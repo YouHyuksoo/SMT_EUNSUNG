@@ -1,0 +1,81 @@
+HA$PBExportHeader$d_smt_plandata_material_comparision_rpt.srd
+$PBExportComments$$$HEX6$$80bd88d4c8b9a4c230d12000$$ENDHEX$$(HSRM_ITEM)
+release 10.5;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no grid.lines=0 )
+header(height=140 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=76 color="536870912" )
+table(column=(type=char(100) updatewhereclause=yes name=item_code dbname="id_item.item_code" dbalias=".item_code" )
+ column=(type=char(300) updatewhereclause=yes name=item_name dbname="id_item.item_name" dbalias="B.item_name" )
+ column=(type=char(300) updatewhereclause=yes name=item_spec dbname="id_item.item_spec" dbalias="B.item_spec" )
+ column=(type=char(30) updatewhereclause=yes name=a_loc dbname="id_item.a_loc" dbalias=".a_loc" )
+ column=(type=char(30) updatewhereclause=yes name=b_loc dbname="id_item.b_loc" dbalias=".b_loc" )
+ column=(type=char(2) updatewhereclause=yes name=diff_check dbname="diff_check" )
+ column=(type=char(1) updatewhereclause=yes name=model_name dbname="id_item.model_name" dbalias=".model_name" )
+ column=(type=char(1) updatewhereclause=yes name=com_model_name dbname="id_item.com_model_name" dbalias=".com_model_name" )
+ retrieve="SELECT  a.item_code  item_code ,
+			b.item_name item_name , 
+             b.item_spec item_spec ,
+			a.a_loc a_loc , a.b_loc b_loc ,   
+             decode( a.a_loc , a.b_loc , 'OK' , 'X' )  DIFF_CHECK ,  
+             :arg_model_name model_name ,
+             :arg_comp_model_name com_model_name
+
+  FROM   (  SELECT
+						    item_code , 
+						    MAX (nvl(a_loc,'*')) a_loc, 
+						    MAX (nvl(b_loc,'*')) b_loc
+
+                   FROM   (
+							SELECT   a.item_code  item_code , 
+										 a.location_code  a_loc, 
+										 '' b_loc
+								FROM   ib_product_plandata a
+								WHERE a.line_code  = :arg_line_code
+								AND a.model_name    = :arg_model_name
+								AND a.pcb_item            = :arg_topbot
+								AND a.organization_id = :arg_org
+
+								UNION 
+
+							  SELECT b.item_code item_code, 
+									      '' a_loc, 
+										   b.location_code b_loc
+								FROM   ib_product_plandata b
+								WHERE   b.line_code   = :arg_comp_line_code
+								AND b.model_name     = :arg_comp_model_name
+								AND b.pcb_item            = :arg_topbot
+								AND b.organization_id = :arg_org
+                                )
+          GROUP BY   item_code )  A , id_item B
+ WHERE A.ITEM_CODE = B.ITEM_CODE(+)
+     AND A.A_LOC <> '*' AND  A.B_LOC <> '*' 
+" arguments=(("ARG_LINE_CODE", string),("ARG_MODEL_NAME", string),("ARG_COMP_LINE_CODE", string),("ARG_COMP_MODEL_NAME", string),("ARG_TOPBOT", string),("ARG_ORG", number))  sort="diff_check A item_code A " )
+group(level=1 header.height=0 trailer.height=72 by=("diff_check" ) header.color="536870912" trailer.color="65280" )
+compute(band=header alignment="2" expression=" ARG_LINE_CODE "border="2" color="33554432" x="1897" y="12" height="60" width="599" format="[GENERAL]" html.valueishtml="0"  name=compute_4 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+compute(band=header alignment="2" expression=" ARG_COMP_MODEL_NAME "border="2" color="33554432" x="2505" y="76" height="60" width="690" format="[GENERAL]" html.valueishtml="0"  name=compute_3 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+compute(band=header alignment="2" expression=" ARG_COMP_LINE_CODE "border="2" color="33554432" x="2505" y="12" height="60" width="690" format="[GENERAL]" html.valueishtml="0"  name=compute_5 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Diff Check" border="2" color="33554432" x="3205" y="12" height="124" width="407" html.valueishtml="0"  name=diff_check_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+compute(band=header alignment="2" expression=" ARG_MODEL_NAME "border="2" color="33554432" x="1897" y="76" height="60" width="599" format="[GENERAL]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+compute(band=detail alignment="2" expression="getrow()"border="0" color="33554432" x="9" y="4" height="64" width="178" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="33554432~tIF (  diff_check ='OK' , 0 , 255 ) " x="197" y="4" height="64" width="599" format="[general]" html.valueishtml="0"  name=item_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="0" color="33554432~tIF (  diff_check ='OK' , 0 , 255 ) " x="1897" y="4" height="64" width="599" format="[general]" html.valueishtml="0"  name=a_loc visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=5 alignment="2" tabsequence=32766 border="0" color="33554432~tIF (  diff_check ='OK' , 0 , 255 ) " x="2505" y="4" height="64" width="690" format="[general]" html.valueishtml="0"  name=b_loc visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=6 alignment="2" tabsequence=32766 border="0" color="33554432~tIF (  diff_check ='OK' , 0 , 255 ) " x="3205" y="4" height="64" width="407" format="[general]" html.valueishtml="0"  name=diff_check visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="33554432~tIF (  diff_check ='OK' , 0 , 255 ) " x="805" y="4" height="64" width="503" format="[general]" html.valueishtml="0"  name=item_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="0" color="33554432~tIF (  diff_check ='OK' , 0 , 255 ) " x="1317" y="4" height="64" width="571" format="[general]" html.valueishtml="0"  name=item_spec visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=header alignment="2" text="Item Code" border="2" color="33554432" x="197" y="12" height="124" width="599" html.valueishtml="0"  name=item_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Item Name" border="2" color="33554432" x="805" y="12" height="124" width="503" html.valueishtml="0"  name=item_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Item Spec" border="2" color="33554432" x="1317" y="12" height="124" width="571" html.valueishtml="0"  name=item_spec_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

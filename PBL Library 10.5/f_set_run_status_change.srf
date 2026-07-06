@@ -1,0 +1,21 @@
+HA$PBExportHeader$f_set_run_status_change.srf
+global type f_set_run_status_change from function_object
+end type
+
+forward prototypes
+global function integer f_set_run_status_change (string arg_run_no, string arg_status)
+end prototypes
+
+global function integer f_set_run_status_change (string arg_run_no, string arg_status);   UPDATE ip_product_run_card
+      SET run_status = :arg_status
+    WHERE run_no = :arg_run_no
+	    and organization_id = :gvi_organization_id ;
+
+if f_sql_check() < 0 then 
+	return -1 
+end if 
+commit ;
+
+return 0
+end function
+

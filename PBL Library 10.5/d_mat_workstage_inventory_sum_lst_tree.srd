@@ -1,0 +1,86 @@
+HA$PBExportHeader$d_mat_workstage_inventory_sum_lst_tree.srd
+$PBExportComments$D_MAT_WORKSTAGE_INVENTORY_LST Create Date :2006-09-22 Created By : ADMIN
+release 10.5;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no grid.lines=0 )
+header(height=140 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=80 color="536870912" )
+table(column=(type=char(10) updatewhereclause=yes name=workstage_code dbname="im_item_workstage_inventory.workstage_code" )
+ column=(type=char(20) updatewhereclause=yes name=item_code dbname="im_item_workstage_inventory.item_code" )
+ column=(type=number updatewhereclause=yes name=organization_id dbname="im_item_workstage_inventory.organization_id" )
+ column=(type=number updatewhereclause=yes name=inventory_qty dbname="inventory_qty" )
+ column=(type=char(300) updatewhereclause=yes name=item_name dbname="id_item.item_name" )
+ column=(type=char(300) updatewhereclause=yes name=item_spec dbname="id_item.item_spec" )
+ column=(type=char(1) updatewhereclause=yes name=item_division dbname="id_item.item_division" )
+ column=(type=char(10) updatewhereclause=yes name=msl_level dbname="id_item.msl_level" )
+ column=(type=number updatewhereclause=yes name=unit_price dbname="unit_price" )
+ retrieve="  SELECT 
+         ~"IM_ITEM_WORKSTAGE_INVENTORY~".~"WORKSTAGE_CODE~",   
+ 
+         ~"IM_ITEM_WORKSTAGE_INVENTORY~".~"ITEM_CODE~",   
+         ~"IM_ITEM_WORKSTAGE_INVENTORY~".~"ORGANIZATION_ID~",   
+         SUM(~"IM_ITEM_WORKSTAGE_INVENTORY~".~"INVENTORY_QTY~") INVENTORY_QTY,   
+         ~"ID_ITEM~".~"ITEM_NAME~",   
+         ~"ID_ITEM~".~"ITEM_SPEC~",   
+         ~"ID_ITEM~".~"ITEM_DIVISION~",   
+         ~"ID_ITEM~".~"MSL_LEVEL~"  ,
+		
+		f_get_mat_max_unit_price_cfm( ~"IM_ITEM_WORKSTAGE_INVENTORY~".~"ITEM_CODE~",   'F' , SYSDATE ,  :ARG_ORG ) UNIT_PRICE
+
+    FROM ~"IM_ITEM_WORKSTAGE_INVENTORY~",   
+         ~"ID_ITEM~"  
+   WHERE ( ~"IM_ITEM_WORKSTAGE_INVENTORY~".~"ITEM_CODE~" = ~"ID_ITEM~".~"ITEM_CODE~" ) and  
+         ( ~"IM_ITEM_WORKSTAGE_INVENTORY~".~"ORGANIZATION_ID~" = ~"ID_ITEM~".~"ORGANIZATION_ID~" ) and  
+         ( ( ~"IM_ITEM_WORKSTAGE_INVENTORY~".~"MFS~" like :ARG_MFS ) AND  
+         ( ~"IM_ITEM_WORKSTAGE_INVENTORY~".~"LINE_CODE~" like :ARG_LINE_CODE ) AND  
+         ( ~"IM_ITEM_WORKSTAGE_INVENTORY~".~"WORKSTAGE_CODE~" like :ARG_WORKSTAGE_CODE ) AND  
+         ( ~"IM_ITEM_WORKSTAGE_INVENTORY~".~"ITEM_CODE~" like :ARG_ITEM_CODE ) AND  
+         ( ~"ID_ITEM~".~"ITEM_DIVISION~" like :ARG_ITEM_DIVISION ) AND  
+         ( ~"IM_ITEM_WORKSTAGE_INVENTORY~".~"MATERIAL_MFS~" like :ARG_MATERIAL_MFS ) AND  
+         ( ~"IM_ITEM_WORKSTAGE_INVENTORY~".~"ORGANIZATION_ID~" = :ARG_ORG ) )    
+
+
+GROUP BY 
+         ~"IM_ITEM_WORKSTAGE_INVENTORY~".~"WORKSTAGE_CODE~",   
+
+         ~"IM_ITEM_WORKSTAGE_INVENTORY~".~"ITEM_CODE~",   
+         ~"IM_ITEM_WORKSTAGE_INVENTORY~".~"ORGANIZATION_ID~",   
+
+         ~"ID_ITEM~".~"ITEM_NAME~",   
+         ~"ID_ITEM~".~"ITEM_SPEC~",   
+         ~"ID_ITEM~".~"ITEM_DIVISION~",   
+         ~"ID_ITEM~".~"MSL_LEVEL~"  " arguments=(("ARG_MFS", string),("ARG_LINE_CODE", string),("ARG_WORKSTAGE_CODE", string),("ARG_ITEM_CODE", string),("ARG_ITEM_DIVISION", string),("ARG_MATERIAL_MFS", string),("ARG_ORG", number))  sort="item_division A workstage_code A item_code A " )
+group(level=1 header.height=0 trailer.height=68 by=("item_division" ) header.color="536870912" trailer.color="12639424" )
+text(band=header alignment="2" text="Workstage Code" border="0" color="16777215" x="841" y="8" height="124" width="357" html.valueishtml="0"  name=workstage_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+text(band=header alignment="2" text="Item Code" border="0" color="16777215" x="1207" y="8" height="124" width="585" html.valueishtml="0"  name=item_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+text(band=header alignment="2" text="Item Name" border="0" color="16777215" x="2816" y="8" height="124" width="1312" html.valueishtml="0"  name=item_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+text(band=header alignment="2" text="Item Spec" border="0" color="16777215" x="4137" y="8" height="124" width="978" html.valueishtml="0"  name=item_spec_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+text(band=header alignment="2" text="Item Division" border="0" color="16777215" x="229" y="8" height="124" width="306" html.valueishtml="0"  name=item_division_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+text(band=header alignment="2" text="Msl Level" border="0" color="16777215" x="544" y="8" height="124" width="288" html.valueishtml="0"  name=msl_level_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+text(band=header alignment="2" text="Inventory Qty" border="0" color="16777215" x="1801" y="8" height="124" width="366" html.valueishtml="0"  name=inventory_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+text(band=header alignment="2" text="Unit Price" border="0" color="16777215" x="2176" y="8" height="124" width="306" html.valueishtml="0"  name=unit_price_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+text(band=header alignment="2" text="Inventory Amt" border="0" color="16777215" x="2491" y="8" height="124" width="320" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+compute(band=detail alignment="0" expression="getrow()"border="0" color="33554432" x="9" y="4" height="68" width="206" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=7 alignment="2" tabsequence=32766 border="0" color="33554432" x="229" y="4" height="68" width="306" format="[general]" html.valueishtml="0"  name=item_division visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="33554432" x="841" y="4" height="68" width="357" format="[general]" html.valueishtml="0"  name=workstage_code visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="33554432" x="1207" y="4" height="68" width="585" format="[general]" html.valueishtml="0"  name=item_code visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=8 alignment="2" tabsequence=32766 border="0" color="33554432" x="544" y="4" height="68" width="288" format="[general]" html.valueishtml="0"  name=msl_level visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="0" tabsequence=32766 border="0" color="33554432" x="2816" y="4" height="68" width="1312" format="[general]" html.valueishtml="0"  name=item_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=6 alignment="0" tabsequence=32766 border="0" color="33554432" x="4137" y="4" height="68" width="978" format="[general]" html.valueishtml="0"  name=item_spec visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=9 alignment="1" tabsequence=32766 border="0" color="33554432~tif (  unit_price = 0 , 255 , 0 )" x="2176" y="4" height="68" width="306" format="###,##0.00" html.valueishtml="0"  name=unit_price visible="1" edit.limit=0 edit.case=any edit.format="###,##0.00" edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="1" tabsequence=32766 border="0" color="33554432~tif ( inventory_qty < 0 , 255 , 0 ) " x="1801" y="4" height="68" width="366" format="[general]" html.valueishtml="0"  name=inventory_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+compute(band=detail alignment="1" expression=" inventory_qty *  unit_price "border="0" color="33554432" x="2491" y="4" height="68" width="320" format="###,##0.00" html.valueishtml="0"  name=compute_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(inventory_qty for group 1)"border="0" color="33554432" x="1801" y="4" height="60" width="366" format="[general]" html.valueishtml="0"  name=compute_3 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum( inventory_qty *  unit_price  for group 1)"border="0" color="33554432" x="2491" y="4" height="60" width="320" format="###,##0.00" html.valueishtml="0"  name=compute_4 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

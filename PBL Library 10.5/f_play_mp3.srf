@@ -1,0 +1,20 @@
+HA$PBExportHeader$f_play_mp3.srf
+global type f_play_mp3 from function_object
+end type
+
+forward prototypes
+global subroutine f_play_mp3 (string arg_file)
+end prototypes
+
+global subroutine f_play_mp3 (string arg_file);long ll_rc , cchReturn
+string lpszReturnString 
+//==============
+//MP3 $$HEX4$$4cd1a4c2b8d22000$$ENDHEX$$
+//===============
+lpszReturnString = Space(100)
+ll_rc = MciSendString ('close MP3_Device', lpszReturnString,  cchReturn, 0)
+ll_rc = MciSendString("open ~"" + arg_file + "~" type MPEGVideo alias MP3_Device", lpszReturnString,  cchReturn, 0)
+ll_rc = MciSendString ("play Mp3_Device", lpszReturnString,  cchReturn, 0)
+//ll_rc = MciSendString ('close MP3_Device', lpszReturnString,  cchReturn, 0)
+end subroutine
+

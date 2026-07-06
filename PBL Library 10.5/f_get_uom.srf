@@ -1,0 +1,23 @@
+HA$PBExportHeader$f_get_uom.srf
+global type f_get_uom from function_object
+end type
+
+forward prototypes
+global function string f_get_uom (string arg_item_code, integer arg_org)
+end prototypes
+
+global function string f_get_uom (string arg_item_code, integer arg_org);string lvs_uom
+select item_uom into :lvs_uom
+ from id_item 
+ where item_code = :arg_item_code
+ and dateset <= trunc(sysdate)
+ and dateend >= trunc(sysdate)
+ and organization_id = :arg_org ;
+ 
+ if f_sql_check() < 0 then 
+	return 'EA'
+end if 
+
+return lvs_uom
+end function
+

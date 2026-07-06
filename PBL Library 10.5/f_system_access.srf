@@ -1,0 +1,58 @@
+HA$PBExportHeader$f_system_access.srf
+$PBExportComments$System Access Log Trace
+global type f_system_access from function_object
+end type
+
+forward prototypes
+global function integer f_system_access (string as_window_name, string as_execution_object_name, string as_access_type)
+end prototypes
+
+global function integer f_system_access (string as_window_name, string as_execution_object_name, string as_access_type);if Gvi_db_status = 1 then  // Not Yet Connected Database
+if Gvs_system_access_yn ='Y' then
+else
+	Return 0
+end if 
+  INSERT INTO "ISYS_SYSTEM_ACCESS"  
+         ( "APPLICATION_NAME",   
+           "ACCESS_DATE",   
+           "ORGANIZATION_ID",   
+           "WINDOW_NAME",   
+           "EXECUTION_OBJECT_NAME",   
+           "SYSTEM_ACCESS_TYPE",   
+           "ACCESS_BY",   
+		"COMPUTER_NAME",	  
+           "LOGON_USER_ID",   
+           "IP_ADDRESS",   
+           "MAC_ADDRESS",   
+           "ENTER_DATE",   
+           "ENTER_BY",   
+           "LAST_MODIFY_DATE",   
+           "LAST_MODIFY_BY" )  
+  VALUES ( :Gvs_app_name ,
+           sysdate,   
+           :Gvi_organization_id,   
+           UPPER(:as_window_name) ,
+           UPPER(:as_execution_object_name),   
+           UPPER(:as_access_type),
+           :Gvs_user_id ,
+		:GVS_COMPUTER_NAME,
+           :GVS_COMPUTER_LOGIN_USER,   
+          nvl(:GVS_IP_ADDRESS,'*'),
+           nvl(:Gvs_mac_address,'*'),   
+           sysdate,   
+           :Gvs_user_id,   
+           sysdate,   
+           :Gvs_user_id )  ;
+			  
+			if f_sql_check() < 0 then 
+				Return -1 
+			end if
+			Commit ;
+	
+	Return 0			
+else
+	
+	Return 0
+end if
+end function
+

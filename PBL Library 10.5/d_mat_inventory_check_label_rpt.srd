@@ -1,0 +1,97 @@
+HA$PBExportHeader$d_mat_inventory_check_label_rpt.srd
+release 10.5;
+datawindow(units=2 timer_interval=0 color=1073741824 processing=2 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 0 print.margin.right = 0 print.margin.top = 0 print.margin.bottom = 0 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no label.name="Laser Address/Ship 3.33 x 4.00 5164" label.width=3900 label.height=2600 label.rows=4 label.rows.spacing=100 label.columns=2 label.columns.spacing=188 label.topdown=no label.sheet=yes label.shape=roundrectangle label.ellipse_height=158 label.ellipse_width=158 )
+detail(height=2604 color="536870912" )
+table(column=(type=char(20) updatewhereclause=yes name=item_code dbname="im_item_inventory_check.item_code" dbalias=".item_code" )
+ column=(type=number updatewhereclause=yes name=organization_id dbname="im_item_inventory_check.organization_id" dbalias=".organization_id" )
+ column=(type=char(10) updatewhereclause=yes name=line_type dbname="im_item_inventory_check.line_type" dbalias=".line_type" )
+ column=(type=number updatewhereclause=yes name=im_item_inventory_check_inventory_price dbname="im_item_inventory_check.inventory_price" dbalias=".inventory_price" )
+ column=(type=number updatewhereclause=yes name=inventory_qty dbname="im_item_inventory_check.inventory_qty" dbalias=".inventory_qty" )
+ column=(type=number updatewhereclause=yes name=im_item_inventory_check_inventory_amt dbname="im_item_inventory_check.inventory_amt" dbalias=".inventory_amt" )
+ column=(type=char(20) updatewhereclause=yes name=location_code dbname="im_item_inventory_check.location_code" dbalias=".location_code" )
+ column=(type=number updatewhereclause=yes name=check_inventory_qty dbname="im_item_inventory_check.check_inventory_qty" dbalias=".check_inventory_qty" )
+ column=(type=char(1000) updatewhereclause=yes name=comments dbname="im_item_inventory_check.comments" dbalias=".comments" )
+ column=(type=datetime updatewhereclause=yes name=im_item_inventory_check_enter_date dbname="im_item_inventory_check.enter_date" dbalias=".enter_date" )
+ column=(type=char(20) updatewhereclause=yes name=im_item_inventory_check_enter_by dbname="im_item_inventory_check.enter_by" dbalias=".enter_by" )
+ column=(type=datetime updatewhereclause=yes name=im_item_inventory_check_last_modify_date dbname="im_item_inventory_check.last_modify_date" dbalias=".last_modify_date" )
+ column=(type=char(20) updatewhereclause=yes name=im_item_inventory_check_last_modify_by dbname="im_item_inventory_check.last_modify_by" dbalias=".last_modify_by" )
+ column=(type=char(300) updatewhereclause=yes name=item_spec dbname="id_item.item_spec" dbalias=".item_spec" )
+ column=(type=char(300) updatewhereclause=yes name=item_name dbname="id_item.item_name" dbalias=".item_name" )
+ column=(type=char(3) updatewhereclause=yes name=item_uom dbname="id_item.item_uom" dbalias=".item_uom" )
+ column=(type=char(1) updatewhereclause=yes name=item_division dbname="id_item.item_division" dbalias=".item_division" )
+ column=(type=char(6) updatewhereclause=yes name=close_yyyymm dbname="im_item_inventory_check.close_yyyymm" dbalias=".close_yyyymm" )
+ retrieve="  SELECT ~"IM_ITEM_INVENTORY_CHECK~".~"ITEM_CODE~",   
+         ~"IM_ITEM_INVENTORY_CHECK~".~"ORGANIZATION_ID~",   
+         ~"IM_ITEM_INVENTORY_CHECK~".~"LINE_TYPE~",   
+         ~"IM_ITEM_INVENTORY_CHECK~".~"INVENTORY_PRICE~",   
+         ~"IM_ITEM_INVENTORY_CHECK~".~"INVENTORY_QTY~",   
+         ~"IM_ITEM_INVENTORY_CHECK~".~"INVENTORY_AMT~",   
+         ~"IM_ITEM_INVENTORY_CHECK~".~"LOCATION_CODE~",   
+         ~"IM_ITEM_INVENTORY_CHECK~".~"CHECK_INVENTORY_QTY~",   
+         ~"IM_ITEM_INVENTORY_CHECK~".~"COMMENTS~",   
+         ~"IM_ITEM_INVENTORY_CHECK~".~"ENTER_DATE~",   
+         ~"IM_ITEM_INVENTORY_CHECK~".~"ENTER_BY~",   
+         ~"IM_ITEM_INVENTORY_CHECK~".~"LAST_MODIFY_DATE~",   
+         ~"IM_ITEM_INVENTORY_CHECK~".~"LAST_MODIFY_BY~",   
+         ~"ID_ITEM~".~"ITEM_SPEC~",   
+         ~"ID_ITEM~".~"ITEM_NAME~",   
+         ~"ID_ITEM~".~"ITEM_UOM~",   
+         ~"ID_ITEM~".~"ITEM_DIVISION~",   
+         ~"IM_ITEM_INVENTORY_CHECK~".~"CLOSE_YYYYMM~"  
+    FROM ~"IM_ITEM_INVENTORY_CHECK~",   
+         ~"ID_ITEM~"  
+   WHERE ( ~"ID_ITEM~".~"ITEM_CODE~" = ~"IM_ITEM_INVENTORY_CHECK~".~"ITEM_CODE~" ) and  
+         ( ~"ID_ITEM~".~"ORGANIZATION_ID~" = ~"IM_ITEM_INVENTORY_CHECK~".~"ORGANIZATION_ID~" ) and  
+         ( ( ~"IM_ITEM_INVENTORY_CHECK~".~"CLOSE_YYYYMM~" = :arg_yyyymm ) AND  
+         ( ( ~"IM_ITEM_INVENTORY_CHECK~".~"ITEM_CODE~" like :arg_item_code ) AND  
+		 ( NVL(~"IM_ITEM_INVENTORY_CHECK~".~"LOCATION_CODE~",'*') like :arg_location_code ) AND  
+         ( ~"IM_ITEM_INVENTORY_CHECK~".~"ORGANIZATION_ID~" = :arg_org_id ) ) )    
+" arguments=(("arg_yyyymm", string),("arg_item_code", string),("arg_location_code", string),("arg_org_id", number)) )
+line(band=detail x1="0" y1="312" x2="3875" y2="312"  name=l_4 visible="1" pen.style="0" pen.width="10" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+compute(band=detail alignment="1" expression="getrow()"border="0" color="33554432" x="3291" y="62" height="177" width="541" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+line(band=detail x1="10" y1="1395" x2="3885" y2="1395"  name=l_2 visible="1" pen.style="0" pen.width="10" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+line(band=detail x1="10" y1="2072" x2="3885" y2="2072"  name=l_1 visible="1" pen.style="0" pen.width="10" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432" x="166" y="62" height="177" width="2218" format="[general]" html.valueishtml="0"  name=organization_id visible="1" dddw.name=vd_organization_name dddw.displaycolumn=organization_name dddw.datacolumn=organization_id dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="1" expression="'Page ' + page() + ' of ' + pageCount()"border="0" color="33554432" x="2416" y="62" height="177" width="843" format="[general]" html.valueishtml="0"  name=page_1 visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+line(band=detail x1="1072" y1="1395" x2="1072" y2="2270"  name=l_5 visible="1" pen.style="0" pen.width="10" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+line(band=detail x1="1072" y1="312" x2="1072" y2="1406"  name=l_6 visible="1" pen.style="0" pen.width="10" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+line(band=detail x1="1072" y1="2072" x2="1072" y2="2593"  name=l_3 visible="1" pen.style="0" pen.width="10" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+column(band=detail id=18 alignment="0" tabsequence=32766 border="0" color="33554432" x="1125" y="354" height="177" width="927" format="[general]" html.valueishtml="0"  name=close_yyyymm visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432" x="1125" y="770" height="177" width="1614" format="[general]" html.valueishtml="0"  name=item_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="33554432" x="1125" y="989" height="177" width="989" format="[general]" html.valueishtml="0"  name=line_type visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any dddw.autoretrieve=no  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=7 alignment="0" tabsequence=32766 border="0" color="33554432" x="1125" y="1197" height="177" width="1614" format="[general]" html.valueishtml="0"  name=location_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=15 alignment="0" tabsequence=32766 border="0" color="33554432" x="1125" y="1447" height="177" width="2687" format="[general]" html.valueishtml="0"  name=item_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=14 alignment="0" tabsequence=32766 border="0" color="33554432" x="1125" y="1656" height="177" width="2687" format="[general]" html.valueishtml="0"  name=item_spec visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=16 alignment="0" tabsequence=32766 border="0" color="33554432" x="1125" y="1864" height="177" width="562" format="[general]" html.valueishtml="0"  name=item_uom visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=detail alignment="1" text="Close YYYYMM" border="0" color="33554432" x="52" y="354" height="166" width="989" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=detail alignment="1" text="Material MFS" border="0" color="33554432" x="52" y="552" height="166" width="989" html.valueishtml="0"  name=t_2 visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=detail alignment="1" text="Item Code" border="0" color="33554432" x="52" y="770" height="166" width="989" html.valueishtml="0"  name=t_3 visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=detail alignment="1" text="Line Type" border="0" color="33554432" x="52" y="989" height="166" width="989" html.valueishtml="0"  name=t_4 visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=detail alignment="1" text="Location Code" border="0" color="33554432" x="52" y="1197" height="166" width="989" html.valueishtml="0"  name=t_5 visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=detail alignment="1" text="Item Name" border="0" color="33554432" x="41" y="1447" height="166" width="1000" html.valueishtml="0"  name=t_6 visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=detail alignment="1" text="Item Spec" border="0" color="33554432" x="41" y="1656" height="166" width="1000" html.valueishtml="0"  name=t_7 visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=detail alignment="1" text="Item UOM" border="0" color="33554432" x="41" y="1864" height="166" width="1000" html.valueishtml="0"  name=t_8 visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=detail alignment="1" text="Inventory Qty" border="0" color="33554432" x="52" y="2125" height="166" width="989" html.valueishtml="0"  name=t_9 visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=detail alignment="1" text="Check Inventory Qty" border="0" color="33554432" x="52" y="2385" height="166" width="989" html.valueishtml="0"  name=t_10 visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+line(band=detail x1="2760" y1="312" x2="2760" y2="1406"  name=l_7 visible="1" pen.style="0" pen.width="10" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+text(band=detail alignment="2" text="Item Division" border="0" color="33554432" x="2812" y="354" height="166" width="989" html.valueishtml="0"  name=t_11 visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=17 alignment="2" tabsequence=32766 border="0" color="33554432" x="2791" y="572" height="166" width="1052" format="[general]" html.valueishtml="0"  name=item_division visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any dddw.autoretrieve=no  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+line(band=detail x1="2770" y1="770" x2="3885" y2="770"  name=l_8 visible="1" pen.style="0" pen.width="10" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+column(band=detail id=5 alignment="1" tabsequence=32766 border="0" color="33554432" x="1135" y="2125" height="177" width="947" format="###,##0.####" html.valueishtml="0"  name=inventory_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=8 alignment="1" tabsequence=32766 border="0" color="33554432" x="1135" y="2385" height="177" width="947" format="###,###.####" html.valueishtml="0"  name=check_inventory_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+line(band=detail x1="2135" y1="2083" x2="2135" y2="2583"  name=l_10 visible="1" pen.style="0" pen.width="10" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+line(band=detail x1="2937" y1="2083" x2="2937" y2="2583"  name=l_11 visible="1" pen.style="0" pen.width="10" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+line(band=detail x1="2145" y1="2322" x2="3895" y2="2322"  name=l_9 visible="1" pen.style="0" pen.width="10" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+text(band=detail alignment="1" text="Inspect By" border="0" color="33554432" x="2177" y="2114" height="166" width="718" html.valueishtml="0"  name=t_12 visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=detail alignment="1" text="Confirm By" border="0" color="33554432" x="2177" y="2395" height="166" width="718" html.valueishtml="0"  name=t_13 visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

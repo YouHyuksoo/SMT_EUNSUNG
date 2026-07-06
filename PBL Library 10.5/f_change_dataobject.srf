@@ -1,0 +1,17 @@
+HA$PBExportHeader$f_change_dataobject.srf
+global type f_change_dataobject from function_object
+end type
+
+forward prototypes
+global function integer f_change_dataobject (ref datawindow arg_dw, string arg_dw_store)
+end prototypes
+
+global function integer f_change_dataobject (ref datawindow arg_dw, string arg_dw_store);
+arg_dw.dataobject = arg_dw_store
+arg_dw.settransobject(sqlca)
+f_set_column_dddw(arg_dw)
+f_dual_lang_change_dwtext( arg_dw)
+
+return 0
+end function
+

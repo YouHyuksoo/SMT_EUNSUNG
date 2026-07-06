@@ -1,0 +1,36 @@
+Save Format v3.0(19990112)
+@begin Libraries
+ "infinity21_urw_com.pbl" "";
+@end;
+@begin Objects
+ "w_mat_barcode_status_report.srw" "infinity21_urw_com.pbl";
+ "w_product_run_card_rpt.srw" "infinity21_urw_com.pbl";
+ "w_pln_master_plan_rpt.srw" "infinity21_urw_com.pbl";
+ "w_smt_pickup_rate_rpt.srw" "infinity21_urw_com.pbl";
+ "w_pln_line_barcode_rpt.srw" "infinity21_urw_com.pbl";
+ "w_product_material_tracking_4_workorder_rpt.srw" "infinity21_urw_com.pbl";
+ "w_mcn_mold_receipt_rpt.srw" "infinity21_urw_com.pbl";
+ "w_des_item_master_rpt.srw" "infinity21_urw_com.pbl";
+ "w_mcn_machine_rpt.srw" "infinity21_urw_com.pbl";
+ "w_product_pid_tracking_fpcb_rpt.srw" "infinity21_urw_com.pbl";
+ "w_product_carrier_barcode.srw" "infinity21_urw_com.pbl";
+ "w_product_workstage_stock_rpt.srw" "infinity21_urw_com.pbl";
+ "w_product_material_tracking_history_rpt.srw" "infinity21_urw_com.pbl";
+ "w_smt_recycle_check_rpt.srw" "infinity21_urw_com.pbl";
+ "w_product_pid_material_tracking_rpt.srw" "infinity21_urw_com.pbl";
+ "w_smt_bom_master_rpt.srw" "infinity21_urw_com.pbl";
+ "w_mcn_mold_issue_rpt.srw" "infinity21_urw_com.pbl";
+ "w_mcn_mold_rpt.srw" "infinity21_urw_com.pbl";
+ "w_product_material_tracking_rpt.srw" "infinity21_urw_com.pbl";
+ "w_product_result_rpt.srw" "infinity21_urw_com.pbl";
+ "w_mcn_jig_rpt.srw" "infinity21_urw_com.pbl";
+ "w_product_material_tracking_msl_rpt.srw" "infinity21_urw_com.pbl";
+ "w_product_qc_repair_item.srw" "infinity21_urw_com.pbl";
+ "w_product_material_tracking_multi_rpt.srw" "infinity21_urw_com.pbl";
+ "w_product_pid_tracking_rpt.srw" "infinity21_urw_com.pbl";
+ "w_qc_4m_history_rpt.srw" "infinity21_urw_com.pbl";
+ "w_product_workstage_magazine_stock_rpt.srw" "infinity21_urw_com.pbl";
+ "w_prd_product_fg_issue_rpt.srw" "infinity21_urw_com.pbl";
+ "w_line_machine_daily_operation_rpt.srw" "infinity21_urw_com.pbl";
+ "w_smt_bom_comparison_master_rpt.srw" "infinity21_urw_com.pbl";
+@end;

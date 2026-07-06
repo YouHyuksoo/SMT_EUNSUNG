@@ -1,0 +1,11 @@
+HA$PBExportHeader$f_get_to_supplier_by_invoice.srf
+global type f_get_to_supplier_by_invoice from function_object
+end type
+
+forward prototypes
+global function string f_get_to_supplier_by_invoice (string arg_invoice)
+end prototypes
+
+global function string f_get_to_supplier_by_invoice (string arg_invoice);return ''
+end function
+

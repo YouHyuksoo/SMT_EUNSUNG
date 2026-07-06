@@ -1,0 +1,23 @@
+HA$PBExportHeader$f_get_item_code_by_model_suffix.srf
+global type f_get_item_code_by_model_suffix from function_object
+end type
+
+forward prototypes
+global function string f_get_item_code_by_model_suffix (string arg_model_name, string arg_model_suffix)
+end prototypes
+
+global function string f_get_item_code_by_model_suffix (string arg_model_name, string arg_model_suffix);string lvs_item_code
+
+ select item_code into :lvs_item_code 
+  from ip_product_model_master 
+where model_name = :arg_model_name
+   and nvl(model_suffix , '*') =  nvl(:arg_model_suffix , '*') 
+   and organization_id = :gvi_organization_id ;
+
+if f_sql_check() < 0 then 
+	return '*'
+end if 
+
+return lvs_item_code
+end function
+

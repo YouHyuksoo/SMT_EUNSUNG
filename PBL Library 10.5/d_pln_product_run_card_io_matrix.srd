@@ -1,0 +1,65 @@
+HA$PBExportHeader$d_pln_product_run_card_io_matrix.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=4 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no  crosstab.dynamic = yes grid.lines=0 grid.columnmove=no selected.mouse=no )
+header[1](height=0 color="536870912" )
+header[2](height=116 color="536870912" )
+header[3](height=120 color="536870912" )
+summary(height=76 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=80 color="536870912" )
+table(column=(type=char(20) updatewhereclause=yes name=line_code dbname="line_code" )
+ column=(type=char(20) updatewhereclause=yes name=run_no dbname="run_no" )
+ column=(type=char(20) updatewhereclause=yes name=model_name dbname="model_name" )
+ column=(type=char(20) updatewhereclause=yes name=pcb_item dbname="pcb_item" )
+ column=(type=number updatewhereclause=yes name=lot_qty dbname="lot_qty" )
+ retrieve="  SELECT ~"IP_PRODUCT_RUN_CARD_IO~".~"RECEIPT_DATE~",   
+         ~"IP_PRODUCT_RUN_CARD_IO~".~"RUN_NO~",   
+         ~"IP_PRODUCT_RUN_CARD_IO~".~"MODEL_NAME~",   
+         ~"IP_PRODUCT_RUN_CARD_IO~".~"LINE_CODE~",   
+         ~"IP_PRODUCT_RUN_CARD_IO~".~"WORKSTAGE_CODE~",   
+         ~"IP_PRODUCT_RUN_CARD_IO~".~"LOT_QTY~",   
+         ~"IP_PRODUCT_RUN_CARD_IO~".~"PCB_ITEM~"  ,
+	         ~"IP_PRODUCT_RUN_CARD_IO~".~"MAGAZINE_LABEL_TYPE~" 
+    FROM ~"IP_PRODUCT_RUN_CARD_IO~"   
+   WHERE ( ~"IP_PRODUCT_RUN_CARD_IO~".~"LINE_CODE~" like :ARG_LINE_CODE ) AND  
+         ( ~"IP_PRODUCT_RUN_CARD_IO~".~"WORKSTAGE_CODE~" like :ARG_WORKSTAGE_CODE ) AND  
+         ( ~"IP_PRODUCT_RUN_CARD_IO~".~"MODEL_NAME~" like :ARG_MODEL_NAME ) AND  
+         ( ~"IP_PRODUCT_RUN_CARD_IO~".~"MAGAZINE_LABEL_NO~" like :ARG_MAGAZINE_LABEL_NO ) AND  
+         ( ~"IP_PRODUCT_RUN_CARD_IO~".~"RECEIPT_DATE~" >= to_date(:arg_dateset,'yyyy-mm-dd hh24:mi:ss' ) ) AND  
+         ( ~"IP_PRODUCT_RUN_CARD_IO~".~"RECEIPT_DATE~" <= to_date(:arg_dateend,'yyyy-mm-dd hh24:mi:ss' ) ) AND  
+         ( ~"IP_PRODUCT_RUN_CARD_IO~".~"RUN_NO~" like :ARG_RUN_NO ) AND  
+         ( ~"IP_PRODUCT_RUN_CARD_IO~".~"ORGANIZATION_ID~" = :ARG_ORG )    
+" arguments=(("ARG_LINE_CODE", string),("ARG_WORKSTAGE_CODE", string),("ARG_MODEL_NAME", string),("ARG_MAGAZINE_LABEL_NO", string),("ARG_DATESET", string),("ARG_DATEEND", string),("ARG_RUN_NO", string),("ARG_ORG", number))  sort="line_code A run_no A model_name A pcb_item A " )
+group(level=1 header.height=0 trailer.height=72 by=("line_code" ) header.color="536870912" trailer.color="67108864" )
+text(band=header[2] alignment="2" text="@col" border="0" color="0" x="1573" y="4" height="116" width="224" html.valueishtml="0"  name=t_4 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header[3] alignment="0" text="Line Code" border="0" color="0" x="192" y="4" height="112" width="329" html.valueishtml="0"  name=line_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[3] alignment="0" text="Run No" border="0" color="0" x="530" y="4" height="112" width="370" html.valueishtml="0"  name=run_no_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[3] alignment="0" text="Model Name" border="0" color="0" x="910" y="4" height="112" width="453" html.valueishtml="0"  name=model_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[3] alignment="0" text="Pcb Item" border="0" color="0" x="1371" y="4" height="112" width="192" html.valueishtml="0"  name=pcb_item_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[3] alignment="2" text="@magazine_label_type" border="0" color="0" x="1573" y="4" height="112" width="224" html.valueishtml="0"  name=lot_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[3] alignment="0" text="Grand Total " border="0" color="0" x="1810" y="4" height="112" width="274" html.valueishtml="0"  name=grand_sum_lot_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16776960" )
+column(band=detail id=5 alignment="1" tabsequence=32766 border="0" color="33554432" x="1573" y="4" height="68" width="224" format="[general]" html.valueishtml="0"  name=lot_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes crosstab.repeat=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="1" expression="crosstabsum(1)"border="0" color="33554432" x="1810" y="4" height="68" width="274" format="[general]" html.valueishtml="0"  name=grand_sum_lot_qty visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16776960" )
+compute(band=trailer.1 alignment="1" expression="sum(lot_qty for group 1)"border="0" color="33554432" x="1573" y="4" height="96" width="224" format="[general]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum(crosstabsum(1) for group 1)"border="0" color="33554432" x="1806" y="4" height="96" width="279" format="[general]" html.valueishtml="0"  name=compute_3 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=summary alignment="2" expression="~"Grand Total~""border="0" color="65535" x="192" y="4" height="68" width="329" format="[general]" html.valueishtml="0"  name=compute_13 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+compute(band=summary alignment="1" expression="sum(lot_qty for all )"border="0" color="65535" x="1573" y="4" height="68" width="224" format="[general]" html.valueishtml="0"  name=compute_14 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+compute(band=summary alignment="1" expression="sum(grand_sum_lot_qty for all )"border="0" color="65535" x="1810" y="4" height="68" width="274" format="[general]" html.valueishtml="0"  name=compute_16 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="33554432" x="192" y="4" height="68" width="329" format="[general]" html.valueishtml="0"  name=line_code visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15793151" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="33554432" x="530" y="4" height="68" width="370" format="[general]" html.valueishtml="0"  name=run_no visible="1" edit.limit=30 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15793151" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="0" color="33554432" x="910" y="4" height="68" width="453" format="[general]" html.valueishtml="0"  name=model_name visible="1" edit.limit=50 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15793151" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="0" color="33554432" x="1371" y="4" height="68" width="192" format="[general]" html.valueishtml="0"  name=pcb_item visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15793151" )
+compute(band=detail alignment="0" expression="GETROW()"border="0" color="33554432" x="5" y="4" height="68" width="178" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15793151" )
+ crosstab(band = foreground  crosstabonly = yes 
+ columns = "string(receipt_date , ~"YYMMDD~"), magazine_label_type" rows = "line_code, run_no, model_name, pcb_item" values = "sum(lot_qty for crosstab)" sourcenames = "receipt_date, run_no, model_name, line_code, workstage_code, lot_qty, pcb_item, magazine_label_type")
+sparse(names="line_code	run_no	model_name")htmltable(border="0" cellpadding="1" cellspacing="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

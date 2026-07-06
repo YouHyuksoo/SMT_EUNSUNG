@@ -1,0 +1,46 @@
+HA$PBExportHeader$f_get_dataobject.srf
+$PBExportComments$$$HEX14$$01ac200095bc78c7c4bc200074d5f9b2200008c7c4b3b0c6d0c52000$$ENDHEX$$dataobject$$HEX7$$7cb92000acb934d174d500c9e4b2$$ENDHEX$$.
+global type f_get_dataobject from function_object
+end type
+
+forward prototypes
+global function string f_get_dataobject (string as_dw_type, string as_window, string as_dataobject)
+end prototypes
+
+global function string f_get_dataobject (string as_dw_type, string as_window, string as_dataobject);string		ls_syntax,		&
+			ls_window,		&	
+			ls_dataobject
+blob		lblob_syntax
+
+// $$HEX6$$01ac95bc78c7c4bc5cb82000$$ENDHEX$$DATAOBJECT$$HEX7$$7cb92000c0bcbdac74d500c9e4b2$$ENDHEX$$.
+setpointer(Hourglass!)
+
+CHOOSE CASE UPPER(as_dw_type)
+	//D ATA $$HEX13$$08c7c4b3b0c658c720006cad84bd44c72000acb934d15cd5e4b2$$ENDHEX$$.		
+	//$$HEX3$$08b8ecd3b8d2$$ENDHEX$$
+	CASE	'REPORT'
+		ls_window		=	upper(as_window)
+		ls_dataobject	=	upper(as_dataobject)
+		
+		SELECTBLOB	DO_SYNTAX
+		INTO		:lblob_syntax
+		FROM		ISYS_DATAOBJECT
+		WHERE	ORGANIZATION_ID						=	:gvi_organization_id
+		AND		WINDOW_NAME			=	:ls_window
+		AND		DATAOBJECT_NAME		=	:ls_dataobject
+		;
+		
+		if	f_sql_check() < 0  then
+			ls_syntax	=	''
+		else
+			ls_syntax	=	string(lblob_syntax)
+		end if
+			
+END CHOOSE			
+
+return	ls_syntax
+
+
+
+end function
+

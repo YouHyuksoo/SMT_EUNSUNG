@@ -1,0 +1,220 @@
+HA$PBExportHeader$f_gen_purchase_order_plan_by_manual.srf
+$PBExportComments$$$HEX22$$acc0a9c690c700ac200085c725b85cd52000c4ac8dd6d0c51cc180bd30d1200008c615c818c2c9b7b0c09ccd$$ENDHEX$$
+global type f_gen_purchase_order_plan_by_manual from function_object
+end type
+
+forward prototypes
+global function integer f_gen_purchase_order_plan_by_manual (datetime arg_plan_dateset, datetime arg_plan_dateend, string arg_set_item_code, string arg_line_code)
+end prototypes
+
+global function integer f_gen_purchase_order_plan_by_manual (datetime arg_plan_dateset, datetime arg_plan_dateend, string arg_set_item_code, string arg_line_code);LONG        I , LVL_COUNT
+DOUBLE     LVDB_SESSION_ID , LVDB_REQ_SESSION_ID
+STRING     LVS_SET_ITEM_CODE  , LVS_MFS  , LVS_LINE_CODE
+DECIMAL   LVF_ORDER_QTY
+DATETIME  LVDT_PLAN_DATE , LVDT_REQUIRMENT_PLAN_DATE
+ 
+//  DECLARE CL_PLAN CURSOR FOR
+//    SELECT MFS ,  ITEM_CODE , PLAN_DATE , ORDER_QTY
+//      FROM IM_ITEM_MASTER_PLAN_4_PO
+//	WHERE PLAN_DATE >= :ARG_PLAN_DATESET
+//         AND PLAN_DATE <= :ARG_PLAN_DATEEND
+//	    AND ORGANIZATION_ID      = :GVI_ORGANIZATION_ID ;
+		 
+  DECLARE CL_PLAN CURSOR FOR
+    SELECT   '*' CUSTOMER_ORDER_NO , 
+	 			ITEM_CODE , 
+				REQUIRMENT_PLAN_DATE,
+	         	PLAN_DATE , 
+		      	ORDER_QTY ,
+			 	'' LINE_CODE 
+      FROM IM_ITEM_MASTER_PLAN_4_PO
+	WHERE TRUNC(PLAN_DATE) >= :ARG_PLAN_DATESET
+         AND TRUNC(PLAN_DATE) <= :ARG_PLAN_DATEEND
+	    AND ITEM_CODE LIKE :arg_set_item_code
+	  //  AND LINE_CODE LIKE :arg_line_code
+	    AND ORGANIZATION_ID      = :GVI_ORGANIZATION_ID ;		 
+	  
+	 SELECT COUNT(*) INTO :LVL_COUNT
+	   FROM IM_ITEM_MASTER_PLAN_4_PO
+	 WHERE TRUNC(PLAN_DATE) >= :ARG_PLAN_DATESET
+         AND TRUNC(PLAN_DATE) <= :ARG_PLAN_DATEEND
+	    AND ITEM_CODE LIKE :arg_set_item_code
+//	    AND LINE_CODE LIKE :arg_line_code		 
+         AND ORGANIZATION_ID      = :GVI_ORGANIZATION_ID ;
+		 
+	 IF F_SQL_CHECK_WITH_MSG('F_GEN_PURCHASE_PLAN_BY_PROD_PLAN ') < 0 THEN 
+         RETURN -1
+	 END IF
+	 
+	 IF LVL_COUNT = 0 THEN 
+		 F_MSGBOX1(9011 , string(ARG_PLAN_DATESET,'yyyymmdd') ) //@ $$HEX8$$90c7ccb800ac2000c6c5b5c2c8b2e4b2$$ENDHEX$$
+		 RETURN -1
+	 END IF
+	 
+	 SELECT SEQ_REQUIRMENT_PLAN.NEXTVAL 
+	   INTO :LVDB_REQ_SESSION_ID
+	   FROM DUAL ;
+		
+	 IF F_SQL_CHECK() < 0 THEN 
+		 RETURN -1
+	 END IF
+	 
+      F_MSG_MDI_HELP( "Session ID = "+STRING(LVDB_REQ_SESSION_ID))
+	
+	OPEN CL_PLAN ;  
+	IF F_SQL_CHECK() < 0 THEN
+		CLOSE CL_PLAN ;
+		RETURN -1
+	END IF
+
+  //===================================================================================	
+  //
+  //===================================================================================	
+  DO
+		 
+		 FETCH CL_PLAN INTO :LVS_MFS ,  :LVS_SET_ITEM_CODE , :LVDT_REQUIRMENT_PLAN_DATE , :LVDT_PLAN_DATE  , :LVF_ORDER_QTY , :LVS_LINE_CODE;
+		 
+		 IF F_SQL_CHECK() < 0 THEN
+			 CLOSE CL_PLAN ;
+			 EXIT
+		 END IF
+		  
+		 IF SQLCA.SQLCODE = 100 THEN 
+			  CLOSE CL_PLAN;
+			  EXIT
+		 END IF
+		 
+		 
+     IF ISNULL(LVF_ORDER_QTY)  THEN 
+		
+		Rollback ;
+		MESSAGEBOX("Notify" , LVS_SET_ITEM_CODE+'  '+string(LVDT_PLAN_DATE)+" Order Qty Is null Please Check Again" )
+		
+		return -1 
+		
+    END IF 		 
+		 
+ 		 I++
+		  
+	  LVDB_SESSION_ID = SQLCA.BOM_EXPLOSION( LVS_SET_ITEM_CODE , LVDT_PLAN_DATE , GVI_ORGANIZATION_ID) ;  
+       IF F_SQL_CHECK() < 0 THEN
+			 CLOSE CL_PLAN ;
+			 EXIT 
+	   END IF
+		
+       IF LVDB_SESSION_ID < 0 THEN
+		      MESSAGEBOX("Error" , LVS_SET_ITEM_CODE+'  '+'Can`t BOM Explosion')
+			 CLOSE CL_PLAN ;
+			 EXIT 
+	   END IF		
+		 
+	INSERT INTO "IM_ITEM_REQUIRMENT_PLAN_TEMP"  
+		  	  ( "SESSION_ID",
+				"REQUIRMENT_PLAN_DATE",   
+				"MFS" , 
+				"ITEM_CODE",  
+				"LINE_TYPE" , 
+				"SUPPLIER_CODE",   
+				"ORGANIZATION_ID",   
+				"PLAN_DATE",   
+				"REQUIRMENT_QTY",   
+				"ENTER_BY",   
+				"ENTER_DATE",   
+				"LAST_MODIFY_BY",   
+				"LAST_MODIFY_DATE" ,
+				SET_ITEM_CODE , PARENT_ITEM_CODE
+				)  
+	 SELECT :LVDB_REQ_SESSION_ID ,
+				 :LVDT_REQUIRMENT_PLAN_DATE ,
+				:LVS_MFS MFS ,
+				CHILD_ITEM_CODE,
+				 LINE_TYPE ,
+				 '*' , 
+				ORGANIZATION_ID ,
+				:LVDT_PLAN_DATE ,
+				MODEL_UNIT_QTY * :LVF_ORDER_QTY,
+				:GVS_USER_ID ,SYSDATE,:GVS_USER_ID ,SYSDATE ,
+				:LVS_SET_ITEM_CODE , PARENT_ITEM_CODE
+		FROM ID_ENG_BOM_TEMP 
+	   WHERE SESSION_ID = :LVDB_SESSION_ID
+		   AND LINE_TYPE  <> 'A' ;
+				
+		 IF F_SQL_CHECK() < 0 THEN 
+			 RETURN  -1
+		 END IF
+		 
+		 DELETE FROM ID_ENG_BOM_TEMP WHERE SESSION_ID = :LVDB_SESSION_ID ;
+		 
+		 IF F_SQL_CHECK_WITH_MSG('F_GEN_PURCHASE_PLAN_BY_PROD_PLAN - INSERT IM_ITEM_REQUIRMENT_PLAN_TEMP ') < 0 THEN 
+			 RETURN  -1
+		 END IF
+		 
+  LOOP UNTIL I = LVL_COUNT
+
+ IF I = 0 THEN 
+	 
+	 F_MSGBOX( 117 ) // $$HEX9$$90c7ccb800ac2000c6c5b5c2c8b2e4b22000$$ENDHEX$$
+	
+ ELSE
+	
+	    //$$HEX16$$74d5f9b230ae04ac58c72000fcc838bb08c615c8ccb92000adc01cc85cd5e4b2$$ENDHEX$$
+	     DELETE FROM IM_ITEM_PURCHASE_REQUIR_ORDER
+		 WHERE ORGANIZATION_ID = :GVI_ORGANIZATION_ID ;
+			 
+		 IF F_SQL_CHECK() < 0 THEN 
+			 RETURN -1
+		 END IF	 
+	
+	    INSERT INTO "IM_ITEM_PURCHASE_REQUIR_ORDER"  
+				( "REQUIRMENT_PLAN_DATE",   
+				  "MFS" ,
+				  "ITEM_CODE", 
+				  "SUPPLIER_CODE",   
+				  "ORGANIZATION_ID",   
+				  "PLAN_DATE",   
+				  "REQUIRMENT_QTY",   
+				  "LINE_TYPE",
+				  "ENTER_BY",   
+				  "ENTER_DATE",   
+				  "LAST_MODIFY_BY",   
+				  "LAST_MODIFY_DATE" ,
+				  SET_ITEM_CODE ,
+				  PARENT_ITEM_CODE)
+        SELECT "REQUIRMENT_PLAN_DATE",   
+		           "MFS" , 
+				  "ITEM_CODE",   
+				  F_GET_MAX_SUPPLIER_BY_ITEM( ITEM_CODE , ORGANIZATION_ID ) SUPPLIER_CODE,   
+				  "ORGANIZATION_ID",   
+				  "PLAN_DATE",   
+				  SUM("REQUIRMENT_QTY"),   
+				  LINE_TYPE ,
+//				  F_GET_LINE_TYPE_FROM_ITEM(ITEM_CODE,ORGANIZATION_ID) LINE_TYPE,
+				  MAX("ENTER_BY"),   
+				  MAX("ENTER_DATE"),   
+				  MAX("LAST_MODIFY_BY"),   
+				  MAX("LAST_MODIFY_DATE"),
+				  MAX(SET_ITEM_CODE) ,
+				  MAX(PARENT_ITEM_CODE)
+		 FROM IM_ITEM_REQUIRMENT_PLAN_TEMP
+         WHERE SESSION_ID = :LVDB_REQ_SESSION_ID	
+		    AND LINE_TYPE <> 'A'
+	     GROUP BY REQUIRMENT_PLAN_DATE , MFS ,ITEM_CODE ,LINE_TYPE ,  SUPPLIER_CODE ,  ORGANIZATION_ID , PLAN_DATE ;
+	
+		 IF F_SQL_CHECK_WITH_MSG('F_GEN_PURCHASE_PLAN_BY_PROD_PLAN - INSERT IM_ITEM_PURCHASE_REQUIR_ORDER ')  < 0 THEN 
+			 RETURN -1
+		 END IF
+		 
+		 LVL_COUNT = SQLCA.SQLNROWS ; 
+		 
+		 DELETE FROM IM_ITEM_REQUIRMENT_PLAN_TEMP
+          WHERE SESSION_ID = :LVDB_REQ_SESSION_ID ;
+				 
+		 IF F_SQL_CHECK() < 0 THEN 
+			 RETURN -1
+		 END IF	
+		
+		RETURN LVL_COUNT
+		
+ END IF
+end function
+

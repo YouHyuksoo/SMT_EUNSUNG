@@ -1,0 +1,62 @@
+HA$PBExportHeader$d_qc_visual_inspect_bad_query.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=4 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no  crosstab.dynamic = yes grid.lines=0 selected.mouse=no )
+header[1](height=0 color="536870912" )
+header[2](height=140 color="536870912" )
+summary(height=80 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=76 color="536870912" )
+table(column=(type=char(20) updatewhereclause=yes name=line_code dbname="line_code" )
+ column=(type=char(20) updatewhereclause=yes name=mfs dbname="iq_product_wqc_model_name" )
+ column=(type=char(20) updatewhereclause=yes name=item_code dbname="iq_product_wqc_item_code" )
+ column=(type=char(20) updatewhereclause=yes name=model_name dbname="id_item_item_name" )
+ column=(type=number updatewhereclause=yes name=inspect_bad_qty dbname="iq_product_wqc_inspect_bad_qty" )
+ retrieve="SELECT IQ_PRODUCT_WQC.MODEL_NAME MODEL_NAME,
+			IQ_PRODUCT_WQC.ITEM_CODE ITEM_CODE,
+			F_GET_LINE_NAME (IQ_PRODUCT_WQC.LINE_CODE,
+			IQ_PRODUCT_WQC.ORGANIZATION_ID)	LINE_CODE,
+			f_get_code_master ('VISUAL BAD REASON CODE', IQ_PRODUCT_WQC.BAD_REASON_CODE,:ARG_LANG,:ARG_ORG)	BAD_REASON_CODE,
+			IQ_PRODUCT_WQC.INSPECT_BAD_QTY INSPECT_BAD_QTY,
+			ID_ITEM.ITEM_NAME ITEM_NAME
+  FROM IQ_PRODUCT_WQC, ID_ITEM
+ WHERE     IQ_PRODUCT_WQC.ITEM_CODE = ID_ITEM.ITEM_CODE(+)
+       AND IQ_PRODUCT_WQC.ORGANIZATION_ID = ID_ITEM.ORGANIZATION_ID(+)
+       AND IQ_PRODUCT_WQC.MODEL_NAME LIKE :ARG_MODEL_NAME
+       AND IQ_PRODUCT_WQC.LINE_CODE LIKE :ARG_LINE_CODE
+       AND INSPECT_DATE >= trunc(:ARG_DATESET)
+       AND INSPECT_DATE < trunc(:ARG_DATEEND + 1 ) " arguments=(("ARG_MODEL_NAME", string),("ARG_LINE_CODE", string),("ARG_DATESET", datetime),("ARG_DATEEND", datetime),("ARG_LANG", string),("ARG_ORG", number))  sort="line_code A " )
+group(level=1 header.height=0 trailer.height=80 by=("line_code" ) header.color="536870912" trailer.color="536870912" )
+text(band=header[2] alignment="2" text="Line Code" border="0" color="0" x="165" y="4" height="136" width="398" html.valueishtml="0"  name=line_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[2] alignment="2" text="Model Name" border="0" color="0" x="571" y="4" height="136" width="343" html.valueishtml="0"  name=mfs_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[2] alignment="2" text="Item Code" border="0" color="0" x="923" y="4" height="136" width="302" html.valueishtml="0"  name=item_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[2] alignment="2" text="Item Name" border="0" color="0" x="1234" y="4" height="136" width="329" html.valueishtml="0"  name=model_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[2] alignment="2" text="@bad_reason_code" border="0" color="0" x="1883" y="4" height="136" width="293" html.valueishtml="0"  name=iq_product_wqc_inspect_bad_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[2] alignment="2" text="Grand Total " border="0" color="33554432" x="1573" y="4" height="136" width="302" html.valueishtml="0"  name=grand_sum_iq_product_wqc_inspect_bad_q_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+column(band=detail id=5 alignment="1" tabsequence=32766 border="0" color="33554432" x="1883" y="4" height="68" width="293" format="[general]" html.valueishtml="0"  name=inspect_bad_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes crosstab.repeat=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="33554432" x="165" y="4" height="68" width="398" format="[general]" html.valueishtml="0"  name=line_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="33554432" x="571" y="4" height="68" width="343" format="[general]" html.valueishtml="0"  name=mfs visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="0" color="33554432" x="923" y="4" height="68" width="302" format="[general]" html.valueishtml="0"  name=item_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="0" color="33554432" x="1234" y="4" height="68" width="329" format="[general]" html.valueishtml="0"  name=model_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="1" expression="crosstabsum(1)"border="0" color="33554432" x="1573" y="4" height="68" width="302" format="[general]" html.valueishtml="0"  name=grand_sum_iq_product_wqc_inspect_bad_qty visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+compute(band=detail alignment="0" expression="getrow()"border="0" color="33554432" x="5" y="4" height="68" width="151" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+compute(band=trailer.1 alignment="1" expression="sum(inspect_bad_qty for group 1)"border="0" color="33554432" x="1883" y="4" height="72" width="293" format="[general]" html.valueishtml="0"  name=compute_8 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65280" )
+compute(band=trailer.1 alignment="2" expression="line_code + ~" Total~""border="0" color="33554432" x="165" y="4" height="72" width="398" format="[general]" html.valueishtml="0"  name=compute_7 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65280" )
+compute(band=trailer.1 alignment="1" expression="sum(grand_sum_iq_product_wqc_inspect_bad_qty for group 1)"border="0" color="33554432" x="1573" y="4" height="72" width="302" format="[general]" html.valueishtml="0"  name=compute_9 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65280" )
+text(band=trailer.1 alignment="0" text="" border="0" color="33554432" x="571" y="4" height="72" width="343" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65280" )
+text(band=trailer.1 alignment="0" text="" border="0" color="33554432" x="923" y="4" height="72" width="302" html.valueishtml="0"  name=t_2 visible="1"  font.face="Tahoma" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65280" )
+text(band=trailer.1 alignment="0" text="" border="0" color="33554432" x="1234" y="4" height="72" width="329" html.valueishtml="0"  name=t_3 visible="1"  font.face="Tahoma" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65280" )
+compute(band=summary alignment="1" expression=" sum(inspect_bad_qty for all )"border="0" color="65280" x="1883" y="4" height="68" width="293" format="[general]" html.valueishtml="0"  name=compute_11 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+compute(band=summary alignment="2" expression="~"Grand Total~""border="0" color="65280" x="165" y="4" height="68" width="398" format="[general]" html.valueishtml="0"  name=compute_10 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+compute(band=summary alignment="1" expression="sum(grand_sum_iq_product_wqc_inspect_bad_qty for all )"border="0" color="33554432" x="1573" y="4" height="68" width="302" format="[general]" html.valueishtml="0"  name=compute_12 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+ crosstab(band = foreground  crosstabonly = yes 
+ columns = "bad_reason_code" rows = "line_code, iq_product_wqc_model_name, iq_product_wqc_item_code, id_item_item_name" values = "sum(iq_product_wqc_inspect_bad_qty for crosstab)" sourcenames = "iq_product_wqc_model_name, iq_product_wqc_item_code, line_code, bad_reason_code, iq_product_wqc_inspect_bad_qty, id_item_item_name")
+sparse(names="line_code")htmltable(border="0" cellpadding="1" cellspacing="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()

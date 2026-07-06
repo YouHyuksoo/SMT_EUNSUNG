@@ -1,0 +1,110 @@
+HA$PBExportHeader$d_mat_request_master_rpt.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no grid.lines=1 )
+header(height=300 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=320 color="536870912" )
+detail(height=84 color="536870912" )
+table(column=(type=datetime updatewhereclause=yes name=request_date dbname="im_item_request.request_date" dbalias=".request_date" )
+ column=(type=char(20) updatewhereclause=yes name=line_code dbname="im_item_request.line_code" dbalias=".line_code" )
+ column=(type=char(20) updatewhereclause=yes name=machine_code dbname="im_item_request.machine_code" dbalias=".machine_code" )
+ column=(type=char(20) updatewhereclause=yes name=item_code dbname="im_item_request.item_code" dbalias=".item_code" )
+ column=(type=char(10) updatewhereclause=yes name=location_code dbname="im_item_request.location_code" dbalias=".location_code" )
+ column=(type=char(1) update=yes updatewhereclause=yes name=request_status dbname="im_item_request.request_status" dbalias=".request_status" )
+ column=(type=datetime update=yes updatewhereclause=yes name=confirm_date dbname="im_item_request.confirm_date" dbalias=".confirm_date" )
+ column=(type=char(20) updatewhereclause=yes name=enter_by dbname="im_item_request.enter_by" dbalias=".enter_by" )
+ column=(type=datetime updatewhereclause=yes name=enter_date dbname="im_item_request.enter_date" dbalias=".enter_date" )
+ column=(type=char(20) updatewhereclause=yes name=last_modify_by dbname="im_item_request.last_modify_by" dbalias=".last_modify_by" )
+ column=(type=datetime updatewhereclause=yes name=last_modify_date dbname="im_item_request.last_modify_date" dbalias=".last_modify_date" )
+ column=(type=number updatewhereclause=yes name=organization_id dbname="im_item_request.organization_id" dbalias=".organization_id" )
+ column=(type=char(300) updatewhereclause=yes name=item_name dbname="id_item.item_name" dbalias=".item_name" )
+ column=(type=char(300) updatewhereclause=yes name=item_spec dbname="id_item.item_spec" dbalias=".item_spec" )
+ column=(type=char(20) updatewhereclause=yes name=location_address dbname="id_item.location_address" dbalias=".location_address" )
+ column=(type=number updatewhereclause=yes name=id_item_material_qty dbname="id_item.material_qty" dbalias=".material_qty" )
+ column=(type=number updatewhereclause=yes name=request_qty dbname="im_item_request.request_qty" dbalias=".request_qty" )
+ column=(type=char(1) updatewhereclause=yes name=im_item_request_request_deficit dbname="im_item_request.request_deficit" dbalias=".request_deficit" )
+ column=(type=char(30) updatewhereclause=yes name=model_name dbname="im_item_request.model_name" dbalias=".model_name" )
+ column=(type=char(20) updatewhereclause=yes name=location_address_rack dbname="im_item_request.location_address_rack" dbalias=".location_address_rack" )
+ column=(type=char(30) updatewhereclause=yes name=material_mfs dbname="im_item_request.material_mfs" dbalias=".material_mfs" )
+ column=(type=char(1) updatewhereclause=yes name=issue_status dbname="im_item_request.issue_status" dbalias=".issue_status" )
+ column=(type=datetime updatewhereclause=yes name=issue_date dbname="im_item_request.issue_date" dbalias=".issue_date" )
+ column=(type=number updatewhereclause=yes name=request_sequence dbname="im_item_request.request_sequence" dbalias=".request_sequence" )
+ column=(type=number updatewhereclause=yes name=wait_time dbname="wait_time" )
+ column=(type=char(1) updatewhereclause=yes name=abc_grade dbname="id_item.abc_grade" dbalias=".abc_grade" )
+ retrieve="  SELECT ~"IM_ITEM_REQUEST~".~"REQUEST_DATE~",   
+         ~"IM_ITEM_REQUEST~".~"LINE_CODE~",   
+         ~"IM_ITEM_REQUEST~".~"MACHINE_CODE~",   
+         ~"IM_ITEM_REQUEST~".~"ITEM_CODE~",   
+         ~"IM_ITEM_REQUEST~".~"LOCATION_CODE~",   
+         ~"IM_ITEM_REQUEST~".~"REQUEST_STATUS~",   
+         ~"IM_ITEM_REQUEST~".~"CONFIRM_DATE~",   
+         ~"IM_ITEM_REQUEST~".~"ENTER_BY~",   
+         ~"IM_ITEM_REQUEST~".~"ENTER_DATE~",   
+         ~"IM_ITEM_REQUEST~".~"LAST_MODIFY_BY~",   
+         ~"IM_ITEM_REQUEST~".~"LAST_MODIFY_DATE~",   
+         ~"IM_ITEM_REQUEST~".~"ORGANIZATION_ID~",   
+         ~"ID_ITEM~".~"ITEM_NAME~",   
+         ~"ID_ITEM~".~"ITEM_SPEC~",   
+         ~"ID_ITEM~".~"LOCATION_ADDRESS~",   
+         ~"ID_ITEM~".~"MATERIAL_QTY~",   
+         ~"IM_ITEM_REQUEST~".~"REQUEST_QTY~",   
+         ~"IM_ITEM_REQUEST~".~"REQUEST_DEFICIT~",   
+         ~"IM_ITEM_REQUEST~".~"MODEL_NAME~",   
+         ~"IM_ITEM_REQUEST~".~"LOCATION_ADDRESS_RACK~",   
+         ~"IM_ITEM_REQUEST~".~"MATERIAL_MFS~",   
+         ~"IM_ITEM_REQUEST~".~"ISSUE_STATUS~",   
+         ~"IM_ITEM_REQUEST~".~"ISSUE_DATE~",   
+         ~"IM_ITEM_REQUEST~".~"REQUEST_SEQUENCE~",   
+         ( SYSDATE - REQUEST_DATE ) * 24 * 60 WAIT_TIME,   
+         ~"ID_ITEM~".~"ABC_GRADE~"  
+    FROM ~"IM_ITEM_REQUEST~",   
+         ~"ID_ITEM~"  
+   WHERE ( im_item_request.item_code = id_item.item_code (+)) and  
+         ( im_item_request.organization_id = id_item.organization_id (+)) and  
+         ( ( ~"IM_ITEM_REQUEST~".~"LINE_CODE~" like :arg_line_code ) AND  
+         ( NVL(~"IM_ITEM_REQUEST~".~"MACHINE_CODE~" , '*') like :arg_machine_code ) AND  
+         ( ~"IM_ITEM_REQUEST~".~"ITEM_CODE~" like :arg_item ) AND  
+         ( ~"IM_ITEM_REQUEST~".~"REQUEST_STATUS~" = 'R' ) AND  
+         ( ~"ID_ITEM~".~"ABC_GRADE~" like :arg_abc_grade ) AND 
+         ( NVL(~"ID_ITEM~".~"SUPPLIER_CODE~", '*') like :arg_supplier_code ) AND    
+         ( ~"IM_ITEM_REQUEST~".~"ORGANIZATION_ID~" = :arg_org ) )    
+" arguments=(("arg_line_code", string),("arg_machine_code", string),("arg_item", string),("arg_abc_grade", string),("arg_supplier_code", string),("arg_org", number))  sort="abc_grade A line_code A request_date A request_sequence A organization_id A " )
+group(level=1 header.height=0 trailer.height=72 by=("abc_grade" ) newpage=yes resetpagecount=yes header.color="536870912" trailer.color="12632256" )
+text(band=background alignment="0" text="Material Request List" border="1" color="33554432" x="5" y="12" height="116" width="1879" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-18" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+text(band=header alignment="2" text="Location Code" border="2" color="33554432" x="919" y="164" height="128" width="270" html.valueishtml="0"  name=location_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Item Spec" border="2" color="33554432" x="2766" y="164" height="128" width="581" html.valueishtml="0"  name=item_spec_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Model Name" border="2" color="33554432" x="517" y="164" height="128" width="393" html.valueishtml="0"  name=model_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Location Address" border="2" color="33554432" x="2245" y="164" height="128" width="279" html.valueishtml="0"  name=id_item_location_address_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Location Address Rack" border="2" color="33554432" x="2533" y="164" height="128" width="224" html.valueishtml="0"  name=location_address_rac_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Line Code" border="2" color="33554432" x="270" y="164" height="128" width="238" html.valueishtml="0"  name=line_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Request Date" border="2" color="33554432" x="1198" y="164" height="128" width="384" html.valueishtml="0"  name=request_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Abc Grade" border="2" color="33554432" x="119" y="164" height="128" width="142" html.valueishtml="0"  name=abc_grade_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+compute(band=header alignment="2" expression="'Page ' + page() + ' of ' + pageCount()"border="0" color="33554432" x="2766" y="72" height="72" width="581" format="[general]" html.valueishtml="0"  name=page_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+compute(band=header alignment="2" expression="today()"border="0" color="33554432" x="2766" y="8" height="52" width="581" format="yyyymmdd hh:mm:ss" html.valueishtml="0"  name=date_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=header alignment="2" text="Item Code" border="2" color="33554432" x="1591" y="164" height="128" width="430" html.valueishtml="0"  name=item_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Request Qty" border="2" color="33554432" x="2030" y="164" height="128" width="210" html.valueishtml="0"  name=request_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+compute(band=detail alignment="0" expression="getrow()"border="2" color="33554432" x="9" y="0" height="72" width="101" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="2" color="33554432" x="270" y="0" height="72" width="238" format="[general]" html.valueishtml="0"  name=line_code visible="1" dddw.name=vd_line_code dddw.displaycolumn=line_name dddw.datacolumn=line_code dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="2" tabsequence=32766 border="2" color="33554432" x="919" y="4" height="72" width="270" format="[general]" html.valueishtml="0"  name=location_code visible="1" edit.limit=30 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=14 alignment="2" tabsequence=32766 border="2" color="33554432" x="2766" y="4" height="72" width="581" format="[general]" html.valueishtml="0"  name=item_spec visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=15 alignment="2" tabsequence=32766 border="2" color="33554432" x="2245" y="4" height="72" width="279" format="[general]" html.valueishtml="0"  name=location_address visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=19 alignment="2" tabsequence=32766 border="2" color="33554432" x="517" y="4" height="72" width="393" format="[general]" html.valueishtml="0"  name=model_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=20 alignment="2" tabsequence=32766 border="2" color="33554432" x="2533" y="4" height="72" width="224" format="[general]" html.valueishtml="0"  name=location_address_rack visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="2" color="33554432" x="1198" y="4" height="72" width="384" format="yymmdd hh:mm" html.valueishtml="0"  name=request_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=26 alignment="2" tabsequence=32766 border="2" color="33554432" x="119" y="4" height="72" width="142" format="[general]" html.valueishtml="0"  name=abc_grade visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="2" color="33554432" x="1591" y="4" height="72" width="430" format="[general]" html.valueishtml="0"  name=item_code visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=17 alignment="2" tabsequence=32766 border="2" color="33554432" x="2034" y="4" height="72" width="206" format="[general]" html.valueishtml="0"  name=request_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="2" expression="count(request_date for group 1)"border="2" color="33554432" x="1198" y="8" height="52" width="384" format="[shortdate] [time]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+rectangle(band=footer x="91" y="24" height="256" width="1769"  name=r_1 visible="1" brush.hatch="6" brush.color="16777215" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+bitmap(band=footer filename="companylogo.jpg" x="2121" y="32" height="244" width="1225" border="0"  name=p_1 visible="1" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

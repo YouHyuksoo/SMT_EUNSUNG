@@ -1,0 +1,26 @@
+HA$PBExportHeader$f_get_item_type_from_item.srf
+global type f_get_item_type_from_item from function_object
+end type
+
+forward prototypes
+global function string f_get_item_type_from_item (string arg_item_code)
+end prototypes
+
+global function string f_get_item_type_from_item (string arg_item_code);STRING LVS_ITEM_TYPE
+
+SELECT ITEM_TYPE
+  INTO :LVS_ITEM_TYPE
+  FROM ID_ITEM
+ WHERE ITEM_CODE = :ARG_ITEM_CODE
+	AND DATESET  <= TRUNC(SYSDATE)
+	AND DATEEND  >= TRUNC(SYSDATE)
+	AND ORGANIZATION_ID = :GVI_ORGANIZATION_ID ;
+	
+ IF F_SQL_CHECK() < 0 THEN
+	 RETURN ''
+ END IF
+ 
+ RETURN LVS_ITEM_TYPE
+ 
+end function
+

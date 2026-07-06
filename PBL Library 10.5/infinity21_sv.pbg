@@ -1,0 +1,21 @@
+Save Format v3.0(19990112)
+@begin Libraries
+ "infinity21_sv.pbl" "";
+@end;
+@begin Objects
+ "vd_iqc_standard_code.srd" "infinity21_sv.pbl";
+ "vd_oqc_standard_code.srd" "infinity21_sv.pbl";
+ "vd_wqc_standard_code.srd" "infinity21_sv.pbl";
+ "vd_standard_code.srd" "infinity21_sv.pbl";
+ "vd_basecode_label_step.srd" "infinity21_sv.pbl";
+ "vd_organization_name.srd" "infinity21_sv.pbl";
+ "vd_table_column_select.srd" "infinity21_sv.pbl";
+ "vd_company_code.srd" "infinity21_sv.pbl";
+ "vd_department_code.srd" "infinity21_sv.pbl";
+ "vd_window_name.srd" "infinity21_sv.pbl";
+ "vd_initial_value.srd" "infinity21_sv.pbl";
+ "vd_basecode.srd" "infinity21_sv.pbl";
+ "vd_user_name.srd" "infinity21_sv.pbl";
+ "vd_basecode_with_filter.srd" "infinity21_sv.pbl";
+ "vd_wqc_line_status_code.srd" "infinity21_sv.pbl";
+@end;

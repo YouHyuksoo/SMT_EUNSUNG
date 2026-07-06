@@ -1,0 +1,23 @@
+HA$PBExportHeader$f_get_magazine_lot_qty.srf
+global type f_get_magazine_lot_qty from function_object
+end type
+
+forward prototypes
+global function long f_get_magazine_lot_qty (string arg_magazine_label_no)
+end prototypes
+
+global function long f_get_magazine_lot_qty (string arg_magazine_label_no);long lvl_return
+
+select lot_qty into :lvl_return
+from IP_PRODUCT_RUN_CARD_IO 
+where magazine_label_no = :arg_magazine_label_no
+and organization_id = :gvi_organization_id ;
+
+if f_sql_check() < 0 then
+	return 0
+end if 
+
+return lvl_return
+
+end function
+

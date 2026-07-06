@@ -1,0 +1,15 @@
+HA$PBExportHeader$f_t_sysdate.srf
+$PBExportComments$Call Server's System Date
+global type f_t_sysdate from function_object
+end type
+
+forward prototypes
+global function datetime f_t_sysdate ()
+end prototypes
+
+global function datetime f_t_sysdate ();datetime d_1		
+select TRUNC(sysdate)  into :d_1 from dual ;
+f_sql_check()
+return d_1
+end function
+

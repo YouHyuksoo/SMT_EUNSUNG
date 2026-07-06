@@ -1,0 +1,117 @@
+HA$PBExportHeader$d_mat_receipt_lot_barcode_rpt_7x4.srd
+$PBExportComments$$$HEX7$$68d5b5c290c7acc714bc54cfdcb4$$ENDHEX$$
+release 10.5;
+datawindow(units=3 timer_interval=0 color=8421504 processing=2 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 0 print.margin.right = 0 print.margin.top = 0 print.margin.bottom = 0 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no label.name="" label.width=7000 label.height=4000 label.rows=1 label.rows.spacing=132 label.columns=1 label.columns.spacing=200 label.topdown=yes label.sheet=yes label.shape=roundrectangle label.ellipse_height=0 label.ellipse_width=0 )
+detail(height=3995 color="536870912" )
+table(column=(type=char(20) updatewhereclause=yes name=item_code dbname="id_item.item_code" )
+ column=(type=char(2000) updatewhereclause=yes name=item_barcode_barcode dbname="item_barcode_barcode" )
+ column=(type=char(50) updatewhereclause=yes name=lot_no dbname="im_item_receipt_barcode.lot_no" )
+ column=(type=char(2000) updatewhereclause=yes name=lot_no_barcode dbname="lot_no_barcode" )
+ column=(type=char(50) updatewhereclause=yes name=item_barcode dbname="im_item_receipt_barcode.item_barcode" )
+ column=(type=number updatewhereclause=yes name=scan_qty dbname="im_item_receipt_barcode.scan_qty" )
+ column=(type=char(42) updatewhereclause=yes name=scan_qty_barcode dbname="scan_qty_barcode" )
+ column=(type=char(300) updatewhereclause=yes name=item_name dbname="id_item.item_name" )
+ column=(type=char(300) updatewhereclause=yes name=item_spec dbname="id_item.item_spec" )
+ column=(type=char(10) updatewhereclause=yes name=msl_level dbname="id_item.msl_level" )
+ column=(type=char(20) updatewhereclause=yes name=location_address dbname="id_item.location_address" )
+ column=(type=char(4000) updatewhereclause=yes name=msl_tag11 dbname="supplier_code" )
+ column=(type=number updatewhereclause=yes name=organization_id dbname="im_item_receipt_barcode.organization_id" )
+ column=(type=datetime updatewhereclause=yes name=enter_date dbname="im_item_receipt_barcode.enter_date" )
+ column=(type=char(1) updatewhereclause=yes name=label_type dbname="im_item_receipt_barcode.label_type" )
+ column=(type=char(20) updatewhereclause=yes name=enter_by dbname="im_item_receipt_barcode.enter_by" )
+ column=(type=datetime updatewhereclause=yes name=receipt_enter_date dbname="receipt_enter_date" )
+ column=(type=char(1) updatewhereclause=yes name=receipt_type dbname="im_item_receipt_barcode.receipt_type" )
+ column=(type=char(100) updatewhereclause=yes name=organization_id dbname="isys_organization.organization_id" )
+ column=(type=char(11) updatewhereclause=yes name=msl_tag dbname="msl_tag" )
+ column=(type=char(20) updatewhereclause=yes name=receipt_slip_no dbname="im_item_receipt_barcode.receipt_slip_no" )
+ column=(type=char(22) updatewhereclause=yes name=receipt_slip_no_barcode dbname="receipt_slip_no_barcode" )
+ column=(type=char(10) updatewhereclause=yes name=manufacture_week dbname="im_item_receipt_barcode.manufacture_week" )
+ column=(type=datetime updatewhereclause=yes name=manufacture_date dbname="im_item_receipt_barcode.manufacture_date" )
+ column=(type=datetime updatewhereclause=yes name=pcb_coating_date dbname="im_item_receipt_barcode.pcb_coating_date" )
+ column=(type=char(20) updatewhereclause=yes name=pcb_coating_type dbname="id_item.pcb_coating_type" )
+ column=(type=char(20) updatewhereclause=yes name=item_class dbname="id_item.item_class" )
+ column=(type=number updatewhereclause=yes name=life_cycle dbname="id_item.life_cycle" )
+ column=(type=number updatewhereclause=yes name=msl_passed_time dbname="im_item_receipt_barcode.msl_passed_time" )
+ retrieve="  SELECT 
+        
+		~"ID_ITEM~".~"ITEM_CODE~", 
+		F_BACODE_CODE128( 'B' ,~"IM_ITEM_RECEIPT_BARCODE~".~"ITEM_BARCODE~") ITEM_BARCODE_BARCODE,   
+		~"IM_ITEM_RECEIPT_BARCODE~".~"LOT_NO~" LOT_NO,   
+		F_BACODE_CODE128( 'B' , ~"IM_ITEM_RECEIPT_BARCODE~".~"LOT_NO~") LOT_NO_BARCODE,   
+		~"IM_ITEM_RECEIPT_BARCODE~".~"ITEM_BARCODE~",   
+         ~"IM_ITEM_RECEIPT_BARCODE~".~"SCAN_QTY~",   
+         '*'||~"IM_ITEM_RECEIPT_BARCODE~".~"SCAN_QTY~"||'*' SCAN_QTY_BARCODE,   
+         ~"ID_ITEM~".~"ITEM_NAME~",   
+         ~"ID_ITEM~".~"ITEM_SPEC~",   
+         ~"ID_ITEM~".~"MSL_LEVEL~",   
+         ~"ID_ITEM~".~"LOCATION_ADDRESS~",   
+         f_get_supplier_name(~"IM_ITEM_RECEIPT_BARCODE~".~"SUPPLIER_CODE~" , :arg_org ) as SUPPLIER_CODE  ,
+		~"IM_ITEM_RECEIPT_BARCODE~".~"ORGANIZATION_ID~" ,
+		SYSDATE ENTER_DATE , 
+          IM_ITEM_RECEIPT_BARCODE.LABEL_TYPE ,
+         IM_ITEM_RECEIPT_BARCODE.ENTER_BY ,
+         TO_DATE(IM_ITEM_RECEIPT_BARCODE.RECEIPT_COMPARE_DATE) AS RECEIPT_ENTER_DATE ,
+		IM_ITEM_RECEIPT_BARCODE.RECEIPT_TYPE ,
+		O.ORGANIZATION_FULL_NAME_ENG ORGANIZATION_ID,
+         'MSL_TAG.JPG'   MSL_TAG,  
+		RECEIPT_SLIP_NO, 
+         '*'||RECEIPT_SLIP_NO||'*' as RECEIPT_SLIP_NO_BARCODE ,
+		MANUFACTURE_WEEK ,
+		MANUFACTURE_DATE ,
+		PCB_COATING_DATE ,
+         PCB_COATING_TYPE ,
+		ID_ITEM.ITEM_CLASS AS ITEM_CLASS ,	
+		ID_ITEM.LIFE_CYCLE AS LIFE_CYCLE ,
+	     MSL_PASSED_TIME
+    FROM ~"IM_ITEM_RECEIPT_BARCODE~",   
+         ~"ID_ITEM~"  ,
+		ISYS_ORGANIZATION O
+   WHERE ( im_item_receipt_barcode.item_code = id_item.item_code (+)) and  
+         ( im_item_receipt_barcode.organization_id = id_item.organization_id (+)) and  
+         ( im_item_receipt_barcode.organization_id = o.organization_id (+)) and  
+
+         ( ( ~"IM_ITEM_RECEIPT_BARCODE~".~"ITEM_CODE~" = :arg_item_code ) AND  
+         ( ~"IM_ITEM_RECEIPT_BARCODE~".~"RECEIPT_SLIP_NO~" = :arg_slip_no ) AND  
+         ( ~"IM_ITEM_RECEIPT_BARCODE~".~"LOT_NO~" LIKE :arg_lot_no ) AND  
+         ( ~"IM_ITEM_RECEIPT_BARCODE~".~"BARCODE_STATUS~" <> 'C' ) AND  
+         ( ~"IM_ITEM_RECEIPT_BARCODE~".~"ORGANIZATION_ID~" = :arg_org ) )    
+" arguments=(("arg_item_code", string),("arg_slip_no", string),("arg_lot_no", string),("arg_org", number)) )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432" x="158" y="635" height="582" width="3492" format="[general]" html.valueishtml="0"  name=item_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-14" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="33554432" x="52" y="1322" height="635" width="6985" format="[general]" html.valueishtml="0"  name=item_barcode_barcode visible="1"  hidesnaked=1 edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Code 128" font.height="-23" font.weight="200"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="33554432" x="3757" y="793" height="396" width="1957" format="[general]" html.valueishtml="0"  name=lot_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=12 alignment="1" tabsequence=32766 border="0" color="33554432" x="2910" y="238" height="291" width="2063" format="[general]" html.valueishtml="0"  name=supplier_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=16 alignment="0" tabsequence=32766 border="0" color="33554432" x="5080" y="238" height="291" width="1508" format="[general]" html.valueishtml="0"  name=enter_by visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=19 alignment="0" tabsequence=32766 border="0" color="33554432" x="529" y="238" height="291" width="2275" format="[general]" html.valueishtml="0"  name=organization_id visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=8 alignment="0" tabsequence=32766 border="0" color="33554432" x="211" y="2037" height="396" width="1984" format="[general]" html.valueishtml="0"  name=item_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-6" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=9 alignment="0" tabsequence=32766 border="0" color="33554432" x="2301" y="2037" height="396" width="3386" format="[general]" html.valueishtml="0"  name=item_spec visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-6" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=6 alignment="1" tabsequence=32766 border="0" color="33554432" x="5794" y="714" height="476" width="1111" format="###,###" html.valueishtml="0"  name=scan_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=27 alignment="1" tabsequence=32766 border="0" color="33554432" x="5794" y="2063" height="370" width="1111" format="[general]" html.valueishtml="0"  name=item_class visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=detail alignment="1" text="L/C:" border="0" color="33554432" x="5132" y="3439" height="291" width="846" html.valueishtml="0"  name=t_8 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=28 alignment="0" tabsequence=32766 border="0" color="33554432" x="6085" y="3439" height="291" width="793" format="[general]" html.valueishtml="0"  name=life_cycle visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=26 alignment="0" tabsequence=32766 border="0" color="33554432" x="6085" y="3016" height="291" width="793" format="[general]" html.valueishtml="0"  name=pcb_coating_type visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=29 alignment="0" tabsequence=32766 border="0" color="33554432" x="6085" y="2619" height="291" width="793" format="[general]" html.valueishtml="0"  name=msl_passed_time visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=detail alignment="1" text="C/T:" border="0" color="33554432" x="5132" y="3042" height="291" width="846" html.valueishtml="0"  name=t_7 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=detail alignment="1" text="Msl(P) :" border="0" color="33554432" x="5132" y="2619" height="291" width="846" html.valueishtml="0"  name=t_9 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=detail alignment="1" text="LOC:" border="0" color="33554432" x="3307" y="2619" height="291" width="687" html.valueishtml="0"  name=t_2 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=detail alignment="1" text="MSL:" border="0" color="33554432" x="3307" y="3042" height="291" width="687" html.valueishtml="0"  name=t_3 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=detail alignment="1" text="Week:" border="0" color="33554432" x="3307" y="3439" height="291" width="687" html.valueishtml="0"  name=t_5 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=24 alignment="0" tabsequence=32766 border="0" color="33554432" x="1111" y="2645" height="291" width="2116" format="YYYY/MM/DD" html.valueishtml="0"  name=manufacture_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=25 alignment="0" tabsequence=32766 border="0" color="33554432" x="1111" y="3042" height="291" width="2116" format="YYYY/MM/DD" html.valueishtml="0"  name=pcb_coating_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=14 alignment="0" tabsequence=32766 border="0" color="33554432" x="1111" y="3439" height="291" width="2116" format="YYYY/MM/DD" html.valueishtml="0"  name=enter_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=detail alignment="1" text="M/Date:" border="0" color="33554432" x="79" y="2645" height="291" width="978" html.valueishtml="0"  name=t_4 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=detail alignment="1" text="Coating:" border="0" color="33554432" x="79" y="3042" height="291" width="978" html.valueishtml="0"  name=t_6 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=detail alignment="1" text="Receipt:" border="0" color="33554432" x="79" y="3439" height="291" width="978" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=11 alignment="0" tabsequence=32766 border="0" color="33554432" x="4048" y="2619" height="291" width="1031" format="[general]" html.valueishtml="0"  name=location_address visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=10 alignment="0" tabsequence=32766 border="0" color="33554432" x="4048" y="3042" height="291" width="1031" format="[general]" html.valueishtml="0"  name=msl_level visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=23 alignment="0" tabsequence=32766 border="0" color="33554432" x="4048" y="3439" height="291" width="1031" format="[general]" html.valueishtml="0"  name=manufacture_week visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

@@ -1,0 +1,23 @@
+HA$PBExportHeader$f_get_magazine_size.srf
+global type f_get_magazine_size from function_object
+end type
+
+forward prototypes
+global function long f_get_magazine_size (string arg_model_name)
+end prototypes
+
+global function long f_get_magazine_size (string arg_model_name);long lvl_return
+
+select magazine_size into :lvl_return
+from IP_PRODUCT_MODEL_MASTER 
+where ( model_name = :arg_model_name or master_model_name = :arg_model_name )
+and organization_id = :gvi_organization_id ;
+
+if f_sql_check() < 0 then
+	return 0
+end if 
+
+return lvl_return
+
+end function
+

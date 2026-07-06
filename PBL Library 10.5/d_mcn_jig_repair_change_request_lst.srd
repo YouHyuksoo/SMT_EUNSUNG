@@ -1,0 +1,143 @@
+HA$PBExportHeader$d_mcn_jig_repair_change_request_lst.srd
+$PBExportComments$D_MCN_MACHINE_LST CREATE DATE :2006-05-13 CREATED BY : ADMIN
+release 10.5;
+datawindow(units=0 timer_interval=0 color=12632256 processing=1 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no grid.lines=0 )
+header(height=120 color="15780518" )
+summary(height=60 color="65535" )
+footer(height=0 color="536870912" )
+detail(height=56 color="12632256" )
+table(column=(type=char(30) update=yes updatewhereclause=yes name=jig_code dbname="imcn_jig_repair.jig_code" dbalias=".jig_code" )
+ column=(type=char(20) updatewhereclause=yes name=jig_lot_no dbname="imcn_jig_repair.jig_lot_no" dbalias=".jig_lot_no" )
+ column=(type=number update=yes updatewhereclause=yes name=repair_sequence dbname="imcn_jig_repair.repair_sequence" dbalias=".repair_sequence" )
+ column=(type=number update=yes updatewhereclause=yes name=organization_id dbname="imcn_jig_repair.organization_id" dbalias=".organization_id" )
+ column=(type=datetime update=yes updatewhereclause=yes name=repair_request_date dbname="imcn_jig_repair.repair_request_date" dbalias=".repair_request_date" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=repair_reason_code dbname="imcn_jig_repair.repair_reason_code" dbalias=".repair_reason_code" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=repair_vendor_code dbname="imcn_jig_repair.repair_vendor_code" dbalias=".repair_vendor_code" )
+ column=(type=char(1) update=yes updatewhereclause=yes name=repair_status dbname="imcn_jig_repair.repair_status" dbalias=".repair_status" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=repair_by dbname="imcn_jig_repair.repair_by" dbalias=".repair_by" )
+ column=(type=datetime update=yes updatewhereclause=yes name=repair_date dbname="imcn_jig_repair.repair_date" dbalias=".repair_date" )
+ column=(type=number update=yes updatewhereclause=yes name=repair_amt dbname="imcn_jig_repair.repair_amt" dbalias=".repair_amt" )
+ column=(type=char(3) update=yes updatewhereclause=yes name=currency dbname="imcn_jig_repair.currency" dbalias=".currency" )
+ column=(type=char(1000) update=yes updatewhereclause=yes name=comments dbname="imcn_jig_repair.comments" dbalias=".comments" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=enter_by dbname="imcn_jig_repair.enter_by" dbalias=".enter_by" )
+ column=(type=datetime update=yes updatewhereclause=yes name=enter_date dbname="imcn_jig_repair.enter_date" dbalias=".enter_date" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=last_modify_by dbname="imcn_jig_repair.last_modify_by" dbalias=".last_modify_by" )
+ column=(type=datetime update=yes updatewhereclause=yes name=last_modify_date dbname="imcn_jig_repair.last_modify_date" dbalias=".last_modify_date" )
+ column=(type=number update=yes updatewhereclause=yes name=repair_time dbname="imcn_jig_repair.repair_time" dbalias=".repair_time" )
+ column=(type=char(37) updatewhereclause=yes name=rowid dbname="imcn_jig_repair.rowid" dbalias=".rowid" )
+ column=(type=char(20) updatewhereclause=yes name=jig_type dbname="imcn_jig.jig_type" dbalias=".jig_type" )
+ column=(type=char(100) updatewhereclause=yes name=jig_model_name dbname="imcn_jig.jig_model_name" dbalias=".jig_model_name" )
+ column=(type=char(1) updatewhereclause=yes name=jig_status dbname="imcn_jig.jig_status" dbalias=".jig_status" )
+ column=(type=char(100) updatewhereclause=yes name=jig_name dbname="imcn_jig.jig_name" dbalias=".jig_name" )
+ column=(type=char(1000) updatewhereclause=yes name=repair_comments dbname="imcn_jig_repair.repair_comments" dbalias=".repair_comments" )
+ retrieve="  SELECT ~"IMCN_JIG_REPAIR~".~"JIG_CODE~",   
+         ~"IMCN_JIG_REPAIR~".~"JIG_LOT_NO~",   
+         ~"IMCN_JIG_REPAIR~".~"REPAIR_SEQUENCE~",   
+         ~"IMCN_JIG_REPAIR~".~"ORGANIZATION_ID~",   
+         ~"IMCN_JIG_REPAIR~".~"REPAIR_REQUEST_DATE~",   
+         ~"IMCN_JIG_REPAIR~".~"REPAIR_REASON_CODE~",   
+         ~"IMCN_JIG_REPAIR~".~"REPAIR_VENDOR_CODE~",   
+         ~"IMCN_JIG_REPAIR~".~"REPAIR_STATUS~",   
+         ~"IMCN_JIG_REPAIR~".~"REPAIR_BY~",   
+         ~"IMCN_JIG_REPAIR~".~"REPAIR_DATE~",   
+         ~"IMCN_JIG_REPAIR~".~"REPAIR_AMT~",   
+         ~"IMCN_JIG_REPAIR~".~"CURRENCY~",   
+         ~"IMCN_JIG_REPAIR~".~"COMMENTS~",   
+         ~"IMCN_JIG_REPAIR~".~"ENTER_BY~",   
+         ~"IMCN_JIG_REPAIR~".~"ENTER_DATE~",   
+         ~"IMCN_JIG_REPAIR~".~"LAST_MODIFY_BY~",   
+         ~"IMCN_JIG_REPAIR~".~"LAST_MODIFY_DATE~",   
+         ~"IMCN_JIG_REPAIR~".~"REPAIR_TIME~",   
+         IMCN_JIG_REPAIR.ROWID,   
+         ~"IMCN_JIG~".~"JIG_TYPE~",   
+         ~"IMCN_JIG~".~"JIG_MODEL_NAME~",   
+         ~"IMCN_JIG~".~"JIG_STATUS~",   
+         ~"IMCN_JIG~".~"JIG_NAME~" ,
+         ~"IMCN_JIG_REPAIR~".~"REPAIR_COMMENTS~"
+    FROM ~"IMCN_JIG_REPAIR~",   
+         ~"IMCN_JIG~" 
+   WHERE 
+        (( ~"IMCN_JIG_REPAIR~".~"JIG_CODE~" = ~"IMCN_JIG~".~"JIG_CODE~" ) and  
+         ( ~"IMCN_JIG_REPAIR~".~"ORGANIZATION_ID~" = ~"IMCN_JIG~".~"ORGANIZATION_ID~" ) and  
+         ( ~"IMCN_JIG~".~"JIG_TYPE~" like :arg_jig_type ) AND  
+         ( ~"IMCN_JIG_REPAIR~".~"JIG_LOT_NO~" like :arg_jig_lot_no ) AND  
+		( ~"IMCN_JIG_REPAIR~".~"JIG_CODE~" like :arg_jig_code ) AND  
+         ( ~"IMCN_JIG_REPAIR~".~"REPAIR_STATUS~" like :arg_repair_status ) AND  
+         ( ~"IMCN_JIG_REPAIR~".~"REPAIR_REQUEST_DATE~" >= :arg_dateset ) AND  
+         ( ~"IMCN_JIG_REPAIR~".~"REPAIR_REQUEST_DATE~" <= :arg_dateend ) AND  
+         ( ~"IMCN_JIG_REPAIR~".~"ORGANIZATION_ID~" = :arg_org )
+        ) OR  
+        (
+         ( ~"IMCN_JIG_REPAIR~".~"JIG_CODE~" = ~"IMCN_JIG~".~"JIG_CODE~" ) and  
+         ( ~"IMCN_JIG_REPAIR~".~"ORGANIZATION_ID~" = ~"IMCN_JIG~".~"ORGANIZATION_ID~" ) and  
+
+		( ~"IMCN_JIG_REPAIR~".~"JIG_CODE~" like :arg_jig_code ) AND  
+         ( ~"IMCN_JIG_REPAIR~".~"JIG_LOT_NO~" like :arg_jig_lot_no ) AND  
+         ( ~"IMCN_JIG_REPAIR~".~"REPAIR_STATUS~" = 'R' ) AND  
+         ( ~"IMCN_JIG~".~"JIG_TYPE~" like :arg_jig_type ) AND  
+    
+         ( ~"IMCN_JIG_REPAIR~".~"ORGANIZATION_ID~" = :arg_org )
+        )    
+" arguments=(("arg_jig_code", string),("arg_repair_status", string),("arg_dateset", datetime),("arg_dateend", datetime),("arg_jig_type", string),("arg_jig_lot_no", string),("arg_org", number))  sort="organization_id A repair_status A repair_request_date A repair_sequence A " )
+group(level=1 header.height=0 trailer.height=52 by=("organization_id" , "repair_status" ) header.color="536870912" trailer.color="65280" )
+text(band=header alignment="2" text="No" border="0" color="33554432" x="119" y="8" height="108" width="151" html.valueishtml="0"  name=no_1_t visible="1"  font.face="TAHOMA" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Repair Status" border="0" color="33554432" x="279" y="8" height="108" width="256" html.valueishtml="0"  name=repair_status_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="552651430" )
+text(band=header alignment="2" text="Repair Reason Code" border="0" color="33554432" x="544" y="8" height="108" width="279" html.valueishtml="0"  name=repair_reason_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="552651430" )
+text(band=header alignment="2" text="Jig Type" border="0" color="33554432" x="832" y="8" height="108" width="219" html.valueishtml="0"  name=imcn_jig_jig_type_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="Repair Sequence" border="0" color="33554432" x="3630" y="8" height="108" width="215" html.valueishtml="0"  name=repair_sequence_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="552651430" )
+text(band=header alignment="2" text="Repair Request Date" border="0" color="33554432" x="3854" y="8" height="108" width="270" html.valueishtml="0"  name=repair_request_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="552651430" )
+text(band=header alignment="2" text="Repair By" border="0" color="33554432" x="5701" y="8" height="108" width="201" html.valueishtml="0"  name=repair_by_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="Repair Date" border="0" color="33554432" x="5911" y="8" height="108" width="283" html.valueishtml="0"  name=repair_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="Repair Amt" border="0" color="33554432" x="6446" y="8" height="108" width="261" html.valueishtml="0"  name=repair_amt_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="Currency" border="0" color="33554432" x="6715" y="8" height="108" width="251" html.valueishtml="0"  name=currency_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="Enter By" border="0" color="33554432" x="7241" y="8" height="108" width="210" html.valueishtml="0"  name=enter_by_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="Enter Date" border="0" color="33554432" x="7461" y="8" height="108" width="283" html.valueishtml="0"  name=enter_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="Last Modify By" border="0" color="33554432" x="7753" y="8" height="108" width="293" html.valueishtml="0"  name=last_modify_by_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="Last Modify Date" border="0" color="33554432" x="8055" y="8" height="108" width="293" html.valueishtml="0"  name=last_modify_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="Repair Time" border="0" color="33554432" x="6203" y="8" height="108" width="233" html.valueishtml="0"  name=repair_time_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="Jig Model Name" border="0" color="33554432" x="2949" y="8" height="108" width="672" html.valueishtml="0"  name=imcn_jig_jig_model_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="Jig Status" border="0" color="33554432" x="6976" y="8" height="108" width="256" html.valueishtml="0"  name=imcn_jig_jig_status_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="Jig Name" border="0" color="33554432" x="2162" y="8" height="108" width="777" html.valueishtml="0"  name=imcn_jig_jig_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="Repair Vendor Code" border="0" color="33554432" x="4133" y="8" height="108" width="265" html.valueishtml="0"  name=repair_vendor_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="552651430" )
+text(band=header alignment="2" text="Jig Repair Comments" border="0" color="33554432" x="4407" y="8" height="108" width="667" html.valueishtml="0"  name=comments_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="Organization Id" border="0" color="33554432" x="8357" y="8" height="108" width="398" html.valueishtml="0"  name=organization_id_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="Repair Comments" border="0" color="33554432" x="5083" y="8" height="108" width="608" html.valueishtml="0"  name=repair_comments_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=header alignment="2" text="Jig Code" border="0" color="33554432" x="1061" y="8" height="108" width="462" html.valueishtml="0"  name=jig_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Jig Lot No" border="0" color="33554432" x="1531" y="8" height="108" width="622" html.valueishtml="0"  name=jig_lot_no_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+compute(band=detail alignment="0" expression="TRIM('')"border="0" color="0" x="9" y="0" height="52" width="101" format="[GENERAL]" html.valueishtml="0"  name=indicator visible="1"  font.face="TAHOMA" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+compute(band=detail alignment="0" expression="GETROW()"border="0" color="0" x="119" y="0" height="52" width="151" format="[GENERAL]" html.valueishtml="0"  name=no_1 visible="1"  font.face="TAHOMA" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=8 alignment="2" tabsequence=32766 border="0" color="0" x="279" y="0" height="52" width="256" format="[general]" html.valueishtml="0"  name=repair_status visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=500 dddw.lines=10 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any dddw.hscrollbar=yes dddw.vscrollbar=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=6 alignment="2" tabsequence=32766 border="0" color="0" x="544" y="0" height="52" width="279" format="[general]" html.valueishtml="0"  name=repair_reason_code visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=300 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any dddw.hscrollbar=yes dddw.vscrollbar=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=20 alignment="2" tabsequence=32766 border="0" color="0" x="832" y="0" height="52" width="219" format="[general]" html.valueishtml="0"  name=jig_type visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="0" x="1061" y="0" height="52" width="462" format="[general]" html.valueishtml="0"  name=jig_code visible="1" edit.limit=30 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="0" x="3630" y="0" height="52" width="215" format="[general]" html.valueishtml="0"  name=repair_sequence visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=5 alignment="0" tabsequence=32766 border="0" color="0" x="3854" y="0" height="52" width="270" format="[shortdate] [time]" html.valueishtml="0"  name=repair_request_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=7 alignment="0" tabsequence=32766 border="0" color="0" x="4133" y="0" height="52" width="265" format="[general]" html.valueishtml="0"  name=repair_vendor_code visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=9 alignment="0" tabsequence=32766 border="0" color="0" x="5701" y="0" height="52" width="201" format="[general]" html.valueishtml="0"  name=repair_by visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=10 alignment="2" tabsequence=32766 border="0" color="0" x="5911" y="0" height="52" width="283" format="[shortdate] [time]" html.valueishtml="0"  name=repair_date visible="1" editmask.mask="YYYYMMDD" editmask.focusrectangle=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=12 alignment="0" tabsequence=32766 border="0" color="0" x="6715" y="0" height="52" width="251" format="[general]" html.valueishtml="0"  name=currency visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=300 dddw.lines=0 dddw.limit=8 dddw.allowedit=no dddw.useasborder=no dddw.case=any dddw.autohscroll=yes dddw.hsplitscroll=yes dddw.hscrollbar=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=13 alignment="0" tabsequence=32766 border="0" color="0" x="4407" y="0" height="52" width="667" format="[general]" html.valueishtml="0"  name=comments visible="1" edit.limit=1000 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=11 alignment="1" tabsequence=32766 border="0" color="0" x="6446" y="0" height="52" width="261" format="[general]" html.valueishtml="0"  name=repair_amt visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=14 alignment="0" tabsequence=32766 border="0" color="0" x="7241" y="0" height="52" width="210" format="[general]" html.valueishtml="0"  name=enter_by visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=15 alignment="0" tabsequence=32766 border="0" color="0" x="7461" y="0" height="52" width="283" format="[shortdate] [time]" html.valueishtml="0"  name=enter_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=16 alignment="0" tabsequence=32766 border="0" color="0" x="7753" y="0" height="52" width="293" format="[general]" html.valueishtml="0"  name=last_modify_by visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=17 alignment="0" tabsequence=32766 border="0" color="0" x="8055" y="0" height="52" width="293" format="[shortdate] [time]" html.valueishtml="0"  name=last_modify_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=18 alignment="1" tabsequence=32766 border="0" color="0" x="6203" y="0" height="52" width="233" format="[general]" html.valueishtml="0"  name=repair_time visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=21 alignment="0" tabsequence=32766 border="0" color="0" x="2949" y="0" height="52" width="672" format="[general]" html.valueishtml="0"  name=jig_model_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=22 alignment="2" tabsequence=32766 border="0" color="0" x="6976" y="0" height="52" width="256" format="[general]" html.valueishtml="0"  name=jig_status visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=23 alignment="0" tabsequence=32766 border="0" color="0" x="2162" y="0" height="52" width="777" format="[general]" html.valueishtml="0"  name=jig_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="0" x="8357" y="0" height="52" width="398" format="[general]" html.valueishtml="0"  name=organization_id visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=24 alignment="0" tabsequence=32766 border="0" color="0" x="5083" y="0" height="52" width="608" format="[general]" html.valueishtml="0"  name=repair_comments visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="0" x="1531" y="0" height="52" width="622" format="[general]" html.valueishtml="0"  name=jig_lot_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=summary alignment="1" expression="sum(repair_amt for all)"border="0" color="0" x="6446" y="4" height="52" width="261" format="[general]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

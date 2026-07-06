@@ -1,0 +1,89 @@
+HA$PBExportHeader$d_pln_product_workstage_io_inventory_sum_list.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no grid.lines=0 )
+header(height=148 color="536870912" )
+summary(height=84 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=64 color="536870912" )
+table(column=(type=char(1) updatewhereclause=yes name=io_deficit dbname="io_deficit" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=item_code dbname="ip_product_workstage_io.item_code" dbalias=".item_code" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=line_code dbname="ip_product_workstage_io.line_code" dbalias=".line_code" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=workstage_code dbname="ip_product_workstage_io.workstage_code" dbalias=".workstage_code" )
+ column=(type=number update=yes updatewhereclause=yes name=io_qty dbname="io_qty" )
+ column=(type=number update=yes updatewhereclause=yes name=organization_id dbname="ip_product_workstage_io.organization_id" dbalias=".organization_id" )
+ column=(type=char(30) updatewhereclause=yes name=model_name dbname="ip_product_workstage_io.model_name" dbalias=".model_name" )
+ column=(type=char(10) updatewhereclause=yes name=model_suffix dbname="ip_product_workstage_io.model_suffix" dbalias=".model_suffix" )
+ column=(type=char(300) updatewhereclause=yes name=item_name dbname="item_name" )
+ column=(type=char(300) updatewhereclause=yes name=item_spec dbname="item_spec" )
+ retrieve="  SELECT /*+INDEX(IP_PRODUCT_WORKSTAGE_IO INDXIP_PRODUCT_WORKSTAGE_IO3)*/         
+         IP_PRODUCT_WORKSTAGE_IO.IO_DEFICIT,   
+         IP_PRODUCT_WORKSTAGE_IO.ITEM_CODE,   
+         IP_PRODUCT_WORKSTAGE_IO.LINE_CODE,   
+         IP_PRODUCT_WORKSTAGE_IO.WORKSTAGE_CODE,   
+         SUM( IP_PRODUCT_WORKSTAGE_IO.IO_QTY) IO_QTY ,   
+         IP_PRODUCT_WORKSTAGE_IO.ORGANIZATION_ID,   
+         IP_PRODUCT_WORKSTAGE_IO.MODEL_NAME,   
+         IP_PRODUCT_WORKSTAGE_IO.MODEL_SUFFIX ,
+		MAX(ID_ITEM.ITEM_NAME) as ITEM_NAME ,
+        MAX( ID_ITEM.ITEM_SPEC) as  ITEM_SPEC
+    FROM  IP_PRODUCT_WORKSTAGE_IO  ,  ID_ITEM 
+
+
+   WHERE IP_PRODUCT_WORKSTAGE_IO.ITEM_CODE =  ID_ITEM.ITEM_CODE(+) AND 
+
+		( IP_PRODUCT_WORKSTAGE_IO.LINE_CODE like :arg_line_code ) AND  
+         ( IP_PRODUCT_WORKSTAGE_IO.WORKSTAGE_CODE like :arg_workstage_code ) AND  
+         ( IP_PRODUCT_WORKSTAGE_IO.MODEL_NAME like :arg_model_name ) AND  
+         ( IP_PRODUCT_WORKSTAGE_IO.MODEL_SUFFIX like :arg_model_suffix ) AND  
+		(         IP_PRODUCT_WORKSTAGE_IO.IO_DEFICIT = 'I' ) AND
+         ( IP_PRODUCT_WORKSTAGE_IO.ORGANIZATION_ID = :arg_org )    
+
+GROUP BY 
+         IP_PRODUCT_WORKSTAGE_IO.IO_DEFICIT,  
+		IP_PRODUCT_WORKSTAGE_IO.ITEM_CODE,   
+         IP_PRODUCT_WORKSTAGE_IO.LINE_CODE,   
+         IP_PRODUCT_WORKSTAGE_IO.WORKSTAGE_CODE,   
+         IP_PRODUCT_WORKSTAGE_IO.IO_DEFICIT,   
+         IP_PRODUCT_WORKSTAGE_IO.ORGANIZATION_ID,  
+         IP_PRODUCT_WORKSTAGE_IO.MODEL_NAME,   
+         IP_PRODUCT_WORKSTAGE_IO.MODEL_SUFFIX" arguments=(("arg_line_code", string),("arg_workstage_code", string),("arg_model_name", string),("arg_model_suffix", string),("arg_org", number))  sort="io_deficit A line_code A workstage_code A item_code A " )
+group(level=1 header.height=0 trailer.height=84 by=("io_deficit" ) header.color="536870912" trailer.color="134217731" )
+group(level=2 header.height=0 trailer.height=80 by=("line_code" ) header.color="536870912" trailer.color="12639424" )
+group(level=3 header.height=0 trailer.height=76 by=("workstage_code" ) header.color="536870912" trailer.color="12632256" )
+text(band=header alignment="2" text="Workstage Code" border="6" color="0" x="955" y="16" height="116" width="521" html.valueishtml="0"  name=workstage_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="Io Qty" border="6" color="0" x="2450" y="16" height="116" width="549" html.valueishtml="0"  name=io_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="Model Name" border="6" color="0" x="1486" y="16" height="116" width="539" html.valueishtml="0"  name=model_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="Model Suffix" border="6" color="0" x="2034" y="16" height="116" width="407" html.valueishtml="0"  name=model_suffix_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="Item Code" border="6" color="0" x="3008" y="16" height="116" width="640" html.valueishtml="0"  name=item_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="Item Name" border="6" color="33554432" x="3657" y="16" height="116" width="754" html.valueishtml="0"  name=id_item_item_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="Item Spec" border="6" color="33554432" x="4421" y="16" height="116" width="1385" html.valueishtml="0"  name=id_item_item_spec_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="Line Code" border="6" color="0" x="425" y="16" height="116" width="521" html.valueishtml="0"  name=line_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="Io Deficit" border="6" color="33554432" x="178" y="16" height="116" width="238" html.valueishtml="0"  name=io_deficit_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+column(band=detail id=3 alignment="2" tabsequence=20 border="0" color="33554432" x="425" y="4" height="56" width="521" format="[general]" html.valueishtml="0"  name=line_code visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="2" tabsequence=30 border="0" color="33554432" x="955" y="4" height="56" width="521" format="[general]" html.valueishtml="0"  name=workstage_code visible="1" dddw.name=vd_workstage_code dddw.displaycolumn=workstage_name dddw.datacolumn=workstage_code dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=7 alignment="2" tabsequence=40 border="0" color="33554432" x="1486" y="4" height="56" width="539" format="[general]" html.valueishtml="0"  name=model_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=8 alignment="2" tabsequence=50 border="0" color="33554432" x="2034" y="4" height="56" width="407" format="[general]" html.valueishtml="0"  name=model_suffix visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="2" tabsequence=70 border="0" color="33554432" x="3008" y="4" height="56" width="640" format="[general]" html.valueishtml="0"  name=item_code visible="1" edit.limit=30 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=9 alignment="0" tabsequence=80 border="0" color="33554432" x="3657" y="4" height="56" width="754" format="[general]" html.valueishtml="0"  name=item_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=10 alignment="0" tabsequence=90 border="0" color="33554432" x="4421" y="4" height="56" width="1385" format="[general]" html.valueishtml="0"  name=item_spec visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="0" expression="getrow()"border="0" color="33554432" x="9" y="4" height="56" width="160" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=1 alignment="2" tabsequence=10 border="0" color="33554432" x="178" y="4" height="56" width="238" format="[general]" html.valueishtml="0"  name=io_deficit visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="1" tabsequence=60 border="0" color="33554432" x="2450" y="8" height="56" width="549" format="[general]" html.valueishtml="0"  name=io_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=trailer.3 alignment="0" expression="lookupdisplay(  workstage_code )"border="0" color="33554432" x="1486" y="4" height="64" width="539" format="[GENERAL]" html.valueishtml="0"  name=compute_5 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=trailer.3 alignment="1" expression="sum(io_qty for group 3)"border="0" color="33554432" x="2450" y="4" height="64" width="549" format="[general]" html.valueishtml="0"  name=compute_4 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="2" expression="lookupdisplay(  line_code )"border="0" color="33554432" x="1486" y="8" height="64" width="539" format="[GENERAL]" html.valueishtml="0"  name=compute_9 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="1" expression="sum(io_qty for group 2)"border="0" color="33554432" x="2450" y="8" height="64" width="549" format="[GENERAL]" html.valueishtml="0"  name=compute_8 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(io_qty for group 1)"border="0" color="33554432" x="2450" y="4" height="72" width="549" format="[general]" html.valueishtml="0"  name=compute_3 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=summary alignment="2" text="Grand Total" border="0" color="0" x="425" y="4" height="76" width="521" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+compute(band=summary alignment="1" expression="sum(io_qty for all)"border="0" color="33554432" x="2450" y="4" height="76" width="549" format="[general]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

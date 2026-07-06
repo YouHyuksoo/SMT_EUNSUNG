@@ -1,0 +1,16 @@
+HA$PBExportHeader$f_check_user_id.srf
+global type f_check_user_id from function_object
+end type
+
+forward prototypes
+global function integer f_check_user_id (string arg_enter_by)
+end prototypes
+
+global function integer f_check_user_id (string arg_enter_by);if gvs_user_id = arg_enter_by or gvi_user_level >8 then
+	return 1
+else
+	return 0
+end if
+
+end function
+

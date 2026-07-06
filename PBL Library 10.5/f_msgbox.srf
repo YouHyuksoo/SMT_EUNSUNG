@@ -1,0 +1,72 @@
+HA$PBExportHeader$f_msgbox.srf
+$PBExportComments$Messagebox -  Variables 0
+global type f_msgbox from function_object
+end type
+
+forward prototypes
+global function integer f_msgbox (integer ai_id)
+end prototypes
+
+global function integer f_msgbox (integer ai_id);string ls_title, ls_detail , ls_help
+int li_rtn, li_icon, li_button
+icon lic_icon[4]
+button lbu_button[3]
+
+lbu_button[1] = ok!
+lbu_button[2] = yesno!
+lbu_button[3] = yesnocancel!
+
+lic_icon[1] = information! 
+lic_icon[2] = StopSign!
+lic_icon[3] = Exclamation!
+lic_icon[4] = Question!
+
+//=============================================================
+// Not Connected Database  then Message Get From Message.dat
+//=============================================================
+
+if Gvi_db_status = 0 then 
+	
+	Messagebox("Notify" , f_off_msgbox(  'DATABASE' , GVS_LANGUAGE+'DB_NOT_CONNECTED' ) )
+	Rollback ;
+	halt Close
+
+else
+	
+end if
+
+//=============================================================
+//
+//=============================================================
+select decode(:Gvs_language, 'C',nvl(title_loc,' '),  'K',nvl(title_kor,' '),   nvl(title_eng,' ')), 
+		 decode(:Gvs_language, 'C',nvl(detail_loc,' '), 'K', nvl(detail_kor,' '), nvl(detail_eng,' ')), 
+		 decode(:Gvs_language, 'C',nvl(help_msg_loc,' '), 'K', nvl(help_msg_kor,' '), nvl(help_msg_eng,' ')), 		 
+		 nvl(button,1), 
+		 nvl(icon,1)
+into  :ls_title, :ls_detail, :ls_help , :li_button, :li_icon
+from  ISYS_dual_message
+where msg_id = :ai_id ;
+
+if sqlca.sqlcode = 0 then
+	
+	if ls_help = ' ' then 
+
+		li_rtn = messagebox( ls_title + "(" + string(ai_id) +")", ls_detail, lic_icon[li_icon], lbu_button[li_button])
+		return li_rtn		
+	else				
+		li_rtn = messagebox( ls_title + "(" + string(ai_id) +")", ls_detail+'~r~n'+'HELP : '+ls_help, lic_icon[li_icon], lbu_button[li_button])
+		return li_rtn
+
+	end if 
+	
+else
+   msg = messagebox("Information" + "(" + string(ai_id) +") f_msg", "Message Statement Not Found! Halt Close ?" , Stopsign! , yesno!)
+   if msg = 1 then 
+		Rollback ;
+		halt Close
+	else
+		return 0
+	end if
+end if
+end function
+

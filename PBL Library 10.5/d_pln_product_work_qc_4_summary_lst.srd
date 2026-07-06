@@ -1,0 +1,41 @@
+HA$PBExportHeader$d_pln_product_work_qc_4_summary_lst.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=4 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no  crosstab.dynamic = yes grid.lines=0 grid.columnmove=no selected.mouse=no )
+header[1](height=0 color="536870912" )
+header[2](height=128 color="536870912" )
+summary(height=76 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=68 color="536870912" )
+table(column=(type=datetime updatewhereclause=yes name=qc_date dbname="qc_date" )
+ column=(type=number updatewhereclause=yes name=bad_qty dbname="bad_qty" )
+ retrieve="  SELECT ~"IP_PRODUCT_WORK_QC~".~"BAD_QTY~",   
+			TRUNC(~"IP_PRODUCT_WORK_QC~".~"QC_DATE~")  QC_DATE,   
+			f_get_code_master( 'WQC BAD REASON CODE' , ~"IP_PRODUCT_WORK_QC~".~"BAD_REASON_CODE~"   , :ARG_LANG  , :ARG_ORG )  BAD_REASON_CODE
+    FROM ~"IP_PRODUCT_WORK_QC~"  
+   WHERE ( ~"IP_PRODUCT_WORK_QC~".~"QC_DATE~" >= :ARG_DATESET ) AND  
+         ( ~"IP_PRODUCT_WORK_QC~".~"QC_DATE~" < :ARG_DATEEND+1 ) AND  
+         ( NVL(~"IP_PRODUCT_WORK_QC~".~"MODEL_NAME~" ,'*') like :ARG_MODEL_NAME ) AND  
+         ( ORGANIZATION_ID = :ARG_ORG )    
+" arguments=(("ARG_DATESET", datetime),("ARG_DATEEND", datetime),("ARG_MODEL_NAME", string),("ARG_LANG", string),("ARG_ORG", number))  sort="qc_date A " )
+text(band=header[2] alignment="2" text="Qc Date" border="2" color="0" x="178" y="4" height="116" width="375" html.valueishtml="0"  name=qc_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[2] alignment="2" text="@bad_reason_code" border="2" color="0" x="562" y="4" height="116" width="270" html.valueishtml="0"  name=bad_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[2] alignment="2" text="Grand Total " border="2" color="0" x="841" y="4" height="116" width="325" html.valueishtml="0"  name=grand_sum_bad_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="2" color="33554432" x="562" y="4" height="64" width="270" format="[general]" html.valueishtml="0"  name=bad_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes crosstab.repeat=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="2" color="33554432" x="178" y="4" height="64" width="375" format="YYYY/MM/DD" html.valueishtml="0"  name=qc_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="0" expression="GETROW()"border="0" color="33554432" x="5" y="4" height="64" width="165" format="[GENERAL]" html.valueishtml="0"  name=compute_4 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+compute(band=detail alignment="2" expression="crosstabsum(1)"border="2" color="33554432" x="841" y="4" height="64" width="325" format="[general]" html.valueishtml="0"  name=grand_sum_bad_qty visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+compute(band=summary alignment="2" expression="~"Grand Total~""border="0" color="0" x="178" y="4" height="64" width="375" format="[general]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="2" expression="sum(bad_qty for all )"border="2" color="33554432" x="562" y="4" height="64" width="270" format="[general]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="2" expression="sum(grand_sum_bad_qty for all )"border="2" color="33554432" x="841" y="4" height="64" width="325" format="[general]" html.valueishtml="0"  name=compute_3 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+ crosstab(band = foreground  crosstabonly = yes 
+ columns = "bad_reason_code" rows = "qc_date" values = "sum(bad_qty for crosstab)" sourcenames = "bad_qty, qc_date, bad_reason_code")htmltable(border="0" cellpadding="1" cellspacing="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

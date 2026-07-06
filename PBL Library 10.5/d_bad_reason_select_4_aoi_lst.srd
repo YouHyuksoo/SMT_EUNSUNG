@@ -1,0 +1,37 @@
+HA$PBExportHeader$d_bad_reason_select_4_aoi_lst.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=0 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no rows_per_detail = 6 )
+header(height=0 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=312 color="536870912" )
+table(column=(type=char(100) updatewhereclause=yes name=code_name dbname="isys_code_master.code_name" )
+ column=(type=char(100) updatewhereclause=yes name=code_mean dbname="code_mean" )
+ retrieve="  SELECT ~"ISYS_CODE_MASTER~".~"CODE_NAME~",   
+         decode( :arg_lang ,'C' , ~"ISYS_CODE_MASTER~".~"CODE_MEAN_LOCAL~"   ,'K' ,  ~"ISYS_CODE_MASTER~".~"CODE_MEAN_KOR~"  ,  ~"ISYS_CODE_MASTER~".~"CODE_MEAN_ENG~" ) CODE_MEAN
+    FROM ~"ISYS_CODE_MASTER~"  
+   WHERE ~"ISYS_CODE_MASTER~".~"CODE_TYPE~" = 'AOI BAD REASON CODE'    
+" arguments=(("ARG_LANG", string),("ARG_ORG", number))  sort="code_name A " )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="6" color="33554432" x="18" y="12" height="80" width="338" format="[general]" html.valueishtml="0" row_in_detail=1  name=code_name_1 visible="1" edit.limit=100 edit.case=any edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65280" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="6" color="33554432" x="18" y="108" height="184" width="338" format="[general]" html.valueishtml="0" row_in_detail=1  name=code_mean_1 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="6" color="33554432" x="370" y="12" height="80" width="338" format="[general]" html.valueishtml="0" row_in_detail=2  name=code_name_2 visible="1" edit.limit=100 edit.case=any edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65280" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="6" color="33554432" x="370" y="108" height="184" width="338" format="[general]" html.valueishtml="0" row_in_detail=2  name=code_mean_2 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="6" color="33554432" x="722" y="12" height="80" width="338" format="[general]" html.valueishtml="0" row_in_detail=3  name=code_name_3 visible="1" edit.limit=100 edit.case=any edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65280" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="6" color="33554432" x="722" y="108" height="184" width="338" format="[general]" html.valueishtml="0" row_in_detail=3  name=code_mean_3 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="6" color="33554432" x="1074" y="12" height="80" width="338" format="[general]" html.valueishtml="0" row_in_detail=4  name=code_name_4 visible="1" edit.limit=100 edit.case=any edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65280" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="6" color="33554432" x="1074" y="108" height="184" width="338" format="[general]" html.valueishtml="0" row_in_detail=4  name=code_mean_4 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="6" color="33554432" x="1426" y="12" height="80" width="338" format="[general]" html.valueishtml="0" row_in_detail=5  name=code_name_5 visible="1" edit.limit=100 edit.case=any edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65280" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="6" color="33554432" x="1426" y="108" height="184" width="338" format="[general]" html.valueishtml="0" row_in_detail=5  name=code_mean_5 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="6" color="33554432" x="1778" y="12" height="80" width="338" format="[general]" html.valueishtml="0" row_in_detail=6  name=code_name_6 visible="1" edit.limit=100 edit.case=any edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65280" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="6" color="33554432" x="1778" y="108" height="184" width="338" format="[general]" html.valueishtml="0" row_in_detail=6  name=code_mean_6 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

@@ -1,0 +1,307 @@
+CREATE OR REPLACE TRIGGER TIGIQ_MACHINE_INS_DATA_SP_INS
+  /* ================================================================
+   * 트리거명  : TIGIQ_MACHINE_INS_DATA_SP_INS
+   * 작성자  : 지성솔루션컨설팅
+   * 작성일  : 2026-07-02
+   * 수정이력:
+   *   2026-07-02 - 지성솔루션컨설팅 - 최초 작성
+   *   2026-07-02 - AI(Codex)       - 한글 주석 자동 추가
+   * ================================================================
+   * [AI 분석] 기능 설명:
+   *   IQ_MACHINE_INSPECT_DATA_SP 테이블의 INSERT 이벤트 발생 시 원본 트리거 로직에 정의된 후속 처리를 자동 수행한다.
+   *   업무 데이터의 기본값 설정, 검증, 이력 기록 또는 연계 테이블 갱신에 사용된다.
+   * ================================================================
+   * [AI 분석] 발화 조건:
+   *   시점: BEFORE
+   *   이벤트: INSERT
+   *   단위: FOR EACH ROW
+   *   조건: 없음
+   * ================================================================
+   * [AI 분석] 대상 객체:
+   *   IQ_MACHINE_INSPECT_DATA_SP - 트리거가 걸린 테이블/뷰
+   * ================================================================
+   * [AI 분석] OLD/NEW 사용:
+   *   :NEW.RUN_NO - 신규/변경 후 작업지시/런 관련 값
+   *   :NEW.PID - 신규/변경 후 제품 식별자 관련 값
+   *   :NEW.ORGANIZATION_ID - 신규/변경 후 값 값
+   *   :NEW.LINE_CODE - 신규/변경 후 라인 관련 값
+   *   :NEW.EQUIPMENTID - 신규/변경 후 값 값
+   *   :NEW.SEQ_NO - 신규/변경 후 값 값
+   *   :NEW.POSITION - 신규/변경 후 값 값
+   *   :NEW.DOUBLE_PRINTING_OPTION - 신규/변경 후 값 값
+   *   :NEW.PRINTING_DIRECTION - 신규/변경 후 값 값
+   * ================================================================
+   * [AI 분석] 참조 테이블:
+   *   IQ_MACHINE_INSPECT_DATA_SP - 설비 / 검사 관련 트리거 대상 테이블
+   *   IP_PRODUCT_2D_BARCODE - 제품 / 바코드 관련 트리거 내부 SQL에서 참조/변경
+   *   IP_PRODUCT_LINE - 제품 / 라인 관련 트리거 내부 SQL에서 참조/변경
+   *   IMCN_JIG - 지그 관련 트리거 내부 SQL에서 참조/변경
+   * ================================================================
+   * [AI 분석] 예외 처리:
+   *   WHEN 절 또는 원본 예외 로직 기준으로 트리거 내부 오류를 처리한다.
+   * ================================================================
+   * [AI 분석] 복잡도:
+   *   조건 분기: IF 10회, ELSIF 4회 / 반복문: 0회
+   *   DML: SELECT 7회, INSERT 2회, UPDATE 13회, DELETE 2회
+   * ================================================================
+   * 검증 방법:
+   *   SELECT status FROM user_objects WHERE object_type = 'TRIGGER' AND object_name = 'TIGIQ_MACHINE_INS_DATA_SP_INS';
+   *   SELECT * FROM user_errors WHERE type = 'TRIGGER' AND name = 'TIGIQ_MACHINE_INS_DATA_SP_INS';
+   *   주의: 검증 목적으로 대상 테이블에 DML을 실행하지 않는다.
+   * ================================================================ */
+
+ BEFORE INSERT ON IQ_MACHINE_INSPECT_DATA_SP
+ REFERENCING OLD AS OLD NEW AS NEW
+ FOR EACH ROW
+DECLARE
+
+   LVI_COUNT             NUMBER ;
+   LVS_RUN_NO            VARCHAR2(30) ;
+   
+   lvs_last_jig_lot_no   VARCHAR2(50) ;
+   lvl_sequeeze_count    NUMBER ;
+    
+BEGIN
+           
+      BEGIN
+         
+          SELECT RUN_NO
+            INTO :NEW.RUN_NO
+            FROM IP_PRODUCT_2D_BARCODE
+           WHERE serial_no       = :NEW.PID
+             AND ORGANIZATION_ID = :NEW.ORGANIZATION_ID;     
+          
+       EXCEPTION 
+             WHEN NO_DATA_FOUND THEN 
+             
+                  :NEW.RUN_NO := 'NULL';
+       END;
+           
+
+      IF ( :NEW.RUN_NO = 'NULL' OR :NEW.RUN_NO = ''  OR :NEW.RUN_NO IS NULL ) THEN
+            BEGIN
+                    SELECT NVL(RUN_NO , '*')
+                    INTO :NEW.RUN_NO
+                    FROM IP_PRODUCT_LINE
+                   WHERE LINE_CODE       = :NEW.LINE_CODE
+                     AND ORGANIZATION_ID = :NEW.ORGANIZATION_ID;   
+                     
+             EXCEPTION 
+             WHEN NO_DATA_FOUND THEN 
+                          :NEW.RUN_NO := 'NULL';
+             END;
+      
+      END IF;
+  
+    :new.pid    := nvl(:new.pid, 'NULL') ;
+                             
+    :NEW.EQUIPMENTID := NVL(:NEW.EQUIPMENTID , '*') ;                         
+    :NEW.SEQ_NO := NVL(:NEW.SEQ_NO , '00' ) ;                                      
+ 
+    ------------------------------------------------------------
+    -- 최종데이타만 남도록 삭제
+    ------------------------------------------------------------
+
+ --   DELETE IQ_MACHINE_INSPECT_DATA_SP
+ --    WHERE PID             = :NEW.PID
+ --      AND ORGANIZATION_ID = :NEW.ORGANIZATION_ID; 
+ --      
+ --   DELETE IQ_MACHINE_INSPECT_DATA_SP
+ --    WHERE PID             = 'NULL' ;    
+ 
+    ------------------------------------------------------------
+    -- 메탈마스크, 스퀴즈 사용횟수 반영
+    ------------------------------------------------------------                             
+
+    if ( (:new.line_code = '01') or (:new.line_code = '02') or (:new.line_code = '03') or (:new.line_code = '04') or (:new.line_code = '07') or (:new.line_code = '08') or (:new.line_code = '09') ) THEN             -- HIT : log 내 position 관련 정보가 있어 REAR 를 squeeze_lot_no2 로 본다
+             
+        if    ( :new.position = 'REAR SQUEEGEE' ) then
+                               
+              update imcn_jig 
+                 set hit_value = nvl (hit_value, 0) + 1,
+                     last_modify_date  = sysdate,
+                     last_modify_by    = 'USED COUNT'
+               where line_code         = :new.line_code
+                 and jig_type          = 'M' ;
+                    
+              update imcn_jig
+                 set hit_value = nvl(hit_value, 0) +1,
+                     last_modify_date  = sysdate,
+                     last_modify_by    = 'USED COUNT'
+               where jig_lot_no        = (
+                                            select squeeze_lot_no2
+                                              from ip_product_line
+                                             where line_code = :NEW.LINE_CODE           -- REAR
+                                          ) ;
+                                                            
+        elsif ( :new.position = 'FRONT SQUEEGEE' ) then
+            
+              update imcn_jig 
+                 set hit_value = nvl (hit_value, 0) + 1,
+                     last_modify_date  = sysdate,
+                     last_modify_by    = 'USED COUNT'
+               where line_code         = :new.line_code
+                 and jig_type          = 'M' ;
+                         
+              update imcn_jig
+                 set hit_value = nvl(hit_value, 0) +1,
+                     last_modify_date  = sysdate,
+                     last_modify_by    = 'USED COUNT'
+                     where jig_lot_no  = (
+                                          select squeeze_lot_no
+                                            from ip_product_line
+                                           where line_code = :NEW.LINE_CODE     -- FRONT
+                                         ) ;   
+  
+        elsif ( :new.position = 'DOUBLE PRINTING' ) then
+            
+               update imcn_jig 
+                  set hit_value = nvl (hit_value, 0) + 2,
+                     last_modify_date  = sysdate,
+                     last_modify_by    = 'USED COUNT'
+                where line_code        = :new.line_code
+                  and jig_type         = 'M' ;
+                                       
+               update imcn_jig 
+                  set hit_value         = nvl (hit_value, 0) + 1,                        -- REAR, FRONT
+                      last_modify_date  = sysdate,
+                      last_modify_by    = 'USED COUNT'
+                where line_code         = :new.line_code
+                  and jig_type          = 'S' ;                                    
+                                       
+        else
+          
+                null;       
+                  
+        end if;
+                               
+    elsif ( (:new.line_code = '05') or (:new.line_code = '06') ) THEN          -- SJ InnoTech : Printing Direction 을 가지고 확인
+        
+        if ( :new.DOUBLE_PRINTING_OPTION = 'Not Use' ) then                            -- 단면사용
+       
+                update imcn_jig 
+                   set hit_value = nvl (hit_value, 0) + 1,
+                       last_modify_date  = sysdate,
+                       last_modify_by    = 'USED COUNT'
+                 where line_code         = :new.line_code
+                   and jig_type          = 'M' ;
+                                    
+                if    ( :new.PRINTING_DIRECTION = 'Backward' ) then
+                                        
+                      update imcn_jig
+                         set hit_value         = nvl(hit_value, 0) +1,
+                             last_modify_date  = sysdate,
+                             last_modify_by    = 'USED COUNT'
+                       where jig_lot_no        = (
+                                                    select squeeze_lot_no2
+                                                      from ip_product_line
+                                                     where line_code = :NEW.LINE_CODE           -- REAR
+                                                  ) ;
+                                                                    
+                elsif ( :new.PRINTING_DIRECTION = 'Forward' ) then
+                    
+                      update imcn_jig
+                         set hit_value         = nvl(hit_value, 0) +1,
+                             last_modify_date  = sysdate,
+                             last_modify_by    = 'USED COUNT'
+                             where jig_lot_no  = (
+                                                  select squeeze_lot_no
+                                                    from ip_product_line
+                                                   where line_code = :NEW.LINE_CODE     -- FRONT
+                                                 ) ;   
+                                                
+                else
+                  
+                      null;       
+                          
+                end if;
+                
+        else                                                                           -- 양면사용
+
+               update imcn_jig 
+                  set hit_value = nvl (hit_value, 0) + 2,
+                      last_modify_date  = sysdate,
+                     last_modify_by    = 'USED COUNT'
+                where line_code = :new.line_code
+                  and jig_type  = 'M' ;
+                                       
+               update imcn_jig 
+                  set hit_value = nvl (hit_value, 0) + 1,                               -- Backward, Forward
+                      last_modify_date  = sysdate,
+                      last_modify_by    = 'USED COUNT'
+                where line_code = :new.line_code
+                  and jig_type  = 'S' ;
+                                                         
+        end if;
+           
+    else
+      
+           update imcn_jig 
+              set hit_value = nvl (hit_value, 0) + 1,
+                  last_modify_date  = sysdate,
+                  last_modify_by    = 'USED COUNT'
+            where line_code = :new.line_code
+              and jig_type  = 'M' ;
+                                    
+           update imcn_jig 
+              set hit_value = nvl (hit_value, 0) + 1,
+                  last_modify_date  = sysdate,
+                  last_modify_by    = 'USED COUNT'
+            where line_code = :new.line_code
+              and jig_type  = 'S' ;
+  
+    end if;   
+                                                                                     
+
+     
+    ------------------------------------------------------------
+    -- 온습도관리에 내용추가
+    ------------------------------------------------------------
+    
+ /*   BEGIN
+      
+        INSERT INTO icom_temperature_raw (
+                                           organization_id,
+                                           gather_date,
+                                           gw_id,
+                                           nodeid,
+                                           lqi,
+                                           child_cnt,
+                                           nodetype,
+                                           batt,
+                                           room_temperature,
+                                           humidity,
+                                           dew_point,
+                                           sd4
+                                        ) 
+              select  :NEW.ORGANIZATION_ID,
+                      TO_DATE(:NEW.INSPECT_DATE, 'YYYY/MM/DD HH24:MI:SS'),
+                      :NEW.machine_code||'_'||:NEW.line_code||'_'||'TEMP',  
+                      :NEW.machine_code||'_'||:NEW.line_code||'_'||'TEMP',   
+                      0,  
+                      0,  
+                      1,
+                      100,
+                      TO_NUMBER(:NEW.TEMPRATURE),
+                      0,
+                      0,
+                      0
+                 from dual;
+
+    EXCEPTION
+       WHEN OTHERS THEN
+   
+            NULL;
+    END;*/
+       
+
+EXCEPTION
+    WHEN OTHERS THEN
+   
+        raise_application_error (
+                                 -20003, 
+                                 'SP INS TRRIGER ERROR '
+                                 || ' '
+                                 || SQLERRM
+                                 );
+END;

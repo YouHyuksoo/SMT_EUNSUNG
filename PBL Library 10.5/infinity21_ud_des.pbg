@@ -1,0 +1,47 @@
+Save Format v3.0(19990112)
+@begin Libraries
+ "infinity21_ud_des.pbl" "";
+@end;
+@begin Objects
+ "d_des_bom_4_kitting_query.srd" "infinity21_ud_des.pbl";
+ "d_des_bom_smt_replace_4_modify_lst.srd" "infinity21_ud_des.pbl";
+ "d_des_bom_replace_4_modify_lst.srd" "infinity21_ud_des.pbl";
+ "d_des_bom_query_4_sale_price.srd" "infinity21_ud_des.pbl";
+ "d_des_item_replace_lst.srd" "infinity21_ud_des.pbl";
+ "d_des_mfs_bom_lst.srd" "infinity21_ud_des.pbl";
+ "d_des_raw_bom_lst.srd" "infinity21_ud_des.pbl";
+ "d_des_bom_query_4_comparision.srd" "infinity21_ud_des.pbl";
+ "d_des_item_4_trade_mst.srd" "infinity21_ud_des.pbl";
+ "d_des_bom_create_lst.srd" "infinity21_ud_des.pbl";
+ "d_des_bom_smt_replace_batch_lst.srd" "infinity21_ud_des.pbl";
+ "d_des_apply_item_lst.srd" "infinity21_ud_des.pbl";
+ "d_des_item_lst_4_barcode_tree.srd" "infinity21_ud_des.pbl";
+ "d_des_item_lst_tree.srd" "infinity21_ud_des.pbl";
+ "d_des_item_4_extra_mst.srd" "infinity21_ud_des.pbl";
+ "d_des_item_class_lst.srd" "infinity21_ud_des.pbl";
+ "d_des_mfs_bom_4_query_lst.srd" "infinity21_ud_des.pbl";
+ "d_des_bom_query.srd" "infinity21_ud_des.pbl";
+ "d_des_bom_query_4_issue_plan_check_lst.srd" "infinity21_ud_des.pbl";
+ "d_des_item_lst.srd" "infinity21_ud_des.pbl";
+ "d_des_item_mst.srd" "infinity21_ud_des.pbl";
+ "d_des_mfs_bom_query.srd" "infinity21_ud_des.pbl";
+ "d_des_bom_list_nup.srd" "infinity21_ud_des.pbl";
+ "d_des_bom_query_4_blocking_comparision.srd" "infinity21_ud_des.pbl";
+ "d_des_bom_smt_replace_lst.srd" "infinity21_ud_des.pbl";
+ "d_des_item_4_bom_modify_lst.srd" "infinity21_ud_des.pbl";
+ "d_des_bom_query_4_ng_upload_comparision.srd" "infinity21_ud_des.pbl";
+ "d_des_item_replace_mlst.srd" "infinity21_ud_des.pbl";
+ "d_des_smt_bom_4_kitting_lst.srd" "infinity21_ud_des.pbl";
+ "d_des_item_4_hs_name_lst.srd" "infinity21_ud_des.pbl";
+ "d_des_raw_bom_4_modify_lst.srd" "infinity21_ud_des.pbl";
+ "d_des_bom_smt_create_lst.srd" "infinity21_ud_des.pbl";
+ "d_des_product_class_lst.srd" "infinity21_ud_des.pbl";
+ "d_des_bom_drawing_4_item_master_tree.srd" "infinity21_ud_des.pbl";
+ "d_des_item_4_mfs_bom_lst.srd" "infinity21_ud_des.pbl";
+ "d_des_product_class_mst.srd" "infinity21_ud_des.pbl";
+ "d_des_smt_bom_4_item_kitting_lst.srd" "infinity21_ud_des.pbl";
+ "d_des_smt_bom_4_item_kitting_lst2.srd" "infinity21_ud_des.pbl";
+ "d_des_item_4_bom_smt_modify_lst.srd" "infinity21_ud_des.pbl";
+ "d_des_item_4_plan_smt_modify_lst.srd" "infinity21_ud_des.pbl";
+ "d_des_bom_smt_no_replace_4_modify_lst.srd" "infinity21_ud_des.pbl";
+@end;

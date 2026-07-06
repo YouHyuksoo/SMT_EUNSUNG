@@ -1,0 +1,50 @@
+HA$PBExportHeader$f_get_dec_to_hex.srf
+global type f_get_dec_to_hex from function_object
+end type
+
+forward prototypes
+global function string f_get_dec_to_hex (long text)
+end prototypes
+
+global function string f_get_dec_to_hex (long text);string result='',single_char
+ulong dec_num,single_num,length,i
+
+dec_num=long(text)
+
+if dec_num = 0 then 
+	return '00'
+end if 
+
+do while dec_num<>0
+	
+	single_num=mod(dec_num,16)
+	
+	choose case single_num
+		case 10
+			single_char='A'
+		case 11 
+			single_char='B'
+		case 12
+			single_char='C'
+		case 13
+			single_char='D'
+		case 14
+			single_char='E'
+		case 15 
+			single_char='F'
+		case	else 
+			single_char=string(single_num)
+	end choose
+	
+	dec_num=dec_num/16
+	result=single_char+result
+loop
+
+if len(result) < 2 then 
+	result = '0'+result
+	return result
+else
+	return result
+end if 
+end function
+

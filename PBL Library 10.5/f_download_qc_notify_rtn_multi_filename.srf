@@ -1,0 +1,97 @@
+HA$PBExportHeader$f_download_qc_notify_rtn_multi_filename.srf
+global type f_download_qc_notify_rtn_multi_filename from function_object
+end type
+
+forward prototypes
+global function string f_download_qc_notify_rtn_multi_filename (datetime arg_reg_date, long arg_seq_no, integer arg_index)
+end prototypes
+
+global function string f_download_qc_notify_rtn_multi_filename (datetime arg_reg_date, long arg_seq_no, integer arg_index);string LS_PATH , lvs_file_name, lvs_path_name 
+BLOB   LVB_FILE 
+long   li_FileNum ,   LVB_FILE_LENGTH  , lvi_write_byte_sum
+
+
+ LS_PATH = Gvs_default_directory+'\Temp'
+ 
+if DirectoryExists ( LS_PATH ) Then
+else
+	CreateDirectory( LS_PATH ) 
+end if
+ 
+ //=====================================================
+ // SELECT DATA FROM DATABASE
+ //=====================================================
+  SETPOINTER(HOURGLASS!)
+  F_MSG_MDI_HELP( F_MSG_ST( 9025 )) //ST_MSG.TEXT = "File Downloading..."
+  
+ 		if arg_index = 1 then 
+  
+			SELECTBLOB NG_IMAGE INTO :LVB_FILE
+			FROM IQ_DAILY_NOTIFY
+			WHERE ACTION_DATE = :ARG_REG_DATE
+			AND NOTIFY_SEQUENCE= :ARG_SEQ_NO
+			AND ORGANIZATION_ID = :GVI_ORGANIZATION_ID ;
+				  
+				  
+		elseif arg_index = 2 then 
+			
+			SELECTBLOB INSPECT_IMAGE INTO :LVB_FILE
+			FROM IQ_DAILY_NOTIFY
+			WHERE ACTION_DATE = :ARG_REG_DATE
+			AND NOTIFY_SEQUENCE= :ARG_SEQ_NO
+			AND ORGANIZATION_ID = :GVI_ORGANIZATION_ID ;
+				  
+		elseif arg_index = 3 then 
+			
+				SELECTBLOB DOCUMENT_IMAGE INTO :LVB_FILE
+			FROM IQ_DAILY_NOTIFY
+			WHERE ACTION_DATE = :ARG_REG_DATE
+			AND NOTIFY_SEQUENCE= :ARG_SEQ_NO
+			AND ORGANIZATION_ID = :GVI_ORGANIZATION_ID ;
+			
+		end if 
+		
+		
+  IF F_SQL_CHECK() < 0 THEN 
+	  F_MSGBOX( 117)
+	  RETURN 'ERROR'
+  END IF
+			 
+LVB_FILE_LENGTH = LEN(LVB_FILE)
+
+IF LVB_FILE_LENGTH = 0 OR ISNULL(LVB_FILE_LENGTH) THEN 
+	F_MSG_MDI_HELP( F_MSG_ST( 117 ))
+	RETURN 'ERROR'
+END IF
+
+
+			
+		   SELECT DECODE( :ARG_INDEX  , 1 , NG_IMAGE_FILE_NAME  , 2 , INSPECT_IMAGE_FILE_NAME , 3 , DOCUMENT_IMAGE_FILE_NAME  ) 
+			  INTO :LVS_FILE_NAME
+			 FROM IQ_DAILY_NOTIFY
+			WHERE ACTION_DATE = :ARG_REG_DATE
+			   AND NOTIFY_SEQUENCE= :ARG_SEQ_NO
+			   AND ORGANIZATION_ID = :GVI_ORGANIZATION_ID ;
+		
+		IF F_SQL_CHECK() < 0 THEN 
+			F_MSGBOX( 117)
+			RETURN 'ERROR'
+		END IF
+
+	li_FileNum = FileOpen( ls_path+"\"+LVS_FILE_NAME ,  StreamMode!, Write!, Shared!, Replace!)
+	
+	if li_FileNum < 0 then 
+		F_MSGBOX(9024)  //FILE OPEN ERROR
+		Fileclose( li_FileNum ) 
+		RETURN 'ERROR'
+	end if	
+
+	lvi_write_byte_sum = FileWriteEX(li_FileNum, LVB_FILE , LVB_FILE_LENGTH )			 	
+	Fileclose( li_FileNum ) 
+	F_MSG_MDI_HELP( F_MSG_ST( 9023 ))
+	RETURN ls_path+"\"+LVS_FILE_NAME
+
+
+
+end function
+

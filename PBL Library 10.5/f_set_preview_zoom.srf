@@ -1,0 +1,41 @@
+HA$PBExportHeader$f_set_preview_zoom.srf
+global type f_set_preview_zoom from function_object
+end type
+
+forward prototypes
+global function integer f_set_preview_zoom (window arg_window_name, datawindow arg_datawindow)
+end prototypes
+
+global function integer f_set_preview_zoom (window arg_window_name, datawindow arg_datawindow);string active_window , active_dw ,vs_ot ,vs_style , lvs_window_zoom, ls_zoom
+
+if isvalid(arg_datawindow) then 
+else
+	return -1
+end if
+
+active_window = arg_window_name.classname()
+active_dw        = arg_datawindow.classname()
+
+   select style , zoom_is , window_zoom_is
+      into :vs_ot , :ls_zoom , :lvs_window_zoom
+     from isys_dwzoom
+  where upper(window_name) = upper(:active_window)
+	 and upper(DATAWINDOW_NAME)     = upper(:active_dw) 
+	 and organization_id  = :gvi_organization_id;
+
+	if  f_sql_check() < 1 then 
+		return -1
+	end if
+
+if sqlca.sqlnrows < 1 then 
+    return 0
+else
+	string s_var
+	s_var = "datawindow.zoom=" + trim(ls_zoom)
+	arg_datawindow.modify(s_var)
+
+	vs_style = "datawindow.print.orientation = "+vs_ot
+	arg_datawindow.modify(vs_style)
+end if
+end function
+

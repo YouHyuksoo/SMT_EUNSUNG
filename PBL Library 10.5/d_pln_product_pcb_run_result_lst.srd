@@ -1,0 +1,46 @@
+HA$PBExportHeader$d_pln_product_pcb_run_result_lst.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no grid.lines=0 )
+header(height=152 color="16777215" )
+summary(height=0 color="65535" )
+footer(height=0 color="65535" )
+detail(height=80 color="33554431" pointer="" )
+table(column=(type=char(30) updatewhereclause=yes name=run_no dbname="ip_product_workstage_io.run_no" )
+ column=(type=char(20) updatewhereclause=yes name=line_code dbname="ip_product_workstage_io.line_code" )
+ column=(type=char(20) updatewhereclause=yes name=workstage_code dbname="ip_product_workstage_io.workstage_code" )
+ column=(type=number updatewhereclause=yes name=result dbname="result" )
+ column=(type=datetime updatewhereclause=yes name=first_date dbname="first_date" )
+ column=(type=datetime updatewhereclause=yes name=last_date dbname="last_date" )
+ retrieve="  SELECT  RUN_NO,
+               LINE_CODE,
+               WORKSTAGE_CODE, 
+               SUM(IO_QTY)      RESULT, 
+               MIN(IO_DATE)     FIRST_DATE, 
+               MAX(IO_DATE)     LAST_DATE
+     FROM IP_PRODUCT_WORKSTAGE_IO
+    WHERE RUN_NO = :ARG_RUN_NO
+    GROUP BY RUN_NO, LINE_CODE, WORKSTAGE_CODE
+    ORDER BY RUN_NO, LINE_CODE, WORKSTAGE_CODE" arguments=(("ARG_RUN_NO", string)) )
+text(band=header alignment="2" text="Line Code" border="0" color="33554432" x="539" y="8" height="136" width="507" html.valueishtml="0"  name=line_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Workstage Code" border="0" color="33554432" x="1056" y="8" height="136" width="517" html.valueishtml="0"  name=workstage_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Result" border="0" color="33554432" x="1582" y="8" height="136" width="311" html.valueishtml="0"  name=result_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="First Date" border="0" color="33554432" x="1902" y="8" height="136" width="613" html.valueishtml="0"  name=first_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Last Date" border="0" color="33554432" x="2523" y="8" height="136" width="635" html.valueishtml="0"  name=last_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Run No" border="0" color="33554432" x="137" y="8" height="136" width="393" html.valueishtml="0"  name=run_no_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+compute(band=detail alignment="2" expression="getrow()"border="0" color="33554432" x="9" y="8" height="60" width="119" format="[GENERAL]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="0" color="33554432" x="1582" y="8" height="60" width="311" format="[general]" html.valueishtml="0"  name=result visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="33554432" x="539" y="8" height="60" width="507" format="[general]" html.valueishtml="0"  name=line_code visible="1" dddw.name=vd_line_code dddw.displaycolumn=line_name dddw.datacolumn=line_code dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="0" color="33554432" x="1056" y="8" height="60" width="517" format="[general]" html.valueishtml="0"  name=workstage_code visible="1" dddw.name=vd_workstage_code dddw.displaycolumn=workstage_name dddw.datacolumn=workstage_code dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=5 alignment="2" tabsequence=32766 border="0" color="33554432" x="1902" y="8" height="60" width="613" format="[shortdate] [time]" html.valueishtml="0"  name=first_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=6 alignment="2" tabsequence=32766 border="0" color="33554432" x="2523" y="8" height="60" width="635" format="[shortdate] [time]" html.valueishtml="0"  name=last_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="33554432" x="137" y="8" height="60" width="393" format="[general]" html.valueishtml="0"  name=run_no visible="1" edit.limit=30 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml( template=(comment="" name="iq_interlock_check_ng_log" xhtml="$$HEX1$$fffe$$ENDHEX$$<form name=~"d_interlock_check_ng_log_dataForm~"><div class=~"d_interlock_check_ng_log_band_0~"><div class=~"d_interlock_check_ng_log_line_code_t~">line_code_t</div><div class=~"d_interlock_check_ng_log_machine_code_t~">machine_code_t</div><div class=~"d_interlock_check_ng_log_vr1_0~"/><div class=~"d_interlock_check_ng_log_serial_no_t~">serial_no_t</div><div class=~"d_interlock_check_ng_log_vr2_0~"/><div class=~"d_interlock_check_ng_log_request_date_t~">request_date_t</div><div class=~"d_interlock_check_ng_log_vr3_0~"/><div class=~"d_interlock_check_ng_log_comments_t~">comments_t</div><div class=~"d_interlock_check_ng_log_vr4_0~"/><div class=~"d_interlock_check_ng_log_log_sequence_t~">log_sequence_t</div><div class=~"d_interlock_check_ng_log_vr5_0~"/><div class=~"d_interlock_check_ng_log_workstage_code_t~">workstage_code_t</div><div class=~"d_interlock_check_ng_log_vr6_0~"/><div class=~"d_interlock_check_ng_log_interlock_type_t~">interlock_type_t</div><div class=~"d_interlock_check_ng_log_vr7_0~"/><div class=~"d_interlock_check_ng_log_return_value_t~">return_value_t</div><div class=~"d_interlock_check_ng_log_vr8_0~"/></div><div class=~"d_interlock_check_ng_log_detail_0~" __pbband=~"detail~"><textarea name=~"d_interlock_check_ng_log_return_value~">return_value</textarea><textarea name=~"d_interlock_check_ng_log_interlock_type~">interlock_type</textarea><textarea name=~"d_interlock_check_ng_log_workstage_code~">workstage_code</textarea><textarea name=~"d_interlock_check_ng_log_log_sequence~">log_sequence</textarea><textarea name=~"d_interlock_check_ng_log_comments~">comments</textarea><textarea name=~"d_interlock_check_ng_log_request_date~">run_date</textarea><textarea name=~"d_interlock_check_ng_log_serial_no~">serial_no</textarea><textarea name=~"d_interlock_check_ng_log_machine_code~">machine_code</textarea><textarea name=~"d_interlock_check_ng_log_line_code~">line_code</textarea></div></form>"))

@@ -1,0 +1,30 @@
+HA$PBExportHeader$f_get_product_date_by_model.srf
+global type f_get_product_date_by_model from function_object
+end type
+
+forward prototypes
+global function datetime f_get_product_date_by_model (string arg_model, string arg_first_last)
+end prototypes
+
+global function datetime f_get_product_date_by_model (string arg_model, string arg_first_last);DATETIME LVDT_START_TIME
+
+
+IF ARG_FIRST_LAst = 'FIRST' then 
+	
+SELECT TO_DATE( MIN( STARTTIME) , 'YYYYMMDDHH24MISS') INTO :LVDT_START_TIME
+ FROM TB_VIS_TSTRSLT
+ WHERE model = :arg_model ;
+ 
+else
+	
+SELECT TO_DATE( max( STARTTIME) , 'YYYYMMDDHH24MISS') INTO :LVDT_START_TIME
+ FROM TB_VIS_TSTRSLT
+ WHERE model = :arg_model ;
+ 	
+	
+end if 
+
+
+ RETURN LVDT_START_TIME
+end function
+

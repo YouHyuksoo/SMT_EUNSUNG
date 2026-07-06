@@ -1,0 +1,8 @@
+Save Format v3.0(19990112)
+@begin Libraries
+ "infinity21_srd.pbl" "";
+@end;
+@begin Objects
+ "d_table_description_rpt.srd" "infinity21_srd.pbl";
+ "d_sys_pub_work_board_rpt.srd" "infinity21_srd.pbl";
+@end;

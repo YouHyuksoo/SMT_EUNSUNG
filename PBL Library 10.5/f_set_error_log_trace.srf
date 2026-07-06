@@ -1,0 +1,66 @@
+HA$PBExportHeader$f_set_error_log_trace.srf
+global type f_set_error_log_trace from function_object
+end type
+
+forward prototypes
+global function integer f_set_error_log_trace (window arg_window, string arg_function_name, long arg_app_error_code, string arg_app_error_text, long arg_sqldbcode, string arg_sqlerrtext, string arg_sql_syntax)
+end prototypes
+
+global function integer f_set_error_log_trace (window arg_window, string arg_function_name, long arg_app_error_code, string arg_app_error_text, long arg_sqldbcode, string arg_sqlerrtext, string arg_sql_syntax);string ivs_window_name
+
+if isvalid(arg_window) then 
+	ivs_window_name = arg_window.classname()
+else
+	ivs_window_name = "Unknown Window"
+end if
+
+//send(handle(rte_1),770,0, 0)  
+
+  INSERT INTO "ISYS_ERROR_TRACE"  
+       		   ( "APPLICATION_NAME",   
+				"WINDOW_NAME",   
+				"ORIGINAL_ERROR_CODE",   
+				"ERROR_ACTIVE_DATE",   
+				"ORGANIZATION_ID",   
+				"FUNCTION_NAME",
+				"APP_ERROR_CODE",   
+				"APP_ERROR_TEXT",   
+				"ORIGINAL_ERROR_TEXT",   
+				"SQL_SYNTAX" ,
+				"COMPUTER_NAME",   
+				"COMPUTER_LOGIN_USER",   
+				"IP_ADDRESS",   
+				"MAC_ADDRESS",   
+				"ENTER_DATE",   
+				"ENTER_BY",   
+				"LAST_MODIFY_DATE",   
+				"LAST_MODIFY_BY" )  
+VALUES ( :Gvs_app_name,   
+			:ivs_window_name,   
+			:arg_sqldbcode ,		
+			sysdate ,
+			:Gvi_organization_id,   
+			:arg_function_name,
+			:arg_app_error_code,
+			:arg_app_error_text,
+			:arg_sqlerrtext,   
+			:arg_sql_syntax,
+			:Gvs_computer_name,   
+			:GVS_COMPUTER_LOGIN_USER,   
+			:GVS_IP_ADDRESS,   
+			:GVS_mac_ADDRESS,   
+			sysdate ,
+			:Gvs_user_id,   
+			sysdate,   
+			:Gvs_user_id )  ;
+
+if SQLCA.SQLCODE < 0 then 
+	ROLLBACK;
+	return -1
+end if
+
+commit ;			  
+Return 1
+
+end function
+

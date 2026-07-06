@@ -1,0 +1,173 @@
+HA$PBExportHeader$d_lg_bom_comparision_rpt2.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no grid.lines=0 )
+header(height=120 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=84 color="536870912" )
+table(column=(type=char(30) update=yes updatewhereclause=yes name=part_no dbname="part_no" )
+ column=(type=char(1000) updatewhereclause=yes name=item_spec_1 dbname="item_spec_1" )
+ column=(type=number updatewhereclause=yes name=component_qty_1 dbname="component_qty_1" )
+ column=(type=char(8) updatewhereclause=yes name=expiry_date_1 dbname="expiry_date_1" )
+ column=(type=char(20) updatewhereclause=yes name=eco_no_1 dbname="eco_no_1" )
+ column=(type=char(30) updatewhereclause=yes name=parent_part_no_1 dbname="parent_part_no_1" )
+ column=(type=char(20) updatewhereclause=yes name=substitute_item_1 dbname="substitute_item_1" )
+ column=(type=char(2000) updatewhereclause=yes name=location_info_1 dbname="location_info_1" )
+ column=(type=char(1000) updatewhereclause=yes name=item_spec_2 dbname="item_spec_2" )
+ column=(type=number updatewhereclause=yes name=component_qty_2 dbname="component_qty_2" )
+ column=(type=char(8) updatewhereclause=yes name=expiry_date_2 dbname="expiry_date_2" )
+ column=(type=char(20) updatewhereclause=yes name=eco_no_2 dbname="eco_no_2" )
+ column=(type=char(30) updatewhereclause=yes name=parent_part_no_2 dbname="parent_part_no_2" )
+ column=(type=char(20) updatewhereclause=yes name=substitute_item_2 dbname="substitute_item_2" )
+ column=(type=char(2000) updatewhereclause=yes name=location_info_2 dbname="location_info_2" )
+ retrieve="SELECT     PART_NO                PART_NO,   
+			 MAX(ITEM_SPEC_1)       ITEM_SPEC_1,   
+			 MAX(COMPONENT_QTY_1)   COMPONENT_QTY_1,   
+			 MAX(EXPIRY_DATE_1)     EXPIRY_DATE_1,   
+			 MAX(ECO_NO_1)          ECO_NO_1,   
+			 MAX(PARENT_PART_NO_1)  PARENT_PART_NO_1,   
+			 MAX(SUBSTITUTE_ITEM_1) SUBSTITUTE_ITEM_1,   
+			 MAX(LOCATION_INFO_1)   LOCATION_INFO_1,
+			 MAX(ITEM_SPEC_2)       ITEM_SPEC_2,   
+			 MAX(COMPONENT_QTY_2)   COMPONENT_QTY_2,   
+			 MAX(EXPIRY_DATE_2)     EXPIRY_DATE_2,   
+			 MAX(ECO_NO_2)          ECO_NO_2,   
+			 MAX(PARENT_PART_NO_2)  PARENT_PART_NO_2,   
+			 MAX(SUBSTITUTE_ITEM_2) SUBSTITUTE_ITEM_2,   
+			 MAX(LOCATION_INFO_2)   LOCATION_INFO_2
+FROM (       
+			SELECT A.DIV                  DIV,
+					 A.PART_NO,
+					 A.PART_NO||'-'||A.PARENT_PART_NO             PART_NO2,
+					 A.ITEM_SPEC           ITEM_SPEC_1,   
+					 A.COMPONENT_QTY      COMPONENT_QTY_1,   
+					 A.EXPIRY_DATE        EXPIRY_DATE_1,   
+					 A.ECO_NO              ECO_NO_1,   
+					 A.PARENT_PART_NO     PARENT_PART_NO_1,   
+					 A.SUBSTITUTE_ITEM    SUBSTITUTE_ITEM_1,   
+					 A.LOCATION_INFO      LOCATION_INFO_1,
+					'' ITEM_SPEC_2,   
+					 0  COMPONENT_QTY_2,   
+					 '' EXPIRY_DATE_2,   
+					 '' ECO_NO_2,   
+					 '' PARENT_PART_NO_2,   
+					 '' SUBSTITUTE_ITEM_2,   
+					 '' LOCATION_INFO_2   
+			  FROM 
+					(  SELECT 'FILE1' DIV ,
+								ID_ENG_BOM_EXCEL_LG_CPR1.PART_NO,   
+								ID_ENG_BOM_EXCEL_LG_CPR1.ITEM_SPEC,   
+								ID_ENG_BOM_EXCEL_LG_CPR1.COMPONENT_QTY,   
+								ID_ENG_BOM_EXCEL_LG_CPR1.EXPIRY_DATE,   
+								ID_ENG_BOM_EXCEL_LG_CPR1.ECO_NO,   
+								ID_ENG_BOM_EXCEL_LG_CPR1.PARENT_PART_NO,   
+								ID_ENG_BOM_EXCEL_LG_CPR1.SUBSTITUTE_ITEM,   
+								ID_ENG_BOM_EXCEL_LG_CPR1.LOCATION_INFO  
+			
+						 FROM ID_ENG_BOM_EXCEL_LG_CPR1   
+			
+					MINUS
+			
+					  SELECT  'FILE1' DIV ,
+			
+								ID_ENG_BOM_EXCEL_LG_CPR2.PART_NO,   
+								ID_ENG_BOM_EXCEL_LG_CPR2.ITEM_SPEC,   
+								ID_ENG_BOM_EXCEL_LG_CPR2.COMPONENT_QTY,   
+								ID_ENG_BOM_EXCEL_LG_CPR2.EXPIRY_DATE,   
+								ID_ENG_BOM_EXCEL_LG_CPR2.ECO_NO,   
+								ID_ENG_BOM_EXCEL_LG_CPR2.PARENT_PART_NO,   
+								ID_ENG_BOM_EXCEL_LG_CPR2.SUBSTITUTE_ITEM,   
+								ID_ENG_BOM_EXCEL_LG_CPR2.LOCATION_INFO  
+						 FROM ID_ENG_BOM_EXCEL_LG_CPR2   
+					) A
+			
+			UNION ALL
+			
+			SELECT B.DIV    DIV ,
+					 B.PART_NO,
+					 B.PART_NO||'-'||B.PARENT_PART_NO             PART_NO2,
+					 '' ITEM_SPEC_1,   
+					 0  COMPONENT_QTY_1,   
+					 '' EXPIRY_DATE_1,   
+					 '' ECO_NO_1,   
+					 '' PARENT_PART_NO_1,   
+					 '' SUBSTITUTE_ITEM_1,   
+					 '' LOCATION_INFO_1,  
+					 B.ITEM_SPEC           ITEM_SPEC_2,   
+					 B.COMPONENT_QTY      COMPONENT_QTY_2,   
+					 B.EXPIRY_DATE        EXPIRY_DATE_2,   
+					 B.ECO_NO              ECO_NO_2,   
+					 B.PARENT_PART_NO     PARENT_PART_NO_2,   
+					 B.SUBSTITUTE_ITEM    SUBSTITUTE_ITEM_2,   
+					 B.LOCATION_INFO      LOCATION_INFO_2
+			  FROM  
+					(
+			
+					  SELECT  'FILE2' DIV ,
+			
+								ID_ENG_BOM_EXCEL_LG_CPR2.PART_NO,   
+								ID_ENG_BOM_EXCEL_LG_CPR2.ITEM_SPEC,   
+								ID_ENG_BOM_EXCEL_LG_CPR2.COMPONENT_QTY,   
+								ID_ENG_BOM_EXCEL_LG_CPR2.EXPIRY_DATE,   
+								ID_ENG_BOM_EXCEL_LG_CPR2.ECO_NO,   
+								ID_ENG_BOM_EXCEL_LG_CPR2.PARENT_PART_NO,   
+								ID_ENG_BOM_EXCEL_LG_CPR2.SUBSTITUTE_ITEM,   
+								ID_ENG_BOM_EXCEL_LG_CPR2.LOCATION_INFO  
+						 FROM ID_ENG_BOM_EXCEL_LG_CPR2   
+			
+					MINUS 
+			
+					  SELECT  'FILE2' DIV ,
+								ID_ENG_BOM_EXCEL_LG_CPR1.PART_NO,   
+								ID_ENG_BOM_EXCEL_LG_CPR1.ITEM_SPEC,   
+								ID_ENG_BOM_EXCEL_LG_CPR1.COMPONENT_QTY,   
+								ID_ENG_BOM_EXCEL_LG_CPR1.EXPIRY_DATE,   
+								ID_ENG_BOM_EXCEL_LG_CPR1.ECO_NO,   
+								ID_ENG_BOM_EXCEL_LG_CPR1.PARENT_PART_NO,   
+								ID_ENG_BOM_EXCEL_LG_CPR1.SUBSTITUTE_ITEM,   
+								ID_ENG_BOM_EXCEL_LG_CPR1.LOCATION_INFO  
+						 FROM ID_ENG_BOM_EXCEL_LG_CPR1   ) B
+			)
+GROUP BY PART_NO, PART_NO2
+ORDER BY PART_NO, PART_NO2" )
+text(band=header alignment="2" text="Item Spec 2" border="0" color="0" x="4503" y="8" height="100" width="1198" html.valueishtml="0"  name=item_spec_2_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16776960" )
+text(band=header alignment="2" text="Component Qty 2" border="0" color="0" x="5710" y="8" height="100" width="343" html.valueishtml="0"  name=component_qty_2_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16776960" )
+text(band=header alignment="2" text="Expiry Date 2" border="0" color="0" x="6062" y="8" height="100" width="329" html.valueishtml="0"  name=expiry_date_2_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16776960" )
+text(band=header alignment="2" text="Eco No 2" border="0" color="0" x="6400" y="8" height="100" width="334" html.valueishtml="0"  name=eco_no_2_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16776960" )
+text(band=header alignment="2" text="Parent Part No 2" border="0" color="0" x="6743" y="8" height="100" width="343" html.valueishtml="0"  name=parent_part_no_2_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16776960" )
+text(band=header alignment="2" text="Substitute Item 2" border="0" color="0" x="7095" y="8" height="100" width="338" html.valueishtml="0"  name=substitute_item_2_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16776960" )
+text(band=header alignment="2" text="Location Info 2" border="0" color="0" x="7442" y="8" height="100" width="1193" html.valueishtml="0"  name=location_info_2_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16776960" )
+text(band=header alignment="2" text="Location Info 1" border="0" color="33554432" x="3301" y="8" height="100" width="1193" html.valueishtml="0"  name=location_info_1_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+text(band=header alignment="2" text="Part No" border="0" color="33554432" x="9" y="8" height="100" width="329" html.valueishtml="0"  name=part_no_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+text(band=header alignment="2" text="Item Spec 1" border="0" color="33554432" x="347" y="8" height="100" width="1207" html.valueishtml="0"  name=item_spec_1_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+text(band=header alignment="2" text="Component Qty 1" border="0" color="33554432" x="1563" y="8" height="100" width="343" html.valueishtml="0"  name=component_qty_1_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+text(band=header alignment="2" text="Expiry Date 1" border="0" color="33554432" x="1915" y="8" height="100" width="334" html.valueishtml="0"  name=expiry_date_1_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+text(band=header alignment="2" text="Eco No 1" border="0" color="33554432" x="2258" y="8" height="100" width="338" html.valueishtml="0"  name=eco_no_1_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+text(band=header alignment="2" text="Parent Part No 1" border="0" color="33554432" x="2606" y="8" height="100" width="338" html.valueishtml="0"  name=parent_part_no_1_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+text(band=header alignment="2" text="Substitute Item 1" border="0" color="33554432" x="2953" y="8" height="100" width="338" html.valueishtml="0"  name=substitute_item_1_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+column(band=detail id=1 alignment="0" tabsequence=60 border="0" color="33554432" x="9" y="8" height="68" width="329" format="[general]" html.valueishtml="0"  name=part_no visible="1" edit.limit=30 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="0" tabsequence=70 border="0" color="33554432~tIF( item_spec_1 <>  item_spec_2,RGB(255,0,0),RGB(0,0,0)) " x="352" y="8" height="68" width="1202" format="[general]" html.valueishtml="0"  name=item_spec_1 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="1" tabsequence=80 border="0" color="33554432~tIF(  component_qty_1  <>  component_qty_2,RGB(255,0,0),RGB(0,0,0)) " x="1568" y="8" height="68" width="338" format="#,##0.0000" html.valueishtml="0"  name=component_qty_1 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="2" tabsequence=90 border="0" color="33554432~tIF(   expiry_date_1   <>   expiry_date_2,RGB(255,0,0),RGB(0,0,0)) " x="1920" y="8" height="68" width="329" format="[general]" html.valueishtml="0"  name=expiry_date_1 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="0" tabsequence=100 border="0" color="33554432~tIF(   eco_no_1  <>  eco_no_2 , RGB(255,0,0), RGB(0,0,0) ) " x="2263" y="8" height="68" width="334" format="[general]" html.valueishtml="0"  name=eco_no_1 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=6 alignment="0" tabsequence=110 border="0" color="33554432~tIF(   parent_part_no_1   <>   parent_part_no_2 , RGB(255,0,0), RGB(0,0,0) ) " x="2610" y="8" height="68" width="334" format="[general]" html.valueishtml="0"  name=parent_part_no_1 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=7 alignment="0" tabsequence=120 border="0" color="33554432~tIF(  substitute_item_1  <>  substitute_item_2 , RGB(255,0,0), RGB(0,0,0) ) " x="2958" y="8" height="68" width="334" format="[general]" html.valueishtml="0"  name=substitute_item_1 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=8 alignment="0" tabsequence=130 border="0" color="33554432~tIF(  location_info_1  <>   location_info_2  , RGB(255,0,0), RGB(0,0,0) ) " x="3305" y="8" height="68" width="1189" format="[general]" html.valueishtml="0"  name=location_info_1 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=9 alignment="0" tabsequence=140 border="0" color="33554432~tIF( item_spec_1 <>  item_spec_2,RGB(255,0,0),RGB(0,0,0)) " x="4507" y="8" height="68" width="1193" format="[general]" html.valueishtml="0"  name=item_spec_2 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=10 alignment="1" tabsequence=150 border="0" color="33554432~tIF(  component_qty_1  <>  component_qty_2,RGB(255,0,0),RGB(0,0,0)) " x="5714" y="8" height="68" width="338" format="#,##0.0000" html.valueishtml="0"  name=component_qty_2 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=11 alignment="2" tabsequence=160 border="0" color="33554432~tIF(   expiry_date_1   <>   expiry_date_2,RGB(255,0,0),RGB(0,0,0)) " x="6066" y="8" height="68" width="325" format="[general]" html.valueishtml="0"  name=expiry_date_2 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=12 alignment="0" tabsequence=170 border="0" color="33554432~tIF(   eco_no_1  <>  eco_no_2 , RGB(255,0,0), RGB(0,0,0) ) " x="6405" y="8" height="68" width="329" format="[general]" html.valueishtml="0"  name=eco_no_2 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=13 alignment="0" tabsequence=180 border="0" color="33554432~tIF(   parent_part_no_1   <>   parent_part_no_2 , RGB(255,0,0), RGB(0,0,0) ) " x="6747" y="8" height="68" width="338" format="[general]" html.valueishtml="0"  name=parent_part_no_2 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=14 alignment="0" tabsequence=190 border="0" color="33554432~tIF(  substitute_item_1  <>  substitute_item_2 , RGB(255,0,0), RGB(0,0,0) ) " x="7099" y="8" height="68" width="334" format="[general]" html.valueishtml="0"  name=substitute_item_2 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=15 alignment="0" tabsequence=200 border="0" color="33554432~tIF(  location_info_1  <>   location_info_2  , RGB(255,0,0), RGB(0,0,0) ) " x="7447" y="8" height="68" width="1189" format="[general]" html.valueishtml="0"  name=location_info_2 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

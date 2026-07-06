@@ -1,0 +1,43 @@
+HA$PBExportHeader$f_set_gst_return_init.srf
+global type f_set_gst_return_init from function_object
+end type
+
+forward prototypes
+global function integer f_set_gst_return_init (string as_type, integer ai_count)
+end prototypes
+
+global function integer f_set_gst_return_init (string as_type, integer ai_count);int i
+
+if as_type = 'S' then 
+
+		do
+			  i++
+			gst_return.gvs_return[i] = ''
+			
+		loop until i = ai_count
+		
+		return 0 
+		
+elseif  as_type = 'F' then 
+	
+		do
+		     i++
+			gst_return.gvf_return[i] = 0
+			
+		loop until i = ai_count
+		
+		return 0 	
+		
+elseif  as_type = 'L' then 
+	
+		do
+		     i++
+			gst_return.gvl_return[i] = 0
+			
+		loop until i = ai_count
+		
+		return 0 			
+	
+end if
+end function
+

@@ -1,0 +1,17 @@
+HA$PBExportHeader$f_screen_capture.srf
+global type f_screen_capture from function_object
+end type
+
+forward prototypes
+global function integer f_screen_capture ()
+end prototypes
+
+global function integer f_screen_capture ();//open(w_error_log_trace_popup)
+//keybd_event( 44, 1, 0, 0 ) // Places the entire screen into the clipboard. 
+keybd_event( 44, 0, 0, 0 ) // Places justthe active window into the clipboard. Equivalent to ALT + Print Scrn. 
+//Powerscript: (This code dynamically triggers a PASTE. Equivalent to pressing CTRL + V) 
+//send(handle(rte_1),770,0, 0)  
+
+return 0
+end function
+

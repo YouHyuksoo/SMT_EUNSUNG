@@ -1,0 +1,52 @@
+HA$PBExportHeader$d_material_barcode_rpt3.srd
+$PBExportComments$7.5*3.5
+release 10.5;
+datawindow(units=3 timer_interval=0 color=1073741824 processing=2 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 0 print.margin.right = 0 print.margin.top = 0 print.margin.bottom = 0 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no label.name="" label.width=7000 label.height=3000 label.rows=1 label.rows.spacing=0 label.columns=1 label.columns.spacing=250 label.topdown=yes label.sheet=yes label.shape=roundrectangle label.ellipse_height=0 label.ellipse_width=0 )
+detail(height=2989 color="536870912" )
+table(column=(type=char(100) updatewhereclause=yes name=item_code_barcode dbname="im_item_inventory_barcode.item_code_barcode" dbalias=".item_code_barcode" )
+ column=(type=char(50) updatewhereclause=yes name=item_code dbname="im_item_inventory_barcode.item_code" dbalias=".item_code" )
+ column=(type=char(20) updatewhereclause=yes name=line_type dbname="im_item_inventory_barcode.line_type" dbalias=".line_type" )
+ column=(type=number updatewhereclause=yes name=item_qty dbname="im_item_inventory_barcode.item_qty" dbalias=".item_qty" )
+ column=(type=char(100) updatewhereclause=yes name=supplier_name dbname="im_item_inventory_barcode.supplier_name" dbalias=".supplier_name" )
+ column=(type=char(100) updatewhereclause=yes name=supplier_item_code dbname="im_item_inventory_barcode.supplier_item_code" dbalias=".supplier_item_code" )
+ column=(type=char(300) updatewhereclause=yes name=item_spec dbname="im_item_inventory_barcode.item_spec" dbalias=".item_spec" )
+ column=(type=char(4000) updatewhereclause=yes name=item_barcode dbname="item_barcode" )
+ column=(type=datetime updatewhereclause=yes name=print_date dbname="print_date" )
+ retrieve="  SELECT ~"IM_ITEM_INVENTORY_BARCODE~".~"ITEM_CODE_BARCODE~",   
+         ~"IM_ITEM_INVENTORY_BARCODE~".~"ITEM_CODE~",   
+         ~"IM_ITEM_INVENTORY_BARCODE~".~"LINE_TYPE~",   
+         ~"IM_ITEM_INVENTORY_BARCODE~".~"ITEM_QTY~",   
+         ~"IM_ITEM_INVENTORY_BARCODE~".~"SUPPLIER_NAME~",   
+         ~"IM_ITEM_INVENTORY_BARCODE~".~"SUPPLIER_ITEM_CODE~",   
+         ~"IM_ITEM_INVENTORY_BARCODE~".~"ITEM_SPEC~",   
+          f_bacode_code128('B',item_code_barcode)  item_barcode,   
+         trunc(~"IM_ITEM_INVENTORY_BARCODE~".~"PRINT_DATE~") print_date
+    FROM ~"IM_ITEM_INVENTORY_BARCODE~"  
+    WHERE 
+		( ~"IM_ITEM_INVENTORY_BARCODE~".~"ITEM_CODE~" like :arg_item_code) AND 
+		( ~"IM_ITEM_INVENTORY_BARCODE~".~"SERIAL_NO~" like :arg_serial_no ) AND  
+		( ~"IM_ITEM_INVENTORY_BARCODE~".~"ITEM_CODE_BARCODE~" like :arg_item_code_barcode ) AND   
+         ( ~"IM_ITEM_INVENTORY_BARCODE~".~"ORGANIZATION_ID~" = :arg_org )    
+" arguments=(("arg_item_code", string),("arg_serial_no", string),("arg_item_code_barcode", string),("arg_org", number)) )
+column(band=detail id=8 alignment="2" tabsequence=32766 border="0" color="33554432" x="291" y="1746" height="608" width="5000" format="[general]" html.valueishtml="0"  name=item_barcode visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Code 128" font.height="-24" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432" x="264" y="264" height="529" width="3783" format="[general]" html.valueishtml="0"  name=item_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="1" tabsequence=32766 border="0" color="33554432" x="5371" y="1746" height="582" width="1296" format="[general]" html.valueishtml="0"  name=item_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="33554432" x="1031" y="2407" height="238" width="3413" format="[general]" html.valueishtml="0"  name=item_code_barcode visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-6" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=9 alignment="1" tabsequence=32766 border="0" color="33554432" x="4497" y="2381" height="343" width="2169" format="yyyy-mm-dd" html.valueishtml="0"  name=print_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=6 alignment="0" tabsequence=32766 border="0" color="33554432" x="1455" y="873" height="343" width="5212" format="[general]" html.valueishtml="0"  name=supplier_item_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=detail alignment="0" text="S-Code:" border="0" color="33554432" x="264" y="873" height="343" width="1137" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=detail alignment="0" text="SPEC:" border="0" color="33554432" x="264" y="1322" height="343" width="1137" html.valueishtml="0"  name=t_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=7 alignment="0" tabsequence=32766 border="0" color="33554432" x="1455" y="1322" height="343" width="5212" format="[general]" html.valueishtml="0"  name=item_spec visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="0" tabsequence=32766 border="0" color="33554432" x="4101" y="291" height="502" width="1878" format="[general]" html.valueishtml="0"  name=supplier_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="1" tabsequence=32766 border="0" color="33554432" x="6032" y="291" height="502" width="661" format="[general]" html.valueishtml="0"  name=line_type visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

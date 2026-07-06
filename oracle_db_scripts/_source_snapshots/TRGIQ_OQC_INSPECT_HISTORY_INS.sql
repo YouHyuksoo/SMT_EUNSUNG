@@ -1,0 +1,13 @@
+TRIGGER "INFINITY21_JSMES"."TRGIQ_OQC_INSPECT_HISTORY_INS" 
+ AFTER 
+ INSERT
+ ON IQ_OQC_INSPECT_HISTORY
+ REFERENCING OLD AS OLD NEW AS NEW
+ FOR EACH ROW 
+BEGIN
+   
+    UPDATE ip_product_2d_barcode
+       SET qc_scan_yn = 'Y', qc_scan_date = SYSDATE
+     WHERE serial_no = :new.PRODUCT_ID ;
+     
+END;

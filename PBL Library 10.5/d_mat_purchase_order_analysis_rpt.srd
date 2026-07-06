@@ -1,0 +1,60 @@
+HA$PBExportHeader$d_mat_purchase_order_analysis_rpt.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=4 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no  crosstab.dynamic = yes grid.lines=0 grid.columnmove=no selected.mouse=no )
+header[1](height=0 color="536870912" )
+header[2](height=124 color="536870912" )
+header[3](height=112 color="536870912" )
+summary(height=68 color="65535" )
+footer(height=0 color="536870912" )
+detail(height=64 color="536870912" )
+table(column=(type=char(20) updatewhereclause=yes name=item_code dbname="item_code" )
+ column=(type=char(20) updatewhereclause=yes name=item_name dbname="item_name" )
+ column=(type=number updatewhereclause=yes name=order_qty dbname="order_qty" )
+ column=(type=number updatewhereclause=yes name=arrival_qty dbname="arrival_qty" )
+ retrieve="  SELECT ~"IM_ITEM_PURCHASE_ORDER~".~"DELIVERY_DATE~",   
+         ~"IM_ITEM_PURCHASE_ORDER~".~"SUPPLIER_CODE~"||' '||f_get_supplier_name( supplier_code , organization_id) supplier_code,   
+         ~"IM_ITEM_PURCHASE_ORDER~".~"ITEM_CODE~",   
+         ~"IM_ITEM_PURCHASE_ORDER~".~"ORDER_QTY~",   
+         ~"IM_ITEM_PURCHASE_ORDER~".~"ARRIVAL_QTY~",   
+         f_get_item_name( item_code , trunc(delivery_date) , organization_id ) item_name  
+    FROM ~"IM_ITEM_PURCHASE_ORDER~"  
+   WHERE ( ~"IM_ITEM_PURCHASE_ORDER~".~"DELIVERY_DATE~" >= :arg_dateset ) AND  
+         ( ~"IM_ITEM_PURCHASE_ORDER~".~"DELIVERY_DATE~" <= :arg_dateend ) AND  
+         ( ~"IM_ITEM_PURCHASE_ORDER~".~"SUPPLIER_CODE~" like :arg_supplier_code ) AND  
+         ( ~"IM_ITEM_PURCHASE_ORDER~".~"ITEM_CODE~" like :arg_item_code ) AND  
+         ( TO_CHAR(~"IM_ITEM_PURCHASE_ORDER~".~"ORGANIZATION_ID~") LIKE :arg_org )    
+" arguments=(("arg_dateset", datetime),("arg_dateend", datetime),("arg_supplier_code", string),("arg_item_code", string),("arg_org", string))  sort="item_code A item_name A " )
+text(band=header[2] alignment="2" text="@supplier_code" border="2" color="33554432" x="1234" y="4" height="116" width="315" html.valueishtml="0"  name=t_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[3] alignment="0" text="Item Code" border="2" color="33554432" x="224" y="4" height="112" width="480" html.valueishtml="0"  name=item_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[3] alignment="0" text="Item Name" border="2" color="33554432" x="713" y="4" height="112" width="512" html.valueishtml="0"  name=item_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[3] alignment="1" text="Order Qty" border="2" color="33554432" x="1234" y="4" height="112" width="315" html.valueishtml="0"  name=order_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[3] alignment="1" text="Arrival Qty" border="2" color="33554432" x="1559" y="4" height="112" width="320" html.valueishtml="0"  name=arrival_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[3] alignment="1" text="Total Sum Of Order Qty" border="2" color="33554432" x="2121" y="4" height="112" width="375" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65280" )
+text(band=header[3] alignment="1" text="Total Sum Of Arrival Qty" border="2" color="33554432" x="2505" y="4" height="112" width="379" html.valueishtml="0"  name=t_5 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65280" )
+compute(band=detail alignment="0" expression="getrow()"border="2" color="33554432" x="5" y="4" height="56" width="210" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="2" color="33554432" x="713" y="4" height="56" width="512" format="[general]" html.valueishtml="0"  name=item_name visible="1" edit.limit=4000 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="2" color="33554432" x="224" y="4" height="56" width="480" format="[general]" html.valueishtml="0"  name=item_code visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="1" tabsequence=32766 border="2" color="33554432" x="1234" y="4" height="56" width="315" format="###,##0.00" html.valueishtml="0"  name=order_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes crosstab.repeat=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="1" expression="crosstabsum(1)"border="2" color="33554432" x="2121" y="4" height="56" width="375" format="###,##0.00" html.valueishtml="0"  name=grand_sum_order_qty visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65280" )
+column(band=detail id=4 alignment="1" tabsequence=32766 border="2" color="33554432" x="1559" y="4" height="56" width="320" format="###,##0.00" html.valueishtml="0"  name=arrival_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes crosstab.repeat=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+compute(band=detail alignment="1" expression=" arrival_qty / order_qty "border="2" color="33554432" x="1888" y="4" height="56" width="229" format="##0.00%" html.valueishtml="0"  name=compute_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65280" )
+compute(band=detail alignment="1" expression="crosstabsum(2)"border="2" color="33554432" x="2505" y="4" height="56" width="379" format="###,##0.00" html.valueishtml="0"  name=grand_sum_arrival_qty visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65280" )
+compute(band=summary alignment="1" expression="~"Grand Total~""border="2" color="33554432" x="224" y="4" height="64" width="480" format="[general]" html.valueishtml="0"  name=compute_6 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(order_qty for all )"border="2" color="33554432" x="1234" y="4" height="64" width="315" format="###,##0.00" html.valueishtml="0"  name=compute_7 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(grand_sum_order_qty for all )"border="2" color="33554432" x="2121" y="4" height="64" width="375" format="###,##0.00" html.valueishtml="0"  name=compute_9 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65280" )
+compute(band=summary alignment="1" expression="sum(arrival_qty for all )"border="2" color="33554432" x="1559" y="4" height="64" width="320" format="###,##0.00" html.valueishtml="0"  name=compute_8 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+compute(band=summary alignment="1" expression="avg( arrival_qty / order_qty  for all)"border="2" color="33554432" x="1888" y="4" height="64" width="229" format="##0.00%" html.valueishtml="0"  name=compute_3 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65280" )
+compute(band=summary alignment="1" expression="sum(grand_sum_arrival_qty for all )"border="2" color="33554432" x="2505" y="4" height="64" width="379" format="###,##0.00" html.valueishtml="0"  name=compute_10 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65280" )
+ crosstab(band = foreground  crosstabonly = yes 
+ columns = "supplier_code" rows = "item_code, item_name" values = "sum(order_qty for crosstab), sum(arrival_qty for crosstab)" sourcenames = "delivery_date, supplier_code, item_code, order_qty, arrival_qty, item_name")
+sparse(names="item_code")htmltable(border="0" cellpadding="1" cellspacing="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

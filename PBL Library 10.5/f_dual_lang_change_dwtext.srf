@@ -1,0 +1,210 @@
+HA$PBExportHeader$f_dual_lang_change_dwtext.srf
+$PBExportComments$Data Window $$HEX8$$38bb90c72000c0bcbdac200068d518c2$$ENDHEX$$
+global type f_dual_lang_change_dwtext from function_object
+end type
+
+forward prototypes
+global subroutine f_dual_lang_change_dwtext (datawindow adw_dw)
+end prototypes
+
+global subroutine f_dual_lang_change_dwtext (datawindow adw_dw);setpointer(hourglass!)
+
+string ls_crosstab
+
+string		ls_dwhead,		&
+			ls_dwobject,	&
+			ls_dwcobject,	&
+			ls_text,			&
+			ls_chg_text , lvs_datawindow_name , lvs_window_name , LVS_ISO_TAG
+integer	li_rc,				&
+			li_col,				&
+			li_objcount,		&
+			li_start,			&
+			li_end,			&
+			li_cobjcount,	&
+			li_col3,			&
+			li_cstart,			&
+			li_cend , lvi_footer
+long		ll_row,			&
+			ll_rowcnt
+
+STRING	lvs_column_name
+
+
+YIELD()
+
+if Gvs_previous_language <>  Gvs_language then
+
+		if Gvs_previous_language ='K' then
+				lvs_column_name =  "korea_text = '"
+		elseif  Gvs_previous_language ='C' then
+				lvs_column_name =  "local_text = '"
+		elseif Gvs_previous_language ='E' then
+				lvs_column_name =  "english_text = '"
+		end if
+else
+				lvs_column_name =  "english_text = '"
+end if 
+
+datastore			ds_child
+datawindowchild	dwc_child
+
+ds_child = create datastore
+
+if adw_dw.dataobject = '' then
+	return
+end if
+
+lvs_datawindow_name = upper(adw_dw.CLASSname( ))
+lvs_window_name = upper(selected_window.classname())
+
+lvi_footer = integer(string(adw_dw.object.datawindow.Footer.Height)) - 52
+if lvi_footer = 0 then 
+else
+	adw_dw.modify( "create text(band=footer alignment='0' text='"+LVS_ISO_TAG+"' border='0' color='33554432' x='18' y='"+string(lvi_footer)+"' height='52' width='850' html.valueishtml='0'  name=t_iso_tag visible='1'  font.face='Tahoma' font.height='-8' font.weight='400'  font.family='2' font.pitch='2' font.charset='0' background.mode='2' background.color='1073741824' ")
+			
+end if
+
+ls_dwobject = adw_dw.Object.DataWindow.Objects     // dw object list
+
+if len(trim(ls_dwobject)) = 0 &
+then                    
+	 return
+end if
+
+ll_rowcnt = gds_dual.rowcount ()
+li_objcount = f_dual_lang_object_count(ls_dwobject)     		 // get object count
+li_start = 0
+
+for li_col = 1 to li_objcount
+	li_end = pos(ls_dwobject, "~t", li_start + 1)
+
+	if li_col < li_objcount then    // last object check
+		ls_dwhead = mid(ls_dwobject, li_start + 1, li_end - li_start - 1)	
+	else
+		ls_dwhead = mid(ls_dwobject, li_start + 1, len(ls_dwobject) - li_start)
+	end if
+		
+	if  adw_dw.describe (ls_dwhead + ".type") = "text" then    // object type check
+		ls_text = trim(adw_dw.describe(ls_dwhead + ".text"))
+		ll_row = gds_dual.find ( lvs_column_name + UPPER ( ls_text ) + "' ", 1, ll_rowcnt )
+		if ll_row > 0 then
+			if Gvs_language = 'C' then
+				ls_chg_text = gds_dual.object.local_text [ ll_row ]
+			elseif Gvs_language = 'K' then
+				ls_chg_text = gds_dual.object.korea_text [ ll_row ]
+			elseif Gvs_language = 'E' then
+				ls_chg_text = gds_dual.object.english_origin_text [ ll_row ]					
+			end if	
+			adw_dw.modify(ls_dwhead + ".text = '" + ls_chg_text + "'")
+		end if
+	elseif adw_dw.describe (ls_dwhead + ".type") = "column" then    // object type check
+		
+//		if	UPPER(ls_dwhead) = 'EMPNO' then	adw_dw.modify(ls_dwhead + ".Pointer = 'Help!' ")
+
+		ls_text	=	trim(adw_dw.describe(ls_dwhead + ".checkbox.text"))
+		if not(ls_text = '!' or ls_text = '?') then				
+			ll_row = gds_dual.find ( lvs_column_name + UPPER ( ls_text ) + "' ", 1, ll_rowcnt )
+			if ll_row > 0 then
+				if Gvs_language = 'C' then
+				ls_chg_text = gds_dual.object.local_text [ ll_row ]
+				elseif Gvs_language = 'K' then
+					ls_chg_text = gds_dual.object.korea_text [ ll_row ]
+				elseif Gvs_language = 'E' then
+					ls_chg_text = gds_dual.object.english_origin_text [ ll_row ]					
+				end if	
+				adw_dw.modify(ls_dwhead + ".checkbox.text = '" + ls_chg_text + "'")
+			end if
+		end if
+
+		ls_text	=	trim(adw_dw.describe(ls_dwhead + ".radiobuttons.columns"))
+		if not(ls_text = '!' or ls_text = '?') then		
+			
+			ls_text = adw_dw.Describe(ls_dwhead + ".Values")
+			
+			ll_row = gds_dual.find ( lvs_column_name + UPPER ( ls_text ) + "' ", 1, ll_rowcnt )
+			if ll_row > 0 then
+				if Gvs_language = 'C' then
+					ls_chg_text = gds_dual.object.local_text [ ll_row ]
+				elseif Gvs_language = 'K' then
+					ls_chg_text = gds_dual.object.korea_text [ ll_row ]
+				elseif Gvs_language = 'E' then
+					ls_chg_text = gds_dual.object.english_origin_text [ ll_row ]					
+				end if	
+				adw_dw.modify(ls_dwhead + ".Values = '" + ls_chg_text + "'")
+			end if
+		end if
+elseif  adw_dw.describe (ls_dwhead + ".type") = "button" then    // object type check
+		ls_text = trim(adw_dw.describe(ls_dwhead + ".text"))
+		ll_row = gds_dual.find ( lvs_column_name + UPPER ( ls_text ) + "' ", 1, ll_rowcnt )
+		if ll_row > 0 then
+			if Gvs_language = 'C' then
+				ls_chg_text = gds_dual.object.local_text [ ll_row ]
+			elseif Gvs_language = 'K' then
+				ls_chg_text = gds_dual.object.korea_text [ ll_row ]
+			elseif Gvs_language = 'E' then
+				ls_chg_text = gds_dual.object.english_origin_text [ ll_row ]					
+			end if	
+			adw_dw.modify(ls_dwhead + ".text = '" + ls_chg_text + "'")
+		end if
+		
+	elseif adw_dw.describe (ls_dwhead + ".type") = "report" then    // object type check
+			adw_dw.getchild ( ls_dwhead, dwc_child )
+			ds_child.dataobject = adw_dw.describe (ls_dwhead + ".dataobject") 
+			
+			ls_dwcobject = ds_child.object.DataWindow.Objects     // dw object list
+			if len(trim(ls_dwcobject)) = 0 then 
+				continue
+			end if
+			
+			lvi_footer = integer(string(adw_dw.object.datawindow.Footer.Height)) - 52
+			if lvi_footer = 0 then 
+			else		
+				ds_child.modify( "create text(band=footer alignment='0' text='"+LVS_ISO_TAG+"' border='0' color='33554432' x='18' y='"+string(lvi_footer)+"' height='52' width='850' html.valueishtml='0'  name=t_iso_tag visible='1'  font.face='Tahoma' font.height='-8' font.weight='400'  font.family='2' font.pitch='2' font.charset='0' background.mode='2' background.color='1073741824' ")
+			end if
+			
+			ls_crosstab = ds_child.describe ("DataWindow.Processing")  
+			// crosstab$$HEX15$$74c774ba2000e4b26dadb4c52000c0bc58d6200058d5c0c920004ac54cc7$$ENDHEX$$
+			if ls_crosstab = '4' then
+				continue
+			end if
+							
+			li_cobjcount = f_dual_lang_object_count(ls_dwcobject)     		  // get object count
+			li_cstart = 0
+			for li_col3 = 1 to li_cobjcount
+				li_cend = pos(ls_dwcobject, "~t", li_cstart + 1)
+				if li_col3 < li_cobjcount then    // last object check
+					ls_dwhead = mid(ls_dwcobject, li_cstart + 1, li_cend - li_cstart - 1)	
+				else
+					ls_dwhead = mid(ls_dwcobject, li_cstart + 1, len(ls_dwcobject) - li_cstart)
+				end if
+				
+				if ds_child.describe (ls_dwhead + ".type") = "text" then    // object type check
+					ls_text = trim(ds_child.describe(ls_dwhead + ".text")) 
+					ll_row = gds_dual.find ( lvs_column_name + UPPER ( ls_text ) + "' ", 1, ll_rowcnt )
+					if ll_row > 0 then
+						if Gvs_language = 'C' then
+							ls_chg_text = gds_dual.object.local_text [ ll_row ]
+						elseif Gvs_language = 'K' then
+							ls_chg_text = gds_dual.object.korea_text [ ll_row ]
+						elseif Gvs_language = 'E' then
+							ls_chg_text = gds_dual.object.english_origin_text [ ll_row ]					
+						end if	
+						dwc_child.modify(ls_dwhead + ".text = '" + ls_chg_text + "'")
+					end if 
+				end if
+				
+				li_cstart = li_cend
+			next
+	end if
+
+	 li_start = li_end 
+next
+
+ls_crosstab = adw_dw.describe ("DataWindow.Processing")  
+//// crosstab$$HEX15$$74c774ba2000e4b26dadb4c52000c0bc58d6200058d5c0c920004ac54cc7$$ENDHEX$$
+//if ls_crosstab = '1' then
+//	adw_dw.Modify( "create bitmap(band=background filename='dw_back.bmp' x='0' y='0' height='128' width='17307' border='0'  name=p_1 visible='1' )" )
+//end if 
+end subroutine
+

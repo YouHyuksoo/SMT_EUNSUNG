@@ -1,0 +1,101 @@
+HA$PBExportHeader$d_mat_total_inventory_matrix_query.srd
+$PBExportComments$$$HEX7$$1dcdacc7e0ace4b9b8d2adb9a4c2$$ENDHEX$$
+release 10.5;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=4 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no  crosstab.dynamic = yes grid.lines=0 grid.columnmove=no selected.mouse=no )
+header[1](height=0 color="536870912" )
+header[2](height=128 color="536870912" )
+summary(height=84 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=72 color="536870912" )
+table(column=(type=char(20) updatewhereclause=yes name=supplier_code dbname="supplier_code" )
+ column=(type=char(20) updatewhereclause=yes name=item_code dbname="item_code" )
+ column=(type=char(20) updatewhereclause=yes name=item_name dbname="item_name" )
+ column=(type=char(20) updatewhereclause=yes name=item_division dbname="item_division" )
+ column=(type=char(20) updatewhereclause=yes name=abc_grade dbname="abc_grade" )
+ column=(type=char(20) updatewhereclause=yes name=keyitem_yn dbname="keyitem_yn" )
+ column=(type=char(20) updatewhereclause=yes name=msl_level dbname="msl_level" )
+ column=(type=number updatewhereclause=yes name=product_inventory_qty dbname="product_inventory_qty" )
+ column=(type=number updatewhereclause=yes name=assembly_inventory_qty dbname="assembly_inventory_qty" )
+ column=(type=number updatewhereclause=yes name=workstage_inventory_qty dbname="workstage_inventory_qty" )
+ column=(type=number updatewhereclause=yes name=on_feeding_qty dbname="on_feeding_qty" )
+ column=(type=number updatewhereclause=yes name=receipt_wait_qty dbname="receipt_wait_qty" )
+ column=(type=number updatewhereclause=yes name=workstage_reverse_qty dbname="workstage_reverse_qty" )
+ column=(type=number updatewhereclause=yes name=inventory_qty dbname="inventory_qty" )
+ retrieve="  SELECT A.ITEM_CODE,   
+         A.ITEM_NAME,   
+         A.ITEM_SPEC,   
+         A.MSL_LEVEL,   
+         A.KEYITEM_YN,   
+         A.ABC_GRADE,   
+         A.ITEM_DIVISION,   
+         A.SUPPLIER_CODE,   
+
+		F_GET_MAT_ON_FEEDER_QTY(A.item_code ,  A.organization_id ) on_feeding_qty ,  
+		f_get_mat_receipt_wait_qty(A.item_code ,  A.organization_id ) receipt_wait_qty ,  
+       	f_get_sal_assy_inv_by_item( A.item_code ,  A.organization_id ) ASSEMBLY_INVENTORY_QTY ,
+		f_get_sal_prod_inv_by_item( A.item_code ,  A.organization_id ) PRODUCT_INVENTORY_QTY ,
+		f_get_mat_ws_inv_qty( A.item_code ,  A.organization_id ) WORKSTAGE_INVENTORY_QTY ,
+		F_GET_MAT_WS_REV_INV_QTY( A.item_code ,  A.organization_id ) WORKSTAGE_REVERSE_QTY ,
+         f_get_basecode( 'MATERIAL LOCATION CODE' , B.LOCATION_CODE  , :ARG_LANG , :ARG_ORG ) LOCATION_CODE ,
+
+		B.INVENTORY_QTY
+    FROM ID_ITEM A,   
+           ( SELECT ITEM_CODE , LOCATION_CODE , SUM(INVENTORY_QTY) INVENTORY_QTY , ORGANIZATION_ID  FROM IM_ITEM_INVENTORY GROUP BY ITEM_CODE , LOCATION_CODE , ORGANIZATION_ID  ) B 
+   WHERE ( A.item_code = B.item_code (+)) and  
+         ( A.organization_id = B.organization_id (+))  and
+		A.ITEM_CODE LIKE :ARG_ITEM_CODE AND 
+		A.ITEM_DIVISION LIKE :ARG_ITEM_DIVISION AND 
+		A.ORGANIZATION_ID = :ARG_ORG AND 
+		A.ITEM_CODE <> '*' 
+    
+
+
+" arguments=(("ARG_ITEM_CODE", string),("ARG_ITEM_DIVISION", string),("ARG_LANG", string),("ARG_ORG", number))  sort="supplier_code A item_code A item_name A item_division A abc_grade A keyitem_yn A msl_level A product_inventory_qty A assembly_inventory_qty A workstage_inventory_qty A on_feeding_qty A receipt_wait_qty A workstage_reverse_qty A " )
+text(band=header[1] alignment="0" text="Sum Of Inventory Qty" border="0" color="0" x="9" y="4" height="52" width="279" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header[1] alignment="0" text="Location Code" border="0" color="0" x="297" y="4" height="52" width="448" html.valueishtml="0"  name=t_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432" x="9" y="4" height="64" width="279" format="[general]" html.valueishtml="0"  name=supplier_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432" x="297" y="4" height="64" width="448" format="[general]" html.valueishtml="0"  name=item_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="33554432" x="754" y="4" height="64" width="599" format="[general]" html.valueishtml="0"  name=item_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="33554432" x="1362" y="4" height="64" width="183" format="[general]" html.valueishtml="0"  name=item_division visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="0" tabsequence=32766 border="0" color="33554432" x="1554" y="4" height="64" width="146" format="[general]" html.valueishtml="0"  name=abc_grade visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=6 alignment="0" tabsequence=32766 border="0" color="33554432" x="1710" y="4" height="64" width="165" format="[general]" html.valueishtml="0"  name=keyitem_yn visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=7 alignment="0" tabsequence=32766 border="0" color="33554432" x="1883" y="4" height="64" width="151" format="[general]" html.valueishtml="0"  name=msl_level visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="~"Grand Total~""border="0" color="0" x="9" y="4" height="64" width="279" format="[general]" html.valueishtml="0"  name=compute_37 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header[2] alignment="2" text="Supplier Code" border="0" color="0" x="9" y="4" height="116" width="279" html.valueishtml="0"  name=supplier_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[2] alignment="2" text="Item Code" border="0" color="0" x="297" y="4" height="116" width="448" html.valueishtml="0"  name=item_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[2] alignment="2" text="Item Name" border="0" color="0" x="754" y="4" height="116" width="599" html.valueishtml="0"  name=item_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[2] alignment="2" text="Item Division" border="0" color="0" x="1362" y="4" height="116" width="183" html.valueishtml="0"  name=item_division_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[2] alignment="2" text="Abc Grade" border="0" color="0" x="1554" y="4" height="116" width="146" html.valueishtml="0"  name=abc_grade_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[2] alignment="2" text="Keyitem Yn" border="0" color="0" x="1710" y="4" height="116" width="165" html.valueishtml="0"  name=keyitem_yn_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[2] alignment="2" text="Msl Level" border="0" color="0" x="1883" y="4" height="116" width="151" html.valueishtml="0"  name=msl_level_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[2] alignment="2" text="Product Inventory Qty" border="0" color="0" x="2043" y="4" height="116" width="288" html.valueishtml="0"  name=product_inventory_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[2] alignment="2" text="Assembly Inventory Qty" border="0" color="0" x="2341" y="4" height="116" width="302" html.valueishtml="0"  name=assembly_inventory_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[2] alignment="2" text="Workstage Inventory Qty" border="0" color="0" x="2651" y="4" height="116" width="311" html.valueishtml="0"  name=workstage_inventory_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[2] alignment="2" text="On Feeding Qty" border="0" color="0" x="2971" y="4" height="116" width="293" html.valueishtml="0"  name=on_feeding_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[2] alignment="2" text="Receipt Wait Qty" border="0" color="0" x="3273" y="4" height="116" width="215" html.valueishtml="0"  name=receipt_wait_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[2] alignment="2" text="Workstage Reverse Qty" border="0" color="0" x="3497" y="4" height="116" width="297" html.valueishtml="0"  name=workstage_reverse_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[2] alignment="2" text="@location_code" border="0" color="0" x="3803" y="4" height="116" width="347" html.valueishtml="0"  name=inventory_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[2] alignment="2" text="Grand Total " border="0" color="0" x="4160" y="4" height="116" width="366" html.valueishtml="0"  name=grand_sum_inventory_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+column(band=detail id=8 alignment="1" tabsequence=32766 border="0" color="33554432" x="2043" y="4" height="64" width="288" format="[general]" html.valueishtml="0"  name=product_inventory_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=9 alignment="1" tabsequence=32766 border="0" color="33554432" x="2341" y="4" height="64" width="302" format="[general]" html.valueishtml="0"  name=assembly_inventory_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=10 alignment="1" tabsequence=32766 border="0" color="33554432" x="2651" y="4" height="64" width="311" format="[general]" html.valueishtml="0"  name=workstage_inventory_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=11 alignment="1" tabsequence=32766 border="0" color="33554432" x="2971" y="4" height="64" width="293" format="[general]" html.valueishtml="0"  name=on_feeding_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=12 alignment="1" tabsequence=32766 border="0" color="33554432" x="3273" y="4" height="64" width="215" format="[general]" html.valueishtml="0"  name=receipt_wait_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=13 alignment="1" tabsequence=32766 border="0" color="33554432" x="3497" y="4" height="64" width="297" format="[general]" html.valueishtml="0"  name=workstage_reverse_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=14 alignment="1" tabsequence=32766 border="0" color="33554432" x="3803" y="4" height="64" width="347" format="[general]" html.valueishtml="0"  name=inventory_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes crosstab.repeat=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="1" expression="crosstabsum(1)"border="0" color="33554432" x="4160" y="4" height="64" width="366" format="[general]" html.valueishtml="0"  name=grand_sum_inventory_qty visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(inventory_qty for all )"border="0" color="33554432" x="3803" y="4" height="64" width="347" format="[general]" html.valueishtml="0"  name=compute_38 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(grand_sum_inventory_qty for all )"border="0" color="33554432" x="4160" y="4" height="64" width="366" format="[general]" html.valueishtml="0"  name=compute_39 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+ crosstab(band = foreground  crosstabonly = yes 
+ columns = "location_code" rows = "supplier_code, item_code, item_name, item_division, abc_grade, keyitem_yn, msl_level, product_inventory_qty, assembly_inventory_qty, workstage_inventory_qty, on_feeding_qty, receipt_wait_qty, workstage_reverse_qty" values = "sum(inventory_qty for crosstab)" sourcenames = "item_code, item_name, item_spec, msl_level, keyitem_yn, abc_grade, item_division, supplier_code, on_feeding_qty, receipt_wait_qty, assembly_inventory_qty, product_inventory_qty, workstage_inventory_qty, workstage_reverse_qty, location_code, inventory_qty")
+sparse(names="supplier_code	item_code	item_name	item_division	abc_grade	keyitem_yn	msl_level	product_inventory_qty	assembly_inventory_qty	workstage_inventory_qty	on_feeding_qty	receipt_wait_qty")htmltable(border="0" cellpadding="1" cellspacing="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

@@ -1,0 +1,34 @@
+HA$PBExportHeader$vd_product_location_code.srd
+$PBExportComments$$$HEX6$$64b8200054cfdcb4a9c62000$$ENDHEX$$DDDW
+release 10.5;
+datawindow(units=0 timer_interval=0 color=12632256 processing=1 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no grid.lines=0 )
+header(height=76 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=64 color="12632256" )
+table(column=(type=char(100) updatewhereclause=yes name=code_name dbname="isys_basecode.code_name" )
+ column=(type=char(100) updatewhereclause=yes name=code_mean dbname="code_mean" )
+ retrieve="SELECT CODE_NAME ,
+		 DECODE(:ARG_LANG, 'K', CODE_MEAN_KOR, 'E', CODE_MEAN_ENG ,CODE_MEAN_LOCAL ) AS CODE_MEAN     
+FROM  ISYS_BASECODE      
+WHERE  CODE_TYPE       = 'PRODUCT LOCATION CODE'
+     AND  ORGANIZATION_ID = :ARG_ORG   " arguments=(("ARG_LANG", string),("ARG_ORG", string)) )
+group(level=1 header.height=0 trailer.height=12 by=("" ) header.color="536870912" trailer.color="65535" )
+text(band=header alignment="2" text="No" border="0" color="0" x="110" y="8" height="116" width="133" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Code Name" border="0" color="33554432" x="247" y="8" height="116" width="320" html.valueishtml="0"  name=code_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Code Mean" border="0" color="33554432" x="576" y="8" height="116" width="434" html.valueishtml="0"  name=code_mean_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+compute(band=detail alignment="2" expression="trim('')"border="0" color="0" x="9" y="4" height="56" width="91" format="[GENERAL]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=detail alignment="2" expression="getrow()"border="0" color="0" x="110" y="4" height="56" width="133" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="33554432" x="251" y="4" height="56" width="315" format="[general]" html.valueishtml="0"  name=code_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="33554432" x="576" y="4" height="56" width="430" format="[general]" html.valueishtml="0"  name=code_mean visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

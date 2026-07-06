@@ -1,0 +1,62 @@
+HA$PBExportHeader$f_sql_check.srf
+$PBExportComments$SQLCA $$HEX6$$7cb92000b4cc6cd05cd5e4b2$$ENDHEX$$
+global type f_sql_check from function_object
+end type
+
+forward prototypes
+global function integer f_sql_check ()
+end prototypes
+
+global function integer f_sql_check ();STRING LVS_TEXT , LVS_SQLERRTEXT , LVS_CONSTRAINTS_NAME , LVS_TABLE_NAME
+LONG LVL_SQLCODE , LVL_SQLDBCODE
+
+LVL_SQLCODE = SQLCA.SQLCODE
+LVL_SQLDBCODE= SQLCA.SQLDBCODE
+LVS_SQLERRTEXT = SQLCA.SQLERRTEXT
+LVS_TEXT = STRING(SQLCA.SQLERRTEXT)+"~r~n"+"Return Data"+SQLCA.SQLReturnData+'~r~n'
+
+
+IF LVL_SQLCODE < 0 THEN 
+	
+      f_screen_capture()			
+	ROLLBACK;
+	
+	if   LVL_SQLDBCODE = 20100 then 
+		
+		F_MSGBOX1( LVL_SQLDBCODE , LVS_TEXT  )		
+		
+	elseif LVL_SQLCODE =  2291 then
+		
+			LVS_CONSTRAINTS_NAME = MID( LVS_SQLERRTEXT , POS( LVS_SQLERRTEXT , '.' ,1 ) + 1 ,   POS(LVS_SQLERRTEXT , ')' ) - ( POS( LVS_SQLERRTEXT , '.' ,1 )  +1 )  )
+			LVS_TABLE_NAME = F_GET_CONSTRAINTS_TABLE_NAME(LVS_CONSTRAINTS_NAME) 
+			
+			IF ISNULL(LVS_TABLE_NAME) OR LVS_TABLE_NAME = '' THEN 
+				LVS_TABLE_NAME = '*'
+			END IF
+			
+			F_MSGBOX2(1101, 'SQLCODE='+STRING(SQLCA.SQLCODE)+'  '+LVS_CONSTRAINTS_NAME , LVS_TABLE_NAME )		
+
+	else	
+
+		F_MSGBOX2( 1101 , STRING(LVL_SQLDBCODE) , LVS_TEXT )
+		
+	end if
+
+	ROLLBACK;
+	
+	//=========================================================
+	// Error Log Trace
+	//=========================================================
+	if Gvs_error_log_trace_yn = 'Y' then
+		f_set_error_log_trace( w_main_frame.Getactivesheet() , '' , 0 , ''  ,LVL_SQLCODE ,  LVS_SQLERRTEXT , '') 
+	end if 
+	//=========================================================
+
+	RETURN -1 
+ELSE
+	RETURN  1
+END IF
+
+
+end function
+

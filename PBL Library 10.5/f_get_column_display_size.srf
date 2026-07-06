@@ -1,0 +1,26 @@
+HA$PBExportHeader$f_get_column_display_size.srf
+global type f_get_column_display_size from function_object
+end type
+
+forward prototypes
+global function integer f_get_column_display_size (string arg_column_name)
+end prototypes
+
+global function integer f_get_column_display_size (string arg_column_name);LONG LVL_COLUMN_DISPLAY_SIZE
+
+SELECT NVL(COLUMN_DISPLAY_SIZE ,0)
+   INTO :LVL_COLUMN_DISPLAY_SIZE
+  FROM ISYS_WORD_DICTIONARY 
+WHERE COLUMN_NAME = :ARG_COLUMN_NAME  ;
+
+IF F_SQL_CHECK() < 0 THEN 
+	RETURN -1
+END IF
+
+IF LVL_COLUMN_DISPLAY_SIZE = 0 THEN 
+	RETURN 0
+END IF
+
+RETURN LVL_COLUMN_DISPLAY_SIZE
+end function
+

@@ -1,0 +1,17 @@
+HA$PBExportHeader$f_set_zoom.srf
+$PBExportComments$Pring Page Size Setting
+global type f_set_zoom from function_object
+end type
+
+forward prototypes
+global function integer f_set_zoom (datawindow arg_dw_name, string arg_zoom)
+end prototypes
+
+global function integer f_set_zoom (datawindow arg_dw_name, string arg_zoom);string s_var
+s_var = "Datawindow.Zoom=" + trim(arg_zoom)
+arg_dw_name.Modify(s_var)
+Gvs_zoom_size = arg_zoom
+return 1
+
+end function
+

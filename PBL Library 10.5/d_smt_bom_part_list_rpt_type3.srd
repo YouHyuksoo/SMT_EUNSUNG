@@ -1,0 +1,261 @@
+HA$PBExportHeader$d_smt_bom_part_list_rpt_type3.srd
+$PBExportComments$$$HEX13$$3dcce0ac54cfdcb400ac20005ec5d0c588c794b2200020c715d6$$ENDHEX$$
+release 10.5;
+datawindow(units=0 timer_interval=60000 color=16777215 processing=0 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 0 print.margin.right = 0 print.margin.top = 0 print.margin.bottom = 0 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no )
+header(height=856 color="536870912" )
+summary(height=0 color="536870912" height.autosize=yes )
+footer(height=132 color="536870912" )
+detail(height=132 color="536870912" height.autosize=yes )
+table(column=(type=char(3) updatewhereclause=yes name=div dbname="div" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=parent_item_code dbname="id_eng_bom_smt.parent_item_code" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=child_item_code dbname="id_eng_bom_smt.child_item_code" )
+ column=(type=datetime update=yes updatewhereclause=yes name=dateset dbname="id_eng_bom_smt.dateset" )
+ column=(type=number update=yes updatewhereclause=yes name=sort_sequence dbname="id_eng_bom_smt.sort_sequence" )
+ column=(type=number update=yes updatewhereclause=yes name=item_unit_qty dbname="id_eng_bom_smt.item_unit_qty" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=workstage_code dbname="id_eng_bom_smt.workstage_code" )
+ column=(type=datetime update=yes updatewhereclause=yes name=dateend dbname="id_eng_bom_smt.dateend" )
+ column=(type=number update=yes updatewhereclause=yes name=bom_work_no dbname="id_eng_bom_smt.bom_work_no" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=enter_by dbname="id_eng_bom_smt.enter_by" )
+ column=(type=datetime update=yes updatewhereclause=yes name=enter_date dbname="id_eng_bom_smt.enter_date" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=last_modify_by dbname="id_eng_bom_smt.last_modify_by" )
+ column=(type=datetime update=yes updatewhereclause=yes name=last_modify_date dbname="id_eng_bom_smt.last_modify_date" )
+ column=(type=char(300) updatewhereclause=yes name=item_name dbname="id_item.item_name" )
+ column=(type=char(300) updatewhereclause=yes name=item_spec dbname="id_item.item_spec" )
+ column=(type=char(3) updatewhereclause=yes name=item_uom dbname="id_item.item_uom" )
+ column=(type=char(300) updatewhereclause=yes name=parent_item_name dbname="id_item.item_name" )
+ column=(type=char(300) updatewhereclause=yes name=parent_item_spec dbname="id_item.item_spec" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=item_type dbname="id_eng_bom_smt.item_type" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=line_type dbname="id_eng_bom_smt.line_type" )
+ column=(type=number update=yes updatewhereclause=yes name=bom_level dbname="id_eng_bom_smt.bom_level" )
+ column=(type=number update=yes updatewhereclause=yes name=organization_id dbname="id_eng_bom_smt.organization_id" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=location_code dbname="id_eng_bom_smt.location_code" )
+ column=(type=char(1) updatewhereclause=yes name=table_id dbname="table_id" )
+ column=(type=char(20) updatewhereclause=yes name=line_code dbname="id_eng_bom_smt.line_code" )
+ column=(type=char(20) updatewhereclause=yes name=machine dbname="id_eng_bom_smt.machine" )
+ column=(type=char(100) updatewhereclause=yes name=line_name dbname="ib_line_master.line_name" )
+ column=(type=char(100) updatewhereclause=yes name=machine_name dbname="ib_line_master.machine_name" )
+ column=(type=char(32) updatewhereclause=yes name=location_barcode dbname="location_barcode" )
+ column=(type=char(20) updatewhereclause=yes name=line_division dbname="ib_line_master.line_division" )
+ column=(type=char(32) updatewhereclause=yes name=parent_item_barcode dbname="parent_item_barcode" )
+ column=(type=char(2000) updatewhereclause=yes name=location_info dbname="location_info" )
+ column=(type=char(10) updatewhereclause=yes name=version dbname="id_eng_bom_smt.version" )
+ column=(type=char(30) updatewhereclause=yes name=pcb_item dbname="id_eng_bom_smt.pcb_item" )
+ column=(type=char(20) updatewhereclause=yes name=marking_no dbname="id_eng_bom_smt.marking_no" )
+ column=(type=char(1000) updatewhereclause=yes name=comments dbname="id_eng_bom_smt.comments" )
+ column=(type=char(1) updatewhereclause=yes name=show_table_yn dbname="ib_line_master.show_table_yn" )
+ retrieve="  SELECT 'BOM' DIV ,
+		ID_ENG_BOM_SMT.PARENT_ITEM_CODE,   
+         ID_ENG_BOM_SMT.CHILD_ITEM_CODE,   
+         ID_ENG_BOM_SMT.DATESET,   
+         ID_ENG_BOM_SMT.SORT_SEQUENCE,   
+         ID_ENG_BOM_SMT.ITEM_UNIT_QTY,   
+         ID_ENG_BOM_SMT.WORKSTAGE_CODE,   
+         ID_ENG_BOM_SMT.DATEEND,   
+         ID_ENG_BOM_SMT.BOM_WORK_NO,   
+         ID_ENG_BOM_SMT.ENTER_BY,   
+         ID_ENG_BOM_SMT.ENTER_DATE,   
+         ID_ENG_BOM_SMT.LAST_MODIFY_BY,   
+         ID_ENG_BOM_SMT.LAST_MODIFY_DATE,   
+         ID_ITEM_A.ITEM_NAME,   
+         ID_ITEM_A.ITEM_SPEC,   
+         ID_ITEM_A.ITEM_UOM,   
+         ID_ITEM_B.ITEM_NAME,   
+         ID_ITEM_B.ITEM_SPEC,   
+         ID_ENG_BOM_SMT.ITEM_TYPE,   
+         ID_ENG_BOM_SMT.LINE_TYPE,   
+         ID_ENG_BOM_SMT.BOM_LEVEL,   
+         ID_ENG_BOM_SMT.ORGANIZATION_ID,   
+         ID_ENG_BOM_SMT.LOCATION_CODE,   
+         SUBSTR(ID_ENG_BOM_SMT.LOCATION_CODE,1,1) TABLE_ID ,   
+         ID_ENG_BOM_SMT.LINE_CODE,   
+         ID_ENG_BOM_SMT.MACHINE,   
+         IB_LINE_MASTER.LINE_NAME,   
+         IB_LINE_MASTER.MACHINE_NAME,   
+         '*'||ID_ENG_BOM_SMT.LOCATION_CODE||'*' LOCATION_BARCODE,   
+        IB_LINE_MASTER.line_division  line_division ,
+         '*'||ID_ENG_BOM_SMT.PARENT_ITEM_CODE||'*' PARENT_ITEM_BARCODE,   
+         REPLACE( ID_ENG_BOM_SMT.LOCATION_INFO,',',' ') LOCATION_INFO  ,
+
+	   ID_ENG_BOM_SMT.VERSION,   
+	   ID_ENG_BOM_SMT.PCB_ITEM,   
+	   ID_ENG_BOM_SMT.MARKING_NO,
+	   ID_ENG_BOM_SMT.COMMENTS ,
+	
+       IB_LINE_MASTER.SHOW_TABLE_YN	 SHOW_TABLE_YN
+		
+    FROM ID_ENG_BOM_SMT,   
+         ID_ITEM ID_ITEM_A,   
+         ID_ITEM ID_ITEM_B,   
+         IB_LINE_MASTER,   
+         IB_MACHINE_LOCATION  
+   WHERE ( ID_ENG_BOM_SMT.CHILD_ITEM_CODE = ID_ITEM_A.ITEM_CODE (+)) AND  
+         ( ID_ENG_BOM_SMT.ORGANIZATION_ID = ID_ITEM_A.ORGANIZATION_ID (+)) AND  
+         ( ID_ENG_BOM_SMT.PARENT_ITEM_CODE = ID_ITEM_B.ITEM_CODE (+)) AND  
+         ( ID_ENG_BOM_SMT.ORGANIZATION_ID = ID_ITEM_B.ORGANIZATION_ID (+)) AND  
+         ( ID_ENG_BOM_SMT.LINE_CODE = IB_LINE_MASTER.LINE_CODE (+)) AND  
+         ( ID_ENG_BOM_SMT.ORGANIZATION_ID = IB_LINE_MASTER.ORGANIZATION_ID (+)) AND  
+         ( ID_ENG_BOM_SMT.MACHINE = IB_LINE_MASTER.MACHINE (+)) AND  
+
+
+         ( ID_ENG_BOM_SMT.ORGANIZATION_ID = IB_MACHINE_LOCATION.ORGANIZATION_ID) AND  
+         ( ID_ENG_BOM_SMT.LOCATION_CODE = IB_MACHINE_LOCATION.LOCATION_CODE) AND  
+
+         ( ID_ENG_BOM_SMT.PARENT_ITEM_CODE LIKE :ARG_PARENT_ITEM ) AND  
+         ( ID_ENG_BOM_SMT.LINE_CODE LIKE :ARG_LINE_CODE ) AND  
+         ( ID_ENG_BOM_SMT.MACHINE LIKE :ARG_MACHINE ) AND  
+         ( ID_ENG_BOM_SMT.DATESET <= :ARG_DATESET ) AND  
+         ( ID_ENG_BOM_SMT.DATEEND >= :ARG_DATESET ) AND  
+ 	    ( NVL(ID_ENG_BOM_SMT.PCB_ITEM ,'*')  LIKE :ARG_TOPBOT )    AND
+         ( ID_ENG_BOM_SMT.ORGANIZATION_ID = :ARG_ORG )    
+/*
+UNION ALL
+
+  SELECT F_GET_DUAL_LANG_TEXT( 'REPLACE'  , 'C' ,  ID_ENG_BOM_SMT_REPLACE.ORGANIZATION_ID )  DIV ,
+		ID_ENG_BOM_SMT_REPLACE.PARENT_ITEM_CODE,   
+         ID_ENG_BOM_SMT_REPLACE.CHILD_ITEM_CODE,   
+         ID_ENG_BOM_SMT_REPLACE.DATESET,   
+         ID_ENG_BOM_SMT_REPLACE.SORT_SEQUENCE,   
+         ID_ENG_BOM_SMT_REPLACE.ITEM_UNIT_QTY,   
+         ID_ENG_BOM_SMT_REPLACE.WORKSTAGE_CODE,   
+         ID_ENG_BOM_SMT_REPLACE.DATEEND,   
+         ID_ENG_BOM_SMT_REPLACE.BOM_WORK_NO,   
+         ID_ENG_BOM_SMT_REPLACE.ENTER_BY,   
+         ID_ENG_BOM_SMT_REPLACE.ENTER_DATE,   
+         ID_ENG_BOM_SMT_REPLACE.LAST_MODIFY_BY,   
+         ID_ENG_BOM_SMT_REPLACE.LAST_MODIFY_DATE,   
+         ID_ITEM_A.ITEM_NAME,   
+         ID_ITEM_A.ITEM_SPEC,   
+         ID_ITEM_A.ITEM_UOM,   
+         ID_ITEM_B.ITEM_NAME,   
+         ID_ITEM_B.ITEM_SPEC,   
+         ID_ENG_BOM_SMT_REPLACE.ITEM_TYPE,   
+         ID_ENG_BOM_SMT_REPLACE.LINE_TYPE,   
+         ID_ENG_BOM_SMT_REPLACE.BOM_LEVEL,   
+         ID_ENG_BOM_SMT_REPLACE.ORGANIZATION_ID,   
+         ID_ENG_BOM_SMT_REPLACE.LOCATION_CODE,   
+         SUBSTR(ID_ENG_BOM_SMT_REPLACE.LOCATION_CODE,1,1) TABLE_ID ,   
+         ID_ENG_BOM_SMT_REPLACE.LINE_CODE,   
+         ID_ENG_BOM_SMT_REPLACE.MACHINE,   
+         IB_LINE_MASTER.LINE_NAME,   
+         IB_LINE_MASTER.MACHINE_NAME,   
+         '*'||ID_ENG_BOM_SMT_REPLACE.LOCATION_CODE||'*' LOCATION_BARCODE,   
+        IB_LINE_MASTER.line_division  line_division ,
+         '*'||ID_ENG_BOM_SMT_REPLACE.PARENT_ITEM_CODE||'*' PARENT_ITEM_BARCODE,   
+         ID_ENG_BOM_SMT_REPLACE.REPLACE_ITEM_CODE LOCATION_INFO  ,
+
+   ID_ENG_BOM_SMT_REPLACE.VERSION,   
+	   ID_ENG_BOM_SMT_REPLACE.PCB_ITEM,   
+	   ID_ENG_BOM_SMT_REPLACE.MARKING_NO,
+	   ID_ENG_BOM_SMT_REPLACE.COMMENTS ,
+
+       IB_LINE_MASTER.SHOW_TABLE_YN	 SHOW_TABLE_YN
+    FROM ID_ENG_BOM_SMT_REPLACE,   
+         ID_ITEM ID_ITEM_A,   
+         ID_ITEM ID_ITEM_B,   
+         IB_LINE_MASTER,   
+         IB_MACHINE_LOCATION  
+   WHERE ( ID_ENG_BOM_SMT_REPLACE.CHILD_ITEM_CODE = ID_ITEM_A.ITEM_CODE (+)) AND  
+         ( ID_ENG_BOM_SMT_REPLACE.ORGANIZATION_ID = ID_ITEM_A.ORGANIZATION_ID (+)) AND  
+         ( ID_ENG_BOM_SMT_REPLACE.PARENT_ITEM_CODE = ID_ITEM_B.ITEM_CODE (+)) AND  
+         ( ID_ENG_BOM_SMT_REPLACE.ORGANIZATION_ID = ID_ITEM_B.ORGANIZATION_ID (+)) AND  
+
+         ( ID_ENG_BOM_SMT_REPLACE.LINE_CODE = IB_LINE_MASTER.LINE_CODE (+)) AND  
+  	     ( ID_ENG_BOM_SMT_REPLACE.MACHINE = IB_LINE_MASTER.MACHINE (+)) AND  
+   		( ID_ENG_BOM_SMT_REPLACE.ORGANIZATION_ID = IB_LINE_MASTER.ORGANIZATION_ID (+)) AND  
+         ( ID_ENG_BOM_SMT_REPLACE.ORGANIZATION_ID = IB_MACHINE_LOCATION.ORGANIZATION_ID) AND  
+         ( ID_ENG_BOM_SMT_REPLACE.LOCATION_CODE = IB_MACHINE_LOCATION.LOCATION_CODE) AND  
+         ( ID_ENG_BOM_SMT_REPLACE.PARENT_ITEM_CODE LIKE :ARG_PARENT_ITEM ) AND  
+         ( ID_ENG_BOM_SMT_REPLACE.LINE_CODE LIKE :ARG_LINE_CODE ) AND  
+         ( ID_ENG_BOM_SMT_REPLACE.MACHINE LIKE :ARG_MACHINE ) AND  
+         ( ID_ENG_BOM_SMT_REPLACE.DATESET <= :ARG_DATESET ) AND  
+         ( ID_ENG_BOM_SMT_REPLACE.DATEEND >= :ARG_DATESET ) AND  
+         ( ID_ENG_BOM_SMT_REPLACE.ORGANIZATION_ID = :ARG_ORG )  AND 
+		
+         ( ID_ENG_BOM_SMT_REPLACE.PARENT_ITEM_CODE ,  ID_ENG_BOM_SMT_REPLACE.CHILD_ITEM_CODE ) 
+         IN ( SELECT ID_ENG_BOM_SMT.PARENT_ITEM_CODE ,  ID_ENG_BOM_SMT.CHILD_ITEM_CODE 
+               FROM  ID_ENG_BOM_SMT
+			WHERE      
+         ( ID_ENG_BOM_SMT.PARENT_ITEM_CODE LIKE :ARG_PARENT_ITEM ) AND  
+         ( ID_ENG_BOM_SMT.LINE_CODE LIKE :ARG_LINE_CODE ) AND  
+         ( ID_ENG_BOM_SMT.MACHINE LIKE :ARG_MACHINE ) AND  
+         ( ID_ENG_BOM_SMT.DATESET <= :ARG_DATESET ) AND  
+         ( ID_ENG_BOM_SMT.DATEEND >= :ARG_DATESET ) AND  
+         ( ID_ENG_BOM_SMT.ORGANIZATION_ID = :ARG_ORG )    
+  	) 
+
+  */
+" arguments=(("ARG_PARENT_ITEM", string),("ARG_DATESET", datetime),("ARG_LINE_CODE", string),("ARG_MACHINE", string),("ARG_TOPBOT", string),("ARG_ORG", number))  sort="line_code A                     machine A                     parent_item_code A                     INTEGER(table_id) A                    sort_sequence A " )
+group(level=1 header.height=0 trailer.height=168 trailer.height.autosize=yes by=("organization_id" , "line_code" , "machine" , "parent_item_code" , "table_id" ) newpage=yes resetpagecount=yes header.color="536870912" trailer.color="65535" )
+group(level=2 header.height=100 trailer.height=0 by=("div" ) header.color="536870912" trailer.color="536870912" )
+rectangle(band=header x="23" y="452" height="324" width="3351"  name=r_2 visible="1" brush.hatch="6" brush.color="16777215" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="33554432" )
+rectangle(band=header x="23" y="4" height="324" width="3351"  name=r_6 visible="1" brush.hatch="6" brush.color="16777215" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="0" )
+rectangle(band=header x="23" y="324" height="132" width="3351"  name=r_3 visible="1" brush.hatch="6" brush.color="16777215" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+column(band=header id=31 alignment="0" tabsequence=140 border="0" color="33554432" x="1851" y="340" height="96" width="1440" format="[general]" html.valueishtml="0"  name=parent_item_barcode visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Free 3 of 9" font.height="-20" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+text(band=header alignment="1" text="Model Name" border="0" color="33554432" x="55" y="464" height="76" width="759" html.valueishtml="0"  name=parent_item_code_t visible="1"  font.face="Tahoma" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=header id=2 alignment="2" tabsequence=32766 border="0" color="33554432~tIF ( DATEEND < TODAY()  , 255 , 0 )" x="891" y="464" height="76" width="974" format="[general]" html.valueishtml="0"  name=parent_item_code visible="1" edit.limit=30 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="16777215~tif (  parent_item_code = ~"*~"  , RGB(255,128,255) , RGB( 255,255,255 ) )" )
+column(band=header id=34 alignment="2" tabsequence=140 border="0" color="33554432" x="1920" y="464" height="76" width="1399" format="[general]" html.valueishtml="0"  name=pcb_item visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="1" text="Version" border="0" color="0" x="55" y="568" height="84" width="759" html.valueishtml="0"  name=id_item_item_name_t_1 visible="1"  font.face="Tahoma" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=header id=33 alignment="2" tabsequence=130 border="0" color="33554432" x="891" y="568" height="84" width="974" format="[general]" html.valueishtml="0"  name=version visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="1" text="Create Date" border="0" color="33554432" x="1915" y="568" height="84" width="530" html.valueishtml="0"  name=t_11 visible="1"  font.face="Tahoma" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=header id=4 alignment="2" tabsequence=170 border="0" color="33554432" x="2473" y="568" height="84" width="622" format="yyyy/mm/dd" html.valueishtml="0"  name=dateset visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="1" text="Marking No" border="0" color="0" x="55" y="672" height="92" width="759" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=header id=35 alignment="2" tabsequence=150 border="0" color="33554432" x="891" y="672" height="92" width="974" format="[general]" html.valueishtml="0"  name=marking_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="1" text="Generate By" border="0" color="33554432" x="1915" y="672" height="92" width="530" html.valueishtml="0"  name=t_10 visible="1"  font.face="Tahoma" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=header id=10 alignment="2" tabsequence=170 border="0" color="33554432" x="2473" y="672" height="92" width="622" format="[general]" html.valueishtml="0"  name=enter_by visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+line(band=header x1="869" y1="324" x2="869" y2="772"  name=l_6 visible="1" pen.style="0" pen.width="5" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+line(band=header x1="1897" y1="456" x2="1897" y2="768"  name=l_5 visible="1" pen.style="0" pen.width="5" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+line(band=header x1="2459" y1="560" x2="2459" y2="768"  name=l_1 visible="1" pen.style="0" pen.width="5" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+text(band=header alignment="2" text="Qty" border="0" color="33554432" x="2958" y="780" height="64" width="151" html.valueishtml="0"  name=t_3 visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Barcode" border="0" color="33554432" x="2322" y="780" height="64" width="622" html.valueishtml="0"  name=location_code_t visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Location Code" border="0" color="33554432" x="41" y="780" height="64" width="174" html.valueishtml="0"  name=t_6 visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+column(band=header id=30 alignment="0" tabsequence=130 border="0" color="33554432" x="142" y="76" height="160" width="946" format="[general]" html.valueishtml="0"  name=line_division visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-20" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=header id=25 alignment="0" tabsequence=180 border="0" color="33554432" x="1106" y="76" height="160" width="539" format="[general]" html.valueishtml="0"  name=line_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-20" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+text(band=header alignment="1" text="Machine Code" border="0" color="33554432" x="55" y="344" height="92" width="759" html.valueishtml="0"  name=t_5 visible="1"  font.face="Tahoma" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=header id=26 alignment="0" tabsequence=160 border="0" color="33554432" x="901" y="344" height="92" width="187" format="[general]" html.valueishtml="0"  name=machine visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=header id=28 alignment="0" tabsequence=32766 border="0" color="33554432" x="1120" y="344" height="92" width="215" format="[general]" html.valueishtml="0"  name=machine_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+text(band=header alignment="2" text="Child Item Code" border="0" color="33554432" x="229" y="780" height="64" width="494" html.valueishtml="0"  name=child_item_code_t visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Location Infor" border="0" color="33554432" x="745" y="784" height="64" width="1554" html.valueishtml="0"  name=t_2 visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+column(band=header id=37 alignment="0" tabsequence=150 border="0" color="33554432" x="59" y="92" height="80" width="46" format="[general]" html.valueishtml="0"  name=show_table_yn visible="0" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Free 3 of 9" font.height="-20" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+text(band=header alignment="2" text="-" border="0" color="33554432" x="1353" y="344" height="88" width="59" html.valueishtml="0"  name=t_13 visible="1~tif (  SHOW_TABLE_YN = ~"Y~" , 1 , 0 )"  font.face="Tahoma" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=header alignment="0" text="Table" border="0" color="33554432" x="1600" y="344" height="92" width="210" html.valueishtml="0"  name=t_12 visible="1~tif (  SHOW_TABLE_YN = ~"Y~" , 1 , 0 )"  font.face="Tahoma" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+rectangle(band=header x="23" y="772" height="84" width="3351"  name=r_1 visible="1" brush.hatch="6" brush.color="16777215" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="33554432" )
+text(band=header alignment="2" text="Confirm" border="0" color="33554432" x="1874" y="124" height="80" width="411" html.valueishtml="0"  name=t_4 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+text(band=header alignment="2" text="Confirmer1" border="0" color="33554432" x="2331" y="32" height="52" width="283" html.valueishtml="0"  name=t_7 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+line(band=header x1="2309" y1="8" x2="2309" y2="320"  name=l_9 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="0" )
+line(band=header x1="32" y1="556" x2="3365" y2="556"  name=l_2 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="0" )
+line(band=header x1="32" y1="660" x2="3365" y2="660"  name=l_4 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="0" )
+text(band=header alignment="2" text="Confirmer3" border="0" color="33554432" x="3054" y="32" height="52" width="279" html.valueishtml="0"  name=t_9 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+line(band=header x1="3031" y1="8" x2="3031" y2="320"  name=l_13 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="0" )
+text(band=header alignment="2" text="Confirmer2" border="0" color="33554432" x="2693" y="32" height="52" width="283" html.valueishtml="0"  name=t_8 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+line(band=header x1="2665" y1="8" x2="2665" y2="320"  name=l_12 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="0" )
+line(band=header x1="1842" y1="8" x2="1842" y2="320"  name=l_3 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="0" )
+line(band=header x1="2309" y1="248" x2="3365" y2="248"  name=l_11 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="0" )
+line(band=header x1="2309" y1="112" x2="3365" y2="112"  name=l_10 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="0" )
+rectangle(band=header.2 x="37" y="0" height="120" width="3333"  name=r_4 visible="1" brush.hatch="6" brush.color="16776960" pen.style="0" pen.width="5" pen.color="16776960"  background.mode="2" background.color="33554432" )
+column(band=header.2 id=1 alignment="0" tabsequence=190 border="0" color="33554432" x="50" y="12" height="76" width="398" format="[general]" html.valueishtml="0"  name=div visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-12" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+rectangle(band=detail x="23" y="0" height="128" width="3351"  name=r_7 visible="1" brush.hatch="7" brush.color="553648127" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="33554432" )
+line(band=detail x1="2286" y1="0" x2="2286" y2="124"  name=l_16 visible="1" pen.style="2" pen.width="5" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+line(band=detail x1="210" y1="0" x2="210" y2="124"  name=l_14 visible="1" pen.style="2" pen.width="5" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+line(band=detail x1="722" y1="0" x2="722" y2="124"  name=l_15 visible="1" pen.style="2" pen.width="5" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+line(band=detail x1="2098" y1="0" x2="2098" y2="124"  name=l_7 visible="1" pen.style="2" pen.width="5" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+column(band=detail id=23 alignment="2" tabsequence=120 border="0" color="33554432" x="37" y="20" height="88" width="169" format="[general]" html.valueishtml="0"  name=location_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15793151" )
+column(band=detail id=6 alignment="1" tabsequence=140 border="0" color="33554432" x="3250" y="12" height="84" width="110" format="[general]" html.valueishtml="0"  name=item_unit_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="1" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="0" color="33554432~tIF ( DATEEND < TODAY()  , 255 , 0 )" x="224" y="20" height="88" width="494" format="[general]" html.valueishtml="0"  name=child_item_code visible="1" height.autosize=yes edit.limit=30 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="16777215~tif (  parent_item_code = ~"*~"  , RGB(255,128,255) , RGB( 255,255,255 ) )" )
+column(band=detail id=32 alignment="0" tabsequence=130 border="0" color="33554432" x="736" y="8" height="112" width="1358" format="[general]" html.valueishtml="0"  name=location_info visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-3~tif ( div = ~"BOM~", -6 , -10 )" font.weight="400"  font.family="1" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=23 alignment="2" tabsequence=120 border="0" color="33554432" x="2112" y="20" height="84" width="169" format="[general]" html.valueishtml="0"  name=location_code_1 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15793151" )
+column(band=detail id=29 alignment="0" tabsequence=32766 border="0" color="33554432" x="2341" y="16" height="88" width="640" format="[general]" html.valueishtml="0"  name=location_barcode visible="1~tif  ( mod( getrow(),2) = 1 , 1 , 0 )" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Free 3 of 9" font.height="-24" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=29 alignment="1" tabsequence=32766 border="0" color="33554432" x="2560" y="16" height="88" width="640" format="[general]" html.valueishtml="0"  name=location_barcode_1 visible="1~tif  ( mod( getrow(),2) = 1 , 0 ,1 )" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Free 3 of 9" font.height="-24" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+report(band=trailer.1 dataobject="d_smt_bom_replace_part_list_4_line_rpt" x="23" y="0" height="148" width="3351" border="2"  height.autosize=yes criteria="" nest_arguments=((" parent_item_code "),(" line_code "),(" machine "),(" table_id ")) trail_footer = yes  name=dw_1 visible="1"  slideleft=yes  slideup=directlyabove )
+compute(band=footer alignment="1" expression="'Page ' + page() + ' of ' + pageCount()"border="0" color="33554432" x="2866" y="12" height="72" width="489" format="[general]" html.valueishtml="0"  name=page_1 visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="0" expression="MAX( comments FOR ALL )"border="0" color="33554432" x="41" y="16" height="68" width="2807" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

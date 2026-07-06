@@ -1,0 +1,23 @@
+HA$PBExportHeader$f_get_new_scan_qty.srf
+global type f_get_new_scan_qty from function_object
+end type
+
+forward prototypes
+global function long f_get_new_scan_qty (string arg_item_code, string arg_lot_no)
+end prototypes
+
+global function long f_get_new_scan_qty (string arg_item_code, string arg_lot_no);LONG LVL_QTY
+SELECT DECODE ( NVL( NEW_SCAN_QTY , 0 ) , 0 , SCAN_QTY , NEW_SCAN_QTY ) 
+  INTO :LVL_QTY 
+  FROM IM_ITEM_RECEIPT_BARCODE 
+  WHERE ITEM_CODE = :ARG_ITEM_CODE
+      AND LOT_NO = :ARG_LOT_NO
+      AND ORGANIZATION_ID = :GVI_ORGANIZATION_ID ;
+		
+IF F_SQL_CHECK() < 0 THEN 
+	RETURN 0
+END IF 
+
+RETURN LVL_QTY ;
+end function
+

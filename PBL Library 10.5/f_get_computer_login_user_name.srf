@@ -1,0 +1,19 @@
+HA$PBExportHeader$f_get_computer_login_user_name.srf
+$PBExportComments$Computer Logon User Name
+global type f_get_computer_login_user_name from function_object
+end type
+
+forward prototypes
+global function string f_get_computer_login_user_name ()
+end prototypes
+
+global function string f_get_computer_login_user_name ();long ll_ret 
+string  ls_UserName 
+ulong BufferLength = 250 
+
+ls_UserName = Space(BufferLength) 
+ll_ret = GetuserNameA(ls_UserName, BufferLength)
+
+return ls_UserName
+end function
+

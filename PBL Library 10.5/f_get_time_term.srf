@@ -1,0 +1,21 @@
+HA$PBExportHeader$f_get_time_term.srf
+global type f_get_time_term from function_object
+end type
+
+forward prototypes
+global function decimal f_get_time_term (datetime arg_dateset, datetime arg_dateend)
+end prototypes
+
+global function decimal f_get_time_term (datetime arg_dateset, datetime arg_dateend);Decimal  lvf_term
+
+select  F_GET_TIME_TERM( :arg_dateset  , :arg_dateend )
+  into :lvf_term
+  from dual ;
+  
+  if f_sql_check_with_msg("f_get_time_term") < 0 then 
+	return - 1
+end if
+
+return lvf_term
+end function
+

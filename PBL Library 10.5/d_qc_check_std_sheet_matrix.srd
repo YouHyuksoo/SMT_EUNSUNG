@@ -1,0 +1,63 @@
+HA$PBExportHeader$d_qc_check_std_sheet_matrix.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=4 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no  crosstab.dynamic = yes grid.lines=1 grid.columnmove=no selected.mouse=no )
+header[1](height=0 color="536870912" )
+header[2](height=76 color="536870912" )
+header[3](height=136 color="536870912" )
+summary(height=68 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=72 color="536870912" )
+table(column=(type=char(20) updatewhereclause=yes name=workstage_code_group dbname="workstage_code_group" )
+ column=(type=number updatewhereclause=yes name=check_point dbname="check_point" )
+ column=(type=number updatewhereclause=yes name=ng_point dbname="ng_point" )
+ column=(type=number updatewhereclause=yes name=rate dbname="rate" )
+ retrieve="  SELECT F_GET_BASECODE( 'WORKSTAGE CODE GROUP' , IQ_QC_CHECK_STD_SHEET.WORKSTAGE_CODE_GROUP , :ARG_LANG , :ARG_ORG ) WORKSTAGE_CODE_GROUP,   
+         IQ_QC_CHECK_STD_SHEET.CHECK_POINT,   
+         TO_CHAR(IQ_QC_CHECK_STD_SHEET.CHECK_DATE,'YY/MM/DD') CHECK_DATE,   
+         IQ_QC_CHECK_STD_SHEET.NG_POINT,   
+	     1 - ( IQ_QC_CHECK_STD_SHEET.NG_POINT / IQ_QC_CHECK_STD_SHEET.CHECK_POINT ) RATE,   
+         IQ_QC_CHECK_STD_SHEET.CHECK_BY,   
+         IQ_QC_CHECK_STD_SHEET.ENTER_DATE,   
+         IQ_QC_CHECK_STD_SHEET.ENTER_BY,   
+         IQ_QC_CHECK_STD_SHEET.LAST_MODIFY_DATE,   
+         IQ_QC_CHECK_STD_SHEET.LAST_MODIFY_BY,   
+         IQ_QC_CHECK_STD_SHEET.ORGANIZATION_ID  
+    FROM IQ_QC_CHECK_STD_SHEET   
+WHERE CHECK_DATE >= :ARG_DATESET
+    AND CHECK_DATE <= :ARG_DATEEND
+    AND ORGANIZATION_ID = :ARG_ORG
+" arguments=(("arg_dateset", datetime),("arg_dateend", datetime),("arg_lang", string),("arg_org", number))  sort="workstage_code_group A " )
+text(band=header[2] alignment="2" text="@check_date" border="2" color="33554432" x="635" y="4" height="64" width="535" html.valueishtml="0"  name=t_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65280" )
+text(band=header[3] alignment="2" text="Workstage Code Group" border="2" color="33554432" x="137" y="4" height="124" width="489" html.valueishtml="0"  name=workstage_code_group_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[3] alignment="2" text="Check Point" border="2" color="33554432" x="635" y="4" height="124" width="151" html.valueishtml="0"  name=check_point_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[3] alignment="2" text="Ng Point" border="2" color="33554432" x="795" y="4" height="124" width="160" html.valueishtml="0"  name=ng_point_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="2" color="33554432" x="137" y="4" height="64" width="489" format="[general]" html.valueishtml="0"  name=workstage_code_group visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="0" expression="getrow()"border="2" color="33554432" x="5" y="4" height="64" width="123" format="[GENERAL]" html.valueishtml="0"  name=compute_6 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="1" tabsequence=32766 border="2" color="33554432" x="635" y="4" height="64" width="151" format="[general]" html.valueishtml="0"  name=check_point visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes crosstab.repeat=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="1" tabsequence=32766 border="2" color="33554432" x="795" y="4" height="64" width="160" format="[general]" html.valueishtml="0"  name=ng_point visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes crosstab.repeat=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="1" tabsequence=32766 border="2" color="33554432" x="965" y="4" height="64" width="201" format="##0.0%" html.valueishtml="0"  name=rate visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes crosstab.repeat=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+compute(band=detail alignment="1" expression="crosstabsum(1)"border="2" color="33554432" x="1175" y="4" height="64" width="274" format="[general]" html.valueishtml="0"  name=grand_sum_check_point visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="1" expression="crosstabsum(2)"border="2" color="33554432" x="1458" y="4" height="64" width="265" format="[general]" html.valueishtml="0"  name=grand_sum_ng_point visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="~"Grand Total~""border="2" color="65280" x="137" y="4" height="60" width="489" format="[general]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+compute(band=summary alignment="1" expression="sum(check_point for all )"border="2" color="65280" x="635" y="4" height="60" width="151" format="[general]" html.valueishtml="0"  name=check_point_sum visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+compute(band=summary alignment="1" expression="sum(ng_point for all )"border="2" color="65280" x="795" y="4" height="60" width="160" format="[general]" html.valueishtml="0"  name=ng_point_sum visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+compute(band=summary alignment="1" expression="sum(grand_sum_check_point for all )"border="2" color="65280" x="1175" y="4" height="60" width="274" format="[general]" html.valueishtml="0"  name=compute_4 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+compute(band=summary alignment="1" expression="sum(grand_sum_ng_point for all )"border="2" color="65280" x="1458" y="4" height="60" width="265" format="[general]" html.valueishtml="0"  name=compute_5 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+compute(band=summary alignment="1" expression=" ng_point_sum /  check_point_sum "border="0" color="65280" x="965" y="4" height="60" width="201" format="##0.0%" html.valueishtml="0"  name=compute_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+text(band=header[3] alignment="2" text="Rate" border="2" color="33554432" x="965" y="4" height="124" width="201" html.valueishtml="0"  name=rate_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+text(band=header[3] alignment="2" text=" Total CHeck Point" border="2" color="33554432" x="1175" y="4" height="124" width="274" html.valueishtml="0"  name=grand_sum_check_point_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+compute(band=detail alignment="1" expression="crosstabavg(3)"border="2" color="33554432" x="1733" y="4" height="64" width="256" format="0.0%" html.valueishtml="0"  name=compute_3 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header[3] alignment="2" text=" Total NG Point" border="2" color="33554432" x="1458" y="4" height="124" width="265" html.valueishtml="0"  name=grand_sum_ng_point_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[3] alignment="2" text="Total Rate" border="2" color="33554432" x="1733" y="4" height="124" width="256" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+ crosstab(band = foreground  crosstabonly = yes 
+ columns = "check_date" rows = "workstage_code_group" values = "sum(check_point for crosstab), sum(ng_point for crosstab), AVG(rate for crosstab)" sourcenames = "workstage_code_group, check_point, check_date, ng_point, rate, check_by, enter_date, enter_by, last_modify_date, last_modify_by, organization_id")htmltable(border="0" cellpadding="1" cellspacing="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

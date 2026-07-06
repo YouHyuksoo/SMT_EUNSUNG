@@ -1,0 +1,25 @@
+HA$PBExportHeader$f_dual_lang_object_count.srf
+$PBExportComments$Dual Language $$HEX17$$c0bcbdaca9c620001dacb4cc20002fac18c27cb920006cad58d594b2200068d518c2$$ENDHEX$$
+global type f_dual_lang_object_count from function_object
+end type
+
+forward prototypes
+global function integer f_dual_lang_object_count (string as_object)
+end prototypes
+
+global function integer f_dual_lang_object_count (string as_object);// KIM, YONG-CHUL
+// Argument : as_object (string)
+integer li_rc, li_start, li_check
+
+li_start = 0
+do
+	li_rc += 1
+	li_check = pos(as_object, "~t", li_start + 1)
+	li_start = li_check
+loop until li_check < 1 
+
+return li_rc
+
+
+end function
+

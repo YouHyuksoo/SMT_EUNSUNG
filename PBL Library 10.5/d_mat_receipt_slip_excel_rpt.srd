@@ -1,0 +1,170 @@
+HA$PBExportHeader$d_mat_receipt_slip_excel_rpt.srd
+release 10.5;
+datawindow(units=0 timer_interval=60000 color=1073741824 processing=1 HTMLDW=no print.printername="" print.documentname="" print.orientation = 1 print.margin.left = 0 print.margin.right = 0 print.margin.top = 0 print.margin.bottom = 0 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no grid.lines=1 )
+header(height=268 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=80 color="536870912" )
+detail(height=132 color="536870912" )
+table(column=(type=char(20) update=yes updatewhereclause=yes name=txn_date dbname="im_item_receipt_slip_excel.txn_date" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=item dbname="im_item_receipt_slip_excel.item" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=item_type dbname="im_item_receipt_slip_excel.item_type" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=subinventory dbname="im_item_receipt_slip_excel.subinventory" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=locator dbname="im_item_receipt_slip_excel.locator" )
+ column=(type=number update=yes updatewhereclause=yes name=transaction_qty dbname="im_item_receipt_slip_excel.transaction_qty" )
+ column=(type=number update=yes updatewhereclause=yes name=derived_onhand_qty dbname="im_item_receipt_slip_excel.derived_onhand_qty" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=arrival_department dbname="im_item_receipt_slip_excel.arrival_department" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=transfer_subinventory dbname="im_item_receipt_slip_excel.transfer_subinventory" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=transfer_locator dbname="im_item_receipt_slip_excel.transfer_locator" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=transaction_type dbname="im_item_receipt_slip_excel.transaction_type" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=reason_code dbname="im_item_receipt_slip_excel.reason_code" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=reason dbname="im_item_receipt_slip_excel.reason" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=supplier_code dbname="im_item_receipt_slip_excel.supplier_code" )
+ column=(type=char(100) update=yes updatewhereclause=yes name=supplier_name dbname="im_item_receipt_slip_excel.supplier_name" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=work_order dbname="im_item_receipt_slip_excel.work_order" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=sales_order dbname="im_item_receipt_slip_excel.sales_order" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=assembly dbname="im_item_receipt_slip_excel.assembly" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=line_code dbname="im_item_receipt_slip_excel.line_code" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=transfer_org_code dbname="im_item_receipt_slip_excel.transfer_org_code" )
+ column=(type=char(1000) update=yes updatewhereclause=yes name=item_desc dbname="im_item_receipt_slip_excel.item_desc" )
+ column=(type=char(1000) update=yes updatewhereclause=yes name=item_spec dbname="im_item_receipt_slip_excel.item_spec" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=market dbname="im_item_receipt_slip_excel.market" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=currency dbname="im_item_receipt_slip_excel.currency" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=unit_price dbname="im_item_receipt_slip_excel.unit_price" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=arrival_no dbname="im_item_receipt_slip_excel.arrival_no" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=mpc dbname="im_item_receipt_slip_excel.mpc" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=supplier_ref_no dbname="im_item_receipt_slip_excel.supplier_ref_no" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=order_no dbname="im_item_receipt_slip_excel.order_no" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=invoice_no dbname="im_item_receipt_slip_excel.invoice_no" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=exchange_rate dbname="im_item_receipt_slip_excel.exchange_rate" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=shipment_num dbname="im_item_receipt_slip_excel.shipment_num" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=item_cost dbname="im_item_receipt_slip_excel.item_cost" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=creation_date dbname="im_item_receipt_slip_excel.creation_date" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=created_by dbname="im_item_receipt_slip_excel.created_by" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=arrived_by dbname="im_item_receipt_slip_excel.arrived_by" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=received_by dbname="im_item_receipt_slip_excel.received_by" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=account dbname="im_item_receipt_slip_excel.account" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=account_description dbname="im_item_receipt_slip_excel.account_description" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=takeover_user dbname="im_item_receipt_slip_excel.takeover_user" )
+ column=(type=datetime update=yes updatewhereclause=yes name=takeover_date dbname="im_item_receipt_slip_excel.takeover_date" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=transaction_id dbname="im_item_receipt_slip_excel.transaction_id" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=reference_reason_detail dbname="im_item_receipt_slip_excel.reference_reason_detail" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=content_lpn dbname="im_item_receipt_slip_excel.content_lpn" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=uit dbname="im_item_receipt_slip_excel.uit" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=delivery_type dbname="im_item_receipt_slip_excel.delivery_type" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=wh_keeper dbname="im_item_receipt_slip_excel.wh_keeper" )
+ column=(type=number update=yes updatewhereclause=yes name=pack_qty dbname="im_item_receipt_slip_excel.pack_qty" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=bl_no dbname="im_item_receipt_slip_excel.bl_no" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=location dbname="im_item_receipt_slip_excel.location" )
+ column=(type=datetime update=yes updatewhereclause=yes name=transaction_date dbname="im_item_receipt_slip_excel.transaction_date" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=dropship_osp dbname="im_item_receipt_slip_excel.dropship_osp" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=nota_no dbname="im_item_receipt_slip_excel.nota_no" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=reason_code2 dbname="im_item_receipt_slip_excel.reason_code2" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=reason_desc dbname="im_item_receipt_slip_excel.reason_desc" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=model_suffix dbname="im_item_receipt_slip_excel.model_suffix" )
+ column=(type=char(1) update=yes updatewhereclause=yes name=scan_yn dbname="scan_yn" )
+ column=(type=datetime updatewhereclause=yes name=receipt_date dbname="im_item_receipt_slip.receipt_date" )
+ column=(type=char(114) updatewhereclause=yes name=slip_item_barcode dbname="slip_item_barcode" )
+ column=(type=char(32) updatewhereclause=yes name=slip_no_barcode dbname="slip_no_barcode" )
+ retrieve="  SELECT A.TXN_DATE,   
+         A.ITEM,   
+         A.ITEM_TYPE,   
+         A.SUBINVENTORY,   
+         A.LOCATOR,   
+         A.TRANSACTION_QTY,   
+         A.DERIVED_ONHAND_QTY,   
+         A.ARRIVAL_DEPARTMENT,   
+         A.TRANSFER_SUBINVENTORY,   
+         A.TRANSFER_LOCATOR,   
+         A.TRANSACTION_TYPE,   
+         A.REASON_CODE,   
+         A.REASON,   
+         A.SUPPLIER_CODE,   
+         A.SUPPLIER_NAME,   
+         A.WORK_ORDER,   
+         A.SALES_ORDER,   
+         A.ASSEMBLY,   
+         A.LINE_CODE,   
+         A.TRANSFER_ORG_CODE,   
+         A.ITEM_DESC,   
+         A.ITEM_SPEC,   
+         A.MARKET,   
+         A.CURRENCY,   
+         A.UNIT_PRICE,   
+         A.ARRIVAL_NO,   
+         A.MPC,   
+         A.SUPPLIER_REF_NO,   
+         A.ORDER_NO,   
+         A.INVOICE_NO,   
+         A.EXCHANGE_RATE,   
+         A.SHIPMENT_NUM,   
+         A.ITEM_COST,   
+         A.CREATION_DATE,   
+         A.CREATED_BY,   
+         A.ARRIVED_BY,   
+         A.RECEIVED_BY,   
+         A.ACCOUNT,   
+         A.ACCOUNT_DESCRIPTION,   
+         A.TAKEOVER_USER,   
+         A.TAKEOVER_DATE,   
+         A.TRANSACTION_ID,   
+         A.REFERENCE_REASON_DETAIL,   
+         A.CONTENT_LPN,   
+         A.UIT,   
+         A.DELIVERY_TYPE,   
+         A.WH_KEEPER,   
+         A.PACK_QTY,   
+         A.BL_NO,   
+         A.LOCATION,   
+         A.TRANSACTION_DATE,   
+         A.DROPSHIP_OSP,   
+         A.NOTA_NO,   
+         A.REASON_CODE2,   
+         A.REASON_DESC,   
+         A.MODEL_SUFFIX,   
+         NVL(A.SCAN_YN   , 'N' ) SCAN_YN ,
+		IM_ITEM_RECEIPT_SLIP.RECEIPT_DATE ,
+
+         '*'||A.ITEM||'+'||    CASE WHEN A.TRANSACTION_QTY <=   A.PACK_QTY THEN  1 ELSE  TRUNC(DECODE(  A.PACK_QTY , 0 , 0 ,  A.TRANSACTION_QTY  /   A.PACK_QTY  ) ) END   ||'+'||A.TRANSACTION_QTY||'*' SLIP_ITEM_BARCODE ,
+
+         '*'||A.TRANSACTION_ID||'*' SLIP_NO_BARCODE
+
+    FROM IM_ITEM_RECEIPT_SLIP_EXCEL  A   , IM_ITEM_RECEIPT_SLIP 
+WHERE A.TRANSACTION_ID = IM_ITEM_RECEIPT_SLIP.RECEIPT_SLIP_NO(+)
+     AND A.TRANSACTION_DATE >= :ARG_DATESET
+     AND A.TRANSACTION_DATE <= :ARG_DATEEND
+     AND A.ITEM LIKE :ARG_ITEM_CODE
+     AND A.TRANSACTION_ID LIKE :ARG_SLIP_NO
+     AND A.SLIP_GROUP_NO LIKE :ARG_SLIP_GROUP_NO" arguments=(("ARG_DATESET", datetime),("ARG_DATEEND", datetime),("ARG_ITEM_CODE", string),("ARG_SLIP_NO", string),("ARG_SLIP_GROUP_NO", string))  sort="scan_yn A txn_date A item A " )
+text(band=header alignment="0" text="LG Issue Slip List" border="2" color="33554432" x="101" y="12" height="132" width="1957" html.valueishtml="0"  name=t_2 visible="1"  font.face="Tahoma" font.height="-16" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+text(band=header alignment="2" text="Scan Yn" border="2" color="33554432" x="2066" y="152" height="108" width="133" html.valueishtml="0"  name=scan_yn_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+text(band=header alignment="2" text="Transaction Qty" border="2" color="33554432" x="3040" y="152" height="108" width="201" html.valueishtml="0"  name=transaction_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+text(band=header alignment="2" text="Transaction Id" border="2" color="33554432" x="3570" y="152" height="108" width="283" html.valueishtml="0"  name=transaction_id_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+text(band=header alignment="2" text="Pack Qty" border="2" color="33554432" x="3250" y="152" height="108" width="165" html.valueishtml="0"  name=pack_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+text(band=header alignment="2" text="Reel Qty" border="2" color="33554432" x="3424" y="152" height="108" width="137" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+text(band=header alignment="2" text="Slip Item Barcode" border="2" color="33554432" x="101" y="152" height="108" width="1957" html.valueishtml="0"  name=slip_item_barcode_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+text(band=header alignment="2" text="Slip No Barcode" border="2" color="33554432" x="3867" y="152" height="108" width="1125" html.valueishtml="0"  name=slip_no_barcode_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+compute(band=header alignment="1" expression="today()"border="2" color="33554432" x="3867" y="56" height="72" width="1125" format="[general]" html.valueishtml="0"  name=date_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=header alignment="2" text="Item" border="2" color="33554432" x="2606" y="152" height="108" width="425" html.valueishtml="0"  name=item_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+text(band=header alignment="2" text="Transaction Date" border="2" color="33554432" x="2208" y="152" height="108" width="389" html.valueishtml="0"  name=transaction_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=59 alignment="2" tabsequence=10 border="0" color="33554432" x="101" y="24" height="72" width="1957" format="[general]" html.valueishtml="0"  name=slip_item_barcode visible="1~tIF (  transaction_qty < 0 , 0 , 1 )" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Free 3 of 9" font.height="-32" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="0" tabsequence=40 border="0" color="33554432~tIF (  transaction_qty <=0 , 255 , 0 )" x="2606" y="24" height="72" width="425" format="[general]" html.valueishtml="0"  name=item visible="1" edit.limit=30 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=6 alignment="1" tabsequence=50 border="0" color="33554432~tIF (  transaction_qty <=0 , 255 , 0 )" x="3040" y="24" height="72" width="201" format="[general]" html.valueishtml="0"  name=transaction_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=42 alignment="0" tabsequence=70 border="0" color="33554432~tIF (  transaction_qty <=0 , 255 , 0 )" x="3570" y="24" height="72" width="283" format="[general]" html.valueishtml="0"  name=transaction_id visible="1" edit.limit=30 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=48 alignment="1" tabsequence=60 border="0" color="33554432~tIF (  transaction_qty <=0 , 255 , 0 )" x="3250" y="24" height="72" width="165" format="[general]" html.valueishtml="0"  name=pack_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="2" expression="if (   transaction_qty  < pack_qty  , 1 ,   round( transaction_qty /  pack_qty ,0) )"border="0" color="33554432~tIF (  transaction_qty <=0 , 255 , 0 )" x="3424" y="24" height="72" width="137" format="[GENERAL]" html.valueishtml="0"  name=reel_qty visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=60 alignment="2" tabsequence=90 border="0" color="33554432" x="3867" y="24" height="72" width="1125" format="[general]" html.valueishtml="0"  name=slip_no_barcode visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Free 3 of 9" font.height="-28" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=57 alignment="2" tabsequence=20 border="0" color="33554432~tIF (  transaction_qty <=0 , 255 , 0 )" x="2066" y="24" height="72" width="133" format="[general]" html.valueishtml="0"  name=scan_yn visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=51 alignment="2" tabsequence=30 border="0" color="33554432" x="2208" y="24" height="72" width="389" format="YYMMDD HH:MM:SS" html.valueishtml="0"  name=transaction_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="0" expression="getrow()"border="0" color="33554432" x="9" y="24" height="72" width="82" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+compute(band=footer alignment="0" expression="'Page ' + page() + ' of ' + pageCount()"border="0" color="33554432" x="101" y="8" height="52" width="1957" format="[general]" html.valueishtml="0"  name=page_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

@@ -1,0 +1,39 @@
+HA$PBExportHeader$f_mymenu_update.srf
+$PBExportComments$My Menu Update
+global type f_mymenu_update from function_object
+end type
+
+forward prototypes
+global function integer f_mymenu_update ()
+end prototypes
+
+global function integer f_mymenu_update ();if isvalid(w_bulletin_board) then
+//	if w_bulletin_board.dw_3.update() < 0 then 
+//		Rollback;
+//		F_MESSAGE_ONTIME( 2 , "My Menu Update Failed")		
+//		w_main_frame.setmicrohelp("My Menu Update Failed")
+//		return -1		
+//	else
+//		commit ;
+//		F_MESSAGE_ONTIME( 2 , "My Menu Updated")		
+//		w_main_frame.setmicrohelp("My Menu Updated")
+//	end if
+	
+else
+	
+	if w_wallpaper.dw_favorites.update() < 0 then 
+		Rollback;
+		F_MESSAGE_ONTIME( 2 , "My Menu Update Failed")		
+		w_main_frame.setmicrohelp("My Menu Update Failed")
+		return -1
+	else
+		commit ;
+		F_MESSAGE_ONTIME( 2 , "My Menu Updated")		
+		w_main_frame.setmicrohelp("My Menu Updated")
+	end if	
+	
+end if
+
+return 0
+end function
+

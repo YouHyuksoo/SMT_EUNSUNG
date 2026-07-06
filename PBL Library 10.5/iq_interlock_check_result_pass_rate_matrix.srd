@@ -1,0 +1,58 @@
+HA$PBExportHeader$iq_interlock_check_result_pass_rate_matrix.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=4 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no  crosstab.dynamic = yes grid.lines=1 grid.columnmove=no selected.mouse=no )
+header[1](height=0 color="536870912" )
+header[2](height=88 color="536870912" )
+header[3](height=140 color="536870912" )
+summary(height=76 color="8421504" )
+footer(height=0 color="536870912" )
+detail(height=96 color="536870912" )
+table(column=(type=char(20) updatewhereclause=yes name=line_code dbname="line_code" )
+ column=(type=char(20) updatewhereclause=yes name=model_name dbname="model_name" )
+ column=(type=number updatewhereclause=yes name=ng_qty dbname="ng_qty" )
+ column=(type=number updatewhereclause=yes name=ok_qty dbname="ok_qty" )
+ column=(type=number updatewhereclause=yes name=pass_rate dbname="pass_rate" )
+ retrieve="SELECT  /*+ index ( IQ_INTERLOCK_CHECK_RESULT XPKIQ_INTERLOCK_CHECK_RESULT ) */  line_code , workstage_code , workstage_code||' '||f_get_workstage_name( workstage_code) workstage_name  , model_name,
+        SUM( DECODE( CHECK_RESULT , 'OK' , 0 , 1 ) ) NG_QTY, 
+        SUM( DECODE( CHECK_RESULT , 'OK' , 1 , 0 ) ) OK_QTY ,
+        
+        round(SUM( DECODE( CHECK_RESULT , 'OK' , 1 , 0 ) ) / ( SUM( DECODE( CHECK_RESULT , 'OK' , 0 , 1 ) ) + SUM( DECODE( CHECK_RESULT , 'OK' , 1 , 0 ) ))  * 100 , 1) pass_rate
+ FROM IQ_INTERLOCK_CHECK_RESULT 
+ WHERE LINE_CODE LIKE :ARG_LINE_CODE
+ AND MODEL_NAME LIKE  :ARG_MODEL_NAME
+AND ORGANIZATION_ID =:ARG_ORG
+AND RECEIPT_DATE >= :ARG_DATESET
+AND RECEIPT_DATE <   :ARG_DATEEND +1
+group by line_code , workstage_code  , model_name" arguments=(("arg_line_code", string),("arg_model_name", string),("arg_dateset", datetime),("arg_dateend", datetime),("arg_org", number))  sort="line_code A model_name A " )
+group(level=1 header.height=0 trailer.height=84 by=("line_code" ) header.color="536870912" trailer.color="12639424" )
+text(band=header[2] alignment="2" text="@workstage_name" border="2" color="33554432" x="777" y="4" height="80" width="713" html.valueishtml="0"  name=t_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+text(band=header[3] alignment="2" text="Line Code" border="2" color="33554432" x="9" y="4" height="136" width="293" html.valueishtml="0"  name=line_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[3] alignment="2" text="Model Name" border="2" color="33554432" x="311" y="4" height="136" width="457" html.valueishtml="0"  name=model_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[3] alignment="2" text="Ng Qty" border="2" color="33554432" x="777" y="4" height="136" width="206" html.valueishtml="0"  name=ng_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[3] alignment="2" text="Ok Qty" border="2" color="33554432" x="992" y="4" height="136" width="197" html.valueishtml="0"  name=ok_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[3] alignment="2" text="Pass Rate" border="2" color="33554432" x="1198" y="4" height="136" width="288" html.valueishtml="0"  name=pass_rate_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="2" color="33554432" x="9" y="4" height="88" width="293" format="[general]" html.valueishtml="0"  name=line_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="2" color="33554432" x="311" y="4" height="88" width="457" format="[general]" html.valueishtml="0"  name=model_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="line_code + ~" Total~""border="0" color="33554432" x="9" y="4" height="68" width="293" format="[general]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=summary alignment="1" expression="~"Grand Total~""border="2" color="65280" x="9" y="8" height="60" width="293" format="[general]" html.valueishtml="0"  name=compute_6 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="2" color="33554432" x="777" y="4" height="88" width="206" format="[general]" html.valueishtml="0"  name=ng_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes crosstab.repeat=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="2" color="33554432" x="992" y="4" height="88" width="197" format="[general]" html.valueishtml="0"  name=ok_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes crosstab.repeat=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="2" tabsequence=32766 border="2" color="33554432~tif (  pass_rate < 90 , 255 , 0 )" x="1198" y="4" height="88" width="288" format="[general]" html.valueishtml="0"  name=pass_rate visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes crosstab.repeat=yes  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+compute(band=summary alignment="2" expression="sum(ng_qty for all )"border="2" color="65280" x="777" y="8" height="60" width="206" format="[general]" html.valueishtml="0"  name=compute_7 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=summary alignment="2" expression="sum(ok_qty for all )"border="2" color="65280" x="992" y="8" height="60" width="197" format="[general]" html.valueishtml="0"  name=compute_8 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=summary alignment="2" expression="avg(pass_rate for all)"border="2" color="65280" x="1198" y="8" height="60" width="288" format="###,##0.0" html.valueishtml="0"  name=compute_5 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="2" expression="sum(ng_qty for group 1)"border="2" color="33554432" x="777" y="4" height="72" width="206" format="[general]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="2" expression="sum(ok_qty for group 1)"border="2" color="33554432" x="992" y="4" height="72" width="197" format="[general]" html.valueishtml="0"  name=compute_3 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="2" expression="avg(pass_rate for group 1)"border="2" color="33554432" x="1198" y="4" height="72" width="288" format="###,##0.0" html.valueishtml="0"  name=compute_4 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+ crosstab(band = foreground  crosstabonly = yes 
+ columns = "workstage_name" rows = "line_code, model_name" values = "sum(ng_qty for crosstab), sum(ok_qty for crosstab), AVG(pass_rate for crosstab)" sourcenames = "line_code, workstage_code, workstage_name, model_name, ng_qty, ok_qty, pass_rate")
+sparse(names="line_code")htmltable(border="0" cellpadding="1" cellspacing="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()

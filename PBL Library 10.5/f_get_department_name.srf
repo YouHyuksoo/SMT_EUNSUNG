@@ -1,0 +1,23 @@
+HA$PBExportHeader$f_get_department_name.srf
+global type f_get_department_name from function_object
+end type
+
+forward prototypes
+global function string f_get_department_name (string arg_dept_code)
+end prototypes
+
+global function string f_get_department_name (string arg_dept_code);STRING LVS_DEPT_NAME
+
+SELECT DECODE( :GVS_LANGUAGE , 'K' , DEPARTMENT_NAME_KOR , 'E' , DEPARTMENT_NAME_ENG , 'C' , DEPARTMENT_NAME_LOCAL )
+  INTO :LVS_DEPT_NAME
+  FROM ISYS_DEPARTMENT
+ WHERE DEPARTMENT_CODE = :ARG_DEPT_CODE 
+    AND ORGANIZATION_ID = :GVI_ORGANIZATION_ID ;
+	 
+	 IF F_SQL_CHECK() < 0 THEN 
+		RETURN  ''
+	END IF 
+	
+RETURN 	LVS_DEPT_NAME ;
+end function
+

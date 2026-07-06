@@ -1,0 +1,80 @@
+HA$PBExportHeader$f_download_qc_document_data.srf
+global type f_download_qc_document_data from function_object
+end type
+
+forward prototypes
+global function long f_download_qc_document_data (datetime arg_reg_date, double arg_seq_no)
+end prototypes
+
+global function long f_download_qc_document_data (datetime arg_reg_date, double arg_seq_no);string LS_PATH , lvs_file_name, lvs_path_name 
+BLOB   LVB_FILE 
+long   li_FileNum ,   LVB_FILE_LENGTH  , lvi_write_byte_sum
+
+ IF  ISNULL(ARG_REG_DATE) THEN 
+	 RETURN -1
+ END IF
+ 
+ LS_PATH = Gvs_default_directory+'\Temp'
+ 
+if DirectoryExists ( LS_PATH ) Then
+else
+	CreateDirectory( LS_PATH ) 
+end if
+ 
+ //=====================================================
+ // SELECT DATA FROM DATABASE
+ //=====================================================
+  SETPOINTER(HOURGLASS!)
+  F_MSG_MDI_HELP( F_MSG_ST( 9025 )) //ST_MSG.TEXT = "File Downloading..."
+  
+  	   SELECTBLOB DOCUMENT_IMAGE INTO :LVB_FILE
+		FROM IQ_DAILY_NOTIFY
+		WHERE ACTION_DATE = :ARG_REG_DATE
+			AND NOTIFY_SEQUENCE= :ARG_SEQ_NO
+			AND ORGANIZATION_ID = :GVI_ORGANIZATION_ID ;
+			
+  IF F_SQL_CHECK() < 0 THEN 
+	  F_MSGBOX( 117)
+	  RETURN -1
+  END IF
+			 
+LVB_FILE_LENGTH = LEN(LVB_FILE)
+
+IF LVB_FILE_LENGTH = 0 OR ISNULL(LVB_FILE_LENGTH) THEN 
+	F_MSGBOX( 117 )
+	F_MSG_MDI_HELP( F_MSG_ST( 117 ))
+	RETURN -1
+END IF
+
+		SELECT DOCUMENT_IMAGE_FILE_NAME
+		    INTO :LVS_FILE_NAME
+		  FROM IQ_DAILY_NOTIFY
+		 WHERE ACTION_DATE = :ARG_REG_DATE
+		 	 AND NOTIFY_SEQUENCE= :ARG_SEQ_NO
+			 AND ORGANIZATION_ID = :GVI_ORGANIZATION_ID ;
+	
+		IF F_SQL_CHECK() < 0 THEN 
+			F_MSGBOX( 117)
+			RETURN -1
+		END IF
+
+	li_FileNum = FileOpen( ls_path+"\"+LVS_FILE_NAME ,  StreamMode!, Write!, Shared!, Replace! )
+	
+	if li_FileNum < 0 then 
+		F_MSGBOX(9024)  //FILE OPEN ERROR
+		Fileclose( li_FileNum ) 
+		return -1
+	end if	
+	
+	lvi_write_byte_sum = FileWriteEX(li_FileNum, LVB_FILE , LVB_FILE_LENGTH )			 	
+	Fileclose( li_FileNum ) 
+	
+	Gst_return.gvs_return[1] = LVS_FILE_NAME
+	
+	F_MSG_MDI_HELP( F_MSG_ST( 9023 ))
+	RETURN lvi_write_byte_sum
+
+
+
+end function
+

@@ -1,0 +1,87 @@
+HA$PBExportHeader$f_dual_lang_change_dddw.srf
+$PBExportComments$Change Current DDDW Text
+global type f_dual_lang_change_dddw from function_object
+end type
+
+forward prototypes
+global subroutine f_dual_lang_change_dddw (datawindow adw_1, string as_column)
+end prototypes
+
+global subroutine f_dual_lang_change_dddw (datawindow adw_1, string as_column);/**************************************************************
+* DDDW$$HEX2$$94b22000$$ENDHEX$$settransobject $$HEX15$$c4d6d0c52000c0bcbdac58d5ecc57cc5200058d530ae20004cb538bbd0c5$$ENDHEX$$
+* $$HEX16$$c4bcc4b358c72000e4b26dadb4c5200098ccacb97cb92000ccb9e4b4c8c54cc7$$ENDHEX$$.
+**************************************************************/
+DataWindowChild state_child
+datastore ds_child
+string    ls_dwhead,   ls_text,   ls_chg_text, ls_dwcobject
+long      ll_row,      ll_rowcnt
+int       li_cstart,   li_cend,   li_col3,     li_cobjcount
+string    ls_dddw_object_name
+
+string lvs_column_name
+if Gvs_previous_language <>  Gvs_language then
+
+		if Gvs_previous_language ='K' then
+				lvs_column_name =  "korea_text = '"
+		elseif  Gvs_previous_language ='C' then
+				lvs_column_name =  "local_text = '"
+		elseif Gvs_previous_language ='E' then
+				lvs_column_name =  "english_text = '"
+		end if
+else
+				lvs_column_name =  "english_text = '"
+end if 
+
+
+ds_child = create datastore
+ll_rowcnt = gds_dual.rowcount()
+
+adw_1.GetChild(as_column, state_child)
+
+ls_dddw_object_name = adw_1.describe (as_column + ".dddw.name")
+
+//DDDW $$HEX4$$74c784b940c72000$$ENDHEX$$2$$HEX13$$90c7acb9200074c7c1c074c7c0bb5cb82000c6c53cc774ba2000$$ENDHEX$$return $$HEX2$$5cd5e4b2$$ENDHEX$$.
+if len(ls_dddw_object_name) < 2 then
+	return
+end if
+
+ds_child.dataobject =  ls_dddw_object_name
+
+ls_dwcobject = ds_child.object.DataWindow.Objects     // dw object list
+
+if len(trim(ls_dwcobject)) = 0 then 
+	return
+end if
+
+li_cobjcount = f_dual_lang_object_count(ls_dwcobject)     		  // get object count
+li_cstart = 0
+for li_col3 = 1 to li_cobjcount
+	 li_cend = pos(ls_dwcobject, "~t", li_cstart + 1)
+	 if li_col3 < li_cobjcount then    // last object check
+		 ls_dwhead = mid(ls_dwcobject, li_cstart + 1, li_cend - li_cstart - 1)	
+	 else
+		 ls_dwhead = mid(ls_dwcobject, li_cstart + 1, len(ls_dwcobject) - li_cstart)
+	 end if
+					
+	 if ds_child.describe (ls_dwhead + ".type") = "text" then    // object type check
+		 ls_text = trim(ds_child.describe(ls_dwhead + ".text")) 
+
+		 ll_row = gds_dual.find ( lvs_column_name + UPPER ( ls_text ) + "' ", 1, ll_rowcnt )
+		 if ll_row > 0 then
+				if Gvs_language = 'C' then
+					ls_chg_text = gds_dual.object.local_text [ ll_row ]
+				elseif Gvs_language = 'K' then
+					ls_chg_text = gds_dual.object.korea_text [ ll_row ]
+				elseif Gvs_language = 'E' then
+					ls_chg_text = gds_dual.object.english_origin_text [ ll_row ]					
+				end if
+			 
+			      state_child.modify(ls_dwhead + ".text = '" + ls_chg_text + "'")
+			 
+		 end if 
+	 end if
+	 
+	 li_cstart = li_cend
+next
+end subroutine
+

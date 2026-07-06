@@ -1,0 +1,57 @@
+HA$PBExportHeader$f_quick_sort.srf
+$PBExportComments$Quick Sort
+global type f_quick_sort from function_object
+end type
+
+forward prototypes
+global subroutine f_quick_sort (datawindow arg_datawindow, string arg_column_name)
+end prototypes
+
+global subroutine f_quick_sort (datawindow arg_datawindow, string arg_column_name);STRING s_col
+
+if ARG_COLUMN_NAME = 'datawind' THEN
+
+ELSE
+	
+if ARG_COLUMN_NAME = Gvs_sort_column then 
+	
+	CHOOSE CASE GVS_SORT_TYPE
+			
+		CASE 'A' 
+			s_col = ARG_COLUMN_NAME+" "+"D"
+
+			ARG_DATAWINDOW.SetSort(s_col)
+			ARG_DATAWINDOW.sort()
+			
+			Gvs_sort_column = ARG_COLUMN_NAME
+			GVS_SORT_TYPE   = 'D'
+		CASE 'D'
+			
+			s_col = ARG_COLUMN_NAME+" "+"A"
+
+			ARG_DATAWINDOW.SetSort(s_col)
+			ARG_DATAWINDOW.sort()
+			
+		   Gvs_sort_column = ARG_COLUMN_NAME
+			GVS_SORT_TYPE   = 'A'	
+			
+		CASE ELSE
+			
+	END CHOOSE
+	
+	
+ELSE //$$HEX8$$e0c2dcad200015c82cb82000eccefcb7$$ENDHEX$$
+	
+			s_col = ARG_COLUMN_NAME+" "+"A"
+
+			ARG_DATAWINDOW.SetSort(s_col)
+			ARG_DATAWINDOW.sort()
+			
+			Gvs_sort_column = ARG_COLUMN_NAME
+			GVS_SORT_TYPE   = 'A'
+
+END IF
+
+END IF
+end subroutine
+

@@ -1,0 +1,71 @@
+HA$PBExportHeader$d_mat_inventory_fifo_check_lst.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no grid.lines=0 )
+header(height=124 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=80 color="536870912" )
+table(column=(type=number updatewhereclause=yes name=sort_order dbname="sort_order" )
+ column=(type=char(50) updatewhereclause=yes name=lot_no dbname="im_item_receipt_barcode.lot_no" dbalias=".lot_no" )
+ column=(type=number updatewhereclause=yes name=scan_qty dbname="im_item_receipt_barcode.scan_qty" dbalias=".scan_qty" )
+ column=(type=datetime updatewhereclause=yes name=last_receipt_date dbname="last_receipt_date" )
+ retrieve="     SELECT  1 SORT_ORDER , LOT_NO , SCAN_QTY , NVL( ISSUE_RETURN_DATE , RECEIPT_COMPARE_DATE ) LAST_RECEIPT_DATE
+	       FROM IM_ITEM_RECEIPT_BARCODE 
+	     WHERE ITEM_CODE = :arg_item_code
+			AND RECEIPT_COMPARE_YN = 'Y'
+			AND NVL(ISSUE_COMPARE_YN ,'N') = 'N'
+			AND LOT_NO <> :arg_material_mfs
+			AND MANUFACTURE_WEEK < TO_CHAR( SYSDATE - 30  , 'YYWW') 
+			AND INVENTORY_TYPE = :arg_inventory_type
+			AND NVL(LABEL_TYPE , 'N') = 'N'
+			AND LOT_NO IN ( SELECT MATERIAL_MFS FROM IM_ITEM_INVENTORY WHERE ITEM_CODE = :arg_item_code AND LOCATION_CODE = 'M01' AND INVENTORY_QTY > 0 )
+			AND ROWNUM =1
+  
+    UNION ALL	
+		
+	     SELECT 2 SORT_ORDER , LOT_NO , SCAN_QTY , NVL( ISSUE_RETURN_DATE , RECEIPT_COMPARE_DATE ) LAST_RECEIPT_DATE
+		   FROM IM_ITEM_RECEIPT_BARCODE
+	     WHERE ITEM_CODE = :arg_item_code
+			AND RECEIPT_COMPARE_YN = 'Y'
+			AND NVL(ISSUE_COMPARE_YN ,'N') = 'N'
+			AND ISSUE_RETURN_YN = 'Y'
+				AND LOT_NO <> :arg_material_mfs
+			AND INVENTORY_TYPE = :arg_inventory_type
+             AND NVL( ISSUE_RETURN_DATE , RECEIPT_COMPARE_DATE ) < TRUNC(:arg_receipt_date )
+             AND NVL(LABEL_TYPE , 'N') = 'N'
+             AND LOT_NO IN ( SELECT MATERIAL_MFS FROM IM_ITEM_INVENTORY WHERE ITEM_CODE = :arg_item_code AND LOCATION_CODE = 'M01' AND INVENTORY_QTY > 0 )
+			AND ROWNUM =1  
+	
+	UNION ALL		
+				
+		  SELECT 3 SORT_ORDER , LOT_NO , SCAN_QTY , NVL( ISSUE_RETURN_DATE , RECEIPT_COMPARE_DATE ) LAST_RECEIPT_DATE
+		   FROM IM_ITEM_RECEIPT_BARCODE
+		  WHERE ITEM_CODE = :arg_item_code
+			AND TRUNC(RECEIPT_COMPARE_DATE) <  TRUNC(:arg_receipt_date )
+			AND RECEIPT_COMPARE_YN = 'Y'
+			AND NVL(ISSUE_COMPARE_YN ,'N') = 'N'
+			AND LOT_NO <> :arg_material_mfs
+			AND INVENTORY_TYPE = :arg_inventory_type
+             AND NVL(LABEL_TYPE , 'N') = 'N'
+		    AND LOT_NO IN ( SELECT MATERIAL_MFS FROM IM_ITEM_INVENTORY WHERE ITEM_CODE = :arg_item_code AND LOCATION_CODE = 'M01' AND INVENTORY_QTY > 0 )
+			AND ROWNUM =1
+" arguments=(("arg_item_code", string),("arg_material_mfs", string),("arg_receipt_date", datetime),("arg_inventory_type", string))  sort="sort_order A last_receipt_date A " )
+text(band=header alignment="2" text="Sort Order" border="0" color="33554432" x="9" y="4" height="108" width="155" html.valueishtml="0"  name=sort_order_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Last Receipt Date" border="0" color="33554432" x="174" y="8" height="108" width="475" html.valueishtml="0"  name=last_receipt_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Lot No" border="0" color="33554432" x="658" y="4" height="108" width="489" html.valueishtml="0"  name=lot_no_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Scan Qty" border="0" color="33554432" x="1157" y="4" height="108" width="338" html.valueishtml="0"  name=scan_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="33554432" x="174" y="8" height="64" width="475" format="[shortdate] [time]" html.valueishtml="0"  name=last_receipt_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432" x="9" y="8" height="64" width="155" format="[general]" html.valueishtml="0"  name=sort_order visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432" x="658" y="8" height="64" width="489" format="[general]" html.valueishtml="0"  name=lot_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="33554432" x="1157" y="8" height="64" width="338" format="[general]" html.valueishtml="0"  name=scan_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

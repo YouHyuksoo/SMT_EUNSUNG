@@ -1,0 +1,43 @@
+HA$PBExportHeader$d_smt_nc_upload_file_name_lst.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no grid.lines=0 )
+header(height=108 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=72 color="536870912" )
+table(column=(type=char(20) updatewhereclause=yes name=line_code dbname="ib_line_master.line_code" )
+ column=(type=char(10) updatewhereclause=yes name=machine_group dbname="ib_line_master.machine_group" )
+ column=(type=char(0) updatewhereclause=yes name=file_name dbname="file_name" )
+ column=(type=char(0) updatewhereclause=yes name=start_table_id dbname="start_table_id" values="A	A/B	B/C	C/D	D/E	E/F	F/G	G/H	H/I	I/J	J/K	K/L	L/M	M/N	N/O	O/P	P/Q	Q/R	R/S	S/T	T/U	U/V	V/W	W/X	X/Y	Y/Z	Z/" )
+ column=(type=char(0) updatewhereclause=yes name=process_type dbname="process_type" values="S	S/C	C/N	N/" )
+ retrieve="  SELECT ~"IB_LINE_MASTER~".~"LINE_CODE~",   
+         ~"IB_LINE_MASTER~".~"MACHINE_GROUP~",   
+         '' file_name  ,
+		'' start_table_id ,
+         '' process_type
+    FROM ~"IB_LINE_MASTER~"   
+   WHERE LINE_CODE = :ARG_LINE_CODE
+ GROUP BY LINE_CODE , MACHINE_GROUP " arguments=(("ARG_LINE_CODE", string))  sort="line_code A machine_group A " )
+text(band=header alignment="2" text="Line Code" border="0" color="16777215" x="3191" y="0" height="108" width="165" html.valueishtml="0"  name=line_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217734" )
+text(band=header alignment="2" text="File Name" border="0" color="16777215" x="1253" y="0" height="108" width="1929" html.valueishtml="0"  name=file_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217734" )
+text(band=header alignment="2" text="Start Table Id" border="0" color="16777215" x="1006" y="0" height="108" width="238" html.valueishtml="0"  name=start_table_id_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217734" )
+text(band=header alignment="2" text="Machine Group" border="0" color="16777215" x="302" y="0" height="108" width="183" html.valueishtml="0"  name=machine_group_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217734" )
+text(band=header alignment="2" text="Process Type" border="0" color="65535" x="494" y="0" height="108" width="503" html.valueishtml="0"  name=process_type_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="8421504" )
+compute(band=detail alignment="0" expression="trim(~"~")"border="0" color="33554432" x="9" y="4" height="52" width="283" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+button(band=detail text="File Upload" enabled=yes action="0" border="0" color="33554432" x="5" y="0" height="72" width="279" vtextalign="0" htextalign="0"  name=b_file_upload visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="33554432" x="3191" y="4" height="56" width="165" format="[general]" html.valueishtml="0"  name=line_code visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="0" tabsequence=30 border="0" color="33554432" x="1253" y="4" height="56" width="1929" format="[general]" html.valueishtml="0"  name=file_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="33554432" x="302" y="4" height="56" width="183" format="[general]" html.valueishtml="0"  name=machine_group visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="2" tabsequence=20 border="0" color="33554432" x="1006" y="4" height="56" width="238" format="[general]" html.valueishtml="0"  name=start_table_id visible="1" ddlb.limit=0 ddlb.sorted=yes ddlb.allowedit=no ddlb.case=upper ddlb.autohscroll=yes ddlb.vscrollbar=yes ddlb.useasborder=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="0" tabsequence=10 border="0" color="33554432" x="494" y="4" height="56" width="503" format="[general]" html.valueishtml="0"  name=process_type visible="1" radiobuttons.columns=3 radiobuttons.scale=no radiobuttons.threed=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

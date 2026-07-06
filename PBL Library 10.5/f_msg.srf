@@ -1,0 +1,74 @@
+HA$PBExportHeader$f_msg.srf
+global type f_msg from function_object
+end type
+
+forward prototypes
+global function string f_msg (string arg_msg, string arg_type)
+end prototypes
+
+global function string f_msg (string arg_msg, string arg_type);string lvs_msg
+int lvi_count
+transaction sqlca2
+
+
+select 1 , decode( :gvs_language , 'K' , msg_kor , 'E' , msg_eng , msg_chn )
+  into :lvi_count , :lvs_msg
+  from isys_dual_message_direct
+where origin_msg = :arg_msg ;
+	
+if f_sql_check() < 0 then 
+	return lvs_msg
+end if 
+	
+	//=============================================================
+	// $$HEX11$$c8c05cb82000ddc031c12000b8d29cb71dc858c12000$$ENDHEX$$
+	//=============================================================	
+if lvi_count <> 1  then 
+		
+		sqlca2 = create transaction ;
+		sqlca2.dbms      =sqlca.dbms
+		sqlca2.logid       =sqlca.logid  
+		sqlca2.logpass   =sqlca.logpass 
+
+		sqlca2.servername  = sqlca.servername ;
+		connect using sqlca2 ; 
+		
+		insert into isys_dual_message_direct ( origin_msg , enter_date , enter_by , last_modify_date , last_moDiFy_by , organization_id ) 
+		 values ( :arg_msg , sysdate , :gvs_user_id , sysdate , :gvs_user_id , :gvi_organization_id )  using sqlca2 ;
+		
+		if sqlca2.sqlcode < 0 then 
+			Messagebox("Error" , sqlca2.sqlerrtext )
+			disconnect using sqlca2; 
+			destroy sqlca2 ;
+			return arg_msg
+		end if 
+		
+		commit using sqlca2 ;
+		disconnect using sqlca2; 
+		destroy sqlca2 ;
+		
+end if 
+
+	
+	
+//==============================================================
+//
+//==============================================================
+
+if arg_type = 'P' then 
+	
+	openwithparm(w_msgbox_dual , arg_msg )
+	return ' '
+	
+else
+	
+
+	if lvs_msg = '' or isnull(lvs_msg) then 
+		return arg_msg
+	else
+		return lvs_msg 
+	end if 
+	
+end if 
+end function
+

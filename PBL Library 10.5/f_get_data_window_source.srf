@@ -1,0 +1,28 @@
+HA$PBExportHeader$f_get_data_window_source.srf
+global type f_get_data_window_source from function_object
+end type
+
+forward prototypes
+global function string f_get_data_window_source (string arg_data_window_name)
+end prototypes
+
+global function string f_get_data_window_source (string arg_data_window_name);blob lvb_source
+string lvs_string
+
+selectblob datawindow_source
+     into :lvb_source
+    from isys_report_source
+  where datawindow_name = :arg_data_window_name
+     and organization_id = :gvi_organization_id ;
+	 
+if f_sql_check() < 0 then 
+	return ''
+end if 
+
+lvs_string = string( lvb_source )
+
+return lvs_string
+  
+  
+end function
+

@@ -1,0 +1,21 @@
+HA$PBExportHeader$f_replace.srf
+global type f_replace from function_object
+end type
+
+forward prototypes
+global function string f_replace (string arg_string1, string arg_string2, string arg_string3)
+end prototypes
+
+global function string f_replace (string arg_string1, string arg_string2, string arg_string3);STRING LVS_VALUE
+SELECT REPLACE( :ARG_STRING1 , :ARG_STRING2 , :ARG_STRING3 )
+   INTO :LVS_VALUE
+ FROM DUAL ;
+ 
+ IF F_SQL_CHECK() < 0 THEN 
+	RETURN ''
+ELSE
+	RETURN LVS_VALUE
+END IF 
+	
+end function
+

@@ -1,0 +1,65 @@
+HA$PBExportHeader$f_get_item_inventory_price.srf
+global type f_get_item_inventory_price from function_object
+end type
+
+forward prototypes
+global function decimal f_get_item_inventory_price (string as_item_code, string as_line_type, string as_material_mfs)
+end prototypes
+
+global function decimal f_get_item_inventory_price (string as_item_code, string as_line_type, string as_material_mfs);Decimal lvf_inventory_price
+string lvs_currency 
+
+if isnull(as_material_mfs) or as_material_mfs = '' then 
+	
+	
+	if f_get_item_division(as_item_code) = 'F' or f_get_item_division(as_item_code) = 'G' then
+		
+		select  avg(inventory_price)
+		into    :lvf_inventory_price 
+		from   is_product_inventory
+		where item_code     =     :as_item_code 
+		and    product_line_type        =     :as_line_type
+		and    organization_id  = :gvi_organization_id ; 			
+		
+	elseif f_get_item_division(as_item_code) = 'W' then
+		
+		select  avg(inventory_price)
+		into    :lvf_inventory_price 
+		from   is_assembly_inventory
+		where item_code     =     :as_item_code 
+		and    product_line_type        =     :as_line_type
+		and    organization_id  = :gvi_organization_id ; 			
+		
+	else
+
+		select  avg(inventory_price)
+		into    :lvf_inventory_price 
+		from   im_item_inventory
+		where item_code     =     :as_item_code 
+		and    line_type        =     :as_line_type
+		and    organization_id  = :gvi_organization_id ; 	
+		
+	end if
+	
+else
+	select  inventory_price
+	into    :lvf_inventory_price 
+	from   im_item_inventory
+	where item_code     =     :as_item_code 
+	and    line_type        =     :as_line_type
+	and   material_mfs   =     :as_material_mfs
+	and    organization_id  = :gvi_organization_id ; 
+	
+end if
+if f_sql_check() < 0 then 
+	return -2
+end if 
+
+if sqlca.sqlcode = 100 then
+   messagebox('Notify',"Inventory Price Not Found  => "+'  Item Code='+as_item_code+' Line Type='+as_line_type )
+   return  -2	
+end if
+
+return lvf_inventory_price
+end function
+

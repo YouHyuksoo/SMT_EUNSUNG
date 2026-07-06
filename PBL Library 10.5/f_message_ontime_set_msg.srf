@@ -1,0 +1,16 @@
+HA$PBExportHeader$f_message_ontime_set_msg.srf
+global type f_message_ontime_set_msg from function_object
+end type
+
+forward prototypes
+global subroutine f_message_ontime_set_msg (string arg_message)
+end prototypes
+
+global subroutine f_message_ontime_set_msg (string arg_message);if isvalid(w_message_ontime) then 
+	
+	w_message_ontime.pb_info_msg.text = w_message_ontime.pb_info_msg.text +'~r~n'+arg_message
+else
+end if
+
+end subroutine
+

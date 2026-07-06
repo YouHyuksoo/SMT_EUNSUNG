@@ -1,0 +1,109 @@
+HA$PBExportHeader$d_des_set_item_popup_tree.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=12632256 processing=9 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=yes grid.lines=0 )
+header(height=112 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=68 color="536870912" )
+table(column=(type=char(20) updatewhereclause=yes name=item_code dbname="id_item.item_code" dbalias=".item_code" )
+ column=(type=char(1) updatewhereclause=yes name=set_item_yn dbname="id_item.set_item_yn" dbalias=".set_item_yn" )
+ column=(type=char(300) updatewhereclause=yes name=item_name dbname="id_item.item_name" dbalias=".item_name" )
+ column=(type=char(300) updatewhereclause=yes name=item_spec dbname="id_item.item_spec" dbalias=".item_spec" )
+ column=(type=char(3) updatewhereclause=yes name=item_uom dbname="id_item.item_uom" dbalias=".item_uom" )
+ column=(type=char(10) updatewhereclause=yes name=item_type dbname="id_item.item_type" dbalias=".item_type" )
+ column=(type=char(10) updatewhereclause=yes name=line_type dbname="id_item.line_type" dbalias=".line_type" )
+ column=(type=number updatewhereclause=yes name=organization_id dbname="id_item.organization_id" dbalias=".organization_id" )
+ column=(type=datetime updatewhereclause=yes name=dateset dbname="id_item.dateset" dbalias=".dateset" )
+ column=(type=char(30) updatewhereclause=yes name=drawing_no dbname="id_item.drawing_no" dbalias=".drawing_no" )
+ column=(type=char(7) updatewhereclause=yes name=status dbname="status" )
+ column=(type=char(20) updatewhereclause=yes name=item_class dbname="id_item.item_class" dbalias=".item_class" )
+ column=(type=number updatewhereclause=yes name=safety_inventory dbname="id_item.safety_inventory" dbalias=".safety_inventory" )
+ column=(type=number updatewhereclause=yes name=manufacture_leadtime dbname="id_item.manufacture_leadtime" dbalias=".manufacture_leadtime" )
+ column=(type=char(1) updatewhereclause=yes name=item_division dbname="id_item.item_division" dbalias=".item_division" )
+ column=(type=char(20) updatewhereclause=yes name=route_no dbname="id_item.route_no" dbalias=".route_no" )
+ column=(type=char(20) updatewhereclause=yes name=part_no dbname="id_item.part_no" dbalias=".part_no" )
+ column=(type=char(4000) updatewhereclause=yes name=bom_exists dbname="bom_exists" )
+ column=(type=char(30) updatewhereclause=yes name=model_name dbname="id_item.model_name" dbalias=".model_name" )
+ retrieve="  SELECT ~"ID_ITEM~".~"ITEM_CODE~",   
+         ~"ID_ITEM~".~"SET_ITEM_YN~",   
+         ~"ID_ITEM~".~"ITEM_NAME~",   
+         ~"ID_ITEM~".~"ITEM_SPEC~",   
+         ~"ID_ITEM~".~"ITEM_UOM~",   
+         ~"ID_ITEM~".~"ITEM_TYPE~",   
+         ~"ID_ITEM~".~"LINE_TYPE~",   
+         ~"ID_ITEM~".~"ORGANIZATION_ID~",   
+         ~"ID_ITEM~".~"DATESET~",   
+         ~"ID_ITEM~".~"DRAWING_NO~",   
+         DECODE( SIGN( id_item.dateend - TRUNC( SYSDATE )), 1, 'RUNNING', 'EXPIRED' ) status,   
+         ~"ID_ITEM~".~"ITEM_CLASS~",   
+         ~"ID_ITEM~".~"SAFETY_INVENTORY~",   
+         ~"ID_ITEM~".~"MANUFACTURE_LEADTIME~",   
+         ~"ID_ITEM~".~"ITEM_DIVISION~",   
+         ~"ID_ITEM~".~"ROUTE_NO~",   
+         ~"ID_ITEM~".~"PART_NO~",
+	    F_CHECK_BOM_EXISTS ( ITEM_CODE ,  ORGANIZATION_ID ) BOM_EXISTS ,
+		~"ID_ITEM~".~"MODEL_NAME~"
+    FROM ~"ID_ITEM~"  
+   WHERE ( ( id_item.item_code LIKE :arg_item_code ) AND  
+( id_item.model_name LIKE :arg_model_name ) AND  
+         ( NVL( id_item.item_name, '*' ) LIKE :arg_item_name ) AND  
+         ( id_item.item_type LIKE :arg_item_type ) AND  
+         ( id_item.line_type LIKE :arg_line_type ) AND  
+         ( id_item.dateend >= :arg_dateset ) AND  
+          NVL(~"ID_ITEM~".~"DRAWING_NO~",'*') LIKE :ARG_DRAWING_NO AND
+        ( id_item.set_item_yn = 'Y' )   AND
+         ( id_item.organization_id = :arg_organization_id ) )    
+" arguments=(("ARG_MODEL_NAME", string),("ARG_ITEM_CODE", string),("ARG_ITEM_NAME", string),("ARG_ITEM_TYPE", string),("ARG_LINE_TYPE", string),("ARG_DATESET", datetime),("ARG_DRAWING_NO", string),("ARG_ORGANIZATION_ID", number))  sort="status D item_division A set_item_yn D item_code A " )
+text(band=header alignment="2" text="No" border="0" color="0" x="9" y="4" height="104" width="352" html.valueishtml="0"  name=t_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Item Yn" border="0" color="0" x="1888" y="4" height="104" width="155" html.valueishtml="0"  name=set_item_yn_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Item Name" border="0" color="0" x="3282" y="4" height="104" width="325" html.valueishtml="0"  name=item_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Item Code" border="0" color="0" x="2793" y="4" height="104" width="480" html.valueishtml="0"  name=item_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Drawing No" border="0" color="0" x="6281" y="4" height="104" width="370" html.valueishtml="0"  name=drawing_no_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Item Spec" border="0" color="0" x="3616" y="4" height="104" width="677" html.valueishtml="0"  name=item_spec_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Item Uom" border="0" color="0" x="4302" y="4" height="104" width="178" html.valueishtml="0"  name=item_uom_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Item Type" border="0" color="0" x="4809" y="4" height="104" width="251" html.valueishtml="0"  name=item_type_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Line Type" border="0" color="0" x="5070" y="4" height="104" width="215" html.valueishtml="0"  name=line_type_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Dateset" border="0" color="0" x="5294" y="4" height="104" width="233" html.valueishtml="0"  name=dateset_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Organization Id" border="0" color="0" x="6661" y="4" height="104" width="315" html.valueishtml="0"  name=organization_id_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Safety Inventory" border="0" color="0" x="5536" y="4" height="104" width="347" html.valueishtml="0"  name=safety_inventory_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Manufacture Leadtime" border="0" color="0" x="5893" y="4" height="104" width="379" html.valueishtml="0"  name=manufacture_leadtime_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Item Division" border="0" color="0" x="1600" y="4" height="104" width="279" html.valueishtml="0"  name=item_division_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Item Class" border="0" color="0" x="2053" y="4" height="104" width="270" html.valueishtml="0"  name=item_class_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Route No" border="0" color="0" x="4489" y="4" height="104" width="311" html.valueishtml="0"  name=route_no_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Part No" border="0" color="0" x="2331" y="4" height="104" width="453" html.valueishtml="0"  name=part_no_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Bom Exists" border="0" color="0" x="370" y="4" height="104" width="293" html.valueishtml="0"  name=bom_exists_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Status" border="0" color="0" x="672" y="4" height="104" width="229" html.valueishtml="0"  name=status_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Model Name" border="0" color="33554432" x="910" y="4" height="104" width="681" html.valueishtml="0"  name=model_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+column(band=detail id=11 alignment="2" tabsequence=20 border="0" color="0~tIF(  status ='EXPIRED' , 255 , 0 )" x="672" y="4" height="60" width="229" format="[general]" html.valueishtml="0"  name=status visible="1" edit.limit=0 edit.case=any edit.autoselect=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=1 alignment="0" tabsequence=70 border="0" color="0" x="2793" y="4" height="60" width="480" format="[general]" html.valueishtml="0"  name=item_code  tag="Item Code" visible="1" edit.limit=0 edit.case=any edit.autoselect=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="0" x="1888" y="4" height="60" width="155" format="[general]" html.valueishtml="0"  name=set_item_yn visible="1" dddw.name=vd_set_item_yn dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=100 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=3 alignment="0" tabsequence=80 border="0" color="0" x="3282" y="4" height="60" width="325" format="[general]" html.valueishtml="0"  name=item_name  tag="Item Name" visible="1" edit.limit=50 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=10 alignment="0" tabsequence=170 border="0" color="0" x="6281" y="4" height="60" width="370" format="[general]" html.valueishtml="0"  name=drawing_no visible="1" edit.limit=0 edit.case=any edit.autoselect=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=4 alignment="0" tabsequence=90 border="0" color="0" x="3616" y="4" height="60" width="677" format="[general]" html.valueishtml="0"  name=item_spec  tag="Item Spec" visible="1" edit.limit=50 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=5 alignment="0" tabsequence=100 border="0" color="0" x="4302" y="4" height="60" width="178" format="[general]" html.valueishtml="0"  name=item_uom  tag="Item UOM" visible="1" edit.limit=0 edit.case=any edit.autoselect=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=6 alignment="0" tabsequence=120 border="0" color="0" x="4809" y="4" height="60" width="251" format="[general]" html.valueishtml="0"  name=item_type  tag="Item Type" visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=7 alignment="0" tabsequence=130 border="0" color="0" x="5070" y="4" height="60" width="215" format="[general]" html.valueishtml="0"  name=line_type  tag="Line Type" visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=9 alignment="0" tabsequence=140 border="0" color="0" x="5294" y="4" height="60" width="233" format="[shortdate] [time]" html.valueishtml="0"  name=dateset visible="1" edit.limit=0 edit.case=any edit.autoselect=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=8 alignment="1" tabsequence=32766 border="0" color="0" x="6661" y="4" height="60" width="315" format="[general]" html.valueishtml="0"  name=organization_id  tag="Organization" visible="1" edit.limit=0 edit.case=any edit.autoselect=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=13 alignment="0" tabsequence=150 border="0" color="0" x="5536" y="4" height="60" width="347" format="[general]" html.valueishtml="0"  name=safety_inventory visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=14 alignment="0" tabsequence=160 border="0" color="0" x="5893" y="4" height="60" width="379" format="[general]" html.valueishtml="0"  name=manufacture_leadtime visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=15 alignment="0" tabsequence=40 border="0" color="0" x="1600" y="4" height="60" width="279" format="[general]" html.valueishtml="0"  name=item_division visible="1" dddw.name=VD_BASECODE dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=12 alignment="0" tabsequence=50 border="0" color="0" x="2053" y="4" height="60" width="270" format="[general]" html.valueishtml="0"  name=item_class visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=16 alignment="0" tabsequence=110 border="0" color="0" x="4489" y="4" height="60" width="311" format="[general]" html.valueishtml="0"  name=route_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=17 alignment="0" tabsequence=60 border="0" color="0" x="2331" y="4" height="60" width="453" format="[general]" html.valueishtml="0"  name=part_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=19 alignment="0" tabsequence=30 border="0" color="0" x="910" y="4" height="60" width="681" format="[general]" html.valueishtml="0"  name=model_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=detail alignment="0" expression="getrow()"border="0" color="0" x="238" y="4" height="60" width="123" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=18 alignment="2" tabsequence=10 border="0" color="0~tif (  bom_exists = 'NOTFOUND' , 255 , 0 )" x="370" y="4" height="60" width="293" format="[general]" html.valueishtml="0"  name=bom_exists visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+tree(type=1 showconnectlines=yes showleafnodeconnectLines=yes  indent=80 showtreenodeicon=yes defaultexpandtolevel=1 stateiconalignmode=0 selectnodebymouse=yes rtollayout=no 
+level=(expandedtreenodeiconname="" expandedtreenodeicontranscolor="553648127" collapsedtreenodeicontranscolor="553648127" )
+) 

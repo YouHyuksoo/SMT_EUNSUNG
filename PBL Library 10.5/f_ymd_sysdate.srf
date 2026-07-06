@@ -1,0 +1,16 @@
+HA$PBExportHeader$f_ymd_sysdate.srf
+$PBExportComments$Call Server's System Date
+global type f_ymd_sysdate from function_object
+end type
+
+forward prototypes
+global function string f_ymd_sysdate ()
+end prototypes
+
+global function string f_ymd_sysdate ();string lvs_yyyy,lvs_mm,lvs_dd,lvs_return		
+select substr(to_char(sysdate,'yyyy'),4,1),f_get_month_code2(to_char(sysdate,'mm')),f_get_day_code(to_char(sysdate,'dd')) into :lvs_yyyy,:lvs_mm,:lvs_dd from dual ;
+f_sql_check()
+lvs_return = lvs_yyyy + lvs_mm + lvs_dd
+return lvs_return
+end function
+

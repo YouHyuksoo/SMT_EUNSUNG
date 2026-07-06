@@ -1,0 +1,14 @@
+HA$PBExportHeader$f_sort.srf
+$PBExportComments$$$HEX10$$8cc1b8d208c7c4b37cb9200038d69ccd5cd5e4b2$$ENDHEX$$
+global type f_sort from function_object
+end type
+
+forward prototypes
+global subroutine f_sort ()
+end prototypes
+
+global subroutine f_sort ();openwithparm(w_sort,selected_data_window)
+SELECTED_DATA_WINDOW.GROUPCALC()
+
+end subroutine
+

@@ -1,0 +1,17 @@
+HA$PBExportHeader$f_off_msgbox.srf
+global type f_off_msgbox from function_object
+end type
+
+forward prototypes
+global function string f_off_msgbox (string arg_category, string arg_msg)
+end prototypes
+
+global function string f_off_msgbox (string arg_category, string arg_msg);//===============================================
+//  Message.ini $$HEX13$$5cb8200080bd30d1200054ba38c1c0c9200088bdecb724c630ae$$ENDHEX$$
+//===============================================
+String   Lvs_msg
+	  //     Lvs_msg  = Profilestring("MESSAGE.INI",arg_category ,arg_msg ,"")
+Return Lvs_msg
+
+end function
+

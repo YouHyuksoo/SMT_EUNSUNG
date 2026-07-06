@@ -1,0 +1,34 @@
+FUNCTION F_GET_ESD_CHECK_CYCLE_VALUE
+(
+  P_SUPPLIER IN VARCHAR2 
+, P_ITEM_CODE IN VARCHAR2 
+, P_ORG IN NUMBER 
+) RETURN NUMBER AS 
+
+
+LVI_VALUE NUMBER ;
+BEGIN
+
+ begin 
+   
+   SELECT NVL(ESD_CHECK_CYCLE_VALUE , 0 ) 
+     INTO LVI_VALUE
+     FROM IM_ITEM_MASTER 
+    WHERE SUPPLIER_CODE = P_SUPPLIER 
+      AND ITEM_CODE = P_ITEM_CODE
+      AND ORGANIZATION_ID = P_ORG ; 
+     
+  exception 
+       when no_data_found then 
+            return 0 ;
+  end ;  
+  
+  return LVI_VALUE;
+  
+EXCEPTION
+  
+     WHEN OTHERS THEN 
+          RAISE_APPLICATION_ERROR( -20003 , SQLERRM ) ;
+          RETURN 0 ;
+     
+END ;

@@ -1,0 +1,129 @@
+HA$PBExportHeader$f_set_column_dddw.srf
+global type f_set_column_dddw from function_object
+end type
+
+forward prototypes
+global subroutine f_set_column_dddw (datawindow adw_name)
+end prototypes
+
+global subroutine f_set_column_dddw (datawindow adw_name);int li_objcount , li_start , li_col2 , li_end , lvi_visible
+string ls_dwobject , ls_dwhead , lvs_column_dddw_name , lvs_table_name , lvs_right_string , lvs_rdwhead
+datawindowchild idw_child
+
+//=============================================
+//
+//=============================================
+ls_dwobject = adw_name.dataobject
+
+if len(trim(ls_dwobject)) = 0 or isnull(ls_dwobject) then 
+   return
+end if
+//=============================================
+//
+//=============================================
+
+ls_dwobject = adw_name.Object.DataWindow.Objects     // dw object list
+if len(trim(ls_dwobject)) = 0 then 
+   return 
+end if
+//=============================================
+//
+//=============================================
+			
+ls_dwobject = adw_name.Object.DataWindow.Objects 
+
+li_objcount = f_dual_lang_object_count(ls_dwobject)  // get object count
+li_start = 0
+//=============================================
+//
+//=============================================
+
+for li_col2 = 1 to li_objcount
+	li_end = pos(ls_dwobject, "~t", li_start + 1)
+	
+	if li_col2 < li_objcount then    // last object check
+		ls_dwhead = mid(ls_dwobject, li_start + 1, li_end - li_start - 1)	
+	else
+		ls_dwhead = mid(ls_dwobject, li_start + 1, len(ls_dwobject) - li_start)
+	end if
+
+		lvs_column_dddw_name = adw_name.Describe(ls_dwhead+ ".DDDW.NAME")
+		//================================================
+		
+		if upper(lvs_column_dddw_name) = upper('vd_basecode') THEN
+			
+			F_MSG_MDI_HELP(adw_name.classname()+'  '+ls_dwhead+'  '+lvs_column_dddw_name)  				
+			adw_name.GETCHILD( ls_dwhead , IDW_CHILD)
+			IDW_CHILD.settransobject( SQLCA) 
+			//===============================================
+			//
+			//===============================================	
+			lvs_rdwhead = upper(f_replace_string(ls_dwhead,'_' , ' '))
+			
+			lvs_right_string = trim(Right(  lvs_rdwhead , 2 ))
+			if  isnumber(lvs_right_string) then 
+				IDW_CHILD.RETrieve( GVS_LANGUAGE , STRING(GVI_ORGANIZATION_ID) , trim(Mid( lvs_rdwhead  ,1 , Len( lvs_rdwhead) -2 )) ) 
+			else
+				IDW_CHILD.RETrieve( GVS_LANGUAGE , STRING(GVI_ORGANIZATION_ID) ,  lvs_rdwhead ) 
+			end if
+			IDW_CHILD.insertrow(1)				
+			f_dual_lang_change_dddw(adw_name, ls_dwhead) //$$HEX6$$e4b26dadb4c5200009000900$$ENDHEX$$
+			
+
+		elseif upper(lvs_column_dddw_name) = upper('vd_standard_code') THEN
+			
+			F_MSG_MDI_HELP(adw_name.classname()+'  '+ls_dwhead+'  '+lvs_column_dddw_name)  				
+			adw_name.GETCHILD( ls_dwhead , IDW_CHILD)
+			IDW_CHILD.settransobject( SQLCA) 
+			IDW_CHILD.RETrieve( GVS_LANGUAGE , STRING(GVI_ORGANIZATION_ID) , upper( f_replace_string(ls_dwhead,'_' , ' ') )   , '%' , '%' , '%' ) 
+			IDW_CHILD.insertrow(1)								
+			f_dual_lang_change_dddw(adw_name, ls_dwhead) //$$HEX6$$e4b26dadb4c5200009000900$$ENDHEX$$
+		 elseif upper(lvs_column_dddw_name) = upper('vd_account_code_all') or &
+			   upper(lvs_column_dddw_name) = upper('vd_department_code') or &
+			   upper(lvs_column_dddw_name) = upper('vd_cost_center_code') or &
+			   upper(lvs_column_dddw_name) = upper('vd_delivery_nation_code') or &						   
+			   upper(lvs_column_dddw_name) = upper('vd_svc_line_type') or &
+			   upper(lvs_column_dddw_name) = upper('vd_product_location_code') or &
+		       upper(lvs_column_dddw_name) = upper('vd_wqc_standard_code') or &	
+				 upper(lvs_column_dddw_name) = upper('vd_oqc_standard_code') or &	
+			   upper(lvs_column_dddw_name) = upper('vd_wqc_line_status_code') or &
+				upper(lvs_column_dddw_name) = upper('vd_defect_code') or &
+			   upper(lvs_column_dddw_name) = upper('vd_material_location_code') or &			
+				upper(lvs_column_dddw_name) = upper('vd_basecode_label_step')  &								
+	       then
+			
+			F_MSG_MDI_HELP(adw_name.classname()+'  '+ls_dwhead+'  '+lvs_column_dddw_name)  				
+			adw_name.GETCHILD( ls_dwhead , IDW_CHILD)
+			IDW_CHILD.settransobject( SQLCA) 
+			IDW_CHILD.RETrieve( GVS_LANGUAGE , STRING(GVI_ORGANIZATION_ID) ) 
+			IDW_CHILD.insertrow(1)											
+                  f_dual_lang_change_dddw(adw_name, ls_dwhead) //$$HEX6$$e4b26dadb4c5200009000900$$ENDHEX$$
+		elseif  upper(lvs_column_dddw_name) = upper('vd_inspect_machine_code') or &
+			upper(lvs_column_dddw_name) = upper('vd_inspect_process_code') or &
+			upper(lvs_column_dddw_name) = upper('vd_machine_code') or &
+			upper(lvs_column_dddw_name) = upper('vd_location_barcode') or &			
+			upper(lvs_column_dddw_name) = upper('vd_product_class_code') or &
+			upper(lvs_column_dddw_name) = upper('vd_workstage_code') or &
+			upper(lvs_column_dddw_name) = upper('vd_workstage_routing_code') or &				
+			upper(lvs_column_dddw_name) = upper('vd_item_code') or &
+			upper(lvs_column_dddw_name) = upper('vd_set_item_code') or &			
+			upper(lvs_column_dddw_name) = upper('vd_supplier_code') or &
+			upper(lvs_column_dddw_name) = upper('vd_line_code') or &
+			upper(lvs_column_dddw_name) = upper('vd_customer_code') or & 
+		    upper(lvs_column_dddw_name) = upper('vd_model_name') or &
+				    upper(lvs_column_dddw_name) = upper('vd_smt_machine_code') or & 	 
+			upper(lvs_column_dddw_name) = upper('vd_user_name')THEN
+			
+			F_MSG_MDI_HELP(adw_name.classname()+'  '+ls_dwhead+'  '+lvs_column_dddw_name)  				
+			adw_name.GETCHILD( ls_dwhead , IDW_CHILD)
+			IDW_CHILD.settransobject( SQLCA) 
+			IDW_CHILD.RETrieve(  STRING(GVI_ORGANIZATION_ID)) 
+			IDW_CHILD.insertrow(1)		
+			f_dual_lang_change_dddw(adw_name, ls_dwhead) //$$HEX6$$e4b26dadb4c5200009000900$$ENDHEX$$
+			
+	
+		end if					
+	li_start = li_end
+next
+end subroutine
+

@@ -1,0 +1,31 @@
+HA$PBExportHeader$f_mymenu_delete_all.srf
+$PBExportComments$My Menu Update
+global type f_mymenu_delete_all from function_object
+end type
+
+forward prototypes
+global function integer f_mymenu_delete_all ()
+end prototypes
+
+global function integer f_mymenu_delete_all ();msg = f_msgbox1(1161 ,  "Delete All") 
+if msg = 1 then 
+
+      delete from isys_menu 
+	 where user_id = :GVS_USER_ID 
+		 and organization_id = :gvi_organization_id ;
+	
+		 if f_sql_check() < 0 then 
+			return -1
+		end if
+		
+		commit ;
+		F_MESSAGE_ONTIME( 2 , "My Menu Updated")		
+		w_main_frame.setmicrohelp("My Menu Updated")
+
+else
+
+end if
+
+return 0
+end function
+

@@ -1,0 +1,45 @@
+Save Format v3.0(19990112)
+@begin Libraries
+ "infinity21_uw_mac.pbl" "";
+@end;
+@begin Objects
+ "w_mcn_jig_input_history_master.srw" "infinity21_uw_mac.pbl";
+ "w_mcn_mold_inventory_master.srw" "infinity21_uw_mac.pbl";
+ "w_mcn_sample_bcr_input_history_master.srw" "infinity21_uw_mac.pbl";
+ "w_mcn_jig_squeeze_clean_check_master.srw" "infinity21_uw_mac.pbl";
+ "w_mcn_machine_master.srw" "infinity21_uw_mac.pbl";
+ "w_mcn_sample_master.srw" "infinity21_uw_mac.pbl";
+ "w_mcn_jig_backupblock_check_history.srw" "infinity21_uw_mac.pbl";
+ "w_mcn_jig_issue_master.srw" "infinity21_uw_mac.pbl";
+ "w_mcn_jig_backupblock_check_master.srw" "infinity21_uw_mac.pbl";
+ "w_mcn_jig_pm_master.srw" "infinity21_uw_mac.pbl";
+ "w_mcn_mold_master.srw" "infinity21_uw_mac.pbl";
+ "w_mcn_jig_fixture_check_master.srw" "infinity21_uw_mac.pbl";
+ "w_mcn_jig_squeeze_check_master.srw" "infinity21_uw_mac.pbl";
+ "w_mcn_feeder_master.srw" "infinity21_uw_mac.pbl";
+ "w_mcn_jig_squeeze_check_history.srw" "infinity21_uw_mac.pbl";
+ "w_mcn_jig_mask_tension_check_master.srw" "infinity21_uw_mac.pbl";
+ "w_mcn_mold_purchase_order_master.srw" "infinity21_uw_mac.pbl";
+ "w_mcn_mold_buy_price_confirm.srw" "infinity21_uw_mac.pbl";
+ "w_mcn_jig_mask_check_master.srw" "infinity21_uw_mac.pbl";
+ "w_mcn_it_master.srw" "infinity21_uw_mac.pbl";
+ "w_mcn_jig_master.srw" "infinity21_uw_mac.pbl";
+ "w_mcn_jig_mask_check_history.srw" "infinity21_uw_mac.pbl";
+ "w_mcn_feeder_repair_master.srw" "infinity21_uw_mac.pbl";
+ "w_mcn_machine_repair_master.srw" "infinity21_uw_mac.pbl";
+ "w_mcn_jig_repair_master.srw" "infinity21_uw_mac.pbl";
+ "w_mcn_machine_pm_master.srw" "infinity21_uw_mac.pbl";
+ "w_mcn_mold_buy_price_master.srw" "infinity21_uw_mac.pbl";
+ "w_mcn_mold_repair_master.srw" "infinity21_uw_mac.pbl";
+ "w_mcn_jig_feeder_adjust_master.srw" "infinity21_uw_mac.pbl";
+ "w_mcn_mold_receipt_master.srw" "infinity21_uw_mac.pbl";
+ "w_mcn_feeder_pickup_master.srw" "infinity21_uw_mac.pbl";
+ "w_mcn_feeder_repair_request_master.srw" "infinity21_uw_mac.pbl";
+ "w_mcn_jig_repair_request_master.srw" "infinity21_uw_mac.pbl";
+ "w_mcn_mold_repair_request_master.srw" "infinity21_uw_mac.pbl";
+ "w_mcn_machine_daily_operation.srw" "infinity21_uw_mac.pbl";
+ "w_mcn_mold_issue_master.srw" "infinity21_uw_mac.pbl";
+ "w_mcn_machine_mounter_status_master.srw" "infinity21_uw_mac.pbl";
+ "w_mcn_machine_repair_request_master.srw" "infinity21_uw_mac.pbl";
+ "w_mcn_sample_input_history_master.srw" "infinity21_uw_mac.pbl";
+@end;

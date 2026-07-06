@@ -1,0 +1,171 @@
+HA$PBExportHeader$d_des_smt_bom_4_kitting_lst.srd
+release 10.5;
+datawindow(units=0 timer_interval=60000 color=16777215 processing=1 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no grid.lines=0 )
+header(height=120 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=72 color="536870912" height.autosize=yes )
+table(column=(type=char(7) updatewhereclause=yes name=div dbname="div" )
+ column=(type=char(30) updatewhereclause=yes name=parent_item_code dbname="id_eng_bom_smt.parent_item_code" )
+ column=(type=char(30) updatewhereclause=yes name=child_item_code dbname="id_eng_bom_smt.child_item_code" )
+ column=(type=number updatewhereclause=yes name=item_unit_qty dbname="id_eng_bom_smt.item_unit_qty" )
+ column=(type=char(10) updatewhereclause=yes name=workstage_code dbname="id_eng_bom_smt.workstage_code" )
+ column=(type=char(300) updatewhereclause=yes name=item_name dbname="id_item.item_name" )
+ column=(type=char(300) updatewhereclause=yes name=item_spec dbname="id_item.item_spec" )
+ column=(type=char(20) updatewhereclause=yes name=line_code dbname="id_eng_bom_smt.line_code" )
+ column=(type=char(20) updatewhereclause=yes name=machine dbname="id_eng_bom_smt.machine" )
+ column=(type=char(30) updatewhereclause=yes name=location_code dbname="id_eng_bom_smt.location_code" )
+ column=(type=char(10) updatewhereclause=yes name=table_id dbname="id_eng_bom_smt.table_id" )
+ column=(type=char(30) updatewhereclause=yes name=pcb_item dbname="id_eng_bom_smt.pcb_item" )
+ column=(type=char(0) updatewhereclause=yes name=our_barcode dbname="our_barcode" )
+ column=(type=number updatewhereclause=yes name=feeding_qty dbname="feeding_qty" )
+ column=(type=number updatewhereclause=yes name=actual_qty dbname="actual_qty" )
+ column=(type=number updatewhereclause=yes name=unfeeding_qty dbname="unfeeding_qty" )
+ column=(type=number updatewhereclause=yes name=inventory_qty dbname="inventory_qty" )
+ column=(type=char(20) updatewhereclause=yes name=location_address dbname="id_item.location_address" )
+ column=(type=char(1) updatewhereclause=yes name=feeder_shaft dbname="id_eng_bom_smt.feeder_shaft" )
+ column=(type=number updatewhereclause=yes name=unit_price dbname="unit_price" )
+ retrieve="  SELECT 'BOM'  DIV ,
+          ~"ID_ENG_BOM_SMT~".~"PARENT_ITEM_CODE~",   
+         ~"ID_ENG_BOM_SMT~".~"CHILD_ITEM_CODE~",   
+
+         ~"ID_ENG_BOM_SMT~".~"ITEM_UNIT_QTY~",   
+         ~"ID_ENG_BOM_SMT~".~"WORKSTAGE_CODE~",   
+
+         ~"ID_ITEM_A~".~"ITEM_NAME~",   
+         ~"ID_ITEM_A~".~"ITEM_SPEC~",   
+
+         ~"ID_ENG_BOM_SMT~".~"LINE_CODE~" , 
+         ~"ID_ENG_BOM_SMT~".~"MACHINE~" , 
+         ~"ID_ENG_BOM_SMT~".~"LOCATION_CODE~",
+         ~"ID_ENG_BOM_SMT~".~"TABLE_ID~",
+		~"ID_ENG_BOM_SMT~".~"PCB_ITEM~",
+		'' OUR_BARCODE ,
+		F_GET_SHAFT_FEEDING_QTY(ID_ENG_BOM_SMT.LINE_CODE , PARENT_ITEM_CODE , LOCATION_CODE , PCB_ITEM  , FEEDER_SHAFT )  FEEDING_QTY,
+         F_GET_FEEDER_ACTUAL_QTY( ID_ENG_BOM_SMT.LINE_CODE , PARENT_ITEM_CODE , LOCATION_CODE , PCB_ITEM )  ACTUAL_QTY ,
+		F_GET_UNFEEDING_QTY(  ID_ENG_BOM_SMT.LINE_CODE , ID_ENG_BOM_SMT.PARENT_ITEM_CODE , ID_ENG_BOM_SMT.CHILD_ITEM_CODE , ID_ENG_BOM_SMT.LOCATION_CODE  ,ID_ENG_BOM_SMT.FEEDER_SHAFT ) UNFEEDING_QTY ,
+		f_get_mat_inventory_qty_all( ID_ENG_BOM_SMT.CHILD_ITEM_CODE , ID_ENG_BOM_SMT.organization_id) INVENTORY_QTY ,
+		
+		 ~"ID_ITEM_A~".~"LOCATION_ADDRESS~" LOCATION_ADDRESS ,
+
+		  ~"ID_ENG_BOM_SMT~".~"FEEDER_SHAFT~"  ,
+		 f_get_mat_max_unit_price_cfm( ID_ENG_BOM_SMT.CHILD_ITEM_CODE , 'F' , SYSDATE , ~"ID_ENG_BOM_SMT~".~"ORGANIZATION_ID~" ) UNIT_PRICE
+		
+    FROM ~"ID_ENG_BOM_SMT~",   
+         ~"ID_ITEM~" ~"ID_ITEM_A~"
+   WHERE ( id_eng_bom_smt.child_item_code = ID_ITEM_A.item_code (+)) and  
+         ( id_eng_bom_smt.organization_id = ID_ITEM_A.organization_id (+)) and  
+ 
+         ( ~"ID_ENG_BOM_SMT~".~"PARENT_ITEM_CODE~" = :ARG_PARENT_ITEM ) and
+         ( ~"ID_ENG_BOM_SMT~".~"LINE_CODE~" = :ARG_LINE_CODE ) and
+         ( ~"ID_ENG_BOM_SMT~".~"DATESET~" <= :ARG_DATESET ) and
+         ( NVL(~"ID_ENG_BOM_SMT~".~"DATEEND~",  TO_DATE('99991231','YYYYMMDD')) >= :ARG_DATESET ) and
+         ( ~"ID_ENG_BOM_SMT~".~"PCB_ITEM~" LIKE :ARG_TOPBOT ) and
+         ( NVL(~"ID_ENG_BOM_SMT~".~"FEEDER_SHAFT~" ,'A') LIKE :ARG_FEEDER_SHAFT ) and
+         ( ~"ID_ENG_BOM_SMT~".~"ORGANIZATION_ID~" = :ARG_ORG ) 
+
+
+UNION ALL 
+  SELECT 'REPLACE' DIV ,
+		~"ID_ENG_BOM_SMT_REPLACE~".~"PARENT_ITEM_CODE~",   
+         ~"ID_ENG_BOM_SMT_REPLACE~".~"REPLACE_ITEM_CODE~",   
+ 
+  
+         ~"ID_ENG_BOM_SMT_REPLACE~".~"ITEM_UNIT_QTY~",   
+         ~"ID_ENG_BOM_SMT_REPLACE~".~"WORKSTAGE_CODE~",   
+
+         ~"ID_ITEM_A~".~"ITEM_NAME~",   
+         ~"ID_ITEM_A~".~"ITEM_SPEC~",   
+
+
+         ~"ID_ENG_BOM_SMT_REPLACE~".~"LINE_CODE~" , 
+         ~"ID_ENG_BOM_SMT_REPLACE~".~"MACHINE~" , 
+         ~"ID_ENG_BOM_SMT_REPLACE~".~"LOCATION_CODE~",
+         ~"ID_ENG_BOM_SMT_REPLACE~".~"TABLE_ID~",
+		~"ID_ENG_BOM_SMT_REPLACE~".~"PCB_ITEM~",
+		'' OUR_BARCODE ,
+		0  FEEDING_QTY,
+		0 ACTUAL_QTY ,
+		0 UNFEEDING_QTY ,
+		f_get_mat_inventory_qty_all( ID_ENG_BOM_SMT_REPLACE.CHILD_ITEM_CODE , ID_ENG_BOM_SMT_REPLACE.organization_id) INVENTORY_QTY ,
+	     ~"ID_ITEM_A~".~"LOCATION_ADDRESS~" LOCATION_ADDRESS ,
+
+		'' FEEDER_SHAFT ,
+
+ 		f_get_mat_max_unit_price_cfm( ID_ENG_BOM_SMT_REPLACE.CHILD_ITEM_CODE , 'F' , SYSDATE , ~"ID_ENG_BOM_SMT_REPLACE~".~"ORGANIZATION_ID~" ) UNIT_PRICE
+
+    FROM ~"ID_ENG_BOM_SMT_REPLACE~",   
+         ~"ID_ITEM~" ~"ID_ITEM_A~"
+   WHERE ( ID_ENG_BOM_SMT_REPLACE.child_item_code = ID_ITEM_A.item_code (+)) and  
+         ( ID_ENG_BOM_SMT_REPLACE.organization_id = ID_ITEM_A.organization_id (+)) and  
+
+         ( ~"ID_ENG_BOM_SMT_REPLACE~".~"PARENT_ITEM_CODE~" = :ARG_PARENT_ITEM ) and
+         ( ~"ID_ENG_BOM_SMT_REPLACE~".~"LINE_CODE~" = :ARG_LINE_CODE ) and
+         ( ~"ID_ENG_BOM_SMT_REPLACE~".~"DATESET~" <= :ARG_DATESET ) and
+         ( NVL(~"ID_ENG_BOM_SMT_REPLACE~".~"DATEEND~",  TO_DATE('99991231','YYYYMMDD')) >= :ARG_DATESET ) and
+         ( ~"ID_ENG_BOM_SMT_REPLACE~".~"PCB_ITEM~" LIKE :ARG_TOPBOT ) and
+         ( ~"ID_ENG_BOM_SMT_REPLACE~".~"ORGANIZATION_ID~" = :ARG_ORG ) 
+" arguments=(("ARG_PARENT_ITEM", string),("ARG_DATESET", datetime),("ARG_LINE_CODE", string),("ARG_TOPBOT", string),("ARG_FEEDER_SHAFT", string),("arg_org", number))  sort="line_code A production_quantity A location_code A " )
+group(level=1 header.height=100 trailer.height=56 by=("parent_item_code" ) header.color="536870912" trailer.color="30474192" )
+button(band=header text="<" enabled=yes action="0" border="0" color="16777215" x="9" y="8" height="108" width="82" vtextalign="0" htextalign="0"  name=b_size visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217745" )
+text(band=header alignment="2" text="No" border="6" color="16777215" x="101" y="8" height="108" width="114" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217745" )
+text(band=header alignment="2" text="Line Code" border="6" color="16777215" x="384" y="8" height="108" width="160" html.valueishtml="0"  name=line_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217745" )
+text(band=header alignment="2" text="Div" border="6" color="16777215" x="224" y="8" height="108" width="151" html.valueishtml="0"  name=div_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217745" )
+text(band=header alignment="2" text="Table Id" border="6" color="16777215" x="553" y="8" height="108" width="133" html.valueishtml="0"  name=id_eng_bom_smt_table_id_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217745" )
+text(band=header alignment="2" text="Pcb Item" border="6" color="16777215" x="695" y="8" height="108" width="160" html.valueishtml="0"  name=id_eng_bom_smt_pcb_item_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217745" )
+text(band=header alignment="2" text="Feeder Shaft" border="0" color="16777215" x="864" y="8" height="108" width="187" html.valueishtml="0"  name=feeder_shaft_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217745" )
+text(band=header alignment="2" text="Our Barcode" border="6" color="16777215" x="1705" y="8" height="108" width="718" html.valueishtml="0"  name=our_barcode_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217745" )
+text(band=header alignment="2" text="Location Code" border="6" color="16777215" x="2702" y="8" height="108" width="183" html.valueishtml="0"  name=location_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217745" )
+text(band=header alignment="2" text="Item Name" border="6" color="16777215" x="2432" y="8" height="108" width="261" html.valueishtml="0"  name=id_item_item_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217745" )
+text(band=header alignment="2" text="Location Address" border="6" color="16777215" x="2894" y="8" height="108" width="187" html.valueishtml="0"  name=location_address_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217745" )
+text(band=header alignment="2" text="Item Unit Qty" border="6" color="16777215" x="3090" y="8" height="108" width="201" html.valueishtml="0"  name=item_unit_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217745" )
+text(band=header alignment="2" text="Item Spec" border="6" color="16777215" x="5239" y="8" height="108" width="453" html.valueishtml="0"  name=id_item_item_spec_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217745" )
+text(band=header alignment="2" text="Parent Item Code" border="6" color="16777215" x="4672" y="8" height="108" width="329" html.valueishtml="0"  name=parent_item_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217745" )
+text(band=header alignment="2" text="Machine" border="6" color="16777215" x="5701" y="8" height="108" width="224" html.valueishtml="0"  name=machine_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217745" )
+text(band=header alignment="2" text="Actual Qty" border="6" color="16777215" x="5010" y="8" height="108" width="219" html.valueishtml="0"  name=actual_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217745" )
+text(band=header alignment="2" text="Production Quantity" border="6" color="16777215" x="4384" y="8" height="108" width="279" html.valueishtml="0"  name=production_quantity_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217745" )
+text(band=header alignment="2" text="Feeding Qty" border="6" color="0" x="3301" y="8" height="108" width="238" html.valueishtml="0"  name=feeding_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+text(band=header alignment="2" text="Unfeeding Qty" border="0" color="0" x="3547" y="8" height="108" width="251" html.valueishtml="0"  name=unfeeding_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+text(band=header alignment="2" text="Inventory Qty" border="0" color="16777215" x="3808" y="8" height="108" width="233" html.valueishtml="0"  name=inventory_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217745" )
+text(band=header alignment="2" text="Feeder Remain Qty" border="0" color="33554432" x="4050" y="8" height="108" width="325" html.valueishtml="0"  name=t_3 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+compute(band=header.1 alignment="2" expression="count( child_item_code for all )"border="0" color="33554432" x="1061" y="8" height="80" width="343" format="[GENERAL]" html.valueishtml="0"  name=compute_4 visible="1"  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+compute(band=header.1 alignment="2" expression="sum (   (  if ( isnull(our_barcode) , 1 , 0))  for all )"border="0" color="33554432" x="1705" y="8" height="80" width="718" format="[GENERAL]" html.valueishtml="0"  name=no_scan_count visible="1"  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="1073741824~tif (  no_scan_count > 0  , 255 , rgb(255,255,255) )" )
+text(band=header.1 alignment="0" text="Rows No Scan" border="0" color="33554432" x="2432" y="8" height="80" width="261" html.valueishtml="0"  name=t_2 visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+compute(band=detail alignment="0" expression="TRIM('')"border="0" color="0" x="9" y="4" height="68" width="82" format="[GENERAL]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="553648127~tif (  production_quantity <= 500 ,rgb(255,200,200) , if ( production_quantity  > 500 and production_quantity  <= 1000 , rgb(128,255,255) , if ( production_quantity  > 1000 and production_quantity  <= 2000 , rgb(255,128,0) , RGB(255,255,255) ) ) )" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="0" x="224" y="4" height="68" width="151" format="[general]" html.valueishtml="0"  name=div visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="553648127~tif (  production_quantity <= 500 ,rgb(255,200,200) , if ( production_quantity  > 500 and production_quantity  <= 1000 , rgb(128,255,255) , if ( production_quantity  > 1000 and production_quantity  <= 2000 , rgb(255,128,0) , RGB(255,255,255) ) ) )" )
+column(band=detail id=11 alignment="0" tabsequence=32766 border="0" color="0" x="553" y="4" height="68" width="133" format="[general]" html.valueishtml="0"  name=table_id visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="553648127~tif (  production_quantity <= 500 ,rgb(255,200,200) , if ( production_quantity  > 500 and production_quantity  <= 1000 , rgb(128,255,255) , if ( production_quantity  > 1000 and production_quantity  <= 2000 , rgb(255,128,0) , RGB(255,255,255) ) ) )" )
+column(band=detail id=8 alignment="0" tabsequence=32766 border="0" color="0~tif ( our_barcode <> ~"~" , 255 , 0 ) " x="384" y="4" height="68" width="160" format="[general]" html.valueishtml="0"  name=line_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="553648127~tif (  production_quantity <= 500 ,rgb(255,200,200) , if ( production_quantity  > 500 and production_quantity  <= 1000 , rgb(128,255,255) , if ( production_quantity  > 1000 and production_quantity  <= 2000 , rgb(255,128,0) , RGB(255,255,255) ) ) )" )
+compute(band=detail alignment="0" expression="GETROW()"border="0" color="0" x="101" y="4" height="68" width="114" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="553648127~tif (  production_quantity <= 500 ,rgb(255,200,200) , if ( production_quantity  > 500 and production_quantity  <= 1000 , rgb(128,255,255) , if ( production_quantity  > 1000 and production_quantity  <= 2000 , rgb(255,128,0) , RGB(255,255,255) ) ) )" )
+column(band=detail id=12 alignment="2" tabsequence=32766 border="0" color="0" x="695" y="4" height="68" width="160" format="[general]" html.valueishtml="0"  name=pcb_item visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="553648127~tif (  production_quantity <= 500 ,rgb(255,200,200) , if ( production_quantity  > 500 and production_quantity  <= 1000 , rgb(128,255,255) , if ( production_quantity  > 1000 and production_quantity  <= 2000 , rgb(255,128,0) , RGB(255,255,255) ) ) )" )
+column(band=detail id=13 alignment="2" tabsequence=32766 border="0" color="0~tif ( our_barcode <> ~"~" , 255 , 0 ) " x="1705" y="4" height="68" width="718" format="[general]" html.valueishtml="0"  name=our_barcode visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="553648127~tif (  production_quantity <= 500 ,rgb(255,200,200) , if ( production_quantity  > 500 and production_quantity  <= 1000 , rgb(128,255,255) , if ( production_quantity  > 1000 and production_quantity  <= 2000 , rgb(255,128,0) , RGB(255,255,255) ) ) )" )
+column(band=detail id=6 alignment="2" tabsequence=32766 border="0" color="0~tif ( our_barcode <> ~"~" , 255 , 0 ) " x="2432" y="4" height="68" width="261" format="[general]" html.valueishtml="0"  name=item_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="553648127~tif (  production_quantity <= 500 ,rgb(255,200,200) , if ( production_quantity  > 500 and production_quantity  <= 1000 , rgb(128,255,255) , if ( production_quantity  > 1000 and production_quantity  <= 2000 , rgb(255,128,0) , RGB(255,255,255) ) ) )" )
+column(band=detail id=10 alignment="2" tabsequence=32766 border="0" color="0~tif ( our_barcode <> ~"~" , 255 , 0 ) " x="2702" y="4" height="68" width="183" format="[general]" html.valueishtml="0"  name=location_code visible="1" dddw.name=vd_location_barcode dddw.displaycolumn=location_code dddw.datacolumn=barcode dddw.percentwidth=500 dddw.lines=10 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any dddw.hscrollbar=yes dddw.vscrollbar=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="553648127~tif (  production_quantity <= 500 ,rgb(255,200,200) , if ( production_quantity  > 500 and production_quantity  <= 1000 , rgb(128,255,255) , if ( production_quantity  > 1000 and production_quantity  <= 2000 , rgb(255,128,0) , RGB(255,255,255) ) ) )" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="0" color="0~tif ( our_barcode <> ~"~" , 255 , 0 ) " x="3090" y="4" height="68" width="201" format="###,###.00" html.valueishtml="0"  name=item_unit_qty visible="1" editmask.mask="###,###.00" editmask.focusrectangle=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="553648127~tif (  production_quantity <= 500 ,rgb(255,200,200) , if ( production_quantity  > 500 and production_quantity  <= 1000 , rgb(128,255,255) , if ( production_quantity  > 1000 and production_quantity  <= 2000 , rgb(255,128,0) , RGB(255,255,255) ) ) )" )
+column(band=detail id=18 alignment="2" tabsequence=32766 border="0" color="0" x="2894" y="4" height="68" width="187" format="[general]" html.valueishtml="0"  name=location_address visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="553648127~tif (  production_quantity <= 500 ,rgb(255,200,200) , if ( production_quantity  > 500 and production_quantity  <= 1000 , rgb(128,255,255) , if ( production_quantity  > 1000 and production_quantity  <= 2000 , rgb(255,128,0) , RGB(255,255,255) ) ) )" )
+column(band=detail id=19 alignment="2" tabsequence=32766 border="0" color="0" x="864" y="4" height="68" width="187" format="[general]" html.valueishtml="0"  name=feeder_shaft visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=14 alignment="1" tabsequence=32766 border="0" color="0" x="3301" y="4" height="68" width="238" format="[general]" html.valueishtml="0"  name=feeding_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="553648127~tif (  production_quantity <= 500 ,rgb(255,200,200) , if ( production_quantity  > 500 and production_quantity  <= 1000 , rgb(128,255,255) , if ( production_quantity  > 1000 and production_quantity  <= 2000 , rgb(255,128,0) , RGB(255,255,255) ) ) )" )
+column(band=detail id=16 alignment="1" tabsequence=32766 border="0" color="0" x="3547" y="4" height="68" width="251" format="[general]" html.valueishtml="0"  name=unfeeding_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=17 alignment="1" tabsequence=32766 border="0" color="0" x="3808" y="4" height="68" width="233" format="[general]" html.valueishtml="0"  name=inventory_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="0~tif ( our_barcode <> ~"~" , 255 , 0 ) " x="4672" y="4" height="68" width="329" format="[general]" html.valueishtml="0"  name=parent_item_code visible="1" edit.limit=30 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="553648127~tif (  production_quantity <= 500 ,rgb(255,200,200) , if ( production_quantity  > 500 and production_quantity  <= 1000 , rgb(128,255,255) , if ( production_quantity  > 1000 and production_quantity  <= 2000 , rgb(255,128,0) , RGB(255,255,255) ) ) )" )
+column(band=detail id=7 alignment="2" tabsequence=32766 border="0" color="0~tif ( our_barcode <> ~"~" , 255 , 0 ) " x="5239" y="4" height="68" width="453" format="[general]" html.valueishtml="0"  name=item_spec visible="1" edit.limit=0 edit.case=any edit.autoselect=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="553648127~tif (  production_quantity <= 500 ,rgb(255,200,200) , if ( production_quantity  > 500 and production_quantity  <= 1000 , rgb(128,255,255) , if ( production_quantity  > 1000 and production_quantity  <= 2000 , rgb(255,128,0) , RGB(255,255,255) ) ) )" )
+column(band=detail id=9 alignment="2" tabsequence=32766 border="0" color="0~tif ( our_barcode <> ~"~" , 255 , 0 ) " x="5701" y="4" height="68" width="224" format="[general]" html.valueishtml="0"  name=machine visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="553648127~tif (  production_quantity <= 500 ,rgb(255,200,200) , if ( production_quantity  > 500 and production_quantity  <= 1000 , rgb(128,255,255) , if ( production_quantity  > 1000 and production_quantity  <= 2000 , rgb(255,128,0) , RGB(255,255,255) ) ) )" )
+compute(band=detail alignment="1" expression=" ( unfeeding_qty + feeding_qty - actual_qty )  / item_unit_qty "border="0" color="0" x="4384" y="4" height="68" width="279" format="###,##0" html.valueishtml="0"  name=production_quantity visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="1073741824~tif (  production_quantity <= 500 ,rgb(255,200,200) , if ( production_quantity  > 500 and production_quantity  <= 1000 , rgb(128,255,255) , if ( production_quantity  > 1000 and production_quantity  <= 2000 , rgb(255,128,0) , RGB(255,255,255) ) ) )" )
+column(band=detail id=15 alignment="1" tabsequence=32766 border="0" color="0" x="5010" y="4" height="68" width="219" format="[general]" html.valueishtml="0"  name=actual_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="553648127~tif (  production_quantity <= 500 ,rgb(255,200,200) , if ( production_quantity  > 500 and production_quantity  <= 1000 , rgb(128,255,255) , if ( production_quantity  > 1000 and production_quantity  <= 2000 , rgb(255,128,0) , RGB(255,255,255) ) ) )" )
+compute(band=detail alignment="1" expression="( feeding_qty -  actual_qty )"border="0" color="33554432" x="4050" y="4" height="68" width="325" format="###,##0" html.valueishtml="0"  name=compute_5 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+compute(band=trailer.1 alignment="2" expression="count(line_code for group 1)"border="0" color="33554432" x="384" y="4" height="52" width="160" format="[general]" html.valueishtml="0"  name=compute_3 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Child Item Code" border="6" color="16777215" x="1061" y="8" height="108" width="343" html.valueishtml="0"  name=child_item_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217745" )
+text(band=header alignment="2" text="Unit Price" border="6" color="16777215" x="1413" y="8" height="108" width="283" html.valueishtml="0"  name=unit_price_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217745" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="0" color="0~tif ( our_barcode <> ~"~" , 255 , 0 ) " x="1061" y="4" height="68" width="343" format="[general]" html.valueishtml="0"  name=child_item_code visible="1" edit.limit=30 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="553648127~tif (  production_quantity <= 500 ,rgb(255,200,200) , if ( production_quantity  > 500 and production_quantity  <= 1000 , rgb(128,255,255) , if ( production_quantity  > 1000 and production_quantity  <= 2000 , rgb(255,128,0) , RGB(255,255,255) ) ) )" )
+column(band=detail id=20 alignment="1" tabsequence=32766 border="0" color="0" x="1413" y="4" height="68" width="283" format="###,##0.00" html.valueishtml="0"  name=unit_price visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+
+sparse(names="parent_item_code")htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

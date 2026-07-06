@@ -1,0 +1,9 @@
+TRIGGER "INFINITY21_JSMES"."TRG_ISAL_SHIPPING_LOT_DEL" 
+ AFTER
+  DELETE
+ ON isal_shipping_lot_master
+REFERENCING NEW AS NEW OLD AS OLD
+ FOR EACH ROW
+BEGIN DELETE FROM isal_shipping_lot_detail
+      WHERE lot_no = :OLD.lot_no;
+ END;

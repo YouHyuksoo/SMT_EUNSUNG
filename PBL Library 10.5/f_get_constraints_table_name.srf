@@ -1,0 +1,27 @@
+HA$PBExportHeader$f_get_constraints_table_name.srf
+$PBExportComments$GET CONSTRAINTS  NAME  FROM USER_CONSTRAINTS
+global type f_get_constraints_table_name from function_object
+end type
+
+forward prototypes
+global function string f_get_constraints_table_name (string arg_constraints)
+end prototypes
+
+global function string f_get_constraints_table_name (string arg_constraints);STRING LVS_TABLE_NAME , LVS_TABLE_NAME_DESC , LVS_CONST_NAME
+
+SELECT TABLE_NAME , R_CONSTRAINT_NAME INTO :LVS_TABLE_NAME , :LVS_CONST_NAME
+FROM USER_CONSTRAINTS 
+WHERE CONSTRAINT_NAME = :ARG_CONSTRAINTS  ; 
+
+IF F_SQL_CHECK() < 0 THEN 
+	RETURN ''
+END IF 
+
+SELECT DECODE( :GVS_LANGUAGE , 'K' , OBJECT_DESC_KOREA , 'C' , OBJECT_DESC_LOCAL ) 
+  INTO :LVS_TABLE_NAME_DESC
+  FROM ISYS_OBJECT  
+WHERE OBJECT_NAME = :LVS_TABLE_NAME  ; 
+
+RETURN "[ "+LVS_TABLE_NAME+'  '+LVS_TABLE_NAME_DESC+" ]"+"["+LVS_CONST_NAME+"]"
+end function
+

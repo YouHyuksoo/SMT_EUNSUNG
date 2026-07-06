@@ -1,0 +1,141 @@
+HA$PBExportHeader$f_gen_work_order_to_assy_plan.srf
+global type f_gen_work_order_to_assy_plan from function_object
+end type
+
+forward prototypes
+global function integer f_gen_work_order_to_assy_plan (string arg_work_order_no, string arg_item_code, string arg_line_type, string arg_mfs, datetime arg_plan_date, string arg_line_code, string arg_workstage_code, string arg_machine_code, double arg_plan_qty)
+end prototypes
+
+global function integer f_gen_work_order_to_assy_plan (string arg_work_order_no, string arg_item_code, string arg_line_type, string arg_mfs, datetime arg_plan_date, string arg_line_code, string arg_workstage_code, string arg_machine_code, double arg_plan_qty);  
+INSERT INTO IP_ASSEMBLY_MASTER_PLAN  
+         ( PLAN_DATE,   
+           PLAN_DATE_SEQUENCE,   
+           ORGANIZATION_ID,   
+           PLAN_YYYYMM,   
+           MFS,   
+           ITEM_CODE,   
+           PLAN_PRIORITY,   
+           PLAN_TIME,   
+           PRODUCT_LINE_TYPE,   
+           WORKSTAGE_CODE,   
+           MACHINE_CODE,   
+           LINE_CODE,   
+           WORK_DIVISION,   
+           ORDER_QTY,   
+           PRODUCT_ACTUAL_QTY,   
+           CUSTOMER_CODE,   
+           CUSTOMER_ORDER_NO,   
+           SHIPPING_ACCOUNT,   
+           DELIVERY_DATE,   
+           ORIGIN_MFS,   
+           SHIFT_CODE,   
+           TOTAL_REQUIRED_TIME,   
+           PLAN_TRANSFER_YN,   
+           PLAN_STATUS,   
+           ENTER_BY,   
+           ENTER_DATE,   
+           LAST_MODIFY_BY,   
+           LAST_MODIFY_DATE,   
+           ROUTE_NO,   
+           PARENT_ITEM_CODE,   
+           LOT_DIVIDE_YN,   
+           CUSTOMER_ORDER_NO_ORIGIN,   
+           MOLD_CODE,   
+           MOLD_VERSION,   
+           MOLD_SET_SERIAL,   
+           ST_VALUE,   
+           REQUIRMENT_TIME,   
+           BAD_QTY, 
+		  PLAN_TRANSFER_TYPE )  
+ SELECT :ARG_PLAN_DATE , //PLAN_DATE,   
+           SEQ_PLAN_DATE_SEQUENCE.NEXTVAL , //PLAN_DATE_SEQUENCE,   
+           ORGANIZATION_ID,   
+           PLAN_YYYYMM,   
+           f_get_assy_mfs( organization_id  ) MFS,   
+           ITEM_CODE,   
+           PLAN_PRIORITY,   
+           800 , //PLAN_TIME,   
+           LINE_TYPE,   
+           WORKSTAGE_CODE,   
+           '*' , //MACHINE_CODE,   
+           LINE_CODE,   
+           'P' , //WORK_DIVISION,   
+           ISSUE_PLAN_QTY - ISSUE_QTY ORDER_QTY,   
+           0 , //PRODUCT_ACTUAL_QTY,   
+           '*' , //CUSTOMER_CODE,   
+           '*' , //CUSTOMER_ORDER_NO,   
+           'M001' , //SHIPPING_ACCOUNT,   
+           PLAN_DATE , //DELIVERY_DATE,   
+           ORIGIN_MFS,   
+           SHIFT_CODE,   
+           0 , //TOTAL_REQUIRED_TIME,   
+           'N' , //PLAN_TRANSFER_YN,   
+           'W' , //PLAN_STATUS,   
+           ENTER_BY,   
+           ENTER_DATE,   
+           LAST_MODIFY_BY,   
+           LAST_MODIFY_DATE,   
+           ROUTE_NO,   
+           PARENT_ITEM_CODE,   
+           'N' , //LOT_DIVIDE_YN,   
+           '*' , //CUSTOMER_ORDER_NO_ORIGIN,   
+           '*' , //MOLD_CODE,   
+           NULL , //MOLD_VERSION,   
+           NULL , //MOLD_SET_SERIAL,   
+           0 ST_VALUE,   
+           0 REQUIRMENT_TIME,   
+           0 BAD_QTY ,
+		  'W' // $$HEX16$$91c7c5c5c0c9dcc25cb8200080bd30d12000ddc031c11cb42000c4ac8dd62000$$ENDHEX$$
+ FROM IM_ITEM_WORK_ORDER
+ WHERE WORK_ORDER_NO = :arg_work_order_no
+    AND ITEM_CODE = :arg_item_code
+    AND LINE_TYPE = :arg_line_type
+    AND MFS = :arg_mfs
+    AND PLAN_DATE = :arg_plan_date
+    AND LINE_CODE = :arg_line_code
+    AND WORKSTAGE_CODE = :arg_workstage_code
+ //   AND MACHINE_CODE = :arg_machine_code
+    AND ORGANIZATION_ID = :gvi_organization_id ;
+ 
+ IF F_SQL_CHECK() < 0 THEN 
+	RETURN -1 
+END IF 
+
+UPDATE  IM_ITEM_WORK_ORDER SET APPLY_ASSEMBLY_PLAN = 'Y'
+ WHERE WORK_ORDER_NO = :arg_work_order_no
+    AND ITEM_CODE = :arg_item_code
+    AND LINE_TYPE = :arg_line_type
+    AND MFS = :arg_mfs
+    AND PLAN_DATE = :arg_plan_date
+    AND LINE_CODE = :arg_line_code
+    AND WORKSTAGE_CODE = :arg_workstage_code
+   AND MACHINE_CODE = :arg_machine_code
+    AND ORGANIZATION_ID = :gvi_organization_id ;
+
+//====================================
+// $$HEX30$$18bc1cc888d42000e4c201c840c7200018bcdcb4dcc220003dcce0ac5cb8200085c7e0ac2000c4d620009ccde0ac200074d57cc5200058d594b22000$$ENDHEX$$
+// $$HEX25$$bdacb0c620009ccde0ac2000c0c9dcc27cb92000adc01cc8200058d5c0c920004ac5e0ac2000b4c024b8200054b4e4b22000$$ENDHEX$$
+//====================================
+IF GVS_ASSEMBLY_RESULT_RECEIPT_WH = 'Y' THEN 
+ELSE
+	DELETE FROM IM_ITEM_WORK_ORDER
+	 WHERE WORK_ORDER_NO = :arg_work_order_no
+		 AND ITEM_CODE = :arg_item_code
+		 AND LINE_TYPE = :arg_line_type
+		 AND MFS = :arg_mfs
+		 AND PLAN_DATE = :arg_plan_date
+		 AND LINE_CODE = :arg_line_code
+		 AND WORKSTAGE_CODE = :arg_workstage_code
+		 AND MACHINE_CODE = :arg_machine_code
+		 AND ORGANIZATION_ID = :gvi_organization_id ;
+		 
+		 IF F_SQL_CHECK() < 0 THEN 
+			RETURN -1 
+		END IF
+		
+END IF 
+
+RETURN 0 
+
+end function
+

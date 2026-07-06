@@ -1,0 +1,55 @@
+HA$PBExportHeader$d_ip_product_pid_inspect_data_pcb_rpt_k.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=0 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no )
+header(height=240 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=56 color="536870912" )
+detail(height=80 color="536870912" )
+table(column=(type=char(4000) updatewhereclause=yes name=line_code dbname="line_code" )
+ column=(type=datetime updatewhereclause=yes name=scan_date dbname="ip_product_pcb_scan_master.scan_date" )
+ column=(type=char(50) updatewhereclause=yes name=item_barcode dbname="im_item_receipt_barcode.item_barcode" )
+ column=(type=number updatewhereclause=yes name=scan_qty dbname="im_item_receipt_barcode.scan_qty" )
+ column=(type=char(10) updatewhereclause=yes name=manufacture_week dbname="im_item_receipt_barcode.manufacture_week" )
+ column=(type=datetime updatewhereclause=yes name=pcb_coating_date dbname="im_item_receipt_barcode.pcb_coating_date" )
+ retrieve="
+ select  f_get_line_name( p.line_code, 1)  line_code, 
+          p.scan_date, 
+          b.item_barcode , 
+          b.scan_qty, 
+          b.manufacture_week , 
+          b.pcb_coating_date 
+      from ip_product_pcb_scan_master p,
+              im_item_receipt_barcode      b
+     where p.pcb_barcode = b.item_barcode
+       and run_no =  (
+                               select run_no   
+                                 from ip_product_2d_barcode  
+                              where SERIAL_NO like :ARG_SERIAL_NO 
+                                  AND ORGANIZATION_ID = :ARG_ORG 
+                                 AND ROWNUM = 1
+                             )
+" arguments=(("ARG_SERIAL_NO", string),("ARG_ORG", number))  sort="scan_date A " )
+text(band=header alignment="0" text="PCB $$HEX4$$2cd285c715c8f4bc$$ENDHEX$$" border="1" color="33554432" x="14" y="12" height="76" width="1714" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="2" color="33554432" x="14" y="8" height="64" width="338" format="[general]" html.valueishtml="0"  name=line_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="2" color="33554432" x="361" y="8" height="64" width="549" format="[shortdate] [time]" html.valueishtml="0"  name=scan_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=5 alignment="2" tabsequence=32766 border="2" color="33554432" x="2075" y="8" height="64" width="338" format="[general]" html.valueishtml="0"  name=manufacture_week visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=6 alignment="2" tabsequence=32766 border="2" color="33554432" x="2423" y="8" height="64" width="498" format="[shortdate] [time]" html.valueishtml="0"  name=pcb_coating_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="2" color="33554432" x="1728" y="8" height="64" width="338" format="[general]" html.valueishtml="0"  name=scan_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="2" color="33554432" x="919" y="8" height="64" width="800" format="[general]" html.valueishtml="0"  name=item_barcode visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=header alignment="2" text="$$HEX4$$7cb778c754cfdcb4$$ENDHEX$$" border="2" color="33554432" x="14" y="120" height="112" width="338" html.valueishtml="0"  name=serial_no_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="$$HEX4$$2cd285c77cc790c7$$ENDHEX$$" border="2" color="33554432" x="361" y="120" height="112" width="549" html.valueishtml="0"  name=t_11 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="PCB $$HEX3$$14bc54cfdcb4$$ENDHEX$$" border="2" color="33554432" x="919" y="120" height="112" width="800" html.valueishtml="0"  name=meas_time_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="$$HEX2$$18c2c9b7$$ENDHEX$$" border="2" color="33554432" x="1728" y="120" height="112" width="338" html.valueishtml="0"  name=t_12 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="$$HEX4$$1cc870c8fcc828cc$$ENDHEX$$" border="2" color="33554432" x="2075" y="120" height="112" width="338" html.valueishtml="0"  name=judgment_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="$$HEX4$$54cf05d37cc790c7$$ENDHEX$$" border="2" color="33554432" x="2423" y="120" height="112" width="498" html.valueishtml="0"  name=t_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

@@ -1,0 +1,58 @@
+HA$PBExportHeader$d_mat_keyitem_lst.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no grid.lines=0 )
+header(height=136 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=76 color="536870912" )
+table(column=(type=char(40) updatewhereclause=yes name=item_code dbname="if_keyt_keyitem.item_code" dbalias="A.item_code" )
+ column=(type=datetime updatewhereclause=yes name=created_date dbname="if_keyt_keyitem.created_date" dbalias="A.created_date" )
+ column=(type=char(30) updatewhereclause=yes name=created_by dbname="if_keyt_keyitem.created_by" dbalias="A.created_by" )
+ column=(type=char(100) updatewhereclause=yes name=attribute1 dbname="if_keyt_keyitem.attribute1" dbalias="A.attribute1" )
+ column=(type=char(100) updatewhereclause=yes name=attribute2 dbname="if_keyt_keyitem.attribute2" dbalias="A.attribute2" )
+ column=(type=char(100) updatewhereclause=yes name=attribute3 dbname="if_keyt_keyitem.attribute3" dbalias="A.attribute3" )
+ column=(type=char(100) updatewhereclause=yes name=attribute4 dbname="if_keyt_keyitem.attribute4" dbalias="A.attribute4" )
+ column=(type=char(100) updatewhereclause=yes name=attribute5 dbname="if_keyt_keyitem.attribute5" dbalias="A.attribute5" )
+ column=(type=char(15) updatewhereclause=yes name=vendor_code1 dbname="id_item.vendor_code1" dbalias="B.vendor_code1" )
+ column=(type=char(15) updatewhereclause=yes name=vendor_code2 dbname="id_item.vendor_code2" dbalias="B.vendor_code2" )
+ column=(type=char(15) updatewhereclause=yes name=vendor_code3 dbname="id_item.vendor_code3" dbalias="B.vendor_code3" )
+ retrieve="  SELECT A.ITEM_CODE,
+              A.CREATED_DATE,
+              A.CREATED_BY,
+              A.ATTRIBUTE1,
+              A.ATTRIBUTE2,
+              A.ATTRIBUTE3,
+              A.ATTRIBUTE4,
+              A.ATTRIBUTE5,
+              B.VENDOR_CODE1,
+              B.VENDOR_CODE2, 
+              B.VENDOR_CODE3 
+   FROM  IF_KEYT_KEYITEM A,
+             ID_ITEM                B
+ WHERE A.ITEM_CODE = B.ITEM_CODE"  sort="item_code A " )
+compute(band=detail alignment="0" expression="getrow()"border="0" color="33554432" x="9" y="8" height="64" width="110" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=1 alignment="0" tabsequence=0 border="0" color="33554432" x="133" y="0" height="72" width="526" html.valueishtml="0"  name=item_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=2 alignment="0" tabsequence=0 border="0" color="33554432" x="672" y="0" height="72" width="658" html.valueishtml="0"  name=created_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=4 alignment="0" tabsequence=0 border="0" color="33554432" x="1349" y="0" height="72" width="937" html.valueishtml="0"  name=attribute1 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=5 alignment="0" tabsequence=0 border="0" color="33554432" x="2299" y="0" height="72" width="818" html.valueishtml="0"  name=attribute2 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=9 alignment="0" tabsequence=0 border="0" color="33554432" x="3136" y="0" height="72" width="402" html.valueishtml="0"  name=vendor_code1 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=10 alignment="0" tabsequence=0 border="0" color="33554432" x="3552" y="0" height="72" width="407" html.valueishtml="0"  name=vendor_code2 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=11 alignment="0" tabsequence=0 border="0" color="33554432" x="3973" y="0" height="72" width="411" html.valueishtml="0"  name=vendor_code3 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=header alignment="2" text="Item Code" border="0" color="0" x="128" y="4" height="128" width="530" html.valueishtml="0"  name=item_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Created Date" border="0" color="0" x="667" y="4" height="128" width="663" html.valueishtml="0"  name=created_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Attribute1" border="0" color="0" x="1344" y="4" height="128" width="942" html.valueishtml="0"  name=attribute1_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Attribute2" border="0" color="0" x="2295" y="4" height="128" width="823" html.valueishtml="0"  name=attribute2_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Vendor Code1" border="0" color="0" x="3131" y="4" height="128" width="407" html.valueishtml="0"  name=vendor_code1_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Vendor Code2" border="0" color="0" x="3547" y="4" height="128" width="411" html.valueishtml="0"  name=vendor_code2_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Vendor Code3" border="0" color="0" x="3968" y="4" height="128" width="416" html.valueishtml="0"  name=vendor_code3_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

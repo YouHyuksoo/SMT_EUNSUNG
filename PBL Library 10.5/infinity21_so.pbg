@@ -1,0 +1,30 @@
+Save Format v3.0(19990112)
+@begin Libraries
+ "infinity21_so.pbl" "";
+@end;
+@begin Objects
+ "so_pbutton.sru" "infinity21_so.pbl";
+ "so_multilineedit_tooltip.sru" "infinity21_so.pbl";
+ "so_singlelineedit.sru" "infinity21_so.pbl";
+ "so_multilineedit.sru" "infinity21_so.pbl";
+ "so_hprogressbar.sru" "infinity21_so.pbl";
+ "so_statichyperlink.sru" "infinity21_so.pbl";
+ "st_uo_transparent.sru" "infinity21_so.pbl";
+ "so_hscrollbar.sru" "infinity21_so.pbl";
+ "st_uo_gradiant.sru" "infinity21_so.pbl";
+ "so_picturelistbox.sru" "infinity21_so.pbl";
+ "so_dropdownlistbox.sru" "infinity21_so.pbl";
+ "uo_tabpage.sru" "infinity21_so.pbl";
+ "so_datawindow.sru" "infinity21_so.pbl";
+ "pb_uo_workflow.sru" "infinity21_so.pbl";
+ "so_commandbutton.sru" "infinity21_so.pbl";
+ "so_picturebutton.sru" "infinity21_so.pbl";
+ "so_hpprogress.sru" "infinity21_so.pbl";
+ "so_editmask.sru" "infinity21_so.pbl";
+ "so_statictext.sru" "infinity21_so.pbl";
+ "so_checkbox.sru" "infinity21_so.pbl";
+ "so_groupbox.sru" "infinity21_so.pbl";
+ "so_radiobutton.sru" "infinity21_so.pbl";
+ "so_listbox.sru" "infinity21_so.pbl";
+ "so_picture.sru" "infinity21_so.pbl";
+@end;

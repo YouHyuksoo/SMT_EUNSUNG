@@ -1,0 +1,40 @@
+HA$PBExportHeader$d_smt_bom_location_comparision_4_location_rpt.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=4 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no  crosstab.dynamic = yes grid.lines=0 grid.columnmove=no selected.mouse=no )
+header[1](height=0 color="536870912" )
+header[2](height=124 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=88 color="536870912" )
+table(column=(type=char(20) updatewhereclause=yes name=check_diff dbname="check_diff" )
+ column=(type=char(20) updatewhereclause=yes name=location_code dbname="location_code" )
+ column=(type=char(20) updatewhereclause=yes name=child_item_code dbname="child_item_code" )
+ retrieve="  SELECT ~"ID_ENG_BOM_SMT~".~"PARENT_ITEM_CODE~"||~"ID_ENG_BOM_SMT~".~"PCB_ITEM~" AS PARENT_ITEM_CODE,   
+         ~"ID_ENG_BOM_SMT~".~"CHILD_ITEM_CODE~",   
+         ~"ID_ENG_BOM_SMT~".~"LOCATION_CODE~",   
+         'N' CHECK_DIFF  
+    FROM ~"ID_ENG_BOM_SMT~"  
+   WHERE ( ~"ID_ENG_BOM_SMT~".~"LINE_CODE~" like :arg_line_code ) AND  
+         ( ~"ID_ENG_BOM_SMT~".~"PARENT_ITEM_CODE~"||ID_ENG_BOM_SMT.PCB_ITEM in ( :arg_parent_item_code ) ) AND  
+         ( ~"ID_ENG_BOM_SMT~".~"ORGANIZATION_ID~" = :arg_org )    
+" arguments=(("arg_line_code", string),("arg_parent_item_code", stringlist),("arg_org", number))  sort="check_diff A location_code A " )
+text(band=header[1] alignment="0" text="Max Of Item Code" border="0" color="0" x="9" y="4" height="52" width="192" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header[1] alignment="0" text="Model Name" border="0" color="0" x="210" y="4" height="52" width="293" html.valueishtml="0"  name=t_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header[2] alignment="2" text="Check Diff" border="0" color="0" x="9" y="4" height="112" width="192" html.valueishtml="0"  name=check_diff_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header[2] alignment="2" text="Location Code" border="0" color="0" x="210" y="4" height="112" width="293" html.valueishtml="0"  name=location_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[2] alignment="2" text="@parent_item_code" border="0" color="0" x="512" y="4" height="112" width="457" html.valueishtml="0"  name=item_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65280" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="33554432~tif ( check_diff = 'Y' , 255, 0 )" x="9" y="4" height="72" width="192" format="[general]" html.valueishtml="0"  name=check_diff visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="33554432~tif ( check_diff = 'Y' , 255, 0 )" x="210" y="4" height="72" width="293" format="[general]" html.valueishtml="0"  name=location_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="0" color="33554432~tif ( check_diff = 'Y' , 255, 0 )" x="512" y="4" height="72" width="457" format="[general]" html.valueishtml="0"  name=child_item_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes crosstab.repeat=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+ crosstab(band = foreground  crosstabonly = yes 
+ columns = "parent_item_code" rows = "check_diff, location_code" values = "max(child_item_code for crosstab)" sourcenames = "parent_item_code, child_item_code, location_code, check_diff")htmltable(border="0" cellpadding="1" cellspacing="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

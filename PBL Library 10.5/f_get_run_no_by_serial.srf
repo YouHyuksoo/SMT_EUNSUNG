@@ -1,0 +1,23 @@
+HA$PBExportHeader$f_get_run_no_by_serial.srf
+global type f_get_run_no_by_serial from function_object
+end type
+
+forward prototypes
+global function string f_get_run_no_by_serial (string arg_serial_no)
+end prototypes
+
+global function string f_get_run_no_by_serial (string arg_serial_no);string lvs_run_no
+
+select run_no 
+   into :lvs_run_no 
+ from IP_PRODUCT_2D_BARCODE
+where serial_no         like :arg_serial_no
+   and organization_id =    :gvi_organization_id
+   and rownum           =    1;
+
+if f_sql_check() < 0 then 
+	return  '*'
+end if 
+return lvs_run_no 
+end function
+

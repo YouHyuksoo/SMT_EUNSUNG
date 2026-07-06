@@ -1,0 +1,49 @@
+HA$PBExportHeader$d_mat_no_receipt_issue_barcode_lst.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no grid.lines=0 )
+header(height=76 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=64 color="536870912" )
+table(column=(type=char(50) update=yes updatewhereclause=yes name=item_barcode dbname="im_item_receipt_barcode.item_barcode" dbalias=".item_barcode" )
+ column=(type=datetime update=yes updatewhereclause=yes name=scan_date dbname="im_item_receipt_barcode.scan_date" dbalias=".scan_date" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=lot_no dbname="im_item_receipt_barcode.lot_no" dbalias=".lot_no" )
+ column=(type=number update=yes updatewhereclause=yes name=scan_qty dbname="im_item_receipt_barcode.scan_qty" dbalias=".scan_qty" )
+ column=(type=char(100) update=yes updatewhereclause=yes name=supplier_barcode dbname="supplier_barcode" )
+ retrieve="  SELECT ~"IM_ITEM_RECEIPT_BARCODE~".~"ITEM_BARCODE~",   
+         ~"IM_ITEM_RECEIPT_BARCODE~".~"SCAN_DATE~",   
+         ~"IM_ITEM_RECEIPT_BARCODE~".~"LOT_NO~",   
+         ~"IM_ITEM_RECEIPT_BARCODE~".~"SCAN_QTY~",   
+
+		( SELECT MAX(SCAN_SUPPLIER_PARTNAME) FROM IB_SMT_CHECKHIST 
+              WHERE SCAN_PARTNAME = ITEM_BARCODE ) SUPPLIER_BARCODE
+
+    FROM ~"IM_ITEM_RECEIPT_BARCODE~"  
+   WHERE ( ~"IM_ITEM_RECEIPT_BARCODE~".~"RECEIPT_COMPARE_YN~" = 'N' ) AND  
+         ( ~"IM_ITEM_RECEIPT_BARCODE~".~"ISSUE_COMPARE_YN~" = 'Y' )   AND 
+		    BARCODE_STATUS <> 'C' AND 
+             RETURN_YN = 'N'  AND
+            LOT_NO IN ( SELECT MATERIAL_MFS  FROM IM_ITEM_ISSUE  )
+            
+"  sort="scan_date A " )
+text(band=header alignment="2" text="Item Barcode" border="0" color="33554432" x="14" y="8" height="64" width="357" html.valueishtml="0"  name=item_barcode_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Scan Date" border="0" color="33554432" x="389" y="8" height="64" width="585" html.valueishtml="0"  name=scan_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Lot No" border="0" color="33554432" x="987" y="8" height="64" width="389" html.valueishtml="0"  name=lot_no_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Scan Qty" border="0" color="33554432" x="1390" y="8" height="64" width="384" html.valueishtml="0"  name=scan_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Supplier Barcode" border="0" color="33554432" x="1787" y="8" height="64" width="795" html.valueishtml="0"  name=supplier_barcode_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="1" font.charset="129" background.mode="2" background.color="15780518" )
+column(band=detail id=1 alignment="0" tabsequence=10 border="0" color="33554432" x="14" y="8" height="52" width="357" format="[general]" html.valueishtml="0"  name=item_barcode visible="1" edit.limit=50 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="0" tabsequence=40 border="0" color="33554432" x="389" y="8" height="52" width="585" format="[shortdate] [time]" html.valueishtml="0"  name=scan_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="0" tabsequence=50 border="0" color="33554432" x="987" y="8" height="52" width="389" format="[general]" html.valueishtml="0"  name=lot_no visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="1" tabsequence=60 border="0" color="33554432" x="1390" y="8" height="52" width="384" format="[general]" html.valueishtml="0"  name=scan_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="0" tabsequence=70 border="0" color="33554432" x="1787" y="8" height="52" width="795" format="[general]" html.valueishtml="0"  name=supplier_barcode visible="1" edit.limit=50 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="1" font.charset="129" background.mode="1" background.color="536870912" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

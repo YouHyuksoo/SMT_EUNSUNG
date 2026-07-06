@@ -1,0 +1,26 @@
+HA$PBExportHeader$f_get_model_name_by_run_no.srf
+global type f_get_model_name_by_run_no from function_object
+end type
+
+forward prototypes
+global function string f_get_model_name_by_run_no (string arg_run_no)
+end prototypes
+
+global function string f_get_model_name_by_run_no (string arg_run_no);string lvs_model_name
+
+select model_name into :lvs_model_name
+ from ip_product_run_card
+ where run_no = :arg_run_no
+    and organization_id = :gvi_organization_id ;
+	 
+	 
+	 if f_sql_check() < 0 then 
+		return  ''
+	end if 
+	
+	
+	return lvs_model_name 
+		
+	 
+end function
+

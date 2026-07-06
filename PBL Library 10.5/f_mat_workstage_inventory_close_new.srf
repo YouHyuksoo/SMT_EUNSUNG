@@ -1,0 +1,586 @@
+HA$PBExportHeader$f_mat_workstage_inventory_close_new.srf
+global type f_mat_workstage_inventory_close_new from function_object
+end type
+
+forward prototypes
+global function integer f_mat_workstage_inventory_close_new (string as_yyyymm)
+end prototypes
+
+global function integer f_mat_workstage_inventory_close_new (string as_yyyymm);string as_last_yyyymm
+long phase , lvl_count
+datetime lvdt_start_date , lvdt_end_date
+//======================================================
+//
+//======================================================
+SELECT F_GET_INVENTORY_CLOSE_DATE( :as_yyyymm , 'START' , :gvi_organization_id ) ,
+		   F_GET_INVENTORY_CLOSE_DATE( :as_yyyymm , 'END' , :gvi_organization_id  )
+    INTO :LVDT_START_date , :Lvdt_end_date
+   FROM DUAL  ;
+  
+ if f_sql_check_with_msg(string(phase)) < 0 then 
+	return -10
+ end if  
+
+msg = f_msgbox1(1161 , string(LVDT_START_date)+'  '+string(Lvdt_end_date)+' Inventory Close ')
+if msg = 1 then 
+else
+	return  0
+end if
+phase = 1 
+
+open(w_progress_popup)
+w_progress_popup.f_set_range( 1, 11)
+w_progress_popup.f_setstep(1)
+
+//=========================================
+// $$HEX18$$f9b2d4c620003dcce0ac2000acc7e0ac2000c8b910ac2000ecc580bd2000b4cc6cd02000$$ENDHEX$$
+//=========================================
+ select count(*) into :lvl_count 
+   from im_item_inventory_close  b
+where b.close_yyyymm = :as_yyyymm
+    and b.organization_id = :gvi_organization_id ;
+
+ if f_sql_check_with_msg(string(phase)) < 0 then 
+	close(w_progress_popup)
+	return -1
+  end if
+
+IF LVL_COUNT < 1 THEN 
+	msg = MESSAGEBoX("Notify" , "Material Inventory Not Closed Please Close Material Inventory First"  , question! , yesno!)
+	if msg = 1 then 
+	else
+		close(w_progress_popup)
+		return -1
+	end if
+END IF
+
+//=========================================
+// $$HEX21$$f9b2d4c6200018bc1cc888d43dcce0ac2000acc7e0ac2000c8b910ac2000ecc580bd2000b4cc6cd02000$$ENDHEX$$
+//=========================================
+ select count(*) into :lvl_count 
+  from is_assembly_inventory_close  b
+where b.close_yyyymm = :as_yyyymm
+    and b.organization_id = :gvi_organization_id ;
+
+ if f_sql_check_with_msg(string(phase)) < 0 then 
+	close(w_progress_popup)
+	return -1
+  end if
+
+IF LVL_COUNT < 1 THEN 
+	msg = MESSAGEBoX("Notify" , "Assembly Inventory Not Closed. Please Close Assembly Inventory First"  , question! , yesno!)
+	if msg = 1 then 
+	else
+		close(w_progress_popup)
+		return -1
+	end if	
+END IF
+
+//=========================================
+// $$HEX20$$f9b2d4c620001cc888d43dcce0ac2000acc7e0ac2000c8b910ac2000ecc580bd2000b4cc6cd02000$$ENDHEX$$
+//=========================================
+ select count(*) into :lvl_count 
+  from is_product_inventory_close  b
+where b.close_yyyymm = :as_yyyymm
+    and b.organization_id = :gvi_organization_id ;
+
+ if f_sql_check_with_msg(string(phase)) < 0 then 
+	close(w_progress_popup)
+	return -1
+  end if
+
+IF LVL_COUNT < 1 THEN 
+	msg = MESSAGEBoX("Notify" , "Product Inventory Not Closed Please Close Product Inventory First" , question! , yesno!)
+	if msg = 1 then 
+	else
+		close(w_progress_popup)		
+		return -1
+	end if	
+END IF
+//=============================================================
+//
+//=============================================================
+w_progress_popup.f_stepit()
+w_progress_popup.f_set_message('Step 1 : Inventory Count')
+
+select to_char(add_months(to_date(:as_yyyymm || '01', 'yyyymmdd') , -1) ,'yyyymm')
+   into :as_last_yyyymm
+  from dual  ; 
+ if f_sql_check_with_msg(string(phase)) < 0 then 
+	return -1
+  end if
+phase = 2 
+
+w_progress_popup.f_stepit()
+w_progress_popup.f_set_message('Step 2 : Inventory Delete')
+
+delete from im_item_workstage_inv_close 
+where close_yyyymm = :as_yyyymm
+    and organization_id = :gvi_organization_id ; 
+ if f_sql_check_with_msg(string(phase)) < 0 then 
+	return -2
+  end if
+//=============================================================
+// $$HEX16$$04c8d4c6d0b92000f5ac15c82000c8b910ac200090c7ccb8200085c725b82000$$ENDHEX$$
+//=============================================================
+
+w_progress_popup.f_stepit()
+w_progress_popup.f_set_message('Step 3 : Inventory Create')
+phase = 20
+
+w_progress_popup.f_stepit()
+w_progress_popup.f_set_message('Step 2 : Inventory Create Others')
+
+insert into  im_item_workstage_inv_close
+            ( close_yyyymm,                          mfs , material_mfs , 
+			item_code,                                     line_code, workstage_code ,
+			line_type,                                       organization_id,
+			last_avg_price,                              last_inventory_qty,                          last_inventory_amt,
+			mm_receipt_qty,                            mm_receipt_amt,            
+			mm_issue_qty,                               mm_issue_amt,
+			
+			mm_mass_issue_qty,                     mm_mass_issue_amt,
+			mm_bad_issue_qty,                       mm_bad_issue_amt,
+			mm_extra_issue_qty,                    mm_extra_issue_amt,             
+			
+			mm_avg_price,                              mm_inventory_qty,                        
+			mm_inventory_amt,
+			enter_date,                                   enter_by,     
+			last_modify_date,                          last_modify_by
+            )
+		     select  :as_yyyymm,   
+					'*' , '*' , //a.mfs , a.material_mfs ,
+					a.item_code,
+					a.line_code, a.workstage_code ,
+					a.line_type,                                    
+					:gvi_organization_id,  
+
+					max(last_avg_price) ,                                                 
+					sum(last_inventory_qty),   					
+					sum(last_inventory_amt),
+
+					nvl(sum(receipt_qty),0) ,                                                nvl(sum(receipt_amt),0),
+					sum(issue_qty)   ,                                                 0,
+					
+					sum(mm_mass_issue_qty),                                                 0,
+					0,                                                 0,
+					sum(mm_extra_issue_qty),                                                 0,           
+					
+					0,                                                 (sum(last_inventory_qty) + sum(receipt_qty) - sum(issue_qty) )mm_inventory_qty ,                                                 
+					0,         
+					SYSDATE,                                     :gvs_user_id,
+					SYSDATE,                                     :gvs_user_id
+					from (      
+					
+			          select '*' mfs , 
+						     '*' material_mfs ,
+							item_code,
+							line_code , 
+							workstage_code,
+							line_type, 
+							max(mm_avg_price) last_avg_price ,
+							sum(mm_inventory_qty) last_inventory_qty, 
+							sum(mm_inventory_amt) last_inventory_amt,
+							0  receipt_qty , 0  receipt_amt ,
+							0 issue_qty ,
+							0 mm_mass_issue_qty,
+							0 mm_extra_issue_qty,
+							organization_id
+					from im_item_workstage_inv_close
+					where close_yyyymm = :as_last_yyyymm
+						and organization_id = :gvi_organization_id
+						group by //mfs , material_mfs, 
+						item_code, line_type,
+						line_code ,workstage_code ,
+						organization_id					
+					
+					union all
+					
+					select	'*'  mfs , 
+					         '*' material_mfs ,
+							item_code,
+							 line_code , 
+							 workstage_code,
+							line_type, 
+							0 last_avg_price ,
+							0 last_inventory_qty ,
+							0 last_inventory_amt,
+							sum(receipt_qty) receipt_qty ,sum(receipt_amt) receipt_amt ,
+							0 issue_qty ,
+							0 mm_mass_issue_qty,
+							0 mm_extra_issue_qty,
+							organization_id
+					from im_item_workstage_receipt
+					where receipt_date >= :LVDT_START_date 
+					  AND receipt_date <= :LVDT_end_date 
+						and organization_id = :gvi_organization_id
+						group by //mfs , material_mfs, 
+						             item_code, line_type,
+									line_code ,workstage_code ,
+									organization_id
+					union all
+					select 
+							'*'  mfs , 
+							'*' material_mfs ,
+							item_code,
+							 line_code ,
+							workstage_code,
+							line_type,
+							0 last_avg_price ,
+							0 last_inventory_qty , 
+							0 last_inventory_amt,
+							0 receipt_qty , 0 receipt_amt , 
+							sum(issue_qty) issue_qty ,
+							sum(decode( issue_account , 'M001' , issue_qty, 0 )) mm_mass_issue_qty,
+							sum(decode(issue_account , 'M001' , 0 , issue_qty )) mm_extra_issue_qty,
+							organization_id
+					from im_item_workstage_issue
+					where issue_date  >= :LVDT_START_date 
+					    and issue_date <= :LVDT_end_date
+						and organization_id = :gvi_organization_id 
+						group by //mfs , material_mfs, 
+						             item_code, line_type,
+									line_code ,workstage_code ,
+									organization_id)     a 
+
+					group by //mfs , material_mfs,
+								item_code, line_type,
+								line_code ,workstage_code ,
+								organization_id ;
+					
+if f_sql_check_with_msg(string(phase)) < 0 then 
+	return -20
+end if
+phase = 25
+
+//w_progress_popup.f_stepit()
+//w_progress_popup.f_set_message('Step 3 : Item Average Price Set')
+////=====================================================
+//// $$HEX40$$d0c6acc7ccb82000acc7e0ac2000c8b910ac15c8f4bc58c72000c9d3e0ade8b200ac7cb92000f5ac15c82000d0c6acc7ccb82000acc7e0ac58c72000c9d3e0ade8b200ac5cb82000acc0a9c65cd5e4b2$$ENDHEX$$.
+////=====================================================
+//update im_item_workstage_inv_close a
+//      set a.mm_avg_price = (select max(mm_avg_price)
+//									from im_item_inventory_close_mfs  b
+//							  	  where b.close_yyyymm = :as_yyyymm
+//									 and b.item_code  = a.item_code
+// 									 and b.line_type = a.line_type
+//									 and b.material_mfs = a.material_mfs
+//									 and b.organization_id = a.organization_id
+//								 	 and a.item_code in ( select item_code from id_item where item_division IN (  'R' , 'S')  and organization_id = :gvi_organization_id )
+//                                  )
+//where a.close_yyyymm = :as_yyyymm
+//    and a.organization_id = :gvi_organization_id 
+//    and ( a.close_yyyymm , a.material_mfs , a.item_code  , a.line_type )
+//	 in ( select distinct b.close_yyyymm , b.material_mfs , b.item_code , b.line_type  
+//		    from im_item_inventory_close_mfs  b
+//		 where b.close_yyyymm = :as_yyyymm
+//			and b.item_code  = a.item_code
+//			and b.line_type = a.line_type
+//			and b.material_mfs = a.material_mfs
+//			and b.organization_id = a.organization_id 
+//			and a.item_code in ( select item_code from id_item where item_division in(  'R' , 'S') and organization_id = :gvi_organization_id )
+//			)
+//     and   a.item_code in ( select item_code from id_item where item_division IN(  'R' , 'S') and organization_id = :gvi_organization_id );
+//	 
+//if f_sql_check_with_msg(string(phase)) < 0 then 
+//	return -25
+//end if
+
+//w_progress_popup.f_stepit()
+//w_progress_popup.f_set_message('Step 4 : Assembly Average Price Set')
+////=====================================================
+//// $$HEX39$$18bc1cc888d4acc7e0ac2000c8b910ac15c8f4bc58c72000c9d3e0ade8b200ac7cb92000f5ac15c8200018bc1cc888d42000acc7e0ac58c72000c9d3e0ade8b200ac5cb82000acc0a9c65cd5e4b2$$ENDHEX$$.
+//// $$HEX7$$1cc888bcc4bc5cb8200098ccacb9$$ENDHEX$$.
+////=====================================================
+//update im_item_workstage_inv_close a
+//      set a.mm_avg_price = (select  max(mm_avg_price)
+//									from   is_assembly_inv_close_mfs  b
+//									where b.close_yyyymm = :as_yyyymm
+//									and b.item_code  = a.item_code
+//									and b.product_line_type = a.line_type		
+//									and b.mfs = a.mfs
+//									and b.organization_id = a.organization_id
+//									and a.item_code in ( select item_code from id_item where item_division ='W' and organization_id = :gvi_organization_id )
+//									)
+//where a.close_yyyymm = :as_yyyymm
+//    and a.organization_id = :gvi_organization_id 
+//    and (a.close_yyyymm ,  a.item_code , a.mfs , a.line_type ,a.organization_id  ) 
+//	 in ( select distinct b.close_yyyymm , b.item_code , b.mfs , b.product_line_type  , b.organization_id 
+//	         from is_assembly_inv_close_mfs  b
+//		 where b.item_code  = a.item_code
+//			and b.close_yyyymm = :as_yyyymm
+//			and b.product_line_type = a.line_type
+//			and b.mfs = a.mfs
+//			and b.organization_id = a.organization_id 
+//			and a.item_code in ( select item_code from id_item where item_division = 'W' and organization_id = :gvi_organization_id )
+//		  )
+//     and   a.item_code in ( select item_code from id_item where item_division ='W'  and organization_id = :gvi_organization_id );
+//	 
+//if f_sql_check_with_msg(string(phase)) < 0 then 
+//	return -25
+//end if
+//
+////=====================================================
+//w_progress_popup.f_stepit()
+//w_progress_popup.f_set_message('Step 5 : Product Average Price Set')
+////=====================================================
+//// $$HEX36$$1cc888d4acc7e0ac2000c8b910ac15c8f4bc58c72000c9d3e0ade8b200ac7cb92000f5ac15c81cc888d42000acc7e0ac58c72000c9d3e0ade8b200ac5cb82000acc0a9c65cd5e4b2$$ENDHEX$$.
+////=====================================================
+//update im_item_workstage_inv_close a
+//      set a.mm_avg_price = (select  max(mm_avg_price)
+//									from   is_product_inventory_close  b
+//									where b.close_yyyymm = :as_yyyymm
+//									and b.item_code  = a.item_code
+//									and b.product_line_type = a.line_type								  
+//									and b.organization_id = a.organization_id
+//									and   a.item_code in ( select item_code from id_item where item_division IN (  'F' , 'G')  and organization_id = :gvi_organization_id )
+//									)
+//where a.close_yyyymm = :as_yyyymm
+//    and a.organization_id = :gvi_organization_id 
+//    and ( a.close_yyyymm , a.item_code  , a.line_type , a.organization_id ) 
+//	 in ( select distinct b.close_yyyymm , b.item_code , b.product_line_type , b.organization_id 
+//	         from is_product_inventory_close  b
+//		 where b.item_code  = a.item_code
+//			and b.close_yyyymm = :as_yyyymm
+//			and b.product_line_type = a.line_type
+//			and b.organization_id = a.organization_id 
+//			and a.item_code in ( select item_code from id_item where item_division IN ( 'F' , 'G')  and organization_id = :gvi_organization_id )
+//		  )
+//     and   a.item_code in ( select item_code from id_item where item_division IN ( 'F' , 'G')  and organization_id = :gvi_organization_id );
+//	 
+//if f_sql_check_with_msg(string(phase)) < 0 then 
+//	return -25
+//end if
+
+w_progress_popup.f_stepit()
+w_progress_popup.f_set_message('Step 6 : Inventory Amount Set')
+
+
+//=====================================================
+// $$HEX21$$acc7e0ac2000c8b910ac15c8f4bcd0c52000c9d3e0ad2000e8b200ac00ac2000c6c544c7bdacb0c62000$$ENDHEX$$
+// $$HEX25$$f5ac15c8200018c288bdd0c51cc12000c9d3e0ad2000e8b200ac7cb92000b0c09ccd58d5ecc5200000ac38c828c6e4b22000$$ENDHEX$$
+// $$HEX23$$f9b2d4c674c72000c6c53cc774ba200004c8d4c62000c9d3e0ad2000e8b200ac7cb9200000ac38c828c6e4b22000$$ENDHEX$$
+//=====================================================
+update im_item_workstage_inv_close a
+      set a.mm_avg_price = abs(decode( decode( last_inventory_qty + mm_receipt_qty , 0 , 0 , ( last_inventory_amt + mm_receipt_amt ) / ( last_inventory_qty + mm_receipt_qty) ) , 0 , last_avg_price , decode( last_inventory_qty + mm_receipt_qty , 0 , 0 , ( last_inventory_amt + mm_receipt_amt ) / ( last_inventory_qty + mm_receipt_qty) )  ))
+where a.close_yyyymm = :as_yyyymm
+    and a.organization_id = :gvi_organization_id 
+    and nvl(mm_avg_price,0) = 0  ;
+
+if f_sql_check_with_msg(string(phase)) < 0 then 
+	return -25
+end if
+
+w_progress_popup.f_stepit()
+w_progress_popup.f_set_message('Step 6-1 : Inventory Amount Set')
+
+//=============================================================
+// $$HEX10$$f9b2d4c6f5ac15c8200008ae61c5200024c115c8$$ENDHEX$$
+//=============================================================
+phase = 50
+update im_item_workstage_inv_close 
+	 set mm_issue_amt              = mm_issue_qty * mm_avg_price , 
+		  mm_mass_issue_amt    = mm_mass_issue_qty * mm_avg_price, 
+		  mm_bad_issue_amt      = mm_bad_issue_qty * mm_avg_price, 		  
+		  mm_extra_issue_amt   = mm_extra_issue_qty * mm_avg_price,
+		  mm_receipt_amt           = mm_receipt_qty * mm_avg_price,
+		  mm_inventory_amt       = mm_inventory_qty * mm_avg_price 
+where close_yyyymm = :as_yyyymm
+    and organization_id = :gvi_organization_id ; 
+	 
+if f_sql_check_with_msg(string(phase)) < 0 then 
+	return -50
+end if 
+
+//===============================================================
+//
+//===============================================================
+
+if Gvs_workstage_inventory_regenerate = 'Y' then
+w_progress_popup.f_stepit()
+w_progress_popup.f_set_message('Step 7 : Current Inventory Delete')
+
+		//==============================================================
+		// $$HEX14$$acc7e0ac7cb92000deb99ccd4cb5200084c7dcc25cb82000acc0a9c6$$ENDHEX$$
+		//==============================================================
+		DELETE FROM im_item_workstage_inventory WHERE ORGANIZATION_ID = :GVI_ORGANIZATION_ID ;
+		if f_sql_check() < 0 then 
+			return -55
+		end if
+				
+		INSERT INTO im_item_workstage_inventory
+					(line_code,
+					 workstage_code,
+					 material_mfs,
+					 mfs,
+					 item_code,
+					 organization_id,
+					 machine_code,
+					 inventory_hold,
+					 inventory_status,
+					 line_type,
+					 inventory_price,
+					 inventory_qty,
+					 inventory_amt,
+					 enter_date,
+					 enter_by,
+					 last_modify_date,
+					 last_modify_by
+					)
+  	       SELECT 
+				      line_code,
+					 workstage_code,
+					'*'  material_mfs,
+					'*'  mfs,
+					item_code,
+					organization_id,
+					'*', //MACHINE_CODE,
+					'W', //INVENTORY_HOLD,
+					'G', //INVENTORY_STATUS,
+					line_type,
+				    max(mm_avg_price),
+					SUM(mm_inventory_qty),
+					max(mm_avg_price) * SUM(mm_inventory_qty),
+					SYSDATE,
+					:gvs_user_id,
+					SYSDATE,
+					:gvs_user_id
+		     FROM im_item_workstage_inv_close
+		   WHERE close_yyyymm = :as_yyyymm              AND
+				      organization_id = :gvi_organization_id
+	   GROUP BY
+		               line_code,
+					 workstage_code,
+					 item_code,
+					 line_type ,
+//					 mfs,
+//					 material_mfs,
+					 organization_id;
+				
+				if f_sql_check() < 0 then 
+					return -56
+				end if
+else
+				
+			//============================================
+			// $$HEX21$$f5ac15c8acc7e0ac200018c2c9b7200008ae61c52000e8b200ac7cb92000acc724c115c820005cd5e4b2$$ENDHEX$$.
+			//============================================
+			
+			update im_item_workstage_inventory a
+				 set 
+				     //a.inventory_qty    = f_get_mm_workstage_inv_qty (a.line_code,a.workstage_code, a.mfs , a.material_mfs , a.item_code, a.line_type , :as_yyyymm, :gvi_organization_id) , 
+					  a.inventory_price = f_get_mm_ws_avg_price( :as_yyyymm , a.item_code , a.line_type , a.organization_id ) 
+			 where a.organization_id = :gvi_organization_id ;
+			  
+			if f_sql_check_with_msg(string(phase)) < 0 then 
+				return -90
+			end if 				
+			
+			update im_item_workstage_inventory a
+				 set  a.inventory_amt  = a.inventory_qty * a.inventory_price
+			 where a.organization_id = :gvi_organization_id ;
+
+			  
+			if f_sql_check_with_msg(string(phase)) < 0 then 
+				return -90
+			end if 							
+end if 
+//============================================
+// $$HEX21$$f5ac15c89ccde0ac200018c2c9b7200008ae61c52000e8b200ac7cb92000acc724c115c820005cd5e4b2$$ENDHEX$$.
+//============================================
+phase = 60
+update im_item_workstage_issue a
+      set a.issue_price  = f_get_mm_ws_avg_price( :as_yyyymm , a.item_code , a.line_type , a.organization_id ) 
+ where a.issue_date  >= :LVDT_START_date 
+     and a.issue_date <= :LVDT_end_date
+   and a.organization_id = :gvi_organization_id ;
+
+
+if f_sql_check_with_msg(string(phase)) < 0 then 
+	return -60
+end if 
+
+update im_item_workstage_issue a
+      set  a.issue_amt   = a.issue_qty * a.issue_price
+ where  a.issue_date  >= :LVDT_START_date 
+     and a.issue_date <= :LVDT_end_date											  
+   and a.organization_id = :gvi_organization_id ;
+
+
+if f_sql_check_with_msg(string(phase)) < 0 then 
+	return -60
+end if 
+
+////============================================
+////$$HEX25$$18bc1cc888d42000f5ac15c89ccde0ac200018c2c9b7200008ae61c52000e8b200ac7cb92000acc724c115c820005cd5e4b2$$ENDHEX$$.
+////============================================
+//phase = 70
+//update im_item_workstage_issue a
+//      set a.issue_price  = f_get_mm_ws_avg_price( :as_yyyymm , a.item_code , a.line_type , a.organization_id ) ,
+//            a.issue_amt   = a.issue_qty * f_get_mm_ws_avg_price( :as_yyyymm , a.item_code , a.line_type , a.organization_id ) 
+// where a.issue_date BETWEEN F_GET_INVENTORY_CLOSE_DATE( :as_yyyymm , 'START' , a.organization_id ) AND
+//			                                   F_GET_INVENTORY_CLOSE_DATE( :as_yyyymm , 'END' , a.organization_id ) 
+//   and a.organization_id = :gvi_organization_id 
+//   and a.item_code in ( select item_code from id_item where item_division = 'W' and organization_id = :gvi_organization_id ) ;
+//
+//if f_sql_check_with_msg(string(phase)) < 0 then 
+//	return -70
+//end if 
+//
+////============================================
+//// $$HEX24$$1cc888d42000f5ac15c89ccde0ac200018c2c9b7200008ae61c52000e8b200ac7cb92000acc724c115c820005cd5e4b2$$ENDHEX$$.
+////============================================
+//phase = 80
+//update im_item_workstage_issue a
+//       set a.issue_price = f_get_mm_ws_avg_price( :as_yyyymm , a.item_code , a.line_type , a.organization_id ) ,
+//             a.issue_amt  = issue_qty * f_get_mm_ws_avg_price( :as_yyyymm , a.item_code , a.line_type , a.organization_id ) 
+//where a.issue_date BETWEEN F_GET_INVENTORY_CLOSE_DATE( :as_yyyymm , 'START' , a.organization_id ) AND
+//			                   F_GET_INVENTORY_CLOSE_DATE( :as_yyyymm , 'END' , a.organization_id ) 
+//    and a.organization_id = :gvi_organization_id 
+//    and a.item_code in ( select item_code from id_item where item_division in ( 'F' , 'G' ) and organization_id = :gvi_organization_id ) ; 				
+//
+//if f_sql_check_with_msg(string(phase)) < 0 then 
+//	return -80
+//end if 
+
+phase = 90
+w_progress_popup.f_stepit()
+w_progress_popup.f_set_message('Step 8 : Current Inventory Set')
+
+
+
+//phase = 100
+////============================================
+//// $$HEX25$$18bc1cc888d42000f5ac15c8acc7e0ac200018c2c9b7200008ae61c52000e8b200ac7cb92000acc724c115c820005cd5e4b2$$ENDHEX$$.
+////============================================
+//
+//update im_item_workstage_inventory a
+//	 set a.inventory_qty   = f_get_mm_workstage_inv_qty (a.line_code,a.workstage_code, a.mfs , a.material_mfs , a.item_code, a.line_type , :as_yyyymm, :gvi_organization_id) , 
+//		  a.inventory_price = f_get_mm_ws_avg_price( :as_yyyymm , a.item_code , a.line_type , a.organization_id ) ,
+//		  a.inventory_amt  = a.inventory_qty * f_get_mm_ws_avg_price( :as_yyyymm , a.item_code , a.line_type , a.organization_id ) 
+// where a.organization_id = :gvi_organization_id 
+//     and a.item_code in ( select item_code from id_item where item_division = 'W' and organization_id = :gvi_organization_id ) ;
+//  
+//if f_sql_check_with_msg(string(phase)) < 0 then 
+//	return -100
+//end if 
+//
+//phase = 110
+////============================================
+//// $$HEX24$$1cc888d42000f5ac15c8acc7e0ac200018c2c9b7200008ae61c52000e8b200ac7cb92000acc724c115c820005cd5e4b2$$ENDHEX$$.
+////============================================
+//update im_item_workstage_inventory a
+//	set a.inventory_qty    = f_get_mm_workstage_inv_qty (a.line_code,a.workstage_code, a.mfs , a.material_mfs , a.item_code, a.line_type , :as_yyyymm, :gvi_organization_id) , 
+//		 a.inventory_price = f_get_mm_ws_avg_price( :as_yyyymm , a.item_code , a.line_type , a.organization_id ) ,
+//		 a.inventory_amt  = a.inventory_qty * f_get_mm_ws_avg_price( :as_yyyymm , a.item_code , a.line_type , a.organization_id ) 
+//where a.organization_id = :gvi_organization_id 
+//    and a.item_code in ( select item_code from id_item where item_division in ( 'F' , 'G' ) and organization_id = :gvi_organization_id ) ; 			
+// 
+//if f_sql_check_with_msg(string(phase)) < 0 then 
+//	return -110
+//end if 
+
+Close(w_progress_popup)
+return 1
+end function
+

@@ -1,0 +1,57 @@
+HA$PBExportHeader$d_mat_current_inventory_matrix.srd
+$PBExportComments$$$HEX9$$5cb800cf74c758c1c4bcacc7e0ac70c88cd6$$ENDHEX$$
+release 10.5;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=4 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no  crosstab.dynamic = yes grid.lines=0 grid.columnmove=no selected.mouse=no )
+header[1](height=0 color="536870912" )
+header[2](height=128 color="536870912" )
+summary(height=76 color="12632256" )
+footer(height=0 color="536870912" )
+detail(height=72 color="536870912" )
+table(column=(type=char(20) updatewhereclause=yes name=item_code dbname="item_code" )
+ column=(type=char(20) updatewhereclause=yes name=item_name dbname="item_name" )
+ column=(type=char(20) updatewhereclause=yes name=item_spec dbname="item_spec" )
+ column=(type=char(20) updatewhereclause=yes name=line_type dbname="line_type" )
+ column=(type=number updatewhereclause=yes name=inventory_qty dbname="inventory_qty" )
+ retrieve="  SELECT ~"IM_ITEM_INVENTORY~".~"ITEM_CODE~",   
+         ~"ID_ITEM~".~"ITEM_NAME~",   
+         ~"ID_ITEM~".~"ITEM_SPEC~",   
+         ~"IM_ITEM_INVENTORY~".~"LINE_TYPE~",   
+         f_get_basecode( 'LOCATION CODE' , ~"IM_ITEM_INVENTORY~".~"LOCATION_CODE~",  :ARG_LANG , :ARG_ORG )  LOCATION_CODE ,
+         ~"IM_ITEM_INVENTORY~".~"INVENTORY_QTY~"  
+    FROM ~"IM_ITEM_INVENTORY~",   
+         ~"ID_ITEM~"  
+   WHERE ( ~"ID_ITEM~".~"ITEM_CODE~" = ~"IM_ITEM_INVENTORY~".~"ITEM_CODE~" ) and  
+         ( ~"ID_ITEM~".~"ORGANIZATION_ID~" = ~"IM_ITEM_INVENTORY~".~"ORGANIZATION_ID~" ) and  
+         ( ( ~"IM_ITEM_INVENTORY~".~"ITEM_CODE~" like :arg_item_code ) AND  
+         ( ~"IM_ITEM_INVENTORY~".~"LOCATION_CODE~" like :arg_location_code ) AND  
+         ( ~"IM_ITEM_INVENTORY~".~"ORGANIZATION_ID~" = :arg_org ) )    
+" arguments=(("arg_item_code", string),("arg_location_code", string),("arg_lang", string),("arg_org", number))  sort="item_code A item_name A item_spec A line_type A " )
+text(band=header[2] alignment="2" text="Item Code" border="0" color="0" x="146" y="4" height="120" width="471" html.valueishtml="0"  name=item_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[2] alignment="2" text="@location_code" border="0" color="0" x="2190" y="4" height="120" width="334" html.valueishtml="0"  name=inventory_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[2] alignment="2" text="Line Type" border="0" color="0" x="1915" y="4" height="120" width="265" html.valueishtml="0"  name=line_type_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[2] alignment="2" text="Item Name" border="0" color="0" x="626" y="4" height="120" width="635" html.valueishtml="0"  name=item_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[2] alignment="2" text="Item Spec" border="0" color="0" x="1271" y="4" height="120" width="635" html.valueishtml="0"  name=item_spec_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[2] alignment="1" text="Grand Total " border="0" color="0" x="2533" y="4" height="120" width="398" html.valueishtml="0"  name=grand_sum_inventory__t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65280" )
+column(band=detail id=5 alignment="1" tabsequence=32766 border="0" color="33554432" x="2190" y="4" height="64" width="334" format="###,##0.0" html.valueishtml="0"  name=inventory_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes crosstab.repeat=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="0" expression="getrow()"border="0" color="33554432" x="5" y="4" height="64" width="133" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432" x="626" y="4" height="64" width="635" format="[general]" html.valueishtml="0"  name=item_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="33554432" x="1271" y="4" height="64" width="635" format="[general]" html.valueishtml="0"  name=item_spec visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="0" color="33554432" x="1915" y="4" height="64" width="265" format="[general]" html.valueishtml="0"  name=line_type visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="1" expression="crosstabsum(1)"border="0" color="33554432" x="2533" y="4" height="64" width="398" format="###,##0.0" html.valueishtml="0"  name=grand_sum_inventory_qty visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65280" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="33554432" x="146" y="4" height="64" width="471" format="[general]" html.valueishtml="0"  name=item_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(inventory_qty for all )"border="0" color="33554432" x="2190" y="4" height="64" width="334" format="###,##0.0" html.valueishtml="0"  name=compute_11 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(grand_sum_inventory_qty for all )"border="0" color="33554432" x="2533" y="4" height="64" width="398" format="###,##0.0" html.valueishtml="0"  name=compute_12 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65280" )
+compute(band=summary alignment="2" expression="~"Grand Total~""border="0" color="33554432" x="146" y="4" height="64" width="471" format="[general]" html.valueishtml="0"  name=compute_10 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+ crosstab(band = foreground  crosstabonly = yes 
+ columns = "location_code" rows = "item_code, item_name, item_spec, line_type" values = "sum(inventory_qty for crosstab)" sourcenames = "item_code, item_name, item_spec, line_type, location_code, inventory_qty")
+sparse(names="item_code	item_name	item_spec")htmltable(border="0" cellpadding="1" cellspacing="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

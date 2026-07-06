@@ -1,0 +1,17 @@
+HA$PBExportHeader$f_mymenu_refresh.srf
+$PBExportComments$My Menu Refresh
+global type f_mymenu_refresh from function_object
+end type
+
+forward prototypes
+global function integer f_mymenu_refresh ()
+end prototypes
+
+global function integer f_mymenu_refresh ();if isvalid(w_bulletin_board)  then 
+//	w_bulletin_board.dw_3.retrieve(gvs_app_name , gvs_user_id , gvs_language , gvi_organization_id )
+else
+	w_wallpaper.dw_favorites.retrieve(gvs_app_name , gvs_user_id , gvs_language , gvi_organization_id )	
+end if
+return 0
+end function
+

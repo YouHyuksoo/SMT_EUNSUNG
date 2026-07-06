@@ -1,0 +1,119 @@
+HA$PBExportHeader$d_qc_pcb_input_scan_lst_4_dashboard.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no grid.lines=0 )
+header(height=124 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=64 color="536870912" )
+table(column=(type=char(30) update=yes updatewhereclause=yes name=run_no dbname="ip_product_pcb_scan_master.run_no" dbalias=".run_no" )
+ column=(type=char(50) updatewhereclause=yes name=ip_product_pcb_scan_master_model_name dbname="ip_product_pcb_scan_master.model_name" dbalias=".model_name" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=line_code dbname="ip_product_pcb_scan_master.line_code" dbalias=".line_code" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=machine_code dbname="ip_product_pcb_scan_master.machine_code" dbalias=".machine_code" )
+ column=(type=datetime update=yes updatewhereclause=yes name=scan_date dbname="ip_product_pcb_scan_master.scan_date" dbalias=".scan_date" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=scan_by dbname="ip_product_pcb_scan_master.scan_by" dbalias=".scan_by" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=pcb_barcode dbname="ip_product_pcb_scan_master.pcb_barcode" dbalias=".pcb_barcode" )
+ column=(type=number update=yes updatewhereclause=yes name=organization_id dbname="ip_product_pcb_scan_master.organization_id" dbalias=".organization_id" )
+ column=(type=datetime update=yes updatewhereclause=yes name=enter_date dbname="ip_product_pcb_scan_master.enter_date" dbalias=".enter_date" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=enter_by dbname="ip_product_pcb_scan_master.enter_by" dbalias=".enter_by" )
+ column=(type=datetime update=yes updatewhereclause=yes name=last_modify_date dbname="ip_product_pcb_scan_master.last_modify_date" dbalias=".last_modify_date" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=last_modify_by dbname="ip_product_pcb_scan_master.last_modify_by" dbalias=".last_modify_by" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=item_code dbname="ip_product_pcb_scan_master.item_code" dbalias=".item_code" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=workstage_code dbname="ip_product_pcb_scan_master.workstage_code" dbalias=".workstage_code" )
+ column=(type=number update=yes updatewhereclause=yes name=lot_qty dbname="ip_product_pcb_scan_master.lot_qty" dbalias=".lot_qty" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=supplier_code dbname="ip_product_pcb_scan_master.supplier_code" dbalias=".supplier_code" )
+ column=(type=char(1) update=yes updatewhereclause=yes name=receipt_status dbname="ip_product_pcb_scan_master.receipt_status" dbalias=".receipt_status" )
+ column=(type=char(300) updatewhereclause=yes name=item_name dbname="id_item.item_name" dbalias=".item_name" )
+ column=(type=char(300) updatewhereclause=yes name=item_spec dbname="id_item.item_spec" dbalias=".item_spec" )
+ column=(type=char(200) updatewhereclause=yes name=supplier_barcode dbname="im_item_receipt_barcode.supplier_barcode" dbalias=".supplier_barcode" )
+ column=(type=char(50) updatewhereclause=yes name=item_barcode dbname="im_item_receipt_barcode.item_barcode" dbalias=".item_barcode" )
+ column=(type=char(20) updatewhereclause=yes name=id_item_pcb_coating_type dbname="id_item.pcb_coating_type" dbalias=".pcb_coating_type" )
+ column=(type=number updatewhereclause=yes name=id_item_pcb_coating_max_day dbname="id_item.pcb_coating_max_day" dbalias=".pcb_coating_max_day" )
+ column=(type=datetime updatewhereclause=yes name=im_item_receipt_barcode_pcb_coating_date dbname="im_item_receipt_barcode.pcb_coating_date" dbalias=".pcb_coating_date" )
+ column=(type=char(4) updatewhereclause=yes name=im_item_receipt_barcode_manufacture_week dbname="im_item_receipt_barcode.manufacture_week" dbalias=".manufacture_week" )
+ retrieve="  SELECT ~"IP_PRODUCT_PCB_SCAN_MASTER~".~"RUN_NO~",   
+         ~"IP_PRODUCT_PCB_SCAN_MASTER~".~"MODEL_NAME~",   
+         ~"IP_PRODUCT_PCB_SCAN_MASTER~".~"LINE_CODE~",   
+         ~"IP_PRODUCT_PCB_SCAN_MASTER~".~"MACHINE_CODE~",   
+         ~"IP_PRODUCT_PCB_SCAN_MASTER~".~"SCAN_DATE~",   
+         ~"IP_PRODUCT_PCB_SCAN_MASTER~".~"SCAN_BY~",   
+         ~"IP_PRODUCT_PCB_SCAN_MASTER~".~"PCB_BARCODE~",   
+         ~"IP_PRODUCT_PCB_SCAN_MASTER~".~"ORGANIZATION_ID~",   
+         ~"IP_PRODUCT_PCB_SCAN_MASTER~".~"ENTER_DATE~",   
+         ~"IP_PRODUCT_PCB_SCAN_MASTER~".~"ENTER_BY~",   
+         ~"IP_PRODUCT_PCB_SCAN_MASTER~".~"LAST_MODIFY_DATE~",   
+         ~"IP_PRODUCT_PCB_SCAN_MASTER~".~"LAST_MODIFY_BY~",   
+         ~"IP_PRODUCT_PCB_SCAN_MASTER~".~"ITEM_CODE~",   
+         ~"IP_PRODUCT_PCB_SCAN_MASTER~".~"WORKSTAGE_CODE~",   
+         ~"IP_PRODUCT_PCB_SCAN_MASTER~".~"LOT_QTY~",   
+         ~"IP_PRODUCT_PCB_SCAN_MASTER~".~"SUPPLIER_CODE~",   
+         ~"IP_PRODUCT_PCB_SCAN_MASTER~".~"RECEIPT_STATUS~",   
+         ~"ID_ITEM~".~"ITEM_NAME~",   
+         ~"ID_ITEM~".~"ITEM_SPEC~",   
+         ~"IM_ITEM_RECEIPT_BARCODE~".~"SUPPLIER_BARCODE~"  ,
+         ~"IM_ITEM_RECEIPT_BARCODE~" .~"ITEM_BARCODE~",
+          ~"ID_ITEM~".pcb_coating_type, 
+          ~"ID_ITEM~".pcb_coating_max_day,
+          ~"IM_ITEM_RECEIPT_BARCODE~".pcb_coating_date,
+          ~"IM_ITEM_RECEIPT_BARCODE~".manufacture_week
+    FROM ~"IP_PRODUCT_PCB_SCAN_MASTER~",   
+         ~"ID_ITEM~",   
+         ~"IM_ITEM_RECEIPT_BARCODE~"  
+   WHERE ( ip_product_pcb_scan_master.item_code = id_item.item_code (+)) and  
+         ( ip_product_pcb_scan_master.organization_id = id_item.organization_id (+)) and  
+         ( ip_product_pcb_scan_master.pcb_barcode = im_item_receipt_barcode.item_barcode (+)) and  
+ 
+         ( ~"IP_PRODUCT_PCB_SCAN_MASTER~".~"RUN_NO~" like :arg_run_no)  
+  
+" arguments=(("arg_run_no", string))  sort="scan_date A line_code A item_code A " )
+text(band=header alignment="2" text="Line Code" border="0" color="33554432" x="759" y="8" height="112" width="457" html.valueishtml="0"  name=line_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Item Code" border="0" color="33554432" x="2304" y="8" height="112" width="498" html.valueishtml="0"  name=item_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Scan Date" border="0" color="33554432" x="165" y="8" height="112" width="585" html.valueishtml="0"  name=scan_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Lot Qty" border="0" color="33554432" x="6203" y="8" height="112" width="256" html.valueishtml="0"  name=lot_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Item Spec" border="0" color="33554432" x="3159" y="8" height="112" width="1339" html.valueishtml="0"  name=item_spec_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Enter Date" border="0" color="33554432" x="7968" y="8" height="112" width="535" html.valueishtml="0"  name=enter_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Enter By" border="0" color="33554432" x="8512" y="8" height="112" width="393" html.valueishtml="0"  name=enter_by_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Last Modify Date" border="0" color="33554432" x="8914" y="8" height="112" width="471" html.valueishtml="0"  name=last_modify_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Last Modify By" border="0" color="33554432" x="9394" y="8" height="112" width="389" html.valueishtml="0"  name=last_modify_by_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Supplier Barcode" border="0" color="33554432" x="5358" y="8" height="112" width="837" html.valueishtml="0"  name=supplier_bar_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text=" Model Name" border="0" color="33554432" x="1614" y="8" height="112" width="681" html.valueishtml="0"  name=ip_product_pcb_scan_master_model_nam_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Run No" border="0" color="33554432" x="1225" y="8" height="112" width="379" html.valueishtml="0"  name=run_no_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Item Barcode" border="0" color="33554432" x="4507" y="8" height="112" width="841" html.valueishtml="0"  name=im_item_receipt_barcode_item_barcode_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Item Name" border="0" color="33554432" x="2811" y="8" height="112" width="338" html.valueishtml="0"  name=item_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="PCB Coating Type" border="0" color="33554432" x="6469" y="8" height="112" width="379" html.valueishtml="0"  name=id_item_pcb_coating_type_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+text(band=header alignment="2" text="PCB Coating Max Day" border="0" color="33554432" x="6857" y="8" height="112" width="325" html.valueishtml="0"  name=id_item_pcb_coating_max_day_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+text(band=header alignment="2" text="PCB Coating Date" border="0" color="33554432" x="7191" y="8" height="112" width="439" html.valueishtml="0"  name=im_item_receipt_barcode_pcb_coating__t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+text(band=header alignment="2" text="Receipt Status" border="0" color="33554432" x="10039" y="8" height="112" width="270" html.valueishtml="0"  name=receipt_status_t visible="0"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Organization Id" border="0" color="33554432" x="9792" y="8" height="112" width="238" html.valueishtml="0"  name=organization_id_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Manufacture Week" border="0" color="33554432" x="7639" y="8" height="112" width="320" html.valueishtml="0"  name=im_item_receipt_barcode_manufacture__t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+compute(band=detail alignment="2" expression="getrow()"border="0" color="33554432" x="9" y="4" height="56" width="146" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=1 alignment="2" tabsequence=30 border="0" color="33554432" x="1225" y="4" height="56" width="379" format="[general]" html.valueishtml="0"  name=run_no visible="1" edit.limit=30 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="2" tabsequence=20 border="0" color="33554432" x="759" y="4" height="56" width="457" format="[general]" html.valueishtml="0"  name=line_code visible="1" dddw.name=vd_line_code dddw.displaycolumn=line_name dddw.datacolumn=line_code dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="2" tabsequence=10 border="0" color="33554432" x="165" y="4" height="56" width="585" format="[shortdate] [time]" html.valueishtml="0"  name=scan_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=9 alignment="2" tabsequence=150 border="0" color="33554432" x="7968" y="4" height="56" width="535" format="[shortdate] [time]" html.valueishtml="0"  name=enter_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=10 alignment="2" tabsequence=160 border="0" color="33554432" x="8512" y="4" height="56" width="393" format="[general]" html.valueishtml="0"  name=enter_by visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=11 alignment="2" tabsequence=170 border="0" color="33554432" x="8914" y="4" height="56" width="471" format="[shortdate] [time]" html.valueishtml="0"  name=last_modify_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=12 alignment="2" tabsequence=180 border="0" color="33554432" x="9394" y="4" height="56" width="389" format="[general]" html.valueishtml="0"  name=last_modify_by visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=13 alignment="2" tabsequence=50 border="0" color="33554432" x="2304" y="4" height="56" width="498" format="[general]" html.valueishtml="0"  name=item_code visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=15 alignment="2" tabsequence=100 border="0" color="33554432" x="6203" y="4" height="56" width="256" format="[general]" html.valueishtml="0"  name=lot_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=19 alignment="0" tabsequence=70 border="0" color="33554432" x="3159" y="4" height="56" width="1339" format="[general]" html.valueishtml="0"  name=item_spec visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=20 alignment="2" tabsequence=90 border="0" color="33554432" x="5358" y="0" height="52" width="837" format="[general]" html.valueishtml="0"  name=supplier_barcode visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="0" tabsequence=40 border="0" color="33554432" x="1614" y="4" height="56" width="681" format="[general]" html.valueishtml="0"  name=ip_product_pcb_scan_master_model_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=8 alignment="2" tabsequence=190 border="0" color="33554432" x="9792" y="4" height="56" width="238" format="[general]" html.valueishtml="0"  name=organization_id visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=21 alignment="2" tabsequence=80 border="0" color="33554432" x="4507" y="4" height="56" width="841" format="[general]" html.valueishtml="0"  name=item_barcode visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=18 alignment="2" tabsequence=60 border="0" color="33554432" x="2811" y="4" height="56" width="338" format="[general]" html.valueishtml="0"  name=item_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=22 alignment="2" tabsequence=110 border="0" color="33554432" x="6469" y="4" height="56" width="379" format="[general]" html.valueishtml="0"  name=id_item_pcb_coating_type visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=23 alignment="2" tabsequence=120 border="0" color="33554432" x="6857" y="4" height="56" width="325" format="[general]" html.valueishtml="0"  name=id_item_pcb_coating_max_day visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=24 alignment="2" tabsequence=130 border="0" color="33554432" x="7191" y="4" height="56" width="439" format="[shortdate]" html.valueishtml="0"  name=im_item_receipt_barcode_pcb_coating_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=17 alignment="2" tabsequence=200 border="0" color="33554432" x="10039" y="4" height="56" width="270" format="[general]" html.valueishtml="0"  name=receipt_status visible="0" edit.limit=1 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=25 alignment="2" tabsequence=140 border="0" color="33554432" x="7639" y="4" height="56" width="320" format="[general]" html.valueishtml="0"  name=im_item_receipt_barcode_manufacture_week visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

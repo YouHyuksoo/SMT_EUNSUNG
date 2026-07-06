@@ -1,0 +1,48 @@
+HA$PBExportHeader$d_pln_product_suffix_label_rpt.srd
+release 10.5;
+datawindow(units=3 timer_interval=0 color=1073741824 processing=2 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 635 print.margin.right = 635 print.margin.top = 635 print.margin.bottom = 635 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no label.name="" label.width=8000 label.height=4500 label.rows=1 label.rows.spacing=132 label.columns=1 label.columns.spacing=200 label.topdown=no label.sheet=no label.shape=roundrectangle label.ellipse_height=0 label.ellipse_width=0 )
+detail(height=4497 color="536870912" )
+table(column=(type=datetime updatewhereclause=yes name=plan_date dbname="ip_assembly_master_plan.plan_date" )
+ column=(type=char(20) updatewhereclause=yes name=item_code dbname="ip_assembly_master_plan.item_code" )
+ column=(type=char(20) updatewhereclause=yes name=line_code dbname="ip_assembly_master_plan.line_code" )
+ column=(type=number updatewhereclause=yes name=order_qty dbname="ip_assembly_master_plan.order_qty" )
+ column=(type=char(30) updatewhereclause=yes name=model_name dbname="id_item.model_name" )
+ column=(type=char(10) updatewhereclause=yes name=model_suffix dbname="id_item.model_suffix" )
+ column=(type=char(12) updatewhereclause=yes name=suffix_barcode dbname="suffix_barcode" )
+ retrieve="  SELECT ~"IP_ASSEMBLY_MASTER_PLAN~".~"PLAN_DATE~",   
+         ~"IP_ASSEMBLY_MASTER_PLAN~".~"ITEM_CODE~",   
+         ~"IP_ASSEMBLY_MASTER_PLAN~".~"LINE_CODE~",   
+         ~"IP_ASSEMBLY_MASTER_PLAN~".~"ORDER_QTY~",   
+         ~"ID_ITEM~".~"MODEL_NAME~",   
+         ~"ID_ITEM~".~"MODEL_SUFFIX~" ,
+
+		 '*'||~"ID_ITEM~".~"MODEL_SUFFIX~"||'*' SUFFIX_BARCODE  	 
+    FROM ~"IP_ASSEMBLY_MASTER_PLAN~",   
+         ~"ID_ITEM~"  
+   WHERE ( ~"IP_ASSEMBLY_MASTER_PLAN~".~"ITEM_CODE~" = ~"ID_ITEM~".~"ITEM_CODE~" ) and  
+         ( ~"IP_ASSEMBLY_MASTER_PLAN~".~"ORGANIZATION_ID~" = ~"ID_ITEM~".~"ORGANIZATION_ID~" ) and  
+         ( ( ~"IP_ASSEMBLY_MASTER_PLAN~".~"LINE_CODE~" like :arg_line_code ) AND  
+         ( ~"ID_ITEM~".~"MODEL_NAME~" like :arg_model_name ) AND  
+         ( ~"IP_ASSEMBLY_MASTER_PLAN~".~"PLAN_DATE~" >= :arg_dateset ) AND  
+         ( ~"IP_ASSEMBLY_MASTER_PLAN~".~"PLAN_DATE~" <= :arg_dateend ) AND  
+         ( ~"IP_ASSEMBLY_MASTER_PLAN~".~"ORGANIZATION_ID~" = :arg_org ) )    
+" arguments=(("arg_line_code", string),("arg_model_name", string),("arg_dateset", datetime),("arg_dateend", datetime),("arg_org", number)) )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432" x="211" y="2778" height="582" width="2751" format="[general]" html.valueishtml="0"  name=item_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=1 alignment="1" tabsequence=32766 border="0" color="33554432" x="3175" y="2804" height="582" width="4656" format="yyyy/mm/dd" html.valueishtml="0"  name=plan_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="0" tabsequence=32766 border="0" color="33554432" x="396" y="185" height="608" width="3968" format="[general]" html.valueishtml="0"  name=model_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=6 alignment="0" tabsequence=32766 border="0" color="33554432" x="4762" y="185" height="608" width="2857" format="[general]" html.valueishtml="0"  name=model_suffix visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="1" tabsequence=32766 border="0" color="33554432" x="211" y="3651" height="582" width="2751" format="[general]" html.valueishtml="0"  name=order_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="2" expression="today()"border="0" color="33554432" x="3175" y="3651" height="582" width="4656" format="[general]" html.valueishtml="0"  name=date_1 visible="1"  font.face="Tahoma" font.height="-14" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="4" color="33554432" x="185" y="1031" height="1322" width="2063" format="[general]" html.valueishtml="0"  name=line_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-36" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=7 alignment="2" tabsequence=32766 border="0" color="33554432" x="2751" y="1031" height="1322" width="4894" format="[general]" html.valueishtml="0"  name=suffix_barcode visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Free 3 of 9" font.height="-36" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

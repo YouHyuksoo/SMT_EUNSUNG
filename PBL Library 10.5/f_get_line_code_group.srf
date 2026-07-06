@@ -1,0 +1,24 @@
+HA$PBExportHeader$f_get_line_code_group.srf
+global type f_get_line_code_group from function_object
+end type
+
+forward prototypes
+global function string f_get_line_code_group (string arg_line_code)
+end prototypes
+
+global function string f_get_line_code_group (string arg_line_code);STRING LVS_LINE_CODE_GROUP
+
+SELECT LINE_CODE_GROUP
+  INTO :LVS_LINE_CODE_GROUP
+  FROM IP_PRODUCT_LINE
+ WHERE LINE_CODE = :ARG_LINE_CODE
+	AND ORGANIZATION_ID = :GVI_ORGANIZATION_ID ;
+	
+ IF F_SQL_CHECK() < 0 THEN
+	 RETURN '*'
+ END IF
+ 
+ 
+ RETURN LVS_LINE_CODE_GROUP
+end function
+

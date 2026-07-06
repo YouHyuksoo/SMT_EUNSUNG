@@ -1,0 +1,59 @@
+HA$PBExportHeader$d_com_carrying_out_analysys_rpt.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=4 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no  crosstab.dynamic = yes grid.lines=0 grid.columnmove=no selected.mouse=no )
+header[1](height=0 color="536870912" )
+header[2](height=60 color="536870912" )
+header[3](height=120 color="536870912" )
+summary(height=72 color="65535" )
+footer(height=0 color="536870912" )
+detail(height=72 color="536870912" )
+table(column=(type=char(20) updatewhereclause=yes name=carrying_out_receiptor dbname="carrying_out_receiptor" )
+ column=(type=char(20) updatewhereclause=yes name=carrying_out_item dbname="carrying_out_item" )
+ column=(type=char(20) updatewhereclause=yes name=carrying_out_item_spec dbname="carrying_out_item_spec" )
+ column=(type=number updatewhereclause=yes name=carrying_out_qty dbname="carrying_out_qty" )
+ retrieve="  SELECT ~"IMAN_CARRYING_OUT~".~"ORGANIZATION_ID~",   
+         ~"IMAN_CARRYING_OUT~".~"CARRYING_OUT_RECEIPTOR~",   
+         ~"IMAN_CARRYING_OUT~".~"CARRYING_OUT_ITEM~",   
+         ~"IMAN_CARRYING_OUT~".~"CARRYING_OUT_ITEM_SPEC~",   
+         f_get_basecode( 'CARRYING OUT TYPE' , ~"IMAN_CARRYING_OUT~".~"CARRYING_OUT_TYPE~",  :ARG_LANG , ORGANIZATION_ID )  CARRYING_OUT_TYPE ,
+         f_get_basecode( 'CARRYING OUT DIVISION' , ~"IMAN_CARRYING_OUT~".~"CARRYING_OUT_DIVISION~",  :ARG_LANG , ORGANIZATION_ID )  CARRYING_OUT_DIVISION ,
+         ~"IMAN_CARRYING_OUT~".~"CARRYING_OUT_QTY~"  
+    FROM ~"IMAN_CARRYING_OUT~"   
+WHERE CARRYING_OUT_DATE >= :ARG_DATESET
+AND CARRYING_OUT_DATE <= :ARG_DATEEND
+AND CARRYING_OUT_RECEIPTOR LIKE :ARG_SUPPLIER_CODE
+AND CARRYING_OUT_ITEM LIKE :ARG_ITEM_CODE
+AND ORGANIZATION_ID = :ARG_ORG" arguments=(("arg_dateset", datetime),("arg_dateend", datetime),("arg_supplier_code", string),("arg_item_code", string),("arg_lang", string),("arg_org", number))  sort="carrying_out_receiptor A carrying_out_item A carrying_out_item_spec A " )
+text(band=header[2] alignment="2" text="@carrying_out_type" border="2" color="33554432" x="1390" y="4" height="52" width="233" html.valueishtml="0"  name=t_4 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16711935" )
+compute(band=header[2] alignment="2" expression="today()"border="0" color="33554432" x="576" y="4" height="52" width="370" format="[general]" html.valueishtml="0"  name=date_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=header[2] alignment="2" expression="'Page ' + page() + ' of ' + pageCount()"border="0" color="33554432" x="224" y="4" height="52" width="343" format="[general]" html.valueishtml="0"  name=page_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header[3] alignment="0" text="Carrying Out Receiptor" border="2" color="33554432" x="224" y="4" height="116" width="343" html.valueishtml="0"  name=carrying_out_receiptor_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[3] alignment="0" text="Carrying Out Item" border="2" color="33554432" x="576" y="4" height="116" width="370" html.valueishtml="0"  name=carrying_out_item_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[3] alignment="0" text="Carrying Out Item Spec" border="2" color="33554432" x="955" y="4" height="116" width="425" html.valueishtml="0"  name=carrying_out_item_spec_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[3] alignment="1" text="Grand Total " border="2" color="33554432" x="1842" y="4" height="116" width="238" html.valueishtml="0"  name=grand_sum_carrying_out_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65280" )
+text(band=header[3] alignment="2" text=" @carrying_out_type Sum Of Carrying Out Qty" border="2" color="33554432" x="1632" y="4" height="116" width="201" html.valueishtml="0"  name=sum_carrying_out_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+text(band=header[3] alignment="2" text="@carrying_out_division" border="2" color="33554432" x="1390" y="4" height="116" width="233" html.valueishtml="0"  name=carrying_out_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16711935" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="2" color="33554432" x="576" y="4" height="64" width="370" format="[general]" html.valueishtml="0"  name=carrying_out_item visible="1" edit.limit=30 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="2" color="33554432" x="955" y="4" height="64" width="425" format="[general]" html.valueishtml="0"  name=carrying_out_item_spec visible="1" edit.limit=200 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="1" expression="crosstabsum(1)"border="2" color="33554432" x="1842" y="4" height="64" width="238" format="[general]" html.valueishtml="0"  name=grand_sum_carrying_out_qty visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65280" )
+compute(band=detail alignment="1" expression="crosstabsum(1, 2, ~"@carrying_out_type~")"border="2" color="33554432" x="1632" y="4" height="64" width="201" format="[general]" html.valueishtml="0"  name=sum_carrying_out_qty visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" crosstab.repeat=yes )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="2" color="33554432" x="224" y="4" height="64" width="343" format="[general]" html.valueishtml="0"  name=carrying_out_receiptor visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="0" expression="getrow()"border="0" color="33554432" x="5" y="4" height="64" width="210" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=4 alignment="1" tabsequence=32766 border="2" color="33554432" x="1390" y="4" height="64" width="233" format="[general]" html.valueishtml="0"  name=carrying_out_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes crosstab.repeat=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16711935" )
+compute(band=summary alignment="1" expression="~"Grand Total~""border="2" color="33554432" x="224" y="4" height="64" width="343" format="[general]" html.valueishtml="0"  name=compute_9 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=summary alignment="1" expression="sum(grand_sum_carrying_out_qty for all )"border="2" color="33554432" x="1842" y="4" height="64" width="238" format="[general]" html.valueishtml="0"  name=compute_12 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=summary alignment="1" expression="sum(sum_carrying_out_qty for all )"border="2" color="33554432" x="1632" y="4" height="64" width="201" format="[general]" html.valueishtml="0"  name=compute_11 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=summary alignment="1" expression="sum(carrying_out_qty for all )"border="2" color="33554432" x="1390" y="4" height="64" width="233" format="[general]" html.valueishtml="0"  name=compute_10 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+ crosstab(band = foreground  crosstabonly = yes 
+ columns = "carrying_out_type, carrying_out_division" rows = "carrying_out_receiptor, carrying_out_item, carrying_out_item_spec" values = "sum(carrying_out_qty for crosstab)" sourcenames = "organization_id, carrying_out_receiptor, carrying_out_item, carrying_out_item_spec, carrying_out_type, carrying_out_division, carrying_out_qty")
+sparse(names="carrying_out_receiptor	carrying_out_item")htmltable(border="0" cellpadding="1" cellspacing="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

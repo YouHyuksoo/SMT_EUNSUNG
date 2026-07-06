@@ -1,0 +1,28 @@
+HA$PBExportHeader$f_get_sale_exchange_rate.srf
+global type f_get_sale_exchange_rate from function_object
+end type
+
+forward prototypes
+global function decimal f_get_sale_exchange_rate (datetime adt_dateset, string as_currency)
+end prototypes
+
+global function decimal f_get_sale_exchange_rate (datetime adt_dateset, string as_currency);decimal lvf_exchange_rate
+
+select   nvl(selling_rate,0)
+into      :lvf_exchange_rate
+from    icom_exchange_rate
+where  dateset = :adt_dateset
+and      currency = :Gvs_currency
+and      basis_currency  = :as_currency
+;
+if f_sql_check() < 0  then 
+	return -1
+end if 
+
+if isnull(lvf_exchange_rate) then 
+	lvf_exchange_rate = 0
+end if 
+
+return lvf_exchange_rate
+end function
+

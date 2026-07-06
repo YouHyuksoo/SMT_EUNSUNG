@@ -1,0 +1,49 @@
+HA$PBExportHeader$d_granted_role_code_lst.srd
+release 10;
+datawindow(units=0 timer_interval=0 color=12632256 processing=1 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes hidegrayline=no grid.lines=0 )
+header(height=144 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=68 color="536870912" )
+table(column=(type=char(20) updatewhereclause=yes name=user_id dbname="isys_privilege.user_id" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=role_code dbname="isys_privilege.role_code" )
+ column=(type=char(0) updatewhereclause=yes name=check_yn dbname="check_yn" values="	Y/	N" )
+ column=(type=char(20) updatewhereclause=yes name=user_name dbname="isys_users.user_name" )
+ retrieve="  SELECT ~"ISYS_PRIVILEGE~".~"USER_ID~",   
+         ~"ISYS_PRIVILEGE~".~"ROLE_CODE~",   
+         '' check_yn,   
+         ~"ISYS_USERS~".~"USER_NAME~"  
+    FROM ~"ISYS_PRIVILEGE~",   
+         ~"ISYS_USERS~"  
+   WHERE ( ~"ISYS_PRIVILEGE~".~"USER_ID~" = ~"ISYS_USERS~".~"USER_ID~" ) and  
+         ( ~"ISYS_PRIVILEGE~".~"ORGANIZATION_ID~" = ~"ISYS_USERS~".~"ORGANIZATION_ID~" ) and  
+         ( ( ~"ISYS_PRIVILEGE~".~"USER_ID~" = :ARG_USER_ID ) AND  
+         ( ~"ISYS_PRIVILEGE~".~"ORGANIZATION_ID~" = :ARG_ORGANIZATION_ID ) )   
+GROUP BY ~"ISYS_PRIVILEGE~".~"USER_ID~",   
+         ~"ISYS_PRIVILEGE~".~"ROLE_CODE~",   
+         ~"ISYS_PRIVILEGE~".~"ORGANIZATION_ID~",   
+         ~"ISYS_USERS~".~"USER_ID~",   ~"ISYS_USERS~".~"USER_NAME~"  ,
+         ~"ISYS_USERS~".~"ORGANIZATION_ID~"   
+" arguments=(("ARG_USER_ID", string),("ARG_ORGANIZATION_ID", number))  sort="role_code A " )
+text(band=header alignment="2" text="No" border="0" color="65535" x="151" y="8" height="136" width="155" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+text(band=header alignment="2" text="Role Code" border="0" color="0" x="1349" y="8" height="136" width="869" html.valueishtml="0"  name=role_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Check Yn" border="0" color="0" x="315" y="8" height="136" width="206" html.valueishtml="0"  name=check_yn_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="User Id" border="0" color="0" x="530" y="8" height="136" width="347" html.valueishtml="0"  name=user_id_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="User Name" border="0" color="0" x="887" y="8" height="136" width="453" html.valueishtml="0"  name=isys_users_user_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+compute(band=detail alignment="0" expression="trim('')"border="0" color="0" x="9" y="4" height="60" width="133" format="[GENERAL]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="0" expression="GETROW()"border="0" color="65535" x="151" y="4" height="60" width="155" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+column(band=detail id=2 alignment="2" tabsequence=40 border="0" color="0" x="1349" y="4" height="60" width="869" format="[general]" html.valueishtml="0"  name=role_code pointer="Help!" visible="1" edit.limit=20 edit.case=upper edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=3 alignment="2" tabsequence=10 border="0" color="0" x="315" y="4" height="60" width="206" format="[general]" html.valueishtml="0"  name=check_yn visible="1" checkbox.text="" checkbox.on="Y" checkbox.off="N" checkbox.scale=no checkbox.threed=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=4 alignment="0" tabsequence=30 border="0" color="0" x="887" y="4" height="60" width="453" format="[general]" html.valueishtml="0"  name=user_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=1 alignment="2" tabsequence=20 border="0" color="0" x="530" y="4" height="60" width="347" format="[general]" html.valueishtml="0"  name=user_id visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

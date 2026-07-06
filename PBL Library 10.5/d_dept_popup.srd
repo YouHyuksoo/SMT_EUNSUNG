@@ -1,0 +1,69 @@
+HA$PBExportHeader$d_dept_popup.srd
+$PBExportComments$$$HEX7$$80bd1cc1c8b9a4c230d11dd3c5c5$$ENDHEX$$
+release 10.5;
+datawindow(units=0 timer_interval=0 color=12632256 processing=1 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no grid.lines=0 )
+header(height=152 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=72 color="536870912" )
+table(column=(type=char(10) update=yes updatewhereclause=yes name=department_code dbname="isys_department.department_code" )
+ column=(type=number update=yes updatewhereclause=yes name=organization_id dbname="isys_department.organization_id" )
+ column=(type=char(60) updatewhereclause=yes name=department_name dbname="department_name" )
+ column=(type=char(4000) updatewhereclause=yes name=pre_department_name dbname="pre_department_name" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=pre_department_code dbname="isys_department.pre_department_code" )
+ column=(type=char(100) update=yes updatewhereclause=yes name=comments dbname="isys_department.comments" )
+ column=(type=datetime update=yes updatewhereclause=yes name=enter_date dbname="isys_department.enter_date" )
+ column=(type=datetime update=yes updatewhereclause=yes name=last_modify_date dbname="isys_department.last_modify_date" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=enter_by dbname="isys_department.enter_by" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=last_modify_by dbname="isys_department.last_modify_by" )
+ retrieve="  SELECT ~"ISYS_DEPARTMENT~".~"DEPARTMENT_CODE~",   
+         ~"ISYS_DEPARTMENT~".~"ORGANIZATION_ID~",   
+         DECODE( :ARG_LANG , 'K' , ~"ISYS_DEPARTMENT~".~"DEPARTMENT_NAME_KOR~",   'E' ,  ~"ISYS_DEPARTMENT~".~"DEPARTMENT_NAME_ENG~",   'C' , ~"ISYS_DEPARTMENT~".~"DEPARTMENT_NAME_LOCAL~" ) DEPARTMENT_NAME,   
+         DECODE( :ARG_LANG , 'K' , ~"ISYS_DEPARTMENT~".~"PRE_DEPARTMENT_NAME_KOR~",   'E' ,  ~"ISYS_DEPARTMENT~".~"PRE_DEPARTMENT_NAME_ENG~",   'C' , ~"ISYS_DEPARTMENT~".~"PRE_DEPARTMENT_NAME_LOCAL~" ) PRE_DEPARTMENT_NAME,   
+         ~"ISYS_DEPARTMENT~".~"PRE_DEPARTMENT_CODE~",   
+         ~"ISYS_DEPARTMENT~".~"COMMENTS~",   
+         ~"ISYS_DEPARTMENT~".~"ENTER_DATE~",   
+         ~"ISYS_DEPARTMENT~".~"LAST_MODIFY_DATE~",   
+         ~"ISYS_DEPARTMENT~".~"ENTER_BY~",   
+         ~"ISYS_DEPARTMENT~".~"LAST_MODIFY_BY~"
+
+    FROM ~"ISYS_DEPARTMENT~"  
+   WHERE ( ~"ISYS_DEPARTMENT~".~"DEPARTMENT_CODE~" like :ARG_DEPARTMENT_CODE ) AND  
+         ( ~"ISYS_DEPARTMENT~".~"ORGANIZATION_ID~" = :ARG_ORG )    
+" arguments=(("ARG_DEPARTMENT_CODE", string),("ARG_LANG", string),("ARG_ORG", number))  sort="pre_department_code A department_code A " )
+group(level=1 header.height=0 trailer.height=64 by=("pre_department_code" ) header.color="536870912" trailer.color="65535" )
+text(band=header alignment="2" text="No" border="0" color="65535" x="146" y="8" height="132" width="160" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+text(band=header alignment="2" text="Pre Dept Code" border="0" color="65535" x="315" y="8" height="132" width="471" html.valueishtml="0"  name=pre_department_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+text(band=header alignment="2" text="Organization Id" border="0" color="65535" x="5339" y="8" height="132" width="325" html.valueishtml="0"  name=organization_id_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+text(band=header alignment="2" text="Commants" border="0" color="65535" x="3081" y="8" height="132" width="864" html.valueishtml="0"  name=comments_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+text(band=header alignment="2" text="Enter Date" border="0" color="65535" x="3954" y="8" height="132" width="357" html.valueishtml="0"  name=enter_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+text(band=header alignment="2" text="Last Modify Date" border="0" color="65535" x="4320" y="8" height="132" width="329" html.valueishtml="0"  name=last_modify_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+text(band=header alignment="2" text="Enter By" border="0" color="65535" x="4658" y="8" height="132" width="302" html.valueishtml="0"  name=enter_by_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+text(band=header alignment="2" text="Last Modify By" border="0" color="65535" x="4969" y="8" height="132" width="361" html.valueishtml="0"  name=last_modify_by_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+text(band=header alignment="2" text="Dept Code" border="0" color="65535" x="1280" y="8" height="132" width="411" html.valueishtml="0"  name=department_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+text(band=header alignment="2" text="Pre Department Name" border="0" color="65535" x="795" y="8" height="132" width="475" html.valueishtml="0"  name=pre_department_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+text(band=header alignment="2" text="Department Name" border="0" color="65535" x="1701" y="8" height="132" width="1371" html.valueishtml="0"  name=department_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+column(band=detail id=5 alignment="0" tabsequence=10 border="0" color="33554432" x="315" y="4" height="64" width="471" format="[general]" html.valueishtml="0"  name=pre_department_code visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=2 alignment="1" tabsequence=100 border="0" color="33554432" x="5339" y="4" height="64" width="325" format="[general]" html.valueishtml="0"  name=organization_id visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=6 alignment="0" tabsequence=50 border="0" color="33554432" x="3081" y="4" height="64" width="864" format="[general]" html.valueishtml="0"  name=comments visible="1" edit.limit=50 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=7 alignment="0" tabsequence=60 border="0" color="33554432" x="3954" y="4" height="64" width="357" format="[shortdate] [time]" html.valueishtml="0"  name=enter_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=8 alignment="0" tabsequence=70 border="0" color="33554432" x="4320" y="4" height="64" width="329" format="[shortdate] [time]" html.valueishtml="0"  name=last_modify_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=9 alignment="0" tabsequence=80 border="0" color="33554432" x="4658" y="4" height="64" width="302" format="[general]" html.valueishtml="0"  name=enter_by visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=10 alignment="0" tabsequence=90 border="0" color="33554432" x="4969" y="4" height="64" width="361" format="[general]" html.valueishtml="0"  name=last_modify_by visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=1 alignment="0" tabsequence=30 border="0" color="0" x="1280" y="4" height="64" width="411" format="[general]" html.valueishtml="0"  name=department_code visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+column(band=detail id=3 alignment="0" tabsequence=40 border="0" color="33554432" x="1701" y="4" height="64" width="1371" format="[general]" html.valueishtml="0"  name=department_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="0" tabsequence=20 border="0" color="33554432" x="795" y="4" height="64" width="475" format="[general]" html.valueishtml="0"  name=pre_department_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="0" expression="TRIM('')"border="0" color="0" x="9" y="4" height="64" width="128" format="[GENERAL]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=detail alignment="0" expression="GETROW()"border="0" color="0" x="146" y="4" height="64" width="160" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+
+sparse(names="organization_id	pre_department_code	pre_department_name")htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

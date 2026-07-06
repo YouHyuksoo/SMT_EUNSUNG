@@ -1,0 +1,50 @@
+FUNCTION "F_GET_PLAN_QTY_BY_PRODUCT_ST" (
+   P_lINE_CODE    IN VARCHAR2,
+   P_MODEL_NAME   IN VARCHAR2,
+   P_PCB_ITEM     IN VARCHAR2,
+   P_WORKSTAGE_CODE IN VARCHAR2 ,
+   P_TIMEZONE     IN VARCHAR2,
+   P_MC_TIME IN NUMBER ,
+   P_ORG          IN NUMBER)
+   RETURN NUMBER
+IS
+   LVL_TIME   NUMBER;
+   LVL_ST     NUMBER;
+   LVL_LOSS   NUMBER;
+BEGIN
+
+  SELECT ( (TO_DATE ('19000101' || END_TIME, 'YYYYMMDDHH24MI')
+             - TO_DATE ('19000101' || START_TIME, 'YYYYMMDDHH24MI'))
+           * 24
+           * 60
+           * 60
+           - ( NVL (ATTRIBUTE03 * 60 , 0)+ (NVL(P_MC_TIME,0) * 60)  )  ),
+          F_GET_MODEL_PRODUCT_ST (P_MODEL_NAME,
+                          P_lINE_CODE,
+                          P_PCB_ITEM,
+                          P_WORKSTAGE_CODE ,
+                          P_ORG),
+          (NVL (ATTRIBUTE04, 1) / 100)
+     INTO LVL_TIME, LVL_ST, LVL_LOSS
+     FROM ICOM_WORKTIME_RANGES
+    WHERE RANGE_TYPE = 'SMTWORKTIME' AND WORK_TYPE = P_TIMEZONE;
+
+   IF LVL_TIME < 0
+   THEN
+      LVL_TIME := 86400 - ABS (LVL_TIME);
+   END IF;
+
+if LVL_ST = 0 then 
+    return 0  ;
+else
+   RETURN ROUND (LVL_TIME / LVL_ST, 0) * LVL_LOSS;  
+end if ;
+  
+EXCEPTION
+   WHEN NO_DATA_FOUND
+   THEN
+      RETURN 0;
+   WHEN OTHERS
+   THEN
+      RAISE_APPLICATION_ERROR (-20003, SQLERRM);
+END ;

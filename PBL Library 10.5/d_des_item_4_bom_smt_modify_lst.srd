@@ -1,0 +1,36 @@
+HA$PBExportHeader$d_des_item_4_bom_smt_modify_lst.srd
+$PBExportComments$$$HEX6$$80bd88d4c8b9a4c230d12000$$ENDHEX$$(HSRM_ITEM)
+release 10.5;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=0 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no rows_per_detail = 4 )
+header(height=0 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=96 color="536870912" )
+table(column=(type=char(4000) updatewhereclause=yes name=line_code dbname="line_code" )
+ column=(type=char(30) updatewhereclause=yes name=pcb_item dbname="id_eng_bom_smt.pcb_item" dbalias=".pcb_item" )
+ retrieve="  SELECT F_GET_LINE_NAME ( ~"ID_ENG_BOM_SMT~".~"LINE_CODE~"   , organization_id ) LINE_CODE ,   
+         ~"ID_ENG_BOM_SMT~".~"PCB_ITEM~"  
+    FROM ~"ID_ENG_BOM_SMT~"  
+   WHERE ~"ID_ENG_BOM_SMT~".~"PARENT_ITEM_CODE~" = :ARG_PARENT_ITEM_CODE  
+GROUP BY   ~"ID_ENG_BOM_SMT~".~"LINE_CODE~",   
+         ~"ID_ENG_BOM_SMT~".~"PCB_ITEM~"   , organization_id
+" arguments=(("ARG_PARENT_ITEM_CODE", string))  sort="line_code A pcb_item A " )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="2" color="33554432" x="137" y="4" height="88" width="169" format="[general]" html.valueishtml="0" row_in_detail=1  name=line_code_1 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="2" color="33554432" x="311" y="4" height="88" width="91" format="[general]" html.valueishtml="0" row_in_detail=1  name=pcb_item_1 visible="1" edit.limit=30 edit.case=any edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="2" color="33554432" x="466" y="4" height="88" width="169" format="[general]" html.valueishtml="0" row_in_detail=2  name=line_code_2 visible="1" edit.limit=30 edit.case=any edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="2" color="33554432" x="640" y="4" height="88" width="91" format="[general]" html.valueishtml="0" row_in_detail=2  name=pcb_item_2 visible="1" edit.limit=30 edit.case=any edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="2" color="33554432" x="795" y="4" height="88" width="169" format="[general]" html.valueishtml="0" row_in_detail=3  name=line_code_3 visible="1" edit.limit=30 edit.case=any edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="2" color="33554432" x="969" y="4" height="88" width="91" format="[general]" html.valueishtml="0" row_in_detail=3  name=pcb_item_3 visible="1" edit.limit=30 edit.case=any edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="2" color="33554432" x="1147" y="4" height="88" width="169" format="[general]" html.valueishtml="0" row_in_detail=4  name=line_code_4 visible="1" edit.limit=30 edit.case=any edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="2" color="33554432" x="1321" y="4" height="88" width="91" format="[general]" html.valueishtml="0" row_in_detail=4  name=pcb_item_4 visible="1" edit.limit=30 edit.case=any edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

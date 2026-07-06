@@ -1,0 +1,23 @@
+HA$PBExportHeader$f_get_customer_name.srf
+global type f_get_customer_name from function_object
+end type
+
+forward prototypes
+global function string f_get_customer_name (string as_customer_code)
+end prototypes
+
+global function string f_get_customer_name (string as_customer_code);string lvs_customer_name
+select customer_name 
+into    :lvs_customer_name
+from icom_customer
+where  customer_code = :as_customer_code
+  and    organization_id = :gvi_organization_id ; 
+ if f_sql_check() < 0 then 
+	return 'ERROR'
+end if 
+if sqlca.sqlcode = 100 then 
+	return 'NOTFOUND'
+end if 
+return lvs_customer_name
+end function
+

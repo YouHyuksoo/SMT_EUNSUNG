@@ -1,0 +1,26 @@
+HA$PBExportHeader$f_get_item_mfs_laed_time.srf
+global type f_get_item_mfs_laed_time from function_object
+end type
+
+forward prototypes
+global function integer f_get_item_mfs_laed_time (string arg_item_code, integer arg_org)
+end prototypes
+
+global function integer f_get_item_mfs_laed_time (string arg_item_code, integer arg_org);int lvi_return
+
+select nvl(manufacture_leadtime,0) 
+   into :lvi_return
+ from id_item where item_code = :arg_item_code
+ and organization_id = :arg_org  ;
+ 
+ if f_sql_check() < 0 then 
+	return 0
+end if
+
+if sqlca.sqlcode = 100 then 
+	return 0
+end if
+
+return lvi_return
+end function
+

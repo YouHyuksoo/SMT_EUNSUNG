@@ -1,0 +1,27 @@
+FUNCTION "F_GET_MM_LAST_MONTH_QTY" (
+   as_item_code   IN   VARCHAR2,
+   as_yyyymm      IN   VARCHAR2,
+   as_line_type   IN   VARCHAR2,
+   ai_org         IN   NUMBER
+)
+   RETURN NUMBER
+IS
+   al_inv_qty                    NUMBER;
+BEGIN
+   SELECT SUM(NVL(mm_inventory_qty, 0))
+   INTO   al_inv_qty
+   FROM   im_item_inventory_close
+   WHERE      item_code = as_item_code
+          AND line_type = as_line_type
+          AND close_yyyymm = as_yyyymm
+          AND organization_id = ai_org;
+   RETURN NVL(al_inv_qty, 0);
+EXCEPTION
+   WHEN NO_DATA_FOUND
+   THEN
+      raise_application_error(-20003, SQLERRM);
+   WHEN OTHERS
+   THEN
+      ROLLBACK;
+      raise_application_error(-20003, SQLERRM);
+END;

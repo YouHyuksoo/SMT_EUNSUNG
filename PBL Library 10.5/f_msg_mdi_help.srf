@@ -1,0 +1,21 @@
+HA$PBExportHeader$f_msg_mdi_help.srf
+$PBExportComments$MDI Help message$$HEX5$$7cb9200004c75cd52000$$ENDHEX$$Function. Argument [msg_id]
+global type f_msg_mdi_help from function_object
+end type
+
+forward prototypes
+global subroutine f_msg_mdi_help (string as_msg)
+end prototypes
+
+global subroutine f_msg_mdi_help (string as_msg);/****************************************************************************************
+ * MDI Help  Message $$HEX2$$23b130ae$$ENDHEX$$.
+ * if Msg_id = 0 then Direct Push to Message Line
+ *else Select Msg Text from Message Table
+ *
+ ****************************************************************************************/
+w_main_frame.SetMicroHelp( '')
+w_main_frame.SetMicroHelp( as_msg ) 
+
+
+end subroutine
+

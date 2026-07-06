@@ -1,0 +1,62 @@
+HA$PBExportHeader$f_mcn_jig_issue_cancel.srf
+global type f_mcn_jig_issue_cancel from function_object
+end type
+
+forward prototypes
+global function integer f_mcn_jig_issue_cancel (datetime adt_date, double ad_seq)
+end prototypes
+
+global function integer f_mcn_jig_issue_cancel (datetime adt_date, double ad_seq);long lvl_cnt
+double lvl_issue_seq
+
+UPDATE imcn_jig_issue
+   SET issue_status = 'C'
+ WHERE issue_date = :adt_date
+   AND issue_sequence = :ad_seq
+   AND organization_id = :gvi_organization_id;
+
+if f_sql_check() < 0 then 
+	return -3
+end if 
+
+
+
+lvl_issue_seq = double(f_get_sequence('SEQ_JIG_ISSUE_SEQUENCE'))
+INSERT INTO imcn_jig_issue
+            ( issue_sequence,
+              issue_date,
+              issue_deficit,
+              issue_qty,
+              issue_status,
+              jig_code,
+              organization_id,
+              enter_by,
+              enter_date,
+              last_modify_by,
+              last_modify_date,
+			barcode
+            )
+   SELECT :lvl_issue_seq,
+          TRUNC( SYSDATE ),
+          DECODE( issue_deficit, '3', '4', '4', '3' ),
+          issue_qty * -1,
+          'C',
+          jig_code,
+          organization_id,
+          :gvs_user_id,
+          SYSDATE,
+          :gvs_user_id,
+          SYSDATE ,
+		  barcode
+     FROM imcn_jig_issue
+    WHERE issue_date      = :adt_date
+      AND issue_sequence = :ad_seq
+      AND organization_id  = :gvi_organization_id;
+		 
+	if f_sql_check() < 0 then 
+		return -1 
+	end if 
+
+return sqlca.sqlnrows
+end function
+

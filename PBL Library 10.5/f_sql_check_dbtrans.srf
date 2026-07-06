@@ -1,0 +1,51 @@
+HA$PBExportHeader$f_sql_check_dbtrans.srf
+$PBExportComments$SQLCA $$HEX6$$7cb92000b4cc6cd05cd5e4b2$$ENDHEX$$
+global type f_sql_check_dbtrans from function_object
+end type
+
+forward prototypes
+global function integer f_sql_check_dbtrans ()
+end prototypes
+
+global function integer f_sql_check_dbtrans ();STRING LVS_TEXT , LVS_SQLERRTEXT
+LONG LVL_SQLCODE , LVL_SQLDBCODE
+
+LVL_SQLCODE = DBTrans.SQLCODE
+LVL_SQLDBCODE= DBTrans.SQLDBCODE
+LVS_SQLERRTEXT = DBTrans.SQLERRTEXT
+LVS_TEXT = STRING(DBTrans.SQLERRTEXT)+"~r~n"+"Return Data"+DBTrans.SQLReturnData+'~r~n'
+
+
+IF LVL_SQLCODE < 0 THEN 
+     f_screen_capture()			
+
+	ROLLBACK;
+	
+	if   LVL_SQLDBCODE = 20100 then 
+		
+		F_MSGBOX1( LVL_SQLDBCODE , LVS_TEXT  )		
+		
+	else
+
+		F_MSGBOX2( 1101 , STRING(LVL_SQLDBCODE) , LVS_TEXT )
+		
+	end if
+
+	ROLLBACK;
+	
+	//=========================================================
+	// Error Log Trace
+	//=========================================================
+	if Gvs_error_log_trace_yn = 'Y' then
+		f_set_error_log_trace( w_main_frame.Getactivesheet() , '' , 0 , ''  ,LVL_SQLCODE ,  LVS_SQLERRTEXT , '') 
+	end if 
+	//=========================================================
+
+	RETURN -1 
+ELSE
+	RETURN  1
+END IF
+
+
+end function
+

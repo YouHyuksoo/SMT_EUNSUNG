@@ -1,0 +1,32 @@
+HA$PBExportHeader$f_set_item_name_spec_uom.srf
+global type f_set_item_name_spec_uom from function_object
+end type
+
+forward prototypes
+global function string f_set_item_name_spec_uom (datawindow arg_dw, long arg_row, string arg_item_code)
+end prototypes
+
+global function string f_set_item_name_spec_uom (datawindow arg_dw, long arg_row, string arg_item_code);STRING LVS_ITEM_NAME , LVS_ITEM_SPEC , LVS_ITEM_UOM
+
+SELECT ITEM_NAME , ITEM_SPEC , ITEM_UOM
+  INTO :LVS_ITEM_NAME , :LVS_ITEM_SPEC , :LVS_ITEM_UOM
+  FROM ID_ITEM 
+  WHERE ITEM_CODE = :ARG_ITEM_CODE
+  AND ORGANIZATION_ID = :GVI_ORGANIZATION_ID ;
+  
+  IF F_SQL_CHECK() < 0 THEN 
+	RETURN 'ERROR'
+  END IF
+  
+  IF SQLCA.SQLCODE = 100 THEN 
+	RETURN 'NOTFOUND'
+ END IF
+ 
+
+  ARG_DW.OBJECT.ITEM_NAME[ARG_ROW] = LVS_ITEM_NAME
+  ARG_DW.OBJECT.ITEM_SPEC[ARG_ROW] = LVS_ITEM_SPEC
+  ARG_DW.OBJECT.ITEM_UOM[ARG_ROW] = LVS_ITEM_UOM
+  
+  RETURN ''
+end function
+

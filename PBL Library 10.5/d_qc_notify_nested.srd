@@ -1,0 +1,88 @@
+HA$PBExportHeader$d_qc_notify_nested.srd
+$PBExportComments$D_QC_EQUIPMENT_LST Create Date :2006-10-31 Created By : ADMIN
+release 10.5;
+datawindow(units=0 timer_interval=0 color=16777215 processing=0 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no )
+header(height=204 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=76 color="536870912" height.autosize=yes )
+table(column=(type=datetime update=yes updatewhereclause=yes key=yes name=action_date dbname="iq_daily_notify.action_date" dbalias=".action_date" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=line_code dbname="iq_daily_notify.line_code" dbalias=".line_code" )
+ column=(type=char(4000) update=yes updatewhereclause=yes name=line_status_notify dbname="iq_daily_notify.line_status_notify" dbalias=".line_status_notify" )
+ column=(type=datetime update=yes updatewhereclause=yes name=enter_date dbname="iq_daily_notify.enter_date" dbalias=".enter_date" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=enter_by dbname="iq_daily_notify.enter_by" dbalias=".enter_by" )
+ column=(type=datetime update=yes updatewhereclause=yes name=last_modify_date dbname="iq_daily_notify.last_modify_date" dbalias=".last_modify_date" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=last_modify_by dbname="iq_daily_notify.last_modify_by" dbalias=".last_modify_by" )
+ column=(type=number update=yes updatewhereclause=yes key=yes name=organization_id dbname="iq_daily_notify.organization_id" dbalias=".organization_id" )
+ column=(type=number update=yes updatewhereclause=yes key=yes name=notify_sequence dbname="iq_daily_notify.notify_sequence" dbalias=".notify_sequence" )
+ column=(type=datetime update=yes updatewhereclause=yes name=start_time dbname="iq_daily_notify.start_time" dbalias=".start_time" )
+ column=(type=datetime update=yes updatewhereclause=yes name=end_time dbname="iq_daily_notify.end_time" dbalias=".end_time" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=item_code dbname="iq_daily_notify.item_code" dbalias=".item_code" )
+ column=(type=number update=yes updatewhereclause=yes name=inspect_bad_qty dbname="iq_daily_notify.inspect_bad_qty" dbalias=".inspect_bad_qty" )
+ column=(type=char(100) update=yes updatewhereclause=yes name=grade dbname="grade" )
+ column=(type=number update=yes updatewhereclause=yes name=inspect_qty dbname="iq_daily_notify.inspect_qty" dbalias=".inspect_qty" )
+ column=(type=char(100) updatewhereclause=yes name=bad_reason_code dbname="bad_reason_code" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=workstage_code dbname="iq_daily_notify.workstage_code" dbalias=".workstage_code" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=run_no dbname="iq_daily_notify.run_no" dbalias=".run_no" )
+ column=(type=char(1) update=yes updatewhereclause=yes name=complete_yn dbname="iq_daily_notify.complete_yn" dbalias=".complete_yn" )
+ column=(type=datetime update=yes updatewhereclause=yes name=complete_date dbname="iq_daily_notify.complete_date" dbalias=".complete_date" )
+ column=(type=char(1) update=yes updatewhereclause=yes name=notify_status dbname="iq_daily_notify.notify_status" dbalias=".notify_status" )
+ column=(type=char(4000) update=yes updatewhereclause=yes name=comments dbname="iq_daily_notify.comments" dbalias=".comments" )
+ retrieve="  SELECT IQ_DAILY_NOTIFY.ACTION_DATE,   
+         IQ_DAILY_NOTIFY.LINE_CODE,   
+         IQ_DAILY_NOTIFY.LINE_STATUS_NOTIFY,   
+         IQ_DAILY_NOTIFY.ENTER_DATE,   
+         IQ_DAILY_NOTIFY.ENTER_BY,   
+         IQ_DAILY_NOTIFY.LAST_MODIFY_DATE,   
+         IQ_DAILY_NOTIFY.LAST_MODIFY_BY,   
+         IQ_DAILY_NOTIFY.ORGANIZATION_ID,   
+         IQ_DAILY_NOTIFY.NOTIFY_SEQUENCE,   
+         IQ_DAILY_NOTIFY.START_TIME,   
+         IQ_DAILY_NOTIFY.END_TIME,   
+         IQ_DAILY_NOTIFY.ITEM_CODE,   
+         IQ_DAILY_NOTIFY.INSPECT_BAD_QTY,   
+         --IQ_DAILY_NOTIFY.GRADE,   
+		  (SELECT ISYS_BASECODE.CODE_MEAN_ENG
+          FROM ISYS_BASECODE 
+          WHERE CODE_NAME = IQ_DAILY_NOTIFY.GRADE AND
+                CODE_TYPE = 'GRADE') AS GRADE,
+         IQ_DAILY_NOTIFY.INSPECT_QTY,   
+         (SELECT ISYS_CODE_MASTER.CODE_MEAN_ENG
+			FROM ISYS_CODE_MASTER
+			WHERE CODE_NAME = IQ_DAILY_NOTIFY.BAD_REASON_CODE) AS BAD_REASON_CODE,
+         IQ_DAILY_NOTIFY.WORKSTAGE_CODE,   
+         IQ_DAILY_NOTIFY.RUN_NO,   
+         IQ_DAILY_NOTIFY.COMPLETE_YN,   
+         IQ_DAILY_NOTIFY.COMPLETE_DATE,   
+         IQ_DAILY_NOTIFY.NOTIFY_STATUS,   
+         IQ_DAILY_NOTIFY.COMMENTS  
+    FROM IQ_DAILY_NOTIFY  
+   WHERE ( IQ_DAILY_NOTIFY.MODEL_NAME = :arg_model_name ) AND  
+         ( IQ_DAILY_NOTIFY.ORGANIZATION_ID = :arg_org )    
+" update="IQ_DAILY_NOTIFY" updatewhere=0 updatekeyinplace=no arguments=(("arg_model_name", string),("arg_org", number))  sort="action_date A notify_sequence A line_code A " )
+text(band=background alignment="0" text="QC Issue List" border="0" color="16711680" x="9" y="8" height="64" width="1015" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" font.italic="1" background.mode="2" background.color="1073741824" )
+text(band=header alignment="2" text="Action Date" border="2" color="33554432" x="9" y="84" height="116" width="320" html.valueishtml="0"  name=action_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217752" )
+text(band=header alignment="2" text="Grade" border="2" color="33554432" x="338" y="84" height="116" width="155" html.valueishtml="0"  name=grade_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217752" )
+text(band=header alignment="2" text="Line Status Notify" border="2" color="33554432" x="1362" y="84" height="116" width="864" html.valueishtml="0"  name=line_status_notify_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217752" )
+text(band=header alignment="2" text="Item Code" border="2" color="33554432" x="503" y="84" height="116" width="302" html.valueishtml="0"  name=item_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217752" )
+text(band=header alignment="2" text="Inspect Bad Qty" border="2" color="33554432" x="722" y="84" height="116" width="411" html.valueishtml="0"  name=inspect_bad_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217752" )
+text(band=header alignment="2" text="Comments" border="2" color="33554432" x="2235" y="84" height="116" width="1115" html.valueishtml="0"  name=comments_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217752" )
+text(band=header alignment="2" text="Bad Reason Code" border="2" color="33554432" x="983" y="84" height="116" width="443" html.valueishtml="0"  name=bad_reason_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217752" )
+column(band=detail id=1 alignment="2" tabsequence=10 border="0" color="33554432" x="9" y="4" height="60" width="320" format="yyyy/mm/dd" html.valueishtml="0"  name=action_date visible="1"  resizeable=1 height.autosize=yes edit.limit=0 edit.case=any edit.format="yyyy/mm/dd hh:mm:ss" edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=3 alignment="0" tabsequence=60 border="0" color="33554432" x="1362" y="4" height="60" width="864" format="[general]" html.valueishtml="0"  name=line_status_notify visible="1"  resizeable=1 height.autosize=yes edit.limit=2000 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=12 alignment="0" tabsequence=30 border="0" color="33554432" x="503" y="4" height="60" width="302" format="[general]" html.valueishtml="0"  name=item_code visible="1"  resizeable=1 height.autosize=yes edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=14 alignment="2" tabsequence=20 border="0" color="33554432" x="338" y="4" height="60" width="155" format="[general]" html.valueishtml="0"  name=grade visible="1"  resizeable=1 height.autosize=yes dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any dddw.autoretrieve=no  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=22 alignment="0" tabsequence=70 border="0" color="33554432" x="2235" y="4" height="60" width="1115" format="[general]" html.valueishtml="0"  name=comments visible="1"  resizeable=1 height.autosize=yes edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=16 alignment="2" tabsequence=80 border="0" color="33554432" x="983" y="4" height="60" width="443" format="[general]" html.valueishtml="0"  name=bad_reason_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=13 alignment="2" tabsequence=40 border="0" color="33554432" x="814" y="4" height="60" width="229" format="[general]" html.valueishtml="0"  name=inspect_bad_qty visible="1"  resizeable=1 height.autosize=yes edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

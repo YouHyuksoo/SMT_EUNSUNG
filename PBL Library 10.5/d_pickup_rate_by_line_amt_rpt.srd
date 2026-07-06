@@ -1,0 +1,44 @@
+HA$PBExportHeader$d_pickup_rate_by_line_amt_rpt.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=4 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no  crosstab.dynamic = yes grid.lines=0 grid.columnmove=no selected.mouse=no )
+header[1](height=0 color="536870912" )
+header[2](height=136 color="536870912" )
+summary(height=104 color="65280" )
+footer(height=0 color="536870912" )
+detail(height=96 color="536870912" )
+table(column=(type=char(20) updatewhereclause=yes name=line_code dbname="line_code" )
+ column=(type=number updatewhereclause=yes name=machine_code dbname="machine_code" )
+ retrieve="select line_code, 
+       to_char(actual_date,'yy/mm/dd') as actual_date, 
+
+      SUM(( nvl(miss_qty,0) + nvl(recog_qty,0)) * pur_unit_price) as miss_amount
+      
+  from IQ_MACHINE_INSPECT_PICKUP_QRY t
+ WHERE line_code       like :arg_line
+   AND  ITEM_CODE LIKE :arg_item_code
+   AND ACTUAL_DATE >= TRUNC(:arg_sdate)
+   AND ACTUAL_DATE <   TRUNC(:arg_edate)  + 1 
+   AND nvl(pur_unit_price,0)  >=  to_number(:arg_price)
+ GROUP BY LINE_CODE,ACTUAL_DATE" arguments=(("arg_line", string),("arg_sdate", datetime),("arg_edate", datetime),("arg_price", string),("arg_item_code", string))  sort="line_code A " )
+text(band=header[1] alignment="0" text="Sum Of Miss Amount" border="0" color="33554432" x="9" y="4" height="52" width="379" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header[1] alignment="0" text="Actual Date" border="0" color="33554432" x="398" y="4" height="52" width="539" html.valueishtml="0"  name=t_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header[2] alignment="2" text="Line Code" border="0" color="33554432" x="9" y="4" height="120" width="379" html.valueishtml="0"  name=line_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+text(band=header[2] alignment="2" text="@actual_date" border="0" color="33554432" x="398" y="4" height="120" width="539" html.valueishtml="0"  name=machine_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+text(band=header[2] alignment="2" text="Grand Total " border="0" color="33554432" x="946" y="4" height="120" width="590" html.valueishtml="0"  name=grand_sum_miss_amount_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="33554432" x="9" y="4" height="88" width="379" format="[general]" html.valueishtml="0"  name=line_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="1" tabsequence=32766 border="0" color="33554432" x="398" y="4" height="88" width="539" format="###,##0.####" html.valueishtml="0"  name=machine_code visible="1" edit.limit=50 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes crosstab.repeat=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="~"Grand Total~""border="0" color="33554432" x="9" y="8" height="88" width="379" format="[general]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(machine_code for all )"border="0" color="33554432" x="398" y="8" height="88" width="539" format="###,###,###,##0.00" html.valueishtml="0"  name=compute_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="1" expression="crosstabsum(1)"border="0" color="255" x="946" y="4" height="88" width="590" format="###,###,###,##0.00" html.valueishtml="0"  name=grand_sum_miss_amount visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(grand_sum_miss_amount for all )"border="0" color="255" x="946" y="8" height="88" width="590" format="###,###,###,##0.00" html.valueishtml="0"  name=compute_3 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+ crosstab(band = foreground  crosstabonly = yes 
+ columns = "actual_date" rows = "line_code" values = "sum(miss_amount for crosstab)" sourcenames = "line_code, actual_date, miss_amount")htmltable(border="0" cellpadding="1" cellspacing="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()

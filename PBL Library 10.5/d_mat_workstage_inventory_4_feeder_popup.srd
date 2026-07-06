@@ -1,0 +1,105 @@
+HA$PBExportHeader$d_mat_workstage_inventory_4_feeder_popup.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=12632256 processing=9 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=yes grid.lines=0 )
+header(height=156 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=60 color="536870912" )
+table(column=(type=char(50) updatewhereclause=yes name=item_barcode dbname="im_item_receipt_barcode.item_barcode" )
+ column=(type=char(20) updatewhereclause=yes name=item_code dbname="im_item_receipt_barcode.item_code" )
+ column=(type=datetime updatewhereclause=yes name=scan_date dbname="im_item_receipt_barcode.scan_date" )
+ column=(type=char(20) updatewhereclause=yes name=lot_no dbname="im_item_receipt_barcode.lot_no" )
+ column=(type=number updatewhereclause=yes name=scan_qty dbname="im_item_receipt_barcode.scan_qty" )
+ column=(type=char(50) updatewhereclause=yes name=supplier_barcode dbname="im_item_receipt_barcode.supplier_barcode" )
+ column=(type=char(1) updatewhereclause=yes name=receipt_compare_yn dbname="im_item_receipt_barcode.receipt_compare_yn" )
+ column=(type=datetime updatewhereclause=yes name=receipt_compare_date dbname="im_item_receipt_barcode.receipt_compare_date" )
+ column=(type=char(20) updatewhereclause=yes name=receipt_compare_by dbname="im_item_receipt_barcode.receipt_compare_by" )
+ column=(type=char(20) updatewhereclause=yes name=receipt_slip_no dbname="im_item_receipt_barcode.receipt_slip_no" )
+ column=(type=char(1) updatewhereclause=yes name=issue_compare_yn dbname="im_item_receipt_barcode.issue_compare_yn" )
+ column=(type=datetime updatewhereclause=yes name=issue_compare_date dbname="im_item_receipt_barcode.issue_compare_date" )
+ column=(type=char(1) updatewhereclause=yes name=barcode_status dbname="im_item_receipt_barcode.barcode_status" )
+ column=(type=number updatewhereclause=yes name=new_scan_qty dbname="im_item_receipt_barcode.new_scan_qty" )
+ column=(type=char(30) updatewhereclause=yes name=origin_lot_no dbname="im_item_receipt_barcode.origin_lot_no" )
+ column=(type=char(30) updatewhereclause=yes name=line_code dbname="im_item_receipt_barcode.line_code" )
+ column=(type=datetime updatewhereclause=yes name=feeding_date dbname="im_item_receipt_barcode.feeding_date" )
+ column=(type=char(1) updatewhereclause=yes name=feeding_yn dbname="im_item_receipt_barcode.feeding_yn" )
+ retrieve="  SELECT ~"IM_ITEM_RECEIPT_BARCODE~".~"ITEM_BARCODE~",   
+         ~"IM_ITEM_RECEIPT_BARCODE~".~"ITEM_CODE~",   
+         ~"IM_ITEM_RECEIPT_BARCODE~".~"SCAN_DATE~",   
+         ~"IM_ITEM_RECEIPT_BARCODE~".~"LOT_NO~",   
+         ~"IM_ITEM_RECEIPT_BARCODE~".~"SCAN_QTY~",   
+         ~"IM_ITEM_RECEIPT_BARCODE~".~"SUPPLIER_BARCODE~",   
+         ~"IM_ITEM_RECEIPT_BARCODE~".~"RECEIPT_COMPARE_YN~",   
+         ~"IM_ITEM_RECEIPT_BARCODE~".~"RECEIPT_COMPARE_DATE~",   
+         ~"IM_ITEM_RECEIPT_BARCODE~".~"RECEIPT_COMPARE_BY~",   
+         ~"IM_ITEM_RECEIPT_BARCODE~".~"RECEIPT_SLIP_NO~",   
+         ~"IM_ITEM_RECEIPT_BARCODE~".~"ISSUE_COMPARE_YN~",   
+         ~"IM_ITEM_RECEIPT_BARCODE~".~"ISSUE_COMPARE_DATE~",   
+         ~"IM_ITEM_RECEIPT_BARCODE~".~"BARCODE_STATUS~",   
+         ~"IM_ITEM_RECEIPT_BARCODE~".~"NEW_SCAN_QTY~",   
+         ~"IM_ITEM_RECEIPT_BARCODE~".~"ORIGIN_LOT_NO~",   
+         ~"IM_ITEM_RECEIPT_BARCODE~".~"LINE_CODE~",   
+         ~"IM_ITEM_RECEIPT_BARCODE~".~"FEEDING_DATE~",   
+         ~"IM_ITEM_RECEIPT_BARCODE~".~"FEEDING_YN~"  
+    FROM ~"IM_ITEM_RECEIPT_BARCODE~"  
+   WHERE (  ( ~"IM_ITEM_RECEIPT_BARCODE~".~"ITEM_CODE~" = :arg_item_code ) or  ( ~"IM_ITEM_RECEIPT_BARCODE~".~"LOCATION_CODE~" = :arg_location_code ) ) AND   
+         ( ~"IM_ITEM_RECEIPT_BARCODE~".~"LINE_CODE~" = :arg_line_code ) AND  
+         ( ~"IM_ITEM_RECEIPT_BARCODE~".~"ISSUE_COMPARE_YN~" = 'Y' ) AND  
+         ( ~"IM_ITEM_RECEIPT_BARCODE~".~"FEEDING_YN~" = 'N' ) AND  
+         ( ~"IM_ITEM_RECEIPT_BARCODE~".~"ORGANIZATION_ID~" = :arg_org_id )    
+" arguments=(("arg_line_code", string),("arg_item_code", string),("arg_location_code", string),("arg_org_id", number))  sort="item_code A " )
+group(level=1 header.height=72 trailer.height=68 by=("item_code" ) header.color="65535" trailer.color="536870912" )
+text(band=header alignment="2" text="No" border="0" color="33554432" x="9" y="12" height="136" width="425" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Item Barcode" border="0" color="33554432" x="4206" y="12" height="136" width="974" html.valueishtml="0"  name=item_barcode_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Item Code" border="0" color="33554432" x="1189" y="12" height="136" width="439" html.valueishtml="0"  name=item_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Scan Date" border="0" color="33554432" x="1637" y="12" height="136" width="462" html.valueishtml="0"  name=scan_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Lot No" border="0" color="33554432" x="2107" y="12" height="136" width="402" html.valueishtml="0"  name=lot_no_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Scan Qty" border="0" color="33554432" x="2519" y="12" height="136" width="379" html.valueishtml="0"  name=scan_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Supplier Barcode" border="0" color="33554432" x="5189" y="12" height="136" width="635" html.valueishtml="0"  name=supplier_barcode_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Receipt Compare Yn" border="0" color="33554432" x="5833" y="12" height="136" width="274" html.valueishtml="0"  name=receipt_compare_yn_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Receipt Compare Date" border="0" color="33554432" x="6117" y="12" height="136" width="443" html.valueishtml="0"  name=receipt_compare_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Receipt Compare By" border="0" color="33554432" x="6569" y="12" height="136" width="270" html.valueishtml="0"  name=receipt_compare_by_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Receipt Slip No" border="0" color="33554432" x="6848" y="12" height="136" width="809" html.valueishtml="0"  name=receipt_slip_no_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Issue Compare Yn" border="0" color="33554432" x="3278" y="12" height="136" width="187" html.valueishtml="0"  name=issue_compare_yn_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Issue Compare Date" border="0" color="33554432" x="640" y="12" height="136" width="539" html.valueishtml="0"  name=issue_compare_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Barcode Status" border="0" color="33554432" x="7666" y="12" height="136" width="192" html.valueishtml="0"  name=barcode_status_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="New Scan Qty" border="0" color="33554432" x="2907" y="12" height="136" width="361" html.valueishtml="0"  name=new_scan_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Origin Lot No" border="0" color="33554432" x="7867" y="12" height="136" width="279" html.valueishtml="0"  name=origin_lot_no_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Line Code" border="0" color="33554432" x="443" y="12" height="136" width="187" html.valueishtml="0"  name=line_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Feeding Date" border="0" color="33554432" x="3717" y="12" height="136" width="480" html.valueishtml="0"  name=feeding_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Feeding Yn" border="0" color="33554432" x="3474" y="12" height="136" width="233" html.valueishtml="0"  name=feeding_yn_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="0" color="33554432" x="2107" y="0" height="96" width="402" format="[general]" html.valueishtml="0"  name=lot_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432" x="4206" y="0" height="96" width="974" format="[general]" html.valueishtml="0"  name=item_barcode visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=6 alignment="0" tabsequence=32766 border="0" color="33554432" x="5189" y="0" height="96" width="635" format="[general]" html.valueishtml="0"  name=supplier_barcode visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=7 alignment="0" tabsequence=32766 border="0" color="33554432" x="5833" y="0" height="96" width="274" format="[general]" html.valueishtml="0"  name=receipt_compare_yn visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=8 alignment="0" tabsequence=32766 border="0" color="33554432" x="6117" y="0" height="96" width="443" format="[shortdate] [time]" html.valueishtml="0"  name=receipt_compare_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=9 alignment="0" tabsequence=32766 border="0" color="33554432" x="6569" y="0" height="96" width="270" format="[general]" html.valueishtml="0"  name=receipt_compare_by visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=10 alignment="0" tabsequence=32766 border="0" color="33554432" x="6848" y="0" height="96" width="809" format="[general]" html.valueishtml="0"  name=receipt_slip_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=11 alignment="0" tabsequence=32766 border="0" color="33554432" x="3278" y="0" height="96" width="187" format="[general]" html.valueishtml="0"  name=issue_compare_yn visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=13 alignment="0" tabsequence=32766 border="0" color="33554432" x="7666" y="0" height="96" width="192" format="[general]" html.valueishtml="0"  name=barcode_status visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=15 alignment="0" tabsequence=32766 border="0" color="33554432" x="7867" y="0" height="96" width="279" format="[general]" html.valueishtml="0"  name=origin_lot_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=17 alignment="0" tabsequence=32766 border="0" color="33554432" x="3717" y="0" height="96" width="480" format="[shortdate] [time]" html.valueishtml="0"  name=feeding_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=18 alignment="0" tabsequence=32766 border="0" color="33554432" x="3474" y="0" height="96" width="233" format="[general]" html.valueishtml="0"  name=feeding_yn visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=14 alignment="1" tabsequence=32766 border="0" color="33554432" x="2907" y="0" height="96" width="361" format="[general]" html.valueishtml="0"  name=new_scan_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=5 alignment="1" tabsequence=32766 border="0" color="33554432" x="2519" y="0" height="96" width="379" format="[general]" html.valueishtml="0"  name=scan_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+compute(band=detail alignment="2" expression="getrow()"border="0" color="33554432" x="315" y="0" height="96" width="119" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432" x="1189" y="0" height="96" width="439" format="[general]" html.valueishtml="0"  name=item_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="33554432" x="1637" y="0" height="96" width="462" format="[shortdate] [time]" html.valueishtml="0"  name=scan_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=12 alignment="0" tabsequence=32766 border="0" color="33554432" x="640" y="0" height="96" width="539" format="[shortdate] [time]" html.valueishtml="0"  name=issue_compare_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=16 alignment="0" tabsequence=32766 border="0" color="33554432" x="443" y="0" height="96" width="187" format="[general]" html.valueishtml="0"  name=line_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+compute(band=trailer.1 alignment="1" expression="sum(new_scan_qty for group 1)"border="0" color="33554432" x="2907" y="4" height="60" width="361" format="[general]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+compute(band=trailer.1 alignment="1" expression="sum(scan_qty for group 1)"border="0" color="33554432" x="2519" y="4" height="60" width="379" format="[general]" html.valueishtml="0"  name=compute_3 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+tree(type=1 showconnectlines=yes showleafnodeconnectLines=yes  indent=80 showtreenodeicon=yes defaultexpandtolevel=2 stateiconalignmode=0 selectnodebymouse=yes rtollayout=no 
+level=(expandedtreenodeiconname="" collapsedtreenodeIconname="" expandedtreenodeicontranscolor="553648127" collapsedtreenodeicontranscolor="553648127" )
+level=(expandedtreenodeiconname="" expandedtreenodeicontranscolor="553648127" collapsedtreenodeicontranscolor="553648127" )
+) 

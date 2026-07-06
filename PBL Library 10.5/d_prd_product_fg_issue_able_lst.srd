@@ -1,0 +1,60 @@
+HA$PBExportHeader$d_prd_product_fg_issue_able_lst.srd
+$PBExportComments$FG $$HEX8$$9ccde0ac20009ccde0ac00aca5b22000$$ENDHEX$$List
+release 10.5;
+datawindow(units=0 timer_interval=0 color=16777215 processing=1 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no grid.lines=0 )
+header(height=144 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=76 color="536870912" )
+table(column=(type=char(1) updatewhereclause=yes name=chk dbname="chk" values="	Y/	N" )
+ column=(type=char(30) updatewhereclause=yes key=yes name=barcode dbname="ip_product_fg_inventory.barcode" dbalias=".barcode" )
+ column=(type=char(30) updatewhereclause=yes name=pallet_no dbname="ip_product_fg_inventory.pallet_no" dbalias=".pallet_no" )
+ column=(type=datetime updatewhereclause=yes name=inventory_date dbname="ip_product_fg_inventory.inventory_date" dbalias=".inventory_date" )
+ column=(type=number updatewhereclause=yes name=qty dbname="ip_product_fg_inventory.qty" dbalias=".qty" )
+ column=(type=char(10) updatewhereclause=yes name=product_location_code dbname="ip_product_fg_inventory.product_location_code" dbalias=".product_location_code" )
+ column=(type=char(20) updatewhereclause=yes name=model_name dbname="ip_product_fg_inventory.model_name" dbalias=".model_name" )
+ column=(type=char(10) updatewhereclause=yes name=model_suffix dbname="ip_product_fg_inventory.model_suffix" dbalias=".model_suffix" )
+ retrieve="select 'N' chk,
+       barcode, 
+       pallet_no, 
+       inventory_date, 
+       qty, 
+       location_code as product_location_code, 
+       Model_name, 
+       Model_suffix 
+  from ip_product_fg_inventory
+ where ( barcode 		like :arg_barcode ) 
+   and pallet_flag = 'N'                           //$$HEX21$$0cd31bb844c5ccb22000e8b288d4200015bca4c2ccb920007cc704ad98ccacb9200000aca5b268d52000$$ENDHEX$$
+   and model_name 	like :arg_model 
+   and inventory_date >= :arg_sDate
+   and inventory_date  <  :arg_eDate + 1  
+   and location_code  =   'P01'
+ order by pallet_no, inventory_date" update="ip_product_fg_inventory" updatewhere=0 updatekeyinplace=no arguments=(("arg_barcode", string),("arg_model", string),("arg_sDate", datetime),("arg_eDate", datetime)) )
+text(band=header alignment="2" text="Chk" border="0" color="33554432" x="197" y="8" height="136" width="105" html.valueishtml="0"  name=chk_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Barcode" border="0" color="33554432" x="311" y="8" height="136" width="489" html.valueishtml="0"  name=barcode_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Pallet No" border="0" color="33554432" x="2414" y="8" height="136" width="553" html.valueishtml="0"  name=pallet_no_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Inventory Date" border="0" color="33554432" x="1993" y="8" height="136" width="411" html.valueishtml="0"  name=inventory_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Model Name" border="0" color="33554432" x="809" y="8" height="136" width="411" html.valueishtml="0"  name=model_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+text(band=header alignment="2" text="Model Suffix" border="0" color="33554432" x="1230" y="8" height="136" width="229" html.valueishtml="0"  name=model_suffix_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+text(band=header alignment="2" text="Location Code" border="0" color="33554432" x="1467" y="8" height="136" width="233" html.valueishtml="0"  name=product_location_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+text(band=header alignment="2" text="Qty" border="0" color="33554432" x="1710" y="8" height="136" width="274" html.valueishtml="0"  name=qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+compute(band=detail alignment="2" expression="getrow()"border="0" color="33554432" x="9" y="4" height="68" width="178" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+column(band=detail id=8 alignment="0" tabsequence=32766 border="0" color="33554432" x="1230" y="4" height="68" width="229" format="[general]" html.valueishtml="0"  name=model_suffix visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+column(band=detail id=1 alignment="2" tabsequence=10 border="0" color="33554432" x="197" y="4" height="68" width="105" format="[general]" html.valueishtml="0"  name=chk visible="1" checkbox.text="" checkbox.on="Y" checkbox.off="N" checkbox.scale=no checkbox.threed=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="33554432" x="1993" y="4" height="68" width="411" format="[shortdate] [time]" html.valueishtml="0"  name=inventory_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+column(band=detail id=5 alignment="1" tabsequence=32766 border="0" color="33554432" x="1710" y="4" height="68" width="274" format="###,###" html.valueishtml="0"  name=qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+column(band=detail id=6 alignment="0" tabsequence=32766 border="0" color="33554432" x="1467" y="4" height="68" width="233" format="[general]" html.valueishtml="0"  name=product_location_code visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+column(band=detail id=7 alignment="0" tabsequence=32766 border="0" color="33554432" x="809" y="4" height="68" width="411" format="[general]" html.valueishtml="0"  name=model_name visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="0" color="33554432" x="2414" y="4" height="68" width="553" format="[general]" html.valueishtml="0"  name=pallet_no visible="1" edit.limit=30 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="33554432" x="311" y="4" height="68" width="489" format="[general]" html.valueishtml="0"  name=barcode visible="1" edit.limit=30 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

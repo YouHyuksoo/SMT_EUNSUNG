@@ -1,0 +1,48 @@
+HA$PBExportHeader$d_mcn_jig_pm_label_rpt.srd
+release 10.5;
+datawindow(units=3 timer_interval=0 color=1073741824 processing=2 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 635 print.margin.right = 635 print.margin.top = 635 print.margin.bottom = 635 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no label.name="" label.width=8000 label.height=2000 label.rows=1 label.rows.spacing=100 label.columns=1 label.columns.spacing=100 label.topdown=no label.sheet=no label.shape=roundrectangle label.ellipse_height=0 label.ellipse_width=0 )
+detail(height=2010 color="536870912" )
+table(column=(type=char(20) updatewhereclause=yes name=line_code dbname="imcn_jig.line_code" dbalias=".line_code" )
+ column=(type=char(4000) updatewhereclause=yes name=jig_type dbname="jig_type" )
+ column=(type=char(100) updatewhereclause=yes name=jig_code dbname="imcn_jig_pm_master.jig_code" dbalias=".jig_code" )
+ column=(type=char(20) updatewhereclause=yes name=jig_lot_no dbname="imcn_jig_pm_master.jig_lot_no" dbalias=".jig_lot_no" )
+ column=(type=char(100) updatewhereclause=yes name=jig_name dbname="imcn_jig.jig_name" dbalias=".jig_name" )
+ column=(type=char(4000) updatewhereclause=yes name=pm_type dbname="pm_type" )
+ column=(type=char(54) updatewhereclause=yes name=pm_barcode dbname="pm_barcode" )
+ retrieve="  SELECT IMCN_JIG.LINE_CODE LINE_CODE ,
+
+			F_GET_BASECODE( 'JIG TYPE' , IMCN_JIG.JIG_TYPE , :ARG_LANG ,  IMCN_JIG_PM_MASTER.ORGANIZATION_ID ) JIG_TYPE ,
+              IMCN_JIG_PM_MASTER.JIG_CODE,   
+              IMCN_JIG_PM_MASTER.JIG_LOT_NO JIG_LOT_NO,   
+		     IMCN_JIG.JIG_NAME JIG_NAME ,
+	     	 F_GET_BASECODE( 'PM TYPE' , IMCN_JIG_PM_MASTER.PM_TYPE , :arg_lang , IMCN_JIG_PM_MASTER.ORGANIZATION_ID ) PM_TYPE , 
+
+ 		    '*'||IMCN_JIG.LINE_CODE||' '||IMCN_JIG_PM_MASTER.JIG_LOT_NO||' '||IMCN_JIG_PM_MASTER.PM_TYPE||'*' PM_BARCODE  	 
+    FROM IMCN_JIG_PM_MASTER , IMCN_JIG
+   WHERE IMCN_JIG_PM_MASTER.JIG_CODE  = IMCN_JIG.JIG_CODE(+) AND
+			IMCN_JIG_PM_MASTER.ORGANIZATION_ID  = IMCN_JIG.ORGANIZATION_ID(+) AND
+
+             ( IMCN_JIG_PM_MASTER.LINE_CODE like :arg_line_code ) AND  
+			( IMCN_JIG_PM_MASTER.JIG_CODE like :arg_jig_code ) AND 
+			( IMCN_JIG_PM_MASTER.PM_TYPE like :arg_pm_type ) AND 
+			IMCN_JIG.JIG_TYPE LIKE :ARG_JIG_TYPE AND 
+			( IMCN_JIG_PM_MASTER.ORGANIZATION_ID = :arg_org ) 
+" arguments=(("arg_line_code", string),("arg_jig_code", string),("arg_jig_type", string),("arg_pm_type", string),("arg_lang", string),("arg_org", number))  sort="jig_code A pm_type A " )
+column(band=detail id=6 alignment="1" tabsequence=32766 border="0" color="33554432" x="132" y="740" height="476" width="7620" format="[general]" html.valueishtml="0"  name=pm_type visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-11" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=7 alignment="2" tabsequence=32766 border="0" color="33554432" x="132" y="1322" height="529" width="7620" format="[general]" html.valueishtml="0"  name=pm_barcode visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Free 3 of 9" font.height="-20" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432" x="132" y="132" height="476" width="661" format="[general]" html.valueishtml="0"  name=line_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="33554432" x="4365" y="132" height="476" width="1561" format="[general]" html.valueishtml="0"  name=jig_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=5 alignment="1" tabsequence=32766 border="0" color="33554432" x="6006" y="132" height="476" width="1746" format="[general]" html.valueishtml="0"  name=jig_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432" x="899" y="132" height="476" width="1270" format="[general]" html.valueishtml="0"  name=jig_type visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="33554432" x="2275" y="132" height="476" width="1984" format="[general]" html.valueishtml="0"  name=jig_lot_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

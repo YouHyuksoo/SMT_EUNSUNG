@@ -1,0 +1,43 @@
+HA$PBExportHeader$d_smt_workflow_rpt.srd
+$PBExportComments$$$HEX6$$80bd88d4c8b9a4c230d12000$$ENDHEX$$(HSRM_ITEM)
+release 10.5;
+datawindow(units=0 timer_interval=60000 color=16777215 processing=0 HTMLDW=no print.printername="" print.documentname="Feeder Layout" print.orientation = 0 print.margin.left = 220 print.margin.right = 0 print.margin.top = 0 print.margin.bottom = 0 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no )
+header(height=252 color="536870912" )
+summary(height=2928 color="536870912" )
+footer(height=108 color="536870912" )
+detail(height=0 color="536870912~tif (  mod( getrow() ,2 ) = 0 , RGB(192,192,192 ), rgb(255,255,255) )" height.autosize=yes )
+table(column=(type=char(30) updatewhereclause=yes name=model_name dbname="ib_product_plandata.model_name" )
+ column=(type=char(34) updatewhereclause=yes name=feeder_layout_image dbname="feeder_layout_image" )
+ column=(type=char(2000) updatewhereclause=yes name=feeder_layout_comments dbname="ib_smt_bom_image.feeder_layout_comments" )
+ retrieve="  SELECT 	IB_PRODUCT_PLANDATA.MODEL_NAME,   
+		 IB_PRODUCT_PLANDATA.MODEL_NAME||'.JPG' FEEDER_LAYOUT_IMAGE ,
+		IB_SMT_BOM_IMAGE.MODEL_COMMENTS  FEEDER_LAYOUT_COMMENTS
+
+    FROM IB_PRODUCT_PLANDATA,     IB_SMT_BOM_IMAGE 
+   WHERE IB_PRODUCT_PLANDATA.MODEL_NAME = IB_SMT_BOM_IMAGE.MODEL_NAME AND
+         ( IB_PRODUCT_PLANDATA.MODEL_NAME = :ARG_PARENT_ITEM ) AND  
+         ( IB_PRODUCT_PLANDATA.LINE_CODE    LIKE :ARG_LINE_CODE ) AND  
+	     ( NVL(IB_PRODUCT_PLANDATA.PCB_ITEM ,'*')  LIKE :ARG_TOPBOT )    AND
+         ( IB_PRODUCT_PLANDATA.ORGANIZATION_ID = :ARG_ORG )    
+
+" arguments=(("ARG_PARENT_ITEM", string),("ARG_LINE_CODE", string),("ARG_TOPBOT", string),("ARG_ORG", number))  sort="model_name A " )
+column(band=summary id=2 alignment="0" tabsequence=32766 border="2" color="33554432" x="59" y="840" height="2032" width="3099" format="[general]" html.valueishtml="0"  name=feeder_layout_image visible="1" bitmapname=yes edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+compute(band=footer alignment="2" expression="today()"border="0" color="33554432" x="2391" y="28" height="60" width="763" format="yyyy/mm/dd" html.valueishtml="0"  name=date_1 visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+compute(band=footer alignment="2" expression="'Page ' + page() + ' of ' + pageCount()"border="0" color="33554432" x="1298" y="32" height="56" width="590" format="[general]" html.valueishtml="0"  name=page_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+line(band=footer x1="64" y1="16" x2="3186" y2="16"  name=l_3 visible="1" pen.style="0" pen.width="5" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+column(band=summary id=3 alignment="0" tabsequence=32766 border="2" color="33554432" x="59" y="20" height="804" width="3099" format="[general]" html.valueishtml="0"  name=feeder_layout_comments visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+text(band=header alignment="2" text="SMT Important Issue List" border="2" color="33554432" x="59" y="12" height="100" width="3099" html.valueishtml="0"  name=t_2 visible="1"  font.face="Tahoma" font.height="-16" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+compute(band=header alignment="1" expression="today()"border="0" color="33554432" x="1925" y="132" height="104" width="1234" format="[general]" html.valueishtml="0"  name=date_2 visible="1"  font.face="Tahoma" font.height="-14" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+compute(band=header alignment="2" expression=" ARG_PARENT_ITEM "border="0" color="33554432" x="553" y="132" height="104" width="1088" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-14" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+compute(band=header alignment="2" expression=" ARG_ORG "border="0" color="33554432" x="59" y="132" height="104" width="475" format="[GENERAL]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="Tahoma" font.height="-14" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

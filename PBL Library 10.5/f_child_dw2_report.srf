@@ -1,0 +1,27 @@
+HA$PBExportHeader$f_child_dw2_report.srf
+$PBExportComments$$$HEX6$$70c874ac200088c794b22000$$ENDHEX$$child data window $$HEX2$$70c88cd6$$ENDHEX$$(Argument 3$$HEX1$$1cac$$ENDHEX$$)
+global type f_child_dw2_report from function_object
+end type
+
+forward prototypes
+global subroutine f_child_dw2_report (datawindowchild adw_1, string as_column, string as_arg1, string as_arg2)
+end prototypes
+
+global subroutine f_child_dw2_report (datawindowchild adw_1, string as_column, string as_arg1, string as_arg2);DataWindowChild state_child
+long		ll_rowcount
+
+adw_1.GetChild(as_column, state_child)
+
+state_child.settransobject(sqlca)
+ll_rowcount = state_child.retrieve(as_arg1, as_arg2)
+
+state_child.insertrow(1)
+
+ll_rowcount = ll_rowcount + 1
+
+if ll_rowcount > 20 then
+	ll_rowcount = 20
+end if
+
+end subroutine
+

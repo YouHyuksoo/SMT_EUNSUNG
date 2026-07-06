@@ -1,0 +1,99 @@
+HA$PBExportHeader$d_audit_message_history_lst.srd
+release 10;
+datawindow(units=0 timer_interval=0 color=12632256 processing=1 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes hidegrayline=no grid.lines=0 )
+header(height=144 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=64 color="536870912" )
+table(column=(type=number update=yes updatewhereclause=yes key=yes name=audit_message_id dbname="audit_message_id" )
+ column=(type=datetime update=yes updatewhereclause=yes key=yes name=audit_date dbname="audit_date" )
+ column=(type=number update=yes updatewhereclause=yes key=yes name=organization_id dbname="organization_id" )
+ column=(type=decimal(0) update=yes updatewhereclause=yes name=msg_id dbname="msg_id" )
+ column=(type=char(1) update=yes updatewhereclause=yes name=confirm_yn dbname="confirm_yn" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=confirm_by dbname="confirm_by" )
+ column=(type=datetime update=yes updatewhereclause=yes name=confirm_date dbname="confirm_date" )
+ column=(type=datetime update=yes updatewhereclause=yes name=enter_date dbname="enter_date" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=enter_by dbname="enter_by" )
+ column=(type=datetime update=yes updatewhereclause=yes name=last_modify_date dbname="last_modify_date" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=last_modify_by dbname="last_modify_by" )
+ column=(type=char(100) updatewhereclause=yes name=detail dbname="detail" )
+ column=(type=char(0) updatewhereclause=yes name=check_yn dbname="check_yn" values="	Y/	N" )
+ retrieve="SELECT A.*  , DECODE( :ARG_LANGUAGE , 'C' , B.DETAIL_LOC , 'E' , DETAIL_ENG , 'K' , DETAIL_KOR ) DETAIL , '' CHECK_YN
+FROM 
+(
+  SELECT ~"ISYS_AUDIT_MESSAGE~".~"AUDIT_MESSAGE_ID~",   
+         ~"ISYS_AUDIT_MESSAGE~".~"AUDIT_DATE~",   
+         ~"ISYS_AUDIT_MESSAGE~".~"ORGANIZATION_ID~",   
+         ~"ISYS_AUDIT_MESSAGE~".~"MSG_ID~",   
+         ~"ISYS_AUDIT_MESSAGE~".~"CONFIRM_YN~",   
+         ~"ISYS_AUDIT_MESSAGE~".~"CONFIRM_BY~",   
+         ~"ISYS_AUDIT_MESSAGE~".~"CONFIRM_DATE~",   
+         ~"ISYS_AUDIT_MESSAGE~".~"ENTER_DATE~",   
+         ~"ISYS_AUDIT_MESSAGE~".~"ENTER_BY~",   
+         ~"ISYS_AUDIT_MESSAGE~".~"LAST_MODIFY_DATE~",   
+         ~"ISYS_AUDIT_MESSAGE~".~"LAST_MODIFY_BY~"  
+    FROM ~"ISYS_AUDIT_MESSAGE~"  
+WHERE ~"ISYS_AUDIT_MESSAGE~".~"AUDIT_DATE~" >= :ARG_DATESET 
+    AND ~"ISYS_AUDIT_MESSAGE~".~"AUDIT_DATE~"  <= :ARG_DATEEND
+   AND   ~"ISYS_AUDIT_MESSAGE~".~"ORGANIZATION_ID~" = :ARG_ORG 
+
+   UNION  ALL
+  SELECT ~"ISYS_AUDIT_MESSAGE_HISTORY~".~"AUDIT_MESSAGE_ID~",   
+         ~"ISYS_AUDIT_MESSAGE_HISTORY~".~"AUDIT_DATE~",   
+         ~"ISYS_AUDIT_MESSAGE_HISTORY~".~"ORGANIZATION_ID~",   
+         ~"ISYS_AUDIT_MESSAGE_HISTORY~".~"MSG_ID~",   
+         ~"ISYS_AUDIT_MESSAGE_HISTORY~".~"CONFIRM_YN~",   
+         ~"ISYS_AUDIT_MESSAGE_HISTORY~".~"CONFIRM_BY~",   
+         ~"ISYS_AUDIT_MESSAGE_HISTORY~".~"CONFIRM_DATE~",   
+         ~"ISYS_AUDIT_MESSAGE_HISTORY~".~"ENTER_DATE~",   
+         ~"ISYS_AUDIT_MESSAGE_HISTORY~".~"ENTER_BY~",   
+         ~"ISYS_AUDIT_MESSAGE_HISTORY~".~"LAST_MODIFY_DATE~",   
+         ~"ISYS_AUDIT_MESSAGE_HISTORY~".~"LAST_MODIFY_BY~"  
+    FROM ~"ISYS_AUDIT_MESSAGE_HISTORY~"   
+ WHERE ~"ISYS_AUDIT_MESSAGE_HISTORY~".~"AUDIT_DATE~" >= :ARG_DATESET 
+    AND ~"ISYS_AUDIT_MESSAGE_HISTORY~".~"AUDIT_DATE~"  <= :ARG_DATEEND
+   AND   ~"ISYS_AUDIT_MESSAGE_HISTORY~".~"ORGANIZATION_ID~" = :ARG_ORG ) A , ISYS_AUDIT_MESSAGE_CODE B
+
+WHERE  A.MSG_ID = B.MSG_ID
+    AND A.ORGANIZATION_ID = B.ORGANIZATION_ID " update="ISYS_AUDIT_MESSAGE" updatewhere=0 updatekeyinplace=yes arguments=(("ARG_DATESET", datetime),("ARG_DATEEND", datetime),("ARG_LANGUAGE", string),("ARG_ORG", number))  sort="organization_id A confirm_yn D " )
+group(level=1 header.height=0 trailer.height=20 by=("organization_id" , "confirm_yn" ) header.color="536870912" trailer.color="65535" )
+text(band=header alignment="2" text="Organization Id" border="0" color="0" x="5239" y="8" height="128" width="338" html.valueishtml="0"  name=organization_id_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Confirm Yn" border="0" color="0" x="2784" y="8" height="128" width="229" html.valueishtml="0"  name=confirm_yn_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Confirm By" border="0" color="0" x="3022" y="8" height="128" width="361" html.valueishtml="0"  name=confirm_by_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Confirm Date" border="0" color="0" x="3392" y="8" height="128" width="430" html.valueishtml="0"  name=confirm_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Enter Date" border="0" color="0" x="3831" y="8" height="128" width="361" html.valueishtml="0"  name=enter_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Enter By" border="0" color="0" x="4201" y="8" height="128" width="311" html.valueishtml="0"  name=enter_by_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Last Modify Date" border="0" color="0" x="4521" y="8" height="128" width="366" html.valueishtml="0"  name=last_modify_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Last Modify By" border="0" color="0" x="4896" y="8" height="128" width="334" html.valueishtml="0"  name=last_modify_by_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Audit Date" border="0" color="0" x="850" y="8" height="128" width="549" html.valueishtml="0"  name=audit_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Audit Message Id" border="0" color="0" x="521" y="8" height="128" width="320" html.valueishtml="0"  name=audit_message_id_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Msg Id" border="0" color="0" x="1408" y="8" height="128" width="288" html.valueishtml="0"  name=msg_id_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Detail" border="0" color="33554432" x="1705" y="8" height="128" width="1070" html.valueishtml="0"  name=detail_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+column(band=detail id=4 alignment="1" tabsequence=32766 border="0" color="33554432" x="1408" y="4" height="56" width="288" format="[general]" html.valueishtml="0"  name=msg_id visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=12 alignment="0" tabsequence=32766 border="0" color="33554432" x="1705" y="4" height="56" width="1070" format="[general]" html.valueishtml="0"  name=detail visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="0" expression="TRIM('')"border="0" color="33554432" x="9" y="4" height="56" width="142" format="[GENERAL]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="33554432" x="850" y="4" height="56" width="549" format="[shortdate] [time]" html.valueishtml="0"  name=audit_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="33554432" x="521" y="4" height="56" width="320" format="[general]" html.valueishtml="0"  name=audit_message_id visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=3 alignment="1" tabsequence=32766 border="0" color="33554432" x="5239" y="4" height="56" width="338" format="[general]" html.valueishtml="0"  name=organization_id visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="0" tabsequence=20 border="0" color="33554432" x="2784" y="4" height="56" width="229" format="[general]" html.valueishtml="0"  name=confirm_yn visible="1" dddw.name=VD_BASECODE dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=500 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=yes dddw.case=any dddw.hscrollbar=yes dddw.vscrollbar=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=6 alignment="0" tabsequence=32766 border="0" color="33554432" x="3022" y="4" height="56" width="361" format="[general]" html.valueishtml="0"  name=confirm_by visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=7 alignment="0" tabsequence=32766 border="0" color="33554432" x="3392" y="4" height="56" width="430" format="[shortdate] [time]" html.valueishtml="0"  name=confirm_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=8 alignment="0" tabsequence=32766 border="0" color="33554432" x="3831" y="4" height="56" width="361" format="[shortdate] [time]" html.valueishtml="0"  name=enter_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=9 alignment="0" tabsequence=32766 border="0" color="33554432" x="4201" y="4" height="56" width="311" format="[general]" html.valueishtml="0"  name=enter_by visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=10 alignment="0" tabsequence=32766 border="0" color="33554432" x="4521" y="4" height="56" width="366" format="[shortdate] [time]" html.valueishtml="0"  name=last_modify_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=11 alignment="0" tabsequence=32766 border="0" color="33554432" x="4896" y="4" height="56" width="334" format="[general]" html.valueishtml="0"  name=last_modify_by visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="No" border="0" color="0" x="160" y="8" height="128" width="169" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Check Yn" border="0" color="0" x="338" y="8" height="128" width="174" html.valueishtml="0"  name=check_yn_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+compute(band=detail alignment="0" expression="GETROW()"border="0" color="33554432" x="160" y="4" height="56" width="169" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=13 alignment="2" tabsequence=10 border="0" color="33554432" x="343" y="4" height="56" width="169" format="[general]" html.valueishtml="0"  name=check_yn visible="1" checkbox.text="" checkbox.on="Y" checkbox.off="N" checkbox.scale=no checkbox.threed=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

@@ -1,0 +1,95 @@
+HA$PBExportHeader$d_mcn_jig_master_lst.srd
+$PBExportComments$JIG_MASTER_LIST
+release 10.5;
+datawindow(units=0 timer_interval=0 color=12632256 processing=1 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no grid.lines=0 )
+header(height=132 color="15780518" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=64 color="12632256" )
+table(column=(type=char(30) update=yes updatewhereclause=yes name=jig_code dbname="imcn_jig.jig_code" )
+ column=(type=char(20) updatewhereclause=yes name=imcn_jig_jig_lot_no dbname="imcn_jig.jig_lot_no" )
+ column=(type=char(100) update=yes updatewhereclause=yes name=jig_name dbname="imcn_jig.jig_name" )
+ column=(type=char(100) update=yes updatewhereclause=yes name=jig_model_name dbname="imcn_jig.jig_model_name" )
+ column=(type=datetime update=yes updatewhereclause=yes name=enter_date dbname="imcn_jig.enter_date" )
+ column=(type=number updatewhereclause=yes name=imcn_jig_mask_check_tension_check1 dbname="imcn_jig_mask_check.tension_check1" )
+ column=(type=number updatewhereclause=yes name=imcn_jig_mask_check_tension_check2 dbname="imcn_jig_mask_check.tension_check2" )
+ column=(type=number updatewhereclause=yes name=imcn_jig_mask_check_tension_check3 dbname="imcn_jig_mask_check.tension_check3" )
+ column=(type=number updatewhereclause=yes name=imcn_jig_mask_check_tension_check4 dbname="imcn_jig_mask_check.tension_check4" )
+ column=(type=number updatewhereclause=yes name=imcn_jig_mask_check_tension_check5 dbname="imcn_jig_mask_check.tension_check5" )
+ column=(type=number updatewhereclause=yes name=break_value dbname="break_value" )
+ column=(type=number updatewhereclause=yes name=hit_value dbname="hit_value" )
+ column=(type=number updatewhereclause=yes name=remain_value dbname="remain_value" )
+ column=(type=char(2000) updatewhereclause=yes name=imcn_jig_management_commnets dbname="imcn_jig.management_commnets" )
+ column=(type=number update=yes updatewhereclause=yes name=organization_id dbname="imcn_jig.organization_id" )
+ retrieve="SELECT 
+      IMCN_JIG.JIG_CODE,
+      IMCN_JIG.JIG_LOT_NO,
+      IMCN_JIG.JIG_NAME,
+      IMCN_JIG.JIG_MODEL_NAME,
+      IMCN_JIG.ENTER_DATE,
+      IMCN_JIG_MASK_CHECK.TENSION_CHECK1,
+      IMCN_JIG_MASK_CHECK.TENSION_CHECK2,
+      IMCN_JIG_MASK_CHECK.TENSION_CHECK3,
+      IMCN_JIG_MASK_CHECK.TENSION_CHECK4,
+      IMCN_JIG_MASK_CHECK.TENSION_CHECK5,
+      NVL(IMCN_JIG.BREAK_VALUE,0) BREAK_VALUE,
+      NVL(IMCN_JIG.HIT_VALUE,0) HIT_VALUE,
+      NVL(IMCN_JIG.BREAK_VALUE,0) - NVL(IMCN_JIG.HIT_VALUE,0) REMAIN_VALUE,
+      IMCN_JIG.MANAGEMENT_COMMNETS,
+      IMCN_JIG.ORGANIZATION_ID
+FROM IMCN_JIG LEFT OUTER JOIN (SELECT JIG_LOT_NO, TENSION_CHECK1, TENSION_CHECK2, TENSION_CHECK3, TENSION_CHECK4, TENSION_CHECK5, ORGANIZATION_ID
+                                FROM (SELECT RANK() OVER(ORDER BY ENTER_DATE DESC) RNK, JIG_LOT_NO, TENSION_CHECK1, TENSION_CHECK2, TENSION_CHECK3, TENSION_CHECK4, TENSION_CHECK5, ORGANIZATION_ID
+                                      FROM IMCN_JIG_MASK_CHECK
+                                      )TBL
+                                WHERE RNK = 1) IMCN_JIG_MASK_CHECK ON IMCN_JIG.JIG_LOT_NO = IMCN_JIG_MASK_CHECK.JIG_LOT_NO AND IMCN_JIG.ORGANIZATION_ID = IMCN_JIG_MASK_CHECK.ORGANIZATION_ID
+WHERE IMCN_JIG.JIG_TYPE = 'M' AND
+      IMCN_JIG.ENTER_DATE >= :arg_dateset AND
+      IMCN_JIG.ENTER_DATE <= :arg_dateend AND
+      IMCN_JIG.JIG_CODE LIKE :arg_jig_code AND
+	  IMCN_JIG.LINE_CODE LIKE :arg_line_code AND
+	  IMCN_JIG.ORGANIZATION_ID = :arg_org" arguments=(("arg_jig_code", string),("arg_line_code", string),("arg_dateset", datetime),("arg_dateend", datetime),("arg_org", number))  sort="jig_code A " )
+group(level=1 header.height=0 trailer.height=64 by=("organization_id" ) header.color="536870912" trailer.color="65280" )
+text(band=header alignment="2" text="JIG Code" border="0" color="33554432" x="279" y="8" height="116" width="434" html.valueishtml="0"  name=jig_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="552651430" )
+text(band=header alignment="2" text="No" border="0" color="33554432" x="119" y="8" height="116" width="151" html.valueishtml="0"  name=no_1_t visible="1"  font.face="TAHOMA" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="JIG Model Name" border="0" color="33554432" x="1792" y="8" height="116" width="567" html.valueishtml="0"  name=jig_model_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="552651430" )
+text(band=header alignment="2" text="Break Value" border="0" color="33554432" x="6235" y="8" height="116" width="315" html.valueishtml="0"  name=break_value_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Hit Value" border="0" color="33554432" x="6560" y="8" height="116" width="320" html.valueishtml="0"  name=hit_value_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="JIG Name" border="0" color="33554432" x="1184" y="8" height="116" width="599" html.valueishtml="0"  name=jig_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="552651430" )
+text(band=header alignment="2" text="Enter Date" border="0" color="33554432" x="2368" y="8" height="116" width="795" html.valueishtml="0"  name=enter_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="552651430" )
+text(band=header alignment="2" text="Organization Id" border="0" color="33554432" x="8242" y="8" height="116" width="306" html.valueishtml="0"  name=organization_id_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="552651430" )
+text(band=header alignment="2" text="Imcn Jig Mask Check Tension Check1" border="0" color="33554432" x="3173" y="8" height="116" width="585" html.valueishtml="0"  name=imcn_jig_mask_check_tension_check1_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="552651430" )
+text(band=header alignment="2" text="Imcn Jig Mask Check Tension Check2" border="0" color="33554432" x="3767" y="8" height="116" width="585" html.valueishtml="0"  name=imcn_jig_mask_check_tension_check2_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="552651430" )
+text(band=header alignment="2" text="Imcn Jig Mask Check Tension Check3" border="0" color="33554432" x="4361" y="8" height="116" width="617" html.valueishtml="0"  name=imcn_jig_mask_check_tension_check3_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="552651430" )
+text(band=header alignment="2" text="Imcn Jig Mask Check Tension Check4" border="0" color="33554432" x="4987" y="8" height="116" width="626" html.valueishtml="0"  name=imcn_jig_mask_check_tension_check4_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="552651430" )
+text(band=header alignment="2" text="Imcn Jig Mask Check Tension Check5" border="0" color="33554432" x="5623" y="8" height="116" width="603" html.valueishtml="0"  name=imcn_jig_mask_check_tension_check5_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="552651430" )
+text(band=header alignment="2" text="Remain Value" border="0" color="33554432" x="6889" y="8" height="116" width="370" html.valueishtml="0"  name=remain_value_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="552651430" )
+text(band=header alignment="2" text="Imcn Jig Management Commnets" border="0" color="33554432" x="7269" y="8" height="116" width="965" html.valueishtml="0"  name=imcn_jig_management_commnets_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="552651430" )
+text(band=header alignment="0" text="Imcn Jig Jig Lot No" border="0" color="33554432" x="722" y="8" height="116" width="453" html.valueishtml="0"  name=imcn_jig_jig_lot_no_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+compute(band=detail alignment="0" expression="TRIM('')"border="0" color="0" x="9" y="4" height="56" width="101" format="[GENERAL]" html.valueishtml="0"  name=indicator visible="1"  font.face="TAHOMA" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=15 alignment="2" tabsequence=32766 border="0" color="33554432" x="8242" y="4" height="56" width="306" format="[general]" html.valueishtml="0"  name=organization_id visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="549503168" )
+column(band=detail id=11 alignment="1" tabsequence=32766 border="0" color="33554432" x="6235" y="4" height="56" width="315" format="[general]" html.valueishtml="0"  name=break_value visible="1" editmask.mask="###,##0" editmask.focusrectangle=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="549503168" )
+column(band=detail id=12 alignment="1" tabsequence=32766 border="0" color="33554432" x="6560" y="4" height="56" width="320" format="[general]" html.valueishtml="0"  name=hit_value visible="1" editmask.mask="###,##0" editmask.focusrectangle=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="549503168" )
+column(band=detail id=13 alignment="1" tabsequence=32766 border="0" color="33554432" x="6889" y="4" height="56" width="370" format="[general]" html.valueishtml="0"  name=remain_value visible="1" editmask.mask="###,##0" editmask.focusrectangle=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="549503168" )
+column(band=detail id=14 alignment="2" tabsequence=32766 border="0" color="33554432" x="7269" y="4" height="56" width="965" format="[general]" html.valueishtml="0"  name=imcn_jig_management_commnets visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="549503168" )
+compute(band=detail alignment="2" expression="GETROW()"border="0" color="0" x="119" y="4" height="56" width="151" format="[GENERAL]" html.valueishtml="0"  name=no_1 visible="1"  font.face="TAHOMA" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="33554432" x="279" y="4" height="56" width="434" format="[general]" html.valueishtml="0"  name=jig_code visible="1" edit.limit=30 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="0" color="33554432" x="1184" y="4" height="56" width="599" format="[general]" html.valueishtml="0"  name=jig_name visible="1" edit.limit=100 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="549503168" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="0" color="33554432" x="1792" y="4" height="56" width="567" format="[general]" html.valueishtml="0"  name=jig_model_name visible="1" edit.limit=100 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="549503168" )
+column(band=detail id=5 alignment="2" tabsequence=32766 border="0" color="33554432" x="2368" y="4" height="56" width="795" format="[shortdate] [time]" html.valueishtml="0"  name=enter_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="549503168" )
+column(band=detail id=6 alignment="2" tabsequence=32766 border="0" color="33554432" x="3173" y="4" height="56" width="585" format="[general]" html.valueishtml="0"  name=imcn_jig_mask_check_tension_check1 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="549503168" )
+column(band=detail id=7 alignment="2" tabsequence=32766 border="0" color="33554432" x="3767" y="4" height="56" width="585" format="[general]" html.valueishtml="0"  name=imcn_jig_mask_check_tension_check2 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="549503168" )
+column(band=detail id=8 alignment="2" tabsequence=32766 border="0" color="33554432" x="4361" y="4" height="56" width="617" format="[general]" html.valueishtml="0"  name=imcn_jig_mask_check_tension_check3 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="549503168" )
+column(band=detail id=9 alignment="2" tabsequence=32766 border="0" color="33554432" x="4987" y="4" height="56" width="626" format="[general]" html.valueishtml="0"  name=imcn_jig_mask_check_tension_check4 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="549503168" )
+column(band=detail id=10 alignment="2" tabsequence=32766 border="0" color="33554432" x="5623" y="4" height="56" width="603" format="[general]" html.valueishtml="0"  name=imcn_jig_mask_check_tension_check5 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="549503168" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432" x="722" y="8" height="52" width="453" format="[general]" html.valueishtml="0"  name=imcn_jig_jig_lot_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="549503168" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

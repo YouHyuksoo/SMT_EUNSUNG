@@ -1,0 +1,10 @@
+HA$PBExportHeader$st_return.srs
+global type st_return from structure
+	string		gvs_return[]
+	integer		gvi_return[]
+	datetime		gvdt_return[]
+	long		gvl_return[]
+	decimal { 8 }		gvf_return[]
+	boolean		gvb_return
+end type
+

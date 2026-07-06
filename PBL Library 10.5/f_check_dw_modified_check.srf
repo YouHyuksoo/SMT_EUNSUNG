@@ -1,0 +1,23 @@
+HA$PBExportHeader$f_check_dw_modified_check.srf
+global type f_check_dw_modified_check from function_object
+end type
+
+forward prototypes
+global function integer f_check_dw_modified_check (datawindow arg_dw)
+end prototypes
+
+global function integer f_check_dw_modified_check (datawindow arg_dw);if arg_dw.modifiedcount() > 0 or arg_dw.DeletedCount()   > 0 then 
+	
+	msg = f_msgbox1(9014  , string( arg_dw.modifiedcount()  + arg_dw.DeletedCount() ) ) // @ $$HEX11$$74ac74c72000c0bcbdac200018b4c8c5b5c2c8b2e4b2$$ENDHEX$$. $$HEX6$$00c8a5c7200060d54cae94c6$$ENDHEX$$?
+	if msg = 1 then 
+   	   f_update()
+        return 1			
+	else
+        return -1
+	end if
+	
+else
+	return 0
+end if
+end function
+

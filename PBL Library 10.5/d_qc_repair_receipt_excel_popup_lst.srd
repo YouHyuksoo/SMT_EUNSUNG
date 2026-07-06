@@ -1,0 +1,49 @@
+HA$PBExportHeader$d_qc_repair_receipt_excel_popup_lst.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no grid.lines=0 )
+header(height=124 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=72 color="536870912" )
+table(column=(type=char(30) update=yes updatewhereclause=yes key=yes name=serial_no dbname="ip_product_work_qc_excel.serial_no" )
+ column=(type=char(20) update=yes updatewhereclause=yes key=yes name=workstage_code dbname="ip_product_work_qc_excel.workstage_code" )
+ column=(type=char(10) update=yes updatewhereclause=yes key=yes name=bad_reason_code dbname="ip_product_work_qc_excel.bad_reason_code" )
+ column=(type=datetime update=yes updatewhereclause=yes key=yes name=qc_date dbname="ip_product_work_qc_excel.qc_date" )
+ column=(type=char(1) update=yes updatewhereclause=yes name=shift_code dbname="ip_product_work_qc_excel.shift_code" )
+ column=(type=char(1) updatewhereclause=yes name=check_yn dbname="check_yn" )
+ column=(type=char(0) updatewhereclause=yes name=run_no dbname="run_no" )
+ retrieve="  SELECT ~"IP_PRODUCT_WORK_QC_EXCEL~".~"SERIAL_NO~",   
+         ~"IP_PRODUCT_WORK_QC_EXCEL~".~"WORKSTAGE_CODE~",   
+         ~"IP_PRODUCT_WORK_QC_EXCEL~".~"BAD_REASON_CODE~",   
+         ~"IP_PRODUCT_WORK_QC_EXCEL~".~"QC_DATE~",   
+         ~"IP_PRODUCT_WORK_QC_EXCEL~".~"SHIFT_CODE~",   
+         'N' CHECK_YN  ,
+		'' RUN_NO
+    FROM ~"IP_PRODUCT_WORK_QC_EXCEL~"   
+" update="IP_PRODUCT_WORK_QC_EXCEL" updatewhere=1 updatekeyinplace=no )
+text(band=header alignment="2" text="Workstage Code" border="0" color="33554432" x="649" y="8" height="112" width="448" html.valueishtml="0"  name=workstage_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Bad Reason Code" border="0" color="33554432" x="1106" y="8" height="112" width="576" html.valueishtml="0"  name=bad_reason_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Qc Date" border="0" color="33554432" x="1691" y="8" height="112" width="576" html.valueishtml="0"  name=qc_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Serial No" border="0" color="33554432" x="302" y="8" height="112" width="338" html.valueishtml="0"  name=serial_no_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Check Yn" border="0" color="33554432" x="123" y="8" height="112" width="169" html.valueishtml="0"  name=check_yn_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Shift Code" border="0" color="33554432" x="2277" y="8" height="112" width="256" html.valueishtml="0"  name=shift_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Run No" border="0" color="33554432" x="2542" y="8" height="112" width="411" html.valueishtml="0"  name=run_no_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+compute(band=detail alignment="0" expression="getrow()"border="0" color="33554432" x="9" y="8" height="60" width="105" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=1 alignment="2" tabsequence=20 border="0" color="33554432" x="302" y="8" height="60" width="338" format="[general]" html.valueishtml="0"  name=serial_no visible="1" edit.limit=30 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="2" tabsequence=30 border="0" color="33554432" x="649" y="8" height="60" width="448" format="[general]" html.valueishtml="0"  name=workstage_code visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="2" tabsequence=40 border="0" color="33554432" x="1106" y="8" height="60" width="576" format="[general]" html.valueishtml="0"  name=bad_reason_code visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="2" tabsequence=50 border="0" color="33554432" x="1691" y="8" height="60" width="576" format="YYYY/MM/DD HH:MI:SS" html.valueishtml="0"  name=qc_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=6 alignment="2" tabsequence=10 border="0" color="33554432" x="123" y="8" height="60" width="169" format="[general]" html.valueishtml="0"  name=check_yn visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="2" tabsequence=60 border="0" color="33554432" x="2277" y="8" height="60" width="256" format="[general]" html.valueishtml="0"  name=shift_code visible="1" edit.limit=1 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=7 alignment="2" tabsequence=70 border="0" color="33554432" x="2542" y="8" height="60" width="411" format="[general]" html.valueishtml="0"  name=run_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

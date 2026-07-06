@@ -1,0 +1,78 @@
+HA$PBExportHeader$f_get_purchase_order_qty.srf
+global type f_get_purchase_order_qty from function_object
+end type
+
+forward prototypes
+global function decimal f_get_purchase_order_qty (string as_item_code, string as_supplier_code, decimal al_order_qty, string as_property)
+end prototypes
+
+global function decimal f_get_purchase_order_qty (string as_item_code, string as_supplier_code, decimal al_order_qty, string as_property); decimal lvl_mim_order_qty, lvl_packing_qty , lvl_order_bad_qty, lvl_order_qty
+ decimal  lvd_order_bad_rate
+ 
+ select   nvl(order_bad_rate,0),   nvl(mim_order_qty,0), nvl(packing_qty,0)
+     into  :lvd_order_bad_rate, :lvl_mim_order_qty, :lvl_packing_qty
+   from   im_item_master
+ where   item_code  = :as_item_code
+    and    supplier_code = :as_supplier_code
+    and    dateset <=  trunc(sysdate)
+    and    dateend >= trunc(sysdate)
+    and    organization_id = :gvi_organization_id ; 
+	
+  if f_sql_check() < 0 then return al_order_qty
+  
+  if as_property = 'L' then // Lowest Purchase
+    if lvd_order_bad_rate = 0 then 
+		lvl_order_bad_qty = 0 
+	else
+		lvl_order_bad_qty = al_order_qty * lvd_order_bad_rate
+	end if 
+	lvl_order_qty = lvl_mim_order_qty + lvl_order_bad_qty 
+	if lvl_order_qty <  al_order_qty  then 
+		lvl_order_qty = al_order_qty 	
+	end if 
+  end if 
+  
+  if as_property = 'P'  then  // Packing Purchase
+      if al_order_qty > lvl_packing_qty  then 
+			if lvl_packing_qty = 0 then 
+				lvl_order_qty = al_order_qty
+				return  lvl_order_qty
+			end if 
+			if mod(al_order_qty, lvl_packing_qty) <> 0 then 
+			    lvl_order_qty = truncate(al_order_qty / lvl_packing_qty, 0) * lvl_packing_qty + lvl_packing_qty
+			else
+				lvl_order_qty = al_order_qty
+			end if 
+ 	  else
+			lvl_order_qty = lvl_packing_qty
+      end if 
+  end if 
+  
+  if as_property =  'A'  then 
+	  if lvd_order_bad_rate = 0 then 
+		  lvl_order_bad_qty = 0  
+	  else
+		  lvl_order_bad_qty = al_order_qty * lvd_order_bad_rate
+	  end if 
+	  lvl_order_qty = lvl_mim_order_qty + lvd_order_bad_rate
+	  if lvl_order_qty < al_order_qty  then 
+		  lvl_order_qty = al_order_qty 
+	  end if 
+	  if al_order_qty > lvl_packing_qty  then 
+		  if lvl_packing_qty = 0 then 
+			lvl_order_qty = al_order_qty 
+			return lvl_order_qty
+		  end if 
+		  if  mod(al_order_qty , lvl_packing_qty) <> 0 then 
+			   lvl_order_qty = truncate(al_order_qty / lvl_packing_qty, 0) * lvl_packing_qty + lvl_packing_qty
+     	  else
+			   lvl_order_qty = al_order_qty 
+		  end if 
+	  else
+		  lvl_order_qty = lvl_packing_qty
+	  end if 
+   end if 
+	
+   return lvl_order_qty
+end function
+

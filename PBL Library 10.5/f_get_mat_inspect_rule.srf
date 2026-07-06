@@ -1,0 +1,29 @@
+HA$PBExportHeader$f_get_mat_inspect_rule.srf
+global type f_get_mat_inspect_rule from function_object
+end type
+
+forward prototypes
+global function string f_get_mat_inspect_rule (string arg_supplier_code, string arg_item_code)
+end prototypes
+
+global function string f_get_mat_inspect_rule (string arg_supplier_code, string arg_item_code);STRING LVS_INSPECT_RULE
+
+SELECT INSPECT_RULE INTO :LVS_INSPECT_RULE
+ FROM IM_ITEM_MASTER
+ WHERE SUPPLIER_CODE = :ARG_SUPPLIER_CODE
+ AND ITEM_CODE = :ARG_ITEM_CODE
+ AND DATESET <= TRUNC(SYSDATE)
+ AND DATEEND >= TRUNC(SYSDATE)
+ AND ORGANIZATION_ID = :GVI_ORGANIZATION_ID ;
+ 
+ IF F_SQL_CHECK() < 0 THEN 
+	RETURN 'I'
+END IF
+
+IF LVS_INSPECT_RULE = '' OR ISNULL(LVS_INSPECT_RULE) THEN 
+	RETURN 'I'
+ELSE
+	RETURN LVS_INSPECT_RULE
+END IF
+end function
+

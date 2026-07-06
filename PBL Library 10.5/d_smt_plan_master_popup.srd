@@ -1,0 +1,250 @@
+HA$PBExportHeader$d_smt_plan_master_popup.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no grid.lines=0 )
+header(height=116 color="15780518" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=72 color="536870912" )
+table(column=(type=char(30) updatewhereclause=yes name=plan_date dbname="plan_date" )
+ column=(type=char(30) updatewhereclause=yes name=model_name dbname="model_name" )
+ column=(type=char(20) updatewhereclause=yes name=model_suffix dbname="model_suffix" )
+ column=(type=char(100) updatewhereclause=yes name=item_code dbname="item_code" )
+ column=(type=char(20) updatewhereclause=yes name=lot_no dbname="lot_no" )
+ column=(type=char(100) updatewhereclause=yes name=chipname dbname="chipname" )
+ column=(type=char(1) updatewhereclause=yes name=check_yn dbname="check_yn" )
+ column=(type=char(30) updatewhereclause=yes name=selected_date dbname="selected_date" )
+ column=(type=char(30) updatewhereclause=yes name=machine dbname="machine" )
+ column=(type=char(30) updatewhereclause=yes name=line_code dbname="line_code" )
+ column=(type=char(1) updatewhereclause=yes name=check_status dbname="check_status" )
+ column=(type=number updatewhereclause=yes name=organization_id dbname="organization_id" )
+ column=(type=char(30) updatewhereclause=yes name=location_code dbname="location_code" )
+ column=(type=char(200) updatewhereclause=yes name=item_barcode dbname="item_barcode" )
+ column=(type=char(10) updatewhereclause=yes name=table_id dbname="table_id" )
+ column=(type=datetime updatewhereclause=yes name=feeding_date dbname="feeding_date" )
+ column=(type=datetime updatewhereclause=yes name=recycle_date dbname="recycle_date" )
+ column=(type=number update=yes updatewhereclause=yes name=feeding_qty dbname="feeding_qty" )
+ column=(type=datetime updatewhereclause=yes name=change_date dbname="change_date" )
+ column=(type=number updatewhereclause=yes name=plan_qty dbname="plan_qty" )
+ column=(type=number updatewhereclause=yes name=product_actual_qty dbname="product_actual_qty" )
+ column=(type=char(30) updatewhereclause=yes name=pcb_item dbname="pcb_item" )
+ column=(type=number updatewhereclause=yes name=item_unit_qty dbname="item_unit_qty" )
+ column=(type=char(30) updatewhereclause=yes name=parent_item_code dbname="parent_item_code" )
+ column=(type=datetime updatewhereclause=yes name=last_actual_date dbname="last_actual_date" )
+ column=(type=number updatewhereclause=yes name=passed_time dbname="passed_time" )
+ column=(type=number updatewhereclause=yes name=remain_qty dbname="remain_qty" )
+ column=(type=number updatewhereclause=yes name=return_qty dbname="return_qty" )
+ column=(type=number updatewhereclause=yes name=feeding_count dbname="feeding_count" )
+ column=(type=char(82) updatewhereclause=yes name=inventory_qty dbname="inventory_qty" )
+ column=(type=number updatewhereclause=yes name=product_acceptable_qty dbname="product_acceptable_qty" )
+ column=(type=char(300) updatewhereclause=yes name=item_name dbname="item_name" )
+ column=(type=char(300) updatewhereclause=yes name=item_spec dbname="item_spec" )
+ column=(type=char(20) updatewhereclause=yes name=location_address dbname="location_address" )
+ column=(type=number updatewhereclause=yes name=real_st dbname="real_st" )
+ column=(type=char(1) updatewhereclause=yes name=line_status dbname="line_status" )
+ column=(type=number updatewhereclause=yes name=remain_time dbname="remain_time" )
+ column=(type=number updatewhereclause=yes name=st_value dbname="st_value" )
+ column=(type=char(4000) updatewhereclause=yes name=use_status dbname="use_status" )
+ column=(type=char(30) updatewhereclause=yes name=nsnp_status dbname="nsnp_status" )
+ column=(type=number updatewhereclause=yes name=new_scan_qty dbname="new_scan_qty" )
+ retrieve="SELECT X.PLAN_DATE,   
+         X.MODEL_NAME,   
+         X.MODEL_SUFFIX AS MODEL_SUFFIX,   
+         X.ITEM_CODE,   
+         X.LOT_NO,   
+         X.CHIPNAME,   
+         X.CHECK_YN,   
+         X.SELECTED_DATE,   
+         X.MACHINE,   
+         X.LINE_CODE,   
+         X.CHECK_STATUS,   
+         X.ORGANIZATION_ID,   
+         X.LOCATION_CODE,   
+         X.ITEM_BARCODE,   
+         X.TABLE_ID,   
+         X.FEEDING_DATE,   
+         X.RECYCLE_DATE,   
+         X.FEEDING_QTY,   
+         X.CHANGE_DATE,   
+		X.PLAN_QTY ,
+         X.PRODUCT_ACTUAL_QTY,   
+         X.PCB_ITEM  ,
+		X.ITEM_UNIT_QTY  ,
+		X.PARENT_ITEM_CODE,
+		X.LAST_ACTUAL_DATE,
+		X.PASSED_TIME ,
+		X.REMAIN_QTY ,
+		X.RETURN_QTY ,
+		X.FEEDING_COUNT ,
+		X.INVENTORY_QTY ,
+		X.Product_Acceptable_Qty,
+		X.ITEM_NAME ITEM_NAME , 
+		X.ITEM_SPEC ITEM_SPEC ,
+		X.LOCATION_ADDRESS ,
+         X.REAL_ST,
+		X.LINE_STATUS ,
+         X.REMAIN_TIME ,
+         X.ST_VALUE  ,
+
+		X.USE_STATUS ,
+		X.NSNP_STATUS NSNP_STATUS ,
+
+		X.NEW_SCAN_QTY
+FROM
+(  
+SELECT A.PLAN_DATE,   
+         A.MODEL_NAME,   
+         A.MODEL_SUFFIX AS MODEL_SUFFIX,   
+         A.ITEM_CODE,   
+         A.LOT_NO,   
+         A.CHIPNAME,   
+         A.CHECK_YN,   
+         A.SELECTED_DATE,   
+         A.MACHINE,   
+         A.LINE_CODE,   
+         A.CHECK_STATUS,   
+         A.ORGANIZATION_ID,   
+         A.LOCATION_CODE,   
+         A.ITEM_BARCODE,   
+         A.TABLE_ID,   
+         A.FEEDING_DATE,   
+         A.RECYCLE_DATE,   
+         A.FEEDING_QTY,   
+         A.CHANGE_DATE,   
+		0 PLAN_QTY ,
+         A.PRODUCT_ACTUAL_QTY,   
+         A.PCB_ITEM  ,
+		A.ITEM_UNIT_QTY  ,
+		A.PARENT_ITEM_CODE  AS PARENT_ITEM_CODE,
+		A.LAST_ACTUAL_DATE  AS LAST_ACTUAL_DATE,
+		( SYSDATE  - A.LAST_ACTUAL_DATE ) * 24 * 60 * 60 AS PASSED_TIME ,
+		NVL( A.FEEDING_QTY , 0)  - ( NVL(A.PRODUCT_ACTUAL_QTY,0) )  REMAIN_QTY ,
+		RETURN_QTY ,
+		FEEDING_COUNT ,
+		(SELECT SUM(D.INVENTORY_QTY)||'('||COUNT(*) ||')'  FROM IM_ITEM_INVENTORY  D WHERE D.ITEM_CODE =  A.ITEM_CODE AND D.INVENTORY_QTY > 0 AND LOCATION_CODE IN ('M01' , 'M05' , 'M06' ) )  INVENTORY_QTY ,
+		CASE WHEN NVL( A.ITEM_UNIT_QTY, 0 ) = 0 THEN 1
+                      ELSE ROUND(( NVL( A.FEEDING_QTY , 0)  - ( NVL(A.PRODUCT_ACTUAL_QTY,0) ) + F_GET_LINE_SCAN_QTY(A.ITEM_CODE, A.LINE_CODE, A.ORGANIZATION_ID) ) / NVL( A.ITEM_UNIT_QTY, 0 )) END  Product_Acceptable_Qty,
+		B.ITEM_NAME ITEM_NAME , 
+		B.ITEM_SPEC ITEM_SPEC ,
+		B.LOCATION_ADDRESS ,
+         C.REAL_ST AS REAL_ST,
+		C.LINE_STATUS  LINE_STATUS ,
+
+		DECODE( NVL(A.item_unit_qty * C.REAL_ST,0) , 0 , 0 ,TRUNC(  (NVL( A.FEEDING_QTY , 0)- NVL(A.PRODUCT_ACTUAL_QTY,0) ) / A.item_unit_qty * C.REAL_ST / 60 , 0 ) ) REMAIN_TIME ,
+
+		f_get_product_st(  A.PARENT_ITEM_CODE,    A.LINE_CODE,   '*' , '*' , A.ORGANIZATION_ID ) ST_VALUE  ,
+
+		f_get_nsnp_use_status( A.LINE_CODE , A.ORGANIZATION_ID ) USE_STATUS ,
+		C.NSNP_STATUS NSNP_STATUS ,
+
+		(SELECT E.NEW_SCAN_QTY FROM IM_ITEM_RECEIPT_BARCODE E WHERE E.ITEM_CODE = A.ITEM_CODE AND E.LOT_NO = A.LOT_NO ) NEW_SCAN_QTY
+
+    FROM IB_PRODUCT_PLANDATA  A , ID_ITEM B , IP_PRODUCT_LINE  C
+   WHERE  A.ITEM_CODE = B.ITEM_CODE(+) 
+	    AND A.ORGANIZATION_ID = B.ORGANIZATION_ID(+) 
+        AND A.LINE_CODE = C.LINE_CODE(+)
+ 		 AND A.ORGANIZATION_ID = C.ORGANIZATION_ID(+) 
+		AND A.LINE_CODE  = :arg_line_code
+		AND A.MODEL_NAME  = :arg_model_name
+         AND  A.ACTIVE_YN LIKE :ARG_ACTIVE 
+         AND A.ITEM_UNIT_QTY > 0 
+         AND A.PRODUCT_ACTUAL_QTY > 0 
+		AND A.ITEM_UNIT_QTY <= :arg_item_unit_qty
+         AND A.ORGANIZATION_ID = :arg_org
+		AND A.LOCATION_CODE NOT LIKE 'TRAY%'
+) X" arguments=(("arg_line_code", string),("arg_model_name", string),("arg_active", string),("arg_item_unit_qty", number),("arg_org", number))  sort="line_code A model_name A remain_time A location_code A " )
+group(level=1 header.height=0 trailer.height=48 by=("line_code" ) header.color="536870912" trailer.color="134217731" )
+text(band=header alignment="2" text="Check Yn" border="0" color="33554432" x="6542" y="8" height="100" width="155" html.valueishtml="0"  name=check_yn_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Line Code" border="0" color="33554432" x="274" y="8" height="100" width="169" html.valueishtml="0"  name=line_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Feeding Qty" border="0" color="33554432" x="3890" y="8" height="100" width="242" html.valueishtml="0"  name=feeding_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Location Code" border="0" color="33554432" x="2871" y="8" height="100" width="197" html.valueishtml="0"  name=location_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Pcb Item" border="0" color="33554432" x="6706" y="8" height="100" width="178" html.valueishtml="0"  name=pcb_item_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Item Code" border="0" color="33554432" x="2208" y="8" height="100" width="439" html.valueishtml="0"  name=item_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Product Actual Qty" border="0" color="33554432" x="4142" y="8" height="100" width="256" html.valueishtml="0"  name=product_actual_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Parent Item Code" border="0" color="33554432" x="7232" y="8" height="100" width="370" html.valueishtml="0"  name=parent_item_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Model Suffix" border="0" color="33554432" x="6894" y="8" height="100" width="329" html.valueishtml="0"  name=model_suffix_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="St Value" border="0" color="33554432" x="1902" y="8" height="100" width="128" html.valueishtml="0"  name=st_value_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Real St" border="0" color="33554432" x="2039" y="8" height="100" width="160" html.valueishtml="0"  name=real_st_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=header alignment="2" text="Location Address" border="0" color="0" x="2656" y="8" height="100" width="206" html.valueishtml="0"  name=location_address_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Chipname" border="0" color="33554432" x="12146" y="8" height="100" width="489" html.valueishtml="0"  name=chipname_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Machine" border="0" color="33554432" x="11680" y="8" height="100" width="251" html.valueishtml="0"  name=machine_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Table Id" border="0" color="33554432" x="11941" y="8" height="100" width="197" html.valueishtml="0"  name=table_id_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Plan Date" border="0" color="33554432" x="14377" y="8" height="100" width="704" html.valueishtml="0"  name=plan_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Selected Date" border="0" color="33554432" x="15090" y="8" height="100" width="535" html.valueishtml="0"  name=selected_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Feeding Date" border="0" color="33554432" x="12645" y="8" height="100" width="544" html.valueishtml="0"  name=feeding_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Recycle Date" border="0" color="33554432" x="13198" y="8" height="100" width="567" html.valueishtml="0"  name=recycle_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Change Date" border="0" color="33554432" x="13774" y="8" height="100" width="594" html.valueishtml="0"  name=change_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Return Qty" border="0" color="33554432" x="11013" y="8" height="100" width="347" html.valueishtml="0"  name=return_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Feeding Count" border="0" color="33554432" x="11369" y="8" height="100" width="302" html.valueishtml="0"  name=feeding_count_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Item Barcode" border="0" color="33554432" x="9746" y="8" height="100" width="1257" html.valueishtml="0"  name=item_barcode_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Item Name" border="0" color="0" x="7611" y="8" height="100" width="786" html.valueishtml="0"  name=item_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Item Spec" border="0" color="0" x="8407" y="8" height="100" width="681" html.valueishtml="0"  name=item_spec_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Last Actual Date" border="0" color="33554432" x="9097" y="8" height="100" width="640" html.valueishtml="0"  name=last_actual_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Remain Rate" border="0" color="65280" x="4923" y="8" height="100" width="270" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+text(band=header alignment="2" text="Remain Qty" border="0" color="33554432" x="4407" y="8" height="100" width="242" html.valueishtml="0"  name=remain_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Remain Time" border="0" color="0" x="4658" y="8" height="100" width="256" html.valueishtml="0"  name=remain_time_1_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="Check Status" border="0" color="33554432" x="6345" y="8" height="100" width="187" html.valueishtml="0"  name=check_status_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Model Name" border="0" color="33554432" x="1285" y="8" height="100" width="361" html.valueishtml="0"  name=model_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Passed Time" border="0" color="33554432" x="1655" y="8" height="100" width="238" html.valueishtml="0"  name=passed_time_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=header alignment="2" text="Item Unit Qty" border="0" color="33554432" x="3077" y="8" height="100" width="206" html.valueishtml="0"  name=item_unit_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Line Status" border="0" color="33554432" x="453" y="8" height="100" width="256" html.valueishtml="0"  name=line_status_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Use Status" border="0" color="33554432" x="718" y="8" height="100" width="247" html.valueishtml="0"  name=use_status_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Nsnp Status" border="0" color="33554432" x="974" y="8" height="100" width="302" html.valueishtml="0"  name=ip_product_line_nsnp_status_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Lot No" border="0" color="33554432" x="5883" y="8" height="100" width="453" html.valueishtml="0"  name=lot_no_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Plan Qty" border="0" color="0" x="3291" y="8" height="100" width="251" html.valueishtml="0"  name=plan_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="New Scan Qty" border="0" color="33554432" x="3552" y="8" height="100" width="329" html.valueishtml="0"  name=new_scan_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Inventory Qty" border="0" color="0" x="5202" y="8" height="100" width="302" html.valueishtml="0"  name=inventory_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Product Acceptable Qty" border="0" color="0" x="5513" y="8" height="100" width="361" html.valueishtml="0"  name=product_acceptable_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=5 alignment="0" tabsequence=32766 border="0" color="0" x="5883" y="8" height="56" width="453" format="[general]" html.valueishtml="0"  name=lot_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=7 alignment="2" tabsequence=32766 border="0" color="0~tIF ( CHECK_STATUS = ~"E~" , 255, 0 )" x="6542" y="8" height="56" width="155" format="[general]" html.valueishtml="0"  name=check_yn visible="1" edit.limit=0 edit.case=upper edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=11 alignment="2" tabsequence=32766 border="0" color="0~tIF ( CHECK_STATUS = ~"E~" , 255, 0 )" x="6345" y="8" height="56" width="187" format="[general]" html.valueishtml="0"  name=check_status visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=22 alignment="2" tabsequence=32766 border="0" color="0" x="6706" y="8" height="56" width="178" format="[general]" html.valueishtml="0"  name=pcb_item visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=32 alignment="0" tabsequence=32766 border="0" color="134217734" x="7611" y="8" height="56" width="786" format="[general]" html.valueishtml="0"  name=item_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217750" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="134217734~tIF ( CHECK_STATUS = ~"E~" , 255, 0 )" x="14377" y="8" height="56" width="704" format="[general]" html.valueishtml="0"  name=plan_date visible="1" edit.limit=30 edit.case=upper edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217750" )
+column(band=detail id=14 alignment="0" tabsequence=32766 border="0" color="134217734" x="9746" y="8" height="56" width="1257" format="[general]" html.valueishtml="0"  name=item_barcode visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217750" )
+column(band=detail id=19 alignment="2" tabsequence=32766 border="0" color="134217734" x="13774" y="8" height="56" width="594" format="[shortdate] [time]" html.valueishtml="0"  name=change_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217750" )
+column(band=detail id=6 alignment="2" tabsequence=32766 border="0" color="134217734~tIF ( CHECK_STATUS = ~"E~" , 255, 0 )" x="12146" y="8" height="56" width="489" format="[general]" html.valueishtml="0"  name=chipname visible="1" edit.limit=30 edit.case=upper edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217750" )
+column(band=detail id=9 alignment="2" tabsequence=32766 border="0" color="134217734~tIF ( CHECK_STATUS = ~"E~" , 255, 0 )" x="11680" y="8" height="56" width="251" format="[general]" html.valueishtml="0"  name=machine visible="1" edit.limit=0 edit.case=upper edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217750" )
+column(band=detail id=15 alignment="2" tabsequence=32766 border="0" color="134217734" x="11941" y="8" height="56" width="197" format="[general]" html.valueishtml="0"  name=table_id visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217750" )
+column(band=detail id=28 alignment="1" tabsequence=32766 border="0" color="134217734" x="11013" y="8" height="56" width="347" format="[general]" html.valueishtml="0"  name=return_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217750" )
+column(band=detail id=29 alignment="1" tabsequence=32766 border="0" color="134217734" x="11369" y="8" height="56" width="302" format="[general]" html.valueishtml="0"  name=feeding_count visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217750" )
+column(band=detail id=16 alignment="2" tabsequence=32766 border="0" color="134217734" x="12645" y="8" height="56" width="544" format="[shortdate] [time]" html.valueishtml="0"  name=feeding_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217750" )
+column(band=detail id=17 alignment="2" tabsequence=32766 border="0" color="134217734" x="13198" y="8" height="56" width="567" format="[shortdate] [time]" html.valueishtml="0"  name=recycle_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217750" )
+column(band=detail id=33 alignment="0" tabsequence=32766 border="0" color="134217734" x="8407" y="8" height="56" width="681" format="[general]" html.valueishtml="0"  name=item_spec visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217750" )
+column(band=detail id=25 alignment="2" tabsequence=32766 border="0" color="0" x="9097" y="8" height="56" width="640" format="[shortdate] [time]" html.valueishtml="0"  name=last_actual_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=24 alignment="0" tabsequence=32766 border="0" color="0" x="7232" y="8" height="56" width="370" format="[general]" html.valueishtml="0"  name=parent_item_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="0" x="6894" y="8" height="56" width="329" format="[general]" html.valueishtml="0"  name=model_suffix visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+compute(band=detail alignment="0" expression="trim('')"border="0" color="0" x="9" y="8" height="56" width="128" format="[GENERAL]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+compute(band=detail alignment="0" expression="getrow()"border="0" color="0~tIF ( CHECK_STATUS = ~"E~" , 255, 0 )" x="146" y="8" height="56" width="119" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=10 alignment="2" tabsequence=32766 border="0" color="0~tIF ( CHECK_STATUS = ~"E~" , 255, 0 )" x="274" y="8" height="56" width="169" format="[general]" html.valueishtml="0"  name=line_code visible="1" edit.limit=0 edit.case=upper edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=13 alignment="2" tabsequence=32766 border="0" color="0" x="2871" y="8" height="56" width="197" format="[general]" html.valueishtml="0"  name=location_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=18 alignment="1" tabsequence=32766 border="0" color="0" x="3890" y="8" height="56" width="242" format="[general]" html.valueishtml="0"  name=feeding_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="0" color="0" x="2208" y="8" height="56" width="439" format="[general]" html.valueishtml="0"  name=item_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=21 alignment="1" tabsequence=32766 border="0" color="0" x="4142" y="8" height="56" width="256" format="[general]" html.valueishtml="0"  name=product_actual_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65280" )
+column(band=detail id=38 alignment="2" tabsequence=32766 border="0" color="0" x="1902" y="8" height="56" width="128" format="[general]" html.valueishtml="0"  name=st_value visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=35 alignment="2" tabsequence=32766 border="0" color="0" x="2039" y="8" height="56" width="160" format="[general]" html.valueishtml="0"  name=real_st visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=34 alignment="2" tabsequence=32766 border="0" color="0" x="2656" y="8" height="56" width="206" format="[general]" html.valueishtml="0"  name=location_address visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+compute(band=detail alignment="2" expression=" remain_qty /  feeding_qty "border="0" color="65280" x="4923" y="8" height="56" width="270" format="0%" html.valueishtml="0"  name=remain_rate visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+column(band=detail id=27 alignment="1" tabsequence=32766 border="0" color="0~tif ( remain_qty < 0  , 255 , 0 )" x="4407" y="8" height="56" width="242" format="[general]" html.valueishtml="0"  name=remain_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+column(band=detail id=37 alignment="2" tabsequence=32766 border="0" color="0" x="4658" y="8" height="56" width="256" format="[general]" html.valueishtml="0"  name=remain_time visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="16777215~tIF ( REMAIN_TIME < 20 , 255 , RGB( 255,255,255))" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="0" x="1285" y="8" height="56" width="361" format="[general]" html.valueishtml="0"  name=model_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=26 alignment="2" tabsequence=32766 border="0" color="0" x="1655" y="8" height="56" width="238" format="###,##0" html.valueishtml="0"  name=passed_time visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=23 alignment="2" tabsequence=32766 border="0" color="0" x="3077" y="8" height="56" width="206" format="[general]" html.valueishtml="0"  name=item_unit_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=36 alignment="2" tabsequence=32766 border="0" color="0" x="453" y="8" height="56" width="256" format="[general]" html.valueishtml="0"  name=line_status visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=39 alignment="2" tabsequence=32766 border="0" color="0" x="718" y="8" height="56" width="247" format="[general]" html.valueishtml="0"  name=use_status visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="16777215~tif ( use_status = 'S' , 255 , RGB(255,255,255))" )
+column(band=detail id=40 alignment="2" tabsequence=32766 border="0" color="0" x="974" y="8" height="56" width="302" format="[general]" html.valueishtml="0"  name=nsnp_status visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=20 alignment="1" tabsequence=32766 border="0" color="0" x="3291" y="8" height="56" width="251" format="###,###,##0" html.valueishtml="0"  name=plan_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=41 alignment="1" tabsequence=32766 border="0" color="0" x="3552" y="8" height="56" width="329" format="[general]" html.valueishtml="0"  name=new_scan_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=8 alignment="2" tabsequence=32766 border="0" color="134217734~tIF ( CHECK_STATUS = ~"E~" , 255, 0 )" x="15090" y="8" height="56" width="535" format="[general]" html.valueishtml="0"  name=selected_date visible="1" edit.limit=0 edit.case=upper edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217750" )
+column(band=detail id=30 alignment="1" tabsequence=32766 border="0" color="0" x="5202" y="8" height="56" width="302" format="[general]" html.valueishtml="0"  name=inventory_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=31 alignment="1" tabsequence=32766 border="0" color="0" x="5513" y="8" height="56" width="361" format="[general]" html.valueishtml="0"  name=product_acceptable_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+
+sparse(names="model_name	pcb_item")htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()

@@ -1,0 +1,121 @@
+HA$PBExportHeader$f_get_dw_zoom.srf
+$PBExportComments$Data Window $$HEX7$$edd344c720004cc544c5b8b0e4b2$$ENDHEX$$.
+global type f_get_dw_zoom from function_object
+end type
+
+forward prototypes
+global function long f_get_dw_zoom (datawindow adw_dw)
+end prototypes
+
+global function long f_get_dw_zoom (datawindow adw_dw);// Argument : adw_dw
+
+setpointer(hourglass!)
+
+integer	li_col,				&
+			li_objcount,		&
+			li_start,			&
+			li_end
+
+string		ls_dwhead,		&
+			ls_dwobject,	&
+			ls_units
+			
+long		ll_max,			&
+			ll_temp,			&
+			ll_return
+			
+double	ld_unit_factor,	&
+			ld_landscape,	&
+			ld_portrait,		&
+			ld_temp_cal,	&
+			ld_adjust
+
+if adw_dw.dataobject = '' then return	0
+if len(trim(adw_dw.Object.DataWindow.Objects )) = 0 then  return	0
+
+
+li_start	=	0
+ll_max	=	0
+
+// $$HEX11$$b0c620c120000cd3ccc64cbe54b3e8b204c77cb92000$$ENDHEX$$CM$$HEX14$$e8b204c75cb8200058d6b0c058d594b283ac3cc75cb820005cd5e4b2$$ENDHEX$$.
+ls_units	=	adw_dw.Describe("DataWindow.Units")
+CHOOSE CASE ls_units
+	CASE '0' //PowerBuild Unit
+		ld_unit_factor	=	172.8
+	CASE '1' //Picxel Unit
+		ld_unit_factor	=	37.8
+	CASE '2' //Inch Unit
+		ld_unit_factor	=	393.7
+	CASE '3' //CM Unit
+		ld_unit_factor	=	1000.0
+END CHOOSE
+
+// $$HEX7$$3cba00c82000a9c6c0c994b22000$$ENDHEX$$A4$$HEX10$$c0c97cb9200030ae00c93cc75cb820005cd5e4b2$$ENDHEX$$.($$HEX5$$a5d5c4d6200070c815c8$$ENDHEX$$)
+//adw_dw.Describe("DataWindow.Print.Paper.Size")
+ld_portrait		=	21.0
+ld_landscape	=	29.7
+
+// $$HEX33$$6cd05cb8a4c2edd078c72000bdacb0c67cb920006cd030ae7cb920006cad58d530ae04c774d52000b0c620c12000eccefcb744c72000e0ac15c874d5200000c9e4b2$$ENDHEX$$.
+IF	adw_dw.Describe("DataWindow.Processing")	= '4'	THEN	adw_dw.Modify("DataWindow.Crosstab.StaticMode='yes'")
+
+ls_dwobject = adw_dw.Object.DataWindow.Objects     // dw object list
+li_objcount = f_dual_lang_object_count(ls_dwobject)     		 // get object cou
+
+FOR	li_col = 1 to li_objcount
+		li_end = pos(ls_dwobject, "~t", li_start + 1)
+		
+		IF	li_col < li_objcount then    // last object check
+			ls_dwhead = mid(ls_dwobject, li_start + 1, li_end - li_start - 1)	
+		ELSE
+			ls_dwhead = mid(ls_dwobject, li_start + 1, len(ls_dwobject) - li_start)
+		END IF
+			
+		CHOOSE CASE  adw_dw.describe (ls_dwhead + ".type")
+			CASE	"text", "column", "report", "compute"
+				ll_temp	=	long(adw_dw.describe(ls_dwhead + ".x")) + long(adw_dw.describe(ls_dwhead + ".width"))
+				IF	ll_temp > ll_max	THEN
+					ll_max	=	ll_temp
+				END IF
+		END CHOOSE
+		li_start	=	li_end
+NEXT
+
+// $$HEX33$$6cd05cb8a4c2edd078c72000bdacb0c67cb920006cd030ae7cb920006cad58d530ae04c774d52000b0c620c12000eccefcb744c72000e0ac15c874d5200000c9e4b2$$ENDHEX$$. ($$HEX7$$e0ac15c844c7200080d4b4c50cc9$$ENDHEX$$)
+IF	adw_dw.Describe("DataWindow.Processing")	= '4'	THEN	adw_dw.Modify("DataWindow.Crosstab.StaticMode='no'")
+ld_adjust	=	((long(adw_dw.Describe("DataWindow.Print.Margin.Left")) + long(adw_dw.Describe("DataWindow.Print.Margin.Right"))) / ld_unit_factor)
+
+// $$HEX23$$ecc531bc74c72000c6c53cc774ba200030aef8bc01c83cc75cb820000cd3ccc64cbe54b3d0c51cc120007dc52000$$ENDHEX$$0.8cm$$HEX5$$7cb9200060d5f9b268d5$$ENDHEX$$.
+IF ld_adjust < 0.8 THEN ld_adjust = 0.8
+
+//messagebox(string(ld_adjust), string(ll_max/ ld_unit_factor))
+
+CHOOSE	CASE adw_dw.Describe("DataWindow.Print.Orientation")
+	CASE	'1'	//$$HEX4$$00ac5cb830bcf4c5$$ENDHEX$$
+		ld_temp_cal	=	ld_landscape - ld_adjust
+		ll_return		=	truncate(100 / ((ll_max/ ld_unit_factor) / ld_temp_cal), 0)
+	CASE ELSE
+		ld_temp_cal	=	ld_portrait - ld_adjust
+		ll_return		=	truncate(100 / ((ll_max/ ld_unit_factor) / ld_temp_cal), 0)
+	END CHOOSE
+
+// $$HEX17$$04d5b0b930d190c7b4cc2000ecc531bc200038bb1cc800ac200088c7b4c51cc12000$$ENDHEX$$2%$$HEX5$$54b3200004c9ecc50cc9$$ENDHEX$$.
+//messagebox(string(ll_return),string( (ll_return * ll_max) / ld_unit_factor / 100) + '*' + string(ll_max/ ld_unit_factor) )
+if ll_return >= 110 then
+	ll_return	=	ll_return - 5
+elseif ll_return >= 102 and ll_return < 110 then
+	ll_return	=	ll_return
+elseif ll_return >= 99 and ll_return < 102 then
+	ll_return	=	100
+elseif ll_return >= 80 and ll_return < 99 then
+	ll_return	=	ll_return
+elseif ll_return >= 50 and ll_return < 80 then
+	ll_return	=	ll_return - 1
+elseif ll_return >= 35 and ll_return < 50 then
+	ll_return	=	ll_return - 2
+else
+	ll_return	=	ll_return - 3
+end if
+
+return	ll_return
+end function
+

@@ -1,0 +1,105 @@
+HA$PBExportHeader$d_table_description_rpt.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=0 HTMLDW=no print.printername="" print.documentname="" print.orientation = 1 print.margin.left = 0 print.margin.right = 0 print.margin.top = 0 print.margin.bottom = 0 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no )
+header(height=620 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=92 color="536870912" )
+detail(height=84 color="536870912" height.autosize=yes )
+table(column=(type=char(30) updatewhereclause=yes name=table_name dbname="user_tab_columns.table_name" dbalias="A.table_name" )
+ column=(type=char(30) updatewhereclause=yes name=column_name dbname="user_tab_columns.column_name" dbalias="A.column_name" )
+ column=(type=char(106) updatewhereclause=yes name=data_type dbname="user_tab_columns.data_type" dbalias="A.data_type" )
+ column=(type=number updatewhereclause=yes name=data_length dbname="user_tab_columns.data_length" dbalias="A.data_length" )
+ column=(type=number updatewhereclause=yes name=data_precision dbname="user_tab_columns.data_precision" dbalias="A.data_precision" )
+ column=(type=number updatewhereclause=yes name=data_scale dbname="user_tab_columns.data_scale" dbalias="A.data_scale" )
+ column=(type=char(1) updatewhereclause=yes name=nullable dbname="user_tab_columns.nullable" dbalias="A.nullable" )
+ column=(type=number updatewhereclause=yes name=column_id dbname="user_tab_columns.column_id" dbalias="A.column_id" )
+ column=(type=char(100) updatewhereclause=yes name=isys_word_dictionary_word_eng dbname="isys_word_dictionary.word_eng" dbalias="B.word_eng" )
+ column=(type=char(100) updatewhereclause=yes name=isys_word_dictionary_word_kor dbname="isys_word_dictionary.word_kor" dbalias="B.word_kor" )
+ column=(type=char(1000) update=yes updatewhereclause=yes name=isys_word_dictionary_word_description_kor dbname="isys_word_dictionary.word_description_kor" dbalias="B.word_description_kor" )
+ column=(type=char(100) update=yes updatewhereclause=yes name=isys_word_dictionary_word_local dbname="isys_word_dictionary.word_local" dbalias="B.word_local" )
+ column=(type=char(1000) update=yes updatewhereclause=yes name=isys_word_dictionary_word_description_local dbname="isys_word_dictionary.word_description_local" dbalias="B.word_description_local" )
+ column=(type=char(30) updatewhereclause=yes name=user_constraints_constraint_name dbname="user_constraints.constraint_name" dbalias="C.constraint_name" )
+ column=(type=char(4000) updatewhereclause=yes name=user_tab_comments_comments dbname="user_tab_comments.comments" dbalias="D.comments" )
+ column=(type=char(30) updatewhereclause=yes name=object_desc_local dbname="isys_object.object_desc_local" dbalias="E.object_desc_local" )
+ column=(type=char(30) updatewhereclause=yes name=object_comment_local dbname="isys_object.object_comment_local" dbalias="E.object_comment_local" )
+ retrieve="SELECT  A.TABLE_NAME ,
+        A.COLUMN_NAME ,
+        A.DATA_TYPE ,
+        A.DATA_LENGTH ,
+        A.DATA_PRECISION ,
+        A.DATA_SCALE ,
+        A.NULLABLE ,
+        A.COLUMN_ID ,    
+        B.WORD_ENG ,
+        B.WORD_KOR , 
+        B.WORD_DESCRIPTION_KOR , 
+        B.WORD_LOCAL ,
+        B.WORD_DESCRIPTION_LOCAL ,
+        C.CONSTRAINT_NAME,
+        D.COMMENTS,
+        E.OBJECT_DESC_LOCAL,
+        E.OBJECT_COMMENT_LOCAL
+
+  FROM USER_TAB_COLUMNS A , 
+       ISYS_WORD_DICTIONARY B , 
+       USER_CONSTRAINTS C , 
+       USER_TAB_COMMENTS D ,
+       ISYS_OBJECT E
+ WHERE A.TABLE_NAME = B.PARENT_ID(+)
+   AND A.COLUMN_NAME = B.WORD_ENG(+) 
+   AND A.TABLE_NAME LIKE :ARG_TABLE_NAME
+   AND A.TABLE_NAME = C.TABLE_NAME(+)
+   AND C.CONSTRAINT_TYPE(+) = 'P'
+   AND A.TABLE_NAME = D.TABLE_NAME(+)
+   AND A.TABLE_NAME = E.OBJECT_NAME(+)
+   
+" arguments=(("ARG_TABLE_NAME", string))  sort="table_name A column_id A " )
+group(level=1 header.height=0 trailer.height=0 by=("table_name" ) newpage=yes resetpagecount=yes header.color="536870912" trailer.color="536870912" )
+column(band=header id=17 alignment="0" tabsequence=50 border="0" color="33554432" x="2053" y="208" height="64" width="2053" format="[general]" html.valueishtml="0"  name=object_comment_local visible="1" edit.limit=0 edit.case=any edit.autoselect=yes  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=header id=16 alignment="0" tabsequence=40 border="0" color="33554432" x="475" y="284" height="56" width="1554" format="[general]" html.valueishtml="0"  name=object_desc_local visible="1" edit.limit=0 edit.case=any edit.autoselect=yes  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="0" text="Table Name :" border="0" color="33554432" x="9" y="208" height="64" width="462" html.valueishtml="0"  name=table_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=header id=1 alignment="0" tabsequence=32766 border="0" color="33554432" x="485" y="208" height="64" width="1554" format="[general]" html.valueishtml="0"  name=table_name visible="1" edit.limit=30 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="0" text="Constraint Name :" border="0" color="33554432" x="0" y="372" height="64" width="462" html.valueishtml="0"  name=t_4 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=header id=15 alignment="0" tabsequence=30 border="0" color="33554432" x="2043" y="372" height="64" width="2057" format="[general]" html.valueishtml="0"  name=user_tab_comments_comments  tag="KOREA" visible="1" edit.limit=0 edit.case=any edit.autoselect=yes  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="1" text="Print Date :" border="0" color="33554432" x="4850" y="372" height="68" width="270" html.valueishtml="0"  name=t_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=header alignment="1" expression="today()"border="0" color="33554432" x="5134" y="372" height="68" width="402" format="[general]" html.valueishtml="0"  name=date_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=header id=14 alignment="0" tabsequence=32766 border="0" color="33554432" x="475" y="372" height="64" width="1554" format="[general]" html.valueishtml="0"  name=user_constraints_constraint_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="No" border="0" color="33554432" x="174" y="472" height="128" width="137" html.valueishtml="0"  name=t_3 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="0" text="Column Name" border="0" color="33554432" x="325" y="472" height="128" width="823" html.valueishtml="0"  name=column_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Data Type" border="0" color="33554432" x="1161" y="472" height="128" width="283" html.valueishtml="0"  name=data_type_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="1" text="Data Length" border="0" color="33554432" x="1463" y="472" height="128" width="201" html.valueishtml="0"  name=data_length_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="1" text="Data Precision" border="0" color="33554432" x="1678" y="472" height="128" width="247" html.valueishtml="0"  name=data_precision_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="1" text="Data Scale" border="0" color="33554432" x="1943" y="472" height="128" width="233" html.valueishtml="0"  name=data_scale_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Null" border="0" color="33554432" x="2194" y="472" height="128" width="133" html.valueishtml="0"  name=nullable_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Table Description Report" border="0" color="33554432" x="14" y="24" height="92" width="5705" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-14" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" font.underline="1" background.mode="1" background.color="553648127" )
+line(band=header x1="14" y1="452" x2="5719" y2="456"  name=l_2 visible="1" pen.style="0" pen.width="9" pen.color="255"  background.mode="1" background.color="553648127" )
+line(band=header x1="14" y1="612" x2="5719" y2="616"  name=l_1 visible="1" pen.style="0" pen.width="9" pen.color="255"  background.mode="1" background.color="553648127" )
+text(band=header alignment="0" text="Word Kor" border="0" color="33554432" x="2345" y="472" height="128" width="617" html.valueishtml="0"  name=isys_word_dictionary_word_kor_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+text(band=header alignment="0" text="Word Description Kor" border="0" color="33554432" x="2976" y="472" height="128" width="1061" html.valueishtml="0"  name=isys_word_dictionary_word_description_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+text(band=header alignment="0" text="Word Chn" border="0" color="33554432" x="4055" y="472" height="128" width="571" html.valueishtml="0"  name=isys_word_dictionary_word_local_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65280" )
+text(band=header alignment="0" text="Word Description Chn" border="0" color="33554432" x="4645" y="472" height="128" width="1061" html.valueishtml="0"  name=isys_word_dictionary_word_description_t_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65280" )
+column(band=detail id=13 alignment="0" tabsequence=30 border="0" color="33554432" x="4645" y="4" height="72" width="1061" format="[general]" html.valueishtml="0"  name=isys_word_dictionary_word_description_local visible="1" height.autosize=yes edit.limit=0 edit.case=any edit.autoselect=yes edit.autovscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65280" )
+compute(band=detail alignment="0" expression="trim('')"border="0" color="33554432" x="0" y="4" height="72" width="160" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=8 alignment="2" tabsequence=32766 border="0" color="33554432" x="174" y="4" height="72" width="137" format="[general]" html.valueishtml="0"  name=column_id visible="1" edit.limit=0 edit.case=any edit.autoselect=yes  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="0" color="33554432" x="1161" y="4" height="72" width="283" format="[general]" html.valueishtml="0"  name=data_type visible="1" height.autosize=yes edit.limit=106 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=4 alignment="1" tabsequence=32766 border="0" color="33554432" x="1463" y="4" height="72" width="201" format="[general]" html.valueishtml="0"  name=data_length visible="1" height.autosize=yes edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=5 alignment="1" tabsequence=32766 border="0" color="33554432" x="1678" y="4" height="72" width="247" format="[general]" html.valueishtml="0"  name=data_precision visible="1" height.autosize=yes edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=6 alignment="1" tabsequence=32766 border="0" color="33554432" x="1943" y="4" height="72" width="233" format="[general]" html.valueishtml="0"  name=data_scale visible="1" height.autosize=yes edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=7 alignment="2" tabsequence=32766 border="0" color="33554432" x="2194" y="4" height="72" width="133" format="[general]" html.valueishtml="0"  name=nullable visible="1" height.autosize=yes edit.limit=1 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432" x="325" y="4" height="72" width="823" format="[general]" html.valueishtml="0"  name=column_name visible="1" height.autosize=yes edit.limit=30 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=11 alignment="0" tabsequence=20 border="0" color="33554432" x="2976" y="4" height="72" width="1061" format="[general]" html.valueishtml="0"  name=isys_word_dictionary_word_description_kor  tag="KOREA" visible="1" height.autosize=yes edit.limit=0 edit.case=any edit.autoselect=yes edit.autovscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="65535" )
+column(band=detail id=10 alignment="0" tabsequence=10 border="0" color="33554432" x="2345" y="4" height="72" width="617" format="[general]" html.valueishtml="0"  name=isys_word_dictionary_word_kor  tag="KOREA" visible="1" height.autosize=yes edit.limit=0 edit.case=any edit.autoselect=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="65535" )
+column(band=detail id=12 alignment="0" tabsequence=40 border="0" color="33554432" x="4055" y="4" height="72" width="571" format="[general]" html.valueishtml="0"  name=isys_word_dictionary_word_local visible="1" height.autosize=yes edit.limit=0 edit.case=any edit.autoselect=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65280" )
+compute(band=footer alignment="0" expression="'Page ' + page() + ' of ' + pageCount()"border="0" color="33554432" x="2651" y="24" height="64" width="562" format="[general]" html.valueishtml="0"  name=page_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+line(band=footer x1="14" y1="0" x2="5719" y2="4"  name=l_3 visible="1" pen.style="0" pen.width="9" pen.color="255"  background.mode="1" background.color="553648127" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

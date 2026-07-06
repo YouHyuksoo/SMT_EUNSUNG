@@ -1,0 +1,22 @@
+HA$PBExportHeader$f_get_carrier_scan_exists_check.srf
+global type f_get_carrier_scan_exists_check from function_object
+end type
+
+forward prototypes
+global function integer f_get_carrier_scan_exists_check (string arg_run_no, string arg_carrier_barcode)
+end prototypes
+
+global function integer f_get_carrier_scan_exists_check (string arg_run_no, string arg_carrier_barcode);long lvl_count
+select count(*) into :lvl_count
+from IP_PRODUCT_PCB_SCAN_MASTER
+where run_no = :arg_run_no
+    and carrier_barcode = :arg_carrier_barcode
+    and organization_id = :gvi_organization_id ;
+	 
+	 if f_sql_check() < 0 then 
+		return -1
+	end if 
+	
+	return lvl_count
+end function
+

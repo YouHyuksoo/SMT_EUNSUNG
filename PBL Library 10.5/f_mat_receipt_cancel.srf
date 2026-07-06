@@ -1,0 +1,140 @@
+HA$PBExportHeader$f_mat_receipt_cancel.srf
+global type f_mat_receipt_cancel from function_object
+end type
+
+forward prototypes
+global function integer f_mat_receipt_cancel (datetime adt_date, double ad_seq, datetime adt_cancel_date, string as_free_receipt_type)
+end prototypes
+
+global function integer f_mat_receipt_cancel (datetime adt_date, double ad_seq, datetime adt_cancel_date, string as_free_receipt_type);long lvl_cnt, LVF_RETURN , lvl_receipt_qty
+double lvl_receipt_seq
+string  lvs_supplier_code,lvs_item_code , lvs_line_type , lvs_order_no , lvs_material_mfs
+
+SELECT supplier_code , item_code , line_type  , order_no , receipt_qty , material_mfs
+   into  :lvs_supplier_code,:lvs_item_code , :lvs_line_type , :lvs_order_no , :lvl_receipt_qty , :lvs_material_mfs
+  from im_item_receipt
+ WHERE receipt_date = :adt_date
+   AND receipt_sequence = :ad_seq
+   AND organization_id = :gvi_organization_id;
+	if f_sql_check() < 0 then 
+		return -1 
+	end if 
+
+//=============================================================
+// $$HEX17$$84c700acf5ac2000e8b200ac20000fbc200008ae61c52000b0c09ccd20000fbc2000$$ENDHEX$$
+// $$HEX14$$34bbc1c0acc009ae20009ccde0ac2000d9b3dcc2200098ccacb92000$$ENDHEX$$
+//=============================================================		
+
+if as_free_receipt_type = 'N' then
+
+	if  lvs_line_type = 'M' then 			
+		//===========================
+		// bom $$HEX8$$44c7200004c81cac200058d5ecc52000$$ENDHEX$$
+		// $$HEX11$$acc009ae98cc2000acc7e0ac7cb9200010ac8cc12000$$ENDHEX$$/ $$HEX7$$9dc900ac2000dcc2a8d0e4b22000$$ENDHEX$$
+		//===========================
+//		LVF_RETURN = f_get_free_assy_issue_cost( lvs_supplier_code,lvs_item_code , f_t_sysdate() , lvl_receipt_qty * -1 , lvs_order_no  , lvs_material_mfs)
+		if f_sql_check() < 0 then 
+			return -1 
+		end if 
+	end if 
+	
+end if
+//==========================================================
+//
+//==========================================================
+
+UPDATE im_item_receipt
+       SET receipt_status = 'C'
+ WHERE receipt_date = :adt_date
+      AND receipt_sequence = :ad_seq
+      AND organization_id = :gvi_organization_id;
+
+if f_sql_check() < 0 then 
+	return -3
+end if 
+
+lvl_receipt_seq = double(f_get_sequence('seq_mat_receipt'))
+INSERT INTO im_item_receipt
+            ( receipt_sequence,
+              receipt_date,
+              location_code,
+              receipt_deficit,
+              delivery,
+              line_type,
+              receipt_qty,
+              unit_price,
+              material_cost,
+              material_cost_amt,
+              invoice_no,
+              receipt_amt,
+              exchange_rate,
+              foreign_receipt_amt,
+              confirm_yn,
+              confirm_date,
+              receipt_type,
+		    material_mfs,		  
+              mfs,
+              supplier_code,
+              comments,
+              currency,
+              barcode,
+              receipt_status,
+              item_code,
+              arrival_date,
+              arrival_seq_no,
+              organization_id,
+              enter_by,
+              enter_date,
+              last_modify_by,
+              last_modify_date,
+              virtual_receipt_yn,
+              work_order_no , interface_yn,interface_date , receipt_lot_no , incidental_expense_code , receipt_expense_cost,
+		    interface_work_no ,tariff_rate , tariff_amt , order_no , origin_mfs , origin_supplier_code , invoice_open_yn , invoice_open_sequence , inventory_type
+            )
+   SELECT :lvl_receipt_seq,
+          TRUNC(:adt_cancel_date) , //TRUNC( SYSDATE ),
+          location_code,
+          DECODE( receipt_deficit, '1', '2', '2', '1' ),
+          delivery,
+          line_type,
+          receipt_qty * -1,
+          unit_price,
+          material_cost * -1,
+          material_cost_amt * -1,
+          invoice_no,
+          receipt_amt * -1,
+          exchange_rate,
+          foreign_receipt_amt * -1,
+          confirm_yn,
+          confirm_date,
+          receipt_type,
+  	     material_mfs,
+          mfs,
+          supplier_code,
+          comments,
+          currency,
+          barcode,
+          'C',
+          item_code,
+          arrival_date,
+          arrival_seq_no,
+          organization_id,
+          :gvs_user_id,
+          SYSDATE,
+          :gvs_user_id,
+          SYSDATE,
+          virtual_receipt_yn,
+          work_order_no , interface_yn,interface_date , receipt_lot_no, incidental_expense_code , receipt_expense_cost,
+	    interface_work_no ,tariff_rate , tariff_amt	 , order_no , origin_mfs , origin_supplier_code , invoice_open_yn , invoice_open_sequence , inventory_type
+     FROM im_item_receipt
+    WHERE receipt_date = :adt_date
+      AND receipt_sequence = :ad_seq
+      AND organization_id = :gvi_organization_id;
+		 
+	if f_sql_check() < 0 then 
+		return -1 
+	end if 
+
+return sqlca.sqlnrows
+end function
+

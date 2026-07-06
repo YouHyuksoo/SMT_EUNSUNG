@@ -1,0 +1,42 @@
+HA$PBExportHeader$f_download_mold_image.srf
+global type f_download_mold_image from function_object
+end type
+
+forward prototypes
+global function blob f_download_mold_image (string arg_mold_code)
+end prototypes
+
+global function blob f_download_mold_image (string arg_mold_code);blob lvb_image , lvb_null
+int lvi_count
+setnull(lvb_null)
+
+select count(*) into :lvi_count
+  from imcn_mold
+ where mold_code    = :arg_mold_code
+  	and organization_id = :gvi_organization_id
+	and rownum = 1 ;
+	  
+if f_sql_check() < 0 then 
+	return lvb_null
+end if				  
+				
+if lvi_count = 0 then 
+	return lvb_null
+end if 
+//====================================
+//
+//====================================
+
+selectblob mold_image into :lvb_image
+       from imcn_mold
+     where mold_code = :arg_mold_code
+       and organization_id = :gvi_organization_id ;
+
+if f_sql_check() < 0 then 
+	return lvb_null
+end if
+
+return lvb_image
+	
+end function
+

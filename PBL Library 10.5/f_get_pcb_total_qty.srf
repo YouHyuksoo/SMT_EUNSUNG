@@ -1,0 +1,23 @@
+HA$PBExportHeader$f_get_pcb_total_qty.srf
+global type f_get_pcb_total_qty from function_object
+end type
+
+forward prototypes
+global function integer f_get_pcb_total_qty (string arg_run_no)
+end prototypes
+
+global function integer f_get_pcb_total_qty (string arg_run_no);int lvl_return
+
+select count(*) into :lvl_return
+from IP_PRODUCT_PCB_BARCODE 
+where run_no = :arg_run_no
+and organization_id = :gvi_organization_id ;
+
+if f_sql_check() < 0 then
+	return 0
+end if 
+
+return lvl_return
+
+end function
+

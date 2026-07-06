@@ -1,0 +1,52 @@
+HA$PBExportHeader$f_get_qc_repair_result.srf
+global type f_get_qc_repair_result from function_object
+end type
+
+forward prototypes
+global function string f_get_qc_repair_result (string arg_serial_no)
+end prototypes
+
+global function string f_get_qc_repair_result (string arg_serial_no);STRING LVS_RETURN
+INT LVI_COUNT
+
+LVI_COUNT = 0 
+SELECT COUNT(*) INTO :LVI_COUNT 
+  FROM IP_PRODUCT_WORK_QC
+WHERE SERIAL_NO = :ARG_SERIAL_NO ;
+
+IF F_SQL_CHECK() < 0 THEN  
+    RETURN 'NG'
+END IF 
+
+IF LVI_COUNT = 0 THEN 
+   RETURN 'OK'  //$$HEX15$$18c2acb974c725b82000c6c54cc7200018c2acb988d4200044c5d8b22000$$ENDHEX$$
+END IF 
+
+SELECT QC_INSPECT_HANDLING  
+    INTO :LVS_RETURN
+ FROM IP_PRODUCT_WORK_QC 
+WHERE SERIAL_NO = :ARG_SERIAL_NO
+     AND RECEIPT_DEFICIT = '2' //RETURN
+     AND ENTER_DATE = ( SELECT MAX(ENTER_DATE) 
+	                                    FROM IP_PRODUCT_WORK_QC 
+								   WHERE SERIAL_NO = :ARG_SERIAL_NO
+									   AND RECEIPT_DEFICIT = '2' //RETURN
+									//   AND NEW_RUN_NO IS NOT NULL
+								  ) ;
+
+IF F_SQL_CHECK_WITH_MSG("IP_PRODUCT_WORK_QC : "+ARG_SERIAL_NO) < 0 THEN 
+	RETURN 'NG'
+END IF 
+
+IF LVS_RETURN = '' OR ISNULL(LVS_RETURN) THEN 
+    RETURN 'NG'   //$$HEX30$$18c2acb988d4200074c798b0200044c5c1c9200018c2acb96cadedc5d0c51cc120009ccde0ac200098ccacb958d5c0c9200020004ac558c54cc72000$$ENDHEX$$
+END IF 
+
+IF LVS_RETURN = 'U' THEN 
+	RETURN 'OK'
+ELSE
+	RETURN 'NG' // $$HEX15$$acc7acc0a9c6200010d315c844c720001bbcc0c92000bbba88d54cc72000$$ENDHEX$$.
+END IF
+
+end function
+

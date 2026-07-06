@@ -1,0 +1,56 @@
+FUNCTION "F_GET_MODEL_ST" (
+   P_MODEL_NAME   IN VARCHAR2,
+   P_LINE_CODE    IN VARCHAR2,
+   P_TYPE         IN VARCHAR2,
+   P_ORG          IN NUMBER)
+   RETURN NUMBER
+IS
+   LVL_ST   NUMBER;
+BEGIN
+   LVL_ST := 0;
+
+   IF P_TYPE = 'A'                                                     -- ？？u？？？
+   THEN
+      SELECT SUM (PRODUCT_ST)
+        INTO LVL_ST
+        FROM IP_PRODUCT_MODEL_ST_MASTER
+       WHERE     MODEL_NAME = P_MODEL_NAME
+             AND LINE_CODE = P_LINE_CODE
+             AND ORGANIZATION_ID = P_ORG;
+   ELSIF P_TYPE = 'B'                                                    --？？？？
+   THEN
+      SELECT MAX (PRODUCT_ST)
+        INTO LVL_ST
+        FROM IP_PRODUCT_MODEL_ST_MASTER
+       WHERE     MODEL_NAME = P_MODEL_NAME
+             AND LINE_CODE = P_LINE_CODE
+             AND PCB_ITEM = P_TYPE
+             AND ORGANIZATION_ID = P_ORG;
+   ELSIF P_TYPE = 'T'
+   THEN
+      SELECT MAX (PRODUCT_ST)
+        INTO LVL_ST
+        FROM IP_PRODUCT_MODEL_ST_MASTER
+       WHERE     MODEL_NAME = P_MODEL_NAME
+             AND PCB_ITEM = P_TYPE
+             AND LINE_CODE = P_LINE_CODE
+             AND ORGANIZATION_ID = P_ORG;
+   ELSE
+      SELECT MAX (PRODUCT_ST)
+        INTO LVL_ST
+        FROM IP_PRODUCT_MODEL_ST_MASTER
+       WHERE     MODEL_NAME = P_MODEL_NAME
+             AND LINE_CODE = P_LINE_CODE
+             AND ORGANIZATION_ID = P_ORG;
+   END IF;
+
+   RETURN NVL (LVL_ST, 0);
+EXCEPTION
+   WHEN NO_DATA_FOUND
+   THEN
+      LVL_ST := 0;
+   WHEN OTHERS
+   THEN
+      LVL_ST := 0;
+      RAISE_APPLICATION_ERROR (-20003, SQLERRM);
+END F_GET_MODEL_ST;

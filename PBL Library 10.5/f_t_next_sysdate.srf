@@ -1,0 +1,15 @@
+HA$PBExportHeader$f_t_next_sysdate.srf
+$PBExportComments$Call Server's System Date
+global type f_t_next_sysdate from function_object
+end type
+
+forward prototypes
+global function datetime f_t_next_sysdate (datetime arg_dateset)
+end prototypes
+
+global function datetime f_t_next_sysdate (datetime arg_dateset);datetime d_1		
+select TRUNC(:arg_dateset)+1  into :d_1 from dual ;
+f_sql_check()
+return d_1
+end function
+

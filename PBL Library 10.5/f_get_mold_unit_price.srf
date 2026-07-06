@@ -1,0 +1,33 @@
+HA$PBExportHeader$f_get_mold_unit_price.srf
+global type f_get_mold_unit_price from function_object
+end type
+
+forward prototypes
+global function decimal f_get_mold_unit_price (string as_supplier_code, string as_mold_code)
+end prototypes
+
+global function decimal f_get_mold_unit_price (string as_supplier_code, string as_mold_code);decimal lvd_unit_price,  lvd_price
+string lvs_currency 
+select  unit_price, currency 
+into    :lvd_unit_price , :lvs_currency
+from   imcn_mold_unit_price
+where mold_code      =     :as_mold_code 
+and    supplier_code  =    :as_supplier_code
+and   dateset <= trunc(sysdate)
+and   dateend >= trunc(sysdate)
+and    organization_id  = :gvi_organization_id ; 
+
+if f_sql_check() < 0 then 
+	return -2
+end if 
+
+if sqlca.sqlcode = 100 then
+   messagebox('Notify',"Unit Price Not Found  => Supplier Code = "+as_supplier_code+'  Mold Code='+as_mold_code)
+   return  -2	
+end if
+
+gst_return.gvs_return[1] = lvs_currency
+
+return lvd_unit_price
+end function
+

@@ -1,0 +1,85 @@
+HA$PBExportHeader$d_mcn_jig_squeeze_check_lst_4_dashboard.srd
+$PBExportComments$D_MCN_MOLD_RENT_MLST Create Date :2007-03-17 Created By : ADMIN
+release 10.5;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no grid.lines=0 )
+header(height=124 color="536870912" )
+summary(height=64 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=64 color="536870912" )
+table(column=(type=char(30) update=yes updatewhereclause=yes key=yes name=jig_code dbname="imcn_jig_squeze_check.jig_code" )
+ column=(type=number update=yes updatewhereclause=yes key=yes name=organization_id dbname="imcn_jig_squeze_check.organization_id" )
+ column=(type=datetime update=yes updatewhereclause=yes name=jig_check_date dbname="imcn_jig_squeze_check.jig_check_date" )
+ column=(type=char(1) update=yes updatewhereclause=yes name=jig_check_status dbname="imcn_jig_squeze_check.jig_check_status" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=line_code dbname="imcn_jig_squeze_check.line_code" )
+ column=(type=char(1) update=yes updatewhereclause=yes name=clean_yn dbname="imcn_jig_squeze_check.clean_yn" values="Y	Y/N	N/" )
+ column=(type=char(1) update=yes updatewhereclause=yes name=confirm_yn dbname="imcn_jig_squeze_check.confirm_yn" )
+ column=(type=datetime update=yes updatewhereclause=yes name=confirm_date dbname="imcn_jig_squeze_check.confirm_date" )
+ column=(type=char(1000) update=yes updatewhereclause=yes name=comments dbname="imcn_jig_squeze_check.comments" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=enter_by dbname="imcn_jig_squeze_check.enter_by" )
+ column=(type=datetime update=yes updatewhereclause=yes name=enter_date dbname="imcn_jig_squeze_check.enter_date" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=last_modify_by dbname="imcn_jig_squeze_check.last_modify_by" )
+ column=(type=datetime update=yes updatewhereclause=yes name=last_modify_date dbname="imcn_jig_squeze_check.last_modify_date" )
+ column=(type=number update=yes updatewhereclause=yes key=yes name=jig_check_sequence dbname="imcn_jig_squeze_check.jig_check_sequence" )
+ column=(type=char(20) update=yes updatewhereclause=yes key=yes name=jig_lot_no dbname="imcn_jig_squeze_check.jig_lot_no" )
+ column=(type=number updatewhereclause=yes name=break_value dbname="imcn_jig_squeze_check.break_value" )
+ column=(type=number updatewhereclause=yes name=hit_value dbname="imcn_jig_squeze_check.hit_value" )
+ column=(type=char(1) update=yes updatewhereclause=yes name=pin_hole_yn dbname="imcn_jig_squeze_check.pin_hole_yn" values="Y	Y/N	N/" )
+ retrieve="  SELECT ~"IMCN_JIG_SQUEZE_CHECK~".~"JIG_CODE~",   
+         ~"IMCN_JIG_SQUEZE_CHECK~".~"ORGANIZATION_ID~",   
+         ~"IMCN_JIG_SQUEZE_CHECK~".~"JIG_CHECK_DATE~",   
+         ~"IMCN_JIG_SQUEZE_CHECK~".~"JIG_CHECK_STATUS~",   
+         ~"IMCN_JIG_SQUEZE_CHECK~".~"LINE_CODE~",   
+         ~"IMCN_JIG_SQUEZE_CHECK~".~"CLEAN_YN~",   
+         ~"IMCN_JIG_SQUEZE_CHECK~".~"CONFIRM_YN~",   
+         ~"IMCN_JIG_SQUEZE_CHECK~".~"CONFIRM_DATE~",   
+         ~"IMCN_JIG_SQUEZE_CHECK~".~"COMMENTS~",   
+         ~"IMCN_JIG_SQUEZE_CHECK~".~"ENTER_BY~",   
+         ~"IMCN_JIG_SQUEZE_CHECK~".~"ENTER_DATE~",   
+         ~"IMCN_JIG_SQUEZE_CHECK~".~"LAST_MODIFY_BY~",   
+         ~"IMCN_JIG_SQUEZE_CHECK~".~"LAST_MODIFY_DATE~",   
+         ~"IMCN_JIG_SQUEZE_CHECK~".~"JIG_CHECK_SEQUENCE~",   
+         ~"IMCN_JIG_SQUEZE_CHECK~".~"JIG_LOT_NO~",   
+         ~"IMCN_JIG_SQUEZE_CHECK~".~"BREAK_VALUE~",   
+         ~"IMCN_JIG_SQUEZE_CHECK~".~"HIT_VALUE~",   
+         ~"IMCN_JIG_SQUEZE_CHECK~".~"PIN_HOLE_YN~"  
+    FROM ~"IMCN_JIG_SQUEZE_CHECK~"  
+   WHERE ( ~"IMCN_JIG_SQUEZE_CHECK~".~"JIG_LOT_NO~" = :arg_jig_lot_no ) OR  
+         ~"IMCN_JIG_SQUEZE_CHECK~".~"JIG_LOT_NO~" = :arg_jig_lot_no2    
+" update="IMCN_JIG_SQUEZE_CHECK" updatewhere=0 updatekeyinplace=no arguments=(("arg_jig_lot_no", string),("arg_jig_lot_no2", string))  sort="jig_check_date D " )
+text(band=header alignment="2" text="JIG Check Sequence" border="0" color="33554432" x="850" y="8" height="112" width="151" html.valueishtml="0"  name=jig_check_sequence_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Line Code" border="0" color="33554432" x="1824" y="8" height="112" width="233" html.valueishtml="0"  name=line_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Clean Yn" border="0" color="33554432" x="2066" y="8" height="112" width="320" html.valueishtml="0"  name=clean_yn_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Jig Lot No" border="0" color="33554432" x="1362" y="8" height="112" width="453" html.valueishtml="0"  name=jig_lot_no_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="JIG Code" border="0" color="33554432" x="1010" y="8" height="112" width="343" html.valueishtml="0"  name=jig_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Jig Check Date" border="0" color="33554432" x="146" y="8" height="112" width="695" html.valueishtml="0"  name=jig_check_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="JIG Check Status" border="0" color="33554432" x="2738" y="8" height="112" width="581" html.valueishtml="0"  name=jig_check_status_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Confirm Yn" border="0" color="33554432" x="3963" y="8" height="112" width="329" html.valueishtml="0"  name=confirm_yn_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Confirm Date" border="0" color="33554432" x="4302" y="8" height="112" width="681" html.valueishtml="0"  name=confirm_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Comments" border="0" color="33554432" x="4992" y="8" height="112" width="1472" html.valueishtml="0"  name=comments_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Break Value" border="0" color="33554432" x="3657" y="8" height="112" width="297" html.valueishtml="0"  name=break_value_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=header alignment="2" text="Hit Value" border="0" color="33554432" x="3328" y="8" height="112" width="320" html.valueishtml="0"  name=hit_value_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=header alignment="2" text="Pin Hole Yn" border="0" color="33554432" x="2395" y="8" height="112" width="334" html.valueishtml="0"  name=pin_hole_yn_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+column(band=detail id=3 alignment="2" tabsequence=10 border="0" color="33554432" x="146" y="0" height="60" width="695" format="[shortdate] [time]" html.valueishtml="0"  name=jig_check_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=14 alignment="0" tabsequence=32766 border="0" color="33554432" x="850" y="4" height="60" width="151" format="[general]" html.valueishtml="0"  name=jig_check_sequence visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=5 alignment="2" tabsequence=40 border="0" color="33554432" x="1824" y="4" height="60" width="233" format="[general]" html.valueishtml="0"  name=line_code visible="1" dddw.name=vd_line_code dddw.displaycolumn=line_name dddw.datacolumn=line_code dddw.percentwidth=400 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=yes dddw.case=any dddw.hscrollbar=yes dddw.vscrollbar=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=6 alignment="2" tabsequence=50 border="0" color="33554432" x="2066" y="4" height="60" width="320" format="[general]" html.valueishtml="0"  name=clean_yn visible="1" ddlb.limit=0 ddlb.allowedit=no ddlb.case=any ddlb.vscrollbar=yes ddlb.useasborder=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=15 alignment="2" tabsequence=30 border="0" color="33554432" x="1362" y="4" height="60" width="453" format="[general]" html.valueishtml="0"  name=jig_lot_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=1 alignment="2" tabsequence=20 border="0" color="33554432" x="1010" y="4" height="60" width="343" format="[general]" html.valueishtml="0"  name=jig_code visible="1" edit.limit=30 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+compute(band=detail alignment="0" expression="GETROW()"border="0" color="33554432" x="9" y="4" height="60" width="128" format="[GENERAL]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=4 alignment="2" tabsequence=70 border="0" color="33554432" x="2738" y="4" height="60" width="581" format="[general]" html.valueishtml="0"  name=jig_check_status visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=400 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=yes dddw.case=any dddw.hscrollbar=yes dddw.vscrollbar=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=7 alignment="0" tabsequence=100 border="0" color="33554432" x="3963" y="4" height="60" width="329" format="[general]" html.valueishtml="0"  name=confirm_yn visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=400 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=yes dddw.case=any dddw.hscrollbar=yes dddw.vscrollbar=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=8 alignment="0" tabsequence=110 border="0" color="33554432" x="4302" y="4" height="60" width="681" format="yyyy/mm/dd" html.valueishtml="0"  name=confirm_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=9 alignment="0" tabsequence=120 border="0" color="33554432" x="4992" y="4" height="60" width="1472" format="[general]" html.valueishtml="0"  name=comments visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=16 alignment="1" tabsequence=90 border="0" color="33554432" x="3657" y="4" height="60" width="297" format="[general]" html.valueishtml="0"  name=break_value visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=17 alignment="1" tabsequence=80 border="0" color="33554432" x="3328" y="4" height="60" width="320" format="[general]" html.valueishtml="0"  name=hit_value visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=18 alignment="2" tabsequence=60 border="0" color="33554432" x="2395" y="4" height="60" width="334" format="[general]" html.valueishtml="0"  name=pin_hole_yn visible="1" ddlb.limit=0 ddlb.allowedit=no ddlb.case=any ddlb.useasborder=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()

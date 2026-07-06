@@ -1,0 +1,64 @@
+HA$PBExportHeader$d_com_label_file_write_popup.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=12632256 processing=1 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no grid.lines=0 )
+header(height=124 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=72 color="536870912" )
+table(column=(type=char(30) updatewhereclause=yes name=run_no dbname="ip_product_run_card.run_no" dbalias="r.run_no" )
+ column=(type=char(4000) updatewhereclause=yes name=plan_yymdd dbname="plan_yymdd" )
+ column=(type=char(4000) updatewhereclause=yes name=line_code dbname="line_code" )
+ column=(type=char(4) updatewhereclause=yes name=start_serial dbname="start_serial" )
+ column=(type=number updatewhereclause=yes name=lot_size dbname="ip_product_run_card.lot_size" dbalias="r.lot_size" )
+ column=(type=number updatewhereclause=yes name=carrier_size dbname="ip_product_run_card.carrier_size" dbalias="r.carrier_size" )
+ column=(type=char(4000) updatewhereclause=yes name=hw_version dbname="hw_version" )
+ column=(type=char(4000) updatewhereclause=yes name=sw_version dbname="sw_version" )
+ column=(type=char(4000) updatewhereclause=yes name=index_no dbname="index_no" )
+ retrieve="
+  select r.run_no,
+            to_char(r.run_date,'YY')  ||F_GET_MONTH_CODE2(to_char(r.run_date, 'MM'))  ||to_char(r.run_date,'DD') plan_YYMDD,                      
+            f_get_basecode('LINE CODE', r.line_code,'K', 1) line_code,
+            (
+              select substr(min(serial_no),7,4)
+                from ip_product_2d_barcode
+               where run_no = r.run_no
+            )  start_serial ,                                                      
+            r.lot_size,
+            r.carrier_size,                                                        
+       //     NVL(F_GET_MODEL_INFO_4_MODEL(model_name, 1, 'HW_VERSION'),'')  HW_VERSION,
+       //     NVL(F_GET_MODEL_INFO_4_MODEL(model_name, 1, 'SW_VERSION'),'')  SW_VERSION,
+      //      NVL(F_GET_MODEL_INFO_4_MODEL(model_name, 1, 'INDEX'),'')             INDEX_NO  
+            F_GET_MODEL_INFO_4_BCR(:arg_run_no, 'HW_VERSION')                        HW_VERSION,
+            F_GET_MODEL_INFO_4_BCR(:arg_run_no, 'SW_VERSION')                        SW_VERSION,
+            F_GET_MODEL_INFO_4_BCR(:arg_run_no, 'INDEX')                                    INDEX_NO                                                   
+      FROM ip_product_run_card r
+     WHERE run_no = :arg_run_no" arguments=(("arg_run_no", string))  sort="run_no A " )
+text(band=header alignment="2" text="Start Serial" border="0" color="33554432" x="1239" y="4" height="116" width="320" html.valueishtml="0"  name=start_serial_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Lot Size" border="0" color="33554432" x="1568" y="4" height="116" width="306" html.valueishtml="0"  name=lot_size_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Line Code" border="0" color="33554432" x="960" y="4" height="116" width="270" html.valueishtml="0"  name=line_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Run No" border="0" color="33554432" x="119" y="4" height="116" width="462" html.valueishtml="0"  name=run_no_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Plan YYMDD" border="0" color="33554432" x="590" y="4" height="116" width="361" html.valueishtml="0"  name=plan_yymdd_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Carrier Size" border="0" color="33554432" x="1883" y="4" height="116" width="315" html.valueishtml="0"  name=carrier_size_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="HW Version" border="0" color="33554432" x="2208" y="4" height="116" width="302" html.valueishtml="0"  name=hw_version_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="SW Version" border="0" color="33554432" x="2519" y="4" height="116" width="320" html.valueishtml="0"  name=sw_version_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Index No" border="0" color="33554432" x="2848" y="4" height="116" width="265" html.valueishtml="0"  name=index_no_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+compute(band=detail alignment="0" expression="GETROW()"border="0" color="33554432" x="9" y="8" height="64" width="101" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="33554432" x="119" y="0" height="76" width="462" format="[general]" html.valueishtml="0"  name=run_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="33554432" x="590" y="0" height="76" width="361" format="[general]" html.valueishtml="0"  name=plan_yymdd visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="0" color="33554432" x="1239" y="0" height="76" width="320" format="[general]" html.valueishtml="0"  name=start_serial visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=5 alignment="2" tabsequence=32766 border="0" color="33554432" x="1568" y="0" height="76" width="306" format="[general]" html.valueishtml="0"  name=lot_size visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="0" color="33554432" x="960" y="0" height="76" width="270" format="[general]" html.valueishtml="0"  name=line_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=6 alignment="2" tabsequence=32766 border="0" color="33554432" x="1883" y="0" height="76" width="315" format="[general]" html.valueishtml="0"  name=carrier_size visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=7 alignment="2" tabsequence=32766 border="0" color="33554432" x="2213" y="0" height="76" width="297" format="[general]" html.valueishtml="0"  name=hw_version visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=8 alignment="2" tabsequence=32766 border="0" color="33554432" x="2523" y="0" height="76" width="315" format="[general]" html.valueishtml="0"  name=sw_version visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=9 alignment="2" tabsequence=32766 border="0" color="33554432" x="2853" y="0" height="76" width="261" format="[general]" html.valueishtml="0"  name=index_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()

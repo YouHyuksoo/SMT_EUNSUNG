@@ -1,0 +1,17 @@
+HA$PBExportHeader$f_object_role_check.srf
+global type f_object_role_check from function_object
+end type
+
+forward prototypes
+global function boolean f_object_role_check ()
+end prototypes
+
+global function boolean f_object_role_check ();IF GVI_USER_LEVEL = 1 THEN 
+	F_MSGBOX(9090) //$$HEX12$$98ccacb960d520008cad5cd574c72000c6c5b5c2c8b2e4b2$$ENDHEX$$.
+	RETURN FALSE
+	
+ELSE
+	RETURN TRUE
+END IF
+end function
+

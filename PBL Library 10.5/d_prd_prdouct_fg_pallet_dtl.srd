@@ -1,0 +1,98 @@
+HA$PBExportHeader$d_prd_prdouct_fg_pallet_dtl.srd
+$PBExportComments$$$HEX6$$0cd31bb8c1c038c1a9ba5db8$$ENDHEX$$
+release 10.5;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no grid.lines=0 )
+header(height=140 color="536870912" )
+summary(height=80 color="536870912" )
+footer(height=96 color="536870912" )
+detail(height=80 color="536870912" )
+table(column=(type=datetime updatewhereclause=yes name=receipt_date dbname="ip_product_pack_master.receipt_date" )
+ column=(type=datetime updatewhereclause=yes name=pallet_date dbname="ip_product_pack_master.pallet_date" )
+ column=(type=datetime updatewhereclause=yes name=ship_date dbname="ip_product_pack_master.ship_date" )
+ column=(type=char(50) updatewhereclause=yes key=yes name=pack_barcode dbname="ip_product_pack_master.pack_barcode" )
+ column=(type=char(2) updatewhereclause=yes name=pack_type dbname="ip_product_pack_master.pack_type" )
+ column=(type=char(30) updatewhereclause=yes name=model_name dbname="ip_product_pack_master.model_name" )
+ column=(type=char(30) updatewhereclause=yes name=part_no dbname="ip_product_pack_master.part_no" )
+ column=(type=number updatewhereclause=yes name=pack_qty dbname="ip_product_pack_master.pack_qty" )
+ column=(type=char(1) updatewhereclause=yes name=receipt_flag dbname="ip_product_pack_master.receipt_flag" )
+ column=(type=char(1) updatewhereclause=yes name=pallet_flag dbname="ip_product_pack_master.pallet_flag" )
+ column=(type=char(1) updatewhereclause=yes name=ship_flag dbname="ip_product_pack_master.ship_flag" )
+ column=(type=char(30) updatewhereclause=yes name=pallet_no dbname="ip_product_pack_master.pallet_no" )
+ column=(type=char(30) updatewhereclause=yes name=ship_no dbname="ip_product_pack_master.ship_no" )
+ column=(type=datetime updatewhereclause=yes name=pack_date dbname="ip_product_pack_master.pack_date" )
+ column=(type=number updatewhereclause=yes name=organization_id dbname="ip_product_pack_master.organization_id" )
+ column=(type=datetime updatewhereclause=yes name=last_modify_date dbname="ip_product_pack_master.last_modify_date" )
+ column=(type=char(20) updatewhereclause=yes name=last_modify_by dbname="ip_product_pack_master.last_modify_by" )
+ retrieve=" select 
+ 
+        receipt_date, 
+        pallet_date, 
+        ship_date, 
+        
+        pack_barcode, 
+        pack_type, 
+        model_name, 
+        part_no, 
+
+        pack_qty, 
+
+        receipt_flag, 
+
+        pallet_flag, 
+        ship_flag, 
+        pallet_no, 
+        ship_no, 
+        
+        pack_date, 
+        organization_id,
+        last_modify_date, 
+        last_modify_by
+
+   from ip_product_pack_master
+  where pallet_no = :arg_barcode   " update="ip_product_pack_master" updatewhere=1 updatekeyinplace=no arguments=(("arg_barcode", string)) )
+text(band=header alignment="2" text="Receipt Date" border="0" color="33554432" x="9" y="4" height="136" width="539" html.valueishtml="0"  name=receipt_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+text(band=header alignment="2" text="Ship Date" border="0" color="33554432" x="1074" y="4" height="136" width="498" html.valueishtml="0"  name=ship_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+text(band=header alignment="2" text="Pack Barcode" border="0" color="33554432" x="1582" y="4" height="136" width="759" html.valueishtml="0"  name=pack_barcode_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+text(band=header alignment="2" text="Pack Type" border="0" color="33554432" x="2350" y="4" height="136" width="325" html.valueishtml="0"  name=pack_type_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+text(band=header alignment="2" text="Model Name" border="0" color="33554432" x="2683" y="4" height="136" width="681" html.valueishtml="0"  name=model_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+text(band=header alignment="2" text="Part No" border="0" color="33554432" x="3707" y="4" height="136" width="553" html.valueishtml="0"  name=part_no_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+text(band=header alignment="2" text="Pallet No" border="0" color="33554432" x="4823" y="4" height="136" width="489" html.valueishtml="0"  name=pallet_no_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+text(band=header alignment="2" text="Ship No" border="0" color="33554432" x="5321" y="4" height="136" width="791" html.valueishtml="0"  name=ship_no_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+text(band=header alignment="2" text="Pack Date" border="0" color="33554432" x="6121" y="4" height="136" width="347" html.valueishtml="0"  name=pack_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+text(band=header alignment="2" text="Organization Id" border="0" color="33554432" x="7511" y="4" height="136" width="352" html.valueishtml="0"  name=organization_id_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+text(band=header alignment="2" text="Last Modify Date" border="0" color="33554432" x="6478" y="4" height="136" width="562" html.valueishtml="0"  name=last_modify_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+text(band=header alignment="2" text="Last Modify By" border="0" color="33554432" x="7049" y="4" height="136" width="453" html.valueishtml="0"  name=last_modify_by_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+text(band=header alignment="2" text="Pack Qty" border="0" color="33554432" x="3374" y="4" height="136" width="325" html.valueishtml="0"  name=pack_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+text(band=header alignment="2" text="Pallet Date" border="0" color="33554432" x="558" y="4" height="136" width="507" html.valueishtml="0"  name=pallet_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+text(band=header alignment="2" text="Receipt Flag" border="0" color="33554432" x="4270" y="4" height="136" width="183" html.valueishtml="0"  name=receipt_flag_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+text(band=header alignment="2" text="Pallet Flag" border="0" color="33554432" x="4462" y="4" height="136" width="187" html.valueishtml="0"  name=pallet_flag_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+text(band=header alignment="2" text="Ship Flag" border="0" color="33554432" x="4658" y="4" height="136" width="155" html.valueishtml="0"  name=ship_flag_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432" x="9" y="0" height="76" width="539" format="[shortdate] [time]" html.valueishtml="0"  name=receipt_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="33554432" x="1074" y="0" height="76" width="498" format="[shortdate] [time]" html.valueishtml="0"  name=ship_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="0" color="33554432" x="1582" y="0" height="76" width="759" format="[general]" html.valueishtml="0"  name=pack_barcode visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=5 alignment="2" tabsequence=32766 border="0" color="33554432" x="2350" y="0" height="76" width="325" format="[general]" html.valueishtml="0"  name=pack_type visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=6 alignment="0" tabsequence=32766 border="0" color="33554432" x="2683" y="0" height="76" width="681" format="[general]" html.valueishtml="0"  name=model_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=7 alignment="0" tabsequence=32766 border="0" color="33554432" x="3707" y="0" height="76" width="553" format="[general]" html.valueishtml="0"  name=part_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=12 alignment="2" tabsequence=32766 border="0" color="33554432" x="4823" y="0" height="76" width="489" format="[general]" html.valueishtml="0"  name=pallet_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=13 alignment="2" tabsequence=32766 border="0" color="33554432" x="5321" y="0" height="76" width="791" format="[general]" html.valueishtml="0"  name=ship_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=14 alignment="2" tabsequence=32766 border="0" color="33554432" x="6121" y="0" height="76" width="347" format="[shortdate]" html.valueishtml="0"  name=pack_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=15 alignment="2" tabsequence=32766 border="0" color="33554432" x="7511" y="0" height="76" width="352" format="[general]" html.valueishtml="0"  name=organization_id visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=16 alignment="2" tabsequence=32766 border="0" color="33554432" x="6478" y="0" height="76" width="562" format="[shortdate] [time]" html.valueishtml="0"  name=last_modify_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=17 alignment="2" tabsequence=32766 border="0" color="33554432" x="7049" y="0" height="76" width="453" format="[general]" html.valueishtml="0"  name=last_modify_by visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=8 alignment="1" tabsequence=32766 border="0" color="255" x="3374" y="0" height="76" width="325" format="###,###" html.valueishtml="0"  name=pack_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432" x="558" y="0" height="76" width="507" format="[shortdate] [time]" html.valueishtml="0"  name=pallet_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=9 alignment="2" tabsequence=32766 border="0" color="33554432" x="4270" y="0" height="76" width="183" format="[general]" html.valueishtml="0"  name=receipt_flag visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+column(band=detail id=10 alignment="2" tabsequence=32766 border="0" color="33554432" x="4462" y="0" height="76" width="187" format="[general]" html.valueishtml="0"  name=pallet_flag visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+column(band=detail id=11 alignment="2" tabsequence=32766 border="0" color="33554432" x="4658" y="0" height="76" width="155" format="[general]" html.valueishtml="0"  name=ship_flag visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+compute(band=summary alignment="1" expression="sum(pack_qty for all)"border="0" color="255" x="3374" y="4" height="72" width="325" format="###,###" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

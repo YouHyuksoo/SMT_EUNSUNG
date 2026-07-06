@@ -1,0 +1,29 @@
+HA$PBExportHeader$f_get_ip_address.srf
+$PBExportComments$Get IP or Mac Address
+global type f_get_ip_address from function_object
+end type
+
+forward prototypes
+global function string f_get_ip_address (string as_type)
+end prototypes
+
+global function string f_get_ip_address (string as_type);long wk_ip
+string ls_ip 
+ls_ip = space(50) 
+
+if as_type = 'IP'  then 
+	//-> IP Address $$HEX2$$94cd9ccd$$ENDHEX$$
+	GetIPAddress(ls_ip, 50) 
+
+else
+	//-> MAC Address $$HEX2$$94cd9ccd$$ENDHEX$$
+	GetMACAddress(ls_ip, 50)  
+end if
+
+if isnull(ls_ip) or ls_ip = '' then 
+	Return  '*'
+else
+	Return  ls_ip
+end if
+end function
+

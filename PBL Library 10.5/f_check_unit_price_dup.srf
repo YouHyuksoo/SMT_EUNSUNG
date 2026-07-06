@@ -1,0 +1,25 @@
+HA$PBExportHeader$f_check_unit_price_dup.srf
+global type f_check_unit_price_dup from function_object
+end type
+
+forward prototypes
+global function integer f_check_unit_price_dup (string arg_item_code, integer arg_org)
+end prototypes
+
+global function integer f_check_unit_price_dup (string arg_item_code, integer arg_org);int lvi_return
+select count(*) into :lvi_return
+ from im_item_unit_price 
+ where item_code = :arg_item_code
+ and organization_id =:arg_org
+ and dateset  <= trunc(sysdate)
+ and dateend >= trunc(sysdate)
+ group by  supplier_code , item_code , line_type  , organization_id 
+ having count(*) > 1 ;
+ 
+ if f_sql_check() < 0 then 
+	return -1
+end if 
+
+return lvi_return
+end function
+

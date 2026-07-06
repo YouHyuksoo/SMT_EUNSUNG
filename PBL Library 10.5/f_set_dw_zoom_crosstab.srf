@@ -1,0 +1,116 @@
+HA$PBExportHeader$f_set_dw_zoom_crosstab.srf
+$PBExportComments$Data Window $$HEX18$$edd3d0c52000deb9c4b35db82000c0d074c7c0d220000fbc20007cb778c7200070c815c8$$ENDHEX$$
+global type f_set_dw_zoom_crosstab from function_object
+end type
+
+forward prototypes
+global subroutine f_set_dw_zoom_crosstab (datawindow adw_dw)
+end prototypes
+
+global subroutine f_set_dw_zoom_crosstab (datawindow adw_dw);// Argument : adw_dw
+
+setpointer(hourglass!)
+
+integer	li_col,				&
+			li_objcount,		&
+			li_start,			&
+			li_end
+
+string		ls_dwhead,		&
+			ls_dwobject
+			
+long		ll_x,				&
+			ll_max,			&
+			ll_temp_x,		&
+			ll_temp_width,	&
+			ll_return
+
+if adw_dw.dataobject = '' then return
+if len(trim(adw_dw.Object.DataWindow.Objects )) = 0 then  return
+
+
+li_start	=	0
+ll_max	=	0
+ll_x		=	9
+
+// $$HEX14$$6cd05cb8a4c2edd074c7200044c5c8b274ba2000acb934d15cd5e4b2$$ENDHEX$$.
+
+if	adw_dw.Describe("DataWindow.Processing")	<> '4'		then	return
+
+adw_dw.setredraw(false)
+adw_dw.Modify("DataWindow.Crosstab.StaticMode='yes'")
+
+ls_dwobject = adw_dw.Object.DataWindow.Objects     // dw object list
+li_objcount = f_dual_lang_object_count(ls_dwobject)     		 // get object cou
+
+FOR	li_col = 1 to li_objcount
+		adw_dw.Modify("DataWindow.Crosstab.StaticMode='yes'")
+		li_end = pos(ls_dwobject, "~t", li_start + 1)
+		
+		IF	li_col < li_objcount then    // last object check
+			ls_dwhead = mid(ls_dwobject, li_start + 1, li_end - li_start - 1)	
+		ELSE
+			ls_dwhead = mid(ls_dwobject, li_start + 1, len(ls_dwobject) - li_start)
+		END IF
+		
+		CHOOSE CASE  adw_dw.describe (ls_dwhead + ".type")
+			CASE	"text", "column", "report", "compute"
+				ll_temp_x		=	long(adw_dw.describe(ls_dwhead + ".x"))
+				ll_temp_width	=	long(adw_dw.describe(ls_dwhead + ".x")) + long(adw_dw.describe(ls_dwhead + ".width"))
+				
+				// $$HEX22$$dcd0f8ad00ac200088c794b220001dacb4cc94b2200044be50ad200000b3c1c0d0c51cc11cc878c65cd5e4b2$$ENDHEX$$.
+				// $$HEX27$$a4c2dcd0f1d2a8badcb4d0c51cc194b22000dcd0f8ad00ac2000acc07cb7d0c93cc75cb8200084c7dcc25cb82000d0c6f4bc5cd5e4b2$$ENDHEX$$.
+				adw_dw.Modify("DataWindow.Crosstab.StaticMode='no'")
+				IF adw_dw.describe (ls_dwhead + ".tag") = '!' OR adw_dw.describe (ls_dwhead + ".tag") = '?' THEN
+						IF	ll_temp_width > ll_max	THEN
+							ll_max	=	ll_temp_width
+						END IF
+						IF	ll_temp_x < ll_x	THEN
+							ll_x		=	ll_temp_x
+						END IF
+				ELSE
+					//SKIP		
+				END IF
+		END CHOOSE
+		
+		li_start	=	li_end
+NEXT
+//w_emp_manpower.mle_1.text = adw_dw.describe("datawindow.syntax")
+// $$HEX33$$6cd05cb8a4c2edd078c72000bdacb0c67cb920006cd030ae7cb920006cad58d530ae04c774d52000b0c620c12000eccefcb744c72000e0ac15c874d5200000c9e4b2$$ENDHEX$$. ($$HEX7$$e0ac15c844c7200080d4b4c50cc9$$ENDHEX$$)
+//adw_dw.Modify("DataWindow.Crosstab.StaticMode='no'")
+li_start	=	0
+
+FOR	li_col = 1 to li_objcount
+		li_end = pos(ls_dwobject, "~t", li_start + 1)
+		
+		IF	li_col < li_objcount then    // last object check
+			ls_dwhead = mid(ls_dwobject, li_start + 1, li_end - li_start - 1)	
+		ELSE
+			ls_dwhead = mid(ls_dwobject, li_start + 1, len(ls_dwobject) - li_start)
+		END IF
+
+		CHOOSE CASE	UPPER(adw_dw.describe (ls_dwhead + ".tag"))
+			CASE	'FULL'
+				CHOOSE CASE  adw_dw.describe (ls_dwhead + ".type")
+					CASE	"line"
+						adw_dw.modify (ls_dwhead + ".x1 = '" + string(ll_x) + "'")
+						adw_dw.modify (ls_dwhead + ".x2 = '" + string(ll_max) + "'")
+					CASE ELSE
+						adw_dw.modify (ls_dwhead + ".x = '" + string(ll_x) + "'")
+						adw_dw.modify (ls_dwhead + ".width = '" + string(ll_max - ll_x) + "'")
+				END CHOOSE
+			CASE 'RIGHT'
+				CHOOSE CASE  adw_dw.describe (ls_dwhead + ".type")
+					CASE	"line"
+						adw_dw.modify (ls_dwhead + ".x1 = '" + string(long(adw_dw.describe(ls_dwhead + ".x1")) + ll_max - long(adw_dw.describe(ls_dwhead + ".x2"))) + "'")
+						adw_dw.modify (ls_dwhead + ".x2 = '" + string(ll_max) + "'")
+					CASE ELSE
+						adw_dw.modify (ls_dwhead + ".x = '" + string(long(adw_dw.describe(ls_dwhead + ".x")) + ll_max - (long(adw_dw.describe(ls_dwhead + ".x")) + long(adw_dw.describe(ls_dwhead + ".width")))) + "'")
+				END CHOOSE
+		END CHOOSE
+		li_start	=	li_end
+NEXT
+
+adw_dw.setredraw(true)
+end subroutine
+

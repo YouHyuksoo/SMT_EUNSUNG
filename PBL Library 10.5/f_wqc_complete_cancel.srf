@@ -1,0 +1,21 @@
+HA$PBExportHeader$f_wqc_complete_cancel.srf
+global type f_wqc_complete_cancel from function_object
+end type
+
+forward prototypes
+global function integer f_wqc_complete_cancel (string as_item_code, string as_inspect_no, integer al_org)
+end prototypes
+
+global function integer f_wqc_complete_cancel (string as_item_code, string as_inspect_no, integer al_org);update iq_product_wqc 
+      set complete_yn = 'N'
+where item_code = :as_item_code
+    and wqc_inspect_no = :as_inspect_no
+    and organization_id = :al_org ;
+
+if f_sql_check() < 0 then 
+	return -1
+end if
+
+return 1
+end function
+

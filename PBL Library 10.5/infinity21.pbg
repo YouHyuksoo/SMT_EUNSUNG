@@ -1,0 +1,25 @@
+Save Format v3.0(19990112)
+@begin Libraries
+ "infinity21.pbl" "";
+@end;
+@begin Objects
+ "st_return.srs" "infinity21.pbl";
+ "pfc_n_ir.sru" "infinity21.pbl";
+ "str_size.srs" "infinity21.pbl";
+ "driver_info_2.srs" "infinity21.pbl";
+ "st_set.srs" "infinity21.pbl";
+ "n_inet.sru" "infinity21.pbl";
+ "n_ir.sru" "infinity21.pbl";
+ "m_main_frame_menu.srm" "infinity21.pbl";
+ "job_info_1.srs" "infinity21.pbl";
+ "transaction1.sru" "infinity21.pbl";
+ "infinity21_jsmes.sra" "infinity21.pbl";
+ "st_edit_object.srs" "infinity21.pbl";
+ "st_dw_colinfo.srs" "infinity21.pbl";
+ "u_dw_xplistbar.sru" "infinity21.pbl";
+ "n_powerprinter.sru" "infinity21.pbl";
+ "cn_gradient.sru" "infinity21.pbl";
+ "systemtime.srs" "infinity21.pbl";
+ "pfc_n_inet.sru" "infinity21.pbl";
+ "qocinfo.srs" "infinity21.pbl";
+@end;

@@ -1,0 +1,11 @@
+HA$PBExportHeader$f_get_user_id.srf
+global type f_get_user_id from function_object
+end type
+
+forward prototypes
+global function string f_get_user_id ()
+end prototypes
+
+global function string f_get_user_id ();return Gvs_user_id
+end function
+

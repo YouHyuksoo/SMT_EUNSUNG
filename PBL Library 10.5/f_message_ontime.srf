@@ -1,0 +1,13 @@
+HA$PBExportHeader$f_message_ontime.srf
+$PBExportComments$Call Time MessageBox
+global type f_message_ontime from function_object
+end type
+
+forward prototypes
+global subroutine f_message_ontime (decimal on_Time, string on_Msg)
+end prototypes
+
+global subroutine f_message_ontime (decimal on_Time, string on_Msg);Gvf_time = on_Time
+openwithparm(w_message_ontime , on_Msg )
+end subroutine
+

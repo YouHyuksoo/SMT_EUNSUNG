@@ -1,0 +1,11 @@
+TRIGGER "INFINITY21_JSMES"."TRG_ISAL_SHIPPING_LOT_UPD" 
+ AFTER
+   UPDATE OF lot_complete_yn
+ ON isal_shipping_lot_master
+REFERENCING NEW AS NEW OLD AS OLD
+ FOR EACH ROW
+BEGIN
+   UPDATE isal_shipping_lot_detail
+      SET LOT_COMPLETE_YN = :NEW.LOT_COMPLETE_YN
+    WHERE lot_no = :NEW.lot_no;
+END;

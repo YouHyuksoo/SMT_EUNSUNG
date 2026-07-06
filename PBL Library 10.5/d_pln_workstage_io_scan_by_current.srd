@@ -1,0 +1,56 @@
+HA$PBExportHeader$d_pln_workstage_io_scan_by_current.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no grid.lines=0 )
+header(height=156 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=104 color="536870912" )
+table(column=(type=char(20) updatewhereclause=yes name=line_code dbname="ip_product_workstage_io.line_code" )
+ column=(type=char(20) updatewhereclause=yes name=workstage_code dbname="ip_product_workstage_io.workstage_code" )
+ column=(type=char(30) updatewhereclause=yes name=model_name dbname="ip_product_workstage_io.model_name" )
+ column=(type=char(10) updatewhereclause=yes name=model_suffix dbname="ip_product_workstage_io.model_suffix" )
+ column=(type=char(30) updatewhereclause=yes name=item_code dbname="ip_product_workstage_io.item_code" )
+ column=(type=number updatewhereclause=yes name=scan_actual dbname="scan_actual" )
+ column=(type=char(1) updatewhereclause=yes name=shift_code dbname="ip_product_workstage_io.shift_code" )
+ column=(type=datetime updatewhereclause=yes name=actual_date dbname="ip_product_workstage_io.actual_date" )
+ retrieve="select line_code, workstage_code, model_name, model_suffix, item_code, count(1) as scan_actual, 
+        shift_code , 
+
+       actual_date
+  from ip_product_workstage_io x 
+ where x.organization_id = :arg_org
+   and x.line_code           like :arg_line_code
+   and x.workstage_code  like :arg_workstage_code
+   and x.actual_date          =:arg_date 
+  group by actual_date, shift_code, line_code, workstage_code, item_code, model_name, model_suffix" arguments=(("arg_line_code", string),("arg_workstage_code", string),("arg_date", datetime),("arg_org", number))  sort="actual_date D shift_code A model_name A model_suffix A item_code A " )
+group(level=1 header.height=0 trailer.height=92 by=("actual_date" ) header.color="536870912" trailer.color="536870912" )
+group(level=2 header.height=0 trailer.height=0 by=("shift_code" ) header.color="536870912" trailer.color="536870912" )
+text(band=header alignment="2" text="Actual Date" border="0" color="33554432" x="9" y="8" height="140" width="535" html.valueishtml="0"  name=actual_date_t visible="1"  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+text(band=header alignment="2" text="Line Code" border="0" color="33554432" x="553" y="8" height="140" width="5" html.valueishtml="0"  name=line_code_t visible="1"  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+text(band=header alignment="2" text="Workstage Code" border="0" color="33554432" x="567" y="8" height="140" width="457" html.valueishtml="0"  name=workstage_code_t visible="1"  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+text(band=header alignment="2" text="Model Name" border="0" color="33554432" x="1033" y="8" height="140" width="599" html.valueishtml="0"  name=model_name_t visible="1"  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+text(band=header alignment="2" text="Model Suffix" border="0" color="33554432" x="1641" y="8" height="140" width="398" html.valueishtml="0"  name=model_suffix_t visible="1"  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+text(band=header alignment="2" text="Item Code" border="0" color="33554432" x="2048" y="8" height="140" width="571" html.valueishtml="0"  name=item_code_t visible="1"  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+text(band=header alignment="2" text="Scan Actual" border="0" color="33554432" x="3045" y="8" height="140" width="384" html.valueishtml="0"  name=scan_actual_t visible="1"  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+text(band=header alignment="2" text="Shift Code" border="0" color="33554432" x="2629" y="8" height="140" width="407" html.valueishtml="0"  name=shift_code_t visible="1"  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+column(band=detail id=8 alignment="2" tabsequence=32766 border="0" color="255" x="9" y="8" height="88" width="535" format="[shortdate]" html.valueishtml="0"  name=actual_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-12" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432" x="553" y="4" height="88" width="5" format="[general]" html.valueishtml="0"  name=line_code visible="1" dddw.name=vd_line_code dddw.displaycolumn=line_name dddw.datacolumn=line_code dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any dddw.showlist=yes  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432" x="567" y="8" height="88" width="457" format="[general]" html.valueishtml="0"  name=workstage_code visible="1" dddw.name=vd_workstage_code dddw.displaycolumn=workstage_name dddw.datacolumn=workstage_code dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=7 alignment="2" tabsequence=32766 border="0" color="33554432" x="2629" y="8" height="88" width="407" format="[general]" html.valueishtml="0"  name=shift_code visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=6 alignment="1" tabsequence=32766 border="0" color="65280" x="3045" y="8" height="88" width="384" format="###,###" html.valueishtml="0"  name=scan_actual visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-12" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="33554432" x="1033" y="8" height="88" width="599" format="[general]" html.valueishtml="0"  name=model_name visible="1" edit.limit=30 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-12" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="33554432" x="1641" y="8" height="88" width="398" format="[general]" html.valueishtml="0"  name=model_suffix visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-12" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="0" tabsequence=32766 border="0" color="33554432" x="2048" y="8" height="88" width="571" format="[general]" html.valueishtml="0"  name=item_code visible="1" edit.limit=30 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-12" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="1" expression="sum(scan_actual for group 2)"border="0" color="0" x="3045" y="4" height="76" width="384" format="###,###" html.valueishtml="0"  name=compute_2 visible="1"  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+compute(band=trailer.1 alignment="1" expression="sum(scan_actual for group 1)"border="0" color="255" x="3045" y="4" height="80" width="384" format="###,###" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-12" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

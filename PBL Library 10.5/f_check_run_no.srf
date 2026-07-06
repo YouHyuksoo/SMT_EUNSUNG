@@ -1,0 +1,28 @@
+HA$PBExportHeader$f_check_run_no.srf
+global type f_check_run_no from function_object
+end type
+
+forward prototypes
+global function integer f_check_run_no (string arg_run_no)
+end prototypes
+
+global function integer f_check_run_no (string arg_run_no);int lvi_return 
+
+select count(*) into :lvi_return
+from ip_product_run_card
+where run_no = :arg_run_no
+	and organization_id = :gvi_organization_id ;
+
+if f_sql_check() < 0 then 
+	return -1
+end if 
+
+if isnull(lvi_return) then 
+	return 0
+else
+	return lvi_return 
+end if 
+
+	 
+end function
+

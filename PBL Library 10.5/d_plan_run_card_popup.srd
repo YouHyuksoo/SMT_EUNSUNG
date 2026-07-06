@@ -1,0 +1,182 @@
+HA$PBExportHeader$d_plan_run_card_popup.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=16777215 processing=0 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no )
+header(height=1664 color="536870912" )
+summary(height=0 color="536870912" height.autosize=yes )
+footer(height=60 color="536870912" height.autosize=yes )
+detail(height=188 color="16777215" height.autosize=yes )
+table(column=(type=char(30) updatewhereclause=yes name=run_no dbname="ip_product_run_card.run_no" )
+ column=(type=char(32) updatewhereclause=yes name=run_no_label dbname="run_no_label" )
+ column=(type=datetime updatewhereclause=yes name=run_date dbname="run_date" )
+ column=(type=char(50) updatewhereclause=yes name=model_name dbname="ip_product_run_card.model_name" )
+ column=(type=char(30) updatewhereclause=yes name=a_rank_no dbname="ip_product_run_card.a_rank_no" )
+ column=(type=char(32) updatewhereclause=yes name=a_rank_label dbname="a_rank_label" )
+ column=(type=char(30) updatewhereclause=yes name=b_rank_no dbname="ip_product_run_card.b_rank_no" )
+ column=(type=char(32) updatewhereclause=yes name=b_rank_label dbname="b_rank_label" )
+ column=(type=char(10) updatewhereclause=yes name=line_code dbname="ip_product_run_card.line_code" )
+ column=(type=char(10) updatewhereclause=yes name=group_id dbname="ip_product_run_card.group_id" )
+ column=(type=char(12) updatewhereclause=yes name=group_id_label dbname="group_id_label" )
+ column=(type=number updatewhereclause=yes name=pcb_total_qty_1 dbname="ip_product_run_card.pcb_total_qty" )
+ column=(type=number updatewhereclause=yes name=pcb_sum_qty dbname="ip_product_run_card.pcb_sum_qty" )
+ column=(type=number updatewhereclause=yes name=led_total_qty dbname="ip_product_run_card.led_total_qty" )
+ column=(type=number updatewhereclause=yes name=led_sum_qty dbname="ip_product_run_card.led_sum_qty" )
+ column=(type=char(30) updatewhereclause=yes name=pcb_supplier_code dbname="ip_product_run_card.pcb_supplier_code" )
+ column=(type=char(30) updatewhereclause=yes name=a_item_lot_no dbname="ip_product_run_card_detail.a_item_lot_no" )
+ column=(type=char(32) updatewhereclause=yes name=a_item_lot_lable dbname="a_item_lot_lable" )
+ column=(type=char(30) updatewhereclause=yes name=ip_product_run_card_detail_b_item_lot_no dbname="ip_product_run_card_detail.b_item_lot_no" )
+ column=(type=char(32) updatewhereclause=yes name=b_item_lot_lable dbname="b_item_lot_lable" )
+ column=(type=char(30) updatewhereclause=yes name=a_item_code dbname="ip_product_run_card.a_item_code" )
+ column=(type=char(30) updatewhereclause=yes name=ip_product_run_card_b_item_code dbname="ip_product_run_card.b_item_code" )
+ column=(type=number updatewhereclause=yes name=lot_size dbname="ip_product_run_card.lot_size" )
+ column=(type=char(30) updatewhereclause=yes name=marking dbname="ip_product_run_card.marking" )
+ column=(type=char(32) updatewhereclause=yes name=marking_no dbname="marking_no" )
+ column=(type=char(1) updatewhereclause=yes name=product_run_type dbname="ip_product_run_card.product_run_type" )
+ column=(type=char(20) updatewhereclause=yes name=a_bin_code dbname="ip_product_run_card_detail.a_bin_code" )
+ column=(type=char(20) updatewhereclause=yes name=b_bin_code dbname="ip_product_run_card_detail.b_bin_code" )
+ column=(type=char(22) updatewhereclause=yes name=metalmask_code dbname="metalmask_code" )
+ column=(type=number updatewhereclause=yes name=a_item_qty dbname="ip_product_run_card_detail.a_item_qty" )
+ column=(type=number updatewhereclause=yes name=b_item_qty dbname="ip_product_run_card_detail.b_item_qty" )
+ retrieve="  SELECT ~"IP_PRODUCT_RUN_CARD~".~"RUN_NO~", 
+			'*'||UPPER(~"IP_PRODUCT_RUN_CARD~".~"RUN_NO~")||'*' RUN_NO_LABEL,   
+			TRUNC(~"IP_PRODUCT_RUN_CARD~".~"RUN_DATE~") RUN_DATE,   
+			~"IP_PRODUCT_RUN_CARD~".~"MODEL_NAME~",   
+			~"IP_PRODUCT_RUN_CARD~".~"A_RANK_NO~",  
+			'*'||UPPER(~"IP_PRODUCT_RUN_CARD~".~"A_RANK_NO~")||'*' A_RANK_LABEL,  
+			~"IP_PRODUCT_RUN_CARD~".~"B_RANK_NO~",  
+			'*'||UPPER(~"IP_PRODUCT_RUN_CARD~".~"B_RANK_NO~")||'*' B_RANK_LABEL,   
+			~"IP_PRODUCT_RUN_CARD~".~"LINE_CODE~",   
+			~"IP_PRODUCT_RUN_CARD~".~"GROUP_ID~", 
+			'*'|| UPPER(~"IP_PRODUCT_RUN_CARD~".~"GROUP_ID~")||'*' GROUP_ID_LABEL,    
+			~"IP_PRODUCT_RUN_CARD~".~"PCB_TOTAL_QTY~",   
+			~"IP_PRODUCT_RUN_CARD~".~"PCB_SUM_QTY~",   
+			~"IP_PRODUCT_RUN_CARD~".~"LED_TOTAL_QTY~",   
+			~"IP_PRODUCT_RUN_CARD~".~"LED_SUM_QTY~",   
+			~"IP_PRODUCT_RUN_CARD~".~"PCB_SUPPLIER_CODE~",   
+			~"IP_PRODUCT_RUN_CARD_DETAIL~".~"A_ITEM_LOT_NO~", 
+			'*'||  UPPER(~"IP_PRODUCT_RUN_CARD_DETAIL~".~"A_ITEM_LOT_NO~")||'*' A_ITEM_LOT_LABLE,  
+			~"IP_PRODUCT_RUN_CARD_DETAIL~".~"B_ITEM_LOT_NO~",   
+			'*'||  UPPER(~"IP_PRODUCT_RUN_CARD_DETAIL~".~"B_ITEM_LOT_NO~")||'*' B_ITEM_LOT_LABLE,  
+			~"IP_PRODUCT_RUN_CARD~".~"A_ITEM_CODE~",   
+			~"IP_PRODUCT_RUN_CARD~".~"B_ITEM_CODE~"  ,
+			~"IP_PRODUCT_RUN_CARD~".~"LOT_SIZE~" ,
+			~"IP_PRODUCT_RUN_CARD~".~"MARKING_NO~"  MARKING,
+			'*'||~"IP_PRODUCT_RUN_CARD~".~"MARKING_NO~" ||'*'  MARKING_NO ,
+			~"IP_PRODUCT_RUN_CARD~".~"PRODUCT_RUN_TYPE~" ,
+			IP_PRODUCT_RUN_CARD_DETAIL.A_BIN_CODE ,
+			IP_PRODUCT_RUN_CARD_DETAIL.B_BIN_CODE  ,
+			'*'||IP_PRODUCT_RUN_CARD.METALMASK_CODE||'*'   METALMASK_CODE ,
+			IP_PRODUCT_RUN_CARD_DETAIL.A_ITEM_QTY A_ITEM_QTY,
+			IP_PRODUCT_RUN_CARD_DETAIL.B_ITEM_QTY  B_ITEM_QTY
+    FROM ~"IP_PRODUCT_RUN_CARD~",   
+         ~"IP_PRODUCT_RUN_CARD_DETAIL~"  
+WHERE    ( ~"IP_PRODUCT_RUN_CARD~".~"RUN_NO~" = ~"IP_PRODUCT_RUN_CARD_DETAIL~".~"RUN_NO~"(+) ) 
+	AND    ( ~"IP_PRODUCT_RUN_CARD~".~"RUN_NO~" = :arg_run_no) 
+	AND    (~"IP_PRODUCT_RUN_CARD~".~"ORGANIZATION_ID~" = :arg_organization_id)
+" arguments=(("arg_run_no", string),("arg_organization_id", number)) )
+column(band=header id=9 alignment="2" tabsequence=32766 border="0" color="33554432" x="2985" y="36" height="136" width="347" format="[general]" html.valueishtml="0"  name=line_code visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-18" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=header id=23 alignment="2" tabsequence=32766 border="0" color="33554432" x="2985" y="224" height="100" width="347" format="[general]" html.valueishtml="0"  name=lot_size visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-18" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+line(band=header x1="2944" y1="8" x2="2944" y2="348"  name=l_14 visible="1" pen.style="0" pen.width="5" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+line(band=header x1="114" y1="564" x2="114" y2="888"  name=l_32 visible="1" pen.style="0" pen.width="5" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+line(band=header x1="2144" y1="560" x2="2144" y2="1128"  name=l_41 visible="1" pen.style="0" pen.width="5" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+line(band=header x1="864" y1="1244" x2="3369" y2="1244"  name=l_3 visible="1" pen.style="0" pen.width="5" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+line(band=header x1="119" y1="1376" x2="3369" y2="1376"  name=l_4 visible="1" pen.style="0" pen.width="5" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+line(band=header x1="119" y1="1128" x2="3369" y2="1128"  name=l_2 visible="1" pen.style="0" pen.width="5" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+text(band=header alignment="2" text="Line Code" border="0" color="33554432" x="2638" y="32" height="148" width="229" html.valueishtml="0"  name=ip_product_run_card_line_code_t visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+line(band=header x1="123" y1="532" x2="3365" y2="532"  name=l_13 visible="1" pen.style="0" pen.width="5" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+line(band=header x1="114" y1="344" x2="3365" y2="344"  name=l_16 visible="1" pen.style="0" pen.width="5" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+line(band=header x1="123" y1="440" x2="3365" y2="440"  name=l_25 visible="1" pen.style="0" pen.width="5" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+text(band=header alignment="2" text="LED RUN CARD" border="0" color="33554432" x="498" y="16" height="176" width="2025" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-24" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=header id=4 alignment="2" tabsequence=32766 border="0" color="33554432" x="896" y="216" height="108" width="1623" format="[general]" html.valueishtml="0"  name=model_name visible="1" edit.limit=50 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-16" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+line(band=header x1="114" y1="192" x2="3365" y2="192"  name=l_17 visible="1" pen.style="0" pen.width="5" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+line(band=header x1="114" y1="4" x2="3369" y2="4"  name=l_18 visible="1" pen.style="0" pen.width="5" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+line(band=header x1="859" y1="1144" x2="859" y2="1380"  name=l_8 visible="1" pen.style="0" pen.width="5" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+line(band=header x1="1714" y1="1132" x2="1714" y2="1376"  name=l_9 visible="1" pen.style="0" pen.width="5" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+line(band=header x1="119" y1="1648" x2="3369" y2="1648"  name=l_29 visible="1" pen.style="0" pen.width="5" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+line(band=header x1="114" y1="8" x2="114" y2="1652"  name=l_6 visible="1" pen.style="0" pen.width="5" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+text(band=header alignment="2" text="Model Name" border="0" color="33554432" x="128" y="236" height="76" width="718" html.valueishtml="0"  name=model_name_t visible="1"  font.face="Tahoma" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+line(band=header x1="2144" y1="348" x2="2144" y2="560"  name=l_28 visible="1" pen.style="0" pen.width="5" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+line(band=header x1="859" y1="192" x2="859" y2="1144"  name=l_33 visible="1" pen.style="0" pen.width="5" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+line(band=header x1="2944" y1="348" x2="2944" y2="536"  name=l_34 visible="1" pen.style="0" pen.width="5" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+line(band=header x1="2565" y1="12" x2="2565" y2="1132"  name=l_40 visible="1" pen.style="0" pen.width="5" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+line(band=header x1="3365" y1="4" x2="3365" y2="1648"  name=l_7 visible="1" pen.style="0" pen.width="5" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+line(band=header x1="1518" y1="348" x2="1518" y2="532"  name=l_27 visible="1" pen.style="0" pen.width="5" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+column(band=header id=3 alignment="2" tabsequence=32766 border="0" color="33554432" x="128" y="456" height="64" width="718" format="YYYY-MM-DD" html.valueishtml="0"  name=run_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="Lot Size" border="0" color="33554432" x="2601" y="232" height="76" width="315" html.valueishtml="0"  name=t_4 visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+line(band=header x1="1207" y1="348" x2="1207" y2="532"  name=l_26 visible="1" pen.style="0" pen.width="5" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+text(band=header alignment="2" text="Marking" border="0" color="33554432" x="338" y="936" height="76" width="347" html.valueishtml="0"  name=t_21 visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+line(band=header x1="114" y1="856" x2="2149" y2="856"  name=l_37 visible="1" pen.style="0" pen.width="5" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+text(band=header alignment="2" text="LED RANK" border="0" color="33554432" x="137" y="1216" height="76" width="695" html.valueishtml="0"  name=t_3 visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+line(band=header x1="142" y1="1664" x2="3342" y2="1664"  name=l_54 visible="1" pen.style="0" pen.width="32" pen.color="65535"  background.mode="2" background.color="1073741824" )
+report(band=header dataobject="d_des_pcb_item_4_run_card_nup" x="535" y="1420" height="192" width="2816" border="0"  height.autosize=yes criteria="" nest_arguments=((" model_name ")) trail_footer = yes  name=dw_1 visible="1"  slideup=directlyabove )
+column(band=header id=24 alignment="2" tabsequence=32766 border="0" color="33554432" x="878" y="900" height="76" width="1234" format="[general]" html.valueishtml="0"  name=marking visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=header id=25 alignment="2" tabsequence=32766 border="0" color="33554432" x="878" y="1000" height="108" width="1234" format="[general]" html.valueishtml="0"  name=marking_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Free 3 of 9" font.height="-18" font.weight="400"  font.family="1" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="WH CG" border="0" color="33554432" x="2587" y="360" height="64" width="343" html.valueishtml="0"  name=t_16 visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=header alignment="2" text="WS CG" border="0" color="33554432" x="2587" y="456" height="64" width="343" html.valueishtml="0"  name=t_17 visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+line(band=header x1="859" y1="984" x2="2144" y2="984"  name=l_5 visible="1" pen.style="0" pen.width="5" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+line(band=header x1="2149" y1="984" x2="3365" y2="984"  name=l_12 visible="1" pen.style="0" pen.width="5" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+line(band=header x1="859" y1="692" x2="2144" y2="692"  name=l_1 visible="1" pen.style="0" pen.width="5" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+column(band=header id=1 alignment="2" tabsequence=32766 border="0" color="33554432" x="887" y="580" height="84" width="1225" format="[general]" html.valueishtml="0"  name=run_no visible="1" edit.limit=30 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-12" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=header id=2 alignment="2" tabsequence=32766 border="0" color="33554432" x="878" y="724" height="96" width="1234" format="[general]" html.valueishtml="0"  name=run_no_label visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Free 3 of 9" font.height="-20" font.weight="400"  font.family="1" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="Run No" border="0" color="33554432" x="128" y="628" height="116" width="718" html.valueishtml="0"  name=ip_product_run_card_run_no_t visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="Group Id" border="0" color="33554432" x="2597" y="1152" height="72" width="370" html.valueishtml="0"  name=ip_product_run_card_group_id_t visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+line(band=header x1="521" y1="1380" x2="521" y2="1644"  name=l_20 visible="1" pen.style="0" pen.width="5" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+line(band=header x1="2565" y1="1132" x2="2565" y2="1376"  name=l_21 visible="1" pen.style="0" pen.width="5" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+text(band=header alignment="2" text="A Rank No" border="0" color="33554432" x="910" y="1144" height="88" width="361" html.valueishtml="0"  name=ip_product_run_card_a_rank_no_t visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+line(band=header x1="1289" y1="1132" x2="1289" y2="1244"  name=l_19 visible="1" pen.style="0" pen.width="5" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+column(band=header id=5 alignment="2" tabsequence=32766 border="0" color="33554432" x="1317" y="1148" height="88" width="370" format="[general]" html.valueishtml="0"  name=a_rank_no visible="1" edit.limit=30 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=header id=6 alignment="2" tabsequence=32766 border="0" color="33554432" x="905" y="1264" height="96" width="782" format="[general]" html.valueishtml="0"  name=a_rank_label visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Free 3 of 9" font.height="-20" font.weight="400"  font.family="1" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="B Rank No" border="0" color="33554432" x="1755" y="1144" height="88" width="361" html.valueishtml="0"  name=ip_product_run_card_b_rank_no_t visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+line(band=header x1="2144" y1="1132" x2="2144" y2="1248"  name=l_10 visible="1" pen.style="0" pen.width="5" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+column(band=header id=7 alignment="2" tabsequence=32766 border="0" color="33554432" x="2190" y="1148" height="88" width="370" format="[general]" html.valueishtml="0"  name=b_rank_no visible="1" edit.limit=30 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=header id=8 alignment="2" tabsequence=32766 border="0" color="33554432" x="1737" y="1264" height="96" width="782" format="[general]" html.valueishtml="0"  name=b_rank_label visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Free 3 of 9" font.height="-20" font.weight="400"  font.family="1" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=header id=10 alignment="2" tabsequence=32766 border="0" color="33554432" x="3013" y="1140" height="88" width="338" format="[general]" html.valueishtml="0"  name=group_id visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=header id=11 alignment="2" tabsequence=32766 border="0" color="33554432" x="2693" y="1260" height="104" width="544" format="[general]" html.valueishtml="0"  name=group_id_label visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Free 3 of 9" font.height="-20" font.weight="400"  font.family="1" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+line(band=header x1="2994" y1="1132" x2="2994" y2="1248"  name=l_23 visible="1" pen.style="0" pen.width="5" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+report(band=header dataobject="d_des_cnt_item_4_run_card_nup" x="2578" y="552" height="116" width="791" border="0"  height.autosize=yes criteria="" nest_arguments=((" model_name ")) trail_footer = yes  name=dw_2 visible="1"  slideleft=yes  slideup=directlyabove )
+text(band=header alignment="2" text="CNT" border="0" color="33554432" x="2171" y="708" height="64" width="379" html.valueishtml="0"  name=t_2 visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=header id=26 alignment="2" tabsequence=32766 border="0" color="33554432" x="192" y="28" height="144" width="224" format="[general]" html.valueishtml="0"  name=product_run_type visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any dddw.autoretrieve=no  font.face="Tahoma" font.height="-18" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="Run Date" border="0" color="33554432" x="123" y="356" height="76" width="727" html.valueishtml="0"  name=ip_product_run_card_run_date_t visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="Remain Qty" border="0" color="33554432" x="2171" y="360" height="68" width="379" html.valueishtml="0"  name=t_20 visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+line(band=header x1="1842" y1="348" x2="1842" y2="532"  name=l_15 visible="1" pen.style="0" pen.width="5" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+column(band=header id=16 alignment="2" tabsequence=32766 border="0" color="33554432" x="151" y="1544" height="64" width="343" format="[general]" html.valueishtml="0"  name=pcb_supplier_code visible="1" edit.limit=30 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="PCB Barcode" border="0" color="33554432" x="146" y="1404" height="76" width="343" html.valueishtml="0"  name=t_19 visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+line(band=header x1="119" y1="1504" x2="521" y2="1504"  name=l_31 visible="1" pen.style="0" pen.width="5" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+text(band=header alignment="2" text="Metal Mask" border="0" color="33554432" x="2171" y="1024" height="64" width="379" html.valueishtml="0"  name=t_7 visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=header id=29 alignment="0" tabsequence=32766 border="0" color="33554432" x="2629" y="1004" height="104" width="672" format="[general]" html.valueishtml="0"  name=metalmask_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Free 3 of 9" font.height="-20" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="Pcb Sum" border="0" color="33554432" x="878" y="356" height="64" width="315" html.valueishtml="0"  name=t_6 visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="Pcb Total" border="0" color="33554432" x="1225" y="356" height="64" width="279" html.valueishtml="0"  name=pcd_total_qty_t visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="Led Sum" border="0" color="33554432" x="1545" y="356" height="64" width="279" html.valueishtml="0"  name=t_5 visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="Led Total" border="0" color="33554432" x="1856" y="356" height="64" width="274" html.valueishtml="0"  name=ip_product_run_card_led_total_qty_t visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=header id=13 alignment="2" tabsequence=32766 border="0" color="33554432" x="878" y="456" height="60" width="315" format="[general]" html.valueishtml="0"  name=pcb_sum_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=header id=12 alignment="2" tabsequence=32766 border="0" color="33554432" x="1225" y="456" height="60" width="279" format="[general]" html.valueishtml="0"  name=pcb_total_qty_1 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=header id=15 alignment="2" tabsequence=32766 border="0" color="33554432" x="1545" y="456" height="60" width="279" format="[general]" html.valueishtml="0"  name=led_sum_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=header id=14 alignment="2" tabsequence=32766 border="0" color="33554432" x="1856" y="456" height="60" width="274" format="[general]" html.valueishtml="0"  name=led_total_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+line(band=detail x1="114" y1="180" x2="3374" y2="180"  name=l_11 visible="1" pen.style="0" pen.width="5" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+line(band=detail x1="1216" y1="0" x2="1216" y2="184"  name=l_24 visible="1" pen.style="0" pen.width="5" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+line(band=detail x1="114" y1="76" x2="3374" y2="76"  name=l_42 visible="1" pen.style="0" pen.width="5" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+line(band=detail x1="2171" y1="0" x2="2171" y2="184"  name=l_22 visible="1" pen.style="0" pen.width="5" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+line(band=detail x1="1783" y1="0" x2="1783" y2="184"  name=l_38 visible="1" pen.style="0" pen.width="5" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+line(band=detail x1="1499" y1="0" x2="1499" y2="184"  name=l_30 visible="1" pen.style="0" pen.width="5" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+column(band=detail id=30 alignment="2" tabsequence=32766 border="0" color="33554432" x="1518" y="92" height="68" width="247" format="[general]" html.valueishtml="0"  name=a_item_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=27 alignment="2" tabsequence=32766 border="0" color="33554432" x="1518" y="4" height="68" width="247" format="[general]" html.valueishtml="0"  name=a_bin_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=17 alignment="0" tabsequence=32766 border="0" color="33554432" x="128" y="4" height="64" width="1056" format="[general]" html.valueishtml="0"  name=a_item_lot_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=19 alignment="0" tabsequence=32766 border="0" color="33554432" x="2231" y="4" height="64" width="1115" format="[general]" html.valueishtml="0"  name=b_item_lot_no visible="1" edit.limit=30 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=31 alignment="2" tabsequence=32766 border="0" color="33554432" x="1842" y="92" height="68" width="247" format="[general]" html.valueishtml="0"  name=b_item_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=28 alignment="2" tabsequence=32766 border="0" color="33554432" x="1842" y="4" height="68" width="247" format="[general]" html.valueishtml="0"  name=b_bin_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=18 alignment="0" tabsequence=32766 border="0" color="33554432" x="128" y="92" height="76" width="1056" format="[general]" html.valueishtml="0"  name=a_item_lot_lable visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Free 3 of 9" font.height="-22" font.weight="400"  font.family="1" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=20 alignment="0" tabsequence=32766 border="0" color="33554432" x="2231" y="92" height="76" width="1115" format="[general]" html.valueishtml="0"  name=b_item_lot_lable visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Free 3 of 9" font.height="-22" font.weight="400"  font.family="1" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=detail alignment="1" text="Bin Code" border="0" color="33554432" x="1230" y="4" height="52" width="219" html.valueishtml="0"  name=t_11 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=detail alignment="1" text="Qty" border="0" color="33554432" x="1257" y="92" height="52" width="197" html.valueishtml="0"  name=t_8 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="'Page ' + page() + ' of ' + pageCount()"border="0" color="33554432" x="1417" y="4" height="52" width="699" format="[general]" html.valueishtml="0"  name=page_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=footer alignment="1" text="RUn Card Bottom Document" border="0" color="33554432" x="2267" y="4" height="52" width="1088" html.valueishtml="0"  name=t_73 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

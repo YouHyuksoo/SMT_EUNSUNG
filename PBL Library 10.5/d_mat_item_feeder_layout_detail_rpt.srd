@@ -1,0 +1,74 @@
+HA$PBExportHeader$d_mat_item_feeder_layout_detail_rpt.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=16777215 processing=4 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no  crosstab.dynamic = yes grid.lines=0 grid.columnmove=no selected.mouse=no )
+header[1](height=0 color="536870912" )
+header[2](height=60 color="536870912" )
+header[3](height=52 color="536870912" )
+header[4](height=120 color="536870912" )
+summary(height=76 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=72 color="536870912" )
+table(column=(type=char(20) updatewhereclause=yes name=id_eng_bom_smt_child_item_code dbname="id_eng_bom_smt_child_item_code" )
+ column=(type=char(20) updatewhereclause=yes name=id_item_item_name dbname="id_item_item_name" )
+ column=(type=char(20) updatewhereclause=yes name=id_item_item_spec dbname="id_item_item_spec" )
+ column=(type=char(20) updatewhereclause=yes name=id_item_location_address dbname="id_item_location_address" )
+ column=(type=char(20) updatewhereclause=yes name=id_item_msl_level dbname="id_item_msl_level" )
+ column=(type=number updatewhereclause=yes name=inventory_qty dbname="inventory_qty" )
+ column=(type=number updatewhereclause=yes name=id_eng_bom_smt_item_unit_qty dbname="id_eng_bom_smt_item_unit_qty" )
+ column=(type=number updatewhereclause=yes name=workstage_inventory_qty dbname="workstage_inventory_qty" )
+ retrieve="  SELECT ~"ID_ENG_BOM_SMT~".~"CHILD_ITEM_CODE~",   
+         ~"ID_ENG_BOM_SMT~".~"LINE_CODE~",   
+         ~"ID_ENG_BOM_SMT~".~"ITEM_UNIT_QTY~",   
+         ~"ID_ENG_BOM_SMT~".~"PCB_ITEM~",   
+         ( select sum(inventory_qty) from im_item_inventory b where b.item_code = id_eng_bom_smt.child_item_code ) inventory_qty,   
+         ~"ID_ITEM~".~"ITEM_NAME~",   
+         ~"ID_ITEM~".~"ITEM_SPEC~",   
+         ~"ID_ITEM~".~"LOCATION_ADDRESS~",   
+         ~"ID_ITEM~".~"MSL_LEVEL~",   
+         ~"ID_ITEM~".~"MATERIAL_QTY~",   
+         ~"ID_ITEM~".~"MATERIAL_QTY2~",   
+         ( select sum(inventory_qty) from im_item_workstage_inventory b where b.item_code = id_eng_bom_smt.child_item_code and b.line_code = id_eng_bom_smt.line_code ) workstage_inventory_qty  
+    FROM ~"ID_ENG_BOM_SMT~",   
+         ~"ID_ITEM~"  
+   WHERE ( id_eng_bom_smt.child_item_code = id_item.item_code (+)) and  
+         ( id_eng_bom_smt.organization_id = id_item.organization_id (+)) and  
+          ( ~"ID_ENG_BOM_SMT~".~"CHILD_ITEM_CODE~" like :arg_item_code ) AND  
+        ( NVL( ~"ID_ITEM~".~"KEYITEM_YN~",'N')  like :arg_keyitem_yn ) AND  
+         ( ~"ID_ENG_BOM_SMT~".~"PARENT_ITEM_CODE~" like :arg_model_name )   
+" arguments=(("arg_item_code", string),("arg_model_name", string),("arg_keyitem_yn", string))  sort="id_eng_bom_smt_child_item_code A id_item_item_name A id_item_item_spec A id_item_location_address A id_item_msl_level A inventory_qty A " )
+text(band=header[1] alignment="0" text="Id Eng Bom Smt Line Code" border="0" color="0" x="544" y="4" height="52" width="603" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header[1] alignment="0" text="Id Eng Bom Smt Pcb Item" border="0" color="0" x="1157" y="4" height="52" width="530" html.valueishtml="0"  name=t_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header[2] alignment="2" text="@id_eng_bom_smt_line_code" border="0" color="0" x="2382" y="4" height="52" width="425" html.valueishtml="0"  name=t_3 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65280" )
+text(band=header[3] alignment="2" text="@id_eng_bom_smt_pcb_item" border="0" color="0" x="2382" y="4" height="52" width="425" html.valueishtml="0"  name=t_8 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65280" )
+text(band=header[4] alignment="2" text="Item Code" border="0" color="0" x="9" y="4" height="108" width="526" html.valueishtml="0"  name=id_eng_bom_smt_child_item_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[4] alignment="2" text=" Item Name" border="0" color="0" x="544" y="4" height="108" width="603" html.valueishtml="0"  name=id_item_item_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[4] alignment="2" text=" Item Spec" border="0" color="0" x="1157" y="4" height="108" width="530" html.valueishtml="0"  name=id_item_item_spec_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[4] alignment="2" text=" Location Address" border="0" color="0" x="1696" y="4" height="108" width="215" html.valueishtml="0"  name=id_item_location_address_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[4] alignment="2" text="MSL Level" border="0" color="0" x="1920" y="4" height="108" width="197" html.valueishtml="0"  name=id_item_msl_level_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[4] alignment="2" text="Inventory Qty" border="0" color="0" x="2126" y="4" height="108" width="247" html.valueishtml="0"  name=inventory_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[4] alignment="2" text="Unit Qty" border="0" color="0" x="2382" y="4" height="108" width="137" html.valueishtml="0"  name=id_eng_bom_smt_item_unit_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[4] alignment="2" text=" Workstage Inventory Qty" border="0" color="0" x="2528" y="4" height="108" width="274" html.valueishtml="0"  name=workstage_inventory_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="33554432" x="9" y="4" height="64" width="526" format="[general]" html.valueishtml="0"  name=id_eng_bom_smt_child_item_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="0" color="33554432" x="1696" y="4" height="64" width="215" format="[general]" html.valueishtml="0"  name=id_item_location_address visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="2" tabsequence=32766 border="0" color="33554432" x="1920" y="4" height="64" width="197" format="[general]" html.valueishtml="0"  name=id_item_msl_level visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=6 alignment="1" tabsequence=32766 border="0" color="33554432" x="2126" y="4" height="64" width="247" format="###,###,##0" html.valueishtml="0"  name=inventory_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=7 alignment="2" tabsequence=32766 border="0" color="33554432" x="2382" y="4" height="64" width="137" format="[general]" html.valueishtml="0"  name=id_eng_bom_smt_item_unit_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes crosstab.repeat=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=8 alignment="1" tabsequence=32766 border="0" color="33554432" x="2528" y="4" height="64" width="274" format="[general]" html.valueishtml="0"  name=workstage_inventory_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes crosstab.repeat=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432" x="544" y="4" height="64" width="603" format="[general]" html.valueishtml="0"  name=id_item_item_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="33554432" x="1157" y="4" height="64" width="530" format="[general]" html.valueishtml="0"  name=id_item_item_spec visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="~"Grand Total~""border="0" color="0" x="9" y="4" height="64" width="526" format="[general]" html.valueishtml="0"  name=compute_36 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="2" expression="sum(id_eng_bom_smt_item_unit_qty for all )"border="0" color="33554432" x="2382" y="4" height="64" width="137" format="[general]" html.valueishtml="0"  name=compute_37 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(workstage_inventory_qty for all )"border="0" color="33554432" x="2528" y="4" height="64" width="274" format="[general]" html.valueishtml="0"  name=compute_38 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+ crosstab(band = foreground  crosstabonly = yes 
+ columns = "id_eng_bom_smt_line_code, id_eng_bom_smt_pcb_item" rows = "id_eng_bom_smt_child_item_code, id_item_item_name, id_item_item_spec, id_item_location_address, id_item_msl_level, inventory_qty" values = "sum(id_eng_bom_smt_item_unit_qty for crosstab), sum(workstage_inventory_qty for crosstab)" sourcenames = "id_eng_bom_smt_child_item_code, id_eng_bom_smt_line_code, id_eng_bom_smt_item_unit_qty, id_eng_bom_smt_pcb_item, inventory_qty, id_item_item_name, id_item_item_spec, id_item_location_address, id_item_msl_level, id_item_material_qty, id_item_material_qty2, workstage_inventory_qty")
+sparse(names="id_eng_bom_smt_child_item_code	id_item_item_name	id_item_item_spec	id_item_location_address	id_item_msl_level")htmltable(border="0" cellpadding="1" cellspacing="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

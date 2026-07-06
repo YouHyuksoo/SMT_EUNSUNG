@@ -1,0 +1,80 @@
+HA$PBExportHeader$f_set_column_visible.srf
+global type f_set_column_visible from function_object
+end type
+
+forward prototypes
+global subroutine f_set_column_visible (datawindow adw_name)
+end prototypes
+
+global subroutine f_set_column_visible (datawindow adw_name);int li_objcount , li_start , li_col2 , li_end , lvi_visible
+string ls_dwobject , ls_dwhead  
+datawindowchild idw_child
+
+//=============================================
+// Datawindow Updatetable Name Descibe
+//=============================================
+//lvs_table_name = adw_name.Describe( "DataWindow.Table.UpdateTable")
+
+//=============================================
+//
+//=============================================
+
+ls_dwobject = adw_name.dataobject
+
+if len(trim(ls_dwobject)) = 0 or isnull(ls_dwobject) then 
+   return
+end if
+//=============================================
+//
+//=============================================
+
+ls_dwobject = adw_name.Object.DataWindow.Objects     // dw object list
+if len(trim(ls_dwobject)) = 0 then 
+   return 
+end if
+//=============================================
+//
+//=============================================
+			
+ls_dwobject = adw_name.Object.DataWindow.Objects 
+
+li_objcount = f_dual_lang_object_count(ls_dwobject)  // get object count
+li_start = 0
+//=============================================
+//
+//=============================================
+
+for li_col2 = 1 to li_objcount
+	li_end = pos(ls_dwobject, "~t", li_start + 1)
+	
+	if li_col2 < li_objcount then    // last object check
+		ls_dwhead = mid(ls_dwobject, li_start + 1, li_end - li_start - 1)	
+	else
+		ls_dwhead = mid(ls_dwobject, li_start + 1, len(ls_dwobject) - li_start)
+	end if
+
+		//================================================
+		//  $$HEX7$$eccefcb7200010ac94cd30ae2000$$ENDHEX$$
+		//================================================
+	
+		 select COUNT(*)  into :lvi_visible
+		  from iv_set_column_visible
+		  where upper(column_name) = upper(:ls_dwhead) 
+		     and  nvl(visible_yn , 'N')  = 'N' ;
+		
+		
+		  if lvi_visible > 0  then 
+			  adw_name.Modify( ls_dwhead+".visible = 0" )
+		 else
+			  adw_name.Modify( ls_dwhead+".visible = 1" )			
+		  end if
+	
+		//================================================
+		//
+		//================================================		
+	//	f_dual_lang_change_dddw(adw_name, ls_dwhead) //$$HEX6$$e4b26dadb4c5200009000900$$ENDHEX$$
+			
+	li_start = li_end
+next
+end subroutine
+

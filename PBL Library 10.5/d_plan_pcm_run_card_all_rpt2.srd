@@ -1,0 +1,211 @@
+HA$PBExportHeader$d_plan_pcm_run_card_all_rpt2.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=16777215 processing=0 HTMLDW=yes print.printername="" print.documentname="Run Card" print.orientation = 0 print.margin.left = 0 print.margin.right = 0 print.margin.top = 0 print.margin.bottom = 0 print.paper.source = 7 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no )
+header(height=1296 color="536870912" )
+summary(height=0 color="536870912" height.autosize=yes )
+footer(height=88 color="536870912" height.autosize=yes )
+detail(height=100 color="16777215" height.autosize=yes )
+table(column=(type=char(30) updatewhereclause=yes name=run_no dbname="ip_product_run_card.run_no" )
+ column=(type=char(32) updatewhereclause=yes name=run_no_label dbname="run_no_label" )
+ column=(type=datetime updatewhereclause=yes name=run_date dbname="run_date" )
+ column=(type=char(100) updatewhereclause=yes name=model_name dbname="ip_product_run_card.model_name" )
+ column=(type=char(2000) updatewhereclause=yes name=model_name_label dbname="model_name_label" )
+ column=(type=char(100) updatewhereclause=yes name=b_model_name dbname="ip_product_model_master.b_model_name" )
+ column=(type=char(10) updatewhereclause=yes name=line_code dbname="ip_product_run_card.line_code" )
+ column=(type=char(12) updatewhereclause=yes name=line_code_label dbname="line_code_label" )
+ column=(type=number updatewhereclause=yes name=lot_size dbname="ip_product_run_card.lot_size" )
+ column=(type=char(1) updatewhereclause=yes name=product_run_type dbname="ip_product_run_card.product_run_type" )
+ column=(type=char(2000) updatewhereclause=yes name=comments dbname="ip_product_run_card.comments" )
+ column=(type=char(4000) updatewhereclause=yes name=metalmask_code dbname="metalmask_code" )
+ column=(type=char(4000) updatewhereclause=yes name=metalmask_code_label dbname="metalmask_code_label" )
+ column=(type=char(4000) updatewhereclause=yes name=sample_code dbname="sample_code" )
+ column=(type=char(4000) updatewhereclause=yes name=sample_code_label dbname="sample_code_label" )
+ column=(type=char(30) updatewhereclause=yes name=item_code dbname="ip_product_run_card.item_code" )
+ column=(type=char(30) updatewhereclause=yes name=parent_item_code dbname="ip_product_run_card.parent_item_code" )
+ column=(type=char(104) updatewhereclause=yes name=model_part_image dbname="model_part_image" )
+ column=(type=char(30) updatewhereclause=yes name=lot_no dbname="ip_product_run_card.lot_no" )
+ column=(type=char(30) updatewhereclause=yes name=marking_no dbname="ip_product_run_card.marking_no" )
+ column=(type=char(50) updatewhereclause=yes name=master_model_name dbname="ip_product_run_card.master_model_name" )
+ column=(type=char(20) updatewhereclause=yes name=mfs_group_no dbname="ip_product_run_card.mfs_group_no" )
+ column=(type=char(22) updatewhereclause=yes name=mfs_group_no_barcode dbname="mfs_group_no_barcode" )
+ column=(type=char(20) updatewhereclause=yes name=customer_code dbname="ip_product_model_master.customer_code" )
+ column=(type=char(30) updatewhereclause=yes name=item_code dbname="ip_product_model_master.item_code" )
+ column=(type=char(100) updatewhereclause=yes name=model_spec dbname="ip_product_model_master.model_spec" )
+ column=(type=char(61) updatewhereclause=yes name=serial_no dbname="serial_no" )
+ column=(type=char(20) updatewhereclause=yes name=pcb_week dbname="ip_product_run_card.pcb_week" )
+ column=(type=char(4000) updatewhereclause=yes name=pcb_item dbname="pcb_item" )
+ column=(type=char(1) updatewhereclause=yes name=solder_type dbname="ip_product_model_master.solder_type" )
+ column=(type=char(50) updatewhereclause=yes name=smt_model_name dbname="ip_product_model_master.smt_model_name" )
+ retrieve="  SELECT IP_PRODUCT_RUN_CARD.RUN_NO,   
+			'*'||UPPER(IP_PRODUCT_RUN_CARD.RUN_NO)||'*' RUN_NO_LABEL,   
+			TRUNC(IP_PRODUCT_RUN_CARD.RUN_DATE) RUN_DATE,   
+
+			IP_PRODUCT_RUN_CARD.MODEL_NAME AS MODEL_NAME,   
+			// '*'||IP_PRODUCT_RUN_CARD.MODEL_NAME||'*' MODEL_NAME_LABEL,   
+              F_BACODE_CODE128( 'B' , ~"IP_PRODUCT_RUN_CARD~".~"MODEL_NAME~") MODEL_NAME_LABEL,   
+
+			B.MODEL_NAME AS B_MODEL_NAME, 
+			
+			IP_PRODUCT_RUN_CARD.LINE_CODE,   
+			'*'||IP_PRODUCT_RUN_CARD.LINE_CODE||'*' LINE_CODE_LABEL ,   
+			IP_PRODUCT_RUN_CARD.LOT_SIZE,   
+			IP_PRODUCT_RUN_CARD.PRODUCT_RUN_TYPE,   
+			IP_PRODUCT_RUN_CARD.COMMENTS,
+
+			// IP_PRODUCT_RUN_CARD.METALMASK_CODE,   
+			// '*'||IP_PRODUCT_RUN_CARD.METALMASK_CODE||'*' METALMASK_CODE_LABEL,   
+
+			(
+                 select listagg(jig_lot_no,', ') within group ( order by jig_lot_no )
+                  from imcn_jig
+                where jig_lot_no in (
+                                              select jig_lot_no
+                                                from imcn_jig_apply_model
+                                              where item_code = IP_PRODUCT_RUN_CARD.MODEL_NAME
+                                            )
+                   and jig_type = 'M'
+                   and use_status = 'U' 
+                   and jig_status = 'Z'
+                   and pcb_item = IP_PRODUCT_RUN_CARD.pcb_item
+                 group by jig_type
+              )  METALMASK_CODE,
+              
+              (
+                select listagg(location_address,', ') within group ( order by location_address )
+                 from imcn_jig
+                where jig_lot_no in (
+                                              select jig_lot_no
+                                                from imcn_jig_apply_model
+                                              where item_code = IP_PRODUCT_RUN_CARD.MODEL_NAME
+                                            )
+                   and jig_type = 'M'
+                   and use_status = 'U' 
+                   and jig_status = 'Z'
+                 group by jig_type
+              ) METALMASK_CODE_LABEL,
+
+             (
+                 select listagg(sample_lot_no,', ') within group ( order by sample_lot_no )
+                  from imcn_sample
+                where sample_lot_no in (
+                                              select sample_lot_no
+                                                from imcn_sample_apply_model
+                                              where item_code = IP_PRODUCT_RUN_CARD.MODEL_NAME
+                                            )
+                   and sample_type = 'S'
+                   and use_status = 'U' 
+                   and sample_status = 'Z'
+                 group by sample_type
+              )  SAMPLE_CODE,
+              
+              (
+                select listagg(location_address,', ') within group ( order by location_address )
+                 from imcn_sample
+                where sample_lot_no in (
+                                              select sample_lot_no
+                                                from imcn_sample_apply_model
+                                              where item_code = IP_PRODUCT_RUN_CARD.MODEL_NAME
+                                            )
+                   and sample_type = 'S'
+                   and use_status = 'U' 
+                   and sample_status = 'Z'
+                 group by sample_type
+              ) SAMPLE_CODE_LABEL,
+			
+			IP_PRODUCT_RUN_CARD.ITEM_CODE,   
+			IP_PRODUCT_RUN_CARD.PARENT_ITEM_CODE,   
+			IP_PRODUCT_RUN_CARD.MODEL_NAME||'.JPG' MODEL_PART_IMAGE ,
+			IP_PRODUCT_RUN_CARD.LOT_NO ,
+			IP_PRODUCT_RUN_CARD.MARKING_NO AS MARKING_NO ,
+			IP_PRODUCT_RUN_CARD.MASTER_MODEL_NAME MASTER_MODEL_NAME ,
+			IP_PRODUCT_RUN_CARD.MFS_GROUP_NO MFS_GROUP_NO ,
+			'*'||IP_PRODUCT_RUN_CARD.MFS_GROUP_NO||'*' MFS_GROUP_NO_BARCODE ,
+			B.CUSTOMER_CODE CUSTOMER_CODE ,
+			B.ITEM_CODE , 
+			B.MODEL_SPEC ,
+			( SELECT MIN(A.SERIAL_NO) ||'-'||MAX(A.SERIAL_NO) FROM IP_PRODUCT_2D_BARCODE A WHERE A.RUN_NO = IP_PRODUCT_RUN_CARD.RUN_NO ) SERIAL_NO  ,
+			IP_PRODUCT_RUN_CARD.PCB_WEEK AS PCB_WEEK,
+              F_GET_BASECODE('PCB ITEM', pcb_item, 'K', 1) pcb_item ,
+			B.SOLDER_TYPE  SOLDER_TYPE ,
+B.SMT_MODEL_NAME  SMT_MODEL_NAME
+
+    FROM IP_PRODUCT_RUN_CARD, IP_PRODUCT_MODEL_MASTER B   
+  
+   WHERE  IP_PRODUCT_RUN_CARD.MASTER_MODEL_NAME = B.MASTER_MODEL_NAME(+) AND 
+         IP_PRODUCT_RUN_CARD.ORGANIZATION_ID = B.ORGANIZATION_ID(+) AND 
+         IP_PRODUCT_RUN_CARD.RUN_NO IN ( :arg_run_no ) AND  
+         IP_PRODUCT_RUN_CARD.ORGANIZATION_ID = :arg_organization_id
+" arguments=(("arg_run_no", stringlist),("arg_organization_id", number))  sort="run_date A mfs_group_no A run_no A " )
+group(level=1 header.height=0 trailer.height=1988 by=("run_no" ) newpage=yes header.color="536870912" trailer.color="536870912" )
+line(band=header x1="82" y1="1288" x2="3342" y2="1288"  name=l_1 visible="1" pen.style="0" pen.width="14" pen.color="255"  background.mode="2" background.color="1073741824" )
+text(band=header alignment="2" text="Product Run Card" border="2" color="33554432" x="503" y="8" height="156" width="1815" html.valueishtml="0"  name=t_10 visible="1"  font.face="Tahoma" font.height="-24" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+column(band=header id=30 alignment="2" tabsequence=32766 border="2" color="33554432" x="0" y="180" height="156" width="489" format="[general]" html.valueishtml="0"  name=solder_type visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any  font.face="Tahoma" font.height="-22" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=header id=4 alignment="2" tabsequence=32766 border="0" color="33554432" x="549" y="220" height="120" width="1271" format="[general]" html.valueishtml="0"  name=model_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-14" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=header id=5 alignment="1" tabsequence=32766 border="0" color="33554432" x="1861" y="216" height="100" width="955" format="[general]" html.valueishtml="0"  name=model_name_label visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Code 128" font.height="-26" font.weight="400"  font.family="0" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=header id=9 alignment="2" tabsequence=32766 border="0" color="33554432" x="2885" y="544" height="164" width="480" format="###,##0" html.valueishtml="0"  name=lot_size visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-22" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Lot Size" border="0" color="0" x="2935" y="388" height="64" width="402" html.valueishtml="0"  name=t_26 visible="1"  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=header id=29 alignment="2" tabsequence=32766 border="2" color="33554432" x="2871" y="180" height="156" width="507" format="[general]" html.valueishtml="0"  name=pcb_item visible="1" edit.limit=0 edit.case=upper edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-22" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+rectangle(band=header x="23" y="768" height="272" width="3360"  name=r_1 visible="1" brush.hatch="6" brush.color="16777215" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=header x1="27" y1="868" x2="3378" y2="868"  name=l_2 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="0" )
+column(band=header id=27 alignment="2" tabsequence=32766 border="0" color="33554432" x="2519" y="784" height="68" width="841" format="[general]" html.valueishtml="0"  name=serial_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+line(band=header x1="2482" y1="768" x2="2482" y2="1036"  name=l_10 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="1073741824" )
+line(band=header x1="608" y1="768" x2="608" y2="1032"  name=l_11 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="1073741824" )
+line(band=header x1="2085" y1="768" x2="2085" y2="1036"  name=l_12 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="2" background.color="1073741824" )
+text(band=header alignment="2" text="Marking Charger" border="0" color="33554432" x="2107" y="916" height="52" width="366" html.valueishtml="0"  name=t_9 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Input Date and Name" border="0" color="12632256" x="2510" y="908" height="92" width="841" html.valueishtml="0"  name=t_11 visible="1"  font.face="Tahoma" font.height="-14" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="1" text="Serial No" border="0" color="33554432" x="2117" y="784" height="68" width="329" html.valueishtml="0"  name=t_6 visible="1"  font.face="Tahoma" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=header id=20 alignment="0" tabsequence=32766 border="0" color="33554432" x="1033" y="968" height="52" width="1029" format="[general]" html.valueishtml="0"  name=marking_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=header id=19 alignment="1" tabsequence=32766 border="0" color="33554432" x="1033" y="888" height="56" width="1029" format="[general]" html.valueishtml="0"  name=lot_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="1" text="Marking No" border="0" color="33554432" x="645" y="968" height="52" width="357" html.valueishtml="0"  name=t_58 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="1" text="Lot No" border="0" color="33554432" x="645" y="888" height="56" width="357" html.valueishtml="0"  name=t_45 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=header id=8 alignment="2" tabsequence=32766 border="0" color="33554432" x="155" y="896" height="116" width="329" format="[general]" html.valueishtml="0"  name=line_code_label visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Free 3 of 9" font.height="-32" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Line Code" border="0" color="33554432" x="155" y="784" height="68" width="329" html.valueishtml="0"  name=t_60 visible="1"  font.face="Tahoma" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=header id=7 alignment="2" tabsequence=32766 border="2" color="33554432" x="0" y="8" height="156" width="489" format="[general]" html.valueishtml="0"  name=line_code visible="1" dddw.name=vd_line_code dddw.displaycolumn=line_name dddw.datacolumn=line_code dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any  font.face="Tahoma" font.height="-24" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=header id=10 alignment="2" tabsequence=32766 border="2" color="33554432" x="2336" y="8" height="156" width="512" format="[general]" html.valueishtml="0"  name=product_run_type visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any  font.face="Tahoma" font.height="-24" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=header id=24 alignment="2" tabsequence=32766 border="2" color="33554432" x="2871" y="8" height="156" width="507" format="[general]" html.valueishtml="0"  name=customer_code visible="1" dddw.name=vd_customer_code dddw.displaycolumn=customer_name dddw.datacolumn=customer_code dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any  font.face="Tahoma" font.height="-24" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=header id=2 alignment="0" tabsequence=32766 border="0" color="33554432" x="1298" y="384" height="100" width="1399" format="[general]" html.valueishtml="0"  name=run_no_label visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Free 3 of 9" font.height="-22" font.weight="400"  font.family="1" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="1" text="PCB Week" border="0" color="33554432" x="23" y="652" height="64" width="453" html.valueishtml="0"  name=t_16 visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="1" text="Run No" border="0" color="33554432" x="23" y="400" height="64" width="453" html.valueishtml="0"  name=t_13 visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="1" text="MFS Group No" border="0" color="33554432" x="23" y="480" height="64" width="453" html.valueishtml="0"  name=t_3 visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="1" text="Master Model Name" border="0" color="33554432" x="23" y="576" height="52" width="453" html.valueishtml="0"  name=t_4 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="1" text="Run Date" border="0" color="33554432" x="1289" y="660" height="56" width="443" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=header id=28 alignment="0" tabsequence=32766 border="4" color="33554432" x="549" y="652" height="64" width="718" format="[general]" html.valueishtml="0"  name=pcb_week visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=header id=1 alignment="0" tabsequence=32766 border="4" color="33554432" x="549" y="400" height="64" width="718" format="[general]" html.valueishtml="0"  name=run_no visible="1" edit.limit=30 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=header id=22 alignment="0" tabsequence=32766 border="4" color="33554432" x="549" y="480" height="64" width="718" format="[general]" html.valueishtml="0"  name=mfs_group_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=header id=21 alignment="0" tabsequence=32766 border="4" color="33554432" x="549" y="572" height="56" width="718" format="[general]" html.valueishtml="0"  name=master_model_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="1" text="MatelMask Jig" border="0" color="33554432" x="32" y="1068" height="124" width="443" html.valueishtml="0"  name=t_15 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="1" text="Address" border="0" color="33554432" x="32" y="1208" height="52" width="443" html.valueishtml="0"  name=t_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=header id=13 alignment="0" tabsequence=32766 border="4" color="33554432" x="494" y="1208" height="52" width="1202" format="[general]" html.valueishtml="0"  name=metalmask_code_label visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=header id=12 alignment="0" tabsequence=32766 border="4" color="33554432" x="494" y="1068" height="124" width="1202" format="[general]" html.valueishtml="0"  name=metalmask_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="1" text=" Address" border="0" color="33554432" x="1714" y="1208" height="52" width="443" html.valueishtml="0"  name=t_14 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=header id=15 alignment="0" tabsequence=32766 border="4" color="33554432" x="2176" y="1208" height="52" width="1202" format="[general]" html.valueishtml="0"  name=sample_code_label visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="1" text="Sample Jig Code" border="0" color="33554432" x="1714" y="1068" height="124" width="443" html.valueishtml="0"  name=t_12 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=header id=14 alignment="0" tabsequence=32766 border="4" color="33554432" x="2176" y="1068" height="124" width="1202" format="[general]" html.valueishtml="0"  name=sample_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="1" text="SMT Model Name" border="0" color="33554432" x="1289" y="568" height="52" width="443" html.valueishtml="0"  name=t_7 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=header id=3 alignment="0" tabsequence=32766 border="4" color="33554432" x="1751" y="660" height="56" width="1029" format="yyyy/mm/dd" html.valueishtml="0"  name=run_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=header id=31 alignment="0" tabsequence=32766 border="4" color="33554432" x="1751" y="560" height="64" width="1029" format="[general]" html.valueishtml="0"  name=smt_model_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=6 alignment="0" tabsequence=32766 border="0" color="33554432" x="123" y="8" height="68" width="1042" format="[general]" html.valueishtml="0"  name=b_model_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=25 alignment="0" tabsequence=32766 border="0" color="33554432" x="1221" y="8" height="68" width="576" format="[general]" html.valueishtml="0"  name=item_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=26 alignment="0" tabsequence=32766 border="0" color="33554432" x="1838" y="8" height="68" width="1518" format="[general]" html.valueishtml="0"  name=model_spec visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+line(band=trailer.1 x1="82" y1="12" x2="3342" y2="12"  name=l_9 visible="1" pen.style="0" pen.width="14" pen.color="255"  background.mode="2" background.color="1073741824" )
+column(band=trailer.1 id=11 alignment="0" tabsequence=32766 border="4" color="33554432" x="82" y="1840" height="68" width="3259" format="[general]" html.valueishtml="0"  name=comments visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+line(band=trailer.1 x1="73" y1="1744" x2="3333" y2="1744"  name=l_69 visible="1" pen.style="0" pen.width="5" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+line(band=trailer.1 x1="78" y1="128" x2="3333" y2="128"  name=l_73 visible="1" pen.style="0" pen.width="5" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+line(band=trailer.1 x1="73" y1="132" x2="73" y2="1744"  name=l_70 visible="1" pen.style="0" pen.width="5" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+line(band=trailer.1 x1="3333" y1="132" x2="3333" y2="1744"  name=l_72 visible="1" pen.style="0" pen.width="5" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+column(band=trailer.1 id=18 alignment="0" tabsequence=32766 border="0" color="33554432" x="82" y="124" height="1608" width="3241" format="[general]" html.valueishtml="0"  name=model_part_image visible="1" bitmapname=yes edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="'Page ' + page() + ' of ' + pageCount()"border="0" color="33554432" x="1271" y="8" height="72" width="896" format="[general]" html.valueishtml="0"  name=page_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="1" expression="today()"border="0" color="33554432" x="2309" y="8" height="72" width="1029" format="[general]" html.valueishtml="0"  name=date_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="" border="2" color="0" x="2871" y="360" height="136" width="507" html.valueishtml="0"  name=t_8 visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="" border="2" color="0" x="2871" y="360" height="396" width="507" html.valueishtml="0"  name=t_5 visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

@@ -1,0 +1,162 @@
+HA$PBExportHeader$d_mat_material_model_sum_cost_lst.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=0 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no )
+header(height=468 color="536870912" )
+summary(height=100 color="536870912" )
+footer(height=92 color="536870912" )
+detail(height=96 color="536870912~tif ( mod(  getrow() , 2 )  = 0 , rgb(255,255,255) , rgb(219,219,219) )" )
+table(column=(type=char(20) updatewhereclause=yes key=yes name=item_code dbname="id_item.item_code" )
+ column=(type=number updatewhereclause=yes name=product_qty dbname="product_qty" )
+ column=(type=number updatewhereclause=yes name=net_meterial_amt dbname="id_item.net_meterial_amt" )
+ column=(type=number updatewhereclause=yes name=net_per_amt dbname="net_per_amt" )
+ column=(type=number updatewhereclause=yes name=input_meterial_amt dbname="id_item.input_meterial_amt" )
+ column=(type=number updatewhereclause=yes name=input_per_amt dbname="input_per_amt" )
+ column=(type=number updatewhereclause=yes name=total_meterial_amt dbname="id_item.total_meterial_amt" )
+ column=(type=number updatewhereclause=yes name=totla_per_amt dbname="totla_per_amt" )
+ column=(type=number updatewhereclause=yes name=distributed_cost dbname="id_item.distributed_cost" )
+ column=(type=number updatewhereclause=yes name=workstage_inventory_amt dbname="id_item.workstage_inventory_amt" )
+ column=(type=char(100) updatewhereclause=yes name=item_name dbname="id_item.item_name" )
+ column=(type=char(100) updatewhereclause=yes name=item_spec dbname="id_item.item_spec" )
+ column=(type=number updatewhereclause=yes name=conversion_cost dbname="conversion_cost" )
+ column=(type=number updatewhereclause=yes name=avg_sale_price dbname="avg_sale_price" )
+ column=(type=number updatewhereclause=yes key=yes name=organization_id dbname="id_item.organization_id" )
+ retrieve="SELECT  
+			A.ITEM_CODE                                                          AS ITEM_CODE, 
+			F_GET_PLAN_PRODUCT_ACTUAL_QTY( :ARG_YYYYMM , A.ITEM_CODE  , '' , 'ITEM' ,A.ORGANIZATION_ID )                                       AS PRODUCT_QTY,
+			A.CURR_NET_BOM_AMT                                                                             AS NET_METERIAL_AMT,
+			nvl(DECODE( F_GET_PLAN_PRODUCT_ACTUAL_QTY( :ARG_YYYYMM ,A.ITEM_CODE , '' , 'ITEM' , A.ORGANIZATION_ID ) , 0, 0, A.CURR_NET_BOM_AMT / F_GET_PLAN_PRODUCT_ACTUAL_QTY(:ARG_YYYYMM ,A.ITEM_CODE  , '' , 'ITEM' , A.ORGANIZATION_ID )  ) , 0 )          AS NET_PER_AMT, 
+			
+			A.CURR_INPUT_MATERIAL_AMT                                                                      AS INPUT_METERIAL_AMT,
+			nvl(DECODE( F_GET_PLAN_PRODUCT_ACTUAL_QTY(:ARG_YYYYMM ,A.ITEM_CODE  , '' , 'ITEM' , A.ORGANIZATION_ID ) , 0, 0, A.CURR_INPUT_MATERIAL_AMT / F_GET_PLAN_PRODUCT_ACTUAL_QTY(:ARG_YYYYMM ,A.ITEM_CODE  , '' , 'ITEM' , A.ORGANIZATION_ID )  ) , 0)  AS INPUT_PER_AMT,      
+			
+			A.CURR_TOTAL_MATERIAL_AMT                                                                      AS TOTAL_METERIAL_AMT,   
+			DECODE( F_GET_PLAN_PRODUCT_ACTUAL_QTY(:ARG_YYYYMM ,A.ITEM_CODE  , '' , 'ITEM' , A.ORGANIZATION_ID ) , 0, 0, A.CURR_TOTAL_MATERIAL_AMT /F_GET_PLAN_PRODUCT_ACTUAL_QTY(:ARG_YYYYMM ,A.ITEM_CODE  , '' , 'ITEM' , A.ORGANIZATION_ID ) )           AS TOTLA_PER_AMT,
+			
+			A.DISTRIBUTED_COST                                AS DISTRIBUTED_COST,
+			A.MM_WORKSTAGE_INVENTORY_AMT       AS WORKSTAGE_INVENTORY_AMT,
+			
+			B.ITEM_NAME                                              AS ITEM_NAME ,
+			B.ITEM_SPEC                                               AS ITEM_SPEC ,
+		    	
+			F_GET_CST_CONVERSION_COST(  SUBSTR(:ARG_YYYYMM, 4) , A.ITEM_CODE  , A.ORGANIZATION_ID ) AS CONVERSION_COST ,
+			F_GET_SAL_AVG_SALE_PRICE( :ARG_YYYYMM,  A.ITEM_CODE  , A.ORGANIZATION_ID ) AS AVG_SALE_PRICE ,
+			A.ORGANIZATION_ID                                         AS ORGANIZATION_ID
+
+FROM   (  SELECT 
+						ITEM_CODE                  AS ITEM_CODE,
+						ORGANIZATION_ID             AS ORGANIZATION_ID,
+						ROUND( SUM( DECODE( PLAN_YYYYMM, :ARG_YYYYMM, NET_BOM_AMT, 0 ) ), 5)         AS CURR_NET_BOM_AMT,
+						ROUND( SUM( DECODE( PLAN_YYYYMM, :ARG_YYYYMM, INPUT_MATERIAL_AMT, 0 ) ), 5)  AS CURR_INPUT_MATERIAL_AMT,
+						ROUND( SUM( DECODE( PLAN_YYYYMM, :ARG_YYYYMM, TOTAL_MATERIAL_COST, 0 ) ), 5) AS CURR_TOTAL_MATERIAL_AMT,
+						ROUND( SUM( DECODE( PLAN_YYYYMM, :ARG_YYYYMM, INPUT_CLAIM_AMT, 0 ) ), 5)     AS DISTRIBUTED_COST ,
+						ROUND( SUM( DECODE( PLAN_YYYYMM, :ARG_YYYYMM, MM_WORKSTAGE_INVENTORY_AMT, 0 ) ), 5)     AS MM_WORKSTAGE_INVENTORY_AMT 
+            	  FROM IM_ITEM_DETAIL_COST
+			WHERE ORGANIZATION_ID  = :ARG_ORG
+				AND PLAN_YYYYMM = :ARG_YYYYMM
+			     AND ITEM_CODE LIKE :ARG_ITEM_CODE
+				GROUP  BY ITEM_CODE,  ORGANIZATION_ID
+       ) A , ID_ITEM B
+WHERE A.ITEM_CODE   = B.ITEM_CODE(+)
+     AND A.ORGANIZATION_ID = B.ORGANIZATION_ID(+)" update="ID_ITEM" updatewhere=0 updatekeyinplace=no arguments=(("ARG_YYYYMM", string),("ARG_ITEM_CODE", string),("ARG_ORG", number))  sort="item_code A " )
+line(band=header x1="3259" y1="308" x2="3259" y2="468"  name=l_6 visible="1" pen.style="0" pen.width="9" pen.color="0"  background.mode="1" background.color="553648127" )
+line(band=header x1="5189" y1="308" x2="5189" y2="468"  name=l_15 visible="1" pen.style="0" pen.width="9" pen.color="0"  background.mode="1" background.color="553648127" )
+line(band=header x1="6034" y1="308" x2="6034" y2="468"  name=l_17 visible="1" pen.style="0" pen.width="9" pen.color="0"  background.mode="1" background.color="553648127" )
+line(band=header x1="4082" y1="308" x2="4082" y2="468"  name=l_8 visible="1" pen.style="0" pen.width="9" pen.color="0"  background.mode="1" background.color="553648127" )
+line(band=header x1="4521" y1="308" x2="4521" y2="468"  name=l_35 visible="1" pen.style="0" pen.width="9" pen.color="0"  background.mode="1" background.color="553648127" )
+text(band=header alignment="1" text="Workstage Inventory Amt" border="0" color="0" x="4101" y="320" height="124" width="402" html.valueishtml="0"  name=t_9 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="1" text="Diff Rate" border="0" color="0" x="4923" y="320" height="124" width="247" html.valueishtml="0"  name=t_6 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="1" text="Total Meterial Amt" border="0" color="0" x="5198" y="320" height="124" width="398" html.valueishtml="0"  name=total_meterial_amt_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="1" text="Totla Per Amt" border="0" color="0" x="5614" y="320" height="124" width="402" html.valueishtml="0"  name=totla_per_amt_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="1" text="Diff Amt" border="0" color="0" x="4535" y="320" height="124" width="375" html.valueishtml="0"  name=t_5 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="1" text="Net Per Amt" border="0" color="0" x="2418" y="320" height="124" width="389" html.valueishtml="0"  name=net_per_amt_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="1" text="Input Per Amt" border="0" color="0" x="3282" y="320" height="124" width="389" html.valueishtml="0"  name=input_per_amt_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="1" text="Input Meterial Amt" border="0" color="0" x="3689" y="320" height="124" width="389" html.valueishtml="0"  name=input_meterial_amt_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="1" text="Net Meterial Amt" border="0" color="0" x="2834" y="320" height="124" width="411" html.valueishtml="0"  name=net_meterial_amt_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+line(band=header x1="6427" y1="308" x2="6427" y2="468"  name=l_10 visible="1" pen.style="0" pen.width="9" pen.color="0"  background.mode="1" background.color="553648127" )
+text(band=header alignment="1" text="Distributed Cost" border="0" color="0" x="6053" y="320" height="124" width="357" html.valueishtml="0"  name=distributed_cost_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="1" text="Conversion Cost" border="0" color="0" x="6450" y="320" height="124" width="357" html.valueishtml="0"  name=t_13 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="1" text="Conversion Amt" border="0" color="0" x="6830" y="320" height="124" width="425" html.valueishtml="0"  name=t_14 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=header alignment="0" expression="today()"border="0" color="0" x="6871" y="212" height="64" width="393" format="[general]" html.valueishtml="0"  name=date_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="1" text="Print Date:" border="0" color="0" x="6560" y="212" height="56" width="293" html.valueishtml="0"  name=t_3 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+line(band=header x1="2395" y1="308" x2="2395" y2="468"  name=l_4 visible="1" pen.style="0" pen.width="9" pen.color="0"  background.mode="1" background.color="553648127" )
+line(band=header x1="9" y1="300" x2="9" y2="460"  name=l_12 visible="1" pen.style="0" pen.width="9" pen.color="0"  background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Material Cost  ( Set Item)" border="0" color="0" x="23" y="44" height="92" width="7273" html.valueishtml="0"  name=t_2 visible="1"  font.face="Tahoma" font.height="-14" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" font.underline="1" background.mode="1" background.color="553648127" )
+line(band=header x1="9" y1="304" x2="7278" y2="304"  name=l_1 visible="1" pen.style="0" pen.width="9" pen.color="0"  background.mode="1" background.color="553648127" )
+line(band=header x1="9" y1="460" x2="7282" y2="460"  name=l_2 visible="1" pen.style="0" pen.width="9" pen.color="0"  background.mode="1" background.color="553648127" )
+line(band=header x1="7278" y1="308" x2="7278" y2="468"  name=l_41 visible="1" pen.style="0" pen.width="9" pen.color="0"  background.mode="1" background.color="553648127" )
+text(band=header alignment="0" text="Item Name" border="0" color="0" x="576" y="320" height="124" width="338" html.valueishtml="0"  name=t_10 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="0" text="Item Spec" border="0" color="0" x="933" y="320" height="124" width="480" html.valueishtml="0"  name=t_11 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+line(band=header x1="1422" y1="308" x2="1422" y2="468"  name=l_26 visible="1" pen.style="0" pen.width="9" pen.color="0"  background.mode="1" background.color="553648127" )
+text(band=header alignment="0" text="No" border="0" color="0" x="23" y="320" height="124" width="133" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="0" text="Item Code" border="0" color="0" x="169" y="320" height="124" width="389" html.valueishtml="0"  name=item_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="1" text="Material Rate" border="0" color="0" x="2149" y="320" height="124" width="229" html.valueishtml="0"  name=t_8 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="1" text="Sale Price" border="0" color="0" x="1806" y="320" height="124" width="325" html.valueishtml="0"  name=t_12 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="1" text="Product Qty" border="0" color="0" x="1440" y="316" height="124" width="347" html.valueishtml="0"  name=product_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+line(band=detail x1="3259" y1="0" x2="3259" y2="88"  name=l_7 visible="1" pen.style="0" pen.width="9" pen.color="0"  background.mode="1" background.color="553648127" )
+compute(band=detail alignment="1" expression="if (input_per_amt = 0 , 0 ,  if ( net_per_amt = 0 , 100 ,  (net_per_amt - input_per_amt) / net_per_amt * 100 ))"border="0" color="0" x="4923" y="8" height="72" width="247" format="#,##0.00" html.valueishtml="0"  name=compute_3 visible="1"  font.face="Arial" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+line(band=detail x1="5189" y1="0" x2="5189" y2="88"  name=l_16 visible="1" pen.style="0" pen.width="9" pen.color="0"  background.mode="1" background.color="553648127" )
+line(band=detail x1="6034" y1="0" x2="6034" y2="88"  name=l_18 visible="1" pen.style="0" pen.width="9" pen.color="0"  background.mode="1" background.color="553648127" )
+line(band=detail x1="4082" y1="0" x2="4082" y2="88"  name=l_9 visible="1" pen.style="0" pen.width="9" pen.color="0"  background.mode="1" background.color="553648127" )
+line(band=detail x1="4521" y1="0" x2="4521" y2="88"  name=l_36 visible="1" pen.style="0" pen.width="9" pen.color="0"  background.mode="1" background.color="553648127" )
+line(band=detail x1="128" y1="92" x2="128" y2="208"  name=l_40 visible="1" pen.style="0" pen.width="9" pen.color="0"  background.mode="1" background.color="553648127" )
+column(band=detail id=7 alignment="1" tabsequence=32766 border="0" color="0" x="5198" y="4" height="76" width="398" format="#,###,##0.0000" html.valueishtml="0"  name=total_meterial_amt visible="1" edit.limit=0 edit.case=any edit.format="#,###,##0.00000000" edit.autoselect=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=8 alignment="1" tabsequence=32766 border="0" color="0" x="5614" y="4" height="76" width="402" format="#,###,##0.0000" html.valueishtml="0"  name=totla_per_amt visible="1" edit.limit=0 edit.case=any edit.format="#,###,##0.00000000" edit.autoselect=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=10 alignment="1" tabsequence=32766 border="0" color="0" x="4101" y="8" height="76" width="402" format="#,###,##0.0000" html.valueishtml="0"  name=workstage_inventory_amt visible="1" edit.limit=0 edit.case=any edit.format="#,###,##0.00000000" edit.autoselect=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=detail alignment="1" expression=" net_meterial_amt - input_meterial_amt "border="0" color="0" x="4535" y="8" height="72" width="375" format="#,###,##0.0000" html.valueishtml="0"  name=compute_2 visible="1"  font.face="Arial" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=6 alignment="1" tabsequence=32766 border="0" color="0" x="3282" y="4" height="76" width="389" format="#,###,##0.00000000" html.valueishtml="0"  name=input_per_amt visible="1" edit.limit=0 edit.case=any edit.format="#,###,##0.00000000" edit.autoselect=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=5 alignment="1" tabsequence=32766 border="0" color="0" x="3689" y="4" height="76" width="389" format="#,###,##0.0000" html.valueishtml="0"  name=input_meterial_amt visible="1" edit.limit=0 edit.case=any edit.format="#,###,##0.00000000" edit.autoselect=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=3 alignment="1" tabsequence=32766 border="0" color="0" x="2834" y="4" height="76" width="411" format="#,###,##0.0000" html.valueishtml="0"  name=net_meterial_amt visible="1" edit.limit=0 edit.case=any edit.format="#,###,##0.00000000" edit.autoselect=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=9 alignment="1" tabsequence=32766 border="0" color="0" x="6053" y="4" height="76" width="357" format="#,###,##0.0000" html.valueishtml="0"  name=distributed_cost visible="1" edit.limit=0 edit.case=any edit.format="#,###,##0.00000000" edit.autoselect=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+line(band=detail x1="6427" y1="0" x2="6427" y2="88"  name=l_11 visible="1" pen.style="0" pen.width="9" pen.color="0"  background.mode="1" background.color="553648127" )
+line(band=detail x1="2400" y1="92" x2="7273" y2="92"  name=l_14 visible="1" pen.style="0" pen.width="5" pen.color="0"  background.mode="1" background.color="553648127" )
+column(band=detail id=13 alignment="1" tabsequence=32766 border="0" color="0" x="6450" y="4" height="76" width="357" format="###,##0.0000" html.valueishtml="0"  name=conversion_cost visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=detail alignment="1" expression=" product_qty * conversion_cost "border="0" color="0" x="6830" y="4" height="76" width="425" format="###,##0.00" html.valueishtml="0"  name=compute_22 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+line(band=detail x1="2395" y1="0" x2="2395" y2="204"  name=l_5 visible="1" pen.style="0" pen.width="9" pen.color="0"  background.mode="1" background.color="553648127" )
+column(band=detail id=4 alignment="1" tabsequence=32766 border="0" color="0" x="2418" y="8" height="76" width="389" format="#,###,##0.00000000" html.valueishtml="0"  name=net_per_amt visible="1" edit.limit=0 edit.case=any edit.format="#,###,##0.00000000" edit.autoselect=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+line(band=detail x1="9" y1="0" x2="9" y2="84"  name=l_13 visible="1" pen.style="0" pen.width="9" pen.color="0"  background.mode="1" background.color="553648127" )
+line(band=detail x1="7278" y1="0" x2="7278" y2="88"  name=l_42 visible="1" pen.style="0" pen.width="9" pen.color="0"  background.mode="1" background.color="553648127" )
+line(band=detail x1="1422" y1="0" x2="1422" y2="204"  name=l_27 visible="1" pen.style="0" pen.width="9" pen.color="0"  background.mode="1" background.color="553648127" )
+column(band=detail id=12 alignment="0" tabsequence=32766 border="0" color="0~tif (  net_per_amt  = 0  ,255 , 0 )" x="933" y="8" height="76" width="480" format="[general]" html.valueishtml="0"  name=item_spec visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=11 alignment="0" tabsequence=32766 border="0" color="0~tif (  net_per_amt  = 0  ,255 , 0 )" x="571" y="8" height="76" width="338" format="[general]" html.valueishtml="0"  name=item_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="0~tif (  net_per_amt  = 0  ,255 , 0 )" x="169" y="8" height="64" width="389" format="[general]" html.valueishtml="0"  name=item_code visible="1" edit.limit=0 edit.case=any edit.autoselect=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=detail alignment="0" expression="GETROW()"border="0" color="0" x="23" y="8" height="64" width="133" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=detail alignment="1" expression="if (  avg_sale_price =0 , 0 , net_per_amt /  avg_sale_price )"border="0" color="0" x="2149" y="8" height="76" width="229" format="0%" html.valueishtml="0"  name=compute_12 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=14 alignment="1" tabsequence=32766 border="0" color="0" x="1801" y="8" height="76" width="325" format="###,##0.0000" html.valueishtml="0"  name=avg_sale_price visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=2 alignment="1" tabsequence=32766 border="0" color="0" x="1435" y="8" height="76" width="347" format="##,###,##0" html.valueishtml="0"  name=product_qty visible="1" edit.limit=0 edit.case=any edit.autoselect=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+line(band=summary x1="3259" y1="0" x2="3259" y2="96"  name=l_20 visible="1" pen.style="0" pen.width="9" pen.color="0"  background.mode="1" background.color="553648127" )
+line(band=summary x1="5189" y1="0" x2="5189" y2="96"  name=l_22 visible="1" pen.style="0" pen.width="9" pen.color="0"  background.mode="1" background.color="553648127" )
+line(band=summary x1="6034" y1="0" x2="6034" y2="96"  name=l_23 visible="1" pen.style="0" pen.width="9" pen.color="0"  background.mode="1" background.color="553648127" )
+line(band=summary x1="4082" y1="0" x2="4082" y2="96"  name=l_21 visible="1" pen.style="0" pen.width="9" pen.color="0"  background.mode="1" background.color="553648127" )
+line(band=summary x1="4521" y1="0" x2="4521" y2="96"  name=l_38 visible="1" pen.style="0" pen.width="9" pen.color="0"  background.mode="1" background.color="553648127" )
+compute(band=summary alignment="1" expression="sum(workstage_inventory_amt for all)"border="0" color="0" x="4101" y="4" height="76" width="402" format="#,###,##0.0000" html.valueishtml="0"  name=compute_21 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=summary alignment="1" expression="sum( net_meterial_amt - input_meterial_amt  for all)"border="0" color="0" x="4535" y="4" height="72" width="375" format="#,###,##0.0000" html.valueishtml="0"  name=compute_11 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=summary alignment="1" expression="sum(total_meterial_amt for all)"border="0" color="0" x="5198" y="4" height="76" width="398" format="#,###,##0.0000" html.valueishtml="0"  name=compute_8 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=summary alignment="1" expression="sum(totla_per_amt for all)"border="0" color="0" x="5614" y="4" height="76" width="402" format="#,###,##0.0000" html.valueishtml="0"  name=compute_9 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=summary alignment="1" text="Grand Total:" border="0" color="0" x="1851" y="12" height="52" width="457" html.valueishtml="0"  name=t_7 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=summary alignment="1" expression="sum(net_per_amt for all)"border="0" color="0" x="2418" y="4" height="76" width="389" format="#,###,##0.00000000" html.valueishtml="0"  name=compute_5 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=summary alignment="1" expression="sum(input_per_amt for all)"border="0" color="0" x="3282" y="4" height="76" width="389" format="#,###,##0.00000000" html.valueishtml="0"  name=compute_7 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=summary alignment="1" expression="sum(input_meterial_amt for all)"border="0" color="0" x="3689" y="4" height="76" width="389" format="#,###,##0.0000" html.valueishtml="0"  name=compute_6 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=summary alignment="1" expression="sum(net_meterial_amt for all)"border="0" color="0" x="2834" y="4" height="76" width="411" format="#,###,##0.0000" html.valueishtml="0"  name=compute_4 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+line(band=summary x1="6427" y1="0" x2="6427" y2="96"  name=l_24 visible="1" pen.style="0" pen.width="9" pen.color="0"  background.mode="1" background.color="553648127" )
+compute(band=summary alignment="1" expression="sum(distributed_cost for all)"border="0" color="0" x="6053" y="4" height="76" width="357" format="#,###,##0.0000" html.valueishtml="0"  name=compute_10 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=summary alignment="1" expression="sum( product_qty * conversion_cost  for ALL)"border="0" color="0" x="6830" y="4" height="76" width="425" format="[GENERAL]" html.valueishtml="0"  name=compute_24 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+line(band=summary x1="2395" y1="0" x2="2395" y2="96"  name=l_19 visible="1" pen.style="0" pen.width="9" pen.color="0"  background.mode="1" background.color="553648127" )
+line(band=summary x1="9" y1="0" x2="9" y2="88"  name=l_34 visible="1" pen.style="0" pen.width="9" pen.color="0"  background.mode="1" background.color="553648127" )
+line(band=summary x1="9" y1="92" x2="7278" y2="92"  name=l_25 visible="1" pen.style="0" pen.width="9" pen.color="0"  background.mode="1" background.color="553648127" )
+line(band=summary x1="7278" y1="0" x2="7278" y2="96"  name=l_44 visible="1" pen.style="0" pen.width="9" pen.color="0"  background.mode="1" background.color="553648127" )
+line(band=summary x1="1422" y1="0" x2="1422" y2="96"  name=l_28 visible="1" pen.style="0" pen.width="9" pen.color="0"  background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="'Page ' + page() + ' of ' + pageCount()"border="0" color="0" x="3086" y="20" height="64" width="425" format="[general]" html.valueishtml="0"  name=page_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=footer alignment="1" text="Organization Id:" border="0" color="0" x="6144" y="20" height="64" width="361" html.valueishtml="0"  name=t_4 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=footer id=15 alignment="0" tabsequence=32766 border="0" color="0" x="6523" y="16" height="64" width="750" format="[general]" html.valueishtml="0"  name=organization_id visible="1" edit.limit=0 edit.case=any edit.autoselect=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+line(band=footer x1="9" y1="4" x2="7278" y2="4"  name=l_3 visible="1" pen.style="0" pen.width="9" pen.color="0"  background.mode="1" background.color="553648127" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

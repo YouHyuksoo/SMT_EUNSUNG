@@ -1,0 +1,75 @@
+HA$PBExportHeader$d_mat_divide_history.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no grid.lines=0 )
+header(height=68 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=80 color="536870912" )
+table(column=(type=char(50) update=yes updatewhereclause=yes key=yes name=item_barcode dbname="im_item_divide_hist.item_barcode" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=supplier_code dbname="im_item_divide_hist.supplier_code" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=item_code dbname="im_item_divide_hist.item_code" )
+ column=(type=char(20) update=yes updatewhereclause=yes key=yes name=lot_no dbname="im_item_divide_hist.lot_no" )
+ column=(type=number update=yes updatewhereclause=yes name=item_qty dbname="im_item_divide_hist.item_qty" )
+ column=(type=datetime update=yes updatewhereclause=yes name=divide_date dbname="im_item_divide_hist.divide_date" )
+ column=(type=char(50) update=yes updatewhereclause=yes name=reel_divide_reason dbname="im_item_divide_hist.reel_divide_reason" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=divide_by dbname="im_item_divide_hist.divide_by" )
+ column=(type=char(50) update=yes updatewhereclause=yes name=before_barcode dbname="im_item_divide_hist.before_barcode" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=before_lot_no dbname="im_item_divide_hist.before_lot_no" )
+ column=(type=number update=yes updatewhereclause=yes name=before_qty dbname="im_item_divide_hist.before_qty" )
+ column=(type=char(50) update=yes updatewhereclause=yes name=first_barcode dbname="im_item_divide_hist.first_barcode" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=first_lot_no dbname="im_item_divide_hist.first_lot_no" )
+ column=(type=number update=yes updatewhereclause=yes name=first_qty dbname="im_item_divide_hist.first_qty" )
+ retrieve="select item_barcode,
+		supplier_code,
+		item_code,
+		lot_no,
+		item_qty,
+		divide_date,
+		reel_divide_reason,
+		divide_by,
+		before_barcode,
+		before_lot_no,
+		before_qty,
+		first_barcode,
+		first_lot_no,
+		first_qty
+from im_item_divide_hist" update="im_item_divide_hist" updatewhere=0 updatekeyinplace=no )
+text(band=header alignment="0" text="Item Barcode" border="0" color="33554432" x="5" y="4" height="52" width="553" html.valueishtml="0"  name=item_barcode_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=header alignment="0" text="Supplier Code" border="0" color="33554432" x="567" y="4" height="52" width="814" html.valueishtml="0"  name=supplier_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=header alignment="0" text="Item Code" border="0" color="33554432" x="1390" y="4" height="52" width="814" html.valueishtml="0"  name=item_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=header alignment="0" text="Lot No" border="0" color="33554432" x="2213" y="4" height="52" width="814" html.valueishtml="0"  name=lot_no_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=header alignment="0" text="Item Qty" border="0" color="33554432" x="3035" y="4" height="52" width="338" html.valueishtml="0"  name=item_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=header alignment="0" text="Divide Date" border="0" color="33554432" x="3383" y="4" height="52" width="448" html.valueishtml="0"  name=divide_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=header alignment="0" text="Reel Divide Reason" border="0" color="33554432" x="3840" y="4" height="52" width="2043" html.valueishtml="0"  name=reel_divide_reason_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=header alignment="0" text="Divide By" border="0" color="33554432" x="5893" y="4" height="52" width="814" html.valueishtml="0"  name=divide_by_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=header alignment="0" text="Before Barcode" border="0" color="33554432" x="6715" y="4" height="52" width="2043" html.valueishtml="0"  name=before_barcode_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=header alignment="0" text="Before Lot No" border="0" color="33554432" x="8768" y="4" height="52" width="814" html.valueishtml="0"  name=before_lot_no_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=header alignment="0" text="Before Qty" border="0" color="33554432" x="9591" y="4" height="52" width="6514" html.valueishtml="0"  name=before_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=header alignment="0" text="First Barcode" border="0" color="33554432" x="16114" y="4" height="52" width="2043" html.valueishtml="0"  name=first_barcode_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=header alignment="0" text="First Lot No" border="0" color="33554432" x="18167" y="4" height="52" width="814" html.valueishtml="0"  name=first_lot_no_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=header alignment="0" text="First Qty" border="0" color="33554432" x="18990" y="4" height="52" width="6514" html.valueishtml="0"  name=first_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432" x="9" y="0" height="96" width="549" format="[general]" html.valueishtml="0"  name=item_barcode visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432" x="571" y="0" height="96" width="809" format="[general]" html.valueishtml="0"  name=supplier_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="33554432" x="1394" y="0" height="96" width="809" format="[general]" html.valueishtml="0"  name=item_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="33554432" x="2217" y="0" height="96" width="809" format="[general]" html.valueishtml="0"  name=lot_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=5 alignment="0" tabsequence=32766 border="0" color="33554432" x="3040" y="0" height="96" width="334" format="[general]" html.valueishtml="0"  name=item_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=6 alignment="0" tabsequence=32766 border="0" color="33554432" x="3387" y="0" height="96" width="443" format="[shortdate] [time]" html.valueishtml="0"  name=divide_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=7 alignment="0" tabsequence=32766 border="0" color="33554432" x="3845" y="0" height="96" width="2039" format="[general]" html.valueishtml="0"  name=reel_divide_reason visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=8 alignment="0" tabsequence=32766 border="0" color="33554432" x="5897" y="0" height="96" width="809" format="[general]" html.valueishtml="0"  name=divide_by visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=9 alignment="0" tabsequence=32766 border="0" color="33554432" x="6720" y="0" height="96" width="2039" format="[general]" html.valueishtml="0"  name=before_barcode visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=10 alignment="0" tabsequence=32766 border="0" color="33554432" x="8773" y="0" height="96" width="809" format="[general]" html.valueishtml="0"  name=before_lot_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=11 alignment="0" tabsequence=32766 border="0" color="33554432" x="9595" y="0" height="96" width="6510" format="[general]" html.valueishtml="0"  name=before_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=12 alignment="0" tabsequence=32766 border="0" color="33554432" x="16119" y="0" height="96" width="2039" format="[general]" html.valueishtml="0"  name=first_barcode visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=13 alignment="0" tabsequence=32766 border="0" color="33554432" x="18171" y="0" height="96" width="809" format="[general]" html.valueishtml="0"  name=first_lot_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=14 alignment="0" tabsequence=32766 border="0" color="33554432" x="18994" y="0" height="96" width="6510" format="[general]" html.valueishtml="0"  name=first_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

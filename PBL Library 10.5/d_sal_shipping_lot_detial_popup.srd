@@ -1,0 +1,74 @@
+HA$PBExportHeader$d_sal_shipping_lot_detial_popup.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no grid.lines=0 )
+header(height=116 color="536870912" )
+summary(height=76 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=68 color="536870912" )
+table(column=(type=char(20) update=yes updatewhereclause=yes key=yes name=lot_no dbname="isal_shipping_lot_detail.lot_no" )
+ column=(type=number update=yes updatewhereclause=yes key=yes name=lot_sequence dbname="isal_shipping_lot_detail.lot_sequence" )
+ column=(type=datetime update=yes updatewhereclause=yes name=lot_date dbname="isal_shipping_lot_detail.lot_date" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=run_no dbname="isal_shipping_lot_detail.run_no" )
+ column=(type=number update=yes updatewhereclause=yes name=set_qty dbname="isal_shipping_lot_detail.set_qty" )
+ column=(type=number update=yes updatewhereclause=yes name=total_pcs_qty dbname="isal_shipping_lot_detail.total_pcs_qty" )
+ column=(type=number update=yes updatewhereclause=yes key=yes name=organization_id dbname="isal_shipping_lot_detail.organization_id" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=enter_by dbname="isal_shipping_lot_detail.enter_by" )
+ column=(type=datetime update=yes updatewhereclause=yes name=enter_date dbname="isal_shipping_lot_detail.enter_date" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=last_modify_by dbname="isal_shipping_lot_detail.last_modify_by" )
+ column=(type=datetime update=yes updatewhereclause=yes name=last_modify_date dbname="isal_shipping_lot_detail.last_modify_date" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=marking_no dbname="isal_shipping_lot_detail.marking_no" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=model_name dbname="isal_shipping_lot_detail.model_name" )
+ column=(type=char(1) update=yes updatewhereclause=yes name=lot_complete_yn dbname="isal_shipping_lot_detail.lot_complete_yn" values="	Y/	N/	P" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=old_lot_no dbname="isal_shipping_lot_detail.old_lot_no" )
+ retrieve="SELECT  ~"ISAL_SHIPPING_LOT_DETAIL~".~"LOT_NO~" ,      
+~"ISAL_SHIPPING_LOT_DETAIL~".~"LOT_SEQUENCE~" ,        
+~"ISAL_SHIPPING_LOT_DETAIL~".~"LOT_DATE~" ,    
+~"ISAL_SHIPPING_LOT_DETAIL~".~"RUN_NO~" ,    
+~"ISAL_SHIPPING_LOT_DETAIL~".~"SET_QTY~" , 
+~"ISAL_SHIPPING_LOT_DETAIL~".~"TOTAL_PCS_QTY~" ,   
+~"ISAL_SHIPPING_LOT_DETAIL~".~"ORGANIZATION_ID~" ,      
+~"ISAL_SHIPPING_LOT_DETAIL~".~"ENTER_BY~" ,        
+~"ISAL_SHIPPING_LOT_DETAIL~".~"ENTER_DATE~" ,      
+~"ISAL_SHIPPING_LOT_DETAIL~".~"LAST_MODIFY_BY~" ,    
+~"ISAL_SHIPPING_LOT_DETAIL~".~"LAST_MODIFY_DATE~" ,    
+~"ISAL_SHIPPING_LOT_DETAIL~".~"MARKING_NO~" ,   
+~"ISAL_SHIPPING_LOT_DETAIL~".~"MODEL_NAME~" ,    
+~"ISAL_SHIPPING_LOT_DETAIL~".~"LOT_COMPLETE_YN~" ,  
+~"ISAL_SHIPPING_LOT_DETAIL~".~"OLD_LOT_NO~"     
+FROM ~"ISAL_SHIPPING_LOT_DETAIL~"    
+ WHERE ( ~"ISAL_SHIPPING_LOT_DETAIL~".~"LOT_NO~" = :arg_lot_no ) And    
+( ~"ISAL_SHIPPING_LOT_DETAIL~".~"ORGANIZATION_ID~" = :arg_org )   " update="ISAL_SHIPPING_LOT_DETAIL" updatewhere=0 updatekeyinplace=no arguments=(("arg_lot_no", string),("arg_org", number)) )
+text(band=header alignment="2" text="Lot Complete Yn" border="0" color="33554432" x="119" y="8" height="112" width="119" html.valueishtml="0"  name=lot_complete_yn_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Lot Sequence" border="0" color="33554432" x="576" y="8" height="112" width="247" html.valueishtml="0"  name=lot_sequence_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Lot Date" border="0" color="33554432" x="832" y="8" height="112" width="370" html.valueishtml="0"  name=lot_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Run No" border="0" color="33554432" x="1760" y="8" height="112" width="645" html.valueishtml="0"  name=run_no_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Set Qty" border="0" color="33554432" x="2770" y="8" height="112" width="265" html.valueishtml="0"  name=set_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Model Name" border="0" color="33554432" x="1211" y="8" height="112" width="539" html.valueishtml="0"  name=model_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Marking No" border="0" color="33554432" x="2414" y="8" height="112" width="347" html.valueishtml="0"  name=marking_no_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Lot No" border="0" color="33554432" x="247" y="8" height="112" width="320" html.valueishtml="0"  name=lot_no_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Total Pcs Qty" border="0" color="33554432" x="3045" y="8" height="112" width="347" html.valueishtml="0"  name=total_pcs_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Old Lot No" border="0" color="33554432" x="3406" y="8" height="112" width="457" html.valueishtml="0"  name=old_lot_no_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+compute(band=detail alignment="2" expression="GETROW()"border="0" color="33554432" x="9" y="0" height="68" width="101" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=4 alignment="2" tabsequence=20 border="0" color="33554432" x="1760" y="0" height="68" width="645" format="[general]" html.valueishtml="0"  name=run_no visible="1" edit.limit=30 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=12 alignment="2" tabsequence=30 border="0" color="33554432" x="2414" y="0" height="68" width="347" format="[general]" html.valueishtml="0"  name=marking_no visible="1" edit.limit=30 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=13 alignment="2" tabsequence=32766 border="0" color="33554432" x="1211" y="0" height="68" width="539" format="[general]" html.valueishtml="0"  name=model_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="0" color="33554432" x="832" y="0" height="68" width="370" format="yyyy/mm/dd" html.valueishtml="0"  name=lot_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="33554432" x="576" y="0" height="68" width="247" format="[general]" html.valueishtml="0"  name=lot_sequence visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="33554432" x="247" y="0" height="68" width="320" format="[general]" html.valueishtml="0"  name=lot_no visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=14 alignment="2" tabsequence=10 border="0" color="33554432" x="119" y="0" height="68" width="119" format="[general]" html.valueishtml="0"  name=lot_complete_yn visible="1" checkbox.text="" checkbox.on="Y" checkbox.off="N" checkbox.other="P" checkbox.scale=no checkbox.threed=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=15 alignment="0" tabsequence=90 border="0" color="33554432" x="3410" y="0" height="68" width="453" format="[general]" html.valueishtml="0"  name=old_lot_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="2" tabsequence=40 border="0" color="33554432" x="2770" y="0" height="68" width="265" format="[general]" html.valueishtml="0"  name=set_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=6 alignment="2" tabsequence=50 border="0" color="33554432" x="3045" y="0" height="68" width="347" format="[general]" html.valueishtml="0"  name=total_pcs_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(set_qty for all)"border="0" color="33554432" x="2770" y="4" height="60" width="265" format="[general]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+compute(band=summary alignment="1" expression="sum(total_pcs_qty for all)"border="0" color="33554432" x="3045" y="4" height="60" width="347" format="[general]" html.valueishtml="0"  name=compute_3 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

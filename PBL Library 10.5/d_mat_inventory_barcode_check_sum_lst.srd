@@ -1,0 +1,89 @@
+HA$PBExportHeader$d_mat_inventory_barcode_check_sum_lst.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no grid.lines=0 )
+header(height=144 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=80 color="536870912" )
+table(column=(type=char(6) update=yes updatewhereclause=yes name=check_yyyymm dbname="im_item_inventory_check_bcd.check_yyyymm" )
+ column=(type=char(50) update=yes updatewhereclause=yes name=item_code dbname="im_item_inventory_check_bcd.item_code" )
+ column=(type=number update=yes updatewhereclause=yes name=organization_id dbname="im_item_inventory_check_bcd.organization_id" )
+ column=(type=number update=yes updatewhereclause=yes name=inventory_qty dbname="inventory_qty" )
+ column=(type=number update=yes updatewhereclause=yes name=barcode_qty dbname="barcode_qty" )
+ column=(type=char(300) updatewhereclause=yes name=item_name dbname="id_item.item_name" )
+ column=(type=char(300) updatewhereclause=yes name=item_spec dbname="id_item.item_spec" )
+ column=(type=char(20) updatewhereclause=yes name=location_address dbname="id_item.location_address" )
+ column=(type=char(1) updatewhereclause=yes name=abc_grade dbname="id_item.abc_grade" )
+ column=(type=number updatewhereclause=yes name=receipt_wait_qty dbname="receipt_wait_qty" )
+ column=(type=number updatewhereclause=yes name=workstage_rev_qty dbname="workstage_rev_qty" )
+ column=(type=number updatewhereclause=yes name=receipt_qty dbname="receipt_qty" )
+ column=(type=number updatewhereclause=yes name=issue_qty dbname="issue_qty" )
+ retrieve="  SELECT ~"IM_ITEM_INVENTORY_CHECK_BCD~".~"CHECK_YYYYMM~",   
+         ~"IM_ITEM_INVENTORY_CHECK_BCD~".~"ITEM_CODE~",   
+         ~"IM_ITEM_INVENTORY_CHECK_BCD~".~"ORGANIZATION_ID~",   
+         SUM(~"IM_ITEM_INVENTORY_CHECK_BCD~".~"INVENTORY_QTY~") INVENTORY_QTY,   
+         SUM(~"IM_ITEM_INVENTORY_CHECK_BCD~".~"BARCODE_QTY~") BARCODE_QTY,   
+         ~"ID_ITEM~".~"ITEM_NAME~",   
+         ~"ID_ITEM~".~"ITEM_SPEC~",
+		ID_ITEM.LOCATION_ADDRESS , 
+		ID_ITEM.ABC_GRADE ,	
+		f_get_mat_receipt_wait_qty(IM_ITEM_INVENTORY_CHECK_BCD.item_code ,  IM_ITEM_INVENTORY_CHECK_BCD.organization_id ) receipt_wait_qty ,  
+		F_GET_MAT_WS_REV_INV_QTY (  ~"IM_ITEM_INVENTORY_CHECK_BCD~".~"ITEM_CODE~",   ~"IM_ITEM_INVENTORY_CHECK_BCD~".~"ORGANIZATION_ID~" ) WORKSTAGE_REV_QTY,
+
+		f_get_mm_receipt_qty( IM_ITEM_INVENTORY_CHECK_BCD.ITEM_CODE ,  CHECK_YYYYMM ,  'F' , TO_DATE( CHECK_YYYYMM||'01' , 'YYYYMMDD') ,  LAST_DAY( TO_DATE( CHECK_YYYYMM||'01' , 'YYYYMMDD')) , IM_ITEM_INVENTORY_CHECK_BCD.ORGANIZATION_ID ) RECEIPT_QTY ,
+		f_get_mm_issue_qty( IM_ITEM_INVENTORY_CHECK_BCD.ITEM_CODE ,  CHECK_YYYYMM , 'F' ,  '*' , TO_DATE( CHECK_YYYYMM||'01' , 'YYYYMMDD') ,  LAST_DAY( TO_DATE( CHECK_YYYYMM||'01' , 'YYYYMMDD')) , IM_ITEM_INVENTORY_CHECK_BCD.ORGANIZATION_ID ) ISSUE_QTY 
+	
+    FROM ~"IM_ITEM_INVENTORY_CHECK_BCD~",   
+         ~"ID_ITEM~"
+   WHERE ( im_item_inventory_check_bcd.item_code = id_item.item_code (+)) and  
+         ( ( ~"IM_ITEM_INVENTORY_CHECK_BCD~".~"CHECK_YYYYMM~" = :arg_yyyymm ) AND  
+         ( ~"IM_ITEM_INVENTORY_CHECK_BCD~".~"ITEM_BARCODE~" like :arg_item_barcode ) AND  
+         ( ~"IM_ITEM_INVENTORY_CHECK_BCD~".~"ORGANIZATION_ID~" = :arg_org ) )    
+
+GROUP BY ~"IM_ITEM_INVENTORY_CHECK_BCD~".~"CHECK_YYYYMM~",   
+         ~"IM_ITEM_INVENTORY_CHECK_BCD~".~"ITEM_CODE~",   
+         ~"IM_ITEM_INVENTORY_CHECK_BCD~".~"ORGANIZATION_ID~",   
+         ~"ID_ITEM~".~"ITEM_NAME~",   
+         ~"ID_ITEM~".~"ITEM_SPEC~",
+			ID_ITEM.LOCATION_ADDRESS , 
+		ID_ITEM.ABC_GRADE 	" arguments=(("arg_yyyymm", string),("arg_item_barcode", string),("arg_org", number))  sort="item_code A " )
+text(band=header alignment="2" text="Check Yyyymm" border="0" color="33554432" x="174" y="8" height="132" width="265" html.valueishtml="0"  name=check_yyyymm_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Item Code" border="0" color="33554432" x="933" y="8" height="132" width="448" html.valueishtml="0"  name=item_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Item Name" border="0" color="33554432" x="1390" y="8" height="132" width="978" html.valueishtml="0"  name=item_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Item Spec" border="0" color="33554432" x="2377" y="8" height="132" width="690" html.valueishtml="0"  name=item_spec_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Receipt Qty" border="0" color="33554432" x="3497" y="8" height="132" width="398" html.valueishtml="0"  name=receipt_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Inventory Qty" border="0" color="33554432" x="4302" y="8" height="132" width="398" html.valueishtml="0"  name=inventory_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Barcode Qty" border="0" color="33554432" x="4709" y="8" height="132" width="471" html.valueishtml="0"  name=barcode_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Organization Id" border="0" color="33554432" x="6053" y="8" height="132" width="329" html.valueishtml="0"  name=organization_id_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Workstage Rev Qty" border="0" color="33554432" x="5189" y="8" height="132" width="439" html.valueishtml="0"  name=workstage_rev_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+text(band=header alignment="2" text="Total Inventory Qty" border="0" color="33554432" x="5637" y="8" height="132" width="407" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65280" )
+text(band=header alignment="2" text="Issue Qty" border="0" color="33554432" x="3904" y="8" height="132" width="389" html.valueishtml="0"  name=issue_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Receipt Wait Qty" border="0" color="33554432" x="3077" y="8" height="132" width="411" html.valueishtml="0"  name=receipt_wait_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Location Address" border="0" color="33554432" x="654" y="8" height="132" width="270" html.valueishtml="0"  name=id_item_location_address_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=header alignment="2" text="Abc Grade" border="0" color="33554432" x="448" y="8" height="132" width="197" html.valueishtml="0"  name=id_item_abc_grade_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=2 alignment="0" tabsequence=40 border="0" color="33554432" x="933" y="8" height="64" width="448" format="[general]" html.valueishtml="0"  name=item_code visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="2" expression="getrow()"border="0" color="33554432" x="9" y="8" height="64" width="155" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=1 alignment="0" tabsequence=10 border="0" color="33554432" x="174" y="8" height="64" width="265" format="[general]" html.valueishtml="0"  name=check_yyyymm visible="1" edit.limit=6 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217750" )
+column(band=detail id=6 alignment="0" tabsequence=50 border="0" color="33554432" x="1390" y="8" height="64" width="978" format="[general]" html.valueishtml="0"  name=item_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="0" color="33554432" x="6053" y="8" height="64" width="329" format="[general]" html.valueishtml="0"  name=organization_id visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=4 alignment="1" tabsequence=100 border="0" color="33554432" x="4302" y="8" height="64" width="398" format="###,###,##0" html.valueishtml="0"  name=inventory_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=12 alignment="1" tabsequence=80 border="0" color="33554432" x="3497" y="8" height="64" width="398" format="###,###,##0" html.valueishtml="0"  name=receipt_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="1" tabsequence=110 border="0" color="33554432~tIF (  inventory_qty <>  barcode_qty , 255 , 0 )" x="4709" y="8" height="64" width="471" format="###,###,##0" html.valueishtml="0"  name=barcode_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=11 alignment="1" tabsequence=120 border="0" color="33554432" x="5189" y="8" height="64" width="439" format="###,###,##0" html.valueishtml="0"  name=workstage_rev_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+compute(band=detail alignment="1" expression=" barcode_qty + workstage_rev_qty "border="0" color="33554432" x="5637" y="8" height="64" width="407" format="###,###,##0" html.valueishtml="0"  name=compute_4 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65280" )
+column(band=detail id=13 alignment="1" tabsequence=90 border="0" color="33554432" x="3904" y="8" height="64" width="389" format="###,###,##0" html.valueishtml="0"  name=issue_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=7 alignment="1" tabsequence=60 border="0" color="33554432" x="2377" y="8" height="64" width="690" format="[general]" html.valueishtml="0"  name=item_spec visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=10 alignment="1" tabsequence=70 border="0" color="33554432" x="3077" y="8" height="64" width="411" format="###,###,##0" html.valueishtml="0"  name=receipt_wait_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=8 alignment="0" tabsequence=30 border="0" color="33554432" x="654" y="8" height="64" width="270" format="[general]" html.valueishtml="0"  name=location_address visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=9 alignment="0" tabsequence=20 border="0" color="33554432" x="448" y="8" height="64" width="197" format="[general]" html.valueishtml="0"  name=abc_grade visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

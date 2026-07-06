@@ -1,0 +1,36 @@
+HA$PBExportHeader$d_mcn_jig_barcode_width_rpt.srd
+release 10.5;
+datawindow(units=3 timer_interval=0 color=1073741824 processing=2 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 0 print.margin.right = 0 print.margin.top = 0 print.margin.bottom = 0 print.paper.source = 0 print.paper.size = 9 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no label.name="" label.width=8000 label.height=1500 label.rows=1 label.rows.spacing=132 label.columns=1 label.columns.spacing=2000 label.topdown=yes label.sheet=yes label.shape=roundrectangle label.ellipse_height=0 label.ellipse_width=0 )
+detail(height=1508 color="536870912" )
+table(column=(type=char(30) updatewhereclause=yes name=jig_code dbname="imcn_jig.jig_code" dbalias=".jig_code" )
+ column=(type=char(20) updatewhereclause=yes name=jig_lot_no dbname="imcn_jig.jig_lot_no" dbalias=".jig_lot_no" )
+ column=(type=char(22) updatewhereclause=yes name=barcode dbname="barcode" )
+ column=(type=char(100) updatewhereclause=yes name=jig_name dbname="imcn_jig.jig_name" dbalias=".jig_name" )
+ column=(type=char(100) updatewhereclause=yes name=jig_spec dbname="imcn_jig.jig_spec" dbalias=".jig_spec" )
+ retrieve="  SELECT ~"IMCN_JIG~".~"JIG_CODE~",   
+			~"IMCN_JIG~".~"JIG_LOT_NO~",   
+			'*'||~"IMCN_JIG~".~"JIG_LOT_NO~"||'*' BARCODE,   
+			~"IMCN_JIG~".~"JIG_NAME~",   
+			~"IMCN_JIG~".~"JIG_SPEC~"  
+    FROM ~"IMCN_JIG~"
+   WHERE
+        ( ~"IMCN_JIG~".~"JIG_CODE~" like :arg_jig_code ) AND
+        ( ~"IMCN_JIG~".~"JIG_TYPE~" like :arg_jig_type ) AND
+         ( ~"IMCN_JIG~".~"JIG_LOT_NO~" like :arg_jig_lot_no ) AND  
+         ( ~"IMCN_JIG~".~"JIG_NAME~" like :arg_jig_name ) AND  
+         ( ~"IMCN_JIG~".~"ORGANIZATION_ID~" = :arg_org )     
+" arguments=(("arg_jig_code", string),("arg_jig_type", string),("arg_jig_lot_no", string),("arg_jig_name", string),("arg_org", number))  sort="jig_code A " )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="0" color="33554432" x="370" y="105" height="740" width="7302" format="[general]" html.valueishtml="0"  name=barcode visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Free 3 of 9" font.height="-24" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432" x="105" y="926" height="423" width="3810" format="[general]" html.valueishtml="0"  name=jig_lot_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="33554432" x="3968" y="926" height="423" width="3889" format="[general]" html.valueishtml="0"  name=jig_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

@@ -1,0 +1,32 @@
+HA$PBExportHeader$f_msg_st.srf
+$PBExportComments$Function For Status Bar(St_message)St_message. No Argument.
+global type f_msg_st from function_object
+end type
+
+forward prototypes
+global function string f_msg_st (integer ai_msg_id)
+end prototypes
+
+global function string f_msg_st (integer ai_msg_id);/****************************************************************************************
+ * st_message$$HEX2$$d0c52000$$ENDHEX$$Message $$HEX2$$23b130ae$$ENDHEX$$.
+ ****************************************************************************************/
+string   ls_message
+ 
+IF ai_msg_id = 0 or isnull(ai_msg_id) THEN
+	
+     RETURN 'Message ID Invalid'
+END IF
+
+SELECT decode(:Gvs_language, 'C', nvl(detail_loc,' '), 'K', nvl(detail_kor,' '), nvl(detail_eng,' '))
+into   :ls_message
+from   ISYS_dual_message
+where  msg_id = :ai_msg_id ;
+
+if sqlca.sqlcode <> 0 or sqlca.sqlnrows = 0 &
+then
+	RETURN  STRING(ai_msg_id)+' Message Statement Not Found!'+' '+STRING(SQLCA.SQLERRTEXT)
+end if		 
+
+RETURN  ls_message+' (MSGID='+STRING(ai_msg_id)+')'
+end function
+

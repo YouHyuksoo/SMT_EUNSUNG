@@ -1,0 +1,100 @@
+HA$PBExportHeader$f_dual_lang_change_menu.srf
+$PBExportComments$Change  current menu text
+global type f_dual_lang_change_menu from function_object
+end type
+
+forward prototypes
+global function boolean f_dual_lang_change_menu (menu am_menuitem)
+end prototypes
+
+global function boolean f_dual_lang_change_menu (menu am_menuitem);/*************************************************************/
+/* Desc     : Local Language Convert                         */             
+/* Argument : am_menuitem(Menu)                              */
+/*************************************************************/
+
+int  inx,item_int
+long ll_row
+string ls_text,  ls_chg_text , lvs_column_name
+
+if Gvs_previous_language <>  Gvs_language then
+
+		if Gvs_previous_language ='K' then
+				lvs_column_name =  "korea_text = '"
+		elseif  Gvs_previous_language ='C' then
+				lvs_column_name =  "local_text = '"
+		elseif Gvs_previous_language ='E' then
+				lvs_column_name =  "english_text = '"
+		end if
+else
+				lvs_column_name =  "english_text = '"
+end if 
+
+//if isvalid(am_menuitem) then 
+//else
+//	return true
+//end if 
+
+item_int = upperbound(am_menuitem.item[])
+
+if item_int > 0 then
+
+	for inx = 1 to item_int
+		   
+		if f_dual_lang_change_menu(am_menuitem.item[inx]) then
+			return true
+		end if
+
+	next
+end if
+
+ls_text = am_menuitem.text
+if ls_text <> '-' then
+   ll_row = gds_dual.find ( lvs_column_name + UPPER ( ls_text ) + "' ", 1, gds_dual.rowcount() )
+  	if ll_row > 0 then
+		if Gvs_language = 'C' then
+			am_menuitem.text = gds_dual.object.local_text [ ll_row ]
+			am_menuitem.toolbaritemtext= gds_dual.object.local_text [ ll_row ]			
+			am_menuitem.Microhelp= gds_dual.object.local_text [ ll_row ]						
+		elseif Gvs_language = 'K' then
+			am_menuitem.text = gds_dual.object.korea_text [ ll_row ]
+			am_menuitem.toolbaritemtext= gds_dual.object.korea_text [ ll_row ]
+			am_menuitem.Microhelp= gds_dual.object.korea_text [ ll_row ]						
+		elseif Gvs_language = 'E' then
+			am_menuitem.text = gds_dual.object.english_origin_text [ ll_row ]			
+			am_menuitem.toolbaritemtext= gds_dual.object.english_origin_text [ ll_row ]		
+			am_menuitem.Microhelp= gds_dual.object.english_origin_text [ ll_row ]									
+		end if
+	end if
+end if		
+
+if gds_menu.rowcount() < 1 then 
+
+else
+	
+	f_set_menu_visible_yn ( w_main_frame.menuid , am_menuitem ) 
+	
+	
+	if Gvi_user_level  > 8 then 
+	else
+			int lvi_count 
+			string lvs_window_name
+			
+			lvs_window_name = upper( am_menuitem.tag)
+			
+			ll_row = GDS_PRIVILEGE.find ( "window_name='" + UPPER ( lvs_window_name ) + "' ", 1, GDS_PRIVILEGE.rowcount() )
+			 
+			if ll_row > 0 then 
+				
+			elseif ll_row <= 0 and  lvs_window_name <> '' then 
+				
+				am_menuitem.enabled = false
+				
+			end if
+     end if
+	
+	
+end if
+
+return false
+end function
+

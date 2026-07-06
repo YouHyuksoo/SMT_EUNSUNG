@@ -1,0 +1,91 @@
+HA$PBExportHeader$d_des_bom_query_4_ng_upload_comparision.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=16777215 processing=1 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no grid.lines=0 )
+header(height=116 color="536870912" )
+summary(height=68 color="12632256" )
+footer(height=0 color="536870912" )
+detail(height=68 color="16777215" )
+table(column=(type=number updatewhereclause=yes name=session_id dbname="id_eng_bom_temp.session_id" dbalias=".session_id" )
+ column=(type=char(30) updatewhereclause=yes name=parent_item_code dbname="id_eng_bom_temp.parent_item_code" dbalias=".parent_item_code" )
+ column=(type=char(30) updatewhereclause=yes name=child_item_code dbname="id_eng_bom_temp.child_item_code" dbalias=".child_item_code" )
+ column=(type=char(4000) updatewhereclause=yes name=bom_level dbname="bom_level" )
+ column=(type=number updatewhereclause=yes name=sort_sequence dbname="id_eng_bom_temp.sort_sequence" dbalias=".sort_sequence" )
+ column=(type=char(100) updatewhereclause=yes name=sort_order dbname="id_eng_bom_temp.sort_order" dbalias=".sort_order" )
+ column=(type=number updatewhereclause=yes name=item_unit_qty dbname="id_eng_bom_temp.item_unit_qty" dbalias=".item_unit_qty" )
+ column=(type=number updatewhereclause=yes name=model_unit_qty dbname="id_eng_bom_temp.model_unit_qty" dbalias=".model_unit_qty" )
+ column=(type=char(1000) updatewhereclause=yes name=location_info dbname="id_eng_bom_temp.location_info" dbalias=".location_info" )
+ column=(type=char(20) updatewhereclause=yes name=id_item_item_code dbname="id_item.item_code" dbalias="B.item_code" )
+ column=(type=number updatewhereclause=yes name=id_item_organization_id dbname="id_item.organization_id" dbalias="A.organization_id" )
+ column=(type=char(300) updatewhereclause=yes name=parent_item_name dbname="id_item.parent_item_name" dbalias="A.parent_item_name" )
+ column=(type=char(300) updatewhereclause=yes name=parent_item_spec dbname="id_item.parent_item_spec" dbalias="A.parent_item_spec" )
+ column=(type=char(300) updatewhereclause=yes name=child_item_name dbname="id_item.child_item_name" dbalias="B.child_item_name" )
+ column=(type=char(300) updatewhereclause=yes name=child_item_spec dbname="id_item.child_item_spec" dbalias="B.child_item_spec" )
+ column=(type=char(3) updatewhereclause=yes name=child_item_uom dbname="id_item.child_item_uom" dbalias="B.child_item_uom" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=line_type dbname="id_eng_bom_temp.line_type" dbalias=".line_type" )
+ column=(type=char(20) updatewhereclause=yes name=item_class dbname="id_item.item_class" dbalias="A.item_class" )
+ retrieve="  SELECT ~"ID_ENG_BOM_TEMP~".~"SESSION_ID~",   
+         ~"ID_ENG_BOM_TEMP~".~"PARENT_ITEM_CODE~",   
+         ~"ID_ENG_BOM_TEMP~".~"CHILD_ITEM_CODE~",   
+
+         LPAD(BOM_LEVEL ,BOM_LEVEL , '.' ) BOM_LEVEL,   
+         ~"ID_ENG_BOM_TEMP~".~"SORT_SEQUENCE~",   
+         ~"ID_ENG_BOM_TEMP~".~"SORT_ORDER~",   
+         ~"ID_ENG_BOM_TEMP~".~"ITEM_UNIT_QTY~",   
+         ~"ID_ENG_BOM_TEMP~".~"MODEL_UNIT_QTY~",   
+         ~"ID_ENG_BOM_TEMP~".~"LOCATION_INFO~",  
+         ~"B~".~"ITEM_CODE~" ITEM_CODE ,   
+         ~"A~".~"ORGANIZATION_ID~" ,   
+
+         ~"A~".~"ITEM_NAME~" PARENT_ITEM_NAME ,   
+         ~"A~".~"ITEM_SPEC~" PARENT_ITEM_SPEC,   
+
+         ~"B~".~"ITEM_NAME~" CHILD_ITEM_NAME,   
+         ~"B~".~"ITEM_SPEC~" CHILD_ITEM_SPEC,   
+         ~"B~".~"ITEM_UOM~" CHILD_ITEM_UOM,   
+         ~"ID_ENG_BOM_TEMP~".~"LINE_TYPE~" ,
+		A.ITEM_CLASS ITEM_CLASS
+    FROM ~"ID_ENG_BOM_TEMP~",   
+         ~"ID_ITEM~" ~"A~",   
+         ~"ID_ITEM~" ~"B~" 
+   WHERE ( ~"ID_ENG_BOM_TEMP~".~"PARENT_ITEM_CODE~" = ~"A~".~"ITEM_CODE~"(+) ) and  
+         ( ~"ID_ENG_BOM_TEMP~".~"ORGANIZATION_ID~" = ~"A~".~"ORGANIZATION_ID~"(+) ) and  
+         ( ~"ID_ENG_BOM_TEMP~".~"CHILD_ITEM_CODE~" = ~"B~".~"ITEM_CODE~"(+) ) and  
+         ( ~"ID_ENG_BOM_TEMP~".~"ORGANIZATION_ID~" = ~"B~".~"ORGANIZATION_ID~"(+) ) and  
+
+         ( ID_eng_bom_temp.session_id = :arg_session_id ) AND  
+         ( ID_eng_bom_temp.organization_id = :arg_organization_id )   AND 
+		A.ITEM_CLASS LIKE :ARG_TOPBOT
+			
+" arguments=(("ARG_SESSION_ID", number),("ARG_TOPBOT", string),("ARG_ORGANIZATION_ID", number))  sort="sort_order A sort_sequence A child_item_code A " )
+text(band=header alignment="2" text="No" border="0" color="0" x="101" y="4" height="112" width="119" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Parent Item Code" border="0" color="33554432" x="1984" y="8" height="112" width="370" html.valueishtml="0"  name=parent_item_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Child Item Code" border="0" color="33554432" x="375" y="8" height="112" width="411" html.valueishtml="0"  name=child_item_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Model Unit Qty" border="0" color="0" x="2560" y="8" height="112" width="297" html.valueishtml="0"  name=model_unit_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Item Unit Qty" border="0" color="33554432" x="1769" y="8" height="112" width="206" html.valueishtml="0"  name=item_unit_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Bom Level" border="0" color="33554432" x="2363" y="8" height="112" width="187" html.valueishtml="0"  name=bom_level_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Item Class" border="0" color="33554432" x="229" y="8" height="112" width="137" html.valueishtml="0"  name=item_class_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Child Item Spec" border="0" color="33554432" x="2866" y="8" height="112" width="1504" html.valueishtml="0"  name=id_item_child_item_spec_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Location Info" border="0" color="33554432" x="795" y="8" height="112" width="960" html.valueishtml="0"  name=location_info_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+compute(band=detail alignment="0" expression="TRIM('')"border="0" color="33554432" x="9" y="0" height="64" width="82" format="[GENERAL]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="16777215~tif ( item_class   IN (  ~"T~" , ~"B~" ) , RGB( 255,255,128) , RGB(255,255,255))" )
+column(band=detail id=15 alignment="0" tabsequence=32766 border="0" color="33554432" x="2866" y="0" height="64" width="1504" format="[general]" html.valueishtml="0"  name=child_item_spec visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="16777215~tif ( item_class   =  ~"T~"  , RGB( 255,255,128) ,   RGB(128,255,255))" )
+column(band=detail id=8 alignment="1" tabsequence=32766 border="0" color="33554432" x="2560" y="0" height="64" width="297" format="###,###.0" html.valueishtml="0"  name=model_unit_qty visible="1" editmask.mask="###,###.0" editmask.focusrectangle=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="134217750~tif ( item_class   =  ~"T~"  , RGB( 255,255,128) ,   RGB(128,255,255))" )
+column(band=detail id=9 alignment="0" tabsequence=32766 border="0" color="33554432" x="795" y="0" height="64" width="960" format="[general]" html.valueishtml="0"  name=location_info visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="16777215~tif ( item_class   =  ~"T~"  , RGB( 255,255,128) ,   RGB(128,255,255))" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432" x="1984" y="0" height="64" width="370" format="[general]" html.valueishtml="0"  name=parent_item_code visible="1" edit.limit=30 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="134217750~tif ( item_class   =  ~"T~"  , RGB( 255,255,128) ,   RGB(128,255,255))" )
+compute(band=detail alignment="0" expression="GETROW()"border="0" color="0" x="101" y="0" height="64" width="119" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="134217750~tif ( item_class   =  ~"T~"  , RGB( 255,255,128) ,   RGB(128,255,255))" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="33554432" x="375" y="0" height="64" width="411" format="[general]" html.valueishtml="0"  name=child_item_code visible="1" edit.limit=30 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="134217750~tif ( item_class   =  ~"T~"  , RGB( 255,255,128) ,   RGB(128,255,255))" )
+column(band=detail id=7 alignment="1" tabsequence=32766 border="0" color="33554432" x="1769" y="0" height="64" width="206" format="###,###.0" html.valueishtml="0"  name=item_unit_qty visible="1" editmask.mask="###,###.0" editmask.focusrectangle=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="134217750~tif ( item_class   =  ~"T~"  , RGB( 255,255,128) ,   RGB(128,255,255))" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="0" x="2363" y="0" height="64" width="187" format="[general]" html.valueishtml="0"  name=bom_level visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="134217750~tif ( item_class   =  ~"T~"  , RGB( 255,255,128) ,   RGB(128,255,255))" )
+column(band=detail id=18 alignment="2" tabsequence=32766 border="0" color="33554432" x="229" y="0" height="64" width="137" format="[general]" html.valueishtml="0"  name=item_class visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="16777215~tif ( item_class   =  ~"T~"  , RGB( 255,255,128) ,   RGB(128,255,255))" )
+compute(band=summary alignment="1" expression="sum(item_unit_qty for all)"border="0" color="33554432" x="1769" y="4" height="60" width="206" format="###,###.0" html.valueishtml="0"  name=compute_4 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+
+sparse(names="parent_item_code")htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

@@ -1,0 +1,22 @@
+HA$PBExportHeader$f_check_is_admin_yn.srf
+global type f_check_is_admin_yn from function_object
+end type
+
+forward prototypes
+global function integer f_check_is_admin_yn (string arg_user_id, string arg_password)
+end prototypes
+
+global function integer f_check_is_admin_yn (string arg_user_id, string arg_password);INT LVI_COUNT
+SELECT COUNT(*) INTO :LVI_COUNT 
+FROM ISYS_USERS 
+WHERE USER_ID = :ARG_USER_ID
+AND PASSWORD = :ARG_PASSWORD
+AND USER_LEVEL >= 8 ;
+
+IF F_SQL_CHECK() < 0 THEN 
+	RETURN 0 
+END IF 
+RETURN LVI_COUNT 
+
+end function
+

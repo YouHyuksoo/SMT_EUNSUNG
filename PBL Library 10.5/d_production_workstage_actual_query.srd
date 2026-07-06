@@ -1,0 +1,118 @@
+HA$PBExportHeader$d_production_workstage_actual_query.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=4 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no  crosstab.dynamic = yes grid.lines=0 grid.columnmove=no selected.mouse=no )
+header[1](height=0 color="536870912" )
+header[2](height=0 color="536870912" )
+header[3](height=60 color="536870912" )
+header[4](height=72 color="536870912" )
+summary(height=72 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=76 color="536870912" )
+table(column=(type=char(20) updatewhereclause=yes name=model_name dbname="model_name" )
+ column=(type=char(20) updatewhereclause=yes name=model_suffix dbname="model_suffix" )
+ column=(type=char(20) updatewhereclause=yes name=item_code dbname="item_code" )
+ column=(type=number updatewhereclause=yes name=actual_qty dbname="actual_qty" )
+ retrieve="SELECT 
+              MODEL_NAME, MODEL_SUFFIX, item_code,workstage_code, workstage_name, actual_qty, seq
+  FROM ( 
+
+SELECT  
+            MODEL_NAME, MODEL_SUFFIX, item_code, workstage_code,f_get_workstage_name(workstage_code) workstage_name,  SUM(IO_QTY) as actual_qty, 
+            decode(workstage_code,'W80',3,'W30',5,'W50',9,'W60',10,'W70',11,'W53',12 ,'W55',14) as seq  
+  FROM IP_PRODUCT_WORKSTAGE_IO 
+ WHERE ORGANIZATION_ID = 1 
+   AND ACTUAL_DATE = :arg_date 
+   AND model_name like :arg_model||'%'
+   
+ GROUP BY  workstage_code, MODEL_NAME, MODEL_SUFFIX, item_code 
+ 
+ 
+ union
+ 
+ select /*+INDEX( IP_PRODUCT_RUN_CARD_IO XPKIP_PRODUCT_RUN_CARD_IO)*/
+         model_name, model_suffix, item_code, workstage_code, f_get_workstage_name(workstage_code) workstage_name, 
+        decode( workstage_code,'W10',sum(decode(  receipt_deficit, 1, lot_qty ,0 )),
+       --sum(decode(  receipt_deficit, 2, lot_qty ,0 )) as out_qty, 
+       --sum(decode(receipt_confirm_yn, 'N', lot_qty)) as wait_qty, 
+        sum(decode(receipt_confirm_yn, 'Y', lot_qty)) )  as Actual_qty, 
+        decode(workstage_code,'W10',1,'W20',2) as seq  
+  from IP_PRODUCT_RUN_CARD_IO 
+ where organization_id =1 
+   and receipt_date >= F_GET_WORK_ACTUAL_DATE(:arg_date+1,'S') 
+   and receipt_date  < F_GET_WORK_ACTUAL_DATE(:arg_date+1,'E')
+   and pcb_item = 'B' 
+   and model_name like :arg_model||'%'
+ group by model_name, model_suffix,item_code, workstage_code
+  
+ union
+ 
+   
+  select
+                model, 
+                buyer, 
+                item_code, 
+                operationname, 
+                f_get_basecode('OPERATIONNAME',operationname,'C',1) as operation_desc,
+                count(distinct x.PRODUCT_ID ) as actual, 
+                decode(operationname, 'SMT3500',4,
+                              'PCB2300',6,
+                              'PCB2100',7,
+                              'FLD4500',8
+               ) as seq 
+          from tb_vis_tstrslt x
+        where x.CREATED_DATE >= to_char(F_GET_WORK_ACTUAL_DATE(:arg_date+1 ,'S'),'yyyymmddhh24mi') 
+            and x.CREATED_DATE  < to_char(F_GET_WORK_ACTUAL_DATE(:arg_date+1 ,'E'),'yyyymmddhh24mi') 
+            and model like :arg_model||'%'
+         group by model, buyer, item_code, operationname
+  
+  union
+ 
+ 
+ select 
+        /*+INDEX(x XPKTB_VIS_TXNHISTORY_2)*/  
+        model, buyer, item_code,operationname,  f_get_basecode('OPERATIONNAME',operationname,'C',1) as operation_desc,sum(1) as actual , 
+        decode(operationname, 'PCB8100',13,
+                                           'FNL1000',15)  as seq 
+   from tb_vis_txnhistory x 
+  where x.CREATED_DATE >= to_char(F_GET_WORK_ACTUAL_DATE(:arg_date+1,'S'),'yyyymmddhh24mi') 
+    and x.CREATED_DATE < to_char(F_GET_WORK_ACTUAL_DATE(:arg_date+1,'E'),'yyyymmddhh24mi') 
+  and model like :arg_model||'%'
+   group by model, buyer, item_code,operationname    
+) " arguments=(("arg_date", datetime),("arg_model", string))  sort="model_name A model_suffix A item_code A " )
+group(level=1 header.height=0 trailer.height=0 by=("model_name" ) header.color="536870912" trailer.color="536870912" )
+group(level=2 header.height=0 trailer.height=0 by=("model_suffix" ) header.color="536870912" trailer.color="536870912" )
+text(band=header[1] alignment="0" text="Sum Of Actual Qty" border="0" color="33554432" x="9" y="4" height="52" width="498" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header[1] alignment="0" text="Seq" border="0" color="33554432" x="517" y="4" height="52" width="407" html.valueishtml="0"  name=t_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header[1] alignment="0" text="Workstage Name" border="0" color="33554432" x="933" y="4" height="52" width="549" html.valueishtml="0"  name=t_3 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header[1] alignment="0" text="Workstage Code" border="0" color="33554432" x="1490" y="4" height="52" width="407" html.valueishtml="0"  name=t_4 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header[2] alignment="0" text="@seq" border="0" color="33554432" x="1490" y="4" height="52" width="407" html.valueishtml="0"  name=t_5 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header[3] alignment="2" text="@workstage_name" border="0" color="33554432" x="1490" y="4" height="52" width="407" html.valueishtml="0"  name=t_8 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+compute(band=header[3] alignment="0" expression="arg_date"border="0" color="33554432" x="517" y="4" height="52" width="407" format="[SHORTDATE] [TIME]" html.valueishtml="0"  name=compute_3 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=header[3] alignment="2" text="Actual Date" border="0" color="33554432" x="9" y="4" height="52" width="503" html.valueishtml="0"  name=t_6 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+text(band=header[4] alignment="2" text="Model Name" border="0" color="33554432" x="9" y="4" height="52" width="498" html.valueishtml="0"  name=model_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[4] alignment="2" text="Model Suffix" border="0" color="33554432" x="517" y="4" height="52" width="407" html.valueishtml="0"  name=model_suffix_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[4] alignment="2" text="Item Code" border="0" color="33554432" x="933" y="4" height="52" width="549" html.valueishtml="0"  name=item_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[4] alignment="2" text="@workstage_code" border="0" color="33554432" x="1490" y="4" height="52" width="407" html.valueishtml="0"  name=actual_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432" x="9" y="4" height="60" width="498" format="[general]" html.valueishtml="0"  name=model_name visible="1" edit.limit=50 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432" x="517" y="4" height="60" width="407" format="[general]" html.valueishtml="0"  name=model_suffix visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="0" color="33554432" x="933" y="4" height="60" width="549" format="[general]" html.valueishtml="0"  name=item_code visible="1" edit.limit=40 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="1" tabsequence=32766 border="0" color="33554432" x="1490" y="4" height="60" width="407" format="###,###" html.valueishtml="0"  name=actual_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes crosstab.repeat=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="1" expression="model_suffix + ~" Total~""border="0" color="33554432" x="517" y="4" height="88" width="407" format="[general]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="1" expression="sum(actual_qty for group 2)"border="0" color="33554432" x="1490" y="4" height="88" width="407" format="###,###" html.valueishtml="0"  name=compute_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="model_name + ~" Total~""border="0" color="33554432" x="9" y="4" height="88" width="498" format="[general]" html.valueishtml="0"  name=compute_6 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(actual_qty for group 1)"border="0" color="33554432" x="1490" y="4" height="88" width="407" format="###,###" html.valueishtml="0"  name=compute_7 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="~"Grand Total~""border="0" color="33554432" x="9" y="4" height="88" width="498" format="[general]" html.valueishtml="0"  name=compute_11 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(actual_qty for all )"border="0" color="33554432" x="1490" y="4" height="88" width="407" format="###,###" html.valueishtml="0"  name=compute_12 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+ crosstab(band = foreground  crosstabonly = yes 
+ columns = "seq, workstage_name, workstage_code" rows = "model_name, model_suffix, item_code" values = "sum(actual_qty for crosstab)" sourcenames = "model_name, model_suffix, item_code, workstage_code, workstage_name, actual_qty, seq")
+sparse(names="model_name	model_suffix")htmltable(border="0" cellpadding="1" cellspacing="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

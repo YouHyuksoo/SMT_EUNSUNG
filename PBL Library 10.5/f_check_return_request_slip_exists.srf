@@ -1,0 +1,27 @@
+HA$PBExportHeader$f_check_return_request_slip_exists.srf
+global type f_check_return_request_slip_exists from function_object
+end type
+
+forward prototypes
+global function integer f_check_return_request_slip_exists (string arg_slip_no, string arg_item_code)
+end prototypes
+
+global function integer f_check_return_request_slip_exists (string arg_slip_no, string arg_item_code);int lvi_count 
+
+select count(*) into :lvi_count
+ from IM_ITEM_RECEIPT_RETURN_REQUEST 
+where INVOICE_NO   = :arg_slip_no
+   and ITEM_CODE = :ARG_ITEM_CODE
+   and organization_id = :gvi_organization_id ;
+	
+if f_sql_check() < 0 then 
+	return -1
+end if 
+
+if lvi_count = 0 then 
+	return 0
+elseif lvi_count > 0 then 
+	return 1
+end if 
+end function
+

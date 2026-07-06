@@ -1,0 +1,121 @@
+HA$PBExportHeader$d_pln_product_magazine_repair_label_rpt.srd
+release 10.5;
+datawindow(units=3 timer_interval=0 color=16777215 processing=2 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 0 print.margin.right = 0 print.margin.top = 0 print.margin.bottom = 0 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no label.name="" label.width=7200 label.height=18000 label.rows=1 label.rows.spacing=0 label.columns=1 label.columns.spacing=0 label.topdown=no label.sheet=no label.shape=roundrectangle label.ellipse_height=0 label.ellipse_width=0 )
+detail(height=17991 color="536870912" )
+table(column=(type=char(50) updatewhereclause=yes name=model_name dbname="ip_product_run_card_io.model_name" dbalias="A.model_name" )
+ column=(type=char(10) updatewhereclause=yes name=model_suffix dbname="ip_product_run_card_io.model_suffix" dbalias="A.model_suffix" )
+ column=(type=datetime updatewhereclause=yes name=receipt_date dbname="ip_product_run_card_io.receipt_date" dbalias="A.receipt_date" )
+ column=(type=char(4000) updatewhereclause=yes name=line_code dbname="line_code" )
+ column=(type=char(4000) updatewhereclause=yes name=workstage_code dbname="workstage_code" )
+ column=(type=number updatewhereclause=yes name=lot_qty dbname="ip_product_run_card_io.lot_qty" dbalias="A.lot_qty" )
+ column=(type=char(30) updatewhereclause=yes name=magazine_label_no dbname="ip_product_run_card_io.magazine_label_no" dbalias="A.magazine_label_no" )
+ column=(type=char(4000) updatewhereclause=yes name=pcb_item dbname="pcb_item" )
+ column=(type=char(32) updatewhereclause=yes name=magazine_label_barcode dbname="magazine_label_barcode" )
+ column=(type=char(20) updatewhereclause=yes name=enter_by dbname="ip_product_run_card_io.enter_by" dbalias="A.enter_by" )
+ column=(type=char(20) updatewhereclause=yes name=last_line_code dbname="ip_product_run_card_io.last_line_code" dbalias="A.last_line_code" )
+ column=(type=char(20) updatewhereclause=yes name=last_workstage_code dbname="ip_product_run_card_io.last_workstage_code" dbalias="A.last_workstage_code" )
+ column=(type=number updatewhereclause=yes name=organization_id dbname="ip_product_run_card_io.organization_id" dbalias="A.organization_id" )
+ column=(type=char(30) updatewhereclause=yes name=run_no dbname="ip_product_run_card_io.run_no" dbalias="A.run_no" )
+ column=(type=char(32) updatewhereclause=yes name=run_no_barcode dbname="run_no_barcode" )
+ column=(type=char(4000) updatewhereclause=yes name=magazine_label_type dbname="magazine_label_type" )
+ column=(type=char(1) updatewhereclause=yes name=label_title dbname="ip_product_run_card_io.label_title" dbalias=".label_title" )
+ column=(type=datetime updatewhereclause=yes name=run_date dbname="ip_product_run_card.run_date" dbalias="B.run_date" )
+ column=(type=number updatewhereclause=yes name=lot_size dbname="ip_product_run_card.lot_size" dbalias="B.lot_size" )
+ column=(type=number updatewhereclause=yes name=destroy_qty dbname="ip_product_run_card_io.destroy_qty" dbalias="A.destroy_qty" )
+ column=(type=number updatewhereclause=yes name=repair_qty dbname="ip_product_run_card_io.repair_qty" dbalias="A.repair_qty" )
+ column=(type=char(30) updatewhereclause=yes name=origin_magazine_label_no dbname="ip_product_run_card_io.origin_magazine_label_no" dbalias="A.origin_magazine_label_no" )
+ retrieve="  SELECT A.MODEL_NAME,   
+         A.MODEL_SUFFIX,   
+         A.RECEIPT_DATE,   
+         f_get_line_name(a.line_code, a.organization_id) as line_code, 
+         f_get_workstage_name(a.workstage_code) as WORKSTAGE_CODE, 
+         A.LOT_QTY,   
+         A.MAGAZINE_LABEL_NO,   
+          f_get_basecode('PCB ITEM',a.pcb_item, :arg_lang,a.organization_id) as PCB_ITEM, 
+    
+         '*'||A.MAGAZINE_LABEL_NO||'*' MAGAZINE_LABEL_BARCODE,   
+         A.ENTER_BY,   
+         A.LAST_LINE_CODE,   
+         A.LAST_WORKSTAGE_CODE  ,
+         A.ORGANIZATION_ID  AS ORGANIZATION_ID ,
+         A.RUN_NO ,
+	     '*'||A.RUN_NO||'*' RUN_NO_BARCODE ,
+		f_get_basecode('MAGAZINE LABEL TYPE',a.magazine_label_type, :arg_lang, a.organization_id ) as MAGAZINE_LABEL_TYPE  , 
+         :ARG_LABEL_TITLE   LABEL_TITLE ,
+		B.RUN_DATE , B.LOT_SIZE  ,
+		A.DESTROY_QTY ,
+		A.REPAIR_QTY, 
+         A.ORIGIN_MAGAZINE_LABEL_NO
+    FROM IP_PRODUCT_RUN_CARD_IO A  , IP_PRODUCT_RUN_CARD B 
+   WHERE ( A.MAGAZINE_LABEL_NO = :ARG_MAGAZINE_LABEL_NO )
+       AND  ( A.ORGANIZATION_ID = :ARG_ORG )    
+       AND  A.RUN_NO = B.RUN_NO(+) 
+" arguments=(("ARG_MAGAZINE_LABEL_NO", string),("ARG_LABEL_TITLE", string),("ARG_ORG", number),("ARG_LANG", string)) )
+compute(band=detail alignment="1" expression="today()"border="0" color="33554432" x="1825" y="16853" height="476" width="5212" format="YYYY/MM/DD hh:mm:ss" html.valueishtml="0"  name=date_1 visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+column(band=detail id=10 alignment="2" tabsequence=32766 border="4" color="16777215" x="4550" y="17462" height="370" width="2566" format="[general]" html.valueishtml="0"  name=enter_by visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-9" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+column(band=detail id=13 alignment="2" tabsequence=32766 border="0" color="16777215" x="132" y="17462" height="396" width="4365" format="[general]" html.valueishtml="0"  name=organization_id visible="1" dddw.name=vd_organization_name dddw.displaycolumn=organization_name dddw.datacolumn=organization_id dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any  font.face="Tahoma" font.height="-9" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+column(band=detail id=17 alignment="2" tabsequence=32766 border="0" color="33554432" x="132" y="16880" height="423" width="2143" format="[general]" html.valueishtml="0"  name=label_title visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+rectangle(band=detail x="185" y="9366" height="6006" width="6879"  name=r_1 visible="1" brush.hatch="6" brush.color="16777215" pen.style="0" pen.width="26" pen.color="0"  background.mode="2" background.color="16777215" )
+column(band=detail id=16 alignment="2" tabsequence=32766 border="0" color="0" x="185" y="1084" height="1137" width="6879" format="[general]" html.valueishtml="0"  name=magazine_label_type visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-14" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65280" )
+line(band=detail x1="185" y1="9948" x2="7037" y2="9948"  name=l_1 visible="1" pen.style="0" pen.width="26" pen.color="0"  background.mode="2" background.color="0" )
+line(band=detail x1="185" y1="10451" x2="7037" y2="10451"  name=l_2 visible="1" pen.style="0" pen.width="26" pen.color="0"  background.mode="2" background.color="0" )
+line(band=detail x1="158" y1="11033" x2="7011" y2="11033"  name=l_3 visible="1" pen.style="0" pen.width="26" pen.color="0"  background.mode="2" background.color="0" )
+line(band=detail x1="185" y1="12170" x2="7037" y2="12170"  name=l_4 visible="1" pen.style="0" pen.width="26" pen.color="0"  background.mode="2" background.color="0" )
+line(band=detail x1="185" y1="12726" x2="7037" y2="12726"  name=l_5 visible="1" pen.style="0" pen.width="26" pen.color="0"  background.mode="2" background.color="0" )
+line(band=detail x1="158" y1="11615" x2="7011" y2="11615"  name=l_6 visible="1" pen.style="0" pen.width="26" pen.color="0"  background.mode="2" background.color="0" )
+line(band=detail x1="185" y1="13282" x2="7037" y2="13282"  name=l_11 visible="1" pen.style="0" pen.width="26" pen.color="0"  background.mode="2" background.color="0" )
+line(band=detail x1="185" y1="13811" x2="7037" y2="13811"  name=l_12 visible="1" pen.style="0" pen.width="26" pen.color="0"  background.mode="2" background.color="0" )
+line(band=detail x1="185" y1="14340" x2="7037" y2="14340"  name=l_13 visible="1" pen.style="0" pen.width="26" pen.color="0"  background.mode="2" background.color="0" )
+line(band=detail x1="185" y1="14869" x2="7037" y2="14869"  name=l_14 visible="1" pen.style="0" pen.width="26" pen.color="0"  background.mode="2" background.color="0" )
+text(band=detail alignment="2" text="Bad Qty" border="0" color="33554432" x="5741" y="9445" height="423" width="1243" html.valueishtml="0"  name=t_6 visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+text(band=detail alignment="2" text="Out Qty" border="0" color="33554432" x="4392" y="9445" height="423" width="1243" html.valueishtml="0"  name=t_5 visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+text(band=detail alignment="2" text="In Qty" border="0" color="33554432" x="3042" y="9445" height="423" width="1243" html.valueishtml="0"  name=t_4 visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+text(band=detail alignment="2" text="SMTT" border="0" color="33554432" x="291" y="10080" height="291" width="1270" html.valueishtml="0"  name=t_7 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217750" )
+text(band=detail alignment="2" text="FAOI" border="0" color="33554432" x="291" y="10609" height="291" width="1270" html.valueishtml="0"  name=t_8 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217750" )
+text(band=detail alignment="2" text="SMTB" border="0" color="33554432" x="291" y="11191" height="291" width="1270" html.valueishtml="0"  name=t_9 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217750" )
+text(band=detail alignment="2" text="AOI" border="0" color="33554432" x="291" y="11773" height="291" width="1270" html.valueishtml="0"  name=t_10 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217750" )
+text(band=detail alignment="2" text="ROUTER" border="0" color="33554432" x="291" y="12356" height="291" width="1270" html.valueishtml="0"  name=t_11 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217750" )
+text(band=detail alignment="2" text="ODC" border="0" color="33554432" x="291" y="12911" height="291" width="1270" html.valueishtml="0"  name=t_12 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217750" )
+text(band=detail alignment="2" text="FUNCTION" border="0" color="33554432" x="238" y="13467" height="291" width="1322" html.valueishtml="0"  name=t_13 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217750" )
+text(band=detail alignment="2" text="FINAL" border="0" color="33554432" x="291" y="13970" height="291" width="1270" html.valueishtml="0"  name=t_14 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217750" )
+text(band=detail alignment="2" text="OQC" border="0" color="33554432" x="291" y="14472" height="291" width="1270" html.valueishtml="0"  name=t_15 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217750" )
+text(band=detail alignment="2" text="PACK" border="0" color="33554432" x="291" y="14975" height="291" width="1270" html.valueishtml="0"  name=t_16 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217750" )
+text(band=detail alignment="2" text="Date" border="0" color="33554432" x="1693" y="9445" height="423" width="1217" html.valueishtml="0"  name=t_3 visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+text(band=detail alignment="2" text="W/S" border="0" color="33554432" x="291" y="9445" height="423" width="1270" html.valueishtml="0"  name=t_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+line(band=detail x1="1613" y1="9392" x2="1613" y2="15345"  name=l_7 visible="1" pen.style="0" pen.width="26" pen.color="0"  background.mode="2" background.color="0" )
+line(band=detail x1="2989" y1="9392" x2="2989" y2="15345"  name=l_8 visible="1" pen.style="0" pen.width="26" pen.color="0"  background.mode="2" background.color="0" )
+line(band=detail x1="4339" y1="9392" x2="4339" y2="15345"  name=l_9 visible="1" pen.style="0" pen.width="26" pen.color="0"  background.mode="2" background.color="0" )
+line(band=detail x1="5688" y1="9392" x2="5688" y2="15345"  name=l_10 visible="1" pen.style="0" pen.width="26" pen.color="0"  background.mode="2" background.color="0" )
+column(band=detail id=8 alignment="1" tabsequence=32766 border="4" color="33554432" x="5767" y="4392" height="423" width="1217" format="[general]" html.valueishtml="0"  name=pcb_item visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=9 alignment="2" tabsequence=32766 border="0" color="33554432" x="185" y="2381" height="793" width="6852" format="[general]" html.valueishtml="0"  name=magazine_label_barcode visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Free 3 of 9" font.height="-28" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=7 alignment="2" tabsequence=32766 border="4" color="33554432" x="211" y="3413" height="423" width="6852" format="[general]" html.valueishtml="0"  name=magazine_label_no visible="1" edit.limit=30 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=detail alignment="1" text="Model" border="4" color="33554432" x="238" y="4365" height="423" width="2248" html.valueishtml="0"  name=t_21 visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=1 alignment="1" tabsequence=32766 border="4" color="33554432" x="2592" y="4365" height="423" width="3069" format="[general]" html.valueishtml="0"  name=model_name visible="1" edit.limit=50 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=detail alignment="1" text="Line" border="4" color="33554432" x="185" y="3889" height="423" width="2248" html.valueishtml="0"  name=t_18 visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="1" tabsequence=32766 border="4" color="33554432" x="2619" y="5794" height="423" width="4418" format="[shortdate] [time]" html.valueishtml="0"  name=receipt_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=detail alignment="1" text="Date" border="4" color="33554432" x="264" y="5794" height="423" width="2248" html.valueishtml="0"  name=t_23 visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=detail alignment="2" text="OK QTY" border="4" color="33554432" x="238" y="4921" height="661" width="2275" html.valueishtml="0"  name=t_26 visible="1"  font.face="Tahoma" font.height="-16" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+column(band=detail id=6 alignment="2" tabsequence=32766 border="4" color="33554432" x="2592" y="4921" height="661" width="3042" format="[general]" html.valueishtml="0"  name=lot_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-16" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=detail alignment="2" text="EA" border="4" color="33554432" x="5715" y="4921" height="661" width="1296" html.valueishtml="0"  name=t_22 visible="1"  font.face="Tahoma" font.height="-16" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+column(band=detail id=18 alignment="1" tabsequence=32766 border="4" color="0" x="2619" y="8096" height="423" width="4418" format="[shortdate] [time]" html.valueishtml="0"  name=run_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=19 alignment="1" tabsequence=32766 border="4" color="0" x="2619" y="8678" height="423" width="4418" format="[general]" html.valueishtml="0"  name=lot_size visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+text(band=detail alignment="1" text="Run Date" border="4" color="33554432" x="264" y="8096" height="423" width="2248" html.valueishtml="0"  name=t_24 visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=detail alignment="1" text="Lot Size" border="4" color="33554432" x="264" y="8678" height="423" width="2248" html.valueishtml="0"  name=t_25 visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=15 alignment="0" tabsequence=32766 border="4" color="0" x="264" y="7381" height="608" width="6746" format="[general]" html.valueishtml="0"  name=run_no_barcode visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Free 3 of 9" font.height="-28" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=14 alignment="1" tabsequence=32766 border="4" color="33554432" x="2619" y="6852" height="423" width="4418" format="[general]" html.valueishtml="0"  name=run_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=detail alignment="1" text="Run No" border="4" color="33554432" x="264" y="6852" height="423" width="2248" html.valueishtml="0"  name=t_20 visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="1" tabsequence=32766 border="4" color="33554432" x="2540" y="3889" height="423" width="1852" format="[general]" html.valueishtml="0"  name=line_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="1" tabsequence=32766 border="4" color="33554432" x="4471" y="3889" height="423" width="2566" format="[general]" html.valueishtml="0"  name=workstage_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=detail alignment="0" text="* Root  Lot No :" border="0" color="33554432" x="185" y="16245" height="423" width="2672" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=22 alignment="0" tabsequence=0 border="0" color="0" x="3016" y="16245" height="423" width="4048" html.valueishtml="0"  name=origin_magazine_label_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-9" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

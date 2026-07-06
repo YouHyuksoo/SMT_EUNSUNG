@@ -1,0 +1,32 @@
+HA$PBExportHeader$f_reset_dual_language.srf
+global type f_reset_dual_language from function_object
+end type
+
+forward prototypes
+global function integer f_reset_dual_language (window arg_window)
+end prototypes
+
+global function integer f_reset_dual_language (window arg_window);gds_dual.retrieve('%', '%', '%', '%', gvi_organization_id)
+/*********************************************************
+* $$HEX19$$e4b26dadb4c5200098ccacb97cb9200004c75cd5200090c7ccb8200088bdecb724c630ae2000$$ENDHEX$$: w_genapp_frame$$HEX5$$d0c51cc1200020c1b8c5$$ENDHEX$$
+* $$HEX16$$74c7f3acd0c51cc194b22000c0bc58d6200091c7c5c5ccb9200018c289d568d5$$ENDHEX$$
+* BY KIM, YONG-CHUL
+**********************************************************/
+if	Gvs_language =	'C' or Gvs_language = 'K'  OR  Gvs_language = 'E'  then
+
+	if gds_dual.rowcount() < 1 then 
+		f_msgbox(136) //There is not a possibility of knowing multi national language information
+		return -1
+	else
+		F_MSG_MDI_HELP( "Dual Source "+string(gds_dual.rowcount())+" Rows Found" )
+	end if
+	w_main_frame.SetMicroHelp("Language Change...")
+     f_dual_lang_change_text(arg_window)
+	w_main_frame.SetMicroHelp("Language Change Done.")
+	  	
+end if
+
+return 0
+
+end function
+

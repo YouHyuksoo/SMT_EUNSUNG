@@ -1,0 +1,161 @@
+HA$PBExportHeader$d_mat_current_inventory_4_detail_lst.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=16777215 processing=1 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no grid.lines=0 )
+header(height=156 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=64 color="536870912" )
+table(column=(type=char(7) updatewhereclause=yes name=div dbname="div" )
+ column=(type=char(30) updatewhereclause=yes name=material_mfs dbname="im_item_inventory.material_mfs" dbalias=".material_mfs" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=item_code dbname="im_item_inventory.item_code" dbalias=".item_code" )
+ column=(type=char(1) update=yes updatewhereclause=yes name=inventory_status dbname="im_item_inventory.inventory_status" dbalias=".inventory_status" )
+ column=(type=number update=yes updatewhereclause=yes name=organization_id dbname="im_item_inventory.organization_id" dbalias=".organization_id" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=line_type dbname="im_item_inventory.line_type" dbalias=".line_type" )
+ column=(type=number updatewhereclause=yes name=inventory_qty dbname="im_item_inventory.inventory_qty" dbalias=".inventory_qty" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=location_code dbname="im_item_inventory.location_code" dbalias=".location_code" )
+ column=(type=char(300) updatewhereclause=yes name=item_spec dbname="id_item.item_spec" dbalias=".item_spec" )
+ column=(type=char(300) updatewhereclause=yes name=item_name dbname="id_item.item_name" dbalias=".item_name" )
+ column=(type=char(10) updatewhereclause=yes name=msl_level dbname="id_item.msl_level" dbalias=".msl_level" )
+ column=(type=number updatewhereclause=yes name=msl_max_time dbname="id_item.msl_max_time" dbalias=".msl_max_time" )
+ column=(type=char(20) updatewhereclause=yes name=location_address dbname="id_item.location_address" dbalias=".location_address" )
+ column=(type=char(50) updatewhereclause=yes name=item_barcode dbname="im_item_receipt_barcode.item_barcode" dbalias=".item_barcode" )
+ column=(type=char(50) updatewhereclause=yes name=origin_item_barcode dbname="im_item_receipt_barcode.origin_item_barcode" dbalias=".origin_item_barcode" )
+ column=(type=char(1) updatewhereclause=yes name=lot_divide_yn dbname="im_item_receipt_barcode.lot_divide_yn" dbalias=".lot_divide_yn" )
+ column=(type=number updatewhereclause=yes name=scan_qty dbname="im_item_receipt_barcode.scan_qty" dbalias=".scan_qty" )
+ column=(type=char(10) updatewhereclause=yes name=manufacture_week dbname="im_item_inventory.manufacture_week" dbalias=".manufacture_week" )
+ column=(type=datetime updatewhereclause=yes name=last_receipt_date dbname="im_item_inventory.last_receipt_date" dbalias=".last_receipt_date" )
+ column=(type=number updatewhereclause=yes name=msl_passed_time dbname="im_item_receipt_barcode.msl_passed_time" dbalias=".msl_passed_time" )
+ column=(type=number updatewhereclause=yes name=life_cycle dbname="life_cycle" )
+ column=(type=number updatewhereclause=yes name=passed_day dbname="passed_day" )
+ retrieve="  SELECT 'ORIGIN' DIV ,
+		~"IM_ITEM_INVENTORY~".~"MATERIAL_MFS~",   
+         ~"IM_ITEM_INVENTORY~".~"ITEM_CODE~",   
+         ~"IM_ITEM_INVENTORY~".~"INVENTORY_STATUS~",   
+         ~"IM_ITEM_INVENTORY~".~"ORGANIZATION_ID~",   
+         ~"IM_ITEM_INVENTORY~".~"LINE_TYPE~",   
+         ~"IM_ITEM_INVENTORY~".~"INVENTORY_QTY~",   
+         ~"IM_ITEM_INVENTORY~".~"LOCATION_CODE~",   
+         ~"ID_ITEM~".~"ITEM_SPEC~",   
+         ~"ID_ITEM~".~"ITEM_NAME~",   
+         ~"ID_ITEM~".~"MSL_LEVEL~",   
+		~"ID_ITEM~".~"MSL_MAX_TIME~",  
+         ~"ID_ITEM~".~"LOCATION_ADDRESS~",   
+         ~"IM_ITEM_RECEIPT_BARCODE~".~"ITEM_BARCODE~",   
+         ~"IM_ITEM_RECEIPT_BARCODE~".~"ORIGIN_ITEM_BARCODE~",   
+         ~"IM_ITEM_RECEIPT_BARCODE~".~"LOT_DIVIDE_YN~",   
+         ~"IM_ITEM_RECEIPT_BARCODE~".~"SCAN_QTY~",   
+         ~"IM_ITEM_INVENTORY~".~"MANUFACTURE_WEEK~",   
+         ~"IM_ITEM_INVENTORY~".~"LAST_RECEIPT_DATE~",   
+         ~"IM_ITEM_RECEIPT_BARCODE~".~"MSL_PASSED_TIME~",   
+         NVL(~"ID_ITEM~".~"LIFE_CYCLE~", 365)    LIFE_CYCLE ,
+         SYSDATE - LAST_RECEIPT_DATE  PASSED_DAY  
+    FROM ~"IM_ITEM_INVENTORY~",   
+         ~"ID_ITEM~",   
+         ~"IM_ITEM_RECEIPT_BARCODE~"  
+   WHERE ( im_item_inventory.item_code = im_item_receipt_barcode.item_code (+)) and  
+         ( im_item_inventory.material_mfs = im_item_receipt_barcode.lot_no (+)) and  
+         ( im_item_inventory.organization_id = im_item_receipt_barcode.organization_id (+)) and  
+         ( ~"IM_ITEM_INVENTORY~".~"ITEM_CODE~" = ~"ID_ITEM~".~"ITEM_CODE~" ) and  
+         ( ~"IM_ITEM_INVENTORY~".~"ORGANIZATION_ID~" = ~"ID_ITEM~".~"ORGANIZATION_ID~" ) and  
+         ( ~"IM_ITEM_INVENTORY~".~"ITEM_CODE~" = :arg_item_code ) AND  
+         ( ~"IM_ITEM_INVENTORY~".~"ORGANIZATION_ID~" = :arg_org_id )  AND 
+         ( ~"IM_ITEM_INVENTORY~".~"INVENTORY_QTY~" <> 0 )  
+
+UNION ALL
+
+  SELECT 'REPLACE' DIV ,
+		~"IM_ITEM_INVENTORY~".~"MATERIAL_MFS~",   
+         ~"IM_ITEM_INVENTORY~".~"ITEM_CODE~",   
+         ~"IM_ITEM_INVENTORY~".~"INVENTORY_STATUS~",   
+         ~"IM_ITEM_INVENTORY~".~"ORGANIZATION_ID~",   
+         ~"IM_ITEM_INVENTORY~".~"LINE_TYPE~",   
+         ~"IM_ITEM_INVENTORY~".~"INVENTORY_QTY~",   
+         ~"IM_ITEM_INVENTORY~".~"LOCATION_CODE~",   
+         ~"ID_ITEM~".~"ITEM_SPEC~",   
+         ~"ID_ITEM~".~"ITEM_NAME~",   
+         ~"ID_ITEM~".~"MSL_LEVEL~",   
+		~"ID_ITEM~".~"MSL_MAX_TIME~",  
+         ~"ID_ITEM~".~"LOCATION_ADDRESS~",   
+         ~"IM_ITEM_RECEIPT_BARCODE~".~"ITEM_BARCODE~",   
+         ~"IM_ITEM_RECEIPT_BARCODE~".~"ORIGIN_ITEM_BARCODE~",   
+         ~"IM_ITEM_RECEIPT_BARCODE~".~"LOT_DIVIDE_YN~",   
+         ~"IM_ITEM_RECEIPT_BARCODE~".~"SCAN_QTY~",   
+         ~"IM_ITEM_INVENTORY~".~"MANUFACTURE_WEEK~",   
+         ~"IM_ITEM_INVENTORY~".~"LAST_RECEIPT_DATE~",   
+         ~"IM_ITEM_RECEIPT_BARCODE~".~"MSL_PASSED_TIME~",   
+         NVL(~"ID_ITEM~".~"LIFE_CYCLE~", 365)    LIFE_CYCLE ,
+         SYSDATE - LAST_RECEIPT_DATE  PASSED_DAY  
+    FROM ~"IM_ITEM_INVENTORY~",   
+         ~"ID_ITEM~",   
+         ~"IM_ITEM_RECEIPT_BARCODE~"  
+   WHERE ( im_item_inventory.item_code = im_item_receipt_barcode.item_code (+)) and  
+         ( im_item_inventory.material_mfs = im_item_receipt_barcode.lot_no (+)) and  
+         ( im_item_inventory.organization_id = im_item_receipt_barcode.organization_id (+)) and  
+         ( ~"IM_ITEM_INVENTORY~".~"ITEM_CODE~" = ~"ID_ITEM~".~"ITEM_CODE~" ) and  
+         ( ~"IM_ITEM_INVENTORY~".~"ORGANIZATION_ID~" = ~"ID_ITEM~".~"ORGANIZATION_ID~" ) and  
+         ( ~"IM_ITEM_INVENTORY~".~"ITEM_CODE~" IN ( SELECT REPLACE_ITEM_CODE FROM ID_ENG_BOM_SMT_REPLACE 
+                                                                         WHERE CHILD_ITEM_CODE = :ARG_ITEM_CODE AND DATESET <= SYSDATE AND DATEEND >= SYSDATE AND ORGANIZATION_ID = :arg_org_id ))  AND 
+         ( ~"IM_ITEM_INVENTORY~".~"ORGANIZATION_ID~" = :arg_org_id )  AND 
+         ( ~"IM_ITEM_INVENTORY~".~"INVENTORY_QTY~" <> 0 )  
+
+
+
+
+" arguments=(("arg_item_code", string),("arg_org_id", number))  sort="organization_id A div A location_code A inventory_qty D " )
+group(level=1 header.height=0 trailer.height=0 by=("organization_id" ) header.color="536870912" trailer.color="65535" )
+group(level=2 header.height=0 trailer.height=72 by=("div" ) header.color="536870912" trailer.color="12632256" )
+group(level=3 header.height=0 trailer.height=68 by=("location_code" ) header.color="536870912" trailer.color="65280" )
+text(band=header alignment="2" text="Item Name" border="0" color="33554432" x="2341" y="12" height="140" width="722" html.valueishtml="0"  name=item_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Item Code" border="0" color="33554432" x="736" y="12" height="140" width="443" html.valueishtml="0"  name=item_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Item Spec" border="0" color="33554432" x="3072" y="12" height="140" width="827" html.valueishtml="0"  name=item_spec_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Location Address" border="0" color="33554432" x="1504" y="12" height="140" width="288" html.valueishtml="0"  name=location_address_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Item Barcode" border="0" color="33554432" x="6025" y="12" height="140" width="791" html.valueishtml="0"  name=item_barcode_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="Scan Qty" border="0" color="33554432" x="3909" y="12" height="140" width="293" html.valueishtml="0"  name=scan_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Inventory Qty" border="0" color="33554432" x="1189" y="12" height="140" width="306" html.valueishtml="0"  name=inventory_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Location Code" border="0" color="33554432" x="480" y="12" height="140" width="247" html.valueishtml="0"  name=location_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Material Mfs" border="0" color="33554432" x="1801" y="12" height="140" width="325" html.valueishtml="0"  name=material_mfs_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Origin Item Barcode" border="0" color="33554432" x="6825" y="12" height="140" width="713" html.valueishtml="0"  name=origin_item__t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Lot Divide Yn" border="0" color="33554432" x="7547" y="12" height="140" width="229" html.valueishtml="0"  name=lot_divide_y_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Manufacture Week" border="0" color="33554432" x="4210" y="12" height="140" width="219" html.valueishtml="0"  name=manufacture_week_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Last Receipt Date" border="0" color="33554432" x="5458" y="12" height="140" width="558" html.valueishtml="0"  name=last_receipt_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Msl Passed Time" border="0" color="33554432" x="4681" y="12" height="140" width="233" html.valueishtml="0"  name=msl_passed_t_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Life Cycle" border="0" color="33554432" x="4923" y="12" height="140" width="265" html.valueishtml="0"  name=life_cycle_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Passed Day" border="0" color="33554432" x="5198" y="12" height="140" width="251" html.valueishtml="0"  name=passed_day_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Msl Level" border="0" color="33554432" x="2135" y="12" height="140" width="197" html.valueishtml="0"  name=msl_level_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Msl Max Time" border="0" color="33554432" x="4439" y="12" height="140" width="233" html.valueishtml="0"  name=msl_max_time_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="No" border="0" color="33554432" x="123" y="12" height="140" width="151" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Div" border="0" color="33554432" x="283" y="12" height="140" width="187" html.valueishtml="0"  name=div_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+compute(band=detail alignment="2" expression="trim('')"border="0" color="33554432" x="9" y="0" height="56" width="105" format="[GENERAL]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=13 alignment="2" tabsequence=32766 border="0" color="33554432" x="1504" y="0" height="56" width="288" format="[general]" html.valueishtml="0"  name=location_address visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="33554432" x="1801" y="0" height="56" width="325" format="[general]" html.valueishtml="0"  name=material_mfs visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=14 alignment="2" tabsequence=32766 border="0" color="33554432" x="6025" y="0" height="56" width="791" format="[general]" html.valueishtml="0"  name=item_barcode visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="0" color="33554432~tif ( life_cycle < passed_day , 255 , rgb(0,0,255))" x="736" y="0" height="56" width="443" format="[general]" html.valueishtml="0"  name=item_code visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+compute(band=detail alignment="2" expression="getrow()"border="0" color="33554432" x="123" y="0" height="56" width="151" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=17 alignment="1" tabsequence=32766 border="0" color="33554432" x="3909" y="0" height="56" width="293" format="[general]" html.valueishtml="0"  name=scan_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=10 alignment="0" tabsequence=32766 border="0" color="33554432" x="2341" y="0" height="56" width="722" format="[general]" html.valueishtml="0"  name=item_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=9 alignment="0" tabsequence=32766 border="0" color="33554432" x="3072" y="0" height="56" width="827" format="[general]" html.valueishtml="0"  name=item_spec visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=15 alignment="2" tabsequence=32766 border="0" color="33554432" x="6825" y="0" height="56" width="713" format="[general]" html.valueishtml="0"  name=origin_item_barcode visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=16 alignment="2" tabsequence=32766 border="0" color="33554432" x="7547" y="0" height="56" width="229" format="[general]" html.valueishtml="0"  name=lot_divide_yn visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=18 alignment="2" tabsequence=32766 border="0" color="33554432" x="4210" y="0" height="56" width="219" format="[general]" html.valueishtml="0"  name=manufacture_week visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=19 alignment="2" tabsequence=32766 border="0" color="33554432" x="5458" y="0" height="56" width="558" format="[shortdate] [time]" html.valueishtml="0"  name=last_receipt_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=20 alignment="1" tabsequence=32766 border="0" color="33554432" x="4681" y="0" height="56" width="233" format="[general]" html.valueishtml="0"  name=msl_passed_time visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=21 alignment="1" tabsequence=32766 border="0" color="33554432" x="4923" y="0" height="56" width="265" format="[general]" html.valueishtml="0"  name=life_cycle visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=22 alignment="1" tabsequence=32766 border="0" color="33554432~tif ( passed_day > life_cycle , 255 , rgb(0,0,255))" x="5198" y="0" height="56" width="251" format="###,##0" html.valueishtml="0"  name=passed_day visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=11 alignment="2" tabsequence=32766 border="0" color="33554432" x="2135" y="0" height="56" width="197" format="[general]" html.valueishtml="0"  name=msl_level visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=12 alignment="2" tabsequence=32766 border="0" color="33554432" x="4439" y="0" height="56" width="233" format="[general]" html.valueishtml="0"  name=msl_max_time visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=8 alignment="2" tabsequence=32766 border="0" color="33554432" x="480" y="0" height="56" width="247" format="[general]" html.valueishtml="0"  name=location_code visible="1" dddw.name=VD_BASECODE dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432" x="283" y="0" height="56" width="187" format="[general]" html.valueishtml="0"  name=div visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=7 alignment="1" tabsequence=32766 border="0" color="33554432~tif ( inventory_qty > 0 , rgb(0,0,255) , 255 )" x="1189" y="0" height="56" width="306" format="[general]" html.valueishtml="0"  name=inventory_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+compute(band=trailer.3 alignment="1" expression="sum(inventory_qty for group 3)"border="0" color="33554432" x="1189" y="4" height="52" width="306" format="[general]" html.valueishtml="0"  name=compute_4 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.2 alignment="1" expression="sum(inventory_qty for group 2)"border="0" color="33554432" x="1189" y="4" height="64" width="306" format="[general]" html.valueishtml="0"  name=compute_3 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml( template=(comment="" name="s" xhtml="$$HEX1$$fffe$$ENDHEX$$<form name=~"webDW_dataForm~"><div class=~"webDW_band_0~"><div class=~"webDW_item_name_t~">item_name_t</div><div class=~"webDW_vr1~"/><div class=~"webDW_item_code_t~">item_code_t</div><div class=~"webDW_vr2~"/><div class=~"webDW_inventory_status_t~">inventory_status_t</div><div class=~"webDW_vr3~"/><div class=~"webDW_line_type_t~">line_type_t</div><div class=~"webDW_vr4~"/><div class=~"webDW_inventory_hold_t~">inventory_hold_t</div><div class=~"webDW_vr5~"/><div class=~"webDW_inventory_price_t~">inventory_price_t</div><div class=~"webDW_vr6~"/><div class=~"webDW_inventory_amt_t~">inventory_amt_t</div><div class=~"webDW_vr7~"/><div class=~"webDW_location_code_t~">location_code_t</div><div class=~"webDW_vr8~"/><div class=~"webDW_comments_t~">comments_t</div><div class=~"webDW_vr9~"/><div class=~"webDW_enter_date_t~">enter_date_t</div><div class=~"webDW_vr10~"/><div class=~"webDW_enter_by_t~">enter_by_t</div><div class=~"webDW_vr11~"/><div class=~"webDW_last_modify_date_t~">last_modify_date_t</div><div class=~"webDW_vr12~"/><div class=~"webDW_last_modify_by_t~">last_modify_by_t</div><div class=~"webDW_vr13~"/><div class=~"webDW_item_spec_t~">item_spec_t</div><div class=~"webDW_vr14~"/><div class=~"webDW_organization_id_t~">organization_id_t</div><div class=~"webDW_vr15~"/><div class=~"webDW_virtual_receipt_yn_t~">virtual_receipt_yn_t</div><div class=~"webDW_vr16~"/><div class=~"webDW_supplier_name_t~">supplier_name_t</div><div class=~"webDW_vr17~"/><div class=~"webDW_inventory_qty_t~">inventory_qty_t</div><div class=~"webDW_vr18~"/><div class=~"webDW_t_1~">t_1</div><div class=~"webDW_warehosue_type_t~">warehosue_type_t</div><div class=~"webDW_vr19~"/></div><div class=~"webDW_detail_0~" __pbband=~"detail~"><div class=~"webDW_compute_2~">compute_2</div><div class=~"webDW_compute_1~">compute_1</div><div class=~"webDW_inventory_status~">inventory_status</div><div class=~"webDW_line_type~">line_type</div><div class=~"webDW_inventory_hold~">inventory_hold</div><input name=~"webDW_inventory_price~" type=~"text~" value=~"inventory_price~"/><input name=~"webDW_inventory_amt~" type=~"text~" value=~"inventory_amt~"/><input name=~"webDW_location_code~" type=~"text~" value=~"location_code~"/><input name=~"webDW_comments~" type=~"text~" value=~"comments~"/><input name=~"webDW_enter_date~" type=~"text~" value=~"enter_date~"/><input name=~"webDW_enter_by~" type=~"text~" value=~"enter_by~"/><input name=~"webDW_last_modify_date~" type=~"text~" value=~"last_modify_date~"/><input name=~"webDW_last_modify_by~" type=~"text~" value=~"last_modify_by~"/><input name=~"webDW_item_spec~" type=~"text~" value=~"item_spec~"/><input name=~"webDW_item_name~" type=~"text~" value=~"item_name~"/><input name=~"webDW_item_code~" type=~"text~" value=~"item_code~"/><input name=~"webDW_organization_id~" type=~"text~" value=~"organization_id~"/><div class=~"webDW_virtual_receipt_yn~">virtual_receipt_yn</div><input name=~"webDW_supplier_name~" type=~"text~" value=~"supplier_name~"/><input name=~"webDW_inventory_qty~" type=~"text~" value=~"inventory_qty~"/><input name=~"webDW_warehosue_type~" type=~"text~" value=~"warehosue_type~"/></div></form>"))
+ 

@@ -1,0 +1,42 @@
+HA$PBExportHeader$f_shell_execute_by_extention.srf
+$PBExportComments$Shell Execute Extention
+global type f_shell_execute_by_extention from function_object
+end type
+
+forward prototypes
+global subroutine f_shell_execute_by_extention (string as_file_name, string as_parm, string as_directory)
+end prototypes
+
+global subroutine f_shell_execute_by_extention (string as_file_name, string as_parm, string as_directory);long ll_rc
+String ls_Null
+SetNull(ls_Null)
+
+ll_rc = ShellExecuteA( Handle( This ), "open", as_file_name, as_parm, as_directory , 1)
+
+if ll_rc =  2 then
+	Messagebox("Notify" , "File not found")
+elseif ll_rc = 3 then 
+	Messagebox("Notify" , "Path not found")
+elseif ll_rc =5  then
+	Messagebox("Notify" , "Access denied")
+elseif ll_rc =8 then 
+	Messagebox("Notify" , "Out of memory")
+elseif ll_rc =32 then 
+	Messagebox("Notify" , "DLL NOTFOUND" ) 
+elseif ll_rc =26 then 
+	Messagebox("Notify" , "	Error SHARE")
+elseif ll_rc =27 then 
+	Messagebox("Notify" , "Error ASSOCINCOMPLETE")
+elseif ll_rc =28 then 
+	Messagebox("Notify" , "DDETIMEOUT")
+elseif ll_rc =29 then 
+	Messagebox("Notify" , "DDEFAIL")
+elseif ll_rc =30 then 
+	Messagebox("Notify" , "DDEBUSY")
+elseif ll_rc =21 then 
+	Messagebox("Notify" , "NOASSOC")
+end if 
+
+
+end subroutine
+

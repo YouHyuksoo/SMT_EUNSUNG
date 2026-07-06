@@ -1,0 +1,74 @@
+HA$PBExportHeader$d_sal_shipping_lot_master_popup.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no grid.lines=0 )
+header(height=120 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=72 color="536870912" )
+table(column=(type=char(30) update=yes updatewhereclause=yes name=model_name dbname="isal_shipping_lot_master.model_name" )
+ column=(type=datetime update=yes updatewhereclause=yes name=lot_date dbname="isal_shipping_lot_master.lot_date" )
+ column=(type=char(20) update=yes updatewhereclause=yes key=yes name=lot_no dbname="isal_shipping_lot_master.lot_no" )
+ column=(type=number update=yes updatewhereclause=yes name=lot_qty dbname="isal_shipping_lot_master.lot_qty" )
+ column=(type=number update=yes updatewhereclause=yes name=set_qty dbname="isal_shipping_lot_master.set_qty" )
+ column=(type=number update=yes updatewhereclause=yes name=total_pcs_qty dbname="isal_shipping_lot_master.total_pcs_qty" )
+ column=(type=char(1) update=yes updatewhereclause=yes name=lot_complete_yn dbname="isal_shipping_lot_master.lot_complete_yn" )
+ column=(type=number update=yes updatewhereclause=yes key=yes name=organization_id dbname="isal_shipping_lot_master.organization_id" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=enter_by dbname="isal_shipping_lot_master.enter_by" )
+ column=(type=datetime update=yes updatewhereclause=yes name=enter_date dbname="isal_shipping_lot_master.enter_date" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=last_modify_by dbname="isal_shipping_lot_master.last_modify_by" )
+ column=(type=datetime update=yes updatewhereclause=yes name=last_modify_date dbname="isal_shipping_lot_master.last_modify_date" )
+ column=(type=char(1) updatewhereclause=yes name=check_yn dbname="check_yn" values="	Y/	N" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=palette_no dbname="isal_shipping_lot_master.palette_no" )
+ retrieve="  SELECT ~"ISAL_SHIPPING_LOT_MASTER~".~"MODEL_NAME~",   
+         ~"ISAL_SHIPPING_LOT_MASTER~".~"LOT_DATE~",   
+         ~"ISAL_SHIPPING_LOT_MASTER~".~"LOT_NO~",   
+         ~"ISAL_SHIPPING_LOT_MASTER~".~"LOT_QTY~",   
+         ~"ISAL_SHIPPING_LOT_MASTER~".~"SET_QTY~",   
+         ~"ISAL_SHIPPING_LOT_MASTER~".~"TOTAL_PCS_QTY~",   
+         ~"ISAL_SHIPPING_LOT_MASTER~".~"LOT_COMPLETE_YN~",   
+         ~"ISAL_SHIPPING_LOT_MASTER~".~"ORGANIZATION_ID~",   
+         ~"ISAL_SHIPPING_LOT_MASTER~".~"ENTER_BY~",   
+         ~"ISAL_SHIPPING_LOT_MASTER~".~"ENTER_DATE~",   
+         ~"ISAL_SHIPPING_LOT_MASTER~".~"LAST_MODIFY_BY~",   
+         ~"ISAL_SHIPPING_LOT_MASTER~".~"LAST_MODIFY_DATE~",   
+         'N' CHECK_YN,   
+         ~"ISAL_SHIPPING_LOT_MASTER~".~"PALETTE_NO~"  
+    FROM ~"ISAL_SHIPPING_LOT_MASTER~"  
+   WHERE    ( ~"ISAL_SHIPPING_LOT_MASTER~".~"LOT_NO~" like :ARG_LOT_NO ) AND  
+				( ~"ISAL_SHIPPING_LOT_MASTER~".~"ORGANIZATION_ID~" = :ARG_ORG ) " update="ISAL_SHIPPING_LOT_MASTER" updatewhere=0 updatekeyinplace=no arguments=(("ARG_LOT_NO", string),("ARG_ORG", number))  sort="palette_no A model_name A lot_date A " )
+group(level=1 header.height=0 trailer.height=60 by=("palette_no" ) header.color="536870912" trailer.color="12632256" )
+group(level=2 header.height=0 trailer.height=84 by=("model_name" ) header.color="536870912" trailer.color="65535" )
+text(band=header alignment="2" text="Lot Date" border="0" color="33554432" x="2158" y="8" height="124" width="370" html.valueishtml="0"  name=lot_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Model Name" border="0" color="33554432" x="1481" y="8" height="124" width="667" html.valueishtml="0"  name=model_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Lot No" border="0" color="33554432" x="1001" y="8" height="124" width="471" html.valueishtml="0"  name=lot_no_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Lot Qty" border="0" color="33554432" x="2537" y="8" height="124" width="251" html.valueishtml="0"  name=lot_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+text(band=header alignment="2" text="Set Qty" border="0" color="33554432" x="2798" y="8" height="124" width="256" html.valueishtml="0"  name=set_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65280" )
+text(band=header alignment="2" text="Lot Complete Yn" border="0" color="33554432" x="343" y="8" height="124" width="206" html.valueishtml="0"  name=lot_complete_yn_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Check Yn" border="0" color="33554432" x="183" y="8" height="124" width="151" html.valueishtml="0"  name=check_yn_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Total Pcs Qty" border="0" color="33554432" x="3063" y="8" height="124" width="274" html.valueishtml="0"  name=total_pcs_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16776960" )
+text(band=header alignment="2" text="Palette No" border="0" color="33554432" x="558" y="8" height="124" width="434" html.valueishtml="0"  name=palette_no_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+compute(band=detail alignment="0" expression="getrow()"border="0" color="33554432" x="9" y="4" height="64" width="165" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="33554432" x="2158" y="4" height="64" width="370" format="yyyy/mm/dd" html.valueishtml="0"  name=lot_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432" x="1481" y="4" height="64" width="667" format="[general]" html.valueishtml="0"  name=model_name visible="1" dddw.name=vd_set_item_code dddw.displaycolumn=model_name dddw.datacolumn=model_name dddw.percentwidth=400 dddw.lines=10 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any dddw.hscrollbar=yes dddw.vscrollbar=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="0" color="33554432" x="1001" y="4" height="64" width="471" format="[general]" html.valueishtml="0"  name=lot_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="1" tabsequence=32766 border="0" color="33554432" x="2537" y="4" height="64" width="251" format="[general]" html.valueishtml="0"  name=lot_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+column(band=detail id=5 alignment="1" tabsequence=32766 border="0" color="33554432" x="2798" y="4" height="64" width="256" format="[general]" html.valueishtml="0"  name=set_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65280" )
+column(band=detail id=7 alignment="2" tabsequence=32766 border="0" color="33554432" x="343" y="4" height="64" width="206" format="[general]" html.valueishtml="0"  name=lot_complete_yn visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=400 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any dddw.hscrollbar=yes dddw.vscrollbar=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=13 alignment="2" tabsequence=32766 border="0" color="33554432" x="183" y="4" height="64" width="151" format="[general]" html.valueishtml="0"  name=check_yn visible="1~tif ( isnull(palette_no) or palette_no  = ~"~" , 1 , 0 )" checkbox.text="" checkbox.on="Y" checkbox.off="N" checkbox.scale=no checkbox.threed=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=6 alignment="1" tabsequence=32766 border="0" color="33554432" x="3063" y="4" height="64" width="274" format="[general]" html.valueishtml="0"  name=total_pcs_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16776960" )
+column(band=detail id=14 alignment="2" tabsequence=32766 border="0" color="33554432" x="558" y="4" height="64" width="434" format="[general]" html.valueishtml="0"  name=palette_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="count(lot_no for group 1)"border="0" color="33554432" x="1001" y="4" height="52" width="471" format="[general]" html.valueishtml="0"  name=compute_4 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(lot_qty for group 1)"border="0" color="33554432" x="2537" y="4" height="52" width="251" format="[general]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+compute(band=trailer.1 alignment="1" expression="sum(set_qty for group 1)"border="0" color="33554432" x="2798" y="4" height="52" width="256" format="[general]" html.valueishtml="0"  name=compute_5 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65280" )
+compute(band=trailer.1 alignment="1" expression="sum(total_pcs_qty for group 1)"border="0" color="33554432" x="3063" y="4" height="52" width="274" format="[general]" html.valueishtml="0"  name=compute_3 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16776960" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

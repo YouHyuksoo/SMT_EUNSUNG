@@ -1,0 +1,34 @@
+HA$PBExportHeader$f_get_sequence.srf
+global type f_get_sequence from function_object
+end type
+
+forward prototypes
+global function double f_get_sequence (string as_seq_name)
+end prototypes
+
+global function double f_get_sequence (string as_seq_name);double lvdb_sequence
+STRING lvs_sql
+
+lvs_sql = "SELECT "+AS_SEQ_NAME+".nextval "+" FROM dual" 
+
+DECLARE cl_seq DYNAMIC CURSOR FOR SQLSA ;
+
+PREPARE SQLSA FROM :lvs_sql ;
+
+OPEN DYNAMIC cl_seq ;
+
+if f_sql_check_with_msg("Open Dynamic Cursot for Sequence "+as_seq_name) < 0 then 
+   return -1
+end if
+
+FETCH cl_seq INTO :lvdb_sequence ;
+
+if f_sql_check_with_msg("Fetch Dynamic Cursot for Sequence "+as_seq_name) < 0 then 
+   return -1
+end if
+
+CLOSE cl_seq ;
+
+RETURN lvdb_sequence ;
+end function
+

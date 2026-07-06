@@ -1,0 +1,111 @@
+HA$PBExportHeader$d_mat_inventory_check_lst.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=12632256 processing=1 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no grid.lines=0 )
+header(height=152 color="536870912" )
+summary(height=56 color="65535" )
+footer(height=24 color="536870912" )
+detail(height=64 color="536870912" )
+table(column=(type=char(6) updatewhereclause=yes key=yes name=close_yyyymm dbname="close_yyyymm" )
+ column=(type=char(20) updatewhereclause=yes key=yes name=item_code dbname="item_code" )
+ column=(type=number updatewhereclause=yes key=yes name=organization_id dbname="organization_id" )
+ column=(type=char(30) updatewhereclause=yes key=yes name=material_mfs dbname="material_mfs" )
+ column=(type=char(10) updatewhereclause=yes key=yes name=line_type dbname="line_type" )
+ column=(type=number updatewhereclause=yes name=inventory_qty dbname="inventory_qty" )
+ column=(type=number update=yes updatewhereclause=yes name=check_inventory_qty dbname="check_inventory_qty" )
+ column=(type=char(20) updatewhereclause=yes key=yes name=location_code dbname="location_code" )
+ column=(type=number updatewhereclause=yes name=difference_qty dbname="difference_qty" )
+ column=(type=char(1) updatewhereclause=yes name=check_yn dbname="check_yn" values="	Y/	N" )
+ column=(type=number updatewhereclause=yes name=excel_check_inventory_qty dbname="excel_check_inventory_qty" )
+ retrieve="SELECT * FROM 
+(
+  SELECT ~"IM_ITEM_INVENTORY_CHECK~".~"CLOSE_YYYYMM~",   
+         ~"IM_ITEM_INVENTORY_CHECK~".~"ITEM_CODE~",   
+         ~"IM_ITEM_INVENTORY_CHECK~".~"ORGANIZATION_ID~",   
+         ~"IM_ITEM_INVENTORY_CHECK~".~"MATERIAL_MFS~",   
+         ~"IM_ITEM_INVENTORY_CHECK~".~"LINE_TYPE~",   
+         ~"IM_ITEM_INVENTORY_CHECK~".~"INVENTORY_QTY~",   
+         ~"IM_ITEM_INVENTORY_CHECK~".~"CHECK_INVENTORY_QTY~",   
+         ~"IM_ITEM_INVENTORY_CHECK~".~"LOCATION_CODE~",   
+         nvl(im_item_inventory_check.inventory_qty,0) - nvl(im_item_inventory_check.check_inventory_qty,0) difference_qty,   
+         'N' CHECK_YN,   
+         ~"IM_ITEM_INVENTORY_CHECK_EXCEL~".~"CHECK_INVENTORY_QTY~"  EXCEL_CHECK_INVENTORY_QTY
+    FROM ~"IM_ITEM_INVENTORY_CHECK~",  
+         ~"IM_ITEM_INVENTORY_CHECK_EXCEL~"  
+   WHERE ( im_item_inventory_check.close_yyyymm = im_item_inventory_check_excel.close_yyyymm (+)) and  
+         ( im_item_inventory_check.item_code = im_item_inventory_check_excel.item_code (+)) and  
+         ( im_item_inventory_check.line_type = im_item_inventory_check_excel.line_type (+)) and  
+         ( im_item_inventory_check.organization_id = im_item_inventory_check_excel.organization_id (+)) and  
+         ( im_item_inventory_check.location_code = im_item_inventory_check_excel.location_code (+)) and  
+         ( im_item_inventory_check.material_mfs = im_item_inventory_check_excel.material_mfs (+)) and  
+         ( ( ~"IM_ITEM_INVENTORY_CHECK~".~"CLOSE_YYYYMM~" = :arg_yyyymm ) AND  
+         ( ~"IM_ITEM_INVENTORY_CHECK~".~"ITEM_CODE~" like :arg_item_code ) AND  
+         ( ~"IM_ITEM_INVENTORY_CHECK~".~"MATERIAL_MFS~" like :arg_material_mfs ) AND  
+         ( NVL(~"IM_ITEM_INVENTORY_CHECK~".~"LOCATION_CODE~",'*') like :arg_location_code ) AND  
+		( NVL(~"IM_ITEM_INVENTORY_CHECK~".~"LOCATION_CODE~",'*') in ( 'M01' , 'M05' , 'M06')) AND  
+		
+         ( ~"IM_ITEM_INVENTORY_CHECK~".~"ORGANIZATION_ID~" = :arg_org_id ) )    
+
+UNION ALL
+
+  SELECT ~"IM_ITEM_INVENTORY_CHECK_EXCEL~".~"CLOSE_YYYYMM~",   
+         ~"IM_ITEM_INVENTORY_CHECK_EXCEL~".~"ITEM_CODE~",   
+         ~"IM_ITEM_INVENTORY_CHECK_EXCEL~".~"ORGANIZATION_ID~",   
+         ~"IM_ITEM_INVENTORY_CHECK_EXCEL~".~"MATERIAL_MFS~",   
+         ~"IM_ITEM_INVENTORY_CHECK_EXCEL~".~"LINE_TYPE~",   
+         0 INVENTORY_QTY,   
+         0 CHECK_INVENTORY_QTY,   
+         ~"IM_ITEM_INVENTORY_CHECK_EXCEL~".~"LOCATION_CODE~",   
+         nvl(IM_ITEM_INVENTORY_CHECK_EXCEL.CHECK_INVENTORY_QTY,0) difference_qty,   
+         'N' CHECK_YN,   
+         ~"IM_ITEM_INVENTORY_CHECK_EXCEL~".~"CHECK_INVENTORY_QTY~"   EXCEL_CHECK_INVENTORY_QTY
+    FROM  ~"IM_ITEM_INVENTORY_CHECK_EXCEL~"  
+   WHERE  ( ~"IM_ITEM_INVENTORY_CHECK_EXCEL~".~"CLOSE_YYYYMM~" = :arg_yyyymm )  
+       AND   ( CLOSE_YYYYMM , ITEM_CODE  , MATERIAL_MFS , LINE_TYPE , LOCATION_CODE , ORGANIZATION_ID )
+       NOT IN ( SELECT CLOSE_YYYYMM , ITEM_CODE  , MATERIAL_MFS , LINE_TYPE , LOCATION_CODE , ORGANIZATION_ID
+                       FROM IM_ITEM_INVENTORY_CHECK
+                      WHERE ~"IM_ITEM_INVENTORY_CHECK~".~"CLOSE_YYYYMM~" = :arg_yyyymm AND
+                      ( ~"IM_ITEM_INVENTORY_CHECK~".~"MATERIAL_MFS~" like :arg_material_mfs )   
+                    )
+       AND  ( NVL(~"IM_ITEM_INVENTORY_CHECK_EXCEL~".~"LOCATION_CODE~",'*') like :arg_location_code )  
+	  AND   ( NVL(~"IM_ITEM_INVENTORY_CHECK_EXCEL~".~"LOCATION_CODE~",'*') in ( 'M01' , 'M05' , 'M06')   )
+       AND  ( ~"IM_ITEM_INVENTORY_CHECK_EXCEL~".~"ITEM_CODE~" like :arg_item_code ) 
+       AND   ( ~"IM_ITEM_INVENTORY_CHECK_EXCEL~".~"MATERIAL_MFS~" like :arg_material_mfs ) 
+ ) " update="IM_ITEM_INVENTORY_CHECK" updatewhere=0 updatekeyinplace=no arguments=(("arg_yyyymm", string),("arg_item_code", string),("arg_location_code", string),("arg_material_mfs", string),("arg_org_id", number)) )
+text(band=header alignment="2" text="Location Code" border="0" color="0" x="544" y="8" height="136" width="370" html.valueishtml="0"  name=location_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Item Code" border="0" color="0" x="1262" y="8" height="136" width="421" html.valueishtml="0"  name=item_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Difference Qty" border="0" color="33554432" x="2985" y="8" height="136" width="315" html.valueishtml="0"  name=difference_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Organization Id" border="0" color="0" x="3310" y="8" height="136" width="352" html.valueishtml="0"  name=organization_id_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Close Yyyymm" border="0" color="0" x="288" y="8" height="136" width="247" html.valueishtml="0"  name=close_yyyymm_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Material Mfs" border="0" color="33554432" x="923" y="8" height="136" width="329" html.valueishtml="0"  name=material_mfs_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="No" border="0" color="0" x="119" y="8" height="136" width="160" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Inventory Qty" border="0" color="0" x="2295" y="8" height="136" width="329" html.valueishtml="0"  name=inventory_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+text(band=header alignment="2" text="Check Inventory Qty" border="0" color="0" x="2633" y="8" height="136" width="343" html.valueishtml="0"  name=check_inventory_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65280" )
+text(band=header alignment="2" text="Line Type" border="0" color="0" x="1691" y="8" height="136" width="302" html.valueishtml="0"  name=line_type_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Excel Check Inventory Qty" border="0" color="33554432" x="2002" y="8" height="136" width="283" html.valueishtml="0"  name=excel_check_inventory_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="1" tabsequence=32766 border="0" color="33554432" x="3310" y="4" height="56" width="352" format="[general]" html.valueishtml="0"  name=organization_id visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=9 alignment="1" tabsequence=32766 border="0" color="33554432" x="2985" y="4" height="56" width="315" format="###,##0.####" html.valueishtml="0"  name=difference_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="0" expression="trim('')"border="0" color="33554432" x="9" y="4" height="56" width="101" format="[GENERAL]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432" x="1262" y="4" height="56" width="421" format="[general]" html.valueishtml="0"  name=item_code visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=8 alignment="0" tabsequence=32766 border="0" color="33554432" x="544" y="4" height="56" width="370" format="[general]" html.valueishtml="0"  name=location_code visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432" x="288" y="4" height="56" width="247" format="[general]" html.valueishtml="0"  name=close_yyyymm visible="1" edit.limit=6 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="2" tabsequence=10 border="0" color="33554432" x="923" y="4" height="56" width="329" format="[general]" html.valueishtml="0"  name=material_mfs visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="0" expression="getrow()"border="0" color="33554432" x="119" y="4" height="56" width="160" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=6 alignment="1" tabsequence=32766 border="0" color="33554432" x="2295" y="4" height="56" width="329" format="###,##0.####" html.valueishtml="0"  name=inventory_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+column(band=detail id=7 alignment="1" tabsequence=30 border="0" color="33554432" x="2633" y="4" height="56" width="343" format="###,##0.####" html.valueishtml="0"  name=check_inventory_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65280" )
+column(band=detail id=5 alignment="0" tabsequence=32766 border="0" color="33554432" x="1691" y="4" height="56" width="302" format="[general]" html.valueishtml="0"  name=line_type visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=11 alignment="1" tabsequence=20 border="0" color="33554432" x="2002" y="8" height="56" width="283" format="[general]" html.valueishtml="0"  name=excel_check_inventory_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(inventory_qty for all)"border="0" color="33554432" x="2295" y="0" height="52" width="329" format="###,##0.####" html.valueishtml="0"  name=compute_3 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+compute(band=summary alignment="1" expression="sum(difference_qty for all)"border="0" color="33554432" x="2985" y="0" height="52" width="315" format="###,##0.####" html.valueishtml="0"  name=compute_5 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(check_inventory_qty for all)"border="0" color="33554432" x="2633" y="0" height="52" width="343" format="###,##0.####" html.valueishtml="0"  name=compute_4 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65280" )
+compute(band=summary alignment="1" expression="sum(excel_check_inventory_qty for all)"border="0" color="33554432" x="2002" y="0" height="52" width="283" format="[general]" html.valueishtml="0"  name=compute_6 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml( template=(comment="" name="d" xhtml="$$HEX1$$fffe$$ENDHEX$$<form name=~"webDW_dataForm~"><div class=~"webDW_band_0~"><div class=~"webDW_t_1~">t_1</div><div class=~"webDW_item_status_t~">item_status_t</div><div class=~"webDW_vr1~"/><div class=~"webDW_mfs_t~">mfs_t</div><div class=~"webDW_vr2~"/><div class=~"webDW_line_type_t~">line_type_t</div><div class=~"webDW_vr3~"/><div class=~"webDW_inventory_hold_t~">inventory_hold_t</div><div class=~"webDW_vr4~"/><div class=~"webDW_inventory_price_t~">inventory_price_t</div><div class=~"webDW_vr5~"/><div class=~"webDW_inventory_qty_t~">inventory_qty_t</div><div class=~"webDW_vr6~"/><div class=~"webDW_check_inventory_qty_t~">check_inventory_qty_t</div><div class=~"webDW_vr7~"/><div class=~"webDW_inventory_amt_t~">inventory_amt_t</div><div class=~"webDW_vr8~"/><div class=~"webDW_inventory_division_t~">inventory_division_t</div><div class=~"webDW_vr9~"/><div class=~"webDW_location_code_t~">location_code_t</div><div class=~"webDW_vr10~"/><div class=~"webDW_comments_t~">comments_t</div><div class=~"webDW_vr11~"/><div class=~"webDW_enter_date_t~">enter_date_t</div><div class=~"webDW_vr12~"/><div class=~"webDW_enter_by_t~">enter_by_t</div><div class=~"webDW_vr13~"/><div class=~"webDW_last_modify_date_t~">last_modify_date_t</div><div class=~"webDW_vr14~"/><div class=~"webDW_line_code_t~">line_code_t</div><div class=~"webDW_vr15~"/><div class=~"webDW_last_modify_by_t~">last_modify_by_t</div><div class=~"webDW_vr16~"/><div class=~"webDW_item_spec_t~">item_spec_t</div><div class=~"webDW_vr17~"/><div class=~"webDW_item_name_t~">item_name_t</div><div class=~"webDW_vr18~"/><div class=~"webDW_item_code_t~">item_code_t</div><div class=~"webDW_vr19~"/><div class=~"webDW_close_yyyymm_t~">close_yyyymm_t</div><div class=~"webDW_vr20~"/><div class=~"webDW_difference_qty_t~">difference_qty_t</div><div class=~"webDW_vr21~"/><div class=~"webDW_organization_id_t~">organization_id_t</div><div class=~"webDW_vr22~"/><div class=~"webDW_virtual_receipt_yn_t~">virtual_receipt_yn_t</div><div class=~"webDW_vr23~"/></div><div class=~"webDW_detail_0~" __pbband=~"detail~"><input name=~"webDW_item_code~" type=~"text~" value=~"item_code~"/><input name=~"webDW_close_yyyymm~" type=~"text~" value=~"close_yyyymm~"/><div class=~"webDW_compute_1~">compute_1</div><div class=~"webDW_compute_2~">compute_2</div><div class=~"webDW_item_status~">item_status</div><input name=~"webDW_mfs~" type=~"text~" value=~"mfs~"/><div class=~"webDW_line_type~">line_type</div><div class=~"webDW_inventory_hold~">inventory_hold</div><input name=~"webDW_inventory_price~" type=~"text~" value=~"inventory_price~"/><input name=~"webDW_inventory_qty~" type=~"text~" value=~"inventory_qty~"/><input name=~"webDW_check_inventory_qty~" type=~"text~" value=~"check_inventory_qty~"/><input name=~"webDW_inventory_amt~" type=~"text~" value=~"inventory_amt~"/><div class=~"webDW_inventory_division~">inventory_division</div><input name=~"webDW_location_code~" type=~"text~" value=~"location_code~"/><input name=~"webDW_comments~" type=~"text~" value=~"comments~"/><input name=~"webDW_enter_date~" type=~"text~" value=~"enter_date~"/><input name=~"webDW_enter_by~" type=~"text~" value=~"enter_by~"/><input name=~"webDW_last_modify_date~" type=~"text~" value=~"last_modify_date~"/><div class=~"webDW_line_code~">line_code</div><input name=~"webDW_last_modify_by~" type=~"text~" value=~"last_modify_by~"/><input name=~"webDW_item_spec~" type=~"text~" value=~"item_spec~"/><input name=~"webDW_item_name~" type=~"text~" value=~"item_name~"/><input name=~"webDW_difference_qty~" type=~"text~" value=~"difference_qty~"/><input name=~"webDW_organization_id~" type=~"text~" value=~"organization_id~"/><div class=~"webDW_virtual_receipt_yn~">virtual_receipt_yn</div></div></form>"))
+ 

@@ -1,0 +1,21 @@
+HA$PBExportHeader$f_mat_issue_return_request_cancel.srf
+global type f_mat_issue_return_request_cancel from function_object
+end type
+
+forward prototypes
+global function integer f_mat_issue_return_request_cancel (datetime adt_issue_date, double al_seq)
+end prototypes
+
+global function integer f_mat_issue_return_request_cancel (datetime adt_issue_date, double al_seq);
+DELETE FROM  im_item_issue_return_request
+    WHERE issue_date      = :adt_issue_date
+      AND issue_sequence = :al_seq
+      AND NVL(confirm_yn,'N') <> 'Y' //$$HEX16$$98ccacb9200018b4c0c920004ac540c783acccb92000adc01cc8200000aca5b2$$ENDHEX$$
+      AND organization_id = :gvi_organization_id;
+		
+if f_sql_check() < 0 then 
+	return -2
+end if 
+return sqlca.sqlnrows
+end function
+

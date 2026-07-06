@@ -1,0 +1,468 @@
+HA$PBExportHeader$d_mat_total_inventory_check_rpt.srd
+$PBExportComments$D_MAT_TOTAL_INVENTORY_CHECK_RPT Create Date :2007-12-30 Created By : ADMIN
+release 10.5;
+datawindow(units=0 timer_interval=60000 color=16777215 processing=1 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no grid.lines=0 )
+header(height=340 color="16777215" )
+summary(height=60 color="65535" )
+footer(height=0 color="536870912" )
+detail(height=56 color="16777215" )
+table(column=(type=char(6) update=yes updatewhereclause=yes name=close_yyyymm dbname="id_item.close_yyyymm" )
+ column=(type=char(20) update=yes updatewhereclause=yes key=yes name=item_code dbname="id_item.item_code" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=line_type dbname="id_item.line_type" )
+ column=(type=number update=yes updatewhereclause=yes key=yes name=organization_id dbname="id_item.organization_id" )
+ column=(type=number updatewhereclause=yes name=last_material_inventory_qty dbname="last_material_inventory_qty" )
+ column=(type=number updatewhereclause=yes name=mm_material_inventory_qty dbname="mm_material_inventory_qty" )
+ column=(type=number updatewhereclause=yes name=mm_material_receipt dbname="mm_material_receipt" )
+ column=(type=number updatewhereclause=yes name=excel_material_receipt dbname="excel_material_receipt" )
+ column=(type=number updatewhereclause=yes name=mm_material_bad_issue dbname="mm_material_bad_issue" )
+ column=(type=number updatewhereclause=yes name=mm_material_extra_issue dbname="mm_material_extra_issue" )
+ column=(type=number updatewhereclause=yes name=mm_material_inventory_check dbname="mm_material_inventory_check" )
+ column=(type=number updatewhereclause=yes name=last_workstage_inventory dbname="last_workstage_inventory" )
+ column=(type=number updatewhereclause=yes name=mm_workstage_inventory dbname="mm_workstage_inventory" )
+ column=(type=number updatewhereclause=yes name=mm_workstage_issue dbname="mm_workstage_issue" )
+ column=(type=number updatewhereclause=yes name=mm_workstage_inventory_check dbname="mm_workstage_inventory_check" )
+ column=(type=number updatewhereclause=yes name=mm_product_result dbname="mm_product_result" )
+ column=(type=number updatewhereclause=yes name=model_unit_qty dbname="model_unit_qty" )
+ column=(type=char(100) updatewhereclause=yes name=item_name dbname="id_item.item_name" )
+ column=(type=char(100) updatewhereclause=yes name=item_spec dbname="id_item.item_spec" )
+ column=(type=char(3) updatewhereclause=yes name=item_uom dbname="id_item.item_uom" )
+ column=(type=char(1) updatewhereclause=yes name=item_division dbname="id_item.item_division" )
+ retrieve="SELECT  A.CLOSE_YYYYMM,   
+			A.ITEM_CODE,   
+			A.LINE_TYPE,   
+			A.ORGANIZATION_ID,   
+			SUM(A.LAST_MATERIAL_INVENTORY_QTY) LAST_MATERIAL_INVENTORY_QTY,   
+			SUM(A.MM_MATERIAL_INVENTORY_QTY) MM_MATERIAL_INVENTORY_QTY ,
+			SUM(A.MM_MATERIAL_RECEIPT) MM_MATERIAL_RECEIPT ,
+			SUM(A.EXCEL_MATERIAL_RECEIPT) EXCEL_MATERIAL_RECEIPT ,
+			SUM(A.MM_MATERIAL_BAD_ISSUE) MM_MATERIAL_BAD_ISSUE ,
+			SUM(A.MM_MATERIAL_EXTRA_ISSUE) MM_MATERIAL_EXTRA_ISSUE ,
+			SUM(A.MM_MATERIAL_INVENTORY_CHECK) MM_MATERIAL_INVENTORY_CHECK ,
+			SUM(A.LAST_WORKSTAGE_INVENTORY) LAST_WORKSTAGE_INVENTORY,
+			SUM(A.MM_WORKSTAGE_INVENTORY) MM_WORKSTAGE_INVENTORY,
+			SUM(A.MM_WORKSTAGE_ISSUE) MM_WORKSTAGE_ISSUE,
+			SUM(A.MM_WORKSTAGE_INVENTORY_CHECK) MM_WORKSTAGE_INVENTORY_CHECK,
+			SUM(A.MM_PRODUCT_RESULT) MM_PRODUCT_RESULT ,
+			MAX(A.MODEL_UNIT_QTY) 	MODEL_UNIT_QTY,
+			B.ITEM_NAME , B.ITEM_SPEC , B.ITEM_UOM , B.ITEM_DIVISION
+FROM 
+(
+  SELECT A.CLOSE_YYYYMM,   
+			A.ITEM_CODE,   
+			A.LINE_TYPE,   
+			A.ORGANIZATION_ID,   
+			A.INVENTORY_QTY LAST_MATERIAL_INVENTORY_QTY,   
+			0 MM_MATERIAL_INVENTORY_QTY ,
+			0 MM_MATERIAL_RECEIPT ,
+			0 EXCEL_MATERIAL_RECEIPT ,
+			0 MM_MATERIAL_BAD_ISSUE ,
+			0 MM_MATERIAL_EXTRA_ISSUE ,
+			0 MM_MATERIAL_INVENTORY_CHECK ,
+			0 LAST_WORKSTAGE_INVENTORY,
+			0 MM_WORKSTAGE_INVENTORY,
+			0 MM_WORKSTAGE_ISSUE,
+			0 MM_WORKSTAGE_INVENTORY_CHECK,
+			0 MM_PRODUCT_RESULT,
+			1 MODEL_UNIT_QTY
+    FROM IM_ITEM_TOTAL_INVENTORY A   
+  WHERE A.CLOSE_YYYYMM = :ARG_YYYYMM
+       AND A.ITEM_CODE LIKE :ARG_ITEM_CODE
+       AND A.ORGANIZATION_ID = :ARG_ORG
+       AND A.TOTAL_INVENTORY_DIVISION = 'LAST MATERIAL INVENTORY'
+
+UNION ALL
+
+  SELECT A.CLOSE_YYYYMM,   
+			A.ITEM_CODE,   
+			A.LINE_TYPE,   
+			A.ORGANIZATION_ID,   
+			0 LAST_MATERIAL_INVENTORY_QTY,   
+			A.INVENTORY_QTY MM_MATERIAL_INVENTORY_QTY ,
+			0 MM_MATERIAL_RECEIPT ,
+			0 EXCEL_MATERIAL_RECEIPT ,
+			0 MM_MATERIAL_BAD_ISSUE ,
+			0 MM_MATERIAL_EXTRA_ISSUE ,
+			0 MM_MATERIAL_INVENTORY_CHECK ,
+			0 LAST_WORKSTAGE_INVENTORY,
+			0 MM_WORKSTAGE_INVENTORY,
+			0 MM_WORKSTAGE_ISSUE,
+			0 MM_WORKSTAGE_INVENTORY_CHECK,
+			0 MM_PRODUCT_RESULT,
+			1 MODEL_UNIT_QTY
+    FROM IM_ITEM_TOTAL_INVENTORY A   
+  WHERE A.CLOSE_YYYYMM = :ARG_YYYYMM
+       AND A.ITEM_CODE LIKE :ARG_ITEM_CODE
+       AND A.ORGANIZATION_ID = :ARG_ORG
+       AND A.TOTAL_INVENTORY_DIVISION = 'MM MATERIAL INVENTORY'
+
+UNION ALL
+
+  SELECT A.CLOSE_YYYYMM,   
+			A.ITEM_CODE,   
+			A.LINE_TYPE,   
+			A.ORGANIZATION_ID,   
+			0 LAST_MATERIAL_INVENTORY_QTY,   
+			0 MM_MATERIAL_INVENTORY_QTY ,
+			A.INVENTORY_QTY MM_MATERIAL_RECEIPT ,
+			0 EXCEL_MATERIAL_RECEIPT ,
+			0 MM_MATERIAL_BAD_ISSUE ,
+			0 MM_MATERIAL_EXTRA_ISSUE ,
+			0 MM_MATERIAL_INVENTORY_CHECK ,
+			0 LAST_WORKSTAGE_INVENTORY,
+			0 MM_WORKSTAGE_INVENTORY,
+			0 MM_WORKSTAGE_ISSUE,
+			0 MM_WORKSTAGE_INVENTORY_CHECK,
+			0 MM_PRODUCT_RESULT,
+			1 MODEL_UNIT_QTY
+    FROM IM_ITEM_TOTAL_INVENTORY A   
+  WHERE A.CLOSE_YYYYMM = :ARG_YYYYMM
+       AND A.ITEM_CODE LIKE :ARG_ITEM_CODE
+       AND A.ORGANIZATION_ID = :ARG_ORG
+       AND A.TOTAL_INVENTORY_DIVISION = 'MM MATERIAL RECEIPT'
+
+UNION ALL
+
+  SELECT A.CLOSE_YYYYMM,   
+			A.ITEM_CODE,   
+			A.LINE_TYPE,   
+			A.ORGANIZATION_ID,   
+			0 LAST_MATERIAL_INVENTORY_QTY,   
+			0 MM_MATERIAL_INVENTORY_QTY ,
+			0 MM_MATERIAL_RECEIPT ,
+			A.INVENTORY_QTY EXCEL_MATERIAL_RECEIPT ,
+			0 MM_MATERIAL_BAD_ISSUE ,
+			0 MM_MATERIAL_EXTRA_ISSUE ,
+			0 MM_MATERIAL_INVENTORY_CHECK ,
+			0 LAST_WORKSTAGE_INVENTORY,
+			0 MM_WORKSTAGE_INVENTORY,
+			0 MM_WORKSTAGE_ISSUE,
+			0 MM_WORKSTAGE_INVENTORY_CHECK,
+			0 MM_PRODUCT_RESULT,
+			1 MODEL_UNIT_QTY
+    FROM IM_ITEM_TOTAL_INVENTORY A   
+  WHERE A.CLOSE_YYYYMM = :ARG_YYYYMM
+       AND A.ITEM_CODE LIKE :ARG_ITEM_CODE
+       AND A.ORGANIZATION_ID = :ARG_ORG
+       AND A.TOTAL_INVENTORY_DIVISION = 'EXCEL MATERIAL RECEIPT'
+
+
+UNION ALL
+
+  SELECT A.CLOSE_YYYYMM,   
+			A.ITEM_CODE,   
+			A.LINE_TYPE,   
+			A.ORGANIZATION_ID,   
+			0 LAST_MATERIAL_INVENTORY_QTY,   
+			0 MM_MATERIAL_INVENTORY_QTY ,
+			0 MM_MATERIAL_RECEIPT ,
+			0 EXCEL_MATERIAL_RECEIPT ,
+			A.INVENTORY_QTY MM_MATERIAL_BAD_ISSUE ,
+			0 MM_MATERIAL_EXTRA_ISSUE ,
+			0 MM_MATERIAL_INVENTORY_CHECK ,
+			0 LAST_WORKSTAGE_INVENTORY,
+			0 MM_WORKSTAGE_INVENTORY,
+			0 MM_WORKSTAGE_ISSUE,
+			0 MM_WORKSTAGE_INVENTORY_CHECK,
+			0 MM_PRODUCT_RESULT,
+			1 MODEL_UNIT_QTY
+    FROM IM_ITEM_TOTAL_INVENTORY A   
+  WHERE A.CLOSE_YYYYMM = :ARG_YYYYMM
+       AND A.ITEM_CODE LIKE :ARG_ITEM_CODE
+       AND A.ORGANIZATION_ID = :ARG_ORG
+       AND A.TOTAL_INVENTORY_DIVISION = 'MM MATERIAL BAD ISSUE'
+
+UNION ALL
+
+  SELECT A.CLOSE_YYYYMM,   
+			A.ITEM_CODE,   
+			A.LINE_TYPE,   
+			A.ORGANIZATION_ID,   
+			0 LAST_MATERIAL_INVENTORY_QTY,   
+			0 MM_MATERIAL_INVENTORY_QTY ,
+			0 MM_MATERIAL_RECEIPT ,
+			0 EXCEL_MATERIAL_RECEIPT ,
+			0 MM_MATERIAL_BAD_ISSUE ,
+			A.INVENTORY_QTY MM_MATERIAL_EXTRA_ISSUE ,
+			0 MM_MATERIAL_INVENTORY_CHECK ,
+			0 LAST_WORKSTAGE_INVENTORY,
+			0 MM_WORKSTAGE_INVENTORY,
+			0 MM_WORKSTAGE_ISSUE,
+			0 MM_WORKSTAGE_INVENTORY_CHECK,
+			0 MM_PRODUCT_RESULT,
+			1 MODEL_UNIT_QTY
+    FROM IM_ITEM_TOTAL_INVENTORY A   
+  WHERE A.CLOSE_YYYYMM = :ARG_YYYYMM
+       AND A.ITEM_CODE LIKE :ARG_ITEM_CODE
+       AND A.ORGANIZATION_ID = :ARG_ORG
+       AND A.TOTAL_INVENTORY_DIVISION = 'MM MATERIAL EXTRA ISSUE'
+
+UNION ALL
+
+  SELECT A.CLOSE_YYYYMM,   
+			A.ITEM_CODE,   
+			A.LINE_TYPE,   
+			A.ORGANIZATION_ID,   
+			0 LAST_MATERIAL_INVENTORY_QTY,   
+			0 MM_MATERIAL_INVENTORY_QTY ,
+			0 MM_MATERIAL_RECEIPT ,
+			0 EXCEL_MATERIAL_RECEIPT ,
+			0 MM_MATERIAL_BAD_ISSUE ,
+			0 MM_MATERIAL_EXTRA_ISSUE ,
+			A.INVENTORY_QTY MM_MATERIAL_INVENTORY_CHECK ,
+			0 LAST_WORKSTAGE_INVENTORY,
+			0 MM_WORKSTAGE_INVENTORY,
+			0 MM_WORKSTAGE_ISSUE,
+			0 MM_WORKSTAGE_INVENTORY_CHECK,
+			0 MM_PRODUCT_RESULT,
+			1 MODEL_UNIT_QTY
+    FROM IM_ITEM_TOTAL_INVENTORY A   
+  WHERE A.CLOSE_YYYYMM = :ARG_YYYYMM
+       AND A.ITEM_CODE LIKE :ARG_ITEM_CODE
+       AND A.ORGANIZATION_ID = :ARG_ORG
+       AND A.TOTAL_INVENTORY_DIVISION = 'MM MATERIAL INVENTORY CHECK'
+
+UNION ALL
+
+  SELECT A.CLOSE_YYYYMM,   
+			A.ITEM_CODE,   
+			A.LINE_TYPE,   
+			A.ORGANIZATION_ID,   
+			0 LAST_MATERIAL_INVENTORY_QTY,   
+			0 MM_MATERIAL_INVENTORY_QTY ,
+			0 MM_MATERIAL_RECEIPT ,
+			0 EXCEL_MATERIAL_RECEIPT ,
+			0 MM_MATERIAL_BAD_ISSUE ,
+			0 MM_MATERIAL_EXTRA_ISSUE ,
+			0 MATERIAL_INVENTORY_CHECK ,
+			A.INVENTORY_QTY LAST_WORKSTAGE_INVENTORY,
+			0 MM_WORKSTAGE_INVENTORY,
+			0 MM_WORKSTAGE_ISSUE,
+			0 MM_WORKSTAGE_INVENTORY_CHECK,
+			0 MM_PRODUCT_RESULT,
+			1 MODEL_UNIT_QTY
+    FROM IM_ITEM_TOTAL_INVENTORY A   
+  WHERE A.CLOSE_YYYYMM = :ARG_YYYYMM
+       AND A.ITEM_CODE LIKE :ARG_ITEM_CODE
+       AND A.ORGANIZATION_ID = :ARG_ORG
+       AND A.TOTAL_INVENTORY_DIVISION = 'LAST WORKSTAGE INVENTORY'
+
+UNION ALL
+
+  SELECT A.CLOSE_YYYYMM,   
+			A.ITEM_CODE,   
+			A.LINE_TYPE,   
+			A.ORGANIZATION_ID,   
+			0 LAST_MATERIAL_INVENTORY_QTY,   
+			0 MM_MATERIAL_INVENTORY_QTY ,
+			0 MM_MATERIAL_RECEIPT ,
+			0 EXCEL_MATERIAL_RECEIPT ,
+			0 MM_MATERIAL_BAD_ISSUE ,
+			0 MM_MATERIAL_EXTRA_ISSUE ,
+			0 MATERIAL_INVENTORY_CHECK ,
+			0 LAST_WORKSTAGE_INVENTORY,
+			A.INVENTORY_QTY MM_WORKSTAGE_INVENTORY,
+			0 MM_WORKSTAGE_ISSUE,
+			0 MM_WORKSTAGE_INVENTORY_CHECK,
+			0 MM_PRODUCT_RESULT,
+			1 MODEL_UNIT_QTY
+    FROM IM_ITEM_TOTAL_INVENTORY A   
+  WHERE A.CLOSE_YYYYMM = :ARG_YYYYMM
+       AND A.ITEM_CODE LIKE :ARG_ITEM_CODE
+       AND A.ORGANIZATION_ID = :ARG_ORG
+       AND A.TOTAL_INVENTORY_DIVISION = 'MM WORKSTAGE INVENTORY'
+
+UNION ALL
+
+  SELECT A.CLOSE_YYYYMM,   
+			A.ITEM_CODE,   
+			A.LINE_TYPE,   
+			A.ORGANIZATION_ID,   
+			0 LAST_MATERIAL_INVENTORY_QTY,   
+			0 MM_MATERIAL_INVENTORY_QTY ,
+			0 MM_MATERIAL_RECEIPT ,
+			0 EXCEL_MATERIAL_RECEIPT ,
+			0 MM_MATERIAL_BAD_ISSUE ,
+			0 MM_MATERIAL_EXTRA_ISSUE ,
+			0 MATERIAL_INVENTORY_CHECK ,
+			0 LAST_WORKSTAGE_INVENTORY,
+			0 MM_WORKSTAGE_INVENTORY,
+			A.INVENTORY_QTY MM_WORKSTAGE_ISSUE,
+			0 MM_WORKSTAGE_INVENTORY_CHECK,
+			0 MM_PRODUCT_RESULT,
+			1 MODEL_UNIT_QTY
+    FROM IM_ITEM_TOTAL_INVENTORY A   
+  WHERE A.CLOSE_YYYYMM = :ARG_YYYYMM
+       AND A.ITEM_CODE LIKE :ARG_ITEM_CODE
+       AND A.ORGANIZATION_ID = :ARG_ORG
+       AND A.TOTAL_INVENTORY_DIVISION = 'MM WORKSTAGE ISSUE'
+
+UNION ALL
+
+  SELECT A.CLOSE_YYYYMM,   
+			A.ITEM_CODE,   
+			A.LINE_TYPE,   
+			A.ORGANIZATION_ID,   
+			0 LAST_MATERIAL_INVENTORY_QTY,   
+			0 MM_MATERIAL_INVENTORY_QTY ,
+			0 MM_MATERIAL_RECEIPT ,
+			0 EXCEL_MATERIAL_RECEIPT ,
+			0 MM_MATERIAL_BAD_ISSUE ,
+			0 MM_MATERIAL_EXTRA_ISSUE ,
+			0 MATERIAL_INVENTORY_CHECK ,
+			0 LAST_WORKSTAGE_INVENTORY,
+			0 MM_WORKSTAGE_INVENTORY,
+			0 MM_WORKSTAGE_ISSUE,
+			A.INVENTORY_QTY MM_WORKSTAGE_INVENTORY_CHECK,
+			0 MM_PRODUCT_RESULT,
+			1 MODEL_UNIT_QTY
+    FROM IM_ITEM_TOTAL_INVENTORY A   
+  WHERE A.CLOSE_YYYYMM = :ARG_YYYYMM
+       AND A.ITEM_CODE LIKE :ARG_ITEM_CODE
+       AND A.ORGANIZATION_ID = :ARG_ORG
+       AND A.TOTAL_INVENTORY_DIVISION = 'MM WORKSTAGE INVENTORY CHECK'
+
+UNION ALL
+
+  SELECT A.CLOSE_YYYYMM,   
+			A.ITEM_CODE,   
+			A.LINE_TYPE,   
+			A.ORGANIZATION_ID,   
+			0 LAST_MATERIAL_INVENTORY_QTY,   
+			0 MM_MATERIAL_INVENTORY_QTY ,
+			0 MM_MATERIAL_RECEIPT ,
+			0 EXCEL_MATERIAL_RECEIPT ,
+			0 MM_MATERIAL_BAD_ISSUE ,
+			0 MM_MATERIAL_EXTRA_ISSUE ,
+			0 MATERIAL_INVENTORY_CHECK ,
+			0 LAST_WORKSTAGE_INVENTORY,
+			0 MM_WORKSTAGE_INVENTORY,
+			0 MM_WORKSTAGE_ISSUE,
+			0 MM_WORKSTAGE_INVENTORY_CHECK,
+			A.INVENTORY_QTY MM_PRODUCT_RESULT,
+			A.MODEL_UNIT_QTY
+    FROM IM_ITEM_TOTAL_INVENTORY A   
+  WHERE A.CLOSE_YYYYMM = :ARG_YYYYMM
+       AND A.ITEM_CODE LIKE :ARG_ITEM_CODE
+       AND A.ORGANIZATION_ID = :ARG_ORG
+       AND A.TOTAL_INVENTORY_DIVISION = 'MM PRODUCT RESULT'  
+)  A , ID_ITEM B
+
+WHERE A.ITEM_CODE = B.ITEM_CODE(+)
+AND A.ORGANIZATION_ID = B.ORGANIZATION_ID(+)
+GROUP BY A.CLOSE_YYYYMM , A.ITEM_CODE , A.LINE_TYPE , A.ORGANIZATION_ID  , B.ITEM_NAME , B.ITEM_SPEC , B.ITEM_UOM , B.ITEM_DIVISION , B.ORGANIZATION_ID" update="ID_ITEM" updatewhere=0 updatekeyinplace=no arguments=(("ARG_YYYYMM", string),("ARG_ITEM_CODE", string),("ARG_ORG", number))  sort="close_yyyymm A item_division A item_code A item_code A " )
+group(level=1 header.height=0 trailer.height=60 by=("item_division" ) header.color="536870912" trailer.color="65280" )
+text(band=header alignment="2" text="No" border="2" color="33554432" x="119" y="228" height="108" width="151" html.valueishtml="0"  name=no_1_t visible="1"  font.face="TAHOMA" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Mm Material Extra Issue" border="2" color="33554432" x="4786" y="228" height="108" width="343" html.valueishtml="0"  name=mm_material_extra_issue_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Mm Material Bad Issue" border="2" color="33554432" x="5138" y="228" height="108" width="343" html.valueishtml="0"  name=mm_material_bad_issue_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Last Workstage Inventory" border="2" color="33554432" x="3173" y="228" height="108" width="325" html.valueishtml="0"  name=last_workstage_inventory_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+text(band=header alignment="2" text="Last Material Inventory Qty" border="2" color="33554432" x="2843" y="228" height="108" width="320" html.valueishtml="0"  name=last_material_inventory_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+text(band=header alignment="2" text="Mm Product Result" border="2" color="33554432" x="4462" y="228" height="108" width="315" html.valueishtml="0"  name=mm_product_result_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16776960" )
+text(band=header alignment="0" text="Item Code" border="2" color="33554432" x="805" y="228" height="108" width="480" html.valueishtml="0"  name=item_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="0" text="Line Type" border="2" color="33554432" x="1294" y="228" height="108" width="187" html.valueishtml="0"  name=line_type_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="0" text="Close Yyyymm" border="2" color="33554432" x="279" y="228" height="108" width="274" html.valueishtml="0"  name=close_yyyymm_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="0" text="Item Name" border="2" color="0" x="1490" y="228" height="108" width="430" html.valueishtml="0"  name=item_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="0" text="Item Spec" border="2" color="0" x="1929" y="228" height="108" width="581" html.valueishtml="0"  name=item_spec_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="0" text="Item Division" border="2" color="0" x="562" y="228" height="108" width="233" html.valueishtml="0"  name=item_division_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="A" border="2" color="33554432" x="2843" y="160" height="56" width="320" html.valueishtml="0"  name=t_3 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+compute(band=header alignment="2" expression="'Page ' + page() + ' of ' + pageCount()"border="2" color="0" x="805" y="164" height="52" width="480" format="[general]" html.valueishtml="0"  name=page_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Mm Material Receipt" border="2" color="33554432" x="3506" y="228" height="108" width="315" html.valueishtml="0"  name=mm_material_receipt_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+text(band=header alignment="2" text="Excel Material Receipt" border="2" color="33554432" x="3831" y="228" height="108" width="288" html.valueishtml="0"  name=excel_material_receipt_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="0" text="Item Uom" border="2" color="0" x="2519" y="228" height="108" width="155" html.valueishtml="0"  name=item_uom_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Model Unit Qty" border="2" color="33554432" x="2683" y="228" height="108" width="151" html.valueishtml="0"  name=model_unit_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="MM Logical Inventory Qty" border="2" color="33554432" x="5824" y="228" height="108" width="347" html.valueishtml="0"  name=mm_logical_inventory_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16776960" )
+text(band=header alignment="2" text="MM Total Inventory" border="2" color="33554432" x="4128" y="228" height="108" width="325" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16711935" )
+text(band=header alignment="2" text="MM Total Issue Qty" border="2" color="33554432" x="5490" y="228" height="108" width="325" html.valueishtml="0"  name=mm_total_issue_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16711935" )
+text(band=header alignment="0" text="Print Date" border="2" color="33554432" x="7927" y="80" height="52" width="366" html.valueishtml="0"  name=t_14 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=header alignment="0" expression="today()"border="2" color="0" x="8302" y="80" height="52" width="352" format="yyyymmdd h:mm" html.valueishtml="0"  name=date_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=detail alignment="0" expression="TRIM('')"border="2" color="0" x="9" y="0" height="56" width="101" format="[GENERAL]" html.valueishtml="0"  name=indicator visible="1"  font.face="TAHOMA" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=detail alignment="0" expression="GETROW()"border="2" color="0" x="119" y="0" height="56" width="151" format="[GENERAL]" html.valueishtml="0"  name=no_1 visible="1"  font.face="TAHOMA" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=1 alignment="0" tabsequence=10 border="2" color="33554432" x="279" y="0" height="56" width="274" format="[general]" html.valueishtml="0"  name=close_yyyymm visible="1" edit.limit=6 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=2 alignment="0" tabsequence=30 border="2" color="33554432" x="805" y="0" height="56" width="480" format="[general]" html.valueishtml="0"  name=item_code visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=3 alignment="0" tabsequence=40 border="2" color="33554432" x="1294" y="0" height="56" width="187" format="[general]" html.valueishtml="0"  name=line_type visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=300 dddw.lines=0 dddw.limit=8 dddw.allowedit=no dddw.useasborder=no dddw.case=any dddw.autohscroll=yes dddw.hsplitscroll=yes dddw.hscrollbar=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=18 alignment="0" tabsequence=50 border="2" color="33554432" x="1490" y="0" height="56" width="430" format="[general]" html.valueishtml="0"  name=item_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=19 alignment="0" tabsequence=60 border="2" color="33554432" x="1929" y="0" height="56" width="581" format="[general]" html.valueishtml="0"  name=item_spec visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=20 alignment="0" tabsequence=70 border="2" color="33554432" x="2519" y="0" height="56" width="155" format="[general]" html.valueishtml="0"  name=item_uom visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=21 alignment="0" tabsequence=20 border="2" color="33554432" x="562" y="0" height="56" width="233" format="[general]" html.valueishtml="0"  name=item_division visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=5 alignment="1" tabsequence=90 border="2" color="33554432" x="2843" y="0" height="56" width="320" format="###,##0" html.valueishtml="0"  name=last_material_inventory_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=16 alignment="1" tabsequence=130 border="2" color="33554432~tif (  mm_product_result < 0 , 255 , 0 )" x="4462" y="0" height="56" width="315" format="###,##0" html.valueishtml="0"  name=mm_product_result visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=12 alignment="1" tabsequence=100 border="2" color="33554432" x="3173" y="0" height="56" width="325" format="###,##0" html.valueishtml="0"  name=last_workstage_inventory visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=10 alignment="1" tabsequence=140 border="2" color="33554432" x="4786" y="0" height="56" width="343" format="###,##0" html.valueishtml="0"  name=mm_material_extra_issue visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=9 alignment="1" tabsequence=150 border="2" color="33554432" x="5138" y="0" height="56" width="343" format="###,##0" html.valueishtml="0"  name=mm_material_bad_issue visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=7 alignment="1" tabsequence=110 border="2" color="33554432" x="3506" y="0" height="56" width="315" format="###,##0.##" html.valueishtml="0"  name=mm_material_receipt visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=8 alignment="1" tabsequence=120 border="2" color="33554432~tif (   round(mm_material_receipt ,3) <> round(excel_material_receipt,3) , 255 , 0 )" x="3831" y="0" height="56" width="288" format="###,##0.##" html.valueishtml="0"  name=excel_material_receipt visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=17 alignment="2" tabsequence=80 border="0" color="33554432" x="2683" y="0" height="52" width="151" format="##0.##" html.valueishtml="0"  name=model_unit_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=detail alignment="1" expression=" mm_total_inventory_qty - ( mm_product_result + mm_material_bad_issue + mm_material_extra_issue )"border="2" color="33554432~tif ( mm_logical_inventory_qty < 0 , 255 , 0 )" x="5824" y="0" height="56" width="347" format="###,##0" html.valueishtml="0"  name=mm_logical_inventory_qty visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16776960" )
+compute(band=detail alignment="1" expression=" last_material_inventory_qty + mm_material_receipt + last_workstage_inventory "border="2" color="33554432~tif ( mm_total_inventory_qty<  0 , 255 , 0 )" x="4128" y="0" height="56" width="325" format="###,##0" html.valueishtml="0"  name=mm_total_inventory_qty visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16711935" )
+compute(band=detail alignment="1" expression=" mm_material_bad_issue + mm_material_extra_issue + mm_product_result "border="2" color="33554432" x="5490" y="0" height="56" width="325" format="###,##0" html.valueishtml="0"  name=mm_total_issue_qty visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16711935" )
+compute(band=trailer.1 alignment="1" expression="sum(excel_material_receipt for group 1)"border="2" color="33554432" x="3831" y="4" height="52" width="288" format="###,##0.##" html.valueishtml="0"  name=compute_29 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum(mm_product_result for group 1)"border="2" color="33554432" x="4462" y="4" height="52" width="315" format="###,##0" html.valueishtml="0"  name=compute_18 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum(mm_material_extra_issue for group 1)"border="2" color="33554432" x="4786" y="4" height="52" width="343" format="###,##0" html.valueishtml="0"  name=compute_20 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum(mm_material_bad_issue for group 1)"border="2" color="33554432" x="5138" y="4" height="52" width="343" format="###,##0" html.valueishtml="0"  name=compute_26 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum( mm_total_inventory_qty - ( mm_product_result + mm_material_bad_issue + mm_material_extra_issue ) for group 1)"border="2" color="33554432" x="5824" y="4" height="52" width="347" format="###,##0" html.valueishtml="0"  name=compute_28 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum( last_material_inventory_qty + mm_material_receipt + last_workstage_inventory  for group 1)"border="2" color="33554432" x="4128" y="4" height="52" width="325" format="###,##0" html.valueishtml="0"  name=compute_17 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum( mm_material_bad_issue + mm_material_extra_issue + mm_product_result  for group 1)"border="2" color="33554432" x="5490" y="4" height="52" width="325" format="###,##0" html.valueishtml="0"  name=compute_27 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum(last_material_inventory_qty for group 1)"border="2" color="33554432" x="2843" y="4" height="52" width="320" format="###,##0" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum(mm_material_receipt for group 1)"border="2" color="33554432" x="3506" y="4" height="52" width="315" format="###,##0" html.valueishtml="0"  name=compute_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum(last_workstage_inventory for group 1)"border="2" color="33554432" x="3173" y="4" height="52" width="325" format="###,##0" html.valueishtml="0"  name=compute_19 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=summary alignment="1" expression="sum( last_material_inventory_qty + mm_material_receipt + last_workstage_inventory  for all)"border="2" color="33554432" x="4128" y="4" height="52" width="325" format="###,##0" html.valueishtml="0"  name=compute_3 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=summary alignment="1" expression="sum(mm_product_result for all)"border="2" color="33554432" x="4462" y="4" height="52" width="315" format="###,##0" html.valueishtml="0"  name=compute_4 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=summary alignment="1" expression="sum(mm_material_extra_issue for all)"border="2" color="33554432" x="4786" y="4" height="52" width="343" format="###,##0" html.valueishtml="0"  name=compute_8 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=summary alignment="1" expression="sum(mm_material_bad_issue for all)"border="2" color="33554432" x="5138" y="4" height="52" width="343" format="###,##0" html.valueishtml="0"  name=compute_14 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=summary alignment="1" expression="sum( mm_total_inventory_qty - ( mm_product_result + mm_material_bad_issue + mm_material_extra_issue ) for all)"border="2" color="33554432" x="5824" y="4" height="52" width="347" format="###,##0" html.valueishtml="0"  name=compute_16 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=summary alignment="1" expression="sum( mm_material_bad_issue + mm_material_extra_issue + mm_product_result  for all)"border="2" color="33554432" x="5490" y="4" height="52" width="325" format="###,##0" html.valueishtml="0"  name=compute_15 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=summary alignment="1" expression="sum(last_workstage_inventory for all)"border="2" color="33554432" x="3173" y="4" height="52" width="325" format="###,##0" html.valueishtml="0"  name=compute_6 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=summary alignment="1" expression="sum(last_material_inventory_qty for all)"border="2" color="33554432" x="2843" y="4" height="52" width="320" format="###,##0" html.valueishtml="0"  name=compute_5 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=summary alignment="1" text="Grand Total" border="2" color="33554432" x="1929" y="4" height="52" width="581" html.valueishtml="0"  name=t_8 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=summary alignment="1" expression="sum(mm_material_receipt for all)"border="2" color="33554432" x="3506" y="4" height="52" width="315" format="###,##0" html.valueishtml="0"  name=compute_7 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=summary alignment="1" expression="sum(excel_material_receipt for all)"border="2" color="33554432" x="3831" y="4" height="52" width="288" format="[GENERAL]" html.valueishtml="0"  name=compute_30 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=foreground alignment="2" text="Total Inventory Check Report" border="2" color="33554432" x="119" y="8" height="100" width="2382" html.valueishtml="0"  name=t_15 visible="1"  font.face="Tahoma" font.height="-16" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Mm Workstage Issue" border="2" color="33554432" x="8302" y="228" height="108" width="352" html.valueishtml="0"  name=mm_workstage_issue_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Mm Material Inventory Qty" border="2" color="33554432" x="6181" y="228" height="108" width="325" html.valueishtml="0"  name=mm_material_inventory_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65280" )
+text(band=header alignment="2" text="Mm Workstage Inventory Check" border="2" color="33554432" x="7927" y="228" height="108" width="366" html.valueishtml="0"  name=mm_workstage_inventory_check_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="Mm Material Inventory Check" border="2" color="33554432" x="7557" y="228" height="108" width="361" html.valueishtml="0"  name=mm_material_inventory_check_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="Mm Workstage Inventory" border="2" color="33554432" x="6514" y="228" height="108" width="334" html.valueishtml="0"  name=mm_workstage_inventory_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65280" )
+column(band=detail id=14 alignment="1" tabsequence=200 border="2" color="33554432" x="8302" y="0" height="56" width="352" format="###,##0" html.valueishtml="0"  name=mm_workstage_issue visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=6 alignment="1" tabsequence=160 border="2" color="33554432" x="6181" y="0" height="56" width="325" format="###,##0" html.valueishtml="0"  name=mm_material_inventory_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=15 alignment="1" tabsequence=190 border="2" color="33554432" x="7927" y="0" height="56" width="366" format="###,##0" html.valueishtml="0"  name=mm_workstage_inventory_check visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12639424" )
+column(band=detail id=11 alignment="1" tabsequence=180 border="2" color="33554432" x="7557" y="0" height="56" width="361" format="###,##0" html.valueishtml="0"  name=mm_material_inventory_check visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12639424" )
+column(band=detail id=13 alignment="1" tabsequence=170 border="2" color="33554432" x="6514" y="0" height="56" width="334" format="###,##0" html.valueishtml="0"  name=mm_workstage_inventory visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=detail alignment="1" expression=" mm_material_inventory_qty + mm_workstage_inventory "border="2" color="33554432" x="6857" y="0" height="56" width="343" format="###,##0" html.valueishtml="0"  name=mm_erp_total_inventory_qty visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65280" )
+compute(band=detail alignment="1" expression=" mm_logical_inventory_qty -  mm_erp_total_inventory_qty "border="2" color="33554432" x="7209" y="0" height="56" width="347" format="###,##0" html.valueishtml="0"  name=compute_31 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+compute(band=trailer.1 alignment="1" expression="sum(mm_workstage_inventory for group 1)"border="2" color="33554432" x="6514" y="4" height="52" width="334" format="###,##0" html.valueishtml="0"  name=compute_21 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum(mm_workstage_issue for group 1)"border="2" color="33554432" x="8302" y="4" height="52" width="352" format="###,##0" html.valueishtml="0"  name=compute_22 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum(mm_material_inventory_qty for group 1)"border="2" color="33554432" x="6181" y="4" height="52" width="325" format="###,##0" html.valueishtml="0"  name=compute_25 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum(mm_workstage_inventory_check for group 1)"border="2" color="33554432" x="7927" y="4" height="52" width="366" format="###,##0" html.valueishtml="0"  name=compute_23 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum(mm_material_inventory_check for group 1)"border="2" color="33554432" x="7557" y="4" height="52" width="361" format="###,##0" html.valueishtml="0"  name=compute_24 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum( mm_material_inventory_qty + mm_workstage_inventory  for group 1)"border="2" color="33554432" x="6857" y="4" height="52" width="343" format="###,##0" html.valueishtml="0"  name=compute_32 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum( mm_logical_inventory_qty -  mm_erp_total_inventory_qty  for group 1)"border="2" color="33554432" x="7209" y="4" height="52" width="347" format="###,##0" html.valueishtml="0"  name=compute_34 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=summary alignment="1" expression="sum(mm_workstage_issue for all)"border="2" color="33554432" x="8302" y="4" height="52" width="352" format="###,##0" html.valueishtml="0"  name=compute_10 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=summary alignment="1" expression="sum(mm_material_inventory_qty for all)"border="2" color="33554432" x="6181" y="4" height="52" width="325" format="###,##0" html.valueishtml="0"  name=compute_13 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=summary alignment="1" expression="sum(mm_workstage_inventory_check for all)"border="2" color="33554432" x="7927" y="4" height="52" width="366" format="###,##0" html.valueishtml="0"  name=compute_11 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=summary alignment="1" expression="sum(mm_material_inventory_check for all)"border="2" color="33554432" x="7557" y="4" height="52" width="361" format="###,##0" html.valueishtml="0"  name=compute_12 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=summary alignment="1" expression="sum(mm_workstage_inventory for all)"border="2" color="33554432" x="6514" y="4" height="52" width="334" format="###,##0" html.valueishtml="0"  name=compute_9 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=summary alignment="1" expression="sum( mm_material_inventory_qty + mm_workstage_inventory  for all)"border="2" color="33554432" x="6857" y="4" height="52" width="343" format="[GENERAL]" html.valueishtml="0"  name=compute_33 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=summary alignment="1" expression="sum( mm_logical_inventory_qty -  mm_erp_total_inventory_qty  for all)"border="2" color="33554432" x="7209" y="4" height="52" width="347" format="###,##0" html.valueishtml="0"  name=compute_35 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="MM Total Inventory Qty" border="2" color="33554432" x="6857" y="228" height="108" width="343" html.valueishtml="0"  name=t_16 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65280" )
+text(band=header alignment="2" text="Logical VS ERP Different QTY" border="2" color="33554432" x="7209" y="228" height="108" width="347" html.valueishtml="0"  name=t_11 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+text(band=header alignment="2" text="G" border="2" color="33554432" x="5138" y="160" height="56" width="343" html.valueishtml="0"  name=t_9 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="H=(E+F+G)" border="2" color="33554432" x="5490" y="160" height="52" width="325" html.valueishtml="0"  name=t_12 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="F" border="2" color="33554432" x="4786" y="160" height="56" width="343" html.valueishtml="0"  name=t_13 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="C" border="2" color="33554432" x="3506" y="160" height="56" width="315" html.valueishtml="0"  name=t_5 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="D=(A+B+C)" border="2" color="33554432" x="4128" y="160" height="56" width="325" html.valueishtml="0"  name=t_6 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="B" border="2" color="33554432" x="3173" y="160" height="56" width="325" html.valueishtml="0"  name=t_4 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="E" border="2" color="33554432" x="4462" y="160" height="56" width="315" html.valueishtml="0"  name=t_7 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+button(band=header text="Load Data" enabled=yes action="0" border="0" color="33554432" x="3817" y="148" height="72" width="306" vtextalign="0" htextalign="0"  name=b_load_receipt_data visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="I=D-H" border="2" color="33554432" x="5824" y="160" height="56" width="347" html.valueishtml="0"  name=t_10 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="ERP System" border="2" color="33554432" x="6181" y="160" height="56" width="1019" html.valueishtml="0"  name=t_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65280" )
+text(band=header alignment="2" text="Inventory Check Qty" border="0" color="33554432" x="7566" y="160" height="56" width="722" html.valueishtml="0"  name=t_17 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12639424" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

@@ -1,0 +1,159 @@
+HA$PBExportHeader$d_mcn_mold_mst.srd
+$PBExportComments$D_MCN_MACHINE_LST CREATE DATE :2006-05-13 CREATED BY : ADMIN
+release 10.5;
+datawindow(units=0 timer_interval=0 color=12632256 processing=0 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no )
+header(height=0 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=848 color="12632256" )
+table(column=(type=number update=yes updatewhereclause=yes key=yes name=organization_id dbname="imcn_mold.organization_id" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=drawing_no dbname="imcn_mold.drawing_no" )
+ column=(type=char(100) updatewhereclause=yes name=mold_name dbname="imcn_mold.mold_name" )
+ column=(type=char(100) updatewhereclause=yes name=mold_spec dbname="imcn_mold.mold_spec" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=raw_material dbname="imcn_mold.raw_material" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=punch_no dbname="imcn_mold.punch_no" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=mold_line_type dbname="imcn_mold.mold_line_type" )
+ column=(type=number update=yes updatewhereclause=yes name=safety_inventory dbname="imcn_mold.safety_inventory" )
+ column=(type=number update=yes updatewhereclause=yes name=order_leadtime dbname="imcn_mold.order_leadtime" )
+ column=(type=char(3) update=yes updatewhereclause=yes name=nation_code dbname="imcn_mold.nation_code" values="" )
+ column=(type=datetime update=yes updatewhereclause=yes name=last_receipt_date dbname="imcn_mold.last_receipt_date" )
+ column=(type=datetime update=yes updatewhereclause=yes name=last_issue_date dbname="imcn_mold.last_issue_date" )
+ column=(type=char(1000) update=yes updatewhereclause=yes name=comments dbname="imcn_mold.comments" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=enter_by dbname="imcn_mold.enter_by" )
+ column=(type=datetime update=yes updatewhereclause=yes name=enter_date dbname="imcn_mold.enter_date" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=last_modify_by dbname="imcn_mold.last_modify_by" )
+ column=(type=datetime update=yes updatewhereclause=yes name=last_modify_date dbname="imcn_mold.last_modify_date" )
+ column=(type=char(1) updatewhereclause=yes name=check_yn dbname="check_yn" )
+ column=(type=char(20) updatewhereclause=yes name=supplier_code dbname="imcn_mold_inventory.supplier_code" )
+ column=(type=char(40) update=yes updatewhereclause=yes key=yes name=mold_code dbname="imcn_mold.mold_code" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=mold_group dbname="imcn_mold.mold_group" )
+ column=(type=char(3) updatewhereclause=yes name=mold_uom dbname="imcn_mold.mold_uom" )
+ column=(type=char(50) updatewhereclause=yes name=barcode dbname="imcn_mold_inventory.barcode" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=item_code dbname="imcn_mold.item_code" )
+ column=(type=number update=yes updatewhereclause=yes name=item_unit_qty dbname="imcn_mold.item_unit_qty" )
+ column=(type=number update=yes updatewhereclause=yes name=cycle_time dbname="imcn_mold.cycle_time" )
+ column=(type=number update=yes updatewhereclause=yes name=machine_capacity dbname="imcn_mold.machine_capacity" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=mold_type dbname="imcn_mold.mold_type" )
+ column=(type=number updatewhereclause=yes name=mold_version dbname="imcn_mold_inventory.mold_version" )
+ column=(type=number updatewhereclause=yes name=mold_set_serial dbname="imcn_mold_inventory.mold_set_serial" )
+ column=(type=number updatewhereclause=yes name=mold_row_qty dbname="imcn_mold_inventory.mold_row_qty" )
+ column=(type=char(1) updatewhereclause=yes name=mold_use_status dbname="imcn_mold_inventory.mold_use_status" )
+ column=(type=number updatewhereclause=yes name=mold_usefull_row_qty dbname="imcn_mold_inventory.mold_usefull_row_qty" )
+ column=(type=char(20) updatewhereclause=yes name=mold_warehouse_code dbname="imcn_mold_inventory.mold_warehouse_code" )
+ column=(type=char(20) updatewhereclause=yes name=mold_location_code dbname="imcn_mold_inventory.location_code" )
+ column=(type=number updatewhereclause=yes name=break_value dbname="imcn_mold_inventory.break_value" )
+ column=(type=number updatewhereclause=yes name=actual_value dbname="imcn_mold_inventory.actual_value" )
+ column=(type=char(100) updatewhereclause=yes name=supplier_name dbname="icom_supplier.supplier_name" )
+ column=(type=number updatewhereclause=yes name=mold_set_qty dbname="imcn_mold_inventory.mold_set_qty" )
+ column=(type=char(1) updatewhereclause=yes name=mold_in_out dbname="imcn_mold_inventory.mold_in_out" )
+ column=(type=char(30) updatewhereclause=yes name=apply_model_name dbname="imcn_mold_inventory.apply_model_name" )
+ column=(type=char(1) update=yes updatewhereclause=yes name=gas_yn dbname="imcn_mold.gas_yn" )
+ column=(type=number update=yes updatewhereclause=yes name=item_gas_qty dbname="imcn_mold.item_gas_qty" )
+ column=(type=char(1) update=yes updatewhereclause=yes name=auto_receipt_yn dbname="imcn_mold.auto_receipt_yn" values="Y	Y/N	N/" )
+ retrieve="  SELECT ~"IMCN_MOLD~".~"ORGANIZATION_ID~",   
+         ~"IMCN_MOLD~".~"DRAWING_NO~",   
+         ~"IMCN_MOLD~".~"MOLD_NAME~",   
+         ~"IMCN_MOLD~".~"MOLD_SPEC~",   
+         ~"IMCN_MOLD~".~"RAW_MATERIAL~",   
+         ~"IMCN_MOLD~".~"PUNCH_NO~",   
+         ~"IMCN_MOLD~".~"MOLD_LINE_TYPE~",   
+         ~"IMCN_MOLD~".~"SAFETY_INVENTORY~",   
+         ~"IMCN_MOLD~".~"ORDER_LEADTIME~",   
+         ~"IMCN_MOLD~".~"NATION_CODE~",   
+         ~"IMCN_MOLD~".~"LAST_RECEIPT_DATE~",   
+         ~"IMCN_MOLD~".~"LAST_ISSUE_DATE~",   
+         ~"IMCN_MOLD~".~"COMMENTS~",   
+         ~"IMCN_MOLD~".~"ENTER_BY~",   
+         ~"IMCN_MOLD~".~"ENTER_DATE~",   
+         ~"IMCN_MOLD~".~"LAST_MODIFY_BY~",   
+         ~"IMCN_MOLD~".~"LAST_MODIFY_DATE~",   
+         'N' CHECK_YN,   
+         ~"IMCN_MOLD_INVENTORY~".~"SUPPLIER_CODE~",   
+         ~"IMCN_MOLD~".~"MOLD_CODE~",   
+         ~"IMCN_MOLD~".~"MOLD_GROUP~",   
+         ~"IMCN_MOLD~".~"MOLD_UOM~",   
+         ~"IMCN_MOLD_INVENTORY~".~"BARCODE~",   
+         ~"IMCN_MOLD~".~"ITEM_CODE~",   
+         ~"IMCN_MOLD~".~"ITEM_UNIT_QTY~",   
+         ~"IMCN_MOLD~".~"CYCLE_TIME~",   
+         ~"IMCN_MOLD~".~"MACHINE_CAPACITY~",   
+         ~"IMCN_MOLD~".~"MOLD_TYPE~",   
+         ~"IMCN_MOLD_INVENTORY~".~"MOLD_VERSION~",   
+         ~"IMCN_MOLD_INVENTORY~".~"MOLD_SET_SERIAL~",   
+         ~"IMCN_MOLD_INVENTORY~".~"MOLD_ROW_QTY~",   
+         ~"IMCN_MOLD_INVENTORY~".~"MOLD_USE_STATUS~",   
+         ~"IMCN_MOLD_INVENTORY~".~"MOLD_USEFULL_ROW_QTY~",   
+         ~"IMCN_MOLD_INVENTORY~".~"MOLD_WAREHOUSE_CODE~",   
+         ~"IMCN_MOLD_INVENTORY~".~"LOCATION_CODE~",   
+         ~"IMCN_MOLD_INVENTORY~".~"BREAK_VALUE~",   
+         ~"IMCN_MOLD_INVENTORY~".~"ACTUAL_VALUE~",   
+         ~"ICOM_SUPPLIER~".~"SUPPLIER_NAME~",   
+         ~"IMCN_MOLD_INVENTORY~".~"MOLD_SET_QTY~",   
+         ~"IMCN_MOLD_INVENTORY~".~"MOLD_IN_OUT~",   
+         ~"IMCN_MOLD_INVENTORY~".~"APPLY_MODEL_NAME~",   
+         ~"IMCN_MOLD~".~"GAS_YN~",   
+         ~"IMCN_MOLD~".~"ITEM_GAS_QTY~"  ,
+	    ~"IMCN_MOLD~".~"AUTO_RECEIPT_YN~"   AUTO_RECEIPT_YN
+    FROM ~"IMCN_MOLD~",   
+         ~"IMCN_MOLD_INVENTORY~",   
+         ~"ICOM_SUPPLIER~"  
+   WHERE ( imcn_mold.mold_code = imcn_mold_inventory.mold_code (+)) and  
+         ( imcn_mold.organization_id = imcn_mold_inventory.organization_id (+)) and  
+         ( imcn_mold.supplier_code = icom_supplier.supplier_code (+)) and  
+         ( imcn_mold.organization_id = icom_supplier.organization_id (+)) " update="IMCN_MOLD" updatewhere=0 updatekeyinplace=no )
+column(band=detail id=20 alignment="2" tabsequence=10 border="5" color="33554432" x="430" y="8" height="52" width="507" format="[general]" html.valueishtml="0"  name=mold_code visible="1" edit.limit=0 edit.case=upper edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.autovscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=24 alignment="2" tabsequence=80 border="5" color="33554432" x="425" y="416" height="52" width="507" format="[general]" html.valueishtml="0"  name=item_code visible="1" edit.limit=0 edit.case=upper edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.autovscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=7 alignment="2" tabsequence=100 border="5" color="33554432" x="425" y="556" height="52" width="507" format="[general]" html.valueishtml="0"  name=mold_line_type visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=200 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=yes dddw.case=any dddw.hscrollbar=yes dddw.vscrollbar=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=21 alignment="2" tabsequence=90 border="5" color="33554432" x="425" y="488" height="52" width="507" format="[general]" html.valueishtml="0"  name=mold_group visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=200 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=yes dddw.case=any dddw.hscrollbar=yes dddw.vscrollbar=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=28 alignment="2" tabsequence=110 border="5" color="33554432" x="425" y="624" height="52" width="507" format="[general]" html.valueishtml="0"  name=mold_type visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=200 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=yes dddw.case=any dddw.hscrollbar=yes dddw.vscrollbar=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=23 alignment="0" tabsequence=60 border="5" color="33554432" x="425" y="352" height="52" width="507" format="[general]" html.valueishtml="0"  name=barcode visible="1" edit.limit=0 edit.case=upper edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.autovscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+text(band=detail alignment="1" text="Mold Usefull_row" border="0" color="33554432" x="955" y="412" height="52" width="398" html.valueishtml="0"  name=t_13 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="549503168" )
+text(band=detail alignment="1" text="Mold Row Qty" border="0" color="33554432" x="955" y="548" height="52" width="398" html.valueishtml="0"  name=t_15 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="549503168" )
+column(band=detail id=33 alignment="2" tabsequence=32766 border="5" color="33554432" x="1371" y="416" height="52" width="398" format="[general]" html.valueishtml="0"  name=mold_usefull_row_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=31 alignment="2" tabsequence=32766 border="5" color="33554432" x="1371" y="556" height="52" width="398" format="[general]" html.valueishtml="0"  name=mold_row_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+text(band=detail alignment="1" text="Mold Use Status" border="0" color="33554432" x="955" y="488" height="52" width="398" html.valueishtml="0"  name=t_14 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="549503168" )
+column(band=detail id=32 alignment="2" tabsequence=32766 border="5" color="33554432" x="1371" y="488" height="52" width="398" format="[general]" html.valueishtml="0"  name=mold_use_status visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+text(band=detail alignment="1" text="Apply Model Name" border="0" color="33554432" x="951" y="624" height="52" width="402" html.valueishtml="0"  name=t_16 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="549503168" )
+column(band=detail id=41 alignment="2" tabsequence=32766 border="5" color="33554432" x="1371" y="624" height="52" width="398" format="[general]" html.valueishtml="0"  name=apply_model_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+text(band=detail alignment="1" text="Mold Set Qty" border="0" color="33554432" x="955" y="692" height="52" width="398" html.valueishtml="0"  name=t_17 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="549503168" )
+column(band=detail id=39 alignment="2" tabsequence=32766 border="5" color="33554432" x="1371" y="692" height="52" width="398" format="[general]" html.valueishtml="0"  name=mold_set_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+text(band=detail alignment="1" text="Mold Warehouse Code" border="0" color="33554432" x="955" y="348" height="52" width="398" html.valueishtml="0"  name=t_12 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="549503168" )
+column(band=detail id=35 alignment="2" tabsequence=32766 border="5" color="33554432" x="1371" y="148" height="52" width="398" format="[general]" html.valueishtml="0"  name=mold_location_code visible="1" dddw.name=vd_mold_location_code dddw.displaycolumn=mold_location_code dddw.datacolumn=mold_location_code dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+text(band=detail alignment="1" text="Location Code" border="0" color="33554432" x="955" y="148" height="52" width="398" html.valueishtml="0"  name=break_value_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="549503168" )
+column(band=detail id=22 alignment="0" tabsequence=70 border="5" color="33554432" x="1623" y="280" height="52" width="142" format="[general]" html.valueishtml="0"  name=mold_uom visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=3 alignment="0" tabsequence=40 border="5" color="33554432" x="430" y="212" height="52" width="1339" format="[general]" html.valueishtml="0"  name=mold_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.autovscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=4 alignment="0" tabsequence=50 border="5" color="33554432" x="430" y="280" height="52" width="1175" format="[general]" html.valueishtml="0"  name=mold_spec visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=29 alignment="2" tabsequence=20 border="5" color="33554432" x="425" y="76" height="52" width="507" format="[general]" html.valueishtml="0"  name=mold_version visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.autovscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+column(band=detail id=30 alignment="2" tabsequence=30 border="5" color="33554432" x="425" y="144" height="52" width="507" format="[general]" html.valueishtml="0"  name=mold_set_serial visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+column(band=detail id=25 alignment="2" tabsequence=220 border="5" color="33554432" x="1371" y="772" height="52" width="398" format="[general]" html.valueishtml="0"  name=item_unit_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+text(band=detail alignment="1" text="Item Unit Qty" border="0" color="33554432" x="955" y="772" height="52" width="398" html.valueishtml="0"  name=t_21 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="549503168" )
+text(band=detail alignment="1" text="Mold Code" border="0" color="33554432" x="9" y="8" height="52" width="402" html.valueishtml="0"  name=mold_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="549503168" )
+text(band=detail alignment="1" text="Mold Line Type" border="0" color="33554432" x="9" y="556" height="52" width="402" html.valueishtml="0"  name=mold_rows_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="549503168" )
+text(band=detail alignment="1" text="Mold Version" border="0" color="33554432" x="9" y="80" height="52" width="402" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="549503168" )
+text(band=detail alignment="1" text="Mold Spec" border="0" color="33554432" x="9" y="276" height="52" width="402" html.valueishtml="0"  name=t_3 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="549503168" )
+text(band=detail alignment="1" text="Mold Material" border="0" color="33554432" x="9" y="416" height="52" width="402" html.valueishtml="0"  name=t_4 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="549503168" )
+text(band=detail alignment="1" text="Mold Set Serial" border="0" color="33554432" x="9" y="144" height="52" width="402" html.valueishtml="0"  name=t_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="549503168" )
+text(band=detail alignment="1" text="Mold Name" border="0" color="33554432" x="9" y="212" height="52" width="402" html.valueishtml="0"  name=mold_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="549503168" )
+text(band=detail alignment="1" text="Barcode" border="0" color="33554432" x="9" y="348" height="52" width="402" html.valueishtml="0"  name=t_23 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="549503168" )
+text(band=detail alignment="1" text="Mold Group" border="0" color="33554432" x="9" y="488" height="52" width="402" html.valueishtml="0"  name=t_5 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="549503168" )
+text(band=detail alignment="1" text="Mold Type" border="0" color="33554432" x="9" y="624" height="52" width="402" html.valueishtml="0"  name=t_6 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="549503168" )
+text(band=detail alignment="1" text="Mold In Out" border="0" color="33554432" x="955" y="4" height="52" width="402" html.valueishtml="0"  name=t_10 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="549503168" )
+text(band=detail alignment="1" text="Maker Supplier Code" border="0" color="33554432" x="955" y="84" height="52" width="402" html.valueishtml="0"  name=t_22 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="549503168" )
+column(band=detail id=34 alignment="2" tabsequence=32766 border="5" color="33554432" x="1371" y="348" height="52" width="398" format="[general]" html.valueishtml="0"  name=mold_warehouse_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=40 alignment="2" tabsequence=32766 border="5" color="33554432" x="1371" y="4" height="52" width="398" format="[general]" html.valueishtml="0"  name=mold_in_out visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=19 alignment="0" tabsequence=32766 border="5" color="33554432" x="1371" y="80" height="52" width="398" format="[general]" html.valueishtml="0"  name=supplier_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=detail alignment="1" text="Actual Value" border="0" color="33554432" x="9" y="700" height="52" width="402" html.valueishtml="0"  name=nation_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="549503168" )
+text(band=detail alignment="1" text="Break Value" border="0" color="33554432" x="0" y="764" height="52" width="402" html.valueishtml="0"  name=comments_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="549503168" )
+column(band=detail id=37 alignment="2" tabsequence=32766 border="5" color="33554432" x="425" y="700" height="52" width="507" format="[general]" html.valueishtml="0"  name=actual_value visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=36 alignment="2" tabsequence=32766 border="5" color="33554432" x="425" y="764" height="52" width="507" format="[general]" html.valueishtml="0"  name=break_value visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

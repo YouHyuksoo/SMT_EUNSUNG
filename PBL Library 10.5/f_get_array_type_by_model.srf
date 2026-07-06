@@ -1,0 +1,23 @@
+HA$PBExportHeader$f_get_array_type_by_model.srf
+global type f_get_array_type_by_model from function_object
+end type
+
+forward prototypes
+global function integer f_get_array_type_by_model (string arg_item_code)
+end prototypes
+
+global function integer f_get_array_type_by_model (string arg_item_code);int lvl_return
+
+select nvl(array_type,0) into :lvl_return
+from IP_PRODUCT_MODEL_MASTER 
+where item_code = :arg_item_code
+and organization_id = :gvi_organization_id ;
+
+if f_sql_check() < 0 then
+	return 0
+end if 
+
+return lvl_return
+
+end function
+

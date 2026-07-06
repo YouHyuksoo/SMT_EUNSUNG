@@ -1,0 +1,109 @@
+HA$PBExportHeader$d_mat_work_order_plan_matrix_rpt.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=16777215 processing=4 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no  crosstab.dynamic = yes grid.lines=1 grid.columnmove=no selected.mouse=no )
+header[1](height=156 color="536870912" )
+header[2](height=144 color="536870912" )
+header[3](height=124 color="536870912" )
+summary(height=76 color="33554432" )
+footer(height=0 color="536870912" )
+detail(height=76 color="536870912" )
+table(column=(type=char(20) updatewhereclause=yes name=model_name dbname="model_name" )
+ column=(type=char(20) updatewhereclause=yes name=model_suffix dbname="model_suffix" )
+ column=(type=char(20) updatewhereclause=yes name=mfs dbname="mfs" )
+ column=(type=char(20) updatewhereclause=yes name=item_code dbname="item_code" )
+ column=(type=char(20) updatewhereclause=yes name=item_name dbname="item_name" )
+ column=(type=char(20) updatewhereclause=yes name=item_spec dbname="item_spec" )
+ column=(type=number updatewhereclause=yes name=order_qty dbname="order_qty" )
+ column=(type=number updatewhereclause=yes name=inventory_qty dbname="inventory_qty" )
+ retrieve="  SELECT ~"IM_ITEM_PURCHASE_ORDER_PLAN~".~"ORDER_NO~",   
+         ~"IM_ITEM_PURCHASE_ORDER_PLAN~".~"PURCHASE_ORDER_DATE~",   
+         ~"IM_ITEM_PURCHASE_ORDER_PLAN~".~"ORGANIZATION_ID~",   
+         ~"IM_ITEM_PURCHASE_ORDER_PLAN~".~"SUPPLIER_CODE~",   
+         ~"IM_ITEM_PURCHASE_ORDER_PLAN~".~"ITEM_CODE~",   
+         ~"IM_ITEM_PURCHASE_ORDER_PLAN~".~"DELIVERY_DATE~" DELIVERY_DATE ,   
+         ~"IM_ITEM_PURCHASE_ORDER_PLAN~".~"DELIVERY~",   
+         ~"IM_ITEM_PURCHASE_ORDER_PLAN~".~"LINE_TYPE~",   
+         ~"IM_ITEM_PURCHASE_ORDER_PLAN~".~"ORDER_TYPE~",   
+         ~"IM_ITEM_PURCHASE_ORDER_PLAN~".~"ORDER_QTY~",   
+         ~"IM_ITEM_PURCHASE_ORDER_PLAN~".~"UNIT_PRICE~",   
+         ~"IM_ITEM_PURCHASE_ORDER_PLAN~".~"CURRENCY~",   
+         ~"IM_ITEM_PURCHASE_ORDER_PLAN~".~"INVENTORY_QTY~",   
+         ~"IM_ITEM_PURCHASE_ORDER_PLAN~".~"ARRIVAL_QTY~",   
+         ~"IM_ITEM_PURCHASE_ORDER_PLAN~".~"PRE_ORDER_QTY~",   
+         ~"IM_ITEM_PURCHASE_ORDER_PLAN~".~"MFS~",   
+         ~"B~".~"MODEL_NAME~",   
+         ~"B~".~"MODEL_SUFFIX~",   
+         ~"IM_ITEM_PURCHASE_ORDER_PLAN~".~"ENTER_BY~",   
+         ~"IM_ITEM_PURCHASE_ORDER_PLAN~".~"ENTER_DATE~",   
+         ~"IM_ITEM_PURCHASE_ORDER_PLAN~".~"LAST_MODIFY_BY~",   
+         ~"IM_ITEM_PURCHASE_ORDER_PLAN~".~"LAST_MODIFY_DATE~",   
+         ~"ICOM_SUPPLIER~".~"SUPPLIER_NAME~",   
+         ~"ID_ITEM~".~"ITEM_NAME~",   
+         ~"ID_ITEM~".~"ITEM_SPEC~",   
+         ~"ID_ITEM~".~"ITEM_UOM~"  
+    FROM ~"IM_ITEM_PURCHASE_ORDER_PLAN~",   
+         ~"ICOM_SUPPLIER~",   
+         ~"ID_ITEM~"  , ID_ITEM B
+   WHERE ( im_item_purchase_order_plan.supplier_code = icom_supplier.supplier_code (+)) and  
+         ( im_item_purchase_order_plan.organization_id = icom_supplier.organization_id (+)) and  
+         ( im_item_purchase_order_plan.item_code = id_item.item_code (+)) and  
+         ( im_item_purchase_order_plan.organization_id = id_item.organization_id (+)) and  
+         ( im_item_purchase_order_plan.set_item_code = b.item_code (+)) and  
+         ( im_item_purchase_order_plan.organization_id = b.organization_id (+)) and  			
+         ( ( ~"IM_ITEM_PURCHASE_ORDER_PLAN~".~"SUPPLIER_CODE~" like :ARG_SUPPLIER_CODE ) AND  
+         ( ~"IM_ITEM_PURCHASE_ORDER_PLAN~".~"ITEM_CODE~" like :ARG_ITEM_CODE ) AND  
+         ( ~"IM_ITEM_PURCHASE_ORDER_PLAN~".~"DELIVERY_DATE~" >= :ARG_DATESET ) AND  
+         ( ~"IM_ITEM_PURCHASE_ORDER_PLAN~".~"DELIVERY_DATE~" <= :ARG_DATEEND ) AND  
+         ( ~"IM_ITEM_PURCHASE_ORDER_PLAN~".~"ORGANIZATION_ID~" = :ARG_ORG ) )    
+ ORDER BY im_item_purchase_order_plan.DELIVERY_DATE, im_item_purchase_order_plan.mfs ,  B.MODEL_NAME, B.MODEL_SUFFIX,   im_item_purchase_order_plan.ITEM_CODE 
+" arguments=(("ARG_SUPPLIER_CODE", string),("ARG_ITEM_CODE", string),("ARG_DATESET", datetime),("ARG_DATEEND", datetime),("ARG_ORG", number))  sort="model_name A model_suffix A mfs A item_code A item_name A item_spec A " )
+text(band=header[2] alignment="2" text="@delivery_date" border="2" color="0" x="2542" y="4" height="136" width="613" html.valueishtml="0"  name=t_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+compute(band=header[2] alignment="0" expression="'Page ' + page() + ' of ' + pageCount()"border="2" color="0" x="9" y="32" height="68" width="393" format="[general]" html.valueishtml="0"  name=page_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=header[2] alignment="0" expression="today()"border="2" color="0" x="677" y="36" height="68" width="297" format="[general]" html.valueishtml="0"  name=date_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header[3] alignment="1" text="Sum Of Order Qty" border="2" color="0" x="2542" y="4" height="112" width="288" html.valueishtml="0"  name=order_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[3] alignment="1" text="Sum Of Inventory Qty" border="2" color="0" x="2839" y="4" height="112" width="311" html.valueishtml="0"  name=inventory_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[3] alignment="1" text="Total Sum of Insufficient Qty" border="2" color="0" x="3995" y="4" height="112" width="265" html.valueishtml="0"  name=total_insufficient_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16711935" )
+text(band=header[3] alignment="1" text="Insufficient Qty" border="2" color="0" x="3159" y="4" height="112" width="270" html.valueishtml="0"  name=t_4 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+text(band=header[3] alignment="1" text="Total Sum Of Order Qty" border="2" color="0" x="3438" y="4" height="112" width="283" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65280" )
+text(band=header[3] alignment="1" text="Total Sum Of Inventory Qty" border="2" color="0" x="3730" y="4" height="112" width="256" html.valueishtml="0"  name=grand_sum_inventory_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65280" )
+text(band=header[3] alignment="1" text="WH+WS Inventory Qty" border="2" color="33554432" x="2254" y="4" height="112" width="283" html.valueishtml="0"  name=t_3 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+text(band=header[3] alignment="2" text="Model Name" border="2" color="0" x="9" y="4" height="112" width="389" html.valueishtml="0"  name=model_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[3] alignment="2" text="Model Suffix" border="2" color="0" x="407" y="4" height="112" width="261" html.valueishtml="0"  name=model_suffix_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[3] alignment="2" text="MFS" border="2" color="0" x="677" y="4" height="112" width="297" html.valueishtml="0"  name=mfs_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[3] alignment="2" text="Item Code" border="2" color="0" x="983" y="4" height="112" width="379" html.valueishtml="0"  name=item_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[3] alignment="2" text="Item Name" border="2" color="0" x="1371" y="4" height="112" width="393" html.valueishtml="0"  name=item_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[3] alignment="2" text="Item Spec" border="2" color="0" x="1774" y="4" height="112" width="471" html.valueishtml="0"  name=item_spec_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="2" color="33554432" x="9" y="4" height="64" width="389" format="[general]" html.valueishtml="0"  name=model_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="2" color="33554432" x="407" y="4" height="64" width="261" format="[general]" html.valueishtml="0"  name=model_suffix visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="2" color="33554432~tIF(  mfs ='*' , 255 , 0 ) " x="677" y="4" height="64" width="297" format="[general]" html.valueishtml="0"  name=mfs visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="2" color="33554432" x="983" y="4" height="64" width="379" format="[general]" html.valueishtml="0"  name=item_code visible="1" edit.limit=30 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=5 alignment="0" tabsequence=32766 border="2" color="33554432" x="1371" y="4" height="64" width="393" format="[general]" html.valueishtml="0"  name=item_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=7 alignment="1" tabsequence=32766 border="2" color="33554432" x="2542" y="4" height="64" width="288" format="[general]" html.valueishtml="0"  name=order_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes crosstab.repeat=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+column(band=detail id=8 alignment="1" tabsequence=32766 border="2" color="0" x="2839" y="4" height="64" width="311" format="[general]" html.valueishtml="0"  name=inventory_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes crosstab.repeat=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+compute(band=detail alignment="1" expression=" grand_sum_order_qty - grand_sum_inventory_qty "border="2" color="0" x="3995" y="4" height="64" width="265" format="[GENERAL]" html.valueishtml="0"  name=total_insufficient_qty visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16711935" )
+compute(band=detail alignment="1" expression=" order_qty  -  inventory_qty "border="2" color="0~tif ( insufficient_qty > 0 , 255 , 0 )" x="3159" y="4" height="64" width="270" format="[GENERAL]" html.valueishtml="0"  name=insufficient_qty visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+compute(band=detail alignment="1" expression="crosstabsum(1)"border="2" color="33554432" x="3438" y="4" height="64" width="283" format="[general]" html.valueishtml="0"  name=grand_sum_order_qty visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65280" )
+compute(band=detail alignment="1" expression="crosstabsum(2)"border="2" color="0" x="3730" y="4" height="64" width="256" format="[general]" html.valueishtml="0"  name=grand_sum_inventory_qty visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65280" )
+column(band=detail id=6 alignment="0" tabsequence=32766 border="2" color="33554432" x="1774" y="4" height="64" width="471" format="[general]" html.valueishtml="0"  name=item_spec visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=detail alignment="1" expression="f_get_item_wh_ws_inv_sum_qty_by_item( item_code )"border="2" color="33554432" x="2254" y="4" height="64" width="283" format="###,##0.##" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+compute(band=summary alignment="1" expression="~"Grand Total~""border="2" color="65535" x="9" y="4" height="64" width="389" format="[general]" html.valueishtml="0"  name=compute_26 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=summary alignment="1" expression="sum(order_qty for all )"border="2" color="65535" x="2542" y="4" height="64" width="288" format="[general]" html.valueishtml="0"  name=compute_27 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+compute(band=summary alignment="1" expression="sum(inventory_qty for all )"border="2" color="65535" x="2839" y="4" height="64" width="311" format="[general]" html.valueishtml="0"  name=compute_28 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+compute(band=summary alignment="1" expression="sum( grand_sum_order_qty - grand_sum_inventory_qty  for all)"border="2" color="0" x="3995" y="4" height="64" width="265" format="[GENERAL]" html.valueishtml="0"  name=compute_4 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16711935" )
+compute(band=summary alignment="1" expression="sum( order_qty  -  inventory_qty  for all)"border="2" color="0" x="3159" y="4" height="64" width="270" format="[GENERAL]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+compute(band=summary alignment="1" expression="sum(grand_sum_order_qty for all )"border="2" color="33554432" x="3438" y="4" height="64" width="283" format="[general]" html.valueishtml="0"  name=compute_29 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65280" )
+compute(band=summary alignment="1" expression="sum(grand_sum_inventory_qty for all )"border="2" color="33554432" x="3730" y="4" height="64" width="256" format="[general]" html.valueishtml="0"  name=compute_30 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65280" )
+text(band=foreground alignment="0" text="Purchase Order Plan Report( MFS )" border="2" color="0" x="0" y="32" height="92" width="2135" html.valueishtml="0"  name=t_5 visible="1"  font.face="Tahoma" font.height="-14" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+ crosstab(band = foreground  crosstabonly = yes 
+ columns = "delivery_date" rows = "model_name, model_suffix, mfs, item_code, item_name, item_spec" values = "sum(order_qty for crosstab), sum(inventory_qty for crosstab)" sourcenames = "order_no, purchase_order_date, organization_id, supplier_code, item_code, delivery_date, delivery, line_type, order_type, order_qty, unit_price, currency, inventory_qty, arrival_qty, pre_order_qty, mfs, model_name, model_suffix, enter_by, enter_date, last_modify_by, last_modify_date, vendor_name, item_name, item_spec, item_uom")
+sparse(names="model_name	model_suffix	mfs	item_code	item_name")htmltable(border="0" cellpadding="1" cellspacing="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

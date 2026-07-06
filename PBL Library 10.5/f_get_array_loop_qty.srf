@@ -1,0 +1,33 @@
+HA$PBExportHeader$f_get_array_loop_qty.srf
+global type f_get_array_loop_qty from function_object
+end type
+
+forward prototypes
+global function integer f_get_array_loop_qty (string arg_model_name, string arg_ab_type)
+end prototypes
+
+global function integer f_get_array_loop_qty (string arg_model_name, string arg_ab_type);int lvi_a_array_loop_qty , lvi_b_array_loop_qty , lvi_c_array_loop_qty , lvi_d_array_loop_qty
+
+select a_array_loop_qty , b_array_loop_qty ,  c_array_loop_qty , d_array_loop_qty
+  into :lvi_a_array_loop_qty , :lvi_b_array_loop_qty , :lvi_c_array_loop_qty , :lvi_d_array_loop_qty
+  from ip_product_model_master
+ where model_name = :arg_model_name
+     and organization_id = :gvi_organization_id ;
+	  
+if f_sql_check() < 0 then 
+	return 0
+end if 
+
+if arg_ab_type = '1' then 
+	return lvi_a_array_loop_qty
+elseif arg_ab_type = '2' then 
+	return lvi_b_array_loop_qty
+elseif arg_ab_type = '3' then 
+	return lvi_c_array_loop_qty
+elseif arg_ab_type = '4' then 
+	return lvi_d_array_loop_qty	
+end if 
+
+return 0
+end function
+

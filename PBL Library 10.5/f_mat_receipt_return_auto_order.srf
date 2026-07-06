@@ -1,0 +1,81 @@
+HA$PBExportHeader$f_mat_receipt_return_auto_order.srf
+global type f_mat_receipt_return_auto_order from function_object
+end type
+
+forward prototypes
+global function integer f_mat_receipt_return_auto_order (datetime ad_receipt_date, long al_receipt_sequence, decimal af_return_qty, string as_order_type)
+end prototypes
+
+global function integer f_mat_receipt_return_auto_order (datetime ad_receipt_date, long al_receipt_sequence, decimal af_return_qty, string as_order_type);  INSERT INTO IM_ITEM_PURCHASE_ORDER  
+         ( ORDER_NO,   
+           ORGANIZATION_ID,   
+           ORDER_GROUP_NO,   
+           SUPPLIER_CODE,   
+           PURCHASE_ORDER_DATE,   
+           DELIVERY_DATE,   
+           DELIVERY,   
+           LINE_TYPE,   
+           INCIDENTAL_EXPENSE_CODE,   
+           ORIGIN_NATION_CODE,   
+           ORDER_TYPE,   
+           DELIVERY_PLACE,   
+           ORDER_QTY,   
+           UNIT_PRICE,   
+           DELIVERY_METHOD,   
+           CURRENCY,   
+           ARRIVAL_QTY,   
+           MFS,   
+           ENTER_DATE,   
+           ENTER_BY,   
+           ITEM_CODE,   
+           LAST_MODIFY_DATE,   
+           LAST_MODIFY_BY,   
+           SHIPMENT_COMMENT,   
+           ATTN_NAME,   
+           CC_NAME,   
+           MATERIAL_MFS,   
+           ORDER_AMT,   
+           ORIGIN_MFS )  
+			  
+SELECT TRUNC(SYSDATE)|| SEQ_PURCHASE_ORDER_NO.NEXTVAL   ORDER_NO,   
+           ORGANIZATION_ID,   
+           TRUNC(SYSDATE)|| SEQ_PURCHASE_ORDER_NO.NEXTVAL ORDER_GROUP_NO,   
+           SUPPLIER_CODE,   
+           TRUNC(SYSDATE)  PURCHASE_ORDER_DATE,   
+           TRUNC(SYSDATE) + 1 DELIVERY_DATE,   
+           1 DELIVERY,   
+           LINE_TYPE,   
+           '' INCIDENTAL_EXPENSE_CODE,   
+           '' ORIGIN_NATION_CODE,   
+           :as_order_type ORDER_TYPE,   
+           '*' DELIVERY_PLACE,   
+           :af_return_qty ORDER_QTY,   
+           UNIT_PRICE,   
+           '' DELIVERY_METHOD,   
+           CURRENCY,   
+           0 ARRIVAL_QTY,   
+           MFS,   
+           SYSDATE ENTER_DATE,   
+           :GVS_USER_ID ENTER_BY,   
+           ITEM_CODE,   
+           SYSDATE LAST_MODIFY_DATE,   
+           :GVS_USER_ID LAST_MODIFY_BY,   
+           '' SHIPMENT_COMMENT,   
+           '' ATTN_NAME,   
+           '' CC_NAME,   
+           MATERIAL_MFS,   
+           UNIT_PRICE * :af_return_qty  ORDER_AMT,   
+           ORIGIN_MFS 
+ FROM IM_ITEM_RECEIPT
+ WHERE RECEIPT_DATE = :ad_receipt_date
+ and receipt_sequence = :al_receipt_sequence
+ and organization_id = :gvi_organization_id ;
+ 
+ if f_sql_check() < 0 then 
+	return -1 
+end if 
+
+return 0
+
+end function
+

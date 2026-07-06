@@ -1,0 +1,55 @@
+HA$PBExportHeader$d_mat_total_inventory_detail_lot_qty.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no grid.lines=0 )
+header(height=136 color="536870912" )
+summary(height=80 color="65535" )
+footer(height=0 color="65535" )
+detail(height=64 color="536870912" )
+table(column=(type=char(9) updatewhereclause=yes name=window_group dbname="window_group" )
+ column=(type=char(4000) updatewhereclause=yes name=location_code dbname="location_code" )
+ column=(type=char(30) updatewhereclause=yes name=material_mfs dbname="im_item_inventory.material_mfs" )
+ column=(type=number updatewhereclause=yes name=inventory_qty dbname="im_item_inventory.inventory_qty" )
+ retrieve="select 'WAREHOUSE' WINDOW_GROUP,
+		f_get_basecode('LOCATION CODE', location_code, :arg_lang, 1) location_code,
+       material_mfs,
+       inventory_qty
+from IM_ITEM_INVENTORY
+where item_code = :arg_item and
+		inventory_qty <> 0 and
+		organization_id = :arg_org
+
+union all
+
+select 'WORKSTAGE' WINDOW_GROUP,
+		f_get_line_name( a.line_code  , a.organization_id)  location_code, 
+		a.material_mfs,
+		f_get_mat_ws_inv_qty_by_line( a.item_code ,  a.line_code , a.material_mfs ,  a.organization_id ) inventory_qty 
+  from im_item_workstage_inventory a
+where a.item_code = :arg_item 
+    and a.organization_id = :arg_org 
+    and f_get_mat_ws_inv_qty_by_line( a.item_code ,  a.line_code , a.material_mfs ,  a.organization_id ) <> 0 
+group by a.line_code , a.item_code , a.material_mfs  , a.organization_id" arguments=(("arg_item", string),("arg_lang", string),("arg_org", number)) )
+group(level=1 header.height=0 trailer.height=76 by=("window_group" ) header.color="536870912" trailer.color="134217728" )
+text(band=header alignment="2" text="Material Mfs" border="0" color="33554432" x="800" y="4" height="132" width="421" html.valueishtml="0"  name=material_mfs_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Inventory Qty" border="0" color="33554432" x="1230" y="4" height="132" width="311" html.valueishtml="0"  name=inventory_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Location Code" border="0" color="33554432" x="498" y="4" height="132" width="293" html.valueishtml="0"  name=location_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="location" border="0" color="33554432" x="142" y="4" height="132" width="347" html.valueishtml="0"  name=window_group_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="0" color="33554432" x="800" y="0" height="68" width="421" format="[general]" html.valueishtml="0"  name=material_mfs visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=4 alignment="1" tabsequence=32766 border="0" color="33554432~tif ( inventory_qty < 0 , 255 , 0 ) " x="1230" y="0" height="68" width="311" format="###,###,###,##0" html.valueishtml="0"  name=inventory_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+compute(band=detail alignment="2" expression="getrow()"border="0" color="33554432" x="9" y="0" height="68" width="123" format="[GENERAL]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="33554432" x="498" y="0" height="68" width="293" format="[general]" html.valueishtml="0"  name=location_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="33554432" x="142" y="0" height="68" width="347" format="[general]" html.valueishtml="0"  name=window_group visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+compute(band=trailer.1 alignment="1" expression="sum(inventory_qty for group 1)"border="0" color="33554432" x="1230" y="4" height="64" width="311" format="###,###,###,##0" html.valueishtml="0"  name=compute_3 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=summary alignment="1" expression="sum( inventory_qty )"border="0" color="33554432" x="1230" y="8" height="60" width="311" format="###,###,###,##0" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=summary alignment="1" text="Grand Total" border="0" color="0" x="142" y="12" height="52" width="347" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

@@ -1,0 +1,12 @@
+HA$PBExportHeader$f_check_system_license.srf
+$PBExportComments$System License Check
+global type f_check_system_license from function_object
+end type
+
+forward prototypes
+global function integer f_check_system_license ()
+end prototypes
+
+global function integer f_check_system_license ();Return 1
+end function
+

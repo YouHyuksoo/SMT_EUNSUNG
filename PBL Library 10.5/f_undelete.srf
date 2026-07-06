@@ -1,0 +1,23 @@
+HA$PBExportHeader$f_undelete.srf
+$PBExportComments$Re Retrieve
+global type f_undelete from function_object
+end type
+
+forward prototypes
+global function integer f_undelete ()
+end prototypes
+
+global function integer f_undelete ();window activesheet
+string mtext
+activesheet = w_main_frame.GetActiveSheet( )
+IF IsValid(activesheet) THEN
+	Gvs_Ue_data_control = 'UNDELETE'
+	activesheet.TRIGGEREVENT('UE_DATA_CONTROL')
+ELSE 
+   RETURN -1
+   
+END IF
+
+	RETURN 0 
+end function
+

@@ -1,0 +1,78 @@
+HA$PBExportHeader$d_qc_4m_history_rpt.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=16777215 processing=0 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no )
+header(height=632 color="536870912" )
+summary(height=444 color="536870912" height.autosize=yes )
+footer(height=152 color="536870912" )
+detail(height=340 color="536870912" height.autosize=yes )
+table(column=(type=char(30) updatewhereclause=yes key=yes name=model_name dbname="ip_product_model_master.model_name" )
+ column=(type=char(30) updatewhereclause=yes name=model_suffix dbname="ip_product_model_master.model_suffix" )
+ column=(type=number updatewhereclause=yes name=version dbname="ip_product_model_master.version" )
+ column=(type=char(30) updatewhereclause=yes name=item_code dbname="ip_product_model_master.item_code" )
+ column=(type=number updatewhereclause=yes key=yes name=organization_id dbname="ip_product_model_master.organization_id" )
+ column=(type=char(100) updatewhereclause=yes name=sw_version_out dbname="sw_version_out" )
+ column=(type=char(100) updatewhereclause=yes name=sw_version_in dbname="sw_version_in" )
+ column=(type=char(100) updatewhereclause=yes name=hw_version dbname="ip_product_model_master.hw_version" )
+ retrieve="  SELECT
+			A.MODEL_NAME,   
+			A.MODEL_SUFFIX,   
+			A.VERSION,   
+			A.ITEM_CODE ,
+
+			A.ORGANIZATION_ID,   
+			--A.SW_VERSION,   
+			(SELECT OUTPUT_SW_VERSION
+			  FROM (
+					  SELECT ROW_NUMBER() OVER (PARTITION BY MODEL_NAME ORDER BY UPLOAD_DATE DESC) CNT , IS_NEW, MODEL_NAME, OUTPUT_SW_VERSION
+					  FROM IP_PRODUCT_SOFTWARE_MASTER
+					  WHERE IS_NEW = 'N' AND NVL(OUTPUT_SW_VERSION,' ') <> ' ') 
+			  WHERE CNT = 1 AND MODEL_NAME = A.MODEL_NAME) SW_VERSION_OUT,
+			(SELECT INPUT_SW_VERSION
+			  FROM (
+					  SELECT ROW_NUMBER() OVER (PARTITION BY MODEL_NAME ORDER BY UPLOAD_DATE DESC) CNT , IS_NEW, MODEL_NAME, INPUT_SW_VERSION
+					  FROM IP_PRODUCT_SOFTWARE_MASTER
+					  WHERE IS_NEW = 'N' AND NVL(OUTPUT_SW_VERSION,' ') <> ' ') 
+			  WHERE CNT = 1 AND MODEL_NAME = A.MODEL_NAME) SW_VERSION_IN,
+				A.HW_VERSION  
+    FROM IP_PRODUCT_MODEL_MASTER A
+   WHERE
+         ( a.model_name = :arg_model_name ) AND  
+         ( a.organization_id = :arg_org ) AND
+		  ( a.MODEL_SUFFIX like :arg_suffix)" update="IP_PRODUCT_MODEL_MASTER" updatewhere=0 updatekeyinplace=no arguments=(("arg_model_name", string),("arg_org", number),("arg_suffix", string))  sort="model_name A " )
+group(level=1 header.height=0 trailer.height=24 by=("item_code" ) header.color="536870912" trailer.color="536870912" )
+text(band=header alignment="1" text="Model Name" border="0" color="33554432" x="46" y="216" height="96" width="402" html.valueishtml="0"  name=model_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=header alignment="1" text="Parent Item Code" border="0" color="33554432" x="46" y="460" height="96" width="402" html.valueishtml="0"  name=parent_item_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=header alignment="1" text="Model Suffix" border="0" color="33554432" x="46" y="340" height="96" width="402" html.valueishtml="0"  name=model_suffix_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=header alignment="2" text="4M Change History  Report" border="1" color="33554432" x="27" y="16" height="132" width="3360" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-20" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=header alignment="1" text="Out Sw Version" border="0" color="33554432" x="1024" y="304" height="52" width="402" html.valueishtml="0"  name=sw_version_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=header alignment="1" text="BOM Version" border="0" color="33554432" x="1024" y="216" height="64" width="402" html.valueishtml="0"  name=version_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=header id=3 alignment="0" tabsequence=32766 border="4" color="33554432" x="1449" y="216" height="64" width="1915" format="[general]" html.valueishtml="0"  name=version visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=header id=1 alignment="0" tabsequence=32766 border="4" color="33554432" x="475" y="200" height="96" width="507" format="[general]" html.valueishtml="0"  name=model_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=header id=2 alignment="0" tabsequence=32766 border="4" color="33554432" x="475" y="340" height="96" width="507" format="[general]" html.valueishtml="0"  name=model_suffix visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=header id=4 alignment="0" tabsequence=32766 border="4" color="33554432" x="475" y="468" height="96" width="507" format="[general]" html.valueishtml="0"  name=item_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=header alignment="1" text="Hw Version" border="0" color="33554432" x="1024" y="500" height="64" width="402" html.valueishtml="0"  name=hw_version_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=header id=8 alignment="0" tabsequence=32766 border="4" color="33554432" x="1449" y="488" height="116" width="1915" format="[general]" html.valueishtml="0"  name=hw_version visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=header id=6 alignment="0" tabsequence=32766 border="4" color="33554432" x="1449" y="296" height="88" width="1915" format="[general]" html.valueishtml="0"  name=sw_version_out visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=header id=7 alignment="0" tabsequence=32766 border="4" color="33554432" x="1449" y="392" height="88" width="1915" format="[general]" html.valueishtml="0"  name=sw_version_in visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=header alignment="1" text="In Sw Version" border="0" color="33554432" x="1024" y="400" height="52" width="402" html.valueishtml="0"  name=t_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+report(band=detail dataobject="d_qc_4m_item_bom_lst" x="14" y="4" height="136" width="3378" border="0"  height.autosize=yes criteria="" nest_arguments=((" item_code ")) trail_footer = yes  name=dw_3 visible="1"  slideleft=yes  slideup=directlyabove )
+report(band=detail dataobject="d_qc_notify_nested" x="14" y="176" height="136" width="3378" border="0"  height.autosize=yes criteria="" nest_arguments=((" model_name "),(" organization_id ")) trail_footer = yes  name=dw_2 visible="1"  slideleft=yes  slideup=allabove )
+line(band=trailer.1 x1="27" y1="8" x2="3387" y2="8"  name=l_1 visible="1" pen.style="0" pen.width="14" pen.color="255"  background.mode="2" background.color="1073741824" )
+report(band=summary dataobject="d_qc_4m_nested" x="14" y="160" height="136" width="3378" border="0"  height.autosize=yes criteria="" nest_arguments=((" model_name "),(" organization_id ")) trail_footer = yes  name=dw_1 visible="1"  slideleft=yes  slideup=allabove )
+report(band=summary dataobject="d_qc_4m_soft_version_nested" x="14" y="16" height="136" width="3378" border="0"  height.autosize=yes criteria="" nest_arguments=((" model_name "),(" model_suffix ")) trail_footer = yes  name=dw_4 visible="1"  slideup=directlyabove )
+compute(band=footer alignment="1" expression="'Page ' + page() + ' of ' + pageCount()"border="0" color="33554432" x="1289" y="48" height="92" width="759" format="[general]" html.valueishtml="0"  name=page_1 visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=footer id=5 alignment="1" tabsequence=32766 border="0" color="33554432" x="2629" y="44" height="92" width="759" format="[general]" html.valueishtml="0"  name=organization_id visible="1" dddw.name=VD_ORGANIZATION_NAME dddw.displaycolumn=organization_name dddw.datacolumn=organization_id dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+line(band=footer x1="27" y1="20" x2="3387" y2="20"  name=l_2 visible="1" pen.style="0" pen.width="14" pen.color="255"  background.mode="2" background.color="1073741824" )
+text(band=footer alignment="0" text="Print Date" border="0" color="33554432" x="14" y="60" height="72" width="302" html.valueishtml="0"  name=t_5 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+compute(band=footer alignment="0" expression="today()"border="0" color="33554432" x="347" y="60" height="72" width="759" format="[general]" html.valueishtml="0"  name=date_1 visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

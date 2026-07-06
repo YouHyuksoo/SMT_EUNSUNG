@@ -1,0 +1,102 @@
+HA$PBExportHeader$d_qc_iqc_cancel_lst.srd
+$PBExportComments$iqc cancel list
+release 10;
+datawindow(units=0 timer_interval=0 color=12632256 processing=1 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes hidegrayline=no grid.lines=0 )
+header(height=156 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=72 color="536870912" )
+table(column=(type=datetime updatewhereclause=yes name=inspect_date dbname="iq_item_iqc.inspect_date" )
+ column=(type=char(0) updatewhereclause=yes name=check_in dbname="check_in" values="	Y/	N" )
+ column=(type=number updatewhereclause=yes name=inspect_sequence dbname="iq_item_iqc.inspect_sequence" )
+ column=(type=char(20) updatewhereclause=yes name=iqc_inspect_no dbname="iq_item_iqc.iqc_inspect_no" )
+ column=(type=char(30) updatewhereclause=yes name=mfs dbname="iq_item_iqc.mfs" )
+ column=(type=number updatewhereclause=yes name=receipt_qty dbname="iq_item_iqc.receipt_qty" )
+ column=(type=decimal(0) updatewhereclause=yes name=bad_qty dbname="iq_item_iqc.bad_qty" )
+ column=(type=char(1) updatewhereclause=yes name=inspect_result dbname="iq_item_iqc.inspect_result" )
+ column=(type=char(20) updatewhereclause=yes name=supplier_code dbname="iq_item_iqc.supplier_code" )
+ column=(type=char(20) updatewhereclause=yes name=inspect_by dbname="iq_item_iqc.inspect_by" )
+ column=(type=datetime updatewhereclause=yes name=enter_date dbname="iq_item_iqc.enter_date" )
+ column=(type=char(20) updatewhereclause=yes name=enter_by dbname="iq_item_iqc.enter_by" )
+ column=(type=datetime updatewhereclause=yes name=last_modify_date dbname="iq_item_iqc.last_modify_date" )
+ column=(type=char(20) updatewhereclause=yes name=last_modify_by dbname="iq_item_iqc.last_modify_by" )
+ column=(type=char(20) updatewhereclause=yes name=item_code dbname="iq_item_iqc.item_code" )
+ column=(type=number updatewhereclause=yes name=organization_id dbname="iq_item_iqc.organization_id" )
+ column=(type=char(30) updatewhereclause=yes name=item_name dbname="id_item.item_name" )
+ column=(type=char(100) updatewhereclause=yes name=customer_name dbname="icom_customer.customer_name" )
+ retrieve="  SELECT ~"IQ_ITEM_IQC~".~"INSPECT_DATE~",   
+		''	check_in ,
+         ~"IQ_ITEM_IQC~".~"INSPECT_SEQUENCE~",   
+         ~"IQ_ITEM_IQC~".~"IQC_INSPECT_NO~",   
+         ~"IQ_ITEM_IQC~".~"MFS~",   
+         ~"IQ_ITEM_IQC~".~"RECEIPT_QTY~",   
+         ~"IQ_ITEM_IQC~".~"BAD_QTY~",   
+         ~"IQ_ITEM_IQC~".~"INSPECT_RESULT~",   
+         ~"IQ_ITEM_IQC~".~"SUPPLIER_CODE~",   
+         ~"IQ_ITEM_IQC~".~"INSPECT_BY~",   
+         ~"IQ_ITEM_IQC~".~"ENTER_DATE~",   
+         ~"IQ_ITEM_IQC~".~"ENTER_BY~",   
+         ~"IQ_ITEM_IQC~".~"LAST_MODIFY_DATE~",   
+         ~"IQ_ITEM_IQC~".~"LAST_MODIFY_BY~",   
+         ~"IQ_ITEM_IQC~".~"ITEM_CODE~",   
+         ~"IQ_ITEM_IQC~".~"ORGANIZATION_ID~",   
+         ~"ID_ITEM~".~"ITEM_NAME~",   
+         ~"ICOM_CUSTOMER~".~"CUSTOMER_NAME~"  
+    FROM ~"ICOM_CUSTOMER~",   
+         ~"ID_ITEM~",   
+         ~"IQ_ITEM_IQC~"  
+   WHERE ( ~"IQ_ITEM_IQC~".~"ITEM_CODE~" = ~"ID_ITEM~".~"ITEM_CODE~" ) and  
+         ( ~"IQ_ITEM_IQC~".~"ORGANIZATION_ID~" = ~"ID_ITEM~".~"ORGANIZATION_ID~" ) and  
+         ( ~"IQ_ITEM_IQC~".~"SUPPLIER_CODE~" = ~"ICOM_CUSTOMER~".~"CUSTOMER_CODE~" ) and  
+         ( ~"ICOM_CUSTOMER~".~"ORGANIZATION_ID~" = ~"IQ_ITEM_IQC~".~"ORGANIZATION_ID~" )    
+" )
+text(band=header alignment="0" text="Inspect Date" border="0" color="33554432" x="2583" y="4" height="144" width="343" html.valueishtml="0"  name=inspect_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="0" text="Iqc Inspect No" border="0" color="33554432" x="946" y="4" height="144" width="439" html.valueishtml="0"  name=iqc_inspect_no_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="0" text="Mfs" border="0" color="33554432" x="1394" y="4" height="144" width="219" html.valueishtml="0"  name=mfs_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="0" text="Receipt Qty" border="0" color="33554432" x="1623" y="4" height="144" width="315" html.valueishtml="0"  name=receipt_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="0" text="Bad Qty" border="0" color="33554432" x="1947" y="4" height="144" width="261" html.valueishtml="0"  name=bad_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="0" text="Inspect Result" border="0" color="33554432" x="2217" y="4" height="144" width="357" html.valueishtml="0"  name=inspect_result_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="0" text="Supplier Code" border="0" color="33554432" x="2935" y="4" height="144" width="320" html.valueishtml="0"  name=supplier_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="0" text="Inspect By" border="0" color="33554432" x="4480" y="4" height="144" width="379" html.valueishtml="0"  name=inspect_by_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="0" text="Enter Date" border="0" color="33554432" x="4869" y="4" height="144" width="343" html.valueishtml="0"  name=enter_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="0" text="Enter By" border="0" color="33554432" x="5221" y="4" height="144" width="293" html.valueishtml="0"  name=enter_by_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="0" text="Last Modify Date" border="0" color="33554432" x="5522" y="4" height="144" width="439" html.valueishtml="0"  name=last_modify_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="0" text="Last Modify By" border="0" color="33554432" x="5970" y="4" height="144" width="384" html.valueishtml="0"  name=last_modify_by_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="0" text="Item Code" border="0" color="33554432" x="3762" y="4" height="144" width="320" html.valueishtml="0"  name=item_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="0" text="Organization Id" border="0" color="33554432" x="6363" y="4" height="144" width="457" html.valueishtml="0"  name=organization_id_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="0" text="Item Name" border="0" color="33554432" x="4091" y="4" height="144" width="379" html.valueishtml="0"  name=id_item_item_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="0" text="Customer Name" border="0" color="33554432" x="3264" y="4" height="144" width="489" html.valueishtml="0"  name=customer_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+compute(band=detail alignment="0" expression="trim('')"border="0" color="33554432" x="9" y="4" height="64" width="137" format="[GENERAL]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="0" expression="getrow()"border="0" color="65535" x="155" y="4" height="64" width="174" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432" x="2583" y="4" height="64" width="343" format="[shortdate] [time]" html.valueishtml="0"  name=inspect_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="33554432" x="946" y="4" height="64" width="439" format="[general]" html.valueishtml="0"  name=iqc_inspect_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=5 alignment="0" tabsequence=32766 border="0" color="33554432" x="1394" y="4" height="64" width="219" format="[general]" html.valueishtml="0"  name=mfs visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=6 alignment="0" tabsequence=32766 border="0" color="33554432" x="1623" y="4" height="64" width="315" format="[general]" html.valueishtml="0"  name=receipt_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=7 alignment="0" tabsequence=32766 border="0" color="33554432" x="1947" y="4" height="64" width="261" format="[general]" html.valueishtml="0"  name=bad_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=8 alignment="0" tabsequence=32766 border="0" color="33554432" x="2217" y="4" height="64" width="357" format="[general]" html.valueishtml="0"  name=inspect_result visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=9 alignment="0" tabsequence=32766 border="0" color="33554432" x="2935" y="4" height="64" width="320" format="[general]" html.valueishtml="0"  name=supplier_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=10 alignment="0" tabsequence=32766 border="0" color="33554432" x="4480" y="4" height="64" width="379" format="[general]" html.valueishtml="0"  name=inspect_by visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=11 alignment="0" tabsequence=32766 border="0" color="33554432" x="4869" y="4" height="64" width="343" format="[shortdate] [time]" html.valueishtml="0"  name=enter_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=12 alignment="0" tabsequence=32766 border="0" color="33554432" x="5221" y="4" height="64" width="293" format="[general]" html.valueishtml="0"  name=enter_by visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=13 alignment="0" tabsequence=32766 border="0" color="33554432" x="5522" y="4" height="64" width="439" format="[shortdate] [time]" html.valueishtml="0"  name=last_modify_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=14 alignment="0" tabsequence=32766 border="0" color="33554432" x="5970" y="4" height="64" width="384" format="[general]" html.valueishtml="0"  name=last_modify_by visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=15 alignment="0" tabsequence=32766 border="0" color="33554432" x="3762" y="4" height="64" width="320" format="[general]" html.valueishtml="0"  name=item_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=16 alignment="0" tabsequence=32766 border="0" color="33554432" x="6363" y="4" height="64" width="457" format="[general]" html.valueishtml="0"  name=organization_id visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=17 alignment="0" tabsequence=32766 border="0" color="33554432" x="4091" y="4" height="64" width="379" format="[general]" html.valueishtml="0"  name=item_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=18 alignment="0" tabsequence=32766 border="0" color="33554432" x="3264" y="4" height="64" width="489" format="[general]" html.valueishtml="0"  name=customer_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+text(band=header alignment="0" text="Inspect Sequence" border="0" color="33554432" x="475" y="4" height="144" width="462" html.valueishtml="0"  name=inspect_sequence_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="NO" border="0" color="33554432" x="155" y="4" height="144" width="174" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="0" text="Check In" border="0" color="33554432" x="338" y="4" height="144" width="128" html.valueishtml="0"  name=check_in_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="33554432" x="475" y="4" height="64" width="462" format="[general]" html.valueishtml="0"  name=inspect_sequence visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="33554432" x="343" y="4" height="64" width="123" format="[general]" html.valueishtml="0"  name=check_in visible="1" checkbox.text="" checkbox.on="Y" checkbox.off="N" checkbox.scale=no checkbox.threed=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

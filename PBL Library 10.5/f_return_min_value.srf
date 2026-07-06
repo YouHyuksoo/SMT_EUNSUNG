@@ -1,0 +1,40 @@
+HA$PBExportHeader$f_return_min_value.srf
+global type f_return_min_value from function_object
+end type
+
+forward prototypes
+global function decimal f_return_min_value (decimal arg_value[])
+end prototypes
+
+global function decimal f_return_min_value (decimal arg_value[]);int i = 1 , lvi_upper
+decimal lvl_min
+
+lvi_upper= upperbound(arg_value[] )
+
+	if isnull(arg_value[1])  then
+		arg_value[1] = 0
+	end if
+	
+	lvl_min = arg_value[1]
+	
+	
+do
+
+	
+	i++
+	
+	
+	if isnull(arg_value[i]) then 
+		arg_value[i] = 0
+	end if
+	
+	if lvl_min > arg_value[i]  then 
+		lvl_min = arg_value[i] 
+	end if
+	
+	
+loop until i = lvi_upper
+
+return lvl_min
+end function
+

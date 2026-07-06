@@ -1,0 +1,78 @@
+HA$PBExportHeader$f_mfs_bom_copy.srf
+global type f_mfs_bom_copy from function_object
+end type
+
+forward prototypes
+global function integer f_mfs_bom_copy (string arg_item_code, string arg_source_mfs, string arg_dest_mfs, integer arg_org)
+end prototypes
+
+global function integer f_mfs_bom_copy (string arg_item_code, string arg_source_mfs, string arg_dest_mfs, integer arg_org);long lvl_count
+
+select count(*) into :lvl_count
+  from id_mfs_bom
+where mfs = :arg_source_mfs
+    and item_code = :arg_item_code
+    and organization_id = :arg_org ;
+	
+if f_sql_check() < 0 then 
+	return -1
+end if
+
+if lvl_count = 0 then 
+	
+	Messagebox("Notify" ,arg_source_mfs+  " MFS BOM Not Found")
+	return -1 
+elseif lvl_count > 0 then 
+	
+			  INSERT INTO ID_MFS_BOM  
+				 ( MFS,   ITEM_CODE ,
+				   PARENT_ITEM_CODE,   
+				   CHILD_ITEM_CODE,   
+				   ORGANIZATION_ID,   
+				   BOM_LEVEL,   
+				   ITEM_TYPE,   
+				   LINE_TYPE,   
+				   MODEL_UNIT_QTY,   
+				   MODEL_UNIT_QTY_EXT,   
+				   ITEM_UNIT_QTY,   
+				   ITEM_UNIT_QTY_EXT,   
+				   SORT_ORDER,   
+				   ASSY_EXP_YN,   
+				   DATESET,   
+				   DATEEND,   
+				   ENTER_BY,   
+				   ENTER_DATE,   
+				   LAST_MODIFY_BY,   
+				   LAST_MODIFY_DATE )  
+			 SELECT :arg_dest_mfs,  ID_MFS_BOM.ITEM_CODE ,
+					ID_MFS_BOM.PARENT_ITEM_CODE,   
+					ID_MFS_BOM.CHILD_ITEM_CODE,   
+					ID_MFS_BOM.ORGANIZATION_ID,   
+					ID_MFS_BOM.BOM_LEVEL,   
+					ID_MFS_BOM.ITEM_TYPE,   
+					ID_MFS_BOM.LINE_TYPE,   
+					ID_MFS_BOM.MODEL_UNIT_QTY,   
+					ID_MFS_BOM.MODEL_UNIT_QTY_EXT,   
+					ID_MFS_BOM.ITEM_UNIT_QTY,   
+					ID_MFS_BOM.ITEM_UNIT_QTY_EXT,   
+					ID_MFS_BOM.SORT_ORDER,   
+					ID_MFS_BOM.ASSY_EXP_YN,   
+					ID_MFS_BOM.DATESET,   
+					ID_MFS_BOM.DATEEND,   
+					ID_MFS_BOM.ENTER_BY,   
+					ID_MFS_BOM.ENTER_DATE,   
+					ID_MFS_BOM.LAST_MODIFY_BY,   
+					ID_MFS_BOM.LAST_MODIFY_DATE  
+			   FROM ID_MFS_BOM 
+			  WHERE MFS = :ARG_SOURCE_MFS	  
+			      and item_code = :arg_item_code
+				AND ORGANIZATION_ID = :ARG_ORG ;
+				
+			if f_sql_check() < 0 then 
+				return -1 
+			end if 
+end if 
+
+return sqlca.sqlnrows
+end function
+

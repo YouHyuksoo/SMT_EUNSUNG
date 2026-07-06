@@ -1,0 +1,83 @@
+HA$PBExportHeader$f_mat_issue_return_request.srf
+global type f_mat_issue_return_request from function_object
+end type
+
+forward prototypes
+global function integer f_mat_issue_return_request (string as_mfs, datetime adt_issue_date, double al_seq, decimal af_return_qty, string as_group_no)
+end prototypes
+
+global function integer f_mat_issue_return_request (string as_mfs, datetime adt_issue_date, double al_seq, decimal af_return_qty, string as_group_no);//double lvl_issue_seq 
+//lvl_issue_seq = f_get_sequence('seq_mat_issue')
+INSERT INTO im_item_issue_return_request
+			( issue_date,
+			issue_sequence,
+			organization_id,
+			material_mfs,				  
+			mfs,
+			item_code,		  
+			location_code,
+			supplier_code,		  
+			item_type,
+			line_code,
+			workstage_code,machine_code,
+			issue_deficit,
+			issue_qty,
+			issue_status,
+			issue_amt,
+			issue_account,
+			line_type,
+			issue_price,
+			issue_type,	  
+			virtual_receipt_yn ,
+			work_order_no ,	 
+			comments,
+			enter_date,
+			enter_by,
+			last_modify_date,
+			last_modify_by,
+			invoice_no,parent_item_code,interface_yn,interface_date, arrival_date , arrival_seq_no , dest_organization_id , request_group_no
+			)
+   SELECT TRUNC(SYSDATE),
+			seq_mat_issue.nextval,
+			:gvi_organization_id,
+			material_mfs,	 
+			mfs,
+			item_code,
+			location_code,
+			supplier_code ,
+			item_type,
+			line_code,
+			workstage_code,machine_code,
+			4 ,
+			abs(:af_return_qty) * -1,
+			issue_status,
+			abs(:af_return_qty* issue_price ) * -1,
+			issue_account,
+			line_type,
+			issue_price,
+			issue_type,	 
+			virtual_receipt_yn ,		
+			work_order_no ,	 		  
+			comments,
+			SYSDATE,
+			:gvs_user_id,
+			SYSDATE,
+			:gvs_user_id,
+			invoice_no ,parent_item_code , interface_yn,interface_date, arrival_date , arrival_seq_no , dest_organization_id , :as_group_no
+     FROM im_item_issue
+    WHERE issue_date      = :adt_issue_date
+      AND issue_sequence = :al_seq
+      AND organization_id = :gvi_organization_id;
+		
+if f_sql_check() < 0 then 
+	return -2
+end if 
+return sqlca.sqlnrows
+		  
+//======================
+//  Insert Trigger $$HEX3$$e4c289d52000$$ENDHEX$$
+//======================
+
+
+end function
+

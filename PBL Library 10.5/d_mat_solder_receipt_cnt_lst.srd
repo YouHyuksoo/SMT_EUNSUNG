@@ -1,0 +1,58 @@
+HA$PBExportHeader$d_mat_solder_receipt_cnt_lst.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no grid.lines=0 )
+header(height=128 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=76 color="536870912" )
+table(column=(type=char(20) update=yes updatewhereclause=yes name=line_code dbname="line_code" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=solder_type dbname="solder_type" )
+ column=(type=number updatewhereclause=yes name=refrigerator_cnt dbname="refrigerator_cnt" )
+ column=(type=number updatewhereclause=yes name=unfreezing_cnt dbname="unfreezing_cnt" )
+ column=(type=number updatewhereclause=yes name=mix_cnt dbname="mix_cnt" )
+ column=(type=number updatewhereclause=yes name=viscosity_wait_cnt dbname="viscosity_wait_cnt" )
+ column=(type=number updatewhereclause=yes name=input_wait_cnt dbname="input_wait_cnt" )
+ retrieve="select line_code, 
+       solder_type, 
+       sum(refrigerator_cnt) refrigerator_cnt, 
+       sum(unfreezing_cnt) unfreezing_cnt,
+       sum(mix_cnt) mix_cnt,
+       sum(viscosity_wait_cnt) viscosity_wait_cnt,
+       sum(input_wait_cnt) input_wait_cnt
+from (
+      select line_code, SOLDER_TYPE,
+              case when receipt_date is not null and issue_date is null  then 1 else 0 end                   refrigerator_cnt,
+              case when unfreezing_start_date is not null and unfreezing_end_date is null then 1 else 0 end  unfreezing_cnt,
+              case when mix_start_date is not null  and mix_end_date is null then 1 else 0 end               mix_cnt,
+              case when mix_end_date is not null and viscosity_end_date is null then 1 else 0 end            viscosity_wait_cnt,
+              case when mix_end_date is not null and viscosity_end_date is not null and input_date is null then 1 else 0 end              input_wait_cnt  
+         from im_item_solder_master
+        where ( input_date is null and destroy_date is null )
+      )
+group by line_code, solder_type" )
+text(band=header alignment="2" text="Line Code" border="0" color="33554432" x="206" y="8" height="112" width="407" html.valueishtml="0"  name=line_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Solder Type" border="0" color="33554432" x="622" y="8" height="112" width="334" html.valueishtml="0"  name=solder_type_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Refrigerator Cnt" border="0" color="33554432" x="965" y="8" height="112" width="489" html.valueishtml="0"  name=refrigerator_cnt_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Unfreezing Cnt" border="0" color="33554432" x="1463" y="8" height="112" width="494" html.valueishtml="0"  name=unfreezing_cnt_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Mix Cnt" border="0" color="33554432" x="1966" y="8" height="112" width="475" html.valueishtml="0"  name=mix_cnt_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Viscosity Wait Cnt" border="0" color="33554432" x="2450" y="8" height="112" width="471" html.valueishtml="0"  name=viscosity_wait_cnt_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Input Wait Cnt" border="0" color="33554432" x="2930" y="8" height="112" width="462" html.valueishtml="0"  name=input_wait_cnt_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+compute(band=detail alignment="2" expression="GETROW()"border="0" color="33554432" x="9" y="4" height="60" width="187" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="33554432" x="206" y="4" height="60" width="407" format="[general]" html.valueishtml="0"  name=line_code visible="1" dddw.name=vd_line_code dddw.displaycolumn=line_name dddw.datacolumn=line_code dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="33554432" x="622" y="4" height="60" width="334" format="[general]" html.valueishtml="0"  name=solder_type visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="0" color="33554432" x="969" y="4" height="60" width="485" format="[general]" html.valueishtml="0"  name=refrigerator_cnt visible="1" editmask.mask="###,###,##0" editmask.focusrectangle=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="0" color="33554432" x="1467" y="4" height="60" width="489" format="[general]" html.valueishtml="0"  name=unfreezing_cnt visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="2" tabsequence=32766 border="0" color="33554432" x="1970" y="4" height="60" width="471" format="[general]" html.valueishtml="0"  name=mix_cnt visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=6 alignment="2" tabsequence=32766 border="0" color="33554432" x="2455" y="4" height="60" width="466" format="[general]" html.valueishtml="0"  name=viscosity_wait_cnt visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=7 alignment="2" tabsequence=32766 border="0" color="33554432" x="2935" y="4" height="60" width="457" format="[general]" html.valueishtml="0"  name=input_wait_cnt visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

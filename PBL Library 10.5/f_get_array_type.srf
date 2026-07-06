@@ -1,0 +1,27 @@
+HA$PBExportHeader$f_get_array_type.srf
+global type f_get_array_type from function_object
+end type
+
+forward prototypes
+global function string f_get_array_type (string arg_serial)
+end prototypes
+
+global function string f_get_array_type (string arg_serial);STRING LVS_TYPE
+//===============================================
+// $$HEX25$$01acdcc2acb9bcc558c720002000b4c508b874c7200090c7acb918c2200000ac20007cc715c858ce20004ac544c51cc12000$$ENDHEX$$
+// $$HEX3$$c1c911c82000$$ENDHEX$$DB $$HEX6$$d0c51cc1200070c88cd62000$$ENDHEX$$
+// $$HEX9$$8dc1c4b32000a6b244c718c2200088c74cc7$$ENDHEX$$.
+//===============================================
+SELECT ARRAY_TYPE INTO  :LVS_TYPE  FROM IP_PRODUCT_PCB_BARCODE
+WHERE SERIAL_NO = :arg_serial ;
+
+IF F_SQL_CHECK() < 0 THEN 
+	RETURN '*'
+END IF 
+
+RETURN LVS_TYPE
+
+//RETURN MID( ARG_SERIAL , 2,1 )
+
+end function
+

@@ -1,0 +1,70 @@
+HA$PBExportHeader$d_smt_plandata_location_comparision_rpt.srd
+$PBExportComments$$$HEX6$$80bd88d4c8b9a4c230d12000$$ENDHEX$$(HSRM_ITEM)
+release 10.5;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no grid.lines=0 )
+header(height=140 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=68 color="536870912" )
+table(column=(type=char(30) updatewhereclause=yes name=loc dbname="id_item.loc" )
+ column=(type=char(100) updatewhereclause=yes name=a_item dbname="id_item.a_item" )
+ column=(type=char(300) updatewhereclause=yes name=item_name dbname="id_item.item_name" )
+ column=(type=char(300) updatewhereclause=yes name=item_spec dbname="id_item.item_spec" )
+ column=(type=char(100) updatewhereclause=yes name=b_item dbname="id_item.b_item" )
+ column=(type=char(300) updatewhereclause=yes name=id_item_item_name dbname="id_item.item_name" )
+ column=(type=char(300) updatewhereclause=yes name=id_item_item_spec dbname="id_item.item_spec" )
+ column=(type=char(1) updatewhereclause=yes name=model_name dbname="id_item.model_name" )
+ column=(type=char(1) updatewhereclause=yes name=comp_model_name dbname="id_item.comp_model_name" )
+ retrieve="SELECT   loc ,
+              a_item , a.item_name , a.item_spec ,
+              b_item , b.item_name , b.item_spec ,
+              :arg_model_name  model_name ,
+              :arg_comp_model_name comp_model_name
+
+  FROM   (  SELECT   loc, MAX (nvl(a_item,'*')) a_item, MAX (nvl(b_item,'*')) b_item
+              FROM   (SELECT   a.location_code loc, a.item_code a_item, '' b_item
+                        FROM   ib_product_plandata a
+                       WHERE   a.line_code = :arg_line_code
+                           AND a.model_name = :arg_model_name
+                           AND a.pcb_item = :arg_topbot
+                           AND a.organization_id = :arg_org
+                      UNION ALL
+                      SELECT   b.location_code loc, '' a_item, b.item_code b_item
+                        FROM   ib_product_plandata b
+                       WHERE   b.line_code = :arg_comp_line_code
+                           AND b.model_name = :arg_comp_model_name
+                           AND b.pcb_item = :arg_topbot
+                           AND b.organization_id = :arg_org)
+          GROUP BY   loc)  C , ID_ITEM  A ,  ID_ITEM  B
+ WHERE  C.a_item =  A.ITEM_CODE(+) 
+     AND  C.b_item =  B.ITEM_CODE(+) 
+     AND   C.a_item <> C.b_item" arguments=(("ARG_LINE_CODE", string),("ARG_MODEL_NAME", string),("ARG_COMP_LINE_CODE", string),("ARG_COMP_MODEL_NAME", string),("ARG_TOPBOT", string),("ARG_ORG", number))  sort="loc A " )
+text(band=header alignment="2" text="Loc" border="2" color="33554432" x="183" y="72" height="64" width="219" html.valueishtml="0"  name=loc_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Line" border="2" color="33554432" x="183" y="12" height="56" width="219" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12639424" )
+compute(band=header alignment="2" expression=" ARG_COMP_MODEL_NAME "border="2" color="33554432" x="2272" y="72" height="64" width="613" format="[GENERAL]" html.valueishtml="0"  name=compute_3 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12639424" )
+compute(band=header alignment="2" expression=" ARG_COMP_LINE_CODE "border="2" color="33554432" x="2272" y="12" height="56" width="613" format="[GENERAL]" html.valueishtml="0"  name=compute_5 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12639424" )
+compute(band=header alignment="2" expression=" ARG_MODEL_NAME "border="2" color="33554432" x="411" y="72" height="64" width="645" format="[GENERAL]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+compute(band=header alignment="2" expression=" ARG_LINE_CODE "border="2" color="33554432" x="411" y="12" height="56" width="645" format="[GENERAL]" html.valueishtml="0"  name=compute_4 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+compute(band=detail alignment="2" expression="getrow()"border="0" color="33554432" x="9" y="4" height="64" width="165" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="33554432" x="183" y="4" height="64" width="219" format="[general]" html.valueishtml="0"  name=loc visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+column(band=detail id=5 alignment="2" tabsequence=32766 border="0" color="33554432" x="2272" y="4" height="64" width="613" format="[general]" html.valueishtml="0"  name=b_item visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="33554432" x="411" y="4" height="64" width="645" format="[general]" html.valueishtml="0"  name=a_item visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+text(band=header alignment="2" text="Item Spec" border="2" color="33554432" x="1509" y="12" height="124" width="754" html.valueishtml="0"  name=item_spec_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+text(band=header alignment="2" text="Item Name" border="2" color="33554432" x="1065" y="12" height="124" width="434" html.valueishtml="0"  name=item_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="33554432" x="1065" y="4" height="64" width="434" format="[general]" html.valueishtml="0"  name=item_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="33554432" x="1509" y="4" height="64" width="754" format="[general]" html.valueishtml="0"  name=item_spec visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+text(band=header alignment="2" text="B Item Name" border="2" color="33554432" x="2894" y="12" height="124" width="421" html.valueishtml="0"  name=b_item_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+text(band=header alignment="2" text="B Item Spec" border="2" color="33554432" x="3323" y="12" height="124" width="814" html.valueishtml="0"  name=id_item_item_spec_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=6 alignment="0" tabsequence=32766 border="0" color="33554432" x="2894" y="4" height="64" width="421" format="[general]" html.valueishtml="0"  name=id_item_item_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=7 alignment="0" tabsequence=32766 border="0" color="33554432" x="3323" y="4" height="64" width="814" format="[general]" html.valueishtml="0"  name=id_item_item_spec visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

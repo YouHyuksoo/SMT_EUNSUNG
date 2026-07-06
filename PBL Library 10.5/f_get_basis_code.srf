@@ -1,0 +1,30 @@
+HA$PBExportHeader$f_get_basis_code.srf
+global type f_get_basis_code from function_object
+end type
+
+forward prototypes
+global function string f_get_basis_code (string arg_code_type, string arg_code_name)
+end prototypes
+
+global function string f_get_basis_code (string arg_code_type, string arg_code_name);String lvs_name
+SELECT DECODE(:gvs_language, 'C', NVL(CODE_MEAN_LOCAL, ''), 'K', NVL(CODE_MEAN_KOR, ''), CODE_MEAN_ENG)
+  INTO :lvs_name
+  FROM ISYS_BASECODE
+ WHERE CODE_TYPE = UPPER(:arg_code_type)
+     AND CODE_NAME = UPPER(:arg_code_name)
+     AND ORGANIZATION_ID = :GVI_ORGANIZATION_ID ;
+
+if f_sql_check() < 0 then 
+	return ""
+end if
+
+if lvs_name = '' or isnull(lvs_name) then 
+	
+   Messagebox ( "Notify" , 	"Code Type = "+arg_code_type+" Default Value Not Found!" )
+   Return ''	
+	
+end if
+
+return lvs_name
+end function
+

@@ -1,0 +1,26 @@
+FUNCTION "F_GET_TIME_TERM_HH24MI"
+  ( param1 IN DATE ,param2 IN DATE )
+  RETURN  VARCHAR2 IS
+
+
+lvl_time NUMBER ;
+lvl_str  VARCHAR2(10);
+
+BEGIN
+
+
+    lvl_time := ROUND((param2 - param1) * 24 *60);
+
+    IF ( lvl_time/60 < 99 AND lvl_time >= 0 ) THEN
+         lvl_str := trim(to_char(trunc(lvl_time/60),'00'))||':'||trim(to_char(mod(lvl_time, 60),'00'));
+    ELSE
+         lvl_str := '##:##';
+    END IF;
+
+    RETURN lvl_str ;
+
+EXCEPTION
+   WHEN others THEN
+       raise_application_error( -20003 , SQLERRM ) ;
+END;
+

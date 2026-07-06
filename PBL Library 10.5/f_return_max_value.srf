@@ -1,0 +1,40 @@
+HA$PBExportHeader$f_return_max_value.srf
+global type f_return_max_value from function_object
+end type
+
+forward prototypes
+global function decimal f_return_max_value (decimal arg_value[])
+end prototypes
+
+global function decimal f_return_max_value (decimal arg_value[]);int i = 1 , lvi_upper
+Decimal lvl_max
+
+lvi_upper= upperbound(arg_value[] )
+
+	if isnull(arg_value[1])  then
+		arg_value[1] = 0
+	end if
+	
+	lvl_max = arg_value[1]
+	
+	
+do
+
+	
+	i++
+	
+	
+	if isnull(arg_value[i]) then 
+		arg_value[i] = 0
+	end if
+	
+	if lvl_max < arg_value[i]  then 
+		lvl_max = arg_value[i] 
+	end if
+	
+	
+loop until i = lvi_upper
+
+return lvl_max
+end function
+

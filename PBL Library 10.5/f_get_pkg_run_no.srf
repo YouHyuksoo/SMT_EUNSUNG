@@ -1,0 +1,61 @@
+HA$PBExportHeader$f_get_pkg_run_no.srf
+global type f_get_pkg_run_no from function_object
+end type
+
+forward prototypes
+global function string f_get_pkg_run_no (string arg_run_no)
+end prototypes
+
+global function string f_get_pkg_run_no (string arg_run_no);string lvs_code , lvs_merge
+
+declare cl1 cursor for select  NVL( substr (  A_MRM_BARCODE , INSTR( A_MRM_BARCODE , '=' , 1 , 3 ) +1 , 11 ) ,'*' ) FROM IP_PRODUCT_RUN_CARD_DETAIL 
+WHERE RUN_NO = :ARG_RUN_NO ;
+
+declare cl2 cursor for select NVL( substr (  B_MRM_BARCODE , INSTR( B_MRM_BARCODE , '=' , 1 , 3 ) +1 , 11 ) ,'*' ) FROM IP_PRODUCT_RUN_CARD_DETAIL 
+WHERE RUN_NO = :ARG_RUN_NO ;
+
+
+OPEN CL1 ;
+
+DO 
+	FETCH CL1 INTO :LVS_CODE ;
+	
+	IF SQLCA.SQLCODE = 100 THEN 
+		CLOSE CL1 ;
+		EXIT
+	END IF 
+	
+	IF F_SQL_CHECK() < 0 THEN 
+		CLOSE CL1 ;
+		EXIT
+	END IF 
+	
+	LVS_MERGE = LVS_MERGE + LVS_CODE + ',' ;
+	
+LOOP UNTIL 1= 2 
+
+LVS_CODE = ''
+
+OPEN CL2 ;
+DO 
+	FETCH CL2 INTO :LVS_CODE ;
+	
+	IF SQLCA.SQLCODE = 100 THEN 
+		CLOSE CL2 ;
+		EXIT
+	END IF 
+	IF F_SQL_CHECK() < 0 THEN 
+		CLOSE CL2 ;
+		EXIT
+	END IF 
+		
+	LVS_MERGE = LVS_MERGE + LVS_CODE + ',' ;
+	
+	
+LOOP UNTIL 1= 2 
+
+CLOSE CL1 ;
+CLOSE CL2;
+return   mid(LVS_MERGE  , 1, len(lvs_merge) -1 );
+end function
+

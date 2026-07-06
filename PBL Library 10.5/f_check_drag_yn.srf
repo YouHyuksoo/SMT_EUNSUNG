@@ -1,0 +1,17 @@
+HA$PBExportHeader$f_check_drag_yn.srf
+global type f_check_drag_yn from function_object
+end type
+
+forward prototypes
+global function boolean f_check_drag_yn (string arg_dwo_name)
+end prototypes
+
+global function boolean f_check_drag_yn (string arg_dwo_name);//if arg_dwo_name = 'vendor_code' then 
+//	Return true		
+//elseif arg_dwo_name = 'customer_code' then 
+//	Return true	
+//end if
+//
+Return False
+end function
+

@@ -1,0 +1,51 @@
+HA$PBExportHeader$d_ip_product_pid_inspect_data_mk_rpt_k.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=0 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no )
+header(height=240 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=52 color="536870912" )
+detail(height=80 color="536870912" )
+table(column=(type=char(100) updatewhereclause=yes name=pid dbname="iq_machine_inspect_data_mk.pid" )
+ column=(type=char(20) updatewhereclause=yes name=result_code dbname="iq_machine_inspect_data_mk.result_code" )
+ column=(type=char(20) updatewhereclause=yes name=dateset dbname="iq_machine_inspect_data_mk.dateset" )
+ column=(type=char(20) updatewhereclause=yes name=equipmentid dbname="iq_machine_inspect_data_mk.equipmentid" )
+ column=(type=char(100) updatewhereclause=yes name=run_no dbname="iq_machine_inspect_data_mk.run_no" )
+ column=(type=char(100) updatewhereclause=yes name=cstid dbname="iq_machine_inspect_data_mk.cstid" )
+ column=(type=char(20) updatewhereclause=yes name=seq dbname="iq_machine_inspect_data_mk.seq" )
+ column=(type=datetime updatewhereclause=yes name=enter_date dbname="iq_machine_inspect_data_mk.enter_date" )
+ column=(type=char(20) updatewhereclause=yes name=enter_by dbname="iq_machine_inspect_data_mk.enter_by" )
+ column=(type=number updatewhereclause=yes name=organization_id dbname="iq_machine_inspect_data_mk.organization_id" )
+ column=(type=char(4000) updatewhereclause=yes name=line_code dbname="line_code" )
+ retrieve=" select pid, 
+          result_code,
+          dateset, 
+          equipmentid, 
+          run_no,
+          cstid, 
+          seq,
+          enter_date, 
+          enter_by, 
+          organization_id  ,
+          f_get_line_name( line_code, organization_id)  line_code
+  from iq_machine_inspect_data_mk 
+where PID LIKE :ARG_SERIAL_NO 
+   AND ORGANIZATION_ID = :ARG_ORG
+" arguments=(("ARG_SERIAL_NO", string),("ARG_ORG", number))  sort="pid A dateset A " )
+text(band=header alignment="0" text="$$HEX4$$c8b9b9d015c8f4bc$$ENDHEX$$" border="1" color="33554432" x="14" y="12" height="76" width="1714" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="2" color="33554432" x="14" y="8" height="64" width="649" format="[general]" html.valueishtml="0"  name=pid visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="2" color="33554432" x="672" y="8" height="64" width="498" format="[general]" html.valueishtml="0"  name=dateset visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=11 alignment="2" tabsequence=32766 border="2" color="33554432" x="1179" y="8" height="64" width="347" format="[general]" html.valueishtml="0"  name=line_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=header alignment="2" text="$$HEX3$$14bc54cfdcb4$$ENDHEX$$" border="2" color="33554432" x="14" y="120" height="112" width="649" html.valueishtml="0"  name=serial_no_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="$$HEX4$$c8b9b9d07cc790c7$$ENDHEX$$" border="2" color="33554432" x="672" y="120" height="112" width="498" html.valueishtml="0"  name=t_11 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="$$HEX4$$7cb778c754cfdcb4$$ENDHEX$$" border="2" color="33554432" x="1179" y="120" height="112" width="347" html.valueishtml="0"  name=t_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

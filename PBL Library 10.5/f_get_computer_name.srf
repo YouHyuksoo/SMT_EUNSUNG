@@ -1,0 +1,19 @@
+HA$PBExportHeader$f_get_computer_name.srf
+$PBExportComments$Get Computer name
+global type f_get_computer_name from function_object
+end type
+
+forward prototypes
+global function string f_get_computer_name ()
+end prototypes
+
+global function string f_get_computer_name (); string ls_compname
+ long ll_buf
+ 
+ ll_buf = 25
+ ls_compname = space(ll_buf)
+ GetComputerNameA(ls_compname, ll_buf)
+return ls_compname
+
+end function
+

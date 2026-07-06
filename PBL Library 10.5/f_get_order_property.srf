@@ -1,0 +1,128 @@
+HA$PBExportHeader$f_get_order_property.srf
+$PBExportComments$$$HEX6$$1cbcfcc815c8f4bc01c8a9c6$$ENDHEX$$
+global type f_get_order_property from function_object
+end type
+
+forward prototypes
+global function decimal f_get_order_property (string arg_supplier_code, string arg_item_code, decimal arg_order_qty, string arg_property)
+end prototypes
+
+global function decimal f_get_order_property (string arg_supplier_code, string arg_item_code, decimal arg_order_qty, string arg_property);DECIMAL LVF_RETURN_QTY , LVF_MIN_ORDER_QTY , LVF_PACKING_QTY , LVF_ORDER_BAD_RATE , LVF_ORDER_BAD_RATE_QTY
+STRING LVS_UOM
+
+SELECT NVL(MIM_ORDER_QTY ,0 ) , NVL(PACKING_QTY ,0 ) ,  NVL(ORDER_BAD_RATE ,0 )
+  INTO :LVF_MIN_ORDER_QTY , :LVF_PACKING_QTY , :LVF_ORDER_BAD_RATE
+  FROM IM_ITEM_MASTER
+ WHERE SUPPLIER_CODE = :ARG_SUPPLIER_CODE
+      AND ITEM_CODE = :ARG_ITEM_CODE
+	AND DATESET  <= TRUNC(SYSDATE)
+	AND DATEEND  >= TRUNC(SYSDATE)
+	AND ORGANIZATION_ID = :GVI_ORGANIZATION_ID ;
+	
+	IF F_SQL_CHECK() < 0 THEN 
+		RETURN -1 ;
+	END IF
+	
+IF     ARG_PROPERTY = 'M' THEN
+	
+		 IF LVF_ORDER_BAD_RATE = 0 THEN //$$HEX14$$88bdc9b73cc75cb820001cbcddc018b494b2200018c2c9b720000900$$ENDHEX$$
+			LVF_ORDER_BAD_RATE_QTY  =	0
+		 ELSE
+			LVS_UOM = F_GET_UOM( ARG_ITEM_CODE , GVI_ORGANIZATION_ID ) 
+			IF LVS_UOM  = 'EA' OR LVS_UOM = 'SET' then
+				 LVF_ORDER_BAD_RATE_QTY = ROUND((  LVF_ORDER_BAD_RATE * ARG_ORDER_QTY / 100 ) , 0)	 				
+			ELSE
+				 LVF_ORDER_BAD_RATE_QTY = ROUND((  LVF_ORDER_BAD_RATE * ARG_ORDER_QTY / 100 ) , 4)	 
+			END IF 
+		 END IF	    		
+		 
+		LVF_RETURN_QTY = ARG_ORDER_QTY +  LVF_ORDER_BAD_RATE_QTY		 
+                   
+		 IF ( LVF_RETURN_QTY  >= LVF_MIN_ORDER_QTY ) OR LVF_MIN_ORDER_QTY = 0 THEN 	// $$HEX20$$5ccd8cc11cbcfcc8c9b72000f4bce4b220006cd074ba200088bdc9b7ccb9200010ac48c55cd5e4b2$$ENDHEX$$.
+			
+	          LVF_RETURN_QTY = LVF_RETURN_QTY  //$$HEX18$$5ccd8cc11cbcfcc8c9b72000f4bce4b220006cd074ba2000f8ade5b02000acb934d12000$$ENDHEX$$
+						 
+		 ELSE // $$HEX23$$5ccd8cc120001cbcfcc8c9b72000f4bce4b2200091c73cc774ba20005ccd8cc120001cbcfcc8c9b72000acb934d1$$ENDHEX$$
+					LVF_RETURN_QTY = LVF_MIN_ORDER_QTY
+		 END IF
+
+ELSEIF ARG_PROPERTY = 'P' THEN
+	
+     LVF_RETURN_QTY = ARG_ORDER_QTY			
+	
+	 IF LVF_PACKING_QTY = 0 THEN 
+		
+         LVF_RETURN_QTY = LVF_RETURN_QTY
+				
+	 ELSE
+		
+		  IF LVF_RETURN_QTY >  LVF_PACKING_QTY THEN 
+			
+			  IF MOD( LVF_RETURN_QTY , LVF_PACKING_QTY )  > 0 THEN 
+				
+				  LVF_RETURN_QTY = (TRUNCATE(( LVF_RETURN_QTY / LVF_PACKING_QTY ),0) * LVF_PACKING_QTY ) + LVF_PACKING_QTY
+				  
+			  END IF
+			
+		  ELSE
+			
+   	         LVF_RETURN_QTY = LVF_PACKING_QTY
+					
+		  END IF
+		 
+	 END IF
+	
+ELSEIF ARG_PROPERTY = 'A' THEN
+
+		 IF LVF_ORDER_BAD_RATE = 0 THEN //$$HEX14$$88bdc9b73cc75cb820001cbcddc018b494b2200018c2c9b720000900$$ENDHEX$$
+			LVF_ORDER_BAD_RATE_QTY  =	0
+		 ELSE
+			LVS_UOM = F_GET_UOM( ARG_ITEM_CODE , GVI_ORGANIZATION_ID ) 
+			IF LVS_UOM  = 'EA' OR LVS_UOM = 'SET' then
+
+				 LVF_ORDER_BAD_RATE_QTY = ROUND((  LVF_ORDER_BAD_RATE * ARG_ORDER_QTY / 100 ) , 0)	 
+			ELSE
+				 LVF_ORDER_BAD_RATE_QTY = ROUND((  LVF_ORDER_BAD_RATE * ARG_ORDER_QTY / 100 ) , 4)	 				
+			END IF 
+		 END IF	    		
+		 
+		LVF_RETURN_QTY = ARG_ORDER_QTY +  LVF_ORDER_BAD_RATE_QTY		 
+                   
+		 IF ( LVF_RETURN_QTY  >= LVF_MIN_ORDER_QTY ) OR LVF_MIN_ORDER_QTY = 0 THEN 	// $$HEX20$$5ccd8cc11cbcfcc8c9b72000f4bce4b220006cd074ba200088bdc9b7ccb9200010ac48c55cd5e4b2$$ENDHEX$$.
+			
+	          LVF_RETURN_QTY = LVF_RETURN_QTY  //$$HEX18$$5ccd8cc11cbcfcc8c9b72000f4bce4b220006cd074ba2000f8ade5b02000acb934d12000$$ENDHEX$$
+						 
+		 ELSE // $$HEX23$$5ccd8cc120001cbcfcc8c9b72000f4bce4b2200091c73cc774ba20005ccd8cc120001cbcfcc8c9b72000acb934d1$$ENDHEX$$
+					LVF_RETURN_QTY = LVF_MIN_ORDER_QTY
+		 END IF
+		 
+	 
+	 
+	 
+	 
+	 IF LVF_PACKING_QTY = 0 THEN 
+ 	     
+	 ELSE
+		  IF LVF_RETURN_QTY > LVF_PACKING_QTY THEN 
+			
+			  IF MOD( LVF_RETURN_QTY , LVF_PACKING_QTY )  > 0 THEN 
+				
+				  LVF_RETURN_QTY = ( TRUNCATE(( LVF_RETURN_QTY / LVF_PACKING_QTY ),0) * LVF_PACKING_QTY ) + LVF_PACKING_QTY
+				
+			  END IF
+			
+		  ELSE
+			
+   	           LVF_RETURN_QTY = LVF_PACKING_QTY
+					  
+					  
+		  END IF
+		 
+
+	 END IF
+		
+END IF
+
+RETURN LVF_RETURN_QTY
+end function
+

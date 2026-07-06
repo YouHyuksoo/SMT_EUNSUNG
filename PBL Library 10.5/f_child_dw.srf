@@ -1,0 +1,34 @@
+HA$PBExportHeader$f_child_dw.srf
+$PBExportComments$$$HEX6$$44d530d12000c6c594b22000$$ENDHEX$$child data window $$HEX2$$70c88cd6$$ENDHEX$$(Argument 1$$HEX1$$1cac$$ENDHEX$$)
+global type f_child_dw from function_object
+end type
+
+forward prototypes
+global subroutine f_child_dw (datawindow adw_1, string as_column, string as_arg)
+end prototypes
+
+global subroutine f_child_dw (datawindow adw_1, string as_column, string as_arg);DataWindowChild state_child
+long		ll_rowcount
+
+adw_1.GetChild(as_column, state_child)
+state_child.settransobject(sqlca)
+
+ll_rowcount = state_child.retrieve(as_arg)
+
+state_child.insertrow(1)
+
+ll_rowcount = ll_rowcount + 1
+
+if ll_rowcount > 20 then
+	ll_rowcount = 20
+end if
+
+//adw_1.Modify(as_column + ".DDDW.Lines= " + string(ll_rowcount+2))
+
+/**********$$HEX6$$e4b26dadb4c5200098ccacb9$$ENDHEX$$******************/
+f_dual_lang_change_dddw(adw_1, as_column)
+
+
+
+end subroutine
+

@@ -1,0 +1,33 @@
+HA$PBExportHeader$f_call_db_function.srf
+global type f_call_db_function from function_object
+end type
+
+forward prototypes
+global function string f_call_db_function (string arg_function_name)
+end prototypes
+
+global function string f_call_db_function (string arg_function_name);STRING lvs_sql , lvs_return
+
+lvs_sql = "SELECT "+arg_function_name+" FROM dual" 
+
+DECLARE cl_seq DYNAMIC CURSOR FOR SQLSA ;
+
+PREPARE SQLSA FROM :lvs_sql ;
+
+OPEN DYNAMIC cl_seq ;
+
+if f_sql_check_with_msg("Open Dynamic Cursot for Function "+arg_function_name) < 0 then 
+   return 'ERROR'
+end if
+
+FETCH cl_seq INTO :lvs_return ;
+
+if f_sql_check_with_msg("Fetch Dynamic Cursot for Function "+arg_function_name) < 0 then 
+   return 'ERROR'
+end if
+
+CLOSE cl_seq ;
+
+RETURN lvs_return ;
+end function
+

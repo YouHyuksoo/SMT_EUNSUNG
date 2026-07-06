@@ -1,0 +1,369 @@
+CREATE OR REPLACE PROCEDURE "P_PRODUCT_FG_RECEIPT" (p_barcode varchar2, p_location varchar2,  p_txn number,  p_commit varchar2, p_out out varchar2, p_msg out varchar2) is
+  /* ================================================================
+   * 프로시저명  : P_PRODUCT_FG_RECEIPT
+   * 작성자  : 지성솔루션컨설팅
+   * 작성일  : 2020-07-30
+   * 수정이력:
+   *   2020-07-30 - 지성솔루션컨설팅 - 최초 작성
+   *   2026-07-02 - AI(Codex)       - 한글 주석 자동 추가
+   * ================================================================
+   * [AI 분석] 기능 설명:
+   *   제품, 재고, 입출고 또는 팔레트 관련 업무 데이터를 등록/갱신한다.
+   *   대상 데이터의 존재 여부와 수량 조건을 확인한 뒤 원본 로직에 따라 처리한다.
+   *   COMMIT/ROLLBACK 포함 여부는 원본 트랜잭션 흐름을 그대로 유지한다.
+   * ================================================================
+   * [AI 분석] 파라미터:
+   *   P_BARCODE - 원본 선언부 기준 입력/출력 파라미터
+   *   P_LOCATION - 원본 선언부 기준 입력/출력 파라미터
+   *   P_TXN - 원본 선언부 기준 입력/출력 파라미터
+   *   P_COMMIT - 원본 선언부 기준 입력/출력 파라미터
+   *   P_OUT - 원본 선언부 기준 입력/출력 파라미터
+   *   P_MSG - 원본 선언부 기준 입력/출력 파라미터
+   *   PACKING - 원본 선언부 기준 입력/출력 파라미터
+   *   PDA - 원본 선언부 기준 입력/출력 파라미터
+   *   P_LOCATOIN - 원본 선언부 기준 입력/출력 파라미터
+   *   PRODUCT - 원본 선언부 기준 입력/출력 파라미터
+   *   PACK_BARCODE - 원본 선언부 기준 입력/출력 파라미터
+   *   PACK - 원본 선언부 기준 입력/출력 파라미터
+   *   PACK_TYPE - 원본 선언부 기준 입력/출력 파라미터
+   * ================================================================
+   * [AI 분석] 참조 테이블:
+   *   IP_PRODUCT_2D_BARCODE - 원본 로직 참조 테이블
+   *   IP_PRODUCT_FG_INVENTORY - 원본 로직 참조 테이블
+   *   IP_PRODUCT_FG_RECEIPT - 원본 로직 참조 테이블
+   *   IP_PRODUCT_PACK_MASTER - 원본 로직 참조 테이블
+   * ================================================================
+   * [AI 분석] 호출 객체:
+   *   F_GET_WORKTIME_ZONE
+   *   F_GET_WORK_ACTUAL_DATE
+   *   F_GET_WORK_SHIFT_CODE
+   *   F_MSG
+   *   P_LOCATOIN
+   * ================================================================
+   * [AI 분석] 예외 처리:
+   *   원본 EXCEPTION 절의 반환값, RAISE, COMMIT/ROLLBACK 흐름을 변경하지 않는다.
+   * ================================================================
+   * [AI 분석] 복잡도:
+   *   조건 분기/반복문/DML은 원본 구현 기준으로 유지되며 주석만 추가했다.
+   * ================================================================
+   * 사용 예시:
+   *   EXEC P_PRODUCT_FG_RECEIPT(...)
+   * ================================================================ */
+   /****************************************************
+    * 제품 입고
+    * 1. Packing 된 제품을 창고로 입고 한다. 
+    *    PDA / UI 동시 사용 가능  
+    *    p_locatoin ( isys basecode PRODUCT LOCATION CODE ) 
+    *    p_commit 'Y" procedure 내에서 Txn 종료 
+    *             'N' 호출 UI 에서 Txn 종료 처리 
+    *    p_txn  1 정상 , 2 취소
+    ****************************************************
+    * IP_PRODUCT_PACK_MASTER RECEIPT_FLAG = 'N' 인것 
+    ****************************************************/
+    lvs_receipt_flag varchar2(1);  -- [AI] 내부 처리용 변수
+    lvs_pallet_flag  varchar2(1); -- [AI] 내부 처리용 변수
+    lvs_ship_flag    varchar2(1);  -- [AI] 내부 처리용 변수
+    lvs_pack_type    varchar2(2); -- [AI] 내부 처리용 변수
+    lvl_pack_qty     number     ;  -- [AI] 내부 처리용 변수
+    lvs_model_name   varchar2(30);  -- [AI] 내부 처리용 변수
+    lvs_ok_msg       varchar2(4000); -- [AI] 내부 처리용 변수
+    lvs_ng_msg       varchar2(4000); -- [AI] 내부 처리용 변수
+    
+    lvs_rtn_location varchar2(50);  -- [AI] 내부 처리용 변수
+begin
+   -- [AI] 주요 업무 처리 로직을 시작한다.
+  
+    /******************************
+    * 바코드 확인 
+    ******************************/
+    begin 
+      select receipt_flag, nvl(pack_qty,0), pallet_flag, ship_flag, pack_type, model_name
+        into lvs_receipt_flag,lvl_pack_qty, lvs_pallet_flag, lvs_ship_flag, lvs_pack_type, lvs_model_name
+        from ip_product_pack_master 
+       where pack_barcode = p_barcode ; 
+    exception 
+   -- [AI] 예외 상황을 원본 처리 방식대로 처리한다.
+      when no_data_found then
+        p_out := 'NG' ; 
+        p_msg := f_msg('존재하지 않는 Barcode 입니다.','C',1);
+        return ;     
+   -- [AI] 예외 상황을 원본 처리 방식대로 처리한다.
+      when others then
+        p_out := 'NG'; 
+        p_msg := substr(sqlerrm,1,200);
+        return ;   
+    end ; 
+    
+    if ( p_location = '' or p_location is null ) then
+      
+        p_out := 'NG' ; 
+        p_msg := f_msg('Location 정보가 없습니다.','C',1);
+        return ; 
+            
+    end if;
+    
+    /******************************
+    * Pack 수량 없는건은 입고 안됨 
+    ******************************/
+    if lvl_pack_qty < 1 then 
+        p_out := 'NG' ; 
+        p_msg := f_msg('Packing 수량이 없는 바코드 입니다.','C',1);
+        return ; 
+    end if ;
+    
+    if p_txn = '2' then 
+      
+      begin 
+        
+        select x.location_code 
+          into lvs_rtn_location 
+          from ip_product_fg_inventory x 
+         where x.barcode       = p_barcode
+           and x.location_code = p_location ; 
+           
+      exception 
+   -- [AI] 예외 상황을 원본 처리 방식대로 처리한다.
+        when no_data_found then 
+          null ; 
+          lvs_rtn_location := '*'; 
+   -- [AI] 예외 상황을 원본 처리 방식대로 처리한다.
+        when others then 
+          p_out := 'NG' ; 
+          p_msg := 'Inv Check '||substr(sqlerrm,1,200);
+          return ; 
+      end ; 
+    end if ; 
+    
+    --정상 처리 
+    if p_txn =1 then
+          if lvs_receipt_flag = 'Y' then 
+           p_out := 'NG'; 
+           p_msg := f_msg( '입고불가 : 이미 입고처리된 바코드 입니다.','C',1); 
+           return ; 
+         elsif lvs_pallet_flag = 'Y' then 
+           p_out := 'NG'; 
+           p_msg := f_msg( '입고불가 : 이미 파렛트가 구성된 상태입니다.','C',1); 
+           return ; 
+         elsif lvs_ship_flag   = 'Y' then
+           p_out := 'NG'; 
+           p_msg := f_msg( '입고불가 : 이미 출하 완료된 상태입니다.','C',1); 
+           return ; 
+         end if;   
+
+          -- 1. Pack Master 입고 Flag 변경 
+          update ip_product_pack_master  
+             set receipt_flag = 'Y'
+           where pack_barcode = p_barcode 
+             and receipt_flag  = 'N' ;  
+             
+             
+          insert into ip_product_fg_receipt ( 
+            receipt_date, 
+            receipt_sequence, 
+            barcode, 
+            pack_type, 
+            txn_deficit, 
+            qty, 
+            
+            model_name, 
+            model_suffix, 
+            
+            item_code, 
+            
+            line_code, 
+            workstage_code, 
+
+            location_code, 
+            enter_by, 
+            enter_date, 
+            last_modify_by, 
+            last_modify_date, 
+            organization_id , 
+            actual_date, 
+            work_time_zone, 
+            shift_code
+
+          ) 
+          select sysdate, 
+                 seq_fg_receipt_seq.nextval, 
+                 pack_barcode,
+                 pack_type, 
+                 '1', 
+                 pack_qty, 
+                 
+                 model_name,
+                 '*', 
+                 part_no, 
+                 
+                 line_code, 
+                 workstage_code, 
+                 
+                 p_location, 
+                 'FG_RECEIPT',
+                 sysdate,
+                 'FG_RECEIPT',
+                 sysdate,
+                 1      , 
+                 f_get_work_actual_date(sysdate,'A'), 
+                 f_get_worktime_zone(to_char(sysdate,'yyyymmdd'), to_char(sysdate,'hh24mi'),'ZONE'), 
+                 f_get_work_shift_code(sysdate) 
+           from ip_product_pack_master 
+          where pack_barcode = p_barcode 
+         ; 
+         
+         
+         /************************************************************
+         * 2D BarCode 입고 일자 업데이트 
+         ************************************************************/
+         /*UPDATE ip_product_2d_barcode X
+            SET X.RECEIPT_DATE = SYSDATE, 
+             
+                X.LAST_MODIFY_DATE = SYSDATE, 
+                X.LAST_MODIFY_BY   = 'FG_RCV'
+          WHERE X.SERIAL_NO IN ( 
+          
+                                 SELECT Z.BARCODE
+                                   FROM IP_PRODUCT_PACK_MASTER Y , 
+                                        IP_PRODUCT_PACK_SERIAL Z 
+                                  WHERE Y.PACK_BARCODE = p_barcode
+                                    AND Y.PACK_TYPE    = 'C'                --Cell Biz Type 만 M 메거진은 아님 
+                                    AND Y.PACK_BARCODE = Z.PACK_BARCODE
+                               ) ;*/ 
+         UPDATE ip_product_2d_barcode X
+            SET X.RECEIPT_DATE = SYSDATE, 
+             
+                X.LAST_MODIFY_DATE = SYSDATE, 
+                X.LAST_MODIFY_BY   = 'FG_RCV'
+          WHERE X.Box_No           = p_barcode  ; 
+         /***********************************************************/
+         if p_commit = 'Y' then 
+           commit ; 
+         end if;   
+    --취소 처리 
+    else
+         if lvs_receipt_flag = 'N' then 
+           p_out := 'NG'; 
+           p_msg := f_msg( '입고취소불가 : 입고되지 않은 바코드 입니다.','C',1); 
+           return ; 
+         elsif lvs_pallet_flag = 'Y' then 
+           p_out := 'NG'; 
+           p_msg := f_msg( '입고취소불가 : 이미 파렛트가 구성된 상태입니다.','C',1); 
+           return ; 
+         elsif lvs_ship_flag = 'Y' then
+           p_out := 'NG'; 
+           p_msg := f_msg( '입고취소불가 : 이미 출하 완료된 상태입니다.','C',1); 
+           return ; 
+         end if;  
+      
+         --. ip_product_pack_master 를 입고 대기상태로 변경 한다.
+         update ip_product_pack_master  
+            set receipt_flag = 'N'
+          where pack_barcode = p_barcode 
+            and receipt_flag  = 'Y' ;
+               
+         --.입고취로를 등록 한다.
+         insert into ip_product_fg_receipt ( 
+            receipt_date, 
+            receipt_sequence, 
+            barcode, 
+            pack_type, 
+            txn_deficit, 
+            qty, 
+            
+            model_name, 
+            model_suffix, 
+            
+            item_code, 
+            
+            line_code, 
+            workstage_code, 
+
+            location_code, 
+            enter_by, 
+            enter_date, 
+            last_modify_by, 
+            last_modify_date, 
+            organization_id, 
+            
+            actual_date, 
+            work_time_zone, 
+            shift_code
+
+          ) 
+          select sysdate, 
+                 seq_fg_receipt_seq.nextval, 
+                 pack_barcode,
+                 pack_type, 
+                 '2', 
+                 pack_qty, 
+                 
+                 model_name,
+                 '*', 
+                 part_no, 
+                 
+                 null, 
+                 null, 
+                 
+                 lvs_rtn_location, 
+                 'FG_R_CANCEL',
+                 sysdate,
+                 'FG_R_CANCEL',
+                 sysdate,
+                 1      , 
+                 f_get_work_actual_date(sysdate,'A'), 
+                 f_get_worktime_zone(to_char(sysdate,'yyyymmdd'), to_char(sysdate,'hh24mi'),'ZONE'), 
+                 f_get_work_shift_code(sysdate) 
+                 
+           from ip_product_pack_master 
+          where pack_barcode = p_barcode 
+          
+         ; 
+         /************************************************************
+         * 2D BarCode 입고일자를 NULL 화 한다. 
+         ************************************************************/
+         /*UPDATE ip_product_2d_barcode X
+            SET X.RECEIPT_DATE = NULL, 
+                X.LAST_MODIFY_DATE = SYSDATE, 
+                X.LAST_MODIFY_BY   = 'FG_RCV_RTN'
+          WHERE X.SERIAL_NO IN ( 
+          
+                                 SELECT Z.BARCODE
+                                   FROM IP_PRODUCT_PACK_MASTER Y , 
+                                        IP_PRODUCT_PACK_SERIAL Z 
+                                  WHERE Y.PACK_BARCODE = p_barcode
+                                    AND Y.PACK_TYPE    = 'C'                --Cell Biz Type 만 M 메거진은 아님 
+                                    
+                                    AND Y.PACK_BARCODE = Z.PACK_BARCODE
+                               ) ; */
+         
+         UPDATE ip_product_2d_barcode X
+            SET X.RECEIPT_DATE     = NULL, 
+                X.LAST_MODIFY_DATE = SYSDATE, 
+                X.LAST_MODIFY_BY   = 'FG_RCV_RTN'
+          WHERE X.Box_No           = p_barcode  ; 
+         /************************************************************/
+          
+         if p_commit = 'Y' then 
+           commit ; 
+         end if;    
+    end if ; 
+    
+    p_out := 'OK'; 
+    
+    if p_txn = 1 then 
+       p_msg := lvs_model_name||', '||to_char(lvl_pack_qty)||'  '||'Receipt '||' '||f_msg('정상처리 되었습니다.','C',1);
+    else 
+       p_msg := lvs_model_name||', '||to_char(lvl_pack_qty)||'  '||'Cancel '||' '||f_msg('정상처리 되었습니다.','C',1);
+    end if;
+    
+exception 
+   -- [AI] 예외 상황을 원본 처리 방식대로 처리한다.
+  when others then 
+    p_out := 'NG' ; 
+    p_msg := substr(sqlerrm,1,200); 
+    
+    if p_commit = 'Y' then 
+      rollback ; 
+    end if; 
+      
+end P_PRODUCT_FG_RECEIPT;

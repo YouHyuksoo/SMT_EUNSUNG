@@ -1,0 +1,13 @@
+HA$PBExportHeader$st_edit_object.srs
+global type st_edit_object from structure
+	string		object_name[]
+	string		object_type[]
+	long		object_x1[]
+	long		object_x2[]
+	long		object_y1[]
+	long		object_y2[]
+	long		object_width[]
+	long		object_height[]
+	long		object_index
+end type
+

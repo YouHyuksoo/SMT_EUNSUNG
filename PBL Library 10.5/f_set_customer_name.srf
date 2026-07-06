@@ -1,0 +1,26 @@
+HA$PBExportHeader$f_set_customer_name.srf
+global type f_set_customer_name from function_object
+end type
+
+forward prototypes
+global function string f_set_customer_name (datawindow arg_dw, long arg_row, string arg_customer_code)
+end prototypes
+
+global function string f_set_customer_name (datawindow arg_dw, long arg_row, string arg_customer_code);string lvs_customer_name
+select customer_name 
+into    :lvs_customer_name
+from icom_customer
+where  customer_code = :arg_customer_code
+  and    organization_id = :gvi_organization_id ; 
+ if f_sql_check() < 0 then 
+	return 'ERROR'
+end if 
+if sqlca.sqlcode = 100 then 
+	return 'NOTFOUND'
+end if 
+
+arg_dw.object.customer_name[arg_row] = lvs_customer_name
+
+return ''
+end function
+

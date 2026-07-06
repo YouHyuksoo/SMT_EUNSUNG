@@ -1,0 +1,32 @@
+HA$PBExportHeader$d_line_barcode_rpt1.srd
+release 10.5;
+datawindow(units=3 timer_interval=0 color=1073741824 processing=2 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 0 print.margin.right = 0 print.margin.top = 0 print.margin.bottom = 0 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no label.name="" label.width=8000 label.height=4250 label.rows=1 label.rows.spacing=132 label.columns=1 label.columns.spacing=200 label.topdown=yes label.sheet=yes label.shape=roundrectangle label.ellipse_height=0 label.ellipse_width=0 )
+detail(height=4259 color="536870912" )
+table(column=(type=char(10) updatewhereclause=yes name=line_code dbname="ip_product_line_barcode.line_code" )
+ column=(type=char(20) updatewhereclause=yes name=machine_code dbname="ip_product_line_barcode.machine_code" )
+ column=(type=char(10) updatewhereclause=yes name=position_code dbname="ip_product_line_barcode.position_code" )
+ column=(type=char(42) updatewhereclause=yes name=line_barcoe dbname="line_barcoe" )
+ retrieve="  SELECT ~"IP_PRODUCT_LINE_BARCODE~".~"LINE_CODE~",   
+              ~"IP_PRODUCT_LINE_BARCODE~".~"MACHINE_CODE~",   
+ ~"IP_PRODUCT_LINE_BARCODE~".~"POSITION_CODE~",   
+             '*'||line_code||machine_code||position_code||'*' LINE_BARCOE  
+    FROM ~"IP_PRODUCT_LINE_BARCODE~"  
+   WHERE ( ~"IP_PRODUCT_LINE_BARCODE~".~"LINE_CODE~" LIKE :arg_line_code ) AND  
+         ( ~"IP_PRODUCT_LINE_BARCODE~".~"MACHINE_CODE~" LIKE :arg_machine ) AND  
+         ( ~"IP_PRODUCT_LINE_BARCODE~".~"ORGANIZATION_ID~" = :arg_org )    
+" arguments=(("arg_line_code", string),("arg_machine", string),("arg_org", number))  sort="line_code A machine_code A " )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="0" color="33554432" x="529" y="2460" height="978" width="6905" format="[general]" html.valueishtml="0"  name=line_barcoe visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Free 3 of 9" font.height="-32" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="0" color="33554432" x="5662" y="529" height="1587" width="1719" format="[general]" html.valueishtml="0"  name=position_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-36" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="33554432" x="529" y="608" height="714" width="4868" format="[general]" html.valueishtml="0"  name=line_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-16" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="33554432" x="529" y="1402" height="714" width="4868" format="[general]" html.valueishtml="0"  name=machine_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-16" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

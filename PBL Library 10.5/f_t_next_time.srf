@@ -1,0 +1,20 @@
+HA$PBExportHeader$f_t_next_time.srf
+$PBExportComments$Call Server's System Date
+global type f_t_next_time from function_object
+end type
+
+forward prototypes
+global function datetime f_t_next_time (datetime arg_dateset, integer arg_next_hour, integer arg_next_min)
+end prototypes
+
+global function datetime f_t_next_time (datetime arg_dateset, integer arg_next_hour, integer arg_next_min);datetime d_1		
+
+select :arg_dateset + (  ( :arg_next_hour /  24  )  + (  :arg_next_min  / 24 / 60 )  )
+
+into :d_1 from dual ;
+
+
+f_sql_check()
+return d_1
+end function
+

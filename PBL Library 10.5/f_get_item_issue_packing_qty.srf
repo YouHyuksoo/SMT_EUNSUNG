@@ -1,0 +1,51 @@
+HA$PBExportHeader$f_get_item_issue_packing_qty.srf
+global type f_get_item_issue_packing_qty from function_object
+end type
+
+forward prototypes
+global function decimal f_get_item_issue_packing_qty (string arg_item_code, decimal arg_issue_qty, integer arg_org)
+end prototypes
+
+global function decimal f_get_item_issue_packing_qty (string arg_item_code, decimal arg_issue_qty, integer arg_org);Decimal lvf_issue_packing_qty , lvf_return
+
+
+if arg_issue_qty = 0 then 
+	return 0
+end if 
+
+select  nvl( issue_packing_qty,0 ) into :lvf_issue_packing_qty
+from id_item
+where item_code = :arg_item_code
+and organization_id = :arg_org ;
+
+if f_sql_check() < 0 then
+	return 0
+end if
+
+if sqlca.sqlcode = 100 then 
+	return arg_issue_qty	
+end if
+
+if lvf_issue_packing_qty = 0 then 
+	return arg_issue_qty
+end if 
+
+
+if lvf_issue_packing_qty >= arg_issue_qty then 
+	lvf_return = lvf_issue_packing_qty
+elseif lvf_issue_packing_qty <  arg_issue_qty then 
+	
+	lvf_return = truncate( arg_issue_qty  / lvf_issue_packing_qty , 0 ) * lvf_issue_packing_qty 
+	
+	if mod( arg_issue_qty , lvf_issue_packing_qty ) > 0 then 
+		
+		lvf_return = lvf_return+ lvf_issue_packing_qty
+		
+	end if
+	
+end if
+
+return lvf_return
+
+end function
+

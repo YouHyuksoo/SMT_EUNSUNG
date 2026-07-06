@@ -1,0 +1,28 @@
+HA$PBExportHeader$d_packing_label_report.srd
+$PBExportComments$$$HEX9$$1cc888d46fb8b8d214bc54cfdcb491c5ddc2$$ENDHEX$$
+release 10.5;
+datawindow(units=3 timer_interval=0 color=1073741824 processing=2 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 635 print.margin.right = 635 print.margin.top = 635 print.margin.bottom = 635 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no label.name="" label.width=6400 label.height=4400 label.rows=1 label.rows.spacing=0 label.columns=1 label.columns.spacing=0 label.topdown=no label.sheet=yes label.shape=roundrectangle label.ellipse_height=0 label.ellipse_width=0 )
+detail(height=4392 color="536870912" )
+table(column=(type=char(30) updatewhereclause=no name=lot_no dbname="LOT_NO" )
+ column=(type=char(100) updatewhereclause=no name=lot_no_barcode dbname="LOT_NO_BARCODE" )
+ column=(type=char(30) updatewhereclause=no name=model_name dbname="MODEL_NAME" )
+ column=(type=datetime updatewhereclause=no name=lot_date dbname="LOT_DATE" )
+ column=(type=number updatewhereclause=no name=set_qty dbname="SET_QTY" )
+ column=(type=char(30) updatewhereclause=no name=organization_name dbname="organization_name" )
+ )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432" x="158" y="158" height="582" width="3704" format="[general]" html.valueishtml="0"  name=lot_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="33554432" x="158" y="820" height="582" width="3704" format="[general]" html.valueishtml="0"  name=model_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="3" tabsequence=32766 border="0" color="33554432" x="158" y="1508" height="952" width="6111" format="[general]" html.valueishtml="0"  name=lot_no_barcode visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Code 128" font.height="-26" font.weight="400"  font.family="0" font.pitch="2" font.charset="2" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="1" tabsequence=32766 border="0" color="33554432" x="4021" y="158" height="582" width="2275" format="YYYY/MM/DD" html.valueishtml="0"  name=lot_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="1" tabsequence=32766 border="0" color="33554432" x="3995" y="820" height="582" width="2275" format="###,##0" html.valueishtml="0"  name=set_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

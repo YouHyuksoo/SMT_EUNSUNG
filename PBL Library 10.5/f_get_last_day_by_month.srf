@@ -1,0 +1,15 @@
+HA$PBExportHeader$f_get_last_day_by_month.srf
+$PBExportComments$Call Server's System Last Date
+global type f_get_last_day_by_month from function_object
+end type
+
+forward prototypes
+global function datetime f_get_last_day_by_month (string arg_month)
+end prototypes
+
+global function datetime f_get_last_day_by_month (string arg_month);datetime d_1		
+select TRUNC(last_day(to_date(:Arg_month||'01','yyyymmdd')))  into :d_1 from dual ;
+f_sql_check()
+return d_1
+end function
+

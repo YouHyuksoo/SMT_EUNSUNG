@@ -1,0 +1,46 @@
+HA$PBExportHeader$f_get_qc_workstage_result_by_serial.srf
+global type f_get_qc_workstage_result_by_serial from function_object
+end type
+
+forward prototypes
+global function string f_get_qc_workstage_result_by_serial (string arg_serial_no)
+end prototypes
+
+global function string f_get_qc_workstage_result_by_serial (string arg_serial_no);STRING LVS_RETURN
+INT LVI_COUNT
+
+LVI_COUNT = 0 
+SELECT COUNT(*) INTO :LVI_COUNT 
+ FROM IQ_PRODUCT_WQC
+WHERE SERIAL_NO = :ARG_SERIAL_NO
+   AND ROWNUM = 1;
+
+IF F_SQL_CHECK() < 0 THEN  
+	RETURN 'NG'
+END IF 
+
+IF LVI_COUNT = 0 THEN 
+    RETURN 'OK'  //$$HEX18$$f5ac15c888bdc9b72000f1b45db8200074c725b82000c6c54cc7200018c2acb988d42000$$ENDHEX$$
+END IF 
+
+SELECT  MAX(REPAIR_YN)  
+    INTO :LVS_RETURN
+ FROM IQ_PRODUCT_WQC 
+WHERE SERIAL_NO = :ARG_SERIAL_NO ;
+
+IF F_SQL_CHECK() < 0 THEN 
+	RETURN 'NG'
+END IF 
+
+IF LVS_RETURN = '' OR ISNULL(LVS_RETURN) THEN 
+    RETURN 'NG'   //$$HEX30$$18c2acb988d4200074c798b0200044c5c1c9200018c2acb96cadedc5d0c51cc120009ccde0ac200098ccacb958d5c0c9200020004ac558c54cc72000$$ENDHEX$$
+END IF 
+
+IF LVS_RETURN = 'Y' THEN 
+	RETURN 'OK'
+ELSE  //$$HEX10$$18c2acb9c4d62000d0d330ae200018b4c8c54cc7$$ENDHEX$$.
+	RETURN 'NG' 
+END IF
+
+end function
+

@@ -1,0 +1,91 @@
+HA$PBExportHeader$d_mat_purchase_order_plan_matrix_lst.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=16777215 processing=4 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no  crosstab.dynamic = yes grid.lines=0 grid.columnmove=no selected.mouse=no )
+header[1](height=212 color="536870912" )
+header[2](height=124 color="536870912" )
+summary(height=68 color="65535" )
+footer(height=68 color="536870912" )
+detail(height=68 color="536870912" )
+table(column=(type=char(20) updatewhereclause=yes name=supplier_name dbname="supplier_name" )
+ column=(type=char(20) updatewhereclause=yes name=item_code dbname="item_code" )
+ column=(type=char(20) updatewhereclause=yes name=item_name dbname="item_name" )
+ column=(type=char(20) updatewhereclause=yes name=item_spec dbname="item_spec" )
+ column=(type=char(20) updatewhereclause=yes name=item_uom dbname="item_uom" )
+ column=(type=char(20) updatewhereclause=yes name=line_type dbname="line_type" )
+ column=(type=number updatewhereclause=yes name=delivery dbname="delivery" )
+ retrieve="  SELECT ~"IM_ITEM_PURCHASE_ORDER_PLAN~".~"ORDER_NO~",   
+         ~"IM_ITEM_PURCHASE_ORDER_PLAN~".~"PURCHASE_ORDER_DATE~",   
+         ~"IM_ITEM_PURCHASE_ORDER_PLAN~".~"ORGANIZATION_ID~",   
+         ~"IM_ITEM_PURCHASE_ORDER_PLAN~".~"SUPPLIER_CODE~",   
+         ~"IM_ITEM_PURCHASE_ORDER_PLAN~".~"ITEM_CODE~",   
+         TO_CHAR(~"IM_ITEM_PURCHASE_ORDER_PLAN~".~"DELIVERY_DATE~", 'YYYYMMDD') DELIVERY_DATE ,   
+         ~"IM_ITEM_PURCHASE_ORDER_PLAN~".~"DELIVERY~",   
+         ~"IM_ITEM_PURCHASE_ORDER_PLAN~".~"LINE_TYPE~",   
+         ~"IM_ITEM_PURCHASE_ORDER_PLAN~".~"ORDER_TYPE~",   
+         ~"IM_ITEM_PURCHASE_ORDER_PLAN~".~"PURCHASE_ORDER_QTY~",   
+         ~"IM_ITEM_PURCHASE_ORDER_PLAN~".~"UNIT_PRICE~",   
+         ~"IM_ITEM_PURCHASE_ORDER_PLAN~".~"CURRENCY~",   
+         ~"IM_ITEM_PURCHASE_ORDER_PLAN~".~"INVENTORY_QTY~",   
+         ~"IM_ITEM_PURCHASE_ORDER_PLAN~".~"ARRIVAL_QTY~",   
+         ~"IM_ITEM_PURCHASE_ORDER_PLAN~".~"PRE_ORDER_QTY~",   
+         ~"IM_ITEM_PURCHASE_ORDER_PLAN~".~"MFS~",   
+         ~"IM_ITEM_PURCHASE_ORDER_PLAN~".~"ENTER_BY~",   
+         ~"IM_ITEM_PURCHASE_ORDER_PLAN~".~"ENTER_DATE~",   
+         ~"IM_ITEM_PURCHASE_ORDER_PLAN~".~"LAST_MODIFY_BY~",   
+         ~"IM_ITEM_PURCHASE_ORDER_PLAN~".~"LAST_MODIFY_DATE~",   
+         ~"ICOM_SUPPLIER~".~"SUPPLIER_NAME~",   
+         ~"ID_ITEM~".~"ITEM_NAME~",   
+         ~"ID_ITEM~".~"ITEM_SPEC~",   
+         ~"ID_ITEM~".~"ITEM_UOM~"  
+    FROM ~"IM_ITEM_PURCHASE_ORDER_PLAN~",   
+         ~"ICOM_SUPPLIER~",   
+         ~"ID_ITEM~"  
+   WHERE ( IM_ITEM_PURCHASE_ORDER_PLAN.supplier_code = ICOM_SUPPLIER.supplier_code (+)) and  
+         ( IM_ITEM_PURCHASE_ORDER_PLAN.organization_id = ICOM_SUPPLIER.organization_id (+)) and  
+         ( IM_ITEM_PURCHASE_ORDER_PLAN.item_code = ID_ITEM.item_code (+)) and  
+         ( IM_ITEM_PURCHASE_ORDER_PLAN.organization_id = ID_ITEM.organization_id (+)) and  
+         ( ( ~"IM_ITEM_PURCHASE_ORDER_PLAN~".~"SUPPLIER_CODE~" like :ARG_supplier_code ) AND
+         ( ~"IM_ITEM_PURCHASE_ORDER_PLAN~".~"ITEM_CODE~" like :ARG_ITEM_CODE ) AND  
+         ( ~"IM_ITEM_PURCHASE_ORDER_PLAN~".~"PURCHASE_ORDER_DATE~" = :ARG_DATESET ) AND  
+         ( ~"IM_ITEM_PURCHASE_ORDER_PLAN~".~"PURCHASE_ORDER_QTY~" > 0 ) AND  			
+         ( ~"IM_ITEM_PURCHASE_ORDER_PLAN~".~"ORGANIZATION_ID~" = :ARG_ORG ) )    
+" arguments=(("ARG_supplier_code", string),("ARG_ITEM_CODE", string),("ARG_DATESET", datetime),("ARG_ORG", number))  sort="supplier_name A delivery A item_code A item_name A item_spec A item_uom A line_type A " )
+group(level=1 header.height=0 trailer.height=80 by=("supplier_name" ) header.color="536870912" trailer.color="536870912" )
+compute(band=header[1] alignment="2" expression="'Page ' + page() + ' of ' + pageCount()"border="0" color="33554432" x="5" y="144" height="52" width="567" format="[general]" html.valueishtml="0"  name=page_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header[1] alignment="2" text="Print Data" border="0" color="33554432" x="946" y="148" height="52" width="379" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=header[1] alignment="0" expression="today()"border="0" color="33554432" x="1335" y="148" height="52" width="626" format="[general]" html.valueishtml="0"  name=date_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header[2] alignment="0" text="Supplier Name" border="0" color="33554432" x="9" y="4" height="112" width="562" html.valueishtml="0"  name=supplier_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[2] alignment="0" text="Item Code" border="0" color="33554432" x="581" y="4" height="112" width="357" html.valueishtml="0"  name=item_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[2] alignment="0" text="Item Name" border="0" color="33554432" x="946" y="4" height="112" width="379" html.valueishtml="0"  name=item_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[2] alignment="0" text="Item Spec" border="0" color="33554432" x="1335" y="4" height="112" width="626" html.valueishtml="0"  name=item_spec_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[2] alignment="0" text="Item Uom" border="0" color="33554432" x="1970" y="4" height="112" width="187" html.valueishtml="0"  name=item_uom_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[2] alignment="0" text="Line Type" border="0" color="33554432" x="2167" y="4" height="112" width="288" html.valueishtml="0"  name=line_type_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[2] alignment="2" text="@delivery_date" border="0" color="33554432" x="2464" y="4" height="112" width="325" html.valueishtml="0"  name=delivery_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[2] alignment="2" text="Grand Total " border="0" color="33554432" x="2798" y="4" height="112" width="425" html.valueishtml="0"  name=grand_sum_purchase_order_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432" x="9" y="4" height="56" width="562" format="[general]" html.valueishtml="0"  name=supplier_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432" x="581" y="4" height="56" width="357" format="[general]" html.valueishtml="0"  name=item_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="33554432" x="946" y="4" height="56" width="379" format="[general]" html.valueishtml="0"  name=item_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="33554432" x="1335" y="4" height="56" width="626" format="[general]" html.valueishtml="0"  name=item_spec visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="0" tabsequence=32766 border="0" color="33554432" x="1970" y="4" height="56" width="187" format="[general]" html.valueishtml="0"  name=item_uom visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=6 alignment="0" tabsequence=32766 border="0" color="33554432" x="2167" y="4" height="56" width="288" format="[general]" html.valueishtml="0"  name=line_type visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any dddw.autoretrieve=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=7 alignment="1" tabsequence=32766 border="0" color="33554432" x="2464" y="4" height="56" width="325" format="###,###,##0.####" html.valueishtml="0"  name=delivery visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=300 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any dddw.autoretrieve=no crosstab.repeat=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="1" expression="crosstabsum(1)"border="0" color="33554432" x="2798" y="4" height="56" width="425" format="###,###,##0.####" html.valueishtml="0"  name=grand_sum_purchase_order_qty visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+compute(band=trailer.1 alignment="1" expression="supplier_name + ~" Total~""border="0" color="33554432" x="9" y="8" height="56" width="562" format="[general]" html.valueishtml="0"  name=compute_13 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="~"Grand Total~""border="0" color="33554432" x="9" y="4" height="56" width="562" format="[general]" html.valueishtml="0"  name=compute_16 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=summary alignment="1" expression="sum(delivery for all )"border="0" color="33554432" x="2464" y="4" height="56" width="325" format="###,###,##0.####" html.valueishtml="0"  name=compute_17 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(grand_sum_purchase_order_qty for all )"border="0" color="33554432" x="2798" y="4" height="56" width="425" format="###,###,##0.####" html.valueishtml="0"  name=compute_18 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+compute(band=trailer.1 alignment="1" expression="sum(delivery for group 1)"border="0" color="33554432" x="2464" y="8" height="64" width="325" format="###,###,##0.####" html.valueishtml="0"  name=compute_14 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(grand_sum_purchase_order_qty for group 1)"border="0" color="33554432" x="2798" y="8" height="64" width="425" format="###,###,##0.####" html.valueishtml="0"  name=compute_15 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+ crosstab(band = foreground  crosstabonly = yes 
+ columns = "delivery_date" rows = "supplier_name, item_code, item_name, item_spec, item_uom, line_type" values = "sum(purchase_order_qty for crosstab)" sourcenames = "order_no, purchase_order_date, organization_id, supplier_code, item_code, delivery_date, delivery, line_type, order_type, purchase_order_qty, unit_price, currency, inventory_qty, arrival_qty, pre_order_qty, mfs, enter_by, enter_date, last_modify_by, last_modify_date, supplier_name, item_name, item_spec, item_uom")
+sparse(names="supplier_name	item_code	item_name	item_spec	item_uom")htmltable(border="0" cellpadding="1" cellspacing="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

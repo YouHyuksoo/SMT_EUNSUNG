@@ -1,0 +1,92 @@
+HA$PBExportHeader$f_msgbox3.srf
+$PBExportComments$Messagebox -  Variables 3
+global type f_msgbox3 from function_object
+end type
+
+forward prototypes
+global function integer f_msgbox3 (integer ai_id, string as_arg1, string as_arg2, string as_arg3)
+end prototypes
+
+global function integer f_msgbox3 (integer ai_id, string as_arg1, string as_arg2, string as_arg3);string ls_title, ls_detail , ls_help
+int li_rtn, li_icon, li_button, li_pos1, li_pos2, li_pos3
+icon lic_icon[4]
+button lbu_button[3]
+
+lbu_button[1] = ok!
+lbu_button[2] = yesno!
+lbu_button[3] = yesnocancel!
+
+lic_icon[1] = information! 
+lic_icon[2] = StopSign!
+lic_icon[3] = Exclamation!
+lic_icon[4] = Question!
+
+//=============================================================
+// Not Connected Database  then Message Get From Message.dat
+//=============================================================
+
+if Gvi_db_status = 0 then 
+	
+	Messagebox("Notify" , f_off_msgbox(  'DATABASE' , GVS_LANGUAGE+'DB_NOT_CONNECTED' ) )
+	Rollback ;
+	halt Close
+
+else
+	
+end if
+
+
+select decode(:Gvs_language, 'C',nvl(title_loc,' '),  'K',nvl(title_kor,' '),   nvl(title_eng,' ')),
+		 decode(:Gvs_language, 'C', nvl(detail_loc,' '), 'K', nvl(detail_kor,' '), nvl(detail_eng,' ')), 
+          decode(:Gvs_language, 'C',nvl(help_msg_loc,' '), 'K', nvl(help_msg_kor,' '), nvl(help_msg_eng,' ')), 			 
+		 nvl(button,1), 
+		 nvl(icon,1)
+into  :ls_title, :ls_detail, :ls_help , :li_button, :li_icon
+from  isys_dual_message
+where msg_id = :ai_id
+;
+
+li_pos1 = pos(ls_detail,"@",1)
+
+if li_pos1 > 0 then
+	li_pos2 = pos(ls_detail,"@", li_pos1 + 1)
+	if li_pos2 > 0 then
+		li_pos3 = pos(ls_detail,"@", li_pos2 + 1)
+		if li_pos3 > 0 then
+			ls_detail = mid(ls_detail, 1, li_pos1 - 1) + as_arg1 + & 
+							mid(ls_detail, li_pos1 + 1, li_pos2 - li_pos1 - 1 ) + as_arg2  + &
+							mid(ls_detail, li_pos2 + 1, li_pos3 - li_pos2 - 1 ) + as_arg3  + &
+							mid(ls_detail, li_pos3 + 1)			
+		else
+			ls_detail = mid(ls_detail, 1, li_pos1 - 1) + as_arg1 + & 
+							mid(ls_detail, li_pos1 + 1, li_pos2 - li_pos1 - 1 ) + as_arg2  + &
+							mid(ls_detail, li_pos2 + 1)
+		end if
+	else
+		ls_detail = mid(ls_detail, 1, li_pos1 - 1) + as_arg1 + mid(ls_detail, li_pos1 + 1)	
+	end if
+end if
+
+if sqlca.sqlcode = 0  and sqlca.sqlnrows > 0 then
+	if ls_help = ' ' then 
+
+		li_rtn = messagebox( ls_title + "(" + string(ai_id) +")", ls_detail, lic_icon[li_icon], lbu_button[li_button])
+		return li_rtn		
+	else				
+		li_rtn = messagebox( ls_title + "(" + string(ai_id) +")", ls_detail+'~r~n'+'HELP : '+ls_help, lic_icon[li_icon], lbu_button[li_button])
+		return li_rtn
+
+	end if 
+else
+	msg = messagebox("Information" + "(" + string(ai_id) +") f_msg3", "Message Statement Not Found! Halt Close ?" , stopsign! , yesno!)
+	if msg = 1 then 
+		rollback;
+		halt Close
+	else
+		return 0
+	end if
+end if
+
+
+end function
+

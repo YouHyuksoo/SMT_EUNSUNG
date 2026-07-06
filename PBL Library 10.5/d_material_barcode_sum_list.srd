@@ -1,0 +1,99 @@
+HA$PBExportHeader$d_material_barcode_sum_list.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no grid.lines=0 )
+header(height=128 color="536870912" )
+summary(height=56 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=80 color="536870912" )
+table(column=(type=char(20) update=yes updatewhereclause=yes name=item_type dbname="im_item_inventory_barcode.item_type" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=line_type dbname="im_item_inventory_barcode.line_type" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=location_code dbname="im_item_inventory_barcode.location_code" )
+ column=(type=char(2) update=yes updatewhereclause=yes name=barcode_status dbname="im_item_inventory_barcode.barcode_status" )
+ column=(type=number updatewhereclause=yes name=item_qty dbname="item_qty" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=supplier_code dbname="im_item_inventory_barcode.supplier_code" )
+ column=(type=char(20) updatewhereclause=yes name=enter_by dbname="enter_by" )
+ column=(type=datetime updatewhereclause=yes name=enter_date dbname="enter_date" )
+ column=(type=datetime updatewhereclause=yes name=last_modify_date dbname="last_modify_date" )
+ column=(type=char(20) updatewhereclause=yes name=last_modify_by dbname="last_modify_by" )
+ column=(type=number updatewhereclause=yes name=organization_id dbname="organization_id" )
+ column=(type=datetime updatewhereclause=yes name=print_date dbname="print_date" )
+ column=(type=char(50) update=yes updatewhereclause=yes name=item_code dbname="im_item_inventory_barcode.item_code" )
+ column=(type=char(50) updatewhereclause=yes name=item_name dbname="item_name" )
+ column=(type=char(100) updatewhereclause=yes name=supplier_name dbname="supplier_name" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=bin_code dbname="im_item_inventory_barcode.bin_code" )
+ column=(type=char(50) update=yes updatewhereclause=yes name=invoice_no dbname="im_item_inventory_barcode.invoice_no" )
+ retrieve="  SELECT
+         ~"IM_ITEM_INVENTORY_BARCODE~".~"ITEM_TYPE~",   
+         ~"IM_ITEM_INVENTORY_BARCODE~".~"LINE_TYPE~",   
+         ~"IM_ITEM_INVENTORY_BARCODE~".~"LOCATION_CODE~",   
+         ~"IM_ITEM_INVENTORY_BARCODE~".~"BARCODE_STATUS~",   
+         sum(~"IM_ITEM_INVENTORY_BARCODE~".~"ITEM_QTY~") ITEM_QTY,   
+         ~"IM_ITEM_INVENTORY_BARCODE~".~"SUPPLIER_CODE~",      
+         max(~"IM_ITEM_INVENTORY_BARCODE~".~"ENTER_BY~") ENTER_BY,   
+         max(~"IM_ITEM_INVENTORY_BARCODE~".~"ENTER_DATE~") ENTER_DATE,   
+         max(~"IM_ITEM_INVENTORY_BARCODE~".~"LAST_MODIFY_DATE~") LAST_MODIFY_DATE,   
+         max(~"IM_ITEM_INVENTORY_BARCODE~".~"LAST_MODIFY_BY~") LAST_MODIFY_BY,   
+         max(~"IM_ITEM_INVENTORY_BARCODE~".~"ORGANIZATION_ID~") ORGANIZATION_ID,    
+         max(~"IM_ITEM_INVENTORY_BARCODE~".~"PRINT_DATE~") PRINT_DATE,   
+         ~"IM_ITEM_INVENTORY_BARCODE~".~"ITEM_CODE~",   
+         max(~"IM_ITEM_INVENTORY_BARCODE~".~"ITEM_NAME~") ITEM_NAME,   
+         max(~"IM_ITEM_INVENTORY_BARCODE~".~"SUPPLIER_NAME~") SUPPLIER_NAME,   
+         ~"IM_ITEM_INVENTORY_BARCODE~".~"BIN_CODE~",   
+         ~"IM_ITEM_INVENTORY_BARCODE~".~"INVOICE_NO~"  
+    FROM ~"IM_ITEM_INVENTORY_BARCODE~"  
+   WHERE ( ~"IM_ITEM_INVENTORY_BARCODE~".~"ITEM_CODE_BARCODE~" like :arg_item_code_barcode ) AND  
+         ( ~"IM_ITEM_INVENTORY_BARCODE~".~"SERIAL_NO~" like :arg_serial_no ) AND  
+         ( ~"IM_ITEM_INVENTORY_BARCODE~".~"ITEM_CODE~" like :arg_item_code ) AND  
+         ( trunc(~"IM_ITEM_INVENTORY_BARCODE~".~"PRINT_DATE~") >= :arg_datestart ) AND  
+         ( trunc(~"IM_ITEM_INVENTORY_BARCODE~".~"PRINT_DATE~") <= :arg_dateend ) AND  
+         ( ~"IM_ITEM_INVENTORY_BARCODE~".~"ORGANIZATION_ID~" = :arg_org ) 
+group by   item_code,supplier_code,item_type,line_type,location_code,invoice_no,barcode_status,bin_code
+" arguments=(("arg_item_code", string),("arg_serial_no", string),("arg_item_code_barcode", string),("arg_datestart", datetime),("arg_dateend", datetime),("arg_org", number)) )
+group(level=1 header.height=0 trailer.height=56 by=("invoice_no" ) header.color="536870912" trailer.color="65535" )
+text(band=header alignment="2" text="Barcode Status" border="0" color="33554432" x="315" y="8" height="116" width="229" html.valueishtml="0"  name=barcode_status_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Item Code" border="0" color="33554432" x="553" y="8" height="116" width="530" html.valueishtml="0"  name=item_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Item Type" border="0" color="33554432" x="3680" y="8" height="116" width="480" html.valueishtml="0"  name=item_type_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Line Type" border="0" color="33554432" x="4169" y="8" height="116" width="480" html.valueishtml="0"  name=line_type_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Bin Code" border="0" color="33554432" x="1093" y="4" height="116" width="279" html.valueishtml="0"  name=bin_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Invoice No" border="0" color="33554432" x="1381" y="4" height="116" width="544" html.valueishtml="0"  name=invoice_no_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Location Code" border="0" color="33554432" x="9" y="8" height="116" width="297" html.valueishtml="0"  name=location_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Supplier Code" border="0" color="33554432" x="2693" y="8" height="116" width="480" html.valueishtml="0"  name=supplier_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Item Qty" border="0" color="33554432" x="1934" y="8" height="116" width="379" html.valueishtml="0"  name=item_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Enter By" border="0" color="33554432" x="5170" y="8" height="116" width="453" html.valueishtml="0"  name=enter_by_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Enter Date" border="0" color="33554432" x="5632" y="8" height="116" width="357" html.valueishtml="0"  name=enter_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Last Modify Date" border="0" color="33554432" x="5998" y="8" height="116" width="297" html.valueishtml="0"  name=last_modify_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Last Modify By" border="0" color="33554432" x="6304" y="8" height="116" width="315" html.valueishtml="0"  name=last_modify_by_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Organization Id" border="0" color="33554432" x="6629" y="8" height="116" width="347" html.valueishtml="0"  name=organization_id_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Print Date" border="0" color="33554432" x="2322" y="8" height="116" width="361" html.valueishtml="0"  name=print_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Item Name" border="0" color="33554432" x="4658" y="8" height="116" width="503" html.valueishtml="0"  name=item_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Supplier Name" border="0" color="33554432" x="3182" y="8" height="116" width="489" html.valueishtml="0"  name=supplier_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="0" color="33554432" x="315" y="8" height="64" width="229" format="[general]" html.valueishtml="0"  name=barcode_status visible="1" edit.limit=2 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=13 alignment="2" tabsequence=32766 border="0" color="33554432" x="553" y="8" height="64" width="530" format="[general]" html.valueishtml="0"  name=item_code visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="33554432" x="3680" y="8" height="64" width="480" format="[general]" html.valueishtml="0"  name=item_type visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="33554432" x="4169" y="8" height="64" width="480" format="[general]" html.valueishtml="0"  name=line_type visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="0" color="33554432" x="9" y="8" height="64" width="297" format="[general]" html.valueishtml="0"  name=location_code visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=16 alignment="2" tabsequence=32766 border="0" color="33554432" x="1093" y="8" height="64" width="279" format="[general]" html.valueishtml="0"  name=bin_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=17 alignment="2" tabsequence=32766 border="0" color="33554432" x="1381" y="8" height="64" width="544" format="[general]" html.valueishtml="0"  name=invoice_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=7 alignment="0" tabsequence=32766 border="0" color="33554432" x="5170" y="8" height="64" width="453" format="[general]" html.valueishtml="0"  name=enter_by visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=8 alignment="0" tabsequence=32766 border="0" color="33554432" x="5632" y="8" height="64" width="357" format="[shortdate] [time]" html.valueishtml="0"  name=enter_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=9 alignment="0" tabsequence=32766 border="0" color="33554432" x="5998" y="8" height="64" width="297" format="[shortdate] [time]" html.valueishtml="0"  name=last_modify_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=10 alignment="0" tabsequence=32766 border="0" color="33554432" x="6304" y="8" height="64" width="315" format="[general]" html.valueishtml="0"  name=last_modify_by visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=11 alignment="0" tabsequence=32766 border="0" color="33554432" x="6629" y="8" height="64" width="347" format="[general]" html.valueishtml="0"  name=organization_id visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=12 alignment="0" tabsequence=32766 border="0" color="33554432" x="2322" y="8" height="64" width="361" format="[shortdate] [time]" html.valueishtml="0"  name=print_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=14 alignment="0" tabsequence=32766 border="0" color="33554432" x="4658" y="8" height="64" width="503" format="[general]" html.valueishtml="0"  name=item_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=15 alignment="0" tabsequence=32766 border="0" color="33554432" x="3182" y="8" height="64" width="489" format="[general]" html.valueishtml="0"  name=supplier_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=6 alignment="2" tabsequence=32766 border="0" color="33554432" x="2693" y="8" height="64" width="480" format="[general]" html.valueishtml="0"  name=supplier_code visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="2" tabsequence=32766 border="0" color="33554432" x="1934" y="8" height="64" width="379" format="[general]" html.valueishtml="0"  name=item_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65280" )
+compute(band=trailer.1 alignment="0" expression="sum(  item_qty for group 1 )"border="0" color="33554432" x="1934" y="0" height="52" width="379" format="[GENERAL]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+compute(band=summary alignment="0" expression="sum( item_qty for all )"border="0" color="33554432" x="1934" y="0" height="52" width="379" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65280" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

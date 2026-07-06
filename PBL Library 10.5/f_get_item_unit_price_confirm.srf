@@ -1,0 +1,135 @@
+HA$PBExportHeader$f_get_item_unit_price_confirm.srf
+global type f_get_item_unit_price_confirm from function_object
+end type
+
+forward prototypes
+global function decimal f_get_item_unit_price_confirm (string as_supplier_code, string as_item_code, string as_line_type, datetime adt_date)
+end prototypes
+
+global function decimal f_get_item_unit_price_confirm (string as_supplier_code, string as_item_code, string as_line_type, datetime adt_date);decimal lvd_unit_price, lvd_exchange_rate, lvd_price
+string lvs_currency , lvs_delivery
+
+//if as_line_type = 'F' then //$$HEX8$$34bbc1c06cade4b978c7bdacb0c62000$$ENDHEX$$
+
+//	gst_return.gvs_return[1] = Gvs_currency
+//	gst_return.gvs_return[2] = '2'
+//	gst_return.gvf_return[1] = 1
+//	return 0
+
+//end if 
+//===========================================
+//
+//===========================================
+
+  select  unit_price, currency , delivery
+	into  :lvd_unit_price , :lvs_currency , :lvs_delivery
+	from im_item_unit_price
+ where item_code      =     :as_item_code 
+	and    supplier_code  =    :as_supplier_code
+	and    line_type        =     :as_line_type
+	and    dateset          <=   :adt_date
+	and    dateend         >=   :adt_date
+	and    price_change_confirm_yn = 'Y'
+	and    organization_id  = :gvi_organization_id ; 
+
+if f_sql_check() < 0 then 
+	return -2
+end if 
+
+if sqlca.sqlcode = 100 then
+	
+	   //================================
+	   // $$HEX19$$b9c278c7200048c51cb42000e8b200ac00ac200088c794b2c0c92000b4cc6cd020005cd5e4b2$$ENDHEX$$
+	   //================================
+		select  unit_price, currency , delivery
+		into  :lvd_unit_price , :lvs_currency , :lvs_delivery
+		from im_item_unit_price
+		where item_code      =     :as_item_code 
+		and    supplier_code  =    :as_supplier_code
+//		and    line_type        =     :as_line_type
+		and    dateset          <=   :adt_date
+		and    dateend         >=   :adt_date
+		and    organization_id  = :gvi_organization_id ; 
+		
+		if f_sql_check() < 0 then 
+			return -2
+		end if 
+
+		//==========================================================
+		//
+		//==========================================================
+				if Gvs_show_unit_price_error_msg = 'Y' then
+							 if sqlca.sqlcode = 100 then
+								f_msgbox1( 9086 , 	'Supplier Code = '+as_supplier_code+'  Item Code='+as_item_code+' Line Type='+as_line_type ) //$$HEX9$$6cade4b92000e8b200ac2000f8bbf1b45db8$$ENDHEX$$
+								return  -2
+							else
+								f_msgbox1( 9086 , 	'Not Confirmed Supplier Code = '+as_supplier_code+'  Item Code='+as_item_code+' Line Type='+as_line_type ) // $$HEX11$$b9c278c7200048c51cb42000e8b200ac200074c8acc7$$ENDHEX$$
+								return  -2
+							end if
+				end if 
+						
+else
+		if lvd_unit_price = 0 or isnull(lvd_unit_price) then 
+				lvd_unit_price = 0
+				lvs_currency = Gvs_currency
+				lvs_delivery = '2'
+			end if 
+		end if
+
+		lvd_exchange_rate = 1 
+
+		//=============================================
+		//$$HEX21$$c4b385c774ba38c1200010b694b22000fcac38c1ccb9200058d628c744c72000b4cc6cd058d5e0ac2000$$ENDHEX$$
+		//=============================================
+		if as_line_type = 'P' or as_line_type = 'D' then //$$HEX16$$c4b385c7200074ba38c1200010b694b22000fcac38c1200078c7bdacb0c62000$$ENDHEX$$
+		
+					if lvs_currency = '' or isnull(lvs_currency) then 
+						f_msgbox1( 9086 , 	'Supplier Code = '+as_supplier_code+'  Item Code='+as_item_code+' Line Type='+as_line_type ) //$$HEX9$$6cade4b92000e8b200ac2000f8bbf1b45db8$$ENDHEX$$
+						return -2
+					end if 
+				
+					if Gvs_currency <> lvs_currency then 
+						lvd_exchange_rate = f_get_exchange_rate(adt_date, lvs_currency)
+						if lvd_exchange_rate <= 0 or isnull(lvd_exchange_rate) then
+							f_msgbox1( 9045 , Gvs_currency+ ' Local Currency = '+lvs_currency) ///$$HEX9$$58d628c7200015c8f4bc2000f8bbf1b45db8$$ENDHEX$$
+							return  -2
+						end if 
+					end if 
+		else
+	
+				//=========================================
+				//$$HEX35$$c4b385c774ba38c12000fcac38c100ac200044c5c8b2c0c9ccb92000b5d154d6200054cfdcb400ac2000e4b274b974ba200058d628c744c7200001c8a9c620005cd5e4b22000$$ENDHEX$$
+				//=========================================
+				
+					if Gvs_currency <> lvs_currency then 
+						lvd_exchange_rate = f_get_exchange_rate(adt_date, lvs_currency)
+						if lvd_exchange_rate <= 0 or isnull(lvd_exchange_rate) then
+							f_msgbox1( 9045 , "Default urreny="+Gvs_currency+ " Local Currency = "+lvs_currency) ///$$HEX9$$58d628c7200015c8f4bc2000f8bbf1b45db8$$ENDHEX$$
+							return  -2
+						end if 
+					else
+						lvs_currency	 = Gvs_currency		
+					end if 	
+	
+
+			end if 
+			
+//==================================================================
+//
+//==================================================================
+
+if Gvs_show_unit_price_error_msg = 'Y' then
+	
+	if lvs_delivery = '' or isnull(lvs_delivery) then 
+		f_msgbox1(9097 , "Supplier Code = "+as_supplier_code+'  Item Code='+as_item_code+' Line Type='+as_line_type ) //$$HEX10$$a9b020c115c8f4bc00ac2000c6c5b5c2c8b2e4b2$$ENDHEX$$.
+		return -1
+	end if
+end if 
+
+gst_return.gvs_return[1] = lvs_currency
+gst_return.gvs_return[2] = lvs_delivery
+gst_return.gvf_return[1] = lvd_exchange_rate
+
+return lvd_unit_price
+end function
+

@@ -1,0 +1,96 @@
+HA$PBExportHeader$f_check_interlock_condition.srf
+global type f_check_interlock_condition from function_object
+end type
+
+forward prototypes
+global function string f_check_interlock_condition (string arg_line_code, string arg_workstage_code, string arg_pid)
+end prototypes
+
+global function string f_check_interlock_condition (string arg_line_code, string arg_workstage_code, string arg_pid);STRING LVS_interlock_check_type , lvs_result 
+STRING lvs_message , lvs_ng_messgae , lvs_ok_message
+INT  i , j  , lvi_check_sequence
+
+lvs_result= space(4000)
+lvs_message = space(4000)
+lvs_ng_messgae = space(4000)
+lvs_ok_message= space(4000)
+
+
+declare cl1 cursor for  
+     SELECT   interlock_check_type, check_sequence
+            FROM   iq_interlock_check_condition
+           WHERE   line_code = :arg_line_code 
+             AND workstage_code = :arg_workstage_code  
+             AND NVL (use_yn, 'Y') = 'Y'
+        ORDER BY   check_sequence ASC;
+
+//=====================================================
+//
+//=====================================================
+OPEN CL1 ;
+
+DO
+
+	FETCH CL1 INTO :LVS_interlock_check_type , :lvi_check_sequence;
+	
+	if f_sql_check() < 0 then 
+		j++
+		Close cl1 ;
+		exit
+	end if 	
+	
+	IF SQLCA.SQLCODE = 100 THEN 
+		CLOSE CL1 ;
+		EXIT 
+	END IF 
+	
+	
+	i++
+	
+	lvs_result= space(4000)
+	lvs_message = space(4000)
+	lvs_ng_messgae = space(4000)
+	lvs_ok_message= space(4000)
+	
+	sqlca.p_interlock_check( arg_line_code, arg_workstage_code, '*' , arg_pid, LVS_interlock_check_type ,ref  lvs_result , ref lvs_message , ref lvs_ng_messgae ,ref lvs_ok_message)
+	
+	if f_sql_check() < 0 then 
+		j++
+		Close cl1 ;
+		exit
+	end if 
+	
+	
+	if isnull(lvs_result) then 
+		lvs_result = 'UNKNOWN'
+	end if 
+	if isnull(lvs_message) then 
+		lvs_message = 'UNKNOWN'
+	end if 
+	if isnull(lvs_ng_messgae) then 
+		lvs_ng_messgae = 'UNKNOWN'
+	end if 	
+	//=======================================================
+	// NG $$HEX8$$00ac44c5c8b274ba2000b5d1fcac2000$$ENDHEX$$
+	//=======================================================
+	if lvs_result <> 'NG' then 
+		continue
+	else
+		j++
+		messagebox( "Interock NG" , LVS_interlock_check_type+'~r~n'+arg_line_code +' : '+arg_workstage_code+'  : '+arg_pid+'~r~n'+lvs_message+'~r~n'+lvs_ng_messgae ) 
+		close cl1 ;
+		exit
+	end if 
+	
+LOOP UNTIL 1 =2 
+
+//=================================
+// $$HEX8$$d0c5ecb7d0c5200078acacb974ba2000$$ENDHEX$$
+//================================= 
+if j > 0 then 
+	return 'NG : '+ LVS_interlock_check_type+' : '+lvs_message+' : '+lvs_ng_messgae
+else
+	return 'OK' 
+end if 
+end function
+

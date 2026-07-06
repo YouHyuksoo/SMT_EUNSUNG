@@ -1,0 +1,88 @@
+HA$PBExportHeader$d_smt_eng_bom_compare_return_lst.srd
+$PBExportComments$$$HEX4$$44be50ad18bca9b0$$ENDHEX$$
+release 10.5;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no grid.lines=0 )
+header(height=124 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=72 color="536870912" )
+table(column=(type=char(7) updatewhereclause=yes name=div dbname="div" )
+ column=(type=char(30) updatewhereclause=yes name=child_item_code dbname="child_item_code" )
+ column=(type=char(30) updatewhereclause=yes name=location_code dbname="location_code" )
+ column=(type=char(30) updatewhereclause=yes name=pcb_item dbname="pcb_item" )
+ retrieve="( SELECT 'RETURN ' DIV ,
+~"ID_ENG_BOM_SMT~".~"CHILD_ITEM_CODE~",   
+~"ID_ENG_BOM_SMT~".~"LOCATION_CODE~",   
+
+~"ID_ENG_BOM_SMT~".~"PCB_ITEM~"
+FROM ~"ID_ENG_BOM_SMT~"   
+WHERE LINE_CODE = :ARG_LINE_CODE 
+AND PARENT_ITEM_CODE = :ARG_MODEL_NAME
+AND PCB_ITEM = :ARG_PCB_ITEM
+AND NVL(FEEDER_SHAFT,'*') =  NVL(:ARG_SHAFT,'*')
+AND ORGANIZATION_ID = :ARG_ORG
+
+MINUS 
+
+SELECT  'RETURN ' DIV ,
+~"ID_ENG_BOM_SMT~".~"CHILD_ITEM_CODE~",   
+~"ID_ENG_BOM_SMT~".~"LOCATION_CODE~",   
+~"ID_ENG_BOM_SMT~".~"PCB_ITEM~"
+
+FROM ~"ID_ENG_BOM_SMT~"   
+WHERE LINE_CODE = :ARG_LINE_CODE_NEW
+AND PARENT_ITEM_CODE = :ARG_MODEL_NAME_NEW
+AND PCB_ITEM = :ARG_PCB_ITEM_NEW
+AND NVL(FEEDER_SHAFT,'*') = NVL(:ARG_SHAFT_NEW,'*')
+AND ORGANIZATION_ID = :ARG_ORG_NEW
+)
+
+UNION ALL
+
+(
+SELECT  'ISSUE ' DIV ,
+~"ID_ENG_BOM_SMT~".~"CHILD_ITEM_CODE~",   
+~"ID_ENG_BOM_SMT~".~"LOCATION_CODE~",   
+~"ID_ENG_BOM_SMT~".~"PCB_ITEM~"
+FROM ~"ID_ENG_BOM_SMT~"   
+WHERE LINE_CODE = :ARG_LINE_CODE_NEW
+AND PARENT_ITEM_CODE = :ARG_MODEL_NAME_NEW
+AND PCB_ITEM = :ARG_PCB_ITEM_NEW
+AND NVL(FEEDER_SHAFT,'*') = NVL(:ARG_SHAFT_NEW,'*')
+AND ORGANIZATION_ID = :ARG_ORG_NEW
+
+MINUS 
+
+SELECT  'ISSUE ' DIV ,
+~"ID_ENG_BOM_SMT~".~"CHILD_ITEM_CODE~",   
+~"ID_ENG_BOM_SMT~".~"LOCATION_CODE~",   
+~"ID_ENG_BOM_SMT~".~"PCB_ITEM~"
+FROM ~"ID_ENG_BOM_SMT~"   
+WHERE LINE_CODE = :ARG_LINE_CODE 
+AND PARENT_ITEM_CODE = :ARG_MODEL_NAME
+AND PCB_ITEM = :ARG_PCB_ITEM
+AND NVL(FEEDER_SHAFT,'*') = NVL(:ARG_SHAFT ,'*')
+AND ORGANIZATION_ID = :ARG_ORG
+
+)
+" arguments=(("ARG_LINE_CODE", string),("ARG_MODEL_NAME", string),("ARG_PCB_ITEM", string),("ARG_SHAFT", string),("ARG_ORG", number),("ARG_LINE_CODE_NEW", string),("ARG_MODEL_NAME_NEW", string),("ARG_PCB_ITEM_NEW", string),("ARG_SHAFT_NEW", string),("ARG_ORG_NEW", number)) )
+text(band=header alignment="2" text="Div" border="0" color="33554432" x="128" y="8" height="108" width="370" html.valueishtml="0"  name=div_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Child Item Code" border="0" color="33554432" x="512" y="8" height="108" width="585" html.valueishtml="0"  name=child_item_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Location Code" border="0" color="33554432" x="1106" y="8" height="108" width="480" html.valueishtml="0"  name=location_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Pcb Item" border="0" color="33554432" x="1595" y="8" height="108" width="293" html.valueishtml="0"  name=pcb_item_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+compute(band=detail alignment="2" expression="getrow()"border="0" color="33554432" x="9" y="8" height="60" width="110" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="33554432" x="128" y="8" height="60" width="370" format="[general]" html.valueishtml="0"  name=div visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="536870912~tif ( div = 'RETURN' , RGB( 255,128,128 ) , RGB( 255,255,255))" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="33554432" x="512" y="8" height="60" width="585" format="[general]" html.valueishtml="0"  name=child_item_code visible="1" edit.limit=30 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="536870912~tif ( div = 'RETURN' , RGB( 255,128,128 ) , RGB( 255,255,255))" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="0" color="33554432" x="1106" y="8" height="60" width="480" format="[general]" html.valueishtml="0"  name=location_code visible="1" edit.limit=30 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="536870912~tif ( div = 'RETURN' , RGB( 255,128,128 ) , RGB( 255,255,255))" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="0" color="33554432" x="1595" y="8" height="60" width="293" format="[general]" html.valueishtml="0"  name=pcb_item visible="1" edit.limit=30 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="536870912~tif ( div = 'RETURN' , RGB( 255,128,128 ) , RGB( 255,255,255))" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

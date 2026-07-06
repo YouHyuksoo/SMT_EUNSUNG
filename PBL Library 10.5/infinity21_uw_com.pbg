@@ -1,0 +1,29 @@
+Save Format v3.0(19990112)
+@begin Libraries
+ "infinity21_uw_com.pbl" "";
+@end;
+@begin Objects
+ "w_com_bring_in_master.srw" "infinity21_uw_com.pbl";
+ "w_com_customer_master.srw" "infinity21_uw_com.pbl";
+ "w_com_supplier_master.srw" "infinity21_uw_com.pbl";
+ "w_com_mat_rank_master.srw" "infinity21_uw_com.pbl";
+ "w_des_item_master_es.srw" "infinity21_uw_com.pbl";
+ "w_des_raw_bom_master.srw" "infinity21_uw_com.pbl";
+ "w_com_document_master.srw" "infinity21_uw_com.pbl";
+ "w_des_item_master.srw" "infinity21_uw_com.pbl";
+ "w_com_carrying_out_bring_in_confirm.srw" "infinity21_uw_com.pbl";
+ "w_com_carrying_out_bring_in_analysis_report.srw" "infinity21_uw_com.pbl";
+ "w_com_carrying_out_bring_in_report.srw" "infinity21_uw_com.pbl";
+ "w_com_carrying_out_bring_in_security.srw" "infinity21_uw_com.pbl";
+ "w_com_full_check_time_master.srw" "infinity21_uw_com.pbl";
+ "w_com_exchange_rate_master.srw" "infinity21_uw_com.pbl";
+ "w_des_replace_bom_master.srw" "infinity21_uw_com.pbl";
+ "w_com_interlock_inspect_condition_master.srw" "infinity21_uw_com.pbl";
+ "w_des_product_class_master.srw" "infinity21_uw_com.pbl";
+ "w_com_carrying_out_master.srw" "infinity21_uw_com.pbl";
+ "w_com_production_status_dashboard.srw" "infinity21_uw_com.pbl";
+ "w_des_apply_item_master.srw" "infinity21_uw_com.pbl";
+ "w_customer_complaints_master.srw" "infinity21_uw_com.pbl";
+ "w_des_bom_confirm_master.srw" "infinity21_uw_com.pbl";
+ "w_des_bom_modify_master.srw" "infinity21_uw_com.pbl";
+@end;

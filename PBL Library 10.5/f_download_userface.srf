@@ -1,0 +1,62 @@
+HA$PBExportHeader$f_download_userface.srf
+global type f_download_userface from function_object
+end type
+
+forward prototypes
+global function long f_download_userface ()
+end prototypes
+
+global function long f_download_userface ();string ls_path, ls_file 
+string lvs_file_name, lvs_path_name 
+BLOB   LVB_FILE , LVB_FILE_SUBSTR
+long   li_rc , li_FileNum , LVI_INC , lvi_write_byte
+LONG   LVB_FILE_LENGTH , lvi_write_byte_sum
+
+ IF GVS_USER_ID = '' OR ISNULL(GVS_USER_ID) THEN 
+	 RETURN -1
+ END IF
+ 
+ LS_PATH = Getcurrentdirectory()+'\USERFACE'+'.GIF'
+ 
+ //=====================================================
+ // SELECT DATA FROM DATABASE
+ //=====================================================
+  SETPOINTER(HOURGLASS!)
+//  F_MSG_ST( 9025 , ST_MSG ) //ST_MSG.TEXT = "File Downloading..."
+  
+		SELECTBLOB USER_IMAGE INTO :LVB_FILE
+		FROM ISYS_USERS
+		WHERE USER_ID = :GVS_USER_ID 
+		AND ORGANIZATION_ID = :GVI_ORGANIZATION_ID ;
+		
+		IF F_SQL_CHECK() < 0 THEN 
+			F_MSGBOX( 117 )
+			RETURN -1
+		END IF
+			 
+LVB_FILE_LENGTH = LEN(LVB_FILE)
+
+		IF LVB_FILE_LENGTH = 0 OR ISNULL(LVB_FILE_LENGTH) THEN 
+			F_MSGBOX( 117  ) // $$HEX9$$90c7ccb800ac2000c6c5b5c2c8b2e4b22000$$ENDHEX$$
+			RETURN -1
+		END IF
+
+	
+   li_FileNum = FileOpen( ls_path ,  StreamMode!, Write!, Shared!, Replace!)
+
+	if li_FileNum < 0 then 
+		F_MSGBOX(9024)  //FILE OPEN ERROR
+		Fileclose( li_FileNum ) 
+		return -1
+	end if	
+	
+   FileWriteEX(li_FileNum, LVB_FILE , LVB_FILE_LENGTH  )			 	
+   Fileclose( li_FileNum ) 
+	
+
+RETURN lvi_write_byte_sum
+
+//F_MSG_ST( 9023 , ST_MSG ) //ST_MSG.TEXT = "Download Completed"
+ 
+end function
+

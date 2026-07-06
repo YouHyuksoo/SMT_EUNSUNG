@@ -1,0 +1,11 @@
+HA$PBExportHeader$f_warning_sound.srf
+global type f_warning_sound from function_object
+end type
+
+forward prototypes
+global subroutine f_warning_sound ()
+end prototypes
+
+global subroutine f_warning_sound (); beep(5)
+end subroutine
+

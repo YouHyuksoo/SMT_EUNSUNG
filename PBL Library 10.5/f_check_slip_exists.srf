@@ -1,0 +1,27 @@
+HA$PBExportHeader$f_check_slip_exists.srf
+global type f_check_slip_exists from function_object
+end type
+
+forward prototypes
+global function integer f_check_slip_exists (string arg_slip_no)
+end prototypes
+
+global function integer f_check_slip_exists (string arg_slip_no);int lvi_count 
+
+select count(*) into :lvi_count
+ from IM_ITEM_RECEIPT_SLIP 
+where RECEIPT_SLIP_NO   = :arg_slip_no
+   and RECEIPT_STATUS <> 'C'
+   and organization_id = :gvi_organization_id ;
+	
+if f_sql_check() < 0 then 
+	return -1
+end if 
+
+if lvi_count = 0 then 
+	return 0
+elseif lvi_count > 0 then 
+	return 1
+end if 
+end function
+

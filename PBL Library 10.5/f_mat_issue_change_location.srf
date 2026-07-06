@@ -1,0 +1,176 @@
+HA$PBExportHeader$f_mat_issue_change_location.srf
+global type f_mat_issue_change_location from function_object
+end type
+
+forward prototypes
+global function integer f_mat_issue_change_location (datetime adt_issue_date, double al_seq, string as_change_location)
+end prototypes
+
+global function integer f_mat_issue_change_location (datetime adt_issue_date, double al_seq, string as_change_location);Double lvl_issue_seq
+
+//=============================
+// $$HEX14$$30ae74c890c7ccb82000e8cd8cc120000cd598b7f8ad200098ccacb9$$ENDHEX$$
+//=============================
+update im_item_issue 
+      set issue_status = 'C'
+where issue_date        = :adt_issue_date
+    and issue_sequence = :al_seq
+    and organization_id  = :gvi_organization_id ; 
+	 
+if f_sql_check() < 0 then 
+	return -1 
+end if 
+
+//==============================
+// $$HEX10$$e0c2dcad2000e8cd8cc190c7ccb8200085c725b8$$ENDHEX$$
+//==============================
+lvl_issue_seq = f_get_sequence('seq_mat_issue')
+
+INSERT INTO im_item_issue
+            ( issue_date,
+		issue_sequence,
+		organization_id,
+		material_mfs,				  
+		mfs,
+		item_code,		  
+		location_code,
+		supplier_code,		  
+		item_type,
+		line_code,
+		workstage_code,machine_code,
+		issue_deficit,
+		issue_qty,
+		issue_status,
+		issue_amt,
+		issue_account,
+		line_type,
+		issue_price,
+		issue_type,	  
+		virtual_receipt_yn ,
+		work_order_no ,	 
+		sale_price , sale_amt ,
+		comments,
+		enter_date,
+		enter_by,
+		last_modify_date,
+		last_modify_by,
+		invoice_no,parent_item_code , interface_yn , interface_date , arrival_date , arrival_seq_no , dest_organization_id ,
+		barcode
+            )
+   SELECT 
+	     issue_date, 
+		:lvl_issue_seq,
+		:gvi_organization_id,
+		material_mfs,	 
+		mfs,
+		item_code,
+		location_code,
+		supplier_code ,
+		item_type,
+		line_code,
+		workstage_code,machine_code,
+		decode( ISSUE_DEFICIT , '3' , '4', '4' , '3' ) ,
+		issue_qty *-1,
+		'C',
+		issue_amt * -1,
+		issue_account,
+		line_type,
+		issue_price,
+		issue_type,	 
+		virtual_receipt_yn ,		
+		work_order_no ,	
+		sale_price * -1, sale_amt * -1,		  
+		comments,
+		SYSDATE,
+		:gvs_user_id,
+		SYSDATE,
+		:gvs_user_id,
+		invoice_no ,parent_item_code ,interface_yn , interface_date , arrival_date , arrival_seq_no , dest_organization_id ,
+		barcode
+      FROM im_item_issue
+    WHERE issue_date = :adt_issue_date
+        AND issue_sequence = :al_seq
+        AND organization_id = :gvi_organization_id;
+		
+if f_sql_check() < 0 then 
+	return -2
+end if 
+		  
+//==============================
+// $$HEX6$$e0c2dcad2000200085c725b8$$ENDHEX$$
+//==============================
+lvl_issue_seq = f_get_sequence('seq_mat_issue')
+
+INSERT INTO im_item_issue
+            ( issue_date,
+		issue_sequence,
+		organization_id,
+		material_mfs,				  
+		mfs,
+		item_code,		  
+		location_code,
+		supplier_code,		  
+		item_type,
+		line_code,
+		workstage_code,machine_code,
+		issue_deficit,
+		issue_qty,
+		issue_status,
+		issue_amt,
+		issue_account,
+		line_type,
+		issue_price,
+		issue_type,	  
+		virtual_receipt_yn ,
+		work_order_no ,	 
+		sale_price , sale_amt ,
+		comments,
+		enter_date,
+		enter_by,
+		last_modify_date,
+		last_modify_by,
+		invoice_no,parent_item_code , interface_yn , interface_date , arrival_date , arrival_seq_no , dest_organization_id ,
+		barcode
+            )
+   SELECT 
+	     issue_date, 
+		:lvl_issue_seq,
+		:gvi_organization_id,
+		material_mfs,	 
+		mfs,
+		item_code,
+		:as_change_location,
+		supplier_code ,
+		item_type,
+		line_code,
+		workstage_code,machine_code,
+		ISSUE_DEFICIT ,
+		issue_qty,
+		'N',
+		abs(issue_amt) ,
+		issue_account,
+		line_type,
+		issue_price,
+		issue_type,	 
+		virtual_receipt_yn ,		
+		work_order_no ,	
+		sale_price, sale_amt,		  
+		comments,
+		SYSDATE,
+		:gvs_user_id,
+		SYSDATE,
+		:gvs_user_id,
+		invoice_no ,parent_item_code ,interface_yn , interface_date , arrival_date , arrival_seq_no , dest_organization_id ,
+		barcode
+      FROM im_item_issue
+    WHERE issue_date       = :adt_issue_date
+        AND issue_sequence = :al_seq
+        AND organization_id = :gvi_organization_id;
+		
+	if f_sql_check() < 0 then 
+		return -2
+	end if 
+
+return sqlca.sqlnrows
+end function
+

@@ -1,0 +1,13 @@
+HA$PBExportHeader$systemtime.srs
+$PBExportComments$System time structure as used by Win APIs
+global type systemtime from structure
+	unsignedinteger		wyear
+	unsignedinteger		wmonth
+	unsignedinteger		wdayoftheweek
+	unsignedinteger		wday
+	unsignedinteger		whour
+	unsignedinteger		wminute
+	unsignedinteger		wsecond
+	unsignedinteger		wmilliseconds
+end type
+

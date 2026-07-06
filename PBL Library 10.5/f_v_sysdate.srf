@@ -1,0 +1,18 @@
+HA$PBExportHeader$f_v_sysdate.srf
+global type f_v_sysdate from function_object
+end type
+
+forward prototypes
+global function datetime f_v_sysdate (integer arg_day)
+end prototypes
+
+global function datetime f_v_sysdate (integer arg_day);datetime d_1		
+select TRUNC(sysdate) - :ARG_DAY into :d_1 from dual ;
+
+if f_sql_check() < 0 then 
+ return d_1
+else
+  return d_1
+end if
+end function
+

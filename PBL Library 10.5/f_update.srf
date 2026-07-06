@@ -1,0 +1,23 @@
+HA$PBExportHeader$f_update.srf
+$PBExportComments$Re Retrieve
+global type f_update from function_object
+end type
+
+forward prototypes
+global function integer f_update ()
+end prototypes
+
+global function integer f_update ();window activesheet
+string mtext
+activesheet = w_main_frame.GetActiveSheet( )
+IF IsValid(activesheet) THEN
+	Gvs_ue_data_control = 'UPDATE'
+	activesheet.TRIGGEREVENT('UE_DATA_CONTROL')
+ELSE 
+   RETURN -1
+   
+END IF
+
+RETURN 0 
+end function
+

@@ -1,0 +1,22 @@
+HA$PBExportHeader$f_get_run_no_io_in_qty.srf
+global type f_get_run_no_io_in_qty from function_object
+end type
+
+forward prototypes
+global function integer f_get_run_no_io_in_qty (string arg_run_no)
+end prototypes
+
+global function integer f_get_run_no_io_in_qty (string arg_run_no);LONG LVL_IN_QTY
+SELECT IN_QTY INTO :LVL_IN_QTY
+ FROM IP_PRODUCT_RUN_CARD_IO
+WHERE RUN_NO = :ARG_RUN_NO
+     AND IO_DEFICIT = 'I'
+	AND WORKSTAGE_CODE = 'S023' ;
+	
+IF F_SQL_CHECK() < 0 THEN 
+	RETURN 0
+END IF 
+
+RETURN LVL_IN_QTY
+end function
+

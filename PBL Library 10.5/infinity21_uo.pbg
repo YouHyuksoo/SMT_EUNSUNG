@@ -1,0 +1,24 @@
+Save Format v3.0(19990112)
+@begin Libraries
+ "infinity21_uo.pbl" "";
+@end;
+@begin Objects
+ "uo_tab.sru" "infinity21_uo.pbl";
+ "uo_ymd_company_calendar_4_popup.sru" "infinity21_uo.pbl";
+ "uo_ym.sru" "infinity21_uo.pbl";
+ "uo_ymdh_now_calendar.sru" "infinity21_uo.pbl";
+ "uo_ymdend_calendar.sru" "infinity21_uo.pbl";
+ "uo_select_filename.sru" "infinity21_uo.pbl";
+ "uo_dynamic_filter.sru" "infinity21_uo.pbl";
+ "uo_ymd_calendar_4_popup.sru" "infinity21_uo.pbl";
+ "uo_editmask_timer.sru" "infinity21_uo.pbl";
+ "uo_ymd_calendar.sru" "infinity21_uo.pbl";
+ "uo_ymdh_calendar.sru" "infinity21_uo.pbl";
+ "uo_color_selection.sru" "infinity21_uo.pbl";
+ "uo_table_name.sru" "infinity21_uo.pbl";
+ "uo_work_board.sru" "infinity21_uo.pbl";
+ "uo_graph_gallery.sru" "infinity21_uo.pbl";
+ "uo_object_type.sru" "infinity21_uo.pbl";
+ "uo_menu_list.sru" "infinity21_uo.pbl";
+ "uo_year.sru" "infinity21_uo.pbl";
+@end;

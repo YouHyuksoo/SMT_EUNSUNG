@@ -1,0 +1,22 @@
+HA$PBExportHeader$f_get_code_name.srf
+global type f_get_code_name from function_object
+end type
+
+forward prototypes
+global function string f_get_code_name (string arg_code_name)
+end prototypes
+
+global function string f_get_code_name (string arg_code_name);String lvs_name
+SELECT DECODE(:gvs_language, 'C', NVL(LOCAL_TEXT, ''), 'K', NVL(KOREA_TEXT, ''), ENGLISH_TEXT)
+  INTO :lvs_name
+  FROM ISYS_DUAL_LANGUAGE
+ WHERE ENGLISH_TEXT = UPPER(:arg_code_name)
+     AND ORGANIZATION_ID = :GVI_ORGANIZATION_ID ;
+
+if f_sql_check() < 0 then 
+	return arg_code_name
+end if
+
+	return lvs_name
+end function
+

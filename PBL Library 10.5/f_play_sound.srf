@@ -1,0 +1,16 @@
+HA$PBExportHeader$f_play_sound.srf
+global type f_play_sound from function_object
+end type
+
+forward prototypes
+global subroutine f_play_sound (string as_filename)
+end prototypes
+
+global subroutine f_play_sound (string as_filename);long lui_NumDevs
+
+lui_NumDevs = WaveOutGetNumDevs()
+IF lui_NumDevs > 0 THEN
+	 sndPlaySoundA( as_filename, 1 )
+END IF
+end subroutine
+

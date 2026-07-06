@@ -1,0 +1,87 @@
+HA$PBExportHeader$f_mymenu_append.srf
+$PBExportComments$My Menu Append
+global type f_mymenu_append from function_object
+end type
+
+forward prototypes
+global function integer f_mymenu_append ()
+end prototypes
+
+global function integer f_mymenu_append ();
+if Gst_set.WINDOW_ID = '' or isnull(Gst_set.WINDOW_ID) then
+	return -1
+end if
+
+IF  f_msgbox( 179 ) = 1 then
+//("Confirm" , "Do You Wish To Add My Menu ?" , question! , yesno! ) = 1 THEN 
+  
+  
+  SELECT COUNT(*) INTO :ROWCNT
+    FROM ISYS_MENU
+	WHERE USER_ID         = :GVS_USER_ID
+	  AND WINDOW_NAME     = UPPER(:Gst_set.WINDOW_ID)
+	  AND APPLICATION_NAME = :GVS_APP_NAME
+	  AND ORGANIZATION_ID = :GVI_ORGANIZATION_ID ;
+	  
+    IF F_SQL_CHECK() < 0 THEN 
+		 RETURN -1
+	 END IF
+	 
+	 IF ROWCNT > 0 THEN 
+		 f_msgbox( 180 )
+		 //("Notify" , "This Memu Aready Exists !" )
+		 RETURN -1
+	 END IF
+	  
+STRING LVS_WINDOW_GROUP_KOR , LVS_WINDOW_GROUP_ENG , LVS_WINDOW_GROUP_LOCAL , LVS_WINDOW_TYPE
+
+ SELECT NVL(WINDOW_GROUP_KOR,'*' ) , NVL(WINDOW_GROUP_ENG ,'*' ) , NVL( WINDOW_GROUP_LOCAL , '*' ) , WINDOW_TYPE
+   INTO :LVS_WINDOW_GROUP_KOR , :LVS_WINDOW_GROUP_ENG , :LVS_WINDOW_GROUP_LOCAL , :LVS_WINDOW_TYPE
+ FROM ISYS_WINDOW 
+ WHERE WINDOW_NAME     = UPPER(:Gst_set.WINDOW_ID)
+  AND ORGANIZATION_ID = :GVI_ORGANIZATION_ID ;
+  
+    IF F_SQL_CHECK() < 0 THEN 
+		 RETURN -1
+	 END IF
+  	
+  INSERT INTO "ISYS_MENU"  
+         ( WINDOW_TYPE ,
+		"WINDOW_GROUP_KOR" ,"WINDOW_GROUP_ENG" , "WINDOW_GROUP_LOCAL" ,
+		 "USER_ID",   
+           "APPLICATION_NAME",   
+           "WINDOW_NAME",   
+           "ORGANIZATION_ID",   
+           "WINDOW_DESCRIPTION_USERDEFINE",			  
+           "WINDOW_DESCRIPTION_ENG",   
+           "WINDOW_DESCRIPTION_KOR",   
+           "WINDOW_DESCRIPTION_LOCAL",   
+           "ENTER_DATE",   
+           "LAST_MODIFY_DATE",   
+           "ENTER_BY",   
+           "LAST_MODIFY_BY" )  
+  VALUES (   :LVS_WINDOW_TYPE ,
+                    :LVS_WINDOW_GROUP_KOR , :LVS_WINDOW_GROUP_ENG , :LVS_WINDOW_GROUP_LOCAL ,
+                    :GVS_USER_ID,   
+				:Gvs_app_name,   
+				upper(:Gst_set.WINDOW_ID),
+				:GVI_ORGANIZATION_ID,
+				upper(:Gst_set.WINDOW_COMMENT),
+				upper(:Gst_set.WINDOW_COMMENT),   
+				upper(:Gst_set.WINDOW_COMMENT),   
+				upper(:Gst_set.WINDOW_COMMENT),   
+				SYSDATE,   
+				SYSDATE,   
+				:GVS_USER_ID, 
+				:GVS_USER_ID)  ;
+			  
+    IF F_SQL_CHECK() < 0 THEN 
+		 RETURN -1
+	 END IF
+	 COMMIT ;
+	 F_Message_Ontime( 2 , f_msg_st( 170 ))
+	 return 0
+			  
+END IF
+end function
+

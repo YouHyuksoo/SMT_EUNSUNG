@@ -1,0 +1,64 @@
+HA$PBExportHeader$d_smt_line_bom_list_rpt.srd
+$PBExportComments$$$HEX6$$80bd88d4c8b9a4c230d12000$$ENDHEX$$(HSRM_ITEM)
+release 10.5;
+datawindow(units=0 timer_interval=60000 color=16777215 processing=0 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no )
+header(height=412 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=84 color="536870912" )
+detail(height=72 color="536870912" height.autosize=yes )
+table(column=(type=char(30) update=yes updatewhereclause=yes name=parent_item_code dbname="id_eng_bom_smt.parent_item_code" dbalias=".parent_item_code" )
+ column=(type=datetime update=yes updatewhereclause=yes name=dateset dbname="dateset" )
+ column=(type=datetime update=yes updatewhereclause=yes name=dateend dbname="dateend" )
+ column=(type=number update=yes updatewhereclause=yes name=bom_level dbname="id_eng_bom_smt.bom_level" dbalias=".bom_level" )
+ column=(type=number update=yes updatewhereclause=yes name=organization_id dbname="id_eng_bom_smt.organization_id" dbalias=".organization_id" )
+ column=(type=char(20) updatewhereclause=yes name=line_code dbname="id_eng_bom_smt.line_code" dbalias=".line_code" )
+ retrieve="  SELECT 
+		DISTINCT 
+         PARENT_ITEM_CODE,   
+         TRUNC(DATESET)  DATESET,   
+         TRUNC(DATEEND)  DATEEND ,   
+         BOM_LEVEL,   
+         ORGANIZATION_ID,   
+         LINE_CODE
+
+    FROM ID_ENG_BOM_SMT
+   WHERE PARENT_ITEM_CODE IN ( SELECT MODEL_NAME FROM ID_ITEM WHERE SET_ITEM_YN = 'Y' ) AND
+         ( PARENT_ITEM_CODE LIKE :ARG_PARENT_ITEM ) and
+         ( LINE_CODE LIKE :ARG_LINE_CODE ) and
+         ( MACHINE LIKE :ARG_MACHINE ) and
+         ( DATESET <= :ARG_DATESET ) and
+         ( DATEEND >= :ARG_DATESET ) and
+		( BOM_LEVEL = '1' ) and 
+         ( ORGANIZATION_ID = :ARG_ORG ) 
+" arguments=(("ARG_PARENT_ITEM", string),("ARG_DATESET", datetime),("ARG_LINE_CODE", string),("ARG_MACHINE", string),("ARG_ORG", number))  sort="line_code A parent_item_code A " )
+group(level=1 header.height=0 trailer.height=0 by=("organization_id" , "line_code" ) newpage=yes header.color="536870912" trailer.color="536870912" )
+text(band=header alignment="1" text="Print Date" border="0" color="33554432" x="1984" y="176" height="72" width="594" html.valueishtml="0"  name=t_3 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=header alignment="2" text="No" border="0" color="0" x="14" y="280" height="108" width="110" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Bom Level" border="0" color="33554432" x="347" y="280" height="108" width="137" html.valueishtml="0"  name=bom_level_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Line Code" border="0" color="33554432" x="142" y="280" height="108" width="187" html.valueishtml="0"  name=t_4 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=header alignment="1" expression="today()"border="0" color="33554432" x="2592" y="176" height="72" width="777" format="[general]" html.valueishtml="0"  name=date_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=header alignment="2" text="Line BOM List Report" border="0" color="33554432" x="18" y="28" height="100" width="3351" html.valueishtml="0"  name=t_2 visible="1"  font.face="Tahoma" font.height="-16" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+line(band=header x1="18" y1="264" x2="3369" y2="264"  name=l_1 visible="1" pen.style="0" pen.width="9" pen.color="0"  background.mode="2" background.color="0" )
+line(band=header x1="18" y1="408" x2="3369" y2="408"  name=l_2 visible="1" pen.style="0" pen.width="9" pen.color="0"  background.mode="2" background.color="0" )
+text(band=header alignment="0" text="Parent Item Code" border="0" color="33554432" x="503" y="280" height="108" width="681" html.valueishtml="0"  name=child_item_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Dateset" border="0" color="33554432" x="2414" y="280" height="108" width="448" html.valueishtml="0"  name=dateset_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Dateend" border="0" color="33554432" x="2875" y="280" height="108" width="494" html.valueishtml="0"  name=dateend_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=detail alignment="0" expression="GETROW()"border="0" color="0" x="14" y="4" height="60" width="110" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="33554432" x="347" y="4" height="60" width="137" format="[general]" html.valueishtml="0"  name=bom_level visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=6 alignment="0" tabsequence=32766 border="0" color="33554432" x="142" y="4" height="60" width="187" format="[general]" html.valueishtml="0"  name=line_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432" x="507" y="4" height="60" width="681" format="[general]" html.valueishtml="0"  name=parent_item_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432~tIF ( DATEEND < TODAY()  , 255 , 0 )" x="2414" y="4" height="60" width="448" format="[shortdate] [time]" html.valueishtml="0"  name=dateset visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="16777215~tif (  parent_item_code = ~"*~"  , RGB(255,128,255) , RGB( 255,255,255 ) )" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="33554432~tIF ( DATEEND < TODAY()  , 255 , 0 )" x="2875" y="4" height="60" width="494" format="[shortdate] [time]" html.valueishtml="0"  name=dateend visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="16777215~tif (  parent_item_code = ~"*~"  , RGB(255,128,255) , RGB( 255,255,255 ) )" )
+column(band=footer id=5 alignment="0" tabsequence=110 border="0" color="33554432" x="2213" y="8" height="68" width="1147" format="[general]" html.valueishtml="0"  name=organization_id visible="1" dddw.name=vd_organization_name dddw.displaycolumn=organization_name dddw.datacolumn=organization_id dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+compute(band=footer alignment="2" expression="'Page ' + page() + ' of ' + pageCount()"border="0" color="33554432" x="1518" y="8" height="68" width="590" format="[general]" html.valueishtml="0"  name=page_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

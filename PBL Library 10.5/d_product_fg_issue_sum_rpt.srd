@@ -1,0 +1,58 @@
+HA$PBExportHeader$d_product_fg_issue_sum_rpt.srd
+$PBExportComments$$$HEX4$$9ccd58d5a9ba5db8$$ENDHEX$$
+release 10.5;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no grid.lines=0 )
+header(height=140 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=96 color="536870912" )
+table(column=(type=char(20) updatewhereclause=yes name=model_name dbname="ip_product_fg_issue.model_name" )
+ column=(type=char(10) updatewhereclause=yes name=model_suffix dbname="ip_product_fg_issue.model_suffix" )
+ column=(type=char(20) updatewhereclause=yes name=customer_code dbname="ip_product_fg_issue.customer_code" )
+ column=(type=char(10) updatewhereclause=yes name=product_location_code dbname="ip_product_fg_issue.location_code" )
+ column=(type=number updatewhereclause=yes name=qty dbname="qty" )
+ column=(type=number updatewhereclause=yes name=issue_price dbname="issue_price" )
+ retrieve="select  model_name, 
+          model_suffix, 
+          customer_code,
+          location_code,
+         sum(decode(txn_deficit,3,1,-1)*qty)  qty,
+          max(f_get_sal_last_price_cfm(customer_code,item_code, 'T',issue_date,organization_id)) issue_price
+  from ip_product_fg_issue 
+where issue_date >= :arg_sDate
+   and issue_date < :arg_eDate + 1 
+   and model_name like :arg_model 
+   and barcode like :arg_barcode 
+ group by model_name, 
+              model_suffix, 
+              customer_code,
+              location_code" arguments=(("arg_sDate", datetime),("arg_eDate", datetime),("arg_Model", string),("arg_barcode", string))  sort="model_name A " )
+group(level=1 header.height=0 trailer.height=88 by=("model_name" ) header.color="536870912" trailer.color="536870912" )
+text(band=header alignment="2" text="Model Name" border="0" color="33554432" x="183" y="8" height="164" width="544" html.valueishtml="0"  name=model_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Model Suffix" border="0" color="33554432" x="736" y="8" height="164" width="247" html.valueishtml="0"  name=model_suffix_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Customer Code" border="0" color="33554432" x="992" y="8" height="164" width="366" html.valueishtml="0"  name=customer_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Location Code" border="0" color="33554432" x="1367" y="8" height="164" width="256" html.valueishtml="0"  name=location_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Qty" border="0" color="33554432" x="1637" y="8" height="164" width="224" html.valueishtml="0"  name=qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+text(band=header alignment="2" text="Issue unit Price" border="0" color="33554432" x="1870" y="8" height="164" width="320" html.valueishtml="0"  name=issue_price_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+text(band=header alignment="2" text="Issue Amount" border="0" color="33554432" x="2199" y="8" height="164" width="521" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432~tif(txn_deficit='4',rgb(255,0,0),rgb(0,0,0))" x="183" y="8" height="76" width="544" format="[general]" html.valueishtml="0"  name=model_name visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432~tif(txn_deficit='4',rgb(255,0,0),rgb(0,0,0))" x="736" y="8" height="76" width="247" format="[general]" html.valueishtml="0"  name=model_suffix visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="33554432~tif(txn_deficit='4',rgb(255,0,0),rgb(0,0,0))" x="992" y="8" height="76" width="366" format="[general]" html.valueishtml="0"  name=customer_code visible="1" dddw.name=vd_customer_code dddw.displaycolumn=customer_name dddw.datacolumn=customer_code dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="0" color="33554432~tif(txn_deficit='4',rgb(255,0,0),rgb(0,0,0))" x="1367" y="8" height="76" width="256" format="[general]" html.valueishtml="0"  name=product_location_code visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+column(band=detail id=5 alignment="1" tabsequence=32766 border="0" color="33554432" x="1637" y="8" height="76" width="224" format="###,##0" html.valueishtml="0"  name=qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+compute(band=detail alignment="1" expression=" qty * issue_price"border="0" color="33554432" x="2199" y="8" height="76" width="521" format="[General]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+column(band=detail id=6 alignment="1" tabsequence=32766 border="0" color="33554432" x="1870" y="0" height="84" width="320" format="###,##0.0" html.valueishtml="0"  name=issue_price visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+compute(band=detail alignment="2" expression="getrow()"border="0" color="33554432" x="9" y="8" height="76" width="165" format="[GENERAL]" html.valueishtml="0"  name=compute_4 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+compute(band=trailer.1 alignment="1" expression="sum(qty for group 1)"border="0" color="33554432" x="1637" y="4" height="76" width="224" format="###,###,##0" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+compute(band=trailer.1 alignment="1" expression="sum( qty * issue_price for group 1)"border="0" color="33554432" x="2199" y="4" height="76" width="521" format="[General]" html.valueishtml="0"  name=compute_3 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

@@ -1,0 +1,23 @@
+HA$PBExportHeader$f_get_line_idle_time.srf
+global type f_get_line_idle_time from function_object
+end type
+
+forward prototypes
+global function integer f_get_line_idle_time (string as_line_code, string as_workstage_code, string as_machine_code)
+end prototypes
+
+global function integer f_get_line_idle_time (string as_line_code, string as_workstage_code, string as_machine_code);decimal lvf_return
+select idle_time1 + idle_time2+ idle_time3+ idle_time4+ idle_time5+ idle_time6+ idle_time7+ idle_time8+ idle_time9+ idle_time10+ idle_time11+ idle_time12
+into :lvf_return 
+from ip_line_idle_time 
+where line_code = :as_line_code
+and workstage_code = :as_workstage_code
+and machine_code = :as_machine_code
+and organization_id = :gvi_organization_id ;
+
+if f_sql_check() < 0 then 
+	return 0
+end if 
+return 0 
+end function
+

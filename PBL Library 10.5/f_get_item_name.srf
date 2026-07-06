@@ -1,0 +1,34 @@
+HA$PBExportHeader$f_get_item_name.srf
+global type f_get_item_name from function_object
+end type
+
+forward prototypes
+global function string f_get_item_name (string as_item_code)
+end prototypes
+
+global function string f_get_item_name (string as_item_code);String	lvs_item_name
+
+
+if as_item_code = '' or isnull(as_item_code) then 
+	return ''
+end if
+
+SELECT	item_name	INTO	:lvs_item_name
+  FROM	id_item
+WHERE	item_code = :as_item_code
+	AND	organization_id = :gvi_organization_id ;
+	
+	
+IF	f_sql_check() < 0	THEN
+	return 'ERROR'
+END IF
+
+IF	SQLCA.SQLCode = 100	THEN
+	return 'NOTFOUND'
+END IF
+
+RETURN	lvs_item_name
+
+
+end function
+

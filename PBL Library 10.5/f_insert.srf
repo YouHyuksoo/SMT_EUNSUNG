@@ -1,0 +1,23 @@
+HA$PBExportHeader$f_insert.srf
+$PBExportComments$Re Retrieve
+global type f_insert from function_object
+end type
+
+forward prototypes
+global function integer f_insert ()
+end prototypes
+
+global function integer f_insert ();window activesheet
+string mtext
+activesheet = w_main_frame.GetActiveSheet( )
+IF IsValid(activesheet) THEN
+	Gvs_ue_data_control = 'INSERT'
+	activesheet.TRIGGEREVENT('UE_DATA_CONTROL')
+ELSE 
+   RETURN -1
+   
+END IF
+
+RETURN 0 
+end function
+

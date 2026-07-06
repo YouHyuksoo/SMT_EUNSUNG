@@ -1,0 +1,31 @@
+HA$PBExportHeader$f_check_item_exists_internal.srf
+global type f_check_item_exists_internal from function_object
+end type
+
+forward prototypes
+global function integer f_check_item_exists_internal (string arg_item_code, datetime arg_dateset, integer arg_org)
+end prototypes
+
+global function integer f_check_item_exists_internal (string arg_item_code, datetime arg_dateset, integer arg_org);LONG LVL_COUNT
+
+SELECT COUNT(*)  
+ INTO :LVL_COUNT
+ FROM ID_ITEM
+WHERE ITEM_CODE = :ARG_ITEM_CODE
+  AND DATESET   <= TRUNC(:ARG_DATESET)
+  AND DATEEND   >= TRUNC(:ARG_DATESET)
+  AND ORGANIZATION_ID = :arg_org ;
+  
+  IF F_SQL_CHECK() < 0 THEN 
+	  RETURN -1
+  END IF
+  
+  IF LVL_COUNT < 1 THEN 
+	  RETURN -1
+  ELSE
+	  RETURN LVL_COUNT
+  END IF
+	
+  
+end function
+

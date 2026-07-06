@@ -1,0 +1,63 @@
+HA$PBExportHeader$f_barcode_code128.srf
+global type f_barcode_code128 from function_object
+end type
+
+forward prototypes
+global function string f_barcode_code128 (string ls_type, string as_sourcetext)
+end prototypes
+
+global function string f_barcode_code128 (string ls_type, string as_sourcetext);/*******************************************************************
+$$HEX5$$fd5170650d54f0791aff$$ENDHEX$$f_getcode128()
+$$HEX2$$c2537065$$ENDHEX$$:     as_sourcetext string $$HEX12$$906e575b267b324e0d000a00d48fde563c501aff20002000$$ENDHEX$$string $$HEX2$$6c8f1062$$ENDHEX$$code128$$HEX17$$01780e54ef53536270538476575b267b324e0d000a009f52fd80cf63f08f1affd653$$ENDHEX$$code128$$HEX22$$0178575b267b324e0d000a001b52fa5eba4e1aff20002000b75e5152116c0d000a001b52fa5ee5651f671aff$$ENDHEX$$2008-12-10
+$$HEX6$$48722c67f7531aff20002000$$ENDHEX$$V1.0
+$$HEX5$$0759e86c1aff81892857$$ENDHEX$$PB$$HEX5$$2d4e636b385e53627053$$ENDHEX$$code128$$HEX9$$0178575b267b324e0cffc55f7b987f4f2875$$ENDHEX$$PB10$$HEX5$$e54e0a4e08ff2f650163$$ENDHEX$$Unicode$$HEX2$$017809ff$$ENDHEX$$
+*******************************************************************/
+//CODE128$$HEX6$$61670178fa574078e577c68b$$ENDHEX$$
+//CODE128$$HEX5$$0967094e2a4e48722c67$$ENDHEX$$
+//CODE128A: $$HEX7$$0768c6517065575b8c54575bcd6b$$ENDHEX$$, $$HEX3$$a7633652267b$$ENDHEX$$, $$HEX4$$79728a6b575b267b$$ENDHEX$$
+//CODE128B: $$HEX7$$0768c6517065575b8c54575bcd6b$$ENDHEX$$, $$HEX4$$0f5c9951575bcd6b$$ENDHEX$$, $$HEX4$$79728a6b575b267b$$ENDHEX$$
+//CODE128C: [00]-[99]$$HEX6$$84767065575bf95bc6960854$$ENDHEX$$, $$HEX1$$7151$$ENDHEX$$100$$HEX1$$2a4e$$ENDHEX$$
+//$$HEX5$$2c67fd517065c7912875$$ENDHEX$$CODE128B$$HEX2$$48722c67$$ENDHEX$$
+//$$HEX20$$616701783175005fcb594d4f013070656e634d4f013021688c9a4d4f01305c50626b4d4fc47e1062$$ENDHEX$$
+//$$HEX5$$a18b977bc78f0b7a1aff$$ENDHEX$$
+//1.$$HEX4$$d6530454575b267b$$ENDHEX$$ASC$$HEX11$$0178584ee54e575b267b8f5ef7534b4e8c5408ffe54e$$ENDHEX$$ASC=32$$HEX7$$3a4e06524c75b9700cff27598e4e$$ENDHEX$$32$$HEX1$$cf51$$ENDHEX$$32$$HEX3$$0cff0f5c8e4e$$ENDHEX$$32$$HEX1$$a052$$ENDHEX$$64$$HEX1$$09ff$$ENDHEX$$
+//2.$$HEX5$$a18b977b21688c9a0178$$ENDHEX$$
+//3.$$HEX8$$c47e0854616701781aff005fcb594d4f$$ENDHEX$$+$$HEX3$$70656e634d4f$$ENDHEX$$+$$HEX3$$21688c9a4d4f$$ENDHEX$$+$$HEX3$$5c50626b4d4f$$ENDHEX$$
+int li_asc_total = 104 
+int li_asc_tmp,i
+char lc_start=char(204)//$$HEX2$$c7912875$$ENDHEX$$CODE128B$$HEX2$$48722c67$$ENDHEX$$
+char lc_stop=char(206)
+int li_check_digit
+string ls_check_digit
+
+choose case ls_type
+	case 'A' 
+		RETURN 'A'
+	case 'B' 
+		//1.$$HEX4$$d6530454575b267b$$ENDHEX$$ASC$$HEX11$$0178584ee54e575b267b8f5ef7534b4e8c5408ffe54e$$ENDHEX$$ASC=32$$HEX7$$3a4e06524c75b9700cff27598e4e$$ENDHEX$$32$$HEX1$$cf51$$ENDHEX$$32$$HEX3$$0cff0f5c8e4e$$ENDHEX$$32$$HEX1$$a052$$ENDHEX$$64$$HEX1$$09ff$$ENDHEX$$
+		For i = 1 To len(as_sourcetext)
+			  li_asc_tmp = Asc(mid(as_sourcetext,i, 1)) 
+			  If li_asc_tmp >= 32 Then 
+					 li_asc_total = li_asc_total + (li_asc_tmp - 32) * i 
+			  Else 
+					 li_asc_total = li_asc_total + (li_asc_tmp + 64) * i 
+			  End If 
+		Next 
+		//2.$$HEX5$$a18b977b21688c9a0178$$ENDHEX$$
+		li_check_digit = mod(li_asc_total,103)
+		If li_check_digit >= 95 Then//$$HEX4$$79728a6b575b267b$$ENDHEX$$
+			 li_check_digit = li_check_digit + 100
+		Else 
+			  li_check_digit = li_check_digit + 32 
+		end if
+		ls_check_digit = char(li_check_digit) 
+		//3.$$HEX8$$c47e0854616701781aff005fcb594d4f$$ENDHEX$$+$$HEX3$$70656e634d4f$$ENDHEX$$+$$HEX3$$21688c9a4d4f$$ENDHEX$$+$$HEX3$$5c50626b4d4f$$ENDHEX$$
+		Return lc_start + as_sourcetext + ls_check_digit  + lc_stop
+	case 'C' 
+		return 'C'
+	case else
+		return '*'
+	end choose
+
+end function
+

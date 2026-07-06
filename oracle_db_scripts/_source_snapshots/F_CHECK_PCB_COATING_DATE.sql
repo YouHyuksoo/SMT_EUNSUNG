@@ -1,0 +1,36 @@
+FUNCTION F_CHECK_PCB_COATING_DATE
+(
+  P_ITEM_CODE IN VARCHAR2 
+, P_COATING_DATE IN DATE 
+, P_ORG IN NUMBER 
+) RETURN VARCHAR2 AS 
+
+
+LVI_TERM NUMBER ;
+LVI_MAX_DAY NUMBER  ;
+
+BEGIN
+
+
+   SELECT  trunc(SYSDATE) - P_COATING_DATE , decode( nvl(PCB_COATING_MAX_DAY,0) , 0 , 99999, PCB_COATING_MAX_DAY ) 
+     INTO     LVI_TERM , LVI_MAX_DAY
+    FROM id_item 
+  WHERE ITEM_CODE = P_ITEM_CODE ;
+    
+    
+    IF LVI_MAX_DAY = 0 THEN 
+        RETURN 'Y' ;
+    ELSE
+        IF LVI_TERM <= LVI_MAX_DAY THEN 
+
+            RETURN 'Y' ;
+        ELSE
+            RETURN 'N' ;
+            
+        END IF ;
+    
+    
+    END IF  ;
+    
+      
+END F_CHECK_PCB_COATING_DATE;

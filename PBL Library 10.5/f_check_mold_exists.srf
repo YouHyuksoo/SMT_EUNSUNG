@@ -1,0 +1,29 @@
+HA$PBExportHeader$f_check_mold_exists.srf
+global type f_check_mold_exists from function_object
+end type
+
+forward prototypes
+global function integer f_check_mold_exists (string arg_mold_code)
+end prototypes
+
+global function integer f_check_mold_exists (string arg_mold_code);LONG LVL_COUNT
+
+SELECT COUNT(*)  
+ INTO :LVL_COUNT
+ FROM IMCN_MOLD
+WHERE MOLD_CODE = :ARG_MOLD_CODE
+   AND ORGANIZATION_ID = :GVI_ORGANIZATION_ID ;
+  
+  IF F_SQL_CHECK() < 0 THEN 
+	  RETURN -1
+  END IF
+  
+  IF LVL_COUNT < 1 THEN 
+	  RETURN -1
+  ELSE
+	  RETURN LVL_COUNT
+  END IF
+	
+  
+end function
+

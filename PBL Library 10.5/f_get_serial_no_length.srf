@@ -1,0 +1,23 @@
+HA$PBExportHeader$f_get_serial_no_length.srf
+global type f_get_serial_no_length from function_object
+end type
+
+forward prototypes
+global function long f_get_serial_no_length (string arg_item_code)
+end prototypes
+
+global function long f_get_serial_no_length (string arg_item_code);Long lvs_return
+
+select serial_no_length into :lvs_return
+from IP_PRODUCT_MODEL_MASTER 
+where item_code = :arg_item_code
+and organization_id = :gvi_organization_id ;
+
+if f_sql_check() < 0 then
+	return 0
+end if 
+
+return lvs_return
+
+end function
+

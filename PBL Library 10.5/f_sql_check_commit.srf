@@ -1,0 +1,33 @@
+HA$PBExportHeader$f_sql_check_commit.srf
+$PBExportComments$SQLCA$$HEX9$$7cb9b4cc6cd058d5e0ac00c8a5c75cd5e4b2$$ENDHEX$$
+global type f_sql_check_commit from function_object
+end type
+
+forward prototypes
+global function integer f_sql_check_commit (string action)
+end prototypes
+
+global function integer f_sql_check_commit (string action);STRING LVS_CODE , LVS_TEXT
+LVS_CODE = STRING(SQLCA.SQLCODE)
+LVS_TEXT = STRING(SQLCA.SQLERRTEXT)+"   Return Data"+SQLCA.SQLReturnData
+
+IF SQLCA.SQLCODE < 0 THEN 
+	ROLLBACK ;
+	F_MSGBOX2( 1101 , LVS_CODE , LVS_TEXT )
+	Rollback;
+END IF
+
+IF ACTION = 'COMMIT' THEN 
+	COMMIT;
+	RETURN 1		
+ELSEIF ACTION = 'ROLLBACK' THEN 
+	ROLLBACK;
+	RETURN 1
+ELSE
+   RETURN 1
+END IF
+
+
+
+end function
+

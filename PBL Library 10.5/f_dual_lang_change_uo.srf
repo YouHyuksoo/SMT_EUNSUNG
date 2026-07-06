@@ -1,0 +1,385 @@
+HA$PBExportHeader$f_dual_lang_change_uo.srf
+$PBExportComments$Change Current UserObject Text
+global type f_dual_lang_change_uo from function_object
+end type
+
+forward prototypes
+global subroutine f_dual_lang_change_uo (userobject auo_userobject)
+end prototypes
+
+global subroutine f_dual_lang_change_uo (userobject auo_userobject);// KIM, YONG-CHUL
+// Argument : auo_userobject (userobject)
+
+if  Gvs_language = 'E' &
+then
+	return
+end if
+
+commandbutton      cb_local
+statictext         st_local
+groupbox           gb_local
+radiobutton        rb_local
+datawindow         dw_local
+datastore          ds_child
+datawindowchild    dwc_child
+tab                tb_local
+UserObject         uo_local
+checkbox           cbx_local			
+	  
+
+string ls_dwhead, &
+		 ls_dwobject, ls_dwcobject, &
+		 ls_return, &
+		 ls_text, &
+		 ls_chg_text
+
+integer li_rc, &
+		  li_col, li_col1, li_col2, li_col3, &
+		  li_objcount, li_cobjcount, &
+		  li_start, li_cstart, &
+		  li_end, li_cend 
+long ll_row, ll_rowcnt
+
+string lvs_column_name
+if Gvs_previous_language <>  Gvs_language then
+
+		if Gvs_previous_language ='K' then
+				lvs_column_name =  "korea_text = '"
+		elseif  Gvs_previous_language ='C' then
+				lvs_column_name =  "local_text = '"
+		elseif Gvs_previous_language ='E' then
+				lvs_column_name =  "english_text = '"
+		end if
+else
+				lvs_column_name =  "english_text = '"
+end if 
+
+
+ds_child = create datastore 
+
+ll_rowcnt = gds_dual.rowcount ()
+
+for li_rc =1 to UpperBound(auo_userobject.control)
+	 ls_text = ''
+	 ls_chg_text = ''
+	 
+	choose case auo_userobject.control[li_rc].typeof()	// object type check
+	  case UserObject!
+		      uo_local = auo_userobject.control[li_rc]
+			 f_dual_lang_change_uo(uo_local)
+	  case CommandButton!
+			 cb_local = auo_userobject.control[li_rc]
+			 ls_text = trim(cb_local.text)
+		
+          ll_row = gds_dual.find ( lvs_column_name + UPPER ( ls_text ) + "' ", 1, gds_dual.rowcount() )
+   	    if ll_row > 0 then
+				if Gvs_language = 'C' then
+					cb_local.text = gds_dual.object.local_text [ ll_row ]
+				elseif Gvs_language = 'K' then
+					cb_local.text = gds_dual.object.korea_text [ ll_row ]
+				elseif Gvs_language = 'E' then
+					cb_local.text = gds_dual.object.english_origin_text [ ll_row ]						
+				end if 
+		    end if
+			
+	  case StaticText!
+			 st_local = auo_userobject.control[li_rc]
+			 ls_text  = trim(st_local.text)
+ 
+          ll_row = gds_dual.find ( lvs_column_name + UPPER ( ls_text ) + "' ", 1, gds_dual.rowcount() )
+   	    if ll_row > 0 then
+				if Gvs_language = 'C' then
+					st_local.text = gds_dual.object.local_text [ ll_row ]
+				elseif Gvs_language = 'K' then
+					st_local.text = gds_dual.object.korea_text [ ll_row ]
+				elseif Gvs_language = 'E' then
+					st_local.text = gds_dual.object.english_origin_text [ ll_row ]											
+				end if
+				 
+		    end if
+
+	  case GroupBox!
+			 gb_local = auo_userobject.control[li_rc]
+			 ls_text = trim(gb_local.text)
+
+          ll_row = gds_dual.find ( lvs_column_name + UPPER ( ls_text ) + "' ", 1, gds_dual.rowcount() )
+   	    if ll_row > 0 then
+				if Gvs_language = 'C' then
+					gb_local.text = gds_dual.object.local_text [ ll_row ]
+				elseif Gvs_language = 'K' then
+					gb_local.text = gds_dual.object.korea_text [ ll_row ]
+				elseif Gvs_language = 'E' then
+					gb_local.text = gds_dual.object.english_origin_text [ ll_row ]							
+				end if
+			    
+		    end if
+			 
+			 
+     case Checkbox!
+			 cbx_local = auo_userobject.control[li_rc]
+			 ls_text = trim(cbx_local.text)
+
+
+          ll_row = gds_dual.find ( lvs_column_name + UPPER ( ls_text ) + "' ", 1, gds_dual.rowcount() )
+   	    if ll_row > 0 then
+				if Gvs_language = 'C' then
+					cbx_local.text = gds_dual.object.local_text [ ll_row ]
+				elseif Gvs_language = 'K' then
+					cbx_local.text = gds_dual.object.korea_text [ ll_row ]
+				elseif Gvs_language = 'E' then
+					cbx_local.text = gds_dual.object.english_origin_text [ ll_row ]								
+				end if
+			   
+		    end if			 
+			 
+
+     case Radiobutton!
+			 rb_local = auo_userobject.control[li_rc]
+			 ls_text = trim(rb_local.text)
+
+
+          ll_row = gds_dual.find ( lvs_column_name + UPPER ( ls_text ) + "' ", 1, gds_dual.rowcount() )
+   	    if ll_row > 0 then
+				if Gvs_language = 'C' then
+					rb_local.text = gds_dual.object.local_text [ ll_row ]
+				elseif Gvs_language = 'K' then
+					rb_local.text = gds_dual.object.korea_text [ ll_row ]
+				elseif Gvs_language = 'E' then
+					rb_local.text = gds_dual.object.english_origin_text [ ll_row ]								
+				end if
+			   
+		    end if
+
+     case Datawindow!
+		 	 dw_local    = auo_userobject.control[li_rc]
+			
+			 if dw_local.dataobject = '' then
+			    continue
+			 end if
+			
+			 f_msg_mdi_help(dw_local.classname())
+			 ls_dwobject = dw_local.Object.DataWindow.Objects     // dw object list
+			 if len(trim(ls_dwobject)) = 0 then                    
+				 continue
+			 end if
+			
+			 li_objcount = f_dual_lang_object_count(ls_dwobject)     		 // get object count
+			 li_start = 0
+			
+			 for li_col = 1 to li_objcount
+				  li_end = pos(ls_dwobject, "~t", li_start + 1)
+
+				  if li_col < li_objcount then    // last object check
+					 ls_dwhead = mid(ls_dwobject, li_start + 1, li_end - li_start - 1)	
+				  else
+					 ls_dwhead = mid(ls_dwobject, li_start + 1, len(ls_dwobject) - li_start)
+				  end if
+					
+				  if dw_local.describe (ls_dwhead + ".type") = "text" then    // object type check
+					  ls_text = trim(dw_local.describe(ls_dwhead + ".text"))
+
+    			     ll_row = gds_dual.find ( lvs_column_name + UPPER ( ls_text ) + "' ", 1, ll_rowcnt )
+                 if ll_row > 0 then
+						if Gvs_language = 'C' then
+							ls_chg_text = gds_dual.object.local_text [ ll_row ]
+						elseif Gvs_language = 'K' then
+							ls_chg_text = gds_dual.object.korea_text [ ll_row ]
+						elseif Gvs_language = 'E' then
+							ls_chg_text = gds_dual.object.english_origin_text [ ll_row ]										
+						end if
+			   		dw_local.modify(ls_dwhead + ".text = '" + ls_chg_text + "'")
+                 end if
+
+				  end if
+
+				  li_start = li_end 
+			 next
+
+    case Tab!
+         tb_local = auo_userobject.control[li_rc]
+
+         for li_col = 1 to upperbound(tb_local.control)
+  		     ls_text = trim(tb_local.control[li_col].text)
+
+			ll_row = gds_dual.find ( lvs_column_name + UPPER ( ls_text ) + "' ", 1, gds_dual.rowcount() )
+			if ll_row > 0 then
+				if Gvs_language = 'C' then
+					tb_local.control[li_col].text = gds_dual.object.local_text [ ll_row ]
+				elseif Gvs_language = 'K' then
+					tb_local.control[li_col].text = gds_dual.object.korea_text [ ll_row ]
+				elseif Gvs_language = 'E' then
+					tb_local.control[li_col].text = gds_dual.object.english_origin_text [ ll_row ]										
+				end if
+			end if
+
+             for li_col1 = 1 to upperbound(tb_local.control[li_col].control)
+                 ls_text = ''
+                 choose case tb_local.control[li_col].control[li_col1].typeof()	// object type check
+                  		case UserObject!
+						  uo_local = auo_userobject.control[li_rc]
+						  f_dual_lang_change_uo(uo_local)
+				     case CommandButton!
+                                cb_local = tb_local.control[li_col].control[li_col1]
+			                 ls_text = trim(cb_local.text)
+		
+                             ll_row = gds_dual.find ( lvs_column_name + UPPER ( ls_text ) + "' ", 1, gds_dual.rowcount() )
+   	                       if ll_row > 0 then
+											if Gvs_language = 'C' then
+												cb_local.text = gds_dual.object.local_text [ ll_row ]
+											elseif Gvs_language = 'K' then
+												cb_local.text = gds_dual.object.korea_text [ ll_row ]
+											elseif Gvs_language = 'E' then
+												cb_local.text = gds_dual.object.english_origin_text [ ll_row ]													
+											end if
+			                       
+		                       end if
+						
+                        case StaticText!
+                             st_local = tb_local.control[li_col].control[li_col1]
+			                    ls_text  = trim(st_local.text)
+ 
+			                    ll_row = gds_dual.find ( lvs_column_name + UPPER ( ls_text ) + "' ", 1, gds_dual.rowcount() )
+   	                       if ll_row > 0 then
+			                        if Gvs_language = 'C' then
+												st_local.text = gds_dual.object.local_text [ ll_row ]
+											elseif Gvs_language = 'K' then
+												st_local.text = gds_dual.object.korea_text [ ll_row ]
+											elseif Gvs_language = 'E' then
+												st_local.text = gds_dual.object.english_origin_text [ ll_row ]																									
+											end if
+			                       
+		                       end if
+
+                        case GroupBox!
+			                    gb_local = tb_local.control[li_col].control[li_col1]
+			                    ls_text  = trim(gb_local.text)
+
+			                    ll_row = gds_dual.find ( lvs_column_name + UPPER ( ls_text ) + "' ", 1, gds_dual.rowcount() )
+   	                       if ll_row > 0 then
+											if Gvs_language = 'C' then
+												gb_local.text = gds_dual.object.local_text [ ll_row ]
+											elseif Gvs_language = 'K' then
+												gb_local.text = gds_dual.object.korea_text [ ll_row ]
+											elseif Gvs_language = 'E' then
+												gb_local.text = gds_dual.object.english_origin_text [ ll_row ]													
+											end if
+			                       
+		                       end if
+
+                        case Checkbox!
+			                    cbx_local = tb_local.control[li_col].control[li_col1]
+			                    ls_text  = trim(cbx_local.text)
+
+			                    ll_row = gds_dual.find ( lvs_column_name + UPPER ( ls_text ) + "' ", 1, gds_dual.rowcount() )
+   	                       if ll_row > 0 then
+											if Gvs_language = 'C' then
+												cbx_local.text = gds_dual.object.local_text [ ll_row ]
+											elseif Gvs_language = 'K' then
+												cbx_local.text = gds_dual.object.korea_text [ ll_row ]
+											elseif Gvs_language = 'E' then
+												cbx_local.text = gds_dual.object.english_origin_text [ ll_row ]														
+											end if
+			                       
+		                       end if
+
+                        case Radiobutton!
+			                    rb_local = tb_local.control[li_col].control[li_col1]
+			                    ls_text  = trim(rb_local.text)
+
+			                    ll_row = gds_dual.find ( lvs_column_name + UPPER ( ls_text ) + "' ", 1, gds_dual.rowcount() )
+   	                       if ll_row > 0 then
+											if Gvs_language = 'C' then
+												rb_local.text = gds_dual.object.local_text [ ll_row ]
+											elseif Gvs_language = 'K' then
+												rb_local.text = gds_dual.object.korea_text [ ll_row ]
+											elseif Gvs_language = 'E' then
+												rb_local.text = gds_dual.object.english_origin_text [ ll_row ]														
+											end if
+			                       
+		                       end if
+
+                        case Datawindow!
+                             dw_local = tb_local.control[li_col].control[li_col1]
+                             ls_dwobject = dw_local.dataobject
+             	              if len(trim(ls_dwobject)) = 0 or isnull(ls_dwobject) then 
+                                continue
+                             end if
+
+                             ls_dwobject = dw_local.Object.DataWindow.Objects     // dw object list
+                             if len(trim(ls_dwobject)) = 0 then 
+                                continue
+                             end if
+			
+                             li_objcount = f_dual_lang_object_count(ls_dwobject)  // get object count
+                             li_start = 0
+                             
+                             for li_col2 = 1 to li_objcount
+                                	li_end = pos(ls_dwobject, "~t", li_start + 1)
+                                	if li_col2 < li_objcount then    // last object check
+                                    ls_dwhead = mid(ls_dwobject, li_start + 1, li_end - li_start - 1)	
+                                 else
+                                    ls_dwhead = mid(ls_dwobject, li_start + 1, len(ls_dwobject) - li_start)
+                                 end if
+					
+                                	if dw_local.describe (ls_dwhead + ".type") = "text" then    // object type check
+                                    ls_text = trim(dw_local.describe(ls_dwhead + ".text"))
+                                    
+					                     ll_row = gds_dual.find ( lvs_column_name + UPPER ( ls_text ) + "' ", 1, ll_rowcnt )
+                                    if ll_row > 0 then
+													if Gvs_language = 'C' then
+														ls_chg_text = gds_dual.object.local_text [ ll_row ]
+													elseif Gvs_language = 'K' then
+														ls_chg_text = gds_dual.object.korea_text [ ll_row ]
+													elseif Gvs_language = 'E' then
+														ls_chg_text = gds_dual.object.english_origin_text [ ll_row ]																												
+													end if
+                 	                     
+                                       dw_local.modify(ls_dwhead + ".text = '" + ls_chg_text + "'")
+                                    end if
+
+                                	elseif dw_local.describe (ls_dwhead + ".type") = "report" then    // object type check
+                                    dw_local.getchild ( ls_dwhead, dwc_child )
+                                    ds_child.dataobject = dw_local.describe (ls_dwhead + ".dataobject") 
+                                    ls_dwcobject = ds_child.object.DataWindow.Objects     // dw object list
+                                    if len(trim(ls_dwcobject)) = 0 then 
+                                       continue
+							 end if
+
+                                    li_cobjcount = f_dual_lang_object_count(ls_dwobject)     		  // get object count
+                                    li_cstart = 0
+                                    for li_col3 = 1 to li_cobjcount
+                                        li_cend = pos(ls_dwcobject, "~t", li_cstart + 1)
+                                        if li_col3 < li_cobjcount then    // last object check
+                                           ls_dwhead = mid(ls_dwcobject, li_cstart + 1, li_cend - li_cstart - 1)	
+                                        else
+                                        	 ls_dwhead = mid(ls_dwcobject, li_cstart + 1, len(ls_dwcobject) - li_cstart)
+                                        end if
+																	
+                                        if ds_child.describe (ls_dwhead + ".type") = "text" then    // object type check
+                                           ls_text = trim(ds_child.describe(ls_dwhead + ".text")) 
+
+                                           ll_row = gds_dual.find ( lvs_column_name + UPPER ( ls_text ) + "' ", 1, ll_rowcnt )
+                                           if ll_row > 0 then
+                 	                            	if Gvs_language = 'C' then
+																	ls_chg_text = gds_dual.object.local_text [ ll_row ]
+																elseif Gvs_language = 'K' then
+																	ls_chg_text = gds_dual.object.korea_text [ ll_row ]
+																elseif Gvs_language = 'E' then
+																	ls_chg_text = gds_dual.object.english_origin_text [ ll_row ]														
+																end if
+                 	                            dwc_child.modify(ls_dwhead + ".text = '" + ls_chg_text + "'")
+                                           end if 
+                                        end if
+                                        
+                                        li_cstart = li_cend
+                                    next
+                                	end if
+                                 li_start = li_end
+                             next
+                 end choose
+            next
+         next
+	END CHOOSE
+next
+end subroutine
+

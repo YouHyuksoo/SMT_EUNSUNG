@@ -1,0 +1,223 @@
+HA$PBExportHeader$d_pln_master_plan_4_insert_form.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=12632256 processing=0 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no )
+header(height=12 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=68 color="536870912" )
+detail(height=1148 color="536870912" )
+table(column=(type=char(6) update=yes updatewhereclause=yes name=plan_yyyymm dbname="ip_product_master_plan.plan_yyyymm" )
+ column=(type=datetime update=yes updatewhereclause=yes key=yes name=plan_date dbname="ip_product_master_plan.plan_date" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=mfs dbname="ip_product_master_plan.mfs" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=plan_priority dbname="ip_product_master_plan.plan_priority" )
+ column=(type=number update=yes updatewhereclause=yes name=plan_time dbname="ip_product_master_plan.plan_time" )
+ column=(type=number update=yes updatewhereclause=yes key=yes name=organization_id dbname="ip_product_master_plan.organization_id" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=item_code dbname="ip_product_master_plan.item_code" )
+ column=(type=char(1) update=yes updatewhereclause=yes name=product_line_type dbname="ip_product_master_plan.product_line_type" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=work_division dbname="ip_product_master_plan.work_division" )
+ column=(type=number update=yes updatewhereclause=yes name=order_qty dbname="ip_product_master_plan.order_qty" )
+ column=(type=number update=yes updatewhereclause=yes name=product_actual_qty dbname="product_actual_qty" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=line_code dbname="ip_product_master_plan.line_code" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=customer_code dbname="ip_product_master_plan.customer_code" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=customer_order_no dbname="ip_product_master_plan.customer_order_no" )
+ column=(type=datetime update=yes updatewhereclause=yes name=delivery_date dbname="ip_product_master_plan.delivery_date" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=origin_mfs dbname="ip_product_master_plan.origin_mfs" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=shift_code dbname="ip_product_master_plan.shift_code" )
+ column=(type=char(1) update=yes updatewhereclause=yes name=plan_transfer_yn dbname="ip_product_master_plan.plan_transfer_yn" )
+ column=(type=char(1) update=yes updatewhereclause=yes name=plan_status dbname="ip_product_master_plan.plan_status" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=enter_by dbname="ip_product_master_plan.enter_by" )
+ column=(type=datetime update=yes updatewhereclause=yes name=enter_date dbname="ip_product_master_plan.enter_date" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=last_modify_by dbname="ip_product_master_plan.last_modify_by" )
+ column=(type=datetime update=yes updatewhereclause=yes name=last_modify_date dbname="ip_product_master_plan.last_modify_date" )
+ column=(type=char(0) updatewhereclause=yes name=check_yn dbname="check_yn" )
+ column=(type=number update=yes updatewhereclause=yes key=yes name=plan_date_sequence dbname="ip_product_master_plan.plan_date_sequence" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=workstage_code dbname="ip_product_master_plan.workstage_code" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=machine_code dbname="ip_product_master_plan.machine_code" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=shipping_account dbname="ip_product_master_plan.shipping_account" )
+ column=(type=char(1) update=yes updatewhereclause=yes name=lot_divide_yn dbname="ip_product_master_plan.lot_divide_yn" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=route_no dbname="ip_product_master_plan.route_no" )
+ column=(type=char(300) updatewhereclause=yes name=item_name dbname="id_item.item_name" )
+ column=(type=char(300) updatewhereclause=yes name=item_spec dbname="id_item.item_spec" )
+ column=(type=char(3) updatewhereclause=yes name=item_uom dbname="id_item.item_uom" )
+ column=(type=char(1) updatewhereclause=yes name=iassy_exp_yn dbname="ip_product_master_plan.assy_exp_yn" )
+ column=(type=datetime updatewhereclause=yes name=iassy_exp_date dbname="ip_product_master_plan.assy_exp_date" )
+ column=(type=number updatewhereclause=yes name=work_capacity dbname="ip_product_daily_line_capacity.work_capacity" )
+ column=(type=number updatewhereclause=yes name=st_value dbname="ip_product_master_plan.st_value" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=customer_order_no_origin dbname="ip_product_master_plan.customer_order_no_origin" )
+ column=(type=char(20) updatewhereclause=yes name=item_class dbname="id_item.item_class" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=mold_code dbname="ip_product_master_plan.mold_code" )
+ column=(type=number update=yes updatewhereclause=yes name=mold_version dbname="ip_product_master_plan.mold_version" )
+ column=(type=number update=yes updatewhereclause=yes name=mold_set_serial dbname="ip_product_master_plan.mold_set_serial" )
+ column=(type=number update=yes updatewhereclause=yes name=requirment_time dbname="ip_product_master_plan.requirment_time" )
+ column=(type=number update=yes updatewhereclause=yes name=idle_time dbname="ip_product_master_plan.idle_time" )
+ column=(type=char(1) update=yes updatewhereclause=yes name=active_yn dbname="ip_product_master_plan.active_yn" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=plan_start_time dbname="ip_product_master_plan.plan_start_time" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=plan_end_time dbname="ip_product_master_plan.plan_end_time" )
+ column=(type=char(37) updatewhereclause=yes name=rowid dbname="ip_product_master_plan.rowid" )
+ column=(type=char(30) updatewhereclause=yes name=id_item_model_name dbname="id_item.model_name" )
+ column=(type=char(10) updatewhereclause=yes name=id_item_model_suffix dbname="id_item.model_suffix" )
+ column=(type=number update=yes updatewhereclause=yes name=plan_time1 dbname="ip_product_master_plan.plan_time1" )
+ column=(type=number update=yes updatewhereclause=yes name=plan_time2 dbname="ip_product_master_plan.plan_time2" )
+ column=(type=number update=yes updatewhereclause=yes name=plan_time3 dbname="ip_product_master_plan.plan_time3" )
+ column=(type=number update=yes updatewhereclause=yes name=plan_time4 dbname="ip_product_master_plan.plan_time4" )
+ column=(type=number update=yes updatewhereclause=yes name=plan_time5 dbname="ip_product_master_plan.plan_time5" )
+ column=(type=number update=yes updatewhereclause=yes name=plan_time6 dbname="ip_product_master_plan.plan_time6" )
+ column=(type=number update=yes updatewhereclause=yes name=plan_time7 dbname="ip_product_master_plan.plan_time7" )
+ column=(type=number update=yes updatewhereclause=yes name=plan_time8 dbname="ip_product_master_plan.plan_time8" )
+ column=(type=number update=yes updatewhereclause=yes name=plan_time9 dbname="ip_product_master_plan.plan_time9" )
+ column=(type=number update=yes updatewhereclause=yes name=plan_time10 dbname="ip_product_master_plan.plan_time10" )
+ retrieve="  SELECT ~"IP_PRODUCT_MASTER_PLAN~".~"PLAN_YYYYMM~",   
+         ~"IP_PRODUCT_MASTER_PLAN~".~"PLAN_DATE~",   
+         ~"IP_PRODUCT_MASTER_PLAN~".~"MFS~",   
+         ~"IP_PRODUCT_MASTER_PLAN~".~"PLAN_PRIORITY~",   
+         ~"IP_PRODUCT_MASTER_PLAN~".~"PLAN_TIME~",   
+         ~"IP_PRODUCT_MASTER_PLAN~".~"ORGANIZATION_ID~",   
+         ~"IP_PRODUCT_MASTER_PLAN~".~"ITEM_CODE~",   
+         ~"IP_PRODUCT_MASTER_PLAN~".~"PRODUCT_LINE_TYPE~",   
+         ~"IP_PRODUCT_MASTER_PLAN~".~"WORK_DIVISION~",   
+         ~"IP_PRODUCT_MASTER_PLAN~".~"ORDER_QTY~",   
+        NVL( ~"IP_PRODUCT_MASTER_PLAN~".~"PRODUCT_ACTUAL_QTY~", 0) PRODUCT_ACTUAL_QTY,  
+         ~"IP_PRODUCT_MASTER_PLAN~".~"LINE_CODE~",   
+         ~"IP_PRODUCT_MASTER_PLAN~".~"CUSTOMER_CODE~",   
+         ~"IP_PRODUCT_MASTER_PLAN~".~"CUSTOMER_ORDER_NO~",   
+         ~"IP_PRODUCT_MASTER_PLAN~".~"DELIVERY_DATE~",   
+         ~"IP_PRODUCT_MASTER_PLAN~".~"ORIGIN_MFS~",   
+         ~"IP_PRODUCT_MASTER_PLAN~".~"SHIFT_CODE~",   
+         ~"IP_PRODUCT_MASTER_PLAN~".~"PLAN_TRANSFER_YN~",   
+         ~"IP_PRODUCT_MASTER_PLAN~".~"PLAN_STATUS~",   
+         ~"IP_PRODUCT_MASTER_PLAN~".~"ENTER_BY~",   
+         ~"IP_PRODUCT_MASTER_PLAN~".~"ENTER_DATE~",   
+         ~"IP_PRODUCT_MASTER_PLAN~".~"LAST_MODIFY_BY~",   
+         ~"IP_PRODUCT_MASTER_PLAN~".~"LAST_MODIFY_DATE~",   
+         '' check_yn,   
+         ~"IP_PRODUCT_MASTER_PLAN~".~"PLAN_DATE_SEQUENCE~",   
+         ~"IP_PRODUCT_MASTER_PLAN~".~"WORKSTAGE_CODE~",   
+         ~"IP_PRODUCT_MASTER_PLAN~".~"MACHINE_CODE~",   
+         ~"IP_PRODUCT_MASTER_PLAN~".~"SHIPPING_ACCOUNT~",   
+         ~"IP_PRODUCT_MASTER_PLAN~".~"LOT_DIVIDE_YN~",   
+         ~"IP_PRODUCT_MASTER_PLAN~".~"ROUTE_NO~",   
+         ~"ID_ITEM~".~"ITEM_NAME~",   
+         ~"ID_ITEM~".~"ITEM_SPEC~",   
+         ~"ID_ITEM~".~"ITEM_UOM~",   
+         ~"IP_PRODUCT_MASTER_PLAN~".~"ASSY_EXP_YN~",   
+         ~"IP_PRODUCT_MASTER_PLAN~".~"ASSY_EXP_DATE~",   
+         ~"IP_PRODUCT_DAILY_LINE_CAPACITY~".~"WORK_CAPACITY~",   
+		~"IP_PRODUCT_MASTER_PLAN~".~"ST_VALUE~" ,
+         ~"IP_PRODUCT_MASTER_PLAN~".~"CUSTOMER_ORDER_NO_ORIGIN~",   
+         ~"ID_ITEM~".~"ITEM_CLASS~"  ,
+         ~"IP_PRODUCT_MASTER_PLAN~".~"MOLD_CODE~",
+         ~"IP_PRODUCT_MASTER_PLAN~".~"MOLD_VERSION~",
+         ~"IP_PRODUCT_MASTER_PLAN~".~"MOLD_SET_SERIAL~",
+         ~"IP_PRODUCT_MASTER_PLAN~".~"REQUIRMENT_TIME~",
+         ~"IP_PRODUCT_MASTER_PLAN~".~"IDLE_TIME~",
+         ~"IP_PRODUCT_MASTER_PLAN~".~"ACTIVE_YN~",
+         ~"IP_PRODUCT_MASTER_PLAN~".~"PLAN_START_TIME~",
+         ~"IP_PRODUCT_MASTER_PLAN~".~"PLAN_END_TIME~" ,
+		
+		IP_PRODUCT_MASTER_PLAN.rowid ,
+		ID_ITEM.MODEL_NAME , 
+		ID_ITEM.MODEL_SUFFIX ,
+		
+		PLAN_TIME1 ,
+		PLAN_TIME2 ,
+		PLAN_TIME3 ,
+		PLAN_TIME4 ,
+		PLAN_TIME5 ,
+		PLAN_TIME6 ,
+		PLAN_TIME7 ,
+		PLAN_TIME8 ,
+		PLAN_TIME9 ,
+		PLAN_TIME10
+   
+    FROM ~"IP_PRODUCT_MASTER_PLAN~",   
+         ~"ID_ITEM~",   
+         ~"IP_PRODUCT_DAILY_LINE_CAPACITY~"
+   WHERE ( ip_product_master_plan.plan_date = ip_product_daily_line_capacity.plan_date (+)) and  
+         ( ip_product_master_plan.organization_id = ip_product_daily_line_capacity.organization_id (+)) and  
+         ( ip_product_master_plan.line_code = ip_product_daily_line_capacity.line_code (+)) " update="IP_PRODUCT_MASTER_PLAN" updatewhere=0 updatekeyinplace=yes )
+text(band=detail alignment="1" text="Customer Order No Origin" border="0" color="33554432" x="823" y="72" height="52" width="411" html.valueishtml="0"  name=customer_order_no_origin_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=detail alignment="1" text="Customer Code" border="0" color="16711680" x="823" y="4" height="52" width="411" html.valueishtml="0"  name=customer_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=34 alignment="0" tabsequence=270 border="0" color="33554432" x="82" y="1632" height="52" width="603" format="[general]" html.valueishtml="0"  name=iassy_exp_yn visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=35 alignment="0" tabsequence=280 border="0" color="33554432" x="82" y="1632" height="52" width="603" format="[shortdate] [time]" html.valueishtml="0"  name=iassy_exp_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=36 alignment="0" tabsequence=290 border="0" color="33554432" x="82" y="1632" height="52" width="603" format="[general]" html.valueishtml="0"  name=work_capacity visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+text(band=detail alignment="1" text="Machine Code" border="0" color="33554432" x="823" y="348" height="52" width="411" html.valueishtml="0"  name=machine_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=detail alignment="1" text="Workstage Code" border="0" color="16711680" x="823" y="280" height="52" width="411" html.valueishtml="0"  name=workstage_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=detail alignment="1" text="Work Division" border="0" color="33554432" x="823" y="140" height="52" width="411" html.valueishtml="0"  name=work_division_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+button(band=detail text="?" enabled=yes action="0" border="0" color="33554432" x="1627" y="208" height="60" width="82" vtextalign="0" htextalign="0"  name=b_line visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=detail alignment="1" text="Line Code" border="0" color="16711680" x="823" y="212" height="52" width="411" html.valueishtml="0"  name=line_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=38 alignment="2" tabsequence=160 border="5" color="33554432" x="1253" y="72" height="52" width="361" format="[general]" html.valueishtml="0" protect="0~tif (  plan_transfer_yn =~"Y~" or product_actual_qty > 0 , 1 , 0 )"  name=customer_order_no_origin visible="1" edit.limit=30 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=26 alignment="2" tabsequence=200 border="5" color="33554432" x="1253" y="280" height="52" width="361" format="[general]" html.valueishtml="0" protect="0~tif (  plan_transfer_yn =~"Y~" or product_actual_qty > 0 , 1 , 0 )"  name=workstage_code visible="1" dddw.name=vd_workstage_code dddw.displaycolumn=workstage_code dddw.datacolumn=workstage_code dddw.percentwidth=300 dddw.lines=20 dddw.limit=0 dddw.allowedit=no dddw.useasborder=yes dddw.case=any dddw.hscrollbar=yes dddw.vscrollbar=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=27 alignment="2" tabsequence=210 border="5" color="33554432" x="1253" y="348" height="52" width="361" format="[general]" html.valueishtml="0" protect="0~tif (  plan_transfer_yn =~"Y~" or product_actual_qty > 0 , 1 , 0 )"  name=machine_code visible="1" dddw.name=vd_machine_code dddw.displaycolumn=machine_code dddw.datacolumn=machine_code dddw.percentwidth=300 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=yes dddw.case=any dddw.hscrollbar=yes dddw.vscrollbar=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=9 alignment="2" tabsequence=180 border="5" color="33554432" x="1253" y="140" height="52" width="361" format="[general]" html.valueishtml="0" protect="0~tif (  plan_transfer_yn =~"Y~" or product_actual_qty > 0 , 1 , 0 )"  name=work_division visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=200 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=yes dddw.case=any dddw.hscrollbar=yes dddw.vscrollbar=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=12 alignment="2" tabsequence=190 border="5" color="33554432" x="1253" y="212" height="52" width="361" format="[general]" html.valueishtml="0" protect="0~tif (  plan_transfer_yn =~"Y~" or product_actual_qty > 0 , 1 , 0 )"  name=line_code visible="1" dddw.name=vd_line_code dddw.displaycolumn=line_code dddw.datacolumn=line_code dddw.percentwidth=300 dddw.lines=20 dddw.limit=0 dddw.allowedit=no dddw.useasborder=yes dddw.case=any dddw.hscrollbar=yes dddw.vscrollbar=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+text(band=detail alignment="1" text="Plan Yyyymm" border="0" color="33554432" x="9" y="4" height="52" width="411" html.valueishtml="0"  name=plan_yyyymm_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=detail alignment="1" text="Plan Date Sequence" border="0" color="33554432" x="9" y="140" height="52" width="411" html.valueishtml="0"  name=plan_date_sequence_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=detail alignment="1" text="Item Code" border="0" color="16711680" x="9" y="280" height="52" width="411" html.valueishtml="0"  name=item_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=detail alignment="1" text="Mfs" border="0" color="33554432" x="9" y="208" height="52" width="411" html.valueishtml="0"  name=mfs_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=detail alignment="1" text="Plan Date" border="0" color="16711680" x="9" y="72" height="52" width="411" html.valueishtml="0"  name=plan_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=detail alignment="1" text="Plan Time" border="0" color="33554432" x="9" y="496" height="52" width="411" html.valueishtml="0"  name=plan_time_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=detail alignment="1" text="Plan Priority" border="0" color="16711680" x="9" y="424" height="52" width="411" html.valueishtml="0"  name=plan_priority_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=detail alignment="1" text="Product Line Type" border="0" color="33554432" x="9" y="568" height="52" width="411" html.valueishtml="0"  name=product_line_type_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=detail alignment="1" text="Order Qty" border="0" color="16711680" x="9" y="780" height="52" width="411" html.valueishtml="0"  name=order_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=detail alignment="1" text="Plan Start Time" border="0" color="16711680" x="9" y="640" height="52" width="411" html.valueishtml="0"  name=t_10 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=detail alignment="1" text="Plan End Time" border="0" color="16711680" x="9" y="708" height="52" width="411" html.valueishtml="0"  name=t_11 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=detail alignment="1" text="St Value" border="0" color="33554432" x="9" y="352" height="52" width="411" html.valueishtml="0"  name=t_5 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=1 alignment="2" tabsequence=10 border="5" color="33554432" x="439" y="4" height="52" width="361" format="[general]" html.valueishtml="0" protect="0~tif (  plan_transfer_yn =~"Y~" or product_actual_qty > 0 , 1 , 0 )"  name=plan_yyyymm visible="1" edit.limit=6 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=2 alignment="2" tabsequence=20 border="5" color="33554432" x="439" y="72" height="52" width="361" format="yyyy/mm/dd" html.valueishtml="0" protect="0~tif (  plan_transfer_yn =~"Y~" or product_actual_qty > 0 , 1 , 0 )"  name=plan_date visible="1" editmask.spin=yes editmask.mask="yyyy/mm/dd" editmask.spinincr=1 editmask.focusrectangle=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+column(band=detail id=25 alignment="2" tabsequence=30 border="5" color="33554432" x="439" y="140" height="52" width="361" format="[general]" html.valueishtml="0" protect="0~tif (  plan_transfer_yn =~"Y~" or product_actual_qty > 0 , 1 , 0 )"  name=plan_date_sequence visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=3 alignment="2" tabsequence=40 border="5" color="33554432" x="439" y="208" height="52" width="361" format="[general]" html.valueishtml="0" protect="0~tif (  plan_transfer_yn =~"Y~" or product_actual_qty > 0 , 1 , 0 )"  name=mfs visible="1" edit.limit=30 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=7 alignment="2" tabsequence=50 border="5" color="33554432" x="439" y="280" height="52" width="361" format="[general]" html.valueishtml="0" protect="0~tif (  plan_transfer_yn =~"Y~" or product_actual_qty > 0 , 1 , 0 )"  name=item_code visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=5 alignment="2" tabsequence=80 border="5" color="33554432" x="439" y="496" height="52" width="361" format="00:00" html.valueishtml="0" protect="0~tif (  plan_transfer_yn =~"Y~" or product_actual_qty > 0 , 1 , 0 )"  name=plan_time visible="1" edit.limit=0 edit.case=any edit.format="00:00" edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=4 alignment="2" tabsequence=70 border="5" color="33554432" x="439" y="424" height="52" width="361" format="[general]" html.valueishtml="0" protect="0~tif (  plan_transfer_yn =~"Y~" or product_actual_qty > 0 , 1 , 0 )"  name=plan_priority visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+column(band=detail id=8 alignment="2" tabsequence=90 border="5" color="33554432" x="439" y="568" height="52" width="361" format="[general]" html.valueishtml="0" protect="0~tif (  plan_transfer_yn =~"Y~" or product_actual_qty > 0 , 1 , 0 )"  name=product_line_type visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=200 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=yes dddw.case=any dddw.hscrollbar=yes dddw.vscrollbar=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=10 alignment="1" tabsequence=130 border="5" color="33554432" x="439" y="780" height="52" width="361" format="[general]" html.valueishtml="0" protect="0~tif (  plan_transfer_yn =~"Y~" or product_actual_qty > 0 , 1 , 0 )"  name=order_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+column(band=detail id=37 alignment="2" tabsequence=60 border="5" color="33554432" x="439" y="352" height="52" width="247" format="[general]" html.valueishtml="0"  name=st_value visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+button(band=detail text="?" enabled=yes action="0" border="0" color="33554432" x="699" y="340" height="80" width="114" vtextalign="0" htextalign="0"  name=b_gen_st visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=detail alignment="0" text="0800" border="0" color="16711680" x="690" y="672" height="52" width="110" html.valueishtml="0"  name=t_12 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=46 alignment="0" tabsequence=110 border="5" color="16711680" x="439" y="640" height="52" width="229" format="[general]" html.valueishtml="0"  name=plan_start_time visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+column(band=detail id=47 alignment="0" tabsequence=120 border="5" color="16711680" x="439" y="708" height="52" width="229" format="[general]" html.valueishtml="0"  name=plan_end_time visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+column(band=detail id=13 alignment="2" tabsequence=150 border="5" color="33554432" x="1253" y="4" height="52" width="361" format="[general]" html.valueishtml="0" protect="0~tif (  plan_transfer_yn =~"Y~" or product_actual_qty > 0 , 1 , 0 )"  name=customer_code visible="1" edit.limit=40 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+compute(band=detail alignment="1" expression="page() + ' of ' + pageCount()"border="5" color="33554432" x="1518" y="1040" height="52" width="229" format="[general]" html.valueishtml="0"  name=page_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=detail alignment="1" text="Origin Mfs" border="0" color="33554432" x="823" y="416" height="52" width="411" html.valueishtml="0"  name=origin_mfs_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=detail alignment="1" text="Shift Code" border="0" color="33554432" x="823" y="488" height="52" width="411" html.valueishtml="0"  name=shift_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=detail alignment="1" text="Idle Time" border="0" color="33554432" x="823" y="560" height="52" width="411" html.valueishtml="0"  name=t_9 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=16 alignment="2" tabsequence=250 border="5" color="33554432" x="1253" y="416" height="52" width="361" format="[general]" html.valueishtml="0" protect="0~tif (  plan_transfer_yn =~"Y~" or product_actual_qty > 0 , 1 , 0 )"  name=origin_mfs visible="1" edit.limit=30 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=17 alignment="2" tabsequence=260 border="5" color="33554432" x="1253" y="488" height="52" width="361" format="[general]" html.valueishtml="0" protect="0~tif (  plan_transfer_yn =~"Y~" or product_actual_qty > 0 , 1 , 0 )"  name=shift_code visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=200 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=yes dddw.case=any dddw.hscrollbar=yes dddw.vscrollbar=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=44 alignment="1" tabsequence=340 border="5" color="33554432" x="1253" y="564" height="56" width="366" format="##0.0" html.valueishtml="0"  name=idle_time visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+text(band=detail alignment="1" text="Plan Transfer Yn" border="0" color="33554432" x="823" y="708" height="52" width="411" html.valueishtml="0"  name=plan_transfer_yn_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=detail alignment="1" text="Customer Order No" border="0" color="33554432" x="818" y="636" height="52" width="411" html.valueishtml="0"  name=customer_order_no_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=18 alignment="2" tabsequence=32766 border="5" color="33554432" x="1253" y="708" height="52" width="361" format="[general]" html.valueishtml="0" protect="0~tif (  plan_transfer_yn =~"Y~" or product_actual_qty > 0 , 1 , 0 )"  name=plan_transfer_yn visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=200 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=yes dddw.case=any dddw.hscrollbar=yes dddw.vscrollbar=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=14 alignment="2" tabsequence=170 border="5" color="33554432" x="1253" y="636" height="52" width="361" format="[general]" html.valueishtml="0" protect="0~tif (  plan_transfer_yn =~"Y~" or product_actual_qty > 0 , 1 , 0 )"  name=customer_order_no visible="1" edit.limit=30 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+text(band=detail alignment="1" text="Plan Status" border="0" color="33554432" x="823" y="780" height="52" width="411" html.valueishtml="0"  name=plan_status_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=19 alignment="2" tabsequence=32766 border="5" color="33554432" x="1253" y="780" height="52" width="361" format="[general]" html.valueishtml="0" protect="0~tif (  plan_transfer_yn =~"Y~" or product_actual_qty > 0 , 1 , 0 )"  name=plan_status visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+text(band=detail alignment="1" text="Product Actual Qty" border="0" color="33554432" x="9" y="852" height="60" width="411" html.valueishtml="0"  name=product_actual_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=11 alignment="1" tabsequence=32766 border="5" color="33554432" x="439" y="852" height="52" width="361" format="[general]" html.valueishtml="0" protect="0~tif (  plan_transfer_yn =~"Y~" or product_actual_qty > 0 , 1 , 0 )"  name=product_actual_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+text(band=detail alignment="1" text="Requirment Time" border="0" color="33554432" x="823" y="852" height="52" width="411" html.valueishtml="0"  name=t_8 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=43 alignment="2" tabsequence=330 border="5" color="33554432" x="1253" y="852" height="52" width="361" format="###,##0.00" html.valueishtml="0"  name=requirment_time visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+text(band=detail alignment="1" text="Night Plan" border="0" color="33554432" x="14" y="1068" height="52" width="411" html.valueishtml="0"  name=t_14 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=detail alignment="1" text="Day Plan" border="0" color="33554432" x="9" y="984" height="52" width="411" html.valueishtml="0"  name=t_13 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=56 alignment="2" tabsequence=410 border="5" color="33554432" x="443" y="1068" height="60" width="192" format="[general]" html.valueishtml="0"  name=plan_time6 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=57 alignment="2" tabsequence=420 border="5" color="33554432" x="658" y="1068" height="60" width="192" format="[general]" html.valueishtml="0"  name=plan_time7 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=58 alignment="2" tabsequence=430 border="5" color="33554432" x="873" y="1068" height="60" width="192" format="[general]" html.valueishtml="0"  name=plan_time8 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=59 alignment="2" tabsequence=440 border="5" color="33554432" x="1083" y="1068" height="60" width="192" format="[general]" html.valueishtml="0"  name=plan_time9 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=60 alignment="2" tabsequence=450 border="5" color="33554432" x="1294" y="1068" height="60" width="192" format="[general]" html.valueishtml="0"  name=plan_time10 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=51 alignment="2" tabsequence=360 border="5" color="33554432" x="443" y="984" height="60" width="192" format="[general]" html.valueishtml="0"  name=plan_time1 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=52 alignment="2" tabsequence=370 border="5" color="33554432" x="658" y="984" height="60" width="192" format="[general]" html.valueishtml="0"  name=plan_time2 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=53 alignment="2" tabsequence=380 border="5" color="33554432" x="873" y="984" height="60" width="192" format="[general]" html.valueishtml="0"  name=plan_time3 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=54 alignment="2" tabsequence=390 border="5" color="33554432" x="1083" y="984" height="60" width="192" format="[general]" html.valueishtml="0"  name=plan_time4 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=55 alignment="2" tabsequence=400 border="5" color="33554432" x="1294" y="984" height="60" width="192" format="[general]" html.valueishtml="0"  name=plan_time5 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+text(band=detail alignment="2" text="A" border="0" color="33554432" x="439" y="920" height="48" width="192" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=detail alignment="2" text="B" border="0" color="33554432" x="654" y="920" height="52" width="192" html.valueishtml="0"  name=t_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=detail alignment="2" text="C" border="0" color="33554432" x="873" y="920" height="52" width="192" html.valueishtml="0"  name=t_3 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=detail alignment="2" text="D" border="0" color="33554432" x="1093" y="920" height="52" width="192" html.valueishtml="0"  name=t_4 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=detail alignment="2" text="E" border="0" color="33554432" x="1294" y="920" height="52" width="192" html.valueishtml="0"  name=t_6 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

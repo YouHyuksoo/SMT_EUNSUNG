@@ -1,0 +1,73 @@
+HA$PBExportHeader$d_mcn_daily_operation_rpt.srd
+$PBExportComments$D_MCN_DAILY_OPERATION_RPT Create Date :2007-10-28 Created By : ADMIN
+release 10.5;
+datawindow(units=0 timer_interval=0 color=16777215 processing=0 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no )
+header(height=400 color="16777215" )
+summary(height=88 color="536870912" )
+footer(height=92 color="536870912" )
+detail(height=76 color="16777215" )
+table(column=(type=char(30) updatewhereclause=yes name=machine_code dbname="imcn_machine.machine_code" dbalias=".machine_code" )
+ column=(type=char(100) updatewhereclause=yes name=machine_name dbname="imcn_machine.machine_name" dbalias=".machine_name" )
+ column=(type=number updatewhereclause=yes name=total_operation_time dbname="imcn_machine_daily_operation.total_operation_time" dbalias=".total_operation_time" )
+ column=(type=datetime updatewhereclause=yes name=plan_date dbname="imcn_machine_daily_operation.plan_date" dbalias=".plan_date" )
+ column=(type=datetime updatewhereclause=yes name=start_time dbname="imcn_machine_daily_operation.start_time" dbalias=".start_time" )
+ column=(type=datetime updatewhereclause=yes name=end_time dbname="imcn_machine_daily_operation.end_time" dbalias=".end_time" )
+ column=(type=char(1) updatewhereclause=yes name=machine_status_code dbname="imcn_machine_daily_operation.machine_status_code" dbalias=".machine_status_code" )
+ retrieve="  SELECT ~"IMCN_MACHINE~".~"MACHINE_CODE~",   
+         ~"IMCN_MACHINE~".~"MACHINE_NAME~",   
+         ~"IMCN_MACHINE_DAILY_OPERATION~".~"TOTAL_OPERATION_TIME~",  
+           ~"IMCN_MACHINE_DAILY_OPERATION~".~"PLAN_DATE~",
+         ~"IMCN_MACHINE_DAILY_OPERATION~".~"START_TIME~",   
+         ~"IMCN_MACHINE_DAILY_OPERATION~".~"END_TIME~",   
+         ~"IMCN_MACHINE_DAILY_OPERATION~".~"MACHINE_STATUS_CODE~"  
+    FROM ~"IMCN_MACHINE~",   
+         ~"IMCN_MACHINE_DAILY_OPERATION~"  
+   WHERE ( imcn_machine.machine_code = imcn_machine_daily_operation.machine_code (+)) and  
+         ( imcn_machine.organization_id = imcn_machine_daily_operation.organization_id (+)) and  
+         ( ( ~"IMCN_MACHINE~".~"MACHINE_CODE~" like :arg_machine_code ) AND  
+         (  ~"IMCN_MACHINE~".~"MACHINE_TYPE~" like :arg_machine_type ) AND  
+         ( ~"IMCN_MACHINE_DAILY_OPERATION~".~"PLAN_DATE~" >= :arg_dateset ) AND  
+         ( ~"IMCN_MACHINE_DAILY_OPERATION~".~"PLAN_DATE~" <= :arg_dateend ) AND  
+		(~"IMCN_MACHINE_DAILY_OPERATION~".~"MACHINE_STATUS_CODE~"  <> 'S' ) AND
+         ( ~"IMCN_MACHINE~".~"ORGANIZATION_ID~" = :arg_org ) )    
+" arguments=(("arg_machine_code", string),("arg_machine_type", string),("arg_dateset", datetime),("arg_dateend", datetime),("arg_org", number))  sort="machine_code A plan_date A " )
+group(level=1 header.height=0 trailer.height=104 by=("machine_code" , "plan_date" ) newpage=yes header.color="536870912" trailer.color="65535" )
+text(band=header alignment="2" text="No" border="0" color="33554432" x="119" y="224" height="152" width="151" html.valueishtml="0"  name=no_1_t visible="1"  font.face="TAHOMA" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+line(band=header x1="5" y1="208" x2="3662" y2="208"  name=l_1 visible="1" pen.style="0" pen.width="9" pen.color="255"  background.mode="2" background.color="1073741824" )
+line(band=header x1="5" y1="388" x2="3662" y2="388"  name=l_2 visible="1" pen.style="0" pen.width="9" pen.color="255"  background.mode="2" background.color="1073741824" )
+text(band=header alignment="2" text="Machine Code" border="0" color="33554432" x="279" y="224" height="152" width="558" html.valueishtml="0"  name=machine_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="1" text="Machine Status Code" border="0" color="33554432" x="3241" y="224" height="152" width="411" html.valueishtml="0"  name=t_4 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+text(band=header alignment="2" text="Machine Name" border="0" color="33554432" x="846" y="224" height="152" width="773" html.valueishtml="0"  name=machine_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Plan Date" border="0" color="33554432" x="1627" y="224" height="152" width="270" html.valueishtml="0"  name=t_3 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Start Time" border="0" color="33554432" x="1911" y="224" height="152" width="233" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="End Time" border="0" color="33554432" x="2158" y="224" height="152" width="219" html.valueishtml="0"  name=t_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="1" text="Total Operation Time" border="0" color="33554432" x="2386" y="224" height="152" width="398" html.valueishtml="0"  name=t_5 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+text(band=header alignment="1" text="Total Operation Time(Min)" border="0" color="33554432" x="2802" y="224" height="152" width="416" html.valueishtml="0"  name=t_6 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+compute(band=detail alignment="0" expression="GETROW()"border="0" color="0" x="119" y="4" height="64" width="151" format="[GENERAL]" html.valueishtml="0"  name=no_1 visible="1"  font.face="TAHOMA" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=detail alignment="0" expression="TRIM('')"border="0" color="0" x="9" y="4" height="64" width="101" format="[GENERAL]" html.valueishtml="0"  name=indicator visible="1"  font.face="TAHOMA" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432" x="279" y="4" height="64" width="558" format="[general]" html.valueishtml="0"  name=machine_code visible="1" edit.limit=30 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=7 alignment="2" tabsequence=32766 border="0" color="33554432" x="3241" y="12" height="52" width="411" format="[general]" html.valueishtml="0"  name=machine_status_code visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432" x="846" y="4" height="64" width="773" format="[general]" html.valueishtml="0"  name=machine_name visible="1" edit.limit=100 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="0" color="33554432" x="1627" y="4" height="64" width="270" format="YYYYMMDD" html.valueishtml="0"  name=plan_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=5 alignment="2" tabsequence=32766 border="0" color="33554432" x="1911" y="4" height="64" width="233" format="hhmm" html.valueishtml="0"  name=start_time visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=6 alignment="2" tabsequence=32766 border="0" color="33554432" x="2158" y="4" height="64" width="219" format="hhmm" html.valueishtml="0"  name=end_time visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=3 alignment="1" tabsequence=32766 border="0" color="33554432" x="2386" y="4" height="64" width="398" format="###,##0" html.valueishtml="0"  name=total_operation_time visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+compute(band=detail alignment="1" expression=" total_operation_time / 60"border="0" color="33554432" x="2802" y="4" height="52" width="416" format="###,##0.00" html.valueishtml="0"  name=compute_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+line(band=trailer.1 x1="5" y1="4" x2="3662" y2="4"  name=l_3 visible="1" pen.style="0" pen.width="9" pen.color="255"  background.mode="2" background.color="1073741824" )
+compute(band=trailer.1 alignment="1" expression="sum(total_operation_time for group 1)"border="0" color="33554432" x="2377" y="24" height="64" width="398" format="###,##0" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+compute(band=trailer.1 alignment="1" expression="sum( total_operation_time / 60 for group 1)"border="0" color="33554432" x="2802" y="24" height="64" width="416" format="###,##0.00" html.valueishtml="0"  name=compute_3 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+line(band=summary x1="5" y1="4" x2="3662" y2="4"  name=l_4 visible="1" pen.style="0" pen.width="9" pen.color="255"  background.mode="2" background.color="1073741824" )
+compute(band=footer alignment="2" expression="'Page ' + page() + ' of ' + pageCount()"border="0" color="33554432" x="1307" y="20" height="60" width="672" format="[general]" html.valueishtml="0"  name=page_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" font.underline="1" background.mode="1" background.color="553648127" )
+line(band=footer x1="5" y1="4" x2="3662" y2="4"  name=l_5 visible="1" pen.style="0" pen.width="9" pen.color="255"  background.mode="2" background.color="1073741824" )
+text(band=foreground alignment="2" text="Daily Operation Report" border="0" color="33554432" x="5" y="20" height="100" width="3657" html.valueishtml="0"  name=t_9 visible="1"  font.face="Tahoma" font.height="-16" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" font.underline="1" background.mode="1" background.color="553648127" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

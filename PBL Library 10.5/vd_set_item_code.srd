@@ -1,0 +1,59 @@
+HA$PBExportHeader$vd_set_item_code.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=16777215 processing=1 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no grid.lines=0 )
+header(height=132 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=76 color="16776960" )
+table(column=(type=char(20) updatewhereclause=yes name=item_code dbname="id_item.item_code" )
+ column=(type=char(1) updatewhereclause=yes name=set_item_yn dbname="id_item.set_item_yn" )
+ column=(type=char(300) updatewhereclause=yes name=item_name dbname="id_item.item_name" )
+ column=(type=char(300) updatewhereclause=yes name=item_spec dbname="id_item.item_spec" )
+ column=(type=char(3) updatewhereclause=yes name=item_uom dbname="id_item.item_uom" )
+ column=(type=char(10) updatewhereclause=yes name=item_type dbname="id_item.item_type" )
+ column=(type=char(10) updatewhereclause=yes name=line_type dbname="id_item.line_type" )
+ column=(type=char(30) updatewhereclause=yes name=model_name dbname="id_item.model_name" )
+ column=(type=number updatewhereclause=yes name=organization_id dbname="id_item.organization_id" )
+ retrieve="  SELECT ~"ID_ITEM~".~"ITEM_CODE~",   
+         ~"ID_ITEM~".~"SET_ITEM_YN~",   
+         ~"ID_ITEM~".~"ITEM_NAME~",   
+         ~"ID_ITEM~".~"ITEM_SPEC~",   
+         ~"ID_ITEM~".~"ITEM_UOM~",   
+         ~"ID_ITEM~".~"ITEM_TYPE~",   
+         ~"ID_ITEM~".~"LINE_TYPE~",   
+         ~"ID_ITEM~".~"MODEL_NAME~",   
+         ~"ID_ITEM~".~"ORGANIZATION_ID~"  
+    FROM ~"ID_ITEM~"  
+   WHERE ~"ID_ITEM~".~"SET_ITEM_YN~" = 'Y'   
+     AND ORGANIZATION_ID = TO_NUMBER(:ARG_ORG)
+" arguments=(("ARG_ORG", string))  sort="set_item_yn D item_code A " )
+text(band=header alignment="2" text="Set Item Yn" border="0" color="65535" x="123" y="8" height="116" width="192" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+text(band=header alignment="2" text="Item Name" border="0" color="65535" x="1125" y="8" height="116" width="494" html.valueishtml="0"  name=item_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+text(band=header alignment="2" text="Item Spec" border="0" color="65535" x="1627" y="8" height="116" width="379" html.valueishtml="0"  name=item_spec_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+text(band=header alignment="2" text="Item Code" border="0" color="65535" x="759" y="8" height="116" width="357" html.valueishtml="0"  name=item_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+text(band=header alignment="2" text="Item Uom" border="0" color="65535" x="2016" y="8" height="116" width="206" html.valueishtml="0"  name=item_uom_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+text(band=header alignment="2" text="Item Type" border="0" color="65535" x="2231" y="8" height="116" width="347" html.valueishtml="0"  name=item_type_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+text(band=header alignment="2" text="Line Type" border="0" color="65535" x="2587" y="8" height="116" width="283" html.valueishtml="0"  name=line_type_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+text(band=header alignment="2" text="Organization Id" border="0" color="65535" x="2880" y="8" height="116" width="315" html.valueishtml="0"  name=organization_id_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+text(band=header alignment="2" text="Model Name" border="0" color="65535" x="325" y="8" height="116" width="425" html.valueishtml="0"  name=model_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="0" x="1125" y="4" height="68" width="494" format="[general]" html.valueishtml="0"  name=item_name  tag="$$HEX2$$88d485ba$$ENDHEX$$" visible="1" edit.limit=50 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="0" x="1627" y="4" height="68" width="379" format="[general]" html.valueishtml="0"  name=item_spec  tag="$$HEX2$$dcada9ac$$ENDHEX$$" visible="1" edit.limit=50 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="0" x="759" y="4" height="68" width="357" format="[general]" html.valueishtml="0"  name=item_code visible="1" edit.limit=0 edit.case=any edit.autoselect=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="0" tabsequence=32766 border="0" color="0" x="2016" y="4" height="68" width="206" format="[general]" html.valueishtml="0"  name=item_uom visible="1" edit.limit=0 edit.case=any edit.autoselect=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=6 alignment="0" tabsequence=32766 border="0" color="0" x="2231" y="4" height="68" width="347" format="[general]" html.valueishtml="0"  name=item_type visible="1" edit.limit=0 edit.case=any edit.autoselect=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=7 alignment="0" tabsequence=32766 border="0" color="0" x="2587" y="4" height="68" width="283" format="[general]" html.valueishtml="0"  name=line_type visible="1" edit.limit=0 edit.case=any edit.autoselect=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=9 alignment="0" tabsequence=32766 border="0" color="0" x="2880" y="4" height="68" width="315" format="[general]" html.valueishtml="0"  name=organization_id visible="1" edit.limit=0 edit.case=any edit.autoselect=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="0" x="123" y="4" height="68" width="192" format="[general]" html.valueishtml="0"  name=set_item_yn visible="1" dddw.name=vd_set_item_yn dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=100 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="0" expression="GETROW()"border="0" color="0" x="9" y="4" height="68" width="105" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=8 alignment="0" tabsequence=32766 border="0" color="0" x="325" y="4" height="68" width="425" format="[general]" html.valueishtml="0"  name=model_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

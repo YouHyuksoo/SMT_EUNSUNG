@@ -1,0 +1,30 @@
+HA$PBExportHeader$f_get_customer_dc_rate.srf
+global type f_get_customer_dc_rate from function_object
+end type
+
+forward prototypes
+global function decimal f_get_customer_dc_rate (string arg_customer_code)
+end prototypes
+
+global function decimal f_get_customer_dc_rate (string arg_customer_code);DECIMAL lvf_v_dc_rate 
+
+//========================================
+// $$HEX10$$e0ac1dacc4bc200060d578c728c7200070c88cd6$$ENDHEX$$
+//======================================== 
+
+  select  nvl(volume_dc_rate,0) into :lvf_v_dc_rate
+   from icom_customer 
+ where customer_code = :arg_customer_code
+  and organization_id = :gvi_organization_id ;
+  
+ if f_sql_check() < 0 then 
+	return 0
+end if 
+
+if lvf_v_dc_rate = 0 or isnull(lvf_v_dc_rate) then 
+	lvf_v_dc_rate = 0
+end if 
+
+RETURN lvf_v_dc_rate
+end function
+

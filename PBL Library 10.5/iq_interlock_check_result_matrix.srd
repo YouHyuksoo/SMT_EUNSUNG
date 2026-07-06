@@ -1,0 +1,65 @@
+HA$PBExportHeader$iq_interlock_check_result_matrix.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=4 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no  crosstab.dynamic = yes grid.lines=1 grid.columnmove=no selected.mouse=no )
+header[1](height=0 color="536870912" )
+header[2](height=84 color="536870912" )
+header[3](height=132 color="536870912" )
+header[4](height=120 color="536870912" )
+summary(height=72 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=76 color="536870912" )
+table(column=(type=char(20) updatewhereclause=yes name=model_name dbname="model_name" )
+ column=(type=char(20) updatewhereclause=yes name=run_no dbname="run_no" )
+ column=(type=number updatewhereclause=yes name=check_result dbname="check_result" )
+ retrieve="  SELECT /*+ index ( IQ_INTERLOCK_CHECK_RESULT XPKIQ_INTERLOCK_CHECK_RESULT ) */ IQ_INTERLOCK_CHECK_RESULT.LINE_CODE AS LINE_CODE,   
+         IQ_INTERLOCK_CHECK_RESULT.WORKSTAGE_CODE||' '||F_GET_WORKSTAGE_NAME(IQ_INTERLOCK_CHECK_RESULT.WORKSTAGE_CODE) AS WORKSTAGE_NAME ,
+		 IQ_INTERLOCK_CHECK_RESULT.WORKSTAGE_CODE AS WORKSTAGE_CODE,   
+         IQ_INTERLOCK_CHECK_RESULT.CHECK_RESULT AS CHECK_RESULT ,   
+         IQ_INTERLOCK_CHECK_RESULT.ITEM_CODE AS ITEM_CODE ,   
+         IQ_INTERLOCK_CHECK_RESULT.RUN_NO AS RUN_NO,   
+         IQ_INTERLOCK_CHECK_RESULT.MODEL_NAME AS MODEL_NAME ,   
+         IQ_INTERLOCK_CHECK_RESULT.PCB_ITEM AS PCB_ITEM,   
+         IQ_INTERLOCK_CHECK_RESULT.CHILD_ITEM_CODE AS CHILD_ITEM_CODE  
+    FROM IQ_INTERLOCK_CHECK_RESULT   , ID_ITEM 
+  WHERE          ( IQ_INTERLOCK_CHECK_RESULT.RECEIPT_DATE >= :arg_dateset ) AND  
+         ( IQ_INTERLOCK_CHECK_RESULT.RECEIPT_DATE < :arg_dateend+1 ) AND  
+			( iq_interlock_check_result.item_code = id_item.item_code (+)) and  
+         ( iq_interlock_check_result.organization_id = id_item.organization_id (+)) and  
+         ( ( IQ_INTERLOCK_CHECK_RESULT.LINE_CODE like :arg_line_code ) AND  
+         ( IQ_INTERLOCK_CHECK_RESULT.WORKSTAGE_CODE like :arg_workstage_code ) AND  
+         ( IQ_INTERLOCK_CHECK_RESULT.RUN_NO like :arg_run_no ) AND  
+         ( NVL(IQ_INTERLOCK_CHECK_RESULT.MODEL_NAME , '*')  like :arg_model_name ) AND  
+         ( IQ_INTERLOCK_CHECK_RESULT.SERIAL_NO like :arg_serial_no ) AND  
+         ( NVL(IQ_INTERLOCK_CHECK_RESULT.IS_LAST_YN , 'N') like :arg_is_last_yn ) AND  
+         ( IQ_INTERLOCK_CHECK_RESULT.ORGANIZATION_ID = :arg_org ) )    
+	    ORDER BY WORKSTAGE_CODE
+" arguments=(("ARG_LINE_CODE", string),("ARG_WORKSTAGE_CODE", string),("ARG_RUN_NO", string),("ARG_MODEL_NAME", string),("ARG_SERIAL_NO", string),("ARG_DATESET", datetime),("ARG_DATEEND", datetime),("ARG_IS_LAST_YN", string),("ARG_ORG", number))  sort="model_name A run_no A " )
+text(band=header[1] alignment="0" text="Count Of Check Result" border="0" color="0" x="9" y="4" height="52" width="539" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header[1] alignment="0" text="Line Code" border="0" color="0" x="558" y="4" height="52" width="352" html.valueishtml="0"  name=t_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header[1] alignment="0" text="Workstage Name" border="0" color="0" x="919" y="4" height="52" width="274" html.valueishtml="0"  name=t_3 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header[2] alignment="2" text="@line_code" border="2" color="0" x="919" y="4" height="76" width="274" html.valueishtml="0"  name=t_5 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header[3] alignment="2" text="@workstage_name" border="2" color="0" x="919" y="4" height="128" width="274" html.valueishtml="0"  name=t_8 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65280" )
+text(band=header[3] alignment="2" text="@line_code" border="2" color="0" x="1202" y="4" height="128" width="265" html.valueishtml="0"  name=t_4 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+text(band=header[4] alignment="2" text="Model Name" border="2" color="0" x="9" y="4" height="108" width="539" html.valueishtml="0"  name=model_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[4] alignment="2" text="Run No" border="2" color="0" x="558" y="4" height="108" width="352" html.valueishtml="0"  name=run_no_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[4] alignment="2" text="@check_result" border="2" color="0" x="919" y="4" height="108" width="274" html.valueishtml="0"  name=check_result_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[4] alignment="2" text=" " border="2" color="0" x="1207" y="4" height="108" width="261" html.valueishtml="0"  name=count_check_result_1_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="2" color="33554432" x="9" y="4" height="68" width="539" format="[general]" html.valueishtml="0"  name=model_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="2" color="33554432" x="558" y="4" height="68" width="352" format="[general]" html.valueishtml="0"  name=run_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="2" color="33554432" x="919" y="4" height="68" width="274" format="[general]" html.valueishtml="0"  name=check_result visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes crosstab.repeat=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="2" expression="crosstabsum(1, 3, ~"@line_code~")"border="2" color="33554432" x="1207" y="4" height="68" width="261" format="[general]" html.valueishtml="0"  name=count_check_result_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" crosstab.repeat=yes )
+compute(band=summary alignment="2" expression="~"Grand Total~""border="2" color="0" x="9" y="4" height="68" width="539" format="[general]" html.valueishtml="0"  name=compute_6 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="2" expression="sum(check_result for all )"border="2" color="33554432" x="919" y="4" height="68" width="274" format="[general]" html.valueishtml="0"  name=compute_7 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="2" expression="sum(count_check_result_1 for all )"border="2" color="33554432" x="1207" y="4" height="68" width="261" format="[general]" html.valueishtml="0"  name=compute_9 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+ crosstab(band = foreground  crosstabonly = yes 
+ columns = "line_code, workstage_name, check_result" rows = "model_name, run_no" values = "count(check_result for crosstab)" sourcenames = "line_code, workstage_name, workstage_code, check_result, item_code, run_no, model_name, pcb_item, child_item_code")
+sparse(names="model_name")htmltable(border="0" cellpadding="1" cellspacing="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()

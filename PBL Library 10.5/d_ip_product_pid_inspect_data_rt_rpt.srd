@@ -1,0 +1,61 @@
+HA$PBExportHeader$d_ip_product_pid_inspect_data_rt_rpt.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=0 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no )
+header(height=240 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=56 color="536870912" )
+detail(height=80 color="536870912" )
+table(column=(type=char(100) updatewhereclause=yes key=yes name=pid dbname="iq_machine_inspect_data_rt.pid" )
+ column=(type=char(10) updatewhereclause=yes name=result dbname="iq_machine_inspect_data_rt.result" )
+ column=(type=char(1000) updatewhereclause=yes name=defect_code dbname="iq_machine_inspect_data_rt.defect_code" )
+ column=(type=char(30) updatewhereclause=yes key=yes name=inspect_date dbname="iq_machine_inspect_data_rt.inspect_date" )
+ column=(type=char(4000) updatewhereclause=yes name=line_code dbname="line_code" )
+ column=(type=char(30) updatewhereclause=yes name=equipmentid dbname="iq_machine_inspect_data_rt.equipmentid" )
+ column=(type=char(50) updatewhereclause=yes name=run_no dbname="iq_machine_inspect_data_rt.run_no" )
+ column=(type=char(50) updatewhereclause=yes name=cstid dbname="iq_machine_inspect_data_rt.cstid" )
+ column=(type=char(10) updatewhereclause=yes name=seq_no dbname="iq_machine_inspect_data_rt.seq_no" )
+ column=(type=char(30) updatewhereclause=yes name=rpm_value dbname="iq_machine_inspect_data_rt.rpm_value" )
+ column=(type=char(30) updatewhereclause=yes name=bit_value dbname="iq_machine_inspect_data_rt.bit_value" )
+ column=(type=datetime updatewhereclause=yes name=enter_date dbname="iq_machine_inspect_data_rt.enter_date" )
+ column=(type=char(20) updatewhereclause=yes name=enter_by dbname="iq_machine_inspect_data_rt.enter_by" )
+ column=(type=number updatewhereclause=yes name=organization_id dbname="iq_machine_inspect_data_rt.organization_id" )
+ retrieve="select pid, 
+         result, 
+         defect_code, 
+         inspect_date, 
+         f_get_line_name( line_code, organization_id) line_code, 
+         equipmentid, 
+         run_no, 
+         cstid, 
+         seq_no,  
+         rpm_value, 
+         bit_value,
+         enter_date, 
+         enter_by, 
+         organization_id  
+  from iq_machine_inspect_data_rt   
+ where PID LIKE :ARG_SERIAL_NO 
+   AND ORGANIZATION_ID = :ARG_ORG
+" update="iq_machine_inspect_data_rt" updatewhere=0 updatekeyinplace=no arguments=(("ARG_SERIAL_NO", string),("ARG_ORG", number))  sort="pid A inspect_date A " )
+text(band=header alignment="0" text="  Router Work Result" border="1" color="33554432" x="14" y="12" height="76" width="1714" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=header alignment="2" text="Serial No" border="2" color="33554432" x="14" y="120" height="112" width="649" html.valueishtml="0"  name=serial_no_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="2" color="33554432" x="14" y="8" height="64" width="649" format="[general]" html.valueishtml="0"  name=pid visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=header alignment="2" text="BIT" border="2" color="33554432" x="2034" y="120" height="112" width="498" html.valueishtml="0"  name=t_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="RPM" border="2" color="33554432" x="1527" y="120" height="112" width="498" html.valueishtml="0"  name=t_3 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="Line" border="2" color="33554432" x="1179" y="120" height="112" width="338" html.valueishtml="0"  name=meas_time_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="Workt Date" border="2" color="33554432" x="672" y="120" height="112" width="498" html.valueishtml="0"  name=t_11 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+column(band=detail id=11 alignment="2" tabsequence=32766 border="2" color="33554432" x="2034" y="8" height="64" width="498" format="[general]" html.valueishtml="0"  name=bit_value visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=10 alignment="2" tabsequence=32766 border="2" color="33554432" x="1527" y="8" height="64" width="498" format="[general]" html.valueishtml="0"  name=rpm_value visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="2" color="33554432" x="672" y="8" height="64" width="498" format="[general]" html.valueishtml="0"  name=inspect_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=5 alignment="2" tabsequence=32766 border="2" color="33554432" x="1179" y="8" height="64" width="338" format="[general]" html.valueishtml="0"  name=line_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

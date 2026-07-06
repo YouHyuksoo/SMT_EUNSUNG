@@ -1,0 +1,15 @@
+HA$PBExportHeader$f_get_last_day.srf
+$PBExportComments$Call Server's System Last Date
+global type f_get_last_day from function_object
+end type
+
+forward prototypes
+global function datetime f_get_last_day ()
+end prototypes
+
+global function datetime f_get_last_day ();datetime d_1		
+select TRUNC(last_day(sysdate))  into :d_1 from dual ;
+f_sql_check()
+return d_1
+end function
+

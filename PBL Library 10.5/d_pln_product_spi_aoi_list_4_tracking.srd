@@ -1,0 +1,266 @@
+HA$PBExportHeader$d_pln_product_spi_aoi_list_4_tracking.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no grid.lines=0 )
+header(height=132 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=68 color="536870912" )
+table(column=(type=char(5) updatewhereclause=yes name=workstage_name dbname="workstage_name" )
+ column=(type=char(30) updatewhereclause=yes name=run_no dbname="ip_product_2d_barcode.run_no" )
+ column=(type=char(30) updatewhereclause=yes name=serial_no dbname="ip_product_2d_barcode.serial_no" )
+ column=(type=datetime updatewhereclause=yes name=run_date dbname="ip_product_2d_barcode.run_date" )
+ column=(type=char(50) updatewhereclause=yes name=item_code dbname="ip_product_2d_barcode.item_code" )
+ column=(type=char(20) updatewhereclause=yes name=magazine_no dbname="ip_product_2d_barcode.magazine_no" )
+ column=(type=char(50) updatewhereclause=yes name=box_no dbname="ip_product_2d_barcode.box_no" )
+ column=(type=char(50) updatewhereclause=yes name=pallete_no dbname="ip_product_2d_barcode.pallete_no" )
+ column=(type=char(30) updatewhereclause=yes name=carrier_barcode dbname="ip_product_2d_barcode.carrier_barcode" )
+ column=(type=char(1) updatewhereclause=yes name=qc_scan_yn dbname="ip_product_2d_barcode.qc_scan_yn" )
+ column=(type=char(20) updatewhereclause=yes name=lot_no dbname="ip_product_2d_barcode.lot_no" )
+ column=(type=datetime updatewhereclause=yes name=qc_scan_date dbname="ip_product_2d_barcode.qc_scan_date" )
+ column=(type=char(100) updatewhereclause=yes name=model_name dbname="ip_product_2d_barcode.model_name" )
+ column=(type=number updatewhereclause=yes name=ip_product_2d_barcode_lot_qty dbname="ip_product_2d_barcode.lot_qty" )
+ column=(type=char(1) updatewhereclause=yes name=ip_product_2d_barcode_barcode_status dbname="ip_product_2d_barcode.barcode_status" )
+ column=(type=char(50) updatewhereclause=yes name=iq_machine_inspect_data_spi_cstid dbname="iq_machine_inspect_data_spi.cstid" )
+ column=(type=char(10) updatewhereclause=yes name=iq_machine_inspect_data_spi_seq_no dbname="iq_machine_inspect_data_spi.seq_no" )
+ column=(type=char(100) updatewhereclause=yes name=iq_machine_inspect_data_spi_pid dbname="iq_machine_inspect_data_spi.pid" )
+ column=(type=char(10) updatewhereclause=yes name=iq_machine_inspect_data_spi_result dbname="iq_machine_inspect_data_spi.result" )
+ column=(type=char(1000) updatewhereclause=yes name=iq_machine_inspect_data_spi_defect_code dbname="iq_machine_inspect_data_spi.defect_code" )
+ column=(type=datetime updatewhereclause=yes name=inspect_date dbname="inspect_date" )
+ column=(type=char(500) updatewhereclause=yes name=iq_machine_inspect_data_spi_file_name dbname="iq_machine_inspect_data_spi.file_name" )
+ column=(type=char(20) updatewhereclause=yes name=line_code dbname="iq_machine_inspect_data_spi.line_code" )
+ column=(type=char(30) updatewhereclause=yes name=iq_machine_inspect_data_spi_equipmentid dbname="iq_machine_inspect_data_spi.equipmentid" )
+ column=(type=char(50) updatewhereclause=yes name=iq_machine_inspect_data_spi_run_no dbname="iq_machine_inspect_data_spi.run_no" )
+ column=(type=char(50) updatewhereclause=yes name=smt_model_name dbname="ip_product_model_master.smt_model_name" )
+ column=(type=datetime updatewhereclause=yes name=min_datetime dbname="min_datetime" )
+ column=(type=datetime updatewhereclause=yes name=max_datetime dbname="max_datetime" )
+ retrieve="  SELECT 'SPI' AS WORKSTAGE_NAME ,
+
+         ~"IP_PRODUCT_2D_BARCODE~".~"RUN_NO~",   
+         ~"IP_PRODUCT_2D_BARCODE~".~"SERIAL_NO~",   
+         ~"IP_PRODUCT_2D_BARCODE~".~"RUN_DATE~",   
+         ~"IP_PRODUCT_2D_BARCODE~".~"ITEM_CODE~",   
+         ~"IP_PRODUCT_2D_BARCODE~".~"MAGAZINE_NO~",   
+         ~"IP_PRODUCT_2D_BARCODE~".~"BOX_NO~",   
+         ~"IP_PRODUCT_2D_BARCODE~".~"PALLETE_NO~",   
+         ~"IP_PRODUCT_2D_BARCODE~".~"CARRIER_BARCODE~",   
+         ~"IP_PRODUCT_2D_BARCODE~".~"QC_SCAN_YN~",   
+         ~"IP_PRODUCT_2D_BARCODE~".~"LOT_NO~",   
+         ~"IP_PRODUCT_2D_BARCODE~".~"QC_SCAN_DATE~",   
+         ~"IP_PRODUCT_2D_BARCODE~".~"MODEL_NAME~",   
+         ~"IP_PRODUCT_2D_BARCODE~".~"LOT_QTY~",   
+         ~"IP_PRODUCT_2D_BARCODE~".~"BARCODE_STATUS~",   
+         ~"IQ_MACHINE_INSPECT_DATA_SPI~".~"CSTID~",  
+         ~"IQ_MACHINE_INSPECT_DATA_SPI~".~"SEQ_NO~", 
+         ~"IQ_MACHINE_INSPECT_DATA_SPI~".~"PID~",   
+         ~"IQ_MACHINE_INSPECT_DATA_SPI~".~"RESULT~",   
+         ~"IQ_MACHINE_INSPECT_DATA_SPI~".~"DEFECT_CODE~",
+         TO_DATE(~"IQ_MACHINE_INSPECT_DATA_SPI~".~"INSPECT_DATE~",'YYYY/MM/DD HH24:MI:SS') INSPECT_DATE,   
+         ~"IQ_MACHINE_INSPECT_DATA_SPI~".~"FILE_NAME~",   
+         ~"IQ_MACHINE_INSPECT_DATA_SPI~".~"LINE_CODE~",   
+         ~"IQ_MACHINE_INSPECT_DATA_SPI~".~"EQUIPMENTID~",   
+         ~"IQ_MACHINE_INSPECT_DATA_SPI~".~"RUN_NO~",
+
+		IP_PRODUCT_MODEL_MASTER.SMT_MODEL_NAME , 
+
+	   (
+         SELECT MAX(H.LINE_ONOFF_DATE) 
+           FROM IB_SMT_LINE_ONOFF_HISTORY H 
+         WHERE H.LINE_CODE   = IQ_MACHINE_INSPECT_DATA_SPI.LINE_CODE 
+              AND H.LINE_ONOFF = 'OFF' 
+              AND H.LINE_ONOFF_DATE <    (SELECT MAX(TO_DATE(B.INSPECT_DATE,'YYYY/MM/DD HH24:MI:SS'))
+													   FROM  IQ_MACHINE_INSPECT_SPI B
+												  	 WHERE B.PID         = ~"IP_PRODUCT_2D_BARCODE~".~"SERIAL_NO~" 
+														 AND B.line_code =  ~"IQ_MACHINE_INSPECT_DATA_SPI~".~"LINE_CODE~" 
+													  ) 
+         )  AS MIN_DATETIME,
+
+        (SELECT  MAX(TO_DATE(B.INSPECT_DATE,'YYYY/MM/DD HH24:MI:SS'))
+            FROM   IQ_MACHINE_INSPECT_DATA_SPI B
+          WHERE B.PID          = ~"IP_PRODUCT_2D_BARCODE~".~"SERIAL_NO~" 
+			 AND B.line_code =  ~"IQ_MACHINE_INSPECT_DATA_SPI~".~"LINE_CODE~" 
+	   ) AS MAX_DATETIME
+
+    FROM ~"IP_PRODUCT_2D_BARCODE~",   
+         ~"IQ_MACHINE_INSPECT_DATA_SPI~"  ,
+		 IP_PRODUCT_MODEL_MASTER 
+   WHERE  IQ_MACHINE_INSPECT_DATA_SPI.PID = ip_product_2d_barcode.serial_no (+) 
+	  AND ~"IP_PRODUCT_2D_BARCODE~".~"MODEL_NAME~" = ~"IP_PRODUCT_MODEL_MASTER~".~"MODEL_NAME~"  		
+       AND ~"IQ_MACHINE_INSPECT_DATA_SPI~".~"PID~" = :arg_serial_no  
+       AND  ~"IQ_MACHINE_INSPECT_DATA_SPI~".~"ORGANIZATION_ID~" = :arg_org  
+
+UNION ALL
+
+  SELECT 'AOI' AS WORKSTAGE_NAME ,
+
+		 ~"IP_PRODUCT_2D_BARCODE~".~"RUN_NO~",   
+         ~"IP_PRODUCT_2D_BARCODE~".~"SERIAL_NO~",   
+         ~"IP_PRODUCT_2D_BARCODE~".~"RUN_DATE~",   
+         ~"IP_PRODUCT_2D_BARCODE~".~"ITEM_CODE~",   
+         ~"IP_PRODUCT_2D_BARCODE~".~"MAGAZINE_NO~",   
+         ~"IP_PRODUCT_2D_BARCODE~".~"BOX_NO~",   
+         ~"IP_PRODUCT_2D_BARCODE~".~"PALLETE_NO~",   
+         ~"IP_PRODUCT_2D_BARCODE~".~"CARRIER_BARCODE~",   
+         ~"IP_PRODUCT_2D_BARCODE~".~"QC_SCAN_YN~",   
+         ~"IP_PRODUCT_2D_BARCODE~".~"LOT_NO~",   
+         ~"IP_PRODUCT_2D_BARCODE~".~"QC_SCAN_DATE~",   
+         ~"IP_PRODUCT_2D_BARCODE~".~"MODEL_NAME~",   
+         ~"IP_PRODUCT_2D_BARCODE~".~"LOT_QTY~",   
+         ~"IP_PRODUCT_2D_BARCODE~".~"BARCODE_STATUS~",   
+
+         ~"IQ_MACHINE_INSPECT_DATA_AOI~".~"CSTID~",   
+         ~"IQ_MACHINE_INSPECT_DATA_AOI~".~"SEQ_NO~",   
+         ~"IQ_MACHINE_INSPECT_DATA_AOI~".~"PID~" ,   
+         ~"IQ_MACHINE_INSPECT_DATA_AOI~".~"RESULT~",   
+         ~"IQ_MACHINE_INSPECT_DATA_AOI~".~"DEFECT_CODE~",
+          TO_DATE(~"IQ_MACHINE_INSPECT_DATA_AOI~".~"INSPECT_DATE~",'YYYY/MM/DD HH24:MI:SS') INSPECT_DATE, 
+         ~"IQ_MACHINE_INSPECT_DATA_AOI~".~"FILE_NAME~",   
+         ~"IQ_MACHINE_INSPECT_DATA_AOI~".~"LINE_CODE~",    
+         ~"IQ_MACHINE_INSPECT_DATA_AOI~".~"EQUIPMENTID~",   
+         ~"IQ_MACHINE_INSPECT_DATA_AOI~".~"RUN_NO~",
+
+		IP_PRODUCT_MODEL_MASTER.SMT_MODEL_NAME ,
+
+	  ( SELECT MAX(H.LINE_ONOFF_DATE) FROM IB_SMT_LINE_ONOFF_HISTORY H 
+         WHERE H.LINE_CODE   = IQ_MACHINE_INSPECT_DATA_AOI.LINE_CODE 
+              AND H.LINE_ONOFF = 'OFF' 
+              AND H.LINE_ONOFF_DATE <  (
+														SELECT MAX(TO_DATE(B.INSPECT_DATE,'YYYY/MM/DD HH24:MI:SS'))
+														  FROM IQ_MACHINE_INSPECT_AOI B
+														WHERE B.PID         = ~"IP_PRODUCT_2D_BARCODE~".~"SERIAL_NO~" 
+														    AND B.line_code =  ~"IQ_MACHINE_INSPECT_DATA_AOI~".~"LINE_CODE~" 
+									  			    )
+        )  AS MIN_DATE,
+
+        (
+          SELECT  MAX(TO_DATE(B.INSPECT_DATE,'YYYY/MM/DD HH24:MI:SS'))
+            FROM  IQ_MACHINE_INSPECT_AOI B
+           WHERE B.PID          = ~"IP_PRODUCT_2D_BARCODE~".~"SERIAL_NO~" 
+			  AND B.line_code =  ~"IQ_MACHINE_INSPECT_DATA_AOI~".~"LINE_CODE~" 
+	    ) AS MAX_DATETIME
+
+    FROM ~"IP_PRODUCT_2D_BARCODE~",   
+         ~"IQ_MACHINE_INSPECT_DATA_AOI~"  ,
+		IP_PRODUCT_MODEL_MASTER
+   WHERE IQ_MACHINE_INSPECT_DATA_AOI.PID = ip_product_2d_barcode.serial_no (+)
+       AND  ~"IP_PRODUCT_2D_BARCODE~".~"MODEL_NAME~" = ~"IP_PRODUCT_MODEL_MASTER~".~"MODEL_NAME~"   
+       AND  ~"IQ_MACHINE_INSPECT_DATA_AOI~".~"PID~" = :arg_serial_no 
+       AND  ~"IQ_MACHINE_INSPECT_DATA_AOI~".~"ORGANIZATION_ID~" = :arg_org     
+
+UNION ALL
+
+  SELECT 'START' AS WORKSTAGE_NAME ,
+
+     	~"IP_PRODUCT_2D_BARCODE~".~"RUN_NO~",   
+         ~"IP_PRODUCT_2D_BARCODE~".~"SERIAL_NO~",   
+         ~"IP_PRODUCT_2D_BARCODE~".~"RUN_DATE~",   
+         ~"IP_PRODUCT_2D_BARCODE~".~"ITEM_CODE~",   
+         ~"IP_PRODUCT_2D_BARCODE~".~"MAGAZINE_NO~",   
+         ~"IP_PRODUCT_2D_BARCODE~".~"BOX_NO~",   
+         ~"IP_PRODUCT_2D_BARCODE~".~"PALLETE_NO~",   
+         ~"IP_PRODUCT_2D_BARCODE~".~"CARRIER_BARCODE~",   
+         ~"IP_PRODUCT_2D_BARCODE~".~"QC_SCAN_YN~",   
+         ~"IP_PRODUCT_2D_BARCODE~".~"LOT_NO~",   
+         ~"IP_PRODUCT_2D_BARCODE~".~"QC_SCAN_DATE~",   
+         ~"IP_PRODUCT_2D_BARCODE~".~"MODEL_NAME~",   
+         ~"IP_PRODUCT_2D_BARCODE~".~"LOT_QTY~",   
+         ~"IP_PRODUCT_2D_BARCODE~".~"BARCODE_STATUS~",   
+
+         ''   AS CSTID,   
+         ''   AS SEQ_NO,   
+         ''   AS PID ,   
+         ''   AS RESULT,   
+         ''   AS DEFECT_CODE,
+         NULL   AS INSPECT_DATE, 
+         ''   AS FILE_NAME,   
+         ~"IP_PRODUCT_WORKSTAGE_IO~".~"LINE_CODE~",    
+         ''   AS EQUIPMENTID,   
+         ~"IP_PRODUCT_WORKSTAGE_IO~".~"RUN_NO~",
+
+		IP_PRODUCT_MODEL_MASTER.SMT_MODEL_NAME ,
+
+	  ( SELECT MAX(H.LINE_ONOFF_DATE) FROM IB_SMT_LINE_ONOFF_HISTORY H WHERE H.LINE_CODE = IP_PRODUCT_WORKSTAGE_IO.LINE_CODE
+              AND H.LINE_ONOFF = 'OFF' 
+              AND H.LINE_ONOFF_DATE <  IP_PRODUCT_WORKSTAGE_IO.IO_DATE 
+       )  AS MIN_DATE ,
+
+
+         IP_PRODUCT_WORKSTAGE_IO.IO_DATE AS  MAX_DATETIME
+
+    FROM ~"IP_PRODUCT_2D_BARCODE~",   
+         ~"IP_PRODUCT_WORKSTAGE_IO~"  ,
+		IP_PRODUCT_MODEL_MASTER
+   WHERE ( IP_PRODUCT_WORKSTAGE_IO.SERIAL_NO = ip_product_2d_barcode.serial_no (+)) and  
+              (~"IP_PRODUCT_2D_BARCODE~".~"MODEL_NAME~" = ~"IP_PRODUCT_MODEL_MASTER~".~"MODEL_NAME~") AND  
+    			(IP_PRODUCT_WORKSTAGE_IO.SERIAL_NO = :arg_serial_no ) AND  
+   			(IP_PRODUCT_WORKSTAGE_IO.WORKSTAGE_CODE = 'W020' ) AND  
+	         ( ~"IP_PRODUCT_WORKSTAGE_IO~".~"ORGANIZATION_ID~" = :arg_org )   
+
+" arguments=(("arg_serial_no", string),("arg_org", number))  sort="workstage_name A model_name A magazine_no A serial_no A " )
+text(band=header alignment="2" text="Run No" border="0" color="33554432" x="3269" y="4" height="128" width="544" html.valueishtml="0"  name=run_no_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Run Date" border="0" color="33554432" x="2843" y="4" height="128" width="416" html.valueishtml="0"  name=run_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Carrier Barcode" border="0" color="33554432" x="5129" y="4" height="128" width="384" html.valueishtml="0"  name=carrier_barcode_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Qc Scan Yn" border="0" color="33554432" x="6272" y="4" height="128" width="197" html.valueishtml="0"  name=qc_scan_yn_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Serial No" border="0" color="33554432" x="1847" y="4" height="128" width="512" html.valueishtml="0"  name=serial_no_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Item Code" border="0" color="33554432" x="4201" y="4" height="128" width="466" html.valueishtml="0"  name=item_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Box No" border="0" color="33554432" x="5522" y="4" height="128" width="279" html.valueishtml="0"  name=box_no_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Pallete No" border="0" color="33554432" x="5810" y="4" height="128" width="453" html.valueishtml="0"  name=pallete_no_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Lot Qty" border="0" color="33554432" x="4882" y="4" height="128" width="238" html.valueishtml="0"  name=lot_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Barcode Status" border="0" color="33554432" x="4677" y="4" height="128" width="197" html.valueishtml="0"  name=barcode_status_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Magazine No" border="0" color="33554432" x="3822" y="4" height="128" width="370" html.valueishtml="0"  name=magazine_no_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Lot No" border="0" color="33554432" x="6478" y="4" height="128" width="453" html.valueishtml="0"  name=lot_no_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Qc Scan Date" border="0" color="33554432" x="7255" y="4" height="128" width="553" html.valueishtml="0"  name=qc_scan_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Model Name" border="0" color="33554432" x="2368" y="4" height="128" width="466" html.valueishtml="0"  name=ip_product_2d_barcode_model_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Smt Model Name" border="0" color="33554432" x="1321" y="4" height="128" width="517" html.valueishtml="0"  name=smt_model_na_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=header alignment="2" text="Max Datetime" border="0" color="33554432" x="832" y="4" height="128" width="480" html.valueishtml="0"  name=max_datetime_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Workstage Name" border="0" color="33554432" x="123" y="4" height="128" width="229" html.valueishtml="0"  name=workstage_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Min Datetime" border="0" color="33554432" x="361" y="4" height="128" width="462" html.valueishtml="0"  name=min_datetime_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Inspect Date" border="0" color="33554432" x="7817" y="4" height="128" width="485" html.valueishtml="0"  name=inspect_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Cstid" border="0" color="33554432" x="8311" y="4" height="128" width="434" html.valueishtml="0"  name=iq_machine_inspect_data_spi_cstid_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=header alignment="2" text="Seq No" border="0" color="33554432" x="8754" y="4" height="128" width="219" html.valueishtml="0"  name=iq_machine_inspect_data_spi_seq_no_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=header alignment="2" text="Pid" border="0" color="33554432" x="8983" y="4" height="128" width="599" html.valueishtml="0"  name=iq_machine_inspect_data_spi_pid_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=header alignment="2" text="Result" border="0" color="33554432" x="9591" y="4" height="128" width="375" html.valueishtml="0"  name=iq_machine_inspect_data_spi_result_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=header alignment="2" text="Defect Code" border="0" color="33554432" x="9975" y="4" height="128" width="389" html.valueishtml="0"  name=iq_machine_inspect_data_spi_defect_c_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=header alignment="2" text="File Name" border="0" color="33554432" x="10373" y="4" height="128" width="544" html.valueishtml="0"  name=iq_machine_inspect_data_spi_file_nam_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=header alignment="2" text="Line Code" border="0" color="33554432" x="6939" y="4" height="128" width="306" html.valueishtml="0"  name=iq_machine_inspect_data_spi_line_cod_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=header alignment="2" text="Equipmentid" border="0" color="33554432" x="10926" y="4" height="128" width="334" html.valueishtml="0"  name=iq_machine_inspect_data_spi_equipmen_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=header alignment="2" text="Run No" border="0" color="33554432" x="11269" y="4" height="128" width="599" html.valueishtml="0"  name=iq_machine_inspect_data_spi_run_no_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+compute(band=detail alignment="0" expression="GETROW()"border="0" color="33554432" x="9" y="0" height="76" width="105" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="33554432" x="123" y="0" height="76" width="229" format="[general]" html.valueishtml="0"  name=workstage_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="0" color="33554432" x="2843" y="0" height="76" width="416" format="yyyy/mm/dd" html.valueishtml="0"  name=run_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="33554432" x="3269" y="0" height="76" width="544" format="[general]" html.valueishtml="0"  name=run_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=7 alignment="0" tabsequence=32766 border="0" color="33554432" x="5522" y="0" height="76" width="279" format="[general]" html.valueishtml="0"  name=box_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=8 alignment="0" tabsequence=32766 border="0" color="33554432" x="5810" y="0" height="76" width="453" format="[general]" html.valueishtml="0"  name=pallete_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=9 alignment="2" tabsequence=32766 border="0" color="33554432" x="5129" y="0" height="76" width="384" format="[general]" html.valueishtml="0"  name=carrier_barcode visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=10 alignment="2" tabsequence=32766 border="0" color="33554432" x="6272" y="0" height="76" width="197" format="[general]" html.valueishtml="0"  name=qc_scan_yn visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=11 alignment="2" tabsequence=32766 border="0" color="33554432" x="6478" y="0" height="76" width="453" format="[general]" html.valueishtml="0"  name=lot_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=12 alignment="2" tabsequence=32766 border="0" color="33554432" x="7255" y="0" height="76" width="553" format="[shortdate] [time]" html.valueishtml="0"  name=qc_scan_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=14 alignment="2" tabsequence=32766 border="0" color="33554432" x="4882" y="0" height="76" width="238" format="[general]" html.valueishtml="0"  name=ip_product_2d_barcode_lot_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=15 alignment="2" tabsequence=32766 border="0" color="33554432" x="4677" y="0" height="76" width="197" format="[general]" html.valueishtml="0"  name=ip_product_2d_barcode_barcode_status visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="0" color="33554432" x="1847" y="0" height="76" width="512" format="[general]" html.valueishtml="0"  name=serial_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=5 alignment="2" tabsequence=32766 border="0" color="33554432" x="4201" y="0" height="76" width="466" format="[general]" html.valueishtml="0"  name=item_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=6 alignment="2" tabsequence=32766 border="0" color="33554432" x="3822" y="0" height="76" width="370" format="[general]" html.valueishtml="0"  name=magazine_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+column(band=detail id=13 alignment="2" tabsequence=32766 border="0" color="33554432" x="2368" y="0" height="76" width="466" format="[general]" html.valueishtml="0"  name=model_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=26 alignment="2" tabsequence=20 border="0" color="33554432" x="1321" y="0" height="76" width="517" format="[general]" html.valueishtml="0"  name=smt_model_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=28 alignment="2" tabsequence=32766 border="0" color="33554432" x="832" y="0" height="76" width="480" format="[shortdate] [time]" html.valueishtml="0"  name=max_datetime visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=27 alignment="2" tabsequence=10 border="0" color="33554432" x="361" y="0" height="76" width="462" format="[shortdate] [time]" html.valueishtml="0"  name=min_datetime visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=21 alignment="2" tabsequence=40 border="0" color="33554432" x="7817" y="0" height="76" width="485" format="[shortdate] [time]" html.valueishtml="0"  name=inspect_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=16 alignment="0" tabsequence=50 border="0" color="33554432" x="8311" y="0" height="52" width="434" format="[general]" html.valueishtml="0"  name=iq_machine_inspect_data_spi_cstid visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=17 alignment="0" tabsequence=60 border="0" color="33554432" x="8754" y="0" height="52" width="219" format="[general]" html.valueishtml="0"  name=iq_machine_inspect_data_spi_seq_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=18 alignment="0" tabsequence=70 border="0" color="33554432" x="8983" y="0" height="52" width="599" format="[general]" html.valueishtml="0"  name=iq_machine_inspect_data_spi_pid visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=19 alignment="0" tabsequence=80 border="0" color="33554432" x="9591" y="0" height="52" width="375" format="[general]" html.valueishtml="0"  name=iq_machine_inspect_data_spi_result visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=20 alignment="0" tabsequence=90 border="0" color="33554432" x="9975" y="0" height="52" width="389" format="[general]" html.valueishtml="0"  name=iq_machine_inspect_data_spi_defect_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=22 alignment="0" tabsequence=100 border="0" color="33554432" x="10373" y="0" height="52" width="544" format="[general]" html.valueishtml="0"  name=iq_machine_inspect_data_spi_file_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=23 alignment="0" tabsequence=30 border="0" color="33554432" x="6939" y="0" height="52" width="306" format="[general]" html.valueishtml="0"  name=line_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=24 alignment="0" tabsequence=110 border="0" color="33554432" x="10926" y="0" height="52" width="334" format="[general]" html.valueishtml="0"  name=iq_machine_inspect_data_spi_equipmentid visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=25 alignment="0" tabsequence=120 border="0" color="33554432" x="11269" y="0" height="52" width="599" format="[general]" html.valueishtml="0"  name=iq_machine_inspect_data_spi_run_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

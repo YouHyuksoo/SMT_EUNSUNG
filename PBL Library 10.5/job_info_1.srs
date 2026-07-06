@@ -1,0 +1,18 @@
+HA$PBExportHeader$job_info_1.srs
+$PBExportComments$Job information
+global type job_info_1 from structure
+	long		jobid
+	string		pprintername
+	string		pmachinename
+	string		pusername
+	string		pdocument
+	string		pdatatype
+	string		pstatus
+	long		status
+	long		priority
+	long		position
+	long		totalpages
+	long		pagesprinted
+	systemtime		submitted
+end type
+

@@ -1,0 +1,35 @@
+HA$PBExportHeader$vd_department_code.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=16777215 processing=1 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no grid.lines=0 )
+header(height=140 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=68 color="536870912" )
+table(column=(type=char(20) updatewhereclause=yes key=yes name=department_code dbname="isys_department.department_code" )
+ column=(type=char(20) updatewhereclause=yes name=department_name dbname="department_name" )
+ column=(type=decimal(0) updatewhereclause=yes key=yes name=organization_id dbname="isys_department.organization_id" )
+ retrieve="  SELECT ~"ISYS_DEPARTMENT~".~"DEPARTMENT_CODE~",   
+         DECODE( :ARG_LANGUAGE , 'C' , DEPARTMENT_NAME_LOCAL , 'K' , DEPARTMENT_NAME_KOR , 'E' , DEPARTMENT_NAME_ENG ) DEPARTMENT_NAME,   
+         ~"ISYS_DEPARTMENT~".~"ORGANIZATION_ID~"  
+    FROM ~"ISYS_DEPARTMENT~"  
+   WHERE ( ~"ISYS_DEPARTMENT~".~"ORGANIZATION_ID~" like :arg_org )    
+" update="ISYS_DEPARTMENT" updatewhere=0 updatekeyinplace=no arguments=(("arg_language", string),("arg_org", string))  sort="department_code A " )
+text(band=header alignment="2" text="Organization Id" border="0" color="0" x="1088" y="8" height="128" width="347" html.valueishtml="0"  name=organization_id_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="DEPARTMENT NAME" border="0" color="0" x="603" y="8" height="128" width="475" html.valueishtml="0"  name=department_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="DEPARTMENT CODE" border="0" color="0" x="169" y="8" height="128" width="425" html.valueishtml="0"  name=department_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="No" border="0" color="0" x="9" y="8" height="128" width="151" html.valueishtml="0"  name=no_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+compute(band=detail alignment="0" expression="getrow()"border="0" color="0" x="9" y="4" height="60" width="151" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="0" x="603" y="4" height="60" width="475" format="[general]" html.valueishtml="0"  name=department_name  tag="$$HEX3$$80bd1cc185ba$$ENDHEX$$" visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="0" color="0" x="1088" y="4" height="60" width="347" format="[general]" html.valueishtml="0"  name=organization_id visible="1" edit.limit=0 edit.case=any edit.autoselect=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="0" x="169" y="4" height="60" width="425" format="[general]" html.valueishtml="0"  name=department_code  tag="$$HEX4$$80bd1cc154cfdcb4$$ENDHEX$$" visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

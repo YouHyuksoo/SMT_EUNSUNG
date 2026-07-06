@@ -1,0 +1,181 @@
+HA$PBExportHeader$d_mcn_machine_interlock_mst.srd
+$PBExportComments$D_MCN_MACHINE_LST CREATE DATE :2006-05-13 CREATED BY : ADMIN
+release 10.5;
+datawindow(units=0 timer_interval=0 color=12632256 processing=0 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no )
+header(height=0 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=664 color="12632256" )
+table(column=(type=char(30) update=yes updatewhereclause=yes key=yes name=machine_code dbname="imcn_machine.machine_code" dbalias=".machine_code" )
+ column=(type=number update=yes updatewhereclause=yes key=yes name=organization_id dbname="imcn_machine.organization_id" dbalias=".organization_id" )
+ column=(type=char(100) update=yes updatewhereclause=yes name=machine_name dbname="imcn_machine.machine_name" dbalias=".machine_name" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=machine_type dbname="imcn_machine.machine_type" dbalias=".machine_type" )
+ column=(type=number update=yes updatewhereclause=yes name=capacity dbname="imcn_machine.capacity" dbalias=".capacity" )
+ column=(type=number update=yes updatewhereclause=yes name=reserved_capacity dbname="imcn_machine.reserved_capacity" dbalias=".reserved_capacity" )
+ column=(type=datetime update=yes updatewhereclause=yes name=acquisition_date dbname="imcn_machine.acquisition_date" dbalias=".acquisition_date" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=acquisition_type dbname="imcn_machine.acquisition_type" dbalias=".acquisition_type" )
+ column=(type=char(86) update=yes updatewhereclause=yes name=machine_model_name dbname="imcn_machine.machine_model_name" dbalias=".machine_model_name" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=line_code dbname="imcn_machine.line_code" dbalias=".line_code" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=customer_code dbname="imcn_machine.customer_code" dbalias=".customer_code" )
+ column=(type=char(1) update=yes updatewhereclause=yes name=use_status dbname="imcn_machine.use_status" dbalias=".use_status" )
+ column=(type=char(500) update=yes updatewhereclause=yes name=manual_location_comment dbname="imcn_machine.manual_location_comment" dbalias=".manual_location_comment" )
+ column=(type=char(3) update=yes updatewhereclause=yes name=nation_code dbname="imcn_machine.nation_code" dbalias=".nation_code" values="" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=workstage_code dbname="imcn_machine.workstage_code" dbalias=".workstage_code" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=enter_by dbname="imcn_machine.enter_by" dbalias=".enter_by" )
+ column=(type=datetime update=yes updatewhereclause=yes name=enter_date dbname="imcn_machine.enter_date" dbalias=".enter_date" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=last_modify_by dbname="imcn_machine.last_modify_by" dbalias=".last_modify_by" )
+ column=(type=datetime update=yes updatewhereclause=yes name=last_modify_date dbname="imcn_machine.last_modify_date" dbalias=".last_modify_date" )
+ column=(type=number update=yes updatewhereclause=yes name=use_rate dbname="imcn_machine.use_rate" dbalias=".use_rate" )
+ column=(type=number update=yes updatewhereclause=yes name=uph_value dbname="imcn_machine.uph_value" dbalias=".uph_value" )
+ column=(type=char(3) update=yes updatewhereclause=yes name=capacity_uom dbname="imcn_machine.capacity_uom" dbalias=".capacity_uom" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=supplier_code dbname="imcn_machine.supplier_code" dbalias=".supplier_code" )
+ column=(type=char(1) update=yes updatewhereclause=yes name=machine_status dbname="imcn_machine.machine_status" dbalias=".machine_status" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=mold_code dbname="imcn_machine.mold_code" dbalias=".mold_code" )
+ column=(type=number update=yes updatewhereclause=yes name=mold_version dbname="imcn_machine.mold_version" dbalias=".mold_version" )
+ column=(type=number update=yes updatewhereclause=yes name=mold_set_serial dbname="imcn_machine.mold_set_serial" dbalias=".mold_set_serial" )
+ column=(type=char(200) updatewhereclause=yes name=machine_image_file_name dbname="imcn_machine.machine_image_file_name" dbalias=".machine_image_file_name" )
+ column=(type=char(1) update=yes updatewhereclause=yes name=mes_display_yn dbname="imcn_machine.mes_display_yn" dbalias=".mes_display_yn" values="Y	Y/N	N/" )
+ column=(type=number update=yes updatewhereclause=yes name=mes_display_sequence dbname="imcn_machine.mes_display_sequence" dbalias=".mes_display_sequence" )
+ column=(type=char(1) updatewhereclause=yes name=mold_exists_yn dbname="imcn_machine.mold_exists_yn" dbalias=".mold_exists_yn" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=machine_status_code dbname="imcn_machine.machine_status_code" dbalias=".machine_status_code" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=calling_plc_address dbname="imcn_machine.calling_plc_address" dbalias=".calling_plc_address" )
+ column=(type=datetime update=yes updatewhereclause=yes name=action_date dbname="imcn_machine.action_date" dbalias=".action_date" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=actual_plc_address dbname="imcn_machine.actual_plc_address" dbalias=".actual_plc_address" )
+ column=(type=char(1) update=yes updatewhereclause=yes name=use_tpm_yn dbname="imcn_machine.use_tpm_yn" dbalias=".use_tpm_yn" )
+ column=(type=char(1000) update=yes updatewhereclause=yes name=machine_spec dbname="imcn_machine.machine_spec" dbalias=".machine_spec" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=model_name dbname="imcn_machine.model_name" dbalias=".model_name" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=department_code dbname="imcn_machine.department_code" dbalias=".department_code" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=ip_address dbname="imcn_machine.ip_address" dbalias=".ip_address" )
+ column=(type=number update=yes updatewhereclause=yes name=port_no dbname="imcn_machine.port_no" dbalias=".port_no" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=jig_type dbname="imcn_machine.jig_type" dbalias=".jig_type" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=process_wait_time dbname="imcn_machine.process_wait_time" dbalias=".process_wait_time" )
+ column=(type=number updatewhereclause=yes name=break_value dbname="imcn_machine.break_value" dbalias=".break_value" )
+ column=(type=number updatewhereclause=yes name=hit_value dbname="imcn_machine.hit_value" dbalias=".hit_value" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=buffer_type dbname="imcn_machine.buffer_type" dbalias=".buffer_type" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=bcr_code dbname="imcn_machine.bcr_code" dbalias=".bcr_code" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=dio_address dbname="imcn_machine.dio_address" dbalias=".dio_address" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=equipment_port dbname="imcn_machine.equipment_port" dbalias=".equipment_port" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=scanner_port dbname="imcn_machine.scanner_port" dbalias=".scanner_port" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=dio_port dbname="imcn_machine.dio_port" dbalias=".dio_port" )
+ column=(type=char(20) updatewhereclause=yes name=main_power dbname="imcn_machine.main_power" dbalias=".main_power" )
+ column=(type=char(20) updatewhereclause=yes name=machine_length dbname="imcn_machine.machine_length" dbalias=".machine_length" )
+ column=(type=char(20) updatewhereclause=yes name=power_consumption dbname="imcn_machine.power_consumption" dbalias=".power_consumption" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=scanner_address dbname="imcn_machine.scanner_address" dbalias=".scanner_address" )
+ column=(type=number update=yes updatewhereclause=yes name=min_temp_value dbname="imcn_machine.min_temp_value" dbalias=".min_temp_value" )
+ column=(type=number update=yes updatewhereclause=yes name=max_temp_value dbname="imcn_machine.max_temp_value" dbalias=".max_temp_value" )
+ column=(type=number update=yes updatewhereclause=yes name=std_temp_value dbname="imcn_machine.std_temp_value" dbalias=".std_temp_value" )
+ column=(type=number update=yes updatewhereclause=yes name=min_humidity_value dbname="imcn_machine.min_humidity_value" dbalias=".min_humidity_value" )
+ column=(type=number update=yes updatewhereclause=yes name=max_humidity_value dbname="imcn_machine.max_humidity_value" dbalias=".max_humidity_value" )
+ column=(type=number update=yes updatewhereclause=yes name=std_humidity_value dbname="imcn_machine.std_humidity_value" dbalias=".std_humidity_value" )
+ column=(type=char(1) update=yes updatewhereclause=yes name=nsnp_minus_check_yn dbname="imcn_machine.nsnp_minus_check_yn" dbalias=".nsnp_minus_check_yn" )
+ retrieve="  SELECT ~"IMCN_MACHINE~".~"MACHINE_CODE~",   
+         ~"IMCN_MACHINE~".~"ORGANIZATION_ID~",   
+         ~"IMCN_MACHINE~".~"MACHINE_NAME~",   
+         ~"IMCN_MACHINE~".~"MACHINE_TYPE~",   
+         ~"IMCN_MACHINE~".~"CAPACITY~",   
+         ~"IMCN_MACHINE~".~"RESERVED_CAPACITY~",   
+         ~"IMCN_MACHINE~".~"ACQUISITION_DATE~",   
+         ~"IMCN_MACHINE~".~"ACQUISITION_TYPE~",   
+         ~"IMCN_MACHINE~".~"MACHINE_MODEL_NAME~",   
+         ~"IMCN_MACHINE~".~"LINE_CODE~",   
+         ~"IMCN_MACHINE~".~"CUSTOMER_CODE~",   
+         ~"IMCN_MACHINE~".~"USE_STATUS~",   
+         ~"IMCN_MACHINE~".~"MANUAL_LOCATION_COMMENT~",   
+         ~"IMCN_MACHINE~".~"NATION_CODE~",   
+         ~"IMCN_MACHINE~".~"WORKSTAGE_CODE~",   
+         ~"IMCN_MACHINE~".~"ENTER_BY~",   
+         ~"IMCN_MACHINE~".~"ENTER_DATE~",   
+         ~"IMCN_MACHINE~".~"LAST_MODIFY_BY~",   
+         ~"IMCN_MACHINE~".~"LAST_MODIFY_DATE~",   
+         ~"IMCN_MACHINE~".~"USE_RATE~",   
+         ~"IMCN_MACHINE~".~"UPH_VALUE~",   
+         ~"IMCN_MACHINE~".~"CAPACITY_UOM~",   
+         ~"IMCN_MACHINE~".~"SUPPLIER_CODE~",   
+         ~"IMCN_MACHINE~".~"MACHINE_STATUS~",   
+         ~"IMCN_MACHINE~".~"MOLD_CODE~",   
+         ~"IMCN_MACHINE~".~"MOLD_VERSION~",   
+         ~"IMCN_MACHINE~".~"MOLD_SET_SERIAL~",   
+         ~"IMCN_MACHINE~".~"MACHINE_IMAGE_FILE_NAME~",   
+         ~"IMCN_MACHINE~".~"MES_DISPLAY_YN~",   
+         ~"IMCN_MACHINE~".~"MES_DISPLAY_SEQUENCE~",   
+         ~"IMCN_MACHINE~".~"MOLD_EXISTS_YN~",   
+         ~"IMCN_MACHINE~".~"MACHINE_STATUS_CODE~",   
+         ~"IMCN_MACHINE~".~"CALLING_PLC_ADDRESS~",   
+         ~"IMCN_MACHINE~".~"ACTION_DATE~",   
+         ~"IMCN_MACHINE~".~"ACTUAL_PLC_ADDRESS~",   
+         ~"IMCN_MACHINE~".~"USE_TPM_YN~",   
+         ~"IMCN_MACHINE~".~"MACHINE_SPEC~",   
+         ~"IMCN_MACHINE~".~"MODEL_NAME~",   
+         ~"IMCN_MACHINE~".~"DEPARTMENT_CODE~",   
+         ~"IMCN_MACHINE~".~"IP_ADDRESS~",   
+         ~"IMCN_MACHINE~".~"PORT_NO~",   
+         ~"IMCN_MACHINE~".~"JIG_TYPE~",   
+         ~"IMCN_MACHINE~".~"PROCESS_WAIT_TIME~",   
+         ~"IMCN_MACHINE~".~"BREAK_VALUE~",   
+         ~"IMCN_MACHINE~".~"HIT_VALUE~",   
+         ~"IMCN_MACHINE~".~"BUFFER_TYPE~",   
+         ~"IMCN_MACHINE~".~"BCR_CODE~",   
+         ~"IMCN_MACHINE~".~"DIO_ADDRESS~",   
+         ~"IMCN_MACHINE~".~"EQUIPMENT_PORT~",   
+         ~"IMCN_MACHINE~".~"SCANNER_PORT~",   
+         ~"IMCN_MACHINE~".~"DIO_PORT~" ,
+         ~"IMCN_MACHINE~".~"MAIN_POWER~",   
+         ~"IMCN_MACHINE~".~"MACHINE_LENGTH~",   
+         ~"IMCN_MACHINE~".~"POWER_CONSUMPTION~"  ,
+		~"IMCN_MACHINE~".~"SCANNER_ADDRESS~" ,
+        ~"IMCN_MACHINE~".~"MIN_TEMP_VALUE~",   
+         ~"IMCN_MACHINE~".~"MAX_TEMP_VALUE~",   
+         ~"IMCN_MACHINE~".~"STD_TEMP_VALUE~",   
+         ~"IMCN_MACHINE~".~"MIN_HUMIDITY_VALUE~",   
+         ~"IMCN_MACHINE~".~"MAX_HUMIDITY_VALUE~",   
+         ~"IMCN_MACHINE~".~"STD_HUMIDITY_VALUE~"  ,
+         ~"IMCN_MACHINE~".~"NSNP_MINUS_CHECK_YN~"
+    FROM ~"IMCN_MACHINE~"  
+   WHERE ROWID = :arg_rowid    
+" update="IMCN_MACHINE" updatewhere=0 updatekeyinplace=yes arguments=(("arg_rowid", string)) )
+text(band=detail alignment="1" text="DIO Port" border="0" color="33554432" x="37" y="28" height="52" width="517" html.valueishtml="0"  name=t_20 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="549503168" )
+text(band=detail alignment="1" text="Scanner Port" border="0" color="33554432" x="37" y="100" height="52" width="517" html.valueishtml="0"  name=t_21 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="549503168" )
+column(band=detail id=51 alignment="2" tabsequence=290 border="5" color="33554432" x="585" y="28" height="52" width="425" format="[general]" html.valueishtml="0"  name=dio_port visible="1" edit.limit=0 edit.case=upper edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+compute(band=detail alignment="2" expression="'Page ' + page() + ' of ' + pageCount()"border="0" color="33554432" x="2601" y="320" height="68" width="791" format="[general]" html.valueishtml="0"  name=page_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=detail alignment="1" text="Equipment Port" border="0" color="33554432" x="37" y="172" height="52" width="517" html.valueishtml="0"  name=t_22 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="549503168" )
+column(band=detail id=49 alignment="2" tabsequence=310 border="5" color="33554432" x="585" y="172" height="52" width="425" format="[general]" html.valueishtml="0"  name=equipment_port visible="1" edit.limit=0 edit.case=upper edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+text(band=detail alignment="1" text="DIO Address" border="0" color="33554432" x="1042" y="36" height="52" width="517" html.valueishtml="0"  name=t_23 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="549503168" )
+column(band=detail id=50 alignment="2" tabsequence=300 border="5" color="33554432" x="585" y="100" height="52" width="425" format="[general]" html.valueishtml="0"  name=scanner_port visible="1" edit.limit=0 edit.case=upper edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+text(band=detail alignment="1" text="Scanner Address" border="0" color="33554432" x="1042" y="108" height="52" width="517" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="549503168" )
+text(band=detail alignment="1" text="BCR Code" border="0" color="33554432" x="37" y="244" height="52" width="517" html.valueishtml="0"  name=t_24 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="549503168" )
+text(band=detail alignment="1" text="Buffer Type" border="0" color="33554432" x="37" y="312" height="52" width="517" html.valueishtml="0"  name=t_25 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="549503168" )
+text(band=detail alignment="1" text="Process Wait Time" border="0" color="33554432" x="37" y="384" height="52" width="517" html.valueishtml="0"  name=t_26 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="549503168" )
+text(band=detail alignment="1" text="JIG Type" border="0" color="33554432" x="37" y="452" height="52" width="517" html.valueishtml="0"  name=t_27 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="549503168" )
+column(band=detail id=47 alignment="2" tabsequence=340 border="5" color="33554432" x="585" y="244" height="52" width="425" format="[general]" html.valueishtml="0"  name=bcr_code visible="1" edit.limit=0 edit.case=upper edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=46 alignment="2" tabsequence=350 border="5" color="33554432" x="585" y="312" height="52" width="425" format="[general]" html.valueishtml="0"  name=buffer_type visible="1" edit.limit=0 edit.case=upper edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=43 alignment="0" tabsequence=360 border="5" color="33554432" x="585" y="384" height="52" width="425" format="[general]" html.valueishtml="0"  name=process_wait_time visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=42 alignment="0" tabsequence=370 border="5" color="33554432" x="585" y="452" height="52" width="425" format="[general]" html.valueishtml="0"  name=jig_type visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+text(band=detail alignment="1" text="IP Address" border="0" color="33554432" x="37" y="520" height="52" width="517" html.valueishtml="0"  name=t_18 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="549503168" )
+column(band=detail id=40 alignment="0" tabsequence=270 border="5" color="33554432" x="585" y="520" height="52" width="425" format="[general]" html.valueishtml="0"  name=ip_address visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+text(band=detail alignment="1" text="Port No" border="0" color="33554432" x="37" y="592" height="52" width="517" html.valueishtml="0"  name=t_19 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="549503168" )
+column(band=detail id=41 alignment="0" tabsequence=280 border="5" color="33554432" x="585" y="592" height="52" width="425" format="[general]" html.valueishtml="0"  name=port_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=55 alignment="0" tabsequence=380 border="5" color="33554432" x="1591" y="100" height="52" width="425" format="[general]" html.valueishtml="0"  name=scanner_address visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=48 alignment="2" tabsequence=320 border="5" color="33554432" x="1591" y="36" height="52" width="425" format="[general]" html.valueishtml="0"  name=dio_address visible="1" edit.limit=0 edit.case=upper edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=56 alignment="0" tabsequence=390 border="5" color="33554432" x="1591" y="228" height="52" width="425" format="[general]" html.valueishtml="0"  name=min_temp_value visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+text(band=detail alignment="1" text="Min Temp" border="0" color="33554432" x="1042" y="232" height="52" width="517" html.valueishtml="0"  name=t_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="549503168" )
+column(band=detail id=61 alignment="0" tabsequence=440 border="5" color="33554432" x="1591" y="592" height="52" width="425" format="[general]" html.valueishtml="0"  name=std_humidity_value visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+text(band=detail alignment="1" text="STD Humidity" border="0" color="33554432" x="1042" y="592" height="52" width="517" html.valueishtml="0"  name=t_7 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="549503168" )
+column(band=detail id=60 alignment="0" tabsequence=430 border="5" color="33554432" x="1591" y="520" height="52" width="425" format="[general]" html.valueishtml="0"  name=max_humidity_value visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+text(band=detail alignment="1" text="Max Humidity" border="0" color="33554432" x="1042" y="520" height="52" width="517" html.valueishtml="0"  name=t_6 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="549503168" )
+column(band=detail id=59 alignment="0" tabsequence=420 border="5" color="33554432" x="1591" y="448" height="52" width="425" format="[general]" html.valueishtml="0"  name=min_humidity_value visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+text(band=detail alignment="1" text="Min Humidity" border="0" color="33554432" x="1042" y="448" height="52" width="517" html.valueishtml="0"  name=t_5 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="549503168" )
+column(band=detail id=58 alignment="0" tabsequence=410 border="5" color="33554432" x="1591" y="376" height="52" width="425" format="[general]" html.valueishtml="0"  name=std_temp_value visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+text(band=detail alignment="1" text="STD Temp" border="0" color="33554432" x="1042" y="376" height="52" width="517" html.valueishtml="0"  name=t_4 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="549503168" )
+column(band=detail id=57 alignment="0" tabsequence=400 border="5" color="33554432" x="1591" y="300" height="52" width="425" format="[general]" html.valueishtml="0"  name=max_temp_value visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+text(band=detail alignment="1" text="Max Temp" border="0" color="33554432" x="1042" y="300" height="52" width="517" html.valueishtml="0"  name=t_3 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="549503168" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

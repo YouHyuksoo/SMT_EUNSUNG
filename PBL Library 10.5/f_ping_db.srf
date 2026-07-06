@@ -1,0 +1,18 @@
+HA$PBExportHeader$f_ping_db.srf
+global type f_ping_db from function_object
+end type
+
+forward prototypes
+global function datetime f_ping_db ()
+end prototypes
+
+global function datetime f_ping_db ();datetime lvf_date
+
+/************************
+* Wake Up Database
+*************************/
+select sysdate  into :lvf_date
+  from dual ;
+return lvf_date
+end function
+

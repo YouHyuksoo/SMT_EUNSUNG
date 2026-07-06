@@ -1,0 +1,68 @@
+HA$PBExportHeader$d_dual_language_popup.srd
+$PBExportComments$Dual Language Text $$HEX9$$c0bc58d6200070b374c7c0d008c7c4b3b0c6$$ENDHEX$$
+release 10;
+datawindow(units=0 timer_interval=0 color=12632256 processing=1 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes hidegrayline=no grid.lines=0 selected.mouse=no )
+header(height=152 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=68 color="536870912" )
+table(column=(type=char(100) update=yes updatewhereclause=yes key=yes name=english_text dbname="isys_dual_language.english_text" )
+ column=(type=char(100) update=yes updatewhereclause=yes name=local_text dbname="isys_dual_language.local_text" )
+ column=(type=char(1) update=yes updatewhereclause=yes name=conver_chk dbname="isys_dual_language.conver_chk" values="	Y/	N" )
+ column=(type=char(100) update=yes updatewhereclause=yes name=korea_text dbname="isys_dual_language.korea_text" )
+ column=(type=datetime update=yes updatewhereclause=yes name=enter_date dbname="isys_dual_language.enter_date" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=enter_by dbname="isys_dual_language.enter_by" )
+ column=(type=datetime update=yes updatewhereclause=yes name=last_modify_date dbname="isys_dual_language.last_modify_date" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=last_modify_by dbname="isys_dual_language.last_modify_by" )
+ column=(type=decimal(0) update=yes updatewhereclause=yes key=yes name=organization_id dbname="isys_dual_language.organization_id" )
+ column=(type=char(100) update=yes updatewhereclause=yes name=english_origin_text dbname="isys_dual_language.english_origin_text" )
+ retrieve="  SELECT ~"ISYS_DUAL_LANGUAGE~".~"ENGLISH_TEXT~",   
+         ~"ISYS_DUAL_LANGUAGE~".~"LOCAL_TEXT~",   
+         ~"ISYS_DUAL_LANGUAGE~".~"CONVER_CHK~",   
+         ~"ISYS_DUAL_LANGUAGE~".~"KOREA_TEXT~",   
+         ~"ISYS_DUAL_LANGUAGE~".~"ENTER_DATE~",   
+         ~"ISYS_DUAL_LANGUAGE~".~"ENTER_BY~",   
+         ~"ISYS_DUAL_LANGUAGE~".~"LAST_MODIFY_DATE~",   
+         ~"ISYS_DUAL_LANGUAGE~".~"LAST_MODIFY_BY~",   
+         ~"ISYS_DUAL_LANGUAGE~".~"ORGANIZATION_ID~",   
+         ~"ISYS_DUAL_LANGUAGE~".~"ENGLISH_ORIGIN_TEXT~"  
+    FROM ~"ISYS_DUAL_LANGUAGE~"  
+   WHERE (( ~"ISYS_DUAL_LANGUAGE~".~"ENGLISH_TEXT~" like :ARG_TEXT ) OR  
+         ( ~"ISYS_DUAL_LANGUAGE~".~"LOCAL_TEXT~" like :ARG_TEXT ) OR  
+         ( ~"ISYS_DUAL_LANGUAGE~".~"KOREA_TEXT~" like :ARG_TEXT ) ) AND  
+         ( ~"ISYS_DUAL_LANGUAGE~".~"ORGANIZATION_ID~" = :ARG_ORG )    
+" update="ISYS_DUAL_LANGUAGE" updatewhere=0 updatekeyinplace=yes arguments=(("ARG_TEXT", string),("ARG_ORG", number))  sort="english_text A " )
+text(band=header alignment="2" text="NO" border="0" color="65535" x="123" y="4" height="144" width="178" html.valueishtml="0"  name=no_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+text(band=header alignment="2" text="Local Text" border="0" color="0" x="937" y="4" height="144" width="562" html.valueishtml="0"  name=local_text_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Create Date" border="0" color="0" x="3045" y="4" height="144" width="384" html.valueishtml="0"  name=enter_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Create By" border="0" color="0" x="3438" y="4" height="144" width="325" html.valueishtml="0"  name=enter_by_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Modify Date" border="0" color="0" x="3771" y="4" height="144" width="338" html.valueishtml="0"  name=last_modify_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Modify By" border="0" color="0" x="4119" y="4" height="144" width="334" html.valueishtml="0"  name=last_modify_by_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Organization Id" border="0" color="0" x="4462" y="4" height="144" width="315" html.valueishtml="0"  name=organization_id_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="English Text" border="0" color="0" x="311" y="4" height="144" width="617" html.valueishtml="0"  name=english_text_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Convert" border="0" color="0" x="2825" y="4" height="144" width="210" html.valueishtml="0"  name=conver_chk_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Korea Text" border="0" color="0" x="1509" y="4" height="144" width="581" html.valueishtml="0"  name=korea_text_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="English Origin Text" border="0" color="0" x="2098" y="4" height="144" width="718" html.valueishtml="0"  name=english_origin_text_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+column(band=detail id=2 alignment="0" tabsequence=20 border="0" color="0" x="937" y="4" height="60" width="562" format="[general]" html.valueishtml="0"  name=local_text visible="1" edit.limit=50 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+compute(band=detail alignment="0" expression="bitmap ('')"border="0" color="0" x="9" y="4" height="60" width="105" format="[GENERAL]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=1 alignment="0" tabsequence=10 border="0" color="0" x="311" y="4" height="60" width="617" format="[general]" html.valueishtml="0"  name=english_text visible="1" edit.limit=50 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+compute(band=detail alignment="0" expression="GETROW()"border="0" color="65535" x="123" y="4" height="60" width="178" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+column(band=detail id=3 alignment="2" tabsequence=50 border="0" color="0" x="2825" y="4" height="60" width="210" format="[general]" html.valueishtml="0"  name=conver_chk visible="1" checkbox.text="" checkbox.on="Y" checkbox.off="N" checkbox.scale=no checkbox.threed=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=5 alignment="2" tabsequence=60 border="0" color="0" x="3045" y="4" height="60" width="384" format="yyyy/mm/dd" html.valueishtml="0"  name=enter_date visible="1" edit.limit=0 edit.case=any edit.format="YYYY/MM/DD" edit.autoselect=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=9 alignment="2" tabsequence=100 border="0" color="0" x="4462" y="4" height="60" width="315" format="[general]" html.valueishtml="0"  name=organization_id visible="1" edit.limit=0 edit.case=any edit.autoselect=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=6 alignment="2" tabsequence=70 border="0" color="0" x="3438" y="4" height="60" width="325" format="[general]" html.valueishtml="0"  name=enter_by visible="1" edit.limit=0 edit.case=any edit.format="" edit.autoselect=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=8 alignment="2" tabsequence=90 border="0" color="0" x="4119" y="4" height="60" width="334" format="[general]" html.valueishtml="0"  name=last_modify_by visible="1" edit.limit=0 edit.case=any edit.autoselect=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=7 alignment="2" tabsequence=80 border="0" color="0" x="3771" y="4" height="60" width="338" format="yyyy/mm/dd" html.valueishtml="0"  name=last_modify_date visible="1" edit.limit=0 edit.case=any edit.format="YYYY/MM/DD" edit.autoselect=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=4 alignment="0" tabsequence=30 border="0" color="0" x="1509" y="4" height="60" width="581" format="[general]" html.valueishtml="0"  name=korea_text  tag="KOREA" visible="1" edit.limit=0 edit.case=any edit.autoselect=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="129" background.mode="2" background.color="16777215" )
+column(band=detail id=10 alignment="0" tabsequence=40 border="0" color="0" x="2098" y="4" height="60" width="718" format="[general]" html.valueishtml="0"  name=english_origin_text visible="1" edit.limit=0 edit.case=any edit.autoselect=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

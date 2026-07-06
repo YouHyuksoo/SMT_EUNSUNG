@@ -1,0 +1,149 @@
+HA$PBExportHeader$d_ip_product_material_tracking_kfc_rpt.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no grid.lines=0 )
+header(height=124 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=72 color="536870912" )
+table(column=(type=char(30) updatewhereclause=yes name=p_pcb dbname="ip_prod_material_tracking_kfc.p_pcb" dbalias=".p_pcb" )
+ column=(type=char(50) updatewhereclause=yes name=p_kefilot dbname="ip_prod_material_tracking_kfc.p_kefilot" dbalias=".p_kefilot" )
+ column=(type=char(50) updatewhereclause=yes name=p_material dbname="ip_prod_material_tracking_kfc.p_material" dbalias=".p_material" )
+ column=(type=char(50) updatewhereclause=yes name=m_material dbname="ip_prod_material_tracking_kfc.m_material" dbalias=".m_material" )
+ column=(type=char(20) updatewhereclause=yes name=line_code dbname="ip_prod_material_tracking_kfc.p_prog" dbalias=".p_prog" )
+ column=(type=char(20) updatewhereclause=yes name=p_equip dbname="ip_prod_material_tracking_kfc.p_equip" dbalias=".p_equip" )
+ column=(type=datetime updatewhereclause=yes name=p_process_time dbname="ip_prod_material_tracking_kfc.p_process_time" dbalias=".p_process_time" )
+ column=(type=char(20) updatewhereclause=yes name=p_status dbname="ip_prod_material_tracking_kfc.p_status" dbalias=".p_status" )
+ column=(type=char(30) updatewhereclause=yes name=model_name dbname="id_item.model_name" dbalias="ID_ITEM_A.model_name" )
+ column=(type=char(300) updatewhereclause=yes name=item_name dbname="id_item.item_name" dbalias="ID_ITEM_B.item_name" )
+ column=(type=char(300) updatewhereclause=yes name=item_spec dbname="id_item.item_spec" dbalias="ID_ITEM_B.item_spec" )
+ column=(type=char(30) updatewhereclause=yes name=mat_vendor dbname="ip_prod_material_tracking_kfc.mat_vendor" dbalias=".mat_vendor" )
+ column=(type=number updatewhereclause=yes name=scan_qty dbname="ip_prod_material_tracking_kfc.scan_qty" dbalias=".scan_qty" )
+ column=(type=char(50) updatewhereclause=yes name=trace_code dbname="ip_prod_material_tracking_kfc.trace_code" dbalias=".trace_code" )
+ column=(type=datetime updatewhereclause=yes name=inspect_date dbname="ip_prod_material_tracking_kfc.inspect_date" dbalias=".inspect_date" )
+ column=(type=datetime updatewhereclause=yes name=valid_date dbname="ip_prod_material_tracking_kfc.valid_date" dbalias=".valid_date" )
+ column=(type=char(30) updatewhereclause=yes name=emp_code dbname="ip_prod_material_tracking_kfc.emp_code" dbalias=".emp_code" )
+ column=(type=char(100) updatewhereclause=yes name=item_name_in_barcode dbname="ip_prod_material_tracking_kfc.item_name_in_barcode" dbalias=".item_name_in_barcode" )
+ column=(type=char(300) updatewhereclause=yes name=our_origin_barcode dbname="ip_prod_material_tracking_kfc.our_origin_barcode" dbalias=".our_origin_barcode" )
+ column=(type=char(100) updatewhereclause=yes name=mapping_label dbname="ip_product_2d_barcode.mapping_label" dbalias=".mapping_label" )
+ column=(type=char(30) updatewhereclause=yes name=customer_model_name dbname="ip_product_2d_barcode.customer_model_name" dbalias=".customer_model_name" )
+ column=(type=char(20) updatewhereclause=yes name=magazine_no dbname="ip_product_2d_barcode.magazine_no" dbalias=".magazine_no" )
+ column=(type=char(50) updatewhereclause=yes name=vendor_lotno dbname="im_item_receipt_barcode.vendor_lotno" dbalias=".vendor_lotno" )
+ column=(type=char(30) updatewhereclause=yes name=vendor_code dbname="im_item_receipt_barcode.vendor_code" dbalias=".vendor_code" )
+ column=(type=char(50) updatewhereclause=yes name=supplier_lot_no dbname="im_item_receipt_barcode.supplier_lot_no" dbalias=".supplier_lot_no" )
+ column=(type=char(50) updatewhereclause=yes name=origin_item_barcode dbname="im_item_receipt_barcode.origin_item_barcode" dbalias=".origin_item_barcode" )
+ column=(type=char(20) updatewhereclause=yes name=origin_supplier_code dbname="im_item_receipt_barcode.origin_supplier_code" dbalias=".origin_supplier_code" )
+ retrieve="  SELECT ~"IP_PROD_MATERIAL_TRACKING_KFC~".~"P_PCB~",   
+         ~"IP_PROD_MATERIAL_TRACKING_KFC~".~"P_KEFILOT~",   
+         ~"IP_PROD_MATERIAL_TRACKING_KFC~".~"P_MATERIAL~",   
+         ~"IP_PROD_MATERIAL_TRACKING_KFC~".~"M_MATERIAL~",   
+         ~"IP_PROD_MATERIAL_TRACKING_KFC~".~"P_PROG~",   
+         ~"IP_PROD_MATERIAL_TRACKING_KFC~".~"P_EQUIP~",   
+         ~"IP_PROD_MATERIAL_TRACKING_KFC~".~"P_PROCESS_TIME~",   
+         ~"IP_PROD_MATERIAL_TRACKING_KFC~".~"P_STATUS~",   
+         ~"ID_ITEM_A~".~"MODEL_NAME~",   
+         ~"ID_ITEM_B~".~"ITEM_NAME~",   
+         ~"ID_ITEM_B~".~"ITEM_SPEC~",   
+         ~"IP_PROD_MATERIAL_TRACKING_KFC~".~"MAT_VENDOR~",   
+         ~"IP_PROD_MATERIAL_TRACKING_KFC~".~"SCAN_QTY~",   
+         ~"IP_PROD_MATERIAL_TRACKING_KFC~".~"TRACE_CODE~",   
+         ~"IP_PROD_MATERIAL_TRACKING_KFC~".~"INSPECT_DATE~",   
+         ~"IP_PROD_MATERIAL_TRACKING_KFC~".~"VALID_DATE~",   
+         ~"IP_PROD_MATERIAL_TRACKING_KFC~".~"EMP_CODE~",   
+         ~"IP_PROD_MATERIAL_TRACKING_KFC~".~"ITEM_NAME_IN_BARCODE~",   
+         ~"IP_PROD_MATERIAL_TRACKING_KFC~".~"OUR_ORIGIN_BARCODE~",   
+         ~"IP_PRODUCT_2D_BARCODE~".~"MAPPING_LABEL~",   
+         ~"IP_PRODUCT_2D_BARCODE~".~"CUSTOMER_MODEL_NAME~",   
+         ~"IP_PRODUCT_2D_BARCODE~".~"MAGAZINE_NO~",   
+         ~"IM_ITEM_RECEIPT_BARCODE~".~"VENDOR_LOTNO~",   
+         ~"IM_ITEM_RECEIPT_BARCODE~".~"VENDOR_CODE~",   
+         ~"IM_ITEM_RECEIPT_BARCODE~".~"SUPPLIER_LOT_NO~",   
+         ~"IM_ITEM_RECEIPT_BARCODE~".~"ORIGIN_ITEM_BARCODE~",   
+         ~"IM_ITEM_RECEIPT_BARCODE~".~"ORIGIN_SUPPLIER_CODE~"  
+    FROM ~"IP_PROD_MATERIAL_TRACKING_KFC~",   
+         ~"ID_ITEM~" ~"ID_ITEM_A~",   
+         ~"ID_ITEM~" ~"ID_ITEM_B~",   
+         ~"IP_PRODUCT_2D_BARCODE~",   
+         ~"IM_ITEM_RECEIPT_BARCODE~"  
+   WHERE ( ip_prod_material_tracking_kfc.p_material = ID_ITEM_A.item_code (+)) and  
+         ( ip_prod_material_tracking_kfc.m_material = ID_ITEM_B.item_code (+)) and  
+         ( ip_prod_material_tracking_kfc.p_pcb = ip_product_2d_barcode.serial_no (+)) and  
+         ( ip_prod_material_tracking_kfc.p_kefilot = im_item_receipt_barcode.lot_no (+)) and  
+         ( ( ~"IP_PROD_MATERIAL_TRACKING_KFC~".~"P_PCB~" like :arg_serial_no ) AND  
+         ( ~"IP_PROD_MATERIAL_TRACKING_KFC~".~"P_KEFILOT~" like :arg_lot_no ) AND  
+         ( ~"IP_PROD_MATERIAL_TRACKING_KFC~".~"P_MATERIAL~" like :arg_set_item_code ) AND  
+         ( ~"IP_PROD_MATERIAL_TRACKING_KFC~".~"M_MATERIAL~" like :arg_item_code ) AND  
+         ( ~"IP_PROD_MATERIAL_TRACKING_KFC~".~"P_PROCESS_TIME~" >= :arg_dateset ) AND  
+         ( ~"IP_PROD_MATERIAL_TRACKING_KFC~".~"P_PROCESS_TIME~" <= :arg_dateend+1 ) ) AND  
+         IP_PROD_MATERIAL_TRACKING_KFC.P_MATERIAL IN ( SELECT ITEM_CODE FROM IP_PRODUCT_MODEL_MASTER WHERE CUSTOMER_CODE LIKE :ARG_CUSTOMER_CODE )   AND
+         ID_ITEM_A.organization_id =1 and
+         ID_ITEM_B.organization_id =1
+" arguments=(("arg_serial_no", string),("arg_lot_no", string),("arg_set_item_code", string),("arg_item_code", string),("arg_dateset", datetime),("arg_dateend", datetime),("arg_customer_code", string))  sort="line_code A p_equip A p_status A model_name A p_pcb A p_process_time A p_material A " )
+group(level=1 header.height=0 trailer.height=44 by=("p_material" ) header.color="536870912" trailer.color="65280" )
+group(level=2 header.height=0 trailer.height=68 by=("p_pcb" ) header.color="536870912" trailer.color="16776960" )
+text(band=header alignment="2" text="Origin Supplier Code" border="0" color="33554432" x="11630" y="8" height="112" width="457" html.valueishtml="0"  name=im_item_receipt_barcode_origin_suppl_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="P Pcb" border="0" color="33554432" x="1669" y="8" height="112" width="416" html.valueishtml="0"  name=p_pcb_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="P Kefilot" border="0" color="33554432" x="2094" y="8" height="112" width="686" html.valueishtml="0"  name=p_kefilot_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="P Material" border="0" color="33554432" x="2789" y="8" height="112" width="471" html.valueishtml="0"  name=p_material_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="P Prog" border="0" color="33554432" x="133" y="8" height="112" width="421" html.valueishtml="0"  name=p_prog_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="P Equip" border="0" color="33554432" x="562" y="8" height="112" width="402" html.valueishtml="0"  name=p_equip_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="P Status" border="0" color="33554432" x="1509" y="8" height="112" width="151" html.valueishtml="0"  name=p_status_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Model Name" border="0" color="33554432" x="974" y="8" height="112" width="526" html.valueishtml="0"  name=model_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="M Material" border="0" color="33554432" x="3269" y="8" height="112" width="475" html.valueishtml="0"  name=m_material_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Item Name" border="0" color="33554432" x="5751" y="8" height="112" width="283" html.valueishtml="0"  name=item_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Item Spec" border="0" color="33554432" x="6043" y="8" height="112" width="352" html.valueishtml="0"  name=item_spec_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="P Process Time" border="0" color="33554432" x="6405" y="8" height="112" width="471" html.valueishtml="0"  name=p_process_time_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Mat Vendor" border="0" color="33554432" x="4041" y="8" height="112" width="544" html.valueishtml="0"  name=mat_vendor_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Scan Qty" border="0" color="33554432" x="3753" y="8" height="112" width="279" html.valueishtml="0"  name=scan_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Trace Code" border="0" color="33554432" x="4594" y="8" height="112" width="283" html.valueishtml="0"  name=trace_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Inspect Date" border="0" color="33554432" x="6885" y="8" height="112" width="485" html.valueishtml="0"  name=inspec_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Valid Date" border="0" color="33554432" x="7378" y="8" height="112" width="370" html.valueishtml="0"  name=valid_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Item Name In Barcode" border="0" color="33554432" x="4887" y="8" height="112" width="855" html.valueishtml="0"  name=item_n_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Emp Code" border="0" color="33554432" x="7758" y="8" height="112" width="334" html.valueishtml="0"  name=emp_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Our Origin Barcode" border="0" color="33554432" x="8101" y="8" height="112" width="599" html.valueishtml="0"  name=our_origin_barcode_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Mapping Label" border="0" color="33554432" x="8709" y="8" height="112" width="512" html.valueishtml="0"  name=mapping_label_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Customer Model Name" border="0" color="33554432" x="9230" y="8" height="112" width="293" html.valueishtml="0"  name=customer_model_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Magazine No" border="0" color="33554432" x="9531" y="8" height="112" width="416" html.valueishtml="0"  name=magazine_no_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Vendor Lotno" border="0" color="33554432" x="9957" y="8" height="112" width="402" html.valueishtml="0"  name=im_item_receipt_barcode_vendor_lotno_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Vendor Code" border="0" color="33554432" x="10368" y="8" height="112" width="334" html.valueishtml="0"  name=im_item_receipt_barcode_vendor_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Supplier Lot No" border="0" color="33554432" x="10711" y="8" height="112" width="462" html.valueishtml="0"  name=im_item_receipt_barcode_supplier_lot_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Origin Item Barcode" border="0" color="33554432" x="11182" y="8" height="112" width="439" html.valueishtml="0"  name=im_item_receipt_barcode_origin_item__t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="33554432" x="1669" y="8" height="56" width="416" format="[general]" html.valueishtml="0"  name=p_pcb visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="33554432" x="2094" y="8" height="56" width="686" format="[general]" html.valueishtml="0"  name=p_kefilot visible="1" edit.limit=50 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="0" color="33554432" x="2789" y="8" height="56" width="471" format="[general]" html.valueishtml="0"  name=p_material visible="1" edit.limit=50 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="2" tabsequence=32766 border="0" color="33554432" x="133" y="8" height="56" width="421" format="[general]" html.valueishtml="0"  name=line_code visible="1" dddw.name=vd_line_code dddw.displaycolumn=line_name dddw.datacolumn=line_code dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=6 alignment="2" tabsequence=32766 border="0" color="33554432" x="562" y="8" height="56" width="402" format="[general]" html.valueishtml="0"  name=p_equip visible="1" dddw.name=vd_machine_code dddw.displaycolumn=machine_name dddw.datacolumn=machine_code dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=8 alignment="2" tabsequence=32766 border="0" color="33554432" x="1509" y="8" height="56" width="151" format="[general]" html.valueishtml="0"  name=p_status visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="0" color="33554432" x="3269" y="8" height="56" width="475" format="[general]" html.valueishtml="0"  name=m_material visible="1" edit.limit=50 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12639424" )
+column(band=detail id=10 alignment="2" tabsequence=32766 border="0" color="33554432" x="5751" y="8" height="56" width="283" format="[general]" html.valueishtml="0"  name=item_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12639424" )
+column(band=detail id=11 alignment="2" tabsequence=32766 border="0" color="33554432" x="6043" y="8" height="56" width="352" format="[general]" html.valueishtml="0"  name=item_spec visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12639424" )
+column(band=detail id=9 alignment="2" tabsequence=32766 border="0" color="33554432" x="974" y="8" height="56" width="526" format="[general]" html.valueishtml="0"  name=model_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="2" expression="getrow()"border="0" color="33554432" x="9" y="8" height="56" width="114" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=7 alignment="2" tabsequence=32766 border="0" color="33554432" x="6405" y="8" height="56" width="471" format="[shortdate] [time]" html.valueishtml="0"  name=p_process_time visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=12 alignment="0" tabsequence=32766 border="0" color="33554432" x="4041" y="8" height="56" width="544" format="[general]" html.valueishtml="0"  name=mat_vendor visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=13 alignment="1" tabsequence=32766 border="0" color="33554432" x="3753" y="8" height="56" width="279" format="[general]" html.valueishtml="0"  name=scan_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=14 alignment="0" tabsequence=32766 border="0" color="33554432" x="4594" y="8" height="56" width="283" format="[general]" html.valueishtml="0"  name=trace_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=18 alignment="0" tabsequence=32766 border="0" color="33554432" x="4887" y="8" height="56" width="855" format="[general]" html.valueishtml="0"  name=item_name_in_barcode visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=15 alignment="2" tabsequence=32766 border="0" color="33554432" x="6885" y="8" height="56" width="485" format="[shortdate] [time]" html.valueishtml="0"  name=inspect_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=16 alignment="2" tabsequence=32766 border="0" color="33554432" x="7378" y="8" height="56" width="370" format="[shortdate] [time]" html.valueishtml="0"  name=valid_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=17 alignment="2" tabsequence=32766 border="0" color="33554432" x="7758" y="8" height="56" width="334" format="[general]" html.valueishtml="0"  name=emp_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=19 alignment="0" tabsequence=32766 border="0" color="33554432" x="8105" y="8" height="56" width="594" format="[general]" html.valueishtml="0"  name=our_origin_barcode visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=20 alignment="0" tabsequence=32766 border="0" color="33554432" x="8713" y="8" height="56" width="507" format="[general]" html.valueishtml="0"  name=mapping_label visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=21 alignment="0" tabsequence=32766 border="0" color="33554432" x="9234" y="8" height="56" width="288" format="[general]" html.valueishtml="0"  name=customer_model_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=22 alignment="0" tabsequence=32766 border="0" color="33554432" x="9536" y="8" height="56" width="411" format="[general]" html.valueishtml="0"  name=magazine_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=23 alignment="2" tabsequence=32766 border="0" color="33554432" x="9961" y="8" height="56" width="398" format="[general]" html.valueishtml="0"  name=vendor_lotno visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=24 alignment="2" tabsequence=32766 border="0" color="33554432" x="10373" y="8" height="56" width="329" format="[general]" html.valueishtml="0"  name=vendor_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=25 alignment="2" tabsequence=32766 border="0" color="33554432" x="10715" y="8" height="56" width="457" format="[general]" html.valueishtml="0"  name=supplier_lot_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=26 alignment="2" tabsequence=32766 border="0" color="33554432" x="11186" y="8" height="56" width="434" format="[general]" html.valueishtml="0"  name=origin_item_barcode visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=27 alignment="2" tabsequence=32766 border="0" color="33554432" x="11634" y="8" height="56" width="453" format="[general]" html.valueishtml="0"  name=origin_supplier_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=trailer.2 alignment="2" expression="count(p_pcb for group 2)"border="0" color="33554432" x="1669" y="4" height="56" width="416" format="[general]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+
+sparse(names="model_name	p_pcb")htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()

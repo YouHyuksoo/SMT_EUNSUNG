@@ -1,0 +1,121 @@
+HA$PBExportHeader$d_mat_workstage_receipt_issue_summary_4_lot_tracking_rpt.srd
+$PBExportComments$D_MAT_WORKSTAGE_INVENTORY_LST CREATE DATE :2006-09-22 CREATED BY : ADMIN
+release 10.5;
+datawindow(units=0 timer_interval=0 color=16777215 processing=1 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no grid.lines=0 )
+header(height=188 color="16777215" )
+summary(height=64 color="16777215" )
+footer(height=0 color="536870912" )
+detail(height=72 color="16777215" )
+table(column=(type=number update=yes updatewhereclause=yes name=organization_id dbname="organization_id" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=item_code dbname="item_code" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=item_type dbname="item_type" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=line_type dbname="line_type" )
+ column=(type=number updatewhereclause=yes name=receipt_price dbname="receipt_price" )
+ column=(type=number updatewhereclause=yes name=receipt_qty dbname="receipt_qty" )
+ column=(type=number updatewhereclause=yes name=receipt_amt dbname="receipt_amt" )
+ column=(type=number updatewhereclause=yes name=issue_price dbname="issue_price" )
+ column=(type=number updatewhereclause=yes name=issue_qty dbname="issue_qty" )
+ column=(type=number updatewhereclause=yes name=issue_amt dbname="issue_amt" )
+ column=(type=char(100) updatewhereclause=yes name=item_name dbname="item_name" )
+ column=(type=char(100) updatewhereclause=yes name=item_spec dbname="item_spec" )
+ column=(type=char(3) updatewhereclause=yes name=item_uom dbname="item_uom" )
+ retrieve="SELECT  ORGANIZATION_ID , ITEM_CODE , ITEM_TYPE , LINE_TYPE ,
+              avg( RECEIPT_PRICE ) RECEIPT_PRICE, 
+              sum(RECEIPT_QTY)  RECEIPT_QTY, 
+              sum(RECEIPT_AMT) RECEIPT_AMT,
+              avg(ISSUE_PRICE )  ISSUE_PRICE, 
+              sum(ISSUE_QTY)  ISSUE_QTY, 
+              sum(ISSUE_AMT) ISSUE_AMT ,
+              ITEM_NAME , ITEM_SPEC , ITEM_UOM 
+FROM
+(  SELECT
+          ~"IM_ITEM_WORKSTAGE_RECEIPT~".~"RECEIPT_DATE~"         RECEIPT_ISSUE_DATE,   
+
+         ~"IM_ITEM_WORKSTAGE_RECEIPT~".~"ORGANIZATION_ID~"   ORGANIZATION_ID,   
+         ~"IM_ITEM_WORKSTAGE_RECEIPT~".~"ITEM_CODE~" ITEM_CODE,   
+         ~"IM_ITEM_WORKSTAGE_RECEIPT~".~"ITEM_TYPE~" ITEM_TYPE,   
+         ~"IM_ITEM_WORKSTAGE_RECEIPT~".~"LINE_TYPE~" LINE_TYPE,   
+         ~"IM_ITEM_WORKSTAGE_RECEIPT~".~"RECEIPT_PRICE~",   
+         ~"IM_ITEM_WORKSTAGE_RECEIPT~".~"RECEIPT_QTY~",   
+         ~"IM_ITEM_WORKSTAGE_RECEIPT~".~"RECEIPT_AMT~",   
+	    0 ISSUE_PRICE , 0  ISSUE_QTY , 0 ISSUE_AMT ,
+
+         ~"ID_ITEM~".~"ITEM_NAME~",   
+         ~"ID_ITEM~".~"ITEM_SPEC~",   
+         ~"ID_ITEM~".~"ITEM_UOM~"
+
+    FROM ~"IM_ITEM_WORKSTAGE_RECEIPT~", 
+         ~"ID_ITEM~"
+
+   WHERE  ( ~"IM_ITEM_WORKSTAGE_RECEIPT~".~"ITEM_CODE~" = ~"ID_ITEM~".~"ITEM_CODE~" ) and  
+         ( ~"IM_ITEM_WORKSTAGE_RECEIPT~".~"ORGANIZATION_ID~" = ~"ID_ITEM~".~"ORGANIZATION_ID~" ) and  
+         ( ~"IM_ITEM_WORKSTAGE_RECEIPT~".~"MFS~" like :arg_mfs ) AND  
+         ( ~"IM_ITEM_WORKSTAGE_RECEIPT~".~"RECEIPT_STATUS~" = 'N' ) AND  
+         ( ~"IM_ITEM_WORKSTAGE_RECEIPT~".~"ORGANIZATION_ID~" = :arg_org )
+
+UNION ALL
+
+  SELECT ~"IM_ITEM_WORKSTAGE_ISSUE~".~"ISSUE_DATE~",   
+         ~"IM_ITEM_WORKSTAGE_ISSUE~".~"ORGANIZATION_ID~",   
+         ~"IM_ITEM_WORKSTAGE_ISSUE~".~"ITEM_CODE~",   
+         ~"IM_ITEM_WORKSTAGE_ISSUE~".~"ITEM_TYPE~",   
+         ~"IM_ITEM_WORKSTAGE_ISSUE~".~"LINE_TYPE~",   
+
+	    0 RECEIPT_PRICE , 0  RECEIPT_QTY , 0 RECEIPT_AMT ,
+
+         ~"IM_ITEM_WORKSTAGE_ISSUE~".~"ISSUE_PRICE~",   
+         ~"IM_ITEM_WORKSTAGE_ISSUE~".~"ISSUE_QTY~",   
+         ~"IM_ITEM_WORKSTAGE_ISSUE~".~"ISSUE_AMT~",   
+
+         ~"ID_ITEM~".~"ITEM_NAME~",   
+         ~"ID_ITEM~".~"ITEM_SPEC~",   
+         ~"ID_ITEM~".~"ITEM_UOM~"  
+    FROM ~"IM_ITEM_WORKSTAGE_ISSUE~",   
+         ~"ID_ITEM~"  
+   WHERE ( ~"IM_ITEM_WORKSTAGE_ISSUE~".~"ITEM_CODE~" = ~"ID_ITEM~".~"ITEM_CODE~" ) and  
+         ( ~"IM_ITEM_WORKSTAGE_ISSUE~".~"ORGANIZATION_ID~" = ~"ID_ITEM~".~"ORGANIZATION_ID~" ) and  
+         ( ~"IM_ITEM_WORKSTAGE_ISSUE~".~"MFS~" like :arg_mfs ) AND  
+         ( ~"IM_ITEM_WORKSTAGE_ISSUE~".~"ORGANIZATION_ID~" = :arg_org ) 
+) 
+
+GROUP BY ORGANIZATION_ID , ITEM_CODE , ITEM_TYPE , LINE_TYPE , ITEM_NAME , ITEM_SPEC , ITEM_UOM " arguments=(("arg_mfs", string),("arg_org", number))  sort="organization_id A item_code A " )
+text(band=header alignment="2" text="No" border="0" color="33554432" x="9" y="64" height="116" width="110" html.valueishtml="0"  name=no_1_t visible="1"  font.face="TAHOMA" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Item Code" border="0" color="33554432" x="133" y="64" height="116" width="315" html.valueishtml="0"  name=item_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Item Type" border="0" color="33554432" x="1321" y="64" height="116" width="197" html.valueishtml="0"  name=item_type_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Item Name" border="0" color="33554432" x="457" y="64" height="116" width="297" html.valueishtml="0"  name=item_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Item Spec" border="0" color="33554432" x="763" y="64" height="116" width="370" html.valueishtml="0"  name=item_spec_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Item Uom" border="0" color="33554432" x="1143" y="64" height="116" width="169" html.valueishtml="0"  name=item_uom_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Line Type" border="0" color="33554432" x="1527" y="64" height="116" width="251" html.valueishtml="0"  name=line_type_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Receipt Qty" border="0" color="33554432" x="1792" y="64" height="116" width="329" html.valueishtml="0"  name=receipt_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Receipt Amt" border="0" color="33554432" x="2130" y="64" height="116" width="334" html.valueishtml="0"  name=receipt_amt_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Issue Qty" border="0" color="33554432" x="2478" y="64" height="116" width="311" html.valueishtml="0"  name=issue_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Issue Amt" border="0" color="33554432" x="2798" y="64" height="116" width="311" html.valueishtml="0"  name=issue_amt_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Collect Rate" border="0" color="33554432" x="3118" y="64" height="116" width="251" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=detail alignment="0" expression="GETROW()"border="0" color="0" x="9" y="4" height="60" width="110" format="[GENERAL]" html.valueishtml="0"  name=no_1 visible="1"  font.face="TAHOMA" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432" x="133" y="4" height="60" width="315" format="[general]" html.valueishtml="0"  name=item_code visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="33554432" x="1321" y="4" height="60" width="197" format="[general]" html.valueishtml="0"  name=item_type visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=300 dddw.lines=0 dddw.limit=8 dddw.allowedit=no dddw.useasborder=no dddw.case=any dddw.autohscroll=yes dddw.hsplitscroll=yes dddw.hscrollbar=yes dddw.autoretrieve=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=11 alignment="0" tabsequence=20 border="0" color="33554432" x="457" y="4" height="60" width="297" format="[general]" html.valueishtml="0"  name=item_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=12 alignment="0" tabsequence=30 border="0" color="33554432" x="763" y="4" height="60" width="370" format="[general]" html.valueishtml="0"  name=item_spec visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=13 alignment="0" tabsequence=40 border="0" color="33554432" x="1143" y="4" height="60" width="169" format="[general]" html.valueishtml="0"  name=item_uom visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=4 alignment="1" tabsequence=32766 border="0" color="33554432" x="1527" y="4" height="60" width="251" format="[general]" html.valueishtml="0"  name=line_type visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=300 dddw.lines=0 dddw.limit=8 dddw.allowedit=no dddw.useasborder=no dddw.case=any dddw.autohscroll=yes dddw.hsplitscroll=yes dddw.hscrollbar=yes dddw.autoretrieve=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=detail alignment="1" expression="if ( receipt_qty = 0 , 0 ,issue_qty  /receipt_qty )"border="0" color="33554432" x="3118" y="4" height="60" width="251" format="##0.00%" html.valueishtml="0"  name=compute_5 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=6 alignment="1" tabsequence=60 border="0" color="33554432" x="1792" y="4" height="60" width="329" format="###,##0.0000" html.valueishtml="0"  name=receipt_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=7 alignment="1" tabsequence=70 border="0" color="33554432" x="2130" y="4" height="60" width="334" format="###,##0.00" html.valueishtml="0"  name=receipt_amt visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=9 alignment="1" tabsequence=90 border="0" color="33554432" x="2478" y="4" height="60" width="311" format="###,##0.0000" html.valueishtml="0"  name=issue_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=10 alignment="1" tabsequence=100 border="0" color="33554432" x="2798" y="4" height="60" width="311" format="###,##0.00" html.valueishtml="0"  name=issue_amt visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=summary alignment="1" expression="sum(receipt_amt for all)"border="0" color="33554432" x="2130" y="4" height="52" width="334" format="###,##0.00" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=summary alignment="1" expression="sum(issue_amt for all)"border="0" color="33554432" x="2798" y="4" height="52" width="311" format="###,##0.00" html.valueishtml="0"  name=compute_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=summary alignment="1" expression="sum(issue_qty for all)"border="0" color="33554432" x="2478" y="4" height="52" width="311" format="###,##0.0000" html.valueishtml="0"  name=compute_3 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=summary alignment="1" expression="sum(receipt_qty for all)"border="0" color="33554432" x="1792" y="4" height="52" width="329" format="###,##0.0000" html.valueishtml="0"  name=compute_4 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=summary alignment="1" expression="avg(if ( receipt_qty = 0 , 0 ,issue_qty  /receipt_qty ) for all)"border="0" color="33554432" x="3118" y="4" height="52" width="251" format="##0.00%" html.valueishtml="0"  name=compute_6 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

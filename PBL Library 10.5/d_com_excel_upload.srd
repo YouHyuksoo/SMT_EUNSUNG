@@ -1,0 +1,222 @@
+HA$PBExportHeader$d_com_excel_upload.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=12632256 processing=1 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no row.resize=1 grid.lines=0 )
+header(height=136 color="15780518" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=76 color="12632256" )
+table(column=(type=char(100) updatewhereclause=yes name=c01 dbname="icom_excel.c01" )
+ column=(type=char(100) updatewhereclause=yes name=c02 dbname="icom_excel.c02" )
+ column=(type=char(100) updatewhereclause=yes name=c03 dbname="icom_excel.c03" )
+ column=(type=char(100) updatewhereclause=yes name=c04 dbname="icom_excel.c04" )
+ column=(type=char(100) updatewhereclause=yes name=c05 dbname="icom_excel.c05" )
+ column=(type=char(100) updatewhereclause=yes name=c06 dbname="icom_excel.c06" )
+ column=(type=char(100) updatewhereclause=yes name=c07 dbname="icom_excel.c07" )
+ column=(type=char(100) updatewhereclause=yes name=c08 dbname="icom_excel.c08" )
+ column=(type=char(100) updatewhereclause=yes name=c09 dbname="icom_excel.c09" )
+ column=(type=char(100) updatewhereclause=yes name=c10 dbname="icom_excel.c10" )
+ column=(type=char(100) updatewhereclause=yes name=c11 dbname="icom_excel.c11" )
+ column=(type=char(100) updatewhereclause=yes name=c12 dbname="icom_excel.c12" )
+ column=(type=char(100) updatewhereclause=yes name=c13 dbname="icom_excel.c13" )
+ column=(type=char(100) updatewhereclause=yes name=c14 dbname="icom_excel.c14" )
+ column=(type=char(100) updatewhereclause=yes name=c15 dbname="icom_excel.c15" )
+ column=(type=char(100) updatewhereclause=yes name=c16 dbname="icom_excel.c16" )
+ column=(type=char(100) updatewhereclause=yes name=c17 dbname="icom_excel.c17" )
+ column=(type=char(100) updatewhereclause=yes name=c18 dbname="icom_excel.c18" )
+ column=(type=char(100) updatewhereclause=yes name=c19 dbname="icom_excel.c19" )
+ column=(type=char(100) updatewhereclause=yes name=c20 dbname="icom_excel.c20" )
+ column=(type=char(100) updatewhereclause=yes name=c21 dbname="icom_excel.c21" )
+ column=(type=char(100) updatewhereclause=yes name=c22 dbname="icom_excel.c22" )
+ column=(type=char(100) updatewhereclause=yes name=c23 dbname="icom_excel.c23" )
+ column=(type=char(100) updatewhereclause=yes name=c24 dbname="icom_excel.c24" )
+ column=(type=char(100) updatewhereclause=yes name=c25 dbname="icom_excel.c25" )
+ column=(type=char(100) updatewhereclause=yes name=c26 dbname="icom_excel.c26" )
+ column=(type=char(100) updatewhereclause=yes name=c27 dbname="icom_excel.c27" )
+ column=(type=char(100) updatewhereclause=yes name=c28 dbname="icom_excel.c28" )
+ column=(type=char(100) updatewhereclause=yes name=c29 dbname="icom_excel.c29" )
+ column=(type=char(100) updatewhereclause=yes name=c30 dbname="icom_excel.c30" )
+ column=(type=char(100) updatewhereclause=yes name=c31 dbname="icom_excel.c31" )
+ column=(type=char(100) updatewhereclause=yes name=c32 dbname="icom_excel.c32" )
+ column=(type=char(100) updatewhereclause=yes name=c33 dbname="icom_excel.c33" )
+ column=(type=char(100) updatewhereclause=yes name=c34 dbname="icom_excel.c34" )
+ column=(type=char(100) updatewhereclause=yes name=c35 dbname="icom_excel.c35" )
+ column=(type=char(100) updatewhereclause=yes name=c36 dbname="icom_excel.c36" )
+ column=(type=char(100) updatewhereclause=yes name=c37 dbname="icom_excel.c37" )
+ column=(type=char(100) updatewhereclause=yes name=c38 dbname="icom_excel.c38" )
+ column=(type=char(100) updatewhereclause=yes name=c39 dbname="icom_excel.c39" )
+ column=(type=char(100) updatewhereclause=yes name=c40 dbname="icom_excel.c40" )
+ column=(type=char(100) updatewhereclause=yes name=c41 dbname="icom_excel.c41" )
+ column=(type=char(100) updatewhereclause=yes name=c42 dbname="icom_excel.c42" )
+ column=(type=char(100) updatewhereclause=yes name=c43 dbname="icom_excel.c43" )
+ column=(type=char(100) updatewhereclause=yes name=c44 dbname="icom_excel.c44" )
+ column=(type=char(100) updatewhereclause=yes name=c45 dbname="icom_excel.c45" )
+ column=(type=char(100) updatewhereclause=yes name=c46 dbname="icom_excel.c46" )
+ column=(type=char(100) updatewhereclause=yes name=c47 dbname="icom_excel.c47" )
+ column=(type=char(100) updatewhereclause=yes name=c48 dbname="icom_excel.c48" )
+ column=(type=char(100) updatewhereclause=yes name=c49 dbname="icom_excel.c49" )
+ column=(type=char(100) updatewhereclause=yes name=c50 dbname="icom_excel.c50" )
+ retrieve="  SELECT ~"ICOM_EXCEL~".~"C01~",   
+         ~"ICOM_EXCEL~".~"C02~",   
+         ~"ICOM_EXCEL~".~"C03~",   
+         ~"ICOM_EXCEL~".~"C04~",   
+         ~"ICOM_EXCEL~".~"C05~",   
+         ~"ICOM_EXCEL~".~"C06~",   
+         ~"ICOM_EXCEL~".~"C07~",   
+         ~"ICOM_EXCEL~".~"C08~",   
+         ~"ICOM_EXCEL~".~"C09~",   
+         ~"ICOM_EXCEL~".~"C10~",   
+         ~"ICOM_EXCEL~".~"C11~",   
+         ~"ICOM_EXCEL~".~"C12~",   
+         ~"ICOM_EXCEL~".~"C13~",   
+         ~"ICOM_EXCEL~".~"C14~",   
+         ~"ICOM_EXCEL~".~"C15~",   
+         ~"ICOM_EXCEL~".~"C16~",   
+         ~"ICOM_EXCEL~".~"C17~",   
+         ~"ICOM_EXCEL~".~"C18~",   
+         ~"ICOM_EXCEL~".~"C19~",   
+         ~"ICOM_EXCEL~".~"C20~",   
+         ~"ICOM_EXCEL~".~"C21~",   
+         ~"ICOM_EXCEL~".~"C22~",   
+         ~"ICOM_EXCEL~".~"C23~",   
+         ~"ICOM_EXCEL~".~"C24~",   
+         ~"ICOM_EXCEL~".~"C25~",   
+         ~"ICOM_EXCEL~".~"C26~",   
+         ~"ICOM_EXCEL~".~"C27~",   
+         ~"ICOM_EXCEL~".~"C28~",   
+         ~"ICOM_EXCEL~".~"C29~",   
+         ~"ICOM_EXCEL~".~"C30~",   
+         ~"ICOM_EXCEL~".~"C31~",   
+         ~"ICOM_EXCEL~".~"C32~",   
+         ~"ICOM_EXCEL~".~"C33~",   
+         ~"ICOM_EXCEL~".~"C34~",   
+         ~"ICOM_EXCEL~".~"C35~",   
+         ~"ICOM_EXCEL~".~"C36~",   
+         ~"ICOM_EXCEL~".~"C37~",   
+         ~"ICOM_EXCEL~".~"C38~",   
+         ~"ICOM_EXCEL~".~"C39~",   
+         ~"ICOM_EXCEL~".~"C40~",   
+         ~"ICOM_EXCEL~".~"C41~",   
+         ~"ICOM_EXCEL~".~"C42~",   
+         ~"ICOM_EXCEL~".~"C43~",   
+         ~"ICOM_EXCEL~".~"C44~",   
+         ~"ICOM_EXCEL~".~"C45~",   
+         ~"ICOM_EXCEL~".~"C46~",   
+         ~"ICOM_EXCEL~".~"C47~",   
+         ~"ICOM_EXCEL~".~"C48~",   
+         ~"ICOM_EXCEL~".~"C49~",   
+         ~"ICOM_EXCEL~".~"C50~"  
+    FROM ~"ICOM_EXCEL~"  " )
+group(level=1 header.height=0 trailer.height=0 by=("" ) header.color="536870912" trailer.color="65280" )
+text(band=header alignment="2" text="No" border="0" color="33554432" x="9" y="8" height="128" width="151" html.valueishtml="0"  name=no_1_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="C01" border="0" color="33554432" x="169" y="8" height="128" width="347" html.valueishtml="0"  name=c01_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="C02" border="0" color="33554432" x="526" y="8" height="128" width="334" html.valueishtml="0"  name=c02_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="C03" border="0" color="33554432" x="869" y="8" height="128" width="338" html.valueishtml="0"  name=c03_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="C04" border="0" color="33554432" x="1216" y="8" height="128" width="334" html.valueishtml="0"  name=c04_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="C05" border="0" color="33554432" x="1559" y="8" height="128" width="338" html.valueishtml="0"  name=c05_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="C06" border="0" color="33554432" x="1906" y="8" height="128" width="338" html.valueishtml="0"  name=c06_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="C07" border="0" color="33554432" x="2254" y="8" height="128" width="338" html.valueishtml="0"  name=c07_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="C08" border="0" color="33554432" x="2601" y="8" height="128" width="334" html.valueishtml="0"  name=c08_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="C09" border="0" color="33554432" x="2944" y="8" height="128" width="338" html.valueishtml="0"  name=c09_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="C10" border="0" color="33554432" x="3291" y="8" height="128" width="334" html.valueishtml="0"  name=c10_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="C11" border="0" color="33554432" x="3634" y="8" height="128" width="338" html.valueishtml="0"  name=c11_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="C12" border="0" color="33554432" x="3982" y="8" height="128" width="334" html.valueishtml="0"  name=c12_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="C13" border="0" color="33554432" x="4325" y="8" height="128" width="338" html.valueishtml="0"  name=c13_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="C14" border="0" color="33554432" x="4672" y="8" height="128" width="338" html.valueishtml="0"  name=c14_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="C15" border="0" color="33554432" x="5019" y="8" height="128" width="334" html.valueishtml="0"  name=c15_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="C16" border="0" color="33554432" x="5362" y="8" height="128" width="338" html.valueishtml="0"  name=c16_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="C17" border="0" color="33554432" x="5710" y="8" height="128" width="334" html.valueishtml="0"  name=c17_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="C18" border="0" color="33554432" x="6053" y="8" height="128" width="338" html.valueishtml="0"  name=c18_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="C19" border="0" color="33554432" x="6400" y="8" height="128" width="338" html.valueishtml="0"  name=c19_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="C20" border="0" color="33554432" x="6747" y="8" height="128" width="334" html.valueishtml="0"  name=c20_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="C21" border="0" color="33554432" x="7090" y="8" height="128" width="338" html.valueishtml="0"  name=c21_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="C22" border="0" color="33554432" x="7438" y="8" height="128" width="334" html.valueishtml="0"  name=c22_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="C23" border="0" color="33554432" x="7781" y="8" height="128" width="338" html.valueishtml="0"  name=c23_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="C24" border="0" color="33554432" x="8128" y="8" height="128" width="334" html.valueishtml="0"  name=c24_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="C25" border="0" color="33554432" x="8471" y="8" height="128" width="338" html.valueishtml="0"  name=c25_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="C26" border="0" color="33554432" x="8818" y="8" height="128" width="338" html.valueishtml="0"  name=c26_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="C27" border="0" color="33554432" x="9166" y="8" height="128" width="334" html.valueishtml="0"  name=c27_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="C28" border="0" color="33554432" x="9509" y="8" height="128" width="338" html.valueishtml="0"  name=c28_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="C29" border="0" color="33554432" x="9856" y="8" height="128" width="334" html.valueishtml="0"  name=c29_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="C30" border="0" color="33554432" x="10199" y="8" height="128" width="338" html.valueishtml="0"  name=c30_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="C31" border="0" color="33554432" x="10546" y="8" height="128" width="338" html.valueishtml="0"  name=c31_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="C32" border="0" color="33554432" x="10894" y="8" height="128" width="338" html.valueishtml="0"  name=c32_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="C33" border="0" color="33554432" x="11241" y="8" height="128" width="338" html.valueishtml="0"  name=c33_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="C34" border="0" color="33554432" x="11589" y="8" height="128" width="329" html.valueishtml="0"  name=c34_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="C35" border="0" color="33554432" x="11927" y="8" height="128" width="343" html.valueishtml="0"  name=c35_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="C36" border="0" color="33554432" x="12279" y="8" height="128" width="334" html.valueishtml="0"  name=c36_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="C37" border="0" color="33554432" x="12622" y="8" height="128" width="338" html.valueishtml="0"  name=c37_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="C38" border="0" color="33554432" x="12969" y="8" height="128" width="334" html.valueishtml="0"  name=c38_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="C39" border="0" color="33554432" x="13312" y="8" height="128" width="334" html.valueishtml="0"  name=c39_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="C40" border="0" color="33554432" x="13655" y="8" height="128" width="338" html.valueishtml="0"  name=c40_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="C41" border="0" color="33554432" x="14002" y="8" height="128" width="338" html.valueishtml="0"  name=c41_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="C42" border="0" color="33554432" x="14350" y="8" height="128" width="334" html.valueishtml="0"  name=c42_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="C43" border="0" color="33554432" x="14693" y="8" height="128" width="338" html.valueishtml="0"  name=c43_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="C44" border="0" color="33554432" x="15040" y="8" height="128" width="334" html.valueishtml="0"  name=c44_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="C45" border="0" color="33554432" x="15383" y="8" height="128" width="338" html.valueishtml="0"  name=c45_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="C46" border="0" color="33554432" x="15730" y="8" height="128" width="334" html.valueishtml="0"  name=c46_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="C47" border="0" color="33554432" x="16073" y="8" height="128" width="338" html.valueishtml="0"  name=c47_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="C48" border="0" color="33554432" x="16421" y="8" height="128" width="338" html.valueishtml="0"  name=c48_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="C49" border="0" color="33554432" x="16768" y="8" height="128" width="334" html.valueishtml="0"  name=c49_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="C50" border="0" color="33554432" x="17111" y="8" height="128" width="338" html.valueishtml="0"  name=c50_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+compute(band=detail alignment="2" expression="GETROW()"border="0" color="0" x="9" y="4" height="64" width="151" format="[GENERAL]" html.valueishtml="0"  name=no_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432" x="174" y="4" height="64" width="343" format="[general]" html.valueishtml="0"  name=c01 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432" x="530" y="4" height="64" width="329" format="[general]" html.valueishtml="0"  name=c02 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="33554432" x="873" y="4" height="64" width="334" format="[general]" html.valueishtml="0"  name=c03 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="33554432" x="1221" y="4" height="64" width="329" format="[general]" html.valueishtml="0"  name=c04 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=5 alignment="0" tabsequence=32766 border="0" color="33554432" x="1563" y="4" height="64" width="334" format="[general]" html.valueishtml="0"  name=c05 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=6 alignment="0" tabsequence=32766 border="0" color="33554432" x="1911" y="4" height="64" width="334" format="[general]" html.valueishtml="0"  name=c06 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=7 alignment="0" tabsequence=32766 border="0" color="33554432" x="2258" y="4" height="64" width="334" format="[general]" html.valueishtml="0"  name=c07 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=8 alignment="0" tabsequence=32766 border="0" color="33554432" x="2606" y="4" height="64" width="329" format="[general]" html.valueishtml="0"  name=c08 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=9 alignment="0" tabsequence=32766 border="0" color="33554432" x="2949" y="4" height="64" width="334" format="[general]" html.valueishtml="0"  name=c09 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=10 alignment="0" tabsequence=32766 border="0" color="33554432" x="3296" y="4" height="64" width="329" format="[general]" html.valueishtml="0"  name=c10 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=11 alignment="0" tabsequence=32766 border="0" color="33554432" x="3639" y="4" height="64" width="334" format="[general]" html.valueishtml="0"  name=c11 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=12 alignment="0" tabsequence=32766 border="0" color="33554432" x="3986" y="4" height="64" width="329" format="[general]" html.valueishtml="0"  name=c12 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=13 alignment="0" tabsequence=32766 border="0" color="33554432" x="4329" y="4" height="64" width="334" format="[general]" html.valueishtml="0"  name=c13 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=14 alignment="0" tabsequence=32766 border="0" color="33554432" x="4677" y="4" height="64" width="334" format="[general]" html.valueishtml="0"  name=c14 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=15 alignment="0" tabsequence=32766 border="0" color="33554432" x="5024" y="4" height="64" width="329" format="[general]" html.valueishtml="0"  name=c15 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=16 alignment="0" tabsequence=32766 border="0" color="33554432" x="5367" y="4" height="64" width="334" format="[general]" html.valueishtml="0"  name=c16 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=17 alignment="0" tabsequence=32766 border="0" color="33554432" x="5714" y="4" height="64" width="329" format="[general]" html.valueishtml="0"  name=c17 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=18 alignment="0" tabsequence=32766 border="0" color="33554432" x="6057" y="4" height="64" width="334" format="[general]" html.valueishtml="0"  name=c18 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=19 alignment="0" tabsequence=32766 border="0" color="33554432" x="6405" y="4" height="64" width="334" format="[general]" html.valueishtml="0"  name=c19 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=20 alignment="0" tabsequence=32766 border="0" color="33554432" x="6752" y="4" height="64" width="329" format="[general]" html.valueishtml="0"  name=c20 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=21 alignment="0" tabsequence=32766 border="0" color="33554432" x="7095" y="4" height="64" width="334" format="[general]" html.valueishtml="0"  name=c21 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=22 alignment="0" tabsequence=32766 border="0" color="33554432" x="7442" y="4" height="64" width="329" format="[general]" html.valueishtml="0"  name=c22 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=23 alignment="0" tabsequence=32766 border="0" color="33554432" x="7785" y="4" height="64" width="334" format="[general]" html.valueishtml="0"  name=c23 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=24 alignment="0" tabsequence=32766 border="0" color="33554432" x="8133" y="4" height="64" width="329" format="[general]" html.valueishtml="0"  name=c24 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=25 alignment="0" tabsequence=32766 border="0" color="33554432" x="8475" y="4" height="64" width="334" format="[general]" html.valueishtml="0"  name=c25 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=26 alignment="0" tabsequence=32766 border="0" color="33554432" x="8823" y="4" height="64" width="334" format="[general]" html.valueishtml="0"  name=c26 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=27 alignment="0" tabsequence=32766 border="0" color="33554432" x="9170" y="4" height="64" width="329" format="[general]" html.valueishtml="0"  name=c27 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=28 alignment="0" tabsequence=32766 border="0" color="33554432" x="9513" y="4" height="64" width="334" format="[general]" html.valueishtml="0"  name=c28 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=29 alignment="0" tabsequence=32766 border="0" color="33554432" x="9861" y="4" height="64" width="329" format="[general]" html.valueishtml="0"  name=c29 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=30 alignment="0" tabsequence=32766 border="0" color="33554432" x="10203" y="4" height="64" width="334" format="[general]" html.valueishtml="0"  name=c30 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=31 alignment="0" tabsequence=32766 border="0" color="33554432" x="10551" y="4" height="64" width="334" format="[general]" html.valueishtml="0"  name=c31 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=32 alignment="0" tabsequence=32766 border="0" color="33554432" x="10898" y="4" height="64" width="334" format="[general]" html.valueishtml="0"  name=c32 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=33 alignment="0" tabsequence=32766 border="0" color="33554432" x="11246" y="4" height="64" width="334" format="[general]" html.valueishtml="0"  name=c33 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=34 alignment="0" tabsequence=32766 border="0" color="33554432" x="11593" y="4" height="64" width="325" format="[general]" html.valueishtml="0"  name=c34 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=35 alignment="0" tabsequence=32766 border="0" color="33554432" x="11931" y="4" height="64" width="338" format="[general]" html.valueishtml="0"  name=c35 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=36 alignment="0" tabsequence=32766 border="0" color="33554432" x="12283" y="4" height="64" width="329" format="[general]" html.valueishtml="0"  name=c36 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=37 alignment="0" tabsequence=32766 border="0" color="33554432" x="12626" y="4" height="64" width="334" format="[general]" html.valueishtml="0"  name=c37 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=38 alignment="0" tabsequence=32766 border="0" color="33554432" x="12974" y="4" height="64" width="329" format="[general]" html.valueishtml="0"  name=c38 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=39 alignment="0" tabsequence=32766 border="0" color="33554432" x="13317" y="4" height="64" width="329" format="[general]" html.valueishtml="0"  name=c39 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=40 alignment="0" tabsequence=32766 border="0" color="33554432" x="13659" y="4" height="64" width="334" format="[general]" html.valueishtml="0"  name=c40 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=41 alignment="0" tabsequence=32766 border="0" color="33554432" x="14007" y="4" height="64" width="334" format="[general]" html.valueishtml="0"  name=c41 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=42 alignment="0" tabsequence=32766 border="0" color="33554432" x="14354" y="4" height="64" width="329" format="[general]" html.valueishtml="0"  name=c42 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=43 alignment="0" tabsequence=32766 border="0" color="33554432" x="14697" y="4" height="64" width="334" format="[general]" html.valueishtml="0"  name=c43 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=44 alignment="0" tabsequence=32766 border="0" color="33554432" x="15045" y="4" height="64" width="329" format="[general]" html.valueishtml="0"  name=c44 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=45 alignment="0" tabsequence=32766 border="0" color="33554432" x="15387" y="4" height="64" width="334" format="[general]" html.valueishtml="0"  name=c45 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=46 alignment="0" tabsequence=32766 border="0" color="33554432" x="15735" y="4" height="64" width="329" format="[general]" html.valueishtml="0"  name=c46 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=47 alignment="0" tabsequence=32766 border="0" color="33554432" x="16078" y="4" height="64" width="334" format="[general]" html.valueishtml="0"  name=c47 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=48 alignment="0" tabsequence=32766 border="0" color="33554432" x="16425" y="4" height="64" width="334" format="[general]" html.valueishtml="0"  name=c48 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=49 alignment="0" tabsequence=32766 border="0" color="33554432" x="16773" y="4" height="64" width="329" format="[general]" html.valueishtml="0"  name=c49 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=50 alignment="0" tabsequence=32766 border="0" color="33554432" x="17115" y="4" height="64" width="334" format="[general]" html.valueishtml="0"  name=c50 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

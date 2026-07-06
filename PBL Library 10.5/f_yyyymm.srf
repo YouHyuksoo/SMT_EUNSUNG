@@ -1,0 +1,15 @@
+HA$PBExportHeader$f_yyyymm.srf
+$PBExportComments$Call Server's System Date
+global type f_yyyymm from function_object
+end type
+
+forward prototypes
+global function string f_yyyymm ()
+end prototypes
+
+global function string f_yyyymm ();string lvs_yyyymm	
+select to_char(TRUNC(sysdate), 'yyyymm')  into :lvs_yyyymm from dual ;
+f_sql_check()
+return lvs_yyyymm
+end function
+

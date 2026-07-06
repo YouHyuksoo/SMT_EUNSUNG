@@ -1,0 +1,16 @@
+HA$PBExportHeader$f_set_layered_window.srf
+global type f_set_layered_window from function_object
+end type
+
+forward prototypes
+global subroutine f_set_layered_window (long al_handle, integer ai_digree)
+end prototypes
+
+global subroutine f_set_layered_window (long al_handle, integer ai_digree);long rtn
+rtn = GetWindowLongA(al_handle, GWL_EXSTYLE)
+rtn = WS_EX_LAYERED
+rtn = SetWindowLonga(al_handle, GWL_EXSTYLE, rtn)
+SetLayeredWindowAttributes(al_handle, 0, (255 * ai_digree) / 100, LWA_ALPHA)
+
+end subroutine
+

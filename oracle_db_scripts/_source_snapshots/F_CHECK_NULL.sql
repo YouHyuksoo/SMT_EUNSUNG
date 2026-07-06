@@ -1,0 +1,20 @@
+FUNCTION "F_CHECK_NULL" (p_str VARCHAR2) RETURN NUMBER
+IS
+
+   lvl_return VARCHAR2(100);
+
+BEGIN
+
+   IF p_str IS NULL OR p_str = '' THEN
+
+      RETURN 1;
+
+   END IF;
+
+   RETURN 0;
+
+   EXCEPTION WHEN OTHERS THEN
+
+      RETURN 0;
+
+END ;

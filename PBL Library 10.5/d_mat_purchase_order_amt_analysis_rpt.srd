@@ -1,0 +1,331 @@
+HA$PBExportHeader$d_mat_purchase_order_amt_analysis_rpt.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=33554431 processing=0 HTMLDW=no print.printername="" print.documentname="" print.orientation = 1 print.margin.left = 0 print.margin.right = 0 print.margin.top = 0 print.margin.bottom = 0 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no )
+header(height=468 color="536870912" )
+summary(height=2784 color="16777215" )
+footer(height=88 color="536870912" )
+detail(height=88 color="536870912~tif(mod(getrow(),2)= 0 , rgb(255,255,255), rgb(219,219,219))" )
+table(column=(type=char(20) updatewhereclause=yes name=supplier_code dbname="supplier_code" )
+ column=(type=char(1) updatewhereclause=yes name=order_type dbname="order_type" )
+ column=(type=char(100) updatewhereclause=yes name=supplier_name dbname="supplier_name" )
+ column=(type=char(10) updatewhereclause=yes name=delivery dbname="delivery" )
+ column=(type=number updatewhereclause=yes name=order_qty dbname="order_qty" )
+ column=(type=number updatewhereclause=yes name=order_amt dbname="order_amt" )
+ column=(type=number updatewhereclause=yes name=last_year_total_qty dbname="last_year_total_qty" )
+ column=(type=number updatewhereclause=yes name=last_year_total_amt dbname="last_year_total_amt" )
+ column=(type=number updatewhereclause=yes name=last_year_same_period_qty dbname="last_year_same_period_qty" )
+ column=(type=number updatewhereclause=yes name=last_year_same_period_amt dbname="last_year_same_period_amt" )
+ column=(type=number updatewhereclause=yes name=last_month_qty dbname="last_month_qty" )
+ column=(type=number updatewhereclause=yes name=last_month_amt dbname="last_month_amt" )
+ column=(type=number updatewhereclause=yes name=this_year_total_qty dbname="this_year_total_qty" )
+ column=(type=number updatewhereclause=yes name=this_year_total_amt dbname="this_year_total_amt" )
+ column=(type=number updatewhereclause=yes name=organization_id dbname="organization_id" )
+ retrieve="select  supplier_code , order_type , supplier_name , delivery ,
+           sum(order_qty) order_qty ,
+           sum(order_amt)  order_amt,
+	      sum(last_year_total_qty) last_year_total_qty, 
+           sum(last_year_total_amt) last_year_total_amt,
+
+	      sum(last_year_same_period_qty) last_year_same_period_qty, 
+           sum(last_year_same_period_amt) last_year_same_period_amt,
+
+	      sum(last_month_qty) last_month_qty, 
+           sum(last_month_amt) last_month_amt,
+
+ 		 sum(this_year_total_qty)  this_year_total_qty,
+ 		 sum(this_year_total_amt) this_year_total_amt ,
+           organization_id 
+
+from (
+select  a.supplier_code,  a.order_type ,            
+           max(b.supplier_name) supplier_name , 
+           max(a.delivery) delivery,
+
+           sum(a.order_qty) order_qty ,  
+           sum(a.order_amt) order_amt, 
+
+	      0 last_year_total_qty, 
+           0 last_year_total_amt,
+
+	      0 last_year_same_period_qty, 
+           0 last_year_same_period_amt,
+
+	      0 last_month_qty, 
+           0 last_month_amt,
+
+ 		 0 this_year_total_qty ,
+ 		 0 this_year_total_amt ,
+	
+           a.organization_id
+from   im_item_purchase_order   a, 
+          icom_supplier b
+where  a.supplier_code = b.supplier_code
+and     a.organization_id = b.organization_id
+and     a.delivery_date  >=   to_date(:arg_yyyymm||'01' , 'yyyymmdd')
+and     a.delivery_date  <=  last_day(to_date(:arg_yyyymm||'01' , 'yyyymmdd'))
+and     a.supplier_code like :arg_supplier_code
+and     a.item_code like :arg_item_code
+and     to_char(a.organization_id) like :arg_org_id 
+group by a.supplier_code, a.order_type , a.organization_id   
+
+union  all
+
+select  a.supplier_code,  a.order_type ,            
+           max(b.supplier_name) supplier_name , 
+           max(a.delivery) delivery,
+
+           0  order_qty ,  
+           0  order_amt, 
+
+	      sum(order_qty)  last_year_total_qty, 
+           sum(order_amt) last_year_total_amt,
+
+	      0 last_year_same_period_qty, 
+           0 last_year_same_period_amt,
+
+	      0 last_month_qty, 
+           0 last_month_amt,
+
+ 		 0 this_year_total_qty ,
+ 		 0 this_year_total_amt ,
+	
+           a.organization_id
+from   im_item_purchase_order   a, 
+          icom_supplier b
+where  a.supplier_code = b.supplier_code
+and     a.organization_id = b.organization_id
+
+and     a.delivery_date  >=    to_date( substr( to_char(add_months ( to_date(:arg_yyyymm||'01' , 'yyyymmdd') , -12 ),'yyyymmdd') , 1, 4 )||'0101' , 'yyyymmdd')
+and     a.delivery_date  <=    to_date( substr( to_char(add_months ( to_date(:arg_yyyymm||'01' , 'yyyymmdd') , -12 ),'yyyymmdd') , 1, 4 )||'1231' , 'yyyymmdd')
+
+and     a.supplier_code like :arg_supplier_code
+and     a.item_code like :arg_item_code
+and     to_char(a.organization_id) like :arg_org_id 
+group by a.supplier_code, a.order_type , a.organization_id   
+
+union  all
+
+select  a.supplier_code, a.order_type ,             
+           max(b.supplier_name) supplier_name , 
+           max(a.delivery) delivery,
+
+           0  order_qty ,  
+           0  order_amt, 
+
+	      0  last_year_total_qty, 
+           0  last_year_total_amt,
+
+	      sum(order_qty)  last_year_same_period_qty, 
+           sum(order_amt) last_year_same_period_amt,
+
+	      0 last_month_qty, 
+           0 last_month_amt,
+
+ 		 0 this_year_total_qty ,
+ 		 0 this_year_total_amt ,
+	
+           a.organization_id
+from   im_item_purchase_order   a, 
+          icom_supplier b
+where  a.supplier_code = b.supplier_code
+and     a.organization_id = b.organization_id
+
+and     a.delivery_date  >=    to_date( substr( to_char(add_months ( to_date(:arg_yyyymm||'01' , 'yyyymmdd') , -12 ) ,'yyyymmdd') , 1, 6 )||'01' , 'yyyymmdd')
+and     a.delivery_date  <=    last_day(to_date( substr( to_char(add_months ( to_date(:arg_yyyymm||'01' , 'yyyymmdd') , -12 ),'yyyymmdd') , 1, 6 )||'01' , 'yyyymmdd'))
+
+and     a.supplier_code like :arg_supplier_code
+and     a.item_code like :arg_item_code
+and     to_char(a.organization_id) like :arg_org_id 
+group by a.supplier_code,  a.order_type , a.organization_id   
+
+
+union  all
+
+select  a.supplier_code, a.order_type ,             
+           max(b.supplier_name) supplier_name , 
+           max(a.delivery) delivery,
+
+           0  order_qty ,  
+           0  order_amt, 
+
+	      0  last_year_total_qty, 
+           0  last_year_total_amt,
+
+	      0 last_year_same_period_qty, 
+           0 last_year_same_period_amt,
+
+	      sum(order_qty)  last_month_qty, 
+           sum(order_amt) last_month_amt,
+
+ 		 0 this_year_total_qty ,
+ 		 0 this_year_total_amt ,
+	
+           a.organization_id
+from   im_item_purchase_order   a, 
+          icom_supplier b
+where  a.supplier_code = b.supplier_code
+and     a.organization_id = b.organization_id
+
+and     a.delivery_date  >=    add_months ( to_date( :arg_yyyymm||'01' , 'yyyymmdd') , -1 )
+and     a.delivery_date  <=    Last_day ( add_months ( to_date( :arg_yyyymm||'01' , 'yyyymmdd') , -1 ) )
+
+and     a.supplier_code like :arg_supplier_code
+and     a.item_code like :arg_item_code
+and     to_char(a.organization_id) like :arg_org_id 
+group by a.supplier_code,  a.order_type , a.organization_id   
+
+
+union  all
+
+select  a.supplier_code,   a.order_type ,           
+           max(b.supplier_name) supplier_name , 
+           max(a.delivery) delivery,
+
+           0  order_qty ,  
+           0  order_amt, 
+
+	      0  last_year_total_qty, 
+           0  last_year_total_amt,
+
+	      0 last_year_same_period_qty, 
+           0 last_year_same_period_amt,
+
+	      0 last_month_qty, 
+           0 last_month_amt,
+
+ 		 sum(order_qty)  this_year_total_qty ,
+ 		 sum(order_amt)  this_year_total_amt ,
+	
+           a.organization_id
+from   im_item_purchase_order   a, 
+          icom_supplier b
+where  a.supplier_code = b.supplier_code
+and     a.organization_id = b.organization_id
+
+and     a.delivery_date  >=    to_date ( substr( :arg_yyyymm , 1, 4 )||'0101' , 'yyyymmdd')
+and     a.delivery_date  <=    last_day( to_date ( :arg_yyyymm||'01'  , 'yyyymmdd'))
+
+and     a.supplier_code like :arg_supplier_code
+and     a.item_code like :arg_item_code
+and     to_char(a.organization_id) like :arg_org_id 
+group by a.supplier_code,  a.order_type , a.organization_id   
+
+) 
+group by supplier_code , supplier_name , delivery ,order_type , organization_id
+
+
+" arguments=(("arg_yyyymm", string),("arg_supplier_code", string),("arg_item_code", string),("arg_org_id", string))  sort="organization_id A supplier_code A order_type A " )
+group(level=1 header.height=0 trailer.height=80 by=("organization_id" ) header.color="536870912" trailer.color="536870912" )
+line(band=header x1="64" y1="300" x2="64" y2="492"  name=l_7 visible="1" pen.style="0" pen.width="9" pen.color="255"  background.mode="2" background.color="1073741824" )
+compute(band=header alignment="0" expression=" arg_supplier_code "border="0" color="33554432" x="1335" y="228" height="60" width="411" format="[GENERAL]" html.valueishtml="0"  name=compute_4 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Customer Code" border="0" color="33554432" x="928" y="228" height="60" width="393" html.valueishtml="0"  name=t_3 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="1" text="YYYYMM" border="0" color="33554432" x="91" y="228" height="60" width="357" html.valueishtml="0"  name=t_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=header alignment="0" expression=" arg_yyyymm "border="0" color="33554432" x="471" y="228" height="60" width="347" format="[GENERAL]" html.valueishtml="0"  name=compute_11 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+line(band=header x1="1646" y1="300" x2="1646" y2="492"  name=l_9 visible="1" pen.style="0" pen.width="9" pen.color="255"  background.mode="2" background.color="1073741824" )
+text(band=header alignment="1" text="Last Year Total Amt" border="0" color="33554432" x="1659" y="320" height="120" width="393" html.valueishtml="0"  name=order_amt_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header alignment="1" text="Last Year Period Amt" border="0" color="33554432" x="2071" y="320" height="120" width="407" html.valueishtml="0"  name=t_11 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header alignment="1" text="Last Month Amt" border="0" color="33554432" x="2496" y="320" height="120" width="398" html.valueishtml="0"  name=t_13 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+line(band=header x1="2903" y1="300" x2="2903" y2="492"  name=l_11 visible="1" pen.style="0" pen.width="9" pen.color="255"  background.mode="2" background.color="1073741824" )
+text(band=header alignment="1" text="This Month Order Amt" border="0" color="33554432" x="2917" y="320" height="120" width="398" html.valueishtml="0"  name=t_15 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+line(band=header x1="3767" y1="300" x2="3767" y2="492"  name=l_5 visible="1" pen.style="0" pen.width="9" pen.color="255"  background.mode="2" background.color="1073741824" )
+line(band=header x1="4119" y1="300" x2="4119" y2="492"  name=l_19 visible="1" pen.style="0" pen.width="9" pen.color="255"  background.mode="2" background.color="1073741824" )
+text(band=header alignment="1" text="This YearOrder Amt" border="0" color="33554432" x="3328" y="320" height="120" width="421" html.valueishtml="0"  name=t_16 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header alignment="1" text="Last Period Vs Building Rate" border="0" color="33554432" x="3799" y="320" height="120" width="302" html.valueishtml="0"  name=t_8 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+line(band=header x1="4466" y1="300" x2="4466" y2="492"  name=l_22 visible="1" pen.style="0" pen.width="9" pen.color="255"  background.mode="2" background.color="1073741824" )
+line(band=header x1="4800" y1="300" x2="4800" y2="492"  name=l_28 visible="1" pen.style="0" pen.width="9" pen.color="255"  background.mode="2" background.color="1073741824" )
+text(band=header alignment="1" text="Last Month Vs Building Rate" border="0" color="33554432" x="4142" y="316" height="120" width="302" html.valueishtml="0"  name=t_6 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header alignment="1" text="Occupancy Rate" border="0" color="33554432" x="4480" y="320" height="120" width="302" html.valueishtml="0"  name=t_9 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=header alignment="1" expression="today()"border="0" color="33554432" x="4265" y="228" height="60" width="512" format="[SHORTDATE] [TIME]" html.valueishtml="0"  name=compute_6 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Print Date" border="0" color="33554432" x="3986" y="228" height="60" width="261" html.valueishtml="0"  name=t_5 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Purchase Order Amount Analysis Report" border="0" color="33554432" x="59" y="16" height="100" width="4727" html.valueishtml="0"  name=t_7 visible="1"  font.face="Tahoma" font.height="-16" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" font.underline="1" background.mode="1" background.color="536870912" )
+line(band=header x1="59" y1="304" x2="4800" y2="304"  name=l_1 visible="1" pen.style="0" pen.width="9" pen.color="255"  background.mode="2" background.color="1073741824" )
+line(band=header x1="59" y1="460" x2="4800" y2="460"  name=l_4 visible="1" pen.style="0" pen.width="9" pen.color="255"  background.mode="2" background.color="1073741824" )
+text(band=header alignment="1" text="No" border="0" color="33554432" x="78" y="320" height="120" width="133" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Organization Id" border="0" color="33554432" x="219" y="320" height="120" width="101" html.valueishtml="0"  name=organization_id_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header alignment="0" text="Customer Code" border="0" color="33554432" x="334" y="320" height="120" width="265" html.valueishtml="0"  name=supplier_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header alignment="0" text="Customer Name" border="0" color="33554432" x="613" y="320" height="120" width="626" html.valueishtml="0"  name=supplier_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header alignment="1" text="Order Type" border="0" color="33554432" x="1253" y="320" height="120" width="197" html.valueishtml="0"  name=t_10 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="Delivery" border="0" color="33554432" x="1463" y="320" height="120" width="169" html.valueishtml="0"  name=delivery_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="1" expression="if ( total_order_amt_sum = 0 , 0 ,  order_amt  / total_order_amt_sum )"border="0" color="33554432" x="4480" y="8" height="64" width="302" format="##0.00%" html.valueishtml="0"  name=occupancy_rate visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=detail alignment="1" expression="if  ( last_month_amt  =0 , 0 , ( order_amt - last_month_amt ) /  last_month_amt )"border="0" color="33554432" x="4142" y="8" height="64" width="302" format="##0.00%" html.valueishtml="0"  name=compute_9 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="1" expression="if  (  last_year_same_period_amt =0 , 0 , ( order_amt -  last_year_same_period_amt ) /   last_year_same_period_amt )"border="0" color="33554432" x="3799" y="8" height="64" width="302" format="##0.00%" html.valueishtml="0"  name=compute_10 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=14 alignment="1" tabsequence=32766 border="0" color="33554432" x="3328" y="8" height="64" width="421" format="###,##0.00" html.valueishtml="0"  name=this_year_total_amt visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=6 alignment="1" tabsequence=32766 border="0" color="33554432" x="2917" y="4" height="64" width="398" format="###,##0.00" html.valueishtml="0"  name=order_amt visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+column(band=detail id=12 alignment="1" tabsequence=32766 border="0" color="33554432" x="2496" y="8" height="64" width="398" format="###,##0.00" html.valueishtml="0"  name=last_month_amt visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=10 alignment="1" tabsequence=32766 border="0" color="33554432" x="2071" y="8" height="64" width="407" format="###,##0.00" html.valueishtml="0"  name=last_year_same_period_amt visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=8 alignment="1" tabsequence=32766 border="0" color="33554432" x="1659" y="8" height="64" width="393" format="###,##0.00" html.valueishtml="0"  name=last_year_total_amt visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+line(band=detail x1="64" y1="0" x2="64" y2="112"  name=l_8 visible="1" pen.style="0" pen.width="9" pen.color="255"  background.mode="2" background.color="1073741824" )
+line(band=detail x1="78" y1="84" x2="4818" y2="84"  name=l_2 visible="1" pen.style="2" pen.width="5" pen.color="0"  background.mode="2" background.color="1073741824" )
+compute(band=detail alignment="2" expression="getrow()"border="0" color="33554432" x="73" y="12" height="64" width="133" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+line(band=detail x1="1646" y1="0" x2="1646" y2="112"  name=l_10 visible="1" pen.style="0" pen.width="9" pen.color="255"  background.mode="2" background.color="1073741824" )
+line(band=detail x1="2903" y1="0" x2="2903" y2="112"  name=l_12 visible="1" pen.style="0" pen.width="9" pen.color="255"  background.mode="2" background.color="1073741824" )
+line(band=detail x1="3767" y1="0" x2="3767" y2="112"  name=l_6 visible="1" pen.style="0" pen.width="9" pen.color="255"  background.mode="2" background.color="1073741824" )
+line(band=detail x1="4119" y1="0" x2="4119" y2="112"  name=l_20 visible="1" pen.style="0" pen.width="9" pen.color="255"  background.mode="2" background.color="1073741824" )
+line(band=detail x1="4466" y1="0" x2="4466" y2="112"  name=l_23 visible="1" pen.style="0" pen.width="9" pen.color="255"  background.mode="2" background.color="1073741824" )
+line(band=detail x1="4800" y1="0" x2="4800" y2="112"  name=l_29 visible="1" pen.style="0" pen.width="9" pen.color="255"  background.mode="2" background.color="1073741824" )
+column(band=detail id=15 alignment="2" tabsequence=32766 border="0" color="33554432" x="219" y="12" height="64" width="101" format="[general]" html.valueishtml="0"  name=organization_id visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432" x="334" y="12" height="64" width="265" format="[general]" html.valueishtml="0"  name=supplier_code visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="33554432" x="613" y="12" height="64" width="626" format="[general]" html.valueishtml="0"  name=supplier_name visible="1" edit.limit=100 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432" x="1253" y="12" height="64" width="197" format="[general]" html.valueishtml="0"  name=order_type visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="0" color="33554432" x="1463" y="12" height="64" width="169" format="[general]" html.valueishtml="0"  name=delivery visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(if ( total_order_amt_sum_g1 = 0 , 0 ,  order_amt  / total_order_amt_sum_g1 ) for all)"border="0" color="33554432" x="4480" y="4" height="64" width="302" format="##0.00%" html.valueishtml="0"  name=compute_12 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="if  ( total_last_month_amt_sum_g1  =0 , 0 , ( total_order_amt_sum_g1 - total_last_month_amt_sum_g1  ) /  total_last_month_amt_sum_g1  )"border="0" color="33554432" x="4142" y="4" height="64" width="302" format="##0.00%" html.valueishtml="0"  name=compute_13 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="if  ( total_last_year_same_period_amt_sum_g1=0 , 0 , ( total_order_amt_sum_g1 - total_last_year_same_period_amt_sum_g1) /  total_last_year_same_period_amt_sum_g1)"border="0" color="33554432" x="3799" y="4" height="64" width="302" format="##0.00%" html.valueishtml="0"  name=compute_14 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum(this_year_total_amt for group 1)"border="0" color="33554432" x="3328" y="4" height="64" width="421" format="###,##0.00" html.valueishtml="0"  name=compute_15 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum(order_amt for group 1)"border="0" color="33554432" x="2917" y="4" height="64" width="398" format="###,##0.00" html.valueishtml="0"  name=total_order_amt_sum_g1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum(last_month_amt for group 1)"border="0" color="33554432" x="2496" y="4" height="64" width="398" format="###,##0.00" html.valueishtml="0"  name=total_last_month_amt_sum_g1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum(last_year_same_period_amt for group 1)"border="0" color="33554432" x="2071" y="4" height="64" width="407" format="###,##0.00" html.valueishtml="0"  name=total_last_year_same_period_amt_sum_g1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum(last_year_total_amt for group 1)"border="0" color="33554432" x="1659" y="4" height="64" width="393" format="###,##0.00" html.valueishtml="0"  name=compute_19 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+line(band=trailer.1 x1="1646" y1="0" x2="1646" y2="112"  name=l_25 visible="1" pen.style="0" pen.width="9" pen.color="255"  background.mode="2" background.color="1073741824" )
+line(band=trailer.1 x1="2903" y1="0" x2="2903" y2="112"  name=l_26 visible="1" pen.style="0" pen.width="9" pen.color="255"  background.mode="2" background.color="1073741824" )
+line(band=trailer.1 x1="3767" y1="0" x2="3767" y2="112"  name=l_27 visible="1" pen.style="0" pen.width="9" pen.color="255"  background.mode="2" background.color="1073741824" )
+line(band=trailer.1 x1="4119" y1="0" x2="4119" y2="112"  name=l_31 visible="1" pen.style="0" pen.width="9" pen.color="255"  background.mode="2" background.color="1073741824" )
+line(band=trailer.1 x1="4466" y1="0" x2="4466" y2="112"  name=l_32 visible="1" pen.style="0" pen.width="9" pen.color="255"  background.mode="2" background.color="1073741824" )
+line(band=trailer.1 x1="4800" y1="0" x2="4800" y2="112"  name=l_33 visible="1" pen.style="0" pen.width="9" pen.color="255"  background.mode="2" background.color="1073741824" )
+line(band=trailer.1 x1="64" y1="0" x2="64" y2="112"  name=l_34 visible="1" pen.style="0" pen.width="9" pen.color="255"  background.mode="2" background.color="1073741824" )
+line(band=trailer.1 x1="59" y1="0" x2="4800" y2="0"  name=l_35 visible="1" pen.style="0" pen.width="9" pen.color="255"  background.mode="2" background.color="1073741824" )
+line(band=summary x1="64" y1="0" x2="64" y2="92"  name=l_17 visible="1" pen.style="0" pen.width="9" pen.color="255"  background.mode="2" background.color="1073741824" )
+text(band=summary alignment="1" text="Grand Total" border="0" color="33554432" x="1042" y="20" height="64" width="590" html.valueishtml="0"  name=t_4 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+compute(band=summary alignment="1" expression="sum(this_year_total_amt for all)"border="0" color="33554432" x="3328" y="20" height="64" width="421" format="###,##0.00" html.valueishtml="0"  name=compute_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(order_amt for all)"border="0" color="33554432" x="2917" y="20" height="64" width="398" format="###,##0.00" html.valueishtml="0"  name=total_order_amt_sum visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+compute(band=summary alignment="1" expression="sum(last_month_amt for all)"border="0" color="33554432" x="2496" y="20" height="64" width="398" format="###,##0.00" html.valueishtml="0"  name=total_last_month_amt_sum visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(last_year_same_period_amt for all)"border="0" color="33554432" x="2071" y="20" height="64" width="407" format="###,##0.00" html.valueishtml="0"  name=total_last_year_same_period_amt_sum visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(last_year_total_amt for all)"border="0" color="33554432" x="1664" y="20" height="64" width="393" format="###,##0.00" html.valueishtml="0"  name=compute_8 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+line(band=summary x1="2903" y1="0" x2="2903" y2="92"  name=l_15 visible="1" pen.style="0" pen.width="9" pen.color="255"  background.mode="2" background.color="1073741824" )
+line(band=summary x1="1646" y1="0" x2="1646" y2="92"  name=l_16 visible="1" pen.style="0" pen.width="9" pen.color="255"  background.mode="2" background.color="1073741824" )
+line(band=summary x1="3767" y1="0" x2="3767" y2="92"  name=l_14 visible="1" pen.style="0" pen.width="9" pen.color="255"  background.mode="2" background.color="1073741824" )
+line(band=summary x1="4119" y1="0" x2="4119" y2="92"  name=l_21 visible="1" pen.style="0" pen.width="9" pen.color="255"  background.mode="2" background.color="1073741824" )
+line(band=summary x1="4466" y1="0" x2="4466" y2="92"  name=l_24 visible="1" pen.style="0" pen.width="9" pen.color="255"  background.mode="2" background.color="1073741824" )
+line(band=summary x1="4800" y1="0" x2="4800" y2="92"  name=l_30 visible="1" pen.style="0" pen.width="9" pen.color="255"  background.mode="2" background.color="1073741824" )
+line(band=summary x1="59" y1="4" x2="4800" y2="4"  name=l_13 visible="1" pen.style="0" pen.width="9" pen.color="255"  background.mode="2" background.color="1073741824" )
+line(band=summary x1="59" y1="96" x2="4800" y2="96"  name=l_18 visible="1" pen.style="0" pen.width="9" pen.color="255"  background.mode="2" background.color="1073741824" )
+compute(band=summary alignment="1" expression="sum(if ( total_order_amt_sum = 0 , 0 ,  order_amt  / total_order_amt_sum ) for all)"border="0" color="33554432" x="4480" y="20" height="64" width="302" format="##0.00%" html.valueishtml="0"  name=compute_3 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=summary alignment="1" expression="if  ( total_last_month_amt_sum  =0 , 0 , ( total_order_amt_sum - total_last_month_amt_sum  ) /  total_last_month_amt_sum  )"border="0" color="33554432" x="4142" y="20" height="64" width="302" format="##0.00%" html.valueishtml="0"  name=compute_5 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="if  ( total_last_year_same_period_amt_sum=0 , 0 , ( total_order_amt_sum - total_last_year_same_period_amt_sum) /  total_last_year_same_period_amt_sum)"border="0" color="33554432" x="3794" y="20" height="64" width="302" format="##0.00%" html.valueishtml="0"  name=compute_7 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+graph(band=summary height="2656" width="2455" graphtype="4" perspective="2" rotation="-20" color="33554432" backcolor="1090519039" shadecolor="8355711" range= 0 border="2" overlappercent="0" spacing="100" plotnulldata="0" elevation="20" depth="100"x="73" y="124" height="2656" width="2455"  name=gr_1 visible="1"  resizeable=1  moveable=1  category="supplier_name"  values="sum(order_amt for graph)"  title="Order Amount"  title.dispattr.backcolor="536870912"  title.dispattr.alignment="2"  title.dispattr.autosize="0"  title.dispattr.font.charset="0"  title.dispattr.font.escapement="0"  title.dispattr.font.face="Tahoma"  title.dispattr.font.family="2"  title.dispattr.font.height="-9"  title.dispattr.font.italic="0"  title.dispattr.font.orientation="0"  title.dispattr.font.pitch="2"  title.dispattr.font.strikethrough="0"  title.dispattr.font.underline="0"  title.dispattr.font.weight="700"  title.dispattr.format="[General]"  title.dispattr.textcolor="0"  title.dispattr.displayexpression="title"  legend="4"  legend.dispattr.backcolor="536870912"  legend.dispattr.alignment="0"  legend.dispattr.autosize="0"  legend.dispattr.font.charset="0"  legend.dispattr.font.escapement="0"  legend.dispattr.font.face="Tahoma"  legend.dispattr.font.family="2"  legend.dispattr.font.height="-9"  legend.dispattr.font.italic="0"  legend.dispattr.font.orientation="0"  legend.dispattr.font.pitch="2"  legend.dispattr.font.strikethrough="0"  legend.dispattr.font.underline="0"  legend.dispattr.font.weight="400"  legend.dispattr.format="[General]"  legend.dispattr.textcolor="0"  legend.dispattr.displayexpression="series" 
+	series.autoscale="1" 
+	series.displayeverynlabels="0"  series.droplines="0"  series.frame="1"  series.label="(None)"  series.majordivisions="0"  series.majorgridline="0"  series.majortic="3"  series.maximumvalue="0"  series.minimumvalue="0"  series.minordivisions="0"  series.minorgridline="0"  series.minortic="1"  series.originline="0"  series.primaryline="1"  series.roundto="0"  series.roundtounit="0"  series.scaletype="1"  series.scalevalue="1"  series.secondaryline="0"  series.shadebackedge="0"  series.dispattr.backcolor="536870912"  series.dispattr.alignment="0"  series.dispattr.autosize="1"  series.dispattr.font.charset="0"  series.dispattr.font.escapement="0"  series.dispattr.font.face="Tahoma"  series.dispattr.font.family="2"  series.dispattr.font.height="0"  series.dispattr.font.italic="0"  series.dispattr.font.orientation="0"  series.dispattr.font.pitch="2"  series.dispattr.font.strikethrough="0"  series.dispattr.font.underline="0"  series.dispattr.font.weight="400"  series.dispattr.format="[General]"  series.dispattr.textcolor="0"  series.dispattr.displayexpression="series"  series.labeldispattr.backcolor="536870912"  series.labeldispattr.alignment="2"  series.labeldispattr.autosize="1"  series.labeldispattr.font.charset="0"  series.labeldispattr.font.escapement="0"  series.labeldispattr.font.face="Tahoma"  series.labeldispattr.font.family="2"  series.labeldispattr.font.height="0"  series.labeldispattr.font.italic="0"  series.labeldispattr.font.orientation="0"  series.labeldispattr.font.pitch="2"  series.labeldispattr.font.strikethrough="0"  series.labeldispattr.font.underline="0"  series.labeldispattr.font.weight="400"  series.labeldispattr.format="[General]"  series.labeldispattr.textcolor="0"  series.labeldispattr.displayexpression="seriesaxislabel"  series.sort="1" 
+	category.autoscale="1" 
+	category.displayeverynlabels="0"  category.droplines="0"  category.frame="1"  category.label="Customer Name"  category.majordivisions="0"  category.majorgridline="0"  category.majortic="3"  category.maximumvalue="0"  category.minimumvalue="0"  category.minordivisions="0"  category.minorgridline="0"  category.minortic="1"  category.originline="0"  category.primaryline="1"  category.roundto="0"  category.roundtounit="0"  category.scaletype="1"  category.scalevalue="1"  category.secondaryline="0"  category.shadebackedge="1"  category.dispattr.backcolor="536870912"  category.dispattr.alignment="1"  category.dispattr.autosize="0"  category.dispattr.font.charset="0"  category.dispattr.font.escapement="0"  category.dispattr.font.face="Tahoma"  category.dispattr.font.family="2"  category.dispattr.font.height="-8"  category.dispattr.font.italic="0"  category.dispattr.font.orientation="0"  category.dispattr.font.pitch="2"  category.dispattr.font.strikethrough="0"  category.dispattr.font.underline="0"  category.dispattr.font.weight="400"  category.dispattr.format="[General]"  category.dispattr.textcolor="0"  category.dispattr.displayexpression="category"  category.labeldispattr.backcolor="536870912"  category.labeldispattr.alignment="2"  category.labeldispattr.autosize="0"  category.labeldispattr.font.charset="0"  category.labeldispattr.font.escapement="900"  category.labeldispattr.font.face="Tahoma"  category.labeldispattr.font.family="2"  category.labeldispattr.font.height="-8"  category.labeldispattr.font.italic="0"  category.labeldispattr.font.orientation="900"  category.labeldispattr.font.pitch="2"  category.labeldispattr.font.strikethrough="0"  category.labeldispattr.font.underline="0"  category.labeldispattr.font.weight="400"  category.labeldispattr.format="[General]"  category.labeldispattr.textcolor="0"  category.labeldispattr.displayexpression="categoryaxislabel"  category.sort="1" 
+	values.autoscale="1" 
+	values.displayeverynlabels="0"  values.droplines="0"  values.frame="1"  values.label="Order Amount"  values.majordivisions="0"  values.majorgridline="0"  values.majortic="3"  values.maximumvalue="250"  values.minimumvalue="0"  values.minordivisions="0"  values.minorgridline="0"  values.minortic="1"  values.originline="1"  values.primaryline="1"  values.roundto="0"  values.roundtounit="0"  values.scaletype="1"  values.scalevalue="1"  values.secondaryline="0"  values.shadebackedge="0"  values.dispattr.backcolor="536870912"  values.dispattr.alignment="2"  values.dispattr.autosize="0"  values.dispattr.font.charset="0"  values.dispattr.font.escapement="0"  values.dispattr.font.face="Tahoma"  values.dispattr.font.family="2"  values.dispattr.font.height="-8"  values.dispattr.font.italic="0"  values.dispattr.font.orientation="0"  values.dispattr.font.pitch="2"  values.dispattr.font.strikethrough="0"  values.dispattr.font.underline="0"  values.dispattr.font.weight="400"  values.dispattr.format="###,##0.00"  values.dispattr.textcolor="0"  values.dispattr.displayexpression="value"  values.labeldispattr.backcolor="536870912"  values.labeldispattr.alignment="2"  values.labeldispattr.autosize="0"  values.labeldispattr.font.charset="0"  values.labeldispattr.font.escapement="0"  values.labeldispattr.font.face="Tahoma"  values.labeldispattr.font.family="2"  values.labeldispattr.font.height="-8"  values.labeldispattr.font.italic="0"  values.labeldispattr.font.orientation="0"  values.labeldispattr.font.pitch="2"  values.labeldispattr.font.strikethrough="0"  values.labeldispattr.font.underline="0"  values.labeldispattr.font.weight="400"  values.labeldispattr.format="[General]"  values.labeldispattr.textcolor="0"  values.labeldispattr.displayexpression="valuesaxislabel" )
+graph(band=summary height="2656" width="2245" graphtype="17" perspective="1" rotation="-20" color="33554432" backcolor="1090519039" shadecolor="8355711" range= 0 border="2" overlappercent="0" spacing="100" plotnulldata="0" elevation="-60" depth="50"x="2551" y="124" height="2656" width="2245"  name=gr_2 visible="1"  resizeable=1  moveable=1  category="supplier_code"  values="occupancy_rate"  title="Occupancy Rate"  title.dispattr.backcolor="536870912"  title.dispattr.alignment="2"  title.dispattr.autosize="0"  title.dispattr.font.charset="0"  title.dispattr.font.escapement="0"  title.dispattr.font.face="Tahoma"  title.dispattr.font.family="2"  title.dispattr.font.height="-9"  title.dispattr.font.italic="0"  title.dispattr.font.orientation="0"  title.dispattr.font.pitch="2"  title.dispattr.font.strikethrough="0"  title.dispattr.font.underline="0"  title.dispattr.font.weight="700"  title.dispattr.format="[General]"  title.dispattr.textcolor="0"  title.dispattr.displayexpression="title"  legend="1"  legend.dispattr.backcolor="536870912"  legend.dispattr.alignment="0"  legend.dispattr.autosize="0"  legend.dispattr.font.charset="0"  legend.dispattr.font.escapement="0"  legend.dispattr.font.face="Tahoma"  legend.dispattr.font.family="2"  legend.dispattr.font.height="-8"  legend.dispattr.font.italic="0"  legend.dispattr.font.orientation="0"  legend.dispattr.font.pitch="2"  legend.dispattr.font.strikethrough="0"  legend.dispattr.font.underline="0"  legend.dispattr.font.weight="400"  legend.dispattr.format="[General]"  legend.dispattr.textcolor="0"  legend.dispattr.displayexpression="category"  pie.dispattr.backcolor="536870912"  pie.dispattr.alignment="0"  pie.dispattr.autosize="0"  pie.dispattr.font.charset="0"  pie.dispattr.font.escapement="0"  pie.dispattr.font.face="Tahoma"  pie.dispattr.font.family="2"  pie.dispattr.font.height="-8"  pie.dispattr.font.italic="0"  pie.dispattr.font.orientation="0"  pie.dispattr.font.pitch="2"  pie.dispattr.font.strikethrough="0"  pie.dispattr.font.underline="0"  pie.dispattr.font.weight="400"  pie.dispattr.format="[General]"  pie.dispattr.textcolor="0"  pie.dispattr.displayexpression="if(seriescount > 1, series,string(percentofseries,~"0.00%~"))" 
+	series.autoscale="1" 
+	series.displayeverynlabels="0"  series.droplines="0"  series.frame="1"  series.label="(None)"  series.majordivisions="0"  series.majorgridline="0"  series.majortic="3"  series.maximumvalue="0"  series.minimumvalue="0"  series.minordivisions="0"  series.minorgridline="0"  series.minortic="1"  series.originline="0"  series.primaryline="1"  series.roundto="0"  series.roundtounit="0"  series.scaletype="1"  series.scalevalue="1"  series.secondaryline="0"  series.shadebackedge="0"  series.dispattr.backcolor="536870912"  series.dispattr.alignment="0"  series.dispattr.autosize="1"  series.dispattr.font.charset="0"  series.dispattr.font.escapement="0"  series.dispattr.font.face="Tahoma"  series.dispattr.font.family="2"  series.dispattr.font.height="0"  series.dispattr.font.italic="0"  series.dispattr.font.orientation="0"  series.dispattr.font.pitch="2"  series.dispattr.font.strikethrough="0"  series.dispattr.font.underline="0"  series.dispattr.font.weight="400"  series.dispattr.format="[General]"  series.dispattr.textcolor="0"  series.dispattr.displayexpression="series"  series.labeldispattr.backcolor="536870912"  series.labeldispattr.alignment="2"  series.labeldispattr.autosize="1"  series.labeldispattr.font.charset="0"  series.labeldispattr.font.escapement="0"  series.labeldispattr.font.face="Tahoma"  series.labeldispattr.font.family="2"  series.labeldispattr.font.height="0"  series.labeldispattr.font.italic="0"  series.labeldispattr.font.orientation="0"  series.labeldispattr.font.pitch="2"  series.labeldispattr.font.strikethrough="0"  series.labeldispattr.font.underline="0"  series.labeldispattr.font.weight="400"  series.labeldispattr.format="[General]"  series.labeldispattr.textcolor="0"  series.labeldispattr.displayexpression="seriesaxislabel"  series.sort="1" 
+	category.autoscale="1" 
+	category.displayeverynlabels="0"  category.droplines="0"  category.frame="1"  category.label="(None)"  category.majordivisions="0"  category.majorgridline="0"  category.majortic="3"  category.maximumvalue="0"  category.minimumvalue="0"  category.minordivisions="0"  category.minorgridline="0"  category.minortic="1"  category.originline="0"  category.primaryline="1"  category.roundto="0"  category.roundtounit="0"  category.scaletype="1"  category.scalevalue="1"  category.secondaryline="0"  category.shadebackedge="1"  category.dispattr.backcolor="536870912"  category.dispattr.alignment="2"  category.dispattr.autosize="1"  category.dispattr.font.charset="0"  category.dispattr.font.escapement="0"  category.dispattr.font.face="Tahoma"  category.dispattr.font.family="2"  category.dispattr.font.height="0"  category.dispattr.font.italic="0"  category.dispattr.font.orientation="0"  category.dispattr.font.pitch="2"  category.dispattr.font.strikethrough="0"  category.dispattr.font.underline="0"  category.dispattr.font.weight="400"  category.dispattr.format="[General]"  category.dispattr.textcolor="0"  category.dispattr.displayexpression="category"  category.labeldispattr.backcolor="536870912"  category.labeldispattr.alignment="2"  category.labeldispattr.autosize="1"  category.labeldispattr.font.charset="0"  category.labeldispattr.font.escapement="0"  category.labeldispattr.font.face="Tahoma"  category.labeldispattr.font.family="2"  category.labeldispattr.font.height="0"  category.labeldispattr.font.italic="0"  category.labeldispattr.font.orientation="0"  category.labeldispattr.font.pitch="2"  category.labeldispattr.font.strikethrough="0"  category.labeldispattr.font.underline="0"  category.labeldispattr.font.weight="400"  category.labeldispattr.format="[General]"  category.labeldispattr.textcolor="0"  category.labeldispattr.displayexpression="categoryaxislabel"  category.sort="1" 
+	values.autoscale="1" 
+	values.displayeverynlabels="0"  values.droplines="0"  values.frame="1"  values.label="(None)"  values.majordivisions="0"  values.majorgridline="0"  values.majortic="3"  values.maximumvalue="250"  values.minimumvalue="0"  values.minordivisions="0"  values.minorgridline="0"  values.minortic="1"  values.originline="1"  values.primaryline="1"  values.roundto="0"  values.roundtounit="0"  values.scaletype="1"  values.scalevalue="1"  values.secondaryline="0"  values.shadebackedge="0"  values.dispattr.backcolor="536870912"  values.dispattr.alignment="1"  values.dispattr.autosize="1"  values.dispattr.font.charset="0"  values.dispattr.font.escapement="0"  values.dispattr.font.face="Tahoma"  values.dispattr.font.family="2"  values.dispattr.font.height="0"  values.dispattr.font.italic="0"  values.dispattr.font.orientation="0"  values.dispattr.font.pitch="2"  values.dispattr.font.strikethrough="0"  values.dispattr.font.underline="0"  values.dispattr.font.weight="400"  values.dispattr.format="[General]"  values.dispattr.textcolor="0"  values.dispattr.displayexpression="value"  values.labeldispattr.backcolor="536870912"  values.labeldispattr.alignment="2"  values.labeldispattr.autosize="1"  values.labeldispattr.font.charset="0"  values.labeldispattr.font.escapement="900"  values.labeldispattr.font.face="Tahoma"  values.labeldispattr.font.family="2"  values.labeldispattr.font.height="0"  values.labeldispattr.font.italic="0"  values.labeldispattr.font.orientation="0"  values.labeldispattr.font.pitch="2"  values.labeldispattr.font.strikethrough="0"  values.labeldispattr.font.underline="0"  values.labeldispattr.font.weight="400"  values.labeldispattr.format="[General]"  values.labeldispattr.textcolor="0"  values.labeldispattr.displayexpression="valuesaxislabel" )
+compute(band=footer alignment="2" expression="'Page ' + page() + ' of ' + pageCount()"border="0" color="33554432" x="2135" y="16" height="60" width="590" format="[general]" html.valueishtml="0"  name=page_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+line(band=footer x1="59" y1="4" x2="4786" y2="4"  name=l_3 visible="1" pen.style="0" pen.width="9" pen.color="255"  background.mode="2" background.color="1073741824" )
+htmltable(border="1" generatecss="1" nowrap="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0  template=(comment="" encoding="UTF-16LE" name="f" xml="<?xml version=~"1.0~" encoding=~"UTF-16LE~" standalone=~"no~"?><untitled><untitled_row __pbband=~"detail~"><im_item_purchase_order_supplier_code>supplier_code</im_item_purchase_order_supplier_code><supplier_name>supplier_name</supplier_name><im_item_purchase_order_item_code>item_code</im_item_purchase_order_item_code><delivery>delivery</delivery><order_qty>order_qty</order_qty><order_amt>order_amt</order_amt><sale_currency>sale_currency</sale_currency><im_item_purchase_order_organization_id>organization_id</im_item_purchase_order_organization_id></untitled_row></untitled>"))
+import.xml()
+export.pdf(method=1 distill.custompostscript="1" xslfop.print="0" )
+export.xhtml(usetemplate=""  template=(comment="" name="f" xhtml="$$HEX1$$fffe$$ENDHEX$$<form name=~"webDW_dataForm~"><div class=~"webDW_band_0~"><div class=~"webDW_t_1~">t_1</div><div class=~"webDW_supplier_code_t~">supplier_code_t</div><div class=~"webDW_supplier_name_t~">supplier_name_t</div><div class=~"webDW_item_code_t~">item_code_t</div><div class=~"webDW_item_name_t~">item_name_t</div><div class=~"webDW_item_spec_t~">item_spec_t</div><div class=~"webDW_sale_currency_t~">sale_currency_t</div><div class=~"webDW_delivery_t~">delivery_t</div><div class=~"webDW_order_amt_t~">order_amt_t</div><div class=~"webDW_order_qty_t~">order_qty_t</div><hr/><hr/><div class=~"webDW_compute_5~">compute_5</div><div class=~"webDW_t_6~">t_6</div><div class=~"webDW_t_2~">t_2</div><div class=~"webDW_t_4~">t_4</div><div class=~"webDW_compute_2~">compute_2</div><div class=~"webDW_compute_3~">compute_3</div><div class=~"webDW_compute_4~">compute_4</div><div class=~"webDW_t_3~">t_3</div><div class=~"webDW_compute_6~">compute_6</div><div class=~"webDW_t_5~">t_5</div><div class=~"webDW_t_7~">t_7</div></div><div class=~"webDW_detail_0~" __pbband=~"detail~"><div class=~"webDW_compute_1~">compute_1</div><input name=~"webDW_supplier_code~" type=~"text~" value=~"supplier_code~"/><input name=~"webDW_supplier_name~" type=~"text~" value=~"supplier_name~"/><input name=~"webDW_item_code~" type=~"text~" value=~"item_code~"/><input name=~"webDW_item_name~" type=~"text~" value=~"item_name~"/><input name=~"webDW_item_spec~" type=~"text~" value=~"item_spec~"/><div class=~"webDW_sale_currency~">sale_currency</div><div class=~"webDW_delivery~">delivery</div><input name=~"webDW_order_amt~" type=~"text~" value=~"order_amt~"/><input name=~"webDW_order_qty~" type=~"text~" value=~"order_qty~"/><hr/></div><div class=~"webDW_band_1~"><hr/><div class=~"webDW_organization_id~">organization_id</div><div class=~"webDW_organization_id_t~">organization_id_t</div><div class=~"webDW_page_1~">page_1</div></div></form>"))
+ 

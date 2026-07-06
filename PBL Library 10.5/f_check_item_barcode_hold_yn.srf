@@ -1,0 +1,34 @@
+HA$PBExportHeader$f_check_item_barcode_hold_yn.srf
+global type f_check_item_barcode_hold_yn from function_object
+end type
+
+forward prototypes
+global function string f_check_item_barcode_hold_yn (string as_item_code, string as_lot_no)
+end prototypes
+
+global function string f_check_item_barcode_hold_yn (string as_item_code, string as_lot_no);string lvs_check 
+
+select  NVL(max(holding_yn),'N')
+into    :lvs_check
+from   im_item_receipt_barcode
+where item_code      =     :as_item_code 
+and    lot_no             =     :as_lot_no
+and    organization_id  = :gvi_organization_id ; 
+
+if f_sql_check() < 0 then 
+	return 'N'
+end if 
+
+if sqlca.sqlcode = 100 then
+   f_msgbox(9106) //$$HEX12$$90c7acc72000acc7e0ac00ac2000c6c5b5c2c8b2e4b22000$$ENDHEX$$
+   return 'N'
+end if
+
+if lvs_check = 'N' then 
+   return 'N'
+else
+	return 'Y'
+end if 
+	
+end function
+

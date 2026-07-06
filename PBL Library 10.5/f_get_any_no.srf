@@ -1,0 +1,20 @@
+HA$PBExportHeader$f_get_any_no.srf
+global type f_get_any_no from function_object
+end type
+
+forward prototypes
+global function string f_get_any_no (string arg_name)
+end prototypes
+
+global function string f_get_any_no (string arg_name);STRING LVS_ANY_NO
+
+SELECT F_GET_ANY_NO( UPPER(:ARG_NAME ), :GVI_ORGANIZATION_ID )
+  INTO :LVS_ANY_NO
+  FROM DUAL ;
+  
+  IF F_SQL_CHECK() < 0 THEN 
+	 RETURN ''
+  END IF
+RETURN LVS_ANY_NO
+end function
+

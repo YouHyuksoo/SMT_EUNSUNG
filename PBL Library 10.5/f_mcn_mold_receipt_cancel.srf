@@ -1,0 +1,73 @@
+HA$PBExportHeader$f_mcn_mold_receipt_cancel.srf
+global type f_mcn_mold_receipt_cancel from function_object
+end type
+
+forward prototypes
+global function integer f_mcn_mold_receipt_cancel (datetime adt_date, double ad_seq)
+end prototypes
+
+global function integer f_mcn_mold_receipt_cancel (datetime adt_date, double ad_seq);long  lvl_cnt
+double lvl_receipt_seq
+
+UPDATE imcn_mold_receipt
+   SET receipt_status = 'C'
+ WHERE receipt_date = :adt_date
+   AND receipt_sequence = :ad_seq
+   AND organization_id = :gvi_organization_id;
+
+if f_sql_check() < 0 then 
+	return -3
+end if 
+
+lvl_receipt_seq = double(f_get_sequence('seq_mat_receipt'))
+/* Formatted on 2006/09/19 10:14 (Formatter Plus v4.8.0) */
+INSERT INTO imcn_mold_receipt
+            ( receipt_sequence,
+              receipt_date,
+              location_code,
+              receipt_deficit,
+              receipt_qty,
+              unit_price,
+              invoice_no,
+              receipt_amt,
+              supplier_code,
+              currency,
+              receipt_status,
+              mold_code,
+	         order_no,			  
+              organization_id,
+              enter_by,
+              enter_date,
+              last_modify_by,
+              last_modify_date , mold_version , mold_set_serial , line_type
+            )
+   SELECT :lvl_receipt_seq,
+          TRUNC( SYSDATE ),
+          location_code,
+          DECODE( receipt_deficit, '1', '2', '2', '1' ),
+          receipt_qty * -1,
+          unit_price,
+          invoice_no,
+          receipt_amt * -1,
+	     supplier_code,
+          currency,
+          'C',
+          mold_code,
+		order_no	 ,
+          organization_id,
+          :gvs_user_id,
+          SYSDATE,
+          :gvs_user_id,
+          SYSDATE , mold_version , mold_set_serial , line_type
+     FROM imcn_mold_receipt
+    WHERE receipt_date = :adt_date
+      AND receipt_sequence = :ad_seq
+      AND organization_id = :gvi_organization_id;
+		 
+	if f_sql_check() < 0 then 
+		return -1 
+	end if 
+
+return sqlca.sqlnrows
+end function
+

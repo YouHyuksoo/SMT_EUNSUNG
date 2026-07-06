@@ -1,0 +1,11 @@
+HA$PBExportHeader$driver_info_2.srs
+$PBExportComments$printer driver information
+global type driver_info_2 from structure
+	long		dversion
+	string		pName
+	string		pEnvironment
+	string		pDriverPath
+	string		pDataFile
+	string		pConfigFile
+end type
+

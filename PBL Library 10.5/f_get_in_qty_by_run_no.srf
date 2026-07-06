@@ -1,0 +1,30 @@
+HA$PBExportHeader$f_get_in_qty_by_run_no.srf
+global type f_get_in_qty_by_run_no from function_object
+end type
+
+forward prototypes
+global function long f_get_in_qty_by_run_no (string arg_run_no, string arg_workstage_code)
+end prototypes
+
+global function long f_get_in_qty_by_run_no (string arg_run_no, string arg_workstage_code);long lvl_lot_size
+
+select in_qty into :lvl_lot_size
+ from ip_product_run_card_io
+ where run_no = :arg_run_no
+    and workstage_code = :arg_workstage_code
+    and organization_id   = :gvi_organization_id ;
+	 
+	 
+	 if f_sql_check() < 0 then 
+		return  0
+	end if 
+	
+	if isnull(lvl_lot_size) then 
+		return 0
+	else
+		return lvl_lot_size 
+	end if 
+		
+	 
+end function
+

@@ -1,0 +1,15 @@
+FUNCTION "F_GET_NUMBER_TO_ALPABET" 
+(
+  P_NUM IN NUMBER 
+) RETURN VARCHAR2 AS 
+LVS_RETURN VARCHAR2(10) ;
+
+BEGIN
+    
+    select  chr( ascii('A') + P_NUM  -1  )
+				 INTO LVS_RETURN
+					 from dual ;
+    
+
+  RETURN LVS_RETURN;
+END F_GET_NUMBER_TO_ALPABET;

@@ -1,0 +1,29 @@
+HA$PBExportHeader$d_line_barcode_rpt.srd
+release 10.5;
+datawindow(units=3 timer_interval=0 color=1073741824 processing=2 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 0 print.margin.right = 0 print.margin.top = 0 print.margin.bottom = 0 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no label.name="" label.width=7000 label.height=3000 label.rows=1 label.rows.spacing=0 label.columns=1 label.columns.spacing=0 label.topdown=yes label.sheet=yes label.shape=roundrectangle label.ellipse_height=0 label.ellipse_width=0 )
+detail(height=2989 color="536870912" )
+table(column=(type=char(20) updatewhereclause=yes name=line_code dbname="ib_line_master.line_code" )
+ column=(type=char(30) updatewhereclause=yes name=machine dbname="ib_line_master.machine" )
+ column=(type=char(53) updatewhereclause=yes name=line_barcoe dbname="line_barcoe" )
+ retrieve="  SELECT ~"IB_LINE_MASTER~".~"LINE_CODE~",   
+              ~"IB_LINE_MASTER~".~"MACHINE~",   
+              '*'||line_code||'-'||MACHINE||'*' LINE_BARCOE  
+    FROM ~"IB_LINE_MASTER~"  
+   WHERE ( ~"IB_LINE_MASTER~".~"LINE_CODE~" = :arg_line_code ) AND  
+         ( ~"IB_LINE_MASTER~".~"ORGANIZATION_ID~" = :arg_org )    
+" arguments=(("arg_line_code", string),("arg_org", number))  sort="line_code A " )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="0" color="33554432" x="370" y="1693" height="846" width="6323" format="[general]" html.valueishtml="0"  name=line_barcoe visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Free 3 of 9" font.height="-36" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432" x="2196" y="211" height="1058" width="1402" format="[general]" html.valueishtml="0"  name=line_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-24" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432" x="3995" y="211" height="1058" width="2857" format="[general]" html.valueishtml="0"  name=machine visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-24" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=detail alignment="0" text="Line:" border="0" color="33554432" x="158" y="211" height="1031" width="1825" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-24" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

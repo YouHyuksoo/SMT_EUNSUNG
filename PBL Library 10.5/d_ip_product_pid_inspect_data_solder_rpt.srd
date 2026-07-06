@@ -1,0 +1,63 @@
+HA$PBExportHeader$d_ip_product_pid_inspect_data_solder_rpt.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=0 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no )
+header(height=240 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=56 color="536870912" )
+detail(height=80 color="536870912" )
+table(column=(type=char(20) updatewhereclause=yes name=im_item_solder_input_hist_run_no dbname="im_item_solder_input_hist.run_no" dbalias="h.run_no" )
+ column=(type=char(4000) updatewhereclause=yes name=line_code dbname="line_code" )
+ column=(type=char(100) updatewhereclause=yes name=item_barcode dbname="im_item_solder_master.item_barcode" dbalias="m.item_barcode" )
+ column=(type=char(10) updatewhereclause=yes name=solder_type dbname="im_item_solder_master.solder_type" dbalias="m.solder_type" )
+ column=(type=char(20) updatewhereclause=yes name=item_code dbname="im_item_solder_master.item_code" dbalias="m.item_code" )
+ column=(type=datetime updatewhereclause=yes name=im_item_solder_input_hist_input_date dbname="im_item_solder_input_hist.input_date" dbalias="h.input_date" )
+ column=(type=datetime updatewhereclause=yes name=destroy_date dbname="im_item_solder_master.destroy_date" dbalias="m.destroy_date" )
+ column=(type=datetime updatewhereclause=yes name=valid_date dbname="im_item_solder_master.valid_date" dbalias="m.valid_date" )
+ column=(type=number updatewhereclause=yes name=viscosity dbname="im_item_solder_master.viscosity" dbalias="m.viscosity" )
+ retrieve="
+   select h.run_no, 
+            f_get_line_name( h.line_code, 1) line_code,
+            m.item_barcode,
+            m.solder_type,  
+            m.item_code, 
+            h.input_date, 
+            m.destroy_date,  
+            m.valid_date, 
+            m.viscosity
+     from im_item_solder_input_hist h,
+             im_item_solder_master     m
+    where h.solder_lot_no = m.item_barcode
+      and h.run_no  = (                    
+                                 select run_no
+                                  from ip_product_2d_barcode
+                                 where serial_no like  :ARG_SERIAL_NO 
+                                     and rownum = 1
+                                ) " arguments=(("ARG_SERIAL_NO", string),("ARG_ORG", number))  sort="item_barcode A " )
+text(band=header alignment="0" text="  Solder Input History" border="1" color="33554432" x="14" y="12" height="76" width="1714" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=header alignment="2" text="Line Code" border="2" color="33554432" x="521" y="120" height="112" width="361" html.valueishtml="0"  name=t_12 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="Item Barcode" border="2" color="33554432" x="891" y="120" height="112" width="498" html.valueishtml="0"  name=judgment_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="Item Code" border="2" color="33554432" x="1399" y="120" height="112" width="498" html.valueishtml="0"  name=meas_time_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="Destroy Date" border="2" color="33554432" x="2414" y="120" height="112" width="498" html.valueishtml="0"  name=t_13 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="Valid Date" border="2" color="33554432" x="2921" y="120" height="112" width="498" html.valueishtml="0"  name=t_4 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="Viscosity" border="2" color="33554432" x="3429" y="120" height="112" width="311" html.valueishtml="0"  name=t_3 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="Solder Type" border="2" color="33554432" x="1906" y="120" height="112" width="498" html.valueishtml="0"  name=t_11 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="Input Date" border="2" color="33554432" x="14" y="120" height="112" width="498" html.valueishtml="0"  name=machine_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="2" color="33554432" x="891" y="8" height="64" width="498" format="[general]" html.valueishtml="0"  name=item_barcode visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=5 alignment="2" tabsequence=32766 border="2" color="33554432" x="1399" y="8" height="64" width="498" format="[general]" html.valueishtml="0"  name=item_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=7 alignment="2" tabsequence=32766 border="2" color="33554432" x="2414" y="8" height="64" width="498" format="[shortdate] [time]" html.valueishtml="0"  name=destroy_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=8 alignment="2" tabsequence=32766 border="2" color="33554432" x="2921" y="8" height="64" width="498" format="[shortdate] [time]" html.valueishtml="0"  name=valid_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=9 alignment="2" tabsequence=32766 border="2" color="33554432" x="3429" y="8" height="64" width="311" format="[general]" html.valueishtml="0"  name=viscosity visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="2" color="33554432" x="1906" y="8" height="64" width="498" format="[general]" html.valueishtml="0"  name=solder_type visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="2" color="33554432" x="521" y="8" height="64" width="361" format="[general]" html.valueishtml="0"  name=line_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=6 alignment="2" tabsequence=32766 border="2" color="33554432" x="14" y="8" height="64" width="498" format="[shortdate] [time]" html.valueishtml="0"  name=im_item_solder_input_hist_input_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

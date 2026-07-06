@@ -1,0 +1,41 @@
+Save Format v3.0(19990112)
+@begin Libraries
+ "infinity21_spd.pbl" "";
+@end;
+@begin Objects
+ "d_privilege_lst_popup_by_user.srd" "infinity21_spd.pbl";
+ "d_datawindow_source_lst.srd" "infinity21_spd.pbl";
+ "d_report_menu_insert_lst_tree.srd" "infinity21_spd.pbl";
+ "d_user_function_lst_popup.srd" "infinity21_spd.pbl";
+ "d_report_window_column_property.srd" "infinity21_spd.pbl";
+ "d_user_role_group_popup.srd" "infinity21_spd.pbl";
+ "d_dwzoom_manager.srd" "infinity21_spd.pbl";
+ "d_clipboard_info.srd" "infinity21_spd.pbl";
+ "d_dual_language_popup.srd" "infinity21_spd.pbl";
+ "d_standard_code_popup.srd" "infinity21_spd.pbl";
+ "de_choose_org.srd" "infinity21_spd.pbl";
+ "de_choose_org_extern.srd" "infinity21_spd.pbl";
+ "d_sort_target.srd" "infinity21_spd.pbl";
+ "d_initial_value_popup.srd" "infinity21_spd.pbl";
+ "d_basecode_popup.srd" "infinity21_spd.pbl";
+ "d_data_filter_popup.srd" "infinity21_spd.pbl";
+ "d_sort_source.srd" "infinity21_spd.pbl";
+ "d_clipboard.srd" "infinity21_spd.pbl";
+ "d_role_group_popup.srd" "infinity21_spd.pbl";
+ "de_column_sort.srd" "infinity21_spd.pbl";
+ "d_value_list_popup.srd" "infinity21_spd.pbl";
+ "d_window_lst_popup.srd" "infinity21_spd.pbl";
+ "d_col_info_lst_popup.srd" "infinity21_spd.pbl";
+ "d_report_source_where_lst.srd" "infinity21_spd.pbl";
+ "d_report_window_where_condition_popup.srd" "infinity21_spd.pbl";
+ "d_report_source_where_condition_lst.srd" "infinity21_spd.pbl";
+ "d_dept_popup.srd" "infinity21_spd.pbl";
+ "d_role_popup.srd" "infinity21_spd.pbl";
+ "d_user_popup.srd" "infinity21_spd.pbl";
+ "d_table_column_select_popup.srd" "infinity21_spd.pbl";
+ "d_table_name_select_popup.srd" "infinity21_spd.pbl";
+ "d_dynamic_where_condition_popup.srd" "infinity21_spd.pbl";
+ "de_column_explanation_popup.srd" "infinity21_spd.pbl";
+ "d_user_sequence_lst_popup.srd" "infinity21_spd.pbl";
+ "d_col_info_lst_popup_tree.srd" "infinity21_spd.pbl";
+@end;

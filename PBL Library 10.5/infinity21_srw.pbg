@@ -1,0 +1,7 @@
+Save Format v3.0(19990112)
+@begin Libraries
+ "infinity21_srw.pbl" "";
+@end;
+@begin Objects
+ "w_table_description_rpt.srw" "infinity21_srw.pbl";
+@end;

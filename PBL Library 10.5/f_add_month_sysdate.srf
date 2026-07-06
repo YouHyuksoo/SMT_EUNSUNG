@@ -1,0 +1,15 @@
+HA$PBExportHeader$f_add_month_sysdate.srf
+$PBExportComments$Call Server's System Date
+global type f_add_month_sysdate from function_object
+end type
+
+forward prototypes
+global function datetime f_add_month_sysdate (integer arg_months)
+end prototypes
+
+global function datetime f_add_month_sysdate (integer arg_months);datetime d_1		
+select    trunc(add_months( sysdate , :arg_months ))  into :d_1 from dual ;
+f_sql_check()
+return d_1
+end function
+

@@ -1,0 +1,19 @@
+HA$PBExportHeader$f_last_yyyymm.srf
+global type f_last_yyyymm from function_object
+end type
+
+forward prototypes
+global function string f_last_yyyymm ()
+end prototypes
+
+global function string f_last_yyyymm ();string d_1		
+
+select to_char(add_months(sysdate,-1),'yyyymm') into :d_1 from dual ;
+
+if f_sql_check() < 0 then 
+ return d_1
+else
+  return d_1
+end if
+end function
+

@@ -1,0 +1,72 @@
+HA$PBExportHeader$d_window_lst_popup.srd
+$PBExportComments$Window List Popup
+release 10.5;
+datawindow(units=0 timer_interval=0 color=134217747 processing=1 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no grid.lines=0 )
+header(height=148 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=68 color="536870912" )
+table(column=(type=char(100) update=yes updatewhereclause=yes key=yes name=window_name dbname="isys_window.window_name" )
+ column=(type=char(100) updatewhereclause=yes name=window_description dbname="window_description" )
+ column=(type=number update=yes updatewhereclause=yes key=yes name=organization_id dbname="isys_window.organization_id" )
+ column=(type=datetime update=yes updatewhereclause=yes name=enter_date dbname="isys_window.enter_date" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=enter_by dbname="isys_window.enter_by" )
+ column=(type=datetime update=yes updatewhereclause=yes name=last_modify_date dbname="isys_window.last_modify_date" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=last_modify_by dbname="isys_window.last_modify_by" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=window_type dbname="isys_window.window_type" )
+ column=(type=number update=yes updatewhereclause=yes name=version dbname="isys_window.version" )
+ column=(type=char(0) updatewhereclause=yes name=check_yn dbname="check_yn" values="	Y/	N" )
+ column=(type=char(100) updatewhereclause=yes name=window_group dbname="window_group" )
+ retrieve="  SELECT ~"ISYS_WINDOW~".~"WINDOW_NAME~",   
+         DECODE( :ARG_LANG , 'K' , ~"ISYS_WINDOW~".~"WINDOW_DESCRIPTION_KOR~", 'E' , ~"ISYS_WINDOW~".~"WINDOW_DESCRIPTION_ENG~", ~"ISYS_WINDOW~".~"WINDOW_DESCRIPTION_LOCAL~" ) WINDOW_DESCRIPTION,   
+         ~"ISYS_WINDOW~".~"ORGANIZATION_ID~",   
+         ~"ISYS_WINDOW~".~"ENTER_DATE~",   
+         ~"ISYS_WINDOW~".~"ENTER_BY~",   
+         ~"ISYS_WINDOW~".~"LAST_MODIFY_DATE~",   
+         ~"ISYS_WINDOW~".~"LAST_MODIFY_BY~",   
+         ~"ISYS_WINDOW~".~"WINDOW_TYPE~",   
+         ~"ISYS_WINDOW~".~"VERSION~",   
+         '' CHECK_YN,   
+         DECODE( :ARG_LANG , 'K' , ~"ISYS_WINDOW~".~"WINDOW_GROUP_KOR~",   'E' ,   ~"ISYS_WINDOW~".~"WINDOW_GROUP_ENG~",   ~"ISYS_WINDOW~".~"WINDOW_GROUP_LOCAL~"  ) WINDOW_GROUP
+    FROM ~"ISYS_WINDOW~"  
+   WHERE ( ~"ISYS_WINDOW~".~"WINDOW_NAME~" like :ARG_WINDOW_NAME ) AND  
+         ( ~"ISYS_WINDOW~".~"ORGANIZATION_ID~" = :ARG_ORGANIZATION_ID )    
+" update="ISYS_WINDOW" updatewhere=1 updatekeyinplace=no arguments=(("ARG_WINDOW_NAME", string),("ARG_LANG", string),("ARG_ORGANIZATION_ID", number))  sort="organization_id A window_type A window_group A window_name A " )
+group(level=1 header.height=0 trailer.height=0 by=("organization_id" , "window_type" ) header.color="536870912" trailer.color="536870912" )
+group(level=2 header.height=0 trailer.height=40 by=("organization_id" , "window_type" , "window_group" ) header.color="536870912" trailer.color="65535" )
+text(band=header alignment="2" text="No" border="0" color="0" x="151" y="8" height="132" width="155" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Check Yn" border="0" color="0" x="315" y="8" height="132" width="169" html.valueishtml="0"  name=check_yn_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Organization Id" border="0" color="0" x="4763" y="8" height="132" width="320" html.valueishtml="0"  name=organization_id_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Enter Date" border="0" color="0" x="3456" y="8" height="132" width="329" html.valueishtml="0"  name=enter_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Enter By" border="0" color="0" x="3794" y="8" height="132" width="302" html.valueishtml="0"  name=enter_by_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Last Modify Date" border="0" color="0" x="4105" y="8" height="132" width="325" html.valueishtml="0"  name=last_modify_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Last Modify By" border="0" color="0" x="4439" y="8" height="132" width="315" html.valueishtml="0"  name=last_modify_by_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Version" border="0" color="0" x="2885" y="8" height="132" width="242" html.valueishtml="0"  name=version_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Window Name" border="0" color="0" x="882" y="8" height="132" width="1079" html.valueishtml="0"  name=window_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Window Type" border="0" color="0" x="3136" y="8" height="132" width="311" html.valueishtml="0"  name=window_type_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Window Group" border="0" color="33554432" x="494" y="8" height="132" width="379" html.valueishtml="0"  name=window_group_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Window Description" border="0" color="33554432" x="1970" y="8" height="132" width="905" html.valueishtml="0"  name=window_description_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+compute(band=detail alignment="0" expression="trim('')"border="0" color="33554432" x="9" y="4" height="56" width="133" format="[GENERAL]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=1 alignment="0" tabsequence=30 border="0" color="0" x="882" y="4" height="56" width="1079" format="[general]" html.valueishtml="0"  name=window_name visible="1" edit.limit=100 edit.case=upper edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=8 alignment="0" tabsequence=60 border="0" color="0" x="3136" y="4" height="56" width="311" format="[general]" html.valueishtml="0"  name=window_type visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=yes dddw.case=any dddw.hscrollbar=yes dddw.vscrollbar=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=3 alignment="1" tabsequence=110 border="0" color="0" x="4763" y="4" height="56" width="320" format="[general]" html.valueishtml="0"  name=organization_id visible="1" edit.limit=0 edit.case=upper edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=4 alignment="0" tabsequence=70 border="0" color="0" x="3456" y="4" height="56" width="329" format="[shortdate] [time]" html.valueishtml="0"  name=enter_date visible="1" edit.limit=0 edit.case=upper edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=5 alignment="0" tabsequence=80 border="0" color="0" x="3794" y="4" height="56" width="302" format="[general]" html.valueishtml="0"  name=enter_by visible="1" edit.limit=20 edit.case=upper edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=6 alignment="0" tabsequence=90 border="0" color="0" x="4105" y="4" height="56" width="325" format="[shortdate] [time]" html.valueishtml="0"  name=last_modify_date visible="1" edit.limit=0 edit.case=upper edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=7 alignment="0" tabsequence=100 border="0" color="0" x="4439" y="4" height="56" width="315" format="[general]" html.valueishtml="0"  name=last_modify_by visible="1" edit.limit=20 edit.case=upper edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=9 alignment="1" tabsequence=50 border="0" color="0" x="2885" y="4" height="56" width="242" format="##.00" html.valueishtml="0"  name=version visible="1" editmask.mask="##.00" editmask.focusrectangle=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=detail alignment="0" expression="GETROW()"border="0" color="33554432" x="151" y="4" height="56" width="155" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=10 alignment="2" tabsequence=10 border="0" color="0" x="315" y="4" height="56" width="169" format="[general]" html.valueishtml="0"  name=check_yn visible="1" checkbox.text="" checkbox.on="Y" checkbox.off="N" checkbox.scale=no checkbox.threed=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=2 alignment="0" tabsequence=40 border="0" color="0" x="1970" y="0" height="52" width="905" format="[general]" html.valueishtml="0"  name=window_description visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=11 alignment="0" tabsequence=20 border="0" color="0" x="494" y="0" height="52" width="379" format="[general]" html.valueishtml="0"  name=window_group visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=200 dddw.lines=0 dddw.limit=0 dddw.allowedit=yes dddw.useasborder=yes dddw.case=any dddw.autohscroll=yes dddw.hscrollbar=yes dddw.vscrollbar=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

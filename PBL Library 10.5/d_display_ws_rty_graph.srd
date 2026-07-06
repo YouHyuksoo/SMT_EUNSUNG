@@ -1,0 +1,61 @@
+HA$PBExportHeader$d_display_ws_rty_graph.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no grid.lines=0 )
+header(height=68 color="536870912" )
+summary(height=68 color="536870912" )
+footer(height=1296 color="536870912" )
+detail(height=56 color="536870912" )
+table(column=(type=char(4000) updatewhereclause=yes name=workstage_code dbname="workstage_code" )
+ column=(type=number updatewhereclause=yes name=in_qty dbname="in_qty" )
+ column=(type=number updatewhereclause=yes name=out_qty dbname="out_qty" )
+ column=(type=number updatewhereclause=yes name=bad_qty dbname="bad_qty" )
+ column=(type=number updatewhereclause=yes name=rty dbname="rty" )
+ retrieve="  SELECT F_GET_WORKSTAGE_NAME(WORKSTAGE_CODE) WORKSTAGE_CODE,
+			SUM(IN_QTY) IN_QTY,
+			SUM(OUT_QTY) OUT_QTY,
+			SUM(BAD_QTY) BAD_QTY,
+			SUM(OUT_QTY) / SUM(IN_QTY) RTY 
+FROM 
+(
+SELECT A.WORKSTAGE_CODE  ,
+		   OUT_QTY , IN_QTY , BAD_QTY
+    FROM IP_PRODUCT_RUN_CARD_IO    A
+WHERE  A.OUT_DATE >= TRUNC(SYSDATE) - 30
+     AND IN_QTY > 0 AND OUT_QTY > 0 
+ORDER BY WORKSTAGE_CODE
+)
+GROUP BY WORKSTAGE_CODE
+"  sort="workstage_code A " )
+text(band=header alignment="2" text="Workstage Code" border="2" color="33554432" x="160" y="8" height="56" width="832" html.valueishtml="0"  name=workstage_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="33327873" )
+text(band=header alignment="2" text="Good Rate" border="2" color="33554432" x="1001" y="8" height="56" width="325" html.valueishtml="0"  name=rty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="33327873" )
+text(band=header alignment="2" text="In Qty" border="2" color="33554432" x="1335" y="8" height="56" width="288" html.valueishtml="0"  name=in_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="33327873" )
+text(band=header alignment="2" text="Out Qty" border="2" color="33554432" x="1632" y="8" height="56" width="283" html.valueishtml="0"  name=out_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="33327873" )
+text(band=header alignment="2" text="Bad Rate" border="2" color="33554432" x="2185" y="8" height="56" width="242" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="33327873" )
+text(band=header alignment="2" text="Bad Qty" border="2" color="33554432" x="1925" y="8" height="56" width="251" html.valueishtml="0"  name=bad_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="33327873" )
+text(band=header alignment="2" text="PPM" border="2" color="33554432" x="2437" y="8" height="56" width="261" html.valueishtml="0"  name=t_3 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="33327873" )
+compute(band=detail alignment="1" expression=" bad_qty / in_qty "border="2" color="33554432" x="2185" y="4" height="52" width="242" format="##0.00%" html.valueishtml="0"  name=compute_5 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+column(band=detail id=5 alignment="1" tabsequence=32766 border="2" color="33554432" x="1001" y="4" height="52" width="325" format="###,##0.00" html.valueishtml="0"  name=rty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=2 alignment="1" tabsequence=32766 border="2" color="33554432" x="1335" y="4" height="52" width="288" format="###,##0" html.valueishtml="0"  name=in_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=3 alignment="1" tabsequence=32766 border="2" color="33554432" x="1632" y="4" height="52" width="283" format="###,##0" html.valueishtml="0"  name=out_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="2" color="33554432" x="160" y="4" height="52" width="832" format="[general]" html.valueishtml="0"  name=workstage_code visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+compute(band=detail alignment="0" expression="getrow()"border="2" color="33554432" x="9" y="4" height="52" width="142" format="[GENERAL]" html.valueishtml="0"  name=compute_7 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+compute(band=detail alignment="1" expression=" ( bad_qty /  in_qty) * 1000000"border="2" color="33554432" x="2437" y="4" height="52" width="261" format="###,##0.00" html.valueishtml="0"  name=compute_8 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65280" )
+column(band=detail id=4 alignment="1" tabsequence=32766 border="2" color="255" x="1925" y="4" height="52" width="251" format="###,##0" html.valueishtml="0"  name=bad_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+compute(band=summary alignment="1" expression="EXP( SUM(log( rty ) FOR ALL ) )"border="2" color="33554432" x="1001" y="0" height="64" width="325" format="###,##0.00%" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16776960" )
+compute(band=summary alignment="1" expression="sum(in_qty for all)"border="2" color="33554432" x="1335" y="0" height="64" width="288" format="###,##0.00" html.valueishtml="0"  name=compute_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+compute(band=summary alignment="1" expression="sum(out_qty for all)"border="2" color="33554432" x="1632" y="0" height="64" width="283" format="###,##0" html.valueishtml="0"  name=compute_3 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+compute(band=summary alignment="1" expression="avg( bad_qty / in_qty  for all)"border="2" color="33554432" x="2185" y="0" height="64" width="242" format="##0.00%" html.valueishtml="0"  name=compute_6 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+text(band=summary alignment="1" text="RTY" border="2" color="33554432" x="160" y="0" height="64" width="832" html.valueishtml="0"  name=t_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="33327873" )
+compute(band=summary alignment="1" expression="avg( ( bad_qty /  in_qty) * 1000000 for all)"border="2" color="33554432" x="2437" y="0" height="64" width="261" format="###,##0.00" html.valueishtml="0"  name=compute_9 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65280" )
+compute(band=summary alignment="1" expression="sum(bad_qty for all)"border="2" color="255" x="1925" y="0" height="64" width="251" format="###,##0" html.valueishtml="0"  name=compute_4 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

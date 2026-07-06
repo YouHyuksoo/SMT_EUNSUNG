@@ -1,0 +1,135 @@
+PROCEDURE "TEST_P_INSERT_DATA_RAW" (
+   p_data   IN ARRAY5_PARAMS_T,
+   p_info   IN ARRAY5_PARAMS_T)
+IS
+   lvs_file_name      VARCHAR2 (200) := '';
+   lvs_line_code      VARCHAR2 (20) := '';
+   lvs_machine_code   VARCHAR2 (20) := '';
+   lvs_file_path      VARCHAR2 (3000) := '';
+   lvs_sql            VARCHAR2 (30000);
+   LVS_ERRORMSG       VARCHAR2 (32000);
+
+   li_key_count       int := 0;
+   
+   --lvs_info5          VARCHAR2 (3000) := '';
+   --lvs_info5_str1     VARCHAR2 (100) := '';
+   --lvs_info5_str2     VARCHAR2 (3000) := '';
+
+   --lvs_str1        VARCHAR2 (100) := '';
+   --lvs_str2        VARCHAR2 (100) := '';
+   --lvs_str3        VARCHAR2 (100) := '';
+   --lvs_str4        VARCHAR2 (100) := '';
+   --lvs_str5        VARCHAR2 (100) := '';
+   --lvs_str6        VARCHAR2 (100) := '';
+BEGIN
+   --********************************************************************
+   -- info ????????
+   --********************************************************************
+
+   IF p_info.LAST >= 1
+   THEN
+      lvs_file_name := REPLACE (TRIM (p_info (1)), '"');
+   END IF;
+
+   IF p_info.LAST >= 2
+   THEN
+      lvs_line_code := REPLACE (TRIM (p_info (2)), '"');
+   END IF;
+
+   IF p_info.LAST >= 3
+   THEN
+      lvs_machine_code := REPLACE (TRIM (p_info (3)), '"');
+   END IF;
+
+   IF p_info.LAST >= 4
+   THEN
+      lvs_file_path := REPLACE (TRIM (p_info (4)), '"');
+   END IF;
+
+   --********************************************************************
+   -- data ??????????
+   --********************************************************************
+
+   lvs_sql := 'INSERT INTO TEST_DATA_RAW ( C1';
+
+
+   FOR i IN p_data.FIRST + 1 .. p_data.LAST + li_key_count
+   LOOP
+      lvs_sql := lvs_sql || ', C' || i;
+   END LOOP;
+
+   lvs_sql := lvs_sql
+        || ',
+            ENTER_DATE       ,
+            ENTER_BY         ,
+            LAST_MODIFY_DATE ,
+            LAST_MODIFY_BY   ,
+            ORGANIZATION_ID  ,
+            FILE_NAME        ,
+            LINE_CODE        ,
+            MACHINE_CODE     ,
+            RUN_NO           ,
+            FILE_PATH
+            )
+              VALUES
+            (';
+
+   lvs_sql := lvs_sql || '''' || REPLACE (REPLACE (TRIM (p_data (1)), '"'), '''') || '''';
+
+   FOR i IN p_data.FIRST + 1 .. p_data.LAST
+   LOOP
+      lvs_sql := lvs_sql || ', ''' || REPLACE (REPLACE (TRIM (p_data (i)), '"'), '''') || '''';
+   END LOOP;
+
+   lvs_sql := lvs_sql
+      || ','
+      || 'SYSDATE'
+      || ','
+      || ''''
+      || 'SYSTEM'
+      || ''''
+      || ','
+      || 'SYSDATE'
+      || ','
+      || ''''
+      || 'SYSTEM'
+      || ''''
+      || ','
+      || '1'
+      || ','
+      || ''''
+      || lvs_file_name
+      || ''''
+      || ','
+      || ''''
+      || lvs_line_code
+      || ''''
+      || ','
+      || ''''
+      || lvs_machine_code
+      || ''''
+      || ','
+      || ''''
+      || '*'
+      || ''''
+      || ','
+      || ''''
+      || lvs_file_path
+      || ''''
+      || ')';
+
+   EXECUTE IMMEDIATE lvs_sql;
+
+   COMMIT;
+EXCEPTION
+   WHEN OTHERS
+   THEN
+      LVS_ERRORMSG :=
+         '[TEST_P_INSERT_DATA_RAW]'|| SUBSTR (SQLERRM, 1, 200)|| lvs_sql;
+
+    --   INSERT INTO ICOM_MACHINE_INSERT_LOG( LOG_DATE , ERROR_MESSAGE , ERROR_DESC )
+     --  VALUES ( SYSDATE  , LVS_ERRORMSG  , lvs_file_name||' LINE='||lvs_line_code  ) ;
+      ps_job_errorlog(990,1,'TEST_P_INSERT_DATA_RAW','RAW',LVS_ERRORMSG,'FFF');
+      COMMIT;
+      NULL;
+END "TEST_P_INSERT_DATA_RAW";

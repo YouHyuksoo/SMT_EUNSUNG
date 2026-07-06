@@ -1,0 +1,156 @@
+HA$PBExportHeader$f_menu_control.srf
+$PBExportComments$Menu Setting
+global type f_menu_control from function_object
+end type
+
+forward prototypes
+global function integer f_menu_control (string object, boolean control)
+end prototypes
+
+global function integer f_menu_control (string object, boolean control);IF GVI_USER_LEVEL = 1 THEN 
+		
+					M_MAIN_FRAME_MENU.m_control.m_retrieve.Enabled = True				
+					M_MAIN_FRAME_MENU.m_control.m_stop.Enabled = True								
+					M_MAIN_FRAME_MENU.m_control.m_insert.Enabled = False
+					M_MAIN_FRAME_MENU.m_control.m_append.Enabled    = False								
+					M_MAIN_FRAME_MENU.m_control.m_delete.Enabled = False
+					M_MAIN_FRAME_MENU.m_control.m_undelete.Enabled = False										
+					M_MAIN_FRAME_MENU.m_control.m_update.Enabled = False
+					M_MAIN_FRAME_MENU.m_file.m_print.Enabled = False					
+ELSE				
+
+	CHOOSE CASE object 
+			
+		CASE 'ADMIN'
+		CASE 'MANAGER'	
+		CASE 'GUEST'
+		CASE 'RETRIEVE' //$$HEX8$$70c88cd6ccb92000200000aca5b22000$$ENDHEX$$
+			     w_main_frame.SetToolbar(3, FALSE, AlignAtRight!)
+				  
+				if Control = True Then
+					M_MAIN_FRAME_MENU.m_control.m_retrieve.Enabled = True				
+					M_MAIN_FRAME_MENU.m_control.m_stop.Enabled = True					
+					M_MAIN_FRAME_MENU.m_control.m_delete.Enabled = False
+					M_MAIN_FRAME_MENU.m_control.m_undelete.Enabled = False					
+					M_MAIN_FRAME_MENU.m_control.m_deleteselected.Enabled = False					
+					M_MAIN_FRAME_MENU.m_control.m_update.Enabled = False					
+					M_MAIN_FRAME_MENU.m_file.m_print.Enabled = False					
+				else
+					M_MAIN_FRAME_MENU.m_control.m_retrieve.Enabled = False				
+					M_MAIN_FRAME_MENU.m_control.m_stop.Enabled = False
+					M_MAIN_FRAME_MENU.m_control.m_delete.Enabled = False
+					M_MAIN_FRAME_MENU.m_control.m_undelete.Enabled = False										
+					M_MAIN_FRAME_MENU.m_control.m_deleteselected.Enabled = False					
+					M_MAIN_FRAME_MENU.m_control.m_update.Enabled = False										
+					M_MAIN_FRAME_MENU.m_file.m_print.Enabled = False					
+				end if				
+		
+		CASE 'DATA_CONTROL_MODIFY'		//$$HEX8$$18c215c8ccb92000200000aca5b22000$$ENDHEX$$
+			     w_main_frame.SetToolbar(3, FALSE, AlignAtRight!)			
+				if Control = True Then
+					M_MAIN_FRAME_MENU.m_control.m_insert.Enabled = False
+					M_MAIN_FRAME_MENU.m_control.m_append.Enabled    = False				
+					M_MAIN_FRAME_MENU.m_control.m_delete.Enabled = False
+					M_MAIN_FRAME_MENU.m_control.m_undelete.Enabled = False										
+					M_MAIN_FRAME_MENU.m_control.m_deleteselected.Enabled = False
+					M_MAIN_FRAME_MENU.m_control.m_update.Enabled = True
+					M_MAIN_FRAME_MENU.m_file.m_print.Enabled = False					
+				else
+					M_MAIN_FRAME_MENU.m_control.m_insert.Enabled = False
+					M_MAIN_FRAME_MENU.m_control.m_append.Enabled    = False								
+					M_MAIN_FRAME_MENU.m_control.m_delete.Enabled = False
+					M_MAIN_FRAME_MENU.m_control.m_undelete.Enabled = False										
+					M_MAIN_FRAME_MENU.m_control.m_deleteselected.Enabled = False					
+					M_MAIN_FRAME_MENU.m_control.m_update.Enabled = False
+					M_MAIN_FRAME_MENU.m_file.m_print.Enabled = False					
+				end if		
+			
+		CASE 'DATA_CONTROL'		//$$HEX15$$85c725b8200018c215c82000adc01cc8200000aca5b22000090009000900$$ENDHEX$$
+			     w_main_frame.SetToolbar(3, FALSE, AlignAtRight!)			
+				if Control = True Then
+					M_MAIN_FRAME_MENU.m_control.m_insert.Enabled = True
+					M_MAIN_FRAME_MENU.m_control.m_append.Enabled    = True
+					M_MAIN_FRAME_MENU.m_control.m_delete.Enabled = True
+					M_MAIN_FRAME_MENU.m_control.m_deleteselected.Enabled = True					
+					M_MAIN_FRAME_MENU.m_control.m_update.Enabled = True
+					M_MAIN_FRAME_MENU.m_control.m_undelete.Enabled = True		
+					M_MAIN_FRAME_MENU.m_file.m_print.Enabled = False					
+				else
+					M_MAIN_FRAME_MENU.m_control.m_insert.Enabled = False
+					M_MAIN_FRAME_MENU.m_control.m_append.Enabled    = False								
+					M_MAIN_FRAME_MENU.m_control.m_delete.Enabled = False
+					M_MAIN_FRAME_MENU.m_control.m_deleteselected.Enabled = false
+					M_MAIN_FRAME_MENU.m_control.m_update.Enabled = False
+					M_MAIN_FRAME_MENU.m_control.m_undelete.Enabled = False
+					M_MAIN_FRAME_MENU.m_file.m_print.Enabled = False					
+				end if
+	
+		CASE 'DATA_CONTROL_INSERT'		//$$HEX2$$85c725b8$$ENDHEX$$, $$HEX6$$00c8a5c7200000aca5b22000$$ENDHEX$$
+			     w_main_frame.SetToolbar(3, FALSE, AlignAtRight!)			
+			
+				if Control = True Then
+					M_MAIN_FRAME_MENU.m_control.m_insert.Enabled = True
+					M_MAIN_FRAME_MENU.m_control.m_append.Enabled    = False								
+					M_MAIN_FRAME_MENU.m_control.m_delete.Enabled = False
+					M_MAIN_FRAME_MENU.m_control.m_deleteselected.Enabled = false
+					M_MAIN_FRAME_MENU.m_control.m_update.Enabled = True
+					M_MAIN_FRAME_MENU.m_control.m_undelete.Enabled = false	
+					M_MAIN_FRAME_MENU.m_file.m_print.Enabled = False					
+				else
+					M_MAIN_FRAME_MENU.m_control.m_insert.Enabled   = False
+					M_MAIN_FRAME_MENU.m_control.m_append.Enabled      = False								
+					M_MAIN_FRAME_MENU.m_control.m_delete.Enabled   = False
+					M_MAIN_FRAME_MENU.m_control.m_deleteselected.Enabled = False
+					M_MAIN_FRAME_MENU.m_control.m_update.Enabled   = False
+					M_MAIN_FRAME_MENU.m_control.m_undelete.Enabled = True
+					M_MAIN_FRAME_MENU.m_file.m_print.Enabled = False					
+				end if
+		CASE 'DATA_CONTROL_DELETE'		//$$HEX6$$adc01cc8200000aca5b22000$$ENDHEX$$
+			     w_main_frame.SetToolbar(3, FALSE, AlignAtRight!)			
+				if Control = True Then
+					M_MAIN_FRAME_MENU.m_control.m_insert.Enabled = False
+					M_MAIN_FRAME_MENU.m_control.m_append.Enabled    = False								
+					M_MAIN_FRAME_MENU.m_control.m_delete.Enabled = True
+					M_MAIN_FRAME_MENU.m_control.m_deleteselected.Enabled = True
+					M_MAIN_FRAME_MENU.m_control.m_update.Enabled = True
+					M_MAIN_FRAME_MENU.m_control.m_undelete.Enabled = True	
+					M_MAIN_FRAME_MENU.m_file.m_print.Enabled = False
+				else
+					M_MAIN_FRAME_MENU.m_control.m_insert.Enabled   = False
+					M_MAIN_FRAME_MENU.m_control.m_append.Enabled      = False								
+					M_MAIN_FRAME_MENU.m_control.m_delete.Enabled   = False
+					M_MAIN_FRAME_MENU.m_control.m_deleteselected.Enabled = True					
+					M_MAIN_FRAME_MENU.m_control.m_update.Enabled   = False
+					M_MAIN_FRAME_MENU.m_control.m_undelete.Enabled = True
+					M_MAIN_FRAME_MENU.m_file.m_print.Enabled = False
+				end if				
+
+          CASE 'REPORT'
+			
+			     w_main_frame.SetToolbar(3, TRUE, AlignAtRight!)
+				if w_main_frame.menuid = M_MAIN_FRAME_MENU then 
+			
+					if Control = True Then
+						M_MAIN_FRAME_MENU.m_file.m_print.Enabled = True
+						M_MAIN_FRAME_MENU.m_control.m_insert.Enabled   = False
+						M_MAIN_FRAME_MENU.m_control.m_append.Enabled      = False								
+						M_MAIN_FRAME_MENU.m_control.m_delete.Enabled   = False
+						M_MAIN_FRAME_MENU.m_control.m_undelete.Enabled = False											
+						M_MAIN_FRAME_MENU.m_control.m_deleteselected.Enabled = False
+						M_MAIN_FRAME_MENU.m_control.m_update.Enabled   = False						
+						
+					else
+						M_MAIN_FRAME_MENU.m_file.m_print.Enabled = False
+						
+					end if
+				end if
+				
+		CASE ELSE
+			  Return -1
+	END CHOOSE 
+
+END IF 
+Return 0
+
+end function
+

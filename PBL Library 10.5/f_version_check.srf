@@ -1,0 +1,61 @@
+HA$PBExportHeader$f_version_check.srf
+$PBExportComments$Application Version Check
+global type f_version_check from function_object
+end type
+
+forward prototypes
+global subroutine f_version_check ()
+end prototypes
+
+global subroutine f_version_check ();REAL Vi_new_version,  Vi_curr_version
+Vi_curr_version  = Real(Profilestring("VERSION.INI","Database","Version",""))
+
+if Gvs_app_name = '' or isnull(Gvs_app_name) then 
+ 	 F_MSGBOX(176)    
+      HALT CLOSE 		
+end if
+
+Select version
+  Into :Vi_new_version
+  from isys_version
+ where application_name =:Gvs_app_name
+   and organization_id = :GVI_ORGANIZATION_ID;
+
+IF F_SQL_CHECK_WITH_MSG("Version Check") < 0 THEN 
+     HALT CLOSE 
+END IF
+
+
+IF Vi_new_version = 0 or isnull(Vi_new_version)  THEN
+ 	 F_MSGBOX(175)
+      HALT CLOSE 	 
+END IF
+
+
+IF VI_NEW_VERSION > VI_CURR_VERSION THEN
+	
+	STRING LVS_VERSION_HISTORY
+	SELECT VERSION_HISTORY INTO :LVS_VERSION_HISTORY
+	FROM ISYS_VERSION_HISTORY
+	WHERE NEW_VERSION = round(:VI_NEW_VERSION ,2)
+	AND application_name =:Gvs_app_name
+		and organization_id = :GVI_ORGANIZATION_ID;
+		
+	IF F_SQL_CHECK_WITH_MSG("Version Check") < 0 THEN 
+	ELSE
+		
+		IF LVS_VERSION_HISTORY <> '' THEN 
+			 OPENWITHPARM(W_EDIT_WINDOW , LVS_VERSION_HISTORY )
+		END IF
+	END IF	
+	
+	boolean lb_exist
+	lb_exist = FileExists('Infinity21_Loader.exe')
+	IF lb_exist  = false THEN 
+		MessageBox("Run",  "System Upgrade Loader not found Please Check File Exists : " + 'Infinity21_Loader.exe',stopsign!)
+	END IF	
+   RUN('Infinity21_Loader.exe system.ini') 	
+   HALT CLOSE 
+End if 
+end subroutine
+

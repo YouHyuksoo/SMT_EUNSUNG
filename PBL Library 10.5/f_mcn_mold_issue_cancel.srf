@@ -1,0 +1,81 @@
+HA$PBExportHeader$f_mcn_mold_issue_cancel.srf
+global type f_mcn_mold_issue_cancel from function_object
+end type
+
+forward prototypes
+global function integer f_mcn_mold_issue_cancel (datetime adt_date, double ad_seq)
+end prototypes
+
+global function integer f_mcn_mold_issue_cancel (datetime adt_date, double ad_seq);long lvl_cnt
+double lvl_issue_seq
+
+UPDATE imcn_mold_issue
+   SET issue_status = 'C'
+ WHERE issue_date = :adt_date
+   AND issue_sequence = :ad_seq
+   AND organization_id = :gvi_organization_id;
+
+if f_sql_check() < 0 then 
+	return -3
+end if 
+
+UPDATE imcn_mold_request
+   SET request_status = 'R' , ISSUE_QTY = 0 
+ WHERE  issue_date = :adt_date
+   AND issue_sequence = :ad_seq
+     AND organization_id = :gvi_organization_id;
+
+if f_sql_check() < 0 then 
+	return -3
+end if 
+
+
+lvl_issue_seq = double(f_get_sequence('seq_mat_issue'))
+/* Formatted on 2006/09/19 10:14 (Formatter Plus v4.8.0) */
+INSERT INTO imcn_mold_issue
+            ( issue_sequence,
+              issue_date,
+              issue_deficit,
+              issue_qty,
+              issue_price,
+              issue_amt,
+              workstage_code,
+				  currency ,
+              issue_status,
+              mold_code,
+//		    invoice_no,	  
+              organization_id,
+              enter_by,
+              enter_date,
+              last_modify_by,
+              last_modify_date ,mold_version , mold_set_serial , line_type , mold_issue_account , line_code , machine_code
+            )
+   SELECT :lvl_issue_seq,
+          TRUNC( SYSDATE ),
+          DECODE( issue_deficit, '3', '4', '4', '3' ),
+          issue_qty * -1,
+          issue_price,
+
+          issue_amt * -1,
+	     workstage_code,
+          currency,
+          'C',
+          mold_code,
+//          invoice_no,			 
+          organization_id,
+          :gvs_user_id,
+          SYSDATE,
+          :gvs_user_id,
+          SYSDATE , mold_version , mold_set_serial , line_type , mold_issue_account , line_code , machine_code
+     FROM imcn_mold_issue
+    WHERE issue_date      = :adt_date
+      AND issue_sequence = :ad_seq
+      AND organization_id  = :gvi_organization_id;
+		 
+	if f_sql_check() < 0 then 
+		return -1 
+	end if 
+
+return sqlca.sqlnrows
+end function
+

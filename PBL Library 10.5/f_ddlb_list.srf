@@ -1,0 +1,89 @@
+HA$PBExportHeader$f_ddlb_list.srf
+$PBExportComments$$$HEX5$$6dd5a9ba94cd00ac2000$$ENDHEX$$dorp down list
+global type f_ddlb_list from function_object
+end type
+
+forward prototypes
+global function long f_ddlb_list (dropdownlistbox ddlb_name, string sql_statement)
+end prototypes
+
+global function long f_ddlb_list (dropdownlistbox ddlb_name, string sql_statement);/**********************************************************************
+** 
+** Function Name:    f_ddlb_dept_list
+**
+** Description:      This function fills user provided ddlb using
+**                   user specified sql
+**
+** Parameters:       dropdownlistbox ddlb_name  - into which item fills
+**                   string          sql_statement - sql statement
+**
+** Return valuse:    long -1         - when error occurs
+**                   long ll_itemcnt - the number of items processed
+** 
+** Globals:
+**		Used:    sqlca
+**Modified:    None
+** 
+** Special Logic Notes: None
+**
+**********************************************************************
+**                     MODIFICATON LOG
+**     DATE           AUTHOR               DESCRIPTION
+** --------------     -----------------    --------------------
+**    99/11/25       $$HEX21$$40aea9c6a0cc200020002000200020002000200020002000200020002000200020002000200020002000$$ENDHEX$$Initial Release
+**********************************************************************/
+string ls_code,		ls_max
+int	 li_max
+
+declare ddlb_cursor dynamic cursor for sqlsa;
+prepare sqlsa from :sql_statement using sqlca;
+
+if sqlca.sqlcode = -1  then
+	MESSAGEBOX(STRING(sqlca), &
+				"in f_ddlb_list after prepare with " &
+				+ sql_statement &
+			  )
+
+	return -1
+end if
+
+open dynamic ddlb_cursor;
+if sqlca.sqlcode = -1 then
+	MESSAGEBOX( STRING(sqlca), &
+				"in f_ddlb_list after open with " &
+				+ sql_statement &
+			  )
+
+	close  ddlb_cursor;
+	return -1
+end if
+
+ddlb_name.reset()
+
+// 2001/03/07 BY KIM, YONG CHUL
+// $$HEX9$$90c7ccb800ac2000c6c544c74cb594b22000$$ENDHEX$$RESET$$HEX6$$ccb92000dcc21ccf00c9e4b2$$ENDHEX$$.
+if sqlca.sqlcode = 0 then
+	DO WHILE TRUE
+		FETCH ddlb_cursor INTO  :ls_code;
+		
+		if sqlca.sqlcode <> 0 then
+			exit
+		end if
+		li_max++
+		ddlb_name.additem( ls_code )
+		if li_max = 1 then
+			ls_max = ls_code
+		end if
+	LOOP
+	
+	close  ddlb_cursor;
+	IF li_max > 0 then
+		ddlb_name.text = ls_max
+	end if
+	
+	return li_max
+else
+	return 0
+end if
+end function
+

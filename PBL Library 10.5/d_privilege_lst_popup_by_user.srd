@@ -1,0 +1,90 @@
+HA$PBExportHeader$d_privilege_lst_popup_by_user.srd
+release 10;
+datawindow(units=0 timer_interval=0 color=12632256 processing=1 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes hidegrayline=no grid.lines=0 )
+header(height=116 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=64 color="536870912" )
+table(column=(type=char(20) update=yes updatewhereclause=yes key=yes name=user_id dbname="isys_privilege.user_id" )
+ column=(type=char(100) update=yes updatewhereclause=yes key=yes name=window_name dbname="isys_privilege.window_name" )
+ column=(type=char(100) updatewhereclause=yes name=window_description dbname="isys_privilege.window_description" )
+ column=(type=number update=yes updatewhereclause=yes key=yes name=organization_id dbname="isys_privilege.organization_id" )
+ column=(type=datetime update=yes updatewhereclause=yes name=dateset dbname="isys_privilege.dateset" )
+ column=(type=datetime update=yes updatewhereclause=yes name=dateend dbname="isys_privilege.dateend" )
+ column=(type=char(20) update=yes updatewhereclause=yes key=yes name=role_code dbname="isys_privilege.role_code" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=enter_by dbname="isys_privilege.enter_by" )
+ column=(type=datetime update=yes updatewhereclause=yes name=enter_date dbname="isys_privilege.enter_date" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=last_modify_by dbname="isys_privilege.last_modify_by" )
+ column=(type=datetime update=yes updatewhereclause=yes name=last_modify_date dbname="isys_privilege.last_modify_date" )
+ column=(type=char(20) updatewhereclause=yes name=user_name dbname="isys_users.user_name" )
+ column=(type=decimal(0) updatewhereclause=yes name=user_level dbname="isys_users.user_level" )
+ column=(type=char(20) updatewhereclause=yes name=department_code dbname="isys_users.department_code" )
+ column=(type=char(1) update=yes updatewhereclause=yes name=role_type dbname="isys_privilege.role_type" )
+ retrieve="  SELECT ~"ISYS_PRIVILEGE~".~"USER_ID~",   
+         ~"ISYS_PRIVILEGE~".~"WINDOW_NAME~",   
+         ~"ISYS_PRIVILEGE~".~"WINDOW_NAME~" WINDOW_DESCRIPTION,    
+         ~"ISYS_PRIVILEGE~".~"ORGANIZATION_ID~",   
+         ~"ISYS_PRIVILEGE~".~"DATESET~",   
+         ~"ISYS_PRIVILEGE~".~"DATEEND~",   
+         ~"ISYS_PRIVILEGE~".~"ROLE_CODE~",   
+         ~"ISYS_PRIVILEGE~".~"ENTER_BY~",   
+         ~"ISYS_PRIVILEGE~".~"ENTER_DATE~",   
+         ~"ISYS_PRIVILEGE~".~"LAST_MODIFY_BY~",   
+         ~"ISYS_PRIVILEGE~".~"LAST_MODIFY_DATE~",   
+         ~"ISYS_USERS~".~"USER_NAME~",   
+         ~"ISYS_USERS~".~"USER_LEVEL~",   
+         ~"ISYS_USERS~".~"DEPARTMENT_CODE~",   
+         ~"ISYS_PRIVILEGE~".~"ROLE_TYPE~"  
+    FROM ~"ISYS_PRIVILEGE~",   
+         ~"ISYS_USERS~"  
+   WHERE ( isys_privilege.user_id = isys_users.user_id (+)) and  
+         ( isys_privilege.organization_id = isys_users.organization_id (+)) and  
+         ( ( ~"ISYS_PRIVILEGE~".~"USER_ID~" = :ARG_USER_ID ) AND  
+         ( ~"ISYS_PRIVILEGE~".~"ORGANIZATION_ID~" = :ARG_ORGANIZATION_ID ) )    
+" update="ISYS_PRIVILEGE" updatewhere=0 updatekeyinplace=no arguments=(("ARG_USER_ID", string),("ARG_ORGANIZATION_ID", number))  sort="user_id A role_code A window_name A " )
+group(level=1 header.height=0 trailer.height=32 by=("organization_id" , "role_code" ) header.color="536870912" trailer.color="65535" )
+text(band=header alignment="2" text="No" border="0" color="0" x="151" y="8" height="104" width="155" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Role Code" border="0" color="0" x="315" y="8" height="104" width="457" html.valueishtml="0"  name=role_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="User Id" border="0" color="0" x="3735" y="8" height="104" width="288" html.valueishtml="0"  name=user_id_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Organization Id" border="0" color="0" x="6345" y="8" height="104" width="325" html.valueishtml="0"  name=organization_id_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Dateset" border="0" color="0" x="2382" y="8" height="104" width="370" html.valueishtml="0"  name=dateset_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Dateend" border="0" color="0" x="2761" y="8" height="104" width="407" html.valueishtml="0"  name=dateend_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Enter By" border="0" color="0" x="4782" y="8" height="104" width="411" html.valueishtml="0"  name=enter_by_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Enter Date" border="0" color="0" x="5202" y="8" height="104" width="416" html.valueishtml="0"  name=enter_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Last Modify By" border="0" color="0" x="5627" y="8" height="104" width="343" html.valueishtml="0"  name=last_modify_by_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Last Modify Date" border="0" color="0" x="5979" y="8" height="104" width="357" html.valueishtml="0"  name=last_modify_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="User Level" border="0" color="0" x="3177" y="8" height="104" width="183" html.valueishtml="0"  name=user_level_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Role Type" border="0" color="0" x="4032" y="8" height="104" width="416" html.valueishtml="0"  name=role_type_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="User Name" border="0" color="0" x="3369" y="8" height="104" width="357" html.valueishtml="0"  name=user_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Department Code" border="0" color="0" x="4457" y="8" height="104" width="315" html.valueishtml="0"  name=department_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Window Name" border="0" color="0" x="782" y="8" height="104" width="782" html.valueishtml="0"  name=window_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Window Description" border="0" color="0" x="1573" y="8" height="104" width="800" html.valueishtml="0"  name=window_description_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+compute(band=detail alignment="0" expression="trim('')"border="0" color="0" x="9" y="4" height="56" width="133" format="[GENERAL]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=2 alignment="0" tabsequence=20 border="0" color="0" x="782" y="4" height="56" width="782" format="[general]" html.valueishtml="0"  name=window_name visible="1" dddw.name=vd_window_name dddw.displaycolumn=window_name dddw.datacolumn=window_name dddw.percentwidth=300 dddw.lines=8 dddw.limit=0 dddw.allowedit=no dddw.useasborder=yes dddw.case=any dddw.hscrollbar=yes dddw.vscrollbar=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=4 alignment="2" tabsequence=110 border="0" color="0" x="6345" y="4" height="56" width="325" format="[general]" html.valueishtml="0"  name=organization_id visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=8 alignment="2" tabsequence=70 border="0" color="0" x="4782" y="4" height="56" width="411" format="[general]" html.valueishtml="0"  name=enter_by visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=9 alignment="2" tabsequence=80 border="0" color="0" x="5202" y="4" height="56" width="416" format="[shortdate] [time]" html.valueishtml="0"  name=enter_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=10 alignment="2" tabsequence=90 border="0" color="0" x="5627" y="4" height="56" width="343" format="[general]" html.valueishtml="0"  name=last_modify_by visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=11 alignment="2" tabsequence=100 border="0" color="0" x="5979" y="4" height="56" width="357" format="[shortdate] [time]" html.valueishtml="0"  name=last_modify_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="0" x="1573" y="4" height="56" width="800" format="[general]" html.valueishtml="0"  name=window_description visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+compute(band=detail alignment="0" expression="GETROW()"border="0" color="0" x="151" y="4" height="56" width="155" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=7 alignment="2" tabsequence=10 border="0" color="0" x="315" y="4" height="56" width="457" format="[general]" html.valueishtml="0"  name=role_code pointer="Help!" visible="1" edit.limit=20 edit.case=upper edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=15 alignment="2" tabsequence=60 border="0" color="0" x="4032" y="4" height="56" width="416" format="[general]" html.valueishtml="0"  name=role_type visible="1" dddw.name=VD_BASECODE dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=400 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=yes dddw.case=any dddw.hscrollbar=yes dddw.vscrollbar=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=1 alignment="2" tabsequence=50 border="0" color="0" x="3735" y="4" height="56" width="288" format="[general]" html.valueishtml="0"  name=user_id pointer="Help!" visible="1" edit.limit=20 edit.case=upper edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=12 alignment="0" tabsequence=32766 border="0" color="0" x="3369" y="4" height="56" width="357" format="[general]" html.valueishtml="0"  name=user_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=13 alignment="2" tabsequence=32766 border="0" color="0" x="3177" y="4" height="56" width="183" format="[general]" html.valueishtml="0"  name=user_level visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=14 alignment="0" tabsequence=32766 border="0" color="0" x="4457" y="4" height="56" width="315" format="[general]" html.valueishtml="0"  name=department_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=6 alignment="2" tabsequence=40 border="0" color="0" x="2761" y="4" height="56" width="407" format="yyyy/mm/dd" html.valueishtml="0"  name=dateend visible="1" editmask.spin=yes editmask.mask="yyyy/mm/dd" editmask.spinincr=1 editmask.focusrectangle=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=5 alignment="2" tabsequence=30 border="0" color="0" x="2382" y="4" height="56" width="370" format="yyyy/mm/dd" html.valueishtml="0"  name=dateset visible="1" editmask.spin=yes editmask.mask="yyyy/mm/dd" editmask.spinincr=1 editmask.focusrectangle=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+
+sparse(names="user_id	user_name	department_code	user_level")htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

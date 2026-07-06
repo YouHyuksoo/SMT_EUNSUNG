@@ -1,0 +1,84 @@
+HA$PBExportHeader$d_prd_cell_biz_pack_barcode_14x10.srd
+$PBExportComments$cell biz pack barcode $$HEX3$$14bc54cfdcb4$$ENDHEX$$
+release 10.5;
+datawindow(units=3 timer_interval=0 color=16777215 processing=2 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 0 print.margin.right = 0 print.margin.top = 0 print.margin.bottom = 0 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no label.name="" label.width=7200 label.height=16000 label.rows=1 label.rows.spacing=132 label.columns=1 label.columns.spacing=200 label.topdown=no label.sheet=no label.shape=roundrectangle label.ellipse_height=0 label.ellipse_width=0 )
+detail(height=16007 color="536870912" )
+table(column=(type=char(4000) updatewhereclause=yes name=pack_label dbname="pack_label" )
+ column=(type=char(50) updatewhereclause=yes key=yes name=pack_barcode dbname="ip_product_pack_master.pack_barcode" )
+ column=(type=char(30) updatewhereclause=yes name=model_name dbname="ip_product_pack_master.model_name" )
+ column=(type=char(32) updatewhereclause=yes name=partno_barcode39 dbname="partno_barcode39" )
+ column=(type=char(2) updatewhereclause=yes name=pack_type dbname="ip_product_pack_master.pack_type" )
+ column=(type=number updatewhereclause=yes name=pack_qty dbname="ip_product_pack_master.pack_qty" )
+ column=(type=char(42) updatewhereclause=yes name=pack_qty_barcode39 dbname="pack_qty_barcode39" )
+ column=(type=char(19) updatewhereclause=yes name=pack_date dbname="pack_date" )
+ column=(type=char(10) updatewhereclause=yes name=company dbname="company" )
+ column=(type=datetime updatewhereclause=yes name=print_date dbname="ip_product_pack_master.print_date" )
+ column=(type=char(4000) updatewhereclause=yes name=org_name dbname="org_name" )
+ column=(type=char(4000) updatewhereclause=yes name=customer_model_name dbname="customer_model_name" )
+ column=(type=char(4000) updatewhereclause=yes name=customer_model_barcode128 dbname="customer_model_barcode128" )
+ retrieve="
+select 
+       f_bacode_code128('B',pack_barcode) as pack_label , 
+       pack_barcode  , 
+       model_name, 
+       '*'||model_name||'*' as PartNo_Barcode39, 
+       
+       pack_type, 
+       pack_qty, 
+       '*'||pack_qty||'*' as pack_qty_barcode39, 
+       
+       to_char(pack_date,'yyyy/mm/dd hh24:Mi:ss') pack_date, 
+       nvl(attr5, 'VN-DONGDO')  company , 
+       sysdate as print_date , 
+       f_get_org_name(organization_id) as org_name, 
+       f_get_model_info(model_name, organization_id, 'CUSTOMER_MODEL_NAME') as Customer_model_name, 
+       
+       f_bacode_code128('B', f_get_model_info(model_name, organization_id, 'CUSTOMER_MODEL_NAME') ) as Customer_Model_Barcode128
+      
+      
+  from ip_product_pack_master
+         
+where pack_barcode = :arg_barcode " update="ip_product_pack_master" updatewhere=0 updatekeyinplace=no arguments=(("arg_barcode", string)) )
+rectangle(band=detail x="105" y="9472" height="5238" width="6985"  name=r_1 visible="1" brush.hatch="6" brush.color="16777215" pen.style="0" pen.width="26" pen.color="0"  background.mode="2" background.color="16777215" )
+text(band=detail alignment="2" text="X$$HEX1$$e100$$ENDHEX$$c nh$$HEX1$$ad1e$$ENDHEX$$n" border="0" color="0" x="264" y="11377" height="502" width="1957" html.valueishtml="0"  name=t_4 visible="1"  font.face="Tahoma" font.height="-12" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=detail alignment="1" text="MODEL" border="4" color="33554432" x="105" y="2328" height="608" width="1931" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-14" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=12 alignment="0" tabsequence=32766 border="4" color="33554432" x="2143" y="2328" height="608" width="4974" format="[general]" html.valueishtml="0"  name=customer_model_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-14" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="33554432" x="105" y="1746" height="476" width="6985" format="[general]" html.valueishtml="0"  name=pack_barcode visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="0" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="33554432" x="105" y="899" height="767" width="6985" format="[general]" html.valueishtml="0"  name=pack_label visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Code 128" font.height="-22" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=detail alignment="2" text="phi$$HEX1$$bf1e$$ENDHEX$$u giao h$$HEX1$$e000$$ENDHEX$$ng" border="0" color="16777215" x="105" y="132" height="714" width="6985" html.valueishtml="0"  name=t_17 visible="1"  font.face="Tahoma" font.height="-14" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+column(band=detail id=11 alignment="2" tabsequence=32766 border="0" color="16777215" x="105" y="15398" height="555" width="6985" format="[general]" html.valueishtml="0"  name=org_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+text(band=detail alignment="1" text="P/N" border="4" color="33554432" x="105" y="3095" height="608" width="1931" html.valueishtml="0"  name=t_21 visible="1"  font.face="Tahoma" font.height="-14" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="4" color="33554432" x="2143" y="3095" height="608" width="4974" format="[general]" html.valueishtml="0"  name=model_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-14" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=detail alignment="2" text="EA" border="4" color="33554432" x="4312" y="3836" height="608" width="714" html.valueishtml="0"  name=t_22 visible="1"  font.face="Tahoma" font.height="-14" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+column(band=detail id=7 alignment="0" tabsequence=32766 border="0" color="33554432" x="5159" y="3783" height="740" width="1905" format="[general]" html.valueishtml="0"  name=pack_qty_barcode39 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Free 3 of 9" font.height="-20" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=detail alignment="1" text="QTY" border="4" color="33554432" x="105" y="3836" height="608" width="1931" html.valueishtml="0"  name=t_26 visible="1"  font.face="Tahoma" font.height="-14" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+column(band=detail id=6 alignment="1" tabsequence=32766 border="4" color="33554432" x="2143" y="3836" height="608" width="2063" format="###,###" html.valueishtml="0"  name=pack_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-14" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+rectangle(band=detail x="105" y="4603" height="2381" width="6985"  name=r_3 visible="1" brush.hatch="6" brush.color="16777215" pen.style="0" pen.width="26" pen.color="0"  background.mode="2" background.color="16777215" )
+text(band=detail alignment="0" text="* Model ** Part No" border="0" color="33554432" x="317" y="4656" height="343" width="2407" html.valueishtml="0"  name=t_7 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+rectangle(band=detail x="105" y="6799" height="2698" width="6985"  name=r_2 visible="1" brush.hatch="6" brush.color="16777215" pen.style="0" pen.width="26" pen.color="0"  background.mode="2" background.color="16777215" )
+line(band=detail x1="3730" y1="6799" x2="3730" y2="9498"  name=l_1 visible="1" pen.style="0" pen.width="26" pen.color="0"  background.mode="2" background.color="0" )
+text(band=detail alignment="0" text="s$$HEX1$$a31e$$ENDHEX$$n ph$$HEX1$$a91e$$ENDHEX$$m s$$HEX1$$ed1e$$ENDHEX$$a ch$$HEX1$$ef1e$$ENDHEX$$a" border="0" color="33554432" x="185" y="6932" height="476" width="3492" html.valueishtml="0"  name=t_2 visible="1"  font.face="Tahoma" font.height="-11" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=detail alignment="0" text="LOT b$$HEX1$$a51e$$ENDHEX$$t th$$HEX2$$b001dd1e$$ENDHEX$$ng" border="0" color="33554432" x="185" y="7620" height="476" width="3492" html.valueishtml="0"  name=t_3 visible="1"  font.face="Tahoma" font.height="-11" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=detail alignment="0" text="thay $$HEX2$$1101d51e$$ENDHEX$$i th$$HEX1$$f400$$ENDHEX$$ng s$$HEX1$$d11e$$ENDHEX$$" border="0" color="33554432" x="185" y="8281" height="476" width="3492" html.valueishtml="0"  name=t_5 visible="1"  font.face="Tahoma" font.height="-11" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=detail alignment="0" text="Ng$$HEX1$$e000$$ENDHEX$$y giao h$$HEX1$$e000$$ENDHEX$$ng" border="0" color="33554432" x="185" y="8916" height="476" width="3492" html.valueishtml="0"  name=t_6 visible="1"  font.face="Tahoma" font.height="-11" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+line(band=detail x1="79" y1="7487" x2="7064" y2="7487"  name=l_2 visible="1" pen.style="0" pen.width="26" pen.color="0"  background.mode="2" background.color="0" )
+line(band=detail x1="79" y1="8149" x2="7064" y2="8149"  name=l_3 visible="1" pen.style="0" pen.width="26" pen.color="0"  background.mode="2" background.color="0" )
+line(band=detail x1="79" y1="8810" x2="7064" y2="8810"  name=l_5 visible="1" pen.style="0" pen.width="26" pen.color="0"  background.mode="2" background.color="0" )
+column(band=detail id=13 alignment="0" tabsequence=32766 border="0" color="33554432" x="714" y="5027" height="687" width="6138" format="[general]" html.valueishtml="0"  name=customer_model_barcode128 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Code 128" font.height="-20" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="33554432" x="714" y="5953" height="661" width="6138" format="[general]" html.valueishtml="0"  name=partno_barcode39 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Free 3 of 9" font.height="-20" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=detail alignment="0" text="*" border="0" color="33554432" x="211" y="5265" height="343" width="185" html.valueishtml="0"  name=t_8 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=detail alignment="0" text="**" border="0" color="33554432" x="211" y="6138" height="343" width="317" html.valueishtml="0"  name=t_9 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+line(band=detail x1="79" y1="13546" x2="7064" y2="13546"  name=l_6 visible="1" pen.style="0" pen.width="26" pen.color="0"  background.mode="2" background.color="0" )
+text(band=detail alignment="2" text="Ng$$HEX2$$b001dd1e$$ENDHEX$$i nh$$HEX1$$ad1e$$ENDHEX$$n" border="0" color="0" x="264" y="13890" height="423" width="1905" html.valueishtml="0"  name=t_10 visible="1"  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+line(band=detail x1="2301" y1="9472" x2="2301" y2="14710"  name=l_4 visible="1" pen.style="0" pen.width="26" pen.color="0"  background.mode="2" background.color="0" )
+column(band=detail id=8 alignment="1" tabsequence=32766 border="0" color="16777215" x="105" y="14816" height="502" width="6985" format="[general]" html.valueishtml="0"  name=pack_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="8421504" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()

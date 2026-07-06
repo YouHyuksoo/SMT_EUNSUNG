@@ -1,0 +1,80 @@
+HA$PBExportHeader$d_smt_plandata_lst.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no grid.lines=0 )
+header(height=116 color="15780518" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=68 color="536870912" )
+table(column=(type=char(1) updatewhereclause=yes name=active_yn dbname="active_yn" )
+ column=(type=char(30) updatewhereclause=yes name=plan_date dbname="plan_date" )
+ column=(type=char(50) updatewhereclause=yes name=model_name dbname="ib_product_plandata.model_name" )
+ column=(type=char(30) updatewhereclause=yes name=line_code dbname="ib_product_plandata.line_code" )
+ column=(type=char(100) updatewhereclause=yes name=model_spec dbname="model_spec" )
+ column=(type=char(30) updatewhereclause=yes name=model_suffix dbname="model_suffix" )
+ column=(type=char(30) updatewhereclause=yes name=pcb_item dbname="ib_product_plandata.pcb_item" )
+ column=(type=char(1) updatewhereclause=yes name=feeder_shaft dbname="feeder_shaft" )
+ column=(type=char(50) updatewhereclause=yes name=model_master_smt_model_name dbname="ip_product_model_master.model_master_smt_model_name" )
+ column=(type=char(50) updatewhereclause=yes name=smt_model_name dbname="ib_product_plandata.smt_model_name" )
+ column=(type=char(10) updatewhereclause=yes name=revision dbname="revision" )
+ retrieve="  SELECT 
+			MAX(ACTIVE_YN) ACTIVE_YN ,
+			MAX( IB_PRODUCT_PLANDATA.PLAN_DATE) PLAN_DATE,   
+			IB_PRODUCT_PLANDATA.MODEL_NAME,   
+			IB_PRODUCT_PLANDATA.LINE_CODE,   
+			MAX(B.MODEL_SPEC)  AS MODEL_SPEC ,   
+			MAX( IB_PRODUCT_PLANDATA.MODEL_SUFFIX) MODEL_SUFFIX ,
+			IB_PRODUCT_PLANDATA.PCB_ITEM ,
+			MAX(IB_PRODUCT_PLANDATA.FEEDER_SHAFT)  FEEDER_SHAFT,
+			B.SMT_MODEL_NAME AS MODEL_MASTER_SMT_MODEL_NAME ,
+			IB_PRODUCT_PLANDATA.SMT_MODEL_NAME,  
+		     MAX(IB_PRODUCT_PLANDATA.REVISION) REVISION
+    FROM IB_PRODUCT_PLANDATA,   
+              IP_PRODUCT_MODEL_MASTER B
+   WHERE IB_PRODUCT_PLANDATA.SMT_MODEL_NAME = B.SMT_MODEL_NAME (+)  and  
+              IB_PRODUCT_PLANDATA.LINE_CODE     LIKE :ARG_LINE_CODE  AND
+			IB_PRODUCT_PLANDATA.MODEL_NAME LIKE :ARG_MODEL_NAME 
+GROUP BY IB_PRODUCT_PLANDATA.MODEL_NAME,   
+			IB_PRODUCT_PLANDATA.LINE_CODE, 
+			IB_PRODUCT_PLANDATA.PCB_ITEM ,
+			B.SMT_MODEL_NAME ,
+			IB_PRODUCT_PLANDATA.SMT_MODEL_NAME
+" arguments=(("arg_line_code", string),("ARG_MODEL_NAME", string))  sort="active_yn D line_code A model_name A pcb_item A feeder_shaft A " )
+group(level=1 header.height=0 trailer.height=68 by=("line_code" ) header.color="536870912" trailer.color="536870912" )
+text(band=header alignment="2" text="Line Code" border="0" color="33554432" x="443" y="8" height="100" width="197" html.valueishtml="0"  name=line_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Active Yn" border="0" color="33554432" x="283" y="8" height="100" width="151" html.valueishtml="0"  name=active_yn_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Lot Name" border="0" color="33554432" x="1545" y="8" height="100" width="914" html.valueishtml="0"  name=model_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Model Suffix" border="0" color="33554432" x="4832" y="8" height="100" width="256" html.valueishtml="0"  name=model_suffix_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+text(band=header alignment="2" text="Pcb Item" border="0" color="33554432" x="649" y="8" height="100" width="142" html.valueishtml="0"  name=pcb_item_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Feeder Shaft" border="0" color="33554432" x="800" y="8" height="100" width="165" html.valueishtml="0"  name=ib_product_plandata_feeder_shaft_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Revision" border="0" color="33554432" x="1317" y="8" height="100" width="219" html.valueishtml="0"  name=revision_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Plan Date" border="0" color="33554432" x="4384" y="8" height="100" width="439" html.valueishtml="0"  name=plan_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Model Spec" border="0" color="33554432" x="3840" y="8" height="100" width="535" html.valueishtml="0"  name=model_spec_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Model Master Smt Model Name" border="0" color="33554432" x="3333" y="8" height="100" width="498" html.valueishtml="0"  name=model_master_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Smt Model Name" border="0" color="33554432" x="2469" y="8" height="100" width="855" html.valueishtml="0"  name=smt_model_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+compute(band=detail alignment="2" expression="TRIM('')"border="0" color="33554432" x="9" y="4" height="52" width="114" format="[GENERAL]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+compute(band=detail alignment="2" expression="getrow()"border="0" color="33554432" x="133" y="4" height="52" width="142" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="33554432~tif ( active_yn = ~"Y~" , rgb( 0,128,255) , rgb(255,255,255))" x="283" y="4" height="52" width="151" format="[general]" html.valueishtml="0"  name=active_yn visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="2" expression="TRIM(~"~")"border="0" color="33554432" x="974" y="4" height="52" width="334" format="[GENERAL]" html.valueishtml="0"  name=compute_4 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+button(band=detail text="Comments" enabled=yes action="0" border="0" color="33554432" x="974" y="0" height="68" width="315" vtextalign="0" htextalign="0"  name=b_comments visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="0" color="33554432" x="443" y="4" height="52" width="197" format="[general]" html.valueishtml="0"  name=line_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=7 alignment="2" tabsequence=32766 border="0" color="33554432" x="649" y="4" height="52" width="142" format="[general]" html.valueishtml="0"  name=pcb_item visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=8 alignment="2" tabsequence=32766 border="0" color="33554432" x="800" y="4" height="52" width="165" format="[general]" html.valueishtml="0"  name=feeder_shaft visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=11 alignment="2" tabsequence=32766 border="0" color="33554432" x="1317" y="4" height="52" width="219" format="[general]" html.valueishtml="0"  name=revision visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="33554432" x="4384" y="4" height="52" width="439" format="[general]" html.valueishtml="0"  name=plan_date visible="1" edit.limit=30 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="0" tabsequence=32766 border="0" color="33554432" x="3840" y="4" height="52" width="535" format="[general]" html.valueishtml="0"  name=model_spec visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=6 alignment="2" tabsequence=32766 border="0" color="33554432" x="4832" y="4" height="52" width="256" format="[general]" html.valueishtml="0"  name=model_suffix visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=9 alignment="0" tabsequence=32766 border="0" color="33554432" x="3333" y="4" height="52" width="498" format="[general]" html.valueishtml="0"  name=model_master_smt_model_name visible="1" edit.limit=50 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217731" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="33554432~tif (  isnull(item_name) , 255 , 0 )" x="1545" y="4" height="52" width="914" format="[general]" html.valueishtml="0"  name=model_name visible="1" edit.limit=50 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=10 alignment="0" tabsequence=32766 border="0" color="33554432" x="2469" y="4" height="52" width="855" format="[general]" html.valueishtml="0"  name=smt_model_name visible="1" edit.limit=50 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217731" )
+compute(band=trailer.1 alignment="2" expression="count(model_name for group 1)"border="0" color="33554432" x="1545" y="4" height="52" width="914" format="[general]" html.valueishtml="0"  name=compute_3 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

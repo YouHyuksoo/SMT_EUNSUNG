@@ -1,0 +1,8 @@
+HA$PBExportHeader$qocinfo.srs
+global type qocinfo from structure
+	long		dwsize
+	long		dwflag
+	long		dwinspeed
+	long		dwoutspeed
+end type
+

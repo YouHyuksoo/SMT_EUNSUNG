@@ -1,0 +1,23 @@
+HA$PBExportHeader$f_get_marking_yn.srf
+global type f_get_marking_yn from function_object
+end type
+
+forward prototypes
+global function string f_get_marking_yn (string arg_item_code)
+end prototypes
+
+global function string f_get_marking_yn (string arg_item_code);string lvs_return
+
+select max( MARKING_YN)  into :lvs_return
+from IP_PRODUCT_MODEL_MASTER 
+where model_name = :arg_item_code
+and organization_id = :gvi_organization_id ;
+
+if f_sql_check() < 0 then
+	return 'N'
+end if 
+
+return lvs_return
+
+end function
+

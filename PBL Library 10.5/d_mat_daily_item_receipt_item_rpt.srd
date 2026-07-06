@@ -1,0 +1,98 @@
+HA$PBExportHeader$d_mat_daily_item_receipt_item_rpt.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=33554431 processing=0 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no )
+header(height=492 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=132 color="536870912" )
+detail(height=104 color="536870912" )
+table(column=(type=datetime updatewhereclause=yes name=receipt_date dbname="im_item_receipt.receipt_date" )
+ column=(type=number updatewhereclause=yes name=organization_id dbname="im_item_receipt.organization_id" )
+ column=(type=char(20) updatewhereclause=yes name=supplier_code dbname="im_item_receipt.supplier_code" )
+ column=(type=char(20) updatewhereclause=yes name=item_code dbname="im_item_receipt.item_code" )
+ column=(type=number updatewhereclause=yes name=receipt_qty dbname="receipt_qty" )
+ column=(type=number updatewhereclause=yes name=unit_price dbname="im_item_receipt.unit_price" )
+ column=(type=number updatewhereclause=yes name=receipt_amt dbname="receipt_amt" )
+ column=(type=char(100) updatewhereclause=yes name=supplier_name dbname="supplier_name" )
+ column=(type=char(100) updatewhereclause=yes name=item_name dbname="item_name" )
+ column=(type=char(100) updatewhereclause=yes name=item_spec dbname="item_spec" )
+ column=(type=char(1) updatewhereclause=yes name=item_division dbname="item_division" )
+ column=(type=char(3) updatewhereclause=yes name=item_uom dbname="item_uom" )
+ retrieve="   SELECT      ~"IM_ITEM_RECEIPT~".~"RECEIPT_DATE~" ,           
+			~"IM_ITEM_RECEIPT~".~"ORGANIZATION_ID~" ,           
+			~"IM_ITEM_RECEIPT~".~"SUPPLIER_CODE~" ,           
+			~"IM_ITEM_RECEIPT~".~"ITEM_CODE~" ,           
+			SUM(~"IM_ITEM_RECEIPT~".~"RECEIPT_QTY~") RECEIPT_QTY,           
+			~"IM_ITEM_RECEIPT~".~"UNIT_PRICE~" UNIT_PRICE,   		  
+			SUM(~"IM_ITEM_RECEIPT~".~"RECEIPT_AMT~") RECEIPT_AMT,       
+			MAX(~"ICOM_SUPPLIER~".~"SUPPLIER_NAME~") SUPPLIER_NAME,           
+			MAX(~"ID_ITEM~".~"ITEM_NAME~") ITEM_NAME,           
+			MAX(~"ID_ITEM~".~"ITEM_SPEC~") ITEM_SPEC,     		        
+			MAX(~"ID_ITEM~".~"ITEM_DIVISION~") ITEM_DIVISION,           
+			MAX(~"ID_ITEM~".~"ITEM_UOM~" ) ITEM_UOM
+    FROM ~"IM_ITEM_RECEIPT~" ,      
+               ~"ID_ITEM~" ,           
+               ~"ICOM_SUPPLIER~"     
+WHERE ( ~"ID_ITEM~".~"ITEM_CODE~" = ~"IM_ITEM_RECEIPT~".~"ITEM_CODE~" ) and
+			( ~"ID_ITEM~".~"ORGANIZATION_ID~" = ~"IM_ITEM_RECEIPT~".~"ORGANIZATION_ID~" ) and
+			( ~"ICOM_SUPPLIER~".~"SUPPLIER_CODE~" = ~"IM_ITEM_RECEIPT~".~"SUPPLIER_CODE~" ) and
+			( ~"ICOM_SUPPLIER~".~"ORGANIZATION_ID~" = ~"IM_ITEM_RECEIPT~".~"ORGANIZATION_ID~" ) and
+		     ( ~"IM_ITEM_RECEIPT~".~"RECEIPT_DATE~" = :arg_date) and
+			( ~"IM_ITEM_RECEIPT~".~"SUPPLIER_CODE~" like  :arg_supplier_code ) and		
+			( ~"IM_ITEM_RECEIPT~".~"ITEM_CODE~" like :arg_item_code ) and
+			( ~"IM_ITEM_RECEIPT~".~"RECEIPT_STATUS~"<> 'C' ) and
+			( ~"IM_ITEM_RECEIPT~".~"ORGANIZATION_ID~" = :arg_org_id ) 
+GROUP BY ~"IM_ITEM_RECEIPT~".~"RECEIPT_DATE~" ,           
+			   ~"IM_ITEM_RECEIPT~".~"ORGANIZATION_ID~" ,           
+			   ~"IM_ITEM_RECEIPT~".~"SUPPLIER_CODE~" ,           
+			   ~"IM_ITEM_RECEIPT~".~"ITEM_CODE~",
+			   ~"IM_ITEM_RECEIPT~".~"UNIT_PRICE~", 
+                  ~"ICOM_SUPPLIER~".~"SUPPLIER_CODE~",
+                  ~"ICOM_SUPPLIER~".~"ORGANIZATION_ID~",
+                  ~"ID_ITEM~".~"ITEM_CODE~",
+                  ~"ID_ITEM~".~"ORGANIZATION_ID~"
+" arguments=(("arg_date", datetime),("arg_supplier_code", string),("arg_item_code", string),("arg_org_id", number)) )
+text(band=header alignment="0" text="Item Spec" border="0" color="33554432" x="1266" y="336" height="136" width="695" html.valueishtml="0"  name=item_spec_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="No" border="0" color="33554432" x="14" y="336" height="136" width="123" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="1" text="Receipt Qty" border="0" color="33554432" x="3026" y="336" height="136" width="361" html.valueishtml="0"  name=receipt_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+line(band=header x1="0" y1="484" x2="4169" y2="484"  name=l_3 visible="1" pen.style="0" pen.width="9" pen.color="255"  background.mode="2" background.color="1073741824" )
+line(band=header x1="0" y1="316" x2="4169" y2="316"  name=l_1 visible="1" pen.style="0" pen.width="9" pen.color="255"  background.mode="2" background.color="1073741824" )
+text(band=header alignment="2" text="Daily Item Receipt Report" border="0" color="33554432" x="0" y="40" height="92" width="4169" html.valueishtml="0"  name=t_2 visible="1"  font.face="Tahoma" font.height="-14" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" font.underline="1" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Print Date" border="0" color="33554432" x="3227" y="224" height="64" width="261" html.valueishtml="0"  name=t_3 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=header alignment="0" expression="today()"border="0" color="33554432" x="3502" y="224" height="64" width="622" format="[SHORTDATE] [TIME]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header alignment="0" text="Item Name" border="0" color="33554432" x="910" y="336" height="136" width="338" html.valueishtml="0"  name=item_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=10 alignment="0" tabsequence=32766 border="0" color="33554432" x="1266" y="8" height="64" width="695" format="[general]" html.valueishtml="0"  name=item_spec visible="1" edit.limit=100 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="2" expression="getrow()"border="0" color="33554432" x="14" y="8" height="64" width="123" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="1" tabsequence=32766 border="0" color="33554432" x="3026" y="8" height="64" width="361" format="###,##0.00000" html.valueishtml="0"  name=receipt_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+line(band=detail x1="0" y1="88" x2="4169" y2="88"  name=l_2 visible="1" pen.style="2" pen.width="5" pen.color="0"  background.mode="2" background.color="1073741824" )
+column(band=detail id=9 alignment="0" tabsequence=32766 border="0" color="33554432" x="910" y="8" height="64" width="338" format="[general]" html.valueishtml="0"  name=item_name visible="1" edit.limit=100 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+line(band=footer x1="0" y1="8" x2="4169" y2="8"  name=l_4 visible="1" pen.style="0" pen.width="9" pen.color="255"  background.mode="2" background.color="1073741824" )
+column(band=footer id=2 alignment="1" tabsequence=32766 border="0" color="33554432" x="3625" y="32" height="64" width="535" format="[general]" html.valueishtml="0"  name=organization_id visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=footer alignment="2" text="Organization Id" border="0" color="33554432" x="3182" y="32" height="64" width="425" html.valueishtml="0"  name=organization_id_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="'Page ' + page() + ' of ' + pageCount()"border="0" color="33554432" x="1847" y="32" height="64" width="672" format="[general]" html.valueishtml="0"  name=page_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header alignment="1" text="Unit Price" border="0" color="33554432" x="3401" y="336" height="136" width="361" html.valueishtml="0"  name=unit_price_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=6 alignment="1" tabsequence=32766 border="0" color="33554432" x="3401" y="8" height="64" width="361" format="###,##0.00000" html.valueishtml="0"  name=unit_price visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header alignment="1" text="Receipt Amt" border="0" color="33554432" x="3776" y="336" height="136" width="398" html.valueishtml="0"  name=receipt_amt_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=7 alignment="1" tabsequence=32766 border="0" color="33554432" x="3776" y="8" height="64" width="398" format="###,##0.00" html.valueishtml="0"  name=receipt_amt visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header alignment="0" text="Item Uom" border="0" color="33554432" x="1975" y="336" height="136" width="128" html.valueishtml="0"  name=item_uom_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=12 alignment="0" tabsequence=32766 border="0" color="33554432" x="1975" y="8" height="64" width="128" format="[general]" html.valueishtml="0"  name=item_uom visible="1" edit.limit=3 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header alignment="0" text="Supplier Code" border="0" color="33554432" x="2117" y="336" height="136" width="320" html.valueishtml="0"  name=supplier_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="33554432" x="2117" y="8" height="64" width="320" format="[general]" html.valueishtml="0"  name=supplier_code visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header alignment="0" text="Supplier Name" border="0" color="33554432" x="2450" y="336" height="136" width="562" html.valueishtml="0"  name=supplier_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=8 alignment="0" tabsequence=32766 border="0" color="33554432" x="2450" y="8" height="64" width="562" format="[general]" html.valueishtml="0"  name=supplier_name visible="1" edit.limit=100 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header alignment="0" text="Item Division" border="0" color="33554432" x="151" y="336" height="136" width="219" html.valueishtml="0"  name=item_division_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=11 alignment="0" tabsequence=32766 border="0" color="33554432" x="151" y="8" height="64" width="219" format="[general]" html.valueishtml="0"  name=item_division visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header alignment="0" text="Item Code" border="0" color="33554432" x="389" y="336" height="136" width="507" html.valueishtml="0"  name=item_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="33554432" x="389" y="8" height="64" width="507" format="[general]" html.valueishtml="0"  name=item_code visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=header id=1 alignment="0" tabsequence=32766 border="0" color="33554432" x="535" y="232" height="64" width="503" format="[shortdate] [time]" html.valueishtml="0"  name=receipt_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="Receipt Date" border="0" color="33554432" x="14" y="232" height="64" width="503" html.valueishtml="0"  name=receipt_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0  template=(comment="" encoding="UTF-16LE" name="f" xml="<?xml version=~"1.0~" encoding=~"UTF-16LE~" standalone=~"no~"?><untitled><untitled_row __pbband=~"detail~"><im_item_receipt_receipt_date>receipt_date</im_item_receipt_receipt_date><im_item_receipt_organization_id>organization_id</im_item_receipt_organization_id><im_item_receipt_supplier_code>supplier_code</im_item_receipt_supplier_code><im_item_receipt_item_code>item_code</im_item_receipt_item_code><receipt_qty>receipt_qty</receipt_qty><im_item_receipt_unit_price>unit_price</im_item_receipt_unit_price><receipt_amt>receipt_amt</receipt_amt><supplier_name>supplier_name</supplier_name><item_name>item_name</item_name><item_spec>item_spec</item_spec><item_division>item_division</item_division><item_uom>item_uom</item_uom></untitled_row></untitled>"))
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml( template=(comment="" name="f" xhtml="$$HEX1$$fffe$$ENDHEX$$<form name=~"webDW_dataForm~"><div class=~"webDW_band_0~"><input name=~"webDW_receipt_date~" type=~"text~" value=~"receipt_date~"/><div class=~"webDW_receipt_date_t~">receipt_date_t</div><div class=~"webDW_supplier_code_t~">supplier_code_t</div><div class=~"webDW_item_code_t~">item_code_t</div><div class=~"webDW_supplier_name_t~">supplier_name_t</div><div class=~"webDW_item_name_t~">item_name_t</div><div class=~"webDW_item_spec_t~">item_spec_t</div><div class=~"webDW_item_division_t~">item_division_t</div><div class=~"webDW_item_uom_t~">item_uom_t</div><div class=~"webDW_t_1~">t_1</div><div class=~"webDW_unit_price_t~">unit_price_t</div><div class=~"webDW_receipt_amt_t~">receipt_amt_t</div><div class=~"webDW_receipt_qty_t~">receipt_qty_t</div><hr/><hr/><div class=~"webDW_t_2~">t_2</div><div class=~"webDW_t_3~">t_3</div><div class=~"webDW_compute_2~">compute_2</div></div><div class=~"webDW_detail_0~" __pbband=~"detail~"><input name=~"webDW_supplier_code~" type=~"text~" value=~"supplier_code~"/><input name=~"webDW_item_code~" type=~"text~" value=~"item_code~"/><input name=~"webDW_supplier_name~" type=~"text~" value=~"supplier_name~"/><input name=~"webDW_item_name~" type=~"text~" value=~"item_name~"/><input name=~"webDW_item_spec~" type=~"text~" value=~"item_spec~"/><div class=~"webDW_item_division~">item_division</div><input name=~"webDW_item_uom~" type=~"text~" value=~"item_uom~"/><div class=~"webDW_compute_1~">compute_1</div><input name=~"webDW_unit_price~" type=~"text~" value=~"unit_price~"/><input name=~"webDW_receipt_amt~" type=~"text~" value=~"receipt_amt~"/><input name=~"webDW_receipt_qty~" type=~"text~" value=~"receipt_qty~"/><hr/></div><div class=~"webDW_band_1~"><hr/><div class=~"webDW_organization_id~">organization_id</div><div class=~"webDW_organization_id_t~">organization_id_t</div><div class=~"webDW_page_1~">page_1</div></div></form>"))
+ 

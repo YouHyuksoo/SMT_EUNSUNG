@@ -1,0 +1,102 @@
+HA$PBExportHeader$f_mat_receipt_return.srf
+global type f_mat_receipt_return from function_object
+end type
+
+forward prototypes
+global function integer f_mat_receipt_return (datetime adt_date, datetime adt_receipt_date, double ad_seq, decimal ad_return_qty, string as_location_code)
+end prototypes
+
+global function integer f_mat_receipt_return (datetime adt_date, datetime adt_receipt_date, double ad_seq, decimal ad_return_qty, string as_location_code);//=====================================================
+Double lvl_receipt_seq
+
+ad_return_qty   =  abs(ad_return_qty)
+
+lvl_receipt_seq = double(f_get_sequence('seq_mat_receipt'))
+INSERT INTO im_item_receipt
+            ( receipt_sequence,
+              receipt_date,
+             location_code ,//
+              receipt_deficit,
+              delivery,
+              line_type,
+              receipt_qty,
+              unit_price,
+              material_cost,
+              material_cost_amt,
+              invoice_no,
+              receipt_amt,
+              exchange_rate,
+              foreign_receipt_amt,
+              confirm_yn,
+              confirm_date,
+              receipt_type,
+            material_mfs,         
+              mfs,
+              supplier_code,
+              comments,
+              currency,
+              barcode,
+              receipt_status,
+              item_code,
+              arrival_date,
+              arrival_seq_no,
+              organization_id,
+              enter_by,
+              enter_date,
+              last_modify_by,
+              last_modify_date,
+              virtual_receipt_yn,
+              work_order_no , interface_yn,interface_date , receipt_lot_no , incidental_expense_code , receipt_expense_cost,
+            interface_work_no ,tariff_rate , tariff_amt , order_no , origin_mfs , origin_supplier_code , invoice_open_yn , invoice_open_sequence , inventory_type
+            )
+   SELECT :lvl_receipt_seq,
+          :adt_date,
+           decode( :as_location_code , null , location_code, :as_location_code ) ,
+          2 ,
+          delivery,
+          line_type,
+          :ad_return_qty * -1,
+          unit_price,
+          material_cost ,
+          :ad_return_qty * material_cost * -1,
+          invoice_no,
+          decode( currency , :gvs_currency , :ad_return_qty * unit_price * -1 , :ad_return_qty * unit_price * exchange_rate *  -1 ) , //$$HEX7$$d0c654d618bc88d408ae61c52000$$ENDHEX$$
+          exchange_rate, //$$HEX3$$58d628c72000$$ENDHEX$$
+          decode( currency , :gvs_currency , 0 , :ad_return_qty *  unit_price  * -1  ) ,  // $$HEX9$$78c654d6200018bc88d4200008ae61c52000$$ENDHEX$$
+          confirm_yn,
+          confirm_date,
+          receipt_type,
+         decode( :Gvs_material_mfs_replace_location_code , 'Y' , decode( :as_location_code , null , location_code, :as_location_code ) ,   material_mfs ) ,
+          mfs,
+          supplier_code,
+          comments,
+          currency,
+          barcode,
+          'N',
+          item_code,
+          arrival_date,
+          arrival_seq_no,
+          organization_id,
+          :gvs_user_id,
+          SYSDATE,
+          :gvs_user_id,
+          SYSDATE,
+          virtual_receipt_yn,
+          work_order_no , interface_yn,interface_date , receipt_lot_no, incidental_expense_code , receipt_expense_cost *-1,
+          interface_work_no ,tariff_rate , :ad_return_qty * tariff_rate   * -1 , order_no , 
+	     origin_mfs ,
+	     origin_supplier_code ,
+		 invoice_open_yn , 
+		 invoice_open_sequence , inventory_type
+     FROM im_item_receipt
+    WHERE receipt_date = :adt_receipt_date
+      AND receipt_sequence = :ad_seq
+      AND organization_id = :gvi_organization_id;
+         
+    if f_sql_check() < 0 then 
+        return -1 
+    end if 
+
+return sqlca.sqlnrows
+end function
+

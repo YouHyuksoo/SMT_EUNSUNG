@@ -1,0 +1,45 @@
+HA$PBExportHeader$d_prd_cell_biz_pack_barcode.srd
+$PBExportComments$cell biz pack barcode $$HEX3$$14bc54cfdcb4$$ENDHEX$$
+release 10.5;
+datawindow(units=3 timer_interval=0 color=16777215 processing=2 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 0 print.margin.right = 0 print.margin.top = 0 print.margin.bottom = 0 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no label.name="" label.width=10000 label.height=7000 label.rows=1 label.rows.spacing=132 label.columns=1 label.columns.spacing=200 label.topdown=yes label.sheet=no label.shape=roundrectangle label.ellipse_height=0 label.ellipse_width=0 )
+detail(height=7011 color="536870912" )
+table(column=(type=char(4000) updatewhereclause=yes name=item_barcode_barcode dbname="item_barcode_barcode" )
+ column=(type=char(50) updatewhereclause=yes name=lot_no_barcode dbname="ip_product_pack_master.lot_no_barcode" )
+ column=(type=char(30) updatewhereclause=yes name=model_name dbname="ip_product_pack_master.model_name" )
+ column=(type=number updatewhereclause=yes name=pack_qty dbname="ip_product_pack_master.pack_qty" )
+ column=(type=char(10) updatewhereclause=yes name=pack_date dbname="pack_date" )
+ column=(type=char(30) updatewhereclause=yes name=company dbname="company" )
+ retrieve="
+select f_bacode_code128('B',pack_barcode) as ITEM_BARCODE_BARCODE , 
+          pack_barcode as LOT_NO_BARCODE , 
+       model_name, 
+       pack_qty, 
+       to_char(pack_date,'yyyy-mm-dd') pack_date, 
+       nvl(attr5, 'GZ-DONGDO')  company 
+  from ip_product_pack_master
+where pack_barcode = :arg_barcode " arguments=(("arg_barcode", string)) )
+line(band=detail x1="6244" y1="5344" x2="6244" y2="6376"  name=l_4 visible="1" pen.style="0" pen.width="26" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+column(band=detail id=4 alignment="1" tabsequence=32766 border="0" color="33554432" x="7143" y="5397" height="846" width="2381" format="[general]" html.valueishtml="0"  name=pack_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Arial Black" font.height="-18" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+line(band=detail x1="291" y1="793" x2="291" y2="6376"  name=l_6 visible="1" pen.style="0" pen.width="26" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="0" color="33554432" x="423" y="952" height="1084" width="9154" format="[general]" html.valueishtml="0"  name=model_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Arial Black" font.height="-24" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="33554432" x="423" y="2354" height="1084" width="9154" format="[general]" html.valueishtml="0"  name=item_barcode_barcode visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Code 128" font.height="-28" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="33554432" x="423" y="3545" height="555" width="9154" format="[general]" html.valueishtml="0"  name=lot_no_barcode visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Arial" font.height="-12" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+line(band=detail x1="9710" y1="793" x2="9710" y2="6376"  name=l_5 visible="1" pen.style="0" pen.width="26" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+line(band=detail x1="291" y1="793" x2="9736" y2="793"  name=l_7 visible="1" pen.style="0" pen.width="26" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+line(band=detail x1="291" y1="2169" x2="9736" y2="2169"  name=l_1 visible="1" pen.style="0" pen.width="26" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+line(band=detail x1="291" y1="4233" x2="9736" y2="4233"  name=l_8 visible="1" pen.style="0" pen.width="26" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+line(band=detail x1="291" y1="5318" x2="9736" y2="5318"  name=l_2 visible="1" pen.style="0" pen.width="26" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+line(band=detail x1="291" y1="6376" x2="9736" y2="6376"  name=l_3 visible="1" pen.style="0" pen.width="26" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+column(band=detail id=5 alignment="2" tabsequence=32766 border="0" color="33554432" x="423" y="4339" height="926" width="9154" format="[general]" html.valueishtml="0"  name=pack_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Arial" font.height="-20" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=6 alignment="2" tabsequence=32766 border="0" color="33554432" x="423" y="5423" height="820" width="4947" format="[general]" html.valueishtml="0"  name=company visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Arial Black" font.height="-16" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

@@ -1,0 +1,52 @@
+HA$PBExportHeader$f_replace_string.srf
+$PBExportComments$[string , old_string , new_string]
+global type f_replace_string from function_object
+end type
+
+forward prototypes
+global function string f_replace_string (string as_string, string as_old_string, string as_new_string)
+end prototypes
+
+global function string f_replace_string (string as_string, string as_old_string, string as_new_string);
+
+long start_pos=1
+string old_str, new_str, mystring
+
+mystring = as_string
+old_str = lower(as_old_string)
+new_str =as_new_string
+
+// Find the first occurrence of old_str.
+
+start_pos = Pos(mystring, old_str, start_pos)
+if start_pos = 0 then
+	
+	start_pos = 1
+	
+	start_pos = Pos(mystring, upper(old_str), start_pos)
+	
+end if 
+
+// Only enter the loop if you find old_str.
+
+DO WHILE start_pos > 0
+
+    // Replace old_str with new_str.
+
+    mystring = Replace(mystring, start_pos, Len(old_str), new_str)
+
+    // Find the next occurrence of old_str.
+
+	start_pos = Pos(mystring, old_str,  start_pos+Len(new_str))
+	
+	if start_pos = 0 then 
+		start_pos = 1
+		start_pos = Pos(mystring, upper(old_str), start_pos+Len(new_str))
+	end if 
+
+
+LOOP
+
+return mystring
+end function
+

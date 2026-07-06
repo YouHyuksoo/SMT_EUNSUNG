@@ -1,0 +1,23 @@
+HA$PBExportHeader$f_set_keyboard_mode.srf
+global type f_set_keyboard_mode from function_object
+end type
+
+forward prototypes
+global subroutine f_set_keyboard_mode (string arg_mode, long arg_handle)
+end prototypes
+
+global subroutine f_set_keyboard_mode (string arg_mode, long arg_handle);long mode
+
+if arg_mode = 'K' then
+	
+//   mode = ImmGetContext( arg_handle)
+//   ImmSetConversionStatus(mode, 1, 0)  // $$HEX6$$5cd500ae90c710d3c0bc58d6$$ENDHEX$$
+	
+else
+
+//   mode = ImmGetContext( arg_handle)
+//   ImmSetConversionStatus(mode, 0, 0)  // $$HEX5$$01c690c710d3c0bc58d6$$ENDHEX$$
+
+end if
+end subroutine
+

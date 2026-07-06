@@ -1,0 +1,25 @@
+HA$PBExportHeader$f_get_supplier_name.srf
+global type f_get_supplier_name from function_object
+end type
+
+forward prototypes
+global function string f_get_supplier_name (string as_supplier_code, integer arg_org)
+end prototypes
+
+global function string f_get_supplier_name (string as_supplier_code, integer arg_org);string lvs_supplier_name
+
+select supplier_name 
+into    :lvs_supplier_name
+from   icom_supplier
+where  supplier_code = :as_supplier_code
+and      organization_id = :arg_org  ; 
+if f_sql_check() < 0 then 
+	return 'ERROR'
+end if 
+if sqlca.sqlcode = 100 then 
+	return 'NOTFOUND'
+end if 
+ 
+ return lvs_supplier_name
+end function
+

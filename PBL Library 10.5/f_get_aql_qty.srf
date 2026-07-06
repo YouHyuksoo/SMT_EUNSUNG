@@ -1,0 +1,50 @@
+HA$PBExportHeader$f_get_aql_qty.srf
+global type f_get_aql_qty from function_object
+end type
+
+forward prototypes
+global function integer f_get_aql_qty (string arg_item_code, integer arg_lot_qty, integer arg_org)
+global function integer f_get_aql_qty (integer arg_lot_qty, integer arg_org)
+end prototypes
+
+global function integer f_get_aql_qty (string arg_item_code, integer arg_lot_qty, integer arg_org);LONG LVL_QTY = 0
+
+SELECT  TYP_VALUE INTO :LVL_QTY
+ FROM IQ_LED_INSPECT_CONDITION
+WHERE MODEL_NAME = :ARG_ITEM_CODE
+   AND MIN_VALUE <= :ARG_LOT_QTY
+   AND MAX_VALUE >= :ARG_LOT_QTY 
+   AND ORGANIZATION_ID = :ARG_ORG ;
+	
+IF F_SQL_CHECK() < 0 THEN 
+	RETURN 0
+END IF 
+
+	IF LVL_QTY = 0 THEN 
+		RETURN ARG_LOT_QTY
+	ELSE
+		RETURN LVL_QTY
+	END IF 
+end function
+
+global function integer f_get_aql_qty (integer arg_lot_qty, integer arg_org);LONG LVL_QTY = 0
+
+SELECT  TYP_VALUE INTO :LVL_QTY
+ FROM IQ_LED_INSPECT_CONDITION
+WHERE MIN_VALUE <= :ARG_LOT_QTY
+   AND MAX_VALUE >= :ARG_LOT_QTY 
+   AND SYMBOL = 'G2'
+   AND CONDITION = 'ITEM' 
+   AND ORGANIZATION_ID = :ARG_ORG ;
+	
+IF F_SQL_CHECK() < 0 THEN 
+	RETURN 0
+END IF 
+
+	IF LVL_QTY = 0 THEN 
+		RETURN ARG_LOT_QTY
+	ELSE
+		RETURN LVL_QTY
+	END IF 
+end function
+

@@ -1,0 +1,37 @@
+HA$PBExportHeader$f_sql_check_with_msg.srf
+$PBExportComments$$$HEX11$$54ba38c1c0c99ccd25b858d594b2d0c5ecb7b4cc6cd0$$ENDHEX$$
+global type f_sql_check_with_msg from function_object
+end type
+
+forward prototypes
+global function integer f_sql_check_with_msg (string arg_msg)
+end prototypes
+
+global function integer f_sql_check_with_msg (string arg_msg);STRING LVS_TEXT , LVS_SQLERRTEXT
+LONG LVL_SQLCODE
+
+LVL_SQLCODE = SQLCA.SQLCODE
+LVS_SQLERRTEXT = SQLCA.SQLERRTEXT
+LVS_TEXT = STRING(SQLCA.SQLERRTEXT)+"~r~n"+"Return Data"+SQLCA.SQLReturnData+"~r~n"+ARG_MSG
+
+IF LVL_SQLCODE < 0 THEN 
+	ROLLBACK ;
+	F_MSGBOX2( 1101 , STRING(LVL_SQLCODE) , LVS_TEXT )
+	Rollback;
+	
+	//=========================================================
+	// Error Log Trace
+	//=========================================================
+	if Gvs_error_log_trace_yn = 'Y' then
+		f_set_error_log_trace( w_main_frame.Getactivesheet() , '' , 0 , ''  ,LVL_SQLCODE ,  LVS_SQLERRTEXT , '') 
+	end if 
+	//=========================================================
+
+	RETURN -1 
+ELSE
+	RETURN  1
+END IF
+
+
+end function
+

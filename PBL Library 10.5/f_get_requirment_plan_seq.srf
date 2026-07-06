@@ -1,0 +1,20 @@
+HA$PBExportHeader$f_get_requirment_plan_seq.srf
+global type f_get_requirment_plan_seq from function_object
+end type
+
+forward prototypes
+global function double f_get_requirment_plan_seq ()
+end prototypes
+
+global function double f_get_requirment_plan_seq ();DOUBLE LVDB_Requirment_Plan_Seq
+
+SELECT SEQ_Requirment_Plan_Seq.NEXTVAL INTO :LVDB_Requirment_Plan_Seq
+    FROM DUAL ;
+	 
+ IF F_SQL_CHECK() < 0 THEN 
+	RETURN -1 
+END IF
+	 
+RETURN LVDB_Requirment_Plan_Seq ;
+end function
+

@@ -1,0 +1,23 @@
+HA$PBExportHeader$f_get_serial_scan_exists_check.srf
+global type f_get_serial_scan_exists_check from function_object
+end type
+
+forward prototypes
+global function integer f_get_serial_scan_exists_check (string arg_run_no, string arg_serial_no)
+end prototypes
+
+global function integer f_get_serial_scan_exists_check (string arg_run_no, string arg_serial_no);long lvl_count
+select count(*) into :lvl_count
+from IP_PRODUCT_PCB_SCAN_MASTER
+where run_no = :arg_run_no
+    and serial_no = :arg_serial_no
+    and organization_id = :gvi_organization_id
+	and rownum = 1 ;
+	 
+	 if f_sql_check() < 0 then 
+		return -1
+	end if 
+	
+	return lvl_count
+end function
+

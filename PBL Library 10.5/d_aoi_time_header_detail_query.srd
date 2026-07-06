@@ -1,0 +1,101 @@
+HA$PBExportHeader$d_aoi_time_header_detail_query.srd
+$PBExportComments$$$HEX3$$30bcb8d2a8b0$$ENDHEX$$
+release 10.5;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no grid.lines=0 )
+header(height=172 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=76 color="536870912" )
+table(column=(type=char(20) updatewhereclause=yes name=line_code dbname="iq_machine_inspect_aoi.line_code" dbalias=".line_code" )
+ column=(type=char(20) updatewhereclause=yes name=machine_code dbname="iq_machine_inspect_aoi.machine_code" dbalias=".machine_code" )
+ column=(type=char(300) updatewhereclause=yes name=data_type dbname="iq_machine_inspect_aoi.data_type" dbalias=".data_type" )
+ column=(type=char(300) updatewhereclause=yes name=product_id dbname="iq_machine_inspect_aoi.product_id" dbalias=".product_id" )
+ column=(type=datetime updatewhereclause=yes name=inspect_date dbname="inspect_date" )
+ column=(type=char(300) updatewhereclause=yes name=pcbmodel dbname="pcbmodel" )
+ column=(type=char(300) updatewhereclause=yes name=machine_result dbname="machine_result" )
+ column=(type=char(300) updatewhereclause=yes name=review_result dbname="review_result" )
+ column=(type=char(300) updatewhereclause=yes name=reviewer dbname="reviewer" )
+ column=(type=char(300) updatewhereclause=yes name=array_index dbname="array_index" )
+ column=(type=char(300) updatewhereclause=yes name=component dbname="component" )
+ column=(type=char(300) updatewhereclause=yes name=lead_id dbname="lead_id" )
+ column=(type=char(300) updatewhereclause=yes name=ng_insptype dbname="ng_insptype" )
+ column=(type=char(300) updatewhereclause=yes name=ng_machineresult dbname="ng_machineresult" )
+ column=(type=char(300) updatewhereclause=yes name=ng_reviewresult dbname="iq_machine_inspect_aoi.ng_reviewresult" dbalias=".ng_reviewresult" )
+ column=(type=datetime updatewhereclause=yes name=enter_date dbname="iq_machine_inspect_aoi.enter_date" dbalias=".enter_date" )
+ retrieve="SELECT LINE_CODE, 
+       MACHINE_CODE, 
+       C1 as DATA_TYPE, 
+       C2 as PRODUCT_ID, 
+       
+       DECODE( c1,'[Header]', to_date(C3,'yyyymmddhh24miss') , '') as INSPECT_DATE ,
+      
+       
+
+       DECODE( c1,'[Header]', C4 , '') as PCBModel ,
+       
+       
+       DECODE( c1,'[Header]', C5 , '') as MACHINE_RESULT ,
+                              
+       DECODE( c1,'[Header]', C6 , '') as REVIEW_RESULT ,
+       
+       DECODE( c1,'[Header]', C7 , '') as Reviewer ,
+       
+       DECODE( c1,'[Detail]', C3 , '') as Array_INDEX ,
+       DECODE( c1,'[Detail]', C4 , '') as Component ,
+       DECODE( c1,'[Detail]', C5 , '') as LEAD_ID ,
+       
+       DECODE( c1,'[Detail]', C6 , '') as NG_InspType ,
+       
+       DECODE( c1,'[Detail]', C7 , '') as NG_MachineResult, 
+       
+       C8 as NG_ReviewResult,
+       enter_date 
+  FROM IQ_MACHINE_INSPECT_AOI 
+where C2 like :arg_pid
+   and DECODE( c1,'[Header]', C3 , '')  >= :arg_sdate
+   and DECODE( c1,'[Header]', C3 , '')  <= :arg_edate
+   and line_code like :arg_line_code
+   and length(c3) = 14" arguments=(("arg_pid", string),("arg_sdate", string),("arg_edate", string),("arg_line_code", string)) )
+text(band=header alignment="2" text="Inspect Date" border="0" color="33554432" x="1632" y="8" height="152" width="581" html.valueishtml="0"  name=inspect_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+text(band=header alignment="2" text="Pcbmodel" border="0" color="33554432" x="2222" y="8" height="152" width="585" html.valueishtml="0"  name=pcbmodel_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+text(band=header alignment="2" text="Machine Result" border="0" color="33554432" x="2816" y="8" height="152" width="389" html.valueishtml="0"  name=machine_result_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+text(band=header alignment="2" text="Review Result" border="0" color="33554432" x="3214" y="8" height="152" width="320" html.valueishtml="0"  name=review_result_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+text(band=header alignment="2" text="Reviewer" border="0" color="33554432" x="3543" y="8" height="152" width="338" html.valueishtml="0"  name=reviewer_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+text(band=header alignment="2" text="Line Code" border="0" color="33554432" x="9" y="4" height="156" width="297" html.valueishtml="0"  name=line_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Product Id" border="0" color="33554432" x="1065" y="8" height="152" width="558" html.valueishtml="0"  name=product_id_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Machine Code" border="0" color="33554432" x="315" y="8" height="152" width="366" html.valueishtml="0"  name=machine_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Data Type" border="0" color="33554432" x="690" y="8" height="152" width="366" html.valueishtml="0"  name=data_type_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Array Index" border="0" color="33554432" x="3890" y="8" height="152" width="201" html.valueishtml="0"  name=array_index_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217731" )
+text(band=header alignment="2" text="Component" border="0" color="33554432" x="4101" y="8" height="152" width="357" html.valueishtml="0"  name=component_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217731" )
+text(band=header alignment="2" text="Lead Id" border="0" color="33554432" x="4466" y="8" height="152" width="247" html.valueishtml="0"  name=lead_id_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217731" )
+text(band=header alignment="2" text="Ng Insptype" border="0" color="33554432" x="4722" y="8" height="152" width="462" html.valueishtml="0"  name=ng_insptype_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217731" )
+text(band=header alignment="2" text="Ng Machineresult" border="0" color="33554432" x="5193" y="8" height="152" width="357" html.valueishtml="0"  name=ng_machineresult_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217731" )
+text(band=header alignment="2" text="Ng Reviewresult" border="0" color="33554432" x="5559" y="8" height="152" width="352" html.valueishtml="0"  name=ng_reviewresult_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217731" )
+text(band=header alignment="2" text="Enter Date" border="0" color="33554432" x="5920" y="8" height="152" width="704" html.valueishtml="0"  name=enter_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217731" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="33554432" x="9" y="4" height="68" width="297" format="[general]" html.valueishtml="0"  name=line_code visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="33554432" x="315" y="8" height="64" width="366" format="[general]" html.valueishtml="0"  name=machine_code visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+column(band=detail id=5 alignment="2" tabsequence=32766 border="0" color="33554432" x="1632" y="8" height="64" width="581" format="[shortdate] [time]" html.valueishtml="0"  name=inspect_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+column(band=detail id=6 alignment="0" tabsequence=32766 border="0" color="33554432" x="2222" y="8" height="64" width="585" format="[general]" html.valueishtml="0"  name=pcbmodel visible="1" edit.limit=300 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+column(band=detail id=9 alignment="0" tabsequence=32766 border="0" color="33554432" x="3543" y="8" height="64" width="338" format="[general]" html.valueishtml="0"  name=reviewer visible="1" edit.limit=300 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+column(band=detail id=10 alignment="2" tabsequence=32766 border="0" color="255" x="3890" y="8" height="64" width="201" format="[general]" html.valueishtml="0"  name=array_index visible="1" edit.limit=300 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+column(band=detail id=11 alignment="0" tabsequence=32766 border="0" color="255" x="4101" y="8" height="64" width="357" format="[general]" html.valueishtml="0"  name=component visible="1" edit.limit=300 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+column(band=detail id=12 alignment="2" tabsequence=32766 border="0" color="255" x="4466" y="8" height="64" width="247" format="[general]" html.valueishtml="0"  name=lead_id visible="1" edit.limit=300 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+column(band=detail id=13 alignment="0" tabsequence=32766 border="0" color="255" x="4722" y="8" height="64" width="462" format="[general]" html.valueishtml="0"  name=ng_insptype visible="1" edit.limit=300 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+column(band=detail id=16 alignment="0" tabsequence=32766 border="0" color="255" x="5920" y="8" height="64" width="704" format="[shortdate] [time]" html.valueishtml="0"  name=enter_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="0" color="33554432" x="690" y="8" height="64" width="366" format="[general]" html.valueishtml="0"  name=data_type visible="1" edit.limit=300 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="0" color="33554432" x="1065" y="8" height="64" width="558" format="[general]" html.valueishtml="0"  name=product_id visible="1" edit.limit=300 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+column(band=detail id=7 alignment="2" tabsequence=32766 border="0" color="33554432" x="2816" y="8" height="64" width="389" format="[general]" html.valueishtml="0"  name=machine_result visible="1" edit.limit=300 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+column(band=detail id=8 alignment="2" tabsequence=32766 border="0" color="255" x="3214" y="8" height="64" width="320" format="[general]" html.valueishtml="0"  name=review_result visible="1" edit.limit=300 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+column(band=detail id=14 alignment="2" tabsequence=32766 border="0" color="255" x="5193" y="8" height="64" width="357" format="[general]" html.valueishtml="0"  name=ng_machineresult visible="1" edit.limit=300 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+column(band=detail id=15 alignment="2" tabsequence=32766 border="0" color="255" x="5559" y="8" height="64" width="352" format="[general]" html.valueishtml="0"  name=ng_reviewresult visible="1" edit.limit=300 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

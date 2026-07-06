@@ -1,0 +1,19 @@
+HA$PBExportHeader$f_get_first_day_by_month.srf
+$PBExportComments$Call Server's System Last Date
+global type f_get_first_day_by_month from function_object
+end type
+
+forward prototypes
+global function datetime f_get_first_day_by_month (string arg_month)
+end prototypes
+
+global function datetime f_get_first_day_by_month (string arg_month);datetime d_1		
+select  to_date( :Arg_month||'01' , 'yyyymmdd')   into :d_1 from dual ;
+
+if f_sql_check() < 0 then 
+	return d_1      
+end if
+
+return d_1
+end function
+

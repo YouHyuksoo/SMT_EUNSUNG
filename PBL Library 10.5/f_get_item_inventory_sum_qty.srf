@@ -1,0 +1,30 @@
+HA$PBExportHeader$f_get_item_inventory_sum_qty.srf
+global type f_get_item_inventory_sum_qty from function_object
+end type
+
+forward prototypes
+global function decimal f_get_item_inventory_sum_qty (string as_item_code, string as_line_type)
+end prototypes
+
+global function decimal f_get_item_inventory_sum_qty (string as_item_code, string as_line_type);Decimal lvf_inventory_qty
+string lvs_currency 
+
+select  SUM(inventory_qty)
+into    :lvf_inventory_qty 
+from   im_item_inventory
+where item_code      =     :as_item_code 
+and    line_type        =     :as_line_type
+and    organization_id  = :gvi_organization_id ; 
+
+if f_sql_check() < 0 then 
+	return -2
+end if 
+
+if sqlca.sqlcode = 100 then
+   messagebox('Notify',"Inventory Qty Not Found  => "+'  Item Code='+as_item_code+' Line Type='+as_line_type )
+   return  -2	
+end if
+
+return lvf_inventory_qty
+end function
+

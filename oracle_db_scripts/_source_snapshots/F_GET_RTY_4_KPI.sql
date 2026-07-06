@@ -1,0 +1,20 @@
+FUNCTION "F_GET_RTY_4_KPI" (
+   P_LINE_CODE IN VARCHAR2)
+   RETURN NUMBER
+IS
+   lvf_rate   NUMBER;
+BEGIN
+
+
+   lvf_rate := f_get_ws_pass_rate_4_kpi (P_LINE_CODE, '%', SYSDATE);
+
+
+   RETURN NVL(lvf_rate , 0 ) ;
+EXCEPTION
+   WHEN NO_DATA_FOUND
+   THEN
+      RETURN 0;
+   WHEN OTHERS
+   THEN
+      RAISE_APPLICATION_ERROR (-20003, SQLERRM);
+END F_GET_RTY_4_KPI;

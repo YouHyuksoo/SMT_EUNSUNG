@@ -1,0 +1,28 @@
+HA$PBExportHeader$f_get_run_type.srf
+global type f_get_run_type from function_object
+end type
+
+forward prototypes
+global function string f_get_run_type (string arg_run_no)
+end prototypes
+
+global function string f_get_run_type (string arg_run_no);string lvs_return 
+
+select product_run_type into :lvs_return
+ from ip_product_run_card
+where run_no = :arg_run_no
+   and organization_id = :gvi_organization_id ;
+
+if f_sql_check() < 0 then 
+	return  'X'
+end if 
+
+if isnull(lvs_return) then 
+	return 'X'
+else
+	return lvs_return 
+end if 
+
+	 
+end function
+

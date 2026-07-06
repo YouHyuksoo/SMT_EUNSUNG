@@ -1,0 +1,45 @@
+Save Format v3.0(19990112)
+@begin Libraries
+ "infinity21_uw_iqc.pbl" "";
+@end;
+@begin Objects
+ "w_spi_query.srw" "infinity21_uw_iqc.pbl";
+ "w_qc_inspect_time_check2.srw" "infinity21_uw_iqc.pbl";
+ "w_qc_inspect_time_check3.srw" "infinity21_uw_iqc.pbl";
+ "w_qc_interlock_reflow_status_master.srw" "infinity21_uw_iqc.pbl";
+ "w_qc_machine_inspect_data_ett28_query.srw" "infinity21_uw_iqc.pbl";
+ "w_qc_machine_inspect_data_o1xx_query.srw" "infinity21_uw_iqc.pbl";
+ "w_qc_eco_notify_master.srw" "infinity21_uw_iqc.pbl";
+ "w_qc_machine_inspect_data_aeev_query.srw" "infinity21_uw_iqc.pbl";
+ "w_qc_machine_inspect_data_bma_query.srw" "infinity21_uw_iqc.pbl";
+ "w_qc_visual_inspect_data_master.srw" "infinity21_uw_iqc.pbl";
+ "w_qc_machine_inspect_data_cma_query.srw" "infinity21_uw_iqc.pbl";
+ "w_qc_workstage_inspect_data_master_es.srw" "infinity21_uw_iqc.pbl";
+ "w_qc_notify_master.srw" "infinity21_uw_iqc.pbl";
+ "w_qc_workstage_inspect_data_master.srw" "infinity21_uw_iqc.pbl";
+ "w_qc_inspect_time_check_query.srw" "infinity21_uw_iqc.pbl";
+ "w_qc_inspect_time_check_query2.srw" "infinity21_uw_iqc.pbl";
+ "w_qc_machine_inspect_data_ict_query.srw" "infinity21_uw_iqc.pbl";
+ "w_qc_machine_inspect_data_eol_query.srw" "infinity21_uw_iqc.pbl";
+ "w_qc_inspect_time_check.srw" "infinity21_uw_iqc.pbl";
+ "w_qc_machine_inspect_data_sp_query.srw" "infinity21_uw_iqc.pbl";
+ "w_qc_oqc_inspect_history_4_lot_master.srw" "infinity21_uw_iqc.pbl";
+ "w_qc_machine_inspect_data_solder_query.srw" "infinity21_uw_iqc.pbl";
+ "w_qc_machine_inspect_data_eop_query.srw" "infinity21_uw_iqc.pbl";
+ "w_qc_machine_inspect_data_reflow_query.srw" "infinity21_uw_iqc.pbl";
+ "w_qc_machine_inspect_data_rt_query.srw" "infinity21_uw_iqc.pbl";
+ "w_qc_machine_inspect_data_rw_query.srw" "infinity21_uw_iqc.pbl";
+ "w_qc_iqc_master.srw" "infinity21_uw_iqc.pbl";
+ "w_qc_pcb_input_scan_master.srw" "infinity21_uw_iqc.pbl";
+ "w_aoi_time_query.srw" "infinity21_uw_iqc.pbl";
+ "w_spi_time_query.srw" "infinity21_uw_iqc.pbl";
+ "w_qc_inventory_hold_master.srw" "infinity21_uw_iqc.pbl";
+ "w_qc_4m_master.srw" "infinity21_uw_iqc.pbl";
+ "w_aoi_header_detail_query.srw" "infinity21_uw_iqc.pbl";
+ "w_qc_machine_inspect_manual.srw" "infinity21_uw_iqc.pbl";
+ "w_qc_led_inspect_condition_master.srw" "infinity21_uw_iqc.pbl";
+ "w_pln_product_pcb_destroy_master.srw" "infinity21_uw_iqc.pbl";
+ "w_qc_inspect_item_group.srw" "infinity21_uw_iqc.pbl";
+ "w_qc_iqc_inspect_history_master.srw" "infinity21_uw_iqc.pbl";
+ "w_qc_oqc_inspect_history_master.srw" "infinity21_uw_iqc.pbl";
+@end;

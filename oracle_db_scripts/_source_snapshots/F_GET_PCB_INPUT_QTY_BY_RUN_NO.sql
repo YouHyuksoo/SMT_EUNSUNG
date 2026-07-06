@@ -1,0 +1,31 @@
+FUNCTION "F_GET_PCB_INPUT_QTY_BY_RUN_NO" (p_run_no IN VARCHAR2, p_org IN NUMBER)
+   RETURN NUMBER
+IS
+   lvl_return   NUMBER;
+BEGIN
+  
+
+
+   SELECT COUNT(DISTINCT PID) 
+        INTO LVL_RETURN
+     FROM IQ_MACHINE_INSPECT_DATA_MK
+    WHERE PID IN ( SELECT SERIAL_NO FROM IP_PRODUCT_2D_BARCODE WHERE RUN_NO = P_RUN_NO ) ;
+    
+     RETURN LVL_RETURN;
+    
+  IF   LVL_RETURN = 0 THEN 
+   SELECT COUNT (DISTINCT  PID)
+     INTO lvl_return
+     FROM Iq_Machine_Inspect_Data_spi
+    WHERE  PID IN ( SELECT SERIAL_NO FROM IP_PRODUCT_2D_BARCODE WHERE RUN_NO = P_RUN_NO ) 
+      AND organization_id = p_org;    
+   END IF ;   
+
+   RETURN lvl_return;
+   
+EXCEPTION
+   WHEN NO_DATA_FOUND THEN
+        RETURN 0;
+   WHEN OTHERS THEN
+        raise_application_error (-20003, SQLERRM);
+END;

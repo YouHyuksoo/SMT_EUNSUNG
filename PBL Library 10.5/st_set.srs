@@ -1,0 +1,14 @@
+HA$PBExportHeader$st_set.srs
+$PBExportComments$System Information Structure
+global type st_set from structure
+	string		window_id
+	string		window_title
+	string		window_comment
+	string		author
+	string		creation_date
+	string		last_modify_date
+	decimal { 2 }		version
+	boolean		report_window
+	string		window_type
+end type
+

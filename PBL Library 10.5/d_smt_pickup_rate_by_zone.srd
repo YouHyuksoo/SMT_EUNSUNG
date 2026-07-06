@@ -1,0 +1,545 @@
+HA$PBExportHeader$d_smt_pickup_rate_by_zone.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=16777215 processing=0 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no )
+header(height=212 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=92 color="65535" )
+detail(height=88 color="536870912" )
+table(column=(type=char(5) updatewhereclause=yes name=line_code dbname="line_code" )
+ column=(type=char(50) updatewhereclause=yes name=machine_code dbname="machine_code" )
+ column=(type=char(20) updatewhereclause=yes name=item_code dbname="item_code" )
+ column=(type=number updatewhereclause=yes name=inventory_price dbname="inventory_price" )
+ column=(type=char(50) updatewhereclause=yes name=program_name dbname="program_name" )
+ column=(type=char(10) updatewhereclause=yes name=table_no dbname="table_no" )
+ column=(type=char(10) updatewhereclause=yes name=feeder_zaxis dbname="feeder_zaxis" )
+ column=(type=char(10) updatewhereclause=yes name=feeder_lraxis dbname="feeder_lraxis" )
+ column=(type=char(1) updatewhereclause=yes name=abc_grade dbname="abc_grade" )
+ column=(type=number updatewhereclause=yes name=takea dbname="takea" )
+ column=(type=number updatewhereclause=yes name=missa dbname="missa" )
+ column=(type=number updatewhereclause=yes name=recoa dbname="recoa" )
+ column=(type=number updatewhereclause=yes name=takeb dbname="takeb" )
+ column=(type=number updatewhereclause=yes name=missb dbname="missb" )
+ column=(type=number updatewhereclause=yes name=recob dbname="recob" )
+ column=(type=number updatewhereclause=yes name=takec dbname="takec" )
+ column=(type=number updatewhereclause=yes name=missc dbname="missc" )
+ column=(type=number updatewhereclause=yes name=recoc dbname="recoc" )
+ column=(type=number updatewhereclause=yes name=taked dbname="taked" )
+ column=(type=number updatewhereclause=yes name=missd dbname="missd" )
+ column=(type=number updatewhereclause=yes name=recod dbname="recod" )
+ column=(type=number updatewhereclause=yes name=takee dbname="takee" )
+ column=(type=number updatewhereclause=yes name=misse dbname="misse" )
+ column=(type=number updatewhereclause=yes name=recoe dbname="recoe" )
+ column=(type=number updatewhereclause=yes name=takef dbname="takef" )
+ column=(type=number updatewhereclause=yes name=missf dbname="missf" )
+ column=(type=number updatewhereclause=yes name=recof dbname="recof" )
+ column=(type=number updatewhereclause=yes name=takeg dbname="takeg" )
+ column=(type=number updatewhereclause=yes name=missg dbname="missg" )
+ column=(type=number updatewhereclause=yes name=recog dbname="recog" )
+ column=(type=number updatewhereclause=yes name=takeh dbname="takeh" )
+ column=(type=number updatewhereclause=yes name=missh dbname="missh" )
+ column=(type=number updatewhereclause=yes name=recoh dbname="recoh" )
+ column=(type=number updatewhereclause=yes name=takei dbname="takei" )
+ column=(type=number updatewhereclause=yes name=missi dbname="missi" )
+ column=(type=number updatewhereclause=yes name=recoi dbname="recoi" )
+ column=(type=number updatewhereclause=yes name=takej dbname="takej" )
+ column=(type=number updatewhereclause=yes name=missj dbname="missj" )
+ column=(type=number updatewhereclause=yes name=recoj dbname="recoj" )
+ column=(type=number updatewhereclause=yes name=takesum dbname="takesum" )
+ column=(type=number updatewhereclause=yes name=misssum dbname="misssum" )
+ column=(type=number updatewhereclause=yes name=recosum dbname="recosum" )
+ column=(type=number updatewhereclause=yes name=taskeam dbname="taskeam" )
+ column=(type=number updatewhereclause=yes name=missam dbname="missam" )
+ column=(type=number updatewhereclause=yes name=recoam dbname="recoam" )
+ column=(type=number updatewhereclause=yes name=takepm dbname="takepm" )
+ column=(type=number updatewhereclause=yes name=misspm dbname="misspm" )
+ column=(type=number updatewhereclause=yes name=recopm dbname="recopm" )
+ retrieve="SELECT  LINE_CODE, 
+		MACHINE_CODE, 
+		ITEM_CODE, 
+		INVENTORY_PRICE,
+		PROGRAM_NAME, 
+		TABLE_NO, 
+		FEEDER_ZAXIS, 
+		FEEDER_LRAXIS,
+
+		ABC_GRADE ,
+		
+		TakeA, MissA, RecoA, 
+		TakeB, MissB, RecoB, 
+		TakeC, MissC, RecoC, 
+		TakeD, MissD, RecoD, 
+		TakeE, MissE, RecoE, 
+		TakeF, MissF, RecoF, 
+		TakeG, MissG, RecoG, 
+		TakeH, MissH, RecoH, 
+		TakeI, MissI, RecoI, 
+		TakeJ, MissJ, RecoJ, 
+		
+								
+								  
+								  
+		TakeA +                       
+		TakeB +                       
+		TakeC +                       
+		TakeD +                       
+		TakeE +                       
+		TakeF +                       
+		TakeG +                       
+		TakeH +                       
+		TakeI +                       
+		TakeJ as TakeSUM,             
+								  
+		MissA +                       
+		MissB +                       
+		MissC +                       
+		MissD +                       
+		MissE +                       
+		MissF +                       
+		MissG +                       
+		MissH +                       
+		MissI +                       
+		MissJ as MissSUM,             
+									
+		RecoA+                        
+		RecoB+                        
+		RecoC+                        
+		RecoD+                        
+		RecoE+                        
+		RecoF+                        
+		RecoG+                        
+		RecoH+                        
+		RecoI+                        
+		RecoJ as RecoSUM,             
+								  
+								  
+								  
+		TakeA +                       
+		TakeB +                       
+		TakeC +                       
+		TakeD +                       
+		TakeE as TaskeAM,             
+								  
+		MissA +                       
+		MissB +                       
+		MissC +                       
+		MissD +                       
+		MissE as MissAM,              
+									
+		RecoA+                        
+		RecoB+                        
+		RecoC+                        
+		RecoD+                        
+		RecoE as RecoAM,              
+								  
+								  
+		TakeF +                       
+		TakeG +                       
+		TakeH +                       
+		TakeI +                       
+		TakeJ as TakePM,              
+									
+		MissF +                       
+		MissG +                       
+		MissH +                       
+		MissI +                       
+		MissJ as MissPM,              
+									
+		RecoF+                        
+		RecoG+                        
+		RecoH+                        
+		RecoI+                        
+		RecoJ as RecoPM               
+
+ 
+
+   
+  FROM ( 
+
+		SELECT LINE_CODE, 
+				 MACHINE_CODE, 
+				 ITEM_CODE, 
+				 ABC_GRADE ,
+				INVENTORY_PRICE,
+				 PROGRAM_NAME, 
+				 TABLE_NO, 
+				 FEEDER_ZAXIS, 
+				 FEEDER_LRAXIS,
+				 
+				 SUM(DECODE(ACTUAL_TIME,'A', DECODE(DATA_TYPE,'T',DECODE(SIGN(SIM_COUNT),-1,HEAD_SUM,NVL(SIM_COUNT,HEAD_SUM)),0),0)) TakeA, 
+				 SUM(DECODE(ACTUAL_TIME,'A', DECODE(DATA_TYPE,'M',DECODE(SIGN(SIM_COUNT),-1,HEAD_SUM,NVL(SIM_COUNT,HEAD_SUM)),0),0)) MissA, 
+				 SUM(DECODE(ACTUAL_TIME,'A', DECODE(DATA_TYPE,'R',DECODE(SIGN(SIM_COUNT),-1,HEAD_SUM,NVL(SIM_COUNT,HEAD_SUM)),0),0)) RecoA,
+				 
+				 SUM(DECODE(ACTUAL_TIME,'B', DECODE(DATA_TYPE,'T',DECODE(SIGN(SIM_COUNT),-1,HEAD_SUM,NVL(SIM_COUNT,HEAD_SUM)),0),0)) TakeB, 
+				 SUM(DECODE(ACTUAL_TIME,'B', DECODE(DATA_TYPE,'M',DECODE(SIGN(SIM_COUNT),-1,HEAD_SUM,NVL(SIM_COUNT,HEAD_SUM)),0),0)) MissB, 
+				 SUM(DECODE(ACTUAL_TIME,'B', DECODE(DATA_TYPE,'R',DECODE(SIGN(SIM_COUNT),-1,HEAD_SUM,NVL(SIM_COUNT,HEAD_SUM)),0),0)) RecoB,
+				 
+				 SUM(DECODE(ACTUAL_TIME,'C', DECODE(DATA_TYPE,'T',DECODE(SIGN(SIM_COUNT),-1,HEAD_SUM,NVL(SIM_COUNT,HEAD_SUM)),0),0)) TakeC, 
+				 SUM(DECODE(ACTUAL_TIME,'C', DECODE(DATA_TYPE,'M',DECODE(SIGN(SIM_COUNT),-1,HEAD_SUM,NVL(SIM_COUNT,HEAD_SUM)),0),0)) MissC, 
+				 SUM(DECODE(ACTUAL_TIME,'C', DECODE(DATA_TYPE,'R',DECODE(SIGN(SIM_COUNT),-1,HEAD_SUM,NVL(SIM_COUNT,HEAD_SUM)),0),0)) RecoC,
+				 
+				 SUM(DECODE(ACTUAL_TIME,'D', DECODE(DATA_TYPE,'T',DECODE(SIGN(SIM_COUNT),-1,HEAD_SUM,NVL(SIM_COUNT,HEAD_SUM)),0),0)) TakeD, 
+				 SUM(DECODE(ACTUAL_TIME,'D', DECODE(DATA_TYPE,'M',DECODE(SIGN(SIM_COUNT),-1,HEAD_SUM,NVL(SIM_COUNT,HEAD_SUM)),0),0)) MissD, 
+				 SUM(DECODE(ACTUAL_TIME,'D', DECODE(DATA_TYPE,'R',DECODE(SIGN(SIM_COUNT),-1,HEAD_SUM,NVL(SIM_COUNT,HEAD_SUM)),0),0)) RecoD,
+				 
+				 SUM(DECODE(ACTUAL_TIME,'E', DECODE(DATA_TYPE,'T',DECODE(SIGN(SIM_COUNT),-1,HEAD_SUM,NVL(SIM_COUNT,HEAD_SUM)),0),0)) TakeE, 
+				 SUM(DECODE(ACTUAL_TIME,'E', DECODE(DATA_TYPE,'M',DECODE(SIGN(SIM_COUNT),-1,HEAD_SUM,NVL(SIM_COUNT,HEAD_SUM)),0),0)) MissE, 
+				 SUM(DECODE(ACTUAL_TIME,'E', DECODE(DATA_TYPE,'R',DECODE(SIGN(SIM_COUNT),-1,HEAD_SUM,NVL(SIM_COUNT,HEAD_SUM)),0),0)) RecoE,
+				 
+				 SUM(DECODE(ACTUAL_TIME,'F', DECODE(DATA_TYPE,'T',DECODE(SIGN(SIM_COUNT),-1,HEAD_SUM,NVL(SIM_COUNT,HEAD_SUM)),0),0)) TakeF, 
+				 SUM(DECODE(ACTUAL_TIME,'F', DECODE(DATA_TYPE,'M',DECODE(SIGN(SIM_COUNT),-1,HEAD_SUM,NVL(SIM_COUNT,HEAD_SUM)),0),0)) MissF, 
+				 SUM(DECODE(ACTUAL_TIME,'F', DECODE(DATA_TYPE,'R',DECODE(SIGN(SIM_COUNT),-1,HEAD_SUM,NVL(SIM_COUNT,HEAD_SUM)),0),0)) RecoF,
+				 
+				 SUM(DECODE(ACTUAL_TIME,'G', DECODE(DATA_TYPE,'T',DECODE(SIGN(SIM_COUNT),-1,HEAD_SUM,NVL(SIM_COUNT,HEAD_SUM)),0),0)) TakeG, 
+				 SUM(DECODE(ACTUAL_TIME,'G', DECODE(DATA_TYPE,'M',DECODE(SIGN(SIM_COUNT),-1,HEAD_SUM,NVL(SIM_COUNT,HEAD_SUM)),0),0)) MissG, 
+				 SUM(DECODE(ACTUAL_TIME,'G', DECODE(DATA_TYPE,'R',DECODE(SIGN(SIM_COUNT),-1,HEAD_SUM,NVL(SIM_COUNT,HEAD_SUM)),0),0)) RecoG,
+				 
+				 SUM(DECODE(ACTUAL_TIME,'H', DECODE(DATA_TYPE,'T',DECODE(SIGN(SIM_COUNT),-1,HEAD_SUM,NVL(SIM_COUNT,HEAD_SUM)),0),0)) TakeH, 
+				 SUM(DECODE(ACTUAL_TIME,'H', DECODE(DATA_TYPE,'M',DECODE(SIGN(SIM_COUNT),-1,HEAD_SUM,NVL(SIM_COUNT,HEAD_SUM)),0),0)) MissH, 
+				 SUM(DECODE(ACTUAL_TIME,'H', DECODE(DATA_TYPE,'R',DECODE(SIGN(SIM_COUNT),-1,HEAD_SUM,NVL(SIM_COUNT,HEAD_SUM)),0),0)) RecoH,
+				 
+				 SUM(DECODE(ACTUAL_TIME,'I', DECODE(DATA_TYPE,'T',DECODE(SIGN(SIM_COUNT),-1,HEAD_SUM,NVL(SIM_COUNT,HEAD_SUM)),0),0)) TakeI, 
+				 SUM(DECODE(ACTUAL_TIME,'I', DECODE(DATA_TYPE,'M',DECODE(SIGN(SIM_COUNT),-1,HEAD_SUM,NVL(SIM_COUNT,HEAD_SUM)),0),0)) MissI, 
+				 SUM(DECODE(ACTUAL_TIME,'I', DECODE(DATA_TYPE,'R',DECODE(SIGN(SIM_COUNT),-1,HEAD_SUM,NVL(SIM_COUNT,HEAD_SUM)),0),0)) RecoI,
+				 
+				 SUM(DECODE(ACTUAL_TIME,'J', DECODE(DATA_TYPE,'T',DECODE(SIGN(SIM_COUNT),-1,HEAD_SUM,NVL(SIM_COUNT,HEAD_SUM)),0),0)) TakeJ, 
+				 SUM(DECODE(ACTUAL_TIME,'J', DECODE(DATA_TYPE,'M',DECODE(SIGN(SIM_COUNT),-1,HEAD_SUM,NVL(SIM_COUNT,HEAD_SUM)),0),0)) MissJ, 
+				 SUM(DECODE(ACTUAL_TIME,'J', DECODE(DATA_TYPE,'R',DECODE(SIGN(SIM_COUNT),-1,HEAD_SUM,NVL(SIM_COUNT,HEAD_SUM)),0),0)) RecoJ
+
+		  FROM ( 
+					 SELECT T.LINE_CODE  , 
+							  T.MACHINE_CODE, 
+							  T.PROGRAM_NAME, 
+							  T.ADDRESS    , 
+							  T.SUB_ADDRESS, 
+							  T.ITEM_CODE  ,
+							  T.DATA_TYPE  ,
+							  T.ACTUAL_TIME,
+							  ID_ITEM.ABC_GRADE  AS ABC_GRADE ,
+							  T.TABLE_NO, 
+							  T.FEEDER_ZAXIS, 
+							  T.FEEDER_LRAXIS, 
+							  T.MODEL_NAME, 
+							  T.MODEL_SUFFIX, 
+							  T.PARENT_ITEM_CODE,
+							  T.PCB_ITEM, 
+							  T.ACTUAL_DATE, 
+							  //NVL(f_get_mat_max_unit_price_cfm(substr(t.item_code, 1, decode(instr(t.item_code,'-'),0,length(t.item_code), instr(t.item_code,'-') - 1 )),'F',sysdate,1),0)  INVENTORY_PRICE,
+						      NVL(f_get_mat_max_unit_price_cfm(t.item_code,'*',sysdate,1),0)  INVENTORY_PRICE,
+						
+							  
+							  T.HEAD_SUM   ,  
+							  DECODE(NVL(T.MACHINE_TYPE,'CM'), 'NPM' , T.HEAD_SUM, 
+							  T.HEAD_SUM - 
+							  LAG( T.HEAD_SUM) OVER ( PARTITION BY T.LINE_CODE  , 
+																			 T.MACHINE_CODE, 
+																			 T.PROGRAM_NAME,
+																			 T.ADDRESS    , 
+																			 T.SUB_ADDRESS,
+																			 T.ITEM_CODE  ,
+																			 T.DATA_TYPE  
+															 ORDER BY T.LINE_CODE  , 
+																				 T.MACHINE_CODE,
+																				 T.PROGRAM_NAME,
+																				 T.ADDRESS    , 
+																				 T.SUB_ADDRESS, 
+																				 T.ITEM_CODE  ,
+																				 T.DATA_TYPE  ,
+																				 T.ACTUAL_DATE, 
+																				 T.ACTUAL_TIME
+														  )
+							  ) SIM_COUNT  
+							  
+               
+                                                    
+                  
+            FROM IQ_MACHINE_INSPECT_PICKUP_RATE t , ID_ITEM 
+           WHERE T.ITEM_CODE = ID_ITEM.ITEM_CODE(+) 
+             AND  ( T.ACTUAL_DATE = :arg_date or ( T.ACTUAL_DATE = TRUNC(:arg_date -1) and T.ACTUAL_TIME = 'J' ) )   
+             AND T.LINE_CODE like  :arg_line
+		    AND T.MACHINE_CODE like :arg_machine
+             AND T.PROGRAM_NAME like :arg_program
+		    AND T.item_code like :arg_item 
+		    AND T.TABLE_NO like :arg_table 
+		    AND T.FEEDER_ZAXIS  like :arg_feeder 
+		    AND T.FEEDER_LRAXIS like :arg_lr
+     )  
+WHERE ACTUAL_DATE = TRUNC(:arg_date) 
+   
+GROUP BY LINE_CODE, 
+		MACHINE_CODE, 
+		ITEM_CODE, 
+		ABC_GRADE ,
+		INVENTORY_PRICE,
+		PROGRAM_NAME, 
+		TABLE_NO, 
+		FEEDER_ZAXIS, 
+		FEEDER_LRAXIS
+) 
+
+ORDER BY LINE_CODE, MACHINE_CODE, PROGRAM_NAME, TABLE_NO, FEEDER_ZAXIS, FEEDER_LRAXIS" arguments=(("arg_date", datetime),("arg_line", string),("arg_machine", string),("arg_program", string),("arg_item", string),("arg_table", string),("arg_feeder", string),("arg_lr", string))  sort="line_code A machine_code A program_name A item_code A feeder_zaxis A feeder_lraxis A table_no A item_code A inventory_price A " )
+group(level=1 header.height=24 trailer.height=88 by=("line_code" , "machine_code" , "program_name" ) header.color="536870912" trailer.color="65280" )
+text(band=header alignment="2" text="Line" border="0" color="33554432" x="9" y="32" height="176" width="247" html.valueishtml="0"  name=line_code_t visible="1"  font.face="Tahoma" font.height="-9" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="4" color="33554432" x="9" y="4" height="76" width="247" format="[general]" html.valueishtml="0"  name=line_code visible="1" dddw.name=vd_line_code dddw.displaycolumn=line_name dddw.datacolumn=line_code dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header alignment="2" text="Machine Code" border="0" color="33554432" x="265" y="36" height="176" width="421" html.valueishtml="0"  name=machine_code_t visible="1"  font.face="Tahoma" font.height="-9" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Table No" border="0" color="33554432" x="2062" y="32" height="176" width="242" html.valueishtml="0"  name=table_no_t visible="1"  font.face="Tahoma" font.height="-9" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Zaxis" border="0" color="33554432" x="2313" y="32" height="176" width="187" html.valueishtml="0"  name=feeder_zaxis_t visible="1"  font.face="Tahoma" font.height="-9" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text=" Lraxis" border="0" color="33554432" x="2510" y="32" height="176" width="187" html.valueishtml="0"  name=feeder_lraxis_t visible="1"  font.face="Tahoma" font.height="-9" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Pickup Count" border="0" color="33554432" x="2706" y="100" height="108" width="293" html.valueishtml="0"  name=takesum_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Pickup Miss" border="0" color="33554432" x="3008" y="100" height="108" width="215" html.valueishtml="0"  name=misssum_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Recog Miss" border="0" color="33554432" x="3232" y="100" height="108" width="215" html.valueishtml="0"  name=t_3 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Price" border="0" color="33554432" x="1815" y="32" height="176" width="242" html.valueishtml="0"  name=inventory_price_t visible="1"  font.face="Tahoma" font.height="-9" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Pickup Rate" border="0" color="33554432" x="3456" y="100" height="108" width="215" html.valueishtml="0"  name=pickup_rate_sum_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Item Code" border="0" color="33554432" x="1394" y="32" height="176" width="411" html.valueishtml="0"  name=item_code_t visible="1"  font.face="Tahoma" font.height="-9" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Amt" border="0" color="33554432" x="3675" y="100" height="108" width="247" html.valueishtml="0"  name=amount_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Amt" border="0" color="33554432" x="9307" y="100" height="108" width="215" html.valueishtml="0"  name=t_69 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Amt" border="0" color="33554432" x="14907" y="100" height="104" width="215" html.valueishtml="0"  name=t_70 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Program Name" border="0" color="33554432" x="695" y="32" height="176" width="507" html.valueishtml="0"  name=program_name_t visible="1"  font.face="Tahoma" font.height="-9" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="ABC" border="0" color="33554432" x="1211" y="32" height="176" width="174" html.valueishtml="0"  name=abc_grade_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Pickup Count" border="0" color="33554432" x="4827" y="100" height="108" width="215" html.valueishtml="0"  name=t_13 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Pickup Count" border="0" color="33554432" x="14011" y="100" height="108" width="215" html.valueishtml="0"  name=t_61 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Pickup Count" border="0" color="33554432" x="13120" y="100" height="108" width="215" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Pickup Count" border="0" color="33554432" x="12219" y="100" height="108" width="215" html.valueishtml="0"  name=t_56 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Pickup Count" border="0" color="33554432" x="11319" y="100" height="108" width="215" html.valueishtml="0"  name=t_46 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Pickup Count" border="0" color="33554432" x="10427" y="100" height="108" width="215" html.valueishtml="0"  name=t_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Pickup Count" border="0" color="33554432" x="9531" y="100" height="108" width="215" html.valueishtml="0"  name=t_41 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Pickup Count" border="0" color="33554432" x="8411" y="100" height="108" width="215" html.valueishtml="0"  name=t_31 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Pickup Count" border="0" color="33554432" x="7515" y="100" height="108" width="215" html.valueishtml="0"  name=t_26 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Pickup Count" border="0" color="33554432" x="6619" y="100" height="108" width="215" html.valueishtml="0"  name=t_21 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Pickup Count" border="0" color="33554432" x="5723" y="100" height="108" width="215" html.valueishtml="0"  name=t_17 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Pickup Count" border="0" color="33554432" x="3931" y="100" height="108" width="215" html.valueishtml="0"  name=t_8 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Pickup Miss" border="0" color="33554432" x="14235" y="100" height="108" width="215" html.valueishtml="0"  name=t_62 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Pickup Miss" border="0" color="33554432" x="13339" y="100" height="108" width="215" html.valueishtml="0"  name=t_57 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Pickup Miss" border="0" color="33554432" x="12443" y="100" height="108" width="215" html.valueishtml="0"  name=t_52 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Pickup Miss" border="0" color="33554432" x="11543" y="100" height="108" width="215" html.valueishtml="0"  name=t_47 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Pickup Miss" border="0" color="33554432" x="10651" y="100" height="108" width="215" html.valueishtml="0"  name=t_42 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Pickup Miss" border="0" color="33554432" x="9755" y="100" height="108" width="215" html.valueishtml="0"  name=t_37 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Pickup Miss" border="0" color="33554432" x="8635" y="100" height="108" width="215" html.valueishtml="0"  name=t_32 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Pickup Miss" border="0" color="33554432" x="7739" y="100" height="108" width="215" html.valueishtml="0"  name=t_27 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Pickup Miss" border="0" color="33554432" x="6843" y="100" height="108" width="215" html.valueishtml="0"  name=t_22 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Pickup Miss" border="0" color="33554432" x="5947" y="100" height="108" width="215" html.valueishtml="0"  name=t_18 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Pickup Miss" border="0" color="33554432" x="5051" y="100" height="108" width="215" html.valueishtml="0"  name=t_11 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Pickup Miss" border="0" color="33554432" x="4155" y="100" height="108" width="215" html.valueishtml="0"  name=t_9 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Recog Miss" border="0" color="33554432" x="4379" y="100" height="108" width="215" html.valueishtml="0"  name=t_10 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Recog Miss" border="0" color="33554432" x="5275" y="100" height="108" width="215" html.valueishtml="0"  name=t_12 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Recog Miss" border="0" color="33554432" x="6171" y="100" height="108" width="215" html.valueishtml="0"  name=t_19 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Recog Miss" border="0" color="33554432" x="7067" y="100" height="108" width="215" html.valueishtml="0"  name=t_23 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Recog Miss" border="0" color="33554432" x="7963" y="100" height="108" width="215" html.valueishtml="0"  name=t_28 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Recog Miss" border="0" color="33554432" x="8859" y="100" height="108" width="215" html.valueishtml="0"  name=t_33 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Recog Miss" border="0" color="33554432" x="9979" y="100" height="108" width="215" html.valueishtml="0"  name=t_38 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Recog Miss" border="0" color="33554432" x="10875" y="100" height="108" width="215" html.valueishtml="0"  name=t_43 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Recog Miss" border="0" color="33554432" x="11767" y="100" height="108" width="215" html.valueishtml="0"  name=t_48 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Recog Miss" border="0" color="33554432" x="12667" y="100" height="108" width="215" html.valueishtml="0"  name=t_53 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Recog Miss" border="0" color="33554432" x="13563" y="100" height="108" width="215" html.valueishtml="0"  name=t_58 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Recog Miss" border="0" color="33554432" x="14459" y="100" height="108" width="215" html.valueishtml="0"  name=t_63 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Pickup Rate" border="0" color="33554432" x="4603" y="100" height="108" width="215" html.valueishtml="0"  name=t_6 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Pickup Rate" border="0" color="33554432" x="5504" y="100" height="108" width="215" html.valueishtml="0"  name=t_15 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Pickup Rate" border="0" color="33554432" x="6395" y="100" height="108" width="215" html.valueishtml="0"  name=t_16 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Pickup Rate" border="0" color="33554432" x="7291" y="100" height="108" width="215" html.valueishtml="0"  name=t_25 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Pickup Rate" border="0" color="33554432" x="8187" y="100" height="108" width="215" html.valueishtml="0"  name=t_30 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Pickup Rate" border="0" color="33554432" x="9083" y="100" height="108" width="215" html.valueishtml="0"  name=t_35 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Pickup Rate" border="0" color="33554432" x="10203" y="100" height="108" width="215" html.valueishtml="0"  name=t_40 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Pickup Rate" border="0" color="33554432" x="11099" y="100" height="108" width="215" html.valueishtml="0"  name=t_45 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Pickup Rate" border="0" color="33554432" x="11991" y="100" height="108" width="215" html.valueishtml="0"  name=t_50 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Pickup Rate" border="0" color="33554432" x="12891" y="100" height="108" width="215" html.valueishtml="0"  name=t_55 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Pickup Rate" border="0" color="33554432" x="13787" y="100" height="108" width="215" html.valueishtml="0"  name=t_60 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Pickup Rate" border="0" color="33554432" x="14683" y="100" height="108" width="215" html.valueishtml="0"  name=t_65 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="4" color="33554432" x="265" y="4" height="76" width="421" format="[general]" html.valueishtml="0"  name=machine_code visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=6 alignment="2" tabsequence=32766 border="4" color="33554432" x="2062" y="4" height="76" width="242" format="[general]" html.valueishtml="0"  name=table_no visible="1" dddw.name=none dddw.displaycolumn=none dddw.datacolumn=none dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any  font.face="Tahoma" font.height="-9" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=7 alignment="2" tabsequence=32766 border="4" color="33554432" x="2313" y="4" height="76" width="187" format="[general]" html.valueishtml="0"  name=feeder_zaxis visible="1" edit.limit=2 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-9" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=8 alignment="2" tabsequence=32766 border="4" color="33554432" x="2510" y="4" height="76" width="187" format="[general]" html.valueishtml="0"  name=feeder_lraxis visible="1" edit.limit=1 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-9" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="1" tabsequence=32766 border="4" color="16711680" x="1810" y="4" height="76" width="242" format="#,##0.0000" html.valueishtml="0"  name=inventory_price visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="4" color="33554432" x="1394" y="4" height="76" width="411" format="[general]" html.valueishtml="0"  name=item_code visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="0" tabsequence=32766 border="4" color="33554432" x="695" y="4" height="76" width="507" format="[general]" html.valueishtml="0"  name=program_name visible="1" edit.limit=50 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=9 alignment="2" tabsequence=32766 border="4" color="33554432" x="1211" y="4" height="76" width="174" format="[general]" html.valueishtml="0"  name=abc_grade visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=40 alignment="1" tabsequence=32766 border="4" color="33554432" x="2706" y="4" height="76" width="293" format="###,###,###" html.valueishtml="0"  name=takesum visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+column(band=detail id=41 alignment="1" tabsequence=32766 border="4" color="33554432" x="3008" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=misssum visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+column(band=detail id=42 alignment="1" tabsequence=32766 border="4" color="33554432" x="3232" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=recosum visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+column(band=detail id=10 alignment="1" tabsequence=32766 border="4" color="33554432" x="3931" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=takea visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=11 alignment="1" tabsequence=32766 border="4" color="33554432" x="4155" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=missa visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=12 alignment="1" tabsequence=32766 border="4" color="33554432" x="4379" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=recoa visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=13 alignment="1" tabsequence=32766 border="4" color="33554432" x="4827" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=takeb visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=14 alignment="1" tabsequence=32766 border="4" color="33554432" x="5051" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=missb visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=15 alignment="1" tabsequence=32766 border="4" color="33554432" x="5275" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=recob visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=16 alignment="1" tabsequence=32766 border="4" color="33554432" x="5723" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=takec visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=17 alignment="1" tabsequence=32766 border="4" color="33554432" x="5947" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=missc visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=18 alignment="1" tabsequence=32766 border="4" color="33554432" x="6171" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=recoc visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=20 alignment="1" tabsequence=32766 border="4" color="33554432" x="6843" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=missd visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=19 alignment="1" tabsequence=32766 border="4" color="33554432" x="6619" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=taked visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=21 alignment="1" tabsequence=32766 border="4" color="33554432" x="7067" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=recod visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=22 alignment="1" tabsequence=32766 border="4" color="33554432" x="7515" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=takee visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=23 alignment="1" tabsequence=32766 border="4" color="33554432" x="7739" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=misse visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=24 alignment="1" tabsequence=32766 border="4" color="33554432" x="7963" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=recoe visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=25 alignment="1" tabsequence=32766 border="4" color="33554432" x="9531" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=takef visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=26 alignment="1" tabsequence=32766 border="4" color="33554432" x="9755" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=missf visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=27 alignment="1" tabsequence=32766 border="4" color="33554432" x="9979" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=recof visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=28 alignment="1" tabsequence=32766 border="4" color="33554432" x="10427" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=takeg visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=30 alignment="1" tabsequence=32766 border="4" color="33554432" x="10875" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=recog visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=29 alignment="1" tabsequence=32766 border="4" color="33554432" x="10651" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=missg visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=32 alignment="1" tabsequence=32766 border="4" color="33554432" x="11543" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=missh visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=33 alignment="1" tabsequence=32766 border="4" color="33554432" x="11767" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=recoh visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=34 alignment="1" tabsequence=32766 border="4" color="33554432" x="12219" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=takei visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=35 alignment="1" tabsequence=32766 border="4" color="33554432" x="12443" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=missi visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=36 alignment="1" tabsequence=32766 border="4" color="33554432" x="12667" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=recoi visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=37 alignment="1" tabsequence=32766 border="4" color="33554432" x="13120" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=takej visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=38 alignment="1" tabsequence=32766 border="4" color="33554432" x="13339" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=missj visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=39 alignment="1" tabsequence=32766 border="4" color="33554432" x="13563" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=recoj visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="1" expression="(1 - ( misssum + recosum ) /  takesum ) * 100"border="4" color="33554432" x="3456" y="4" height="76" width="215" format="##0.00" html.valueishtml="0"  name=pickup_rate_sum visible="1"  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+column(band=detail id=44 alignment="1" tabsequence=32766 border="4" color="33554432" x="8635" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=missam visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+column(band=detail id=45 alignment="1" tabsequence=32766 border="4" color="33554432" x="8859" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=recoam visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+column(band=detail id=43 alignment="1" tabsequence=32766 border="4" color="33554432" x="8411" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=taskeam visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+column(band=detail id=31 alignment="1" tabsequence=32766 border="4" color="33554432" x="11319" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=takeh visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=47 alignment="1" tabsequence=32766 border="4" color="33554432" x="14235" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=misspm visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+column(band=detail id=48 alignment="1" tabsequence=32766 border="4" color="33554432" x="14459" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=recopm visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+column(band=detail id=46 alignment="1" tabsequence=32766 border="4" color="33554432" x="14011" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=takepm visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+compute(band=detail alignment="1" expression=" (misssum + recosum )* inventory_price "border="4" color="255" x="3675" y="4" height="76" width="247" format="###,###,###,##0.00" html.valueishtml="0"  name=amount visible="1"  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+compute(band=detail alignment="1" expression="(1 - ( missa + recoa ) /  takea ) * 100"border="4" color="255" x="4603" y="4" height="76" width="215" format="##0.00" html.valueishtml="0"  name=compute_2 visible="1"  hidesnaked=1  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="1" expression="(1 - ( missb + recob ) /  takeb ) * 100"border="4" color="255" x="5504" y="4" height="76" width="215" format="##0.00" html.valueishtml="0"  name=compute_3 visible="1"  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="1" expression="(1 - ( missc + recoc ) /  takec ) * 100"border="4" color="255" x="6395" y="4" height="76" width="215" format="##0.00" html.valueishtml="0"  name=compute_4 visible="1"  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="1" expression="(1 - ( missd + recod ) /  taked ) * 100"border="4" color="255" x="7291" y="4" height="76" width="215" format="##0.00" html.valueishtml="0"  name=compute_5 visible="1"  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="1" expression="(1 - ( misse + recoe ) /  takee ) * 100"border="4" color="255" x="8187" y="4" height="76" width="215" format="##0.00" html.valueishtml="0"  name=compute_6 visible="1"  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="1" expression="(1 - ( missam + recoam ) /   taskeam ) * 100"border="4" color="255" x="9083" y="4" height="76" width="215" format="##0.00" html.valueishtml="0"  name=compute_7 visible="1"  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+compute(band=detail alignment="1" expression=" (missam + recoam )* inventory_price "border="4" color="255" x="9307" y="4" height="76" width="215" format="###,###,##0.00" html.valueishtml="0"  name=compute_120 visible="1"  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+compute(band=detail alignment="1" expression="(1 - ( missf + recof ) /  takef ) * 100"border="4" color="255" x="10203" y="4" height="76" width="215" format="##0.00" html.valueishtml="0"  name=compute_8 visible="1"  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="1" expression="(1 - ( missg + recog ) /  takeg ) * 100"border="4" color="255" x="11099" y="4" height="76" width="215" format="##0.00" html.valueishtml="0"  name=compute_9 visible="1"  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="1" expression="(1 - ( missi + recoi ) /  takei ) * 100"border="4" color="255" x="12891" y="4" height="76" width="215" format="##0.00" html.valueishtml="0"  name=compute_11 visible="1"  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="1" expression="(1 - ( missj + recoj ) /  takei ) * 100"border="4" color="255" x="13787" y="4" height="76" width="215" format="##0.00" html.valueishtml="0"  name=compute_12 visible="1"  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="1" expression="(1 - ( misspm + recopm ) /  takepm ) * 100"border="4" color="255" x="14683" y="4" height="76" width="215" format="##0.00" html.valueishtml="0"  name=compute_13 visible="1"  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+compute(band=detail alignment="1" expression=" (misspm + recopm )* inventory_price "border="4" color="255" x="14907" y="4" height="76" width="215" format="###,###,##0.00" html.valueishtml="0"  name=compute_121 visible="1"  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+compute(band=detail alignment="1" expression="(1 - ( missh + recoh ) /  takeh ) * 100"border="4" color="255" x="11991" y="4" height="76" width="215" format="##0.00" html.valueishtml="0"  name=compute_10 visible="1"  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="machine_code  +   ~" ~" + program_name + ~" Sub Total~""border="0" color="33554432" x="1157" y="4" height="76" width="1536" format="[GENERAL]" html.valueishtml="0"  name=compute_118 visible="1"  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum(takesum for group 1)"border="4" color="33554432" x="2706" y="4" height="76" width="293" format="###,###,###" html.valueishtml="0"  name=compute_115 visible="1"  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum(misssum for group 1)"border="4" color="33554432" x="3008" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_110 visible="1"  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum(recosum for group 1)"border="4" color="33554432" x="3232" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_111 visible="1"  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum(takea for group 1)"border="4" color="33554432" x="3931" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_67 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum(missa for group 1)"border="4" color="33554432" x="4155" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_65 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum(recoa for group 1)"border="4" color="33554432" x="4379" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_66 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum(takeb for group 1)"border="4" color="33554432" x="4827" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_69 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum(missb for group 1)"border="4" color="33554432" x="5051" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_70 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum(recob for group 1)"border="4" color="33554432" x="5275" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_71 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum(takec for group 1)"border="4" color="33554432" x="5723" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_73 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum(missc for group 1)"border="4" color="33554432" x="5947" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_74 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum(recoc for group 1)"border="4" color="33554432" x="6171" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_75 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum(missd for group 1)"border="4" color="33554432" x="6843" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_77 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum(taked for group 1)"border="4" color="33554432" x="6619" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_78 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum(recod for group 1)"border="4" color="33554432" x="7067" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_79 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum(takee for group 1)"border="4" color="33554432" x="7515" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_81 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum(misse for group 1)"border="4" color="33554432" x="7739" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_82 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum(recoe for group 1)"border="4" color="33554432" x="7963" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_83 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum(takef for group 1)"border="4" color="33554432" x="9531" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_86 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum(missf for group 1)"border="4" color="33554432" x="9755" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_87 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum(recof for group 1)"border="4" color="33554432" x="9979" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_88 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum(takeg for group 1)"border="4" color="33554432" x="10427" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_89 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum(recog for group 1)"border="4" color="33554432" x="10875" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_90 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum(missg for group 1)"border="4" color="33554432" x="10651" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_91 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum(missh for group 1)"border="4" color="33554432" x="11543" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_94 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum(recoh for group 1)"border="4" color="33554432" x="11767" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_95 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum(takei for group 1)"border="4" color="33554432" x="12219" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_97 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum(missi for group 1)"border="4" color="33554432" x="12443" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_98 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum(recoi for group 1)"border="4" color="33554432" x="12667" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_99 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum(takej for group 1)"border="4" color="33554432" x="13120" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_101 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum(missj for group 1)"border="4" color="33554432" x="13339" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_103 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum(recoj for group 1)"border="4" color="33554432" x="13563" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_104 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="(1 - ( compute_110+ compute_111) /  compute_115) * 100 "border="4" color="33554432" x="3456" y="4" height="76" width="215" format="##0.00" html.valueishtml="0"  name=compute_109 visible="1"  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum(missam for group 1)"border="4" color="33554432" x="8635" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_106 visible="1"  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum(recoam for group 1)"border="4" color="33554432" x="8859" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_107 visible="1"  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum(taskeam for group 1)"border="4" color="33554432" x="8411" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_105 visible="1"  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum(takeh for group 1)"border="4" color="33554432" x="11319" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_93 visible="1"  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum(misspm for group 1)"border="4" color="33554432" x="14235" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_112 visible="1"  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum(recopm for group 1)"border="4" color="33554432" x="14459" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_113 visible="1"  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum(takepm for group 1)"border="4" color="33554432" x="14011" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_108 visible="1"  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum( (misssum + recosum )* inventory_price  for group 1)"border="4" color="255" x="3675" y="4" height="76" width="247" format="###,###,###,##0.00" html.valueishtml="0"  name=compute_122 visible="1"  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="avg((1 - ( missa + recoa ) /  takea ) * 100 for group 1)"border="4" color="255" x="4603" y="4" height="76" width="215" format="##0.00" html.valueishtml="0"  name=compute_68 visible="1"  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="avg((1 - ( missb + recob ) /  takeb ) * 100 for group 1)"border="4" color="255" x="5504" y="4" height="76" width="215" format="##0.00" html.valueishtml="0"  name=compute_72 visible="1"  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="avg((1 - ( missc + recoc ) /  takec ) * 100 for group 1)"border="4" color="255" x="6395" y="4" height="76" width="215" format="##0.00" html.valueishtml="0"  name=compute_76 visible="1"  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="avg((1 - ( missd + recod ) /  taked ) * 100 for group 1)"border="4" color="255" x="7291" y="4" height="76" width="215" format="##0.00" html.valueishtml="0"  name=compute_80 visible="1"  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="avg((1 - ( misse + recoe ) /  takee ) * 100 for group 1)"border="4" color="255" x="8187" y="4" height="76" width="215" format="##0.00" html.valueishtml="0"  name=compute_84 visible="1"  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="0" expression="avg ( (1 - ( missam + recoam ) /  taskeam ) * 100 for group 1) "border="4" color="255" x="9083" y="4" height="76" width="215" format="##0.00" html.valueishtml="0"  name=compute_116 visible="1"  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum( (missam + recoam )* inventory_price  for group 1)"border="4" color="255" x="9307" y="4" height="76" width="215" format="###,###,##0.00" html.valueishtml="0"  name=compute_123 visible="1"  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="avg((1 - ( missf + recof ) /  takef ) * 100 for group 1)"border="4" color="255" x="10203" y="4" height="76" width="215" format="##0.00" html.valueishtml="0"  name=compute_85 visible="1"  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="avg((1 - ( missg + recog ) /  takeg ) * 100 for group 1)"border="4" color="255" x="11099" y="4" height="76" width="215" format="##0.00" html.valueishtml="0"  name=compute_92 visible="1"  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="avg((1 - ( missi + recoi ) /  takei ) * 100 for group 1)"border="4" color="255" x="12891" y="4" height="76" width="215" format="##0.00" html.valueishtml="0"  name=compute_100 visible="1"  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="avg((1 - ( missj + recoj ) /  takei ) * 100 for group 1)"border="4" color="255" x="13787" y="4" height="76" width="215" format="##0.00" html.valueishtml="0"  name=compute_102 visible="1"  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="avg((1 - ( misspm + recopm ) /  takepm ) * 100 for group 1)"border="4" color="255" x="14683" y="4" height="76" width="215" format="##0.00" html.valueishtml="0"  name=compute_114 visible="1"  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="sum( (misspm + recopm )* inventory_price  for group 1)"border="4" color="255" x="14907" y="4" height="76" width="215" format="###,###,##0.00" html.valueishtml="0"  name=compute_124 visible="1"  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=trailer.1 alignment="1" expression="avg((1 - ( missh + recoh ) /  takeh ) * 100 for group 1)"border="4" color="255" x="11991" y="4" height="76" width="215" format="##0.00" html.valueishtml="0"  name=compute_96 visible="1"  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=footer alignment="1" text="Total " border="0" color="33554432" x="2377" y="4" height="76" width="315" html.valueishtml="0"  name=t_66 visible="1"  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+compute(band=footer alignment="1" expression="sum(takesum for all)"border="4" color="33554432" x="2706" y="4" height="76" width="293" format="###,###,###" html.valueishtml="0"  name=compute_14 visible="1"  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+compute(band=footer alignment="1" expression="sum(misssum for all)"border="4" color="33554432" x="3008" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_60 visible="1"  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+compute(band=footer alignment="1" expression="sum(recosum for all)"border="4" color="33554432" x="3232" y="4" height="76" width="215" format="###,###,###,###" html.valueishtml="0"  name=compute_61 visible="1"  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+compute(band=footer alignment="1" expression="sum(takea for all)"border="4" color="33554432" x="3931" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_17 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+compute(band=footer alignment="1" expression="sum(missa for all)"border="4" color="33554432" x="4155" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_15 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+compute(band=footer alignment="1" expression="sum(recoa for all)"border="4" color="33554432" x="4379" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_16 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+compute(band=footer alignment="1" expression="sum(takeb for all)"border="4" color="33554432" x="4827" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_19 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+compute(band=footer alignment="1" expression="sum(missb for all)"border="4" color="33554432" x="5051" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_20 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+compute(band=footer alignment="1" expression="sum(recob for all)"border="4" color="33554432" x="5275" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_21 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+compute(band=footer alignment="1" expression="sum(takec for all)"border="4" color="33554432" x="5723" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_23 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+compute(band=footer alignment="1" expression="sum(missc for all)"border="4" color="33554432" x="5947" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_24 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+compute(band=footer alignment="1" expression="sum(recoc for all)"border="4" color="33554432" x="6171" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_25 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+compute(band=footer alignment="1" expression="sum(missd for all)"border="4" color="33554432" x="6843" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_27 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+compute(band=footer alignment="1" expression="sum(taked for all)"border="4" color="33554432" x="6619" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_28 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+compute(band=footer alignment="1" expression="sum(recod for all)"border="4" color="33554432" x="7067" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_29 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+compute(band=footer alignment="1" expression="sum(takee for all)"border="4" color="33554432" x="7515" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_31 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+compute(band=footer alignment="1" expression="sum(misse for all)"border="4" color="33554432" x="7739" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_32 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+compute(band=footer alignment="1" expression="sum(recoe for all)"border="4" color="33554432" x="7963" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_33 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+compute(band=footer alignment="1" expression="sum(takef for all)"border="4" color="33554432" x="9531" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_36 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+compute(band=footer alignment="1" expression="sum(missf for all)"border="4" color="33554432" x="9755" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_37 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+compute(band=footer alignment="1" expression="sum(recof for all)"border="4" color="33554432" x="9979" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_38 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+compute(band=footer alignment="1" expression="sum(takeg for all)"border="4" color="33554432" x="10427" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_39 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+compute(band=footer alignment="1" expression="sum(recog for all)"border="4" color="33554432" x="10875" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_40 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+compute(band=footer alignment="1" expression="sum(missg for all)"border="4" color="33554432" x="10651" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_41 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+compute(band=footer alignment="1" expression="sum(missh for all)"border="4" color="33554432" x="11543" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_44 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+compute(band=footer alignment="1" expression="sum(recoh for all)"border="4" color="33554432" x="11767" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_45 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+compute(band=footer alignment="1" expression="sum(takei for all)"border="4" color="33554432" x="12219" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_47 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+compute(band=footer alignment="1" expression="sum(missi for all)"border="4" color="33554432" x="12443" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_48 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+compute(band=footer alignment="1" expression="sum(recoi for all)"border="4" color="33554432" x="12667" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_49 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+compute(band=footer alignment="1" expression="sum(takej for all)"border="4" color="33554432" x="13120" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_51 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+compute(band=footer alignment="1" expression="sum(missj for all)"border="4" color="33554432" x="13339" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_53 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+compute(band=footer alignment="1" expression="sum(recoj for all)"border="4" color="33554432" x="13563" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_54 visible="1"  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+compute(band=footer alignment="1" expression="(1 - ( compute_60+ compute_61) /  compute_14) * 100 "border="4" color="33554432" x="3456" y="4" height="76" width="215" format="##0.00" html.valueishtml="0"  name=compute_59 visible="1"  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+compute(band=footer alignment="1" expression="sum(missam for all)"border="4" color="33554432" x="8635" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_56 visible="1"  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+compute(band=footer alignment="1" expression="sum(recoam for all)"border="4" color="33554432" x="8859" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_57 visible="1"  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+compute(band=footer alignment="1" expression="sum(taskeam for all)"border="4" color="33554432" x="8411" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_55 visible="1"  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+compute(band=footer alignment="1" expression="sum(takeh for all)"border="4" color="33554432" x="11319" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_43 visible="1"  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+compute(band=footer alignment="1" expression="sum(misspm for all)"border="4" color="33554432" x="14235" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_62 visible="1"  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+compute(band=footer alignment="1" expression="sum(recopm for all)"border="4" color="33554432" x="14459" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_63 visible="1"  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+compute(band=footer alignment="1" expression="sum(takepm for all)"border="4" color="33554432" x="14011" y="4" height="76" width="215" format="###,###,###" html.valueishtml="0"  name=compute_58 visible="1"  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+compute(band=footer alignment="1" expression="sum( (misssum + recosum )* inventory_price  for all)"border="4" color="255" x="3675" y="4" height="76" width="247" format="###,###,###,##0.00" html.valueishtml="0"  name=compute_127 visible="1"  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217739" )
+compute(band=footer alignment="1" expression="avg((1 - ( missa + recoa ) /  takea ) * 100 for all)"border="4" color="255" x="4603" y="4" height="76" width="215" format="##0.00" html.valueishtml="0"  name=compute_18 visible="1"  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+compute(band=footer alignment="1" expression="avg((1 - ( missb + recob ) /  takeb ) * 100 for all)"border="4" color="255" x="5504" y="4" height="76" width="215" format="##0.00" html.valueishtml="0"  name=compute_22 visible="1"  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+compute(band=footer alignment="1" expression="avg((1 - ( missc + recoc ) /  takec ) * 100 for all)"border="4" color="255" x="6395" y="4" height="76" width="215" format="##0.00" html.valueishtml="0"  name=compute_26 visible="1"  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+compute(band=footer alignment="1" expression="avg((1 - ( missd + recod ) /  taked ) * 100 for all)"border="4" color="255" x="7291" y="4" height="76" width="215" format="##0.00" html.valueishtml="0"  name=compute_30 visible="1"  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+compute(band=footer alignment="1" expression="avg((1 - ( misse + recoe ) /  takee ) * 100 for all)"border="4" color="255" x="8187" y="4" height="76" width="215" format="##0.00" html.valueishtml="0"  name=compute_34 visible="1"  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+compute(band=footer alignment="0" expression="avg ( (1 - ( missam + recoam ) /  taskeam ) * 100 for all) "border="4" color="255" x="9083" y="4" height="76" width="215" format="##0.00" html.valueishtml="0"  name=compute_117 visible="1"  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+compute(band=footer alignment="1" expression="sum( (missam + recoam )* inventory_price  for all)"border="4" color="255" x="9307" y="4" height="76" width="215" format="###,###,##0.00" html.valueishtml="0"  name=compute_126 visible="1"  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217739" )
+compute(band=footer alignment="1" expression="avg((1 - ( missf + recof ) /  takef ) * 100 for all)"border="4" color="255" x="10203" y="4" height="76" width="215" format="##0.00" html.valueishtml="0"  name=compute_35 visible="1"  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+compute(band=footer alignment="1" expression="avg((1 - ( missg + recog ) /  takeg ) * 100 for all)"border="4" color="255" x="11099" y="4" height="76" width="215" format="##0.00" html.valueishtml="0"  name=compute_42 visible="1"  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+compute(band=footer alignment="1" expression="avg((1 - ( missi + recoi ) /  takei ) * 100 for all)"border="4" color="255" x="12891" y="4" height="76" width="215" format="##0.00" html.valueishtml="0"  name=compute_50 visible="1"  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+compute(band=footer alignment="1" expression="avg((1 - ( missj + recoj ) /  takei ) * 100 for all)"border="4" color="255" x="13787" y="4" height="76" width="215" format="##0.00" html.valueishtml="0"  name=compute_52 visible="1"  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+compute(band=footer alignment="1" expression="avg((1 - ( misspm + recopm ) /  takepm ) * 100 for all)"border="4" color="255" x="14683" y="4" height="76" width="215" format="##0.00" html.valueishtml="0"  name=compute_64 visible="1"  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+compute(band=footer alignment="1" expression="sum( (misspm + recopm )* inventory_price  for all)"border="4" color="255" x="14907" y="4" height="76" width="215" format="###,###,##0.00" html.valueishtml="0"  name=compute_125 visible="1"  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217739" )
+compute(band=footer alignment="1" expression="avg((1 - ( missh + recoh ) /  takeh ) * 100 for all)"border="4" color="255" x="11991" y="4" height="76" width="215" format="##0.00" html.valueishtml="0"  name=compute_46 visible="1"  font.face="Tahoma" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+text(band=foreground alignment="2" text="TOTAL" border="0" color="33554432" x="2706" y="28" height="56" width="1221" html.valueishtml="0"  name=t_5 visible="1"  font.face="Tahoma" font.height="-9" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16776960" )
+text(band=foreground alignment="2" text="TIME A" border="0" color="33554432" x="3931" y="28" height="56" width="887" html.valueishtml="0"  name=t_7 visible="1"  font.face="Tahoma" font.height="-9" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+text(band=foreground alignment="2" text="TIME B" border="0" color="33554432" x="4827" y="28" height="56" width="887" html.valueishtml="0"  name=t_14 visible="1"  font.face="Tahoma" font.height="-9" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217752" )
+text(band=foreground alignment="2" text="TIME C" border="0" color="33554432" x="5723" y="28" height="56" width="887" html.valueishtml="0"  name=t_20 visible="1"  font.face="Tahoma" font.height="-9" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+text(band=foreground alignment="2" text="TIME D" border="0" color="33554432" x="6619" y="28" height="56" width="887" html.valueishtml="0"  name=t_24 visible="1"  font.face="Tahoma" font.height="-9" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217752" )
+text(band=foreground alignment="2" text="TIME E" border="0" color="33554432" x="7515" y="28" height="56" width="887" html.valueishtml="0"  name=t_29 visible="1"  font.face="Tahoma" font.height="-9" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+text(band=foreground alignment="2" text="AM TOTAL" border="0" color="33554432" x="8411" y="28" height="56" width="1111" html.valueishtml="0"  name=t_34 visible="1"  font.face="Tahoma" font.height="-9" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16776960" )
+text(band=foreground alignment="2" text="TIME F" border="0" color="33554432" x="9531" y="28" height="56" width="887" html.valueishtml="0"  name=t_39 visible="1"  font.face="Tahoma" font.height="-9" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+text(band=foreground alignment="2" text="TIME H" border="0" color="33554432" x="11323" y="28" height="56" width="887" html.valueishtml="0"  name=t_49 visible="1"  font.face="Tahoma" font.height="-9" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+text(band=foreground alignment="2" text="TIME J" border="0" color="33554432" x="13115" y="28" height="56" width="887" html.valueishtml="0"  name=t_59 visible="1"  font.face="Tahoma" font.height="-9" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+text(band=foreground alignment="2" text="PM TOTAL" border="0" color="33554432" x="14011" y="28" height="56" width="1111" html.valueishtml="0"  name=t_64 visible="1"  font.face="Tahoma" font.height="-9" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16776960" )
+text(band=foreground alignment="2" text="TIME G" border="0" color="33554432" x="10427" y="28" height="56" width="887" html.valueishtml="0"  name=t_44 visible="1"  font.face="Tahoma" font.height="-9" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217752" )
+text(band=foreground alignment="2" text="TIME I" border="0" color="33554432" x="12219" y="28" height="56" width="887" html.valueishtml="0"  name=t_54 visible="1"  font.face="Tahoma" font.height="-9" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217752" )
+
+sparse(names="line_code	machine_code	program_name	abc_grade	item_code	table_no	feeder_zaxis	feeder_lraxis")htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

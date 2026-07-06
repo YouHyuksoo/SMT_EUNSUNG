@@ -1,0 +1,12 @@
+HA$PBExportHeader$f_change_mdi_menu.srf
+global type f_change_mdi_menu from function_object
+end type
+
+forward prototypes
+global subroutine f_change_mdi_menu (menu arg_menu)
+end prototypes
+
+global subroutine f_change_mdi_menu (menu arg_menu);w_main_frame.changemenu( arg_menu )
+f_dual_lang_change_menu( arg_menu )
+end subroutine
+

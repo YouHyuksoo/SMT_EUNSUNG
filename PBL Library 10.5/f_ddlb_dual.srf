@@ -1,0 +1,30 @@
+HA$PBExportHeader$f_ddlb_dual.srf
+$PBExportComments$DDLB$$HEX28$$58c72000b4b0a9c644c72000e4b26dadb4c55cb82000c0bc58d658d574ba1cc12000acb9a4c205d3200074d5fcc894b2200068d518c22000$$ENDHEX$$(addlb_kind, ai_index, as_text)
+global type f_ddlb_dual from function_object
+end type
+
+forward prototypes
+global subroutine f_ddlb_dual (dropdownlistbox addlb_kind, integer ai_index, string as_text)
+end prototypes
+
+global subroutine f_ddlb_dual (dropdownlistbox addlb_kind, integer ai_index, string as_text);long		ll_row
+string		ls_index
+
+ls_index	=	string(ai_index, '00') + ' '
+
+ll_row = gds_dual.find ( "english_text = '" + UPPER ( as_text ) + "' ", 1, gds_dual.rowcount() )
+
+if	ll_row > 0 then
+	if	Gvs_language = 'C' then
+		addlb_kind.additem( ls_index + gds_dual.object.local_text [ ll_row ] )
+	elseif Gvs_language = 'K' then
+		addlb_kind.additem(  ls_index + gds_dual.object.korea_text [ ll_row ] )
+	else
+		addlb_kind.additem(  ls_index + as_text )
+	end if
+else
+	addlb_kind.additem(  ls_index + as_text )
+end if
+
+end subroutine
+

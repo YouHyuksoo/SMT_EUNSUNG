@@ -1,0 +1,46 @@
+HA$PBExportHeader$d_ip_product_pid_inspect_data_jig_rpt.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=0 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no )
+header(height=240 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=56 color="536870912" )
+detail(height=80 color="536870912" )
+table(column=(type=char(30) updatewhereclause=yes name=run_no dbname="imcn_jig_input_hist.run_no" dbalias=".run_no" )
+ column=(type=char(20) updatewhereclause=yes name=jig_type dbname="imcn_jig_input_hist.jig_type" dbalias=".jig_type" )
+ column=(type=char(4000) updatewhereclause=yes name=line_code dbname="line_code" )
+ column=(type=datetime updatewhereclause=yes name=input_date dbname="imcn_jig_input_hist.input_date" dbalias=".input_date" )
+ column=(type=char(30) updatewhereclause=yes name=jig_lot_no dbname="imcn_jig_input_hist.jig_lot_no" dbalias=".jig_lot_no" )
+ retrieve=" select run_no, 
+          jig_type, 
+          f_get_line_name( line_code, organization_id) line_code,
+          input_date,  
+          jig_lot_no
+   from imcn_jig_input_hist    
+ where run_no = (
+                           select run_no
+                              from ip_product_2d_barcode
+                            where serial_no like :ARG_SERIAL_NO 
+                                and rownum = 1
+                         ) 
+   AND ORGANIZATION_ID = :ARG_ORG
+" arguments=(("ARG_SERIAL_NO", string),("ARG_ORG", number))  sort="input_date A jig_lot_no A " )
+text(band=header alignment="0" text="  Jig Input History" border="1" color="33554432" x="14" y="12" height="76" width="1714" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=header alignment="2" text="Input Date" border="2" color="33554432" x="14" y="120" height="112" width="617" html.valueishtml="0"  name=t_11 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="Line Code" border="2" color="33554432" x="640" y="120" height="112" width="498" html.valueishtml="0"  name=judgment_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="Jig Type" border="2" color="33554432" x="1147" y="120" height="112" width="361" html.valueishtml="0"  name=t_12 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=header alignment="2" text="Jig Lot No" border="2" color="33554432" x="1518" y="120" height="112" width="635" html.valueishtml="0"  name=meas_time_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="2" color="33554432" x="14" y="8" height="64" width="617" format="[shortdate] [time]" html.valueishtml="0"  name=input_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="2" color="33554432" x="640" y="8" height="64" width="498" format="[general]" html.valueishtml="0"  name=line_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="2" color="33554432" x="1147" y="8" height="64" width="361" format="[general]" html.valueishtml="0"  name=jig_type visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=5 alignment="2" tabsequence=32766 border="2" color="33554432" x="1518" y="8" height="64" width="635" format="[general]" html.valueishtml="0"  name=jig_lot_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

@@ -1,0 +1,13 @@
+HA$PBExportHeader$f_mat_receipt_auto_issue.srf
+global type f_mat_receipt_auto_issue from function_object
+end type
+
+forward prototypes
+global function integer f_mat_receipt_auto_issue (datetime adt_date, double adb_sequence, string as_line_code, string as_workstage_code)
+end prototypes
+
+global function integer f_mat_receipt_auto_issue (datetime adt_date, double adb_sequence, string as_line_code, string as_workstage_code);
+
+return 0
+end function
+

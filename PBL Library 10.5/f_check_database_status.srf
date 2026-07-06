@@ -1,0 +1,30 @@
+HA$PBExportHeader$f_check_database_status.srf
+global type f_check_database_status from function_object
+end type
+
+forward prototypes
+global function integer f_check_database_status ()
+end prototypes
+
+global function integer f_check_database_status ();Disconnect;
+sqlca.dbms               = ProfileString ("SYSTEM.INI", "database", "dbms",       "")
+if ProfileString ("SYSTEM.INI", "database", "dbms",       "") = 'JDBC' then 
+   sqlca.dbparm = ProfileString ("SYSTEM.INI", "JDBCDBPARM", "dbparm",     "")		
+
+else
+   sqlca.dbparm = ProfileString ("SYSTEM.INI", "NATIVEDBPARM", "dbparm",     "")		
+end if
+
+sqlca.logid       = ProfileString ("SYSTEM.INI", "database", "logid",      "")
+sqlca.logpass   = f_password_decode(ProfileString ("SYSTEM.INI", "database", "LogPassWord", ""))
+sqlca.servername = ProfileString ("SYSTEM.INI", "database", "servername", "")
+
+Connect;
+
+if sqlca.sqlcode <> 0 then
+	return -1
+else
+	return 1
+end if
+end function
+

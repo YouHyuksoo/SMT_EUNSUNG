@@ -1,0 +1,185 @@
+HA$PBExportHeader$f_check_interlock_status.srf
+global type f_check_interlock_status from function_object
+end type
+
+forward prototypes
+global function string f_check_interlock_status (string arg_serial_no, string arg_check_type)
+end prototypes
+
+global function string f_check_interlock_status (string arg_serial_no, string arg_check_type);LONG LVI_COUNT
+
+IF  arg_check_type = 'PID' THEN 
+	
+		 SELECT COUNT(*) INTO :LVI_COUNT 
+	   FROM IP_PRODUCT_2D_BARCODE 
+      WHERE SERIAL_NO = :ARG_SERIAL_NO  ;
+
+		IF F_SQL_CHECK() < 0 THEN 
+			RETURN 'ERROR' 
+		END IF 
+	
+		if LVI_COUNT > 0 then 
+			return 'OK'
+		ELSE
+			return 'NG'
+		end if 	
+		
+ELSEIF  arg_check_type = 'SPI' THEN 
+
+	 SELECT COUNT(*) INTO :LVI_COUNT 
+	   FROM IQ_INTERLOCK_CHECK_RESULT 
+      WHERE SERIAL_NO = :ARG_SERIAL_NO 
+		  AND WORKSTAGE_CODE = 'W030' 
+		  AND IS_LAST_YN = 'Y'
+		  AND CHECK_RESULT NOT IN ( 'OK' , 'PASS')  ;
+		  
+		IF F_SQL_CHECK() < 0 THEN 
+			RETURN 'ERROR' 
+		END IF 
+	
+		if LVI_COUNT > 0 then 
+			return 'NG'
+		ELSE
+			return 'OK'
+		end if 		
+		
+ELSEIF  arg_check_type = 'AOI' THEN 
+	
+		 SELECT COUNT(*) INTO :LVI_COUNT 
+	   FROM IQ_INTERLOCK_CHECK_RESULT 
+      WHERE SERIAL_NO = :ARG_SERIAL_NO 
+		  AND WORKSTAGE_CODE = 'W050' 
+		  AND IS_LAST_YN = 'Y'
+		  AND CHECK_RESULT NOT IN ( 'OK' , 'PASS')  ;
+		  
+		IF F_SQL_CHECK() < 0 THEN 
+			RETURN 'ERROR' 
+		END IF 
+	
+		if LVI_COUNT > 0 then 
+			return 'NG'
+		ELSE
+			return 'OK'
+		end if 		
+	
+ELSEIF  arg_check_type = 'REFLOW' THEN 
+	
+	 SELECT COUNT(*) INTO :LVI_COUNT 
+	   FROM IQ_INTERLOCK_CHECK_RESULT 
+      WHERE SERIAL_NO = :ARG_SERIAL_NO 
+		  AND WORKSTAGE_CODE = 'W060' 
+		  AND IS_LAST_YN = 'Y'
+		  AND CHECK_RESULT NOT IN ( 'OK' , 'PASS')  ;
+		  
+		IF F_SQL_CHECK() < 0 THEN 
+			RETURN 'ERROR' 
+		END IF 
+	
+		if LVI_COUNT > 0 then 
+			return 'NG'
+		ELSE
+			return 'OK'
+		end if 		
+		
+ELSEIF  arg_check_type = 'ICT' THEN 
+	
+	 SELECT COUNT(*) INTO :LVI_COUNT 
+	   FROM IQ_INTERLOCK_CHECK_RESULT 
+      WHERE SERIAL_NO = :ARG_SERIAL_NO 
+		  AND WORKSTAGE_CODE = 'W070' 
+		  AND IS_LAST_YN = 'Y'
+		  AND CHECK_RESULT NOT IN ( 'OK' , 'PASS')  ;
+		  
+		IF F_SQL_CHECK() < 0 THEN 
+			RETURN 'ERROR' 
+		END IF 
+	
+		if LVI_COUNT > 0 then 
+			return 'NG'
+		ELSE
+			return 'OK'
+		end if 		
+ELSEIF  arg_check_type = 'FUNCTION' THEN 
+	
+ELSEIF  arg_check_type = 'PRESSFIT' THEN 	
+	
+ELSEIF  arg_check_type = 'COATING' THEN 		
+	
+		 SELECT COUNT(*) INTO :LVI_COUNT 
+	   FROM IQ_INTERLOCK_CHECK_RESULT 
+      WHERE SERIAL_NO = :ARG_SERIAL_NO 
+		  AND WORKSTAGE_CODE = 'W090' 
+		  AND IS_LAST_YN = 'Y'
+		  AND CHECK_RESULT NOT IN ( 'OK' , 'PASS')  ;
+		  
+		IF F_SQL_CHECK() < 0 THEN 
+			RETURN 'ERROR' 
+		END IF 
+	
+		if LVI_COUNT > 0 then 
+			return 'NG'
+		ELSE
+			return 'OK'
+		end if 		
+ELSEIF  arg_check_type = 'SELECTIVE' THEN 		
+	
+		 SELECT COUNT(*) INTO :LVI_COUNT 
+	   FROM IQ_INTERLOCK_CHECK_RESULT 
+      WHERE SERIAL_NO = :ARG_SERIAL_NO 
+		  AND WORKSTAGE_CODE = 'W150' 
+		  AND IS_LAST_YN = 'Y'
+		  AND CHECK_RESULT NOT IN ( 'OK' , 'PASS')  ;
+		  
+		IF F_SQL_CHECK() < 0 THEN 
+			RETURN 'ERROR' 
+		END IF 
+	
+		if LVI_COUNT > 0 then 
+			return 'NG'
+		ELSE
+			return 'OK'
+		end if 			
+		
+ELSEIF  arg_check_type = 'WAVESOLDER' THEN 		
+	
+		 SELECT COUNT(*) INTO :LVI_COUNT 
+	   FROM IQ_INTERLOCK_CHECK_RESULT 
+      WHERE SERIAL_NO = :ARG_SERIAL_NO 
+		  AND WORKSTAGE_CODE = 'W160' 
+		  AND IS_LAST_YN = 'Y'
+		  AND CHECK_RESULT NOT IN ( 'OK' , 'PASS')  ;
+		  
+		IF F_SQL_CHECK() < 0 THEN 
+			RETURN 'ERROR' 
+		END IF 
+	
+		if LVI_COUNT > 0 then 
+			return 'NG'
+		ELSE
+			return 'OK'
+		end if 					
+		
+ELSEIF  arg_check_type = 'REPAIR' THEN 	
+	
+	 //===================================
+	// $$HEX15$$18c2acb9e4c2200085c7e0ac2000c1c0dcd05cb8200088c794b283ac2000$$ENDHEX$$
+	//===================================
+	 SELECT COUNT(*) INTO :LVI_COUNT 
+	   FROM IP_PRODUCT_WORK_QC 
+      WHERE SERIAL_NO = :ARG_SERIAL_NO 
+	      AND RECEIPT_DEFICIT = '1'  ;
+		  
+		IF F_SQL_CHECK() < 0 THEN 
+			RETURN 'ERROR' 
+		END IF 
+	
+		if LVI_COUNT > 0 then 
+			return 'NG'
+		ELSE
+			return 'OK'
+		end if 		
+	
+END IF 
+
+end function
+

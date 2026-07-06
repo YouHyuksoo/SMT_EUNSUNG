@@ -1,0 +1,57 @@
+HA$PBExportHeader$f_set_security_row.srf
+$PBExportComments$$$HEX12$$70b374c7c0d05ccd08cd85c725b8dcc215c8f4bc24c115c8$$ENDHEX$$
+global type f_set_security_row from function_object
+end type
+
+forward prototypes
+global function integer f_set_security_row (datawindow arg_dw_name, integer arg_rownum, string arg_type)
+end prototypes
+
+global function integer f_set_security_row (datawindow arg_dw_name, integer arg_rownum, string arg_type);/***********************************************************************
+* $$HEX18$$14b5f4d3b8d22000eccefcb724c115c812ac44c720007cc704ad200038c105d35cd5e4b2$$ENDHEX$$
+* $$HEX3$$70c8c1c92000$$ENDHEX$$id , $$HEX7$$5ccd85c818c215c87cc790c72000$$ENDHEX$$, $$HEX6$$5ccd85c818c215c890c72000$$ENDHEX$$
+* $$HEX3$$c0d085c72000$$ENDHEX$$ALL , MODIFY , NONORG 
+***********************************************************************/
+
+IF ARG_TYPE = 'ALL' THEN 
+	IF  ISVALID(arg_dw_name) THEN 
+		
+		arg_dw_name.setitem(arg_rownum , 'organization_id' , Gvi_organization_id)
+		arg_dw_name.setitem(arg_rownum , 'enter_date' , f_sysdate())
+		arg_dw_name.setitem(arg_rownum , 'enter_by' , Gvs_user_id)
+		arg_dw_name.setitem(arg_rownum , 'last_modify_date' , f_sysdate())
+		arg_dw_name.setitem(arg_rownum , 'last_modify_by' , Gvs_user_id)
+		Return 0
+	ELSE
+		
+		F_MSGBOX1 ( 140  , CLASSNAME(arg_dw_name) )  //("Selected Data Window Invalid" , CLASSNAME(arg_dw_name) ) 
+	END IF
+
+
+ELSEIF ARG_TYPE = 'MODIFY' THEN 
+	
+	/***********************************************************************
+	* $$HEX18$$14b5f4d3b8d22000eccefcb724c115c812ac44c720007cc704ad200038c105d35cd5e4b2$$ENDHEX$$
+	* $$HEX3$$70c8c1c92000$$ENDHEX$$id , $$HEX7$$5ccd85c818c215c87cc790c72000$$ENDHEX$$, $$HEX6$$5ccd85c818c215c890c72000$$ENDHEX$$
+	***********************************************************************/
+	//arg_dw_name.setitem(arg_rownum , 'organization_id' , Gvi_organization_id)
+	arg_dw_name.setitem(arg_rownum , 'last_modify_by' , Gvs_user_id)
+	arg_dw_name.setitem(arg_rownum , 'last_modify_date' , f_sysdate())
+	Return 0
+
+
+ELSEIF ARG_TYPE = 'NONORG' THEN 
+
+	/***********************************************************************
+	* $$HEX18$$14b5f4d3b8d22000eccefcb724c115c812ac44c720007cc704ad200038c105d35cd5e4b2$$ENDHEX$$
+	* $$HEX7$$5ccd85c818c215c87cc790c72000$$ENDHEX$$, $$HEX6$$5ccd85c818c215c890c72000$$ENDHEX$$
+	***********************************************************************/
+	arg_dw_name.setitem(arg_rownum , 'enter_date' , f_sysdate())
+	arg_dw_name.setitem(arg_rownum , 'enter_by' , Gvs_user_id)
+	arg_dw_name.setitem(arg_rownum , 'last_modify_date' , f_sysdate())
+	arg_dw_name.setitem(arg_rownum , 'last_modify_by' , Gvs_user_id)
+	Return 0
+	
+END IF
+end function
+

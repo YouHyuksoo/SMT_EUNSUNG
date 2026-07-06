@@ -1,0 +1,44 @@
+HA$PBExportHeader$f_get_order_dc_rate.srf
+global type f_get_order_dc_rate from function_object
+end type
+
+forward prototypes
+global function decimal f_get_order_dc_rate (string arg_customer_code, string arg_origin_order_no, string arg_order_no)
+end prototypes
+
+global function decimal f_get_order_dc_rate (string arg_customer_code, string arg_origin_order_no, string arg_order_no);DECIMAL lvf_v_dc_rate , LVF_DC_RATE
+
+//========================================
+// $$HEX10$$e0ac1dacc4bc200060d578c728c7200070c88cd6$$ENDHEX$$
+//======================================== 
+
+  select   1 - ( nvl(volume_dc_rate ,0) / 100 ) into :lvf_v_dc_rate
+   from icom_customer 
+ where customer_code = :arg_customer_code
+  and organization_id = :gvi_organization_id ;
+  
+ if f_sql_check() < 0 then 
+	return 0
+end if 
+
+if lvf_v_dc_rate = 0 or isnull(lvf_v_dc_rate) then 
+	lvf_v_dc_rate = 1 
+end if 
+
+SELECT :lvf_v_dc_rate * (1 - nvl(ORDER_DC_RATE,0) / 100)  INTO :LVF_DC_RATE
+ FROM IS_PRODUCT_SALE_PLAN
+ WHERE CUSTOMER_ORDER_NO = :ARG_ORDER_NO
+ AND CUSTOMER_ORDER_NO_ORIGIN = :ARG_ORIGIN_ORDER_NO
+ AND ORGANIZATION_ID = :GVI_ORGANIZATION_ID ;
+ 
+ IF F_SQL_CHECK() < 0 THEN 
+	RETURN 0
+END IF 
+
+IF LVF_DC_RATE = 0 OR ISNULL(LVF_DC_RATE) THEN 
+	LVF_DC_RATE = 1
+END IF 
+
+RETURN LVF_DC_RATE
+end function
+

@@ -1,0 +1,367 @@
+HA$PBExportHeader$f_mat_workstage_inventory_move.srf
+global type f_mat_workstage_inventory_move from function_object
+end type
+
+forward prototypes
+global function integer f_mat_workstage_inventory_move (string as_rowid, string as_invoice_no, string as_dest_line_code, string as_dest_workstage_code, decimal af_move_qty, string as_item_type, long af_inventory_price)
+end prototypes
+
+global function integer f_mat_workstage_inventory_move (string as_rowid, string as_invoice_no, string as_dest_line_code, string as_dest_workstage_code, decimal af_move_qty, string as_item_type, long af_inventory_price);Long i , j
+string lvs_rowid , lvs_dest_workstage_code , lvs_invoice_no , lvs_dest_line_code   , lvs_item_type
+decimal lvf_move_qty , lvf_move_weight
+double lvdb_work_order_no
+
+//==========================================================================
+//
+//==========================================================================
+	lvf_move_qty        = af_move_qty
+	lvf_move_weight   = af_move_qty
+
+
+	lvs_rowid = as_rowid
+	lvs_dest_line_code=as_dest_line_code
+	lvs_dest_workstage_code = as_dest_workstage_code
+	lvs_item_type = as_item_type
+	lvs_invoice_no = as_invoice_no	 
+	
+	
+	lvdb_work_order_no = F_GET_SEQUENCE('SEQ_WORK_ORDER_NO')	
+	
+//	 if cbx_date_fixed.checked = true then 
+//		lvs_date_fixed = 'Y'
+//	 else
+//		lvs_date_fixed = 'N'		
+//	 end if 
+	 
+	 if as_dest_workstage_code = '' or isnull(as_dest_workstage_code) or as_dest_workstage_code = '%' then
+		Messagebox("Notify" , "Dest Workstage Code Invalid")
+		return -1
+	end if
+	 
+INSERT INTO "IM_ITEM_WORKSTAGE_RECEIPT"  
+         ( "RECEIPT_DATE",   
+           "RECEIPT_SEQUENCE",   
+           "ORGANIZATION_ID",   
+           "ISSUE_DATE",   
+           "ISSUE_SEQUENCE",   
+           "MFS",   
+           "ITEM_CODE",   
+           "ITEM_TYPE",   
+           "RECEIPT_DEFICIT",   
+           "LINE_CODE",   
+           "FROM_LINE_CODE",   			  
+           "RECEIPT_ACCOUNT",   
+           "WORKSTAGE_CODE",   
+           "RECEIPT_AMT",   
+           "RECEIPT_WEIGHT",   
+           "RECEIPT_TYPE",   
+           "MACHINE_CODE",   
+           "LINE_TYPE",   
+           "ITEM_UNIT_WEIGHT",   
+           "RECEIPT_STATUS",   
+           "RECEIPT_PRICE",   
+           "RECEIPT_QTY",   
+           "TRANSFER_DATE",   
+           "TRANSFER_SEQUENCE",   
+           "WORK_ORDER_NO",   
+           "TRANSFER_YN",   
+           "ENTER_DATE",   
+           "ENTER_BY",   
+           "LAST_MODIFY_DATE",   
+           "LAST_MODIFY_BY",   
+           "MFS_CONNECT",   
+           "TRANSFER_TYPE",   
+           "MATERIAL_MFS",   
+           "INVOICE_NO",   
+           "SUB_MFS" ,
+	     "FROM_WORKSTAGE_CODE"
+		   
+		   )  
+     SELECT trunc(sysdate),   
+             seq_workstage_receipt_seq.nextval , //"IM_ITEM_WORKSTAGE_RECEIPT"."RECEIPT_SEQUENCE",   
+            "IM_ITEM_WORKSTAGE_INVENTORY"."ORGANIZATION_ID",   
+            null , //"IM_ITEM_WORKSTAGE_RECEIPT"."ISSUE_DATE",   
+            null , //"IM_ITEM_WORKSTAGE_RECEIPT"."ISSUE_SEQUENCE",   
+            "IM_ITEM_WORKSTAGE_INVENTORY"."MFS",   
+            "IM_ITEM_WORKSTAGE_INVENTORY"."ITEM_CODE",   
+            :LVS_ITEM_TYPE , //"IM_ITEM_WORKSTAGE_RECEIPT"."ITEM_TYPE",   
+            '2' , //"IM_ITEM_WORKSTAGE_RECEIPT"."RECEIPT_DEFICIT",   
+            "IM_ITEM_WORKSTAGE_INVENTORY"."LINE_CODE",   
+            "IM_ITEM_WORKSTAGE_INVENTORY"."LINE_CODE",   		// FROM LINE CODE 		
+            'M001' , //"IM_ITEM_WORKSTAGE_RECEIPT"."RECEIPT_ACCOUNT",   
+            "IM_ITEM_WORKSTAGE_INVENTORY"."WORKSTAGE_CODE" , //"IM_ITEM_WORKSTAGE_RECEIPT"."WORKSTAGE_CODE",   
+            :lvf_move_qty *:af_inventory_price * -1 , //"IM_ITEM_WORKSTAGE_RECEIPT"."RECEIPT_AMT",   
+            :lvf_move_qty * -1 , //"IM_ITEM_WORKSTAGE_RECEIPT"."RECEIPT_WEIGHT",   
+            'N' , //"IM_ITEM_WORKSTAGE_RECEIPT"."RECEIPT_TYPE",   
+            "IM_ITEM_WORKSTAGE_INVENTORY"."MACHINE_CODE",   
+           "IM_ITEM_WORKSTAGE_INVENTORY"."LINE_TYPE",   
+            "IM_ITEM_WORKSTAGE_INVENTORY"."INVENTORY_WEIGHT",   
+            'N' , //"IM_ITEM_WORKSTAGE_RECEIPT"."RECEIPT_STATUS",   
+          :af_inventory_price,   
+            :lvf_move_qty * -1, //"IM_ITEM_WORKSTAGE_RECEIPT"."RECEIPT_QTY",   
+            trunc(sysdate) , //"IM_ITEM_WORKSTAGE_RECEIPT"."TRANSFER_DATE",   
+            seq_workstage_receipt_seq.NEXTVAL, //"IM_ITEM_WORKSTAGE_RECEIPT"."TRANSFER_SEQUENCE",   
+            :lvdb_work_order_no , //"IM_ITEM_WORKSTAGE_RECEIPT"."WORK_ORDER_NO",   
+            'Y' , //"IM_ITEM_WORKSTAGE_RECEIPT"."TRANSFER_YN",   
+            sysdate,   
+            :gvs_user_id,   
+            sysdate,   
+            :gvs_user_id,   
+            '*' , //"IM_ITEM_WORKSTAGE_RECEIPT"."MFS_CONNECT",   
+            'M' , //"IM_ITEM_WORKSTAGE_RECEIPT"."TRANSFER_TYPE",   $$HEX14$$74c7d9b3d0c5200058c774d5200085c7e0ac1cb4200090c7ccb82000$$ENDHEX$$
+            "IM_ITEM_WORKSTAGE_INVENTORY"."MATERIAL_MFS" , //"IM_ITEM_WORKSTAGE_RECEIPT"."MATERIAL_MFS",   
+            :lvs_invoice_no , //"IM_ITEM_WORKSTAGE_RECEIPT"."INVOICE_NO",   
+            '*' , // "IM_ITEM_WORKSTAGE_RECEIPT"."SUB_MFS"  ,
+	       "IM_ITEM_WORKSTAGE_INVENTORY"."WORKSTAGE_CODE"		
+       FROM "IM_ITEM_WORKSTAGE_INVENTORY" 
+    WHERE ROWID = :lvs_rowid ;
+	 
+	if f_sql_check() < 0 then 
+		return -1
+	end if 
+
+	  INSERT INTO "IM_ITEM_WORKSTAGE_RECEIPT"  
+         ( "RECEIPT_DATE",   
+           "RECEIPT_SEQUENCE",   
+           "ORGANIZATION_ID",   
+           "ISSUE_DATE",   
+           "ISSUE_SEQUENCE",   
+           "MFS",   
+           "ITEM_CODE",   
+           "ITEM_TYPE",   
+           "RECEIPT_DEFICIT",   
+           "LINE_CODE",   
+           "FROM_LINE_CODE" ,			  
+           "RECEIPT_ACCOUNT",   
+           "WORKSTAGE_CODE",   
+           "RECEIPT_AMT",   
+           "RECEIPT_WEIGHT",   
+           "RECEIPT_TYPE",   
+           "MACHINE_CODE",   
+           "LINE_TYPE",   
+           "ITEM_UNIT_WEIGHT",   
+           "RECEIPT_STATUS",   
+           "RECEIPT_PRICE",   
+           "RECEIPT_QTY",   
+           "TRANSFER_DATE",   
+           "TRANSFER_SEQUENCE",   
+           "WORK_ORDER_NO",   
+           "TRANSFER_YN",   
+           "ENTER_DATE",   
+           "ENTER_BY",   
+           "LAST_MODIFY_DATE",   
+           "LAST_MODIFY_BY",   
+           "MFS_CONNECT",   
+           "TRANSFER_TYPE",   
+           "MATERIAL_MFS",   
+           "INVOICE_NO",   
+           "SUB_MFS" ,"FROM_WORKSTAGE_CODE" 	)  
+     SELECT trunc(sysdate),   
+             seq_workstage_receipt_seq.nextval , //"IM_ITEM_WORKSTAGE_RECEIPT"."RECEIPT_SEQUENCE",   
+            "IM_ITEM_WORKSTAGE_INVENTORY"."ORGANIZATION_ID",   
+            null , //"IM_ITEM_WORKSTAGE_RECEIPT"."ISSUE_DATE",   
+            null , //"IM_ITEM_WORKSTAGE_RECEIPT"."ISSUE_SEQUENCE",   
+            "IM_ITEM_WORKSTAGE_INVENTORY"."MFS",   
+            "IM_ITEM_WORKSTAGE_INVENTORY"."ITEM_CODE",   
+            :lvs_item_type , //"IM_ITEM_WORKSTAGE_RECEIPT"."ITEM_TYPE",   
+            '1' , //"IM_ITEM_WORKSTAGE_RECEIPT"."RECEIPT_DEFICIT",   
+            :lvs_dest_line_code , //"IM_ITEM_WORKSTAGE_RECEIPT"."LINE_CODE",   
+             "IM_ITEM_WORKSTAGE_INVENTORY"."LINE_CODE" , //"IM_ITEM_WORKSTAGE_RECEIPT"."LINE_CODE",   				
+            'M001' , //"IM_ITEM_WORKSTAGE_RECEIPT"."RECEIPT_ACCOUNT",   
+            :lvs_dest_workstage_code , //"IM_ITEM_WORKSTAGE_RECEIPT"."WORKSTAGE_CODE",   
+            :lvf_move_qty *:af_inventory_price , //"IM_ITEM_WORKSTAGE_RECEIPT"."RECEIPT_AMT",   
+            :lvf_move_qty , //"IM_ITEM_WORKSTAGE_RECEIPT"."RECEIPT_WEIGHT",   
+            'N' , //"IM_ITEM_WORKSTAGE_RECEIPT"."RECEIPT_TYPE",   
+            "IM_ITEM_WORKSTAGE_INVENTORY"."MACHINE_CODE",   
+            "IM_ITEM_WORKSTAGE_INVENTORY"."LINE_TYPE",   
+            "IM_ITEM_WORKSTAGE_INVENTORY"."INVENTORY_WEIGHT",   
+            'N' , //"IM_ITEM_WORKSTAGE_RECEIPT"."RECEIPT_STATUS",   
+           :af_inventory_price,   
+            :lvf_move_qty , //"IM_ITEM_WORKSTAGE_RECEIPT"."RECEIPT_QTY",   
+            trunc(sysdate) , //"IM_ITEM_WORKSTAGE_RECEIPT"."TRANSFER_DATE",   
+            seq_workstage_receipt_seq.NEXTVAL , //"IM_ITEM_WORKSTAGE_RECEIPT"."TRANSFER_SEQUENCE",   
+            :lvdb_work_order_no, //"IM_ITEM_WORKSTAGE_RECEIPT"."WORK_ORDER_NO",   
+            'Y' , //"IM_ITEM_WORKSTAGE_RECEIPT"."TRANSFER_YN",   
+            sysdate,   
+            :gvs_user_id,   
+            sysdate,   
+            :gvs_user_id,   
+            '*' , //"IM_ITEM_WORKSTAGE_RECEIPT"."MFS_CONNECT",   
+            'M' , //"IM_ITEM_WORKSTAGE_RECEIPT"."TRANSFER_TYPE",   
+            "IM_ITEM_WORKSTAGE_INVENTORY"."MATERIAL_MFS", // "IM_ITEM_WORKSTAGE_RECEIPT"."MATERIAL_MFS",   
+            :lvs_invoice_no , //"IM_ITEM_WORKSTAGE_RECEIPT"."INVOICE_NO",   
+            '*' , //"IM_ITEM_WORKSTAGE_RECEIPT"."SUB_MFS"  ,
+	      "IM_ITEM_WORKSTAGE_INVENTORY"."WORKSTAGE_CODE"
+       FROM "IM_ITEM_WORKSTAGE_INVENTORY" 
+    WHERE ROWID = :lvs_rowid ;
+
+	if f_sql_check() < 0 then 
+		return -1
+	end if 
+//-------------------------------------------------------------------------------------------------
+//INSERT INTO "IM_ITEM_WORKSTAGE_RECEIPT"  
+//         ( "RECEIPT_DATE",   
+//           "RECEIPT_SEQUENCE",   
+//           "ORGANIZATION_ID",   
+//           "ISSUE_DATE",   
+//           "ISSUE_SEQUENCE",   
+//           "MFS",   
+//           "ITEM_CODE",   
+//           "ITEM_TYPE",   
+//           "RECEIPT_DEFICIT",   
+//           "LINE_CODE",   
+//           "FROM_LINE_CODE",   			  
+//           "RECEIPT_ACCOUNT",   
+//           "WORKSTAGE_CODE",   
+//           "RECEIPT_AMT",   
+//           "RECEIPT_WEIGHT",   
+//           "RECEIPT_TYPE",   
+//           "MACHINE_CODE",   
+//           "LINE_TYPE",   
+//           "ITEM_UNIT_WEIGHT",   
+//           "RECEIPT_STATUS",   
+//           "RECEIPT_PRICE",   
+//           "RECEIPT_QTY",   
+//           "TRANSFER_DATE",   
+//           "TRANSFER_SEQUENCE",   
+//           "WORK_ORDER_NO",   
+//           "TRANSFER_YN",   
+//           "ENTER_DATE",   
+//           "ENTER_BY",   
+//           "LAST_MODIFY_DATE",   
+//           "LAST_MODIFY_BY",   
+//           "MFS_CONNECT",   
+//           "TRANSFER_TYPE",   
+//           "MATERIAL_MFS",   
+//           "INVOICE_NO",   
+//           "SUB_MFS" ,
+//	      "FROM_WORKSTAGE_CODE"
+//		   
+//		   )  
+//     SELECT trunc(sysdate),   
+//             seq_workstage_receipt_seq.nextval , //"IM_ITEM_WORKSTAGE_RECEIPT"."RECEIPT_SEQUENCE",   
+//            "IM_ITEM_WORKSTAGE_INVENTORY"."ORGANIZATION_ID",   
+//            null , //"IM_ITEM_WORKSTAGE_RECEIPT"."ISSUE_DATE",   
+//            null , //"IM_ITEM_WORKSTAGE_RECEIPT"."ISSUE_SEQUENCE",   
+//            "IM_ITEM_WORKSTAGE_INVENTORY"."MFS",   
+//            "IM_ITEM_WORKSTAGE_INVENTORY"."ITEM_CODE",   
+//            :lvs_item_type , //"IM_ITEM_WORKSTAGE_INVENTORY"."ITEM_TYPE",   
+//            '2' , //"IM_ITEM_WORKSTAGE_RECEIPT"."RECEIPT_DEFICIT",   
+//            "IM_ITEM_WORKSTAGE_INVENTORY"."LINE_CODE",   
+//            "IM_ITEM_WORKSTAGE_INVENTORY"."LINE_CODE",   		// FROM LINE CODE 		
+//            'M001' , //"IM_ITEM_WORKSTAGE_RECEIPT"."RECEIPT_ACCOUNT",   
+//            "IM_ITEM_WORKSTAGE_INVENTORY"."WORKSTAGE_CODE",   
+//            0 , //:lvf_move_qty * "IM_ITEM_WORKSTAGE_RECEIPT"."RECEIPT_PRICE" * -1 , //"IM_ITEM_WORKSTAGE_RECEIPT"."RECEIPT_AMT",   
+//            :lvf_move_qty * -1 , //"IM_ITEM_WORKSTAGE_RECEIPT"."RECEIPT_WEIGHT",   
+//            'N' , //"IM_ITEM_WORKSTAGE_RECEIPT"."RECEIPT_TYPE",   
+//            "IM_ITEM_WORKSTAGE_INVENTORY"."MACHINE_CODE",   
+//           "IM_ITEM_WORKSTAGE_INVENTORY"."LINE_TYPE",   
+//            0 , //"IM_ITEM_WORKSTAGE_RECEIPT"."ITEM_UNIT_WEIGHT",   
+//            'N' , //"IM_ITEM_WORKSTAGE_RECEIPT"."RECEIPT_STATUS",   
+//            0 , //"IM_ITEM_WORKSTAGE_RECEIPT"."RECEIPT_PRICE",   
+//            :lvf_move_qty * -1, //"IM_ITEM_WORKSTAGE_RECEIPT"."RECEIPT_QTY",   
+//            trunc(sysdate) , //"IM_ITEM_WORKSTAGE_RECEIPT"."TRANSFER_DATE",   
+//            seq_workstage_receipt_seq.NEXTVAL, //"IM_ITEM_WORKSTAGE_RECEIPT"."TRANSFER_SEQUENCE",   
+//            :lvdb_work_order_no , //"IM_ITEM_WORKSTAGE_RECEIPT"."WORK_ORDER_NO",   
+//            'Y' , //"IM_ITEM_WORKSTAGE_RECEIPT"."TRANSFER_YN",   
+//            sysdate,   
+//            :gvs_user_id,   
+//            sysdate,   
+//            :gvs_user_id,   
+//            '*' , //"IM_ITEM_WORKSTAGE_RECEIPT"."MFS_CONNECT",   
+//            'M' , //"IM_ITEM_WORKSTAGE_RECEIPT"."TRANSFER_TYPE",   $$HEX14$$74c7d9b3d0c5200058c774d5200085c7e0ac1cb4200090c7ccb82000$$ENDHEX$$
+//            MFS , //"IM_ITEM_WORKSTAGE_RECEIPT"."MATERIAL_MFS",   
+//            :lvs_invoice_no , //"IM_ITEM_WORKSTAGE_RECEIPT"."INVOICE_NO",   
+//            '*' , // "IM_ITEM_WORKSTAGE_RECEIPT"."SUB_MFS"  ,
+//	     "IM_ITEM_WORKSTAGE_INVENTORY"."WORKSTAGE_CODE"		
+//       FROM "IM_ITEM_WORKSTAGE_INVENTORY" 
+//    WHERE ROWID = :lvs_rowid ;
+//	 
+//	if f_sql_check() < 0 then 
+//		return -1
+//	end if 
+//
+//	  INSERT INTO "IM_ITEM_WORKSTAGE_RECEIPT"  
+//         ( "RECEIPT_DATE",   
+//           "RECEIPT_SEQUENCE",   
+//           "ORGANIZATION_ID",   
+//           "ISSUE_DATE",   
+//           "ISSUE_SEQUENCE",   
+//           "MFS",   
+//           "ITEM_CODE",   
+//           "ITEM_TYPE",   
+//           "RECEIPT_DEFICIT",   
+//           "LINE_CODE",   
+//           "FROM_LINE_CODE" ,			  
+//           "RECEIPT_ACCOUNT",   
+//           "WORKSTAGE_CODE",   
+//           "RECEIPT_AMT",   
+//           "RECEIPT_WEIGHT",   
+//           "RECEIPT_TYPE",   
+//           "MACHINE_CODE",   
+//           "LINE_TYPE",   
+//           "ITEM_UNIT_WEIGHT",   
+//           "RECEIPT_STATUS",   
+//           "RECEIPT_PRICE",   
+//           "RECEIPT_QTY",   
+//           "TRANSFER_DATE",   
+//           "TRANSFER_SEQUENCE",   
+//           "WORK_ORDER_NO",   
+//           "TRANSFER_YN",   
+//           "ENTER_DATE",   
+//           "ENTER_BY",   
+//           "LAST_MODIFY_DATE",   
+//           "LAST_MODIFY_BY",   
+//           "MFS_CONNECT",   
+//           "TRANSFER_TYPE",   
+//           "MATERIAL_MFS",   
+//           "INVOICE_NO",   
+//           "SUB_MFS" ,"FROM_WORKSTAGE_CODE" 	)  
+//     SELECT trunc(sysdate),   
+//             seq_workstage_receipt_seq.nextval , //"IM_ITEM_WORKSTAGE_RECEIPT"."RECEIPT_SEQUENCE",   
+//            "IM_ITEM_WORKSTAGE_INVENTORY"."ORGANIZATION_ID",   
+//            null , //"IM_ITEM_WORKSTAGE_RECEIPT"."ISSUE_DATE",   
+//            null , //"IM_ITEM_WORKSTAGE_RECEIPT"."ISSUE_SEQUENCE",   
+//            "IM_ITEM_WORKSTAGE_INVENTORY"."MFS",   
+//            "IM_ITEM_WORKSTAGE_INVENTORY"."ITEM_CODE",   
+//            :lvs_item_type , //"IM_ITEM_WORKSTAGE_INVENTORY"."ITEM_TYPE",   
+//            1 , //"IM_ITEM_WORKSTAGE_RECEIPT"."RECEIPT_DEFICIT",   
+//            :as_dest_line_code , //"IM_ITEM_WORKSTAGE_RECEIPT"."LINE_CODE",   
+//            :as_dest_line_code , //"IM_ITEM_WORKSTAGE_RECEIPT"."LINE_CODE",   				
+//            'M001' , //"IM_ITEM_WORKSTAGE_RECEIPT"."RECEIPT_ACCOUNT",   
+//            :as_dest_workstage_code , //"IM_ITEM_WORKSTAGE_RECEIPT"."WORKSTAGE_CODE",   
+//            0 , //:lvf_move_qty * "IM_ITEM_WORKSTAGE_RECEIPT"."RECEIPT_PRICE" , //"IM_ITEM_WORKSTAGE_RECEIPT"."RECEIPT_AMT",   
+//            :lvf_move_qty , //"IM_ITEM_WORKSTAGE_RECEIPT"."RECEIPT_WEIGHT",   
+//            'N' , //"IM_ITEM_WORKSTAGE_RECEIPT"."RECEIPT_TYPE",   
+//            "IM_ITEM_WORKSTAGE_INVENTORY"."MACHINE_CODE",   
+//            "IM_ITEM_WORKSTAGE_INVENTORY"."LINE_TYPE",   
+//            0 , //"IM_ITEM_WORKSTAGE_RECEIPT"."ITEM_UNIT_WEIGHT",   
+//            'N' , //"IM_ITEM_WORKSTAGE_RECEIPT"."RECEIPT_STATUS",   
+//            0 , //"IM_ITEM_WORKSTAGE_RECEIPT"."RECEIPT_PRICE",   
+//            :lvf_move_qty , //"IM_ITEM_WORKSTAGE_RECEIPT"."RECEIPT_QTY",   
+//            trunc(sysdate) , //"IM_ITEM_WORKSTAGE_RECEIPT"."TRANSFER_DATE",   
+//            seq_workstage_receipt_seq.NEXTVAL , //"IM_ITEM_WORKSTAGE_RECEIPT"."TRANSFER_SEQUENCE",   
+//            :lvdb_work_order_no, //"IM_ITEM_WORKSTAGE_RECEIPT"."WORK_ORDER_NO",   
+//            'Y' , //"IM_ITEM_WORKSTAGE_RECEIPT"."TRANSFER_YN",   
+//            sysdate,   
+//            :gvs_user_id,   
+//            sysdate,   
+//            :gvs_user_id,   
+//            '*' , //"IM_ITEM_WORKSTAGE_RECEIPT"."MFS_CONNECT",   
+//            'M' , //"IM_ITEM_WORKSTAGE_RECEIPT"."TRANSFER_TYPE",   
+//            MFS , // "IM_ITEM_WORKSTAGE_RECEIPT"."MATERIAL_MFS",   
+//            :lvs_invoice_no , //"IM_ITEM_WORKSTAGE_RECEIPT"."INVOICE_NO",   
+//            '*' , //"IM_ITEM_WORKSTAGE_RECEIPT"."SUB_MFS",
+//	       "IM_ITEM_WORKSTAGE_INVENTORY"."WORKSTAGE_CODE"
+//       FROM "IM_ITEM_WORKSTAGE_INVENTORY" 
+//    WHERE ROWID = :lvs_rowid ;
+//
+//	if f_sql_check() < 0 then 
+//		return -1 
+//	end if 
+	
+	return 1
+
+
+end function
+

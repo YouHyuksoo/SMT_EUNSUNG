@@ -1,0 +1,67 @@
+HA$PBExportHeader$d_pln_product_run_card_inv_lst.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=16777215 processing=9 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no grid.lines=0 )
+header(height=124 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=68 color="536870912" )
+table(column=(type=char(30) update=yes updatewhereclause=yes key=yes name=item_code dbname="ip_product_run_card_inv.item_code" )
+ column=(type=char(50) update=yes updatewhereclause=yes key=yes name=model_name dbname="ip_product_run_card_inv.model_name" )
+ column=(type=char(20) update=yes updatewhereclause=yes key=yes name=line_code dbname="ip_product_run_card_inv.line_code" )
+ column=(type=char(20) update=yes updatewhereclause=yes key=yes name=workstage_code dbname="ip_product_run_card_inv.workstage_code" )
+ column=(type=number updatewhereclause=yes name=inventory_qty dbname="ip_product_run_card_inv.inventory_qty" )
+ column=(type=number update=yes updatewhereclause=yes key=yes name=organization_id dbname="ip_product_run_card_inv.organization_id" )
+ column=(type=datetime update=yes updatewhereclause=yes name=enter_date dbname="ip_product_run_card_inv.enter_date" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=enter_by dbname="ip_product_run_card_inv.enter_by" )
+ column=(type=datetime update=yes updatewhereclause=yes name=last_modify_date dbname="ip_product_run_card_inv.last_modify_date" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=last_modify_by dbname="ip_product_run_card_inv.last_modify_by" )
+ column=(type=char(10) updatewhereclause=yes key=yes name=model_suffix dbname="ip_product_run_card_inv.model_suffix" )
+ column=(type=char(10) updatewhereclause=yes key=yes name=pcb_item dbname="ip_product_run_card_inv.pcb_item" )
+ retrieve="SELECT   ~"IP_PRODUCT_RUN_CARD_INV~".~"ITEM_CODE~",
+         ~"IP_PRODUCT_RUN_CARD_INV~".~"MODEL_NAME~",
+         ~"IP_PRODUCT_RUN_CARD_INV~".~"LINE_CODE~",
+         ~"IP_PRODUCT_RUN_CARD_INV~".~"WORKSTAGE_CODE~",
+         ~"IP_PRODUCT_RUN_CARD_INV~".~"INVENTORY_QTY~",
+         ~"IP_PRODUCT_RUN_CARD_INV~".~"ORGANIZATION_ID~",
+         ~"IP_PRODUCT_RUN_CARD_INV~".~"ENTER_DATE~",
+         ~"IP_PRODUCT_RUN_CARD_INV~".~"ENTER_BY~",
+         ~"IP_PRODUCT_RUN_CARD_INV~".~"LAST_MODIFY_DATE~",
+         ~"IP_PRODUCT_RUN_CARD_INV~".~"LAST_MODIFY_BY~",
+         ~"IP_PRODUCT_RUN_CARD_INV~".~"MODEL_SUFFIX~",
+         ~"IP_PRODUCT_RUN_CARD_INV~".~"PCB_ITEM~"
+  FROM   ~"IP_PRODUCT_RUN_CARD_INV~"
+ WHERE   (~"IP_PRODUCT_RUN_CARD_INV~".~"LINE_CODE~" LIKE :arg_line_code)
+     AND (~"IP_PRODUCT_RUN_CARD_INV~".~"WORKSTAGE_CODE~" LIKE :arg_workstage_code)
+     AND (~"IP_PRODUCT_RUN_CARD_INV~".~"MODEL_NAME~" LIKE :arg_model_name)
+     AND (~"IP_PRODUCT_RUN_CARD_INV~".~"PCB_ITEM~" LIKE :arg_pcb_item)
+     AND (~"IP_PRODUCT_RUN_CARD_INV~".~"INVENTORY_QTY~" <> 0 )
+     AND (~"IP_PRODUCT_RUN_CARD_INV~".~"ORGANIZATION_ID~" = :arg_org)" update="IP_PRODUCT_RUN_CARD_INV" updatewhere=1 updatekeyinplace=no arguments=(("ARG_LINE_CODE", string),("ARG_WORKSTAGE_CODE", string),("ARG_MODEL_NAME", string),("ARG_PCB_ITEM", string),("ARG_ORG", number))  sort="model_name A workstage_code A line_code A " )
+group(level=1 header.height=0 trailer.height=52 by=("model_name" , "model_suffix" ) header.color="536870912" trailer.color="134217728" )
+text(band=header alignment="2" text="Line Code" border="0" color="0" x="165" y="12" height="112" width="302" html.valueishtml="0"  name=line_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Workstage Code" border="0" color="0" x="475" y="12" height="112" width="485" html.valueishtml="0"  name=workstage_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Model Name" border="0" color="0" x="969" y="12" height="112" width="507" html.valueishtml="0"  name=model_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Model Suffix" border="0" color="0" x="1486" y="12" height="112" width="370" html.valueishtml="0"  name=model_suffix_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Pcb Item" border="0" color="0" x="1865" y="12" height="112" width="133" html.valueishtml="0"  name=pcb_item_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Organization Id" border="0" color="0" x="2697" y="12" height="112" width="375" html.valueishtml="0"  name=organization_id_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Item Code" border="0" color="0" x="2007" y="12" height="112" width="393" html.valueishtml="0"  name=item_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Inventory Qty" border="0" color="33554432" x="2409" y="12" height="112" width="279" html.valueishtml="0"  name=inventory_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+compute(band=detail alignment="1" expression="getrow()"border="0" color="0" x="9" y="0" height="60" width="146" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="0" x="969" y="0" height="60" width="507" format="[general]" html.valueishtml="0"  name=model_name visible="1" edit.limit=50 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="0" x="2007" y="0" height="60" width="393" format="[general]" html.valueishtml="0"  name=item_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=11 alignment="2" tabsequence=32766 border="0" color="0" x="1486" y="0" height="60" width="370" format="[general]" html.valueishtml="0"  name=model_suffix visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=12 alignment="2" tabsequence=32766 border="0" color="0" x="1865" y="0" height="60" width="133" format="[general]" html.valueishtml="0"  name=pcb_item visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="0" color="0" x="165" y="0" height="60" width="302" format="[general]" html.valueishtml="0"  name=line_code visible="1" dddw.name=vd_line_code dddw.displaycolumn=line_name dddw.datacolumn=line_code dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="0" color="0" x="475" y="0" height="60" width="485" format="[general]" html.valueishtml="0"  name=workstage_code visible="1" dddw.name=vd_workstage_code dddw.displaycolumn=workstage_name dddw.datacolumn=workstage_code dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=6 alignment="2" tabsequence=32766 border="0" color="0" x="2697" y="0" height="60" width="375" format="[general]" html.valueishtml="0"  name=organization_id visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=5 alignment="1" tabsequence=32766 border="0" color="0" x="2409" y="0" height="60" width="279" format="[general]" html.valueishtml="0"  name=inventory_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

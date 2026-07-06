@@ -1,0 +1,50 @@
+HA$PBExportHeader$f_dual_lang_gettext_menu.srf
+$PBExportComments$get current menu text
+global type f_dual_lang_gettext_menu from function_object
+end type
+
+forward prototypes
+global function boolean f_dual_lang_gettext_menu (menu am_menuitem)
+end prototypes
+
+global function boolean f_dual_lang_gettext_menu (menu am_menuitem);int  inx,check_cnt, item_int
+long ll_row
+string ls_text
+
+if  Gvs_language <> 'E' then
+	return False
+end if
+
+item_int = upperbound(am_menuitem.item[])
+
+if item_int > 0 then
+
+	for inx = 1 to item_int
+
+		if f_dual_lang_gettext_menu(am_menuitem.item[inx]) then
+			return true
+		end if
+
+	next
+	
+end if
+
+ls_text = am_menuitem.text
+
+SELECT count(*) 
+  INTO :check_cnt
+  FROM ISYS_DUAL_LANGUAGE
+ WHERE ORGANIZATION_ID = :Gvi_organization_id
+	AND english_text = upper(:ls_text);
+   
+if check_cnt < 1 and ls_text <> '-' then 
+	INSERT INTO ISYS_DUAL_LANGUAGE ( ORGANIZATION_ID, ENGLISH_TEXT, LOCAL_TEXT, KOREA_TEXT, ENGLISH_ORIGIN_TEXT ,
+	                                                               ENTER_DATE, ENTER_BY, LAST_MODIFY_DATE, LAST_MODIFY_BY, CONVER_CHK)
+	VALUES ( :Gvi_organization_id, upper(:ls_text), :ls_text, :ls_text, :ls_text ,
+	                SYSDATE, :Gvs_user_id, SYSDATE, :Gvs_user_id,'N') ;
+	commit;	
+end if
+
+return false
+end function
+

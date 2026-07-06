@@ -1,0 +1,385 @@
+HA$PBExportHeader$f_dual_lang_gettext_uo.srf
+$PBExportComments$Dual Language $$HEX9$$7cb9200004c758d5ecc5200074d5f9b22000$$ENDHEX$$userobject$$HEX5$$58c72000a8bae0b42000$$ENDHEX$$text$$HEX6$$7cb92000bbc5b4c528c6e4b2$$ENDHEX$$.
+global type f_dual_lang_gettext_uo from function_object
+end type
+
+forward prototypes
+global subroutine f_dual_lang_gettext_uo (userobject auo_userobject)
+end prototypes
+
+global subroutine f_dual_lang_gettext_uo (userobject auo_userobject);// KIM, YONG-CHUL
+// Argument : auo_userobject (window)
+
+commandbutton cb_local
+statictext    st_local
+groupbox      gb_local
+radiobutton   rb_local
+datawindow    dw_local
+datastore     ds_child
+checkbox cbx_local
+tab           tb_local
+userobject    uo_local
+
+if  Gvs_language <> 'E' then
+	return 
+end if
+
+setpointer( hourglass! )
+
+string ls_dwhead, &
+		 ls_dwobject, ls_dwcobject, &
+		 ls_dataobject, &
+		 ls_return, &
+		 ls_text
+integer li_rc, &
+		  li_col, li_col1, li_col2, li_col3, &
+		  li_objcount, li_cobjcount, &
+		  li_start, li_cstart, &
+		  li_end, li_cend, check_cnt
+
+for li_rc =1 to UpperBound(auo_userobject.control)
+	ls_text = ''
+	choose case auo_userobject.control[li_rc].typeof()	// object type check
+		case	Userobject!
+			uo_local = auo_userobject.control[li_rc]
+			f_dual_lang_gettext_uo(uo_local)
+			
+		case	CommandButton!
+			cb_local = auo_userobject.control[li_rc]
+			ls_text = trim(cb_local.text)
+			
+			SELECT count(*) 
+			INTO :check_cnt
+			FROM ISYS_DUAL_LANGUAGE
+			WHERE ORGANIZATION_ID = :Gvi_organization_id
+			AND english_text = upper(:ls_text);
+   
+			if check_cnt < 1 and ls_text <> '-' then 
+				INSERT INTO ISYS_DUAL_LANGUAGE ( ORGANIZATION_ID, ENGLISH_TEXT, LOCAL_TEXT, KOREA_TEXT , ENGLISH_ORIGIN_TEXT, ENTER_DATE, ENTER_BY, LAST_MODIFY_DATE, LAST_MODIFY_BY, CONVER_CHK) 
+	  	  		VALUES ( :Gvi_organization_id, upper(:ls_text), :ls_text, :ls_text, :ls_text, SYSDATE, :Gvs_user_id, SYSDATE, :Gvs_user_id,'N') ;
+				IF F_SQL_CHECK() < 0 THEN 
+					ROLLBACK;
+				ELSE
+					COMMIT;	
+				END IF
+			end if
+
+		case	StaticText!
+			st_local = auo_userobject.control[li_rc]
+			if st_local.Classname ( ) 		= "st_auth" &
+				or st_local.Classname ( ) 	= "st_message" &
+				or st_local.Classname ( ) 	= "st_id" &
+				or st_local.Classname ( ) 	= "st_date" then
+				continue
+			end if
+			ls_text = trim(st_local.text)
+			
+			SELECT count(*) 
+           INTO :check_cnt
+           FROM ISYS_DUAL_LANGUAGE
+          WHERE ORGANIZATION_ID = :Gvi_organization_id
+            AND english_text = upper(:ls_text);
+   
+			if check_cnt < 1 and ls_text <> '-' then 
+				INSERT INTO ISYS_DUAL_LANGUAGE ( ORGANIZATION_ID, ENGLISH_TEXT, LOCAL_TEXT, KOREA_TEXT , ENGLISH_ORIGIN_TEXT, ENTER_DATE, ENTER_BY, LAST_MODIFY_DATE, LAST_MODIFY_BY, CONVER_CHK) 
+	  	  		VALUES ( :Gvi_organization_id, upper(:ls_text), :ls_text, :ls_text, :ls_text, SYSDATE, :Gvs_user_id, SYSDATE, :Gvs_user_id,'N') ;
+				IF F_SQL_CHECK() < 0 THEN 
+					ROLLBACK;
+				ELSE
+					COMMIT;	
+				END IF
+			end if
+				
+		case	GroupBox!
+			gb_local = auo_userobject.control[li_rc]
+			ls_text = trim(gb_local.text)
+			
+			SELECT count(*) 
+           INTO :check_cnt
+           FROM ISYS_DUAL_LANGUAGE
+          WHERE ORGANIZATION_ID = :Gvi_organization_id
+            AND english_text = upper(:ls_text);
+   
+			if check_cnt < 1 and ls_text <> '-' then 
+				INSERT INTO ISYS_DUAL_LANGUAGE ( ORGANIZATION_ID, ENGLISH_TEXT, LOCAL_TEXT, KOREA_TEXT , ENGLISH_ORIGIN_TEXT, ENTER_DATE, ENTER_BY, LAST_MODIFY_DATE, LAST_MODIFY_BY, CONVER_CHK) 
+	  	  		VALUES ( :Gvi_organization_id, upper(:ls_text), :ls_text, :ls_text, :ls_text, SYSDATE, :Gvs_user_id, SYSDATE, :Gvs_user_id,'N') ;
+				IF F_SQL_CHECK() < 0 THEN 
+					ROLLBACK;
+				ELSE
+					COMMIT;	
+				END IF
+			end if
+			
+		case	Radiobutton!
+			rb_local = auo_userobject.control[li_rc]
+			ls_text = trim(rb_local.text)
+			
+			SELECT count(*) 
+           INTO :check_cnt
+           FROM ISYS_DUAL_LANGUAGE
+          WHERE ORGANIZATION_ID = :Gvi_organization_id
+            AND english_text = upper(:ls_text);
+   
+			if check_cnt < 1 and ls_text <> '-' then
+				INSERT INTO ISYS_DUAL_LANGUAGE ( ORGANIZATION_ID, ENGLISH_TEXT, LOCAL_TEXT, KOREA_TEXT , ENGLISH_ORIGIN_TEXT, ENTER_DATE, ENTER_BY, LAST_MODIFY_DATE, LAST_MODIFY_BY, CONVER_CHK) 
+	  	  		VALUES ( :Gvi_organization_id, upper(:ls_text), :ls_text, :ls_text, :ls_text, SYSDATE, :Gvs_user_id, SYSDATE, :Gvs_user_id,'N') ;
+				IF F_SQL_CHECK() < 0 THEN 
+					ROLLBACK;
+				ELSE
+					COMMIT;	
+				END IF
+			end if
+
+		case Tab!
+			 tb_local = auo_userobject.control[li_rc]
+			 for li_col = 1 to upperbound(tb_local.control)
+				  ls_text = trim(tb_local.control[li_col].text)
+			
+		  SELECT count(*) 
+	           INTO   :check_cnt
+ 	           FROM   ISYS_DUAL_LANGUAGE
+ 	           WHERE  ORGANIZATION_ID = :Gvi_organization_id
+	           AND    english_text = upper(:ls_text);
+   
+	           if check_cnt < 1 and ls_text <> '-' then
+					  INSERT INTO ISYS_DUAL_LANGUAGE ( ORGANIZATION_ID, ENGLISH_TEXT, LOCAL_TEXT, KOREA_TEXT , ENGLISH_ORIGIN_TEXT, ENTER_DATE, ENTER_BY, LAST_MODIFY_DATE, LAST_MODIFY_BY, CONVER_CHK) 
+	  	  			  VALUES ( :Gvi_organization_id, upper(:ls_text), :ls_text, :ls_text, :ls_text, SYSDATE, :Gvs_user_id, SYSDATE, :Gvs_user_id,'N') ;
+				IF F_SQL_CHECK() < 0 THEN 
+					ROLLBACK;
+				ELSE
+					COMMIT;	
+				END IF
+				  end if
+				
+  				for li_col1 = 1 to upperbound(tb_local.control[li_col].control)
+		   		 ls_text = ''
+					 choose case tb_local.control[li_col].control[li_col1].typeof()	// object type check
+					   case Userobject!
+								uo_local = auo_userobject.control[li_rc]
+								f_dual_lang_gettext_uo(uo_local)
+			
+					   case CommandButton!
+							  cb_local = tb_local.control[li_col].control[li_col1]
+							  ls_text = trim(cb_local.text)
+							
+							  SELECT count(*) 
+	      			     INTO   :check_cnt
+ 	           			  FROM   ISYS_DUAL_LANGUAGE
+ 	         			  WHERE  ORGANIZATION_ID = :Gvi_organization_id
+	        				  AND    english_text = upper(:ls_text);
+   
+	           			  if check_cnt < 1 and ls_text <> '-' then
+							  	  INSERT INTO ISYS_DUAL_LANGUAGE ( ORGANIZATION_ID, ENGLISH_TEXT, LOCAL_TEXT, KOREA_TEXT , ENGLISH_ORIGIN_TEXT, ENTER_DATE, ENTER_BY, LAST_MODIFY_DATE, LAST_MODIFY_BY, CONVER_CHK) 
+	  			  			  	  VALUES ( :Gvi_organization_id, upper(:ls_text), :ls_text, :ls_text, :ls_text, SYSDATE, :Gvs_user_id, SYSDATE, :Gvs_user_id,'N') ;
+									IF F_SQL_CHECK() < 0 THEN 
+										ROLLBACK;
+									ELSE
+										COMMIT;	
+									END IF
+				  		  end if
+							
+  						case StaticText!
+		   				  st_local = tb_local.control[li_col].control[li_col1]
+					   	  ls_text = trim(st_local.text)
+							
+							  SELECT count(*) 
+							  INTO   :check_cnt
+							  FROM   ISYS_DUAL_LANGUAGE
+							  WHERE  ORGANIZATION_ID = :Gvi_organization_id
+							  AND    english_text = upper(:ls_text);
+   
+	           			  if check_cnt < 1 and ls_text <> '-' then
+							  	  INSERT INTO ISYS_DUAL_LANGUAGE ( ORGANIZATION_ID, ENGLISH_TEXT, LOCAL_TEXT, KOREA_TEXT , ENGLISH_ORIGIN_TEXT, ENTER_DATE, ENTER_BY, LAST_MODIFY_DATE, LAST_MODIFY_BY, CONVER_CHK) 
+	  			  			  	  VALUES ( :Gvi_organization_id, upper(:ls_text), :ls_text, :ls_text, :ls_text, SYSDATE, :Gvs_user_id, SYSDATE, :Gvs_user_id,'N') ;
+									IF F_SQL_CHECK() < 0 THEN 
+										ROLLBACK;
+									ELSE
+										COMMIT;	
+									END IF
+				  			  end if
+								 
+  						case checkBox!
+		   				  cbx_local = tb_local.control[li_col].control[li_col1]
+					   	  ls_text = trim(st_local.text)
+							
+							  SELECT count(*) 
+							  INTO   :check_cnt
+							  FROM   ISYS_DUAL_LANGUAGE
+							  WHERE  ORGANIZATION_ID = :Gvi_organization_id
+							  AND    english_text = upper(:ls_text);
+   
+	           			  if check_cnt < 1 and ls_text <> '-' then
+							  	  INSERT INTO ISYS_DUAL_LANGUAGE ( ORGANIZATION_ID, ENGLISH_TEXT, LOCAL_TEXT, KOREA_TEXT , ENGLISH_ORIGIN_TEXT, ENTER_DATE, ENTER_BY, LAST_MODIFY_DATE, LAST_MODIFY_BY, CONVER_CHK) 
+	  			  			  	  VALUES ( :Gvi_organization_id, upper(:ls_text), :ls_text, :ls_text, :ls_text, SYSDATE, :Gvs_user_id, SYSDATE, :Gvs_user_id,'N') ;
+									IF F_SQL_CHECK() < 0 THEN 
+										ROLLBACK;
+									ELSE
+										COMMIT;	
+									END IF
+				  			  end if								 
+
+  						case radiobutton!
+		   				  rb_local = tb_local.control[li_col].control[li_col1]
+					   	  ls_text = trim(st_local.text)
+							
+							  SELECT count(*) 
+							  INTO   :check_cnt
+							  FROM   ISYS_DUAL_LANGUAGE
+							  WHERE  ORGANIZATION_ID = :Gvi_organization_id
+							  AND    english_text = upper(:ls_text);
+   
+	           			  if check_cnt < 1 and ls_text <> '-' then
+							  	  INSERT INTO ISYS_DUAL_LANGUAGE ( ORGANIZATION_ID, ENGLISH_TEXT, LOCAL_TEXT, KOREA_TEXT , ENGLISH_ORIGIN_TEXT, ENTER_DATE, ENTER_BY, LAST_MODIFY_DATE, LAST_MODIFY_BY, CONVER_CHK) 
+	  			  			  	  VALUES ( :Gvi_organization_id, upper(:ls_text), :ls_text, :ls_text, :ls_text, SYSDATE, :Gvs_user_id, SYSDATE, :Gvs_user_id,'N') ;
+									IF F_SQL_CHECK() < 0 THEN 
+										ROLLBACK;
+									ELSE
+										COMMIT;	
+									END IF
+				  			  end if								  						
+	  					case Datawindow!
+			   			  dw_local = tb_local.control[li_col].control[li_col1]
+						     ls_dataobject = dw_local.dataobject
+							  if len(trim(ls_dataobject)) = 0 or isnull(ls_dataobject) then 
+                          continue
+                       end if
+
+							  ls_dwobject = dw_local.Object.DataWindow.Objects     // dw object list
+							  if len(trim(ls_dwobject)) = 0 then 
+                          continue
+                       end if
+			
+							  li_objcount = f_dual_lang_object_count(ls_dwobject)     		  // get object count
+							  li_start = 0
+							  for li_col2 = 1 to li_objcount
+								   li_end = pos(ls_dwobject, "~t", li_start + 1)
+								   if li_col2 < li_objcount then    // last object check
+									   ls_dwhead = mid(ls_dwobject, li_start + 1, li_end - li_start - 1)	
+								   else
+									   ls_dwhead = mid(ls_dwobject, li_start + 1, len(ls_dwobject) - li_start)
+								   end if
+					
+								   if dw_local.describe (ls_dwhead + ".type") = "text" then    // object type check
+									   ls_text = trim(dw_local.describe(ls_dwhead + ".text"))
+							
+		      						SELECT count(*) 
+	      			     			INTO   :check_cnt
+ 	           			  			FROM   ISYS_DUAL_LANGUAGE
+ 	         			  			WHERE  ORGANIZATION_ID = :Gvi_organization_id
+	        				  			AND    english_text = upper(:ls_text);
+   
+	           			  			if check_cnt < 1 and ls_text <> '-' then
+							  	  			INSERT INTO ISYS_DUAL_LANGUAGE ( ORGANIZATION_ID, ENGLISH_TEXT, LOCAL_TEXT, KOREA_TEXT , ENGLISH_ORIGIN_TEXT, ENTER_DATE, ENTER_BY, LAST_MODIFY_DATE, LAST_MODIFY_BY, CONVER_CHK) 
+	  			  			  	  			VALUES ( :Gvi_organization_id, upper(:ls_text), :ls_text, :ls_text, :ls_text, SYSDATE, :Gvs_user_id, SYSDATE, :Gvs_user_id,'N') ;
+											IF F_SQL_CHECK() < 0 THEN 
+												ROLLBACK;
+											ELSE
+												COMMIT;	
+											END IF
+				  			  			end if
+									     
+							      elseif dw_local.describe (ls_dwhead + ".type") = "report"  then    // object type check
+										ds_child.dataobject = dw_local.describe (ls_dwhead + ".dataobject") 
+										ls_dwcobject = ds_child.object.DataWindow.Objects     // dw object list
+										if len(trim(ls_dwcobject)) = 0 then 
+                                 continue
+										end if 
+										    
+                              li_cobjcount = f_dual_lang_object_count(ls_dwcobject)     		  // get object count
+										li_cstart = 0
+										for li_col3 = 1 to li_cobjcount
+										    li_cend = pos(ls_dwcobject, "~t", li_cstart + 1)
+										    if li_col3 < li_cobjcount then    // last object check
+												 ls_dwhead = mid(ls_dwcobject, li_cstart + 1, li_cend - li_cstart - 1)	
+											 else
+												 ls_dwhead = mid(ls_dwcobject, li_cstart + 1, len(ls_dwcobject) - li_cstart)
+											 end if
+												
+											 if ds_child.describe (ls_dwhead + ".type") = "text" then    // object type check
+												 ls_text = trim(ds_child.describe(ls_dwhead + ".text"))
+
+		      								 SELECT count(*) 
+	      			     					 INTO   :check_cnt
+ 	           			  					 FROM   ISYS_DUAL_LANGUAGE
+ 	         			  					 WHERE  ORGANIZATION_ID = :Gvi_organization_id
+	        				  					 AND    english_text = upper(:ls_text);
+   
+	           			  					 if check_cnt < 1 and ls_text <> '-' then
+							  	  					 INSERT INTO ISYS_DUAL_LANGUAGE ( ORGANIZATION_ID, ENGLISH_TEXT, LOCAL_TEXT, KOREA_TEXT , ENGLISH_ORIGIN_TEXT, ENTER_DATE, ENTER_BY, LAST_MODIFY_DATE, LAST_MODIFY_BY, CONVER_CHK) 
+	  			  			  	  					 VALUES ( :Gvi_organization_id, upper(:ls_text), :ls_text, :ls_text, :ls_text, SYSDATE, :Gvs_user_id, SYSDATE, :Gvs_user_id,'N') ;
+													IF F_SQL_CHECK() < 0 THEN 
+														ROLLBACK;
+													ELSE
+														COMMIT;	
+													END IF
+				  			  					 end if
+													  
+											 end if
+							
+											 li_cstart = li_cend 
+										next
+							      end if
+   							   li_start = li_end 
+							  next
+			
+	  					end choose
+  				next
+		   next	
+
+		case Datawindow!
+			dw_local = auo_userobject.control[li_rc]
+			ls_dataobject = dw_local.dataobject
+			if len(trim(ls_dataobject)) = 0 or isnull(ls_dataobject) then continue
+			ls_dwobject = dw_local.Object.DataWindow.Objects     // dw object list
+			if len(trim(ls_dwobject)) = 0 then continue
+			
+			li_objcount = f_dual_lang_object_count(ls_dwobject)     		  // get object count
+			li_start = 0
+			for li_col = 1 to li_objcount
+				li_end = pos(ls_dwobject, "~t", li_start + 1)
+				if li_col < li_objcount &
+				then    // last object check
+					ls_dwhead = mid(ls_dwobject, li_start + 1, li_end - li_start - 1)	
+				else
+					ls_dwhead = mid(ls_dwobject, li_start + 1, len(ls_dwobject) - li_start)
+				end if
+					
+				if dw_local.describe (ls_dwhead + ".type") = "text" &
+				then    // object type check
+					ls_text = trim(dw_local.describe(ls_dwhead + ".text"))
+
+					SELECT count(*) 
+           		INTO :check_cnt
+           		FROM ISYS_DUAL_LANGUAGE
+          		WHERE ORGANIZATION_ID = :Gvi_organization_id
+            	AND english_text = upper(:ls_text);
+   
+					if check_cnt < 1 and ls_text <> '-' then
+						INSERT INTO ISYS_DUAL_LANGUAGE ( ORGANIZATION_ID, ENGLISH_TEXT, LOCAL_TEXT, KOREA_TEXT , ENGLISH_ORIGIN_TEXT, ENTER_DATE, ENTER_BY, LAST_MODIFY_DATE, LAST_MODIFY_BY, CONVER_CHK) 
+	  	  				VALUES ( :Gvi_organization_id, upper(:ls_text), :ls_text, :ls_text, :ls_text, SYSDATE, :Gvs_user_id, SYSDATE, :Gvs_user_id,'N') ;
+							IF F_SQL_CHECK() < 0 THEN 
+								ROLLBACK;
+							ELSE
+								COMMIT;	
+							END IF
+					end if
+				
+						IF F_SQL_CHECK() < 0 THEN 
+							ROLLBACK;
+						ELSE
+							COMMIT;	
+						END IF
+				end if
+
+				li_start = li_end 
+			next
+			
+	end choose
+	IF F_SQL_CHECK() < 0 THEN 
+		ROLLBACK;
+	ELSE
+		COMMIT;	
+	END IF
+next
+end subroutine
+

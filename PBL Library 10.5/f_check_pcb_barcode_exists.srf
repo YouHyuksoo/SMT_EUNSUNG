@@ -1,0 +1,22 @@
+HA$PBExportHeader$f_check_pcb_barcode_exists.srf
+global type f_check_pcb_barcode_exists from function_object
+end type
+
+forward prototypes
+global function integer f_check_pcb_barcode_exists (string arg_run_no, string arg_serial_no)
+end prototypes
+
+global function integer f_check_pcb_barcode_exists (string arg_run_no, string arg_serial_no);int lvi_count
+select count(*) into :lvi_count
+ from ip_product_2d_barcode
+ where serial_no = :arg_serial_no 
+     and run_no = :arg_run_no
+	 and rownum = 1;
+ 
+ if f_sql_check() < 0 then 
+	return -1
+end if 
+
+return lvi_count
+end function
+

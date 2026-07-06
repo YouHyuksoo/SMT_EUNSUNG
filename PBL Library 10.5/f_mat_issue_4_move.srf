@@ -1,0 +1,190 @@
+HA$PBExportHeader$f_mat_issue_4_move.srf
+global type f_mat_issue_4_move from function_object
+end type
+
+forward prototypes
+global function integer f_mat_issue_4_move (string as_location_code, string as_dest_location_code, string as_material_mfs, string as_item_code, string as_line_type, string as_invoice_no, decimal af_issue_qty)
+end prototypes
+
+global function integer f_mat_issue_4_move (string as_location_code, string as_dest_location_code, string as_material_mfs, string as_item_code, string as_line_type, string as_invoice_no, decimal af_issue_qty);long lvi_count 
+
+select count(*) into :lvi_count 
+     FROM im_item_inventory
+    WHERE item_code = :as_item_code
+      AND line_type = :as_line_type
+      AND location_code = :as_location_code		
+	 AND material_mfs = :as_material_mfs
+      AND organization_id = :gvi_organization_id;
+if f_sql_check() < 0 then 
+	return -1
+end if
+	  
+if lvi_count  < 1 then 
+	Messagebox("Notity" ,"Inventory Not Found")
+	Return -1
+end if 
+
+INSERT INTO im_item_issue
+			( issue_date,
+			issue_sequence,
+			organization_id,
+			material_mfs,				  
+			mfs,
+			item_code,		  
+			location_code,
+			supplier_code,		  
+			item_type,
+			line_code,
+			workstage_code,machine_code,
+			issue_deficit,
+			issue_qty,
+			issue_status,
+			issue_amt,
+			issue_account,
+			line_type,
+			issue_price,
+			issue_type,	  
+			virtual_receipt_yn ,
+			work_order_no ,	 
+			comments,
+			enter_date,
+			enter_by,
+			last_modify_date,
+			last_modify_by,
+			invoice_no,parent_item_code,interface_yn,interface_date, arrival_date , arrival_seq_no , dest_organization_id , inventory_type 
+			)
+   SELECT TRUNC(SYSDATE),
+			seq_mat_issue.nextval,
+			:gvi_organization_id,
+			decode( :Gvs_material_mfs_replace_location_code , 'Y' , location_code , material_mfs) ,	 
+			'*' mfs,
+			item_code,
+			location_code,
+			supplier_code ,
+			'T' item_type,
+			'*',
+			'*',
+			'*' machine_code,
+			3 ,
+			abs(:af_issue_qty),
+			'N' issue_status,
+			abs(:af_issue_qty) * inventory_price,
+			'M001'  issue_account,
+			line_type,
+			inventory_price,
+			'N' issue_type,	 
+			'N' virtual_receipt_yn ,		
+			seq_mat_issue.nextval  work_order_no ,	 		  
+			'SELECT INSPECT' comments,
+			last_receipt_date,
+			:gvs_user_id,
+			SYSDATE,
+			:gvs_user_id,
+			:as_invoice_no invoice_no ,
+			'*' parent_item_code , 
+			'N' interface_yn,
+			NULL interface_date, 
+			NULL arrival_date , 
+			NULL arrival_seq_no , 
+			NULL dest_organization_id ,
+			inventory_type 
+			 
+			
+     FROM im_item_inventory
+    WHERE item_code = :as_item_code
+      AND line_type = :as_line_type
+      AND location_code = :as_location_code		
+	  AND material_mfs = :as_material_mfs
+      AND organization_id = :gvi_organization_id;
+		
+if f_sql_check() < 0 then 
+	return -2
+end if 
+
+//================================
+//
+//=================================
+
+INSERT INTO im_item_issue
+			( issue_date,
+			issue_sequence,
+			organization_id,
+			material_mfs,				  
+			mfs,
+			item_code,		  
+			location_code,
+			supplier_code,		  
+			item_type,
+			line_code,
+			workstage_code,machine_code,
+			issue_deficit,
+			issue_qty,
+			issue_status,
+			issue_amt,
+			issue_account,
+			line_type,
+			issue_price,
+			issue_type,	  
+			virtual_receipt_yn ,
+			work_order_no ,	 
+			comments,
+			enter_date,
+			enter_by,
+			last_modify_date,
+			last_modify_by,
+			invoice_no,parent_item_code,interface_yn,interface_date, arrival_date , arrival_seq_no , dest_organization_id ,
+			inventory_type 
+			)
+   SELECT TRUNC(SYSDATE),
+			seq_mat_issue.nextval,
+			:gvi_organization_id,
+			decode( :Gvs_material_mfs_replace_location_code , 'Y' , :as_dest_location_code , material_mfs) ,	 
+			'*' mfs,
+			item_code,
+			:as_dest_location_code,
+			supplier_code ,
+			'T' item_type,
+			'*',
+			'*',
+			'*' machine_code,
+			4 ,
+			abs(:af_issue_qty) * -1,
+			'N' issue_status,
+			abs(:af_issue_qty) *-1 * inventory_price ,
+			'M001'  issue_account,
+			line_type,
+			inventory_price,
+			'N' issue_type,	 
+			'N' virtual_receipt_yn ,		
+			seq_mat_issue.nextval  work_order_no ,	 		  
+			'MOVE' comments,
+			last_receipt_date,
+			:gvs_user_id,
+			SYSDATE,
+			:gvs_user_id,
+			:as_invoice_no invoice_no ,
+			'*' parent_item_code , 
+			'N' interface_yn,
+			NULL interface_date, 
+			NULL arrival_date , 
+			NULL arrival_seq_no , 
+			NULL dest_organization_id ,
+			inventory_type
+     FROM im_item_inventory
+    WHERE item_code = :as_item_code
+      AND line_type = :as_line_type
+      AND location_code = :as_location_code		
+	  AND material_mfs = :as_material_mfs
+      AND organization_id = :gvi_organization_id;
+		
+if f_sql_check() < 0 then 
+	return -2
+end if 
+return sqlca.sqlnrows
+		  
+//======================
+//  Insert Trigger $$HEX3$$e4c289d52000$$ENDHEX$$
+//======================
+
+end function
+

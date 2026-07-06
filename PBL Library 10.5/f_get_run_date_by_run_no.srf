@@ -1,0 +1,25 @@
+HA$PBExportHeader$f_get_run_date_by_run_no.srf
+global type f_get_run_date_by_run_no from function_object
+end type
+
+forward prototypes
+global function datetime f_get_run_date_by_run_no (string arg_run_no)
+end prototypes
+
+global function datetime f_get_run_date_by_run_no (string arg_run_no);datetime lvdt_run_date
+setnull(lvdt_run_date)
+
+select run_date into :lvdt_run_date
+from ip_product_run_card
+where run_no = :arg_run_no
+	and organization_id = :gvi_organization_id ;
+
+if f_sql_check() < 0 then 
+	return lvdt_run_date
+end if 
+
+return lvdt_run_date 
+
+	 
+end function
+

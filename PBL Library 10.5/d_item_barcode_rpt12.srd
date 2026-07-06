@@ -1,0 +1,36 @@
+HA$PBExportHeader$d_item_barcode_rpt12.srd
+release 10.5;
+datawindow(units=3 timer_interval=0 color=1073741824 processing=2 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 0 print.margin.right = 0 print.margin.top = 0 print.margin.bottom = 0 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no label.name="" label.width=6650 label.height=2500 label.rows=1 label.rows.spacing=132 label.columns=1 label.columns.spacing=200 label.topdown=yes label.sheet=yes label.shape=roundrectangle label.ellipse_height=0 label.ellipse_width=0 )
+detail(height=2513 color="536870912" )
+table(column=(type=char(30) updatewhereclause=yes name=model_name dbname="ip_product_model_master.model_name" )
+ column=(type=char(30) updatewhereclause=yes name=item_code dbname="ip_product_model_master.item_code" )
+ column=(type=char(10) updatewhereclause=yes name=company_code dbname="ip_product_model_master.company_code" )
+ column=(type=char(50) updatewhereclause=yes name=item_barcode dbname="item_barcode" )
+ column=(type=char(46) updatewhereclause=yes name=barcode_no dbname="barcode_no" )
+ retrieve=" SELECT  MODEL_NAME,
+              ITEM_CODE,
+             COMPANY_CODE,
+            ITEM_CODE||COMPANY_CODE||TO_CHAR(:ARG_DATESET,'YYMMDD')||'.BMP'   ITEM_BARCODE,
+            ITEM_CODE||COMPANY_CODE||TO_CHAR(:ARG_DATESET,'YYMMDD')   BARCODE_NO    
+           
+FROM    IP_PRODUCT_MODEL_MASTER
+WHERE     MODEL_NAME   LIKE  :ARG_MODEL_NAME
+AND     ITEM_CODE   LIKE  :ARG_ITEM_CODE
+AND       ORGANIZATION_ID = :ARG_ORG" arguments=(("arg_model_name", string),("arg_item_code", string),("arg_dateset", datetime),("arg_org", number)) )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432" x="4418" y="1428" height="343" width="1719" format="[general]" html.valueishtml="0"  name=model_name_1 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Arial Narrow" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432" x="1217" y="1428" height="317" width="1746" format="[general]" html.valueishtml="0"  name=model_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Arial Narrow" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="33554432" x="317" y="1375" height="793" width="767" format="[general]" html.valueishtml="0"  name=item_barcode visible="1" bitmapname=yes edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Arial" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="33554432" x="3518" y="1375" height="793" width="767" format="[general]" html.valueishtml="0"  name=item_barcode_1 visible="1" bitmapname=yes edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Arial" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432" x="1217" y="1852" height="317" width="1746" format="[general]" html.valueishtml="0"  name=item_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Arial Narrow" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432" x="4418" y="1852" height="343" width="1719" format="[general]" html.valueishtml="0"  name=item_code_1 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Arial Narrow" font.height="-7" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

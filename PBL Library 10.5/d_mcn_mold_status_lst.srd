@@ -1,0 +1,83 @@
+HA$PBExportHeader$d_mcn_mold_status_lst.srd
+$PBExportComments$D_MCN_MACHINE_LST CREATE DATE :2006-05-13 CREATED BY : ADMIN
+release 10.5;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=0 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no )
+header(height=0 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=340 color="536870912" )
+table(column=(type=number updatewhereclause=yes name=total_count dbname="total_count" )
+ column=(type=number updatewhereclause=yes name=mold_in_count dbname="mold_in_count" )
+ column=(type=number updatewhereclause=yes name=mold_out_count dbname="mold_out_count" )
+ column=(type=number updatewhereclause=yes name=mold_rent_count dbname="mold_rent_count" )
+ column=(type=number updatewhereclause=yes name=mold_rent_wait_count dbname="mold_rent_wait_count" )
+ column=(type=number updatewhereclause=yes name=mold_not_confirm_count dbname="mold_not_confirm_count" )
+ column=(type=number updatewhereclause=yes name=mold_mass_count dbname="mold_mass_count" )
+ column=(type=number updatewhereclause=yes name=mold_stop_count dbname="mold_stop_count" )
+ column=(type=number updatewhereclause=yes name=mold_obsolete_count dbname="mold_obsolete_count" )
+ column=(type=number updatewhereclause=yes name=mold_repair_count dbname="mold_repair_count" )
+ column=(type=number updatewhereclause=yes name=mold_destroy_count dbname="mold_destroy_count" )
+ column=(type=number updatewhereclause=yes name=mold_shortremain_qty dbname="mold_shortremain_qty" )
+ column=(type=number updatewhereclause=yes name=mold_shortnon_qty dbname="mold_shortnon_qty" )
+ retrieve="  SELECT COUNT(*) TOTAL_COUNT ,
+              SUM( DECODE( MOLD_IN_OUT , 'I' , 1 , 0 ) ) MOLD_IN_COUNT ,
+			 SUM( DECODE( MOLD_IN_OUT , 'O' , 1 , 0 ) ) MOLD_OUT_COUNT ,
+
+			 SUM( DECODE( RENT_STATUS , 'N' , 1 , 0 ) ) MOLD_RENT_COUNT ,
+			 SUM( DECODE( RENT_STATUS , 'C' , 1 , 'W' , 1 , 0 ) ) MOLD_RENT_WAIT_COUNT ,
+
+			 SUM( DECODE( MOLD_USE_STATUS , 'N' , 1 , 0 ) ) MOLD_NOT_CONFIRM_COUNT ,
+			 SUM( DECODE( MOLD_USE_STATUS , 'P' , 1 , 0 ) ) MOLD_MASS_COUNT ,
+			 SUM( DECODE( MOLD_USE_STATUS , 'T' , 1 , 0 ) ) MOLD_STOP_COUNT ,
+			 SUM( DECODE( MOLD_USE_STATUS , 'D' , 1 , 0 ) ) MOLD_OBSOLETE_COUNT ,
+			 SUM( DECODE( MOLD_USE_STATUS , 'R' , 1 , 0 ) ) MOLD_REPAIR_COUNT ,
+			 SUM( DECODE( MOLD_USE_STATUS , 'S' , 1 , 0 ) ) MOLD_DESTROY_COUNT,
+			
+			SUM( CASE WHEN nvl(BREAK_VALUE ,0) >=nvl( ACTUAL_VALUE ,0) THEN 1 ELSE 0  END ) MOLD_SHORTREMAIN_QTY ,
+			SUM( CASE WHEN nvl(BREAK_VALUE,0) < nvl(ACTUAL_VALUE ,0) THEN 1 ELSE 0  END ) MOLD_SHORTNON_QTY 
+
+    FROM ~"IMCN_MOLD_INVENTORY~"   , IMCN_MOLD
+WHERE ( ~"IMCN_MOLD_INVENTORY~".~"MOLD_CODE~" = ~"IMCN_MOLD~".~"MOLD_CODE~" ) and  
+         ( ~"IMCN_MOLD_INVENTORY~".~"ORGANIZATION_ID~" = ~"IMCN_MOLD~".~"ORGANIZATION_ID~" ) and
+         ( ~"IMCN_MOLD_INVENTORY~".~"MOLD_CODE~" like :arg_mold_code ) AND  
+         ( ~"IMCN_MOLD_INVENTORY~".~"MOLD_USE_STATUS~" like :arg_mold_use_status ) AND  
+         ( ~"IMCN_MOLD~".~"MOLD_GROUP~" like :arg_mold_group ) AND  
+         ( ~"IMCN_MOLD_INVENTORY~".~"MOLD_CODE~" <> '*' ) AND  
+         ( ~"IMCN_MOLD_INVENTORY~".~"ORGANIZATION_ID~" = :arg_org )
+" arguments=(("ARG_MOLD_CODE", string),("ARG_MOLD_USE_STATUS", string),("ARG_MOLD_GROUP", string),("ARG_ORG", number)) )
+text(band=detail alignment="1" text="Mold In Count" border="0" color="33554432" x="96" y="140" height="80" width="553" html.valueishtml="0"  name=t_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=detail alignment="1" text="Mold Rent Wait Count" border="0" color="33554432" x="1298" y="140" height="80" width="553" html.valueishtml="0"  name=t_5 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=detail alignment="1" text="Mold Obsolete Count" border="0" color="33554432" x="2469" y="140" height="80" width="553" html.valueishtml="0"  name=t_8 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=detail alignment="1" text="Mold Total Count" border="0" color="33554432" x="96" y="44" height="80" width="553" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=detail alignment="1" text="Mold Rent Count" border="0" color="33554432" x="1298" y="44" height="80" width="553" html.valueishtml="0"  name=t_4 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=detail alignment="1" text="Mold Out Count" border="0" color="33554432" x="96" y="236" height="80" width="553" html.valueishtml="0"  name=t_3 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=detail alignment="1" text="Mold Repair Count" border="0" color="33554432" x="1298" y="236" height="80" width="553" html.valueishtml="0"  name=t_6 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=detail alignment="1" text="Mold Stop Count" border="0" color="33554432" x="2469" y="236" height="80" width="553" html.valueishtml="0"  name=t_9 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="1" tabsequence=32766 border="5" color="33554432" x="1879" y="140" height="80" width="553" format="[general]" html.valueishtml="0"  name=mold_rent_wait_count visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=4 alignment="1" tabsequence=32766 border="5" color="33554432" x="1879" y="44" height="80" width="553" format="[general]" html.valueishtml="0"  name=mold_rent_count visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=10 alignment="1" tabsequence=32766 border="5" color="33554432" x="1879" y="236" height="80" width="553" format="[general]" html.valueishtml="0"  name=mold_repair_count visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=2 alignment="1" tabsequence=32766 border="5" color="33554432" x="667" y="140" height="80" width="553" format="[general]" html.valueishtml="0"  name=mold_in_count visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=11 alignment="1" tabsequence=32766 border="5" color="33554432" x="667" y="44" height="80" width="553" format="[general]" html.valueishtml="0"  name=mold_destroy_count visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=1 alignment="1" tabsequence=32766 border="5" color="33554432" x="667" y="44" height="80" width="553" format="[general]" html.valueishtml="0"  name=total_count visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=3 alignment="1" tabsequence=32766 border="5" color="33554432" x="667" y="236" height="80" width="553" format="[general]" html.valueishtml="0"  name=mold_out_count visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=9 alignment="1" tabsequence=32766 border="5" color="33554432" x="3045" y="140" height="80" width="553" format="[general]" html.valueishtml="0"  name=mold_obsolete_count visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=8 alignment="1" tabsequence=32766 border="5" color="33554432" x="3045" y="236" height="80" width="553" format="[general]" html.valueishtml="0"  name=mold_stop_count visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=6 alignment="1" tabsequence=32766 border="5" color="33554432" x="3045" y="44" height="80" width="553" format="[general]" html.valueishtml="0"  name=mold_not_confirm_count visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=detail alignment="1" text="Mold not Confirm Count" border="0" color="33554432" x="2469" y="44" height="80" width="553" html.valueishtml="0"  name=t_7 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=detail alignment="1" text="Mold Product Count" border="0" color="33554432" x="3621" y="44" height="80" width="553" html.valueishtml="0"  name=t_10 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=detail alignment="1" text="Mold Shortnon Qty" border="0" color="33554432" x="3621" y="244" height="80" width="553" html.valueishtml="0"  name=t_11 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=detail alignment="1" text="Mold Short Remain Count" border="0" color="33554432" x="3621" y="152" height="80" width="553" html.valueishtml="0"  name=t_12 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=7 alignment="1" tabsequence=32766 border="5" color="33554432" x="4197" y="44" height="80" width="553" format="[general]" html.valueishtml="0"  name=mold_mass_count visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=12 alignment="1" tabsequence=0 border="5" color="33554432" x="4197" y="136" height="80" width="553" html.valueishtml="0"  name=mold_shortremain_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=13 alignment="1" tabsequence=0 border="5" color="33554432" x="4197" y="240" height="80" width="553" html.valueishtml="0"  name=mold_shortnon_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

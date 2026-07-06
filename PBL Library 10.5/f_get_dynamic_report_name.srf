@@ -1,0 +1,36 @@
+HA$PBExportHeader$f_get_dynamic_report_name.srf
+global type f_get_dynamic_report_name from function_object
+end type
+
+forward prototypes
+global function string f_get_dynamic_report_name (string arg_model_name, string arg_type)
+end prototypes
+
+global function string f_get_dynamic_report_name (string arg_model_name, string arg_type);string lvs_name
+
+
+if arg_type = 'PID' then 
+	
+		select qr_pid_dw_name into :lvs_name
+		 from ip_product_model_master
+		 where model_name = :arg_model_name 
+		 and organization_id = :gvi_organization_id ;
+		 
+		 if f_sql_check() < 0 then 
+			return ''
+		end if 
+elseif arg_type = 'PACKING'  then 
+		
+		select PACKING_LABEL_DW_NAME into :lvs_name
+		 from ip_product_model_master
+		 where model_name = :arg_model_name 
+		 and organization_id = :gvi_organization_id ;
+		 
+		 if f_sql_check() < 0 then 
+			return ''
+		end if 		
+		
+end if 
+return lvs_name
+end function
+

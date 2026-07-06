@@ -1,0 +1,35 @@
+HA$PBExportHeader$vd_table_column_select.srd
+$PBExportComments$$$HEX7$$4cd174c714beeccefcb720c1ddd0$$ENDHEX$$
+release 10;
+datawindow(units=0 timer_interval=0 color=12632256 processing=1 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes hidegrayline=no grid.lines=0 )
+header(height=112 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=68 color="536870912" )
+table(column=(type=char(30) updatewhereclause=yes name=column_name dbname="user_tab_columns.column_name" )
+ column=(type=char(106) updatewhereclause=yes name=data_type dbname="user_tab_columns.data_type" )
+ column=(type=char(100) updatewhereclause=yes name=column_desc dbname="column_desc" )
+ retrieve="  SELECT ~"USER_TAB_COLUMNS~".~"COLUMN_NAME~",   
+               ~"USER_TAB_COLUMNS~".~"DATA_TYPE~",   
+                DECODE( :ARG_LANGUAGE , 'K' , WORD_KOR , 'E' , WORD_ENG , WORD_LOCAL ) COLUMN_DESC
+    FROM ~"USER_TAB_COLUMNS~",~"ISYS_WORD_DICTIONARY~"  
+   WHERE    ( user_tab_columns.column_name = isys_word_dictionary.column_name (+)) and         
+                   ( ~"USER_TAB_COLUMNS~".~"TABLE_NAME~" = :ARG_TABLE_NAME )" arguments=(("ARG_LANGUAGE", string),("ARG_TABLE_NAME", string)) )
+text(band=header alignment="2" text="Data Type" border="0" color="65535" x="1600" y="4" height="104" width="283" html.valueishtml="0"  name=data_type_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16711680" )
+text(band=header alignment="2" text="Column Name" border="0" color="65535" x="137" y="4" height="104" width="837" html.valueishtml="0"  name=column_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16711680" )
+text(band=header alignment="2" text="Column Desc" border="0" color="65535" x="983" y="4" height="104" width="608" html.valueishtml="0"  name=column_desc_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16711680" )
+column(band=detail id=2 alignment="2" tabsequence=20 border="0" color="0" x="1600" y="4" height="60" width="283" format="[general]" html.valueishtml="0"  name=data_type visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="0" x="137" y="4" height="60" width="837" format="[general]" html.valueishtml="0"  name=column_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=3 alignment="0" tabsequence=10 border="0" color="0" x="983" y="4" height="60" width="608" format="[general]" html.valueishtml="0"  name=column_desc visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+compute(band=detail alignment="0" expression="TRIM('')"border="0" color="0" x="9" y="4" height="60" width="119" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

@@ -1,0 +1,59 @@
+HA$PBExportHeader$d_qc_4m_item_bom_lst.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no grid.lines=1 )
+header(height=76 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=72 color="536870912" )
+table(column=(type=char(30) updatewhereclause=yes name=id_eng_bom_child_item_code dbname="id_eng_bom.child_item_code" dbalias="a.child_item_code" )
+ column=(type=number updatewhereclause=yes name=item_unit_qty dbname="item_unit_qty" )
+ column=(type=char(10) updatewhereclause=yes name=id_eng_bom_line_type dbname="id_eng_bom.line_type" dbalias="a.line_type" )
+ column=(type=char(1000) updatewhereclause=yes name=id_eng_bom_location_info dbname="id_eng_bom.location_info" dbalias="a.location_info" )
+ column=(type=char(300) updatewhereclause=yes name=id_item_item_name dbname="id_item.item_name" dbalias="b.item_name" )
+ column=(type=char(300) updatewhereclause=yes name=id_item_item_spec dbname="id_item.item_spec" dbalias="b.item_spec" )
+ retrieve="     SELECT DISTINCT 
+                            a.child_item_code,
+                            decode(a.child_item_code , :ARG_PARENT_ITEM_CODE ,1,a.item_unit_qty)  item_unit_qty,
+                     
+                            a.line_type ,
+                            a.location_info ,
+						 b.item_name , 
+						 b.item_spec  
+        
+            FROM id_eng_bom a , id_item b
+            WHERE a.child_item_code = b.item_code(+) AND 
+				     a.dateset <= TRUNC(SYSDATE) AND
+                       a.dateend >=  TRUNC(SYSDATE)  AND
+                       b.KEYITEM_YN = 'Y'
+            START WITH a.child_item_code = :ARG_PARENT_ITEM_CODE 
+                         AND a.parent_item_code = '*'
+					  AND	a.dateset <=   TRUNC(SYSDATE)  
+					  AND a.dateend >=  TRUNC(SYSDATE) 
+									
+            CONNECT BY PRIOR a.child_item_code = a.parent_item_code AND
+                            a.dateset  <=  TRUNC(SYSDATE) AND
+                            a.dateend >=  TRUNC(SYSDATE) 
+" arguments=(("ARG_PARENT_ITEM_CODE", string)) )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="2" color="33554432" x="9" y="4" height="64" width="507" format="[general]" html.valueishtml="0"  name=id_eng_bom_child_item_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="2" color="33554432" x="526" y="4" height="64" width="261" format="[general]" html.valueishtml="0"  name=id_eng_bom_line_type visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="2" color="33554432" x="1088" y="4" height="64" width="498" format="[general]" html.valueishtml="0"  name=id_eng_bom_location_info visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=5 alignment="2" tabsequence=32766 border="2" color="33554432" x="1595" y="4" height="64" width="896" format="[general]" html.valueishtml="0"  name=id_item_item_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=6 alignment="2" tabsequence=32766 border="2" color="33554432" x="2501" y="4" height="64" width="869" format="[general]" html.valueishtml="0"  name=id_item_item_spec visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="2" color="33554432" x="795" y="4" height="64" width="283" format="[general]" html.valueishtml="0"  name=item_unit_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=header alignment="2" text="Item Unit Qty" border="2" color="33554432" x="795" y="4" height="60" width="283" html.valueishtml="0"  name=item_unit_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+text(band=header alignment="2" text="Item Code" border="2" color="33554432" x="9" y="4" height="60" width="507" html.valueishtml="0"  name=id_eng_bom_child_item_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+text(band=header alignment="2" text="Line Type" border="2" color="33554432" x="526" y="4" height="60" width="261" html.valueishtml="0"  name=id_eng_bom_line_type_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+text(band=header alignment="2" text="Location Info" border="2" color="33554432" x="1088" y="4" height="60" width="498" html.valueishtml="0"  name=id_eng_bom_location_info_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+text(band=header alignment="2" text="Item Name" border="2" color="33554432" x="1595" y="4" height="60" width="896" html.valueishtml="0"  name=id_item_item_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+text(band=header alignment="2" text="Item Spec" border="2" color="33554432" x="2501" y="4" height="60" width="869" html.valueishtml="0"  name=id_item_item_spec_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

@@ -1,0 +1,488 @@
+HA$PBExportHeader$d_mat_monthly_rcv_iss_inv_4_location_close_rpt.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=16777215 processing=0 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no )
+header(height=444 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=80 color="536870912" )
+detail(height=268 color="536870912" )
+table(column=(type=char(20) updatewhereclause=yes name=location_code dbname="location_code" )
+ column=(type=number updatewhereclause=yes name=organization_id dbname="organization_id" )
+ column=(type=char(4) updatewhereclause=yes name=t1 dbname="t1" )
+ column=(type=char(4) updatewhereclause=yes name=t2 dbname="t2" )
+ column=(type=char(4) updatewhereclause=yes name=t3 dbname="t3" )
+ column=(type=char(4) updatewhereclause=yes name=t4 dbname="t4" )
+ column=(type=char(4) updatewhereclause=yes name=t5 dbname="t5" )
+ column=(type=char(4) updatewhereclause=yes name=t6 dbname="t6" )
+ column=(type=char(4) updatewhereclause=yes name=t7 dbname="t7" )
+ column=(type=char(4) updatewhereclause=yes name=t8 dbname="t8" )
+ column=(type=char(4) updatewhereclause=yes name=t9 dbname="t9" )
+ column=(type=char(4) updatewhereclause=yes name=t10 dbname="t10" )
+ column=(type=char(4) updatewhereclause=yes name=t11 dbname="t11" )
+ column=(type=char(4) updatewhereclause=yes name=t12 dbname="t12" )
+ column=(type=char(4) updatewhereclause=yes name=t13 dbname="t13" )
+ column=(type=char(4) updatewhereclause=yes name=t14 dbname="t14" )
+ column=(type=char(4) updatewhereclause=yes name=t15 dbname="t15" )
+ column=(type=char(4) updatewhereclause=yes name=t16 dbname="t16" )
+ column=(type=char(4) updatewhereclause=yes name=t17 dbname="t17" )
+ column=(type=char(4) updatewhereclause=yes name=t18 dbname="t18" )
+ column=(type=char(4) updatewhereclause=yes name=t19 dbname="t19" )
+ column=(type=char(4) updatewhereclause=yes name=t20 dbname="t20" )
+ column=(type=char(4) updatewhereclause=yes name=t21 dbname="t21" )
+ column=(type=char(4) updatewhereclause=yes name=t22 dbname="t22" )
+ column=(type=char(4) updatewhereclause=yes name=t23 dbname="t23" )
+ column=(type=char(4) updatewhereclause=yes name=t24 dbname="t24" )
+ column=(type=char(4) updatewhereclause=yes name=t25 dbname="t25" )
+ column=(type=char(4) updatewhereclause=yes name=t26 dbname="t26" )
+ column=(type=char(4) updatewhereclause=yes name=t27 dbname="t27" )
+ column=(type=char(4) updatewhereclause=yes name=t28 dbname="t28" )
+ column=(type=char(4) updatewhereclause=yes name=t29 dbname="t29" )
+ column=(type=char(4) updatewhereclause=yes name=t30 dbname="t30" )
+ column=(type=char(4) updatewhereclause=yes name=t31 dbname="t31" )
+ column=(type=number updatewhereclause=yes name=r01 dbname="r01" )
+ column=(type=number updatewhereclause=yes name=r02 dbname="r02" )
+ column=(type=number updatewhereclause=yes name=r03 dbname="r03" )
+ column=(type=number updatewhereclause=yes name=r04 dbname="r04" )
+ column=(type=number updatewhereclause=yes name=r05 dbname="r05" )
+ column=(type=number updatewhereclause=yes name=r06 dbname="r06" )
+ column=(type=number updatewhereclause=yes name=r07 dbname="r07" )
+ column=(type=number updatewhereclause=yes name=r08 dbname="r08" )
+ column=(type=number updatewhereclause=yes name=r09 dbname="r09" )
+ column=(type=number updatewhereclause=yes name=r10 dbname="r10" )
+ column=(type=number updatewhereclause=yes name=r11 dbname="r11" )
+ column=(type=number updatewhereclause=yes name=r12 dbname="r12" )
+ column=(type=number updatewhereclause=yes name=r13 dbname="r13" )
+ column=(type=number updatewhereclause=yes name=r14 dbname="r14" )
+ column=(type=number updatewhereclause=yes name=r15 dbname="r15" )
+ column=(type=number updatewhereclause=yes name=r16 dbname="r16" )
+ column=(type=number updatewhereclause=yes name=r17 dbname="r17" )
+ column=(type=number updatewhereclause=yes name=r18 dbname="r18" )
+ column=(type=number updatewhereclause=yes name=r19 dbname="r19" )
+ column=(type=number updatewhereclause=yes name=r20 dbname="r20" )
+ column=(type=number updatewhereclause=yes name=r21 dbname="r21" )
+ column=(type=number updatewhereclause=yes name=r22 dbname="r22" )
+ column=(type=number updatewhereclause=yes name=r23 dbname="r23" )
+ column=(type=number updatewhereclause=yes name=r24 dbname="r24" )
+ column=(type=number updatewhereclause=yes name=r25 dbname="r25" )
+ column=(type=number updatewhereclause=yes name=r26 dbname="r26" )
+ column=(type=number updatewhereclause=yes name=r27 dbname="r27" )
+ column=(type=number updatewhereclause=yes name=r28 dbname="r28" )
+ column=(type=number updatewhereclause=yes name=r29 dbname="r29" )
+ column=(type=number updatewhereclause=yes name=r30 dbname="r30" )
+ column=(type=number updatewhereclause=yes name=r31 dbname="r31" )
+ column=(type=number updatewhereclause=yes name=i01 dbname="i01" )
+ column=(type=number updatewhereclause=yes name=i02 dbname="i02" )
+ column=(type=number updatewhereclause=yes name=i03 dbname="i03" )
+ column=(type=number updatewhereclause=yes name=i04 dbname="i04" )
+ column=(type=number updatewhereclause=yes name=i05 dbname="i05" )
+ column=(type=number updatewhereclause=yes name=i06 dbname="i06" )
+ column=(type=number updatewhereclause=yes name=i07 dbname="i07" )
+ column=(type=number updatewhereclause=yes name=i08 dbname="i08" )
+ column=(type=number updatewhereclause=yes name=i09 dbname="i09" )
+ column=(type=number updatewhereclause=yes name=i10 dbname="i10" )
+ column=(type=number updatewhereclause=yes name=i11 dbname="i11" )
+ column=(type=number updatewhereclause=yes name=i12 dbname="i12" )
+ column=(type=number updatewhereclause=yes name=i13 dbname="i13" )
+ column=(type=number updatewhereclause=yes name=i14 dbname="i14" )
+ column=(type=number updatewhereclause=yes name=i15 dbname="i15" )
+ column=(type=number updatewhereclause=yes name=i16 dbname="i16" )
+ column=(type=number updatewhereclause=yes name=i17 dbname="i17" )
+ column=(type=number updatewhereclause=yes name=i18 dbname="i18" )
+ column=(type=number updatewhereclause=yes name=i19 dbname="i19" )
+ column=(type=number updatewhereclause=yes name=i20 dbname="i20" )
+ column=(type=number updatewhereclause=yes name=i21 dbname="i21" )
+ column=(type=number updatewhereclause=yes name=i22 dbname="i22" )
+ column=(type=number updatewhereclause=yes name=i23 dbname="i23" )
+ column=(type=number updatewhereclause=yes name=i24 dbname="i24" )
+ column=(type=number updatewhereclause=yes name=i25 dbname="i25" )
+ column=(type=number updatewhereclause=yes name=i26 dbname="i26" )
+ column=(type=number updatewhereclause=yes name=i27 dbname="i27" )
+ column=(type=number updatewhereclause=yes name=i28 dbname="i28" )
+ column=(type=number updatewhereclause=yes name=i29 dbname="i29" )
+ column=(type=number updatewhereclause=yes name=i30 dbname="i30" )
+ column=(type=number updatewhereclause=yes name=i31 dbname="i31" )
+ column=(type=number updatewhereclause=yes name=last_inv dbname="last_inv" )
+ retrieve="SELECT	LOCATION_CODE , ORGANIZATION_ID,
+
+TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',ORGANIZATION_ID),'MMDD')    T1, 
+TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',ORGANIZATION_ID)+1,'MMDD') T2, 
+TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',ORGANIZATION_ID)+2,'MMDD') T3, 
+TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',ORGANIZATION_ID)+3,'MMDD') T4, 
+TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',ORGANIZATION_ID)+4,'MMDD') T5, 
+TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',ORGANIZATION_ID)+5,'MMDD') T6, 
+TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',ORGANIZATION_ID)+6,'MMDD') T7, 
+TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',ORGANIZATION_ID)+7,'MMDD') T8, 
+TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',ORGANIZATION_ID)+8,'MMDD') T9, 
+TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',ORGANIZATION_ID)+9,'MMDD') T10, 
+TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',ORGANIZATION_ID)+10,'MMDD') T11,
+TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',ORGANIZATION_ID)+11,'MMDD') T12,
+TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',ORGANIZATION_ID)+12,'MMDD') T13,
+TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',ORGANIZATION_ID)+13,'MMDD') T14,
+TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',ORGANIZATION_ID)+14,'MMDD') T15,
+TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',ORGANIZATION_ID)+15,'MMDD') T16,
+TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',ORGANIZATION_ID)+16,'MMDD') T17,
+TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',ORGANIZATION_ID)+17,'MMDD') T18,
+TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',ORGANIZATION_ID)+18,'MMDD') T19,
+TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',ORGANIZATION_ID)+19,'MMDD') T20,
+TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',ORGANIZATION_ID)+20,'MMDD') T21,
+TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',ORGANIZATION_ID)+21,'MMDD') T22,
+TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',ORGANIZATION_ID)+22,'MMDD') T23,
+TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',ORGANIZATION_ID)+23,'MMDD') T24,
+TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',ORGANIZATION_ID)+24,'MMDD') T25,
+TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',ORGANIZATION_ID)+25,'MMDD') T26,
+TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',ORGANIZATION_ID)+26,'MMDD') T27,
+TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',ORGANIZATION_ID)+27,'MMDD') T28,
+TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',ORGANIZATION_ID)+28,'MMDD') T29,
+TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',ORGANIZATION_ID)+29,'MMDD') T30,
+TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',ORGANIZATION_ID)+30,'MMDD') T31,
+
+			R01,
+			R02,
+			R03,
+			R04,
+			R05,
+			R06,
+			R07,
+			R08,
+			R09,
+			R10,
+			R11,
+			R12,
+			R13,
+			R14,
+			R15,
+			R16,
+			R17,
+			R18,
+			R19,
+			R20,
+			R21,
+			R22,
+			R23,
+			R24,
+			R25,
+			R26,
+			R27,
+			R28,
+			R29,
+			R30,
+			R31,
+			
+			I01,
+			I02,
+			I03,
+			I04,
+			I05,
+			I06,
+			I07,
+			I08,
+			I09,
+			I10,
+			I11,
+			I12,
+			I13,
+			I14,
+			I15,
+			I16,
+			I17,
+			I18,
+			I19,
+			I20,
+			I21,
+			I22,
+			I23,
+			I24,
+			I25,
+			I26,
+			I27,
+			I28,
+			I29,
+			I30,
+			I31,
+
+			NVL	(	(	SELECT	NVL(SUM(I.MM_INVENTORY_QTY), 0)	LAST_INV
+							FROM		IM_ITEM_INVENTORY_CLOSE	I
+							WHERE	      CLOSE_YYYYMM			=		TO_CHAR(ADD_MONTHS(TO_DATE(:ARG_YYYYMM||'01', 'YYYYMMDD'), -1), 'YYYYMM')
+                          		AND        I.LOCATION_CODE = R.LOCATION_CODE
+							AND		I.ORGANIZATION_ID		=		R.ORGANIZATION_ID
+						), 0
+					)		LAST_INV
+
+FROM		(	SELECT	A.LOCATION_CODE ,
+							A.ORGANIZATION_ID ,
+							SUM(	DECODE(  TO_CHAR(A.CLOSE_DATE,'MMDD') , TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',A.ORGANIZATION_ID),'MMDD') , A.DD_RECEIPT_QTY , 0 )) R01 ,  
+							SUM(	DECODE(  TO_CHAR(A.CLOSE_DATE,'MMDD') , TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',A.ORGANIZATION_ID)+1,'MMDD') , A.DD_RECEIPT_QTY , 0 )) R02 ,  
+							SUM(	DECODE(  TO_CHAR(A.CLOSE_DATE,'MMDD') , TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',A.ORGANIZATION_ID)+2,'MMDD') , A.DD_RECEIPT_QTY , 0 )) R03 ,  
+							SUM(	DECODE(  TO_CHAR(A.CLOSE_DATE,'MMDD') , TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',A.ORGANIZATION_ID)+3,'MMDD') , A.DD_RECEIPT_QTY , 0 )) R04 ,  
+							SUM(	DECODE(  TO_CHAR(A.CLOSE_DATE,'MMDD') , TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',A.ORGANIZATION_ID)+4,'MMDD') , A.DD_RECEIPT_QTY , 0 )) R05 ,  
+							SUM(	DECODE(  TO_CHAR(A.CLOSE_DATE,'MMDD') , TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',A.ORGANIZATION_ID)+5,'MMDD') , A.DD_RECEIPT_QTY , 0 )) R06 ,  
+							SUM(	DECODE(  TO_CHAR(A.CLOSE_DATE,'MMDD') , TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',A.ORGANIZATION_ID)+6,'MMDD') , A.DD_RECEIPT_QTY , 0 )) R07 ,  
+							SUM(	DECODE(  TO_CHAR(A.CLOSE_DATE,'MMDD') , TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',A.ORGANIZATION_ID)+7,'MMDD') , A.DD_RECEIPT_QTY , 0 )) R08 ,  
+							SUM(	DECODE(  TO_CHAR(A.CLOSE_DATE,'MMDD') , TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',A.ORGANIZATION_ID)+8,'MMDD') , A.DD_RECEIPT_QTY , 0 )) R09 ,  
+							SUM(	DECODE(  TO_CHAR(A.CLOSE_DATE,'MMDD') , TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',A.ORGANIZATION_ID)+9,'MMDD') , A.DD_RECEIPT_QTY , 0 )) R10 ,  
+							SUM(	DECODE(  TO_CHAR(A.CLOSE_DATE,'MMDD') , TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',A.ORGANIZATION_ID)+10,'MMDD') , A.DD_RECEIPT_QTY , 0 )) R11 ,  
+							SUM(	DECODE(  TO_CHAR(A.CLOSE_DATE,'MMDD') , TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',A.ORGANIZATION_ID)+11,'MMDD') , A.DD_RECEIPT_QTY , 0 )) R12 ,  
+							SUM(	DECODE(  TO_CHAR(A.CLOSE_DATE,'MMDD') , TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',A.ORGANIZATION_ID)+12,'MMDD') , A.DD_RECEIPT_QTY , 0 )) R13 ,  
+							SUM(	DECODE(  TO_CHAR(A.CLOSE_DATE,'MMDD') , TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',A.ORGANIZATION_ID)+13,'MMDD') , A.DD_RECEIPT_QTY , 0 )) R14 ,  
+							SUM(	DECODE(  TO_CHAR(A.CLOSE_DATE,'MMDD') , TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',A.ORGANIZATION_ID)+14,'MMDD') , A.DD_RECEIPT_QTY , 0 )) R15 ,  
+							SUM(	DECODE(  TO_CHAR(A.CLOSE_DATE,'MMDD') , TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',A.ORGANIZATION_ID)+15,'MMDD') , A.DD_RECEIPT_QTY , 0 )) R16 ,  
+							SUM(	DECODE(  TO_CHAR(A.CLOSE_DATE,'MMDD') , TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',A.ORGANIZATION_ID)+16,'MMDD') , A.DD_RECEIPT_QTY , 0 )) R17 ,  
+							SUM(	DECODE(  TO_CHAR(A.CLOSE_DATE,'MMDD') , TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',A.ORGANIZATION_ID)+17,'MMDD') , A.DD_RECEIPT_QTY , 0 )) R18 ,  
+							SUM(	DECODE(  TO_CHAR(A.CLOSE_DATE,'MMDD') , TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',A.ORGANIZATION_ID)+18,'MMDD') , A.DD_RECEIPT_QTY , 0 )) R19 ,  
+							SUM(	DECODE(  TO_CHAR(A.CLOSE_DATE,'MMDD') , TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',A.ORGANIZATION_ID)+19,'MMDD') , A.DD_RECEIPT_QTY , 0 )) R20 ,  
+							SUM(	DECODE(  TO_CHAR(A.CLOSE_DATE,'MMDD') , TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',A.ORGANIZATION_ID)+20,'MMDD') , A.DD_RECEIPT_QTY , 0 )) R21 ,  
+							SUM(	DECODE(  TO_CHAR(A.CLOSE_DATE,'MMDD') , TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',A.ORGANIZATION_ID)+21,'MMDD') , A.DD_RECEIPT_QTY , 0 )) R22 ,  
+							SUM(	DECODE(  TO_CHAR(A.CLOSE_DATE,'MMDD') , TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',A.ORGANIZATION_ID)+22,'MMDD') , A.DD_RECEIPT_QTY , 0 )) R23 ,  
+							SUM(	DECODE(  TO_CHAR(A.CLOSE_DATE,'MMDD') , TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',A.ORGANIZATION_ID)+23,'MMDD') , A.DD_RECEIPT_QTY , 0 )) R24 ,  
+							SUM(	DECODE(  TO_CHAR(A.CLOSE_DATE,'MMDD') , TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',A.ORGANIZATION_ID)+24,'MMDD') , A.DD_RECEIPT_QTY , 0 )) R25 ,  
+							SUM(	DECODE(  TO_CHAR(A.CLOSE_DATE,'MMDD') , TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',A.ORGANIZATION_ID)+25,'MMDD') , A.DD_RECEIPT_QTY , 0 )) R26 ,  
+							SUM(	DECODE(  TO_CHAR(A.CLOSE_DATE,'MMDD') , TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',A.ORGANIZATION_ID)+26,'MMDD') , A.DD_RECEIPT_QTY , 0 )) R27 ,  
+							SUM(	DECODE(  TO_CHAR(A.CLOSE_DATE,'MMDD') , TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',A.ORGANIZATION_ID)+27,'MMDD') , A.DD_RECEIPT_QTY , 0 )) R28 ,  
+							SUM(	DECODE(  TO_CHAR(A.CLOSE_DATE,'MMDD') , TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',A.ORGANIZATION_ID)+28,'MMDD') , A.DD_RECEIPT_QTY , 0 )) R29 ,  
+							SUM(	DECODE(  TO_CHAR(A.CLOSE_DATE,'MMDD') , TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',A.ORGANIZATION_ID)+29,'MMDD') , A.DD_RECEIPT_QTY , 0 )) R30 ,  
+							SUM(	DECODE(  TO_CHAR(A.CLOSE_DATE,'MMDD') , TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',A.ORGANIZATION_ID)+30,'MMDD') , A.DD_RECEIPT_QTY , 0 )) R31 ,  
+																															 
+							SUM(	DECODE(  TO_CHAR(A.CLOSE_DATE,'MMDD') , TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',A.ORGANIZATION_ID),'MMDD') , A.DD_SHIPPING_QTY , 0 )) I01 ,    
+							SUM(	DECODE(  TO_CHAR(A.CLOSE_DATE,'MMDD') , TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',A.ORGANIZATION_ID)+1,'MMDD') , A.DD_SHIPPING_QTY , 0 )) I02 ,    
+							SUM(	DECODE(  TO_CHAR(A.CLOSE_DATE,'MMDD') , TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',A.ORGANIZATION_ID)+2,'MMDD') , A.DD_SHIPPING_QTY , 0 )) I03 ,    
+							SUM(	DECODE(  TO_CHAR(A.CLOSE_DATE,'MMDD') , TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',A.ORGANIZATION_ID)+3,'MMDD') , A.DD_SHIPPING_QTY , 0 )) I04 ,    
+							SUM(	DECODE(  TO_CHAR(A.CLOSE_DATE,'MMDD') , TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',A.ORGANIZATION_ID)+4,'MMDD') , A.DD_SHIPPING_QTY , 0 )) I05 ,    
+							SUM(	DECODE(  TO_CHAR(A.CLOSE_DATE,'MMDD') , TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',A.ORGANIZATION_ID)+5,'MMDD') , A.DD_SHIPPING_QTY , 0 )) I06 ,    
+							SUM(	DECODE(  TO_CHAR(A.CLOSE_DATE,'MMDD') , TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',A.ORGANIZATION_ID)+6,'MMDD') , A.DD_SHIPPING_QTY , 0 )) I07 ,    
+							SUM(	DECODE(  TO_CHAR(A.CLOSE_DATE,'MMDD') , TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',A.ORGANIZATION_ID)+7,'MMDD') , A.DD_SHIPPING_QTY , 0 )) I08 ,    
+							SUM(	DECODE(  TO_CHAR(A.CLOSE_DATE,'MMDD') , TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',A.ORGANIZATION_ID)+8,'MMDD') , A.DD_SHIPPING_QTY , 0 )) I09 ,    
+							SUM(	DECODE(  TO_CHAR(A.CLOSE_DATE,'MMDD') , TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',A.ORGANIZATION_ID)+9,'MMDD') , A.DD_SHIPPING_QTY , 0 )) I10 ,    
+							SUM(	DECODE(  TO_CHAR(A.CLOSE_DATE,'MMDD') , TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',A.ORGANIZATION_ID)+10,'MMDD') , A.DD_SHIPPING_QTY , 0 )) I11 ,    
+							SUM(	DECODE(  TO_CHAR(A.CLOSE_DATE,'MMDD') , TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',A.ORGANIZATION_ID)+11,'MMDD') , A.DD_SHIPPING_QTY , 0 )) I12 ,    
+							SUM(	DECODE(  TO_CHAR(A.CLOSE_DATE,'MMDD') , TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',A.ORGANIZATION_ID)+12,'MMDD') , A.DD_SHIPPING_QTY , 0 )) I13 ,    
+							SUM(	DECODE(  TO_CHAR(A.CLOSE_DATE,'MMDD') , TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',A.ORGANIZATION_ID)+13,'MMDD') , A.DD_SHIPPING_QTY , 0 )) I14 ,    
+							SUM(	DECODE(  TO_CHAR(A.CLOSE_DATE,'MMDD') , TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',A.ORGANIZATION_ID)+14,'MMDD') , A.DD_SHIPPING_QTY , 0 )) I15 ,    
+							SUM(	DECODE(  TO_CHAR(A.CLOSE_DATE,'MMDD') , TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',A.ORGANIZATION_ID)+15,'MMDD') , A.DD_SHIPPING_QTY , 0 )) I16 ,    
+							SUM(	DECODE(  TO_CHAR(A.CLOSE_DATE,'MMDD') , TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',A.ORGANIZATION_ID)+16,'MMDD') , A.DD_SHIPPING_QTY , 0 )) I17 ,    
+							SUM(	DECODE(  TO_CHAR(A.CLOSE_DATE,'MMDD') , TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',A.ORGANIZATION_ID)+17,'MMDD') , A.DD_SHIPPING_QTY , 0 )) I18 ,    
+							SUM(	DECODE(  TO_CHAR(A.CLOSE_DATE,'MMDD') , TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',A.ORGANIZATION_ID)+18,'MMDD') , A.DD_SHIPPING_QTY , 0 )) I19 ,    
+							SUM(	DECODE(  TO_CHAR(A.CLOSE_DATE,'MMDD') , TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',A.ORGANIZATION_ID)+19,'MMDD') , A.DD_SHIPPING_QTY , 0 )) I20 ,    
+							SUM(	DECODE(  TO_CHAR(A.CLOSE_DATE,'MMDD') , TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',A.ORGANIZATION_ID)+20,'MMDD') , A.DD_SHIPPING_QTY , 0 )) I21 ,    
+							SUM(	DECODE(  TO_CHAR(A.CLOSE_DATE,'MMDD') , TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',A.ORGANIZATION_ID)+21,'MMDD') , A.DD_SHIPPING_QTY , 0 )) I22 ,    
+							SUM(	DECODE(  TO_CHAR(A.CLOSE_DATE,'MMDD') , TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',A.ORGANIZATION_ID)+22,'MMDD') , A.DD_SHIPPING_QTY , 0 )) I23 ,    
+							SUM(	DECODE(  TO_CHAR(A.CLOSE_DATE,'MMDD') , TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',A.ORGANIZATION_ID)+23,'MMDD') , A.DD_SHIPPING_QTY , 0 )) I24 ,    
+							SUM(	DECODE(  TO_CHAR(A.CLOSE_DATE,'MMDD') , TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',A.ORGANIZATION_ID)+24,'MMDD') , A.DD_SHIPPING_QTY , 0 )) I25 ,    
+							SUM(	DECODE(  TO_CHAR(A.CLOSE_DATE,'MMDD') , TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',A.ORGANIZATION_ID)+25,'MMDD') , A.DD_SHIPPING_QTY , 0 )) I26 ,    
+							SUM(	DECODE(  TO_CHAR(A.CLOSE_DATE,'MMDD') , TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',A.ORGANIZATION_ID)+26,'MMDD') , A.DD_SHIPPING_QTY , 0 )) I27 ,    
+							SUM(	DECODE(  TO_CHAR(A.CLOSE_DATE,'MMDD') , TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',A.ORGANIZATION_ID)+27,'MMDD') , A.DD_SHIPPING_QTY , 0 )) I28 ,    
+							SUM(	DECODE(  TO_CHAR(A.CLOSE_DATE,'MMDD') , TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',A.ORGANIZATION_ID)+28,'MMDD') , A.DD_SHIPPING_QTY , 0 )) I29 ,    
+							SUM(	DECODE(  TO_CHAR(A.CLOSE_DATE,'MMDD') , TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',A.ORGANIZATION_ID)+29,'MMDD') , A.DD_SHIPPING_QTY , 0 )) I30 ,    
+							SUM(	DECODE(  TO_CHAR(A.CLOSE_DATE,'MMDD') , TO_CHAR(F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',A.ORGANIZATION_ID)+30,'MMDD') , A.DD_SHIPPING_QTY , 0 )) I31 																							 
+
+				  FROM ( SELECT     CLOSE_DATE , LOCATION_CODE ,
+                                                SUM(DD_RECEIPT_QTY)  DD_RECEIPT_QTY, 
+                                                SUM(DD_SHIPPING_QTY) DD_SHIPPING_QTY , 
+                                                ORGANIZATION_ID
+                                                  
+                                                  FROM ( SELECT LOCATION_CODE , 
+																	RECEIPT_DATE CLOSE_DATE  , 
+																	SUM(RECEIPT_QTY) DD_RECEIPT_QTY , 
+																	0 DD_SHIPPING_QTY , 
+																	ORGANIZATION_ID
+														FROM IM_ITEM_RECEIPT 
+														WHERE RECEIPT_DATE >= F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',ORGANIZATION_ID)
+														AND RECEIPT_DATE    <=   F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'END',ORGANIZATION_ID)
+														AND LOCATION_CODE LIKE :ARG_LOCATION_CODE
+														AND ORGANIZATION_ID = :ARG_ORG
+														GROUP BY RECEIPT_DATE , LOCATION_CODE ,ORGANIZATION_ID 
+
+								UNION ALL
+								SELECT LOCATION_CODE ,  SHIPPING_DATE CLOSE_DATE  , 0 DD_RECEIPT_QTY , SUM(SHIPPING_QTY) DD_SHIPPING_QTY , ORGANIZATION_ID
+								FROM IS_MATERIAL_SHIPPING
+								WHERE SHIPPING_DATE >= F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',ORGANIZATION_ID)
+								AND SHIPPING_DATE <=   F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'END',ORGANIZATION_ID)
+                                    AND LOCATION_CODE LIKE :ARG_LOCATION_CODE
+                                    AND ORGANIZATION_ID = :ARG_ORG
+								GROUP BY SHIPPING_DATE , LOCATION_CODE ,  ORGANIZATION_ID 
+
+								UNION ALL
+								SELECT LOCATION_CODE ,  ISSUE_DATE CLOSE_DATE  , 0 DD_RECEIPT_QTY , SUM(ISSUE_QTY) DD_SHIPPING_QTY , ORGANIZATION_ID
+								FROM IM_ITEM_ISSUE
+								WHERE ISSUE_DATE >= F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',ORGANIZATION_ID)
+								AND ISSUE_DATE <=   F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'END',ORGANIZATION_ID)
+                                    AND LOCATION_CODE LIKE :ARG_LOCATION_CODE
+                                    AND ORGANIZATION_ID = :ARG_ORG
+								GROUP BY ISSUE_DATE , LOCATION_CODE ,  ORGANIZATION_ID 
+
+                                    UNION ALL
+								SELECT LOCATION_CODE ,  F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',ORGANIZATION_ID) CLOSE_DATE  , 0 DD_RECEIPT_QTY , 0 DD_SHIPPING_QTY , ORGANIZATION_ID
+								FROM IM_ITEM_INVENTORY
+								WHERE INVENTORY_QTY <> 0
+                                    AND LOCATION_CODE LIKE :ARG_LOCATION_CODE
+								AND ORGANIZATION_ID = :ARG_ORG
+								GROUP BY LOCATION_CODE , F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',ORGANIZATION_ID) , ITEM_CODE ,LINE_TYPE , ORGANIZATION_ID
+								) 
+						GROUP BY CLOSE_DATE , LOCATION_CODE , ORGANIZATION_ID	
+                                    )  A 
+
+				WHERE A.CLOSE_DATE    >=F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'START',A.ORGANIZATION_ID)
+				  AND A.CLOSE_DATE    <=F_GET_INVENTORY_CLOSE_DATE(:ARG_YYYYMM,'END',A.ORGANIZATION_ID)
+				  AND A.ORGANIZATION_ID = :ARG_ORG
+    	        GROUP BY  A.LOCATION_CODE ,				A.ORGANIZATION_ID
+			)	R
+" arguments=(("ARG_YYYYMM", string),("ARG_ITEM_CODE", string),("ARG_LOCATION_CODE", string),("ARG_ORG", number))  sort="organization_id A location_code A " )
+group(level=1 header.height=0 trailer.height=0 by=("organization_id" ) header.color="536870912" trailer.color="536870912" )
+compute(band=header alignment="0" expression=" ARG_YYYYMM "border="0" color="33554432" x="453" y="188" height="64" width="370" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=header alignment="0" text="Close YYYYMM" border="0" color="33554432" x="50" y="188" height="64" width="370" html.valueishtml="0"  name=t_3 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Div" border="0" color="33554432" x="1079" y="292" height="120" width="256" html.valueishtml="0"  name=t_7 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Monthly Material Receipt Issue Inventory Report" border="0" color="33554432" x="0" y="12" height="92" width="10647" html.valueishtml="0"  name=t_5 visible="1"  font.face="Tahoma" font.height="-14" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=header id=3 alignment="2" tabsequence=32766 border="0" color="33554432" x="1847" y="292" height="120" width="270" format="[general]" html.valueishtml="0"  name=t1 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=header id=6 alignment="2" tabsequence=32766 border="0" color="33554432" x="2697" y="292" height="120" width="270" format="[general]" html.valueishtml="0"  name=t4 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=header id=7 alignment="2" tabsequence=32766 border="0" color="33554432" x="2981" y="292" height="120" width="270" format="[general]" html.valueishtml="0"  name=t5 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=header id=8 alignment="2" tabsequence=32766 border="0" color="33554432" x="3264" y="292" height="120" width="270" format="[general]" html.valueishtml="0"  name=t6 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=header id=4 alignment="2" tabsequence=32766 border="0" color="33554432" x="2130" y="292" height="120" width="270" format="[general]" html.valueishtml="0"  name=t2 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=header id=5 alignment="2" tabsequence=32766 border="0" color="33554432" x="2414" y="292" height="120" width="270" format="[general]" html.valueishtml="0"  name=t3 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=header id=33 alignment="2" tabsequence=32766 border="0" color="33554432" x="10359" y="292" height="120" width="270" format="[general]" html.valueishtml="0"  name=t31 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=header id=32 alignment="2" tabsequence=32766 border="0" color="33554432" x="10075" y="292" height="120" width="270" format="[general]" html.valueishtml="0"  name=t30 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=header id=31 alignment="2" tabsequence=32766 border="0" color="33554432" x="9792" y="292" height="120" width="270" format="[general]" html.valueishtml="0"  name=t29 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=header id=30 alignment="2" tabsequence=32766 border="0" color="33554432" x="9504" y="292" height="120" width="270" format="[general]" html.valueishtml="0"  name=t28 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=header id=29 alignment="2" tabsequence=32766 border="0" color="33554432" x="9221" y="292" height="120" width="270" format="[general]" html.valueishtml="0"  name=t27 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=header id=28 alignment="2" tabsequence=32766 border="0" color="33554432" x="8937" y="292" height="120" width="270" format="[general]" html.valueishtml="0"  name=t26 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=header id=27 alignment="2" tabsequence=32766 border="0" color="33554432" x="8654" y="292" height="120" width="270" format="[general]" html.valueishtml="0"  name=t25 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=header id=26 alignment="2" tabsequence=32766 border="0" color="33554432" x="8370" y="292" height="120" width="270" format="[general]" html.valueishtml="0"  name=t24 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=header id=25 alignment="2" tabsequence=32766 border="0" color="33554432" x="8087" y="292" height="120" width="270" format="[general]" html.valueishtml="0"  name=t23 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=header id=24 alignment="2" tabsequence=32766 border="0" color="33554432" x="7803" y="292" height="120" width="270" format="[general]" html.valueishtml="0"  name=t22 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=header id=23 alignment="2" tabsequence=32766 border="0" color="33554432" x="7520" y="292" height="120" width="270" format="[general]" html.valueishtml="0"  name=t21 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=header id=22 alignment="2" tabsequence=32766 border="0" color="33554432" x="7237" y="292" height="120" width="270" format="[general]" html.valueishtml="0"  name=t20 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=header id=21 alignment="2" tabsequence=32766 border="0" color="33554432" x="6953" y="292" height="120" width="270" format="[general]" html.valueishtml="0"  name=t19 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=header id=20 alignment="2" tabsequence=32766 border="0" color="33554432" x="6670" y="292" height="120" width="274" format="[general]" html.valueishtml="0"  name=t18 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=header id=19 alignment="2" tabsequence=32766 border="0" color="33554432" x="6386" y="292" height="120" width="270" format="[general]" html.valueishtml="0"  name=t17 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=header id=18 alignment="2" tabsequence=32766 border="0" color="33554432" x="6103" y="292" height="120" width="270" format="[general]" html.valueishtml="0"  name=t16 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=header id=17 alignment="2" tabsequence=32766 border="0" color="33554432" x="5819" y="292" height="120" width="270" format="[general]" html.valueishtml="0"  name=t15 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=header id=16 alignment="2" tabsequence=32766 border="0" color="33554432" x="5536" y="292" height="120" width="270" format="[general]" html.valueishtml="0"  name=t14 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=header id=15 alignment="2" tabsequence=32766 border="0" color="33554432" x="5253" y="292" height="120" width="270" format="[general]" html.valueishtml="0"  name=t13 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=header id=14 alignment="2" tabsequence=32766 border="0" color="33554432" x="4969" y="292" height="120" width="270" format="[general]" html.valueishtml="0"  name=t12 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=header id=13 alignment="2" tabsequence=32766 border="0" color="33554432" x="4686" y="292" height="120" width="270" format="[general]" html.valueishtml="0"  name=t11 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=header id=12 alignment="2" tabsequence=32766 border="0" color="33554432" x="4402" y="292" height="120" width="270" format="[general]" html.valueishtml="0"  name=t10 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=header id=11 alignment="2" tabsequence=32766 border="0" color="33554432" x="4119" y="292" height="120" width="270" format="[general]" html.valueishtml="0"  name=t9 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=header id=10 alignment="2" tabsequence=32766 border="0" color="33554432" x="3835" y="292" height="120" width="270" format="[general]" html.valueishtml="0"  name=t8 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=header id=9 alignment="2" tabsequence=32766 border="0" color="33554432" x="3547" y="292" height="120" width="274" format="[general]" html.valueishtml="0"  name=t7 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="1" text="Total" border="0" color="33554432" x="1349" y="292" height="120" width="475" html.valueishtml="0"  name=t_4 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+line(band=header x1="0" y1="272" x2="10629" y2="268"  name=l_1 visible="1" pen.style="0" pen.width="9" pen.color="255"  background.mode="1" background.color="553648127" )
+line(band=header x1="0" y1="428" x2="10629" y2="424"  name=l_2 visible="1" pen.style="0" pen.width="9" pen.color="255"  background.mode="1" background.color="553648127" )
+text(band=header alignment="0" text="Print Date" border="0" color="33554432" x="9495" y="188" height="60" width="466" html.valueishtml="0"  name=t_11 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=header alignment="0" expression="today()"border="0" color="33554432" x="9975" y="188" height="60" width="635" format="[general]" html.valueishtml="0"  name=date_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=detail alignment="2" text="Receipt" border="0" color="33554432" x="1079" y="8" height="64" width="256" html.valueishtml="0"  name=t_8 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=detail alignment="2" text="Issue" border="0" color="33554432" x="1079" y="92" height="64" width="256" html.valueishtml="0"  name=t_9 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=detail alignment="2" text="Inventory" border="0" color="33554432" x="1079" y="180" height="64" width="256" html.valueishtml="0"  name=t_10 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=96 alignment="1" tabsequence=32766 border="0" color="16711680" x="325" y="180" height="64" width="736" format="###,##0.00" html.valueishtml="0"  name=last_inv visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+text(band=detail alignment="0" text="Last Inv" border="0" color="16711680" x="9" y="180" height="64" width="302" html.valueishtml="0"  name=last_inv_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+column(band=detail id=34 alignment="1" tabsequence=32766 border="0" color="33554432" x="1847" y="4" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=r01 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=37 alignment="1" tabsequence=32766 border="0" color="33554432" x="2697" y="4" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=r04 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+column(band=detail id=38 alignment="1" tabsequence=32766 border="0" color="33554432" x="2981" y="4" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=r05 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=39 alignment="1" tabsequence=32766 border="0" color="33554432" x="3264" y="4" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=r06 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+column(band=detail id=35 alignment="1" tabsequence=32766 border="0" color="33554432" x="2130" y="4" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=r02 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+column(band=detail id=36 alignment="1" tabsequence=32766 border="0" color="33554432" x="2414" y="4" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=r03 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=64 alignment="1" tabsequence=32766 border="0" color="33554432" x="10359" y="4" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=r31 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=63 alignment="1" tabsequence=32766 border="0" color="33554432" x="10075" y="4" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=r30 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+column(band=detail id=62 alignment="1" tabsequence=32766 border="0" color="33554432" x="9792" y="4" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=r29 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=61 alignment="1" tabsequence=32766 border="0" color="33554432" x="9504" y="4" height="64" width="274" format="###,##0.00" html.valueishtml="0"  name=r28 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+column(band=detail id=60 alignment="1" tabsequence=32766 border="0" color="33554432" x="9221" y="4" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=r27 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=59 alignment="1" tabsequence=32766 border="0" color="33554432" x="8937" y="4" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=r26 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+column(band=detail id=58 alignment="1" tabsequence=32766 border="0" color="33554432" x="8654" y="4" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=r25 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=57 alignment="1" tabsequence=32766 border="0" color="33554432" x="8370" y="4" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=r24 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+column(band=detail id=56 alignment="1" tabsequence=32766 border="0" color="33554432" x="8087" y="4" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=r23 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=55 alignment="1" tabsequence=32766 border="0" color="33554432" x="7803" y="4" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=r22 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+column(band=detail id=54 alignment="1" tabsequence=32766 border="0" color="33554432" x="7520" y="4" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=r21 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=53 alignment="1" tabsequence=32766 border="0" color="33554432" x="7237" y="4" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=r20 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+column(band=detail id=52 alignment="1" tabsequence=32766 border="0" color="33554432" x="6953" y="4" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=r19 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=51 alignment="1" tabsequence=32766 border="0" color="33554432" x="6670" y="4" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=r18 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+column(band=detail id=50 alignment="1" tabsequence=32766 border="0" color="33554432" x="6386" y="4" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=r17 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=49 alignment="1" tabsequence=32766 border="0" color="33554432" x="6103" y="4" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=r16 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+column(band=detail id=48 alignment="1" tabsequence=32766 border="0" color="33554432" x="5819" y="4" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=r15 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=47 alignment="1" tabsequence=32766 border="0" color="33554432" x="5536" y="4" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=r14 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+column(band=detail id=46 alignment="1" tabsequence=32766 border="0" color="33554432" x="5253" y="4" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=r13 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=45 alignment="1" tabsequence=32766 border="0" color="33554432" x="4969" y="4" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=r12 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+column(band=detail id=44 alignment="1" tabsequence=32766 border="0" color="33554432" x="4686" y="4" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=r11 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=43 alignment="1" tabsequence=32766 border="0" color="33554432" x="4402" y="4" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=r10 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+column(band=detail id=42 alignment="1" tabsequence=32766 border="0" color="33554432" x="4119" y="4" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=r09 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=41 alignment="1" tabsequence=32766 border="0" color="33554432" x="3835" y="4" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=r08 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+column(band=detail id=40 alignment="1" tabsequence=32766 border="0" color="33554432" x="3547" y="4" height="64" width="274" format="###,##0.00" html.valueishtml="0"  name=r07 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=65 alignment="1" tabsequence=32766 border="0" color="33554432" x="1847" y="92" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=i01 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=66 alignment="1" tabsequence=32766 border="0" color="33554432" x="2130" y="92" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=i02 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+column(band=detail id=67 alignment="1" tabsequence=32766 border="0" color="33554432" x="2414" y="92" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=i03 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=68 alignment="1" tabsequence=32766 border="0" color="33554432" x="2697" y="92" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=i04 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+column(band=detail id=69 alignment="1" tabsequence=32766 border="0" color="33554432" x="2981" y="92" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=i05 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=70 alignment="1" tabsequence=32766 border="0" color="33554432" x="3264" y="92" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=i06 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+column(band=detail id=71 alignment="1" tabsequence=32766 border="0" color="33554432" x="3547" y="92" height="64" width="274" format="###,##0.00" html.valueishtml="0"  name=i07 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=72 alignment="1" tabsequence=32766 border="0" color="33554432" x="3835" y="92" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=i08 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+column(band=detail id=73 alignment="1" tabsequence=32766 border="0" color="33554432" x="4119" y="92" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=i09 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=74 alignment="1" tabsequence=32766 border="0" color="33554432" x="4402" y="92" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=i10 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+column(band=detail id=75 alignment="1" tabsequence=32766 border="0" color="33554432" x="4686" y="92" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=i11 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=76 alignment="1" tabsequence=32766 border="0" color="33554432" x="4969" y="92" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=i12 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+column(band=detail id=77 alignment="1" tabsequence=32766 border="0" color="33554432" x="5253" y="92" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=i13 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=78 alignment="1" tabsequence=32766 border="0" color="33554432" x="5536" y="92" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=i14 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+column(band=detail id=79 alignment="1" tabsequence=32766 border="0" color="33554432" x="5819" y="92" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=i15 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=80 alignment="1" tabsequence=32766 border="0" color="33554432" x="6103" y="92" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=i16 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+column(band=detail id=81 alignment="1" tabsequence=32766 border="0" color="33554432" x="6386" y="92" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=i17 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=82 alignment="1" tabsequence=32766 border="0" color="33554432" x="6670" y="92" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=i18 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=83 alignment="1" tabsequence=32766 border="0" color="33554432" x="6953" y="92" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=i19 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=84 alignment="1" tabsequence=32766 border="0" color="33554432" x="7237" y="92" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=i20 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+column(band=detail id=86 alignment="1" tabsequence=32766 border="0" color="33554432" x="7803" y="92" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=i22 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+column(band=detail id=87 alignment="1" tabsequence=32766 border="0" color="33554432" x="8087" y="92" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=i23 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=88 alignment="1" tabsequence=32766 border="0" color="33554432" x="8370" y="92" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=i24 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+column(band=detail id=89 alignment="1" tabsequence=32766 border="0" color="33554432" x="8654" y="92" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=i25 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=90 alignment="1" tabsequence=32766 border="0" color="33554432" x="8937" y="92" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=i26 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+column(band=detail id=91 alignment="1" tabsequence=32766 border="0" color="33554432" x="9221" y="92" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=i27 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=92 alignment="1" tabsequence=32766 border="0" color="33554432" x="9504" y="92" height="64" width="274" format="###,##0.00" html.valueishtml="0"  name=i28 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+column(band=detail id=93 alignment="1" tabsequence=32766 border="0" color="33554432" x="9792" y="92" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=i29 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=94 alignment="1" tabsequence=32766 border="0" color="33554432" x="10075" y="92" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=i30 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+column(band=detail id=95 alignment="1" tabsequence=32766 border="0" color="33554432" x="10359" y="92" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=i31 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=85 alignment="1" tabsequence=32766 border="0" color="33554432" x="7520" y="92" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=i21 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=detail alignment="1" expression=" last_inv + r01 - i01"border="0" color="33554432" x="1847" y="180" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=n01 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=detail alignment="1" expression="n01 + r02 - i02"border="0" color="33554432" x="2130" y="180" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=n02 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+compute(band=detail alignment="1" expression="n02 + r03 - i03"border="0" color="33554432" x="2414" y="180" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=n03 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=detail alignment="1" expression="n03 + r04 - i04"border="0" color="33554432" x="2697" y="180" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=n04 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+compute(band=detail alignment="1" expression="n04 + r05 - i05"border="0" color="33554432" x="2981" y="180" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=n05 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=detail alignment="1" expression="n05 + r06 - i06"border="0" color="33554432" x="3264" y="180" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=n06 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+compute(band=detail alignment="1" expression="n06 + r07 - i07"border="0" color="33554432" x="3547" y="180" height="64" width="274" format="###,##0.00" html.valueishtml="0"  name=n07 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=detail alignment="1" expression="n07 + r08 - i08"border="0" color="33554432" x="3835" y="180" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=n08 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+compute(band=detail alignment="1" expression="n08 + r09 - i09"border="0" color="33554432" x="4119" y="180" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=n09 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=detail alignment="1" expression="n09 + r10 - i10"border="0" color="33554432" x="4402" y="180" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=n10 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+compute(band=detail alignment="1" expression="n10 + r11 - i11"border="0" color="33554432" x="4686" y="180" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=n11 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=detail alignment="1" expression="n11 + r12 - i12"border="0" color="33554432" x="4969" y="180" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=n12 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+compute(band=detail alignment="1" expression="n12 + r13 - i13"border="0" color="33554432" x="5253" y="180" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=n13 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=detail alignment="1" expression="n13 + r14 - i14"border="0" color="33554432" x="5536" y="180" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=n14 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+compute(band=detail alignment="1" expression="n14 + r15 - i15"border="0" color="33554432" x="5819" y="180" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=n15 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=detail alignment="1" expression="n15 + r16 - i16"border="0" color="33554432" x="6103" y="180" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=n16 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+compute(band=detail alignment="1" expression="n16 + r17 - i17"border="0" color="33554432" x="6386" y="180" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=n17 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=detail alignment="1" expression="n17 + r18 - i18"border="0" color="33554432" x="6670" y="180" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=n18 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+compute(band=detail alignment="1" expression="n18 + r19 - i19"border="0" color="33554432" x="6953" y="180" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=n19 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=detail alignment="1" expression="n19 + r20 - i20"border="0" color="33554432" x="7237" y="180" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=n20 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+compute(band=detail alignment="1" expression="n20 + r21 - i21"border="0" color="33554432" x="7520" y="180" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=n21 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=detail alignment="1" expression="n21 + r22 - i22"border="0" color="33554432" x="7803" y="180" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=n22 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+compute(band=detail alignment="1" expression="n22 + r23 - i23"border="0" color="33554432" x="8087" y="180" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=n23 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=detail alignment="1" expression="n23 + r24 - i24"border="0" color="33554432" x="8370" y="180" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=n24 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+compute(band=detail alignment="1" expression="n24 + r25 - i25"border="0" color="33554432" x="8654" y="180" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=n25 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=detail alignment="1" expression="n25 + r26 - i26"border="0" color="33554432" x="8937" y="180" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=n26 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+compute(band=detail alignment="1" expression="n26 + r27 - i27"border="0" color="33554432" x="9221" y="180" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=n27 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=detail alignment="1" expression="n27 + r28 - i28"border="0" color="33554432" x="9504" y="180" height="64" width="274" format="###,##0.00" html.valueishtml="0"  name=n28 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+compute(band=detail alignment="1" expression="n28 + r29 - i29"border="0" color="33554432" x="9792" y="180" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=n29 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=detail alignment="1" expression="n29 + r30 - i30"border="0" color="33554432" x="10075" y="180" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=n30 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+compute(band=detail alignment="1" expression="n30 + r31 - i31"border="0" color="33554432" x="10359" y="180" height="64" width="270" format="###,##0.00" html.valueishtml="0"  name=n31 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=detail alignment="1" expression="r01+r02+r03+r04+r05+r06+r07+r08+r09+r10+ r11+r12+r13+r14+r15+r16+r17+r18+r19+r20+ r21+r22+r23+r24+r25+r26+r27+r28+r29+r30+r31"border="0" color="33554432" x="1349" y="8" height="64" width="475" format="###,##0.00" html.valueishtml="0"  name=tot_rcv visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+compute(band=detail alignment="1" expression="i01+i02+i03+i04+i05+i06+i07+i08+i09+i10+ i11+i12+i13+i14+i15+i16+i17+i18+i19+i20+ i21+i22+i23+i24+i25+i26+i27+i28+i29+i30+i31"border="0" color="33554432" x="1349" y="92" height="64" width="475" format="###,##0.00" html.valueishtml="0"  name=tot_iss visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+compute(band=detail alignment="1" expression="last_inv + tot_rcv - tot_iss"border="0" color="33554432" x="1349" y="180" height="64" width="475" format="###,##0.00" html.valueishtml="0"  name=tot_inv visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+line(band=detail x1="1083" y1="80" x2="10633" y2="80"  name=l_6 visible="1" pen.style="2" pen.width="5" pen.color="255"  background.mode="1" background.color="553648127" )
+line(band=detail x1="1083" y1="164" x2="10633" y2="164"  name=l_11 visible="1" pen.style="2" pen.width="5" pen.color="255"  background.mode="1" background.color="553648127" )
+line(band=detail x1="0" y1="256" x2="10633" y2="256"  name=l_3 visible="1" pen.style="0" pen.width="5" pen.color="255"  background.mode="1" background.color="553648127" )
+compute(band=footer alignment="2" expression="'Page ' + page() + ' of ' + pageCount()"border="0" color="33554432" x="4983" y="16" height="60" width="590" format="[general]" html.valueishtml="0"  name=page_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=footer id=2 alignment="0" tabsequence=32766 border="0" color="33554432" x="9851" y="12" height="60" width="768" format="[general]" html.valueishtml="0"  name=organization_id visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+line(band=footer x1="0" y1="0" x2="10633" y2="0"  name=l_10 visible="1" pen.style="0" pen.width="5" pen.color="255"  background.mode="1" background.color="553648127" )
+text(band=header alignment="0" text="Location Code" border="0" color="33554432" x="9" y="292" height="52" width="1056" html.valueishtml="0"  name=item_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="33554432" x="9" y="8" height="80" width="1056" format="[general]" html.valueishtml="0"  name=location_code visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any  font.face="Tahoma" font.height="-12" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

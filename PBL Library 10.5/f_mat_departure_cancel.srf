@@ -1,0 +1,134 @@
+HA$PBExportHeader$f_mat_departure_cancel.srf
+global type f_mat_departure_cancel from function_object
+end type
+
+forward prototypes
+global function integer f_mat_departure_cancel (datetime arg_arrival_date, double arg_arrival_seq_no)
+end prototypes
+
+global function integer f_mat_departure_cancel (datetime arg_arrival_date, double arg_arrival_seq_no);
+Decimal lvf_arrival_qty
+String lvs_order_no
+
+select arrival_qty  , order_no
+  into :lvf_arrival_qty , :lvs_order_no
+  from im_item_arrival
+where  arrival_date = :arg_arrival_date
+    and arrival_seq_no = :arg_arrival_seq_no
+    and arrival_status  ='N'
+    and organization_id = :gvi_organization_id ;
+  
+  if f_sql_check() < 0 then 
+	Return -1
+end if
+
+if sqlca.sqlcode = 100 then 
+  Messagebox("Notify" , string(arg_arrival_date)+'   '+STRING(arg_arrival_seq_no)+' No Data Found for Departure Cancel')
+  return -1
+end if
+
+//====================================
+//
+//====================================
+update im_item_purchase_order
+     set arrival_qty = arrival_qty - :lvf_arrival_qty
+where order_no = :lvs_order_no
+   and  organization_id = :gvi_organization_id ; 
+
+if f_sql_check() < 0 then 
+	return  -1
+end if
+
+update im_item_arrival set arrival_status = 'C'
+ where arrival_date = :arg_arrival_date
+     and arrival_seq_no = :arg_arrival_seq_no
+     and organization_id = :gvi_organization_id ;
+  
+if f_sql_check() < 0 then 
+	return  -1
+end if
+
+  INSERT INTO IM_ITEM_ARRIVAL  
+         ( ARRIVAL_DATE,   
+           ARRIVAL_SEQ_NO,   
+           ORGANIZATION_ID,   
+           SUPPLIER_CODE,   
+           ITEM_CODE,   
+           DELIVERY,   
+           LINE_TYPE,   
+           MFS,   
+	    MATERIAL_MFS,	  
+	    ORIGIN_MFS,	  	
+           ARRIVAL_QTY,   
+           ARRIVAL_AMT,   
+	     ARRIVAL_TYPE,	  
+           ARRIVAL_STATUS,   
+           UNIT_PRICE,   
+           CURRENCY,   
+           INVOICE_NO,   
+           INSPECT_DATE,   
+           INSPECT_RULE,   
+           INSPECT_RESULT,   
+           IQC_INSPECT_NO,   
+           PRODUCT_DATE,   
+           DEPARTURE_DATE,   
+           RECEIPT_DATE,   
+           RECEIPT_SEQUENCE,   
+           ORDER_NO,   
+           ORDER_GROUP_NO,   
+           VIRTUAL_RECEIPT_YN,   
+	     incidental_expense_code,	  
+	     DELIVERY_DATE, LOT_DIV_YN , ARRIVAL_SEQ_NO_ORIGIN , ARRIVAL_LOCATION_CODE , ORIGIN_SUPPLIER_CODE, order_type ,
+           COMMENTS,   
+           ENTER_BY,   
+           ENTER_DATE,   
+           LAST_MODIFY_BY,   
+           LAST_MODIFY_DATE )  
+SELECT TRUNC(SYSDATE) ,
+		SEQ_MAT_ARRIVAL.NEXTVAL,   
+		ORGANIZATION_ID,   
+		SUPPLIER_CODE,   
+		ITEM_CODE,   
+		DELIVERY,   
+		LINE_TYPE,   
+		MFS,   
+		MATERIAL_MFS,	 
+		ORIGIN_MFS ,
+		ARRIVAL_QTY *-1,   
+		ARRIVAL_AMT *-1,   
+		ARRIVAL_TYPE,	  
+		'C' ARRIVAL_STATUS ,   
+		UNIT_PRICE,   
+		CURRENCY,   
+		INVOICE_NO,   
+		INSPECT_DATE,   
+		INSPECT_RULE,   
+		INSPECT_RESULT,   
+		IQC_INSPECT_NO,   
+		PRODUCT_DATE,   
+		DEPARTURE_DATE,   
+		RECEIPT_DATE,   
+		RECEIPT_SEQUENCE,   
+		ORDER_NO,   
+		ORDER_GROUP_NO,   
+		VIRTUAL_RECEIPT_YN,   
+		incidental_expense_code,	  
+		DELIVERY_DATE,LOT_DIV_YN ,ARRIVAL_SEQ_NO_ORIGIN ,ARRIVAL_LOCATION_CODE ,ORIGIN_SUPPLIER_CODE , order_type ,
+		COMMENTS,   
+		:GVS_USER_ID,   
+		sysdate,   
+		:GVS_USER_ID,   
+		sysdate 
+ FROM  im_item_arrival
+where  arrival_date = :arg_arrival_date
+  and arrival_seq_no = :arg_arrival_seq_no
+  and arrival_status = 'C'
+  and organization_id = :gvi_organization_id ;	   
+		
+  if f_sql_check() < 0 then 
+	Return -1
+end if
+
+return 0
+end function
+

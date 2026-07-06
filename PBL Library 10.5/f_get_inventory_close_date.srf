@@ -1,0 +1,49 @@
+HA$PBExportHeader$f_get_inventory_close_date.srf
+global type f_get_inventory_close_date from function_object
+end type
+
+forward prototypes
+global function datetime f_get_inventory_close_date (string as_close_yyyymm, string as_start_end_div)
+end prototypes
+
+global function datetime f_get_inventory_close_date (string as_close_yyyymm, string as_start_end_div);datetime lvdt_close_start_date , lvdt_close_end_date , lvdt_last_close_start_date , lvdt_last_close_end_date
+
+//=============================================
+// $$HEX12$$f9b2d4c6c8b910ac20007cc790c720006cad58d530ae2000$$ENDHEX$$
+//=============================================
+ select start_date , end_date 
+    into :lvdt_close_start_date , :lvdt_close_end_date
+   from isys_inventory_close_date
+where close_yyyymm =  :as_close_yyyymm 
+    and organization_id =:gvi_organization_id ;
+
+ if f_sql_check() < 0 then 
+	return f_t_sysdate()
+  end if
+ 
+ //=================================
+//
+//=================================
+
+  if  sqlca.sqlcode = 100 then 
+
+	select   to_date( :as_close_yyyymm||'01' , 'yyyymmdd') ,  add_months( to_date( :as_close_yyyymm||'01' , 'yyyymmdd') , 1 ) -1
+	   into  :lvdt_close_start_date , :lvdt_close_end_date
+      from dual ;		
+	
+end if
+
+//=================================
+//
+//=================================
+
+if as_start_end_div = 'START' then
+	return  lvdt_close_start_date
+elseif as_start_end_div = 'END' then
+	return  lvdt_close_end_date	
+else
+	return f_t_sysdate()
+end if
+	
+end function
+

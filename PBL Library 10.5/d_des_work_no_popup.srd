@@ -1,0 +1,49 @@
+HA$PBExportHeader$d_des_work_no_popup.srd
+$PBExportComments$$$HEX6$$91c7c5c588bc38d61dd3c5c5$$ENDHEX$$
+release 10.5;
+datawindow(units=0 timer_interval=0 color=134217731 processing=1 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no grid.lines=0 )
+header(height=152 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=80 color="536870912" )
+table(column=(type=number updatewhereclause=yes name=bom_work_no dbname="bom_work_no" )
+ column=(type=char(20) updatewhereclause=yes name=item_code dbname="item_code" )
+ column=(type=char(20) updatewhereclause=yes name=enter_by dbname="enter_by" )
+ column=(type=char(20) updatewhereclause=yes name=last_modify_by dbname="last_modify_by" )
+ column=(type=datetime updatewhereclause=yes name=enter_date dbname="enter_date" )
+ column=(type=datetime updatewhereclause=yes name=last_modify_date dbname="last_modify_date" )
+ retrieve="  SELECT MAX(~"ID_ENG_BOM_WORKSPACE~".~"BOM_WORK_NO~")BOM_WORK_NO,   
+         MIN(~"ID_ENG_BOM_WORKSPACE~".~"ITEM_CODE~") ITEM_CODE,   
+         MAX(~"ID_ENG_BOM_WORKSPACE~".~"ENTER_BY~") ENTER_BY,   
+         MAX(~"ID_ENG_BOM_WORKSPACE~".~"LAST_MODIFY_BY~")LAST_MODIFY_BY ,   
+         MAX(~"ID_ENG_BOM_WORKSPACE~".~"ENTER_DATE~") ENTER_DATE,   
+         MAX(~"ID_ENG_BOM_WORKSPACE~".~"LAST_MODIFY_DATE~") LAST_MODIFY_DATE  
+    FROM ~"ID_ENG_BOM_WORKSPACE~"  
+   WHERE ( LAST_MODIFY_BY LIKE :ARG_USER_ID ) AND  
+         ( ORGANIZATION_ID = :ARG_ORG ) AND  
+         ( ~"ID_ENG_BOM_WORKSPACE~".~"PARENT_ITEM_CODE~" <> '*' )   
+GROUP BY ~"ID_ENG_BOM_WORKSPACE~".~"BOM_WORK_NO~"   
+" arguments=(("ARG_USER_ID", string),("ARG_ORG", number)) )
+text(band=header alignment="2" text="Bom Work No" border="0" color="65535" x="9" y="8" height="140" width="338" html.valueishtml="0"  name=bom_work_no_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+text(band=header alignment="2" text="Enter By" border="0" color="65535" x="818" y="8" height="140" width="315" html.valueishtml="0"  name=enter_by_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+text(band=header alignment="2" text="Last Modify By" border="0" color="65535" x="1143" y="8" height="140" width="315" html.valueishtml="0"  name=last_modify_by_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+text(band=header alignment="2" text="Enter Date" border="0" color="65535" x="1467" y="8" height="140" width="539" html.valueishtml="0"  name=enter_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+text(band=header alignment="2" text="Last Modify Date" border="0" color="65535" x="2016" y="8" height="140" width="553" html.valueishtml="0"  name=last_modify_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+text(band=header alignment="2" text="Item Code" border="0" color="65535" x="357" y="8" height="140" width="453" html.valueishtml="0"  name=item_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+column(band=detail id=5 alignment="0" tabsequence=32766 border="0" color="33554432" x="1467" y="8" height="64" width="539" format="[shortdate] [time]" html.valueishtml="0"  name=enter_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=6 alignment="0" tabsequence=32766 border="0" color="33554432" x="2016" y="8" height="64" width="553" format="[shortdate] [time]" html.valueishtml="0"  name=last_modify_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=1 alignment="1" tabsequence=32766 border="0" color="33554432" x="9" y="8" height="64" width="338" format="[general]" html.valueishtml="0"  name=bom_work_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="33554432" x="818" y="8" height="64" width="315" format="[general]" html.valueishtml="0"  name=enter_by visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="33554432" x="1143" y="8" height="64" width="315" format="[general]" html.valueishtml="0"  name=last_modify_by visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432" x="357" y="0" height="52" width="453" format="[general]" html.valueishtml="0"  name=item_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

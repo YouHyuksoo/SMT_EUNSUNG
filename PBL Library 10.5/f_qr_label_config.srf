@@ -1,0 +1,48 @@
+HA$PBExportHeader$f_qr_label_config.srf
+global type f_qr_label_config from function_object
+end type
+
+forward prototypes
+global function integer f_qr_label_config (string arg_model_name)
+end prototypes
+
+global function integer f_qr_label_config (string arg_model_name);
+select 
+NVL(MAX(QR_ACROSS) , '5' ) ,		
+NVL(MAX(QR_COLSPACING) , '0' ) ,				
+NVL(MAX(QR_ROWSPACING) , '0' ) ,
+NVL(MAX(QR_LABEL_FONT) , '4' ) ,		
+NVL(MAX(QR_HEIGHT) , '1000' ) ,		
+NVL(MAX(QR_WIDTH) , '600' ) ,
+NVL(MAX(QR_LABEL_FONTFACE) , 'Arial' ) ,
+NVL(MAX(QR_LABEL_TYPE) , 'TEXT' ) ,		
+NVL(MAX(BARCODE_TYPE) , '*' ) ,
+
+NVL(MAX(QR_TOPMARGIN) , '0' ) ,
+NVL(MAX(QR_LEFTMARGIN) , '0' ) ,
+NVL(MAX(QR_BOTTOMMARGIN) , '0' ) 
+
+INTO 
+	     :Gvs_label_across ,
+		 :Gvs_label_column_spacing ,
+		 :Gvs_label_row_spacing,
+		 :Gvs_label_font,
+		 :Gvs_label_height,
+		 :Gvs_label_width,
+		 :Gvs_label_fontface,
+		 :Gvs_label_type,
+		 :Gvs_barcode_type,
+		 :Gvs_top_margin ,
+		 :Gvs_left_margin ,
+		 :Gvs_bottom_margin
+from 	ip_product_model_master 
+WHERE MODEL_NAME   = :ARG_MODEL_NAME 
+AND ORGANIZATION_ID = :GVI_ORGANIZATION_ID ;
+
+IF F_SQL_CHECK()  < 0 THEN 
+	RETURN -1
+END IF 
+
+RETURN 0
+end function
+

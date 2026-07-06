@@ -1,0 +1,28 @@
+Save Format v3.0(19990112)
+@begin Libraries
+ "infinity21_uv.pbl" "";
+@end;
+@begin Objects
+ "vd_smt_model_name.srd" "infinity21_uv.pbl";
+ "vd_location_barcode.srd" "infinity21_uv.pbl";
+ "vd_machine_code.srd" "infinity21_uv.pbl";
+ "vd_smt_machine_code.srd" "infinity21_uv.pbl";
+ "vd_product_class_code.srd" "infinity21_uv.pbl";
+ "ed_set_item_code.srd" "infinity21_uv.pbl";
+ "vd_set_item_code.srd" "infinity21_uv.pbl";
+ "vd_customer_code.srd" "infinity21_uv.pbl";
+ "vd_supplier_code.srd" "infinity21_uv.pbl";
+ "vd_defect_code.srd" "infinity21_uv.pbl";
+ "vd_model_name.srd" "infinity21_uv.pbl";
+ "vd_item_class_code.srd" "infinity21_uv.pbl";
+ "ed_item_code.srd" "infinity21_uv.pbl";
+ "vd_item_code.srd" "infinity21_uv.pbl";
+ "vd_line_code.srd" "infinity21_uv.pbl";
+ "vd_serial_no.srd" "infinity21_uv.pbl";
+ "vd_material_location_code.srd" "infinity21_uv.pbl";
+ "vd_delivery_nation_code.srd" "infinity21_uv.pbl";
+ "vd_product_location_code.srd" "infinity21_uv.pbl";
+ "vd_model_suffix_by_model.srd" "infinity21_uv.pbl";
+ "vd_workstage_routing_code.srd" "infinity21_uv.pbl";
+ "vd_workstage_code.srd" "infinity21_uv.pbl";
+@end;

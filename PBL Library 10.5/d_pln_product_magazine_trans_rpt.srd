@@ -1,0 +1,62 @@
+HA$PBExportHeader$d_pln_product_magazine_trans_rpt.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=4 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no  crosstab.dynamic = yes grid.lines=0 grid.columnmove=no selected.mouse=no )
+header[1](height=0 color="536870912" )
+header[2](height=120 color="536870912" )
+header[3](height=124 color="536870912" )
+summary(height=76 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=80 color="536870912" )
+table(column=(type=char(20) updatewhereclause=yes name=model_name dbname="model_name" )
+ column=(type=char(20) updatewhereclause=yes name=model_suffix dbname="model_suffix" )
+ column=(type=char(20) updatewhereclause=yes name=pcb_item dbname="pcb_item" )
+ column=(type=number updatewhereclause=yes name=lot_qty dbname="lot_qty" )
+ retrieve="  SELECT f_get_time_set( ~"IP_PRODUCT_RUN_CARD_IO~".~"RECEIPT_DATE~", ~"IP_PRODUCT_RUN_CARD_IO~".~"ORGANIZATION_ID~" ) RECEIPT_DATE,   
+         ~"IP_PRODUCT_RUN_CARD_IO~".~"MODEL_NAME~",   
+         ~"IP_PRODUCT_RUN_CARD_IO~".~"MODEL_SUFFIX~",   
+         ~"IP_PRODUCT_RUN_CARD_IO~".~"LOT_QTY~",   
+         ~"IP_PRODUCT_RUN_CARD_IO~".~"PCB_ITEM~",   
+         F_GET_WORKSTAGE_NAME( ~"IP_PRODUCT_RUN_CARD_IO~".~"WORKSTAGE_CODE~"  ) WORKSTAGE_NAME
+    FROM ~"IP_PRODUCT_RUN_CARD_IO~"  
+   WHERE ( ~"IP_PRODUCT_RUN_CARD_IO~".~"MODEL_NAME~" like :arg_model_name ) AND  
+         ( ~"IP_PRODUCT_RUN_CARD_IO~".~"WORKSTAGE_CODE~" like :arg_workstage_code ) AND  
+         ( ~"IP_PRODUCT_RUN_CARD_IO~".~"RECEIPT_DATE~" >= to_date(:arg_dateset,'yyyy-mm-dd hh24:mi:ss' ) ) AND  
+         ( ~"IP_PRODUCT_RUN_CARD_IO~".~"RECEIPT_DATE~" < =to_date(:arg_dateend,'yyyy-mm-dd hh24:mi:ss' ) ) AND  
+         ( ~"IP_PRODUCT_RUN_CARD_IO~".~"RECEIPT_DEFICIT~" = '1' ) AND  
+         ( ~"IP_PRODUCT_RUN_CARD_IO~".~"TRANSACTION_TYPE~" = 'T' ) AND  
+         ( ~"IP_PRODUCT_RUN_CARD_IO~".~"ORGANIZATION_ID~" = :arg_org )   AND 
+         ( ~"IP_PRODUCT_RUN_CARD_IO~".~"MAGAZINE_LABEL_NO~" like  :arg_magazine_label_no )    " arguments=(("arg_model_name", string),("arg_workstage_code", string),("arg_dateset", string),("arg_dateend", string),("arg_org", number),("arg_magazine_label_no", string))  sort="model_name A model_suffix A pcb_item A " )
+text(band=header[1] alignment="0" text="Sum Of Lot Qty" border="0" color="0" x="9" y="4" height="52" width="443" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header[1] alignment="0" text="Workstage Name" border="0" color="0" x="462" y="4" height="52" width="457" html.valueishtml="0"  name=t_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header[1] alignment="0" text="Receipt Date" border="0" color="0" x="928" y="4" height="52" width="201" html.valueishtml="0"  name=t_3 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header[2] alignment="2" text="@workstage_name" border="0" color="0" x="1138" y="4" height="120" width="462" html.valueishtml="0"  name=t_4 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65280" )
+text(band=header[2] alignment="2" text="@workstage_name Sum Of Lot Qty" border="0" color="0" x="1609" y="4" height="120" width="421" html.valueishtml="0"  name=t_5 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65280" )
+text(band=header[3] alignment="0" text=" " border="0" color="0" x="1609" y="4" height="120" width="421" html.valueishtml="0"  name=sum_lot_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65280" )
+text(band=header[3] alignment="2" text="Model Name" border="0" color="0" x="9" y="4" height="120" width="443" html.valueishtml="0"  name=model_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[3] alignment="2" text="Model Suffix" border="0" color="0" x="462" y="4" height="120" width="457" html.valueishtml="0"  name=model_suffix_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[3] alignment="2" text="Pcb Item" border="0" color="0" x="928" y="4" height="120" width="201" html.valueishtml="0"  name=pcb_item_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[3] alignment="2" text="@receipt_date" border="0" color="0" x="1138" y="4" height="120" width="462" html.valueishtml="0"  name=lot_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[3] alignment="2" text="Grand Total " border="0" color="0" x="2039" y="4" height="120" width="407" html.valueishtml="0"  name=grand_sum_lot_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="33554432" x="9" y="4" height="64" width="443" format="[general]" html.valueishtml="0"  name=model_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="33554432" x="462" y="4" height="64" width="457" format="[general]" html.valueishtml="0"  name=model_suffix visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="0" color="33554432" x="928" y="4" height="64" width="201" format="[general]" html.valueishtml="0"  name=pcb_item visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="0" color="33554432" x="1138" y="4" height="64" width="462" format="[general]" html.valueishtml="0"  name=lot_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes crosstab.repeat=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="2" expression="crosstabsum(1)"border="0" color="33554432" x="2039" y="4" height="64" width="407" format="[general]" html.valueishtml="0"  name=grand_sum_lot_qty visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="2" expression="crosstabsum(1, 2, ~"@workstage_name~")"border="0" color="33554432" x="1609" y="4" height="64" width="421" format="[general]" html.valueishtml="0"  name=sum_lot_qty visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65280" crosstab.repeat=yes )
+compute(band=summary alignment="2" expression="~"Grand Total~""border="0" color="33554432" x="9" y="4" height="64" width="443" format="[general]" html.valueishtml="0"  name=compute_9 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12639424" )
+compute(band=summary alignment="2" expression="sum(lot_qty for all )"border="0" color="33554432" x="1138" y="4" height="64" width="462" format="[general]" html.valueishtml="0"  name=compute_10 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12639424" )
+compute(band=summary alignment="2" expression="sum(sum_lot_qty for all )"border="0" color="33554432" x="1609" y="4" height="64" width="421" format="[general]" html.valueishtml="0"  name=compute_11 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12639424" )
+compute(band=summary alignment="2" expression="sum(grand_sum_lot_qty for all )"border="0" color="33554432" x="2039" y="4" height="64" width="407" format="[general]" html.valueishtml="0"  name=compute_12 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12639424" )
+ crosstab(band = foreground  crosstabonly = yes 
+ columns = "workstage_name, receipt_date" rows = "model_name, model_suffix, pcb_item" values = "sum(lot_qty for crosstab)" sourcenames = "receipt_date, model_name, model_suffix, lot_qty, pcb_item, workstage_name")
+sparse(names="model_name	model_suffix")htmltable(border="0" cellpadding="1" cellspacing="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

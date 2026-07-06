@@ -1,0 +1,24 @@
+HA$PBExportHeader$f_orgnization_name_by_id.srf
+$PBExportComments$$$HEX6$$70c8c1c985ba2000acb934d1$$ENDHEX$$
+global type f_orgnization_name_by_id from function_object
+end type
+
+forward prototypes
+global function string f_orgnization_name_by_id (integer arg_org)
+end prototypes
+
+global function string f_orgnization_name_by_id (integer arg_org);string	ls_name
+
+SELECT	ORGANIZATION_NAME
+INTO		:ls_name
+FROM		ISYS_ORGANIZATION
+WHERE	ORGANIZATION_ID	=	:arg_org
+;
+
+if f_sql_check() <  0 then 
+	return	string(gvi_organization_id)
+else
+	return ls_name
+end if
+end function
+

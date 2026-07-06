@@ -1,0 +1,42 @@
+HA$PBExportHeader$d_com_document_mst.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=12632256 processing=0 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no ole.client.class="DataWindow" ole.client.name="Untitled" )
+header(height=0 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=820 color="536870912" )
+table(column=(type=char(200) update=yes updatewhereclause=yes name=doc_keyword dbname="icom_document.doc_keyword" )
+ column=(type=char(2000) update=yes updatewhereclause=yes name=doc_comment dbname="icom_document.doc_comment" )
+ column=(type=number updatewhereclause=yes key=yes name=organization_id dbname="icom_document.organization_id" )
+ column=(type=number updatewhereclause=yes key=yes name=doc_id dbname="icom_document.doc_id" )
+ column=(type=char(30) updatewhereclause=yes name=enter_by dbname="icom_document.enter_by" )
+ column=(type=datetime updatewhereclause=yes name=enter_date dbname="icom_document.enter_date" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=last_modify_by dbname="icom_document.last_modify_by" )
+ column=(type=datetime update=yes updatewhereclause=yes name=last_modify_date dbname="icom_document.last_modify_date" )
+ retrieve="  SELECT ~"ICOM_DOCUMENT~".~"DOC_KEYWORD~",   
+               ~"ICOM_DOCUMENT~".~"DOC_COMMENT~", 
+               organization_ID, 
+               DOC_ID, 
+               ENTER_BY, ENTER_DATE, LAST_MODIFY_BY, LAST_MODIFY_DATE
+    FROM ~"ICOM_DOCUMENT~"  
+   WHERE rowid = :arg_rowid    
+" update="ICOM_DOCUMENT" updatewhere=0 updatekeyinplace=yes arguments=(("arg_rowid", string)) )
+column(band=detail id=2 alignment="0" tabsequence=20 border="5" color="33554432" x="5" y="88" height="720" width="4137" format="[general]" html.valueishtml="0"  name=doc_comment visible="1" edit.limit=2000 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes edit.autovscroll=yes edit.hscrollbar=yes edit.vscrollbar=yes  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=1 alignment="0" tabsequence=10 border="5" color="33554432" x="5" y="8" height="64" width="4137" format="[general]" html.valueishtml="0"  name=doc_keyword visible="1" edit.limit=200 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="5" color="33554432" x="805" y="840" height="52" width="814" format="[general]" html.valueishtml="0"  name=organization_id visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="5" color="33554432" x="1637" y="836" height="52" width="274" format="[general]" html.valueishtml="0"  name=doc_id visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+column(band=detail id=5 alignment="0" tabsequence=32766 border="5" color="33554432" x="242" y="928" height="52" width="809" format="[general]" html.valueishtml="0"  name=enter_by visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=6 alignment="0" tabsequence=32766 border="5" color="33554432" x="1051" y="928" height="52" width="297" format="[shortdate] [time]" html.valueishtml="0"  name=enter_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=7 alignment="0" tabsequence=32766 border="5" color="33554432" x="1349" y="928" height="52" width="809" format="[general]" html.valueishtml="0"  name=last_modify_by visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=8 alignment="0" tabsequence=32766 border="5" color="33554432" x="2158" y="928" height="52" width="297" format="[shortdate] [time]" html.valueishtml="0"  name=last_modify_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

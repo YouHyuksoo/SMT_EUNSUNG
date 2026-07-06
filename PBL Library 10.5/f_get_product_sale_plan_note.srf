@@ -1,0 +1,25 @@
+HA$PBExportHeader$f_get_product_sale_plan_note.srf
+global type f_get_product_sale_plan_note from function_object
+end type
+
+forward prototypes
+global function string f_get_product_sale_plan_note (string arg_customer_code, string arg_customer_order_no)
+end prototypes
+
+global function string f_get_product_sale_plan_note (string arg_customer_code, string arg_customer_order_no);string lvs_return
+
+
+select note into :lvs_return
+ from is_product_sale_plan_note
+ where customer_code = :arg_customer_code
+   and customer_order_no = :arg_customer_order_no
+   and organization_id = :gvi_organization_id ;
+   
+   if f_sql_check() < 0 then 
+	return ''
+   end if 
+
+
+return lvs_return
+end function
+

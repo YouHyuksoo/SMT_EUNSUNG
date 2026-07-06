@@ -1,0 +1,15 @@
+HA$PBExportHeader$f_t_maxdate.srf
+$PBExportComments$Call Server's System Date
+global type f_t_maxdate from function_object
+end type
+
+forward prototypes
+global function datetime f_t_maxdate ()
+end prototypes
+
+global function datetime f_t_maxdate ();datetime d_1		
+select  to_date('99991231' , 'YYYYMMDD')  into :d_1 from dual ;
+f_sql_check()
+return d_1
+end function
+

@@ -1,0 +1,72 @@
+HA$PBExportHeader$d_audit_message_filter_lst.srd
+release 10;
+datawindow(units=0 timer_interval=0 color=12632256 processing=1 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes hidegrayline=no grid.lines=0 )
+header(height=156 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=76 color="536870912" )
+table(column=(type=char(20) update=yes updatewhereclause=yes key=yes name=user_id dbname="isys_audit_message_filter.user_id" )
+ column=(type=decimal(0) update=yes updatewhereclause=yes key=yes name=msg_id dbname="isys_audit_message_filter.msg_id" )
+ column=(type=number update=yes updatewhereclause=yes key=yes name=organization_id dbname="isys_audit_message_filter.organization_id" )
+ column=(type=char(1) update=yes updatewhereclause=yes name=visible_yn dbname="isys_audit_message_filter.visible_yn" )
+ column=(type=datetime update=yes updatewhereclause=yes name=enter_date dbname="isys_audit_message_filter.enter_date" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=enter_by dbname="isys_audit_message_filter.enter_by" )
+ column=(type=datetime update=yes updatewhereclause=yes name=last_modify_date dbname="isys_audit_message_filter.last_modify_date" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=last_modify_by dbname="isys_audit_message_filter.last_modify_by" )
+ column=(type=char(20) updatewhereclause=yes name=user_name dbname="isys_users.user_name" )
+ column=(type=char(100) updatewhereclause=yes name=detail dbname="detail" )
+ retrieve="  SELECT ~"ISYS_AUDIT_MESSAGE_FILTER~".~"USER_ID~",   
+         ~"ISYS_AUDIT_MESSAGE_FILTER~".~"MSG_ID~",   
+         ~"ISYS_AUDIT_MESSAGE_FILTER~".~"ORGANIZATION_ID~",   
+         ~"ISYS_AUDIT_MESSAGE_FILTER~".~"VISIBLE_YN~",   
+         ~"ISYS_AUDIT_MESSAGE_FILTER~".~"ENTER_DATE~",   
+         ~"ISYS_AUDIT_MESSAGE_FILTER~".~"ENTER_BY~",   
+         ~"ISYS_AUDIT_MESSAGE_FILTER~".~"LAST_MODIFY_DATE~",   
+         ~"ISYS_AUDIT_MESSAGE_FILTER~".~"LAST_MODIFY_BY~",   
+         ~"ISYS_USERS~".~"USER_NAME~",   
+         DECODE( :ARG_LANGUAGE , 'E' , ~"ISYS_AUDIT_MESSAGE_CODE~".~"DETAIL_ENG~",   'K' ,  ~"ISYS_AUDIT_MESSAGE_CODE~".~"DETAIL_KOR~",   'C' ,  ~"ISYS_AUDIT_MESSAGE_CODE~".~"DETAIL_LOC~"  ) DETAIL
+    FROM ~"ISYS_AUDIT_MESSAGE_FILTER~",   
+         ~"ISYS_USERS~",   
+         ~"ISYS_AUDIT_MESSAGE_CODE~"  
+   WHERE ( ~"ISYS_USERS~".~"USER_ID~" = ~"ISYS_AUDIT_MESSAGE_FILTER~".~"USER_ID~" ) and  
+         ( ~"ISYS_USERS~".~"ORGANIZATION_ID~" = ~"ISYS_AUDIT_MESSAGE_FILTER~".~"ORGANIZATION_ID~" ) and  
+         ( ~"ISYS_AUDIT_MESSAGE_FILTER~".~"MSG_ID~" = ~"ISYS_AUDIT_MESSAGE_CODE~".~"MSG_ID~" ) and  
+         ( ~"ISYS_AUDIT_MESSAGE_FILTER~".~"ORGANIZATION_ID~" = ~"ISYS_AUDIT_MESSAGE_CODE~".~"ORGANIZATION_ID~" )   and
+	    ( ~"ISYS_AUDIT_MESSAGE_FILTER~".~"USER_ID~" like :ARG_USER_ID ) and
+	    ( ~"ISYS_AUDIT_MESSAGE_FILTER~".~"ORGANIZATION_ID~" = :ARG_ORG )
+" update="ISYS_AUDIT_MESSAGE_FILTER" updatewhere=0 updatekeyinplace=no arguments=(("ARG_LANGUAGE", string),("ARG_USER_ID", string),("ARG_ORG", number))  sort="organization_id A user_id A msg_id A " )
+group(level=1 header.height=0 trailer.height=36 by=("organization_id" , "user_id" ) header.color="536870912" trailer.color="65535" )
+text(band=header alignment="2" text="Msg Id" border="0" color="0" x="1326" y="8" height="140" width="315" html.valueishtml="0"  name=msg_id_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Organization Id" border="0" color="0" x="4503" y="8" height="140" width="398" html.valueishtml="0"  name=organization_id_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Visible Yn" border="0" color="0" x="338" y="8" height="140" width="265" html.valueishtml="0"  name=visible_yn_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Enter Date" border="0" color="0" x="2935" y="8" height="140" width="370" html.valueishtml="0"  name=enter_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Enter By" border="0" color="0" x="3314" y="8" height="140" width="389" html.valueishtml="0"  name=enter_by_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Last Modify Date" border="0" color="0" x="3712" y="8" height="140" width="416" html.valueishtml="0"  name=last_modify_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Last Modify By" border="0" color="0" x="4137" y="8" height="140" width="357" html.valueishtml="0"  name=last_modify_by_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="No" border="0" color="0" x="155" y="8" height="140" width="174" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="User Id" border="0" color="0" x="613" y="8" height="140" width="270" html.valueishtml="0"  name=user_id_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="User Name" border="0" color="0" x="891" y="8" height="140" width="425" html.valueishtml="0"  name=isys_users_user_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Detail" border="0" color="0" x="1650" y="8" height="140" width="1275" html.valueishtml="0"  name=detail_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+compute(band=detail alignment="0" expression="getrow()"border="0" color="33554432" x="155" y="4" height="64" width="174" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+compute(band=detail alignment="0" expression="trim('')"border="0" color="33554432" x="9" y="4" height="64" width="137" format="[GENERAL]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=3 alignment="1" tabsequence=100 border="0" color="33554432" x="4503" y="4" height="64" width="398" format="[general]" html.valueishtml="0"  name=organization_id visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="0" tabsequence=60 border="0" color="33554432" x="2935" y="4" height="64" width="370" format="[shortdate] [time]" html.valueishtml="0"  name=enter_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=6 alignment="0" tabsequence=70 border="0" color="33554432" x="3314" y="4" height="64" width="389" format="[general]" html.valueishtml="0"  name=enter_by visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=7 alignment="0" tabsequence=80 border="0" color="33554432" x="3712" y="4" height="64" width="416" format="[shortdate] [time]" html.valueishtml="0"  name=last_modify_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=8 alignment="0" tabsequence=90 border="0" color="33554432" x="4137" y="4" height="64" width="357" format="[general]" html.valueishtml="0"  name=last_modify_by visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="2" tabsequence=10 border="0" color="33554432" x="338" y="4" height="64" width="265" format="[general]" html.valueishtml="0"  name=visible_yn visible="1" edit.limit=1 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=1 alignment="0" tabsequence=20 border="0" color="33554432" x="613" y="4" height="64" width="270" format="[general]" html.valueishtml="0"  name=user_id visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=9 alignment="0" tabsequence=30 border="0" color="33554432" x="891" y="4" height="64" width="425" format="[general]" html.valueishtml="0"  name=user_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="2" tabsequence=40 border="0" color="33554432" x="1326" y="4" height="64" width="315" format="[general]" html.valueishtml="0"  name=msg_id visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=10 alignment="0" tabsequence=50 border="0" color="33554432" x="1650" y="4" height="64" width="1275" format="[general]" html.valueishtml="0"  name=detail visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

@@ -1,0 +1,111 @@
+HA$PBExportHeader$f_set_column_initial_value.srf
+global type f_set_column_initial_value from function_object
+end type
+
+forward prototypes
+global subroutine f_set_column_initial_value (datawindow arg_dw, long arg_row, string arg_modify_type)
+end prototypes
+
+global subroutine f_set_column_initial_value (datawindow arg_dw, long arg_row, string arg_modify_type);String lvs_column_name , lvs_initial_value , lvs_column_type , LVS_WINDOW , LVS_DW_NAME , lvs_initial_value_type , lvs_return_function
+Long Row
+Double lvdb_return_sequence
+
+Declare  cl1 cursor for
+select column_name , initial_value  , column_type , initial_value_type
+	from isys_default_value
+    where window_name = :LVS_WINDOW
+	    and datawindow_name = :LVS_DW_NAME
+	    and initial_value is not null 
+	    and organization_id = :gvi_organization_id ;
+
+row = arg_dw.insertrow(arg_row)
+arg_dw.scrolltorow(row)		
+f_set_security_row(arg_dw , row ,arg_modify_type )
+
+LVS_WINDOW = UPPER(classname(w_main_frame.GetActiveSheet ( )))
+LVS_DW_NAME= UPPER(classname(arg_dw))
+
+//==========================================
+//
+//==========================================
+open cl1 ;
+
+do
+	fetch cl1 into :lvs_column_name , :lvs_initial_value  , :lvs_column_type , :lvs_initial_value_type;
+	
+		if f_sql_check() < 0 then 
+			close cl1;
+			return 
+		end if
+		
+		if sqlca.sqlcode = 100 then 
+		   close cl1 ;
+	        exit
+		end if
+   
+          //==========================================
+	     //
+          //==========================================
+			 
+			 
+		if lvs_initial_value_type	 = 'SEQUENCE' then
+			
+			lvs_initial_value = String(f_get_sequence( lvs_initial_value ))
+		     arg_dw.setitem( row , lvs_column_name , Double(lvs_initial_value ))
+			
+		elseif lvs_initial_value_type	 = 'FUNCTION' then
+			
+			lvs_initial_value = f_call_db_function( lvs_initial_value )
+			arg_dw.setitem( row , lvs_column_name , lvs_initial_value )			
+			
+		elseif lvs_initial_value_type	 = 'SQL' then		
+
+			lvs_initial_value = f_call_db_sql( lvs_initial_value )			
+	          arg_dw.setitem( row , lvs_column_name , lvs_initial_value )			
+		else
+						 
+				     if lvs_column_type = 'DATE' or lvs_column_type = 'DATETIME' then 
+						if 	UPPER(lvs_initial_value)= 'SYSDATE' then
+							arg_dw.setitem( row , lvs_column_name , f_t_sysdate() )
+						else
+								 arg_dw.setitem( row , lvs_column_name , date(lvs_initial_value) )	
+						end if
+					elseif lvs_column_type = 'NUMBER'  or lvs_column_type = 'LONG'  then
+							 arg_dw.setitem( row , lvs_column_name , Long(lvs_initial_value) )													
+							 
+					elseif lvs_column_type = 'ULONG'  then
+							 arg_dw.setitem( row , lvs_column_name , Long(lvs_initial_value) )													 
+							 
+					elseif  lvs_column_type = 'DOUBLE' then				 
+							 arg_dw.setitem( row , lvs_column_name , Double(lvs_initial_value) )													 				 
+							 
+					elseif  lvs_column_type = 'REAL' then				 
+							 arg_dw.setitem( row , lvs_column_name , Real(lvs_initial_value) )													 				 				 
+							 
+					elseif  UPPER(Mid(lvs_column_type,1,3))  = 'DEC' then 
+							 arg_dw.setitem( row , lvs_column_name , Dec(lvs_initial_value) )										
+							 
+					elseif  lvs_column_type = 'INT' then 
+							 arg_dw.setitem( row , lvs_column_name , Integer(lvs_initial_value) )														 
+							 
+					elseif  UPPER(Mid(lvs_column_type,1,4))  = 'CHAR' then 
+						
+						if lvs_initial_value = 'SYSMONTH' then 
+								 arg_dw.setitem( row , lvs_column_name , f_yyyymm() )				
+						else				
+								 arg_dw.setitem( row , lvs_column_name , lvs_initial_value )
+						end if
+					else
+						if lvs_initial_value = 'SYSMONTH' then 
+								 arg_dw.setitem( row , lvs_column_name , f_yyyymm() )				
+						else				
+								 arg_dw.setitem( row , lvs_column_name , lvs_initial_value )
+						end if
+					end if
+		end if
+	     arg_dw.Accepttext()
+
+loop until 1= 2
+f_msg_mdi_help(f_msg_st(152))
+end subroutine
+

@@ -1,0 +1,52 @@
+HA$PBExportHeader$d_pln_product_magazine_receipt_trans_rpt.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=4 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no  crosstab.dynamic = yes grid.lines=0 grid.columnmove=no selected.mouse=no )
+header[1](height=0 color="536870912" )
+header[2](height=140 color="536870912" )
+summary(height=76 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=80 color="536870912" )
+table(column=(type=char(20) updatewhereclause=yes name=model_name dbname="model_name" )
+ column=(type=char(20) updatewhereclause=yes name=model_suffix dbname="model_suffix" )
+ column=(type=number updatewhereclause=yes name=lot_qty dbname="lot_qty" )
+ retrieve="  SELECT f_get_time_set( ~"IP_PRODUCT_RUN_CARD_IO~".~"RECEIPT_DATE~",   ~"IP_PRODUCT_RUN_CARD_IO~".~"ORGANIZATION_ID~" )  RECEIPT_DATE ,
+         ~"IP_PRODUCT_RUN_CARD_IO~".~"MODEL_NAME~",   
+         ~"IP_PRODUCT_RUN_CARD_IO~".~"MODEL_SUFFIX~",   
+         ~"IP_PRODUCT_RUN_CARD_IO~".~"LOT_QTY~"  
+    FROM ~"IP_PRODUCT_RUN_CARD_IO~"  
+   WHERE ( ~"IP_PRODUCT_RUN_CARD_IO~".~"MODEL_NAME~" like :arg_model_name ) AND  
+         ( ~"IP_PRODUCT_RUN_CARD_IO~".~"RECEIPT_DATE~" >= to_date(:arg_dateset,'yyyy-mm-dd hh24:mi:ss' ) ) AND  
+         ( ~"IP_PRODUCT_RUN_CARD_IO~".~"RECEIPT_DATE~" <=to_date(:arg_dateend,'yyyy-mm-dd hh24:mi:ss' ) ) AND  
+         ( ~"IP_PRODUCT_RUN_CARD_IO~".~"RECEIPT_DEFICIT~" = '1' ) AND  
+         ( ~"IP_PRODUCT_RUN_CARD_IO~".~"TRANSACTION_TYPE~" = 'T' ) AND  
+         ( ~"IP_PRODUCT_RUN_CARD_IO~".~"PCB_ITEM~" = 'B' ) AND  
+         ( ~"IP_PRODUCT_RUN_CARD_IO~".~"RECEIPT_CONFIRM_YN~" = 'Y' ) AND  
+         ( ~"IP_PRODUCT_RUN_CARD_IO~".~"ORGANIZATION_ID~" = :arg_org )    
+" arguments=(("arg_model_name", string),("arg_dateset", string),("arg_dateend", string),("arg_org", number))  sort="model_name A model_suffix A " )
+group(level=1 header.height=0 trailer.height=0 by=("model_name" ) header.color="536870912" trailer.color="536870912" )
+text(band=header[2] alignment="2" text="Model Name" border="0" color="0" x="9" y="4" height="124" width="585" html.valueishtml="0"  name=model_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[2] alignment="2" text="Model Suffix" border="0" color="0" x="603" y="4" height="124" width="352" html.valueishtml="0"  name=model_suffix_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[2] alignment="2" text="@receipt_date" border="0" color="0" x="965" y="4" height="124" width="233" html.valueishtml="0"  name=lot_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[2] alignment="2" text="Grand Total " border="0" color="0" x="1207" y="4" height="124" width="329" html.valueishtml="0"  name=grand_sum_lot_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="33554432" x="9" y="4" height="64" width="585" format="[general]" html.valueishtml="0"  name=model_name visible="1" edit.limit=50 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="33554432" x="603" y="4" height="64" width="352" format="[general]" html.valueishtml="0"  name=model_suffix visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="1" tabsequence=32766 border="0" color="33554432" x="965" y="4" height="64" width="233" format="[general]" html.valueishtml="0"  name=lot_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes crosstab.repeat=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="1" expression="crosstabsum(1)"border="0" color="33554432" x="1207" y="4" height="64" width="329" format="[general]" html.valueishtml="0"  name=grand_sum_lot_qty visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+compute(band=trailer.1 alignment="1" expression="sum(lot_qty for group 1)"border="0" color="33554432" x="965" y="4" height="64" width="233" format="[general]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=trailer.1 alignment="1" expression="sum(grand_sum_lot_qty for group 1)"border="0" color="33554432" x="1207" y="4" height="64" width="329" format="[general]" html.valueishtml="0"  name=compute_3 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+compute(band=summary alignment="1" expression="~"Grand Total~""border="0" color="0" x="9" y="4" height="64" width="585" format="[general]" html.valueishtml="0"  name=compute_4 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(lot_qty for all )"border="0" color="33554432" x="965" y="4" height="64" width="233" format="[general]" html.valueishtml="0"  name=compute_5 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(grand_sum_lot_qty for all )"border="0" color="33554432" x="1207" y="4" height="64" width="329" format="[general]" html.valueishtml="0"  name=compute_6 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+ crosstab(band = foreground  crosstabonly = yes 
+ columns = "receipt_date" rows = "model_name, model_suffix" values = "sum(lot_qty for crosstab)" sourcenames = "receipt_date, model_name, model_suffix, lot_qty")
+sparse(names="model_name")htmltable(border="0" cellpadding="1" cellspacing="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

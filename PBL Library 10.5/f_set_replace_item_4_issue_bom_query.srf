@@ -1,0 +1,79 @@
+HA$PBExportHeader$f_set_replace_item_4_issue_bom_query.srf
+$PBExportComments$$$HEX8$$00b3b4cc80bd88d45cd4dcc268d518c2$$ENDHEX$$
+global type f_set_replace_item_4_issue_bom_query from function_object
+end type
+
+forward prototypes
+global function integer f_set_replace_item_4_issue_bom_query (datawindow arg_dw)
+end prototypes
+
+global function integer f_set_replace_item_4_issue_bom_query (datawindow arg_dw);STRING LVS_REPLACE_ITEM_CODE , LVS_PARENT_ITEM_CODE , LVS_CHILD_ITEM_CODE , LVS_REPLACE_ITEM_NAME , LVS_REPLACE_ITEM_SPEC , LVS_DRAWING_NO , LVS_ITEM_TYPE , LVS_LINE_TYPE
+STRING LVS_WORKSTAGE_CODE
+LONG I  , J , LVS_ROWS  , lvl_rowcount
+DECIMAL LVF_UNIT_QTY , LVF_MODEL_QTY
+IF ARG_DW.GETROW() < 1 THEN RETURN -1
+
+//=================================================
+//
+//=================================================
+
+DECLARE CL1 	CURSOR FOR
+SELECT REPLACE_ITEM_CODE , ITEM_UNIT_QTY  , WORKSTAGE_CODE 
+  FROM ID_ITEM_REPLACE
+WHERE PARENT_ITEM_CODE = :LVS_PARENT_ITEM_CODE
+	AND CHILD_ITEM_CODE = :LVS_CHILD_ITEM_CODE
+	AND DATESET <= TRUNC(SYSDATE)
+	AND DATEEND >= TRUNC(SYSDATE)
+	AND ORGANIZATION_ID = :GVI_ORGANIZATION_ID ;
+	
+//=================================================
+//
+//=================================================
+
+lvl_rowcount = arg_dw.rowcount()
+
+DO
+	i++
+	LVS_PARENT_ITEM_CODE  = ARG_DW.GETITEMSTRING( I , 'PARENT_ITEM_CODE')
+	LVS_CHILD_ITEM_CODE= ARG_DW.GETITEMSTRING( I , 'CHILD_ITEM_CODE')
+//	LVF_MODEL_QTY= ARG_DW.GETITEMDECIMAL( I , 'MODEL_UNIT_QTY')
+	
+
+	OPEN CL1 ;	
+	DO
+	
+	     j = 0
+		FETCH CL1   INTO :LVS_REPLACE_ITEM_CODE , :LVF_UNIT_QTY , :LVS_WORKSTAGE_CODE ;
+		
+		IF F_SQL_CHECK() < 0 THEN 
+			CLOSE CL1 ;
+			EXIT
+		END IF
+		
+		IF SQLCA.SQLCODE = 100 THEN 
+			CLOSE CL1 ;
+			EXIT ;
+		ELSE
+	
+		j++	
+		LVS_ROWS = ARG_DW.INSERTROW( i+j )
+		ARG_DW.SETITEM( LVS_ROWS , 'CHILD_ITEM_CODE' , LVS_REPLACE_ITEM_CODE )
+		ARG_DW.SETITEM( LVS_ROWS , 'STATUS' , 'REPLACE' )
+
+		lvl_rowcount = lvl_rowcount + 1
+	END IF
+	
+	LOOP UNTIL  1= 2
+	CLOSE CL1 ;
+LOOP UNTIL i= lvl_rowcount
+
+RETURN j
+
+
+
+
+
+		
+		
+end function
+

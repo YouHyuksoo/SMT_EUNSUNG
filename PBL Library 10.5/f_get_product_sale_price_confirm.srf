@@ -1,0 +1,201 @@
+HA$PBExportHeader$f_get_product_sale_price_confirm.srf
+global type f_get_product_sale_price_confirm from function_object
+end type
+
+forward prototypes
+global function decimal f_get_product_sale_price_confirm (string as_customer_code, string as_item_code, string as_product_line_type, string as_work_division, datetime adt_date, string as_model_delivery_code)
+end prototypes
+
+global function decimal f_get_product_sale_price_confirm (string as_customer_code, string as_item_code, string as_product_line_type, string as_work_division, datetime adt_date, string as_model_delivery_code);decimal lvd_price , lvd_exchange_rate 
+String Lvs_currency
+
+
+if  as_product_line_type = '' or isnull(as_product_line_type) then
+	Messagebox("Notify" , "Product Line Type Unknown ")
+	return 0
+end if
+
+if  as_model_delivery_code = '' or isnull(as_model_delivery_code) then
+	f_msgbox(9110)
+	return 0
+end if
+
+//===========================================
+// $$HEX21$$e0ac1dac44c720006cad84bd58d5c0c920004ac594b2200010d300ac15c845cc7cc72000bdacb0c62000$$ENDHEX$$
+//===========================================
+
+IF GVS_PRODUCT_SALE_PRICE_TYPE = 'F' THEN 
+	as_customer_code = '*'
+END IF 
+
+//===========================================
+
+
+		//$$HEX9$$90c791c7ddc0b0c088d478c7bdacb0c62000$$ENDHEX$$
+		if as_work_division = 'P' then 
+			
+			
+							if  GVS_PRODUCT_SALE_PRICE_TYPE = 'F' then //$$HEX36$$e0ac1dac44c720006cad84bd58d5c0c920004ac5e0ac200018c29ccd2000b4b018c220005cb8ccb920006cad84bd58d594b2200010d3e4b900ac200015c845cc78c7bdacb0c62000$$ENDHEX$$
+								
+													if as_model_delivery_code = '1' then //$$HEX12$$b4b018c274ba2000b4b018c210d300ac200070c88cd62000$$ENDHEX$$
+														select  product_sale_price , sale_currency
+														into      :lvd_price , :Lvs_currency
+														from (select  product_sale_price , sale_currency
+																from     is_product_sale_price
+																where   customer_code = :as_customer_code
+																and       item_code  = :as_item_code	
+																and       product_line_type = :as_product_line_type
+																and       dateset <= :adt_date
+																and       dateend >= :adt_date
+																and       price_change_confirm_yn = 'Y'
+																and       organization_id = :gvi_organization_id
+																union all
+																select   product_sale_price , sale_currency
+																from     is_material_sale_price
+																where   customer_code = :as_customer_code
+																and       item_code  = :as_item_code	
+																and       line_type = :as_product_line_type
+																and       dateset <= :adt_date
+																and       dateend >= :adt_date
+																and       price_change_confirm_yn = 'Y'
+																and       organization_id = :gvi_organization_id)
+																where product_sale_price is not null and
+																			 product_sale_price > 0 ;
+															
+														if f_sql_check_with_msg(as_customer_code+'  '+as_item_code) < 0 then  
+															return 0
+														end if 					
+														
+													elseif as_model_delivery_code = '2' then //$$HEX14$$18c29ccd74c774ba200018c29ccd200010d300ac200070c88cd62000$$ENDHEX$$
+									
+														select  foreign_sale_price , foreign_sale_currency
+														into      :lvd_price , :Lvs_currency
+														from (select   foreign_sale_price , foreign_sale_currency
+																from     is_product_sale_price
+																where   customer_code = :as_customer_code
+																and       item_code  = :as_item_code	
+																and       product_line_type = :as_product_line_type
+																and       dateset <= :adt_date
+																and       dateend >= :adt_date
+																and       price_change_confirm_yn = 'Y'
+																and       organization_id = :gvi_organization_id
+																union all
+																select   foreign_sale_price  , foreign_sale_currency
+																from     is_material_sale_price
+																where   customer_code = :as_customer_code
+																and       item_code  = :as_item_code	
+																and       line_type = :as_product_line_type
+																and       dateset <= :adt_date
+																and       dateend >= :adt_date
+																and       price_change_confirm_yn = 'Y'
+																and       organization_id = :gvi_organization_id)
+														where foreign_sale_price is not null and
+																	 foreign_sale_price > 0; 
+														
+														if f_sql_check_with_msg(as_customer_code+'  '+as_item_code) < 0 then  
+															return 0
+														end if 					
+													else
+															f_msgbox(9110)
+															return 0
+													end if 
+								
+							else // S $$HEX28$$e0ac1dac44c720006cad84bd58d594b2200010d300ac200015c845cc78c7200010b694b2200018c2fcc8dcc2200085c725b800aca9ac2000$$ENDHEX$$O $$HEX6$$15c845cc2000bdacb0c62000$$ENDHEX$$
+								
+									if GVS_PRODUCT_SALE_PRICE_TYPE = 'O' then 
+										as_customer_code = '*' 
+									end if 
+				
+									select  product_sale_price , sale_currency
+									into      :lvd_price , :Lvs_currency
+									from (select   product_sale_price, sale_currency
+											from     is_product_sale_price
+											where   customer_code = :as_customer_code
+											and       item_code  = :as_item_code	
+											and       product_line_type = :as_product_line_type
+											and       dateset <= :adt_date
+											and       dateend >= :adt_date
+											and       price_change_confirm_yn = 'Y'
+											and       organization_id = :gvi_organization_id
+											union all
+											select   product_sale_price , sale_currency
+											from     is_material_sale_price
+											where   customer_code = :as_customer_code
+											and       item_code  = :as_item_code	
+											and       line_type = :as_product_line_type
+											and       dateset <= :adt_date
+											and       dateend >= :adt_date
+											and       price_change_confirm_yn = 'Y'
+											and       organization_id = :gvi_organization_id)
+									where product_sale_price is not null and
+												 product_sale_price > 0 ;
+									
+								if f_sql_check_with_msg(as_customer_code+'  '+as_item_code) < 0 then  
+									return 0
+								end if 
+								
+							end if 
+		elseif as_work_division = 'W' then 
+					//$$HEX9$$84c700acf5ac88d478c7bdacb0c620000900$$ENDHEX$$
+						select  product_work_cost , work_currency
+						into      :lvd_price , :Lvs_currency
+						from     is_product_work_cost
+						where   customer_code = :as_customer_code
+						and       item_code  = :as_item_code	
+						and       product_line_type = :as_product_line_type	
+						and       dateset <= :adt_date
+						and       dateend >= :adt_date
+						and       price_change_confirm_yn = 'Y'	
+						and       organization_id = :gvi_organization_id ; 
+						
+						if f_sql_check() < 0 then return  0
+		elseif as_work_division = 'R' then 
+						
+					//$$HEX8$$18c2acb988d478c7bdacb0c620000900$$ENDHEX$$
+						select  product_work_cost , work_currency
+						into      :lvd_price , :Lvs_currency
+						from     is_product_work_cost
+						where   customer_code = :as_customer_code
+						and       item_code  = :as_item_code	
+						and       product_line_type = :as_product_line_type	
+						and       dateset <= :adt_date
+						and       dateend >= :adt_date
+						and       price_change_confirm_yn = 'Y'	
+						and       organization_id = :gvi_organization_id ; 
+						
+						if f_sql_check() < 0 then return  0
+			else
+						Messagebox("Notify" , "Work Division Invalid Please Check Work Division Code")
+						return 0
+			end if 
+
+lvd_exchange_rate = 1 
+
+if Gvs_currency <> lvs_currency then 
+	lvd_exchange_rate = f_get_sale_exchange_rate(adt_date, lvs_currency)
+	if lvd_exchange_rate <= 0 or isnull(lvd_exchange_rate) then
+		//===================================
+		// $$HEX19$$d8c00cd52000acacf8bc88d4200040c720005cb8f8ad3dcc20005cd4dcc2200048c568d52000$$ENDHEX$$
+		//===================================
+		if f_get_item_division(as_item_code) = 'V' then 
+		else
+		
+			if isvalid(w_error_log_list_window) then 
+				w_error_log_list_window.mle_1.text = w_error_log_list_window.mle_1.text + f_msg_st(9045)+ ' '+f_get_dual_lang_text(Gvs_language , "Product Sale Price Type")+"="+Gvs_product_sale_price_type+"~r~n"+f_get_dual_lang_text(Gvs_language ,"Customer Code")+"="+as_customer_code+"~r~n"+f_get_dual_lang_text(Gvs_language ,"Item Code")+"="+as_item_code+"~r~n"+f_get_dual_lang_text(Gvs_language ,"Product Line Type")+"="+as_product_line_type+'  System Currency '+Gvs_currency+ f_get_dual_lang_text(Gvs_language ,"Local Currency")+"="+lvs_currency + "~r~n"+f_get_dual_lang_text(Gvs_language ,"Work Division")+"="+as_work_division+'~r~n'
+			else
+				open (w_error_log_list_window )
+				w_error_log_list_window.mle_1.text = w_error_log_list_window.mle_1.text + f_msg_st(9045)+ ' '+f_get_dual_lang_text(Gvs_language , "Product Sale Price Type")+"="+Gvs_product_sale_price_type+"~r~n"+f_get_dual_lang_text(Gvs_language ,"Customer Code")+"="+as_customer_code+"~r~n"+f_get_dual_lang_text(Gvs_language ,"Item Code")+"="+as_item_code+"~r~n"+f_get_dual_lang_text(Gvs_language ,"Product Line Type")+"="+as_product_line_type+'  System Currency '+Gvs_currency+ f_get_dual_lang_text(Gvs_language ,"Local Currency")+"="+lvs_currency + "~r~n"+f_get_dual_lang_text(Gvs_language ,"Work Division")+"="+as_work_division+'~r~n'
+			end if 
+			
+		end if 
+		
+//		f_msgbox1( 9045 ,f_get_dual_lang_text(Gvs_language , "Product Sale Price Type")+"="+Gvs_product_sale_price_type+"~r~n"+f_get_dual_lang_text(Gvs_language ,"Customer Code")+"="+as_customer_code+"~r~n"+f_get_dual_lang_text(Gvs_language ,"Item Code")+"="+as_item_code+"~r~n"+f_get_dual_lang_text(Gvs_language ,"Product Line Type")+"="+as_product_line_type+'  System Currency '+Gvs_currency+ f_get_dual_lang_text(Gvs_language ,"Local Currency")+"="+lvs_currency + "~r~n"+f_get_dual_lang_text(Gvs_language ,"Work Division")+"="+as_work_division) ///$$HEX9$$58d628c7200015c8f4bc2000f8bbf1b45db8$$ENDHEX$$
+		return  0
+	end if 
+end if 
+
+Gst_return.gvs_return[1] = Lvs_currency
+gst_return.gvf_return[2] = lvd_exchange_rate
+return lvd_price 
+end function
+

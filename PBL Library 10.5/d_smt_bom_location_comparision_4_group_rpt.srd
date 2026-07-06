@@ -1,0 +1,48 @@
+HA$PBExportHeader$d_smt_bom_location_comparision_4_group_rpt.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=4 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no  crosstab.dynamic = yes grid.lines=0 grid.columnmove=no selected.mouse=no )
+header[1](height=0 color="536870912" )
+header[2](height=140 color="536870912" )
+summary(height=64 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=76 color="536870912" )
+table(column=(type=char(20) updatewhereclause=yes name=check_diff_yn dbname="check_diff_yn" values="	Y/	N" )
+ column=(type=char(20) updatewhereclause=yes name=parent_item_code dbname="parent_item_code" )
+ column=(type=char(20) updatewhereclause=yes name=child_item_code dbname="child_item_code" )
+ column=(type=number updatewhereclause=yes name=location_code dbname="location_code" )
+ retrieve="  SELECT 'N' CHECK_DIFF_YN,   
+         ~"ID_ENG_BOM_SMT~".~"PARENT_ITEM_CODE~"||~"ID_ENG_BOM_SMT~".~"PCB_ITEM~" AS PARENT_ITEM_CODE,   
+         ~"ID_ENG_BOM_SMT~".~"CHILD_ITEM_CODE~",   
+         ~"ID_ENG_BOM_SMT~".~"LOCATION_CODE~"  
+    FROM ~"ID_ENG_BOM_SMT~"  
+   WHERE ( ~"ID_ENG_BOM_SMT~".~"LINE_CODE~" like :arg_line_code ) AND  
+         ( ~"ID_ENG_BOM_SMT~".~"PARENT_ITEM_CODE~"||ID_ENG_BOM_SMT.PCB_ITEM in ( :arg_model_name ) ) AND  
+         ( ~"ID_ENG_BOM_SMT~".~"ORGANIZATION_ID~" = :arg_org )    
+" arguments=(("arg_line_code", string),("arg_model_name", stringlist),("arg_org", number))  sort="check_diff_yn A parent_item_code A child_item_code A " )
+text(band=header[1] alignment="0" text="Count Of Child Item Code" border="0" color="0" x="9" y="4" height="52" width="160" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header[1] alignment="0" text="Parent Item Code" border="0" color="0" x="178" y="4" height="52" width="439" html.valueishtml="0"  name=t_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header[2] alignment="2" text="Check Diff Yn" border="0" color="0" x="9" y="4" height="132" width="160" html.valueishtml="0"  name=check_diff_yn_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[2] alignment="2" text="Child Item Code" border="0" color="0" x="178" y="4" height="132" width="439" html.valueishtml="0"  name=parent_item_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[2] alignment="2" text="Location Code" border="0" color="0" x="626" y="4" height="132" width="219" html.valueishtml="0"  name=child_item_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[2] alignment="2" text="@parent_item_code" border="0" color="0" x="855" y="4" height="132" width="338" html.valueishtml="0"  name=location_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[2] alignment="2" text="Grand Total " border="0" color="0" x="1202" y="4" height="132" width="283" html.valueishtml="0"  name=grand_count_child_item_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="33554432~tif ( check_diff_yn = ~"Y~" , 255 , 0 )" x="9" y="4" height="60" width="160" format="[general]" html.valueishtml="0"  name=check_diff_yn visible="1" checkbox.text="" checkbox.on="Y" checkbox.off="N" checkbox.scale=no checkbox.threed=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="33554432~tif ( check_diff_yn = ~"Y~" , 255 , 0 )" x="178" y="4" height="60" width="439" format="[general]" html.valueishtml="0"  name=parent_item_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="33554432~tif ( check_diff_yn = ~"Y~" , 255 , 0 )" x="626" y="4" height="60" width="219" format="[general]" html.valueishtml="0"  name=child_item_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="1" tabsequence=32766 border="0" color="33554432~tif ( check_diff_yn = ~"Y~" , 255 , 0 )" x="855" y="4" height="60" width="338" format="[general]" html.valueishtml="0"  name=location_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes crosstab.repeat=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="1" expression="crosstabsum(1)"border="0" color="33554432~tif ( check_diff_yn = ~"Y~" , 255 , 0 )" x="1202" y="4" height="60" width="283" format="[general]" html.valueishtml="0"  name=grand_count_child_item_code visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="~"Grand Total~""border="0" color="0" x="9" y="4" height="60" width="160" format="[general]" html.valueishtml="0"  name=compute_7 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(location_code for all )"border="0" color="33554432" x="855" y="4" height="60" width="338" format="[general]" html.valueishtml="0"  name=compute_8 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(grand_count_child_item_code for all )"border="0" color="33554432" x="1202" y="4" height="60" width="283" format="[general]" html.valueishtml="0"  name=compute_9 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+ crosstab(band = foreground  crosstabonly = yes 
+ columns = "parent_item_code" rows = "check_diff_yn, child_item_code, location_code" values = "count(child_item_code for crosstab)" sourcenames = "check_diff_yn, parent_item_code, child_item_code, location_code")htmltable(border="0" cellpadding="1" cellspacing="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

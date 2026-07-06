@@ -1,0 +1,25 @@
+HA$PBExportHeader$f_jssetprofilestring.srf
+global type f_jssetprofilestring from function_object
+end type
+
+forward prototypes
+global subroutine f_jssetprofilestring (string arg_filename, string arg_category, string arg_item, string arg_value)
+end prototypes
+
+global subroutine f_jssetprofilestring (string arg_filename, string arg_category, string arg_item, string arg_value);//2017.03.17
+//
+
+if FileExists(arg_filename) then 
+	SetProfileString( arg_filename, arg_category, arg_item, arg_value )
+else 
+	int li_fileNum
+	
+	li_filenum = FileOpen(arg_filename, LineMode!,Write!,LockWrite!,Append!)
+	FileWrite(li_filenum,"")
+	FileClose(li_filenum)
+	
+	SetProfileString( arg_filename, arg_category, arg_item, arg_value )
+	
+end if
+end subroutine
+

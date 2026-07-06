@@ -1,0 +1,97 @@
+HA$PBExportHeader$f_mat_issue_return_confirm.srf
+global type f_mat_issue_return_confirm from function_object
+end type
+
+forward prototypes
+global function integer f_mat_issue_return_confirm (string as_mfs, datetime adt_issue_date, double al_seq, decimal af_return_qty)
+end prototypes
+
+global function integer f_mat_issue_return_confirm (string as_mfs, datetime adt_issue_date, double al_seq, decimal af_return_qty);//DOUBLE LVL_ISSUE_SEQ 
+//LVL_ISSUE_SEQ = F_GET_SEQUENCE('SEQ_MAT_ISSUE')
+
+INSERT INTO IM_ITEM_ISSUE
+			( ISSUE_DATE,
+			ISSUE_SEQUENCE,
+			ORGANIZATION_ID,
+			MATERIAL_MFS,				  
+			MFS,
+			ITEM_CODE,		  
+			LOCATION_CODE,
+			SUPPLIER_CODE,		  
+			ITEM_TYPE,
+			LINE_CODE,
+			WORKSTAGE_CODE,MACHINE_CODE,
+			ISSUE_DEFICIT,
+			ISSUE_QTY,
+			ISSUE_STATUS,
+			ISSUE_AMT,
+			ISSUE_ACCOUNT,
+			LINE_TYPE,
+			ISSUE_PRICE,
+			ISSUE_TYPE,	  
+			VIRTUAL_RECEIPT_YN ,
+			WORK_ORDER_NO ,	 
+			COMMENTS,
+			ENTER_DATE,
+			ENTER_BY,
+			LAST_MODIFY_DATE,
+			LAST_MODIFY_BY,
+			INVOICE_NO,PARENT_ITEM_CODE,INTERFACE_YN,INTERFACE_DATE, ARRIVAL_DATE , ARRIVAL_SEQ_NO , DEST_ORGANIZATION_ID ,
+			RETURN_REQUEST_DATE , RETURN_REQUEST_SEQUENCE
+			)
+      SELECT TRUNC(SYSDATE), 
+			SEQ_MAT_ISSUE.NEXTVAL,
+			:GVI_ORGANIZATION_ID,
+			MATERIAL_MFS,	 
+			MFS,
+			ITEM_CODE,
+			LOCATION_CODE,
+			SUPPLIER_CODE ,
+			ITEM_TYPE,
+			LINE_CODE,
+			WORKSTAGE_CODE,MACHINE_CODE,
+			4 ,
+			ABS(:AF_RETURN_QTY) * -1,
+			ISSUE_STATUS,
+			ABS(:AF_RETURN_QTY* ISSUE_PRICE ) * -1,
+			ISSUE_ACCOUNT,
+			LINE_TYPE,
+			ISSUE_PRICE,
+			ISSUE_TYPE,	 
+			VIRTUAL_RECEIPT_YN ,		
+			WORK_ORDER_NO ,	 		  
+			COMMENTS,
+			SYSDATE,
+			:GVS_USER_ID,
+			SYSDATE,
+			:GVS_USER_ID,
+			INVOICE_NO ,PARENT_ITEM_CODE , INTERFACE_YN,INTERFACE_DATE, ARRIVAL_DATE , ARRIVAL_SEQ_NO , DEST_ORGANIZATION_ID ,
+			:ADT_ISSUE_DATE , :AL_SEQ
+     FROM IM_ITEM_ISSUE_RETURN_REQUEST
+    WHERE ISSUE_DATE       = :ADT_ISSUE_DATE
+      AND ISSUE_SEQUENCE = :AL_SEQ
+      AND ORGANIZATION_ID = :GVI_ORGANIZATION_ID;
+		
+IF F_SQL_CHECK() < 0 THEN 
+	RETURN -2
+END IF 
+//====================================================
+// $$HEX5$$44c6ccb898ccacb92000$$ENDHEX$$
+//====================================================
+UPDATE IM_ITEM_ISSUE_RETURN_REQUEST SET CONFIRM_YN = 'Y' , CONFIRM_DATE = SYSDATE 
+  WHERE ISSUE_DATE = :ADT_ISSUE_DATE
+       AND ISSUE_SEQUENCE   = :AL_SEQ
+       AND ORGANIZATION_ID = :GVI_ORGANIZATION_ID;
+	  
+IF F_SQL_CHECK() < 0 THEN 
+	RETURN -2
+END IF 	  
+
+RETURN SQLCA.SQLNROWS
+		  
+//======================
+//  INSERT TRIGGER $$HEX3$$e4c289d52000$$ENDHEX$$
+//======================
+
+end function
+

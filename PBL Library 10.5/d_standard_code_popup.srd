@@ -1,0 +1,77 @@
+HA$PBExportHeader$d_standard_code_popup.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=12632256 processing=9 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no grid.lines=0 )
+header(height=148 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=8 color="536870912" )
+detail(height=68 color="536870912" )
+table(column=(type=char(30) update=yes updatewhereclause=yes key=yes name=code_type dbname="isys_code_master.code_type" )
+ column=(type=char(100) update=yes updatewhereclause=yes key=yes name=code_name dbname="isys_code_master.code_name" )
+ column=(type=number update=yes updatewhereclause=yes key=yes name=organization_id dbname="isys_code_master.organization_id" )
+ column=(type=char(100) updatewhereclause=yes name=code_mean dbname="code_mean" )
+ column=(type=char(100) updatewhereclause=yes name=code_name_description dbname="code_name_description" )
+ column=(type=char(100) update=yes updatewhereclause=yes key=yes name=code_group dbname="isys_code_master.code_group" )
+ column=(type=char(20) update=yes updatewhereclause=yes key=yes name=code_group_second dbname="isys_code_master.code_group_second" )
+ column=(type=char(20) update=yes updatewhereclause=yes key=yes name=code_group_third dbname="isys_code_master.code_group_third" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=enter_by dbname="isys_code_master.enter_by" )
+ column=(type=datetime update=yes updatewhereclause=yes name=enter_date dbname="isys_code_master.enter_date" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=last_modify_by dbname="isys_code_master.last_modify_by" )
+ column=(type=datetime update=yes updatewhereclause=yes name=last_modify_date dbname="isys_code_master.last_modify_date" )
+ retrieve="  SELECT ~"ISYS_CODE_MASTER~".~"CODE_TYPE~",   
+         ~"ISYS_CODE_MASTER~".~"CODE_NAME~",   
+         ~"ISYS_CODE_MASTER~".~"ORGANIZATION_ID~",   
+         DECODE( :ARG_LANGUAGE , 'E' , ~"ISYS_CODE_MASTER~".~"CODE_MEAN_ENG~", 'K',  ~"ISYS_CODE_MASTER~".~"CODE_MEAN_KOR~",   'C' ,    ~"ISYS_CODE_MASTER~".~"CODE_MEAN_LOCAL~" ) CODE_MEAN ,
+         DECODE( :ARG_LANGUAGE , 'E' , ~"ISYS_CODE_MASTER~".~"CODE_NAME_DESCRIPTION_ENG~",   'K' , ~"ISYS_CODE_MASTER~".~"CODE_NAME_DESCRIPTION_KOR~",   'C' ,   ~"ISYS_CODE_MASTER~".~"CODE_NAME_DESCRIPTION_LOCAL~" ) CODE_NAME_DESCRIPTION ,   
+         ~"ISYS_CODE_MASTER~".~"CODE_GROUP~",   
+         ~"ISYS_CODE_MASTER~".~"CODE_GROUP_SECOND~",   
+         ~"ISYS_CODE_MASTER~".~"CODE_GROUP_THIRD~",   
+         ~"ISYS_CODE_MASTER~".~"ENTER_BY~",   
+         ~"ISYS_CODE_MASTER~".~"ENTER_DATE~",   
+         ~"ISYS_CODE_MASTER~".~"LAST_MODIFY_BY~",   
+         ~"ISYS_CODE_MASTER~".~"LAST_MODIFY_DATE~"  
+    FROM ~"ISYS_CODE_MASTER~"   
+   WHERE   ( ~"ISYS_CODE_MASTER~".~"CODE_TYPE~" like :ARG_CODE_TYPE ) AND  
+         ( ~"ISYS_CODE_MASTER~".~"ORGANIZATION_ID~" = :ARG_ORGANIZATION_ID )    
+" update="ISYS_CODE_MASTER" updatewhere=1 updatekeyinplace=no arguments=(("ARG_CODE_TYPE", string),("ARG_LANGUAGE", string),("ARG_ORGANIZATION_ID", number))  sort="organization_id A code_type A code_group A code_group_second A code_group_third A code_name A " )
+group(level=1 header.height=64 trailer.height=0 by=("code_group" ) header.color="65535" trailer.color="536870912" )
+text(band=header alignment="2" text="Code Type" border="0" color="33554432" x="466" y="8" height="132" width="439" html.valueishtml="0"  name=code_type_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="No" border="0" color="33554432" x="9" y="8" height="132" width="448" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Code Name" border="0" color="33554432" x="914" y="8" height="132" width="293" html.valueishtml="0"  name=code_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Organization Id" border="0" color="33554432" x="4334" y="8" height="132" width="334" html.valueishtml="0"  name=organization_id_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Code Group" border="0" color="33554432" x="2025" y="8" height="132" width="320" html.valueishtml="0"  name=code_group_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Code Group Second" border="0" color="33554432" x="2354" y="8" height="132" width="347" html.valueishtml="0"  name=code_group_second_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Code Group Third" border="0" color="33554432" x="2711" y="8" height="132" width="325" html.valueishtml="0"  name=code_group_third_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Enter By" border="0" color="33554432" x="3045" y="8" height="132" width="297" html.valueishtml="0"  name=enter_by_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Enter Date" border="0" color="33554432" x="3351" y="8" height="132" width="302" html.valueishtml="0"  name=enter_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Last Modify By" border="0" color="33554432" x="3662" y="8" height="132" width="329" html.valueishtml="0"  name=last_modify_by_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Last Modify Date" border="0" color="33554432" x="4000" y="8" height="132" width="325" html.valueishtml="0"  name=last_modify_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="0" text="Code Mean" border="0" color="33554432" x="1216" y="8" height="132" width="503" html.valueishtml="0"  name=code_mean_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="0" text="Code Name Description" border="0" color="33554432" x="1728" y="8" height="132" width="288" html.valueishtml="0"  name=code_name_description_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+compute(band=detail alignment="0" expression="getrow()"border="0" color="0" x="320" y="4" height="60" width="137" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=1 alignment="0" tabsequence=10 border="0" color="33554432" x="466" y="4" height="60" width="439" format="[general]" html.valueishtml="0"  name=code_type visible="1" edit.limit=30 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=2 alignment="0" tabsequence=20 border="0" color="33554432" x="914" y="4" height="60" width="293" format="[general]" html.valueishtml="0"  name=code_name visible="1" edit.limit=100 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=3 alignment="1" tabsequence=120 border="0" color="33554432" x="4334" y="4" height="60" width="334" format="[general]" html.valueishtml="0"  name=organization_id visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=6 alignment="0" tabsequence=50 border="0" color="33554432" x="2025" y="4" height="60" width="320" format="[general]" html.valueishtml="0"  name=code_group visible="1" edit.limit=100 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+column(band=detail id=7 alignment="0" tabsequence=60 border="0" color="33554432" x="2354" y="4" height="60" width="347" format="[general]" html.valueishtml="0"  name=code_group_second visible="1" edit.limit=100 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+column(band=detail id=8 alignment="0" tabsequence=70 border="0" color="33554432" x="2711" y="4" height="60" width="325" format="[general]" html.valueishtml="0"  name=code_group_third visible="1" edit.limit=100 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+column(band=detail id=9 alignment="0" tabsequence=80 border="0" color="33554432" x="3045" y="4" height="60" width="297" format="[general]" html.valueishtml="0"  name=enter_by visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=10 alignment="0" tabsequence=90 border="0" color="33554432" x="3351" y="4" height="60" width="302" format="[shortdate] [time]" html.valueishtml="0"  name=enter_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=11 alignment="0" tabsequence=100 border="0" color="33554432" x="3662" y="4" height="60" width="329" format="[general]" html.valueishtml="0"  name=last_modify_by visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=12 alignment="0" tabsequence=110 border="0" color="33554432" x="4000" y="4" height="60" width="325" format="[shortdate] [time]" html.valueishtml="0"  name=last_modify_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=4 alignment="0" tabsequence=30 border="0" color="33554432" x="1216" y="4" height="60" width="503" format="[general]" html.valueishtml="0"  name=code_mean visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=5 alignment="0" tabsequence=40 border="0" color="33554432" x="1728" y="4" height="60" width="288" format="[general]" html.valueishtml="0"  name=code_name_description visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=header.1 id=6 alignment="0" tabsequence=130 border="0" color="0" x="238" y="0" height="76" width="219" html.valueishtml="0"  name=code_group_1 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+htmltable(border="0" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+tree(type=1 showconnectlines=yes showleafnodeconnectLines=yes  indent=80 showtreenodeicon=yes defaultexpandtolevel=2 stateiconalignmode=0 selectnodebymouse=yes rtollayout=no 
+level=(expandedtreenodeiconname="expand_tree.ico" collapsedtreenodeIconname="collapsed_tree.ico" expandedtreenodeicontranscolor="553648127" collapsedtreenodeicontranscolor="553648127" )
+level=(expandedtreenodeiconname="plus.ico" expandedtreenodeicontranscolor="553648127" collapsedtreenodeicontranscolor="553648127" )
+) 

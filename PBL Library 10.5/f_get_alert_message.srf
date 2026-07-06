@@ -1,0 +1,41 @@
+HA$PBExportHeader$f_get_alert_message.srf
+global type f_get_alert_message from function_object
+end type
+
+forward prototypes
+global function string f_get_alert_message ()
+end prototypes
+
+global function string f_get_alert_message ();STRING LVS_ALERT_MESSAGE , LVS_BATCH_SCRIPT
+Long li_FileNum ,Ivl_return
+SELECT ALERT_MESSAGE  , ALERT_ACTION_CODE  , BATCH_SCRIPT
+INTO :LVS_ALERT_MESSAGE , :Gvs_alert_action_code , :LVS_BATCH_SCRIPT
+ FROM ISYS_ALERT_MASTER
+ WHERE DATESET <= TRUNC(SYSDATE)
+      AND DATEEND >=TRUNC(SYSDATE)
+      AND ORGANIZATION_ID = :GVI_ORGANIZATION_ID ;
+		
+IF F_SQL_CHECK() < 0 THEN 
+	RETURN 'ERROR'
+END IF
+ 
+//BATCH FILE CREATE
+IF Gvs_alert_action_code = 'EXECUTE BATCH SCRIPT' THEN 
+	
+    li_FileNum = FileOpen(GETCURRENTDIRECTORY()+"\ALERT_BATCH.BAT", StreamMode!, Write!, LockWrite!, Replace!)
+
+	IF li_FileNum < 1 then 
+		  Messagebox( "Error" , "Alert Batch File Create Error.~r~n" )
+		  RETURN 'ERROR'
+	END IF
+
+		ivl_return = FileWrite( li_FileNum, LVS_BATCH_SCRIPT )
+		FileClose(li_FileNum)
+	
+END IF
+  
+RETURN  LVS_ALERT_MESSAGE
+ 
+ 
+end function
+

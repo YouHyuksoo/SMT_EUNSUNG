@@ -1,0 +1,26 @@
+HA$PBExportHeader$f_get_dual_lang_text.srf
+global type f_get_dual_lang_text from function_object
+end type
+
+forward prototypes
+global function string f_get_dual_lang_text (string arg_language, string arg_text)
+end prototypes
+
+global function string f_get_dual_lang_text (string arg_language, string arg_text);STRING LVS_TEXT
+SELECT DECODE( :ARG_LANGUAGE , 'E' , ENGLISH_ORIGIN_TEXT , 'K' , KOREA_TEXT , LOCAL_TEXT )
+     INTO :LVS_TEXT
+  FROM ISYS_DUAL_LANGUAGE 
+ WHERE ENGLISH_TEXT = upper(:ARG_TEXT)
+      AND ORGANIZATION_ID = :GVI_ORGANIZATION_ID;
+ 
+ IF F_SQL_CHECK() < 0 THEN 
+	RETURN ARG_TEXT
+END IF
+ 
+IF SQLCA.SQLCODE = 100 THEN 
+	RETURN ARG_TEXT
+END IF	
+ 
+ RETURN LVS_TEXT
+end function
+

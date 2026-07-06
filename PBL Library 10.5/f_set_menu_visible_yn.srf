@@ -1,0 +1,41 @@
+HA$PBExportHeader$f_set_menu_visible_yn.srf
+$PBExportComments$Menu Visible YN set
+global type f_set_menu_visible_yn from function_object
+end type
+
+forward prototypes
+global function integer f_set_menu_visible_yn (menu arg_menuid, menu arg_menuitem)
+end prototypes
+
+global function integer f_set_menu_visible_yn (menu arg_menuid, menu arg_menuitem);
+String lvs_menuid , lvs_menuitem , LVS_VISIBLE_YN
+Long  ll_row
+lvs_menuid = Upper(arg_menuid.classname())
+lvs_menuitem= Upper(arg_menuitem.classname())
+
+IF GVI_USER_LEVEL = 9 THEN
+ELSE
+	
+	ll_row = gds_menu.find ( "menu_item_name='"+UPPER ( lvs_menuitem ) + "'", 1, gds_menu.rowcount() )
+	if ll_row = 0 then 
+	else 
+			LVS_VISIBLE_YN = gds_menu.object.MENU_VISIBLE_YN[ ll_row ]
+			
+			if LVS_VISIBLE_YN = 'N' then 
+				
+				arg_menuitem.visible = false
+				
+			elseif LVS_VISIBLE_YN = 'X' then  
+				
+				arg_menuitem.enabled = false
+			else
+				arg_menuitem.enabled =True
+			//	arg_menuitem.visible = True
+				
+			end if
+	end if
+
+END IF
+return 0
+end function
+

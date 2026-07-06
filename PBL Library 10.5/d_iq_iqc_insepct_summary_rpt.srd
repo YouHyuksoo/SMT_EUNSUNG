@@ -1,0 +1,85 @@
+HA$PBExportHeader$d_iq_iqc_insepct_summary_rpt.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=4 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no  crosstab.dynamic = yes grid.lines=0 grid.columnmove=no selected.mouse=no )
+header[1](height=0 color="536870912" )
+header[2](height=124 color="536870912" )
+summary(height=72 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=80 color="536870912" )
+table(column=(type=datetime updatewhereclause=yes name=inspect_date dbname="inspect_date" )
+ column=(type=char(20) updatewhereclause=yes name=shift_code dbname="shift_code" )
+ column=(type=char(20) updatewhereclause=yes name=model_name dbname="model_name" )
+ column=(type=char(20) updatewhereclause=yes name=iqc_inspect_type dbname="inspect_type" )
+ column=(type=char(20) updatewhereclause=yes name=item_class dbname="item_class" )
+ column=(type=char(20) updatewhereclause=yes name=supplier_code dbname="supplier_code" )
+ column=(type=number updatewhereclause=yes name=inspect_qty dbname="inspect_qty" )
+ column=(type=number updatewhereclause=yes name=defect_rate dbname="defect_rate" )
+ column=(type=number updatewhereclause=yes name=defect_qty dbname="defect_qty" )
+ retrieve="  SELECT ~"IQ_IQC_INSPECT_HISTORY~".~"INSPECT_DATE~",   
+         ~"IQ_IQC_INSPECT_HISTORY~".~"MODEL_NAME~",   
+         ~"IQ_IQC_INSPECT_HISTORY~".~"SHIFT_CODE~",   
+         ~"IQ_IQC_INSPECT_HISTORY~".~"SUPPLIER_CODE~",   
+         ~"IQ_IQC_INSPECT_HISTORY~".~"ITEM_CLASS~",   
+         SUM(~"IQ_IQC_INSPECT_HISTORY~".~"DEFECT_QTY~") AS DEFECT_QTY ,   
+         MAX(~"IQ_IQC_INSPECT_HISTORY~".~"INSPECT_QTY~") AS INSPECT_QTY ,   
+          F_GET_CODE_MASTER('IQC BAD REASON CODE' ,  ~"IQ_IQC_INSPECT_HISTORY~".~"BAD_REASON_CODE~",   :ARG_LANGUAGE , :ARG_ORG ) BAD_REASON_CODE , 
+         ~"IQ_IQC_INSPECT_HISTORY~".~"INSPECTOR~",  
+         ~"IQ_IQC_INSPECT_HISTORY~".~"INSPECT_TYPE~",  
+          SUM(defect_qty ) / MAX( inspect_qty ) as defect_rate  
+    FROM ~"IQ_IQC_INSPECT_HISTORY~"  
+   WHERE ( ~"IQ_IQC_INSPECT_HISTORY~".~"INSPECT_DATE~" >= :arg_dateset ) AND  
+         ( ~"IQ_IQC_INSPECT_HISTORY~".~"INSPECT_DATE~" < :arg_dateend +1) AND  
+         ( ~"IQ_IQC_INSPECT_HISTORY~".~"MODEL_NAME~" like :arg_model_name ) AND  
+         ( ~"IQ_IQC_INSPECT_HISTORY~".~"ITEM_CLASS~" like :arg_item_class ) AND  
+         ( ~"IQ_IQC_INSPECT_HISTORY~".~"SUPPLIER_CODE~" like :arg_supplier_code ) AND  
+         ( ~"IQ_IQC_INSPECT_HISTORY~".~"SHIFT_CODE~" like :arg_shift_code ) AND  
+         ( ~"IQ_IQC_INSPECT_HISTORY~".~"ORGANIZATION_ID~" = :arg_org )    
+
+GROUP BY  ~"IQ_IQC_INSPECT_HISTORY~".~"INSPECT_DATE~",   
+         ~"IQ_IQC_INSPECT_HISTORY~".~"MODEL_NAME~",   
+         ~"IQ_IQC_INSPECT_HISTORY~".~"SHIFT_CODE~",   
+         ~"IQ_IQC_INSPECT_HISTORY~".~"SUPPLIER_CODE~",   
+         ~"IQ_IQC_INSPECT_HISTORY~".~"ITEM_CLASS~",   
+          F_GET_CODE_MASTER('IQC BAD REASON CODE' ,  ~"IQ_IQC_INSPECT_HISTORY~".~"BAD_REASON_CODE~",   :ARG_LANGUAGE , :ARG_ORG ) , 
+         ~"IQ_IQC_INSPECT_HISTORY~".~"INSPECTOR~",
+         ~"IQ_IQC_INSPECT_HISTORY~".~"INSPECT_TYPE~"
+" arguments=(("arg_dateset", datetime),("arg_dateend", datetime),("arg_model_name", string),("arg_item_class", string),("arg_supplier_code", string),("arg_shift_code", string),("arg_language", string),("arg_org", number))  sort="inspect_date A shift_code A model_name A item_class A supplier_code A inspect_qty A defect_rate A " )
+text(band=header[1] alignment="0" text="Sum Of Defect Qty" border="0" color="0" x="9" y="4" height="52" width="544" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header[1] alignment="0" text="Bad Reason Code" border="0" color="0" x="562" y="4" height="52" width="306" html.valueishtml="0"  name=t_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=header[2] alignment="2" text="Inspect Date" border="0" color="0" x="9" y="4" height="116" width="544" html.valueishtml="0"  name=inspect_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[2] alignment="2" text="Shift Code" border="0" color="0" x="562" y="4" height="116" width="306" html.valueishtml="0"  name=shift_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[2] alignment="2" text="Model Name" border="0" color="0" x="878" y="4" height="116" width="526" html.valueishtml="0"  name=model_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[2] alignment="2" text="Inspect Type" border="0" color="0" x="1413" y="4" height="116" width="466" html.valueishtml="0"  name=inspect_type_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[2] alignment="2" text="Item Class" border="0" color="0" x="1888" y="4" height="116" width="521" html.valueishtml="0"  name=item_class_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[2] alignment="2" text="Supplier Code" border="0" color="0" x="2418" y="4" height="116" width="485" html.valueishtml="0"  name=supplier_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[2] alignment="2" text="Inspect Qty" border="0" color="0" x="2912" y="4" height="116" width="288" html.valueishtml="0"  name=inspect_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[2] alignment="2" text="Defect Rate" border="0" color="0" x="3209" y="4" height="116" width="283" html.valueishtml="0"  name=defect_rate_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header[2] alignment="2" text="@bad_reason_code" border="0" color="0" x="3502" y="0" height="116" width="439" html.valueishtml="0"  name=defect_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12639424" )
+text(band=header[2] alignment="2" text="Grand Total " border="0" color="0" x="3950" y="4" height="116" width="306" html.valueishtml="0"  name=grand_sum_defect_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="33554432" x="9" y="4" height="72" width="544" format="[shortdate] [time]" html.valueishtml="0"  name=inspect_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="33554432" x="562" y="4" height="72" width="306" format="[general]" html.valueishtml="0"  name=shift_code visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any dddw.autoretrieve=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="0" color="33554432" x="878" y="4" height="72" width="526" format="[general]" html.valueishtml="0"  name=model_name visible="1" edit.limit=30 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="0" color="33554432" x="1413" y="4" height="72" width="466" format="[general]" html.valueishtml="0"  name=iqc_inspect_type visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any dddw.autoretrieve=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="2" tabsequence=32766 border="0" color="33554432" x="1888" y="4" height="72" width="521" format="[general]" html.valueishtml="0"  name=item_class visible="1" dddw.name=vd_product_class_code dddw.displaycolumn=product_class_name dddw.datacolumn=product_class_code dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any dddw.autoretrieve=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=6 alignment="2" tabsequence=32766 border="0" color="33554432" x="2418" y="4" height="72" width="485" format="[general]" html.valueishtml="0"  name=supplier_code visible="1" dddw.name=vd_supplier_code dddw.displaycolumn=supplier_name dddw.datacolumn=supplier_code dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any dddw.autoretrieve=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=7 alignment="1" tabsequence=32766 border="0" color="33554432" x="2912" y="4" height="72" width="288" format="[general]" html.valueishtml="0"  name=inspect_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=8 alignment="1" tabsequence=32766 border="0" color="33554432" x="3209" y="4" height="72" width="283" format="0.00%" html.valueishtml="0"  name=defect_rate visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=9 alignment="1" tabsequence=32766 border="0" color="33554432" x="3502" y="4" height="72" width="439" format="[general]" html.valueishtml="0"  name=defect_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes crosstab.repeat=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="1" expression="crosstabsum(1)"border="0" color="33554432" x="3950" y="4" height="72" width="306" format="[general]" html.valueishtml="0"  name=grand_sum_defect_qty visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="~"Grand Total~""border="0" color="33554432" x="9" y="4" height="72" width="544" format="[general]" html.valueishtml="0"  name=compute_22 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(defect_qty for all )"border="0" color="33554432" x="3502" y="4" height="72" width="439" format="[general]" html.valueishtml="0"  name=compute_23 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="sum(grand_sum_defect_qty for all )"border="0" color="33554432" x="3950" y="4" height="72" width="306" format="[general]" html.valueishtml="0"  name=compute_24 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=summary alignment="1" expression="avg(defect_rate for all)"border="0" color="33554432" x="3209" y="0" height="64" width="283" format="0.00%" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+ crosstab(band = foreground  crosstabonly = yes 
+ columns = "bad_reason_code" rows = "inspect_date, shift_code, model_name, inspect_type, item_class, supplier_code, inspect_qty, defect_rate" values = "sum(defect_qty for crosstab)" sourcenames = "inspect_date, model_name, shift_code, supplier_code, item_class, defect_qty, inspect_qty, bad_reason_code, inspector, inspect_type, defect_rate")
+sparse(names="inspect_date	shift_code	model_name	item_class	supplier_code	inspect_qty")htmltable(border="0" cellpadding="1" cellspacing="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

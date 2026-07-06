@@ -1,0 +1,22 @@
+HA$PBExportHeader$f_get_run_no_io_status.srf
+global type f_get_run_no_io_status from function_object
+end type
+
+forward prototypes
+global function string f_get_run_no_io_status (string arg_run_no)
+end prototypes
+
+global function string f_get_run_no_io_status (string arg_run_no);STRING LVS_WORKSTAGE_CODE
+SELECT MAX(WORKSTAGE_CODE)
+   INTO :LVS_WORKSTAGE_CODE
+ FROM IP_PRODUCT_RUN_CARD_IO 
+ WHERE RUN_NO = :ARG_RUN_NO
+ AND IO_DEFICIT = 'I' ;
+ 
+ IF F_SQL_CHECK() < 0 THEN 
+	 RETURN '*'
+END IF 
+
+RETURN LVS_WORKSTAGE_CODE
+end function
+

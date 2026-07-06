@@ -1,0 +1,46 @@
+HA$PBExportHeader$d_prd_product_fg_pallet_barcode_88x85.srd
+release 10.5;
+datawindow(units=3 timer_interval=0 color=16777215 processing=2 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 0 print.margin.right = 0 print.margin.top = 0 print.margin.bottom = 0 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no label.name="" label.width=8000 label.height=8500 label.rows=1 label.rows.spacing=132 label.columns=1 label.columns.spacing=200 label.topdown=yes label.sheet=no label.shape=roundrectangle label.ellipse_height=0 label.ellipse_width=0 )
+detail(height=8493 color="536870912" )
+table(column=(type=char(30) updatewhereclause=yes name=pallet_no dbname="ip_product_fg_pallet.pallet_no" )
+ column=(type=char(4000) updatewhereclause=yes name=pallet_barcode dbname="pallet_barcode" )
+ column=(type=number updatewhereclause=yes name=pallet_qty dbname="ip_product_fg_pallet.pallet_qty" )
+ column=(type=char(4000) updatewhereclause=yes name=pallet_type dbname="pallet_type" )
+ column=(type=char(4000) updatewhereclause=yes name=org_name dbname="org_name" )
+ column=(type=datetime updatewhereclause=yes name=print_date dbname="ip_product_fg_pallet.print_date" )
+ retrieve="
+select pallet_no, 
+        f_bacode_code128('B', pallet_no) as pallet_barcode, 
+        pallet_qty, 
+        f_get_basecode('PALLET TYPE',pallet_type,:arg_lang,organization_id) as pallet_type, 
+        F_GET_ORG_NAME(organizatioN_id) org_name, 
+        sysdate as print_date 
+   from ip_product_fg_pallet
+  where ship_flag = 'N' 
+    and pallet_no = :arg_pallet
+" arguments=(("arg_pallet", string),("arg_lang", string)) )
+rectangle(band=detail x="317" y="5238" height="2222" width="6879"  name=r_1 visible="1" brush.hatch="6" brush.color="16777215" pen.style="0" pen.width="26" pen.color="0"  background.mode="2" background.color="16777215" )
+column(band=detail id=6 alignment="0" tabsequence=32766 border="0" color="0" x="2804" y="4577" height="502" width="4153" format="[shortdate] [time]" html.valueishtml="0"  name=print_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=detail alignment="2" text="Confirm Date" border="0" color="0" x="3280" y="5318" height="661" width="3810" html.valueishtml="0"  name=t_5 visible="1"  font.face="Tahoma" font.height="-14" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217738" )
+text(band=detail alignment="2" text="Charger" border="0" color="0" x="370" y="5344" height="608" width="2804" html.valueishtml="0"  name=t_4 visible="1"  font.face="Tahoma" font.height="-14" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217738" )
+line(band=detail x1="264" y1="6032" x2="7117" y2="6032"  name=l_3 visible="1" pen.style="0" pen.width="26" pen.color="0"  background.mode="2" background.color="0" )
+line(band=detail x1="3201" y1="7381" x2="3201" y2="5212"  name=l_4 visible="1" pen.style="0" pen.width="26" pen.color="0"  background.mode="2" background.color="0" )
+column(band=detail id=3 alignment="1" tabsequence=32766 border="0" color="33554432" x="2831" y="3545" height="899" width="2883" format="###,###" html.valueishtml="0"  name=pallet_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-20" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=detail alignment="1" text="Print Date" border="4" color="33554432" x="317" y="4577" height="502" width="2248" html.valueishtml="0"  name=t_2 visible="1"  font.face="Tahoma" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=detail alignment="2" text="QTY" border="4" color="33554432" x="317" y="3545" height="767" width="2275" html.valueishtml="0"  name=t_26 visible="1"  font.face="Tahoma" font.height="-18" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+column(band=detail id=5 alignment="0" tabsequence=32766 border="0" color="16777215" x="317" y="7567" height="740" width="6879" format="[general]" html.valueishtml="0"  name=org_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+text(band=detail alignment="2" text="EA" border="4" color="33554432" x="5900" y="3545" height="767" width="1296" html.valueishtml="0"  name=t_22 visible="1"  font.face="Tahoma" font.height="-22" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+text(band=detail alignment="2" text="Pallet Label" border="0" color="16777215" x="317" y="899" height="608" width="6905" html.valueishtml="0"  name=t_17 visible="1"  font.face="Tahoma" font.height="-14" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="0" x="317" y="1587" height="1031" width="6905" format="[general]" html.valueishtml="0"  name=pallet_barcode visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Code 128" font.height="-24" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="0" x="317" y="2725" height="502" width="6905" format="[general]" html.valueishtml="0"  name=pallet_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

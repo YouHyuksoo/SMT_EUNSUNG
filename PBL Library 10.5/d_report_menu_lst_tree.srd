@@ -1,0 +1,58 @@
+HA$PBExportHeader$d_report_menu_lst_tree.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=16777215 processing=9 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=yes grid.lines=0 )
+header(height=0 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=64 color="536870912" )
+table(column=(type=char(1) update=yes updatewhereclause=yes name=report_division dbname="isys_report_menu.report_division" dbalias=".report_division" )
+ column=(type=char(200) update=yes updatewhereclause=yes name=report_group dbname="isys_report_menu.report_group" dbalias=".report_group" )
+ column=(type=char(4000) update=yes updatewhereclause=yes name=report_title dbname="report_title" )
+ column=(type=char(1000) update=yes updatewhereclause=yes name=comments dbname="isys_report_menu.comments" dbalias=".comments" )
+ column=(type=char(100) update=yes updatewhereclause=yes name=datawindow_name dbname="isys_report_menu.datawindow_name" dbalias=".datawindow_name" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=user_id dbname="isys_report_menu.user_id" dbalias=".user_id" )
+ column=(type=datetime update=yes updatewhereclause=yes name=enter_date dbname="isys_report_menu.enter_date" dbalias=".enter_date" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=enter_by dbname="isys_report_menu.enter_by" dbalias=".enter_by" )
+ column=(type=datetime update=yes updatewhereclause=yes name=last_modify_date dbname="isys_report_menu.last_modify_date" dbalias=".last_modify_date" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=last_modify_by dbname="isys_report_menu.last_modify_by" dbalias=".last_modify_by" )
+ column=(type=number update=yes updatewhereclause=yes name=organization_id dbname="isys_report_menu.organization_id" dbalias=".organization_id" )
+ column=(type=number update=yes updatewhereclause=yes name=sort_sequence dbname="isys_report_menu.sort_sequence" dbalias=".sort_sequence" )
+ retrieve="  SELECT ~"ISYS_REPORT_MENU~".~"REPORT_DIVISION~",   
+         ~"ISYS_REPORT_MENU~".~"REPORT_GROUP~",   
+         F_GET_DUAL_LANG_TEXT( ~"ISYS_REPORT_MENU~".~"REPORT_TITLE~",   :ARG_LANG , :ARG_ORG ) REPORT_TITLE ,
+         ~"ISYS_REPORT_MENU~".~"COMMENTS~",   
+         ~"ISYS_REPORT_MENU~".~"DATAWINDOW_NAME~",   
+         ~"ISYS_REPORT_MENU~".~"USER_ID~",   
+         ~"ISYS_REPORT_MENU~".~"ENTER_DATE~",   
+         ~"ISYS_REPORT_MENU~".~"ENTER_BY~",   
+         ~"ISYS_REPORT_MENU~".~"LAST_MODIFY_DATE~",   
+         ~"ISYS_REPORT_MENU~".~"LAST_MODIFY_BY~",   
+         ~"ISYS_REPORT_MENU~".~"ORGANIZATION_ID~",   
+         ~"ISYS_REPORT_MENU~".~"SORT_SEQUENCE~"  
+    FROM ~"ISYS_REPORT_MENU~"   
+WHERE F_GET_DUAL_LANG_TEXT( ~"ISYS_REPORT_MENU~".~"REPORT_TITLE~",   :ARG_LANG , :ARG_ORG )  LIKE :ARG_REPORT_TITLE
+   AND ORGANIZATION_ID = :ARG_ORG
+   AND DATAWINDOW_NAME IN ( SELECT WINDOW_NAME FROM ISYS_PRIVILEGE WHERE USER_ID = :ARG_USER_ID AND ORGANIZATION_ID = :ARG_ORG )" arguments=(("ARG_REPORT_TITLE", string),("ARG_LANG", string),("ARG_USER_ID", string),("ARG_ORG", number))  sort="report_division A report_group A sort_sequence A " )
+group(level=1 header.height=72 trailer.height=56 by=("report_division" ) header.color="12632256" trailer.color="134217729" )
+group(level=2 header.height=68 trailer.height=0 by=("report_group" ) header.color="12632256" trailer.color="536870912" )
+text(band=header alignment="0" text="Sort Sequence" border="0" color="33554432" x="2555" y="4" height="76" width="229" html.valueishtml="0"  name=sort_sequence_t visible="1"  font.face="Tahoma" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=header.1 id=1 alignment="0" tabsequence=32766 border="0" color="8421504" x="238" y="4" height="64" width="1472" format="[general]" html.valueishtml="0"  name=report_division visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=header.2 id=2 alignment="0" tabsequence=32766 border="0" color="8421504" x="315" y="0" height="60" width="1394" format="[general]" html.valueishtml="0"  name=report_group visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=3 alignment="0" tabsequence=32766 border="0" color="33554432~tif (  datawindow_name = '' or isnull( datawindow_name ) , 255 , 0 )" x="398" y="4" height="56" width="1312" format="[general]" html.valueishtml="0"  name=report_title visible="1" edit.limit=200 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="33554432" x="1719" y="4" height="56" width="827" format="[general]" html.valueishtml="0"  name=comments visible="1" edit.limit=1000 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=12 alignment="0" tabsequence=32766 border="0" color="0" x="2555" y="0" height="52" width="229" format="[general]" html.valueishtml="0"  name=sort_sequence visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+tree(type=1 showconnectlines=yes showleafnodeconnectLines=yes  indent=80 showtreenodeicon=yes defaultexpandtolevel=2 stateiconalignmode=0 selectnodebymouse=no rtollayout=no 
+level=(expandedtreenodeiconname="expand_tree.ico" collapsedtreenodeIconname="collapsed_tree.ico" expandedtreenodeicontranscolor="553648127" collapsedtreenodeicontranscolor="553648127" )
+level=(expandedtreenodeiconname="expand_tree.ico" collapsedtreenodeIconname="collapsed_tree.ico" expandedtreenodeicontranscolor="553648127" collapsedtreenodeicontranscolor="553648127" )
+level=(expandedtreenodeiconname="menu_tree.ico" expandedtreenodeicontranscolor="553648127" collapsedtreenodeicontranscolor="553648127" )
+) 

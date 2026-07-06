@@ -1,0 +1,21 @@
+HA$PBExportHeader$f_bom_query_prc.srf
+global type f_bom_query_prc from function_object
+end type
+
+forward prototypes
+global function double f_bom_query_prc (string arg_parent_partno, datetime arg_dateset)
+end prototypes
+
+global function double f_bom_query_prc (string arg_parent_partno, datetime arg_dateset);DOUBLE LVDB_SESSION_ID
+
+LVDB_SESSION_ID = SQLCA.BOM_QUERY( arg_parent_partno , arg_dateset , GVI_ORGANIZATION_ID);
+
+IF F_SQL_CHECK() < 0 THEN 
+	RETURN SQLCA.SQLCODE 
+END IF
+
+RETURN LVDB_SESSION_ID
+
+
+end function
+

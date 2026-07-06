@@ -1,0 +1,57 @@
+HA$PBExportHeader$d_pln_product_model_by_master_model_lst.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no grid.lines=0 )
+header(height=168 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=120 color="536870912" )
+table(column=(type=char(30) updatewhereclause=yes name=model_name dbname="ip_product_model_master.model_name" )
+ column=(type=number updatewhereclause=yes name=lot_qty dbname="lot_qty" )
+ column=(type=number updatewhereclause=yes name=ok_qty dbname="ok_qty" )
+ column=(type=number updatewhereclause=yes name=ng_qty dbname="ng_qty" )
+ column=(type=number updatewhereclause=yes name=ok_include_qty dbname="ok_include_qty" )
+ column=(type=number updatewhereclause=yes name=destroy_qty dbname="destroy_qty" )
+ column=(type=number updatewhereclause=yes name=repair_qty dbname="repair_qty" )
+ column=(type=char(30) updatewhereclause=yes name=item_code dbname="ip_product_model_master.item_code" )
+ column=(type=number updatewhereclause=yes name=magazine_qty dbname="magazine_qty" )
+ retrieve="  SELECT A.MODEL_NAME MODEL_NAME  ,
+			0 LOT_QTY ,
+			0 OK_QTY ,
+			0 NG_QTY ,
+              0 OK_INCLUDE_QTY ,
+			0 DESTROY_QTY , 
+			0 REPAIR_QTY ,
+             A.ITEM_CODE AS ITEM_CODE ,
+	        NVL( F_GET_MAGAZINE_QTY_BY_RUN_NO( :ARG_RUN_NO  ,  ORGANIZATION_ID ) ,0 )  AS  MAGAZINE_QTY
+    FROM IP_PRODUCT_MODEL_MASTER    A
+  WHERE A.MASTER_MODEL_NAME = :ARG_MODEL_NAME
+      AND A.ORGANIZATION_ID = :ARG_ORG" arguments=(("ARG_MODEL_NAME", string),("ARG_RUN_NO", string),("ARG_ORG", number)) )
+text(band=header alignment="2" text="Model Name" border="0" color="33554432" x="9" y="8" height="168" width="686" html.valueishtml="0"  name=model_name_t visible="1"  font.face="Tahoma" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="Item Code" border="0" color="33554432" x="3291" y="4" height="168" width="681" html.valueishtml="0"  name=item_code_t visible="1"  font.face="Tahoma" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="Lot Qty" border="0" color="33554432" x="704" y="4" height="168" width="384" html.valueishtml="0"  name=lot_qty_t visible="1"  font.face="Tahoma" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="Ok Qty" border="0" color="33554432" x="2967" y="4" height="168" width="315" html.valueishtml="0"  name=ok_qty_t visible="1"  font.face="Tahoma" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="Ng Qty" border="0" color="33554432" x="1467" y="4" height="168" width="338" html.valueishtml="0"  name=ng_qty_t visible="1"  font.face="Tahoma" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="Ok Include Qty" border="0" color="33554432" x="1815" y="4" height="168" width="393" html.valueishtml="0"  name=ok_include_qty_t visible="1"  font.face="Tahoma" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="Destroy Qty" border="0" color="33554432" x="2217" y="4" height="168" width="379" html.valueishtml="0"  name=destroy_qty_t visible="1"  font.face="Tahoma" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="Repair Qty" border="0" color="33554432" x="2606" y="4" height="168" width="352" html.valueishtml="0"  name=repair_qty_t visible="1"  font.face="Tahoma" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="Magazine Qty" border="0" color="33554432" x="1097" y="4" height="168" width="361" html.valueishtml="0"  name=magazine_qty_t visible="1"  font.face="Tahoma" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12639424" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="33554432" x="9" y="8" height="104" width="686" format="[general]" html.valueishtml="0"  name=model_name visible="1" edit.limit=30 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-16" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=8 alignment="2" tabsequence=32766 border="0" color="33554432" x="3291" y="8" height="104" width="681" format="[general]" html.valueishtml="0"  name=item_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-16" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="33554432" x="704" y="8" height="104" width="384" format="###,###" html.valueishtml="0"  name=lot_qty visible="1" edit.limit=0 edit.case=any edit.format="###,###" edit.focusrectangle=no edit.autoselect=yes  font.face="Tahoma" font.height="-16" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="2" tabsequence=50 border="0" color="33554432" x="2967" y="8" height="104" width="315" format="###,##0" html.valueishtml="0"  name=ok_qty visible="1" edit.limit=0 edit.case=any edit.format="###,###" edit.focusrectangle=no edit.autoselect=yes  font.face="Tahoma" font.height="-16" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65280" )
+column(band=detail id=4 alignment="2" tabsequence=10 border="0" color="33554432" x="1467" y="8" height="104" width="338" format="###,##0" html.valueishtml="0"  name=ng_qty visible="1" edit.limit=0 edit.case=any edit.format="###,###" edit.focusrectangle=no edit.autoselect=yes  font.face="Tahoma" font.height="-16" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+column(band=detail id=5 alignment="2" tabsequence=20 border="0" color="33554432" x="1815" y="8" height="104" width="393" format="###,##0" html.valueishtml="0"  name=ok_include_qty visible="1" edit.limit=0 edit.case=any edit.format="###,###" edit.focusrectangle=no edit.autoselect=yes  font.face="Tahoma" font.height="-16" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+column(band=detail id=6 alignment="2" tabsequence=30 border="0" color="33554432" x="2217" y="8" height="104" width="379" format="###,##0" html.valueishtml="0"  name=destroy_qty visible="1" edit.limit=0 edit.case=any edit.format="###,###" edit.focusrectangle=no edit.autoselect=yes  font.face="Tahoma" font.height="-16" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16711935" )
+column(band=detail id=7 alignment="2" tabsequence=40 border="0" color="33554432" x="2606" y="8" height="104" width="352" format="###,###" html.valueishtml="0"  name=repair_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-16" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+column(band=detail id=9 alignment="2" tabsequence=32766 border="0" color="33554432" x="1097" y="8" height="104" width="361" format="###,###" html.valueishtml="0"  name=magazine_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-16" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

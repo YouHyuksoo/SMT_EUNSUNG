@@ -1,0 +1,19 @@
+HA$PBExportHeader$f_get_first_day.srf
+$PBExportComments$Call Server's System Last Date
+global type f_get_first_day from function_object
+end type
+
+forward prototypes
+global function datetime f_get_first_day ()
+end prototypes
+
+global function datetime f_get_first_day ();datetime d_1		
+select  to_date( to_char(sysdate , 'yyyymm')||'01' , 'yyyymmdd')   into :d_1 from dual ;
+
+if f_sql_check() < 0 then 
+	return d_1      
+end if
+
+return d_1
+end function
+

@@ -1,0 +1,112 @@
+HA$PBExportHeader$d_qc_machine_inspect_data_4_ng_only_aoi_i_tf_popup.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no grid.lines=0 )
+header(height=144 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=72 color="536870912" )
+table(column=(type=char(50) updatewhereclause=yes name=machine dbname="machine" )
+ column=(type=char(200) updatewhereclause=yes name=barcode dbname="barcode" )
+ column=(type=char(50) updatewhereclause=yes name=testdata dbname="testdata" )
+ column=(type=char(50) updatewhereclause=yes name=product dbname="product" )
+ column=(type=char(50) updatewhereclause=yes name=lotno dbname="lotno" )
+ column=(type=char(50) updatewhereclause=yes name=imagename dbname="imagename" )
+ column=(type=char(50) updatewhereclause=yes name=locationid dbname="locationid" )
+ column=(type=char(50) updatewhereclause=yes name=partnumber dbname="partnumber" )
+ column=(type=char(50) updatewhereclause=yes name=featureid dbname="featureid" )
+ column=(type=datetime updatewhereclause=yes name=enter_date dbname="enter_date" )
+ column=(type=char(20) updatewhereclause=yes name=enter_by dbname="enter_by" )
+ column=(type=datetime updatewhereclause=yes name=last_modify_date dbname="last_modify_date" )
+ column=(type=char(20) updatewhereclause=yes name=last_modify_by dbname="last_modify_by" )
+ column=(type=number updatewhereclause=yes name=organization_id dbname="organization_id" )
+ column=(type=char(200) updatewhereclause=yes name=file_name dbname="file_name" )
+ column=(type=char(20) updatewhereclause=yes name=line_code dbname="line_code" )
+ column=(type=char(20) updatewhereclause=yes name=machine_code dbname="machine_code" )
+ column=(type=char(30) updatewhereclause=yes name=run_no dbname="run_no" )
+ column=(type=char(50) updatewhereclause=yes name=review dbname="review" )
+ retrieve="SELECT * 
+   FROM (     
+ SELECT ~"IQ_MACHINE_INSPECT_AOI_R_TF~".~"MACHINE~",   
+         ~"IQ_MACHINE_INSPECT_AOI_R_TF~".~"BARCODE~",   
+         ~"IQ_MACHINE_INSPECT_AOI_R_TF~".~"TESTDATA~",   
+         ~"IQ_MACHINE_INSPECT_AOI_R_TF~".~"PRODUCT~",   
+         ~"IQ_MACHINE_INSPECT_AOI_R_TF~".~"LOTNO~",   
+         ~"IQ_MACHINE_INSPECT_AOI_R_TF~".~"IMAGENAME~",   
+         ~"IQ_MACHINE_INSPECT_AOI_R_TF~".~"LOCATIONID~",   
+         ~"IQ_MACHINE_INSPECT_AOI_R_TF~".~"PARTNUMBER~",   
+         ~"IQ_MACHINE_INSPECT_AOI_R_TF~".~"FEATUREID~",   
+         ~"IQ_MACHINE_INSPECT_AOI_R_TF~".~"ENTER_DATE~",   
+         ~"IQ_MACHINE_INSPECT_AOI_R_TF~".~"ENTER_BY~",   
+         ~"IQ_MACHINE_INSPECT_AOI_R_TF~".~"LAST_MODIFY_DATE~",   
+         ~"IQ_MACHINE_INSPECT_AOI_R_TF~".~"LAST_MODIFY_BY~",   
+         ~"IQ_MACHINE_INSPECT_AOI_R_TF~".~"ORGANIZATION_ID~",   
+         ~"IQ_MACHINE_INSPECT_AOI_R_TF~".~"FILE_NAME~",   
+         ~"IQ_MACHINE_INSPECT_AOI_R_TF~".~"LINE_CODE~",   
+         ~"IQ_MACHINE_INSPECT_AOI_R_TF~".~"MACHINE_CODE~",   
+         ~"IQ_MACHINE_INSPECT_AOI_R_TF~".~"RUN_NO~" ,
+         ~"IQ_MACHINE_INSPECT_AOI_R_TF~".~"REVIEW~" 
+    FROM  
+
+         ~"IQ_MACHINE_INSPECT_AOI_R_TF~"
+ 
+
+   WHERE      
+		 ( ~"IQ_MACHINE_INSPECT_AOI_R_TF~".~"LINE_CODE~" like :arg_line_code||'%' ) AND  
+         ( ~"IQ_MACHINE_INSPECT_AOI_R_TF~".~"BARCODE~" like :arg_pid||'%' )
+
+
+           
+
+     ) " arguments=(("arg_line_code", string),("arg_pid", string))  sort="line_code A barcode A testdata A " )
+group(level=1 header.height=0 trailer.height=28 by=("line_code" ) header.color="536870912" trailer.color="536870912" )
+group(level=2 header.height=0 trailer.height=44 by=("testdata" ) header.color="536870912" trailer.color="16776960" )
+text(band=header alignment="2" text="Machine" border="0" color="33554432" x="366" y="8" height="132" width="366" html.valueishtml="0"  name=machine_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Barcode" border="0" color="33554432" x="1536" y="8" height="132" width="1051" html.valueishtml="0"  name=barcode_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Product" border="0" color="33554432" x="741" y="8" height="132" width="786" html.valueishtml="0"  name=product_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Imagename" border="0" color="33554432" x="2597" y="8" height="132" width="311" html.valueishtml="0"  name=imagename_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Line Code" border="0" color="33554432" x="160" y="8" height="132" width="197" html.valueishtml="0"  name=line_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Locationid" border="0" color="33554432" x="2917" y="8" height="132" width="334" html.valueishtml="0"  name=locationid_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Testdata" border="0" color="33554432" x="5042" y="8" height="132" width="530" html.valueishtml="0"  name=testdata_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Lotno" border="0" color="33554432" x="5582" y="8" height="132" width="384" html.valueishtml="0"  name=lotno_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Featureid" border="0" color="33554432" x="4343" y="8" height="132" width="690" html.valueishtml="0"  name=featureid_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Enter Date" border="0" color="33554432" x="7625" y="8" height="132" width="411" html.valueishtml="0"  name=enter_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Enter By" border="0" color="33554432" x="7264" y="8" height="132" width="352" html.valueishtml="0"  name=enter_by_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Last Modify Date" border="0" color="33554432" x="8046" y="8" height="132" width="334" html.valueishtml="0"  name=last_modify_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="File Name" border="0" color="33554432" x="6793" y="8" height="132" width="462" html.valueishtml="0"  name=file_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Machine Code" border="0" color="33554432" x="6377" y="8" height="132" width="407" html.valueishtml="0"  name=machine_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Run No" border="0" color="33554432" x="5975" y="8" height="132" width="393" html.valueishtml="0"  name=run_no_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Last Modify By" border="0" color="33554432" x="8389" y="8" height="132" width="256" html.valueishtml="0"  name=last_modify_by_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Organization Id" border="0" color="33554432" x="8654" y="8" height="132" width="503" html.valueishtml="0"  name=organization_id_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Partnumber" border="0" color="33554432" x="3259" y="8" height="132" width="722" html.valueishtml="0"  name=partnumber_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Review" border="0" color="33554432" x="3991" y="8" height="132" width="343" html.valueishtml="0"  name=review_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+compute(band=detail alignment="2" expression="getrow()"border="0" color="33554432" x="9" y="8" height="56" width="142" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=16 alignment="2" tabsequence=32766 border="0" color="33554432~tif ( review = '$$HEX2$$91c588d4$$ENDHEX$$' , 0 , 255 ) " x="160" y="8" height="56" width="197" format="[general]" html.valueishtml="0"  name=line_code visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="33554432~tif ( review = '$$HEX2$$91c588d4$$ENDHEX$$' , 0 , 255 ) " x="366" y="8" height="56" width="366" format="[general]" html.valueishtml="0"  name=machine visible="1" edit.limit=50 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="33554432~tif ( review = '$$HEX2$$91c588d4$$ENDHEX$$' , 0 , 255 ) " x="1536" y="8" height="56" width="1051" format="[general]" html.valueishtml="0"  name=barcode visible="1" edit.limit=50 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="0" color="33554432~tif ( review = '$$HEX2$$91c588d4$$ENDHEX$$' , 0 , 255 ) " x="741" y="8" height="56" width="786" format="[general]" html.valueishtml="0"  name=product visible="1" edit.limit=50 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=6 alignment="2" tabsequence=32766 border="0" color="33554432~tif ( review = '$$HEX2$$91c588d4$$ENDHEX$$' , 0 , 255 ) " x="2597" y="8" height="56" width="311" format="[general]" html.valueishtml="0"  name=imagename visible="1" edit.limit=50 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=7 alignment="2" tabsequence=32766 border="0" color="33554432~tif ( review = '$$HEX2$$91c588d4$$ENDHEX$$' , 0 , 255 ) " x="2917" y="8" height="56" width="334" format="[general]" html.valueishtml="0"  name=locationid visible="1" edit.limit=50 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=8 alignment="2" tabsequence=32766 border="0" color="33554432~tif ( review = '$$HEX2$$91c588d4$$ENDHEX$$' , 0 , 255 ) " x="3259" y="8" height="56" width="722" format="[general]" html.valueishtml="0"  name=partnumber visible="1" edit.limit=50 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="0" color="33554432~tif ( review = '$$HEX2$$91c588d4$$ENDHEX$$' , 0 , 255 ) " x="5042" y="8" height="56" width="530" format="[general]" html.valueishtml="0"  name=testdata visible="1" edit.limit=50 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="2" tabsequence=32766 border="0" color="33554432~tif ( review = '$$HEX2$$91c588d4$$ENDHEX$$' , 0 , 255 ) " x="5582" y="8" height="56" width="384" format="[general]" html.valueishtml="0"  name=lotno visible="1" edit.limit=50 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=9 alignment="2" tabsequence=32766 border="0" color="33554432~tif ( review = '$$HEX2$$91c588d4$$ENDHEX$$' , 0 , 255 ) " x="4343" y="8" height="56" width="690" format="[general]" html.valueishtml="0"  name=featureid visible="1" edit.limit=50 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=10 alignment="2" tabsequence=32766 border="0" color="33554432~tif ( review = '$$HEX2$$91c588d4$$ENDHEX$$' , 0 , 255 ) " x="7625" y="8" height="56" width="411" format="[shortdate] [time]" html.valueishtml="0"  name=enter_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=11 alignment="2" tabsequence=32766 border="0" color="33554432~tif ( review = '$$HEX2$$91c588d4$$ENDHEX$$' , 0 , 255 ) " x="7264" y="8" height="56" width="352" format="[general]" html.valueishtml="0"  name=enter_by visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=12 alignment="2" tabsequence=32766 border="0" color="33554432~tif ( review = '$$HEX2$$91c588d4$$ENDHEX$$' , 0 , 255 ) " x="8046" y="8" height="56" width="334" format="[shortdate] [time]" html.valueishtml="0"  name=last_modify_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=13 alignment="2" tabsequence=32766 border="0" color="33554432~tif ( review = '$$HEX2$$91c588d4$$ENDHEX$$' , 0 , 255 ) " x="8389" y="8" height="56" width="256" format="[general]" html.valueishtml="0"  name=last_modify_by visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=15 alignment="2" tabsequence=32766 border="0" color="33554432~tif ( review = '$$HEX2$$91c588d4$$ENDHEX$$' , 0 , 255 ) " x="6793" y="8" height="56" width="462" format="[general]" html.valueishtml="0"  name=file_name visible="1" edit.limit=200 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=17 alignment="2" tabsequence=32766 border="0" color="33554432~tif ( review = '$$HEX2$$91c588d4$$ENDHEX$$' , 0 , 255 ) " x="6377" y="8" height="56" width="407" format="[general]" html.valueishtml="0"  name=machine_code visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=18 alignment="2" tabsequence=32766 border="0" color="33554432~tif ( review = '$$HEX2$$91c588d4$$ENDHEX$$' , 0 , 255 ) " x="5975" y="8" height="56" width="393" format="[general]" html.valueishtml="0"  name=run_no visible="1" edit.limit=30 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=14 alignment="2" tabsequence=32766 border="0" color="33554432~tif ( review = '$$HEX2$$91c588d4$$ENDHEX$$' , 0 , 255 ) " x="8654" y="8" height="56" width="503" format="[general]" html.valueishtml="0"  name=organization_id visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=19 alignment="2" tabsequence=32766 border="0" color="33554432~tif ( review = '$$HEX2$$91c588d4$$ENDHEX$$' , 0 , 255 ) " x="3991" y="8" height="56" width="343" format="[general]" html.valueishtml="0"  name=review visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

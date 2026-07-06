@@ -1,0 +1,23 @@
+HA$PBExportHeader$f_get_model_division.srf
+global type f_get_model_division from function_object
+end type
+
+forward prototypes
+global function string f_get_model_division (string arg_model_name)
+end prototypes
+
+global function string f_get_model_division (string arg_model_name);string  lvs_division
+
+	
+ select model_division into :lvs_division	 
+  from ip_product_model_master 
+ where model_name = :arg_model_name ;
+ 
+	 
+	 if f_sql_check() < 0 then 
+		return  ''
+	end if 
+	
+	return lvs_division  
+end function
+

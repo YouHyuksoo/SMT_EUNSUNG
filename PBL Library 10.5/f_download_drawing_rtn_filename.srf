@@ -1,0 +1,74 @@
+HA$PBExportHeader$f_download_drawing_rtn_filename.srf
+global type f_download_drawing_rtn_filename from function_object
+end type
+
+forward prototypes
+global function string f_download_drawing_rtn_filename (string arg_drawing_no, string arg_item_code)
+end prototypes
+
+global function string f_download_drawing_rtn_filename (string arg_drawing_no, string arg_item_code);string LS_PATH , lvs_file_name, lvs_path_name 
+BLOB   LVB_FILE 
+long   li_FileNum ,   LVB_FILE_LENGTH  , lvi_write_byte_sum
+
+ IF  ISNULL(ARG_DRAWING_NO) THEN 
+	 RETURN 'ERROR'
+ END IF
+ 
+ LS_PATH = Gvs_default_directory+'\Temp'
+ 
+if DirectoryExists ( LS_PATH ) Then
+else
+	CreateDirectory( LS_PATH ) 
+end if
+ 
+ //=====================================================
+ // SELECT DATA FROM DATABASE
+ //=====================================================
+  SETPOINTER(HOURGLASS!)
+  F_MSG_MDI_HELP( F_MSG_ST( 9025 )) //ST_MSG.TEXT = "File Downloading..."
+  
+  	   SELECTBLOB ECO_CHECK_IMAGE INTO :LVB_FILE
+		FROM ID_ITEM_IMAGE
+		WHERE TEM_CODE = :ARG_ITEM_CODE
+		AND ORGANIZATION_ID = :GVI_ORGANIZATION_ID ;
+			
+  IF F_SQL_CHECK() < 0 THEN 
+	  F_MSGBOX( 117)
+	  RETURN 'ERROR'
+  END IF
+			 
+LVB_FILE_LENGTH = LEN(LVB_FILE)
+
+IF LVB_FILE_LENGTH = 0 OR ISNULL(LVB_FILE_LENGTH) THEN 
+	F_MSGBOX( 117 )
+	F_MSG_MDI_HELP( F_MSG_ST( 117 ))
+	RETURN 'ERROR'
+END IF
+
+		SELECT ITEM_CODE||'.JPG' INTO :LVS_FILE_NAME
+		FROM ID_ITEM_IMAGE
+		WHERE  ITEM_CODE = :ARG_ITEM_CODE
+		       AND ORGANIZATION_ID = :GVI_ORGANIZATION_ID ;
+		
+		IF F_SQL_CHECK() < 0 THEN 
+			F_MSGBOX( 117)
+			RETURN 'ERROR'
+		END IF
+
+	li_FileNum = FileOpen( ls_path+"\"+LVS_FILE_NAME ,  StreamMode!, Write!, Shared!, Replace!)
+	
+	if li_FileNum < 0 then 
+		F_MSGBOX(9024)  //FILE OPEN ERROR
+		Fileclose( li_FileNum ) 
+		RETURN 'ERROR'
+	end if	
+	
+	lvi_write_byte_sum = FileWriteEX(li_FileNum, LVB_FILE , LVB_FILE_LENGTH )			 	
+	Fileclose( li_FileNum ) 
+	F_MSG_MDI_HELP( F_MSG_ST( 9023 ))
+	RETURN LVS_FILE_NAME
+
+
+
+end function
+

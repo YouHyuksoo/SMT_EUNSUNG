@@ -1,0 +1,27 @@
+HA$PBExportHeader$f_get_company_holiday_yn.srf
+global type f_get_company_holiday_yn from function_object
+end type
+
+forward prototypes
+global function string f_get_company_holiday_yn (datetime ad_datetime)
+end prototypes
+
+global function string f_get_company_holiday_yn (datetime ad_datetime);INT LVI_COUNT 
+
+SELECT COUNT(*) INTO :LVI_COUNT
+ FROM IP_PRODUCT_COMPANY_CALENDAR
+WHERE PLAN_DATE = :AD_DATETIME
+    AND HOLIDAY_YN = 'Y'
+    AND ORGANIZATION_ID = :GVI_ORGANIZATION_ID ;
+	 
+	IF F_SQL_CHECK() < 0 THEN 
+		RETURN 'N'
+	END IF
+	
+IF LVI_COUNT > 0 THEN
+	RETURN 'Y'
+ELSE
+	RETURN 'N'
+END IF
+end function
+

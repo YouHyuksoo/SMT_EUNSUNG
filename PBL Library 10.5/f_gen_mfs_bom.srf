@@ -1,0 +1,114 @@
+HA$PBExportHeader$f_gen_mfs_bom.srf
+global type f_gen_mfs_bom from function_object
+end type
+
+forward prototypes
+global function double f_gen_mfs_bom (string arg_mfs, string arg_item_code, datetime arg_dateset, string arg_show_hide)
+end prototypes
+
+global function double f_gen_mfs_bom (string arg_mfs, string arg_item_code, datetime arg_dateset, string arg_show_hide);double LVDB_SESSION_ID
+
+if arg_show_hide= 'Y'  then
+	LVDB_SESSION_ID = F_BOM_QUERY_ALL_PRC( arg_item_code , f_t_sysdate())
+else
+	LVDB_SESSION_ID = F_BOM_QUERY_PRC( arg_item_code , f_t_sysdate())
+end if
+
+if  LVDB_SESSION_ID <= 0 then
+	ROLLBACK;
+	f_msgbox1(9051 ,arg_item_code  )    	
+else
+	
+		 delete id_mfs_bom 
+		 where item_code = :arg_item_code
+		     and mfs = :arg_mfs 
+		     and organization_id = :gvi_organization_id ;
+			  
+	      if f_sql_check() < 0 then 
+				return -1
+		end if
+
+		INSERT INTO id_mfs_bom
+					(mfs,
+					  item_code,plan_date ,
+					 parent_item_code,
+					 child_item_code,
+					 organization_id,
+					 bom_level,
+					 item_type,
+					 line_type,
+					 model_unit_qty,
+					 model_unit_qty_ext,
+					 item_unit_qty,
+					 item_unit_qty_ext,
+					 sort_order,
+					 assy_exp_yn,
+					 dateset,
+					 dateend,
+					 enter_by,
+					 enter_date,
+					 last_modify_by,
+					 last_modify_date , used_yn , confirm_yn , 
+					 pcb_item ,
+					 sort_sequence,
+					 comments
+					)
+	   SELECT :arg_mfs,
+			      :arg_item_code , 
+			      :arg_dateset ,
+				  id_eng_bom_temp.parent_item_code,
+				  id_eng_bom_temp.child_item_code,
+				  id_eng_bom_temp.organization_id,
+				  id_eng_bom_temp.bom_level,
+				  id_eng_bom_temp.item_type,
+				  id_eng_bom_temp.line_type,
+				  NVL(id_eng_bom_temp.model_unit_qty, 0),
+				  NVL(id_eng_bom_temp.model_unit_qty_ext, 0),
+				  NVL(id_eng_bom_temp.item_unit_qty, 0),
+				  NVL(id_eng_bom_temp.item_unit_qty_ext, 0),
+				  id_eng_bom_temp.sort_order,
+				  :arg_show_hide,
+				  id_eng_bom_temp.dateset,
+				  id_eng_bom_temp.dateend,
+				  id_eng_bom_temp.enter_by,
+				  id_eng_bom_temp.enter_date,
+				  id_eng_bom_temp.last_modify_by,
+				  id_eng_bom_temp.last_modify_date , 'Y' , 'N' ,
+				  '' ,
+				  id_eng_bom_temp.sort_sequence ,
+				  id_eng_bom_temp.comments 
+		   FROM   id_eng_bom_temp
+	        WHERE  session_id = :lvdb_session_id;
+
+			IF F_SQL_CHECK() < 0 THEN
+				RETURN -1
+			END IF
+			
+			update id_mfs_bom set pcb_item = 'B' 
+			WHERE PARENT_ITEM_CODE IN ( SELECT ITEM_CODE FROM ID_ITEM WHERE ITEM_CLASS = 'B' )
+			     AND item_code  =  :arg_item_code 
+				AND MFS = :ARG_MFS   
+				  ;
+			IF F_SQL_CHECK() < 0 THEN
+				RETURN -1
+			END IF		
+			
+			update id_mfs_bom set pcb_item = 'T' 
+			WHERE PARENT_ITEM_CODE IN ( SELECT ITEM_CODE FROM ID_ITEM WHERE ITEM_CLASS = 'T' )
+			     AND item_code  =  :arg_item_code 
+				AND MFS = :ARG_MFS   
+				  ;
+			IF F_SQL_CHECK() < 0 THEN
+				RETURN -1
+			END IF					
+			
+			
+			DELETE FROM ID_ENG_BOM_TEMP WHERE SESSION_ID = :LVDB_SESSION_ID ;
+			IF F_SQL_CHECK() < 0 THEN
+				RETURN -1
+			END IF
+end if 
+
+return lvdb_session_id ;
+end function
+

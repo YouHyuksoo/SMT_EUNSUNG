@@ -1,0 +1,15 @@
+FUNCTION "F_GET_WORK_ORDER_NO" (p_serial_no IN VARCHAR2)
+   RETURN VARCHAR2
+IS
+    lvs_return   VARCHAR2 (10);
+BEGIN
+    SELECT DISTINCT WORK_ORDER_NO INTO lvs_return
+    FROM   IP_PRODUCT_2D_BARCODE
+    WHERE  WORKSTAGE_CODE = p_serial_no;
+
+    RETURN lvs_return;
+EXCEPTION
+    WHEN OTHERS
+    THEN
+        RETURN '';
+END;

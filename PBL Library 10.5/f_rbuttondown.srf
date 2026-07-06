@@ -1,0 +1,99 @@
+HA$PBExportHeader$f_rbuttondown.srf
+global type f_rbuttondown from function_object
+end type
+
+forward prototypes
+global function integer f_rbuttondown (datawindow arg_dw, string arg_name, long arg_row, string arg_type)
+end prototypes
+
+global function integer f_rbuttondown (datawindow arg_dw, string arg_name, long arg_row, string arg_type);if arg_row = 0 or isnull(arg_row) then 
+	return 0
+end if
+
+if Isvalid(arg_dw) = false then 
+	return 0
+end if
+if  upper(arg_name) = 'ITEM_CODE' or  upper(arg_name) = 'PART_NO' then 
+//======================================================
+    IF ARG_TYPE = '1' THEN  // $$HEX12$$88d485ba2000dcada9ac2000e8b204c7200024c115c82000$$ENDHEX$$
+
+			open(w_des_set_item_popup)
+			if message.stringparm = '' then 
+				 return 0		
+			else
+				
+				arg_dw.object.item_code[arg_row]   = message.stringparm
+				arg_dw.object.item_name[arg_row]  = Gst_return.Gvs_return[3]
+				arg_dw.object.item_spec[arg_row]   = Gst_return.Gvs_return[4]
+				arg_dw.object.item_uom[arg_row]    = Gst_return.Gvs_return[5]
+				arg_dw.object.part_no[arg_row]       = Gst_return.Gvs_return[7]
+				
+				Gst_return.Gvs_return[3] =''
+				Gst_return.Gvs_return[4] =''
+				Gst_return.Gvs_return[5] =''
+				Gst_return.Gvs_return[7] =''				
+			end if 
+			
+  ELSEIF ARG_TYPE = '2' THEN  // 
+			open(w_des_set_item_popup)
+			if message.stringparm = '' then 
+				 return 0		
+			else
+				arg_dw.object.item_code[arg_row]   = message.stringparm
+				Gst_return.Gvs_return[3] =''
+				Gst_return.Gvs_return[4] =''
+				Gst_return.Gvs_return[5] =''				
+			end if 
+ELSEIF ARG_TYPE = '3' THEN  // $$HEX26$$88d485ba2000dcada9ac2000e8b204c7200024c115c8200004c8b4cc200088d4a9baacb9a4c2b8d22000d0c51cc1200070c88cd6$$ENDHEX$$
+
+			open(w_des_item_popup)
+			if message.stringparm = '' then 
+				 return 0		
+			else
+				
+				arg_dw.object.item_code[arg_row]   = message.stringparm
+				arg_dw.object.item_name[arg_row]  = Gst_return.Gvs_return[3]
+				arg_dw.object.item_spec[arg_row]    = Gst_return.Gvs_return[4]
+				arg_dw.object.item_uom[arg_row]    = Gst_return.Gvs_return[5]
+				
+				Gst_return.Gvs_return[3] =''
+				Gst_return.Gvs_return[4] =''
+				Gst_return.Gvs_return[5] =''
+			end if 						
+ END IF
+//=======================================================
+elseif  upper(arg_name) ='CUSTOMER_CODE' THEN 
+
+    IF ARG_TYPE = '1' THEN  // $$HEX6$$70ac98b798cc200054cfdcb4$$ENDHEX$$+$$HEX5$$85ba200020c1ddd02000$$ENDHEX$$
+		open(w_com_customer_popup)
+		
+		if gst_return.gvb_return = true then
+			arg_dw.object.customer_code[arg_row]  = message.stringparm
+			arg_dw.object.customer_name[arg_row] = gst_return.gvs_return[1]					
+		end if 
+		
+	ELSEIF ARG_TYPE = '2' THEN  // $$HEX10$$70ac98b798cc200054cfdcb4200020c1ddd02000$$ENDHEX$$
+		
+		open(w_com_customer_popup)
+		
+		if gst_return.gvb_return = true then
+			arg_dw.object.customer_code[arg_row]  = message.stringparm
+		end if 
+		
+	ELSEIF ARG_TYPE = '3' THEN  // $$HEX6$$70ac98b798cc200054cfdcb4$$ENDHEX$$+$$HEX1$$85ba$$ENDHEX$$+$$HEX4$$ecc5e0c2f1b409ae$$ENDHEX$$+$$HEX8$$ecc5e0c208ae61c5200020c1ddd02000$$ENDHEX$$
+		
+		open(w_com_customer_popup)
+		
+		if gst_return.gvb_return = true then
+			arg_dw.object.customer_code[arg_row]  = message.stringparm
+			arg_dw.object.customer_name[arg_row]  = Gst_return.Gvs_return[1]
+			arg_dw.object.credit_grade[arg_row]  = Gst_return.Gvs_return[2]
+			arg_dw.object.credit_amount[arg_row]  = Gst_return.Gvf_return[1]			
+		end if 		
+		
+	END IF
+//========================================================
+end if
+return 0 ;
+end function
+

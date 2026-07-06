@@ -1,0 +1,176 @@
+HA$PBExportHeader$d_customer_complaints_4_monitor_lst.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=12632256 processing=9 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no grid.lines=0 )
+header(height=148 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=140 color="536870912" )
+table(column=(type=char(30) update=yes updatewhereclause=yes name=complaints_no dbname="icom_customer_complaints.complaints_no" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=item_code dbname="icom_customer_complaints.item_code" )
+ column=(type=number update=yes updatewhereclause=yes name=organization_id dbname="icom_customer_complaints.organization_id" )
+ column=(type=char(300) update=yes updatewhereclause=yes name=complaints_comment dbname="icom_customer_complaints.complaints_comment" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=enter_by dbname="icom_customer_complaints.enter_by" )
+ column=(type=datetime update=yes updatewhereclause=yes name=enter_date dbname="icom_customer_complaints.enter_date" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=last_modify_by dbname="icom_customer_complaints.last_modify_by" )
+ column=(type=char(1) updatewhereclause=yes name=set_item_yn dbname="id_item.set_item_yn" )
+ column=(type=char(300) updatewhereclause=yes name=item_name dbname="id_item.item_name" )
+ column=(type=char(300) updatewhereclause=yes name=item_spec dbname="id_item.item_spec" )
+ column=(type=char(3) updatewhereclause=yes name=item_uom dbname="id_item.item_uom" )
+ column=(type=char(10) updatewhereclause=yes name=item_type dbname="id_item.item_type" )
+ column=(type=char(10) updatewhereclause=yes name=line_type dbname="id_item.line_type" )
+ column=(type=char(20) updatewhereclause=yes name=item_class dbname="id_item.item_class" )
+ column=(type=number updatewhereclause=yes name=weight dbname="id_item.weight" )
+ column=(type=number updatewhereclause=yes name=height dbname="id_item.height" )
+ column=(type=char(3) update=yes updatewhereclause=yes name=image_format dbname="icom_customer_complaints.image_format" )
+ column=(type=char(300) update=yes updatewhereclause=yes name=file_name dbname="icom_customer_complaints.file_name" )
+ column=(type=datetime update=yes updatewhereclause=yes name=last_modify_date dbname="icom_customer_complaints.last_modify_date" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=part_no dbname="id_item.part_no" )
+ column=(type=char(1) updatewhereclause=yes name=item_division dbname="id_item.item_division" )
+ column=(type=char(1000) update=yes updatewhereclause=yes name=key_word dbname="icom_customer_complaints.key_word" )
+ column=(type=char(20) updatewhereclause=yes name=raw_material dbname="id_item.raw_material" )
+ column=(type=number update=yes updatewhereclause=yes name=version dbname="icom_customer_complaints.version" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=customer_code dbname="icom_customer_complaints.customer_code" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=user_id dbname="icom_customer_complaints.user_id" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=department_code dbname="icom_customer_complaints.department_code" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=model_name dbname="icom_customer_complaints.model_name" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=model_suffix dbname="icom_customer_complaints.model_suffix" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=part_no dbname="icom_customer_complaints.part_no" )
+ column=(type=datetime update=yes updatewhereclause=yes name=complaints_date dbname="icom_customer_complaints.complaints_date" )
+ column=(type=char(1) update=yes updatewhereclause=yes name=complete_yn dbname="icom_customer_complaints.complete_yn" )
+ column=(type=char(1) update=yes updatewhereclause=yes name=status dbname="icom_customer_complaints.status" )
+ column=(type=char(1) update=yes updatewhereclause=yes name=check_in_out dbname="icom_customer_complaints.check_in_out" values="	O/	I" )
+ column=(type=char(37) updatewhereclause=yes name=rowid dbname="icom_customer_complaints.rowid" )
+ column=(type=datetime update=yes updatewhereclause=yes name=check_in_out_date dbname="icom_customer_complaints.check_in_out_date" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=check_in_out_by dbname="icom_customer_complaints.check_in_out_by" )
+ column=(type=char(1) update=yes updatewhereclause=yes name=complaints_grade dbname="icom_customer_complaints.complaints_grade" )
+ column=(type=char(1) update=yes updatewhereclause=yes name=complaints_division dbname="icom_customer_complaints.complaints_division" )
+ column=(type=char(30) updatewhereclause=yes name=serial_no dbname="icom_customer_complaints.serial_no" )
+ column=(type=char(1) updatewhereclause=yes name=customer_close_yn dbname="icom_customer_complaints.customer_close_yn" )
+ column=(type=char(30) updatewhereclause=yes name=icom_customer_complaints_run_no dbname="icom_customer_complaints.run_no" )
+ column=(type=char(2000) updatewhereclause=yes name=icom_customer_complaints_reason_comment dbname="icom_customer_complaints.reason_comment" )
+ column=(type=char(2000) updatewhereclause=yes name=icom_customer_complaints_improvement_comment dbname="icom_customer_complaints.improvement_comment" )
+ column=(type=number updatewhereclause=yes name=icom_customer_complaints_complaints_qty dbname="icom_customer_complaints.complaints_qty" )
+ column=(type=char(1) updatewhereclause=yes name=issue_improvment_yn dbname="icom_customer_complaints.issue_improvment_yn" )
+ retrieve="  SELECT ~"ICOM_CUSTOMER_COMPLAINTS~".~"COMPLAINTS_NO~",   
+         ~"ICOM_CUSTOMER_COMPLAINTS~".~"ITEM_CODE~",   
+         ~"ICOM_CUSTOMER_COMPLAINTS~".~"ORGANIZATION_ID~",   
+         ~"ICOM_CUSTOMER_COMPLAINTS~".~"COMPLAINTS_COMMENT~",   
+         ~"ICOM_CUSTOMER_COMPLAINTS~".~"ENTER_BY~",   
+         ~"ICOM_CUSTOMER_COMPLAINTS~".~"ENTER_DATE~",   
+         ~"ICOM_CUSTOMER_COMPLAINTS~".~"LAST_MODIFY_BY~",   
+         ~"ID_ITEM~".~"SET_ITEM_YN~",   
+         ~"ID_ITEM~".~"ITEM_NAME~",   
+         ~"ID_ITEM~".~"ITEM_SPEC~",   
+         ~"ID_ITEM~".~"ITEM_UOM~",   
+         ~"ID_ITEM~".~"ITEM_TYPE~",   
+         ~"ID_ITEM~".~"LINE_TYPE~",   
+         ~"ID_ITEM~".~"ITEM_CLASS~",   
+         ~"ID_ITEM~".~"WEIGHT~",   
+         ~"ID_ITEM~".~"HEIGHT~",   
+         ~"ICOM_CUSTOMER_COMPLAINTS~".~"IMAGE_FORMAT~",   
+         ~"ICOM_CUSTOMER_COMPLAINTS~".~"FILE_NAME~",   
+         ~"ICOM_CUSTOMER_COMPLAINTS~".~"LAST_MODIFY_DATE~",   
+         ~"ID_ITEM~".~"PART_NO~",   
+         ~"ID_ITEM~".~"ITEM_DIVISION~",   
+         ~"ICOM_CUSTOMER_COMPLAINTS~".~"KEY_WORD~",   
+         ~"ID_ITEM~".~"RAW_MATERIAL~",   
+         ~"ICOM_CUSTOMER_COMPLAINTS~".~"VERSION~",   
+         ~"ICOM_CUSTOMER_COMPLAINTS~".~"CUSTOMER_CODE~",   
+         ~"ICOM_CUSTOMER_COMPLAINTS~".~"USER_ID~",   
+         ~"ICOM_CUSTOMER_COMPLAINTS~".~"DEPARTMENT_CODE~",   
+         ~"ICOM_CUSTOMER_COMPLAINTS~".~"MODEL_NAME~",   
+         ~"ICOM_CUSTOMER_COMPLAINTS~".~"MODEL_SUFFIX~",   
+         ~"ICOM_CUSTOMER_COMPLAINTS~".~"PART_NO~",   
+         ~"ICOM_CUSTOMER_COMPLAINTS~".~"COMPLAINTS_DATE~",   
+         ~"ICOM_CUSTOMER_COMPLAINTS~".~"COMPLETE_YN~",   
+         ~"ICOM_CUSTOMER_COMPLAINTS~".~"STATUS~",   
+         ~"ICOM_CUSTOMER_COMPLAINTS~".~"CHECK_IN_OUT~",   
+         ICOM_CUSTOMER_COMPLAINTS.ROWID,   
+         ~"ICOM_CUSTOMER_COMPLAINTS~".~"CHECK_IN_OUT_DATE~",   
+         ~"ICOM_CUSTOMER_COMPLAINTS~".~"CHECK_IN_OUT_BY~",   
+         ~"ICOM_CUSTOMER_COMPLAINTS~".~"COMPLAINTS_GRADE~",   
+         ~"ICOM_CUSTOMER_COMPLAINTS~".~"COMPLAINTS_DIVISION~",   
+         ~"ICOM_CUSTOMER_COMPLAINTS~".~"SERIAL_NO~",   
+         ~"ICOM_CUSTOMER_COMPLAINTS~".~"CUSTOMER_CLOSE_YN~",   
+         ~"ICOM_CUSTOMER_COMPLAINTS~".~"RUN_NO~",   
+         ~"ICOM_CUSTOMER_COMPLAINTS~".~"REASON_COMMENT~",   
+         ~"ICOM_CUSTOMER_COMPLAINTS~".~"IMPROVEMENT_COMMENT~",   
+         ~"ICOM_CUSTOMER_COMPLAINTS~".~"COMPLAINTS_QTY~",   
+         ~"ICOM_CUSTOMER_COMPLAINTS~".~"ISSUE_IMPROVMENT_YN~"  
+    FROM ~"ICOM_CUSTOMER_COMPLAINTS~",   
+         ~"ID_ITEM~"  
+   WHERE ( icom_customer_complaints.item_code = id_item.item_code (+)) and  
+         ( icom_customer_complaints.organization_id = id_item.organization_id (+)) and  
+		~"ICOM_CUSTOMER_COMPLAINTS~".~"COMPLETE_YN~" <>  'Y' and
+         ( ~"ICOM_CUSTOMER_COMPLAINTS~".~"ORGANIZATION_ID~" = :ARG_ORGANIZATION_ID ) 
+" arguments=(("ARG_ORGANIZATION_ID", number))  sort="organization_id A customer_code A complaints_division A item_division A item_code A version A complaints_no A " )
+group(level=1 header.height=60 trailer.height=0 by=("organization_id" , "complaints_division" ) header.color="23113727" trailer.color="65535" )
+group(level=2 header.height=0 trailer.height=0 by=("organization_id" , "item_code" ) header.color="536870912" trailer.color="65280" )
+text(band=header alignment="2" text="No" border="0" color="0" x="9" y="8" height="136" width="526" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Item Code" border="0" color="0" x="6034" y="8" height="136" width="370" html.valueishtml="0"  name=item_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Complaints Comment" border="0" color="0" x="4631" y="8" height="136" width="603" html.valueishtml="0"  name=complaints_comment_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Item Name" border="0" color="0" x="6414" y="8" height="136" width="462" html.valueishtml="0"  name=item_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Item Spec" border="0" color="0" x="6885" y="8" height="136" width="393" html.valueishtml="0"  name=item_spec_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Key Word" border="0" color="0" x="7991" y="8" height="136" width="471" html.valueishtml="0"  name=key_word_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Complaints No" border="0" color="0" x="3269" y="8" height="136" width="270" html.valueishtml="0"  name=complaints_no_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Version" border="0" color="0" x="3072" y="8" height="136" width="187" html.valueishtml="0"  name=version_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Customer Code" border="0" color="0" x="969" y="8" height="136" width="311" html.valueishtml="0"  name=customer_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="User Id" border="0" color="0" x="7287" y="8" height="136" width="293" html.valueishtml="0"  name=user_id_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Department Code" border="0" color="0" x="8471" y="8" height="136" width="329" html.valueishtml="0"  name=department_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Model Name" border="0" color="0" x="5650" y="8" height="136" width="375" html.valueishtml="0"  name=model_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Complaints Date" border="0" color="0" x="3547" y="8" height="136" width="343" html.valueishtml="0"  name=complaints_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Complete Yn" border="0" color="0" x="2400" y="8" height="136" width="219" html.valueishtml="0"  name=complete_yn_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Status" border="0" color="0" x="2167" y="8" height="136" width="224" html.valueishtml="0"  name=status_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Complaints Grade" border="0" color="33554432" x="2857" y="8" height="136" width="206" html.valueishtml="0"  name=complaints_grade_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Check In Out" border="0" color="0" x="544" y="8" height="136" width="197" html.valueishtml="0"  name=check_in_out_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Complaints Division" border="0" color="33554432" x="1289" y="8" height="136" width="297" html.valueishtml="0"  name=complaints_division_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Serial No" border="0" color="33554432" x="7589" y="8" height="136" width="393" html.valueishtml="0"  name=serial_no_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Customer Close Yn" border="0" color="33554432" x="750" y="8" height="136" width="210" html.valueishtml="0"  name=customer_cl_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Run No" border="0" color="33554432" x="5243" y="8" height="136" width="398" html.valueishtml="0"  name=run_no_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Reason Comment" border="0" color="33554432" x="1595" y="8" height="136" width="562" html.valueishtml="0"  name=reason_comm_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Improvement Comment" border="0" color="33554432" x="4142" y="8" height="136" width="480" html.valueishtml="0"  name=improvement_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Complaints Qty" border="0" color="33554432" x="3899" y="8" height="136" width="233" html.valueishtml="0"  name=icom_customer_complaints_complaints__t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Issue Improvment Yn" border="0" color="33554432" x="2629" y="8" height="136" width="219" html.valueishtml="0"  name=icom_customer_complaints_issue_impro_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+column(band=header.1 id=39 alignment="0" tabsequence=32766 border="0" color="33554432" x="544" y="4" height="52" width="197" format="[general]" html.valueishtml="0"  name=complaints_division_1 visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=header.2 id=3 alignment="0" tabsequence=32766 border="0" color="0" x="544" y="0" height="76" width="197" format="[general]" html.valueishtml="0"  name=organization_id_1 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=header.2 id=2 alignment="0" tabsequence=32766 border="0" color="0" x="544" y="0" height="76" width="197" format="[general]" html.valueishtml="0"  name=item_code_1 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+compute(band=detail alignment="0" expression="GETROW()"border="0" color="0" x="398" y="4" height="56" width="137" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=9 alignment="0" tabsequence=32766 border="0" color="0~tif ( status = 'L' , 255 , 0 )" x="6414" y="4" height="56" width="462" format="[general]" html.valueishtml="0"  name=item_name visible="1" edit.limit=0 edit.case=any edit.autoselect=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=2 alignment="0" tabsequence=32766 border="0" color="0~tif ( status = 'L' , 255 , 0 )" x="6034" y="4" height="56" width="370" format="[general]" html.valueishtml="0"  name=item_code visible="1" edit.limit=30 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=10 alignment="0" tabsequence=32766 border="0" color="0~tif ( status = 'L' , 255 , 0 )" x="6885" y="4" height="56" width="393" format="[general]" html.valueishtml="0"  name=item_spec visible="1" edit.limit=0 edit.case=any edit.autoselect=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=22 alignment="0" tabsequence=32766 border="0" color="0~tif ( status = 'L' , 255 , 0 )" x="7991" y="4" height="56" width="471" format="[general]" html.valueishtml="0"  name=key_word visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=24 alignment="2" tabsequence=32766 border="0" color="0~tif ( status = 'L' , 255 , 0 )" x="3072" y="4" height="56" width="187" format="[general]" html.valueishtml="0"  name=version visible="1" editmask.mask="##0" editmask.spinrange="1~~999" editmask.focusrectangle=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=26 alignment="0" tabsequence=32766 border="0" color="0~tif ( status = 'L' , 255 , 0 )" x="7287" y="4" height="56" width="293" format="[general]" html.valueishtml="0"  name=user_id visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=27 alignment="0" tabsequence=32766 border="0" color="0~tif ( status = 'L' , 255 , 0 )" x="8471" y="4" height="56" width="329" format="[general]" html.valueishtml="0"  name=department_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=28 alignment="0" tabsequence=32766 border="0" color="0~tif ( status = 'L' , 255 , 0 )" x="5650" y="4" height="56" width="375" format="[general]" html.valueishtml="0"  name=model_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=31 alignment="0" tabsequence=32766 border="0" color="0~tif ( status = 'L' , 255 , 0 )" x="3547" y="4" height="56" width="343" format="[shortdate] [time]" html.valueishtml="0"  name=complaints_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=1 alignment="0" tabsequence=32766 border="0" color="0~tif ( status = 'L' , 255 , 0 )" x="3269" y="4" height="56" width="270" format="[general]" html.valueishtml="0"  name=complaints_no visible="1" edit.limit=30 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=38 alignment="0" tabsequence=32766 border="0" color="0" x="2857" y="4" height="56" width="206" format="[general]" html.valueishtml="0"  name=complaints_grade visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=34 alignment="2" tabsequence=32766 border="0" color="0~tif ( status = 'L' , 255 , 0 )" x="544" y="4" height="56" width="197" format="[general]" html.valueishtml="0"  name=check_in_out visible="1" checkbox.text="" checkbox.on="O" checkbox.off="I" checkbox.scale=no checkbox.threed=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=40 alignment="0" tabsequence=32766 border="0" color="33554432" x="7589" y="4" height="56" width="393" format="[general]" html.valueishtml="0"  name=serial_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=42 alignment="0" tabsequence=32766 border="0" color="33554432" x="5243" y="4" height="56" width="398" format="[general]" html.valueishtml="0"  name=icom_customer_complaints_run_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=45 alignment="0" tabsequence=32766 border="0" color="33554432" x="3899" y="4" height="56" width="233" format="[general]" html.valueishtml="0"  name=icom_customer_complaints_complaints_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=25 alignment="2" tabsequence=32766 border="0" color="0~tif ( status = 'L' , 255 , 0 )" x="969" y="4" height="56" width="311" format="[general]" html.valueishtml="0"  name=customer_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=32 alignment="2" tabsequence=32766 border="0" color="0~tif ( status = 'L' , 255 , 0 )" x="2400" y="4" height="56" width="219" format="[general]" html.valueishtml="0"  name=complete_yn visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=33 alignment="2" tabsequence=32766 border="0" color="0~tif ( status = 'L' , 255 , 0 )" x="2167" y="4" height="56" width="224" format="[general]" html.valueishtml="0"  name=status visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=300 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any dddw.hsplitscroll=yes dddw.hscrollbar=yes dddw.vscrollbar=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=39 alignment="2" tabsequence=32766 border="0" color="0" x="1289" y="4" height="56" width="297" format="[general]" html.valueishtml="0"  name=complaints_division visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=41 alignment="2" tabsequence=32766 border="0" color="33554432" x="750" y="4" height="56" width="210" format="[general]" html.valueishtml="0"  name=customer_close_yn visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=46 alignment="2" tabsequence=32766 border="0" color="33554432" x="2629" y="4" height="56" width="219" format="[general]" html.valueishtml="0"  name=issue_improvment_yn visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_name dddw.datacolumn=code_name dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="0~tif ( status = 'L' , 255 , 0 )" x="4631" y="4" height="124" width="603" format="[general]" html.valueishtml="0"  name=complaints_comment visible="1" edit.limit=300 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=43 alignment="0" tabsequence=32766 border="0" color="33554432" x="1595" y="4" height="124" width="562" format="[general]" html.valueishtml="0"  name=icom_customer_complaints_reason_comment visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=44 alignment="0" tabsequence=32766 border="0" color="33554432" x="4142" y="4" height="124" width="480" format="[general]" html.valueishtml="0"  name=icom_customer_complaints_improvement_comment visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+tree(type=1 showconnectlines=yes showleafnodeconnectLines=yes  indent=80 showtreenodeicon=yes defaultexpandtolevel=3 stateiconalignmode=0 selectnodebymouse=yes rtollayout=no 
+level=(expandedtreenodeiconname="" collapsedtreenodeIconname="" expandedtreenodeicontranscolor="553648127" collapsedtreenodeicontranscolor="553648127" )
+level=(expandedtreenodeicontranscolor="553648127" collapsedtreenodeicontranscolor="553648127" )
+level=(expandedtreenodeiconname="" expandedtreenodeicontranscolor="553648127" collapsedtreenodeicontranscolor="553648127" )
+) 

@@ -1,0 +1,577 @@
+HA$PBExportHeader$f_mat_inventory_close_location_origin.srf
+global type f_mat_inventory_close_location_origin from function_object
+end type
+
+forward prototypes
+global function integer f_mat_inventory_close_location_origin (string as_yyyymm)
+end prototypes
+
+global function integer f_mat_inventory_close_location_origin (string as_yyyymm);string as_last_yyyymm
+long phase 
+phase = 10 
+
+datetime lvdt_start_date , lvdt_end_date , Lvdt_last_date
+
+open(w_progress_popup)
+w_progress_popup.f_set_range( 1 , 13 )
+w_progress_popup.f_setstep(1)
+
+SELECT    F_GET_INVENTORY_CLOSE_DATE( :as_yyyymm , 'START' , :gvi_organization_id ) ,
+			 F_GET_INVENTORY_CLOSE_DATE( :as_yyyymm , 'END' , :gvi_organization_id  ) ,
+			 F_GET_INVENTORY_CLOSE_DATE( :as_yyyymm , 'LAST' , :gvi_organization_id  ) 
+    INTO 	:LVDT_START_date , :Lvdt_end_date , :Lvdt_last_date
+  FROM DUAL  ;
+  
+ if f_sql_check_with_msg(string(phase)) < 0 then 
+	return -10
+ end if  
+
+msg = f_msgbox1(1161 , string(LVDT_START_date)+'  '+string(Lvdt_end_date)+' Inventory Close ')
+if msg = 1 then 
+else
+	return  0
+end if
+
+select to_char(add_months(to_date(:as_yyyymm || '01', 'yyyymmdd') , -1) ,'yyyymm')
+into    :as_last_yyyymm
+from  dual  ; 
+ if f_sql_check_with_msg(string(phase)) < 0 then 
+	return -10
+  end if
+  
+ w_progress_popup.f_stepit()  // 1-15
+phase = 20 
+
+delete from im_item_inventory_close_mfs 
+where close_yyyymm = :as_yyyymm
+   and organization_id = :gvi_organization_id ; 
+	
+ if f_sql_check_with_msg(string(phase)) < 0 then 
+	return -20
+ end if  
+  
+w_progress_popup.f_stepit()  // 1-15  
+phase = 30
+insert into im_item_inventory_close_mfs 
+          (close_yyyymm,                                 material_mfs , item_code,      location_code ,                              
+		   line_type,                                         organization_id,
+		   last_avg_price,                                  last_inventory_qty,		                  last_inventory_amt,
+           mm_receipt_qty,                               mm_receipt_amt,                           mm_material_cost_amt,  
+		   mm_issue_qty,                                 mm_issue_amt,
+		  mm_mass_qty,                                 mm_mass_amt,		   
+		   mm_bad_qty,                                   mm_bad_amt,
+		   mm_extra_qty,                                 mm_extra_amt,
+		   mm_free_qty,                                   mm_free_amt,
+		   mm_sale_qty,                                   mm_sale_amt,
+		   mm_avg_price,                                 mm_inventory_qty,                         mm_inventory_amt,
+		   enter_date,                                       enter_by,                                     last_modify_date,
+		   last_modify_by)
+select    :as_yyyymm,                                   material_mfs ,  item_code,  location_code ,                                 
+            line_type,                                         :gvi_organization_id,
+		   mm_avg_price,                                  mm_inventory_qty,                        mm_inventory_amt,
+		   0,                                                    0,                                               0,
+		   0,                                                    0,                                             
+		   0,                                                    0,                              
+		   0,                                                    0, 
+		   0,                                                    0,
+		   0,                                                    0,
+		   0,                                                    0,
+		   0,                                                    0,                                               0,
+		   sysdate,                                           :gvs_user_id,                                sysdate,
+		   :gvs_user_id
+from     im_item_inventory_close_mfs
+where   close_yyyymm = :as_last_yyyymm
+and      organization_id = :gvi_organization_id 
+//and      mm_inventory_qty <> 0 
+; 
+
+if f_sql_check_with_msg(string(phase)) < 0 then 
+	return -30
+end if
+w_progress_popup.f_stepit()  // 1-15
+w_progress_popup.f_set_message("INSERT INTO im_item_inventory_close_mfs")
+
+phase = 40
+/* Formatted on 2007/10/27 12:55 (RevealNet Formatter v4.4.0) */
+INSERT INTO im_item_inventory_close_mfs
+            (close_yyyymm,
+             material_mfs,
+             item_code,
+             line_type,
+             location_code,
+             organization_id,
+             last_avg_price,
+             last_inventory_qty,
+             last_inventory_amt,
+             mm_receipt_qty,
+             mm_receipt_amt,
+             mm_material_cost_amt,
+             mm_issue_qty,
+             mm_issue_amt,
+             mm_mass_qty,
+             mm_mass_amt,
+             mm_bad_qty,
+             mm_bad_amt,
+             mm_extra_qty,
+             mm_extra_amt,
+             mm_free_qty,
+             mm_free_amt,
+             mm_sale_qty,
+             mm_sale_amt,
+             mm_avg_price,
+             mm_inventory_qty,
+             mm_inventory_amt,
+             enter_date,
+             enter_by,
+             last_modify_date,
+             last_modify_by
+            )
+   SELECT   :as_yyyymm,
+            a.material_mfs,
+            a.item_code,
+            a.line_type,
+            a.location_code,
+            :gvi_organization_id,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            SYSDATE,
+            :gvs_user_id,
+            SYSDATE,
+            :gvs_user_id
+   FROM     (SELECT material_mfs,
+							item_code,
+							line_type,
+							location_code,
+							organization_id
+					FROM   im_item_receipt
+					WHERE receipt_date BETWEEN:LVDT_start_date
+					AND :LVDT_end_date
+                 //      AND ENTER_DATE <= :lvdt_last_date
+					AND organization_id = :gvi_organization_id
+             UNION ALL
+               SELECT material_mfs,
+						item_code,
+						line_type,
+						location_code,
+						organization_id
+				FROM im_item_issue
+				WHERE issue_date  BETWEEN:LVDT_start_date
+				AND :LVDT_end_date
+			//	AND ENTER_DATE <= :lvdt_last_date
+		       
+				AND organization_id = :gvi_organization_id) a
+   WHERE    NOT EXISTS 
+	                  ( SELECT 'X'
+                           FROM  im_item_inventory_close_mfs b
+                        WHERE   b.item_code       = a.item_code
+                               AND b.line_type         = a.line_type
+                               AND b.material_mfs   = a.material_mfs
+                               AND b.close_yyyymm  = :as_yyyymm
+                               AND b.organization_id = a.organization_id
+				             AND b.location_code   = a.location_code			   
+                               AND b.organization_id = :gvi_organization_id)
+   GROUP BY 
+	        material_mfs,
+            item_code,
+            line_type,
+		   location_code,
+            organization_id;
+				
+				
+w_progress_popup.f_stepit()  // 1-15
+
+if f_sql_check_with_msg(string(phase)) < 0 then 
+	return -40
+end if
+//==============================================
+//
+//==============================================
+w_progress_popup.f_set_message("UPDATE im_item_receipt SET CLOSE_YN = 'Y' ")
+
+UPDATE im_item_receipt SET CLOSE_YN = 'Y' , CLOSE_DATE = SYSDATE 
+WHERE receipt_date 
+BETWEEN :LVDT_start_date
+         AND :LVDT_end_date
+	//     AND ENTER_DATE <= :lvdt_last_date
+         AND organization_id = :gvi_organization_id ;
+			
+if f_sql_check_with_msg(string(phase)) < 0 then 
+	return -40
+end if
+w_progress_popup.f_set_message("UPDATE im_item_issue SET CLOSE_YN = 'Y' ")
+
+UPDATE im_item_issue
+      SET CLOSE_YN = 'Y' , CLOSE_DATE = SYSDATE 
+WHERE issue_date 
+BETWEEN :LVDT_start_date
+        AND :LVDT_end_date
+	  // AND ENTER_DATE <= :lvdt_last_date
+        AND organization_id = :gvi_organization_id ;
+if f_sql_check_with_msg(string(phase)) < 0 then 
+	return -40
+end if
+
+UPDATE is_material_shipping SET CLOSE_YN = 'Y' , CLOSE_DATE = SYSDATE 
+WHERE shipping_date 
+BETWEEN :LVDT_start_date
+        AND :LVDT_end_date
+//	   AND ENTER_DATE <= :lvdt_last_date
+        AND organization_id = :gvi_organization_id	;
+if f_sql_check_with_msg(string(phase)) < 0 then 
+	return -40
+end if
+w_progress_popup.f_stepit()  // 4-15
+phase = 50
+
+w_progress_popup.f_set_message("mm_issue_qty    = f_get_mm_mfs_issue_qty ")
+
+update im_item_inventory_close_mfs 
+  set   mm_issue_qty    = f_get_mm_mfs_issue_qty(material_mfs ,location_code, item_code, :as_yyyymm,line_type , '%', :LVDT_start_date , :LVDT_end_date ,  :gvi_organization_id) , 
+		mm_mass_qty   = f_get_mm_mfs_issue_qty(material_mfs ,location_code , item_code, :as_yyyymm,line_type, 'M',  :LVDT_start_date , :LVDT_end_date ,:gvi_organization_id) , 
+		mm_bad_qty     = f_get_mm_mfs_issue_qty(material_mfs ,location_code , item_code, :as_yyyymm,line_type, 'B',   :LVDT_start_date , :LVDT_end_date ,:gvi_organization_id),
+	//	mm_free_qty     = f_get_mm_mfs_issue_qty(material_mfs ,item_code, :as_yyyymm,line_type, 'F',  :gvi_organization_id),
+	//	mm_sale_qty     = f_get_mm_mfs_issue_qty(material_mfs ,item_code, :as_yyyymm,line_type, 'S',  :gvi_organization_id),
+	//	mm_extra_qty   = f_get_mm_mfs_issue_qty(material_mfs ,item_code, :as_yyyymm, line_type,'E',  :gvi_organization_id),
+		mm_receipt_qty = f_get_mm_mfs_receipt_qty(material_mfs , location_code , item_code, :as_yyyymm, line_type , :LVDT_start_date , :LVDT_end_date , :gvi_organization_id), 
+		mm_receipt_amt = nvl(f_get_mm_mfs_receipt_amt( material_mfs ,location_code , item_code, :as_yyyymm, line_type , :LVDT_start_date , :LVDT_end_date , :gvi_organization_id),0)
+where   close_yyyymm = :as_yyyymm	
+and      organization_id = :gvi_organization_id ; 
+if f_sql_check_with_msg(string(phase)) < 0 then 
+	return -50
+end if
+w_progress_popup.f_stepit()  // 1-15
+//================================================
+//
+//================================================
+w_progress_popup.f_set_message("60")
+
+phase = 60
+update im_item_inventory_close_mfs 
+set      mm_inventory_qty = nvl(last_inventory_qty ,0)+ nvl(mm_receipt_qty,0) - ( nvl(mm_issue_qty ,0) +  nvl(mm_sale_qty ,0) ),
+          mm_avg_price = abs(decode(( nvl(last_inventory_qty,0) + nvl(mm_receipt_qty,0)) , 0 , 0 , (nvl(last_inventory_amt, 0) + nvl(mm_receipt_amt,0) + decode( line_type , 'M' , nvl(mm_material_cost_amt,0),0))/( nvl(last_inventory_qty,0) + nvl(mm_receipt_qty,0)) )) 
+  //	     mm_inventory_amt = ( nvl(last_inventory_qty ,0)+ nvl(mm_receipt_qty,0) - (nvl(mm_issue_qty ,0) + nvl(mm_sale_qty ,0) ) ) *	 DECODE(( nvl(last_inventory_qty,0) + nvl(mm_receipt_qty,0)) , 0 , 0 , (nvl(last_inventory_amt, 0) + nvl(mm_receipt_amt,0) + decode( line_type , 'M' , nvl(mm_material_cost_amt,0),0))/( nvl(last_inventory_qty,0) + nvl(mm_receipt_qty,0)) )
+where   close_yyyymm = :as_yyyymm
+and      organization_id = :gvi_organization_id ; 
+if f_sql_check_with_msg(string(phase)) < 0 then 
+	return -60
+end if
+w_progress_popup.f_set_message("70")
+w_progress_popup.f_stepit()  // 1-15
+phase = 80
+update im_item_inventory_close_mfs a 
+set a.mm_avg_price = ( select max(b.mm_avg_price)
+									from im_item_inventory_close_mfs b 
+									where a.close_yyyymm = b.close_yyyymm 
+									and a.item_code = b.item_code 
+									and a.line_type = b.line_type
+									and a.organization_id = b.organization_id
+									and b.mm_avg_price > 0 )
+where  a.close_yyyymm = :as_yyyymm
+and      a.organization_id = :gvi_organization_id
+and a.mm_avg_price = 0 
+and ( a.close_yyyymm , a.item_code , a.line_type, a.organization_id  ) 
+in ( select b.close_yyyymm , b.item_code , b.line_type , b.organization_id 
+		from im_item_inventory_close_mfs b 
+									where a.close_yyyymm = b.close_yyyymm 
+									and a.item_code = b.item_code 
+									and a.line_type = b.line_type
+									and a.organization_id = b.organization_id
+									and b.mm_avg_price > 0
+		) ;
+
+if f_sql_check_with_msg(string(phase)) < 0 then 
+	return -60
+end if
+
+
+update im_item_inventory_close_mfs 
+set      mm_inventory_amt = mm_inventory_qty * ABS(mm_avg_price )
+where   close_yyyymm = :as_yyyymm
+and      organization_id = :gvi_organization_id ; 
+if f_sql_check_with_msg(string(phase)) < 0 then 
+	return -70
+end if
+
+w_progress_popup.f_set_message("80")
+
+UPDATE im_item_inventory_close_mfs
+   SET mm_issue_amt = mm_issue_qty * mm_avg_price,
+          mm_mass_amt = mm_mass_qty * mm_avg_price,
+          mm_bad_amt = mm_bad_qty * mm_avg_price,
+          mm_free_amt = mm_free_qty * mm_avg_price,
+          mm_sale_amt = mm_sale_qty * mm_avg_price,
+         mm_extra_amt = mm_extra_qty * mm_avg_price
+ WHERE     close_yyyymm = :as_yyyymm
+       AND organization_id = :gvi_organization_id;
+
+if f_sql_check_with_msg(string(phase)) < 0 then 
+	return -80
+end if 
+w_progress_popup.f_stepit()  // 1-15
+//==============================================
+//
+//==============================================
+w_progress_popup.f_set_message("90")
+phase = 90
+update im_item_issue a
+set      (issue_price, issue_amt ) =
+          (select   b.mm_avg_price,    a.issue_qty *  abs(b.mm_avg_price)
+		   from   im_item_inventory_close_mfs  b
+		   where  b.close_yyyymm = :as_yyyymm
+		       and a.material_mfs = b.material_mfs 	
+			  and  a.item_code = b.item_code
+			  and a.line_type = b.line_type
+		       and b.organization_id  = :gvi_organization_id
+		       and a.organization_id = b.organization_id 
+
+		       and a.location_code = b.location_code
+		)
+where issue_date >= :LVDT_START_date AND issue_date  <= :LVDT_END_date
+    and  a.organization_id = :gvi_organization_id
+;
+if f_sql_check_with_msg(string(phase)) < 0 then 
+	return -90
+end if 
+phase = 100
+w_progress_popup.f_stepit()  // 1-15
+//=========================================================
+//
+//=========================================================
+w_progress_popup.f_set_message("100")
+
+UPDATE im_item_inventory a
+   SET (a.inventory_price) =
+          (SELECT b.mm_avg_price
+           FROM   im_item_inventory_close_mfs b
+           WHERE  a.material_mfs = b.material_mfs
+			    AND a.item_code = b.item_code
+                  AND a.line_type = b.line_type
+                  AND a.location_code = b.location_code
+                  AND a.organization_id = b.organization_id
+                  AND b.close_yyyymm = :as_yyyymm
+                  AND b.organization_id = :gvi_organization_id)
+ WHERE     ( a.material_mfs, a.item_code, a.line_type,a.location_code, a.organization_id) IN
+             (SELECT
+                     b.item_code,
+                     b.line_type,
+				   b.material_mfs ,
+				   b.location_code ,	
+                     b.organization_id
+              FROM   im_item_inventory_close_mfs b
+              WHERE   a.material_mfs = b.material_mfs   
+				   AND a.item_code = b.item_code
+                     AND a.line_type = b.line_type
+                     AND a.location_code = b.location_code
+                     AND a.organization_id = b.organization_id
+                     AND b.close_yyyymm = :as_yyyymm
+                     AND b.organization_id = :gvi_organization_id)
+       AND organization_id = :gvi_organization_id;
+		
+if f_sql_check_with_msg(string(phase)) < 0 then 
+	return -100
+end if 
+phase = 110
+w_progress_popup.f_stepit()  // 1-15
+w_progress_popup.f_set_message("110")
+//=============================================
+//
+//=============================================
+
+
+DELETE FROM im_item_inventory_close_mfs
+          WHERE close_yyyymm = :as_yyyymm
+               AND organization_id = :gvi_organization_id
+			 AND LAST_INVENTORY_QTY =0 
+			 AND MM_RECEIPT_QTY = 0
+			 AND MM_ISSUE_QTY = 0 
+			 AND MM_INVENTORY_QTY = 0 ;
+			 
+if f_sql_check_with_msg(string(phase)) < 0 then 
+	return -110
+end if 
+
+//=============================================
+//
+//
+//=============================================
+DELETE FROM im_item_inventory_close
+      WHERE     close_yyyymm = :as_yyyymm
+            AND organization_id = :gvi_organization_id;
+if f_sql_check_with_msg(string(phase)) < 0 then 
+	return -120
+end if 
+w_progress_popup.f_stepit()  // 1-15
+/* Formatted on 2007/10/27 12:56 (RevealNet Formatter v4.4.0) */
+w_progress_popup.f_set_message("120")
+INSERT INTO im_item_inventory_close
+            (close_yyyymm,
+             item_code,
+             line_type,location_code,
+             organization_id,
+             last_avg_price,
+             last_inventory_amt,
+             last_inventory_qty,
+             mm_mass_qty,
+             mm_mass_amt,
+             mm_issue_qty,
+             mm_issue_amt,
+             mm_receipt_qty,
+             mm_material_cost_amt,
+             mm_receipt_amt,
+             mm_bad_qty,
+             mm_bad_amt,
+             mm_extra_qty,
+             mm_extra_amt,
+             mm_avg_price,
+             mm_inventory_qty,
+             mm_free_amt,
+             mm_inventory_amt,
+             mm_sale_amt,
+             enter_by,
+             enter_date,
+             last_modify_by,
+             last_modify_date,
+             mm_free_qty,
+             mm_sale_qty
+            )
+   SELECT   close_yyyymm,
+            item_code,
+            line_type,location_code,
+            organization_id,
+           abs(DECODE(
+               SUM(last_inventory_qty), 0, AVG(last_avg_price),
+               SUM(last_inventory_amt) / SUM(last_inventory_qty)
+            )),
+            SUM(last_inventory_amt),
+            SUM(last_inventory_qty),
+            SUM(mm_mass_qty),
+            SUM(mm_mass_amt),
+            SUM(mm_issue_qty),
+            SUM(mm_issue_amt),
+            SUM(mm_receipt_qty),
+            SUM(mm_material_cost_amt),
+            SUM(mm_receipt_amt),
+            SUM(mm_bad_qty),
+            SUM(mm_bad_amt),
+            SUM(mm_extra_qty),
+            SUM(mm_extra_amt),
+           abs( DECODE(
+               SUM(last_inventory_qty + mm_receipt_qty), 0, 0,
+               SUM(last_inventory_amt + mm_receipt_amt)
+               / SUM(last_inventory_qty + mm_receipt_qty)
+            )),
+            SUM(mm_inventory_qty),
+            SUM(mm_free_amt),
+            SUM(mm_inventory_amt),
+            SUM(mm_sale_amt),
+            MAX(enter_by),
+            MAX(enter_date),
+            MAX(last_modify_by),
+            MAX(last_modify_date),
+            SUM(mm_free_qty),
+            SUM(mm_sale_qty)
+   FROM     im_item_inventory_close_mfs
+   WHERE    close_yyyymm = :as_yyyymm
+     AND organization_id = :gvi_organization_id
+   GROUP BY close_yyyymm,
+                  item_code,
+                  line_type,
+			     location_code,
+                  organization_id;
+
+
+	if f_sql_check_with_msg(string(phase)) < 0 then 
+		return -130
+	end if 
+w_progress_popup.f_stepit()  // 1-15
+phase = 130
+//=============================================
+//
+//=============================================
+w_progress_popup.f_set_message("130")
+
+if as_yyyymm = f_yyyymm()  then 
+	
+		UPDATE im_item_inventory a
+			SET a.inventory_qty = 0
+		where organization_id = :gvi_organization_id  ;
+		
+			if f_sql_check_with_msg(string(phase)) < 0 then 
+				return -120
+			end if 		
+			
+		UPDATE im_item_inventory a
+			SET a.inventory_qty =
+					 (SELECT b.mm_inventory_qty
+						 FROM im_item_inventory_close_mfs b
+						WHERE a.material_mfs = b.material_mfs	
+					         AND a.item_code = b.item_code
+						    AND a.line_type = b.line_type				
+					         AND a.location_code = b.location_code
+						    AND a.organization_id = b.organization_id
+						    AND b.close_yyyymm = :as_yyyymm)
+		 WHERE ( a.material_mfs , a.item_code, a.line_type , a.location_code,  a.organization_id)
+		 IN (
+					 SELECT b.material_mfs ,  b.item_code,b.line_type , b.location_code , b.organization_id
+						FROM im_item_inventory_close_mfs b
+					  WHERE a.material_mfs = b.material_mfs	 
+					AND a.item_code = b.item_code
+					AND a.line_type = b.line_type			  
+					AND a.location_code = b.location_code
+					AND a.organization_id = b.organization_id
+					AND b.close_yyyymm = :as_yyyymm
+						 );
+			
+			if f_sql_check_with_msg(string(phase)) < 0 then 
+				return -120
+			end if 
+END IF 
+//if as_yyyymm = f_yyyymm()  then 
+//	update im_item_inventory 
+//	      set inventory_qty = nvl(f_get_sum_rcv( material_mfs , item_code , line_type , organization_id ),0) -nvl( f_get_sum_iss( material_mfs , item_code , line_type , organization_id ),0) 
+//	where organization_id = :gvi_organization_id ;
+//	
+//	if f_sql_check_with_msg(string(phase)) < 0 then 
+//		return -120
+//	end if 
+//
+//end if 
+w_progress_popup.f_set_message("140")
+//=============================================
+//
+//=============================================
+phase = 130
+update im_item_inventory set inventory_amt = inventory_qty * inventory_price
+where   organization_id = :gvi_organization_id  ;
+	 
+if f_sql_check_with_msg(string(phase)) < 0 then 
+	return -130
+end if 
+w_progress_popup.f_stepit()  // 1-15
+close(w_progress_popup)		
+return 1
+ 
+
+
+
+end function
+

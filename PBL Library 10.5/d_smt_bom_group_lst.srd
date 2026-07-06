@@ -1,0 +1,55 @@
+HA$PBExportHeader$d_smt_bom_group_lst.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no grid.lines=0 )
+header(height=132 color="536870912" )
+summary(height=0 color="553648127" )
+footer(height=0 color="536870912" )
+detail(height=72 color="536870912" )
+table(column=(type=char(30) updatewhereclause=yes name=parent_item_code dbname="id_eng_bom_smt.parent_item_code" )
+ column=(type=char(1) updatewhereclause=yes name=feeder_shaft dbname="id_eng_bom_smt.feeder_shaft" )
+ column=(type=char(10) updatewhereclause=yes name=revision dbname="id_eng_bom_smt.revision" )
+ column=(type=char(20) updatewhereclause=yes name=line_code dbname="id_eng_bom_smt.line_code" )
+ column=(type=char(30) updatewhereclause=yes name=pcb_item dbname="id_eng_bom_smt.pcb_item" )
+ column=(type=char(1) updatewhereclause=yes name=feeder_shaft_status dbname="id_eng_bom_smt.feeder_shaft_status" )
+ retrieve="  SELECT ~"ID_ENG_BOM_SMT~".~"PARENT_ITEM_CODE~",   
+         ~"ID_ENG_BOM_SMT~".~"FEEDER_SHAFT~",   
+         ~"ID_ENG_BOM_SMT~".~"REVISION~",   
+         ~"ID_ENG_BOM_SMT~".~"LINE_CODE~",   
+	     ~"ID_ENG_BOM_SMT~".~"PCB_ITEM~" ,
+         ~"ID_ENG_BOM_SMT~".~"FEEDER_SHAFT_STATUS~" 
+    FROM ~"ID_ENG_BOM_SMT~"   
+  WHERE PARENT_ITEM_CODE = :ARG_ITEM_CODE 
+      AND REVISION LIKE :ARG_REVISION
+      AND ORGANIZATION_ID = :ARG_ORG
+GROUP BY ~"ID_ENG_BOM_SMT~".~"PARENT_ITEM_CODE~",   
+         ~"ID_ENG_BOM_SMT~".~"FEEDER_SHAFT~",   
+         ~"ID_ENG_BOM_SMT~".~"REVISION~",   
+         ~"ID_ENG_BOM_SMT~".~"LINE_CODE~",   
+         ~"ID_ENG_BOM_SMT~".~"PCB_ITEM~"  ,
+ ~"ID_ENG_BOM_SMT~".~"FEEDER_SHAFT_STATUS~" " arguments=(("ARG_ITEM_CODE", string),("ARG_REVISION", string),("ARG_ORG", number))  sort="line_code A parent_item_code A pcb_item A revision A feeder_shaft A " )
+group(level=1 header.height=0 trailer.height=44 by=("line_code" ) header.color="536870912" trailer.color="30474192" )
+text(band=header alignment="2" text="Feeder Shaft" border="0" color="33554432" x="293" y="8" height="116" width="242" html.valueishtml="0"  name=feeder_shaft_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Line Code" border="0" color="33554432" x="128" y="8" height="116" width="155" html.valueishtml="0"  name=line_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Pcb Item" border="0" color="33554432" x="544" y="8" height="116" width="169" html.valueishtml="0"  name=pcb_item_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="SMT Model Name" border="0" color="33554432" x="722" y="8" height="116" width="549" html.valueishtml="0"  name=parent_item_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Revision" border="0" color="33554432" x="1280" y="8" height="116" width="256" html.valueishtml="0"  name=revision_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Feeder Shaft Status" border="0" color="33554432" x="1545" y="8" height="116" width="215" html.valueishtml="0"  name=feeder_shaft_status_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="0" color="33554432" x="1280" y="8" height="52" width="256" format="[general]" html.valueishtml="0"  name=revision visible="1" edit.limit=10 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=6 alignment="2" tabsequence=32766 border="0" color="33554432" x="1550" y="8" height="52" width="210" format="[general]" html.valueishtml="0"  name=feeder_shaft_status visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="33554432" x="722" y="8" height="52" width="549" format="[general]" html.valueishtml="0"  name=parent_item_code visible="1" edit.limit=30 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="33554432" x="293" y="8" height="52" width="242" format="[general]" html.valueishtml="0"  name=feeder_shaft visible="1" edit.limit=1 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="0" color="33554432" x="128" y="8" height="52" width="155" format="[general]" html.valueishtml="0"  name=line_code visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="2" tabsequence=32766 border="0" color="33554432" x="544" y="8" height="52" width="169" format="[general]" html.valueishtml="0"  name=pcb_item visible="1" edit.limit=30 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="0" expression="trim('')"border="0" color="33554432" x="9" y="8" height="52" width="110" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+
+sparse(names="line_code")htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

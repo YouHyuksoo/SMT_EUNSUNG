@@ -1,0 +1,39 @@
+HA$PBExportHeader$d_mat_item_vendor_popup.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=12632256 processing=1 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no grid.lines=0 )
+header(height=120 color="12632256" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=72 color="536870912" )
+table(column=(type=char(20) updatewhereclause=yes name=item_code dbname="id_item.item_code" )
+ column=(type=char(15) updatewhereclause=yes name=vendor_code1 dbname="id_item.vendor_code1" )
+ retrieve="  SELECT ITEM_CODE, VENDOR_CODE1
+    FROM ID_ITEM  
+  WHERE ITEM_CODE            = :arg_item_code
+      AND  ORGANIZATION_ID = :arg_org_id 
+UNION ALL
+  SELECT ITEM_CODE, VENDOR_CODE2
+    FROM ID_ITEM  
+  WHERE ITEM_CODE            = :arg_item_code
+      AND  ORGANIZATION_ID = :arg_org_id 
+UNION ALL
+  SELECT ITEM_CODE, VENDOR_CODE3
+    FROM ID_ITEM  
+  WHERE ITEM_CODE            = :arg_item_code
+      AND  ORGANIZATION_ID = :arg_org_id " arguments=(("arg_item_code", string),("arg_org_id", number)) )
+text(band=header alignment="2" text="No" border="0" color="0" x="137" y="8" height="108" width="178" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="vendor code" border="0" color="0" x="325" y="8" height="108" width="1326" html.valueishtml="0"  name=vendor_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="0" x="329" y="4" height="60" width="1321" format="[general]" html.valueishtml="0"  name=vendor_code1 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=detail alignment="0" expression="TRIM('')"border="0" color="0" x="9" y="4" height="60" width="119" format="[GENERAL]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=detail alignment="2" expression="GETROW()"border="0" color="0~tif ( supplier_code = '*' , 255 , 0 )" x="137" y="4" height="60" width="178" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

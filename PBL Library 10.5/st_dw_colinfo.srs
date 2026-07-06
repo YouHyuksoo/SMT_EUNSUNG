@@ -1,0 +1,24 @@
+HA$PBExportHeader$st_dw_colinfo.srs
+$PBExportComments$(Ref:uo_dw_colinfo)Structure for Column's Info
+global type st_dw_colinfo from structure
+	window		w_window
+	integer		i_dw_colcount
+	integer		i_dw_dispcolcount
+	integer		i_dw_initcolcount
+	integer		i_dw_sortcolcount
+	integer		i_dw_visibleseq
+	integer		i_dw_sortseq
+	datawindow		dw_dyn_colinfo
+	datawindow		dw_main_sheet
+	string		s_dddw_name[]
+	string		s_dddw_datacol[]
+	string		s_dddw_dispcol[]
+	string		s_dwc_colname[]
+	datawindowchild		dwc_objname[]
+	integer		i_dwc_objcnt
+	string		s_howfind_mode
+	string		s_dwo_name[]
+	string		s_reusedddw_import
+	boolean		b_reusedddw_called
+end type
+

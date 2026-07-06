@@ -1,0 +1,80 @@
+HA$PBExportHeader$d_product_qc_repair_item_rpt.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=0 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no )
+header(height=456 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=84 color="536870912" )
+detail(height=104 color="536870912" )
+table(column=(type=char(30) updatewhereclause=yes name=run_no dbname="ip_product_work_qc_repair_item.run_no" dbalias=".run_no" )
+ column=(type=number updatewhereclause=yes name=qc_sequence dbname="ip_product_work_qc_repair_item.qc_sequence" dbalias=".qc_sequence" )
+ column=(type=char(30) updatewhereclause=yes name=material_mfs dbname="ip_product_work_qc_repair_item.material_mfs" dbalias=".material_mfs" )
+ column=(type=char(30) updatewhereclause=yes name=item_code dbname="ip_product_work_qc_repair_item.item_code" dbalias=".item_code" )
+ column=(type=number updatewhereclause=yes name=repair_qty dbname="ip_product_work_qc_repair_item.repair_qty" dbalias=".repair_qty" )
+ column=(type=number updatewhereclause=yes name=repair_price dbname="repair_price" )
+ column=(type=number updatewhereclause=yes name=repair_amt dbname="repair_amt" )
+ column=(type=char(1000) updatewhereclause=yes name=comments dbname="ip_product_work_qc_repair_item.comments" dbalias=".comments" )
+ column=(type=number updatewhereclause=yes name=organization_id dbname="ip_product_work_qc_repair_item.organization_id" dbalias=".organization_id" )
+ column=(type=datetime updatewhereclause=yes name=enter_date dbname="ip_product_work_qc_repair_item.enter_date" dbalias=".enter_date" )
+ column=(type=char(20) updatewhereclause=yes name=enter_by dbname="ip_product_work_qc_repair_item.enter_by" dbalias=".enter_by" )
+ column=(type=datetime updatewhereclause=yes name=last_modify_date dbname="ip_product_work_qc_repair_item.last_modify_date" dbalias=".last_modify_date" )
+ column=(type=char(20) updatewhereclause=yes name=last_modify_by dbname="ip_product_work_qc_repair_item.last_modify_by" dbalias=".last_modify_by" )
+ retrieve="  SELECT ~"IP_PRODUCT_WORK_QC_REPAIR_ITEM~".~"RUN_NO~",   
+         ~"IP_PRODUCT_WORK_QC_REPAIR_ITEM~".~"QC_SEQUENCE~",   
+         ~"IP_PRODUCT_WORK_QC_REPAIR_ITEM~".~"MATERIAL_MFS~",   
+         ~"IP_PRODUCT_WORK_QC_REPAIR_ITEM~".~"ITEM_CODE~",   
+         ~"IP_PRODUCT_WORK_QC_REPAIR_ITEM~".~"REPAIR_QTY~",   
+         F_GET_MAT_INVENTORY_PRICE(~"IP_PRODUCT_WORK_QC_REPAIR_ITEM~".~"ITEM_CODE~", 'F', ~"IP_PRODUCT_WORK_QC_REPAIR_ITEM~".~"ORGANIZATION_ID~")  REPAIR_PRICE,
+         ROUND(F_GET_MAT_INVENTORY_PRICE(~"IP_PRODUCT_WORK_QC_REPAIR_ITEM~".~"ITEM_CODE~", 'F', ~"IP_PRODUCT_WORK_QC_REPAIR_ITEM~".~"ORGANIZATION_ID~") 
+                     * ~"IP_PRODUCT_WORK_QC_REPAIR_ITEM~".~"REPAIR_QTY~" ) REPAIR_AMT,
+         ~"IP_PRODUCT_WORK_QC_REPAIR_ITEM~".~"COMMENTS~",   
+         ~"IP_PRODUCT_WORK_QC_REPAIR_ITEM~".~"ORGANIZATION_ID~",   
+         ~"IP_PRODUCT_WORK_QC_REPAIR_ITEM~".~"ENTER_DATE~",   
+         ~"IP_PRODUCT_WORK_QC_REPAIR_ITEM~".~"ENTER_BY~",   
+         ~"IP_PRODUCT_WORK_QC_REPAIR_ITEM~".~"LAST_MODIFY_DATE~",   
+         ~"IP_PRODUCT_WORK_QC_REPAIR_ITEM~".~"LAST_MODIFY_BY~"  
+    FROM ~"IP_PRODUCT_WORK_QC_REPAIR_ITEM~"  
+   WHERE ( ~"IP_PRODUCT_WORK_QC_REPAIR_ITEM~".~"RUN_NO~" LIKE :arg_run_no )
+        AND ( ~"IP_PRODUCT_WORK_QC_REPAIR_ITEM~".~"MATERIAL_MFS~" LIKE :arg_material_mfs )
+        AND ( ~"IP_PRODUCT_WORK_QC_REPAIR_ITEM~".~"ENTER_DATE~" >= :arg_dateset )   
+        AND ( ~"IP_PRODUCT_WORK_QC_REPAIR_ITEM~".~"ENTER_DATE~" <= :arg_dateend )   
+        AND ( ~"IP_PRODUCT_WORK_QC_REPAIR_ITEM~".~"ORGANIZATION_ID~" = :arg_org )    
+" arguments=(("arg_run_no", string),("arg_material_mfs", string),("arg_dateset", datetime),("arg_dateend", datetime),("arg_org", number)) )
+line(band=header x1="0" y1="296" x2="5248" y2="296"  name=l_1 visible="1" pen.style="0" pen.width="9" pen.color="255"  background.mode="2" background.color="1073741824" )
+text(band=header alignment="2" text="Qc Repair Report" border="0" color="33554432" x="5" y="16" height="100" width="5248" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-16" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" font.underline="1" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Run No" border="0" color="33554432" x="146" y="312" height="120" width="347" html.valueishtml="0"  name=run_no_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Qc Sequence" border="0" color="33554432" x="507" y="312" height="120" width="210" html.valueishtml="0"  name=qc_sequence_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Material Mfs" border="0" color="33554432" x="736" y="312" height="120" width="654" html.valueishtml="0"  name=material_mfs_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Item Code" border="0" color="33554432" x="1403" y="312" height="120" width="571" html.valueishtml="0"  name=item_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="0" text="Enter Date" border="0" color="33554432" x="4576" y="312" height="120" width="654" html.valueishtml="0"  name=enter_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+compute(band=header alignment="1" expression="today()"border="0" color="33554432" x="4631" y="212" height="60" width="613" format="[general]" html.valueishtml="0"  name=date_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="1" text="Print Date" border="0" color="33554432" x="4357" y="212" height="60" width="261" html.valueishtml="0"  name=t_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="No" border="0" color="33554432" x="9" y="312" height="116" width="151" html.valueishtml="0"  name=no_1_t visible="1"  font.face="TAHOMA" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+line(band=detail x1="0" y1="92" x2="5248" y2="92"  name=l_2 visible="1" pen.style="2" pen.width="5" pen.color="0"  background.mode="2" background.color="1073741824" )
+compute(band=detail alignment="0" expression="getrow()"border="0" color="33554432" x="5" y="8" height="68" width="128" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="33554432" x="146" y="8" height="68" width="347" format="[general]" html.valueishtml="0"  name=run_no visible="1" edit.limit=30 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="33554432" x="507" y="8" height="68" width="210" format="[general]" html.valueishtml="0"  name=qc_sequence visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="0" color="33554432" x="736" y="8" height="68" width="654" format="[general]" html.valueishtml="0"  name=material_mfs visible="1" edit.limit=30 edit.case=upper edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="0" color="33554432" x="1403" y="8" height="68" width="571" format="[general]" html.valueishtml="0"  name=item_code visible="1" edit.limit=30 edit.case=upper edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=10 alignment="0" tabsequence=32766 border="0" color="33554432" x="4576" y="8" height="68" width="654" format="[shortdate] [time]" html.valueishtml="0"  name=enter_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+line(band=header x1="0" y1="448" x2="5248" y2="448"  name=l_4 visible="1" pen.style="0" pen.width="9" pen.color="255"  background.mode="2" background.color="1073741824" )
+compute(band=footer alignment="0" expression="'Page ' + page() + ' of ' + pageCount()"border="0" color="33554432" x="2208" y="16" height="60" width="590" format="[general]" html.valueishtml="0"  name=page_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+line(band=footer x1="0" y1="8" x2="5248" y2="8"  name=l_3 visible="1" pen.style="0" pen.width="9" pen.color="255"  background.mode="2" background.color="1073741824" )
+column(band=detail id=8 alignment="2" tabsequence=32766 border="0" color="33554432" x="2926" y="8" height="68" width="1627" format="[general]" html.valueishtml="0"  name=comments visible="1" edit.limit=1000 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Comments" border="0" color="33554432" x="2926" y="312" height="120" width="1627" html.valueishtml="0"  name=comments_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Repair Qty" border="0" color="33554432" x="1993" y="312" height="120" width="210" html.valueishtml="0"  name=repair_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Repair Price" border="0" color="33554432" x="2222" y="312" height="120" width="261" html.valueishtml="0"  name=t_3 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=header alignment="2" text="Repair Amt" border="0" color="33554432" x="2505" y="312" height="120" width="393" html.valueishtml="0"  name=t_4 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=5 alignment="1" tabsequence=32766 border="0" color="33554432" x="1993" y="8" height="68" width="210" format="#,##0" html.valueishtml="0"  name=repair_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=6 alignment="0" tabsequence=0 border="0" color="33554432" x="2222" y="8" height="68" width="261" format="#,##0.00" html.valueishtml="0"  name=repair_price visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=7 alignment="1" tabsequence=0 border="0" color="33554432" x="2505" y="8" height="68" width="393" format="#,##0" html.valueishtml="0"  name=repair_amt visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

@@ -1,0 +1,78 @@
+HA$PBExportHeader$d_mat_receipt_lot_barcode_rpt_onetek_solder.srd
+$PBExportComments$$$HEX7$$68d5b5c290c7acc714bc54cfdcb4$$ENDHEX$$
+release 10.5;
+datawindow(units=3 timer_interval=0 color=1073741824 processing=2 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 0 print.margin.right = 0 print.margin.top = 0 print.margin.bottom = 0 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no label.name="" label.width=4200 label.height=2400 label.rows=1 label.rows.spacing=132 label.columns=1 label.columns.spacing=200 label.topdown=yes label.sheet=yes label.shape=roundrectangle label.ellipse_height=0 label.ellipse_width=0 )
+detail(height=2407 color="536870912" )
+table(column=(type=char(20) updatewhereclause=yes name=item_code dbname="id_item.item_code" )
+ column=(type=char(4000) updatewhereclause=yes name=item_barcode_barcode dbname="item_barcode_barcode" )
+ column=(type=char(50) updatewhereclause=yes name=item_barcode dbname="im_item_receipt_barcode.item_barcode" )
+ column=(type=char(50) updatewhereclause=yes name=lot_no dbname="im_item_receipt_barcode.lot_no" )
+ column=(type=char(4000) updatewhereclause=yes name=lot_no_barcode dbname="lot_no_barcode" )
+ column=(type=char(50) updatewhereclause=yes name=im_item_receipt_barcode_item_barcode dbname="im_item_receipt_barcode.item_barcode" )
+ column=(type=number updatewhereclause=yes name=scan_qty dbname="im_item_receipt_barcode.scan_qty" )
+ column=(type=char(42) updatewhereclause=yes name=scan_qty_barcode dbname="scan_qty_barcode" )
+ column=(type=char(300) updatewhereclause=yes name=item_name dbname="id_item.item_name" )
+ column=(type=char(300) updatewhereclause=yes name=item_spec dbname="id_item.item_spec" )
+ column=(type=char(10) updatewhereclause=yes name=msl_level dbname="id_item.msl_level" )
+ column=(type=char(20) updatewhereclause=yes name=location_address dbname="id_item.location_address" )
+ column=(type=char(20) updatewhereclause=yes name=supplier_code dbname="im_item_receipt_barcode.supplier_code" )
+ column=(type=number updatewhereclause=yes name=organization_id dbname="im_item_receipt_barcode.organization_id" )
+ column=(type=datetime updatewhereclause=yes name=enter_date dbname="im_item_receipt_barcode.enter_date" )
+ column=(type=char(1) updatewhereclause=yes name=label_type dbname="im_item_receipt_barcode.label_type" )
+ column=(type=char(20) updatewhereclause=yes name=enter_by dbname="im_item_receipt_barcode.enter_by" )
+ column=(type=char(1) updatewhereclause=yes name=receipt_type dbname="im_item_receipt_barcode.receipt_type" )
+ column=(type=char(100) updatewhereclause=yes name=organization_id dbname="isys_organization.organization_id" )
+ column=(type=char(4000) updatewhereclause=yes name=supplier_name dbname="supplier_name" )
+ column=(type=char(4000) updatewhereclause=yes name=item_code_barcode dbname="item_code_barcode" )
+ retrieve="  SELECT 
+        
+		~"ID_ITEM~".~"ITEM_CODE~", 
+		F_BACODE_CODE128( 'B' ,~"IM_ITEM_RECEIPT_BARCODE~".~"ITEM_BARCODE~") ITEM_BARCODE_BARCODE,
+		IM_ITEM_RECEIPT_BARCODE.ITEM_BARCODE,  
+		~"IM_ITEM_RECEIPT_BARCODE~".~"LOT_NO~" LOT_NO,   
+		F_BACODE_CODE128( 'B' , ~"IM_ITEM_RECEIPT_BARCODE~".~"LOT_NO~") LOT_NO_BARCODE,   
+		~"IM_ITEM_RECEIPT_BARCODE~".~"ITEM_BARCODE~",   
+         ~"IM_ITEM_RECEIPT_BARCODE~".~"SCAN_QTY~",   
+         '*'||~"IM_ITEM_RECEIPT_BARCODE~".~"SCAN_QTY~"||'*' SCAN_QTY_BARCODE,   
+         ~"ID_ITEM~".~"ITEM_NAME~",   
+         ~"ID_ITEM~".~"ITEM_SPEC~",   
+         ~"ID_ITEM~".~"MSL_LEVEL~",   
+         ~"ID_ITEM~".~"LOCATION_ADDRESS~",   
+         ~"IM_ITEM_RECEIPT_BARCODE~".~"SUPPLIER_CODE~"  ,
+		~"IM_ITEM_RECEIPT_BARCODE~".~"ORGANIZATION_ID~" ,
+		SYSDATE ENTER_DATE , 
+          IM_ITEM_RECEIPT_BARCODE.LABEL_TYPE ,
+         IM_ITEM_RECEIPT_BARCODE.ENTER_BY ,
+		IM_ITEM_RECEIPT_BARCODE.RECEIPT_TYPE ,
+		O.ORGANIZATION_FULL_NAME_ENG ORGANIZATION_ID,
+         f_get_supplier_name( ~"IM_ITEM_RECEIPT_BARCODE~".~"SUPPLIER_CODE~" , ~"IM_ITEM_RECEIPT_BARCODE~".~"ORGANIZATION_ID~") SUPPLIER_NAME,
+         F_BACODE_CODE128( 'B' ,~"ID_ITEM~".~"ITEM_CODE~") ITEM_CODE_BARCODE
+		
+    FROM ~"IM_ITEM_RECEIPT_BARCODE~",   
+         ~"ID_ITEM~"  ,
+		ISYS_ORGANIZATION O
+   WHERE ( im_item_receipt_barcode.item_code = id_item.item_code (+)) and  
+         ( im_item_receipt_barcode.organization_id = id_item.organization_id (+)) and  
+         ( im_item_receipt_barcode.organization_id = o.organization_id (+)) and  
+
+         ( ( ~"IM_ITEM_RECEIPT_BARCODE~".~"ITEM_CODE~" = :arg_item_code ) AND  
+         ( ~"IM_ITEM_RECEIPT_BARCODE~".~"RECEIPT_SLIP_NO~" = :arg_slip_no ) AND  
+         ( ~"IM_ITEM_RECEIPT_BARCODE~".~"LOT_NO~" LIKE :arg_lot_no ) AND  
+         ( ~"IM_ITEM_RECEIPT_BARCODE~".~"BARCODE_STATUS~" <> 'C' ) AND  
+         ( ~"IM_ITEM_RECEIPT_BARCODE~".~"ORGANIZATION_ID~" = :arg_org ) )    
+" arguments=(("arg_item_code", string),("arg_slip_no", string),("arg_lot_no", string),("arg_org", number)) )
+column(band=detail id=21 alignment="2" tabsequence=32766 border="0" color="33554432" x="132" y="132" height="396" width="3995" format="[general]" html.valueishtml="0"  name=item_code_barcode visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Code 128" font.height="-22" font.weight="400"  font.family="0" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="33554432" x="132" y="555" height="396" width="3995" format="[general]" html.valueishtml="0"  name=item_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="33554432" x="132" y="899" height="396" width="3995" format="[general]" html.valueishtml="0"  name=item_barcode_barcode visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Code 128" font.height="-22" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=6 alignment="2" tabsequence=32766 border="0" color="33554432" x="132" y="1349" height="396" width="3995" format="[general]" html.valueishtml="0"  name=im_item_receipt_barcode_item_barcode visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-7" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 
