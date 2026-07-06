@@ -40,25 +40,21 @@ OEE = 가동율 × 성능율 × 양품율
 
 ---
 
-## 2. 기존 DB 자산 (참조 원천)
+## 2. 기존 DB 자산 (설계 참조 전용 — 런타임 의존 없음)
 
-OEE 3요소 계산에 활용할, 이미 존재하는 Oracle 자산. (신규 도메인은 이들을 **참조만** 한다.)
+> **원칙(2026-07-06 REV2 확정)**: 기존 MES 테이블·함수는 **설계 참조용으로만** 본다. OEE 도메인은
+> 계획가동·가동/비가동·생산수량·표준CT를 **모두 자체 테이블로 신규 구현**하며, 아래 기존 자산을
+> **런타임에 조회·조인하지 않는다**. 아래 표는 "우리가 무엇을 새로 만들어야 하는지"의 구조 참고일 뿐이다.
 
-| 용도 | 기존 자산 |
-|---|---|
-| 설비 마스터 | `IMCN_MACHINE` |
-| 라인 마스터 | `IP_PRODUCT_LINE` |
-| 모델 표준시간(성능율) | `IP_PRODUCT_MODEL_ST_MASTER`, `F_GET_MODEL_ST` |
-| 생산실적/양품(양품율) | `F_GET_RUN_ACTUAL_QTY`, `F_GET_PCB_OUTPUT_QTY_BY_RUN_NO` |
-| 불량수량(양품율) | `F_GET_RUN_NG_QTY`, `F_GET_PCB_BAD_QTY_BY_RUN_NO` |
-| 생산월력(근무일) | `IP_PRODUCT_COMPANY_CALENDAR` |
-| 근무시간대·휴식 | `ICOM_WORKTIME_RANGES` (`RANGE_TYPE='SMTWORKTIME'`, `WORK_TYPE`=주/야, `START_TIME/END_TIME`, `ATTRIBUTE03`=휴식분) |
-| 휴식/로스 참고 | `F_GET_WORK_BREAKTIME_MIN`, `F_GET_WORK_LOSSTIME_MIN` |
+| 용도(설계 참고) | 기존 자산(참조만) | OEE 도메인 대응(신규 구현) |
+|---|---|---|
+| 설비/라인 식별 구조 | `IMCN_MACHINE`, `IP_PRODUCT_LINE` | `OEE_RESOURCE.ref_code` (문자 참조값, FK 아님) |
+| 표준시간 구조 | `IP_PRODUCT_MODEL_ST_MASTER` | `OEE_RESOURCE.ideal_ct` |
+| 생산수량/양품/불량 구조 | `F_GET_RUN_ACTUAL_QTY`, `F_GET_RUN_NG_QTY` 등 | `OEE_PRODUCTION_RESULT` (신규, §3-⑥) |
+| 근무일 구조 | `IP_PRODUCT_COMPANY_CALENDAR` | `OEE_WORK_CALENDAR` (신규, §3-⑦) |
+| 근무시간대·휴식 구조 | `ICOM_WORKTIME_RANGES` (`RANGE_TYPE`, `START_TIME/END_TIME`, 휴식) | `OEE_WORKTIME_RANGE` (신규, §3-⑦) |
 
-> 참고: 기존 `IMCN_MACHINE_DAILY_OPERATION`(설비 일일운행, PowerBuilder 기록)은 접근 A의 원천이었으나,
-> **접근 B 선택으로 신규 `OEE_OPERATION_LOG`를 별도 운영**한다. 향후 연계·이관은 후속 과제.
-
-> ⚠️ 구현 착수 시 검증 필요: 작업자 식별용 **사원마스터 테이블명**, `ICOM_WORKTIME_RANGES`의 공정별 `RANGE_TYPE` 존재 여부(SMT 외 공정), 비가동사유 코드마스터 재사용 가능성.
+> ⚠️ 구현 착수 시 확인: 작업자 사번 체계(문자열 저장), 공정별 근무패턴(주/야 정의), 생산수량 수집 경로(설비/PDA 신호 또는 입력).
 
 ---
 
@@ -114,7 +110,7 @@ created_date
 ```
 
 ### ④ `OEE_PLAN_TIME` — 계획가동시간(부하시간)
-가동율 분모. **원칙적으로 근무캘린더에서 파생**(뷰/함수), 예외만 이 테이블에 override.
+가동율 분모. **자체 근무마스터(⑦)에서 파생**(뷰), 예외만 이 테이블에 override.
 ```
 resource_id
 organization_id
@@ -125,8 +121,38 @@ planned_stop_minutes   -- 휴식 + 계획정지
 net_load_minutes       -- 순부하시간 = planned - planned_stop
 override_yn            -- 수동 보정 여부
 ```
-- 자동 산출: `IP_PRODUCT_COMPANY_CALENDAR`(근무일) × `ICOM_WORKTIME_RANGES`(근무시간·휴식).
+- 자동 산출: `OEE_WORK_CALENDAR`(근무일) × `OEE_WORKTIME_RANGE`(근무시간·휴식) — 모두 신규(⑦).
 - override_yn='Y'인 행이 있으면 그 값을 우선.
+
+### ⑥ `OEE_PRODUCTION_RESULT` — OEE 전용 생산실적 (신규, 성능·양품 원천)
+기존 RUN 실적을 런타임 조회하지 않고, OEE 도메인이 수량을 자체 보유.
+```
+result_id         PK
+organization_id
+resource_id       -- → OEE_RESOURCE
+process_code
+work_date
+shift
+run_no            -- LOT 연계 (nullable)
+output_qty        -- 총생산수량
+good_qty          -- 양품수량
+defect_qty        -- 불량수량
+source            -- MANUAL / EQUIP / PDA (수집 경로)
+created_by
+created_date
+```
+- 수집 경로: 가동일지 입력화면의 수량 섹션(MANUAL) 또는 설비/PDA 신호(EQUIP/PDA) — 후자는 후속 자동화.
+
+### ⑦ 근무 마스터 (신규, 계획가동 파생 원천)
+`OEE_WORK_CALENDAR` — 근무일 달력
+```
+organization_id, work_date, holiday_yn ('Y'=휴무), remark
+```
+`OEE_WORKTIME_RANGE` — 근무/휴식 시간대
+```
+range_id PK, organization_id, shift (DAY/NIGHT), range_type (WORK/BREAK),
+start_hhmm (VARCHAR2(4)), end_hhmm (VARCHAR2(4)), sort_order
+```
 
 ### ⑤ `OEE_DAILY_SUMMARY` — OEE 집계 스냅샷 (확정 계층)
 대시보드/트렌드용. **오직 마감 프로세스만 생성.**
@@ -158,15 +184,15 @@ oee
 가동율 = 실제가동시간 / 계획가동시간(순부하시간)
   실제가동시간 = Σ OEE_OPERATION_LOG.duration_min (status='RUN')
   계획가동시간 = OEE_PLAN_TIME.net_load_minutes
-               (파생: IP_PRODUCT_COMPANY_CALENDAR × ICOM_WORKTIME_RANGES)
+               (파생: OEE_WORK_CALENDAR × OEE_WORKTIME_RANGE — 모두 신규)
   비가동시간   = Σ duration_min (status='DOWN')  -- 사유별 파레토는 reason_code 집계
 
 성능율 = (이론CT × 총생산수량) / 실제가동시간
-  이론CT      = OEE_RESOURCE.ideal_ct, 없으면 IP_PRODUCT_MODEL_ST_MASTER(F_GET_MODEL_ST)
-  총생산수량  = RUN_NO 실적 (F_GET_RUN_ACTUAL_QTY / F_GET_PCB_OUTPUT_QTY_BY_RUN_NO)
+  이론CT      = OEE_RESOURCE.ideal_ct (자체 보유)
+  총생산수량  = Σ OEE_PRODUCTION_RESULT.output_qty (자체 보유, 신규)
 
 양품율 = 양품수량 / 총생산수량
-  양품/불량   = F_GET_RUN_NG_QTY, F_GET_PCB_BAD_QTY_BY_RUN_NO
+  양품/불량   = Σ OEE_PRODUCTION_RESULT.good_qty / defect_qty (자체 보유, 신규)
 
 OEE = 가동율 × 성능율 × 양품율
 ```
@@ -296,9 +322,17 @@ src/lib/queries/sql-registry.ts  # SQL 뷰어 등록
 ---
 
 ## 11. 착수 전 검증 항목 (Open Items)
-- [ ] 작업자 식별용 사원마스터 테이블명 확인
-- [ ] `ICOM_WORKTIME_RANGES` 공정별 `RANGE_TYPE` 존재 여부 (SMT 외 5공정)
+- [ ] 작업자 사번 체계(문자열) 확인
+- [ ] 공정별 근무패턴(주/야 시간대) 실무값 확정 → `OEE_WORKTIME_RANGE` 시드
 - [ ] 공정별 리소스 실제 단위 확정 (성능검사/코팅/라우팅/조립/검사·포장)
 - [ ] Oracle 스케줄러 사용 가능 여부 및 근무조 마감 시점 정의
 - [ ] 비가동사유 코드 6대 로스 매핑 실무 확정
+- [ ] 생산수량 수집 경로 확정 (MANUAL 입력 우선, EQUIP/PDA 자동화는 후속)
 - [ ] 신규 테이블 organization_id 다중사업장 정책 확인
+
+---
+
+## 12. 개정 이력
+- **REV1 (2026-07-06)**: 초기 설계 — 접근 B(독립 OEE 도메인), 단 계획가동·성능·양품 원천은 기존 MES 자산 런타임 참조.
+- **REV2 (2026-07-06)**: 사용자 지시 "기존 구조는 참조만, 모두 새로 구현" 반영. 기존 MES 테이블·함수 **런타임 의존 전면 제거**. 생산수량은 `OEE_PRODUCTION_RESULT`(⑥), 근무/계획가동은 `OEE_WORK_CALENDAR`·`OEE_WORKTIME_RANGE`(⑦)로 **자체 신규 구현**. §2는 "설계 참조 전용"으로 재정의.
+  - 영향: 플랜 1(테이블 5종)은 그대로 유효, 신규 테이블(⑥⑦)은 **플랜 3에서 추가 DDL**로 편입. 플랜 2(입력)는 자립적이라 변동 없음(생산수량 입력 섹션은 플랜 3에서 입력화면에 추가).
