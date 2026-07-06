@@ -68,3 +68,15 @@ next-env.d.ts
 
 # 임시 분석 산출물 (PB analyzer 등 일회성)
 /analysis/
+
+# 소스 외 바이너리/미디어 자산 (주로 PBL Library 참조 리소스)
+# 앱 자산(public/, src/의 png·svg·mp4)은 추적 유지
+*.wav
+*.bmp
+*.jpg
+*.jpeg
+*.gif
+*.ico
+*.ttf
+*.xls
+*.xlsx
