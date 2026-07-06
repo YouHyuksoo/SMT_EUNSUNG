@@ -1,0 +1,152 @@
+##
+# @file .github/workflows/deploy.yml
+# @description WebDisplayID(인도) 자동 배포 워크플로우 (SMIND PDA와 동일한 PM2 방식)
+#
+# Flow: main push -> Git Pull -> npm ci -> Build -> PM2 Restart -> Health Check
+#
+# Prerequisites (인도 서버 10.110.100.13):
+# - Self-hosted Runner(india-webdisplay-runner) 설치됨 (WebDisplayID repo 전용)
+# - D:\Project\WebDisplayID git cloned
+# - config\database.json 존재 (인도 SOLIND, gitignore되어 서버에만 존재)
+# - PM2가 독립 Windows 서비스로 운영됨 (PM2_HOME=C:\ProgramData\pm2\home)
+##
+
+name: Deploy WebDisplayID (India)
+
+on:
+  push:
+    branches: [ "main" ]
+    paths-ignore:
+      - '*.md'
+      - '.gitignore'
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-webdisplay-india
+  cancel-in-progress: false
+
+env:
+  DEPLOY_PATH: D:\Project\WebDisplayID
+  DEPLOY_DIR_WEBDISPLAY: D:\Project\WebDisplayID
+  PM2_APP_NAME: mes-display
+  # PM2를 러너와 독립된 Windows 서비스(LocalService)로 운영 → job 종료/재부팅 후에도 앱 생존.
+  # pm2 CLI가 이 서비스 데몬과 통신하도록 PM2_HOME을 서비스 홈으로 고정.
+  PM2_HOME: C:\ProgramData\pm2\home
+  # puppeteer devDependency의 크로미움 다운로드 스킵 (운영 배포에 불필요)
+  PUPPETEER_SKIP_DOWNLOAD: "true"
+
+jobs:
+  deploy:
+    name: Deploy to India Server
+    runs-on: [self-hosted, Windows, X64]
+
+    steps:
+      - name: Check Environment
+        run: |
+          Write-Host "========================================="
+          Write-Host "  WebDisplayID (India) Deploy Start"
+          Write-Host "========================================="
+          Write-Host "Runner: $env:COMPUTERNAME"
+          Write-Host "User: $env:USERNAME"
+          Write-Host "Deploy Path: ${{ env.DEPLOY_PATH }}"
+          Write-Host "========================================="
+          node --version
+          npm --version
+
+      - name: Verify Deploy Path
+        run: |
+          if (-not (Test-Path "${{ env.DEPLOY_PATH }}")) {
+            Write-Host "[ERROR] Deploy path not found: ${{ env.DEPLOY_PATH }}"
+            exit 1
+          }
+          if (-not (Test-Path "${{ env.DEPLOY_PATH }}\config\database.json")) {
+            Write-Host "[WARNING] config\database.json not found. DB connection will fail."
+          }
+          Write-Host "[OK] Deploy path verified"
+
+      - name: Git Pull Latest Code
+        timeout-minutes: 3
+        working-directory: ${{ env.DEPLOY_PATH }}
+        run: |
+          Write-Host "[1/4] Pulling latest code..."
+          git -c safe.directory=D:/Project/WebDisplayID fetch "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" main
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          git -c safe.directory=D:/Project/WebDisplayID reset --hard FETCH_HEAD
+          git -c safe.directory=D:/Project/WebDisplayID log --oneline -3
+          Write-Host "[OK] Git Pull done"
+
+      - name: Stop PM2 Process (release node_modules file locks)
+        working-directory: ${{ env.DEPLOY_PATH }}
+        run: |
+          $ErrorActionPreference = "Continue"
+          Write-Host "[1.5/4] Stopping PM2 to release @parcel/watcher (watcher.node) lock before npm ci..."
+          pm2 describe ${{ env.PM2_APP_NAME }} 2>$null
+          if ($LASTEXITCODE -eq 0) {
+            pm2 stop ${{ env.PM2_APP_NAME }}
+            # 앱 node 프로세스가 종료되며 잠긴 네이티브 바이너리 핸들이 풀리도록 잠시 대기
+            Start-Sleep -Seconds 3
+            Write-Host "[OK] PM2 process stopped (will be restarted after build)"
+          } else {
+            Write-Host "[INFO] No existing PM2 process to stop"
+          }
+
+      - name: Install Dependencies
+        timeout-minutes: 10
+        working-directory: ${{ env.DEPLOY_PATH }}
+        run: |
+          Write-Host "[2/4] Installing dependencies (npm ci)..."
+          npm ci
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          Write-Host "[OK] npm ci done"
+
+      - name: Build Next.js
+        timeout-minutes: 15
+        working-directory: ${{ env.DEPLOY_PATH }}
+        run: |
+          Write-Host "[3/4] Building project..."
+          npm run build
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          Write-Host "[OK] Build done"
+
+      - name: Ensure logs directory
+        run: |
+          $logs = "${{ env.DEPLOY_PATH }}\logs"
+          if (-not (Test-Path $logs)) { New-Item -ItemType Directory -Path $logs -Force | Out-Null }
+          Write-Host "[OK] logs directory ready"
+
+      - name: Restart PM2 Process
+        working-directory: ${{ env.DEPLOY_PATH }}
+        run: |
+          $ErrorActionPreference = "Continue"
+          Write-Host "[4/4] Restarting PM2..."
+          pm2 describe ${{ env.PM2_APP_NAME }} 2>$null
+          if ($LASTEXITCODE -eq 0) {
+            Write-Host "[INFO] Restarting existing process..."
+            pm2 restart ${{ env.PM2_APP_NAME }} --update-env
+          } else {
+            Write-Host "[INFO] Starting new process..."
+            pm2 start ecosystem.config.js
+          }
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          pm2 save
+          Write-Host ""
+          Write-Host "========================================="
+          Write-Host "  Deploy Complete!"
+          Write-Host "  URL: http://localhost:3100"
+          Write-Host "  PM2: ${{ env.PM2_APP_NAME }}"
+          Write-Host "========================================="
+
+      - name: Health Check
+        run: |
+          Write-Host "[CHECK] Waiting 10 seconds..."
+          Start-Sleep -Seconds 10
+          try {
+            $response = Invoke-WebRequest -Uri http://localhost:3100 -UseBasicParsing -TimeoutSec 10
+            Write-Host "[OK] HTTP Status: $($response.StatusCode)"
+          } catch {
+            Write-Host "[WARNING] Server not responding - check PM2 logs"
+            pm2 logs ${{ env.PM2_APP_NAME }} --lines 20 --nostream
+          }
+          Write-Host ""
+          Write-Host "[INFO] PM2 process status:"
+          pm2 list

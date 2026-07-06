@@ -1,0 +1,1296 @@
+{
+  "object_type": "window",
+  "object_name": "w_mat_buy_price_master",
+  "file_path": "C:\\Project\\MES\\Infinity21 MES SMT_EUNSUNG\\PBL Library 10.5\\w_mat_buy_price_master.srw",
+  "title": "Material Buy Price Master",
+  "parent_class": "w_main_root",
+  "metadata": {
+    "author": "JiSheng",
+    "creation_date": "20051101",
+    "resize_type": "MASTER_DETAIL",
+    "menu_control": "DATA_CONTROL",
+    "width": 4384,
+    "height": 2656
+  },
+  "variables": {
+    "instance": [],
+    "global_refs": [
+      "GVI_ORGANIZATION_ID",
+      "GVS_CURRENCY",
+      "GVS_USER_ID",
+      "Gvs_currency",
+      "Gvs_item_buy_price_auto_confirm",
+      "Gvs_user_id",
+      "gvi_organization_id",
+      "gvs_return",
+      "gvs_ue_data_control",
+      "gvs_user_id"
+    ]
+  },
+  "controls": [
+    {
+      "name": "st_1",
+      "type": "statictext",
+      "pb_type": "so_statictext",
+      "text": "Item Code",
+      "x": 41,
+      "y": 100,
+      "width": 539,
+      "height": 60,
+      "taborder": null,
+      "visible": true,
+      "enabled": true,
+      "events": {}
+    },
+    {
+      "name": "ddlb_item_code",
+      "type": "dropdownlistbox",
+      "pb_type": "uo_item_code",
+      "text": null,
+      "x": 41,
+      "y": 176,
+      "width": 539,
+      "height": null,
+      "taborder": 20,
+      "visible": true,
+      "enabled": true,
+      "items": null,
+      "events": {}
+    },
+    {
+      "name": "ddlb_supplier_code",
+      "type": "dropdownlistbox",
+      "pb_type": "uo_supplier_code",
+      "text": null,
+      "x": 590,
+      "y": 176,
+      "width": 448,
+      "height": null,
+      "taborder": 20,
+      "visible": true,
+      "enabled": true,
+      "items": null,
+      "events": {}
+    },
+    {
+      "name": "st_3",
+      "type": "statictext",
+      "pb_type": "so_statictext",
+      "text": "Supplier Code",
+      "x": 590,
+      "y": 100,
+      "width": 448,
+      "height": 60,
+      "taborder": null,
+      "visible": true,
+      "enabled": true,
+      "events": {}
+    },
+    {
+      "name": "gb_1",
+      "type": "groupbox",
+      "pb_type": "so_groupbox",
+      "text": "Where Condition",
+      "x": null,
+      "y": 4,
+      "width": 4334,
+      "height": 300,
+      "taborder": 10,
+      "visible": true,
+      "enabled": true,
+      "events": {}
+    },
+    {
+      "name": "st_14",
+      "type": "statictext",
+      "pb_type": "so_statictext",
+      "text": "Item Name",
+      "x": 2939,
+      "y": 100,
+      "width": 462,
+      "height": 60,
+      "taborder": null,
+      "visible": true,
+      "enabled": true,
+      "events": {}
+    },
+    {
+      "name": "sle_item_name",
+      "type": "singlelineedit",
+      "pb_type": "so_singlelineedit",
+      "text": null,
+      "x": 2939,
+      "y": 176,
+      "width": 462,
+      "height": 84,
+      "taborder": 30,
+      "visible": true,
+      "enabled": true,
+      "events": {}
+    },
+    {
+      "name": "sle_1",
+      "type": "singlelineedit",
+      "pb_type": "so_singlelineedit",
+      "text": null,
+      "x": 3410,
+      "y": 176,
+      "width": 375,
+      "height": 84,
+      "taborder": 40,
+      "visible": true,
+      "enabled": true,
+      "events": {}
+    },
+    {
+      "name": "st_4",
+      "type": "statictext",
+      "pb_type": "so_statictext",
+      "text": "Item Spec",
+      "x": 3410,
+      "y": 100,
+      "width": 375,
+      "height": 60,
+      "taborder": null,
+      "visible": true,
+      "enabled": true,
+      "events": {}
+    },
+    {
+      "name": "tab_1",
+      "type": "tab",
+      "pb_type": "tab",
+      "text": null,
+      "x": null,
+      "y": 312,
+      "width": 3785,
+      "height": 288,
+      "taborder": 30,
+      "visible": true,
+      "enabled": true,
+      "events": {}
+    },
+    {
+      "name": "tabpage_1",
+      "type": "userobject",
+      "pb_type": "userobject",
+      "text": "Process",
+      "x": 18,
+      "y": 112,
+      "width": 3749,
+      "height": 160,
+      "taborder": null,
+      "visible": true,
+      "enabled": true,
+      "events": {}
+    },
+    {
+      "name": "rb_4",
+      "type": "radiobutton",
+      "pb_type": "so_radiobutton",
+      "text": "Running  Only",
+      "x": 389,
+      "y": 60,
+      "width": 425,
+      "height": 64,
+      "taborder": null,
+      "visible": true,
+      "enabled": true,
+      "events": {}
+    },
+    {
+      "name": "rb_3",
+      "type": "radiobutton",
+      "pb_type": "so_radiobutton",
+      "text": "All",
+      "x": 46,
+      "y": 64,
+      "width": 320,
+      "height": 64,
+      "taborder": null,
+      "visible": true,
+      "enabled": true,
+      "events": {}
+    },
+    {
+      "name": "rb_2",
+      "type": "radiobutton",
+      "pb_type": "so_radiobutton",
+      "text": "Running  Only",
+      "x": 361,
+      "y": 364,
+      "width": 425,
+      "height": 64,
+      "taborder": null,
+      "visible": true,
+      "enabled": true,
+      "events": {}
+    },
+    {
+      "name": "rb_1",
+      "type": "radiobutton",
+      "pb_type": "so_radiobutton",
+      "text": "All",
+      "x": 37,
+      "y": 368,
+      "width": 425,
+      "height": 64,
+      "taborder": null,
+      "visible": true,
+      "enabled": true,
+      "events": {}
+    },
+    {
+      "name": "pb_2",
+      "type": "commandbutton",
+      "pb_type": "so_commandbutton",
+      "text": "Import From Excel",
+      "x": 3067,
+      "y": 12,
+      "width": 562,
+      "height": null,
+      "taborder": 60,
+      "visible": true,
+      "enabled": true,
+      "events": {}
+    },
+    {
+      "name": "cbx_item_buy_price_auto_confirm",
+      "type": "checkbox",
+      "pb_type": "so_checkbox",
+      "text": "Auto Confirm",
+      "x": 2606,
+      "y": 40,
+      "width": null,
+      "height": null,
+      "taborder": null,
+      "visible": true,
+      "enabled": false,
+      "checked": false,
+      "events": {}
+    },
+    {
+      "name": "cb_close",
+      "type": "commandbutton",
+      "pb_type": "so_commandbutton",
+      "text": "Price Close",
+      "x": 1691,
+      "y": 20,
+      "width": 379,
+      "height": null,
+      "taborder": 40,
+      "visible": true,
+      "enabled": true,
+      "events": {}
+    },
+    {
+      "name": "cb_copy",
+      "type": "commandbutton",
+      "pb_type": "so_commandbutton",
+      "text": "Price Copy",
+      "x": 1294,
+      "y": 20,
+      "width": 379,
+      "height": null,
+      "taborder": 40,
+      "visible": true,
+      "enabled": true,
+      "events": {}
+    },
+    {
+      "name": "st_2",
+      "type": "statictext",
+      "pb_type": "so_statictext",
+      "text": "Close Date",
+      "x": 873,
+      "y": 16,
+      "width": 407,
+      "height": 60,
+      "taborder": null,
+      "visible": true,
+      "enabled": true,
+      "events": {}
+    },
+    {
+      "name": "uo_close_date",
+      "type": "uo_ymd_calendar",
+      "pb_type": "uo_ymd_calendar",
+      "text": null,
+      "x": 873,
+      "y": 72,
+      "width": null,
+      "height": null,
+      "taborder": 40,
+      "visible": true,
+      "enabled": true,
+      "events": {}
+    },
+    {
+      "name": "pb_1",
+      "type": "commandbutton",
+      "pb_type": "so_commandbutton",
+      "text": "Price Check",
+      "x": 2089,
+      "y": 20,
+      "width": 379,
+      "height": null,
+      "taborder": 50,
+      "visible": true,
+      "enabled": true,
+      "events": {}
+    },
+    {
+      "name": "gb_2",
+      "type": "groupbox",
+      "pb_type": "so_groupbox",
+      "text": "Filter",
+      "x": null,
+      "y": 304,
+      "width": 855,
+      "height": 156,
+      "taborder": 30,
+      "visible": true,
+      "enabled": true,
+      "events": {}
+    },
+    {
+      "name": "tabpage_2",
+      "type": "userobject",
+      "pb_type": "userobject",
+      "text": "Tranfer",
+      "x": 18,
+      "y": 112,
+      "width": 3749,
+      "height": 160,
+      "taborder": null,
+      "visible": true,
+      "enabled": true,
+      "events": {}
+    },
+    {
+      "name": "cb_3",
+      "type": "commandbutton",
+      "pb_type": "so_commandbutton",
+      "text": "Sync Price",
+      "x": 5,
+      "y": 76,
+      "width": 581,
+      "height": 84,
+      "taborder": 80,
+      "visible": true,
+      "enabled": true,
+      "events": {}
+    },
+    {
+      "name": "ddlb_from_org",
+      "type": "dropdownlistbox",
+      "pb_type": "uo_orz_id",
+      "text": null,
+      "x": 594,
+      "y": 76,
+      "width": 603,
+      "height": null,
+      "taborder": 50,
+      "visible": true,
+      "enabled": true,
+      "items": null,
+      "events": {}
+    },
+    {
+      "name": "ddlb_to_org",
+      "type": "dropdownlistbox",
+      "pb_type": "uo_orz_id",
+      "text": null,
+      "x": 1207,
+      "y": 76,
+      "width": 603,
+      "height": null,
+      "taborder": 60,
+      "visible": true,
+      "enabled": true,
+      "items": null,
+      "events": {}
+    },
+    {
+      "name": "st_9",
+      "type": "statictext",
+      "pb_type": "so_statictext",
+      "text": "To",
+      "x": 1207,
+      "y": 20,
+      "width": 590,
+      "height": 60,
+      "taborder": null,
+      "visible": true,
+      "enabled": true,
+      "events": {}
+    },
+    {
+      "name": "st_8",
+      "type": "statictext",
+      "pb_type": "so_statictext",
+      "text": "From",
+      "x": 599,
+      "y": 16,
+      "width": 603,
+      "height": 60,
+      "taborder": null,
+      "visible": true,
+      "enabled": true,
+      "events": {}
+    },
+    {
+      "name": "tabpage_3",
+      "type": "userobject",
+      "pb_type": "userobject",
+      "text": "Supplier Change",
+      "x": 18,
+      "y": 112,
+      "width": 3749,
+      "height": 160,
+      "taborder": null,
+      "visible": true,
+      "enabled": true,
+      "events": {}
+    },
+    {
+      "name": "st_17",
+      "type": "statictext",
+      "pb_type": "so_statictext",
+      "text": "HELP: Check item for Change",
+      "x": 1842,
+      "y": 76,
+      "width": 745,
+      "height": 60,
+      "taborder": null,
+      "visible": true,
+      "enabled": true,
+      "events": {}
+    },
+    {
+      "name": "cb_2",
+      "type": "commandbutton",
+      "pb_type": "so_commandbutton",
+      "text": "Supplier Change",
+      "x": 1353,
+      "y": 52,
+      "width": 462,
+      "height": 100,
+      "taborder": 50,
+      "visible": true,
+      "enabled": true,
+      "events": {}
+    },
+    {
+      "name": "st_5",
+      "type": "statictext",
+      "pb_type": "so_statictext",
+      "text": "After Supplier",
+      "x": 713,
+      "y": 12,
+      "width": 617,
+      "height": 60,
+      "taborder": null,
+      "visible": true,
+      "enabled": true,
+      "events": {}
+    },
+    {
+      "name": "ddlb_after_supplier",
+      "type": "dropdownlistbox",
+      "pb_type": "uo_supplier_code",
+      "text": null,
+      "x": 709,
+      "y": 72,
+      "width": 617,
+      "height": null,
+      "taborder": 50,
+      "visible": true,
+      "enabled": true,
+      "items": null,
+      "events": {}
+    },
+    {
+      "name": "ddlb_before_supplier",
+      "type": "dropdownlistbox",
+      "pb_type": "uo_supplier_code",
+      "text": null,
+      "x": 27,
+      "y": 72,
+      "width": 681,
+      "height": null,
+      "taborder": 60,
+      "visible": true,
+      "enabled": true,
+      "items": null,
+      "events": {}
+    },
+    {
+      "name": "st_6",
+      "type": "statictext",
+      "pb_type": "so_statictext",
+      "text": "Before Supplier",
+      "x": 27,
+      "y": 12,
+      "width": 667,
+      "height": 56,
+      "taborder": null,
+      "visible": true,
+      "enabled": true,
+      "events": {}
+    },
+    {
+      "name": "tabpage_4",
+      "type": "userobject",
+      "pb_type": "userobject",
+      "text": "Get New Item",
+      "x": 18,
+      "y": 112,
+      "width": 3749,
+      "height": 160,
+      "taborder": null,
+      "visible": true,
+      "enabled": true,
+      "events": {}
+    },
+    {
+      "name": "cb_1",
+      "type": "commandbutton",
+      "pb_type": "so_commandbutton",
+      "text": "Get New Item",
+      "x": 32,
+      "y": 32,
+      "width": null,
+      "height": 96,
+      "taborder": 30,
+      "visible": true,
+      "enabled": true,
+      "events": {}
+    },
+    {
+      "name": "tabpage_5",
+      "type": "userobject",
+      "pb_type": "userobject",
+      "text": "Change Line Type",
+      "x": 18,
+      "y": 112,
+      "width": 3749,
+      "height": 160,
+      "taborder": null,
+      "visible": true,
+      "enabled": true,
+      "events": {}
+    },
+    {
+      "name": "cb_4",
+      "type": "commandbutton",
+      "pb_type": "so_commandbutton",
+      "text": "Change Line Type",
+      "x": 2610,
+      "y": 20,
+      "width": null,
+      "height": null,
+      "taborder": 40,
+      "visible": true,
+      "enabled": true,
+      "events": {}
+    },
+    {
+      "name": "st_16",
+      "type": "statictext",
+      "pb_type": "so_statictext",
+      "text": "Dateend",
+      "x": 1659,
+      "y": null,
+      "width": 407,
+      "height": 64,
+      "taborder": null,
+      "visible": true,
+      "enabled": true,
+      "events": {}
+    },
+    {
+      "name": "st_15",
+      "type": "statictext",
+      "pb_type": "so_statictext",
+      "text": "Dateset",
+      "x": 1257,
+      "y": null,
+      "width": 402,
+      "height": 64,
+      "taborder": null,
+      "visible": true,
+      "enabled": true,
+      "events": {}
+    },
+    {
+      "name": "uo_dateend",
+      "type": "uo_ymd_calendar",
+      "pb_type": "uo_ymd_calendar",
+      "text": null,
+      "x": 1659,
+      "y": 68,
+      "width": null,
+      "height": null,
+      "taborder": 70,
+      "visible": true,
+      "enabled": false,
+      "events": {}
+    },
+    {
+      "name": "uo_dateset",
+      "type": "uo_ymd_calendar",
+      "pb_type": "uo_ymd_calendar",
+      "text": null,
+      "x": 1253,
+      "y": 68,
+      "width": null,
+      "height": null,
+      "taborder": 70,
+      "visible": true,
+      "enabled": false,
+      "events": {}
+    },
+    {
+      "name": "st_12",
+      "type": "statictext",
+      "pb_type": "so_statictext",
+      "text": "New Line Type",
+      "x": 2071,
+      "y": 4,
+      "width": 517,
+      "height": 56,
+      "taborder": null,
+      "visible": true,
+      "enabled": true,
+      "events": {}
+    },
+    {
+      "name": "st_11",
+      "type": "statictext",
+      "pb_type": "so_statictext",
+      "text": "Line Type",
+      "x": 887,
+      "y": 4,
+      "width": 357,
+      "height": 56,
+      "taborder": null,
+      "visible": true,
+      "enabled": true,
+      "events": {}
+    },
+    {
+      "name": "st_10",
+      "type": "statictext",
+      "pb_type": "so_statictext",
+      "text": "Item Code",
+      "x": 448,
+      "y": 4,
+      "width": 434,
+      "height": 56,
+      "taborder": null,
+      "visible": true,
+      "enabled": true,
+      "events": {}
+    },
+    {
+      "name": "st_7",
+      "type": "statictext",
+      "pb_type": "so_statictext",
+      "text": "Supplier Code",
+      "x": 9,
+      "y": 4,
+      "width": 434,
+      "height": 56,
+      "taborder": null,
+      "visible": true,
+      "enabled": true,
+      "events": {}
+    },
+    {
+      "name": "sle_line_type",
+      "type": "singlelineedit",
+      "pb_type": "so_singlelineedit",
+      "text": null,
+      "x": 887,
+      "y": 72,
+      "width": 357,
+      "height": null,
+      "taborder": 30,
+      "visible": true,
+      "enabled": false,
+      "events": {}
+    },
+    {
+      "name": "ddlb_new_line_type",
+      "type": "dropdownlistbox",
+      "pb_type": "uo_line_type",
+      "text": null,
+      "x": 2066,
+      "y": 64,
+      "width": 530,
+      "height": 724,
+      "taborder": 30,
+      "visible": true,
+      "enabled": true,
+      "items": null,
+      "events": {}
+    },
+    {
+      "name": "sle_item_code",
+      "type": "singlelineedit",
+      "pb_type": "so_singlelineedit",
+      "text": null,
+      "x": 448,
+      "y": 72,
+      "width": 434,
+      "height": null,
+      "taborder": 90,
+      "visible": true,
+      "enabled": false,
+      "events": {}
+    },
+    {
+      "name": "sle_supplier_code",
+      "type": "singlelineedit",
+      "pb_type": "so_singlelineedit",
+      "text": null,
+      "x": 9,
+      "y": 72,
+      "width": 434,
+      "height": null,
+      "taborder": 90,
+      "visible": true,
+      "enabled": false,
+      "events": {}
+    },
+    {
+      "name": "tabpage_6",
+      "type": "userobject",
+      "pb_type": "userobject",
+      "text": "Price Change",
+      "x": 18,
+      "y": 112,
+      "width": 3749,
+      "height": 160,
+      "taborder": null,
+      "visible": true,
+      "enabled": true,
+      "events": {}
+    },
+    {
+      "name": "cbx_rate",
+      "type": "checkbox",
+      "pb_type": "checkbox",
+      "text": "Rate",
+      "x": 37,
+      "y": 60,
+      "width": 306,
+      "height": 64,
+      "taborder": null,
+      "visible": true,
+      "enabled": true,
+      "checked": true,
+      "events": {}
+    },
+    {
+      "name": "st_19",
+      "type": "statictext",
+      "pb_type": "so_statictext",
+      "text": "Apply Date",
+      "x": 1170,
+      "y": 16,
+      "width": 407,
+      "height": 76,
+      "taborder": null,
+      "visible": true,
+      "enabled": true,
+      "events": {}
+    },
+    {
+      "name": "uo_apply_date",
+      "type": "uo_ymd_calendar",
+      "pb_type": "uo_ymd_calendar",
+      "text": null,
+      "x": 1175,
+      "y": 72,
+      "width": null,
+      "height": null,
+      "taborder": 50,
+      "visible": true,
+      "enabled": true,
+      "events": {}
+    },
+    {
+      "name": "rb_decreease",
+      "type": "radiobutton",
+      "pb_type": "so_radiobutton",
+      "text": "Decrease",
+      "x": 745,
+      "y": 96,
+      "width": 379,
+      "height": 44,
+      "taborder": null,
+      "visible": true,
+      "enabled": true,
+      "events": {}
+    },
+    {
+      "name": "rb_increase",
+      "type": "radiobutton",
+      "pb_type": "so_radiobutton",
+      "text": "Increase",
+      "x": 745,
+      "y": 32,
+      "width": 379,
+      "height": 56,
+      "taborder": null,
+      "visible": true,
+      "enabled": true,
+      "events": {}
+    },
+    {
+      "name": "em_discount",
+      "type": "editmask",
+      "pb_type": "so_editmask",
+      "text": "",
+      "x": 393,
+      "y": 52,
+      "width": 325,
+      "height": null,
+      "taborder": 100,
+      "visible": true,
+      "enabled": true,
+      "events": {}
+    },
+    {
+      "name": "cb_5",
+      "type": "commandbutton",
+      "pb_type": "so_commandbutton",
+      "text": "Change",
+      "x": 1614,
+      "y": 28,
+      "width": null,
+      "height": 116,
+      "taborder": 40,
+      "visible": true,
+      "enabled": true,
+      "events": {}
+    },
+    {
+      "name": "ddlb_line_type",
+      "type": "dropdownlistbox",
+      "pb_type": "uo_line_type",
+      "text": null,
+      "x": 1042,
+      "y": 176,
+      "width": 539,
+      "height": null,
+      "taborder": 20,
+      "visible": true,
+      "enabled": true,
+      "items": null,
+      "events": {}
+    },
+    {
+      "name": "st_13",
+      "type": "statictext",
+      "pb_type": "so_statictext",
+      "text": "Line Type",
+      "x": 1042,
+      "y": 104,
+      "width": 539,
+      "height": 60,
+      "taborder": null,
+      "visible": true,
+      "enabled": true,
+      "events": {}
+    },
+    {
+      "name": "ddlb_item_division",
+      "type": "dropdownlistbox",
+      "pb_type": "uo_item_division",
+      "text": null,
+      "x": 1586,
+      "y": 176,
+      "width": 439,
+      "height": null,
+      "taborder": 30,
+      "visible": true,
+      "enabled": true,
+      "items": null,
+      "events": {}
+    },
+    {
+      "name": "st_18",
+      "type": "statictext",
+      "pb_type": "so_statictext",
+      "text": "Item Division",
+      "x": 1577,
+      "y": 112,
+      "width": 439,
+      "height": 56,
+      "taborder": null,
+      "visible": true,
+      "enabled": true,
+      "events": {}
+    },
+    {
+      "name": "sle_2",
+      "type": "singlelineedit",
+      "pb_type": "so_singlelineedit",
+      "text": null,
+      "x": 3790,
+      "y": 176,
+      "width": 443,
+      "height": 84,
+      "taborder": 50,
+      "visible": true,
+      "enabled": true,
+      "events": {}
+    },
+    {
+      "name": "st_20",
+      "type": "statictext",
+      "pb_type": "so_statictext",
+      "text": "HS Name",
+      "x": 3790,
+      "y": 100,
+      "width": 443,
+      "height": 60,
+      "taborder": null,
+      "visible": true,
+      "enabled": true,
+      "events": {}
+    },
+    {
+      "name": "ddlb_price_type",
+      "type": "dropdownlistbox",
+      "pb_type": "uo_basecode",
+      "text": null,
+      "x": 2034,
+      "y": 176,
+      "width": 475,
+      "height": null,
+      "taborder": 40,
+      "visible": true,
+      "enabled": true,
+      "items": null,
+      "events": {}
+    },
+    {
+      "name": "st_21",
+      "type": "statictext",
+      "pb_type": "so_statictext",
+      "text": "Price Type",
+      "x": 2034,
+      "y": 112,
+      "width": 475,
+      "height": 56,
+      "taborder": null,
+      "visible": true,
+      "enabled": true,
+      "events": {}
+    },
+    {
+      "name": "uo_start_date",
+      "type": "uo_ymd_calendar",
+      "pb_type": "uo_ymd_calendar",
+      "text": null,
+      "x": 2514,
+      "y": 172,
+      "width": null,
+      "height": null,
+      "taborder": 50,
+      "visible": true,
+      "enabled": true,
+      "events": {}
+    },
+    {
+      "name": "st_22",
+      "type": "statictext",
+      "pb_type": "so_statictext",
+      "text": "Dateset",
+      "x": 2514,
+      "y": 116,
+      "width": 407,
+      "height": 60,
+      "taborder": null,
+      "visible": true,
+      "enabled": true,
+      "events": {}
+    },
+    {
+      "name": "mle_1",
+      "type": "multilineedit",
+      "pb_type": "multilineedit",
+      "text": null,
+      "x": 3849,
+      "y": 320,
+      "width": 411,
+      "height": 324,
+      "taborder": 40,
+      "visible": true,
+      "enabled": true,
+      "events": {}
+    }
+  ],
+  "datawindows": [
+    {
+      "name": "dw_5",
+      "dataobject": null,
+      "title": null,
+      "visible": true,
+      "x": null,
+      "y": 608,
+      "width": null,
+      "height": null,
+      "events": {}
+    },
+    {
+      "name": "dw_4",
+      "dataobject": null,
+      "title": null,
+      "visible": true,
+      "x": null,
+      "y": 608,
+      "width": null,
+      "height": null,
+      "events": {}
+    },
+    {
+      "name": "dw_3",
+      "dataobject": null,
+      "title": null,
+      "visible": true,
+      "x": null,
+      "y": 608,
+      "width": null,
+      "height": null,
+      "events": {}
+    },
+    {
+      "name": "dw_2",
+      "dataobject": "d_mat_buy_price_mst",
+      "title": null,
+      "visible": true,
+      "x": null,
+      "y": 1724,
+      "width": 4334,
+      "height": 524,
+      "events": {
+        "itemchanged": {
+          "summary": "[CALL] f_get_supplier_name(data , gvi_organization_id) | [CALL] f_set_item_name_spec_uom(this , row , this.object.item_code[row])",
+          "script": "call super::itemchanged;string lvs_return\nif dwo.name = 'supplier_code' then \n\tlvs_return = f_get_supplier_name(data , gvi_organization_id)\n\tif lvs_return = 'ERROR' then \n\t\treturn 1 \n\tend if  \n\tif lvs_return = 'NOTFOUND' then \n\t\treturn 1 \n\tend if\n\t\n\tthis.object.supplier_name[row] = lvs_return \nend if \n\nif dwo.name = 'item_code' then \n\t\n     lvs_return = f_set_item_name_spec_uom( this , row , this.object.item_code[row] )\t\t\n\n\tif \tlvs_return = 'ERROR' THEN \n\t\treturn 1\n\tend if\t\n\t\t\n\tif lvs_return = 'NOTFOUND' then \n\t\treturn 1  \n\tend if \t\t\nend if\n\nif dwo.name = 'line_type' then\n\t\n\tif data = 'G' then \n\t\tthis.object.currency[row] = Gvs_currency\n\tend if \n\t\nend if"
+        },
+        "rbuttondown": {
+          "summary": "[CALL] F_SET_SECURITY_ROW(THIS , ROW , 'MODIFY') | [CALL] F_SET_SECURITY_ROW(THIS , ROW , 'MODIFY') | [SET] ivs_modify_security = 'Y' | [SET] ivs_modify_security = 'Y'",
+          "script": "call super::rbuttondown;if dwo.name = 'supplier_code' then \n\topen(w_com_supplier_popup)\n\tif message.stringparm = '' then \n\telse\n\t\tthis.object.supplier_code[row] = message.stringparm\n\t\tIF ivs_modify_security = 'Y' THEN \n\t\t\tF_SET_SECURITY_ROW( THIS , ROW , 'MODIFY' )\n\t\tEND IF\t\t\n\t\tthis.trigger event itemchanged(row, this.object.supplier_code, this.object.supplier_code[row])\n\t\t\n\tend if\nend if \nif dwo.name = 'item_code' then \n\topen(w_mat_item_popup)\n\tif gst_return.gvb_return = false then \n\telse\n\t\tthis.object.item_code[row] = gst_return.gvs_return[1] \n\t\tthis.object.item_name[row] = gst_return.gvs_return[2] \n\t\tthis.object.item_spec[row] = gst_return.gvs_return[3] \n\t\tthis.object.supplier_code[row] = gst_return.gvs_return[4] \n\t\tthis.object.supplier_name[row] = gst_return.gvs_return[5] \n\t\tthis.object.line_type[row] = gst_return.gvs_return[6] \n\t\tthis.object.item_uom[row] = gst_return.gvs_return[7] \t\t\n\t\tIF ivs_modify_security = 'Y' THEN \n\t\t\tF_SET_SECURITY_ROW( THIS , ROW , 'MODIFY' )\n\t\tEND IF\t\t\n\tend if \n\tgst_return.gvs_return[1] = ''\n\tgst_return.gvs_return[2] = ''\n\tgst_return.gvs_return[3] = ''\n\tgst_return.gvs_return[4] = ''\n\tgst_return.gvs_return[5] = ''\n\tgst_return.gvs_return[6] = ''\n\tgst_return.gvs_return[7] = ''\t\nend if"
+        }
+      }
+    },
+    {
+      "name": "dw_1",
+      "dataobject": "d_mat_buy_price_lst_tree",
+      "title": "Material Buy Price List",
+      "visible": true,
+      "x": null,
+      "y": 600,
+      "width": 4329,
+      "height": 1112,
+      "events": {
+        "doubleclicked": {
+          "summary": "[RETRIEVE] DW_2.RETRIEVE( DW_1.GETITEMSTRING( ROW , 'ROWID' )",
+          "script": "call super::doubleclicked;IF ROW < 1  THEN RETURN\nDW_2.RETRIEVE( DW_1.GETITEMSTRING( ROW , 'ROWID' ) )\n\nif dw_1.object.price_change_confirm_yn[row] = 'Y' then\n    dw_2.enabled = False\nelse\n\tdw_2.enabled = True\nend if"
+        },
+        "rbuttondown": {
+          "summary": "[CALL] F_SET_SECURITY_ROW(THIS , ROW , 'MODIFY') | [SET] ivs_modify_security = 'Y'",
+          "script": "call super::rbuttondown;if dwo.name = 'supplier_code' then \n\topen(w_com_supplier_popup)\n\tif message.stringparm = '' then \n\telse\n\t\tthis.object.supplier_code[row] = message.stringparm\n\t\tIF ivs_modify_security = 'Y' THEN \n\t\t\tF_SET_SECURITY_ROW( THIS , ROW , 'MODIFY' )\n\t\tEND IF\t\t\n\t\tthis.trigger event itemchanged(row, this.object.supplier_code, this.object.supplier_code[row])\n\t\t\n\tend if\nend if"
+        },
+        "rowfocuschanged": {
+          "summary": "[RETRIEVE] DW_2.RETRIEVE( DW_1.GETITEMSTRING( currentrow , 'ROWID' )",
+          "script": "call super::rowfocuschanged;IF currentrow = 0 THEN RETURN\nDW_2.RETRIEVE( DW_1.GETITEMSTRING( currentrow , 'ROWID' ) )\n\nif dw_1.object.price_change_confirm_yn[currentrow] = 'Y' then\n\tDW_2.enabled = False\nelse\n\tDW_2.enabled = True\nend if \n\ntab_1.tabpage_5.sle_supplier_code.text = this.object.supplier_code[currentrow]\ntab_1.tabpage_5.sle_item_code.text = this.object.item_code[currentrow]\ntab_1.tabpage_5.sle_line_type.text = this.object.line_type[currentrow]\n\ntab_1.tabpage_5.uo_dateset.settext(STRING(this.object.dateset[currentrow]))\ntab_1.tabpage_5.uo_dateend.settext(STRING(this.object.dateend[currentrow]))"
+        }
+      }
+    }
+  ],
+  "events": {
+    "activate": {
+      "summary": "[CALL] F_MENU_CONTROL('DATA_CONTROL' , TRUE) | [SET] Ivs_resize_type = 'MASTER_DETAIL' | [SET] ivs_dw_1_use_focusindicator = 'Y' | [SET] ivs_dw_2_use_focusindicator = 'N' | [SET] ivs_dw_3_use_focusindicator = 'N' | [SET] ivs_dw_4_use_focusindicator = 'N' | [SET] ivs_dw_5_use_focusindicator = 'N'",
+      "script": "call super::activate;/***************************************\n* Window Default Property \n****************************************/\nGst_set.window_id            = this.classname() \nGst_set.author                  = \"JiSheng\"\nGst_set.creation_date      = '20051101'\nGst_set.last_modify_date = '20051101'\nGst_set.Report_window    = False  // Report Window  True / Flase\n\n/*****************************************\n* Data Window Property\n******************************************/\nIvs_resize_type                      = 'MASTER_DETAIL'        // Resize Data Window Property ( NORMAL , MASTER_DETAIL )\n\n\nivs_dw_1_use_focusindicator = 'Y' //Focus Indicator Show / Hide Property\nivs_dw_2_use_focusindicator = 'N' //Default\nivs_dw_3_use_focusindicator = 'N' //Default\nivs_dw_4_use_focusindicator = 'N' //Default\nivs_dw_5_use_focusindicator = 'N' //Default\n\n/****************************************\n* Menu Property \n*****************************************\n* ADMIN  ( All Control )\n* MANAGE ( Manager )\n* GUEST  ( Only Query )\n* QUERY  ( Only Query  )\n* DATA_CONTROL  ( Insert Delete Update )\n* REPORT ( Report )\n****************************************/\nF_MENU_CONTROL('DATA_CONTROL' , TRUE)  // All Data Control"
+    },
+    "ue_post_open": {
+      "summary": "[주석] 윈도의에 대한 프로퍼티 설정 | [CALL] WF_SET_WINDOW_PROPERTY(this.classname()",
+      "script": "call super::ue_post_open;\n\n/****************************************\n* 윈도의에 대한 프로퍼티 설정\n*****************************************/\nWF_SET_WINDOW_PROPERTY(this.classname())"
+    },
+    "ue_data_control": {
+      "_full_script": "call super::ue_data_control;long row\nchoose case gvs_ue_data_control\n\t\t\n\tcase 'RETRIEVE'\n\t\t\t\n\t\t\tdw_1.reset()\n\t\t\tdw_1.retrieve(ddlb_item_code.text + '%', ddlb_supplier_code.text + '%', ddlb_line_type.getcode()+'%' ,ddlb_item_division.getcode( )+'%',  ddlb_price_type.getcode()+'%' ,   gvi_organization_id)\n\t\t\n\tcase 'INSERT'\n\t\t\n\t\t    DW_2.RESET()\n\t\t\tDW_2.ENABLED = TRUE\n\t\t\tROW = DW_2.INSERTROW(DW_2.GETROW())\n\t\t\tDW_2.SCROLLTOROW(ROW)\n\t\t\tF_SET_SECURITY_ROW(DW_2 , ROW ,'ALL')\n\t\t\tdw_2.object.dateset[row] = f_t_sysdate()\n\t\t\tdw_2.object.dateend[row] = date('2999-12-31')\n\t\t\tdw_2.object.price_type[row] = 'F'\n\t\t\tdw_2.object.price_change_reason[row] = 'N'\t\t\t\t\t\t\n\t\t\tdw_2.object.delivery[row] = '2'\t\t\t\t\t\t\t\t\t\n\t\t\tdw_2.object.currency[row] = Gvs_currency\n\t\t\t\n\t\t\tIF Gvs_item_buy_price_auto_confirm = 'Y' then\n\t\t\t\tdw_2.object.price_change_confirm_yn[row] = 'Y'\t\t\t\t\t\t\t\t\t\n\t\t\t\tdw_2.object.confirm_by[row] = Gvs_user_id\n\t\t\t\tdw_2.object.confirm_date[row] = f_t_sysdate()\t\t\t\n\t\t\telse\n\t\t\t\tdw_2.object.price_change_confirm_yn[row] = 'N'\t\t\t\t\t\t\t\t\t\t\t\t\t\n\t\t\tend if\n\t\t\t\n\tcase 'APPEND'\t\t\n\t\t    DW_2.RESET()\t\t\n\t\t\tDW_2.ENABLED = TRUE\n\t\t\tROW = DW_2.INSERTROW(DW_2.GETROW())\n\t\t\tDW_2.SCROLLTOROW(ROW)\n\t\t\tF_SET_SECURITY_ROW(DW_2 , ROW ,'ALL')\n\t\t\tdw_2.object.dateset[row] = f_t_sysdate()\n\t\t\tdw_2.object.dateend[row] = date('2999-12-31')\n\t\t\tdw_2.object.price_type[row] = 'F'\n\t\t\tdw_2.object.price_change_reason[row] = 'N'\t\t\t\n\t\t\tdw_2.object.delivery[row] = '2'\t\t\t\t\n\t\t\tdw_2.object.currency[row] = Gvs_currency\t\t\t\n\t\t\tIF Gvs_item_buy_price_auto_confirm = 'Y' then\n\t\t\t\tdw_2.object.price_change_confirm_yn[row] = 'Y'\t\t\t\t\t\t\t\t\t\n\t\t\t\tdw_2.object.confirm_by[row] = Gvs_user_id\n\t\t\t\tdw_2.object.confirm_date[row] = f_t_sysdate()\t\t\t\n\t\t\telse\n\t\t\t\tdw_2.object.price_change_confirm_yn[row] = 'N'\t\t\t\t\t\t\t\t\t\t\t\t\t\n\t\t\tend if\n\t\t\t\n\tcase 'DELETE'\n\t\t\n\t\t  \tif DW_2.AcceptText() = -1 then\n\t\t\t\treturn\n\t\t\tend if\n\t\t\t\n\t\t\tif Gvs_item_buy_price_auto_confirm = 'Y' then\n\t\t\telse\n\t\t\t\n\t\t\t\tif dw_2.object.price_change_confirm_yn[dw_2.getrow()] = 'Y' then\n\t\t\t\t\tMessagebox(\"Notify\" , \"Aready Confirmed Can`t Delete\")\n\t\t\t\t\treturn\n\t\t\t\tend if\n\t\t\tend if \n\t\t\t\n\t\t\tMSG = F_MSGBOX(1003)  //삭제하시겠습니까?\n\t\t\tIF MSG = 1 THEN\n\t\t\t\t  \t\t\t\t\t\n                dw_2.deleterow( dw_2.getrow( ) )\n\t\t\t\t\t \n\t\t\t\tIF DW_2.UPDATE() < 0  THEN\n\t\t\t\t\t ROLLBACK;\n\t\t\t\t\t RETURN\n\t\t\t\tELSE\t\t\t\t  \t\t\t \n\t\t\t\t\tCOMMIT;\n\t\t\t\t\t F_MSG_MDI_HELP( \"Update Complete\" )//성공적으로 저장 되었습니다\"\n\t\t\t\t\t F_RETRIEVE()\t\t\t\t\t\t\t \n\t\t\t\tEND IF\n\t\t\tEND IF\n\t\t\t\n\tcase 'UPDATE'\n\t\t\n\t\t\n\t\t\tIF DW_1.UPDATE() < 0  THEN\n\t\t\t  \t ROLLBACK;\n\t\t\t      RETURN\n\t\t\tEND IF \n\t\t   //=======================================================\n\t\t   //\t\n\t\t   //=======================================================\t\t\t\n\t\t\tIF DW_2.UPDATE() < 0  THEN\n\t\t\t  \t ROLLBACK;\n\t\t\t      RETURN\n\t\t\tELSE\n\t\t\t\t\n\t\t\t\t IF DW_2.GETROW() < 1 THEN \n\t\t\t\t\t\tCOMMIT;\n\t\t\t\t\t\tF_MSG_MDI_HELP( \"Update Complete\" )//성공적으로 저장 되었습니다\"\n\t\t\t\t\n\t\t\t\t ELSE\n\t\t\t\t\n\t\t\t\t\tIF F_CHECK_UNIT_PRICE_DUP( dw_2.object.item_code[dw_2.getrow()] , GVI_ORGANIZATION_ID)  < 0 THEN \n\t\t\t\t\t\tRollback;\n\t\t\t\t\t\tMessagebox( \"Notify\" , string(dw_2.object.item_code[dw_2.getrow()] ) + \" Unit Price Duplicate Please Check Dateset !\")\n\t\t\t\t\t\tReturn\n\t\t\t\t\tEND IF\n\t\t\t\t\n\t\t\t\t\tCOMMIT;\n\t\t\t\t\tF_MSG_MDI_HELP( \"Update Complete\" )//성공적으로 저장 되었습니다\"\n\t\t\t\tEND IF\n\t\t\t\t\n\t\t\t\t\t\t\t \n\t\t\tEND IF\n\n\tcase else\nend choose",
+      "RETRIEVE": {
+        "summary": "[RETRIEVE] dw_1.RETRIEVE(ddlb_item_code.text + '%', ddlb_supplier_code.text + '%', ddlb_line_type.getcode()",
+        "script": "dw_1.reset()\n\t\t\tdw_1.retrieve(ddlb_item_code.text + '%', ddlb_supplier_code.text + '%', ddlb_line_type.getcode()+'%' ,ddlb_item_division.getcode( )+'%',  ddlb_price_type.getcode()+'%' ,   gvi_organization_id)"
+      },
+      "INSERT": {
+        "summary": "[CALL] F_SET_SECURITY_ROW(DW_2 , ROW ,'ALL') | [CALL] f_t_sysdate() | [CALL] f_t_sysdate() | [ROW] DW_2.INSERTROW() | [SET] Gvs_item_buy_price_auto_confirm = 'Y'",
+        "script": "DW_2.RESET()\n\t\t\tDW_2.ENABLED = TRUE\n\t\t\tROW = DW_2.INSERTROW(DW_2.GETROW())\n\t\t\tDW_2.SCROLLTOROW(ROW)\n\t\t\tF_SET_SECURITY_ROW(DW_2 , ROW ,'ALL')\n\t\t\tdw_2.object.dateset[row] = f_t_sysdate()\n\t\t\tdw_2.object.dateend[row] = date('2999-12-31')\n\t\t\tdw_2.object.price_type[row] = 'F'\n\t\t\tdw_2.object.price_change_reason[row] = 'N'\t\t\t\t\t\t\n\t\t\tdw_2.object.delivery[row] = '2'\t\t\t\t\t\t\t\t\t\n\t\t\tdw_2.object.currency[row] = Gvs_currency\n\t\t\t\n\t\t\tIF Gvs_item_buy_price_auto_confirm = 'Y' then\n\t\t\t\tdw_2.object.price_change_confirm_yn[row] = 'Y'\t\t\t\t\t\t\t\t\t\n\t\t\t\tdw_2.object.confirm_by[row] = Gvs_user_id\n\t\t\t\tdw_2.object.confirm_date[row] = f_t_sysdate()\t\t\t\n\t\t\telse\n\t\t\t\tdw_2.object.price_change_confirm_yn[row] = 'N'\t\t\t\t\t\t\t\t\t\t\t\t\t\n\t\t\tend if"
+      },
+      "DELETE": {
+        "summary": "[주석] 삭제하시겠습니까 | [주석] 성공적으로 저장 되었습니다 | [CALL] F_MSGBOX(1003) | [CALL] F_MSG_MDI_HELP(\"Update Complete\") | [CALL] F_RETRIEVE() | [COMMIT] | [ROLLBACK] | [ROW] dw_2.deleterow() | [SET] Gvs_item_buy_price_auto_confirm = 'Y'",
+        "script": "if DW_2.AcceptText() = -1 then\n\t\t\t\treturn\n\t\t\tend if\n\t\t\t\n\t\t\tif Gvs_item_buy_price_auto_confirm = 'Y' then\n\t\t\telse\n\t\t\t\n\t\t\t\tif dw_2.object.price_change_confirm_yn[dw_2.getrow()] = 'Y' then\n\t\t\t\t\tMessagebox(\"Notify\" , \"Aready Confirmed Can`t Delete\")\n\t\t\t\t\treturn\n\t\t\t\tend if\n\t\t\tend if \n\t\t\t\n\t\t\tMSG = F_MSGBOX(1003)  //삭제하시겠습니까?\n\t\t\tIF MSG = 1 THEN\n\t\t\t\t  \t\t\t\t\t\n                dw_2.deleterow( dw_2.getrow( ) )\n\t\t\t\t\t \n\t\t\t\tIF DW_2.UPDATE() < 0  THEN\n\t\t\t\t\t ROLLBACK;\n\t\t\t\t\t RETURN\n\t\t\t\tELSE\t\t\t\t  \t\t\t \n\t\t\t\t\tCOMMIT;\n\t\t\t\t\t F_MSG_MDI_HELP( \"Update Complete\" )//성공적으로 저장 되었습니다\"\n\t\t\t\t\t F_RETRIEVE()\t\t\t\t\t\t\t \n\t\t\t\tEND IF\n\t\t\tEND IF"
+      },
+      "UPDATE": {
+        "summary": "[주석] 성공적으로 저장 되었습니다 | [주석] 성공적으로 저장 되었습니다 | [CALL] F_MSG_MDI_HELP(\"Update Complete\") | [CALL] F_CHECK_UNIT_PRICE_DUP(dw_2.object.item_code[dw_2.getrow() | [CALL] F_MSG_MDI_HELP(\"Update Complete\") | [COMMIT] | [ROLLBACK]",
+        "script": "IF DW_1.UPDATE() < 0  THEN\n\t\t\t  \t ROLLBACK;\n\t\t\t      RETURN\n\t\t\tEND IF \n\t\t   //=======================================================\n\t\t   //\t\n\t\t   //=======================================================\t\t\t\n\t\t\tIF DW_2.UPDATE() < 0  THEN\n\t\t\t  \t ROLLBACK;\n\t\t\t      RETURN\n\t\t\tELSE\n\t\t\t\t\n\t\t\t\t IF DW_2.GETROW() < 1 THEN \n\t\t\t\t\t\tCOMMIT;\n\t\t\t\t\t\tF_MSG_MDI_HELP( \"Update Complete\" )//성공적으로 저장 되었습니다\"\n\t\t\t\t\n\t\t\t\t ELSE\n\t\t\t\t\n\t\t\t\t\tIF F_CHECK_UNIT_PRICE_DUP( dw_2.object.item_code[dw_2.getrow()] , GVI_ORGANIZATION_ID)  < 0 THEN \n\t\t\t\t\t\tRollback;\n\t\t\t\t\t\tMessagebox( \"Notify\" , string(dw_2.object.item_code[dw_2.getrow()] ) + \" Unit Price Duplicate Please Check Dateset !\")\n\t\t\t\t\t\tReturn\n\t\t\t\t\tEND IF\n\t\t\t\t\n\t\t\t\t\tCOMMIT;\n\t\t\t\t\tF_MSG_MDI_HELP( \"Update Complete\" )//성공적으로 저장 되었습니다\"\n\t\t\t\tEND IF\n\t\t\t\t\n\t\t\t\t\t\t\t \n\t\t\tEND IF"
+      }
+    },
+    "constructor": {
+      "summary": "[SET] Gvs_item_buy_price_auto_confirm = 'Y'",
+      "script": "call super::constructor;if Gvs_item_buy_price_auto_confirm = 'Y' then \n\tthis.checked = true\nelse\n\tthis.checked = false\nend if"
+    },
+    "ue_editchange": {
+      "summary": "[주석] 정렬할 컬럼값 | [CALL] F_MSG_MDI_HELP(STRING( dw_1.ROWCOUNT() | [FILTER] dw_1.SetFilter('') | [FILTER] dw_1.SetFilter('') | [FILTER] dw_1.SetFilter(LVS_COLUMN  +\" LIKE '\"+LVS_VALUE+\"'\")",
+      "script": "//=====================================\n//LVS_COLUMN 정렬할 컬럼값\n//=====================================\nSTRING LVS_VALUE , LVS_COLUMN\n\ndw_1.SETFILTER('')\ndw_1.FILTER()\n\nLVS_COLUMN = 'ITEM_NAME'\nIF ISNULL(LVS_COLUMN) OR LENA(LVS_COLUMN) = 0 THEN \n\tRETURN \nEND IF\n\nIF THIS.TEXT = '' OR ISNULL(THIS.TEXT) THEN \n    dw_1.SETFILTER('')\n    dw_1.FILTER()\t\n    RETURN\nELSE\n\tLVS_VALUE = '%'+this.text+'%'\nEND IF\n\ndw_1.SETFILTER( LVS_COLUMN  +\" LIKE '\"+LVS_VALUE+\"'\")\ndw_1.FILTER()\nF_MSG_MDI_HELP( STRING( dw_1.ROWCOUNT() ) + \" Found\" )"
+    }
+  },
+  "functions": [],
+  "sql_statements": [
+    {
+      "type": "SELECT",
+      "sql": "select item_code from im_item_unit_price where dateset <= trunc(sysdate) and dateend >= trunc(sysdate) and organization_id = :gvi_organization_id group by supplier_code , item_code , line_type , organization_id having count(*) > 1",
+      "tables": [
+        "IM_ITEM_UNIT_PRICE"
+      ]
+    },
+    {
+      "type": "SELECT",
+      "sql": "select count(*) into :lvi_count from icom_supplier where supplier_code = :lvs_own_supplier_code and organization_id = :LVI_TO_ORG",
+      "tables": [
+        "ICOM_SUPPLIER"
+      ]
+    },
+    {
+      "type": "SELECT",
+      "sql": "select count(*) into :lvi_count from im_item_unit_price where supplier_code = :lvs_own_supplier_code and item_code = :lvs_item_code and line_type = 'N' and dateset <= trunc(sysdate) and dateend >= trunc(sysdate) and organization_id = :LVI_TO_ORG",
+      "tables": [
+        "IM_ITEM_UNIT_PRICE"
+      ]
+    },
+    {
+      "type": "SELECT",
+      "sql": "SELECT COUNT(*) INTO :LVI_COUNT FROM IM_ITEM_RECEIPT WHERE SUPPLIER_CODE = :LVS_BEFORE_SUPPLIER AND ITEM_CODE = :LVS_ITEM_CODE AND ORGANIZATION_ID = :GVI_ORGANIZATION_ID",
+      "tables": [
+        "IM_ITEM_RECEIPT"
+      ]
+    },
+    {
+      "type": "SELECT",
+      "sql": "SELECT ITEM_CODE, SUPPLIER_CODE, buy_PRICE , line_type FROM ID_ITEM WHERE ( ITEM_CODE , ORGANIZATION_ID ) NOT IN ( SELECT ITEM_CODE , ORGANIZATION_ID FROM IM_ITEM_UNIT_PRICE WHERE ORGANIZATION_ID = :GVI_ORGANIZATION_ID ) AND LINE_TYPE <> 'T' AND ITEM_DIVISION IN ('R','B') AND ORGANIZATION_ID = :GVI_ORGANIZATION_ID",
+      "tables": [
+        "ID_ITEM",
+        "IM_ITEM_UNIT_PRICE"
+      ]
+    },
+    {
+      "type": "SELECT",
+      "sql": "SELECT DATESET, ITEM_CODE, SUPPLIER_CODE, LINE_TYPE, DELIVERY, CURRENCY, UNIT_PRICE, TAX_RATE, PRICE_TYPE, APPROVAL_NO, STANDARD_UNIT_PRICE FROM IM_ITEM_UNIT_PRICE WHERE ROWID = :LVS_ROWID AND ORGANIZATION_ID = :GVI_ORGANIZATION_ID",
+      "tables": [
+        "IM_ITEM_UNIT_PRICE"
+      ]
+    },
+    {
+      "type": "INSERT",
+      "sql": "INSERT INTO \"IM_ITEM_UNIT_PRICE\" ( \"DATESET\", \"ITEM_CODE\", \"SUPPLIER_CODE\", \"LINE_TYPE\", \"ORGANIZATION_ID\", \"DELIVERY\", \"CURRENCY\", \"UNIT_PRICE\", \"TAX_RATE\", \"PRICE_TYPE\", \"APPROVAL_NO\", \"STANDARD_UNIT_PRICE\", \"DATEEND\", \"PRICE_CHANGE_REASON\", \"CONFIRM_BY\", \"PRICE_CHANGE_CONFIRM_YN\", \"CONFIRM_DATE\", \"ENTER_DATE\", \"ENTER_BY\", \"LAST_MODIFY_DATE\", \"LAST_MODIFY_BY\" ) values( :lvdt_dateset , //\"IM_ITEM_UNIT_PRICE\".\"DATESET\", :lvs_item_code , //\"IM_ITEM_UNIT_PRICE\".\"ITEM_CODE\", :lvs_own_supplier_code ",
+      "tables": [
+        "IM_ITEM_UNIT_PRICE"
+      ]
+    },
+    {
+      "type": "INSERT",
+      "sql": "INSERT INTO IM_ITEM_UNIT_PRICE ( DATESET, ITEM_CODE, SUPPLIER_CODE, LINE_TYPE, ORGANIZATION_ID, DELIVERY, CURRENCY, UNIT_PRICE, TAX_RATE, PRICE_TYPE, APPROVAL_NO, STANDARD_UNIT_PRICE, DATEEND, PRICE_CHANGE_REASON, CONFIRM_BY, PRICE_CHANGE_CONFIRM_YN, CONFIRM_DATE, ENTER_DATE, ENTER_BY, LAST_MODIFY_DATE, LAST_MODIFY_BY ) VALUES ( TRUNC(SYSDATE) , :LVS_ITEM_CODE, :LVS_SUPPLIER_CODE, :lvs_line_type , //'G', :GVI_ORGANIZATION_ID, '2', :GVS_CURRENCY , NVL(:LVF_UNIT_PRICE,0) , 0 , 'T' , '' , 0 , TO_DA",
+      "tables": [
+        "IM_ITEM_UNIT_PRICE"
+      ]
+    },
+    {
+      "type": "UPDATE",
+      "sql": "UPDATE IM_ITEM_UNIT_PRICE SET SUPPLIER_CODE = :LVS_AFTER_SUPPLIER WHERE SUPPLIER_CODE = :LVS_BEFORE_SUPPLIER AND ITEM_CODE = :LVS_ITEM_CODE AND SUPPLIER_CODE = :LVS_SUPPLIER_CODE AND DATESET <= TRUNC(SYSDATE) AND DATEEND >= TRUNC(SYSDATE) AND ORGANIZATION_ID = :GVI_ORGANIZATION_ID",
+      "tables": [
+        "IM_ITEM_UNIT_PRICE"
+      ]
+    },
+    {
+      "type": "UPDATE",
+      "sql": "update im_item_unit_price set line_type = :lvs_new_line_type where supplier_code = :lvs_supplier_code and item_code = :lvs_item_code and line_type = :lvs_line_type and dateset = :lvdt_dateset and dateend = :lvdt_dateend and organization_id = :gvi_organization_id",
+      "tables": [
+        "IM_ITEM_UNIT_PRICE"
+      ]
+    },
+    {
+      "type": "UPDATE",
+      "sql": "update im_item_arrival set line_type =:lvs_new_line_type where supplier_code = :lvs_supplier_code and item_code = :lvs_item_code and line_type = :lvs_line_type and arrival_date >= :lvdt_dateset and arrival_date <= :lvdt_dateend and organization_id = :gvi_organization_id",
+      "tables": [
+        "IM_ITEM_ARRIVAL"
+      ]
+    },
+    {
+      "type": "UPDATE",
+      "sql": "update im_item_free_receipt set line_type =:lvs_new_line_type where item_code = :lvs_item_code and line_type = :lvs_line_type and receipt_date >= :lvdt_dateset and receipt_date <= :lvdt_dateend and organization_id = :gvi_organization_id",
+      "tables": [
+        "IM_ITEM_FREE_RECEIPT"
+      ]
+    },
+    {
+      "type": "UPDATE",
+      "sql": "update im_item_receipt set line_type =:lvs_new_line_type where supplier_code = :lvs_supplier_code and item_code = :lvs_item_code and line_type = :lvs_line_type and receipt_date >= :lvdt_dateset and receipt_date <= :lvdt_dateend and organization_id = :gvi_organization_id",
+      "tables": [
+        "IM_ITEM_RECEIPT"
+      ]
+    },
+    {
+      "type": "UPDATE",
+      "sql": "update im_item_issue set line_type =:lvs_new_line_type where item_code = :lvs_item_code and line_type = :lvs_line_type and issue_date >= :lvdt_dateset and issue_date <= :lvdt_dateend and organization_id = :gvi_organization_id",
+      "tables": [
+        "IM_ITEM_ISSUE"
+      ]
+    },
+    {
+      "type": "UPDATE",
+      "sql": "update im_item_inventory set line_type =:lvs_new_line_type // where item_code = :lvs_item_code // and line_type = :lvs_line_type // and organization_id = :gvi_organization_id",
+      "tables": [
+        "IM_ITEM_INVENTORY"
+      ]
+    }
+  ],
+  "db_references": {
+    "tables": [
+      "ID_ITEM",
+      "IM_ITEM_ARRIVAL",
+      "IM_ITEM_FREE_RECEIPT",
+      "IM_ITEM_INVENTORY",
+      "IM_ITEM_ISSUE",
+      "IM_ITEM_RECEIPT",
+      "IM_ITEM_UNIT_PRICE"
+    ],
+    "functions": [
+      "F_CHECK_UNIT_PRICE_DUP",
+      "F_GET_SUPPLIER_CODE_ONESELF",
+      "F_GET_SUPPLIER_NAME",
+      "F_MENU_CONTROL",
+      "F_MSGBOX",
+      "F_MSGBOX1",
+      "F_MSG_MDI_HELP",
+      "F_MSG_ST",
+      "F_OBJECT_ROLE_CHECK",
+      "F_RETRIEVE",
+      "F_SET_ITEM_NAME_SPEC_UOM",
+      "F_SET_SECURITY_ROW",
+      "F_SQL_CHECK",
+      "F_T_SYSDATE"
+    ],
+    "sequences": []
+  },
+  "popups": [
+    "w_com_supplier_popup",
+    "w_mat_item_popup",
+    "w_mat_material_unit_price_excel_form_popup"
+  ]
+}

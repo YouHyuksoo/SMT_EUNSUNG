@@ -1,0 +1,443 @@
+/**
+ * @file src/lib/menu/sections.ts
+ * @description 섹션 전환 및 깊이 관리 관련 함수 모음
+ *
+ * 초보자 가이드:
+ * 1. **주요 개념**: 3D 터널 내 섹션(레이어) 간 전환 및 깊이 효과 관리
+ * 2. **사용 방법**:
+ *    ```ts
+ *    import { goToSection, updateCardsDepth } from '@/lib/menu/sections';
+ *    goToSection(2); // 3번째 섹션으로 이동
+ *    ```
+ * 3. **의존성**: state, config, categories, carousel(lazy), gsap
+ *
+ * 원본: mydesktop/js/sections.js (App.Sections)
+ * 변경점:
+ *   - `App.Sections.xxx` -> named export 함수
+ *   - `App.state` -> `state` (state.ts import)
+ *   - `App.Config` -> config.ts import
+ *   - `App.Carousel` -> carousel.ts import (동기 참조)
+ *   - `App.Categories` -> categories.ts import
+ */
+
+import gsap from 'gsap';
+import { state } from './state';
+import { DEFAULT_CATEGORIES } from './config';
+import * as Categories from './categories';
+import * as Carousel from './carousel';
+import type { Category } from './types';
+import { t } from './i18n';
+
+/** 동적 import 캐시 (매 전환마다 import() 반복 방지) */
+let _cardsModule: typeof import('./cards') | null = null;
+function getCardsModule(): Promise<typeof import('./cards')> {
+  if (_cardsModule) return Promise.resolve(_cardsModule);
+  return import('./cards').then((m) => { _cardsModule = m; return m; });
+}
+
+// ---------------------------------------------------------------------------
+// 상수
+// ---------------------------------------------------------------------------
+
+/** 섹션 간 Z 간격 */
+export const DEPTH_SPACING = 600;
+
+// ---------------------------------------------------------------------------
+// 유틸
+// ---------------------------------------------------------------------------
+
+/**
+ * 현재 사용 가능한 카테고리(섹션) 목록 반환
+ * 동적 카테고리(기본 + 사용자 정의) 반환
+ * @returns 카테고리 배열
+ */
+export function getSections(): Category[] {
+  if (typeof Categories.getAll === 'function') {
+    return Categories.getAll();
+  }
+  return DEFAULT_CATEGORIES;
+}
+
+// ---------------------------------------------------------------------------
+// 섹션 이동
+// ---------------------------------------------------------------------------
+
+/**
+ * 특정 섹션으로 이동
+ * @param index - 이동할 섹션 인덱스
+ * @param forceDirection - 강제 방향 지정 (1: 앞으로, -1: 뒤로)
+ */
+export function goToSection(index: number, forceDirection: number | null = null): void {
+  if (state.isTransitioning) return;
+
+  const sections = getSections();
+
+  // 순환 처리 및 방향 계산
+  let direction: number;
+  if (index < 0) {
+    index = sections.length - 1;
+    direction = -1; // 뒤로 가는 것
+  } else if (index >= sections.length) {
+    index = 0;
+    direction = 1; // 앞으로 가는 것
+  } else {
+    direction = index > state.currentSection ? 1 : -1;
+  }
+
+  if (index === state.currentSection) return;
+  if (forceDirection !== null) direction = forceDirection;
+
+  // 히스토리에 현재 섹션 기록 (돌아가기 기능용, 최대 20개)
+  const oldSection = state.currentSection;
+  state.sectionHistory.push(oldSection);
+  if (state.sectionHistory.length > 20) state.sectionHistory.shift();
+
+  state.isTransitioning = true;
+
+  // ★ 핵심: state.currentSection을 즉시 업데이트 (onComplete 지연 제거)
+  // 이전에는 onComplete(0.25초 후)에서 업데이트했는데, isTransitioning 잠금(50ms)보다
+  // 늦어서 그 사이에 클릭하면 방향 계산이 꼬이는 버그가 있었음
+  state.currentSection = index;
+
+  // 인접(±1) vs 건너뛰기 판별 — oldSection 기준으로 계산
+  const rawDist = Math.abs(index - oldSection);
+  const isAdjacent = rawDist === 1 || rawDist === sections.length - 1;
+
+  // 터널 가속
+  state.targetSpeed = direction * 30;
+
+  // ★ 기존 모든 섹션 관련 트윈 강제 정리 (방향 전환 시 충돌 방지)
+  gsap.killTweensOf('#section-info');
+  gsap.killTweensOf('#scroll-hint');
+  document.querySelectorAll('.section-cards').forEach((s) => gsap.killTweensOf(s));
+
+  // 섹션 타이틀 애니메이션
+  gsap.to('#section-info', {
+    opacity: 0,
+    y: direction * -30,
+    duration: 0.25,
+    overwrite: true,
+    onComplete: () => {
+      updateSectionInfo();
+      updateDepthIndicator();
+      window.dispatchEvent(new CustomEvent('menu-section-changed', { detail: { index } }));
+
+      gsap.fromTo(
+        '#section-info',
+        { opacity: 0, y: direction * 30 },
+        { opacity: 1, y: 0, duration: 0.25, overwrite: true },
+      );
+    },
+  });
+
+  // 도트 인디케이터 즉시 업데이트 (타이틀 페이드 기다리지 않음)
+  updateDepthIndicator();
+
+  // 카드 깊이 업데이트 — oldSection을 명시적으로 전달
+  animateCardsToSection(index, direction, isAdjacent, oldSection);
+
+  // 인접 이동: 터널 가속 + 부드러운 전환 / 건너뛰기: 즉시
+  if (isAdjacent) {
+    gsap.to({ speed: state.targetSpeed }, {
+      speed: 0,
+      duration: 0.5,
+      ease: 'power2.out',
+      overwrite: true,
+      onUpdate: function (this: gsap.core.Tween) {
+        state.targetSpeed = (this.targets()[0] as { speed: number }).speed;
+      },
+    });
+  } else {
+    state.targetSpeed = 0;
+  }
+
+  // ★ 애니메이션 기반 해제: 고정 타이머 대신 gsap duration에 맞춘 안전한 해제
+  const transitionDuration = !isAdjacent ? 50 : (state.simpleVirtualization ? 100 : 800);
+  setTimeout(() => {
+    state.isTransitioning = false;
+  }, transitionDuration);
+
+  // 스크롤 힌트 숨기기
+  gsap.to('#scroll-hint', { opacity: 0, duration: 0.5 });
+}
+
+/**
+ * 다음 섹션으로 이동 (자동 롤링용)
+ */
+export function goToNextSection(): void {
+  const sections = getSections();
+  if (sections.length === 0) return;
+  const next = (state.currentSection + 1) % sections.length;
+  goToSection(next, 1);
+}
+
+// ---------------------------------------------------------------------------
+// 카드 애니메이션
+// ---------------------------------------------------------------------------
+
+/**
+ * 카드들을 목표 섹션으로 애니메이션 (무한 순환 지원)
+ *
+ * 순환 오프셋 계산으로 마지막→첫번째, 첫번째→마지막 이동 시에도
+ * 최단 경로로 부드러운 전환을 구현합니다.
+ *
+ * @param targetIndex - 목표 섹션 인덱스
+ * @param direction - 이동 방향 (1 또는 -1)
+ * @param isAdjacent - 인접 이동 여부
+ * @param fromIndex - 출발 섹션 인덱스 (명시하지 않으면 state.currentSection 사용)
+ */
+export function animateCardsToSection(targetIndex: number, direction: number, isAdjacent = true, fromIndex?: number): void {
+  const departingSection = fromIndex ?? state.currentSection;
+  const sections = document.querySelectorAll('.section-cards');
+  const sectionCount = sections.length;
+
+  // 먼저 모든 섹션에서 active 제거
+  sections.forEach((s) => s.classList.remove('active'));
+
+  sections.forEach((section, i) => {
+    // 순환 오프셋: 최단 경로 계산
+    let offset = i - targetIndex;
+    if (offset > sectionCount / 2) offset -= sectionCount;
+    if (offset < -sectionCount / 2) offset += sectionCount;
+
+    const absOffset = Math.abs(offset);
+
+    // 인접 이동에서만 떠나는 줌 효과 — departingSection(출발지)을 명시적으로 사용
+    const isDeparting = isAdjacent && (i === departingSection) && (i !== targetIndex);
+
+    // 떠나는 섹션: 앞으로→커지며 뒤로 사라짐, 뒤로→작아지며 앞으로 빠짐
+    const zPos = isDeparting
+      ? direction * DEPTH_SPACING * 0.4
+      : -offset * DEPTH_SPACING;
+    const scale = isDeparting
+      ? (direction > 0 ? 1.3 : 0.5)
+      : offset === 0 ? 1 : Math.max(0.3, 1 - absOffset * 0.4);
+    const yOffset = offset > 0 ? -40 : offset < 0 ? 40 : 0;
+
+    // 현재 섹션만 표시 (인접 섹션 프리뷰 제거 — 전환 시 깜빡임 방지)
+    const opacity = isDeparting ? 0
+      : offset === 0 ? 1
+      : 0;
+    // zIndex: 떠나는 섹션은 일반 값 사용 (200 금지 — 잔류 방지)
+    const zIndex = 100 - absOffset;
+
+    gsap.killTweensOf(section);
+
+    // 보이지 않는 섹션은 즉시 숨김 (떠나는 섹션은 애니메이션 후 숨김)
+    if (offset !== 0 && !isDeparting) {
+      gsap.set(section, {
+        z: zPos, scale: scale, opacity: 0, y: yOffset, zIndex,
+        display: 'none',
+      });
+      return;
+    }
+
+    // ★ 플래시 방지: display 전환 전에 opacity를 먼저 0으로 설정
+    // display:none → flex 시 이전 스타일이 한 프레임 보이는 것을 차단
+    const wasHidden = (section as HTMLElement).style.display === 'none';
+    if (wasHidden) {
+      gsap.set(section, { opacity: 0 });
+    }
+
+    // 가까운 섹션: display 설정 + 그리드 모드만 사전 카드 로드
+    if (state.cardLayout === 'grid' && !isDeparting) {
+      getCardsModule().then((Cards) => {
+        Cards.populateSection(section as HTMLElement, i);
+      });
+    }
+
+    if (state.cardLayout === 'thumbnail' && (section as HTMLElement).classList.contains('thumbnail-layout')) {
+      gsap.set(section, { display: 'grid' });
+    } else {
+      gsap.set(section, { display: 'flex' });
+    }
+
+    const sectionProps = { z: zPos, scale, opacity, y: yOffset, zIndex };
+    const onSectionComplete = () => {
+      // 떠나는 섹션: 애니메이션 완료 후 완전 숨김 + 스타일 리셋
+      if (isDeparting) {
+        gsap.set(section, { display: 'none', opacity: 0, scale: 1, z: 0, y: 0, zIndex: 0 });
+      }
+      if (offset === 0) {
+        section.classList.add('active');
+        (section as HTMLElement).scrollTop = 0;
+        if (state.cardLayout === 'carousel') {
+          state.carouselIndex = 0;
+          Carousel.renderCarouselSlots();
+          Carousel.updateCarouselUI();
+        }
+        if (state.cardLayout === 'thumbnail') {
+          getCardsModule().then((Cards) => {
+            Cards.resetThumbnailPage();
+            Cards.renderThumbnailPage();
+            Cards.updateThumbnailArrowsVisibility();
+          });
+        }
+      }
+    };
+
+    if (state.simpleVirtualization || !isAdjacent) {
+      // 라이트 모드 또는 건너뛰기: 즉시 전환 (GSAP 트윈 0개)
+      gsap.set(section, sectionProps);
+      onSectionComplete();
+    } else {
+      gsap.to(section, {
+        ...sectionProps,
+        duration: 0.5,
+        ease: 'power2.out',
+        overwrite: true,
+        onComplete: onSectionComplete,
+      });
+    }
+
+    // 현재 섹션 카드 등장 처리
+    if (offset === 0) {
+      const cards = section.querySelectorAll('.shortcut-card');
+
+      // [최적화] 이미 렌더된 카드(data-shown)는 가벼운 fade만,
+      // 최초 등장 카드만 scale 애니메이션 (DOM 재활용 시 부하 대폭 감소)
+      const isFirstRender = !section.hasAttribute('data-rendered');
+      if (isFirstRender) section.setAttribute('data-rendered', '1');
+
+      if (state.simpleVirtualization) {
+        // 라이트 모드: 카드 애니메이션 전체 스킵
+        gsap.set(cards, { scale: 1, opacity: 1 });
+      } else if (isFirstRender) {
+        // 최초 등장: scale 애니메이션 (최대 8개)
+        const maxAnimCards = Math.min(cards.length, 8);
+        for (let ci = 0; ci < maxAnimCards; ci++) {
+          gsap.fromTo(
+            cards[ci],
+            { scale: 0.5, opacity: 0 },
+            {
+              scale: 1, opacity: 1,
+              duration: 0.35, delay: 0.15 + ci * 0.03,
+              ease: 'back.out(1.7)', overwrite: 'auto',
+            },
+          );
+        }
+        for (let ci = maxAnimCards; ci < cards.length; ci++) {
+          gsap.set(cards[ci], { scale: 1, opacity: 1 });
+        }
+      }
+      // 재방문 + 일반 모드: 애니메이션 없음 (섹션 자체 opacity 전환으로 충분)
+    }
+  });
+}
+
+// ---------------------------------------------------------------------------
+// 섹션 정보 업데이트
+// ---------------------------------------------------------------------------
+
+/**
+ * 섹션 정보 UI 업데이트
+ */
+export function updateSectionInfo(): void {
+  const sections = getSections();
+  const section = sections[state.currentSection];
+  if (!section) return;
+
+  const titleEl = document.getElementById('section-title');
+  const subtitleEl = document.getElementById('section-subtitle');
+
+  if (titleEl) {
+    const nameKey = `menuUI.catName${section.id}`;
+    titleEl.textContent = t(nameKey) !== nameKey ? t(nameKey) : section.name;
+  }
+  if (subtitleEl) {
+    const subKey = `menuUI.catSub${section.id}`;
+    subtitleEl.textContent = t(subKey) !== subKey ? t(subKey) : (section.subtitle ?? section.name);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// 깊이 관리
+// ---------------------------------------------------------------------------
+
+/**
+ * 카드 섹션들의 3D 깊이 업데이트 (무한 순환 지원)
+ */
+export function updateCardsDepth(): void {
+  const sections = document.querySelectorAll('.section-cards');
+  const sectionCount = sections.length;
+
+  sections.forEach((section, i) => {
+    // 순환 오프셋: 최단 경로 계산
+    let offset = i - state.currentSection;
+    if (offset > sectionCount / 2) offset -= sectionCount;
+    if (offset < -sectionCount / 2) offset += sectionCount;
+
+    const absOffset = Math.abs(offset);
+    const zPos = -offset * DEPTH_SPACING;
+    const scale = offset === 0 ? 1 : Math.max(0.3, 1 - absOffset * 0.4);
+    const yOffset = offset > 0 ? -30 : offset < 0 ? 30 : 0;
+
+    const opacity = offset === 0 ? 1 : 0;
+    const zIndex = 100 - absOffset;
+
+    // 현재 섹션만 카드 로드
+    if (offset === 0) {
+      getCardsModule().then((Cards) => {
+        Cards.populateSection(section as HTMLElement, i);
+      });
+    }
+
+    gsap.set(section, {
+      z: zPos,
+      scale: scale,
+      opacity: opacity,
+      y: yOffset,
+      zIndex: zIndex,
+      display: offset === 0
+        ? ((section as HTMLElement).classList.contains('thumbnail-layout') ? 'grid' : 'flex')
+        : 'none',
+    });
+
+    section.classList.toggle('active', offset === 0);
+  });
+}
+
+/**
+ * 깊이 인디케이터(도트) 업데이트
+ */
+export function updateDepthIndicator(): void {
+  document.querySelectorAll('.depth-dot').forEach((dot, i) => {
+    dot.classList.toggle('active', i === state.currentSection);
+  });
+}
+
+/**
+ * 깊이 인디케이터 초기 생성
+ */
+export function createDepthIndicator(): void {
+  const container = document.getElementById('depth-indicator');
+  if (!container) return;
+
+  const sections = getSections();
+
+  // 기존 내용 제거 (재생성 시)
+  container.innerHTML = '';
+
+  sections.forEach((section, i) => {
+    const dot = document.createElement('div');
+    dot.className = 'depth-dot' + (i === state.currentSection ? ' active' : '');
+    const icon = 'icon' in section ? (section as Category).icon : '';
+    const localizedName = t(`menuUI.catName${section.id}`) !== `menuUI.catName${section.id}`
+      ? t(`menuUI.catName${section.id}`)
+      : section.subtitle || section.name;
+    dot.dataset.label = `${icon || ''} ${localizedName}`;
+    dot.addEventListener('click', () => goToSection(i));
+    container.appendChild(dot);
+  });
+
+  // + 버튼 추가 (인디케이터 아래에 위치)
+  const addBtn = document.createElement('button');
+  addBtn.className = 'depth-add-btn';
+  addBtn.id = 'depth-add-btn';
+  addBtn.title = t('menuUI.newCategory');
+  addBtn.textContent = '+';
+  addBtn.addEventListener('click', () => {
+    Categories.openEditDialog();
+  });
+  container.appendChild(addBtn);
+}

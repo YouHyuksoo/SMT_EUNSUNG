@@ -1,0 +1,196 @@
+/**
+ * @file src/styles/menu/components-layout.css
+ * @description 레이아웃 컴포넌트 스타일 (mydesktop 원본 포팅)
+ *
+ * 초보자 가이드:
+ * 1. 이 파일은 depth-indicator, grid-scroll 스타일을 포함합니다
+ * 2. mydesktop/css/components/depth-indicator.css, grid-scroll.css에서 포팅되었습니다
+ * 3. globals.css에서 @import로 로드됩니다
+ */
+
+/* === From: depth-indicator.css === */
+
+/* ===== Depth Indicator ===== */
+#depth-indicator {
+  position: fixed;
+  right: 25px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  z-index: 200;
+}
+
+.depth-dot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  cursor: pointer;
+  position: relative;
+  background: rgba(10, 10, 15, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.3s ease;
+}
+
+/* 도트 원형 마커 */
+.depth-dot::before {
+  content: '';
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(255, 215, 0, 0.25);
+  border: 2px solid rgba(255, 215, 0, 0.4);
+  flex-shrink: 0;
+  order: 1;
+  transition: all 0.3s ease;
+}
+
+/* 메뉴 이름 라벨 (항상 표시) */
+.depth-dot::after {
+  content: attr(data-label);
+  white-space: nowrap;
+  font-size: 15px;
+  letter-spacing: 1px;
+  color: rgba(255, 255, 255, 0.4);
+  transition: all 0.3s ease;
+  order: 0;
+}
+
+.depth-dot:hover {
+  background: rgba(255, 215, 0, 0.08);
+  border-color: rgba(255, 215, 0, 0.2);
+}
+
+.depth-dot:hover::before {
+  background: rgba(255, 215, 0, 0.4);
+  border-color: var(--accent);
+  box-shadow: 0 0 10px var(--card-glow);
+}
+
+.depth-dot:hover::after {
+  color: var(--accent);
+}
+
+/* 활성 섹션 */
+.depth-dot.active {
+  background: rgba(255, 215, 0, 0.1);
+  border-color: rgba(255, 215, 0, 0.25);
+}
+
+.depth-dot.active::before {
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 0 12px var(--card-glow);
+  animation: depthPulse 2s ease-in-out infinite;
+}
+
+.depth-dot.active::after {
+  color: var(--accent);
+  font-weight: 600;
+  text-shadow: 0 0 8px var(--card-glow);
+}
+
+@keyframes depthPulse {
+  0%, 100% { box-shadow: 0 0 12px var(--card-glow); }
+  50% { box-shadow: 0 0 20px var(--card-glow); }
+}
+
+/* === From: grid-scroll.css === */
+
+/* ===== Grid Scroll Controls ===== */
+#grid-scroll-controls {
+  position: fixed;
+  right: 100px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  z-index: 150;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+#grid-scroll-controls.visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.grid-scroll-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  background: rgba(10, 10, 15, 0.8);
+  backdrop-filter: blur(10px);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+  transition: all 0.3s ease;
+}
+
+.grid-scroll-btn:hover {
+  background: rgba(255, 215, 0, 0.15);
+  border-color: var(--accent);
+  transform: scale(1.1);
+}
+
+.grid-scroll-btn:active {
+  transform: scale(0.95);
+}
+
+.grid-scroll-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.grid-scroll-btn svg {
+  width: 24px;
+  height: 24px;
+}
+
+/* ===== Scroll Hint ===== */
+#scroll-hint {
+  position: fixed;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  color: var(--accent);
+  font-size: 12px;
+  letter-spacing: 2px;
+  z-index: 200;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+#scroll-hint .mouse {
+  width: 24px;
+  height: 40px;
+  border: 2px solid var(--accent);
+  border-radius: 12px;
+  position: relative;
+}
+
+#scroll-hint .mouse::before {
+  content: '';
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 8px;
+  background: var(--accent);
+  border-radius: 2px;
+  animation: scrollWheel 1.5s ease-in-out infinite;
+}

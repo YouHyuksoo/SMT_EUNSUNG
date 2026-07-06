@@ -1,0 +1,527 @@
+/**
+ * @file src/styles/menu/responsive.css
+ * @description 반응형 미디어 쿼리 (mydesktop 원본 포팅)
+ *
+ * 초보자 가이드:
+ * 1. 이 파일은 mydesktop 메뉴 화면의 반응형 레이아웃을 정의합니다
+ * 2. 768px, 480px 브레이크포인트에서 모바일 최적화를 적용합니다
+ * 3. globals.css에서 @import로 로드됩니다
+ */
+
+/* ===== depth-handle: 좁은 화면 전용 호버 핸들 (기본 숨김) ===== */
+#depth-handle {
+  display: none;
+}
+
+/* ===== 900px 이하: depth-indicator 슬라이드 숨김 + 호버 핸들 + 타이틀 축소 ===== */
+@media (max-width: 900px) {
+  /* 768px 블록 전에 중간 단계 타이틀 축소 (768px 기본값 48px → 여기서 34px → 768px에서 24px) */
+  #section-title {
+    font-size: 34px;
+    letter-spacing: 3px;
+  }
+  #section-subtitle {
+    font-size: 12px;
+    letter-spacing: 3px;
+  }
+
+  #depth-indicator {
+    /* right 속성으로 숨김. transform은 기본값(translateY) 유지
+       닫힘(복귀) 시 딜레이 0.15s - 핸들↔메뉴 이동 중 끊김 방지 */
+    transition: right 0.35s cubic-bezier(0.4, 0, 0.2, 1) 0.15s;
+    right: -260px;
+  }
+
+  /* 화면 가장자리에 남는 핸들 (미니멀 — 배경 거의 투명, 그림자 제거) */
+  #depth-handle {
+    display: flex;
+    position: fixed;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 14px;
+    height: 48px;
+    background: rgba(10, 10, 15, 0.15);
+    border: 1px solid rgba(255, 215, 0, 0.18);
+    border-right: none;
+    border-radius: 6px 0 0 6px;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 215, 0, 0.5);
+    font-size: 9px;
+    cursor: pointer;
+    z-index: 201;
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease, width 0.3s ease;
+  }
+
+  #depth-handle::before {
+    content: '◀';
+  }
+
+  /* 핸들 hover 또는 메뉴 영역 hover 시 슬라이드 인 (열림은 즉시) */
+  #depth-handle:hover ~ #depth-indicator,
+  #depth-indicator:hover {
+    transition-delay: 0s;
+    right: 25px;
+  }
+
+  /* 핸들 hover 상태 시각 피드백 - hover 시에만 선명해짐 */
+  #depth-handle:hover {
+    width: 18px;
+    background: rgba(255, 215, 0, 0.15);
+    border-color: var(--accent);
+    color: #fff;
+  }
+
+  /* 열린 상태에서 핸들 아이콘 반전 */
+  #depth-handle:hover::before,
+  body:has(#depth-indicator:hover) #depth-handle::before {
+    content: '▶';
+  }
+}
+
+@media (max-width: 768px) {
+  .shortcut-card { width: 100px; height: 105px; padding: 8px; border-radius: 14px; }
+  .shortcut-icon { width: 36px; height: 36px; font-size: 16px; }
+  .shortcut-icon img, .shortcut-icon svg { width: 28px; height: 28px; }
+  .shortcut-title { font-size: 10px; }
+  .shortcut-url { font-size: 7px; }
+  #section-title { font-size: 24px; letter-spacing: 4px; }
+  #section-subtitle { font-size: 10px; }
+  .section-cards { gap: 12px; max-width: min(400px, calc(100vw - 120px)); }
+
+  #util-icons {
+    top: 15px;
+    right: 15px;
+    gap: 8px;
+  }
+
+  .util-btn {
+    width: 34px;
+    height: 34px;
+    font-size: 16px;
+  }
+
+  #clock-widget {
+    padding: 8px 12px;
+  }
+
+  #clock-widget .time {
+    font-size: 20px;
+  }
+
+  #clock-widget .date {
+    font-size: 9px;
+  }
+
+  .card-actions { display: none; }
+
+  /* 캐러셀 모바일 */
+  .carousel-nav {
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+  }
+  .carousel-nav.prev { left: 10px; }
+  .carousel-nav.next { right: 10px; }
+
+  /* 세로 캐러셀용 버튼 위치 */
+  .carousel-nav.prev {
+    top: 35%;
+    left: 50%;
+    transform: translateX(-50%) rotate(90deg);
+  }
+  .carousel-nav.next {
+    top: 65%;
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%) rotate(90deg);
+  }
+
+  .carousel-dots {
+    bottom: auto;
+    right: 20px;
+    left: auto;
+    top: 50%;
+    transform: translateY(-50%);
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 480px) {
+  .shortcut-card { width: 80px; height: 85px; padding: 6px; border-radius: 12px; }
+  .shortcut-icon { width: 30px; height: 30px; }
+  .shortcut-icon img, .shortcut-icon svg { width: 24px; height: 24px; }
+  .shortcut-title { font-size: 9px; }
+  .shortcut-url { display: none; }
+  #section-title { font-size: 18px; letter-spacing: 2px; }
+  #section-subtitle { font-size: 9px; letter-spacing: 1px; }
+  #section-info { top: 30px; }
+  .section-cards { gap: 10px; max-width: 320px; }
+
+  /* 모바일 검색 영역 */
+  #search-area {
+    bottom: 15px;
+    left: 15px;
+    gap: 6px;
+  }
+
+  #search-container {
+    width: auto;
+  }
+
+  #recent-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+  }
+
+  #recent-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .search-box {
+    padding: 10px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    justify-content: center;
+    cursor: pointer;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .search-box .search-icon {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+  }
+
+  /* 펼쳐진 상태에서 아이콘 hover 효과 */
+  #search-container.search-expanded .search-box .search-icon:hover {
+    color: var(--accent);
+  }
+
+  .search-box #search-input {
+    width: 0;
+    padding: 0;
+    opacity: 0;
+    transition: all 0.3s ease;
+  }
+
+  .search-box .search-shortcut {
+    display: none;
+  }
+
+  /* 검색창 펼쳐진 상태 */
+  #search-container.search-expanded .search-box {
+    width: 220px;
+    border-radius: 12px;
+    padding: 10px 14px;
+    justify-content: flex-start;
+  }
+
+  #search-container.search-expanded .search-box #search-input {
+    width: 100%;
+    padding: 0 10px;
+    opacity: 1;
+  }
+
+  .search-results {
+    max-height: 200px;
+  }
+
+  /* 검색 결과 위치 조정 */
+  #search-container.search-expanded .search-results {
+    width: 220px;
+  }
+
+  #util-icons {
+    top: 10px;
+    right: 10px;
+    gap: 6px;
+  }
+
+  .util-btn {
+    width: 30px;
+    height: 30px;
+    font-size: 14px;
+  }
+
+  #easter-egg-panel {
+    grid-template-columns: repeat(5, 1fr);
+    gap: 4px;
+    padding: 6px;
+  }
+
+  .easter-btn {
+    width: 30px;
+    height: 30px;
+    font-size: 14px;
+  }
+
+  #clock-widget {
+    padding: 6px 10px;
+    top: 10px;
+    left: 10px;
+  }
+
+  #clock-widget .time {
+    font-size: 16px;
+  }
+
+  #scroll-hint {
+    bottom: 15px;
+    font-size: 10px;
+  }
+
+  #scroll-hint .mouse {
+    width: 18px;
+    height: 30px;
+  }
+
+  .color-bar-btn {
+    width: 12px;
+    height: 12px;
+  }
+
+  #color-bar {
+    padding: 8px 5px;
+    gap: 6px;
+  }
+
+  #sidebar-toggles {
+    top: calc(50% + 90px);
+    left: 12px;
+    gap: 6px;
+  }
+
+  #sidebar-toggles button {
+    width: 30px;
+    height: 30px;
+  }
+
+  #sidebar-toggles button svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .depth-dot {
+    padding: 4px 8px;
+    gap: 6px;
+  }
+
+  .depth-dot::after {
+    font-size: 10px;
+  }
+
+  .depth-dot::before {
+    width: 8px;
+    height: 8px;
+  }
+
+  #depth-indicator {
+    /* right 값은 900px 블록에서 관리 (숨김/hover). 여기선 gap만 축소 */
+    gap: 6px;
+  }
+
+  /* 768px 이하에서는 hover 복귀 위치도 더 가까이 */
+  #depth-handle:hover ~ #depth-indicator,
+  #depth-indicator:hover {
+    right: 10px;
+  }
+
+  .bottom-buttons {
+    bottom: 12px;
+    right: 12px;
+    gap: 8px;
+  }
+
+  .floating-btn {
+    width: 36px;
+    height: 36px;
+    font-size: 14px;
+  }
+
+  #add-btn {
+    font-size: 18px;
+  }
+
+  /* 설정 메뉴 모바일 최적화 */
+  #settings-menu {
+    bottom: 60px;
+    right: 12px;
+    min-width: 180px;
+    max-height: 70vh;
+    overflow-y: auto;
+    padding: 8px 0;
+  }
+
+  .settings-item {
+    padding: 10px 14px;
+    font-size: 12px;
+  }
+
+  .settings-item .icon {
+    font-size: 14px;
+  }
+
+  .settings-credits {
+    padding: 10px 14px;
+  }
+
+  .credits-name {
+    font-size: 12px;
+  }
+
+  .credits-tagline {
+    font-size: 9px;
+  }
+
+  /* 터널 서브메뉴 모바일 */
+  #tunnel-submenu {
+    bottom: 60px;
+    right: 12px;
+    left: auto;
+    min-width: 120px;
+  }
+
+  .tunnel-option {
+    padding: 8px 12px;
+    font-size: 11px;
+  }
+
+  /* 카드 스타일 서브메뉴 모바일 */
+  #card-style-submenu {
+    bottom: 60px;
+    right: 12px;
+    left: auto;
+    min-width: 120px;
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+
+  .card-style-option {
+    padding: 8px 12px;
+    font-size: 11px;
+  }
+
+  .style-preview {
+    width: 16px;
+    height: 16px;
+  }
+
+  /* 왼쪽 사이드바 - 모바일에서 인디케이터로 토글 */
+  #left-sidebar-container {
+    display: flex;
+    align-items: center;
+    pointer-events: auto;
+  }
+
+  #left-sidebar-indicator {
+    display: flex;
+    position: relative;
+    z-index: 210;
+  }
+
+  /* 모바일에서 기존 fixed 메뉴 숨김 */
+  #color-bar,
+  #sidebar-toggles {
+    display: none !important;
+  }
+
+  #left-sidebar-menus {
+    position: absolute;
+    left: -150px;
+    top: 50%;
+    transform: translateY(-50%);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    background: rgba(10, 10, 15, 0.95);
+    backdrop-filter: blur(15px);
+    border-radius: 0 16px 16px 0;
+    padding: 15px;
+    border: 1px solid rgba(255, 215, 0, 0.15);
+    border-left: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  #left-sidebar-container.menu-open #left-sidebar-menus {
+    left: 0;
+    opacity: 1;
+    visibility: visible;
+  }
+
+  /* 메뉴 안의 컬러바/토글은 다시 표시 */
+  #left-sidebar-menus #color-bar,
+  #left-sidebar-menus #sidebar-toggles {
+    display: flex !important;
+    position: relative;
+    left: 0;
+    top: 0;
+    transform: none;
+  }
+
+  #left-sidebar-menus #color-bar {
+    padding: 8px;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 6px;
+    width: 100px;
+    background: transparent;
+    border: none;
+    backdrop-filter: none;
+  }
+
+  #left-sidebar-menus #color-bar #color-bar-label {
+    width: 100%;
+    writing-mode: horizontal-tb;
+    transform: none;
+    text-align: center;
+    margin-bottom: 5px;
+  }
+
+  #left-sidebar-menus #color-bar .color-bar-options {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  #left-sidebar-menus #sidebar-toggles {
+    flex-direction: row;
+    margin-top: 0;
+    gap: 6px;
+  }
+
+  #left-sidebar-menus #sidebar-toggles button {
+    width: 32px;
+    height: 32px;
+  }
+
+  /* 이스터에그 - 모바일에서 클릭으로 토글 */
+  #easter-egg-container {
+    top: 60px;
+    left: 10px;
+  }
+
+  #easter-egg-indicator {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+  }
+
+  /* 모바일에서 터치를 위해 컨테이너에 클래스 추가 시 패널 표시 */
+  #easter-egg-container.show-buttons #easter-egg-panel {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(0);
+  }
+}
