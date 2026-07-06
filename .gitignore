@@ -81,3 +81,11 @@ next-env.d.ts
 *.xls
 *.xlsx
 *.mp4
+
+# PowerBuilder 바이너리 (라이브러리/컴파일/실행파일 - 소스 외, 참조용)
+*.pbl
+*.pbd
+*.pbt
+*.dll
+*.ocx
+*.exe
