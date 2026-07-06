@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** OEE 도메인을 **완전 자립형**으로 완성한다 — 자체 근무마스터·생산실적 테이블을 신설하고, 계획가동시간 파생 뷰·실시간 OEE 뷰·마감 스냅샷 프로시저를 만들어 공정별 OEE 대시보드 3종을 제공한다.
+**Goal:** OEE 도메인을 **완전 자립형**으로 완성한다 — 공정별 2교대 근무마스터·생산실적(계획/실적/픽업)·원자재준비·고객불량 테이블을 신설하고, 계획가동 파생 뷰·실시간 OEE 뷰(부가지표 포함)·마감 스냅샷 프로시저를 만들어 공정별 OEE 대시보드 3종을 제공한다.
 
-**Architecture:** 기존 MES는 **런타임 조회하지 않는다**(스펙 REV2). 계획가동은 `OEE_WORK_CALENDAR × OEE_WORKTIME_RANGE`에서 파생(`V_OEE_PLAN_TIME`), 생산수량은 `OEE_PRODUCTION_RESULT`에서, 가동/비가동은 `OEE_OPERATION_LOG`에서 조합해 `V_OEE_LIVE`(실시간)를 만든다. 마감 스냅샷은 `P_OEE_BUILD_SUMMARY`만 생성하며, 과거 스냅샷 부재 시 폴백 없이 오류(`OEE_SUMMARY_NOT_BUILT`)를 낸다.
+**Architecture:** 기존 MES는 **런타임 조회하지 않는다**(스펙 REV2~4). 계획가동은 `OEE_WORK_CALENDAR × OEE_WORKTIME_RANGE`(공정별·2교대)에서 파생(`V_OEE_PLAN_TIME`), 생산·픽업은 `OEE_PRODUCTION_RESULT`, 가동/비가동은 `OEE_OPERATION_LOG`를 조합해 `V_OEE_LIVE`(가동/성능/양품/OEE + UPH/계획달성/픽업)를 만든다. 마감 스냅샷은 `P_OEE_BUILD_SUMMARY`만 생성, 과거 스냅샷 부재 시 폴백 없이 오류(`OEE_SUMMARY_NOT_BUILT`)를 낸다. 원자재준비율·고객불량은 OEE 곱셈 밖의 선행/사후 KPI로 별도 테이블·위젯.
 
 **Tech Stack:** Oracle(뷰/프로시저/스케줄러), Next.js 16 display 라우트, Recharts, SWR.
 
@@ -13,43 +13,43 @@
 ## Global Constraints
 
 - 기존 MES 테이블·함수 **런타임 의존 금지** — OEE 도메인 객체만 조인.
-- OEE 계산식은 `src/lib/oee/oee-calc.ts`(플랜 1)와 **동일 정의**로 SQL에 구현 — 값 불일치 시 정합성 테스트(Task 7)에서 검출.
-- 스냅샷은 `P_OEE_BUILD_SUMMARY`만 생성. 과거 조회 시 스냅샷 없으면 **오류 반환(폴백 없음)**.
-- display 화면은 기존 `screens.ts`/`DisplayLayout`/`config/cards.json` 패턴 준수.
-- Oracle 오류 원문 보존. 소스 UTF-8.
+- OEE 계산식은 `src/lib/oee/oee-calc.ts`(플랜 1)와 **동일 정의**로 SQL 구현 — Task 9 정합성 테스트로 일치 강제.
+- 스냅샷은 `P_OEE_BUILD_SUMMARY`만 생성. 과거 조회 시 스냅샷 없으면 **오류(폴백 없음)**.
+- `organization_id = 1` 단일. 작업자 사번 `VARCHAR2(50)`. 근무 2교대(DAY/NIGHT), 근무시간 공정별 상이.
+- 원자재준비율·고객불량은 OEE 곱셈식에 **미포함**(선행/사후 KPI, 대시보드 위젯).
+- Oracle 오류 원문 보존. 소스 UTF-8. display 화면은 기존 `screens.ts`/`DisplayLayout`/`cards.json` 패턴 준수.
 
 ## File Structure
 
 | 파일 | 책임 |
 |---|---|
-| `oracle_db_scripts/oee/03_tables_ext.sql` | OEE_WORK_CALENDAR, OEE_WORKTIME_RANGE, OEE_PRODUCTION_RESULT DDL + 시드 |
-| `oracle_db_scripts/oee/04_view_plan_time.sql` | `V_OEE_PLAN_TIME` 파생 뷰 |
-| `oracle_db_scripts/oee/05_view_live.sql` | `V_OEE_LIVE` 실시간 OEE 뷰 |
-| `oracle_db_scripts/oee/06_proc_build_summary.sql` | `P_OEE_BUILD_SUMMARY` 마감 스냅샷 프로시저 |
-| `src/lib/queries/oee/production.ts` | 생산실적 INSERT/SELECT 빌더 |
-| `src/lib/queries/oee/dashboard.ts` | 실시간/스냅샷 조회 빌더 |
-| `src/app/api/oee/production/route.ts` | 생산실적 저장 API |
-| `src/app/api/display/44/route.ts` | 공정별 OEE 종합 |
-| `src/app/api/display/45/route.ts` | 리소스 드릴다운 |
-| `src/app/api/display/46/route.ts` | 로스 파레토 |
-| `src/components/display/screens/oee-overview/OeeOverview.tsx` | 44 화면 |
-| `src/components/display/screens/oee-drilldown/OeeDrilldown.tsx` | 45 화면 |
-| `src/components/display/screens/oee-loss/OeeLoss.tsx` | 46 화면 |
-| `src/lib/screens.ts` / `config/cards.json` / `src/lib/queries/sql-registry.ts` | 등록 |
+| `oracle_db_scripts/oee/03_tables_ext.sql` | 근무마스터·생산실적·원자재준비·고객불량 DDL + 시드 |
+| `oracle_db_scripts/oee/04_view_plan_time.sql` | `V_OEE_PLAN_TIME`(공정별 조인) |
+| `oracle_db_scripts/oee/05_view_live.sql` | `V_OEE_LIVE`(OEE + 부가지표) |
+| `oracle_db_scripts/oee/06_proc_build_summary.sql` | `P_OEE_BUILD_SUMMARY` |
+| `src/lib/queries/oee/worktime.ts` `production.ts` `readiness.ts` `dashboard.ts` | 쿼리 빌더 |
+| `src/app/api/oee/worktime`·`production`·`plan-time`·`material`·`customer` | write/조회 API |
+| `src/app/api/display/44`·`45`·`46` | 대시보드 조회 API |
+| `src/app/(oee)/oee/master/worktime`·`input/material`·`input/customer` | 마스터·입력 화면 |
+| `src/components/display/screens/oee-*` | 대시보드 3종 |
+| `src/lib/screens.ts`·`config/cards.json`·`src/lib/queries/sql-registry.ts` | 등록 |
 
 ---
 
-## Task 1: 자립형 테이블 추가 (근무마스터 + 생산실적)
+## Task 1: 자립형 테이블 추가 (근무마스터·생산실적·원자재준비·고객불량)
 
 **Files:**
 - Create: `oracle_db_scripts/oee/03_tables_ext.sql`
-- Create: `docs/sql/oee_tables_ext_snapshot.sql` (근거 스냅샷)
+- Create: `docs/sql/oee_tables_ext_snapshot.sql`
 
 **Interfaces:**
 - Produces:
   - `OEE_WORK_CALENDAR(organization_id, work_date, holiday_yn, remark)`
-  - `OEE_WORKTIME_RANGE(range_id, organization_id, shift, range_type, start_hhmm, end_hhmm, sort_order)`
-  - `OEE_PRODUCTION_RESULT(result_id, organization_id, resource_id, process_code, work_date, shift, run_no, output_qty, good_qty, defect_qty, source, created_by, created_date)`
+  - `OEE_WORKTIME_RANGE(range_id, organization_id, process_code, shift, range_type, start_hhmm, end_hhmm, sort_order)`
+  - `OEE_PRODUCTION_RESULT(result_id, organization_id, resource_id, process_code, work_date, shift, run_no, plan_qty, output_qty, good_qty, defect_qty, pickup_rate, source, created_by, created_date)`
+  - `OEE_MATERIAL_READINESS(readiness_id, organization_id, work_date, process_code, plan_qty, ready_qty, readiness_rate, created_by, created_date)`
+  - `OEE_CUSTOMER_DEFECT(defect_id, organization_id, work_date, model_code, return_qty, remark, created_by, created_date)`
+  - 추가 사유 시드: `PREV_WAIT`(前공정 자재 대기, MATERIAL/AVAILABILITY)
 
 - [ ] **Step 1: `03_tables_ext.sql` 작성**
 
@@ -57,18 +57,19 @@
 CREATE TABLE OEE_WORK_CALENDAR (
   ORGANIZATION_ID NUMBER      NOT NULL,
   WORK_DATE       DATE        NOT NULL,
-  HOLIDAY_YN      CHAR(1)     DEFAULT 'N' NOT NULL,   -- Y=휴무
+  HOLIDAY_YN      CHAR(1)     DEFAULT 'N' NOT NULL,
   REMARK          VARCHAR2(100),
   CONSTRAINT PK_OEE_WORKCAL PRIMARY KEY (ORGANIZATION_ID, WORK_DATE)
 );
 
 CREATE TABLE OEE_WORKTIME_RANGE (
   RANGE_ID        NUMBER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
-  ORGANIZATION_ID NUMBER      NOT NULL,
-  SHIFT           VARCHAR2(10) NOT NULL,   -- DAY/NIGHT
+  ORGANIZATION_ID NUMBER       NOT NULL,
+  PROCESS_CODE    VARCHAR2(20) NOT NULL,   -- 공정별 근무시간
+  SHIFT           VARCHAR2(10) NOT NULL,   -- DAY/NIGHT (2교대)
   RANGE_TYPE      VARCHAR2(10) NOT NULL,   -- WORK/BREAK
-  START_HHMM      VARCHAR2(4)  NOT NULL,   -- '0830'
-  END_HHMM        VARCHAR2(4)  NOT NULL,   -- '1730'
+  START_HHMM      VARCHAR2(4)  NOT NULL,
+  END_HHMM        VARCHAR2(4)  NOT NULL,
   SORT_ORDER      NUMBER       DEFAULT 0 NOT NULL
 );
 
@@ -80,68 +81,100 @@ CREATE TABLE OEE_PRODUCTION_RESULT (
   WORK_DATE       DATE         NOT NULL,
   SHIFT           VARCHAR2(10) NOT NULL,
   RUN_NO          VARCHAR2(50),
-  OUTPUT_QTY      NUMBER       DEFAULT 0 NOT NULL,
+  PLAN_QTY        NUMBER       DEFAULT 0 NOT NULL,   -- LOT 생산계획
+  OUTPUT_QTY      NUMBER       DEFAULT 0 NOT NULL,   -- 생산(검사)수량
   GOOD_QTY        NUMBER       DEFAULT 0 NOT NULL,
   DEFECT_QTY      NUMBER       DEFAULT 0 NOT NULL,
-  SOURCE          VARCHAR2(10) DEFAULT 'MANUAL' NOT NULL,  -- MANUAL/EQUIP/PDA
+  PICKUP_RATE     NUMBER,                            -- SMT 픽업율(%) nullable
+  SOURCE          VARCHAR2(10) DEFAULT 'MANUAL' NOT NULL,
   CREATED_BY      VARCHAR2(50) NOT NULL,
   CREATED_DATE    DATE         DEFAULT SYSDATE NOT NULL
 );
 CREATE INDEX IX_OEE_PROD_RES_DATE ON OEE_PRODUCTION_RESULT(RESOURCE_ID, WORK_DATE, SHIFT);
 
--- 근무시간대 시드 (주간 08:30~17:30, 휴식 12:00~13:00). ORGANIZATION_ID=1 치환.
-INSERT INTO OEE_WORKTIME_RANGE (ORGANIZATION_ID, SHIFT, RANGE_TYPE, START_HHMM, END_HHMM, SORT_ORDER) VALUES (1,'DAY','WORK','0830','1730',10);
-INSERT INTO OEE_WORKTIME_RANGE (ORGANIZATION_ID, SHIFT, RANGE_TYPE, START_HHMM, END_HHMM, SORT_ORDER) VALUES (1,'DAY','BREAK','1200','1300',20);
+CREATE TABLE OEE_MATERIAL_READINESS (
+  READINESS_ID    NUMBER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+  ORGANIZATION_ID NUMBER       NOT NULL,
+  WORK_DATE       DATE         NOT NULL,
+  PROCESS_CODE    VARCHAR2(20) DEFAULT 'SMT' NOT NULL,
+  PLAN_QTY        NUMBER       DEFAULT 0 NOT NULL,
+  READY_QTY       NUMBER       DEFAULT 0 NOT NULL,
+  READINESS_RATE  NUMBER       DEFAULT 0 NOT NULL,   -- ready/plan
+  CREATED_BY      VARCHAR2(50) NOT NULL,
+  CREATED_DATE    DATE         DEFAULT SYSDATE NOT NULL
+);
+
+CREATE TABLE OEE_CUSTOMER_DEFECT (
+  DEFECT_ID       NUMBER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+  ORGANIZATION_ID NUMBER       NOT NULL,
+  WORK_DATE       DATE         NOT NULL,
+  MODEL_CODE      VARCHAR2(50),
+  RETURN_QTY      NUMBER       DEFAULT 0 NOT NULL,
+  REMARK          VARCHAR2(500),
+  CREATED_BY      VARCHAR2(50) NOT NULL,
+  CREATED_DATE    DATE         DEFAULT SYSDATE NOT NULL
+);
+
+-- 前공정 자재 대기 사유 (플랜1 시드에 없던 항목 보충)
+INSERT INTO OEE_DOWNTIME_REASON (REASON_CODE, ORGANIZATION_ID, PROCESS_CODE, REASON_NAME, LOSS_BUCKET, OEE_FACTOR, SORT_ORDER)
+  VALUES ('PREV_WAIT', 1, '*', '前공정 자재 대기', 'MATERIAL', 'AVAILABILITY', 15);
+
+-- 근무시간 시드 (공정별·2교대). 예: SMT 주간 08:30~17:30 / 야간 20:30~익일05:30, 휴식 1h. 실제값은 관리화면에서 조정.
+INSERT INTO OEE_WORKTIME_RANGE (ORGANIZATION_ID, PROCESS_CODE, SHIFT, RANGE_TYPE, START_HHMM, END_HHMM, SORT_ORDER) VALUES (1,'SMT','DAY','WORK','0830','1730',10);
+INSERT INTO OEE_WORKTIME_RANGE (ORGANIZATION_ID, PROCESS_CODE, SHIFT, RANGE_TYPE, START_HHMM, END_HHMM, SORT_ORDER) VALUES (1,'SMT','DAY','BREAK','1200','1300',20);
+INSERT INTO OEE_WORKTIME_RANGE (ORGANIZATION_ID, PROCESS_CODE, SHIFT, RANGE_TYPE, START_HHMM, END_HHMM, SORT_ORDER) VALUES (1,'SMT','NIGHT','WORK','2030','0530',30);
+INSERT INTO OEE_WORKTIME_RANGE (ORGANIZATION_ID, PROCESS_CODE, SHIFT, RANGE_TYPE, START_HHMM, END_HHMM, SORT_ORDER) VALUES (1,'SMT','NIGHT','BREAK','0000','0100',40);
 COMMIT;
 ```
 
 - [ ] **Step 2: 배포 + 검증**
 
-`oracle-db` 스킬로 배포 후:
 ```sql
-SELECT table_name FROM user_tables WHERE table_name IN ('OEE_WORK_CALENDAR','OEE_WORKTIME_RANGE','OEE_PRODUCTION_RESULT');
-SELECT COUNT(*) FROM OEE_WORKTIME_RANGE;
+SELECT table_name FROM user_tables WHERE table_name IN
+  ('OEE_WORK_CALENDAR','OEE_WORKTIME_RANGE','OEE_PRODUCTION_RESULT','OEE_MATERIAL_READINESS','OEE_CUSTOMER_DEFECT');
+SELECT COUNT(*) FROM OEE_WORKTIME_RANGE;                     -- 4
+SELECT COUNT(*) FROM OEE_DOWNTIME_REASON WHERE REASON_CODE='PREV_WAIT';  -- 1
 ```
-Expected: 3개 테이블, WORKTIME 2행.
+Expected: 5개 테이블, WORKTIME 4행, PREV_WAIT 1행.
 
-- [ ] **Step 3: 근거 스냅샷 복사 + 커밋**
+- [ ] **Step 3: 스냅샷 복사 + 커밋**
 
 `docs/sql/oee_tables_ext_snapshot.sql`에 복사.
 ```bash
 git add oracle_db_scripts/oee/03_tables_ext.sql docs/sql/oee_tables_ext_snapshot.sql
-git commit -m "feat(oee): add self-contained work-calendar/worktime/production tables"
+git commit -m "feat(oee): add worktime(process/2shift), production(plan/pickup), material, customer tables"
 ```
 
 ---
 
-## Task 2: 계획가동시간 파생 뷰 `V_OEE_PLAN_TIME`
+## Task 2: 계획가동시간 파생 뷰 `V_OEE_PLAN_TIME` (공정별)
 
 **Files:**
 - Create: `oracle_db_scripts/oee/04_view_plan_time.sql`
 
 **Interfaces:**
-- Produces 뷰 컬럼: `RESOURCE_ID, ORGANIZATION_ID, WORK_DATE, SHIFT, PLANNED_MINUTES, PLANNED_STOP_MINUTES, NET_LOAD_MINUTES`
-- 규칙: 근무일(`HOLIDAY_YN='N'`)만. WORK 합=근무, BREAK 합=휴식, net=근무-휴식. `OEE_PLAN_TIME.OVERRIDE_YN='Y'` 있으면 그 값 우선. 야간(end<start)은 +1440.
+- Produces 컬럼: `RESOURCE_ID, ORGANIZATION_ID, WORK_DATE, SHIFT, PLANNED_MINUTES, PLANNED_STOP_MINUTES, NET_LOAD_MINUTES`
+- 규칙: 근무일(`HOLIDAY_YN='N'`)만. 근무시간대는 **리소스 공정(`PROCESS_CODE`)과 매칭**. 야간(end<start)은 +1440. `OEE_PLAN_TIME.OVERRIDE_YN='Y'` 우선.
 
 - [ ] **Step 1: 뷰 작성**
 
 ```sql
 CREATE OR REPLACE VIEW V_OEE_PLAN_TIME AS
 WITH wt AS (
-  SELECT ORGANIZATION_ID, SHIFT,
+  SELECT ORGANIZATION_ID, PROCESS_CODE, SHIFT,
          SUM(CASE WHEN RANGE_TYPE='WORK'  THEN DUR ELSE 0 END) AS PLANNED,
          SUM(CASE WHEN RANGE_TYPE='BREAK' THEN DUR ELSE 0 END) AS BRK
     FROM (
-      SELECT ORGANIZATION_ID, SHIFT, RANGE_TYPE,
+      SELECT ORGANIZATION_ID, PROCESS_CODE, SHIFT, RANGE_TYPE,
              CASE WHEN E_MIN >= S_MIN THEN E_MIN - S_MIN ELSE E_MIN - S_MIN + 1440 END AS DUR
         FROM (
-          SELECT ORGANIZATION_ID, SHIFT, RANGE_TYPE,
+          SELECT ORGANIZATION_ID, PROCESS_CODE, SHIFT, RANGE_TYPE,
                  TO_NUMBER(SUBSTR(START_HHMM,1,2))*60 + TO_NUMBER(SUBSTR(START_HHMM,3,2)) AS S_MIN,
                  TO_NUMBER(SUBSTR(END_HHMM,1,2))*60   + TO_NUMBER(SUBSTR(END_HHMM,3,2))   AS E_MIN
             FROM OEE_WORKTIME_RANGE
         )
     )
-   GROUP BY ORGANIZATION_ID, SHIFT
+   GROUP BY ORGANIZATION_ID, PROCESS_CODE, SHIFT
 )
 SELECT r.RESOURCE_ID, r.ORGANIZATION_ID, c.WORK_DATE, wt.SHIFT,
        NVL(ov.PLANNED_MINUTES,      wt.PLANNED)              AS PLANNED_MINUTES,
@@ -149,7 +182,7 @@ SELECT r.RESOURCE_ID, r.ORGANIZATION_ID, c.WORK_DATE, wt.SHIFT,
        NVL(ov.NET_LOAD_MINUTES,     wt.PLANNED - wt.BRK)     AS NET_LOAD_MINUTES
   FROM OEE_RESOURCE r
   JOIN OEE_WORK_CALENDAR c ON c.ORGANIZATION_ID = r.ORGANIZATION_ID AND c.HOLIDAY_YN = 'N'
-  JOIN wt                  ON wt.ORGANIZATION_ID = r.ORGANIZATION_ID
+  JOIN wt ON wt.ORGANIZATION_ID = r.ORGANIZATION_ID AND wt.PROCESS_CODE = r.PROCESS_CODE
   LEFT JOIN OEE_PLAN_TIME ov ON ov.RESOURCE_ID = r.RESOURCE_ID AND ov.WORK_DATE = c.WORK_DATE
                             AND ov.SHIFT = wt.SHIFT AND ov.OVERRIDE_YN = 'Y'
  WHERE r.USE_YN = 'Y';
@@ -157,46 +190,124 @@ SELECT r.RESOURCE_ID, r.ORGANIZATION_ID, c.WORK_DATE, wt.SHIFT,
 
 - [ ] **Step 2: 배포 + 검증**
 
-시드 확인용 데이터 삽입 후 조회:
 ```sql
 INSERT INTO OEE_WORK_CALENDAR (ORGANIZATION_ID, WORK_DATE, HOLIDAY_YN) VALUES (1, TRUNC(SYSDATE), 'N');
 COMMIT;
 SELECT RESOURCE_ID, SHIFT, PLANNED_MINUTES, PLANNED_STOP_MINUTES, NET_LOAD_MINUTES
   FROM V_OEE_PLAN_TIME WHERE WORK_DATE = TRUNC(SYSDATE);
 ```
-Expected: 리소스별 DAY 행, PLANNED=540, STOP=60, NET_LOAD=480 (08:30~17:30 - 휴식1h).
+Expected: SMT 리소스 DAY 행 NET_LOAD=480(540-60), NIGHT 행 NET_LOAD=480(09h-1h). 다른 공정은 근무시간 등록 후 표시.
 
 - [ ] **Step 3: 커밋**
 
 ```bash
 git add oracle_db_scripts/oee/04_view_plan_time.sql
-git commit -m "feat(oee): add V_OEE_PLAN_TIME derived load-time view"
+git commit -m "feat(oee): add V_OEE_PLAN_TIME derived view (process-scoped, 2-shift)"
 ```
 
 ---
 
-## Task 3: 생산실적 API + 입력화면 수량 섹션 + 계획가동 자동 로드
+## Task 3: 근무시간 마스터 API + 화면
+
+**Files:**
+- Create: `src/lib/queries/oee/worktime.ts`
+- Create: `src/app/api/oee/worktime/route.ts`
+- Create: `src/app/(oee)/oee/master/worktime/page.tsx`
+
+**Interfaces:**
+- Produces: `sqlSelectWorktime()`, `sqlDeleteWorktime()`, `sqlInsertWorktime()`; `GET /api/oee/worktime?processCode=&shift=` → `{ rows }`, `POST` = (process,shift) replace 저장.
+
+- [ ] **Step 1: 빌더 작성**
+
+`src/lib/queries/oee/worktime.ts`:
+```ts
+/** OEE_WORKTIME_RANGE 빌더 (공정·교대 단위 관리) */
+export function sqlSelectWorktime(): string {
+  return `SELECT RANGE_ID, PROCESS_CODE, SHIFT, RANGE_TYPE, START_HHMM, END_HHMM, SORT_ORDER
+  FROM OEE_WORKTIME_RANGE
+ WHERE PROCESS_CODE = :processCode AND SHIFT = :shift
+ ORDER BY SORT_ORDER`;
+}
+export function sqlDeleteWorktime(): string {
+  return `DELETE FROM OEE_WORKTIME_RANGE WHERE PROCESS_CODE = :processCode AND SHIFT = :shift`;
+}
+export function sqlInsertWorktime(): string {
+  return `INSERT INTO OEE_WORKTIME_RANGE (ORGANIZATION_ID, PROCESS_CODE, SHIFT, RANGE_TYPE, START_HHMM, END_HHMM, SORT_ORDER)
+  VALUES (:organizationId, :processCode, :shift, :rangeType, :startHhmm, :endHhmm, :sortOrder)`;
+}
+```
+
+- [ ] **Step 2: API 작성**
+
+`src/app/api/oee/worktime/route.ts` — GET는 `sqlSelectWorktime`, POST는 (process,shift) DELETE + INSERT를 `executeTransaction`으로. body `{ organizationId, processCode, shift, ranges: [{ rangeType, startHhmm, endHhmm, sortOrder }] }`:
+```ts
+/** @file OEE 근무시간 마스터 API — (공정,교대) replace 저장 */
+import { NextResponse } from 'next/server';
+import { executeQuery, executeTransaction } from '@/lib/db';
+import { sqlSelectWorktime, sqlDeleteWorktime, sqlInsertWorktime } from '@/lib/queries/oee/worktime';
+
+export const dynamic = 'force-dynamic';
+interface Range { rangeType: 'WORK' | 'BREAK'; startHhmm: string; endHhmm: string; sortOrder: number; }
+interface Body { organizationId: number; processCode: string; shift: string; ranges: Range[]; }
+
+export async function GET(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const rows = await executeQuery(sqlSelectWorktime(), { processCode: searchParams.get('processCode') ?? '', shift: searchParams.get('shift') ?? '' });
+    return NextResponse.json({ rows });
+  } catch (error) {
+    console.error('[API /oee/worktime GET]', error);
+    return NextResponse.json({ error: 'Database query failed', rows: [] }, { status: 500 });
+  }
+}
+export async function POST(request: Request) {
+  try {
+    const b = (await request.json()) as Body;
+    if (!b.processCode || !b.shift) return NextResponse.json({ error: 'processCode, shift 는 필수입니다' }, { status: 400 });
+    const statements = [
+      { sql: sqlDeleteWorktime(), binds: { processCode: b.processCode, shift: b.shift } },
+      ...b.ranges.map((r) => ({ sql: sqlInsertWorktime(), binds: { organizationId: b.organizationId, processCode: b.processCode, shift: b.shift, rangeType: r.rangeType, startHhmm: r.startHhmm, endHhmm: r.endHhmm, sortOrder: r.sortOrder } })),
+    ];
+    await executeTransaction(statements);
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    console.error('[API /oee/worktime POST]', error);
+    return NextResponse.json({ error: 'Database query failed' }, { status: 500 });
+  }
+}
+```
+
+- [ ] **Step 3: 관리 화면 작성**
+
+`src/app/(oee)/oee/master/worktime/page.tsx` — 공정 select(SMT/PERF/COAT/ROUTER/ASSY/PACK) + 교대 select(DAY/NIGHT) 선택 → 해당 근무/휴식 구간 목록 편집(추가/삭제) → 저장(POST). 리소스 마스터 화면(플랜 2 Task 3)과 동일한 SWR+폼 패턴. 필드: `rangeType`(WORK/BREAK), `startHhmm`, `endHhmm`, `sortOrder`.
+
+- [ ] **Step 4: 타입 체크 + 검증 + 커밋**
+
+Run: `npx tsc --noEmit --pretty false` → 에러 없음. `/oee/master/worktime`에서 SMT/DAY 구간 조회·수정 확인.
+```bash
+git add src/lib/queries/oee/worktime.ts src/app/api/oee/worktime "src/app/(oee)/oee/master/worktime"
+git commit -m "feat(oee): add worktime master API and screen"
+```
+
+---
+
+## Task 4: 생산실적 API(계획/픽업) + 계획가동 자동로드 + 입력화면 수량 섹션
 
 **Files:**
 - Create: `src/lib/queries/oee/production.ts`
-- Create: `src/app/api/oee/production/route.ts`
-- Create: `src/app/api/oee/plan-time/route.ts`
-- Modify: `src/app/(oee)/oee/entry/page.tsx` (플랜 2) — 수량 입력 + netLoad 자동 로드
+- Create: `src/app/api/oee/production/route.ts`, `src/app/api/oee/plan-time/route.ts`
+- Modify: `src/app/(oee)/oee/entry/page.tsx` (플랜 2)
 
 **Interfaces:**
-- Consumes: `executeQuery`/`executeTransaction`.
-- Produces:
-  - `sqlSelectProduction()`, `sqlDeleteProduction()`, `sqlInsertProduction()`
-  - `POST /api/oee/production` `{ organizationId, resourceId, processCode, workDate, shift, createdBy, rows: [{ runNo, outputQty, goodQty, defectQty }] }` → 근무조 replace 저장.
-  - `GET /api/oee/plan-time?resourceId=&workDate=&shift=` → `{ netLoadMinutes: number | null }` (V_OEE_PLAN_TIME 조회).
+- Produces: `sqlSelectProduction/DeleteProduction/InsertProduction/SelectPlanTime`; `POST /api/oee/production` body `{ ..., rows:[{ runNo, planQty, outputQty, goodQty, defectQty, pickupRate }] }`; `GET /api/oee/plan-time` → `{ netLoadMinutes }`.
 
-- [ ] **Step 1: 생산실적 빌더 작성**
+- [ ] **Step 1: 빌더 작성**
 
 `src/lib/queries/oee/production.ts`:
 ```ts
-/** OEE_PRODUCTION_RESULT 근무조 단위 빌더 */
+/** OEE_PRODUCTION_RESULT 근무조 빌더 (계획/실적/픽업) */
 export function sqlSelectProduction(): string {
-  return `SELECT RESULT_ID, RUN_NO, OUTPUT_QTY, GOOD_QTY, DEFECT_QTY, SOURCE
+  return `SELECT RESULT_ID, RUN_NO, PLAN_QTY, OUTPUT_QTY, GOOD_QTY, DEFECT_QTY, PICKUP_RATE, SOURCE
   FROM OEE_PRODUCTION_RESULT
  WHERE RESOURCE_ID = :resourceId AND WORK_DATE = TO_DATE(:workDate,'YYYY-MM-DD') AND SHIFT = :shift
  ORDER BY RESULT_ID`;
@@ -207,59 +318,46 @@ export function sqlDeleteProduction(): string {
 }
 export function sqlInsertProduction(): string {
   return `INSERT INTO OEE_PRODUCTION_RESULT
-    (ORGANIZATION_ID, RESOURCE_ID, PROCESS_CODE, WORK_DATE, SHIFT, RUN_NO, OUTPUT_QTY, GOOD_QTY, DEFECT_QTY, SOURCE, CREATED_BY)
+    (ORGANIZATION_ID, RESOURCE_ID, PROCESS_CODE, WORK_DATE, SHIFT, RUN_NO, PLAN_QTY, OUTPUT_QTY, GOOD_QTY, DEFECT_QTY, PICKUP_RATE, SOURCE, CREATED_BY)
   VALUES
-    (:organizationId, :resourceId, :processCode, TO_DATE(:workDate,'YYYY-MM-DD'), :shift, :runNo, :outputQty, :goodQty, :defectQty, 'MANUAL', :createdBy)`;
+    (:organizationId, :resourceId, :processCode, TO_DATE(:workDate,'YYYY-MM-DD'), :shift, :runNo, :planQty, :outputQty, :goodQty, :defectQty, :pickupRate, 'MANUAL', :createdBy)`;
 }
 export function sqlSelectPlanTime(): string {
-  return `SELECT NET_LOAD_MINUTES
-  FROM V_OEE_PLAN_TIME
+  return `SELECT NET_LOAD_MINUTES FROM V_OEE_PLAN_TIME
  WHERE RESOURCE_ID = :resourceId AND WORK_DATE = TO_DATE(:workDate,'YYYY-MM-DD') AND SHIFT = :shift`;
 }
 ```
 
 - [ ] **Step 2: 생산실적 API 작성**
 
-`src/app/api/oee/production/route.ts`:
+`src/app/api/oee/production/route.ts` — 플랜 2의 로그 API와 동일한 replace-트랜잭션 구조. body rows 필드: `runNo, planQty, outputQty, goodQty, defectQty, pickupRate`:
 ```ts
-/** @file OEE 생산실적 API — 근무조 replace 저장(MANUAL) */
+/** @file OEE 생산실적 API — 근무조 replace(MANUAL). 계획/실적/양품/불량/픽업 */
 import { NextResponse } from 'next/server';
 import { executeQuery, executeTransaction } from '@/lib/db';
 import { sqlSelectProduction, sqlDeleteProduction, sqlInsertProduction } from '@/lib/queries/oee/production';
 
 export const dynamic = 'force-dynamic';
-
-interface ProdRow { runNo: string | null; outputQty: number; goodQty: number; defectQty: number; }
-interface ProdBody { organizationId: number; resourceId: number; processCode: string; workDate: string; shift: string; createdBy: string; rows: ProdRow[]; }
+interface Row { runNo: string | null; planQty: number; outputQty: number; goodQty: number; defectQty: number; pickupRate: number | null; }
+interface Body { organizationId: number; resourceId: number; processCode: string; workDate: string; shift: string; createdBy: string; rows: Row[]; }
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const binds = { resourceId: Number(searchParams.get('resourceId')), workDate: searchParams.get('workDate') ?? '', shift: searchParams.get('shift') ?? '' };
-    const rows = await executeQuery(sqlSelectProduction(), binds);
+    const rows = await executeQuery(sqlSelectProduction(), { resourceId: Number(searchParams.get('resourceId')), workDate: searchParams.get('workDate') ?? '', shift: searchParams.get('shift') ?? '' });
     return NextResponse.json({ rows });
   } catch (error) {
     console.error('[API /oee/production GET]', error);
     return NextResponse.json({ error: 'Database query failed', rows: [] }, { status: 500 });
   }
 }
-
 export async function POST(request: Request) {
   try {
-    const b = (await request.json()) as ProdBody;
-    if (!b.resourceId || !b.workDate || !b.shift || !b.createdBy) {
-      return NextResponse.json({ error: 'resourceId, workDate, shift, createdBy 는 필수입니다' }, { status: 400 });
-    }
+    const b = (await request.json()) as Body;
+    if (!b.resourceId || !b.workDate || !b.shift || !b.createdBy) return NextResponse.json({ error: 'resourceId, workDate, shift, createdBy 는 필수입니다' }, { status: 400 });
     const statements = [
       { sql: sqlDeleteProduction(), binds: { resourceId: b.resourceId, workDate: b.workDate, shift: b.shift } },
-      ...b.rows.map((r) => ({
-        sql: sqlInsertProduction(),
-        binds: {
-          organizationId: b.organizationId, resourceId: b.resourceId, processCode: b.processCode,
-          workDate: b.workDate, shift: b.shift, runNo: r.runNo ?? null,
-          outputQty: r.outputQty, goodQty: r.goodQty, defectQty: r.defectQty, createdBy: b.createdBy,
-        },
-      })),
+      ...b.rows.map((r) => ({ sql: sqlInsertProduction(), binds: { organizationId: b.organizationId, resourceId: b.resourceId, processCode: b.processCode, workDate: b.workDate, shift: b.shift, runNo: r.runNo ?? null, planQty: r.planQty, outputQty: r.outputQty, goodQty: r.goodQty, defectQty: r.defectQty, pickupRate: r.pickupRate ?? null, createdBy: b.createdBy } })),
     ];
     await executeTransaction(statements);
     return NextResponse.json({ ok: true });
@@ -274,18 +372,16 @@ export async function POST(request: Request) {
 
 `src/app/api/oee/plan-time/route.ts`:
 ```ts
-/** @file OEE 계획가동시간 조회 (V_OEE_PLAN_TIME 파생값) */
+/** @file OEE 계획가동시간 조회 (V_OEE_PLAN_TIME) */
 import { NextResponse } from 'next/server';
 import { executeQuery } from '@/lib/db';
 import { sqlSelectPlanTime } from '@/lib/queries/oee/production';
 
 export const dynamic = 'force-dynamic';
-
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const binds = { resourceId: Number(searchParams.get('resourceId')), workDate: searchParams.get('workDate') ?? '', shift: searchParams.get('shift') ?? '' };
-    const rows = await executeQuery<{ NET_LOAD_MINUTES: number }>(sqlSelectPlanTime(), binds);
+    const rows = await executeQuery<{ NET_LOAD_MINUTES: number }>(sqlSelectPlanTime(), { resourceId: Number(searchParams.get('resourceId')), workDate: searchParams.get('workDate') ?? '', shift: searchParams.get('shift') ?? '' });
     return NextResponse.json({ netLoadMinutes: rows[0]?.NET_LOAD_MINUTES ?? null });
   } catch (error) {
     console.error('[API /oee/plan-time GET]', error);
@@ -294,11 +390,11 @@ export async function GET(request: Request) {
 }
 ```
 
-- [ ] **Step 4: 입력화면에 계획가동 자동 로드 연결**
+- [ ] **Step 4: 입력화면에 수량 섹션 + 계획가동 자동로드 추가**
 
-`src/app/(oee)/oee/entry/page.tsx`(플랜 2)의 `useEffect`(로그 로드) 뒤에 계획가동 자동 로드 추가:
+`src/app/(oee)/oee/entry/page.tsx`(플랜 2)에:
+1. 계획가동 자동로드 `useEffect` 추가:
 ```tsx
-  // 계획가동시간 자동 로드 (V_OEE_PLAN_TIME). 없으면 수동값 유지.
   useEffect(() => {
     if (!profile) return;
     fetch(`/api/oee/plan-time?resourceId=${profile.resourceId}&workDate=${workDate}&shift=${profile.shift}`)
@@ -306,40 +402,99 @@ export async function GET(request: Request) {
       .then((d: { netLoadMinutes: number | null }) => { if (d.netLoadMinutes != null) setNetLoad(d.netLoadMinutes); });
   }, [profile, workDate]);
 ```
-`계획가동(분)` input은 자동 로드값 표시(수동 조정 가능 유지).
+2. 생산수량 상태 + 저장 추가 (LOT별 계획/실적/양품/불량, SMT면 픽업율):
+```tsx
+  const [prodRows, setProdRows] = useState<{ runNo: string; planQty: number; outputQty: number; goodQty: number; defectQty: number; pickupRate: number | null }[]>([]);
+  async function saveProduction() {
+    if (!profile || !resource) return;
+    await fetch('/api/oee/production', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ organizationId: 1, resourceId: profile.resourceId, processCode: resource.PROCESS_CODE, workDate, shift: profile.shift, createdBy: worker, rows: prodRows.map((r) => ({ ...r, runNo: r.runNo || null })) }) });
+  }
+```
+UI: LOT 행 추가 폼(계획/생산/양품/불량 입력, `resource.PROCESS_CODE==='SMT'`일 때만 픽업율 입력), "수량 저장" 버튼 → `saveProduction()`. 저장 버튼 클릭 시 일지 저장(`save()`)과 수량 저장을 함께 호출.
 
-- [ ] **Step 5: 타입 체크 + 검증**
+- [ ] **Step 5: 타입 체크 + 검증 + 커밋**
 
-Run: `npx tsc --noEmit --pretty false` → 에러 없음.
-`npm run dev` → `/oee/entry`에서 계획가동이 480으로 자동 채워지는지 확인(Task 2 시드 기준). 생산실적 POST → GET 재조회.
-
-- [ ] **Step 6: 커밋**
-
+Run: `npx tsc --noEmit --pretty false`. `/oee/entry`에서 계획가동 자동 480 채움, LOT 수량 입력·저장·재조회 확인.
 ```bash
-git add src/lib/queries/oee/production.ts src/app/api/oee/production/route.ts src/app/api/oee/plan-time/route.ts "src/app/(oee)/oee/entry/page.tsx"
-git commit -m "feat(oee): add production-result API and plan-time auto-load"
+git add src/lib/queries/oee/production.ts src/app/api/oee/production src/app/api/oee/plan-time "src/app/(oee)/oee/entry/page.tsx"
+git commit -m "feat(oee): add production(plan/pickup) API, plan-time auto-load, entry qty section"
 ```
 
 ---
 
-## Task 4: 실시간 OEE 뷰 `V_OEE_LIVE`
+## Task 5: 원자재 준비율 + 고객불량 입력 (API + 화면)
+
+**Files:**
+- Create: `src/lib/queries/oee/readiness.ts`
+- Create: `src/app/api/oee/material/route.ts`, `src/app/api/oee/customer/route.ts`
+- Create: `src/app/(oee)/oee/input/material/page.tsx`, `src/app/(oee)/oee/input/customer/page.tsx`
+
+**Interfaces:**
+- Produces: 원자재준비 `POST /api/oee/material` `{ organizationId, workDate, processCode, planQty, readyQty, createdBy }` (readiness_rate = ready/plan 서버계산); 고객불량 `POST /api/oee/customer` `{ organizationId, workDate, modelCode, returnQty, remark, createdBy }`. 각 GET `?date=` 목록.
+
+- [ ] **Step 1: 빌더 작성**
+
+`src/lib/queries/oee/readiness.ts`:
+```ts
+/** 원자재 준비율 / 고객불량 빌더 */
+export function sqlInsertMaterial(): string {
+  return `INSERT INTO OEE_MATERIAL_READINESS (ORGANIZATION_ID, WORK_DATE, PROCESS_CODE, PLAN_QTY, READY_QTY, READINESS_RATE, CREATED_BY)
+  VALUES (:organizationId, TO_DATE(:workDate,'YYYY-MM-DD'), :processCode, :planQty, :readyQty, :readinessRate, :createdBy)`;
+}
+export function sqlSelectMaterial(): string {
+  return `SELECT PROCESS_CODE, PLAN_QTY, READY_QTY, READINESS_RATE
+  FROM OEE_MATERIAL_READINESS WHERE WORK_DATE = TO_DATE(:workDate,'YYYY-MM-DD') ORDER BY PROCESS_CODE`;
+}
+export function sqlInsertCustomer(): string {
+  return `INSERT INTO OEE_CUSTOMER_DEFECT (ORGANIZATION_ID, WORK_DATE, MODEL_CODE, RETURN_QTY, REMARK, CREATED_BY)
+  VALUES (:organizationId, TO_DATE(:workDate,'YYYY-MM-DD'), :modelCode, :returnQty, :remark, :createdBy)`;
+}
+export function sqlSelectCustomer(): string {
+  return `SELECT MODEL_CODE, RETURN_QTY, REMARK
+  FROM OEE_CUSTOMER_DEFECT WHERE WORK_DATE = TO_DATE(:workDate,'YYYY-MM-DD') ORDER BY DEFECT_ID`;
+}
+export function sqlSumCustomer(): string {
+  return `SELECT NVL(SUM(RETURN_QTY),0) AS RETURN_QTY FROM OEE_CUSTOMER_DEFECT WHERE WORK_DATE = TO_DATE(:workDate,'YYYY-MM-DD')`;
+}
+```
+
+- [ ] **Step 2: 원자재 API 작성**
+
+`src/app/api/oee/material/route.ts` — GET(`sqlSelectMaterial`), POST(readinessRate = planQty>0 ? readyQty/planQty : 0 서버계산 후 `sqlInsertMaterial`, `executeDml`). 검증: planQty, readyQty, createdBy 필수.
+
+- [ ] **Step 3: 고객불량 API 작성**
+
+`src/app/api/oee/customer/route.ts` — GET(`sqlSelectCustomer`), POST(`sqlInsertCustomer`, `executeDml`). 검증: returnQty, createdBy 필수.
+
+- [ ] **Step 4: 입력 화면 2종 작성**
+
+`/oee/input/material` — 일자·공정·계획·준비 입력 → 저장 → 준비율(=ready/plan) 표시 목록. `/oee/input/customer` — 일자·모델·반입수량·비고 입력 → 저장 → 목록. 둘 다 리소스 마스터(플랜 2 Task 3) SWR+폼 패턴.
+
+- [ ] **Step 5: 타입 체크 + 검증 + 커밋**
+
+Run: `npx tsc --noEmit --pretty false`. 두 화면 저장·조회 확인.
+```bash
+git add src/lib/queries/oee/readiness.ts src/app/api/oee/material src/app/api/oee/customer "src/app/(oee)/oee/input"
+git commit -m "feat(oee): add material-readiness and customer-defect input API/screens"
+```
+
+---
+
+## Task 6: 실시간 OEE 뷰 `V_OEE_LIVE` (OEE + 부가지표)
 
 **Files:**
 - Create: `oracle_db_scripts/oee/05_view_live.sql`
 
 **Interfaces:**
-- Produces 뷰 컬럼: `RESOURCE_ID, PROCESS_CODE, ORGANIZATION_ID, WORK_DATE, SHIFT, NET_LOAD_MIN, RUN_MIN, DOWNTIME_MIN, AVAILABILITY, IDEAL_CT, OUTPUT_QTY, PERFORMANCE, GOOD_QTY, TOTAL_QTY, QUALITY, OEE`
-- 계산은 `src/lib/oee/oee-calc.ts`(플랜 1)와 동일 규칙: 분모 0이면 0, clamp 없음.
+- Produces 컬럼: `RESOURCE_ID, PROCESS_CODE, ORGANIZATION_ID, WORK_DATE, SHIFT, NET_LOAD_MIN, RUN_MIN, DOWNTIME_MIN, AVAILABILITY, IDEAL_CT, PLAN_QTY, OUTPUT_QTY, PLAN_ACHIEVE, UPH, PERFORMANCE, GOOD_QTY, TOTAL_QTY, QUALITY, PICKUP_RATE, OEE`
+- 계산은 `oee-calc.ts`와 동일 규칙(분모0→0, clamp없음). UPH=output/(run_min/60), 계획달성=output/plan.
 
 - [ ] **Step 1: 뷰 작성**
 
 ```sql
 CREATE OR REPLACE VIEW V_OEE_LIVE AS
-SELECT b.RESOURCE_ID, b.PROCESS_CODE, b.ORGANIZATION_ID, b.WORK_DATE, b.SHIFT,
-       b.NET_LOAD_MIN, b.RUN_MIN, b.DOWNTIME_MIN,
-       b.AVAILABILITY, b.IDEAL_CT, b.OUTPUT_QTY, b.PERFORMANCE,
-       b.GOOD_QTY, b.TOTAL_QTY, b.QUALITY,
-       b.AVAILABILITY * b.PERFORMANCE * b.QUALITY AS OEE
+SELECT b.*, b.AVAILABILITY * b.PERFORMANCE * b.QUALITY AS OEE
   FROM (
     SELECT pt.RESOURCE_ID, r.PROCESS_CODE, pt.ORGANIZATION_ID, pt.WORK_DATE, pt.SHIFT,
            pt.NET_LOAD_MINUTES AS NET_LOAD_MIN,
@@ -347,12 +502,16 @@ SELECT b.RESOURCE_ID, b.PROCESS_CODE, b.ORGANIZATION_ID, b.WORK_DATE, b.SHIFT,
            NVL(op.DOWN_MIN, 0) AS DOWNTIME_MIN,
            CASE WHEN pt.NET_LOAD_MINUTES > 0 THEN NVL(op.RUN_MIN,0) / pt.NET_LOAD_MINUTES ELSE 0 END AS AVAILABILITY,
            r.IDEAL_CT,
+           NVL(pr.PLAN_QTY, 0)   AS PLAN_QTY,
            NVL(pr.OUTPUT_QTY, 0) AS OUTPUT_QTY,
+           CASE WHEN NVL(pr.PLAN_QTY,0) > 0 THEN NVL(pr.OUTPUT_QTY,0) / pr.PLAN_QTY ELSE 0 END AS PLAN_ACHIEVE,
+           CASE WHEN NVL(op.RUN_MIN,0) > 0 THEN NVL(pr.OUTPUT_QTY,0) / (NVL(op.RUN_MIN,0) / 60) ELSE 0 END AS UPH,
            CASE WHEN NVL(op.RUN_MIN,0) > 0 AND r.IDEAL_CT IS NOT NULL
                 THEN (r.IDEAL_CT * NVL(pr.OUTPUT_QTY,0)) / (NVL(op.RUN_MIN,0) * 60) ELSE 0 END AS PERFORMANCE,
            NVL(pr.GOOD_QTY, 0)   AS GOOD_QTY,
            NVL(pr.OUTPUT_QTY, 0) AS TOTAL_QTY,
-           CASE WHEN NVL(pr.OUTPUT_QTY,0) > 0 THEN NVL(pr.GOOD_QTY,0) / pr.OUTPUT_QTY ELSE 0 END AS QUALITY
+           CASE WHEN NVL(pr.OUTPUT_QTY,0) > 0 THEN NVL(pr.GOOD_QTY,0) / pr.OUTPUT_QTY ELSE 0 END AS QUALITY,
+           pr.PICKUP_RATE
       FROM V_OEE_PLAN_TIME pt
       JOIN OEE_RESOURCE r ON r.RESOURCE_ID = pt.RESOURCE_ID
       LEFT JOIN (
@@ -363,7 +522,8 @@ SELECT b.RESOURCE_ID, b.PROCESS_CODE, b.ORGANIZATION_ID, b.WORK_DATE, b.SHIFT,
       ) op ON op.RESOURCE_ID = pt.RESOURCE_ID AND op.WORK_DATE = pt.WORK_DATE AND op.SHIFT = pt.SHIFT
       LEFT JOIN (
         SELECT RESOURCE_ID, WORK_DATE, SHIFT,
-               SUM(OUTPUT_QTY) AS OUTPUT_QTY, SUM(GOOD_QTY) AS GOOD_QTY, SUM(DEFECT_QTY) AS DEFECT_QTY
+               SUM(PLAN_QTY) AS PLAN_QTY, SUM(OUTPUT_QTY) AS OUTPUT_QTY, SUM(GOOD_QTY) AS GOOD_QTY,
+               SUM(DEFECT_QTY) AS DEFECT_QTY, AVG(PICKUP_RATE) AS PICKUP_RATE
           FROM OEE_PRODUCTION_RESULT GROUP BY RESOURCE_ID, WORK_DATE, SHIFT
       ) pr ON pr.RESOURCE_ID = pt.RESOURCE_ID AND pr.WORK_DATE = pt.WORK_DATE AND pr.SHIFT = pt.SHIFT
   ) b;
@@ -371,37 +531,42 @@ SELECT b.RESOURCE_ID, b.PROCESS_CODE, b.ORGANIZATION_ID, b.WORK_DATE, b.SHIFT,
 
 - [ ] **Step 2: 배포 + 검증**
 
-플랜 2로 입력한 당일 로그 + Task 3 생산실적이 있는 상태에서:
+플랜 2 로그 + Task 4 생산실적 입력 상태에서:
 ```sql
-SELECT RESOURCE_ID, SHIFT, NET_LOAD_MIN, RUN_MIN, AVAILABILITY, PERFORMANCE, QUALITY, OEE
+SELECT RESOURCE_ID, SHIFT, AVAILABILITY, PERFORMANCE, QUALITY, OEE, UPH, PLAN_ACHIEVE, PICKUP_RATE
   FROM V_OEE_LIVE WHERE WORK_DATE = TRUNC(SYSDATE);
 ```
-Expected: 가동율=RUN_MIN/480, 양품율=GOOD/OUTPUT, OEE=세 값 곱. 수기로 계산해 일치 확인.
+Expected: OEE=A×P×Q, UPH=output/(run_min/60), 계획달성=output/plan. 수기 계산 일치.
 
 - [ ] **Step 3: 커밋**
 
 ```bash
 git add oracle_db_scripts/oee/05_view_live.sql
-git commit -m "feat(oee): add V_OEE_LIVE realtime OEE view"
+git commit -m "feat(oee): add V_OEE_LIVE with OEE and UPH/plan-achieve/pickup"
 ```
 
 ---
 
-## Task 5: 마감 스냅샷 프로시저 + 대시보드 조회 API
+## Task 7: 마감 스냅샷 프로시저(부가컬럼) + 대시보드 조회 API
 
 **Files:**
+- Modify: `oracle_db_scripts/oee/01_tables.sql` 참고 — `OEE_DAILY_SUMMARY`에 `PLAN_QTY, PLAN_ACHIEVE, UPH, PICKUP_RATE` 컬럼 추가 (ALTER)
 - Create: `oracle_db_scripts/oee/06_proc_build_summary.sql`
 - Create: `src/lib/queries/oee/dashboard.ts`
 - Create: `src/app/api/display/44/route.ts`, `45/route.ts`, `46/route.ts`
 
 **Interfaces:**
-- Produces:
-  - `P_OEE_BUILD_SUMMARY(p_work_date DATE)` — 해당 일자 전 리소스/근무조 `V_OEE_LIVE` → `OEE_DAILY_SUMMARY` MERGE.
-  - `sqlOverviewLive()/sqlOverviewSnapshot()`, `sqlDrilldownLive()/Snapshot()`, `sqlLossLive()/Snapshot()`
-  - display API 규칙: `?date=YYYY-MM-DD`. 당일이면 `V_OEE_LIVE`, 과거이면 `OEE_DAILY_SUMMARY`. 과거인데 스냅샷 0건이면 `{ error: 'OEE_SUMMARY_NOT_BUILT' }` + 409.
+- Produces: `P_OEE_BUILD_SUMMARY(p_work_date DATE)`; dashboard 빌더; display API 44/45/46 (과거 스냅샷 부재 시 409 `OEE_SUMMARY_NOT_BUILT`).
 
-- [ ] **Step 1: 스냅샷 프로시저 작성**
+- [ ] **Step 1: 스냅샷 테이블 컬럼 추가**
 
+```sql
+ALTER TABLE OEE_DAILY_SUMMARY ADD (PLAN_QTY NUMBER DEFAULT 0, PLAN_ACHIEVE NUMBER DEFAULT 0, UPH NUMBER DEFAULT 0, PICKUP_RATE NUMBER);
+```
+
+- [ ] **Step 2: 프로시저 작성**
+
+`oracle_db_scripts/oee/06_proc_build_summary.sql`:
 ```sql
 CREATE OR REPLACE PROCEDURE P_OEE_BUILD_SUMMARY (p_work_date DATE) IS
 BEGIN
@@ -409,21 +574,21 @@ BEGIN
   USING (SELECT * FROM V_OEE_LIVE WHERE WORK_DATE = TRUNC(p_work_date)) s
      ON (t.RESOURCE_ID = s.RESOURCE_ID AND t.WORK_DATE = s.WORK_DATE AND t.SHIFT = s.SHIFT)
   WHEN MATCHED THEN UPDATE SET
-     t.NET_LOAD_MIN = s.NET_LOAD_MIN, t.RUN_MIN = s.RUN_MIN, t.DOWNTIME_MIN = s.DOWNTIME_MIN,
-     t.AVAILABILITY = s.AVAILABILITY, t.IDEAL_CT = s.IDEAL_CT, t.OUTPUT_QTY = s.OUTPUT_QTY,
-     t.PERFORMANCE = s.PERFORMANCE, t.GOOD_QTY = s.GOOD_QTY, t.TOTAL_QTY = s.TOTAL_QTY,
-     t.QUALITY = s.QUALITY, t.OEE = s.OEE
+     t.NET_LOAD_MIN=s.NET_LOAD_MIN, t.RUN_MIN=s.RUN_MIN, t.DOWNTIME_MIN=s.DOWNTIME_MIN,
+     t.AVAILABILITY=s.AVAILABILITY, t.IDEAL_CT=s.IDEAL_CT, t.PLAN_QTY=s.PLAN_QTY, t.OUTPUT_QTY=s.OUTPUT_QTY,
+     t.PLAN_ACHIEVE=s.PLAN_ACHIEVE, t.UPH=s.UPH, t.PERFORMANCE=s.PERFORMANCE,
+     t.GOOD_QTY=s.GOOD_QTY, t.TOTAL_QTY=s.TOTAL_QTY, t.QUALITY=s.QUALITY, t.PICKUP_RATE=s.PICKUP_RATE, t.OEE=s.OEE
   WHEN NOT MATCHED THEN INSERT
      (RESOURCE_ID, PROCESS_CODE, ORGANIZATION_ID, WORK_DATE, SHIFT, NET_LOAD_MIN, RUN_MIN, DOWNTIME_MIN,
-      AVAILABILITY, IDEAL_CT, OUTPUT_QTY, PERFORMANCE, GOOD_QTY, TOTAL_QTY, QUALITY, OEE)
+      AVAILABILITY, IDEAL_CT, PLAN_QTY, OUTPUT_QTY, PLAN_ACHIEVE, UPH, PERFORMANCE, GOOD_QTY, TOTAL_QTY, QUALITY, PICKUP_RATE, OEE)
      VALUES
      (s.RESOURCE_ID, s.PROCESS_CODE, s.ORGANIZATION_ID, s.WORK_DATE, s.SHIFT, s.NET_LOAD_MIN, s.RUN_MIN, s.DOWNTIME_MIN,
-      s.AVAILABILITY, s.IDEAL_CT, s.OUTPUT_QTY, s.PERFORMANCE, s.GOOD_QTY, s.TOTAL_QTY, s.QUALITY, s.OEE);
+      s.AVAILABILITY, s.IDEAL_CT, s.PLAN_QTY, s.OUTPUT_QTY, s.PLAN_ACHIEVE, s.UPH, s.PERFORMANCE, s.GOOD_QTY, s.TOTAL_QTY, s.QUALITY, s.PICKUP_RATE, s.OEE);
   COMMIT;
 END;
 ```
 
-- [ ] **Step 2: 프로시저 검증**
+- [ ] **Step 3: 프로시저 검증**
 
 ```sql
 EXEC P_OEE_BUILD_SUMMARY(TRUNC(SYSDATE));
@@ -431,220 +596,184 @@ SELECT COUNT(*) FROM OEE_DAILY_SUMMARY WHERE WORK_DATE = TRUNC(SYSDATE);
 ```
 Expected: V_OEE_LIVE 당일 행수와 동일.
 
-- [ ] **Step 3: 대시보드 조회 빌더 작성**
+- [ ] **Step 4: 대시보드 조회 빌더 작성**
 
-`src/lib/queries/oee/dashboard.ts`:
+`src/lib/queries/oee/dashboard.ts` — 당일=`V_OEE_LIVE`, 과거=`OEE_DAILY_SUMMARY`(동일 컬럼셋):
 ```ts
-/** 대시보드 조회 빌더. 당일=V_OEE_LIVE, 과거=OEE_DAILY_SUMMARY.
- *  두 소스는 동일 컬럼셋을 노출하므로 FROM만 교체한다. */
 function src(isLive: boolean): string { return isLive ? 'V_OEE_LIVE' : 'OEE_DAILY_SUMMARY'; }
 
-/** 공정별 종합: 공정 단위 평균 OEE/가동/성능/양품 */
+/** 공정별 종합 (부가지표 포함) */
 export function sqlOverview(isLive: boolean): string {
   return `SELECT PROCESS_CODE,
-       ROUND(AVG(AVAILABILITY),4) AS AVAILABILITY,
-       ROUND(AVG(PERFORMANCE),4)  AS PERFORMANCE,
-       ROUND(AVG(QUALITY),4)      AS QUALITY,
-       ROUND(AVG(OEE),4)          AS OEE
-  FROM ${src(isLive)}
- WHERE WORK_DATE = TO_DATE(:workDate,'YYYY-MM-DD')
+       ROUND(AVG(AVAILABILITY),4) AS AVAILABILITY, ROUND(AVG(PERFORMANCE),4) AS PERFORMANCE,
+       ROUND(AVG(QUALITY),4) AS QUALITY, ROUND(AVG(OEE),4) AS OEE,
+       ROUND(AVG(PLAN_ACHIEVE),4) AS PLAN_ACHIEVE, ROUND(SUM(OUTPUT_QTY),0) AS OUTPUT_QTY,
+       ROUND(AVG(UPH),1) AS UPH, ROUND(AVG(PICKUP_RATE),2) AS PICKUP_RATE
+  FROM ${src(isLive)} WHERE WORK_DATE = TO_DATE(:workDate,'YYYY-MM-DD')
  GROUP BY PROCESS_CODE ORDER BY PROCESS_CODE`;
 }
-
-/** 리소스 드릴다운: 공정 선택 → 리소스별 OEE */
+/** 리소스 드릴다운 */
 export function sqlDrilldown(isLive: boolean): string {
-  return `SELECT RESOURCE_ID, AVAILABILITY, PERFORMANCE, QUALITY, OEE, RUN_MIN, DOWNTIME_MIN, OUTPUT_QTY
-  FROM ${src(isLive)}
- WHERE WORK_DATE = TO_DATE(:workDate,'YYYY-MM-DD') AND PROCESS_CODE = :processCode
- ORDER BY OEE`;
+  return `SELECT RESOURCE_ID, AVAILABILITY, PERFORMANCE, QUALITY, OEE, UPH, PLAN_ACHIEVE, RUN_MIN, DOWNTIME_MIN, OUTPUT_QTY
+  FROM ${src(isLive)} WHERE WORK_DATE = TO_DATE(:workDate,'YYYY-MM-DD') AND PROCESS_CODE = :processCode ORDER BY OEE`;
 }
-
-/** 로스 파레토: 비가동사유별 시간 (당일/과거 무관하게 OPERATION_LOG 집계) */
+/** 로스 파레토 (사유별 시간) */
 export function sqlLossPareto(): string {
   return `SELECT dr.REASON_NAME, dr.LOSS_BUCKET, SUM(ol.DURATION_MIN) AS DOWN_MIN
-  FROM OEE_OPERATION_LOG ol
-  JOIN OEE_DOWNTIME_REASON dr ON dr.REASON_CODE = ol.REASON_CODE
+  FROM OEE_OPERATION_LOG ol JOIN OEE_DOWNTIME_REASON dr ON dr.REASON_CODE = ol.REASON_CODE
  WHERE ol.WORK_DATE = TO_DATE(:workDate,'YYYY-MM-DD') AND ol.STATUS = 'DOWN'
  GROUP BY dr.REASON_NAME, dr.LOSS_BUCKET ORDER BY DOWN_MIN DESC`;
 }
+/** 원자재준비율 / 고객불량 (44 보조 위젯) */
+export function sqlMaterialByDate(): string {
+  return `SELECT PROCESS_CODE, PLAN_QTY, READY_QTY, READINESS_RATE FROM OEE_MATERIAL_READINESS WHERE WORK_DATE = TO_DATE(:workDate,'YYYY-MM-DD') ORDER BY PROCESS_CODE`;
+}
+export function sqlCustomerSumByDate(): string {
+  return `SELECT NVL(SUM(RETURN_QTY),0) AS RETURN_QTY FROM OEE_CUSTOMER_DEFECT WHERE WORK_DATE = TO_DATE(:workDate,'YYYY-MM-DD')`;
+}
 ```
 
-- [ ] **Step 4: display API 44 작성 (당일/과거 분기 + 스냅샷 부재 오류)**
+- [ ] **Step 5: display API 44/45/46 작성**
 
-`src/app/api/display/44/route.ts`:
+`44/route.ts` — 당일/과거 분기 + 스냅샷 부재 409. overview + material + customer 함께 반환:
 ```ts
-/** @file 공정별 OEE 종합 (screenId 44). 당일=실시간, 과거=스냅샷(없으면 409 오류). */
+/** @file 공정별 OEE 종합 (screenId 44). 당일=실시간, 과거=스냅샷(없으면 409). */
 import { NextResponse } from 'next/server';
 import { executeQuery } from '@/lib/db';
-import { sqlOverview } from '@/lib/queries/oee/dashboard';
+import { sqlOverview, sqlMaterialByDate, sqlCustomerSumByDate } from '@/lib/queries/oee/dashboard';
 
 export const dynamic = 'force-dynamic';
-
-function isToday(dateStr: string): boolean {
-  return dateStr === new Date().toISOString().slice(0, 10);
-}
+const today = () => new Date().toISOString().slice(0, 10);
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const workDate = searchParams.get('date') ?? new Date().toISOString().slice(0, 10);
-    const live = isToday(workDate);
+    const workDate = searchParams.get('date') ?? today();
+    const live = workDate === today();
     const rows = await executeQuery(sqlOverview(live), { workDate });
     if (!live && rows.length === 0) {
       return NextResponse.json({ error: 'OEE_SUMMARY_NOT_BUILT', message: '집계 미생성(마감 필요)', rows: [] }, { status: 409 });
     }
-    return NextResponse.json({ rows, live, timestamp: new Date().toISOString() });
+    const material = await executeQuery(sqlMaterialByDate(), { workDate });
+    const customer = await executeQuery<{ RETURN_QTY: number }>(sqlCustomerSumByDate(), { workDate });
+    return NextResponse.json({ rows, material, customerReturnQty: customer[0]?.RETURN_QTY ?? 0, live, timestamp: new Date().toISOString() });
   } catch (error) {
     console.error('[API /display/44]', error);
     return NextResponse.json({ error: 'Database query failed', rows: [] }, { status: 500 });
   }
 }
 ```
-
-- [ ] **Step 5: display API 45 / 46 작성**
-
-`45/route.ts` — Step 4와 동일 구조, `sqlDrilldown(live)` 사용, `processCode` 파라미터 추가, 동일한 스냅샷 부재 409 처리.
-`46/route.ts` — `sqlLossPareto()` 사용(당일/과거 공통 OPERATION_LOG 집계이므로 스냅샷 분기 없음, 500만 처리):
-```ts
-/** @file 로스 파레토 (screenId 46). 비가동사유별 시간 집계. */
-import { NextResponse } from 'next/server';
-import { executeQuery } from '@/lib/db';
-import { sqlLossPareto } from '@/lib/queries/oee/dashboard';
-
-export const dynamic = 'force-dynamic';
-
-export async function GET(request: Request) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const workDate = searchParams.get('date') ?? new Date().toISOString().slice(0, 10);
-    const rows = await executeQuery(sqlLossPareto(), { workDate });
-    return NextResponse.json({ rows, timestamp: new Date().toISOString() });
-  } catch (error) {
-    console.error('[API /display/46]', error);
-    return NextResponse.json({ error: 'Database query failed', rows: [] }, { status: 500 });
-  }
-}
-```
+`45/route.ts` — `sqlDrilldown(live)` + `processCode` 파라미터 + 동일 409 처리. `46/route.ts` — `sqlLossPareto()`(당일/과거 공통 OPERATION_LOG 집계, 409 없음, 500만).
 
 - [ ] **Step 6: 타입 체크 + 검증 + 커밋**
 
-Run: `npx tsc --noEmit --pretty false` → 에러 없음.
-`curl 'http://localhost:3100/api/display/44?date=<오늘>'` → 공정별 행. 과거 미마감 일자 → `409 OEE_SUMMARY_NOT_BUILT`.
+Run: `npx tsc --noEmit --pretty false`. `curl '.../api/display/44?date=<오늘>'` → 공정 행+material+customer. 과거 미마감 → 409.
 ```bash
 git add oracle_db_scripts/oee/06_proc_build_summary.sql src/lib/queries/oee/dashboard.ts src/app/api/display/44 src/app/api/display/45 src/app/api/display/46
-git commit -m "feat(oee): add summary procedure and dashboard APIs 44/45/46"
+git commit -m "feat(oee): add summary procedure(ext cols) and dashboard APIs 44/45/46"
 ```
 
 ---
 
-## Task 6: 대시보드 화면 3종 + 등록
+## Task 8: 대시보드 화면 3종(부가지표·위젯) + 등록
 
 **Files:**
-- Create: `src/components/display/screens/oee-overview/OeeOverview.tsx`
-- Create: `src/components/display/screens/oee-drilldown/OeeDrilldown.tsx`
-- Create: `src/components/display/screens/oee-loss/OeeLoss.tsx`
+- Create: `src/components/display/screens/oee-overview/OeeOverview.tsx`, `oee-drilldown/OeeDrilldown.tsx`, `oee-loss/OeeLoss.tsx`
 - Modify: `src/lib/screens.ts`, `config/cards.json`, `src/lib/queries/sql-registry.ts`
-
-**Interfaces:**
-- Consumes: display API 44/45/46, 기존 `DisplayLayout`/화면 로딩 규약(기존 스크린 컴포넌트 배치 방식 준수).
 
 - [ ] **Step 1: 공정별 종합 화면 (44)**
 
-`src/components/display/screens/oee-overview/OeeOverview.tsx` — 공정 카드 그리드, 각 카드에 OEE + 3지표. 스냅샷 부재 시 오류 배지:
+`OeeOverview.tsx` — 공정 카드(OEE + 가동/성능/양품 + UPH·계획달성, SMT면 픽업율) + 상단 고객불량/하단 원자재준비 위젯. 스냅샷 부재 시 오류 배지:
 ```tsx
 'use client';
 import useSWR from 'swr';
-
-const fetcher = (u: string) => fetch(u).then(async (r) => ({ ok: r.ok, status: r.status, body: await r.json() }));
-interface Row { PROCESS_CODE: string; AVAILABILITY: number; PERFORMANCE: number; QUALITY: number; OEE: number; }
+const fetcher = (u: string) => fetch(u).then(async (r) => ({ ok: r.ok, body: await r.json() }));
+interface Row { PROCESS_CODE: string; AVAILABILITY: number; PERFORMANCE: number; QUALITY: number; OEE: number; UPH: number; PLAN_ACHIEVE: number; PICKUP_RATE: number | null; }
+interface Mat { PROCESS_CODE: string; READINESS_RATE: number; }
 const pct = (n: number) => `${(n * 100).toFixed(1)}%`;
 
 export default function OeeOverview({ date }: { date?: string }) {
   const d = date ?? new Date().toISOString().slice(0, 10);
   const { data } = useSWR(`/api/display/44?date=${d}`, fetcher, { refreshInterval: 30000 });
-
-  if (data && !data.ok && data.body?.error === 'OEE_SUMMARY_NOT_BUILT') {
+  if (data && !data.ok && data.body?.error === 'OEE_SUMMARY_NOT_BUILT')
     return <div className="p-8 text-center text-amber-500 text-2xl">집계 미생성 (마감 필요)</div>;
-  }
   const rows: Row[] = data?.body?.rows ?? [];
+  const material: Mat[] = data?.body?.material ?? [];
+  const custReturn: number = data?.body?.customerReturnQty ?? 0;
   return (
-    <div className="grid grid-cols-3 gap-4 p-6">
-      {rows.map((r) => (
-        <div key={r.PROCESS_CODE} className="rounded-xl bg-slate-800 p-5 text-white">
-          <div className="text-sm text-slate-400">{r.PROCESS_CODE}</div>
-          <div className="text-5xl font-bold my-2">{pct(r.OEE)}</div>
-          <div className="flex justify-between text-sm text-slate-300">
-            <span>가동 {pct(r.AVAILABILITY)}</span><span>성능 {pct(r.PERFORMANCE)}</span><span>양품 {pct(r.QUALITY)}</span>
+    <div className="p-6 space-y-4 text-white">
+      <div className="flex justify-between text-sm text-slate-300">
+        <span>원자재 준비율: {material.map((m) => `${m.PROCESS_CODE} ${pct(m.READINESS_RATE)}`).join(' · ') || '-'}</span>
+        <span>고객불량 반입: {custReturn}</span>
+      </div>
+      <div className="grid grid-cols-3 gap-4">
+        {rows.map((r) => (
+          <div key={r.PROCESS_CODE} className="rounded-xl bg-slate-800 p-5">
+            <div className="text-sm text-slate-400">{r.PROCESS_CODE}</div>
+            <div className="text-5xl font-bold my-2">{pct(r.OEE)}</div>
+            <div className="flex justify-between text-sm text-slate-300"><span>가동 {pct(r.AVAILABILITY)}</span><span>성능 {pct(r.PERFORMANCE)}</span><span>양품 {pct(r.QUALITY)}</span></div>
+            <div className="flex justify-between text-xs text-slate-400 mt-1">
+              <span>UPH {r.UPH?.toFixed(0)}</span><span>계획달성 {pct(r.PLAN_ACHIEVE)}</span>
+              {r.PROCESS_CODE === 'SMT' && r.PICKUP_RATE != null && <span>픽업 {r.PICKUP_RATE.toFixed(1)}%</span>}
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }
 ```
 
-- [ ] **Step 2: 리소스 드릴다운 화면 (45)**
+- [ ] **Step 2: 리소스 드릴다운 (45)**
 
-`OeeDrilldown.tsx` — 공정 선택(select) → `/api/display/45?date=&processCode=` 조회 → 리소스별 OEE 가로 막대(Recharts `BarChart`). 스냅샷 부재 시 동일 오류 배지. Recharts는 이미 설치됨(`recharts`).
+`OeeDrilldown.tsx` — 공정 select → `/api/display/45?date=&processCode=` → 리소스별 OEE 가로 막대(Recharts `BarChart`, `OEE`/`UPH`/`PLAN_ACHIEVE` 표시). 스냅샷 부재 시 동일 오류 배지.
 
-- [ ] **Step 3: 로스 파레토 화면 (46)**
+- [ ] **Step 3: 로스 파레토 (46)**
 
-`OeeLoss.tsx` — `/api/display/46?date=` 조회 → 비가동사유별 `DOWN_MIN` 내림차순 막대 + 누적%(Recharts `ComposedChart` Bar+Line). `LOSS_BUCKET`별 색상 구분.
+`OeeLoss.tsx` — `/api/display/46?date=` → `DOWN_MIN` 내림차순 막대 + 누적% 선(Recharts `ComposedChart`), `LOSS_BUCKET`별 색상.
 
-- [ ] **Step 4: 스크린 레지스트리 등록**
+- [ ] **Step 4: 레지스트리·카드·SQL 등록**
 
-`src/lib/screens.ts`의 `SCREENS`에 추가:
+`src/lib/screens.ts` `SCREENS`에 추가:
 ```ts
   '44': { id: '44', title: 'OEE Overview', titleKo: '공정별 OEE 종합', window: 'w_display_oee_overview', group: 'monitoring' },
   '45': { id: '45', title: 'OEE Drilldown', titleKo: 'OEE 리소스 드릴다운', window: 'w_display_oee_drilldown', group: 'monitoring', lineFilter: true },
   '46': { id: '46', title: 'OEE Loss Pareto', titleKo: 'OEE 로스 파레토', window: 'w_display_oee_loss', group: 'charts' },
 ```
-그리고 기존 스크린→컴포넌트 매핑 지점(기존 스크린이 컴포넌트로 연결되는 파일, 예: display 렌더러의 switch/맵)에 44/45/46 → 위 3개 컴포넌트를 연결한다. (기존 매핑 파일을 grep으로 찾아 동일 패턴으로 추가.)
+기존 스크린→컴포넌트 매핑 파일(grep으로 확인)에 44/45/46 → 세 컴포넌트 연결. `config/cards.json`에 44/45/46 MONITORING 카드 추가. `sql-registry.ts`에 dashboard 빌더 등록.
 
-- [ ] **Step 5: 메뉴 카드 + SQL 레지스트리 등록**
+- [ ] **Step 5: 타입 체크 + 시각 확인 + 커밋**
 
-`config/cards.json`에 44/45/46 카드를 MONITORING 레이어로 추가(기존 카드 형식 준수). `src/lib/queries/sql-registry.ts`에 dashboard 빌더 3종 등록(기존 항목 형식 준수).
-
-- [ ] **Step 6: 타입 체크 + 시각 확인 + 커밋**
-
-Run: `npx tsc --noEmit --pretty false` → 에러 없음.
-`npm run dev` → `/display/44`(공정 카드), `/display/45`(막대), `/display/46`(파레토) 렌더 확인. 브라우저 localStorage `mes-display-cards-cache` 삭제 후 메뉴에 카드 노출 확인.
+Run: `npx tsc --noEmit --pretty false`. `/display/44`(카드+위젯), `/display/45`(막대), `/display/46`(파레토) 렌더. `mes-display-cards-cache` 삭제 후 메뉴 카드 확인.
 ```bash
 git add src/components/display/screens/oee-overview src/components/display/screens/oee-drilldown src/components/display/screens/oee-loss src/lib/screens.ts config/cards.json src/lib/queries/sql-registry.ts
-git commit -m "feat(oee): add OEE dashboard screens 44/45/46 and registration"
+git commit -m "feat(oee): add OEE dashboards 44/45/46 with aux metrics and widgets"
 ```
 
 ---
 
-## Task 7: 집계 정합성 검증 + 스케줄 등록
+## Task 9: 집계 정합성 검증 + 스케줄 등록
 
 **Files:**
-- Create: `scripts/oee/verify-consistency.sql` (수동 검증 쿼리)
-
-**Interfaces:**
-- Consumes: `V_OEE_LIVE`, `OEE_DAILY_SUMMARY`, `P_OEE_BUILD_SUMMARY`.
+- Create: `scripts/oee/verify-consistency.sql`
 
 - [ ] **Step 1: 정합성 검증 쿼리 작성**
 
 `scripts/oee/verify-consistency.sql`:
 ```sql
--- 동일 일자에 대해 실시간 뷰와 마감 스냅샷의 OEE가 일치해야 한다.
 EXEC P_OEE_BUILD_SUMMARY(TRUNC(SYSDATE));
-SELECT l.RESOURCE_ID, l.SHIFT, l.OEE AS LIVE_OEE, s.OEE AS SNAP_OEE,
-       ABS(NVL(l.OEE,0) - NVL(s.OEE,0)) AS DIFF
-  FROM V_OEE_LIVE l
-  JOIN OEE_DAILY_SUMMARY s ON s.RESOURCE_ID = l.RESOURCE_ID AND s.WORK_DATE = l.WORK_DATE AND s.SHIFT = l.SHIFT
- WHERE l.WORK_DATE = TRUNC(SYSDATE) AND ABS(NVL(l.OEE,0) - NVL(s.OEE,0)) > 0.0001;
+SELECT l.RESOURCE_ID, l.SHIFT, l.OEE AS LIVE_OEE, s.OEE AS SNAP_OEE, ABS(NVL(l.OEE,0)-NVL(s.OEE,0)) AS DIFF
+  FROM V_OEE_LIVE l JOIN OEE_DAILY_SUMMARY s
+    ON s.RESOURCE_ID=l.RESOURCE_ID AND s.WORK_DATE=l.WORK_DATE AND s.SHIFT=l.SHIFT
+ WHERE l.WORK_DATE=TRUNC(SYSDATE) AND ABS(NVL(l.OEE,0)-NVL(s.OEE,0)) > 0.0001;
 ```
 
 - [ ] **Step 2: 정합성 실행**
 
-위 스크립트 실행.
-Expected: DIFF > 0.0001 인 행 **0건** (실시간=스냅샷 일치).
+Expected: DIFF > 0.0001 인 행 **0건**.
 
 - [ ] **Step 3: 마감 스케줄 등록**
 
-Oracle 스케줄러로 근무조 마감 시점(예: 매일 08:40, 20:40)에 전일/당일 마감을 실행하도록 등록:
 ```sql
 BEGIN
   DBMS_SCHEDULER.CREATE_JOB(
@@ -655,32 +784,34 @@ BEGIN
     enabled         => TRUE);
 END;
 ```
-> 스케줄러 사용 불가 환경이면 운영 배치/외부 크론으로 `P_OEE_BUILD_SUMMARY` 호출로 대체. (스펙 §11 확인 항목)
+> 스케줄러 불가 시 운영 배치/외부 크론으로 대체 (스펙 §11).
 
 - [ ] **Step 4: 커밋**
 
 ```bash
 git add scripts/oee/verify-consistency.sql
-git commit -m "feat(oee): add OEE live/snapshot consistency check and schedule"
+git commit -m "feat(oee): add live/snapshot consistency check and schedule"
 ```
 
 ---
 
 ## Self-Review (작성자 점검 결과)
 
-**Spec coverage (플랜 3 범위, REV2 반영):**
-- §2 런타임 의존 제거 → 모든 뷰/프로시저가 OEE 도메인 객체만 조인 ✅
-- §3-④ `V_OEE_PLAN_TIME` 파생 → Task 2 ✅
-- §3-⑤ `OEE_DAILY_SUMMARY` 스냅샷 → Task 5 ✅
-- §3-⑥ `OEE_PRODUCTION_RESULT` → Task 1/3 ✅
-- §3-⑦ 근무마스터 → Task 1/2 ✅
-- §4.1 계산식(자체 원천) → Task 4 `V_OEE_LIVE` ✅
-- §4.2 실시간/스냅샷 2계층 + 폴백 없음 → Task 4/5 (`OEE_SUMMARY_NOT_BUILT` 409) ✅
-- §6 대시보드 44/45/46 + 등록 → Task 6 ✅
-- §9 정합성(V_OEE_LIVE==스냅샷) → Task 7 ✅
+**Spec coverage (REV2~4 전 항목):**
+- §2 런타임 의존 제거 → 모든 뷰/프로시저가 OEE 도메인만 조인 ✅
+- §3-④ `V_OEE_PLAN_TIME`(공정별) → Task 2 ✅
+- §3-⑤ 스냅샷(+부가컬럼) → Task 7 ✅
+- §3-⑥ 생산실적(plan_qty/pickup_rate) → Task 1/4 ✅
+- §3-⑦ 근무마스터(공정별·2교대) + 관리화면 → Task 1/2/3 ✅
+- §3-⑧ 원자재준비 / §3-⑨ 고객불량 → Task 1/5, 44 위젯(Task 8) ✅
+- §4 부가지표(UPH/UPD/계획달성/픽업) → Task 6 `V_OEE_LIVE` + Task 8 표기 ✅
+- §4.2 실시간/스냅샷 2계층 + 폴백 없음 → Task 6/7 (409) ✅
+- 前공정 대기 사유 → Task 1 시드 ✅
+- §6 대시보드 44/45/46 + 등록 → Task 8 ✅
+- §9 정합성 → Task 9 ✅
 
-**Placeholder scan:** SQL/뷰/프로시저/API/컴포넌트 실제 코드 포함. 45/46 컴포넌트(Task 6 Step 2/3)는 44와 동일 로딩 패턴이라 차트 유형·엔드포인트·컬럼을 구체 명시(“Similar to” 금지 준수). 스크린→컴포넌트 매핑 파일은 기존 저장소 구조에 따라 grep으로 찾아 연결하도록 명시(파일명이 저장소마다 다를 수 있어 위치를 단정하지 않음).
+**Placeholder scan:** DDL/뷰/프로시저/API/컴포넌트 실제 코드 포함. 반복 패턴 화면(worktime/material/customer/drilldown/loss)은 "동일 패턴 + 구체 필드/차트/엔드포인트" 명시로 "Similar to" 금지 준수. 스크린→컴포넌트 매핑 파일은 저장소별 위치가 달라 grep 확인으로 지정.
 
-**Type consistency:** `V_OEE_LIVE`와 `OEE_DAILY_SUMMARY` 컬럼셋 동일 → `sqlOverview/sqlDrilldown`이 `FROM`만 교체(Task 5). `NET_LOAD_MIN`(뷰) = `net_load_minutes`(V_OEE_PLAN_TIME) 매핑 일치. OEE SQL 계산식 = `oee-calc.ts` 규칙(분모0→0, clamp없음) 동일.
+**Type consistency:** `V_OEE_LIVE`와 `OEE_DAILY_SUMMARY`(ALTER로 PLAN_QTY/PLAN_ACHIEVE/UPH/PICKUP_RATE 추가) 컬럼셋 동일 → `sqlOverview/sqlDrilldown`이 `FROM`만 교체. `NET_LOAD_MIN`(뷰)=`NET_LOAD_MINUTES`(plan-time) 매핑 일치. 생산실적 빌더 bind(`planQty/pickupRate`)와 API body 필드 일치.
 
-**계산식 이중 정의 주의:** OEE 계산이 TS(`oee-calc.ts`)와 SQL(`V_OEE_LIVE`) 두 곳에 존재한다. 이는 "실시간 SQL 집계 성능" 목적의 의도적 병행이며, Task 7 정합성 테스트로 두 정의의 일치를 강제한다(스펙 §7.3의 단일 출처 원칙을 테스트로 보증).
+**계산식 이중 정의 주의:** OEE가 TS(`oee-calc.ts`)와 SQL(`V_OEE_LIVE`) 두 곳에 존재 — "실시간 SQL 집계 성능" 목적의 의도적 병행. Task 9 정합성 테스트로 일치 강제(스펙 §7.3 단일 출처 원칙을 테스트로 보증). UPH/계획달성은 SQL에만 정의(집계 지표라 TS 불필요).

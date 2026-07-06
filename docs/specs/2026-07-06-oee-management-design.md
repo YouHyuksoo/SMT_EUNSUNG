@@ -134,24 +134,46 @@ process_code
 work_date
 shift
 run_no            -- LOT 연계 (nullable)
-output_qty        -- 총생산수량
+plan_qty          -- LOT 생산계획 수량 (계획/실적 대비)
+output_qty        -- 총생산수량(=검사공정은 검사수량)
 good_qty          -- 양품수량
 defect_qty        -- 불량수량
+pickup_rate       -- SMT 픽업율(%) (SMT 전용, nullable)
 source            -- MANUAL / EQUIP / PDA (수집 경로)
 created_by
 created_date
 ```
 - 수집 경로: 가동일지 입력화면의 수량 섹션(MANUAL) 또는 설비/PDA 신호(EQUIP/PDA) — 후자는 후속 자동화.
+- **계획달성률** = output_qty / plan_qty. **UPH** = output_qty / (실가동분/60), **UPD** = 일자 output_qty 합. (파생 지표)
+- **pickup_rate**는 SMT 공정만 사용, 대시보드에서 SMT일 때만 표시.
 
-### ⑦ 근무 마스터 (신규, 계획가동 파생 원천)
+### ⑦ 근무 마스터 (신규, 계획가동 파생 원천) — 관리화면으로 등록
 `OEE_WORK_CALENDAR` — 근무일 달력
 ```
 organization_id, work_date, holiday_yn ('Y'=휴무), remark
 ```
-`OEE_WORKTIME_RANGE` — 근무/휴식 시간대
+`OEE_WORKTIME_RANGE` — 근무/휴식 시간대 (**공정별 · 2교대**)
 ```
-range_id PK, organization_id, shift (DAY/NIGHT), range_type (WORK/BREAK),
+range_id PK, organization_id, process_code, shift (DAY/NIGHT), range_type (WORK/BREAK),
 start_hhmm (VARCHAR2(4)), end_hhmm (VARCHAR2(4)), sort_order
+```
+- **2교대**(DAY/NIGHT) 운영. 근무시간은 **공정마다 다를 수 있어** `process_code`로 구분한다.
+- 시드 하드코딩이 아니라 **근무시간 마스터 관리 화면**(`/oee/master/worktime`)에서 등록·수정.
+- 계획가동 파생 시 리소스의 `process_code`와 매칭되는 근무시간대를 사용한다.
+
+> 단일 사업장(`organization_id = 1`)만 존재. 작업자 사번은 숫자·문자 조합 문자열(`VARCHAR2(50)`).
+
+### ⑧ `OEE_MATERIAL_READINESS` — 원자재 준비율 (원자재 입고/보관/출고)
+"생산계획 대비 원자재 준비" 지표. OEE 3요소 밖의 선행 KPI.
+```
+readiness_id PK, organization_id, work_date, process_code (기본 SMT),
+plan_qty (생산계획), ready_qty (준비완료), readiness_rate (=ready/plan), created_by, created_date
+```
+
+### ⑨ `OEE_CUSTOMER_DEFECT` — 고객불량 반입 (완제품 창고)
+완제품 창고의 "고객사 불량 반입 수량".
+```
+defect_id PK, organization_id, work_date, model_code (nullable), return_qty, remark, created_by, created_date
 ```
 
 ### ⑤ `OEE_DAILY_SUMMARY` — OEE 집계 스냅샷 (확정 계층)
@@ -194,11 +216,19 @@ oee
 양품율 = 양품수량 / 총생산수량
   양품/불량   = Σ OEE_PRODUCTION_RESULT.good_qty / defect_qty (자체 보유, 신규)
 
+부가지표(체계도 명시)
+  계획달성률 = Σ output_qty / Σ plan_qty
+  UPH        = Σ output_qty / (실가동분 / 60)
+  UPD        = 일자별 Σ output_qty
+  픽업율      = OEE_PRODUCTION_RESULT.pickup_rate (SMT 전용)
+  원자재준비율 = OEE_MATERIAL_READINESS.readiness_rate (선행 KPI, OEE 곱셈엔 미포함)
+  고객불량    = OEE_CUSTOMER_DEFECT.return_qty (완제품, 사후 지표)
+
 OEE = 가동율 × 성능율 × 양품율
 ```
 
 ### 4.2 집계 전략 (2계층 + 폴백 없음)
-1. **`V_OEE_LIVE` (실시간 계층)** — **진행 중인 당일/현재 근무조에 한해** OPERATION_LOG + 월력 + RUN실적에서 on-the-fly 계산. 마감 전 실시간 표시 전용.
+1. **`V_OEE_LIVE` (실시간 계층)** — **진행 중인 당일/현재 근무조에 한해** OEE_OPERATION_LOG + V_OEE_PLAN_TIME + OEE_PRODUCTION_RESULT에서 on-the-fly 계산(모두 자체 도메인). 마감 전 실시간 표시 전용.
 2. **`OEE_DAILY_SUMMARY` (확정 계층)** — **오직 `P_OEE_BUILD_SUMMARY`(Oracle 스케줄러 프로시저)만** 근무조 마감 시점에 스냅샷 생성. 과거 이력은 전적으로 이 스냅샷에서만 조회.
 3. **폴백 없음** — 마감된 과거 기간을 조회했는데 스냅샷이 없으면 API는 즉석 계산·저장하지 않고 **`OEE_SUMMARY_NOT_BUILT` 오류** 반환. 대시보드는 "집계 미생성(마감 필요)" 오류 상태로 표시. 누락을 정상값처럼 보이게 하지 않는다.
 
@@ -212,14 +242,18 @@ OEE = 가동율 × 성능율 × 양품율
 
 ### 5.1 라우트
 모니터링(display)과 분리된 신규 그룹 `/oee`:
-- `/oee/entry` — 가동/비가동 일지 입력 (핵심, 태블릿)
+- `/oee/entry` — 가동/비가동 일지 + 생산수량(계획/실적/양품/불량/픽업) 입력 (핵심, 태블릿)
 - `/oee/master/resource` — 리소스 마스터
 - `/oee/master/reason` — 비가동사유 코드
+- `/oee/master/worktime` — 근무시간 마스터(공정별·2교대)
 - `/oee/master/plan-time` — 계획가동시간 예외 보정(override)
+- `/oee/input/material` — 원자재 준비율 입력 (원자재 공정)
+- `/oee/input/customer` — 고객불량 반입 입력 (완제품 창고)
 
 ### 5.2 가동일지 입력 `/oee/entry`
 - 상단: **단말 프로파일**(공정·리소스·근무조) — localStorage 저장, 최초 1회 선택 후 고정.
-- 본문: 해당 근무조 **타임라인**. 구간 추가 = `start~end` + 상태(RUN/DOWN) + DOWN이면 비가동사유(6대 로스 그룹핑 그리드) + RUN_NO 연계(선택).
+- 본문: 해당 근무조 **타임라인**. 구간 추가 = `start~end` + 상태(RUN/DOWN) + DOWN이면 비가동사유(6대 로스 그룹핑 그리드, 前공정대기 포함) + RUN_NO 연계(선택).
+- **생산수량 섹션**: LOT별 계획수량·생산(검사)수량·양품·불량, SMT면 픽업율. → `OEE_PRODUCTION_RESULT`.
 - **작업자 식별**: 입력·저장 시 작업자 사번 선택/스캔 → `created_by`.
 - 태블릿 친화: 큰 버튼, 시간 스텝퍼/슬라이더.
 
@@ -228,10 +262,10 @@ OEE = 가동율 × 성능율 × 양품율
 - 구간 합 ≤ 계획가동시간(근무시간)
 - `status='DOWN'` → `reason_code` 필수
 - 미래시간/역전(start>end) 금지
-- 저장: `executeDml` INSERT/UPDATE, 트랜잭션 단위 = 근무조 저장
+- 저장: 근무조 replace를 `executeTransaction`으로 원자화
 
 ### 5.4 마스터 화면
-리소스/사유/예외보정 표준 CRUD.
+리소스/사유/근무시간/예외보정 표준 CRUD + 원자재준비·고객불량 입력.
 
 ---
 
@@ -241,13 +275,14 @@ OEE = 가동율 × 성능율 × 양품율
 
 | screenId | 화면 | 내용 | 데이터 |
 |---|---|---|---|
-| 44 | 공정별 OEE 종합 현황 | 6공정 카드, OEE 대형 수치 + 가동/성능/양품 3게이지 + 당일 스파크라인 | 당일=`V_OEE_LIVE` / 과거=`OEE_DAILY_SUMMARY` |
+| 44 | 공정별 OEE 종합 현황 | 6공정 카드, OEE 대형 수치 + 가동/성능/양품 3게이지 + UPH/UPD·계획달성률, SMT는 픽업율 | 당일=`V_OEE_LIVE` / 과거=`OEE_DAILY_SUMMARY` |
 | 45 | 리소스 드릴다운 | 공정 선택 → 설비/라인/작업그룹별 OEE 순위·비교, 리소스 실시간 상태 | 동일 |
-| 46 | 로스 분석 파레토 | 비가동사유별 시간 파레토(가동율 로스), 성능/양품 로스, 6대 로스 버킷 | 동일 |
+| 46 | 로스 분석 파레토 | 비가동사유별 시간 파레토(前공정대기·자재·셋업·고장·부재), 6대 로스 버킷 | `OEE_OPERATION_LOG` |
 
+- 44 카드에 부가지표(UPH/UPD/계획달성률) 표기, SMT 카드에만 픽업율 노출.
+- 원자재 준비율(`OEE_MATERIAL_READINESS`)·고객불량(`OEE_CUSTOMER_DEFECT`)은 44 상/하단 보조 위젯으로 표시(선행/사후 KPI).
 - OEE 트렌드(일/주/월)는 44~46 내 탭 또는 별도로 `OEE_DAILY_SUMMARY` 스냅샷 전용.
-- 라인/공정 필터: 기존 display의 localStorage/이벤트 방식 준수.
-- 스냅샷 부재 시 오류 배지.
+- 라인/공정 필터: 기존 display의 localStorage/이벤트 방식 준수. 스냅샷 부재 시 오류 배지.
 
 ---
 
@@ -322,13 +357,14 @@ src/lib/queries/sql-registry.ts  # SQL 뷰어 등록
 ---
 
 ## 11. 착수 전 검증 항목 (Open Items)
-- [ ] 작업자 사번 체계(문자열) 확인
-- [ ] 공정별 근무패턴(주/야 시간대) 실무값 확정 → `OEE_WORKTIME_RANGE` 시드
+- [x] 작업자 사번 체계 → 숫자·문자 조합 문자열 (`VARCHAR2(50)`)
+- [x] 사업장 → `organization_id = 1` 단일 (다중사업장 고려 제거)
+- [x] 근무패턴 → **2교대(DAY/NIGHT)**, 근무시간은 **공정별 상이 가능** → `OEE_WORKTIME_RANGE.process_code` + 관리화면(`/oee/master/worktime`)
+- [ ] 공정별 실제 근무시간·휴식 값 (관리화면 등록 데이터, 개발 후 실무 입력)
 - [ ] 공정별 리소스 실제 단위 확정 (성능검사/코팅/라우팅/조립/검사·포장)
 - [ ] Oracle 스케줄러 사용 가능 여부 및 근무조 마감 시점 정의
 - [ ] 비가동사유 코드 6대 로스 매핑 실무 확정
 - [ ] 생산수량 수집 경로 확정 (MANUAL 입력 우선, EQUIP/PDA 자동화는 후속)
-- [ ] 신규 테이블 organization_id 다중사업장 정책 확인
 
 ---
 
@@ -336,3 +372,5 @@ src/lib/queries/sql-registry.ts  # SQL 뷰어 등록
 - **REV1 (2026-07-06)**: 초기 설계 — 접근 B(독립 OEE 도메인), 단 계획가동·성능·양품 원천은 기존 MES 자산 런타임 참조.
 - **REV2 (2026-07-06)**: 사용자 지시 "기존 구조는 참조만, 모두 새로 구현" 반영. 기존 MES 테이블·함수 **런타임 의존 전면 제거**. 생산수량은 `OEE_PRODUCTION_RESULT`(⑥), 근무/계획가동은 `OEE_WORK_CALENDAR`·`OEE_WORKTIME_RANGE`(⑦)로 **자체 신규 구현**. §2는 "설계 참조 전용"으로 재정의.
   - 영향: 플랜 1(테이블 5종)은 그대로 유효, 신규 테이블(⑥⑦)은 **플랜 3에서 추가 DDL**로 편입. 플랜 2(입력)는 자립적이라 변동 없음(생산수량 입력 섹션은 플랜 3에서 입력화면에 추가).
+- **REV3 (2026-07-06)**: 근무패턴 실무 확정. 2교대(DAY/NIGHT), `OEE_WORKTIME_RANGE`에 **`process_code` 추가**(공정별 근무시간 상이), **근무시간 마스터 관리화면**(`/oee/master/worktime`) 도입. `organization_id=1` 단일 확정. `V_OEE_PLAN_TIME` 파생 조인에 `process_code` 추가.
+- **REV4 (2026-07-06)**: OEE 관리 체계도(제안서 10쪽) 재점검 반영 — 부가지표 4종 전부 포함. ①前공정대기 사유 시드 + UPH/UPD 파생, ②`OEE_PRODUCTION_RESULT.plan_qty`(LOT 계획/실적)·`pickup_rate`(SMT), ③원자재준비율 `OEE_MATERIAL_READINESS`(⑧), ④고객불량 `OEE_CUSTOMER_DEFECT`(⑨). 원자재준비율·고객불량은 OEE 곱셈식에는 미포함되는 선행/사후 KPI로 대시보드에만 노출.
