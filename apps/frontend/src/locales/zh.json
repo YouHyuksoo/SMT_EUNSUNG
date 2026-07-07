@@ -465,7 +465,7 @@
     "login": "登录",
     "register": "注册",
     "loginTitle": "登录",
-    "loginDesc": "请输入邮箱和密码。",
+    "loginDesc": "请输入用户ID和密码。",
     "registerTitle": "注册",
     "registerDesc": "创建新账户。",
     "email": "邮箱",
@@ -505,7 +505,8 @@
     },
     "noPermission": "无访问权限",
     "noPermissionDesc": "您没有访问此页面的权限。请联系管理员。",
-    "goHome": "前往仪表盘"
+    "goHome": "前往仪表盘",
+    "userId": "用户ID"
   },
   "dashboard": {
     "title": "仪表盘",

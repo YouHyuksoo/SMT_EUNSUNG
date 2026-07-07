@@ -45,6 +45,11 @@ const nextConfig: NextConfig = {
   reactStrictMode: false,
   transpilePackages: ["@smt/shared"],
 
+  // oracledb는 네이티브 애드온이므로 번들링하지 않고 런타임에 node_modules에서 로드한다.
+  // Turbopack이 번들에 포함하면 db.ts의 thick 클라이언트 초기화가 무력화되어
+  // thin 모드로 폴백 → 11g/12c(0x939 verifier) 접속 시 NJS-116이 발생한다.
+  serverExternalPackages: ["oracledb"],
+
   compiler: {
     removeConsole: process.env.NODE_ENV === "production",
   },

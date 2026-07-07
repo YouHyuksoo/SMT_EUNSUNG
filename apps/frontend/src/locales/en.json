@@ -465,7 +465,7 @@
     "login": "Login",
     "register": "Register",
     "loginTitle": "Login",
-    "loginDesc": "Enter your email and password.",
+    "loginDesc": "Enter your user ID and password.",
     "registerTitle": "Register",
     "registerDesc": "Create a new account.",
     "email": "Email",
@@ -505,7 +505,8 @@
     },
     "noPermission": "Access Denied",
     "noPermissionDesc": "You do not have permission to access this page. Please contact your administrator.",
-    "goHome": "Go to Dashboard"
+    "goHome": "Go to Dashboard",
+    "userId": "User ID"
   },
   "dashboard": {
     "title": "Dashboard",

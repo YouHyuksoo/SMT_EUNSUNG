@@ -3,7 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "pnpm --filter @eunsung/frontend dev",
+    "dev": "turbo run dev",
+    "dev:frontend": "pnpm --filter @eunsung/frontend dev",
+    "dev:backend": "pnpm --filter @eunsung/backend dev",
     "build": "pnpm --filter @eunsung/frontend build",
     "start": "pnpm --filter @eunsung/frontend start",
     "lint": "pnpm --filter @eunsung/frontend lint",

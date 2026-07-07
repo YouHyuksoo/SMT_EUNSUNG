@@ -46,7 +46,9 @@ export const useSysConfigStore = create<SysConfigState>((set, get) => ({
     if (get().isLoading) return;
     set({ isLoading: true });
     try {
-      const res = await api.get('/system/configs/active');
+      // 은성전장은 시스템 환경설정(SYS_CONFIG) 백엔드 모듈이 아직 비활성이다.
+      // 실패해도 기본값으로 동작하는 선택적 부트스트랩 호출이므로 전역 에러 모달은 끈다.
+      const res = await api.get('/system/configs/active', { suppressErrorModal: true });
       const result = res.data?.data ?? res.data;
       const configs = result?.data ?? [];
       const configMap = result?.map ?? {};

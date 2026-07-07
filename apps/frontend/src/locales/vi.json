@@ -465,7 +465,7 @@
     "login": "Đăng nhập",
     "register": "Đăng ký",
     "loginTitle": "Đăng nhập",
-    "loginDesc": "Nhập email và mật khẩu.",
+    "loginDesc": "Nhập tên đăng nhập và mật khẩu.",
     "registerTitle": "Đăng ký",
     "registerDesc": "Tạo tài khoản mới.",
     "email": "Email",
@@ -505,7 +505,8 @@
     },
     "noPermission": "Không có quyền truy cập",
     "noPermissionDesc": "Bạn không có quyền truy cập trang này. Vui lòng liên hệ quản trị viên.",
-    "goHome": "Đi đến bảng điều khiển"
+    "goHome": "Đi đến bảng điều khiển",
+    "userId": "Tên đăng nhập"
   },
   "dashboard": {
     "title": "Bảng điều khiển",

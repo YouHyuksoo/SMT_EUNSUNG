@@ -465,7 +465,7 @@
     "login": "로그인",
     "register": "회원가입",
     "loginTitle": "로그인",
-    "loginDesc": "이메일과 비밀번호를 입력하세요.",
+    "loginDesc": "아이디와 비밀번호를 입력하세요.",
     "registerTitle": "회원가입",
     "registerDesc": "새 계정을 만들어주세요.",
     "email": "이메일",
@@ -505,7 +505,8 @@
     },
     "noPermission": "접근 권한이 없습니다",
     "noPermissionDesc": "이 페이지에 대한 접근 권한이 없습니다. 관리자에게 문의하세요.",
-    "goHome": "대시보드로 이동"
+    "goHome": "대시보드로 이동",
+    "userId": "아이디"
   },
   "dashboard": {
     "title": "대시보드",
