@@ -9,9 +9,13 @@ const fromRoot = (...parts) => path.join(root, ...parts);
 test('display monitoring route group remains isolated from business layout shell', () => {
   const displayPagePath = fromRoot('src', 'app', '(display)', 'display', '[screenId]', 'page.tsx');
   const displayLayoutPath = fromRoot('src', 'components', 'display', 'DisplayLayout.tsx');
+  const monitoringMenuPath = fromRoot('src', 'app', '(menu)', 'monitoring', 'page.tsx');
+  const businessLandingPath = fromRoot('src', 'app', '(business)', 'page.tsx');
 
   assert.equal(existsSync(displayPagePath), true, 'display page route must remain under (display)');
   assert.equal(existsSync(displayLayoutPath), true, 'display layout component must remain available');
+  assert.equal(existsSync(monitoringMenuPath), true, 'monitoring menu must use /monitoring route');
+  assert.equal(existsSync(businessLandingPath), true, 'business landing page must own / route');
 
   const displayPage = readFileSync(displayPagePath, 'utf8');
   assert.equal(displayPage.includes('@/components/layout/MainLayout'), false);
