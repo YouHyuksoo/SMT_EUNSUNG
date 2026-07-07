@@ -62,28 +62,8 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
       component = mod.getPageComponent();
       break;
     }
-    case "/customs/entry": {
-      const mod = await import("./page-registries/customs__entry.generated");
-      component = mod.getPageComponent();
-      break;
-    }
-    case "/customs/stock": {
-      const mod = await import("./page-registries/customs__stock.generated");
-      component = mod.getPageComponent();
-      break;
-    }
-    case "/customs/usage": {
-      const mod = await import("./page-registries/customs__usage.generated");
-      component = mod.getPageComponent();
-      break;
-    }
     case "/dashboard": {
       const mod = await import("./page-registries/dashboard.generated");
-      component = mod.getPageComponent();
-      break;
-    }
-    case "/equipment/calibration-history": {
-      const mod = await import("./page-registries/equipment__calibration-history.generated");
       component = mod.getPageComponent();
       break;
     }
@@ -267,11 +247,6 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
       component = mod.getPageComponent();
       break;
     }
-    case "/master/gauge": {
-      const mod = await import("./page-registries/master__gauge.generated");
-      component = mod.getPageComponent();
-      break;
-    }
     case "/master/iqc-item": {
       const mod = await import("./page-registries/master__iqc-item.generated");
       component = mod.getPageComponent();
@@ -344,26 +319,6 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
     }
     case "/material/adjustment": {
       const mod = await import("./page-registries/material__adjustment.generated");
-      component = mod.getPageComponent();
-      break;
-    }
-    case "/material/arrival": {
-      const mod = await import("./page-registries/material__arrival.generated");
-      component = mod.getPageComponent();
-      break;
-    }
-    case "/material/arrival-result": {
-      const mod = await import("./page-registries/material__arrival-result.generated");
-      component = mod.getPageComponent();
-      break;
-    }
-    case "/material/arrival-stock": {
-      const mod = await import("./page-registries/material__arrival-stock.generated");
-      component = mod.getPageComponent();
-      break;
-    }
-    case "/material/arrival-transaction": {
-      const mod = await import("./page-registries/material__arrival-transaction.generated");
       component = mod.getPageComponent();
       break;
     }
@@ -444,21 +399,6 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
     }
     case "/material/receipt-cancel": {
       const mod = await import("./page-registries/material__receipt-cancel.generated");
-      component = mod.getPageComponent();
-      break;
-    }
-    case "/material/receive": {
-      const mod = await import("./page-registries/material__receive.generated");
-      component = mod.getPageComponent();
-      break;
-    }
-    case "/material/receive-history": {
-      const mod = await import("./page-registries/material__receive-history.generated");
-      component = mod.getPageComponent();
-      break;
-    }
-    case "/material/receive-label": {
-      const mod = await import("./page-registries/material__receive-label.generated");
       component = mod.getPageComponent();
       break;
     }
@@ -692,11 +632,6 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
       component = mod.getPageComponent();
       break;
     }
-    case "/quality/msa": {
-      const mod = await import("./page-registries/quality__msa.generated");
-      component = mod.getPageComponent();
-      break;
-    }
     case "/quality/oqc": {
       const mod = await import("./page-registries/quality__oqc.generated");
       component = mod.getPageComponent();
@@ -744,16 +679,6 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
     }
     case "/quality/trace": {
       const mod = await import("./page-registries/quality__trace.generated");
-      component = mod.getPageComponent();
-      break;
-    }
-    case "/sales/customer-po": {
-      const mod = await import("./page-registries/sales__customer-po.generated");
-      component = mod.getPageComponent();
-      break;
-    }
-    case "/sales/customer-po-status": {
-      const mod = await import("./page-registries/sales__customer-po-status.generated");
       component = mod.getPageComponent();
       break;
     }

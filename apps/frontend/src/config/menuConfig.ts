@@ -10,8 +10,8 @@
  */
 import {
   LayoutDashboard, Package, Factory, ScanLine, Shield, Wrench, Truck,
-  Database, FileBox, Cog, Building2, ArrowLeftRight, UserCog,
-  ClipboardCheck, ShoppingCart, Monitor, PackageCheck, Ruler, GitBranch,
+  Database, Cog, Building2, ArrowLeftRight, UserCog,
+  ClipboardCheck, ShoppingCart, Monitor, PackageCheck, GitBranch,
 } from "lucide-react";
 
 /** 메뉴 설정 항목 인터페이스 */
@@ -78,12 +78,6 @@ export const menuConfig: MenuConfigItem[] = [
     icon: Package,
     children: [
       /* ── 자재 수불 ── */
-      { code: "MAT_ARRIVAL", labelKey: "menu.material.arrival", path: "/material/arrival" },
-      { code: "MAT_ARRIVAL_RESULT", labelKey: "menu.material.arrivalResult", path: "/material/arrival-result" },
-      { code: "MAT_ARRIVAL_TRANSACTION", labelKey: "menu.material.arrivalTransaction", path: "/material/arrival-transaction" },
-      { code: "MAT_RECEIVE_LABEL", labelKey: "menu.material.receiveLabel", path: "/material/receive-label" },
-      { code: "MAT_RECEIVE", labelKey: "menu.material.receive", path: "/material/receive" },
-      { code: "MAT_RECEIVE_HISTORY", labelKey: "menu.material.receiveHistory", path: "/material/receive-history" },
       { code: "MAT_REQUEST", labelKey: "menu.material.request", path: "/material/request" },
       { code: "MAT_REQUEST_OTHER", labelKey: "menu.material.requestOther", path: "/material/request-other" },
       { code: "MAT_ISSUE", labelKey: "menu.material.issue", path: "/material/issue" },
@@ -106,7 +100,6 @@ export const menuConfig: MenuConfigItem[] = [
       { code: "INV_MAT_PHYSICAL_INV", labelKey: "menu.inventory.matPhysicalInv", path: "/inventory/material-physical-inv" },
       { code: "INV_MAT_PHYSICAL_INV_APPLY", labelKey: "menu.inventory.matPhysicalInvApply", path: "/inventory/material-physical-inv-apply" },
       { code: "INV_MAT_PHYSICAL_INV_HISTORY", labelKey: "menu.inventory.matPhysicalInvHistory", path: "/inventory/material-physical-inv-history" },
-      { code: "INV_ARRIVAL_STOCK", labelKey: "menu.inventory.arrivalStock", path: "/material/arrival-stock" },
       { code: "MAT_HOLD", labelKey: "menu.material.hold", path: "/material/hold" },
     ],
   },
@@ -236,16 +229,6 @@ export const menuConfig: MenuConfigItem[] = [
     ],
   },
   {
-    code: "GAUGE_MGMT",
-    labelKey: "menu.gauge",
-    icon: Ruler,
-    children: [
-      { code: "GAUGE_MASTER", labelKey: "menu.gauge.master", path: "/master/gauge" },
-      { code: "GAUGE_CALIBRATION", labelKey: "menu.gauge.calibration", path: "/quality/msa" },
-      { code: "GAUGE_CALIBRATION_HISTORY", labelKey: "menu.gauge.calibrationHistory", path: "/equipment/calibration-history" },
-    ],
-  },
-  {
     code: "SHIPPING",
     labelKey: "menu.shipping",
     icon: Truck,
@@ -259,25 +242,6 @@ export const menuConfig: MenuConfigItem[] = [
       { code: "SHIP_PALLET_SHIP", labelKey: "menu.shipping.palletShip", path: "/shipping/pallet-ship" },
       { code: "SHIP_HISTORY", labelKey: "menu.shipping.history", path: "/shipping/history" },
       { code: "SHIP_RETURN", labelKey: "menu.shipping.return", path: "/shipping/return" },
-    ],
-  },
-  {
-    code: "SALES",
-    labelKey: "menu.sales",
-    icon: ShoppingCart,
-    children: [
-      { code: "SALES_CUST_PO", labelKey: "menu.sales.customerPo", path: "/sales/customer-po" },
-      { code: "SALES_CUST_PO_STATUS", labelKey: "menu.sales.customerPoStatus", path: "/sales/customer-po-status" },
-    ],
-  },
-  {
-    code: "CUSTOMS",
-    labelKey: "menu.customs",
-    icon: FileBox,
-    children: [
-      { code: "CUST_ENTRY", labelKey: "menu.customs.entry", path: "/customs/entry" },
-      { code: "CUST_STOCK", labelKey: "menu.customs.stock", path: "/customs/stock" },
-      { code: "CUST_USAGE", labelKey: "menu.customs.usage", path: "/customs/usage" },
     ],
   },
   {

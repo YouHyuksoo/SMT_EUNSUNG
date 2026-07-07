@@ -30,7 +30,6 @@ import { QualityModule } from './modules/quality/quality.module';
 import { EquipmentModule } from './modules/equipment/equipment.module';
 import { ShippingModule } from './modules/shipping/shipping.module';
 import { InterfaceModule } from './modules/interface/interface.module';
-import { CustomsModule } from './modules/customs/customs.module';
 import { ConsumablesModule } from './modules/consumables/consumables.module';
 import { OutsourcingModule } from './modules/outsourcing/outsourcing.module';
 import { InventoryModule } from './modules/inventory/inventory.module';
@@ -96,8 +95,6 @@ import { PrintAgentModule } from './modules/print-agent/print-agent.module';
     // ERP 인터페이스 (데이터 연동)
     InterfaceModule,
 
-    // 보세관리 (수입신고, 보세자재, 사용신고)
-    CustomsModule,
 
     // 소모품관리 (금형, 지그, 공구)
     ConsumablesModule,
