@@ -2,23 +2,25 @@ import 'reflect-metadata';
 import { GUARDS_METADATA } from '@nestjs/common/constants';
 import { MenuCategoriesController } from './menu-categories.controller';
 import { MenuCategoryItemsController } from './menu-category-items.controller';
+import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { Public, IS_PUBLIC_KEY } from '../../../common/decorators/public.decorator';
 
 /**
- * JwtAuthGuard는 APP_GUARD로 전역 등록되었으므로 컨트롤러 레벨 @UseGuards 검증은 불필요하다.
- * 대신 이 컨트롤러들이 인증 우회용 @Public() 으로 노출되어 있지 않은지 회귀 방지.
+ * 은성 아키텍처에서는 JwtAuthGuard를 전역 등록하지 않고 인증이 필요한 컨트롤러마다
+ * @UseGuards(JwtAuthGuard)를 명시한다. 이 컨트롤러들은 테넌트(organizationId) 스코프
+ * 데이터를 다루므로 반드시 JwtAuthGuard가 붙어 있고 @Public()으로 우회되지 않아야 한다.
  */
 describe('Menu category controller auth posture', () => {
   it.each([MenuCategoriesController, MenuCategoryItemsController])(
-    'does not bypass JwtAuthGuard via @Public(): %p',
+    'requires JwtAuthGuard and is not @Public(): %p',
     (controller) => {
       // 컨트롤러 자체가 Public이면 위험.
       const classPublic = Reflect.getMetadata(IS_PUBLIC_KEY, controller);
       expect(classPublic).toBeFalsy();
 
-      // 메소드 레벨 가드 우회도 없는지 확인 (가드를 별도로 끼워 넣지 않았는지)
+      // 클래스 레벨 @UseGuards(JwtAuthGuard)가 명시되어 있어야 한다.
       const guards = Reflect.getMetadata(GUARDS_METADATA, controller) ?? [];
-      expect(guards).toEqual([]);
+      expect(guards).toContain(JwtAuthGuard);
     },
   );
 
