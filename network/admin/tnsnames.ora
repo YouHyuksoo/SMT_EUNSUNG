@@ -1,0 +1,15 @@
+ES_MESI =
+  (DESCRIPTION =
+    (ADDRESS = (PROTOCOL = TCP)(HOST = 192.168.175.100)(PORT = 1521))
+    (CONNECT_DATA =
+      (SERVICE_NAME = XE)
+    )
+  )
+
+ES_MES =
+  (DESCRIPTION =
+    (ADDRESS = (PROTOCOL = TCP)(HOST = 61.105.35.54)(PORT = 1521))
+    (CONNECT_DATA =
+      (SERVICE_NAME = XE)
+    )
+  )
