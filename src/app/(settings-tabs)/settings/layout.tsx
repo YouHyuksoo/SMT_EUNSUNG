@@ -14,7 +14,7 @@ import SettingsTabNav from "./_components/SettingsTabNav";
 import "../../globals.css";
 
 export const metadata: Metadata = {
-  title: "SOLUEM India MES - 설정",
+  title: "은성전장 MES - 설정",
 };
 
 export default function SettingsLayout({

@@ -168,7 +168,7 @@ src/
 
 ## DB 연결
 
-기존 `lib/db.ts`의 `executeQuery`는 SOLUEM India(SMMEXPDB)에 연결되어 있다.
+기존 `lib/db.ts`의 `executeQuery`는 은성전장(SMMEXPDB)에 연결되어 있다.
 SVEHICLEPDB 연결을 위해 별도 connection 설정이 필요하며, 기존 mxvc API(`/api/mxvc/data`, `/api/mxvc/tables`)의 DB 연결 방식을 따른다.
 
 ## 참조

@@ -375,7 +375,7 @@ export default function DatabasePanel() {
             <input
               value={config.sidOrService}
               onChange={(e) => update({ sidOrService: e.target.value })}
-              placeholder="SOLIND"
+              placeholder="ORCL"
               className={inputClass}
             />
           </div>

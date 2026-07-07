@@ -1,7 +1,7 @@
 /**
  * @file src/lib/teams.ts
  * @description
- * SOLUEM India MES WebDisplay용 Microsoft Teams 웹훅 알림 유틸리티입니다.
+ * 은성전장 MES WebDisplay용 Microsoft Teams 웹훅 알림 유틸리티입니다.
  * Teams Incoming Webhook으로 MessageCard 형식 알림을 전송합니다.
  *
  * 초보자 가이드:
@@ -235,8 +235,8 @@ function buildTeamsPayload(type: TeamsNotificationType, data: NotificationData):
         '@type': 'MessageCard',
         '@context': 'http://schema.org/extensions',
         themeColor: '6b7280',
-        summary: '[SOLUEM India MES] 알림 발생',
-        sections: [{ activityTitle: '[SOLUEM India MES] 알림', markdown: true }],
+        summary: '[은성전장 MES] 알림 발생',
+        sections: [{ activityTitle: '[은성전장 MES] 알림', markdown: true }],
       };
   }
 }

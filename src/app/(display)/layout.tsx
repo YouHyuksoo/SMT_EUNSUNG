@@ -13,7 +13,7 @@ import "../globals.css";
 import "./display-theme.css";
 
 export const metadata: Metadata = {
-  title: "SOLUEM India MES Display - Monitoring",
+  title: "은성전장 MES Display - Monitoring",
   description: "Manufacturing Execution System Display Monitor Screens",
 };
 

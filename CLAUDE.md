@@ -5,7 +5,7 @@ This file defines how coding agents should work in this repository.
 The document has two layers:
 
 1. **Agent operating rules**: general behavior rules that prevent common LLM coding mistakes.
-2. **Project rules**: SOLUEM India MES Display-specific facts, workflows, and constraints.
+2. **Project rules**: 은성전장 MES Display-specific facts, workflows, and constraints.
 
 ## Agent Operating Rules
 
@@ -54,9 +54,9 @@ Define success criteria and verify them.
 
 ## Project Identity
 
-SOLUEM India MES Display는 솔루엠인도(SOLUEM India) 현장 모니터링용 Next.js 애플리케이션입니다.
+은성전장 MES Display는 은성전장 현장 모니터링용 Next.js 애플리케이션입니다.
 
-- **Site**: 솔루엠인도 (SOLUEM India)
+- **Site**: 은성전장 (EUNSUNG)
 - **DB**: Oracle, `config/database.json`의 `activeProfile` 기준 접속
 - **UI**: 3D 메뉴 + `/display/[screenId]` 모니터링 화면
 - **Languages**: 한국어/영어/스페인어/베트남어

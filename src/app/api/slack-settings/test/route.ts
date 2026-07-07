@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
           type: 'header',
           text: {
             type: 'plain_text',
-            text: '✅ SOLUEM India MES 연동 테스트',
+            text: '✅ 은성전장 MES 연동 테스트',
             emoji: true,
           },
         },
@@ -59,12 +59,12 @@ export async function POST(request: NextRequest) {
           elements: [
             {
               type: 'mrkdwn',
-              text: `테스트 시간: ${new Date().toLocaleString('ko-KR')} | SOLUEM India MES WebDisplay`,
+              text: `테스트 시간: ${new Date().toLocaleString('ko-KR')} | 은성전장 MES WebDisplay`,
             },
           ],
         },
       ],
-      text: '[SOLUEM India MES] Slack 연동 테스트 메시지입니다.',
+      text: '[은성전장 MES] Slack 연동 테스트 메시지입니다.',
     };
 
     const response = await fetch(webhookUrl, {

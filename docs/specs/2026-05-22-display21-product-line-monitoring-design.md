@@ -8,7 +8,7 @@
 
 ## 1. 배경
 
-기존 display/21은 다른 서버(SOLUEM India MES) 기준으로 구성되어 있어 BJVNSMT_E DB 컬럼 불일치. 완전 재구성.
+기존 display/21은 다른 서버(은성전장 MES) 기준으로 구성되어 있어 BJVNSMT_E DB 컬럼 불일치. 완전 재구성.
 
 ---
 

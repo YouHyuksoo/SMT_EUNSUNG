@@ -13,7 +13,7 @@ export default function OverviewSection() {
         <div>
           <h3 className="mb-3 text-lg font-bold text-white">MES Display란?</h3>
           <p className="leading-relaxed text-zinc-300">
-            SOLUEM India MES Display는 제조 실행 시스템(Manufacturing Execution System)의 실시간 모니터링 화면입니다.
+            은성전장 MES Display는 제조 실행 시스템(Manufacturing Execution System)의 실시간 모니터링 화면입니다.
             SMD 라인 생산현황, 품질 관리, 설비 상태 등을 TV/모니터에 상시 표시하여
             현장 관리자가 생산 상태를 한눈에 파악할 수 있도록 합니다.
           </p>

@@ -9,7 +9,7 @@ import { LocaleProvider } from "@/components/providers/LocaleProvider";
 import "../globals.css";
 
 export const metadata: Metadata = {
-  title: "SOLUEM India MES Display - Help",
+  title: "은성전장 MES Display - Help",
   description: "MES Display System Help & Documentation",
 };
 

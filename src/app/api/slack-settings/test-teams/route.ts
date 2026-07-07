@@ -53,13 +53,13 @@ export async function POST(request: NextRequest) {
       '@type': 'MessageCard',
       '@context': 'http://schema.org/extensions',
       themeColor: '22c55e',
-      summary: 'SOLUEM India MES Teams 연동 테스트',
+      summary: '은성전장 MES Teams 연동 테스트',
       sections: [
         {
-          activityTitle: '✅ SOLUEM India MES 연동 테스트',
+          activityTitle: '✅ 은성전장 MES 연동 테스트',
           activityText: 'Teams 웹훅 연동이 **정상적으로 설정**되었습니다.',
           facts: [
-            { name: '시스템', value: 'SOLUEM India MES WebDisplay' },
+            { name: '시스템', value: '은성전장 MES WebDisplay' },
             { name: '테스트 시간', value: new Date().toLocaleString('ko-KR') },
             { name: '상태', value: '연동 성공' },
           ],

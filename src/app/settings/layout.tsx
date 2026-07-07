@@ -4,7 +4,7 @@ import { LocaleProvider } from '@/components/providers/LocaleProvider';
 import '../globals.css';
 
 export const metadata: Metadata = {
-  title: 'SOLUEM India MES - 마이그레이션',
+  title: '은성전장 MES - 마이그레이션',
 };
 
 export default function MigrationSettingsLayout({

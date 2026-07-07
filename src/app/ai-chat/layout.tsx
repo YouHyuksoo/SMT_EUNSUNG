@@ -15,7 +15,7 @@ import '../globals.css';
 import '../(display)/display-theme.css';
 
 export const metadata: Metadata = {
-  title: 'SOLUEM India MES - AI 어시스턴트',
+  title: '은성전장 MES - AI 어시스턴트',
 };
 
 export default function AiChatLayout({ children }: Readonly<{ children: React.ReactNode }>) {

@@ -44,7 +44,7 @@ export default function HelpSidebar({ activeSection, onSectionClick, onBack }: H
       {/* 헤더 */}
       <div className="border-b border-zinc-800 p-5">
         <h2 className="text-xl font-black text-white">{t('title')}</h2>
-        <p className="mt-1 text-sm text-zinc-500">SOLUEM India MES Display</p>
+        <p className="mt-1 text-sm text-zinc-500">은성전장 MES Display</p>
       </div>
 
       {/* 목차 */}

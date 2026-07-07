@@ -10,7 +10,7 @@ import "../globals.css";
 import "./menu-theme.css";
 
 export const metadata: Metadata = {
-  title: "SOLUEM India MES Display - Menu",
+  title: "은성전장 MES Display - Menu",
   description: "Manufacturing Execution System Display Monitor Menu",
 };
 

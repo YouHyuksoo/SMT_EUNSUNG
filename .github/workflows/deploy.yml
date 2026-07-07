@@ -1,17 +1,17 @@
 ##
 # @file .github/workflows/deploy.yml
-# @description WebDisplayID(인도) 자동 배포 워크플로우 (SMIND PDA와 동일한 PM2 방식)
+# @description WebDisplayID(은성전장) 자동 배포 워크플로우 (SMIND PDA와 동일한 PM2 방식)
 #
 # Flow: main push -> Git Pull -> npm ci -> Build -> PM2 Restart -> Health Check
 #
-# Prerequisites (인도 서버 10.110.100.13):
-# - Self-hosted Runner(india-webdisplay-runner) 설치됨 (WebDisplayID repo 전용)
+# Prerequisites (은성전장 서버):
+# - Self-hosted Runner(eunsung-webdisplay-runner) 설치됨 (WebDisplayID repo 전용)
 # - D:\Project\WebDisplayID git cloned
-# - config\database.json 존재 (인도 SOLIND, gitignore되어 서버에만 존재)
+# - config\database.json 존재 (은성전장 ESDB, gitignore되어 서버에만 존재)
 # - PM2가 독립 Windows 서비스로 운영됨 (PM2_HOME=C:\ProgramData\pm2\home)
 ##
 
-name: Deploy WebDisplayID (India)
+name: Deploy WebDisplayID (EUNSUNG)
 
 on:
   push:
@@ -22,7 +22,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: deploy-webdisplay-india
+  group: deploy-webdisplay-eunsung
   cancel-in-progress: false
 
 env:
@@ -37,14 +37,14 @@ env:
 
 jobs:
   deploy:
-    name: Deploy to India Server
+    name: Deploy to EUNSUNG Server
     runs-on: [self-hosted, Windows, X64]
 
     steps:
       - name: Check Environment
         run: |
           Write-Host "========================================="
-          Write-Host "  WebDisplayID (India) Deploy Start"
+          Write-Host "  WebDisplayID (EUNSUNG) Deploy Start"
           Write-Host "========================================="
           Write-Host "Runner: $env:COMPUTERNAME"
           Write-Host "User: $env:USERNAME"

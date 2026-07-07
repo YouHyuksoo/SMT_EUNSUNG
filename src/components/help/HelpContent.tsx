@@ -20,7 +20,7 @@ export default function HelpContent() {
       <SettingsSection />
       <ShortcutsSection />
       <footer className="mt-16 border-t border-zinc-800 py-8 text-center text-sm text-zinc-600">
-        SOLUEM India MES Display v1.0 &copy; {new Date().getFullYear()}
+        은성전장 MES Display v1.0 &copy; {new Date().getFullYear()}
       </footer>
     </main>
   );

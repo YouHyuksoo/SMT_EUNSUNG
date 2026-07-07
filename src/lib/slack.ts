@@ -1,7 +1,7 @@
 /**
  * @file src/lib/slack.ts
  * @description
- * SOLUEM India MES WebDisplay용 Slack / Teams 통합 알림 유틸리티입니다.
+ * 은성전장 MES WebDisplay용 Slack / Teams 통합 알림 유틸리티입니다.
  * JSON 파일에 저장된 설정을 기반으로 MES 이벤트를 Slack/Teams로 알림합니다.
  *
  * 초보자 가이드:
@@ -265,7 +265,7 @@ function buildPayload(
       };
     }
     default:
-      return { text: '[SOLUEM India MES] 알림 발생' };
+      return { text: '[은성전장 MES] 알림 발생' };
   }
 }
 

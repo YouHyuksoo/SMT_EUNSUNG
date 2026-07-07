@@ -443,8 +443,8 @@ const html = `<!DOCTYPE html>
     <span class="vi">Hướng dẫn quy trình: Đăng ký kế hoạch sản xuất → Tình trạng nhập sản phẩm → Tình trạng đóng gói</span>
   </p>
   <div class="badge">
-    <span class="ko">SOLUEM India MES Web Display v2.0 — 2026</span>
-    <span class="vi">SOLUEM India MES Web Display v2.0 — 2026</span>
+    <span class="ko">은성전장 MES Web Display v2.0 — 2026</span>
+    <span class="vi">은성전장 MES Web Display v2.0 — 2026</span>
   </div>
 </div>
 
@@ -456,10 +456,10 @@ const html = `<!DOCTYPE html>
       <span class="ko">&#9888;&#65039; 시스템 변경 안내</span>
       <span class="vi">&#9888;&#65039; Thông báo thay đổi hệ thống</span>
     </h3>
-    <p class="ko">기존 <strong>SOLUEM India CTQ 프로그램</strong>에서 <strong>웹(Web) 모니터링 시스템</strong>으로 변경되었습니다. 별도 프로그램 설치 없이 웹 브라우저(Chrome 권장)에서 바로 사용할 수 있습니다.</p>
-    <p class="vi">Hệ thống đã được chuyển từ <strong>chương trình SOLUEM India CTQ</strong> sang <strong>hệ thống giám sát Web</strong>. Có thể sử dụng trực tiếp trên trình duyệt web (khuyến nghị Chrome) mà không cần cài đặt phần mềm riêng.</p>
+    <p class="ko">기존 <strong>은성전장 CTQ 프로그램</strong>에서 <strong>웹(Web) 모니터링 시스템</strong>으로 변경되었습니다. 별도 프로그램 설치 없이 웹 브라우저(Chrome 권장)에서 바로 사용할 수 있습니다.</p>
+    <p class="vi">Hệ thống đã được chuyển từ <strong>chương trình 은성전장 CTQ</strong> sang <strong>hệ thống giám sát Web</strong>. Có thể sử dụng trực tiếp trên trình duyệt web (khuyến nghị Chrome) mà không cần cài đặt phần mềm riêng.</p>
     <div class="change-arrow">
-      <span class="change-old">SOLUEM India CTQ (Windows)</span>
+      <span class="change-old">은성전장 CTQ (Windows)</span>
       <span style="color:var(--text-muted)">→</span>
       <span class="change-new">Web Monitoring (Chrome Browser)</span>
     </div>
@@ -904,8 +904,8 @@ const html = `<!DOCTYPE html>
 
       <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:20px; margin-bottom:12px;">
         <p style="color:var(--primary-light); font-weight:700; margin-bottom:8px;">
-          <span class="ko">Q. SOLUEM India CTQ 프로그램과 무엇이 다른가요?</span>
-          <span class="vi">Q. Có gì khác so với chương trình SOLUEM India CTQ?</span>
+          <span class="ko">Q. 은성전장 CTQ 프로그램과 무엇이 다른가요?</span>
+          <span class="vi">Q. Có gì khác so với chương trình 은성전장 CTQ?</span>
         </p>
         <p>
           <span class="ko">A. 기능은 동일하지만 웹 기반으로 변경되어 별도 설치 없이 브라우저에서 바로 사용할 수 있습니다. 다국어(한국어/영어/베트남어/스페인어) 지원과 다크 모드가 추가되었습니다.</span>
@@ -930,7 +930,7 @@ const html = `<!DOCTYPE html>
 
 <!-- Footer -->
 <footer>
-  <p>SOLUEM India MES Web Display — PBA Monitoring User Manual</p>
+  <p>은성전장 MES Web Display — PBA Monitoring User Manual</p>
   <p style="margin-top:4px; opacity:0.6;">Generated 2026-03-30 | Version 2.0</p>
 </footer>
 
