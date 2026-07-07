@@ -20,6 +20,7 @@ import configuration from './config/configuration';
 
 // 기능 모듈 (은성화 진행하며 하나씩 추가)
 import { AuthModule } from './modules/auth/auth.module';
+import { OeeModule } from './modules/oee/oee.module';
 
 @Module({
   imports: [
@@ -34,6 +35,9 @@ import { AuthModule } from './modules/auth/auth.module';
 
     // 인증 (로그인)
     AuthModule,
+
+    // OEE (설비종합효율) — 입력·마스터
+    OeeModule,
   ],
   controllers: [AppController],
   providers: [AppService],

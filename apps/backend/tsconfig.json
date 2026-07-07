@@ -28,8 +28,12 @@
     "src/database/**/*.ts",
     "src/common/**/*.ts",
     "src/modules/auth/**/*.ts",
+    "src/modules/oee/**/*.ts",
     "src/entities/isys-user.entity.ts",
-    "src/entities/isys-organization.entity.ts"
+    "src/entities/isys-organization.entity.ts",
+    "src/entities/oee-resource.entity.ts",
+    "src/entities/oee-downtime-reason.entity.ts",
+    "src/entities/oee-operation-log.entity.ts"
   ],
   "exclude": [
     "node_modules",

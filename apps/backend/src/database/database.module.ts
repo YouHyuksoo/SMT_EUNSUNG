@@ -15,6 +15,9 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { SqlDebugTypeormLogger } from '../common/sql-debug/typeorm-sql-debug.logger';
 import { IsysUser } from '../entities/isys-user.entity';
 import { IsysOrganization } from '../entities/isys-organization.entity';
+import { OeeResource } from '../entities/oee-resource.entity';
+import { OeeDowntimeReason } from '../entities/oee-downtime-reason.entity';
+import { OeeOperationLog } from '../entities/oee-operation-log.entity';
 
 @Global()
 @Module({
@@ -44,7 +47,13 @@ import { IsysOrganization } from '../entities/isys-organization.entity';
           maxQueryExecutionTime: 3000,
           // 로그인 단계에서는 은성 인증 엔티티만 로드한다.
           // 화면을 은성화하며 필요한 엔티티를 이 배열에 추가한다.
-          entities: [IsysUser, IsysOrganization],
+          entities: [
+            IsysUser,
+            IsysOrganization,
+            OeeResource,
+            OeeDowntimeReason,
+            OeeOperationLog,
+          ],
           migrations: [],
           migrationsRun: false,
 
