@@ -166,7 +166,7 @@ export class AiKnowledgeService implements OnModuleInit {
         provider TEXT NOT NULL,
         model TEXT NOT NULL,
         dims INTEGER NOT NULL,
-        embedding_json TEXT NOT NULL,
+        embedding BLOB NOT NULL,
         updated_at TEXT NOT NULL,
         PRIMARY KEY (chunk_id, provider, model, dims)
       );
@@ -207,6 +207,70 @@ export class AiKnowledgeService implements OnModuleInit {
     } catch {
       // 이미 컬럼이 있으면 무시한다.
     }
+    this.migrateEmbeddingStorage();
+  }
+
+  /**
+   * 임베딩 저장 포맷을 JSON 텍스트(embedding_json) → float32 BLOB(embedding)로 1회 변환한다.
+   * 벡터 1개가 ~29KB(JSON) → ~6KB(BLOB)로 줄어든다. 캐시 데이터는 그대로 보존되어 재색인 재사용이 유지된다.
+   * 신규 설치(이미 BLOB 스키마)나 변환 완료 DB에서는 즉시 반환한다.
+   */
+  private migrateEmbeddingStorage(): void {
+    const db = this.db!;
+    const cols = db.prepare(`PRAGMA table_info(ai_knowledge_embeddings)`).all() as Array<{ name: string }>;
+    const names = new Set(cols.map((c) => c.name));
+    if (names.has('embedding') || !names.has('embedding_json')) return;
+
+    try {
+      const rows = db.prepare(
+        `SELECT chunk_id AS chunkId, provider, model, dims, embedding_json AS embeddingJson, updated_at AS updatedAt FROM ai_knowledge_embeddings`,
+      ).all() as Array<{ chunkId: string; provider: string; model: string; dims: number; embeddingJson: string; updatedAt: string }>;
+      const migrate = db.transaction(() => {
+        db.exec(`ALTER TABLE ai_knowledge_embeddings RENAME TO ai_knowledge_embeddings_old;`);
+        db.exec(`
+          CREATE TABLE ai_knowledge_embeddings (
+            chunk_id TEXT NOT NULL,
+            provider TEXT NOT NULL,
+            model TEXT NOT NULL,
+            dims INTEGER NOT NULL,
+            embedding BLOB NOT NULL,
+            updated_at TEXT NOT NULL,
+            PRIMARY KEY (chunk_id, provider, model, dims)
+          );
+        `);
+        const ins = db.prepare(
+          `INSERT OR REPLACE INTO ai_knowledge_embeddings(chunk_id, provider, model, dims, embedding, updated_at) VALUES (?, ?, ?, ?, ?, ?)`,
+        );
+        let migrated = 0;
+        for (const row of rows) {
+          try {
+            const blob = this.floatsToBlob(Float32Array.from(JSON.parse(row.embeddingJson) as number[]));
+            ins.run(row.chunkId, row.provider, row.model, row.dims, blob, row.updatedAt);
+            migrated += 1;
+          } catch {
+            // 손상된 캐시 행은 건너뛴다(다음 재색인에서 재생성됨).
+          }
+        }
+        db.exec(`DROP TABLE ai_knowledge_embeddings_old;`);
+        return migrated;
+      });
+      const migrated = migrate();
+      db.exec(`VACUUM;`);
+      this.logger.log(`ai_knowledge_embeddings: JSON→BLOB 마이그레이션 완료 (${migrated}/${rows.length} rows, VACUUM 수행)`);
+    } catch (error) {
+      this.logger.error(`ai_knowledge_embeddings 마이그레이션 실패: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  /** Float32Array를 SQLite BLOB로 바인딩할 수 있는 Buffer 뷰로 변환한다(복사 없음). */
+  private floatsToBlob(vector: Float32Array): Buffer {
+    return Buffer.from(vector.buffer, vector.byteOffset, vector.byteLength);
+  }
+
+  /** SQLite BLOB(Buffer)을 정렬 안전하게 Float32Array로 복원한다. */
+  private blobToFloats(blob: Buffer): Float32Array {
+    const aligned = blob.buffer.slice(blob.byteOffset, blob.byteOffset + blob.byteLength);
+    return new Float32Array(aligned);
   }
 
   private ensureVectorSchema(dims: number): void {
@@ -306,7 +370,7 @@ export class AiKnowledgeService implements OnModuleInit {
       const insertFts = db.prepare(`INSERT INTO ai_knowledge_fts(chunk_id, title, heading, summary, keywords, content) VALUES (?, ?, ?, ?, ?, ?)`);
       const insertVec = this.vectorEnabled ? db.prepare(`INSERT INTO ai_knowledge_vec(chunk_id, embedding) VALUES (?, ?)`) : null;
       const upsertEmbedding = db.prepare(`
-        INSERT OR REPLACE INTO ai_knowledge_embeddings(chunk_id, provider, model, dims, embedding_json, updated_at)
+        INSERT OR REPLACE INTO ai_knowledge_embeddings(chunk_id, provider, model, dims, embedding, updated_at)
         VALUES (?, ?, ?, ?, ?, ?)
       `);
 
@@ -338,7 +402,7 @@ export class AiKnowledgeService implements OnModuleInit {
           chunk.content,
         );
         if (insertVec) insertVec.run(chunk.chunkId, embeddings[index]);
-        upsertEmbedding.run(chunk.chunkId, cfg.provider, cfg.model, cfg.dims, JSON.stringify(Array.from(embeddings[index])), now);
+        upsertEmbedding.run(chunk.chunkId, cfg.provider, cfg.model, cfg.dims, this.floatsToBlob(embeddings[index]), now);
       });
       if (chunks.length > 0) {
         const activeIds = new Set(chunks.map((chunk) => chunk.chunkId));
@@ -735,7 +799,7 @@ export class AiKnowledgeService implements OnModuleInit {
   ): Promise<Array<{ vector: Float32Array; reused: boolean }>> {
     const db = this.db!;
     const cached = db.prepare(`
-      SELECT embedding_json AS embeddingJson
+      SELECT embedding AS embedding
       FROM ai_knowledge_embeddings
       WHERE chunk_id = ? AND provider = ? AND model = ? AND dims = ?
     `);
@@ -743,10 +807,10 @@ export class AiKnowledgeService implements OnModuleInit {
     const missing: Array<{ index: number; text: string }> = [];
 
     chunks.forEach((chunk, index) => {
-      const row = cached.get(chunk.chunkId, provider, model, dims) as { embeddingJson?: string } | undefined;
-      if (row?.embeddingJson) {
+      const row = cached.get(chunk.chunkId, provider, model, dims) as { embedding?: Buffer } | undefined;
+      if (row?.embedding && row.embedding.byteLength === dims * 4) {
         try {
-          results[index] = { vector: new Float32Array(JSON.parse(row.embeddingJson) as number[]), reused: true };
+          results[index] = { vector: this.blobToFloats(row.embedding), reused: true };
           return;
         } catch {
           // 잘못된 cache는 재생성한다.
