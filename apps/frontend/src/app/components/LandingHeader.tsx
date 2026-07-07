@@ -14,6 +14,7 @@ import { useTranslation } from "react-i18next";
 import { Factory, LogIn, LayoutDashboard } from "lucide-react";
 import Link from "next/link";
 import LanguageSwitcher from "@/components/layout/LanguageSwitcher";
+import ThemeSelector from "./ThemeSelector";
 
 interface LandingHeaderProps {
   isAuthenticated: boolean;
@@ -53,6 +54,7 @@ export default function LandingHeader({ isAuthenticated, onNavigate }: LandingHe
 
         {/* 우측 액션 */}
         <div className="flex items-center gap-2">
+          <ThemeSelector />
           <LanguageSwitcher />
           <button
             onClick={onNavigate}

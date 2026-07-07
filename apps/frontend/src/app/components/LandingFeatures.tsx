@@ -8,10 +8,12 @@
  * 1. **Feature Cards**: 6개 핵심 기능을 카드 형태로 소개
  * 2. **아이콘**: lucide-react 아이콘 사용
  * 3. **반응형 그리드**: 모바일 1열 → 태블릿 2열 → 데스크톱 3열
+ * 4. **인터랙션**: gsap 스크롤 리빌 + 마우스 3D 틸트
  */
 
+import { useEffect, useRef } from "react";
+import type { LucideIcon } from "lucide-react";
 import {
-  Activity,
   Boxes,
   Database,
   Factory,
@@ -19,8 +21,16 @@ import {
   Monitor,
   ScanLine,
 } from "lucide-react";
+import gsap from "gsap";
 
-const features = [
+interface Feature {
+  icon: LucideIcon;
+  title: string;
+  description: string;
+  color: string;
+}
+
+const features: Feature[] = [
   {
     icon: Database,
     title: "기준정보",
@@ -59,9 +69,73 @@ const features = [
   },
 ];
 
-export default function LandingFeatures() {
+function FeatureCard({ feature }: { feature: Feature }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const Icon = feature.icon;
+
+  function onMove(e: React.MouseEvent) {
+    const el = ref.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const px = (e.clientX - r.left) / r.width - 0.5;
+    const py = (e.clientY - r.top) / r.height - 0.5;
+    el.style.transform = `perspective(900px) rotateX(${py * -5}deg) rotateY(${px * 7}deg) translateY(-4px)`;
+  }
+  function reset() {
+    if (ref.current) ref.current.style.transform = "";
+  }
+
   return (
-    <section className="py-20 lg:py-28 bg-surface/50 border-t border-border">
+    <div
+      ref={ref}
+      data-feature-card
+      onMouseMove={onMove}
+      onMouseLeave={reset}
+      className="
+        group p-6 rounded-lg
+        bg-card border border-border
+        [transform-style:preserve-3d] will-change-transform
+        transition-[box-shadow,border-color] duration-300
+        hover:border-primary/30 hover:shadow-lg
+      "
+    >
+      <div className={`
+        w-11 h-11 rounded-lg flex items-center justify-center mb-4
+        ${feature.color}
+      `}>
+        <Icon className="w-5 h-5" />
+      </div>
+      <h3 className="text-lg font-semibold text-text mb-2">
+        {feature.title}
+      </h3>
+      <p className="text-sm text-text-muted leading-relaxed">
+        {feature.description}
+      </p>
+    </div>
+  );
+}
+
+export default function LandingFeatures() {
+  const rootRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    // 마운트 시 1회 스태거 등장. ScrollTrigger를 쓰지 않으므로 gsap가
+    // 실행되지 않아도 카드는 CSS 기본(가시) 상태로 남아 영구 숨김이 없다.
+    const ctx = gsap.context(() => {
+      gsap.from("[data-feature-card]", {
+        opacity: 0,
+        y: 26,
+        duration: 0.6,
+        ease: "power3.out",
+        stagger: 0.08,
+      });
+    }, rootRef);
+    return () => ctx.revert();
+  }, []);
+
+  return (
+    <section ref={rootRef} className="py-20 lg:py-28 bg-surface/50 border-t border-border">
       <div className="max-w-7xl mx-auto px-6">
         {/* Section Header */}
         <div className="text-center mb-14">
@@ -77,28 +151,7 @@ export default function LandingFeatures() {
         {/* Feature Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {features.map((feature) => (
-            <div
-              key={feature.title}
-            className="
-                group p-6 rounded-lg
-                bg-card border border-border
-                hover:border-primary/30 hover:shadow-lg
-                transition-all duration-300
-              "
-            >
-              <div className={`
-                w-11 h-11 rounded-lg flex items-center justify-center mb-4
-                ${feature.color}
-              `}>
-                <feature.icon className="w-5 h-5" />
-              </div>
-              <h3 className="text-lg font-semibold text-text mb-2">
-                {feature.title}
-              </h3>
-              <p className="text-sm text-text-muted leading-relaxed">
-                {feature.description}
-              </p>
-            </div>
+            <FeatureCard key={feature.title} feature={feature} />
           ))}
         </div>
       </div>
