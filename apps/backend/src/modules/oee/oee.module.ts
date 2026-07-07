@@ -10,10 +10,11 @@ import { OeeOperationLog } from '../../entities/oee-operation-log.entity';
 import { OeeController } from './oee.controller';
 import { OeeMasterService } from './oee-master.service';
 import { OeeLogService } from './oee-log.service';
+import { OeeDashboardService } from './oee-dashboard.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([OeeResource, OeeDowntimeReason, OeeOperationLog])],
   controllers: [OeeController],
-  providers: [OeeMasterService, OeeLogService],
+  providers: [OeeMasterService, OeeLogService, OeeDashboardService],
 })
 export class OeeModule {}
