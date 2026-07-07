@@ -11,7 +11,7 @@
 import {
   LayoutDashboard, Package, Factory, ScanLine, Shield, Wrench, Truck,
   Database, Cog, Building2, ArrowLeftRight, UserCog,
-  ClipboardCheck, ShoppingCart, Monitor, PackageCheck, GitBranch,
+  ClipboardCheck, ShoppingCart, Monitor, PackageCheck, GitBranch, Activity,
 } from "lucide-react";
 
 /** 메뉴 설정 항목 인터페이스 */
@@ -48,6 +48,16 @@ export const menuConfig: MenuConfigItem[] = [
     icon: Monitor,
     children: [
       { code: "MON_EQUIP_STATUS", labelKey: "menu.equipment.status", path: "/equipment/status" },
+    ],
+  },
+  {
+    code: "OEE",
+    labelKey: "menu.oee",
+    icon: Activity,
+    children: [
+      { code: "OEE_ENTRY", labelKey: "menu.oee.entry", path: "/oee/entry" },
+      { code: "OEE_MST_RESOURCE", labelKey: "menu.oee.resource", path: "/oee/master/resource" },
+      { code: "OEE_MST_REASON", labelKey: "menu.oee.reason", path: "/oee/master/reason" },
     ],
   },
   {

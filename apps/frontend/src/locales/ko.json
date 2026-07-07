@@ -422,7 +422,11 @@
     "system.erView": "ER VIEW",
     "system.menuCategory": "메뉴 카테고리 관리",
     "root": "최상위",
-    "system.improvementRequests": "개선요청 관리"
+    "system.improvementRequests": "개선요청 관리",
+    "oee": "OEE 관리",
+    "oee.entry": "가동일지 입력",
+    "oee.resource": "리소스 마스터",
+    "oee.reason": "비가동사유 마스터"
   },
   "header": {
     "theme": "테마",

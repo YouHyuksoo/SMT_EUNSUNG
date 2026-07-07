@@ -422,7 +422,11 @@
     "system.erView": "ER VIEW",
     "system.menuCategory": "Quản lý danh mục menu",
     "root": "Cấp cao nhất",
-    "system.improvementRequests": "Quản lý yêu cầu cải tiến"
+    "system.improvementRequests": "Quản lý yêu cầu cải tiến",
+    "oee": "Quản lý OEE",
+    "oee.entry": "Nhật ký vận hành",
+    "oee.resource": "Danh mục nguồn lực",
+    "oee.reason": "Danh mục lý do dừng máy"
   },
   "header": {
     "theme": "Giao diện",

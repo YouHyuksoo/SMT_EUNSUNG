@@ -422,7 +422,11 @@
     "system.erView": "ER VIEW",
     "system.menuCategory": "Menu Category Management",
     "root": "Root",
-    "system.improvementRequests": "Improvement Requests"
+    "system.improvementRequests": "Improvement Requests",
+    "oee": "OEE",
+    "oee.entry": "Operation Log",
+    "oee.resource": "Resource Master",
+    "oee.reason": "Downtime Reason Master"
   },
   "header": {
     "theme": "Theme",
