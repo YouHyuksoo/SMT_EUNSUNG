@@ -18,6 +18,8 @@ import { IsysOrganization } from '../entities/isys-organization.entity';
 import { OeeResource } from '../entities/oee-resource.entity';
 import { OeeDowntimeReason } from '../entities/oee-downtime-reason.entity';
 import { OeeOperationLog } from '../entities/oee-operation-log.entity';
+import { MenuCategory } from '../entities/menu-category.entity';
+import { MenuCategoryItem } from '../entities/menu-category-item.entity';
 
 @Global()
 @Module({
@@ -53,6 +55,8 @@ import { OeeOperationLog } from '../entities/oee-operation-log.entity';
             OeeResource,
             OeeDowntimeReason,
             OeeOperationLog,
+            MenuCategory,
+            MenuCategoryItem,
           ],
           migrations: [],
           migrationsRun: false,

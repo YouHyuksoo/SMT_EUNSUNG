@@ -21,6 +21,7 @@ import configuration from './config/configuration';
 // 기능 모듈 (은성화 진행하며 하나씩 추가)
 import { AuthModule } from './modules/auth/auth.module';
 import { OeeModule } from './modules/oee/oee.module';
+import { MenuCategoriesModule } from './modules/menu-categories/menu-categories.module';
 
 @Module({
   imports: [
@@ -38,6 +39,9 @@ import { OeeModule } from './modules/oee/oee.module';
 
     // OEE (설비종합효율) — 입력·마스터
     OeeModule,
+
+    // 메뉴 카테고리 관리 (/system/menu-categories)
+    MenuCategoriesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

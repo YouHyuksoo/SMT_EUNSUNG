@@ -29,11 +29,15 @@
     "src/common/**/*.ts",
     "src/modules/auth/**/*.ts",
     "src/modules/oee/**/*.ts",
+    "src/modules/menu-categories/**/*.ts",
+    "src/shared/transaction.service.ts",
     "src/entities/isys-user.entity.ts",
     "src/entities/isys-organization.entity.ts",
     "src/entities/oee-resource.entity.ts",
     "src/entities/oee-downtime-reason.entity.ts",
-    "src/entities/oee-operation-log.entity.ts"
+    "src/entities/oee-operation-log.entity.ts",
+    "src/entities/menu-category.entity.ts",
+    "src/entities/menu-category-item.entity.ts"
   ],
   "exclude": [
     "node_modules",
@@ -44,7 +48,8 @@
     "src/database/test-connection.ts",
     "src/database/data-source.ts",
     "src/database/oracle-data-source.ts",
-    "src/common/guards/**/*.ts",
+    "src/common/guards/inventory-freeze.guard.ts",
+    "src/common/guards/roles.guard.ts",
     "src/common/modules/guard.module.ts",
     "src/common/interfaces/stock-manager.interface.ts"
   ]
