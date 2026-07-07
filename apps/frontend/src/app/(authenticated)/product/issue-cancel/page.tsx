@@ -1,0 +1,199 @@
+﻿"use client";
+
+/**
+ * @file src/app/(authenticated)/product/issue-cancel/page.tsx
+ * @description 제품출고취소 페이지 - 제품 출고 트랜잭션 역분개 처리
+ *
+ * 초보자 가이드:
+ * 1. PRODUCT_TRANSACTIONS에서 WIP_OUT/FG_OUT 유형의 DONE 상태만 취소 가능
+ * 2. 취소 시 source='product'로 전달하여 ProductInventoryService로 라우팅
+ * 3. 역분개: 원래 출고의 반대 트랜잭션 생성 + PRODUCT_STOCKS 재고 복구
+ */
+
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { useTranslation } from "react-i18next";
+import { RotateCcw, Search, RefreshCw, XCircle } from "lucide-react";
+import { Card, CardContent, Button, Input, StatCard, Modal } from "@/components/ui";
+import ComCodeBadge from "@/components/ui/ComCodeBadge";
+import DataGrid from "@/components/data-grid/DataGrid";
+import api from "@/services/api";
+import { getTodayLocal } from "@/utils/date";
+import DateRangeFilter from "@/components/shared/DateRangeFilter";
+import {
+  createProductIssueCancelGridColumns,
+  type ProductIssueTx,
+} from "./productIssueCancelColumns";
+
+export default function ProductIssueCancelPage() {
+  const { t } = useTranslation();
+
+  const [data, setData] = useState<ProductIssueTx[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [searchText, setSearchText] = useState("");
+  const [fromDate, setStartDate] = useState(() => getTodayLocal());
+  const [toDate, setEndDate] = useState(() => getTodayLocal());
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedTx, setSelectedTx] = useState<ProductIssueTx | null>(null);
+  const [reason, setReason] = useState("");
+
+  /** 제품 출고 이력 조회 */
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params: Record<string, string> = {
+        transType: "WIP_OUT,FG_OUT,WIP_OUT_CANCEL,FG_OUT_CANCEL",
+        limit: "5000",
+      };
+      if (fromDate) params.fromDate = fromDate;
+      if (toDate) params.toDate = toDate;
+      const res = await api.get("/inventory/product/transactions", { params });
+      const list = res.data?.data ?? res.data;
+      setData(Array.isArray(list) ? list : []);
+    } catch {
+      setData([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [fromDate, toDate]);
+
+  useEffect(() => { fetchData(); }, [fetchData]);
+
+  /** 통계 */
+  const issueTypes = useMemo(() => new Set(["WIP_OUT", "FG_OUT"]), []);
+  const stats = useMemo(() => ({
+    total: data.filter((d) => issueTypes.has(d.transType)).length,
+    cancellable: data.filter(
+      (d) => issueTypes.has(d.transType) && d.status !== "CANCELED" && !d.cancelRefId,
+    ).length,
+    canceled: data.filter(
+      (d) => d.status === "CANCELED" || d.transType.includes("CANCEL"),
+    ).length,
+  }), [data, issueTypes]);
+
+  /** 취소 처리 */
+  const handleCancel = useCallback(async () => {
+    if (!selectedTx || !reason) return;
+    setSaving(true);
+    try {
+      await api.post("/inventory/cancel", {
+        transactionId: selectedTx.id,
+        remark: reason,
+        source: "product",
+      });
+      setIsModalOpen(false);
+      setReason("");
+      setSelectedTx(null);
+      fetchData();
+    } catch (e) {
+      console.error("Cancel failed:", e);
+    } finally {
+      setSaving(false);
+    }
+  }, [selectedTx, reason, fetchData]);
+
+  const columns = useMemo(() => createProductIssueCancelGridColumns({
+    t,
+    onCancelTx: (tx) => {
+      setSelectedTx(tx);
+      setReason("");
+      setIsModalOpen(true);
+    },
+  }), [t]);
+
+  return (
+    <div className="h-full flex flex-col overflow-hidden p-6 gap-4 animate-fade-in">
+      {/* 헤더 */}
+      <div className="flex justify-between items-center flex-shrink-0">
+        <div>
+          <h1 className="text-xl font-bold text-text flex items-center gap-2">
+            <RotateCcw className="w-7 h-7 text-primary" />
+            {t("productMgmt.issueCancel.title")}
+          </h1>
+          <p className="text-text-muted mt-1">{t("productMgmt.issueCancel.subtitle")}</p>
+        </div>
+        <Button variant="secondary" size="sm" onClick={fetchData}>
+          <RefreshCw className={`w-4 h-4 mr-1 ${loading ? "animate-spin" : ""}`} />{t("common.refresh")}
+        </Button>
+      </div>
+
+      {/* StatCards */}
+      <div className="grid grid-cols-3 gap-3 flex-shrink-0">
+        <StatCard label={t("productMgmt.issueCancel.stats.total")} value={stats.total} icon={RotateCcw} color="blue" />
+        <StatCard label={t("productMgmt.issueCancel.stats.cancellable")} value={stats.cancellable} icon={XCircle} color="yellow" />
+        <StatCard label={t("productMgmt.issueCancel.stats.canceled")} value={stats.canceled} icon={RotateCcw} color="red" />
+      </div>
+
+      {/* DataGrid */}
+      <Card className="flex-1 min-h-0 overflow-hidden" padding="none"><CardContent className="h-full p-4">
+        <DataGrid data={data} columns={columns} isLoading={loading} enableColumnFilter enableExport
+          exportFileName={t("productMgmt.issueCancel.title")}
+          toolbarLeft={
+            <div className="flex gap-3 flex-1 min-w-0">
+              <div className="flex-1 min-w-0">
+                <Input placeholder={t("productMgmt.issueCancel.searchPlaceholder")}
+                  value={searchText} onChange={(e) => setSearchText(e.target.value)}
+                  leftIcon={<Search className="w-4 h-4" />} fullWidth />
+              </div>
+              <DateRangeFilter
+                from={fromDate}
+                to={toDate}
+                onFromChange={setStartDate}
+                onToChange={setEndDate}
+                className="flex-shrink-0"
+              />
+            </div>
+          }
+          sqlQuery={`SELECT *\nFROM PROD_ISSUE_CANCELS\nWHERE COMPANY = '40'\n  AND PLANT_CD = '1000'\nORDER BY CREATED_AT DESC`}/>
+      </CardContent></Card>
+
+      {/* 취소 모달 */}
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}
+        title={t("productMgmt.issueCancel.cancelTitle")} size="lg">
+        {selectedTx && (
+          <div className="space-y-4">
+            <div className="p-3 bg-red-50 dark:bg-red-950/30 rounded-lg border border-red-200 dark:border-red-800">
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <span className="text-text-muted">{t("productMgmt.issueCancel.transNo")}:</span>{" "}
+                  <span className="font-mono font-medium">{selectedTx.transNo}</span>
+                </div>
+                <div>
+                  <span className="text-text-muted">{t("common.partCode")}:</span>{" "}
+                  <span className="font-mono">{selectedTx.part?.itemCode}</span>
+                </div>
+                <div>
+                  <span className="text-text-muted">{t("common.partName")}:</span>{" "}
+                  {selectedTx.part?.itemName}
+                </div>
+                <div>
+                  <span className="text-text-muted">{t("productMgmt.issueCancel.qty")}:</span>{" "}
+                  <span className="font-medium text-red-600 dark:text-red-400">
+                    {selectedTx.qty.toLocaleString()} {selectedTx.part?.unit || ""}
+                  </span>
+                </div>
+                {selectedTx.issueType && (
+                  <div>
+                    <span className="text-text-muted">{t("productMgmt.issueCancel.issueType")}:</span>{" "}
+                    <ComCodeBadge groupCode="ISSUE_TYPE" code={selectedTx.issueType} />
+                  </div>
+                )}
+              </div>
+            </div>
+            <Input label={t("productMgmt.issueCancel.reason")}
+              placeholder={t("productMgmt.issueCancel.reasonPlaceholder")}
+              value={reason} onChange={(e) => setReason(e.target.value)} fullWidth />
+            <div className="flex justify-end gap-2 pt-4">
+              <Button variant="secondary" onClick={() => setIsModalOpen(false)}>{t("common.cancel")}</Button>
+              <Button onClick={handleCancel} disabled={saving || !reason}>
+                {saving ? t("common.saving") : (
+                  <><XCircle className="w-4 h-4 mr-1" />{t("productMgmt.issueCancel.confirm")}</>
+                )}
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
+    </div>
+  );
+}

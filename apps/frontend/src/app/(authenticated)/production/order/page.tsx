@@ -1,0 +1,421 @@
+﻿"use client";
+
+/**
+ * @file src/app/(authenticated)/production/order/page.tsx
+ * @description 작업지시 관리 페이지 - 액션바 기반 상태관리, BOM 반제품 자동생성, 트리뷰
+ *
+ * 초보자 가이드:
+ * 1. **작업지시**: 완제품/반제품 생산 명령 (WAITING → RUNNING → DONE)
+ * 2. **액션바**: 행 선택 시 상단에 상태별 액션 버튼 표시
+ * 3. **홀딩**: HOLD 상태 시 실적등록/출하 전부 차단
+ * 4. **생성/수정**: 생성은 공정별 설비 배정 모달, 수정은 오른쪽 슬라이드 패널
+ */
+
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useTranslation } from "react-i18next";
+import {
+  Search, RefreshCw, ClipboardList, Plus,
+  Play, CheckCircle2, PauseCircle, PlayCircle, XCircle,
+  Printer, Wrench,
+} from "lucide-react";
+import { Card, CardContent, Button, Input, Select, ComCodeBadge, ConfirmModal } from "@/components/ui";
+import { ComCodeSelect, EquipSelect } from "@/components/shared";
+import DateRangeFilter from "@/components/shared/DateRangeFilter";
+import DataGrid from "@/components/data-grid/DataGrid";
+import { createProductionOrderGridColumns } from "./productionOrderColumns";
+import api from "@/services/api";
+import { usePageAiTools } from "@/ai-page-tools/usePageAiTools";
+import { usePageToolStore } from "@/ai-page-tools/pageToolStore";
+import { useAiChatStore } from "@/stores/aiChatStore";
+import JobOrderFormPanel from "./components/JobOrderFormPanel";
+import type { JobOrderFormData } from "./components/JobOrderFormPanel";
+import JobOrderCreateModal from "./components/JobOrderCreateModal";
+import JobOrderPrintModal from "./components/JobOrderPrintModal";
+import type { ProductionJobOrderRow } from "@smt/shared";
+
+type JobOrderItem = ProductionJobOrderRow;
+type AiJobOrderDraft = Partial<JobOrderFormData>;
+
+/** 트리 데이터를 평탄화 (들여쓰기 depth 포함) */
+function flattenTree(items: JobOrderItem[], depth = 0): (JobOrderItem & { _depth: number })[] {
+  const result: (JobOrderItem & { _depth: number })[] = [];
+  for (const item of items) {
+    result.push({ ...item, _depth: depth });
+    if (item.children?.length) {
+      result.push(...flattenTree(item.children, depth + 1));
+    }
+  }
+  return result;
+}
+
+/** 액션 타입 정의 */
+type ActionType = "start" | "complete" | "hold" | "holdRelease" | "cancel";
+
+const toJobOrderFormData = (row: JobOrderItem): JobOrderFormData => ({
+  orderNo: row.orderNo,
+  itemCode: row.itemCode,
+  lineCode: row.lineCode ?? undefined,
+  processCode: row.processCode ?? undefined,
+  equipCode: row.equipCode ?? undefined,
+  custPoNo: row.custPoNo ?? undefined,
+  planQty: row.planQty,
+  planDate: row.planDate ? String(row.planDate).slice(0, 10) : undefined,
+  priority: row.priority,
+  remark: row.remark ?? undefined,
+});
+
+export default function JobOrderPage() {
+  const { t } = useTranslation();
+  const openAiChat = useAiChatStore((s) => s.open);
+  const openToolsTab = usePageToolStore((s) => s.openToolsTab);
+  const addExecutionLog = usePageToolStore((s) => s.addExecutionLog);
+  const [data, setData] = useState<JobOrderItem[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [searchText, setSearchText] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [equipFilter, setEquipFilter] = useState("");
+  const [itemTypeFilter, setItemTypeFilter] = useState("");
+  const [startDate, setStartDate] = useState(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  });
+  const [endDate, setEndDate] = useState(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  });
+  const [viewMode, setViewMode] = useState<"list" | "tree">("list");
+
+  // 행 선택 상태
+  const [selectedRow, setSelectedRow] = useState<JobOrderItem | null>(null);
+
+  // 패널 상태
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [isPanelOpen, setIsPanelOpen] = useState(false);
+  const [editingOrder, setEditingOrder] = useState<JobOrderFormData | null>(null);
+  const [aiDraft, setAiDraft] = useState<AiJobOrderDraft | null>(null);
+  const [aiDraftVersion, setAiDraftVersion] = useState(0);
+  const panelAnimateRef = useRef(true);
+
+  // 삭제/액션 확인 모달
+  const [deleteTarget, setDeleteTarget] = useState<JobOrderItem | null>(null);
+  const [pendingAction, setPendingAction] = useState<ActionType | null>(null);
+
+  // 작업지시서 출력
+  const [printOrderNo, setPrintOrderNo] = useState<string | null>(null);
+
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    try {
+      if (viewMode === "tree") {
+        const treeParams: Record<string, string> = {};
+        if (startDate) treeParams.planDateFrom = startDate;
+        if (endDate) treeParams.planDateTo = endDate;
+        const res = await api.get("/production/job-orders/tree", { params: treeParams });
+        setData(res.data?.data ?? []);
+      } else {
+        const params: Record<string, string> = { limit: "5000" };
+        if (searchText) params.search = searchText;
+        if (statusFilter) params.status = statusFilter;
+        if (startDate) params.planDateFrom = startDate;
+        if (endDate) params.planDateTo = endDate;
+        const res = await api.get("/production/job-orders", { params });
+        setData(res.data?.data ?? []);
+      }
+    } catch {
+      setData([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [viewMode, searchText, statusFilter, startDate, endDate]);
+
+  useEffect(() => { fetchData(); }, [fetchData]);
+
+  const applyJobOrderDraft = useCallback((input: unknown) => {
+    const draft = input && typeof input === "object" ? input as AiJobOrderDraft : {};
+    setAiDraft(draft);
+    setAiDraftVersion((version) => version + 1);
+    setEditingOrder(null);
+    setCreateModalOpen(true);
+    addExecutionLog({
+      pageId: "production.order",
+      toolName: "applyJobOrderDraft",
+      input: draft,
+      status: "success",
+      summary: "AI 작업지시 초안을 생성 모달에 반영했습니다. 저장은 사용자가 직접 실행해야 합니다.",
+    });
+    return { accepted: true, mode: "draft-only" };
+  }, [addExecutionLog]);
+
+  const pageToolExecutors = useMemo(() => ({ applyJobOrderDraft }), [applyJobOrderDraft]);
+  usePageAiTools("production.order", pageToolExecutors);
+
+  // QR 스캔 진입: URL ?orderNo= 가 있으면 해당 작업지시 자동 검색(목록 모드)
+  const [scanOrderNo, setScanOrderNo] = useState<string | null>(null);
+  useEffect(() => {
+    const o = new URLSearchParams(window.location.search).get("orderNo");
+    if (o) {
+      setScanOrderNo(o);
+      setViewMode("list");
+      setSearchText(o);
+    }
+  }, []);
+
+  const displayData = useMemo(() => {
+    let rows = viewMode === "tree" ? flattenTree(data) : data.map(d => ({ ...d, _depth: 0 }));
+    if (equipFilter) rows = rows.filter(r => (r.equipCode ?? "") === equipFilter);
+    if (itemTypeFilter) rows = rows.filter(r => (r.part?.itemType ?? "") === itemTypeFilter);
+    return rows;
+  }, [viewMode, data, equipFilter, itemTypeFilter]);
+
+  // ===== 액션바 로직 =====
+  const canStart = selectedRow?.status === "WAITING";
+  const canComplete = selectedRow?.status === "RUNNING";
+  const canHold = selectedRow?.status === "WAITING" || selectedRow?.status === "RUNNING";
+  const canHoldRelease = selectedRow?.status === "HOLD";
+  const canCancel = selectedRow?.status === "WAITING" || selectedRow?.status === "HOLD";
+
+  const actionEndpoints: Record<ActionType, string> = {
+    start: "start",
+    complete: "complete",
+    hold: "hold",
+    holdRelease: "hold-release",
+    cancel: "cancel",
+  };
+
+  const handleAction = useCallback(async () => {
+    if (!selectedRow || !pendingAction) return;
+    try {
+      await api.post(`/production/job-orders/${selectedRow.orderNo}/${actionEndpoints[pendingAction]}`);
+      setSelectedRow(null);
+      fetchData();
+    } catch {
+      // api 인터셉터에서 처리
+    } finally {
+      setPendingAction(null);
+    }
+  }, [selectedRow, pendingAction, fetchData]);
+
+  const getConfirmMessage = (action: ActionType) => {
+    const key = `production.order.confirm${action.charAt(0).toUpperCase() + action.slice(1)}` as const;
+    return t(key as string);
+  };
+
+  const getConfirmVariant = (action: ActionType): "danger" | "default" => {
+    return action === "cancel" ? "danger" : "default";
+  };
+
+  // ===== 패널 로직 =====
+  const handleCreate = () => {
+    setEditingOrder(null);
+    setAiDraft(null);
+    setCreateModalOpen(true);
+  };
+
+  const handleEdit = (row: JobOrderItem) => {
+    panelAnimateRef.current = !isPanelOpen;
+    setEditingOrder(toJobOrderFormData(row));
+    setAiDraft(null);
+    setIsPanelOpen(true);
+  };
+
+  const handlePanelClose = () => {
+    setIsPanelOpen(false);
+    setEditingOrder(null);
+    setAiDraft(null);
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      await api.delete(`/production/job-orders/${deleteTarget.orderNo}`);
+      fetchData();
+    } catch {
+      // api 인터셉터에서 처리
+    } finally {
+      setDeleteTarget(null);
+    }
+  };
+
+  /** 행 클릭 시 선택/해제 토글 */
+  const handleRowClick = (row: JobOrderItem & { _depth: number }) => {
+    const nextSelected = selectedRow?.orderNo === row.orderNo ? null : row;
+    setSelectedRow(nextSelected);
+    if (nextSelected && isPanelOpen && editingOrder) {
+      panelAnimateRef.current = false;
+      setEditingOrder(toJobOrderFormData(nextSelected));
+    }
+  };
+
+  const columns = useMemo(() => createProductionOrderGridColumns({
+    t,
+    onEdit: handleEdit,
+    onDelete: setDeleteTarget,
+  }), [t, isPanelOpen]);
+
+  return (
+    <div className="flex h-full animate-fade-in">
+      {/* 좌측: 메인 콘텐츠 */}
+      <div className="flex-1 min-w-0 flex flex-col overflow-hidden p-6 gap-4">
+        <div className="flex justify-between items-center flex-shrink-0">
+          <div>
+            <h1 className="text-xl font-bold text-text flex items-center gap-2">
+              <ClipboardList className="w-7 h-7 text-primary" />
+              {t("production.order.title")}
+            </h1>
+            <p className="text-text-muted mt-1">{t("production.order.description")}</p>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => {
+                openAiChat();
+                openToolsTab();
+              }}
+            >
+              <Wrench className="w-4 h-4 mr-1" />{t("production.order.toolView", "도구보기")}
+            </Button>
+            <Button variant="secondary" size="sm" onClick={fetchData}>
+              <RefreshCw className={`w-4 h-4 mr-1 ${loading ? "animate-spin" : ""}`} />{t("common.refresh")}
+            </Button>
+            <Button variant="secondary" size="sm"
+              onClick={() => setViewMode(v => v === "list" ? "tree" : "list")}>
+              {viewMode === "list" ? t("production.order.treeView") : t("production.order.listView")}
+            </Button>
+            <Button size="sm" onClick={handleCreate}>
+              <Plus className="w-4 h-4 mr-1" /> {t("production.order.create")}
+            </Button>
+          </div>
+        </div>
+
+        {/* 액션바 — 항상 표시, 선택된 행이 없으면 버튼 비활성 */}
+        <div className="flex items-center gap-2 px-4 py-2 bg-primary/5 dark:bg-primary/10 border border-primary/20 rounded-lg flex-shrink-0">
+          {selectedRow ? (
+            <>
+              <span className="text-xs font-medium text-text mr-2">{selectedRow.orderNo}</span>
+              <ComCodeBadge groupCode="JOB_ORDER_STATUS" code={selectedRow.status} />
+            </>
+          ) : (
+            <span className="text-xs text-text-muted">{t("production.order.selectRowForAction")}</span>
+          )}
+          <div className="flex-1" />
+          <Button size="sm" variant="secondary" disabled={!selectedRow}
+            onClick={() => selectedRow && setPrintOrderNo(selectedRow.orderNo)}>
+            <Printer className="w-3.5 h-3.5 mr-1" />{t("production.order.printBtn", "작업지시서 출력")}
+          </Button>
+          <Button size="sm" variant="secondary" disabled={!canStart}
+            onClick={() => setPendingAction("start")}>
+            <Play className="w-3.5 h-3.5 mr-1" />{t("production.order.actionStart")}
+          </Button>
+          <Button size="sm" variant="secondary" disabled={!canComplete}
+            onClick={() => setPendingAction("complete")}>
+            <CheckCircle2 className="w-3.5 h-3.5 mr-1" />{t("production.order.actionComplete")}
+          </Button>
+          <Button size="sm" variant="secondary" disabled={!canHold}
+            onClick={() => setPendingAction("hold")}>
+            <PauseCircle className="w-3.5 h-3.5 mr-1" />{t("production.order.actionHold")}
+          </Button>
+          <Button size="sm" variant="secondary" disabled={!canHoldRelease}
+            onClick={() => setPendingAction("holdRelease")}>
+            <PlayCircle className="w-3.5 h-3.5 mr-1" />{t("production.order.actionHoldRelease")}
+          </Button>
+          <Button size="sm" variant="secondary" disabled={!canCancel}
+            onClick={() => setPendingAction("cancel")}
+            className={canCancel ? "text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30" : ""}>
+            <XCircle className="w-3.5 h-3.5 mr-1" />{t("production.order.actionCancel")}
+          </Button>
+        </div>
+
+        <Card className="flex-1 min-h-0 overflow-hidden" padding="none"><CardContent className="h-full p-4">
+          <DataGrid data={displayData} columns={columns} isLoading={loading} enableColumnFilter enableExport exportFileName={t("production.order.exportFileName", "작업지시")}
+            onRowClick={handleRowClick}
+            rowClassName={(row: JobOrderItem & { _depth: number }) => row.orderNo === selectedRow?.orderNo ? "bg-primary/5 dark:bg-primary/10" : ""}
+            toolbarLeft={
+              <div className="flex gap-3 flex-1 min-w-0">
+                <div className="flex-1 min-w-0">
+                  <Input placeholder={t("production.order.searchPlaceholder")}
+                    value={searchText} onChange={e => setSearchText(e.target.value)}
+                    leftIcon={<Search className="w-4 h-4" />} fullWidth />
+                </div>
+                <div className="w-36 flex-shrink-0">
+                  <ComCodeSelect groupCode="JOB_ORDER_STATUS" value={statusFilter}
+                    onChange={setStatusFilter} labelPrefix={t("common.status", "상태")} fullWidth />
+                </div>
+                <div className="w-40 flex-shrink-0">
+                  <EquipSelect value={equipFilter} onChange={setEquipFilter}
+                    labelPrefix={t("production.order.equip")} fullWidth />
+                </div>
+                <div className="w-36 flex-shrink-0">
+                  <Select
+                    value={itemTypeFilter}
+                    onChange={setItemTypeFilter}
+                    options={[
+                      { value: "", label: `${t("common.partType", "품목유형")}: ${t("common.all", "전체")}` },
+                      { value: "FINISHED", label: t("production.order.itemTypeFG", "완제품") },
+                      { value: "SEMI_PRODUCT", label: t("production.order.itemTypeWIP", "반제품") },
+                    ]}
+                    fullWidth
+                  />
+                </div>
+                <DateRangeFilter from={startDate} to={endDate} onFromChange={setStartDate} onToChange={setEndDate} className="flex-shrink-0" />
+              </div>
+            }
+            sqlQuery={`SELECT *\nFROM PROD_ORDERS\nWHERE COMPANY = '40'\n  AND PLANT_CD = '1000'\nORDER BY PRIORITY ASC, PLAN_DATE ASC, CREATED_AT DESC`}/>
+        </CardContent></Card>
+      </div>
+
+      {/* 우측: 패널 */}
+      {isPanelOpen && editingOrder && (
+        <JobOrderFormPanel
+          key={editingOrder.orderNo}
+          editingOrder={editingOrder}
+          onClose={handlePanelClose}
+          onSave={fetchData}
+          animate={panelAnimateRef.current}
+        />
+      )}
+
+      <JobOrderCreateModal
+        key={aiDraft ? `__ai_draft_${aiDraftVersion}` : "__new__"}
+        isOpen={createModalOpen}
+        draftOrder={aiDraft ?? undefined}
+        onClose={() => {
+          setCreateModalOpen(false);
+          setAiDraft(null);
+        }}
+        onSave={fetchData}
+      />
+
+      {/* 작업지시서 출력 (A4: 상단 작업지시 + 하단 자재요청) */}
+      <JobOrderPrintModal
+        isOpen={!!printOrderNo}
+        orderNo={printOrderNo}
+        onClose={() => setPrintOrderNo(null)}
+      />
+
+      {/* 삭제 확인 모달 */}
+      <ConfirmModal
+        isOpen={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleDelete}
+        title={t("common.deleteConfirmTitle")}
+        message={t("common.deleteConfirmMessage", { name: deleteTarget?.orderNo })}
+        confirmText={t("common.delete")}
+        variant="danger"
+      />
+
+      {/* 액션 확인 모달 */}
+      <ConfirmModal
+        isOpen={!!pendingAction}
+        onClose={() => setPendingAction(null)}
+        onConfirm={handleAction}
+        title={pendingAction ? t(`production.order.action${pendingAction.charAt(0).toUpperCase() + pendingAction.slice(1)}`) : ""}
+        message={pendingAction ? getConfirmMessage(pendingAction) : ""}
+        confirmText={t("common.confirm")}
+        variant={pendingAction ? getConfirmVariant(pendingAction) : "default"}
+      />
+
+    </div>
+  );
+}

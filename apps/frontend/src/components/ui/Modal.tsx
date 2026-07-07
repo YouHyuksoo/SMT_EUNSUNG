@@ -1,130 +1,263 @@
+"use client";
+
 /**
  * @file src/components/ui/Modal.tsx
- * @description 공통 모달 다이얼로그. 다크 헤더 + 라이트 바디로 시각적 위계 확보.
+ * @description 모달 다이얼로그 컴포넌트
  *
  * 초보자 가이드:
- * 1. **size**: 모달 너비 (sm=384px, md=448px, lg=512px, xl=640px, full=896px)
- * 2. **isOpen / onClose**: 열림 상태와 닫기 핸들러
- * 3. **title**: 다크 헤더에 표시할 제목 (없으면 헤더 숨김)
- * 4. **children**: 본문 콘텐츠 (스크롤 가능)
- * 5. **footer**: 하단 고정 버튼 영역
- * 6. ESC 키, 오버레이 클릭으로 닫기 지원
- *
- * @example
- * <Modal isOpen={open} onClose={() => setOpen(false)} title="라인 선택" size="lg">
- *   <p>본문</p>
- * </Modal>
+ * 1. **isOpen**: 모달 표시 여부
+ * 2. **onClose**: 닫기 콜백
+ * 3. **size**: 모달 크기 (sm, md, lg, xl, full)
+ * 4. **Portal**: body에 직접 렌더링하여 z-index 문제 방지
  */
-'use client';
+import { useEffect, useCallback, useState, Fragment } from 'react';
+import { createPortal } from 'react-dom';
+import { useTranslation } from 'react-i18next';
+import { X, AlertTriangle, HelpCircle, Copy, Check } from 'lucide-react';
+import Button from './Button';
 
-import { useEffect, useCallback, useRef, type ReactNode } from 'react';
-
-type ModalSize = 'sm' | 'md' | 'lg' | 'xl' | 'full';
-
-interface ModalProps {
+export interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
   title?: string;
   subtitle?: string;
-  size?: ModalSize;
-  children: ReactNode;
-  footer?: ReactNode;
+  children: React.ReactNode;
+  size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | 'full';
+  showCloseButton?: boolean;
+  closeOnOverlayClick?: boolean;
+  closeOnEsc?: boolean;
+  footer?: React.ReactNode;
 }
 
-const sizeClasses: Record<ModalSize, string> = {
-  sm: 'max-w-sm',
-  md: 'max-w-md',
-  lg: 'max-w-lg',
-  xl: 'max-w-[640px]',
-  full: 'max-w-4xl',
-};
-
-export default function Modal({
+function Modal({
   isOpen,
   onClose,
   title,
   subtitle,
-  size = 'md',
   children,
+  size = 'md',
+  showCloseButton = true,
+  closeOnOverlayClick = true,
+  closeOnEsc = true,
   footer,
 }: ModalProps) {
-  const overlayRef = useRef<HTMLDivElement>(null);
+  const { t } = useTranslation();
 
+  // ESC 키로 닫기
   const handleKeyDown = useCallback(
-    (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); },
-    [onClose],
+    (e: KeyboardEvent) => {
+      if (closeOnEsc && e.key === 'Escape') {
+        onClose();
+      }
+    },
+    [closeOnEsc, onClose]
   );
 
   useEffect(() => {
-    if (!isOpen) return;
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, handleKeyDown]);
+    if (isOpen) {
+      document.addEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = 'hidden';
+    }
 
-  const handleOverlayClick = (e: React.MouseEvent) => {
-    if (e.target === overlayRef.current) onClose();
-  };
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen, handleKeyDown]);
 
   if (!isOpen) return null;
 
-  return (
-    <div
-      ref={overlayRef}
-      className="fixed inset-0 z-50 flex items-center justify-center p-6
-        bg-black/60 backdrop-blur-sm animate-[fadeIn_200ms_ease-out]"
-      onClick={handleOverlayClick}
-    >
+  // Size 스타일
+  const sizeStyles = {
+    sm: 'max-w-sm',         // 384px (확인/알림용)
+    md: 'max-w-lg',         // 512px (일반 폼)
+    lg: 'max-w-xl',         // 576px (복잡한 폼)
+    xl: 'max-w-2xl',        // 672px (대형 폼/테이블)
+    '2xl': 'max-w-5xl',     // 1024px (다컬럼 테이블 모달)
+    full: 'max-w-[90vw] max-h-[90vh]',
+  };
+
+  const modalContent = (
+    <Fragment>
+      {/* Overlay */}
       <div
-        className={`w-full ${sizeClasses[size]} flex flex-col overflow-hidden
-          rounded-lg bg-white shadow-2xl
-          dark:bg-zinc-900
-          animate-[scaleIn_200ms_ease-out]`}
-      >
-        {/* ── 헤더: 다크 배경으로 시각적 앵커 ── */}
-        {title && (
-          <div className="relative bg-zinc-800 px-10 py-7 dark:bg-zinc-950">
-            {/* 상단 액센트 라인 */}
-            <div className="absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r from-sky-400 to-cyan-300" />
-            <div className="flex items-start justify-between">
-              <div>
-                <h3 className="text-lg font-bold tracking-wide text-white">
-                  {title}
-                </h3>
-                {subtitle && (
-                  <p className="mt-2 text-[13px] text-zinc-400">
-                    {subtitle}
-                  </p>
-                )}
-              </div>
-              <button
-                onClick={onClose}
-                className="mt-0.5 -mr-1 rounded-md p-2 text-zinc-500 transition-colors
-                  hover:bg-white/10 hover:text-zinc-300"
-                aria-label="Close"
-              >
-                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-          </div>
-        )}
+        className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm animate-fade-in"
+        onClick={closeOnOverlayClick ? onClose : undefined}
+        aria-hidden="true"
+      />
 
-        {/* ── 본문 ── */}
+      {/* Modal */}
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
         <div
-          className="flex-1 overflow-y-auto px-10 py-8"
-          style={{ maxHeight: 'calc(100vh - 280px)' }}
+          className={`
+            w-full ${sizeStyles[size]}
+            bg-surface
+            rounded-[var(--radius)]
+            shadow-2xl
+            animate-slide-up
+          `}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={title ? 'modal-title' : undefined}
+          onClick={(e) => e.stopPropagation()}
         >
-          {children}
-        </div>
+          {/* Header */}
+          {(title || subtitle || showCloseButton) && (
+            <div className="flex items-center justify-between p-4 border-b border-border">
+              {(title || subtitle) && (
+                <div>
+                  {title && (
+                    <h2
+                      id="modal-title"
+                      className="text-lg font-semibold text-text"
+                    >
+                      {title}
+                    </h2>
+                  )}
+                  {subtitle && (
+                    <p className="mt-1 text-sm text-text-muted">
+                      {subtitle}
+                    </p>
+                  )}
+                </div>
+              )}
+              {showCloseButton && (
+                <button
+                  onClick={onClose}
+                  className="p-1 rounded-md text-text-muted hover:text-text hover:bg-background transition-colors"
+                  aria-label={t('common.close')}
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              )}
+            </div>
+          )}
 
-        {/* ── 푸터 ── */}
-        {footer && (
-          <div className="flex items-center justify-end gap-3 border-t border-zinc-200 bg-zinc-50 px-10 py-5 dark:border-zinc-700 dark:bg-zinc-800/50">
-            {footer}
-          </div>
-        )}
+          {/* Content */}
+          <div className="p-4 overflow-y-auto max-h-[75vh]">{children}</div>
+
+          {/* Footer */}
+          {footer && (
+            <div className="flex items-center justify-end gap-3 p-4 border-t border-border">
+              {footer}
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </Fragment>
+  );
+
+  // Portal로 body에 렌더링
+  return createPortal(modalContent, document.body);
+}
+
+// 확인 다이얼로그 헬퍼
+export interface ConfirmModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  title?: string;
+  message: React.ReactNode;
+  confirmText?: string;
+  cancelText?: string;
+  variant?: 'default' | 'danger';
+  isLoading?: boolean;
+}
+
+export function ConfirmModal({
+  isOpen,
+  onClose,
+  onConfirm,
+  title,
+  message,
+  confirmText,
+  cancelText,
+  variant = 'default',
+  isLoading = false,
+}: ConfirmModalProps) {
+  const { t } = useTranslation();
+  const [copied, setCopied] = useState(false);
+  const actualTitle = title ?? t('common.confirm');
+  const actualConfirmText = confirmText ?? t('common.confirm');
+  const actualCancelText = cancelText ?? t('common.cancel');
+
+  const isDanger = variant === 'danger';
+  const Icon = isDanger ? AlertTriangle : HelpCircle;
+  const iconColor = isDanger ? 'text-red-500' : 'text-primary';
+  const iconRing = isDanger
+    ? 'border-red-500/30 bg-red-500/10'
+    : 'border-primary/30 bg-primary/10';
+
+  // 메시지가 문자열일 때만 복사 가능
+  const copyText = typeof message === 'string' ? message : null;
+
+  useEffect(() => {
+    if (!isOpen) setCopied(false);
+  }, [isOpen]);
+
+  const handleCopy = useCallback(async () => {
+    if (!copyText) return;
+    try {
+      await navigator.clipboard.writeText(copyText);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // 클립보드 접근 불가 시 무시
+    }
+  }, [copyText]);
+
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={actualTitle}
+      size="md"
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose} disabled={isLoading}>
+            {actualCancelText}
+          </Button>
+          <Button
+            variant={isDanger ? 'danger' : 'primary'}
+            onClick={onConfirm}
+            isLoading={isLoading}
+          >
+            {actualConfirmText}
+          </Button>
+        </>
+      }
+    >
+      <div className="flex gap-4">
+        <div
+          className={`flex-shrink-0 w-11 h-11 rounded-full border flex items-center justify-center ${iconRing}`}
+        >
+          <Icon className={`w-6 h-6 ${iconColor}`} />
+        </div>
+        <div className="flex-1 min-w-0 pt-0.5">
+          <div className="text-text leading-relaxed whitespace-pre-line">{message}</div>
+          {copyText && (
+            <button
+              type="button"
+              onClick={handleCopy}
+              className="mt-3 inline-flex items-center gap-1.5 text-xs text-text-muted hover:text-text transition-colors"
+            >
+              {copied ? (
+                <>
+                  <Check className="w-3.5 h-3.5 text-green-500" />
+                  {t('common.copied', '복사됨')}
+                </>
+              ) : (
+                <>
+                  <Copy className="w-3.5 h-3.5" />
+                  {t('common.copy', '복사')}
+                </>
+              )}
+            </button>
+          )}
+        </div>
+      </div>
+    </Modal>
   );
 }
+
+export default Modal;

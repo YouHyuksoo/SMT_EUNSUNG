@@ -1,87 +1,130 @@
+"use client";
+
 /**
  * @file src/components/ui/Button.tsx
- * @description 공통 버튼 컴포넌트. WBSMaster 표준 디자인을 WebDisplay에 맞게 적용.
+ * @description 프리미엄 버튼 컴포넌트 - 다크/라이트 모드 대응
  *
  * 초보자 가이드:
- * 1. **variant**: 버튼 스타일 (primary, secondary, ghost, outline, danger)
+ * 1. **variant**: 버튼 스타일 종류 (primary, secondary, outline, ghost)
  * 2. **size**: 버튼 크기 (sm, md, lg)
- * 3. **fullWidth**: true면 부모 너비 100% 채움
- * 4. primary 버튼은 glow 테마 색상(--glow-primary)을 자동 적용
- *
- * @example
- * <Button variant="primary" size="lg" onClick={handleSave}>저장</Button>
- * <Button variant="ghost" onClick={onCancel}>취소</Button>
- * <Button variant="danger" onClick={onDelete}>삭제</Button>
+ * 3. **forwardRef**: 부모 컴포넌트에서 ref 접근 가능
  */
+import { forwardRef, ButtonHTMLAttributes } from 'react';
+import { Loader2 } from 'lucide-react';
 
-import { ButtonHTMLAttributes, forwardRef } from 'react';
-
-type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'outline' | 'danger';
-type ButtonSize = 'sm' | 'md' | 'lg';
-
-interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: ButtonVariant;
-  size?: ButtonSize;
+export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
+  size?: 'sm' | 'md' | 'lg';
   isLoading?: boolean;
-  fullWidth?: boolean;
+  disabledReason?: string;
+  leftIcon?: React.ReactNode;
+  rightIcon?: React.ReactNode;
 }
-
-const variantStyles: Record<ButtonVariant, string> = {
-  primary:
-    'bg-sky-500 text-white shadow-lg shadow-sky-500/25 hover:bg-sky-600 hover:-translate-y-0.5',
-  secondary:
-    'bg-zinc-100 border border-zinc-300 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-700',
-  ghost:
-    'bg-transparent text-zinc-700 hover:bg-black/5 dark:text-zinc-300 dark:hover:bg-white/5',
-  outline:
-    'bg-transparent border border-zinc-300 text-zinc-700 hover:bg-zinc-100 hover:border-zinc-400 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:border-zinc-500',
-  danger:
-    'bg-transparent text-red-500 hover:bg-red-500/10 dark:text-red-400 dark:hover:bg-red-400/10',
-};
-
-const sizeStyles: Record<ButtonSize, string> = {
-  sm: 'h-9 px-4 text-sm',
-  md: 'h-10 px-6 text-sm',
-  lg: 'h-12 px-8 text-base',
-};
-
-const baseStyles =
-  'inline-flex items-center justify-center gap-2 rounded-lg font-bold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:transform-none';
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   (
     {
+      className = '',
       variant = 'primary',
       size = 'md',
       isLoading = false,
-      fullWidth = false,
-      className = '',
-      children,
+      disabledReason,
+      leftIcon,
+      rightIcon,
       disabled,
+      children,
+      title,
       ...props
     },
-    ref,
+    ref
   ) => {
-    return (
+    // 기본 스타일
+    const baseStyles = `
+      inline-flex items-center justify-center gap-2
+      font-bold rounded-lg
+      transition-all duration-200 ease-in-out
+      focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2
+      disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:transform-none
+    `;
+
+    // variant 스타일
+    const variantStyles = {
+      primary: `
+        bg-primary text-white
+        shadow-lg shadow-primary/25
+        hover:bg-primary-hover hover:-translate-y-0.5
+        focus-visible:ring-primary
+      `,
+      secondary: `
+        bg-card border border-border text-foreground
+        hover:bg-card-hover
+        focus-visible:ring-primary
+      `,
+      outline: `
+        bg-transparent border border-border text-foreground
+        hover:bg-card-hover hover:border-border-hover
+        focus-visible:ring-primary
+      `,
+      ghost: `
+        bg-transparent text-foreground
+        hover:bg-black/5 dark:hover:bg-white/5
+        focus-visible:ring-primary
+      `,
+      danger: `
+        bg-error text-white
+        shadow-lg shadow-error/25
+        hover:opacity-90 hover:-translate-y-0.5
+        focus-visible:ring-error
+      `,
+    };
+
+    // size 스타일
+    const sizeStyles = {
+      sm: 'h-9 px-4 text-sm',
+      md: 'h-10 px-6 text-sm',
+      lg: 'h-12 px-8 text-base',
+    };
+
+    const isActionDisabled = disabled || isLoading;
+    const buttonTitle = title ?? (isActionDisabled ? disabledReason : undefined);
+    const buttonNode = (
       <button
         ref={ref}
-        className={`${baseStyles} ${variantStyles[variant]} ${sizeStyles[size]} ${fullWidth ? 'w-full' : ''} ${className}`}
-        disabled={disabled || isLoading}
+        type="button"
+        className={`
+          ${baseStyles}
+          ${variantStyles[variant]}
+          ${sizeStyles[size]}
+          ${className}
+        `}
+        disabled={isActionDisabled}
+        title={buttonTitle}
+        aria-label={buttonTitle ?? undefined}
         {...props}
       >
-        {isLoading && (
-          <svg className="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-          </svg>
+        {isLoading ? (
+          <Loader2 className="w-4 h-4 animate-spin" />
+        ) : (
+          leftIcon
         )}
         {children}
+        {!isLoading && rightIcon}
       </button>
     );
-  },
+
+    if (isActionDisabled && buttonTitle) {
+      return (
+        <span title={buttonTitle} className="inline-flex">
+          {buttonNode}
+        </span>
+      );
+    }
+
+    return buttonNode;
+  }
 );
 
 Button.displayName = 'Button';
 
 export { Button };
-export type { ButtonProps, ButtonVariant, ButtonSize };
+export default Button;

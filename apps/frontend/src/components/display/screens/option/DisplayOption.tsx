@@ -1,7 +1,7 @@
 /**
  * @file DisplayOption.tsx
  * @description 옵션 설정 화면 (Screen 18) 메인 컨테이너. 5탭 UI.
- * 초보자 가이드: DisplayLayout으로 감싸고, 기본 3탭 + AI 설정 2탭(모델/페르소나 통합, 테이블)을 전환한다.
+ * 초보자 가이드: DisplayLayout으로 감싸고, 모니터링 전용 옵션 탭을 전환한다.
  */
 'use client';
 
@@ -15,8 +15,6 @@ import DatabasePanel from './DatabasePanel';
 import AutoLaunchPanel from './AutoLaunchPanel';
 import CardManagerPanel from './CardManagerPanel';
 
-const AiModelsPanel = dynamic(() => import('@/app/(settings-tabs)/settings/ai-models/page'), { ssr: false });
-const AiPersonasPanel = dynamic(() => import('@/app/(settings-tabs)/settings/ai-personas/page'), { ssr: false });
 const AiTrainingPanel = dynamic(() => import('./panels/AiTrainingPanel'), { ssr: false });
 
 type Tab =
@@ -24,7 +22,6 @@ type Tab =
   | 'database'
   | 'autolaunch'
   | 'cards'
-  | 'aiModels'
   | 'aiTraining';
 
 const TAB_KEYS: { key: Tab; labelKey: string }[] = [
@@ -32,7 +29,6 @@ const TAB_KEYS: { key: Tab; labelKey: string }[] = [
   { key: 'database', labelKey: 'dbSettings' },
   { key: 'autolaunch', labelKey: 'autoLaunch' },
   { key: 'cards', labelKey: 'cardManage' },
-  { key: 'aiModels', labelKey: 'aiModels' },
   { key: 'aiTraining', labelKey: 'aiTraining' },
 ];
 
@@ -80,14 +76,6 @@ export default function DisplayOption({ screenId }: DisplayOptionProps) {
           {activeTab === 'database' && <DatabasePanel />}
           {activeTab === 'autolaunch' && <AutoLaunchPanel />}
           {activeTab === 'cards' && <CardManagerPanel />}
-          {activeTab === 'aiModels' && (
-            <div className="space-y-6 p-4">
-              <AiModelsPanel />
-              <div className="border-t border-zinc-200 pt-6 dark:border-zinc-700">
-                <AiPersonasPanel />
-              </div>
-            </div>
-          )}
           {activeTab === 'aiTraining' && <div className="h-full"><AiTrainingPanel /></div>}
         </div>
       </div>

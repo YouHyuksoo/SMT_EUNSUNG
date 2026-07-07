@@ -9,7 +9,6 @@ import { LocaleProvider } from "@/components/providers/LocaleProvider";
 import { TooltipProvider } from "@/components/providers/TooltipProvider";
 import { FooterProvider } from "@/components/providers/FooterProvider";
 import DisplayFooter from "@/components/display/DisplayFooter";
-import "../globals.css";
 import "./display-theme.css";
 
 export const metadata: Metadata = {
@@ -21,23 +20,21 @@ export default function DisplayLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="ko" suppressHydrationWarning>
-      <body className="h-screen overflow-hidden bg-background text-foreground antialiased dark:bg-background-dark dark:text-white">
-        <ThemeProvider>
-          <LocaleProvider>
-            <TooltipProvider>
-              <FooterProvider>
-                <div className="flex flex-col h-screen overflow-hidden">
-                  <div className="flex-1 overflow-hidden">
-                    {children}
-                  </div>
-                  <DisplayFooter />
+    <div className="h-screen overflow-hidden bg-background text-foreground antialiased dark:bg-background-dark dark:text-white">
+      <ThemeProvider>
+        <LocaleProvider>
+          <TooltipProvider>
+            <FooterProvider>
+              <div className="flex h-screen flex-col overflow-hidden">
+                <div className="flex-1 overflow-hidden">
+                  {children}
                 </div>
-              </FooterProvider>
-            </TooltipProvider>
-          </LocaleProvider>
-        </ThemeProvider>
-      </body>
-    </html>
+                <DisplayFooter />
+              </div>
+            </FooterProvider>
+          </TooltipProvider>
+        </LocaleProvider>
+      </ThemeProvider>
+    </div>
   );
 }

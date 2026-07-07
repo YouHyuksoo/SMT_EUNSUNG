@@ -6,7 +6,6 @@ import type { Metadata } from "next";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { LocaleProvider } from "@/components/providers/LocaleProvider";
 import { TooltipProvider } from "@/components/providers/TooltipProvider";
-import "../globals.css";
 import "./menu-theme.css";
 
 export const metadata: Metadata = {
@@ -18,16 +17,14 @@ export default function MenuLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="ko" suppressHydrationWarning>
-      <body className="h-screen overflow-hidden bg-white text-zinc-900 antialiased dark:bg-[#050508] dark:text-white">
-        <ThemeProvider>
-          <LocaleProvider>
-            <TooltipProvider>
-              {children}
-            </TooltipProvider>
-          </LocaleProvider>
-        </ThemeProvider>
-      </body>
-    </html>
+    <div className="h-screen overflow-hidden bg-white text-zinc-900 antialiased dark:bg-[#050508] dark:text-white">
+      <ThemeProvider>
+        <LocaleProvider>
+          <TooltipProvider>
+            {children}
+          </TooltipProvider>
+        </LocaleProvider>
+      </ThemeProvider>
+    </div>
   );
 }

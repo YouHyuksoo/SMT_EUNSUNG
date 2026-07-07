@@ -1,0 +1,162 @@
+﻿"use client";
+
+/**
+ * @file src/app/(authenticated)/outsourcing/order/page.tsx
+ * @description 외주발주 관리 페이지
+ *
+ * 초보자 가이드:
+ * 1. **외주발주**: 외주처에 가공/제조를 의뢰하는 발주서 관리
+ * 2. **상태 흐름**: ORDERED -> DELIVERED -> PARTIAL_RECV -> RECEIVED -> CLOSED
+ * 3. API: GET/POST/PUT /outsourcing/orders
+ */
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { useTranslation } from "react-i18next";
+import { Plus, RefreshCw, Search, FileText, Truck, Package, CheckCircle } from "lucide-react";
+import { Card, CardContent, Button, Input, Modal, Select, StatCard } from "@/components/ui";
+import { QtyInput } from "@/components/shared";
+import { ComCodeSelect } from "@/components/shared";
+import DataGrid from "@/components/data-grid/DataGrid";
+import api from "@/services/api";
+import { createSubconOrderGridColumns } from "./subconOrderColumns";
+import type { SubconOrder } from "./types";
+
+export default function SubconOrderPage() {
+  const { t } = useTranslation();
+  const [data, setData] = useState<SubconOrder[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<SubconOrder | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [form, setForm] = useState({ vendorCode: "", itemCode: "", itemName: "", orderQty: "", dueDate: "", remark: "" });
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params: Record<string, string> = { limit: "5000" };
+      if (searchTerm) params.search = searchTerm;
+      if (statusFilter) params.status = statusFilter;
+      const res = await api.get("/outsourcing/orders", { params });
+      setData(res.data?.data ?? []);
+    } catch {
+      setData([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [searchTerm, statusFilter]);
+
+  useEffect(() => { fetchData(); }, [fetchData]);
+
+  const handleSave = useCallback(async () => {
+    setSaving(true);
+    try {
+      await api.post("/outsourcing/orders", form);
+      setIsModalOpen(false);
+      setForm({ vendorCode: "", itemCode: "", itemName: "", orderQty: "", dueDate: "", remark: "" });
+      fetchData();
+    } catch (e) {
+      console.error("Save failed:", e);
+    } finally {
+      setSaving(false);
+    }
+  }, [form, fetchData]);
+
+  const columns = useMemo(() => createSubconOrderGridColumns({
+    t,
+    onShowDetail: (order) => {
+      setSelectedOrder(order);
+      setIsDetailModalOpen(true);
+    },
+  }), [t]);
+
+  const stats = useMemo(() => ({
+    ordered: data.filter((d) => d.status === "ORDERED").length,
+    delivered: data.filter((d) => d.status === "DELIVERED").length,
+    pending: data.filter((d) => ["DELIVERED", "PARTIAL_RECV"].includes(d.status)).length,
+    received: data.filter((d) => d.status === "RECEIVED").length,
+  }), [data]);
+
+  return (
+    <div className="h-full flex flex-col overflow-hidden p-6 gap-4 animate-fade-in">
+      <div className="flex justify-between items-center flex-shrink-0">
+        <div>
+          <h1 className="text-xl font-bold text-text flex items-center gap-2"><FileText className="w-7 h-7 text-primary" />{t("outsourcing.order.title")}</h1>
+          <p className="text-text-muted mt-1">{t("outsourcing.order.description")}</p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="secondary" size="sm" onClick={fetchData}>
+            <RefreshCw className={`w-4 h-4 mr-1 ${loading ? "animate-spin" : ""}`} />{t("common.refresh")}
+          </Button>
+          <Button size="sm" onClick={() => setIsModalOpen(true)}>
+            <Plus className="w-4 h-4 mr-1" /> {t("outsourcing.order.register")}
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-4 gap-3 flex-shrink-0">
+        <StatCard label={t("outsourcing.order.statusOrdered")} value={stats.ordered} icon={FileText} color="blue" />
+        <StatCard label={t("outsourcing.order.statusDelivered")} value={stats.delivered} icon={Truck} color="purple" />
+        <StatCard label={t("outsourcing.order.pendingReceive")} value={stats.pending} icon={Package} color="yellow" />
+        <StatCard label={t("outsourcing.order.statusReceived")} value={stats.received} icon={CheckCircle} color="green" />
+      </div>
+
+      <Card className="flex-1 min-h-0 overflow-hidden" padding="none"><CardContent className="h-full p-4">
+        <DataGrid
+          data={data}
+          columns={columns}
+          isLoading={loading}
+          enableColumnFilter
+          enableExport
+          exportFileName={t("outsourcing.order.title")}
+          toolbarLeft={
+            <div className="flex gap-3 flex-1 min-w-0">
+              <div className="flex-1 min-w-0">
+                <Input placeholder={t("outsourcing.order.searchPlaceholder")} value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} leftIcon={<Search className="w-4 h-4" />} fullWidth />
+              </div>
+              <div className="w-36 flex-shrink-0">
+                <ComCodeSelect groupCode="SUBCON_ORDER_STATUS" labelPrefix={t('common.status')} value={statusFilter} onChange={setStatusFilter} fullWidth />
+              </div>
+            </div>
+          }
+
+        sqlQuery={`SELECT *\nFROM OS_ORDERS\nWHERE COMPANY = '40'\n  AND PLANT_CD = '1000'\nORDER BY CREATED_AT DESC`}/>
+      </CardContent></Card>
+
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={t("outsourcing.order.register")} size="lg">
+        <div className="space-y-4">
+          <Input label={t("common.partCode")} placeholder="WH-001" value={form.itemCode} onChange={(e) => setForm((p) => ({ ...p, itemCode: e.target.value }))} fullWidth />
+          <Input label={t("common.partName")} placeholder="" value={form.itemName} onChange={(e) => setForm((p) => ({ ...p, itemName: e.target.value }))} fullWidth />
+          <QtyInput label={t("outsourcing.order.orderQty")} placeholder="1000" value={Number(form.orderQty) || 0} onChange={(n) => setForm((p) => ({ ...p, orderQty: n ? String(n) : "" }))} fullWidth />
+          <Input label={t("outsourcing.order.dueDate")} type="date" value={form.dueDate} onChange={(e) => setForm((p) => ({ ...p, dueDate: e.target.value }))} fullWidth />
+          <Input label={t("common.remark")} placeholder={t("common.remarkPlaceholder")} value={form.remark} onChange={(e) => setForm((p) => ({ ...p, remark: e.target.value }))} fullWidth />
+        </div>
+        <div className="flex justify-end gap-2 pt-4 mt-4 border-t border-border">
+          <Button variant="secondary" onClick={() => setIsModalOpen(false)}>{t("common.cancel")}</Button>
+          <Button onClick={handleSave} disabled={saving}>{saving ? t("common.saving") : t("common.save", "저장")}</Button>
+        </div>
+      </Modal>
+
+      <Modal isOpen={isDetailModalOpen} onClose={() => setIsDetailModalOpen(false)} title={`${t("outsourcing.order.detail")} - ${selectedOrder?.orderNo}`} size="lg">
+        {selectedOrder && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-2 gap-4">
+              <div><p className="text-sm text-text-muted">{t("outsourcing.order.vendor")}</p><p className="font-medium text-text">{selectedOrder.vendorName}</p></div>
+              <div><p className="text-sm text-text-muted">{t("common.part")}</p><p className="font-medium text-text">{selectedOrder.itemCode} - {selectedOrder.itemName}</p></div>
+              <div><p className="text-sm text-text-muted">{t("outsourcing.order.orderDate")}</p><p className="font-medium text-text">{selectedOrder.orderDate}</p></div>
+              <div><p className="text-sm text-text-muted">{t("outsourcing.order.dueDate")}</p><p className="font-medium text-text">{selectedOrder.dueDate}</p></div>
+            </div>
+            <div className="grid grid-cols-4 gap-4 p-4 bg-surface rounded-lg">
+              <div className="text-center"><p className="text-sm text-text-muted">{t("outsourcing.order.orderQty")}</p><p className="text-lg font-bold leading-tight text-text">{selectedOrder.orderQty.toLocaleString()}</p></div>
+              <div className="text-center"><p className="text-sm text-text-muted">{t("outsourcing.order.deliveredQty")}</p><p className="text-lg font-bold leading-tight text-purple-600 dark:text-purple-400">{selectedOrder.deliveredQty.toLocaleString()}</p></div>
+              <div className="text-center"><p className="text-sm text-text-muted">{t("outsourcing.order.receivedQty")}</p><p className="text-lg font-bold leading-tight text-green-600 dark:text-green-400">{selectedOrder.receivedQty.toLocaleString()}</p></div>
+              <div className="text-center"><p className="text-sm text-text-muted">{t("outsourcing.order.defectQty")}</p><p className="text-lg font-bold leading-tight text-red-600 dark:text-red-400">{selectedOrder.defectQty.toLocaleString()}</p></div>
+            </div>
+          </div>
+        )}
+      </Modal>
+    </div>
+  );
+}
