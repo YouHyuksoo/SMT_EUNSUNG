@@ -78,7 +78,9 @@ export const useMenuTreeStore = create<MenuTreeStore>()(
               .filter((x): x is MergedMenuItem => x !== undefined),
           }));
 
-          set({ groups, loading: false });
+          // DB에 카테고리가 하나도 없으면 groups=null → 사이드바가 코드 menuConfig로 폴백한다.
+          // (은성 초기 상태: MENU_CATEGORIES 비어 있음. /system/menu-categories에서 구성하면 DB 기반으로 전환)
+          set({ groups: groups.length > 0 ? groups : null, loading: false });
         } catch (e: unknown) {
           const message = e instanceof Error ? e.message : 'failed to load menu tree';
           set({ loading: false, error: message });
