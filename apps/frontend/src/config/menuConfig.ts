@@ -9,7 +9,7 @@
  * 4. 새 메뉴 추가 시 반드시 고유 code를 부여할 것
  */
 import {
-  LayoutDashboard, Package, Factory, ScanLine, Shield, Wrench, Truck,
+  LayoutDashboard, Package, Factory, Shield, Wrench, Truck,
   Database, Cog, Building2, ArrowLeftRight, UserCog,
   ClipboardCheck, ShoppingCart, Monitor, PackageCheck, GitBranch, Activity,
 } from "lucide-react";
@@ -170,19 +170,6 @@ export const menuConfig: MenuConfigItem[] = [
       { code: "QC_REWORK", labelKey: "menu.quality.rework", path: "/quality/rework" },
       { code: "QC_REWORK_HISTORY", labelKey: "menu.quality.reworkHistory", path: "/quality/rework-history" },
       { code: "PROD_REPAIR", labelKey: "menu.production.repair", path: "/production/repair" },
-    ],
-  },
-  {
-    code: "INSPECTION",
-    labelKey: "menu.inspection",
-    icon: ScanLine,
-    children: [
-      { code: "INSP_INTEGRATED", labelKey: "menu.inspection.integrated", path: "/inspection/integrated" },
-      { code: "INSP_STRUCTURE", labelKey: "menu.inspection.structure", path: "/inspection/structure" },
-      { code: "INSP_RESULT", labelKey: "menu.inspection.result", path: "/inspection/result" },
-      { code: "INSP_TERMINAL_RESULT", labelKey: "menu.inspection.terminalResult", path: "/inspection/terminal-result" },
-      { code: "INSP_HISTORY", labelKey: "menu.inspection.history", path: "/inspection/history" },
-      { code: "INSP_PROTOCOL", labelKey: "menu.inspection.protocol", path: "/inspection/protocol" },
     ],
   },
   {

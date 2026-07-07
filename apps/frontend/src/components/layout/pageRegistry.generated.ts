@@ -127,36 +127,6 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
       component = mod.getPageComponent();
       break;
     }
-    case "/inspection/history": {
-      const mod = await import("./page-registries/inspection__history.generated");
-      component = mod.getPageComponent();
-      break;
-    }
-    case "/inspection/integrated": {
-      const mod = await import("./page-registries/inspection__integrated.generated");
-      component = mod.getPageComponent();
-      break;
-    }
-    case "/inspection/protocol": {
-      const mod = await import("./page-registries/inspection__protocol.generated");
-      component = mod.getPageComponent();
-      break;
-    }
-    case "/inspection/result": {
-      const mod = await import("./page-registries/inspection__result.generated");
-      component = mod.getPageComponent();
-      break;
-    }
-    case "/inspection/structure": {
-      const mod = await import("./page-registries/inspection__structure.generated");
-      component = mod.getPageComponent();
-      break;
-    }
-    case "/inspection/terminal-result": {
-      const mod = await import("./page-registries/inspection__terminal-result.generated");
-      component = mod.getPageComponent();
-      break;
-    }
     case "/interface/dashboard": {
       const mod = await import("./page-registries/interface__dashboard.generated");
       component = mod.getPageComponent();

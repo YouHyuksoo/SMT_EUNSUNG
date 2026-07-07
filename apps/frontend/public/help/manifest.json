@@ -488,42 +488,6 @@
       ]
     },
     {
-      "key": "inspection",
-      "title": "검사관리",
-      "items": [
-        {
-          "menuCode": "INSP_RESULT",
-          "title": "검사결과조회",
-          "path": "/inspection/result"
-        },
-        {
-          "menuCode": "INSP_INTEGRATED",
-          "title": "통합검사",
-          "path": "/inspection/integrated"
-        },
-        {
-          "menuCode": "INSP_STRUCTURE",
-          "title": "구조검사",
-          "path": "/inspection/structure"
-        },
-        {
-          "menuCode": "INSP_TERMINAL_RESULT",
-          "title": "단자검사결과",
-          "path": "/inspection/terminal-result"
-        },
-        {
-          "menuCode": "INSP_HISTORY",
-          "title": "검사이력",
-          "path": "/inspection/history"
-        },
-        {
-          "menuCode": "INSP_PROTOCOL",
-          "title": "검사프로토콜",
-          "path": "/inspection/protocol"
-        }
-      ]
-    },
-    {
       "key": "consumables",
       "title": "소모품관리",
       "items": [

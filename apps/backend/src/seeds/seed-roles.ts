@@ -8,7 +8,7 @@
  * 2. **UPSERT 방식**: code 기준으로 이미 존재하면 건너뛰어 기존 데이터를 보존
  * 3. **ADMIN**: 별도 권한 행 없음 (코드에서 전체 허용 처리)
  * 4. **MANAGER**: SYSTEM/SYS_* 제외 전체 메뉴
- * 5. **OPERATOR**: DASHBOARD + PRODUCTION/QUALITY/EQUIPMENT/INSPECTION 하위 전체
+ * 5. **OPERATOR**: DASHBOARD + PRODUCTION/QUALITY/EQUIPMENT 하위 전체
  * 6. **VIEWER**: DASHBOARD만
  *
  * 실행 방법:
@@ -98,7 +98,6 @@ function getManagerMenuCodes(): string[] {
  * - PRODUCTION 하위 전체 (PROD_*)
  * - QUALITY 하위 전체 (QC_*)
  * - EQUIPMENT 하위 전체 (EQUIP_*)
- * - INSPECTION 하위 전체 (INSP_*)
  */
 function getOperatorMenuCodes(): string[] {
   return [
@@ -106,7 +105,6 @@ function getOperatorMenuCodes(): string[] {
     ...getGroupCodes('PRODUCTION'),
     ...getGroupCodes('QUALITY'),
     ...getGroupCodes('EQUIPMENT'),
-    ...getGroupCodes('INSPECTION'),
   ];
 }
 

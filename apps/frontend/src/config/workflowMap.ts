@@ -507,10 +507,6 @@ export const workflowNodes: WorkflowActivityNode[] = [
     dataObjects: ["INSPECT_RESULTS", "SAMPLE_INSPECT_RESULTS", "QC_RESULTS"],
     routes: [
       { label: "검사관리", path: "/quality/inspect" },
-      { label: "통합검사", path: "/inspection/integrated" },
-      { label: "검사결과", path: "/inspection/result" },
-      { label: "단자검사결과", path: "/inspection/terminal-result" },
-      { label: "검사이력", path: "/inspection/history" },
       { label: "샘플검사", path: "/production/sample-inspect" },
       { label: "의뢰검사", path: "/quality/request-inspect" },
       { label: "자주검사이력", path: "/quality/self-inspect-history" },

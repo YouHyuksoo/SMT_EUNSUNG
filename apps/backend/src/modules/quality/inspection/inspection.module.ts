@@ -4,8 +4,7 @@
  *
  * @module InspectionModule
  * @description
- * 검사실적 및 검사 관련 기능을 위한 서브모듈입니다.
- * - InspectResult: 일반 검사실적 관리
+ * 추적성(4M 이력) 조회를 위한 서브모듈입니다.
  * - Trace: 추적성 조회 (4M 이력)
  *
  * @dependencies
@@ -15,9 +14,7 @@
 
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { InspectResultController } from './controllers/inspect-result.controller';
 import { TraceController } from './controllers/trace.controller';
-import { InspectResultService } from './services/inspect-result.service';
 import { ProductTraceabilityService } from './services/product-traceability.service';
 import { InspectResult } from '../../../entities/inspect-result.entity';
 import { ProdResult } from '../../../entities/prod-result.entity';
@@ -87,8 +84,8 @@ import { SharedModule } from '../../../shared/shared.module';
     ]),
     SharedModule, // SeqGeneratorService 제공
   ],
-  controllers: [InspectResultController, TraceController],
-  providers: [InspectResultService, ProductTraceabilityService],
-  exports: [InspectResultService, ProductTraceabilityService],
+  controllers: [TraceController],
+  providers: [ProductTraceabilityService],
+  exports: [ProductTraceabilityService],
 })
 export class InspectionModule {}
