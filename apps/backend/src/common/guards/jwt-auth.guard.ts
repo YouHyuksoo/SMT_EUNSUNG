@@ -97,6 +97,7 @@ export class JwtAuthGuard implements CanActivate {
           id: user.userId,
           email: user.emailAddress || user.userId,
           role: this.roleFromLevel(user.userLevel),
+          organizationId: user.organizationId,
           company,
           plant,
         };
@@ -108,8 +109,8 @@ export class JwtAuthGuard implements CanActivate {
         }
       }
 
-      if (!resolvedUser.company || !resolvedUser.plant) {
-        throw new UnauthorizedException('회사/사업장 정보가 없습니다. 재로그인 해주세요.');
+      if (resolvedUser.organizationId == null) {
+        throw new UnauthorizedException('조직 정보가 없습니다. 재로그인 해주세요.');
       }
 
       setRequestUser(request, resolvedUser);

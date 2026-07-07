@@ -3,8 +3,8 @@
  * @description 메뉴(leaf) ↔ 카테고리 배치 엔티티
  *
  * 초보자 가이드:
- * 1. COMPANY + PLANT_CD + MENU_CODE가 PK — 한 메뉴는 tenant 안에서 하나의 카테고리에만 배치
- * 2. COMPANY + PLANT_CD + CATEGORY_CODE는 FK + 일반 컬럼 (TypeORM 표준 패턴, role-menu-permission 참고)
+ * 1. ORGANIZATION_ID + MENU_CODE가 PK — 한 메뉴는 tenant 안에서 하나의 카테고리에만 배치
+ * 2. ORGANIZATION_ID + CATEGORY_CODE는 FK + 일반 컬럼 (부모 MENU_CATEGORIES 참조)
  * 3. SORT_ORDER는 카테고리 내 표시 순서(10단위 권장)
  */
 import {
@@ -20,11 +20,8 @@ import { MenuCategory } from './menu-category.entity';
 
 @Entity({ name: 'MENU_CATEGORY_ITEMS' })
 export class MenuCategoryItem {
-  @PrimaryColumn({ name: 'COMPANY', type: 'varchar2', length: 20 })
-  company!: string;
-
-  @PrimaryColumn({ name: 'PLANT_CD', type: 'varchar2', length: 20 })
-  plantCd!: string;
+  @PrimaryColumn({ name: 'ORGANIZATION_ID', type: 'number' })
+  organizationId!: number;
 
   @PrimaryColumn({ name: 'MENU_CODE', type: 'varchar2', length: 100 })
   menuCode!: string;
@@ -34,8 +31,7 @@ export class MenuCategoryItem {
 
   @ManyToOne(() => MenuCategory)
   @JoinColumn([
-    { name: 'COMPANY', referencedColumnName: 'company' },
-    { name: 'PLANT_CD', referencedColumnName: 'plantCd' },
+    { name: 'ORGANIZATION_ID', referencedColumnName: 'organizationId' },
     { name: 'CATEGORY_CODE', referencedColumnName: 'categoryCode' },
   ])
   category?: MenuCategory;

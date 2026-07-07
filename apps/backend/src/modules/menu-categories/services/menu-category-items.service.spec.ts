@@ -61,15 +61,15 @@ describe('MenuCategoryItemsService', () => {
 
       const result = await service.move(
         { menuCode: 'MST_PART', toCategoryCode: 'TARGET', sortOrder: 10 },
-        { company: 'C1', plantCd: 'P1', userId: 'tester' },
+        { organizationId: 1, userId: 'tester' },
       );
       expect(result.menuCode).toBe('MST_PART');
       expect(result.categoryCode).toBe('TARGET');
       expect(categoryRepo.findOne).toHaveBeenCalledWith({
-        where: { categoryCode: 'TARGET', company: 'C1', plantCd: 'P1' },
+        where: { categoryCode: 'TARGET', organizationId: 1 },
       });
       expect(itemRepo.findOne).toHaveBeenCalledWith({
-        where: { menuCode: 'MST_PART', company: 'C1', plantCd: 'P1' },
+        where: { menuCode: 'MST_PART', organizationId: 1 },
       });
     });
 
@@ -80,7 +80,7 @@ describe('MenuCategoryItemsService', () => {
 
       await service.move(
         { menuCode: 'MST_PART', toCategoryCode: 'TARGET', sortOrder: 20 },
-        { company: 'C1', plantCd: 'P1', userId: 'tester' },
+        { organizationId: 1, userId: 'tester' },
       );
       expect(itemRepo.save).toHaveBeenCalled();
     });
@@ -89,7 +89,7 @@ describe('MenuCategoryItemsService', () => {
       await expect(
         service.move(
           { menuCode: 'NON_EXISTENT', toCategoryCode: 'X', sortOrder: 0 },
-          { company: 'C1', plantCd: 'P1', userId: 'tester' },
+          { organizationId: 1, userId: 'tester' },
         ),
       ).rejects.toBeInstanceOf(BadRequestException);
     });
@@ -99,7 +99,7 @@ describe('MenuCategoryItemsService', () => {
       await expect(
         service.move(
           { menuCode: 'MST_PART', toCategoryCode: 'GONE', sortOrder: 0 },
-          { company: 'C1', plantCd: 'P1', userId: 'tester' },
+          { organizationId: 1, userId: 'tester' },
         ),
       ).rejects.toBeInstanceOf(NotFoundException);
     });
@@ -110,11 +110,11 @@ describe('MenuCategoryItemsService', () => {
       itemRepo.findOne.mockResolvedValueOnce({ menuCode: 'MST_PART' } as any);
       itemRepo.delete.mockResolvedValueOnce({} as any);
 
-      await service.remove('MST_PART', { company: 'C1', plantCd: 'P1', userId: 'tester' });
+      await service.remove('MST_PART', { organizationId: 1, userId: 'tester' });
       expect(itemRepo.findOne).toHaveBeenCalledWith({
-        where: { menuCode: 'MST_PART', company: 'C1', plantCd: 'P1' },
+        where: { menuCode: 'MST_PART', organizationId: 1 },
       });
-      expect(itemRepo.delete).toHaveBeenCalledWith({ menuCode: 'MST_PART', company: 'C1', plantCd: 'P1' });
+      expect(itemRepo.delete).toHaveBeenCalledWith({ menuCode: 'MST_PART', organizationId: 1 });
     });
 
     it('매핑이 없으면 NotFound', async () => {
@@ -137,13 +137,13 @@ describe('MenuCategoryItemsService', () => {
   });
 
   describe('tenant keys', () => {
-    it('includes company and plantCd in MenuCategoryItem primary key metadata', () => {
+    it('includes organizationId in MenuCategoryItem primary key metadata', () => {
       const primaryColumnNames = getMetadataArgsStorage()
         .columns
         .filter(column => column.target === MenuCategoryItem && column.options.primary)
         .map(column => column.propertyName);
 
-      expect(primaryColumnNames).toEqual(expect.arrayContaining(['company', 'plantCd', 'menuCode']));
+      expect(primaryColumnNames).toEqual(expect.arrayContaining(['organizationId', 'menuCode']));
     });
   });
 });

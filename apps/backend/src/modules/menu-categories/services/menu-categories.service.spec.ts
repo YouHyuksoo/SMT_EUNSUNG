@@ -57,7 +57,7 @@ describe('MenuCategoriesService', () => {
 
       const result = await service.create(
         { code: 'NEW_CAT', labelKey: 'menu.newCat' },
-        { company: 'C1', plantCd: 'P1', userId: 'tester' },
+        { organizationId: 1, userId: 'tester' },
       );
       expect(result.categoryCode).toBe('NEW_CAT');
       expect(categoryRepo.save).toHaveBeenCalled();
@@ -69,11 +69,11 @@ describe('MenuCategoriesService', () => {
 
       await service.create(
         { code: 'NEW_CAT', labelKey: 'menu.newCat' },
-        { company: 'C1', plantCd: 'P1', userId: 'tester' },
+        { organizationId: 1, userId: 'tester' },
       );
 
       expect(categoryRepo.findOne).toHaveBeenCalledWith({
-        where: { categoryCode: 'NEW_CAT', company: 'C1', plantCd: 'P1' },
+        where: { categoryCode: 'NEW_CAT', organizationId: 1 },
       });
     });
 
@@ -81,7 +81,7 @@ describe('MenuCategoriesService', () => {
       await expect(
         service.create(
           { code: '__ROOT__', labelKey: 'x' } as any,
-          { company: 'C1', plantCd: 'P1', userId: 'tester' },
+          { organizationId: 1, userId: 'tester' },
         ),
       ).rejects.toBeInstanceOf(BadRequestException);
     });
@@ -91,7 +91,7 @@ describe('MenuCategoriesService', () => {
       await expect(
         service.create(
           { code: 'X', labelKey: 'x' },
-          { company: 'C1', plantCd: 'P1', userId: 'tester' },
+          { organizationId: 1, userId: 'tester' },
         ),
       ).rejects.toBeInstanceOf(ConflictException);
     });
@@ -127,13 +127,13 @@ describe('MenuCategoriesService', () => {
   });
 
   describe('tenant keys', () => {
-    it('includes company and plantCd in MenuCategory primary key metadata', () => {
+    it('includes organizationId in MenuCategory primary key metadata', () => {
       const primaryColumnNames = getMetadataArgsStorage()
         .columns
         .filter(column => column.target === MenuCategory && column.options.primary)
         .map(column => column.propertyName);
 
-      expect(primaryColumnNames).toEqual(expect.arrayContaining(['company', 'plantCd', 'categoryCode']));
+      expect(primaryColumnNames).toEqual(expect.arrayContaining(['organizationId', 'categoryCode']));
     });
   });
 

@@ -4,7 +4,7 @@ import { MenuCategoryItemsService } from '../services/menu-category-items.servic
 import { BadRequestException } from '@nestjs/common';
 
 describe('MenuCategoriesController', () => {
-  it('create maps JwtAuthGuard user plant and id to menu category scope', async () => {
+  it('create maps JwtAuthGuard user organizationId and id to menu category scope', async () => {
     const categories = {
       create: jest.fn().mockResolvedValue({ categoryCode: 'CAT-1' }),
     } as unknown as MenuCategoriesService;
@@ -12,12 +12,12 @@ describe('MenuCategoriesController', () => {
     const controller = new MenuCategoriesController(categories, items);
 
     await controller.create({ categoryCode: 'CAT-1', labelKey: 'menu.cat', iconName: 'Menu' } as any, {
-      user: { id: 'tester@test.com', company: 'C1', plant: 'P1' },
+      user: { id: 'tester@test.com', organizationId: 1 },
     } as any);
 
     expect(categories.create).toHaveBeenCalledWith(
       expect.anything(),
-      expect.objectContaining({ company: 'C1', plantCd: 'P1', userId: 'tester@test.com' }),
+      expect.objectContaining({ organizationId: 1, userId: 'tester@test.com' }),
     );
   });
 

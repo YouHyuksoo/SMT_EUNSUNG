@@ -32,14 +32,12 @@ export class MenuCategoryItemsController {
 
   private scope(req: AuthenticatedRequest) {
     const user = req.user;
-    const company = user.company;
-    const plantCd = user.plant;
-    if (!company || !plantCd) {
-      throw new BadRequestException('회사/사업장 정보가 없습니다.');
+    const organizationId = user.organizationId;
+    if (organizationId == null) {
+      throw new BadRequestException('조직 정보가 없습니다.');
     }
     return {
-      company,
-      plantCd,
+      organizationId,
       userId: user.id,
     };
   }

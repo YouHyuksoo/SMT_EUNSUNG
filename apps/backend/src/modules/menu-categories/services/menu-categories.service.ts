@@ -21,8 +21,7 @@ import {
 } from '../dto/menu-category.dto';
 
 interface AuditScope {
-  company: string;
-  plantCd: string;
+  organizationId: number;
   userId: string;
 }
 
@@ -37,7 +36,7 @@ export class MenuCategoriesService {
   ) {}
 
   async findAll(scope?: AuditScope): Promise<MenuCategory[]> {
-    const tenantWhere = scope ? { company: scope.company, plantCd: scope.plantCd } : {};
+    const tenantWhere = scope ? { organizationId: scope.organizationId } : {};
     return this.categoryRepo.find({
       where: tenantWhere,
       order: { sortOrder: 'ASC', categoryCode: 'ASC' },
@@ -49,7 +48,7 @@ export class MenuCategoriesService {
       throw new BadRequestException(`예약어 ${RESERVED_ROOT}는 생성할 수 없습니다.`);
     }
     const existing = await this.categoryRepo.findOne({
-      where: { categoryCode: dto.code, company: scope.company, plantCd: scope.plantCd },
+      where: { categoryCode: dto.code, organizationId: scope.organizationId },
     });
     if (existing) {
       throw new ConflictException(`이미 존재하는 카테고리 코드입니다: ${dto.code}`);
@@ -61,8 +60,7 @@ export class MenuCategoriesService {
       iconName: dto.iconName ?? null,
       sortOrder: 9999,
       isActive: 'Y',
-      company: scope.company,
-      plantCd: scope.plantCd,
+      organizationId: scope.organizationId,
       createdAt: now,
       createdBy: scope.userId,
       updatedAt: now,
@@ -73,7 +71,7 @@ export class MenuCategoriesService {
 
   async update(code: string, dto: UpdateMenuCategoryDto, scope: AuditScope): Promise<MenuCategory> {
     const existing = await this.categoryRepo.findOne({
-      where: { categoryCode: code, company: scope.company, plantCd: scope.plantCd },
+      where: { categoryCode: code, organizationId: scope.organizationId },
     });
     if (!existing) throw new NotFoundException(`카테고리를 찾을 수 없습니다: ${code}`);
 
@@ -84,7 +82,7 @@ export class MenuCategoriesService {
     }
 
     await this.categoryRepo.update(
-      { categoryCode: code, company: scope.company, plantCd: scope.plantCd },
+      { categoryCode: code, organizationId: scope.organizationId },
       {
         ...(dto.labelKey !== undefined && { labelKey: dto.labelKey }),
         ...(dto.iconName !== undefined && { iconName: dto.iconName }),
@@ -96,7 +94,7 @@ export class MenuCategoriesService {
     );
 
     return (await this.categoryRepo.findOne({
-      where: { categoryCode: code, company: scope.company, plantCd: scope.plantCd },
+      where: { categoryCode: code, organizationId: scope.organizationId },
     }))!;
   }
 
@@ -104,7 +102,7 @@ export class MenuCategoriesService {
     if (code === RESERVED_ROOT) {
       throw new BadRequestException(`예약어 ${RESERVED_ROOT}는 삭제할 수 없습니다.`);
     }
-    const tenantWhere = scope ? { company: scope.company, plantCd: scope.plantCd } : {};
+    const tenantWhere = scope ? { organizationId: scope.organizationId } : {};
     const existing = await this.categoryRepo.findOne({ where: { categoryCode: code, ...tenantWhere } });
     if (!existing) throw new NotFoundException(`카테고리를 찾을 수 없습니다: ${code}`);
 
@@ -120,7 +118,7 @@ export class MenuCategoriesService {
   }
 
   async reorder(dto: ReorderCategoriesDto, scope?: AuditScope): Promise<void> {
-    const tenantWhere = scope ? { company: scope.company, plantCd: scope.plantCd } : {};
+    const tenantWhere = scope ? { organizationId: scope.organizationId } : {};
     await this.tx.run(async (queryRunner) => {
       const repo = queryRunner.manager.getRepository(MenuCategory);
       for (const item of dto.items) {
