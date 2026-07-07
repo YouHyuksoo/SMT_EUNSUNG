@@ -5,6 +5,7 @@
 
 # dependencies
 /node_modules
+/apps/*/node_modules
 /.pnp
 .pnp.*
 .yarn/*
@@ -18,7 +19,9 @@
 
 # next.js
 /.next/
+/apps/*/.next/
 /out/
+/apps/*/out/
 
 # production
 /build
@@ -38,6 +41,7 @@ yarn-error.log*
 
 # DB config (contains credentials)
 /config/database.json
+/apps/frontend/config/database.json
 
 # Slack settings (contains webhook URL)
 /data/slack-settings.json
