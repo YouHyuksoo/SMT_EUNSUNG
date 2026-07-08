@@ -9,9 +9,8 @@
  * 4. 새 메뉴 추가 시 반드시 고유 code를 부여할 것
  */
 import {
-  LayoutDashboard, Package, Wrench, Truck,
-  Database, Building2, UserCog,
-  Monitor, PackageCheck, GitBranch, Activity,
+  Activity, Boxes, Building2,
+  Database, GitBranch, Package,
 } from "lucide-react";
 
 /** 메뉴 설정 항목 인터페이스 */
@@ -31,23 +30,26 @@ export interface MenuConfigItem {
 /** 사이드바 메뉴 설정 배열 */
 export const menuConfig: MenuConfigItem[] = [
   {
-    code: "DASHBOARD",
-    labelKey: "menu.dashboard",
-    path: "/dashboard",
-    icon: LayoutDashboard,
-  },
-  {
-    code: "WORKFLOW",
-    labelKey: "menu.workflow",
-    path: "/workflow",
-    icon: GitBranch,
-  },
-  {
-    code: "MONITORING",
-    labelKey: "menu.monitoring",
-    icon: Monitor,
+    code: "MASTER",
+    labelKey: "menu.master",
+    icon: Database,
     children: [
-      { code: "MON_EQUIP_STATUS", labelKey: "menu.equipment.status", path: "/equipment/status" },
+      { code: "MST_PART", labelKey: "menu.master.part", path: "/master/part" },
+      { code: "MST_BOM", labelKey: "menu.master.bom", path: "/master/bom" },
+      { code: "MST_PARTNER", labelKey: "menu.master.partner", path: "/master/partner" },
+      { code: "EQUIP_MASTER", labelKey: "menu.equipment.master", path: "/master/equip" },
+      { code: "MST_PROCESS", labelKey: "menu.master.process", path: "/master/process" },
+      { code: "MST_PROD_LINE", labelKey: "menu.master.prodLine", path: "/master/prod-line" },
+      { code: "MST_ROUTING", labelKey: "menu.master.routing", path: "/master/routing" },
+      { code: "MST_WORK_CALENDAR", labelKey: "menu.master.workCalendar", path: "/master/work-calendar" },
+      { code: "MST_WORKER", labelKey: "menu.master.worker", path: "/master/worker" },
+      { code: "MST_WORK_INST", labelKey: "menu.master.workInstruction", path: "/master/work-instruction" },
+      { code: "MST_WAREHOUSE", labelKey: "menu.master.warehouse", path: "/master/warehouse" },
+      { code: "SYS_COMPANY", labelKey: "menu.master.company", path: "/master/company" },
+      { code: "SYS_CODE", labelKey: "menu.master.code", path: "/master/code" },
+      { code: "MST_LABEL", labelKey: "menu.master.label", path: "/master/label" },
+      { code: "MST_PROCESS_CAPA", labelKey: "menu.master.processCapa", path: "/master/process-capa" },
+      { code: "SYS_DOCUMENT", labelKey: "menu.system.document", path: "/system/document" },
     ],
   },
   {
@@ -64,29 +66,8 @@ export const menuConfig: MenuConfigItem[] = [
     ],
   },
   {
-    code: "MASTER",
-    labelKey: "menu.master",
-    icon: Database,
-    children: [
-      { code: "MST_PART", labelKey: "menu.master.part", path: "/master/part" },
-      { code: "MST_BOM", labelKey: "menu.master.bom", path: "/master/bom" },
-      { code: "MST_PARTNER", labelKey: "menu.master.partner", path: "/master/partner" },
-      { code: "EQUIP_MASTER", labelKey: "menu.equipment.master", path: "/master/equip" },
-      { code: "MST_PROCESS", labelKey: "menu.master.process", path: "/master/process" },
-      { code: "MST_PROD_LINE", labelKey: "menu.master.prodLine", path: "/master/prod-line" },
-      { code: "MST_ROUTING", labelKey: "menu.master.routing", path: "/master/routing" },
-      { code: "MST_WORK_CALENDAR", labelKey: "menu.master.workCalendar", path: "/master/work-calendar" },
-      { code: "MST_WORKER", labelKey: "menu.master.worker", path: "/master/worker" },
-      { code: "MST_WORK_INST", labelKey: "menu.master.workInstruction", path: "/master/work-instruction" },
-      { code: "MST_WAREHOUSE", labelKey: "menu.master.warehouse", path: "/master/warehouse" },
-      { code: "MST_LABEL", labelKey: "menu.master.label", path: "/master/label" },
-      { code: "MST_PROCESS_CAPA", labelKey: "menu.master.processCapa", path: "/master/process-capa" },
-      { code: "SYS_DOCUMENT", labelKey: "menu.system.document", path: "/system/document" },
-    ],
-  },
-  {
-    code: "MATERIAL", // 자재관리 — 기존 자재수불관리(MATERIAL) + 자재재고관리(INVENTORY) 통합
-    labelKey: "menu.materialMgmt",
+    code: "MATERIAL",
+    labelKey: "menu.material",
     icon: Package,
     children: [
       /* ── 자재 수불 ── */
@@ -116,79 +97,22 @@ export const menuConfig: MenuConfigItem[] = [
     ],
   },
   {
+    code: "PROCESS_TRANSACTION",
+    labelKey: "menu.processTransaction",
+    icon: GitBranch,
+    children: [],
+  },
+  {
     code: "PRODUCT_MGMT",
     labelKey: "menu.productMgmt",
-    icon: PackageCheck,
-    children: [
-      { code: "PROD_RECEIVE", labelKey: "menu.productMgmt.receive", path: "/product/receive" },
-      { code: "PROD_RECEIPT_CANCEL", labelKey: "menu.productMgmt.receiptCancel", path: "/product/receipt-cancel" },
-      { code: "PROD_ISSUE", labelKey: "menu.productMgmt.issue", path: "/product/issue" },
-      { code: "PROD_ISSUE_CANCEL", labelKey: "menu.productMgmt.issueCancel", path: "/product/issue-cancel" },
-      { code: "PROD_DEFECT_TRANSFER", labelKey: "menu.productMgmt.defectTransfer", path: "/product/defect-transfer" },
-    ],
-  },
-  {
-    code: "EQUIPMENT",
-    labelKey: "menu.equipment",
-    icon: Wrench,
-    children: [
-      /* ── 마스터 ── */
-      { code: "EQ_MOLD_MGMT", labelKey: "menu.equipment.mold", path: "/equipment/mold-mgmt" },
-      { code: "EQUIP_INSPECT_ITEM_MASTER", labelKey: "menu.equipment.inspectItemMaster", path: "/master/equip-inspect-item" },
-      { code: "EQUIP_INSPECT_ITEM", labelKey: "menu.master.equipInspect", path: "/master/equip-inspect" },
-      /* ── 점검 ── */
-      { code: "EQUIP_INSPECT_CALENDAR", labelKey: "menu.equipment.dailyInspectCalendar", path: "/equipment/inspect-calendar" },
-      { code: "EQUIP_DAILY", labelKey: "menu.equipment.dailyInspect", path: "/equipment/daily-inspect" },
-      { code: "EQUIP_PERIODIC_CALENDAR", labelKey: "menu.equipment.periodicInspectCalendar", path: "/equipment/periodic-inspect-calendar" },
-      { code: "EQUIP_PERIODIC", labelKey: "menu.equipment.periodicInspect", path: "/equipment/periodic-inspect" },
-      { code: "EQUIP_HISTORY", labelKey: "menu.equipment.inspectHistory", path: "/equipment/inspect-history" },
-      /* ── 예방보전 ── */
-      { code: "EQUIP_PM_PLAN", labelKey: "menu.equipment.pmPlan", path: "/equipment/pm-plan" },
-      { code: "EQUIP_PM_CALENDAR", labelKey: "menu.equipment.pmCalendar", path: "/equipment/pm-calendar" },
-      { code: "EQUIP_PM_RESULT", labelKey: "menu.equipment.pmResult", path: "/equipment/pm-result" },
-    ],
-  },
-  {
-    code: "SHIPPING",
-    labelKey: "menu.shipping",
-    icon: Truck,
-    children: [
-      { code: "SHIP_PACK", labelKey: "menu.shipping.pack", path: "/shipping/pack" },
-      { code: "SHIP_ORDER", labelKey: "menu.shipping.order", path: "/shipping/order" },
-      { code: "SHIP_BOX_STOCK", labelKey: "menu.shipping.boxStock", path: "/shipping/box-stock" },
-      { code: "SHIP_CONFIRM", labelKey: "menu.shipping.confirm", path: "/shipping/confirm" },
-      { code: "SHIP_PALLET", labelKey: "menu.shipping.pallet", path: "/shipping/pallet" },
-      { code: "SHIP_PALLET_SHIP", labelKey: "menu.shipping.palletShip", path: "/shipping/pallet-ship" },
-      { code: "SHIP_HISTORY", labelKey: "menu.shipping.history", path: "/shipping/history" },
-      { code: "SHIP_RETURN", labelKey: "menu.shipping.return", path: "/shipping/return" },
-    ],
+    icon: Boxes,
+    children: [],
   },
   {
     code: "OUTSOURCING",
     labelKey: "menu.outsourcing",
     icon: Building2,
-    children: [
-      { code: "OUT_VENDOR", labelKey: "menu.outsourcing.vendor", path: "/outsourcing/vendor" },
-      { code: "OUT_ORDER", labelKey: "menu.outsourcing.order", path: "/outsourcing/order" },
-      { code: "OUT_RECEIVE", labelKey: "menu.outsourcing.receive", path: "/outsourcing/receive" },
-    ],
-  },
-  {
-    code: "SYSTEM",
-    labelKey: "menu.system",
-    icon: UserCog,
-    children: [
-      { code: "SYS_COMPANY", labelKey: "menu.master.company", path: "/master/company" },
-      { code: "SYS_DEPT", labelKey: "menu.system.department", path: "/system/department" },
-      { code: "SYS_USER", labelKey: "menu.system.users", path: "/system/users" },
-      { code: "SYS_ROLE", labelKey: "menu.system.roles", path: "/system/roles" },
-      { code: "SYS_CONFIG", labelKey: "menu.system.config", path: "/system/config" },
-      { code: "SYS_CODE", labelKey: "menu.master.code", path: "/master/code" },
-      { code: "SYS_SCHEDULER", labelKey: "scheduler.title", path: "/system/scheduler" },
-      { code: "SYS_ER_VIEW", labelKey: "menu.system.erView", path: "/system/er-view" },
-      { code: "SYS_MENU_CATEGORY", labelKey: "menu.system.menuCategory", path: "/system/menu-categories" },
-      { code: "SYS_IMPR_REQ", labelKey: "menu.system.improvementRequests", path: "/system/improvement-requests" },
-    ],
+    children: [],
   },
 ];
 

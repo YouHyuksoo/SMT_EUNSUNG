@@ -68,6 +68,21 @@ const forbiddenRoutes = [
   "/quality/self-inspect-history",
   "/quality/spc",
   "/quality/trace",
+  "/shipping/pack",
+  "/shipping/order",
+  "/shipping/box-stock",
+  "/shipping/confirm",
+  "/shipping/pallet",
+  "/shipping/pallet-ship",
+  "/shipping/history",
+  "/shipping/return",
+  "/shipping/customer-po",
+  "/shipping/customer-po-status",
+  "/product/receive",
+  "/product/receipt-cancel",
+  "/product/issue",
+  "/product/issue-cancel",
+  "/product/defect-transfer",
 ];
 
 const forbiddenCodes = [
@@ -140,6 +155,22 @@ const forbiddenCodes = [
   "QC_REWORK",
   "QC_REWORK_HISTORY",
   "SYS_TRAINING",
+  "SHIPPING",
+  "SHIP_PACK",
+  "SHIP_ORDER",
+  "SHIP_BOX_STOCK",
+  "SHIP_CONFIRM",
+  "SHIP_PALLET",
+  "SHIP_PALLET_SHIP",
+  "SHIP_HISTORY",
+  "SHIP_RETURN",
+  "SHIP_CUST_PO",
+  "SHIP_CUST_PO_STATUS",
+  "PROD_RECEIVE",
+  "PROD_RECEIPT_CANCEL",
+  "PROD_ISSUE",
+  "PROD_ISSUE_CANCEL",
+  "PROD_DEFECT_TRANSFER",
 ];
 
 const deletedRouteDirs = [
@@ -160,6 +191,8 @@ const deletedRouteDirs = [
   "apps/frontend/src/app/(authenticated)/material/concession",
   "apps/frontend/src/app/(authenticated)/production",
   "apps/frontend/src/app/(authenticated)/system/training",
+  "apps/frontend/src/app/(authenticated)/shipping",
+  "apps/frontend/src/app/(authenticated)/product",
   "apps/backend/src/modules/ai-page-tools/registry/vendor-barcode-tools.provider.ts",
 ];
 
@@ -227,6 +260,21 @@ const deletedRegistryFiles = [
   "apps/frontend/src/components/layout/page-registries/quality__self-inspect-history.generated.ts",
   "apps/frontend/src/components/layout/page-registries/quality__spc.generated.ts",
   "apps/frontend/src/components/layout/page-registries/quality__trace.generated.ts",
+  "apps/frontend/src/components/layout/page-registries/shipping__pack.generated.ts",
+  "apps/frontend/src/components/layout/page-registries/shipping__order.generated.ts",
+  "apps/frontend/src/components/layout/page-registries/shipping__box-stock.generated.ts",
+  "apps/frontend/src/components/layout/page-registries/shipping__confirm.generated.ts",
+  "apps/frontend/src/components/layout/page-registries/shipping__pallet.generated.ts",
+  "apps/frontend/src/components/layout/page-registries/shipping__pallet-ship.generated.ts",
+  "apps/frontend/src/components/layout/page-registries/shipping__history.generated.ts",
+  "apps/frontend/src/components/layout/page-registries/shipping__return.generated.ts",
+  "apps/frontend/src/components/layout/page-registries/shipping__customer-po.generated.ts",
+  "apps/frontend/src/components/layout/page-registries/shipping__customer-po-status.generated.ts",
+  "apps/frontend/src/components/layout/page-registries/product__receive.generated.ts",
+  "apps/frontend/src/components/layout/page-registries/product__receipt-cancel.generated.ts",
+  "apps/frontend/src/components/layout/page-registries/product__issue.generated.ts",
+  "apps/frontend/src/components/layout/page-registries/product__issue-cancel.generated.ts",
+  "apps/frontend/src/components/layout/page-registries/product__defect-transfer.generated.ts",
 ];
 
 test("삭제된 메뉴 페이지는 메뉴, 기본 카테고리, 레지스트리에 남지 않는다", () => {
@@ -265,4 +313,19 @@ test("삭제된 메뉴 페이지의 라우트 폴더와 생성 레지스트리 �
   for (const path of [...deletedRouteDirs, ...deletedRegistryFiles]) {
     assert.equal(fs.existsSync(path), false, `${path} must be deleted`);
   }
+});
+
+test("은성 메뉴 상위 구조는 지정된 6개 카테고리만 사용한다", () => {
+  const source = read("apps/frontend/src/config/menuConfig.ts");
+  const menuArray = source.slice(source.indexOf("export const menuConfig"));
+  const topLevelCodes = [...menuArray.matchAll(/^  \{\r?\n    code: "([^"]+)"/gm)].map((match) => match[1]);
+
+  assert.deepEqual(topLevelCodes, [
+    "MASTER",
+    "OEE",
+    "MATERIAL",
+    "PROCESS_TRANSACTION",
+    "PRODUCT_MGMT",
+    "OUTSOURCING",
+  ]);
 });

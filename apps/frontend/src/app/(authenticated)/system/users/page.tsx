@@ -114,7 +114,7 @@ export default function UserPage() {
                 />
               }
 
-            sqlQuery={`SELECT *\nFROM USERS\nWHERE COMPANY = '40'\n  AND PLANT_CD = '1000'\nORDER BY CREATED_AT DESC`}/>
+            sqlQuery={`SELECT *\nFROM ISYS_USERS\nWHERE ORGANIZATION_ID = 1\nORDER BY USER_ID`}/>
           </CardContent>
         </Card>
       </div>

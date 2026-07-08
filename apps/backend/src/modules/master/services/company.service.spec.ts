@@ -1,31 +1,23 @@
-/**
- * @file src/modules/master/services/company.service.spec.ts
- * @description CompanyService 단위 테스트
- *
- * 초보자 가이드:
- * - target: 테스트 대상(SUT), mock*: 모킹된 의존성
- * - 실행: `pnpm test -- -t "CompanyService"`
- */
 import { Test, TestingModule } from '@nestjs/testing';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { NotFoundException, ConflictException } from '@nestjs/common';
+import { ConflictException, NotFoundException } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { CompanyService } from './company.service';
-import { CompanyMaster } from '../../../entities/company-master.entity';
+import { IsysOrganization } from '../../../entities/isys-organization.entity';
 import { MockLoggerService } from '@test/mock-logger.service';
 
 describe('CompanyService', () => {
   let target: CompanyService;
-  let mockRepo: DeepMocked<Repository<CompanyMaster>>;
+  let mockRepo: DeepMocked<Repository<IsysOrganization>>;
 
   beforeEach(async () => {
-    mockRepo = createMock<Repository<CompanyMaster>>();
+    mockRepo = createMock<Repository<IsysOrganization>>();
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         CompanyService,
-        { provide: getRepositoryToken(CompanyMaster), useValue: mockRepo },
+        { provide: getRepositoryToken(IsysOrganization), useValue: mockRepo },
       ],
     })
       .setLogger(new MockLoggerService())
@@ -34,132 +26,76 @@ describe('CompanyService', () => {
     target = module.get<CompanyService>(CompanyService);
   });
 
-  afterEach(() => {
-    jest.clearAllMocks();
+  afterEach(() => jest.clearAllMocks());
+
+  it('finds company by organization id encoded in the page key', async () => {
+    mockRepo.findOne.mockResolvedValue({
+      organizationId: 1,
+      companyCode: 'EUNSUNG',
+      organizationName: '은성전장',
+    } as IsysOrganization);
+
+    const result = await target.findById('EUNSUNG::1');
+
+    expect(result.companyCode).toBe('EUNSUNG');
+    expect(result.plant).toBe('1');
+    expect(mockRepo.findOne).toHaveBeenCalledWith({ where: { organizationId: 1 } });
   });
 
-  // ─── findById ───
-  describe('findById', () => {
-    it('should return company when found (composite key)', async () => {
-      // Arrange
-      const company = { companyCode: 'C01', plant: 'P01' } as CompanyMaster;
-      mockRepo.findOne.mockResolvedValue(company);
+  it('throws when company does not exist', async () => {
+    mockRepo.findOne.mockResolvedValue(null);
 
-      // Act
-      const result = await target.findById('C01::P01');
-
-      // Assert
-      expect(result).toEqual(company);
-      expect(mockRepo.findOne).toHaveBeenCalledWith({
-        where: { companyCode: 'C01', plant: 'P01' },
-      });
-    });
-
-    it('should use default plant "-" when not in id', async () => {
-      // Arrange
-      mockRepo.findOne.mockResolvedValue(null);
-
-      // Act & Assert
-      await expect(target.findById('C01')).rejects.toThrow(NotFoundException);
-      expect(mockRepo.findOne).toHaveBeenCalledWith({
-        where: { companyCode: 'C01', plant: '-' },
-      });
-    });
-
-    it('should throw NotFoundException when not found', async () => {
-      // Arrange
-      mockRepo.findOne.mockResolvedValue(null);
-
-      // Act & Assert
-      await expect(target.findById('C01::P01')).rejects.toThrow(NotFoundException);
-    });
+    await expect(target.findById('EUNSUNG::1')).rejects.toThrow(NotFoundException);
   });
 
-  // ─── findPlantsByCompany ───
-  describe('findPlantsByCompany', () => {
-    it('should return plants mapped to plantCode/plantName', async () => {
-      // Arrange
-      const rows = [
-        { plant: 'P01', companyName: 'Company1' },
-        { plant: 'P02', companyName: 'Company1' },
-        { plant: null, companyName: 'Company1' },
-      ] as CompanyMaster[];
-      mockRepo.find.mockResolvedValue(rows);
+  it('creates organization rows in ISYS_ORGANIZATION shape', async () => {
+    const queryBuilder = {
+      select: jest.fn().mockReturnThis(),
+      getRawOne: jest.fn().mockResolvedValue({ maxId: 1 }),
+    };
+    mockRepo.findOne.mockResolvedValue(null);
+    mockRepo.createQueryBuilder.mockReturnValue(queryBuilder as any);
+    mockRepo.create.mockImplementation((payload) => payload as IsysOrganization);
+    mockRepo.save.mockImplementation(async (payload) => payload as IsysOrganization);
 
-      // Act
-      const result = await target.findPlantsByCompany('C01');
+    const result = await target.create({ companyCode: 'NEWCO', companyName: 'New Company' } as any, 'admin', '1');
 
-      // Assert
-      expect(result).toHaveLength(2);
-      expect(result[0]).toEqual({ plantCode: 'P01', plantName: 'P01' });
-    });
+    expect(mockRepo.create).toHaveBeenCalledWith(expect.objectContaining({
+      organizationId: 2,
+      companyCode: 'NEWCO',
+      organizationName: 'New Company',
+    }));
+    expect(result.companyCode).toBe('NEWCO');
   });
 
-  // ─── create ───
-  describe('create', () => {
-    it('should create a new company', async () => {
-      // Arrange
-      const dto = { companyCode: 'C01', companyName: 'TestCo' } as any;
-      const created = { ...dto, useYn: 'Y' } as CompanyMaster;
-      mockRepo.findOne.mockResolvedValue(null);
-      mockRepo.create.mockReturnValue(created);
-      mockRepo.save.mockResolvedValue(created);
+  it('rejects duplicate company code', async () => {
+    mockRepo.findOne.mockResolvedValue({ organizationId: 1 } as IsysOrganization);
 
-      // Act
-      const result = await target.create(dto, '40', '1000');
-
-      // Assert
-      expect(result).toEqual(created);
-      expect(mockRepo.create).toHaveBeenCalledWith(expect.objectContaining({
-        company: '40',
-        plant: '1000',
-      }));
-    });
-
-    it('should throw ConflictException when company code exists', async () => {
-      // Arrange
-      const dto = { companyCode: 'C01', companyName: 'TestCo' } as any;
-      mockRepo.findOne.mockResolvedValue({ companyCode: 'C01' } as CompanyMaster);
-
-      // Act & Assert
-      await expect(target.create(dto)).rejects.toThrow(ConflictException);
-    });
+    await expect(target.create({ companyCode: 'EUNSUNG' } as any)).rejects.toThrow(ConflictException);
   });
 
-  // ─── update ───
-  describe('update', () => {
-    it('should update and return company', async () => {
-      // Arrange
-      const existing = { companyCode: 'C01', plant: 'P01' } as CompanyMaster;
-      mockRepo.findOne.mockResolvedValue(existing);
-      mockRepo.update.mockResolvedValue({ affected: 1 } as any);
+  it('updates ISYS_ORGANIZATION columns by organization id', async () => {
+    mockRepo.findOne.mockResolvedValue({
+      organizationId: 1,
+      companyCode: 'EUNSUNG',
+      organizationName: '은성전장',
+    } as IsysOrganization);
+    mockRepo.update.mockResolvedValue({ affected: 1 } as any);
 
-      // Act
-      const result = await target.update('C01::P01', { companyName: 'Updated' } as any);
+    await target.update('EUNSUNG::1', { companyName: 'Updated', tel: '123' } as any, 'admin', '1');
 
-      // Assert
-      expect(result).toEqual(existing);
-      expect(mockRepo.update).toHaveBeenCalledWith(
-        { companyCode: 'C01', plant: 'P01' },
-        { companyName: 'Updated' },
-      );
-    });
+    expect(mockRepo.update).toHaveBeenCalledWith(
+      { organizationId: 1 },
+      expect.objectContaining({ organizationName: 'Updated', telNo: '123' }),
+    );
   });
 
-  // ─── delete ───
-  describe('delete', () => {
-    it('should delete and return id', async () => {
-      // Arrange
-      const existing = { companyCode: 'C01', plant: 'P01' } as CompanyMaster;
-      mockRepo.findOne.mockResolvedValue(existing);
-      mockRepo.delete.mockResolvedValue({ affected: 1 } as any);
+  it('deletes by organization id', async () => {
+    mockRepo.findOne.mockResolvedValue({ organizationId: 1, companyCode: 'EUNSUNG' } as IsysOrganization);
+    mockRepo.delete.mockResolvedValue({ affected: 1 } as any);
 
-      // Act
-      const result = await target.delete('C01::P01');
+    await target.delete('EUNSUNG::1');
 
-      // Assert
-      expect(result).toEqual({ id: 'C01::P01' });
-      expect(mockRepo.delete).toHaveBeenCalledWith({ companyCode: 'C01', plant: 'P01' });
-    });
+    expect(mockRepo.delete).toHaveBeenCalledWith({ organizationId: 1 });
   });
 });

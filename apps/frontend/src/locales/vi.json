@@ -281,6 +281,7 @@
     "productInventory.hold": "Giữ tồn kho sản phẩm",
     "material": "Quản lý xuất nhập vật tư",
     "materialMgmt": "Quản lý vật tư",
+    "processTransaction": "Quản lý xuất nhập công đoạn",
     "productMgmt": "Quản lý xuất nhập sản phẩm",
     "productMgmt.receive": "Nhập kho sản phẩm",
     "productMgmt.receiptCancel": "Hủy nhập kho sản phẩm",

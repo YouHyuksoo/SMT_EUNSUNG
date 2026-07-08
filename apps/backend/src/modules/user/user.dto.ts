@@ -3,7 +3,6 @@
  * @description 사용자 관리 DTO
  */
 import {
-  IsEmail,
   IsNotEmpty,
   IsString,
   IsOptional,
@@ -13,8 +12,8 @@ import {
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateUserDto {
-  @ApiProperty({ description: '이메일' })
-  @IsEmail({}, { message: '올바른 이메일 형식이 아닙니다.' })
+  @ApiProperty({ description: '사용자 ID' })
+  @IsString()
   @IsNotEmpty()
   email: string;
 

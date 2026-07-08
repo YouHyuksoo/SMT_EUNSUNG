@@ -241,52 +241,6 @@
       ]
     },
     {
-      "key": "shipping",
-      "title": "출하관리",
-      "items": [
-        {
-          "menuCode": "SHIP_ORDER",
-          "title": "출하지시관리",
-          "path": "/shipping/order"
-        },
-        {
-          "menuCode": "SHIP_PALLET",
-          "title": "팔레트관리",
-          "path": "/shipping/pallet"
-        },
-        {
-          "menuCode": "SHIP_PALLET_SHIP",
-          "title": "팔레트출하",
-          "path": "/shipping/pallet-ship"
-        },
-        {
-          "menuCode": "SHIP_PACK",
-          "title": "포장관리",
-          "path": "/shipping/pack"
-        },
-        {
-          "menuCode": "SHIP_BOX_STOCK",
-          "title": "박스재고조회",
-          "path": "/shipping/box-stock"
-        },
-        {
-          "menuCode": "SHIP_CONFIRM",
-          "title": "출하확정",
-          "path": "/shipping/confirm"
-        },
-        {
-          "menuCode": "SHIP_HISTORY",
-          "title": "출하이력",
-          "path": "/shipping/history"
-        },
-        {
-          "menuCode": "SHIP_RETURN",
-          "title": "출하취소",
-          "path": "/shipping/return"
-        }
-      ]
-    },
-    {
       "key": "inventory",
       "title": "재고관리",
       "items": [
@@ -314,32 +268,6 @@
           "menuCode": "INV_MAT_PHYSICAL_INV_HISTORY",
           "title": "자재재고실사 이력",
           "path": "/inventory/material-physical-inv-history"
-        }
-      ]
-    },
-    {
-      "key": "product",
-      "title": "제품수불관리",
-      "items": [
-        {
-          "menuCode": "PROD_RECEIVE",
-          "title": "제품입고",
-          "path": "/product/receive"
-        },
-        {
-          "menuCode": "PROD_RECEIPT_CANCEL",
-          "title": "제품입고취소",
-          "path": "/product/receipt-cancel"
-        },
-        {
-          "menuCode": "PROD_ISSUE",
-          "title": "제품출고",
-          "path": "/product/issue"
-        },
-        {
-          "menuCode": "PROD_ISSUE_CANCEL",
-          "title": "제품출고취소",
-          "path": "/product/issue-cancel"
         }
       ]
     }

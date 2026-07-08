@@ -24,6 +24,7 @@ import { OeeModule } from './modules/oee/oee.module';
 import { MenuCategoriesModule } from './modules/menu-categories/menu-categories.module';
 import { SystemModule } from './modules/system/system.module';
 import { MasterCodeModule } from './modules/master/master-code.module';
+import { MasterCompanyModule } from './modules/master/master-company.module';
 import { SharedModule } from './shared/shared.module';
 
 @Module({
@@ -54,6 +55,9 @@ import { SharedModule } from './shared/shared.module';
 
     // 기준정보 공통코드 (/master/com-codes)
     MasterCodeModule,
+
+    // 기준정보 회사정보 (/master/companies) — ISYS_ORGANIZATION 기반
+    MasterCompanyModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -120,7 +120,7 @@ function CompanyPage() {
                 leftIcon={<Search className="w-4 h-4" />} />
             }
 
-          sqlQuery={`SELECT *\nFROM COMPANY_MASTERS\nWHERE COMPANY = '40'\n  AND PLANT_CD = '1000'\nORDER BY CREATED_AT DESC`}/>
+          sqlQuery={`SELECT *\nFROM ISYS_ORGANIZATION\nORDER BY ORGANIZATION_ID`}/>
         </CardContent></Card>
       </div>
 

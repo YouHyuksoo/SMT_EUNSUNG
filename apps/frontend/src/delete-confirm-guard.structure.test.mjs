@@ -7,8 +7,6 @@ const filesThatMustUseConfirmModal = [
   "apps/frontend/src/components/master/ProdLineTab.tsx",
   "apps/frontend/src/components/master/ProcessTab.tsx",
   "apps/frontend/src/app/(authenticated)/system/users/components/UserFormPanel.tsx",
-  "apps/frontend/src/app/(authenticated)/shipping/pallet/page.tsx",
-  "apps/frontend/src/app/(authenticated)/shipping/pack/page.tsx",
   "apps/frontend/src/app/(authenticated)/master/equip-inspect/components/InspectItemPanel.tsx",
   "apps/frontend/src/app/(authenticated)/master/equip-inspect-item/page.tsx",
   "apps/frontend/src/app/(authenticated)/master/process/page.tsx",

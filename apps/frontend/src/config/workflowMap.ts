@@ -512,8 +512,6 @@ export const workflowNodes: WorkflowActivityNode[] = [
     x: 1560,
     dataObjects: ["PRODUCT_STOCKS", "PRODUCT_TRANSACTIONS", "FG_LABELS"],
     routes: [
-      { label: "제품입고", path: "/product/receive" },
-      { label: "제품입고취소", path: "/product/receipt-cancel" },
     ],
     inputs: ["포장 박스", "FG 라벨"],
     outputs: ["제품재고", "제품수불"],
@@ -533,8 +531,6 @@ export const workflowNodes: WorkflowActivityNode[] = [
     x: 1300,
     dataObjects: ["BOX_MASTERS", "FG_LABELS", "OQC_REQUESTS"],
     routes: [
-      { label: "포장", path: "/shipping/pack" },
-      { label: "박스입고재고", path: "/shipping/box-stock" },
     ],
     inputs: ["FG 라벨", "검사 PASS 제품"],
     outputs: ["박스", "포장실적"],
@@ -573,8 +569,6 @@ export const workflowNodes: WorkflowActivityNode[] = [
     x: 2080,
     dataObjects: ["PALLET_MASTERS", "PALLET_BOXES", "BOX_MASTERS"],
     routes: [
-      { label: "팔레트관리", path: "/shipping/pallet" },
-      { label: "팔레트출하", path: "/shipping/pallet-ship" },
     ],
     inputs: ["OQC PASS 박스", "출하지시"],
     outputs: ["팔레트", "박스 적재 관계"],
@@ -594,7 +588,6 @@ export const workflowNodes: WorkflowActivityNode[] = [
     x: 1820,
     dataObjects: ["SHIPMENT_ORDERS", "SHIPMENT_ORDER_ITEMS"],
     routes: [
-      { label: "출하지시", path: "/shipping/order" },
       { label: "고객PO", path: "/sales/customer-po" },
     ],
     inputs: ["고객주문", "품목", "출하수량"],
@@ -615,8 +608,6 @@ export const workflowNodes: WorkflowActivityNode[] = [
     x: 2340,
     dataObjects: ["SHIPMENT_LOGS", "PRODUCT_TRANSACTIONS", "BOX_MASTERS", "PALLET_MASTERS"],
     routes: [
-      { label: "출하확정", path: "/shipping/confirm" },
-      { label: "출하이력", path: "/shipping/history" },
     ],
     inputs: ["확정 출하지시", "박스/팔레트"],
     outputs: ["출하이력", "제품재고 차감", "출하상태"],
@@ -636,8 +627,6 @@ export const workflowNodes: WorkflowActivityNode[] = [
     x: 2600,
     dataObjects: ["SHIPMENT_ORDERS", "SHIPMENT_LOGS", "PALLET_MASTERS"],
     routes: [
-      { label: "출하이력", path: "/shipping/history" },
-      { label: "출하취소", path: "/shipping/return" },
     ],
     inputs: ["출하확정 결과"],
     outputs: ["출하 조회 기준", "취소 검토 대상"],
@@ -686,8 +675,6 @@ export const workflowNodes: WorkflowActivityNode[] = [
     x: 2600,
     dataObjects: ["SHIPMENT_RETURNS", "PRODUCT_TRANSACTIONS", "BOX_MASTERS", "SHIPMENT_ORDERS"],
     routes: [
-      { label: "출하취소", path: "/shipping/return" },
-      { label: "출하이력", path: "/shipping/history" },
     ],
     inputs: ["출하이력", "취소 사유"],
     outputs: ["취소이력", "제품재고 원복", "출하지시 수량 복원"],

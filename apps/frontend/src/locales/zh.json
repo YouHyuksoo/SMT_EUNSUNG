@@ -281,6 +281,7 @@
     "productInventory.hold": "产品库存冻结管理",
     "material": "物料收发管理",
     "materialMgmt": "物料管理",
+    "processTransaction": "工序收发管理",
     "productMgmt": "产品收发管理",
     "productMgmt.receive": "产品入库管理",
     "productMgmt.receiptCancel": "产品入库取消",

@@ -281,6 +281,7 @@
     "productInventory.hold": "Product Stock Hold",
     "material": "Material Mgmt",
     "materialMgmt": "Material Management",
+    "processTransaction": "Process Transaction",
     "productMgmt": "Product Mgmt",
     "productMgmt.receive": "Product Receive",
     "productMgmt.receiptCancel": "Product Receipt Cancel",

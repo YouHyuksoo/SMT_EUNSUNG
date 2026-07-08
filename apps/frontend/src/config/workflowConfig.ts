@@ -10,7 +10,7 @@
  * 5. icon은 lucide-react 컴포넌트 (사이드 메뉴와 동일 스타일)
  */
 import {
-  Package, Truck, Wrench, Building2,
+  Package, Wrench, Building2,
 } from "lucide-react";
 
 export interface WorkflowNode {
@@ -55,19 +55,6 @@ export const workflowConfigs: WorkflowDefinition[] = [
       { id: "RECEIVE", labelKey: "workflow.material.receive", statusKey: "workflow.status.done", path: "/material/receive", color: "text-violet-500", reversePath: "/material/receipt-cancel", reverseKey: "workflow.action.cancelReceipt" },
       { id: "REQUEST", labelKey: "workflow.material.request", statusKey: "workflow.status.requesting", path: "/material/request", color: "text-amber-500" },
       { id: "ISSUE", labelKey: "workflow.material.issue", statusKey: "workflow.status.done", path: "/material/issue", color: "text-purple-500" },
-    ],
-  },
-  {
-    id: "SHIPPING",
-    titleKey: "workflow.shipping.title",
-    icon: Truck,
-    accent: "border-red-500",
-    badgeColor: "bg-red-500",
-    nodes: [
-      { id: "PACK", labelKey: "workflow.shipping.pack", statusKey: "workflow.status.packing", path: "/shipping/pack", color: "text-cyan-500" },
-      { id: "PALLET", labelKey: "workflow.shipping.pallet", statusKey: "workflow.status.palletizing", path: "/shipping/pallet", color: "text-blue-500" },
-      { id: "CONFIRM", labelKey: "workflow.shipping.confirm", statusKey: "workflow.status.confirming", path: "/shipping/confirm", color: "text-violet-500", reversePath: "/shipping/return", reverseKey: "workflow.action.return" },
-      { id: "HISTORY", labelKey: "workflow.shipping.history", statusKey: "workflow.status.done", path: "/shipping/history", color: "text-purple-500" },
     ],
   },
   {

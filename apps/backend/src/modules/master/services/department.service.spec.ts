@@ -1,15 +1,7 @@
-/**
- * @file src/modules/master/services/department.service.spec.ts
- * @description DepartmentService 단위 테스트
- *
- * 초보자 가이드:
- * - target: 테스트 대상(SUT), mock*: 모킹된 의존성
- * - 실행: `pnpm test -- -t "DepartmentService"`
- */
 import { Test, TestingModule } from '@nestjs/testing';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { NotFoundException, ConflictException } from '@nestjs/common';
+import { ConflictException, NotFoundException } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { DepartmentService } from './department.service';
 import { DepartmentMaster } from '../../../entities/department-master.entity';
@@ -34,135 +26,70 @@ describe('DepartmentService', () => {
     target = module.get<DepartmentService>(DepartmentService);
   });
 
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
+  afterEach(() => jest.clearAllMocks());
 
-  // ─── findById ───
-  describe('findById', () => {
-    it('should return department when found', async () => {
-      // Arrange
-      const dept = { deptCode: 'D01', deptName: 'Engineering' } as DepartmentMaster;
-      mockRepo.findOne.mockResolvedValue(dept);
+  it('finds department within organization id', async () => {
+    mockRepo.findOne.mockResolvedValue({
+      deptCode: '1000',
+      deptName: '생산관리',
+      organizationId: 1,
+      parentDeptCode: '0000',
+    } as DepartmentMaster);
 
-      // Act
-      const result = await target.findById('D01');
+    const result = await target.findById('1000', 1);
 
-      // Assert
-      expect(result).toEqual(dept);
-    });
-
-    it('should find department within tenant only', async () => {
-      const dept = { deptCode: 'D01', deptName: 'Engineering', company: 'C1', plant: 'P1' } as DepartmentMaster;
-      mockRepo.findOne.mockResolvedValue(dept);
-
-      await target.findById('D01', 'C1', 'P1');
-
-      expect(mockRepo.findOne).toHaveBeenCalledWith({
-        where: { deptCode: 'D01', company: 'C1', plant: 'P1' },
-      });
-    });
-
-    it('should throw NotFoundException when not found', async () => {
-      // Arrange
-      mockRepo.findOne.mockResolvedValue(null);
-
-      // Act & Assert
-      await expect(target.findById('D99')).rejects.toThrow(NotFoundException);
+    expect(result.deptName).toBe('생산관리');
+    expect(mockRepo.findOne).toHaveBeenCalledWith({
+      where: { deptCode: '1000', organizationId: 1 },
     });
   });
 
-  // ─── create ───
-  describe('create', () => {
-    it('should create a new department', async () => {
-      // Arrange
-      const dto = { deptCode: 'D01', deptName: 'Engineering' } as any;
-      const created = { ...dto, useYn: 'Y', sortOrder: 0 } as DepartmentMaster;
-      mockRepo.findOne.mockResolvedValue(null);
-      mockRepo.create.mockReturnValue(created);
-      mockRepo.save.mockResolvedValue(created);
+  it('throws when department does not exist', async () => {
+    mockRepo.findOne.mockResolvedValue(null);
 
-      // Act
-      const result = await target.create(dto, 'C1', 'P1');
-
-      // Assert
-      expect(result).toEqual(created);
-      expect(mockRepo.findOne).toHaveBeenCalledWith({
-        where: { deptCode: 'D01', company: 'C1', plant: 'P1' },
-      });
-      expect(mockRepo.create).toHaveBeenCalledWith(expect.objectContaining({
-        deptCode: 'D01',
-        company: 'C1',
-        plant: 'P1',
-      }));
-    });
-
-    it('should throw ConflictException when dept code exists', async () => {
-      // Arrange
-      const dto = { deptCode: 'D01', deptName: 'Engineering' } as any;
-      mockRepo.findOne.mockResolvedValue({ deptCode: 'D01' } as DepartmentMaster);
-
-      // Act & Assert
-      await expect(target.create(dto, 'C1', 'P1')).rejects.toThrow(ConflictException);
-    });
+    await expect(target.findById('9999', 1)).rejects.toThrow(NotFoundException);
   });
 
-  // ─── update ───
-  describe('update', () => {
-    it('should update and return department', async () => {
-      // Arrange
-      const existing = { deptCode: 'D01', deptName: 'Old' } as DepartmentMaster;
-      mockRepo.findOne.mockResolvedValue(existing);
-      mockRepo.update.mockResolvedValue({ affected: 1 } as any);
+  it('creates ISYS_DEPARTMENT rows', async () => {
+    mockRepo.findOne.mockResolvedValue(null);
+    mockRepo.create.mockImplementation((payload) => payload as DepartmentMaster);
+    mockRepo.save.mockImplementation(async (payload) => payload as DepartmentMaster);
 
-      // Act
-      const result = await target.update('D01', { deptName: 'New' } as any, 'C1', 'P1');
+    const result = await target.create({ deptCode: '9000', deptName: '개발' } as any, 1);
 
-      // Assert
-      expect(result).toEqual(existing);
-      expect(mockRepo.update).toHaveBeenCalledWith(
-        { deptCode: 'D01', company: 'C1', plant: 'P1' },
-        expect.objectContaining({ deptName: 'New' }),
-      );
-    });
-
-    it('should keep tenant and department key columns from the matched department when update payload contains them', async () => {
-      const existing = { deptCode: 'D01', deptName: 'Old', company: 'C1', plant: 'P1' } as DepartmentMaster;
-      mockRepo.findOne.mockResolvedValue(existing);
-      mockRepo.update.mockResolvedValue({ affected: 1 } as any);
-
-      await target.update('D01', {
-        deptCode: 'D99',
-        deptName: 'New',
-        company: 'C2',
-        plant: 'P2',
-      } as any, 'C1', 'P1');
-
-      expect(mockRepo.update).toHaveBeenCalledWith(
-        { deptCode: 'D01', company: 'C1', plant: 'P1' },
-        expect.not.objectContaining({
-          deptCode: expect.anything(),
-          company: expect.anything(),
-          plant: expect.anything(),
-        }),
-      );
-    });
+    expect(mockRepo.create).toHaveBeenCalledWith(expect.objectContaining({
+      deptCode: '9000',
+      organizationId: 1,
+      deptName: '개발',
+      parentDeptCode: '*',
+    }));
+    expect(result.useYn).toBe('Y');
   });
 
-  // ─── delete ───
-  describe('delete', () => {
-    it('should delete and return id', async () => {
-      // Arrange
-      const existing = { deptCode: 'D01' } as DepartmentMaster;
-      mockRepo.findOne.mockResolvedValue(existing);
-      mockRepo.delete.mockResolvedValue({ affected: 1 } as any);
+  it('rejects duplicate department code in organization', async () => {
+    mockRepo.findOne.mockResolvedValue({ deptCode: '1000', organizationId: 1 } as DepartmentMaster);
 
-      // Act
-      const result = await target.delete('D01', 'C1', 'P1');
+    await expect(target.create({ deptCode: '1000' } as any, 1)).rejects.toThrow(ConflictException);
+  });
 
-      // Assert
-      expect(result).toEqual({ id: 'D01' });
-      expect(mockRepo.delete).toHaveBeenCalledWith({ deptCode: 'D01', company: 'C1', plant: 'P1' });
-    });
+  it('updates only ISYS_DEPARTMENT columns', async () => {
+    mockRepo.findOne.mockResolvedValue({ deptCode: '1000', organizationId: 1 } as DepartmentMaster);
+    mockRepo.update.mockResolvedValue({ affected: 1 } as any);
+
+    await target.update('1000', { deptName: '변경', parentDeptCode: '' } as any, 1);
+
+    expect(mockRepo.update).toHaveBeenCalledWith(
+      { deptCode: '1000', organizationId: 1 },
+      expect.objectContaining({ deptName: '변경', deptNameLocal: '변경', parentDeptCode: '*' }),
+    );
+  });
+
+  it('deletes by department code and organization id', async () => {
+    mockRepo.findOne.mockResolvedValue({ deptCode: '1000', organizationId: 1 } as DepartmentMaster);
+    mockRepo.delete.mockResolvedValue({ affected: 1 } as any);
+
+    await target.delete('1000', 1);
+
+    expect(mockRepo.delete).toHaveBeenCalledWith({ deptCode: '1000', organizationId: 1 });
   });
 });

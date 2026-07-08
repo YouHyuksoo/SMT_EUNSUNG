@@ -35,4 +35,28 @@ export class IsysUser {
 
   @Column({ name: 'POSITION', length: 20, nullable: true })
   position: string | null;
+
+  @Column({ name: 'ADDRESS', length: 100, nullable: true })
+  address: string | null;
+
+  @Column({ name: 'TEL_NO', length: 20, nullable: true })
+  telNo: string | null;
+
+  @Column({ name: 'HANDPHONE_NO', length: 20, nullable: true })
+  handphoneNo: string | null;
+
+  @Column({ name: 'LAST_ENTER_DATE', type: 'date', nullable: true })
+  lastLoginAt: Date | null;
+
+  @Column({ name: 'ENTER_DATE', type: 'date', nullable: true })
+  createdAt: Date | null;
+
+  @Column({ name: 'ENTER_BY', length: 20, nullable: true })
+  createdBy: string | null;
+
+  @Column({ name: 'LAST_MODIFY_DATE', type: 'date', nullable: true })
+  updatedAt: Date | null;
+
+  @Column({ name: 'LAST_MODIFY_BY', length: 20, nullable: true })
+  updatedBy: string | null;
 }

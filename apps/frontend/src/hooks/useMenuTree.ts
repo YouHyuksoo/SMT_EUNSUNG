@@ -5,7 +5,7 @@
  */
 import { useEffect, useMemo, useCallback } from "react";
 import {
-  Folder, LayoutDashboard, Package, Factory, ScanLine, Shield, Wrench, Truck,
+  Activity, Boxes, Folder, LayoutDashboard, Package, Factory, ScanLine, Shield, Wrench, Truck,
   Database, FileBox, Cog, Building2, ArrowLeftRight, Warehouse, UserCog,
   ClipboardCheck, ShoppingCart, Monitor, PackageCheck, Ruler, GitBranch,
 } from "lucide-react";
@@ -14,7 +14,7 @@ import { useAuthStore } from "@/stores/authStore";
 import { useMenuTreeStore } from "@/stores/menuTreeStore";
 
 const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
-  LayoutDashboard, Package, Factory, ScanLine, Shield, Wrench, Truck,
+  Activity, Boxes, LayoutDashboard, Package, Factory, ScanLine, Shield, Wrench, Truck,
   Database, FileBox, Cog, Building2, ArrowLeftRight, Warehouse, UserCog,
   ClipboardCheck, ShoppingCart, Monitor, PackageCheck, Ruler, GitBranch,
 };
@@ -27,7 +27,6 @@ function excludeHelpMenuItems(items: MenuConfigItem[]): MenuConfigItem[] {
     if (!item.children) return [item];
 
     const children = excludeHelpMenuItems(item.children);
-    if (children.length === 0) return [];
 
     return [{ ...item, children }];
   });
@@ -55,9 +54,13 @@ export function useMenuTree() {
       }
     };
     walk(menuConfig);
+    const allowedCategoryCodes = new Set(menuConfig.map((item) => item.code));
+    const seenCategoryCodes = new Set<string>();
 
     const result: MenuConfigItem[] = [];
     for (const g of groups) {
+      if (g.categoryCode !== '__ROOT__' && !allowedCategoryCodes.has(g.categoryCode)) continue;
+
       const childrenLeaf = g.children
         .map((c) => leafLookup.get(c.code))
         .filter((x): x is MenuConfigItem => !!x);
@@ -66,12 +69,16 @@ export function useMenuTree() {
         for (const leaf of childrenLeaf) result.push(leaf);
         continue;
       }
+      seenCategoryCodes.add(g.categoryCode);
       result.push({
         code: g.categoryCode,
         labelKey: g.labelKey,
         icon: ICON_MAP[g.iconName || ''] ?? Folder,
         children: childrenLeaf,
       });
+    }
+    for (const item of menuConfig) {
+      if (!seenCategoryCodes.has(item.code)) result.push(item);
     }
     return excludeHelpMenuItems(result);
   }, [groups]);

@@ -69,7 +69,7 @@ import { WorkCalendarService } from './services/work-calendar.service';
 import { ItemMaster } from '../../entities/item-master.entity';
 import { BomMaster } from '../../entities/bom-master.entity';
 import { ComCode } from '../../entities/com-code.entity';
-import { CompanyMaster } from '../../entities/company-master.entity';
+import { IsysOrganization } from '../../entities/isys-organization.entity';
 import { DepartmentMaster } from '../../entities/department-master.entity';
 import { Plant } from '../../entities/plant.entity';
 import { ProcessMap } from '../../entities/process-map.entity';
@@ -112,7 +112,7 @@ import { WorkCalendarDay } from '../../entities/work-calendar-day.entity';
       ItemMaster,
       BomMaster,
       ComCode,
-      CompanyMaster,
+      IsysOrganization,
       DepartmentMaster,
       Plant,
       ProcessMap,

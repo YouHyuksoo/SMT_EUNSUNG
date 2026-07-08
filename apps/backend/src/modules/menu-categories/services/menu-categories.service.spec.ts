@@ -155,14 +155,17 @@ describe('MenuCategoriesService', () => {
 
       expect(categoryRepo.save).toHaveBeenCalledWith(
         expect.arrayContaining([
-          expect.objectContaining({ organizationId: 7, categoryCode: '__ROOT__' }),
-          expect.objectContaining({ organizationId: 7, categoryCode: 'SYSTEM' }),
+          expect.objectContaining({ organizationId: 7, categoryCode: 'MASTER' }),
+          expect.objectContaining({ organizationId: 7, categoryCode: 'PROCESS_TRANSACTION' }),
+          expect.objectContaining({ organizationId: 7, categoryCode: 'PRODUCT_MGMT' }),
+          expect.objectContaining({ organizationId: 7, categoryCode: 'OUTSOURCING' }),
         ]),
       );
       expect(itemRepo.save).toHaveBeenCalledWith(
         expect.arrayContaining([
-          expect.objectContaining({ organizationId: 7, menuCode: 'DASHBOARD', categoryCode: '__ROOT__' }),
-          expect.objectContaining({ organizationId: 7, menuCode: 'SYS_MENU_CATEGORY', categoryCode: 'SYSTEM' }),
+          expect.objectContaining({ organizationId: 7, menuCode: 'SYS_COMPANY', categoryCode: 'MASTER' }),
+          expect.objectContaining({ organizationId: 7, menuCode: 'OEE_DASHBOARD', categoryCode: 'OEE' }),
+          expect.objectContaining({ organizationId: 7, menuCode: 'MAT_REQUEST', categoryCode: 'MATERIAL' }),
         ]),
       );
     });

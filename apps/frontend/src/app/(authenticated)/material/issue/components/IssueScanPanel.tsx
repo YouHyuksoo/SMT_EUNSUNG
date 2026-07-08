@@ -4,7 +4,7 @@
  * @file material/issue/components/IssueScanPanel.tsx
  * @description 우측 바코드 스캔 출고 패널 (양산 고정) — 상단 고정 스캔영역 + 하단 금일 이력
  *
- * /product/receive의 ReceivablePanel과 동일한 compact 레이아웃 패턴 사용:
+ * 공통 스캔 패널과 동일한 compact 레이아웃 패턴 사용:
  * - 상단(고정): LOT 스캔 입력 + 조회 결과 + 전량출고 버튼
  * - 하단(스크롤): 금일 스캔 출고 이력 테이블
  */

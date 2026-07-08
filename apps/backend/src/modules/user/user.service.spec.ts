@@ -1,31 +1,23 @@
-/**
- * @file src/modules/user/user.service.spec.ts
- * @description UserService 단위 테스트
- *
- * 초보자 가이드:
- * - target: 테스트 대상(SUT), mock*: 모킹된 의존성
- * - 실행: `pnpm test -- -t "UserService"`
- */
 import { Test, TestingModule } from '@nestjs/testing';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { NotFoundException, ConflictException } from '@nestjs/common';
+import { ConflictException, NotFoundException } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { UserService } from './user.service';
-import { User } from '../../entities/user.entity';
+import { IsysUser } from '../../entities/isys-user.entity';
 import { MockLoggerService } from '@test/mock-logger.service';
 
 describe('UserService', () => {
   let target: UserService;
-  let mockRepo: DeepMocked<Repository<User>>;
+  let mockRepo: DeepMocked<Repository<IsysUser>>;
 
   beforeEach(async () => {
-    mockRepo = createMock<Repository<User>>();
+    mockRepo = createMock<Repository<IsysUser>>();
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         UserService,
-        { provide: getRepositoryToken(User), useValue: mockRepo },
+        { provide: getRepositoryToken(IsysUser), useValue: mockRepo },
       ],
     })
       .setLogger(new MockLoggerService())
@@ -34,194 +26,78 @@ describe('UserService', () => {
     target = module.get<UserService>(UserService);
   });
 
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
+  afterEach(() => jest.clearAllMocks());
 
-  // ─── findAll ───
-  describe('findAll', () => {
-    it('should return user list', async () => {
-      // Arrange
-      const users = [{ email: 'user@test.com' }] as User[];
-      mockRepo.find.mockResolvedValue(users);
+  it('finds user by USER_ID and organization id', async () => {
+    mockRepo.findOne.mockResolvedValue({
+      userId: 'KDH',
+      userName: '김대현',
+      organizationId: 1,
+      userLevel: 9,
+    } as IsysUser);
 
-      // Act
-      const result = await target.findAll();
+    const result = await target.findOne('KDH', 1);
 
-      // Assert
-      expect(result).toEqual(users);
-    });
-
-    it('should apply search filter', async () => {
-      // Arrange
-      mockRepo.find.mockResolvedValue([]);
-
-      // Act
-      await target.findAll({ search: 'test' });
-
-      // Assert
-      expect(mockRepo.find).toHaveBeenCalled();
-    });
-
-    it('should apply role and status filters', async () => {
-      // Arrange
-      mockRepo.find.mockResolvedValue([]);
-
-      // Act
-      await target.findAll({ role: 'ADMIN', status: 'ACTIVE' }, 'COMP', 'P01');
-
-      // Assert
-      expect(mockRepo.find).toHaveBeenCalledWith(expect.objectContaining({
-        where: { company: 'COMP', plant: 'P01', role: 'ADMIN', status: 'ACTIVE' },
-      }));
+    expect(result.email).toBe('KDH');
+    expect(result.role).toBe('ADMIN');
+    expect(mockRepo.findOne).toHaveBeenCalledWith({
+      where: { userId: 'KDH', organizationId: 1 },
     });
   });
 
-  // ─── findOne ───
-  describe('findOne', () => {
-    it('should return user when found', async () => {
-      // Arrange
-      const user = { email: 'user@test.com' } as User;
-      mockRepo.findOne.mockResolvedValue(user);
+  it('throws when user does not exist', async () => {
+    mockRepo.findOne.mockResolvedValue(null);
 
-      // Act
-      const result = await target.findOne('user@test.com', 'COMP', 'P01');
-
-      // Assert
-      expect(result).toEqual(user);
-      expect(mockRepo.findOne).toHaveBeenCalledWith(expect.objectContaining({
-        where: { email: 'user@test.com', company: 'COMP', plant: 'P01' },
-      }));
-    });
-
-    it('should throw NotFoundException when not found', async () => {
-      // Arrange
-      mockRepo.findOne.mockResolvedValue(null);
-
-      // Act & Assert
-      await expect(target.findOne('none@test.com', 'COMP', 'P01')).rejects.toThrow(NotFoundException);
-    });
+    await expect(target.findOne('NONE', 1)).rejects.toThrow(NotFoundException);
   });
 
-  // ─── create ───
-  describe('create', () => {
-    it('should create a new user', async () => {
-      // Arrange
-      const dto = { email: 'new@test.com', password: 'pw', name: 'New' } as any;
-      const saved = {
-        email: 'new@test.com',
-        name: 'New',
-        role: 'OPERATOR',
-        status: 'ACTIVE',
-        photoUrl: null,
-        pdaRoleCode: null,
-        createdAt: new Date(),
-      } as User;
-      mockRepo.findOne.mockResolvedValue(null);
-      mockRepo.create.mockReturnValue(saved);
-      mockRepo.save.mockResolvedValue(saved);
+  it('creates ISYS_USERS rows from the page contract', async () => {
+    mockRepo.findOne.mockResolvedValue(null);
+    mockRepo.create.mockImplementation((payload) => payload as IsysUser);
+    mockRepo.save.mockImplementation(async (payload) => payload as IsysUser);
 
-      // Act
-      const result = await target.create(dto, 'COMP', 'P01');
+    const result = await target.create({
+      email: 'NEWID',
+      password: '1234',
+      name: '신규',
+      dept: '1000',
+      role: 'MANAGER',
+    } as any, 1);
 
-      // Assert
-      expect(result.email).toBe('new@test.com');
-      expect(mockRepo.findOne).toHaveBeenCalledWith({
-        where: { email: 'new@test.com', company: 'COMP', plant: 'P01' },
-      });
-      expect(mockRepo.create).toHaveBeenCalledWith(expect.objectContaining({
-        email: 'new@test.com',
-        company: 'COMP',
-        plant: 'P01',
-      }));
-    });
-
-    it('should throw ConflictException when email exists', async () => {
-      // Arrange
-      mockRepo.findOne.mockResolvedValue({ email: 'existing@test.com' } as User);
-
-      // Act & Assert
-      await expect(target.create({ email: 'existing@test.com' } as any, 'COMP', 'P01')).rejects.toThrow(ConflictException);
-    });
+    expect(mockRepo.create).toHaveBeenCalledWith(expect.objectContaining({
+      userId: 'NEWID',
+      userName: '신규',
+      departmentCode: '1000',
+      userLevel: 5,
+      organizationId: 1,
+    }));
+    expect(result.email).toBe('NEWID');
   });
 
-  // ─── update ───
-  describe('update', () => {
-    it('should update user and return result', async () => {
-      // Arrange
-      const user = { email: 'user@test.com', name: 'Old' } as User;
-      mockRepo.findOne.mockResolvedValue(user);
-      mockRepo.update.mockResolvedValue({ affected: 1 } as any);
+  it('rejects duplicate user id in organization', async () => {
+    mockRepo.findOne.mockResolvedValue({ userId: 'KDH', organizationId: 1 } as IsysUser);
 
-      // Act
-      const result = await target.update('user@test.com', { name: 'New', company: 'OTHER' } as any, 'COMP', 'P01');
-
-      // Assert
-      expect(result).toEqual(user);
-      expect(mockRepo.update).toHaveBeenCalledWith(
-        { email: 'user@test.com', company: 'COMP', plant: 'P01' },
-        { name: 'New' },
-      );
-    });
-
-    it('should throw NotFoundException when user not found', async () => {
-      // Arrange
-      mockRepo.findOne.mockResolvedValue(null);
-
-      // Act & Assert
-      await expect(target.update('none@test.com', {} as any, 'COMP', 'P01')).rejects.toThrow(NotFoundException);
-    });
+    await expect(target.create({ email: 'KDH' } as any, 1)).rejects.toThrow(ConflictException);
   });
 
-  // ─── remove ───
-  describe('remove', () => {
-    it('should delete user and return message', async () => {
-      // Arrange
-      const user = { email: 'user@test.com' } as User;
-      mockRepo.findOne.mockResolvedValue(user);
-      mockRepo.delete.mockResolvedValue({ affected: 1 } as any);
+  it('updates only ISYS_USERS columns', async () => {
+    mockRepo.findOne.mockResolvedValue({ userId: 'KDH', organizationId: 1, userLevel: 1 } as IsysUser);
+    mockRepo.update.mockResolvedValue({ affected: 1 } as any);
 
-      // Act
-      const result = await target.remove('user@test.com', 'COMP', 'P01');
+    await target.update('KDH', { name: '변경', dept: '2000', role: 'ADMIN', status: 'INACTIVE' } as any, 1);
 
-      // Assert
-      expect(result).toEqual({ message: '사용자가 삭제되었습니다.' });
-      expect(mockRepo.delete).toHaveBeenCalledWith({ email: 'user@test.com', company: 'COMP', plant: 'P01' });
-    });
+    expect(mockRepo.update).toHaveBeenCalledWith(
+      { userId: 'KDH', organizationId: 1 },
+      expect.objectContaining({ userName: '변경', departmentCode: '2000', userLevel: 9 }),
+    );
   });
 
-  // ─── updatePhoto ───
-  describe('updatePhoto', () => {
-    it('should update photo URL', async () => {
-      // Arrange
-      const user = { email: 'user@test.com' } as User;
-      mockRepo.findOne.mockResolvedValue(user);
-      mockRepo.update.mockResolvedValue({ affected: 1 } as any);
+  it('deletes by USER_ID and organization id', async () => {
+    mockRepo.findOne.mockResolvedValue({ userId: 'KDH', organizationId: 1 } as IsysUser);
+    mockRepo.delete.mockResolvedValue({ affected: 1 } as any);
 
-      // Act
-      const result = await target.updatePhoto('user@test.com', 'http://photo.png', 'COMP', 'P01');
+    await target.remove('KDH', 1);
 
-      // Assert
-      expect(result.photoUrl).toBe('http://photo.png');
-      expect(result.message).toBe('사진이 업로드되었습니다.');
-      expect(mockRepo.update).toHaveBeenCalledWith(
-        { email: 'user@test.com', company: 'COMP', plant: 'P01' },
-        { photoUrl: 'http://photo.png' },
-      );
-    });
-
-    it('should handle null photo URL (delete)', async () => {
-      // Arrange
-      const user = { email: 'user@test.com' } as User;
-      mockRepo.findOne.mockResolvedValue(user);
-      mockRepo.update.mockResolvedValue({ affected: 1 } as any);
-
-      // Act
-      const result = await target.updatePhoto('user@test.com', null, 'COMP', 'P01');
-
-      // Assert
-      expect(result.photoUrl).toBeNull();
-      expect(result.message).toBe('사진이 삭제되었습니다.');
-    });
+    expect(mockRepo.delete).toHaveBeenCalledWith({ userId: 'KDH', organizationId: 1 });
   });
 });

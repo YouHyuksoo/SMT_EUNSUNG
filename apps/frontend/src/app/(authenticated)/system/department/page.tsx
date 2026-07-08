@@ -123,7 +123,7 @@ function DepartmentPage() {
                 />
               }
 
-            sqlQuery={`SELECT *\nFROM DEPARTMENTS\nWHERE COMPANY = '40'\n  AND PLANT_CD = '1000'\nORDER BY CREATED_AT DESC`}/>
+            sqlQuery={`SELECT *\nFROM ISYS_DEPARTMENT\nWHERE ORGANIZATION_ID = 1\nORDER BY DEPARTMENT_CODE`}/>
           </CardContent>
         </Card>
       </div>
