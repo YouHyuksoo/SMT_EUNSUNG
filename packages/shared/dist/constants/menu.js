@@ -110,21 +110,6 @@ exports.MENU_ITEMS = [
         ],
     },
     {
-        key: 'consumables',
-        label: '소모품관리',
-        labelEn: 'Consumables Management',
-        labelVi: 'Quản lý vật tư tiêu hao',
-        icon: 'Wrench',
-        children: [
-            { key: 'consumables-master', label: '소모품마스터', icon: 'Database', path: '/consumables/master' },
-            { key: 'consumables-receiving', label: '입고관리', icon: 'PackagePlus', path: '/consumables/receiving' },
-            { key: 'consumables-issuing', label: '출고관리', icon: 'PackageMinus', path: '/consumables/issuing' },
-            { key: 'consumables-stock', label: '재고현황', icon: 'Boxes', path: '/consumables/stock' },
-            { key: 'consumables-life', label: '수명현황', icon: 'Activity', path: '/consumables/life' },
-            { key: 'consumables-mount', label: '장착관리', icon: 'Settings2', path: '/consumables/mount' },
-        ],
-    },
-    {
         key: 'equipment',
         label: '설비관리',
         labelEn: 'Equipment Management',
@@ -158,17 +143,6 @@ exports.MENU_ITEMS = [
             { key: 'shipping-pallet', label: '팔레트', icon: 'Layers', path: '/shipping/pallet' },
             { key: 'shipping-order', label: '출하지시', icon: 'ClipboardList', path: '/shipping/order' },
             { key: 'shipping-history', label: '출하이력', icon: 'History', path: '/shipping/history' },
-        ],
-    },
-    {
-        key: 'interface',
-        label: '인터페이스관리',
-        labelEn: 'Interface Management',
-        labelVi: 'Quản lý giao diện',
-        icon: 'Link',
-        children: [
-            { key: 'interface-erp', label: 'ERP연동', icon: 'ArrowLeftRight', path: '/interface/erp' },
-            { key: 'interface-log', label: '전송로그', icon: 'ScrollText', path: '/interface/log' },
         ],
     },
     {

@@ -27,41 +27,6 @@ export async function getPageComponent(path: string): Promise<ComponentType | nu
 async function loadPageComponent(path: string): Promise<ComponentType | null> {
   let component: ComponentType | null = null;
   switch (path) {
-    case "/consumables/issuing": {
-      const mod = await import("./page-registries/consumables__issuing.generated");
-      component = mod.getPageComponent();
-      break;
-    }
-    case "/consumables/label": {
-      const mod = await import("./page-registries/consumables__label.generated");
-      component = mod.getPageComponent();
-      break;
-    }
-    case "/consumables/life": {
-      const mod = await import("./page-registries/consumables__life.generated");
-      component = mod.getPageComponent();
-      break;
-    }
-    case "/consumables/master": {
-      const mod = await import("./page-registries/consumables__master.generated");
-      component = mod.getPageComponent();
-      break;
-    }
-    case "/consumables/mount": {
-      const mod = await import("./page-registries/consumables__mount.generated");
-      component = mod.getPageComponent();
-      break;
-    }
-    case "/consumables/receiving": {
-      const mod = await import("./page-registries/consumables__receiving.generated");
-      component = mod.getPageComponent();
-      break;
-    }
-    case "/consumables/stock": {
-      const mod = await import("./page-registries/consumables__stock.generated");
-      component = mod.getPageComponent();
-      break;
-    }
     case "/dashboard": {
       const mod = await import("./page-registries/dashboard.generated");
       component = mod.getPageComponent();
@@ -124,21 +89,6 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
     }
     case "/help": {
       const mod = await import("./page-registries/help.generated");
-      component = mod.getPageComponent();
-      break;
-    }
-    case "/interface/dashboard": {
-      const mod = await import("./page-registries/interface__dashboard.generated");
-      component = mod.getPageComponent();
-      break;
-    }
-    case "/interface/log": {
-      const mod = await import("./page-registries/interface__log.generated");
-      component = mod.getPageComponent();
-      break;
-    }
-    case "/interface/manual": {
-      const mod = await import("./page-registries/interface__manual.generated");
       component = mod.getPageComponent();
       break;
     }
@@ -259,11 +209,6 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
     }
     case "/master/routing": {
       const mod = await import("./page-registries/master__routing.generated");
-      component = mod.getPageComponent();
-      break;
-    }
-    case "/master/vendor-barcode": {
-      const mod = await import("./page-registries/master__vendor-barcode.generated");
       component = mod.getPageComponent();
       break;
     }
@@ -722,11 +667,6 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
       component = mod.getPageComponent();
       break;
     }
-    case "/system/comm-config": {
-      const mod = await import("./page-registries/system__comm-config.generated");
-      component = mod.getPageComponent();
-      break;
-    }
     case "/system/config": {
       const mod = await import("./page-registries/system__config.generated");
       component = mod.getPageComponent();
@@ -754,11 +694,6 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
     }
     case "/system/menu-categories": {
       const mod = await import("./page-registries/system__menu-categories.generated");
-      component = mod.getPageComponent();
-      break;
-    }
-    case "/system/pda-roles": {
-      const mod = await import("./page-registries/system__pda-roles.generated");
       component = mod.getPageComponent();
       break;
     }

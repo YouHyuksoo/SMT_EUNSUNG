@@ -22,7 +22,6 @@ import { WorkCalendarToolsProvider } from './registry/work-calendar-tools.provid
 import { WorkerToolsProvider } from './registry/worker-tools.provider';
 import { WorkInstructionToolsProvider } from './registry/work-instruction-tools.provider';
 import { LabelToolsProvider } from './registry/label-tools.provider';
-import { VendorBarcodeToolsProvider } from './registry/vendor-barcode-tools.provider';
 import { ProcessCapaToolsProvider } from './registry/process-capa-tools.provider';
 import { PAGE_TOOL_PROVIDER, PageToolProvider } from './types';
 
@@ -41,7 +40,6 @@ const PAGE_TOOL_PROVIDERS = [
   WorkerToolsProvider,
   WorkInstructionToolsProvider,
   LabelToolsProvider,
-  VendorBarcodeToolsProvider,
   ProcessCapaToolsProvider,
 ];
 

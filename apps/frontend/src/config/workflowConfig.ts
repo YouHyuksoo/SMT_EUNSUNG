@@ -10,7 +10,7 @@
  * 5. icon은 lucide-react 컴포넌트 (사이드 메뉴와 동일 스타일)
  */
 import {
-  Package, Factory, Shield, Truck, Wrench, Building2, Cog,
+  Package, Factory, Shield, Truck, Wrench, Building2,
 } from "lucide-react";
 
 export interface WorkflowNode {
@@ -72,20 +72,6 @@ export const workflowConfigs: WorkflowDefinition[] = [
       { id: "RESULT", labelKey: "workflow.production.result", statusKey: "workflow.status.inputting", path: "/production/result", color: "text-blue-500" },
       { id: "INSPECT", labelKey: "workflow.production.inspect", statusKey: "workflow.status.inspecting", path: "/production/input-inspect", color: "text-violet-500" },
       { id: "FG_RECEIVE", labelKey: "workflow.production.fgReceive", statusKey: "workflow.status.done", path: "/product/receive", color: "text-purple-500", reversePath: "/product/receipt-cancel", reverseKey: "workflow.action.cancelReceipt" },
-    ],
-  },
-  {
-    id: "CONSUMABLES",
-    titleKey: "workflow.consumables.title",
-    icon: Cog,
-    accent: "border-pink-500",
-    badgeColor: "bg-pink-500",
-    nodes: [
-      { id: "RECEIVING", labelKey: "workflow.consumables.receiving", statusKey: "workflow.status.pending", path: "/consumables/receiving", color: "text-green-500" },
-      { id: "LABEL", labelKey: "workflow.consumables.label", statusKey: "workflow.status.issuing", path: "/consumables/label", color: "text-blue-500" },
-      { id: "ISSUING", labelKey: "workflow.consumables.issuing", statusKey: "workflow.status.active", path: "/consumables/issuing", color: "text-amber-500" },
-      { id: "MOUNT", labelKey: "workflow.consumables.mount", statusKey: "workflow.status.done", path: "/consumables/mount", color: "text-violet-500" },
-      { id: "LIFE", labelKey: "workflow.consumables.life", statusKey: "workflow.status.managing", path: "/consumables/life", color: "text-pink-500" },
     ],
   },
   {

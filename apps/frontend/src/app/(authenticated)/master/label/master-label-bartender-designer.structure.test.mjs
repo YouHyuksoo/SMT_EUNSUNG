@@ -4,14 +4,12 @@ import { dirname, join } from "node:path";
 import assert from "node:assert/strict";
 
 const here = dirname(fileURLToPath(import.meta.url));
-const root = process.cwd();
 const page = readFileSync(join(here, "page.tsx"), "utf8");
 const types = readFileSync(join(here, "types.ts"), "utf8");
 const objectDesigner = readFileSync(join(here, "components/LabelObjectDesigner.tsx"), "utf8");
 const renderer = readFileSync(join(here, "components/LabelDesignRenderer.tsx"), "utf8");
 const designerRuntime = `${objectDesigner}\n${renderer}`;
 const sources = readFileSync(join(here, "labelSources.ts"), "utf8");
-const conLabelPage = readFileSync(join(root, "apps/frontend/src/app/(authenticated)/consumables/label/page.tsx"), "utf8");
 
 for (const kind of ["text", "barcode", "box", "line", "circle", "image"]) {
   assert.match(types, new RegExp(`"${kind}"`), `LabelElementKind에 ${kind} 객체가 필요합니다.`);
@@ -39,7 +37,3 @@ assert.match(page, /LabelObjectDesigner/, "/master/label 페이지는 객체 기
 assert.doesNotMatch(page, /LabelDesigner/, "이전 좌표 입력형 LabelDesigner는 페이지에서 제거되어야 합니다.");
 assert.doesNotMatch(page, /categories\.map/, "상단 카테고리 탭은 제거되어야 합니다.");
 assert.doesNotMatch(page, /handleCategoryChange/, "상단 탭 기반 카테고리 변경 로직은 제거되어야 합니다.");
-
-assert.match(conLabelPage, /label-templates/, "소모품 라벨 발행은 저장된 라벨 템플릿을 조회해야 합니다.");
-assert.match(conLabelPage, /LabelPrintRenderer/, "소모품 라벨 발행은 공통 디자인 렌더러로 출력해야 합니다.");
-assert.doesNotMatch(conLabelPage, /className="label-card"[\s\S]*className="uid"/, "소모품 라벨 고정 HTML 출력은 제거되어야 합니다.");

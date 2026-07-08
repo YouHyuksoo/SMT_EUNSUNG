@@ -10,7 +10,7 @@
  */
 import {
   LayoutDashboard, Package, Factory, Shield, Wrench, Truck,
-  Database, Cog, Building2, ArrowLeftRight, UserCog,
+  Database, Building2, UserCog,
   ClipboardCheck, Monitor, PackageCheck, GitBranch, Activity,
 } from "lucide-react";
 
@@ -80,7 +80,6 @@ export const menuConfig: MenuConfigItem[] = [
       { code: "MST_WORK_INST", labelKey: "menu.master.workInstruction", path: "/master/work-instruction" },
       { code: "MST_WAREHOUSE", labelKey: "menu.master.warehouse", path: "/master/warehouse" },
       { code: "MST_LABEL", labelKey: "menu.master.label", path: "/master/label" },
-      { code: "MST_VENDOR_BARCODE", labelKey: "menu.master.vendorBarcode", path: "/master/vendor-barcode" },
       { code: "MST_PROCESS_CAPA", labelKey: "menu.master.processCapa", path: "/master/process-capa" },
       { code: "SYS_DOCUMENT", labelKey: "menu.system.document", path: "/system/document" },
     ],
@@ -236,20 +235,6 @@ export const menuConfig: MenuConfigItem[] = [
     ],
   },
   {
-    code: "CONSUMABLES",
-    labelKey: "menu.consumables",
-    icon: Cog,
-    children: [
-      { code: "CONS_MASTER", labelKey: "menu.consumables.master", path: "/consumables/master" },
-      { code: "CONS_LABEL", labelKey: "menu.consumables.label", path: "/consumables/label" },
-      { code: "CONS_RECEIVING", labelKey: "menu.consumables.receiving", path: "/consumables/receiving" },
-      { code: "CONS_ISSUING", labelKey: "menu.consumables.issuing", path: "/consumables/issuing" },
-      { code: "CONS_STOCK", labelKey: "menu.consumables.stock", path: "/consumables/stock" },
-      { code: "CONS_LIFE", labelKey: "menu.consumables.life", path: "/consumables/life" },
-      { code: "CONS_MOUNT", labelKey: "menu.consumables.mount", path: "/consumables/mount" },
-    ],
-  },
-  {
     code: "OUTSOURCING",
     labelKey: "menu.outsourcing",
     icon: Building2,
@@ -257,16 +242,6 @@ export const menuConfig: MenuConfigItem[] = [
       { code: "OUT_VENDOR", labelKey: "menu.outsourcing.vendor", path: "/outsourcing/vendor" },
       { code: "OUT_ORDER", labelKey: "menu.outsourcing.order", path: "/outsourcing/order" },
       { code: "OUT_RECEIVE", labelKey: "menu.outsourcing.receive", path: "/outsourcing/receive" },
-    ],
-  },
-  {
-    code: "INTERFACE",
-    labelKey: "menu.interface",
-    icon: ArrowLeftRight,
-    children: [
-      { code: "IF_DASHBOARD", labelKey: "menu.interface.dashboard", path: "/interface/dashboard" },
-      { code: "IF_LOG", labelKey: "menu.interface.log", path: "/interface/log" },
-      { code: "IF_MANUAL", labelKey: "menu.interface.manual", path: "/interface/manual" },
     ],
   },
   {
@@ -278,8 +253,6 @@ export const menuConfig: MenuConfigItem[] = [
       { code: "SYS_DEPT", labelKey: "menu.system.department", path: "/system/department" },
       { code: "SYS_USER", labelKey: "menu.system.users", path: "/system/users" },
       { code: "SYS_ROLE", labelKey: "menu.system.roles", path: "/system/roles" },
-      { code: "SYS_PDA_ROLE", labelKey: "menu.system.pdaRoles", path: "/system/pda-roles" },
-      { code: "SYS_COMM", labelKey: "menu.system.commConfig", path: "/system/comm-config" },
       { code: "SYS_CONFIG", labelKey: "menu.system.config", path: "/system/config" },
       { code: "SYS_CODE", labelKey: "menu.master.code", path: "/master/code" },
       { code: "SYS_SCHEDULER", labelKey: "scheduler.title", path: "/system/scheduler" },
