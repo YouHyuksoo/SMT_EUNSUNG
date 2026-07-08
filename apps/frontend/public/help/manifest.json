@@ -139,11 +139,6 @@
       "title": "자재수불관리",
       "items": [
         {
-          "menuCode": "PUR_PO",
-          "title": "PO관리",
-          "path": "/material/po"
-        },
-        {
           "menuCode": "MAT_ARRIVAL",
           "title": "입하관리",
           "path": "/material/arrival"

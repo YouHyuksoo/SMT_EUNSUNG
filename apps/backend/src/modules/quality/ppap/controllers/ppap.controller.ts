@@ -15,7 +15,7 @@
  *    - GET    /ppap/required-elements/:level : Level별 필수 요소
  *    - GET    /ppap/completion/:id : 완성률 조회
  *
- * 2. **인증**: @Company(), @Plant() 데코레이터로 테넌시 정보, req.user.id로 사용자 ID 추출
+ * 2. **인증**: @OrganizationId() 데코레이터로 테넌시 정보, req.user.id로 사용자 ID 추출
  */
 
 import {
@@ -35,7 +35,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
-import { Company, Plant } from '../../../../common/decorators/tenant.decorator';
+import { OrganizationId } from '../../../../common/decorators/tenant.decorator';
 import { JwtAuthGuard, AuthenticatedRequest } from '../../../../common/guards/jwt-auth.guard';
 import { ResponseUtil } from '../../../../common/dto/response.dto';
 import { PpapService } from '../services/ppap.service';
@@ -75,10 +75,9 @@ export class PpapController {
   @ApiResponse({ status: 200, description: '조회 성공' })
   async getCompletionRate(
     @Param('id') id: string,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.ppapService.getCompletionRate(id, company, plant);
+    const data = await this.ppapService.getCompletionRate(id, organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -92,10 +91,9 @@ export class PpapController {
   @ApiResponse({ status: 200, description: '조회 성공' })
   async findAll(
     @Query() query: PpapFilterDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const result = await this.ppapService.findAll(query, company, plant);
+    const result = await this.ppapService.findAll(query, organizationId);
     return ResponseUtil.paged(
       result.data,
       result.total,
@@ -111,10 +109,9 @@ export class PpapController {
   @ApiResponse({ status: 404, description: 'PPAP 없음' })
   async findById(
     @Param('id') id: string,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.ppapService.findById(id, company, plant);
+    const data = await this.ppapService.findById(id, organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -124,14 +121,12 @@ export class PpapController {
   @ApiResponse({ status: 201, description: '생성 성공' })
   async create(
     @Body() dto: CreatePpapDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
     @Req() req: AuthenticatedRequest,
   ) {
     const data = await this.ppapService.create(
       dto,
-      company,
-      plant,
+      organizationId,
       req.user?.id ?? 'system',
     );
     return ResponseUtil.success(data, 'PPAP가 등록되었습니다.');
@@ -145,15 +140,13 @@ export class PpapController {
     @Param('id') id: string,
     @Body() dto: UpdatePpapDto,
     @Req() req: AuthenticatedRequest,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
     const data = await this.ppapService.update(
       id,
       dto,
       req.user?.id ?? 'system',
-      company,
-      plant,
+      organizationId,
     );
     return ResponseUtil.success(data, 'PPAP가 수정되었습니다.');
   }
@@ -168,10 +161,9 @@ export class PpapController {
   @ApiResponse({ status: 200, description: '삭제 성공' })
   async delete(
     @Param('id') id: string,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    await this.ppapService.delete(id, company, plant);
+    await this.ppapService.delete(id, organizationId);
     return ResponseUtil.success(null, 'PPAP가 삭제되었습니다.');
   }
 
@@ -187,14 +179,12 @@ export class PpapController {
   async submit(
     @Param('id') id: string,
     @Req() req: AuthenticatedRequest,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
     const data = await this.ppapService.submit(
       id,
       req.user?.id ?? 'system',
-      company,
-      plant,
+      organizationId,
     );
     return ResponseUtil.success(data, 'PPAP가 제출되었습니다.');
   }
@@ -209,14 +199,12 @@ export class PpapController {
   async approve(
     @Param('id') id: string,
     @Req() req: AuthenticatedRequest,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
     const data = await this.ppapService.approve(
       id,
       req.user?.id ?? 'system',
-      company,
-      plant,
+      organizationId,
     );
     return ResponseUtil.success(data, 'PPAP가 승인되었습니다.');
   }
@@ -232,15 +220,13 @@ export class PpapController {
     @Param('id') id: string,
     @Body('reason') reason: string,
     @Req() req: AuthenticatedRequest,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
     const data = await this.ppapService.reject(
       id,
       reason,
       req.user?.id ?? 'system',
-      company,
-      plant,
+      organizationId,
     );
     return ResponseUtil.success(data, 'PPAP가 반려되었습니다.');
   }
@@ -255,14 +241,12 @@ export class PpapController {
   async cancelApproval(
     @Param('id') id: string,
     @Req() req: AuthenticatedRequest,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
     const data = await this.ppapService.cancelApproval(
       id,
       req.user?.id ?? 'system',
-      company,
-      plant,
+      organizationId,
     );
     return ResponseUtil.success(data, 'PPAP 승인이 취소되었습니다.');
   }
@@ -277,14 +261,12 @@ export class PpapController {
   async cancelSubmit(
     @Param('id') id: string,
     @Req() req: AuthenticatedRequest,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
     const data = await this.ppapService.cancelSubmit(
       id,
       req.user?.id ?? 'system',
-      company,
-      plant,
+      organizationId,
     );
     return ResponseUtil.success(data, 'PPAP 제출이 취소되었습니다.');
   }

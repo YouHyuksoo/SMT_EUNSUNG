@@ -24,7 +24,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
-import { Company, Plant } from '../../../common/decorators/tenant.decorator';
+import { OrganizationId } from '../../../common/decorators/tenant.decorator';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { IqcItemPoolService } from '../services/iqc-item-pool.service';
 import {
@@ -41,8 +41,8 @@ export class IqcItemPoolController {
 
   @Get()
   @ApiOperation({ summary: 'IQC 검사항목 풀 목록 조회' })
-  async findAll(@Query() query: IqcItemPoolQueryDto, @Company() company: string, @Plant() plant: string) {
-    const result = await this.service.findAll(query, company, plant);
+  async findAll(@Query() query: IqcItemPoolQueryDto, @OrganizationId() organizationId: number) {
+    const result = await this.service.findAll(query, organizationId);
     return ResponseUtil.paged(result.data, result.total, result.page, result.limit);
   }
 
@@ -50,18 +50,17 @@ export class IqcItemPoolController {
   @ApiOperation({ summary: 'IQC 검사항목 상세 조회' })
   async findByCode(
     @Param('inspItemCode') inspItemCode: string,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.service.findByCode(inspItemCode, company, plant);
+    const data = await this.service.findByCode(inspItemCode, organizationId);
     return ResponseUtil.success(data);
   }
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'IQC 검사항목 생성' })
-  async create(@Body() dto: CreateIqcItemPoolDto, @Company() company: string, @Plant() plant: string) {
-    const data = await this.service.create(dto, company, plant);
+  async create(@Body() dto: CreateIqcItemPoolDto, @OrganizationId() organizationId: number) {
+    const data = await this.service.create(dto, organizationId);
     return ResponseUtil.success(data, '검사항목이 생성되었습니다.');
   }
 
@@ -70,10 +69,9 @@ export class IqcItemPoolController {
   async update(
     @Param('inspItemCode') inspItemCode: string,
     @Body() dto: UpdateIqcItemPoolDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.service.update(inspItemCode, dto, company, plant);
+    const data = await this.service.update(inspItemCode, dto, organizationId);
     return ResponseUtil.success(data, '검사항목이 수정되었습니다.');
   }
 
@@ -81,10 +79,9 @@ export class IqcItemPoolController {
   @ApiOperation({ summary: 'IQC 검사항목 삭제' })
   async delete(
     @Param('inspItemCode') inspItemCode: string,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    await this.service.delete(inspItemCode, company, plant);
+    await this.service.delete(inspItemCode, organizationId);
     return ResponseUtil.success(null, '검사항목이 삭제되었습니다.');
   }
 }

@@ -27,22 +27,20 @@ export class ShipHistoryService {
     private readonly partRepository: Repository<ItemMaster>,
   ) {}
 
-  private tenantWhere(company?: string, plant?: string) {
+  private tenantWhere(organizationId?: number) {
     return {
-      ...(company && { company }),
-      ...(plant && { plant }),
+      ...(organizationId != null ? { organizationId } : {}),
     };
   }
 
   /** 출하이력 목록 조회 */
-  async findAll(query: ShipHistoryQueryDto, company?: string, plant?: string) {
+  async findAll(query: ShipHistoryQueryDto, organizationId?: number) {
     const { page = 1, limit = 10, search, status, shipDateFrom, shipDateTo, customerName } = query;
     const skip = (page - 1) * limit;
 
     const buildBaseQb = () => {
       const qb = this.shipmentOrderRepository.createQueryBuilder('order');
-      if (company) qb.andWhere('order.company = :company', { company });
-      if (plant) qb.andWhere('order.plant = :plant', { plant });
+      if (organizationId != null) qb.andWhere('order.organizationId = :organizationId', { organizationId });
       if (status) qb.andWhere('order.status = :status', { status });
       if (customerName) qb.andWhere('order.customerName LIKE :customerName', { customerName: `%${customerName}%` });
       if (search) qb.andWhere('order.shipOrderNo LIKE :search', { search: `%${search}%` });
@@ -60,14 +58,14 @@ export class ShipHistoryService {
     const orderNos = data.map((o) => o.shipOrderNo);
     const allItems = orderNos.length > 0
       ? await this.shipmentOrderItemRepository.find({
-          where: { shipOrderNo: In(orderNos), ...this.tenantWhere(company, plant) },
+          where: { shipOrderNo: In(orderNos), ...this.tenantWhere(organizationId) },
         })
       : [];
 
     const itemCodes = [...new Set(allItems.map((i) => i.itemCode).filter(Boolean))];
     const parts = itemCodes.length > 0
       ? await this.partRepository.find({
-          where: { itemCode: In(itemCodes), ...this.tenantWhere(company, plant) },
+          where: { itemCode: In(itemCodes), ...this.tenantWhere(organizationId) },
           select: ['itemCode', 'itemName'],
         })
       : [];
@@ -87,16 +85,15 @@ export class ShipHistoryService {
   }
 
   /** 출하이력 통계 요약 */
-  async getSummary(company?: string, plant?: string) {
+  async getSummary(organizationId?: number) {
     const [total, byStatus] = await Promise.all([
-      this.shipmentOrderRepository.count({ where: this.tenantWhere(company, plant) }),
+      this.shipmentOrderRepository.count({ where: this.tenantWhere(organizationId) }),
       (async () => {
         const qb = this.shipmentOrderRepository
           .createQueryBuilder('order')
           .select('order.status', 'status')
           .addSelect('COUNT(*)', 'count');
-        if (company) qb.where('order.company = :company', { company });
-        if (plant) qb.andWhere('order.plant = :plant', { plant });
+        if (organizationId != null) qb.where('order.organizationId = :organizationId', { organizationId });
         return qb.groupBy('order.status').getRawMany();
       })(),
     ]);

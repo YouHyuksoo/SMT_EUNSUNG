@@ -26,8 +26,8 @@ export const ALLOWED_SERVICE_METHODS: string[] = [
 ];
 
 /**
- * 스케줄러 Job의 회사/공장 범위로 실행되어야 하는 서비스 메서드.
- * 이 목록의 메서드는 execParams 대신 (company, plantCd)를 첫 인자로 받는다.
+ * 스케줄러 Job의 조직(organizationId) 범위로 실행되어야 하는 서비스 메서드.
+ * 이 목록의 메서드는 execParams 대신 (organizationId)를 첫 인자로 받는다.
  */
 export const TENANT_AWARE_SERVICE_METHODS: string[] = [
   'InterfaceService.scheduledSyncBom',

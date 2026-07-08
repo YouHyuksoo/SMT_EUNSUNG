@@ -17,11 +17,8 @@ import {
 
 @Entity({ name: 'WAREHOUSE_TRANSFER_RULES' })
 export class WarehouseTransferRule {
-  @PrimaryColumn({ type: 'varchar2', name: 'COMPANY', length: 50 })
-  company: string | null;
-
-  @PrimaryColumn({ type: 'varchar2', name: 'PLANT_CD', length: 50 })
-  plant: string | null;
+  @PrimaryColumn({ name: 'ORGANIZATION_ID', type: 'number' })
+  organizationId!: number;
 
   @PrimaryColumn({ name: 'FROM_WAREHOUSE_ID', length: 50 })
   fromWarehouseId: string;

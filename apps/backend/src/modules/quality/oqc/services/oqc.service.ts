@@ -35,10 +35,9 @@ export class OqcService {
     private readonly tx: TransactionService,
   ) {}
 
-  private tenantWhere(company?: string | null, plant?: string | null) {
+  private tenantWhere(organizationId?: number | null) {
     return {
-      ...(company ? { company } : {}),
-      ...(plant ? { plant } : {}),
+      ...(organizationId != null ? { organizationId } : {}),
     };
   }
 
@@ -46,7 +45,7 @@ export class OqcService {
     return { ...request, id: request.requestNo };
   }
 
-  async findAll(query: OqcRequestQueryDto, company?: string, plant?: string) {
+  async findAll(query: OqcRequestQueryDto, organizationId?: number) {
     const { page = 1, limit = 50, search, status, customer, fromDate, toDate } = query;
     const skip = (page - 1) * limit;
 
@@ -54,8 +53,7 @@ export class OqcService {
       .createQueryBuilder('oqc')
       .leftJoinAndMapOne('oqc.part', ItemMaster, 'part', 'oqc.itemCode = part.itemCode');
 
-    if (company) qb.andWhere('oqc.company = :company', { company });
-    if (plant) qb.andWhere('oqc.plant = :plant', { plant });
+    if (organizationId != null) qb.andWhere('oqc.organizationId = :organizationId', { organizationId });
     if (status) qb.andWhere('oqc.status = :status', { status });
     if (customer) qb.andWhere('oqc.customer LIKE :customer', { customer: `%${customer}%` });
     if (fromDate) qb.andWhere(`oqc.requestDate >= TO_DATE(:fromDate, 'YYYY-MM-DD')`, { fromDate });
@@ -76,8 +74,8 @@ export class OqcService {
     return { data: data.map((request) => this.withClientId(request)), total, page, limit };
   }
 
-  async findById(id: string, company?: string, plant?: string) {
-    const tenantWhere = this.tenantWhere(company, plant);
+  async findById(id: string, organizationId?: number) {
+    const tenantWhere = this.tenantWhere(organizationId);
     const oqcRequest = await this.oqcRequestRepo.findOne({
       where: { requestNo: id, ...tenantWhere },
       relations: ['boxes'],
@@ -91,11 +89,11 @@ export class OqcService {
     return { ...this.withClientId(oqcRequest), part };
   }
 
-  async createRequest(dto: CreateOqcRequestDto, company?: string, plant?: string, createdBy?: string) {
+  async createRequest(dto: CreateOqcRequestDto, organizationId?: number, createdBy?: string) {
     const { itemCode, boxIds, customer, requestDate, sampleSize } = dto;
 
     const boxes = await this.boxRepo.find({
-      where: { boxNo: In(boxIds), ...this.tenantWhere(company, plant) },
+      where: { boxNo: In(boxIds), ...this.tenantWhere(organizationId) },
     });
 
     if (boxes.length !== boxIds.length) {
@@ -103,13 +101,11 @@ export class OqcService {
     }
 
     const tenantMismatchedBoxes = boxes.filter(
-      (box) =>
-        (company && box.company !== company) ||
-        (plant && box.plant !== plant),
+      (box) => organizationId != null && box.organizationId !== organizationId,
     );
     if (tenantMismatchedBoxes.length > 0) {
       throw new BadRequestException(
-        `OQC 요청 박스의 회사/사업장 정보가 일치하지 않습니다: ${tenantMismatchedBoxes.map((box) => box.boxNo).join(', ')}`,
+        `OQC 요청 박스의 조직 정보가 일치하지 않습니다: ${tenantMismatchedBoxes.map((box) => box.boxNo).join(', ')}`,
       );
     }
 
@@ -150,8 +146,7 @@ export class OqcService {
         totalQty,
         sampleSize: sampleSize || null,
         status: 'PENDING',
-        company: company || null,
-        plant: plant || null,
+        organizationId: organizationId ?? null,
         createdBy: createdBy || null,
       });
       const saved = await queryRunner.manager.save(OqcRequest, oqcRequest);
@@ -163,8 +158,7 @@ export class OqcService {
           boxNo: box.boxNo,
           qty: box.qty,
           isSample: 'N',
-          company: company || null,
-          plant: plant || null,
+          organizationId: organizationId ?? null,
           createdBy: createdBy || null,
         }),
       );
@@ -172,15 +166,15 @@ export class OqcService {
 
       await queryRunner.manager.update(
         BoxMaster,
-        { boxNo: In(boxIds), ...this.tenantWhere(company, plant) },
+        { boxNo: In(boxIds), ...this.tenantWhere(organizationId) },
         { oqcStatus: 'PENDING' },
       );
     });
-    return this.findById(savedRequestNo, company, plant);
+    return this.findById(savedRequestNo, organizationId);
   }
 
-  async executeInspection(id: string, dto: ExecuteOqcInspectionDto, updatedBy?: string, company?: string, plant?: string) {
-    const tenantWhere = this.tenantWhere(company, plant);
+  async executeInspection(id: string, dto: ExecuteOqcInspectionDto, updatedBy?: string, organizationId?: number) {
+    const tenantWhere = this.tenantWhere(organizationId);
     const oqcRequest = await this.oqcRequestRepo.findOne({
       where: { requestNo: id, ...tenantWhere },
       relations: ['boxes'],
@@ -237,11 +231,11 @@ export class OqcService {
         );
       }
     });
-    return this.findById(id, company, plant);
+    return this.findById(id, organizationId);
   }
 
-  async updateResult(id: string, dto: UpdateOqcResultDto, updatedBy?: string, company?: string, plant?: string) {
-    const tenantWhere = this.tenantWhere(company, plant);
+  async updateResult(id: string, dto: UpdateOqcResultDto, updatedBy?: string, organizationId?: number) {
+    const tenantWhere = this.tenantWhere(organizationId);
     const oqcRequest = await this.oqcRequestRepo.findOne({
       where: { requestNo: id, ...tenantWhere },
       relations: ['boxes'],
@@ -287,10 +281,10 @@ export class OqcService {
         }
       }
     });
-    return this.findById(id, company, plant);
+    return this.findById(id, organizationId);
   }
 
-  async getAvailableBoxes(itemCode?: string, company?: string, plant?: string) {
+  async getAvailableBoxes(itemCode?: string, organizationId?: number) {
     const qb = this.boxRepo
       .createQueryBuilder('box')
       .leftJoinAndMapOne('box.part', ItemMaster, 'part', 'box.itemCode = part.itemCode')
@@ -298,18 +292,16 @@ export class OqcService {
       .andWhere('box.oqcStatus IS NULL');
 
     if (itemCode) qb.andWhere('box.itemCode = :itemCode', { itemCode });
-    if (company) qb.andWhere('box.company = :company', { company });
-    if (plant) qb.andWhere('box.plant = :plant', { plant });
+    if (organizationId != null) qb.andWhere('box.organizationId = :organizationId', { organizationId });
 
     qb.orderBy('box.boxNo', 'ASC');
     return qb.getMany();
   }
 
-  async getStats(company?: string, plant?: string) {
+  async getStats(organizationId?: number) {
     const qb = this.oqcRequestRepo.createQueryBuilder('oqc');
 
-    if (company) qb.andWhere('oqc.company = :company', { company });
-    if (plant) qb.andWhere('oqc.plant = :plant', { plant });
+    if (organizationId != null) qb.andWhere('oqc.organizationId = :organizationId', { organizationId });
 
     const all = await qb.getMany();
     return {

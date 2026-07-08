@@ -13,7 +13,7 @@ import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { KioskConsumableService } from '../services/kiosk-consumable.service';
 import { ScanConsumableMountDto } from '../dto/kiosk-consumable.dto';
 import { ResponseUtil } from '../../../common/dto/response.dto';
-import { Company, Plant } from '../../../common/decorators/tenant.decorator';
+import { OrganizationId } from '../../../common/decorators/tenant.decorator';
 
 @ApiTags('생산관리 - 키오스크 소모품')
 @Controller('production/job-orders/:orderNo/consumables')
@@ -26,11 +26,10 @@ export class KioskConsumableController {
     @Param('orderNo') orderNo: string,
     @Query('equipCode') equipCode?: string,
     @Query('includeMounted') includeMounted?: string,
-    @Company() company?: string,
-    @Plant() plant?: string,
+    @OrganizationId() organizationId?: number,
   ) {
     const withMounted = includeMounted === '1' || includeMounted === 'true';
-    const data = await this.svc.findByJobOrder(orderNo, company, plant, equipCode, withMounted);
+    const data = await this.svc.findByJobOrder(orderNo, organizationId, equipCode, withMounted);
     return ResponseUtil.success(data);
   }
 
@@ -39,10 +38,9 @@ export class KioskConsumableController {
   async scan(
     @Param('orderNo') orderNo: string,
     @Body() body: ScanConsumableMountDto,
-    @Company() company?: string,
-    @Plant() plant?: string,
+    @OrganizationId() organizationId?: number,
   ) {
-    const data = await this.svc.scanMount(orderNo, body.conUid, company, plant, body.equipCode);
+    const data = await this.svc.scanMount(orderNo, body.conUid, organizationId, body.equipCode);
     return ResponseUtil.success(data, '소모품 롯트가 장착되었습니다.');
   }
 
@@ -50,10 +48,9 @@ export class KioskConsumableController {
   @ApiOperation({ summary: '소모품 롯트 장착 해제' })
   async remove(
     @Param('conUid') conUid: string,
-    @Company() company?: string,
-    @Plant() plant?: string,
+    @OrganizationId() organizationId?: number,
   ) {
-    await this.svc.unmount(conUid, company, plant);
+    await this.svc.unmount(conUid, organizationId);
     return ResponseUtil.success(null, '소모품 롯트 장착이 해제되었습니다.');
   }
 }

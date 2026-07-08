@@ -12,7 +12,7 @@
 import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { Company, Plant } from '../../../common/decorators/tenant.decorator';
+import { OrganizationId } from '../../../common/decorators/tenant.decorator';
 import { ProductionViewsService } from '../services/production-views.service';
 import {
   ProgressQueryDto,
@@ -30,40 +30,40 @@ export class ProductionViewsController {
   @Get('progress')
   @ApiOperation({ summary: '작업지시 진행현황', description: '작업지시별 계획수량 vs 실적수량, 진행률 대시보드' })
   @ApiResponse({ status: 200, description: '조회 성공' })
-  async getProgress(@Query() query: ProgressQueryDto, @Company() company: string, @Plant() plant: string) {
-    const result = await this.viewsService.getProgress(query, company, plant);
+  async getProgress(@Query() query: ProgressQueryDto, @OrganizationId() organizationId: number) {
+    const result = await this.viewsService.getProgress(query, organizationId);
     return ResponseUtil.paged(result.data, result.total, result.page, result.limit);
   }
 
   @Get('sample-inspect')
   @ApiOperation({ summary: '샘플검사이력 조회', description: '검사 결과 이력 목록' })
   @ApiResponse({ status: 200, description: '조회 성공' })
-  async getSampleInspect(@Query() query: SampleInspectQueryDto, @Company() company: string, @Plant() plant: string) {
-    const result = await this.viewsService.getSampleInspect(query, company, plant);
+  async getSampleInspect(@Query() query: SampleInspectQueryDto, @OrganizationId() organizationId: number) {
+    const result = await this.viewsService.getSampleInspect(query, organizationId);
     return ResponseUtil.paged(result.data, result.total, result.page, result.limit);
   }
 
   @Get('pack-result')
   @ApiOperation({ summary: '포장실적 조회', description: '포장 박스 실적 목록' })
   @ApiResponse({ status: 200, description: '조회 성공' })
-  async getPackResult(@Query() query: PackResultQueryDto, @Company() company: string, @Plant() plant: string) {
-    const result = await this.viewsService.getPackResult(query, company, plant);
+  async getPackResult(@Query() query: PackResultQueryDto, @OrganizationId() organizationId: number) {
+    const result = await this.viewsService.getPackResult(query, organizationId);
     return ResponseUtil.paged(result.data, result.total, result.page, result.limit);
   }
 
   @Get('wip-stock')
   @ApiOperation({ summary: '반제품/제품 재고 조회', description: 'WIP/FG 유형 재고 목록' })
   @ApiResponse({ status: 200, description: '조회 성공' })
-  async getWipStock(@Query() query: WipStockQueryDto, @Company() company: string, @Plant() plant: string) {
-    const result = await this.viewsService.getWipStock(query, company, plant);
+  async getWipStock(@Query() query: WipStockQueryDto, @OrganizationId() organizationId: number) {
+    const result = await this.viewsService.getWipStock(query, organizationId);
     return ResponseUtil.paged(result.data, result.total, result.page, result.limit);
   }
 
   @Get('wip-stock/fg-labels')
   @ApiOperation({ summary: '제품재고 미포장 FG라벨 상세', description: '선택 품목의 박스 미배정(미포장) FG라벨 목록' })
   @ApiResponse({ status: 200, description: '조회 성공' })
-  async getWipStockFgLabels(@Query('itemCode') itemCode: string, @Company() company: string, @Plant() plant: string) {
-    const result = await this.viewsService.getWipStockFgLabels(itemCode, company, plant);
+  async getWipStockFgLabels(@Query('itemCode') itemCode: string, @OrganizationId() organizationId: number) {
+    const result = await this.viewsService.getWipStockFgLabels(itemCode, organizationId);
     return ResponseUtil.paged(result.data, result.total, result.page, result.limit);
   }
 
@@ -73,10 +73,9 @@ export class ProductionViewsController {
   async getWipStockLabels(
     @Query('itemCode') itemCode: string,
     @Query('itemType') itemType: string,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const result = await this.viewsService.getWipStockLabels(itemCode, itemType, company, plant);
+    const result = await this.viewsService.getWipStockLabels(itemCode, itemType, organizationId);
     return ResponseUtil.paged(result.data, result.total, result.page, result.limit);
   }
 }

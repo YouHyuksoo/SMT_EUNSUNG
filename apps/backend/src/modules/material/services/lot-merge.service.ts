@@ -51,40 +51,34 @@ export class LotMergeService {
     private readonly numbering: NumberingService,
   ) {}
 
-  private tenantWhere(company?: string | null, plant?: string | null) {
+  private tenantWhere(organizationId?: number | null) {
     return {
-      ...(company ? { company } : {}),
-      ...(plant ? { plant } : {}),
+      ...(organizationId != null ? { organizationId } : {}),
     };
   }
 
   private assertSameTenant(
-    row: { company?: string | null; plant?: string | null } | null | undefined,
-    company?: string | null,
-    plant?: string | null,
+    row: { organizationId?: number | null } | null | undefined,
+    organizationId?: number | null,
     context = '데이터',
   ) {
-    if (company && row?.company !== company) {
-      throw new BadRequestException(`${context} 회사 정보가 일치하지 않습니다. request=${company}, row=${row?.company ?? 'NULL'}`);
-    }
-    if (plant && row?.plant !== plant) {
-      throw new BadRequestException(`${context} 사업장 정보가 일치하지 않습니다. request=${plant}, row=${row?.plant ?? 'NULL'}`);
+    if (organizationId != null && row?.organizationId !== organizationId) {
+      throw new BadRequestException(`${context} 조직 정보가 일치하지 않습니다. request=${organizationId}, row=${row?.organizationId ?? 'NULL'}`);
     }
   }
 
-  async findMergeableLots(query: LotMergeQueryDto, company?: string, plant?: string) {
+  async findMergeableLots(query: LotMergeQueryDto, organizationId?: number) {
     const { page = 1, limit = 50, search, itemCode } = query;
     const skip = (page - 1) * limit;
 
     const qb = this.matLotRepository.createQueryBuilder('lot')
-      .innerJoin(MatStock, 'stock', 'stock.matUid = lot.matUid AND stock.company = lot.company AND stock.plant = lot.plant')
+      .innerJoin(MatStock, 'stock', 'stock.matUid = lot.matUid AND stock.organizationId = lot.organizationId')
       .where('stock.qty > 0')
       .andWhere("lot.status = 'NORMAL'")
       .andWhere('NVL(stock.reservedQty, 0) = 0')
       .andWhere(RECEIVED_GATE_SQL);
 
-    if (company) qb.andWhere('lot.company = :company', { company });
-    if (plant) qb.andWhere('lot.plant = :plant', { plant });
+    if (organizationId != null) qb.andWhere('lot.organizationId = :organizationId', { organizationId });
     if (itemCode) qb.andWhere('lot.itemCode = :itemCode', { itemCode });
     if (search) {
       qb.andWhere('(lot.matUid LIKE :search OR lot.itemCode LIKE :search)', { search: `%${search}%` });
@@ -98,18 +92,18 @@ export class LotMergeService {
       qb.getCount(),
     ]);
 
-    const data = await this.attachMeta(lots, company, plant);
+    const data = await this.attachMeta(lots, organizationId);
     return { data, total, page, limit };
   }
 
   /** 바코드 스캔 단건 조회 — 병합 후보 자격을 검증해 반환 (프론트 누적용) */
-  async findByBarcode(matUid: string, company?: string, plant?: string) {
-    const tenantWhere = this.tenantWhere(company, plant);
+  async findByBarcode(matUid: string, organizationId?: number) {
+    const tenantWhere = this.tenantWhere(organizationId);
     const lot = await this.matLotRepository.findOne({ where: { matUid, ...tenantWhere } });
     if (!lot) {
       throw new NotFoundException(`해당 시리얼을 찾을 수 없습니다: ${matUid}`);
     }
-    this.assertSameTenant(lot, company, plant, '시리얼');
+    this.assertSameTenant(lot, organizationId, '시리얼');
 
     if (lot.status === 'HOLD') {
       throw new BadRequestException(`HOLD 상태인 LOT은 병합할 수 없습니다: ${matUid}`);
@@ -138,13 +132,13 @@ export class LotMergeService {
       throw new BadRequestException(`이미 자재출고 이력이 있는 LOT은 병합할 수 없습니다: ${matUid}`);
     }
 
-    const [meta] = await this.attachMeta([lot], company, plant);
+    const [meta] = await this.attachMeta([lot], organizationId);
     return meta;
   }
 
-  async merge(dto: LotMergeDto, company?: string, plant?: string, userId?: string) {
+  async merge(dto: LotMergeDto, organizationId?: number, userId?: string) {
     const { sourceLotIds, remark } = dto;
-    const tenantWhere = this.tenantWhere(company, plant);
+    const tenantWhere = this.tenantWhere(organizationId);
     const uniqueIds = [...new Set(sourceLotIds)];
     if (uniqueIds.length < 2) {
       throw new BadRequestException('병합하려면 서로 다른 2개 이상의 LOT이 필요합니다.');
@@ -160,7 +154,7 @@ export class LotMergeService {
         const missing = uniqueIds.filter((id) => !found.has(id));
         throw new NotFoundException(`존재하지 않는 LOT이 있습니다: ${missing.join(', ')}`);
       }
-      lots.forEach((lot) => this.assertSameTenant(lot, company, plant, `LOT ${lot.matUid}`));
+      lots.forEach((lot) => this.assertSameTenant(lot, organizationId, `LOT ${lot.matUid}`));
 
       // 2) 동일 품목 검증
       const itemCodes = new Set(lots.map((l) => l.itemCode));
@@ -195,7 +189,7 @@ export class LotMergeService {
         if (!lotStock || lotStock.qty <= 0) {
           throw new BadRequestException(`재고가 없는 LOT은 병합할 수 없습니다: ${lot.matUid}`);
         }
-        this.assertSameTenant(lotStock, lot.company, lot.plant, `재고 ${lot.matUid}`);
+        this.assertSameTenant(lotStock, lot.organizationId, `재고 ${lot.matUid}`);
         if ((lotStock.reservedQty ?? 0) > 0) {
           throw new BadRequestException(`예약 수량이 있는 LOT은 병합할 수 없습니다: ${lot.matUid}`);
         }
@@ -225,7 +219,7 @@ export class LotMergeService {
       if (!part) {
         throw new NotFoundException(`품목을 찾을 수 없습니다: ${lots[0].itemCode}`);
       }
-      this.assertSameTenant(part, lots[0].company, lots[0].plant, `품목 ${lots[0].itemCode}`);
+      this.assertSameTenant(part, lots[0].organizationId, `품목 ${lots[0].itemCode}`);
 
       // ── 처리 ──
       const base = lots[0];
@@ -258,8 +252,7 @@ export class LotMergeService {
           remark: mergeRemark,
           workerId: userId ?? null,
           status: 'DONE',
-          company: lot.company,
-          plant: lot.plant,
+          organizationId: lot.organizationId,
           createdBy: userId ?? null,
         }));
 
@@ -294,8 +287,7 @@ export class LotMergeService {
         poNo: base.poNo,
         iqcStatus: base.iqcStatus,
         status: 'NORMAL',
-        company: base.company,
-        plant: base.plant,
+        organizationId: base.organizationId,
         createdBy: userId ?? null,
       });
       await queryRunner.manager.save(newLot);
@@ -308,8 +300,7 @@ export class LotMergeService {
         qty: totalQty,
         availableQty: totalQty,
         reservedQty: 0,
-        company: base.company,
-        plant: base.plant,
+        organizationId: base.organizationId,
         createdBy: userId ?? null,
       }));
 
@@ -328,8 +319,7 @@ export class LotMergeService {
         remark: mergeRemark,
         workerId: userId ?? null,
         status: 'DONE',
-        company: base.company,
-        plant: base.plant,
+        organizationId: base.organizationId,
         createdBy: userId ?? null,
       }));
 
@@ -365,9 +355,9 @@ export class LotMergeService {
   }
 
   /** LOT 목록에 품목명/단위/재고수량 메타 부착 */
-  private async attachMeta(lots: MatLot[], company?: string, plant?: string) {
+  private async attachMeta(lots: MatLot[], organizationId?: number) {
     if (lots.length === 0) return [];
-    const tenantWhere = this.tenantWhere(company, plant);
+    const tenantWhere = this.tenantWhere(organizationId);
     const itemCodes = [...new Set(lots.map((l) => l.itemCode).filter(Boolean))];
     const matUids = lots.map((l) => l.matUid);
     const vendorCodes = [...new Set(lots.map((l) => l.vendor).filter((v): v is string => Boolean(v)))];

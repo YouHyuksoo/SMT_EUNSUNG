@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Put, Query, Req } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { Company, Plant } from '../../../../common/decorators/tenant.decorator';
+import { OrganizationId } from '../../../../common/decorators/tenant.decorator';
 import { AuthenticatedRequest } from '../../../../common/guards/jwt-auth.guard';
 import { ResponseUtil } from '../../../../common/dto/response.dto';
 import { AqlService } from '../services/aql.service';
@@ -16,10 +16,9 @@ export class AqlController {
   @ApiResponse({ status: 200, description: '조회 성공' })
   async findAll(
     @Query() query: AqlQueryDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const result = await this.aqlService.findAll(query, company, plant);
+    const result = await this.aqlService.findAll(query, organizationId);
     return ResponseUtil.paged(result.data, result.total, result.page, result.limit);
   }
 
@@ -28,10 +27,9 @@ export class AqlController {
   async resolve(
     @Query('aqlCode') aqlCode: string,
     @Query('lotQty') lotQty: string,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.aqlService.resolveByAqlCode(aqlCode, Number(lotQty), company, plant);
+    const data = await this.aqlService.resolveByAqlCode(aqlCode, Number(lotQty), organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -39,20 +37,18 @@ export class AqlController {
   @ApiOperation({ summary: 'IQC AQL 정책 목록 조회' })
   async findPolicies(
     @Query('useYn') useYn: string,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.aqlService.findPolicies({ useYn }, company, plant);
+    const data = await this.aqlService.findPolicies({ useYn }, organizationId);
     return ResponseUtil.success(data);
   }
 
   @Get('iso')
   @ApiOperation({ summary: 'ISO 2859 AQL Code Letter / Sampling Plan 표 조회' })
   async findIsoTables(
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.aqlService.findIsoTables(company, plant);
+    const data = await this.aqlService.findIsoTables(organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -61,11 +57,10 @@ export class AqlController {
   @ApiOperation({ summary: 'IQC AQL 정책 등록' })
   async createPolicy(
     @Body() dto: CreateIqcAqlPolicyDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
     @Req() req: AuthenticatedRequest,
   ) {
-    const data = await this.aqlService.createPolicy(dto, company, plant, req.user?.id ?? 'system');
+    const data = await this.aqlService.createPolicy(dto, organizationId, req.user?.id ?? 'system');
     return ResponseUtil.success(data, 'IQC AQL 정책이 등록되었습니다.');
   }
 
@@ -74,11 +69,10 @@ export class AqlController {
   async updatePolicy(
     @Param('policyCode') policyCode: string,
     @Body() dto: UpdateIqcAqlPolicyDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
     @Req() req: AuthenticatedRequest,
   ) {
-    const data = await this.aqlService.updatePolicy(policyCode, dto, company, plant, req.user?.id ?? 'system');
+    const data = await this.aqlService.updatePolicy(policyCode, dto, organizationId, req.user?.id ?? 'system');
     return ResponseUtil.success(data, 'IQC AQL 정책이 수정되었습니다.');
   }
 
@@ -87,11 +81,10 @@ export class AqlController {
   @ApiOperation({ summary: 'IQC AQL 정책 사용중지' })
   async deletePolicy(
     @Param('policyCode') policyCode: string,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
     @Req() req: AuthenticatedRequest,
   ) {
-    const data = await this.aqlService.deletePolicy(policyCode, company, plant, req.user?.id ?? 'system');
+    const data = await this.aqlService.deletePolicy(policyCode, organizationId, req.user?.id ?? 'system');
     return ResponseUtil.success(data, 'IQC AQL 정책이 사용중지되었습니다.');
   }
 
@@ -101,15 +94,13 @@ export class AqlController {
     @Query('itemCode') itemCode: string,
     @Query('vendorCode') vendorCode: string,
     @Query('lotQty') lotQty: string,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
     const data = await this.aqlService.resolveIqcPolicy({
       itemCode,
       vendorCode,
       lotQty: Number(lotQty),
-      company,
-      plant,
+      organizationId,
     });
     return ResponseUtil.success(data);
   }
@@ -120,8 +111,7 @@ export class AqlController {
     @Query('itemCode') itemCode: string,
     @Query('vendorCode') vendorCode: string,
     @Query('lotQty') lotQty: string,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
     const data = await this.aqlService.resolveIqcPolicyByItem({
       itemCode,
@@ -130,8 +120,7 @@ export class AqlController {
       itemDefectCounts: {},
       itemInspectedCounts: {},
       fallbackDefectCounts: { critical: 0, major: 0, minor: 0 },
-      company,
-      plant,
+      organizationId,
     });
     return ResponseUtil.success(data);
   }
@@ -140,10 +129,9 @@ export class AqlController {
   @ApiOperation({ summary: 'AQL 기준 단건 조회' })
   async findOne(
     @Param('aqlCode') aqlCode: string,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.aqlService.findOne(aqlCode, company, plant);
+    const data = await this.aqlService.findOne(aqlCode, organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -152,11 +140,10 @@ export class AqlController {
   @ApiOperation({ summary: 'AQL 기준 등록' })
   async create(
     @Body() dto: CreateAqlDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
     @Req() req: AuthenticatedRequest,
   ) {
-    const data = await this.aqlService.create(dto, company, plant, req.user?.id ?? 'system');
+    const data = await this.aqlService.create(dto, organizationId, req.user?.id ?? 'system');
     return ResponseUtil.success(data, 'AQL 기준이 등록되었습니다.');
   }
 
@@ -165,11 +152,10 @@ export class AqlController {
   async update(
     @Param('aqlCode') aqlCode: string,
     @Body() dto: UpdateAqlDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
     @Req() req: AuthenticatedRequest,
   ) {
-    const data = await this.aqlService.update(aqlCode, dto, company, plant, req.user?.id ?? 'system');
+    const data = await this.aqlService.update(aqlCode, dto, organizationId, req.user?.id ?? 'system');
     return ResponseUtil.success(data, 'AQL 기준이 수정되었습니다.');
   }
 
@@ -178,11 +164,10 @@ export class AqlController {
   @ApiOperation({ summary: 'AQL 기준 사용중지' })
   async delete(
     @Param('aqlCode') aqlCode: string,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
     @Req() req: AuthenticatedRequest,
   ) {
-    const data = await this.aqlService.delete(aqlCode, company, plant, req.user?.id ?? 'system');
+    const data = await this.aqlService.delete(aqlCode, organizationId, req.user?.id ?? 'system');
     return ResponseUtil.success(data, 'AQL 기준이 사용중지되었습니다.');
   }
 }

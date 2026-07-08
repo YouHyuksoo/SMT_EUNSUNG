@@ -14,7 +14,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
-import { Company, Plant } from '../../../common/decorators/tenant.decorator';
+import { OrganizationId } from '../../../common/decorators/tenant.decorator';
 import { JwtAuthGuard, AuthenticatedRequest } from '../../../common/guards/jwt-auth.guard';
 import { ResponseUtil } from '../../../common/dto/response.dto';
 import { MoldService } from '../services/mold.service';
@@ -34,10 +34,9 @@ export class MoldController {
   @ApiOperation({ summary: 'Get molds due for maintenance' })
   @ApiResponse({ status: 200, description: 'Success' })
   async getMaintenanceDue(
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.moldService.getMaintenanceDue(company, plant);
+    const data = await this.moldService.getMaintenanceDue(organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -46,10 +45,9 @@ export class MoldController {
   @ApiResponse({ status: 200, description: 'Success' })
   async findAll(
     @Query() query: MoldQueryDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const result = await this.moldService.findAll(query, company, plant);
+    const result = await this.moldService.findAll(query, organizationId);
     return ResponseUtil.paged(result.data, result.total, result.page, result.limit);
   }
 
@@ -60,10 +58,9 @@ export class MoldController {
   @ApiResponse({ status: 404, description: 'Not found' })
   async findById(
     @Param('id') id: string,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.moldService.findById(id, company, plant);
+    const data = await this.moldService.findById(id, organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -73,11 +70,10 @@ export class MoldController {
   @ApiResponse({ status: 201, description: 'Created' })
   async create(
     @Body() dto: CreateMoldDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
     @Req() req: AuthenticatedRequest,
   ) {
-    const data = await this.moldService.create(dto, company, plant, req.user?.id ?? 'system');
+    const data = await this.moldService.create(dto, organizationId, req.user?.id ?? 'system');
     return ResponseUtil.success(data, 'Mold created.');
   }
 
@@ -89,10 +85,9 @@ export class MoldController {
     @Param('id') id: string,
     @Body() dto: UpdateMoldDto,
     @Req() req: AuthenticatedRequest,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.moldService.update(id, dto, req.user?.id ?? 'system', company, plant);
+    const data = await this.moldService.update(id, dto, req.user?.id ?? 'system', organizationId);
     return ResponseUtil.success(data, 'Mold updated.');
   }
 
@@ -103,10 +98,9 @@ export class MoldController {
   @ApiResponse({ status: 200, description: 'Deleted' })
   async delete(
     @Param('id') id: string,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    await this.moldService.delete(id, company, plant);
+    await this.moldService.delete(id, organizationId);
     return ResponseUtil.success(null, 'Mold deleted.');
   }
 
@@ -116,10 +110,9 @@ export class MoldController {
   @ApiResponse({ status: 200, description: 'Success' })
   async getUsageLogs(
     @Param('id') id: string,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.moldService.getUsageLogs(id, company, plant);
+    const data = await this.moldService.getUsageLogs(id, organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -131,11 +124,10 @@ export class MoldController {
   async addUsage(
     @Param('id') id: string,
     @Body() dto: CreateMoldUsageDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
     @Req() req: AuthenticatedRequest,
   ) {
-    const data = await this.moldService.addUsage(id, dto, company, plant, req.user?.id ?? 'system');
+    const data = await this.moldService.addUsage(id, dto, organizationId, req.user?.id ?? 'system');
     return ResponseUtil.success(data, 'Mold usage logged.');
   }
 
@@ -146,10 +138,9 @@ export class MoldController {
   async retire(
     @Param('id') id: string,
     @Req() req: AuthenticatedRequest,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.moldService.retire(id, req.user?.id ?? 'system', company, plant);
+    const data = await this.moldService.retire(id, req.user?.id ?? 'system', organizationId);
     return ResponseUtil.success(data, 'Mold retired.');
   }
 }

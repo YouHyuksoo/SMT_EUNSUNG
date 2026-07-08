@@ -25,7 +25,6 @@
     "src/modules/material/services/lot-split.service.ts",
     "src/modules/material/services/misc-receipt.service.ts",
     "src/modules/material/services/physical-inv.service.ts",
-    "src/modules/material/services/po-status.service.ts",
     "src/modules/material/services/receipt-cancel.service.ts",
     "src/modules/material/services/scrap.service.ts",
     "src/modules/material/services/shelf-life.service.ts"

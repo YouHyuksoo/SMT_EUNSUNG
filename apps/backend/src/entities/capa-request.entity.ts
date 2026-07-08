@@ -14,7 +14,7 @@ import {
 } from 'typeorm';
 
 @Entity({ name: 'CAPA_REQUESTS' })
-@Index(['company', 'plant', 'status'])
+@Index(['organizationId', 'status'])
 export class CAPARequest {
   @PrimaryColumn({ name: 'CAPA_NO', length: 30 })
   capaNo: string;
@@ -70,11 +70,8 @@ export class CAPARequest {
   @Column({ type: 'varchar2', name: 'LINE_CODE', length: 50, nullable: true })
   lineCode: string;
 
-  @Column({ name: 'COMPANY', length: 50 })
-  company: string;
-
-  @Column({ name: 'PLANT_CD', length: 20 })
-  plant: string;
+  @Column({ name: 'ORGANIZATION_ID', type: 'number' })
+  organizationId!: number;
 
   @Column({ type: 'varchar2', name: 'CREATED_BY', length: 50, nullable: true })
   createdBy: string;

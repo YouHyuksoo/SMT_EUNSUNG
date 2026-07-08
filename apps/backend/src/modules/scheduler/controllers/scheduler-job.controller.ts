@@ -27,7 +27,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
-import { Company, Plant } from '../../../common/decorators/tenant.decorator';
+import { OrganizationId } from '../../../common/decorators/tenant.decorator';
 import { JwtAuthGuard, AuthenticatedRequest } from '../../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../../common/guards/roles.guard';
 import { Roles } from '../../../common/decorators/roles.decorator';
@@ -50,10 +50,9 @@ export class SchedulerJobController {
   @ApiResponse({ status: 200, description: '조회 성공' })
   async findAll(
     @Query() filter: SchedulerJobFilterDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const result = await this.jobService.findAll(filter, company, plant);
+    const result = await this.jobService.findAll(filter, organizationId);
     return ResponseUtil.paged(result.data, result.total, result.page, result.limit);
   }
 
@@ -64,11 +63,10 @@ export class SchedulerJobController {
   @ApiResponse({ status: 201, description: '생성 성공' })
   async create(
     @Body() dto: CreateSchedulerJobDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
     @Req() req: AuthenticatedRequest,
   ) {
-    const data = await this.jobService.create(dto, company, plant, req.user.id);
+    const data = await this.jobService.create(dto, organizationId, req.user.id);
     return ResponseUtil.success(data, '스케줄러 작업이 생성되었습니다.');
   }
 
@@ -80,11 +78,10 @@ export class SchedulerJobController {
   async update(
     @Param('jobCode') jobCode: string,
     @Body() dto: UpdateSchedulerJobDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
     @Req() req: AuthenticatedRequest,
   ) {
-    const data = await this.jobService.update(jobCode, dto, company, plant, req.user.id);
+    const data = await this.jobService.update(jobCode, dto, organizationId, req.user.id);
     return ResponseUtil.success(data, '스케줄러 작업이 수정되었습니다.');
   }
 
@@ -96,10 +93,9 @@ export class SchedulerJobController {
   @ApiResponse({ status: 200, description: '삭제 성공' })
   async remove(
     @Param('jobCode') jobCode: string,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    await this.jobService.remove(jobCode, company, plant);
+    await this.jobService.remove(jobCode, organizationId);
     return ResponseUtil.success(null, '스케줄러 작업이 삭제되었습니다.');
   }
 
@@ -111,10 +107,9 @@ export class SchedulerJobController {
   @ApiResponse({ status: 200, description: '실행 요청 성공' })
   async runNow(
     @Param('jobCode') jobCode: string,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    await this.jobService.runNow(jobCode, company, plant);
+    await this.jobService.runNow(jobCode, organizationId);
     return ResponseUtil.success(null, '작업 실행이 요청되었습니다.');
   }
 
@@ -125,11 +120,10 @@ export class SchedulerJobController {
   @ApiResponse({ status: 200, description: '토글 성공' })
   async toggle(
     @Param('jobCode') jobCode: string,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
     @Req() req: AuthenticatedRequest,
   ) {
-    const data = await this.jobService.toggle(jobCode, company, plant, req.user.id);
+    const data = await this.jobService.toggle(jobCode, organizationId, req.user.id);
     return ResponseUtil.success(data, `작업이 ${data.isActive === 'Y' ? '활성화' : '비활성화'}되었습니다.`);
   }
 }

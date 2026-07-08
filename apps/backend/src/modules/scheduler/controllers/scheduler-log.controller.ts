@@ -15,7 +15,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { Company, Plant } from '../../../common/decorators/tenant.decorator';
+import { OrganizationId } from '../../../common/decorators/tenant.decorator';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { ResponseUtil } from '../../../common/dto/response.dto';
 import { SchedulerLogService } from '../services/scheduler-log.service';
@@ -31,10 +31,9 @@ export class SchedulerLogController {
   @ApiResponse({ status: 200, description: '조회 성공' })
   async findAll(
     @Query() filter: SchedulerLogFilterDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const result = await this.logService.findAll(filter, company, plant);
+    const result = await this.logService.findAll(filter, organizationId);
     return ResponseUtil.paged(result.data, result.total, result.page, result.limit);
   }
 
@@ -42,10 +41,9 @@ export class SchedulerLogController {
   @ApiOperation({ summary: '스케줄러 실행 통계 요약', description: '대시보드용 통계 (오늘 건수, 성공률, 7일 추이, 작업별 비율)' })
   @ApiResponse({ status: 200, description: '조회 성공' })
   async getSummary(
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.logService.getSummary(company, plant);
+    const data = await this.logService.getSummary(organizationId);
     return ResponseUtil.success(data);
   }
 }

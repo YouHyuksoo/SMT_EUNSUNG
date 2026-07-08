@@ -36,12 +36,11 @@ export class KioskMaterialService {
   async scanMount(
     orderNo: string,
     matUid: string,
-    company: string,
-    plant: string,
+    organizationId: number,
     equipCodeOverride?: string,
   ): Promise<MountedRow> {
     const jobOrder = await this.jobOrderRepo.findOne({
-      where: { orderNo, company, plant },
+      where: { orderNo, organizationId },
     });
     if (!jobOrder?.itemCode) {
       throw new NotFoundException(`작업지시를 찾을 수 없습니다: ${orderNo}`);
@@ -55,7 +54,7 @@ export class KioskMaterialService {
 
     // 1. 스캔 LOT 조회 — 실제 품목 확인
     const lot = await this.matLotRepo.findOne({
-      where: { matUid, company, plant },
+      where: { matUid, organizationId },
     });
     if (!lot) {
       throw new NotFoundException(`자재 LOT를 찾을 수 없습니다: ${matUid}`);
@@ -69,8 +68,7 @@ export class KioskMaterialService {
         useYn: 'Y',
         validFrom: LessThanOrEqual(bomEffectiveDate),
         validTo: MoreThanOrEqual(bomEffectiveDate),
-        company,
-        plant,
+        organizationId,
       },
     });
     if (inBom === 0) {
@@ -80,7 +78,7 @@ export class KioskMaterialService {
     }
 
     // 3. 설비 장착(WIP 적재 + MAT_LOTS 차감 + 이력)은 공용 서비스에 위임
-    return this.equipMaterialService.mount(effectiveEquip, matUid, company, plant);
+    return this.equipMaterialService.mount(effectiveEquip, matUid, organizationId);
   }
 
   private resolveBomEffectiveDate(jobOrder: JobOrder): Date {

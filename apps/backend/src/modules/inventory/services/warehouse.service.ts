@@ -19,20 +19,18 @@ export class WarehouseService {
     private readonly dataSource: DataSource,
   ) {}
 
-  private tenantWhere(company?: string | null, plant?: string | null) {
+  private tenantWhere(organizationId?: number | null) {
     return {
-      ...(company && { company }),
-      ...(plant && { plant }),
+      ...(organizationId != null ? { organizationId } : {}),
     };
   }
 
   /**
    * 창고 목록 조회
    */
-  async findAll(warehouseType?: string, company?: string, plant?: string) {
+  async findAll(warehouseType?: string, organizationId?: number) {
     const where: FindOptionsWhere<Warehouse> = {
-      ...(company && { company }),
-      ...(plant && { plant }),
+      ...(organizationId != null ? { organizationId } : {}),
     };
 
     if (warehouseType) {
@@ -53,9 +51,9 @@ export class WarehouseService {
   /**
    * 창고 상세 조회
    */
-  async findOne(warehouseCode: string, company?: string, plant?: string) {
+  async findOne(warehouseCode: string, organizationId?: number) {
     const warehouse = await this.warehouseRepository.findOne({
-      where: { warehouseCode, ...this.tenantWhere(company, plant) },
+      where: { warehouseCode, ...this.tenantWhere(organizationId) },
     });
 
     if (!warehouse) {
@@ -68,17 +66,17 @@ export class WarehouseService {
   /**
    * 창고 코드로 조회
    */
-  async findByCode(warehouseCode: string, company?: string, plant?: string) {
+  async findByCode(warehouseCode: string, organizationId?: number) {
     return this.warehouseRepository.findOne({
-      where: { warehouseCode, ...this.tenantWhere(company, plant) },
+      where: { warehouseCode, ...this.tenantWhere(organizationId) },
     });
   }
 
   /**
    * 창고 생성
    */
-  async create(dto: CreateWarehouseDto, company?: string, plant?: string) {
-    const tenantWhere = this.tenantWhere(company, plant);
+  async create(dto: CreateWarehouseDto, organizationId?: number) {
+    const tenantWhere = this.tenantWhere(organizationId);
     // 중복 코드 확인
     const existing = await this.warehouseRepository.findOne({
       where: { warehouseCode: dto.warehouseCode, ...tenantWhere },
@@ -92,14 +90,13 @@ export class WarehouseService {
       warehouseCode: dto.warehouseCode,
       warehouseName: dto.warehouseName,
       warehouseType: dto.warehouseType,
-      plantCode: dto.plantCode || plant || null,
+      plantCode: dto.plantCode || null,
       lineCode: dto.lineCode || null,
       processCode: dto.processCode || null,
       vendorCode: dto.vendorCode || null,
       isDefault: dto.isDefault ? 'Y' : 'N',
       useYn: 'Y',
-      company: company || null,
-      plant: plant || null,
+      organizationId: organizationId ?? null,
     });
 
     return this.warehouseRepository.save(warehouse);
@@ -108,8 +105,8 @@ export class WarehouseService {
   /**
    * 창고 수정
    */
-  async update(warehouseCode: string, dto: UpdateWarehouseDto, company?: string, plant?: string) {
-    const tenantWhere = this.tenantWhere(company, plant);
+  async update(warehouseCode: string, dto: UpdateWarehouseDto, organizationId?: number) {
+    const tenantWhere = this.tenantWhere(organizationId);
     const warehouse = await this.warehouseRepository.findOne({
       where: { warehouseCode, ...tenantWhere },
     });
@@ -134,8 +131,8 @@ export class WarehouseService {
   /**
    * 창고 삭제 (소프트 삭제)
    */
-  async remove(warehouseCode: string, company?: string, plant?: string) {
-    const tenantWhere = this.tenantWhere(company, plant);
+  async remove(warehouseCode: string, organizationId?: number) {
+    const tenantWhere = this.tenantWhere(organizationId);
     const warehouse = await this.warehouseRepository.findOne({
       where: { warehouseCode, ...tenantWhere },
     });
@@ -161,13 +158,13 @@ export class WarehouseService {
   /**
    * 기본 창고 조회 (유형별)
    */
-  async getDefaultWarehouse(warehouseType: string, company?: string, plant?: string) {
+  async getDefaultWarehouse(warehouseType: string, organizationId?: number) {
     return this.warehouseRepository.findOne({
       where: {
         warehouseType,
         isDefault: 'Y',
         useYn: 'Y',
-        ...this.tenantWhere(company, plant),
+        ...this.tenantWhere(organizationId),
       },
     });
   }
@@ -175,9 +172,9 @@ export class WarehouseService {
   /**
    * 공정재공 창고 조회 또는 생성
    */
-  async getOrCreateFloorWarehouse(lineCode: string, processCode: string, company?: string, plant?: string) {
+  async getOrCreateFloorWarehouse(lineCode: string, processCode: string, organizationId?: number) {
     const warehouseCode = `FLOOR_${lineCode}_${processCode}`;
-    const tenantWhere = this.tenantWhere(company, plant);
+    const tenantWhere = this.tenantWhere(organizationId);
 
     let warehouse = await this.warehouseRepository.findOne({
       where: { warehouseCode, ...tenantWhere },
@@ -188,13 +185,12 @@ export class WarehouseService {
         warehouseCode,
         warehouseName: `${lineCode} ${processCode} 공정재공`,
         warehouseType: 'WIP',
-        plantCode: plant || null,
+        plantCode: null,
         lineCode,
         processCode,
         useYn: 'Y',
         isDefault: 'N',
-        company: company || null,
-        plant: plant || null,
+        organizationId: organizationId ?? null,
       });
 
       warehouse = await this.warehouseRepository.save(warehouse);
@@ -206,9 +202,9 @@ export class WarehouseService {
   /**
    * 외주 창고 조회 또는 생성
    */
-  async getOrCreateSubconWarehouse(vendorCode: string, vendorName: string, company?: string, plant?: string) {
+  async getOrCreateSubconWarehouse(vendorCode: string, vendorName: string, organizationId?: number) {
     const warehouseCode = `SUBCON_${vendorCode}`;
-    const tenantWhere = this.tenantWhere(company, plant);
+    const tenantWhere = this.tenantWhere(organizationId);
 
     let warehouse = await this.warehouseRepository.findOne({
       where: { warehouseCode, ...tenantWhere },
@@ -219,12 +215,11 @@ export class WarehouseService {
         warehouseCode,
         warehouseName: `${vendorName} 외주`,
         warehouseType: 'SUBCON',
-        plantCode: plant || null,
+        plantCode: null,
         vendorCode,
         useYn: 'Y',
         isDefault: 'N',
-        company: company || null,
-        plant: plant || null,
+        organizationId: organizationId ?? null,
       });
 
       warehouse = await this.warehouseRepository.save(warehouse);
@@ -236,7 +231,7 @@ export class WarehouseService {
   /**
    * 기본 창고 초기화
    */
-  async initDefaultWarehouses(company?: string, plant?: string) {
+  async initDefaultWarehouses(organizationId?: number) {
     const defaultWarehouses = [
       { code: 'RM_MAIN', name: '원자재 메인창고', type: 'RM', isDefault: true },
       { code: 'RM_SUB', name: '원자재 서브창고', type: 'RM', isDefault: false },
@@ -250,7 +245,7 @@ export class WarehouseService {
     ];
 
     const allCodes = defaultWarehouses.map((wh) => wh.code);
-    const tenantWhere = this.tenantWhere(company, plant);
+    const tenantWhere = this.tenantWhere(organizationId);
     const existingList = await this.warehouseRepository.find({
       where: allCodes.map((code) => ({ warehouseCode: code, ...tenantWhere })),
       select: ['warehouseCode'],
@@ -269,11 +264,10 @@ export class WarehouseService {
             warehouseCode: wh.code,
             warehouseName: wh.name,
             warehouseType: wh.type,
-            plantCode: plant || null,
+            plantCode: null,
             isDefault: wh.isDefault ? 'Y' : 'N',
             useYn: 'Y',
-            company: company || null,
-            plant: plant || null,
+            organizationId: organizationId ?? null,
           }),
         );
         results.push({ code: wh.code, status: 'created', id: wh.code });

@@ -53,10 +53,9 @@ export class EquipMasterService {
     private readonly workerRepository: Repository<WorkerMaster>,
   ) {}
 
-  private tenantWhere(company?: string, plant?: string) {
+  private tenantWhere(organizationId?: number) {
     return {
-      ...(company ? { company } : {}),
-      ...(plant ? { plant } : {}),
+      ...(organizationId != null ? { organizationId } : {}),
     };
   }
 
@@ -91,7 +90,7 @@ export class EquipMasterService {
       commType,
       useYn,
       search,
-      company,
+      organizationId,
     } = query;
     const skip = (page - 1) * limit;
 
@@ -103,8 +102,7 @@ export class EquipMasterService {
     if (status) qb.andWhere('e.status = :status', { status });
     if (commType) qb.andWhere('e.commType = :commType', { commType });
     if (useYn) qb.andWhere('e.useYn = :useYn', { useYn });
-    if (company) qb.andWhere('e.company = :company', { company });
-    if (query.plant) qb.andWhere('e.plant = :plant', { plant: query.plant });
+    if (organizationId != null) qb.andWhere('e.organizationId = :organizationId', { organizationId });
 
     if (search) {
       const upper = search.toUpperCase();
@@ -147,9 +145,9 @@ export class EquipMasterService {
   /**
    * 설비 단건 조회 (ID)
    */
-  async findById(equipCode: string, company?: string, plant?: string) {
+  async findById(equipCode: string, organizationId?: number) {
     const equip = await this.equipMasterRepository.findOne({
-      where: { equipCode, ...this.tenantWhere(company, plant) },
+      where: { equipCode, ...this.tenantWhere(organizationId) },
     });
 
     if (!equip) {
@@ -162,9 +160,9 @@ export class EquipMasterService {
   /**
    * 설비 단건 조회 (코드)
    */
-  async findByCode(equipCode: string, company?: string, plant?: string) {
+  async findByCode(equipCode: string, organizationId?: number) {
     const equip = await this.equipMasterRepository.findOne({
-      where: { equipCode, ...this.tenantWhere(company, plant) },
+      where: { equipCode, ...this.tenantWhere(organizationId) },
     });
 
     if (!equip) {
@@ -177,10 +175,10 @@ export class EquipMasterService {
   /**
    * 설비 생성
    */
-  async create(dto: CreateEquipMasterDto, company?: string, plant?: string) {
+  async create(dto: CreateEquipMasterDto, organizationId?: number) {
     // 중복 코드 확인
     const existing = await this.equipMasterRepository.findOne({
-      where: { equipCode: dto.equipCode, ...this.tenantWhere(company, plant) },
+      where: { equipCode: dto.equipCode, ...this.tenantWhere(organizationId) },
     });
 
     if (existing) {
@@ -203,7 +201,7 @@ export class EquipMasterService {
       installDate: parseDateStart(dto.installDate),
       status: dto.status ?? 'NORMAL',
       useYn: dto.useYn ?? 'Y',
-      ...this.tenantWhere(company, plant),
+      ...this.tenantWhere(organizationId),
     });
 
     return this.equipMasterRepository.save(equip);
@@ -212,8 +210,8 @@ export class EquipMasterService {
   /**
    * 설비 수정
    */
-  async update(equipCode: string, dto: UpdateEquipMasterDto, company?: string, plant?: string) {
-    await this.findById(equipCode, company, plant);
+  async update(equipCode: string, dto: UpdateEquipMasterDto, organizationId?: number) {
+    await this.findById(equipCode, organizationId);
 
     const updateData: Partial<EquipMaster> = {};
 
@@ -232,24 +230,24 @@ export class EquipMasterService {
     if (dto.status !== undefined) updateData.status = dto.status;
     if (dto.useYn !== undefined) updateData.useYn = dto.useYn;
 
-    await this.equipMasterRepository.update({ equipCode, ...this.tenantWhere(company, plant) }, updateData);
-    return this.findById(equipCode, company, plant);
+    await this.equipMasterRepository.update({ equipCode, ...this.tenantWhere(organizationId) }, updateData);
+    return this.findById(equipCode, organizationId);
   }
 
   /**
    * 설비 삭제 (소프트 삭제)
    */
-  async delete(equipCode: string, company?: string, plant?: string) {
-    await this.findById(equipCode, company, plant);
+  async delete(equipCode: string, organizationId?: number) {
+    await this.findById(equipCode, organizationId);
 
-    await this.equipMasterRepository.delete({ equipCode, ...this.tenantWhere(company, plant) });
+    await this.equipMasterRepository.delete({ equipCode, ...this.tenantWhere(organizationId) });
     return { equipCode, deleted: true };
   }
 
-  async updateImage(equipCode: string, imageUrl: string | null, company?: string, plant?: string) {
-    await this.findById(equipCode, company, plant);
-    await this.equipMasterRepository.update({ equipCode, ...this.tenantWhere(company, plant) }, { imageUrl });
-    return this.findById(equipCode, company, plant);
+  async updateImage(equipCode: string, imageUrl: string | null, organizationId?: number) {
+    await this.findById(equipCode, organizationId);
+    await this.equipMasterRepository.update({ equipCode, ...this.tenantWhere(organizationId) }, { imageUrl });
+    return this.findById(equipCode, organizationId);
   }
 
   // =============================================
@@ -259,26 +257,26 @@ export class EquipMasterService {
   /**
    * 설비 상태 변경
    */
-  async changeStatus(equipCode: string, dto: ChangeEquipStatusDto, company?: string, plant?: string) {
-    const equip = await this.findById(equipCode, company, plant);
+  async changeStatus(equipCode: string, dto: ChangeEquipStatusDto, organizationId?: number) {
+    const equip = await this.findById(equipCode, organizationId);
 
     this.logger.log(
       `설비 상태 변경: ${equip.equipCode} (${equip.status} -> ${dto.status}), 사유: ${dto.reason ?? '없음'}`
     );
 
     await this.equipMasterRepository.update(
-      { equipCode, ...this.tenantWhere(company, plant) },
+      { equipCode, ...this.tenantWhere(organizationId) },
       { status: dto.status },
     );
-    return this.findById(equipCode, company, plant);
+    return this.findById(equipCode, organizationId);
   }
 
   /**
    * 상태별 설비 목록 조회
    */
-  async findByStatus(status: string, company?: string, plant?: string) {
+  async findByStatus(status: string, organizationId?: number) {
     const equips = await this.equipMasterRepository.find({
-      where: { status, useYn: 'Y', ...this.tenantWhere(company, plant) },
+      where: { status, useYn: 'Y', ...this.tenantWhere(organizationId) },
       order: { equipCode: 'ASC' },
     });
     return equips.map((equip) => this.withClientId(equip));
@@ -291,9 +289,9 @@ export class EquipMasterService {
   /**
    * 라인별 설비 목록 조회
    */
-  async findByLineCode(lineCode: string, company?: string, plant?: string) {
+  async findByLineCode(lineCode: string, organizationId?: number) {
     const equips = await this.equipMasterRepository.find({
-      where: { lineCode, useYn: 'Y', ...this.tenantWhere(company, plant) },
+      where: { lineCode, useYn: 'Y', ...this.tenantWhere(organizationId) },
       order: { equipCode: 'ASC' },
     });
     return equips.map((equip) => this.withClientId(equip));
@@ -302,9 +300,9 @@ export class EquipMasterService {
   /**
    * 유형별 설비 목록 조회
    */
-  async findByType(equipType: string, company?: string, plant?: string) {
+  async findByType(equipType: string, organizationId?: number) {
     const equips = await this.equipMasterRepository.find({
-      where: { equipType, useYn: 'Y', ...this.tenantWhere(company, plant) },
+      where: { equipType, useYn: 'Y', ...this.tenantWhere(organizationId) },
       order: { equipCode: 'ASC' },
     });
     return equips.map((equip) => this.withClientId(equip));
@@ -317,15 +315,14 @@ export class EquipMasterService {
   /**
    * 설비 현황 통계
    */
-  async getEquipmentStats(company?: string, plant?: string) {
+  async getEquipmentStats(organizationId?: number) {
     // 상태별 통계
     const statusStats = await this.equipMasterRepository
       .createQueryBuilder('equip')
       .select('equip.status', 'status')
       .addSelect('COUNT(*)', 'count')
       .where('equip.useYn = :useYn', { useYn: 'Y' })
-    if (company) statusStats.andWhere('equip.company = :company', { company });
-    if (plant) statusStats.andWhere('equip.plant = :plant', { plant });
+    if (organizationId != null) statusStats.andWhere('equip.organizationId = :organizationId', { organizationId });
     const statusRows = await statusStats.groupBy('equip.status').getRawMany();
 
     // 유형별 통계
@@ -334,13 +331,12 @@ export class EquipMasterService {
       .select('equip.equipType', 'equipType')
       .addSelect('COUNT(*)', 'count')
       .where('equip.useYn = :useYn', { useYn: 'Y' })
-    if (company) typeStats.andWhere('equip.company = :company', { company });
-    if (plant) typeStats.andWhere('equip.plant = :plant', { plant });
+    if (organizationId != null) typeStats.andWhere('equip.organizationId = :organizationId', { organizationId });
     const typeRows = await typeStats.groupBy('equip.equipType').getRawMany();
 
     // 전체 개수
     const totalCount = await this.equipMasterRepository.count({
-      where: { useYn: 'Y', ...this.tenantWhere(company, plant) },
+      where: { useYn: 'Y', ...this.tenantWhere(organizationId) },
     });
 
     return {
@@ -359,12 +355,12 @@ export class EquipMasterService {
   /**
    * 정비중/중지 설비 목록 조회
    */
-  async getMaintenanceEquipments(company?: string, plant?: string) {
+  async getMaintenanceEquipments(organizationId?: number) {
     const equips = await this.equipMasterRepository.find({
       where: {
         status: In(['MAINT', 'STOP']),
         useYn: 'Y',
-        ...this.tenantWhere(company, plant),
+        ...this.tenantWhere(organizationId),
       },
       order: { updatedAt: 'DESC' },
     });
@@ -378,9 +374,9 @@ export class EquipMasterService {
   /**
    * 라인 목록 조회 (설비 선택용)
    */
-  async getLines(company?: string, plant?: string) {
+  async getLines(organizationId?: number) {
     return this.lineRepository.find({
-      where: { useYn: 'Y', ...this.tenantWhere(company, plant) },
+      where: { useYn: 'Y', ...this.tenantWhere(organizationId) },
       select: ['lineCode', 'lineName', 'lineType', 'oper'],
       order: { lineCode: 'ASC' },
     });
@@ -389,9 +385,9 @@ export class EquipMasterService {
   /**
    * 공정 목록 조회 (설비 선택용)
    */
-  async getProcesses(company?: string, plant?: string) {
+  async getProcesses(organizationId?: number) {
     return this.processRepository.find({
-      where: { useYn: 'Y', ...this.tenantWhere(company, plant) },
+      where: { useYn: 'Y', ...this.tenantWhere(organizationId) },
       select: ['processCode', 'processName', 'processType', 'processCategory'],
       order: { sortOrder: 'ASC', processCode: 'ASC' },
     });
@@ -404,8 +400,8 @@ export class EquipMasterService {
   /**
    * 설비에 작업지시 할당/해제
    */
-  async assignJobOrder(equipCode: string, dto: AssignJobOrderDto, company?: string, plant?: string) {
-    const equip = await this.findById(equipCode, company, plant);
+  async assignJobOrder(equipCode: string, dto: AssignJobOrderDto, organizationId?: number) {
+    const equip = await this.findById(equipCode, organizationId);
 
     // 작업지시 할당 시 설비 상태 검증 — 비정상 상태면 할당 차단
     if (dto.orderNo && ['MAINT', 'STOP', 'INTERLOCK'].includes(equip.status)) {
@@ -415,7 +411,7 @@ export class EquipMasterService {
     }
 
     await this.equipMasterRepository.update(
-      { equipCode, ...this.tenantWhere(company, plant) },
+      { equipCode, ...this.tenantWhere(organizationId) },
       { currentJobOrderId: dto.orderNo ?? null },
     );
 
@@ -425,14 +421,14 @@ export class EquipMasterService {
         : `설비 작업지시 해제: ${equip.equipCode}`,
     );
 
-    return this.findById(equipCode, company, plant);
+    return this.findById(equipCode, organizationId);
   }
 
   /**
    * 설비에 현재 작업자 코드 목록 할당/해제
    */
-  async assignWorkerCodes(equipCode: string, dto: AssignWorkerCodesDto, company?: string, plant?: string) {
-    const equip = await this.findById(equipCode, company, plant);
+  async assignWorkerCodes(equipCode: string, dto: AssignWorkerCodesDto, organizationId?: number) {
+    const equip = await this.findById(equipCode, organizationId);
     const workerCodes = this.normalizeWorkerCodes(dto.workerCodes);
 
     if (workerCodes.length > 0) {
@@ -440,7 +436,7 @@ export class EquipMasterService {
         where: {
           workerCode: In(workerCodes),
           useYn: 'Y',
-          ...this.tenantWhere(company, plant),
+          ...this.tenantWhere(organizationId),
         },
         select: ['workerCode'],
       });
@@ -452,7 +448,7 @@ export class EquipMasterService {
     }
 
     await this.equipMasterRepository.update(
-      { equipCode, ...this.tenantWhere(company, plant) },
+      { equipCode, ...this.tenantWhere(organizationId) },
       { currentWorkerCodes: workerCodes.length > 0 ? workerCodes.join(',') : null },
     );
 
@@ -462,6 +458,6 @@ export class EquipMasterService {
         : `설비 현재 작업자 해제: ${equip.equipCode}`,
     );
 
-    return this.findById(equipCode, company, plant);
+    return this.findById(equipCode, organizationId);
   }
 }

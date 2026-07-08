@@ -153,13 +153,13 @@ describe('HoldService', () => {
         .mockResolvedValueOnce({ matUid: 'MAT-001', itemCode: 'ITEM-001', status: 'NORMAL' } as MatLot);
       partRepo.findOne.mockResolvedValue({ itemCode: 'ITEM-001', itemName: 'Part 1' } as ItemMaster);
 
-      await service.release({ matUid: 'MAT-001' }, 'C1', 'P1');
+      await service.release({ matUid: 'MAT-001' }, 1);
 
       expect(matLotRepo.findOne).toHaveBeenCalledWith({
-        where: { matUid: 'MAT-001', company: 'C1', plant: 'P1' },
+        where: { matUid: 'MAT-001', organizationId: 1 },
       });
       expect(matLotRepo.update).toHaveBeenCalledWith(
-        { matUid: 'MAT-001', company: 'C1', plant: 'P1' },
+        { matUid: 'MAT-001', organizationId: 1 },
         { status: 'NORMAL' },
       );
     });

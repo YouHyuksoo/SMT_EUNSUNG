@@ -33,39 +33,31 @@ export class CommConfigService {
     private readonly commConfigRepository: Repository<CommConfig>,
   ) {}
 
-  private tenantWhere(company?: string | null, plant?: string | null) {
+  private tenantWhere(organizationId?: number | null) {
     return {
-      ...(company ? { company } : {}),
-      ...(plant ? { plant } : {}),
+      ...(organizationId != null ? { organizationId } : {}),
     };
   }
 
   private assertSameTenant(
     context: string,
-    row: { company?: string | null; plant?: string | null },
-    company?: string | null,
-    plant?: string | null,
+    row: { organizationId?: number | null },
+    organizationId?: number | null,
   ) {
-    if (company && row.company !== company) {
+    if (organizationId != null && row.organizationId !== organizationId) {
       throw new BadRequestException(
-        `${context} 회사 정보가 일치하지 않습니다. request=${company}, row=${row.company ?? 'NULL'}`,
-      );
-    }
-    if (plant && row.plant !== plant) {
-      throw new BadRequestException(
-        `${context} 사업장 정보가 일치하지 않습니다. request=${plant}, row=${row.plant ?? 'NULL'}`,
+        `${context} 조직 정보가 일치하지 않습니다. request=${organizationId}, row=${row.organizationId ?? 'NULL'}`,
       );
     }
   }
 
   /** 목록 조회 (페이지네이션 + 필터) */
-  async findAll(query: CommConfigQueryDto, company?: string, plant?: string) {
+  async findAll(query: CommConfigQueryDto, organizationId?: number) {
     const { page = 1, limit = 20, commType, search, useYn } = query;
     const skip = (page - 1) * limit;
 
     const where: Record<string, unknown> = {
-      ...(company && { company }),
-      ...(plant && { plant }),
+      ...(organizationId != null && { organizationId }),
     };
 
     if (commType) where.commType = commType;
@@ -89,40 +81,40 @@ export class CommConfigService {
   }
 
   /** 단건 조회 (ID) */
-  async findById(id: string, company?: string, plant?: string) {
+  async findById(id: string, organizationId?: number) {
     const config = await this.commConfigRepository.findOne({
-      where: { configName: id, ...this.tenantWhere(company, plant) },
+      where: { configName: id, ...this.tenantWhere(organizationId) },
     });
 
     if (!config) {
       throw new NotFoundException('통신설정을 찾을 수 없습니다.');
     }
 
-    this.assertSameTenant('통신설정', config, company, plant);
+    this.assertSameTenant('통신설정', config, organizationId);
     return config;
   }
 
   /** 이름으로 조회 (다른 화면에서 참조용) */
-  async findByName(configName: string, company?: string, plant?: string) {
+  async findByName(configName: string, organizationId?: number) {
     const config = await this.commConfigRepository.findOne({
-      where: { configName, ...this.tenantWhere(company, plant) },
+      where: { configName, ...this.tenantWhere(organizationId) },
     });
 
     if (!config) {
       throw new NotFoundException(`통신설정 '${configName}'을 찾을 수 없습니다.`);
     }
 
-    this.assertSameTenant('통신설정', config, company, plant);
+    this.assertSameTenant('통신설정', config, organizationId);
     return config;
   }
 
   /** 유형별 목록 (드롭다운용) */
-  async findByType(commType: string, company?: string, plant?: string) {
+  async findByType(commType: string, organizationId?: number) {
     return this.commConfigRepository.find({
       where: {
         commType,
         useYn: 'Y',
-        ...this.tenantWhere(company, plant),
+        ...this.tenantWhere(organizationId),
       },
       select: [
         'configName',
@@ -137,9 +129,9 @@ export class CommConfigService {
   }
 
   /** 생성 */
-  async create(dto: CreateCommConfigDto, company?: string, plant?: string) {
+  async create(dto: CreateCommConfigDto, organizationId?: number) {
     const existing = await this.commConfigRepository.findOne({
-      where: { configName: dto.configName, ...this.tenantWhere(company, plant) },
+      where: { configName: dto.configName, ...this.tenantWhere(organizationId) },
     });
 
     if (existing) {
@@ -160,8 +152,7 @@ export class CommConfigService {
       flowControl: dto.flowControl,
       extraConfig: dto.extraConfig ? JSON.stringify(dto.extraConfig) : undefined,
       useYn: dto.useYn ?? 'Y',
-      company,
-      plant,
+      organizationId,
     });
 
     return this.commConfigRepository.save(config);
@@ -171,15 +162,14 @@ export class CommConfigService {
   async update(
     id: string,
     dto: UpdateCommConfigDto,
-    company?: string,
-    plant?: string,
+    organizationId?: number,
   ) {
-    await this.findById(id, company, plant);
+    await this.findById(id, organizationId);
 
     // 이름 변경 시 중복 체크
     if (dto.configName) {
       const existing = await this.commConfigRepository.findOne({
-        where: { configName: dto.configName, ...this.tenantWhere(company, plant) },
+        where: { configName: dto.configName, ...this.tenantWhere(organizationId) },
       });
       if (existing && existing.configName !== id) {
         throw new ConflictException(`이미 등록된 설정 이름입니다: ${dto.configName}`);
@@ -202,19 +192,19 @@ export class CommConfigService {
     if (dto.useYn !== undefined) updateData.useYn = dto.useYn;
 
     await this.commConfigRepository.update(
-      { configName: id, ...this.tenantWhere(company, plant) },
+      { configName: id, ...this.tenantWhere(organizationId) },
       updateData,
     );
-    return this.findById(id, company, plant);
+    return this.findById(id, organizationId);
   }
 
   /** 삭제 (소프트 삭제) */
-  async remove(id: string, company?: string, plant?: string) {
-    await this.findById(id, company, plant);
+  async remove(id: string, organizationId?: number) {
+    await this.findById(id, organizationId);
 
     await this.commConfigRepository.delete({
       configName: id,
-      ...this.tenantWhere(company, plant),
+      ...this.tenantWhere(organizationId),
     });
 
     return { message: '통신설정이 삭제되었습니다.' };

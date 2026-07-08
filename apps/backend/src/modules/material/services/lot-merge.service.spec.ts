@@ -34,12 +34,12 @@ describe('LotMergeService', () => {
 
   const lot = (matUid: string, over: Partial<MatLot> = {}): MatLot => ({
     matUid, itemCode: 'ITEM-001', status: 'NORMAL', initQty: 100,
-    origin: 'ROOT-001', arrivalNo: 'ARR-001', company: 'C1', plant: 'P1', ...over,
+    origin: 'ROOT-001', arrivalNo: 'ARR-001', organizationId: 1, ...over,
   } as MatLot);
 
   const stock = (matUid: string, qty = 50, over: Partial<MatStock> = {}): MatStock => ({
     warehouseCode: 'WH-01', itemCode: 'ITEM-001', matUid, qty, availableQty: qty,
-    reservedQty: 0, company: 'C1', plant: 'P1', ...over,
+    reservedQty: 0, organizationId: 1, ...over,
   } as MatStock);
 
   beforeEach(async () => {
@@ -81,7 +81,7 @@ describe('LotMergeService', () => {
 
   describe('merge', () => {
     it('서로 다른 2개 미만이면 BadRequestException', async () => {
-      await expect(target.merge({ sourceLotIds: ['MAT-001', 'MAT-001'] }, 'C1', 'P1'))
+      await expect(target.merge({ sourceLotIds: ['MAT-001', 'MAT-001'] }, 1))
         .rejects.toThrow(BadRequestException);
     });
 
@@ -91,7 +91,7 @@ describe('LotMergeService', () => {
         lot('MAT-002', { itemCode: 'ITEM-002' }),
       ]);
 
-      await expect(target.merge({ sourceLotIds: ['MAT-001', 'MAT-002'] }, 'C1', 'P1'))
+      await expect(target.merge({ sourceLotIds: ['MAT-001', 'MAT-002'] }, 1))
         .rejects.toThrow(BadRequestException);
     });
 
@@ -101,7 +101,7 @@ describe('LotMergeService', () => {
         lot('MAT-002', { arrivalNo: 'ARR-B' }),
       ]);
 
-      await expect(target.merge({ sourceLotIds: ['MAT-001', 'MAT-002'] }, 'C1', 'P1'))
+      await expect(target.merge({ sourceLotIds: ['MAT-001', 'MAT-002'] }, 1))
         .rejects.toThrow(BadRequestException);
     });
 
@@ -110,7 +110,7 @@ describe('LotMergeService', () => {
         .mockResolvedValueOnce([lot('MAT-001'), lot('MAT-002', { status: 'HOLD' })])
         .mockResolvedValueOnce([stock('MAT-001'), stock('MAT-002')]);
 
-      await expect(target.merge({ sourceLotIds: ['MAT-001', 'MAT-002'] }, 'C1', 'P1'))
+      await expect(target.merge({ sourceLotIds: ['MAT-001', 'MAT-002'] }, 1))
         .rejects.toThrow(BadRequestException);
     });
 
@@ -123,7 +123,7 @@ describe('LotMergeService', () => {
         .mockResolvedValueOnce([{ RECVD: 100 }])
         .mockResolvedValueOnce([{ RECVD: 0 }]);
 
-      await expect(target.merge({ sourceLotIds: ['MAT-001', 'MAT-002'] }, 'C1', 'P1'))
+      await expect(target.merge({ sourceLotIds: ['MAT-001', 'MAT-002'] }, 1))
         .rejects.toThrow(BadRequestException);
     });
 
@@ -133,12 +133,12 @@ describe('LotMergeService', () => {
         .mockResolvedValueOnce([stock('MAT-001', 30), stock('MAT-002', 20)]) // stocks
         .mockResolvedValueOnce([]);                                   // MatIssue
       (mockQueryRunner.manager.query as jest.Mock).mockResolvedValue([{ RECVD: 100 }]);
-      mockQueryRunner.manager.findOne.mockResolvedValue({ itemCode: 'ITEM-001', itemName: 'PART-A', company: 'C1', plant: 'P1' } as ItemMaster);
+      mockQueryRunner.manager.findOne.mockResolvedValue({ itemCode: 'ITEM-001', itemName: 'PART-A', organizationId: 1 } as ItemMaster);
       (mockQueryRunner.manager.create as jest.Mock).mockImplementation((_e: unknown, obj: unknown) => obj);
       mockQueryRunner.manager.save.mockResolvedValue({} as any);
       mockQueryRunner.manager.update.mockResolvedValue({ affected: 1 } as any);
 
-      const result = await target.merge({ sourceLotIds: ['MAT-001', 'MAT-002'] }, 'C1', 'P1');
+      const result = await target.merge({ sourceLotIds: ['MAT-001', 'MAT-002'] }, 1);
 
       expect(mockNumbering.nextMatSerial).toHaveBeenCalledTimes(1);
       expect(result.newLotNo).toBe('NEW-MERGED');
@@ -148,12 +148,12 @@ describe('LotMergeService', () => {
       // 원본 전부 MERGED
       expect(mockQueryRunner.manager.update).toHaveBeenCalledWith(
         MatLot,
-        { matUid: 'MAT-001', company: 'C1', plant: 'P1' },
+        { matUid: 'MAT-001', organizationId: 1 },
         expect.objectContaining({ status: 'MERGED', currentQty: 0 }),
       );
       expect(mockQueryRunner.manager.update).toHaveBeenCalledWith(
         MatLot,
-        { matUid: 'MAT-002', company: 'C1', plant: 'P1' },
+        { matUid: 'MAT-002', organizationId: 1 },
         expect.objectContaining({ status: 'MERGED', currentQty: 0 }),
       );
       // 신규 통합 LOT currentQty=합산수량
@@ -166,7 +166,7 @@ describe('LotMergeService', () => {
   describe('findByBarcode', () => {
     it('미존재 시리얼이면 예외', async () => {
       mockMatLotRepo.findOne.mockResolvedValue(null);
-      await expect(target.findByBarcode('NOPE', 'C1', 'P1')).rejects.toThrow();
+      await expect(target.findByBarcode('NOPE', 1)).rejects.toThrow();
     });
 
     it('정상 시리얼은 메타와 함께 반환', async () => {
@@ -177,7 +177,7 @@ describe('LotMergeService', () => {
       mockPartRepo.find.mockResolvedValue([{ itemCode: 'ITEM-001', itemName: 'PART-A', unit: 'EA' } as ItemMaster]);
       mockMatStockRepo.find.mockResolvedValue([stock('MAT-001', 30)]);
 
-      const result = await target.findByBarcode('MAT-001', 'C1', 'P1');
+      const result = await target.findByBarcode('MAT-001', 1);
       expect(result).toEqual(expect.objectContaining({ matUid: 'MAT-001', itemName: 'PART-A', qty: 30 }));
     });
   });
@@ -200,7 +200,7 @@ describe('LotMergeService', () => {
       mockPartRepo.find.mockResolvedValue([{ itemCode: 'ITEM-001', itemName: 'PART-A', unit: 'EA' } as ItemMaster]);
       mockMatStockRepo.find.mockResolvedValue([stock('MAT-001', 30)]);
 
-      const result = await target.findMergeableLots({ page: 1, limit: 50 }, 'C1', 'P1');
+      const result = await target.findMergeableLots({ page: 1, limit: 50 }, 1);
       expect(result.total).toBe(1);
       expect(result.data[0]).toEqual(expect.objectContaining({ matUid: 'MAT-001', itemName: 'PART-A', qty: 30 }));
     });

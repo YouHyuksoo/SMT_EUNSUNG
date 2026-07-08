@@ -4,7 +4,7 @@
  *
  * 초보자 가이드:
  * 1. Authorization 헤더에서 userId 추출 (activity-log.controller와 동일 패턴)
- * 2. x-company, x-plant 헤더에서 멀티테넌시 정보 추출
+ * 2. req.user.organizationId에서 멀티테넌시 정보 추출
  * 3. 목록 조회 시 screenshot 컬럼 제외 (대용량, 단건 조회 시에만 포함)
  */
 import {
@@ -41,24 +41,24 @@ export class ImprRequestController {
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: '개선요청 등록' })
   async create(@Body() dto: CreateImprRequestDto, @Req() req: Request) {
-    const { userId, userName, company, plantCd } = this.extractMeta(req);
-    const item = await this.service.create(dto, userId, userName, company, plantCd);
+    const { userId, userName, organizationId } = this.extractMeta(req);
+    const item = await this.service.create(dto, userId, userName, organizationId);
     return ResponseUtil.success(item);
   }
 
   @Get()
   @ApiOperation({ summary: '개선요청 목록 조회 (스크린샷 제외)' })
   async findAll(@Query() query: ImprRequestQueryDto, @Req() req: Request) {
-    const { company, plantCd } = this.extractMeta(req);
-    const result = await this.service.findAll(query, company, plantCd);
+    const { organizationId } = this.extractMeta(req);
+    const result = await this.service.findAll(query, organizationId);
     return ResponseUtil.paged(result.data, result.total, result.page, result.limit);
   }
 
   @Get(':id')
   @ApiOperation({ summary: '개선요청 단건 조회 (스크린샷 포함)' })
   async findOne(@Param('id') id: string, @Req() req: Request) {
-    const { company, plantCd } = this.extractMeta(req);
-    const item = await this.service.findOne(id, company, plantCd);
+    const { organizationId } = this.extractMeta(req);
+    const item = await this.service.findOne(id, organizationId);
     return ResponseUtil.success(item);
   }
 
@@ -69,8 +69,8 @@ export class ImprRequestController {
     @Body() dto: UpdateImprStatusDto,
     @Req() req: Request,
   ) {
-    const { company, plantCd } = this.extractMeta(req);
-    const item = await this.service.updateStatus(id, dto, company, plantCd);
+    const { organizationId } = this.extractMeta(req);
+    const item = await this.service.updateStatus(id, dto, organizationId);
     return ResponseUtil.success(item);
   }
 
@@ -80,11 +80,10 @@ export class ImprRequestController {
     const [, token] = auth.split(' ');
     const userId = user.id || token || 'unknown';
     const userName = getHeaderString(req.headers['x-user-name']) ?? null;
-    const company = getHeaderString(req.headers['x-company']) ?? user.company;
-    const plantCd = getHeaderString(req.headers['x-plant']) ?? user.plant;
-    if (!company || !plantCd) {
-      throw new BadRequestException('회사/사업장 정보가 없습니다.');
+    const organizationId = user.organizationId;
+    if (organizationId == null) {
+      throw new BadRequestException('조직 정보가 없습니다.');
     }
-    return { userId, userName, company, plantCd };
+    return { userId, userName, organizationId };
   }
 }

@@ -98,17 +98,16 @@ describe('AdjustmentService', () => {
           seq: 1,
           warehouseCode: 'WH-01',
           itemCode: 'ITEM-001',
-          company: 'C1',
-          plant: 'P1',
+          organizationId: 1,
         } as InvAdjLog,
       ]);
       invAdjLogRepo.count.mockResolvedValue(1);
       itemMasterRepo.find.mockResolvedValue([]);
 
-      await service.findAll({ page: 1, limit: 10 } as any, 'C1', 'P1');
+      await service.findAll({ page: 1, limit: 10 } as any, 1);
 
       expect(itemMasterRepo.find).toHaveBeenCalledWith({
-        where: expect.objectContaining({ company: 'C1', plant: 'P1' }),
+        where: expect.objectContaining({ organizationId: 1 }),
       });
     });
   });
@@ -127,8 +126,7 @@ describe('AdjustmentService', () => {
           matUid: null,
           qty: 10,
           reservedQty: 0,
-          company: 'HANES',
-          plant: 'P01',
+          organizationId: 1,
         } as MatStock);
       (queryRunner.manager.create as jest.Mock).mockReturnValue(invAdjLog);
       (queryRunner.manager.save as jest.Mock).mockResolvedValue(invAdjLog);
@@ -138,7 +136,7 @@ describe('AdjustmentService', () => {
         itemCode: 'ITEM-001',
         afterQty: 12,
         reason: '보정',
-      } as any, 'HANES', 'P01');
+      } as any, 1);
 
       expect(result.adjustStatus).toBe('PENDING');
       expect(tx.run).toHaveBeenCalledTimes(1);
@@ -149,15 +147,14 @@ describe('AdjustmentService', () => {
     it('승인대기 보정 요청은 품목과 LOT를 요청 테넌트 범위에서 확인한다', async () => {
       queryRunner.manager.findOne
         .mockResolvedValueOnce({ itemCode: 'ITEM-001', itemName: 'PART', unit: 'EA' } as ItemMaster)
-        .mockResolvedValueOnce({ matUid: 'MAT-001', company: 'HANES', plant: 'P01' } as MatLot)
+        .mockResolvedValueOnce({ matUid: 'MAT-001', organizationId: 1 } as MatLot)
         .mockResolvedValueOnce({
           warehouseCode: 'WH-01',
           itemCode: 'ITEM-001',
           matUid: 'MAT-001',
           qty: 10,
           reservedQty: 0,
-          company: 'HANES',
-          plant: 'P01',
+          organizationId: 1,
         } as MatStock);
       (queryRunner.manager.create as jest.Mock).mockReturnValue({ adjDate: new Date('2026-04-11'), seq: 1 } as InvAdjLog);
       (queryRunner.manager.save as jest.Mock).mockResolvedValue({ adjDate: new Date('2026-04-11'), seq: 1 } as InvAdjLog);
@@ -168,13 +165,13 @@ describe('AdjustmentService', () => {
         matUid: 'MAT-001',
         afterQty: 12,
         reason: '보정',
-      } as any, 'HANES', 'P01');
+      } as any, 1);
 
       expect(queryRunner.manager.findOne).toHaveBeenNthCalledWith(1, ItemMaster, {
-        where: { itemCode: 'ITEM-001', company: 'HANES', plant: 'P01' },
+        where: { itemCode: 'ITEM-001', organizationId: 1 },
       });
       expect(queryRunner.manager.findOne).toHaveBeenNthCalledWith(2, MatLot, {
-        where: { matUid: 'MAT-001', company: 'HANES', plant: 'P01' },
+        where: { matUid: 'MAT-001', organizationId: 1 },
       });
     });
 
@@ -188,8 +185,7 @@ describe('AdjustmentService', () => {
           matUid: 'MAT-001',
           qty: 10,
           reservedQty: 6,
-          company: 'HANES',
-          plant: 'P01',
+          organizationId: 1,
         } as MatStock);
 
       await expect(
@@ -212,8 +208,7 @@ describe('AdjustmentService', () => {
           matUid: null,
           qty: 10,
           reservedQty: 0,
-          company: 'OTHER',
-          plant: 'P01',
+          organizationId: 2,
         } as MatStock);
 
       await expect(
@@ -222,7 +217,7 @@ describe('AdjustmentService', () => {
           itemCode: 'ITEM-001',
           afterQty: 12,
           reason: '보정',
-        } as any, 'HANES', 'P01'),
+        } as any, 1),
       ).rejects.toThrow(BadRequestException);
       expect(queryRunner.manager.create).not.toHaveBeenCalled();
     });
@@ -240,8 +235,7 @@ describe('AdjustmentService', () => {
         diffQty: 5,
         reason: '보정',
         adjustStatus: 'PENDING',
-        company: 'HANES',
-        plant: 'P01',
+        organizationId: 1,
       } as InvAdjLog);
       queryRunner.manager.findOne.mockResolvedValue({
         warehouseCode: 'WH-01',
@@ -262,8 +256,7 @@ describe('AdjustmentService', () => {
       expect(queryRunner.manager.update).toHaveBeenCalledWith(InvAdjLog, {
         adjDate: new Date('2026-04-11'),
         seq: 1,
-        company: 'HANES',
-        plant: 'P01',
+        organizationId: 1,
       }, expect.objectContaining({
         adjustStatus: 'APPROVED',
       }));
@@ -280,8 +273,7 @@ describe('AdjustmentService', () => {
         diffQty: -10,
         reason: '보정',
         adjustStatus: 'PENDING',
-        company: 'HANES',
-        plant: 'P01',
+        organizationId: 1,
       } as InvAdjLog);
       queryRunner.manager.findOne.mockResolvedValue({
         warehouseCode: 'WH-01',
@@ -289,35 +281,33 @@ describe('AdjustmentService', () => {
         matUid: 'MAT-001',
         qty: 10,
         reservedQty: 0,
-        company: 'HANES',
-        plant: 'P01',
+        organizationId: 1,
       } as MatStock);
       stockTxRepo.findOne.mockResolvedValue(null);
       (queryRunner.manager.create as jest.Mock).mockReturnValue({ transNo: 'ADJ2026041100001' } as StockTransaction);
       (queryRunner.manager.save as jest.Mock).mockResolvedValue({ transNo: 'ADJ2026041100001' } as StockTransaction);
 
-      await service.approve('2026-04-11', 1, 'admin', 'HANES', 'P01');
+      await service.approve('2026-04-11', 1, 'admin', 1);
 
       expect(invAdjLogRepo.findOne).toHaveBeenCalledWith({
-        where: { adjDate: new Date('2026-04-11'), seq: 1, company: 'HANES', plant: 'P01' },
+        where: { adjDate: new Date('2026-04-11'), seq: 1, organizationId: 1 },
       });
       expect(queryRunner.manager.findOne).toHaveBeenCalledWith(MatStock, {
         where: {
           warehouseCode: 'WH-01',
           itemCode: 'ITEM-001',
           matUid: 'MAT-001',
-          company: 'HANES',
-          plant: 'P01',
+          organizationId: 1,
         },
       });
       expect(queryRunner.manager.update).toHaveBeenCalledWith(
         MatLot,
-        { matUid: 'MAT-001', company: 'HANES', plant: 'P01' },
+        { matUid: 'MAT-001', organizationId: 1 },
         { status: 'DEPLETED' },
       );
       expect(queryRunner.manager.update).toHaveBeenCalledWith(
         InvAdjLog,
-        { adjDate: new Date('2026-04-11'), seq: 1, company: 'HANES', plant: 'P01' },
+        { adjDate: new Date('2026-04-11'), seq: 1, organizationId: 1 },
         expect.objectContaining({ adjustStatus: 'APPROVED' }),
       );
     });
@@ -333,8 +323,7 @@ describe('AdjustmentService', () => {
         diffQty: -5,
         reason: '보정',
         adjustStatus: 'PENDING',
-        company: 'HANES',
-        plant: 'P01',
+        organizationId: 1,
       } as InvAdjLog);
       queryRunner.manager.findOne.mockResolvedValue({
         warehouseCode: 'WH-01',
@@ -362,8 +351,7 @@ describe('AdjustmentService', () => {
           matUid: null,
           qty: 10,
           reservedQty: 0,
-          company: 'HANES',
-          plant: 'P01',
+          organizationId: 1,
         } as MatStock);
       stockTxRepo.findOne.mockResolvedValue(null);
       (queryRunner.manager.create as jest.Mock)
@@ -378,7 +366,7 @@ describe('AdjustmentService', () => {
         itemCode: 'ITEM-001',
         afterQty: 12,
         reason: '보정',
-      } as any, 'HANES', 'P01');
+      } as any, 1);
 
       expect(result.adjustStatus).toBe('APPROVED');
       expect(tx.run).toHaveBeenCalledTimes(1);
@@ -389,15 +377,14 @@ describe('AdjustmentService', () => {
     it('즉시승인 보정은 품목과 LOT를 요청 테넌트 범위에서 확인한다', async () => {
       queryRunner.manager.findOne
         .mockResolvedValueOnce({ itemCode: 'ITEM-001', itemName: 'PART', unit: 'EA' } as ItemMaster)
-        .mockResolvedValueOnce({ matUid: 'MAT-001', company: 'HANES', plant: 'P01' } as MatLot)
+        .mockResolvedValueOnce({ matUid: 'MAT-001', organizationId: 1 } as MatLot)
         .mockResolvedValueOnce({
           warehouseCode: 'WH-01',
           itemCode: 'ITEM-001',
           matUid: 'MAT-001',
           qty: 10,
           reservedQty: 0,
-          company: 'HANES',
-          plant: 'P01',
+          organizationId: 1,
         } as MatStock);
       stockTxRepo.findOne.mockResolvedValue(null);
       (queryRunner.manager.create as jest.Mock)
@@ -413,13 +400,13 @@ describe('AdjustmentService', () => {
         matUid: 'MAT-001',
         afterQty: 12,
         reason: '보정',
-      } as any, 'HANES', 'P01');
+      } as any, 1);
 
       expect(queryRunner.manager.findOne).toHaveBeenNthCalledWith(1, ItemMaster, {
-        where: { itemCode: 'ITEM-001', company: 'HANES', plant: 'P01' },
+        where: { itemCode: 'ITEM-001', organizationId: 1 },
       });
       expect(queryRunner.manager.findOne).toHaveBeenNthCalledWith(2, MatLot, {
-        where: { matUid: 'MAT-001', company: 'HANES', plant: 'P01' },
+        where: { matUid: 'MAT-001', organizationId: 1 },
       });
     });
 
@@ -432,8 +419,7 @@ describe('AdjustmentService', () => {
           matUid: null,
           qty: 10,
           reservedQty: 0,
-          company: 'HANES',
-          plant: 'OTHER',
+          organizationId: 2,
         } as MatStock);
 
       await expect(
@@ -442,7 +428,7 @@ describe('AdjustmentService', () => {
           itemCode: 'ITEM-001',
           afterQty: 12,
           reason: '보정',
-        } as any, 'HANES', 'P01'),
+        } as any, 1),
       ).rejects.toThrow(BadRequestException);
       expect(queryRunner.manager.update).not.toHaveBeenCalled();
       expect(queryRunner.manager.create).not.toHaveBeenCalled();

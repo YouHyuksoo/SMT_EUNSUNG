@@ -9,7 +9,7 @@
  */
 import { Controller, Get, Param, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
-import { Company, Plant } from '../../../common/decorators/tenant.decorator';
+import { OrganizationId } from '../../../common/decorators/tenant.decorator';
 import { BoxService } from '../services/box.service';
 import { ResponseUtil } from '../../../common/dto/response.dto';
 
@@ -23,10 +23,9 @@ export class BoxStockController {
   @ApiResponse({ status: 200, description: '조회 성공' })
   async findStockByBox(
     @Query('boxNo') boxNo: string | undefined,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.boxService.findStockByBox(boxNo, company, plant);
+    const data = await this.boxService.findStockByBox(boxNo, organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -36,10 +35,9 @@ export class BoxStockController {
   @ApiResponse({ status: 200, description: '조회 성공' })
   async findStockSerials(
     @Param('boxNo') boxNo: string,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.boxService.findStockSerials(boxNo, company, plant);
+    const data = await this.boxService.findStockSerials(boxNo, organizationId);
     return ResponseUtil.success(data);
   }
 }

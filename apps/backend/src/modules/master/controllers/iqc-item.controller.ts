@@ -12,7 +12,7 @@
   UseGuards,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Company, Plant } from '../../../common/decorators/tenant.decorator';
+import { OrganizationId } from '../../../common/decorators/tenant.decorator';
 import { ResponseUtil } from '../../../common/dto/response.dto';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { CreateIqcItemDto, IqcItemQueryDto, UpdateIqcItemDto } from '../dto/iqc-item.dto';
@@ -27,10 +27,9 @@ export class IqcItemController {
   @ApiOperation({ summary: 'Get IQC item list' })
   async findAll(
     @Query() query: IqcItemQueryDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const result = await this.iqcItemService.findAll(query, company, plant);
+    const result = await this.iqcItemService.findAll(query, organizationId);
     return ResponseUtil.paged(result.data, result.total, result.page, result.limit);
   }
 
@@ -39,10 +38,9 @@ export class IqcItemController {
   async findByCompositeKey(
     @Param('itemCode') itemCode: string,
     @Param('seq') seq: string,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.iqcItemService.findByCompositeKey(itemCode, +seq, company, plant);
+    const data = await this.iqcItemService.findByCompositeKey(itemCode, +seq, organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -51,10 +49,9 @@ export class IqcItemController {
   @ApiOperation({ summary: 'Create IQC item' })
   async create(
     @Body() dto: CreateIqcItemDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.iqcItemService.create(dto, company, plant);
+    const data = await this.iqcItemService.create(dto, organizationId);
     return ResponseUtil.success(data, 'IQC item created');
   }
 
@@ -64,10 +61,9 @@ export class IqcItemController {
     @Param('itemCode') itemCode: string,
     @Param('seq') seq: string,
     @Body() dto: UpdateIqcItemDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.iqcItemService.update(itemCode, +seq, dto, company, plant);
+    const data = await this.iqcItemService.update(itemCode, +seq, dto, organizationId);
     return ResponseUtil.success(data, 'IQC item updated');
   }
 
@@ -76,10 +72,9 @@ export class IqcItemController {
   async delete(
     @Param('itemCode') itemCode: string,
     @Param('seq') seq: string,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    await this.iqcItemService.delete(itemCode, +seq, company, plant);
+    await this.iqcItemService.delete(itemCode, +seq, organizationId);
     return ResponseUtil.success(null, 'IQC item deleted');
   }
 }

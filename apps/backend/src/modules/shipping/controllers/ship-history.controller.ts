@@ -12,7 +12,7 @@
  */
 
 import { Controller, Get, Query } from '@nestjs/common';
-import { Company, Plant } from '../../../common/decorators/tenant.decorator';
+import { OrganizationId } from '../../../common/decorators/tenant.decorator';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ShipHistoryService } from '../services/ship-history.service';
 import { ShipHistoryQueryDto } from '../dto/ship-history.dto';
@@ -26,16 +26,16 @@ export class ShipHistoryController {
   @Get()
   @ApiOperation({ summary: '출하이력 목록 조회' })
   @ApiResponse({ status: 200, description: '조회 성공' })
-  async findAll(@Query() query: ShipHistoryQueryDto, @Company() company: string, @Plant() plant: string) {
-    const result = await this.shipHistoryService.findAll(query, company, plant);
+  async findAll(@Query() query: ShipHistoryQueryDto, @OrganizationId() organizationId: number) {
+    const result = await this.shipHistoryService.findAll(query, organizationId);
     return ResponseUtil.paged(result.data, result.total, result.page, result.limit);
   }
 
   @Get('summary')
   @ApiOperation({ summary: '출하이력 통계 요약' })
   @ApiResponse({ status: 200, description: '조회 성공' })
-  async getSummary(@Company() company: string, @Plant() plant: string) {
-    const data = await this.shipHistoryService.getSummary(company, plant);
+  async getSummary(@OrganizationId() organizationId: number) {
+    const data = await this.shipHistoryService.getSummary(organizationId);
     return ResponseUtil.success(data);
   }
 }

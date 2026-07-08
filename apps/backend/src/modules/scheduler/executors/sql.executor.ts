@@ -81,9 +81,9 @@ export class SqlExecutor implements IJobExecutor {
     const tenantParams = this.extractTenantBindParams(namedBinds, job);
     const isDelete = /^\s*DELETE\s/i.test(sql);
 
-    if (isDelete && (!namedBinds.has('company') || (!namedBinds.has('plant') && !namedBinds.has('plantCd')))) {
+    if (isDelete && !namedBinds.has('organizationId')) {
       throw new ForbiddenException(
-        'DELETE SQL은 company와 plant 또는 plantCd 테넌트 바인드를 포함해야 합니다.',
+        'DELETE SQL은 organizationId 테넌트 바인드를 포함해야 합니다.',
       );
     }
 
@@ -133,11 +133,9 @@ export class SqlExecutor implements IJobExecutor {
     return names;
   }
 
-  private extractTenantBindParams(namedBinds: Set<string>, job: SchedulerJob): Record<string, string> {
-    const params: Record<string, string> = {};
-    if (namedBinds.has('company')) params.company = job.company;
-    if (namedBinds.has('plant')) params.plant = job.plantCd;
-    if (namedBinds.has('plantCd')) params.plantCd = job.plantCd;
+  private extractTenantBindParams(namedBinds: Set<string>, job: SchedulerJob): Record<string, number> {
+    const params: Record<string, number> = {};
+    if (namedBinds.has('organizationId')) params.organizationId = job.organizationId;
     return params;
   }
 

@@ -3,7 +3,7 @@
  * @description 원자재 재고 엔티티 - 창고별 원자재 현재고 관리
  *
  * 초보자 가이드:
- * - 복합 PK: (company, plant, warehouseCode, itemCode, matUid) 조합으로 재고 식별
+ * - 복합 PK: (organizationId, warehouseCode, itemCode, matUid) 조합으로 재고 식별
  * - qty: 총수량, reservedQty: 예약수량, availableQty: 가용수량
  * - 제품 재고는 PRODUCT_STOCKS 테이블 사용
  */
@@ -20,11 +20,8 @@ import {
 @Index(['warehouseCode'])
 @Index(['itemCode'])
 export class MatStock {
-  @PrimaryColumn({ type: 'varchar2', name: 'COMPANY', length: 50 })
-  company: string | null;
-
-  @PrimaryColumn({ type: 'varchar2', name: 'PLANT_CD', length: 50 })
-  plant: string | null;
+  @PrimaryColumn({ name: 'ORGANIZATION_ID', type: 'number' })
+  organizationId!: number;
 
   @PrimaryColumn({ name: 'WAREHOUSE_CODE', length: 50 })
   warehouseCode: string;

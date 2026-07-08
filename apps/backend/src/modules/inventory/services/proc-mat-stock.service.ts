@@ -35,8 +35,7 @@ export interface AddProcStockParams {
   refId: string;
   workerId?: string | null;
   remark?: string | null;
-  company: string;
-  plant: string;
+  organizationId: number;
 }
 
 /** 공정재고 차감 파라미터 */
@@ -53,8 +52,7 @@ export interface DeductProcStockParams {
   scannedMatUids?: string[];
   workerId?: string | null;
   remark?: string | null;
-  company: string;
-  plant: string;
+  organizationId: number;
 }
 
 /** 차감 결과 LOT 단위 */
@@ -75,8 +73,7 @@ export interface RestoreProcStockParams {
   orderNo?: string | null;
   workerId?: string | null;
   remark?: string | null;
-  company: string;
-  plant: string;
+  organizationId: number;
 }
 
 /** 복원 결과 LOT 단위 */
@@ -109,7 +106,7 @@ export class ProcMatStockService {
     }
     const manager = qr.manager;
     await this.upsertAdd(manager, {
-      company: p.company, plant: p.plant, processCode: p.processCode,
+      organizationId: p.organizationId, processCode: p.processCode,
       itemCode: p.itemCode, matUid: p.matUid, addQty: p.qty,
     });
 
@@ -132,8 +129,7 @@ export class ProcMatStockService {
         status: 'DONE',
         remark: p.remark ?? null,
         workerId: p.workerId ?? null,
-        company: p.company,
-        plant: p.plant,
+        organizationId: p.organizationId,
       }),
     );
   }
@@ -152,7 +148,7 @@ export class ProcMatStockService {
     const manager = qr.manager;
     const rows = await manager.find(ProcMatStock, {
       where: {
-        company: p.company, plant: p.plant,
+        organizationId: p.organizationId,
         processCode: p.processCode, itemCode: p.itemCode,
       },
     });
@@ -178,7 +174,7 @@ export class ProcMatStockService {
       await manager.update(
         ProcMatStock,
         {
-          company: p.company, plant: p.plant, processCode: p.processCode,
+          organizationId: p.organizationId, processCode: p.processCode,
           itemCode: p.itemCode, matUid: row.matUid,
         },
         {
@@ -206,8 +202,7 @@ export class ProcMatStockService {
           status: 'DONE',
           remark: p.remark ?? null,
           workerId: p.workerId ?? null,
-          company: p.company,
-          plant: p.plant,
+          organizationId: p.organizationId,
         }),
       );
 
@@ -226,7 +221,7 @@ export class ProcMatStockService {
   async restoreInTx(qr: QueryRunner, p: RestoreProcStockParams): Promise<RestoredProcLot[]> {
     const manager = qr.manager;
     const where: Record<string, unknown> = {
-      company: p.company, plant: p.plant,
+      organizationId: p.organizationId,
       refType: p.refType, refId: p.refId, status: 'DONE',
     };
     if (p.originTransType) where.transType = p.originTransType;
@@ -247,12 +242,12 @@ export class ProcMatStockService {
 
       if (p.mode === 'ADD_BACK') {
         await this.upsertAdd(manager, {
-          company: p.company, plant: p.plant, processCode: origin.processCode,
+          organizationId: p.organizationId, processCode: origin.processCode,
           itemCode: origin.itemCode, matUid: origin.matUid, addQty: absQty,
         });
       } else {
         await this.deductOneLot(manager, {
-          company: p.company, plant: p.plant, processCode: origin.processCode,
+          organizationId: p.organizationId, processCode: origin.processCode,
           itemCode: origin.itemCode, matUid: origin.matUid, deductQty: absQty,
         });
       }
@@ -277,8 +272,7 @@ export class ProcMatStockService {
           status: 'DONE',
           remark: p.remark ?? null,
           workerId: p.workerId ?? null,
-          company: p.company,
-          plant: p.plant,
+          organizationId: p.organizationId,
         }),
       );
 
@@ -292,11 +286,10 @@ export class ProcMatStockService {
   async findLotsByProcessItem(
     processCode: string,
     itemCode: string,
-    company: string,
-    plant: string,
+    organizationId: number,
   ): Promise<{ matUid: string; qty: number; availableQty: number }[]> {
     const rows = await this.procStockRepo.find({
-      where: { company, plant, processCode, itemCode },
+      where: { organizationId, processCode, itemCode },
     });
     return rows
       .filter((r) => (r.availableQty ?? 0) > 0)
@@ -306,11 +299,10 @@ export class ProcMatStockService {
   /** 특정 공정의 장착 대기 공정재고 목록 (availableQty > 0) — 설비 장착 화면용 */
   async listWaitingByProcess(
     processCode: string,
-    company: string,
-    plant: string,
+    organizationId: number,
   ): Promise<{ matUid: string; itemCode: string; qty: number; availableQty: number }[]> {
     const rows = await this.procStockRepo.find({
-      where: { company, plant, processCode },
+      where: { organizationId, processCode },
     });
     return rows
       .filter((r) => (r.availableQty ?? 0) > 0)
@@ -326,11 +318,10 @@ export class ProcMatStockService {
   async findLot(
     processCode: string,
     matUid: string,
-    company: string,
-    plant: string,
+    organizationId: number,
   ): Promise<ProcMatStock | null> {
     return this.procStockRepo.findOne({
-      where: { company, plant, processCode, matUid },
+      where: { organizationId, processCode, matUid },
     });
   }
 
@@ -340,10 +331,10 @@ export class ProcMatStockService {
 
   private async upsertAdd(
     manager: EntityManager,
-    p: { company: string; plant: string; processCode: string; itemCode: string; matUid: string; addQty: number },
+    p: { organizationId: number; processCode: string; itemCode: string; matUid: string; addQty: number },
   ): Promise<void> {
     const key = {
-      company: p.company, plant: p.plant, processCode: p.processCode,
+      organizationId: p.organizationId, processCode: p.processCode,
       itemCode: p.itemCode, matUid: p.matUid,
     };
     const existing = await manager.findOne(ProcMatStock, { where: key });
@@ -362,10 +353,10 @@ export class ProcMatStockService {
 
   private async deductOneLot(
     manager: EntityManager,
-    p: { company: string; plant: string; processCode: string; itemCode: string; matUid: string; deductQty: number },
+    p: { organizationId: number; processCode: string; itemCode: string; matUid: string; deductQty: number },
   ): Promise<void> {
     const key = {
-      company: p.company, plant: p.plant, processCode: p.processCode,
+      organizationId: p.organizationId, processCode: p.processCode,
       itemCode: p.itemCode, matUid: p.matUid,
     };
     const existing = await manager.findOne(ProcMatStock, { where: key });

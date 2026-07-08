@@ -71,18 +71,17 @@ describe('ShipReturnService', () => {
       mockReturnRepo.findOne.mockResolvedValue({
         returnNo: 'SR-001',
         shipmentId: null,
-        company: 'C1',
-        plant: 'P1',
+        organizationId: 1,
       } as any);
       mockReturnItemRepo.find.mockResolvedValue([
-        { returnNo: 'SR-001', itemCode: 'ITEM-001', company: 'C1', plant: 'P1' } as ShipmentReturnItem,
+        { returnNo: 'SR-001', itemCode: 'ITEM-001', organizationId: 1 } as ShipmentReturnItem,
       ]);
       mockPartRepo.findOne.mockResolvedValue({ itemCode: 'ITEM-001', itemName: 'Part A' } as ItemMaster);
 
-      await target.findById('SR-001', 'C1', 'P1');
+      await target.findById('SR-001', 1);
 
       expect(mockPartRepo.findOne).toHaveBeenCalledWith({
-        where: { itemCode: 'ITEM-001', company: 'C1', plant: 'P1' },
+        where: { itemCode: 'ITEM-001', organizationId: 1 },
         select: ['itemCode', 'itemName'],
       });
     });
@@ -130,8 +129,8 @@ describe('ShipReturnService', () => {
 
     it('should preserve tenant columns when replacing items', async () => {
       mockReturnRepo.findOne
-        .mockResolvedValueOnce({ returnNo: 'SR-001', status: 'DRAFT', shipmentId: null, company: 'C1', plant: 'P1' } as any)
-        .mockResolvedValueOnce({ returnNo: 'SR-001', status: 'DRAFT', shipmentId: null, company: 'C1', plant: 'P1' } as any);
+        .mockResolvedValueOnce({ returnNo: 'SR-001', status: 'DRAFT', shipmentId: null, organizationId: 1 } as any)
+        .mockResolvedValueOnce({ returnNo: 'SR-001', status: 'DRAFT', shipmentId: null, organizationId: 1 } as any);
       mockReturnItemRepo.find.mockResolvedValue([]);
       mockReturnItemRepo.create.mockImplementation((payload) => payload as any);
       mockPartRepo.findOne.mockResolvedValue(null);
@@ -139,15 +138,13 @@ describe('ShipReturnService', () => {
       await target.update(
         'SR-001',
         { items: [{ itemCode: 'ITEM-1', returnQty: 2 }] } as any,
-        'C1',
-        'P1',
+        1,
       );
 
       expect(mockReturnItemRepo.create).toHaveBeenCalledWith(expect.objectContaining({
         returnNo: 'SR-001',
         itemCode: 'ITEM-1',
-        company: 'C1',
-        plant: 'P1',
+        organizationId: 1,
       }));
     });
   });
@@ -179,11 +176,11 @@ describe('ShipReturnService', () => {
     it('should preserve tenant columns when creating items', async () => {
       mockReturnRepo.findOne
         .mockResolvedValueOnce(null)
-        .mockResolvedValueOnce({ returnNo: 'SR-001', status: 'DRAFT', shipmentId: null, company: 'C1', plant: 'P1' } as any);
-      mockReturnRepo.create.mockReturnValue({ returnNo: 'SR-001', company: 'C1', plant: 'P1' } as any);
+        .mockResolvedValueOnce({ returnNo: 'SR-001', status: 'DRAFT', shipmentId: null, organizationId: 1 } as any);
+      mockReturnRepo.create.mockReturnValue({ returnNo: 'SR-001', organizationId: 1 } as any);
       mockReturnItemRepo.create.mockImplementation((payload) => payload as any);
       mockQr.manager.save
-        .mockResolvedValueOnce({ returnNo: 'SR-001', company: 'C1', plant: 'P1' } as any)
+        .mockResolvedValueOnce({ returnNo: 'SR-001', organizationId: 1 } as any)
         .mockResolvedValueOnce([] as any);
       mockReturnItemRepo.find.mockResolvedValue([]);
       mockPartRepo.findOne.mockResolvedValue(null);
@@ -193,15 +190,13 @@ describe('ShipReturnService', () => {
           returnNo: 'SR-001',
           items: [{ itemCode: 'ITEM-1', returnQty: 1 }],
         } as any,
-        'C1',
-        'P1',
+        1,
       );
 
       expect(mockReturnItemRepo.create).toHaveBeenCalledWith(expect.objectContaining({
         returnNo: 'SR-001',
         itemCode: 'ITEM-1',
-        company: 'C1',
-        plant: 'P1',
+        organizationId: 1,
       }));
     });
   });

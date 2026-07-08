@@ -55,11 +55,8 @@ export class ComCode {
   @Column({ type: 'varchar2', name: 'DEFECT_GRADE', length: 20, nullable: true })
   defectGrade: 'CRITICAL' | 'MAJOR' | 'MINOR' | null;
 
-  @Column({ type: 'varchar2', name: 'COMPANY', length: 50 })
-  company: string;
-
-  @Column({ type: 'varchar2', name: 'PLANT_CD', length: 50 })
-  plant: string;
+  @Column({ name: 'ORGANIZATION_ID', type: 'number' })
+  organizationId!: number;
 
   @Column({ type: 'varchar2', name: 'CREATED_BY', length: 50, nullable: true })
   createdBy: string | null;

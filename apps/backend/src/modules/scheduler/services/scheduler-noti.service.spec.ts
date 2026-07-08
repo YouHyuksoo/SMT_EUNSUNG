@@ -45,7 +45,7 @@ describe('SchedulerNotiService', () => {
       mockDataSource.query.mockResolvedValue([{ nextId: 3 }]);
 
       // Act
-      const result = await target.generateNotiId('COMP');
+      const result = await target.generateNotiId(1);
 
       // Assert
       expect(result).toBe(3);
@@ -63,7 +63,7 @@ describe('SchedulerNotiService', () => {
 
       // Act
       const result = await target.createNotification({
-        company: 'COMP',
+        organizationId: 1,
         userId: 'admin@test.com',
         message: 'Test',
       });
@@ -82,12 +82,12 @@ describe('SchedulerNotiService', () => {
       mockNotiRepo.find.mockResolvedValue(notis);
 
       // Act
-      const result = await target.findByUser('user', 'COMP', 'PLANT');
+      const result = await target.findByUser('user', 1);
 
       // Assert
       expect(result).toEqual(notis);
       expect(mockNotiRepo.find).toHaveBeenCalledWith({
-        where: { userId: 'user', company: 'COMP', plantCd: 'PLANT' },
+        where: { userId: 'user', organizationId: 1 },
         order: { createdAt: 'DESC' },
         take: 20,
       });
@@ -98,7 +98,7 @@ describe('SchedulerNotiService', () => {
       mockNotiRepo.find.mockResolvedValue([]);
 
       // Act
-      await target.findByUser('user', 'COMP', 'PLANT', 5);
+      await target.findByUser('user', 1, 5);
 
       // Assert
       expect(mockNotiRepo.find).toHaveBeenCalledWith(
@@ -114,12 +114,12 @@ describe('SchedulerNotiService', () => {
       mockNotiRepo.count.mockResolvedValue(3);
 
       // Act
-      const result = await target.getUnreadCount('user', 'COMP', 'PLANT');
+      const result = await target.getUnreadCount('user', 1);
 
       // Assert
       expect(result).toBe(3);
       expect(mockNotiRepo.count).toHaveBeenCalledWith({
-        where: { userId: 'user', company: 'COMP', plantCd: 'PLANT', isRead: 'N' },
+        where: { userId: 'user', organizationId: 1, isRead: 'N' },
       });
     });
   });
@@ -131,11 +131,11 @@ describe('SchedulerNotiService', () => {
       mockNotiRepo.update.mockResolvedValue({ affected: 1 } as any);
 
       // Act
-      await target.markAsRead('COMP', 'PLANT', 1);
+      await target.markAsRead(1, 1);
 
       // Assert
       expect(mockNotiRepo.update).toHaveBeenCalledWith(
-        { company: 'COMP', plantCd: 'PLANT', notiId: 1 },
+        { organizationId: 1, notiId: 1 },
         { isRead: 'Y' },
       );
     });
@@ -148,7 +148,7 @@ describe('SchedulerNotiService', () => {
       mockDataSource.query.mockResolvedValue({ affected: 5 });
 
       // Act
-      await target.markAllAsRead('user', 'COMP', 'PLANT');
+      await target.markAllAsRead('user', 1);
 
       // Assert
       expect(mockDataSource.query).toHaveBeenCalled();

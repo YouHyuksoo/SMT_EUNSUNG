@@ -20,7 +20,7 @@ import { ApiConsumes, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Request, Response } from 'express';
 import { memoryStorage } from 'multer';
-import { Company, Plant } from '../../../common/decorators/tenant.decorator';
+import { OrganizationId } from '../../../common/decorators/tenant.decorator';
 import { ResponseUtil } from '../../../common/dto/response.dto';
 import { AuthenticatedRequest, JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { BomQueryDto, CreateBomDto, UpdateBomDto } from '../dto/bom.dto';
@@ -38,10 +38,9 @@ export class BomController {
   async findParents(
     @Query('search') search?: string,
     @Query('effectiveDate') effectiveDate?: string,
-    @Company() company?: string,
-    @Plant() plant?: string,
+    @OrganizationId() organizationId?: number,
   ) {
-    const data = await this.bomService.findParents(search, effectiveDate, company, plant);
+    const data = await this.bomService.findParents(search, effectiveDate, organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -50,11 +49,10 @@ export class BomController {
   @ApiQuery({ name: 'parentItemCode', required: false })
   async exportToExcel(
     @Query('parentItemCode') parentItemCode: string | undefined,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
     @Res() res: Response,
   ) {
-    const buffer = await this.bomService.exportToExcel(parentItemCode, company, plant);
+    const buffer = await this.bomService.exportToExcel(parentItemCode, organizationId);
     const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
     const filename = parentItemCode
       ? `BOM_${parentItemCode}_${dateStr}.xlsx`
@@ -95,11 +93,10 @@ export class BomController {
   )
   async previewUpload(
     @UploadedFile() file: Express.Multer.File,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
     if (!file) throw new BadRequestException('File is required');
-    const result = await this.bomService.previewUpload(file.buffer, company, plant);
+    const result = await this.bomService.previewUpload(file.buffer, organizationId);
     return ResponseUtil.success(result, `미리보기 완료 — 신규: ${result.newCount}, 중복: ${result.duplicateCount}, 오류: ${result.errorCount}`);
   }
 
@@ -120,13 +117,12 @@ export class BomController {
   )
   async uploadFromExcel(
     @UploadedFile() file: Express.Multer.File,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
     @Req() req: AuthenticatedRequest,
   ) {
     if (!file) throw new BadRequestException('File is required');
     const userId = req.user.id;
-    const result = await this.bomService.uploadFromExcel(file.buffer, company, plant, userId);
+    const result = await this.bomService.uploadFromExcel(file.buffer, organizationId, userId);
     return ResponseUtil.success(
       result,
       `Inserted: ${result.inserted}, Skipped: ${result.skipped}, Errors: ${result.errors.length}`,
@@ -142,10 +138,9 @@ export class BomController {
     @Param('parentItemCode') parentItemCode: string,
     @Query('depth') depth?: number,
     @Query('effectiveDate') effectiveDate?: string,
-    @Company() company?: string,
-    @Plant() plant?: string,
+    @OrganizationId() organizationId?: number,
   ) {
-    const data = await this.bomService.findHierarchy(parentItemCode, depth ?? 3, effectiveDate, company, plant);
+    const data = await this.bomService.findHierarchy(parentItemCode, depth ?? 3, effectiveDate, organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -155,10 +150,9 @@ export class BomController {
   async findByParentId(
     @Param('parentItemCode') parentItemCode: string,
     @Query('effectiveDate') effectiveDate?: string,
-    @Company() company?: string,
-    @Plant() plant?: string,
+    @OrganizationId() organizationId?: number,
   ) {
-    const data = await this.bomService.findByParentId(parentItemCode, effectiveDate, company, plant);
+    const data = await this.bomService.findByParentId(parentItemCode, effectiveDate, organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -166,17 +160,16 @@ export class BomController {
   @ApiOperation({ summary: 'Get BOM list' })
   async findAll(
     @Query() query: BomQueryDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const result = await this.bomService.findAll(query, company, plant);
+    const result = await this.bomService.findAll(query, organizationId);
     return ResponseUtil.paged(result.data, result.total, result.page, result.limit);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get one BOM row' })
-  async findById(@Param('id') id: string, @Company() company?: string, @Plant() plant?: string) {
-    const data = await this.bomService.findById(id, company, plant);
+  async findById(@Param('id') id: string, @OrganizationId() organizationId?: number) {
+    const data = await this.bomService.findById(id, organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -185,24 +178,23 @@ export class BomController {
   @ApiOperation({ summary: 'Create BOM row' })
   async create(
     @Body() dto: CreateBomDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.bomService.create(dto, company, plant);
+    const data = await this.bomService.create(dto, organizationId);
     return ResponseUtil.success(data, 'BOM created');
   }
 
   @Put(':id')
   @ApiOperation({ summary: 'Update BOM row' })
-  async update(@Param('id') id: string, @Body() dto: UpdateBomDto, @Company() company?: string, @Plant() plant?: string) {
-    const data = await this.bomService.update(id, dto, company, plant);
+  async update(@Param('id') id: string, @Body() dto: UpdateBomDto, @OrganizationId() organizationId?: number) {
+    const data = await this.bomService.update(id, dto, organizationId);
     return ResponseUtil.success(data, 'BOM updated');
   }
 
   @Delete(':id')
   @ApiOperation({ summary: 'Delete BOM row' })
-  async delete(@Param('id') id: string, @Company() company?: string, @Plant() plant?: string) {
-    await this.bomService.delete(id, company, plant);
+  async delete(@Param('id') id: string, @OrganizationId() organizationId?: number) {
+    await this.bomService.delete(id, organizationId);
     return ResponseUtil.success(null, 'BOM deleted');
   }
 }

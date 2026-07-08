@@ -61,10 +61,9 @@ export class ConsumablesService {
     private readonly tx: TransactionService,
   ) {}
 
-  private tenantWhere(company?: string, plant?: string) {
+  private tenantWhere(organizationId?: number) {
     return {
-      ...(company && { company }),
-      ...(plant && { plant }),
+      ...(organizationId != null ? { organizationId } : {}),
     };
   }
 
@@ -85,7 +84,7 @@ export class ConsumablesService {
    * 소모품 목록 조회 (페이지네이션)
    * - 검색어 필터링을 DB 레벨 QueryBuilder WHERE/LIKE로 처리
    */
-  async findAll(query?: ConsumableQueryDto, company?: string, plant?: string) {
+  async findAll(query?: ConsumableQueryDto, organizationId?: number) {
     const {
       page = 1,
       limit = 10,
@@ -98,8 +97,7 @@ export class ConsumablesService {
 
     const qb = this.consumableMasterRepository.createQueryBuilder('c');
 
-    if (company) qb.andWhere('c.company = :company', { company });
-    if (plant) qb.andWhere('c.plant = :plant', { plant });
+    if (organizationId != null) qb.andWhere('c.organizationId = :organizationId', { organizationId });
     if (category) qb.andWhere('c.category = :category', { category });
     if (status) qb.andWhere('c.status = :status', { status });
     if (useYn) qb.andWhere('c.useYn = :useYn', { useYn });
@@ -132,9 +130,9 @@ export class ConsumablesService {
   /**
    * 소모품 단건 조회 (ID)
    */
-  async findById(id: string, company?: string, plant?: string) {
+  async findById(id: string, organizationId?: number) {
     const consumable = await this.consumableMasterRepository.findOne({
-      where: { consumableCode: id, ...this.tenantWhere(company, plant) },
+      where: { consumableCode: id, ...this.tenantWhere(organizationId) },
     });
 
     if (!consumable) {
@@ -147,10 +145,10 @@ export class ConsumablesService {
   /**
    * 소모품 생성
    */
-  async create(dto: CreateConsumableDto, company?: string, plant?: string) {
+  async create(dto: CreateConsumableDto, organizationId?: number) {
     // 중복 코드 확인
     const existing = await this.consumableMasterRepository.findOne({
-      where: { consumableCode: dto.consumableCode, ...this.tenantWhere(company, plant) },
+      where: { consumableCode: dto.consumableCode, ...this.tenantWhere(organizationId) },
     });
 
     if (existing) {
@@ -170,8 +168,7 @@ export class ConsumablesService {
       currentCount: 0,
       status: 'NORMAL',
       useYn: 'Y',
-      company: company ?? null,
-      plant: plant ?? null,
+      organizationId: organizationId ?? null,
     });
 
     return this.consumableMasterRepository.save(consumable);
@@ -180,8 +177,8 @@ export class ConsumablesService {
   /**
    * 소모품 수정
    */
-  async update(id: string, dto: UpdateConsumableDto, company?: string, plant?: string) {
-    await this.findById(id, company, plant);
+  async update(id: string, dto: UpdateConsumableDto, organizationId?: number) {
+    await this.findById(id, organizationId);
 
     const updateData: Partial<ConsumableMaster> = {};
 
@@ -197,45 +194,41 @@ export class ConsumablesService {
     if (dto.useYn !== undefined) updateData.useYn = dto.useYn;
 
     await this.consumableMasterRepository.update(
-      { consumableCode: id, ...this.tenantWhere(company, plant) },
+      { consumableCode: id, ...this.tenantWhere(organizationId) },
       updateData,
     );
-    return this.findById(id, company, plant);
+    return this.findById(id, organizationId);
   }
 
   /**
    * 소모품 삭제 (소프트 삭제)
    */
-  async delete(id: string, company?: string, plant?: string) {
-    await this.findById(id, company, plant);
+  async delete(id: string, organizationId?: number) {
+    await this.findById(id, organizationId);
 
-    await this.consumableMasterRepository.delete({ consumableCode: id, ...this.tenantWhere(company, plant) });
+    await this.consumableMasterRepository.delete({ consumableCode: id, ...this.tenantWhere(organizationId) });
     return { id, deleted: true };
   }
 
   /**
    * 소모품 삭제 (remove - controller 호환용)
    */
-  async remove(id: string, company?: string, plant?: string) {
-    return this.delete(id, company, plant);
+  async remove(id: string, organizationId?: number) {
+    return this.delete(id, organizationId);
   }
 
   // =============================================
   // 소모품 사용 매핑
   // =============================================
 
-  async findUsageMaps(consumableCode: string, company?: string, plant?: string) {
-    await this.findById(consumableCode, company, plant);
+  async findUsageMaps(consumableCode: string, organizationId?: number) {
+    await this.findById(consumableCode, organizationId);
 
     const params: unknown[] = [consumableCode];
     const tenantClauses: string[] = [];
-    if (company) {
-      tenantClauses.push(`m.COMPANY = :${params.length + 1}`);
-      params.push(company);
-    }
-    if (plant) {
-      tenantClauses.push(`m.PLANT_CD = :${params.length + 1}`);
-      params.push(plant);
+    if (organizationId != null) {
+      tenantClauses.push(`m.ORGANIZATION_ID = :${params.length + 1}`);
+      params.push(organizationId);
     }
     const tenantSql = tenantClauses.length ? ` AND ${tenantClauses.join(' AND ')}` : '';
 
@@ -253,16 +246,13 @@ export class ConsumablesService {
               m.UPDATED_AT        AS "updatedAt"
          FROM CONSUMABLE_USAGE_MAP m
          LEFT JOIN ITEM_MASTERS p
-           ON p.COMPANY = m.COMPANY
-          AND p.PLANT_CD = m.PLANT_CD
+           ON p.ORGANIZATION_ID = m.ORGANIZATION_ID
           AND p.ITEM_CODE = m.PRODUCT_ITEM_CODE
          LEFT JOIN EQUIP_MASTERS e
-           ON e.COMPANY = m.COMPANY
-          AND e.PLANT_CD = m.PLANT_CD
+           ON e.ORGANIZATION_ID = m.ORGANIZATION_ID
           AND e.EQUIP_CODE = m.EQUIP_CODE
          LEFT JOIN CONSUMABLE_MASTERS c
-           ON c.COMPANY = m.COMPANY
-          AND c.PLANT_CD = m.PLANT_CD
+           ON c.ORGANIZATION_ID = m.ORGANIZATION_ID
           AND c.CONSUMABLE_CODE = m.CONSUMABLE_CODE
         WHERE m.CONSUMABLE_CODE = :1
 ${tenantSql}
@@ -271,13 +261,12 @@ ${tenantSql}
     );
   }
 
-  async createUsageMap(consumableCode: string, dto: CreateConsumableUsageMapDto, company?: string, plant?: string) {
-    await this.findById(consumableCode, company, plant);
-    await this.assertUsageMapRefs(dto.productItemCode, dto.equipCode, company, plant);
+  async createUsageMap(consumableCode: string, dto: CreateConsumableUsageMapDto, organizationId?: number) {
+    await this.findById(consumableCode, organizationId);
+    await this.assertUsageMapRefs(dto.productItemCode, dto.equipCode, organizationId);
 
     const key = {
-      company,
-      plant,
+      organizationId,
       productItemCode: dto.productItemCode,
       equipCode: dto.equipCode,
       consumableCode,
@@ -298,11 +287,10 @@ ${tenantSql}
     productItemCode: string,
     equipCode: string,
     dto: UpdateConsumableUsageMapDto,
-    company?: string,
-    plant?: string,
+    organizationId?: number,
   ) {
     const map = await this.usageMapRepository.findOne({
-      where: { consumableCode, productItemCode, equipCode, ...this.tenantWhere(company, plant) },
+      where: { consumableCode, productItemCode, equipCode, ...this.tenantWhere(organizationId) },
     });
     if (!map) {
       throw new NotFoundException(`소모품 사용 매핑을 찾을 수 없습니다: ${productItemCode}/${equipCode}/${consumableCode}`);
@@ -320,14 +308,13 @@ ${tenantSql}
     consumableCode: string,
     productItemCode: string,
     equipCode: string,
-    company?: string,
-    plant?: string,
+    organizationId?: number,
   ) {
     const result = await this.usageMapRepository.delete({
       consumableCode,
       productItemCode,
       equipCode,
-      ...this.tenantWhere(company, plant),
+      ...this.tenantWhere(organizationId),
     });
     if (!result.affected) {
       throw new NotFoundException(`소모품 사용 매핑을 찾을 수 없습니다: ${productItemCode}/${equipCode}/${consumableCode}`);
@@ -335,13 +322,13 @@ ${tenantSql}
     return { consumableCode, productItemCode, equipCode };
   }
 
-  private async assertUsageMapRefs(productItemCode: string, equipCode: string, company?: string, plant?: string) {
+  private async assertUsageMapRefs(productItemCode: string, equipCode: string, organizationId?: number) {
     const [part, equip] = await Promise.all([
       this.partRepository.findOne({
-        where: { itemCode: productItemCode, useYn: 'Y', ...this.tenantWhere(company, plant) },
+        where: { itemCode: productItemCode, useYn: 'Y', ...this.tenantWhere(organizationId) },
       }),
       this.equipRepository.findOne({
-        where: { equipCode, useYn: 'Y', ...this.tenantWhere(company, plant) },
+        where: { equipCode, useYn: 'Y', ...this.tenantWhere(organizationId) },
       }),
     ]);
 
@@ -360,16 +347,16 @@ ${tenantSql}
   /**
    * 소모품 현황 요약
    */
-  async getSummary(company?: string, plant?: string) {
+  async getSummary(organizationId?: number) {
     const [total, warning, replace] = await Promise.all([
       this.consumableMasterRepository.count({
-        where: { useYn: 'Y', ...this.tenantWhere(company, plant) },
+        where: { useYn: 'Y', ...this.tenantWhere(organizationId) },
       }),
       this.consumableMasterRepository.count({
-        where: { status: 'WARNING', useYn: 'Y', ...this.tenantWhere(company, plant) },
+        where: { status: 'WARNING', useYn: 'Y', ...this.tenantWhere(organizationId) },
       }),
       this.consumableMasterRepository.count({
-        where: { status: 'REPLACE', useYn: 'Y', ...this.tenantWhere(company, plant) },
+        where: { status: 'REPLACE', useYn: 'Y', ...this.tenantWhere(organizationId) },
       }),
     ]);
 
@@ -379,12 +366,12 @@ ${tenantSql}
   /**
    * 경고/교체 필요 소모품 목록
    */
-  async getWarningList(company?: string, plant?: string) {
+  async getWarningList(organizationId?: number) {
     return this.consumableMasterRepository.find({
       where: {
         status: In(['WARNING', 'REPLACE']),
         useYn: 'Y',
-        ...this.tenantWhere(company, plant),
+        ...this.tenantWhere(organizationId),
       },
       order: { status: 'DESC', currentCount: 'DESC' },
     });
@@ -393,9 +380,9 @@ ${tenantSql}
   /**
    * 소모품 수명 현황
    */
-  async getLifeStatus(company?: string, plant?: string) {
+  async getLifeStatus(organizationId?: number) {
     return this.consumableMasterRepository.find({
-      where: { useYn: 'Y', ...this.tenantWhere(company, plant) },
+      where: { useYn: 'Y', ...this.tenantWhere(organizationId) },
       order: { status: 'DESC', currentCount: 'DESC', consumableCode: 'ASC' },
     });
   }
@@ -404,7 +391,7 @@ ${tenantSql}
    * 소모품 재고 현황 조회
    * - 검색어 필터링을 DB 레벨 QueryBuilder WHERE/LIKE로 처리
    */
-  async getStockStatus(query?: ConsumableQueryDto, company?: string, plant?: string) {
+  async getStockStatus(query?: ConsumableQueryDto, organizationId?: number) {
     const {
       page = 1,
       limit = 10,
@@ -415,8 +402,7 @@ ${tenantSql}
 
     const qb = this.consumableMasterRepository.createQueryBuilder('c')
       .where('c.useYn = :useYn', { useYn: 'Y' });
-    if (company) qb.andWhere('c.company = :company', { company });
-    if (plant) qb.andWhere('c.plant = :plant', { plant });
+    if (organizationId != null) qb.andWhere('c.organizationId = :organizationId', { organizationId });
 
     if (category) qb.andWhere('c.category = :category', { category });
 
@@ -453,7 +439,7 @@ ${tenantSql}
   /**
    * 입출고 이력 목록 조회
    */
-  async findAllLogs(query?: ConsumableLogQueryDto, company?: string, plant?: string) {
+  async findAllLogs(query?: ConsumableLogQueryDto, organizationId?: number) {
     const {
       page = 1,
       limit = 10,
@@ -465,7 +451,7 @@ ${tenantSql}
     } = query || {};
     const skip = (page - 1) * limit;
 
-    const where: FindOptionsWhere<ConsumableLog> = { ...this.tenantWhere(company, plant) };
+    const where: FindOptionsWhere<ConsumableLog> = { ...this.tenantWhere(organizationId) };
 
     if (consumableId) {
       where.consumableCode = consumableId;
@@ -510,14 +496,13 @@ ${tenantSql}
   /**
    * 입출고 이력 등록
    */
-  async createLog(dto: CreateConsumableLogDto, company?: string, plant?: string) {
+  async createLog(dto: CreateConsumableLogDto, organizationId?: number) {
     return this.tx.run(async (queryRunner) => {
       // 소모품 존재 확인
       const consumable = await queryRunner.manager.findOne(ConsumableMaster, {
         where: {
           consumableCode: dto.consumableId,
-          ...(company ? { company } : {}),
-          ...(plant ? { plant } : {}),
+          ...(organizationId != null ? { organizationId } : {}),
         },
       });
 
@@ -567,8 +552,7 @@ ${tenantSql}
         equipCode: dto.equipCode || null,
         issueReason: dto.issueReason || null,
         returnReason: dto.returnReason || null,
-        company,
-        plant,
+        organizationId,
       });
 
       const savedLog = await queryRunner.manager.save(ConsumableLog, log);
@@ -578,8 +562,7 @@ ${tenantSql}
         ConsumableMaster,
         {
           consumableCode: dto.consumableId,
-          ...(company ? { company } : {}),
-          ...(plant ? { plant } : {}),
+          ...(organizationId != null ? { organizationId } : {}),
         },
         {
           stockQty: consumable.stockQty + stockDelta,
@@ -598,30 +581,29 @@ ${tenantSql}
   /**
    * 소모품 이미지 URL 업데이트
    */
-  async updateImage(consumableCode: string, imageUrl: string | null, company?: string, plant?: string) {
+  async updateImage(consumableCode: string, imageUrl: string | null, organizationId?: number) {
     const consumable = await this.consumableMasterRepository.findOne({
-      where: { consumableCode, ...this.tenantWhere(company, plant) },
+      where: { consumableCode, ...this.tenantWhere(organizationId) },
     });
     if (!consumable) {
       throw new NotFoundException(`소모품을 찾을 수 없습니다: ${consumableCode}`);
     }
     await this.consumableMasterRepository.update(
-      { consumableCode, ...this.tenantWhere(company, plant) },
+      { consumableCode, ...this.tenantWhere(organizationId) },
       { imageUrl },
     );
-    return this.findById(consumableCode, company, plant);
+    return this.findById(consumableCode, organizationId);
   }
 
   /**
    * 타수 업데이트 (사용 횟수 증가)
    */
-  async updateShotCount(dto: UpdateShotCountDto, company?: string, plant?: string) {
+  async updateShotCount(dto: UpdateShotCountDto, organizationId?: number) {
     return this.tx.run(async (queryRunner) => {
       const consumable = await queryRunner.manager.findOne(ConsumableMaster, {
         where: {
           consumableCode: dto.consumableId,
-          ...(company ? { company } : {}),
-          ...(plant ? { plant } : {}),
+          ...(organizationId != null ? { organizationId } : {}),
         },
       });
 
@@ -643,8 +625,7 @@ ${tenantSql}
         ConsumableMaster,
         {
           consumableCode: dto.consumableId,
-          ...(company ? { company } : {}),
-          ...(plant ? { plant } : {}),
+          ...(organizationId != null ? { organizationId } : {}),
         },
         {
           currentCount: newCount,
@@ -666,8 +647,7 @@ ${tenantSql}
           qty: dto.addCount,
           equipCode: dto.equipCode,
           remark: `타수 업데이트: +${dto.addCount}`,
-          company,
-          plant,
+          organizationId,
         });
         await queryRunner.manager.save(ConsumableLog, log);
       }
@@ -686,13 +666,12 @@ ${tenantSql}
   /**
    * 타수 리셋 (교체 시)
    */
-  async resetShotCount(dto: ResetShotCountDto, company?: string, plant?: string) {
+  async resetShotCount(dto: ResetShotCountDto, organizationId?: number) {
     return this.tx.run(async (queryRunner) => {
       const consumable = await queryRunner.manager.findOne(ConsumableMaster, {
         where: {
           consumableCode: dto.consumableId,
-          ...(company ? { company } : {}),
-          ...(plant ? { plant } : {}),
+          ...(organizationId != null ? { organizationId } : {}),
         },
       });
 
@@ -715,8 +694,7 @@ ${tenantSql}
         logType: 'REPLACE',
         qty: previousCount,
         remark: dto.remark || '소모품 교체 (타수 리셋)',
-        company,
-        plant,
+        organizationId,
       });
       await queryRunner.manager.save(ConsumableLog, log);
 
@@ -725,8 +703,7 @@ ${tenantSql}
         ConsumableMaster,
         {
           consumableCode: dto.consumableId,
-          ...(company ? { company } : {}),
-          ...(plant ? { plant } : {}),
+          ...(organizationId != null ? { organizationId } : {}),
         },
         {
           currentCount: 0,

@@ -11,7 +11,7 @@
 
 import { Controller, Get, Post, Put, Delete, Body, Param, Query, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
-import { Company, Plant } from '../../../common/decorators/tenant.decorator';
+import { OrganizationId } from '../../../common/decorators/tenant.decorator';
 import { ModelSuffixService } from '../services/model-suffix.service';
 import { CreateModelSuffixDto, UpdateModelSuffixDto, ModelSuffixQueryDto } from '../dto/model-suffix.dto';
 import { ResponseUtil } from '../../../common/dto/response.dto';
@@ -23,8 +23,8 @@ export class ModelSuffixController {
 
   @Get()
   @ApiOperation({ summary: '모델접미사 목록 조회' })
-  async findAll(@Query() query: ModelSuffixQueryDto, @Company() company: string, @Plant() plant: string) {
-    const result = await this.modelSuffixService.findAll(query, company, plant);
+  async findAll(@Query() query: ModelSuffixQueryDto, @OrganizationId() organizationId: number) {
+    const result = await this.modelSuffixService.findAll(query, organizationId);
     return ResponseUtil.paged(result.data, result.total, result.page, result.limit);
   }
 
@@ -33,10 +33,9 @@ export class ModelSuffixController {
   async findByCompositeKey(
     @Param('modelCode') modelCode: string,
     @Param('suffixCode') suffixCode: string,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.modelSuffixService.findByCompositeKey(modelCode, suffixCode, company, plant);
+    const data = await this.modelSuffixService.findByCompositeKey(modelCode, suffixCode, organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -45,10 +44,9 @@ export class ModelSuffixController {
   @ApiOperation({ summary: '모델접미사 생성' })
   async create(
     @Body() dto: CreateModelSuffixDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.modelSuffixService.create(dto, company, plant);
+    const data = await this.modelSuffixService.create(dto, organizationId);
     return ResponseUtil.success(data, '모델접미사가 생성되었습니다.');
   }
 
@@ -58,10 +56,9 @@ export class ModelSuffixController {
     @Param('modelCode') modelCode: string,
     @Param('suffixCode') suffixCode: string,
     @Body() dto: UpdateModelSuffixDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.modelSuffixService.update(modelCode, suffixCode, dto, company, plant);
+    const data = await this.modelSuffixService.update(modelCode, suffixCode, dto, organizationId);
     return ResponseUtil.success(data, '모델접미사가 수정되었습니다.');
   }
 
@@ -70,10 +67,9 @@ export class ModelSuffixController {
   async delete(
     @Param('modelCode') modelCode: string,
     @Param('suffixCode') suffixCode: string,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    await this.modelSuffixService.delete(modelCode, suffixCode, company, plant);
+    await this.modelSuffixService.delete(modelCode, suffixCode, organizationId);
     return ResponseUtil.success(null, '모델접미사가 삭제되었습니다.');
   }
 }

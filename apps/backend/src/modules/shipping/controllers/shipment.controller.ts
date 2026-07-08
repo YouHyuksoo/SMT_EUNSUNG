@@ -41,7 +41,7 @@ import {
   HttpStatus,
   UseGuards,
 } from '@nestjs/common';
-import { Company, Plant } from '../../../common/decorators/tenant.decorator';
+import { OrganizationId } from '../../../common/decorators/tenant.decorator';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import {
   ApiTags,
@@ -74,24 +74,24 @@ export class ShipmentController {
   @Get()
   @ApiOperation({ summary: '출하 목록 조회', description: '페이지네이션 및 필터링 지원' })
   @ApiResponse({ status: 200, description: '조회 성공' })
-  async findAll(@Query() query: ShipmentQueryDto, @Company() company: string, @Plant() plant: string) {
-    const result = await this.shipmentService.findAll(query, company, plant);
+  async findAll(@Query() query: ShipmentQueryDto, @OrganizationId() organizationId: number) {
+    const result = await this.shipmentService.findAll(query, organizationId);
     return ResponseUtil.paged(result.data, result.total, result.page, result.limit);
   }
 
   @Get('erp/unsynced')
   @ApiOperation({ summary: 'ERP 미동기화 출하 목록', description: '출하 완료된 건 중 ERP에 동기화되지 않은 목록' })
   @ApiResponse({ status: 200, description: '조회 성공' })
-  async findUnsyncedForErp(@Company() company: string, @Plant() plant: string) {
-    const data = await this.shipmentService.findUnsyncedForErp(company, plant);
+  async findUnsyncedForErp(@OrganizationId() organizationId: number) {
+    const data = await this.shipmentService.findUnsyncedForErp(organizationId);
     return ResponseUtil.success(data);
   }
 
   @Get('stats/daily')
   @ApiOperation({ summary: '일자별 출하 통계', description: '기간 내 일자별 출하 집계' })
   @ApiResponse({ status: 200, description: '조회 성공' })
-  async getShipmentStats(@Query() query: ShipmentStatsQueryDto, @Company() company: string, @Plant() plant: string) {
-    const data = await this.shipmentService.getShipmentStats(query, company, plant);
+  async getShipmentStats(@Query() query: ShipmentStatsQueryDto, @OrganizationId() organizationId: number) {
+    const data = await this.shipmentService.getShipmentStats(query, organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -103,10 +103,9 @@ export class ShipmentController {
   async getCustomerStats(
     @Query('fromDate') fromDate: string,
     @Query('toDate') toDate: string,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.shipmentService.getCustomerStats(fromDate, toDate, company, plant);
+    const data = await this.shipmentService.getCustomerStats(fromDate, toDate, organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -115,8 +114,8 @@ export class ShipmentController {
   @ApiParam({ name: 'shipNo', description: '출하 번호', example: 'SHP-20250126-001' })
   @ApiResponse({ status: 200, description: '조회 성공' })
   @ApiResponse({ status: 404, description: '출하 없음' })
-  async findByShipNo(@Param('shipNo') shipNo: string, @Company() company: string, @Plant() plant: string) {
-    const data = await this.shipmentService.findByShipNo(shipNo, company, plant);
+  async findByShipNo(@Param('shipNo') shipNo: string, @OrganizationId() organizationId: number) {
+    const data = await this.shipmentService.findByShipNo(shipNo, organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -125,8 +124,8 @@ export class ShipmentController {
   @ApiParam({ name: 'id', description: '출하 ID' })
   @ApiResponse({ status: 200, description: '조회 성공' })
   @ApiResponse({ status: 404, description: '출하 없음' })
-  async findById(@Param('id') id: string, @Company() company: string, @Plant() plant: string) {
-    const data = await this.shipmentService.findById(id, company, plant);
+  async findById(@Param('id') id: string, @OrganizationId() organizationId: number) {
+    const data = await this.shipmentService.findById(id, organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -135,8 +134,8 @@ export class ShipmentController {
   @ApiParam({ name: 'id', description: '출하 ID' })
   @ApiResponse({ status: 200, description: '조회 성공' })
   @ApiResponse({ status: 404, description: '출하 없음' })
-  async getShipmentPallets(@Param('id') id: string, @Company() company: string, @Plant() plant: string) {
-    const data = await this.shipmentService.getShipmentPallets(id, company, plant);
+  async getShipmentPallets(@Param('id') id: string, @OrganizationId() organizationId: number) {
+    const data = await this.shipmentService.getShipmentPallets(id, organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -149,10 +148,9 @@ export class ShipmentController {
   async verifyPalletBarcode(
     @Param('id') id: string,
     @Body('palletNo') palletNo: string,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.shipmentService.verifyPalletBarcode(id, palletNo, company, plant);
+    const data = await this.shipmentService.verifyPalletBarcode(id, palletNo, organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -161,8 +159,8 @@ export class ShipmentController {
   @ApiParam({ name: 'id', description: '출하 ID' })
   @ApiResponse({ status: 200, description: '조회 성공' })
   @ApiResponse({ status: 404, description: '출하 없음' })
-  async getShipmentSummary(@Param('id') id: string, @Company() company: string, @Plant() plant: string) {
-    const data = await this.shipmentService.getShipmentSummary(id, company, plant);
+  async getShipmentSummary(@Param('id') id: string, @OrganizationId() organizationId: number) {
+    const data = await this.shipmentService.getShipmentSummary(id, organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -171,8 +169,8 @@ export class ShipmentController {
   @ApiOperation({ summary: '출하 생성' })
   @ApiResponse({ status: 201, description: '생성 성공' })
   @ApiResponse({ status: 409, description: '중복 출하번호' })
-  async create(@Body() dto: CreateShipmentDto, @Company() company: string, @Plant() plant: string) {
-    const data = await this.shipmentService.create(dto, company, plant);
+  async create(@Body() dto: CreateShipmentDto, @OrganizationId() organizationId: number) {
+    const data = await this.shipmentService.create(dto, organizationId);
     return ResponseUtil.success(data, '출하가 생성되었습니다.');
   }
 
@@ -182,8 +180,8 @@ export class ShipmentController {
   @ApiResponse({ status: 200, description: '수정 성공' })
   @ApiResponse({ status: 404, description: '출하 없음' })
   @ApiResponse({ status: 400, description: '수정 불가 상태' })
-  async update(@Param('id') id: string, @Body() dto: UpdateShipmentDto, @Company() company: string, @Plant() plant: string) {
-    const data = await this.shipmentService.update(id, dto, company, plant);
+  async update(@Param('id') id: string, @Body() dto: UpdateShipmentDto, @OrganizationId() organizationId: number) {
+    const data = await this.shipmentService.update(id, dto, organizationId);
     return ResponseUtil.success(data, '출하가 수정되었습니다.');
   }
 
@@ -194,8 +192,8 @@ export class ShipmentController {
   @ApiResponse({ status: 200, description: '삭제 성공' })
   @ApiResponse({ status: 404, description: '출하 없음' })
   @ApiResponse({ status: 400, description: '삭제 불가 상태' })
-  async delete(@Param('id') id: string, @Company() company: string, @Plant() plant: string) {
-    await this.shipmentService.delete(id, company, plant);
+  async delete(@Param('id') id: string, @OrganizationId() organizationId: number) {
+    await this.shipmentService.delete(id, organizationId);
     return ResponseUtil.success(null, '출하가 삭제되었습니다.');
   }
 
@@ -208,8 +206,8 @@ export class ShipmentController {
   @ApiResponse({ status: 200, description: '적재 성공' })
   @ApiResponse({ status: 400, description: '상태 오류' })
   @ApiResponse({ status: 404, description: '팔레트 없음' })
-  async loadPallets(@Param('id') id: string, @Body() dto: LoadPalletsDto, @Company() company: string, @Plant() plant: string) {
-    const data = await this.shipmentService.loadPallets(id, dto, company, plant);
+  async loadPallets(@Param('id') id: string, @Body() dto: LoadPalletsDto, @OrganizationId() organizationId: number) {
+    const data = await this.shipmentService.loadPallets(id, dto, organizationId);
     return ResponseUtil.success(data, '팔레트가 적재되었습니다.');
   }
 
@@ -220,8 +218,8 @@ export class ShipmentController {
   @ApiResponse({ status: 200, description: '하차 성공' })
   @ApiResponse({ status: 400, description: '상태 오류' })
   @ApiResponse({ status: 404, description: '팔레트 없음' })
-  async unloadPallets(@Param('id') id: string, @Body() dto: UnloadPalletsDto, @Company() company: string, @Plant() plant: string) {
-    const data = await this.shipmentService.unloadPallets(id, dto, company, plant);
+  async unloadPallets(@Param('id') id: string, @Body() dto: UnloadPalletsDto, @OrganizationId() organizationId: number) {
+    const data = await this.shipmentService.unloadPallets(id, dto, organizationId);
     return ResponseUtil.success(data, '팔레트가 하차되었습니다.');
   }
 
@@ -233,8 +231,8 @@ export class ShipmentController {
   @ApiParam({ name: 'id', description: '출하 ID' })
   @ApiResponse({ status: 200, description: '적재완료 성공' })
   @ApiResponse({ status: 400, description: '상태 변경 불가' })
-  async markAsLoaded(@Param('id') id: string, @Company() company: string, @Plant() plant: string) {
-    const data = await this.shipmentService.markAsLoaded(id, company, plant);
+  async markAsLoaded(@Param('id') id: string, @OrganizationId() organizationId: number) {
+    const data = await this.shipmentService.markAsLoaded(id, organizationId);
     return ResponseUtil.success(data, '적재가 완료되었습니다.');
   }
 
@@ -244,8 +242,8 @@ export class ShipmentController {
   @ApiParam({ name: 'id', description: '출하 ID' })
   @ApiResponse({ status: 200, description: '출하 성공' })
   @ApiResponse({ status: 400, description: '상태 변경 불가' })
-  async markAsShipped(@Param('id') id: string, @Company() company: string, @Plant() plant: string) {
-    const data = await this.shipmentService.markAsShipped(id, company, plant);
+  async markAsShipped(@Param('id') id: string, @OrganizationId() organizationId: number) {
+    const data = await this.shipmentService.markAsShipped(id, organizationId);
     return ResponseUtil.success(data, '출하되었습니다.');
   }
 
@@ -255,8 +253,8 @@ export class ShipmentController {
   @ApiParam({ name: 'id', description: '출하 ID' })
   @ApiResponse({ status: 200, description: '배송완료 성공' })
   @ApiResponse({ status: 400, description: '상태 변경 불가' })
-  async markAsDelivered(@Param('id') id: string, @Company() company: string, @Plant() plant: string) {
-    const data = await this.shipmentService.markAsDelivered(id, company, plant);
+  async markAsDelivered(@Param('id') id: string, @OrganizationId() organizationId: number) {
+    const data = await this.shipmentService.markAsDelivered(id, organizationId);
     return ResponseUtil.success(data, '배송이 완료되었습니다.');
   }
 
@@ -267,8 +265,8 @@ export class ShipmentController {
   @ApiBody({ schema: { type: 'object', properties: { remark: { type: 'string', description: '취소 사유' } } } })
   @ApiResponse({ status: 200, description: '취소 성공' })
   @ApiResponse({ status: 400, description: '상태 변경 불가' })
-  async cancel(@Param('id') id: string, @Body('remark') remark: string | undefined, @Company() company: string, @Plant() plant: string) {
-    const data = await this.shipmentService.cancel(id, remark, company, plant);
+  async cancel(@Param('id') id: string, @Body('remark') remark: string | undefined, @OrganizationId() organizationId: number) {
+    const data = await this.shipmentService.cancel(id, remark, organizationId);
     return ResponseUtil.success(data, '출하가 취소되었습니다.');
   }
 
@@ -282,10 +280,9 @@ export class ShipmentController {
   async reverseShipment(
     @Param('id') id: string,
     @Body('remark') remark: string | undefined,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.shipmentService.reverseShipment(id, remark, company, plant);
+    const data = await this.shipmentService.reverseShipment(id, remark, organizationId);
     return ResponseUtil.success(data, '출하가 역분개되었습니다.');
   }
 
@@ -293,8 +290,8 @@ export class ShipmentController {
   @ApiOperation({ summary: '상태 직접 변경 (관리자용)', description: '상태를 직접 변경 (주의: 워크플로우 무시)' })
   @ApiParam({ name: 'id', description: '출하 ID' })
   @ApiResponse({ status: 200, description: '변경 성공' })
-  async changeStatus(@Param('id') id: string, @Body() dto: ChangeShipmentStatusDto, @Company() company: string, @Plant() plant: string) {
-    const data = await this.shipmentService.changeStatus(id, dto, company, plant);
+  async changeStatus(@Param('id') id: string, @Body() dto: ChangeShipmentStatusDto, @OrganizationId() organizationId: number) {
+    const data = await this.shipmentService.changeStatus(id, dto, organizationId);
     return ResponseUtil.success(data, '상태가 변경되었습니다.');
   }
 
@@ -304,8 +301,8 @@ export class ShipmentController {
   @ApiOperation({ summary: 'ERP 동기화 플래그 변경' })
   @ApiParam({ name: 'id', description: '출하 ID' })
   @ApiResponse({ status: 200, description: '변경 성공' })
-  async updateErpSyncYn(@Param('id') id: string, @Body() dto: UpdateErpSyncDto, @Company() company: string, @Plant() plant: string) {
-    const data = await this.shipmentService.updateErpSyncYn(id, dto, company, plant);
+  async updateErpSyncYn(@Param('id') id: string, @Body() dto: UpdateErpSyncDto, @OrganizationId() organizationId: number) {
+    const data = await this.shipmentService.updateErpSyncYn(id, dto, organizationId);
     return ResponseUtil.success(data, 'ERP 동기화 상태가 변경되었습니다.');
   }
 
@@ -314,8 +311,8 @@ export class ShipmentController {
   @ApiOperation({ summary: 'ERP 동기화 완료 처리 (일괄)', description: '여러 출하를 동기화 완료 처리' })
   @ApiBody({ schema: { type: 'object', properties: { ids: { type: 'array', items: { type: 'string' } } } } })
   @ApiResponse({ status: 200, description: '처리 성공' })
-  async markAsSynced(@Body('ids') ids: string[], @Company() company: string, @Plant() plant: string) {
-    const result = await this.shipmentService.markAsSynced(ids, company, plant);
+  async markAsSynced(@Body('ids') ids: string[], @OrganizationId() organizationId: number) {
+    const result = await this.shipmentService.markAsSynced(ids, organizationId);
     return ResponseUtil.success(result, `${result.count}건의 출하가 동기화 완료 처리되었습니다.`);
   }
 }

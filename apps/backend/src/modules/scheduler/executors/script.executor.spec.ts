@@ -23,8 +23,7 @@ describe('ScriptExecutor', () => {
   let parsedArgs: string[] = [];
 
   const baseJob = {
-    company: 'C1',
-    plantCd: 'P1',
+    organizationId: 1,
     jobCode: 'SCRIPT_JOB',
     execType: 'SCRIPT',
     execTarget: 'C:\\scripts\\task.bat',
@@ -65,9 +64,7 @@ describe('ScriptExecutor', () => {
 
     expect(callOptions).not.toBeNull();
     const env = (callOptions?.env || {}) as NodeJS.ProcessEnv;
-    expect(env['SCHEDULER_COMPANY']).toBe('C1');
-    expect(env['SCHEDULER_PLANT']).toBe('P1');
-    expect(env['SCHEDULER_PLANT_CD']).toBe('P1');
+    expect(env['SCHEDULER_ORGANIZATION_ID']).toBe('1');
   });
 
   it('should pass array execParams directly as script arguments', async () => {

@@ -12,7 +12,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { Company, Plant } from '../../../../common/decorators/tenant.decorator';
+import { OrganizationId } from '../../../../common/decorators/tenant.decorator';
 import { ResponseUtil } from '../../../../common/dto/response.dto';
 import { AuthenticatedRequest, JwtAuthGuard } from '../../../../common/guards/jwt-auth.guard';
 import {
@@ -31,8 +31,8 @@ export class OqcController {
   @Get('stats')
   @ApiOperation({ summary: 'OQC stats' })
   @ApiResponse({ status: 200, description: 'OK' })
-  async getStats(@Company() company?: string, @Plant() plant?: string) {
-    const data = await this.oqcService.getStats(company, plant);
+  async getStats(@OrganizationId() organizationId?: number) {
+    const data = await this.oqcService.getStats(organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -42,10 +42,9 @@ export class OqcController {
   @ApiResponse({ status: 200, description: 'OK' })
   async getAvailableBoxes(
     @Query('itemCode') itemCode?: string,
-    @Company() company?: string,
-    @Plant() plant?: string,
+    @OrganizationId() organizationId?: number,
   ) {
-    const data = await this.oqcService.getAvailableBoxes(itemCode, company, plant);
+    const data = await this.oqcService.getAvailableBoxes(itemCode, organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -54,10 +53,9 @@ export class OqcController {
   @ApiResponse({ status: 200, description: 'OK' })
   async findAll(
     @Query() query: OqcRequestQueryDto,
-    @Company() company?: string,
-    @Plant() plant?: string,
+    @OrganizationId() organizationId?: number,
   ) {
-    const result = await this.oqcService.findAll(query, company, plant);
+    const result = await this.oqcService.findAll(query, organizationId);
     return ResponseUtil.paged(result.data, result.total, result.page, result.limit);
   }
 
@@ -66,8 +64,8 @@ export class OqcController {
   @ApiParam({ name: 'id' })
   @ApiResponse({ status: 200, description: 'OK' })
   @ApiResponse({ status: 404, description: 'Not found' })
-  async findById(@Param('id') id: string, @Company() company?: string, @Plant() plant?: string) {
-    const data = await this.oqcService.findById(id, company, plant);
+  async findById(@Param('id') id: string, @OrganizationId() organizationId?: number) {
+    const data = await this.oqcService.findById(id, organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -78,11 +76,10 @@ export class OqcController {
   async createRequest(
     @Body() dto: CreateOqcRequestDto,
     @Req() req: AuthenticatedRequest,
-    @Company() company?: string,
-    @Plant() plant?: string,
+    @OrganizationId() organizationId?: number,
   ) {
     const userId = req.user?.id;
-    const data = await this.oqcService.createRequest(dto, company, plant, userId);
+    const data = await this.oqcService.createRequest(dto, organizationId, userId);
     return ResponseUtil.success(data, 'OQC request created');
   }
 
@@ -95,11 +92,10 @@ export class OqcController {
     @Param('id') id: string,
     @Body() dto: ExecuteOqcInspectionDto,
     @Req() req: AuthenticatedRequest,
-    @Company() company?: string,
-    @Plant() plant?: string,
+    @OrganizationId() organizationId?: number,
   ) {
     const userId = req.user?.id;
-    const data = await this.oqcService.executeInspection(id, dto, userId, company, plant);
+    const data = await this.oqcService.executeInspection(id, dto, userId, organizationId);
     return ResponseUtil.success(data, `Result: ${dto.result}`);
   }
 
@@ -111,11 +107,10 @@ export class OqcController {
     @Param('id') id: string,
     @Body() dto: UpdateOqcResultDto,
     @Req() req: AuthenticatedRequest,
-    @Company() company?: string,
-    @Plant() plant?: string,
+    @OrganizationId() organizationId?: number,
   ) {
     const userId = req.user?.id;
-    const data = await this.oqcService.updateResult(id, dto, userId, company, plant);
+    const data = await this.oqcService.updateResult(id, dto, userId, organizationId);
     return ResponseUtil.success(data, 'OQC result updated');
   }
 }

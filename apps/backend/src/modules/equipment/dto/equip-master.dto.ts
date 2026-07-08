@@ -230,13 +230,9 @@ export class EquipMasterQueryDto extends PaginationQueryDto {
   @IsString()
   search?: string;
 
-  @ApiPropertyOptional({ description: '회사 코드' })
+  @ApiPropertyOptional({ description: '조직 ID' })
   @IsOptional()
-  @IsString()
-  company?: string;
-
-  @ApiPropertyOptional({ description: '플랜트 코드' })
-  @IsOptional()
-  @IsString()
-  plant?: string;
+  @Type(() => Number)
+  @IsInt()
+  organizationId?: number;
 }

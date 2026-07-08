@@ -32,10 +32,10 @@ export class SchedulerNotiService {
 
   /**
    * NOTI_ID 채번: Oracle sequence
-   * @param company 회사코드
+   * @param organizationId 조직 ID
    * @returns 다음 NOTI_ID
    */
-  async generateNotiId(company: string): Promise<number> {
+  async generateNotiId(organizationId: number): Promise<number> {
     const result = await this.dataSource.query(
       `SELECT SEQ_SCHEDULER_NOTIFICATIONS.NEXTVAL AS "nextId" FROM DUAL`,
     );
@@ -54,8 +54,8 @@ export class SchedulerNotiService {
   async createNotification(
     data: Partial<SchedulerNotification>,
   ): Promise<SchedulerNotification> {
-    const company = data.company!;
-    const notiId = await this.generateNotiId(company);
+    const organizationId = data.organizationId!;
+    const notiId = await this.generateNotiId(organizationId);
 
     const noti = this.notiRepo.create({
       ...data,
@@ -64,24 +64,23 @@ export class SchedulerNotiService {
     });
 
     const saved = await this.notiRepo.save(noti);
-    this.logger.log(`알림 생성: company=${company}, notiId=${notiId}, userId=${data.userId}`);
+    this.logger.log(`알림 생성: organizationId=${organizationId}, notiId=${notiId}, userId=${data.userId}`);
     return saved;
   }
 
   /**
    * 특정 사용자의 최근 알림 목록 조회
    * @param userId 사용자 ID
-   * @param company 회사코드
+   * @param organizationId 조직 ID
    * @param limit 조회 건수 (기본 20)
    */
   async findByUser(
     userId: string,
-    company: string,
-    plant: string,
+    organizationId: number,
     limit: number = 20,
   ): Promise<SchedulerNotification[]> {
     return this.notiRepo.find({
-      where: { userId, company, plantCd: plant },
+      where: { userId, organizationId },
       order: { createdAt: 'DESC' },
       take: limit,
     });
@@ -90,22 +89,22 @@ export class SchedulerNotiService {
   /**
    * 읽지 않은 알림 개수 조회
    * @param userId 사용자 ID
-   * @param company 회사코드
+   * @param organizationId 조직 ID
    */
-  async getUnreadCount(userId: string, company: string, plant: string): Promise<number> {
+  async getUnreadCount(userId: string, organizationId: number): Promise<number> {
     return this.notiRepo.count({
-      where: { userId, company, plantCd: plant, isRead: 'N' },
+      where: { userId, organizationId, isRead: 'N' },
     });
   }
 
   /**
    * 개별 알림 읽음 처리
-   * @param company 회사코드
+   * @param organizationId 조직 ID
    * @param notiId 알림 ID
    */
-  async markAsRead(company: string, plant: string, notiId: number): Promise<void> {
+  async markAsRead(organizationId: number, notiId: number): Promise<void> {
     await this.notiRepo.update(
-      { company, plantCd: plant, notiId },
+      { organizationId, notiId },
       { isRead: 'Y' },
     );
   }
@@ -113,15 +112,15 @@ export class SchedulerNotiService {
   /**
    * 사용자의 모든 미읽은 알림 일괄 읽음 처리
    * @param userId 사용자 ID
-   * @param company 회사코드
+   * @param organizationId 조직 ID
    */
-  async markAllAsRead(userId: string, company: string, plant: string): Promise<void> {
+  async markAllAsRead(userId: string, organizationId: number): Promise<void> {
     await this.dataSource.query(
       `UPDATE "SCHEDULER_NOTIFICATIONS"
           SET "IS_READ" = 'Y'
-        WHERE "COMPANY" = :1 AND "PLANT_CD" = :2 AND "USER_ID" = :3 AND "IS_READ" = 'N'`,
-      [company, plant, userId],
+        WHERE "ORGANIZATION_ID" = :1 AND "USER_ID" = :2 AND "IS_READ" = 'N'`,
+      [organizationId, userId],
     );
-    this.logger.log(`알림 일괄 읽음 처리: company=${company}, plant=${plant}, userId=${userId}`);
+    this.logger.log(`알림 일괄 읽음 처리: organizationId=${organizationId}, userId=${userId}`);
   }
 }

@@ -67,10 +67,9 @@ export class ShipmentService {
     private readonly sysConfig: SysConfigService,
   ) {}
 
-  private tenantWhere(company?: string, plant?: string) {
+  private tenantWhere(organizationId?: number) {
     return {
-      ...(company && { company }),
-      ...(plant && { plant }),
+      ...(organizationId != null ? { organizationId } : {}),
     };
   }
 
@@ -91,7 +90,7 @@ export class ShipmentService {
   /**
    * 출하 목록 조회
    */
-  async findAll(query: ShipmentQueryDto, company?: string, plant?: string) {
+  async findAll(query: ShipmentQueryDto, organizationId?: number) {
     const {
       page = 1,
       limit = 10,
@@ -105,8 +104,7 @@ export class ShipmentService {
     const skip = (page - 1) * limit;
 
     const qb = this.shipmentRepository.createQueryBuilder('s');
-    if (company) qb.andWhere('s.company = :company', { company });
-    if (plant) qb.andWhere('s.plant = :plant', { plant });
+    if (organizationId != null) qb.andWhere('s.organizationId = :organizationId', { organizationId });
     if (shipNo) qb.andWhere('s.shipNo LIKE :shipNo', { shipNo: `%${shipNo}%` });
     if (customer) qb.andWhere('s.customer LIKE :customer', { customer: `%${customer}%` });
     if (status) qb.andWhere('s.status = :status', { status });
@@ -128,9 +126,9 @@ export class ShipmentService {
   /**
    * 출하 단건 조회 (shipNo PK)
    */
-  async findById(shipNo: string, company?: string, plant?: string) {
+  async findById(shipNo: string, organizationId?: number) {
     const shipment = await this.shipmentRepository.findOne({
-      where: { shipNo, ...this.tenantWhere(company, plant) },
+      where: { shipNo, ...this.tenantWhere(organizationId) },
     });
 
     if (!shipment) {
@@ -143,17 +141,17 @@ export class ShipmentService {
   /**
    * 출하 단건 조회 (출하번호) — findById와 동일, 호환용
    */
-  async findByShipNo(shipNo: string, company?: string, plant?: string) {
-    return this.findById(shipNo, company, plant);
+  async findByShipNo(shipNo: string, organizationId?: number) {
+    return this.findById(shipNo, organizationId);
   }
 
   /**
    * 출하 생성
    */
-  async create(dto: CreateShipmentDto, company?: string, plant?: string) {
+  async create(dto: CreateShipmentDto, organizationId?: number) {
     // 중복 체크
     const existing = await this.shipmentRepository.findOne({
-      where: { shipNo: dto.shipNo, ...this.tenantWhere(company, plant) },
+      where: { shipNo: dto.shipNo, ...this.tenantWhere(organizationId) },
     });
 
     if (existing) {
@@ -174,8 +172,7 @@ export class ShipmentService {
       totalQty: 0,
       status: 'PREPARING',
       erpSyncYn: 'N',
-      company: company || null,
-      plant: plant || null,
+      organizationId: organizationId ?? null,
     });
 
     return this.shipmentRepository.save(shipment);
@@ -184,8 +181,8 @@ export class ShipmentService {
   /**
    * 출하 수정
    */
-  async update(id: string, dto: UpdateShipmentDto, company?: string, plant?: string) {
-    const shipment = await this.findById(id, company, plant);
+  async update(id: string, dto: UpdateShipmentDto, organizationId?: number) {
+    const shipment = await this.findById(id, organizationId);
 
     // SHIPPED 또는 DELIVERED 상태에서는 수정 불가
     if (shipment.status === 'SHIPPED' || shipment.status === 'DELIVERED') {
@@ -205,19 +202,19 @@ export class ShipmentService {
 
     if (Object.keys(updateData).length > 0) {
       await this.shipmentRepository.update(
-        { shipNo: typeof id === 'string' ? id : String(id), ...this.tenantWhere(company, plant) },
+        { shipNo: typeof id === 'string' ? id : String(id), ...this.tenantWhere(organizationId) },
         updateData,
       );
     }
 
-    return this.findById(id, company, plant);
+    return this.findById(id, organizationId);
   }
 
   /**
    * 출하 삭제
    */
-  async delete(id: string, company?: string, plant?: string) {
-    const shipment = await this.findById(id, company, plant);
+  async delete(id: string, organizationId?: number) {
+    const shipment = await this.findById(id, organizationId);
 
     // SHIPPED 또는 DELIVERED 상태에서는 삭제 불가
     if (shipment.status === 'SHIPPED' || shipment.status === 'DELIVERED') {
@@ -234,7 +231,7 @@ export class ShipmentService {
       throw new BadRequestException('팔레트가 적재된 출하는 삭제할 수 없습니다. 먼저 팔레트를 하차해주세요.');
     }
 
-    await this.shipmentRepository.delete({ shipNo: id, ...this.tenantWhere(company, plant) });
+    await this.shipmentRepository.delete({ shipNo: id, ...this.tenantWhere(organizationId) });
 
     return { id, deleted: true };
   }
@@ -244,8 +241,8 @@ export class ShipmentService {
   /**
    * 팔레트 적재
    */
-  async loadPallets(id: string, dto: LoadPalletsDto, company?: string, plant?: string) {
-    const shipment = await this.findById(id, company, plant);
+  async loadPallets(id: string, dto: LoadPalletsDto, organizationId?: number) {
+    const shipment = await this.findById(id, organizationId);
 
     // PREPARING 상태에서만 팔레트 적재 가능
     if (shipment.status !== 'PREPARING') {
@@ -256,7 +253,7 @@ export class ShipmentService {
     const pallets = await this.palletRepository.find({
       where: {
         palletNo: In(dto.palletIds),
-        ...this.tenantWhere(company, plant),
+        ...this.tenantWhere(organizationId),
       },
     });
 
@@ -300,8 +297,7 @@ export class ShipmentService {
       const oqcBlockedBoxes = await this.boxRepository
         .createQueryBuilder('box')
         .where('box.palletNo IN (:...palletNos)', { palletNos })
-        .andWhere(company ? 'box.company = :company' : '1=1', { company })
-        .andWhere(plant ? 'box.plant = :plant' : '1=1', { plant })
+        .andWhere(organizationId != null ? 'box.organizationId = :organizationId' : '1=1', { organizationId })
         .andWhere('(box.oqcStatus IS NULL OR box.oqcStatus IN (:...blockedStatuses))', {
           blockedStatuses: ['FAIL', 'PENDING'],
         })
@@ -321,7 +317,7 @@ export class ShipmentService {
       // 팔레트 업데이트
       await queryRunner.manager.update(
         PalletMaster,
-        { palletNo: In(dto.palletIds), ...this.tenantWhere(company, plant) },
+        { palletNo: In(dto.palletIds), ...this.tenantWhere(organizationId) },
         {
           shipmentId: id,
           status: 'LOADED',
@@ -332,8 +328,7 @@ export class ShipmentService {
       const shipmentSummary = await queryRunner.manager
         .createQueryBuilder(PalletMaster, 'pallet')
         .where('pallet.shipmentId = :shipmentId', { shipmentId: id })
-        .andWhere(company ? 'pallet.company = :company' : '1=1', { company })
-        .andWhere(plant ? 'pallet.plant = :plant' : '1=1', { plant })
+        .andWhere(organizationId != null ? 'pallet.organizationId = :organizationId' : '1=1', { organizationId })
         .select('COUNT(*)', 'count')
         .addSelect('SUM(pallet.boxCount)', 'boxCount')
         .addSelect('SUM(pallet.totalQty)', 'totalQty')
@@ -341,7 +336,7 @@ export class ShipmentService {
 
       await queryRunner.manager.update(
         ShipmentLog,
-        { shipNo: typeof id === 'string' ? id : String(id), ...this.tenantWhere(company, plant) },
+        { shipNo: typeof id === 'string' ? id : String(id), ...this.tenantWhere(organizationId) },
         {
           palletCount: parseInt(shipmentSummary?.count) || 0,
           boxCount: parseInt(shipmentSummary?.boxCount) || 0,
@@ -350,14 +345,14 @@ export class ShipmentService {
       );
     });
 
-    return this.findById(id, company, plant);
+    return this.findById(id, organizationId);
   }
 
   /**
    * 팔레트 하차
    */
-  async unloadPallets(id: string, dto: UnloadPalletsDto, company?: string, plant?: string) {
-    const shipment = await this.findById(id, company, plant);
+  async unloadPallets(id: string, dto: UnloadPalletsDto, organizationId?: number) {
+    const shipment = await this.findById(id, organizationId);
 
     // PREPARING 상태에서만 팔레트 하차 가능
     if (shipment.status !== 'PREPARING') {
@@ -369,7 +364,7 @@ export class ShipmentService {
       where: {
         palletNo: In(dto.palletIds),
         shipmentId: id,
-        ...this.tenantWhere(company, plant),
+        ...this.tenantWhere(organizationId),
       },
     });
 
@@ -384,7 +379,7 @@ export class ShipmentService {
       // 팔레트 업데이트
       await queryRunner.manager.update(
         PalletMaster,
-        { palletNo: In(dto.palletIds), ...this.tenantWhere(company, plant) },
+        { palletNo: In(dto.palletIds), ...this.tenantWhere(organizationId) },
         {
           shipmentId: null,
           status: 'CLOSED',
@@ -395,8 +390,7 @@ export class ShipmentService {
       const shipmentSummary = await queryRunner.manager
         .createQueryBuilder(PalletMaster, 'pallet')
         .where('pallet.shipmentId = :shipmentId', { shipmentId: id })
-        .andWhere(company ? 'pallet.company = :company' : '1=1', { company })
-        .andWhere(plant ? 'pallet.plant = :plant' : '1=1', { plant })
+        .andWhere(organizationId != null ? 'pallet.organizationId = :organizationId' : '1=1', { organizationId })
         .select('COUNT(*)', 'count')
         .addSelect('SUM(pallet.boxCount)', 'boxCount')
         .addSelect('SUM(pallet.totalQty)', 'totalQty')
@@ -404,7 +398,7 @@ export class ShipmentService {
 
       await queryRunner.manager.update(
         ShipmentLog,
-        { shipNo: typeof id === 'string' ? id : String(id), ...this.tenantWhere(company, plant) },
+        { shipNo: typeof id === 'string' ? id : String(id), ...this.tenantWhere(organizationId) },
         {
           palletCount: parseInt(shipmentSummary?.count) || 0,
           boxCount: parseInt(shipmentSummary?.boxCount) || 0,
@@ -413,7 +407,7 @@ export class ShipmentService {
       );
     });
 
-    return this.findById(id, company, plant);
+    return this.findById(id, organizationId);
   }
 
   // ===== 상태 관리 =====
@@ -421,8 +415,8 @@ export class ShipmentService {
   /**
    * 출하 상태 변경: PREPARING -> LOADED
    */
-  async markAsLoaded(id: string, company?: string, plant?: string) {
-    const shipment = await this.findById(id, company, plant);
+  async markAsLoaded(id: string, organizationId?: number) {
+    const shipment = await this.findById(id, organizationId);
 
     if (shipment.status !== 'PREPARING') {
       throw new BadRequestException(`현재 상태(${shipment.status})에서는 적재완료 처리할 수 없습니다. PREPARING 상태여야 합니다.`);
@@ -433,19 +427,19 @@ export class ShipmentService {
     }
 
     await this.shipmentRepository.update(
-      { shipNo: typeof id === 'string' ? id : String(id), ...this.tenantWhere(company, plant) },
+      { shipNo: typeof id === 'string' ? id : String(id), ...this.tenantWhere(organizationId) },
       { status: 'LOADED' }
     );
 
-    return this.findById(id, company, plant);
+    return this.findById(id, organizationId);
   }
 
   /**
    * 출하 상태 변경: LOADED -> SHIPPED
    * OQC 검증: PASS가 아닌 박스가 있으면 출하 차단
    */
-  async markAsShipped(id: string, company?: string, plant?: string) {
-    const shipment = await this.findById(id, company, plant);
+  async markAsShipped(id: string, organizationId?: number) {
+    const shipment = await this.findById(id, organizationId);
 
     if (shipment.status !== 'LOADED') {
       throw new BadRequestException(`현재 상태(${shipment.status})에서는 출하 처리할 수 없습니다. LOADED 상태여야 합니다.`);
@@ -453,7 +447,7 @@ export class ShipmentService {
 
     // OQC 검증: OQC 사용여부(OQC_ENABLED) 설정이 켜진 경우에만 PASS 아닌 박스 출하 차단. 미사용이면 모두 출하 가능.
     const pallets = await this.palletRepository.find({
-      where: { shipmentId: id, ...this.tenantWhere(company, plant) },
+      where: { shipmentId: id, ...this.tenantWhere(organizationId) },
       select: ['palletNo'],
     });
 
@@ -462,8 +456,7 @@ export class ShipmentService {
       const failedBoxes = await this.boxRepository
         .createQueryBuilder('box')
         .where('box.palletNo IN (:...palletIds)', { palletIds })
-        .andWhere(company ? 'box.company = :company' : '1=1', { company })
-        .andWhere(plant ? 'box.plant = :plant' : '1=1', { plant })
+        .andWhere(organizationId != null ? 'box.organizationId = :organizationId' : '1=1', { organizationId })
         .andWhere('(box.oqcStatus IS NULL OR box.oqcStatus IN (:...blockedStatuses))', {
           blockedStatuses: ['FAIL', 'PENDING'],
         })
@@ -482,7 +475,7 @@ export class ShipmentService {
     let allBoxes: BoxMaster[] = [];
     if (palletIds.length > 0) {
       allBoxes = await this.boxRepository.find({
-        where: { palletNo: In(palletIds), ...this.tenantWhere(company, plant) },
+        where: { palletNo: In(palletIds), ...this.tenantWhere(organizationId) },
         select: ['boxNo', 'itemCode', 'qty', 'serialList'],
       });
     }
@@ -505,7 +498,7 @@ export class ShipmentService {
       // 1. 팔레트 상태 업데이트
       await queryRunner.manager.update(
         PalletMaster,
-          { shipmentId: id, ...this.tenantWhere(company, plant) },
+          { shipmentId: id, ...this.tenantWhere(organizationId) },
         { status: 'SHIPPED' }
       );
 
@@ -513,7 +506,7 @@ export class ShipmentService {
       if (palletIds.length > 0) {
         await queryRunner.manager.update(
           BoxMaster,
-          { palletNo: In(palletIds), ...this.tenantWhere(company, plant) },
+          { palletNo: In(palletIds), ...this.tenantWhere(organizationId) },
           { status: 'SHIPPED', shipOrderNo: shipment.shipOrderNo ?? null, shippedAt: new Date() },
         );
       }
@@ -521,7 +514,7 @@ export class ShipmentService {
       // 3. 출하 상태 업데이트
       await queryRunner.manager.update(
         ShipmentLog,
-          { shipNo: typeof id === 'string' ? id : String(id), ...this.tenantWhere(company, plant) },
+          { shipNo: typeof id === 'string' ? id : String(id), ...this.tenantWhere(organizationId) },
         {
           status: 'SHIPPED',
           shipAt: new Date(),
@@ -535,7 +528,7 @@ export class ShipmentService {
           const batch = allFgBarcodes.slice(i, i + batchSize);
           await queryRunner.manager.update(
             FgLabel,
-            { fgBarcode: In(batch), ...this.tenantWhere(company, plant) },
+            { fgBarcode: In(batch), ...this.tenantWhere(organizationId) },
             { status: 'SHIPPED' },
           );
         }
@@ -545,7 +538,7 @@ export class ShipmentService {
       //    재고 부족 시 전체 출하 롤백
       const fgLabels = allFgBarcodes.length > 0
         ? await queryRunner.manager.getRepository(FgLabel).find({
-            where: { fgBarcode: In(allFgBarcodes), ...this.tenantWhere(company, plant) },
+            where: { fgBarcode: In(allFgBarcodes), ...this.tenantWhere(organizationId) },
           })
         : [];
       const fgLabelMap = new Map(fgLabels.map((label) => [label.fgBarcode, label] as const));
@@ -557,7 +550,7 @@ export class ShipmentService {
       }
 
       const warehouse = await queryRunner.manager.findOne(Warehouse, {
-        where: { warehouseType: 'FG', isDefault: 'Y', ...this.tenantWhere(company, plant) },
+        where: { warehouseType: 'FG', isDefault: 'Y', ...this.tenantWhere(organizationId) },
       });
       if (!warehouse) {
         throw new BadRequestException('FG 기본창고(IS_DEFAULT=Y)가 설정되어 있지 않습니다.');
@@ -580,15 +573,14 @@ export class ShipmentService {
           refType: 'SHIPMENT',
           refId: id,
           remark: `출하 ${id} 제품 출고`,
-          company: shipment.company,
-          plant: shipment.plant,
+          organizationId: shipment.organizationId,
         });
       }
 
       // 6. 출하지시 shippedQty 업데이트 (shipOrderNo 연계 시)
       if (shipment.shipOrderNo) {
         const lines = await queryRunner.manager.find(ShipmentOrderItem, {
-          where: { shipOrderNo: shipment.shipOrderNo, ...this.tenantWhere(company, plant) },
+          where: { shipOrderNo: shipment.shipOrderNo, ...this.tenantWhere(organizationId) },
         });
         const lineByItem = new Map<string, ShipmentOrderItem>();
         for (const l of lines) {
@@ -600,64 +592,64 @@ export class ShipmentService {
             const newShipped = line.shippedQty + qty;
             await queryRunner.manager.update(
               ShipmentOrderItem,
-              { shipOrderNo: shipment.shipOrderNo, seq: line.seq, ...this.tenantWhere(company, plant) },
+              { shipOrderNo: shipment.shipOrderNo, seq: line.seq, ...this.tenantWhere(organizationId) },
               { shippedQty: newShipped },
             );
           }
         }
 
         const allLines = await queryRunner.manager.find(ShipmentOrderItem, {
-          where: { shipOrderNo: shipment.shipOrderNo, ...this.tenantWhere(company, plant) },
+          where: { shipOrderNo: shipment.shipOrderNo, ...this.tenantWhere(organizationId) },
         });
         const fullyShipped = allLines.every((l) => l.shippedQty >= l.orderQty);
         if (fullyShipped) {
           await queryRunner.manager.update(
             ShipmentOrder,
-            { shipOrderNo: shipment.shipOrderNo, ...this.tenantWhere(company, plant) },
+            { shipOrderNo: shipment.shipOrderNo, ...this.tenantWhere(organizationId) },
             { status: 'CLOSED' },
           );
         }
       }
     });
 
-    return this.findById(id, company, plant);
+    return this.findById(id, organizationId);
   }
 
   /**
    * 출하 상태 변경: SHIPPED -> DELIVERED
    */
-  async markAsDelivered(id: string, company?: string, plant?: string) {
-    const shipment = await this.findById(id, company, plant);
+  async markAsDelivered(id: string, organizationId?: number) {
+    const shipment = await this.findById(id, organizationId);
 
     if (shipment.status !== 'SHIPPED') {
       throw new BadRequestException(`현재 상태(${shipment.status})에서는 배송완료 처리할 수 없습니다. SHIPPED 상태여야 합니다.`);
     }
 
     await this.shipmentRepository.update(
-      { shipNo: typeof id === 'string' ? id : String(id), ...this.tenantWhere(company, plant) },
+      { shipNo: typeof id === 'string' ? id : String(id), ...this.tenantWhere(organizationId) },
       { status: 'DELIVERED' }
     );
 
-    return this.findById(id, company, plant);
+    return this.findById(id, organizationId);
   }
 
   /**
    * 출하 취소 트랜잭션 본문 헬퍼 (외부 트랜잭션 합성용)
    * 호출자가 상태 검증(PREPARING/LOADED)을 완료한 뒤 호출한다.
    */
-  async cancelInTx(qr: import('typeorm').QueryRunner, shipment: ShipmentLog, remark?: string, company?: string, plant?: string): Promise<void> {
+  async cancelInTx(qr: import('typeorm').QueryRunner, shipment: ShipmentLog, remark?: string, organizationId?: number): Promise<void> {
     const id = shipment.shipNo;
 
     // 팔레트 상태 복원 (CLOSED로)
     const pallets = await qr.manager.find(PalletMaster, {
-      where: { shipmentId: id, ...this.tenantWhere(company, plant) },
+      where: { shipmentId: id, ...this.tenantWhere(organizationId) },
       select: ['palletNo'],
     });
     const palletNos = pallets.map((p) => p.palletNo);
 
     await qr.manager.update(
       PalletMaster,
-      { shipmentId: id, ...this.tenantWhere(company, plant) },
+      { shipmentId: id, ...this.tenantWhere(organizationId) },
       {
         shipmentId: null,
         status: 'CLOSED',
@@ -668,7 +660,7 @@ export class ShipmentService {
     if (palletNos.length > 0) {
       await qr.manager.update(
         BoxMaster,
-        { palletNo: In(palletNos), ...this.tenantWhere(company, plant) },
+        { palletNo: In(palletNos), ...this.tenantWhere(organizationId) },
         { status: 'CLOSED', shippedAt: null, shipOrderNo: null },
       );
     }
@@ -684,7 +676,7 @@ export class ShipmentService {
 
     await qr.manager.update(
       ShipmentLog,
-      { shipNo: typeof id === 'string' ? id : String(id), ...this.tenantWhere(company, plant) },
+      { shipNo: typeof id === 'string' ? id : String(id), ...this.tenantWhere(organizationId) },
       updateData
     );
   }
@@ -692,16 +684,16 @@ export class ShipmentService {
   /**
    * 출하 취소 (PREPARING/LOADED -> CANCELED)
    */
-  async cancel(id: string, remark?: string, company?: string, plant?: string) {
-    const shipment = await this.findById(id, company, plant);
+  async cancel(id: string, remark?: string, organizationId?: number) {
+    const shipment = await this.findById(id, organizationId);
 
     if (shipment.status !== 'PREPARING' && shipment.status !== 'LOADED') {
       throw new BadRequestException(`현재 상태(${shipment.status})에서는 취소할 수 없습니다. PREPARING 또는 LOADED 상태여야 합니다.`);
     }
 
-    await this.tx.run((qr) => this.cancelInTx(qr, shipment, remark, company, plant));
+    await this.tx.run((qr) => this.cancelInTx(qr, shipment, remark, organizationId));
 
-    return this.findById(id, company, plant);
+    return this.findById(id, organizationId);
   }
 
   /**
@@ -709,12 +701,12 @@ export class ShipmentService {
    * 호출자가 상태(SHIPPED) 및 ERP 검증을 완료한 뒤 호출한다.
    * 사전 조회(팔레트, 박스, FG바코드, 재고트랜잭션)를 포함하며 qr.manager를 사용한다.
    */
-  async reverseShipmentInTx(qr: import('typeorm').QueryRunner, shipment: ShipmentLog, remark?: string, company?: string, plant?: string): Promise<Map<string, number>> {
+  async reverseShipmentInTx(qr: import('typeorm').QueryRunner, shipment: ShipmentLog, remark?: string, organizationId?: number): Promise<Map<string, number>> {
     const id = shipment.shipNo;
 
     // 팔레트/박스 조회
     const pallets = await qr.manager.find(PalletMaster, {
-      where: { shipmentId: id, ...this.tenantWhere(company, plant) },
+      where: { shipmentId: id, ...this.tenantWhere(organizationId) },
       select: ['palletNo'],
     });
     const palletIds = pallets.map(p => p.palletNo);
@@ -724,7 +716,7 @@ export class ShipmentService {
     const allFgBarcodes: string[] = [];
     if (palletIds.length > 0) {
       allBoxes = await qr.manager.find(BoxMaster, {
-        where: { palletNo: In(palletIds), ...this.tenantWhere(company, plant) },
+        where: { palletNo: In(palletIds), ...this.tenantWhere(organizationId) },
         select: ['boxNo', 'itemCode', 'qty', 'serialList'],
       });
       for (const box of allBoxes) {
@@ -739,13 +731,13 @@ export class ShipmentService {
 
     // 제품 재고 역분개 대상 조회
     const shipmentTransactions = await qr.manager.find(ProductTransaction, {
-      where: { refType: 'SHIPMENT', refId: id, status: 'DONE', ...this.tenantWhere(company, plant) },
+      where: { refType: 'SHIPMENT', refId: id, status: 'DONE', ...this.tenantWhere(organizationId) },
     });
 
     // 1. 팔레트 상태 → LOADED
     await qr.manager.update(
       PalletMaster,
-      { shipmentId: id, ...this.tenantWhere(company, plant) },
+      { shipmentId: id, ...this.tenantWhere(organizationId) },
       { status: 'LOADED' },
     );
 
@@ -753,7 +745,7 @@ export class ShipmentService {
     if (palletIds.length > 0) {
       await qr.manager.update(
         BoxMaster,
-        { palletNo: In(palletIds), ...this.tenantWhere(company, plant) },
+        { palletNo: In(palletIds), ...this.tenantWhere(organizationId) },
         { status: 'CLOSED', shippedAt: null, shipOrderNo: null },
       );
     }
@@ -761,7 +753,7 @@ export class ShipmentService {
     // 3. 출하 상태 → LOADED
     await qr.manager.update(
       ShipmentLog,
-      { shipNo: typeof id === 'string' ? id : String(id), ...this.tenantWhere(company, plant) },
+      { shipNo: typeof id === 'string' ? id : String(id), ...this.tenantWhere(organizationId) },
       {
         status: 'LOADED',
         shipAt: null,
@@ -776,7 +768,7 @@ export class ShipmentService {
         const batch = allFgBarcodes.slice(i, i + batchSize);
         await qr.manager.update(
           FgLabel,
-          { fgBarcode: In(batch), status: 'SHIPPED', ...this.tenantWhere(company, plant) },
+          { fgBarcode: In(batch), status: 'SHIPPED', ...this.tenantWhere(organizationId) },
           { status: 'PACKED' },
         );
       }
@@ -803,7 +795,7 @@ export class ShipmentService {
       }
 
       const lines = await qr.manager.find(ShipmentOrderItem, {
-        where: { shipOrderNo: shipment.shipOrderNo, ...this.tenantWhere(company, plant) },
+        where: { shipOrderNo: shipment.shipOrderNo, ...this.tenantWhere(organizationId) },
       });
       const lineByItem = new Map<string, ShipmentOrderItem>();
       for (const l of lines) {
@@ -815,7 +807,7 @@ export class ShipmentService {
           const newShipped = Math.max(0, line.shippedQty - qty);
           await qr.manager.update(
             ShipmentOrderItem,
-            { shipOrderNo: shipment.shipOrderNo, seq: line.seq, ...this.tenantWhere(company, plant) },
+            { shipOrderNo: shipment.shipOrderNo, seq: line.seq, ...this.tenantWhere(organizationId) },
             { shippedQty: newShipped },
           );
         }
@@ -824,7 +816,7 @@ export class ShipmentService {
       // 역분개 시에는 CONFIRMED로 되돌림
       await qr.manager.update(
         ShipmentOrder,
-        { shipOrderNo: shipment.shipOrderNo, ...this.tenantWhere(company, plant) },
+        { shipOrderNo: shipment.shipOrderNo, ...this.tenantWhere(organizationId) },
         { status: 'CONFIRMED' },
       );
     }
@@ -836,8 +828,8 @@ export class ShipmentService {
    * 출하 역분개 (SHIPPED -> LOADED): 재고 복구 + FG_LABEL 상태 복원
    * 출하 완료 후 취소가 필요한 경우 사용
    */
-  async reverseShipment(id: string, remark?: string, company?: string, plant?: string) {
-    const shipment = await this.findById(id, company, plant);
+  async reverseShipment(id: string, remark?: string, organizationId?: number) {
+    const shipment = await this.findById(id, organizationId);
 
     if (shipment.status !== 'SHIPPED') {
       throw new BadRequestException(
@@ -851,16 +843,16 @@ export class ShipmentService {
       );
     }
 
-    await this.tx.run((qr) => this.reverseShipmentInTx(qr, shipment, remark, company, plant));
+    await this.tx.run((qr) => this.reverseShipmentInTx(qr, shipment, remark, organizationId));
 
-    return this.findById(id, company, plant);
+    return this.findById(id, organizationId);
   }
 
   /**
    * 상태 직접 변경 (관리자용)
    */
-  async changeStatus(id: string, dto: ChangeShipmentStatusDto, company?: string, plant?: string) {
-    await this.findById(id, company, plant); // 존재 확인
+  async changeStatus(id: string, dto: ChangeShipmentStatusDto, organizationId?: number) {
+    await this.findById(id, organizationId); // 존재 확인
     throw new BadRequestException(
       `출하 상태(${dto.status})는 직접 변경할 수 없습니다. 적재/출하/배송완료/역분개/취소 전용 API를 사용해 주세요.`,
     );
@@ -871,26 +863,26 @@ export class ShipmentService {
   /**
    * ERP 동기화 플래그 업데이트
    */
-  async updateErpSyncYn(id: string, dto: UpdateErpSyncDto, company?: string, plant?: string) {
-    await this.findById(id, company, plant); // 존재 확인
+  async updateErpSyncYn(id: string, dto: UpdateErpSyncDto, organizationId?: number) {
+    await this.findById(id, organizationId); // 존재 확인
 
     await this.shipmentRepository.update(
-      { shipNo: typeof id === 'string' ? id : String(id), ...this.tenantWhere(company, plant) },
+      { shipNo: typeof id === 'string' ? id : String(id), ...this.tenantWhere(organizationId) },
       { erpSyncYn: dto.erpSyncYn }
     );
 
-    return this.findById(id, company, plant);
+    return this.findById(id, organizationId);
   }
 
   /**
    * ERP 미동기화 출하 목록 조회
    */
-  async findUnsyncedForErp(company?: string, plant?: string) {
+  async findUnsyncedForErp(organizationId?: number) {
     return this.shipmentRepository.find({
       where: {
         erpSyncYn: 'N',
         status: In(['SHIPPED', 'DELIVERED']),
-        ...this.tenantWhere(company, plant),
+        ...this.tenantWhere(organizationId),
       },
       order: { shipAt: 'ASC' },
     });
@@ -899,9 +891,9 @@ export class ShipmentService {
   /**
    * ERP 동기화 완료 처리 (일괄)
    */
-  async markAsSynced(ids: string[], company?: string, plant?: string) {
+  async markAsSynced(ids: string[], organizationId?: number) {
     await this.shipmentRepository.update(
-      { shipNo: In(ids), ...this.tenantWhere(company, plant) },
+      { shipNo: In(ids), ...this.tenantWhere(organizationId) },
       { erpSyncYn: 'Y' }
     );
 
@@ -913,7 +905,7 @@ export class ShipmentService {
   /**
    * 일자별 출하 통계
    */
-  async getShipmentStats(query: ShipmentStatsQueryDto, company?: string, plant?: string) {
+  async getShipmentStats(query: ShipmentStatsQueryDto, organizationId?: number) {
     const { startDate, endDate, customer } = query;
 
     const qb = this.shipmentRepository
@@ -924,8 +916,7 @@ export class ShipmentService {
       .andWhere("s.shipDate < TO_DATE(:endDate, 'YYYY-MM-DD') + 1", { endDate })
       .orderBy('s.shipDate', 'ASC');
     if (customer) qb.andWhere('s.customer LIKE :customer', { customer: `%${customer}%` });
-    if (company) qb.andWhere('s.company = :company', { company });
-    if (plant) qb.andWhere('s.plant = :plant', { plant });
+    if (organizationId != null) qb.andWhere('s.organizationId = :organizationId', { organizationId });
 
     const shipments = await qb.getMany();
 
@@ -979,15 +970,14 @@ export class ShipmentService {
   /**
    * 고객사별 출하 통계
    */
-  async getCustomerStats(fromDate: string, toDate: string, company?: string, plant?: string) {
+  async getCustomerStats(fromDate: string, toDate: string, organizationId?: number) {
     const qb = this.shipmentRepository
       .createQueryBuilder('s')
       .select(['s.customer', 's.palletCount', 's.boxCount', 's.totalQty'])
       .where('s.status IN (:...statuses)', { statuses: ['SHIPPED', 'DELIVERED'] })
       .andWhere("s.shipDate >= TO_DATE(:fromDate, 'YYYY-MM-DD')", { fromDate })
       .andWhere("s.shipDate < TO_DATE(:toDate, 'YYYY-MM-DD') + 1", { toDate });
-    if (company) qb.andWhere('s.company = :company', { company });
-    if (plant) qb.andWhere('s.plant = :plant', { plant });
+    if (organizationId != null) qb.andWhere('s.organizationId = :organizationId', { organizationId });
 
     const shipments = await qb.getMany();
 
@@ -1028,11 +1018,11 @@ export class ShipmentService {
   /**
    * 출하에 할당된 팔레트 목록 조회
    */
-  async getShipmentPallets(id: string, company?: string, plant?: string) {
-    await this.findById(id, company, plant); // 존재 확인
+  async getShipmentPallets(id: string, organizationId?: number) {
+    await this.findById(id, organizationId); // 존재 확인
 
     const pallets = await this.palletRepository.find({
-      where: { shipmentId: id, ...this.tenantWhere(company, plant) },
+      where: { shipmentId: id, ...this.tenantWhere(organizationId) },
       order: { palletNo: 'ASC' },
     });
 
@@ -1040,7 +1030,7 @@ export class ShipmentService {
     const result = await Promise.all(
       pallets.map(async (pallet) => {
         const boxes = await this.boxRepository.find({
-          where: { palletNo: In([pallet.palletNo]), ...this.tenantWhere(company, plant) },
+          where: { palletNo: In([pallet.palletNo]), ...this.tenantWhere(organizationId) },
           order: { boxNo: 'ASC' },
           select: ['boxNo', 'itemCode', 'qty', 'status'],
         });
@@ -1055,11 +1045,11 @@ export class ShipmentService {
    * 팔레트 바코드 스캔 검증
    * 스캔한 팔레트 번호가 출하에 속하는지 확인
    */
-  async verifyPalletBarcode(id: string, palletNo: string, company?: string, plant?: string) {
-    await this.findById(id, company, plant); // 존재 확인
+  async verifyPalletBarcode(id: string, palletNo: string, organizationId?: number) {
+    await this.findById(id, organizationId); // 존재 확인
 
     const pallet = await this.palletRepository.findOne({
-      where: { palletNo, ...this.tenantWhere(company, plant) },
+      where: { palletNo, ...this.tenantWhere(organizationId) },
     });
 
     if (!pallet) {
@@ -1083,16 +1073,15 @@ export class ShipmentService {
   /**
    * 출하 상세 요약 정보 조회
    */
-  async getShipmentSummary(id: string, company?: string, plant?: string) {
-    const shipment = await this.findById(id, company, plant);
+  async getShipmentSummary(id: string, organizationId?: number) {
+    const shipment = await this.findById(id, organizationId);
 
     // 품목별 수량 집계
     const boxesWithParts = await this.boxRepository
       .createQueryBuilder('box')
-      .innerJoin(PalletMaster, 'pallet', 'box.palletNo = pallet.palletNo AND box.company = pallet.company AND box.plant = pallet.plant')
+      .innerJoin(PalletMaster, 'pallet', 'box.palletNo = pallet.palletNo AND box.organizationId = pallet.organizationId')
       .where('pallet.shipmentId = :shipmentId', { shipmentId: id })
-      .andWhere(company ? 'box.company = :company' : '1=1', { company })
-      .andWhere(plant ? 'box.plant = :plant' : '1=1', { plant })
+      .andWhere(organizationId != null ? 'box.organizationId = :organizationId' : '1=1', { organizationId })
       .select(['box.itemCode', 'box.qty'])
       .getMany();
 

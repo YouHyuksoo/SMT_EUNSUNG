@@ -41,8 +41,7 @@ describe('MatLotService', () => {
       poNo: 'PO-001',
       iqcStatus: 'PASS',
       status: 'NORMAL',
-      company: 'HANES',
-      plant: 'P01',
+      organizationId: 1,
       createdAt: new Date(),
       updatedAt: new Date(),
       ...overrides,
@@ -116,7 +115,7 @@ describe('MatLotService', () => {
       mockMatLotRepo.count.mockResolvedValue(0);
       mockItemMasterRepo.find.mockResolvedValue([]);
 
-      await target.findAll({ page: 1, limit: 20, itemCode: 'ITEM-001', iqcStatus: 'PASS' }, 'HANES', 'P01');
+      await target.findAll({ page: 1, limit: 20, itemCode: 'ITEM-001', iqcStatus: 'PASS' }, 1);
 
       expect(mockMatLotRepo.find).toHaveBeenCalled();
     });
@@ -139,14 +138,14 @@ describe('MatLotService', () => {
     });
 
     it('LOT 목록 품목 보강 조회도 요청 테넌트 범위로 제한한다', async () => {
-      mockMatLotRepo.find.mockResolvedValue([createMatLot({ company: 'C1', plant: 'P1' })]);
+      mockMatLotRepo.find.mockResolvedValue([createMatLot({ organizationId: 1 })]);
       mockMatLotRepo.count.mockResolvedValue(1);
       mockItemMasterRepo.find.mockResolvedValue([]);
 
-      await target.findAll({ page: 1, limit: 10 }, 'C1', 'P1');
+      await target.findAll({ page: 1, limit: 10 }, 1);
 
       expect(mockItemMasterRepo.find).toHaveBeenCalledWith({
-        where: expect.objectContaining({ company: 'C1', plant: 'P1' }),
+        where: expect.objectContaining({ organizationId: 1 }),
       });
     });
   });
@@ -188,16 +187,16 @@ describe('MatLotService', () => {
     });
 
     it('LOT 상세 조회도 요청 테넌트 범위로 제한한다', async () => {
-      mockMatLotRepo.findOne.mockResolvedValue(createMatLot({ company: 'C1', plant: 'P1' }));
-      mockItemMasterRepo.findOne.mockResolvedValue(createItemMaster({ company: 'C1', plant: 'P1' } as Partial<ItemMaster>));
+      mockMatLotRepo.findOne.mockResolvedValue(createMatLot({ organizationId: 1 }));
+      mockItemMasterRepo.findOne.mockResolvedValue(createItemMaster({ organizationId: 1 } as Partial<ItemMaster>));
 
-      await target.findById('MAT-001', 'C1', 'P1');
+      await target.findById('MAT-001', 1);
 
       expect(mockMatLotRepo.findOne).toHaveBeenCalledWith({
-        where: { matUid: 'MAT-001', company: 'C1', plant: 'P1' },
+        where: { matUid: 'MAT-001', organizationId: 1 },
       });
       expect(mockItemMasterRepo.findOne).toHaveBeenCalledWith({
-        where: { itemCode: 'ITEM-001', company: 'C1', plant: 'P1' },
+        where: { itemCode: 'ITEM-001', organizationId: 1 },
       });
     });
   });
@@ -221,16 +220,16 @@ describe('MatLotService', () => {
     });
 
     it('matUid 별칭 조회도 요청 테넌트 범위로 제한한다', async () => {
-      mockMatLotRepo.findOne.mockResolvedValue(createMatLot({ company: 'C1', plant: 'P1' }));
-      mockItemMasterRepo.findOne.mockResolvedValue(createItemMaster({ company: 'C1', plant: 'P1' } as Partial<ItemMaster>));
+      mockMatLotRepo.findOne.mockResolvedValue(createMatLot({ organizationId: 1 }));
+      mockItemMasterRepo.findOne.mockResolvedValue(createItemMaster({ organizationId: 1 } as Partial<ItemMaster>));
 
-      await target.findByMatUid('MAT-001', 'C1', 'P1');
+      await target.findByMatUid('MAT-001', 1);
 
       expect(mockMatLotRepo.findOne).toHaveBeenCalledWith({
-        where: { matUid: 'MAT-001', company: 'C1', plant: 'P1' },
+        where: { matUid: 'MAT-001', organizationId: 1 },
       });
       expect(mockItemMasterRepo.findOne).toHaveBeenCalledWith({
-        where: { itemCode: 'ITEM-001', company: 'C1', plant: 'P1' },
+        where: { itemCode: 'ITEM-001', organizationId: 1 },
       });
     });
   });
@@ -287,26 +286,26 @@ describe('MatLotService', () => {
     });
 
     it('LOT 생성도 중복/품목 보강 조회를 요청 테넌트 범위로 제한하고 테넌트를 저장한다', async () => {
-      const lot = createMatLot({ company: 'C1', plant: 'P1' });
+      const lot = createMatLot({ organizationId: 1 });
       mockMatLotRepo.findOne.mockResolvedValue(null);
       mockMatLotRepo.create.mockReturnValue(lot);
       mockMatLotRepo.save.mockResolvedValue(lot);
-      mockItemMasterRepo.findOne.mockResolvedValue(createItemMaster({ company: 'C1', plant: 'P1' } as Partial<ItemMaster>));
+      mockItemMasterRepo.findOne.mockResolvedValue(createItemMaster({ organizationId: 1 } as Partial<ItemMaster>));
 
       await target.create({
         matUid: 'MAT-001',
         itemCode: 'ITEM-001',
         initQty: 100,
-      } as any, 'C1', 'P1');
+      } as any, 1);
 
       expect(mockMatLotRepo.findOne).toHaveBeenCalledWith({
-        where: { matUid: 'MAT-001', company: 'C1', plant: 'P1' },
+        where: { matUid: 'MAT-001', organizationId: 1 },
       });
       expect(mockMatLotRepo.create).toHaveBeenCalledWith(
-        expect.objectContaining({ matUid: 'MAT-001', company: 'C1', plant: 'P1' }),
+        expect.objectContaining({ matUid: 'MAT-001', organizationId: 1 }),
       );
       expect(mockItemMasterRepo.findOne).toHaveBeenCalledWith({
-        where: { itemCode: 'ITEM-001', company: 'C1', plant: 'P1' },
+        where: { itemCode: 'ITEM-001', organizationId: 1 },
       });
     });
   });
@@ -337,19 +336,19 @@ describe('MatLotService', () => {
     });
 
     it('LOT 수정도 요청 테넌트 범위로 제한한다', async () => {
-      const lot = createMatLot({ company: 'C1', plant: 'P1' });
+      const lot = createMatLot({ organizationId: 1 });
       mockMatLotRepo.findOne.mockResolvedValue(lot);
       mockMatLotRepo.update.mockResolvedValue({ affected: 1 } as any);
-      mockItemMasterRepo.findOne.mockResolvedValue(createItemMaster({ company: 'C1', plant: 'P1' } as Partial<ItemMaster>));
+      mockItemMasterRepo.findOne.mockResolvedValue(createItemMaster({ organizationId: 1 } as Partial<ItemMaster>));
 
-      await target.update('MAT-001', { iqcStatus: 'FAIL' } as any, 'C1', 'P1');
+      await target.update('MAT-001', { iqcStatus: 'FAIL' } as any, 1);
 
       expect(mockMatLotRepo.update).toHaveBeenCalledWith(
-        { matUid: 'MAT-001', company: 'C1', plant: 'P1' },
+        { matUid: 'MAT-001', organizationId: 1 },
         { iqcStatus: 'FAIL' },
       );
       expect(mockMatLotRepo.findOne).toHaveBeenLastCalledWith({
-        where: { matUid: 'MAT-001', company: 'C1', plant: 'P1' },
+        where: { matUid: 'MAT-001', organizationId: 1 },
       });
     });
   });
@@ -393,21 +392,21 @@ describe('MatLotService', () => {
     });
 
     it('LOT 삭제 전 재고/출고 이력 확인도 요청 테넌트 범위로 제한한다', async () => {
-      mockMatLotRepo.findOne.mockResolvedValue(createMatLot({ company: 'C1', plant: 'P1' }));
-      mockItemMasterRepo.findOne.mockResolvedValue(createItemMaster({ company: 'C1', plant: 'P1' } as Partial<ItemMaster>));
+      mockMatLotRepo.findOne.mockResolvedValue(createMatLot({ organizationId: 1 }));
+      mockItemMasterRepo.findOne.mockResolvedValue(createItemMaster({ organizationId: 1 } as Partial<ItemMaster>));
       mockMatStockRepo.find.mockResolvedValue([]);
       mockMatIssueRepo.find.mockResolvedValue([]);
       mockMatLotRepo.delete.mockResolvedValue({ affected: 1 } as any);
 
-      await target.delete('MAT-001', 'C1', 'P1');
+      await target.delete('MAT-001', 1);
 
       expect(mockMatStockRepo.find).toHaveBeenCalledWith({
-        where: { matUid: 'MAT-001', company: 'C1', plant: 'P1' },
+        where: { matUid: 'MAT-001', organizationId: 1 },
       });
       expect(mockMatIssueRepo.find).toHaveBeenCalledWith({
-        where: { matUid: 'MAT-001', status: expect.anything(), company: 'C1', plant: 'P1' },
+        where: { matUid: 'MAT-001', status: expect.anything(), organizationId: 1 },
       });
-      expect(mockMatLotRepo.delete).toHaveBeenCalledWith({ matUid: 'MAT-001', company: 'C1', plant: 'P1' });
+      expect(mockMatLotRepo.delete).toHaveBeenCalledWith({ matUid: 'MAT-001', organizationId: 1 });
     });
 
     it('존재하지 않는 LOT이면 NotFoundException', async () => {

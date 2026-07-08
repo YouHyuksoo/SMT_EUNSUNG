@@ -12,11 +12,8 @@ import { IqcTemplateItem } from './iqc-template-item.entity';
 
 @Entity({ name: 'IQC_TEMPLATES' })
 export class IqcTemplate {
-  @PrimaryColumn({ type: 'varchar2', name: 'COMPANY', length: 50 })
-  company: string;
-
-  @PrimaryColumn({ type: 'varchar2', name: 'PLANT_CD', length: 50 })
-  plant: string;
+  @PrimaryColumn({ name: 'ORGANIZATION_ID', type: 'number' })
+  organizationId!: number;
 
   @PrimaryColumn({ name: 'TEMPLATE_ID', length: 50 })
   templateId: string;

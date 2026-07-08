@@ -10,11 +10,8 @@ export class VendorInspectionModeHistory {
   @PrimaryGeneratedColumn({ type: 'number', name: 'SEQ' })
   seq: number;
 
-  @Column({ type: 'varchar2', name: 'COMPANY', length: 50 })
-  company: string;
-
-  @Column({ type: 'varchar2', name: 'PLANT_CD', length: 50 })
-  plant: string;
+  @Column({ name: 'ORGANIZATION_ID', type: 'number' })
+  organizationId!: number;
 
   @Column({ type: 'varchar2', name: 'VENDOR_CODE', length: 50 })
   vendorCode: string;

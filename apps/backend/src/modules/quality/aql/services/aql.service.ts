@@ -106,12 +106,11 @@ export class AqlService {
     private readonly specItemRepo: Repository<IqcPartSpecItem>,
   ) {}
 
-  async findAll(query: AqlQueryDto, company?: string, plant?: string) {
+  async findAll(query: AqlQueryDto, organizationId?: number) {
     const { page = 1, limit = 50, search, useYn } = query;
     const qb = this.standardRepo.createQueryBuilder('aql');
 
-    if (company) qb.andWhere('aql.company = :company', { company });
-    if (plant) qb.andWhere('aql.plant = :plant', { plant });
+    if (organizationId != null) qb.andWhere('aql.organizationId = :organizationId', { organizationId });
     if (useYn) qb.andWhere('aql.useYn = :useYn', { useYn });
     if (search) {
       qb.andWhere('(UPPER(aql.aqlCode) LIKE UPPER(:search) OR UPPER(aql.aqlName) LIKE UPPER(:search))', {
@@ -128,46 +127,44 @@ export class AqlService {
     return { data, total, page, limit };
   }
 
-  async findOne(aqlCode: string, company?: string, plant?: string) {
-    const standard = await this.findStandardOrThrow(aqlCode, company, plant);
+  async findOne(aqlCode: string, organizationId?: number) {
+    const standard = await this.findStandardOrThrow(aqlCode, organizationId);
     return { ...standard, rules: [] };
   }
 
-  async findIsoTables(company: string, plant: string) {
+  async findIsoTables(organizationId: number) {
     const [codeLetterRules, samples, acceptanceRules] = await Promise.all([
       this.codeLetterRuleRepo.find({
-        where: { company, plant },
+        where: { organizationId },
         order: { inspectionLevel: 'ASC', lotQtyFrom: 'ASC' },
       }),
       this.codeLetterSampleRepo.find({
-        where: { company, plant },
+        where: { organizationId },
         order: { sortOrder: 'ASC' },
       }),
       this.acceptanceRuleRepo.find({
-        where: { company, plant, inspectionMode: 'NORMAL' },
+        where: { organizationId, inspectionMode: 'NORMAL' },
         order: { codeLetter: 'ASC', aqlValue: 'ASC' },
       }),
     ]);
     return { codeLetterRules, samples, acceptanceRules };
   }
 
-  async findPolicies(query: { useYn?: string }, company?: string, plant?: string) {
+  async findPolicies(query: { useYn?: string }, organizationId?: number) {
     const qb = this.policyRepo.createQueryBuilder('policy');
-    if (company) qb.andWhere('policy.company = :company', { company });
-    if (plant) qb.andWhere('policy.plant = :plant', { plant });
+    if (organizationId != null) qb.andWhere('policy.organizationId = :organizationId', { organizationId });
     if (query.useYn) qb.andWhere('policy.useYn = :useYn', { useYn: query.useYn });
     return qb.orderBy('policy.policyCode', 'ASC').getMany();
   }
 
-  async createPolicy(dto: CreateIqcAqlPolicyDto, company: string, plant: string, userId: string) {
+  async createPolicy(dto: CreateIqcAqlPolicyDto, organizationId: number, userId: string) {
     const policyCode = this.normalizeCode(dto.policyCode);
-    const exists = await this.policyRepo.findOne({ where: { company, plant, policyCode } });
+    const exists = await this.policyRepo.findOne({ where: { organizationId, policyCode } });
     if (exists) throw new BadRequestException(`이미 등록된 IQC AQL 정책입니다: ${policyCode}`);
-    await this.assertPolicyAqlCodesActive(dto.majorAqlCode, dto.minorAqlCode, company, plant);
+    await this.assertPolicyAqlCodesActive(dto.majorAqlCode, dto.minorAqlCode, organizationId);
 
     const policy = this.policyRepo.create({
-      company,
-      plant,
+      organizationId,
       policyCode,
       policyName: dto.policyName.trim(),
       inspectionLevel: dto.inspectionLevel || null,
@@ -183,13 +180,12 @@ export class AqlService {
     return policy;
   }
 
-  async updatePolicy(policyCodeParam: string, dto: UpdateIqcAqlPolicyDto, company: string, plant: string, userId: string) {
-    const policy = await this.findPolicyOrThrow(policyCodeParam, company, plant, { allowInactive: true });
+  async updatePolicy(policyCodeParam: string, dto: UpdateIqcAqlPolicyDto, organizationId: number, userId: string) {
+    const policy = await this.findPolicyOrThrow(policyCodeParam, organizationId, { allowInactive: true });
     await this.assertPolicyAqlCodesActive(
       dto.majorAqlCode ?? policy.majorAqlCode ?? undefined,
       dto.minorAqlCode ?? policy.minorAqlCode ?? undefined,
-      company,
-      plant,
+      organizationId,
     );
 
     Object.assign(policy, {
@@ -205,9 +201,9 @@ export class AqlService {
     return policy;
   }
 
-  async deletePolicy(policyCodeParam: string, company: string, plant: string, userId = 'system') {
-    const policy = await this.findPolicyOrThrow(policyCodeParam, company, plant, { allowInactive: true });
-    const assignedCount = await this.partRepo.count({ where: { company, plant, iqcAqlPolicyCode: policy.policyCode } });
+  async deletePolicy(policyCodeParam: string, organizationId: number, userId = 'system') {
+    const policy = await this.findPolicyOrThrow(policyCodeParam, organizationId, { allowInactive: true });
+    const assignedCount = await this.partRepo.count({ where: { organizationId, iqcAqlPolicyCode: policy.policyCode } });
     if (assignedCount > 0) throw new BadRequestException('품목에 배정된 AQL 정책은 사용중지할 수 없습니다.');
     policy.useYn = 'N';
     policy.updatedBy = userId;
@@ -215,15 +211,14 @@ export class AqlService {
     return { policyCode: policy.policyCode, deleted: true };
   }
 
-  async create(dto: CreateAqlDto, company: string, plant: string, userId: string) {
+  async create(dto: CreateAqlDto, organizationId: number, userId: string) {
     const aqlCode = this.normalizeCode(dto.aqlCode);
-    const exists = await this.standardRepo.findOne({ where: { company, plant, aqlCode } });
+    const exists = await this.standardRepo.findOne({ where: { organizationId, aqlCode } });
     if (exists) throw new BadRequestException(`이미 등록된 AQL 코드입니다: ${aqlCode}`);
 
     this.assertValidRules(dto.rules ?? []);
     const standard = this.standardRepo.create({
-      company,
-      plant,
+      organizationId,
       aqlCode,
       aqlName: dto.aqlName,
       inspectionLevel: dto.inspectionLevel ?? null,
@@ -234,13 +229,13 @@ export class AqlService {
       updatedBy: userId,
     });
     await this.standardRepo.save(standard);
-    await this.replaceRules(aqlCode, dto.rules ?? [], company, plant, userId);
-    return this.findOne(aqlCode, company, plant);
+    await this.replaceRules(aqlCode, dto.rules ?? [], organizationId, userId);
+    return this.findOne(aqlCode, organizationId);
   }
 
-  async update(aqlCodeParam: string, dto: UpdateAqlDto, company: string, plant: string, userId: string) {
+  async update(aqlCodeParam: string, dto: UpdateAqlDto, organizationId: number, userId: string) {
     const aqlCode = this.normalizeCode(aqlCodeParam);
-    const standard = await this.findStandardOrThrow(aqlCode, company, plant);
+    const standard = await this.findStandardOrThrow(aqlCode, organizationId);
     const rules = dto.rules ?? undefined;
     if (rules) this.assertValidRules(rules);
 
@@ -253,17 +248,17 @@ export class AqlService {
       updatedBy: userId,
     });
     await this.standardRepo.save(standard);
-    if (rules) await this.replaceRules(aqlCode, rules, company, plant, userId);
-    return this.findOne(aqlCode, company, plant);
+    if (rules) await this.replaceRules(aqlCode, rules, organizationId, userId);
+    return this.findOne(aqlCode, organizationId);
   }
 
-  async delete(aqlCodeParam: string, company: string, plant: string, userId = 'system') {
+  async delete(aqlCodeParam: string, organizationId: number, userId = 'system') {
     const aqlCode = this.normalizeCode(aqlCodeParam);
-    const standard = await this.findStandardOrThrow(aqlCode, company, plant);
+    const standard = await this.findStandardOrThrow(aqlCode, organizationId);
     const assignedPolicyCount = await this.policyRepo.count({
       where: [
-        { company, plant, useYn: 'Y', majorAqlCode: aqlCode },
-        { company, plant, useYn: 'Y', minorAqlCode: aqlCode },
+        { organizationId, useYn: 'Y', majorAqlCode: aqlCode },
+        { organizationId, useYn: 'Y', minorAqlCode: aqlCode },
       ],
     });
     if (assignedPolicyCount > 0) {
@@ -275,9 +270,9 @@ export class AqlService {
     return { aqlCode, deleted: true };
   }
 
-  async resolveByAqlCode(aqlCodeParam: string, lotQty: number, company?: string, plant?: string) {
+  async resolveByAqlCode(aqlCodeParam: string, lotQty: number, organizationId?: number) {
     const aqlCode = this.normalizeCode(aqlCodeParam);
-    const standard = await this.findStandardOrThrow(aqlCode, company, plant);
+    const standard = await this.findStandardOrThrow(aqlCode, organizationId);
     if (standard.useYn !== 'Y') throw new BadRequestException('사용 중지된 AQL 기준입니다.');
 
     const rule = await this.resolveIsoRule({
@@ -286,8 +281,7 @@ export class AqlService {
       inspectionLevel: standard.inspectionLevel ?? 'II',
       inspectionMode: 'NORMAL',
       lotQty,
-      company: standard.company,
-      plant: standard.plant,
+      organizationId: standard.organizationId,
     });
     return {
       aqlCode,
@@ -303,14 +297,12 @@ export class AqlService {
     lotQty: number;
     defectCounts?: IqcDefectCounts;
     defectCodes?: IqcDefectCodeCount[];
-    company?: string;
-    plant?: string;
+    organizationId?: number;
   }): Promise<IqcAqlPolicyResolution> {
     const part = await this.partRepo.findOne({
       where: {
         itemCode: input.itemCode,
-        ...(input.company ? { company: input.company } : {}),
-        ...(input.plant ? { plant: input.plant } : {}),
+        ...(input.organizationId != null ? { organizationId: input.organizationId } : {}),
       },
     });
     if (!part) throw new NotFoundException(`품목 AQL 기준을 찾을 수 없습니다: ${input.itemCode}`);
@@ -320,26 +312,25 @@ export class AqlService {
       ? await this.partnerRepo.findOne({
           where: {
             partnerCode: vendorCode,
-            ...(input.company ? { company: input.company } : {}),
-            ...(input.plant ? { plant: input.plant } : {}),
+            ...(input.organizationId != null ? { organizationId: input.organizationId } : {}),
           },
         })
       : null;
 
-    const policy = await this.resolvePartPolicy(part, input.company, input.plant);
+    const policy = await this.resolvePartPolicy(part, input.organizationId);
     const inspectionLevel = (policy?.inspectionLevel || 'II').trim().toUpperCase();
     const inspectionMode = this.normalizeInspectionMode(partner?.inspectionMode);
     const lotQty = Math.max(1, Number(input.lotQty) || 1);
-    const defectCounts = await this.resolveIqcDefectCounts(input.defectCounts, input.defectCodes, input.company, input.plant);
+    const defectCounts = await this.resolveIqcDefectCounts(input.defectCounts, input.defectCodes, input.organizationId);
     const defectCritical = defectCounts.critical;
     const defectMajor = defectCounts.major;
     const defectMinor = defectCounts.minor;
 
     const majorRule = policy?.majorAqlCode
-      ? await this.resolveRuleByStandardCode(policy.majorAqlCode, lotQty, input.company, input.plant)
+      ? await this.resolveRuleByStandardCode(policy.majorAqlCode, lotQty, input.organizationId)
       : null;
     const minorRule = policy?.minorAqlCode
-      ? await this.resolveRuleByStandardCode(policy.minorAqlCode, lotQty, input.company, input.plant)
+      ? await this.resolveRuleByStandardCode(policy.minorAqlCode, lotQty, input.organizationId)
       : null;
 
     let result: 'PASS' | 'FAIL' = 'PASS';
@@ -389,15 +380,13 @@ export class AqlService {
     itemInspectedCounts?: Record<number, number>; // seq -> 실제 검사수량(파괴/전수용)
     fallbackDefectCounts?: IqcDefectCounts;
     fallbackDefectCodes?: IqcDefectCodeCount[];
-    company?: string;
-    plant?: string;
+    organizationId?: number;
   }): Promise<IqcAqlPolicyResolution> {
     const specItems = await this.specItemRepo.find({
       where: {
         itemCode: input.itemCode,
         useYn: 'Y',
-        ...(input.company ? { company: input.company } : {}),
-        ...(input.plant ? { plant: input.plant } : {}),
+        ...(input.organizationId != null ? { organizationId: input.organizationId } : {}),
       },
       order: { seq: 'ASC' },
     });
@@ -415,16 +404,14 @@ export class AqlService {
         lotQty: input.lotQty,
         defectCounts: input.fallbackDefectCounts,
         defectCodes: input.fallbackDefectCodes,
-        company: input.company,
-        plant: input.plant,
+        organizationId: input.organizationId,
       });
     }
 
     const part = await this.partRepo.findOne({
       where: {
         itemCode: input.itemCode,
-        ...(input.company ? { company: input.company } : {}),
-        ...(input.plant ? { plant: input.plant } : {}),
+        ...(input.organizationId != null ? { organizationId: input.organizationId } : {}),
       },
     });
     const vendorCode = input.vendorCode?.trim() || null;
@@ -432,13 +419,12 @@ export class AqlService {
       ? await this.partnerRepo.findOne({
           where: {
             partnerCode: vendorCode,
-            ...(input.company ? { company: input.company } : {}),
-            ...(input.plant ? { plant: input.plant } : {}),
+            ...(input.organizationId != null ? { organizationId: input.organizationId } : {}),
           },
         })
       : null;
 
-    const policy = part ? await this.resolvePartPolicy(part, input.company, input.plant) : null;
+    const policy = part ? await this.resolvePartPolicy(part, input.organizationId) : null;
     const partLevel = (policy?.inspectionLevel || 'II').trim().toUpperCase();
     const inspectionMode = this.normalizeInspectionMode(partner?.inspectionMode);
     const lotQty = Math.max(1, Number(input.lotQty) || 1);
@@ -487,7 +473,7 @@ export class AqlService {
           reason = `${item.inspItemCode} Critical 불량 ${defectCount}건`;
         }
       } else if (aql != null) {
-        rule = await this.resolveSeverityRule(level, inspectionMode, aql, lotQty, input.company, input.plant);
+        rule = await this.resolveSeverityRule(level, inspectionMode, aql, lotQty, input.organizationId);
         sampleQty = Math.max(sampleQty, rule.actualInspectQty ?? rule.sampleSize);
         requiredQty = inspectedQty = rule.actualInspectQty ?? rule.sampleSize;
         if (grade === 'MAJOR' && !majorRule) majorRule = rule;
@@ -546,8 +532,7 @@ export class AqlService {
     vendorCode?: string | null;
     itemCode?: string | null;
     arrivalNo?: string | null;
-    company?: string;
-    plant?: string;
+    organizationId?: number;
   }) {
     const vendorCode = input.vendorCode?.trim();
     if (!vendorCode) return null;
@@ -555,8 +540,7 @@ export class AqlService {
     const partner = await this.partnerRepo.findOne({
       where: {
         partnerCode: vendorCode,
-        ...(input.company ? { company: input.company } : {}),
-        ...(input.plant ? { plant: input.plant } : {}),
+        ...(input.organizationId != null ? { organizationId: input.organizationId } : {}),
       },
     });
     if (!partner) return null;
@@ -566,8 +550,7 @@ export class AqlService {
       where: {
         vendorCode,
         status: 'DONE',
-        ...(input.company ? { company: input.company } : {}),
-        ...(input.plant ? { plant: input.plant } : {}),
+        ...(input.organizationId != null ? { organizationId: input.organizationId } : {}),
       },
       order: { inspectDate: 'DESC' },
       take: 10,
@@ -603,8 +586,7 @@ export class AqlService {
     partner.inspectionMode = nextMode;
     await this.partnerRepo.save(partner);
     await this.modeHistoryRepo.save(this.modeHistoryRepo.create({
-      company: partner.company,
-      plant: partner.plant,
+      organizationId: partner.organizationId,
       vendorCode,
       prevMode: currentMode,
       newMode: nextMode,
@@ -620,8 +602,7 @@ export class AqlService {
     vendorCode?: string | null;
     itemCode?: string | null;
     arrivalNo?: string | null;
-    company?: string;
-    plant?: string;
+    organizationId?: number;
   }) {
     const vendorCode = input.vendorCode?.trim();
     if (!vendorCode) return null;
@@ -629,8 +610,7 @@ export class AqlService {
     const partner = await this.partnerRepo.findOne({
       where: {
         partnerCode: vendorCode,
-        ...(input.company ? { company: input.company } : {}),
-        ...(input.plant ? { plant: input.plant } : {}),
+        ...(input.organizationId != null ? { organizationId: input.organizationId } : {}),
       },
     });
     if (!partner) return null;
@@ -639,8 +619,7 @@ export class AqlService {
     const histories = await this.modeHistoryRepo.find({
       where: {
         vendorCode,
-        ...(input.company ? { company: input.company } : {}),
-        ...(input.plant ? { plant: input.plant } : {}),
+        ...(input.organizationId != null ? { organizationId: input.organizationId } : {}),
       },
       order: { changedAt: 'DESC', seq: 'DESC' },
       take: 1,
@@ -665,8 +644,7 @@ export class AqlService {
     partner.inspectionMode = revertedMode;
     await this.partnerRepo.save(partner);
     await this.modeHistoryRepo.save(this.modeHistoryRepo.create({
-      company: partner.company,
-      plant: partner.plant,
+      organizationId: partner.organizationId,
       vendorCode,
       prevMode: currentMode,
       newMode: revertedMode,
@@ -678,26 +656,24 @@ export class AqlService {
     return { vendorCode, inspectionMode: revertedMode, previousMode: currentMode, changed: true, reason };
   }
 
-  private async findStandardOrThrow(aqlCodeParam: string, company?: string, plant?: string) {
+  private async findStandardOrThrow(aqlCodeParam: string, organizationId?: number) {
     const aqlCode = this.normalizeCode(aqlCodeParam);
     const standard = await this.standardRepo.findOne({
       where: {
         aqlCode,
-        ...(company ? { company } : {}),
-        ...(plant ? { plant } : {}),
+        ...(organizationId != null ? { organizationId } : {}),
       },
     });
     if (!standard) throw new NotFoundException(`AQL 기준을 찾을 수 없습니다: ${aqlCode}`);
     return standard;
   }
 
-  private async findPolicyOrThrow(policyCodeParam: string, company?: string, plant?: string, options?: { allowInactive?: boolean }) {
+  private async findPolicyOrThrow(policyCodeParam: string, organizationId?: number, options?: { allowInactive?: boolean }) {
     const policyCode = this.normalizeCode(policyCodeParam);
     const policy = await this.policyRepo.findOne({
       where: {
         policyCode,
-        ...(company ? { company } : {}),
-        ...(plant ? { plant } : {}),
+        ...(organizationId != null ? { organizationId } : {}),
       },
     });
     if (!policy) throw new NotFoundException(`IQC AQL 정책을 찾을 수 없습니다: ${policyCode}`);
@@ -708,8 +684,7 @@ export class AqlService {
   private async assertPolicyAqlCodesActive(
     majorAqlCode: string | null | undefined,
     minorAqlCode: string | null | undefined,
-    company?: string,
-    plant?: string,
+    organizationId?: number,
   ) {
     const aqlCodes = [majorAqlCode, minorAqlCode].filter(Boolean) as string[];
     if (aqlCodes.length === 0) return;
@@ -718,8 +693,7 @@ export class AqlService {
     const standards = await this.standardRepo.find({
       where: {
         aqlCode: In(normalizedCodes),
-        ...(company ? { company } : {}),
-        ...(plant ? { plant } : {}),
+        ...(organizationId != null ? { organizationId } : {}),
       },
     });
     const byCode = new Map(standards.map((s) => [s.aqlCode, s]));
@@ -731,21 +705,20 @@ export class AqlService {
     }
   }
 
-  private async resolvePartPolicy(part: ItemMaster, company?: string, plant?: string) {
+  private async resolvePartPolicy(part: ItemMaster, organizationId?: number) {
     const policyCode = part.iqcAqlPolicyCode?.trim();
     if (!policyCode) {
       throw new BadRequestException(`IQC AQL 정책이 설정되지 않은 품목입니다: ${part.itemCode}`);
     }
-    return this.findPolicyOrThrow(policyCode, company, plant);
+    return this.findPolicyOrThrow(policyCode, organizationId);
   }
 
   private async resolveRuleByStandardCode(
     aqlCodeParam: string,
     lotQty: number,
-    company?: string,
-    plant?: string,
+    organizationId?: number,
   ): Promise<AqlSeverityRule> {
-    const standard = await this.findStandardOrThrow(aqlCodeParam, company, plant);
+    const standard = await this.findStandardOrThrow(aqlCodeParam, organizationId);
     if (standard.useYn !== 'Y') throw new BadRequestException('사용 중지된 AQL 기준입니다.');
 
     return this.resolveIsoRule({
@@ -754,8 +727,7 @@ export class AqlService {
       inspectionLevel: standard.inspectionLevel ?? 'II',
       inspectionMode: 'NORMAL',
       lotQty,
-      company: standard.company,
-      plant: standard.plant,
+      organizationId: standard.organizationId,
     });
   }
 
@@ -764,13 +736,11 @@ export class AqlService {
     inspectionMode: string,
     aqlValue: number,
     lotQty: number,
-    company?: string,
-    plant?: string,
+    organizationId?: number,
   ): Promise<AqlSeverityRule> {
     const standard = await this.findFirstStandard(
       this.buildAqlCodeCandidates(inspectionLevel, inspectionMode, aqlValue),
-      company,
-      plant,
+      organizationId,
     );
     if (!standard) throw new NotFoundException(`AQL 기준을 찾을 수 없습니다: ${inspectionLevel} / ${aqlValue}`);
     if (standard.useYn !== 'Y') throw new BadRequestException('사용 중지된 AQL 기준입니다.');
@@ -781,8 +751,7 @@ export class AqlService {
       inspectionLevel,
       inspectionMode,
       lotQty,
-      company: standard.company,
-      plant: standard.plant,
+      organizationId: standard.organizationId,
     });
   }
 
@@ -792,8 +761,7 @@ export class AqlService {
     inspectionLevel: string;
     inspectionMode: string;
     lotQty: number;
-    company?: string;
-    plant?: string;
+    organizationId?: number;
   }): Promise<AqlSeverityRule> {
     const lotQty = Math.max(1, Number(input.lotQty) || 1);
     const inspectionLevel = this.normalizeInspectionLevel(input.inspectionLevel);
@@ -801,8 +769,7 @@ export class AqlService {
     const rules = await this.codeLetterRuleRepo.find({
       where: {
         inspectionLevel,
-        ...(input.company ? { company: input.company } : {}),
-        ...(input.plant ? { plant: input.plant } : {}),
+        ...(input.organizationId != null ? { organizationId: input.organizationId } : {}),
       },
       order: { lotQtyFrom: 'ASC' },
     });
@@ -818,8 +785,7 @@ export class AqlService {
       codeLetter,
       input.aqlValue,
       inspectionMode,
-      input.company,
-      input.plant,
+      input.organizationId,
     );
     if (!acceptance) {
       throw new NotFoundException(`AQL 판정표를 찾을 수 없습니다: ${codeRule.codeLetter} / ${input.aqlValue}`);
@@ -828,8 +794,7 @@ export class AqlService {
     const sample = await this.codeLetterSampleRepo.findOne({
       where: {
         codeLetter: acceptance.sampleCodeLetter,
-        ...(input.company ? { company: input.company } : {}),
-        ...(input.plant ? { plant: input.plant } : {}),
+        ...(input.organizationId != null ? { organizationId: input.organizationId } : {}),
       },
     });
     if (!sample) throw new NotFoundException(`AQL 샘플수량 표를 찾을 수 없습니다: ${acceptance.sampleCodeLetter}`);
@@ -851,27 +816,24 @@ export class AqlService {
     codeLetter: string,
     aqlValue: number,
     inspectionMode: string,
-    company?: string,
-    plant?: string,
+    organizationId?: number,
   ) {
     const baseWhere = {
       codeLetter,
       aqlValue,
-      ...(company ? { company } : {}),
-      ...(plant ? { plant } : {}),
+      ...(organizationId != null ? { organizationId } : {}),
     };
     return await this.acceptanceRuleRepo.findOne({ where: { ...baseWhere, inspectionMode } })
       ?? await this.acceptanceRuleRepo.findOne({ where: { ...baseWhere, inspectionMode: 'NORMAL' } });
   }
 
-  private async findFirstStandard(aqlCodes: string[], company?: string, plant?: string) {
+  private async findFirstStandard(aqlCodes: string[], organizationId?: number) {
     if (aqlCodes.length === 0) return null;
     // N+1 제거: 후보 코드별 개별 조회 대신 In(...)으로 한 번에 조회 후 후보 우선순위대로 첫 매칭 반환
     const standards = await this.standardRepo.find({
       where: {
         aqlCode: In(aqlCodes),
-        ...(company ? { company } : {}),
-        ...(plant ? { plant } : {}),
+        ...(organizationId != null ? { organizationId } : {}),
       },
     });
     const byCode = new Map<string, (typeof standards)[number]>();
@@ -973,8 +935,7 @@ export class AqlService {
   private async resolveIqcDefectCounts(
     directCounts?: IqcDefectCounts,
     defectCodes?: IqcDefectCodeCount[],
-    company?: string,
-    plant?: string,
+    organizationId?: number,
   ) {
     const counts = {
       critical: this.toNonNegativeInt(directCounts?.critical),
@@ -994,8 +955,7 @@ export class AqlService {
       where: {
         defectCode: In(defectCodeSet),
         useYn: 'Y',
-        ...(company ? { company } : {}),
-        ...(plant ? { plant } : {}),
+        ...(organizationId != null ? { organizationId } : {}),
       },
     });
     const codeMap = new Map(codes.map((code) => [code.defectCode.toUpperCase(), code]));
@@ -1017,11 +977,10 @@ export class AqlService {
     return counts;
   }
 
-  private async replaceRules(aqlCode: string, rules: AqlRuleDto[], company: string, plant: string, userId: string) {
+  private async replaceRules(aqlCode: string, rules: AqlRuleDto[], organizationId: number, userId: string) {
     void aqlCode;
     void rules;
-    void company;
-    void plant;
+    void organizationId;
     void userId;
   }
 

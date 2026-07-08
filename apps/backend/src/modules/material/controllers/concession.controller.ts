@@ -9,7 +9,7 @@ import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { ConcessionService } from '../services/concession.service';
 import { ConcessionTargetQueryDto, ApplyConcessionDto } from '../dto/concession.dto';
 import { ResponseUtil } from '../../../common/dto/response.dto';
-import { Company, Plant } from '../../../common/decorators/tenant.decorator';
+import { OrganizationId } from '../../../common/decorators/tenant.decorator';
 
 @ApiTags('자재관리 - 특채처리')
 @Controller('material/concession')
@@ -18,24 +18,24 @@ export class ConcessionController {
 
   @Get('targets')
   @ApiOperation({ summary: '특채 대상 목록 (불합격 입하+품목 그룹)' })
-  async findTargets(@Query() query: ConcessionTargetQueryDto, @Company() company: string, @Plant() plant: string) {
-    const data = await this.concessionService.findTargets(query, company, plant);
+  async findTargets(@Query() query: ConcessionTargetQueryDto, @OrganizationId() organizationId: number) {
+    const data = await this.concessionService.findTargets(query, organizationId);
     return ResponseUtil.success(data);
   }
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: '특채 처리 (그룹 FAIL 시리얼 전체 특채 승인)' })
-  async apply(@Body() dto: ApplyConcessionDto, @Company() company: string, @Plant() plant: string) {
-    const data = await this.concessionService.apply(dto, company, plant);
+  async apply(@Body() dto: ApplyConcessionDto, @OrganizationId() organizationId: number) {
+    const data = await this.concessionService.apply(dto, organizationId);
     return ResponseUtil.success(data, '특채 처리되었습니다.');
   }
 
   @Post('cancel')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: '특채 취소 (SPECIAL_ACCEPT_YN 복원)' })
-  async cancel(@Body() dto: ApplyConcessionDto, @Company() company: string, @Plant() plant: string) {
-    const data = await this.concessionService.cancel(dto, company, plant);
+  async cancel(@Body() dto: ApplyConcessionDto, @OrganizationId() organizationId: number) {
+    const data = await this.concessionService.cancel(dto, organizationId);
     return ResponseUtil.success(data, '특채가 취소되었습니다.');
   }
 }

@@ -47,26 +47,20 @@ export class InventoryService {
     private readonly tx: TransactionService,
   ) {}
 
-  private tenantWhere(company?: string, plant?: string) {
+  private tenantWhere(organizationId?: number) {
     return {
-      ...(company && { company }),
-      ...(plant && { plant }),
+      ...(organizationId != null ? { organizationId } : {}),
     };
   }
 
   private assertSameTenant(
     context: string,
-    requested: { company?: string; plant?: string },
-    actual: { company?: string | null; plant?: string | null },
+    requested: { organizationId?: number | null },
+    actual: { organizationId?: number | null },
   ) {
-    if (requested.company && actual.company !== requested.company) {
+    if (requested.organizationId != null && actual.organizationId !== requested.organizationId) {
       throw new BadRequestException(
-        `${context} 회사 정보가 일치하지 않습니다. request=${requested.company}, row=${actual.company ?? 'NULL'}`,
-      );
-    }
-    if (requested.plant && actual.plant !== requested.plant) {
-      throw new BadRequestException(
-        `${context} 사업장 정보가 일치하지 않습니다. request=${requested.plant}, row=${actual.plant ?? 'NULL'}`,
+        `${context} 조직 정보가 일치하지 않습니다. request=${requested.organizationId}, row=${actual.organizationId ?? 'NULL'}`,
       );
     }
   }
@@ -75,32 +69,32 @@ export class InventoryService {
   // 조회 위임 (컨트롤러 하위 호환성 유지 — 실제 로직은 InventoryQueryService)
   // ──────────────────────────────────────────────────────────────
 
-  async getStock(query: StockQueryDto, company?: string, plant?: string) {
-    return this.inventoryQueryService.getStock(query, company, plant);
+  async getStock(query: StockQueryDto, organizationId?: number) {
+    return this.inventoryQueryService.getStock(query, organizationId);
   }
 
-  async getTransactions(query: TransactionQueryDto, company?: string, plant?: string) {
-    return this.inventoryQueryService.getTransactions(query, company, plant);
+  async getTransactions(query: TransactionQueryDto, organizationId?: number) {
+    return this.inventoryQueryService.getTransactions(query, organizationId);
   }
 
-  async getLots(query: { itemCode?: string; itemType?: string; status?: string }, company?: string, plant?: string) {
-    return this.inventoryQueryService.getLots(query, company, plant);
+  async getLots(query: { itemCode?: string; itemType?: string; status?: string }, organizationId?: number) {
+    return this.inventoryQueryService.getLots(query, organizationId);
   }
 
-  async getLotById(id: string, company?: string, plant?: string) {
-    return this.inventoryQueryService.getLotById(id, company, plant);
+  async getLotById(id: string, organizationId?: number) {
+    return this.inventoryQueryService.getLotById(id, organizationId);
   }
 
-  async getTransactionById(transNo: string, company?: string, plant?: string) {
-    return this.inventoryQueryService.getTransactionById(transNo, company, plant);
+  async getTransactionById(transNo: string, organizationId?: number) {
+    return this.inventoryQueryService.getTransactionById(transNo, organizationId);
   }
 
-  async getTransaction(id: string, company?: string, plant?: string) {
-    return this.inventoryQueryService.getTransaction(id, company, plant);
+  async getTransaction(id: string, organizationId?: number) {
+    return this.inventoryQueryService.getTransaction(id, organizationId);
   }
 
-  async getStockSummary(query: { warehouseType?: string; itemType?: string }, company?: string, plant?: string) {
-    return this.inventoryQueryService.getStockSummary(query, company, plant);
+  async getStockSummary(query: { warehouseType?: string; itemType?: string }, organizationId?: number) {
+    return this.inventoryQueryService.getStockSummary(query, organizationId);
   }
 
   /**
@@ -127,12 +121,12 @@ export class InventoryService {
   /**
    * 자재 UID 생성
    */
-  async generateMatUid(itemType: string, company?: string, plant?: string): Promise<string> {
+  async generateMatUid(itemType: string, organizationId?: number): Promise<string> {
     const today = new Date();
     const prefix = `${itemType}${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, '0')}${String(today.getDate()).padStart(2, '0')}`;
 
     const lastLot = await this.lotRepository.findOne({
-      where: { matUid: Like(`${prefix}%`), ...this.tenantWhere(company, plant) },
+      where: { matUid: Like(`${prefix}%`), ...this.tenantWhere(organizationId) },
       order: { matUid: 'DESC' },
     });
 
@@ -148,8 +142,8 @@ export class InventoryService {
   /**
    * LOT 생성
    */
-  async createLot(dto: CreateLotDto, company?: string, plant?: string) {
-    const tenantWhere = this.tenantWhere(company, plant);
+  async createLot(dto: CreateLotDto, organizationId?: number) {
+    const tenantWhere = this.tenantWhere(organizationId);
     const existingLot = await this.lotRepository.findOne({
       where: { matUid: dto.matUid, ...tenantWhere },
     });
@@ -168,8 +162,7 @@ export class InventoryService {
       vendor: dto.vendor,
       invoiceNo: dto.invoiceNo,
       poNo: dto.poNo,
-      company: company || null,
-      plant: plant || null,
+      organizationId: organizationId ?? null,
     });
 
     return this.lotRepository.save(lot);
@@ -178,7 +171,7 @@ export class InventoryService {
   /**
    * 입고 처리
    */
-  async receiveStock(dto: ReceiveStockDto, company?: string, plant?: string) {
+  async receiveStock(dto: ReceiveStockDto, organizationId?: number) {
     const transNo = await this.generateTransNo();
 
     return this.tx.run(async (queryRunner) => {
@@ -198,8 +191,7 @@ export class InventoryService {
         workerId: dto.workerId,
         remark: dto.remark,
         status: 'DONE',
-        company: company || null,
-        plant: plant || null,
+        organizationId: organizationId ?? null,
       });
 
       const savedTransaction = await queryRunner.manager.save(StockTransaction, transaction);
@@ -210,8 +202,7 @@ export class InventoryService {
           warehouseCode: dto.warehouseCode,
           itemCode: dto.itemCode,
           matUid: dto.matUid || IsNull(),
-          ...(company && { company }),
-          ...(plant && { plant }),
+          ...(organizationId != null ? { organizationId } : {}),
         },
       });
 
@@ -221,8 +212,7 @@ export class InventoryService {
             warehouseCode: existingStock.warehouseCode,
             itemCode: existingStock.itemCode,
             matUid: existingStock.matUid,
-            ...(company && { company }),
-            ...(plant && { plant }),
+            ...(organizationId != null ? { organizationId } : {}),
           },
           { qty: existingStock.qty + dto.qty, availableQty: existingStock.qty + dto.qty - existingStock.reservedQty },
         );
@@ -234,8 +224,7 @@ export class InventoryService {
           qty: dto.qty,
           reservedQty: 0,
           availableQty: dto.qty,
-          company: company || null,
-          plant: plant || null,
+          organizationId: organizationId ?? null,
         });
       }
 
@@ -248,7 +237,7 @@ export class InventoryService {
   /**
    * 출고 처리
    */
-  async issueStock(dto: IssueStockDto, company?: string, plant?: string) {
+  async issueStock(dto: IssueStockDto, organizationId?: number) {
     const transNo = await this.generateTransNo();
 
     return this.tx.run(async (queryRunner) => {
@@ -258,8 +247,7 @@ export class InventoryService {
           warehouseCode: dto.warehouseCode,
           itemCode: dto.itemCode,
           matUid: dto.matUid || IsNull(),
-          ...(company && { company }),
-          ...(plant && { plant }),
+          ...(organizationId != null ? { organizationId } : {}),
         },
       });
 
@@ -282,8 +270,7 @@ export class InventoryService {
         workerId: dto.workerId,
         remark: dto.remark,
         status: 'DONE',
-        company: company || null,
-        plant: plant || null,
+        organizationId: organizationId ?? null,
       });
 
       const savedTransaction = await queryRunner.manager.save(StockTransaction, transaction);
@@ -294,8 +281,7 @@ export class InventoryService {
           warehouseCode: stock.warehouseCode,
           itemCode: stock.itemCode,
           matUid: stock.matUid,
-          ...(company && { company }),
-          ...(plant && { plant }),
+          ...(organizationId != null ? { organizationId } : {}),
         },
         { qty: stock.qty - dto.qty, availableQty: stock.availableQty - dto.qty },
       );
@@ -307,8 +293,7 @@ export class InventoryService {
             warehouseCode: dto.toWarehouseCode,
             itemCode: dto.itemCode,
             matUid: dto.matUid || IsNull(),
-            ...(company && { company }),
-            ...(plant && { plant }),
+            ...(organizationId != null ? { organizationId } : {}),
           },
         });
 
@@ -318,8 +303,7 @@ export class InventoryService {
               warehouseCode: targetStock.warehouseCode,
               itemCode: targetStock.itemCode,
               matUid: targetStock.matUid,
-              ...(company && { company }),
-              ...(plant && { plant }),
+              ...(organizationId != null ? { organizationId } : {}),
             },
             { qty: targetStock.qty + dto.qty, availableQty: targetStock.qty + dto.qty - targetStock.reservedQty },
           );
@@ -331,8 +315,7 @@ export class InventoryService {
             qty: dto.qty,
             reservedQty: 0,
             availableQty: dto.qty,
-            company: company || null,
-            plant: plant || null,
+            organizationId: organizationId ?? null,
           });
         }
       }
@@ -346,7 +329,7 @@ export class InventoryService {
   /**
    * 창고간 이동
    */
-  async transferStock(dto: TransferStockDto, company?: string, plant?: string) {
+  async transferStock(dto: TransferStockDto, organizationId?: number) {
     return this.issueStock({
       warehouseCode: dto.fromWarehouseCode,
       toWarehouseCode: dto.toWarehouseCode,
@@ -358,19 +341,18 @@ export class InventoryService {
       refId: dto.refId,
       workerId: dto.workerId,
       remark: dto.remark,
-    }, company, plant);
+    }, organizationId);
   }
 
   /**
    * 트랜잭션 취소 (입고취소, 출고취소)
    * 원 트랜잭션의 반대 수량으로 새 트랜잭션 생성
    */
-  async cancelTransaction(dto: CancelTransactionDto, company?: string, plant?: string) {
+  async cancelTransaction(dto: CancelTransactionDto, organizationId?: number) {
     const originalTrans = await this.stockTransactionRepository.findOne({
       where: {
         transNo: dto.transactionId,
-        ...(company && { company }),
-        ...(plant && { plant }),
+        ...(organizationId != null ? { organizationId } : {}),
       },
     });
 
@@ -382,14 +364,13 @@ export class InventoryService {
       throw new BadRequestException('이미 취소된 트랜잭션입니다.');
     }
 
-    this.assertSameTenant('원본 트랜잭션', { company, plant }, originalTrans);
+    this.assertSameTenant('원본 트랜잭션', { organizationId }, originalTrans);
 
     // 취소 트랜잭션 유형 결정
     const cancelTransType = this.getCancelTransType(originalTrans.transType);
     const transNo = await this.generateTransNo();
     const txTenantWhere = {
-      ...(originalTrans.company && { company: originalTrans.company }),
-      ...(originalTrans.plant && { plant: originalTrans.plant }),
+      ...(originalTrans.organizationId != null ? { organizationId: originalTrans.organizationId } : {}),
     };
 
     return this.tx.run(async (queryRunner) => {
@@ -414,8 +395,7 @@ export class InventoryService {
         workerId: dto.workerId,
         remark: dto.remark || `취소: ${originalTrans.transNo}`,
         status: 'DONE',
-        company: originalTrans.company || company || null,
-        plant: originalTrans.plant || plant || null,
+        organizationId: originalTrans.organizationId ?? organizationId ?? null,
       });
 
       const savedCancelTrans = await queryRunner.manager.save(StockTransaction, cancelTrans);
@@ -433,7 +413,7 @@ export class InventoryService {
         });
 
         if (stock) {
-          this.assertSameTenant('취소 대상 재고', { company: originalTrans.company ?? company, plant: originalTrans.plant ?? plant }, stock);
+          this.assertSameTenant('취소 대상 재고', { organizationId: originalTrans.organizationId ?? organizationId }, stock);
           const newQty = stock.qty - Math.abs(originalTrans.qty);
           if (newQty < 0) {
             throw new BadRequestException('재고가 부족하여 취소할 수 없습니다.');
@@ -462,7 +442,7 @@ export class InventoryService {
         });
 
         if (stock) {
-          this.assertSameTenant('복구 대상 재고', { company: originalTrans.company ?? company, plant: originalTrans.plant ?? plant }, stock);
+          this.assertSameTenant('복구 대상 재고', { organizationId: originalTrans.organizationId ?? organizationId }, stock);
           await queryRunner.manager.update(MatStock,
             {
               warehouseCode: stock.warehouseCode,
@@ -480,8 +460,7 @@ export class InventoryService {
             qty: Math.abs(originalTrans.qty),
             reservedQty: 0,
             availableQty: Math.abs(originalTrans.qty),
-            company: originalTrans.company || company || null,
-            plant: originalTrans.plant || plant || null,
+            organizationId: originalTrans.organizationId ?? organizationId ?? null,
           });
         }
       }

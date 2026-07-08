@@ -34,16 +34,16 @@ describe('LotSplitService', () => {
 
   const sourceLot = (over: Partial<MatLot> = {}): MatLot => ({
     matUid: 'MAT-001', itemCode: 'ITEM-001', status: 'NORMAL', initQty: 10,
-    origin: null, company: 'C1', plant: 'P1', ...over,
+    origin: null, organizationId: 1, ...over,
   } as MatLot);
 
   const sourceStock = (over: Partial<MatStock> = {}): MatStock => ({
     warehouseCode: 'WH-01', itemCode: 'ITEM-001', matUid: 'MAT-001',
-    qty: 10, availableQty: 10, reservedQty: 0, company: 'C1', plant: 'P1', ...over,
+    qty: 10, availableQty: 10, reservedQty: 0, organizationId: 1, ...over,
   } as MatStock);
 
   const part = (over: Partial<ItemMaster> = {}): ItemMaster => ({
-    itemCode: 'ITEM-001', itemName: 'PART-A', isSplittable: 'Y', company: 'C1', plant: 'P1', ...over,
+    itemCode: 'ITEM-001', itemName: 'PART-A', isSplittable: 'Y', organizationId: 1, ...over,
   } as ItemMaster);
 
   beforeEach(async () => {
@@ -118,10 +118,10 @@ describe('LotSplitService', () => {
       mockPartRepo.find.mockResolvedValue([]);
       mockMatStockRepo.find.mockResolvedValue([]);
 
-      await target.findSplittableLots({ page: 1, limit: 10 }, 'C1', 'P1');
+      await target.findSplittableLots({ page: 1, limit: 10 }, 1);
 
-      expect(mockPartRepo.find).toHaveBeenCalledWith({ where: expect.objectContaining({ company: 'C1', plant: 'P1' }) });
-      expect(mockMatStockRepo.find).toHaveBeenCalledWith({ where: expect.objectContaining({ company: 'C1', plant: 'P1' }) });
+      expect(mockPartRepo.find).toHaveBeenCalledWith({ where: expect.objectContaining({ organizationId: 1 }) });
+      expect(mockMatStockRepo.find).toHaveBeenCalledWith({ where: expect.objectContaining({ organizationId: 1 }) });
     });
   });
 
@@ -142,7 +142,7 @@ describe('LotSplitService', () => {
       mockQueryRunner.manager.findOne.mockResolvedValueOnce(sourceLot());
       (mockQueryRunner.manager.query as jest.Mock).mockResolvedValue([{ RECVD: 0 }]);
 
-      await expect(target.split({ sourceLotId: 'MAT-001', splitQty: 3 }, 'C1', 'P1'))
+      await expect(target.split({ sourceLotId: 'MAT-001', splitQty: 3 }, 1))
         .rejects.toThrow(BadRequestException);
     });
 
@@ -152,7 +152,7 @@ describe('LotSplitService', () => {
         .mockResolvedValueOnce(sourceStock({ reservedQty: 2 }));
       (mockQueryRunner.manager.query as jest.Mock).mockResolvedValue([{ RECVD: 10 }]);
 
-      await expect(target.split({ sourceLotId: 'MAT-001', splitQty: 3 }, 'C1', 'P1'))
+      await expect(target.split({ sourceLotId: 'MAT-001', splitQty: 3 }, 1))
         .rejects.toThrow(BadRequestException);
     });
 
@@ -163,7 +163,7 @@ describe('LotSplitService', () => {
       (mockQueryRunner.manager.query as jest.Mock).mockResolvedValue([{ RECVD: 10 }]);
       mockQueryRunner.manager.find.mockResolvedValue([{ matUid: 'MAT-001', status: 'DONE' } as MatIssue]);
 
-      await expect(target.split({ sourceLotId: 'MAT-001', splitQty: 3 }, 'C1', 'P1'))
+      await expect(target.split({ sourceLotId: 'MAT-001', splitQty: 3 }, 1))
         .rejects.toThrow(BadRequestException);
     });
 
@@ -174,14 +174,14 @@ describe('LotSplitService', () => {
       (mockQueryRunner.manager.query as jest.Mock).mockResolvedValue([{ RECVD: 10 }]);
       mockQueryRunner.manager.find.mockResolvedValue([]);
 
-      await expect(target.split({ sourceLotId: 'MAT-001', splitQty: 10 }, 'C1', 'P1'))
+      await expect(target.split({ sourceLotId: 'MAT-001', splitQty: 10 }, 1))
         .rejects.toThrow(BadRequestException);
     });
 
     it('정상 분할: 신규 2조각 발번, 원본 SPLIT 처리, currentQty 설정', async () => {
       wireHappyPath();
 
-      const result = await target.split({ sourceLotId: 'MAT-001', splitQty: 3 }, 'C1', 'P1');
+      const result = await target.split({ sourceLotId: 'MAT-001', splitQty: 3 }, 1);
 
       // 신규 2조각 발번
       expect(mockNumbering.nextMatSerial).toHaveBeenCalledTimes(2);
@@ -194,7 +194,7 @@ describe('LotSplitService', () => {
       // 원본 SPLIT + 재고 0
       expect(mockQueryRunner.manager.update).toHaveBeenCalledWith(
         MatLot,
-        { matUid: 'MAT-001', company: 'C1', plant: 'P1' },
+        { matUid: 'MAT-001', organizationId: 1 },
         expect.objectContaining({ status: 'SPLIT', currentQty: 0 }),
       );
       // 신규 LOT은 currentQty=조각수량으로 생성됨 (ORA-01400 회귀 방지)

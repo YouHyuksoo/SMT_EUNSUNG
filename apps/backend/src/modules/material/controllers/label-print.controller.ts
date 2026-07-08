@@ -28,7 +28,7 @@ import {
   PrintLogQueryDto,
 } from '../dto/label-print.dto';
 import { ResponseUtil } from '../../../common/dto/response.dto';
-import { Company, Plant } from '../../../common/decorators/tenant.decorator';
+import { OrganizationId } from '../../../common/decorators/tenant.decorator';
 
 @ApiTags('자재관리 - 라벨 인쇄')
 @Controller('material/label-print')
@@ -39,8 +39,8 @@ export class LabelPrintController {
   @Post('generate')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'ZPL 변수 치환 결과 반환' })
-  async generateZpl(@Body() dto: GenerateZplDto, @Company() company: string, @Plant() plant: string) {
-    const data = await this.labelPrintService.generateZpl(dto, company, plant);
+  async generateZpl(@Body() dto: GenerateZplDto, @OrganizationId() organizationId: number) {
+    const data = await this.labelPrintService.generateZpl(dto, organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -59,10 +59,9 @@ export class LabelPrintController {
   @ApiOperation({ summary: '발행 이력 저장' })
   async createLog(
     @Body() dto: CreatePrintLogDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.labelPrintService.createLog(dto, company, plant);
+    const data = await this.labelPrintService.createLog(dto, organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -71,13 +70,11 @@ export class LabelPrintController {
   @ApiOperation({ summary: '발행 이력 조회' })
   async findLogs(
     @Query() query: PrintLogQueryDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
     const result = await this.labelPrintService.findLogs(
       query,
-      company,
-      plant,
+      organizationId,
     );
     return ResponseUtil.paged(result.data, result.total, result.page, result.limit);
   }

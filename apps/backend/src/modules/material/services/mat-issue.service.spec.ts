@@ -113,27 +113,26 @@ describe('MatIssueService', () => {
           issueQty: 5,
           issueType: 'PROD',
           status: 'DONE',
-          company: 'C1',
-          plant: 'P1',
+          organizationId: 1,
         } as MatIssue,
       ]);
       mockMatIssueRepo.count.mockResolvedValue(1);
       mockMatLotRepo.find.mockResolvedValue([
-        { matUid: 'MAT-001', itemCode: 'ITEM-001', company: 'C1', plant: 'P1' } as MatLot,
+        { matUid: 'MAT-001', itemCode: 'ITEM-001', organizationId: 1 } as MatLot,
       ]);
-      mockJobOrderRepo.find.mockResolvedValue([{ orderNo: 'JO-001', company: 'C1', plant: 'P1' } as JobOrder]);
+      mockJobOrderRepo.find.mockResolvedValue([{ orderNo: 'JO-001', organizationId: 1 } as JobOrder]);
       mockItemMasterRepo.find.mockResolvedValue([]);
 
-      await target.findAll({ page: 1, limit: 10 }, 'C1', 'P1');
+      await target.findAll({ page: 1, limit: 10 }, 1);
 
       expect(mockMatLotRepo.find).toHaveBeenCalledWith({
-        where: expect.objectContaining({ company: 'C1', plant: 'P1' }),
+        where: expect.objectContaining({ organizationId: 1 }),
       });
       expect(mockJobOrderRepo.find).toHaveBeenCalledWith({
-        where: expect.objectContaining({ company: 'C1', plant: 'P1' }),
+        where: expect.objectContaining({ organizationId: 1 }),
       });
       expect(mockItemMasterRepo.find).toHaveBeenCalledWith({
-        where: expect.objectContaining({ company: 'C1', plant: 'P1' }),
+        where: expect.objectContaining({ organizationId: 1 }),
       });
     });
   });
@@ -213,11 +212,10 @@ describe('MatIssueService', () => {
         itemCode: 'ITEM-001',
         iqcStatus: 'PASS',
         status: 'NORMAL',
-        company: 'C1',
-        plant: 'P1',
+        organizationId: 1,
       } as MatLot);
       mockMatStockRepo.find.mockResolvedValue([
-        { warehouseCode: 'WH-01', itemCode: 'ITEM-001', matUid: 'MAT-001', qty: 5, availableQty: 5, company: 'C1', plant: 'P1' } as MatStock,
+        { warehouseCode: 'WH-01', itemCode: 'ITEM-001', matUid: 'MAT-001', qty: 5, availableQty: 5, organizationId: 1 } as MatStock,
       ]);
       mockItemMasterRepo.findOne.mockResolvedValue({ itemCode: 'ITEM-001', itemName: 'Item', unit: 'EA' } as ItemMaster);
       jest.spyOn(target, 'create').mockResolvedValue([
@@ -237,16 +235,16 @@ describe('MatIssueService', () => {
         warehouseCode: 'WH-01',
         issueType: 'PROD',
         workerId: 'worker',
-      }, 'C1', 'P1');
+      }, 1);
 
       expect(mockMatLotRepo.findOne).toHaveBeenCalledWith({
-        where: { matUid: 'MAT-001', company: 'C1', plant: 'P1' },
+        where: { matUid: 'MAT-001', organizationId: 1 },
       });
       expect(mockMatStockRepo.find).toHaveBeenCalledWith({
-        where: { matUid: 'MAT-001', warehouseCode: 'WH-01', company: 'C1', plant: 'P1' },
+        where: { matUid: 'MAT-001', warehouseCode: 'WH-01', organizationId: 1 },
       });
       expect(mockItemMasterRepo.findOne).toHaveBeenCalledWith({
-        where: { itemCode: 'ITEM-001', company: 'C1', plant: 'P1' },
+        where: { itemCode: 'ITEM-001', organizationId: 1 },
       });
     });
 
@@ -256,11 +254,10 @@ describe('MatIssueService', () => {
         itemCode: 'ITEM-001',
         iqcStatus: 'PASS',
         status: 'NORMAL',
-        company: 'C1',
-        plant: 'P1',
+        organizationId: 1,
       } as MatLot);
       mockMatStockRepo.find.mockResolvedValue([
-        { warehouseCode: 'WH-01', itemCode: 'ITEM-001', matUid: 'MAT-001', qty: 5, availableQty: 5, company: 'OTHER', plant: 'P1' } as MatStock,
+        { warehouseCode: 'WH-01', itemCode: 'ITEM-001', matUid: 'MAT-001', qty: 5, availableQty: 5, organizationId: 2 } as MatStock,
       ]);
 
       await expect(target.scanIssue({
@@ -268,7 +265,7 @@ describe('MatIssueService', () => {
         warehouseCode: 'WH-01',
         issueType: 'PROD',
         workerId: 'worker',
-      }, 'C1', 'P1')).rejects.toThrow(BadRequestException);
+      }, 1)).rejects.toThrow(BadRequestException);
     });
   });
 
@@ -279,18 +276,17 @@ describe('MatIssueService', () => {
         itemCode: 'ITEM-001',
         iqcStatus: 'PASS',
         status: 'NORMAL',
-        company: 'HANES',
-        plant: 'P01',
+        organizationId: 1,
       } as MatLot),
       find: jest
         .fn()
         .mockResolvedValueOnce([
-          { warehouseCode: 'W1', itemCode: 'ITEM-001', matUid: 'MAT-001', qty: 3, availableQty: 3, company: 'HANES', plant: 'P01' } as MatStock,
-          { warehouseCode: 'W2', itemCode: 'ITEM-001', matUid: 'MAT-001', qty: 4, availableQty: 4, company: 'HANES', plant: 'P01' } as MatStock,
+          { warehouseCode: 'W1', itemCode: 'ITEM-001', matUid: 'MAT-001', qty: 3, availableQty: 3, organizationId: 1 } as MatStock,
+          { warehouseCode: 'W2', itemCode: 'ITEM-001', matUid: 'MAT-001', qty: 4, availableQty: 4, organizationId: 1 } as MatStock,
         ])
         .mockResolvedValueOnce([
-          { warehouseCode: 'W1', itemCode: 'ITEM-001', matUid: 'MAT-001', qty: 0, availableQty: 0, company: 'HANES', plant: 'P01' } as MatStock,
-          { warehouseCode: 'W2', itemCode: 'ITEM-001', matUid: 'MAT-001', qty: 2, availableQty: 2, company: 'HANES', plant: 'P01' } as MatStock,
+          { warehouseCode: 'W1', itemCode: 'ITEM-001', matUid: 'MAT-001', qty: 0, availableQty: 0, organizationId: 1 } as MatStock,
+          { warehouseCode: 'W2', itemCode: 'ITEM-001', matUid: 'MAT-001', qty: 2, availableQty: 2, organizationId: 1 } as MatStock,
         ]),
       create: jest.fn((entity, payload) => ({ ...payload })),
       save: jest.fn().mockImplementation(async (entity) => entity),
@@ -308,7 +304,7 @@ describe('MatIssueService', () => {
     await target.create({
       issueType: 'PROD',
       items: [{ matUid: 'MAT-001', issueQty: 5 }],
-    } as any, 'HANES', 'P01');
+    } as any, 1);
 
     expect(mockTx.run).toHaveBeenCalledTimes(1);
     expect(mockDataSource.createQueryRunner).not.toHaveBeenCalled();
@@ -316,12 +312,12 @@ describe('MatIssueService', () => {
     expect(manager.save).toHaveBeenCalledWith(expect.objectContaining({ transNo: 'TX-002', qty: -2 }));
     expect(manager.update).toHaveBeenCalledWith(
       MatStock,
-      { warehouseCode: 'W1', itemCode: 'ITEM-001', matUid: 'MAT-001', company: 'HANES', plant: 'P01' },
+      { warehouseCode: 'W1', itemCode: 'ITEM-001', matUid: 'MAT-001', organizationId: 1 },
       { qty: 0, availableQty: 0 },
     );
     expect(manager.update).toHaveBeenCalledWith(
       MatStock,
-      { warehouseCode: 'W2', itemCode: 'ITEM-001', matUid: 'MAT-001', company: 'HANES', plant: 'P01' },
+      { warehouseCode: 'W2', itemCode: 'ITEM-001', matUid: 'MAT-001', organizationId: 1 },
       { qty: 2, availableQty: 2 },
     );
   });
@@ -336,18 +332,17 @@ describe('MatIssueService', () => {
           itemCode: 'ITEM-001',
           iqcStatus: 'PASS',
           status: 'NORMAL',
-          company: 'HANES',
-          plant: 'P01',
+          organizationId: 1,
         } as MatLot),
       find: jest
         .fn()
         // 출고 대상 재고
         .mockResolvedValueOnce([
-          { warehouseCode: 'RM_MAIN', itemCode: 'ITEM-001', matUid: 'MAT-001', qty: 5, availableQty: 5, company: 'HANES', plant: 'P01' } as MatStock,
+          { warehouseCode: 'RM_MAIN', itemCode: 'ITEM-001', matUid: 'MAT-001', qty: 5, availableQty: 5, organizationId: 1 } as MatStock,
         ])
         // 출고 후 원자재 잔여 재고 (공정재고는 별도 테이블이라 여기엔 안 잡힘 → DEPLETED 처리됨)
         .mockResolvedValueOnce([
-          { warehouseCode: 'RM_MAIN', itemCode: 'ITEM-001', matUid: 'MAT-001', qty: 0, availableQty: 0, company: 'HANES', plant: 'P01' } as MatStock,
+          { warehouseCode: 'RM_MAIN', itemCode: 'ITEM-001', matUid: 'MAT-001', qty: 0, availableQty: 0, organizationId: 1 } as MatStock,
         ]),
       create: jest.fn((entity, payload) => ({ ...payload })),
       save: jest.fn().mockImplementation(async (entity) => entity),
@@ -367,7 +362,7 @@ describe('MatIssueService', () => {
       processCode: 'PRC1',
       issueType: 'PROD',
       items: [{ matUid: 'MAT-001', issueQty: 5 }],
-    } as any, 'HANES', 'P01');
+    } as any, 1);
 
     // 원자재 STOCK_TRANSACTIONS 는 PROC_MOVE(from=원자재창고, qty-)
     expect(manager.save).toHaveBeenCalledWith(
@@ -382,7 +377,7 @@ describe('MatIssueService', () => {
     // 원자재창고 차감
     expect(manager.update).toHaveBeenCalledWith(
       MatStock,
-      { warehouseCode: 'RM_MAIN', itemCode: 'ITEM-001', matUid: 'MAT-001', company: 'HANES', plant: 'P01' },
+      { warehouseCode: 'RM_MAIN', itemCode: 'ITEM-001', matUid: 'MAT-001', organizationId: 1 },
       { qty: 0, availableQty: 0 },
     );
     // 공정재고 가산은 ProcMatStockService.addStockInTx 로 위임(PROC_MAT_STOCKS)
@@ -397,8 +392,7 @@ describe('MatIssueService', () => {
         fromWarehouseId: 'RM_MAIN',
         refType: 'MAT_ISSUE',
         refId: 'ISS-001-1',
-        company: 'HANES',
-        plant: 'P01',
+        organizationId: 1,
       }),
     );
   });
@@ -410,16 +404,15 @@ describe('MatIssueService', () => {
         itemCode: 'ITEM-001',
         iqcStatus: 'PASS',
         status: 'NORMAL',
-        company: 'HANES',
-        plant: 'P01',
+        organizationId: 1,
       } as MatLot),
       find: jest
         .fn()
         .mockResolvedValueOnce([
-          { warehouseCode: 'RM_MAIN', itemCode: 'ITEM-001', matUid: 'MAT-001', qty: 5, availableQty: 5, company: 'HANES', plant: 'P01' } as MatStock,
+          { warehouseCode: 'RM_MAIN', itemCode: 'ITEM-001', matUid: 'MAT-001', qty: 5, availableQty: 5, organizationId: 1 } as MatStock,
         ])
         .mockResolvedValueOnce([
-          { warehouseCode: 'RM_MAIN', itemCode: 'ITEM-001', matUid: 'MAT-001', qty: 0, availableQty: 0, company: 'HANES', plant: 'P01' } as MatStock,
+          { warehouseCode: 'RM_MAIN', itemCode: 'ITEM-001', matUid: 'MAT-001', qty: 0, availableQty: 0, organizationId: 1 } as MatStock,
         ]),
       create: jest.fn((entity, payload) => ({ ...payload })),
       save: jest.fn().mockImplementation(async (entity) => entity),
@@ -436,7 +429,7 @@ describe('MatIssueService', () => {
     await target.create({
       issueType: 'PROD',
       items: [{ matUid: 'MAT-001', issueQty: 5 }],
-    } as any, 'HANES', 'P01');
+    } as any, 1);
 
     expect(manager.save).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -458,8 +451,7 @@ describe('MatIssueService', () => {
         itemCode: 'ITEM-001',
         iqcStatus: 'PASS',
         status: 'NORMAL',
-        company: 'HANES',
-        plant: 'P01',
+        organizationId: 1,
       } as MatLot),
       find: jest
         .fn()
@@ -470,8 +462,7 @@ describe('MatIssueService', () => {
             matUid: 'MAT-001',
             qty: 5,
             availableQty: 5,
-            company: 'OTHER',
-            plant: 'P01',
+            organizationId: 2,
           } as MatStock,
         ])
         .mockResolvedValueOnce([]),
@@ -485,7 +476,7 @@ describe('MatIssueService', () => {
     await expect(target.create({
       issueType: 'PROD',
       items: [{ matUid: 'MAT-001', issueQty: 5 }],
-    } as any, 'HANES', 'P01')).rejects.toThrow(BadRequestException);
+    } as any, 1)).rejects.toThrow(BadRequestException);
 
     expect(manager.update).not.toHaveBeenCalledWith(MatStock, expect.anything(), expect.anything());
   });
@@ -497,8 +488,7 @@ describe('MatIssueService', () => {
       status: 'DONE',
       matUid: 'MAT-001',
       issueQty: 5,
-      company: 'HANES',
-      plant: 'P01',
+      organizationId: 1,
     } as MatIssue);
 
     const manager = {
@@ -510,8 +500,7 @@ describe('MatIssueService', () => {
           itemCode: 'ITEM-001',
           matUid: 'MAT-001',
           qty: -3,
-          company: 'HANES',
-          plant: 'P01',
+          organizationId: 1,
         } as StockTransaction,
         {
           transNo: 'TX-002',
@@ -519,14 +508,13 @@ describe('MatIssueService', () => {
           itemCode: 'ITEM-001',
           matUid: 'MAT-001',
           qty: -2,
-          company: 'HANES',
-          plant: 'P01',
+          organizationId: 1,
         } as StockTransaction,
       ]),
       findOne: jest
         .fn()
-        .mockResolvedValueOnce({ warehouseCode: 'W1', itemCode: 'ITEM-001', matUid: 'MAT-001', qty: 0, availableQty: 0, company: 'HANES', plant: 'P01' } as MatStock)
-        .mockResolvedValueOnce({ warehouseCode: 'W2', itemCode: 'ITEM-001', matUid: 'MAT-001', qty: 2, availableQty: 2, company: 'HANES', plant: 'P01' } as MatStock),
+        .mockResolvedValueOnce({ warehouseCode: 'W1', itemCode: 'ITEM-001', matUid: 'MAT-001', qty: 0, availableQty: 0, organizationId: 1 } as MatStock)
+        .mockResolvedValueOnce({ warehouseCode: 'W2', itemCode: 'ITEM-001', matUid: 'MAT-001', qty: 2, availableQty: 2, organizationId: 1 } as MatStock),
       create: jest.fn((entity, payload) => ({ ...payload })),
       save: jest.fn().mockImplementation(async (entity) => entity),
     };
@@ -536,28 +524,28 @@ describe('MatIssueService', () => {
       .mockResolvedValueOnce('CANCEL-001')
       .mockResolvedValueOnce('CANCEL-002');
 
-    await target.cancel('ISS-001', 1, 'cancel', 'HANES', 'P01');
+    await target.cancel('ISS-001', 1, 'cancel', 1);
 
     expect(mockTx.run).toHaveBeenCalledTimes(1);
     expect(mockDataSource.createQueryRunner).not.toHaveBeenCalled();
     expect(manager.update).toHaveBeenCalledWith(
       MatStock,
-      { warehouseCode: 'W1', itemCode: 'ITEM-001', matUid: 'MAT-001', company: 'HANES', plant: 'P01' },
+      { warehouseCode: 'W1', itemCode: 'ITEM-001', matUid: 'MAT-001', organizationId: 1 },
       { qty: 3, availableQty: 3 },
     );
     expect(manager.update).toHaveBeenCalledWith(
       MatStock,
-      { warehouseCode: 'W2', itemCode: 'ITEM-001', matUid: 'MAT-001', company: 'HANES', plant: 'P01' },
+      { warehouseCode: 'W2', itemCode: 'ITEM-001', matUid: 'MAT-001', organizationId: 1 },
       { qty: 4, availableQty: 4 },
     );
     expect(manager.update).toHaveBeenCalledWith(
       StockTransaction,
-      { transNo: 'TX-001', company: 'HANES', plant: 'P01' },
+      { transNo: 'TX-001', organizationId: 1 },
       { status: 'CANCELED' },
     );
     expect(manager.update).toHaveBeenCalledWith(
       StockTransaction,
-      { transNo: 'TX-002', company: 'HANES', plant: 'P01' },
+      { transNo: 'TX-002', organizationId: 1 },
       { status: 'CANCELED' },
     );
     // 역분개 거래는 MAT_OUT_CANCEL 로 기록한다.
@@ -576,8 +564,7 @@ describe('MatIssueService', () => {
       matUid: 'MAT-001',
       orderNo: 'JO-001',
       issueQty: 5,
-      company: 'HANES',
-      plant: 'P01',
+      organizationId: 1,
     } as MatIssue);
 
     const manager = {
@@ -591,14 +578,13 @@ describe('MatIssueService', () => {
           itemCode: 'ITEM-001',
           matUid: 'MAT-001',
           qty: -5,
-          company: 'HANES',
-          plant: 'P01',
+          organizationId: 1,
         } as StockTransaction,
       ]),
       findOne: jest
         .fn()
         // 원자재창고 재고 조회 (복원 대상)
-        .mockResolvedValueOnce({ warehouseCode: 'RM_MAIN', itemCode: 'ITEM-001', matUid: 'MAT-001', qty: 0, availableQty: 0, company: 'HANES', plant: 'P01' } as MatStock),
+        .mockResolvedValueOnce({ warehouseCode: 'RM_MAIN', itemCode: 'ITEM-001', matUid: 'MAT-001', qty: 0, availableQty: 0, organizationId: 1 } as MatStock),
       create: jest.fn((entity, payload) => ({ ...payload })),
       save: jest.fn().mockImplementation(async (entity) => entity),
     };
@@ -607,7 +593,7 @@ describe('MatIssueService', () => {
     mockProcMatStockService.restoreInTx.mockResolvedValue([]);
     mockNumbering.nextInTx.mockResolvedValueOnce('CANCEL-001');
 
-    await target.cancel('ISS-009', 1, 'cancel', 'HANES', 'P01');
+    await target.cancel('ISS-009', 1, 'cancel', 1);
 
     // 원자재측 역분개 거래: PROC_MOVE_CANCEL, 원자재창고 복원
     expect(manager.save).toHaveBeenCalledWith(
@@ -623,13 +609,13 @@ describe('MatIssueService', () => {
     // 원자재창고 복원
     expect(manager.update).toHaveBeenCalledWith(
       MatStock,
-      { warehouseCode: 'RM_MAIN', itemCode: 'ITEM-001', matUid: 'MAT-001', company: 'HANES', plant: 'P01' },
+      { warehouseCode: 'RM_MAIN', itemCode: 'ITEM-001', matUid: 'MAT-001', organizationId: 1 },
       { qty: 5, availableQty: 5 },
     );
     // 원본 거래 취소 처리
     expect(manager.update).toHaveBeenCalledWith(
       StockTransaction,
-      { transNo: 'TX-001', company: 'HANES', plant: 'P01' },
+      { transNo: 'TX-001', organizationId: 1 },
       { status: 'CANCELED' },
     );
     // 공정재고 차감은 ProcMatStockService.restoreInTx(DEDUCT_BACK)로 위임
@@ -642,8 +628,7 @@ describe('MatIssueService', () => {
         cancelTransType: 'PROC_IN_CANCEL',
         originTransType: 'PROC_IN',
         orderNo: 'JO-001',
-        company: 'HANES',
-        plant: 'P01',
+        organizationId: 1,
       }),
     );
   });
@@ -654,11 +639,10 @@ describe('MatIssueService', () => {
       seq: 1,
       status: 'DONE',
       matUid: 'MAT-001',
-      company: 'OTHER',
-      plant: 'P01',
+      organizationId: 2,
     } as MatIssue);
 
-    await expect(target.cancel('ISS-001', 1, 'cancel', 'HANES', 'P01')).rejects.toThrow(BadRequestException);
+    await expect(target.cancel('ISS-001', 1, 'cancel', 1)).rejects.toThrow(BadRequestException);
 
     expect(mockTx.run).not.toHaveBeenCalled();
     expect(mockDataSource.getRepository).not.toHaveBeenCalled();
@@ -670,8 +654,7 @@ describe('MatIssueService', () => {
       seq: 1,
       status: 'DONE',
       matUid: 'MAT-001',
-      company: 'HANES',
-      plant: 'P01',
+      organizationId: 1,
     } as MatIssue);
 
     const manager = {
@@ -683,8 +666,7 @@ describe('MatIssueService', () => {
           itemCode: 'ITEM-001',
           matUid: 'MAT-001',
           qty: -3,
-          company: 'OTHER',
-          plant: 'P01',
+          organizationId: 2,
         } as StockTransaction,
       ]),
       findOne: jest.fn(),
@@ -693,7 +675,7 @@ describe('MatIssueService', () => {
     };
     (mockQueryRunner as any).manager = manager;
 
-    await expect(target.cancel('ISS-001', 1, 'cancel', 'HANES', 'P01')).rejects.toThrow(BadRequestException);
+    await expect(target.cancel('ISS-001', 1, 'cancel', 1)).rejects.toThrow(BadRequestException);
 
     expect(manager.save).not.toHaveBeenCalled();
   });
@@ -704,8 +686,7 @@ describe('MatIssueService', () => {
       seq: 1,
       status: 'DONE',
       matUid: 'MAT-001',
-      company: 'HANES',
-      plant: 'P01',
+      organizationId: 1,
     } as MatIssue);
 
     const manager = {
@@ -717,8 +698,7 @@ describe('MatIssueService', () => {
           itemCode: 'ITEM-001',
           matUid: 'MAT-001',
           qty: -3,
-          company: 'HANES',
-          plant: 'P01',
+          organizationId: 1,
         } as StockTransaction,
       ]),
       findOne: jest.fn().mockResolvedValue({
@@ -727,8 +707,7 @@ describe('MatIssueService', () => {
         matUid: 'MAT-001',
         qty: 0,
         availableQty: 0,
-        company: 'OTHER',
-        plant: 'P01',
+        organizationId: 2,
       } as MatStock),
       create: jest.fn((entity, payload) => ({ ...payload })),
       save: jest.fn().mockImplementation(async (entity) => entity),
@@ -736,7 +715,7 @@ describe('MatIssueService', () => {
     (mockQueryRunner as any).manager = manager;
     mockNumbering.nextInTx.mockResolvedValue('CANCEL-001');
 
-    await expect(target.cancel('ISS-001', 1, 'cancel', 'HANES', 'P01')).rejects.toThrow(BadRequestException);
+    await expect(target.cancel('ISS-001', 1, 'cancel', 1)).rejects.toThrow(BadRequestException);
 
     expect(manager.update).not.toHaveBeenCalledWith(
       MatStock,

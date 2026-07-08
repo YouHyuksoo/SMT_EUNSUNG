@@ -15,7 +15,7 @@
  *    - PATCH  /fai/:id/approve  : 승인
  *    - POST   /fai/:id/items    : 검사항목 일괄 등록
  *
- * 2. **인증**: @Company(), @Plant() 데코레이터로 테넌시 정보, req.user.id로 사용자 ID 추출
+ * 2. **인증**: @OrganizationId() 데코레이터로 테넌시 정보, req.user.id로 사용자 ID 추출
  */
 
 import {
@@ -34,7 +34,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
-import { Company, Plant } from '../../../../common/decorators/tenant.decorator';
+import { OrganizationId } from '../../../../common/decorators/tenant.decorator';
 import { JwtAuthGuard, AuthenticatedRequest } from '../../../../common/guards/jwt-auth.guard';
 import { ResponseUtil } from '../../../../common/dto/response.dto';
 import { FaiService } from '../services/fai.service';
@@ -56,8 +56,8 @@ export class FaiController {
   @Get('stats')
   @ApiOperation({ summary: 'FAI 통계', description: '상태별 건수' })
   @ApiResponse({ status: 200, description: '조회 성공' })
-  async getStats(@Company() company: string, @Plant() plant: string) {
-    const data = await this.faiService.getStats(company, plant);
+  async getStats(@OrganizationId() organizationId: number) {
+    const data = await this.faiService.getStats(organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -68,10 +68,9 @@ export class FaiController {
   @ApiResponse({ status: 200, description: '조회 성공' })
   async findAll(
     @Query() query: FaiQueryDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const result = await this.faiService.findAll(query, company, plant);
+    const result = await this.faiService.findAll(query, organizationId);
     return ResponseUtil.paged(result.data, result.total, result.page, result.limit);
   }
 
@@ -82,10 +81,9 @@ export class FaiController {
   @ApiResponse({ status: 404, description: 'FAI 요청 없음' })
   async findById(
     @Param('id') id: string,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.faiService.findById(id, company, plant);
+    const data = await this.faiService.findById(id, organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -95,14 +93,12 @@ export class FaiController {
   @ApiResponse({ status: 201, description: '생성 성공' })
   async create(
     @Body() dto: CreateFaiDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
     @Req() req: AuthenticatedRequest,
   ) {
     const data = await this.faiService.create(
       dto,
-      company,
-      plant,
+      organizationId,
       req.user?.id ?? 'system',
     );
     return ResponseUtil.success(data, '초물검사가 등록되었습니다.');
@@ -115,16 +111,14 @@ export class FaiController {
   async update(
     @Param('id') id: string,
     @Body() dto: UpdateFaiDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
     @Req() req: AuthenticatedRequest,
   ) {
     const data = await this.faiService.update(
       id,
       dto,
       req.user?.id ?? 'system',
-      company,
-      plant,
+      organizationId,
     );
     return ResponseUtil.success(data, '초물검사가 수정되었습니다.');
   }
@@ -136,10 +130,9 @@ export class FaiController {
   @ApiResponse({ status: 200, description: '삭제 성공' })
   async delete(
     @Param('id') id: string,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    await this.faiService.delete(id, company, plant);
+    await this.faiService.delete(id, organizationId);
     return ResponseUtil.success(null, '초물검사가 삭제되었습니다.');
   }
 
@@ -151,11 +144,10 @@ export class FaiController {
   @ApiResponse({ status: 200, description: '시작 성공' })
   async start(
     @Param('id') id: string,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
     @Req() req: AuthenticatedRequest,
   ) {
-    const data = await this.faiService.start(id, req.user?.id ?? 'system', company, plant);
+    const data = await this.faiService.start(id, req.user?.id ?? 'system', organizationId);
     return ResponseUtil.success(data, '검사가 시작되었습니다.');
   }
 
@@ -166,16 +158,14 @@ export class FaiController {
   async complete(
     @Param('id') id: string,
     @Body() dto: CompleteFaiDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
     @Req() req: AuthenticatedRequest,
   ) {
     const data = await this.faiService.complete(
       id,
       dto,
       req.user?.id ?? 'system',
-      company,
-      plant,
+      organizationId,
     );
     return ResponseUtil.success(data, '검사가 완료되었습니다.');
   }
@@ -186,11 +176,10 @@ export class FaiController {
   @ApiResponse({ status: 200, description: '승인 성공' })
   async approve(
     @Param('id') id: string,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
     @Req() req: AuthenticatedRequest,
   ) {
-    const data = await this.faiService.approve(id, req.user?.id ?? 'system', company, plant);
+    const data = await this.faiService.approve(id, req.user?.id ?? 'system', organizationId);
     return ResponseUtil.success(data, '승인되었습니다.');
   }
 
@@ -204,16 +193,14 @@ export class FaiController {
   async addItems(
     @Param('id') id: string,
     @Body() items: FaiItemDto[],
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
     @Req() req: AuthenticatedRequest,
   ) {
     const data = await this.faiService.addItems(
       id,
       items,
       req.user?.id ?? 'system',
-      company,
-      plant,
+      organizationId,
     );
     return ResponseUtil.success(data, '검사항목이 등록되었습니다.');
   }

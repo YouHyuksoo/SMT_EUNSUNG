@@ -20,11 +20,8 @@ import {
 @Entity({ name: 'ROUTING_PROCESSES' })
 @Index(['routingCode'])
 export class RoutingProcess {
-  @PrimaryColumn({ name: 'COMPANY', length: 50 })
-  company: string;
-
-  @PrimaryColumn({ name: 'PLANT_CD', length: 50 })
-  plant: string;
+  @PrimaryColumn({ name: 'ORGANIZATION_ID', type: 'number' })
+  organizationId!: number;
 
   @PrimaryColumn({ name: 'ROUTING_CODE', length: 50 })
   routingCode: string;

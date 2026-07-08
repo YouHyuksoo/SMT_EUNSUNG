@@ -11,11 +11,8 @@ import {
 @Index(['itemCode'])
 @Index(['warehouseCode'])
 export class MatArrivalStock {
-  @PrimaryColumn({ type: 'varchar2', name: 'COMPANY', length: 50 })
-  company: string;
-
-  @PrimaryColumn({ type: 'varchar2', name: 'PLANT_CD', length: 50 })
-  plant: string;
+  @PrimaryColumn({ name: 'ORGANIZATION_ID', type: 'number' })
+  organizationId!: number;
 
   @PrimaryColumn({ name: 'MAT_UID', length: 50 })
   matUid: string;

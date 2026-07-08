@@ -49,27 +49,20 @@ export class TrainingService {
     private readonly numbering: NumberingService,
   ) {}
 
-  private tenantWhere(company?: string | null, plant?: string | null) {
+  private tenantWhere(organizationId?: number | null) {
     return {
-      ...(company ? { company } : {}),
-      ...(plant ? { plant } : {}),
+      ...(organizationId != null ? { organizationId } : {}),
     };
   }
 
   private assertSameTenant(
     context: string,
-    row: { company?: string | null; plant?: string | null },
-    company?: string | null,
-    plant?: string | null,
+    row: { organizationId?: number | null },
+    organizationId?: number | null,
   ) {
-    if (company && row.company !== company) {
+    if (organizationId != null && row.organizationId !== organizationId) {
       throw new BadRequestException(
-        `${context} 회사 정보가 일치하지 않습니다. request=${company}, row=${row.company ?? 'NULL'}`,
-      );
-    }
-    if (plant && row.plant !== plant) {
-      throw new BadRequestException(
-        `${context} 사업장 정보가 일치하지 않습니다. request=${plant}, row=${row.plant ?? 'NULL'}`,
+        `${context} 조직 정보가 일치하지 않습니다. request=${organizationId}, row=${row.organizationId ?? 'NULL'}`,
       );
     }
   }
@@ -81,7 +74,7 @@ export class TrainingService {
   /**
    * 교육 계획 목록 조회 (페이지네이션 + 필터)
    */
-  async findAll(query: TrainingQueryDto, company?: string, plant?: string) {
+  async findAll(query: TrainingQueryDto, organizationId?: number) {
     const {
       page = 1,
       limit = 50,
@@ -94,8 +87,7 @@ export class TrainingService {
 
     const qb = this.planRepo.createQueryBuilder('t');
 
-    if (company) qb.andWhere('t.company = :company', { company });
-    if (plant) qb.andWhere('t.plant = :plant', { plant });
+    if (organizationId != null) qb.andWhere('t.organizationId = :organizationId', { organizationId });
     if (status) qb.andWhere('t.status = :status', { status });
     if (trainingType)
       qb.andWhere('t.trainingType = :trainingType', { trainingType });
@@ -126,14 +118,14 @@ export class TrainingService {
   /**
    * 교육 계획 단건 조회
    */
-  async findById(planNo: string, company?: string, plant?: string) {
+  async findById(planNo: string, organizationId?: number) {
     const item = await this.planRepo.findOne({
-      where: { planNo, ...this.tenantWhere(company, plant) },
+      where: { planNo, ...this.tenantWhere(organizationId) },
     });
     if (!item) {
       throw new NotFoundException('교육 계획을 찾을 수 없습니다.');
     }
-    this.assertSameTenant('교육 계획', item, company, plant);
+    this.assertSameTenant('교육 계획', item, organizationId);
     return item;
   }
 
@@ -142,8 +134,7 @@ export class TrainingService {
    */
   async create(
     dto: CreateTrainingPlanDto,
-    company: string,
-    plant: string,
+    organizationId: number,
     userId: string,
   ) {
     // NUM_RULE_MASTERS + SELECT FOR UPDATE 기반 채번 (동시성 안전)
@@ -159,8 +150,7 @@ export class TrainingService {
       maxParticipants: dto.maxParticipants ?? null,
       status: 'PLANNED',
       description: dto.description ?? null,
-      company,
-      plant,
+      organizationId,
       createdBy: userId,
       updatedBy: userId,
     });
@@ -176,10 +166,9 @@ export class TrainingService {
     planNo: string,
     dto: UpdateTrainingPlanDto,
     userId: string,
-    company?: string,
-    plant?: string,
+    organizationId?: number,
   ) {
-    const item = await this.findById(planNo, company, plant);
+    const item = await this.findById(planNo, organizationId);
     const updateData: Partial<TrainingPlan> = {
       ...(dto.title !== undefined ? { title: dto.title } : {}),
       ...(dto.trainingType !== undefined ? { trainingType: dto.trainingType } : {}),
@@ -197,12 +186,12 @@ export class TrainingService {
   /**
    * 교육 계획 삭제 — 결과 삭제 + 계획 삭제를 단일 트랜잭션으로 처리 (원자성 보장)
    */
-  async delete(planNo: string, company?: string, plant?: string) {
-    const item = await this.findById(planNo, company, plant);
+  async delete(planNo: string, organizationId?: number) {
+    const item = await this.findById(planNo, organizationId);
     await this.tx.run(async (queryRunner) => {
       await queryRunner.manager.delete(TrainingResult, {
         planNo,
-        ...this.tenantWhere(company, plant),
+        ...this.tenantWhere(organizationId),
       });
       await queryRunner.manager.remove(TrainingPlan, item);
     });
@@ -218,10 +207,9 @@ export class TrainingService {
   async complete(
     planNo: string,
     userId: string,
-    company?: string,
-    plant?: string,
+    organizationId?: number,
   ) {
-    const item = await this.findById(planNo, company, plant);
+    const item = await this.findById(planNo, organizationId);
     if (!['PLANNED', 'IN_PROGRESS'].includes(item.status)) {
       throw new BadRequestException(
         '계획 또는 진행중 상태에서만 완료할 수 있습니다.',
@@ -240,10 +228,9 @@ export class TrainingService {
   async cancelComplete(
     planNo: string,
     userId: string,
-    company?: string,
-    plant?: string,
+    organizationId?: number,
   ) {
-    const item = await this.findById(planNo, company, plant);
+    const item = await this.findById(planNo, organizationId);
     if (item.status !== 'COMPLETED') {
       throw new BadRequestException('완료 상태에서만 취소할 수 있습니다.');
     }
@@ -264,11 +251,10 @@ export class TrainingService {
   async addResult(
     planNo: string,
     dto: CreateTrainingResultDto,
-    company: string,
-    plant: string,
+    organizationId: number,
     userId: string,
   ) {
-    await this.findById(planNo, company, plant);
+    await this.findById(planNo, organizationId);
     const entity = this.resultRepo.create({
       planNo,
       workerCode: dto.workerCode,
@@ -279,8 +265,7 @@ export class TrainingService {
       certificateNo: dto.certificateNo ?? null,
       validUntil: dto.validUntil ? new Date(dto.validUntil) : null,
       remark: dto.remark ?? null,
-      company,
-      plant,
+      organizationId,
       createdBy: userId,
     });
     const saved = await this.resultRepo.save(entity);
@@ -293,13 +278,12 @@ export class TrainingService {
   /**
    * 교육 계획별 결과 조회 (작업자 사진 포함)
    */
-  async getResults(planNo: string, company?: string, plant?: string) {
-    await this.findById(planNo, company, plant);
+  async getResults(planNo: string, organizationId?: number) {
+    await this.findById(planNo, organizationId);
     const results = await this.resultRepo
       .createQueryBuilder('r')
       .where('r.planNo = :planNo', { planNo })
-      .andWhere(company ? 'r.company = :company' : '1 = 1', { company })
-      .andWhere(plant ? 'r.plant = :plant' : '1 = 1', { plant })
+      .andWhere(organizationId != null ? 'r.organizationId = :organizationId' : '1 = 1', { organizationId })
       .orderBy('r.createdAt', 'DESC')
       .getMany();
 
@@ -319,13 +303,9 @@ export class TrainingService {
       const params: unknown[] = [...chunk];
       const placeholders = chunk.map((_, i) => `:${i + 1}`).join(',');
       let tenantFilter = '';
-      if (company) {
-        params.push(company);
-        tenantFilter += ` AND COMPANY = :${params.length}`;
-      }
-      if (plant) {
-        params.push(plant);
-        tenantFilter += ` AND PLANT_CD = :${params.length}`;
+      if (organizationId != null) {
+        params.push(organizationId);
+        tenantFilter += ` AND ORGANIZATION_ID = :${params.length}`;
       }
       const rows = await this.resultRepo.manager.query(
         `SELECT WORKER_CODE, PHOTO_URL, DEPT FROM WORKER_MASTERS WHERE WORKER_CODE IN (${placeholders})${tenantFilter}`,
@@ -340,7 +320,7 @@ export class TrainingService {
     // 매칭 안 된 코드만 골라 전역 조회 — photoUrl/dept 자체는 워커가 어디 소속이든
     // 동일한 PII 라 응답 누락보다 보여 주는 편이 낫다.
     const missing = workerCodes.filter((code) => !workerMap.has(code));
-    if (missing.length > 0 && (company || plant)) {
+    if (missing.length > 0 && organizationId != null) {
       for (let offset = 0; offset < missing.length; offset += chunkSize) {
         const chunk = missing.slice(offset, offset + chunkSize);
         const params: unknown[] = [...chunk];
@@ -374,16 +354,15 @@ export class TrainingService {
     planNo: string,
     workerCode: string,
     dto: Partial<CreateTrainingResultDto>,
-    company?: string,
-    plant?: string,
+    organizationId?: number,
   ) {
     const item = await this.resultRepo.findOne({
-      where: { planNo, workerCode, ...this.tenantWhere(company, plant) },
+      where: { planNo, workerCode, ...this.tenantWhere(organizationId) },
     });
     if (!item) {
       throw new NotFoundException('교육 결과를 찾을 수 없습니다.');
     }
-    this.assertSameTenant('교육 결과', item, company, plant);
+    this.assertSameTenant('교육 결과', item, organizationId);
     const updateData: Partial<TrainingResult> = {
       ...(dto.workerName !== undefined ? { workerName: dto.workerName } : {}),
       ...(dto.attendDate !== undefined ? { attendDate: new Date(dto.attendDate) } : {}),
@@ -403,16 +382,15 @@ export class TrainingService {
   async deleteResult(
     planNo: string,
     workerCode: string,
-    company?: string,
-    plant?: string,
+    organizationId?: number,
   ) {
     const item = await this.resultRepo.findOne({
-      where: { planNo, workerCode, ...this.tenantWhere(company, plant) },
+      where: { planNo, workerCode, ...this.tenantWhere(organizationId) },
     });
     if (!item) {
       throw new NotFoundException('교육 결과를 찾을 수 없습니다.');
     }
-    this.assertSameTenant('교육 결과', item, company, plant);
+    this.assertSameTenant('교육 결과', item, organizationId);
     await this.resultRepo.remove(item);
   }
 
@@ -421,16 +399,14 @@ export class TrainingService {
    */
   async getWorkerHistory(
     workerCode: string,
-    company?: string,
-    plant?: string,
+    organizationId?: number,
   ) {
     const qb = this.resultRepo
       .createQueryBuilder('r')
       .leftJoinAndSelect('r.plan', 'plan')
       .where('r.workerCode = :workerCode', { workerCode });
 
-    if (company) qb.andWhere('r.company = :company', { company });
-    if (plant) qb.andWhere('r.plant = :plant', { plant });
+    if (organizationId != null) qb.andWhere('r.organizationId = :organizationId', { organizationId });
 
     qb.orderBy('r.createdAt', 'DESC');
     return qb.getMany();

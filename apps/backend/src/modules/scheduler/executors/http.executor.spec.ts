@@ -6,8 +6,7 @@ describe('HttpExecutor', () => {
   let originalFetch: unknown;
 
   const baseJob = {
-    company: 'C1',
-    plantCd: 'P1',
+    organizationId: 1,
     jobCode: 'HTTP_JOB',
     execType: 'HTTP',
     execTarget: 'POST https://api.example.com/hooks/sync',
@@ -36,19 +35,16 @@ describe('HttpExecutor', () => {
   it('should force tenant into body fields when present in execParams', async () => {
     await executor.execute({
       ...baseJob,
-      execParams: JSON.stringify({ company: 'OTHER', plant: 'OTHER', plantCd: 'OTHER', mode: 'test' }),
+      execParams: JSON.stringify({ organizationId: 999, mode: 'test' }),
     });
 
     const [, options] = fetchMock.mock.calls[0] as [string, any];
     expect(options?.headers).toMatchObject({
       'Content-Type': 'application/json',
-      'X-Company': 'C1',
-      'X-Plant': 'P1',
+      'X-Organization-Id': '1',
     });
     expect(JSON.parse(options.body as string)).toEqual({
-      company: 'C1',
-      plant: 'P1',
-      plantCd: 'P1',
+      organizationId: 1,
       mode: 'test',
     });
   });
@@ -58,8 +54,7 @@ describe('HttpExecutor', () => {
 
     const [, options] = fetchMock.mock.calls[0] as [string, any];
     expect(options?.headers).toMatchObject({
-      'X-Company': 'C1',
-      'X-Plant': 'P1',
+      'X-Organization-Id': '1',
     });
   });
 

@@ -9,7 +9,7 @@ import { MatIssueService } from '../services/mat-issue.service';
 import { CreateMatIssueDto, MatIssueQueryDto } from '../dto/mat-issue.dto';
 import { ScanIssueDto } from '../dto/scan-issue.dto';
 import { ResponseUtil } from '../../../common/dto/response.dto';
-import { Company, Plant } from '../../../common/decorators/tenant.decorator';
+import { OrganizationId } from '../../../common/decorators/tenant.decorator';
 import { InventoryFreezeGuard } from '../../../common/guards/inventory-freeze.guard';
 
 @ApiTags('자재관리 - 출고')
@@ -19,8 +19,8 @@ export class MatIssueController {
 
   @Get()
   @ApiOperation({ summary: '출고 이력 조회' })
-  async findAll(@Query() query: MatIssueQueryDto, @Company() company: string, @Plant() plant: string) {
-    const result = await this.matIssueService.findAll(query, company, plant);
+  async findAll(@Query() query: MatIssueQueryDto, @OrganizationId() organizationId: number) {
+    const result = await this.matIssueService.findAll(query, organizationId);
     return ResponseUtil.paged(result.data, result.total, result.page, result.limit);
   }
 
@@ -28,15 +28,15 @@ export class MatIssueController {
   @HttpCode(HttpStatus.CREATED)
   @UseGuards(InventoryFreezeGuard)
   @ApiOperation({ summary: '바코드 스캔 출고 (LOT 전량)' })
-  async scanIssue(@Body() dto: ScanIssueDto, @Company() company: string, @Plant() plant: string) {
-    const data = await this.matIssueService.scanIssue(dto, company, plant);
+  async scanIssue(@Body() dto: ScanIssueDto, @OrganizationId() organizationId: number) {
+    const data = await this.matIssueService.scanIssue(dto, organizationId);
     return ResponseUtil.success(data, '스캔 출고가 완료되었습니다.');
   }
 
   @Get(':issueNo/:seq')
   @ApiOperation({ summary: '출고 상세 조회' })
-  async findById(@Param('issueNo') issueNo: string, @Param('seq') seq: string, @Company() company: string, @Plant() plant: string) {
-    const data = await this.matIssueService.findById(issueNo, Number(seq), company, plant);
+  async findById(@Param('issueNo') issueNo: string, @Param('seq') seq: string, @OrganizationId() organizationId: number) {
+    const data = await this.matIssueService.findById(issueNo, Number(seq), organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -44,16 +44,16 @@ export class MatIssueController {
   @HttpCode(HttpStatus.CREATED)
   @UseGuards(InventoryFreezeGuard)
   @ApiOperation({ summary: '자재 출고' })
-  async create(@Body() dto: CreateMatIssueDto, @Company() company: string, @Plant() plant: string) {
-    const data = await this.matIssueService.create(dto, company, plant);
+  async create(@Body() dto: CreateMatIssueDto, @OrganizationId() organizationId: number) {
+    const data = await this.matIssueService.create(dto, organizationId);
     return ResponseUtil.success(data, '자재가 출고되었습니다.');
   }
 
   @Post(':issueNo/:seq/cancel')
   @UseGuards(InventoryFreezeGuard)
   @ApiOperation({ summary: '출고 취소' })
-  async cancel(@Param('issueNo') issueNo: string, @Param('seq') seq: string, @Body('reason') reason: string | undefined, @Company() company: string, @Plant() plant: string) {
-    const data = await this.matIssueService.cancel(issueNo, Number(seq), reason, company, plant);
+  async cancel(@Param('issueNo') issueNo: string, @Param('seq') seq: string, @Body('reason') reason: string | undefined, @OrganizationId() organizationId: number) {
+    const data = await this.matIssueService.cancel(issueNo, Number(seq), reason, organizationId);
     return ResponseUtil.success(data, '출고가 취소되었습니다.');
   }
 }

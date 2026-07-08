@@ -19,7 +19,7 @@ import {
   Param,
   Query,
 } from '@nestjs/common';
-import { Company, Plant } from '../../../common/decorators/tenant.decorator';
+import { OrganizationId } from '../../../common/decorators/tenant.decorator';
 import { ApiTags, ApiOperation, ApiParam } from '@nestjs/swagger';
 import { CommConfigService } from '../services/comm-config.service';
 import { SerialTestService } from '../services/serial-test.service';
@@ -40,8 +40,8 @@ export class CommConfigController {
 
   @Get()
   @ApiOperation({ summary: '통신설정 목록 조회' })
-  async findAll(@Query() query: CommConfigQueryDto, @Company() company: string, @Plant() plant: string) {
-    const result = await this.commConfigService.findAll(query, company, plant);
+  async findAll(@Query() query: CommConfigQueryDto, @OrganizationId() organizationId: number) {
+    const result = await this.commConfigService.findAll(query, organizationId);
     return ResponseUtil.paged(result.data, result.total, result.page, result.limit);
   }
 
@@ -57,10 +57,9 @@ export class CommConfigController {
   @ApiParam({ name: 'type', description: '통신 유형 (SERIAL, TCP, MQTT, OPC_UA, MODBUS)' })
   async findByType(
     @Param('type') type: string,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.commConfigService.findByType(type, company, plant);
+    const data = await this.commConfigService.findByType(type, organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -69,10 +68,9 @@ export class CommConfigController {
   @ApiParam({ name: 'name', description: '설정 이름' })
   async findByName(
     @Param('name') name: string,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.commConfigService.findByName(name, company, plant);
+    const data = await this.commConfigService.findByName(name, organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -80,10 +78,9 @@ export class CommConfigController {
   @ApiOperation({ summary: '통신설정 상세 조회' })
   async findById(
     @Param('id') id: string,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.commConfigService.findById(id, company, plant);
+    const data = await this.commConfigService.findById(id, organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -91,10 +88,9 @@ export class CommConfigController {
   @ApiOperation({ summary: '통신설정 생성' })
   async create(
     @Body() dto: CreateCommConfigDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.commConfigService.create(dto, company, plant);
+    const data = await this.commConfigService.create(dto, organizationId);
     return ResponseUtil.success(data, '통신설정이 등록되었습니다.');
   }
 
@@ -103,10 +99,9 @@ export class CommConfigController {
   async update(
     @Param('id') id: string,
     @Body() dto: UpdateCommConfigDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.commConfigService.update(id, dto, company, plant);
+    const data = await this.commConfigService.update(id, dto, organizationId);
     return ResponseUtil.success(data, '통신설정이 수정되었습니다.');
   }
 
@@ -114,10 +109,9 @@ export class CommConfigController {
   @ApiOperation({ summary: '통신설정 삭제' })
   async remove(
     @Param('id') id: string,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.commConfigService.remove(id, company, plant);
+    const data = await this.commConfigService.remove(id, organizationId);
     return ResponseUtil.success(data);
   }
 }

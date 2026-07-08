@@ -14,11 +14,8 @@ import { EquipMaster } from './equip-master.entity';
 @Entity({ name: 'PROCESS_EQUIPMENTS' })
 @Index(['equipCode'])
 export class ProcessEquipment {
-  @PrimaryColumn({ type: 'varchar2', name: 'COMPANY', length: 50 })
-  company: string | null;
-
-  @PrimaryColumn({ type: 'varchar2', name: 'PLANT_CD', length: 50 })
-  plant: string | null;
+  @PrimaryColumn({ name: 'ORGANIZATION_ID', type: 'number' })
+  organizationId!: number;
 
   @PrimaryColumn({ name: 'PROCESS_CODE', length: 50 })
   processCode: string;
@@ -43,16 +40,14 @@ export class ProcessEquipment {
 
   @ManyToOne(() => ProcessMaster, { onDelete: 'CASCADE' })
   @JoinColumn([
-    { name: 'COMPANY', referencedColumnName: 'company' },
-    { name: 'PLANT_CD', referencedColumnName: 'plant' },
+    { name: 'ORGANIZATION_ID', referencedColumnName: 'organizationId' },
     { name: 'PROCESS_CODE', referencedColumnName: 'processCode' },
   ])
   process: ProcessMaster;
 
   @ManyToOne(() => EquipMaster, { onDelete: 'CASCADE' })
   @JoinColumn([
-    { name: 'COMPANY', referencedColumnName: 'company' },
-    { name: 'PLANT_CD', referencedColumnName: 'plant' },
+    { name: 'ORGANIZATION_ID', referencedColumnName: 'organizationId' },
     { name: 'EQUIP_CODE', referencedColumnName: 'equipCode' },
   ])
   equipment: EquipMaster;

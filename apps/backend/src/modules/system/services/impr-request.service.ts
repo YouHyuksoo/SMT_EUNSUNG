@@ -30,8 +30,7 @@ export class ImprRequestService {
     dto: CreateImprRequestDto,
     requesterId: string,
     requesterNm: string | null,
-    company: string,
-    plantCd: string,
+    organizationId: number,
   ): Promise<ImprRequest> {
     const entity = this.repo.create({
       imprId: randomUUID(),
@@ -43,13 +42,12 @@ export class ImprRequestService {
       status: 'PENDING',
       requesterId,
       requesterNm,
-      company,
-      plantCd,
+      organizationId,
     });
     return this.repo.save(entity);
   }
 
-  async findAll(query: ImprRequestQueryDto, company: string, plantCd: string) {
+  async findAll(query: ImprRequestQueryDto, organizationId: number) {
     const page = Number(query.page) || 1;
     const limit = Number(query.limit) || 20;
     const skip = (page - 1) * limit;
@@ -58,9 +56,9 @@ export class ImprRequestService {
       .select([
         'r.imprId', 'r.pageUrl', 'r.elementText', 'r.elementTag',
         'r.description', 'r.status', 'r.requesterId', 'r.requesterNm',
-        'r.company', 'r.plantCd', 'r.createdAt', 'r.updatedAt',
+        'r.organizationId', 'r.createdAt', 'r.updatedAt',
       ])
-      .where('r.company = :company AND r.plantCd = :plantCd', { company, plantCd });
+      .where('r.organizationId = :organizationId', { organizationId });
 
     if (query.status && query.status !== 'ALL') {
       qb.andWhere('r.status = :status', { status: query.status });
@@ -89,9 +87,9 @@ export class ImprRequestService {
     return { data, total, page, limit };
   }
 
-  async findOne(imprId: string, company: string, plantCd: string): Promise<ImprRequest> {
+  async findOne(imprId: string, organizationId: number): Promise<ImprRequest> {
     const item = await this.repo.findOne({
-      where: { imprId, company, plantCd },
+      where: { imprId, organizationId },
     });
     if (!item) throw new NotFoundException(`ImprRequest ${imprId} not found`);
     return item;
@@ -100,10 +98,9 @@ export class ImprRequestService {
   async updateStatus(
     imprId: string,
     dto: UpdateImprStatusDto,
-    company: string,
-    plantCd: string,
+    organizationId: number,
   ): Promise<ImprRequest> {
-    const item = await this.findOne(imprId, company, plantCd);
+    const item = await this.findOne(imprId, organizationId);
     item.status = dto.status;
     return this.repo.save(item);
   }

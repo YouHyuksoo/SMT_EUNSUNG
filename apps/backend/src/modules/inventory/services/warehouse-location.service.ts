@@ -26,15 +26,14 @@ export class WarehouseLocationService {
     private readonly warehouseRepo: Repository<Warehouse>,
   ) {}
 
-  private tenantWhere(company?: string | null, plant?: string | null) {
+  private tenantWhere(organizationId?: number | null) {
     return {
-      ...(company && { company }),
-      ...(plant && { plant }),
+      ...(organizationId != null ? { organizationId } : {}),
     };
   }
 
-  async findAll(warehouseCode?: string, company?: string, plant?: string) {
-    const tenantWhere = this.tenantWhere(company, plant);
+  async findAll(warehouseCode?: string, organizationId?: number) {
+    const tenantWhere = this.tenantWhere(organizationId);
     const where: FindOptionsWhere<WarehouseLocation> = { ...tenantWhere };
     if (warehouseCode) where.warehouseCode = warehouseCode;
 
@@ -63,8 +62,8 @@ export class WarehouseLocationService {
     };
   }
 
-  async create(dto: CreateWarehouseLocationDto, company?: string, plant?: string) {
-    const tenantWhere = this.tenantWhere(company, plant);
+  async create(dto: CreateWarehouseLocationDto, organizationId?: number) {
+    const tenantWhere = this.tenantWhere(organizationId);
     const existing = await this.locationRepo.findOne({
       where: { warehouseCode: dto.warehouseCode, locationCode: dto.locationCode, ...tenantWhere },
     });
@@ -84,18 +83,17 @@ export class WarehouseLocationService {
       levelNo: dto.levelNo ?? null,
       remark: dto.remark ?? null,
       useYn: 'Y',
-      company: company || null,
-      plant: plant || null,
+      organizationId: organizationId ?? null,
     });
     const saved = await this.locationRepo.save(location);
     return { success: true, data: saved };
   }
 
-  async update(id: string, dto: UpdateWarehouseLocationDto, company?: string, plant?: string) {
+  async update(id: string, dto: UpdateWarehouseLocationDto, organizationId?: number) {
     // id is composite key encoded as "warehouseCode::locationCode"
     const [warehouseCode, locationCode] = id.split('::');
     const location = await this.locationRepo.findOne({
-      where: { warehouseCode, locationCode, ...this.tenantWhere(company, plant) },
+      where: { warehouseCode, locationCode, ...this.tenantWhere(organizationId) },
     });
     if (!location) {
       throw new NotFoundException(`로케이션을 찾을 수 없습니다: ${id}`);
@@ -115,11 +113,11 @@ export class WarehouseLocationService {
     return { success: true, data: saved };
   }
 
-  async remove(id: string, company?: string, plant?: string) {
+  async remove(id: string, organizationId?: number) {
     // id is composite key encoded as "warehouseCode::locationCode"
     const [warehouseCode, locationCode] = id.split('::');
     const location = await this.locationRepo.findOne({
-      where: { warehouseCode, locationCode, ...this.tenantWhere(company, plant) },
+      where: { warehouseCode, locationCode, ...this.tenantWhere(organizationId) },
     });
     if (!location) {
       throw new NotFoundException(`로케이션을 찾을 수 없습니다: ${id}`);

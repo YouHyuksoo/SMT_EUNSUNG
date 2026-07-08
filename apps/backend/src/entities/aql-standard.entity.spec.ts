@@ -13,18 +13,18 @@ function primaryColumnNames(target: Function) {
 
 describe('AQL standard entity keys', () => {
   it('uses tenant and code columns in the standard primary key', () => {
-    expect(primaryColumnNames(AqlStandard)).toEqual(['COMPANY', 'PLANT_CD', 'AQL_CODE']);
+    expect(primaryColumnNames(AqlStandard)).toEqual(['ORGANIZATION_ID', 'AQL_CODE']);
   });
 
   it('uses inspection level and lot range start in the code-letter rule primary key', () => {
-    expect(primaryColumnNames(AqlCodeLetterRule)).toEqual(['COMPANY', 'PLANT_CD', 'INSPECTION_LEVEL', 'LOT_QTY_FROM']);
+    expect(primaryColumnNames(AqlCodeLetterRule)).toEqual(['ORGANIZATION_ID', 'INSPECTION_LEVEL', 'LOT_QTY_FROM']);
   });
 
   it('uses code letter in the sample-size primary key', () => {
-    expect(primaryColumnNames(AqlCodeLetterSample)).toEqual(['COMPANY', 'PLANT_CD', 'CODE_LETTER']);
+    expect(primaryColumnNames(AqlCodeLetterSample)).toEqual(['ORGANIZATION_ID', 'CODE_LETTER']);
   });
 
   it('uses inspection mode, code letter, and AQL value in the acceptance rule primary key', () => {
-    expect(primaryColumnNames(AqlAcceptanceRule)).toEqual(['COMPANY', 'PLANT_CD', 'INSPECTION_MODE', 'CODE_LETTER', 'AQL_VALUE']);
+    expect(primaryColumnNames(AqlAcceptanceRule)).toEqual(['ORGANIZATION_ID', 'INSPECTION_MODE', 'CODE_LETTER', 'AQL_VALUE']);
   });
 });

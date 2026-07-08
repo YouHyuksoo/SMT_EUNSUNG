@@ -23,7 +23,7 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { Company, Plant } from '../../../common/decorators/tenant.decorator';
+import { OrganizationId } from '../../../common/decorators/tenant.decorator';
 import { ApiTags, ApiOperation, ApiParam } from '@nestjs/swagger';
 import { SysConfigService } from '../services/sys-config.service';
 import {
@@ -41,8 +41,8 @@ export class SysConfigController {
 
   @Get()
   @ApiOperation({ summary: '환경설정 목록 조회' })
-  async findAll(@Query() query: SysConfigQueryDto, @Company() company: string, @Plant() plant: string) {
-    const result = await this.sysConfigService.findAll(query, company, plant);
+  async findAll(@Query() query: SysConfigQueryDto, @OrganizationId() organizationId: number) {
+    const result = await this.sysConfigService.findAll(query, organizationId);
     return ResponseUtil.success(result);
   }
 
@@ -58,10 +58,9 @@ export class SysConfigController {
   @ApiOperation({ summary: '환경설정 등록' })
   async create(
     @Body() dto: CreateSysConfigDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.sysConfigService.create(dto, company, plant);
+    const data = await this.sysConfigService.create(dto, organizationId);
     return ResponseUtil.success(data, '설정이 등록되었습니다.');
   }
 
@@ -71,10 +70,9 @@ export class SysConfigController {
   async update(
     @Param('id') id: string,
     @Body() dto: UpdateSysConfigDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.sysConfigService.update(id, dto, company, plant);
+    const data = await this.sysConfigService.update(id, dto, organizationId);
     return ResponseUtil.success(data, '설정이 수정되었습니다.');
   }
 
@@ -82,10 +80,9 @@ export class SysConfigController {
   @ApiOperation({ summary: '환경설정 일괄 저장' })
   async bulkUpdate(
     @Body() dto: BulkUpdateSysConfigDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.sysConfigService.bulkUpdate(dto, company, plant);
+    const data = await this.sysConfigService.bulkUpdate(dto, organizationId);
     return ResponseUtil.success(data, '설정이 저장되었습니다.');
   }
 
@@ -94,10 +91,9 @@ export class SysConfigController {
   @ApiParam({ name: 'id', description: '설정 ID' })
   async remove(
     @Param('id') id: string,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.sysConfigService.remove(id, company, plant);
+    const data = await this.sysConfigService.remove(id, organizationId);
     return ResponseUtil.success(data, '설정이 삭제되었습니다.');
   }
 }

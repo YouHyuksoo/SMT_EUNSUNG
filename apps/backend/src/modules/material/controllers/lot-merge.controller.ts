@@ -12,7 +12,7 @@ import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { LotMergeService } from '../services/lot-merge.service';
 import { LotMergeDto, LotMergeQueryDto } from '../dto/lot-merge.dto';
 import { ResponseUtil } from '../../../common/dto/response.dto';
-import { Company, Plant } from '../../../common/decorators/tenant.decorator';
+import { OrganizationId } from '../../../common/decorators/tenant.decorator';
 import { InventoryFreezeGuard } from '../../../common/guards/inventory-freeze.guard';
 
 @ApiTags('자재관리 - LOT병합')
@@ -22,15 +22,15 @@ export class LotMergeController {
 
   @Get()
   @ApiOperation({ summary: '병합 가능한 LOT 목록 조회' })
-  async findMergeable(@Query() query: LotMergeQueryDto, @Company() company: string, @Plant() plant: string) {
-    const result = await this.lotMergeService.findMergeableLots(query, company, plant);
+  async findMergeable(@Query() query: LotMergeQueryDto, @OrganizationId() organizationId: number) {
+    const result = await this.lotMergeService.findMergeableLots(query, organizationId);
     return ResponseUtil.paged(result.data, result.total, result.page, result.limit);
   }
 
   @Get('by-barcode/:matUid')
   @ApiOperation({ summary: '바코드 스캔 단건 조회 (병합 후보 자격 검증)' })
-  async findByBarcode(@Param('matUid') matUid: string, @Company() company: string, @Plant() plant: string) {
-    const data = await this.lotMergeService.findByBarcode(matUid, company, plant);
+  async findByBarcode(@Param('matUid') matUid: string, @OrganizationId() organizationId: number) {
+    const data = await this.lotMergeService.findByBarcode(matUid, organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -38,8 +38,8 @@ export class LotMergeController {
   @HttpCode(HttpStatus.CREATED)
   @UseGuards(InventoryFreezeGuard)
   @ApiOperation({ summary: 'LOT 병합 실행' })
-  async merge(@Body() dto: LotMergeDto, @Company() company: string, @Plant() plant: string) {
-    const data = await this.lotMergeService.merge(dto, company, plant);
+  async merge(@Body() dto: LotMergeDto, @OrganizationId() organizationId: number) {
+    const data = await this.lotMergeService.merge(dto, organizationId);
     return ResponseUtil.success(data, 'LOT이 병합되었습니다.');
   }
 }

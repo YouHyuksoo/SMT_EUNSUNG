@@ -21,7 +21,7 @@ import {
 import { SpcChart } from './spc-chart.entity';
 
 @Entity({ name: 'SPC_DATA' })
-@Index(['company', 'plant', 'sampleDate'])
+@Index(['organizationId', 'sampleDate'])
 export class SpcData {
   @PrimaryColumn({ name: 'CHART_ID', length: 30 })
   chartId: string;
@@ -63,11 +63,8 @@ export class SpcData {
   @Column({ type: 'varchar2', name: 'REMARK', length: 500, nullable: true })
   remark: string;
 
-  @Column({ name: 'COMPANY', length: 50 })
-  company: string;
-
-  @Column({ name: 'PLANT_CD', length: 20 })
-  plant: string;
+  @Column({ name: 'ORGANIZATION_ID', type: 'number' })
+  organizationId!: number;
 
   @Column({ type: 'varchar2', name: 'CREATED_BY', length: 50, nullable: true })
   createdBy: string;

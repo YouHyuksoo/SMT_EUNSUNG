@@ -48,24 +48,19 @@ export class FaiService {
     private readonly itemRepo: Repository<FaiItem>,
   ) {}
 
-  private tenantWhere(company?: string | null, plant?: string | null) {
+  private tenantWhere(organizationId?: number | null) {
     return {
-      ...(company ? { company } : {}),
-      ...(plant ? { plant } : {}),
+      ...(organizationId != null ? { organizationId } : {}),
     };
   }
 
   private assertSameTenant(
     context: string,
-    row: { company?: string | null; plant?: string | null },
-    company?: string | null,
-    plant?: string | null,
+    row: { organizationId?: number | null },
+    organizationId?: number | null,
   ) {
-    if (company && row.company !== company) {
-      throw new BadRequestException(`${context} 회사 정보가 일치하지 않습니다. request=${company}, row=${row.company ?? 'NULL'}`);
-    }
-    if (plant && row.plant !== plant) {
-      throw new BadRequestException(`${context} 사업장 정보가 일치하지 않습니다. request=${plant}, row=${row.plant ?? 'NULL'}`);
+    if (organizationId != null && row.organizationId !== organizationId) {
+      throw new BadRequestException(`${context} 조직 정보가 일치하지 않습니다. request=${organizationId}, row=${row.organizationId ?? 'NULL'}`);
     }
   }
 
@@ -76,15 +71,14 @@ export class FaiService {
   /**
    * FAI 번호 자동채번: FAI-YYYYMMDD-NNN
    */
-  private async generateFaiNo(company: string, plant: string): Promise<string> {
+  private async generateFaiNo(organizationId: number): Promise<string> {
     const today = new Date();
     const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '');
     const prefix = `FAI-${dateStr}-`;
 
     const last = await this.faiRepo
       .createQueryBuilder('f')
-      .where('f.company = :company', { company })
-      .andWhere('f.plant = :plant', { plant })
+      .where('f.organizationId = :organizationId', { organizationId })
       .andWhere('f.faiNo LIKE :prefix', { prefix: `${prefix}%` })
       .orderBy('f.faiNo', 'DESC')
       .getOne();
@@ -100,7 +94,7 @@ export class FaiService {
   /**
    * FAI 목록 조회 (페이지네이션 + 필터)
    */
-  async findAll(query: FaiQueryDto, company?: string, plant?: string) {
+  async findAll(query: FaiQueryDto, organizationId?: number) {
     const {
       page = 1,
       limit = 50,
@@ -113,8 +107,7 @@ export class FaiService {
 
     const qb = this.faiRepo.createQueryBuilder('f');
 
-    if (company) qb.andWhere('f.company = :company', { company });
-    if (plant) qb.andWhere('f.plant = :plant', { plant });
+    if (organizationId != null) qb.andWhere('f.organizationId = :organizationId', { organizationId });
     if (status) qb.andWhere('f.status = :status', { status });
     if (triggerType) qb.andWhere('f.triggerType = :triggerType', { triggerType });
     if (search) {
@@ -144,12 +137,12 @@ export class FaiService {
   /**
    * FAI 단건 조회 (검사항목 포함)
    */
-  async findById(faiNo: string, company?: string, plant?: string) {
-    const fai = await this.faiRepo.findOne({ where: { faiNo, ...this.tenantWhere(company, plant) } });
+  async findById(faiNo: string, organizationId?: number) {
+    const fai = await this.faiRepo.findOne({ where: { faiNo, ...this.tenantWhere(organizationId) } });
     if (!fai) {
       throw new NotFoundException('초물검사 요청을 찾을 수 없습니다.');
     }
-    this.assertSameTenant('초물검사 요청', fai, company, plant);
+    this.assertSameTenant('초물검사 요청', fai, organizationId);
     const items = await this.itemRepo.find({
       where: { faiId: faiNo },
       order: { seq: 'ASC' },
@@ -162,19 +155,17 @@ export class FaiService {
    */
   async create(
     dto: CreateFaiDto,
-    company: string,
-    plant: string,
+    organizationId: number,
     userId: string,
   ) {
-    const faiNo = await this.generateFaiNo(company, plant);
+    const faiNo = await this.generateFaiNo(organizationId);
     const { items, ...requestFields } = dto;
 
     const entity = this.faiRepo.create({
       ...requestFields,
       faiNo,
       status: 'REQUESTED',
-      company,
-      plant,
+      organizationId,
       createdBy: userId,
       updatedBy: userId,
     });
@@ -191,10 +182,10 @@ export class FaiService {
   /**
    * FAI 요청 수정 (REQUESTED 상태에서만 가능)
    */
-  async update(faiNo: string, dto: UpdateFaiDto, userId: string, company?: string, plant?: string) {
-    const fai = await this.faiRepo.findOne({ where: { faiNo, ...this.tenantWhere(company, plant) } });
+  async update(faiNo: string, dto: UpdateFaiDto, userId: string, organizationId?: number) {
+    const fai = await this.faiRepo.findOne({ where: { faiNo, ...this.tenantWhere(organizationId) } });
     if (!fai) throw new NotFoundException('초물검사 요청을 찾을 수 없습니다.');
-    this.assertSameTenant('초물검사 요청', fai, company, plant);
+    this.assertSameTenant('초물검사 요청', fai, organizationId);
     if (fai.status !== 'REQUESTED') {
       throw new BadRequestException('요청 상태에서만 수정할 수 있습니다.');
     }
@@ -206,10 +197,10 @@ export class FaiService {
   /**
    * FAI 요청 삭제 (REQUESTED 상태에서만 가능)
    */
-  async delete(faiNo: string, company?: string, plant?: string) {
-    const fai = await this.faiRepo.findOne({ where: { faiNo, ...this.tenantWhere(company, plant) } });
+  async delete(faiNo: string, organizationId?: number) {
+    const fai = await this.faiRepo.findOne({ where: { faiNo, ...this.tenantWhere(organizationId) } });
     if (!fai) throw new NotFoundException('초물검사 요청을 찾을 수 없습니다.');
-    this.assertSameTenant('초물검사 요청', fai, company, plant);
+    this.assertSameTenant('초물검사 요청', fai, organizationId);
     if (fai.status !== 'REQUESTED') {
       throw new BadRequestException('요청 상태에서만 삭제할 수 있습니다.');
     }
@@ -224,10 +215,10 @@ export class FaiService {
   /**
    * 검사 시작 (REQUESTED → SAMPLING)
    */
-  async start(faiNo: string, userId: string, company?: string, plant?: string) {
-    const fai = await this.faiRepo.findOne({ where: { faiNo, ...this.tenantWhere(company, plant) } });
+  async start(faiNo: string, userId: string, organizationId?: number) {
+    const fai = await this.faiRepo.findOne({ where: { faiNo, ...this.tenantWhere(organizationId) } });
     if (!fai) throw new NotFoundException('초물검사 요청을 찾을 수 없습니다.');
-    this.assertSameTenant('초물검사 요청', fai, company, plant);
+    this.assertSameTenant('초물검사 요청', fai, organizationId);
     if (fai.status !== 'REQUESTED') {
       throw new BadRequestException('요청 상태에서만 검사를 시작할 수 있습니다.');
     }
@@ -242,10 +233,10 @@ export class FaiService {
    * items 전체 OK이면 PASS, NG가 하나라도 있으면 FAIL.
    * dto.result로 CONDITIONAL(조건부 합격) 수동 지정 가능.
    */
-  async complete(faiNo: string, dto: CompleteFaiDto, userId: string, company?: string, plant?: string) {
-    const fai = await this.faiRepo.findOne({ where: { faiNo, ...this.tenantWhere(company, plant) } });
+  async complete(faiNo: string, dto: CompleteFaiDto, userId: string, organizationId?: number) {
+    const fai = await this.faiRepo.findOne({ where: { faiNo, ...this.tenantWhere(organizationId) } });
     if (!fai) throw new NotFoundException('초물검사 요청을 찾을 수 없습니다.');
-    this.assertSameTenant('초물검사 요청', fai, company, plant);
+    this.assertSameTenant('초물검사 요청', fai, organizationId);
     if (!['SAMPLING', 'INSPECTING'].includes(fai.status)) {
       throw new BadRequestException('샘플링 또는 검사중 상태에서만 완료할 수 있습니다.');
     }
@@ -271,10 +262,10 @@ export class FaiService {
   /**
    * 승인 (PASS/FAIL/CONDITIONAL 상태에서)
    */
-  async approve(faiNo: string, userId: string, company?: string, plant?: string) {
-    const fai = await this.faiRepo.findOne({ where: { faiNo, ...this.tenantWhere(company, plant) } });
+  async approve(faiNo: string, userId: string, organizationId?: number) {
+    const fai = await this.faiRepo.findOne({ where: { faiNo, ...this.tenantWhere(organizationId) } });
     if (!fai) throw new NotFoundException('초물검사 요청을 찾을 수 없습니다.');
-    this.assertSameTenant('초물검사 요청', fai, company, plant);
+    this.assertSameTenant('초물검사 요청', fai, organizationId);
     if (!['PASS', 'FAIL', 'CONDITIONAL'].includes(fai.status)) {
       throw new BadRequestException('판정 완료 상태에서만 승인할 수 있습니다.');
     }
@@ -291,10 +282,10 @@ export class FaiService {
   /**
    * 검사항목 일괄 등록 (기존 항목 삭제 후 재등록)
    */
-  async addItems(faiNo: string, items: FaiItemDto[], userId?: string, company?: string, plant?: string) {
-    const fai = await this.faiRepo.findOne({ where: { faiNo, ...this.tenantWhere(company, plant) } });
+  async addItems(faiNo: string, items: FaiItemDto[], userId?: string, organizationId?: number) {
+    const fai = await this.faiRepo.findOne({ where: { faiNo, ...this.tenantWhere(organizationId) } });
     if (!fai) throw new NotFoundException('초물검사 요청을 찾을 수 없습니다.');
-    this.assertSameTenant('초물검사 요청', fai, company, plant);
+    this.assertSameTenant('초물검사 요청', fai, organizationId);
 
     await this.itemRepo.delete({ faiId: faiNo });
     const saved = await this.saveItems(faiNo, items);
@@ -336,14 +327,13 @@ export class FaiService {
   /**
    * 상태별 통계 (건수)
    */
-  async getStats(company?: string, plant?: string) {
+  async getStats(organizationId?: number) {
     const qb = this.faiRepo
       .createQueryBuilder('f')
       .select('f.status', 'status')
       .addSelect('COUNT(*)', 'count');
 
-    if (company) qb.andWhere('f.company = :company', { company });
-    if (plant) qb.andWhere('f.plant = :plant', { plant });
+    if (organizationId != null) qb.andWhere('f.organizationId = :organizationId', { organizationId });
 
     qb.groupBy('f.status');
     return qb.getRawMany();

@@ -30,15 +30,11 @@ import { PdaRole } from './pda-role.entity';
 
 @Entity({ name: 'PDA_ROLE_MENU' })
 export class PdaRoleMenu {
-  /** 회사 코드 */
-  @PrimaryColumn({ type: 'varchar2', name: 'COMPANY', length: 50 })
-  company: string;
+  /** 조직 ID (단일 테넌트 키) */
+  @PrimaryColumn({ name: 'ORGANIZATION_ID', type: 'number' })
+  organizationId!: number;
 
-  /** 공장 코드 */
-  @PrimaryColumn({ type: 'varchar2', name: 'PLANT_CD', length: 50 })
-  plant: string;
-
-  /** PDA 역할 코드 (FK -> PDA_ROLE.COMPANY + PLANT_CD + CODE) */
+  /** PDA 역할 코드 (FK -> PDA_ROLE.ORGANIZATION_ID + CODE) */
   @PrimaryColumn({ name: 'PDA_ROLE_CODE', length: 50 })
   pdaRoleCode: string;
 
@@ -70,8 +66,7 @@ export class PdaRoleMenu {
   /** PDA 역할 — CASCADE 삭제 */
   @ManyToOne(() => PdaRole, (role) => role.menus, { onDelete: 'CASCADE' })
   @JoinColumn([
-    { name: 'COMPANY', referencedColumnName: 'company' },
-    { name: 'PLANT_CD', referencedColumnName: 'plant' },
+    { name: 'ORGANIZATION_ID', referencedColumnName: 'organizationId' },
     { name: 'PDA_ROLE_CODE', referencedColumnName: 'code' },
   ])
   pdaRole: PdaRole;

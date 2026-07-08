@@ -38,37 +38,30 @@ export class AdjustmentService {
     private readonly tx: TransactionService,
   ) {}
 
-  private tenantWhere(company?: string | null, plant?: string | null) {
+  private tenantWhere(organizationId?: number | null) {
     return {
-      ...(company ? { company } : {}),
-      ...(plant ? { plant } : {}),
+      ...(organizationId != null ? { organizationId } : {}),
     };
   }
 
   private assertSameTenant(
     context: string,
-    requested: { company?: string | null; plant?: string | null },
-    actual: { company?: string | null; plant?: string | null },
+    requested: { organizationId?: number | null },
+    actual: { organizationId?: number | null },
   ) {
-    if (requested.company && actual.company !== requested.company) {
+    if (requested.organizationId != null && actual.organizationId !== requested.organizationId) {
       throw new BadRequestException(
-        `${context} 회사 정보가 일치하지 않습니다. request=${requested.company}, row=${actual.company ?? 'NULL'}`,
-      );
-    }
-    if (requested.plant && actual.plant !== requested.plant) {
-      throw new BadRequestException(
-        `${context} 사업장 정보가 일치하지 않습니다. request=${requested.plant}, row=${actual.plant ?? 'NULL'}`,
+        `${context} 조직 정보가 일치하지 않습니다. request=${requested.organizationId}, row=${actual.organizationId ?? 'NULL'}`,
       );
     }
   }
 
-  async findAll(query: AdjustmentQueryDto, company?: string, plant?: string) {
+  async findAll(query: AdjustmentQueryDto, organizationId?: number) {
     const { page = 1, limit = 10, search, fromDate, toDate } = query;
     const skip = (page - 1) * limit;
 
     const where: FindOptionsWhere<InvAdjLog> = {
-      ...(company && { company }),
-      ...(plant && { plant }),
+      ...(organizationId != null && { organizationId }),
     };
 
     if (search) {
@@ -91,7 +84,7 @@ export class AdjustmentService {
 
     // part 정보 조회 및 중첩 객체 평면화
     const itemCodes = data.map((log) => log.itemCode).filter(Boolean);
-    const tenantWhere = this.tenantWhere(company, plant);
+    const tenantWhere = this.tenantWhere(organizationId);
     const parts = itemCodes.length > 0
       ? await this.itemMasterRepository.find({ where: { itemCode: In(itemCodes), ...tenantWhere } })
       : [];
@@ -114,8 +107,8 @@ export class AdjustmentService {
    * 즉시 승인 재고보정 등록 (PC 화면 기본 동작)
    * - adjustStatus = 'APPROVED'로 저장하고 재고를 즉시 반영합니다.
    */
-  async create(dto: CreateAdjustmentDto, company?: string, plant?: string) {
-    return this._executeAdjustment(dto, 'APPROVED', company, plant);
+  async create(dto: CreateAdjustmentDto, organizationId?: number) {
+    return this._executeAdjustment(dto, 'APPROVED', organizationId);
   }
 
   /**
@@ -123,9 +116,9 @@ export class AdjustmentService {
    * - adjustStatus = 'PENDING'으로 저장하고 재고 변동은 보류합니다.
    * - approve(id) 호출 후 재고가 실제 반영됩니다.
    */
-  async createPending(dto: CreateAdjustmentDto, company?: string, plant?: string) {
+  async createPending(dto: CreateAdjustmentDto, organizationId?: number) {
     const { warehouseCode, itemCode, matUid, afterQty, reason, createdBy } = dto;
-    const tenantWhere = this.tenantWhere(company, plant);
+    const tenantWhere = this.tenantWhere(organizationId);
 
     return this.tx.run(async (queryRunner) => {
       const part = await queryRunner.manager.findOne(ItemMaster, { where: { itemCode, ...tenantWhere } });
@@ -148,7 +141,7 @@ export class AdjustmentService {
       const beforeQty = stock?.qty ?? 0;
       const diffQty = afterQty - beforeQty;
       if (stock) {
-        this.assertSameTenant('보정 대상 재고', { company, plant }, stock);
+        this.assertSameTenant('보정 대상 재고', { organizationId }, stock);
       }
       if (stock && afterQty < stock.reservedQty) {
         throw new BadRequestException(
@@ -167,8 +160,7 @@ export class AdjustmentService {
         reason,
         adjustStatus: 'PENDING',
         createdBy,
-        company: stock?.company ?? company,
-        plant: stock?.plant ?? plant,
+        organizationId: stock?.organizationId ?? organizationId,
       });
       await queryRunner.manager.save(invAdjLog);
 
@@ -196,9 +188,9 @@ export class AdjustmentService {
    * @param seq InvAdjLog 일련번호 PK
    * @param approvedBy 승인자 ID
    */
-  async approve(adjDate: string, seq: number, approvedBy?: string, company?: string, plant?: string) {
+  async approve(adjDate: string, seq: number, approvedBy?: string, organizationId?: number) {
     const adjLog = await this.invAdjLogRepository.findOne({
-      where: { adjDate: new Date(adjDate), seq, ...this.tenantWhere(company, plant) },
+      where: { adjDate: new Date(adjDate), seq, ...this.tenantWhere(organizationId) },
     });
     if (!adjLog) throw new NotFoundException(`보정 이력을 찾을 수 없습니다: ${adjDate}-${seq}`);
     if (adjLog.adjustStatus !== 'PENDING') {
@@ -206,7 +198,7 @@ export class AdjustmentService {
     }
 
     const { warehouseCode, itemCode, matUid, afterQty, diffQty, reason } = adjLog;
-    const adjTenantWhere = this.tenantWhere(adjLog.company, adjLog.plant);
+    const adjTenantWhere = this.tenantWhere(adjLog.organizationId);
 
     return this.tx.run(async (queryRunner) => {
       // 재고 업데이트
@@ -241,8 +233,7 @@ export class AdjustmentService {
           qty: afterQty,
           availableQty: afterQty,
           reservedQty: 0,
-          company: adjLog.company,
-          plant: adjLog.plant,
+          organizationId: adjLog.organizationId,
         });
         stock = await queryRunner.manager.save(newStock);
       }
@@ -271,8 +262,7 @@ export class AdjustmentService {
         account: 'STOCK_ADJ', // 재고보정계정
         status: 'DONE',
         createdBy: approvedBy,
-        company: adjLog.company,
-        plant: adjLog.plant,
+        organizationId: adjLog.organizationId,
       });
       await queryRunner.manager.save(stockTransaction);
 
@@ -295,16 +285,16 @@ export class AdjustmentService {
    * @param seq InvAdjLog 일련번호 PK
    * @param rejectedBy 반려자 ID
    */
-  async reject(adjDate: string, seq: number, rejectedBy?: string, company?: string, plant?: string) {
+  async reject(adjDate: string, seq: number, rejectedBy?: string, organizationId?: number) {
     const adjLog = await this.invAdjLogRepository.findOne({
-      where: { adjDate: new Date(adjDate), seq, ...this.tenantWhere(company, plant) },
+      where: { adjDate: new Date(adjDate), seq, ...this.tenantWhere(organizationId) },
     });
     if (!adjLog) throw new NotFoundException(`보정 이력을 찾을 수 없습니다: ${adjDate}-${seq}`);
     if (adjLog.adjustStatus !== 'PENDING') {
       throw new BadRequestException(`이미 처리된 보정 요청입니다. 현재 상태: ${adjLog.adjustStatus}`);
     }
 
-    await this.invAdjLogRepository.update({ adjDate: new Date(adjDate), seq, ...this.tenantWhere(adjLog.company, adjLog.plant) }, {
+    await this.invAdjLogRepository.update({ adjDate: new Date(adjDate), seq, ...this.tenantWhere(adjLog.organizationId) }, {
       adjustStatus: 'REJECTED',
       updatedBy: rejectedBy || null,
     });
@@ -316,9 +306,9 @@ export class AdjustmentService {
    * 즉시 승인 재고보정의 실제 공통 로직
    * - adjustStatus='APPROVED'일 때만 실제 재고 변동이 발생합니다.
    */
-  private async _executeAdjustment(dto: CreateAdjustmentDto, adjustStatus: 'APPROVED', company?: string, plant?: string) {
+  private async _executeAdjustment(dto: CreateAdjustmentDto, adjustStatus: 'APPROVED', organizationId?: number) {
     const { warehouseCode, itemCode, matUid, afterQty, reason, createdBy } = dto;
-    const tenantWhere = this.tenantWhere(company, plant);
+    const tenantWhere = this.tenantWhere(organizationId);
 
     return this.tx.run(async (queryRunner) => {
       // 품목 확인
@@ -352,7 +342,7 @@ export class AdjustmentService {
       const beforeQty = stock?.qty ?? 0;
       const diffQty = afterQty - beforeQty;
       if (stock) {
-        this.assertSameTenant('보정 대상 재고', { company, plant }, stock);
+        this.assertSameTenant('보정 대상 재고', { organizationId }, stock);
       }
 
       // 재고 업데이트 또는 생성
@@ -377,8 +367,7 @@ export class AdjustmentService {
           qty: afterQty,
           availableQty: afterQty,
           reservedQty: 0,
-          company,
-          plant,
+          organizationId,
         });
         stock = await queryRunner.manager.save(newStock);
       }
@@ -402,8 +391,7 @@ export class AdjustmentService {
         reason,
         adjustStatus,
         createdBy,
-        company: stock?.company ?? company,
-        plant: stock?.plant ?? plant,
+        organizationId: stock?.organizationId ?? organizationId,
       });
       await queryRunner.manager.save(invAdjLog);
 
@@ -424,8 +412,7 @@ export class AdjustmentService {
         account: 'STOCK_ADJ', // 재고보정계정
         status: 'DONE',
         createdBy,
-        company: stock?.company ?? company,
-        plant: stock?.plant ?? plant,
+        organizationId: stock?.organizationId ?? organizationId,
       });
       await queryRunner.manager.save(stockTransaction);
 

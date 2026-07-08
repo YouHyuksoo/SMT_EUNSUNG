@@ -93,7 +93,7 @@ export class ServiceExecutor implements IJobExecutor {
 
     // 메서드 호출
     const result = TENANT_AWARE_SERVICE_METHODS.includes(execTarget)
-      ? await method.call(serviceInstance, job.company, job.plantCd)
+      ? await method.call(serviceInstance, job.organizationId)
       : await method.call(serviceInstance, params);
 
     // 결과에서 affectedRows 추출 (있으면)

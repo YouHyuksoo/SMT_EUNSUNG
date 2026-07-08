@@ -357,16 +357,6 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
       component = mod.getPageComponent();
       break;
     }
-    case "/material/po": {
-      const mod = await import("./page-registries/material__po.generated");
-      component = mod.getPageComponent();
-      break;
-    }
-    case "/material/po-status": {
-      const mod = await import("./page-registries/material__po-status.generated");
-      component = mod.getPageComponent();
-      break;
-    }
     case "/material/receipt-cancel": {
       const mod = await import("./page-registries/material__receipt-cancel.generated");
       component = mod.getPageComponent();
@@ -409,6 +399,21 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
     }
     case "/material/stock-transfer": {
       const mod = await import("./page-registries/material__stock-transfer.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/oee/dashboard": {
+      const mod = await import("./page-registries/oee__dashboard.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/oee/dashboard/drilldown": {
+      const mod = await import("./page-registries/oee__dashboard__drilldown.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/oee/dashboard/loss": {
+      const mod = await import("./page-registries/oee__dashboard__loss.generated");
       component = mod.getPageComponent();
       break;
     }

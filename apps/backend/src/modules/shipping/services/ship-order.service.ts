@@ -72,10 +72,9 @@ export class ShipOrderService {
     private readonly shipmentService: ShipmentService,
   ) {}
 
-  private tenantWhere(company?: string, plant?: string) {
+  private tenantWhere(organizationId?: number) {
     return {
-      ...(company && { company }),
-      ...(plant && { plant }),
+      ...(organizationId != null ? { organizationId } : {}),
     };
   }
 
@@ -83,21 +82,21 @@ export class ShipOrderService {
    * 고객사코드(customerId = PARTNER_MASTERS.partnerCode)로 거래처마스터에서 고객명을 해석한다.
    * 고객명은 프론트가 보내는 값이 아니라 거래처마스터의 현재 이름을 출처로 한다.
    */
-  private async resolveCustomerName(customerId?: string | null, company?: string, plant?: string): Promise<string | null> {
+  private async resolveCustomerName(customerId?: string | null, organizationId?: number): Promise<string | null> {
     if (!customerId) return null;
     const partner = await this.partnerRepository.findOne({
-      where: { partnerCode: customerId, ...this.tenantWhere(company, plant) },
+      where: { partnerCode: customerId, ...this.tenantWhere(organizationId) },
       select: ['partnerCode', 'partnerName'],
     });
     return partner?.partnerName ?? null;
   }
 
   /** 여러 customerId → 고객명 맵 (목록 조인용, N+1 회피) */
-  private async customerNameMap(customerIds: (string | null | undefined)[], company?: string, plant?: string): Promise<Map<string, string>> {
+  private async customerNameMap(customerIds: (string | null | undefined)[], organizationId?: number): Promise<Map<string, string>> {
     const ids = [...new Set(customerIds.filter((c): c is string => !!c))];
     if (ids.length === 0) return new Map();
     const partners = await this.partnerRepository.find({
-      where: { partnerCode: In(ids), ...this.tenantWhere(company, plant) },
+      where: { partnerCode: In(ids), ...this.tenantWhere(organizationId) },
       select: ['partnerCode', 'partnerName'],
     });
     return new Map(partners.map((p) => [p.partnerCode, p.partnerName]));
@@ -120,9 +119,9 @@ export class ShipOrderService {
     return new Map(order.items.map((item) => [item.itemCode, item] as const));
   }
 
-  private async getAllocatedQtyByItem(shipOrderNo: string, company?: string, plant?: string) {
+  private async getAllocatedQtyByItem(shipOrderNo: string, organizationId?: number) {
     const pallets = await this.palletRepository.find({
-      where: { shipOrderNo, ...this.tenantWhere(company, plant) },
+      where: { shipOrderNo, ...this.tenantWhere(organizationId) },
       select: ['palletNo', 'status'],
     });
     const activePalletNos = pallets
@@ -131,7 +130,7 @@ export class ShipOrderService {
     if (activePalletNos.length === 0) return new Map<string, number>();
 
     const boxes = await this.boxRepository.find({
-      where: { palletNo: In(activePalletNos), ...this.tenantWhere(company, plant) },
+      where: { palletNo: In(activePalletNos), ...this.tenantWhere(organizationId) },
       select: ['boxNo', 'itemCode', 'qty'],
     });
 
@@ -156,7 +155,7 @@ export class ShipOrderService {
   }
 
   /** 출하지시 목록 조회 */
-  async findAll(query: ShipOrderQueryDto, company?: string, plant?: string) {
+  async findAll(query: ShipOrderQueryDto, organizationId?: number) {
     const { page = 1, limit = 10, search, status, dueDateFrom, dueDateTo, shipDateFrom, shipDateTo, includeOpen } = query;
     const skip = (page - 1) * limit;
 
@@ -165,8 +164,7 @@ export class ShipOrderService {
 
     // 날짜·상태를 제외한 공통 조건
     const common: FindOptionsWhere<ShipmentOrder> = {
-      ...(company && { company }),
-      ...(plant && { plant }),
+      ...(organizationId != null ? { organizationId } : {}),
       ...(search && { shipOrderNo: ILike(`%${search}%`) }),
     };
 
@@ -220,25 +218,25 @@ export class ShipOrderService {
     // 품목 정보 일괄 조회 (N+1 제거)
     const orderNos = data.map((o) => o.shipOrderNo);
     const allItems = orderNos.length > 0
-      ? await this.shipOrderItemRepository.find({ where: { shipOrderNo: In(orderNos), ...this.tenantWhere(company, plant) } })
+      ? await this.shipOrderItemRepository.find({ where: { shipOrderNo: In(orderNos), ...this.tenantWhere(organizationId) } })
       : [];
 
     const itemCodes = [...new Set(allItems.map((i) => i.itemCode).filter(Boolean))];
     const parts = itemCodes.length > 0
       ? await this.partRepository.find({
-          where: { itemCode: In(itemCodes), ...this.tenantWhere(company, plant) },
+          where: { itemCode: In(itemCodes), ...this.tenantWhere(organizationId) },
           select: ['itemCode', 'itemName'],
         })
       : [];
     const partMap = new Map(parts.map((p) => [p.itemCode, p.itemName]));
 
     // 고객명은 거래처마스터에서 조인해 표시(저장값이 아니라 현재 이름)
-    const custMap = await this.customerNameMap(data.map((o) => o.customerId), company, plant);
+    const custMap = await this.customerNameMap(data.map((o) => o.customerId), organizationId);
 
     // 출하지시별 구성 팔레트수/박스수 집계 (PalletMaster.boxCount는 박스 할당 시 갱신되는 신뢰값)
     const palletsForOrders = orderNos.length > 0
       ? await this.palletRepository.find({
-          where: { shipOrderNo: In(orderNos), ...this.tenantWhere(company, plant) },
+          where: { shipOrderNo: In(orderNos), ...this.tenantWhere(organizationId) },
           select: ['palletNo', 'shipOrderNo', 'boxCount'],
         })
       : [];
@@ -270,21 +268,21 @@ export class ShipOrderService {
   }
 
   /** 출하지시 단건 조회 */
-  async findById(shipOrderNo: string, company?: string, plant?: string) {
+  async findById(shipOrderNo: string, organizationId?: number) {
     const order = await this.shipOrderRepository.findOne({
-      where: { shipOrderNo, ...this.tenantWhere(company, plant) },
+      where: { shipOrderNo, ...this.tenantWhere(organizationId) },
     });
 
     if (!order) throw new NotFoundException(`출하지시를 찾을 수 없습니다: ${shipOrderNo}`);
 
     const items = await this.shipOrderItemRepository.find({
-      where: { shipOrderNo: order.shipOrderNo, ...this.tenantWhere(company, plant) },
+      where: { shipOrderNo: order.shipOrderNo, ...this.tenantWhere(organizationId) },
     });
 
     const itemsWithPart = await Promise.all(
       items.map(async (item) => {
         const part = await this.partRepository.findOne({
-          where: { itemCode: item.itemCode, ...this.tenantWhere(company, plant) },
+          where: { itemCode: item.itemCode, ...this.tenantWhere(organizationId) },
           select: ['itemCode', 'itemName'],
         });
         return {
@@ -297,19 +295,19 @@ export class ShipOrderService {
 
     return {
       ...order,
-      customerName: (await this.resolveCustomerName(order.customerId, company, plant)) ?? order.customerName,
+      customerName: (await this.resolveCustomerName(order.customerId, organizationId)) ?? order.customerName,
       items: itemsWithPart,
     };
   }
 
   /** 출하지시 생성 */
-  async create(dto: CreateShipOrderDto, company?: string, plant?: string) {
+  async create(dto: CreateShipOrderDto, organizationId?: number) {
     this.assertRequiredShipDate(dto.shipDate);
     let savedShipOrderNo!: string;
     await this.tx.run(async (queryRunner) => {
       const shipOrderNo = dto.shipOrderNo?.trim() || await this.numbering.nextShipmentNo(queryRunner);
       const existing = await this.shipOrderRepository.findOne({
-        where: { shipOrderNo, ...this.tenantWhere(company, plant) },
+        where: { shipOrderNo, ...this.tenantWhere(organizationId) },
       });
       if (existing) throw new ConflictException(`이미 존재하는 출하지시 번호입니다: ${shipOrderNo}`);
 
@@ -317,14 +315,13 @@ export class ShipOrderService {
         shipOrderNo,
         customerId: dto.customerId,
         // 고객명은 거래처마스터(customerId)에서 해석해 채운다(프론트 입력값 사용 안 함)
-        customerName: await this.resolveCustomerName(dto.customerId, company, plant),
+        customerName: await this.resolveCustomerName(dto.customerId, organizationId),
         customerPoNo: dto.customerPoNo,
         dueDate: parseDateStart(dto.dueDate),
         shipDate: parseDateStart(dto.shipDate),
         remark: dto.remark,
         status: 'DRAFT',
-        company: company || null,
-        plant: plant || null,
+        organizationId: organizationId ?? null,
       });
 
       const savedOrder = await queryRunner.manager.save(order);
@@ -340,20 +337,19 @@ export class ShipOrderService {
             orderQty: item.orderQty,
             shippedQty: 0,
             remark: item.remark,
-            company: company || null,
-            plant: plant || null,
+            organizationId: organizationId ?? null,
           })
         );
         await queryRunner.manager.save(items);
       }
     });
 
-    return this.findById(savedShipOrderNo, company, plant);
+    return this.findById(savedShipOrderNo, organizationId);
   }
 
   /** 출하지시 수정 */
-  async update(shipOrderNo: string, dto: UpdateShipOrderDto, company?: string, plant?: string) {
-    const order = await this.findById(shipOrderNo, company, plant);
+  async update(shipOrderNo: string, dto: UpdateShipOrderDto, organizationId?: number) {
+    const order = await this.findById(shipOrderNo, organizationId);
     if (order.status !== 'DRAFT') {
       throw new BadRequestException('DRAFT 상태에서만 수정할 수 있습니다.');
     }
@@ -369,7 +365,7 @@ export class ShipOrderService {
     await this.tx.run(async (queryRunner) => {
       const { items, status: _ignoredStatus, shipOrderNo: _ignoredShipOrderNo, ...orderData } = dto;
       if (dto.items) {
-        await queryRunner.manager.delete(ShipmentOrderItem, { shipOrderNo, ...this.tenantWhere(company, plant) });
+        await queryRunner.manager.delete(ShipmentOrderItem, { shipOrderNo, ...this.tenantWhere(organizationId) });
 
         const itemEntities = dto.items.map((item, idx) =>
           this.shipOrderItemRepository.create({
@@ -379,8 +375,7 @@ export class ShipOrderService {
             orderQty: item.orderQty,
             shippedQty: 0,
             remark: item.remark,
-            company: company || null,
-            plant: plant || null,
+            organizationId: organizationId ?? null,
           })
         );
         await queryRunner.manager.save(itemEntities);
@@ -389,27 +384,27 @@ export class ShipOrderService {
       const updateData = this.buildShipmentOrderUpdate(orderData);
       // 고객사 변경 시 고객명은 거래처마스터에서 재해석
       if (orderData.customerId !== undefined) {
-        updateData.customerName = await this.resolveCustomerName(orderData.customerId, company, plant);
+        updateData.customerName = await this.resolveCustomerName(orderData.customerId, organizationId);
       }
 
       if (Object.keys(updateData).length > 0) {
-        await queryRunner.manager.update(ShipmentOrder, { shipOrderNo, ...this.tenantWhere(company, plant) }, updateData);
+        await queryRunner.manager.update(ShipmentOrder, { shipOrderNo, ...this.tenantWhere(organizationId) }, updateData);
       }
     });
 
-    return this.findById(shipOrderNo, company, plant);
+    return this.findById(shipOrderNo, organizationId);
   }
 
   /** 출하지시 삭제 */
-  async delete(shipOrderNo: string, company?: string, plant?: string) {
-    const order = await this.findById(shipOrderNo, company, plant);
+  async delete(shipOrderNo: string, organizationId?: number) {
+    const order = await this.findById(shipOrderNo, organizationId);
     if (order.status !== 'DRAFT') {
       throw new BadRequestException('DRAFT 상태에서만 삭제할 수 있습니다.');
     }
 
     await this.tx.run(async (queryRunner) => {
-      await queryRunner.manager.delete(ShipmentOrderItem, { shipOrderNo, ...this.tenantWhere(company, plant) });
-      await queryRunner.manager.delete(ShipmentOrder, { shipOrderNo, ...this.tenantWhere(company, plant) });
+      await queryRunner.manager.delete(ShipmentOrderItem, { shipOrderNo, ...this.tenantWhere(organizationId) });
+      await queryRunner.manager.delete(ShipmentOrder, { shipOrderNo, ...this.tenantWhere(organizationId) });
     });
 
     return { shipOrderNo, deleted: true };
@@ -419,8 +414,8 @@ export class ShipOrderService {
    * 출하지시 확정 (DRAFT -> CONFIRMED)
    * 확정 후 실출하 생성 가능
    */
-  async confirm(shipOrderNo: string, company?: string, plant?: string) {
-    const order = await this.findById(shipOrderNo, company, plant);
+  async confirm(shipOrderNo: string, organizationId?: number) {
+    const order = await this.findById(shipOrderNo, organizationId);
     if (order.status !== 'DRAFT') {
       throw new BadRequestException('DRAFT 상태에서만 확정할 수 있습니다.');
     }
@@ -430,19 +425,19 @@ export class ShipOrderService {
     }
 
     await this.shipOrderRepository.update(
-      { shipOrderNo, ...this.tenantWhere(company, plant) },
+      { shipOrderNo, ...this.tenantWhere(organizationId) },
       { status: 'CONFIRMED' },
     );
 
-    return this.findById(shipOrderNo, company, plant);
+    return this.findById(shipOrderNo, organizationId);
   }
 
   /**
    * 출하지시 확정취소 (CONFIRMED -> DRAFT)
    * 빈 OPEN 팔레트는 같이 정리하고, 박스/출하수량/마감 이후 팔레트가 있으면 차단한다.
    */
-  async unconfirm(shipOrderNo: string, company?: string, plant?: string) {
-    const order = await this.findById(shipOrderNo, company, plant);
+  async unconfirm(shipOrderNo: string, organizationId?: number) {
+    const order = await this.findById(shipOrderNo, organizationId);
     if (order.status !== 'CONFIRMED') {
       throw new BadRequestException('CONFIRMED 상태에서만 확정취소할 수 있습니다.');
     }
@@ -452,7 +447,7 @@ export class ShipOrderService {
       throw new BadRequestException('출하수량이 있는 출하지시는 확정취소할 수 없습니다.');
     }
 
-    const where = { shipOrderNo, ...this.tenantWhere(company, plant) };
+    const where = { shipOrderNo, ...this.tenantWhere(organizationId) };
     const pallets = await this.palletRepository.find({
       where,
       select: ['palletNo', 'status', 'shipmentId', 'boxCount', 'totalQty'],
@@ -461,7 +456,7 @@ export class ShipOrderService {
     const boxWhere = palletNos.length > 0
       ? [
           where,
-          { palletNo: In(palletNos), ...this.tenantWhere(company, plant) },
+          { palletNo: In(palletNos), ...this.tenantWhere(organizationId) },
         ]
       : where;
     const blockingPallets = pallets.filter((pallet) =>
@@ -488,17 +483,17 @@ export class ShipOrderService {
         await queryRunner.manager.delete(PalletMaster, { palletNo: In(palletNos), ...where });
         await queryRunner.manager.update(ShipmentOrder, where, { status: 'DRAFT' });
       });
-      return this.findById(shipOrderNo, company, plant);
+      return this.findById(shipOrderNo, organizationId);
     }
 
     await this.shipOrderRepository.update(where, { status: 'DRAFT' });
 
-    return this.findById(shipOrderNo, company, plant);
+    return this.findById(shipOrderNo, organizationId);
   }
 
   /** 출하지시 중심 팔레트 작업 현황 */
-  async getFulfillment(shipOrderNo: string, company?: string, plant?: string) {
-    const order = await this.findById(shipOrderNo, company, plant) as ShipmentOrder & { items: ShipmentOrderItem[] };
+  async getFulfillment(shipOrderNo: string, organizationId?: number) {
+    const order = await this.findById(shipOrderNo, organizationId) as ShipmentOrder & { items: ShipmentOrderItem[] };
     const lines = (order.items ?? []).map((item) => ({
       ...item,
       remainingQty: Math.max(0, item.orderQty - item.shippedQty),
@@ -514,18 +509,18 @@ export class ShipOrderService {
               status: 'CLOSED',
               ...(oqcEnabled ? { oqcStatus: 'PASS' } : {}),
               palletNo: IsNull(),
-              ...this.tenantWhere(company, plant),
+              ...this.tenantWhere(organizationId),
             },
             order: { createdAt: 'ASC' },
             take: 500,
           })
         : Promise.resolve([]),
       this.palletRepository.find({
-        where: { shipOrderNo, ...this.tenantWhere(company, plant) },
+        where: { shipOrderNo, ...this.tenantWhere(organizationId) },
         order: { createdAt: 'ASC' },
       }),
       this.shipmentRepository.find({
-        where: { shipOrderNo, ...this.tenantWhere(company, plant) },
+        where: { shipOrderNo, ...this.tenantWhere(organizationId) },
         order: { createdAt: 'DESC' },
       }),
     ]);
@@ -533,7 +528,7 @@ export class ShipOrderService {
     const palletNos = pallets.map((pallet) => pallet.palletNo);
     const palletBoxes = palletNos.length > 0
       ? await this.boxRepository.find({
-          where: { palletNo: In(palletNos), ...this.tenantWhere(company, plant) },
+          where: { palletNo: In(palletNos), ...this.tenantWhere(organizationId) },
           order: { createdAt: 'ASC' },
         })
       : [];
@@ -553,12 +548,12 @@ export class ShipOrderService {
   }
 
   /** 출하지시에 귀속된 팔레트 생성 */
-  async createPalletForOrder(shipOrderNo: string, dto: CreateShipOrderPalletDto, company?: string, plant?: string) {
-    const order = await this.findById(shipOrderNo, company, plant) as ShipmentOrder & { items: ShipmentOrderItem[] };
+  async createPalletForOrder(shipOrderNo: string, dto: CreateShipOrderPalletDto, organizationId?: number) {
+    const order = await this.findById(shipOrderNo, organizationId) as ShipmentOrder & { items: ShipmentOrderItem[] };
     this.assertOrderLineMap(order);
 
     const existingOrderPallets = await this.palletRepository.find({
-      where: { shipOrderNo, ...this.tenantWhere(company, plant) },
+      where: { shipOrderNo, ...this.tenantWhere(organizationId) },
       select: ['palletNo', 'shipOrderNo', 'status'],
     });
     if (existingOrderPallets.length > 0) {
@@ -570,7 +565,7 @@ export class ShipOrderService {
     return this.tx.run(async (qr) => {
       const palletNo = dto.palletNo?.trim() || await this.numbering.nextPalletNo(qr);
       const existing = await this.palletRepository.findOne({
-        where: { palletNo, ...this.tenantWhere(company, plant) },
+        where: { palletNo, ...this.tenantWhere(organizationId) },
       });
       if (existing) throw new ConflictException(`이미 존재하는 팔레트번호입니다: ${palletNo}`);
 
@@ -581,8 +576,7 @@ export class ShipOrderService {
         boxCount: 0,
         totalQty: 0,
         status: 'OPEN',
-        company: company || null,
-        plant: plant || null,
+        organizationId: organizationId ?? null,
       });
       const saved = await qr.manager.save(pallet);
       return { ...saved, id: saved.palletNo };
@@ -594,14 +588,13 @@ export class ShipOrderService {
     shipOrderNo: string,
     palletNo: string,
     dto: AddBoxToPalletDto,
-    company?: string,
-    plant?: string,
+    organizationId?: number,
   ) {
-    const order = await this.findById(shipOrderNo, company, plant) as ShipmentOrder & { items: ShipmentOrderItem[] };
+    const order = await this.findById(shipOrderNo, organizationId) as ShipmentOrder & { items: ShipmentOrderItem[] };
     const lineByItem = this.assertOrderLineMap(order);
 
     const pallet = await this.palletRepository.findOne({
-      where: { palletNo, ...this.tenantWhere(company, plant) },
+      where: { palletNo, ...this.tenantWhere(organizationId) },
     });
     if (!pallet) throw new NotFoundException(`팔레트를 찾을 수 없습니다: ${palletNo}`);
     if (pallet.shipOrderNo !== shipOrderNo) {
@@ -612,7 +605,7 @@ export class ShipOrderService {
     }
 
     const boxes = await this.boxRepository.find({
-      where: { boxNo: In(dto.boxIds), ...this.tenantWhere(company, plant) },
+      where: { boxNo: In(dto.boxIds), ...this.tenantWhere(organizationId) },
     });
     if (boxes.length !== dto.boxIds.length) {
       const foundNos = boxes.map((box) => box.boxNo);
@@ -641,7 +634,7 @@ export class ShipOrderService {
       throw new BadRequestException(`이미 다른 팔레트에 적재된 박스입니다: ${assignedOther.map((box) => box.boxNo).join(', ')}`);
     }
 
-    const allocated = await this.getAllocatedQtyByItem(shipOrderNo, company, plant);
+    const allocated = await this.getAllocatedQtyByItem(shipOrderNo, organizationId);
     const newQtyByItem = new Map<string, number>();
     for (const box of boxes) {
       if (box.palletNo === palletNo) continue;
@@ -659,22 +652,21 @@ export class ShipOrderService {
     await this.tx.run(async (qr) => {
       await qr.manager.update(
         BoxMaster,
-        { boxNo: In(dto.boxIds), ...this.tenantWhere(company, plant) },
+        { boxNo: In(dto.boxIds), ...this.tenantWhere(organizationId) },
         { palletNo },
       );
 
       const summary = await qr.manager
         .createQueryBuilder(BoxMaster, 'box')
         .where('box.palletNo = :palletNo', { palletNo })
-        .andWhere(company ? 'box.company = :company' : '1=1', { company })
-        .andWhere(plant ? 'box.plant = :plant' : '1=1', { plant })
+        .andWhere(organizationId != null ? 'box.organizationId = :organizationId' : '1=1', { organizationId })
         .select('COUNT(*)', 'count')
         .addSelect('SUM(box.qty)', 'totalQty')
         .getRawOne();
 
       await qr.manager.update(
         PalletMaster,
-        { palletNo, ...this.tenantWhere(company, plant) },
+        { palletNo, ...this.tenantWhere(organizationId) },
         {
           boxCount: parseInt(summary?.count, 10) || 0,
           totalQty: parseInt(summary?.totalQty, 10) || 0,
@@ -682,7 +674,7 @@ export class ShipOrderService {
       );
     });
 
-    return this.getFulfillment(shipOrderNo, company, plant);
+    return this.getFulfillment(shipOrderNo, organizationId);
   }
 
   /** 출하지시 팔레트에서 박스 제거 */
@@ -690,11 +682,10 @@ export class ShipOrderService {
     shipOrderNo: string,
     palletNo: string,
     dto: RemoveBoxFromPalletDto,
-    company?: string,
-    plant?: string,
+    organizationId?: number,
   ) {
     const pallet = await this.palletRepository.findOne({
-      where: { palletNo, shipOrderNo, ...this.tenantWhere(company, plant) },
+      where: { palletNo, shipOrderNo, ...this.tenantWhere(organizationId) },
     });
     if (!pallet) throw new NotFoundException(`출하지시 팔레트를 찾을 수 없습니다: ${palletNo}`);
     if (pallet.status !== 'OPEN') {
@@ -704,32 +695,31 @@ export class ShipOrderService {
     await this.tx.run(async (qr) => {
       await qr.manager.update(
         BoxMaster,
-        { boxNo: In(dto.boxIds), palletNo, ...this.tenantWhere(company, plant) },
+        { boxNo: In(dto.boxIds), palletNo, ...this.tenantWhere(organizationId) },
         { palletNo: null },
       );
 
       const summary = await qr.manager
         .createQueryBuilder(BoxMaster, 'box')
         .where('box.palletNo = :palletNo', { palletNo })
-        .andWhere(company ? 'box.company = :company' : '1=1', { company })
-        .andWhere(plant ? 'box.plant = :plant' : '1=1', { plant })
+        .andWhere(organizationId != null ? 'box.organizationId = :organizationId' : '1=1', { organizationId })
         .select('COUNT(*)', 'count')
         .addSelect('SUM(box.qty)', 'totalQty')
         .getRawOne();
 
-      await qr.manager.update(PalletMaster, { palletNo, ...this.tenantWhere(company, plant) }, {
+      await qr.manager.update(PalletMaster, { palletNo, ...this.tenantWhere(organizationId) }, {
         boxCount: parseInt(summary?.count, 10) || 0,
         totalQty: parseInt(summary?.totalQty, 10) || 0,
       });
     });
 
-    return this.getFulfillment(shipOrderNo, company, plant);
+    return this.getFulfillment(shipOrderNo, organizationId);
   }
 
   /** 팔레트 라벨 발행 완료: OPEN -> CLOSED */
-  async closeOrderPallet(shipOrderNo: string, palletNo: string, company?: string, plant?: string) {
+  async closeOrderPallet(shipOrderNo: string, palletNo: string, organizationId?: number) {
     const pallet = await this.palletRepository.findOne({
-      where: { palletNo, shipOrderNo, ...this.tenantWhere(company, plant) },
+      where: { palletNo, shipOrderNo, ...this.tenantWhere(organizationId) },
     });
     if (!pallet) throw new NotFoundException(`출하지시 팔레트를 찾을 수 없습니다: ${palletNo}`);
     if (pallet.status !== 'OPEN') {
@@ -738,19 +728,19 @@ export class ShipOrderService {
     if (pallet.boxCount <= 0) throw new BadRequestException('빈 팔레트는 라벨 발행 완료 처리할 수 없습니다.');
 
     await this.palletRepository.update(
-      { palletNo, shipOrderNo, ...this.tenantWhere(company, plant) },
+      { palletNo, shipOrderNo, ...this.tenantWhere(organizationId) },
       { status: 'CLOSED', closeAt: new Date() },
     );
-    return this.getFulfillment(shipOrderNo, company, plant);
+    return this.getFulfillment(shipOrderNo, organizationId);
   }
 
   /** 출하지시 팔레트 바코드 스캔 후 제품출하 확정 */
-  async shipOrderPallets(shipOrderNo: string, dto: ShipOrderPalletsDto, company?: string, plant?: string) {
-    const order = await this.findById(shipOrderNo, company, plant) as ShipmentOrder & { items: ShipmentOrderItem[] };
+  async shipOrderPallets(shipOrderNo: string, dto: ShipOrderPalletsDto, organizationId?: number) {
+    const order = await this.findById(shipOrderNo, organizationId) as ShipmentOrder & { items: ShipmentOrderItem[] };
     const lineByItem = this.assertOrderLineMap(order);
 
     const pallets = await this.palletRepository.find({
-      where: { palletNo: In(dto.palletNos), shipOrderNo, ...this.tenantWhere(company, plant) },
+      where: { palletNo: In(dto.palletNos), shipOrderNo, ...this.tenantWhere(organizationId) },
     });
     if (pallets.length !== dto.palletNos.length) {
       const found = new Set(pallets.map((pallet) => pallet.palletNo));
@@ -762,7 +752,7 @@ export class ShipOrderService {
     }
 
     const boxes = await this.boxRepository.find({
-      where: { palletNo: In(dto.palletNos), ...this.tenantWhere(company, plant) },
+      where: { palletNo: In(dto.palletNos), ...this.tenantWhere(organizationId) },
     });
     if (boxes.length === 0) throw new BadRequestException('출하 처리할 박스가 없습니다.');
 
@@ -798,7 +788,7 @@ export class ShipOrderService {
     await this.tx.run(async (qr) => {
       shipNo = await this.numbering.nextShipmentNo(qr);
       const existing = await this.shipmentRepository.findOne({
-        where: { shipNo, ...this.tenantWhere(company, plant) },
+        where: { shipNo, ...this.tenantWhere(organizationId) },
       });
       if (existing) throw new ConflictException(`이미 존재하는 출하번호입니다: ${shipNo}`);
 
@@ -814,27 +804,26 @@ export class ShipOrderService {
         totalQty: boxes.reduce((sum, box) => sum + box.qty, 0),
         status: 'LOADED',
         erpSyncYn: 'N',
-        company: company || null,
-        plant: plant || null,
+        organizationId: organizationId ?? null,
       });
       await qr.manager.save(shipment);
 
       await qr.manager.update(
         PalletMaster,
-        { palletNo: In(dto.palletNos), shipOrderNo, ...this.tenantWhere(company, plant) },
+        { palletNo: In(dto.palletNos), shipOrderNo, ...this.tenantWhere(organizationId) },
         { shipmentId: shipNo, status: 'SHIPPED' },
       );
       await qr.manager.update(
         BoxMaster,
-        { palletNo: In(dto.palletNos), ...this.tenantWhere(company, plant) },
+        { palletNo: In(dto.palletNos), ...this.tenantWhere(organizationId) },
         { status: 'SHIPPED', shipOrderNo, shippedAt: new Date() },
       );
       if (fgBarcodes.length > 0) {
-        await qr.manager.update(FgLabel, { fgBarcode: In(fgBarcodes), ...this.tenantWhere(company, plant) }, { status: 'SHIPPED' });
+        await qr.manager.update(FgLabel, { fgBarcode: In(fgBarcodes), ...this.tenantWhere(organizationId) }, { status: 'SHIPPED' });
       }
 
       const warehouse = await qr.manager.findOne(Warehouse, {
-        where: { warehouseType: 'FG', isDefault: 'Y', ...this.tenantWhere(company, plant) },
+        where: { warehouseType: 'FG', isDefault: 'Y', ...this.tenantWhere(organizationId) },
       });
       if (!warehouse) throw new BadRequestException('FG 기본창고(IS_DEFAULT=Y)가 설정되어 있지 않습니다.');
 
@@ -848,14 +837,13 @@ export class ShipOrderService {
           refId: shipNo,
           workerId: dto.workerId,
           remark: `출하지시 팔레트출하:${shipOrderNo}`,
-          company,
-          plant,
+          organizationId,
         });
 
         const line = lineByItem.get(itemCode)!;
         await qr.manager.update(
           ShipmentOrderItem,
-          { shipOrderNo, seq: line.seq, ...this.tenantWhere(company, plant) },
+          { shipOrderNo, seq: line.seq, ...this.tenantWhere(organizationId) },
           { shippedQty: line.shippedQty + qty },
         );
       }
@@ -865,12 +853,12 @@ export class ShipOrderService {
         return shipped >= line.orderQty;
       });
       if (fullyShipped) {
-        await qr.manager.update(ShipmentOrder, { shipOrderNo, ...this.tenantWhere(company, plant) }, { status: 'CLOSED' });
+        await qr.manager.update(ShipmentOrder, { shipOrderNo, ...this.tenantWhere(organizationId) }, { status: 'CLOSED' });
       }
 
       await qr.manager.update(
         ShipmentLog,
-        { shipNo, ...this.tenantWhere(company, plant) },
+        { shipNo, ...this.tenantWhere(organizationId) },
         { status: 'SHIPPED', shipAt: new Date() },
       );
     });
@@ -887,9 +875,9 @@ export class ShipOrderService {
    * 출하지시 기반 박스 단건 출하 (웹 모달 / PDA 공용)
    * 단일 트랜잭션: 박스 SHIPPED + FG_MAIN 재고차감 + 라인 shippedQty 증가 + 완출 시 지시 CLOSED
    */
-  async shipBox(shipOrderNo: string, dto: ShipBoxDto, company?: string, plant?: string) {
+  async shipBox(shipOrderNo: string, dto: ShipBoxDto, organizationId?: number) {
     return this.tx.run(async (qr) => {
-      const where = this.tenantWhere(company, plant);
+      const where = this.tenantWhere(organizationId);
 
       const order = await qr.manager.findOne(ShipmentOrder, { where: { shipOrderNo, ...where } });
       if (!order) throw new NotFoundException(`출하지시를 찾을 수 없습니다: ${shipOrderNo}`);
@@ -936,8 +924,7 @@ export class ShipOrderService {
         refId: shipOrderNo,
         workerId: dto.workerId,
         remark: `출하지시 박스출하:${dto.boxNo}`,
-        company,
-        plant,
+        organizationId,
       });
 
       await qr.manager.update(BoxMaster, { boxNo: box.boxNo, ...where }, { status: 'SHIPPED', shipOrderNo, shippedAt: new Date() });
@@ -978,10 +965,9 @@ export class ShipOrderService {
     shipOrderNo: string,
     boxNo: string,
     workerId?: string,
-    company?: string,
-    plant?: string,
+    organizationId?: number,
   ): Promise<{ shipOrderNo: string; boxNo: string; itemCode: string; qty: number; lineShippedQty: number; lineOrderQty: number; orderStatus: string; canceled: boolean }> {
-    const where = this.tenantWhere(company, plant);
+    const where = this.tenantWhere(organizationId);
 
     const order = await qr.manager.findOne(ShipmentOrder, { where: { shipOrderNo, ...where } });
     if (!order) throw new NotFoundException(`출하지시를 찾을 수 없습니다: ${shipOrderNo}`);
@@ -1060,8 +1046,8 @@ export class ShipOrderService {
    * 출하지시 기반 박스 출하 취소.
    * 출하 직전 상태로 되돌린다: 제품재고 복원 + 박스 CLOSED + FG_LABEL PACKED + 라인 shippedQty 차감 + 지시 CONFIRMED.
    */
-  async cancelShipBox(shipOrderNo: string, dto: ShipBoxDto, company?: string, plant?: string) {
-    return this.tx.run((qr) => this.cancelShipBoxInTx(qr, shipOrderNo, dto.boxNo, dto.workerId, company, plant));
+  async cancelShipBox(shipOrderNo: string, dto: ShipBoxDto, organizationId?: number) {
+    return this.tx.run((qr) => this.cancelShipBoxInTx(qr, shipOrderNo, dto.boxNo, dto.workerId, organizationId));
   }
 
   /**
@@ -1069,8 +1055,8 @@ export class ShipOrderService {
    * 단일 트랜잭션으로 합성하고 SHIPPING_RETURNS에 취소이력을 기록한다.
    * ERP 가드는 트랜잭션 진입 전 사전조회 시점에 검증한다(부분 부작용 방지).
    */
-  async cancelOrderShipment(shipOrderNo: string, dto: CancelOrderShipmentDto, company?: string, plant?: string) {
-    const where = this.tenantWhere(company, plant);
+  async cancelOrderShipment(shipOrderNo: string, dto: CancelOrderShipmentDto, organizationId?: number) {
+    const where = this.tenantWhere(organizationId);
 
     // 사전 조회(검증용)
     const shipments = await this.shipmentRepository.find({
@@ -1114,7 +1100,7 @@ export class ShipOrderService {
         }
         if (s.status === 'SHIPPED') {
           // 재고복원/라벨/팔레트 LOADED/박스 CLOSED/shippedQty 복원; 품목별 복원수량 맵 반환
-          const reversedMap = await this.shipmentService.reverseShipmentInTx(qr, s, dto.reason, company, plant);
+          const reversedMap = await this.shipmentService.reverseShipmentInTx(qr, s, dto.reason, organizationId);
           for (const [code, q] of reversedMap) {
             totalByItem.set(code, (totalByItem.get(code) ?? 0) + q);
           }
@@ -1130,14 +1116,14 @@ export class ShipOrderService {
             { status: 'CANCELED', palletCount: 0, boxCount: 0, totalQty: 0, remark: `출하취소:${dto.reason}` },
           );
         } else {
-          await this.shipmentService.cancelInTx(qr, s, dto.reason, company, plant);
+          await this.shipmentService.cancelInTx(qr, s, dto.reason, organizationId);
         }
         canceledShipments.push(s.shipNo);
       }
 
       // 2) 박스출하분: cancel-ship-box(재고복원/박스 CLOSED/라벨/shippedQty 복원)
       for (const b of looseBoxes) {
-        const res = await this.cancelShipBoxInTx(qr, shipOrderNo, b.boxNo, dto.workerId, company, plant);
+        const res = await this.cancelShipBoxInTx(qr, shipOrderNo, b.boxNo, dto.workerId, organizationId);
         canceledBoxes.push(b.boxNo);
         totalByItem.set(res.itemCode, (totalByItem.get(res.itemCode) ?? 0) + res.qty);
       }
@@ -1151,8 +1137,7 @@ export class ShipOrderService {
         returnReason: dto.reason,
         status: 'COMPLETED',
         remark: `출하취소(shipments:${canceledShipments.join(',') || '-'} / boxes:${canceledBoxes.length})`,
-        company,
-        plant,
+        organizationId,
       });
       await qr.manager.save(ret);
 
@@ -1164,8 +1149,7 @@ export class ShipOrderService {
           itemCode,
           returnQty: qty,
           disposalType: 'RESTOCK',
-          company,
-          plant,
+          organizationId,
         }),
       );
       if (returnItems.length > 0) {
@@ -1178,7 +1162,7 @@ export class ShipOrderService {
   }
 
   /** 좌측 출하이력: 출하분(SHIPPED 박스)이 있는 출하지시 단위 통합 목록 */
-  async findShippedOrders(company?: string, plant?: string) {
+  async findShippedOrders(organizationId?: number) {
     const rows: Array<{
       SHIP_ORDER_NO: string; CUSTOMER_NAME: string | null; SHIP_DATE: Date | null;
       SHIPPED_QTY: number; PALLET_BOXES: number; LOOSE_BOXES: number;
@@ -1194,17 +1178,17 @@ export class ShipOrderService {
               NVL((SELECT MAX(CASE WHEN s.ERP_SYNC_YN = 'Y' THEN 1 ELSE 0 END)
                      FROM SHIPMENT_LOGS s
                     WHERE s.SHIP_ORDER_NO = b.SHIP_ORDER_NO
-                      AND s.COMPANY = b.COMPANY AND s.PLANT_CD = b.PLANT_CD), 0) AS ERP_SYNCED
+                      AND s.ORGANIZATION_ID = b.ORGANIZATION_ID), 0) AS ERP_SYNCED
          FROM BOX_MASTERS b
          JOIN SHIPMENT_ORDERS o
            ON o.SHIP_ORDER_NO = b.SHIP_ORDER_NO
-          AND o.COMPANY = b.COMPANY AND o.PLANT_CD = b.PLANT_CD
+          AND o.ORGANIZATION_ID = b.ORGANIZATION_ID
         WHERE b.STATUS = 'SHIPPED'
           AND b.SHIP_ORDER_NO IS NOT NULL
-          AND b.COMPANY = :1 AND b.PLANT_CD = :2
-        GROUP BY b.SHIP_ORDER_NO, o.CUSTOMER_NAME, o.SHIP_DATE, b.COMPANY, b.PLANT_CD
+          AND b.ORGANIZATION_ID = :1
+        GROUP BY b.SHIP_ORDER_NO, o.CUSTOMER_NAME, o.SHIP_DATE, b.ORGANIZATION_ID
         ORDER BY o.SHIP_DATE DESC NULLS LAST, b.SHIP_ORDER_NO DESC`,
-      [company, plant],
+      [organizationId],
     );
 
     const data = rows.map((r) => ({
@@ -1223,20 +1207,20 @@ export class ShipOrderService {
   }
 
   /** 우측 상세: 선택 출하지시의 팔레트(+박스) 및 박스출하(palletNo '*') */
-  async getShippedDetail(shipOrderNo: string, company?: string, plant?: string) {
+  async getShippedDetail(shipOrderNo: string, organizationId?: number) {
     const order = await this.shipOrderRepository.findOne({
-      where: { shipOrderNo, ...this.tenantWhere(company, plant) },
+      where: { shipOrderNo, ...this.tenantWhere(organizationId) },
       select: ['shipOrderNo', 'customerName', 'shipDate'],
     });
     if (!order) throw new NotFoundException(`출하지시를 찾을 수 없습니다: ${shipOrderNo}`);
 
     const pallets = await this.palletRepository.find({
-      where: { shipOrderNo, status: In(['LOADED', 'SHIPPED']), ...this.tenantWhere(company, plant) },
+      where: { shipOrderNo, status: In(['LOADED', 'SHIPPED']), ...this.tenantWhere(organizationId) },
       order: { createdAt: 'ASC' },
     });
     const palletNos = pallets.map((p) => p.palletNo);
     const palletBoxes = palletNos.length
-      ? await this.boxRepository.find({ where: { palletNo: In(palletNos), ...this.tenantWhere(company, plant) }, order: { createdAt: 'ASC' } })
+      ? await this.boxRepository.find({ where: { palletNo: In(palletNos), ...this.tenantWhere(organizationId) }, order: { createdAt: 'ASC' } })
       : [];
     const boxesByPallet = new Map<string, typeof palletBoxes>();
     for (const b of palletBoxes) {
@@ -1245,7 +1229,7 @@ export class ShipOrderService {
     }
 
     const looseBoxes = await this.boxRepository.find({
-      where: { shipOrderNo, palletNo: IsNull(), status: 'SHIPPED', ...this.tenantWhere(company, plant) },
+      where: { shipOrderNo, palletNo: IsNull(), status: 'SHIPPED', ...this.tenantWhere(organizationId) },
       order: { shippedAt: 'ASC' },
     });
 

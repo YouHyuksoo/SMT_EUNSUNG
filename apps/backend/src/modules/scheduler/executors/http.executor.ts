@@ -37,7 +37,7 @@ export class HttpExecutor implements IJobExecutor {
    * @returns 실행 결과
    */
   async execute(job: SchedulerJob): Promise<ExecutorResult> {
-    const { execTarget, execParams, timeoutSec, company, plantCd } = job;
+    const { execTarget, execParams, timeoutSec, organizationId } = job;
 
     // execTarget을 METHOD URL로 분리
     const spaceIndex = execTarget.indexOf(' ');
@@ -86,13 +86,11 @@ export class HttpExecutor implements IJobExecutor {
       try {
         const parsed = JSON.parse(execParams);
 
-        // 실행 요청 본문에 company/plant 관련 키가 있으면 스케줄러 테넌트를 강제 반영
+        // 실행 요청 본문에 organizationId 키가 있으면 스케줄러 테넌트를 강제 반영
         if (isRecord(parsed)) {
           const mutated = toRecord(parsed);
 
-          if ('company' in mutated) mutated.company = company;
-          if ('plant' in mutated) mutated.plant = plantCd;
-          if ('plantCd' in mutated) mutated.plantCd = plantCd;
+          if ('organizationId' in mutated) mutated.organizationId = organizationId;
 
           body = JSON.stringify(mutated);
         } else {
@@ -119,8 +117,7 @@ export class HttpExecutor implements IJobExecutor {
         method,
         headers: {
           ...(body ? { 'Content-Type': 'application/json' } : {}),
-          'X-Company': company,
-          'X-Plant': plantCd,
+          'X-Organization-Id': String(organizationId),
         },
         body: method !== 'GET' ? body : undefined,
         signal: controller.signal,

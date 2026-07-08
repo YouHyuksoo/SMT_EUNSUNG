@@ -44,13 +44,13 @@ describe('FaiService', () => {
     });
 
     it('scopes FAI lookup by tenant', async () => {
-      mockFaiRepo.findOne.mockResolvedValue({ faiNo: 'FAI-001', company: 'CO', plant: 'P01' } as any);
+      mockFaiRepo.findOne.mockResolvedValue({ faiNo: 'FAI-001', organizationId: 1 } as any);
       mockItemRepo.find.mockResolvedValue([]);
 
-      await target.findById('FAI-001', 'CO', 'P01');
+      await target.findById('FAI-001', 1);
 
       expect(mockFaiRepo.findOne).toHaveBeenCalledWith({
-        where: { faiNo: 'FAI-001', company: 'CO', plant: 'P01' },
+        where: { faiNo: 'FAI-001', organizationId: 1 },
       });
       expect(mockItemRepo.find).toHaveBeenCalledWith({
         where: { faiId: 'FAI-001' },
@@ -73,8 +73,8 @@ describe('FaiService', () => {
     });
 
     it('rejects start when FAI belongs to a different tenant', async () => {
-      mockFaiRepo.findOne.mockResolvedValue({ faiNo: 'FAI-001', status: 'REQUESTED', company: 'OTHER', plant: 'P01' } as any);
-      await expect(target.start('FAI-001', 'user', 'CO', 'P01')).rejects.toThrow(BadRequestException);
+      mockFaiRepo.findOne.mockResolvedValue({ faiNo: 'FAI-001', status: 'REQUESTED', organizationId: 2 } as any);
+      await expect(target.start('FAI-001', 'user', 1)).rejects.toThrow(BadRequestException);
       expect(mockFaiRepo.save).not.toHaveBeenCalled();
     });
   });
@@ -96,8 +96,8 @@ describe('FaiService', () => {
     });
 
     it('rejects complete when FAI belongs to a different tenant', async () => {
-      mockFaiRepo.findOne.mockResolvedValue({ faiNo: 'FAI-001', status: 'INSPECTING', company: 'OTHER', plant: 'P01' } as any);
-      await expect(target.complete('FAI-001', { result: 'PASS' } as any, 'user', 'CO', 'P01')).rejects.toThrow(BadRequestException);
+      mockFaiRepo.findOne.mockResolvedValue({ faiNo: 'FAI-001', status: 'INSPECTING', organizationId: 2 } as any);
+      await expect(target.complete('FAI-001', { result: 'PASS' } as any, 'user', 1)).rejects.toThrow(BadRequestException);
       expect(mockItemRepo.find).not.toHaveBeenCalled();
       expect(mockFaiRepo.save).not.toHaveBeenCalled();
     });
@@ -110,8 +110,8 @@ describe('FaiService', () => {
     });
 
     it('rejects delete when FAI belongs to a different tenant', async () => {
-      mockFaiRepo.findOne.mockResolvedValue({ faiNo: 'FAI-001', status: 'REQUESTED', company: 'OTHER', plant: 'P01' } as any);
-      await expect(target.delete('FAI-001', 'CO', 'P01')).rejects.toThrow(BadRequestException);
+      mockFaiRepo.findOne.mockResolvedValue({ faiNo: 'FAI-001', status: 'REQUESTED', organizationId: 2 } as any);
+      await expect(target.delete('FAI-001', 1)).rejects.toThrow(BadRequestException);
       expect(mockItemRepo.delete).not.toHaveBeenCalled();
       expect(mockFaiRepo.remove).not.toHaveBeenCalled();
     });
@@ -119,24 +119,24 @@ describe('FaiService', () => {
 
   describe('update', () => {
     it('rejects update when FAI belongs to a different tenant', async () => {
-      mockFaiRepo.findOne.mockResolvedValue({ faiNo: 'FAI-001', status: 'REQUESTED', company: 'OTHER', plant: 'P01' } as any);
-      await expect(target.update('FAI-001', { remark: 'x' } as any, 'user', 'CO', 'P01')).rejects.toThrow(BadRequestException);
+      mockFaiRepo.findOne.mockResolvedValue({ faiNo: 'FAI-001', status: 'REQUESTED', organizationId: 2 } as any);
+      await expect(target.update('FAI-001', { remark: 'x' } as any, 'user', 1)).rejects.toThrow(BadRequestException);
       expect(mockFaiRepo.save).not.toHaveBeenCalled();
     });
   });
 
   describe('approve', () => {
     it('rejects approve when FAI belongs to a different tenant', async () => {
-      mockFaiRepo.findOne.mockResolvedValue({ faiNo: 'FAI-001', status: 'PASS', company: 'OTHER', plant: 'P01' } as any);
-      await expect(target.approve('FAI-001', 'user', 'CO', 'P01')).rejects.toThrow(BadRequestException);
+      mockFaiRepo.findOne.mockResolvedValue({ faiNo: 'FAI-001', status: 'PASS', organizationId: 2 } as any);
+      await expect(target.approve('FAI-001', 'user', 1)).rejects.toThrow(BadRequestException);
       expect(mockFaiRepo.save).not.toHaveBeenCalled();
     });
   });
 
   describe('addItems', () => {
     it('rejects addItems when FAI belongs to a different tenant', async () => {
-      mockFaiRepo.findOne.mockResolvedValue({ faiNo: 'FAI-001', status: 'REQUESTED', company: 'OTHER', plant: 'P01' } as any);
-      await expect(target.addItems('FAI-001', [{ seq: 1, inspectItem: 'A' }] as any, 'user', 'CO', 'P01')).rejects.toThrow(BadRequestException);
+      mockFaiRepo.findOne.mockResolvedValue({ faiNo: 'FAI-001', status: 'REQUESTED', organizationId: 2 } as any);
+      await expect(target.addItems('FAI-001', [{ seq: 1, inspectItem: 'A' }] as any, 'user', 1)).rejects.toThrow(BadRequestException);
       expect(mockItemRepo.delete).not.toHaveBeenCalled();
       expect(mockItemRepo.save).not.toHaveBeenCalled();
     });

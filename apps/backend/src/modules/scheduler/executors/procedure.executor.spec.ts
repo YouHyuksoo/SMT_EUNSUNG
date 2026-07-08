@@ -7,8 +7,7 @@ describe('ProcedureExecutor', () => {
   let executor: ProcedureExecutor;
 
   const baseJob = {
-    company: 'C1',
-    plantCd: 'P1',
+    organizationId: 1,
     jobCode: 'PROC_JOB',
     execType: 'PROCEDURE',
     execTarget: 'PKG_TEST.SP_RUN',
@@ -32,17 +31,13 @@ describe('ProcedureExecutor', () => {
     await executor.execute({
       ...baseJob,
       execParams: JSON.stringify({
-        company: 'OTHER',
-        plant: 'OTHER',
-        plantCd: 'OTHER',
+        organizationId: 999,
         mode: 'DAILY',
       }),
     });
 
     expect(oracleService.callProc).toHaveBeenCalledWith('PKG_TEST', 'SP_RUN', {
-      company: 'C1',
-      plant: 'P1',
-      plantCd: 'P1',
+      organizationId: 1,
       mode: 'DAILY',
     });
   });

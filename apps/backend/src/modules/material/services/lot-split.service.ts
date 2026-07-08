@@ -50,41 +50,35 @@ export class LotSplitService {
     private readonly numbering: NumberingService,
   ) {}
 
-  private tenantWhere(company?: string | null, plant?: string | null) {
+  private tenantWhere(organizationId?: number | null) {
     return {
-      ...(company ? { company } : {}),
-      ...(plant ? { plant } : {}),
+      ...(organizationId != null ? { organizationId } : {}),
     };
   }
 
   private assertSameTenant(
-    row: { company?: string | null; plant?: string | null } | null | undefined,
-    company?: string | null,
-    plant?: string | null,
+    row: { organizationId?: number | null } | null | undefined,
+    organizationId?: number | null,
     context = '데이터',
   ) {
-    if (company && row?.company !== company) {
-      throw new BadRequestException(`${context} 회사 정보가 일치하지 않습니다. request=${company}, row=${row?.company ?? 'NULL'}`);
-    }
-    if (plant && row?.plant !== plant) {
-      throw new BadRequestException(`${context} 사업장 정보가 일치하지 않습니다. request=${plant}, row=${row?.plant ?? 'NULL'}`);
+    if (organizationId != null && row?.organizationId !== organizationId) {
+      throw new BadRequestException(`${context} 조직 정보가 일치하지 않습니다. request=${organizationId}, row=${row?.organizationId ?? 'NULL'}`);
     }
   }
 
-  async findSplittableLots(query: LotSplitQueryDto, company?: string, plant?: string) {
+  async findSplittableLots(query: LotSplitQueryDto, organizationId?: number) {
     const { page = 1, limit = 10, search } = query;
     const skip = (page - 1) * limit;
 
     // 분할 가능한 LOT: 입고완료(RECEIVE 합>=initQty) + 재고>1 + NORMAL 상태
     const qb = this.matLotRepository.createQueryBuilder('lot')
-      .innerJoin(MatStock, 'stock', 'stock.matUid = lot.matUid AND stock.company = lot.company AND stock.plant = lot.plant')
+      .innerJoin(MatStock, 'stock', 'stock.matUid = lot.matUid AND stock.organizationId = lot.organizationId')
       .where('stock.qty > 1')
       .andWhere("lot.status = 'NORMAL'")
       .andWhere('NVL(stock.reservedQty, 0) = 0')
       .andWhere(RECEIVED_GATE_SQL);
 
-    if (company) qb.andWhere('lot.company = :company', { company });
-    if (plant) qb.andWhere('lot.plant = :plant', { plant });
+    if (organizationId != null) qb.andWhere('lot.organizationId = :organizationId', { organizationId });
     if (search) qb.andWhere('lot.matUid LIKE :search', { search: `%${search}%` });
 
     const [data, total] = await Promise.all([
@@ -95,7 +89,7 @@ export class LotSplitService {
 
     // part 정보 조회 및 중첩 객체 평면화
     const itemCodes = data.map((lot) => lot.itemCode).filter(Boolean);
-    const tenantWhere = this.tenantWhere(company, plant);
+    const tenantWhere = this.tenantWhere(organizationId);
     const parts = itemCodes.length > 0
       ? await this.itemMasterRepository.find({ where: { itemCode: In(itemCodes), ...tenantWhere } })
       : [];
@@ -134,9 +128,9 @@ export class LotSplitService {
     return { data: flattenedData, total, page, limit };
   }
 
-  async split(dto: LotSplitDto, company?: string, plant?: string, userId?: string) {
+  async split(dto: LotSplitDto, organizationId?: number, userId?: string) {
     const { sourceLotId, splitQty, remark } = dto;
-    const tenantWhere = this.tenantWhere(company, plant);
+    const tenantWhere = this.tenantWhere(organizationId);
 
     return this.tx.run(async (queryRunner) => {
       // 1) 원본 LOT 조회 + 기본 상태 검증
@@ -146,7 +140,7 @@ export class LotSplitService {
       if (!sourceLot) {
         throw new NotFoundException(`원본 LOT을 찾을 수 없습니다: ${sourceLotId}`);
       }
-      this.assertSameTenant(sourceLot, company, plant, '원본 LOT');
+      this.assertSameTenant(sourceLot, organizationId, '원본 LOT');
 
       if (sourceLot.status === 'HOLD') {
         throw new BadRequestException('HOLD 상태인 LOT은 분할할 수 없습니다.');
@@ -165,7 +159,7 @@ export class LotSplitService {
       if (!sourceStock || sourceStock.qty <= 0) {
         throw new BadRequestException(`분할할 재고가 없습니다. 현재 재고: ${sourceStock?.qty ?? 0}`);
       }
-      this.assertSameTenant(sourceStock, sourceLot.company, sourceLot.plant, '원본 재고');
+      this.assertSameTenant(sourceStock, sourceLot.organizationId, '원본 재고');
       if ((sourceStock.reservedQty ?? 0) > 0) {
         throw new BadRequestException('예약 수량이 있는 LOT는 분할할 수 없습니다. 예약부터 먼저 정리해 주세요.');
       }
@@ -190,7 +184,7 @@ export class LotSplitService {
       if (!part) {
         throw new NotFoundException(`품목을 찾을 수 없습니다: ${sourceLot.itemCode}`);
       }
-      this.assertSameTenant(part, sourceLot.company, sourceLot.plant, '품목');
+      this.assertSameTenant(part, sourceLot.organizationId, '품목');
       if (part.isSplittable === 'N') {
         throw new BadRequestException(
           `해당 품목은 분할할 수 없습니다. 품번: ${part.itemCode}, 분할 설정: ${part.isSplittable}`,
@@ -219,8 +213,7 @@ export class LotSplitService {
         remark: splitRemark,
         workerId: userId ?? null,
         status: 'DONE',
-        company: sourceLot.company,
-        plant: sourceLot.plant,
+        organizationId: sourceLot.organizationId,
         createdBy: userId ?? null,
       }));
 
@@ -256,8 +249,7 @@ export class LotSplitService {
           remark: splitRemark,
           workerId: userId ?? null,
           status: 'DONE',
-          company: sourceLot.company,
-          plant: sourceLot.plant,
+          organizationId: sourceLot.organizationId,
           createdBy: userId ?? null,
         }));
 
@@ -326,8 +318,7 @@ export class LotSplitService {
       poNo: sourceLot.poNo,
       iqcStatus: sourceLot.iqcStatus,
       status: 'NORMAL',
-      company: sourceLot.company,
-      plant: sourceLot.plant,
+      organizationId: sourceLot.organizationId,
       createdBy: userId ?? null,
     });
     await queryRunner.manager.save(newLot);
@@ -340,8 +331,7 @@ export class LotSplitService {
       qty,
       availableQty: qty,
       reservedQty: 0,
-      company: sourceStock.company,
-      plant: sourceStock.plant,
+      organizationId: sourceStock.organizationId,
       createdBy: userId ?? null,
     });
     await queryRunner.manager.save(newStock);

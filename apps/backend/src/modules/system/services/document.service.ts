@@ -41,27 +41,20 @@ export class DocumentService {
     private readonly docRepo: Repository<DocumentMaster>,
   ) {}
 
-  private tenantWhere(company?: string | null, plant?: string | null) {
+  private tenantWhere(organizationId?: number | null) {
     return {
-      ...(company ? { company } : {}),
-      ...(plant ? { plant } : {}),
+      ...(organizationId != null ? { organizationId } : {}),
     };
   }
 
   private assertSameTenant(
     context: string,
-    row: { company?: string | null; plant?: string | null },
-    company?: string | null,
-    plant?: string | null,
+    row: { organizationId?: number | null },
+    organizationId?: number | null,
   ) {
-    if (company && row.company !== company) {
+    if (organizationId != null && row.organizationId !== organizationId) {
       throw new BadRequestException(
-        `${context} 회사 정보가 일치하지 않습니다. request=${company}, row=${row.company ?? 'NULL'}`,
-      );
-    }
-    if (plant && row.plant !== plant) {
-      throw new BadRequestException(
-        `${context} 사업장 정보가 일치하지 않습니다. request=${plant}, row=${row.plant ?? 'NULL'}`,
+        `${context} 조직 정보가 일치하지 않습니다. request=${organizationId}, row=${row.organizationId ?? 'NULL'}`,
       );
     }
   }
@@ -74,8 +67,7 @@ export class DocumentService {
    * 문서번호 자동채번: DOC-YYYYMMDD-NNN
    */
   private async generateDocNo(
-    company: string,
-    plant: string,
+    organizationId: number,
   ): Promise<string> {
     const today = new Date();
     const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '');
@@ -83,8 +75,7 @@ export class DocumentService {
 
     const last = await this.docRepo
       .createQueryBuilder('d')
-      .where('d.company = :company', { company })
-      .andWhere('d.plant = :plant', { plant })
+      .where('d.organizationId = :organizationId', { organizationId })
       .andWhere('d.docNo LIKE :prefix', { prefix: `${prefix}%` })
       .orderBy('d.docNo', 'DESC')
       .getOne();
@@ -100,7 +91,7 @@ export class DocumentService {
   /**
    * 문서 목록 조회 (페이지네이션 + 필터)
    */
-  async findAll(query: DocumentQueryDto, company?: string, plant?: string) {
+  async findAll(query: DocumentQueryDto, organizationId?: number) {
     const {
       page = 1,
       limit = 50,
@@ -114,8 +105,7 @@ export class DocumentService {
 
     const qb = this.docRepo.createQueryBuilder('d');
 
-    if (company) qb.andWhere('d.company = :company', { company });
-    if (plant) qb.andWhere('d.plant = :plant', { plant });
+    if (organizationId != null) qb.andWhere('d.organizationId = :organizationId', { organizationId });
     if (status) qb.andWhere('d.status = :status', { status });
     if (docType) qb.andWhere('d.docType = :docType', { docType });
     if (category) qb.andWhere('d.category = :category', { category });
@@ -144,14 +134,14 @@ export class DocumentService {
   /**
    * 문서 단건 조회
    */
-  async findById(docNo: string, company?: string, plant?: string) {
+  async findById(docNo: string, organizationId?: number) {
     const item = await this.docRepo.findOne({
-      where: { docNo, ...this.tenantWhere(company, plant) },
+      where: { docNo, ...this.tenantWhere(organizationId) },
     });
     if (!item) {
       throw new NotFoundException('문서를 찾을 수 없습니다.');
     }
-    this.assertSameTenant('문서', item, company, plant);
+    this.assertSameTenant('문서', item, organizationId);
     return item;
   }
 
@@ -160,11 +150,10 @@ export class DocumentService {
    */
   async create(
     dto: CreateDocumentDto,
-    company: string,
-    plant: string,
+    organizationId: number,
     userId: string,
   ) {
-    const docNo = await this.generateDocNo(company, plant);
+    const docNo = await this.generateDocNo(organizationId);
     const entity = this.docRepo.create({
       docNo,
       docTitle: dto.docTitle,
@@ -177,8 +166,7 @@ export class DocumentService {
       retentionPeriod: dto.retentionPeriod ?? null,
       expiresAt: dto.expiresAt ? new Date(dto.expiresAt) : null,
       description: dto.description ?? null,
-      company,
-      plant,
+      organizationId,
       createdBy: userId,
       updatedBy: userId,
     });
@@ -194,10 +182,9 @@ export class DocumentService {
     docNo: string,
     dto: UpdateDocumentDto,
     userId: string,
-    company?: string,
-    plant?: string,
+    organizationId?: number,
   ) {
-    const item = await this.findById(docNo, company, plant);
+    const item = await this.findById(docNo, organizationId);
     if (item.status !== 'DRAFT') {
       throw new BadRequestException('초안 상태에서만 수정할 수 있습니다.');
     }
@@ -227,8 +214,8 @@ export class DocumentService {
   /**
    * 문서 삭제 (DRAFT 상태에서만 가능)
    */
-  async delete(docNo: string, company?: string, plant?: string) {
-    const item = await this.findById(docNo, company, plant);
+  async delete(docNo: string, organizationId?: number) {
+    const item = await this.findById(docNo, organizationId);
     if (item.status !== 'DRAFT') {
       throw new BadRequestException('초안 상태에서만 삭제할 수 있습니다.');
     }
@@ -245,10 +232,9 @@ export class DocumentService {
   async approve(
     docNo: string,
     userId: string,
-    company?: string,
-    plant?: string,
+    organizationId?: number,
   ) {
-    const item = await this.findById(docNo, company, plant);
+    const item = await this.findById(docNo, organizationId);
     if (!['DRAFT', 'REVIEW'].includes(item.status)) {
       throw new BadRequestException(
         '초안 또는 검토 상태에서만 승인할 수 있습니다.',
@@ -270,10 +256,9 @@ export class DocumentService {
   async revise(
     docNo: string,
     userId: string,
-    company?: string,
-    plant?: string,
+    organizationId?: number,
   ) {
-    const item = await this.findById(docNo, company, plant);
+    const item = await this.findById(docNo, organizationId);
     if (item.status !== 'APPROVED') {
       throw new BadRequestException(
         '승인된 문서만 개정할 수 있습니다.',
@@ -296,8 +281,7 @@ export class DocumentService {
       filePath: item.filePath,
       retentionPeriod: item.retentionPeriod,
       description: item.description,
-      company: item.company,
-      plant: item.plant,
+      organizationId: item.organizationId,
       createdBy: userId,
       updatedBy: userId,
     });
@@ -322,8 +306,7 @@ export class DocumentService {
    */
   async getExpiring(
     days: number,
-    company?: string,
-    plant?: string,
+    organizationId?: number,
   ) {
     const futureDate = new Date();
     futureDate.setDate(futureDate.getDate() + days);
@@ -334,8 +317,7 @@ export class DocumentService {
       .andWhere('d.expiresAt IS NOT NULL')
       .andWhere('d.expiresAt <= :futureDate', { futureDate });
 
-    if (company) qb.andWhere('d.company = :company', { company });
-    if (plant) qb.andWhere('d.plant = :plant', { plant });
+    if (organizationId != null) qb.andWhere('d.organizationId = :organizationId', { organizationId });
 
     qb.orderBy('d.expiresAt', 'ASC');
     return qb.getMany();

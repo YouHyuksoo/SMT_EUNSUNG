@@ -8,11 +8,8 @@ import {
 
 @Entity({ name: 'AQL_SAMPLING_RULES' })
 export class AqlSamplingRule {
-  @PrimaryColumn({ type: 'varchar2', name: 'COMPANY', length: 50 })
-  company: string;
-
-  @PrimaryColumn({ type: 'varchar2', name: 'PLANT_CD', length: 50 })
-  plant: string;
+  @PrimaryColumn({ name: 'ORGANIZATION_ID', type: 'number' })
+  organizationId!: number;
 
   @PrimaryColumn({ type: 'varchar2', name: 'AQL_CODE', length: 50 })
   aqlCode: string;

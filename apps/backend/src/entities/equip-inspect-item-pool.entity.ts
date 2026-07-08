@@ -7,15 +7,12 @@ import {
 } from 'typeorm';
 
 /** 설비-점검항목 연결 풀 — 특정 설비에 등록된 점검항목 링크
- *  PK: COMPANY + PLANT_CD + EQUIP_CODE + ITEM_CODE + INSPECT_TYPE
+ *  PK: ORGANIZATION_ID + EQUIP_CODE + ITEM_CODE + INSPECT_TYPE
  */
 @Entity({ name: 'EQUIP_INSPECT_ITEM_POOL' })
 export class EquipInspectItemPool {
-  @PrimaryColumn({ name: 'COMPANY', length: 50 })
-  company: string;
-
-  @PrimaryColumn({ name: 'PLANT_CD', length: 50 })
-  plant: string;
+  @PrimaryColumn({ name: 'ORGANIZATION_ID', type: 'number' })
+  organizationId!: number;
 
   @PrimaryColumn({ name: 'EQUIP_CODE', length: 36 })
   equipCode: string;

@@ -11,11 +11,8 @@ import { IqcPartSpecItem } from './iqc-part-spec-item.entity';
 
 @Entity({ name: 'IQC_PART_SPECS' })
 export class IqcPartSpec {
-  @PrimaryColumn({ type: 'varchar2', name: 'COMPANY', length: 50 })
-  company: string;
-
-  @PrimaryColumn({ type: 'varchar2', name: 'PLANT_CD', length: 50 })
-  plant: string;
+  @PrimaryColumn({ name: 'ORGANIZATION_ID', type: 'number' })
+  organizationId!: number;
 
   @PrimaryColumn({ name: 'ITEM_CODE', length: 50 })
   itemCode: string;

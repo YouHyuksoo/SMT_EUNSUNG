@@ -72,17 +72,17 @@ describe('ShipHistoryService', () => {
     });
 
     it('should enrich shipment items with part names within tenant only', async () => {
-      const order = { shipOrderNo: 'SO-001', company: 'C1', plant: 'P1' } as ShipmentOrder;
+      const order = { shipOrderNo: 'SO-001', organizationId: 1 } as ShipmentOrder;
       mockOrderListQb([order], 1);
       mockShipmentOrderItemRepo.find.mockResolvedValue([
-        { shipOrderNo: 'SO-001', itemCode: 'ITEM-001', company: 'C1', plant: 'P1' } as ShipmentOrderItem,
+        { shipOrderNo: 'SO-001', itemCode: 'ITEM-001', organizationId: 1 } as ShipmentOrderItem,
       ]);
       mockPartRepo.find.mockResolvedValue([{ itemCode: 'ITEM-001', itemName: 'Part A' } as ItemMaster]);
 
-      await target.findAll({ page: 1, limit: 10 } as any, 'C1', 'P1');
+      await target.findAll({ page: 1, limit: 10 } as any, 1);
 
       expect(mockPartRepo.find).toHaveBeenCalledWith({
-        where: { itemCode: expect.anything(), company: 'C1', plant: 'P1' },
+        where: { itemCode: expect.anything(), organizationId: 1 },
         select: ['itemCode', 'itemName'],
       });
     });

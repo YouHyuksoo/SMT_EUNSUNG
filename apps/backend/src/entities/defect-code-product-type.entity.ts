@@ -1,13 +1,10 @@
 import { Column, CreateDateColumn, Entity, Index, PrimaryColumn } from 'typeorm';
 
 @Entity({ name: 'DEFECT_CODE_PRODUCT_TYPES' })
-@Index(['company', 'plant', 'productType'])
+@Index(['organizationId', 'productType'])
 export class DefectCodeProductType {
-  @PrimaryColumn({ type: 'varchar2', name: 'COMPANY', length: 50 })
-  company: string;
-
-  @PrimaryColumn({ type: 'varchar2', name: 'PLANT_CD', length: 50 })
-  plant: string;
+  @PrimaryColumn({ name: 'ORGANIZATION_ID', type: 'number' })
+  organizationId!: number;
 
   @PrimaryColumn({ type: 'varchar2', name: 'DEFECT_CODE', length: 50 })
   defectCode: string;

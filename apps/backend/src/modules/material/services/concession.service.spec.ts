@@ -49,16 +49,14 @@ describe('ConcessionService', () => {
         arrivalNo: 'ARR-001',
         itemCode: 'ITEM-001',
         iqcStatus: 'FAIL',
-        company: 'C1',
-        plant: 'P1',
+        organizationId: 1,
       } as MatLot,
     ]);
     workerRepo.findOne!.mockResolvedValue({
       workerCode: 'W001',
       workerName: '홍길동',
       useYn: 'Y',
-      company: 'C1',
-      plant: 'P1',
+      organizationId: 1,
     } as WorkerMaster);
 
     const result = await service.apply(
@@ -67,15 +65,14 @@ describe('ConcessionService', () => {
         itemCode: 'ITEM-001',
         specialAcceptWorkerCode: 'W001',
       },
-      'C1',
-      'P1',
+      1,
     );
 
     expect(workerRepo.findOne).toHaveBeenCalledWith({
-      where: { workerCode: 'W001', useYn: 'Y', company: 'C1', plant: 'P1' },
+      where: { workerCode: 'W001', useYn: 'Y', organizationId: 1 },
     });
     expect(lotRepo.update).toHaveBeenCalledWith(
-      { arrivalNo: 'ARR-001', itemCode: 'ITEM-001', iqcStatus: 'FAIL', company: 'C1', plant: 'P1' },
+      { arrivalNo: 'ARR-001', itemCode: 'ITEM-001', iqcStatus: 'FAIL', organizationId: 1 },
       { specialAcceptYn: 'Y', specialAcceptWorkerCode: 'W001' },
     );
     expect(result).toEqual(expect.objectContaining({ specialAcceptWorkerCode: 'W001' }));
@@ -83,7 +80,7 @@ describe('ConcessionService', () => {
 
   it('특채 처리 작업자를 선택하지 않으면 저장하지 않는다', async () => {
     await expect(
-      service.apply({ arrivalNo: 'ARR-001', itemCode: 'ITEM-001' } as any, 'C1', 'P1'),
+      service.apply({ arrivalNo: 'ARR-001', itemCode: 'ITEM-001' } as any, 1),
     ).rejects.toThrow(BadRequestException);
 
     expect(lotRepo.find).not.toHaveBeenCalled();

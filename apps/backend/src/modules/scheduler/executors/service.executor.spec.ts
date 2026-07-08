@@ -19,8 +19,7 @@ describe('ServiceExecutor', () => {
   let dbBackupService: MockDbBackupService;
 
   const baseJob = {
-    company: 'C1',
-    plantCd: 'P1',
+    organizationId: 1,
     jobCode: 'JOB_001',
     execType: 'SERVICE',
     execParams: null,
@@ -51,7 +50,7 @@ describe('ServiceExecutor', () => {
       execTarget: 'InterfaceService.scheduledBulkRetry',
     });
 
-    expect(interfaceService.scheduledBulkRetry).toHaveBeenCalledWith('C1', 'P1');
+    expect(interfaceService.scheduledBulkRetry).toHaveBeenCalledWith(1);
   });
 
   it('should pass execParams to parameter-driven service methods', async () => {

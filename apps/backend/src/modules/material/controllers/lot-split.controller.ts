@@ -8,7 +8,7 @@ import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { LotSplitService } from '../services/lot-split.service';
 import { LotSplitDto, LotSplitQueryDto } from '../dto/lot-split.dto';
 import { ResponseUtil } from '../../../common/dto/response.dto';
-import { Company, Plant } from '../../../common/decorators/tenant.decorator';
+import { OrganizationId } from '../../../common/decorators/tenant.decorator';
 import { InventoryFreezeGuard } from '../../../common/guards/inventory-freeze.guard';
 
 @ApiTags('자재관리 - LOT분할')
@@ -18,8 +18,8 @@ export class LotSplitController {
 
   @Get()
   @ApiOperation({ summary: '분할 가능한 LOT 목록 조회' })
-  async findSplittable(@Query() query: LotSplitQueryDto, @Company() company: string, @Plant() plant: string) {
-    const result = await this.lotSplitService.findSplittableLots(query, company, plant);
+  async findSplittable(@Query() query: LotSplitQueryDto, @OrganizationId() organizationId: number) {
+    const result = await this.lotSplitService.findSplittableLots(query, organizationId);
     return ResponseUtil.paged(result.data, result.total, result.page, result.limit);
   }
 
@@ -27,8 +27,8 @@ export class LotSplitController {
   @HttpCode(HttpStatus.CREATED)
   @UseGuards(InventoryFreezeGuard)
   @ApiOperation({ summary: 'LOT 분할 실행' })
-  async split(@Body() dto: LotSplitDto, @Company() company: string, @Plant() plant: string) {
-    const data = await this.lotSplitService.split(dto, company, plant);
+  async split(@Body() dto: LotSplitDto, @OrganizationId() organizationId: number) {
+    const data = await this.lotSplitService.split(dto, organizationId);
     return ResponseUtil.success(data, 'LOT이 분할되었습니다.');
   }
 }

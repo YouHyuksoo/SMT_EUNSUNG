@@ -46,11 +46,8 @@ export class PalletMaster {
   @Column({ type: 'varchar2', name: 'SHIP_ORDER_NO', length: 50, nullable: true })
   shipOrderNo: string | null;
 
-  @PrimaryColumn({ type: 'varchar2', name: 'COMPANY', length: 50 })
-  company: string;
-
-  @PrimaryColumn({ type: 'varchar2', name: 'PLANT_CD', length: 50 })
-  plant: string;
+  @PrimaryColumn({ name: 'ORGANIZATION_ID', type: 'number' })
+  organizationId!: number;
 
   @Column({ type: 'varchar2', name: 'CREATED_BY', length: 50, nullable: true })
   createdBy: string | null;

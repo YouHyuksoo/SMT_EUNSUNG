@@ -29,7 +29,7 @@ import {
 } from '@nestjs/swagger';
 import { SimulationService } from '../services/simulation.service';
 import { ResponseUtil } from '../../../common/dto/response.dto';
-import { Company, Plant } from '../../../common/decorators/tenant.decorator';
+import { OrganizationId } from '../../../common/decorators/tenant.decorator';
 import { SimulationResult } from '../dto/simulation.dto';
 
 @ApiTags('생산관리 - 시뮬레이션')
@@ -64,13 +64,11 @@ export class SimulationController {
       applySetup?: boolean;
       deductStock?: boolean;
     },
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
     const data = await this.simulationService.simulate(
       body.month,
-      company,
-      plant,
+      organizationId,
       body.strategy || 'DUE_DATE',
       body.planOrder,
       {
@@ -92,15 +90,13 @@ export class SimulationController {
       month: string; strategy?: string; result: SimulationResult;
       shiftCount?: number; includeOt?: boolean; applySetup?: boolean; deductStock?: boolean;
     },
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
     await this.simulationService.saveResult(
       body.month,
       body.strategy || 'DUE_DATE',
       body.result,
-      company,
-      plant,
+      organizationId,
       {
         shiftCount: body.shiftCount ?? 1,
         includeOt: body.includeOt ?? false,
@@ -116,10 +112,9 @@ export class SimulationController {
   @ApiResponse({ status: 200, description: '조회 성공' })
   async getLatest(
     @Query('month') month: string,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.simulationService.getLatest(month, company, plant);
+    const data = await this.simulationService.getLatest(month, organizationId);
     return ResponseUtil.success(data);
   }
 }

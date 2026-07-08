@@ -13,6 +13,19 @@ import { createParamDecorator, ExecutionContext } from '@nestjs/common';
 import { AuthenticatedRequest } from '../guards/jwt-auth.guard';
 
 /**
+ * req.user.organizationId 값을 파라미터로 추출하는 테넌트 데코레이터.
+ * 은성전장은 ORGANIZATION_ID(NUMBER) 단일 키로 테넌트를 구분한다.
+ * (company/plant는 폐기 예정 — 신규/전환 컨트롤러는 이 데코레이터를 사용한다)
+ * @example @OrganizationId() organizationId: number
+ */
+export const OrganizationId = createParamDecorator(
+  (_data: unknown, ctx: ExecutionContext): number | undefined => {
+    const req = ctx.switchToHttp().getRequest<AuthenticatedRequest>();
+    return req.user?.organizationId;
+  },
+);
+
+/**
  * req.user.company 값을 파라미터로 추출하는 데코레이터
  * @example @Company() company: string
  */

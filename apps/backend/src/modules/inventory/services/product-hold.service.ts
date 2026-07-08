@@ -16,13 +16,12 @@ export class ProductHoldService {
     private readonly tx: TransactionService,
   ) {}
 
-  async findAll(query: ProductHoldQueryDto, company?: string, plant?: string) {
+  async findAll(query: ProductHoldQueryDto, organizationId?: number) {
     const { page = 1, limit = 50, search, status, itemType } = query;
     const skip = (page - 1) * limit;
 
     const where: FindOptionsWhere<ProductStock> = {
-      ...(company && { company }),
-      ...(plant && { plant }),
+      ...(organizationId != null ? { organizationId } : {}),
     };
 
     if (status) where.status = status;
@@ -41,7 +40,7 @@ export class ProductHoldService {
 
     const itemCodes = [...new Set(data.map((s) => s.itemCode).filter(Boolean))];
     const parts = itemCodes.length > 0
-      ? await this.itemMasterRepository.find({ where: { itemCode: In(itemCodes), ...(company && { company }), ...(plant && { plant }) } })
+      ? await this.itemMasterRepository.find({ where: { itemCode: In(itemCodes), ...(organizationId != null ? { organizationId } : {}) } })
       : [];
     const partMap = new Map(parts.map((p) => [p.itemCode, p]));
 
@@ -68,13 +67,12 @@ export class ProductHoldService {
     return { warehouseCode, itemCode };
   }
 
-  async hold(dto: ProductHoldActionDto, company?: string, plant?: string, userId?: string) {
+  async hold(dto: ProductHoldActionDto, organizationId?: number, userId?: string) {
     const { stockId, reason } = dto;
     const compositeKey = this.parseStockId(stockId);
     const scopedKey = {
       ...compositeKey,
-      ...(company && { company }),
-      ...(plant && { plant }),
+      ...(organizationId != null ? { organizationId } : {}),
     };
 
     await this.tx.run(async (queryRunner) => {
@@ -97,7 +95,7 @@ export class ProductHoldService {
     const updated = await this.productStockRepository.findOne({ where: scopedKey });
     if (!updated) throw new NotFoundException(`��ǰ ���� ã�� �� �����ϴ�: ${stockId}`);
     const part = await this.itemMasterRepository.findOne({
-      where: { itemCode: updated.itemCode, ...(company && { company }), ...(plant && { plant }) },
+      where: { itemCode: updated.itemCode, ...(organizationId != null ? { organizationId } : {}) },
     });
 
     return {
@@ -110,13 +108,12 @@ export class ProductHoldService {
     };
   }
 
-  async release(dto: ProductReleaseHoldDto, company?: string, plant?: string, userId?: string) {
+  async release(dto: ProductReleaseHoldDto, organizationId?: number, userId?: string) {
     const { stockId, reason } = dto;
     const compositeKey = this.parseStockId(stockId);
     const scopedKey = {
       ...compositeKey,
-      ...(company && { company }),
-      ...(plant && { plant }),
+      ...(organizationId != null ? { organizationId } : {}),
     };
 
     await this.tx.run(async (queryRunner) => {
@@ -138,7 +135,7 @@ export class ProductHoldService {
     const updated = await this.productStockRepository.findOne({ where: scopedKey });
     if (!updated) throw new NotFoundException(`��ǰ ���� ã�� �� �����ϴ�: ${stockId}`);
     const part = await this.itemMasterRepository.findOne({
-      where: { itemCode: updated.itemCode, ...(company && { company }), ...(plant && { plant }) },
+      where: { itemCode: updated.itemCode, ...(organizationId != null ? { organizationId } : {}) },
     });
 
     return {

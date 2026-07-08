@@ -26,7 +26,7 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { Company, Plant } from '../../../common/decorators/tenant.decorator';
+import { OrganizationId } from '../../../common/decorators/tenant.decorator';
 import { ApiTags, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
 import { CustomerOrderService } from '../services/customer-order.service';
 import {
@@ -44,24 +44,24 @@ export class CustomerOrderController {
   @Get()
   @ApiOperation({ summary: '고객발주 목록 조회' })
   @ApiResponse({ status: 200, description: '조회 성공' })
-  async findAll(@Query() query: CustomerOrderQueryDto, @Company() company: string, @Plant() plant: string) {
-    const result = await this.customerOrderService.findAll(query, company, plant);
+  async findAll(@Query() query: CustomerOrderQueryDto, @OrganizationId() organizationId: number) {
+    const result = await this.customerOrderService.findAll(query, organizationId);
     return ResponseUtil.paged(result.data, result.total, result.page, result.limit);
   }
 
   @Get('status')
   @ApiOperation({ summary: '고객발주 출하 진행 현황 조회' })
   @ApiResponse({ status: 200, description: '조회 성공' })
-  async findStatus(@Query() query: CustomerOrderQueryDto, @Company() company: string, @Plant() plant: string) {
-    const result = await this.customerOrderService.findStatus(query, company, plant);
+  async findStatus(@Query() query: CustomerOrderQueryDto, @OrganizationId() organizationId: number) {
+    const result = await this.customerOrderService.findStatus(query, organizationId);
     return ResponseUtil.paged(result.data, result.total, result.page, result.limit);
   }
 
   @Get(':id')
   @ApiOperation({ summary: '고객발주 상세 조회' })
   @ApiParam({ name: 'id', description: '고객발주 ID' })
-  async findById(@Param('id') id: string, @Company() company: string, @Plant() plant: string) {
-    const data = await this.customerOrderService.findById(id, company, plant);
+  async findById(@Param('id') id: string, @OrganizationId() organizationId: number) {
+    const data = await this.customerOrderService.findById(id, organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -69,24 +69,24 @@ export class CustomerOrderController {
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: '고객발주 생성' })
   @ApiResponse({ status: 201, description: '생성 성공' })
-  async create(@Body() dto: CreateCustomerOrderDto, @Company() company: string, @Plant() plant: string) {
-    const data = await this.customerOrderService.create(dto, company, plant);
+  async create(@Body() dto: CreateCustomerOrderDto, @OrganizationId() organizationId: number) {
+    const data = await this.customerOrderService.create(dto, organizationId);
     return ResponseUtil.success(data, '고객발주가 등록되었습니다.');
   }
 
   @Put(':id')
   @ApiOperation({ summary: '고객발주 수정' })
   @ApiParam({ name: 'id', description: '고객발주 ID' })
-  async update(@Param('id') id: string, @Body() dto: UpdateCustomerOrderDto, @Company() company: string, @Plant() plant: string) {
-    const data = await this.customerOrderService.update(id, dto, company, plant);
+  async update(@Param('id') id: string, @Body() dto: UpdateCustomerOrderDto, @OrganizationId() organizationId: number) {
+    const data = await this.customerOrderService.update(id, dto, organizationId);
     return ResponseUtil.success(data, '고객발주가 수정되었습니다.');
   }
 
   @Delete(':id')
   @ApiOperation({ summary: '고객발주 삭제' })
   @ApiParam({ name: 'id', description: '고객발주 ID' })
-  async delete(@Param('id') id: string, @Company() company: string, @Plant() plant: string) {
-    await this.customerOrderService.delete(id, company, plant);
+  async delete(@Param('id') id: string, @OrganizationId() organizationId: number) {
+    await this.customerOrderService.delete(id, organizationId);
     return ResponseUtil.success(null, '고객발주가 삭제되었습니다.');
   }
 }

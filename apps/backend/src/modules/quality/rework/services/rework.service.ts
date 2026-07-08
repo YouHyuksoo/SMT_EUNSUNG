@@ -60,20 +60,19 @@ export class ReworkService {
     private readonly productInventoryService: ProductInventoryService,
   ) {}
 
-  private tenantWhere(company?: string, plant?: string) {
+  private tenantWhere(organizationId?: number) {
     return {
-      ...(company ? { company } : {}),
-      ...(plant ? { plant } : {}),
+      ...(organizationId != null ? { organizationId } : {}),
     };
   }
 
-  private defectLogWhere(defectLogId: string, company?: string, plant?: string) {
+  private defectLogWhere(defectLogId: string, organizationId?: number) {
     const [occurAtStr, seqStr] = defectLogId.split('|');
     if (!occurAtStr || !seqStr) return null;
     return {
       occurAt: new Date(occurAtStr),
       seq: Number(seqStr),
-      ...this.tenantWhere(company, plant),
+      ...this.tenantWhere(organizationId),
     };
   }
 
@@ -84,15 +83,14 @@ export class ReworkService {
   /**
    * 재작업번호 자동채번: RW-YYYYMMDD-NNN
    */
-  private async generateReworkNo(company: string, plant: string): Promise<string> {
+  private async generateReworkNo(organizationId: number): Promise<string> {
     const today = new Date();
     const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '');
     const prefix = `RW-${dateStr}-`;
 
     const last = await this.reworkRepo
       .createQueryBuilder('r')
-      .where('r.company = :company', { company })
-      .andWhere('r.plant = :plant', { plant })
+      .where('r.organizationId = :organizationId', { organizationId })
       .andWhere('r.reworkNo LIKE :prefix', { prefix: `${prefix}%` })
       .orderBy('r.reworkNo', 'DESC')
       .getOne();

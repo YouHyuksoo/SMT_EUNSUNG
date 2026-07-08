@@ -60,11 +60,10 @@ export class SchedulerLogService {
 
   /**
    * LOG_ID 채번: Oracle sequence
-   * @param company 회사코드
-   * @param plant 사업장코드
+   * @param organizationId 조직 ID
    * @returns 다음 LOG_ID
    */
-  async generateLogId(company: string, plant: string): Promise<number> {
+  async generateLogId(organizationId: number): Promise<number> {
     const result = await this.dataSource.query(
       `SELECT SEQ_SCHEDULER_LOGS.NEXTVAL AS "nextId" FROM DUAL`,
     );
@@ -81,9 +80,8 @@ export class SchedulerLogService {
    * @returns 생성된 로그
    */
   async createLog(data: Partial<SchedulerLog>): Promise<SchedulerLog> {
-    const company = data.company!;
-    const plant = data.plantCd!;
-    const logId = await this.generateLogId(company, plant);
+    const organizationId = data.organizationId!;
+    const logId = await this.generateLogId(organizationId);
 
     const log = this.logRepo.create({
       ...data,
@@ -94,25 +92,23 @@ export class SchedulerLogService {
     });
 
     const saved = await this.logRepo.save(log);
-    this.logger.log(`실행 로그 생성: company=${company}, logId=${logId}, jobCode=${data.jobCode}`);
+    this.logger.log(`실행 로그 생성: organizationId=${organizationId}, logId=${logId}, jobCode=${data.jobCode}`);
     return saved;
   }
 
   /**
    * 실행 로그 갱신 (상태, 종료시각, 소요시간 등)
-   * @param company 회사코드
-   * @param plant 사업장코드
+   * @param organizationId 조직 ID
    * @param logId 로그ID
    * @param updates 갱신 데이터
    */
   async updateLog(
-    company: string,
-    plant: string,
+    organizationId: number,
     logId: number,
     updates: Partial<SchedulerLog>,
   ): Promise<void> {
     await this.logRepo.update(
-      { company, plantCd: plant, logId },
+      { organizationId, logId },
       updates,
     );
   }
@@ -120,19 +116,16 @@ export class SchedulerLogService {
   /**
    * 실행 로그 목록 조회 (페이지네이션 + 필터)
    * @param filter 필터 조건
-   * @param company 회사코드
-   * @param plant 사업장코드
+   * @param organizationId 조직 ID
    */
   async findAll(
     filter: SchedulerLogFilterDto,
-    company: string,
-    plant: string,
+    organizationId: number,
   ) {
     const { page = 1, limit = 50, jobCode, status, fromDate, toDate } = filter;
 
     const qb = this.logRepo.createQueryBuilder('l');
-    qb.where('l.company = :company', { company });
-    qb.andWhere('l.plantCd = :plant', { plant });
+    qb.where('l.organizationId = :organizationId', { organizationId });
 
     if (jobCode) qb.andWhere('l.jobCode = :jobCode', { jobCode });
     if (status) qb.andWhere('l.status = :status', { status });
@@ -160,18 +153,17 @@ export class SchedulerLogService {
 
   /**
    * 대시보드 요약 통계
-   * @param company 회사코드
-   * @param plant 사업장코드
+   * @param organizationId 조직 ID
    */
-  async getSummary(company: string, plant: string): Promise<LogSummary> {
+  async getSummary(organizationId: number): Promise<LogSummary> {
     // 오늘 실행 건수 (SUCCESS / FAIL / 전체)
     const todayRows: { status: string; cnt: string }[] = await this.dataSource.query(
       `SELECT "STATUS" AS "status", COUNT(*) AS "cnt"
          FROM "SCHEDULER_LOGS"
-        WHERE "COMPANY" = :1 AND "PLANT_CD" = :2
+        WHERE "ORGANIZATION_ID" = :1
           AND "START_TIME" >= TRUNC(SYSDATE)
         GROUP BY "STATUS"`,
-      [company, plant],
+      [organizationId],
     );
 
     let todayTotal = 0;
@@ -193,11 +185,11 @@ export class SchedulerLogService {
               "STATUS" AS "status",
               COUNT(*) AS "cnt"
          FROM "SCHEDULER_LOGS"
-        WHERE "COMPANY" = :1 AND "PLANT_CD" = :2
+        WHERE "ORGANIZATION_ID" = :1
           AND "START_TIME" >= TRUNC(SYSDATE) - 7
         GROUP BY TRUNC("START_TIME"), "STATUS"
         ORDER BY TRUNC("START_TIME")`,
-      [company, plant],
+      [organizationId],
     );
 
     const trendMap = new Map<string, DailyTrendItem>();
@@ -217,10 +209,10 @@ export class SchedulerLogService {
               "STATUS" AS "status",
               COUNT(*) AS "cnt"
          FROM "SCHEDULER_LOGS"
-        WHERE "COMPANY" = :1 AND "PLANT_CD" = :2
+        WHERE "ORGANIZATION_ID" = :1
           AND "START_TIME" >= TRUNC(SYSDATE) - 30
         GROUP BY "JOB_CODE", "STATUS"`,
-      [company, plant],
+      [organizationId],
     );
 
     const ratioMap = new Map<string, JobRatioItem>();
@@ -236,15 +228,14 @@ export class SchedulerLogService {
 
     // 최근 실패 5건
     const recentFails = await this.logRepo.find({
-      where: { company, plantCd: plant },
+      where: { organizationId },
       order: { startTime: 'DESC' },
       take: 5,
     });
     // TypeORM의 find에서 status IN 조건을 위해 queryBuilder 사용
     const recentFailsFiltered = await this.logRepo
       .createQueryBuilder('l')
-      .where('l.company = :company', { company })
-      .andWhere('l.plantCd = :plant', { plant })
+      .where('l.organizationId = :organizationId', { organizationId })
       .andWhere('l.status IN (:...statuses)', { statuses: ['FAIL', 'TIMEOUT'] })
       .orderBy('l.startTime', 'DESC')
       .take(5)
@@ -267,23 +258,22 @@ export class SchedulerLogService {
 
   /**
    * 서버 재시작 시 RUNNING/RETRYING 상태 로그를 FAIL로 복구
-   * @param company 회사코드
-   * @param plant 사업장코드
+   * @param organizationId 조직 ID
    * @returns 복구된 건수
    */
-  async recoverStaleRunning(company: string, plant: string): Promise<number> {
+  async recoverStaleRunning(organizationId: number): Promise<number> {
     const result = await this.dataSource.query(
       `UPDATE "SCHEDULER_LOGS"
           SET "STATUS" = 'FAIL',
               "ERROR_MSG" = '서버 재시작으로 인한 자동 FAIL 처리',
               "END_TIME" = SYSTIMESTAMP
-        WHERE "COMPANY" = :1 AND "PLANT_CD" = :2
+        WHERE "ORGANIZATION_ID" = :1
           AND "STATUS" IN ('RUNNING', 'RETRYING')`,
-      [company, plant],
+      [organizationId],
     );
     const affected = result?.rowsAffected ?? 0;
     if (affected > 0) {
-      this.logger.warn(`Stale 로그 ${affected}건 FAIL 처리 완료 (company=${company}, plant=${plant})`);
+      this.logger.warn(`Stale 로그 ${affected}건 FAIL 처리 완료 (organizationId=${organizationId})`);
     }
     return affected;
   }

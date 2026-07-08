@@ -43,7 +43,7 @@ import {
   PmWorkOrderQueryDto,
 } from '../dto/pm-plan.dto';
 import { ResponseUtil } from '../../../common/dto/response.dto';
-import { Company, Plant } from '../../../common/decorators/tenant.decorator';
+import { OrganizationId } from '../../../common/decorators/tenant.decorator';
 
 @ApiTags('설비관리 - PM 계획')
 @Controller('equipment/pm-plans')
@@ -55,10 +55,9 @@ export class PmPlanController {
   @ApiResponse({ status: 200, description: '조회 성공' })
   async findAll(
     @Query() query: PmPlanQueryDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const result = await this.pmPlanService.findAllPlans(query, company, plant);
+    const result = await this.pmPlanService.findAllPlans(query, organizationId);
     return ResponseUtil.paged(result.data, result.total, result.page, result.limit);
   }
 
@@ -67,10 +66,9 @@ export class PmPlanController {
   @ApiParam({ name: 'id', description: 'PM 계획 ID' })
   async findById(
     @Param('id') id: string,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.pmPlanService.findPlanById(id, company, plant);
+    const data = await this.pmPlanService.findPlanById(id, organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -80,10 +78,9 @@ export class PmPlanController {
   @ApiResponse({ status: 201, description: '생성 성공' })
   async create(
     @Body() dto: CreatePmPlanDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.pmPlanService.createPlan(dto, company, plant);
+    const data = await this.pmPlanService.createPlan(dto, organizationId);
     return ResponseUtil.success(data, 'PM 계획이 등록되었습니다.');
   }
 
@@ -93,10 +90,9 @@ export class PmPlanController {
   async update(
     @Param('id') id: string,
     @Body() dto: UpdatePmPlanDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.pmPlanService.updatePlan(id, dto, company, plant);
+    const data = await this.pmPlanService.updatePlan(id, dto, organizationId);
     return ResponseUtil.success(data, 'PM 계획이 수정되었습니다.');
   }
 
@@ -105,10 +101,9 @@ export class PmPlanController {
   @ApiParam({ name: 'id', description: 'PM 계획 ID' })
   async delete(
     @Param('id') id: string,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    await this.pmPlanService.deletePlan(id, company, plant);
+    await this.pmPlanService.deletePlan(id, organizationId);
     return ResponseUtil.success(null, 'PM 계획이 삭제되었습니다.');
   }
 }
@@ -123,11 +118,10 @@ export class PmWorkOrderController {
   @ApiResponse({ status: 200, description: '조회 성공' })
   async getCalendarSummary(
     @Query() query: PmCalendarQueryDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
     const data = await this.pmPlanService.getCalendarSummary(
-      query.year, query.month, query.lineCode, query.equipType, company, plant,
+      query.year, query.month, query.lineCode, query.equipType, organizationId,
     );
     return ResponseUtil.success(data);
   }
@@ -137,11 +131,10 @@ export class PmWorkOrderController {
   @ApiResponse({ status: 200, description: '조회 성공' })
   async getDaySchedule(
     @Query() query: PmDayScheduleQueryDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
     const data = await this.pmPlanService.getDaySchedule(
-      query.date, query.lineCode, query.equipType, company, plant,
+      query.date, query.lineCode, query.equipType, organizationId,
     );
     return ResponseUtil.success(data);
   }
@@ -159,10 +152,9 @@ export class PmWorkOrderController {
   @ApiResponse({ status: 200, description: '조회 성공' })
   async findAll(
     @Query() query: PmWorkOrderQueryDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const result = await this.pmPlanService.findAllWorkOrders(query, company, plant);
+    const result = await this.pmPlanService.findAllWorkOrders(query, organizationId);
     return ResponseUtil.paged(result.data, result.total, result.page, result.limit);
   }
 
@@ -172,10 +164,9 @@ export class PmWorkOrderController {
   @ApiResponse({ status: 201, description: '생성 성공' })
   async create(
     @Body() dto: CreatePmWorkOrderDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.pmPlanService.createWorkOrder(dto, company, plant);
+    const data = await this.pmPlanService.createWorkOrder(dto, organizationId);
     return ResponseUtil.success(data, 'Work Order가 생성되었습니다.');
   }
 
@@ -186,10 +177,9 @@ export class PmWorkOrderController {
   async execute(
     @Param('id') id: string,
     @Body() dto: ExecutePmWorkOrderDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.pmPlanService.executeWorkOrder(id, dto, company, plant);
+    const data = await this.pmPlanService.executeWorkOrder(id, dto, organizationId);
     return ResponseUtil.success(data, 'Work Order가 완료되었습니다.');
   }
 
@@ -198,10 +188,9 @@ export class PmWorkOrderController {
   @ApiParam({ name: 'id', description: 'WO 번호 (workOrderNo)' })
   async cancel(
     @Param('id') id: string,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.pmPlanService.cancelWorkOrder(id, company, plant);
+    const data = await this.pmPlanService.cancelWorkOrder(id, organizationId);
     return ResponseUtil.success(data, 'Work Order가 취소되었습니다.');
   }
 }

@@ -18,7 +18,7 @@ import {
 
 @Entity({ name: 'IMPR_REQUESTS' })
 @Index(['status'])
-@Index(['company', 'plantCd'])
+@Index(['organizationId'])
 export class ImprRequest {
   @PrimaryColumn({ name: 'IMPR_ID', type: 'varchar2', length: 36 })
   imprId: string;
@@ -48,11 +48,8 @@ export class ImprRequest {
   @Column({ type: 'varchar2', name: 'REQUESTER_NM', length: 200, nullable: true })
   requesterNm: string | null;
 
-  @Column({ name: 'COMPANY', type: 'varchar2', length: 10 })
-  company: string;
-
-  @Column({ name: 'PLANT_CD', type: 'varchar2', length: 10 })
-  plantCd: string;
+  @Column({ name: 'ORGANIZATION_ID', type: 'number' })
+  organizationId!: number;
 
   @CreateDateColumn({ name: 'CREATED_AT', type: 'timestamp' })
   createdAt: Date;

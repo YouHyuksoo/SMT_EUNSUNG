@@ -47,7 +47,7 @@ describe('SchedulerLogService', () => {
       mockDataSource.query.mockResolvedValue([{ nextId: 5 }]);
 
       // Act
-      const result = await target.generateLogId('COMP', 'PLANT');
+      const result = await target.generateLogId(1);
 
       // Assert
       expect(result).toBe(5);
@@ -65,8 +65,7 @@ describe('SchedulerLogService', () => {
 
       // Act
       const result = await target.createLog({
-        company: 'COMP',
-        plantCd: 'PLANT',
+        organizationId: 1,
         jobCode: 'JOB1',
       });
 
@@ -83,7 +82,7 @@ describe('SchedulerLogService', () => {
       mockLogRepo.update.mockResolvedValue({ affected: 1 } as any);
 
       // Act
-      await target.updateLog('COMP', 'PLANT', 1, {
+      await target.updateLog(1, 1, {
         status: 'SUCCESS',
         endTime: new Date(),
         durationMs: 1000,
@@ -91,7 +90,7 @@ describe('SchedulerLogService', () => {
 
       // Assert
       expect(mockLogRepo.update).toHaveBeenCalledWith(
-        { company: 'COMP', plantCd: 'PLANT', logId: 1 },
+        { organizationId: 1, logId: 1 },
         expect.objectContaining({ status: 'SUCCESS' }),
       );
     });
@@ -112,7 +111,7 @@ describe('SchedulerLogService', () => {
       mockLogRepo.createQueryBuilder.mockReturnValue(qb);
 
       // Act
-      const result = await target.findAll({ page: 1, limit: 50 } as any, 'COMP', 'PLANT');
+      const result = await target.findAll({ page: 1, limit: 50 } as any, 1);
 
       // Assert
       expect(result.total).toBe(1);
@@ -138,7 +137,7 @@ describe('SchedulerLogService', () => {
       mockLogRepo.find.mockResolvedValue([]);
 
       // Act
-      const result = await target.getSummary('COMP', 'PLANT');
+      const result = await target.getSummary(1);
 
       // Assert
       expect(result.todayTotal).toBe(6);
@@ -155,7 +154,7 @@ describe('SchedulerLogService', () => {
       mockDataSource.query.mockResolvedValue({ rowsAffected: 3 });
 
       // Act
-      const result = await target.recoverStaleRunning('COMP', 'PLANT');
+      const result = await target.recoverStaleRunning(1);
 
       // Assert
       expect(result).toBe(3);
@@ -166,7 +165,7 @@ describe('SchedulerLogService', () => {
       mockDataSource.query.mockResolvedValue({ rowsAffected: 0 });
 
       // Act
-      const result = await target.recoverStaleRunning('COMP', 'PLANT');
+      const result = await target.recoverStaleRunning(1);
 
       // Assert
       expect(result).toBe(0);

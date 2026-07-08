@@ -8,8 +8,8 @@ import {
 } from 'typeorm';
 
 @Entity({ name: 'HARNESS_DRAWING_MASTERS' })
-@Index(['company', 'plant', 'drawingNo'], { unique: true })
-@Index(['company', 'plant', 'itemCode'])
+@Index(['organizationId', 'drawingNo'], { unique: true })
+@Index(['organizationId', 'itemCode'])
 export class HarnessDrawingMaster {
   @PrimaryColumn({ name: 'DRAWING_ID', type: 'number' })
   drawingId: number;
@@ -35,11 +35,8 @@ export class HarnessDrawingMaster {
   @Column({ name: 'USE_YN', length: 1, default: 'Y' })
   useYn: string;
 
-  @PrimaryColumn({ type: 'varchar2', name: 'COMPANY', length: 50 })
-  company: string;
-
-  @PrimaryColumn({ type: 'varchar2', name: 'PLANT_CD', length: 50 })
-  plant: string;
+  @PrimaryColumn({ name: 'ORGANIZATION_ID', type: 'number' })
+  organizationId!: number;
 
   @Column({ type: 'varchar2', name: 'CREATED_BY', length: 50, nullable: true })
   createdBy: string | null;

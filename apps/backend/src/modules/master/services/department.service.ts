@@ -16,24 +16,20 @@ export class DepartmentService {
     private readonly departmentRepository: Repository<DepartmentMaster>,
   ) {}
 
-  private tenantWhere(company?: string, plant?: string) {
+  private tenantWhere(organizationId?: number) {
     return {
-      ...(company ? { company } : {}),
-      ...(plant ? { plant } : {}),
+      ...(organizationId != null ? { organizationId } : {}),
     };
   }
 
-  async findAll(query: DepartmentQueryDto, company?: string, plant?: string) {
+  async findAll(query: DepartmentQueryDto, organizationId?: number) {
     const { page = 1, limit = 50, search, useYn } = query;
     const skip = (page - 1) * limit;
 
     const queryBuilder = this.departmentRepository.createQueryBuilder('dept')
 
-    if (company) {
-      queryBuilder.andWhere('dept.company = :company', { company });
-    }
-    if (plant) {
-      queryBuilder.andWhere('dept.plant = :plant', { plant });
+    if (organizationId != null) {
+      queryBuilder.andWhere('dept.organizationId = :organizationId', { organizationId });
     }
 
     if (useYn) {
@@ -61,17 +57,17 @@ export class DepartmentService {
     return { data, total, page, limit };
   }
 
-  async findById(deptCode: string, company?: string, plant?: string) {
+  async findById(deptCode: string, organizationId?: number) {
     const dept = await this.departmentRepository.findOne({
-      where: { deptCode, ...this.tenantWhere(company, plant) },
+      where: { deptCode, ...this.tenantWhere(organizationId) },
     });
     if (!dept) throw new NotFoundException(`부서를 찾을 수 없습니다: ${deptCode}`);
     return dept;
   }
 
-  async create(dto: CreateDepartmentDto, company?: string, plant?: string) {
+  async create(dto: CreateDepartmentDto, organizationId?: number) {
     const existing = await this.departmentRepository.findOne({
-      where: { deptCode: dto.deptCode, ...this.tenantWhere(company, plant) },
+      where: { deptCode: dto.deptCode, ...this.tenantWhere(organizationId) },
     });
     if (existing) throw new ConflictException(`이미 존재하는 부서코드입니다: ${dto.deptCode}`);
 
@@ -83,15 +79,14 @@ export class DepartmentService {
       managerName: dto.managerName,
       remark: dto.remark,
       useYn: dto.useYn ?? 'Y',
-      company: company || null,
-      plant: plant || null,
+      organizationId,
     });
 
     return this.departmentRepository.save(dept);
   }
 
-  async update(id: string, dto: UpdateDepartmentDto, company?: string, plant?: string) {
-    await this.findById(id, company, plant);
+  async update(id: string, dto: UpdateDepartmentDto, organizationId?: number) {
+    await this.findById(id, organizationId);
     const updateData: Partial<DepartmentMaster> = {
       ...(dto.deptName !== undefined ? { deptName: dto.deptName } : {}),
       ...(dto.parentDeptCode !== undefined ? { parentDeptCode: dto.parentDeptCode } : {}),
@@ -100,13 +95,13 @@ export class DepartmentService {
       ...(dto.remark !== undefined ? { remark: dto.remark } : {}),
       ...(dto.useYn !== undefined ? { useYn: dto.useYn } : {}),
     };
-    await this.departmentRepository.update({ deptCode: id, ...this.tenantWhere(company, plant) }, updateData);
-    return this.findById(id, company, plant);
+    await this.departmentRepository.update({ deptCode: id, ...this.tenantWhere(organizationId) }, updateData);
+    return this.findById(id, organizationId);
   }
 
-  async delete(id: string, company?: string, plant?: string) {
-    await this.findById(id, company, plant);
-    await this.departmentRepository.delete({ deptCode: id, ...this.tenantWhere(company, plant) });
+  async delete(id: string, organizationId?: number) {
+    await this.findById(id, organizationId);
+    await this.departmentRepository.delete({ deptCode: id, ...this.tenantWhere(organizationId) });
     return { id };
   }
 }

@@ -45,33 +45,32 @@ export class PdaRoleService {
     private readonly tx: TransactionService,
   ) {}
 
-  private tenantWhere(company?: string, plant?: string) {
+  private tenantWhere(organizationId?: number) {
     return {
-      ...(company ? { company } : {}),
-      ...(plant ? { plant } : {}),
+      ...(organizationId != null ? { organizationId } : {}),
     };
   }
 
-  private requireTenant(company?: string | null, plant?: string | null) {
-    if (!company || !plant) {
-      throw new BadRequestException('회사/사업장 정보가 없습니다.');
+  private requireTenant(organizationId?: number | null) {
+    if (organizationId == null) {
+      throw new BadRequestException('조직 정보가 없습니다.');
     }
-    return { company, plant };
+    return { organizationId };
   }
 
   /** 전체 역할 목록 (메뉴 매핑 포함) */
-  async findAll(company?: string, plant?: string) {
+  async findAll(organizationId?: number) {
     return this.roleRepo.find({
-      where: this.tenantWhere(company, plant),
+      where: this.tenantWhere(organizationId),
       relations: ['menus'],
       order: { createdAt: 'ASC' },
     });
   }
 
   /** 활성 역할 목록 (Select 옵션용 — code, name만) */
-  async findAllActive(company?: string, plant?: string) {
+  async findAllActive(organizationId?: number) {
     return this.roleRepo.find({
-      where: { isActive: true, ...this.tenantWhere(company, plant) },
+      where: { isActive: true, ...this.tenantWhere(organizationId) },
       select: ['code', 'name'],
       order: { name: 'ASC' },
     });
@@ -83,8 +82,8 @@ export class PdaRoleService {
   }
 
   /** 역할 생성 + 메뉴 매핑 */
-  async create(dto: CreatePdaRoleDto, company?: string, plant?: string) {
-    const tenant = this.requireTenant(company, plant);
+  async create(dto: CreatePdaRoleDto, organizationId?: number) {
+    const tenant = this.requireTenant(organizationId);
     const existing = await this.roleRepo.findOne({ where: { code: dto.code, ...tenant } });
     if (existing) {
       throw new ConflictException(`이미 존재하는 역할 코드입니다: ${dto.code}`);
@@ -96,8 +95,7 @@ export class PdaRoleService {
         name: dto.name,
         description: dto.description ?? null,
         isActive: true,
-        company: tenant.company,
-        plant: tenant.plant,
+        organizationId: tenant.organizationId,
       });
       await queryRunner.manager.save(role);
 
@@ -107,8 +105,7 @@ export class PdaRoleService {
             pdaRoleCode: dto.code,
             menuCode,
             isActive: true,
-            company: tenant.company,
-            plant: tenant.plant,
+            organizationId: tenant.organizationId,
           }),
         );
         await queryRunner.manager.save(menus);
@@ -122,8 +119,8 @@ export class PdaRoleService {
   }
 
   /** 역할 수정 + 메뉴 매핑 전체 교체 */
-  async update(code: string, dto: UpdatePdaRoleDto, company?: string, plant?: string) {
-    const tenant = this.requireTenant(company, plant);
+  async update(code: string, dto: UpdatePdaRoleDto, organizationId?: number) {
+    const tenant = this.requireTenant(organizationId);
     const role = await this.roleRepo.findOne({ where: { code, ...tenant } });
     if (!role) throw new NotFoundException(`역할을 찾을 수 없습니다: ${code}`);
 
@@ -146,8 +143,7 @@ export class PdaRoleService {
               pdaRoleCode: code,
               menuCode,
               isActive: true,
-              company: tenant.company,
-              plant: tenant.plant,
+              organizationId: tenant.organizationId,
             }),
           );
           await queryRunner.manager.save(menus);
@@ -162,11 +158,11 @@ export class PdaRoleService {
   }
 
   /** 역할 삭제 (CASCADE로 메뉴 매핑도 삭제) */
-  async remove(code: string, company?: string, plant?: string) {
-    const role = await this.roleRepo.findOne({ where: { code, ...this.tenantWhere(company, plant) } });
+  async remove(code: string, organizationId?: number) {
+    const role = await this.roleRepo.findOne({ where: { code, ...this.tenantWhere(organizationId) } });
     if (!role) throw new NotFoundException(`역할을 찾을 수 없습니다: ${code}`);
 
-    await this.roleRepo.delete({ code, ...this.tenantWhere(company, plant) });
+    await this.roleRepo.delete({ code, ...this.tenantWhere(organizationId) });
     return { code, deleted: true };
   }
 }

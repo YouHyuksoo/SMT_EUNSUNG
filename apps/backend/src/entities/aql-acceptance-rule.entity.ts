@@ -8,11 +8,8 @@ import {
 
 @Entity({ name: 'AQL_ACCEPTANCE_RULES' })
 export class AqlAcceptanceRule {
-  @PrimaryColumn({ type: 'varchar2', name: 'COMPANY', length: 50 })
-  company: string;
-
-  @PrimaryColumn({ type: 'varchar2', name: 'PLANT_CD', length: 50 })
-  plant: string;
+  @PrimaryColumn({ name: 'ORGANIZATION_ID', type: 'number' })
+  organizationId!: number;
 
   @PrimaryColumn({ type: 'varchar2', name: 'INSPECTION_MODE', length: 20 })
   inspectionMode: string;

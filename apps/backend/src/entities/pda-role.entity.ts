@@ -21,13 +21,9 @@ import { PdaRoleMenu } from './pda-role-menu.entity';
 
 @Entity({ name: 'PDA_ROLE' })
 export class PdaRole {
-  /** 회사 코드 (다중 사업장 지원) */
-  @PrimaryColumn({ type: 'varchar2', name: 'COMPANY', length: 50 })
-  company: string;
-
-  /** 공장 코드 (다중 사업장 지원) */
-  @PrimaryColumn({ type: 'varchar2', name: 'PLANT_CD', length: 50 })
-  plant: string;
+  /** 조직 ID (단일 테넌트 키) */
+  @PrimaryColumn({ name: 'ORGANIZATION_ID', type: 'number' })
+  organizationId!: number;
 
   /** 역할 코드 — 자연키 PK (예: PDA_ADMIN) */
   @PrimaryColumn({ name: 'CODE', length: 50 })

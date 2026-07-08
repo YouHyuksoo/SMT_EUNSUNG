@@ -18,7 +18,7 @@ import {
 } from 'typeorm';
 
 @Entity({ name: 'CHANGE_ORDERS' })
-@Index(['company', 'plant', 'status'])
+@Index(['organizationId', 'status'])
 export class ChangeOrder {
   @PrimaryColumn({ name: 'CHANGE_NO', length: 50 })
   changeNo: string;
@@ -80,11 +80,8 @@ export class ChangeOrder {
   @Column({ name: 'COMPLETION_DATE', type: 'date', nullable: true })
   completionDate: Date;
 
-  @Column({ name: 'COMPANY', length: 50 })
-  company: string;
-
-  @Column({ name: 'PLANT_CD', length: 20 })
-  plant: string;
+  @Column({ name: 'ORGANIZATION_ID', type: 'number' })
+  organizationId!: number;
 
   @Column({ type: 'varchar2', name: 'CREATED_BY', length: 50, nullable: true })
   createdBy: string;

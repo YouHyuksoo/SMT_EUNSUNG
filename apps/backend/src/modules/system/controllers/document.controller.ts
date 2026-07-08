@@ -13,7 +13,7 @@
  *    - PATCH  /documents/:id/approve : 승인
  *    - PATCH  /documents/:id/revise  : 개정 (새 DRAFT 생성)
  *
- * 2. **인증**: @Company(), @Plant() 데코레이터로 테넌시 정보
+ * 2. **인증**: @OrganizationId() 데코레이터로 테넌시 정보
  */
 
 import {
@@ -31,7 +31,7 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
-import { Company, Plant } from '../../../common/decorators/tenant.decorator';
+import { OrganizationId } from '../../../common/decorators/tenant.decorator';
 import { AuthenticatedRequest } from '../../../common/guards/jwt-auth.guard';
 import { ResponseUtil } from '../../../common/dto/response.dto';
 import { DocumentService } from '../services/document.service';
@@ -54,13 +54,11 @@ export class DocumentController {
   @ApiResponse({ status: 200, description: '조회 성공' })
   async getExpiring(
     @Query('days') days: number = 30,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
     const data = await this.documentService.getExpiring(
       Number(days) || 30,
-      company,
-      plant,
+      organizationId,
     );
     return ResponseUtil.success(data);
   }
@@ -72,10 +70,9 @@ export class DocumentController {
   @ApiResponse({ status: 200, description: '조회 성공' })
   async findAll(
     @Query() query: DocumentQueryDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const result = await this.documentService.findAll(query, company, plant);
+    const result = await this.documentService.findAll(query, organizationId);
     return ResponseUtil.paged(result.data, result.total, result.page, result.limit);
   }
 
@@ -86,10 +83,9 @@ export class DocumentController {
   @ApiResponse({ status: 404, description: '문서 없음' })
   async findById(
     @Param('id') id: string,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.documentService.findById(id, company, plant);
+    const data = await this.documentService.findById(id, organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -99,14 +95,12 @@ export class DocumentController {
   @ApiResponse({ status: 201, description: '생성 성공' })
   async create(
     @Body() dto: CreateDocumentDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
     @Req() req: AuthenticatedRequest,
   ) {
     const data = await this.documentService.create(
       dto,
-      company,
-      plant,
+      organizationId,
       req.user?.id ?? 'system',
     );
     return ResponseUtil.success(data, '문서가 등록되었습니다.');
@@ -120,15 +114,13 @@ export class DocumentController {
     @Param('id') id: string,
     @Body() dto: UpdateDocumentDto,
     @Req() req: AuthenticatedRequest,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
     const data = await this.documentService.update(
       id,
       dto,
       req.user?.id ?? 'system',
-      company,
-      plant,
+      organizationId,
     );
     return ResponseUtil.success(data, '문서가 수정되었습니다.');
   }
@@ -140,10 +132,9 @@ export class DocumentController {
   @ApiResponse({ status: 200, description: '삭제 성공' })
   async delete(
     @Param('id') id: string,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    await this.documentService.delete(id, company, plant);
+    await this.documentService.delete(id, organizationId);
     return ResponseUtil.success(null, '문서가 삭제되었습니다.');
   }
 
@@ -156,14 +147,12 @@ export class DocumentController {
   async approve(
     @Param('id') id: string,
     @Req() req: AuthenticatedRequest,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
     const data = await this.documentService.approve(
       id,
       req.user?.id ?? 'system',
-      company,
-      plant,
+      organizationId,
     );
     return ResponseUtil.success(data, '문서가 승인되었습니다.');
   }
@@ -175,14 +164,12 @@ export class DocumentController {
   async revise(
     @Param('id') id: string,
     @Req() req: AuthenticatedRequest,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
     const data = await this.documentService.revise(
       id,
       req.user?.id ?? 'system',
-      company,
-      plant,
+      organizationId,
     );
     return ResponseUtil.success(data, '문서가 개정되었습니다.');
   }

@@ -8,7 +8,7 @@
   UseGuards,
 } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { Company, Plant } from '../../../common/decorators/tenant.decorator';
+import { OrganizationId } from '../../../common/decorators/tenant.decorator';
 import { ResponseUtil } from '../../../common/dto/response.dto';
 import {
   AuthenticatedRequest,
@@ -26,10 +26,9 @@ export class SchedulerNotiController {
   @ApiResponse({ status: 200, description: 'OK' })
   async findByUser(
     @Req() req: AuthenticatedRequest,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.notiService.findByUser(req.user.id, company, plant);
+    const data = await this.notiService.findByUser(req.user.id, organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -38,10 +37,9 @@ export class SchedulerNotiController {
   @ApiResponse({ status: 200, description: 'OK' })
   async getUnreadCount(
     @Req() req: AuthenticatedRequest,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const count = await this.notiService.getUnreadCount(req.user.id, company, plant);
+    const count = await this.notiService.getUnreadCount(req.user.id, organizationId);
     return ResponseUtil.success({ count });
   }
 
@@ -50,10 +48,9 @@ export class SchedulerNotiController {
   @ApiResponse({ status: 200, description: 'OK' })
   async markAllAsRead(
     @Req() req: AuthenticatedRequest,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    await this.notiService.markAllAsRead(req.user.id, company, plant);
+    await this.notiService.markAllAsRead(req.user.id, organizationId);
     return ResponseUtil.success(null, 'All notifications marked as read');
   }
 
@@ -63,10 +60,9 @@ export class SchedulerNotiController {
   @ApiResponse({ status: 200, description: 'OK' })
   async markAsRead(
     @Param('notiId', ParseIntPipe) notiId: number,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    await this.notiService.markAsRead(company, plant, notiId);
+    await this.notiService.markAsRead(organizationId, notiId);
     return ResponseUtil.success(null, 'Notification marked as read');
   }
 }

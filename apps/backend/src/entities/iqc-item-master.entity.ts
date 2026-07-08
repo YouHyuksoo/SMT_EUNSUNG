@@ -18,11 +18,8 @@ import {
 
 @Entity({ name: 'IQC_ITEM_MASTERS' })
 export class IqcItemMaster {
-  @PrimaryColumn({ type: 'varchar2', name: 'COMPANY', length: 50 })
-  company: string;
-
-  @PrimaryColumn({ type: 'varchar2', name: 'PLANT_CD', length: 50 })
-  plant: string;
+  @PrimaryColumn({ name: 'ORGANIZATION_ID', type: 'number' })
+  organizationId!: number;
 
   @PrimaryColumn({ name: 'ITEM_CODE', length: 50 })
   itemCode: string;

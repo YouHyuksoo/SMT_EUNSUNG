@@ -22,7 +22,7 @@ import {
 import { ItemMaster } from './item-master.entity';
 
 @Entity({ name: 'CONTROL_PLANS' })
-@Index(['company', 'plant', 'itemCode'])
+@Index(['organizationId', 'itemCode'])
 export class ControlPlan {
   @PrimaryColumn({ name: 'PLAN_NO', length: 30 })
   planNo: string;
@@ -32,8 +32,7 @@ export class ControlPlan {
 
   @ManyToOne(() => ItemMaster, { nullable: true })
   @JoinColumn([
-    { name: 'COMPANY', referencedColumnName: 'company' },
-    { name: 'PLANT_CD', referencedColumnName: 'plant' },
+    { name: 'ORGANIZATION_ID', referencedColumnName: 'organizationId' },
     { name: 'ITEM_CODE', referencedColumnName: 'itemCode' },
   ])
   part: ItemMaster | null;
@@ -62,11 +61,8 @@ export class ControlPlan {
   @Column({ type: 'varchar2', name: 'REMARK', length: 500, nullable: true })
   remark: string;
 
-  @Column({ name: 'COMPANY', length: 50 })
-  company: string;
-
-  @Column({ name: 'PLANT_CD', length: 20 })
-  plant: string;
+  @Column({ name: 'ORGANIZATION_ID', type: 'number' })
+  organizationId!: number;
 
   @Column({ type: 'varchar2', name: 'CREATED_BY', length: 50, nullable: true })
   createdBy: string;

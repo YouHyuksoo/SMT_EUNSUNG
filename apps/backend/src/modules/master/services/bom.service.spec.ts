@@ -136,10 +136,10 @@ describe('BomService', () => {
       mockBomRepo.findAndCount.mockResolvedValue([boms, 1]);
       mockPartRepo.find.mockResolvedValue([]);
 
-      await target.findAll({ page: 1, limit: 10 } as any, 'C1', 'P1');
+      await target.findAll({ page: 1, limit: 10 } as any, 1);
 
       expect(mockPartRepo.find).toHaveBeenCalledWith({
-        where: { itemCode: expect.anything(), company: 'C1', plant: 'P1' },
+        where: { itemCode: expect.anything(), organizationId: 1 },
         select: ['itemCode', 'itemName', 'itemNo', 'itemType', 'productType', 'spec', 'unit'],
       });
     });
@@ -297,7 +297,7 @@ describe('BomService', () => {
         { itemCode: 'P01', bomCount: '1', revisions: 'A', validFrom: new Date('2026-06-01'), validTo: new Date('2099-12-31') },
       ]);
 
-      await target.findParents(undefined, '2026-06-29', '40', '1000');
+      await target.findParents(undefined, '2026-06-29', 1);
 
       const [sql] = mockBomRepo.query.mock.calls[0] as [string, unknown[]];
       expect(sql).toContain('MIN(b.VALID_FROM)');
@@ -323,7 +323,7 @@ describe('BomService', () => {
       XLSX.utils.book_append_sheet(workbook, worksheet, 'BOM');
       const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' }) as Buffer;
 
-      const result = await target.previewUpload(buffer, '40', '1000');
+      const result = await target.previewUpload(buffer, 1);
 
       expect(result.errorCount).toBe(1);
       expect(result.rows[0].status).toBe('error');
@@ -368,10 +368,10 @@ describe('BomService', () => {
       ]);
       mockPartRepo.find.mockResolvedValue([]);
 
-      await target.findByParentId('P01', undefined, 'C1', 'P1');
+      await target.findByParentId('P01', undefined, 1);
 
       expect(mockPartRepo.find).toHaveBeenCalledWith({
-        where: { itemCode: expect.anything(), company: 'C1', plant: 'P1' },
+        where: { itemCode: expect.anything(), organizationId: 1 },
         select: ['itemCode', 'itemName', 'itemNo', 'itemType', 'productType', 'spec', 'unit'],
       });
     });
@@ -384,18 +384,17 @@ describe('BomService', () => {
      * SQL의 절 추가/위치 변경 시 묵시적으로 깨질 수 있으므로 다음을 보장한다:
      *  - params 길이 = SQL에 나타난 unique :N 의 개수
      *  - 각 :N 의 값이 절의 의미와 일치 (예: START WITH 바인드 = parentItemCode)
-     *  - PLANT_CD 컬럼명 (PLANT 아님) 사용
+     *  - ORGANIZATION_ID 컬럼명 사용
      */
-    it('should bind parentItemCode to START WITH and use PLANT_CD column', async () => {
+    it('should bind parentItemCode to START WITH and use ORGANIZATION_ID column', async () => {
       mockBomRepo.query.mockResolvedValue([]);
 
-      await target.findHierarchy('P01', 3, undefined, 'C1', 'PL1');
+      await target.findHierarchy('P01', 3, undefined, 1);
 
-      const [sql, params] = mockBomRepo.query.mock.calls[0] as [string, string[]];
+      const [sql, params] = mockBomRepo.query.mock.calls[0] as [string, (string | number)[]];
 
-      // PLANT_CD가 정확히 사용되어야 한다 (예전 b.PLANT 로 오타냈던 회귀 방지)
-      expect(sql).toContain('b.PLANT_CD');
-      expect(sql).not.toMatch(/b\.PLANT(?!\s*_)/);
+      // ORGANIZATION_ID가 정확히 사용되어야 한다
+      expect(sql).toContain('b.ORGANIZATION_ID');
 
       // SQL에 등장한 모든 :N 의 N이 1..params.length 범위 안이고 빠짐 없어야 한다
       const bindNumbers = new Set<number>();
@@ -414,9 +413,8 @@ describe('BomService', () => {
       const startWithIdx = Number(startWithMatch![1]);
       expect(params[startWithIdx - 1]).toBe('P01');
 
-      // company / plant 값이 params에 포함되어야 한다
-      expect(params).toContain('C1');
-      expect(params).toContain('PL1');
+      // organizationId 값이 params에 포함되어야 한다
+      expect(params).toContain(1);
     });
 
     it('should bind effectiveDate twice in WHERE and twice in CONNECT BY', async () => {
@@ -433,13 +431,13 @@ describe('BomService', () => {
       expect(params.length).toBe(5);
     });
 
-    it('should keep bind positions stable when only plant is provided (no company, no date)', async () => {
+    it('should keep bind positions stable when only organizationId is provided (no date)', async () => {
       // 조건부 절이 모두 빠졌을 때도 :N 번호가 1부터 순차여야 한다 (헬퍼 회귀 방지)
       mockBomRepo.query.mockResolvedValue([]);
 
-      await target.findHierarchy('P01', 3, undefined, undefined, 'PL1');
+      await target.findHierarchy('P01', 3, undefined, 1);
 
-      const [sql, params] = mockBomRepo.query.mock.calls[0] as [string, string[]];
+      const [sql, params] = mockBomRepo.query.mock.calls[0] as [string, (string | number)[]];
 
       const bindNumbers = [...new Set(
         [...sql.matchAll(/:(\d+)/g)].map((m) => Number(m[1])),
@@ -449,8 +447,8 @@ describe('BomService', () => {
       }
       expect(bindNumbers.length).toBe(params.length);
 
-      // WHERE + CONNECT BY 각각의 PLANT_CD 바인드 + parentItemCode = 3
-      expect(params).toEqual(expect.arrayContaining(['PL1', 'P01']));
+      // WHERE + CONNECT BY 각각의 ORGANIZATION_ID 바인드 + parentItemCode = 3
+      expect(params).toEqual(expect.arrayContaining([1, 'P01']));
       expect(params.length).toBe(3);
     });
   });

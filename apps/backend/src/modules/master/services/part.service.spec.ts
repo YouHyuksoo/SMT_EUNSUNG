@@ -56,7 +56,7 @@ describe('PartService', () => {
         iqcYn: 'Y',
         inspectMethod: 'FULL',
         iqcAqlPolicyCode: 'AQLP-II-1.0-2.5',
-      } as any, 'C1', 'P1');
+      } as any, 1);
 
       expect(qb.andWhere).toHaveBeenCalledWith('p.iqcYn = :iqcYn', { iqcYn: 'Y' });
       expect(qb.andWhere).toHaveBeenCalledWith('p.inspectMethod = :inspectMethod', { inspectMethod: 'FULL' });
@@ -74,7 +74,7 @@ describe('PartService', () => {
       };
       mockRepo.createQueryBuilder.mockReturnValue(qb as any);
 
-      await target.findAll({ iqcAqlPolicyCode: '__NONE__' } as any, 'C1', 'P1');
+      await target.findAll({ iqcAqlPolicyCode: '__NONE__' } as any, 1);
 
       expect(qb.andWhere).toHaveBeenCalledWith('p.iqcAqlPolicyCode IS NULL');
     });
@@ -95,13 +95,13 @@ describe('PartService', () => {
     });
 
     it('should find part within tenant only', async () => {
-      const part = { itemCode: 'ITEM01', itemName: 'Part1', company: 'C1', plant: 'P1' } as ItemMaster;
+      const part = { itemCode: 'ITEM01', itemName: 'Part1', organizationId: 1 } as ItemMaster;
       mockRepo.findOne.mockResolvedValue(part);
 
-      await target.findById('ITEM01', 'C1', 'P1');
+      await target.findById('ITEM01', 1);
 
       expect(mockRepo.findOne).toHaveBeenCalledWith({
-        where: { itemCode: 'ITEM01', company: 'C1', plant: 'P1' },
+        where: { itemCode: 'ITEM01', organizationId: 1 },
       });
     });
 
@@ -130,12 +130,12 @@ describe('PartService', () => {
       mockRepo.save.mockResolvedValue(created);
 
       // Act
-      const result = await target.create(dto, 'C1', 'P1');
+      const result = await target.create(dto, 1);
 
       // Assert
       expect(result).toEqual(created);
       expect(mockRepo.findOne).toHaveBeenCalledWith({
-        where: { itemCode: 'ITEM01', company: 'C1', plant: 'P1' },
+        where: { itemCode: 'ITEM01', organizationId: 1 },
       });
     });
 
@@ -159,7 +159,7 @@ describe('PartService', () => {
       } as any;
       mockRepo.findOne.mockResolvedValue(null);
 
-      await expect(target.create(dto, 'C1', 'P1')).rejects.toThrow(BadRequestException);
+      await expect(target.create(dto, 1)).rejects.toThrow(BadRequestException);
       expect(mockRepo.save).not.toHaveBeenCalled();
     });
 
@@ -177,7 +177,7 @@ describe('PartService', () => {
       mockRepo.create.mockReturnValue(created);
       mockRepo.save.mockResolvedValue(created);
 
-      const result = await target.create(dto, 'C1', 'P1');
+      const result = await target.create(dto, 1);
 
       expect(result).toEqual(created);
     });
@@ -198,12 +198,12 @@ describe('PartService', () => {
       mockRepo.update.mockResolvedValue({ affected: 1 } as any);
 
       // Act
-      const result = await target.update('ITEM01', { itemName: 'New' } as any, 'C1', 'P1');
+      const result = await target.update('ITEM01', { itemName: 'New' } as any, 1);
 
       // Assert
       expect(result).toEqual(existing);
       expect(mockRepo.update).toHaveBeenCalledWith(
-        { itemCode: 'ITEM01', company: 'C1', plant: 'P1' },
+        { itemCode: 'ITEM01', organizationId: 1 },
         expect.objectContaining({ itemName: 'New' }),
       );
     });
@@ -212,8 +212,7 @@ describe('PartService', () => {
       const existing = {
         itemCode: 'ITEM01',
         itemName: 'Old',
-        company: 'C1',
-        plant: 'P1',
+        organizationId: 1,
         iqcYn: 'Y',
         inspectMethod: 'FULL',
         iqcAqlPolicyCode: 'AQLP-II-1.0-2.5',
@@ -224,12 +223,11 @@ describe('PartService', () => {
       await target.update('ITEM01', {
         itemCode: 'ITEM99',
         itemName: 'New',
-        company: 'C2',
-        plant: 'P2',
-      } as any, 'C1', 'P1');
+        organizationId: 2,
+      } as any, 1);
 
       expect(mockRepo.update).toHaveBeenCalledWith(
-        { itemCode: 'ITEM01', company: 'C1', plant: 'P1' },
+        { itemCode: 'ITEM01', organizationId: 1 },
         { itemName: 'New' },
       );
     });
@@ -238,8 +236,7 @@ describe('PartService', () => {
       const existing = {
         itemCode: 'ITEM01',
         itemName: 'Old',
-        company: 'C1',
-        plant: 'P1',
+        organizationId: 1,
         iqcYn: 'Y',
         inspectMethod: 'FULL',
         iqcAqlPolicyCode: 'AQLP-II-1.0-2.5',
@@ -250,10 +247,10 @@ describe('PartService', () => {
       await target.update('ITEM01', {
         itemName: 'New',
         externalSource: 'ERP',
-      } as any, 'C1', 'P1');
+      } as any, 1);
 
       expect(mockRepo.update).toHaveBeenCalledWith(
-        { itemCode: 'ITEM01', company: 'C1', plant: 'P1' },
+        { itemCode: 'ITEM01', organizationId: 1 },
         { itemName: 'New' },
       );
     });
@@ -268,7 +265,7 @@ describe('PartService', () => {
       } as ItemMaster;
       mockRepo.findOne.mockResolvedValue(existing);
 
-      await expect(target.update('ITEM01', { iqcAqlPolicyCode: '' } as any, 'C1', 'P1')).rejects.toThrow(BadRequestException);
+      await expect(target.update('ITEM01', { iqcAqlPolicyCode: '' } as any, 1)).rejects.toThrow(BadRequestException);
       expect(mockRepo.update).not.toHaveBeenCalled();
     });
 
@@ -283,10 +280,10 @@ describe('PartService', () => {
       mockRepo.findOne.mockResolvedValue(existing);
       mockRepo.update.mockResolvedValue({ affected: 1 } as any);
 
-      await target.update('ITEM01', { inspectMethod: 'SKIP', iqcAqlPolicyCode: '' } as any, 'C1', 'P1');
+      await target.update('ITEM01', { inspectMethod: 'SKIP', iqcAqlPolicyCode: '' } as any, 1);
 
       expect(mockRepo.update).toHaveBeenCalledWith(
-        { itemCode: 'ITEM01', company: 'C1', plant: 'P1' },
+        { itemCode: 'ITEM01', organizationId: 1 },
         { inspectMethod: 'SKIP', iqcAqlPolicyCode: null },
       );
     });
@@ -301,11 +298,11 @@ describe('PartService', () => {
       mockRepo.delete.mockResolvedValue({ affected: 1 } as any);
 
       // Act
-      const result = await target.delete('ITEM01', 'C1', 'P1');
+      const result = await target.delete('ITEM01', 1);
 
       // Assert
       expect(result).toEqual({ itemCode: 'ITEM01' });
-      expect(mockRepo.delete).toHaveBeenCalledWith({ itemCode: 'ITEM01', company: 'C1', plant: 'P1' });
+      expect(mockRepo.delete).toHaveBeenCalledWith({ itemCode: 'ITEM01', organizationId: 1 });
     });
   });
 
@@ -317,10 +314,10 @@ describe('PartService', () => {
       mockRepo.findOne.mockResolvedValueOnce(existing).mockResolvedValueOnce(updated);
       mockRepo.update.mockResolvedValue({ affected: 1 } as any);
 
-      const result = await target.updateImage('ITEM01', '/uploads/parts/item.png', 'C1', 'P1');
+      const result = await target.updateImage('ITEM01', '/uploads/parts/item.png', 1);
 
       expect(mockRepo.update).toHaveBeenCalledWith(
-        { itemCode: 'ITEM01', company: 'C1', plant: 'P1' },
+        { itemCode: 'ITEM01', organizationId: 1 },
         { imageUrl: '/uploads/parts/item.png' },
       );
       expect(result).toEqual(updated);
@@ -334,12 +331,12 @@ describe('PartService', () => {
       mockRepo.find.mockResolvedValue(parts);
 
       // Act
-      const result = await target.findByType('RM', 'C1', 'P1');
+      const result = await target.findByType('RM', 1);
 
       // Assert
       expect(result).toEqual(parts);
       expect(mockRepo.find).toHaveBeenCalledWith({
-        where: { itemType: 'RM', useYn: 'Y', company: 'C1', plant: 'P1' },
+        where: { itemType: 'RM', useYn: 'Y', organizationId: 1 },
         order: { itemCode: 'asc' },
       });
     });

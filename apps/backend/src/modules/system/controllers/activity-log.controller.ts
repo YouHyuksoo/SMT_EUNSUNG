@@ -44,7 +44,7 @@ export class ActivityLogController {
       getHeaderString(req.headers['x-forwarded-for'])?.split(',')[0]?.trim() ||
       req.ip ||
       null;
-    const { company, plant } = this.tenant(req);
+    const organizationId = this.organizationId(req);
 
     await this.activityLogService.logActivity({
       userId,
@@ -54,8 +54,7 @@ export class ActivityLogController {
       ipAddress,
       userAgent,
       deviceType: dto.deviceType ?? 'PC',
-      company,
-      plant,
+      organizationId,
     });
 
     return ResponseUtil.success(null);
@@ -64,8 +63,7 @@ export class ActivityLogController {
   @Get()
   @ApiOperation({ summary: '활동 로그 조회 (페이지네이션)' })
   async findAll(@Query() query: ActivityLogQueryDto, @Req() req: Request) {
-    const { company, plant } = this.tenant(req);
-    const result = await this.activityLogService.findAll(query, company, plant);
+    const result = await this.activityLogService.findAll(query, this.organizationId(req));
     return ResponseUtil.paged(result.data, result.total, result.page, result.limit);
   }
 
@@ -80,11 +78,12 @@ export class ActivityLogController {
     return type === 'Bearer' && token ? token : null;
   }
 
-  private tenant(req: Request) {
+  private organizationId(req: Request): number | undefined {
     const user = getRequestUser(req) ?? {};
-    return {
-      company: getHeaderString(req.headers['x-company']) || user.company || undefined,
-      plant: getHeaderString(req.headers['x-plant']) || user.plant || undefined,
-    };
+    if (user.organizationId != null) return user.organizationId;
+
+    const plant = getHeaderString(req.headers['x-plant']) || user.plant;
+    const organizationId = plant != null ? Number(plant) : NaN;
+    return Number.isFinite(organizationId) ? organizationId : undefined;
   }
 }

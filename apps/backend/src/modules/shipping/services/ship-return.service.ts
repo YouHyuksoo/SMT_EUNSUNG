@@ -38,10 +38,9 @@ export class ShipReturnService {
     private readonly tx: TransactionService,
   ) {}
 
-  private tenantWhere(company?: string, plant?: string) {
+  private tenantWhere(organizationId?: number) {
     return {
-      ...(company && { company }),
-      ...(plant && { plant }),
+      ...(organizationId != null ? { organizationId } : {}),
     };
   }
 
@@ -59,17 +58,16 @@ export class ShipReturnService {
   /** items 배열의 part를 평면화하는 헬퍼 메서드 */
   private async flattenItems(
     data: ShipmentReturn,
-    company?: string,
-    plant?: string,
+    organizationId?: number,
   ): Promise<ShipmentReturn & { items: Array<ShipmentReturnItem & { itemName?: string }> }> {
     const items = await this.shipReturnItemRepository.find({
-      where: { returnNo: data.returnNo, ...this.tenantWhere(company, plant) },
+      where: { returnNo: data.returnNo, ...this.tenantWhere(organizationId) },
     });
 
     const itemsWithPart = await Promise.all(
       items.map(async (item) => {
         const part = await this.partRepository.findOne({
-          where: { itemCode: item.itemCode, ...this.tenantWhere(company, plant) },
+          where: { itemCode: item.itemCode, ...this.tenantWhere(organizationId) },
           select: ['itemCode', 'itemName'],
         });
         return {
@@ -87,7 +85,7 @@ export class ShipReturnService {
   }
 
   /** 반품 목록 조회 */
-  async findAll(query: ShipReturnQueryDto, company?: string, plant?: string) {
+  async findAll(query: ShipReturnQueryDto, organizationId?: number) {
     const { page = 1, limit = 10, search, status, returnDateFrom, returnDateTo } = query;
     const skip = (page - 1) * limit;
 
@@ -97,8 +95,7 @@ export class ShipReturnService {
       .skip(skip)
       .take(limit);
 
-    if (company) qb.andWhere('sr.company = :company', { company });
-    if (plant) qb.andWhere('sr.plant = :plant', { plant });
+    if (organizationId != null) qb.andWhere('sr.organizationId = :organizationId', { organizationId });
     if (status) qb.andWhere('sr.status = :status', { status });
     if (search) qb.andWhere('sr.returnNo LIKE :search', { search: `%${search}%` });
     if (returnDateFrom) qb.andWhere("sr.returnDate >= TO_DATE(:returnDateFrom, 'YYYY-MM-DD')", { returnDateFrom });
@@ -111,12 +108,12 @@ export class ShipReturnService {
       data.map(async (item) => {
         const shipOrder = item.shipmentId
           ? await this.shipOrderRepository.findOne({
-              where: { shipOrderNo: item.shipmentId, ...this.tenantWhere(company, plant) },
+              where: { shipOrderNo: item.shipmentId, ...this.tenantWhere(organizationId) },
               select: ['shipOrderNo', 'customerName'],
             })
           : null;
 
-        const flattened = await this.flattenItems(item, company, plant);
+        const flattened = await this.flattenItems(item, organizationId);
         return {
           ...flattened,
           shipOrder,
@@ -128,21 +125,21 @@ export class ShipReturnService {
   }
 
   /** 반품 단건 조회 */
-  async findById(returnNo: string, company?: string, plant?: string) {
+  async findById(returnNo: string, organizationId?: number) {
     const ret = await this.shipReturnRepository.findOne({
-      where: { returnNo, ...this.tenantWhere(company, plant) },
+      where: { returnNo, ...this.tenantWhere(organizationId) },
     });
 
     if (!ret) throw new NotFoundException(`반품을 찾을 수 없습니다: ${returnNo}`);
 
     const shipOrder = ret.shipmentId
       ? await this.shipOrderRepository.findOne({
-          where: { shipOrderNo: ret.shipmentId, ...this.tenantWhere(company, plant) },
+          where: { shipOrderNo: ret.shipmentId, ...this.tenantWhere(organizationId) },
           select: ['shipOrderNo', 'customerName'],
         })
       : null;
 
-    const flattened = await this.flattenItems(ret, company, plant);
+    const flattened = await this.flattenItems(ret, organizationId);
     return {
       ...flattened,
       shipOrder,
@@ -150,9 +147,9 @@ export class ShipReturnService {
   }
 
   /** 반품 생성 */
-  async create(dto: CreateShipReturnDto, company?: string, plant?: string) {
+  async create(dto: CreateShipReturnDto, organizationId?: number) {
     const existing = await this.shipReturnRepository.findOne({
-      where: { returnNo: dto.returnNo, ...this.tenantWhere(company, plant) },
+      where: { returnNo: dto.returnNo, ...this.tenantWhere(organizationId) },
     });
     if (existing) throw new ConflictException(`이미 존재하는 반품 번호입니다: ${dto.returnNo}`);
 
@@ -165,8 +162,7 @@ export class ShipReturnService {
         returnReason: dto.returnReason,
         remark: dto.remark,
         status: 'DRAFT',
-        company: company || null,
-        plant: plant || null,
+        organizationId: organizationId ?? null,
       });
 
       const savedReturn = await queryRunner.manager.save(shipReturn);
@@ -182,20 +178,19 @@ export class ShipReturnService {
             returnQty: item.returnQty,
             disposalType: item.disposalType ?? 'RESTOCK',
             remark: item.remark,
-            company: company || null,
-            plant: plant || null,
+            organizationId: organizationId ?? null,
           })
         );
         await queryRunner.manager.save(items);
       }
     });
 
-    return this.findById(savedReturnNo, company, plant);
+    return this.findById(savedReturnNo, organizationId);
   }
 
   /** 반품 수정 */
-  async update(returnNo: string, dto: UpdateShipReturnDto, company?: string, plant?: string) {
-    const ret = await this.findById(returnNo, company, plant);
+  async update(returnNo: string, dto: UpdateShipReturnDto, organizationId?: number) {
+    const ret = await this.findById(returnNo, organizationId);
     if (ret.status !== 'DRAFT') {
       throw new BadRequestException('DRAFT 상태에서만 수정할 수 있습니다.');
     }
@@ -211,7 +206,7 @@ export class ShipReturnService {
     await this.tx.run(async (queryRunner) => {
       const { items, status: _ignoredStatus, returnNo: _ignoredReturnNo, ...returnData } = dto;
       if (dto.items) {
-        await queryRunner.manager.delete(ShipmentReturnItem, { returnNo, ...this.tenantWhere(company, plant) });
+        await queryRunner.manager.delete(ShipmentReturnItem, { returnNo, ...this.tenantWhere(organizationId) });
 
         const itemEntities = dto.items.map((item, idx) =>
           this.shipReturnItemRepository.create({
@@ -221,8 +216,7 @@ export class ShipReturnService {
             returnQty: item.returnQty,
             disposalType: item.disposalType ?? 'RESTOCK',
             remark: item.remark,
-            company: company || null,
-            plant: plant || null,
+            organizationId: organizationId ?? null,
           })
         );
         await queryRunner.manager.save(itemEntities);
@@ -231,21 +225,21 @@ export class ShipReturnService {
       const updateData = this.buildShipmentReturnUpdate(returnData);
 
       if (Object.keys(updateData).length > 0) {
-        await queryRunner.manager.update(ShipmentReturn, { returnNo, ...this.tenantWhere(company, plant) }, updateData);
+        await queryRunner.manager.update(ShipmentReturn, { returnNo, ...this.tenantWhere(organizationId) }, updateData);
       }
     });
 
-    return this.findById(returnNo, company, plant);
+    return this.findById(returnNo, organizationId);
   }
 
   /** 반품 삭제 */
-  async delete(returnNo: string, company?: string, plant?: string) {
-    const ret = await this.findById(returnNo, company, plant);
+  async delete(returnNo: string, organizationId?: number) {
+    const ret = await this.findById(returnNo, organizationId);
     if (ret.status !== 'DRAFT') {
       throw new BadRequestException('DRAFT 상태에서만 삭제할 수 있습니다.');
     }
 
-    await this.shipReturnRepository.delete({ returnNo, ...this.tenantWhere(company, plant) });
+    await this.shipReturnRepository.delete({ returnNo, ...this.tenantWhere(organizationId) });
 
     return { returnNo, deleted: true };
   }

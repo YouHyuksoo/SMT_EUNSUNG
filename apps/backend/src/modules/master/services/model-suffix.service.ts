@@ -19,37 +19,29 @@ export class ModelSuffixService {
     private readonly modelSuffixRepository: Repository<ModelSuffix>,
   ) {}
 
-  private tenantWhere(company?: string, plant?: string) {
+  private tenantWhere(organizationId?: number) {
     return {
-      ...(company ? { company } : {}),
-      ...(plant ? { plant } : {}),
+      ...(organizationId != null ? { organizationId } : {}),
     };
   }
 
   private assertSameTenant(
     context: string,
-    row: { company?: string | null; plant?: string | null },
-    company?: string | null,
-    plant?: string | null,
+    row: { organizationId?: number | null },
+    organizationId?: number | null,
   ) {
-    if (company && row.company !== company) {
-      throw new BadRequestException(`${context} 회사 정보가 일치하지 않습니다. request=${company}, row=${row.company ?? 'NULL'}`);
-    }
-    if (plant && row.plant !== plant) {
-      throw new BadRequestException(`${context} 사업장 정보가 일치하지 않습니다. request=${plant}, row=${row.plant ?? 'NULL'}`);
+    if (organizationId != null && row.organizationId !== organizationId) {
+      throw new BadRequestException(`${context} 조직 정보가 일치하지 않습니다. request=${organizationId}, row=${row.organizationId ?? 'NULL'}`);
     }
   }
 
-  async findAll(query: ModelSuffixQueryDto, company?: string, plant?: string) {
+  async findAll(query: ModelSuffixQueryDto, organizationId?: number) {
     const { page = 1, limit = 10, modelCode, customer, search, useYn } = query;
 
     const queryBuilder = this.modelSuffixRepository.createQueryBuilder('suffix');
 
-    if (company) {
-      queryBuilder.andWhere('suffix.company = :company', { company });
-    }
-    if (plant) {
-      queryBuilder.andWhere('suffix.plant = :plant', { plant });
+    if (organizationId != null) {
+      queryBuilder.andWhere('suffix.organizationId = :organizationId', { organizationId });
     }
 
     if (modelCode) {
@@ -81,25 +73,25 @@ export class ModelSuffixService {
     return { data, total, page, limit };
   }
 
-  async findByCompositeKey(modelCode: string, suffixCode: string, company?: string, plant?: string) {
+  async findByCompositeKey(modelCode: string, suffixCode: string, organizationId?: number) {
     const suffix = await this.modelSuffixRepository.findOne({
-      where: { modelCode, suffixCode, ...this.tenantWhere(company, plant) },
+      where: { modelCode, suffixCode, ...this.tenantWhere(organizationId) },
     });
 
     if (!suffix) {
       throw new NotFoundException('모델접미사를 찾을 수 없습니다.');
     }
-    this.assertSameTenant('모델접미사', suffix, company, plant);
+    this.assertSameTenant('모델접미사', suffix, organizationId);
 
     return suffix;
   }
 
-  async create(dto: CreateModelSuffixDto, company?: string, plant?: string) {
+  async create(dto: CreateModelSuffixDto, organizationId?: number) {
     const existing = await this.modelSuffixRepository.findOne({
       where: {
         modelCode: dto.modelCode,
         suffixCode: dto.suffixCode,
-        ...this.tenantWhere(company, plant),
+        ...this.tenantWhere(organizationId),
       },
     });
 
@@ -114,15 +106,14 @@ export class ModelSuffixService {
       customer: dto.customer ?? null,
       remark: dto.remark ?? null,
       useYn: dto.useYn ?? 'Y',
-      company: company || null,
-      plant: plant || null,
+      organizationId,
     });
     const saved = await this.modelSuffixRepository.save(entity);
     return saved;
   }
 
-  async update(modelCode: string, suffixCode: string, dto: UpdateModelSuffixDto, company?: string, plant?: string) {
-    const suffix = await this.findByCompositeKey(modelCode, suffixCode, company, plant);
+  async update(modelCode: string, suffixCode: string, dto: UpdateModelSuffixDto, organizationId?: number) {
+    const suffix = await this.findByCompositeKey(modelCode, suffixCode, organizationId);
 
     Object.assign(suffix, {
       ...(dto.suffixName !== undefined ? { suffixName: dto.suffixName } : {}),
@@ -133,8 +124,7 @@ export class ModelSuffixService {
 
     const updated = await this.modelSuffixRepository.save({
       ...suffix,
-      company: suffix.company,
-      plant: suffix.plant,
+      organizationId: suffix.organizationId,
       modelCode,
       suffixCode,
     });
@@ -142,8 +132,8 @@ export class ModelSuffixService {
     return updated;
   }
 
-  async delete(modelCode: string, suffixCode: string, company?: string, plant?: string) {
-    const suffix = await this.findByCompositeKey(modelCode, suffixCode, company, plant);
+  async delete(modelCode: string, suffixCode: string, organizationId?: number) {
+    const suffix = await this.findByCompositeKey(modelCode, suffixCode, organizationId);
 
     await this.modelSuffixRepository.remove(suffix);
 

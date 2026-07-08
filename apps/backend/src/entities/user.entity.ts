@@ -48,11 +48,8 @@ export class User {
   @Column({ name: 'LAST_LOGIN', type: 'timestamp', nullable: true })
   lastLoginAt: Date | null;
 
-  @Column({ type: 'varchar2', name: 'COMPANY', length: 50 })
-  company: string;
-
-  @Column({ type: 'varchar2', name: 'PLANT_CD', length: 50 })
-  plant: string;
+  @Column({ name: 'ORGANIZATION_ID', type: 'number' })
+  organizationId!: number;
 
   /** PDA 역할 코드 (FK → PDA_ROLE.CODE, nullable) */
   @Column({ type: 'varchar2', name: 'PDA_ROLE_CODE', length: 50, nullable: true })

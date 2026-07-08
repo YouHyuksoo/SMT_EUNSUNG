@@ -47,24 +47,19 @@ export class AuditService {
     private readonly findingRepo: Repository<AuditFinding>,
   ) {}
 
-  private tenantWhere(company?: string | null, plant?: string | null) {
+  private tenantWhere(organizationId?: number | null) {
     return {
-      ...(company ? { company } : {}),
-      ...(plant ? { plant } : {}),
+      ...(organizationId != null ? { organizationId } : {}),
     };
   }
 
   private assertSameTenant(
     context: string,
-    row: { company?: string | null; plant?: string | null },
-    company?: string | null,
-    plant?: string | null,
+    row: { organizationId?: number | null },
+    organizationId?: number | null,
   ) {
-    if (company && row.company !== company) {
-      throw new BadRequestException(`${context} 회사 정보가 일치하지 않습니다. request=${company}, row=${row.company ?? 'NULL'}`);
-    }
-    if (plant && row.plant !== plant) {
-      throw new BadRequestException(`${context} 사업장 정보가 일치하지 않습니다. request=${plant}, row=${row.plant ?? 'NULL'}`);
+    if (organizationId != null && row.organizationId !== organizationId) {
+      throw new BadRequestException(`${context} 조직 정보가 일치하지 않습니다. request=${organizationId}, row=${row.organizationId ?? 'NULL'}`);
     }
   }
 
@@ -76,8 +71,7 @@ export class AuditService {
    * 심사번호 자동채번: AUD-YYYYMMDD-NNN
    */
   private async generateAuditNo(
-    company: string,
-    plant: string,
+    organizationId: number,
   ): Promise<string> {
     const today = new Date();
     const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '');
@@ -85,8 +79,7 @@ export class AuditService {
 
     const last = await this.auditRepo
       .createQueryBuilder('a')
-      .where('a.company = :company', { company })
-      .andWhere('a.plant = :plant', { plant })
+      .where('a.organizationId = :organizationId', { organizationId })
       .andWhere('a.auditNo LIKE :prefix', { prefix: `${prefix}%` })
       .orderBy('a.auditNo', 'DESC')
       .getOne();
@@ -102,7 +95,7 @@ export class AuditService {
   /**
    * 심사 계획 목록 조회 (페이지네이션 + 필터)
    */
-  async findAll(query: AuditQueryDto, company?: string, plant?: string) {
+  async findAll(query: AuditQueryDto, organizationId?: number) {
     const {
       page = 1,
       limit = 50,
@@ -115,8 +108,7 @@ export class AuditService {
 
     const qb = this.auditRepo.createQueryBuilder('a');
 
-    if (company) qb.andWhere('a.company = :company', { company });
-    if (plant) qb.andWhere('a.plant = :plant', { plant });
+    if (organizationId != null) qb.andWhere('a.organizationId = :organizationId', { organizationId });
     if (status) qb.andWhere('a.status = :status', { status });
     if (auditType) qb.andWhere('a.auditType = :auditType', { auditType });
     if (search) {
@@ -146,12 +138,12 @@ export class AuditService {
   /**
    * 심사 계획 단건 조회
    */
-  async findById(auditNo: string, company?: string, plant?: string) {
-    const item = await this.auditRepo.findOne({ where: { auditNo, ...this.tenantWhere(company, plant) } });
+  async findById(auditNo: string, organizationId?: number) {
+    const item = await this.auditRepo.findOne({ where: { auditNo, ...this.tenantWhere(organizationId) } });
     if (!item) {
       throw new NotFoundException('심사 계획을 찾을 수 없습니다.');
     }
-    this.assertSameTenant('심사 계획', item, company, plant);
+    this.assertSameTenant('심사 계획', item, organizationId);
     return item;
   }
 
@@ -160,11 +152,10 @@ export class AuditService {
    */
   async create(
     dto: CreateAuditPlanDto,
-    company: string,
-    plant: string,
+    organizationId: number,
     userId: string,
   ) {
-    const auditNo = await this.generateAuditNo(company, plant);
+    const auditNo = await this.generateAuditNo(organizationId);
     const entity = this.auditRepo.create({
       auditNo,
       auditType: dto.auditType,
@@ -175,8 +166,7 @@ export class AuditService {
       scheduledDate: parseDateStart(dto.scheduledDate)!,
       summary: dto.summary,
       status: 'PLANNED',
-      company,
-      plant,
+      organizationId,
       createdBy: userId,
       updatedBy: userId,
     });
@@ -188,8 +178,8 @@ export class AuditService {
   /**
    * 심사 계획 수정 (PLANNED 상태에서만 가능)
    */
-  async update(auditNo: string, dto: UpdateAuditPlanDto, userId: string, company?: string, plant?: string) {
-    const item = await this.findById(auditNo, company, plant);
+  async update(auditNo: string, dto: UpdateAuditPlanDto, userId: string, organizationId?: number) {
+    const item = await this.findById(auditNo, organizationId);
     if (item.status !== 'PLANNED') {
       throw new BadRequestException('계획 상태에서만 수정할 수 있습니다.');
     }
@@ -209,8 +199,8 @@ export class AuditService {
   /**
    * 심사 계획 삭제 (PLANNED 상태에서만 가능)
    */
-  async delete(auditNo: string, company?: string, plant?: string) {
-    const item = await this.findById(auditNo, company, plant);
+  async delete(auditNo: string, organizationId?: number) {
+    const item = await this.findById(auditNo, organizationId);
     if (item.status !== 'PLANNED') {
       throw new BadRequestException('계획 상태에서만 삭제할 수 있습니다.');
     }
@@ -228,10 +218,9 @@ export class AuditService {
     auditNo: string,
     overallResult: string,
     userId: string,
-    company?: string,
-    plant?: string,
+    organizationId?: number,
   ) {
-    const item = await this.findById(auditNo, company, plant);
+    const item = await this.findById(auditNo, organizationId);
     if (!['PLANNED', 'IN_PROGRESS'].includes(item.status)) {
       throw new BadRequestException(
         '계획 또는 진행중 상태에서만 완료할 수 있습니다.',
@@ -249,8 +238,8 @@ export class AuditService {
   /**
    * 종결 (COMPLETED → CLOSED)
    */
-  async close(auditNo: string, userId: string, company?: string, plant?: string) {
-    const item = await this.findById(auditNo, company, plant);
+  async close(auditNo: string, userId: string, organizationId?: number) {
+    const item = await this.findById(auditNo, organizationId);
     if (item.status !== 'COMPLETED') {
       throw new BadRequestException('완료 상태에서만 종결할 수 있습니다.');
     }
@@ -270,11 +259,10 @@ export class AuditService {
    */
   async addFinding(
     dto: CreateAuditFindingDto,
-    company: string,
-    plant: string,
+    organizationId: number,
     userId: string,
   ) {
-    await this.findById(dto.auditId, company, plant);
+    await this.findById(dto.auditId, organizationId);
 
     // 발견사항 번호 자동 부여
     const lastFinding = await this.findingRepo
@@ -295,8 +283,7 @@ export class AuditService {
       dueDate: dto.dueDate ? parseDateStart(dto.dueDate)! : undefined,
       remark: dto.remark,
       status: 'OPEN',
-      company,
-      plant,
+      organizationId,
       createdBy: userId,
     });
     const saved = await this.findingRepo.save(entity);
@@ -309,9 +296,9 @@ export class AuditService {
   /**
    * 심사별 발견사항 조회
    */
-  async getFindings(auditId: string, company?: string, plant?: string) {
+  async getFindings(auditId: string, organizationId?: number) {
     return this.findingRepo.find({
-      where: { auditId, ...this.tenantWhere(company, plant) },
+      where: { auditId, ...this.tenantWhere(organizationId) },
       order: { findingNo: 'ASC' },
     });
   }
@@ -319,14 +306,14 @@ export class AuditService {
   /**
    * 발견사항에 CAPA 연결
    */
-  async linkCapa(auditId: string, findingNo: number, capaId: string, company?: string, plant?: string) {
+  async linkCapa(auditId: string, findingNo: number, capaId: string, organizationId?: number) {
     const finding = await this.findingRepo.findOne({
-      where: { auditId, findingNo, ...this.tenantWhere(company, plant) },
+      where: { auditId, findingNo, ...this.tenantWhere(organizationId) },
     });
     if (!finding) {
       throw new NotFoundException('발견사항을 찾을 수 없습니다.');
     }
-    this.assertSameTenant('심사 발견사항', finding, company, plant);
+    this.assertSameTenant('심사 발견사항', finding, organizationId);
     finding.capaId = capaId;
     finding.status = 'IN_PROGRESS';
     const saved = await this.findingRepo.save(finding);

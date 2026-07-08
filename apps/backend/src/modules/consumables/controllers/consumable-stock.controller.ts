@@ -9,7 +9,7 @@
 import { Controller, Get, Param, Query, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Company, Plant } from '../../../common/decorators/tenant.decorator';
+import { OrganizationId } from '../../../common/decorators/tenant.decorator';
 import { ConsumableStock } from '../../../entities/consumable-stock.entity';
 import { ConsumableMaster } from '../../../entities/consumable-master.entity';
 
@@ -27,12 +27,10 @@ export class ConsumableStockController {
   async list(
     @Query('consumableCode') consumableCode?: string,
     @Query('status') status?: string,
-    @Company() company?: string,
-    @Plant() plant?: string,
+    @OrganizationId() organizationId?: number,
   ) {
     const qb = this.stockRepo.createQueryBuilder('s');
-    if (company) qb.andWhere('s.company = :company', { company });
-    if (plant) qb.andWhere('s.plantCd = :plant', { plant });
+    if (organizationId != null) qb.andWhere('s.organizationId = :organizationId', { organizationId });
     if (consumableCode) qb.andWhere('s.consumableCode = :consumableCode', { consumableCode });
     if (status) qb.andWhere('s.status = :status', { status });
     qb.orderBy('s.createdAt', 'DESC');
@@ -40,8 +38,7 @@ export class ConsumableStockController {
     const stocks = await qb.getMany();
     const masters = await this.masterRepo.find({
       where: {
-        ...(company && { company }),
-        ...(plant && { plant }),
+        ...(organizationId != null ? { organizationId } : {}),
       },
     });
     const masterMap = new Map(masters.map((m) => [m.consumableCode, m]));
@@ -63,14 +60,12 @@ export class ConsumableStockController {
   @Get(':conUid')
   async detail(
     @Param('conUid') conUid: string,
-    @Company() company?: string,
-    @Plant() plant?: string,
+    @OrganizationId() organizationId?: number,
   ) {
     const stock = await this.stockRepo.findOne({
       where: {
         conUid,
-        ...(company && { company }),
-        ...(plant && { plantCd: plant }),
+        ...(organizationId != null ? { organizationId } : {}),
       },
     });
     if (!stock) throw new NotFoundException(`소모품 인스턴스를 찾을 수 없습니다: ${conUid}`);
@@ -78,8 +73,7 @@ export class ConsumableStockController {
     const master = await this.masterRepo.findOne({
       where: {
         consumableCode: stock.consumableCode,
-        ...(company && { company }),
-        ...(plant && { plant }),
+        ...(organizationId != null ? { organizationId } : {}),
       },
     });
 

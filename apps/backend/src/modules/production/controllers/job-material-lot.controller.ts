@@ -15,7 +15,7 @@ import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { JobMaterialLotService } from '../services/job-material-lot.service';
 import { ScanBarcodeDto, ScanRequestDto } from '../dto/job-material-lot.dto';
 import { ResponseUtil } from '../../../common/dto/response.dto';
-import { Company, Plant } from '../../../common/decorators/tenant.decorator';
+import { OrganizationId } from '../../../common/decorators/tenant.decorator';
 
 @ApiTags('생산관리 - 자재롯트 스캔')
 @Controller('production/job-orders/:orderNo/material-lots')
@@ -24,8 +24,8 @@ export class JobMaterialLotController {
 
   @Get()
   @ApiOperation({ summary: '작업지시 자재 롯트 목록' })
-  async findAll(@Param('orderNo') orderNo: string, @Company() company?: string, @Plant() plant?: string) {
-    const data = await this.svc.findByJobOrder(orderNo, company, plant);
+  async findAll(@Param('orderNo') orderNo: string, @OrganizationId() organizationId?: number) {
+    const data = await this.svc.findByJobOrder(orderNo, organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -34,8 +34,7 @@ export class JobMaterialLotController {
   async scan(
     @Param('orderNo') orderNo: string,
     @Body() body: ScanRequestDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
     @Request() req: { user?: { username?: string } },
   ) {
     const dto: ScanBarcodeDto = {
@@ -43,7 +42,7 @@ export class JobMaterialLotController {
       scannedBy: body.scannedBy ?? req.user?.username,
     };
     const data = await this.svc.scanAndRegister(
-      orderNo, dto, body.bomItems, company, plant,
+      orderNo, dto, body.bomItems, organizationId,
     );
     return ResponseUtil.success(data, '자재 롯트가 등록되었습니다.');
   }
@@ -54,10 +53,9 @@ export class JobMaterialLotController {
     @Param('orderNo') orderNo: string,
     @Param('itemCode') itemCode: string,
     @Param('seq') seq: string,
-    @Company() company?: string,
-    @Plant() plant?: string,
+    @OrganizationId() organizationId?: number,
   ) {
-    await this.svc.remove(orderNo, itemCode, Number(seq), company, plant);
+    await this.svc.remove(orderNo, itemCode, Number(seq), organizationId);
     return ResponseUtil.success(null, '롯트 등록이 취소되었습니다.');
   }
 }

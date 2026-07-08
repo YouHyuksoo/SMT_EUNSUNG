@@ -58,16 +58,16 @@ export class SchedulerJobService implements OnModuleInit {
     this.logger.log('스케줄러 모듈 초기화 시작...');
 
     try {
-      // 모든 회사/공장 조합에 대해 stale 로그 복구
-      const plants: { company: string; plantCd: string }[] =
+      // 모든 조직에 대해 stale 로그 복구
+      const organizations: { organizationId: number }[] =
         await this.dataSource.query(
-          `SELECT DISTINCT "COMPANY" AS "company", "PLANT_CD" AS "plantCd"
+          `SELECT DISTINCT "ORGANIZATION_ID" AS "organizationId"
              FROM "SCHEDULER_JOBS"
             WHERE "IS_ACTIVE" = 'Y'`,
         );
 
-      for (const { company, plantCd } of plants) {
-        await this.logService.recoverStaleRunning(company, plantCd);
+      for (const { organizationId } of organizations) {
+        await this.logService.recoverStaleRunning(organizationId);
       }
 
       // 활성 작업 로드 + CronJob 등록
@@ -96,14 +96,12 @@ export class SchedulerJobService implements OnModuleInit {
    */
   async findAll(
     filter: SchedulerJobFilterDto,
-    company: string,
-    plant: string,
+    organizationId: number,
   ) {
     const { page = 1, limit = 50, jobGroup, execType, isActive, search } = filter;
 
     const qb = this.jobRepo.createQueryBuilder('j');
-    qb.where('j.company = :company', { company });
-    qb.andWhere('j.plantCd = :plant', { plant });
+    qb.where('j.organizationId = :organizationId', { organizationId });
 
     if (jobGroup) qb.andWhere('j.jobGroup = :jobGroup', { jobGroup });
     if (execType) qb.andWhere('j.execType = :execType', { execType });
@@ -131,11 +129,10 @@ export class SchedulerJobService implements OnModuleInit {
    */
   async findOne(
     jobCode: string,
-    company: string,
-    plant: string,
+    organizationId: number,
   ): Promise<SchedulerJob> {
     const job = await this.jobRepo.findOne({
-      where: { company, plantCd: plant, jobCode },
+      where: { organizationId, jobCode },
     });
     if (!job) {
       throw new NotFoundException(`작업을 찾을 수 없습니다: ${jobCode}`);
@@ -148,15 +145,13 @@ export class SchedulerJobService implements OnModuleInit {
    */
   async create(
     dto: CreateSchedulerJobDto,
-    company: string,
-    plant: string,
+    organizationId: number,
     userId: string,
   ): Promise<SchedulerJob> {
     const nextRunAt = this.computeNextRun(dto.cronExpr);
 
     const entity = this.jobRepo.create({
-      company,
-      plantCd: plant,
+      organizationId,
       jobCode: dto.jobCode,
       jobName: dto.jobName,
       jobGroup: dto.jobGroup,
@@ -184,11 +179,10 @@ export class SchedulerJobService implements OnModuleInit {
   async update(
     jobCode: string,
     dto: UpdateSchedulerJobDto,
-    company: string,
-    plant: string,
+    organizationId: number,
     userId: string,
   ): Promise<SchedulerJob> {
-    const job = await this.findOne(jobCode, company, plant);
+    const job = await this.findOne(jobCode, organizationId);
 
     const updateData: Partial<SchedulerJob> = {
       ...(dto.jobName !== undefined ? { jobName: dto.jobName } : {}),
@@ -211,7 +205,7 @@ export class SchedulerJobService implements OnModuleInit {
     const saved = await this.jobRepo.save(job);
 
     // CronJob 재등록 (활성 상태인 경우)
-    this.unregisterCronJob(company, plant, jobCode);
+    this.unregisterCronJob(organizationId, jobCode);
     if (saved.isActive === 'Y') {
       this.registerCronJob(saved);
     }
@@ -225,11 +219,10 @@ export class SchedulerJobService implements OnModuleInit {
    */
   async remove(
     jobCode: string,
-    company: string,
-    plant: string,
+    organizationId: number,
   ): Promise<void> {
-    const job = await this.findOne(jobCode, company, plant);
-    this.unregisterCronJob(company, plant, jobCode);
+    const job = await this.findOne(jobCode, organizationId);
+    this.unregisterCronJob(organizationId, jobCode);
     await this.jobRepo.remove(job);
     this.logger.log(`작업 삭제: ${jobCode}`);
   }
@@ -239,11 +232,10 @@ export class SchedulerJobService implements OnModuleInit {
    */
   async toggle(
     jobCode: string,
-    company: string,
-    plant: string,
+    organizationId: number,
     userId: string,
   ): Promise<SchedulerJob> {
-    const job = await this.findOne(jobCode, company, plant);
+    const job = await this.findOne(jobCode, organizationId);
     const newActive = job.isActive === 'Y' ? 'N' : 'Y';
 
     job.isActive = newActive;
@@ -254,7 +246,7 @@ export class SchedulerJobService implements OnModuleInit {
       this.registerCronJob(job);
     } else {
       job.nextRunAt = null;
-      this.unregisterCronJob(company, plant, jobCode);
+      this.unregisterCronJob(organizationId, jobCode);
     }
 
     const saved = await this.jobRepo.save(job);
@@ -267,10 +259,9 @@ export class SchedulerJobService implements OnModuleInit {
    */
   async runNow(
     jobCode: string,
-    company: string,
-    plant: string,
+    organizationId: number,
   ): Promise<void> {
-    const job = await this.findOne(jobCode, company, plant);
+    const job = await this.findOne(jobCode, organizationId);
     this.logger.log(`즉시 실행: ${jobCode}`);
     // 비동기로 실행 (응답을 기다리지 않음)
     this.runnerService.execute(job).catch((err: unknown) => {
@@ -288,11 +279,11 @@ export class SchedulerJobService implements OnModuleInit {
    * CronJob 등록 — SchedulerRegistry에 추가 후 시작
    */
   private registerCronJob(job: SchedulerJob): void {
-    const key = `${job.company}_${job.plantCd}_${job.jobCode}`;
+    const key = `${job.organizationId}_${job.jobCode}`;
 
     try {
       // 기존 등록이 있으면 먼저 해제
-      this.unregisterCronJob(job.company, job.plantCd, job.jobCode);
+      this.unregisterCronJob(job.organizationId, job.jobCode);
 
       const cronJob = new CronJob(job.cronExpr, () => {
         this.runnerService.execute(job).catch((err: unknown) => {
@@ -317,11 +308,10 @@ export class SchedulerJobService implements OnModuleInit {
    * CronJob 해제 — SchedulerRegistry에서 삭제
    */
   private unregisterCronJob(
-    company: string,
-    plantCd: string,
+    organizationId: number,
     jobCode: string,
   ): void {
-    const key = `${company}_${plantCd}_${jobCode}`;
+    const key = `${organizationId}_${jobCode}`;
 
     try {
       const existing = this.schedulerRegistry.getCronJob(key);

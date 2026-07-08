@@ -17,7 +17,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Warehouse } from '../../entities/warehouse.entity';
-import { Company, Plant } from '../../common/decorators/tenant.decorator';
+import { OrganizationId } from '../../common/decorators/tenant.decorator';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { InventoryService } from './services/inventory.service';
 import { WarehouseService } from './services/warehouse.service';
@@ -88,8 +88,7 @@ export class InventoryController {
     dto: ProductReceiveStockDto,
     itemType: string,
     transType: string,
-    company: string,
-    plant: string,
+    organizationId: number,
   ): ProductReceiveStockDto {
     return {
       warehouseId: dto.warehouseId,
@@ -106,8 +105,7 @@ export class InventoryController {
       unitPrice: dto.unitPrice,
       workerId: dto.workerId,
       remark: dto.remark,
-      company,
-      plant,
+      organizationId,
     };
   }
 
@@ -115,8 +113,7 @@ export class InventoryController {
     dto: ProductIssueStockDto,
     itemType: string,
     transType: string,
-    company: string,
-    plant: string,
+    organizationId: number,
   ): ProductIssueStockDto {
     return {
       warehouseId: dto.warehouseId,
@@ -134,8 +131,7 @@ export class InventoryController {
       workerId: dto.workerId,
       issueType: dto.issueType,
       remark: dto.remark,
-      company,
-      plant,
+      organizationId,
     };
   }
 
@@ -147,24 +143,24 @@ export class InventoryController {
    * 창고 목록 조회
    */
   @Get('warehouses')
-  async getWarehouses(@Query('warehouseType') warehouseType?: string, @Company() company?: string, @Plant() plant?: string) {
-    return this.warehouseService.findAll(warehouseType, company, plant);
+  async getWarehouses(@Query('warehouseType') warehouseType?: string, @OrganizationId() organizationId?: number) {
+    return this.warehouseService.findAll(warehouseType, organizationId);
   }
 
   /**
    * 창고 상세 조회
    */
   @Get('warehouses/:id')
-  async getWarehouse(@Param('id') id: string, @Company() company?: string, @Plant() plant?: string) {
-    return this.warehouseService.findOne(id, company, plant);
+  async getWarehouse(@Param('id') id: string, @OrganizationId() organizationId?: number) {
+    return this.warehouseService.findOne(id, organizationId);
   }
 
   /**
    * 창고 생성
    */
   @Post('warehouses')
-  async createWarehouse(@Body() dto: CreateWarehouseDto, @Company() company: string, @Plant() plant: string) {
-    return this.warehouseService.create(dto, company, plant);
+  async createWarehouse(@Body() dto: CreateWarehouseDto, @OrganizationId() organizationId: number) {
+    return this.warehouseService.create(dto, organizationId);
   }
 
   /**
@@ -174,25 +170,24 @@ export class InventoryController {
   async updateWarehouse(
     @Param('id') id: string,
     @Body() dto: UpdateWarehouseDto,
-    @Company() company?: string,
-    @Plant() plant?: string,
+    @OrganizationId() organizationId?: number,
   ) {
-    return this.warehouseService.update(id, dto, company, plant);
+    return this.warehouseService.update(id, dto, organizationId);
   }
 
   /**
    * 창고 삭제 (소프트 삭제)
    */
   @Delete('warehouses/:id')
-  async deleteWarehouse(@Param('id') id: string, @Company() company?: string, @Plant() plant?: string) {
-    return this.warehouseService.remove(id, company, plant);
+  async deleteWarehouse(@Param('id') id: string, @OrganizationId() organizationId?: number) {
+    return this.warehouseService.remove(id, organizationId);
   }
 
   /**
    * 기본 창고 초기화
    */
   @Post('warehouses/init')
-  async initWarehouses(@Company() company?: string, @Plant() plant?: string) {
+  async initWarehouses(@OrganizationId() organizationId?: number) {
     return this.warehouseService.initDefaultWarehouses(company, plant);
   }
 
@@ -208,26 +203,25 @@ export class InventoryController {
     @Query('itemCode') itemCode?: string,
     @Query('itemType') itemType?: string,
     @Query('status') status?: string,
-    @Company() company?: string,
-    @Plant() plant?: string,
+    @OrganizationId() organizationId?: number,
   ) {
-    return this.inventoryService.getLots({ itemCode, itemType, status }, company, plant);
+    return this.inventoryService.getLots({ itemCode, itemType, status }, organizationId);
   }
 
   /**
    * LOT 상세 조회
    */
   @Get('lots/:id')
-  async getLot(@Param('id') id: string, @Company() company?: string, @Plant() plant?: string) {
-    return this.inventoryService.getLotById(id, company, plant);
+  async getLot(@Param('id') id: string, @OrganizationId() organizationId?: number) {
+    return this.inventoryService.getLotById(id, organizationId);
   }
 
   /**
    * LOT 생성
    */
   @Post('lots')
-  async createLot(@Body() dto: CreateLotDto, @Company() company: string, @Plant() plant: string) {
-    return this.inventoryService.createLot(dto, company, plant);
+  async createLot(@Body() dto: CreateLotDto, @OrganizationId() organizationId: number) {
+    return this.inventoryService.createLot(dto, organizationId);
   }
 
   // ============================================================================
@@ -238,8 +232,8 @@ export class InventoryController {
    * 현재고 조회
    */
   @Get('stocks')
-  async getStocks(@Query() query: StockQueryDto, @Company() company?: string, @Plant() plant?: string) {
-    return this.inventoryService.getStock(query, company, plant);
+  async getStocks(@Query() query: StockQueryDto, @OrganizationId() organizationId?: number) {
+    return this.inventoryService.getStock(query, organizationId);
   }
 
   /**
@@ -249,18 +243,17 @@ export class InventoryController {
   async getStockSummary(
     @Query('warehouseType') warehouseType?: string,
     @Query('itemType') itemType?: string,
-    @Company() company?: string,
-    @Plant() plant?: string,
+    @OrganizationId() organizationId?: number,
   ) {
-    return this.inventoryService.getStockSummary({ warehouseType, itemType }, company, plant);
+    return this.inventoryService.getStockSummary({ warehouseType, itemType }, organizationId);
   }
 
   /**
    * 특정 품목의 창고별 재고
    */
   @Get('stocks/by-part/:itemCode')
-  async getStockByPart(@Param('itemCode') itemCode: string, @Company() company?: string, @Plant() plant?: string) {
-    return this.inventoryService.getStock({ itemCode }, company, plant);
+  async getStockByPart(@Param('itemCode') itemCode: string, @OrganizationId() organizationId?: number) {
+    return this.inventoryService.getStock({ itemCode }, organizationId);
   }
 
   /**
@@ -270,13 +263,12 @@ export class InventoryController {
   async getStockByWarehouse(
     @Param('warehouseId') warehouseId: string,
     @Query('includeZero') includeZero?: string,
-    @Company() company?: string,
-    @Plant() plant?: string,
+    @OrganizationId() organizationId?: number,
   ) {
     return this.inventoryService.getStock({
       warehouseCode: warehouseId,
       includeZero: includeZero === 'true',
-    }, company, plant);
+    }, organizationId);
   }
 
   /**
@@ -287,8 +279,7 @@ export class InventoryController {
   async getWipMatStocks(
     @Query('equipCode') equipCode?: string,
     @Query('search') search?: string,
-    @Company() company?: string,
-    @Plant() plant?: string,
+    @OrganizationId() organizationId?: number,
   ) {
     const rows = await this.wipMatStockService.findByEquip(equipCode, company, plant, search);
     return ResponseUtil.success(rows);
@@ -298,8 +289,7 @@ export class InventoryController {
   async getWipMatStockLots(
     @Query('equipCode') equipCode: string,
     @Query('itemCode') itemCode: string,
-    @Company() company?: string,
-    @Plant() plant?: string,
+    @OrganizationId() organizationId?: number,
   ) {
     const rows = await this.wipMatStockService.findLotsByEquipItem(equipCode, itemCode, company!, plant!);
     return ResponseUtil.success(rows);
@@ -317,8 +307,7 @@ export class InventoryController {
     @Query('transType') transType?: string,
     @Query('fromDate') fromDate?: string,
     @Query('toDate') toDate?: string,
-    @Company() company?: string,
-    @Plant() plant?: string,
+    @OrganizationId() organizationId?: number,
   ) {
     const rows = await this.wipMatStockService.findTransactions(
       { equipCode, itemCode, search, transType, fromDate, toDate },
@@ -336,40 +325,40 @@ export class InventoryController {
    * 수불 이력 조회
    */
   @Get('transactions')
-  async getTransactions(@Query() query: TransactionQueryDto, @Company() company?: string, @Plant() plant?: string) {
-    return this.inventoryService.getTransactions(query, company, plant);
+  async getTransactions(@Query() query: TransactionQueryDto, @OrganizationId() organizationId?: number) {
+    return this.inventoryService.getTransactions(query, organizationId);
   }
 
   /**
    * 트랜잭션 상세 조회
    */
   @Get('transactions/:id')
-  async getTransaction(@Param('id') id: string, @Company() company?: string, @Plant() plant?: string) {
-    return this.inventoryService.getTransactionById(id, company, plant);
+  async getTransaction(@Param('id') id: string, @OrganizationId() organizationId?: number) {
+    return this.inventoryService.getTransactionById(id, organizationId);
   }
 
   /**
    * 입고 처리
    */
   @Post('receive')
-  async receiveStock(@Body() dto: ReceiveStockDto, @Company() company: string, @Plant() plant: string) {
-    return this.inventoryService.receiveStock(dto, company, plant);
+  async receiveStock(@Body() dto: ReceiveStockDto, @OrganizationId() organizationId: number) {
+    return this.inventoryService.receiveStock(dto, organizationId);
   }
 
   /**
    * 출고 처리
    */
   @Post('issue')
-  async issueStock(@Body() dto: IssueStockDto, @Company() company: string, @Plant() plant: string) {
-    return this.inventoryService.issueStock(dto, company, plant);
+  async issueStock(@Body() dto: IssueStockDto, @OrganizationId() organizationId: number) {
+    return this.inventoryService.issueStock(dto, organizationId);
   }
 
   /**
    * 창고간 이동
    */
   @Post('transfer')
-  async transferStock(@Body() dto: TransferStockDto, @Company() company: string, @Plant() plant: string) {
-    return this.inventoryService.transferStock(dto, company, plant);
+  async transferStock(@Body() dto: TransferStockDto, @OrganizationId() organizationId: number) {
+    return this.inventoryService.transferStock(dto, organizationId);
   }
 
   /**
@@ -379,13 +368,12 @@ export class InventoryController {
   @Post('cancel')
   async cancelTransaction(
     @Body() dto: CancelTransactionDto & { source?: string },
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
     if (dto.source === 'product') {
-      return this.productInventoryService.cancelTransaction(dto, company, plant);
+      return this.productInventoryService.cancelTransaction(dto, organizationId);
     }
-    return this.inventoryService.cancelTransaction(dto, company, plant);
+    return this.inventoryService.cancelTransaction(dto, organizationId);
   }
 
   // ============================================================================
@@ -396,25 +384,25 @@ export class InventoryController {
    * 원자재 입고
    */
   @Post('material/receive')
-  async receiveMaterial(@Body() dto: ReceiveStockDto, @Company() company: string, @Plant() plant: string) {
-    return this.inventoryService.receiveStock(this.receivePayload(dto, 'MAT_IN'), company, plant);
+  async receiveMaterial(@Body() dto: ReceiveStockDto, @OrganizationId() organizationId: number) {
+    return this.inventoryService.receiveStock(this.receivePayload(dto, 'MAT_IN'), organizationId);
   }
 
   /**
    * 원자재 출고 (생산투입)
    */
   @Post('material/issue')
-  async issueMaterial(@Body() dto: IssueStockDto, @Company() company: string, @Plant() plant: string) {
-    return this.inventoryService.issueStock(this.issuePayload(dto, 'MAT_OUT'), company, plant);
+  async issueMaterial(@Body() dto: IssueStockDto, @OrganizationId() organizationId: number) {
+    return this.inventoryService.issueStock(this.issuePayload(dto, 'MAT_OUT'), organizationId);
   }
 
   /**
    * 반제품 창고입고 → PRODUCT_STOCKS 테이블
    */
   @Post('wip/receive')
-  async receiveWip(@Body() dto: ProductReceiveStockDto, @Company() company: string, @Plant() plant: string) {
+  async receiveWip(@Body() dto: ProductReceiveStockDto, @OrganizationId() organizationId: number) {
     return this.productInventoryService.receiveStock(
-      this.productReceivePayload(dto, 'SEMI_PRODUCT', 'WIP_IN', company, plant),
+      this.productReceivePayload(dto, 'SEMI_PRODUCT', 'WIP_IN', organizationId),
     );
   }
 
@@ -422,9 +410,9 @@ export class InventoryController {
    * 반제품 출고 → PRODUCT_STOCKS 테이블
    */
   @Post('wip/issue')
-  async issueWip(@Body() dto: ProductIssueStockDto, @Company() company: string, @Plant() plant: string) {
+  async issueWip(@Body() dto: ProductIssueStockDto, @OrganizationId() organizationId: number) {
     return this.productInventoryService.issueStock(
-      this.productIssuePayload(dto, 'SEMI_PRODUCT', 'WIP_OUT', company, plant),
+      this.productIssuePayload(dto, 'SEMI_PRODUCT', 'WIP_OUT', organizationId),
     );
   }
 
@@ -432,7 +420,7 @@ export class InventoryController {
    * 완제품 창고입고 → PRODUCT_STOCKS 테이블
    */
   @Post('fg/receive')
-  async receiveFg(@Body() dto: ProductReceiveStockDto, @Company() company: string, @Plant() plant: string) {
+  async receiveFg(@Body() dto: ProductReceiveStockDto, @OrganizationId() organizationId: number) {
     const fg = await this.warehouseRepository.findOne({
       where: { warehouseType: 'FG', isDefault: 'Y', company, plant },
     });
@@ -440,7 +428,7 @@ export class InventoryController {
       throw new BadRequestException('FG 기본창고(IS_DEFAULT=Y)가 설정되어 있지 않습니다.');
     }
     return this.productInventoryService.receiveFinishedFromWip(
-      this.productReceivePayload({ ...dto, warehouseId: fg.warehouseCode }, 'FINISHED', 'FG_IN', company, plant),
+      this.productReceivePayload({ ...dto, warehouseId: fg.warehouseCode }, 'FINISHED', 'FG_IN', organizationId),
     );
   }
 
@@ -448,9 +436,9 @@ export class InventoryController {
    * 완제품 출하 → PRODUCT_STOCKS 테이블
    */
   @Post('fg/issue')
-  async issueFg(@Body() dto: ProductIssueStockDto, @Company() company: string, @Plant() plant: string) {
+  async issueFg(@Body() dto: ProductIssueStockDto, @OrganizationId() organizationId: number) {
     return this.productInventoryService.issueStock(
-      this.productIssuePayload(dto, 'FINISHED', 'FG_OUT', company, plant),
+      this.productIssuePayload(dto, 'FINISHED', 'FG_OUT', organizationId),
     );
   }
 
@@ -460,8 +448,7 @@ export class InventoryController {
   @Post('product/defect-transfer')
   async transferProductDefectToWarehouse(
     @Body() dto: ProductDefectTransferDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
     return this.productInventoryService.transferDefectStockToWarehouse({ ...dto, company, plant });
   }
@@ -474,55 +461,55 @@ export class InventoryController {
    * 제품 현재고 조회
    */
   @Get('product/stocks')
-  async getProductStocks(@Query() query: ProductStockQueryDto, @Company() company?: string, @Plant() plant?: string) {
-    return this.productInventoryService.getStock(query, company, plant);
+  async getProductStocks(@Query() query: ProductStockQueryDto, @OrganizationId() organizationId?: number) {
+    return this.productInventoryService.getStock(query, organizationId);
   }
 
   /**
    * 제품 수불 이력 조회
    */
   @Get('product/transactions')
-  async getProductTransactions(@Query() query: ProductTransactionQueryDto, @Company() company?: string, @Plant() plant?: string) {
-    return this.productInventoryService.getTransactions(query, company, plant);
+  async getProductTransactions(@Query() query: ProductTransactionQueryDto, @OrganizationId() organizationId?: number) {
+    return this.productInventoryService.getTransactions(query, organizationId);
   }
 
   /**
    * 외주 자재지급
    */
   @Post('subcon/issue')
-  async issueSubcon(@Body() dto: IssueStockDto, @Company() company: string, @Plant() plant: string) {
-    return this.inventoryService.issueStock(this.issuePayload(dto, 'SUBCON_OUT'), company, plant);
+  async issueSubcon(@Body() dto: IssueStockDto, @OrganizationId() organizationId: number) {
+    return this.inventoryService.issueStock(this.issuePayload(dto, 'SUBCON_OUT'), organizationId);
   }
 
   /**
    * 외주 입고
    */
   @Post('subcon/receive')
-  async receiveSubcon(@Body() dto: ReceiveStockDto, @Company() company: string, @Plant() plant: string) {
-    return this.inventoryService.receiveStock(this.receivePayload(dto, 'SUBCON_IN'), company, plant);
+  async receiveSubcon(@Body() dto: ReceiveStockDto, @OrganizationId() organizationId: number) {
+    return this.inventoryService.receiveStock(this.receivePayload(dto, 'SUBCON_IN'), organizationId);
   }
 
   /**
    * 재고 조정 (+)
    */
   @Post('adjust/plus')
-  async adjustPlus(@Body() dto: ReceiveStockDto, @Company() company: string, @Plant() plant: string) {
-    return this.inventoryService.receiveStock(this.receivePayload(dto, 'ADJ_PLUS'), company, plant);
+  async adjustPlus(@Body() dto: ReceiveStockDto, @OrganizationId() organizationId: number) {
+    return this.inventoryService.receiveStock(this.receivePayload(dto, 'ADJ_PLUS'), organizationId);
   }
 
   /**
    * 재고 조정 (-)
    */
   @Post('adjust/minus')
-  async adjustMinus(@Body() dto: IssueStockDto, @Company() company: string, @Plant() plant: string) {
-    return this.inventoryService.issueStock(this.issuePayload(dto, 'ADJ_MINUS'), company, plant);
+  async adjustMinus(@Body() dto: IssueStockDto, @OrganizationId() organizationId: number) {
+    return this.inventoryService.issueStock(this.issuePayload(dto, 'ADJ_MINUS'), organizationId);
   }
 
   /**
    * 폐기 처리
    */
   @Post('scrap')
-  async scrap(@Body() dto: IssueStockDto, @Company() company: string, @Plant() plant: string) {
-    return this.inventoryService.issueStock(this.issuePayload(dto, 'SCRAP'), company, plant);
+  async scrap(@Body() dto: IssueStockDto, @OrganizationId() organizationId: number) {
+    return this.inventoryService.issueStock(this.issuePayload(dto, 'SCRAP'), organizationId);
   }
 }

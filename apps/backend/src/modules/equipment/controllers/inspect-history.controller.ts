@@ -16,7 +16,7 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { EquipInspectService } from '../services/equip-inspect.service';
 import { EquipInspectQueryDto } from '../dto/equip-inspect.dto';
 import { ResponseUtil } from '../../../common/dto/response.dto';
-import { Company, Plant } from '../../../common/decorators/tenant.decorator';
+import { OrganizationId } from '../../../common/decorators/tenant.decorator';
 
 @ApiTags('설비관리 - 점검이력')
 @Controller('equipment/inspect-history')
@@ -28,18 +28,17 @@ export class InspectHistoryController {
   @ApiResponse({ status: 200, description: '조회 성공' })
   async findAll(
     @Query() query: EquipInspectQueryDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const result = await this.equipInspectService.findAll(query, company, plant);
+    const result = await this.equipInspectService.findAll(query, organizationId);
     return ResponseUtil.paged(result.data, result.total, result.page, result.limit);
   }
 
   @Get('summary')
   @ApiOperation({ summary: '점검이력 통계 요약' })
   @ApiResponse({ status: 200, description: '조회 성공' })
-  async getSummary(@Company() company: string, @Plant() plant: string) {
-    const data = await this.equipInspectService.getSummary(undefined, company, plant);
+  async getSummary(@OrganizationId() organizationId: number) {
+    const data = await this.equipInspectService.getSummary(undefined, organizationId);
     return ResponseUtil.success(data);
   }
 }

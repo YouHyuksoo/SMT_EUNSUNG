@@ -10,7 +10,7 @@
  * 5. POST /consumables/label/confirm-bulk  다건 입고 확정
  */
 import { Controller, Get, Post, Body } from '@nestjs/common';
-import { Company, Plant } from '../../../common/decorators/tenant.decorator';
+import { OrganizationId } from '../../../common/decorators/tenant.decorator';
 import { ResponseUtil } from '../../../common/dto/response.dto';
 import { ConsumableLabelService } from '../services/consumable-label.service';
 import {
@@ -27,57 +27,57 @@ export class ConsumableLabelController {
 
   /** 라벨 발행 가능 마스터 목록 */
   @Get('masters')
-  async getMasters(@Company() company: string, @Plant() plant: string) {
-    const data = await this.labelService.findLabelableConsumables(company, plant);
+  async getMasters(@OrganizationId() organizationId: number) {
+    const data = await this.labelService.findLabelableConsumables(organizationId);
     return ResponseUtil.success(data);
   }
 
   /** conUid 채번 + PENDING 생성 */
   @Post('create')
-  async createLabels(@Body() dto: CreateConLabelsDto, @Company() company: string, @Plant() plant: string) {
-    const data = await this.labelService.createConLabels(dto, company, plant);
+  async createLabels(@Body() dto: CreateConLabelsDto, @OrganizationId() organizationId: number) {
+    const data = await this.labelService.createConLabels(dto, organizationId);
     return ResponseUtil.success(data);
   }
 
   /** 미입고 UID 목록 */
   @Get('pending')
-  async getPending(@Company() company: string, @Plant() plant: string) {
-    const data = await this.labelService.findPendingStocks(company, plant);
+  async getPending(@OrganizationId() organizationId: number) {
+    const data = await this.labelService.findPendingStocks(organizationId);
     return ResponseUtil.success(data);
   }
 
   /** 단건 입고 확정 (바코드 스캔) */
   @Post('confirm')
-  async confirmReceiving(@Body() dto: ConfirmConReceivingDto, @Company() company: string, @Plant() plant: string) {
-    const data = await this.labelService.confirmReceiving(dto, company, plant);
+  async confirmReceiving(@Body() dto: ConfirmConReceivingDto, @OrganizationId() organizationId: number) {
+    const data = await this.labelService.confirmReceiving(dto, organizationId);
     return ResponseUtil.success(data);
   }
 
   /** 단건 반납입고 (바코드 스캔) */
   @Post('return')
-  async returnReceiving(@Body() dto: ReturnConReceivingDto, @Company() company: string, @Plant() plant: string) {
-    const data = await this.labelService.returnByScan(dto, company, plant);
+  async returnReceiving(@Body() dto: ReturnConReceivingDto, @OrganizationId() organizationId: number) {
+    const data = await this.labelService.returnByScan(dto, organizationId);
     return ResponseUtil.success(data);
   }
 
   /** 단건 출고 (바코드 스캔) */
   @Post('issue')
-  async issueByScan(@Body() dto: IssueConDto, @Company() company: string, @Plant() plant: string) {
-    const data = await this.labelService.issueByScan(dto, company, plant);
+  async issueByScan(@Body() dto: IssueConDto, @OrganizationId() organizationId: number) {
+    const data = await this.labelService.issueByScan(dto, organizationId);
     return ResponseUtil.success(data);
   }
 
   /** 단건 출고취소 (바코드 스캔) */
   @Post('issue-return')
-  async issueReturnByScan(@Body() dto: IssueReturnConDto, @Company() company: string, @Plant() plant: string) {
-    const data = await this.labelService.issueReturnByScan(dto, company, plant);
+  async issueReturnByScan(@Body() dto: IssueReturnConDto, @OrganizationId() organizationId: number) {
+    const data = await this.labelService.issueReturnByScan(dto, organizationId);
     return ResponseUtil.success(data);
   }
 
   /** 다건 입고 확정 */
   @Post('confirm-bulk')
-  async confirmBulk(@Body() dto: BulkConfirmConReceivingDto, @Company() company: string, @Plant() plant: string) {
-    const data = await this.labelService.bulkConfirmReceiving(dto, company, plant);
+  async confirmBulk(@Body() dto: BulkConfirmConReceivingDto, @OrganizationId() organizationId: number) {
+    const data = await this.labelService.bulkConfirmReceiving(dto, organizationId);
     return ResponseUtil.success(data);
   }
 }

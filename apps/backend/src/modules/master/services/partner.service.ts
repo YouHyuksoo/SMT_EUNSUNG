@@ -16,24 +16,20 @@ export class PartnerService {
     private readonly partnerRepository: Repository<PartnerMaster>,
   ) {}
 
-  private tenantWhere(company?: string, plant?: string) {
+  private tenantWhere(organizationId?: number) {
     return {
-      ...(company ? { company } : {}),
-      ...(plant ? { plant } : {}),
+      ...(organizationId != null ? { organizationId } : {}),
     };
   }
 
-  async findAll(query: PartnerQueryDto, company?: string, plant?: string) {
+  async findAll(query: PartnerQueryDto, organizationId?: number) {
     const { page = 1, limit = 10, partnerType, search, useYn } = query;
     const skip = (page - 1) * limit;
 
     const queryBuilder = this.partnerRepository.createQueryBuilder('partner')
 
-    if (company) {
-      queryBuilder.andWhere('partner.company = :company', { company });
-    }
-    if (plant) {
-      queryBuilder.andWhere('partner.plant = :plant', { plant });
+    if (organizationId != null) {
+      queryBuilder.andWhere('partner.organizationId = :organizationId', { organizationId });
     }
 
     if (partnerType) {
@@ -64,25 +60,25 @@ export class PartnerService {
     return { data, total, page, limit };
   }
 
-  async findById(partnerCode: string, company?: string, plant?: string) {
+  async findById(partnerCode: string, organizationId?: number) {
     const partner = await this.partnerRepository.findOne({
-      where: { partnerCode, ...this.tenantWhere(company, plant) },
+      where: { partnerCode, ...this.tenantWhere(organizationId) },
     });
     if (!partner) throw new NotFoundException(`거래처를 찾을 수 없습니다: ${partnerCode}`);
     return partner;
   }
 
-  async findByCode(partnerCode: string, company?: string, plant?: string) {
+  async findByCode(partnerCode: string, organizationId?: number) {
     const partner = await this.partnerRepository.findOne({
-      where: { partnerCode, ...this.tenantWhere(company, plant) },
+      where: { partnerCode, ...this.tenantWhere(organizationId) },
     });
     if (!partner) throw new NotFoundException(`거래처를 찾을 수 없습니다: ${partnerCode}`);
     return partner;
   }
 
-  async create(dto: CreatePartnerDto, company?: string, plant?: string) {
+  async create(dto: CreatePartnerDto, organizationId?: number) {
     const existing = await this.partnerRepository.findOne({
-      where: { partnerCode: dto.partnerCode, ...this.tenantWhere(company, plant) },
+      where: { partnerCode: dto.partnerCode, ...this.tenantWhere(organizationId) },
     });
 
     if (existing) throw new ConflictException(`이미 존재하는 거래처 코드입니다: ${dto.partnerCode}`);
@@ -102,15 +98,14 @@ export class PartnerService {
       inspectionMode: dto.inspectionMode ?? 'NORMAL',
       remark: dto.remark,
       useYn: dto.useYn ?? 'Y',
-      company,
-      plant,
+      organizationId,
     });
 
     return this.partnerRepository.save(partner);
   }
 
-  async update(partnerCode: string, dto: UpdatePartnerDto, company?: string, plant?: string) {
-    await this.findById(partnerCode, company, plant);
+  async update(partnerCode: string, dto: UpdatePartnerDto, organizationId?: number) {
+    await this.findById(partnerCode, organizationId);
     const updateData: Partial<Pick<PartnerMaster,
       | 'partnerName'
       | 'partnerType'
@@ -140,24 +135,24 @@ export class PartnerService {
       ...(dto.remark !== undefined ? { remark: dto.remark } : {}),
       ...(dto.useYn !== undefined ? { useYn: dto.useYn } : {}),
     };
-    await this.partnerRepository.update({ partnerCode, ...this.tenantWhere(company, plant) }, updateData);
-    return this.findById(partnerCode, company, plant);
+    await this.partnerRepository.update({ partnerCode, ...this.tenantWhere(organizationId) }, updateData);
+    return this.findById(partnerCode, organizationId);
   }
 
-  async delete(partnerCode: string, company?: string, plant?: string) {
-    await this.findById(partnerCode, company, plant);
-    await this.partnerRepository.delete({ partnerCode, ...this.tenantWhere(company, plant) });
+  async delete(partnerCode: string, organizationId?: number) {
+    await this.findById(partnerCode, organizationId);
+    await this.partnerRepository.delete({ partnerCode, ...this.tenantWhere(organizationId) });
     return { partnerCode };
   }
 
-  async findByType(partnerType: string, company?: string, plant?: string) {
+  async findByType(partnerType: string, organizationId?: number) {
     return this.partnerRepository.find({
-      where: { partnerType, useYn: 'Y', ...this.tenantWhere(company, plant) },
+      where: { partnerType, useYn: 'Y', ...this.tenantWhere(organizationId) },
       order: { partnerCode: 'asc' },
     });
   }
 
-  async getStatistics(company?: string, plant?: string) {
+  async getStatistics(organizationId?: number) {
     // 4번 count → 1번 집계 쿼리로 통합
     const qb = this.partnerRepository
       .createQueryBuilder('p')
@@ -166,8 +161,7 @@ export class PartnerService {
       .addSelect("SUM(CASE WHEN p.partnerType = 'CUSTOMER' THEN 1 ELSE 0 END)", 'customerCount')
       .addSelect("SUM(CASE WHEN p.useYn = 'Y' THEN 1 ELSE 0 END)", 'activeCount');
 
-    if (company) qb.andWhere('p.company = :company', { company });
-    if (plant) qb.andWhere('p.plant = :plant', { plant });
+    if (organizationId != null) qb.andWhere('p.organizationId = :organizationId', { organizationId });
 
     const stats = await qb.getRawOne();
 

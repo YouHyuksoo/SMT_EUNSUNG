@@ -15,7 +15,7 @@ import { ReworkOrder } from './rework-order.entity';
 import { ProcessMaster } from './process-master.entity';
 
 @Entity({ name: 'REWORK_PROCESSES' })
-@Index(['company', 'plant', 'reworkOrderId'])
+@Index(['organizationId', 'reworkOrderId'])
 export class ReworkProcess {
   @PrimaryColumn({ name: 'REWORK_ORDER_ID', length: 50 })
   reworkOrderId: string;
@@ -29,8 +29,7 @@ export class ReworkProcess {
 
   @ManyToOne(() => ProcessMaster)
   @JoinColumn([
-    { name: 'COMPANY', referencedColumnName: 'company' },
-    { name: 'PLANT_CD', referencedColumnName: 'plant' },
+    { name: 'ORGANIZATION_ID', referencedColumnName: 'organizationId' },
     { name: 'PROCESS_CODE', referencedColumnName: 'processCode' },
   ])
   process: ProcessMaster;
@@ -68,11 +67,8 @@ export class ReworkProcess {
   @Column({ type: 'varchar2', name: 'REMARK', length: 500, nullable: true })
   remark: string;
 
-  @Column({ name: 'COMPANY', length: 50 })
-  company: string;
-
-  @Column({ name: 'PLANT_CD', length: 20 })
-  plant: string;
+  @Column({ name: 'ORGANIZATION_ID', type: 'number' })
+  organizationId!: number;
 
   @Column({ type: 'varchar2', name: 'CREATED_BY', length: 50, nullable: true })
   createdBy: string;

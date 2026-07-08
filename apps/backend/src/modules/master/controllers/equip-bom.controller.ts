@@ -28,7 +28,7 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
-import { Company, Plant } from '../../../common/decorators/tenant.decorator';
+import { OrganizationId } from '../../../common/decorators/tenant.decorator';
 import { EquipBomService } from '../services/equip-bom.service';
 import {
   CreateEquipBomItemDto,
@@ -51,8 +51,8 @@ export class EquipBomController {
 
   @Get('items')
   @ApiOperation({ summary: 'BOM 품목 목록 조회' })
-  async findAllItems(@Query() query: EquipBomItemQueryDto, @Company() company: string, @Plant() plant: string) {
-    const result = await this.equipBomService.findAllItems(query, company, plant);
+  async findAllItems(@Query() query: EquipBomItemQueryDto, @OrganizationId() organizationId: number) {
+    const result = await this.equipBomService.findAllItems(query, organizationId);
     return ResponseUtil.paged(result.data, result.total, result.page, result.limit);
   }
 
@@ -61,18 +61,17 @@ export class EquipBomController {
   async findItem(
     @Param('equipCode') equipCode: string,
     @Param('bomItemCode') bomItemCode: string,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.equipBomService.findItem(equipCode, bomItemCode, company, plant);
+    const data = await this.equipBomService.findItem(equipCode, bomItemCode, organizationId);
     return ResponseUtil.success(data);
   }
 
   @Post('items')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'BOM 품목 생성' })
-  async createItem(@Body() dto: CreateEquipBomItemDto, @Company() company: string, @Plant() plant: string) {
-    const data = await this.equipBomService.createItem(dto, company, plant);
+  async createItem(@Body() dto: CreateEquipBomItemDto, @OrganizationId() organizationId: number) {
+    const data = await this.equipBomService.createItem(dto, organizationId);
     return ResponseUtil.success(data, 'BOM 품목이 생성되었습니다.');
   }
 
@@ -82,10 +81,9 @@ export class EquipBomController {
     @Param('equipCode') equipCode: string,
     @Param('bomItemCode') bomItemCode: string,
     @Body() dto: UpdateEquipBomItemDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.equipBomService.updateItem(equipCode, bomItemCode, dto, company, plant);
+    const data = await this.equipBomService.updateItem(equipCode, bomItemCode, dto, organizationId);
     return ResponseUtil.success(data, 'BOM 품목이 수정되었습니다.');
   }
 
@@ -94,10 +92,9 @@ export class EquipBomController {
   async deleteItem(
     @Param('equipCode') equipCode: string,
     @Param('bomItemCode') bomItemCode: string,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    await this.equipBomService.deleteItem(equipCode, bomItemCode, company, plant);
+    await this.equipBomService.deleteItem(equipCode, bomItemCode, organizationId);
     return ResponseUtil.success(null, 'BOM 품목이 삭제되었습니다.');
   }
 
@@ -107,30 +104,30 @@ export class EquipBomController {
 
   @Get('rels')
   @ApiOperation({ summary: '설비-BOM 연결 목록 조회' })
-  async findAllRels(@Query() query: EquipBomRelQueryDto, @Company() company: string, @Plant() plant: string) {
-    const result = await this.equipBomService.findAllRels(query, company, plant);
+  async findAllRels(@Query() query: EquipBomRelQueryDto, @OrganizationId() organizationId: number) {
+    const result = await this.equipBomService.findAllRels(query, organizationId);
     return ResponseUtil.paged(result.data, result.total, result.page, result.limit);
   }
 
   @Get('rels/:equipCode/:bomItemCode')
   @ApiOperation({ summary: '설비-BOM 연결 상세 조회' })
-  async findRelByCompositeKey(@Param('equipCode') equipCode: string, @Param('bomItemCode') bomItemCode: string, @Company() company: string, @Plant() plant: string) {
-    const data = await this.equipBomService.findRelByCompositeKey(equipCode, bomItemCode, company, plant);
+  async findRelByCompositeKey(@Param('equipCode') equipCode: string, @Param('bomItemCode') bomItemCode: string, @OrganizationId() organizationId: number) {
+    const data = await this.equipBomService.findRelByCompositeKey(equipCode, bomItemCode, organizationId);
     return ResponseUtil.success(data);
   }
 
   @Get('equip/:equipCode')
   @ApiOperation({ summary: '특정 설비의 BOM 목록 조회' })
-  async getEquipBomList(@Param('equipCode') equipCode: string, @Company() company: string, @Plant() plant: string) {
-    const data = await this.equipBomService.getEquipBomList(equipCode, company, plant);
+  async getEquipBomList(@Param('equipCode') equipCode: string, @OrganizationId() organizationId: number) {
+    const data = await this.equipBomService.getEquipBomList(equipCode, organizationId);
     return ResponseUtil.success(data);
   }
 
   @Post('rels')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: '설비-BOM 연결 생성' })
-  async createRel(@Body() dto: CreateEquipBomRelDto, @Company() company: string, @Plant() plant: string) {
-    const data = await this.equipBomService.createRel(dto, company, plant);
+  async createRel(@Body() dto: CreateEquipBomRelDto, @OrganizationId() organizationId: number) {
+    const data = await this.equipBomService.createRel(dto, organizationId);
     return ResponseUtil.success(data, '설비-BOM 연결이 생성되었습니다.');
   }
 
@@ -140,17 +137,16 @@ export class EquipBomController {
     @Param('equipCode') equipCode: string,
     @Param('bomItemCode') bomItemCode: string,
     @Body() dto: UpdateEquipBomRelDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.equipBomService.updateRel(equipCode, bomItemCode, dto, company, plant);
+    const data = await this.equipBomService.updateRel(equipCode, bomItemCode, dto, organizationId);
     return ResponseUtil.success(data, '설비-BOM 연결이 수정되었습니다.');
   }
 
   @Delete('rels/:equipCode/:bomItemCode')
   @ApiOperation({ summary: '설비-BOM 연결 삭제' })
-  async deleteRel(@Param('equipCode') equipCode: string, @Param('bomItemCode') bomItemCode: string, @Company() company: string, @Plant() plant: string) {
-    await this.equipBomService.deleteRel(equipCode, bomItemCode, company, plant);
+  async deleteRel(@Param('equipCode') equipCode: string, @Param('bomItemCode') bomItemCode: string, @OrganizationId() organizationId: number) {
+    await this.equipBomService.deleteRel(equipCode, bomItemCode, organizationId);
     return ResponseUtil.success(null, '설비-BOM 연결이 삭제되었습니다.');
   }
 }

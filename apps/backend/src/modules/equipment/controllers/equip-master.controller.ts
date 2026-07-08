@@ -51,7 +51,7 @@ import {
 } from '../dto/equip-master.dto';
 import { EQUIP_TYPE_VALUES, EQUIP_STATUS_VALUES } from '@smt/shared';
 import { ResponseUtil } from '../../../common/dto/response.dto';
-import { Company, Plant } from '../../../common/decorators/tenant.decorator';
+import { OrganizationId } from '../../../common/decorators/tenant.decorator';
 
 @ApiTags('설비관리 - 설비마스터')
 @Controller('equipment/equips')
@@ -65,7 +65,7 @@ export class EquipMasterController {
   @Get('stats')
   @ApiOperation({ summary: '설비 현황 통계' })
   @SwaggerResponse({ status: 200, description: '설비 현황 통계 조회 성공' })
-  async getStats(@Company() company: string, @Plant() plant: string) {
+  async getStats(@OrganizationId() organizationId: number) {
     const data = await this.equipMasterService.getEquipmentStats(company, plant);
     return ResponseUtil.success(data);
   }
@@ -73,7 +73,7 @@ export class EquipMasterController {
   @Get('maintenance')
   @ApiOperation({ summary: '정비중/중지 설비 목록 조회' })
   @SwaggerResponse({ status: 200, description: '정비중/중지 설비 목록 조회 성공' })
-  async getMaintenanceEquipments(@Company() company: string, @Plant() plant: string) {
+  async getMaintenanceEquipments(@OrganizationId() organizationId: number) {
     const data = await this.equipMasterService.getMaintenanceEquipments(company, plant);
     return ResponseUtil.success(data);
   }
@@ -83,10 +83,9 @@ export class EquipMasterController {
   @ApiParam({ name: 'lineCode', description: '라인 코드', example: 'LINE-01' })
   async findByLineCode(
     @Param('lineCode') lineCode: string,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.equipMasterService.findByLineCode(lineCode, company, plant);
+    const data = await this.equipMasterService.findByLineCode(lineCode, organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -95,10 +94,9 @@ export class EquipMasterController {
   @ApiParam({ name: 'equipType', description: '설비 유형', enum: EQUIP_TYPE_VALUES })
   async findByType(
     @Param('equipType') equipType: string,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.equipMasterService.findByType(equipType, company, plant);
+    const data = await this.equipMasterService.findByType(equipType, organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -107,10 +105,9 @@ export class EquipMasterController {
   @ApiParam({ name: 'status', description: '설비 상태', enum: EQUIP_STATUS_VALUES })
   async findByStatus(
     @Param('status') status: string,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.equipMasterService.findByStatus(status, company, plant);
+    const data = await this.equipMasterService.findByStatus(status, organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -119,10 +116,9 @@ export class EquipMasterController {
   @ApiParam({ name: 'equipCode', description: '설비 코드', example: 'EQ-001' })
   async findByCode(
     @Param('equipCode') equipCode: string,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.equipMasterService.findByCode(equipCode, company, plant);
+    const data = await this.equipMasterService.findByCode(equipCode, organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -131,10 +127,9 @@ export class EquipMasterController {
   @SwaggerResponse({ status: 200, description: '설비 목록 조회 성공' })
   async findAll(
     @Query() query: EquipMasterQueryDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const result = await this.equipMasterService.findAll({ ...query, company, plant });
+    const result = await this.equipMasterService.findAll({ ...query, organizationId });
     return ResponseUtil.paged(result.data, result.total, result.page, result.limit);
   }
 
@@ -143,10 +138,9 @@ export class EquipMasterController {
   @ApiParam({ name: 'id', description: '설비 ID' })
   async findById(
     @Param('id') id: string,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.equipMasterService.findById(id, company, plant);
+    const data = await this.equipMasterService.findById(id, organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -180,11 +174,10 @@ export class EquipMasterController {
   async uploadImage(
     @Param('id') id: string,
     @UploadedFile() file: Express.Multer.File,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
     const imageUrl = `/uploads/equips/${file.filename}`;
-    const data = await this.equipMasterService.updateImage(id, imageUrl, company, plant);
+    const data = await this.equipMasterService.updateImage(id, imageUrl, organizationId);
     return ResponseUtil.success(data, '설비 사진이 업로드되었습니다.');
   }
 
@@ -192,10 +185,9 @@ export class EquipMasterController {
   @ApiOperation({ summary: '설비 사진 삭제' })
   async removeImage(
     @Param('id') id: string,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const existing = await this.equipMasterService.findById(id, company, plant);
+    const existing = await this.equipMasterService.findById(id, organizationId);
     if (existing.imageUrl) {
       const filePath = join('.', existing.imageUrl);
       try {
@@ -204,7 +196,7 @@ export class EquipMasterController {
         // 파일 삭제 실패는 DB 경로 해제를 막지 않는다.
       }
     }
-    const data = await this.equipMasterService.updateImage(id, null, company, plant);
+    const data = await this.equipMasterService.updateImage(id, null, organizationId);
     return ResponseUtil.success(data, '설비 사진이 삭제되었습니다.');
   }
 
@@ -219,10 +211,9 @@ export class EquipMasterController {
   @SwaggerResponse({ status: 409, description: '중복된 설비 코드' })
   async create(
     @Body() dto: CreateEquipMasterDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.equipMasterService.create(dto, company, plant);
+    const data = await this.equipMasterService.create(dto, organizationId);
     return ResponseUtil.success(data, '설비가 생성되었습니다.');
   }
 
@@ -234,10 +225,9 @@ export class EquipMasterController {
   async update(
     @Param('id') id: string,
     @Body() dto: UpdateEquipMasterDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.equipMasterService.update(id, dto, company, plant);
+    const data = await this.equipMasterService.update(id, dto, organizationId);
     return ResponseUtil.success(data, '설비가 수정되었습니다.');
   }
 
@@ -248,10 +238,9 @@ export class EquipMasterController {
   @SwaggerResponse({ status: 404, description: '설비를 찾을 수 없음' })
   async delete(
     @Param('id') id: string,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    await this.equipMasterService.delete(id, company, plant);
+    await this.equipMasterService.delete(id, organizationId);
     return ResponseUtil.success(null, '설비가 삭제되었습니다.');
   }
 
@@ -267,10 +256,9 @@ export class EquipMasterController {
   async changeStatus(
     @Param('id') id: string,
     @Body() dto: ChangeEquipStatusDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.equipMasterService.changeStatus(id, dto, company, plant);
+    const data = await this.equipMasterService.changeStatus(id, dto, organizationId);
     return ResponseUtil.success(data, '설비 상태가 변경되었습니다.');
   }
 
@@ -282,10 +270,9 @@ export class EquipMasterController {
   async assignJobOrder(
     @Param('id') id: string,
     @Body() dto: AssignJobOrderDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.equipMasterService.assignJobOrder(id, dto, company, plant);
+    const data = await this.equipMasterService.assignJobOrder(id, dto, organizationId);
     return ResponseUtil.success(data, dto.orderNo ? '작업지시가 할당되었습니다.' : '작업지시가 해제되었습니다.');
   }
 
@@ -297,10 +284,9 @@ export class EquipMasterController {
   async assignWorkerCodes(
     @Param('id') id: string,
     @Body() dto: AssignWorkerCodesDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.equipMasterService.assignWorkerCodes(id, dto, company, plant);
+    const data = await this.equipMasterService.assignWorkerCodes(id, dto, organizationId);
     return ResponseUtil.success(data, dto.workerCodes ? '현재 작업자가 할당되었습니다.' : '현재 작업자가 해제되었습니다.');
   }
 
@@ -311,7 +297,7 @@ export class EquipMasterController {
   @Get('metadata/lines')
   @ApiOperation({ summary: '라인 목록 조회 (설비 선택용)' })
   @SwaggerResponse({ status: 200, description: '라인 목록 조회 성공' })
-  async getLines(@Company() company: string, @Plant() plant: string) {
+  async getLines(@OrganizationId() organizationId: number) {
     const data = await this.equipMasterService.getLines(company, plant);
     return ResponseUtil.success(data);
   }
@@ -319,7 +305,7 @@ export class EquipMasterController {
   @Get('metadata/processes')
   @ApiOperation({ summary: '공정 목록 조회 (설비 선택용)' })
   @SwaggerResponse({ status: 200, description: '공정 목록 조회 성공' })
-  async getProcesses(@Company() company: string, @Plant() plant: string) {
+  async getProcesses(@OrganizationId() organizationId: number) {
     const data = await this.equipMasterService.getProcesses(company, plant);
     return ResponseUtil.success(data);
   }

@@ -41,36 +41,31 @@ export class ProductPhysicalInvService {
     private readonly tx: TransactionService,
   ) {}
 
-  private tenantWhere(company?: string | null, plant?: string | null) {
+  private tenantWhere(organizationId?: number | null) {
     return {
-      ...(company ? { company } : {}),
-      ...(plant ? { plant } : {}),
+      ...(organizationId != null ? { organizationId } : {}),
     };
   }
 
   private assertSameTenant(
     context: string,
-    row: { company?: string | null; plant?: string | null },
-    company?: string | null,
-    plant?: string | null,
+    row: { organizationId?: number | null },
+    organizationId?: number | null,
   ) {
-    if (company && row.company !== company) {
-      throw new BadRequestException(`${context} 회사 정보가 일치하지 않습니다. request=${company}, row=${row.company ?? 'NULL'}`);
-    }
-    if (plant && row.plant !== plant) {
-      throw new BadRequestException(`${context} 사업장 정보가 일치하지 않습니다. request=${plant}, row=${row.plant ?? 'NULL'}`);
+    if (organizationId != null && row.organizationId !== organizationId) {
+      throw new BadRequestException(`${context} 조직 정보가 일치하지 않습니다. request=${organizationId}, row=${row.organizationId ?? 'NULL'}`);
     }
   }
 
-  async findStocks(query: ProductPhysicalInvQueryDto, company?: string, plant?: string) {
+  async findStocks(query: ProductPhysicalInvQueryDto, organizationId?: number) {
     const { page = 1, limit = 50, search } = query;
     const warehouseCode = query.warehouseCode ?? query.warehouseId;
     const skip = (page - 1) * limit;
 
     const qb = this.stockRepository
       .createQueryBuilder('s')
-      .leftJoin(ItemMaster, 'p', 'p.itemCode = s.itemCode AND p.company = s.company AND p.plant = s.plant')
-      .leftJoin(Warehouse, 'w', 'w.warehouseCode = s.warehouseCode AND w.company = s.company AND w.plant = s.plant')
+      .leftJoin(ItemMaster, 'p', 'p.itemCode = s.itemCode AND p.organizationId = s.organizationId')
+      .leftJoin(Warehouse, 'w', 'w.warehouseCode = s.warehouseCode AND w.organizationId = s.organizationId')
       .select([
         's.warehouseCode || \'::\' || s.itemCode AS "id"',
         's.warehouseCode AS "warehouseCode"',
@@ -87,8 +82,7 @@ export class ProductPhysicalInvService {
       ])
       .where('s.qty > 0');
 
-    if (company) qb.andWhere('s.company = :company', { company });
-    if (plant) qb.andWhere('s.plant = :plant', { plant });
+    if (organizationId != null) qb.andWhere('s.organizationId = :organizationId', { organizationId });
     if (warehouseCode) qb.andWhere('s.warehouseCode = :warehouseCode', { warehouseCode });
 
     if (search) {
@@ -106,15 +100,15 @@ export class ProductPhysicalInvService {
     return { data, total, page, limit };
   }
 
-  async findHistory(query: ProductPhysicalInvHistoryQueryDto, company?: string, plant?: string) {
+  async findHistory(query: ProductPhysicalInvHistoryQueryDto, organizationId?: number) {
     const { page = 1, limit = 50, search, fromDate, toDate } = query;
     const warehouseCode = query.warehouseCode ?? query.warehouseId;
 
     const qb = this.invAdjLogRepository
       .createQueryBuilder('log')
-      .leftJoin(ItemMaster, 'part', 'part.itemCode = log.itemCode AND part.company = log.company AND part.plant = log.plant')
-      .leftJoin(MatLot, 'lot', 'lot.matUid = log.matUid AND lot.company = log.company AND lot.plant = log.plant')
-      .leftJoin(Warehouse, 'wh', 'wh.warehouseCode = log.warehouseCode AND wh.company = log.company AND wh.plant = log.plant')
+      .leftJoin(ItemMaster, 'part', 'part.itemCode = log.itemCode AND part.organizationId = log.organizationId')
+      .leftJoin(MatLot, 'lot', 'lot.matUid = log.matUid AND lot.organizationId = log.organizationId')
+      .leftJoin(Warehouse, 'wh', 'wh.warehouseCode = log.warehouseCode AND wh.organizationId = log.organizationId')
       .select([
         'log.adjDate AS "adjDate"',
         'log.seq AS "seq"',
@@ -134,8 +128,7 @@ export class ProductPhysicalInvService {
       ])
       .where('log.adjType = :adjType', { adjType: 'PRODUCT_PHYSICAL_COUNT' });
 
-    if (company) qb.andWhere('log.company = :company', { company });
-    if (plant) qb.andWhere('log.plant = :plant', { plant });
+    if (organizationId != null) qb.andWhere('log.organizationId = :organizationId', { organizationId });
     if (warehouseCode) qb.andWhere('log.warehouseCode = :warehouseCode', { warehouseCode });
     if (fromDate) qb.andWhere('log.createdAt >= :fromDate', { fromDate: new Date(fromDate) });
     if (toDate) {
@@ -158,7 +151,7 @@ export class ProductPhysicalInvService {
     return { data, total, page, limit };
   }
 
-  async applyCount(dto: CreateProductPhysicalInvDto, company?: string, plant?: string, actor?: string) {
+  async applyCount(dto: CreateProductPhysicalInvDto, organizationId?: number, actor?: string) {
     const { items, countMonth, countType } = dto;
     const createdBy = actor || dto.createdBy || 'system';
 
@@ -174,8 +167,7 @@ export class ProductPhysicalInvService {
         const scopedKey: FindOptionsWhere<ProductStock> = {
           warehouseCode,
           itemCode,
-          ...(company && { company }),
-          ...(plant && { plant }),
+          ...(organizationId != null ? { organizationId } : {}),
         };
 
         const stock = await queryRunner.manager.findOne(ProductStock, {
@@ -185,7 +177,7 @@ export class ProductPhysicalInvService {
         if (!stock) {
           throw new NotFoundException(`재고를 찾을 수 없습니다: ${item.stockId}`);
         }
-        this.assertSameTenant('제품 실사 대상 재고', stock, company, plant);
+        this.assertSameTenant('제품 실사 대상 재고', stock, organizationId);
 
         const reservedQty = stock.reservedQty ?? 0;
         if (item.countedQty < reservedQty) {
@@ -213,8 +205,7 @@ export class ProductPhysicalInvService {
           beforeQty,
           afterQty,
           diffQty,
-          company: stock.company,
-          plant: stock.plant,
+          organizationId: stock.organizationId,
           reason: [
             countType === 'CANCEL' ? '[취소]' : null,
             countMonth ? `[${countMonth}]` : null,
@@ -245,10 +236,9 @@ export class ProductPhysicalInvService {
    * sessionId=seq(시퀀스라 고유), sessionNo='YYYY-MM-DD-seq'로 매핑한다.
    * 세션이 없으면 null(컨트롤러는 200 + null).
    */
-  async getActiveSession(company?: string, plant?: string) {
+  async getActiveSession(organizationId?: number) {
     const where: FindOptionsWhere<PhysicalInvSession> = { status: 'IN_PROGRESS', invType: 'PRODUCT' };
-    if (company) where.company = company;
-    if (plant) where.plant = plant;
+    if (organizationId != null) where.organizationId = organizationId;
 
     const session = await this.sessionRepository.findOne({ where, order: { createdAt: 'DESC' } });
     if (!session) return null;
@@ -256,7 +246,7 @@ export class ProductPhysicalInvService {
     let warehouseName = '전체 창고';
     if (session.warehouseCode) {
       const wh = await this.warehouseRepository.findOne({
-        where: { warehouseCode: session.warehouseCode, ...this.tenantWhere(company, plant) },
+        where: { warehouseCode: session.warehouseCode, ...this.tenantWhere(organizationId) },
       });
       warehouseName = wh?.warehouseName ?? session.warehouseCode;
     }
@@ -278,8 +268,7 @@ export class ProductPhysicalInvService {
    */
   async startSession(
     dto: StartProductPhysicalInvSessionDto,
-    company?: string,
-    plant?: string,
+    organizationId?: number,
     actor?: string,
   ): Promise<PhysicalInvSession> {
     const today = new Date();
@@ -287,7 +276,7 @@ export class ProductPhysicalInvService {
 
     return this.tx.run<PhysicalInvSession>(async (queryRunner) => {
       const existing = await queryRunner.manager.findOne(PhysicalInvSession, {
-        where: { status: 'IN_PROGRESS', invType: 'PRODUCT', ...(company && { company }), ...(plant && { plant }) },
+        where: { status: 'IN_PROGRESS', invType: 'PRODUCT', ...(organizationId != null ? { organizationId } : {}) },
       });
       if (existing) {
         throw new BadRequestException(
@@ -307,8 +296,7 @@ export class ProductPhysicalInvService {
         countMonth: dto.countMonth,
         status: 'IN_PROGRESS',
         warehouseCode: dto.warehouseCode ?? null,
-        company: company ?? null,
-        plant: plant ?? null,
+        organizationId: organizationId ?? null,
         startedBy: dto.startedBy ?? actor ?? null,
         remark: dto.remark ?? null,
       } as Partial<PhysicalInvSession>);
@@ -329,10 +317,9 @@ export class ProductPhysicalInvService {
   /**
    * 현재 제품 실사 세션 상태 조회 (IN_PROGRESS & invType='PRODUCT')
    */
-  async getSessionStatus(company?: string, plant?: string) {
+  async getSessionStatus(organizationId?: number) {
     const where: FindOptionsWhere<PhysicalInvSession> = { status: 'IN_PROGRESS', invType: 'PRODUCT' };
-    if (company) where.company = company;
-    if (plant) where.plant = plant;
+    if (organizationId != null) where.organizationId = organizationId;
 
     const session = await this.sessionRepository.findOne({ where, order: { createdAt: 'DESC' } });
     return {
@@ -344,10 +331,9 @@ export class ProductPhysicalInvService {
   /**
    * 진행 중 제품 실사 세션을 sessionId(=seq)로 찾는다.
    */
-  private async findActiveSessionBySeq(sessionId: number, company?: string, plant?: string) {
+  private async findActiveSessionBySeq(sessionId: number, organizationId?: number) {
     const where: FindOptionsWhere<PhysicalInvSession> = { seq: sessionId, invType: 'PRODUCT' };
-    if (company) where.company = company;
-    if (plant) where.plant = plant;
+    if (organizationId != null) where.organizationId = organizationId;
     return this.sessionRepository.findOne({ where });
   }
 
@@ -361,10 +347,10 @@ export class ProductPhysicalInvService {
    * 3. 세션 창고와 불일치 시 에러
    * 4. PHYSICAL_INV_COUNT_DETAILS upsert(+1). MAT_UID 컬럼에 제품 시리얼(FG_BARCODE)을 저장
    */
-  async scanCount(dto: ScanProductCountDto, company?: string, plant?: string) {
+  async scanCount(dto: ScanProductCountDto, organizationId?: number) {
     const { sessionId, barcode, countedBy } = dto;
 
-    const session = await this.findActiveSessionBySeq(sessionId, company, plant);
+    const session = await this.findActiveSessionBySeq(sessionId, organizationId);
     if (!session) {
       throw new NotFoundException(`진행 중인 제품 실사 세션을 찾을 수 없습니다. (sessionId=${sessionId})`);
     }
@@ -374,7 +360,7 @@ export class ProductPhysicalInvService {
 
     // 1) 바코드 → 제품 라벨(FG_LABELS) → itemCode
     const label = await this.fgLabelRepository.findOne({
-      where: { fgBarcode: barcode, ...this.tenantWhere(company, plant) },
+      where: { fgBarcode: barcode, ...this.tenantWhere(organizationId) },
     });
     if (!label) {
       throw new NotFoundException(`존재하지 않는 제품 바코드입니다: ${barcode}`);
@@ -384,7 +370,7 @@ export class ProductPhysicalInvService {
     // 2) PRODUCT_STOCKS 에서 itemCode 로 창고/시스템수량 해석
     const stockWhere: FindOptionsWhere<ProductStock> = {
       itemCode,
-      ...this.tenantWhere(company, plant),
+      ...this.tenantWhere(organizationId),
       ...(session.warehouseCode ? { warehouseCode: session.warehouseCode } : {}),
     };
     const stock = await this.stockRepository.findOne({ where: stockWhere });
@@ -402,7 +388,7 @@ export class ProductPhysicalInvService {
 
     // 3) 품목명 조회
     const part = await this.itemMasterRepository.findOne({
-      where: { itemCode, ...this.tenantWhere(company, plant) },
+      where: { itemCode, ...this.tenantWhere(organizationId) },
     });
     const itemName = part?.itemName ?? '';
 
@@ -430,7 +416,7 @@ export class ProductPhysicalInvService {
     await this.countDetailRepository.save(detail);
 
     // 5) 세션 품목별 집계(items) 구성
-    const items = await this.buildSessionItems(session, company, plant);
+    const items = await this.buildSessionItems(session, organizationId);
 
     return {
       itemCode,
@@ -446,14 +432,13 @@ export class ProductPhysicalInvService {
    */
   private async buildSessionItems(
     session: PhysicalInvSession,
-    company?: string,
-    plant?: string,
+    organizationId?: number,
   ): Promise<Array<{ itemCode: string; itemName: string; systemQty: number; countedQty: number }>> {
     const details = await this.countDetailRepository.find({
       where: {
         sessionDate: session.sessionDate,
         seq: session.seq,
-        ...this.tenantWhere(company, plant),
+        ...this.tenantWhere(organizationId),
       },
     });
     if (details.length === 0) return [];
@@ -470,7 +455,7 @@ export class ProductPhysicalInvService {
 
     const itemCodes = [...agg.keys()];
     const parts = itemCodes.length > 0
-      ? await this.itemMasterRepository.find({ where: { itemCode: In(itemCodes), ...this.tenantWhere(company, plant) } })
+      ? await this.itemMasterRepository.find({ where: { itemCode: In(itemCodes), ...this.tenantWhere(organizationId) } })
       : [];
     const partMap = new Map(parts.map(p => [p.itemCode, p.itemName]));
 

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file src/modules/inventory/services/product-inventory.service.ts
  * @description 제품(WIP/FG) 수불관리 서비스 - PRODUCT_STOCKS/PRODUCT_TRANSACTIONS 테이블 사용
  *
@@ -55,10 +55,9 @@ export class ProductInventoryService {
     manager: EntityManager,
     boxNo: string,
     assign: boolean,
-    company?: string | null,
-    plant?: string | null,
+    organizationId?: number | null,
   ): Promise<void> {
-    const tenantWhere = this.tenantWhere(company, plant);
+    const tenantWhere = this.tenantWhere(organizationId);
     if (assign) {
       const box = await manager.findOne(BoxMaster, { where: { boxNo, ...tenantWhere } });
       const serials: string[] = box?.serialList ? JSON.parse(box.serialList) : [];
@@ -73,26 +72,20 @@ export class ProductInventoryService {
     }
   }
 
-  private tenantWhere(company?: string | null, plant?: string | null) {
+  private tenantWhere(organizationId?: number | null) {
     return {
-      ...(company ? { company } : {}),
-      ...(plant ? { plant } : {}),
+      ...(organizationId != null ? { organizationId } : {}),
     };
   }
 
   private assertSameTenant(
     context: string,
-    expected: { company?: string | null; plant?: string | null },
-    actual: { company?: string | null; plant?: string | null },
+    expected: { organizationId?: number | null },
+    actual: { organizationId?: number | null },
   ) {
-    if (expected.company && actual.company !== expected.company) {
+    if (expected.organizationId != null && actual.organizationId !== expected.organizationId) {
       throw new BadRequestException(
-        `${context} 회사 정보가 일치하지 않습니다. expected=${expected.company}, row=${actual.company ?? 'NULL'}`,
-      );
-    }
-    if (expected.plant && actual.plant !== expected.plant) {
-      throw new BadRequestException(
-        `${context} 사업장 정보가 일치하지 않습니다. expected=${expected.plant}, row=${actual.plant ?? 'NULL'}`,
+        `${context} 조직 정보가 일치하지 않습니다. expected=${expected.organizationId}, row=${actual.organizationId ?? 'NULL'}`,
       );
     }
   }
@@ -124,7 +117,7 @@ export class ProductInventoryService {
 
   /** 제품 입고 처리 */
   async receiveStock(dto: ProductReceiveStockDto) {
-    const tenantWhere = this.tenantWhere(dto.company, dto.plant);
+    const tenantWhere = this.tenantWhere(dto.organizationId);
     const qualityStatus = this.normalizeQualityStatus(dto.qualityStatus);
 
     // 이중입고 가드: 박스(refType='BOX')는 1회만 입고. 동일 박스의 정상(DONE) 입고가 이미 있으면 거부.
@@ -168,15 +161,14 @@ export class ProductInventoryService {
         workerId: dto.workerId,
         remark: dto.remark,
         status: 'DONE',
-        company: dto.company,
-        plant: dto.plant,
+        organizationId: dto.organizationId,
       });
 
       const savedTransaction = await queryRunner.manager.save(ProductTransaction, transaction);
 
       // 박스 입고: 박스 시리얼(FG_LABELS)에 BOX_NO 스탬프 → 제품재고(미출하)로 인식
       if (dto.refType === 'BOX' && dto.refId) {
-        await this.stampBoxSerials(queryRunner.manager, dto.refId, true, dto.company, dto.plant);
+        await this.stampBoxSerials(queryRunner.manager, dto.refId, true, dto.organizationId);
       }
 
       // 2. 재고 업데이트 (품목+창고+품질상태)
@@ -202,8 +194,7 @@ export class ProductInventoryService {
           qty: dto.qty,
           reservedQty: 0,
           availableQty: dto.qty,
-          company: dto.company,
-          plant: dto.plant,
+          organizationId: dto.organizationId,
         });
       }
 
@@ -217,7 +208,7 @@ export class ProductInventoryService {
    * - 호출측 트랜잭션에 참여하므로 commit/rollback은 호출측이 담당
    */
   async receiveStockInTx(qr: QueryRunner, dto: ProductReceiveStockDto): Promise<ProductTransaction> {
-    const tenantWhere = this.tenantWhere(dto.company, dto.plant);
+    const tenantWhere = this.tenantWhere(dto.organizationId);
     const qualityStatus = this.normalizeQualityStatus(dto.qualityStatus);
 
     // 이중입고 가드: 박스(refType='BOX')는 1회만 입고
@@ -257,15 +248,14 @@ export class ProductInventoryService {
       workerId: dto.workerId,
       remark: dto.remark,
       status: 'DONE',
-      company: dto.company,
-      plant: dto.plant,
+      organizationId: dto.organizationId,
     });
 
     const saved = await qr.manager.save(ProductTransaction, transaction);
 
     // 박스 입고: 박스 시리얼(FG_LABELS)에 BOX_NO 스탬프
     if (dto.refType === 'BOX' && dto.refId) {
-      await this.stampBoxSerials(qr.manager, dto.refId, true, dto.company, dto.plant);
+      await this.stampBoxSerials(qr.manager, dto.refId, true, dto.organizationId);
     }
 
     const existingStock = await qr.manager.findOne(ProductStock, {
@@ -289,8 +279,7 @@ export class ProductInventoryService {
         qty: dto.qty,
         reservedQty: 0,
         availableQty: dto.qty,
-        company: dto.company,
-        plant: dto.plant,
+        organizationId: dto.organizationId,
       });
     }
 
@@ -306,7 +295,7 @@ export class ProductInventoryService {
    */
   async receiveFinishedFromWip(dto: ProductReceiveStockDto) {
     return this.tx.run(async (qr) => {
-      const tenantWhere = this.tenantWhere(dto.company, dto.plant);
+      const tenantWhere = this.tenantWhere(dto.organizationId);
 
       // 박스 이중입고 가드 (fg/receive 경로에도 적용 — 기존 issueStock 경로엔 없던 방어)
       if (dto.refType === 'BOX' && dto.refId) {
@@ -340,13 +329,12 @@ export class ProductInventoryService {
         refId: dto.refId,
         workerId: dto.workerId,
         remark: dto.remark ?? '제품입고 WIP->FG 이동',
-        company: dto.company,
-        plant: dto.plant,
+        organizationId: dto.organizationId,
       });
 
       // 박스 입고: 박스 시리얼(FG_LABELS)에 BOX_NO 스탬프
       if (dto.refType === 'BOX' && dto.refId) {
-        await this.stampBoxSerials(qr.manager, dto.refId, true, dto.company, dto.plant);
+        await this.stampBoxSerials(qr.manager, dto.refId, true, dto.organizationId);
       }
 
       return lastTx;
@@ -356,7 +344,7 @@ export class ProductInventoryService {
   /** 제품 출고 처리 */
   async issueStock(dto: ProductIssueStockDto) {
     const transNo = await this.generateTransNo();
-    const tenantWhere = this.tenantWhere(dto.company, dto.plant);
+    const tenantWhere = this.tenantWhere(dto.organizationId);
     const qualityStatus = this.normalizeQualityStatus(dto.qualityStatus);
 
     return this.tx.run(async (queryRunner) => {
@@ -392,8 +380,7 @@ export class ProductInventoryService {
         issueType: dto.issueType,
         remark: dto.remark,
         status: 'DONE',
-        company: dto.company,
-        plant: dto.plant,
+        organizationId: dto.organizationId,
       });
 
       const savedTransaction = await queryRunner.manager.save(ProductTransaction, transaction);
@@ -428,8 +415,7 @@ export class ProductInventoryService {
             qty: dto.qty,
             reservedQty: 0,
             availableQty: dto.qty,
-            company: dto.company,
-            plant: dto.plant,
+            organizationId: dto.organizationId,
           });
         }
       }
@@ -445,7 +431,7 @@ export class ProductInventoryService {
    */
   async issueStockInTx(qr: QueryRunner, dto: ProductIssueStockDto): Promise<ProductTransaction> {
     const transNo = await this.generateTransNo(qr);
-    const tenantWhere = this.tenantWhere(dto.company, dto.plant);
+    const tenantWhere = this.tenantWhere(dto.organizationId);
     const qualityStatus = this.normalizeQualityStatus(dto.qualityStatus);
 
     // 1. 재고 확인 (품목+창고+품질상태)
@@ -482,8 +468,7 @@ export class ProductInventoryService {
       issueType: dto.issueType,
       remark: dto.remark,
       status: 'DONE',
-      company: dto.company,
-      plant: dto.plant,
+      organizationId: dto.organizationId,
     });
 
     const saved = await qr.manager.save(ProductTransaction, transaction);
@@ -524,8 +509,7 @@ export class ProductInventoryService {
           qty: dto.qty,
           reservedQty: 0,
           availableQty: dto.qty,
-          company: dto.company,
-          plant: dto.plant,
+          organizationId: dto.organizationId,
         });
       }
     }
@@ -559,12 +543,11 @@ export class ProductInventoryService {
       refId?: string;
       workerId?: string;
       remark?: string;
-      company?: string;
-      plant?: string;
+      organizationId?: number;
     },
   ): Promise<number> {
     if (!dto.qty || dto.qty <= 0) return 0;
-    const tenantWhere = this.tenantWhere(dto.company, dto.plant);
+    const tenantWhere = this.tenantWhere(dto.organizationId);
     const qualityStatus = this.normalizeQualityStatus(dto.qualityStatus);
     // 품목+창고+품질상태에서 qty만큼 1회 차감(시스템 외부 출하). 시리얼 추적은 FG_LABELS가 담당.
     const stock = await qr.manager.findOne(ProductStock, {
@@ -586,8 +569,7 @@ export class ProductInventoryService {
       refId: dto.refId,
       workerId: dto.workerId,
       remark: dto.remark,
-      company: dto.company,
-      plant: dto.plant,
+      organizationId: dto.organizationId,
     });
     // 소진된 행(qty 0, 예약 0) 정리
     await qr.manager
@@ -599,8 +581,7 @@ export class ProductInventoryService {
         item: dto.itemCode,
         qualityStatus,
       })
-      .andWhere(dto.company ? 'COMPANY = :company' : '1=1', dto.company ? { company: dto.company } : {})
-      .andWhere(dto.plant ? 'PLANT_CD = :plant' : '1=1', dto.plant ? { plant: dto.plant } : {})
+      .andWhere(dto.organizationId != null ? 'ORGANIZATION_ID = :organizationId' : '1=1', dto.organizationId != null ? { organizationId: dto.organizationId } : {})
       .execute();
     return dto.qty;
   }
@@ -616,11 +597,10 @@ export class ProductInventoryService {
     refType?: string;
     refId?: string;
     remark?: string;
-    company?: string;
-    plant?: string;
+    organizationId?: number;
   }): Promise<number> {
     if (!dto.qty || dto.qty <= 0) return 0;
-    const tenantWhere = this.tenantWhere(dto.company, dto.plant);
+    const tenantWhere = this.tenantWhere(dto.organizationId);
     const qualityStatus = this.normalizeQualityStatus(dto.qualityStatus);
     return this.tx.run(async (qr) => {
       // 품목+창고+품질상태에서 가용분만큼 1회 이동
@@ -641,8 +621,7 @@ export class ProductInventoryService {
           refType: dto.refType,
           refId: dto.refId,
           remark: dto.remark,
-          company: dto.company,
-          plant: dto.plant,
+          organizationId: dto.organizationId,
         });
       }
       // 소진된 from 창고 행(qty 0, 예약 0) 정리
@@ -655,8 +634,7 @@ export class ProductInventoryService {
           item: dto.itemCode,
           qualityStatus,
         })
-        .andWhere(dto.company ? 'COMPANY = :company' : '1=1', dto.company ? { company: dto.company } : {})
-        .andWhere(dto.plant ? 'PLANT_CD = :plant' : '1=1', dto.plant ? { plant: dto.plant } : {})
+        .andWhere(dto.organizationId != null ? 'ORGANIZATION_ID = :organizationId' : '1=1', dto.organizationId != null ? { organizationId: dto.organizationId } : {})
         .execute();
       this.logger.log(`재고 이동: ${dto.itemCode} × ${moved} ${dto.fromWarehouseId} → ${dto.toWarehouseId} (${dto.transType})`);
       return moved;
@@ -670,7 +648,7 @@ export class ProductInventoryService {
 
     const targetWarehouseCode = dto.toWarehouseId || 'DEFECT';
     const itemType = dto.itemType || (dto.fromWarehouseId === 'FG_WIP' ? 'FINISHED' : 'SEMI_PRODUCT');
-    const tenantWhere = this.tenantWhere(dto.company, dto.plant);
+    const tenantWhere = this.tenantWhere(dto.organizationId);
 
     return this.tx.run(async (qr) => {
       let defectWarehouse = await qr.manager.findOne(Warehouse, {
@@ -701,18 +679,16 @@ export class ProductInventoryService {
         refType: 'ADJUST',
         workerId: dto.workerId,
         remark: dto.remark || '불량창고 입고',
-        company: dto.company,
-        plant: dto.plant,
+        organizationId: dto.organizationId,
       });
     });
   }
 
-  async cancelTransaction(dto: CancelTransactionDto, company?: string, plant?: string) {
+  async cancelTransaction(dto: CancelTransactionDto, organizationId?: number) {
     const originalTrans = await this.transactionRepository.findOne({
       where: {
         transNo: dto.transactionId,
-        ...(company && { company }),
-        ...(plant && { plant }),
+        ...(organizationId != null ? { organizationId } : {}),
       },
     });
 
@@ -723,7 +699,7 @@ export class ProductInventoryService {
     if (originalTrans.status === 'CANCELED') {
       throw new BadRequestException('이미 취소된 트랜잭션입니다.');
     }
-    this.assertSameTenant('원본 제품거래', { company, plant }, originalTrans);
+    this.assertSameTenant('원본 제품거래', { organizationId }, originalTrans);
 
     return this.tx.run(async (queryRunner) => {
       return this.cancelTransactionInTx(queryRunner, originalTrans, dto);
@@ -741,7 +717,7 @@ export class ProductInventoryService {
   ): Promise<ProductTransaction> {
     const cancelTransType = this.getCancelTransType(originalTrans.transType);
     const transNo = await this.generateTransNo(qr);
-    const tenantWhere = this.tenantWhere(originalTrans.company, originalTrans.plant);
+    const tenantWhere = this.tenantWhere(originalTrans.organizationId);
     const qualityStatus = this.normalizeQualityStatus(originalTrans.qualityStatus);
 
     // 1. 원본 트랜잭션 상태 변경
@@ -770,8 +746,7 @@ export class ProductInventoryService {
       issueType: originalTrans.issueType,
       remark: dto.remark || `취소: ${originalTrans.transNo}`,
       status: 'DONE',
-      company: originalTrans.company,
-      plant: originalTrans.plant,
+      organizationId: originalTrans.organizationId,
     });
 
     const savedCancelTrans = await qr.manager.save(ProductTransaction, cancelTrans);
@@ -835,8 +810,7 @@ export class ProductInventoryService {
           qty: Math.abs(originalTrans.qty),
           reservedQty: 0,
           availableQty: Math.abs(originalTrans.qty),
-          company: originalTrans.company,
-          plant: originalTrans.plant,
+          organizationId: originalTrans.organizationId,
         });
       }
     }
@@ -856,10 +830,9 @@ export class ProductInventoryService {
   }
 
   /** 제품 현재고 조회 */
-  async getStock(query: ProductStockQueryDto, company?: string, plant?: string) {
+  async getStock(query: ProductStockQueryDto, organizationId?: number) {
     const where: FindOptionsWhere<ProductStock> = {};
-    if (company) where.company = company;
-    if (plant) where.plant = plant;
+    if (organizationId != null) where.organizationId = organizationId;
     if (query.warehouseId) where.warehouseCode = query.warehouseId;
     if (query.itemCode) where.itemCode = query.itemCode;
     if (query.itemType) where.itemType = query.itemType;
@@ -877,7 +850,7 @@ export class ProductInventoryService {
 
     const whCodes = [...new Set(filtered.map((s) => s.warehouseCode).filter(Boolean))];
     const itemCodes = [...new Set(filtered.map((s) => s.itemCode).filter(Boolean))];
-    const tenantWhere = this.tenantWhere(company, plant);
+    const tenantWhere = this.tenantWhere(organizationId);
 
     const warehouses = whCodes.length > 0 ? await this.warehouseRepository.find({
       where: { warehouseCode: In(whCodes), ...tenantWhere },
@@ -919,10 +892,9 @@ export class ProductInventoryService {
   }
 
   /** 제품 수불 이력 조회 */
-  async getTransactions(query: ProductTransactionQueryDto, company?: string, plant?: string) {
+  async getTransactions(query: ProductTransactionQueryDto, organizationId?: number) {
     const where: FindOptionsWhere<ProductTransaction> = {};
-    if (company) where.company = company;
-    if (plant) where.plant = plant;
+    if (organizationId != null) where.organizationId = organizationId;
     if (query.itemCode) where.itemCode = query.itemCode;
     if (query.itemType) where.itemType = query.itemType;
     if (query.qualityStatus) where.qualityStatus = query.qualityStatus;
@@ -967,7 +939,7 @@ export class ProductInventoryService {
     // 관련 데이터 일괄 조회
     const whIds = [...new Set(transactions.flatMap((t) => [t.fromWarehouseId, t.toWarehouseId].filter(Boolean)))];
     const itemCodes = [...new Set(transactions.map((t) => t.itemCode).filter(Boolean))];
-    const tenantWhere = this.tenantWhere(company, plant);
+    const tenantWhere = this.tenantWhere(organizationId);
 
     const warehouses = whIds.length > 0 ? await this.warehouseRepository.find({ where: { warehouseCode: In(whIds as string[]), ...tenantWhere } }) : [];
     const parts = itemCodes.length > 0 ? await this.itemMasterRepository.find({ where: { itemCode: In(itemCodes as string[]), ...tenantWhere } }) : [];

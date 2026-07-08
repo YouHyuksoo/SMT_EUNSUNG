@@ -140,11 +140,10 @@ describe('ActivityLogService', () => {
         limit: 20,
         fromDate: '2026-01-01',
         toDate: '2026-01-31',
-      } as any, 'COMPANY', 'PLANT');
+      } as any, 101);
 
       // Assert - 테넌트 + 시작/종료일 조건 적용
-      expect(qb.andWhere).toHaveBeenCalledWith('al.company = :company', { company: 'COMPANY' });
-      expect(qb.andWhere).toHaveBeenCalledWith('al.plant = :plant', { plant: 'PLANT' });
+      expect(qb.andWhere).toHaveBeenCalledWith('al.organizationId = :organizationId', { organizationId: 101 });
       expect(qb.andWhere).toHaveBeenCalledWith(
         "al.createdAt >= TO_DATE(:fromDate, 'YYYY-MM-DD')",
         { fromDate: '2026-01-01' },

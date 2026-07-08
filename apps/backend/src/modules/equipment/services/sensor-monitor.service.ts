@@ -42,26 +42,20 @@ export class SensorMonitorService {
     private readonly pmWorkOrderRepo: Repository<PmWorkOrder>,
   ) {}
 
-  private tenantWhere(company?: string, plant?: string) {
+  private tenantWhere(organizationId?: number) {
     return {
-      ...(company ? { company } : {}),
-      ...(plant ? { plant } : {}),
+      ...(organizationId != null ? { organizationId } : {}),
     };
   }
 
   private assertSameTenant(
     context: string,
-    requested: { company?: string | null; plant?: string | null },
-    actual: { company?: string | null; plant?: string | null },
+    requested: { organizationId?: number | null },
+    actual: { organizationId?: number | null },
   ) {
-    if (requested.company && actual.company !== requested.company) {
+    if (requested.organizationId != null && actual.organizationId !== requested.organizationId) {
       throw new BadRequestException(
-        `${context} 회사 정보가 일치하지 않습니다. request=${requested.company}, row=${actual.company ?? 'NULL'}`,
-      );
-    }
-    if (requested.plant && actual.plant !== requested.plant) {
-      throw new BadRequestException(
-        `${context} 사업장 정보가 일치하지 않습니다. request=${requested.plant}, row=${actual.plant ?? 'NULL'}`,
+        `${context} 조직 정보가 일치하지 않습니다. request=${requested.organizationId}, row=${actual.organizationId ?? 'NULL'}`,
       );
     }
   }
@@ -69,7 +63,7 @@ export class SensorMonitorService {
   // ─── 센서 데이터 수신 ────────────────────────────────────
 
   /** 센서 데이터 일괄 수신 + 규칙 평가 + USAGE_BASED 업데이트 */
-  async receiveSensorData(dto: PostSensorDataDto, company?: string, plant?: string) {
+  async receiveSensorData(dto: PostSensorDataDto, organizationId?: number) {
     const { items } = dto;
 
     // 1. 센서 데이터 저장
@@ -80,8 +74,7 @@ export class SensorMonitorService {
         value: item.value,
         unit: item.unit ?? null,
         measuredAt: item.measuredAt ? new Date(item.measuredAt) : new Date(),
-        company: company ?? null,
-        plant: plant ?? null,
+        organizationId: organizationId ?? null,
       }),
     );
     await this.sensorDataRepo.save(logs);
@@ -111,8 +104,7 @@ export class SensorMonitorService {
           .andWhere('r.sensorType IN (:...sensorTypes)', { sensorTypes })
           .andWhere('r.useYn = :yn', { yn: 'Y' })
       : null;
-    if (allRulesQuery && company) allRulesQuery.andWhere('r.company = :company', { company });
-    if (allRulesQuery && plant) allRulesQuery.andWhere('r.plant = :plant', { plant });
+    if (allRulesQuery && organizationId != null) allRulesQuery.andWhere('r.organizationId = :organizationId', { organizationId });
     const allRules = allRulesQuery
       ? await allRulesQuery.getMany()
       : [];
@@ -130,7 +122,7 @@ export class SensorMonitorService {
       const rules = ruleMap.get(key) || [];
 
       for (const rule of rules) {
-        this.assertSameTenant('센서 조건 규칙', { company, plant }, rule);
+        this.assertSameTenant('센서 조건 규칙', { organizationId }, rule);
 
         // WARNING 체크
         if (rule.warningValue != null && this.isTriggered(value, rule.warningValue, rule.compareOp)) {
@@ -161,8 +153,7 @@ export class SensorMonitorService {
                 status: 'PLANNED',
                 priority: 'HIGH',
                 remark: `자동생성: ${rule.sensorType} ${value} ${rule.compareOp} ${rule.criticalValue}`,
-                company: rule.company,
-                plant: rule.plant,
+                organizationId: rule.organizationId,
               });
               await this.pmWorkOrderRepo.save(wo);
               autoWoCreated++;
@@ -176,7 +167,7 @@ export class SensorMonitorService {
               await this.equipMasterRepo.update(
                 {
                   equipCode: rule.equipCode,
-                  ...this.tenantWhere(rule.company ?? company, rule.plant ?? plant),
+                  ...this.tenantWhere(rule.organizationId ?? organizationId),
                 },
                 { status: 'INTERLOCK' },
               );
@@ -196,7 +187,7 @@ export class SensorMonitorService {
           pmType: 'USAGE_BASED',
           usageField: sensorType,
           useYn: 'Y',
-          ...this.tenantWhere(company, plant),
+          ...this.tenantWhere(organizationId),
         },
         { currentUsage: value },
       );
@@ -208,14 +199,13 @@ export class SensorMonitorService {
   // ─── 센서 데이터 조회 ────────────────────────────────────
 
   /** 센서 데이터 이력 조회 */
-  async querySensorData(query: SensorDataQueryDto, company?: string, plant?: string) {
+  async querySensorData(query: SensorDataQueryDto, organizationId?: number) {
     const { equipCode, sensorType, from, to, page = 1, limit = 50 } = query;
     const skip = (page - 1) * limit;
 
     const qb = this.sensorDataRepo.createQueryBuilder('s');
 
-    if (company) qb.andWhere('s.company = :company', { company });
-    if (plant) qb.andWhere('s.plant = :plant', { plant });
+    if (organizationId != null) qb.andWhere('s.organizationId = :organizationId', { organizationId });
     if (equipCode) qb.andWhere('s.equipCode = :equipCode', { equipCode });
     if (sensorType) qb.andWhere('s.sensorType = :sensorType', { sensorType });
     if (from) qb.andWhere('s.measuredAt >= :from', { from: new Date(from) });
@@ -238,14 +228,13 @@ export class SensorMonitorService {
   // ─── 조건 규칙 CRUD ────────────────────────────────────
 
   /** 규칙 목록 조회 */
-  async findAllRules(query: ConditionRuleQueryDto, company?: string, plant?: string) {
+  async findAllRules(query: ConditionRuleQueryDto, organizationId?: number) {
     const { equipCode, sensorType, page = 1, limit = 50 } = query;
     const skip = (page - 1) * limit;
 
     const qb = this.ruleRepo.createQueryBuilder('r');
 
-    if (company) qb.andWhere('r.company = :company', { company });
-    if (plant) qb.andWhere('r.plant = :plant', { plant });
+    if (organizationId != null) qb.andWhere('r.organizationId = :organizationId', { organizationId });
     if (equipCode) qb.andWhere('r.equipCode = :equipCode', { equipCode });
     if (sensorType) qb.andWhere('r.sensorType = :sensorType', { sensorType });
 
@@ -260,7 +249,7 @@ export class SensorMonitorService {
   }
 
   /** 규칙 생성 */
-  async createRule(dto: CreateConditionRuleDto, company?: string, plant?: string) {
+  async createRule(dto: CreateConditionRuleDto, organizationId?: number) {
     const rule = this.ruleRepo.create({
       equipCode: dto.equipCode,
       sensorType: dto.sensorType,
@@ -269,15 +258,14 @@ export class SensorMonitorService {
       compareOp: dto.compareOp || 'GT',
       actionType: dto.actionType || 'ALERT',
       pmPlanCode: dto.pmPlanCode ?? null,
-      company: company ?? null,
-      plant: plant ?? null,
+      organizationId: organizationId ?? null,
     });
     return this.ruleRepo.save(rule);
   }
 
   /** 규칙 수정 */
-  async updateRule(ruleId: number, dto: UpdateConditionRuleDto, company?: string, plant?: string) {
-    const rule = await this.ruleRepo.findOne({ where: { ruleId, ...this.tenantWhere(company, plant) } });
+  async updateRule(ruleId: number, dto: UpdateConditionRuleDto, organizationId?: number) {
+    const rule = await this.ruleRepo.findOne({ where: { ruleId, ...this.tenantWhere(organizationId) } });
     if (!rule) throw new NotFoundException(`규칙을 찾을 수 없습니다: ${ruleId}`);
 
     if (dto.warningValue !== undefined) rule.warningValue = dto.warningValue;
@@ -291,10 +279,10 @@ export class SensorMonitorService {
   }
 
   /** 규칙 삭제 */
-  async deleteRule(ruleId: number, company?: string, plant?: string) {
-    const rule = await this.ruleRepo.findOne({ where: { ruleId, ...this.tenantWhere(company, plant) } });
+  async deleteRule(ruleId: number, organizationId?: number) {
+    const rule = await this.ruleRepo.findOne({ where: { ruleId, ...this.tenantWhere(organizationId) } });
     if (!rule) throw new NotFoundException(`규칙을 찾을 수 없습니다: ${ruleId}`);
-    await this.ruleRepo.delete({ ruleId, ...this.tenantWhere(company, plant) });
+    await this.ruleRepo.delete({ ruleId, ...this.tenantWhere(organizationId) });
     return { ruleId, deleted: true };
   }
 

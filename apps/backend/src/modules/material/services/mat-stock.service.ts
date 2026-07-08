@@ -39,31 +39,25 @@ export class MatStockService {
     private readonly tx: TransactionService,
   ) {}
 
-  private tenantWhere(company?: string | null, plant?: string | null) {
+  private tenantWhere(organizationId?: number | null) {
     return {
-      ...(company ? { company } : {}),
-      ...(plant ? { plant } : {}),
+      ...(organizationId != null ? { organizationId } : {}),
     };
   }
 
   private assertSameTenant(
     context: string,
-    requested: { company?: string | null; plant?: string | null },
-    actual: { company?: string | null; plant?: string | null },
+    requested: { organizationId?: number | null },
+    actual: { organizationId?: number | null },
   ) {
-    if (requested.company && actual.company !== requested.company) {
+    if (requested.organizationId != null && actual.organizationId !== requested.organizationId) {
       throw new BadRequestException(
-        `${context} 회사 정보가 일치하지 않습니다. request=${requested.company}, row=${actual.company ?? 'NULL'}`,
-      );
-    }
-    if (requested.plant && actual.plant !== requested.plant) {
-      throw new BadRequestException(
-        `${context} 사업장 정보가 일치하지 않습니다. request=${requested.plant}, row=${actual.plant ?? 'NULL'}`,
+        `${context} 조직 정보가 일치하지 않습니다. request=${requested.organizationId}, row=${actual.organizationId ?? 'NULL'}`,
       );
     }
   }
 
-  async findAll(query: StockQueryDto, company?: string, plant?: string) {
+  async findAll(query: StockQueryDto, organizationId?: number) {
     const { page = 1, limit = 10, itemCode, warehouseCode, locationCode, search, lowStockOnly } = query;
     const skip = (page - 1) * limit;
 
@@ -71,8 +65,7 @@ export class MatStockService {
       ...(itemCode && { itemCode }),
       ...(warehouseCode && { warehouseCode }),
       ...(locationCode && { locationCode }),
-      ...(company && { company }),
-      ...(plant && { plant }),
+      ...(organizationId != null && { organizationId }),
     };
 
     const [data, total] = await Promise.all([
@@ -92,8 +85,7 @@ export class MatStockService {
     const warehouseCodes = [...new Set(data.map((s) => s.warehouseCode).filter(Boolean))];
 
     const tenantWhere = {
-      ...(company ? { company } : {}),
-      ...(plant ? { plant } : {}),
+      ...(organizationId != null ? { organizationId } : {}),
     };
     const [parts, lots, warehouses] = await Promise.all([
       this.itemMasterRepository.find({ where: { itemCode: In(itemCodes), ...tenantWhere } }),

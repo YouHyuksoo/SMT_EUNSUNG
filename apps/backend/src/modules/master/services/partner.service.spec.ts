@@ -46,12 +46,12 @@ describe('PartnerService', () => {
       mockRepo.findOne.mockResolvedValue(partner);
 
       // Act
-      const result = await target.findById('P01', 'C1', 'P1');
+      const result = await target.findById('P01', 1);
 
       // Assert
       expect(result).toEqual(partner);
       expect(mockRepo.findOne).toHaveBeenCalledWith({
-        where: { partnerCode: 'P01', company: 'C1', plant: 'P1' },
+        where: { partnerCode: 'P01', organizationId: 1 },
       });
     });
 
@@ -75,16 +75,15 @@ describe('PartnerService', () => {
       mockRepo.save.mockResolvedValue(created);
 
       // Act
-      const result = await target.create(dto, 'C1', 'P1');
+      const result = await target.create(dto, 1);
 
       // Assert
       expect(result).toEqual(created);
       expect(mockRepo.findOne).toHaveBeenCalledWith({
-        where: { partnerCode: 'P01', company: 'C1', plant: 'P1' },
+        where: { partnerCode: 'P01', organizationId: 1 },
       });
       expect(mockRepo.create).toHaveBeenCalledWith(expect.objectContaining({
-        company: 'C1',
-        plant: 'P1',
+        organizationId: 1,
       }));
     });
 
@@ -107,46 +106,45 @@ describe('PartnerService', () => {
       mockRepo.update.mockResolvedValue({ affected: 1 } as any);
 
       // Act
-      const result = await target.update('P01', { partnerName: 'New' } as any, 'C1', 'P1');
+      const result = await target.update('P01', { partnerName: 'New' } as any, 1);
 
       // Assert
       expect(result).toEqual(existing);
       expect(mockRepo.update).toHaveBeenCalledWith(
-        { partnerCode: 'P01', company: 'C1', plant: 'P1' },
+        { partnerCode: 'P01', organizationId: 1 },
         { partnerName: 'New' },
       );
     });
 
     it('should strip key and tenant columns from update payload', async () => {
-      const existing = { partnerCode: 'P01', partnerName: 'Old', company: 'C1', plant: 'P1' } as PartnerMaster;
+      const existing = { partnerCode: 'P01', partnerName: 'Old', organizationId: 1 } as PartnerMaster;
       mockRepo.findOne.mockResolvedValue(existing);
       mockRepo.update.mockResolvedValue({ affected: 1 } as any);
 
       await target.update('P01', {
         partnerCode: 'P99',
         partnerName: 'New',
-        company: 'C2',
-        plant: 'P2',
-      } as any, 'C1', 'P1');
+        organizationId: 2,
+      } as any, 1);
 
       expect(mockRepo.update).toHaveBeenCalledWith(
-        { partnerCode: 'P01', company: 'C1', plant: 'P1' },
+        { partnerCode: 'P01', organizationId: 1 },
         { partnerName: 'New' },
       );
     });
 
     it('does not pass arbitrary fields from update payload to the repository', async () => {
-      const existing = { partnerCode: 'P01', partnerName: 'Old', company: 'C1', plant: 'P1' } as PartnerMaster;
+      const existing = { partnerCode: 'P01', partnerName: 'Old', organizationId: 1 } as PartnerMaster;
       mockRepo.findOne.mockResolvedValue(existing);
       mockRepo.update.mockResolvedValue({ affected: 1 } as any);
 
       await target.update('P01', {
         partnerName: 'New',
         externalSource: 'ERP',
-      } as any, 'C1', 'P1');
+      } as any, 1);
 
       expect(mockRepo.update).toHaveBeenCalledWith(
-        { partnerCode: 'P01', company: 'C1', plant: 'P1' },
+        { partnerCode: 'P01', organizationId: 1 },
         { partnerName: 'New' },
       );
     });
@@ -161,11 +159,11 @@ describe('PartnerService', () => {
       mockRepo.delete.mockResolvedValue({ affected: 1 } as any);
 
       // Act
-      const result = await target.delete('P01', 'C1', 'P1');
+      const result = await target.delete('P01', 1);
 
       // Assert
       expect(result).toEqual({ partnerCode: 'P01' });
-      expect(mockRepo.delete).toHaveBeenCalledWith({ partnerCode: 'P01', company: 'C1', plant: 'P1' });
+      expect(mockRepo.delete).toHaveBeenCalledWith({ partnerCode: 'P01', organizationId: 1 });
     });
   });
 
@@ -177,12 +175,12 @@ describe('PartnerService', () => {
       mockRepo.find.mockResolvedValue(partners);
 
       // Act
-      const result = await target.findByType('SUPPLIER', 'C1', 'P1');
+      const result = await target.findByType('SUPPLIER', 1);
 
       // Assert
       expect(result).toEqual(partners);
       expect(mockRepo.find).toHaveBeenCalledWith({
-        where: { partnerType: 'SUPPLIER', useYn: 'Y', company: 'C1', plant: 'P1' },
+        where: { partnerType: 'SUPPLIER', useYn: 'Y', organizationId: 1 },
         order: { partnerCode: 'asc' },
       });
     });
@@ -204,11 +202,10 @@ describe('PartnerService', () => {
       mockRepo.createQueryBuilder.mockReturnValue(qb);
 
       // Act
-      const result = await target.getStatistics('C1', 'P1');
+      const result = await target.getStatistics(1);
 
       // Assert
-      expect(qb.andWhere).toHaveBeenCalledWith('p.company = :company', { company: 'C1' });
-      expect(qb.andWhere).toHaveBeenCalledWith('p.plant = :plant', { plant: 'P1' });
+      expect(qb.andWhere).toHaveBeenCalledWith('p.organizationId = :organizationId', { organizationId: 1 });
       expect(result).toEqual({
         totalCount: 100,
         supplierCount: 60,

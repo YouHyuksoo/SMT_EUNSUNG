@@ -95,17 +95,17 @@ describe('OutsourcingService', () => {
       expect(result.vendorCode).toBe('V001');
     });
     it('should return vendor and recent orders within tenant', async () => {
-      const vendor = { vendorCode: 'V001', company: 'CO', plant: 'P01' } as VendorMaster;
+      const vendor = { vendorCode: 'V001', organizationId: 1 } as VendorMaster;
       mockVendorRepo.findOne.mockResolvedValue(vendor);
       mockOrderRepo.find.mockResolvedValue([]);
 
-      await target.findVendorById('V001', 'CO', 'P01');
+      await target.findVendorById('V001', 1);
 
       expect(mockVendorRepo.findOne).toHaveBeenCalledWith({
-        where: { vendorCode: 'V001', company: 'CO', plant: 'P01' },
+        where: { vendorCode: 'V001', organizationId: 1 },
       });
       expect(mockOrderRepo.find).toHaveBeenCalledWith({
-        where: { vendorCode: 'V001', company: 'CO', plant: 'P01' },
+        where: { vendorCode: 'V001', organizationId: 1 },
         order: { createdAt: 'DESC' },
         take: 10,
       });
@@ -137,16 +137,16 @@ describe('OutsourcingService', () => {
     it('should check duplicate and create vendor within tenant', async () => {
       const dto = { vendorCode: 'V001', vendorName: 'Test' } as any;
       mockVendorRepo.findOne.mockResolvedValue(null);
-      mockVendorRepo.create.mockReturnValue({ ...dto, company: 'CO', plant: 'P01' } as VendorMaster);
-      mockVendorRepo.save.mockResolvedValue({ ...dto, company: 'CO', plant: 'P01' } as VendorMaster);
+      mockVendorRepo.create.mockReturnValue({ ...dto, organizationId: 1 } as VendorMaster);
+      mockVendorRepo.save.mockResolvedValue({ ...dto, organizationId: 1 } as VendorMaster);
 
-      await target.createVendor(dto, 'CO', 'P01');
+      await target.createVendor(dto, 1);
 
       expect(mockVendorRepo.findOne).toHaveBeenCalledWith({
-        where: { vendorCode: 'V001', company: 'CO', plant: 'P01' },
+        where: { vendorCode: 'V001', organizationId: 1 },
       });
       expect(mockVendorRepo.create).toHaveBeenCalledWith(
-        expect.objectContaining({ vendorCode: 'V001', company: 'CO', plant: 'P01' }),
+        expect.objectContaining({ vendorCode: 'V001', organizationId: 1 }),
       );
     });
 
@@ -191,26 +191,26 @@ describe('OutsourcingService', () => {
       expect(result.orderNo).toBe('ORD001');
     });
     it('should return order relationships within tenant', async () => {
-      const order = { orderNo: 'ORD001', vendorCode: 'V001', company: 'CO', plant: 'P01' } as SubconOrder;
+      const order = { orderNo: 'ORD001', vendorCode: 'V001', organizationId: 1 } as SubconOrder;
       mockOrderRepo.findOne.mockResolvedValue(order);
-      mockVendorRepo.findOne.mockResolvedValue({ vendorCode: 'V001', company: 'CO', plant: 'P01' } as VendorMaster);
+      mockVendorRepo.findOne.mockResolvedValue({ vendorCode: 'V001', organizationId: 1 } as VendorMaster);
       mockDeliveryRepo.find.mockResolvedValue([]);
       mockReceiveRepo.find.mockResolvedValue([]);
 
-      await target.findOrderById('ORD001', 'CO', 'P01');
+      await target.findOrderById('ORD001', 1);
 
       expect(mockOrderRepo.findOne).toHaveBeenCalledWith({
-        where: { orderNo: 'ORD001', company: 'CO', plant: 'P01' },
+        where: { orderNo: 'ORD001', organizationId: 1 },
       });
       expect(mockVendorRepo.findOne).toHaveBeenCalledWith({
-        where: { vendorCode: 'V001', company: 'CO', plant: 'P01' },
+        where: { vendorCode: 'V001', organizationId: 1 },
       });
       expect(mockDeliveryRepo.find).toHaveBeenCalledWith({
-        where: { orderNo: 'ORD001', company: 'CO', plant: 'P01' },
+        where: { orderNo: 'ORD001', organizationId: 1 },
         order: { createdAt: 'DESC' },
       });
       expect(mockReceiveRepo.find).toHaveBeenCalledWith({
-        where: { orderNo: 'ORD001', company: 'CO', plant: 'P01' },
+        where: { orderNo: 'ORD001', organizationId: 1 },
         order: { createdAt: 'DESC' },
       });
     });
@@ -247,10 +247,10 @@ describe('OutsourcingService', () => {
       mockOrderRepo.create.mockReturnValue({ orderNo: 'SCO20260318-0001' } as SubconOrder);
       mockOrderRepo.save.mockResolvedValue({ orderNo: 'SCO20260318-0001' } as SubconOrder);
 
-      await target.createOrder({ vendorCode: 'V001', itemCode: 'PART1', orderQty: 100 } as any, 'CO', 'P01');
+      await target.createOrder({ vendorCode: 'V001', itemCode: 'PART1', orderQty: 100 } as any, 1);
 
       expect(mockOrderRepo.create).toHaveBeenCalledWith(
-        expect.objectContaining({ orderNo: 'SCO20260318-0001', company: 'CO', plant: 'P01' }),
+        expect.objectContaining({ orderNo: 'SCO20260318-0001', organizationId: 1 }),
       );
     });
 
@@ -293,7 +293,7 @@ describe('OutsourcingService', () => {
         routingCode: 'RT-001',
         processSeq: 20,
         processCode: 'PLATING',
-      } as any, 'CO', 'P01');
+      } as any, 1);
 
       expect(mockOrderRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -301,8 +301,7 @@ describe('OutsourcingService', () => {
           routingCode: 'RT-001',
           processSeq: 20,
           processCode: 'PLATING',
-          company: 'CO',
-          plant: 'P01',
+          organizationId: 1,
         }),
       );
     });
@@ -338,17 +337,17 @@ describe('OutsourcingService', () => {
       );
     });
     it('should update order within tenant', async () => {
-      const order = { orderNo: 'ORD001', vendorCode: 'V001', company: 'CO', plant: 'P01' } as SubconOrder;
+      const order = { orderNo: 'ORD001', vendorCode: 'V001', organizationId: 1 } as SubconOrder;
       mockOrderRepo.findOne.mockResolvedValue(order);
       mockVendorRepo.findOne.mockResolvedValue({ vendorCode: 'V001' } as VendorMaster);
       mockDeliveryRepo.find.mockResolvedValue([]);
       mockReceiveRepo.find.mockResolvedValue([]);
       mockOrderRepo.update.mockResolvedValue({ affected: 1 } as any);
 
-      await target.updateOrder('ORD001', { itemName: 'Harness B' } as any, 'CO', 'P01');
+      await target.updateOrder('ORD001', { itemName: 'Harness B' } as any, 1);
 
       expect(mockOrderRepo.update).toHaveBeenCalledWith(
-        { orderNo: 'ORD001', company: 'CO', plant: 'P01' },
+        { orderNo: 'ORD001', organizationId: 1 },
         expect.objectContaining({ itemName: 'Harness B' }),
       );
     });

@@ -1,10 +1,10 @@
 /**
  * @file entities/scheduler-job.entity.ts
  * @description 스케줄러 작업 엔티티 - 정기 실행 작업(Job)의 메타 정보를 관리한다.
- *              복합키: COMPANY + PLANT_CD + JOB_CODE.
+ *              복합키: ORGANIZATION_ID + JOB_CODE.
  *
  * 초보자 가이드:
- * 1. 복합 PK: company(회사) + plantCd(공장) + jobCode(작업코드)
+ * 1. 복합 PK: organizationId(조직) + jobCode(작업코드)
  * 2. execType: 실행 유형 (SERVICE / PROCEDURE / SQL / HTTP / SCRIPT) — ComCode SCHED_EXEC_TYPE
  * 3. jobGroup: 작업 그룹 — ComCode SCHED_GROUP (INTERFACE / RETRY / MAINTENANCE)
  * 4. cronExpr: cron 표현식 (예: '0 *\/10 * * * *' = 10분마다)
@@ -22,11 +22,8 @@ import {
 
 @Entity({ name: 'SCHEDULER_JOBS' })
 export class SchedulerJob {
-  @PrimaryColumn({ name: 'COMPANY', type: 'varchar2', length: 50 })
-  company: string;
-
-  @PrimaryColumn({ name: 'PLANT_CD', type: 'varchar2', length: 50 })
-  plantCd: string;
+  @PrimaryColumn({ name: 'ORGANIZATION_ID', type: 'number' })
+  organizationId!: number;
 
   @PrimaryColumn({ name: 'JOB_CODE', type: 'varchar2', length: 50 })
   jobCode: string;

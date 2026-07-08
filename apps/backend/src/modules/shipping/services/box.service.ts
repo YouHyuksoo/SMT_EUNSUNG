@@ -50,10 +50,9 @@ export class BoxService {
     private readonly numbering: NumberingService,
   ) {}
 
-  private tenantWhere(company?: string, plant?: string) {
+  private tenantWhere(organizationId?: number) {
     return {
-      ...(company && { company }),
-      ...(plant && { plant }),
+      ...(organizationId != null ? { organizationId } : {}),
     };
   }
 
@@ -65,8 +64,7 @@ export class BoxService {
   private async assertSerialsNotPackedElsewhere(
     serials: string[],
     excludeBoxNo: string | null,
-    company?: string,
-    plant?: string,
+    organizationId?: number,
   ) {
     if (serials.length === 0) return;
 
@@ -74,7 +72,7 @@ export class BoxService {
       where: serials.map((serial) => ({
         serialList: Like(`%"${serial}"%`),
         ...(excludeBoxNo ? { boxNo: Not(excludeBoxNo) } : {}),
-        ...this.tenantWhere(company, plant),
+        ...this.tenantWhere(organizationId),
       })),
     });
 
@@ -118,14 +116,13 @@ export class BoxService {
     return `${prefix}-${String(seq).padStart(3, '0')}`;
   }
 
-  async findAll(query: BoxQueryDto, company?: string, plant?: string) {
+  async findAll(query: BoxQueryDto, organizationId?: number) {
     const { page = 1, limit = 10, search, boxNo, itemCode, palletId: palletNo, status, unassigned, oqcStatus, createdFrom, createdTo, includeOpen } = query;
     const skip = (page - 1) * limit;
 
     // 날짜·상태를 제외한 공통 조건(모든 OR 절에 공통 적용)
     const common: Record<string, unknown> = {
-      ...(company && { company }),
-      ...(plant && { plant }),
+      ...(organizationId != null ? { organizationId } : {}),
       ...(boxNo && { boxNo: ILike(`%${boxNo}%`) }),
       ...(itemCode && { itemCode }),
       ...(palletNo && { palletNo }),
@@ -180,7 +177,7 @@ export class BoxService {
     // 품목명·박스입수량(boxQty) 일괄 보강 (N+1 방지)
     const itemCodes = [...new Set(data.map((b) => b.itemCode).filter(Boolean))];
     const parts = itemCodes.length > 0
-      ? await this.partRepository.find({ where: { itemCode: In(itemCodes), ...this.tenantWhere(company, plant) } })
+      ? await this.partRepository.find({ where: { itemCode: In(itemCodes), ...this.tenantWhere(organizationId) } })
       : [];
     const partMap = new Map(parts.map((p) => [p.itemCode, p] as const));
     const enriched = data.map((box) => {
@@ -197,9 +194,9 @@ export class BoxService {
     return { data: enriched, total, page, limit };
   }
 
-  async findById(boxNo: string, company?: string, plant?: string) {
+  async findById(boxNo: string, organizationId?: number) {
     const box = await this.boxRepository.findOne({
-      where: { boxNo, ...this.tenantWhere(company, plant) },
+      where: { boxNo, ...this.tenantWhere(organizationId) },
     });
     if (!box) {
       throw new NotFoundException(`박스를 찾을 수 없습니다: ${boxNo}`);
@@ -207,10 +204,10 @@ export class BoxService {
     return box;
   }
 
-  async findByBoxNo(boxNo: string, company?: string, plant?: string) {
-    const box = await this.findById(boxNo, company, plant);
+  async findByBoxNo(boxNo: string, organizationId?: number) {
+    const box = await this.findById(boxNo, organizationId);
     const part = await this.partRepository.findOne({
-      where: { itemCode: box.itemCode, ...this.tenantWhere(company, plant) },
+      where: { itemCode: box.itemCode, ...this.tenantWhere(organizationId) },
     });
 
     return {
@@ -227,20 +224,20 @@ export class BoxService {
   }
 
   /** 포장 대기 FG 시리얼: 검사합격(VISUAL_PASS)이고 박스 미배정(BOX_NO IS NULL) */
-  async findPackableSerials(company?: string, plant?: string, itemCode?: string) {
+  async findPackableSerials(organizationId?: number, itemCode?: string) {
     const labels = await this.fgLabelRepository.find({
       where: {
         status: 'VISUAL_PASS',
         boxNo: IsNull(),
         ...(itemCode ? { itemCode } : {}),
-        ...this.tenantWhere(company, plant),
+        ...this.tenantWhere(organizationId),
       },
       order: { itemCode: 'ASC', issuedAt: 'ASC' },
     });
     if (labels.length === 0) return [];
     const itemCodes = [...new Set(labels.map((l) => l.itemCode))];
     const parts = await this.partRepository.find({
-      where: { itemCode: In(itemCodes), ...this.tenantWhere(company, plant) },
+      where: { itemCode: In(itemCodes), ...this.tenantWhere(organizationId) },
     });
     const nameMap = new Map(parts.map((p) => [p.itemCode, p.itemName] as const));
     return labels.map((l) => ({
@@ -252,8 +249,8 @@ export class BoxService {
     }));
   }
 
-  async findBoxItems(boxNo: string, company?: string, plant?: string) {
-    const box = await this.findById(boxNo, company, plant);
+  async findBoxItems(boxNo: string, organizationId?: number) {
+    const box = await this.findById(boxNo, organizationId);
     const serials: string[] = box.serialList ? JSON.parse(box.serialList) : [];
     if (serials.length === 0) {
       return [];
@@ -261,10 +258,10 @@ export class BoxService {
 
     const [labels, part] = await Promise.all([
       this.fgLabelRepository.find({
-        where: { fgBarcode: In(serials), ...this.tenantWhere(company, plant) },
+        where: { fgBarcode: In(serials), ...this.tenantWhere(organizationId) },
       }),
       this.partRepository.findOne({
-        where: { itemCode: box.itemCode, ...this.tenantWhere(company, plant) },
+        where: { itemCode: box.itemCode, ...this.tenantWhere(organizationId) },
       }),
     ]);
     const labelMap = new Map(labels.map((label) => [label.fgBarcode, label] as const));
@@ -293,7 +290,7 @@ export class BoxService {
    * 재고 단위 = 시리얼(FG_LABELS). BOX_NO는 포장 식별이고, 창고입고 여부는
    * PRODUCT_TRANSACTIONS(refType=BOX) 입고 이동 이력으로 별도 판정한다.
    */
-  async findStockByBox(boxNo: string | undefined, company?: string, plant?: string) {
+  async findStockByBox(boxNo: string | undefined, organizationId?: number) {
     const qb = this.fgLabelRepository
       .createQueryBuilder('l')
       .select('l.boxNo', 'boxNo')
@@ -312,8 +309,7 @@ export class BoxService {
           'tx.refId = l.boxNo',
           'tx.status = :doneStatus',
           'tx.transType IN (:...receiveTransTypes)',
-          'tx.company = l.company',
-          'tx.plant = l.plant',
+          'tx.organizationId = l.organizationId',
         ].join(' AND '),
         {
           boxRefType: 'BOX',
@@ -326,8 +322,7 @@ export class BoxService {
       .groupBy('l.boxNo')
       .addGroupBy('l.itemCode')
       .orderBy('l.boxNo', 'DESC');
-    if (company) qb.andWhere('l.company = :company', { company });
-    if (plant) qb.andWhere('l.plant = :plant', { plant });
+    if (organizationId != null) qb.andWhere('l.organizationId = :organizationId', { organizationId });
     if (boxNo) qb.andWhere('l.boxNo LIKE :boxNo', { boxNo: `%${boxNo}%` });
 
     const rows = await qb.getRawMany<{
@@ -344,7 +339,7 @@ export class BoxService {
     // 품목명 일괄 보강 (N+1 방지)
     const itemCodes = [...new Set(rows.map((r) => r.itemCode).filter(Boolean))];
     const parts = itemCodes.length > 0
-      ? await this.partRepository.find({ where: { itemCode: In(itemCodes), ...this.tenantWhere(company, plant) } })
+      ? await this.partRepository.find({ where: { itemCode: In(itemCodes), ...this.tenantWhere(organizationId) } })
       : [];
     const partMap = new Map(parts.map((p) => [p.itemCode, p] as const));
 
@@ -365,7 +360,7 @@ export class BoxService {
    * 박스 내 재고 시리얼 목록 (오른쪽 그리드)
    * 선택 박스의 미출하 시리얼(FG_LABELS)을 반환한다.
    */
-  async findStockSerials(boxNo: string, company?: string, plant?: string) {
+  async findStockSerials(boxNo: string, organizationId?: number) {
     const qb = this.fgLabelRepository
       .createQueryBuilder('l')
       .select('l.fgBarcode', 'fgBarcode')
@@ -388,8 +383,7 @@ export class BoxService {
           'tx.refId = l.boxNo',
           'tx.status = :doneStatus',
           'tx.transType IN (:...receiveTransTypes)',
-          'tx.company = l.company',
-          'tx.plant = l.plant',
+          'tx.organizationId = l.organizationId',
         ].join(' AND '),
         {
           boxRefType: 'BOX',
@@ -399,8 +393,7 @@ export class BoxService {
       )
       .where('l.boxNo = :boxNo', { boxNo })
       .andWhere("l.status <> 'SHIPPED'");
-    if (company) qb.andWhere('l.company = :company', { company });
-    if (plant) qb.andWhere('l.plant = :plant', { plant });
+    if (organizationId != null) qb.andWhere('l.organizationId = :organizationId', { organizationId });
     qb
       .groupBy('l.fgBarcode')
       .addGroupBy('l.itemCode')
@@ -430,7 +423,7 @@ export class BoxService {
 
     const itemCodes = [...new Set(labels.map((l) => l.itemCode).filter(Boolean))];
     const parts = itemCodes.length > 0
-      ? await this.partRepository.find({ where: { itemCode: In(itemCodes), ...this.tenantWhere(company, plant) } })
+      ? await this.partRepository.find({ where: { itemCode: In(itemCodes), ...this.tenantWhere(organizationId) } })
       : [];
     const partMap = new Map(parts.map((p) => [p.itemCode, p] as const));
 
@@ -452,26 +445,26 @@ export class BoxService {
     }));
   }
 
-  async create(dto: CreateBoxDto, company?: string, plant?: string) {
+  async create(dto: CreateBoxDto, organizationId?: number) {
     // 박스번호 미지정 시 자동 채번 (BX+YYMMDD+4자리, SEQ_BOX_NO_DAILY)
     const boxNo = dto.boxNo ?? await this.numbering.nextBoxNo();
 
     const existing = await this.boxRepository.findOne({
-      where: { boxNo, ...this.tenantWhere(company, plant) },
+      where: { boxNo, ...this.tenantWhere(organizationId) },
     });
     if (existing) {
       throw new ConflictException(`이미 존재하는 박스번호입니다: ${boxNo}`);
     }
 
     const part = await this.partRepository.findOne({
-      where: { itemCode: dto.itemCode, ...this.tenantWhere(company, plant) },
+      where: { itemCode: dto.itemCode, ...this.tenantWhere(organizationId) },
     });
     if (!part) {
       throw new NotFoundException(`품목을 찾을 수 없습니다: ${dto.itemCode}`);
     }
 
     if (dto.serialList && dto.serialList.length > 0) {
-      await this.assertSerialsNotPackedElsewhere(dto.serialList, boxNo, company, plant);
+      await this.assertSerialsNotPackedElsewhere(dto.serialList, boxNo, organizationId);
     }
 
     const box = this.boxRepository.create({
@@ -481,15 +474,14 @@ export class BoxService {
       serialList: dto.serialList ? JSON.stringify(dto.serialList) : null,
       status: 'OPEN',
       oqcStatus: null,
-      company: company || null,
-      plant: plant || null,
+      organizationId: organizationId ?? null,
     });
 
     return this.boxRepository.save(box);
   }
 
-  async update(id: string, dto: UpdateBoxDto, company?: string, plant?: string) {
-    const box = await this.findById(id, company, plant);
+  async update(id: string, dto: UpdateBoxDto, organizationId?: number) {
+    const box = await this.findById(id, organizationId);
     if (box.status === 'SHIPPED') {
       throw new BadRequestException('출하된 박스는 수정할 수 없습니다.');
     }
@@ -500,7 +492,7 @@ export class BoxService {
     }
 
     if (dto.serialList && dto.serialList.length > 0) {
-      await this.assertSerialsNotPackedElsewhere(dto.serialList, id, company, plant);
+      await this.assertSerialsNotPackedElsewhere(dto.serialList, id, organizationId);
     }
 
     const updateData: Record<string, unknown> = {};
@@ -508,12 +500,12 @@ export class BoxService {
     if (dto.serialList !== undefined) updateData.serialList = JSON.stringify(dto.serialList);
     if (dto.palletId !== undefined) updateData.palletNo = dto.palletId;
 
-    await this.boxRepository.update({ boxNo: id, ...this.tenantWhere(company, plant) }, updateData);
-    return this.findById(id, company, plant);
+    await this.boxRepository.update({ boxNo: id, ...this.tenantWhere(organizationId) }, updateData);
+    return this.findById(id, organizationId);
   }
 
-  async delete(id: string, company?: string, plant?: string) {
-    const box = await this.findById(id, company, plant);
+  async delete(id: string, organizationId?: number) {
+    const box = await this.findById(id, organizationId);
 
     if (box.status === 'SHIPPED') {
       throw new BadRequestException('출하된 박스는 삭제할 수 없습니다.');
@@ -538,12 +530,12 @@ export class BoxService {
       );
     }
 
-    await this.boxRepository.delete({ boxNo: id, ...this.tenantWhere(company, plant) });
+    await this.boxRepository.delete({ boxNo: id, ...this.tenantWhere(organizationId) });
     return { id, deleted: true };
   }
 
-  async addSerial(id: string, dto: AddSerialToBoxDto, company?: string, plant?: string) {
-    const box = await this.findById(id, company, plant);
+  async addSerial(id: string, dto: AddSerialToBoxDto, organizationId?: number) {
+    const box = await this.findById(id, organizationId);
     if (box.status !== 'OPEN') {
       throw new BadRequestException(`현재 상태(${box.status})에서는 시리얼을 추가할 수 없습니다.`);
     }
@@ -555,7 +547,7 @@ export class BoxService {
     }
 
     const lots = dto.serials.length > 0
-      ? await this.lotRepository.find({ where: { matUid: In(dto.serials), ...this.tenantWhere(company, plant) } })
+      ? await this.lotRepository.find({ where: { matUid: In(dto.serials), ...this.tenantWhere(organizationId) } })
       : [];
     const lotMap = new Map(lots.map((lot) => [lot.matUid, lot] as const));
     for (const serial of dto.serials) {
@@ -566,10 +558,10 @@ export class BoxService {
     }
 
     const part = await this.partRepository.findOne({
-      where: { itemCode: box.itemCode, ...this.tenantWhere(company, plant) },
+      where: { itemCode: box.itemCode, ...this.tenantWhere(organizationId) },
     });
     const fgLabels = dto.serials.length > 0
-      ? await this.fgLabelRepository.find({ where: { fgBarcode: In(dto.serials), ...this.tenantWhere(company, plant) } })
+      ? await this.fgLabelRepository.find({ where: { fgBarcode: In(dto.serials), ...this.tenantWhere(organizationId) } })
       : [];
     const fgLabelMap = new Map(fgLabels.map((label) => [label.fgBarcode, label] as const));
     const invalidLabels = dto.serials.filter((serial) => {
@@ -584,7 +576,7 @@ export class BoxService {
       throw new BadRequestException(`외관검사 합격(VISUAL_PASS) FG만 포장할 수 있습니다: ${invalidLabels.join(', ')}`);
     }
 
-    await this.assertSerialsNotPackedElsewhere(dto.serials, id, company, plant);
+    await this.assertSerialsNotPackedElsewhere(dto.serials, id, organizationId);
 
     const boxQty = part?.boxQty != null ? Number(part.boxQty) : 0;
     if (boxQty > 0 && existingSerials.length + dto.serials.length > boxQty) {
@@ -593,18 +585,18 @@ export class BoxService {
 
     const newSerialList = [...existingSerials, ...dto.serials];
     await this.boxRepository.update(
-      { boxNo: id, ...this.tenantWhere(company, plant) },
+      { boxNo: id, ...this.tenantWhere(organizationId) },
       {
         serialList: JSON.stringify(newSerialList),
         qty: newSerialList.length,
       },
     );
 
-    return this.findById(id, company, plant);
+    return this.findById(id, organizationId);
   }
 
-  async removeSerial(id: string, serials: string[], company?: string, plant?: string) {
-    const box = await this.findById(id, company, plant);
+  async removeSerial(id: string, serials: string[], organizationId?: number) {
+    const box = await this.findById(id, organizationId);
     if (box.status !== 'OPEN') {
       throw new BadRequestException(`현재 상태(${box.status})에서는 시리얼을 제거할 수 없습니다.`);
     }
@@ -617,18 +609,18 @@ export class BoxService {
 
     const newSerialList = existingSerials.filter((serial) => !serials.includes(serial));
     await this.boxRepository.update(
-      { boxNo: id, ...this.tenantWhere(company, plant) },
+      { boxNo: id, ...this.tenantWhere(organizationId) },
       {
         serialList: JSON.stringify(newSerialList),
         qty: newSerialList.length,
       },
     );
 
-    return this.findById(id, company, plant);
+    return this.findById(id, organizationId);
   }
 
-  async closeBox(id: string, company?: string, plant?: string) {
-    const box = await this.findById(id, company, plant);
+  async closeBox(id: string, organizationId?: number) {
+    const box = await this.findById(id, organizationId);
 
     if (box.status !== 'OPEN') {
       throw new BadRequestException(`현재 상태(${box.status})에서는 박스를 닫을 수 없습니다.`);
@@ -640,7 +632,7 @@ export class BoxService {
     await this.tx.run(async (queryRunner) => {
       await queryRunner.manager.update(
         BoxMaster,
-        { boxNo: id, ...this.tenantWhere(company, plant) },
+        { boxNo: id, ...this.tenantWhere(organizationId) },
         { status: 'CLOSED', closeAt: new Date(), oqcStatus: 'PENDING' },
       );
 
@@ -653,7 +645,7 @@ export class BoxService {
               const batch = fgBarcodes.slice(i, i + batchSize);
               await queryRunner.manager.update(
                 FgLabel,
-                { fgBarcode: In(batch), ...this.tenantWhere(company, plant) },
+                { fgBarcode: In(batch), ...this.tenantWhere(organizationId) },
                 { status: 'PACKED', boxNo: id },
               );
             }
@@ -675,8 +667,7 @@ export class BoxService {
           totalQty: box.qty,
           sampleSize: null,
           status: 'PENDING',
-          company: box.company,
-          plant: box.plant,
+          organizationId: box.organizationId,
           remark: `AUTO_CREATED_FROM_BOX:${box.boxNo}`,
         }),
       );
@@ -687,17 +678,16 @@ export class BoxService {
           boxNo: box.boxNo,
           qty: box.qty,
           isSample: 'N',
-          company: box.company,
-          plant: box.plant,
+          organizationId: box.organizationId,
         }),
       );
     });
 
-    return this.findById(id, company, plant);
+    return this.findById(id, organizationId);
   }
 
-  async reopenBox(id: string, company?: string, plant?: string) {
-    const box = await this.findById(id, company, plant);
+  async reopenBox(id: string, organizationId?: number) {
+    const box = await this.findById(id, organizationId);
 
     if (box.status !== 'CLOSED') {
       throw new BadRequestException(`현재 상태(${box.status})에서는 박스를 다시 열 수 없습니다.`);
@@ -715,7 +705,7 @@ export class BoxService {
     await this.tx.run(async (queryRunner) => {
       await queryRunner.manager.update(
         BoxMaster,
-        { boxNo: id, ...this.tenantWhere(company, plant) },
+        { boxNo: id, ...this.tenantWhere(organizationId) },
         { status: 'OPEN', closeAt: null, oqcStatus: null },
       );
 
@@ -728,7 +718,7 @@ export class BoxService {
               const batch = fgBarcodes.slice(i, i + batchSize);
               await queryRunner.manager.update(
                 FgLabel,
-                { fgBarcode: In(batch), status: 'PACKED', ...this.tenantWhere(company, plant) },
+                { fgBarcode: In(batch), status: 'PACKED', ...this.tenantWhere(organizationId) },
                 { status: 'VISUAL_PASS' },
               );
             }
@@ -739,29 +729,29 @@ export class BoxService {
       }
 
       const requestBoxes = await queryRunner.manager.find(OqcRequestBox, {
-        where: { boxNo: box.boxNo, ...this.tenantWhere(company, plant) },
+        where: { boxNo: box.boxNo, ...this.tenantWhere(organizationId) },
       });
       const requestNos = requestBoxes.map((requestBox) => requestBox.requestNo);
       if (requestNos.length > 0) {
         const requests = await queryRunner.manager.find(OqcRequest, {
-          where: { requestNo: In(requestNos), status: 'PENDING', ...this.tenantWhere(company, plant) },
+          where: { requestNo: In(requestNos), status: 'PENDING', ...this.tenantWhere(organizationId) },
         });
         const autoRequestNos = requests
           .filter((request) => request.remark === `AUTO_CREATED_FROM_BOX:${box.boxNo}`)
           .map((request) => request.requestNo);
 
         if (autoRequestNos.length > 0) {
-          await queryRunner.manager.delete(OqcRequestBox, { requestNo: In(autoRequestNos), ...this.tenantWhere(company, plant) });
-          await queryRunner.manager.delete(OqcRequest, { requestNo: In(autoRequestNos), ...this.tenantWhere(company, plant) });
+          await queryRunner.manager.delete(OqcRequestBox, { requestNo: In(autoRequestNos), ...this.tenantWhere(organizationId) });
+          await queryRunner.manager.delete(OqcRequest, { requestNo: In(autoRequestNos), ...this.tenantWhere(organizationId) });
         }
       }
     });
 
-    return this.findById(id, company, plant);
+    return this.findById(id, organizationId);
   }
 
-  async assignToPallet(id: string, dto: AssignBoxToPalletDto, company?: string, plant?: string) {
-    const box = await this.findById(id, company, plant);
+  async assignToPallet(id: string, dto: AssignBoxToPalletDto, organizationId?: number) {
+    const box = await this.findById(id, organizationId);
     if (box.status !== 'CLOSED') {
       throw new BadRequestException(`현재 상태(${box.status})에서는 팔레트에 할당할 수 없습니다.`);
     }
@@ -770,7 +760,7 @@ export class BoxService {
     }
 
     const pallet = await this.palletRepository.findOne({
-      where: { palletNo: dto.palletId, ...this.tenantWhere(company, plant) },
+      where: { palletNo: dto.palletId, ...this.tenantWhere(organizationId) },
     });
     if (!pallet) {
       throw new NotFoundException(`팔레트를 찾을 수 없습니다: ${dto.palletId}`);
@@ -782,37 +772,36 @@ export class BoxService {
     await this.tx.run(async (queryRunner) => {
       await queryRunner.manager.update(
         BoxMaster,
-        { boxNo: id, ...this.tenantWhere(company, plant) },
+        { boxNo: id, ...this.tenantWhere(organizationId) },
         { palletNo: dto.palletId },
       );
 
       const summaryQb = queryRunner.manager
         .createQueryBuilder(BoxMaster, 'box')
         .where('box.palletNo = :palletNo', { palletNo: dto.palletId });
-      if (company) summaryQb.andWhere('box.company = :company', { company });
-      if (plant) summaryQb.andWhere('box.plant = :plant', { plant });
+      if (organizationId != null) summaryQb.andWhere('box.organizationId = :organizationId', { organizationId });
       const palletSummary = await summaryQb
         .select('COUNT(*)', 'count')
         .addSelect('SUM(box.qty)', 'totalQty')
         .getRawOne();
 
-      await queryRunner.manager.update(PalletMaster, { palletNo: dto.palletId, ...this.tenantWhere(company, plant) }, {
+      await queryRunner.manager.update(PalletMaster, { palletNo: dto.palletId, ...this.tenantWhere(organizationId) }, {
         boxCount: parseInt(palletSummary.count) || 0,
         totalQty: parseInt(palletSummary.totalQty) || 0,
       });
     });
 
-    return this.findById(id, company, plant);
+    return this.findById(id, organizationId);
   }
 
-  async removeFromPallet(id: string, company?: string, plant?: string) {
-    const box = await this.findById(id, company, plant);
+  async removeFromPallet(id: string, organizationId?: number) {
+    const box = await this.findById(id, organizationId);
     if (!box.palletNo) {
       throw new BadRequestException('팔레트에 할당되지 않은 박스입니다.');
     }
 
     const pallet = await this.palletRepository.findOne({
-      where: { palletNo: box.palletNo, ...this.tenantWhere(company, plant) },
+      where: { palletNo: box.palletNo, ...this.tenantWhere(organizationId) },
     });
     if (!pallet) {
       throw new NotFoundException('팔레트를 찾을 수 없습니다.');
@@ -825,32 +814,31 @@ export class BoxService {
     await this.tx.run(async (queryRunner) => {
       await queryRunner.manager.update(
         BoxMaster,
-        { boxNo: id, ...this.tenantWhere(company, plant) },
+        { boxNo: id, ...this.tenantWhere(organizationId) },
         { palletNo: null },
       );
 
       const summaryQb = queryRunner.manager
         .createQueryBuilder(BoxMaster, 'box')
         .where('box.palletNo = :palletNo', { palletNo });
-      if (company) summaryQb.andWhere('box.company = :company', { company });
-      if (plant) summaryQb.andWhere('box.plant = :plant', { plant });
+      if (organizationId != null) summaryQb.andWhere('box.organizationId = :organizationId', { organizationId });
       const palletSummary = await summaryQb
         .select('COUNT(*)', 'count')
         .addSelect('SUM(box.qty)', 'totalQty')
         .getRawOne();
 
-      await queryRunner.manager.update(PalletMaster, { palletNo, ...this.tenantWhere(company, plant) }, {
+      await queryRunner.manager.update(PalletMaster, { palletNo, ...this.tenantWhere(organizationId) }, {
         boxCount: parseInt(palletSummary?.count) || 0,
         totalQty: parseInt(palletSummary?.totalQty) || 0,
       });
     });
 
-    return this.findById(id, company, plant);
+    return this.findById(id, organizationId);
   }
 
-  async findByPalletId(palletNo: string, company?: string, plant?: string) {
+  async findByPalletId(palletNo: string, organizationId?: number) {
     return this.boxRepository.find({
-      where: { palletNo, ...this.tenantWhere(company, plant) },
+      where: { palletNo, ...this.tenantWhere(organizationId) },
       order: { createdAt: 'ASC' },
     });
   }
@@ -867,12 +855,12 @@ export class BoxService {
     });
   }
 
-  async findUnassignedBoxes(company?: string, plant?: string) {
+  async findUnassignedBoxes(organizationId?: number) {
     return this.boxRepository.find({
       where: {
         palletNo: IsNull(),
         status: 'CLOSED',
-        ...this.tenantWhere(company, plant),
+        ...this.tenantWhere(organizationId),
       },
       order: { createdAt: 'ASC' },
     });

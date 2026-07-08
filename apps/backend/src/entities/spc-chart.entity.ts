@@ -23,8 +23,8 @@ import { ItemMaster } from './item-master.entity';
 import { ProcessMaster } from './process-master.entity';
 
 @Entity({ name: 'SPC_CHARTS' })
-@Index(['company', 'plant', 'itemCode'])
-@Index(['company', 'plant', 'processCode'])
+@Index(['organizationId', 'itemCode'])
+@Index(['organizationId', 'processCode'])
 export class SpcChart {
   @PrimaryColumn({ name: 'CHART_NO', length: 30 })
   chartNo: string;
@@ -34,8 +34,7 @@ export class SpcChart {
 
   @ManyToOne(() => ItemMaster)
   @JoinColumn([
-    { name: 'COMPANY', referencedColumnName: 'company' },
-    { name: 'PLANT_CD', referencedColumnName: 'plant' },
+    { name: 'ORGANIZATION_ID', referencedColumnName: 'organizationId' },
     { name: 'ITEM_CODE', referencedColumnName: 'itemCode' },
   ])
   item: ItemMaster;
@@ -45,8 +44,7 @@ export class SpcChart {
 
   @ManyToOne(() => ProcessMaster)
   @JoinColumn([
-    { name: 'COMPANY', referencedColumnName: 'company' },
-    { name: 'PLANT_CD', referencedColumnName: 'plant' },
+    { name: 'ORGANIZATION_ID', referencedColumnName: 'organizationId' },
     { name: 'PROCESS_CODE', referencedColumnName: 'processCode' },
   ])
   process: ProcessMaster;
@@ -89,11 +87,8 @@ export class SpcChart {
   @Column({ name: 'STATUS', length: 20, default: 'ACTIVE' })
   status: string;
 
-  @Column({ name: 'COMPANY', length: 50 })
-  company: string;
-
-  @Column({ name: 'PLANT_CD', length: 20 })
-  plant: string;
+  @Column({ name: 'ORGANIZATION_ID', type: 'number' })
+  organizationId!: number;
 
   @Column({ type: 'varchar2', name: 'CREATED_BY', length: 50, nullable: true })
   createdBy: string;

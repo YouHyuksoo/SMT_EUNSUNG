@@ -66,11 +66,8 @@ export class GaugeMaster {
   @Column({ type: 'varchar2', name: 'RESPONSIBLE_PERSON', length: 50, nullable: true })
   responsiblePerson: string;
 
-  @Column({ name: 'COMPANY', length: 50 })
-  company: string;
-
-  @Column({ name: 'PLANT_CD', length: 20 })
-  plant: string;
+  @Column({ name: 'ORGANIZATION_ID', type: 'number' })
+  organizationId!: number;
 
   @Column({ type: 'varchar2', name: 'CREATED_BY', length: 50, nullable: true })
   createdBy: string;

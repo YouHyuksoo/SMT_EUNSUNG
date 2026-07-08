@@ -26,7 +26,7 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { Company, Plant } from '../../../common/decorators/tenant.decorator';
+import { OrganizationId } from '../../../common/decorators/tenant.decorator';
 import {
   ApiTags,
   ApiOperation,
@@ -55,8 +55,8 @@ export class InterfaceController {
   @Get('logs')
   @ApiOperation({ summary: '인터페이스 로그 목록 조회' })
   @ApiResponse({ status: 200, description: '조회 성공' })
-  async findAllLogs(@Query() query: InterLogQueryDto, @Company() company: string, @Plant() plant: string) {
-    const result = await this.interfaceService.findAllLogs(query, company, plant);
+  async findAllLogs(@Query() query: InterLogQueryDto, @OrganizationId() organizationId: number) {
+    const result = await this.interfaceService.findAllLogs(query, organizationId);
     return ResponseUtil.paged(result.data, result.total, result.page, result.limit);
   }
 
@@ -65,8 +65,8 @@ export class InterfaceController {
   @ApiParam({ name: 'transDate', description: '전송일 (YYYY-MM-DD)' })
   @ApiParam({ name: 'seq', description: '일련번호' })
   @ApiResponse({ status: 200, description: '조회 성공' })
-  async findLogById(@Param('transDate') transDate: string, @Param('seq') seq: string, @Company() company: string, @Plant() plant: string) {
-    const data = await this.interfaceService.findLogById(parseDateStart(transDate)!, +seq, company, plant);
+  async findLogById(@Param('transDate') transDate: string, @Param('seq') seq: string, @OrganizationId() organizationId: number) {
+    const data = await this.interfaceService.findLogById(parseDateStart(transDate)!, +seq, organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -76,8 +76,8 @@ export class InterfaceController {
   @ApiParam({ name: 'transDate', description: '전송일 (YYYY-MM-DD)' })
   @ApiParam({ name: 'seq', description: '일련번호' })
   @ApiResponse({ status: 200, description: '재시도 성공' })
-  async retryLog(@Param('transDate') transDate: string, @Param('seq') seq: string, @Company() company: string, @Plant() plant: string) {
-    const data = await this.interfaceService.retryLog(parseDateStart(transDate)!, +seq, company, plant);
+  async retryLog(@Param('transDate') transDate: string, @Param('seq') seq: string, @OrganizationId() organizationId: number) {
+    const data = await this.interfaceService.retryLog(parseDateStart(transDate)!, +seq, organizationId);
     return ResponseUtil.success(data, '재시도가 완료되었습니다.');
   }
 
@@ -85,12 +85,12 @@ export class InterfaceController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: '인터페이스 로그 일괄 재시도' })
   @ApiResponse({ status: 200, description: '일괄 재시도 성공' })
-  async bulkRetry(@Body() dto: BulkRetryDto, @Company() company: string, @Plant() plant: string) {
+  async bulkRetry(@Body() dto: BulkRetryDto, @OrganizationId() organizationId: number) {
     const logKeys = dto.logIds.map((item) => ({
       transDate: parseDateStart(item.transDate)!,
       seq: Number(item.seq),
     }));
-    const data = await this.interfaceService.bulkRetry(logKeys, company, plant);
+    const data = await this.interfaceService.bulkRetry(logKeys, organizationId);
     return ResponseUtil.success(data, '일괄 재시도가 완료되었습니다.');
   }
 
@@ -100,8 +100,8 @@ export class InterfaceController {
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: '작업지시 수신 (ERP → MES)' })
   @ApiResponse({ status: 201, description: '수신 성공' })
-  async receiveJobOrder(@Body() dto: JobOrderInboundDto, @Company() company: string, @Plant() plant: string) {
-    const data = await this.interfaceService.receiveJobOrder(dto, company, plant);
+  async receiveJobOrder(@Body() dto: JobOrderInboundDto, @OrganizationId() organizationId: number) {
+    const data = await this.interfaceService.receiveJobOrder(dto, organizationId);
     return ResponseUtil.success(data, '작업지시가 수신되었습니다.');
   }
 
@@ -109,8 +109,8 @@ export class InterfaceController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'BOM 동기화 (ERP → MES)' })
   @ApiResponse({ status: 200, description: '동기화 성공' })
-  async syncBom(@Body() dtos: BomSyncDto[], @Company() company: string, @Plant() plant: string) {
-    const data = await this.interfaceService.syncBom(dtos, company, plant);
+  async syncBom(@Body() dtos: BomSyncDto[], @OrganizationId() organizationId: number) {
+    const data = await this.interfaceService.syncBom(dtos, organizationId);
     return ResponseUtil.success(data, 'BOM 동기화가 완료되었습니다.');
   }
 
@@ -118,8 +118,8 @@ export class InterfaceController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: '품목 마스터 동기화 (ERP → MES)' })
   @ApiResponse({ status: 200, description: '동기화 성공' })
-  async syncPart(@Body() dtos: PartSyncDto[], @Company() company: string, @Plant() plant: string) {
-    const data = await this.interfaceService.syncPart(dtos, company, plant);
+  async syncPart(@Body() dtos: PartSyncDto[], @OrganizationId() organizationId: number) {
+    const data = await this.interfaceService.syncPart(dtos, organizationId);
     return ResponseUtil.success(data, '품목 동기화가 완료되었습니다.');
   }
 
@@ -138,8 +138,8 @@ export class InterfaceController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: '생산실적 전송 (MES → ERP)' })
   @ApiResponse({ status: 200, description: '전송 성공' })
-  async sendProdResult(@Body() dto: ProdResultOutboundDto, @Company() company: string, @Plant() plant: string) {
-    const data = await this.interfaceService.sendProdResult(dto, company, plant);
+  async sendProdResult(@Body() dto: ProdResultOutboundDto, @OrganizationId() organizationId: number) {
+    const data = await this.interfaceService.sendProdResult(dto, organizationId);
     return ResponseUtil.success(data, '생산실적이 전송되었습니다.');
   }
 
@@ -148,24 +148,24 @@ export class InterfaceController {
   @Get('summary')
   @ApiOperation({ summary: '인터페이스 현황 요약' })
   @ApiResponse({ status: 200, description: '조회 성공' })
-  async getSummary(@Company() company: string, @Plant() plant: string) {
-    const data = await this.interfaceService.getSummary(company, plant);
+  async getSummary(@OrganizationId() organizationId: number) {
+    const data = await this.interfaceService.getSummary(organizationId);
     return ResponseUtil.success(data);
   }
 
   @Get('failed')
   @ApiOperation({ summary: '실패 로그 목록' })
   @ApiResponse({ status: 200, description: '조회 성공' })
-  async getFailedLogs(@Company() company: string, @Plant() plant: string) {
-    const data = await this.interfaceService.getFailedLogs(company, plant);
+  async getFailedLogs(@OrganizationId() organizationId: number) {
+    const data = await this.interfaceService.getFailedLogs(organizationId);
     return ResponseUtil.success(data);
   }
 
   @Get('recent')
   @ApiOperation({ summary: '최근 로그 목록' })
   @ApiResponse({ status: 200, description: '조회 성공' })
-  async getRecentLogs(@Query('limit') limit?: number, @Company() company?: string, @Plant() plant?: string) {
-    const data = await this.interfaceService.getRecentLogs(limit, company, plant);
+  async getRecentLogs(@Query('limit') limit?: number, @OrganizationId() organizationId?: number) {
+    const data = await this.interfaceService.getRecentLogs(limit, organizationId);
     return ResponseUtil.success(data);
   }
 }

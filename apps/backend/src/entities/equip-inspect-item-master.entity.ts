@@ -7,15 +7,12 @@ import {
 } from 'typeorm';
 
 /** 설비점검항목 기준 마스터 — 설비유형별 점검항목 템플릿
- *  PK: COMPANY + PLANT_CD + ITEM_CODE
+ *  PK: ORGANIZATION_ID + ITEM_CODE
  */
 @Entity({ name: 'EQUIP_INSPECT_ITEM_MASTERS' })
 export class EquipInspectItemMaster {
-  @PrimaryColumn({ name: 'COMPANY', length: 50 })
-  company: string;
-
-  @PrimaryColumn({ name: 'PLANT_CD', length: 50 })
-  plant: string;
+  @PrimaryColumn({ name: 'ORGANIZATION_ID', type: 'number' })
+  organizationId!: number;
 
   @PrimaryColumn({ name: 'ITEM_CODE', length: 30 })
   itemCode: string;

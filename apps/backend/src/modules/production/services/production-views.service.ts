@@ -47,7 +47,7 @@ export class ProductionViewsService {
   /**
    * 작업지시 진행현황 조회 (대시보드)
    */
-  async getProgress(query: ProgressQueryDto, company?: string, plant?: string) {
+  async getProgress(query: ProgressQueryDto, organizationId?: number) {
     const { page = 1, limit = 20, status, planDateFrom, planDateTo, search, shift } = query;
     const skip = (page - 1) * limit;
 
@@ -55,19 +55,17 @@ export class ProductionViewsService {
       .createQueryBuilder('jo')
       .leftJoinAndSelect('jo.part', 'p')
 
-    if (company) queryBuilder.andWhere('jo.company = :company', { company });
-    if (plant) queryBuilder.andWhere('jo.plant = :plant', { plant });
+    if (organizationId != null) queryBuilder.andWhere('jo.organizationId = :organizationId', { organizationId });
 
     /* shift 필터: 해당 교대의 ProdResult가 존재하는 작업지시만 조회 */
     if (shift) {
       const shiftJoin: string[] = ['pr.ORDER_NO = jo.ORDER_NO', 'pr.SHIFT_CODE = :shift'];
-      if (company) shiftJoin.push('pr.COMPANY = :company');
-      if (plant) shiftJoin.push('pr.PLANT_CD = :plant');
+      if (organizationId != null) shiftJoin.push('pr.ORGANIZATION_ID = :organizationId');
       queryBuilder.innerJoin(
         ProdResult,
         'pr',
         shiftJoin.join(' AND '),
-        { shift },
+        { shift, organizationId },
       );
     }
 
@@ -106,7 +104,7 @@ export class ProductionViewsService {
   /**
    * 샘플검사이력 조회
    */
-  async getSampleInspect(query: SampleInspectQueryDto, company?: string, plant?: string) {
+  async getSampleInspect(query: SampleInspectQueryDto, organizationId?: number) {
     const { page = 1, limit = 10, passYn, fromDate, toDate, search } = query;
     const skip = (page - 1) * limit;
 
@@ -119,11 +117,8 @@ export class ProductionViewsService {
       .skip(skip)
       .take(limit);
 
-    if (company) {
-      queryBuilder.andWhere('pr.company = :company', { company });
-    }
-    if (plant) {
-      queryBuilder.andWhere('pr.plant = :plant', { plant });
+    if (organizationId != null) {
+      queryBuilder.andWhere('pr.organizationId = :organizationId', { organizationId });
     }
 
     if (passYn) {
@@ -152,13 +147,13 @@ export class ProductionViewsService {
   /**
    * 포장실적 조회 — BoxMaster + ItemMaster JOIN
    */
-  async getPackResult(query: PackResultQueryDto, company?: string, plant?: string) {
+  async getPackResult(query: PackResultQueryDto, organizationId?: number) {
     const { page = 1, limit = 50, fromDate, toDate, search } = query;
     const skip = (page - 1) * limit;
 
     const qb = this.boxMasterRepository
       .createQueryBuilder('bm')
-      .leftJoin('ITEM_MASTERS', 'im', 'im.ITEM_CODE = bm.ITEM_CODE AND im.COMPANY = bm.COMPANY AND im.PLANT_CD = bm.PLANT_CD')
+      .leftJoin('ITEM_MASTERS', 'im', 'im.ITEM_CODE = bm.ITEM_CODE AND im.ORGANIZATION_ID = bm.ORGANIZATION_ID')
       .select([
         'bm.BOX_NO AS "boxNo"',
         'bm.ITEM_CODE AS "itemCode"',
@@ -172,8 +167,7 @@ export class ProductionViewsService {
         'bm.CLOSE_TIME AS "closeTime"',
       ]);
 
-    if (company) qb.andWhere('bm.COMPANY = :company', { company });
-    if (plant) qb.andWhere('bm.PLANT_CD = :plant', { plant });
+    if (organizationId != null) qb.andWhere('bm.ORGANIZATION_ID = :organizationId', { organizationId });
 
     if (search) {
       const upper = search.toUpperCase();
@@ -204,7 +198,7 @@ export class ProductionViewsService {
    * - SEMI_PRODUCT: PRODUCT_STOCKS WHERE WAREHOUSE_CODE='SFG_WIP' (반제품 공정창고)
    * - 전체: IN ('FG_WIP', 'SFG_WIP')
    */
-  async getWipStock(query: WipStockQueryDto, company?: string, plant?: string) {
+  async getWipStock(query: WipStockQueryDto, organizationId?: number) {
     const { page = 1, limit = 10, itemType, qualityStatus, search } = query;
     const skip = (page - 1) * limit;
 
@@ -213,12 +207,12 @@ export class ProductionViewsService {
       .leftJoin(
         'ITEM_MASTERS',
         'im',
-        'im.ITEM_CODE = s.ITEM_CODE AND im.COMPANY = s.COMPANY AND im.PLANT_CD = s.PLANT_CD',
+        'im.ITEM_CODE = s.ITEM_CODE AND im.ORGANIZATION_ID = s.ORGANIZATION_ID',
       )
       .leftJoin(
         'WAREHOUSES',
         'wh',
-        'wh.WAREHOUSE_CODE = s.WAREHOUSE_CODE AND wh.COMPANY = s.COMPANY AND wh.PLANT_CD = s.PLANT_CD',
+        'wh.WAREHOUSE_CODE = s.WAREHOUSE_CODE AND wh.ORGANIZATION_ID = s.ORGANIZATION_ID',
       )
       .select([
         's.ITEM_CODE AS "itemCode"',
@@ -243,11 +237,8 @@ export class ProductionViewsService {
             : "s.WAREHOUSE_CODE IN ('FG_WIP', 'SFG_WIP')",
       );
 
-    if (company) {
-      qb.andWhere('s.COMPANY = :company', { company });
-    }
-    if (plant) {
-      qb.andWhere('s.PLANT_CD = :plant', { plant });
+    if (organizationId != null) {
+      qb.andWhere('s.ORGANIZATION_ID = :organizationId', { organizationId });
     }
     if (qualityStatus) {
       qb.andWhere('s.QUALITY_STATUS = :qualityStatus', { qualityStatus });
@@ -267,7 +258,7 @@ export class ProductionViewsService {
     return { data, total, page, limit };
   }
 
-  async getWipStockLabels(itemCode: string, itemType: string, company?: string, plant?: string) {
+  async getWipStockLabels(itemCode: string, itemType: string, organizationId?: number) {
     if (itemType === 'SEMI_PRODUCT') {
       const qb = this.sgLabelRepository
         .createQueryBuilder('sg')
@@ -287,8 +278,7 @@ export class ProductionViewsService {
         ])
         .where('sg.itemCode = :itemCode', { itemCode })
         .andWhere("sg.status NOT IN ('CONSUMED', 'DEFECT')");
-      if (company) qb.andWhere('sg.company = :company', { company });
-      if (plant) qb.andWhere('sg.plant = :plant', { plant });
+      if (organizationId != null) qb.andWhere('sg.organizationId = :organizationId', { organizationId });
       qb.orderBy('sg.issuedAt', 'DESC');
 
       const data = await qb.getRawMany();
@@ -300,7 +290,7 @@ export class ProductionViewsService {
       .leftJoin(
         'PRODUCT_TRANSACTIONS',
         'tx',
-        `tx.REF_TYPE = 'BOX' AND tx.REF_ID = fg.BOX_NO AND tx.STATUS = 'DONE' AND tx.TRANS_TYPE IN ('WIP_OUT', 'FG_IN') AND tx.COMPANY = fg.COMPANY AND tx.PLANT_CD = fg.PLANT_CD`,
+        `tx.REF_TYPE = 'BOX' AND tx.REF_ID = fg.BOX_NO AND tx.STATUS = 'DONE' AND tx.TRANS_TYPE IN ('WIP_OUT', 'FG_IN') AND tx.ORGANIZATION_ID = fg.ORGANIZATION_ID`,
       )
       .select([
         'fg.fgBarcode AS "barcode"',
@@ -315,8 +305,7 @@ export class ProductionViewsService {
       .where('fg.itemCode = :itemCode', { itemCode })
       .andWhere("fg.status NOT IN ('VOIDED', 'SHIPPED')")
       .andWhere('tx.TRANS_NO IS NULL');
-    if (company) qb.andWhere('fg.company = :company', { company });
-    if (plant) qb.andWhere('fg.plant = :plant', { plant });
+    if (organizationId != null) qb.andWhere('fg.organizationId = :organizationId', { organizationId });
     qb.orderBy('fg.issuedAt', 'DESC');
 
     const data = await qb.getRawMany();
@@ -326,7 +315,7 @@ export class ProductionViewsService {
   /**
    * @deprecated use getWipStockLabels(itemCode, itemType)
    */
-  async getWipStockFgLabels(itemCode: string, company?: string, plant?: string) {
-    return this.getWipStockLabels(itemCode, 'FINISHED', company, plant);
+  async getWipStockFgLabels(itemCode: string, organizationId?: number) {
+    return this.getWipStockLabels(itemCode, 'FINISHED', organizationId);
   }
 }

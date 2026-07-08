@@ -20,33 +20,27 @@ export class MatOutRequestService {
     private readonly numbering: NumberingService,
   ) {}
 
-  private tenantWhere(company?: string | null, plant?: string | null) {
+  private tenantWhere(organizationId?: number | null) {
     return {
-      ...(company ? { company } : {}),
-      ...(plant ? { plant } : {}),
+      ...(organizationId != null ? { organizationId } : {}),
     };
   }
 
   private assertSameTenant(
     context: string,
-    row: { company?: string | null; plant?: string | null },
-    company?: string | null,
-    plant?: string | null,
+    row: { organizationId?: number | null },
+    organizationId?: number | null,
   ) {
-    if (company && row.company !== company) {
-      throw new BadRequestException(`${context} 회사 정보가 일치하지 않습니다. request=${company}, row=${row.company ?? 'NULL'}`);
-    }
-    if (plant && row.plant !== plant) {
-      throw new BadRequestException(`${context} 사업장 정보가 일치하지 않습니다. request=${plant}, row=${row.plant ?? 'NULL'}`);
+    if (organizationId != null && row.organizationId !== organizationId) {
+      throw new BadRequestException(`${context} 조직 정보가 일치하지 않습니다. request=${organizationId}, row=${row.organizationId ?? 'NULL'}`);
     }
   }
 
-  async findPending(query: { page?: number; limit?: number }, company?: string, plant?: string) {
+  async findPending(query: { page?: number; limit?: number }, organizationId?: number) {
     const { page = 1, limit = 20 } = query;
     const where: FindOptionsWhere<StockTransaction> = {
       status: 'PENDING_APPROVAL',
-      ...(company && { company }),
-      ...(plant && { plant }),
+      ...(organizationId != null && { organizationId }),
     };
 
     const [data, total] = await this.stockTxRepo.findAndCount({
@@ -59,12 +53,11 @@ export class MatOutRequestService {
     return { data, total, page, limit };
   }
 
-  async create(dto: { matUid: string; itemCode: string; qty: number; outType: string; reason?: string; workerId?: string; company?: string; plant?: string }) {
+  async create(dto: { matUid: string; itemCode: string; qty: number; outType: string; reason?: string; workerId?: string; organizationId?: number }) {
     const lot = await this.matLotRepo.findOne({
       where: {
         matUid: dto.matUid,
-        ...(dto.company ? { company: dto.company } : {}),
-        ...(dto.plant ? { plant: dto.plant } : {}),
+        ...(dto.organizationId != null ? { organizationId: dto.organizationId } : {}),
       },
     });
     if (lot?.status === 'HOLD') {
@@ -75,8 +68,7 @@ export class MatOutRequestService {
       where: {
         matUid: dto.matUid,
         itemCode: dto.itemCode,
-        ...(dto.company ? { company: dto.company } : {}),
-        ...(dto.plant ? { plant: dto.plant } : {}),
+        ...(dto.organizationId != null ? { organizationId: dto.organizationId } : {}),
       },
     });
 
@@ -101,8 +93,7 @@ export class MatOutRequestService {
         workerId: dto.workerId,
         refType: dto.outType,
         status: 'PENDING_APPROVAL',
-        company: dto.company,
-        plant: dto.plant,
+        organizationId: dto.organizationId,
       });
       await queryRunner.manager.save(tx);
 
@@ -112,8 +103,7 @@ export class MatOutRequestService {
           warehouseCode: stock.warehouseCode,
           itemCode: dto.itemCode,
           matUid: dto.matUid,
-          ...(dto.company ? { company: dto.company } : {}),
-          ...(dto.plant ? { plant: dto.plant } : {}),
+          ...(dto.organizationId != null ? { organizationId: dto.organizationId } : {}),
         },
         {
           reservedQty: (stock.reservedQty ?? 0) + dto.qty,
@@ -125,13 +115,13 @@ export class MatOutRequestService {
     });
   }
 
-  async approve(transNo: string, approverId: string, company?: string, plant?: string) {
-    const tx = await this.stockTxRepo.findOne({ where: { transNo, ...this.tenantWhere(company, plant) } });
+  async approve(transNo: string, approverId: string, organizationId?: number) {
+    const tx = await this.stockTxRepo.findOne({ where: { transNo, ...this.tenantWhere(organizationId) } });
     if (!tx) throw new NotFoundException('Stock transaction not found.');
-    this.assertSameTenant('자재출고요청 거래', tx, company, plant);
+    this.assertSameTenant('자재출고요청 거래', tx, organizationId);
     if (tx.status !== 'PENDING_APPROVAL') throw new BadRequestException('Transaction is not pending approval.');
 
-    const txTenantWhere = this.tenantWhere(tx.company, tx.plant);
+    const txTenantWhere = this.tenantWhere(tx.organizationId);
 
     if (tx.matUid) {
       const lot = await this.matLotRepo.findOne({ where: { matUid: tx.matUid, ...txTenantWhere } });
@@ -181,15 +171,15 @@ export class MatOutRequestService {
     return { transNo, status: 'DONE' };
   }
 
-  async reject(transNo: string, approverId: string, company?: string, plant?: string) {
-    const tx = await this.stockTxRepo.findOne({ where: { transNo, ...this.tenantWhere(company, plant) } });
+  async reject(transNo: string, approverId: string, organizationId?: number) {
+    const tx = await this.stockTxRepo.findOne({ where: { transNo, ...this.tenantWhere(organizationId) } });
     if (!tx) throw new NotFoundException('Stock transaction not found.');
-    this.assertSameTenant('자재출고요청 거래', tx, company, plant);
+    this.assertSameTenant('자재출고요청 거래', tx, organizationId);
     if (tx.status !== 'PENDING_APPROVAL') throw new BadRequestException('Transaction is not pending approval.');
 
     await this.unlockStock(tx);
     await this.stockTxRepo.update(
-      { transNo, ...this.tenantWhere(tx.company, tx.plant) },
+      { transNo, ...this.tenantWhere(tx.organizationId) },
       {
         status: 'REJECTED',
         approverId,
@@ -200,16 +190,16 @@ export class MatOutRequestService {
     return { transNo, status: 'REJECTED' };
   }
 
-  async cancel(transNo: string, company?: string, plant?: string) {
-    const tx = await this.stockTxRepo.findOne({ where: { transNo, ...this.tenantWhere(company, plant) } });
+  async cancel(transNo: string, organizationId?: number) {
+    const tx = await this.stockTxRepo.findOne({ where: { transNo, ...this.tenantWhere(organizationId) } });
     if (!tx) throw new NotFoundException('Stock transaction not found.');
-    this.assertSameTenant('자재출고요청 거래', tx, company, plant);
+    this.assertSameTenant('자재출고요청 거래', tx, organizationId);
     if (tx.status !== 'PENDING_APPROVAL') {
       throw new BadRequestException('Only pending approval transaction can be canceled.');
     }
 
     await this.unlockStock(tx);
-    await this.stockTxRepo.update({ transNo, ...this.tenantWhere(tx.company, tx.plant) }, { status: 'CANCELED' });
+    await this.stockTxRepo.update({ transNo, ...this.tenantWhere(tx.organizationId) }, { status: 'CANCELED' });
     return { transNo, status: 'CANCELED' };
   }
 
@@ -221,7 +211,7 @@ export class MatOutRequestService {
         ...(tx.fromWarehouseId ? { warehouseCode: tx.fromWarehouseId } : {}),
         matUid: tx.matUid,
         itemCode: tx.itemCode,
-        ...this.tenantWhere(tx.company, tx.plant),
+        ...this.tenantWhere(tx.organizationId),
       },
     });
 
@@ -233,7 +223,7 @@ export class MatOutRequestService {
         warehouseCode: stock.warehouseCode,
         itemCode: tx.itemCode,
         matUid: tx.matUid,
-        ...this.tenantWhere(tx.company, tx.plant),
+        ...this.tenantWhere(tx.organizationId),
       },
       {
         reservedQty: Math.max(0, (stock.reservedQty ?? 0) - absQty),

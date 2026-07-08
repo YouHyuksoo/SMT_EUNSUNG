@@ -22,24 +22,20 @@ export class ProcessService {
     private readonly processEquipmentRepository: Repository<ProcessEquipment>,
   ) {}
 
-  private tenantWhere(company?: string, plant?: string) {
+  private tenantWhere(organizationId?: number) {
     return {
-      ...(company ? { company } : {}),
-      ...(plant ? { plant } : {}),
+      ...(organizationId != null ? { organizationId } : {}),
     };
   }
 
-  async findAll(query: ProcessQueryDto, company?: string, plant?: string) {
+  async findAll(query: ProcessQueryDto, organizationId?: number) {
     const { page = 1, limit = 10, search, processType, useYn } = query;
     const skip = (page - 1) * limit;
 
     const queryBuilder = this.processRepository.createQueryBuilder('process')
 
-    if (company) {
-      queryBuilder.andWhere('process.company = :company', { company });
-    }
-    if (plant) {
-      queryBuilder.andWhere('process.plant = :plant', { plant });
+    if (organizationId != null) {
+      queryBuilder.andWhere('process.organizationId = :organizationId', { organizationId });
     }
 
     if (processType) {
@@ -71,17 +67,17 @@ export class ProcessService {
     return { data, total, page, limit };
   }
 
-  async findById(processCode: string, company?: string, plant?: string) {
+  async findById(processCode: string, organizationId?: number) {
     const process = await this.processRepository.findOne({
-      where: { processCode, ...this.tenantWhere(company, plant) },
+      where: { processCode, ...this.tenantWhere(organizationId) },
     });
     if (!process) throw new NotFoundException(`공정을 찾을 수 없습니다: ${processCode}`);
     return process;
   }
 
-  async create(dto: CreateProcessDto, company?: string, plant?: string) {
+  async create(dto: CreateProcessDto, organizationId?: number) {
     const existing = await this.processRepository.findOne({
-      where: { processCode: dto.processCode, ...this.tenantWhere(company, plant) },
+      where: { processCode: dto.processCode, ...this.tenantWhere(organizationId) },
     });
     if (existing) throw new ConflictException(`이미 존재하는 공정 코드입니다: ${dto.processCode}`);
 
@@ -94,14 +90,13 @@ export class ProcessService {
       sortOrder: dto.sortOrder ?? 0,
       remark: dto.remark,
       useYn: dto.useYn ?? 'Y',
-      company,
-      plant,
+      organizationId,
     });
 
     return this.processRepository.save(process);
   }
 
-  async update(processCode: string, dto: UpdateProcessDto, company?: string, plant?: string) {
+  async update(processCode: string, dto: UpdateProcessDto, organizationId?: number) {
     await this.findById(processCode, company, plant);
     const updateData: Partial<Pick<ProcessMaster,
       | 'processName'
@@ -120,21 +115,21 @@ export class ProcessService {
       ...(dto.remark !== undefined ? { remark: dto.remark } : {}),
       ...(dto.useYn !== undefined ? { useYn: dto.useYn } : {}),
     };
-    await this.processRepository.update({ processCode, ...this.tenantWhere(company, plant) }, updateData);
+    await this.processRepository.update({ processCode, ...this.tenantWhere(organizationId) }, updateData);
     return this.findById(processCode, company, plant);
   }
 
-  async delete(processCode: string, company?: string, plant?: string) {
+  async delete(processCode: string, organizationId?: number) {
     await this.findById(processCode, company, plant);
-    await this.processRepository.delete({ processCode, ...this.tenantWhere(company, plant) });
+    await this.processRepository.delete({ processCode, ...this.tenantWhere(organizationId) });
     return { processCode };
   }
 
-  async findEquipments(processCode: string, company?: string, plant?: string) {
+  async findEquipments(processCode: string, organizationId?: number) {
     await this.findById(processCode, company, plant);
 
     const assignments = await this.processEquipmentRepository.find({
-      where: { processCode, useYn: 'Y', ...this.tenantWhere(company, plant) },
+      where: { processCode, useYn: 'Y', ...this.tenantWhere(organizationId) },
       relations: ['equipment'],
       order: { equipCode: 'ASC' },
     });
@@ -144,15 +139,14 @@ export class ProcessService {
       .filter((equipment): equipment is EquipMaster => !!equipment);
   }
 
-  async getEquipmentCounts(company?: string, plant?: string): Promise<Record<string, number>> {
+  async getEquipmentCounts(organizationId?: number): Promise<Record<string, number>> {
     const qb = this.processEquipmentRepository
       .createQueryBuilder('pe')
       .select('pe.processCode', 'processCode')
       .addSelect('COUNT(*)', 'count')
       .where('pe.useYn = :useYn', { useYn: 'Y' });
 
-    if (company) qb.andWhere('pe.company = :company', { company });
-    if (plant) qb.andWhere('pe.plant = :plant', { plant });
+    if (organizationId != null) qb.andWhere('pe.organizationId = :organizationId', { organizationId });
 
     const rows = await qb
       .groupBy('pe.processCode')
@@ -164,18 +158,18 @@ export class ProcessService {
     }, {});
   }
 
-  async assignEquipment(processCode: string, equipCode: string, company?: string, plant?: string) {
+  async assignEquipment(processCode: string, equipCode: string, organizationId?: number) {
     await this.findById(processCode, company, plant);
 
     const equipment = await this.equipRepository.findOne({
-      where: { equipCode, ...this.tenantWhere(company, plant) },
+      where: { equipCode, ...this.tenantWhere(organizationId) },
     });
     if (!equipment) {
       throw new NotFoundException(`설비를 찾을 수 없습니다: ${equipCode}`);
     }
 
     const existing = await this.processEquipmentRepository.findOne({
-      where: { processCode, equipCode, ...this.tenantWhere(company, plant) },
+      where: { processCode, equipCode, ...this.tenantWhere(organizationId) },
     });
 
     if (existing) {
@@ -183,17 +177,16 @@ export class ProcessService {
         throw new ConflictException(`이미 배치된 설비입니다: ${equipCode}`);
       }
       await this.processEquipmentRepository.update(
-        { processCode, equipCode, ...this.tenantWhere(company, plant) },
+        { processCode, equipCode, ...this.tenantWhere(organizationId) },
         { useYn: 'Y' },
       );
       return this.processEquipmentRepository.findOne({
-        where: { processCode, equipCode, ...this.tenantWhere(company, plant) },
+        where: { processCode, equipCode, ...this.tenantWhere(organizationId) },
       });
     }
 
     const assignment = this.processEquipmentRepository.create({
-      company: company || null,
-      plant: plant || null,
+      organizationId,
       processCode,
       equipCode,
       useYn: 'Y',
@@ -202,9 +195,9 @@ export class ProcessService {
     return this.processEquipmentRepository.save(assignment);
   }
 
-  async removeEquipment(processCode: string, equipCode: string, company?: string, plant?: string) {
+  async removeEquipment(processCode: string, equipCode: string, organizationId?: number) {
     await this.findById(processCode, company, plant);
-    await this.processEquipmentRepository.delete({ processCode, equipCode, ...this.tenantWhere(company, plant) });
+    await this.processEquipmentRepository.delete({ processCode, equipCode, ...this.tenantWhere(organizationId) });
     return { processCode, equipCode };
   }
 }

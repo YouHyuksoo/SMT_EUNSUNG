@@ -48,21 +48,19 @@ export class KioskConsumableService {
    */
   async findByJobOrder(
     orderNo: string,
-    company?: string,
-    plant?: string,
+    organizationId?: number,
     equipCodeOverride?: string,
     includeMountedOnEquip = false,
   ): Promise<KioskConsumableRow[]> {
     const jobOrder = await this.jobOrderRepo.findOne({
-      where: { orderNo, ...(company ? { company } : {}), ...(plant ? { plant } : {}) },
+      where: { orderNo, ...(organizationId != null ? { organizationId } : {}) },
     });
     const effectiveEquip = equipCodeOverride ?? jobOrder?.equipCode;
     if (!effectiveEquip || !jobOrder?.itemCode) return [];
 
     const maps = await this.mapRepo.find({
       where: {
-        ...(company ? { company } : {}),
-        ...(plant ? { plant } : {}),
+        ...(organizationId != null ? { organizationId } : {}),
         productItemCode: jobOrder.itemCode,
         equipCode: effectiveEquip,
         useYn: 'Y',
@@ -76,8 +74,7 @@ export class KioskConsumableService {
       where: {
         mountedEquipCode: effectiveEquip,
         status: 'MOUNTED',
-        ...(company ? { company } : {}),
-        ...(plant ? { plantCd: plant } : {}),
+        ...(organizationId != null ? { organizationId } : {}),
       },
     });
     const mountedMap = new Map(mounted.map(s => [s.consumableCode, s]));
@@ -90,7 +87,7 @@ export class KioskConsumableService {
     if (allCodes.length === 0) return [];
 
     const masters = await this.masterRepo.find({
-      where: { consumableCode: In(allCodes), ...(company ? { company } : {}), ...(plant ? { plant } : {}) },
+      where: { consumableCode: In(allCodes), ...(organizationId != null ? { organizationId } : {}) },
     });
     const masterMap = new Map(masters.map(m => [m.consumableCode, m]));
 
@@ -115,9 +112,9 @@ export class KioskConsumableService {
    * 바코드(conUid) 스캔 → 소모품 롯트를 설비에 장착
    * @param equipCodeOverride 지정 시 작업지시 설비 대신 이 설비에 장착(검사 화면 검사기 선택용)
    */
-  async scanMount(orderNo: string, conUid: string, company?: string, plant?: string, equipCodeOverride?: string) {
+  async scanMount(orderNo: string, conUid: string, organizationId?: number, equipCodeOverride?: string) {
     const jobOrder = await this.jobOrderRepo.findOne({
-      where: { orderNo, ...(company ? { company } : {}), ...(plant ? { plant } : {}) },
+      where: { orderNo, ...(organizationId != null ? { organizationId } : {}) },
     });
     const effectiveEquip = equipCodeOverride ?? jobOrder?.equipCode;
     if (!jobOrder?.itemCode) {
@@ -131,7 +128,7 @@ export class KioskConsumableService {
     }
 
     const stock = await this.stockRepo.findOne({
-      where: { conUid, ...(company ? { company } : {}), ...(plant ? { plantCd: plant } : {}) },
+      where: { conUid, ...(organizationId != null ? { organizationId } : {}) },
     });
     if (!stock) {
       throw new NotFoundException(`소모품 롯트를 찾을 수 없습니다: ${conUid}`);
@@ -147,8 +144,7 @@ export class KioskConsumableService {
 
     const map = await this.mapRepo.findOne({
       where: {
-        ...(company ? { company } : {}),
-        ...(plant ? { plant } : {}),
+        ...(organizationId != null ? { organizationId } : {}),
         productItemCode: jobOrder.itemCode,
         equipCode: effectiveEquip,
         consumableCode: stock.consumableCode,
@@ -165,8 +161,7 @@ export class KioskConsumableService {
         consumableCode: stock.consumableCode,
         mountedEquipCode: effectiveEquip,
         status: 'MOUNTED',
-        ...(company ? { company } : {}),
-        ...(plant ? { plantCd: plant } : {}),
+        ...(organizationId != null ? { organizationId } : {}),
       },
     });
     for (const prev of prevMounted) {
@@ -192,9 +187,9 @@ export class KioskConsumableService {
   }
 
   /** 장착 해제 (공정대기 복귀) */
-  async unmount(conUid: string, company?: string, plant?: string): Promise<void> {
+  async unmount(conUid: string, organizationId?: number): Promise<void> {
     const stock = await this.stockRepo.findOne({
-      where: { conUid, ...(company ? { company } : {}), ...(plant ? { plantCd: plant } : {}) },
+      where: { conUid, ...(organizationId != null ? { organizationId } : {}) },
     });
     if (!stock) return;
     stock.mountedEquipCode = null;

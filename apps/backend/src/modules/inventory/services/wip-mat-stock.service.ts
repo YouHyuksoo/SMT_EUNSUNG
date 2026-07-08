@@ -35,8 +35,7 @@ export interface AddWipStockParams {
   refId: string;
   workerId?: string | null;
   remark?: string | null;
-  company: string;
-  plant: string;
+  organizationId: number;
 }
 
 /** 공정재고 차감 파라미터 */
@@ -54,8 +53,7 @@ export interface DeductWipStockParams {
   stockPolicy: 'BLOCK' | 'WARN';
   workerId?: string | null;
   remark?: string | null;
-  company: string;
-  plant: string;
+  organizationId: number;
   /** WARN 정책일 때 경고 메시지를 누적할 배열(호출부 제공) */
   warnings?: string[];
 }
@@ -79,8 +77,7 @@ export interface RestoreWipStockParams {
   orderNo?: string | null;
   workerId?: string | null;
   remark?: string | null;
-  company: string;
-  plant: string;
+  organizationId: number;
 }
 
 /** 복원 결과 LOT 단위 */
@@ -157,7 +154,7 @@ export class WipMatStockService {
     }
     const manager = qr.manager;
     await this.upsertAdd(manager, {
-      company: p.company, plant: p.plant, equipCode: p.equipCode,
+      organizationId: p.organizationId, equipCode: p.equipCode,
       itemCode: p.itemCode, matUid: p.matUid, addQty: p.qty,
     });
 
@@ -179,8 +176,7 @@ export class WipMatStockService {
         status: 'DONE',
         remark: p.remark ?? null,
         workerId: p.workerId ?? null,
-        company: p.company,
-        plant: p.plant,
+        organizationId: p.organizationId,
       }),
     );
   }
@@ -200,7 +196,7 @@ export class WipMatStockService {
     const manager = qr.manager;
     const rows = await manager.find(WipMatStock, {
       where: {
-        company: p.company, plant: p.plant,
+        organizationId: p.organizationId,
         equipCode: p.equipCode, itemCode: p.itemCode,
       },
     });
@@ -226,7 +222,7 @@ export class WipMatStockService {
       await manager.update(
         WipMatStock,
         {
-          company: p.company, plant: p.plant, equipCode: p.equipCode,
+          organizationId: p.organizationId, equipCode: p.equipCode,
           itemCode: p.itemCode, matUid: row.matUid,
         },
         {
@@ -253,8 +249,7 @@ export class WipMatStockService {
           status: 'DONE',
           remark: p.remark ?? null,
           workerId: p.workerId ?? null,
-          company: p.company,
-          plant: p.plant,
+          organizationId: p.organizationId,
         }),
       );
 
@@ -281,7 +276,7 @@ export class WipMatStockService {
   async restoreInTx(qr: QueryRunner, p: RestoreWipStockParams): Promise<RestoredLot[]> {
     const manager = qr.manager;
     const where: Record<string, unknown> = {
-      company: p.company, plant: p.plant,
+      organizationId: p.organizationId,
       refType: p.refType, refId: p.refId, status: 'DONE',
     };
     if (p.originTransType) where.transType = p.originTransType;
@@ -303,12 +298,12 @@ export class WipMatStockService {
 
       if (p.mode === 'ADD_BACK') {
         await this.upsertAdd(manager, {
-          company: p.company, plant: p.plant, equipCode: origin.equipCode,
+          organizationId: p.organizationId, equipCode: origin.equipCode,
           itemCode: origin.itemCode, matUid: origin.matUid, addQty: absQty,
         });
       } else {
         await this.deductOneLot(manager, {
-          company: p.company, plant: p.plant, equipCode: origin.equipCode,
+          organizationId: p.organizationId, equipCode: origin.equipCode,
           itemCode: origin.itemCode, matUid: origin.matUid, deductQty: absQty,
         });
       }
@@ -332,8 +327,7 @@ export class WipMatStockService {
           status: 'DONE',
           remark: p.remark ?? null,
           workerId: p.workerId ?? null,
-          company: p.company,
-          plant: p.plant,
+          organizationId: p.organizationId,
         }),
       );
 
@@ -349,16 +343,14 @@ export class WipMatStockService {
    */
   async findByEquip(
     equipCode: string | undefined,
-    company: string,
-    plant: string,
+    organizationId: number,
     search?: string,
   ): Promise<WipStockRow[]> {
     const qb = this.wipStockRepo
       .createQueryBuilder('s')
-      .leftJoin('EQUIP_MASTERS', 'e', 'e.EQUIP_CODE = s.EQUIP_CODE AND e.COMPANY = s.COMPANY AND e.PLANT_CD = s.PLANT_CD')
+      .leftJoin('EQUIP_MASTERS', 'e', 'e.EQUIP_CODE = s.EQUIP_CODE AND e.ORGANIZATION_ID = s.ORGANIZATION_ID')
       .leftJoin('ITEM_MASTERS', 'im', 'im.ITEM_CODE = s.ITEM_CODE')
-      .where('s.COMPANY = :company', { company })
-      .andWhere('s.PLANT_CD = :plant', { plant })
+      .where('s.ORGANIZATION_ID = :organizationId', { organizationId })
       .select('s.EQUIP_CODE', 'equipCode')
       .addSelect('e.EQUIP_NAME', 'equipName')
       .addSelect('s.ITEM_CODE', 'itemCode')
@@ -407,13 +399,11 @@ export class WipMatStockService {
   async findLotsByEquipItem(
     equipCode: string,
     itemCode: string,
-    company: string,
-    plant: string,
+    organizationId: number,
   ): Promise<{ matUid: string; qty: number; availableQty: number; reservedQty: number }[]> {
     const raw = await this.wipStockRepo
       .createQueryBuilder('s')
-      .where('s.COMPANY = :company', { company })
-      .andWhere('s.PLANT_CD = :plant', { plant })
+      .where('s.ORGANIZATION_ID = :organizationId', { organizationId })
       .andWhere('s.EQUIP_CODE = :equipCode', { equipCode })
       .andWhere('s.ITEM_CODE = :itemCode', { itemCode })
       .andWhere('s.QTY > 0')
@@ -441,15 +431,13 @@ export class WipMatStockService {
    */
   async findTransactions(
     params: WipTransactionQuery,
-    company: string,
-    plant: string,
+    organizationId: number,
   ): Promise<WipTransactionRow[]> {
     const qb = this.wipTxRepo
       .createQueryBuilder('tx')
       .leftJoin('EQUIP_MASTERS', 'e', 'e.EQUIP_CODE = tx.EQUIP_CODE')
       .leftJoin('ITEM_MASTERS', 'i', 'i.ITEM_CODE = tx.ITEM_CODE')
-      .where('tx.COMPANY = :company', { company })
-      .andWhere('tx.PLANT_CD = :plant', { plant })
+      .where('tx.ORGANIZATION_ID = :organizationId', { organizationId })
       .select('tx.TRANS_NO', 'transNo')
       .addSelect('tx.TRANS_TYPE', 'transType')
       .addSelect('tx.EQUIP_CODE', 'equipCode')
@@ -535,12 +523,12 @@ export class WipMatStockService {
   private async upsertAdd(
     manager: EntityManager,
     p: {
-      company: string; plant: string; equipCode: string;
+      organizationId: number; equipCode: string;
       itemCode: string; matUid: string; addQty: number;
     },
   ): Promise<void> {
     const key = {
-      company: p.company, plant: p.plant, equipCode: p.equipCode,
+      organizationId: p.organizationId, equipCode: p.equipCode,
       itemCode: p.itemCode, matUid: p.matUid,
     };
     const existing = await manager.findOne(WipMatStock, { where: key });
@@ -566,12 +554,12 @@ export class WipMatStockService {
   private async deductOneLot(
     manager: EntityManager,
     p: {
-      company: string; plant: string; equipCode: string;
+      organizationId: number; equipCode: string;
       itemCode: string; matUid: string; deductQty: number;
     },
   ): Promise<void> {
     const key = {
-      company: p.company, plant: p.plant, equipCode: p.equipCode,
+      organizationId: p.organizationId, equipCode: p.equipCode,
       itemCode: p.itemCode, matUid: p.matUid,
     };
     const existing = await manager.findOne(WipMatStock, { where: key });

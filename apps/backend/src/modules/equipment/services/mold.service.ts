@@ -42,13 +42,12 @@ export class MoldService {
     return result[0].nextSeq;
   }
 
-  async findAll(query: MoldQueryDto, company?: string, plant?: string) {
+  async findAll(query: MoldQueryDto, organizationId?: number) {
     const { page = 1, limit = 50, status, moldType, search } = query;
 
     const qb = this.moldRepo.createQueryBuilder('m');
 
-    if (company) qb.andWhere('m.company = :company', { company });
-    if (plant) qb.andWhere('m.plant = :plant', { plant });
+    if (organizationId != null) qb.andWhere('m.organizationId = :organizationId', { organizationId });
     if (status) qb.andWhere('m.status = :status', { status });
     if (moldType) qb.andWhere('m.moldType = :moldType', { moldType });
     if (search) {
@@ -69,12 +68,11 @@ export class MoldService {
     return { data, total, page, limit };
   }
 
-  async findById(moldCode: string, company?: string, plant?: string) {
+  async findById(moldCode: string, organizationId?: number) {
     const item = await this.moldRepo.findOne({
       where: {
         moldCode,
-        ...(company && { company }),
-        ...(plant && { plant }),
+        ...(organizationId != null && { organizationId }),
       },
     });
 
@@ -84,9 +82,9 @@ export class MoldService {
     return item;
   }
 
-  async create(dto: CreateMoldDto, company: string, plant: string, userId: string) {
+  async create(dto: CreateMoldDto, organizationId: number, userId: string) {
     const existing = await this.moldRepo.findOne({
-      where: { moldCode: dto.moldCode, company, plant },
+      where: { moldCode: dto.moldCode, organizationId },
     });
     if (existing) {
       throw new BadRequestException(`Mold already exists: ${dto.moldCode}`);
@@ -106,8 +104,7 @@ export class MoldService {
       remark: dto.remark ?? null,
       currentShots: 0,
       status: 'ACTIVE',
-      company,
-      plant,
+      organizationId,
       createdBy: userId,
       updatedBy: userId,
     });
@@ -116,8 +113,8 @@ export class MoldService {
     return saved;
   }
 
-  async update(moldCode: string, dto: UpdateMoldDto, userId: string, company?: string, plant?: string) {
-    const item = await this.findById(moldCode, company, plant);
+  async update(moldCode: string, dto: UpdateMoldDto, userId: string, organizationId?: number) {
+    const item = await this.findById(moldCode, organizationId);
     if (item.status === 'SCRAPPED') {
       throw new BadRequestException('Cannot update scrapped mold.');
     }
@@ -152,13 +149,12 @@ export class MoldService {
     return this.moldRepo.save(item);
   }
 
-  async delete(moldCode: string, company?: string, plant?: string) {
-    const item = await this.findById(moldCode, company, plant);
+  async delete(moldCode: string, organizationId?: number) {
+    const item = await this.findById(moldCode, organizationId);
     const usageCount = await this.usageRepo.count({
       where: {
         moldCode,
-        ...(company && { company }),
-        ...(plant && { plant }),
+        ...(organizationId != null && { organizationId }),
       },
     });
     if (usageCount > 0) {
@@ -172,13 +168,12 @@ export class MoldService {
   async addUsage(
     moldCode: string,
     dto: CreateMoldUsageDto,
-    company: string,
-    plant: string,
+    organizationId: number,
     userId: string,
   ) {
     return this.tx.run(async (queryRunner) => {
       const mold = await queryRunner.manager.findOne(MoldMaster, {
-        where: { moldCode, company, plant },
+        where: { moldCode, organizationId },
       });
       if (!mold) {
         throw new NotFoundException('Mold not found.');
@@ -199,8 +194,7 @@ export class MoldService {
         equipCode: dto.equipCode ?? null,
         workerCode: dto.workerCode ?? null,
         remark: dto.remark ?? null,
-        company,
-        plant,
+        organizationId,
         createdBy: userId,
       });
       const saved = await queryRunner.manager.save(MoldUsageLog, usage);
@@ -213,7 +207,7 @@ export class MoldService {
         try {
           await queryRunner.manager.update(
             EquipMaster,
-            { equipCode: dto.equipCode, company, plant },
+            { equipCode: dto.equipCode, organizationId },
             { status: 'INTERLOCK' },
           );
           this.logger.warn(
@@ -229,18 +223,17 @@ export class MoldService {
     });
   }
 
-  async getUsageLogs(moldCode: string, company?: string, plant?: string) {
+  async getUsageLogs(moldCode: string, organizationId?: number) {
     return this.usageRepo.find({
       where: {
         moldCode,
-        ...(company && { company }),
-        ...(plant && { plant }),
+        ...(organizationId != null && { organizationId }),
       },
       order: { usageDate: 'DESC' },
     });
   }
 
-  async getMaintenanceDue(company?: string, plant?: string) {
+  async getMaintenanceDue(organizationId?: number) {
     const qb = this.moldRepo
       .createQueryBuilder('m')
       .where('m.status = :status', { status: 'ACTIVE' })
@@ -257,15 +250,14 @@ export class MoldService {
         },
       );
 
-    if (company) qb.andWhere('m.company = :company', { company });
-    if (plant) qb.andWhere('m.plant = :plant', { plant });
+    if (organizationId != null) qb.andWhere('m.organizationId = :organizationId', { organizationId });
 
     qb.orderBy('m.currentShots', 'DESC');
     return qb.getMany();
   }
 
-  async retire(moldCode: string, userId: string, company?: string, plant?: string) {
-    const item = await this.findById(moldCode, company, plant);
+  async retire(moldCode: string, userId: string, organizationId?: number) {
+    const item = await this.findById(moldCode, organizationId);
 
     if (['RETIRED', 'SCRAPPED'].includes(item.status)) {
       throw new BadRequestException('Mold is already retired or scrapped.');

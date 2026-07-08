@@ -55,20 +55,19 @@ export class ProdPlanService {
     private readonly tx: TransactionService,
   ) {}
 
-  private async resolveRoutingCodeByItem(itemCode: string, company?: string | null, plant?: string | null): Promise<string | null> {
+  private async resolveRoutingCodeByItem(itemCode: string, organizationId?: number | null): Promise<string | null> {
     const group = await this.routingGroupRepo.findOne({
       where: {
         itemCode,
         useYn: 'Y',
-        ...(company ? { company } : {}),
-        ...(plant ? { plant } : {}),
+        ...(organizationId != null ? { organizationId } : {}),
       },
     });
     return group?.routingCode ?? null;
   }
 
   /** 목록 조회 (필터, 페이징, part join) */
-  async findAll(query: ProdPlanQueryDto, company?: string, plant?: string) {
+  async findAll(query: ProdPlanQueryDto, organizationId?: number) {
     const { page = 1, limit = 50, planMonth, itemType, status, search, fromDate, toDate } = query;
     const skip = (page - 1) * limit;
 
@@ -76,8 +75,7 @@ export class ProdPlanService {
       .createQueryBuilder('pp')
       .leftJoinAndSelect('pp.part', 'part');
 
-    if (company) qb.andWhere('pp.company = :company', { company });
-    if (plant) qb.andWhere('pp.plant = :plant', { plant });
+    if (organizationId != null) qb.andWhere('pp.organizationId = :organizationId', { organizationId });
     if (planMonth) qb.andWhere('pp.planMonth = :planMonth', { planMonth });
     if (fromDate) qb.andWhere('pp.planMonth >= :startMonth', { startMonth: fromDate.slice(0, 7) });
     if (toDate) qb.andWhere('pp.planMonth <= :endMonth', { endMonth: toDate.slice(0, 7) });
@@ -100,9 +98,9 @@ export class ProdPlanService {
   }
 
   /** 개별 등록 (planNo 자동생성) */
-  async create(dto: CreateProdPlanDto, company?: string, plant?: string) {
+  async create(dto: CreateProdPlanDto, organizationId?: number) {
     const part = await this.partRepo.findOne({
-      where: { itemCode: dto.itemCode, ...(company ? { company } : {}), ...(plant ? { plant } : {}) },
+      where: { itemCode: dto.itemCode, ...(organizationId != null ? { organizationId } : {}) },
     });
     if (!part) throw new NotFoundException(`품목을 찾을 수 없습니다: ${dto.itemCode}`);
 
@@ -119,19 +117,18 @@ export class ProdPlanService {
       priority: dto.priority ?? 5,
       remark: dto.remark || null,
       status: 'DRAFT',
-      company: company || null,
-      plant: plant || null,
+      organizationId: organizationId ?? null,
     });
 
     const saved = await this.planRepo.save(plan);
     return this.planRepo.findOne({
-      where: { planNo: saved.planNo, ...(company ? { company } : {}), ...(plant ? { plant } : {}) },
+      where: { planNo: saved.planNo, ...(organizationId != null ? { organizationId } : {}) },
       relations: ['part'],
     });
   }
 
   /** 엑셀 일괄 등록 (트랜잭션) */
-  async bulkCreate(dto: BulkCreateProdPlanDto, company?: string, plant?: string) {
+  async bulkCreate(dto: BulkCreateProdPlanDto, organizationId?: number) {
     return this.tx.run(async (queryRunner) => {
       const results: ProdPlan[] = [];
 
@@ -139,7 +136,7 @@ export class ProdPlanService {
       const allItemCodes = [...new Set(dto.items.map((i) => i.itemCode))];
       const allParts = allItemCodes.length > 0
         ? await queryRunner.manager.find(ItemMaster, {
-            where: { itemCode: In(allItemCodes), ...(company ? { company } : {}), ...(plant ? { plant } : {}) },
+            where: { itemCode: In(allItemCodes), ...(organizationId != null ? { organizationId } : {}) },
             select: ['itemCode'],
           })
         : [];
@@ -164,8 +161,7 @@ export class ProdPlanService {
           priority: item.priority ?? 5,
           remark: item.remark || null,
           status: 'DRAFT',
-          company: company || null,
-          plant: plant || null,
+          organizationId: organizationId ?? null,
         });
 
         const saved = await queryRunner.manager.save(plan);
@@ -177,8 +173,8 @@ export class ProdPlanService {
   }
 
   /** 수정 (DRAFT 상태만) */
-  async update(planNo: string, dto: UpdateProdPlanDto, company?: string, plant?: string) {
-    const plan = await this.findById(planNo, company, plant);
+  async update(planNo: string, dto: UpdateProdPlanDto, organizationId?: number) {
+    const plan = await this.findById(planNo, organizationId);
     if (plan.status !== 'DRAFT') {
       throw new BadRequestException('초안(DRAFT) 상태의 계획만 수정할 수 있습니다.');
     }
@@ -192,45 +188,45 @@ export class ProdPlanService {
     if (dto.priority !== undefined) updateData.priority = dto.priority;
     if (dto.remark !== undefined) updateData.remark = dto.remark || null;
 
-    await this.planRepo.update({ planNo, ...(company ? { company } : {}), ...(plant ? { plant } : {}) }, updateData);
+    await this.planRepo.update({ planNo, ...(organizationId != null ? { organizationId } : {}) }, updateData);
     return this.planRepo.findOne({
-      where: { planNo, ...(company ? { company } : {}), ...(plant ? { plant } : {}) },
+      where: { planNo, ...(organizationId != null ? { organizationId } : {}) },
       relations: ['part'],
     });
   }
 
   /** 삭제 (DRAFT 상태만) */
-  async delete(planNo: string, company?: string, plant?: string) {
-    const plan = await this.findById(planNo, company, plant);
+  async delete(planNo: string, organizationId?: number) {
+    const plan = await this.findById(planNo, organizationId);
     if (plan.status !== 'DRAFT') {
       throw new BadRequestException('초안(DRAFT) 상태의 계획만 삭제할 수 있습니다.');
     }
-    await this.planRepo.delete({ planNo, ...(company ? { company } : {}), ...(plant ? { plant } : {}) });
+    await this.planRepo.delete({ planNo, ...(organizationId != null ? { organizationId } : {}) });
     return { planNo };
   }
 
   /** 확정 (DRAFT → CONFIRMED) */
-  async confirm(planNo: string, company?: string, plant?: string) {
-    const plan = await this.findById(planNo, company, plant);
+  async confirm(planNo: string, organizationId?: number) {
+    const plan = await this.findById(planNo, organizationId);
     if (plan.status !== 'DRAFT') {
       throw new BadRequestException('초안(DRAFT) 상태의 계획만 확정할 수 있습니다.');
     }
     await this.planRepo.update(
-      { planNo, ...(company ? { company } : {}), ...(plant ? { plant } : {}) },
+      { planNo, ...(organizationId != null ? { organizationId } : {}) },
       { status: 'CONFIRMED' },
     );
     return this.planRepo.findOne({
-      where: { planNo, ...(company ? { company } : {}), ...(plant ? { plant } : {}) },
+      where: { planNo, ...(organizationId != null ? { organizationId } : {}) },
       relations: ['part'],
     });
   }
 
   /** 일괄 확정 — IN 배치 선조회 + 일괄 UPDATE (N+1 제거) */
-  async bulkConfirm(planNos: string[], company?: string, plant?: string) {
+  async bulkConfirm(planNos: string[], organizationId?: number) {
     if (planNos.length === 0) return { count: 0 };
 
     const plans = await this.planRepo.find({
-      where: { planNo: In(planNos), ...(company ? { company } : {}), ...(plant ? { plant } : {}) },
+      where: { planNo: In(planNos), ...(organizationId != null ? { organizationId } : {}) },
       select: ['planNo', 'status'],
     });
 
@@ -245,51 +241,49 @@ export class ProdPlanService {
       .update(ProdPlan)
       .set({ status: 'CONFIRMED' })
       .where('planNo IN (:...planNos)', { planNos: draftPlanNos });
-    if (company) qb.andWhere('company = :company', { company });
-    if (plant) qb.andWhere('plant = :plant', { plant });
+    if (organizationId != null) qb.andWhere('organizationId = :organizationId', { organizationId });
     await qb.execute();
 
     return { count: draftPlanNos.length };
   }
 
   /** 확정 취소 (CONFIRMED → DRAFT) */
-  async unconfirm(planNo: string, company?: string, plant?: string) {
-    const plan = await this.findById(planNo, company, plant);
+  async unconfirm(planNo: string, organizationId?: number) {
+    const plan = await this.findById(planNo, organizationId);
     if (plan.status !== 'CONFIRMED') {
       throw new BadRequestException('확정(CONFIRMED) 상태의 계획만 취소할 수 있습니다.');
     }
     await this.planRepo.update(
-      { planNo, ...(company ? { company } : {}), ...(plant ? { plant } : {}) },
+      { planNo, ...(organizationId != null ? { organizationId } : {}) },
       { status: 'DRAFT' },
     );
     return this.planRepo.findOne({
-      where: { planNo, ...(company ? { company } : {}), ...(plant ? { plant } : {}) },
+      where: { planNo, ...(organizationId != null ? { organizationId } : {}) },
       relations: ['part'],
     });
   }
 
   /** 마감 (CONFIRMED → CLOSED) */
-  async close(planNo: string, company?: string, plant?: string) {
-    const plan = await this.findById(planNo, company, plant);
+  async close(planNo: string, organizationId?: number) {
+    const plan = await this.findById(planNo, organizationId);
     if (plan.status !== 'CONFIRMED') {
       throw new BadRequestException('확정(CONFIRMED) 상태의 계획만 마감할 수 있습니다.');
     }
     await this.planRepo.update(
-      { planNo, ...(company ? { company } : {}), ...(plant ? { plant } : {}) },
+      { planNo, ...(organizationId != null ? { organizationId } : {}) },
       { status: 'CLOSED' },
     );
     return this.planRepo.findOne({
-      where: { planNo, ...(company ? { company } : {}), ...(plant ? { plant } : {}) },
+      where: { planNo, ...(organizationId != null ? { organizationId } : {}) },
       relations: ['part'],
     });
   }
 
   /** 월간 집계 (FG/WIP별 수량, 상태별 건수) */
-  async getSummary(month: string, company?: string, plant?: string) {
+  async getSummary(month: string, organizationId?: number) {
     const qb = this.planRepo.createQueryBuilder('pp')
       .where('pp.planMonth = :month', { month });
-    if (company) qb.andWhere('pp.company = :company', { company });
-    if (plant) qb.andWhere('pp.plant = :plant', { plant });
+    if (organizationId != null) qb.andWhere('pp.organizationId = :organizationId', { organizationId });
 
     const [plans, total] = await qb.getManyAndCount();
 
@@ -332,8 +326,8 @@ export class ProdPlanService {
    * - 잔여수량(planQty - orderQty) 초과 불가
    * - 트랜잭션으로 JobOrder 생성 + ProdPlan.orderQty 증가 원자성 보장
    */
-  async issueJobOrder(planNo: string, dto: IssueJobOrderFromPlanDto, company?: string, plant?: string) {
-    const plan = await this.findById(planNo, company, plant);
+  async issueJobOrder(planNo: string, dto: IssueJobOrderFromPlanDto, organizationId?: number) {
+    const plan = await this.findById(planNo, organizationId);
     if (plan.status !== 'CONFIRMED') {
       throw new BadRequestException('확정(CONFIRMED) 상태의 계획만 작업지시를 발행할 수 있습니다.');
     }
@@ -346,9 +340,9 @@ export class ProdPlanService {
     return this.tx.run(async (queryRunner) => {
       const orderNo = await this.numbering.nextJobOrderNo(queryRunner);
 
-      const routingCode = await this.resolveRoutingCodeByItem(plan.itemCode, company, plant);
+      const routingCode = await this.resolveRoutingCodeByItem(plan.itemCode, organizationId);
 
-      const rootProcessCode = await this.resolveFirstProcessCode(routingCode, company, plant);
+      const rootProcessCode = await this.resolveFirstProcessCode(routingCode, organizationId);
 
       const jobOrder = queryRunner.manager.create(JobOrder, {
         orderNo,
@@ -366,13 +360,12 @@ export class ProdPlanService {
         remark: dto.remark || `${plan.planNo}에서 발행`,
         status: 'WAITING',
         erpSyncYn: 'N',
-        company: company || null,
-        plant: plant || null,
+        organizationId: organizationId ?? null,
       });
       const saved = await queryRunner.manager.save(jobOrder);
 
       if (dto.autoCreateChildren) {
-        await this.createChildOrdersFromPlanRecursive(queryRunner, saved, saved.orderNo, company, plant, 0, new Set());
+        await this.createChildOrdersFromPlanRecursive(queryRunner, saved, saved.orderNo, organizationId, 0, new Set());
       }
 
       await queryRunner.manager
@@ -380,8 +373,7 @@ export class ProdPlanService {
         .update(ProdPlan)
         .set({ orderQty: () => `ORDER_QTY + ${dto.issueQty}` })
         .where('planNo = :planNo', { planNo })
-        .andWhere(company ? 'company = :company' : '1=1', { company })
-        .andWhere(plant ? 'plant = :plant' : '1=1', { plant })
+        .andWhere(organizationId != null ? 'organizationId = :organizationId' : '1=1', { organizationId })
         .execute();
 
       return {
@@ -402,8 +394,7 @@ export class ProdPlanService {
     queryRunner: import('typeorm').QueryRunner,
     parent: JobOrder,
     rootOrderNo: string,
-    company?: string,
-    plant?: string,
+    organizationId?: number,
     depth: number = 0,
     ancestorItemCodes: Set<string> = new Set(),
   ): Promise<void> {
@@ -423,8 +414,7 @@ export class ProdPlanService {
       where: {
         parentItemCode: parent.itemCode,
         useYn: 'Y',
-        ...(company ? { company } : {}),
-        ...(plant ? { plant } : {}),
+        ...(organizationId != null ? { organizationId } : {}),
       },
       order: { seq: 'ASC' },
     });
@@ -434,8 +424,7 @@ export class ProdPlanService {
       .createQueryBuilder('p')
       .where('p.itemCode IN (:...ids)', { ids: bomItems.map(b => b.childItemCode) })
       .andWhere('p.itemType = :type', { type: 'SEMI_PRODUCT' })
-      .andWhere(company ? 'p.company = :company' : '1=1', { company })
-      .andWhere(plant ? 'p.plant = :plant' : '1=1', { plant })
+      .andWhere(organizationId != null ? 'p.organizationId = :organizationId' : '1=1', { organizationId })
       .getMany();
 
     const wipPartIds = new Set(wipParts.map(p => p.itemCode));
@@ -443,8 +432,8 @@ export class ProdPlanService {
     for (const bom of bomItems) {
       if (!wipPartIds.has(bom.childItemCode)) continue;
 
-      const childRoutingCode = await this.resolveRoutingCodeByItem(bom.childItemCode, company, plant);
-      const childProcessCode = await this.resolveFirstProcessCode(childRoutingCode, company, plant);
+      const childRoutingCode = await this.resolveRoutingCodeByItem(bom.childItemCode, organizationId);
+      const childProcessCode = await this.resolveFirstProcessCode(childRoutingCode, organizationId);
       const childOrderNo = await this.numbering.nextJobOrderNo(queryRunner);
       const childQty = Math.ceil(parent.planQty * Number(bom.qtyPer || 1));
 
@@ -464,27 +453,24 @@ export class ProdPlanService {
           priority: parent.priority,
           status: 'WAITING',
           erpSyncYn: 'N',
-          company: company || null,
-          plant: plant || null,
+          organizationId: organizationId ?? null,
           remark: `${parent.orderNo} 하위 자동생성`,
         }),
       );
 
-      await this.createChildOrdersFromPlanRecursive(queryRunner, child, rootOrderNo, company, plant, depth + 1, nextAncestors);
+      await this.createChildOrdersFromPlanRecursive(queryRunner, child, rootOrderNo, organizationId, depth + 1, nextAncestors);
     }
   }
 
   private async resolveFirstProcessCode(
     routingCode: string | null,
-    company?: string | null,
-    plant?: string | null,
+    organizationId?: number | null,
   ): Promise<string | null> {
     if (!routingCode) return null;
     const firstStep = await this.routingProcessRepo.findOne({
       where: {
         routingCode,
-        ...(company ? { company } : {}),
-        ...(plant ? { plant } : {}),
+        ...(organizationId != null ? { organizationId } : {}),
       },
       order: { seq: 'ASC' },
     });
@@ -492,9 +478,9 @@ export class ProdPlanService {
   }
 
   /** 단건 조회 (내부) */
-  private async findById(planNo: string, company?: string, plant?: string) {
+  private async findById(planNo: string, organizationId?: number) {
     const plan = await this.planRepo.findOne({
-      where: { planNo, ...(company ? { company } : {}), ...(plant ? { plant } : {}) },
+      where: { planNo, ...(organizationId != null ? { organizationId } : {}) },
       relations: ['part'],
     });
     if (!plan) throw new NotFoundException(`생산계획을 찾을 수 없습니다: ${planNo}`);

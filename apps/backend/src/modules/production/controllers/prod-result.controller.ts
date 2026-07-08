@@ -12,7 +12,7 @@
   UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
-import { Company, Plant } from '../../../common/decorators/tenant.decorator';
+import { OrganizationId } from '../../../common/decorators/tenant.decorator';
 import {
   ApiTags,
   ApiOperation,
@@ -39,8 +39,8 @@ export class ProdResultController {
   @Get()
   @ApiOperation({ summary: 'List production results' })
   @ApiResponse({ status: 200, description: 'Success' })
-  async findAll(@Query() query: ProdResultQueryDto, @Company() company: string, @Plant() plant: string) {
-    const result = await this.prodResultService.findAll(query, company, plant);
+  async findAll(@Query() query: ProdResultQueryDto, @OrganizationId() organizationId: number) {
+    const result = await this.prodResultService.findAll(query, organizationId);
     return ResponseUtil.paged(result.data, result.total, result.page, result.limit);
   }
 
@@ -48,8 +48,8 @@ export class ProdResultController {
   @ApiOperation({ summary: 'List by job order' })
   @ApiParam({ name: 'orderNo', description: 'Job order no' })
   @ApiResponse({ status: 200, description: 'Success' })
-  async findByJobOrderId(@Param('orderNo') orderNo: string, @Company() company: string, @Plant() plant: string) {
-    const data = await this.prodResultService.findByJobOrderId(orderNo, company, plant);
+  async findByJobOrderId(@Param('orderNo') orderNo: string, @OrganizationId() organizationId: number) {
+    const data = await this.prodResultService.findByJobOrderId(orderNo, organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -58,10 +58,9 @@ export class ProdResultController {
   @ApiResponse({ status: 200, description: 'Success' })
   async getSummaryByJobOrderList(
     @Query() query: ProdOrderResultQueryDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const result = await this.prodResultService.getSummaryByJobOrderList(query, company, plant);
+    const result = await this.prodResultService.getSummaryByJobOrderList(query, organizationId);
     return ResponseUtil.paged(result.data, result.total, result.page, result.limit);
   }
 
@@ -70,8 +69,8 @@ export class ProdResultController {
   @ApiParam({ name: 'resultNo', description: 'Result no' })
   @ApiResponse({ status: 200, description: 'Success' })
   @ApiResponse({ status: 404, description: 'Not found' })
-  async findById(@Param('resultNo') resultNo: string, @Company() company: string, @Plant() plant: string) {
-    const data = await this.prodResultService.findById(resultNo, company, plant);
+  async findById(@Param('resultNo') resultNo: string, @OrganizationId() organizationId: number) {
+    const data = await this.prodResultService.findById(resultNo, organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -79,8 +78,8 @@ export class ProdResultController {
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create production result' })
   @ApiResponse({ status: 201, description: 'Created' })
-  async create(@Body() dto: CreateProdResultDto, @Company() company: string, @Plant() plant: string) {
-    const data = await this.prodResultService.create(dto, company, plant);
+  async create(@Body() dto: CreateProdResultDto, @OrganizationId() organizationId: number) {
+    const data = await this.prodResultService.create(dto, organizationId);
     return ResponseUtil.success(data, 'Created');
   }
 
@@ -91,10 +90,9 @@ export class ProdResultController {
   async update(
     @Param('resultNo') resultNo: string,
     @Body() dto: UpdateProdResultDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.prodResultService.update(resultNo, dto, company, plant);
+    const data = await this.prodResultService.update(resultNo, dto, organizationId);
     return ResponseUtil.success(data, 'Updated');
   }
 
@@ -103,8 +101,8 @@ export class ProdResultController {
   @ApiOperation({ summary: 'Delete production result' })
   @ApiParam({ name: 'resultNo', description: 'Result no' })
   @ApiResponse({ status: 200, description: 'Deleted' })
-  async delete(@Param('resultNo') resultNo: string, @Company() company: string, @Plant() plant: string) {
-    await this.prodResultService.delete(resultNo, company, plant);
+  async delete(@Param('resultNo') resultNo: string, @OrganizationId() organizationId: number) {
+    await this.prodResultService.delete(resultNo, organizationId);
     return ResponseUtil.success(null, 'Deleted');
   }
 
@@ -116,10 +114,9 @@ export class ProdResultController {
   async complete(
     @Param('resultNo') resultNo: string,
     @Body() dto: CompleteProdResultDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.prodResultService.complete(resultNo, dto, company, plant);
+    const data = await this.prodResultService.complete(resultNo, dto, organizationId);
     return ResponseUtil.success(data, 'Completed');
   }
 
@@ -132,10 +129,9 @@ export class ProdResultController {
   async cancel(
     @Param('resultNo') resultNo: string,
     @Body('remark') remark?: string,
-    @Company() company?: string,
-    @Plant() plant?: string,
+    @OrganizationId() organizationId?: number,
   ) {
-    const data = await this.prodResultService.cancel(resultNo, remark, company, plant);
+    const data = await this.prodResultService.cancel(resultNo, remark, organizationId);
     return ResponseUtil.success(data, 'Canceled');
   }
 
@@ -143,8 +139,8 @@ export class ProdResultController {
   @ApiOperation({ summary: 'Summary by job order' })
   @ApiParam({ name: 'orderNo', description: 'Job order no' })
   @ApiResponse({ status: 200, description: 'Success' })
-  async getSummaryByJobOrder(@Param('orderNo') orderNo: string, @Company() company: string, @Plant() plant: string) {
-    const data = await this.prodResultService.getSummaryByJobOrder(orderNo, company, plant);
+  async getSummaryByJobOrder(@Param('orderNo') orderNo: string, @OrganizationId() organizationId: number) {
+    const data = await this.prodResultService.getSummaryByJobOrder(orderNo, organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -158,10 +154,9 @@ export class ProdResultController {
     @Param('equipCode') equipCode: string,
     @Query('fromDate') fromDate?: string,
     @Query('toDate') toDate?: string,
-    @Company() company?: string,
-    @Plant() plant?: string,
+    @OrganizationId() organizationId?: number,
   ) {
-    const data = await this.prodResultService.getSummaryByEquip(equipCode, fromDate, toDate, company, plant);
+    const data = await this.prodResultService.getSummaryByEquip(equipCode, fromDate, toDate, organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -175,10 +170,9 @@ export class ProdResultController {
     @Param('workerId') workerId: string,
     @Query('fromDate') fromDate?: string,
     @Query('toDate') toDate?: string,
-    @Company() company?: string,
-    @Plant() plant?: string,
+    @OrganizationId() organizationId?: number,
   ) {
-    const data = await this.prodResultService.getSummaryByWorker(workerId, fromDate, toDate, company, plant);
+    const data = await this.prodResultService.getSummaryByWorker(workerId, fromDate, toDate, organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -190,10 +184,9 @@ export class ProdResultController {
   async getDailySummary(
     @Query('fromDate') fromDate: string,
     @Query('toDate') toDate: string,
-    @Company() company?: string,
-    @Plant() plant?: string,
+    @OrganizationId() organizationId?: number,
   ) {
-    const data = await this.prodResultService.getDailySummary(fromDate, toDate, company, plant);
+    const data = await this.prodResultService.getDailySummary(fromDate, toDate, organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -207,10 +200,9 @@ export class ProdResultController {
     @Query('fromDate') fromDate?: string,
     @Query('toDate') toDate?: string,
     @Query('search') search?: string,
-    @Company() company?: string,
-    @Plant() plant?: string,
+    @OrganizationId() organizationId?: number,
   ) {
-    const data = await this.prodResultService.getSummaryByProduct(fromDate, toDate, search, company, plant);
+    const data = await this.prodResultService.getSummaryByProduct(fromDate, toDate, search, organizationId);
     return ResponseUtil.success(data);
   }
 }

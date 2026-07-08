@@ -14,7 +14,7 @@ import {
 } from 'typeorm';
 
 @Entity({ name: 'FAI_REQUESTS' })
-@Index(['company', 'plant', 'status'])
+@Index(['organizationId', 'status'])
 export class FaiRequest {
   @PrimaryColumn({ name: 'FAI_NO', length: 30 })
   faiNo: string;
@@ -58,11 +58,8 @@ export class FaiRequest {
   @Column({ name: 'APPROVED_AT', type: 'timestamp', nullable: true })
   approvedAt: Date;
 
-  @Column({ name: 'COMPANY', length: 50 })
-  company: string;
-
-  @Column({ name: 'PLANT_CD', length: 20 })
-  plant: string;
+  @Column({ name: 'ORGANIZATION_ID', type: 'number' })
+  organizationId!: number;
 
   @Column({ type: 'varchar2', name: 'CREATED_BY', length: 50, nullable: true })
   createdBy: string;

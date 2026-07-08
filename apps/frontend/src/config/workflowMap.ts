@@ -136,10 +136,7 @@ export const workflowNodes: WorkflowActivityNode[] = [
     detail: "입하의 출처가 되는 구매오더를 만들고 라인별 품목, 수량, 납기, 거래처를 관리합니다.",
     x: 0,
     dataObjects: ["PURCHASE_ORDERS", "PURCHASE_ORDER_ITEMS"],
-    routes: [
-      { label: "발주관리", path: "/material/po" },
-      { label: "발주현황", path: "/material/po-status" },
-    ],
+    routes: [],
     inputs: ["거래처", "품목", "발주수량"],
     outputs: ["PO 라인", "입하 가능 잔량"],
     order: 1,

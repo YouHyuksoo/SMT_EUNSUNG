@@ -22,7 +22,7 @@ import { diskStorage } from 'multer';
 import type { Request } from 'express';
 import { extname, join } from 'path';
 import { existsSync, mkdirSync, unlinkSync } from 'fs';
-import { Company, Plant } from '../../../common/decorators/tenant.decorator';
+import { OrganizationId } from '../../../common/decorators/tenant.decorator';
 import { ApiTags, ApiOperation, ApiParam, ApiConsumes } from '@nestjs/swagger';
 import { PartService } from '../services/part.service';
 import { CreatePartDto, UpdatePartDto, PartQueryDto } from '../dto/part.dto';
@@ -37,22 +37,22 @@ export class PartController {
   @Get('types/:type')
   @ApiOperation({ summary: '품목 유형별 목록 조회' })
   @ApiParam({ name: 'type', enum: ITEM_TYPE_VALUES })
-  async findByType(@Param('type') type: string, @Company() company: string, @Plant() plant: string) {
-    const data = await this.partService.findByType(type, company, plant);
+  async findByType(@Param('type') type: string, @OrganizationId() organizationId: number) {
+    const data = await this.partService.findByType(type, organizationId);
     return ResponseUtil.success(data);
   }
 
   @Get('code/:itemCode')
   @ApiOperation({ summary: '품목 코드로 조회' })
-  async findByCode(@Param('itemCode') itemCode: string, @Company() company: string, @Plant() plant: string) {
-    const data = await this.partService.findByCode(itemCode, company, plant);
+  async findByCode(@Param('itemCode') itemCode: string, @OrganizationId() organizationId: number) {
+    const data = await this.partService.findByCode(itemCode, organizationId);
     return ResponseUtil.success(data);
   }
 
   @Get()
   @ApiOperation({ summary: '품목 목록 조회' })
-  async findAll(@Query() query: PartQueryDto, @Company() company: string, @Plant() plant: string) {
-    const result = await this.partService.findAll(query, company, plant);
+  async findAll(@Query() query: PartQueryDto, @OrganizationId() organizationId: number) {
+    const result = await this.partService.findAll(query, organizationId);
     return ResponseUtil.paged(result.data, result.total, result.page, result.limit);
   }
 
@@ -86,52 +86,51 @@ export class PartController {
   async uploadImage(
     @Param('id') id: string,
     @UploadedFile() file: Express.Multer.File,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
     const imageUrl = `/uploads/parts/${file.filename}`;
-    const data = await this.partService.updateImage(id, imageUrl, company, plant);
+    const data = await this.partService.updateImage(id, imageUrl, organizationId);
     return ResponseUtil.success(data, '품목 이미지가 업로드되었습니다.');
   }
 
   @Delete(':id/image')
   @ApiOperation({ summary: '품목 이미지 삭제' })
-  async removeImage(@Param('id') id: string, @Company() company: string, @Plant() plant: string) {
-    const existing = await this.partService.findById(id, company, plant);
+  async removeImage(@Param('id') id: string, @OrganizationId() organizationId: number) {
+    const existing = await this.partService.findById(id, organizationId);
     if (existing.imageUrl) {
       const filePath = join('.', existing.imageUrl);
       try { if (existsSync(filePath)) unlinkSync(filePath); } catch { /* ignore */ }
     }
-    const data = await this.partService.updateImage(id, null, company, plant);
+    const data = await this.partService.updateImage(id, null, organizationId);
     return ResponseUtil.success(data, '품목 이미지가 삭제되었습니다.');
   }
 
   @Get(':id')
   @ApiOperation({ summary: '품목 상세 조회' })
-  async findById(@Param('id') id: string, @Company() company: string, @Plant() plant: string) {
-    const data = await this.partService.findById(id, company, plant);
+  async findById(@Param('id') id: string, @OrganizationId() organizationId: number) {
+    const data = await this.partService.findById(id, organizationId);
     return ResponseUtil.success(data);
   }
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: '품목 생성' })
-  async create(@Body() dto: CreatePartDto, @Company() company: string, @Plant() plant: string) {
-    const data = await this.partService.create(dto, company, plant);
+  async create(@Body() dto: CreatePartDto, @OrganizationId() organizationId: number) {
+    const data = await this.partService.create(dto, organizationId);
     return ResponseUtil.success(data, '품목이 생성되었습니다.');
   }
 
   @Put(':id')
   @ApiOperation({ summary: '품목 수정' })
-  async update(@Param('id') id: string, @Body() dto: UpdatePartDto, @Company() company: string, @Plant() plant: string) {
-    const data = await this.partService.update(id, dto, company, plant);
+  async update(@Param('id') id: string, @Body() dto: UpdatePartDto, @OrganizationId() organizationId: number) {
+    const data = await this.partService.update(id, dto, organizationId);
     return ResponseUtil.success(data, '품목이 수정되었습니다.');
   }
 
   @Delete(':id')
   @ApiOperation({ summary: '품목 삭제' })
-  async delete(@Param('id') id: string, @Company() company: string, @Plant() plant: string) {
-    await this.partService.delete(id, company, plant);
+  async delete(@Param('id') id: string, @OrganizationId() organizationId: number) {
+    await this.partService.delete(id, organizationId);
     return ResponseUtil.success(null, '품목이 삭제되었습니다.');
   }
 }

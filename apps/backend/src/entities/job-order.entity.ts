@@ -54,8 +54,7 @@ export class JobOrder {
 
   @ManyToOne(() => ItemMaster, { nullable: true })
   @JoinColumn([
-    { name: 'COMPANY', referencedColumnName: 'company' },
-    { name: 'PLANT_CD', referencedColumnName: 'plant' },
+    { name: 'ORGANIZATION_ID', referencedColumnName: 'organizationId' },
     { name: 'ITEM_CODE', referencedColumnName: 'itemCode' },
   ])
   part: ItemMaster | null;
@@ -69,8 +68,7 @@ export class JobOrder {
 
   @ManyToOne(() => RoutingGroup, { nullable: true })
   @JoinColumn([
-    { name: 'COMPANY', referencedColumnName: 'company' },
-    { name: 'PLANT_CD', referencedColumnName: 'plant' },
+    { name: 'ORGANIZATION_ID', referencedColumnName: 'organizationId' },
     { name: 'ROUTING_CODE', referencedColumnName: 'routingCode' },
   ])
   routing: RoutingGroup | null;
@@ -128,11 +126,8 @@ export class JobOrder {
   @Column({ name: 'ERP_SYNC_YN', length: 1, default: 'N' })
   erpSyncYn: string;
 
-  @Column({ type: 'varchar2', name: 'COMPANY', length: 50 })
-  company: string;
-
-  @Column({ type: 'varchar2', name: 'PLANT_CD', length: 50 })
-  plant: string;
+  @Column({ name: 'ORGANIZATION_ID', type: 'number' })
+  organizationId!: number;
 
   @Column({ type: 'varchar2', name: 'CREATED_BY', length: 50, nullable: true })
   createdBy: string | null;

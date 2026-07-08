@@ -13,7 +13,7 @@ import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { KioskMaterialService } from '../services/kiosk-material.service';
 import { ScanMaterialMountDto } from '../dto/kiosk-material.dto';
 import { ResponseUtil } from '../../../common/dto/response.dto';
-import { Company, Plant } from '../../../common/decorators/tenant.decorator';
+import { OrganizationId } from '../../../common/decorators/tenant.decorator';
 
 @ApiTags('생산관리 - 키오스크 자재')
 @Controller('production/job-orders/:orderNo/material-mounts')
@@ -25,10 +25,9 @@ export class KioskMaterialController {
   async scan(
     @Param('orderNo') orderNo: string,
     @Body() body: ScanMaterialMountDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.svc.scanMount(orderNo, body.matUid, company, plant, body.equipCode);
+    const data = await this.svc.scanMount(orderNo, body.matUid, organizationId, body.equipCode);
     return ResponseUtil.success(data, '자재가 설비에 장착되었습니다.');
   }
 }

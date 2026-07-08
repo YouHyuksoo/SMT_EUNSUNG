@@ -11,11 +11,8 @@ import {
 @Index(['routingCode', 'seq'])
 @Index(['childItemCode'])
 export class RoutingMaterial {
-  @PrimaryColumn({ name: 'COMPANY', length: 50 })
-  company: string;
-
-  @PrimaryColumn({ name: 'PLANT_CD', length: 50 })
-  plant: string;
+  @PrimaryColumn({ name: 'ORGANIZATION_ID', type: 'number' })
+  organizationId!: number;
 
   @PrimaryColumn({ name: 'ROUTING_CODE', length: 50 })
   routingCode: string;

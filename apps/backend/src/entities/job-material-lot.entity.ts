@@ -32,9 +32,6 @@ export class JobMaterialLot {
   @Column({ name: 'SCANNED_AT', type: 'timestamp', nullable: true })
   scannedAt: Date | null;
 
-  @Column({ type: 'varchar2', name: 'COMPANY', length: 50 })
-  company: string;
-
-  @Column({ type: 'varchar2', name: 'PLANT_CD', length: 50 })
-  plant: string;
+  @Column({ name: 'ORGANIZATION_ID', type: 'number' })
+  organizationId!: number;
 }

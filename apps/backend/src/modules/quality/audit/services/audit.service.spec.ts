@@ -42,12 +42,12 @@ describe('AuditService', () => {
     });
 
     it('scopes audit lookup by tenant', async () => {
-      mockAuditRepo.findOne.mockResolvedValue({ auditNo: 'AUD-001', company: 'CO', plant: 'P01' } as any);
+      mockAuditRepo.findOne.mockResolvedValue({ auditNo: 'AUD-001', organizationId: 1 } as any);
 
-      await target.findById('AUD-001' as any, 'CO', 'P01');
+      await target.findById('AUD-001' as any, 1);
 
       expect(mockAuditRepo.findOne).toHaveBeenCalledWith({
-        where: { auditNo: 'AUD-001', company: 'CO', plant: 'P01' },
+        where: { auditNo: 'AUD-001', organizationId: 1 },
       });
     });
   });
@@ -59,7 +59,7 @@ describe('AuditService', () => {
       const saved = { id: 1, auditNo: 'AUD-20260318-001', status: 'PLANNED' } as any;
       mockAuditRepo.create.mockReturnValue(saved);
       mockAuditRepo.save.mockResolvedValue(saved);
-      const result = await target.create({} as any, 'HANES', 'P01', 'user');
+      const result = await target.create({} as any, 1, 'user');
       expect(result.status).toBe('PLANNED');
     });
   });
@@ -71,7 +71,7 @@ describe('AuditService', () => {
     });
 
     it('should update only DTO fields and keep tenant/audit key columns from the matched audit', async () => {
-      const item = { auditNo: 'AUD-001', auditScope: 'Old', status: 'PLANNED', company: 'CO', plant: 'P01' } as unknown as AuditPlan;
+      const item = { auditNo: 'AUD-001', auditScope: 'Old', status: 'PLANNED', organizationId: 1 } as unknown as AuditPlan;
       mockAuditRepo.findOne.mockResolvedValue(item);
       mockAuditRepo.save.mockImplementation(async (value) => value as AuditPlan);
 
@@ -79,15 +79,13 @@ describe('AuditService', () => {
         auditNo: 'AUD-999',
         auditScope: 'New',
         title: 'Ignored',
-        company: 'OTHER',
-        plant: 'P99',
+        organizationId: 999,
       } as any, 'user');
 
       expect(result).toEqual(expect.objectContaining({
         auditNo: 'AUD-001',
         auditScope: 'New',
-        company: 'CO',
-        plant: 'P01',
+        organizationId: 1,
         updatedBy: 'user',
       }));
       expect(result).not.toHaveProperty('title');

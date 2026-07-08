@@ -35,14 +35,13 @@ export class MatLotService {
     private readonly matIssueRepository: Repository<MatIssue>,
   ) {}
 
-  private tenantWhere(company?: string | null, plant?: string | null) {
+  private tenantWhere(organizationId?: number | null) {
     return {
-      ...(company ? { company } : {}),
-      ...(plant ? { plant } : {}),
+      ...(organizationId != null ? { organizationId } : {}),
     };
   }
 
-  async findAll(query: MatLotQueryDto, company?: string, plant?: string) {
+  async findAll(query: MatLotQueryDto, organizationId?: number) {
     const { page = 1, limit = 10, itemCode, matUid, vendor, iqcStatus, status } = query;
     const skip = (page - 1) * limit;
 
@@ -52,8 +51,7 @@ export class MatLotService {
       ...(vendor && { vendor: Like(`%${vendor}%`) }),
       ...(iqcStatus && { iqcStatus }),
       ...(status && { status }),
-      ...(company && { company }),
-      ...(plant && { plant }),
+      ...(organizationId != null && { organizationId }),
     };
 
     const [data, total] = await Promise.all([
@@ -70,7 +68,7 @@ export class MatLotService {
     const itemCodes = data.map((lot) => lot.itemCode).filter(Boolean);
     const parts = itemCodes.length > 0
       ? await this.itemMasterRepository.find({
-        where: { itemCode: In(itemCodes), ...(company && { company }), ...(plant && { plant }) },
+        where: { itemCode: In(itemCodes), ...(organizationId != null && { organizationId }) },
       })
       : [];
     const partMap = new Map(parts.map((p) => [p.itemCode, p]));
@@ -81,7 +79,7 @@ export class MatLotService {
     );
     const partners = vendorCodes.length > 0
       ? await this.partnerMasterRepository.find({
-        where: { partnerCode: In(vendorCodes), ...(company && { company }), ...(plant && { plant }) },
+        where: { partnerCode: In(vendorCodes), ...(organizationId != null && { organizationId }) },
       })
       : [];
     const partnerMap = new Map(partners.map((p) => [p.partnerCode, p.partnerName]));
@@ -100,8 +98,8 @@ export class MatLotService {
     return { data: flattenedData, total, page, limit };
   }
 
-  async findById(matUid: string, company?: string, plant?: string) {
-    const tenantWhere = this.tenantWhere(company, plant);
+  async findById(matUid: string, organizationId?: number) {
+    const tenantWhere = this.tenantWhere(organizationId);
     const lot = await this.matLotRepository.findOne({
       where: { matUid, ...tenantWhere },
     });
@@ -118,8 +116,8 @@ export class MatLotService {
     };
   }
 
-  async findByMatUid(matUid: string, company?: string, plant?: string) {
-    const tenantWhere = this.tenantWhere(company, plant);
+  async findByMatUid(matUid: string, organizationId?: number) {
+    const tenantWhere = this.tenantWhere(organizationId);
     const lot = await this.matLotRepository.findOne({
       where: { matUid, ...tenantWhere },
     });
@@ -141,8 +139,8 @@ export class MatLotService {
     };
   }
 
-  async create(dto: CreateMatLotDto, company?: string, plant?: string) {
-    const tenantWhere = this.tenantWhere(company, plant);
+  async create(dto: CreateMatLotDto, organizationId?: number) {
+    const tenantWhere = this.tenantWhere(organizationId);
     const existing = await this.matLotRepository.findOne({
       where: { matUid: dto.matUid, ...tenantWhere },
     });
@@ -161,8 +159,7 @@ export class MatLotService {
       poNo: dto.poNo,
       iqcStatus: dto.iqcStatus ?? 'PENDING',
       status: dto.status ?? 'NORMAL',
-      company,
-      plant,
+      organizationId,
     });
 
     const saved = await this.matLotRepository.save(lot);
@@ -176,9 +173,9 @@ export class MatLotService {
     };
   }
 
-  async update(matUid: string, dto: UpdateMatLotDto, company?: string, plant?: string) {
-    const tenantWhere = this.tenantWhere(company, plant);
-    await this.findById(matUid, company, plant);
+  async update(matUid: string, dto: UpdateMatLotDto, organizationId?: number) {
+    const tenantWhere = this.tenantWhere(organizationId);
+    await this.findById(matUid, organizationId);
     if (dto.status) {
       throw new BadRequestException(
         `LOT 상태(${dto.status})는 직접 변경할 수 없습니다. HOLD/해제/폐기/소진 전용 처리 API를 사용해 주세요.`,
@@ -204,9 +201,9 @@ export class MatLotService {
     };
   }
 
-  async delete(matUid: string, company?: string, plant?: string) {
-    const tenantWhere = this.tenantWhere(company, plant);
-    const lot = await this.findById(matUid, company, plant);
+  async delete(matUid: string, organizationId?: number) {
+    const tenantWhere = this.tenantWhere(organizationId);
+    const lot = await this.findById(matUid, organizationId);
 
     const stocks = await this.matStockRepository.find({ where: { matUid, ...tenantWhere } });
     const hasStock = stocks.some((stock) => (stock.qty ?? 0) > 0 || (stock.availableQty ?? 0) > 0);

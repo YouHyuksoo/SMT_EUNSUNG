@@ -168,14 +168,12 @@ describe('MatOutRequestService', () => {
         itemCode: 'ITEM-001',
         matUid: 'MAT-001',
         qty: -3,
-        company: 'HANES',
-        plant: 'P01',
+        organizationId: 1,
       } as StockTransaction);
       matLotRepo.findOne.mockResolvedValue({
         matUid: 'MAT-001',
         status: 'NORMAL',
-        company: 'HANES',
-        plant: 'P01',
+        organizationId: 1,
       } as MatLot);
       matStockRepo.findOne.mockResolvedValue({
         warehouseCode: 'WH-01',
@@ -184,25 +182,23 @@ describe('MatOutRequestService', () => {
         qty: 10,
         reservedQty: 5,
         availableQty: 5,
-        company: 'HANES',
-        plant: 'P01',
+        organizationId: 1,
       } as MatStock);
 
-      await (service as any).approve('TX-001', 'approver', 'HANES', 'P01');
+      await (service as any).approve('TX-001', 'approver', 1);
 
       expect(stockTxRepo.findOne).toHaveBeenCalledWith({
-        where: { transNo: 'TX-001', company: 'HANES', plant: 'P01' },
+        where: { transNo: 'TX-001', organizationId: 1 },
       });
       expect(matLotRepo.findOne).toHaveBeenCalledWith({
-        where: { matUid: 'MAT-001', company: 'HANES', plant: 'P01' },
+        where: { matUid: 'MAT-001', organizationId: 1 },
       });
       expect(matStockRepo.findOne).toHaveBeenCalledWith({
         where: {
           warehouseCode: 'WH-01',
           matUid: 'MAT-001',
           itemCode: 'ITEM-001',
-          company: 'HANES',
-          plant: 'P01',
+          organizationId: 1,
         },
       });
       expect(matStockRepo.update).toHaveBeenCalledWith(
@@ -210,13 +206,12 @@ describe('MatOutRequestService', () => {
           warehouseCode: 'WH-01',
           itemCode: 'ITEM-001',
           matUid: 'MAT-001',
-          company: 'HANES',
-          plant: 'P01',
+          organizationId: 1,
         },
         expect.objectContaining({ qty: 7, reservedQty: 2, availableQty: 5 }),
       );
       expect(stockTxRepo.update).toHaveBeenCalledWith(
-        { transNo: 'TX-001', company: 'HANES', plant: 'P01' },
+        { transNo: 'TX-001', organizationId: 1 },
         expect.objectContaining({ status: 'DONE', approverId: 'approver' }),
       );
     });
@@ -229,10 +224,9 @@ describe('MatOutRequestService', () => {
         itemCode: 'ITEM-001',
         matUid: 'MAT-001',
         qty: -3,
-        company: 'OTHER',
-        plant: 'P01',
+        organizationId: 2,
       } as StockTransaction);
-      matLotRepo.findOne.mockResolvedValue({ matUid: 'MAT-001', status: 'NORMAL', company: 'OTHER', plant: 'P01' } as MatLot);
+      matLotRepo.findOne.mockResolvedValue({ matUid: 'MAT-001', status: 'NORMAL', organizationId: 2 } as MatLot);
       matStockRepo.findOne.mockResolvedValue({
         warehouseCode: 'WH-01',
         itemCode: 'ITEM-001',
@@ -240,11 +234,10 @@ describe('MatOutRequestService', () => {
         qty: 10,
         reservedQty: 5,
         availableQty: 5,
-        company: 'OTHER',
-        plant: 'P01',
+        organizationId: 2,
       } as MatStock);
 
-      await expect(service.approve('TX-001', 'approver', 'HANES', 'P01')).rejects.toThrow(BadRequestException);
+      await expect(service.approve('TX-001', 'approver', 1)).rejects.toThrow(BadRequestException);
       expect(matLotRepo.findOne).not.toHaveBeenCalled();
       expect(matStockRepo.update).not.toHaveBeenCalled();
     });
@@ -284,8 +277,7 @@ describe('MatOutRequestService', () => {
         itemCode: 'ITEM-001',
         matUid: 'MAT-001',
         qty: -3,
-        company: 'HANES',
-        plant: 'P01',
+        organizationId: 1,
       } as StockTransaction);
       matStockRepo.findOne.mockResolvedValue({
         warehouseCode: 'WH-01',
@@ -294,22 +286,20 @@ describe('MatOutRequestService', () => {
         qty: 10,
         reservedQty: 5,
         availableQty: 5,
-        company: 'HANES',
-        plant: 'P01',
+        organizationId: 1,
       } as MatStock);
 
-      await (service as any).reject('TX-001', 'approver', 'HANES', 'P01');
+      await (service as any).reject('TX-001', 'approver', 1);
 
       expect(stockTxRepo.findOne).toHaveBeenCalledWith({
-        where: { transNo: 'TX-001', company: 'HANES', plant: 'P01' },
+        where: { transNo: 'TX-001', organizationId: 1 },
       });
       expect(matStockRepo.findOne).toHaveBeenCalledWith({
         where: {
           warehouseCode: 'WH-01',
           matUid: 'MAT-001',
           itemCode: 'ITEM-001',
-          company: 'HANES',
-          plant: 'P01',
+          organizationId: 1,
         },
       });
       expect(matStockRepo.update).toHaveBeenCalledWith(
@@ -317,13 +307,12 @@ describe('MatOutRequestService', () => {
           warehouseCode: 'WH-01',
           itemCode: 'ITEM-001',
           matUid: 'MAT-001',
-          company: 'HANES',
-          plant: 'P01',
+          organizationId: 1,
         },
         expect.objectContaining({ reservedQty: 2, availableQty: 8 }),
       );
       expect(stockTxRepo.update).toHaveBeenCalledWith(
-        { transNo: 'TX-001', company: 'HANES', plant: 'P01' },
+        { transNo: 'TX-001', organizationId: 1 },
         expect.objectContaining({ status: 'REJECTED', approverId: 'approver' }),
       );
     });
@@ -336,8 +325,7 @@ describe('MatOutRequestService', () => {
         itemCode: 'ITEM-001',
         matUid: 'MAT-001',
         qty: -3,
-        company: 'OTHER',
-        plant: 'P01',
+        organizationId: 2,
       } as StockTransaction);
       matStockRepo.findOne.mockResolvedValue({
         warehouseCode: 'WH-01',
@@ -346,11 +334,10 @@ describe('MatOutRequestService', () => {
         qty: 10,
         reservedQty: 5,
         availableQty: 5,
-        company: 'OTHER',
-        plant: 'P01',
+        organizationId: 2,
       } as MatStock);
 
-      await expect(service.reject('TX-001', 'approver', 'HANES', 'P01')).rejects.toThrow(BadRequestException);
+      await expect(service.reject('TX-001', 'approver', 1)).rejects.toThrow(BadRequestException);
       expect(matStockRepo.findOne).not.toHaveBeenCalled();
       expect(stockTxRepo.update).not.toHaveBeenCalled();
     });
@@ -365,8 +352,7 @@ describe('MatOutRequestService', () => {
         itemCode: 'ITEM-001',
         matUid: 'MAT-001',
         qty: -3,
-        company: 'OTHER',
-        plant: 'P01',
+        organizationId: 2,
       } as StockTransaction);
       matStockRepo.findOne.mockResolvedValue({
         warehouseCode: 'WH-01',
@@ -375,11 +361,10 @@ describe('MatOutRequestService', () => {
         qty: 10,
         reservedQty: 5,
         availableQty: 5,
-        company: 'OTHER',
-        plant: 'P01',
+        organizationId: 2,
       } as MatStock);
 
-      await expect(service.cancel('TX-001', 'HANES', 'P01')).rejects.toThrow(BadRequestException);
+      await expect(service.cancel('TX-001', 1)).rejects.toThrow(BadRequestException);
       expect(matStockRepo.findOne).not.toHaveBeenCalled();
       expect(stockTxRepo.update).not.toHaveBeenCalled();
     });

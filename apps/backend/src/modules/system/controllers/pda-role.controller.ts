@@ -25,7 +25,7 @@ import { ApiTags, ApiOperation, ApiParam } from '@nestjs/swagger';
 import { PdaRoleService } from '../services/pda-role.service';
 import { CreatePdaRoleDto, UpdatePdaRoleDto } from '../dto/pda-role.dto';
 import { ResponseUtil } from '../../../common/dto/response.dto';
-import { Company, Plant } from '../../../common/decorators/tenant.decorator';
+import { OrganizationId } from '../../../common/decorators/tenant.decorator';
 
 @ApiTags('시스템관리 - PDA 역할')
 @Controller('system/pda-roles')
@@ -34,15 +34,15 @@ export class PdaRoleController {
 
   @Get()
   @ApiOperation({ summary: 'PDA 역할 목록 조회 (메뉴 매핑 포함)' })
-  async findAll(@Company() company: string, @Plant() plant: string) {
-    const data = await this.pdaRoleService.findAll(company, plant);
+  async findAll(@OrganizationId() organizationId: number) {
+    const data = await this.pdaRoleService.findAll(organizationId);
     return ResponseUtil.success(data);
   }
 
   @Get('active')
   @ApiOperation({ summary: '활성 PDA 역할 목록 (Select 옵션용)' })
-  async findAllActive(@Company() company: string, @Plant() plant: string) {
-    const data = await this.pdaRoleService.findAllActive(company, plant);
+  async findAllActive(@OrganizationId() organizationId: number) {
+    const data = await this.pdaRoleService.findAllActive(organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -56,8 +56,8 @@ export class PdaRoleController {
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'PDA 역할 생성' })
-  async create(@Body() dto: CreatePdaRoleDto, @Company() company: string, @Plant() plant: string) {
-    const data = await this.pdaRoleService.create(dto, company, plant);
+  async create(@Body() dto: CreatePdaRoleDto, @OrganizationId() organizationId: number) {
+    const data = await this.pdaRoleService.create(dto, organizationId);
     return ResponseUtil.success(data, 'PDA 역할이 생성되었습니다.');
   }
 
@@ -67,18 +67,17 @@ export class PdaRoleController {
   async update(
     @Param('code') code: string,
     @Body() dto: UpdatePdaRoleDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.pdaRoleService.update(code, dto, company, plant);
+    const data = await this.pdaRoleService.update(code, dto, organizationId);
     return ResponseUtil.success(data, 'PDA 역할이 수정되었습니다.');
   }
 
   @Delete(':code')
   @ApiOperation({ summary: 'PDA 역할 삭제' })
   @ApiParam({ name: 'code', description: 'PDA 역할 코드' })
-  async remove(@Param('code') code: string, @Company() company: string, @Plant() plant: string) {
-    const data = await this.pdaRoleService.remove(code, company, plant);
+  async remove(@Param('code') code: string, @OrganizationId() organizationId: number) {
+    const data = await this.pdaRoleService.remove(code, organizationId);
     return ResponseUtil.success(data, 'PDA 역할이 삭제되었습니다.');
   }
 }

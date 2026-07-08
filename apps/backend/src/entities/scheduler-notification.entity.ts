@@ -1,13 +1,13 @@
 /**
  * @file entities/scheduler-notification.entity.ts
  * @description 스케줄러 알림 엔티티 - 작업 실행 결과에 따른 사용자 알림을 관리한다.
- *              복합키: COMPANY + NOTI_ID.
+ *              복합키: ORGANIZATION_ID + NOTI_ID.
  *
  * 초보자 가이드:
- * 1. 복합 PK: company(회사) + notiId(알림 일련번호)
+ * 1. 복합 PK: organizationId(조직) + notiId(알림 일련번호)
  * 2. notiType: 알림 유형 (FAIL / TIMEOUT / SUCCESS)
  * 3. isRead: 읽음 여부 ('Y' / 'N')
- * 4. job: SchedulerJob과 ManyToOne 관계 (company + plantCd + jobCode 복합 FK)
+ * 4. job: SchedulerJob과 ManyToOne 관계 (organizationId + jobCode 복합 FK)
  * 5. userId: 알림 수신 대상 사용자 ID
  */
 import {
@@ -23,8 +23,8 @@ import { SchedulerJob } from './scheduler-job.entity';
 
 @Entity({ name: 'SCHEDULER_NOTIFICATIONS' })
 export class SchedulerNotification {
-  @PrimaryColumn({ name: 'COMPANY', type: 'varchar2', length: 50 })
-  company: string;
+  @PrimaryColumn({ name: 'ORGANIZATION_ID', type: 'number' })
+  organizationId!: number;
 
   @PrimaryColumn({ name: 'NOTI_ID', type: 'number' })
   notiId: number;
@@ -32,14 +32,10 @@ export class SchedulerNotification {
   @Column({ name: 'JOB_CODE', type: 'varchar2', length: 50 })
   jobCode: string;
 
-  @Column({ name: 'PLANT_CD', type: 'varchar2', length: 50 })
-  plantCd: string;
-
   /** 스케줄러 작업 (복합 FK) */
   @ManyToOne(() => SchedulerJob)
   @JoinColumn([
-    { name: 'COMPANY', referencedColumnName: 'company' },
-    { name: 'PLANT_CD', referencedColumnName: 'plantCd' },
+    { name: 'ORGANIZATION_ID', referencedColumnName: 'organizationId' },
     { name: 'JOB_CODE', referencedColumnName: 'jobCode' },
   ])
   job: SchedulerJob;

@@ -25,18 +25,17 @@ export class HoldService {
     private readonly partnerMasterRepository: Repository<PartnerMaster>,
   ) {}
 
-  private tenantWhere(company?: string, plant?: string) {
+  private tenantWhere(organizationId?: number) {
     return {
-      ...(company && { company }),
-      ...(plant && { plant }),
+      ...(organizationId != null ? { organizationId } : {}),
     };
   }
 
-  async findAll(query: HoldQueryDto, company?: string, plant?: string) {
+  async findAll(query: HoldQueryDto, organizationId?: number) {
     const { page = 1, limit = 10, search, status } = query;
     const skip = (page - 1) * limit;
 
-    const where: FindOptionsWhere<MatLot> = this.tenantWhere(company, plant);
+    const where: FindOptionsWhere<MatLot> = this.tenantWhere(organizationId);
 
     if (status) {
       where.status = status;
@@ -47,8 +46,8 @@ export class HoldService {
       // 먼저 품목 검색
       const parts = await this.itemMasterRepository.find({
         where: [
-          { itemCode: Like(`%${search}%`), ...this.tenantWhere(company, plant) },
-          { itemName: Like(`%${search}%`), ...this.tenantWhere(company, plant) },
+          { itemCode: Like(`%${search}%`), ...this.tenantWhere(organizationId) },
+          { itemName: Like(`%${search}%`), ...this.tenantWhere(organizationId) },
         ],
       });
       const itemCodes = parts.map((p) => p.itemCode);
@@ -72,14 +71,14 @@ export class HoldService {
     // part 정보 조회 및 중첩 객체 평면화
     const itemCodes = data.map((lot) => lot.itemCode).filter(Boolean);
     const parts = itemCodes.length > 0
-      ? await this.itemMasterRepository.find({ where: { itemCode: In(itemCodes), ...this.tenantWhere(company, plant) } })
+      ? await this.itemMasterRepository.find({ where: { itemCode: In(itemCodes), ...this.tenantWhere(organizationId) } })
       : [];
     const partMap = new Map(parts.map((p) => [p.itemCode, p]));
 
     // 재고 정보 조회
     const matUids = data.map((lot) => lot.matUid);
     const stocks = matUids.length > 0
-      ? await this.matStockRepository.find({ where: { matUid: In(matUids), ...this.tenantWhere(company, plant) } })
+      ? await this.matStockRepository.find({ where: { matUid: In(matUids), ...this.tenantWhere(organizationId) } })
       : [];
     const stockMap = new Map(stocks.map((s) => [s.matUid, s]));
 
@@ -89,7 +88,7 @@ export class HoldService {
     );
     const partners = vendorCodes.length > 0
       ? await this.partnerMasterRepository.find({
-          where: { partnerCode: In(vendorCodes), ...this.tenantWhere(company, plant) },
+          where: { partnerCode: In(vendorCodes), ...this.tenantWhere(organizationId) },
         })
       : [];
     const partnerMap = new Map(partners.map((p) => [p.partnerCode, p.partnerName]));
@@ -110,11 +109,11 @@ export class HoldService {
     return { data: flattenedData, total, page, limit };
   }
 
-  async hold(dto: HoldActionDto, company?: string, plant?: string) {
+  async hold(dto: HoldActionDto, organizationId?: number) {
     const { matUid, reason } = dto;
 
     const lot = await this.matLotRepository.findOne({
-      where: { matUid: matUid, ...this.tenantWhere(company, plant) },
+      where: { matUid: matUid, ...this.tenantWhere(organizationId) },
     });
 
     if (!lot) {
@@ -130,13 +129,13 @@ export class HoldService {
     }
 
     // HOLD 상태로 변경
-    await this.matLotRepository.update({ matUid, ...this.tenantWhere(company, plant) }, {
+    await this.matLotRepository.update({ matUid, ...this.tenantWhere(organizationId) }, {
       status: 'HOLD',
     });
 
-    const updatedLot = await this.matLotRepository.findOne({ where: { matUid: matUid, ...this.tenantWhere(company, plant) } });
+    const updatedLot = await this.matLotRepository.findOne({ where: { matUid: matUid, ...this.tenantWhere(organizationId) } });
     const part = await this.itemMasterRepository.findOne({
-      where: { itemCode: updatedLot!.itemCode, ...this.tenantWhere(company, plant) },
+      where: { itemCode: updatedLot!.itemCode, ...this.tenantWhere(organizationId) },
     });
 
     return {
@@ -149,11 +148,11 @@ export class HoldService {
     };
   }
 
-  async release(dto: ReleaseHoldDto, company?: string, plant?: string) {
+  async release(dto: ReleaseHoldDto, organizationId?: number) {
     const { matUid, reason } = dto;
 
     const lot = await this.matLotRepository.findOne({
-      where: { matUid: matUid, ...this.tenantWhere(company, plant) },
+      where: { matUid: matUid, ...this.tenantWhere(organizationId) },
     });
 
     if (!lot) {
@@ -165,13 +164,13 @@ export class HoldService {
     }
 
     // NORMAL 상태로 변경
-    await this.matLotRepository.update({ matUid, ...this.tenantWhere(company, plant) }, {
+    await this.matLotRepository.update({ matUid, ...this.tenantWhere(organizationId) }, {
       status: 'NORMAL',
     });
 
-    const updatedLot = await this.matLotRepository.findOne({ where: { matUid: matUid, ...this.tenantWhere(company, plant) } });
+    const updatedLot = await this.matLotRepository.findOne({ where: { matUid: matUid, ...this.tenantWhere(organizationId) } });
     const part = await this.itemMasterRepository.findOne({
-      where: { itemCode: updatedLot!.itemCode, ...this.tenantWhere(company, plant) },
+      where: { itemCode: updatedLot!.itemCode, ...this.tenantWhere(organizationId) },
     });
 
     return {

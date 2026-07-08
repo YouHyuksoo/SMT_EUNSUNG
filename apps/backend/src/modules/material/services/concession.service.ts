@@ -32,10 +32,9 @@ export class ConcessionService {
     private readonly workerMasterRepository: Repository<WorkerMaster>,
   ) {}
 
-  private tenantWhere(company?: string | null, plant?: string | null) {
+  private tenantWhere(organizationId?: number | null) {
     return {
-      ...(company ? { company } : {}),
-      ...(plant ? { plant } : {}),
+      ...(organizationId != null ? { organizationId } : {}),
     };
   }
 
@@ -44,7 +43,7 @@ export class ConcessionService {
    * - iqcStatus='FAIL' 시리얼을 ARRIVAL_NO + ITEM_CODE 로 묶어 1행 반환
    * - 집계는 SQL GROUP BY 로 수행 (메모리 집계 금지)
    */
-  async findTargets(query: ConcessionTargetQueryDto, company?: string, plant?: string) {
+  async findTargets(query: ConcessionTargetQueryDto, organizationId?: number) {
     const qb = this.matLotRepository
       .createQueryBuilder('lot')
       .select('lot.arrivalNo', 'arrivalNo')
@@ -59,8 +58,7 @@ export class ConcessionService {
       .where('lot.arrivalNo IS NOT NULL')
       .andWhere("lot.iqcStatus = 'FAIL'");
 
-    if (company) qb.andWhere('lot.company = :company', { company });
-    if (plant) qb.andWhere('lot.plant = :plant', { plant });
+    if (organizationId != null) qb.andWhere('lot.organizationId = :organizationId', { organizationId });
     if (query.search) {
       qb.andWhere('(lot.arrivalNo LIKE :search OR lot.itemCode LIKE :search)', {
         search: `%${query.search}%`,
@@ -89,12 +87,12 @@ export class ConcessionService {
     const [parts, workers] = await Promise.all([
       itemCodes.length > 0
         ? this.itemMasterRepository.find({
-          where: { itemCode: In(itemCodes), ...this.tenantWhere(company, plant) },
+          where: { itemCode: In(itemCodes), ...this.tenantWhere(organizationId) },
         })
         : Promise.resolve([]),
       specialAcceptWorkerCodes.length > 0
         ? this.workerMasterRepository.find({
-          where: { workerCode: In(specialAcceptWorkerCodes), ...this.tenantWhere(company, plant) },
+          where: { workerCode: In(specialAcceptWorkerCodes), ...this.tenantWhere(organizationId) },
         })
         : Promise.resolve([]),
     ]);
@@ -127,7 +125,7 @@ export class ConcessionService {
   }
 
   /** 특채 처리 — 그룹의 FAIL 시리얼 전체에 SPECIAL_ACCEPT_YN='Y' 설정 */
-  async apply(dto: ApplyConcessionDto, company?: string, plant?: string, userId?: string) {
+  async apply(dto: ApplyConcessionDto, organizationId?: number, userId?: string) {
     const specialAcceptWorkerCode = dto.specialAcceptWorkerCode?.trim();
     if (!specialAcceptWorkerCode) {
       throw new BadRequestException('특채 처리 작업자를 선택해 주세요.');
@@ -138,7 +136,7 @@ export class ConcessionService {
         arrivalNo: dto.arrivalNo,
         itemCode: dto.itemCode,
         iqcStatus: 'FAIL',
-        ...this.tenantWhere(company, plant),
+        ...this.tenantWhere(organizationId),
       },
     });
     if (lots.length === 0) {
@@ -147,14 +145,13 @@ export class ConcessionService {
       );
     }
 
-    const tenantCompany = lots[0].company;
-    const tenantPlant = lots[0].plant;
+    const tenantOrganizationId = lots[0].organizationId;
 
     const worker = await this.workerMasterRepository.findOne({
       where: {
         workerCode: specialAcceptWorkerCode,
         useYn: 'Y',
-        ...this.tenantWhere(tenantCompany, tenantPlant),
+        ...this.tenantWhere(tenantOrganizationId),
       },
     });
     if (!worker) {
@@ -166,7 +163,7 @@ export class ConcessionService {
         arrivalNo: dto.arrivalNo,
         itemCode: dto.itemCode,
         iqcStatus: 'FAIL',
-        ...this.tenantWhere(tenantCompany, tenantPlant),
+        ...this.tenantWhere(tenantOrganizationId),
       },
       {
         specialAcceptYn: 'Y',
@@ -185,13 +182,13 @@ export class ConcessionService {
   }
 
   /** 특채 취소 — SPECIAL_ACCEPT_YN='N' 복원 (이미 입고된 입하건은 취소 불가) */
-  async cancel(dto: ApplyConcessionDto, company?: string, plant?: string, userId?: string) {
+  async cancel(dto: ApplyConcessionDto, organizationId?: number, userId?: string) {
     const lots = await this.matLotRepository.find({
       where: {
         arrivalNo: dto.arrivalNo,
         itemCode: dto.itemCode,
         iqcStatus: 'FAIL',
-        ...this.tenantWhere(company, plant),
+        ...this.tenantWhere(organizationId),
       },
     });
     if (lots.length === 0) {
@@ -200,15 +197,14 @@ export class ConcessionService {
       );
     }
 
-    const tenantCompany = lots[0].company;
-    const tenantPlant = lots[0].plant;
+    const tenantOrganizationId = lots[0].organizationId;
 
     // 이미 입고된 시리얼이 있으면 특채 취소 불가
     const received = await this.matReceivingRepository.findOne({
       where: {
         matUid: In(lots.map((l) => l.matUid)),
         status: 'DONE',
-        ...this.tenantWhere(tenantCompany, tenantPlant),
+        ...this.tenantWhere(tenantOrganizationId),
       },
     });
     if (received) {
@@ -222,7 +218,7 @@ export class ConcessionService {
         arrivalNo: dto.arrivalNo,
         itemCode: dto.itemCode,
         iqcStatus: 'FAIL',
-        ...this.tenantWhere(tenantCompany, tenantPlant),
+        ...this.tenantWhere(tenantOrganizationId),
       },
       { specialAcceptYn: 'N', specialAcceptWorkerCode: null, ...(userId ? { updatedBy: userId } : {}) },
     );

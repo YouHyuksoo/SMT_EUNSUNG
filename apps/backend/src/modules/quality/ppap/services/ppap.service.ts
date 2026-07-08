@@ -175,27 +175,20 @@ export class PpapService {
     private readonly ppapRepo: Repository<PpapSubmission>,
   ) {}
 
-  private tenantWhere(company?: string | null, plant?: string | null) {
+  private tenantWhere(organizationId?: number | null) {
     return {
-      ...(company ? { company } : {}),
-      ...(plant ? { plant } : {}),
+      ...(organizationId != null ? { organizationId } : {}),
     };
   }
 
   private assertSameTenant(
     context: string,
-    row: { company?: string | null; plant?: string | null },
-    company?: string | null,
-    plant?: string | null,
+    row: { organizationId?: number | null },
+    organizationId?: number | null,
   ) {
-    if (company && row.company !== company) {
+    if (organizationId != null && row.organizationId !== organizationId) {
       throw new BadRequestException(
-        `${context} 회사 정보가 일치하지 않습니다. request=${company}, row=${row.company ?? 'NULL'}`,
-      );
-    }
-    if (plant && row.plant !== plant) {
-      throw new BadRequestException(
-        `${context} 사업장 정보가 일치하지 않습니다. request=${plant}, row=${row.plant ?? 'NULL'}`,
+        `${context} 조직 정보가 일치하지 않습니다. request=${organizationId}, row=${row.organizationId ?? 'NULL'}`,
       );
     }
   }
@@ -208,8 +201,7 @@ export class PpapService {
    * PPAP 번호 자동채번: PPAP-YYYYMMDD-NNN
    */
   private async generatePpapNo(
-    company: string,
-    plant: string,
+    organizationId: number,
   ): Promise<string> {
     const today = new Date();
     const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '');
@@ -217,8 +209,7 @@ export class PpapService {
 
     const last = await this.ppapRepo
       .createQueryBuilder('p')
-      .where('p.company = :company', { company })
-      .andWhere('p.plant = :plant', { plant })
+      .where('p.organizationId = :organizationId', { organizationId })
       .andWhere('p.ppapNo LIKE :prefix', { prefix: `${prefix}%` })
       .orderBy('p.ppapNo', 'DESC')
       .getOne();
@@ -234,7 +225,7 @@ export class PpapService {
   /**
    * PPAP 목록 조회 (페이지네이션 + 필터)
    */
-  async findAll(query: PpapFilterDto, company?: string, plant?: string) {
+  async findAll(query: PpapFilterDto, organizationId?: number) {
     const {
       page = 1,
       limit = 50,
@@ -249,8 +240,7 @@ export class PpapService {
 
     const qb = this.ppapRepo.createQueryBuilder('p');
 
-    if (company) qb.andWhere('p.company = :company', { company });
-    if (plant) qb.andWhere('p.plant = :plant', { plant });
+    if (organizationId != null) qb.andWhere('p.organizationId = :organizationId', { organizationId });
     if (status) qb.andWhere('p.status = :status', { status });
     if (itemCode) qb.andWhere('p.itemCode = :itemCode', { itemCode });
     if (customerCode)
@@ -283,14 +273,14 @@ export class PpapService {
   /**
    * PPAP 단건 조회
    */
-  async findById(ppapNo: string, company?: string, plant?: string) {
+  async findById(ppapNo: string, organizationId?: number) {
     const item = await this.ppapRepo.findOne({
-      where: { ppapNo, ...this.tenantWhere(company, plant) },
+      where: { ppapNo, ...this.tenantWhere(organizationId) },
     });
     if (!item) {
       throw new NotFoundException('PPAP 제출을 찾을 수 없습니다.');
     }
-    this.assertSameTenant('PPAP 제출', item, company, plant);
+    this.assertSameTenant('PPAP 제출', item, organizationId);
     return item;
   }
 
@@ -299,11 +289,10 @@ export class PpapService {
    */
   async create(
     dto: CreatePpapDto,
-    company: string,
-    plant: string,
+    organizationId: number,
     userId: string,
   ) {
-    const ppapNo = await this.generatePpapNo(company, plant);
+    const ppapNo = await this.generatePpapNo(organizationId);
     const entity = this.ppapRepo.create({
       ppapNo,
       itemCode: dto.itemCode,
@@ -332,8 +321,7 @@ export class PpapService {
       partSubmissionWarrant: dto.partSubmissionWarrant,
       remark: dto.remark,
       status: 'DRAFT',
-      company,
-      plant,
+      organizationId,
       createdBy: userId,
       updatedBy: userId,
     });
@@ -349,10 +337,9 @@ export class PpapService {
     ppapNo: string,
     dto: UpdatePpapDto,
     userId: string,
-    company?: string,
-    plant?: string,
+    organizationId?: number,
   ) {
-    const item = await this.findById(ppapNo, company, plant);
+    const item = await this.findById(ppapNo, organizationId);
     if (!['DRAFT', 'REJECTED'].includes(item.status)) {
       throw new BadRequestException(
         '초안 또는 반려 상태에서만 수정할 수 있습니다.',
@@ -392,8 +379,8 @@ export class PpapService {
   /**
    * PPAP 삭제 (DRAFT 상태에서만 가능)
    */
-  async delete(ppapNo: string, company?: string, plant?: string) {
-    const item = await this.findById(ppapNo, company, plant);
+  async delete(ppapNo: string, organizationId?: number) {
+    const item = await this.findById(ppapNo, organizationId);
     if (item.status !== 'DRAFT') {
       throw new BadRequestException('초안 상태에서만 삭제할 수 있습니다.');
     }
@@ -410,10 +397,9 @@ export class PpapService {
   async submit(
     ppapNo: string,
     userId: string,
-    company?: string,
-    plant?: string,
+    organizationId?: number,
   ) {
-    const item = await this.findById(ppapNo, company, plant);
+    const item = await this.findById(ppapNo, organizationId);
     if (item.status !== 'DRAFT') {
       throw new BadRequestException('초안 상태에서만 제출할 수 있습니다.');
     }
@@ -431,10 +417,9 @@ export class PpapService {
   async approve(
     ppapNo: string,
     userId: string,
-    company?: string,
-    plant?: string,
+    organizationId?: number,
   ) {
-    const item = await this.findById(ppapNo, company, plant);
+    const item = await this.findById(ppapNo, organizationId);
     if (item.status !== 'SUBMITTED') {
       throw new BadRequestException(
         '제출된 상태에서만 승인할 수 있습니다.',
@@ -456,10 +441,9 @@ export class PpapService {
     ppapNo: string,
     reason: string,
     userId: string,
-    company?: string,
-    plant?: string,
+    organizationId?: number,
   ) {
-    const item = await this.findById(ppapNo, company, plant);
+    const item = await this.findById(ppapNo, organizationId);
     if (item.status !== 'SUBMITTED') {
       throw new BadRequestException(
         '제출된 상태에서만 반려할 수 있습니다.',
@@ -479,10 +463,9 @@ export class PpapService {
   async cancelApproval(
     ppapNo: string,
     userId: string,
-    company?: string,
-    plant?: string,
+    organizationId?: number,
   ) {
-    const item = await this.findById(ppapNo, company, plant);
+    const item = await this.findById(ppapNo, organizationId);
     if (item.status !== 'APPROVED') {
       throw new BadRequestException(
         '승인 상태에서만 승인취소할 수 있습니다.',
@@ -503,10 +486,9 @@ export class PpapService {
   async cancelSubmit(
     ppapNo: string,
     userId: string,
-    company?: string,
-    plant?: string,
+    organizationId?: number,
   ) {
-    const item = await this.findById(ppapNo, company, plant);
+    const item = await this.findById(ppapNo, organizationId);
     if (item.status !== 'SUBMITTED') {
       throw new BadRequestException(
         '제출 상태에서만 제출취소할 수 있습니다.',
@@ -540,8 +522,8 @@ export class PpapService {
   /**
    * 완성률 계산 (필수 요소 대비 완료된 비율)
    */
-  async getCompletionRate(ppapNo: string, company?: string, plant?: string) {
-    const item = await this.findById(ppapNo, company, plant);
+  async getCompletionRate(ppapNo: string, organizationId?: number) {
+    const item = await this.findById(ppapNo, organizationId);
     const matrix = PPAP_LEVEL_MATRIX[item.ppapLevel] ?? PPAP_LEVEL_MATRIX[3];
     const requiredKeys = PPAP_ELEMENT_KEYS.filter((key) => matrix[key]);
     if (requiredKeys.length === 0) {

@@ -92,13 +92,13 @@ describe('AqlService', () => {
         { lotQtyFrom: 1, lotQtyTo: 50, sampleSize: 5, acceptQty: 0, rejectQty: 1 },
         { lotQtyFrom: 40, lotQtyTo: 100, sampleSize: 8, acceptQty: 1, rejectQty: 2 },
       ],
-    }, '40', '1000', 'tester')).rejects.toThrow(BadRequestException);
+    }, 1, 'tester')).rejects.toThrow(BadRequestException);
   });
 
   it('allows ISO sampling plans whose standard sample size is greater than the LOT upper bound', async () => {
     standardRepo.findOne
       .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce({ company: '40', plant: '1000', aqlCode: 'AQL-S-1-0.015' });
+      .mockResolvedValueOnce({ organizationId: 1, aqlCode: 'AQL-S-1-0.015' });
     ruleRepo.find.mockResolvedValue([{ lotQtyFrom: 2, lotQtyTo: 8, sampleSize: 80, acceptQty: 0, rejectQty: 1 }]);
 
     await expect(service.create({
@@ -110,15 +110,14 @@ describe('AqlService', () => {
       rules: [
         { lotQtyFrom: 2, lotQtyTo: 8, sampleSize: 80, acceptQty: 0, rejectQty: 1 },
       ],
-    }, '40', '1000', 'tester')).resolves.toEqual(
+    }, 1, 'tester')).resolves.toEqual(
       expect.objectContaining({ aqlCode: 'AQL-S-1-0.015' }),
     );
   });
 
   it('resolves a lot quantity to the matching rule', async () => {
     standardRepo.findOne.mockResolvedValue({
-      company: '40',
-      plant: '1000',
+      organizationId: 1,
       aqlCode: 'AQL-1.0',
       aqlName: 'AQL 1.0',
       useYn: 'Y',
@@ -128,7 +127,7 @@ describe('AqlService', () => {
       { lotQtyFrom: 21, lotQtyTo: 50, sampleSize: 5, acceptQty: 1, rejectQty: 2 },
     ]);
 
-    await expect(service.resolveByAqlCode('AQL-1.0', 25, '40', '1000')).resolves.toEqual(
+    await expect(service.resolveByAqlCode('AQL-1.0', 25, 1)).resolves.toEqual(
       expect.objectContaining({
         aqlCode: 'AQL-1.0',
         lotQty: 25,
@@ -142,8 +141,7 @@ describe('AqlService', () => {
 
   it('resolves standard sample size and actual inspection quantity separately', async () => {
     standardRepo.findOne.mockResolvedValue({
-      company: '40',
-      plant: '1000',
+      organizationId: 1,
       aqlCode: 'AQL-S-1-0.015',
       aqlName: 'AQL S-1 0.015',
       useYn: 'Y',
@@ -152,7 +150,7 @@ describe('AqlService', () => {
       { lotQtyFrom: 2, lotQtyTo: 8, codeLetter: 'A', sampleSize: 80, acceptQty: 0, rejectQty: 1 },
     ]);
 
-    await expect(service.resolveByAqlCode('AQL-S-1-0.015', 3, '40', '1000')).resolves.toEqual(
+    await expect(service.resolveByAqlCode('AQL-S-1-0.015', 3, 1)).resolves.toEqual(
       expect.objectContaining({
         lotQty: 3,
         codeLetter: 'A',
@@ -168,21 +166,21 @@ describe('AqlService', () => {
   it('rejects inactive AQL standards when resolving', async () => {
     standardRepo.findOne.mockResolvedValue({ aqlCode: 'AQL-1.0', useYn: 'N' });
 
-    await expect(service.resolveByAqlCode('AQL-1.0', 25, '40', '1000')).rejects.toThrow(BadRequestException);
+    await expect(service.resolveByAqlCode('AQL-1.0', 25, 1)).rejects.toThrow(BadRequestException);
   });
 
   it('throws when no sampling rule matches the lot quantity', async () => {
     standardRepo.findOne.mockResolvedValue({ aqlCode: 'AQL-1.0', useYn: 'Y' });
     ruleRepo.find.mockResolvedValue([{ lotQtyFrom: 1, lotQtyTo: 20, sampleSize: 3, acceptQty: 0, rejectQty: 1 }]);
 
-    await expect(service.resolveByAqlCode('AQL-1.0', 25, '40', '1000')).rejects.toThrow(NotFoundException);
+    await expect(service.resolveByAqlCode('AQL-1.0', 25, 1)).rejects.toThrow(NotFoundException);
   });
 
   it('creates an IQC AQL policy from active major/minor AQL standards', async () => {
     policyRepo.findOne.mockResolvedValue(null);
     standardRepo.find.mockResolvedValue([
-      { company: '40', plant: '1000', aqlCode: 'AQL-II-1.0', useYn: 'Y' },
-      { company: '40', plant: '1000', aqlCode: 'AQL-II-2.5', useYn: 'Y' },
+      { organizationId: 1, aqlCode: 'AQL-II-1.0', useYn: 'Y' },
+      { organizationId: 1, aqlCode: 'AQL-II-2.5', useYn: 'Y' },
     ]);
 
     const result = await service.createPolicy({
@@ -192,7 +190,7 @@ describe('AqlService', () => {
       majorAqlCode: 'AQL-II-1.0',
       minorAqlCode: 'AQL-II-2.5',
       useYn: 'Y',
-    }, '40', '1000', 'tester');
+    }, 1, 'tester');
 
     expect(policyRepo.save).toHaveBeenCalledWith(expect.objectContaining({
       policyCode: 'AQLP-II-1.0-2.5',
@@ -204,17 +202,17 @@ describe('AqlService', () => {
   });
 
   it('blocks disabling an IQC AQL policy that is assigned to item masters', async () => {
-    policyRepo.findOne.mockResolvedValue({ company: '40', plant: '1000', policyCode: 'AQLP-II-1.0-2.5', useYn: 'Y' });
+    policyRepo.findOne.mockResolvedValue({ organizationId: 1, policyCode: 'AQLP-II-1.0-2.5', useYn: 'Y' });
     partRepo.count.mockResolvedValue(1);
 
-    await expect(service.deletePolicy('AQLP-II-1.0-2.5', '40', '1000', 'tester')).rejects.toThrow(BadRequestException);
+    await expect(service.deletePolicy('AQLP-II-1.0-2.5', 1, 'tester')).rejects.toThrow(BadRequestException);
   });
 
   it('blocks disabling an AQL standard referenced by active IQC AQL policies', async () => {
-    standardRepo.findOne.mockResolvedValue({ company: '40', plant: '1000', aqlCode: 'AQL-II-1.0', useYn: 'Y' });
+    standardRepo.findOne.mockResolvedValue({ organizationId: 1, aqlCode: 'AQL-II-1.0', useYn: 'Y' });
     policyRepo.count.mockResolvedValue(1);
 
-    await expect(service.delete('AQL-II-1.0', '40', '1000', 'tester')).rejects.toThrow(BadRequestException);
+    await expect(service.delete('AQL-II-1.0', 1, 'tester')).rejects.toThrow(BadRequestException);
     expect(standardRepo.save).not.toHaveBeenCalled();
   });
 
@@ -233,8 +231,8 @@ describe('AqlService', () => {
     });
     partnerRepo.findOne.mockResolvedValue({ partnerCode: 'SUP-A', inspectionMode: 'NORMAL' });
     standardRepo.findOne
-      .mockResolvedValueOnce({ company: '40', plant: '1000', aqlCode: 'AQL-II-1.0', useYn: 'Y' })
-      .mockResolvedValueOnce({ company: '40', plant: '1000', aqlCode: 'AQL-II-2.5', useYn: 'Y' });
+      .mockResolvedValueOnce({ organizationId: 1, aqlCode: 'AQL-II-1.0', useYn: 'Y' })
+      .mockResolvedValueOnce({ organizationId: 1, aqlCode: 'AQL-II-2.5', useYn: 'Y' });
     ruleRepo.find
       .mockResolvedValueOnce([{ lotQtyFrom: 501, lotQtyTo: 1200, sampleSize: 80, acceptQty: 2, rejectQty: 3 }])
       .mockResolvedValueOnce([{ lotQtyFrom: 501, lotQtyTo: 1200, sampleSize: 80, acceptQty: 5, rejectQty: 6 }]);
@@ -244,8 +242,7 @@ describe('AqlService', () => {
       vendorCode: 'SUP-A',
       lotQty: 1000,
       defectCounts: { critical: 1, major: 0, minor: 0 },
-      company: '40',
-      plant: '1000',
+      organizationId: 1,
     });
 
     expect(result.result).toBe('FAIL');
@@ -268,8 +265,8 @@ describe('AqlService', () => {
     });
     partnerRepo.findOne.mockResolvedValue({ partnerCode: 'SUP-B', inspectionMode: 'NORMAL' });
     standardRepo.findOne
-      .mockResolvedValueOnce({ company: '40', plant: '1000', aqlCode: 'AQL-II-1.0', useYn: 'Y' })
-      .mockResolvedValueOnce({ company: '40', plant: '1000', aqlCode: 'AQL-II-2.5', useYn: 'Y' });
+      .mockResolvedValueOnce({ organizationId: 1, aqlCode: 'AQL-II-1.0', useYn: 'Y' })
+      .mockResolvedValueOnce({ organizationId: 1, aqlCode: 'AQL-II-2.5', useYn: 'Y' });
     ruleRepo.find
       .mockResolvedValueOnce([{ lotQtyFrom: 501, lotQtyTo: 1200, sampleSize: 80, acceptQty: 2, rejectQty: 3 }])
       .mockResolvedValueOnce([{ lotQtyFrom: 501, lotQtyTo: 1200, sampleSize: 80, acceptQty: 5, rejectQty: 6 }]);
@@ -279,8 +276,7 @@ describe('AqlService', () => {
       vendorCode: 'SUP-B',
       lotQty: 1000,
       defectCounts: { major: 3, minor: 0 },
-      company: '40',
-      plant: '1000',
+      organizationId: 1,
     });
 
     expect(result.result).toBe('FAIL');
@@ -306,8 +302,8 @@ describe('AqlService', () => {
       { defectCode: 'D-MIN', defectGrade: 'MINOR', useYn: 'Y' },
     ]);
     standardRepo.findOne
-      .mockResolvedValueOnce({ company: '40', plant: '1000', aqlCode: 'AQL-II-1.0', useYn: 'Y' })
-      .mockResolvedValueOnce({ company: '40', plant: '1000', aqlCode: 'AQL-II-2.5', useYn: 'Y' });
+      .mockResolvedValueOnce({ organizationId: 1, aqlCode: 'AQL-II-1.0', useYn: 'Y' })
+      .mockResolvedValueOnce({ organizationId: 1, aqlCode: 'AQL-II-2.5', useYn: 'Y' });
     ruleRepo.find
       .mockResolvedValueOnce([{ lotQtyFrom: 501, lotQtyTo: 1200, sampleSize: 80, acceptQty: 2, rejectQty: 3 }])
       .mockResolvedValueOnce([{ lotQtyFrom: 501, lotQtyTo: 1200, sampleSize: 80, acceptQty: 5, rejectQty: 6 }]);
@@ -320,8 +316,7 @@ describe('AqlService', () => {
         { defectCode: 'D-MAJ', qty: 3 },
         { defectCode: 'D-MIN', qty: 1 },
       ],
-      company: '40',
-      plant: '1000',
+      organizationId: 1,
     });
 
     expect(result.defectMajor).toBe(3);
@@ -349,8 +344,8 @@ describe('AqlService', () => {
       { defectCode: 'D-CRI', defectGrade: 'CRITICAL', useYn: 'Y' },
     ]);
     standardRepo.findOne
-      .mockResolvedValueOnce({ company: '40', plant: '1000', aqlCode: 'AQL-II-1.0', useYn: 'Y' })
-      .mockResolvedValueOnce({ company: '40', plant: '1000', aqlCode: 'AQL-II-2.5', useYn: 'Y' });
+      .mockResolvedValueOnce({ organizationId: 1, aqlCode: 'AQL-II-1.0', useYn: 'Y' })
+      .mockResolvedValueOnce({ organizationId: 1, aqlCode: 'AQL-II-2.5', useYn: 'Y' });
     ruleRepo.find
       .mockResolvedValueOnce([{ lotQtyFrom: 501, lotQtyTo: 1200, sampleSize: 80, acceptQty: 2, rejectQty: 3 }])
       .mockResolvedValueOnce([{ lotQtyFrom: 501, lotQtyTo: 1200, sampleSize: 80, acceptQty: 5, rejectQty: 6 }]);
@@ -360,8 +355,7 @@ describe('AqlService', () => {
       vendorCode: 'SUP-B',
       lotQty: 1000,
       defectCodes: [{ defectCode: 'D-CRI', qty: 1 }],
-      company: '40',
-      plant: '1000',
+      organizationId: 1,
     });
 
     expect(result.defectCritical).toBe(1);
@@ -389,8 +383,7 @@ describe('AqlService', () => {
       vendorCode: null,
       lotQty: 100,
       itemDefectCounts: { 1: 1 },
-      company: '40',
-      plant: '1000',
+      organizationId: 1,
     });
 
     expect(result.result).toBe('FAIL');
@@ -413,7 +406,7 @@ describe('AqlService', () => {
     });
     partnerRepo.findOne.mockResolvedValue(null);
     standardRepo.find.mockResolvedValue([
-      { company: '40', plant: '1000', aqlCode: 'AQL-II-1.0', useYn: 'Y' },
+      { organizationId: 1, aqlCode: 'AQL-II-1.0', useYn: 'Y' },
     ]);
     ruleRepo.find.mockResolvedValue([{ lotQtyFrom: 1, lotQtyTo: 200, sampleSize: 20, acceptQty: 1, rejectQty: 2 }]);
 
@@ -422,8 +415,7 @@ describe('AqlService', () => {
       vendorCode: null,
       lotQty: 100,
       itemDefectCounts: { 1: 2 },
-      company: '40',
-      plant: '1000',
+      organizationId: 1,
     });
 
     expect(result.result).toBe('FAIL');
@@ -444,8 +436,8 @@ describe('AqlService', () => {
     });
     partnerRepo.findOne.mockResolvedValue(null);
     standardRepo.findOne
-      .mockResolvedValueOnce({ company: '40', plant: '1000', aqlCode: 'AQL-II-1.0', useYn: 'Y' })
-      .mockResolvedValueOnce({ company: '40', plant: '1000', aqlCode: 'AQL-II-2.5', useYn: 'Y' });
+      .mockResolvedValueOnce({ organizationId: 1, aqlCode: 'AQL-II-1.0', useYn: 'Y' })
+      .mockResolvedValueOnce({ organizationId: 1, aqlCode: 'AQL-II-2.5', useYn: 'Y' });
     ruleRepo.find
       .mockResolvedValueOnce([{ lotQtyFrom: 1, lotQtyTo: 200, sampleSize: 13, acceptQty: 0, rejectQty: 1 }])
       .mockResolvedValueOnce([{ lotQtyFrom: 1, lotQtyTo: 200, sampleSize: 13, acceptQty: 1, rejectQty: 2 }]);
@@ -456,8 +448,7 @@ describe('AqlService', () => {
       lotQty: 100,
       itemDefectCounts: {},
       fallbackDefectCounts: { critical: 0, major: 0, minor: 0 },
-      company: '40',
-      plant: '1000',
+      organizationId: 1,
     });
 
     expect(result.result).toBe('PASS');
@@ -476,8 +467,7 @@ describe('AqlService', () => {
       lotQty: 100,
       itemDefectCounts: {},
       fallbackDefectCounts: { critical: 0, major: 1, minor: 0 },
-      company: '40',
-      plant: '1000',
+      organizationId: 1,
     })).rejects.toThrow(BadRequestException);
   });
 
@@ -504,8 +494,7 @@ describe('AqlService', () => {
       vendorCode: 'SUP-B',
       lotQty: 1000,
       defectCodes: [{ defectCode: 'D-NO-GRADE', qty: 1 }],
-      company: '40',
-      plant: '1000',
+      organizationId: 1,
     })).rejects.toThrow(BadRequestException);
   });
 
@@ -531,7 +520,7 @@ describe('AqlService', () => {
       itemCode: 'CBL-A', vendorCode: null, lotQty: 1200,
       itemDefectCounts: { 1: 0, 2: 1 },           // 외관 0, 인장 1
       itemInspectedCounts: { 2: 5 },
-      company: '40', plant: '1000',
+      organizationId: 1,
     });
 
     expect(res.result).toBe('FAIL');
@@ -546,8 +535,7 @@ describe('AqlService', () => {
 
   it('switches NORMAL supplier inspection mode to TIGHTENED when recent 5 lots include 2 fails', async () => {
     partnerRepo.findOne.mockResolvedValue({
-      company: '40',
-      plant: '1000',
+      organizationId: 1,
       partnerCode: 'SUP-C',
       inspectionMode: 'NORMAL',
     });
@@ -563,8 +551,7 @@ describe('AqlService', () => {
       vendorCode: 'SUP-C',
       itemCode: 'PCB',
       arrivalNo: 'R1',
-      company: '40',
-      plant: '1000',
+      organizationId: 1,
     });
 
     expect(partnerRepo.save).toHaveBeenCalledWith(expect.objectContaining({ inspectionMode: 'TIGHTENED' }));
@@ -574,8 +561,7 @@ describe('AqlService', () => {
 
   it('reverts supplier inspection mode when the latest mode history belongs to the canceled IQC lot', async () => {
     partnerRepo.findOne.mockResolvedValue({
-      company: '40',
-      plant: '1000',
+      organizationId: 1,
       partnerCode: 'SUP-C',
       inspectionMode: 'TIGHTENED',
     });
@@ -593,8 +579,7 @@ describe('AqlService', () => {
       vendorCode: 'SUP-C',
       arrivalNo: 'ARR-1',
       itemCode: 'ITEM-1',
-      company: '40',
-      plant: '1000',
+      organizationId: 1,
     });
 
     expect(partnerRepo.save).toHaveBeenCalledWith(expect.objectContaining({ inspectionMode: 'NORMAL' }));

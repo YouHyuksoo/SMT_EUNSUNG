@@ -52,30 +52,25 @@ export class MatIssueService {
     });
   }
 
-  private tenantWhere(company?: string | null, plant?: string | null) {
+  private tenantWhere(organizationId?: number | null) {
     return {
-      ...(company ? { company } : {}),
-      ...(plant ? { plant } : {}),
+      ...(organizationId != null ? { organizationId } : {}),
     };
   }
 
   private assertSameTenant(
     label: string,
-    actual: { company?: string | null; plant?: string | null },
-    company?: string | null,
-    plant?: string | null,
+    actual: { organizationId?: number | null },
+    organizationId?: number | null,
   ) {
-    if (company && actual.company !== company) {
-      throw new BadRequestException(`${label}의 회사가 요청 회사와 다릅니다.`);
-    }
-    if (plant && actual.plant !== plant) {
-      throw new BadRequestException(`${label}의 공장이 요청 공장과 다릅니다.`);
+    if (organizationId != null && actual.organizationId !== organizationId) {
+      throw new BadRequestException(`${label}의 조직이 요청 조직과 다릅니다.`);
     }
   }
 
-  private async flattenIssue(issue: MatIssue, company?: string, plant?: string) {
+  private async flattenIssue(issue: MatIssue, organizationId?: number) {
     if (!issue) return null;
-    const tenantWhere = this.tenantWhere(company ?? issue.company, plant ?? issue.plant);
+    const tenantWhere = this.tenantWhere(organizationId ?? issue.organizationId);
 
     const lot = issue.matUid
       ? await this.matLotRepository.findOne({ where: { matUid: issue.matUid, ...tenantWhere } })
@@ -97,7 +92,7 @@ export class MatIssueService {
     };
   }
 
-  async findAll(query: MatIssueQueryDto, company?: string, plant?: string) {
+  async findAll(query: MatIssueQueryDto, organizationId?: number) {
     const { page = 1, limit = 10, orderNo, matUid, issueType, issueDateFrom, issueDateTo, status } = query;
     const skip = (page - 1) * limit;
 
@@ -106,8 +101,7 @@ export class MatIssueService {
       ...(matUid && { matUid }),
       ...(issueType && { issueType }),
       ...(status && { status }),
-      ...(company && { company }),
-      ...(plant && { plant }),
+      ...(organizationId != null && { organizationId }),
     };
 
     if (issueDateFrom && issueDateTo) {
@@ -130,7 +124,7 @@ export class MatIssueService {
 
     const matUids = [...new Set(data.map((i) => i.matUid).filter(Boolean))];
     const orderNos = [...new Set(data.map((i) => i.orderNo).filter(Boolean))];
-    const tenantWhere = this.tenantWhere(company, plant);
+    const tenantWhere = this.tenantWhere(organizationId);
 
     const [lots, jobOrders] = await Promise.all([
       matUids.length > 0
@@ -167,24 +161,24 @@ export class MatIssueService {
     return { data: flattenedData, total, page, limit };
   }
 
-  async findById(issueNo: string, seq: number, company?: string, plant?: string) {
-    const tenantWhere = this.tenantWhere(company, plant);
+  async findById(issueNo: string, seq: number, organizationId?: number) {
+    const tenantWhere = this.tenantWhere(organizationId);
     const issue = await this.matIssueRepository.findOne({ where: { issueNo, seq, ...tenantWhere } });
 
     if (!issue) throw new NotFoundException(`출고 이력을 찾을 수 없습니다: ${issueNo}-${seq}`);
-    return this.flattenIssue(issue, company, plant);
+    return this.flattenIssue(issue, organizationId);
   }
 
-  async create(dto: CreateMatIssueDto, company?: string, plant?: string) {
-    return this.tx.run((queryRunner) => this.createInTx(queryRunner, dto, company, plant));
+  async create(dto: CreateMatIssueDto, organizationId?: number) {
+    return this.tx.run((queryRunner) => this.createInTx(queryRunner, dto, organizationId));
   }
 
-  async createInTx(queryRunner: import('typeorm').QueryRunner, dto: CreateMatIssueDto, company?: string, plant?: string) {
+  async createInTx(queryRunner: import('typeorm').QueryRunner, dto: CreateMatIssueDto, organizationId?: number) {
     const { orderNo, prodResultNo, warehouseCode, issueType, items, remark, workerId } = dto;
     const results = [];
     const issueNo = await this.numbering.nextInTx(queryRunner, 'MAT_ISSUE');
     let seqCounter = 1;
-    const tenantWhere = this.tenantWhere(company, plant);
+    const tenantWhere = this.tenantWhere(organizationId);
 
     // 출고 시 processCode가 지정되면 원자재창고 → 공정재고(PROC_MAT_STOCKS=장착 대기)로 이동한다(ADR 0002).
     // 설비는 출고 시점에 정하지 않는다(설비 장착은 별도 단계). processCode가 없으면 단순 출고(MAT_OUT) 유지.
@@ -199,7 +193,7 @@ export class MatIssueService {
       if (!lot) {
         throw new BadRequestException(`LOT를 찾을 수 없습니다: ${item.matUid}`);
       }
-      this.assertSameTenant('출고 LOT', lot, company, plant);
+      this.assertSameTenant('출고 LOT', lot, organizationId);
 
       if (lot.iqcStatus !== 'PASS') {
         throw new BadRequestException(`IQC 합격 상태가 아닌 LOT입니다: ${lot.matUid}`);
@@ -214,7 +208,7 @@ export class MatIssueService {
           ? { matUid: lot.matUid, warehouseCode, ...tenantWhere }
           : { matUid: lot.matUid, ...tenantWhere },
       });
-      stockRows.forEach((stock) => this.assertSameTenant('출고 대상 재고', stock, lot.company, lot.plant));
+      stockRows.forEach((stock) => this.assertSameTenant('출고 대상 재고', stock, lot.organizationId));
       const stockQty = stockRows.reduce((sum, stock) => sum + (stock.availableQty ?? stock.qty ?? 0), 0);
 
       if (stockQty < item.issueQty) {
@@ -233,8 +227,7 @@ export class MatIssueService {
         workerId,
         remark,
         status: 'DONE',
-        company: lot.company,
-        plant: lot.plant,
+        organizationId: lot.organizationId,
       });
       const savedIssue = await queryRunner.manager.save(issue);
 
@@ -260,8 +253,7 @@ export class MatIssueService {
           refType: 'MAT_ISSUE',
           refId: `${savedIssue.issueNo}-${savedIssue.seq}`,
           status: 'DONE',
-          company: lot.company,
-          plant: lot.plant,
+          organizationId: lot.organizationId,
         });
         await queryRunner.manager.save(stockTx);
 
@@ -288,8 +280,7 @@ export class MatIssueService {
             refType: 'MAT_ISSUE',
             refId: `${savedIssue.issueNo}-${savedIssue.seq}`,
             workerId,
-            company: lot.company,
-            plant: lot.plant,
+            organizationId: lot.organizationId,
           });
         }
 
@@ -299,7 +290,7 @@ export class MatIssueService {
       const remainingStocks = await queryRunner.manager.find(MatStock, {
         where: { matUid: lot.matUid, ...tenantWhere },
       });
-      remainingStocks.forEach((stock) => this.assertSameTenant('출고 후 잔여 재고', stock, lot.company, lot.plant));
+      remainingStocks.forEach((stock) => this.assertSameTenant('출고 후 잔여 재고', stock, lot.organizationId));
       const totalRemainingQty = remainingStocks.reduce((sum, stock) => sum + (stock.qty ?? 0), 0);
 
       // MAT_LOTS.currentQty 정합 — 출고분만큼 LOT 잔량 차감(창고에서 LOT이 나감).
@@ -314,14 +305,14 @@ export class MatIssueService {
         await queryRunner.manager.update(MatLot, { matUid: lot.matUid, ...tenantWhere }, { status: 'DEPLETED' });
       }
 
-      results.push(await this.flattenIssue(savedIssue, company, plant));
+      results.push(await this.flattenIssue(savedIssue, organizationId));
     }
 
     return results;
   }
 
-  async scanIssue(dto: ScanIssueDto, company?: string, plant?: string) {
-    const tenantWhere = this.tenantWhere(company, plant);
+  async scanIssue(dto: ScanIssueDto, organizationId?: number) {
+    const tenantWhere = this.tenantWhere(organizationId);
     const lot = await this.matLotRepository.findOne({
       where: { matUid: dto.matUid, ...tenantWhere },
     });
@@ -356,7 +347,7 @@ export class MatIssueService {
       items: [{ matUid: lot.matUid, issueQty: stockQty }],
       workerId: dto.workerId,
       remark: dto.remark ?? `바코드 스캔 출고: ${dto.matUid}`,
-    }, company, plant);
+    }, organizationId);
 
     const part = await this.itemMasterRepository.findOne({
       where: { itemCode: lot.itemCode, ...tenantWhere },
@@ -372,19 +363,19 @@ export class MatIssueService {
     };
   }
 
-  async cancel(issueNo: string, seq: number, reason?: string, company?: string, plant?: string) {
-    const tenantWhere = this.tenantWhere(company, plant);
+  async cancel(issueNo: string, seq: number, reason?: string, organizationId?: number) {
+    const tenantWhere = this.tenantWhere(organizationId);
     const rawIssue = await this.matIssueRepository.findOne({ where: { issueNo, seq, ...tenantWhere } });
     if (!rawIssue) {
       throw new NotFoundException(`출고 이력을 찾을 수 없습니다: ${issueNo}-${seq}`);
     }
-    this.assertSameTenant('자재출고 이력', rawIssue, company, plant);
+    this.assertSameTenant('자재출고 이력', rawIssue, organizationId);
 
     if (rawIssue.status !== 'DONE') {
       throw new BadRequestException('이미 취소된 출고입니다.');
     }
 
-    await this.ensureNoDownstreamProgress(rawIssue, company, plant);
+    await this.ensureNoDownstreamProgress(rawIssue, organizationId);
 
     return this.tx.run(async (queryRunner) => {
       await queryRunner.manager.update(MatIssue, { issueNo, seq, ...tenantWhere }, { status: 'CANCELED', remark: reason });
@@ -398,7 +389,7 @@ export class MatIssueService {
       let hasMove = false;
 
       for (const originalTx of originalTxs) {
-        this.assertSameTenant('원본 재고거래', originalTx, company, plant);
+        this.assertSameTenant('원본 재고거래', originalTx, organizationId);
 
         const restoreQty = Math.abs(originalTx.qty);
         const isMove = originalTx.transType === 'PROC_MOVE';
@@ -420,16 +411,14 @@ export class MatIssueService {
           refId,
           cancelRefId: originalTx.transNo,
           status: 'DONE',
-          company: originalTx.company,
-          plant: originalTx.plant,
+          organizationId: originalTx.organizationId,
         });
         await queryRunner.manager.save(cancelTx);
         await queryRunner.manager.update(
           StockTransaction,
           {
             transNo: originalTx.transNo,
-            ...(originalTx.company ? { company: originalTx.company } : {}),
-            ...(originalTx.plant ? { plant: originalTx.plant } : {}),
+            ...(originalTx.organizationId != null ? { organizationId: originalTx.organizationId } : {}),
           },
           { status: 'CANCELED' },
         );
@@ -447,7 +436,7 @@ export class MatIssueService {
           : null;
 
         if (stock) {
-          this.assertSameTenant('복구 대상 재고', stock, originalTx.company, originalTx.plant);
+          this.assertSameTenant('복구 대상 재고', stock, originalTx.organizationId);
           await queryRunner.manager.update(
             MatStock,
             { warehouseCode: stock.warehouseCode, itemCode: stock.itemCode, matUid: stock.matUid, ...tenantWhere },
@@ -466,8 +455,7 @@ export class MatIssueService {
               qty: restoreQty,
               reservedQty: 0,
               availableQty: restoreQty,
-              company: originalTx.company,
-              plant: originalTx.plant,
+              organizationId: originalTx.organizationId,
             }),
           );
         }
@@ -484,8 +472,7 @@ export class MatIssueService {
           originTransType: 'PROC_IN',
           orderNo: rawIssue.orderNo ?? null,
           remark: reason ?? null,
-          company: rawIssue.company,
-          plant: rawIssue.plant,
+          organizationId: rawIssue.organizationId,
         });
       }
 
@@ -503,10 +490,10 @@ export class MatIssueService {
     });
   }
 
-  private async ensureNoDownstreamProgress(issue: MatIssue, company?: string, plant?: string) {
+  private async ensureNoDownstreamProgress(issue: MatIssue, organizationId?: number) {
     const prodResultRepo = this.dataSource.getRepository(ProdResult);
     const fgLabelRepo = this.dataSource.getRepository(FgLabel);
-    const tenantWhere = this.tenantWhere(company ?? issue.company, plant ?? issue.plant);
+    const tenantWhere = this.tenantWhere(organizationId ?? issue.organizationId);
 
     let prodResult: ProdResult | null = null;
 

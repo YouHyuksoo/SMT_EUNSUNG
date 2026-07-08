@@ -27,36 +27,28 @@ export class SysConfigService {
     private readonly sysConfigRepository: Repository<SysConfig>,
   ) {}
 
-  private tenantWhere(company?: string | null, plant?: string | null) {
+  private tenantWhere(organizationId?: number | null) {
     return {
-      ...(company ? { company } : {}),
-      ...(plant ? { plant } : {}),
+      ...(organizationId != null ? { organizationId } : {}),
     };
   }
 
   private assertSameTenant(
     context: string,
-    row: { company?: string | null; plant?: string | null },
-    company?: string | null,
-    plant?: string | null,
+    row: { organizationId?: number | null },
+    organizationId?: number | null,
   ) {
-    if (company && row.company !== company) {
+    if (organizationId != null && row.organizationId !== organizationId) {
       throw new BadRequestException(
-        `${context} 회사 정보가 일치하지 않습니다. request=${company}, row=${row.company ?? 'NULL'}`,
-      );
-    }
-    if (plant && row.plant !== plant) {
-      throw new BadRequestException(
-        `${context} 사업장 정보가 일치하지 않습니다. request=${plant}, row=${row.plant ?? 'NULL'}`,
+        `${context} 조직 정보가 일치하지 않습니다. request=${organizationId}, row=${row.organizationId ?? 'NULL'}`,
       );
     }
   }
 
   /** 설정 목록 조회 (관리 페이지용) */
-  async findAll(query: SysConfigQueryDto, company?: string, plant?: string) {
+  async findAll(query: SysConfigQueryDto, organizationId?: number) {
     const where: FindOptionsWhere<SysConfig> = {
-      ...(company && { company }),
-      ...(plant && { plant }),
+      ...(organizationId != null && { organizationId }),
     };
     if (query.configGroup) where.configGroup = query.configGroup;
 
@@ -116,12 +108,12 @@ export class SysConfigService {
   }
 
   /** 설정 생성 */
-  async create(dto: CreateSysConfigDto, company?: string, plant?: string) {
+  async create(dto: CreateSysConfigDto, organizationId?: number) {
     const existing = await this.sysConfigRepository.findOne({
       where: {
         configGroup: dto.configGroup,
         configKey: dto.configKey,
-        ...this.tenantWhere(company, plant),
+        ...this.tenantWhere(organizationId),
       },
     });
     if (existing) {
@@ -139,8 +131,7 @@ export class SysConfigService {
       options: dto.options ?? null,
       sortOrder: dto.sortOrder ?? 0,
       isActive: 'Y',
-      company,
-      plant,
+      organizationId,
     });
     return this.sysConfigRepository.save(entity);
   }
@@ -149,39 +140,37 @@ export class SysConfigService {
   async update(
     id: string,
     dto: UpdateSysConfigDto,
-    company?: string,
-    plant?: string,
+    organizationId?: number,
   ) {
     const config = await this.sysConfigRepository.findOne({
-      where: { configKey: id, ...this.tenantWhere(company, plant) },
+      where: { configKey: id, ...this.tenantWhere(organizationId) },
     });
     if (!config) throw new NotFoundException(`설정을 찾을 수 없습니다: ${id}`);
-    this.assertSameTenant('시스템 설정', config, company, plant);
+    this.assertSameTenant('시스템 설정', config, organizationId);
     await this.sysConfigRepository.update(
-      { configKey: id, ...this.tenantWhere(company, plant) },
+      { configKey: id, ...this.tenantWhere(organizationId) },
       dto,
     );
     return this.sysConfigRepository.findOne({
-      where: { configKey: id, ...this.tenantWhere(company, plant) },
+      where: { configKey: id, ...this.tenantWhere(organizationId) },
     });
   }
 
   /** 일괄 수정 (관리 페이지 저장 버튼) */
   async bulkUpdate(
     dto: BulkUpdateSysConfigDto,
-    company?: string,
-    plant?: string,
+    organizationId?: number,
   ) {
     const results = [];
     for (const item of dto.items) {
       await this.sysConfigRepository.update(
-        { configKey: item.id, ...this.tenantWhere(company, plant) },
+        { configKey: item.id, ...this.tenantWhere(organizationId) },
         {
           configValue: item.configValue,
         },
       );
       const updated = await this.sysConfigRepository.findOne({
-        where: { configKey: item.id, ...this.tenantWhere(company, plant) },
+        where: { configKey: item.id, ...this.tenantWhere(organizationId) },
       });
       if (updated) results.push(updated);
     }
@@ -189,15 +178,15 @@ export class SysConfigService {
   }
 
   /** 설정 삭제 */
-  async remove(id: string, company?: string, plant?: string) {
+  async remove(id: string, organizationId?: number) {
     const config = await this.sysConfigRepository.findOne({
-      where: { configKey: id, ...this.tenantWhere(company, plant) },
+      where: { configKey: id, ...this.tenantWhere(organizationId) },
     });
     if (!config) throw new NotFoundException(`설정을 찾을 수 없습니다: ${id}`);
-    this.assertSameTenant('시스템 설정', config, company, plant);
+    this.assertSameTenant('시스템 설정', config, organizationId);
     await this.sysConfigRepository.delete({
       configKey: id,
-      ...this.tenantWhere(company, plant),
+      ...this.tenantWhere(organizationId),
     });
     return { id, deleted: true };
   }

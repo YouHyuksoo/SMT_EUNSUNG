@@ -36,7 +36,7 @@ import {
   CreateRepairDto,
   UpdateRepairDto,
 } from '../dto/repair.dto';
-import { Company, Plant } from '../../../common/decorators/tenant.decorator';
+import { OrganizationId } from '../../../common/decorators/tenant.decorator';
 import { ResponseUtil } from '../../../common/dto/response.dto';
 
 @ApiTags('생산관리 - 수리관리')
@@ -52,10 +52,9 @@ export class RepairController {
   @ApiResponse({ status: 200, description: '조회 성공' })
   async findAll(
     @Query() query: RepairQueryDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const result = await this.repairService.findAll(query, company, plant);
+    const result = await this.repairService.findAll(query, organizationId);
     return ResponseUtil.paged(
       result.data,
       result.total,
@@ -71,10 +70,9 @@ export class RepairController {
   })
   @ApiResponse({ status: 200, description: '조회 성공' })
   async getInventory(
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.repairService.getInventory(company, plant);
+    const data = await this.repairService.getInventory(organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -89,10 +87,9 @@ export class RepairController {
   async findOne(
     @Param('date') date: string,
     @Param('seq') seq: number,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.repairService.findOne(date, +seq, company, plant);
+    const data = await this.repairService.findOne(date, +seq, organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -105,10 +102,9 @@ export class RepairController {
   @ApiResponse({ status: 201, description: '등록 성공' })
   async create(
     @Body() dto: CreateRepairDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const result = await this.repairService.create(dto, company, plant);
+    const result = await this.repairService.create(dto, organizationId);
     return ResponseUtil.success(result, '수리가 등록되었습니다.');
   }
 
@@ -124,15 +120,13 @@ export class RepairController {
     @Param('date') date: string,
     @Param('seq') seq: number,
     @Body() dto: UpdateRepairDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
     const result = await this.repairService.update(
       date,
       +seq,
       dto,
-      company,
-      plant,
+      organizationId,
     );
     return ResponseUtil.success(result, '수리가 수정되었습니다.');
   }
@@ -148,10 +142,9 @@ export class RepairController {
   async remove(
     @Param('date') date: string,
     @Param('seq') seq: number,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    await this.repairService.remove(date, +seq, company, plant);
+    await this.repairService.remove(date, +seq, organizationId);
     return ResponseUtil.success(null, '수리가 삭제되었습니다.');
   }
 }

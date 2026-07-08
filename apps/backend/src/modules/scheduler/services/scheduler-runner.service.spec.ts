@@ -54,8 +54,7 @@ describe('SchedulerRunnerService', () => {
   });
 
   const mockJob: SchedulerJob = {
-    company: 'COMP',
-    plantCd: 'PLANT',
+    organizationId: 1,
     jobCode: 'JOB1',
     execType: 'SERVICE',
     timeoutSec: 30,
@@ -92,7 +91,7 @@ describe('SchedulerRunnerService', () => {
       qb.getCount.mockResolvedValue(0); // no running
       mockLogRepo.createQueryBuilder.mockReturnValue(qb);
 
-      const log = { logId: 1, company: 'COMP', plantCd: 'PLANT' } as SchedulerLog;
+      const log = { logId: 1, organizationId: 1 } as SchedulerLog;
       mockLogService.createLog.mockResolvedValue(log);
 
       const mockExecutor = { execute: jest.fn().mockResolvedValue({ message: 'OK' }) };
@@ -106,7 +105,7 @@ describe('SchedulerRunnerService', () => {
 
       // Assert
       expect(mockLogService.updateLog).toHaveBeenCalledWith(
-        'COMP', 'PLANT', 1,
+        1, 1,
         expect.objectContaining({ status: 'SUCCESS' }),
       );
     });
@@ -119,7 +118,7 @@ describe('SchedulerRunnerService', () => {
       qb.getCount.mockResolvedValue(0);
       mockLogRepo.createQueryBuilder.mockReturnValue(qb);
 
-      const log = { logId: 1, company: 'COMP', plantCd: 'PLANT' } as SchedulerLog;
+      const log = { logId: 1, organizationId: 1 } as SchedulerLog;
       mockLogService.createLog.mockResolvedValue(log);
 
       const mockExecutor = {
@@ -142,7 +141,7 @@ describe('SchedulerRunnerService', () => {
 
       // Assert
       expect(mockLogService.updateLog).toHaveBeenCalledWith(
-        'COMP', 'PLANT', 1,
+        1, 1,
         expect.objectContaining({ status: 'TIMEOUT' }),
       );
     });
@@ -155,7 +154,7 @@ describe('SchedulerRunnerService', () => {
       qb.getCount.mockResolvedValue(0);
       mockLogRepo.createQueryBuilder.mockReturnValue(qb);
 
-      const log = { logId: 1, company: 'COMP', plantCd: 'PLANT' } as SchedulerLog;
+      const log = { logId: 1, organizationId: 1 } as SchedulerLog;
       mockLogService.createLog.mockResolvedValue(log);
 
       const mockExecutor = {
@@ -176,7 +175,7 @@ describe('SchedulerRunnerService', () => {
 
       // Assert
       expect(mockLogService.updateLog).toHaveBeenCalledWith(
-        'COMP', 'PLANT', 1,
+        1, 1,
         expect.objectContaining({ status: 'FAIL' }),
       );
     });

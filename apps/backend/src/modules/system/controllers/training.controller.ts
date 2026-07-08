@@ -14,7 +14,7 @@
  *    - POST   /trainings/:id/results  : 결과 등록
  *    - GET    /trainings/worker-history/:workerCode : 작업자 교육 이력
  *
- * 2. **인증**: @Company(), @Plant() 데코레이터로 테넌시 정보
+ * 2. **인증**: @OrganizationId() 데코레이터로 테넌시 정보
  */
 
 import {
@@ -33,7 +33,7 @@ import {
   ParseIntPipe,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
-import { Company, Plant } from '../../../common/decorators/tenant.decorator';
+import { OrganizationId } from '../../../common/decorators/tenant.decorator';
 import { AuthenticatedRequest } from '../../../common/guards/jwt-auth.guard';
 import { ResponseUtil } from '../../../common/dto/response.dto';
 import { TrainingService } from '../services/training.service';
@@ -57,13 +57,11 @@ export class TrainingController {
   @ApiResponse({ status: 200, description: '조회 성공' })
   async getWorkerHistory(
     @Param('workerCode') workerCode: string,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
     const data = await this.trainingService.getWorkerHistory(
       workerCode,
-      company,
-      plant,
+      organizationId,
     );
     return ResponseUtil.success(data);
   }
@@ -75,10 +73,9 @@ export class TrainingController {
   @ApiResponse({ status: 200, description: '조회 성공' })
   async findAll(
     @Query() query: TrainingQueryDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const result = await this.trainingService.findAll(query, company, plant);
+    const result = await this.trainingService.findAll(query, organizationId);
     return ResponseUtil.paged(result.data, result.total, result.page, result.limit);
   }
 
@@ -89,10 +86,9 @@ export class TrainingController {
   @ApiResponse({ status: 404, description: '계획 없음' })
   async findById(
     @Param('id') id: string,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.trainingService.findById(id, company, plant);
+    const data = await this.trainingService.findById(id, organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -102,14 +98,12 @@ export class TrainingController {
   @ApiResponse({ status: 201, description: '생성 성공' })
   async create(
     @Body() dto: CreateTrainingPlanDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
     @Req() req: AuthenticatedRequest,
   ) {
     const data = await this.trainingService.create(
       dto,
-      company,
-      plant,
+      organizationId,
       req.user?.id ?? 'system',
     );
     return ResponseUtil.success(data, '교육 계획이 등록되었습니다.');
@@ -123,15 +117,13 @@ export class TrainingController {
     @Param('id') id: string,
     @Body() dto: UpdateTrainingPlanDto,
     @Req() req: AuthenticatedRequest,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
     const data = await this.trainingService.update(
       id,
       dto,
       req.user?.id ?? 'system',
-      company,
-      plant,
+      organizationId,
     );
     return ResponseUtil.success(data, '교육 계획이 수정되었습니다.');
   }
@@ -143,10 +135,9 @@ export class TrainingController {
   @ApiResponse({ status: 200, description: '삭제 성공' })
   async delete(
     @Param('id') id: string,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    await this.trainingService.delete(id, company, plant);
+    await this.trainingService.delete(id, organizationId);
     return ResponseUtil.success(null, '교육 계획이 삭제되었습니다.');
   }
 
@@ -159,14 +150,12 @@ export class TrainingController {
   async complete(
     @Param('id') id: string,
     @Req() req: AuthenticatedRequest,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
     const data = await this.trainingService.complete(
       id,
       req.user?.id ?? 'system',
-      company,
-      plant,
+      organizationId,
     );
     return ResponseUtil.success(data, '교육이 완료되었습니다.');
   }
@@ -178,14 +167,12 @@ export class TrainingController {
   async cancelComplete(
     @Param('id') id: string,
     @Req() req: AuthenticatedRequest,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
     const data = await this.trainingService.cancelComplete(
       id,
       req.user?.id ?? 'system',
-      company,
-      plant,
+      organizationId,
     );
     return ResponseUtil.success(data, '교육 완료가 취소되었습니다.');
   }
@@ -198,10 +185,9 @@ export class TrainingController {
   @ApiResponse({ status: 200, description: '조회 성공' })
   async getResults(
     @Param('id') id: string,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.trainingService.getResults(id, company, plant);
+    const data = await this.trainingService.getResults(id, organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -213,15 +199,13 @@ export class TrainingController {
   async addResult(
     @Param('id') id: string,
     @Body() dto: CreateTrainingResultDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
     @Req() req: AuthenticatedRequest,
   ) {
     const data = await this.trainingService.addResult(
       id,
       dto,
-      company,
-      plant,
+      organizationId,
       req.user?.id ?? 'system',
     );
     return ResponseUtil.success(data, '교육 결과가 등록되었습니다.');
@@ -236,15 +220,13 @@ export class TrainingController {
     @Param('planNo') planNo: string,
     @Param('workerCode') workerCode: string,
     @Body() dto: CreateTrainingResultDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
     const data = await this.trainingService.updateResult(
       planNo,
       workerCode,
       dto,
-      company,
-      plant,
+      organizationId,
     );
     return ResponseUtil.success(data, '교육 결과가 수정되었습니다.');
   }
@@ -258,10 +240,9 @@ export class TrainingController {
   async deleteResult(
     @Param('planNo') planNo: string,
     @Param('workerCode') workerCode: string,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    await this.trainingService.deleteResult(planNo, workerCode, company, plant);
+    await this.trainingService.deleteResult(planNo, workerCode, organizationId);
     return ResponseUtil.success(null, '교육 결과가 삭제되었습니다.');
   }
 }

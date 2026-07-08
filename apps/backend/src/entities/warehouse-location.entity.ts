@@ -18,11 +18,8 @@ import {
 
 @Entity({ name: 'WAREHOUSE_LOCATIONS' })
 export class WarehouseLocation {
-  @PrimaryColumn({ type: 'varchar2', name: 'COMPANY', length: 50 })
-  company: string | null;
-
-  @PrimaryColumn({ type: 'varchar2', name: 'PLANT_CD', length: 50 })
-  plant: string | null;
+  @PrimaryColumn({ name: 'ORGANIZATION_ID', type: 'number' })
+  organizationId!: number;
 
   @PrimaryColumn({ name: 'WAREHOUSE_CODE', length: 50 })
   warehouseCode: string;

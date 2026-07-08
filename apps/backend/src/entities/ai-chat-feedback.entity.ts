@@ -9,11 +9,8 @@ export class AiChatFeedback {
   @PrimaryGeneratedColumn({ name: 'FEEDBACK_ID' })
   feedbackId: number;
 
-  @Column({ type: 'varchar2', name: 'COMPANY', length: 10 })
-  company: string;
-
-  @Column({ type: 'varchar2', name: 'PLANT_CD', length: 10 })
-  plant: string;
+  @Column({ name: 'ORGANIZATION_ID', type: 'number' })
+  organizationId!: number;
 
   @Column({ type: 'varchar2', name: 'ROUTE', length: 200, nullable: true })
   route: string | null;

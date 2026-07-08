@@ -8,8 +8,7 @@ describe('SqlExecutor', () => {
   let executor: SqlExecutor;
 
   const baseJob = {
-    company: 'C1',
-    plantCd: 'P1',
+    organizationId: 1,
     jobCode: 'SQL_JOB',
     execType: 'SQL',
     timeoutSec: 300,
@@ -26,16 +25,16 @@ describe('SqlExecutor', () => {
   it('should bind scheduler job tenant to named SQL tenant parameters', async () => {
     await executor.execute({
       ...baseJob,
-      execTarget: 'SELECT * FROM INTER_LOGS WHERE COMPANY = :company AND PLANT_CD = :plantCd',
+      execTarget: 'SELECT * FROM INTER_LOGS WHERE ORGANIZATION_ID = :organizationId',
     });
 
     expect(dataSource.query).toHaveBeenCalledWith(
-      'SELECT * FROM INTER_LOGS WHERE COMPANY = :company AND PLANT_CD = :plantCd',
-      { company: 'C1', plantCd: 'P1' },
+      'SELECT * FROM INTER_LOGS WHERE ORGANIZATION_ID = :organizationId',
+      { organizationId: 1 },
     );
   });
 
-  it('should reject DELETE SQL without company and plant tenant predicates', async () => {
+  it('should reject DELETE SQL without organizationId tenant predicate', async () => {
     await expect(
       executor.execute({
         ...baseJob,
@@ -49,13 +48,13 @@ describe('SqlExecutor', () => {
   it('should allow DELETE SQL when scoped by scheduler job tenant', async () => {
     await executor.execute({
       ...baseJob,
-      execTarget: 'DELETE FROM INTER_LOGS WHERE COMPANY = :company AND PLANT = :plant AND STATUS = :status',
-      execParams: JSON.stringify({ status: 'SUCCESS', company: 'OTHER', plant: 'OTHER' }),
+      execTarget: 'DELETE FROM INTER_LOGS WHERE ORGANIZATION_ID = :organizationId AND STATUS = :status',
+      execParams: JSON.stringify({ status: 'SUCCESS', organizationId: 999 }),
     });
 
     expect(dataSource.query).toHaveBeenCalledWith(
-      'DELETE FROM INTER_LOGS WHERE COMPANY = :company AND PLANT = :plant AND STATUS = :status',
-      { status: 'SUCCESS', company: 'C1', plant: 'P1' },
+      'DELETE FROM INTER_LOGS WHERE ORGANIZATION_ID = :organizationId AND STATUS = :status',
+      { status: 'SUCCESS', organizationId: 1 },
     );
   });
 
@@ -178,13 +177,13 @@ describe('SqlExecutor', () => {
     expect(dataSource.query).not.toHaveBeenCalled();
   });
 
-  it('문자열 리터럴 안의 :company / :plantCd 토큰은 DELETE 테넌트 가드를 우회할 수 없다', async () => {
+  it('문자열 리터럴 안의 :organizationId 토큰은 DELETE 테넌트 가드를 우회할 수 없다', async () => {
     // sanitization 전에 extractNamedBinds 가 raw SQL 을 스캔하던 우회 공격 회귀 방지.
     await expect(
       executor.execute({
         ...baseJob,
         execTarget:
-          "DELETE FROM INTER_LOGS WHERE STATUS = 'X :company :plantCd'",
+          "DELETE FROM INTER_LOGS WHERE STATUS = 'X :organizationId'",
       }),
     ).rejects.toThrow(ForbiddenException);
 
@@ -192,12 +191,12 @@ describe('SqlExecutor', () => {
   });
 
   it('Oracle 짝-구분자 q-quote 내부의 :N 토큰도 sanitization 으로 제거되어야 한다', async () => {
-    // q'[...]' 는 strip 되지 않아 :company 가 namedBinds 에 새던 우회 공격 회귀 방지.
+    // q'[...]' 는 strip 되지 않아 :organizationId 가 namedBinds 에 새던 우회 공격 회귀 방지.
     await expect(
       executor.execute({
         ...baseJob,
         execTarget:
-          "DELETE FROM INTER_LOGS WHERE STATUS = q'[memo :company :plantCd]'",
+          "DELETE FROM INTER_LOGS WHERE STATUS = q'[memo :organizationId]'",
       }),
     ).rejects.toThrow(ForbiddenException);
 

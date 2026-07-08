@@ -53,7 +53,7 @@ import {
   UpdateErpSyncDto,
 } from '../dto/job-order.dto';
 import { ResponseUtil } from '../../../common/dto/response.dto';
-import { Company, Plant } from '../../../common/decorators/tenant.decorator';
+import { OrganizationId } from '../../../common/decorators/tenant.decorator';
 
 @ApiTags('생산관리 - 작업지시')
 @Controller('production/job-orders')
@@ -65,8 +65,8 @@ export class JobOrderController {
   @Get()
   @ApiOperation({ summary: '작업지시 목록 조회', description: '페이지네이션 및 필터링 지원' })
   @ApiResponse({ status: 200, description: '조회 성공' })
-  async findAll(@Query() query: JobOrderQueryDto, @Company() company: string, @Plant() plant: string) {
-    const result = await this.jobOrderService.findAll(query, company, plant);
+  async findAll(@Query() query: JobOrderQueryDto, @OrganizationId() organizationId: number) {
+    const result = await this.jobOrderService.findAll(query, organizationId);
     return ResponseUtil.paged(result.data, result.total, result.page, result.limit);
   }
 
@@ -76,18 +76,17 @@ export class JobOrderController {
     @Query('parentId') parentId?: string,
     @Query('planDateFrom') planDateFrom?: string,
     @Query('planDateTo') planDateTo?: string,
-    @Company() company?: string,
-    @Plant() plant?: string,
+    @OrganizationId() organizationId?: number,
   ) {
-    const data = await this.jobOrderService.findTree(parentId, company, plant, planDateFrom, planDateTo);
+    const data = await this.jobOrderService.findTree(parentId, organizationId, planDateFrom, planDateTo);
     return ResponseUtil.success(data);
   }
 
   @Get('erp/unsynced')
   @ApiOperation({ summary: 'ERP 미동기화 작업지시 목록', description: '완료된 작업지시 중 ERP에 동기화되지 않은 목록' })
   @ApiResponse({ status: 200, description: '조회 성공' })
-  async findUnsyncedForErp(@Company() company: string, @Plant() plant: string) {
-    const data = await this.jobOrderService.findUnsyncedForErp(company, plant);
+  async findUnsyncedForErp(@OrganizationId() organizationId: number) {
+    const data = await this.jobOrderService.findUnsyncedForErp(organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -96,8 +95,8 @@ export class JobOrderController {
   @ApiParam({ name: 'orderNo', description: '작업지시 번호', example: 'JO-20250126-001' })
   @ApiResponse({ status: 200, description: '조회 성공' })
   @ApiResponse({ status: 404, description: '작업지시 없음' })
-  async findByOrderNo(@Param('orderNo') orderNo: string, @Company() company: string, @Plant() plant: string) {
-    const data = await this.jobOrderService.findByOrderNo(orderNo, company, plant);
+  async findByOrderNo(@Param('orderNo') orderNo: string, @OrganizationId() organizationId: number) {
+    const data = await this.jobOrderService.findByOrderNo(orderNo, organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -106,8 +105,8 @@ export class JobOrderController {
   @ApiParam({ name: 'id', description: '작업지시 ID' })
   @ApiResponse({ status: 200, description: '조회 성공' })
   @ApiResponse({ status: 404, description: '작업지시 없음' })
-  async findById(@Param('id') id: string, @Company() company: string, @Plant() plant: string) {
-    const data = await this.jobOrderService.findByIdWithResults(id, company, plant);
+  async findById(@Param('id') id: string, @OrganizationId() organizationId: number) {
+    const data = await this.jobOrderService.findByIdWithResults(id, organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -116,8 +115,8 @@ export class JobOrderController {
   @ApiParam({ name: 'id', description: '작업지시 ID' })
   @ApiResponse({ status: 200, description: '조회 성공' })
   @ApiResponse({ status: 404, description: '작업지시 없음' })
-  async getJobOrderSummary(@Param('id') id: string, @Company() company: string, @Plant() plant: string) {
-    const data = await this.jobOrderService.getJobOrderSummary(id, company, plant);
+  async getJobOrderSummary(@Param('id') id: string, @OrganizationId() organizationId: number) {
+    const data = await this.jobOrderService.getJobOrderSummary(id, organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -126,8 +125,8 @@ export class JobOrderController {
   @ApiOperation({ summary: '작업지시 생성' })
   @ApiResponse({ status: 201, description: '생성 성공' })
   @ApiResponse({ status: 409, description: '중복 작업지시번호' })
-  async create(@Body() dto: CreateJobOrderDto, @Company() company: string, @Plant() plant: string) {
-    const data = await this.jobOrderService.create(dto, company, plant);
+  async create(@Body() dto: CreateJobOrderDto, @OrganizationId() organizationId: number) {
+    const data = await this.jobOrderService.create(dto, organizationId);
     return ResponseUtil.success(data, '작업지시가 생성되었습니다.');
   }
 
@@ -140,10 +139,9 @@ export class JobOrderController {
   async update(
     @Param('id') id: string,
     @Body() dto: UpdateJobOrderDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.jobOrderService.update(id, dto, company, plant);
+    const data = await this.jobOrderService.update(id, dto, organizationId);
     return ResponseUtil.success(data, '작업지시가 수정되었습니다.');
   }
 
@@ -154,8 +152,8 @@ export class JobOrderController {
   @ApiResponse({ status: 200, description: '삭제 성공' })
   @ApiResponse({ status: 404, description: '작업지시 없음' })
   @ApiResponse({ status: 400, description: '삭제 불가 상태' })
-  async delete(@Param('id') id: string, @Company() company: string, @Plant() plant: string) {
-    await this.jobOrderService.delete(id, company, plant);
+  async delete(@Param('id') id: string, @OrganizationId() organizationId: number) {
+    await this.jobOrderService.delete(id, organizationId);
     return ResponseUtil.success(null, '작업지시가 삭제되었습니다.');
   }
 
@@ -167,8 +165,8 @@ export class JobOrderController {
   @ApiParam({ name: 'id', description: '작업지시 ID' })
   @ApiResponse({ status: 200, description: '시작 성공' })
   @ApiResponse({ status: 400, description: '상태 변경 불가' })
-  async start(@Param('id') id: string, @Company() company: string, @Plant() plant: string) {
-    const data = await this.jobOrderService.start(id, company, plant);
+  async start(@Param('id') id: string, @OrganizationId() organizationId: number) {
+    const data = await this.jobOrderService.start(id, organizationId);
     return ResponseUtil.success(data, '작업이 시작되었습니다.');
   }
 
@@ -178,8 +176,8 @@ export class JobOrderController {
   @ApiParam({ name: 'id', description: '작업지시 ID' })
   @ApiResponse({ status: 200, description: '홀딩 성공' })
   @ApiResponse({ status: 400, description: '상태 변경 불가' })
-  async hold(@Param('id') id: string, @Company() company: string, @Plant() plant: string) {
-    const data = await this.jobOrderService.hold(id, company, plant);
+  async hold(@Param('id') id: string, @OrganizationId() organizationId: number) {
+    const data = await this.jobOrderService.hold(id, organizationId);
     return ResponseUtil.success(data, '작업이 홀딩되었습니다.');
   }
 
@@ -189,8 +187,8 @@ export class JobOrderController {
   @ApiParam({ name: 'id', description: '작업지시 ID' })
   @ApiResponse({ status: 200, description: '홀딩해제 성공' })
   @ApiResponse({ status: 400, description: '상태 변경 불가' })
-  async holdRelease(@Param('id') id: string, @Company() company: string, @Plant() plant: string) {
-    const data = await this.jobOrderService.holdRelease(id, company, plant);
+  async holdRelease(@Param('id') id: string, @OrganizationId() organizationId: number) {
+    const data = await this.jobOrderService.holdRelease(id, organizationId);
     return ResponseUtil.success(data, '홀딩이 해제되었습니다.');
   }
 
@@ -200,8 +198,8 @@ export class JobOrderController {
   @ApiParam({ name: 'id', description: '작업지시 ID' })
   @ApiResponse({ status: 200, description: '완료 성공' })
   @ApiResponse({ status: 400, description: '상태 변경 불가' })
-  async complete(@Param('id') id: string, @Company() company: string, @Plant() plant: string) {
-    const data = await this.jobOrderService.complete(id, company, plant);
+  async complete(@Param('id') id: string, @OrganizationId() organizationId: number) {
+    const data = await this.jobOrderService.complete(id, organizationId);
     return ResponseUtil.success(data, '작업이 완료되었습니다.');
   }
 
@@ -215,10 +213,9 @@ export class JobOrderController {
   async cancel(
     @Param('id') id: string,
     @Body('remark') remark?: string,
-    @Company() company?: string,
-    @Plant() plant?: string,
+    @OrganizationId() organizationId?: number,
   ) {
-    const data = await this.jobOrderService.cancel(id, remark, company, plant);
+    const data = await this.jobOrderService.cancel(id, remark, organizationId);
     return ResponseUtil.success(data, '작업이 취소되었습니다.');
   }
 
@@ -229,10 +226,9 @@ export class JobOrderController {
   async changeStatus(
     @Param('id') id: string,
     @Body() dto: ChangeJobOrderStatusDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.jobOrderService.changeStatus(id, dto, company, plant);
+    const data = await this.jobOrderService.changeStatus(id, dto, organizationId);
     return ResponseUtil.success(data, '상태가 변경되었습니다.');
   }
 
@@ -245,10 +241,9 @@ export class JobOrderController {
   async updateErpSyncYn(
     @Param('id') id: string,
     @Body() dto: UpdateErpSyncDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.jobOrderService.updateErpSyncYn(id, dto, company, plant);
+    const data = await this.jobOrderService.updateErpSyncYn(id, dto, organizationId);
     return ResponseUtil.success(data, 'ERP 동기화 상태가 변경되었습니다.');
   }
 
@@ -257,8 +252,8 @@ export class JobOrderController {
   @ApiOperation({ summary: 'ERP 동기화 완료 처리 (일괄)', description: '여러 작업지시를 동기화 완료 처리' })
   @ApiBody({ schema: { type: 'object', properties: { ids: { type: 'array', items: { type: 'string' } } } } })
   @ApiResponse({ status: 200, description: '처리 성공' })
-  async markAsSynced(@Body('ids') ids: string[], @Company() company: string, @Plant() plant: string) {
-    const result = await this.jobOrderService.markAsSynced(ids, company, plant);
+  async markAsSynced(@Body('ids') ids: string[], @OrganizationId() organizationId: number) {
+    const result = await this.jobOrderService.markAsSynced(ids, organizationId);
     return ResponseUtil.success(result, `${result.count}건의 작업지시가 동기화 완료 처리되었습니다.`);
   }
 }

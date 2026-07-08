@@ -25,7 +25,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
-import { Company, Plant } from '../../../common/decorators/tenant.decorator';
+import { OrganizationId } from '../../../common/decorators/tenant.decorator';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { ResponseUtil } from '../../../common/dto/response.dto';
 import { SensorMonitorService } from '../services/sensor-monitor.service';
@@ -50,10 +50,9 @@ export class SensorMonitorController {
   @ApiResponse({ status: 200, description: '수신 완료 + 규칙 평가 결과' })
   async receiveSensorData(
     @Body() dto: PostSensorDataDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.sensorMonitorService.receiveSensorData(dto, company, plant);
+    const data = await this.sensorMonitorService.receiveSensorData(dto, organizationId);
     return ResponseUtil.success(data, `센서 데이터 ${data.saved}건 수신 완료`);
   }
 
@@ -62,10 +61,9 @@ export class SensorMonitorController {
   @ApiResponse({ status: 200, description: '조회 성공' })
   async querySensorData(
     @Query() query: SensorDataQueryDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const result = await this.sensorMonitorService.querySensorData(query, company, plant);
+    const result = await this.sensorMonitorService.querySensorData(query, organizationId);
     return ResponseUtil.paged(result.data, result.total, result.page, result.limit);
   }
 
@@ -76,10 +74,9 @@ export class SensorMonitorController {
   @ApiResponse({ status: 200, description: '조회 성공' })
   async findAllRules(
     @Query() query: ConditionRuleQueryDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const result = await this.sensorMonitorService.findAllRules(query, company, plant);
+    const result = await this.sensorMonitorService.findAllRules(query, organizationId);
     return ResponseUtil.paged(result.data, result.total, result.page, result.limit);
   }
 
@@ -89,10 +86,9 @@ export class SensorMonitorController {
   @ApiResponse({ status: 201, description: '생성 성공' })
   async createRule(
     @Body() dto: CreateConditionRuleDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.sensorMonitorService.createRule(dto, company, plant);
+    const data = await this.sensorMonitorService.createRule(dto, organizationId);
     return ResponseUtil.success(data, '조건 규칙이 등록되었습니다.');
   }
 
@@ -102,10 +98,9 @@ export class SensorMonitorController {
   async updateRule(
     @Param('id') id: string,
     @Body() dto: UpdateConditionRuleDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.sensorMonitorService.updateRule(Number(id), dto, company, plant);
+    const data = await this.sensorMonitorService.updateRule(Number(id), dto, organizationId);
     return ResponseUtil.success(data, '조건 규칙이 수정되었습니다.');
   }
 
@@ -114,10 +109,9 @@ export class SensorMonitorController {
   @ApiParam({ name: 'id', description: '규칙 ID' })
   async deleteRule(
     @Param('id') id: string,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    await this.sensorMonitorService.deleteRule(Number(id), company, plant);
+    await this.sensorMonitorService.deleteRule(Number(id), organizationId);
     return ResponseUtil.success(null, '조건 규칙이 삭제되었습니다.');
   }
 }

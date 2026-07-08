@@ -1,14 +1,14 @@
 /**
  * @file entities/scheduler-log.entity.ts
  * @description 스케줄러 실행 로그 엔티티 - 각 작업 실행 이력을 기록한다.
- *              복합키: COMPANY + PLANT_CD + LOG_ID (PKG_SEQ_GENERATOR 채번).
+ *              복합키: ORGANIZATION_ID + LOG_ID (PKG_SEQ_GENERATOR 채번).
  *
  * 초보자 가이드:
- * 1. 복합 PK: company(회사) + plantCd(공장) + logId(로그 일련번호)
+ * 1. 복합 PK: organizationId(조직) + logId(로그 일련번호)
  * 2. logId: PKG_SEQ_GENERATOR로 채번 (자동증가 아님)
  * 3. status: 실행 상태 — ComCode SCHED_STATUS (SUCCESS/FAIL/RUNNING/RETRYING/TIMEOUT/SKIPPED)
  * 4. durationMs: 실행 소요 시간(밀리초)
- * 5. job: SchedulerJob과 ManyToOne 관계 (company + plantCd + jobCode 복합 FK)
+ * 5. job: SchedulerJob과 ManyToOne 관계 (organizationId + jobCode 복합 FK)
  */
 import {
   Entity,
@@ -23,13 +23,10 @@ import {
 import { SchedulerJob } from './scheduler-job.entity';
 
 @Entity({ name: 'SCHEDULER_LOGS' })
-@Index('IDX_SCHED_LOGS_SEARCH', ['company', 'plantCd', 'startTime', 'status'])
+@Index('IDX_SCHED_LOGS_SEARCH', ['organizationId', 'startTime', 'status'])
 export class SchedulerLog {
-  @PrimaryColumn({ name: 'COMPANY', type: 'varchar2', length: 50 })
-  company: string;
-
-  @PrimaryColumn({ name: 'PLANT_CD', type: 'varchar2', length: 50 })
-  plantCd: string;
+  @PrimaryColumn({ name: 'ORGANIZATION_ID', type: 'number' })
+  organizationId!: number;
 
   /** PKG_SEQ_GENERATOR로 채번 */
   @PrimaryColumn({ name: 'LOG_ID', type: 'number' })
@@ -41,8 +38,7 @@ export class SchedulerLog {
   /** 스케줄러 작업 (복합 FK) */
   @ManyToOne(() => SchedulerJob)
   @JoinColumn([
-    { name: 'COMPANY', referencedColumnName: 'company' },
-    { name: 'PLANT_CD', referencedColumnName: 'plantCd' },
+    { name: 'ORGANIZATION_ID', referencedColumnName: 'organizationId' },
     { name: 'JOB_CODE', referencedColumnName: 'jobCode' },
   ])
   job: SchedulerJob;

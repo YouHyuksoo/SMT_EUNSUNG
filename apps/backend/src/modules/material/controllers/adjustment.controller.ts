@@ -14,7 +14,7 @@ import { ApiTags, ApiOperation, ApiParam } from '@nestjs/swagger';
 import { AdjustmentService } from '../services/adjustment.service';
 import { CreateAdjustmentDto, AdjustmentQueryDto, ApproveAdjustmentDto } from '../dto/adjustment.dto';
 import { ResponseUtil } from '../../../common/dto/response.dto';
-import { Company, Plant } from '../../../common/decorators/tenant.decorator';
+import { OrganizationId } from '../../../common/decorators/tenant.decorator';
 import { InventoryFreezeGuard } from '../../../common/guards/inventory-freeze.guard';
 
 @ApiTags('자재관리 - 재고보정')
@@ -24,8 +24,8 @@ export class AdjustmentController {
 
   @Get()
   @ApiOperation({ summary: '재고보정 이력 조회' })
-  async findAll(@Query() query: AdjustmentQueryDto, @Company() company: string, @Plant() plant: string) {
-    const result = await this.adjustmentService.findAll(query, company, plant);
+  async findAll(@Query() query: AdjustmentQueryDto, @OrganizationId() organizationId: number) {
+    const result = await this.adjustmentService.findAll(query, organizationId);
     return ResponseUtil.paged(result.data, result.total, result.page, result.limit);
   }
 
@@ -33,8 +33,8 @@ export class AdjustmentController {
   @HttpCode(HttpStatus.CREATED)
   @UseGuards(InventoryFreezeGuard)
   @ApiOperation({ summary: '재고보정 즉시 승인 등록 (PC)' })
-  async create(@Body() dto: CreateAdjustmentDto, @Company() company: string, @Plant() plant: string) {
-    const data = await this.adjustmentService.create(dto, company, plant);
+  async create(@Body() dto: CreateAdjustmentDto, @OrganizationId() organizationId: number) {
+    const data = await this.adjustmentService.create(dto, organizationId);
     return ResponseUtil.success(data, '재고가 보정되었습니다.');
   }
 
@@ -42,8 +42,8 @@ export class AdjustmentController {
   @HttpCode(HttpStatus.CREATED)
   @UseGuards(InventoryFreezeGuard)
   @ApiOperation({ summary: '재고보정 승인 대기 등록 (PDA) — 재고 즉시 반영 안 함' })
-  async createPending(@Body() dto: CreateAdjustmentDto, @Company() company: string, @Plant() plant: string) {
-    const data = await this.adjustmentService.createPending(dto, company, plant);
+  async createPending(@Body() dto: CreateAdjustmentDto, @OrganizationId() organizationId: number) {
+    const data = await this.adjustmentService.createPending(dto, organizationId);
     return ResponseUtil.success(data, '보정 요청이 등록되었습니다. 승인 후 재고에 반영됩니다.');
   }
 
@@ -56,10 +56,9 @@ export class AdjustmentController {
     @Param('adjDate') adjDate: string,
     @Param('seq', ParseIntPipe) seq: number,
     @Body() dto: ApproveAdjustmentDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.adjustmentService.approve(adjDate, seq, dto.approvedBy, company, plant);
+    const data = await this.adjustmentService.approve(adjDate, seq, dto.approvedBy, organizationId);
     return ResponseUtil.success(data, '보정이 승인되었습니다. 재고에 반영되었습니다.');
   }
 
@@ -71,10 +70,9 @@ export class AdjustmentController {
     @Param('adjDate') adjDate: string,
     @Param('seq', ParseIntPipe) seq: number,
     @Body() dto: ApproveAdjustmentDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.adjustmentService.reject(adjDate, seq, dto.approvedBy, company, plant);
+    const data = await this.adjustmentService.reject(adjDate, seq, dto.approvedBy, organizationId);
     return ResponseUtil.success(data, '보정 요청이 반려되었습니다.');
   }
 }

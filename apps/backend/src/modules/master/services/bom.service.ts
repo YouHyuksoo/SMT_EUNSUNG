@@ -131,7 +131,7 @@ export class BomService {
   }
 
   /** BOM에 등재된 모품목(부모품목) 목록 + 자품목 수 (단일 JOIN 쿼리) */
-  async findParents(search?: string, effectiveDate?: string, company?: string, plant?: string) {
+  async findParents(search?: string, effectiveDate?: string, organizationId?: number) {
     try {
       const params: unknown[] = [];
       // 바인드는 SQL 등장 순서대로 push. LIKE 3개도 같은 값이지만 각각 별도 push.
@@ -155,8 +155,7 @@ export class BomService {
       }
 
       let tenantFilter = '';
-      if (company) tenantFilter += ` AND b.COMPANY = :${bind(company)}`;
-      if (plant) tenantFilter += ` AND b.PLANT_CD = :${bind(plant)}`;
+      if (organizationId != null) tenantFilter += ` AND b.ORGANIZATION_ID = :${bind(organizationId)}`;
 
       const rows = await this.bomRepository.query<BomParentRow[]>(
         `SELECT p.ITEM_CODE   AS "itemCode",
@@ -190,13 +189,12 @@ export class BomService {
     }
   }
 
-  async findAll(query: BomQueryDto, company?: string, plant?: string) {
+  async findAll(query: BomQueryDto, organizationId?: number) {
     const { page = 1, limit = 10, parentItemCode, childItemCode, revision } = query;
     const skip = (page - 1) * limit;
 
     const where: FindOptionsWhere<BomMaster> = { useYn: 'Y' };
-    if (company) where.company = company;
-    if (plant) where.plant = plant;
+    if (organizationId != null) where.organizationId = organizationId;
     if (parentItemCode) where.parentItemCode = parentItemCode;
     if (childItemCode) where.childItemCode = childItemCode;
     if (revision) where.revision = revision;
@@ -215,7 +213,7 @@ export class BomService {
     const allCodes = [...new Set([...parentCodes, ...childCodes])];
 
     const parts = await this.partRepository.find({
-      where: { itemCode: In(allCodes), ...(company ? { company } : {}), ...(plant ? { plant } : {}) },
+      where: { itemCode: In(allCodes), ...(organizationId != null ? { organizationId } : {}) },
       select: ['itemCode', 'itemName', 'itemNo', 'itemType', 'productType', 'spec', 'unit'],
     });
     const partMap = new Map(parts.map((p) => [p.itemCode, p]));
@@ -231,18 +229,18 @@ export class BomService {
     return { data, total, page, limit };
   }
 
-  async findById(id: string, company?: string, plant?: string) {
+  async findById(id: string, organizationId?: number) {
     // id is composite key encoded as "parentItemCode::childItemCode::validFrom(YYYY-MM-DD)"
     const [parentItemCode, childItemCode, validFromKey] = id.split('::');
     const validFrom = this.keyDate(validFromKey);
     const bom = await this.bomRepository.findOne({
-      where: { parentItemCode, childItemCode, ...(validFrom ? { validFrom } : {}), ...(company ? { company } : {}), ...(plant ? { plant } : {}) },
+      where: { parentItemCode, childItemCode, ...(validFrom ? { validFrom } : {}), ...(organizationId != null ? { organizationId } : {}) },
     });
 
     if (!bom) throw new NotFoundException(`BOM을 찾을 수 없습니다: ${id}`);
 
     const parts = await this.partRepository.find({
-      where: { itemCode: In([parentItemCode, childItemCode]), ...(company ? { company } : {}), ...(plant ? { plant } : {}) },
+      where: { itemCode: In([parentItemCode, childItemCode]), ...(organizationId != null ? { organizationId } : {}) },
       select: ['itemCode', 'itemName', 'itemNo', 'itemType', 'productType', 'spec', 'unit'],
     });
     const partMap = new Map(parts.map((p) => [p.itemCode, p]));
@@ -256,7 +254,7 @@ export class BomService {
     };
   }
 
-  async findByParentId(parentItemCode: string, effectiveDate?: string, company?: string, plant?: string) {
+  async findByParentId(parentItemCode: string, effectiveDate?: string, organizationId?: number) {
     const params: unknown[] = [];
     const bind = (v: unknown): number => { params.push(v); return params.length; };
 
@@ -270,8 +268,7 @@ export class BomService {
         AND (b.VALID_TO IS NULL OR b.VALID_TO >= TO_DATE(:${t}, 'YYYY-MM-DD'))`;
     }
     let tenantFilter = '';
-    if (company) tenantFilter += ` AND b.COMPANY = :${bind(company)}`;
-    if (plant) tenantFilter += ` AND b.PLANT_CD = :${bind(plant)}`;
+    if (organizationId != null) tenantFilter += ` AND b.ORGANIZATION_ID = :${bind(organizationId)}`;
 
     const rows = await this.bomRepository.query<BomChildRow[]>(
       `SELECT b.PARENT_ITEM_CODE AS "parentItemCode",
@@ -300,7 +297,7 @@ export class BomService {
 
     const childCodes = rows.map((r) => r.childItemCode);
     const parts = await this.partRepository.find({
-      where: { itemCode: In(childCodes), ...(company ? { company } : {}), ...(plant ? { plant } : {}) },
+      where: { itemCode: In(childCodes), ...(organizationId != null ? { organizationId } : {}) },
       select: ['itemCode', 'itemName', 'itemNo', 'itemType', 'productType', 'spec', 'unit'],
     });
     const partMap = new Map(parts.map((p) => [p.itemCode, p]));
@@ -317,11 +314,11 @@ export class BomService {
    * CONNECT BY PRIOR: 자식으로 재귀 탐색
    * LEVEL: 계층 깊이
    */
-  async findHierarchy(parentItemCode: string, depth: number = 3, effectiveDate?: string, company?: string, plant?: string) {
+  async findHierarchy(parentItemCode: string, depth: number = 3, effectiveDate?: string, organizationId?: number) {
     const safeDepth = Math.min(Math.max(Math.floor(Number(depth) || 3), 1), 10);
-    const params: string[] = [];
+    const params: (string | number)[] = [];
     // 바인드는 SQL 등장 순서대로 push (oracledb positional). 각 절마다 별도 바인드.
-    const bind = (v: string): number => {
+    const bind = (v: string | number): number => {
       params.push(v);
       return params.length;
     };
@@ -337,8 +334,7 @@ export class BomService {
 
     // 2) WHERE 절 테넌트 필터
     let tenantFilterWhere = '';
-    if (company) tenantFilterWhere += ` AND b.COMPANY = :${bind(company)}`;
-    if (plant) tenantFilterWhere += ` AND b.PLANT_CD = :${bind(plant)}`;
+    if (organizationId != null) tenantFilterWhere += ` AND b.ORGANIZATION_ID = :${bind(organizationId)}`;
 
     // 3) START WITH
     const parentIdx = bind(parentItemCode);
@@ -354,8 +350,7 @@ export class BomService {
 
     // 5) CONNECT BY 절 테넌트 필터
     let tenantFilterConnect = '';
-    if (company) tenantFilterConnect += ` AND b.COMPANY = :${bind(company)}`;
-    if (plant) tenantFilterConnect += ` AND b.PLANT_CD = :${bind(plant)}`;
+    if (organizationId != null) tenantFilterConnect += ` AND b.ORGANIZATION_ID = :${bind(organizationId)}`;
 
     const query = `
       SELECT
@@ -475,7 +470,7 @@ export class BomService {
     return new Date(y, m - 1, d);
   }
 
-  async create(dto: CreateBomDto, company?: string, plant?: string) {
+  async create(dto: CreateBomDto, organizationId?: number) {
     if (dto.parentItemCode === dto.childItemCode) {
       throw new ConflictException('상위 품목과 하위 품목이 같을 수 없습니다.');
     }
@@ -489,8 +484,7 @@ export class BomService {
       where: {
         parentItemCode: dto.parentItemCode,
         childItemCode: dto.childItemCode,
-        ...(company ? { company } : {}),
-        ...(plant ? { plant } : {}),
+        ...(organizationId != null ? { organizationId } : {}),
       },
       select: ['validFrom'],
     });
@@ -512,16 +506,15 @@ export class BomService {
       validTo: dto.validTo ? new Date(dto.validTo) : undefined,
       remark: dto.remark,
       useYn: dto.useYn ?? 'Y',
-      company: company || null,
-      plant: plant || null,
+      organizationId,
     });
 
     await this.bomRepository.save(bom);
-    return this.findById(`${bom.parentItemCode}::${bom.childItemCode}::${validFromYmd}`, company, plant);
+    return this.findById(`${bom.parentItemCode}::${bom.childItemCode}::${validFromYmd}`, organizationId);
   }
 
-  async update(id: string, dto: UpdateBomDto, company?: string, plant?: string) {
-    const bom = await this.findById(id, company, plant);
+  async update(id: string, dto: UpdateBomDto, organizationId?: number) {
+    const bom = await this.findById(id, organizationId);
 
     const updateData: Partial<Pick<BomMaster, 'qtyPer' | 'seq' | 'revision' | 'bomGrp' | 'processCode' | 'side' | 'ecoNo' | 'validFrom' | 'validTo' | 'remark' | 'useYn'>> = {};
     if (dto.qtyPer !== undefined) updateData.qtyPer = dto.qtyPer;
@@ -543,8 +536,7 @@ export class BomService {
         where: {
           parentItemCode: bom.parentItemCode,
           childItemCode: bom.childItemCode,
-          ...(company ? { company } : {}),
-          ...(plant ? { plant } : {}),
+          ...(organizationId != null ? { organizationId } : {}),
         },
         select: ['validFrom'],
       });
@@ -559,37 +551,33 @@ export class BomService {
         parentItemCode: bom.parentItemCode,
         childItemCode: bom.childItemCode,
         ...(oldValidFrom ? { validFrom: this.keyDate(oldValidFrom)! } : {}),
-        ...(company ? { company } : {}),
-        ...(plant ? { plant } : {}),
+        ...(organizationId != null ? { organizationId } : {}),
       },
       updateData,
     );
     return this.findById(
       `${bom.parentItemCode}::${bom.childItemCode}::${newValidFrom ?? oldValidFrom ?? ''}`,
-      company,
-      plant,
+      organizationId,
     );
   }
 
-  async delete(id: string, company?: string, plant?: string) {
-    const bom = await this.findById(id, company, plant);
+  async delete(id: string, organizationId?: number) {
+    const bom = await this.findById(id, organizationId);
     const validFrom = this.keyDate(bom.validFrom);
     await this.bomRepository.delete({
       parentItemCode: bom.parentItemCode,
       childItemCode: bom.childItemCode,
       ...(validFrom ? { validFrom } : {}),
-      ...(company ? { company } : {}),
-      ...(plant ? { plant } : {}),
+      ...(organizationId != null ? { organizationId } : {}),
     });
     return { id };
   }
 
   /** BOM 데이터를 Excel(xlsx) 파일로 내보내기 */
-  async exportToExcel(parentItemCode?: string, company?: string, plant?: string): Promise<Buffer> {
+  async exportToExcel(parentItemCode?: string, organizationId?: number): Promise<Buffer> {
     const where: FindOptionsWhere<BomMaster> = { useYn: 'Y' };
     if (parentItemCode) where.parentItemCode = parentItemCode;
-    if (company) where.company = company;
-    if (plant) where.plant = plant;
+    if (organizationId != null) where.organizationId = organizationId;
 
     const bomList = await this.bomRepository.find({ where, order: { parentItemCode: 'ASC', seq: 'ASC' } });
     const headers = ['상위품목코드', '하위품목코드', '소요량', '리비전', '순서', 'BOM그룹', '공정코드', '사이드', 'ECO번호', '유효시작일', '유효종료일', '비고'];
@@ -616,7 +604,7 @@ export class BomService {
   }
 
   /** 업로드 미리보기 — 중복(모+자+유효시작일) 및 오류 행 사전 확인 */
-  async previewUpload(buffer: Buffer, company?: string, plant?: string): Promise<BomPreviewResult> {
+  async previewUpload(buffer: Buffer, organizationId?: number): Promise<BomPreviewResult> {
     const wb = XLSX.read(buffer, { type: 'buffer' });
     const jsonRows = XLSX.utils.sheet_to_json<BomExcelRow>(wb.Sheets[wb.SheetNames[0]], { defval: '' });
     const str = (v: unknown) => String(v ?? '').trim();
@@ -669,8 +657,7 @@ export class BomService {
         where: dbKeys.map((k) => ({
           parentItemCode: k.parentItemCode,
           childItemCode: k.childItemCode,
-          ...(company ? { company } : {}),
-          ...(plant ? { plant } : {}),
+          ...(organizationId != null ? { organizationId } : {}),
         })),
         select: ['parentItemCode', 'childItemCode', 'validFrom'],
       });
@@ -694,7 +681,7 @@ export class BomService {
   }
 
   /** Excel(xlsx)에서 BOM 일괄 등록 (신규만 INSERT, 기존 PK 스킵) */
-  async uploadFromExcel(buffer: Buffer, company?: string, plant?: string, userId?: string): Promise<BomUploadResult> {
+  async uploadFromExcel(buffer: Buffer, organizationId?: number, userId?: string): Promise<BomUploadResult> {
     const wb = XLSX.read(buffer, { type: 'buffer' });
     const jsonRows = XLSX.utils.sheet_to_json<BomExcelRow>(wb.Sheets[wb.SheetNames[0]], { defval: '' });
     if (jsonRows.length === 0) return { inserted: 0, skipped: 0, errors: [{ row: 2, message: '데이터가 없습니다.' }] };
@@ -709,7 +696,7 @@ export class BomService {
     }
     const parts = allItemCodes.size > 0
       ? await this.partRepository.find({
-          where: { itemCode: In([...allItemCodes]), ...(company ? { company } : {}), ...(plant ? { plant } : {}) },
+          where: { itemCode: In([...allItemCodes]), ...(organizationId != null ? { organizationId } : {}) },
           select: ['itemCode'],
         })
       : [];
@@ -723,8 +710,7 @@ export class BomService {
       where: pairList.map((pk) => ({
         parentItemCode: pk.p,
         childItemCode: pk.c,
-        ...(company ? { company } : {}),
-        ...(plant ? { plant } : {}),
+        ...(organizationId != null ? { organizationId } : {}),
       })),
       select: ['parentItemCode', 'childItemCode', 'validFrom'],
     });
@@ -765,7 +751,7 @@ export class BomService {
           validFrom: this.keyDate(validFrom)!,
           validTo: new Date(validTo),
           remark: str(row['비고']) || null, useYn: 'Y',
-          company: company ?? null, plant: plant ?? null,
+          organizationId,
           createdBy: userId ?? null, updatedBy: userId ?? null,
         });
         await this.bomRepository.save(bom);

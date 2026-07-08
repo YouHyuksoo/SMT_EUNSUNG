@@ -8,7 +8,7 @@ import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { HoldService } from '../services/hold.service';
 import { HoldActionDto, ReleaseHoldDto, HoldQueryDto } from '../dto/hold.dto';
 import { ResponseUtil } from '../../../common/dto/response.dto';
-import { Company, Plant } from '../../../common/decorators/tenant.decorator';
+import { OrganizationId } from '../../../common/decorators/tenant.decorator';
 
 @ApiTags('자재관리 - 재고홀드')
 @Controller('material/hold')
@@ -17,22 +17,22 @@ export class HoldController {
 
   @Get()
   @ApiOperation({ summary: 'LOT 목록 조회 (홀드 관리)' })
-  async findAll(@Query() query: HoldQueryDto, @Company() company: string, @Plant() plant: string) {
-    const result = await this.holdService.findAll(query, company, plant);
+  async findAll(@Query() query: HoldQueryDto, @OrganizationId() organizationId: number) {
+    const result = await this.holdService.findAll(query, organizationId);
     return ResponseUtil.paged(result.data, result.total, result.page, result.limit);
   }
 
   @Post('hold')
   @ApiOperation({ summary: 'LOT 홀드 처리' })
-  async hold(@Body() dto: HoldActionDto, @Company() company: string, @Plant() plant: string) {
-    const data = await this.holdService.hold(dto, company, plant);
+  async hold(@Body() dto: HoldActionDto, @OrganizationId() organizationId: number) {
+    const data = await this.holdService.hold(dto, organizationId);
     return ResponseUtil.success(data, 'LOT이 홀드 처리되었습니다.');
   }
 
   @Post('release')
   @ApiOperation({ summary: 'LOT 홀드 해제' })
-  async release(@Body() dto: ReleaseHoldDto, @Company() company: string, @Plant() plant: string) {
-    const data = await this.holdService.release(dto, company, plant);
+  async release(@Body() dto: ReleaseHoldDto, @OrganizationId() organizationId: number) {
+    const data = await this.holdService.release(dto, organizationId);
     return ResponseUtil.success(data, 'LOT 홀드가 해제되었습니다.');
   }
 }

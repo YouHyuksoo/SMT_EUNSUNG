@@ -29,7 +29,7 @@ export type PhysicalInvType = 'MATERIAL' | 'PRODUCT';
 
 @Entity({ name: 'PHYSICAL_INV_SESSIONS' })
 @Index(['status'])
-@Index(['company', 'plant', 'status'])
+@Index(['organizationId', 'status'])
 export class PhysicalInvSession {
   @PrimaryColumn({ name: 'SESSION_DATE', type: 'date', default: () => 'SYSDATE' })
   sessionDate: Date;
@@ -56,11 +56,8 @@ export class PhysicalInvSession {
   @Column({ type: 'varchar2', name: 'WAREHOUSE_CODE', length: 50, nullable: true })
   warehouseCode: string | null;
 
-  @Column({ type: 'varchar2', name: 'COMPANY', length: 50 })
-  company: string;
-
-  @Column({ type: 'varchar2', name: 'PLANT_CD', length: 50 })
-  plant: string;
+  @Column({ name: 'ORGANIZATION_ID', type: 'number' })
+  organizationId!: number;
 
   @Column({ type: 'varchar2', name: 'STARTED_BY', length: 50, nullable: true })
   startedBy: string | null;

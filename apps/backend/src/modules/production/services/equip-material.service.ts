@@ -7,7 +7,7 @@
  * - 장착(mount): 설비의 공정(EquipMaster.processCode)의 공정재고에서 LOT 잔량을 차감 → 설비재고로 가산.
  * - 해제(unmount): 설비재고 현재 잔량만 차감 거래로 기록 → 공정재고로 복원.
  * - MAT_LOTS는 출고 단계에서 이미 차감되었으므로 여기서 건드리지 않는다.
- * - 모든 변경은 단일 트랜잭션(this.tx.run) 안에서 수행하고, company/plant 스코프를 적용한다.
+ * - 모든 변경은 단일 트랜잭션(this.tx.run) 안에서 수행하고, organizationId 스코프를 적용한다.
  */
 import { Injectable, BadRequestException, NotFoundException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -51,14 +51,13 @@ export class EquipMaterialService {
   async mount(
     equipCode: string,
     matUid: string,
-    company: string,
-    plant: string,
+    organizationId: number,
     workerId?: string,
   ): Promise<MountedRow> {
     return this.tx.run(async (qr) => {
       // 1. 설비 → 공정 도출 (설비 1:1 공정, ADR 0003)
       const equip = await qr.manager.findOne(EquipMaster, {
-        where: { equipCode, company, plant },
+        where: { equipCode, organizationId },
       });
       if (!equip?.processCode) {
         throw new BadRequestException(`설비에 공정이 지정되지 않았습니다: ${equipCode}`);
@@ -66,7 +65,7 @@ export class EquipMaterialService {
       const processCode = equip.processCode;
 
       // 2. 공정재고(장착 대기)에서 해당 LOT 조회
-      const procLot = await this.procMatStockService.findLot(processCode, matUid, company, plant);
+      const procLot = await this.procMatStockService.findLot(processCode, matUid, organizationId);
       if (!procLot || (procLot.availableQty ?? 0) <= 0) {
         throw new BadRequestException(
           `장착할 공정재고가 없습니다: matUid=${matUid} (공정=${processCode}). 자재 출고(공정 입고)가 먼저 필요합니다.`,
@@ -77,7 +76,7 @@ export class EquipMaterialService {
 
       // 3. 동일 설비에 동일 matUid 중복 장착 확인
       const existing = await qr.manager.findOne(WipMatStock, {
-        where: { company, plant, equipCode, itemCode, matUid },
+        where: { organizationId, equipCode, itemCode, matUid },
       });
       if (existing && (existing.qty ?? 0) > 0) {
         throw new BadRequestException(
@@ -96,8 +95,7 @@ export class EquipMaterialService {
         refId: matUid,
         equipCode,
         workerId: workerId ?? null,
-        company,
-        plant,
+        organizationId,
       });
 
       // 5. 설비재고 가산 (장착됨)
@@ -113,8 +111,7 @@ export class EquipMaterialService {
         orderNo: null,
         workerId: workerId ?? null,
         remark: null,
-        company,
-        plant,
+        organizationId,
       });
 
       // 6. 품목명 조회(Best-effort)
@@ -137,11 +134,10 @@ export class EquipMaterialService {
    */
   async listMounted(
     equipCode: string,
-    company: string,
-    plant: string,
+    organizationId: number,
   ): Promise<MountedRow[]> {
     const stocks = await this.wipStockRepo.find({
-      where: { company, plant, equipCode },
+      where: { organizationId, equipCode },
     });
 
     const positive = stocks.filter((s) => (s.availableQty ?? 0) > 0);
@@ -171,15 +167,14 @@ export class EquipMaterialService {
    */
   async listProcWaiting(
     equipCode: string,
-    company: string,
-    plant: string,
+    organizationId: number,
   ): Promise<MountedRow[]> {
     const equip = await this.wipStockRepo.manager.findOne(EquipMaster, {
-      where: { equipCode, company, plant },
+      where: { equipCode, organizationId },
     });
     if (!equip?.processCode) return [];
 
-    const rows = await this.procMatStockService.listWaitingByProcess(equip.processCode, company, plant);
+    const rows = await this.procMatStockService.listWaitingByProcess(equip.processCode, organizationId);
     if (rows.length === 0) return [];
 
     const itemCodes = [...new Set(rows.map((r) => r.itemCode))];
@@ -207,13 +202,12 @@ export class EquipMaterialService {
   async unmount(
     equipCode: string,
     matUid: string,
-    company: string,
-    plant: string,
+    organizationId: number,
   ): Promise<void> {
     return this.tx.run(async (qr) => {
       // 1. 설비재고 행 조회
       const stock = await qr.manager.findOne(WipMatStock, {
-        where: { company, plant, equipCode, matUid },
+        where: { organizationId, equipCode, matUid },
       });
       if (!stock || (stock.qty ?? 0) <= 0) {
         throw new NotFoundException(
@@ -234,7 +228,7 @@ export class EquipMaterialService {
       }
 
       const equip = await qr.manager.findOne(EquipMaster, {
-        where: { company, plant, equipCode },
+        where: { organizationId, equipCode },
       });
       if (!equip?.processCode) {
         throw new BadRequestException(`설비에 공정이 지정되지 않았습니다: ${equipCode}`);
@@ -251,8 +245,7 @@ export class EquipMaterialService {
         refType: 'EQUIP_UNMOUNT',
         refId: matUid,
         stockPolicy: 'BLOCK',
-        company,
-        plant,
+        organizationId,
       });
       const deductedQty = deducted.reduce((sum, r) => sum + r.qty, 0);
 
@@ -266,8 +259,7 @@ export class EquipMaterialService {
         refType: 'EQUIP_UNMOUNT',
         refId: matUid,
         equipCode,
-        company,
-        plant,
+        organizationId,
       });
 
       this.logger.log(

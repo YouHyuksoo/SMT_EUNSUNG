@@ -24,9 +24,9 @@ import {
 import { ProcessMaster } from './process-master.entity';
 
 @Entity({ name: 'WORK_CALENDARS' })
-@Index(['company', 'plant', 'calendarYear'])
+@Index(['organizationId', 'calendarYear'])
 @Index(['processCd'])
-@Unique('UQ_WORK_CAL_YEAR_PROC', ['company', 'plant', 'calendarYear', 'processCd'])
+@Unique('UQ_WORK_CAL_YEAR_PROC', ['organizationId', 'calendarYear', 'processCd'])
 export class WorkCalendar {
   @PrimaryColumn({ name: 'CALENDAR_ID', length: 50 })
   calendarId: string;
@@ -49,11 +49,8 @@ export class WorkCalendar {
   @Column({ type: 'varchar2', name: 'REMARK', length: 500, nullable: true })
   remark: string | null;
 
-  @Column({ type: 'varchar2', name: 'COMPANY', length: 50 })
-  company: string;
-
-  @Column({ type: 'varchar2', name: 'PLANT_CD', length: 50 })
-  plant: string;
+  @Column({ name: 'ORGANIZATION_ID', type: 'number' })
+  organizationId!: number;
 
   @Column({ type: 'varchar2', name: 'CREATED_BY', length: 50, nullable: true })
   createdBy: string | null;
@@ -71,8 +68,7 @@ export class WorkCalendar {
 
   @ManyToOne(() => ProcessMaster, { nullable: true })
   @JoinColumn([
-    { name: 'COMPANY', referencedColumnName: 'company' },
-    { name: 'PLANT_CD', referencedColumnName: 'plant' },
+    { name: 'ORGANIZATION_ID', referencedColumnName: 'organizationId' },
     { name: 'PROCESS_CD', referencedColumnName: 'processCode' },
   ])
   process: ProcessMaster | null;

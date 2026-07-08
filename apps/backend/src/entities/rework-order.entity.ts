@@ -16,7 +16,7 @@ import { ProdLineMaster } from './prod-line-master.entity';
 import { EquipMaster } from './equip-master.entity';
 
 @Entity({ name: 'REWORK_ORDERS' })
-@Index(['company', 'plant', 'status'])
+@Index(['organizationId', 'status'])
 export class ReworkOrder {
   @PrimaryColumn({ name: 'REWORK_NO', length: 50 })
   reworkNo: string;
@@ -29,8 +29,7 @@ export class ReworkOrder {
 
   @ManyToOne(() => ItemMaster)
   @JoinColumn([
-    { name: 'COMPANY', referencedColumnName: 'company' },
-    { name: 'PLANT_CD', referencedColumnName: 'plant' },
+    { name: 'ORGANIZATION_ID', referencedColumnName: 'organizationId' },
     { name: 'ITEM_CODE', referencedColumnName: 'itemCode' },
   ])
   item: ItemMaster;
@@ -80,8 +79,7 @@ export class ReworkOrder {
 
   @ManyToOne(() => ProdLineMaster, { nullable: true })
   @JoinColumn([
-    { name: 'COMPANY', referencedColumnName: 'company' },
-    { name: 'PLANT_CD', referencedColumnName: 'plant' },
+    { name: 'ORGANIZATION_ID', referencedColumnName: 'organizationId' },
     { name: 'LINE_CODE', referencedColumnName: 'lineCode' },
   ])
   line: ProdLineMaster;
@@ -91,8 +89,7 @@ export class ReworkOrder {
 
   @ManyToOne(() => EquipMaster, { nullable: true })
   @JoinColumn([
-    { name: 'COMPANY', referencedColumnName: 'company' },
-    { name: 'PLANT_CD', referencedColumnName: 'plant' },
+    { name: 'ORGANIZATION_ID', referencedColumnName: 'organizationId' },
     { name: 'EQUIP_CODE', referencedColumnName: 'equipCode' },
   ])
   equip: EquipMaster;
@@ -121,11 +118,8 @@ export class ReworkOrder {
   @Column({ type: 'varchar2', name: 'IMAGE_URL', length: 500, nullable: true })
   imageUrl: string;
 
-  @Column({ name: 'COMPANY', length: 50 })
-  company: string;
-
-  @Column({ name: 'PLANT_CD', length: 20 })
-  plant: string;
+  @Column({ name: 'ORGANIZATION_ID', type: 'number' })
+  organizationId!: number;
 
   @Column({ type: 'varchar2', name: 'CREATED_BY', length: 50, nullable: true })
   createdBy: string;

@@ -11,7 +11,7 @@
 import {
   LayoutDashboard, Package, Factory, Shield, Wrench, Truck,
   Database, Cog, Building2, ArrowLeftRight, UserCog,
-  ClipboardCheck, ShoppingCart, Monitor, PackageCheck, GitBranch, Activity,
+  ClipboardCheck, Monitor, PackageCheck, GitBranch, Activity,
 } from "lucide-react";
 
 /** 메뉴 설정 항목 인터페이스 */
@@ -55,6 +55,9 @@ export const menuConfig: MenuConfigItem[] = [
     labelKey: "menu.oee",
     icon: Activity,
     children: [
+      { code: "OEE_DASHBOARD", labelKey: "menu.oee.dashboard", path: "/oee/dashboard" },
+      { code: "OEE_DRILLDOWN", labelKey: "menu.oee.drilldown", path: "/oee/dashboard/drilldown" },
+      { code: "OEE_LOSS", labelKey: "menu.oee.loss", path: "/oee/dashboard/loss" },
       { code: "OEE_ENTRY", labelKey: "menu.oee.entry", path: "/oee/entry" },
       { code: "OEE_MST_RESOURCE", labelKey: "menu.oee.resource", path: "/oee/master/resource" },
       { code: "OEE_MST_REASON", labelKey: "menu.oee.reason", path: "/oee/master/reason" },
@@ -134,15 +137,6 @@ export const menuConfig: MenuConfigItem[] = [
       { code: "PROD_ISSUE", labelKey: "menu.productMgmt.issue", path: "/product/issue" },
       { code: "PROD_ISSUE_CANCEL", labelKey: "menu.productMgmt.issueCancel", path: "/product/issue-cancel" },
       { code: "PROD_DEFECT_TRANSFER", labelKey: "menu.productMgmt.defectTransfer", path: "/product/defect-transfer" },
-    ],
-  },
-  {
-    code: "PURCHASING",
-    labelKey: "menu.purchasing",
-    icon: ShoppingCart,
-    children: [
-      { code: "PUR_PO", labelKey: "menu.purchasing.po", path: "/material/po" },
-      { code: "PUR_PO_STATUS", labelKey: "menu.purchasing.poStatus", path: "/material/po-status" },
     ],
   },
   {

@@ -125,11 +125,11 @@ describe('ConsumablesService', () => {
       mockMasterRepo.update.mockResolvedValue({ affected: 1 } as any);
 
       // Act
-      await target.update('C001', { consumableCode: 'C002', consumableName: 'Updated' } as any, 'COMP', 'PLANT');
+      await target.update('C001', { consumableCode: 'C002', consumableName: 'Updated' } as any, 1);
 
       // Assert
       expect(mockMasterRepo.update).toHaveBeenCalledWith(
-        { consumableCode: 'C001', company: 'COMP', plant: 'PLANT' },
+        { consumableCode: 'C001', organizationId: 1 },
         expect.not.objectContaining({ consumableCode: expect.anything() }),
       );
     });
@@ -275,7 +275,7 @@ describe('ConsumablesService', () => {
       };
       mockTx.run.mockImplementationOnce(async (callback) => callback(mockQr as any));
 
-      await target.createLog({ consumableId: 'C001', logType: 'IN', qty: 5 } as any, 'COMP', 'PLANT');
+      await target.createLog({ consumableId: 'C001', logType: 'IN', qty: 5 } as any, 1);
 
       expect(mockQr.manager.query).toHaveBeenCalledWith(
         'SELECT SEQ_CONSUMABLE_LOGS.NEXTVAL AS "nextSeq" FROM DUAL',

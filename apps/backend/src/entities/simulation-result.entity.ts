@@ -56,11 +56,8 @@ export class SimulationHeader {
   @Column({ name: 'AVAILABLE_HOURS', type: 'decimal', precision: 10, scale: 1, default: 0 })
   availableHours: number;
 
-  @Column({ name: 'COMPANY', length: 50 })
-  company: string;
-
-  @Column({ name: 'PLANT_CD', length: 50 })
-  plant: string;
+  @Column({ name: 'ORGANIZATION_ID', type: 'number' })
+  organizationId!: number;
 
   @Column({ type: 'varchar2', name: 'CREATED_BY', length: 50, nullable: true })
   createdBy: string | null;

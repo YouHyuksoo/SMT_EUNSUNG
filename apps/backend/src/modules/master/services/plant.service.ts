@@ -16,14 +16,14 @@ export class PlantService {
     private readonly plantRepository: Repository<Plant>,
   ) {}
 
-  async findAll(query: PlantQueryDto, company?: string) {
+  async findAll(query: PlantQueryDto, organizationId?: number) {
     const { page = 1, limit = 10, plantType, search, useYn } = query;
     const skip = (page - 1) * limit;
 
     const queryBuilder = this.plantRepository.createQueryBuilder('plant')
 
-    if (company) {
-      queryBuilder.andWhere('plant.company = :company', { company });
+    if (organizationId != null) {
+      queryBuilder.andWhere('plant.organizationId = :organizationId', { organizationId });
     }
 
     if (plantType) {
@@ -55,15 +55,14 @@ export class PlantService {
     return { data, total, page, limit };
   }
 
-  async findById(plantCode: string, shopCode = '-', lineCode = '-', cellCode = '-', company?: string, tenantPlant?: string) {
+  async findById(plantCode: string, shopCode = '-', lineCode = '-', cellCode = '-', organizationId?: number) {
     const plantEntity = await this.plantRepository.findOne({
       where: {
         plantCode,
         shopCode,
         lineCode,
         cellCode,
-        ...(company ? { company } : {}),
-        ...(tenantPlant ? { plant: tenantPlant } : {}),
+        ...(organizationId != null ? { organizationId } : {}),
       },
     });
 
@@ -83,15 +82,14 @@ export class PlantService {
     });
   }
 
-  async create(dto: CreatePlantDto, company?: string, tenantPlant?: string) {
+  async create(dto: CreatePlantDto, organizationId?: number) {
     const existing = await this.plantRepository.findOne({
       where: {
         plantCode: dto.plantCode,
         shopCode: dto.shopCode ?? '-',
         lineCode: dto.lineCode ?? '-',
         cellCode: dto.cellCode ?? '-',
-        ...(company ? { company } : {}),
-        ...(tenantPlant ? { plant: tenantPlant } : {}),
+        ...(organizationId != null ? { organizationId } : {}),
       },
     });
 
@@ -106,15 +104,14 @@ export class PlantService {
       plantType: dto.plantType,
       sortOrder: dto.sortOrder ?? 0,
       useYn: dto.useYn ?? 'Y',
-      company,
-      plant: tenantPlant,
+      organizationId,
     });
 
     return this.plantRepository.save(plantEntity);
   }
 
-  async update(plantCode: string, dto: UpdatePlantDto, shopCode = '-', lineCode = '-', cellCode = '-', company?: string, tenantPlant?: string) {
-    await this.findById(plantCode, shopCode, lineCode, cellCode, company, tenantPlant);
+  async update(plantCode: string, dto: UpdatePlantDto, shopCode = '-', lineCode = '-', cellCode = '-', organizationId?: number) {
+    await this.findById(plantCode, shopCode, lineCode, cellCode, organizationId);
     const updateData: Partial<Pick<Plant, 'plantName' | 'plantType' | 'sortOrder' | 'useYn'>> = {
       ...(dto.plantName !== undefined ? { plantName: dto.plantName } : {}),
       ...(dto.plantType !== undefined ? { plantType: dto.plantType } : {}),
@@ -122,16 +119,16 @@ export class PlantService {
       ...(dto.useYn !== undefined ? { useYn: dto.useYn } : {}),
     };
     await this.plantRepository.update(
-      { plantCode, shopCode, lineCode, cellCode, ...(company ? { company } : {}), ...(tenantPlant ? { plant: tenantPlant } : {}) },
+      { plantCode, shopCode, lineCode, cellCode, ...(organizationId != null ? { organizationId } : {}) },
       updateData,
     );
-    return this.findById(plantCode, shopCode, lineCode, cellCode, company, tenantPlant);
+    return this.findById(plantCode, shopCode, lineCode, cellCode, organizationId);
   }
 
-  async delete(plantCode: string, shopCode = '-', lineCode = '-', cellCode = '-', company?: string, tenantPlant?: string) {
-    await this.findById(plantCode, shopCode, lineCode, cellCode, company, tenantPlant);
+  async delete(plantCode: string, shopCode = '-', lineCode = '-', cellCode = '-', organizationId?: number) {
+    await this.findById(plantCode, shopCode, lineCode, cellCode, organizationId);
 
-    await this.plantRepository.delete({ plantCode, shopCode, lineCode, cellCode, ...(company ? { company } : {}), ...(tenantPlant ? { plant: tenantPlant } : {}) });
+    await this.plantRepository.delete({ plantCode, shopCode, lineCode, cellCode, ...(organizationId != null ? { organizationId } : {}) });
     return { plantCode, shopCode, lineCode, cellCode };
   }
 

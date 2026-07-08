@@ -1,11 +1,9 @@
 /**
  * @file src/modules/material/material.module.ts
- * @description 자재관리 모듈 - LOT, 재고, 출고, PO, IQC, 분할, 유수명, 홀드, 폐기, 보정, 기타입고, 실사, 입고취소, 자동입고
+ * @description 자재관리 모듈 - LOT, 재고, 출고, IQC, 분할, 유수명, 홀드, 폐기, 보정, 기타입고, 실사, 입고취소, 자동입고
  *
  * 초보자 가이드:
  * 1. **MatLot/MatStock/MatIssue**: 기존 레거시 자재 관리
- * 2. **PurchaseOrder**: 구매발주 CRUD
- * 3. **PoStatus**: PO 현황 조회 (읽기 전용)
  * 4. **IqcHistory**: IQC 검사이력 조회
  * 5. **LotSplit**: LOT 분할
  * 6. **ShelfLife**: 유수명자재 (유효기한 관리)
@@ -25,7 +23,6 @@ import { InventoryControlModule } from './inventory-control/inventory-control.mo
 import { IssueModule } from './issue/issue.module';
 import { LabelsModule } from './labels/labels.module';
 import { LotModule } from './lot/lot.module';
-import { PurchasingModule } from './purchasing/purchasing.module';
 import { ReceivingModule } from './receiving/receiving.module';
 
 @Module({
@@ -35,7 +32,6 @@ import { ReceivingModule } from './receiving/receiving.module';
     IssueModule,
     LabelsModule,
     LotModule,
-    PurchasingModule,
     ReceivingModule,
   ],
   controllers: [],
@@ -44,7 +40,6 @@ import { ReceivingModule } from './receiving/receiving.module';
     InventoryControlModule,
     IssueModule,
     LotModule,
-    PurchasingModule,
   ],
 })
 export class MaterialModule {}

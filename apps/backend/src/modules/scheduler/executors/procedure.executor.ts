@@ -68,9 +68,7 @@ export class ProcedureExecutor implements IJobExecutor {
   private normalizeTenantParams(params: Record<string, unknown>, job: SchedulerJob): Record<string, unknown> {
     return {
       ...params,
-      ...('company' in params ? { company: job.company } : {}),
-      ...('plant' in params ? { plant: job.plantCd } : {}),
-      ...('plantCd' in params ? { plantCd: job.plantCd } : {}),
+      ...('organizationId' in params ? { organizationId: job.organizationId } : {}),
     };
   }
 }

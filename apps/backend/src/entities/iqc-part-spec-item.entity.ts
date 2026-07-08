@@ -13,11 +13,8 @@ import { IqcItemPool } from './iqc-item-pool.entity';
 
 @Entity({ name: 'IQC_PART_SPEC_ITEMS' })
 export class IqcPartSpecItem {
-  @PrimaryColumn({ type: 'varchar2', name: 'COMPANY', length: 50 })
-  company: string;
-
-  @PrimaryColumn({ type: 'varchar2', name: 'PLANT_CD', length: 50 })
-  plant: string;
+  @PrimaryColumn({ name: 'ORGANIZATION_ID', type: 'number' })
+  organizationId!: number;
 
   @PrimaryColumn({ name: 'ITEM_CODE', length: 50 })
   itemCode: string;
@@ -78,16 +75,14 @@ export class IqcPartSpecItem {
 
   @ManyToOne(() => IqcPartSpec, (s) => s.items, { onDelete: 'CASCADE' })
   @JoinColumn([
-    { name: 'COMPANY', referencedColumnName: 'company' },
-    { name: 'PLANT_CD', referencedColumnName: 'plant' },
+    { name: 'ORGANIZATION_ID', referencedColumnName: 'organizationId' },
     { name: 'ITEM_CODE', referencedColumnName: 'itemCode' },
   ])
   spec: IqcPartSpec;
 
   @ManyToOne(() => IqcItemPool, { eager: true })
   @JoinColumn([
-    { name: 'COMPANY', referencedColumnName: 'company' },
-    { name: 'PLANT_CD', referencedColumnName: 'plant' },
+    { name: 'ORGANIZATION_ID', referencedColumnName: 'organizationId' },
     { name: 'INSP_ITEM_CODE', referencedColumnName: 'inspItemCode' },
   ])
   inspItem: IqcItemPool;

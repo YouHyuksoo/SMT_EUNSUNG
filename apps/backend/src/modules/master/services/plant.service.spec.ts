@@ -108,13 +108,12 @@ describe('PlantService', () => {
       mockRepo.save.mockResolvedValue(created);
 
       // Act
-      const result = await target.create(dto, '40', '1000');
+      const result = await target.create(dto, 1);
 
       // Assert
       expect(result).toEqual(created);
       expect(mockRepo.create).toHaveBeenCalledWith(expect.objectContaining({
-        company: '40',
-        plant: '1000',
+        organizationId: 1,
       }));
     });
 

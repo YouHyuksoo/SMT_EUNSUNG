@@ -14,7 +14,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { AuthenticatedRequest, JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
-import { Company, Plant } from '../../../common/decorators/tenant.decorator';
+import { OrganizationId } from '../../../common/decorators/tenant.decorator';
 import { IqcTemplateService } from '../services/iqc-template.service';
 import { CreateIqcTemplateDto } from '../dto/iqc-template.dto';
 import { ResponseUtil } from '../../../common/dto/response.dto';
@@ -29,10 +29,9 @@ export class IqcTemplateController {
   @ApiOperation({ summary: 'IQC 템플릿 목록 조회' })
   async findAll(
     @Query() query: PaginationQueryDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const result = await this.service.findAll(company, plant, query.page, query.limit);
+    const result = await this.service.findAll(organizationId, query.page, query.limit);
     return ResponseUtil.paged(result.data, result.total, result.page, result.limit);
   }
 
@@ -40,10 +39,9 @@ export class IqcTemplateController {
   @ApiOperation({ summary: 'IQC 템플릿 상세 조회' })
   async findOne(
     @Param('templateId') templateId: string,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.service.findById(templateId, company, plant);
+    const data = await this.service.findById(templateId, organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -52,12 +50,11 @@ export class IqcTemplateController {
   @ApiOperation({ summary: '현재 품목 항목을 템플릿으로 저장' })
   async create(
     @Body() dto: CreateIqcTemplateDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
     @Req() req: AuthenticatedRequest,
   ) {
     const userId = req.user?.id ?? 'SYSTEM';
-    const data = await this.service.create(dto, company, plant, userId);
+    const data = await this.service.create(dto, organizationId, userId);
     return ResponseUtil.success(data, '템플릿이 저장되었습니다.');
   }
 
@@ -65,10 +62,9 @@ export class IqcTemplateController {
   @ApiOperation({ summary: 'IQC 템플릿 삭제' })
   async delete(
     @Param('templateId') templateId: string,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    await this.service.delete(templateId, company, plant);
+    await this.service.delete(templateId, organizationId);
     return ResponseUtil.success(null, '템플릿이 삭제되었습니다.');
   }
 }

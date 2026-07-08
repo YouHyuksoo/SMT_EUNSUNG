@@ -43,21 +43,19 @@ export class SchedulerRunnerService {
    * @param job 실행할 작업 엔티티
    */
   async execute(job: SchedulerJob): Promise<void> {
-    const { company, plantCd, jobCode } = job;
+    const { organizationId, jobCode } = job;
 
     // 1. 동시 실행 방지: RUNNING/RETRYING 상태인 로그가 있으면 SKIP
     const runningCount = await this.logRepo
       .createQueryBuilder('l')
-      .where('l.company = :company', { company })
-      .andWhere('l.plantCd = :plant', { plant: plantCd })
+      .where('l.organizationId = :organizationId', { organizationId })
       .andWhere('l.jobCode = :jobCode', { jobCode })
       .andWhere('l.status IN (:...statuses)', { statuses: ['RUNNING', 'RETRYING'] })
       .getCount();
 
     if (runningCount > 0) {
       await this.logService.createLog({
-        company,
-        plantCd,
+        organizationId,
         jobCode,
         status: 'SKIPPED',
         resultMsg: '이전 실행이 진행 중이므로 건너뜀',
@@ -68,8 +66,7 @@ export class SchedulerRunnerService {
 
     // 2. RUNNING 로그 생성
     const log = await this.logService.createLog({
-      company,
-      plantCd,
+      organizationId,
       jobCode,
     });
 
@@ -89,7 +86,7 @@ export class SchedulerRunnerService {
 
       // 4. 성공 처리
       const durationMs = Date.now() - startMs;
-      await this.logService.updateLog(company, plantCd, log.logId, {
+      await this.logService.updateLog(organizationId, log.logId, {
         status: 'SUCCESS',
         endTime: new Date(),
         durationMs,
@@ -99,7 +96,7 @@ export class SchedulerRunnerService {
 
       // job 상태 갱신
       await this.jobRepo.update(
-        { company, plantCd, jobCode },
+        { organizationId, jobCode },
         {
           lastRunAt: new Date(),
           lastStatus: 'SUCCESS',
@@ -134,9 +131,9 @@ export class SchedulerRunnerService {
     log: SchedulerLog,
     durationMs: number,
   ): Promise<void> {
-    const { company, plantCd, jobCode } = job;
+    const { organizationId, jobCode } = job;
 
-    await this.logService.updateLog(company, plantCd, log.logId, {
+    await this.logService.updateLog(organizationId, log.logId, {
       status: 'TIMEOUT',
       endTime: new Date(),
       durationMs,
@@ -144,14 +141,13 @@ export class SchedulerRunnerService {
     });
 
     await this.jobRepo.update(
-      { company, plantCd, jobCode },
+      { organizationId, jobCode },
       { lastStatus: 'TIMEOUT', lastErrorAt: new Date() },
     );
 
     // 관리자 알림
     await this.createAdminNotification(
-      company,
-      plantCd,
+      organizationId,
       jobCode,
       'TIMEOUT',
       `[${jobCode}] 작업이 ${job.timeoutSec}초 제한 시간을 초과했습니다.`,
@@ -174,23 +170,23 @@ export class SchedulerRunnerService {
     errorMsg: string,
     retryCount: number,
   ): Promise<void> {
-    const { company, plantCd, jobCode } = job;
+    const { organizationId, jobCode } = job;
 
     if (retryCount < job.maxRetry) {
       // 재시도 스케줄
-      await this.logService.updateLog(company, plantCd, log.logId, {
+      await this.logService.updateLog(organizationId, log.logId, {
         status: 'RETRYING',
         errorMsg,
         retryCount,
       });
 
-      this.scheduleRetry(job, company, plantCd, log.logId, retryCount);
+      this.scheduleRetry(job, organizationId, log.logId, retryCount);
       this.logger.warn(
         `작업 재시도 예약: ${jobCode} (retry=${retryCount + 1}/${job.maxRetry})`,
       );
     } else {
       // 최종 실패
-      await this.logService.updateLog(company, plantCd, log.logId, {
+      await this.logService.updateLog(organizationId, log.logId, {
         status: 'FAIL',
         endTime: new Date(),
         durationMs,
@@ -199,14 +195,13 @@ export class SchedulerRunnerService {
       });
 
       await this.jobRepo.update(
-        { company, plantCd, jobCode },
+        { organizationId, jobCode },
         { lastStatus: 'FAIL', lastErrorAt: new Date() },
       );
 
       // 관리자 알림
       await this.createAdminNotification(
-        company,
-        plantCd,
+        organizationId,
         jobCode,
         'FAIL',
         `[${jobCode}] 작업 실패 (재시도 ${retryCount}회 소진): ${errorMsg}`,
@@ -221,14 +216,13 @@ export class SchedulerRunnerService {
    */
   private scheduleRetry(
     job: SchedulerJob,
-    logCompany: string,
-    logPlant: string,
+    logOrganizationId: number,
     logId: number,
     retryCount: number,
   ): void {
     const delayMs = 60000 * Math.pow(2, retryCount); // 1분, 2분, 4분...
     setTimeout(() => {
-      this.executeRetry(job, logCompany, logPlant, logId, retryCount + 1)
+      this.executeRetry(job, logOrganizationId, logId, retryCount + 1)
         .catch((err: unknown) => {
           this.logger.error(
             `재시도 실행 중 오류: ${err instanceof Error ? err.message : String(err)}`,
@@ -242,8 +236,7 @@ export class SchedulerRunnerService {
    */
   private async executeRetry(
     job: SchedulerJob,
-    logCompany: string,
-    logPlant: string,
+    logOrganizationId: number,
     logId: number,
     retryCount: number,
   ): Promise<void> {
@@ -262,7 +255,7 @@ export class SchedulerRunnerService {
 
       // 재시도 성공
       const durationMs = Date.now() - startMs;
-      await this.logService.updateLog(logCompany, logPlant, logId, {
+      await this.logService.updateLog(logOrganizationId, logId, {
         status: 'SUCCESS',
         endTime: new Date(),
         durationMs,
@@ -272,7 +265,7 @@ export class SchedulerRunnerService {
       });
 
       await this.jobRepo.update(
-        { company: job.company, plantCd: job.plantCd, jobCode: job.jobCode },
+        { organizationId: job.organizationId, jobCode: job.jobCode },
         { lastRunAt: new Date(), lastStatus: 'SUCCESS' },
       );
 
@@ -295,8 +288,7 @@ export class SchedulerRunnerService {
    * ADMIN 사용자에게 알림 생성
    */
   private async createAdminNotification(
-    company: string,
-    plantCd: string,
+    organizationId: number,
     jobCode: string,
     notiType: string,
     message: string,
@@ -305,14 +297,13 @@ export class SchedulerRunnerService {
       // ADMIN 역할 사용자 조회
       const admins: { email: string }[] = await this.logRepo.manager.query(
         `SELECT "EMAIL" AS "email" FROM "USERS"
-          WHERE "COMPANY" = :1 AND "ROLE" = 'ADMIN' AND "STATUS" = 'ACTIVE'`,
-        [company],
+          WHERE "ORGANIZATION_ID" = :1 AND "ROLE" = 'ADMIN' AND "STATUS" = 'ACTIVE'`,
+        [organizationId],
       );
 
       for (const admin of admins) {
         await this.notiService.createNotification({
-          company,
-          plantCd,
+          organizationId,
           jobCode,
           userId: admin.email,
           notiType,

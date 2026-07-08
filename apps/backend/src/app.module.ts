@@ -22,6 +22,7 @@ import configuration from './config/configuration';
 import { AuthModule } from './modules/auth/auth.module';
 import { OeeModule } from './modules/oee/oee.module';
 import { MenuCategoriesModule } from './modules/menu-categories/menu-categories.module';
+import { SystemModule } from './modules/system/system.module';
 
 @Module({
   imports: [
@@ -42,6 +43,9 @@ import { MenuCategoriesModule } from './modules/menu-categories/menu-categories.
 
     // 메뉴 카테고리 관리 (/system/menu-categories)
     MenuCategoriesModule,
+
+    // 시스템관리 (/system/comm-configs 통신설정, 환경설정, 활동로그, 문서, ER뷰 등)
+    SystemModule,
   ],
   controllers: [AppController],
   providers: [AppService],

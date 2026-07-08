@@ -14,7 +14,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { AuthenticatedRequest, JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
-import { Company, Plant } from '../../../common/decorators/tenant.decorator';
+import { OrganizationId } from '../../../common/decorators/tenant.decorator';
 import { IqcPartSpecService } from '../services/iqc-part-spec.service';
 import { UpsertIqcPartSpecDto } from '../dto/iqc-part-spec.dto';
 import { ResponseUtil } from '../../../common/dto/response.dto';
@@ -29,10 +29,9 @@ export class IqcPartSpecController {
   @ApiOperation({ summary: '품목별 IQC 기준 전체 조회' })
   async findAll(
     @Query() query: PaginationQueryDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const result = await this.service.findAll(company, plant, query.page, query.limit);
+    const result = await this.service.findAll(organizationId, query.page, query.limit);
     return ResponseUtil.paged(result.data, result.total, result.page, result.limit);
   }
 
@@ -40,10 +39,9 @@ export class IqcPartSpecController {
   @ApiOperation({ summary: '품목별 IQC 검사항목 해석 (검사 모달용)' })
   async resolveItems(
     @Param('itemCode') itemCode: string,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.service.resolveItems(itemCode, company, plant);
+    const data = await this.service.resolveItems(itemCode, organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -51,10 +49,9 @@ export class IqcPartSpecController {
   @ApiOperation({ summary: '품목별 IQC 기준 상세 조회' })
   async findOne(
     @Param('itemCode') itemCode: string,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.service.findByItemCode(itemCode, company, plant);
+    const data = await this.service.findByItemCode(itemCode, organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -63,12 +60,11 @@ export class IqcPartSpecController {
   @ApiOperation({ summary: '품목별 IQC 기준 저장 (upsert)' })
   async upsert(
     @Body() dto: UpsertIqcPartSpecDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
     @Req() req: AuthenticatedRequest,
   ) {
     const userId = req.user?.id ?? 'SYSTEM';
-    const data = await this.service.upsert(dto, company, plant, userId);
+    const data = await this.service.upsert(dto, organizationId, userId);
     return ResponseUtil.success(data, '저장되었습니다.');
   }
 
@@ -76,10 +72,9 @@ export class IqcPartSpecController {
   @ApiOperation({ summary: '품목별 IQC 기준 삭제' })
   async delete(
     @Param('itemCode') itemCode: string,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    await this.service.delete(itemCode, company, plant);
+    await this.service.delete(itemCode, organizationId);
     return ResponseUtil.success(null, '삭제되었습니다.');
   }
 }

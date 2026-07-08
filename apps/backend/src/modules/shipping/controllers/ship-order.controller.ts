@@ -29,7 +29,7 @@ import {
   HttpStatus,
   UseGuards,
 } from '@nestjs/common';
-import { Company, Plant } from '../../../common/decorators/tenant.decorator';
+import { OrganizationId } from '../../../common/decorators/tenant.decorator';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { ApiTags, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
 import { ShipOrderService } from '../services/ship-order.service';
@@ -53,31 +53,31 @@ export class ShipOrderController {
   @Get()
   @ApiOperation({ summary: '출하지시 목록 조회' })
   @ApiResponse({ status: 200, description: '조회 성공' })
-  async findAll(@Query() query: ShipOrderQueryDto, @Company() company: string, @Plant() plant: string) {
-    const result = await this.shipOrderService.findAll(query, company, plant);
+  async findAll(@Query() query: ShipOrderQueryDto, @OrganizationId() organizationId: number) {
+    const result = await this.shipOrderService.findAll(query, organizationId);
     return ResponseUtil.paged(result.data, result.total, result.page, result.limit);
   }
 
   @Get('shipped')
   @ApiOperation({ summary: '출하분이 있는 출하지시 통합 이력(박스+팔레트)' })
-  async findShipped(@Company() company: string, @Plant() plant: string) {
-    const result = await this.shipOrderService.findShippedOrders(company, plant);
+  async findShipped(@OrganizationId() organizationId: number) {
+    const result = await this.shipOrderService.findShippedOrders(organizationId);
     return ResponseUtil.success(result.data);
   }
 
   @Get(':id')
   @ApiOperation({ summary: '출하지시 상세 조회' })
   @ApiParam({ name: 'id', description: '출하지시 ID' })
-  async findById(@Param('id') id: string, @Company() company: string, @Plant() plant: string) {
-    const data = await this.shipOrderService.findById(id, company, plant);
+  async findById(@Param('id') id: string, @OrganizationId() organizationId: number) {
+    const data = await this.shipOrderService.findById(id, organizationId);
     return ResponseUtil.success(data);
   }
 
   @Get(':id/shipped-detail')
   @ApiOperation({ summary: '출하지시 출하 상세(팔레트/박스, 박스출하는 *)' })
   @ApiParam({ name: 'id', description: '출하지시 번호' })
-  async getShippedDetail(@Param('id') id: string, @Company() company: string, @Plant() plant: string) {
-    const data = await this.shipOrderService.getShippedDetail(id, company, plant);
+  async getShippedDetail(@Param('id') id: string, @OrganizationId() organizationId: number) {
+    const data = await this.shipOrderService.getShippedDetail(id, organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -85,48 +85,48 @@ export class ShipOrderController {
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: '출하지시 생성' })
   @ApiResponse({ status: 201, description: '생성 성공' })
-  async create(@Body() dto: CreateShipOrderDto, @Company() company: string, @Plant() plant: string) {
-    const data = await this.shipOrderService.create(dto, company, plant);
+  async create(@Body() dto: CreateShipOrderDto, @OrganizationId() organizationId: number) {
+    const data = await this.shipOrderService.create(dto, organizationId);
     return ResponseUtil.success(data, '출하지시가 생성되었습니다.');
   }
 
   @Put(':id')
   @ApiOperation({ summary: '출하지시 수정' })
   @ApiParam({ name: 'id', description: '출하지시 ID' })
-  async update(@Param('id') id: string, @Body() dto: UpdateShipOrderDto, @Company() company: string, @Plant() plant: string) {
-    const data = await this.shipOrderService.update(id, dto, company, plant);
+  async update(@Param('id') id: string, @Body() dto: UpdateShipOrderDto, @OrganizationId() organizationId: number) {
+    const data = await this.shipOrderService.update(id, dto, organizationId);
     return ResponseUtil.success(data, '출하지시가 수정되었습니다.');
   }
 
   @Delete(':id')
   @ApiOperation({ summary: '출하지시 삭제' })
   @ApiParam({ name: 'id', description: '출하지시 ID' })
-  async delete(@Param('id') id: string, @Company() company: string, @Plant() plant: string) {
-    await this.shipOrderService.delete(id, company, plant);
+  async delete(@Param('id') id: string, @OrganizationId() organizationId: number) {
+    await this.shipOrderService.delete(id, organizationId);
     return ResponseUtil.success(null, '출하지시가 삭제되었습니다.');
   }
 
   @Put(':id/confirm')
   @ApiOperation({ summary: '출하지시 확정 (DRAFT → CONFIRMED)' })
   @ApiParam({ name: 'id', description: '출하지시 번호' })
-  async confirm(@Param('id') id: string, @Company() company: string, @Plant() plant: string) {
-    const data = await this.shipOrderService.confirm(id, company, plant);
+  async confirm(@Param('id') id: string, @OrganizationId() organizationId: number) {
+    const data = await this.shipOrderService.confirm(id, organizationId);
     return ResponseUtil.success(data, '출하지시가 확정되었습니다.');
   }
 
   @Put(':id/unconfirm')
   @ApiOperation({ summary: '출하지시 확정취소 (CONFIRMED → DRAFT)' })
   @ApiParam({ name: 'id', description: '출하지시 번호' })
-  async unconfirm(@Param('id') id: string, @Company() company: string, @Plant() plant: string) {
-    const data = await this.shipOrderService.unconfirm(id, company, plant);
+  async unconfirm(@Param('id') id: string, @OrganizationId() organizationId: number) {
+    const data = await this.shipOrderService.unconfirm(id, organizationId);
     return ResponseUtil.success(data, '출하지시 확정이 취소되었습니다.');
   }
 
   @Get(':id/fulfillment')
   @ApiOperation({ summary: '출하지시 중심 출하작업 현황' })
   @ApiParam({ name: 'id', description: '출하지시 번호' })
-  async getFulfillment(@Param('id') id: string, @Company() company: string, @Plant() plant: string) {
-    const data = await this.shipOrderService.getFulfillment(id, company, plant);
+  async getFulfillment(@Param('id') id: string, @OrganizationId() organizationId: number) {
+    const data = await this.shipOrderService.getFulfillment(id, organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -137,10 +137,9 @@ export class ShipOrderController {
   async createOrderPallet(
     @Param('id') id: string,
     @Body() dto: CreateShipOrderPalletDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.shipOrderService.createPalletForOrder(id, dto, company, plant);
+    const data = await this.shipOrderService.createPalletForOrder(id, dto, organizationId);
     return ResponseUtil.success(data, '출하지시 팔레트가 생성되었습니다.');
   }
 
@@ -151,10 +150,9 @@ export class ShipOrderController {
     @Param('id') id: string,
     @Param('palletNo') palletNo: string,
     @Body() dto: AddBoxToPalletDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.shipOrderService.addBoxesToOrderPallet(id, palletNo, dto, company, plant);
+    const data = await this.shipOrderService.addBoxesToOrderPallet(id, palletNo, dto, organizationId);
     return ResponseUtil.success(data, '박스가 출하지시 팔레트에 적재되었습니다.');
   }
 
@@ -165,10 +163,9 @@ export class ShipOrderController {
     @Param('id') id: string,
     @Param('palletNo') palletNo: string,
     @Body() dto: RemoveBoxFromPalletDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.shipOrderService.removeBoxesFromOrderPallet(id, palletNo, dto, company, plant);
+    const data = await this.shipOrderService.removeBoxesFromOrderPallet(id, palletNo, dto, organizationId);
     return ResponseUtil.success(data, '박스가 출하지시 팔레트에서 제거되었습니다.');
   }
 
@@ -178,10 +175,9 @@ export class ShipOrderController {
   async closeOrderPallet(
     @Param('id') id: string,
     @Param('palletNo') palletNo: string,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.shipOrderService.closeOrderPallet(id, palletNo, company, plant);
+    const data = await this.shipOrderService.closeOrderPallet(id, palletNo, organizationId);
     return ResponseUtil.success(data, '팔레트 라벨 발행이 완료되었습니다.');
   }
 
@@ -191,10 +187,9 @@ export class ShipOrderController {
   async shipOrderPallets(
     @Param('id') id: string,
     @Body() dto: ShipOrderPalletsDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.shipOrderService.shipOrderPallets(id, dto, company, plant);
+    const data = await this.shipOrderService.shipOrderPallets(id, dto, organizationId);
     return ResponseUtil.success(data, '제품출하가 확정되었습니다.');
   }
 
@@ -202,8 +197,8 @@ export class ShipOrderController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: '박스 단건 출하 (출하지시 기반)', description: '박스를 스캔해 즉시 출하 처리(SHIPPED + FG_MAIN 차감 + shippedQty 갱신)' })
   @ApiParam({ name: 'id', description: '출하지시 번호' })
-  async shipBox(@Param('id') id: string, @Body() dto: ShipBoxDto, @Company() company: string, @Plant() plant: string) {
-    const data = await this.shipOrderService.shipBox(id, dto, company, plant);
+  async shipBox(@Param('id') id: string, @Body() dto: ShipBoxDto, @OrganizationId() organizationId: number) {
+    const data = await this.shipOrderService.shipBox(id, dto, organizationId);
     return ResponseUtil.success(data, '박스가 출하되었습니다.');
   }
 
@@ -211,8 +206,8 @@ export class ShipOrderController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: '박스 단건 출하 취소', description: '출하된 박스를 출하 직전 상태(CLOSED/PACKED)로 되돌리고 제품재고를 복원한다.' })
   @ApiParam({ name: 'id', description: '출하지시 번호' })
-  async cancelShipBox(@Param('id') id: string, @Body() dto: ShipBoxDto, @Company() company: string, @Plant() plant: string) {
-    const data = await this.shipOrderService.cancelShipBox(id, dto, company, plant);
+  async cancelShipBox(@Param('id') id: string, @Body() dto: ShipBoxDto, @OrganizationId() organizationId: number) {
+    const data = await this.shipOrderService.cancelShipBox(id, dto, organizationId);
     return ResponseUtil.success(data, '박스 출하가 취소되었습니다.');
   }
 
@@ -223,10 +218,9 @@ export class ShipOrderController {
   async cancelOrderShipment(
     @Param('id') id: string,
     @Body() dto: CancelOrderShipmentDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.shipOrderService.cancelOrderShipment(id, dto, company, plant);
+    const data = await this.shipOrderService.cancelOrderShipment(id, dto, organizationId);
     return ResponseUtil.success(data, '출하가 취소되었습니다.');
   }
 }

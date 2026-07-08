@@ -45,24 +45,19 @@ export class InterfaceService {
     private readonly oracleService: OracleService,
   ) {}
 
-  private tenantWhere(company?: string, plant?: string) {
+  private tenantWhere(organizationId?: number) {
     return {
-      ...(company ? { company } : {}),
-      ...(plant ? { plant } : {}),
+      ...(organizationId != null ? { organizationId } : {}),
     };
   }
 
   private applyTenantFilter<T extends { andWhere: (condition: string, parameters?: Record<string, unknown>) => T }>(
     queryBuilder: T,
     alias: string,
-    company?: string,
-    plant?: string,
+    organizationId?: number,
   ) {
-    if (company) {
-      queryBuilder.andWhere(`${alias}.company = :company`, { company });
-    }
-    if (plant) {
-      queryBuilder.andWhere(`${alias}.plant = :plant`, { plant });
+    if (organizationId != null) {
+      queryBuilder.andWhere(`${alias}.organizationId = :organizationId`, { organizationId });
     }
     return queryBuilder;
   }
@@ -86,13 +81,12 @@ export class InterfaceService {
     return { ...log, id: `${transDate}/${log.seq}` };
   }
 
-  async findAllLogs(query: InterLogQueryDto, company?: string, plant?: string) {
+  async findAllLogs(query: InterLogQueryDto, organizationId?: number) {
     const { page = 1, limit = 10, direction, messageType, status, fromDate, toDate } = query;
     const skip = (page - 1) * limit;
 
     const where: Record<string, unknown> = {
-      ...(company && { company }),
-      ...(plant && { plant }),
+      ...(organizationId != null && { organizationId }),
       ...(direction && { direction }),
       ...(messageType && { messageType }),
       ...(status && { status }),
@@ -114,9 +108,9 @@ export class InterfaceService {
     return { data: data.map((log) => this.logWithClientId(log)), total, page, limit };
   }
 
-  async findLogById(transDate: Date, seq: number, company?: string, plant?: string) {
+  async findLogById(transDate: Date, seq: number, organizationId?: number) {
     const log = await this.interLogRepository.findOne({
-      where: { transDate, seq, ...this.tenantWhere(company, plant) },
+      where: { transDate, seq, ...this.tenantWhere(organizationId) },
     });
 
     if (!log) {
@@ -126,7 +120,7 @@ export class InterfaceService {
     return log;
   }
 
-  async createLog(dto: CreateInterLogDto, company?: string, plant?: string) {
+  async createLog(dto: CreateInterLogDto, organizationId?: number) {
     const transDate = new Date();
     transDate.setHours(0, 0, 0, 0);
 
@@ -142,30 +136,29 @@ export class InterfaceService {
         interfaceId: dto.interfaceId,
         payload: dto.payload ? JSON.stringify(dto.payload) : null,
         status: 'PENDING',
-        company,
-        plant,
+        organizationId,
       });
 
       return queryRunner.manager.save(InterLog, log);
     });
   }
 
-  async updateLogStatus(transDate: Date, seq: number, status: string, errorMsg?: string, company?: string, plant?: string) {
-    await this.findLogById(transDate, seq, company, plant);
+  async updateLogStatus(transDate: Date, seq: number, status: string, errorMsg?: string, organizationId?: number) {
+    await this.findLogById(transDate, seq, organizationId);
 
     const updateData: Partial<InterLog> = { status };
     if (errorMsg) updateData.errorMsg = errorMsg;
     if (status === 'SUCCESS') updateData.recvAt = new Date();
 
-    await this.interLogRepository.update({ transDate, seq, ...this.tenantWhere(company, plant) }, updateData);
-    return this.findLogById(transDate, seq, company, plant);
+    await this.interLogRepository.update({ transDate, seq, ...this.tenantWhere(organizationId) }, updateData);
+    return this.findLogById(transDate, seq, organizationId);
   }
 
-  async retryLog(transDate: Date, seq: number, company?: string, plant?: string) {
-    const log = await this.findLogById(transDate, seq, company, plant);
+  async retryLog(transDate: Date, seq: number, organizationId?: number) {
+    const log = await this.findLogById(transDate, seq, organizationId);
     // pk 는 caller 가 넘긴 transDate 가 아니라 DB 에서 읽어 온 log.transDate 를 사용한다.
     // (caller 가 ms/timezone 가 다른 Date 를 넘겨도 affected=0 이 되지 않도록.)
-    const pk = { transDate: log.transDate, seq: log.seq, ...this.tenantWhere(company, plant) };
+    const pk = { transDate: log.transDate, seq: log.seq, ...this.tenantWhere(organizationId) };
 
     if (log.status !== 'FAIL') {
       throw new BadRequestException('실패한 로그만 재시도할 수 있습니다.');
@@ -200,21 +193,21 @@ export class InterfaceService {
         recvAt: new Date(),
       });
 
-      return this.findLogById(transDate, seq, company, plant);
+      return this.findLogById(transDate, seq, organizationId);
     } catch (error) {
       await this.interLogRepository.update(pk, {
         status: 'FAIL',
         errorMsg: error instanceof Error ? error.message : '알 수 없는 오류',
       });
-      return this.findLogById(transDate, seq, company, plant);
+      return this.findLogById(transDate, seq, organizationId);
     }
   }
 
-  async bulkRetry(logKeys: { transDate: Date; seq: number }[], company?: string, plant?: string) {
+  async bulkRetry(logKeys: { transDate: Date; seq: number }[], organizationId?: number) {
     const results = await Promise.all(
       logKeys.map(async (key) => {
         try {
-          await this.retryLog(key.transDate, key.seq, company, plant);
+          await this.retryLog(key.transDate, key.seq, organizationId);
           return { transDate: key.transDate, seq: key.seq, success: true };
         } catch (error) {
           return { transDate: key.transDate, seq: key.seq, success: false, error: error instanceof Error ? error.message : '오류' };
@@ -229,18 +222,18 @@ export class InterfaceService {
   // Inbound 처리 (ERP → MES)
   // ============================================================================
 
-  async receiveJobOrder(dto: JobOrderInboundDto, company?: string, plant?: string) {
+  async receiveJobOrder(dto: JobOrderInboundDto, organizationId?: number) {
     const log = await this.createLog({
       direction: 'IN',
       messageType: 'JOB_ORDER',
       interfaceId: dto.erpOrderNo,
       payload: { ...dto },
-    }, company, plant);
+    }, organizationId);
 
     try {
       // 품목 확인
       const part = await this.itemMasterRepository.findOne({
-        where: { itemCode: dto.itemCode, ...this.tenantWhere(company, plant) },
+        where: { itemCode: dto.itemCode, ...this.tenantWhere(organizationId) },
       });
 
       if (!part) {
@@ -256,13 +249,12 @@ export class InterfaceService {
         planDate: parseDateStart(dto.planDate),
         priority: dto.priority ?? 5,
         erpSyncYn: 'Y',
-        company,
-        plant,
+        organizationId,
       });
 
       await this.jobOrderRepository.save(jobOrder);
 
-      await this.updateLogStatus(log.transDate, log.seq, 'SUCCESS', undefined, company, plant);
+      await this.updateLogStatus(log.transDate, log.seq, 'SUCCESS', undefined, organizationId);
 
       return jobOrder;
     } catch (error) {
@@ -271,25 +263,24 @@ export class InterfaceService {
         log.seq,
         'FAIL',
         error instanceof Error ? error.message : '알 수 없는 오류',
-        company,
-        plant,
+        organizationId,
       );
       throw error;
     }
   }
 
-  async syncBom(dtos: BomSyncDto[], company?: string, plant?: string) {
+  async syncBom(dtos: BomSyncDto[], organizationId?: number) {
     const log = await this.createLog({
       direction: 'IN',
       messageType: 'BOM_SYNC',
       payload: { items: dtos },
-    }, company, plant);
+    }, organizationId);
 
     try {
       // 관련 품목코드 일괄 선조회 (N+1 제거)
       const allItemCodes = [...new Set(dtos.flatMap((d) => [d.parentItemCode, d.childItemCode]))];
       const allParts = allItemCodes.length > 0
-        ? await this.itemMasterRepository.find({ where: { itemCode: In(allItemCodes), ...this.tenantWhere(company, plant) } })
+        ? await this.itemMasterRepository.find({ where: { itemCode: In(allItemCodes), ...this.tenantWhere(organizationId) } })
         : [];
       const partMap = new Map(allParts.map((p) => [p.itemCode, p]));
 
@@ -307,7 +298,7 @@ export class InterfaceService {
       const bomPairs = dtos.map((d) => ({
         parentItemCode: d.parentItemCode,
         childItemCode: d.childItemCode,
-        ...this.tenantWhere(company, plant),
+        ...this.tenantWhere(organizationId),
       }));
       const existingBoms = bomPairs.length > 0
         ? await this.bomMasterRepository.find({ where: bomPairs })
@@ -340,7 +331,7 @@ export class InterfaceService {
 
         if (target) {
           await this.bomMasterRepository.update(
-            { parentItemCode: parentPart.itemCode, childItemCode: childPart.itemCode, validFrom: toLocalDate(toYmd(target.validFrom)), ...this.tenantWhere(company, plant) },
+            { parentItemCode: parentPart.itemCode, childItemCode: childPart.itemCode, validFrom: toLocalDate(toYmd(target.validFrom)), ...this.tenantWhere(organizationId) },
             { qtyPer: dto.qtyPer, ecoNo: dto.ecoNo, revision: rev },
           );
         } else {
@@ -352,8 +343,7 @@ export class InterfaceService {
             revision: rev,
             validFrom: toLocalDate(validFromYmd),
             ecoNo: dto.ecoNo,
-            company,
-            plant,
+            organizationId,
           });
           await this.bomMasterRepository.save(newBom);
           bomByExactKey.set(`${parentPart.itemCode}::${childPart.itemCode}::${validFromYmd}`, newBom);
@@ -365,7 +355,7 @@ export class InterfaceService {
         results.push({ success: true, dto });
       }
 
-      await this.updateLogStatus(log.transDate, log.seq, 'SUCCESS', undefined, company, plant);
+      await this.updateLogStatus(log.transDate, log.seq, 'SUCCESS', undefined, organizationId);
 
       return results;
     } catch (error) {
@@ -374,25 +364,24 @@ export class InterfaceService {
         log.seq,
         'FAIL',
         error instanceof Error ? error.message : '알 수 없는 오류',
-        company,
-        plant,
+        organizationId,
       );
       throw error;
     }
   }
 
-  async syncPart(dtos: PartSyncDto[], company?: string, plant?: string) {
+  async syncPart(dtos: PartSyncDto[], organizationId?: number) {
     const log = await this.createLog({
       direction: 'IN',
       messageType: 'PART_SYNC',
       payload: { items: dtos },
-    }, company, plant);
+    }, organizationId);
 
     try {
       // 기존 품목 일괄 선조회 (N+1 제거)
       const itemCodes = dtos.map((d) => d.itemCode);
       const existingParts = itemCodes.length > 0
-        ? await this.itemMasterRepository.find({ where: { itemCode: In(itemCodes), ...this.tenantWhere(company, plant) } })
+        ? await this.itemMasterRepository.find({ where: { itemCode: In(itemCodes), ...this.tenantWhere(organizationId) } })
         : [];
       const existingSet = new Set(existingParts.map((p) => p.itemCode));
 
@@ -400,7 +389,7 @@ export class InterfaceService {
       for (const dto of dtos) {
         if (existingSet.has(dto.itemCode)) {
           await this.itemMasterRepository.update(
-            { itemCode: dto.itemCode, ...this.tenantWhere(company, plant) },
+            { itemCode: dto.itemCode, ...this.tenantWhere(organizationId) },
             {
               itemName: dto.itemName,
               itemType: dto.itemType,
@@ -419,8 +408,7 @@ export class InterfaceService {
             spec: dto.spec,
             unit: dto.unit ?? 'EA',
             drawNo: dto.drawNo,
-            company,
-            plant,
+            organizationId,
           });
           await this.itemMasterRepository.save(newPart);
           existingSet.add(dto.itemCode);
@@ -429,7 +417,7 @@ export class InterfaceService {
         results.push({ success: true, itemCode: dto.itemCode });
       }
 
-      await this.updateLogStatus(log.transDate, log.seq, 'SUCCESS', undefined, company, plant);
+      await this.updateLogStatus(log.transDate, log.seq, 'SUCCESS', undefined, organizationId);
 
       return results;
     } catch (error) {
@@ -438,8 +426,7 @@ export class InterfaceService {
         log.seq,
         'FAIL',
         error instanceof Error ? error.message : '알 수 없는 오류',
-        company,
-        plant,
+        organizationId,
       );
       throw error;
     }
@@ -449,7 +436,7 @@ export class InterfaceService {
   // Outbound 처리 (MES → ERP)
   // ============================================================================
 
-  async sendProdResult(dto: ProdResultOutboundDto, company?: string, plant?: string) {
+  async sendProdResult(dto: ProdResultOutboundDto, organizationId?: number) {
     const log = await this.createLog({
       direction: 'OUT',
       messageType: 'PROD_RESULT',
@@ -460,7 +447,7 @@ export class InterfaceService {
         ...(dto.defectQty !== undefined ? { defectQty: dto.defectQty } : {}),
         ...(dto.endAt !== undefined ? { endAt: dto.endAt } : {}),
       },
-    }, company, plant);
+    }, organizationId);
 
     try {
       // 실제 ERP 전송 로직 자리. 전송 어댑터가 연결되기 전까지는 로그만 남긴다.
@@ -468,17 +455,17 @@ export class InterfaceService {
 
       // 작업지시 동기화 상태 업데이트
       const jobOrder = await this.jobOrderRepository.findOne({
-        where: { orderNo: dto.orderNo, ...this.tenantWhere(company, plant) },
+        where: { orderNo: dto.orderNo, ...this.tenantWhere(organizationId) },
       });
 
       if (jobOrder) {
         await this.jobOrderRepository.update(
-          { orderNo: jobOrder.orderNo, ...this.tenantWhere(company, plant) },
+          { orderNo: jobOrder.orderNo, ...this.tenantWhere(organizationId) },
           { erpSyncYn: 'Y' },
         );
       }
 
-      await this.updateLogStatus(log.transDate, log.seq, 'SUCCESS', undefined, company, plant);
+      await this.updateLogStatus(log.transDate, log.seq, 'SUCCESS', undefined, organizationId);
 
       return { success: true, transDate: log.transDate, seq: log.seq };
     } catch (error) {
@@ -487,8 +474,7 @@ export class InterfaceService {
         log.seq,
         'FAIL',
         error instanceof Error ? error.message : '알 수 없는 오류',
-        company,
-        plant,
+        organizationId,
       );
       throw error;
     }
@@ -505,7 +491,7 @@ export class InterfaceService {
   // 통계 및 대시보드
   // ============================================================================
 
-  async getSummary(company?: string, plant?: string) {
+  async getSummary(organizationId?: number) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const statusQb = this.applyTenantFilter(
@@ -517,8 +503,7 @@ export class InterfaceService {
         .addSelect("SUM(CASE WHEN log.status = 'FAIL' THEN 1 ELSE 0 END)", 'failed')
         .setParameter('today', today),
       'log',
-      company,
-      plant,
+      organizationId,
     );
     const byTypeQb = this.applyTenantFilter(
       this.interLogRepository
@@ -527,8 +512,7 @@ export class InterfaceService {
         .addSelect('COUNT(*)', 'count')
         .groupBy('log.messageType'),
       'log',
-      company,
-      plant,
+      organizationId,
     );
     const byDirectionQb = this.applyTenantFilter(
       this.interLogRepository
@@ -537,8 +521,7 @@ export class InterfaceService {
         .addSelect('COUNT(*)', 'count')
         .groupBy('log.direction'),
       'log',
-      company,
-      plant,
+      organizationId,
     );
 
     // 4번 count → 1번 집계 쿼리로 통합 + 타입/방향별 집계는 병렬 유지
@@ -568,17 +551,17 @@ export class InterfaceService {
     };
   }
 
-  async getFailedLogs(company?: string, plant?: string) {
+  async getFailedLogs(organizationId?: number) {
     return this.interLogRepository.find({
-      where: { status: 'FAIL', ...this.tenantWhere(company, plant) },
+      where: { status: 'FAIL', ...this.tenantWhere(organizationId) },
       order: { createdAt: 'DESC' },
       take: 50,
     });
   }
 
-  async getRecentLogs(limit: number = 20, company?: string, plant?: string) {
+  async getRecentLogs(limit: number = 20, organizationId?: number) {
     return this.interLogRepository.find({
-      where: this.tenantWhere(company, plant),
+      where: this.tenantWhere(organizationId),
       order: { createdAt: 'DESC' },
       take: limit,
     });
@@ -592,10 +575,10 @@ export class InterfaceService {
    * 스케줄러용: PENDING 상태 BOM 동기화 로그를 조회 후 재시도
    * @returns 처리 건수
    */
-  async scheduledSyncBom(company?: string, plant?: string): Promise<{ affectedRows: number }> {
+  async scheduledSyncBom(organizationId?: number): Promise<{ affectedRows: number }> {
     try {
       const pendingLogs = await this.interLogRepository.find({
-        where: { status: 'PENDING', messageType: 'BOM_SYNC', ...this.tenantWhere(company, plant) },
+        where: { status: 'PENDING', messageType: 'BOM_SYNC', ...this.tenantWhere(organizationId) },
         order: { createdAt: 'ASC' },
         take: 50,
       });
@@ -610,13 +593,13 @@ export class InterfaceService {
         const logPk = {
           transDate: log.transDate,
           seq: log.seq,
-          ...this.tenantWhere(log.company, log.plant),
+          ...this.tenantWhere(log.organizationId),
         };
         try {
           if (log.payload) {
             const payload = JSON.parse(log.payload);
             if (payload.items && Array.isArray(payload.items)) {
-              await this.syncBom(payload.items, log.company ?? company, log.plant ?? plant);
+              await this.syncBom(payload.items, log.organizationId ?? organizationId);
             }
           }
           // 처리 완료 로그는 SUCCESS 로 전이한다.
@@ -682,9 +665,9 @@ export class InterfaceService {
    * 스케줄러용: 실패 로그를 자동 조회 후 bulkRetry() 호출
    * @returns 처리 건수
    */
-  async scheduledBulkRetry(company?: string, plant?: string): Promise<{ affectedRows: number }> {
+  async scheduledBulkRetry(organizationId?: number): Promise<{ affectedRows: number }> {
     try {
-      const failedLogs = await this.getFailedLogs(company, plant);
+      const failedLogs = await this.getFailedLogs(organizationId);
       if (!failedLogs || failedLogs.length === 0) {
         return { affectedRows: 0 };
       }
@@ -693,7 +676,7 @@ export class InterfaceService {
         transDate: l.transDate,
         seq: l.seq,
       }));
-      const results = await this.bulkRetry(keys, company, plant);
+      const results = await this.bulkRetry(keys, organizationId);
       return { affectedRows: Array.isArray(results) ? results.length : 0 };
     } catch (error: unknown) {
       this.logger.error(

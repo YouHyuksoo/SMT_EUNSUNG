@@ -24,16 +24,15 @@ export class JobMaterialLotService {
     private readonly matLotRepo: Repository<MatLot>,
   ) {}
 
-  private tenantWhere(company?: string | null, plant?: string | null) {
+  private tenantWhere(organizationId?: number | null) {
     return {
-      ...(company ? { company } : {}),
-      ...(plant ? { plant } : {}),
+      ...(organizationId != null ? { organizationId } : {}),
     };
   }
 
   /** 작업지시의 자재 롯트 목록 조회 */
-  async findByJobOrder(jobOrderNo: string, company?: string, plant?: string): Promise<JobMaterialLot[]> {
-    return this.repo.find({ where: { jobOrderNo, ...this.tenantWhere(company, plant) } });
+  async findByJobOrder(jobOrderNo: string, organizationId?: number): Promise<JobMaterialLot[]> {
+    return this.repo.find({ where: { jobOrderNo, ...this.tenantWhere(organizationId) } });
   }
 
   /**
@@ -44,10 +43,9 @@ export class JobMaterialLotService {
     jobOrderNo: string,
     dto: ScanBarcodeDto,
     bomItems: { itemCode: string; seq: number }[],
-    company?: string,
-    plant?: string,
+    organizationId?: number,
   ): Promise<JobMaterialLot> {
-    const tenantWhere = this.tenantWhere(company, plant);
+    const tenantWhere = this.tenantWhere(organizationId);
     const matLot = await this.matLotRepo.findOne({ where: { matUid: dto.matUid, ...tenantWhere } });
     if (!matLot) {
       throw new NotFoundException(`LOT를 찾을 수 없습니다: ${dto.matUid}`);
@@ -79,8 +77,7 @@ export class JobMaterialLotService {
         initQty: matLot.initQty,
         scannedBy: dto.scannedBy ?? null,
         scannedAt: new Date(),
-        company: company ?? null,
-        plant: plant ?? null,
+        organizationId: organizationId ?? null,
       });
       return await this.repo.save(record);
     } catch (err: unknown) {
@@ -100,7 +97,7 @@ export class JobMaterialLotService {
   }
 
   /** 특정 BOM 항목의 롯트 등록 취소 */
-  async remove(jobOrderNo: string, itemCode: string, seq: number, company?: string, plant?: string): Promise<void> {
-    await this.repo.delete({ jobOrderNo, itemCode, seq, ...this.tenantWhere(company, plant) });
+  async remove(jobOrderNo: string, itemCode: string, seq: number, organizationId?: number): Promise<void> {
+    await this.repo.delete({ jobOrderNo, itemCode, seq, ...this.tenantWhere(organizationId) });
   }
 }

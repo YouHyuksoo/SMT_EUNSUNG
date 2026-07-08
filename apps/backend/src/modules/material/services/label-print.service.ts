@@ -60,10 +60,9 @@ export class LabelPrintService {
     private readonly itemMasterRepo: Repository<ItemMaster>,
   ) {}
 
-  private tenantWhere(company?: string | null, plant?: string | null) {
+  private tenantWhere(organizationId?: number | null) {
     return {
-      ...(company ? { company } : {}),
-      ...(plant ? { plant } : {}),
+      ...(organizationId != null ? { organizationId } : {}),
     };
   }
 
@@ -72,7 +71,7 @@ export class LabelPrintService {
    * @param dto templateId + matUids
    * @returns zplDataList(치환된 ZPL 배열), lotDetails(LOT 정보 배열)
    */
-  async generateZpl(dto: GenerateZplDto, company?: string, plant?: string) {
+  async generateZpl(dto: GenerateZplDto, organizationId?: number) {
     // templateId는 "templateName::category" 형식
     const parts = dto.templateId.includes('::') ? dto.templateId.split('::') : [dto.templateId, undefined];
     const where: FindOptionsWhere<LabelTemplate> = parts[1]
@@ -92,7 +91,7 @@ export class LabelPrintService {
 
     // 배치 선조회: matUids → MatLot Map
     const matUids = dto.matUids as readonly string[];
-    const tenantWhere = this.tenantWhere(company, plant);
+    const tenantWhere = this.tenantWhere(organizationId);
     const lots = await this.matLotRepo.find({ where: { matUid: In([...matUids]), ...tenantWhere } });
     const lotMap = new Map(lots.map((l) => [l.matUid, l] as const));
 
@@ -199,13 +198,11 @@ export class LabelPrintService {
   /**
    * 라벨 발행 이력 저장
    * @param dto 발행 정보
-   * @param company 회사코드 (테넌트)
-   * @param plant 공장코드 (테넌트)
+   * @param organizationId 조직 ID (테넌트)
    */
   async createLog(
     dto: CreatePrintLogDto,
-    company?: string,
-    plant?: string,
+    organizationId?: number,
   ): Promise<LabelPrintLog> {
     const log = this.printLogRepo.create({
       printedAt: new Date(),
@@ -218,8 +215,7 @@ export class LabelPrintService {
       labelCount: dto.labelCount,
       status: dto.status ?? 'SUCCESS',
       errorMsg: dto.errorMsg ?? null,
-      company: company ?? null,
-      plant: plant ?? null,
+      organizationId: organizationId ?? null,
     });
 
     return this.printLogRepo.save(log);
@@ -228,10 +224,9 @@ export class LabelPrintService {
   /**
    * 발행 이력 조회 (페이지네이션)
    * @param query 필터 + 페이지네이션 파라미터
-   * @param company 회사코드 (테넌트)
-   * @param plant 공장코드 (테넌트)
+   * @param organizationId 조직 ID (테넌트)
    */
-  async findLogs(query: PrintLogQueryDto, company?: string, plant?: string) {
+  async findLogs(query: PrintLogQueryDto, organizationId?: number) {
     const {
       category,
       printMode,
@@ -245,8 +240,7 @@ export class LabelPrintService {
 
     const qb = this.printLogRepo.createQueryBuilder('log');
 
-    if (company) qb.andWhere('log.company = :company', { company });
-    if (plant) qb.andWhere('log.plant = :plant', { plant });
+    if (organizationId != null) qb.andWhere('log.organizationId = :organizationId', { organizationId });
     if (category) qb.andWhere('log.category = :category', { category });
     if (printMode) qb.andWhere('log.printMode = :printMode', { printMode });
     if (status) qb.andWhere('log.status = :status', { status });

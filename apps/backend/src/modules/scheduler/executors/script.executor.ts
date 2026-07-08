@@ -41,7 +41,7 @@ export class ScriptExecutor implements IJobExecutor {
    * @returns 실행 결과
    */
   async execute(job: SchedulerJob): Promise<ExecutorResult> {
-    const { execTarget, execParams, timeoutSec, company, plantCd } = job;
+    const { execTarget, execParams, timeoutSec, organizationId } = job;
 
     // 확장자 검증
     const ext = path.extname(execTarget).toLowerCase();
@@ -99,9 +99,7 @@ export class ScriptExecutor implements IJobExecutor {
         maxBuffer: 10 * 1024 * 1024, // 10MB
         env: {
           ...process.env,
-          SCHEDULER_COMPANY: company,
-          SCHEDULER_PLANT: plantCd,
-          SCHEDULER_PLANT_CD: plantCd,
+          SCHEDULER_ORGANIZATION_ID: String(organizationId),
         },
       });
 

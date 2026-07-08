@@ -36,10 +36,9 @@ export class ComCodeService {
     private readonly comCodeRepository: Repository<ComCode>,
   ) {}
 
-  private tenantWhere(company?: string, plant?: string) {
+  private tenantWhere(organizationId?: number) {
     return {
-      ...(company ? { company } : {}),
-      ...(plant ? { plant } : {}),
+      ...(organizationId != null ? { organizationId } : {}),
     };
   }
 
@@ -52,7 +51,7 @@ export class ComCodeService {
    * 전체 활성 코드를 groupCode별 그룹핑하여 반환
    * 프론트엔드에서 한 번의 호출로 모든 공통코드를 로드할 때 사용
    */
-  async findAllActive(company?: string, plant?: string): Promise<Record<string, Array<{
+  async findAllActive(organizationId?: number): Promise<Record<string, Array<{
     detailCode: string;
     codeName: string;
     codeDesc: string | null;
@@ -63,7 +62,7 @@ export class ComCodeService {
     defectGrade: string | null;
   }>>> {
     const codes = await this.comCodeRepository.find({
-      where: { useYn: 'Y', ...this.tenantWhere(company, plant) },
+      where: { useYn: 'Y', ...this.tenantWhere(organizationId) },
       order: { groupCode: 'asc', sortOrder: 'asc' },
       select: {
         groupCode: true,
@@ -103,7 +102,7 @@ export class ComCodeService {
   /**
    * 그룹 코드 목록 조회 (중복 제거)
    */
-  async findAllGroups(company?: string, plant?: string) {
+  async findAllGroups(organizationId?: number) {
     const queryBuilder = this.comCodeRepository.createQueryBuilder('code')
       .select('code.groupCode', 'groupCode')
       .addSelect('COUNT(*)', 'count')
@@ -115,11 +114,8 @@ export class ComCodeService {
       .groupBy('code.groupCode')
       .orderBy('code.groupCode', 'ASC');
 
-    if (company) {
-      queryBuilder.andWhere('code.company = :company', { company });
-    }
-    if (plant) {
-      queryBuilder.andWhere('code.plant = :plant', { plant });
+    if (organizationId != null) {
+      queryBuilder.andWhere('code.organizationId = :organizationId', { organizationId });
     }
 
     const groups = await queryBuilder.getRawMany();
@@ -142,17 +138,14 @@ export class ComCodeService {
   /**
    * 공통코드 목록 조회
    */
-  async findAll(query: ComCodeQueryDto, company?: string, plant?: string) {
+  async findAll(query: ComCodeQueryDto, organizationId?: number) {
     const { page = 1, limit = 10, groupCode, search, useYn } = query;
     const skip = (page - 1) * limit;
 
     const queryBuilder = this.comCodeRepository.createQueryBuilder('code');
 
-    if (company) {
-      queryBuilder.andWhere('code.company = :company', { company });
-    }
-    if (plant) {
-      queryBuilder.andWhere('code.plant = :plant', { plant });
+    if (organizationId != null) {
+      queryBuilder.andWhere('code.organizationId = :organizationId', { organizationId });
     }
 
     if (groupCode) {
@@ -187,9 +180,9 @@ export class ComCodeService {
   /**
    * 그룹 코드로 상세 코드 목록 조회
    */
-  async findByGroupCode(groupCode: string, company?: string, plant?: string) {
+  async findByGroupCode(groupCode: string, organizationId?: number) {
     return this.comCodeRepository.find({
-      where: { groupCode, useYn: 'Y', ...this.tenantWhere(company, plant) },
+      where: { groupCode, useYn: 'Y', ...this.tenantWhere(organizationId) },
       order: { sortOrder: 'asc' },
     });
   }
@@ -197,11 +190,11 @@ export class ComCodeService {
   /**
    * 공통코드 단건 조회 (ID)
    */
-  async findById(id: string, company?: string, plant?: string) {
+  async findById(id: string, organizationId?: number) {
     // id is composite key encoded as "groupCode::detailCode"
     const { groupCode, detailCode } = this.parseId(id);
     const code = await this.comCodeRepository.findOne({
-      where: { groupCode, detailCode, ...this.tenantWhere(company, plant) },
+      where: { groupCode, detailCode, ...this.tenantWhere(organizationId) },
     });
 
     if (!code) {
@@ -214,9 +207,9 @@ export class ComCodeService {
   /**
    * 공통코드 단건 조회 (그룹코드 + 상세코드)
    */
-  async findByCode(groupCode: string, detailCode: string, company?: string, plant?: string) {
+  async findByCode(groupCode: string, detailCode: string, organizationId?: number) {
     const code = await this.comCodeRepository.findOne({
-      where: { groupCode, detailCode, ...this.tenantWhere(company, plant) },
+      where: { groupCode, detailCode, ...this.tenantWhere(organizationId) },
     });
 
     if (!code) {
@@ -231,13 +224,13 @@ export class ComCodeService {
   /**
    * 공통코드 생성
    */
-  async create(dto: CreateComCodeDto, company?: string, plant?: string) {
+  async create(dto: CreateComCodeDto, organizationId?: number) {
     // 중복 체크
     const existing = await this.comCodeRepository.findOne({
       where: {
         groupCode: dto.groupCode,
         detailCode: dto.detailCode,
-        ...this.tenantWhere(company, plant),
+        ...this.tenantWhere(organizationId),
       },
     });
 
@@ -259,8 +252,7 @@ export class ComCodeService {
       attr2: dto.attr2,
       attr3: dto.attr3,
       defectGrade: dto.defectGrade ?? null,
-      company: company || null,
-      plant: plant || null,
+      organizationId,
     });
 
     return this.comCodeRepository.save(comCode);
@@ -269,8 +261,8 @@ export class ComCodeService {
   /**
    * 공통코드 수정
    */
-  async update(id: string, dto: UpdateComCodeDto, company?: string, plant?: string) {
-    await this.findById(id, company, plant); // 존재 확인
+  async update(id: string, dto: UpdateComCodeDto, organizationId?: number) {
+    await this.findById(id, organizationId); // 존재 확인
     const { groupCode, detailCode } = this.parseId(id);
 
     const updateData: Partial<Pick<ComCode, 'parentCode' | 'codeName' | 'codeDesc' | 'sortOrder' | 'useYn' | 'attr1' | 'attr2' | 'attr3' | 'defectGrade'>> = {};
@@ -285,30 +277,30 @@ export class ComCodeService {
     if (dto.defectGrade !== undefined) updateData.defectGrade = dto.defectGrade;
 
     await this.comCodeRepository.update(
-      { groupCode, detailCode, ...this.tenantWhere(company, plant) },
+      { groupCode, detailCode, ...this.tenantWhere(organizationId) },
       updateData,
     );
-    return this.findById(id, company, plant);
+    return this.findById(id, organizationId);
   }
 
   /**
    * 공통코드 삭제
    */
-  async delete(id: string, company?: string, plant?: string) {
-    await this.findById(id, company, plant); // 존재 확인
+  async delete(id: string, organizationId?: number) {
+    await this.findById(id, organizationId); // 존재 확인
     const { groupCode, detailCode } = this.parseId(id);
 
-    await this.comCodeRepository.delete({ groupCode, detailCode, ...this.tenantWhere(company, plant) });
+    await this.comCodeRepository.delete({ groupCode, detailCode, ...this.tenantWhere(organizationId) });
     return { id, deleted: true };
   }
 
   /**
    * 공통코드 일괄 삭제 (그룹 코드 기준)
    */
-  async deleteByGroupCode(groupCode: string, company?: string, plant?: string) {
+  async deleteByGroupCode(groupCode: string, organizationId?: number) {
     const result = await this.comCodeRepository.delete({
       groupCode,
-      ...this.tenantWhere(company, plant),
+      ...this.tenantWhere(organizationId),
     });
     return { count: result.affected || 0 };
   }

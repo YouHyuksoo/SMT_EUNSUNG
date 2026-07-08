@@ -16,24 +16,20 @@ export class ProdLineService {
     private readonly prodLineRepository: Repository<ProdLineMaster>,
   ) {}
 
-  private tenantWhere(company?: string, plant?: string) {
+  private tenantWhere(organizationId?: number) {
     return {
-      ...(company ? { company } : {}),
-      ...(plant ? { plant } : {}),
+      ...(organizationId != null ? { organizationId } : {}),
     };
   }
 
-  async findAll(query: ProdLineQueryDto, company?: string, plant?: string) {
+  async findAll(query: ProdLineQueryDto, organizationId?: number) {
     const { page = 1, limit = 50, search, useYn } = query;
     const skip = (page - 1) * limit;
 
     const queryBuilder = this.prodLineRepository.createQueryBuilder('prodLine')
 
-    if (company) {
-      queryBuilder.andWhere('prodLine.company = :company', { company });
-    }
-    if (plant) {
-      queryBuilder.andWhere('prodLine.plant = :plant', { plant });
+    if (organizationId != null) {
+      queryBuilder.andWhere('prodLine.organizationId = :organizationId', { organizationId });
     }
 
     if (useYn) {
@@ -60,17 +56,17 @@ export class ProdLineService {
     return { data, total, page, limit };
   }
 
-  async findById(lineCode: string, company?: string, plant?: string) {
+  async findById(lineCode: string, organizationId?: number) {
     const prodLine = await this.prodLineRepository.findOne({
-      where: { lineCode, ...this.tenantWhere(company, plant) },
+      where: { lineCode, ...this.tenantWhere(organizationId) },
     });
     if (!prodLine) throw new NotFoundException(`생산라인을 찾을 수 없습니다: ${lineCode}`);
     return prodLine;
   }
 
-  async create(dto: CreateProdLineDto, company?: string, plant?: string) {
+  async create(dto: CreateProdLineDto, organizationId?: number) {
     const existing = await this.prodLineRepository.findOne({
-      where: { lineCode: dto.lineCode, ...this.tenantWhere(company, plant) },
+      where: { lineCode: dto.lineCode, ...this.tenantWhere(organizationId) },
     });
     if (existing) throw new ConflictException(`이미 존재하는 라인 코드입니다: ${dto.lineCode}`);
 
@@ -83,15 +79,14 @@ export class ProdLineService {
       lineType: dto.lineType,
       remark: dto.remark,
       useYn: dto.useYn ?? 'Y',
-      company: company || null,
-      plant: plant || null,
+      organizationId,
     });
 
     return this.prodLineRepository.save(prodLine);
   }
 
-  async update(lineCode: string, dto: UpdateProdLineDto, company?: string, plant?: string) {
-    await this.findById(lineCode, company, plant);
+  async update(lineCode: string, dto: UpdateProdLineDto, organizationId?: number) {
+    await this.findById(lineCode, organizationId);
     const updateData: Partial<ProdLineMaster> = {
       ...(dto.lineName !== undefined ? { lineName: dto.lineName } : {}),
       ...(dto.whLoc !== undefined ? { whLoc: dto.whLoc } : {}),
@@ -101,13 +96,13 @@ export class ProdLineService {
       ...(dto.remark !== undefined ? { remark: dto.remark } : {}),
       ...(dto.useYn !== undefined ? { useYn: dto.useYn } : {}),
     };
-    await this.prodLineRepository.update({ lineCode, ...this.tenantWhere(company, plant) }, updateData);
-    return this.findById(lineCode, company, plant);
+    await this.prodLineRepository.update({ lineCode, ...this.tenantWhere(organizationId) }, updateData);
+    return this.findById(lineCode, organizationId);
   }
 
-  async delete(lineCode: string, company?: string, plant?: string) {
-    await this.findById(lineCode, company, plant);
-    await this.prodLineRepository.delete({ lineCode, ...this.tenantWhere(company, plant) });
+  async delete(lineCode: string, organizationId?: number) {
+    await this.findById(lineCode, organizationId);
+    await this.prodLineRepository.delete({ lineCode, ...this.tenantWhere(organizationId) });
     return { lineCode };
   }
 }

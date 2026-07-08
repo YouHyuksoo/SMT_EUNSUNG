@@ -11,15 +11,12 @@ export type DefectGrade = 'CRITICAL' | 'MAJOR' | 'MINOR';
 export type DefectScope = 'RAW_MATERIAL' | 'PRODUCT' | 'PROCESS' | 'COMMON';
 
 @Entity({ name: 'DEFECT_CODE_MASTERS' })
-@Index(['company', 'plant', 'categoryCode'])
-@Index(['company', 'plant', 'defectGrade'])
-@Index(['company', 'plant', 'defectScope'])
+@Index(['organizationId', 'categoryCode'])
+@Index(['organizationId', 'defectGrade'])
+@Index(['organizationId', 'defectScope'])
 export class DefectCodeMaster {
-  @PrimaryColumn({ type: 'varchar2', name: 'COMPANY', length: 50 })
-  company: string;
-
-  @PrimaryColumn({ type: 'varchar2', name: 'PLANT_CD', length: 50 })
-  plant: string;
+  @PrimaryColumn({ name: 'ORGANIZATION_ID', type: 'number' })
+  organizationId!: number;
 
   @PrimaryColumn({ type: 'varchar2', name: 'DEFECT_CODE', length: 50 })
   defectCode: string;

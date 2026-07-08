@@ -1,10 +1,10 @@
 /**
  * @file entities/process-capa.entity.ts
  * @description 공정x제품별 CAPA 마스터 엔티티 - 공정+품목 조합의 생산능력 정보를 관리한다.
- *              COMPANY + PLANT_CD + PROCESS_CODE + ITEM_CODE 복합키를 PK로 사용한다.
+ *              ORGANIZATION_ID + PROCESS_CODE + ITEM_CODE 복합키를 PK로 사용한다.
  *
  * 초보자 가이드:
- * 1. 복합 PK: (COMPANY, PLANT_CD, PROCESS_CODE, ITEM_CODE) — 공장별 공정x품목 CAPA 구분
+ * 1. 복합 PK: (ORGANIZATION_ID, PROCESS_CODE, ITEM_CODE) — 조직별 공정x품목 CAPA 구분
  * 2. STD_TACT_TIME: 표준 택트타임(초), STD_UPH: 시간당 생산량 (3600/택트타임 자동 계산)
  * 3. DAILY_CAPA: 일 생산능력 (UPH x 가동시간 x 인원/설비 수 x 밸런싱효율로 자동 계산)
  * 4. BALANCE_EFF: 밸런싱 효율(%), 기본 85%
@@ -26,11 +26,8 @@ import { ItemMaster } from './item-master.entity';
 @Entity({ name: 'PROCESS_CAPAS' })
 @Index(['useYn'])
 export class ProcessCapa {
-  @PrimaryColumn({ name: 'COMPANY', length: 50 })
-  company: string;
-
-  @PrimaryColumn({ name: 'PLANT_CD', length: 50 })
-  plant: string;
+  @PrimaryColumn({ name: 'ORGANIZATION_ID', type: 'number' })
+  organizationId!: number;
 
   @PrimaryColumn({ name: 'PROCESS_CODE', length: 50 })
   processCode: string;
@@ -84,16 +81,14 @@ export class ProcessCapa {
 
   @ManyToOne(() => ProcessMaster, { nullable: true })
   @JoinColumn([
-    { name: 'COMPANY', referencedColumnName: 'company' },
-    { name: 'PLANT_CD', referencedColumnName: 'plant' },
+    { name: 'ORGANIZATION_ID', referencedColumnName: 'organizationId' },
     { name: 'PROCESS_CODE', referencedColumnName: 'processCode' },
   ])
   process: ProcessMaster | null;
 
   @ManyToOne(() => ItemMaster, { nullable: true })
   @JoinColumn([
-    { name: 'COMPANY', referencedColumnName: 'company' },
-    { name: 'PLANT_CD', referencedColumnName: 'plant' },
+    { name: 'ORGANIZATION_ID', referencedColumnName: 'organizationId' },
     { name: 'ITEM_CODE', referencedColumnName: 'itemCode' },
   ])
   part: ItemMaster | null;

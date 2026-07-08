@@ -14,11 +14,8 @@ import { IqcItemPool } from './iqc-item-pool.entity';
 
 @Entity({ name: 'IQC_TEMPLATE_ITEMS' })
 export class IqcTemplateItem {
-  @PrimaryColumn({ type: 'varchar2', name: 'COMPANY', length: 50 })
-  company: string;
-
-  @PrimaryColumn({ type: 'varchar2', name: 'PLANT_CD', length: 50 })
-  plant: string;
+  @PrimaryColumn({ name: 'ORGANIZATION_ID', type: 'number' })
+  organizationId!: number;
 
   @PrimaryColumn({ name: 'TEMPLATE_ID', length: 50 })
   templateId: string;
@@ -79,16 +76,14 @@ export class IqcTemplateItem {
 
   @ManyToOne(() => IqcTemplate, (t) => t.items, { onDelete: 'CASCADE' })
   @JoinColumn([
-    { name: 'COMPANY', referencedColumnName: 'company' },
-    { name: 'PLANT_CD', referencedColumnName: 'plant' },
+    { name: 'ORGANIZATION_ID', referencedColumnName: 'organizationId' },
     { name: 'TEMPLATE_ID', referencedColumnName: 'templateId' },
   ])
   template: IqcTemplate;
 
   @ManyToOne(() => IqcItemPool, { eager: true })
   @JoinColumn([
-    { name: 'COMPANY', referencedColumnName: 'company' },
-    { name: 'PLANT_CD', referencedColumnName: 'plant' },
+    { name: 'ORGANIZATION_ID', referencedColumnName: 'organizationId' },
     { name: 'INSP_ITEM_CODE', referencedColumnName: 'inspItemCode' },
   ])
   inspItem: IqcItemPool;

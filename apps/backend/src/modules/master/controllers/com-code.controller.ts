@@ -12,7 +12,7 @@
   UseGuards,
 } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { Company, Plant } from '../../../common/decorators/tenant.decorator';
+import { OrganizationId } from '../../../common/decorators/tenant.decorator';
 import { ResponseUtil } from '../../../common/dto/response.dto';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { ComCodeQueryDto, CreateComCodeDto, UpdateComCodeDto } from '../dto/com-code.dto';
@@ -26,7 +26,7 @@ export class ComCodeController {
   @Get('all-active')
   @ApiOperation({ summary: 'Get all active common codes grouped by groupCode' })
   @ApiResponse({ status: 200, description: 'OK' })
-  async findAllActive(@Company() company?: string, @Plant() plant?: string) {
+  async findAllActive(@OrganizationId() organizationId?: number) {
     const data = await this.comCodeService.findAllActive(company, plant);
     return ResponseUtil.success(data);
   }
@@ -34,7 +34,7 @@ export class ComCodeController {
   @Get('groups')
   @ApiOperation({ summary: 'Get all code groups' })
   @ApiResponse({ status: 200, description: 'OK' })
-  async findAllGroups(@Company() company?: string, @Plant() plant?: string) {
+  async findAllGroups(@OrganizationId() organizationId?: number) {
     const data = await this.comCodeService.findAllGroups(company, plant);
     return ResponseUtil.success(data);
   }
@@ -45,10 +45,9 @@ export class ComCodeController {
   @ApiResponse({ status: 200, description: 'OK' })
   async findByGroupCode(
     @Param('groupCode') groupCode: string,
-    @Company() company?: string,
-    @Plant() plant?: string,
+    @OrganizationId() organizationId?: number,
   ) {
-    const data = await this.comCodeService.findByGroupCode(groupCode, company, plant);
+    const data = await this.comCodeService.findByGroupCode(groupCode, organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -57,10 +56,9 @@ export class ComCodeController {
   @ApiResponse({ status: 200, description: 'OK' })
   async findAll(
     @Query() query: ComCodeQueryDto,
-    @Company() company?: string,
-    @Plant() plant?: string,
+    @OrganizationId() organizationId?: number,
   ) {
-    const result = await this.comCodeService.findAll(query, company, plant);
+    const result = await this.comCodeService.findAll(query, organizationId);
     return ResponseUtil.paged(result.data, result.total, result.page, result.limit);
   }
 
@@ -69,8 +67,8 @@ export class ComCodeController {
   @ApiParam({ name: 'id' })
   @ApiResponse({ status: 200, description: 'OK' })
   @ApiResponse({ status: 404, description: 'Not found' })
-  async findById(@Param('id') id: string, @Company() company?: string, @Plant() plant?: string) {
-    const data = await this.comCodeService.findById(id, company, plant);
+  async findById(@Param('id') id: string, @OrganizationId() organizationId?: number) {
+    const data = await this.comCodeService.findById(id, organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -80,10 +78,9 @@ export class ComCodeController {
   @ApiResponse({ status: 201, description: 'Created' })
   async create(
     @Body() dto: CreateComCodeDto,
-    @Company() company?: string,
-    @Plant() plant?: string,
+    @OrganizationId() organizationId?: number,
   ) {
-    const data = await this.comCodeService.create(dto, company, plant);
+    const data = await this.comCodeService.create(dto, organizationId);
     return ResponseUtil.success(data, 'Common code created');
   }
 
@@ -94,10 +91,9 @@ export class ComCodeController {
   async update(
     @Param('id') id: string,
     @Body() dto: UpdateComCodeDto,
-    @Company() company?: string,
-    @Plant() plant?: string,
+    @OrganizationId() organizationId?: number,
   ) {
-    const data = await this.comCodeService.update(id, dto, company, plant);
+    const data = await this.comCodeService.update(id, dto, organizationId);
     return ResponseUtil.success(data, 'Common code updated');
   }
 
@@ -106,8 +102,8 @@ export class ComCodeController {
   @ApiOperation({ summary: 'Delete common code' })
   @ApiParam({ name: 'id' })
   @ApiResponse({ status: 200, description: 'OK' })
-  async delete(@Param('id') id: string, @Company() company?: string, @Plant() plant?: string) {
-    await this.comCodeService.delete(id, company, plant);
+  async delete(@Param('id') id: string, @OrganizationId() organizationId?: number) {
+    await this.comCodeService.delete(id, organizationId);
     return ResponseUtil.success(null, 'Common code deleted');
   }
 
@@ -118,10 +114,9 @@ export class ComCodeController {
   @ApiResponse({ status: 200, description: 'OK' })
   async deleteByGroupCode(
     @Param('groupCode') groupCode: string,
-    @Company() company?: string,
-    @Plant() plant?: string,
+    @OrganizationId() organizationId?: number,
   ) {
-    const result = await this.comCodeService.deleteByGroupCode(groupCode, company, plant);
+    const result = await this.comCodeService.deleteByGroupCode(groupCode, organizationId);
     return ResponseUtil.success(result, `${result.count} codes deleted`);
   }
 }

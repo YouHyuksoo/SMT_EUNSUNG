@@ -38,12 +38,12 @@ describe('PpapService', () => {
     });
 
     it('scopes PPAP lookup by tenant', async () => {
-      mockRepo.findOne.mockResolvedValue({ ppapNo: 'PPAP-001', company: 'CO', plant: 'P01' } as any);
+      mockRepo.findOne.mockResolvedValue({ ppapNo: 'PPAP-001', organizationId: 1 } as any);
 
-      await target.findById('PPAP-001', 'CO', 'P01');
+      await target.findById('PPAP-001', 1);
 
       expect(mockRepo.findOne).toHaveBeenCalledWith({
-        where: { ppapNo: 'PPAP-001', company: 'CO', plant: 'P01' },
+        where: { ppapNo: 'PPAP-001', organizationId: 1 },
       });
     });
   });
@@ -62,37 +62,35 @@ describe('PpapService', () => {
     });
 
     it('rejects submit when PPAP belongs to a different tenant', async () => {
-      mockRepo.findOne.mockResolvedValue({ ppapNo: 'PPAP-001', status: 'DRAFT', company: 'OTHER', plant: 'P01' } as any);
-      await expect(target.submit('PPAP-001', 'user', 'CO', 'P01')).rejects.toThrow(BadRequestException);
+      mockRepo.findOne.mockResolvedValue({ ppapNo: 'PPAP-001', status: 'DRAFT', organizationId: 2 } as any);
+      await expect(target.submit('PPAP-001', 'user', 1)).rejects.toThrow(BadRequestException);
       expect(mockRepo.save).not.toHaveBeenCalled();
     });
   });
 
   describe('update', () => {
     it('should keep tenant and ppap key columns from the matched submission when update payload contains them', async () => {
-      const item = { ppapNo: 'PPAP-001', itemCode: 'ITEM-OLD', status: 'DRAFT', company: 'CO', plant: 'P01' } as PpapSubmission;
+      const item = { ppapNo: 'PPAP-001', itemCode: 'ITEM-OLD', status: 'DRAFT', organizationId: 1 } as PpapSubmission;
       mockRepo.findOne.mockResolvedValue(item);
       mockRepo.save.mockImplementation(async (value) => value as PpapSubmission);
 
       const result = await target.update('PPAP-001', {
         ppapNo: 'PPAP-999',
         itemCode: 'ITEM-NEW',
-        company: 'OTHER',
-        plant: 'P99',
+        organizationId: 2,
       } as any, 'user');
 
       expect(result).toEqual(expect.objectContaining({
         ppapNo: 'PPAP-001',
         itemCode: 'ITEM-NEW',
-        company: 'CO',
-        plant: 'P01',
+        organizationId: 1,
         updatedBy: 'user',
       }));
     });
 
     it('rejects update when PPAP belongs to a different tenant', async () => {
-      mockRepo.findOne.mockResolvedValue({ ppapNo: 'PPAP-001', status: 'DRAFT', company: 'OTHER', plant: 'P01' } as any);
-      await expect(target.update('PPAP-001', {} as any, 'user', 'CO', 'P01')).rejects.toThrow(BadRequestException);
+      mockRepo.findOne.mockResolvedValue({ ppapNo: 'PPAP-001', status: 'DRAFT', organizationId: 2 } as any);
+      await expect(target.update('PPAP-001', {} as any, 'user', 1)).rejects.toThrow(BadRequestException);
       expect(mockRepo.save).not.toHaveBeenCalled();
     });
   });
@@ -107,8 +105,8 @@ describe('PpapService', () => {
     });
 
     it('rejects approve when PPAP belongs to a different tenant', async () => {
-      mockRepo.findOne.mockResolvedValue({ ppapNo: 'PPAP-001', status: 'SUBMITTED', company: 'OTHER', plant: 'P01' } as any);
-      await expect(target.approve('PPAP-001', 'user', 'CO', 'P01')).rejects.toThrow(BadRequestException);
+      mockRepo.findOne.mockResolvedValue({ ppapNo: 'PPAP-001', status: 'SUBMITTED', organizationId: 2 } as any);
+      await expect(target.approve('PPAP-001', 'user', 1)).rejects.toThrow(BadRequestException);
       expect(mockRepo.save).not.toHaveBeenCalled();
     });
   });
@@ -123,8 +121,8 @@ describe('PpapService', () => {
     });
 
     it('rejects reject when PPAP belongs to a different tenant', async () => {
-      mockRepo.findOne.mockResolvedValue({ ppapNo: 'PPAP-001', status: 'SUBMITTED', company: 'OTHER', plant: 'P01' } as any);
-      await expect(target.reject('PPAP-001', 'reason', 'user', 'CO', 'P01')).rejects.toThrow(BadRequestException);
+      mockRepo.findOne.mockResolvedValue({ ppapNo: 'PPAP-001', status: 'SUBMITTED', organizationId: 2 } as any);
+      await expect(target.reject('PPAP-001', 'reason', 'user', 1)).rejects.toThrow(BadRequestException);
       expect(mockRepo.save).not.toHaveBeenCalled();
     });
   });
@@ -148,22 +146,22 @@ describe('PpapService', () => {
     });
 
     it('rejects delete when PPAP belongs to a different tenant', async () => {
-      mockRepo.findOne.mockResolvedValue({ ppapNo: 'PPAP-001', status: 'DRAFT', company: 'OTHER', plant: 'P01' } as any);
-      await expect(target.delete('PPAP-001', 'CO', 'P01')).rejects.toThrow(BadRequestException);
+      mockRepo.findOne.mockResolvedValue({ ppapNo: 'PPAP-001', status: 'DRAFT', organizationId: 2 } as any);
+      await expect(target.delete('PPAP-001', 1)).rejects.toThrow(BadRequestException);
       expect(mockRepo.remove).not.toHaveBeenCalled();
     });
   });
 
   describe('cancel transitions', () => {
     it('rejects cancelApproval when PPAP belongs to a different tenant', async () => {
-      mockRepo.findOne.mockResolvedValue({ ppapNo: 'PPAP-001', status: 'APPROVED', company: 'OTHER', plant: 'P01' } as any);
-      await expect(target.cancelApproval('PPAP-001', 'user', 'CO', 'P01')).rejects.toThrow(BadRequestException);
+      mockRepo.findOne.mockResolvedValue({ ppapNo: 'PPAP-001', status: 'APPROVED', organizationId: 2 } as any);
+      await expect(target.cancelApproval('PPAP-001', 'user', 1)).rejects.toThrow(BadRequestException);
       expect(mockRepo.save).not.toHaveBeenCalled();
     });
 
     it('rejects cancelSubmit when PPAP belongs to a different tenant', async () => {
-      mockRepo.findOne.mockResolvedValue({ ppapNo: 'PPAP-001', status: 'SUBMITTED', company: 'OTHER', plant: 'P01' } as any);
-      await expect(target.cancelSubmit('PPAP-001', 'user', 'CO', 'P01')).rejects.toThrow(BadRequestException);
+      mockRepo.findOne.mockResolvedValue({ ppapNo: 'PPAP-001', status: 'SUBMITTED', organizationId: 2 } as any);
+      await expect(target.cancelSubmit('PPAP-001', 'user', 1)).rejects.toThrow(BadRequestException);
       expect(mockRepo.save).not.toHaveBeenCalled();
     });
   });

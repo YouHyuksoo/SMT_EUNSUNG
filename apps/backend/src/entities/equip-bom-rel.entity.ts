@@ -45,11 +45,8 @@ export class EquipBomRel {
   @Column({ name: 'USE_YN', length: 1, default: 'Y' })
   useYn: string;
 
-  @Column({ type: 'varchar2', name: 'COMPANY', length: 50 })
-  company: string;
-
-  @Column({ type: 'varchar2', name: 'PLANT_CD', length: 50 })
-  plant: string;
+  @Column({ name: 'ORGANIZATION_ID', type: 'number' })
+  organizationId!: number;
 
   @Column({ type: 'varchar2', name: 'CREATED_BY', length: 50, nullable: true })
   createdBy: string | null;
@@ -66,8 +63,7 @@ export class EquipBomRel {
   // Relations
   @ManyToOne(() => EquipMaster, (equip) => equip.bomRels, { onDelete: 'CASCADE' })
   @JoinColumn([
-    { name: 'COMPANY', referencedColumnName: 'company' },
-    { name: 'PLANT_CD', referencedColumnName: 'plant' },
+    { name: 'ORGANIZATION_ID', referencedColumnName: 'organizationId' },
     { name: 'EQUIP_CODE', referencedColumnName: 'equipCode' },
   ])
   equipment: EquipMaster;

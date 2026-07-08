@@ -9,7 +9,7 @@
  */
 import { Body, Controller, Get, HttpCode, HttpStatus, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
-import { Company, Plant } from '../../../common/decorators/tenant.decorator';
+import { OrganizationId } from '../../../common/decorators/tenant.decorator';
 import { ResponseUtil } from '../../../common/dto/response.dto';
 import { JwtAuthGuard, AuthenticatedRequest } from '../../../common/guards/jwt-auth.guard';
 import { MountMaterialDto, UnmountMaterialDto } from '../dto/equip-material.dto';
@@ -26,15 +26,13 @@ export class EquipMaterialController {
   @ApiOperation({ summary: '자재 LOT를 설비에 장착 — MAT_LOTS 잔량 전량을 WIP_MAT_STOCKS로 이동' })
   async mount(
     @Body() dto: MountMaterialDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
     @Req() req: AuthenticatedRequest,
   ) {
     const data = await this.svc.mount(
       dto.equipCode,
       dto.matUid,
-      company,
-      plant,
+      organizationId,
       req.user?.id ?? 'system',
     );
     return ResponseUtil.success(data, '자재가 설비에 장착되었습니다.');
@@ -45,10 +43,9 @@ export class EquipMaterialController {
   @ApiQuery({ name: 'equipCode', required: true, description: '설비 코드' })
   async listMounted(
     @Query('equipCode') equipCode: string,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.svc.listMounted(equipCode, company, plant);
+    const data = await this.svc.listMounted(equipCode, organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -57,10 +54,9 @@ export class EquipMaterialController {
   @ApiQuery({ name: 'equipCode', required: true, description: '설비 코드' })
   async listProcWaiting(
     @Query('equipCode') equipCode: string,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.svc.listProcWaiting(equipCode, company, plant);
+    const data = await this.svc.listProcWaiting(equipCode, organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -69,10 +65,9 @@ export class EquipMaterialController {
   @ApiOperation({ summary: '설비 자재 해제 — WIP_MAT_STOCKS 잔량을 MAT_LOTS로 복원' })
   async unmount(
     @Body() dto: UnmountMaterialDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    await this.svc.unmount(dto.equipCode, dto.matUid, company, plant);
+    await this.svc.unmount(dto.equipCode, dto.matUid, organizationId);
     return ResponseUtil.success(null, '자재가 설비에서 해제되었습니다.');
   }
 }

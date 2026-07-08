@@ -64,14 +64,14 @@ describe('CustomerOrderService', () => {
       await expect(target.findById('X')).rejects.toThrow(NotFoundException);
     });
     it('should enrich order items with part names within tenant only', async () => {
-      mockOrderRepo.findOne.mockResolvedValue({ orderNo: 'CO-001', company: 'C1', plant: 'P1' } as any);
-      mockItemRepo.find.mockResolvedValue([{ orderNo: 'CO-001', itemCode: 'ITEM-001', company: 'C1', plant: 'P1' }] as any);
+      mockOrderRepo.findOne.mockResolvedValue({ orderNo: 'CO-001', organizationId: 1 } as any);
+      mockItemRepo.find.mockResolvedValue([{ orderNo: 'CO-001', itemCode: 'ITEM-001', organizationId: 1 }] as any);
       mockPartRepo.find.mockResolvedValue([{ itemCode: 'ITEM-001', itemName: 'Part A' }] as any);
 
-      await target.findById('CO-001', 'C1', 'P1');
+      await target.findById('CO-001', 1);
 
       expect(mockPartRepo.find).toHaveBeenCalledWith({
-        where: { itemCode: expect.anything(), company: 'C1', plant: 'P1' },
+        where: { itemCode: expect.anything(), organizationId: 1 },
         select: ['itemCode', 'itemName'],
       });
     });
@@ -95,24 +95,24 @@ describe('CustomerOrderService', () => {
     };
 
     it('화면 수정 URL에서 사용할 id로 orderNo를 함께 반환한다', async () => {
-      mockListQb([{ orderNo: 'CO-001', company: 'C1', plant: 'P1' }]);
+      mockListQb([{ orderNo: 'CO-001', organizationId: 1 }]);
       mockItemRepo.find.mockResolvedValue([]);
       mockPartRepo.find.mockResolvedValue([]);
 
-      const result = await target.findAll({} as any, 'C1', 'P1');
+      const result = await target.findAll({} as any, 1);
 
       expect(result.data[0]).toEqual(expect.objectContaining({ id: 'CO-001', orderNo: 'CO-001' }));
     });
 
     it('should enrich listed order items with part names within tenant only', async () => {
-      mockListQb([{ orderNo: 'CO-001', company: 'C1', plant: 'P1' }]);
-      mockItemRepo.find.mockResolvedValue([{ orderNo: 'CO-001', itemCode: 'ITEM-001', company: 'C1', plant: 'P1' }] as any);
+      mockListQb([{ orderNo: 'CO-001', organizationId: 1 }]);
+      mockItemRepo.find.mockResolvedValue([{ orderNo: 'CO-001', itemCode: 'ITEM-001', organizationId: 1 }] as any);
       mockPartRepo.find.mockResolvedValue([{ itemCode: 'ITEM-001', itemName: 'Part A' }] as any);
 
-      await target.findAll({} as any, 'C1', 'P1');
+      await target.findAll({} as any, 1);
 
       expect(mockPartRepo.find).toHaveBeenCalledWith({
-        where: { itemCode: expect.anything(), company: 'C1', plant: 'P1' },
+        where: { itemCode: expect.anything(), organizationId: 1 },
         select: ['itemCode', 'itemName'],
       });
     });
@@ -160,8 +160,8 @@ describe('CustomerOrderService', () => {
 
     it('should preserve tenant columns when replacing items', async () => {
       mockOrderRepo.findOne
-        .mockResolvedValueOnce({ orderNo: 'CO-001', status: 'RECEIVED', company: 'C1', plant: 'P1' } as any)
-        .mockResolvedValueOnce({ orderNo: 'CO-001', status: 'RECEIVED', company: 'C1', plant: 'P1' } as any);
+        .mockResolvedValueOnce({ orderNo: 'CO-001', status: 'RECEIVED', organizationId: 1 } as any)
+        .mockResolvedValueOnce({ orderNo: 'CO-001', status: 'RECEIVED', organizationId: 1 } as any);
       mockItemRepo.find.mockResolvedValue([]);
       mockItemRepo.create.mockImplementation((payload) => payload as any);
       mockPartRepo.find.mockResolvedValue([]);
@@ -169,15 +169,13 @@ describe('CustomerOrderService', () => {
       await target.update(
         'CO-001',
         { items: [{ itemCode: 'ITEM-1', orderQty: 3 }] } as any,
-        'C1',
-        'P1',
+        1,
       );
 
       expect(mockItemRepo.create).toHaveBeenCalledWith(expect.objectContaining({
         orderNo: 'CO-001',
         itemCode: 'ITEM-1',
-        company: 'C1',
-        plant: 'P1',
+        organizationId: 1,
       }));
     });
   });
@@ -211,11 +209,11 @@ describe('CustomerOrderService', () => {
     it('should preserve tenant columns when creating items', async () => {
       mockOrderRepo.findOne
         .mockResolvedValueOnce(null)
-        .mockResolvedValueOnce({ orderNo: 'CO-001', status: 'RECEIVED', company: 'C1', plant: 'P1' } as any);
-      mockOrderRepo.create.mockReturnValue({ orderNo: 'CO-001', company: 'C1', plant: 'P1' } as any);
+        .mockResolvedValueOnce({ orderNo: 'CO-001', status: 'RECEIVED', organizationId: 1 } as any);
+      mockOrderRepo.create.mockReturnValue({ orderNo: 'CO-001', organizationId: 1 } as any);
       mockItemRepo.create.mockImplementation((payload) => payload as any);
       mockQr.manager.save
-        .mockResolvedValueOnce({ orderNo: 'CO-001', company: 'C1', plant: 'P1' } as any)
+        .mockResolvedValueOnce({ orderNo: 'CO-001', organizationId: 1 } as any)
         .mockResolvedValueOnce([] as any);
       mockItemRepo.find.mockResolvedValue([]);
       mockPartRepo.find.mockResolvedValue([]);
@@ -227,15 +225,13 @@ describe('CustomerOrderService', () => {
           customerName: 'Customer',
           items: [{ itemCode: 'ITEM-1', orderQty: 1 }],
         } as any,
-        'C1',
-        'P1',
+        1,
       );
 
       expect(mockItemRepo.create).toHaveBeenCalledWith(expect.objectContaining({
         orderNo: 'CO-001',
         itemCode: 'ITEM-1',
-        company: 'C1',
-        plant: 'P1',
+        organizationId: 1,
       }));
     });
   });

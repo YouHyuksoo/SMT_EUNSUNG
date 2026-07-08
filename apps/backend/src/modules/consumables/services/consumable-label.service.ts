@@ -43,31 +43,28 @@ export class ConsumableLabelService {
     private readonly printLogRepo: Repository<LabelPrintLog>,
   ) {}
 
-  private masterTenantWhere(company?: string, plant?: string) {
+  private masterTenantWhere(organizationId?: number) {
     return {
-      ...(company && { company }),
-      ...(plant && { plant }),
+      ...(organizationId != null ? { organizationId } : {}),
     };
   }
 
-  private stockTenantWhere(company?: string, plant?: string) {
+  private stockTenantWhere(organizationId?: number) {
     return {
-      ...(company && { company }),
-      ...(plant && { plantCd: plant }),
+      ...(organizationId != null ? { organizationId } : {}),
     };
   }
 
   /** 라벨 발행 가능 마스터 목록 + 기존 인스턴스 수 */
-  async findLabelableConsumables(company?: string, plant?: string) {
+  async findLabelableConsumables(organizationId?: number) {
     const masters = await this.masterRepo.find({
-      where: { useYn: 'Y', ...this.masterTenantWhere(company, plant) },
+      where: { useYn: 'Y', ...this.masterTenantWhere(organizationId) },
       order: { consumableCode: 'ASC' },
     });
 
     const instanceCounts = await this.stockRepo
       .createQueryBuilder('s')
-      .where(company ? 's.company = :company' : '1=1', { company })
-      .andWhere(plant ? 's.plantCd = :plant' : '1=1', { plant })
+      .where(organizationId != null ? 's.organizationId = :organizationId' : '1=1', { organizationId })
       .select('s.consumableCode', 'consumableCode')
       .addSelect('COUNT(*)', 'totalCount')
       .addSelect("SUM(CASE WHEN s.status = 'PENDING' THEN 1 ELSE 0 END)", 'pendingCount')
@@ -98,9 +95,9 @@ export class ConsumableLabelService {
   }
 
   /** conUid 채번 + ConsumableStock(PENDING) 생성 + LabelPrintLog */
-  async createConLabels(dto: CreateConLabelsDto, company?: string, plant?: string): Promise<ConLabelResultDto[]> {
+  async createConLabels(dto: CreateConLabelsDto, organizationId?: number): Promise<ConLabelResultDto[]> {
     const master = await this.masterRepo.findOne({
-      where: { consumableCode: dto.consumableCode, ...this.masterTenantWhere(company, plant) },
+      where: { consumableCode: dto.consumableCode, ...this.masterTenantWhere(organizationId) },
     });
     if (!master) throw new NotFoundException('소모품 마스터를 찾을 수 없습니다.');
 
@@ -117,8 +114,7 @@ export class ConsumableLabelService {
           vendorCode: dto.vendorCode ?? null,
           vendorName: dto.vendorName ?? null,
           unitPrice: dto.unitPrice ?? master.unitPrice ?? null,
-          company: company ?? null,
-          plantCd: plant ?? null,
+          organizationId: organizationId ?? null,
         });
         await queryRunner.manager.save(stock);
 
@@ -137,8 +133,7 @@ export class ConsumableLabelService {
         uidList: JSON.stringify(results.map((r) => r.conUid)),
         labelCount: dto.qty,
         status: 'SUCCESS',
-        company,
-        plant,
+        organizationId,
       });
       await queryRunner.manager.save(log);
 
@@ -147,14 +142,14 @@ export class ConsumableLabelService {
   }
 
   /** PENDING 상태 UID 목록 */
-  async findPendingStocks(company?: string, plant?: string) {
+  async findPendingStocks(organizationId?: number) {
     const stocks = await this.stockRepo.find({
-      where: { status: 'PENDING', ...this.stockTenantWhere(company, plant) },
+      where: { status: 'PENDING', ...this.stockTenantWhere(organizationId) },
       order: { createdAt: 'DESC' },
     });
 
     const masters = await this.masterRepo.find({
-      where: this.masterTenantWhere(company, plant),
+      where: this.masterTenantWhere(organizationId),
     });
     const masterMap = new Map(masters.map((m) => [m.consumableCode, m]));
 
@@ -174,9 +169,9 @@ export class ConsumableLabelService {
   }
 
   /** 단건 입고 확정: PENDING → ACTIVE */
-  async confirmReceiving(dto: ConfirmConReceivingDto, company?: string, plant?: string) {
+  async confirmReceiving(dto: ConfirmConReceivingDto, organizationId?: number) {
     const stock = await this.stockRepo.findOne({
-      where: { conUid: dto.conUid, ...this.stockTenantWhere(company, plant) },
+      where: { conUid: dto.conUid, ...this.stockTenantWhere(organizationId) },
     });
     if (!stock) throw new NotFoundException(`UID ${dto.conUid}를 찾을 수 없습니다.`);
     if (stock.status !== 'PENDING') {
@@ -192,7 +187,7 @@ export class ConsumableLabelService {
 
       await queryRunner.manager.increment(
         ConsumableMaster,
-        { consumableCode: stock.consumableCode, ...this.masterTenantWhere(company, plant) },
+        { consumableCode: stock.consumableCode, ...this.masterTenantWhere(organizationId) },
         'stockQty',
         1,
       );
@@ -215,13 +210,12 @@ export class ConsumableLabelService {
         vendorName: stock.vendorName,
         unitPrice: stock.unitPrice,
         incomingType: 'NEW',
-        company: company ?? null,
-        plant: plant ?? null,
+        organizationId: organizationId ?? null,
       });
       await queryRunner.manager.save(log);
 
       const master = await this.masterRepo.findOne({
-        where: { consumableCode: stock.consumableCode, ...this.masterTenantWhere(company, plant) },
+        where: { consumableCode: stock.consumableCode, ...this.masterTenantWhere(organizationId) },
       });
 
       return {
@@ -235,9 +229,9 @@ export class ConsumableLabelService {
   }
 
   /** 단건 반납입고 (바코드 스캔): ACTIVE → IN_RETURN 로그 */
-  async returnByScan(dto: ReturnConReceivingDto, company?: string, plant?: string) {
+  async returnByScan(dto: ReturnConReceivingDto, organizationId?: number) {
     const stock = await this.stockRepo.findOne({
-      where: { conUid: dto.conUid, ...this.stockTenantWhere(company, plant) },
+      where: { conUid: dto.conUid, ...this.stockTenantWhere(organizationId) },
     });
     if (!stock) throw new NotFoundException(`UID ${dto.conUid}를 찾을 수 없습니다.`);
     if (stock.status !== 'ACTIVE') {
@@ -251,7 +245,7 @@ export class ConsumableLabelService {
 
       await queryRunner.manager.decrement(
         ConsumableMaster,
-        { consumableCode: stock.consumableCode, ...this.masterTenantWhere(company, plant) },
+        { consumableCode: stock.consumableCode, ...this.masterTenantWhere(organizationId) },
         'stockQty',
         1,
       );
@@ -274,13 +268,12 @@ export class ConsumableLabelService {
         vendorName: stock.vendorName,
         unitPrice: stock.unitPrice,
         returnReason: dto.returnReason ?? null,
-        company: company ?? null,
-        plant: plant ?? null,
+        organizationId: organizationId ?? null,
       });
       await queryRunner.manager.save(log);
 
       const master = await this.masterRepo.findOne({
-        where: { consumableCode: stock.consumableCode, ...this.masterTenantWhere(company, plant) },
+        where: { consumableCode: stock.consumableCode, ...this.masterTenantWhere(organizationId) },
       });
 
       return {
@@ -293,14 +286,14 @@ export class ConsumableLabelService {
   }
 
   /** 단건 출고 (바코드 스캔): ACTIVE → PROC_WAIT */
-  async issueByScan(dto: IssueConDto, company?: string, plant?: string) {
+  async issueByScan(dto: IssueConDto, organizationId?: number) {
     const processCode = dto.processCode?.trim();
     if (!processCode) {
       throw new BadRequestException('소모품 출고 대상 공정을 선택해야 합니다.');
     }
 
     const stock = await this.stockRepo.findOne({
-      where: { conUid: dto.conUid, ...this.stockTenantWhere(company, plant) },
+      where: { conUid: dto.conUid, ...this.stockTenantWhere(organizationId) },
     });
     if (!stock) throw new NotFoundException(`UID ${dto.conUid}를 찾을 수 없습니다.`);
     if (stock.status !== 'ACTIVE') {
@@ -316,7 +309,7 @@ export class ConsumableLabelService {
 
       await queryRunner.manager.decrement(
         ConsumableMaster,
-        { consumableCode: stock.consumableCode, ...this.masterTenantWhere(company, plant) },
+        { consumableCode: stock.consumableCode, ...this.masterTenantWhere(organizationId) },
         'stockQty',
         1,
       );
@@ -338,13 +331,12 @@ export class ConsumableLabelService {
         processCode,
         department: dto.department ?? null,
         issueReason: dto.issueReason ?? null,
-        company: company ?? null,
-        plant: plant ?? null,
+        organizationId: organizationId ?? null,
       });
       await queryRunner.manager.save(log);
 
       const master = await this.masterRepo.findOne({
-        where: { consumableCode: stock.consumableCode, ...this.masterTenantWhere(company, plant) },
+        where: { consumableCode: stock.consumableCode, ...this.masterTenantWhere(organizationId) },
       });
 
       return {
@@ -358,9 +350,9 @@ export class ConsumableLabelService {
   }
 
   /** 단건 출고취소 (바코드 스캔): PROC_WAIT → ACTIVE */
-  async issueReturnByScan(dto: IssueReturnConDto, company?: string, plant?: string) {
+  async issueReturnByScan(dto: IssueReturnConDto, organizationId?: number) {
     const stock = await this.stockRepo.findOne({
-      where: { conUid: dto.conUid, ...this.stockTenantWhere(company, plant) },
+      where: { conUid: dto.conUid, ...this.stockTenantWhere(organizationId) },
     });
     if (!stock) throw new NotFoundException(`UID ${dto.conUid}를 찾을 수 없습니다.`);
     if (stock.status !== 'PROC_WAIT') {
@@ -377,7 +369,7 @@ export class ConsumableLabelService {
 
       await queryRunner.manager.increment(
         ConsumableMaster,
-        { consumableCode: stock.consumableCode, ...this.masterTenantWhere(company, plant) },
+        { consumableCode: stock.consumableCode, ...this.masterTenantWhere(organizationId) },
         'stockQty',
         1,
       );
@@ -398,13 +390,12 @@ export class ConsumableLabelService {
         conUid: stock.conUid,
         processCode,
         returnReason: dto.returnReason ?? null,
-        company: company ?? null,
-        plant: plant ?? null,
+        organizationId: organizationId ?? null,
       });
       await queryRunner.manager.save(log);
 
       const master = await this.masterRepo.findOne({
-        where: { consumableCode: stock.consumableCode, ...this.masterTenantWhere(company, plant) },
+        where: { consumableCode: stock.consumableCode, ...this.masterTenantWhere(organizationId) },
       });
 
       return {
@@ -418,13 +409,13 @@ export class ConsumableLabelService {
   }
 
   /** 다건 입고 확정 */
-  async bulkConfirmReceiving(dto: BulkConfirmConReceivingDto, company?: string, plant?: string) {
+  async bulkConfirmReceiving(dto: BulkConfirmConReceivingDto, organizationId?: number) {
     const results = [];
     for (const conUid of dto.conUids) {
       const result = await this.confirmReceiving({
         conUid,
         location: dto.location,
-      }, company, plant);
+      }, organizationId);
       results.push(result);
     }
     return results;

@@ -25,7 +25,7 @@ import {
 } from '../dto/menu-category.dto';
 import { ReorderMenuItemsDto } from '../dto/menu-category-item.dto';
 import { ResponseUtil } from '../../../common/dto/response.dto';
-import { listKnownMenuCodes } from '../utils/menu-code-validator';
+import { listKnownMenuCodes, isValidMenuCode } from '../utils/menu-code-validator';
 import { AuthenticatedRequest, JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 
 @ApiTags('시스템 - 메뉴 카테고리')
@@ -54,6 +54,8 @@ export class MenuCategoriesController {
     ]);
     const byCategory = new Map<string, { menuCode: string; sortOrder: number }[]>();
     for (const it of allItems) {
+      // menuConfig.ts leaf(=화이트리스트)에 없는 stale 배치행은 사이드바와 동일하게 트리에서 제외
+      if (!isValidMenuCode(it.menuCode)) continue;
       const arr = byCategory.get(it.categoryCode) ?? [];
       arr.push({ menuCode: it.menuCode, sortOrder: it.sortOrder });
       byCategory.set(it.categoryCode, arr);

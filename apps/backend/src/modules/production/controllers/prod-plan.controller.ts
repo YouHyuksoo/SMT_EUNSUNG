@@ -51,7 +51,7 @@ import {
   AutoGeneratePlanDto,
 } from '../dto/prod-plan.dto';
 import { ResponseUtil } from '../../../common/dto/response.dto';
-import { Company, Plant } from '../../../common/decorators/tenant.decorator';
+import { OrganizationId } from '../../../common/decorators/tenant.decorator';
 
 @ApiTags('생산관리 - 월간생산계획')
 @Controller('production/prod-plans')
@@ -64,8 +64,8 @@ export class ProdPlanController {
   @Get()
   @ApiOperation({ summary: '생산계획 목록 조회', description: '필터링 및 페이지네이션 지원' })
   @ApiResponse({ status: 200, description: '조회 성공' })
-  async findAll(@Query() query: ProdPlanQueryDto, @Company() company: string, @Plant() plant: string) {
-    const result = await this.prodPlanService.findAll(query, company, plant);
+  async findAll(@Query() query: ProdPlanQueryDto, @OrganizationId() organizationId: number) {
+    const result = await this.prodPlanService.findAll(query, organizationId);
     return ResponseUtil.paged(result.data, result.total, result.page, result.limit);
   }
 
@@ -73,8 +73,8 @@ export class ProdPlanController {
   @ApiOperation({ summary: '월간 집계', description: 'FG/WIP별 수량, 상태별 건수' })
   @ApiParam({ name: 'month', description: '계획월 (YYYY-MM)', example: '2026-03' })
   @ApiResponse({ status: 200, description: '조회 성공' })
-  async getSummary(@Param('month') month: string, @Company() company: string, @Plant() plant: string) {
-    const data = await this.prodPlanService.getSummary(month, company, plant);
+  async getSummary(@Param('month') month: string, @OrganizationId() organizationId: number) {
+    const data = await this.prodPlanService.getSummary(month, organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -82,8 +82,8 @@ export class ProdPlanController {
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: '생산계획 개별 등록' })
   @ApiResponse({ status: 201, description: '등록 성공' })
-  async create(@Body() dto: CreateProdPlanDto, @Company() company: string, @Plant() plant: string) {
-    const data = await this.prodPlanService.create(dto, company, plant);
+  async create(@Body() dto: CreateProdPlanDto, @OrganizationId() organizationId: number) {
+    const data = await this.prodPlanService.create(dto, organizationId);
     return ResponseUtil.success(data, '생산계획이 등록되었습니다.');
   }
 
@@ -91,8 +91,8 @@ export class ProdPlanController {
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: '생산계획 일괄 등록 (엑셀)', description: '엑셀 파싱 데이터를 일괄 등록' })
   @ApiResponse({ status: 201, description: '등록 성공' })
-  async bulkCreate(@Body() dto: BulkCreateProdPlanDto, @Company() company: string, @Plant() plant: string) {
-    const data = await this.prodPlanService.bulkCreate(dto, company, plant);
+  async bulkCreate(@Body() dto: BulkCreateProdPlanDto, @OrganizationId() organizationId: number) {
+    const data = await this.prodPlanService.bulkCreate(dto, organizationId);
     return ResponseUtil.success(data, `${data.count}건의 생산계획이 등록되었습니다.`);
   }
 
@@ -102,10 +102,9 @@ export class ProdPlanController {
   @ApiResponse({ status: 200, description: '조회 성공' })
   async searchOrders(
     @Body() dto: AutoGeneratePlanDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.autoPlanService.search(dto, company, plant);
+    const data = await this.autoPlanService.search(dto, organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -115,10 +114,9 @@ export class ProdPlanController {
   @ApiResponse({ status: 201, description: '생성 성공' })
   async importOrders(
     @Body() dto: AutoGeneratePlanDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.autoPlanService.importOrders(dto, company, plant);
+    const data = await this.autoPlanService.importOrders(dto, organizationId);
     return ResponseUtil.success(data, `${data.created}건의 생산계획이 추가되었습니다.`);
   }
 
@@ -129,10 +127,9 @@ export class ProdPlanController {
   async update(
     @Param('id') id: string,
     @Body() dto: UpdateProdPlanDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.prodPlanService.update(id, dto, company, plant);
+    const data = await this.prodPlanService.update(id, dto, organizationId);
     return ResponseUtil.success(data, '생산계획이 수정되었습니다.');
   }
 
@@ -141,8 +138,8 @@ export class ProdPlanController {
   @ApiOperation({ summary: '생산계획 삭제', description: 'DRAFT 상태만 삭제 가능' })
   @ApiParam({ name: 'id', description: '계획번호' })
   @ApiResponse({ status: 200, description: '삭제 성공' })
-  async delete(@Param('id') id: string, @Company() company: string, @Plant() plant: string) {
-    await this.prodPlanService.delete(id, company, plant);
+  async delete(@Param('id') id: string, @OrganizationId() organizationId: number) {
+    await this.prodPlanService.delete(id, organizationId);
     return ResponseUtil.success(null, '생산계획이 삭제되었습니다.');
   }
 
@@ -151,8 +148,8 @@ export class ProdPlanController {
   @ApiOperation({ summary: '생산계획 확정', description: 'DRAFT → CONFIRMED' })
   @ApiParam({ name: 'id', description: '계획번호' })
   @ApiResponse({ status: 200, description: '확정 성공' })
-  async confirm(@Param('id') id: string, @Company() company: string, @Plant() plant: string) {
-    const data = await this.prodPlanService.confirm(id, company, plant);
+  async confirm(@Param('id') id: string, @OrganizationId() organizationId: number) {
+    const data = await this.prodPlanService.confirm(id, organizationId);
     return ResponseUtil.success(data, '생산계획이 확정되었습니다.');
   }
 
@@ -161,8 +158,8 @@ export class ProdPlanController {
   @ApiOperation({ summary: '생산계획 일괄 확정' })
   @ApiBody({ schema: { type: 'object', properties: { ids: { type: 'array', items: { type: 'string' } } } } })
   @ApiResponse({ status: 200, description: '확정 성공' })
-  async bulkConfirm(@Body('ids') ids: string[], @Company() company: string, @Plant() plant: string) {
-    const result = await this.prodPlanService.bulkConfirm(ids, company, plant);
+  async bulkConfirm(@Body('ids') ids: string[], @OrganizationId() organizationId: number) {
+    const result = await this.prodPlanService.bulkConfirm(ids, organizationId);
     return ResponseUtil.success(result, `${result.count}건의 생산계획이 확정되었습니다.`);
   }
 
@@ -171,8 +168,8 @@ export class ProdPlanController {
   @ApiOperation({ summary: '생산계획 확정 취소', description: 'CONFIRMED → DRAFT' })
   @ApiParam({ name: 'id', description: '계획번호' })
   @ApiResponse({ status: 200, description: '확정 취소 성공' })
-  async unconfirm(@Param('id') id: string, @Company() company: string, @Plant() plant: string) {
-    const data = await this.prodPlanService.unconfirm(id, company, plant);
+  async unconfirm(@Param('id') id: string, @OrganizationId() organizationId: number) {
+    const data = await this.prodPlanService.unconfirm(id, organizationId);
     return ResponseUtil.success(data, '생산계획 확정이 취소되었습니다.');
   }
 
@@ -184,10 +181,9 @@ export class ProdPlanController {
   async issueJobOrder(
     @Param('id') planNo: string,
     @Body() dto: IssueJobOrderFromPlanDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.prodPlanService.issueJobOrder(planNo, dto, company, plant);
+    const data = await this.prodPlanService.issueJobOrder(planNo, dto, organizationId);
     return ResponseUtil.success(data, '작업지시가 발행되었습니다.');
   }
 
@@ -196,8 +192,8 @@ export class ProdPlanController {
   @ApiOperation({ summary: '생산계획 마감', description: 'CONFIRMED → CLOSED' })
   @ApiParam({ name: 'id', description: '계획번호' })
   @ApiResponse({ status: 200, description: '마감 성공' })
-  async close(@Param('id') id: string, @Company() company: string, @Plant() plant: string) {
-    const data = await this.prodPlanService.close(id, company, plant);
+  async close(@Param('id') id: string, @OrganizationId() organizationId: number) {
+    const data = await this.prodPlanService.close(id, organizationId);
     return ResponseUtil.success(data, '생산계획이 마감되었습니다.');
   }
 }

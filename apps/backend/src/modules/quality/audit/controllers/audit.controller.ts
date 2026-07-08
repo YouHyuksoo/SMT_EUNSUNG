@@ -15,7 +15,7 @@
  *    - POST   /quality/audit-findings      : 발견사항 등록 (../audit-findings)
  *    - PATCH  /quality/audit-findings/:id/link-capa : CAPA 연결 (../audit-findings)
  *
- * 2. **인증**: @Company(), @Plant() 데코레이터로 테넌시 정보
+ * 2. **인증**: @OrganizationId() 데코레이터로 테넌시 정보
  */
 
 import {
@@ -35,7 +35,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
-import { Company, Plant } from '../../../../common/decorators/tenant.decorator';
+import { OrganizationId } from '../../../../common/decorators/tenant.decorator';
 import { JwtAuthGuard, AuthenticatedRequest } from '../../../../common/guards/jwt-auth.guard';
 import { ResponseUtil } from '../../../../common/dto/response.dto';
 import { AuditService } from '../services/audit.service';
@@ -58,10 +58,9 @@ export class AuditController {
   @ApiResponse({ status: 200, description: '조회 성공' })
   async findAll(
     @Query() query: AuditQueryDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const result = await this.auditService.findAll(query, company, plant);
+    const result = await this.auditService.findAll(query, organizationId);
     return ResponseUtil.paged(result.data, result.total, result.page, result.limit);
   }
 
@@ -72,10 +71,9 @@ export class AuditController {
   @ApiResponse({ status: 404, description: '심사 계획 없음' })
   async findById(
     @Param('id') id: string,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.auditService.findById(id, company, plant);
+    const data = await this.auditService.findById(id, organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -85,14 +83,12 @@ export class AuditController {
   @ApiResponse({ status: 201, description: '생성 성공' })
   async create(
     @Body() dto: CreateAuditPlanDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
     @Req() req: AuthenticatedRequest,
   ) {
     const data = await this.auditService.create(
       dto,
-      company,
-      plant,
+      organizationId,
       req.user?.id ?? 'system',
     );
     return ResponseUtil.success(data, '심사 계획이 등록되었습니다.');
@@ -105,16 +101,14 @@ export class AuditController {
   async update(
     @Param('id') id: string,
     @Body() dto: UpdateAuditPlanDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
     @Req() req: AuthenticatedRequest,
   ) {
     const data = await this.auditService.update(
       id,
       dto,
       req.user?.id ?? 'system',
-      company,
-      plant,
+      organizationId,
     );
     return ResponseUtil.success(data, '심사 계획이 수정되었습니다.');
   }
@@ -126,10 +120,9 @@ export class AuditController {
   @ApiResponse({ status: 200, description: '삭제 성공' })
   async delete(
     @Param('id') id: string,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    await this.auditService.delete(id, company, plant);
+    await this.auditService.delete(id, organizationId);
     return ResponseUtil.success(null, '심사 계획이 삭제되었습니다.');
   }
 
@@ -142,16 +135,14 @@ export class AuditController {
   async complete(
     @Param('id') id: string,
     @Body('overallResult') overallResult: string,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
     @Req() req: AuthenticatedRequest,
   ) {
     const data = await this.auditService.complete(
       id,
       overallResult,
       req.user?.id ?? 'system',
-      company,
-      plant,
+      organizationId,
     );
     return ResponseUtil.success(data, '심사가 완료되었습니다.');
   }
@@ -162,15 +153,13 @@ export class AuditController {
   @ApiResponse({ status: 200, description: '종결 성공' })
   async close(
     @Param('id') id: string,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
     @Req() req: AuthenticatedRequest,
   ) {
     const data = await this.auditService.close(
       id,
       req.user?.id ?? 'system',
-      company,
-      plant,
+      organizationId,
     );
     return ResponseUtil.success(data, '심사가 종결되었습니다.');
   }
@@ -183,10 +172,9 @@ export class AuditController {
   @ApiResponse({ status: 200, description: '조회 성공' })
   async getFindings(
     @Param('id') id: string,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.auditService.getFindings(id, company, plant);
+    const data = await this.auditService.getFindings(id, organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -196,14 +184,12 @@ export class AuditController {
   @ApiResponse({ status: 201, description: '등록 성공' })
   async addFinding(
     @Body() dto: CreateAuditFindingDto,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
     @Req() req: AuthenticatedRequest,
   ) {
     const data = await this.auditService.addFinding(
       dto,
-      company,
-      plant,
+      organizationId,
       req.user?.id ?? 'system',
     );
     return ResponseUtil.success(data, '발견사항이 등록되었습니다.');
@@ -218,10 +204,9 @@ export class AuditController {
     @Param('auditId') auditId: string,
     @Param('findingNo', ParseIntPipe) findingNo: number,
     @Body('capaId') capaId: string,
-    @Company() company: string,
-    @Plant() plant: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.auditService.linkCapa(auditId, findingNo, capaId, company, plant);
+    const data = await this.auditService.linkCapa(auditId, findingNo, capaId, organizationId);
     return ResponseUtil.success(data, 'CAPA가 연결되었습니다.');
   }
 }

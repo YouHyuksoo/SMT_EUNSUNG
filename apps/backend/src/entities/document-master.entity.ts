@@ -19,8 +19,8 @@ import {
 } from 'typeorm';
 
 @Entity({ name: 'DOCUMENT_MASTERS' })
-@Index(['company', 'plant', 'docType'])
-@Index(['company', 'plant', 'status'])
+@Index(['organizationId', 'docType'])
+@Index(['organizationId', 'status'])
 export class DocumentMaster {
   @PrimaryColumn({ name: 'DOC_NO', length: 50 })
   docNo: string;
@@ -64,11 +64,8 @@ export class DocumentMaster {
   @Column({ type: 'varchar2', name: 'DESCRIPTION', length: 1000, nullable: true })
   description: string;
 
-  @Column({ name: 'COMPANY', length: 50 })
-  company: string;
-
-  @Column({ name: 'PLANT_CD', length: 20 })
-  plant: string;
+  @Column({ name: 'ORGANIZATION_ID', type: 'number' })
+  organizationId!: number;
 
   @Column({ type: 'varchar2', name: 'CREATED_BY', length: 50, nullable: true })
   createdBy: string;
