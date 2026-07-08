@@ -17,7 +17,7 @@ import {
   Index,
 } from 'typeorm';
 
-@Entity({ name: 'COMM_CONFIGS' })
+@Entity({ name: 'ISYS_COMM_CONFIGS' })
 @Index(['commType'])
 export class CommConfig {
   @PrimaryColumn({ name: 'CONFIG_NAME', length: 100 })
