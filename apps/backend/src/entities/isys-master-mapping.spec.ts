@@ -3,6 +3,8 @@ import { DepartmentMaster } from './department-master.entity';
 import { IsysOrganization } from './isys-organization.entity';
 import { IsysUser } from './isys-user.entity';
 import { ComCode } from './com-code.entity';
+import { SysConfig } from './sys-config.entity';
+import { ItemMaster } from './item-master.entity';
 
 function tableName(target: Function) {
   return getMetadataArgsStorage().tables.find((table) => table.target === target)?.name;
@@ -37,5 +39,19 @@ describe('ISYS master table mappings', () => {
     expect(tableName(ComCode)).toBe('ISYS_BASECODE');
     expect(columnName(ComCode, 'groupCode')).toBe('CODE_TYPE');
     expect(columnName(ComCode, 'detailCode')).toBe('CODE_NAME');
+  });
+
+  it('maps /system/config to ISYS_CONFIG', () => {
+    expect(tableName(SysConfig)).toBe('ISYS_CONFIG');
+    expect(columnName(SysConfig, 'configKey')).toBe('CONFIG_NAME');
+    expect(columnName(SysConfig, 'configValue')).toBe('CONFIG_VALUE');
+    expect(columnName(SysConfig, 'isActive')).toBe('USE_YN');
+  });
+
+  it('maps /master/parts to ID_ITEM', () => {
+    expect(tableName(ItemMaster)).toBe('ID_ITEM');
+    expect(columnName(ItemMaster, 'itemCode')).toBe('ITEM_CODE');
+    expect(columnName(ItemMaster, 'itemName')).toBe('ITEM_NAME');
+    expect(columnName(ItemMaster, 'spec')).toBe('ITEM_SPEC');
   });
 });

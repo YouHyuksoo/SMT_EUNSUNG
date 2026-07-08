@@ -7,6 +7,8 @@ const read = (path) => fs.readFileSync(path, "utf8");
 const forbiddenRoutes = [
   "/system/pda-roles",
   "/system/comm-config",
+  "/system/document",
+  "/system/roles",
   "/interface/dashboard",
   "/interface/log",
   "/interface/manual",
@@ -119,6 +121,8 @@ const forbiddenRoutes = [
 const forbiddenCodes = [
   "SYS_PDA_ROLE",
   "SYS_COMM",
+  "SYS_DOCUMENT",
+  "SYS_ROLE",
   "IF_DASHBOARD",
   "IF_LOG",
   "IF_MANUAL",
@@ -235,6 +239,8 @@ const forbiddenCodes = [
 const deletedRouteDirs = [
   "apps/frontend/src/app/(authenticated)/system/pda-roles",
   "apps/frontend/src/app/(authenticated)/system/comm-config",
+  "apps/frontend/src/app/(authenticated)/system/document",
+  "apps/frontend/src/app/(authenticated)/system/roles",
   "apps/frontend/src/app/(authenticated)/interface",
   "apps/frontend/src/app/(authenticated)/consumables",
   "apps/frontend/src/app/(authenticated)/master/vendor-barcode",
@@ -264,6 +270,8 @@ const deletedRouteDirs = [
 const deletedRegistryFiles = [
   "apps/frontend/src/components/layout/page-registries/system__pda-roles.generated.ts",
   "apps/frontend/src/components/layout/page-registries/system__comm-config.generated.ts",
+  "apps/frontend/src/components/layout/page-registries/system__document.generated.ts",
+  "apps/frontend/src/components/layout/page-registries/system__roles.generated.ts",
   "apps/frontend/src/components/layout/page-registries/interface__dashboard.generated.ts",
   "apps/frontend/src/components/layout/page-registries/interface__log.generated.ts",
   "apps/frontend/src/components/layout/page-registries/interface__manual.generated.ts",
@@ -418,11 +426,11 @@ test("은성 메뉴 상위 구조는 시스템 카테고리를 포함한다", ()
 
   assert.deepEqual(topLevelCodes, [
     "MASTER",
-    "SYSTEM",
     "OEE",
     "MATERIAL",
     "PROCESS_TRANSACTION",
     "PRODUCT_MGMT",
     "OUTSOURCING",
+    "SYSTEM",
   ]);
 });

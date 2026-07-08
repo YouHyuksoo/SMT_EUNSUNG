@@ -27,6 +27,7 @@ import { UserModule } from './modules/user/user.module';
 import { MasterCodeModule } from './modules/master/master-code.module';
 import { MasterCompanyModule } from './modules/master/master-company.module';
 import { MasterDepartmentModule } from './modules/master/master-department.module';
+import { MasterPartModule } from './modules/master/master-part.module';
 import { SharedModule } from './shared/shared.module';
 
 @Module({
@@ -66,6 +67,9 @@ import { SharedModule } from './shared/shared.module';
 
     // 시스템 부서정보 (/system/departments) — ISYS_DEPARTMENT 기반
     MasterDepartmentModule,
+
+    // 기준정보 품목정보 (/master/parts) — ID_ITEM 기반
+    MasterPartModule,
   ],
   controllers: [AppController],
   providers: [AppService],

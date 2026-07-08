@@ -79,11 +79,6 @@
           "menuCode": "MST_PROCESS_CAPA",
           "title": "공정 CAPA 관리",
           "path": "/master/process-capa"
-        },
-        {
-          "menuCode": "SYS_DOCUMENT",
-          "title": "문서관리",
-          "path": "/system/document"
         }
       ]
     },

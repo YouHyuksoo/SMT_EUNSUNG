@@ -27,6 +27,7 @@ function excludeHelpMenuItems(items: MenuConfigItem[]): MenuConfigItem[] {
     if (!item.children) return [item];
 
     const children = excludeHelpMenuItems(item.children);
+    if (children.length === 0) return [];
 
     return [{ ...item, children }];
   });
@@ -71,6 +72,7 @@ export function useMenuTree() {
         continue;
       }
       seenCategoryCodes.add(g.categoryCode);
+      if (childrenLeaf.length === 0) continue;
       result.push({
         code: g.categoryCode,
         labelKey: g.labelKey,

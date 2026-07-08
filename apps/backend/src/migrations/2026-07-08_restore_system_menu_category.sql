@@ -64,7 +64,7 @@ DECLARE
   END;
 BEGIN
   FOR org IN (SELECT ORGANIZATION_ID FROM ISYS_ORGANIZATION) LOOP
-    upsert_category(org.ORGANIZATION_ID, 'SYSTEM', 'menu.system', 'Settings', 20);
+    upsert_category(org.ORGANIZATION_ID, 'SYSTEM', 'menu.system', 'Settings', 70);
 
     upsert_item(org.ORGANIZATION_ID, 'SYS_COMPANY', 'SYSTEM', 10);
     upsert_item(org.ORGANIZATION_ID, 'SYS_CODE', 'SYSTEM', 20);
@@ -72,11 +72,9 @@ BEGIN
     upsert_item(org.ORGANIZATION_ID, 'SYS_MENU_CATEGORY', 'SYSTEM', 40);
     upsert_item(org.ORGANIZATION_ID, 'SYS_DEPT', 'SYSTEM', 50);
     upsert_item(org.ORGANIZATION_ID, 'SYS_USER', 'SYSTEM', 60);
-    upsert_item(org.ORGANIZATION_ID, 'SYS_ROLE', 'SYSTEM', 70);
-    upsert_item(org.ORGANIZATION_ID, 'SYS_DOCUMENT', 'SYSTEM', 80);
-    upsert_item(org.ORGANIZATION_ID, 'SYS_SCHEDULER', 'SYSTEM', 90);
-    upsert_item(org.ORGANIZATION_ID, 'SYS_ER_VIEW', 'SYSTEM', 100);
-    upsert_item(org.ORGANIZATION_ID, 'SYS_IMPR_REQ', 'SYSTEM', 110);
+    upsert_item(org.ORGANIZATION_ID, 'SYS_SCHEDULER', 'SYSTEM', 70);
+    upsert_item(org.ORGANIZATION_ID, 'SYS_ER_VIEW', 'SYSTEM', 80);
+    upsert_item(org.ORGANIZATION_ID, 'SYS_IMPR_REQ', 'SYSTEM', 90);
   END LOOP;
 END;
 /

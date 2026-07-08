@@ -50,24 +50,6 @@ export const menuConfig: MenuConfigItem[] = [
     ],
   },
   {
-    code: "SYSTEM",
-    labelKey: "menu.system",
-    icon: Settings,
-    children: [
-      { code: "SYS_COMPANY", labelKey: "menu.master.company", path: "/master/company" },
-      { code: "SYS_CODE", labelKey: "menu.master.code", path: "/master/code" },
-      { code: "SYS_CONFIG", labelKey: "menu.system.config", path: "/system/config" },
-      { code: "SYS_MENU_CATEGORY", labelKey: "menu.system.menuCategory", path: "/system/menu-categories" },
-      { code: "SYS_DEPT", labelKey: "menu.system.department", path: "/system/department" },
-      { code: "SYS_USER", labelKey: "menu.system.users", path: "/system/users" },
-      { code: "SYS_ROLE", labelKey: "menu.system.roles", path: "/system/roles" },
-      { code: "SYS_DOCUMENT", labelKey: "menu.system.document", path: "/system/document" },
-      { code: "SYS_SCHEDULER", labelKey: "menu.system.scheduler", path: "/system/scheduler" },
-      { code: "SYS_ER_VIEW", labelKey: "menu.system.erView", path: "/system/er-view" },
-      { code: "SYS_IMPR_REQ", labelKey: "menu.system.improvementRequests", path: "/system/improvement-requests" },
-    ],
-  },
-  {
     code: "OEE",
     labelKey: "menu.oee",
     icon: Activity,
@@ -103,6 +85,22 @@ export const menuConfig: MenuConfigItem[] = [
     labelKey: "menu.outsourcing",
     icon: Building2,
     children: [],
+  },
+  {
+    code: "SYSTEM",
+    labelKey: "menu.system",
+    icon: Settings,
+    children: [
+      { code: "SYS_COMPANY", labelKey: "menu.master.company", path: "/master/company" },
+      { code: "SYS_CODE", labelKey: "menu.master.code", path: "/master/code" },
+      { code: "SYS_CONFIG", labelKey: "menu.system.config", path: "/system/config" },
+      { code: "SYS_MENU_CATEGORY", labelKey: "menu.system.menuCategory", path: "/system/menu-categories" },
+      { code: "SYS_DEPT", labelKey: "menu.system.department", path: "/system/department" },
+      { code: "SYS_USER", labelKey: "menu.system.users", path: "/system/users" },
+      { code: "SYS_SCHEDULER", labelKey: "menu.system.scheduler", path: "/system/scheduler" },
+      { code: "SYS_ER_VIEW", labelKey: "menu.system.erView", path: "/system/er-view" },
+      { code: "SYS_IMPR_REQ", labelKey: "menu.system.improvementRequests", path: "/system/improvement-requests" },
+    ],
   },
 ];
 

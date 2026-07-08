@@ -24,10 +24,10 @@ import { MenuCategoryItem } from '../entities/menu-category-item.entity';
 import { ComCode } from '../entities/com-code.entity';
 import { CommConfig } from '../entities/comm-config.entity';
 import { SysConfig } from '../entities/sys-config.entity';
+import { ItemMaster } from '../entities/item-master.entity';
 import { ActivityLog } from '../entities/activity-log.entity';
 import { TrainingPlan } from '../entities/training-plan.entity';
 import { TrainingResult } from '../entities/training-result.entity';
-import { DocumentMaster } from '../entities/document-master.entity';
 import { PdaRole } from '../entities/pda-role.entity';
 import { PdaRoleMenu } from '../entities/pda-role-menu.entity';
 import { ImprRequest } from '../entities/impr-request.entity';
@@ -72,10 +72,10 @@ import { ImprRequest } from '../entities/impr-request.entity';
             ComCode,
             CommConfig,
             SysConfig,
+            ItemMaster,
             ActivityLog,
             TrainingPlan,
             TrainingResult,
-            DocumentMaster,
             PdaRole,
             PdaRoleMenu,
             ImprRequest,

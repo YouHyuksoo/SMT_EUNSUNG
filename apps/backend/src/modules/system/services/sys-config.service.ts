@@ -33,6 +33,55 @@ export class SysConfigService {
     };
   }
 
+  private inferConfigGroup(configKey: string): string {
+    const key = configKey.toUpperCase();
+    if (key.startsWith('AI_')) return 'AI';
+    if (key.startsWith('EMBEDDING_')) return 'AI_EMBEDDING';
+    if (
+      key.startsWith('MAT') ||
+      key.startsWith('MATERIAL') ||
+      key.startsWith('WH') ||
+      key.startsWith('WAREHOUSE') ||
+      key.includes('INVENTORY') ||
+      key.includes('FIFO')
+    ) {
+      return 'MATERIAL';
+    }
+    if (key.startsWith('PROD') || key.includes('ASSEMBLY') || key.includes('LABEL')) {
+      return 'PRODUCTION';
+    }
+    if (key.startsWith('QC') || key.startsWith('IQC') || key.startsWith('LQC') || key.startsWith('OQC')) {
+      return 'QUALITY';
+    }
+    return 'SYSTEM';
+  }
+
+  private inferConfigType(value: string | null): string {
+    if (value === 'Y' || value === 'N') return 'BOOLEAN';
+    if (value != null && value.trim() !== '' && !Number.isNaN(Number(value))) return 'NUMBER';
+    return 'TEXT';
+  }
+
+  private toView(row: SysConfig) {
+    const label = row.configDescription ?? row.configKey;
+    const description = row.configValueDescription ?? row.configDescription ?? null;
+    return {
+      id: row.configKey,
+      configKey: row.configKey,
+      configGroup: this.inferConfigGroup(row.configKey),
+      configValue: row.configValue ?? '',
+      configType: this.inferConfigType(row.configValue),
+      label,
+      description,
+      options: null,
+      sortOrder: 0,
+      isActive: row.isActive ?? 'Y',
+      organizationId: row.organizationId,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+    };
+  }
+
   private assertSameTenant(
     context: string,
     row: { organizationId?: number | null },
@@ -50,17 +99,19 @@ export class SysConfigService {
     const where: FindOptionsWhere<SysConfig> = {
       ...(organizationId != null && { organizationId }),
     };
-    if (query.configGroup) where.configGroup = query.configGroup;
 
     const data = await this.sysConfigRepository.find({
       where,
-      order: { configGroup: 'ASC', sortOrder: 'ASC' },
+      order: { configKey: 'ASC' },
     });
 
-    let result = data;
+    let result = data.map((item) => this.toView(item));
+    if (query.configGroup) {
+      result = result.filter((c) => c.configGroup === query.configGroup);
+    }
     if (query.search) {
       const s = query.search.toLowerCase();
-      result = data.filter(
+      result = result.filter(
         (c) =>
           c.label.toLowerCase().includes(s) ||
           c.configKey.toLowerCase().includes(s) ||
@@ -69,7 +120,7 @@ export class SysConfigService {
     }
 
     // 그룹별로 묶어서 반환
-    const grouped: Record<string, SysConfig[]> = {};
+    const grouped: Record<string, typeof result> = {};
     for (const item of result) {
       if (!grouped[item.configGroup]) grouped[item.configGroup] = [];
       grouped[item.configGroup].push(item);
@@ -82,15 +133,15 @@ export class SysConfigService {
   async findAllActive() {
     const configs = await this.sysConfigRepository.find({
       where: { isActive: 'Y' },
-      order: { configGroup: 'ASC', sortOrder: 'ASC' },
+      order: { configKey: 'ASC' },
     });
 
     const map: Record<string, string> = {};
     for (const c of configs) {
-      map[c.configKey] = c.configValue;
+      map[c.configKey] = c.configValue ?? '';
     }
 
-    return { data: configs, map };
+    return { data: configs.map((item) => this.toView(item)), map };
   }
 
   /** 특정 키 값 조회 (다른 서비스에서 호출) */
@@ -111,7 +162,6 @@ export class SysConfigService {
   async create(dto: CreateSysConfigDto, organizationId?: number) {
     const existing = await this.sysConfigRepository.findOne({
       where: {
-        configGroup: dto.configGroup,
         configKey: dto.configKey,
         ...this.tenantWhere(organizationId),
       },
@@ -122,18 +172,16 @@ export class SysConfigService {
       );
     }
     const entity = this.sysConfigRepository.create({
-      configGroup: dto.configGroup,
       configKey: dto.configKey,
       configValue: dto.configValue,
-      configType: dto.configType,
-      label: dto.label,
-      description: dto.description ?? null,
-      options: dto.options ?? null,
-      sortOrder: dto.sortOrder ?? 0,
+      configDescription: dto.label ?? dto.description ?? dto.configKey,
+      configValueDescription: dto.description ?? dto.options ?? null,
       isActive: 'Y',
-      organizationId,
+      organizationId: organizationId ?? 1,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     });
-    return this.sysConfigRepository.save(entity);
+    return this.toView(await this.sysConfigRepository.save(entity));
   }
 
   /** 설정 수정 */
@@ -147,13 +195,26 @@ export class SysConfigService {
     });
     if (!config) throw new NotFoundException(`설정을 찾을 수 없습니다: ${id}`);
     this.assertSameTenant('시스템 설정', config, organizationId);
+    const updateData: Partial<SysConfig> = {
+      ...(dto.configValue !== undefined ? { configValue: dto.configValue } : {}),
+      ...(dto.label !== undefined || dto.description !== undefined
+        ? { configDescription: dto.label ?? dto.description ?? config.configDescription }
+        : {}),
+      ...(dto.description !== undefined || dto.options !== undefined
+        ? { configValueDescription: dto.description ?? dto.options ?? null }
+        : {}),
+      ...(dto.isActive !== undefined ? { isActive: dto.isActive } : {}),
+      updatedAt: new Date(),
+    };
     await this.sysConfigRepository.update(
       { configKey: id, ...this.tenantWhere(organizationId) },
-      dto,
+      updateData,
     );
-    return this.sysConfigRepository.findOne({
+    const updated = await this.sysConfigRepository.findOne({
       where: { configKey: id, ...this.tenantWhere(organizationId) },
     });
+    if (!updated) throw new NotFoundException(`설정을 찾을 수 없습니다: ${id}`);
+    return this.toView(updated);
   }
 
   /** 일괄 수정 (관리 페이지 저장 버튼) */
@@ -167,12 +228,13 @@ export class SysConfigService {
         { configKey: item.id, ...this.tenantWhere(organizationId) },
         {
           configValue: item.configValue,
+          updatedAt: new Date(),
         },
       );
       const updated = await this.sysConfigRepository.findOne({
         where: { configKey: item.id, ...this.tenantWhere(organizationId) },
       });
-      if (updated) results.push(updated);
+      if (updated) results.push(this.toView(updated));
     }
     return results;
   }

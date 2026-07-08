@@ -43,9 +43,8 @@ describe('SysConfigService', () => {
     it('should return grouped configs', async () => {
       // Arrange
       const configs = [
-        { configKey: 'K1', configGroup: 'G1', label: 'Label1' },
-        { configKey: 'K2', configGroup: 'G1', label: 'Label2' },
-        { configKey: 'K3', configGroup: 'G2', label: 'Label3' },
+        { configKey: 'ALLOW_WH_MINUS_INVENTORY', configDescription: 'Minus inventory', configValue: 'Y', isActive: 'Y', organizationId: 1 },
+        { configKey: 'CURRENCY', configDescription: 'Currency', configValue: 'KRW', isActive: 'Y', organizationId: 1 },
       ] as SysConfig[];
       mockRepo.find.mockResolvedValue(configs);
 
@@ -53,16 +52,16 @@ describe('SysConfigService', () => {
       const result = await target.findAll({} as any);
 
       // Assert
-      expect(result.total).toBe(3);
-      expect(result.grouped['G1']).toHaveLength(2);
-      expect(result.grouped['G2']).toHaveLength(1);
+      expect(result.total).toBe(2);
+      expect(result.grouped['MATERIAL']).toHaveLength(1);
+      expect(result.grouped['SYSTEM']).toHaveLength(1);
     });
 
     it('should filter by search term', async () => {
       // Arrange
       const configs = [
-        { configKey: 'ENABLE_LOG', configGroup: 'G1', label: 'Enable Log', description: null },
-        { configKey: 'OTHER', configGroup: 'G1', label: 'Other', description: null },
+        { configKey: 'ENABLE_LOG', configDescription: 'Enable Log', configValueDescription: null, configValue: 'Y', organizationId: 1 },
+        { configKey: 'OTHER', configDescription: 'Other', configValueDescription: null, configValue: 'N', organizationId: 1 },
       ] as SysConfig[];
       mockRepo.find.mockResolvedValue(configs);
 
@@ -71,6 +70,22 @@ describe('SysConfigService', () => {
 
       // Assert
       expect(result.total).toBe(1);
+    });
+
+    it('should filter inferred config group in memory', async () => {
+      mockRepo.find.mockResolvedValue([
+        { configKey: 'AI_ENABLED', configValue: 'Y', organizationId: 1 },
+        { configKey: 'CURRENCY', configValue: 'KRW', organizationId: 1 },
+      ] as SysConfig[]);
+
+      const result = await target.findAll({ configGroup: 'AI' } as any);
+
+      expect(mockRepo.find).toHaveBeenCalledWith({
+        where: {},
+        order: { configKey: 'ASC' },
+      });
+      expect(result.data).toHaveLength(1);
+      expect(result.data[0].configKey).toBe('AI_ENABLED');
     });
   });
 
@@ -89,7 +104,10 @@ describe('SysConfigService', () => {
 
       // Assert
       expect(result.map).toEqual({ KEY1: 'VAL1', KEY2: 'VAL2' });
-      expect(result.data).toEqual(configs);
+      expect(result.data).toEqual(expect.arrayContaining([
+        expect.objectContaining({ configKey: 'KEY1', configValue: 'VAL1' }),
+        expect.objectContaining({ configKey: 'KEY2', configValue: 'VAL2' }),
+      ]));
     });
   });
 
@@ -160,20 +178,28 @@ describe('SysConfigService', () => {
       // Arrange
       const dto = { configGroup: 'G1', configKey: 'NEW' } as any;
       mockRepo.findOne.mockResolvedValue(null);
-      mockRepo.create.mockReturnValue(dto as SysConfig);
-      mockRepo.save.mockResolvedValue(dto as SysConfig);
+      const created = {
+        configKey: 'NEW',
+        configValue: undefined,
+        configDescription: undefined,
+        configValueDescription: null,
+        isActive: 'Y',
+        organizationId: 1,
+      } as SysConfig;
+      mockRepo.create.mockReturnValue(created);
+      mockRepo.save.mockResolvedValue(created);
 
       // Act
-      const result = await target.create(dto, 'COMP', 'PLANT');
+      const result = await target.create(dto, 1);
 
       // Assert
-      expect(result).toEqual(dto);
+      expect(result).toEqual(expect.objectContaining({ configKey: 'NEW', organizationId: 1 }));
       expect(mockRepo.findOne).toHaveBeenCalledWith({
-        where: { configGroup: 'G1', configKey: 'NEW', company: 'COMP', plant: 'PLANT' },
+        where: { configKey: 'NEW', organizationId: 1 },
       });
       expect(mockRepo.create).toHaveBeenCalledWith(expect.objectContaining({
-        company: 'COMP',
-        plant: 'PLANT',
+        configKey: 'NEW',
+        organizationId: 1,
       }));
     });
 
@@ -190,18 +216,19 @@ describe('SysConfigService', () => {
   describe('update', () => {
     it('should update config', async () => {
       // Arrange
-      const existing = { configKey: 'KEY', company: 'COMP', plant: 'PLANT' } as SysConfig;
-      mockRepo.findOne.mockResolvedValue(existing);
+      const existing = { configKey: 'KEY', organizationId: 1, configValue: 'OLD' } as SysConfig;
+      const updated = { ...existing, configValue: 'NEW_VAL' } as SysConfig;
+      mockRepo.findOne.mockResolvedValueOnce(existing).mockResolvedValueOnce(updated);
       mockRepo.update.mockResolvedValue({ affected: 1 } as any);
 
       // Act
-      const result = await target.update('KEY', { configValue: 'NEW_VAL' } as any, 'COMP', 'PLANT');
+      const result = await target.update('KEY', { configValue: 'NEW_VAL' } as any, 1);
 
       // Assert
-      expect(result).toEqual(existing);
+      expect(result).toEqual(expect.objectContaining({ configKey: 'KEY', configValue: 'NEW_VAL' }));
       expect(mockRepo.update).toHaveBeenCalledWith(
-        { configKey: 'KEY', company: 'COMP', plant: 'PLANT' },
-        { configValue: 'NEW_VAL' },
+        { configKey: 'KEY', organizationId: 1 },
+        expect.objectContaining({ configValue: 'NEW_VAL' }),
       );
     });
 
@@ -214,11 +241,11 @@ describe('SysConfigService', () => {
     });
 
     it('rejects update when config belongs to a different tenant', async () => {
-      const existing = { configKey: 'KEY', company: 'OTHER', plant: 'PLANT' } as SysConfig;
+      const existing = { configKey: 'KEY', organizationId: 2 } as SysConfig;
       mockRepo.findOne.mockResolvedValue(existing);
 
       await expect(
-        target.update('KEY', { configValue: 'NEW_VAL' } as any, 'COMP', 'PLANT'),
+        target.update('KEY', { configValue: 'NEW_VAL' } as any, 1),
       ).rejects.toThrow(BadRequestException);
       expect(mockRepo.update).not.toHaveBeenCalled();
     });
@@ -228,20 +255,20 @@ describe('SysConfigService', () => {
   describe('bulkUpdate', () => {
     it('should update multiple configs', async () => {
       // Arrange
-      const config = { configKey: 'K1', configValue: 'V1', company: 'COMP', plant: 'PLANT' } as SysConfig;
+      const config = { configKey: 'K1', configValue: 'V1', organizationId: 1 } as SysConfig;
       mockRepo.update.mockResolvedValue({ affected: 1 } as any);
       mockRepo.findOne.mockResolvedValue(config);
 
       // Act
       const result = await target.bulkUpdate({
         items: [{ id: 'K1', configValue: 'NEW_V1' }],
-      } as any, 'COMP', 'PLANT');
+      } as any, 1);
 
       // Assert
       expect(result).toHaveLength(1);
       expect(mockRepo.update).toHaveBeenCalledWith(
-        { configKey: 'K1', company: 'COMP', plant: 'PLANT' },
-        { configValue: 'NEW_V1' },
+        { configKey: 'K1', organizationId: 1 },
+        expect.objectContaining({ configValue: 'NEW_V1' }),
       );
     });
   });
@@ -250,25 +277,24 @@ describe('SysConfigService', () => {
   describe('remove', () => {
     it('should delete config and return result', async () => {
       // Arrange
-      mockRepo.findOne.mockResolvedValue({ configKey: 'KEY', company: 'COMP', plant: 'PLANT' } as SysConfig);
+      mockRepo.findOne.mockResolvedValue({ configKey: 'KEY', organizationId: 1 } as SysConfig);
       mockRepo.delete.mockResolvedValue({ affected: 1 } as any);
 
       // Act
-      const result = await target.remove('KEY', 'COMP', 'PLANT');
+      const result = await target.remove('KEY', 1);
 
       // Assert
       expect(result).toEqual({ id: 'KEY', deleted: true });
       expect(mockRepo.delete).toHaveBeenCalledWith({
         configKey: 'KEY',
-        company: 'COMP',
-        plant: 'PLANT',
+        organizationId: 1,
       });
     });
 
     it('rejects remove when config belongs to a different tenant', async () => {
-      mockRepo.findOne.mockResolvedValue({ configKey: 'KEY', company: 'COMP', plant: 'OTHER' } as SysConfig);
+      mockRepo.findOne.mockResolvedValue({ configKey: 'KEY', organizationId: 2 } as SysConfig);
 
-      await expect(target.remove('KEY', 'COMP', 'PLANT')).rejects.toThrow(BadRequestException);
+      await expect(target.remove('KEY', 1)).rejects.toThrow(BadRequestException);
       expect(mockRepo.delete).not.toHaveBeenCalled();
     });
 

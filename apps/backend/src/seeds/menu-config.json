@@ -2,12 +2,12 @@
   "_comment": "메뉴 코드 설정 - 프론트엔드 menuConfig.ts와 동기화 필요",
   "topMenuCodes": [
     "MASTER",
-    "SYSTEM",
     "OEE",
     "MATERIAL",
     "PROCESS_TRANSACTION",
     "PRODUCT_MGMT",
-    "OUTSOURCING"
+    "OUTSOURCING",
+    "SYSTEM"
   ],
   "childMenuCodes": {
     "MASTER": [
@@ -18,8 +18,7 @@
     ],
     "SYSTEM": [
       "SYS_COMPANY", "SYS_CODE", "SYS_CONFIG", "SYS_MENU_CATEGORY", "SYS_DEPT", "SYS_USER",
-      "SYS_ROLE", "SYS_DOCUMENT", "SYS_SCHEDULER", "SYS_ER_VIEW",
-      "SYS_IMPR_REQ"
+      "SYS_SCHEDULER", "SYS_ER_VIEW", "SYS_IMPR_REQ"
     ],
     "OEE": [
       "OEE_DASHBOARD", "OEE_DRILLDOWN", "OEE_LOSS",

@@ -140,7 +140,8 @@ describe('MenuCategoriesService', () => {
 
   describe('ensureDefaultLayout', () => {
     it('seeds default categories and menu placements for an empty tenant', async () => {
-      categoryRepo.count.mockResolvedValueOnce(0);
+      categoryRepo.find.mockResolvedValueOnce([]);
+      itemRepo.find.mockResolvedValueOnce([]);
       categoryRepo.save.mockImplementation(async (e: any) => e);
       itemRepo.save.mockImplementation(async (e: any) => e);
       tx.run.mockImplementationOnce(async (cb: any) =>
@@ -166,13 +167,78 @@ describe('MenuCategoriesService', () => {
           expect.objectContaining({ organizationId: 7, menuCode: 'SYS_COMPANY', categoryCode: 'SYSTEM' }),
           expect.objectContaining({ organizationId: 7, menuCode: 'OEE_DASHBOARD', categoryCode: 'OEE' }),
           expect.objectContaining({ organizationId: 7, menuCode: 'SYS_CODE', categoryCode: 'SYSTEM' }),
-          expect.objectContaining({ organizationId: 7, menuCode: 'SYS_DOCUMENT', categoryCode: 'SYSTEM' }),
+          expect.objectContaining({ organizationId: 7, menuCode: 'SYS_SCHEDULER', categoryCode: 'SYSTEM' }),
         ]),
       );
     });
 
-    it('does not overwrite an already configured tenant layout', async () => {
-      categoryRepo.count.mockResolvedValueOnce(1);
+    it('adds missing default categories without overwriting an already configured tenant layout', async () => {
+      categoryRepo.find.mockResolvedValueOnce([
+        { organizationId: 7, categoryCode: 'MASTER' },
+        { organizationId: 7, categoryCode: 'SYSTEM' },
+        { organizationId: 7, categoryCode: 'OEE' },
+        { organizationId: 7, categoryCode: 'MATERIAL' },
+        { organizationId: 7, categoryCode: 'PRODUCT_MGMT' },
+        { organizationId: 7, categoryCode: 'OUTSOURCING' },
+      ] as any);
+      itemRepo.find.mockResolvedValueOnce([]);
+      categoryRepo.save.mockImplementation(async (e: any) => e);
+      itemRepo.save.mockImplementation(async (e: any) => e);
+      tx.run.mockImplementationOnce(async (cb: any) =>
+        cb({
+          manager: {
+            getRepository: (entity: unknown) => (entity === MenuCategory ? categoryRepo : itemRepo),
+          },
+        }),
+      );
+
+      await service.ensureDefaultLayout({ organizationId: 7, userId: 'tester' });
+
+      expect(categoryRepo.save).toHaveBeenCalledWith([
+        expect.objectContaining({ organizationId: 7, categoryCode: 'PROCESS_TRANSACTION' }),
+      ]);
+    });
+
+    it('does not rewrite a fully configured tenant layout', async () => {
+      categoryRepo.find.mockResolvedValueOnce([
+        { organizationId: 7, categoryCode: 'MASTER' },
+        { organizationId: 7, categoryCode: 'SYSTEM' },
+        { organizationId: 7, categoryCode: 'OEE' },
+        { organizationId: 7, categoryCode: 'MATERIAL' },
+        { organizationId: 7, categoryCode: 'PROCESS_TRANSACTION' },
+        { organizationId: 7, categoryCode: 'PRODUCT_MGMT' },
+        { organizationId: 7, categoryCode: 'OUTSOURCING' },
+      ] as any);
+      itemRepo.find.mockResolvedValueOnce([
+        { menuCode: 'MST_PART' },
+        { menuCode: 'MST_BOM' },
+        { menuCode: 'MST_PARTNER' },
+        { menuCode: 'EQUIP_MASTER' },
+        { menuCode: 'MST_PROCESS' },
+        { menuCode: 'MST_PROD_LINE' },
+        { menuCode: 'MST_ROUTING' },
+        { menuCode: 'MST_WORK_CALENDAR' },
+        { menuCode: 'MST_WORKER' },
+        { menuCode: 'MST_WORK_INST' },
+        { menuCode: 'MST_WAREHOUSE' },
+        { menuCode: 'MST_LABEL' },
+        { menuCode: 'MST_PROCESS_CAPA' },
+        { menuCode: 'SYS_COMPANY' },
+        { menuCode: 'SYS_CODE' },
+        { menuCode: 'SYS_CONFIG' },
+        { menuCode: 'SYS_MENU_CATEGORY' },
+        { menuCode: 'SYS_DEPT' },
+        { menuCode: 'SYS_USER' },
+        { menuCode: 'SYS_SCHEDULER' },
+        { menuCode: 'SYS_ER_VIEW' },
+        { menuCode: 'SYS_IMPR_REQ' },
+        { menuCode: 'OEE_DASHBOARD' },
+        { menuCode: 'OEE_DRILLDOWN' },
+        { menuCode: 'OEE_LOSS' },
+        { menuCode: 'OEE_ENTRY' },
+        { menuCode: 'OEE_MST_RESOURCE' },
+        { menuCode: 'OEE_MST_REASON' },
+      ] as any);
 
       await service.ensureDefaultLayout({ organizationId: 7, userId: 'tester' });
 

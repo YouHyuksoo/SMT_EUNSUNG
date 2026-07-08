@@ -232,11 +232,6 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
       component = mod.getPageComponent();
       break;
     }
-    case "/system/document": {
-      const mod = await import("./page-registries/system__document.generated");
-      component = mod.getPageComponent();
-      break;
-    }
     case "/system/er-view": {
       const mod = await import("./page-registries/system__er-view.generated");
       component = mod.getPageComponent();
@@ -249,11 +244,6 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
     }
     case "/system/menu-categories": {
       const mod = await import("./page-registries/system__menu-categories.generated");
-      component = mod.getPageComponent();
-      break;
-    }
-    case "/system/roles": {
-      const mod = await import("./page-registries/system__roles.generated");
       component = mod.getPageComponent();
       break;
     }

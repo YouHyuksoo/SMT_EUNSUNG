@@ -1,65 +1,47 @@
 /**
  * @file entities/sys-config.entity.ts
- * @description 시스템 환경설정 엔티티 (SYS_CONFIGS 테이블)
- *              configKey를 자연키 PK로 사용한다.
+ * @description 시스템 환경설정 엔티티 - ISYS_CONFIG 테이블 매핑.
  *
  * 초보자 가이드:
- * 1. configKey가 PK (UUID 대신 자연키) - 예: ENABLE_ACTIVITY_LOG
- * 2. configGroup으로 카테고리 분류 (MATERIAL, PRODUCTION, QUALITY, SYSTEM)
- * 3. configType: BOOLEAN(Y/N), SELECT(선택), NUMBER(숫자), TEXT(문자열)
- * 4. options: SELECT 타입일 때 선택지 JSON
+ * 1. configKey는 CONFIG_NAME이다.
+ * 2. ISYS_CONFIG에는 그룹/타입/옵션/정렬 컬럼이 없으므로 서비스 view에서 보강한다.
+ * 3. CONFIG_NAME + ORGANIZATION_ID가 자연키로 쓰인다.
  */
 import {
   Entity,
   PrimaryColumn,
   Column,
-  CreateDateColumn,
-  UpdateDateColumn,
-  Index,
 } from 'typeorm';
 
-@Entity({ name: 'SYS_CONFIGS' })
-@Index(['configGroup'])
+@Entity({ name: 'ISYS_CONFIG' })
 export class SysConfig {
-  @PrimaryColumn({ name: 'CONFIG_KEY', length: 100 })
+  @PrimaryColumn({ name: 'CONFIG_NAME', length: 30 })
   configKey: string;
 
-  @Column({ name: 'CONFIG_GROUP', length: 50 })
-  configGroup: string;
-
-  @Column({ name: 'CONFIG_VALUE', length: 500 })
-  configValue: string;
-
-  @Column({ name: 'CONFIG_TYPE', length: 20, default: 'BOOLEAN' })
-  configType: string;
-
-  @Column({ name: 'LABEL', length: 200 })
-  label: string;
-
-  @Column({ type: 'varchar2', name: 'DESCRIPTION', length: 500, nullable: true })
-  description: string | null;
-
-  @Column({ type: 'varchar2', name: 'OPTIONS', length: 2000, nullable: true })
-  options: string | null;
-
-  @Column({ name: 'SORT_ORDER', type: 'int', default: 0 })
-  sortOrder: number;
-
-  @Column({ name: 'IS_ACTIVE', length: 1, default: 'Y' })
-  isActive: string;
-
-  @Column({ name: 'ORGANIZATION_ID', type: 'number' })
+  @PrimaryColumn({ name: 'ORGANIZATION_ID', type: 'number' })
   organizationId!: number;
 
-  @Column({ type: 'varchar2', name: 'CREATED_BY', length: 50, nullable: true })
+  @Column({ type: 'varchar2', name: 'CONFIG_DESCRIPTION', length: 100, nullable: true })
+  configDescription: string | null;
+
+  @Column({ type: 'varchar2', name: 'CONFIG_VALUE', length: 20, nullable: true })
+  configValue: string | null;
+
+  @Column({ type: 'varchar2', name: 'CONFIG_VALUE_DESCRIPTION', length: 100, nullable: true })
+  configValueDescription: string | null;
+
+  @Column({ name: 'ENTER_DATE', type: 'date', nullable: true })
+  createdAt: Date | null;
+
+  @Column({ type: 'varchar2', name: 'ENTER_BY', length: 20, nullable: true })
   createdBy: string | null;
 
-  @Column({ type: 'varchar2', name: 'UPDATED_BY', length: 50, nullable: true })
+  @Column({ name: 'LAST_MODIFY_DATE', type: 'date', nullable: true })
+  updatedAt: Date | null;
+
+  @Column({ type: 'varchar2', name: 'LAST_MODIFY_BY', length: 20, nullable: true })
   updatedBy: string | null;
 
-  @CreateDateColumn({ name: 'CREATED_AT', type: 'timestamp' })
-  createdAt: Date;
-
-  @UpdateDateColumn({ name: 'UPDATED_AT', type: 'timestamp' })
-  updatedAt: Date;
+  @Column({ type: 'varchar2', name: 'USE_YN', length: 1, nullable: true })
+  isActive: string | null;
 }

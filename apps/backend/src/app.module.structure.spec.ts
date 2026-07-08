@@ -18,4 +18,11 @@ describe('AppModule activated API modules', () => {
     expect(databaseModuleSource).toContain("import { IsysUser } from '../entities/isys-user.entity'");
     expect(databaseModuleSource).toMatch(/entities:\s*\[[\s\S]*\bIsysUser\b/);
   });
+
+  it('activates the ID_ITEM-backed parts API', () => {
+    expect(source).toContain("import { MasterPartModule } from './modules/master/master-part.module'");
+    expect(source).toMatch(/imports:\s*\[[\s\S]*\bMasterPartModule\b/);
+    expect(databaseModuleSource).toContain("import { ItemMaster } from '../entities/item-master.entity'");
+    expect(databaseModuleSource).toMatch(/entities:\s*\[[\s\S]*\bItemMaster\b/);
+  });
 });

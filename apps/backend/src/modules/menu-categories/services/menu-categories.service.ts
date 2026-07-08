@@ -46,47 +46,67 @@ export class MenuCategoriesService {
   }
 
   async ensureDefaultLayout(scope: AuditScope): Promise<void> {
-    const existingCount = await this.categoryRepo.count({
+    const existingCategories = await this.categoryRepo.find({
       where: { organizationId: scope.organizationId },
     });
-    if (existingCount > 0) return;
+    const existingCategoryCodes = new Set(existingCategories.map((category) => category.categoryCode));
+
+    const existingItems = await this.itemRepo.find({
+      where: { organizationId: scope.organizationId },
+    });
+    const existingMenuCodes = new Set(existingItems.map((item) => item.menuCode));
+
+    const missingCategories = DEFAULT_MENU_CATEGORY_LAYOUT.filter(
+      (category) => !existingCategoryCodes.has(category.categoryCode),
+    );
+    const missingItems = DEFAULT_MENU_CATEGORY_LAYOUT.flatMap((category) =>
+      category.menuCodes
+        .filter(isValidMenuCode)
+        .filter((menuCode) => !existingMenuCodes.has(menuCode))
+        .map((menuCode, index) => ({
+          menuCode,
+          categoryCode: category.categoryCode,
+          sortOrder: (index + 1) * 10,
+        })),
+    );
+
+    if (missingCategories.length === 0 && missingItems.length === 0) return;
 
     const now = new Date();
     await this.tx.run(async (queryRunner) => {
       const categoryRepo = queryRunner.manager.getRepository(MenuCategory);
       const itemRepo = queryRunner.manager.getRepository(MenuCategoryItem);
 
-      await categoryRepo.save(
-        DEFAULT_MENU_CATEGORY_LAYOUT.map((category) => ({
-          organizationId: scope.organizationId,
-          categoryCode: category.categoryCode,
-          labelKey: category.labelKey,
-          iconName: null,
-          sortOrder: category.sortOrder,
-          isActive: 'Y' as const,
-          createdAt: now,
-          createdBy: scope.userId,
-          updatedAt: now,
-          updatedBy: scope.userId,
-        })),
-      );
-
-      const items = DEFAULT_MENU_CATEGORY_LAYOUT.flatMap((category) =>
-        category.menuCodes
-          .filter(isValidMenuCode)
-          .map((menuCode, index) => ({
+      if (missingCategories.length > 0) {
+        await categoryRepo.save(
+          missingCategories.map((category) => ({
             organizationId: scope.organizationId,
-            menuCode,
             categoryCode: category.categoryCode,
-            sortOrder: (index + 1) * 10,
+            labelKey: category.labelKey,
+            iconName: null,
+            sortOrder: category.sortOrder,
+            isActive: 'Y' as const,
             createdAt: now,
             createdBy: scope.userId,
             updatedAt: now,
             updatedBy: scope.userId,
           })),
-      );
-      if (items.length > 0) {
-        await itemRepo.save(items);
+        );
+      }
+
+      if (missingItems.length > 0) {
+        await itemRepo.save(
+          missingItems.map((item) => ({
+            organizationId: scope.organizationId,
+            menuCode: item.menuCode,
+            categoryCode: item.categoryCode,
+            sortOrder: item.sortOrder,
+            createdAt: now,
+            createdBy: scope.userId,
+            updatedAt: now,
+            updatedBy: scope.userId,
+          })),
+        );
       }
     });
   }
