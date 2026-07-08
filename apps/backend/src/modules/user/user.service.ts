@@ -13,7 +13,7 @@ import { Repository } from 'typeorm';
 import { IsysUser } from '../../entities/isys-user.entity';
 import { CreateUserDto, UpdateUserDto } from './user.dto';
 
-interface UserView {
+export interface UserView {
   email: string;
   name: string | null;
   empNo: string | null;

@@ -23,6 +23,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { OeeModule } from './modules/oee/oee.module';
 import { MenuCategoriesModule } from './modules/menu-categories/menu-categories.module';
 import { SystemModule } from './modules/system/system.module';
+import { UserModule } from './modules/user/user.module';
 import { MasterCodeModule } from './modules/master/master-code.module';
 import { MasterCompanyModule } from './modules/master/master-company.module';
 import { MasterDepartmentModule } from './modules/master/master-department.module';
@@ -53,6 +54,9 @@ import { SharedModule } from './shared/shared.module';
 
     // 시스템관리 (/system/comm-configs 통신설정, 환경설정, 활동로그, 문서, ER뷰 등)
     SystemModule,
+
+    // 사용자 관리 (/users) — ISYS_USERS 기반
+    UserModule,
 
     // 기준정보 공통코드 (/master/com-codes)
     MasterCodeModule,

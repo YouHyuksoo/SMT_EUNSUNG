@@ -11,4 +11,11 @@ describe('AppModule activated API modules', () => {
     expect(databaseModuleSource).toContain("import { DepartmentMaster } from '../entities/department-master.entity'");
     expect(databaseModuleSource).toMatch(/entities:\s*\[[\s\S]*\bDepartmentMaster\b/);
   });
+
+  it('activates the ISYS_USERS-backed user API', () => {
+    expect(source).toContain("import { UserModule } from './modules/user/user.module'");
+    expect(source).toMatch(/imports:\s*\[[\s\S]*\bUserModule\b/);
+    expect(databaseModuleSource).toContain("import { IsysUser } from '../entities/isys-user.entity'");
+    expect(databaseModuleSource).toMatch(/entities:\s*\[[\s\S]*\bIsysUser\b/);
+  });
 });
