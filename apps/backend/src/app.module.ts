@@ -23,6 +23,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { OeeModule } from './modules/oee/oee.module';
 import { MenuCategoriesModule } from './modules/menu-categories/menu-categories.module';
 import { SystemModule } from './modules/system/system.module';
+import { SharedModule } from './shared/shared.module';
 
 @Module({
   imports: [
@@ -34,6 +35,9 @@ import { SystemModule } from './modules/system/system.module';
 
     // 데이터베이스 (글로벌) - TypeORM + Oracle(은성 외부)
     DatabaseModule,
+
+    // 전역 공유 서비스 (TransactionService, NumberingService 등)
+    SharedModule,
 
     // 인증 (로그인)
     AuthModule,
