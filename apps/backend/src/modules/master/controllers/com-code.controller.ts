@@ -27,7 +27,7 @@ export class ComCodeController {
   @ApiOperation({ summary: 'Get all active common codes grouped by groupCode' })
   @ApiResponse({ status: 200, description: 'OK' })
   async findAllActive(@OrganizationId() organizationId?: number) {
-    const data = await this.comCodeService.findAllActive(company, plant);
+    const data = await this.comCodeService.findAllActive(organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -35,7 +35,7 @@ export class ComCodeController {
   @ApiOperation({ summary: 'Get all code groups' })
   @ApiResponse({ status: 200, description: 'OK' })
   async findAllGroups(@OrganizationId() organizationId?: number) {
-    const data = await this.comCodeService.findAllGroups(company, plant);
+    const data = await this.comCodeService.findAllGroups(organizationId);
     return ResponseUtil.success(data);
   }
 

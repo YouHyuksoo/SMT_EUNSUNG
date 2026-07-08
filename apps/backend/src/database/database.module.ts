@@ -20,6 +20,7 @@ import { OeeDowntimeReason } from '../entities/oee-downtime-reason.entity';
 import { OeeOperationLog } from '../entities/oee-operation-log.entity';
 import { MenuCategory } from '../entities/menu-category.entity';
 import { MenuCategoryItem } from '../entities/menu-category-item.entity';
+import { ComCode } from '../entities/com-code.entity';
 import { CommConfig } from '../entities/comm-config.entity';
 import { SysConfig } from '../entities/sys-config.entity';
 import { ActivityLog } from '../entities/activity-log.entity';
@@ -66,6 +67,7 @@ import { ImprRequest } from '../entities/impr-request.entity';
             OeeOperationLog,
             MenuCategory,
             MenuCategoryItem,
+            ComCode,
             CommConfig,
             SysConfig,
             ActivityLog,

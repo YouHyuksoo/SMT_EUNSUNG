@@ -1,72 +1,74 @@
 /**
  * @file entities/com-code.entity.ts
- * @description 공통코드 엔티티 - 시스템 전체에서 사용하는 코드를 관리한다.
- *              복합 PK: (groupCode, detailCode). 패턴 C.
+ * @description 공통코드 엔티티 - ISYS_BASECODE 테이블 매핑.
  *
  * 초보자 가이드:
- * 1. 복합 PK: groupCode + detailCode
- * 2. groupCode: 코드 그룹 (예: PART_TYPE, WAREHOUSE_TYPE)
- * 3. detailCode: 그룹 내 상세 코드 (예: MAT, PROD)
- * 4. attr1~attr3: 추가 속성 (색상, 아이콘 등)
+ * 1. 복합 PK: CODE_TYPE + CODE_NAME + ORGANIZATION_ID
+ * 2. 화면 계약의 groupCode는 CODE_TYPE, detailCode는 CODE_NAME에 대응한다.
+ * 3. ISYS_BASECODE에는 사용여부/정렬순서/부모코드 컬럼이 없다.
  */
 import {
   Entity,
   PrimaryColumn,
   Column,
-  CreateDateColumn,
-  UpdateDateColumn,
   Index,
 } from 'typeorm';
 
-@Entity({ name: 'COM_CODES' })
+@Entity({ name: 'ISYS_BASECODE' })
 @Index(['groupCode'])
-@Index(['parentCode'])
 export class ComCode {
-  @PrimaryColumn({ name: 'GROUP_CODE', length: 50 })
+  @PrimaryColumn({ name: 'CODE_TYPE', length: 30 })
   groupCode: string;
 
-  @PrimaryColumn({ name: 'DETAIL_CODE', length: 50 })
+  @PrimaryColumn({ name: 'CODE_NAME', length: 100 })
   detailCode: string;
 
-  @Column({ type: 'varchar2', name: 'PARENT_CODE', length: 50, nullable: true })
-  parentCode: string | null;
-
-  @Column({ name: 'CODE_NAME', length: 100 })
-  codeName: string;
-
-  @Column({ type: 'varchar2', name: 'CODE_DESC', length: 255, nullable: true })
-  codeDesc: string | null;
-
-  @Column({ name: 'SORT_ORDER', type: 'int', default: 0 })
-  sortOrder: number;
-
-  @Column({ name: 'USE_YN', length: 1, default: 'Y' })
-  useYn: string;
-
-  @Column({ type: 'varchar2', name: 'ATTR1', length: 100, nullable: true })
-  attr1: string | null;
-
-  @Column({ type: 'varchar2', name: 'ATTR2', length: 100, nullable: true })
-  attr2: string | null;
-
-  @Column({ type: 'varchar2', name: 'ATTR3', length: 100, nullable: true })
-  attr3: string | null;
-
-  @Column({ type: 'varchar2', name: 'DEFECT_GRADE', length: 20, nullable: true })
-  defectGrade: 'CRITICAL' | 'MAJOR' | 'MINOR' | null;
-
-  @Column({ name: 'ORGANIZATION_ID', type: 'number' })
+  @PrimaryColumn({ name: 'ORGANIZATION_ID', type: 'number' })
   organizationId!: number;
 
-  @Column({ type: 'varchar2', name: 'CREATED_BY', length: 50, nullable: true })
+  @Column({ name: 'CODE_MEAN_KOR', length: 100, nullable: true })
+  codeName: string | null;
+
+  @Column({ type: 'varchar2', name: 'CODE_NAME_DESCRIPTION_KOR', length: 100, nullable: true })
+  codeDesc: string | null;
+
+  @Column({ type: 'varchar2', name: 'CODE_MEAN_ENG', length: 100, nullable: true })
+  codeNameEng: string | null;
+
+  @Column({ type: 'varchar2', name: 'CODE_MEAN_LOCAL', length: 100, nullable: true })
+  codeNameLocal: string | null;
+
+  @Column({ type: 'varchar2', name: 'CODE_VALUE', length: 30, nullable: true })
+  attr1: string | null;
+
+  @Column({ type: 'varchar2', name: 'CODE_TYPE_DESC_KOR', length: 100, nullable: true })
+  codeTypeDescKor: string | null;
+
+  @Column({ type: 'varchar2', name: 'CODE_TYPE_DESC_ENG', length: 100, nullable: true })
+  codeTypeDescEng: string | null;
+
+  @Column({ type: 'varchar2', name: 'CODE_TYPE_DESC_LOCAL', length: 100, nullable: true })
+  codeTypeDescLocal: string | null;
+
+  @Column({ type: 'varchar2', name: 'CODE_GROUP', length: 100, nullable: true })
+  codeGroup: string | null;
+
+  @Column({ type: 'varchar2', name: 'ENTER_BY', length: 20, nullable: true })
   createdBy: string | null;
 
-  @Column({ type: 'varchar2', name: 'UPDATED_BY', length: 50, nullable: true })
+  @Column({ type: 'varchar2', name: 'LAST_MODIFY_BY', length: 20, nullable: true })
   updatedBy: string | null;
 
-  @CreateDateColumn({ name: 'CREATED_AT', type: 'timestamp' })
-  createdAt: Date;
+  @Column({ name: 'ENTER_DATE', type: 'date', nullable: true })
+  createdAt: Date | null;
 
-  @UpdateDateColumn({ name: 'UPDATED_AT', type: 'timestamp' })
-  updatedAt: Date;
+  @Column({ name: 'LAST_MODIFY_DATE', type: 'date', nullable: true })
+  updatedAt: Date | null;
+
+  parentCode: string | null;
+  sortOrder: number;
+  useYn: string;
+  attr2: string | null;
+  attr3: string | null;
+  defectGrade: 'CRITICAL' | 'MAJOR' | 'MINOR' | null;
 }

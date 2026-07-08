@@ -23,6 +23,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { OeeModule } from './modules/oee/oee.module';
 import { MenuCategoriesModule } from './modules/menu-categories/menu-categories.module';
 import { SystemModule } from './modules/system/system.module';
+import { MasterCodeModule } from './modules/master/master-code.module';
 import { SharedModule } from './shared/shared.module';
 
 @Module({
@@ -50,6 +51,9 @@ import { SharedModule } from './shared/shared.module';
 
     // 시스템관리 (/system/comm-configs 통신설정, 환경설정, 활동로그, 문서, ER뷰 등)
     SystemModule,
+
+    // 기준정보 공통코드 (/master/com-codes)
+    MasterCodeModule,
   ],
   controllers: [AppController],
   providers: [AppService],

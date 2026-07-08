@@ -7,9 +7,9 @@
  * 2. **TypeORM 사용**: Repository 패턴을 통해 DB 접근
  * 3. **에러 처리**: NotFoundException 등 적절한 예외 발생
  *
- * 실제 DB 스키마 (com_codes 테이블):
- * - 단일 테이블에서 groupCode로 그룹 구분
- * - groupCode + detailCode가 유니크 키
+ * 실제 DB 스키마 (ISYS_BASECODE):
+ * - CODE_TYPE이 groupCode, CODE_NAME이 detailCode에 대응
+ * - CODE_TYPE + CODE_NAME + ORGANIZATION_ID가 키
  */
 
 import {
@@ -26,6 +26,17 @@ import {
   UpdateComCodeDto,
   ComCodeQueryDto,
 } from '../dto/com-code.dto';
+
+type ComCodeView = ComCode & {
+  codeName: string;
+  codeDesc: string | null;
+  parentCode: string | null;
+  sortOrder: number;
+  useYn: string;
+  attr2: string | null;
+  attr3: string | null;
+  defectGrade: 'CRITICAL' | 'MAJOR' | 'MINOR' | null;
+};
 
 @Injectable()
 export class ComCodeService {
@@ -47,6 +58,21 @@ export class ComCodeService {
     return { groupCode, detailCode };
   }
 
+  private toView(code: ComCode): ComCodeView {
+    return {
+      ...code,
+      codeName: code.codeName || code.codeNameLocal || code.codeNameEng || code.detailCode,
+      codeDesc: code.codeDesc || code.codeTypeDescKor,
+      parentCode: null,
+      sortOrder: 0,
+      useYn: 'Y',
+      attr1: code.attr1,
+      attr2: code.codeNameLocal,
+      attr3: code.codeNameEng,
+      defectGrade: null,
+    };
+  }
+
   /**
    * 전체 활성 코드를 groupCode별 그룹핑하여 반환
    * 프론트엔드에서 한 번의 호출로 모든 공통코드를 로드할 때 사용
@@ -62,18 +88,16 @@ export class ComCodeService {
     defectGrade: string | null;
   }>>> {
     const codes = await this.comCodeRepository.find({
-      where: { useYn: 'Y', ...this.tenantWhere(organizationId) },
-      order: { groupCode: 'asc', sortOrder: 'asc' },
+      where: this.tenantWhere(organizationId),
+      order: { groupCode: 'asc', detailCode: 'asc' },
       select: {
         groupCode: true,
         detailCode: true,
         codeName: true,
         codeDesc: true,
-        sortOrder: true,
         attr1: true,
-        attr2: true,
-        attr3: true,
-        defectGrade: true,
+        codeNameLocal: true,
+        codeNameEng: true,
       },
     });
 
@@ -89,7 +113,8 @@ export class ComCodeService {
     }>> = {};
 
     for (const code of codes) {
-      const { groupCode, ...rest } = code;
+      const view = this.toView(code);
+      const { groupCode, ...rest } = view;
       if (!grouped[groupCode]) {
         grouped[groupCode] = [];
       }
@@ -106,11 +131,10 @@ export class ComCodeService {
     const queryBuilder = this.comCodeRepository.createQueryBuilder('code')
       .select('code.groupCode', 'groupCode')
       .addSelect('COUNT(*)', 'count')
-      .addSelect("LISTAGG(code.detailCode, ' ') WITHIN GROUP (ORDER BY code.sortOrder)", 'detailCodes')
-      .addSelect("LISTAGG(code.codeName, ' ') WITHIN GROUP (ORDER BY code.sortOrder)", 'searchTextKo')
-      .addSelect("LISTAGG(code.attr1, ' ') WITHIN GROUP (ORDER BY code.sortOrder)", 'searchTextEn')
-      .addSelect("LISTAGG(code.attr2, ' ') WITHIN GROUP (ORDER BY code.sortOrder)", 'searchTextZh')
-      .addSelect("LISTAGG(code.attr3, ' ') WITHIN GROUP (ORDER BY code.sortOrder)", 'searchTextVi')
+      .addSelect("LISTAGG(code.detailCode, ' ') WITHIN GROUP (ORDER BY code.detailCode)", 'detailCodes')
+      .addSelect("LISTAGG(code.codeName, ' ') WITHIN GROUP (ORDER BY code.detailCode)", 'searchTextKo')
+      .addSelect("LISTAGG(code.codeNameEng, ' ') WITHIN GROUP (ORDER BY code.detailCode)", 'searchTextEn')
+      .addSelect("LISTAGG(code.codeNameLocal, ' ') WITHIN GROUP (ORDER BY code.detailCode)", 'searchTextLocal')
       .groupBy('code.groupCode')
       .orderBy('code.groupCode', 'ASC');
 
@@ -129,8 +153,8 @@ export class ComCodeService {
       searchText: {
         ko: g.searchTextKo ?? '',
         en: g.searchTextEn ?? '',
-        zh: g.searchTextZh ?? '',
-        vi: g.searchTextVi ?? '',
+        zh: g.searchTextLocal ?? '',
+        vi: g.searchTextLocal ?? '',
       },
     }));
   }
@@ -152,14 +176,14 @@ export class ComCodeService {
       queryBuilder.andWhere('code.groupCode = :groupCode', { groupCode });
     }
 
-    if (useYn) {
-      queryBuilder.andWhere('code.useYn = :useYn', { useYn });
+    if (useYn && useYn !== 'Y') {
+      return { data: [], total: 0, page, limit };
     }
 
     if (search) {
       const upper = search.toUpperCase();
       queryBuilder.andWhere(
-        '(code.detailCode LIKE :searchUpper OR code.codeName LIKE :searchRaw)',
+        '(code.detailCode LIKE :searchUpper OR code.codeName LIKE :searchRaw OR code.codeNameEng LIKE :searchRaw OR code.codeNameLocal LIKE :searchRaw)',
         { searchUpper: `%${upper}%`, searchRaw: `%${search}%` },
       );
     }
@@ -167,14 +191,14 @@ export class ComCodeService {
     const [data, total] = await Promise.all([
       queryBuilder
         .orderBy('code.groupCode', 'ASC')
-        .addOrderBy('code.sortOrder', 'ASC')
+        .addOrderBy('code.detailCode', 'ASC')
         .skip(skip)
         .take(limit)
         .getMany(),
       queryBuilder.getCount(),
     ]);
 
-    return { data, total, page, limit };
+    return { data: data.map((code) => this.toView(code)), total, page, limit };
   }
 
   /**
@@ -182,9 +206,9 @@ export class ComCodeService {
    */
   async findByGroupCode(groupCode: string, organizationId?: number) {
     return this.comCodeRepository.find({
-      where: { groupCode, useYn: 'Y', ...this.tenantWhere(organizationId) },
-      order: { sortOrder: 'asc' },
-    });
+      where: { groupCode, ...this.tenantWhere(organizationId) },
+      order: { detailCode: 'asc' },
+    }).then((codes) => codes.map((code) => this.toView(code)));
   }
 
   /**
@@ -201,7 +225,7 @@ export class ComCodeService {
       throw new NotFoundException(`공통코드를 찾을 수 없습니다: ${id}`);
     }
 
-    return code;
+    return this.toView(code);
   }
 
   /**
@@ -218,7 +242,7 @@ export class ComCodeService {
       );
     }
 
-    return code;
+    return this.toView(code);
   }
 
   /**
@@ -243,19 +267,17 @@ export class ComCodeService {
     const comCode = this.comCodeRepository.create({
       groupCode: dto.groupCode,
       detailCode: dto.detailCode,
-      parentCode: dto.parentCode,
       codeName: dto.codeName,
       codeDesc: dto.codeDesc,
-      sortOrder: dto.sortOrder ?? 0,
-      useYn: dto.useYn ?? 'Y',
       attr1: dto.attr1,
-      attr2: dto.attr2,
-      attr3: dto.attr3,
-      defectGrade: dto.defectGrade ?? null,
-      organizationId,
+      codeNameLocal: dto.attr2,
+      codeNameEng: dto.attr3,
+      organizationId: organizationId ?? 1,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     });
 
-    return this.comCodeRepository.save(comCode);
+    return this.toView(await this.comCodeRepository.save(comCode));
   }
 
   /**
@@ -265,16 +287,13 @@ export class ComCodeService {
     await this.findById(id, organizationId); // 존재 확인
     const { groupCode, detailCode } = this.parseId(id);
 
-    const updateData: Partial<Pick<ComCode, 'parentCode' | 'codeName' | 'codeDesc' | 'sortOrder' | 'useYn' | 'attr1' | 'attr2' | 'attr3' | 'defectGrade'>> = {};
-    if (dto.parentCode !== undefined) updateData.parentCode = dto.parentCode;
+    const updateData: Partial<ComCode> = {};
     if (dto.codeName !== undefined) updateData.codeName = dto.codeName;
     if (dto.codeDesc !== undefined) updateData.codeDesc = dto.codeDesc;
-    if (dto.sortOrder !== undefined) updateData.sortOrder = dto.sortOrder;
-    if (dto.useYn !== undefined) updateData.useYn = dto.useYn;
     if (dto.attr1 !== undefined) updateData.attr1 = dto.attr1;
-    if (dto.attr2 !== undefined) updateData.attr2 = dto.attr2;
-    if (dto.attr3 !== undefined) updateData.attr3 = dto.attr3;
-    if (dto.defectGrade !== undefined) updateData.defectGrade = dto.defectGrade;
+    if (dto.attr2 !== undefined) updateData.codeNameLocal = dto.attr2;
+    if (dto.attr3 !== undefined) updateData.codeNameEng = dto.attr3;
+    updateData.updatedAt = new Date();
 
     await this.comCodeRepository.update(
       { groupCode, detailCode, ...this.tenantWhere(organizationId) },
