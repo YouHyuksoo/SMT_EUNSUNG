@@ -407,6 +407,7 @@
     "system.commConfig": "Quản lý cài đặt truyền thông",
     "system.config": "Cấu hình hệ thống",
     "system.roles": "Quản lý vai trò",
+    "system.scheduler": "Bộ lập lịch",
     "system.pdaRoles": "Quản lý vai trò PDA",
     "system.document": "Quản lý tài liệu",
     "system.training": "Quản lý đào tạo",

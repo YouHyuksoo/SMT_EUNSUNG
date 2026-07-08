@@ -407,6 +407,7 @@
     "system.commConfig": "Comm Config Mgmt",
     "system.config": "System Config",
     "system.roles": "Role Management",
+    "system.scheduler": "Scheduler",
     "system.pdaRoles": "PDA Role Management",
     "system.document": "Document Control",
     "system.training": "Training",

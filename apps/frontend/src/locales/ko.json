@@ -407,6 +407,7 @@
     "system.commConfig": "통신설정관리",
     "system.config": "환경설정",
     "system.roles": "역할관리",
+    "system.scheduler": "스케줄러",
     "system.pdaRoles": "PDA 역할관리",
     "system.document": "문서관리",
     "system.training": "교육훈련",

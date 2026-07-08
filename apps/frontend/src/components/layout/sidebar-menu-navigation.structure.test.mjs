@@ -59,6 +59,7 @@ test('top-level sidebar categories use distinct icons', () => {
 
   assert.deepEqual(topLevelIcons, [
     'Database',
+    'Settings',
     'Activity',
     'Package',
     'GitBranch',

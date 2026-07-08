@@ -163,9 +163,10 @@ describe('MenuCategoriesService', () => {
       );
       expect(itemRepo.save).toHaveBeenCalledWith(
         expect.arrayContaining([
-          expect.objectContaining({ organizationId: 7, menuCode: 'SYS_COMPANY', categoryCode: 'MASTER' }),
+          expect.objectContaining({ organizationId: 7, menuCode: 'SYS_COMPANY', categoryCode: 'SYSTEM' }),
           expect.objectContaining({ organizationId: 7, menuCode: 'OEE_DASHBOARD', categoryCode: 'OEE' }),
-          expect.objectContaining({ organizationId: 7, menuCode: 'SYS_CODE', categoryCode: 'MASTER' }),
+          expect.objectContaining({ organizationId: 7, menuCode: 'SYS_CODE', categoryCode: 'SYSTEM' }),
+          expect.objectContaining({ organizationId: 7, menuCode: 'SYS_DOCUMENT', categoryCode: 'SYSTEM' }),
         ]),
       );
     });
