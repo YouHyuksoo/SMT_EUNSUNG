@@ -20,7 +20,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
-@Entity({ name: 'SCHEDULER_JOBS' })
+@Entity({ name: 'ISYS_SCHEDULER_JOBS' })
 export class SchedulerJob {
   @PrimaryColumn({ name: 'ORGANIZATION_ID', type: 'number' })
   organizationId!: number;

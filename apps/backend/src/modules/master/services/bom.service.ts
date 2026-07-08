@@ -12,7 +12,7 @@
 
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In, FindOptionsWhere, SelectQueryBuilder } from 'typeorm';
+import { Repository, In, FindOptionsWhere } from 'typeorm';
 import * as XLSX from 'xlsx';
 import { BomMaster } from '../../../entities/bom-master.entity';
 import { ItemMaster } from '../../../entities/item-master.entity';
@@ -63,7 +63,7 @@ type BomParentRow = {
 type BomChildRow = {
   parentItemCode: string;
   childItemCode: string;
-  revision: string;
+  revision: string | null;
   qtyPer: number | string;
   seq: number | string;
   bomGrp: string | null;
@@ -72,7 +72,7 @@ type BomChildRow = {
   ecoNo: string | null;
   validFrom: string | null;
   validTo: string | null;
-  useYn: string;
+  useYn?: string;
   remark: string | null;
 };
 
@@ -120,16 +120,6 @@ export class BomService {
     private readonly partRepository: Repository<ItemMaster>,
   ) {}
 
-  /** 유효일자 필터 조건 생성 (validFrom <= date AND validTo >= date, NULL은 무제한) */
-  private buildDateFilter(queryBuilder: SelectQueryBuilder<BomMaster>, effectiveDate?: string) {
-    if (!effectiveDate) return queryBuilder;
-    const d = new Date(effectiveDate);
-    
-    return queryBuilder
-      .andWhere('(bom.validFrom IS NULL OR bom.validFrom <= :date)', { date: d })
-      .andWhere('(bom.validTo IS NULL OR bom.validTo >= :date)', { date: d });
-  }
-
   /** BOM에 등재된 모품목(부모품목) 목록 + 자품목 수 (단일 JOIN 쿼리) */
   async findParents(search?: string, effectiveDate?: string, organizationId?: number) {
     try {
@@ -141,8 +131,8 @@ export class BomService {
       if (effectiveDate) {
         const f = bind(effectiveDate);
         const t = bind(effectiveDate);
-        dateFilter = `AND (b.VALID_FROM IS NULL OR b.VALID_FROM <= TO_DATE(:${f}, 'YYYY-MM-DD'))
-          AND (b.VALID_TO IS NULL OR b.VALID_TO >= TO_DATE(:${t}, 'YYYY-MM-DD'))`;
+        dateFilter = `AND TRUNC(b.DATESET) <= TO_DATE(:${f}, 'YYYY-MM-DD')
+          AND NVL(TRUNC(b.DATEEND), TO_DATE('9999-12-31', 'YYYY-MM-DD')) >= TO_DATE(:${t}, 'YYYY-MM-DD')`;
       }
 
       let searchFilter = '';
@@ -155,25 +145,27 @@ export class BomService {
       }
 
       let tenantFilter = '';
-      if (organizationId != null) tenantFilter += ` AND b.ORGANIZATION_ID = :${bind(organizationId)}`;
+      if (organizationId != null) tenantFilter += ` AND p.ORGANIZATION_ID = :${bind(organizationId)}`;
 
       const rows = await this.bomRepository.query<BomParentRow[]>(
         `SELECT p.ITEM_CODE   AS "itemCode",
                 p.ITEM_NAME   AS "itemName",
                 p.PART_NO     AS "itemNo",
                 p.ITEM_TYPE   AS "itemType",
-                p.SPEC        AS "spec",
-                p.UNIT        AS "unit",
-                p.REMARK     AS "remark",
-                COUNT(*)      AS "bomCount",
-                TO_CHAR(MIN(b.VALID_FROM), 'YYYY-MM-DD') AS "validFrom",
-                TO_CHAR(MAX(b.VALID_TO), 'YYYY-MM-DD') AS "validTo",
-                LISTAGG(DISTINCT b.REVISION, ',') WITHIN GROUP (ORDER BY b.REVISION) AS "revisions"
-           FROM BOM_MASTERS b
-           JOIN ITEM_MASTERS p ON p.ITEM_CODE = b.PARENT_ITEM_CODE
-          WHERE b.USE_YN = 'Y' ${dateFilter} ${searchFilter} ${tenantFilter}
+                p.ITEM_SPEC   AS "spec",
+                p.ITEM_UOM    AS "unit",
+                p.COMMENTS    AS "remark",
+                COUNT(b.CHILD_ITEM_CODE) AS "bomCount",
+                TO_CHAR(MIN(b.DATESET), 'YYYY-MM-DD') AS "validFrom",
+                TO_CHAR(MAX(b.DATEEND), 'YYYY-MM-DD') AS "validTo",
+                CAST(NULL AS VARCHAR2(4000)) AS "revisions"
+           FROM ID_ITEM p
+           JOIN ID_ENG_BOM b
+             ON b.PARENT_ITEM_CODE = p.ITEM_CODE
+            AND b.ORGANIZATION_ID = p.ORGANIZATION_ID
+          WHERE p.ITEM_CODE <> '*' ${dateFilter} ${searchFilter} ${tenantFilter}
           GROUP BY p.ITEM_CODE, p.ITEM_NAME, p.PART_NO, p.ITEM_TYPE,
-                   p.SPEC, p.UNIT, p.REMARK
+                   p.ITEM_SPEC, p.ITEM_UOM, p.COMMENTS
           ORDER BY p.ITEM_CODE ASC`,
         params,
       );
@@ -193,7 +185,7 @@ export class BomService {
     const { page = 1, limit = 10, parentItemCode, childItemCode, revision } = query;
     const skip = (page - 1) * limit;
 
-    const where: FindOptionsWhere<BomMaster> = { useYn: 'Y' };
+    const where: FindOptionsWhere<BomMaster> = {};
     if (organizationId != null) where.organizationId = organizationId;
     if (parentItemCode) where.parentItemCode = parentItemCode;
     if (childItemCode) where.childItemCode = childItemCode;
@@ -264,8 +256,8 @@ export class BomService {
     if (effectiveDate) {
       const f = bind(effectiveDate);
       const t = bind(effectiveDate);
-      dateFilter = `AND (b.VALID_FROM IS NULL OR b.VALID_FROM <= TO_DATE(:${f}, 'YYYY-MM-DD'))
-        AND (b.VALID_TO IS NULL OR b.VALID_TO >= TO_DATE(:${t}, 'YYYY-MM-DD'))`;
+      dateFilter = `AND TRUNC(b.DATESET) <= TO_DATE(:${f}, 'YYYY-MM-DD')
+        AND NVL(TRUNC(b.DATEEND), TO_DATE('9999-12-31', 'YYYY-MM-DD')) >= TO_DATE(:${t}, 'YYYY-MM-DD')`;
     }
     let tenantFilter = '';
     if (organizationId != null) tenantFilter += ` AND b.ORGANIZATION_ID = :${bind(organizationId)}`;
@@ -274,22 +266,21 @@ export class BomService {
       `SELECT b.PARENT_ITEM_CODE AS "parentItemCode",
               b.CHILD_ITEM_CODE  AS "childItemCode",
               b.REVISION         AS "revision",
-              b.QTY_PER          AS "qtyPer",
-              b.SEQ              AS "seq",
-              b.BOM_GRP          AS "bomGrp",
-              b.OPER             AS "processCode",
-              b.SIDE             AS "side",
-              b.ECO_NO           AS "ecoNo",
-              TO_CHAR(b.VALID_FROM, 'YYYY-MM-DD') AS "validFrom",
-              TO_CHAR(b.VALID_TO, 'YYYY-MM-DD') AS "validTo",
-              b.USE_YN           AS "useYn",
-              b.REMARK           AS "remark"
-         FROM BOM_MASTERS b
+              b.ITEM_UNIT_QTY    AS "qtyPer",
+              b.SORT_SEQUENCE    AS "seq",
+              CAST(NULL AS VARCHAR2(50)) AS "bomGrp",
+              b.WORKSTAGE_CODE   AS "processCode",
+              b.LINE_TYPE        AS "side",
+              CAST(NULL AS VARCHAR2(50)) AS "ecoNo",
+              TO_CHAR(b.DATESET, 'YYYY-MM-DD') AS "validFrom",
+              TO_CHAR(b.DATEEND, 'YYYY-MM-DD') AS "validTo",
+              'Y'                AS "useYn",
+              b.LOCATION_INFO    AS "remark"
+         FROM ID_ENG_BOM b
         WHERE b.PARENT_ITEM_CODE = :${parentIdx}
-          AND b.USE_YN = 'Y'
           ${dateFilter}
           ${tenantFilter}
-        ORDER BY b.SEQ ASC`,
+        ORDER BY b.SORT_SEQUENCE ASC`,
       params,
     );
 
@@ -328,8 +319,8 @@ export class BomService {
     if (effectiveDate) {
       const f = bind(effectiveDate);
       const t = bind(effectiveDate);
-      dateFilter = `AND (b.VALID_FROM IS NULL OR b.VALID_FROM <= TO_DATE(:${f}, 'YYYY-MM-DD'))
-         AND (b.VALID_TO IS NULL OR b.VALID_TO >= TO_DATE(:${t}, 'YYYY-MM-DD'))`;
+      dateFilter = `AND TRUNC(b.DATESET) <= TO_DATE(:${f}, 'YYYY-MM-DD')
+         AND NVL(TRUNC(b.DATEEND), TO_DATE('9999-12-31', 'YYYY-MM-DD')) >= TO_DATE(:${t}, 'YYYY-MM-DD')`;
     }
 
     // 2) WHERE 절 테넌트 필터
@@ -344,8 +335,8 @@ export class BomService {
     if (effectiveDate) {
       const f = bind(effectiveDate);
       const t = bind(effectiveDate);
-      dateFilterConnect = `AND (b.VALID_FROM IS NULL OR b.VALID_FROM <= TO_DATE(:${f}, 'YYYY-MM-DD'))
-         AND (b.VALID_TO IS NULL OR b.VALID_TO >= TO_DATE(:${t}, 'YYYY-MM-DD'))`;
+      dateFilterConnect = `AND TRUNC(b.DATESET) <= TO_DATE(:${f}, 'YYYY-MM-DD')
+         AND NVL(TRUNC(b.DATEEND), TO_DATE('9999-12-31', 'YYYY-MM-DD')) >= TO_DATE(:${t}, 'YYYY-MM-DD')`;
     }
 
     // 5) CONNECT BY 절 테넌트 필터
@@ -354,37 +345,37 @@ export class BomService {
 
     const query = `
       SELECT
-        b.PARENT_ITEM_CODE || '::' || b.CHILD_ITEM_CODE || '::' || TO_CHAR(b.VALID_FROM, 'YYYY-MM-DD') AS "id",
+        b.PARENT_ITEM_CODE || '::' || b.CHILD_ITEM_CODE || '::' || TO_CHAR(b.DATESET, 'YYYY-MM-DD') AS "id",
         b.PARENT_ITEM_CODE AS "parentItemCode",
         b.CHILD_ITEM_CODE  AS "childItemCode",
-        b.QTY_PER          AS "qtyPer",
-        b.SEQ              AS "seq",
+        b.ITEM_UNIT_QTY    AS "qtyPer",
+        b.SORT_SEQUENCE    AS "seq",
         b.REVISION         AS "revision",
-        b.OPER             AS "processCode",
-        pm.PROCESS_NAME    AS "processName",
-        b.SIDE             AS "side",
-        TO_CHAR(b.VALID_FROM, 'YYYY-MM-DD') AS "validFrom",
-        TO_CHAR(b.VALID_TO, 'YYYY-MM-DD') AS "validTo",
-        b.USE_YN           AS "useYn",
+        b.WORKSTAGE_CODE   AS "processCode",
+        NULL               AS "processName",
+        b.LINE_TYPE        AS "side",
+        TO_CHAR(b.DATESET, 'YYYY-MM-DD') AS "validFrom",
+        TO_CHAR(b.DATEEND, 'YYYY-MM-DD') AS "validTo",
+        'Y'                AS "useYn",
         p.ITEM_CODE        AS "itemCode",
         p.ITEM_NAME        AS "itemName",
         p.PART_NO          AS "itemNo",
         p.ITEM_TYPE        AS "itemType",
-        p.UNIT             AS "unit",
+        p.ITEM_UOM         AS "unit",
         LEVEL              AS "lvl"
-      FROM BOM_MASTERS b
-      JOIN ITEM_MASTERS p ON b.CHILD_ITEM_CODE = p.ITEM_CODE
-      LEFT JOIN PROCESS_MASTERS pm ON b.OPER = pm.PROCESS_CODE
-      WHERE b.USE_YN = 'Y'
+      FROM ID_ENG_BOM b
+      JOIN ID_ITEM p
+        ON b.CHILD_ITEM_CODE = p.ITEM_CODE
+       AND b.ORGANIZATION_ID = p.ORGANIZATION_ID
+      WHERE 1 = 1
         ${dateFilter}
         ${tenantFilterWhere}
       START WITH b.PARENT_ITEM_CODE = :${parentIdx}
       CONNECT BY PRIOR b.CHILD_ITEM_CODE = b.PARENT_ITEM_CODE
         AND LEVEL <= ${safeDepth}
-        AND b.USE_YN = 'Y'
         ${dateFilterConnect}
         ${tenantFilterConnect}
-      ORDER SIBLINGS BY b.SEQ ASC
+      ORDER SIBLINGS BY b.SORT_SEQUENCE ASC
     `;
 
     const rawResults = await this.bomRepository.query<BomTreeFlatRow[]>(query, params);
@@ -411,14 +402,14 @@ export class BomService {
         itemType: row.itemType,
         qtyPer: Number(row.qtyPer),
         unit: row.unit,
-        revision: row.revision,
+        revision: row.revision ?? '',
         seq: Number(row.seq),
         processCode: row.processCode,
         processName: row.processName,
         side: row.side,
         validFrom: row.validFrom,
         validTo: row.validTo,
-        useYn: row.useYn,
+        useYn: row.useYn ?? 'Y',
         children: [],
       };
       childMap.set(node.childItemCode, node);
@@ -516,17 +507,14 @@ export class BomService {
   async update(id: string, dto: UpdateBomDto, organizationId?: number) {
     const bom = await this.findById(id, organizationId);
 
-    const updateData: Partial<Pick<BomMaster, 'qtyPer' | 'seq' | 'revision' | 'bomGrp' | 'processCode' | 'side' | 'ecoNo' | 'validFrom' | 'validTo' | 'remark' | 'useYn'>> = {};
+    const updateData: Partial<Pick<BomMaster, 'qtyPer' | 'seq' | 'revision' | 'processCode' | 'lineType' | 'validFrom' | 'validTo' | 'remark'>> = {};
     if (dto.qtyPer !== undefined) updateData.qtyPer = dto.qtyPer;
     if (dto.seq !== undefined) updateData.seq = dto.seq;
-    if (dto.bomGrp !== undefined) updateData.bomGrp = dto.bomGrp;
     if (dto.processCode !== undefined) updateData.processCode = dto.processCode;
-    if (dto.side !== undefined) updateData.side = dto.side;
-    if (dto.ecoNo !== undefined) updateData.ecoNo = dto.ecoNo;
+    if (dto.side !== undefined) updateData.lineType = dto.side;
     if (dto.revision !== undefined) updateData.revision = dto.revision;
     if (dto.validTo !== undefined) updateData.validTo = dto.validTo ? new Date(dto.validTo) : null;
     if (dto.remark !== undefined) updateData.remark = dto.remark;
-    if (dto.useYn !== undefined) updateData.useYn = dto.useYn;
 
     // 적용일자는 PK — 변경 시 동일 모+자에 같은 적용일자가 이미 있으면 중복
     const oldValidFrom = this.toDateOnly(bom.validFrom);
@@ -575,7 +563,7 @@ export class BomService {
 
   /** BOM 데이터를 Excel(xlsx) 파일로 내보내기 */
   async exportToExcel(parentItemCode?: string, organizationId?: number): Promise<Buffer> {
-    const where: FindOptionsWhere<BomMaster> = { useYn: 'Y' };
+    const where: FindOptionsWhere<BomMaster> = {};
     if (parentItemCode) where.parentItemCode = parentItemCode;
     if (organizationId != null) where.organizationId = organizationId;
 

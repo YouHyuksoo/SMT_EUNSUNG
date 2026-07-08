@@ -166,7 +166,7 @@ export default function SchedulerLogTab() {
               }
             }}
 
-          sqlQuery={`SELECT *\nFROM SYS_SCHEDULER_LOGS\nWHERE COMPANY = '40'\n  AND PLANT_CD = '1000'\nORDER BY CREATED_AT DESC`}/>
+          sqlQuery={`SELECT *\nFROM ISYS_SCHEDULER_LOGS\nWHERE ORGANIZATION_ID = :organizationId\nORDER BY CREATED_AT DESC`}/>
         </CardContent>
       </Card>
 

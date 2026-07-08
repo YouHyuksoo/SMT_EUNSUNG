@@ -21,7 +21,7 @@ import {
 } from 'typeorm';
 import { SchedulerJob } from './scheduler-job.entity';
 
-@Entity({ name: 'SCHEDULER_NOTIFICATIONS' })
+@Entity({ name: 'ISYS_SCHEDULER_NOTIFICATIONS' })
 export class SchedulerNotification {
   @PrimaryColumn({ name: 'ORGANIZATION_ID', type: 'number' })
   organizationId!: number;

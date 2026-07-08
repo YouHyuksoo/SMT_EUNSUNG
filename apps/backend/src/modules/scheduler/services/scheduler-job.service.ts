@@ -62,7 +62,7 @@ export class SchedulerJobService implements OnModuleInit {
       const organizations: { organizationId: number }[] =
         await this.dataSource.query(
           `SELECT DISTINCT "ORGANIZATION_ID" AS "organizationId"
-             FROM "SCHEDULER_JOBS"
+             FROM "ISYS_SCHEDULER_JOBS"
             WHERE "IS_ACTIVE" = 'Y'`,
         );
 

@@ -37,7 +37,7 @@ export class SchedulerNotiService {
    */
   async generateNotiId(organizationId: number): Promise<number> {
     const result = await this.dataSource.query(
-      `SELECT SEQ_SCHEDULER_NOTIFICATIONS.NEXTVAL AS "nextId" FROM DUAL`,
+      `SELECT SEQ_ISYS_SCHEDULER_NOTI.NEXTVAL AS "nextId" FROM DUAL`,
     );
     return result[0].nextId;
   }
@@ -116,7 +116,7 @@ export class SchedulerNotiService {
    */
   async markAllAsRead(userId: string, organizationId: number): Promise<void> {
     await this.dataSource.query(
-      `UPDATE "SCHEDULER_NOTIFICATIONS"
+      `UPDATE "ISYS_SCHEDULER_NOTIFICATIONS"
           SET "IS_READ" = 'Y'
         WHERE "ORGANIZATION_ID" = :1 AND "USER_ID" = :2 AND "IS_READ" = 'N'`,
       [organizationId, userId],

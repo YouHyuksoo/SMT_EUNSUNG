@@ -65,7 +65,7 @@ export class SchedulerLogService {
    */
   async generateLogId(organizationId: number): Promise<number> {
     const result = await this.dataSource.query(
-      `SELECT SEQ_SCHEDULER_LOGS.NEXTVAL AS "nextId" FROM DUAL`,
+      `SELECT SEQ_ISYS_SCHEDULER_LOGS.NEXTVAL AS "nextId" FROM DUAL`,
     );
     return result[0].nextId;
   }
@@ -159,7 +159,7 @@ export class SchedulerLogService {
     // 오늘 실행 건수 (SUCCESS / FAIL / 전체)
     const todayRows: { status: string; cnt: string }[] = await this.dataSource.query(
       `SELECT "STATUS" AS "status", COUNT(*) AS "cnt"
-         FROM "SCHEDULER_LOGS"
+         FROM "ISYS_SCHEDULER_LOGS"
         WHERE "ORGANIZATION_ID" = :1
           AND "START_TIME" >= TRUNC(SYSDATE)
         GROUP BY "STATUS"`,
@@ -184,7 +184,7 @@ export class SchedulerLogService {
       `SELECT TO_CHAR(TRUNC("START_TIME"), 'YYYY-MM-DD') AS "dt",
               "STATUS" AS "status",
               COUNT(*) AS "cnt"
-         FROM "SCHEDULER_LOGS"
+         FROM "ISYS_SCHEDULER_LOGS"
         WHERE "ORGANIZATION_ID" = :1
           AND "START_TIME" >= TRUNC(SYSDATE) - 7
         GROUP BY TRUNC("START_TIME"), "STATUS"
@@ -208,7 +208,7 @@ export class SchedulerLogService {
       `SELECT "JOB_CODE" AS "jobCode",
               "STATUS" AS "status",
               COUNT(*) AS "cnt"
-         FROM "SCHEDULER_LOGS"
+         FROM "ISYS_SCHEDULER_LOGS"
         WHERE "ORGANIZATION_ID" = :1
           AND "START_TIME" >= TRUNC(SYSDATE) - 30
         GROUP BY "JOB_CODE", "STATUS"`,
@@ -263,7 +263,7 @@ export class SchedulerLogService {
    */
   async recoverStaleRunning(organizationId: number): Promise<number> {
     const result = await this.dataSource.query(
-      `UPDATE "SCHEDULER_LOGS"
+      `UPDATE "ISYS_SCHEDULER_LOGS"
           SET "STATUS" = 'FAIL',
               "ERROR_MSG" = '서버 재시작으로 인한 자동 FAIL 처리',
               "END_TIME" = SYSTIMESTAMP

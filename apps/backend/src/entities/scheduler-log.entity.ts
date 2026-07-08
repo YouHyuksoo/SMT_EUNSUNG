@@ -22,8 +22,8 @@ import {
 } from 'typeorm';
 import { SchedulerJob } from './scheduler-job.entity';
 
-@Entity({ name: 'SCHEDULER_LOGS' })
-@Index('IDX_SCHED_LOGS_SEARCH', ['organizationId', 'startTime', 'status'])
+@Entity({ name: 'ISYS_SCHEDULER_LOGS' })
+@Index('IDX_ISYS_SCHED_LOG_SEARCH', ['organizationId', 'startTime', 'status'])
 export class SchedulerLog {
   @PrimaryColumn({ name: 'ORGANIZATION_ID', type: 'number' })
   organizationId!: number;
