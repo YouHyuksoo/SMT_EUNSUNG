@@ -35,6 +35,8 @@ import { SchedulerJob } from '../entities/scheduler-job.entity';
 import { SchedulerLog } from '../entities/scheduler-log.entity';
 import { SchedulerNotification } from '../entities/scheduler-notification.entity';
 import { EquipMaster } from '../entities/equip-master.entity';
+import { EquipBomRel } from '../entities/equip-bom-rel.entity';
+import { EquipBomItem } from '../entities/equip-bom-item.entity';
 
 @Global()
 @Module({
@@ -87,6 +89,8 @@ import { EquipMaster } from '../entities/equip-master.entity';
             SchedulerLog,
             SchedulerNotification,
             EquipMaster,
+            EquipBomRel,
+            EquipBomItem,
           ],
           migrations: [],
           migrationsRun: false,
