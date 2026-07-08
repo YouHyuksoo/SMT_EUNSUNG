@@ -179,6 +179,7 @@
   },
   "menu": {
     "dashboard": "대시보드",
+    "root": "기본 메뉴",
     "workflow": "워크플로우",
     "monitoring": "모니터링",
     "master": "기준정보",

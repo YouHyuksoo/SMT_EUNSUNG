@@ -179,6 +179,7 @@
   },
   "menu": {
     "dashboard": "仪表盘",
+    "root": "默认菜单",
     "workflow": "工作流程",
     "monitoring": "监控",
     "master": "基础数据",

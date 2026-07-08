@@ -19,6 +19,8 @@ import {
   ReorderCategoriesDto,
   RESERVED_ROOT,
 } from '../dto/menu-category.dto';
+import { DEFAULT_MENU_CATEGORY_LAYOUT } from '../utils/default-menu-category-layout';
+import { isValidMenuCode } from '../utils/menu-code-validator';
 
 interface AuditScope {
   organizationId: number;
@@ -40,6 +42,52 @@ export class MenuCategoriesService {
     return this.categoryRepo.find({
       where: tenantWhere,
       order: { sortOrder: 'ASC', categoryCode: 'ASC' },
+    });
+  }
+
+  async ensureDefaultLayout(scope: AuditScope): Promise<void> {
+    const existingCount = await this.categoryRepo.count({
+      where: { organizationId: scope.organizationId },
+    });
+    if (existingCount > 0) return;
+
+    const now = new Date();
+    await this.tx.run(async (queryRunner) => {
+      const categoryRepo = queryRunner.manager.getRepository(MenuCategory);
+      const itemRepo = queryRunner.manager.getRepository(MenuCategoryItem);
+
+      await categoryRepo.save(
+        DEFAULT_MENU_CATEGORY_LAYOUT.map((category) => ({
+          organizationId: scope.organizationId,
+          categoryCode: category.categoryCode,
+          labelKey: category.labelKey,
+          iconName: null,
+          sortOrder: category.sortOrder,
+          isActive: 'Y' as const,
+          createdAt: now,
+          createdBy: scope.userId,
+          updatedAt: now,
+          updatedBy: scope.userId,
+        })),
+      );
+
+      const items = DEFAULT_MENU_CATEGORY_LAYOUT.flatMap((category) =>
+        category.menuCodes
+          .filter(isValidMenuCode)
+          .map((menuCode, index) => ({
+            organizationId: scope.organizationId,
+            menuCode,
+            categoryCode: category.categoryCode,
+            sortOrder: (index + 1) * 10,
+            createdAt: now,
+            createdBy: scope.userId,
+            updatedAt: now,
+            updatedBy: scope.userId,
+          })),
+      );
+      if (items.length > 0) {
+        await itemRepo.save(items);
+      }
     });
   }
 

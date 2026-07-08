@@ -48,6 +48,7 @@ export class MenuCategoriesController {
   @ApiOperation({ summary: '사이드바 트리 (카테고리 + 메뉴 배치)' })
   async tree(@Req() req: AuthenticatedRequest) {
     const scope = this.scope(req);
+    await this.categories.ensureDefaultLayout(scope);
     const [categories, allItems] = await Promise.all([
       this.categories.findAll(scope),
       this.items.findAll(scope),

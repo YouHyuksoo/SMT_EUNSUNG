@@ -63,12 +63,17 @@ export default function CategoryFormPanel({ mode, code, onSaved, onDeleted }: Pr
           iconName: form.iconName || undefined,
         });
       } else if (mode === 'edit' && code) {
-        await menuCategoriesApi.update(code, {
-          labelKey: form.labelKey,
-          iconName: form.iconName === '' ? null : form.iconName,
-          isActive: form.isActive,
-          sortOrder: form.sortOrder,
-        });
+        await menuCategoriesApi.update(
+          code,
+          isRoot
+            ? { sortOrder: form.sortOrder }
+            : {
+                labelKey: form.labelKey,
+                iconName: form.iconName === '' ? null : form.iconName,
+                isActive: form.isActive,
+                sortOrder: form.sortOrder,
+              },
+        );
       }
       await onSaved();
     } catch (e: unknown) {

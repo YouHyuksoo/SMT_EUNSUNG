@@ -179,6 +179,7 @@
   },
   "menu": {
     "dashboard": "Dashboard",
+    "root": "Default Menu",
     "workflow": "Workflow",
     "monitoring": "Monitoring",
     "master": "Master Data",

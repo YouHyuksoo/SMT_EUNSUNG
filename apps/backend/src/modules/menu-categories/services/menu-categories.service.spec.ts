@@ -28,6 +28,7 @@ describe('MenuCategoriesService', () => {
     itemRepo = {
       find: jest.fn(),
       count: jest.fn(),
+      save: jest.fn(),
     } as unknown as jest.Mocked<Repository<MenuCategoryItem>>;
 
     dataSource = {
@@ -134,6 +135,44 @@ describe('MenuCategoriesService', () => {
         .map(column => column.propertyName);
 
       expect(primaryColumnNames).toEqual(expect.arrayContaining(['organizationId', 'categoryCode']));
+    });
+  });
+
+  describe('ensureDefaultLayout', () => {
+    it('seeds default categories and menu placements for an empty tenant', async () => {
+      categoryRepo.count.mockResolvedValueOnce(0);
+      categoryRepo.save.mockImplementation(async (e: any) => e);
+      itemRepo.save.mockImplementation(async (e: any) => e);
+      tx.run.mockImplementationOnce(async (cb: any) =>
+        cb({
+          manager: {
+            getRepository: (entity: unknown) => (entity === MenuCategory ? categoryRepo : itemRepo),
+          },
+        }),
+      );
+
+      await service.ensureDefaultLayout({ organizationId: 7, userId: 'tester' });
+
+      expect(categoryRepo.save).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({ organizationId: 7, categoryCode: '__ROOT__' }),
+          expect.objectContaining({ organizationId: 7, categoryCode: 'SYSTEM' }),
+        ]),
+      );
+      expect(itemRepo.save).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({ organizationId: 7, menuCode: 'DASHBOARD', categoryCode: '__ROOT__' }),
+          expect.objectContaining({ organizationId: 7, menuCode: 'SYS_MENU_CATEGORY', categoryCode: 'SYSTEM' }),
+        ]),
+      );
+    });
+
+    it('does not overwrite an already configured tenant layout', async () => {
+      categoryRepo.count.mockResolvedValueOnce(1);
+
+      await service.ensureDefaultLayout({ organizationId: 7, userId: 'tester' });
+
+      expect(tx.run).not.toHaveBeenCalled();
     });
   });
 

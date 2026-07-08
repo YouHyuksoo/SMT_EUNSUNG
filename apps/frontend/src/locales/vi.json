@@ -179,6 +179,7 @@
   },
   "menu": {
     "dashboard": "Bảng điều khiển",
+    "root": "Menu mặc định",
     "workflow": "Quy trình",
     "monitoring": "Giám sát",
     "master": "Dữ liệu cơ sở",
