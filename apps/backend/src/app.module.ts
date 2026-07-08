@@ -25,6 +25,7 @@ import { MenuCategoriesModule } from './modules/menu-categories/menu-categories.
 import { SystemModule } from './modules/system/system.module';
 import { MasterCodeModule } from './modules/master/master-code.module';
 import { MasterCompanyModule } from './modules/master/master-company.module';
+import { MasterDepartmentModule } from './modules/master/master-department.module';
 import { SharedModule } from './shared/shared.module';
 
 @Module({
@@ -58,6 +59,9 @@ import { SharedModule } from './shared/shared.module';
 
     // 기준정보 회사정보 (/master/companies) — ISYS_ORGANIZATION 기반
     MasterCompanyModule,
+
+    // 시스템 부서정보 (/system/departments) — ISYS_DEPARTMENT 기반
+    MasterDepartmentModule,
   ],
   controllers: [AppController],
   providers: [AppService],

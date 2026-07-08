@@ -15,6 +15,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { SqlDebugTypeormLogger } from '../common/sql-debug/typeorm-sql-debug.logger';
 import { IsysUser } from '../entities/isys-user.entity';
 import { IsysOrganization } from '../entities/isys-organization.entity';
+import { DepartmentMaster } from '../entities/department-master.entity';
 import { OeeResource } from '../entities/oee-resource.entity';
 import { OeeDowntimeReason } from '../entities/oee-downtime-reason.entity';
 import { OeeOperationLog } from '../entities/oee-operation-log.entity';
@@ -62,6 +63,7 @@ import { ImprRequest } from '../entities/impr-request.entity';
           entities: [
             IsysUser,
             IsysOrganization,
+            DepartmentMaster,
             OeeResource,
             OeeDowntimeReason,
             OeeOperationLog,

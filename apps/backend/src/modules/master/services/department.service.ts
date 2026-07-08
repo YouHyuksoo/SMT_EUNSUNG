@@ -9,7 +9,7 @@ import { Repository } from 'typeorm';
 import { DepartmentMaster } from '../../../entities/department-master.entity';
 import { CreateDepartmentDto, UpdateDepartmentDto, DepartmentQueryDto } from '../dto/department.dto';
 
-interface DepartmentView {
+export interface DepartmentView {
   deptCode: string;
   deptName: string;
   parentDeptCode: string | null;
