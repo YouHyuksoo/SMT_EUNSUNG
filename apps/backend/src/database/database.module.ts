@@ -31,6 +31,10 @@ import { TrainingResult } from '../entities/training-result.entity';
 import { PdaRole } from '../entities/pda-role.entity';
 import { PdaRoleMenu } from '../entities/pda-role-menu.entity';
 import { ImprRequest } from '../entities/impr-request.entity';
+import { SchedulerJob } from '../entities/scheduler-job.entity';
+import { SchedulerLog } from '../entities/scheduler-log.entity';
+import { SchedulerNotification } from '../entities/scheduler-notification.entity';
+import { EquipMaster } from '../entities/equip-master.entity';
 
 @Global()
 @Module({
@@ -79,6 +83,10 @@ import { ImprRequest } from '../entities/impr-request.entity';
             PdaRole,
             PdaRoleMenu,
             ImprRequest,
+            SchedulerJob,
+            SchedulerLog,
+            SchedulerNotification,
+            EquipMaster,
           ],
           migrations: [],
           migrationsRun: false,

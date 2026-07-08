@@ -8,15 +8,15 @@
  * 3. **EquipBomRel**: 설비-BOM 연결 정보
  */
 
-import type { CommTypeValue, EquipStatusValue, EquipTypeValue } from "@smt/shared";
+import type { CommTypeValue } from "@smt/shared";
 
 // ========================================
 // 설비 마스터 타입
 // ========================================
 
-export type EquipType = EquipTypeValue;
+export type EquipType = string;
 export type CommType = Exclude<CommTypeValue, "OPC_UA" | "MODBUS"> | "NONE";
-export type EquipStatus = EquipStatusValue;
+export type EquipStatus = string;
 
 export interface EquipMaster {
   equipCode: string;
@@ -36,8 +36,6 @@ export interface EquipMaster {
   installDate?: string;
   status: EquipStatus;
   useYn: string;
-  company?: string;
-  plant?: string;
   createdAt?: string;
   updatedAt?: string;
 }

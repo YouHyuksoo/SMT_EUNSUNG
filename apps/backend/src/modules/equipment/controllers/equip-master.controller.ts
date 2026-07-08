@@ -49,7 +49,6 @@ import {
   AssignJobOrderDto,
   AssignWorkerCodesDto,
 } from '../dto/equip-master.dto';
-import { EQUIP_TYPE_VALUES, EQUIP_STATUS_VALUES } from '@smt/shared';
 import { ResponseUtil } from '../../../common/dto/response.dto';
 import { OrganizationId } from '../../../common/decorators/tenant.decorator';
 
@@ -66,7 +65,7 @@ export class EquipMasterController {
   @ApiOperation({ summary: '설비 현황 통계' })
   @SwaggerResponse({ status: 200, description: '설비 현황 통계 조회 성공' })
   async getStats(@OrganizationId() organizationId: number) {
-    const data = await this.equipMasterService.getEquipmentStats(company, plant);
+    const data = await this.equipMasterService.getEquipmentStats(organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -74,7 +73,7 @@ export class EquipMasterController {
   @ApiOperation({ summary: '정비중/중지 설비 목록 조회' })
   @SwaggerResponse({ status: 200, description: '정비중/중지 설비 목록 조회 성공' })
   async getMaintenanceEquipments(@OrganizationId() organizationId: number) {
-    const data = await this.equipMasterService.getMaintenanceEquipments(company, plant);
+    const data = await this.equipMasterService.getMaintenanceEquipments(organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -91,7 +90,7 @@ export class EquipMasterController {
 
   @Get('type/:equipType')
   @ApiOperation({ summary: '설비 유형별 목록 조회' })
-  @ApiParam({ name: 'equipType', description: '설비 유형', enum: EQUIP_TYPE_VALUES })
+  @ApiParam({ name: 'equipType', description: '설비 유형' })
   async findByType(
     @Param('equipType') equipType: string,
     @OrganizationId() organizationId: number,
@@ -102,7 +101,7 @@ export class EquipMasterController {
 
   @Get('status/:status')
   @ApiOperation({ summary: '설비 상태별 목록 조회' })
-  @ApiParam({ name: 'status', description: '설비 상태', enum: EQUIP_STATUS_VALUES })
+  @ApiParam({ name: 'status', description: '설비 상태' })
   async findByStatus(
     @Param('status') status: string,
     @OrganizationId() organizationId: number,
@@ -298,7 +297,7 @@ export class EquipMasterController {
   @ApiOperation({ summary: '라인 목록 조회 (설비 선택용)' })
   @SwaggerResponse({ status: 200, description: '라인 목록 조회 성공' })
   async getLines(@OrganizationId() organizationId: number) {
-    const data = await this.equipMasterService.getLines(company, plant);
+    const data = await this.equipMasterService.getLines(organizationId);
     return ResponseUtil.success(data);
   }
 
@@ -306,7 +305,15 @@ export class EquipMasterController {
   @ApiOperation({ summary: '공정 목록 조회 (설비 선택용)' })
   @SwaggerResponse({ status: 200, description: '공정 목록 조회 성공' })
   async getProcesses(@OrganizationId() organizationId: number) {
-    const data = await this.equipMasterService.getProcesses(company, plant);
+    const data = await this.equipMasterService.getProcesses(organizationId);
+    return ResponseUtil.success(data);
+  }
+
+  @Get('metadata/types')
+  @ApiOperation({ summary: '설비 유형 목록 조회 (IMCN_MACHINE 기준)' })
+  @SwaggerResponse({ status: 200, description: '설비 유형 목록 조회 성공' })
+  async getTypes(@OrganizationId() organizationId: number) {
+    const data = await this.equipMasterService.getTypes(organizationId);
     return ResponseUtil.success(data);
   }
 }

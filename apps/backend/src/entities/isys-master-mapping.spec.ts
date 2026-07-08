@@ -5,6 +5,10 @@ import { IsysUser } from './isys-user.entity';
 import { ComCode } from './com-code.entity';
 import { SysConfig } from './sys-config.entity';
 import { ItemMaster } from './item-master.entity';
+import { SchedulerJob } from './scheduler-job.entity';
+import { SchedulerLog } from './scheduler-log.entity';
+import { SchedulerNotification } from './scheduler-notification.entity';
+import { EquipMaster } from './equip-master.entity';
 
 function tableName(target: Function) {
   return getMetadataArgsStorage().tables.find((table) => table.target === target)?.name;
@@ -53,5 +57,25 @@ describe('ISYS master table mappings', () => {
     expect(columnName(ItemMaster, 'itemCode')).toBe('ITEM_CODE');
     expect(columnName(ItemMaster, 'itemName')).toBe('ITEM_NAME');
     expect(columnName(ItemMaster, 'spec')).toBe('ITEM_SPEC');
+  });
+
+  it('maps /master/equip to IMCN_MACHINE', () => {
+    expect(tableName(EquipMaster)).toBe('IMCN_MACHINE');
+    expect(columnName(EquipMaster, 'equipCode')).toBe('MACHINE_CODE');
+    expect(columnName(EquipMaster, 'equipName')).toBe('MACHINE_NAME');
+    expect(columnName(EquipMaster, 'equipType')).toBe('MACHINE_TYPE');
+    expect(columnName(EquipMaster, 'lineCode')).toBe('LINE_CODE');
+    expect(columnName(EquipMaster, 'processCode')).toBe('WORKSTAGE_CODE');
+    expect(columnName(EquipMaster, 'port')).toBe('PORT_NO');
+  });
+
+  it('maps /system/scheduler to ISYS scheduler tables', () => {
+    expect(tableName(SchedulerJob)).toBe('ISYS_SCHEDULER_JOBS');
+    expect(tableName(SchedulerLog)).toBe('ISYS_SCHEDULER_LOGS');
+    expect(tableName(SchedulerNotification)).toBe('ISYS_SCHEDULER_NOTIFICATIONS');
+    expect(columnName(SchedulerJob, 'organizationId')).toBe('ORGANIZATION_ID');
+    expect(columnName(SchedulerJob, 'jobCode')).toBe('JOB_CODE');
+    expect(columnName(SchedulerLog, 'logId')).toBe('LOG_ID');
+    expect(columnName(SchedulerNotification, 'notiId')).toBe('NOTI_ID');
   });
 });

@@ -17,7 +17,7 @@ import {
   Plus, Edit2, Trash2, Search, RefreshCw, Settings, ImageIcon, Upload,
   Wifi, Boxes, Monitor,
 } from "lucide-react";
-import { Card, CardContent, Button, Input, Modal, ConfirmModal } from "@/components/ui";
+import { Card, CardContent, Button, Input, Modal, ConfirmModal, Select } from "@/components/ui";
 import DataGrid from "@/components/data-grid/DataGrid";
 import ComCodeBadge from "@/components/ui/ComCodeBadge";
 import StatusHeaderHelp from "@/components/shared/StatusHeaderHelp";
@@ -25,7 +25,8 @@ import { EquipMaster, EquipType, CommType, COMM_TYPE_COLORS, COMM_TYPE_LABELS } 
 import api from "@/services/api";
 import { useUnsavedGuard } from "@/hooks/useUnsavedGuard";
 import { ComCodeSelect, LineSelect } from '@/components/shared';
-import { FieldInput, FieldComCodeSelect, FieldLineSelect } from "./EquipFieldHelp";
+import { useEquipTypeOptions } from "@/hooks/useMasterOptions";
+import { Field, FieldInput, FieldComCodeSelect, FieldLineSelect } from "./EquipFieldHelp";
 import EquipBomPanel from "./EquipBomPanel";
 
 function EquipImageThumb({ src, alt }: { src: string; alt: string }) {
@@ -61,7 +62,7 @@ interface FormState {
 const EMPTY_FORM: FormState = {
   equipCode: "",
   equipName: "",
-  equipType: "SINGLE_CUT",
+  equipType: "TEMP",
   lineCode: "",
   modelName: "",
   maker: "",
@@ -95,6 +96,7 @@ export default function EquipMasterTab() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [imageError, setImageError] = useState(false);
   const [imageDeleteConfirmOpen, setImageDeleteConfirmOpen] = useState(false);
+  const { options: equipTypeOptions, isLoading: equipTypeLoading } = useEquipTypeOptions();
 
   // API에서 설비 목록 조회
   const fetchEquipments = useCallback(async () => {
@@ -391,12 +393,23 @@ export default function EquipMasterTab() {
                       fullWidth
                     />
                   </div>
-                  <ComCodeSelect groupCode="EQUIP_TYPE" value={typeFilter} onChange={setTypeFilter} labelPrefix={t("master.equip.type", "유형")} />
+                  <Select
+                    options={[
+                      { value: "", label: `${t("master.equip.type", "유형")}: ${t("common.all", "전체")}` },
+                      ...equipTypeOptions.map((option) => ({
+                        ...option,
+                        label: `${t("master.equip.type", "유형")}: ${option.label}`,
+                      })),
+                    ]}
+                    value={typeFilter}
+                    onChange={setTypeFilter}
+                    disabled={equipTypeLoading}
+                  />
                   <LineSelect value={lineFilter} onChange={setLineFilter} placeholder={t("master.equip.line", "라인")} />
                   <ComCodeSelect groupCode="COMM_TYPE" value={commFilter} onChange={setCommFilter} labelPrefix={t("master.equip.commTypeShort", "통신")} />
                 </div>
               }
-              sqlQuery={`SELECT *\nFROM EQUIP_MASTERS\nWHERE COMPANY = '40'\n  AND PLANT_CD = '1000'\nORDER BY CREATED_AT DESC`}/>
+              sqlQuery={`SELECT *\nFROM IMCN_MACHINE\nWHERE ORGANIZATION_ID = :organizationId\nORDER BY MACHINE_CODE`}/>
           </CardContent>
         </Card>
       </div>
@@ -422,7 +435,15 @@ export default function EquipMasterTab() {
               <div className="grid grid-cols-2 gap-3">
                 <FieldInput field="equipCode" label={t("master.equip.equipCode", "설비코드")} value={form.equipCode} onChange={(e) => setForm({ ...form, equipCode: e.target.value })} disabled={!!editing} required />
                 <FieldInput field="equipName" label={t("master.equip.equipName", "설비명")} value={form.equipName} onChange={(e) => setForm({ ...form, equipName: e.target.value })} required />
-                <FieldComCodeSelect field="equipType" groupCode="EQUIP_TYPE" includeAll={false} label={t("master.equip.type", "유형")} value={form.equipType} onChange={(v) => setForm({ ...form, equipType: v as EquipType })} required />
+                <Field field="equipType" label={t("master.equip.type", "유형")} required>
+                  <Select
+                    options={equipTypeOptions.length ? equipTypeOptions : [{ value: form.equipType, label: form.equipType }]}
+                    value={form.equipType}
+                    onChange={(v) => setForm({ ...form, equipType: v as EquipType })}
+                    disabled={equipTypeLoading}
+                    fullWidth
+                  />
+                </Field>
                 <FieldComCodeSelect field="commType" groupCode="COMM_TYPE" includeAll={false} label={t("master.equip.commType", "통신방식")} value={form.commType} onChange={(v) => setForm({ ...form, commType: v as CommType })} />
                 <FieldLineSelect field="lineCode" label={t("master.equip.line", "라인")} value={form.lineCode} onChange={(v) => setForm({ ...form, lineCode: v })} wrapperClassName="col-span-2" />
               </div>

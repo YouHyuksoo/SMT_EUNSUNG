@@ -1,61 +1,121 @@
 # 세션 핸드오프 — 은성전장 MES (2026-07-08)
 
-다음 세션(또는 다른 에이전트)이 이어서 작업하기 위한 현재 상태 요약.
-중복은 피하고 spec/plan/커밋을 경로로 참조한다.
+다음 세션 또는 다른 에이전트가 바로 이어서 작업하기 위한 현재 상태 요약이다.
+이 문서는 2026-07-08 현재 `main` 기준으로 갱신했다.
 
-## 0. 환경 핵심 (먼저 읽을 것)
+## 0. 현재 기준 상태
 
-- **모노레포**: pnpm + turborepo. `apps/backend`(@eunsung/backend, NestJS 3003), `apps/frontend`(@eunsung/frontend, Next 3100), `packages/shared`(@smt/shared).
-- **DB**: 은성 외부 Oracle. oracle-db 스킬 사이트명 **`ESDBext`** (61.105.35.54:1521/XE, INFINITY21_JSMES). 구버전 verifier라 **thick client 필수**.
-  - 백엔드: `apps/backend/.env`(untracked) + TypeORM. 프론트 레거시 display: `apps/frontend/config/database.json`(untracked, activeProfile=은성전장외부).
-- **서버는 사용자가 직접 기동**한다(임의 기동/재시작 금지). 필요하면 명령만 제시. dev는 `--watch`라 코드 저장 시 자동 반영됨.
-- 로그인 계정 예: `ADMIN`/`12351235`, `KSW`/`5361` (ISYS_USERS). 토큰 = USER_ID.
-- 회사코드는 **EUNSUNG**(ISYS_ORGANIZATION.COMPANY_CODE, ISYS_COMPANY와 정합). 변경 후 재로그인 필요.
+- 기준 브랜치: `main`
+- 기준 커밋: `385b4c2`
+- 원격 추적 상태: `main...origin/main` 차이 없음
+- 작업 전환 전 미커밋 변경은 폐기하지 않고 stash에 보존했다.
+- 현재 세션의 문서 최신화 변경은 이 파일에 반영했다.
 
-## 1. 이번 세션에서 한 일 (전부 커밋·푸시됨, origin/main)
+보존된 stash:
 
-git log 참조. 주요 커밋:
-- `f2d80c1`~ 이전: HANES UI 마이그레이션(기존)
-- 백엔드/로그인: HANES `apps/backend` 통째 복사 → 은성 개조. auth를 `ISYS_USERS/ISYS_ORGANIZATION` 기반으로 재작성. 로그인 화면 은성화(회사/사업장·회원가입 제거, 아이디 입력).
-- `be96f86` refactor(menu): 보세관리·영업관리·계측기관리·자재 입하/입고 메뉴·페이지 제거
-- OEE: `883aa52`(DDL) `a239f73`(calc/validation) `2808de4`(입력 백엔드) `49d28b3`(입력 화면/메뉴) `8f29034`(집계층: 확장테이블·뷰·프로시저)
-- menu-categories: `00e64d5`(테이블) `e531df0`(모듈 활성화+은성 가드)
-- `754eb57` fix(menu): DB 메뉴트리 비면 menuConfig 폴백 + 회사코드 EUNSUNG
+| Stash | 설명 |
+|---|---|
+| `stash@{0}` | `On main: codex-clean-main-after-switch-20260708` |
+| `stash@{1}` | `On refactor/menu-org-tenant-and-inspection-cleanup: codex-before-switch-to-main-20260708` |
+| `stash@{2}` | `On refactor/menu-org-tenant-and-inspection-cleanup: epitaxy: pre-switch from refactor/menu-org-tenant-and-inspection-cleanup` |
 
-## 2. 확립된 아키텍처 규약 (반드시 준수)
+최근 `main` 커밋:
 
-- **Lean 백엔드**: `apps/backend`는 HANES 전체를 복사했지만, `tsconfig.json`의 **`include` allowlist**로 활성 모듈만 컴파일한다(auth, oee, menu-categories + 인프라). 전체 모듈 구성은 `apps/backend/src/app.module.full.ts.bak` 보존.
-  - **화면/모듈을 하나씩 은성화**하며 activate: ① `app.module.ts` imports에 모듈 추가 ② `database.module.ts` entities 배열에 엔티티 추가 ③ `tsconfig.json` include에 모듈/엔티티 경로 추가 ④ 필요한 공유 provider(예: `TransactionService`)를 모듈 providers에 직접 등록.
-- **은성 인증 가드**: `apps/backend/src/common/guards/jwt-auth.guard.ts` — Bearer 토큰=USER_ID → ISYS_USERS 검증, USER_LEVEL→role, req.user에 `{id,email,role,organizationId,company,plant}`. 인증 필요한 컨트롤러는 `@UseGuards(JwtAuthGuard)` 명시(전역 GuardModule 미사용). menu-categories는 organizationId로 tenant 스코핑.
-- **엔티티 매핑**: TypeORM. IDENTITY PK는 **단건 insert**로 넣을 것(다중행 insert는 PK NULL 바인딩 오류 — `oee-log.service.ts` 참고). DATE에 시각 보존 필요하면 `type:'timestamp'`.
-- **프론트 API**: `api`(axios, baseURL `/api`) → Next rewrite → `:3003/api/v1/*`. 응답 envelope `{success,data,...}`. SWR fetcher: `api.get(u).then(r=>r.data?.data??r.data)`.
-- **공유 계산/검증**: `@smt/shared`(빌드 필요 `pnpm --filter @smt/shared build`). OEE calc/validation은 `@smt/shared/oee`(또는 루트 export).
-- **삭제/정리**: 라우트 삭제 후 `node apps/frontend/scripts/gen-page-registry.mjs` 재생성. menuConfig·locales(ko/en/vi/zh) 동기. tsc로 검증.
+- `385b4c2 WIP: epitaxy pre-switch from refactor/menu-org-tenant-and-inspection-cleanup`
+- `f9d5af0 fix eunsung master mappings and trim system menus`
+- `e149aa1 fix users API module registration`
+- `be595d9 fix department API module registration`
+- `837a92b restore system menu category`
+- `666ed01 rename comm config table to isys`
+- `f202bd7 fix comm config table and sidebar icons`
+- `8da646f remove material management pages`
 
-## 3. OEE 현황 (spec/plan은 아래 참조)
+## 1. 환경 핵심
 
-- 근거: `docs/specs/2026-07-06-oee-management-design.md`, `docs/plans/2026-07-06-oee-{foundation,input,dashboard}.md`
-- **주의**: plan 문서들은 마이그레이션 전 WebDisplay 구조(src/lib, /display/[screenId], cards.json) 전제. **현재는 NestJS+authenticated로 재배치**하기로 확정(도메인 설계는 spec 그대로).
+- 모노레포: pnpm + turborepo
+- 백엔드: `apps/backend` (`@eunsung/backend`, NestJS, 포트 3003)
+- 프론트엔드: `apps/frontend` (`@eunsung/frontend`, Next.js, 포트 3100)
+- 공유 패키지: `packages/shared` (`@smt/shared`)
+- DB: Oracle, `oracle-db` 사이트명 `ESDBext`, 스키마 `INFINITY21_JSMES`
+- 서버는 사용자가 직접 기동한다. 에이전트가 임의로 dev 서버나 대체 포트를 띄우지 않는다.
+- DB/DDL/DML 작업은 실제 스키마를 먼저 확인하고 `oracle-db` connector로 적용/검증한다.
 
-완료:
-- **Plan 1**: OEE 테이블 5종 + `@smt/shared` calc/validation(테스트 13). `oracle_db_scripts/oee/01_tables.sql,02_seed_reason.sql`.
-- **Plan 2**: 백엔드 `apps/backend/src/modules/oee`(엔티티 3종 + 마스터/가동일지 API, `/api/v1/oee/{resource,reason,log}`) + 프론트 `apps/frontend/src/app/(authenticated)/oee/{entry,master/resource,master/reason}` + menuConfig OEE + `useOeeProfile`.
-- **Plan 3 데이터층**: `oracle_db_scripts/oee/03_tables_ext.sql`(확장 5종+summary컬럼), `04_view_plan_time.sql`(V_OEE_PLAN_TIME), `05_view_live.sql`(V_OEE_LIVE), `06_proc_build_summary.sql`(P_OEE_BUILD_SUMMARY). ESDBext 배포·검증(OEE 계산·정합성). **프로시저는 `deploy_plsql.py`로 배포**(execute-file은 프로시저 본문 잘림).
+## 2. 현재 확립된 개발 규약
 
-남은 OEE (Plan 3 앱층):
-- **대시보드 44/45/46**: NestJS dashboard 모듈(당일=V_OEE_LIVE, 과거=OEE_DAILY_SUMMARY, 스냅샷부재 409 `OEE_SUMMARY_NOT_BUILT`; 로스파레토=OEE_OPERATION_LOG) + `(authenticated)/oee` Recharts 화면 3종. (plan은 display/[screenId] 44~46이지만 authenticated 페이지로 재배치.)
-- **잔여 입력화면**: 근무시간 마스터(`/oee/master/worktime`), 입력화면 수량 섹션(OEE_PRODUCTION_RESULT + plan-time 자동로드), 원자재준비/고객불량 입력.
-- 스케줄러(P_OEE_BUILD_SUMMARY 정기 실행)는 선택(스펙 §11).
+- package manager는 `pnpm`만 사용한다.
+- `main`에서 작업한다는 지시가 있으면 먼저 브랜치와 dirty tree를 확인한다.
+- dirty tree가 있으면 버리거나 덮어쓰지 말고 stash 또는 사용자 확인으로 보존한다.
+- 프론트/백엔드/shared가 같이 바뀌면 각 워크스페이스 타입체크를 별도로 수행한다.
+- 인증형 MES 업무 화면은 `apps/frontend/src/app/(authenticated)` 아래를 기준으로 한다.
+- 백엔드 신규 모듈 활성화 시 `app.module.ts`, `database.module.ts`, 관련 entity/provider/test 경로를 함께 확인한다.
+- 메뉴 코드는 메뉴 식별자와 DB 테이블명을 혼동하지 않는다. 예: `SYS_SCHEDULER`는 메뉴 코드이고, 스케줄러 테이블명 변경 대상이 아니다.
 
-## 4. 기타 대기 작업
+## 3. 최근 확인된 시스템 상태
 
-- **`/master/part → ID_ITEM`**: master(part) 백엔드 슬라이스를 은성화(활성화 + ID_ITEM 테이블 매핑)하고 화면 검증. (§2 activate 절차 준수)
-- menu-categories 사이드바를 실제 DB 기반으로 쓰려면 MENU_CATEGORIES/ITEMS를 menuConfig로 시드해야 함(현재는 비어 있어 menuConfig 폴백). 테이블 PK가 COMPANY/PLANT_CD인데 컨트롤러는 organizationId 스코핑으로 리팩터링됨 — **정합성 확인 필요**(다른 에이전트 변경).
-- 후속 정리(앱 영향 없음): 백엔드 seed/validator의 삭제 메뉴코드(customs/sales/gauge/material 입하), workflowMap/workflowConfig 죽은 링크.
+- `main`과 `origin/main`은 현재 동일 커밋이다.
+- 직전 전환 작업에서 `refactor/menu-org-tenant-and-inspection-cleanup` 브랜치의 변경은 stash에 보존했다.
+- `docs/README.md` manifest는 `standardVersion: 1`이며, docs 정리 작업은 이 manifest를 기준으로 한다.
+- 현재 docs 직하위 허용 구조:
+  - `docs/README.md`
+  - `docs/plans/`
+  - `docs/specs/`
+  - `docs/sql/`
+  - `docs/reports/`는 core 폴더지만 별도 보고서가 필요할 때만 사용한다.
 
-## 5. 주의 (다른 에이전트 병렬 변경 감지됨)
+## 4. OEE 현황
 
-작업트리에 내가 만들지 않은 변경 존재(ai-knowledge.service.ts, quality/inspection 삭제, seeds, CLAUDE.md 갱신, menu-categories organizationId 리팩터링 등). **되돌리지 말 것.** 커밋 시 의도한 파일만 스테이징.
+근거 문서:
+
+- `docs/specs/2026-07-06-oee-management-design.md`
+- `docs/plans/2026-07-06-oee-foundation.md`
+- `docs/plans/2026-07-06-oee-input.md`
+- `docs/plans/2026-07-06-oee-dashboard.md`
+
+현재 유지해야 할 전제:
+
+- OEE는 WebDisplay 전용 구조가 아니라 NestJS 백엔드 + authenticated 프론트 구조로 재배치하는 방향이다.
+- OEE 계산/검증 로직은 `packages/shared` 쪽 공용 규칙을 우선한다.
+- DB 작업은 `ESDBext` 실제 객체와 동기화 여부를 확인한 뒤 진행한다.
+
+남은 OEE 후보 작업:
+
+- OEE 대시보드 앱층 완성
+- 근무시간 마스터 화면
+- 입력 화면 수량/plan-time 자동로드
+- 원자재준비/고객불량 입력
+- `P_OEE_BUILD_SUMMARY` 정기 실행 스케줄러 연결 여부 결정
+
+## 5. 문서 정리 현황
+
+`managing-docs` manifest 기준으로 확인한 내용:
+
+| 항목 | 현재 판단 |
+|---|---|
+| 미등록 docs 폴더 | 없음 |
+| docs 루트 md 오염 | 없음 (`README.md`만 허용) |
+| 살아있는 문서 frontmatter 누락 | 현재 살아있는 문서가 없어 대상 없음 |
+| 외부 문서 집합 | 등록 없음 |
+| SQL 파일명 의심 | `docs/sql/oee_tables_ext_snapshot.sql`, `docs/sql/oee_tables_snapshot.sql`는 manifest의 `kebab-case.sql` 규칙과 다름 |
+| 위치 의심 | `docs/plans/*-design.md` 일부는 specs 명명규칙과도 맞아 내용 확인 후 이동 후보 |
+
+정리 후보:
+
+1. `docs/sql/oee_tables_ext_snapshot.sql` → `docs/sql/oee-tables-ext-snapshot.sql`
+2. `docs/sql/oee_tables_snapshot.sql` → `docs/sql/oee-tables-snapshot.sql`
+3. `docs/plans/*-design.md` 중 구현 전 설계 문서인 것은 `docs/specs/`로 이동 검토
+
+이동/삭제는 manifest 원칙상 사용자 승인 후 `git mv`로 처리한다.
+
+## 6. 다음 작업 시 주의
+
+- stash에 보존된 변경을 적용하기 전에는 반드시 `git stash show --stat stash@{n}`로 범위를 확인한다.
+- 이전 브랜치 변경을 `main`에 합칠지 여부는 파일 단위로 판단한다.
+- 문서 최신화 요청이 있으면 기존 상태 문서도 최신 내용으로 갱신한다. 새 보고서만 만들고 기존 handoff를 방치하지 않는다.
+- 커밋 요청 시 전체 dirty tree를 확인하고, 의도한 문서/코드만 stage한다.
 
 ## 다음 세션 추천 스킬
-- `oracle-db`(ESDBext DDL/PLSQL), `frontend-design`(대시보드 UI), `superpowers:executing-plans`(oee-dashboard.md 이어서), `managing-docs`(문서 최신화).
+
+- `oracle-db`: ESDBext 스키마/DDL/PLSQL 확인 및 적용
+- `managing-docs`: docs 구조 정리, 기존 문서 최신화
+- `frontend-design`: authenticated 업무 화면 UI 작업
+- `verification-before-completion`: 완료 주장 전 검증

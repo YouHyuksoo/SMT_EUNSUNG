@@ -22,7 +22,6 @@ import {
   IsOptional,
   IsInt,
   IsDateString,
-  IsJSON,
   IsNotEmpty,
   Min,
   Max,
@@ -32,7 +31,7 @@ import {
   ValidateIf,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { EQUIP_STATUS_VALUES, COMM_TYPE_VALUES, EQUIP_TYPE_VALUES, USE_YN_VALUES } from '@smt/shared';
+import { USE_YN_VALUES } from '@smt/shared';
 import { PaginationQueryDto } from '../../../common/dto/base-query.dto';
 
 /**
@@ -51,12 +50,10 @@ export class CreateEquipMasterDto {
 
   @ApiProperty({
     description: '설비 유형',
-    enum: EQUIP_TYPE_VALUES,
-    example: 'AUTO_CRIMP',
+    example: 'M0130',
   })
   @IsNotEmpty()
   @IsString()
-  @IsIn([...EQUIP_TYPE_VALUES])
   equipType: string;
 
   @ApiPropertyOptional({ description: '모델명', maxLength: 100 })
@@ -105,12 +102,10 @@ export class CreateEquipMasterDto {
 
   @ApiPropertyOptional({
     description: '통신 방식',
-    enum: COMM_TYPE_VALUES,
     example: 'TCP',
   })
   @IsOptional()
   @IsString()
-  @IsIn([...COMM_TYPE_VALUES])
   commType?: string;
 
   @ApiPropertyOptional({
@@ -127,12 +122,10 @@ export class CreateEquipMasterDto {
 
   @ApiPropertyOptional({
     description: '설비 상태',
-    enum: EQUIP_STATUS_VALUES,
-    default: 'NORMAL',
+    default: 'N',
   })
   @IsOptional()
   @IsString()
-  @IsIn([...EQUIP_STATUS_VALUES])
   status?: string;
 
   @ApiPropertyOptional({ description: '사용 여부', default: 'Y', enum: USE_YN_VALUES })
@@ -153,11 +146,9 @@ export class UpdateEquipMasterDto extends PartialType(CreateEquipMasterDto) {}
 export class ChangeEquipStatusDto {
   @ApiProperty({
     description: '변경할 상태',
-    enum: EQUIP_STATUS_VALUES,
-    example: 'MAINT',
+    example: 'N',
   })
   @IsString()
-  @IsIn([...EQUIP_STATUS_VALUES])
   status: string;
 
   @ApiPropertyOptional({ description: '변경 사유', maxLength: 500 })
@@ -194,7 +185,7 @@ export class AssignWorkerCodesDto {
  */
 export class EquipMasterQueryDto extends PaginationQueryDto {
 
-  @ApiPropertyOptional({ description: '설비 유형', enum: EQUIP_TYPE_VALUES })
+  @ApiPropertyOptional({ description: '설비 유형' })
   @IsOptional()
   @IsString()
   equipType?: string;
@@ -209,12 +200,12 @@ export class EquipMasterQueryDto extends PaginationQueryDto {
   @IsString()
   processCode?: string;
 
-  @ApiPropertyOptional({ description: '상태', enum: EQUIP_STATUS_VALUES })
+  @ApiPropertyOptional({ description: '상태' })
   @IsOptional()
   @IsString()
   status?: string;
 
-  @ApiPropertyOptional({ description: '통신 방식', enum: COMM_TYPE_VALUES })
+  @ApiPropertyOptional({ description: '통신 방식' })
   @IsOptional()
   @IsString()
   commType?: string;

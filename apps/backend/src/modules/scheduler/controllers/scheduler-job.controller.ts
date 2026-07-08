@@ -41,7 +41,7 @@ import {
 
 @ApiTags('Scheduler')
 @Controller('scheduler/jobs')
-@UseGuards(RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class SchedulerJobController {
   constructor(private readonly jobService: SchedulerJobService) {}
 

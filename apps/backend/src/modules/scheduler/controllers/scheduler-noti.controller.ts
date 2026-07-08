@@ -18,6 +18,7 @@ import { SchedulerNotiService } from '../services/scheduler-noti.service';
 
 @ApiTags('Scheduler')
 @Controller('scheduler/notifications')
+@UseGuards(JwtAuthGuard)
 export class SchedulerNotiController {
   constructor(private readonly notiService: SchedulerNotiService) {}
 

@@ -25,9 +25,6 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
 import { EquipMaster } from '../../../entities/equip-master.entity';
-import { ProdLineMaster } from '../../../entities/prod-line-master.entity';
-import { ProcessMaster } from '../../../entities/process-master.entity';
-import { WorkerMaster } from '../../../entities/worker-master.entity';
 import {
   CreateEquipMasterDto,
   UpdateEquipMasterDto,
@@ -45,12 +42,6 @@ export class EquipMasterService {
   constructor(
     @InjectRepository(EquipMaster)
     private readonly equipMasterRepository: Repository<EquipMaster>,
-    @InjectRepository(ProdLineMaster)
-    private readonly lineRepository: Repository<ProdLineMaster>,
-    @InjectRepository(ProcessMaster)
-    private readonly processRepository: Repository<ProcessMaster>,
-    @InjectRepository(WorkerMaster)
-    private readonly workerRepository: Repository<WorkerMaster>,
   ) {}
 
   private tenantWhere(organizationId?: number) {
@@ -59,8 +50,21 @@ export class EquipMasterService {
     };
   }
 
+  private resolveOrganizationId(organizationId?: number) {
+    return organizationId ?? 1;
+  }
+
   private withClientId(equip: EquipMaster) {
-    return { ...equip, id: equip.equipCode };
+    return {
+      ...equip,
+      id: equip.equipCode,
+      commType: equip.commType ?? 'NONE',
+      commConfig: equip.commConfig ?? null,
+      status: equip.status ?? 'N',
+      useYn: equip.useYn ?? 'Y',
+      currentJobOrderId: equip.currentJobOrderId ?? null,
+      currentWorkerCodes: equip.currentWorkerCodes ?? null,
+    };
   }
 
   private normalizeWorkerCodes(value: AssignWorkerCodesDto['workerCodes']): string[] {
@@ -87,7 +91,6 @@ export class EquipMasterService {
       equipType,
       lineCode,
       status,
-      commType,
       useYn,
       search,
       organizationId,
@@ -100,7 +103,6 @@ export class EquipMasterService {
     if (lineCode) qb.andWhere('e.lineCode = :lineCode', { lineCode });
     if (query.processCode) qb.andWhere('e.processCode = :processCode', { processCode: query.processCode });
     if (status) qb.andWhere('e.status = :status', { status });
-    if (commType) qb.andWhere('e.commType = :commType', { commType });
     if (useYn) qb.andWhere('e.useYn = :useYn', { useYn });
     if (organizationId != null) qb.andWhere('e.organizationId = :organizationId', { organizationId });
 
@@ -121,22 +123,11 @@ export class EquipMasterService {
       qb.clone().getCount(),
     ]);
 
-    // 공정명·라인구분 매핑 — PROCESS_MASTERS 단일 출처 (단일 IN 조회, N+1 회피)
-    const processCodes = [...new Set(data.map((e) => e.processCode).filter((c): c is string => !!c))];
-    const procMap = new Map<string, { processName: string; lineType: string | null }>();
-    if (processCodes.length) {
-      const processes = await this.processRepository.find({
-        where: { processCode: In(processCodes) },
-        select: ['processCode', 'processName', 'lineType'],
-      });
-      processes.forEach((p) =>
-        procMap.set(p.processCode, { processName: p.processName, lineType: p.lineType }),
-      );
-    }
     const enriched = data.map((e) => ({
       ...this.withClientId(e),
-      processName: e.processCode ? procMap.get(e.processCode)?.processName ?? null : null,
-      lineType: e.processCode ? procMap.get(e.processCode)?.lineType ?? null : null,
+      processName: e.processCode ?? null,
+      lineName: e.lineCode ?? null,
+      lineType: null,
     }));
 
     return { data: enriched, total, page, limit };
@@ -192,16 +183,15 @@ export class EquipMasterService {
       modelName: dto.modelName,
       imageUrl: dto.imageUrl ?? null,
       maker: dto.maker,
-      lineCode: dto.lineCode,
+      lineCode: dto.lineCode || '*',
       processCode: dto.processCode,
       ipAddress: dto.ipAddress,
       port: dto.port,
-      commType: dto.commType,
-      commConfig: dto.commConfig ? JSON.stringify(dto.commConfig) : null,
       installDate: parseDateStart(dto.installDate),
-      status: dto.status ?? 'NORMAL',
+      status: dto.status ?? 'N',
       useYn: dto.useYn ?? 'Y',
-      ...this.tenantWhere(organizationId),
+      organizationId: this.resolveOrganizationId(organizationId),
+      acquisitionType: '*',
     });
 
     return this.equipMasterRepository.save(equip);
@@ -224,8 +214,6 @@ export class EquipMasterService {
     if (dto.processCode !== undefined) updateData.processCode = dto.processCode;
     if (dto.ipAddress !== undefined) updateData.ipAddress = dto.ipAddress;
     if (dto.port !== undefined) updateData.port = dto.port;
-    if (dto.commType !== undefined) updateData.commType = dto.commType;
-    if (dto.commConfig !== undefined) updateData.commConfig = dto.commConfig ? JSON.stringify(dto.commConfig) : null;
     if (dto.installDate !== undefined) updateData.installDate = parseDateStart(dto.installDate);
     if (dto.status !== undefined) updateData.status = dto.status;
     if (dto.useYn !== undefined) updateData.useYn = dto.useYn;
@@ -358,7 +346,7 @@ export class EquipMasterService {
   async getMaintenanceEquipments(organizationId?: number) {
     const equips = await this.equipMasterRepository.find({
       where: {
-        status: In(['MAINT', 'STOP']),
+        status: In(['MAINT', 'STOP', 'A', 'E']),
         useYn: 'Y',
         ...this.tenantWhere(organizationId),
       },
@@ -375,22 +363,42 @@ export class EquipMasterService {
    * 라인 목록 조회 (설비 선택용)
    */
   async getLines(organizationId?: number) {
-    return this.lineRepository.find({
-      where: { useYn: 'Y', ...this.tenantWhere(organizationId) },
-      select: ['lineCode', 'lineName', 'lineType', 'oper'],
-      order: { lineCode: 'ASC' },
-    });
+    const qb = this.equipMasterRepository
+      .createQueryBuilder('equip')
+      .select('equip.lineCode', 'lineCode')
+      .addSelect('equip.lineCode', 'lineName')
+      .where('equip.lineCode IS NOT NULL')
+      .groupBy('equip.lineCode')
+      .orderBy('equip.lineCode', 'ASC');
+    if (organizationId != null) qb.andWhere('equip.organizationId = :organizationId', { organizationId });
+    return qb.getRawMany<{ lineCode: string; lineName: string }>();
   }
 
   /**
    * 공정 목록 조회 (설비 선택용)
    */
   async getProcesses(organizationId?: number) {
-    return this.processRepository.find({
-      where: { useYn: 'Y', ...this.tenantWhere(organizationId) },
-      select: ['processCode', 'processName', 'processType', 'processCategory'],
-      order: { sortOrder: 'ASC', processCode: 'ASC' },
-    });
+    const qb = this.equipMasterRepository
+      .createQueryBuilder('equip')
+      .select('equip.processCode', 'processCode')
+      .addSelect('equip.processCode', 'processName')
+      .where('equip.processCode IS NOT NULL')
+      .groupBy('equip.processCode')
+      .orderBy('equip.processCode', 'ASC');
+    if (organizationId != null) qb.andWhere('equip.organizationId = :organizationId', { organizationId });
+    return qb.getRawMany<{ processCode: string; processName: string }>();
+  }
+
+  async getTypes(organizationId?: number) {
+    const qb = this.equipMasterRepository
+      .createQueryBuilder('equip')
+      .select('equip.equipType', 'equipType')
+      .addSelect('equip.equipType', 'equipTypeName')
+      .where('equip.equipType IS NOT NULL')
+      .groupBy('equip.equipType')
+      .orderBy('equip.equipType', 'ASC');
+    if (organizationId != null) qb.andWhere('equip.organizationId = :organizationId', { organizationId });
+    return qb.getRawMany<{ equipType: string; equipTypeName: string }>();
   }
 
   // =============================================
@@ -410,15 +418,10 @@ export class EquipMasterService {
       );
     }
 
-    await this.equipMasterRepository.update(
-      { equipCode, ...this.tenantWhere(organizationId) },
-      { currentJobOrderId: dto.orderNo ?? null },
-    );
-
     this.logger.log(
       dto.orderNo
-        ? `설비 작업지시 할당: ${equip.equipCode} → ${dto.orderNo}`
-        : `설비 작업지시 해제: ${equip.equipCode}`,
+        ? `IMCN_MACHINE 설비 작업지시 할당 요청 수신(저장 컬럼 없음): ${equip.equipCode} → ${dto.orderNo}`
+        : `IMCN_MACHINE 설비 작업지시 해제 요청 수신(저장 컬럼 없음): ${equip.equipCode}`,
     );
 
     return this.findById(equipCode, organizationId);
@@ -431,31 +434,10 @@ export class EquipMasterService {
     const equip = await this.findById(equipCode, organizationId);
     const workerCodes = this.normalizeWorkerCodes(dto.workerCodes);
 
-    if (workerCodes.length > 0) {
-      const workers = await this.workerRepository.find({
-        where: {
-          workerCode: In(workerCodes),
-          useYn: 'Y',
-          ...this.tenantWhere(organizationId),
-        },
-        select: ['workerCode'],
-      });
-      const found = new Set(workers.map((worker) => worker.workerCode));
-      const missing = workerCodes.filter((code) => !found.has(code));
-      if (missing.length > 0) {
-        throw new NotFoundException(`작업자를 찾을 수 없습니다: ${missing.join(',')}`);
-      }
-    }
-
-    await this.equipMasterRepository.update(
-      { equipCode, ...this.tenantWhere(organizationId) },
-      { currentWorkerCodes: workerCodes.length > 0 ? workerCodes.join(',') : null },
-    );
-
     this.logger.log(
       workerCodes.length > 0
-        ? `설비 현재 작업자 할당: ${equip.equipCode} → ${workerCodes.join(',')}`
-        : `설비 현재 작업자 해제: ${equip.equipCode}`,
+        ? `IMCN_MACHINE 설비 현재 작업자 할당 요청 수신(저장 컬럼 없음): ${equip.equipCode} → ${workerCodes.join(',')}`
+        : `IMCN_MACHINE 설비 현재 작업자 해제 요청 수신(저장 컬럼 없음): ${equip.equipCode}`,
     );
 
     return this.findById(equipCode, organizationId);

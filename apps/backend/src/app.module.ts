@@ -16,6 +16,7 @@ import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { DatabaseModule } from './database/database.module';
+import { OracleModule } from './common/modules/oracle.module';
 import configuration from './config/configuration';
 
 // 기능 모듈 (은성화 진행하며 하나씩 추가)
@@ -23,11 +24,14 @@ import { AuthModule } from './modules/auth/auth.module';
 import { OeeModule } from './modules/oee/oee.module';
 import { MenuCategoriesModule } from './modules/menu-categories/menu-categories.module';
 import { SystemModule } from './modules/system/system.module';
+import { SchedulerModule } from './modules/scheduler/scheduler.module';
 import { UserModule } from './modules/user/user.module';
 import { MasterCodeModule } from './modules/master/master-code.module';
 import { MasterCompanyModule } from './modules/master/master-company.module';
 import { MasterDepartmentModule } from './modules/master/master-department.module';
 import { MasterPartModule } from './modules/master/master-part.module';
+import { MasterEquipModule } from './modules/master/master-equip.module';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { SharedModule } from './shared/shared.module';
 
 @Module({
@@ -40,6 +44,9 @@ import { SharedModule } from './shared/shared.module';
 
     // 데이터베이스 (글로벌) - TypeORM + Oracle(은성 외부)
     DatabaseModule,
+
+    // OracleService (패키지/프로시저 실행 등 raw Oracle 헬퍼)
+    OracleModule,
 
     // 전역 공유 서비스 (TransactionService, NumberingService 등)
     SharedModule,
@@ -56,6 +63,9 @@ import { SharedModule } from './shared/shared.module';
     // 시스템관리 (/system/comm-configs 통신설정, 환경설정, 활동로그, 문서, ER뷰 등)
     SystemModule,
 
+    // 시스템 스케줄러 (/scheduler/jobs, /scheduler/logs)
+    SchedulerModule,
+
     // 사용자 관리 (/users) — ISYS_USERS 기반
     UserModule,
 
@@ -70,6 +80,12 @@ import { SharedModule } from './shared/shared.module';
 
     // 기준정보 품목정보 (/master/parts) — ID_ITEM 기반
     MasterPartModule,
+
+    // 기준정보 설비정보 (/equipment/equips) — IMCN_MACHINE 기반
+    MasterEquipModule,
+
+    // 대시보드 (/dashboard/summary)
+    DashboardModule,
   ],
   controllers: [AppController],
   providers: [AppService],

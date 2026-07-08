@@ -66,6 +66,11 @@ interface EquipItem {
   lineCode?: string;
 }
 
+interface EquipTypeItem {
+  equipType: string;
+  equipTypeName: string;
+}
+
 interface PartnerItem {
   id: string;
   partnerCode: string;
@@ -282,6 +287,30 @@ export function useEquipOptions(processCode?: string) {
     return list.map((e) => ({
       value: e.equipCode,
       label: `${e.equipCode} - ${e.equipName}`,
+    }));
+  }, [data]);
+
+  return { options, isLoading };
+}
+
+/**
+ * 설비유형 목록을 SelectOption[]으로 반환
+ */
+export function useEquipTypeOptions() {
+  const { data, isLoading } = useApiQuery<{ data: EquipTypeItem[] }>(
+    ["equip-types", "options"],
+    "/equipment/equips/metadata/types",
+    { staleTime: 5 * 60 * 1000 },
+  );
+
+  const options = useMemo<SelectOption[]>(() => {
+    const response = data?.data as unknown as ApiResponse<EquipTypeItem[]> | EquipTypeItem[] | undefined;
+    const list = Array.isArray(response) ? response : response?.data ?? [];
+    return list.map((type) => ({
+      value: type.equipType,
+      label: type.equipTypeName && type.equipTypeName !== type.equipType
+        ? `${type.equipType} - ${type.equipTypeName}`
+        : type.equipType,
     }));
   }, [data]);
 

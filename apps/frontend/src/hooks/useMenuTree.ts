@@ -27,7 +27,6 @@ function excludeHelpMenuItems(items: MenuConfigItem[]): MenuConfigItem[] {
     if (!item.children) return [item];
 
     const children = excludeHelpMenuItems(item.children);
-    if (children.length === 0) return [];
 
     return [{ ...item, children }];
   });
@@ -56,13 +55,10 @@ export function useMenuTree() {
     };
     walk(menuConfig);
     const categoryLookup = new Map(menuConfig.map((item) => [item.code, item]));
-    const allowedCategoryCodes = new Set(menuConfig.map((item) => item.code));
     const seenCategoryCodes = new Set<string>();
 
     const result: MenuConfigItem[] = [];
     for (const g of groups) {
-      if (g.categoryCode !== '__ROOT__' && !allowedCategoryCodes.has(g.categoryCode)) continue;
-
       const childrenLeaf = g.children
         .map((c) => leafLookup.get(c.code))
         .filter((x): x is MenuConfigItem => !!x);
@@ -72,7 +68,6 @@ export function useMenuTree() {
         continue;
       }
       seenCategoryCodes.add(g.categoryCode);
-      if (childrenLeaf.length === 0) continue;
       result.push({
         code: g.categoryCode,
         labelKey: g.labelKey,

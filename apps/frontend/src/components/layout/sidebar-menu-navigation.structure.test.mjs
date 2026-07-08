@@ -54,9 +54,15 @@ test('DB menu categories fall back to the category-specific menuConfig icon', ()
   assert.match(useMenuTreeSource, /ICON_MAP\[g\.iconName \|\| ['"]['"]\] \?\? categoryLookup\.get\(g\.categoryCode\)\?\.icon \?\? Folder/);
 });
 
-test('sidebar hides empty categories from the left menu', () => {
-  assert.match(useMenuTreeSource, /if \(children\.length === 0\) return \[\]/);
-  assert.match(useMenuTreeSource, /if \(childrenLeaf\.length === 0\) continue/);
+test('sidebar keeps empty categories visible in the left menu', () => {
+  assert.doesNotMatch(useMenuTreeSource, /if \(children\.length === 0\) return \[\]/);
+  assert.doesNotMatch(useMenuTreeSource, /if \(childrenLeaf\.length === 0\) continue/);
+  assert.match(useMenuTreeSource, /children:\s*childrenLeaf/);
+});
+
+test('sidebar does not discard active DB categories missing from menuConfig', () => {
+  assert.doesNotMatch(useMenuTreeSource, /allowedCategoryCodes/);
+  assert.doesNotMatch(useMenuTreeSource, /!allowedCategoryCodes\.has/);
 });
 
 test('top-level sidebar categories use distinct icons', () => {
