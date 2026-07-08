@@ -10,7 +10,7 @@
  * 5. icon은 lucide-react 컴포넌트 (사이드 메뉴와 동일 스타일)
  */
 import {
-  Package, Factory, Shield, Truck, Wrench, Building2,
+  Package, Truck, Wrench, Building2,
 } from "lucide-react";
 
 export interface WorkflowNode {
@@ -52,26 +52,9 @@ export const workflowConfigs: WorkflowDefinition[] = [
     nodes: [
       { id: "ARRIVAL", labelKey: "workflow.material.arrival", statusKey: "workflow.status.pending", path: "/material/arrival", color: "text-green-500" },
       { id: "LABEL", labelKey: "workflow.material.label", statusKey: "workflow.status.issuing", path: "/material/receive-label", color: "text-cyan-500" },
-      { id: "IQC", labelKey: "workflow.material.iqc", statusKey: "workflow.status.inspecting", path: "/material/iqc", color: "text-blue-500" },
       { id: "RECEIVE", labelKey: "workflow.material.receive", statusKey: "workflow.status.done", path: "/material/receive", color: "text-violet-500", reversePath: "/material/receipt-cancel", reverseKey: "workflow.action.cancelReceipt" },
       { id: "REQUEST", labelKey: "workflow.material.request", statusKey: "workflow.status.requesting", path: "/material/request", color: "text-amber-500" },
       { id: "ISSUE", labelKey: "workflow.material.issue", statusKey: "workflow.status.done", path: "/material/issue", color: "text-purple-500" },
-    ],
-    branches: [{ afterNodeId: "IQC", conditions: [{ labelKey: "workflow.branch.pass", type: "pass" }, { labelKey: "workflow.branch.fail", type: "fail" }] }],
-  },
-  {
-    id: "PRODUCTION",
-    titleKey: "workflow.production.title",
-    icon: Factory,
-    accent: "border-blue-500",
-    badgeColor: "bg-blue-500",
-    nodes: [
-      { id: "PLAN", labelKey: "workflow.production.plan", statusKey: "workflow.status.planning", path: "/production/monthly-plan", color: "text-green-500" },
-      { id: "SIMULATION", labelKey: "workflow.production.simulation", statusKey: "workflow.status.simulating", path: "/production/simulation", color: "text-cyan-500" },
-      { id: "ORDER", labelKey: "workflow.production.order", statusKey: "workflow.status.active", path: "/production/order", color: "text-amber-500" },
-      { id: "RESULT", labelKey: "workflow.production.result", statusKey: "workflow.status.inputting", path: "/production/result", color: "text-blue-500" },
-      { id: "INSPECT", labelKey: "workflow.production.inspect", statusKey: "workflow.status.inspecting", path: "/production/input-inspect", color: "text-violet-500" },
-      { id: "FG_RECEIVE", labelKey: "workflow.production.fgReceive", statusKey: "workflow.status.done", path: "/product/receive", color: "text-purple-500", reversePath: "/product/receipt-cancel", reverseKey: "workflow.action.cancelReceipt" },
     ],
   },
   {
@@ -81,14 +64,11 @@ export const workflowConfigs: WorkflowDefinition[] = [
     accent: "border-red-500",
     badgeColor: "bg-red-500",
     nodes: [
-      { id: "PACK_RESULT", labelKey: "workflow.shipping.packResult", statusKey: "workflow.status.active", path: "/production/pack-result", color: "text-green-500" },
       { id: "PACK", labelKey: "workflow.shipping.pack", statusKey: "workflow.status.packing", path: "/shipping/pack", color: "text-cyan-500" },
       { id: "PALLET", labelKey: "workflow.shipping.pallet", statusKey: "workflow.status.palletizing", path: "/shipping/pallet", color: "text-blue-500" },
-      { id: "OQC", labelKey: "workflow.shipping.oqc", statusKey: "workflow.status.inspecting", path: "/quality/oqc", color: "text-amber-500" },
       { id: "CONFIRM", labelKey: "workflow.shipping.confirm", statusKey: "workflow.status.confirming", path: "/shipping/confirm", color: "text-violet-500", reversePath: "/shipping/return", reverseKey: "workflow.action.return" },
       { id: "HISTORY", labelKey: "workflow.shipping.history", statusKey: "workflow.status.done", path: "/shipping/history", color: "text-purple-500" },
     ],
-    branches: [{ afterNodeId: "OQC", conditions: [{ labelKey: "workflow.branch.pass", type: "pass" }, { labelKey: "workflow.branch.fail", type: "fail" }] }],
   },
   {
     id: "EQUIPMENT",
@@ -115,23 +95,6 @@ export const workflowConfigs: WorkflowDefinition[] = [
       { id: "VENDOR", labelKey: "workflow.outsourcing.vendor", statusKey: "workflow.status.master", path: "/outsourcing/vendor", color: "text-green-500" },
       { id: "ORDER", labelKey: "workflow.outsourcing.order", statusKey: "workflow.status.ordering", path: "/outsourcing/order", color: "text-amber-500" },
       { id: "RECEIVE", labelKey: "workflow.outsourcing.receive", statusKey: "workflow.status.receiving", path: "/outsourcing/receive", color: "text-emerald-500" },
-    ],
-  },
-  {
-    id: "QUALITY",
-    titleKey: "workflow.quality.title",
-    icon: Shield,
-    accent: "border-amber-500",
-    badgeColor: "bg-amber-500",
-    fullWidth: true,
-    nodes: [
-      { id: "IQC", labelKey: "workflow.quality.iqc", statusKey: "workflow.status.inspecting", path: "/material/iqc", color: "text-blue-500" },
-      { id: "PROCESS_INSPECT", labelKey: "workflow.quality.processInspect", statusKey: "workflow.status.active", path: "/quality/inspect", color: "text-amber-500" },
-      { id: "OQC", labelKey: "workflow.quality.oqc", statusKey: "workflow.status.pending", path: "/quality/oqc", color: "text-emerald-500" },
-      { id: "DEFECT", labelKey: "workflow.quality.defect", statusKey: "workflow.status.reporting", path: "/quality/defect", color: "text-red-500" },
-      { id: "REWORK", labelKey: "workflow.quality.rework", statusKey: "workflow.status.active", path: "/quality/rework", color: "text-orange-500" },
-      { id: "REINSPECT", labelKey: "workflow.quality.reinspect", statusKey: "workflow.status.inspecting", path: "/quality/rework-inspect", color: "text-violet-500" },
-      { id: "CAPA", labelKey: "workflow.quality.capa", statusKey: "workflow.status.done", path: "/quality/capa", color: "text-purple-500" },
     ],
   },
 ];

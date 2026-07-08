@@ -38,7 +38,6 @@ export const MENU_ITEMS: MenuItem[] = [
     icon: 'Package',
     children: [
       { key: 'material-arrival', label: '입하관리', icon: 'PackageCheck', path: '/material/arrival' },
-      { key: 'material-iqc', label: '수입검사(IQC)', icon: 'PackageSearch', path: '/material/iqc' },
       { key: 'material-receive', label: '입고관리', icon: 'PackagePlus', path: '/material/receive' },
       { key: 'material-request', label: '출고요청', icon: 'ClipboardList', path: '/material/request' },
       { key: 'material-issue', label: '출고관리', icon: 'PackageMinus', path: '/material/issue' },
@@ -81,19 +80,6 @@ export const MENU_ITEMS: MenuItem[] = [
     ],
   },
   {
-    key: 'production',
-    label: '생산관리',
-    labelEn: 'Production Management',
-    labelVi: 'Quản lý sản xuất',
-    icon: 'Factory',
-    children: [
-      { key: 'production-order', label: '작업지시', icon: 'ClipboardList', path: '/production/order' },
-      { key: 'production-simulation', label: '생산계획 시뮬레이션', icon: 'GanttChartSquare', path: '/production/simulation' },
-      { key: 'production-work', label: '생산실적', icon: 'FileBarChart', path: '/production/work' },
-      { key: 'production-monitor', label: '현황모니터', icon: 'Monitor', path: '/production/monitor' },
-    ],
-  },
-  {
     key: 'inspection',
     label: '통전검사',
     labelEn: 'Electrical Inspection',
@@ -102,19 +88,6 @@ export const MENU_ITEMS: MenuItem[] = [
     children: [
       { key: 'inspection-work', label: '검사수행', icon: 'Play', path: '/inspection/work' },
       { key: 'inspection-result', label: '검사결과', icon: 'FileCheck', path: '/inspection/result' },
-    ],
-  },
-  {
-    key: 'quality',
-    label: '품질관리',
-    labelEn: 'Quality Management',
-    labelVi: 'Quản lý chất lượng',
-    icon: 'ShieldCheck',
-    children: [
-      { key: 'quality-iqc', label: '수입검사', icon: 'PackageSearch', path: '/quality/iqc' },
-      { key: 'quality-defect', label: '불량관리', icon: 'AlertTriangle', path: '/quality/defect' },
-      { key: 'quality-repair', label: '수리관리', icon: 'Wrench', path: '/quality/repair' },
-      { key: 'quality-mrb', label: 'MRB심의', icon: 'Users', path: '/quality/mrb' },
     ],
   },
   {

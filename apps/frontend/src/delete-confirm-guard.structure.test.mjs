@@ -7,7 +7,6 @@ const filesThatMustUseConfirmModal = [
   "apps/frontend/src/components/master/ProdLineTab.tsx",
   "apps/frontend/src/components/master/ProcessTab.tsx",
   "apps/frontend/src/app/(authenticated)/system/users/components/UserFormPanel.tsx",
-  "apps/frontend/src/app/(authenticated)/system/training/components/TrainingResultList.tsx",
   "apps/frontend/src/app/(authenticated)/shipping/pallet/page.tsx",
   "apps/frontend/src/app/(authenticated)/shipping/pack/page.tsx",
   "apps/frontend/src/app/(authenticated)/master/equip-inspect/components/InspectItemPanel.tsx",
@@ -15,10 +14,7 @@ const filesThatMustUseConfirmModal = [
   "apps/frontend/src/app/(authenticated)/master/process/page.tsx",
   "apps/frontend/src/app/(authenticated)/master/part/components/PartFormPanel.tsx",
   "apps/frontend/src/app/(authenticated)/master/label/components/TemplateManager.tsx",
-  "apps/frontend/src/app/(authenticated)/master/iqc-item/components/IqcTemplatePickerModal.tsx",
   "apps/frontend/src/app/(authenticated)/master/routing/components/SelfInspectConfigEditor.tsx",
-  "apps/frontend/src/app/(authenticated)/quality/audit/components/AuditFindingList.tsx",
-  "apps/frontend/src/app/(authenticated)/quality/control-plan/components/ControlPlanItemList.tsx",
 ];
 
 const forbiddenDirectDeleteClicks = [

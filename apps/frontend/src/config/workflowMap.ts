@@ -192,8 +192,6 @@ export const workflowNodes: WorkflowActivityNode[] = [
     x: 0,
     dataObjects: ["IQC_PART_SPECS", "IQC_PART_SPEC_ITEMS", "IQC_AQL_POLICIES", "AQL_STANDARDS"],
     routes: [
-      { label: "IQC품목규격", path: "/master/iqc-part-spec" },
-      { label: "AQL 기준관리", path: "/quality/aql" },
     ],
     inputs: ["품목", "검사항목", "AQL 정책"],
     outputs: ["품목별 검사 기준", "샘플링 정책"],
@@ -213,10 +211,6 @@ export const workflowNodes: WorkflowActivityNode[] = [
     x: 520,
     dataObjects: ["IQC_LOGS", "MAT_LOTS", "MAT_ARRIVALS", "DEFECT_CODE_MASTERS"],
     routes: [
-      { label: "IQC검사", path: "/material/iqc" },
-      { label: "IQC이력", path: "/material/iqc-history" },
-      { label: "불량코드관리", path: "/quality/defect-code" },
-      { label: "특채처리", path: "/material/concession" },
     ],
     inputs: ["입하번호", "품목", "검사항목", "시료"],
     outputs: ["IQC 이력", "PASS/FAIL", "불량코드"],
@@ -345,7 +339,6 @@ export const workflowNodes: WorkflowActivityNode[] = [
     x: 0,
     dataObjects: ["SMT_DRAWING_MASTERS", "SMT_DRAWING_REVISIONS", "SMT_CIRCUIT_SPECS"],
     routes: [
-      { label: "제품 도면관리", path: "/production/specification-setup" },
       { label: "라우팅", path: "/master/routing" },
       { label: "BOM", path: "/master/bom" },
     ],
@@ -367,8 +360,6 @@ export const workflowNodes: WorkflowActivityNode[] = [
     x: 260,
     dataObjects: ["PROD_PLANS", "SIMULATION_HEADERS"],
     routes: [
-      { label: "월간생산계획", path: "/production/monthly-plan" },
-      { label: "시뮬레이션", path: "/production/simulation" },
     ],
     inputs: ["수주", "품목", "CAPA", "월력"],
     outputs: ["생산계획", "작업지시 발행 기준"],
@@ -388,8 +379,6 @@ export const workflowNodes: WorkflowActivityNode[] = [
     x: 520,
     dataObjects: ["JOB_ORDERS", "ROUTING_GROUPS", "BOM_MASTERS"],
     routes: [
-      { label: "작업지시", path: "/production/order" },
-      { label: "생산진도", path: "/production/progress" },
     ],
     inputs: ["생산계획", "품목", "라우팅", "BOM"],
     outputs: ["작업지시", "공정 실행 기준"],
@@ -409,9 +398,6 @@ export const workflowNodes: WorkflowActivityNode[] = [
     x: 780,
     dataObjects: ["JOB_ORDERS", "PROD_RESULTS", "SG_LABELS", "MAT_ISSUES"],
     routes: [
-      { label: "입력키오스크", path: "/production/input-kiosk" },
-      { label: "조립투입", path: "/production/input-assembly" },
-      { label: "생산진도", path: "/production/progress" },
     ],
     inputs: ["작업지시", "작업자", "설비", "SG/자재 바코드"],
     outputs: ["생산 시작", "스캔 실적", "공정 진행 상태"],
@@ -431,8 +417,6 @@ export const workflowNodes: WorkflowActivityNode[] = [
     x: 1040,
     dataObjects: ["SG_LABELS", "SG_GENEALOGY", "SMT_CIRCUIT_SPECS"],
     routes: [
-      { label: "서브공정 키팅", path: "/production/subprocess-kitting" },
-      { label: "입력키오스크", path: "/production/input-kiosk" },
     ],
     inputs: ["작업지시", "이전 SG", "회로 사양"],
     outputs: ["신규 SG", "SG 계보"],
@@ -452,9 +436,6 @@ export const workflowNodes: WorkflowActivityNode[] = [
     x: 1300,
     dataObjects: ["PROD_RESULTS", "SG_LABELS", "FG_LABELS"],
     routes: [
-      { label: "조립투입", path: "/production/input-assembly" },
-      { label: "입력키오스크", path: "/production/input-kiosk" },
-      { label: "생산실적", path: "/production/result" },
     ],
     inputs: ["작업지시", "SG", "자재투입"],
     outputs: ["생산실적", "FG/SG 라벨"],
@@ -474,9 +455,6 @@ export const workflowNodes: WorkflowActivityNode[] = [
     x: 1560,
     dataObjects: ["PROD_RESULTS", "JOB_ORDERS", "PRODUCT_STOCKS"],
     routes: [
-      { label: "생산실적", path: "/production/result" },
-      { label: "실적집계", path: "/production/result-summary" },
-      { label: "WIP재고", path: "/production/wip-stock" },
     ],
     inputs: ["작업지시", "현장 실적"],
     outputs: ["양품수량", "불량수량", "WIP/제품재고 후보"],
@@ -496,10 +474,6 @@ export const workflowNodes: WorkflowActivityNode[] = [
     x: 780,
     dataObjects: ["INSPECT_RESULTS", "SAMPLE_INSPECT_RESULTS", "QC_RESULTS"],
     routes: [
-      { label: "검사관리", path: "/quality/inspect" },
-      { label: "샘플검사", path: "/production/sample-inspect" },
-      { label: "의뢰검사", path: "/quality/request-inspect" },
-      { label: "자주검사이력", path: "/quality/self-inspect-history" },
     ],
     inputs: ["생산실적", "검사항목"],
     outputs: ["검사결과", "합격/불합격"],
@@ -519,10 +493,6 @@ export const workflowNodes: WorkflowActivityNode[] = [
     x: 1040,
     dataObjects: ["DEFECT_LOGS", "REWORK_ORDERS", "REPAIR_ORDERS"],
     routes: [
-      { label: "불량관리", path: "/quality/defect" },
-      { label: "재작업", path: "/quality/rework" },
-      { label: "재작업검사", path: "/quality/rework-inspect" },
-      { label: "수리", path: "/production/repair" },
     ],
     inputs: ["검사 FAIL", "불량코드"],
     outputs: ["불량이력", "재작업지시", "수리이력"],
@@ -543,7 +513,6 @@ export const workflowNodes: WorkflowActivityNode[] = [
     dataObjects: ["PRODUCT_STOCKS", "PRODUCT_TRANSACTIONS", "FG_LABELS"],
     routes: [
       { label: "제품입고", path: "/product/receive" },
-      { label: "제품재고", path: "/inventory/stock" },
       { label: "제품입고취소", path: "/product/receipt-cancel" },
     ],
     inputs: ["포장 박스", "FG 라벨"],
@@ -565,7 +534,6 @@ export const workflowNodes: WorkflowActivityNode[] = [
     dataObjects: ["BOX_MASTERS", "FG_LABELS", "OQC_REQUESTS"],
     routes: [
       { label: "포장", path: "/shipping/pack" },
-      { label: "포장실적", path: "/production/pack-result" },
       { label: "박스입고재고", path: "/shipping/box-stock" },
     ],
     inputs: ["FG 라벨", "검사 PASS 제품"],
@@ -586,8 +554,6 @@ export const workflowNodes: WorkflowActivityNode[] = [
     x: 1560,
     dataObjects: ["OQC_REQUESTS", "OQC_RESULTS", "BOX_MASTERS"],
     routes: [
-      { label: "OQC검사", path: "/quality/oqc" },
-      { label: "OQC이력", path: "/quality/oqc-history" },
     ],
     inputs: ["마감 박스", "검사항목"],
     outputs: ["OQC PASS/FAIL", "출하 가능 박스"],
@@ -691,7 +657,6 @@ export const workflowNodes: WorkflowActivityNode[] = [
     x: 2080,
     dataObjects: ["FG_LABELS", "SG_LABELS", "MAT_LOTS", "IQC_LOGS", "SHIPMENT_LOGS"],
     routes: [
-      { label: "추적성", path: "/quality/trace" },
       { label: "LOT조회", path: "/material/lot" },
     ],
     inputs: ["FG 바코드", "SG 라벨", "MAT UID", "박스/팔레트"],
@@ -736,9 +701,6 @@ export const workflowNodes: WorkflowActivityNode[] = [
     x: 780,
     dataObjects: ["CONTROL_PLANS", "FAI_REQUESTS", "PPAP_SUBMISSIONS"],
     routes: [
-      { label: "관리계획서", path: "/quality/control-plan" },
-      { label: "초물검사(FAI)", path: "/quality/fai" },
-      { label: "PPAP", path: "/quality/ppap" },
     ],
     inputs: ["신규/변경 품목", "도면/사양", "고객 요구"],
     outputs: ["관리계획서", "FAI 판정", "PPAP 승인"],
@@ -759,7 +721,6 @@ export const workflowNodes: WorkflowActivityNode[] = [
     x: 1300,
     dataObjects: ["CHANGE_ORDERS"],
     routes: [
-      { label: "4M변경관리", path: "/quality/change-control" },
     ],
     inputs: ["변경 요청", "영향 범위"],
     outputs: ["변경 승인", "변경 이력"],
@@ -779,8 +740,6 @@ export const workflowNodes: WorkflowActivityNode[] = [
     x: 1820,
     dataObjects: ["SPC_CHARTS", "SPC_DATA", "CALIBRATION_LOGS"],
     routes: [
-      { label: "SPC", path: "/quality/spc" },
-      { label: "계측기 교정", path: "/quality/msa" },
     ],
     inputs: ["공정 측정값", "계측기"],
     outputs: ["관리도/Cpk", "교정 상태"],
@@ -800,9 +759,6 @@ export const workflowNodes: WorkflowActivityNode[] = [
     x: 2340,
     dataObjects: ["CUSTOMER_COMPLAINTS", "CAPA_REQUESTS", "AUDIT_PLANS"],
     routes: [
-      { label: "고객클레임", path: "/quality/complaint" },
-      { label: "CAPA", path: "/quality/capa" },
-      { label: "내부심사", path: "/quality/audit" },
     ],
     inputs: ["고객 클레임", "부적합 발견"],
     outputs: ["시정/예방조치", "심사 결과"],

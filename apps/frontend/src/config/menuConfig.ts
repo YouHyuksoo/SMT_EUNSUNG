@@ -9,9 +9,9 @@
  * 4. 새 메뉴 추가 시 반드시 고유 code를 부여할 것
  */
 import {
-  LayoutDashboard, Package, Factory, Shield, Wrench, Truck,
+  LayoutDashboard, Package, Wrench, Truck,
   Database, Building2, UserCog,
-  ClipboardCheck, Monitor, PackageCheck, GitBranch, Activity,
+  Monitor, PackageCheck, GitBranch, Activity,
 } from "lucide-react";
 
 /** 메뉴 설정 항목 인터페이스 */
@@ -116,17 +116,6 @@ export const menuConfig: MenuConfigItem[] = [
     ],
   },
   {
-    code: "PRODUCT_INVENTORY",
-    labelKey: "menu.productInventory",
-    icon: ClipboardCheck,
-    children: [
-      { code: "INV_PRODUCT_STOCK", labelKey: "menu.inventory.productStock", path: "/inventory/stock" },
-      { code: "INV_PRODUCT_PHYSICAL_INV", labelKey: "menu.inventory.productPhysicalInv", path: "/inventory/product-physical-inv" },
-      { code: "INV_PRODUCT_PHYSICAL_INV_HISTORY", labelKey: "menu.inventory.productPhysicalInvHistory", path: "/inventory/product-physical-inv-history" },
-      { code: "PROD_HOLD", labelKey: "menu.productInventory.hold", path: "/inventory/product-hold" },
-    ],
-  },
-  {
     code: "PRODUCT_MGMT",
     labelKey: "menu.productMgmt",
     icon: PackageCheck,
@@ -136,65 +125,6 @@ export const menuConfig: MenuConfigItem[] = [
       { code: "PROD_ISSUE", labelKey: "menu.productMgmt.issue", path: "/product/issue" },
       { code: "PROD_ISSUE_CANCEL", labelKey: "menu.productMgmt.issueCancel", path: "/product/issue-cancel" },
       { code: "PROD_DEFECT_TRANSFER", labelKey: "menu.productMgmt.defectTransfer", path: "/product/defect-transfer" },
-    ],
-  },
-  {
-    code: "PRODUCTION",
-    labelKey: "menu.production",
-    icon: Factory,
-    children: [
-      { code: "PROD_MONTHLY_PLAN", labelKey: "menu.production.monthlyPlan", path: "/production/monthly-plan" },
-      { code: "PROD_SIMULATION", labelKey: "menu.production.simulation", path: "/production/simulation" },
-      { code: "PROD_SPEC_SETUP", labelKey: "menu.production.specificationSetup", path: "/production/specification-setup" },
-      { code: "PROD_KITTING", labelKey: "menu.production.kitting", path: "/production/subprocess-kitting" },
-      { code: "PROD_INPUT_ASSEMBLY", labelKey: "menu.production.inputAssembly", path: "/production/input-assembly" },
-      { code: "PROD_ORDER", labelKey: "menu.production.order", path: "/production/order" },
-      { code: "PROD_RESULT", labelKey: "menu.production.result", path: "/production/result" },
-      { code: "PROD_ORDER_RESULT", labelKey: "menu.production.orderResult", path: "/production/order-result" },
-      { code: "PROD_PROGRESS", labelKey: "menu.production.progress", path: "/production/progress" },
-      { code: "PROD_INPUT_KIOSK", labelKey: "menu.production.inputKiosk", path: "/production/input-kiosk" },
-      { code: "PROD_INPUT_INSPECT", labelKey: "menu.production.inputInspect", path: "/production/input-inspect" },
-      { code: "PROD_INPUT_EQUIP", labelKey: "menu.production.inputEquip", path: "/production/input-equip" },
-      { code: "PROD_RESULT_SUMMARY", labelKey: "menu.production.resultSummary", path: "/production/result-summary" },
-      { code: "PROD_WIP_STOCK", labelKey: "menu.production.wipSemiStock", path: "/production/wip-stock" },
-      { code: "PROD_FG_STOCK", labelKey: "menu.production.fgStock", path: "/production/fg-stock" },
-      { code: "PROD_WIP_MAT_STOCK", labelKey: "menu.production.wipMaterialStock", path: "/production/wip-material-stock" },
-      { code: "PROD_WIP_MAT_TRANS", labelKey: "menu.production.wipMaterialTrans", path: "/production/wip-material-trans" },
-      { code: "QC_REWORK", labelKey: "menu.quality.rework", path: "/quality/rework" },
-      { code: "QC_REWORK_HISTORY", labelKey: "menu.quality.reworkHistory", path: "/quality/rework-history" },
-      { code: "PROD_REPAIR", labelKey: "menu.production.repair", path: "/production/repair" },
-    ],
-  },
-  {
-    code: "QUALITY",
-    labelKey: "menu.quality",
-    icon: Shield,
-    children: [
-      { code: "QC_IQC_ITEM", labelKey: "menu.master.iqcItem", path: "/master/iqc-item" },
-      { code: "QC_IQC_PART_SPEC", labelKey: "menu.master.iqcPartSpec", path: "/master/iqc-part-spec" },
-      { code: "QC_AQL", labelKey: "menu.quality.aql", path: "/quality/aql" },
-      { code: "QC_IQC", labelKey: "menu.material.iqc", path: "/material/iqc" },
-      { code: "QC_IQC_HISTORY", labelKey: "menu.material.iqcHistory", path: "/material/iqc-history" },
-      { code: "QC_CONCESSION", labelKey: "menu.material.concession", path: "/material/concession" },
-      { code: "QC_DEFECT", labelKey: "menu.quality.defect", path: "/quality/defect" },
-      { code: "QC_DEFECT_CODE", labelKey: "menu.quality.defectCode", path: "/quality/defect-code" },
-      { code: "QC_REWORK_INSPECT", labelKey: "menu.quality.reworkInspect", path: "/quality/rework-inspect" },
-      { code: "QC_INSPECT", labelKey: "menu.quality.inspect", path: "/quality/inspect" },
-      { code: "QC_REQUEST_INSPECT", labelKey: "menu.quality.requestInspect", path: "/quality/request-inspect" },
-      { code: "QC_SELF_INSPECT_HISTORY", labelKey: "menu.quality.selfInspectHistory", path: "/quality/self-inspect-history" },
-      { code: "QC_SAMPLE_INSPECT", labelKey: "menu.production.sampleInspect", path: "/production/sample-inspect" },
-      { code: "QC_OQC", labelKey: "menu.quality.oqc", path: "/quality/oqc" },
-      { code: "QC_OQC_HISTORY", labelKey: "menu.quality.oqcHistory", path: "/quality/oqc-history" },
-      { code: "QC_TRACE", labelKey: "menu.quality.trace", path: "/quality/trace" },
-      { code: "QC_CHANGE", labelKey: "menu.quality.changeControl", path: "/quality/change-control" },
-      { code: "QC_COMPLAINT", labelKey: "menu.quality.complaint", path: "/quality/complaint" },
-      { code: "QC_CAPA", labelKey: "menu.quality.capa", path: "/quality/capa" },
-      { code: "QC_FAI", labelKey: "menu.quality.fai", path: "/quality/fai" },
-      { code: "QC_PPAP", labelKey: "menu.quality.ppap", path: "/quality/ppap" },
-      { code: "QC_SPC", labelKey: "menu.quality.spc", path: "/quality/spc" },
-      { code: "QC_CONTROL_PLAN", labelKey: "menu.quality.controlPlan", path: "/quality/control-plan" },
-      { code: "QC_AUDIT", labelKey: "menu.quality.audit", path: "/quality/audit" },
-      { code: "SYS_TRAINING", labelKey: "menu.system.training", path: "/system/training" },
     ],
   },
   {
@@ -223,7 +153,6 @@ export const menuConfig: MenuConfigItem[] = [
     labelKey: "menu.shipping",
     icon: Truck,
     children: [
-      { code: "SHIP_PACK_RESULT", labelKey: "menu.production.packResult", path: "/production/pack-result" },
       { code: "SHIP_PACK", labelKey: "menu.shipping.pack", path: "/shipping/pack" },
       { code: "SHIP_ORDER", labelKey: "menu.shipping.order", path: "/shipping/order" },
       { code: "SHIP_BOX_STOCK", labelKey: "menu.shipping.boxStock", path: "/shipping/box-stock" },
@@ -286,7 +215,7 @@ export function getAllMenuCodes(): string[] {
 
 /**
  * path로 메뉴 코드를 찾기
- * @param path - 라우트 경로 (예: "/production/order")
+ * @param path - 라우트 경로 (예: "/dashboard")
  * @returns 해당 경로의 메뉴 code 또는 undefined
  */
 export function findMenuCodeByPath(path: string): string | undefined {
@@ -303,7 +232,7 @@ export function findMenuCodeByPath(path: string): string | undefined {
 
 /**
  * path로 메뉴 항목과 부모 코드를 찾기 (탭 자동 생성용)
- * @param path - 라우트 경로 (예: "/production/order")
+ * @param path - 라우트 경로 (예: "/dashboard")
  * @returns 해당 경로의 메뉴 항목과 부모 code 또는 undefined
  */
 export function findMenuItemByPath(
