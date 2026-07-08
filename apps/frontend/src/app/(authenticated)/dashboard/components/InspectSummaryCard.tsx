@@ -38,7 +38,7 @@ interface Props {
   pass: number;
   fail: number;
   loading?: boolean;
-  linkPath: string;
+  linkPath?: string;
 }
 
 const resultConfig: Record<string, { icon: typeof CheckCircle; color: string; bgColor: string }> = {
@@ -65,13 +65,15 @@ export default function InspectSummaryCard({
             <Icon className={`w-4 h-4 ${iconColor}`} />
             <h3 className="text-sm font-bold text-text">{title}</h3>
           </div>
-          <Link
-            href={linkPath}
-            className="flex items-center gap-0.5 text-xs text-primary hover:text-primary/80 font-medium"
-          >
-            {t("common.viewMore", "더보기")}
-            <ChevronRight className="w-3.5 h-3.5" />
-          </Link>
+          {linkPath && (
+            <Link
+              href={linkPath}
+              className="flex items-center gap-0.5 text-xs text-primary hover:text-primary/80 font-medium"
+            >
+              {t("common.viewMore", "더보기")}
+              <ChevronRight className="w-3.5 h-3.5" />
+            </Link>
+          )}
         </div>
 
         {/* Summary Stats */}

@@ -16,7 +16,6 @@ import { Card, CardContent, Button, Input, ConfirmModal } from "@/components/ui"
 import { ComCodeSelect, UseYnSelect } from "@/components/shared";
 import DataGrid from "@/components/data-grid/DataGrid";
 import api from "@/services/api";
-import { usePageAiTools } from "@/ai-page-tools/usePageAiTools";
 import { useUnsavedGuard } from "@/hooks/useUnsavedGuard";
 import PartnerFormPanel, { type Partner } from "./components/PartnerFormPanel";
 import { createPartnerGridColumns } from "./partnerColumns";
@@ -24,7 +23,6 @@ import { createPartnerGridColumns } from "./partnerColumns";
 type PanelMode = "create" | "edit";
 
 function PartnerPage() {
-  usePageAiTools("master.partner");
   const { t } = useTranslation();
   const [partners, setPartners] = useState<Partner[]>([]);
   const [loading, setLoading] = useState(false);

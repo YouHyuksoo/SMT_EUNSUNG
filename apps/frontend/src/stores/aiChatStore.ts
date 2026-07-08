@@ -9,14 +9,6 @@ import { createJSONStorage, persist } from "zustand/middleware";
 
 export type AiChatPersona = "user" | "operator" | "engineer";
 
-/** 승인 후 실행할 페이지 도구 호출 제안(write 도구) */
-export interface AiPageToolCallProposal {
-  pageId: string;
-  toolName: string;
-  label: string;
-  input: Record<string, unknown>;
-}
-
 /** 답변 근거로 사용한 RAG 지식 청크 요약 */
 export interface AiChatSource {
   chunkId: string;
@@ -45,8 +37,6 @@ export interface AiChatMessage {
   requiresApproval?: boolean;
   /** 실행 완료 여부 */
   executed?: boolean;
-  /** 페이지 도구 실행 제안(승인 카드) */
-  pageToolCall?: AiPageToolCallProposal;
   /** 답변 근거 출처 (RAG 검색 결과가 있을 때만) */
   sources?: AiChatSource[];
 }

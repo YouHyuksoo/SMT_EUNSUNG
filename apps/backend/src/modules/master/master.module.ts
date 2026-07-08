@@ -10,11 +10,9 @@
 
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ComCodeController } from './controllers/com-code.controller';
 import { ComCodeService } from './services/com-code.service';
 import { PlantController } from './controllers/plant.controller';
 import { PlantService } from './services/plant.service';
-import { PartController } from './controllers/part.controller';
 import { PartService } from './services/part.service';
 import { BomController } from './controllers/bom.controller';
 import { BomService } from './services/bom.service';
@@ -44,9 +42,7 @@ import { LabelTemplateController } from './controllers/label-template.controller
 import { LabelTemplateService } from './services/label-template.service';
 import { ProdLineController } from './controllers/prod-line.controller';
 import { ProdLineService } from './services/prod-line.service';
-import { CompanyController } from './controllers/company.controller';
 import { CompanyService } from './services/company.service';
-import { DepartmentController } from './controllers/department.controller';
 import { DepartmentService } from './services/department.service';
 import { VendorBarcodeMappingController } from './controllers/vendor-barcode-mapping.controller';
 import { VendorBarcodeMappingService } from './services/vendor-barcode-mapping.service';
@@ -151,9 +147,7 @@ import { WorkCalendarDay } from '../../entities/work-calendar-day.entity';
     ]),
   ],
   controllers: [
-    ComCodeController,
     PlantController,
-    PartController,
     BomController,
     PartnerController,
     ProcessController,
@@ -168,8 +162,6 @@ import { WorkCalendarDay } from '../../entities/work-calendar-day.entity';
     ModelSuffixController,
     LabelTemplateController,
     ProdLineController,
-    CompanyController,
-    DepartmentController,
     VendorBarcodeMappingController,
     IqcItemPoolController,
     IqcPartSpecController,

@@ -13,7 +13,6 @@ import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Workflow, RefreshCw } from "lucide-react";
 import { Button, Modal, Select, ConfirmModal } from "@/components/ui";
-import { usePageAiTools } from "@/ai-page-tools/usePageAiTools";
 import { useUnsavedGuard } from "@/hooks/useUnsavedGuard";
 import api from "@/services/api";
 import ProcessList, { type Process } from "./components/ProcessList";
@@ -33,7 +32,6 @@ interface Equipment {
 
 export default function ProcessPage() {
   const { t } = useTranslation();
-  usePageAiTools("master.process");
 
   /* ── 공정 목록 상태 ── */
   const [processes, setProcesses] = useState<Process[]>([]);

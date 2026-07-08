@@ -19,7 +19,6 @@ import { useComCodeMap, useComCodeOptions } from "@/hooks/useComCode";
 import DataGrid from "@/components/data-grid/DataGrid";
 import api from "@/services/api";
 import { Part } from "./types";
-import { usePageAiTools } from "@/ai-page-tools/usePageAiTools";
 import { useUnsavedGuard } from "@/hooks/useUnsavedGuard";
 
 import PartFormPanel from "./components/PartFormPanel";
@@ -32,7 +31,6 @@ type IqcAqlPolicyOption = {
 
 export default function PartPage() {
   const { t } = useTranslation();
-  usePageAiTools("master.part");
   const [parts, setParts] = useState<Part[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);

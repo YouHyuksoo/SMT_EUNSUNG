@@ -14,13 +14,10 @@ import { Sparkles, X, Send, LoaderCircle, Trash2, Database, Play, Copy, Check, T
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import api from "@/services/api";
-import { usePageToolStore } from "@/ai-page-tools/pageToolStore";
 import { useAiChatStore, type AiChatAttachment, type AiChatMessage, type AiChatPersona, type AiChatSource } from "@/stores/aiChatStore";
 import { useHelpStore } from "@/stores/helpStore";
 import { findMenuCodeByPath } from "@/config/menuConfig";
 import { slugify } from "@/lib/help";
-import PageToolExecutionLog from "./PageToolExecutionLog";
-import PageToolInspector from "./PageToolInspector";
 
 interface SpeechRecognitionEventLike {
   results: ArrayLike<ArrayLike<{ transcript: string }>>;
@@ -109,11 +106,6 @@ export default function AiChatPanel() {
   const { t } = useTranslation();
   const pathname = usePathname();
   const { isOpen, messages, persona, setPersona, close, addMessage, clear } = useAiChatStore();
-  const activeTab = usePageToolStore((state) => state.activeTab);
-  const manifest = usePageToolStore((state) => state.manifest);
-  const openChatTab = usePageToolStore((state) => state.openChatTab);
-  const openToolsTab = usePageToolStore((state) => state.openToolsTab);
-  const openLogTab = usePageToolStore((state) => state.openLogTab);
   const openHelpFor = useHelpStore((state) => state.openHelpFor);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
@@ -190,21 +182,6 @@ export default function AiChatPanel() {
     setSending(true);
     try {
       const history = [...messages, userMsg].map((m) => ({ role: m.role, content: m.content, attachments: m.attachments }));
-      const pageToolContext = manifest
-        ? {
-            pageId: manifest.pageId,
-            executionLevel: manifest.executionLevel,
-            tools: manifest.tools.map(({ name, label, description, riskLevel, source, neverPersists, confirmationPolicy }) => ({
-              name,
-              label,
-              description,
-              riskLevel,
-              source,
-              neverPersists,
-              confirmationPolicy,
-            })),
-          }
-        : undefined;
       const knowledgeContext = {
         route: pathname,
         menuCode: findMenuCodeByPath(pathname),
@@ -212,7 +189,7 @@ export default function AiChatPanel() {
         audience: AI_PERSONAS.find((item) => item.value === persona)?.audience ?? "user",
         persona,
       };
-      const res = await api.post("/ai/chat", { messages: history, pageToolContext, knowledgeContext });
+      const res = await api.post("/ai/chat", { messages: history, knowledgeContext });
       const data = res.data?.data ?? {};
       addMessage({
         role: "assistant",
@@ -220,7 +197,6 @@ export default function AiChatPanel() {
         sql: data.sql,
         requiresApproval: data.requiresApproval,
         executed: data.executed,
-        pageToolCall: data.pageToolCall,
         sources: data.sources,
       });
     } catch (e: unknown) {
@@ -230,7 +206,7 @@ export default function AiChatPanel() {
       setSending(false);
       setTimeout(() => inputRef.current?.focus(), 50);
     }
-  }, [input, attachments, sending, messages, addMessage, t, manifest, pathname, persona]);
+  }, [input, attachments, sending, messages, addMessage, t, pathname, persona]);
 
   const applyRoutePrefix = useCallback((prefix: string) => {
     setInput((prev) => {
@@ -345,25 +321,6 @@ export default function AiChatPanel() {
         const res = await api.post("/ai/execute-sql", { sql });
         const data = res.data?.data ?? {};
         addMessage({ role: "assistant", content: data.content || t("ai.chat.executed", "실행이 완료되었습니다."), executed: true });
-      } catch (e: unknown) {
-        const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message;
-        addMessage({ role: "assistant", content: msg || t("ai.chat.error", "응답을 가져오지 못했습니다.") });
-      } finally {
-        setApprovedIdx((prev) => new Set(prev).add(idx));
-        setSending(false);
-      }
-    },
-    [sending, addMessage, t],
-  );
-
-  const executeTool = useCallback(
-    async (idx: number, call?: { pageId: string; toolName: string; input: Record<string, unknown> }) => {
-      if (!call || sending) return;
-      setSending(true);
-      try {
-        const res = await api.post(`/ai/page-tools/${call.pageId}/execute`, { toolName: call.toolName, input: call.input });
-        const data = res.data?.data ?? {};
-        addMessage({ role: "assistant", content: data.summary || t("ai.chat.executed", "실행이 완료되었습니다."), executed: true });
       } catch (e: unknown) {
         const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message;
         addMessage({ role: "assistant", content: msg || t("ai.chat.error", "응답을 가져오지 못했습니다.") });
@@ -522,30 +479,6 @@ export default function AiChatPanel() {
         </div>
       </div>
 
-      <div className="flex gap-1 border-b border-border px-3 py-2">
-        <button
-          type="button"
-          onClick={openChatTab}
-          className={`rounded px-3 py-1.5 text-xs font-medium ${activeTab === "chat" ? "bg-primary text-white" : "text-text-muted hover:bg-surface hover:text-text"}`}
-        >
-          {t("ai.chat.tab.chat", "채팅")}
-        </button>
-        <button
-          type="button"
-          onClick={openToolsTab}
-          className={`rounded px-3 py-1.5 text-xs font-medium ${activeTab === "tools" ? "bg-primary text-white" : "text-text-muted hover:bg-surface hover:text-text"}`}
-        >
-          {t("ai.chat.tab.tools", "도구")}
-        </button>
-        <button
-          type="button"
-          onClick={openLogTab}
-          className={`rounded px-3 py-1.5 text-xs font-medium ${activeTab === "log" ? "bg-primary text-white" : "text-text-muted hover:bg-surface hover:text-text"}`}
-        >
-          {t("ai.chat.tab.log", "실행로그")}
-        </button>
-      </div>
-
       <div className="flex items-center gap-2 border-b border-border px-3 py-2">
         <span className="text-[11px] font-medium text-text-muted">{t("ai.chat.persona", "페르소나")}</span>
         <div className="grid flex-1 grid-cols-3 rounded-md border border-border bg-surface p-0.5">
@@ -576,19 +509,8 @@ export default function AiChatPanel() {
         </div>
       </div>
 
-      {activeTab === "tools" && (
-        <div className="flex-1 min-h-0 overflow-y-auto">
-          <PageToolInspector />
-        </div>
-      )}
-      {activeTab === "log" && (
-        <div className="flex-1 min-h-0 overflow-y-auto">
-          <PageToolExecutionLog />
-        </div>
-      )}
-
       {/* 메시지 목록 */}
-      <div ref={scrollRef} className={`flex-1 space-y-3 overflow-y-auto p-4 ${activeTab === "chat" ? "" : "hidden"}`}>
+      <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto p-4">
         {messages.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center gap-3 text-center text-text-muted">
             <Sparkles className="h-10 w-10 opacity-20" />
@@ -642,26 +564,6 @@ export default function AiChatPanel() {
                       {t("ai.chat.cancel", "취소")}
                     </button>
                     <button type="button" onClick={() => approve(i, m.sql)} disabled={sending} className="flex items-center gap-1 rounded bg-amber-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-amber-700 disabled:opacity-50">
-                      <Play className="h-3 w-3" />
-                      {t("ai.chat.execute", "실행")}
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* 페이지 도구 실행 승인 카드 */}
-              {m.role === "assistant" && m.pageToolCall && !approvedIdx.has(i) && (
-                <div className="mt-2 w-[92%] rounded-lg border border-amber-400 p-2.5 dark:border-amber-700">
-                  <div className="mb-1 flex items-center gap-1.5 text-xs font-semibold text-amber-700 dark:text-amber-400">
-                    <Play className="h-3.5 w-3.5" />
-                    {t("ai.chat.toolApproveTitle", "작업 실행 승인 필요")}: {m.pageToolCall.label}
-                  </div>
-                  <pre className="mb-2 max-h-40 overflow-auto whitespace-pre-wrap rounded bg-surface px-2 py-1.5 font-mono text-[11px] text-text">{JSON.stringify(m.pageToolCall.input, null, 2)}</pre>
-                  <div className="flex justify-end gap-2">
-                    <button type="button" onClick={() => setApprovedIdx((p) => new Set(p).add(i))} className="rounded px-2.5 py-1 text-xs text-text-muted hover:bg-surface">
-                      {t("ai.chat.cancel", "취소")}
-                    </button>
-                    <button type="button" onClick={() => executeTool(i, m.pageToolCall)} disabled={sending} className="flex items-center gap-1 rounded bg-amber-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-amber-700 disabled:opacity-50">
                       <Play className="h-3 w-3" />
                       {t("ai.chat.execute", "실행")}
                     </button>
@@ -758,7 +660,7 @@ export default function AiChatPanel() {
       </div>
 
       {/* 입력 */}
-      <div className={`border-t border-border p-3 ${activeTab === "chat" ? "block" : "hidden"}`}>
+      <div className="border-t border-border p-3">
         <div className="mb-2 flex flex-wrap gap-1">
           {AI_ROUTE_MODES.map((mode) => (
             <button

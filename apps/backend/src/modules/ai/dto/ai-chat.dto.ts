@@ -2,7 +2,7 @@
  * @file src/modules/ai/dto/ai-chat.dto.ts
  * @description AI 채팅 요청 DTO
  */
-import { IsArray, IsString, IsIn, IsNumber, ValidateNested, ArrayNotEmpty, MaxLength, IsOptional, IsBoolean } from 'class-validator';
+import { IsArray, IsString, IsIn, IsNumber, ValidateNested, ArrayNotEmpty, MaxLength, IsOptional } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class AiChatAttachmentDto {
@@ -37,44 +37,6 @@ export class AiChatMessageDto {
   attachments?: AiChatAttachmentDto[];
 }
 
-export class AiPageToolContextToolDto {
-  @IsString()
-  name: string;
-
-  @IsString()
-  label: string;
-
-  @IsString()
-  description: string;
-
-  @IsString()
-  riskLevel: string;
-
-  @IsString()
-  source: string;
-
-  @IsOptional()
-  @IsBoolean()
-  neverPersists?: boolean;
-
-  @IsOptional()
-  @IsString()
-  confirmationPolicy?: string;
-}
-
-export class AiPageToolContextDto {
-  @IsString()
-  pageId: string;
-
-  @IsString()
-  executionLevel: string;
-
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => AiPageToolContextToolDto)
-  tools: AiPageToolContextToolDto[];
-}
-
 export class AiKnowledgeContextDto {
   @IsOptional()
   @IsString()
@@ -103,11 +65,6 @@ export class AiChatDto {
   @ValidateNested({ each: true })
   @Type(() => AiChatMessageDto)
   messages: AiChatMessageDto[];
-
-  @IsOptional()
-  @ValidateNested()
-  @Type(() => AiPageToolContextDto)
-  pageToolContext?: AiPageToolContextDto;
 
   @IsOptional()
   @ValidateNested()

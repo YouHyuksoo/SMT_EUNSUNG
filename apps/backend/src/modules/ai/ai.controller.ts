@@ -35,7 +35,7 @@ export class AiController {
 
   @Post('chat')
   chat(@Body() dto: AiChatDto) {
-    return this.aiSqlService.process(dto.messages, dto.pageToolContext, dto.knowledgeContext);
+    return this.aiSqlService.process(dto.messages, dto.knowledgeContext);
   }
 
   @Post('chat/feedback')

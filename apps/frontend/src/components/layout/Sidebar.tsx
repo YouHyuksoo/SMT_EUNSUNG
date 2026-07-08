@@ -6,7 +6,7 @@
  * 초보자 가이드:
  * 1. useMenuTreeStore.groups가 null이면 코드 menuConfig 그대로 사용 (FOUC fallback)
  * 2. groups 도착 후 카테고리/순서/소속이 DB 기준으로 머지된 트리로 교체
- * 3. __ROOT__ 카테고리의 자식은 평탄화하여 사이드바 최상위에 표시 (DASHBOARD/WORKFLOW)
+ * 3. __ROOT__ 카테고리의 자식은 평탄화하여 사이드바 최상위에 표시 (DASHBOARD)
  * 4. 권한 필터링 로직(allowedMenus + 부모-자식 합)은 그대로 유지
  */
 import { useState } from "react";

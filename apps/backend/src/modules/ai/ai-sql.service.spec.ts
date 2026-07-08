@@ -24,7 +24,6 @@ describe('AiSqlService response quality prompts', () => {
       validate: jest.fn().mockReturnValue({ valid: true, kind: 'select' }),
       stripFences: jest.fn((sql: string) => sql.trim()),
     };
-    const pageTools = { getManifest: jest.fn() };
     const knowledge = {
       search: jest.fn().mockResolvedValue([]),
       formatContext: jest.fn().mockReturnValue(''),
@@ -43,13 +42,12 @@ describe('AiSqlService response quality prompts', () => {
       catalog as any,
       schemaInfo as any,
       validator as any,
-      pageTools as any,
       knowledge as any,
       knowledgePipeline as any,
       dataSource as any,
     );
 
-    return { target, catalog, schemaInfo, validator, dataSource, knowledge, pageTools };
+    return { target, catalog, schemaInfo, validator, dataSource, knowledge };
   };
 
   it('일반 대화 system prompt는 단순 답변 대신 근거와 후속 확인을 요구한다', async () => {
@@ -109,13 +107,13 @@ describe('AiSqlService response quality prompts', () => {
     expect(analysisUserPrompt).toContain('결과 행 수: 1');
   });
 
-  it('/MES 명시 모드는 page tool context가 있어도 SQL 조회를 우선한다', async () => {
+  it('/MES 명시 모드는 SQL 조회를 실행한다', async () => {
     const complete = jest
       .fn()
       .mockResolvedValueOnce('["ITEM_MASTERS"]')
       .mockResolvedValueOnce('SELECT COUNT(*) AS ITEM_MASTER_COUNT FROM ITEM_MASTERS')
       .mockResolvedValueOnce('품목마스터는 34건입니다.');
-    const { target, catalog, schemaInfo, dataSource, pageTools } = createTarget(complete);
+    const { target, catalog, schemaInfo, dataSource } = createTarget(complete);
     catalog.getSelectionCatalog.mockResolvedValueOnce({
       catalog: 'ITEM_MASTERS: 품목 마스터 (동의어: 품목, 품목마스터, 품목 마스터)',
       tables: ['ITEM_MASTERS'],
@@ -123,41 +121,13 @@ describe('AiSqlService response quality prompts', () => {
     schemaInfo.getSchemaText.mockResolvedValueOnce('ITEM_MASTERS(ITEM_CODE -- 품목코드)');
     dataSource.query.mockResolvedValueOnce([{ ITEM_MASTER_COUNT: 34 }]);
 
-    const result = await target.process(
-      [{ role: 'user', content: '/MES 품목 마스터 등록건수 알려줘' }],
-      { pageId: 'MST_PART', executionLevel: 'assist', tools: [] } as any,
-    );
+    const result = await target.process([{ role: 'user', content: '/MES 품목 마스터 등록건수 알려줘' }]);
 
-    expect(pageTools.getManifest).not.toHaveBeenCalled();
     expect(result.executed).toBe(true);
     expect(result.sql).toContain('ITEM_MASTERS');
     expect(dataSource.query).toHaveBeenCalledWith(
       expect.stringContaining('SELECT COUNT(*) AS ITEM_MASTER_COUNT FROM ITEM_MASTERS'),
     );
-  });
-
-  it('등록건수 같은 조회 질문은 page tool context가 있어도 SQL 조회를 우선한다', async () => {
-    const complete = jest
-      .fn()
-      .mockResolvedValueOnce('["ITEM_MASTERS"]')
-      .mockResolvedValueOnce('SELECT COUNT(*) AS ITEM_MASTER_COUNT FROM ITEM_MASTERS')
-      .mockResolvedValueOnce('품목마스터는 34건입니다.');
-    const { target, catalog, schemaInfo, dataSource, pageTools } = createTarget(complete);
-    catalog.getSelectionCatalog.mockResolvedValueOnce({
-      catalog: 'ITEM_MASTERS: 품목 마스터 (동의어: 품목, 품목마스터, 품목 마스터)',
-      tables: ['ITEM_MASTERS'],
-    });
-    schemaInfo.getSchemaText.mockResolvedValueOnce('ITEM_MASTERS(ITEM_CODE -- 품목코드)');
-    dataSource.query.mockResolvedValueOnce([{ ITEM_MASTER_COUNT: 34 }]);
-
-    const result = await target.process(
-      [{ role: 'user', content: '품목 마스터 등록건수 알려줘' }],
-      { pageId: 'MST_PART', executionLevel: 'assist', tools: [] } as any,
-    );
-
-    expect(pageTools.getManifest).not.toHaveBeenCalled();
-    expect(result.executed).toBe(true);
-    expect(result.sql).toContain('ITEM_MASTERS');
   });
 
   it('/HELP 명시 모드는 SQL 테이블 선택 없이 도움말 답변으로 보낸다', async () => {
@@ -182,32 +152,6 @@ describe('AiSqlService response quality prompts', () => {
 
     expect(catalog.getSelectionCatalog).not.toHaveBeenCalled();
     expect(result.content).toBe('도움말 답변');
-  });
-
-  it('/DO 명시 모드는 작업 동사가 없어도 page tool 후보를 선택한다', async () => {
-    const complete = jest.fn().mockResolvedValueOnce('{"toolName":"createPart","input":{"itemCode":"A001"}}');
-    const { target, pageTools } = createTarget(complete);
-    pageTools.getManifest.mockReturnValueOnce({
-      tools: [
-        {
-          name: 'createPart',
-          label: '품목 등록',
-          description: '품목을 등록한다.',
-          source: 'backend',
-          riskLevel: 'write',
-          inputSchema: {},
-        },
-      ],
-    });
-
-    const result = await target.process(
-      [{ role: 'user', content: '/DO 품목 A001' }],
-      { pageId: 'MST_PART', executionLevel: 'assist', tools: [] } as any,
-    );
-
-    expect(result.requiresApproval).toBe(true);
-    expect(result.pageToolCall?.toolName).toBe('createPart');
-    expect(result.pageToolCall?.input).toEqual({ itemCode: 'A001' });
   });
 
   it('/WEB 명시 모드는 현재 미연결 상태를 안내하고 LLM이나 SQL을 호출하지 않는다', async () => {
@@ -243,7 +187,6 @@ describe('AiSqlService knowledge pipeline 연동', () => {
       { getSelectionCatalog: jest.fn().mockResolvedValue({ catalog: '', tables: [] }), getRelationsText: jest.fn() } as any,
       { getSelectionCatalog: jest.fn().mockResolvedValue({ catalog: '', tables: [] }), getSchemaText: jest.fn() } as any,
       { validate: jest.fn(), stripFences: jest.fn((s: string) => s) } as any,
-      { getManifest: jest.fn() } as any,
       { formatContext: jest.fn() } as any,
       pipeline as any,
       {} as any,
@@ -251,7 +194,7 @@ describe('AiSqlService knowledge pipeline 연동', () => {
     // selectTables가 빈 배열 → generalChat 경로
     jest.spyOn(service as any, 'selectTables').mockResolvedValue([]);
 
-    const result = await service.process([{ role: 'user', content: '작업지시 다음엔 뭐 해?' }], undefined, { persona: 'user' } as any);
+    const result = await service.process([{ role: 'user', content: '작업지시 다음엔 뭐 해?' }], { persona: 'user' } as any);
 
     expect(pipeline.retrieve).toHaveBeenCalledWith('작업지시 다음엔 뭐 해?', { persona: 'user' });
     expect(result.sources?.[0].chunkId).toBe('c1');
@@ -272,14 +215,13 @@ describe('AiSqlService knowledge pipeline 연동', () => {
       { getSelectionCatalog: jest.fn().mockResolvedValue({ catalog: '', tables: [] }), getRelationsText: jest.fn() } as any,
       { getSelectionCatalog: jest.fn().mockResolvedValue({ catalog: '', tables: [] }), getSchemaText: jest.fn() } as any,
       { validate: jest.fn(), stripFences: jest.fn((s: string) => s) } as any,
-      { getManifest: jest.fn() } as any,
       knowledge as any,
       pipeline as any,
       {} as any,
     );
     jest.spyOn(service as any, 'selectTables').mockResolvedValue([]);
 
-    const result = await service.process([{ role: 'user', content: '질문' }], undefined, {} as any);
+    const result = await service.process([{ role: 'user', content: '질문' }], {} as any);
 
     expect(knowledge.search).toHaveBeenCalled();
     expect(result.content).toBeTruthy();

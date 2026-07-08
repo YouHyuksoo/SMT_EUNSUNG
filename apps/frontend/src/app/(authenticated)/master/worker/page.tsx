@@ -18,13 +18,11 @@ import { ComCodeSelect } from "@/components/shared";
 import DataGrid from "@/components/data-grid/DataGrid";
 import { Worker } from "./types";
 import { api } from "@/services/api";
-import { usePageAiTools } from "@/ai-page-tools/usePageAiTools";
 import { useUnsavedGuard } from "@/hooks/useUnsavedGuard";
 import WorkerFormPanel from "./components/WorkerFormPanel";
 import { createWorkerGridColumns } from "./workerColumns";
 
 export default function WorkerPage() {
-  usePageAiTools("master.worker");
   const { t } = useTranslation();
   const [workers, setWorkers] = useState<Worker[]>([]);
   const [loading, setLoading] = useState(false);

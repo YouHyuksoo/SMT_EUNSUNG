@@ -11,10 +11,8 @@
  */
 
 import EquipMasterTab from "./components/EquipMasterTab";
-import { usePageAiTools } from "@/ai-page-tools/usePageAiTools";
 
 export default function EquipPage() {
-  usePageAiTools("master.equip");
 
   return (
     <div className="h-full">

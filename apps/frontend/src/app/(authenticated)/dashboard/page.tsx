@@ -198,7 +198,6 @@ export default function DashboardPage() {
             pass={daily.pass}
             fail={daily.fail}
             loading={inspectLoading}
-            linkPath="/equipment/inspect-calendar"
           />
           <InspectSummaryCard
             title={t("dashboard.inspect.periodicTitle", "정기점검")}
@@ -211,7 +210,6 @@ export default function DashboardPage() {
             pass={periodic.pass}
             fail={periodic.fail}
             loading={inspectLoading}
-            linkPath="/equipment/periodic-inspect-calendar"
           />
           <InspectSummaryCard
             title={t("dashboard.inspect.pmTitle", "예방보전")}
@@ -224,7 +222,6 @@ export default function DashboardPage() {
             pass={pm.pass}
             fail={pm.fail}
             loading={inspectLoading}
-            linkPath="/equipment/pm-calendar"
           />
         </div>
       </div>

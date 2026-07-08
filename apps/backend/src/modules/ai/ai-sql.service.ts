@@ -12,17 +12,9 @@ import { AiService } from './ai.service';
 import { AiCatalogService } from './ai-catalog.service';
 import { SchemaInfoService } from './schema-info.service';
 import { SqlValidatorService } from './sql-validator.service';
-import { AiPageToolsService } from '../ai-page-tools/ai-page-tools.service';
-import { AiChatMessageDto, AiKnowledgeContextDto, AiPageToolContextDto } from './dto/ai-chat.dto';
+import { AiChatMessageDto, AiKnowledgeContextDto } from './dto/ai-chat.dto';
 import { AiKnowledgeService, KnowledgeSearchResult } from '../ai-knowledge/ai-knowledge.service';
 import { KnowledgeIntent, KnowledgePipelineService } from './knowledge-pipeline.service';
-
-export interface AiPageToolCallProposal {
-  pageId: string;
-  toolName: string;
-  label: string;
-  input: Record<string, unknown>;
-}
 
 export interface AiKnowledgeSourceSummary {
   chunkId: string;
@@ -40,21 +32,11 @@ export interface AiSqlResult {
   executed?: boolean;
   rowCount?: number;
   requiresApproval?: boolean;
-  /** 승인 후 실행할 페이지 도구 호출 제안(write 도구) */
-  pageToolCall?: AiPageToolCallProposal;
   /** 답변 근거로 사용한 RAG 지식 청크 요약 (검색 결과가 있을 때만) */
   sources?: AiKnowledgeSourceSummary[];
 }
 
 type AiChatRouteMode = 'auto' | 'mes' | 'help' | 'do' | 'web';
-
-const TOOL_SELECT_PROMPT = `당신은 사용자의 등록/처리 요청을 "페이지 도구 호출"로 변환하는 AI입니다.
-규칙:
-- 아래 '도구 목록'에서 요청에 가장 맞는 도구 하나를 고르고, 그 도구의 inputSchema에 맞는 입력값을 추출합니다.
-- 반드시 JSON만 출력: {"toolName":"도구이름","input":{...}}. 맞는 도구가 없으면 {"toolName":null}.
-- inputSchema의 required 필드는 사용자 문구에서 추출하세요. 값을 알 수 없으면 그 필드를 생략합니다(빈 문자열 금지).
-- enum이 지정된 필드는 반드시 그 값 중 하나로 매핑하세요(설명의 매핑 규칙 참고).
-- 다른 설명 없이 JSON만 출력하세요.`;
 
 const TABLE_SELECT_PROMPT = `당신은 HANES MES 데이터베이스에서 사용자 질문에 답할 테이블을 고르는 도우미입니다.
 규칙:
@@ -103,30 +85,6 @@ const GENERAL_PROMPT =
 const NO_KNOWLEDGE_RESPONSE =
   '도움말/문서 출처를 찾지 못했습니다. 현재 설정에서는 출처 없는 LLM 일반지식 답변을 생성하지 않습니다. 관련 도움말을 추가하거나 임베딩 재생성을 실행한 뒤 다시 질문해 주세요.';
 
-const PAGE_WORKFLOW_KEYWORDS = [
-  '등록',
-  '생성',
-  '만들',
-  '작성',
-  '초안',
-  '반영',
-  '처리',
-  '실행',
-  '추가',
-  // 수정 계열
-  '수정',
-  '변경',
-  '바꿔',
-  '바꾸',
-  '업데이트',
-  // 삭제 계열
-  '삭제',
-  '제거',
-  '지워',
-  '지우',
-  '없애',
-];
-
 @Injectable()
 export class AiSqlService {
   private readonly logger = new Logger(AiSqlService.name);
@@ -136,7 +94,6 @@ export class AiSqlService {
     private readonly catalog: AiCatalogService,
     private readonly schemaInfo: SchemaInfoService,
     private readonly validator: SqlValidatorService,
-    private readonly pageTools: AiPageToolsService,
     private readonly knowledge: AiKnowledgeService,
     private readonly knowledgePipeline: KnowledgePipelineService,
     @InjectDataSource() private readonly dataSource: DataSource,
@@ -144,7 +101,6 @@ export class AiSqlService {
 
   async process(
     messages: AiChatMessageDto[],
-    pageToolContext?: AiPageToolContextDto,
     knowledgeContext?: AiKnowledgeContextDto,
   ): Promise<AiSqlResult> {
     const rawUserMessage = [...messages].reverse().find((m) => m.role === 'user')?.content ?? '';
@@ -180,7 +136,6 @@ export class AiSqlService {
     const result = await this.processWithKnowledge(
       userMessage,
       effectiveMessages,
-      pageToolContext,
       knowledgePrompt,
       knowledgeContext,
       knowledgeIntent,
@@ -210,42 +165,24 @@ export class AiSqlService {
   private async processWithKnowledge(
     userMessage: string,
     messages: AiChatMessageDto[],
-    pageToolContext: AiPageToolContextDto | undefined,
     knowledgePrompt: string,
     knowledgeContext?: AiKnowledgeContextDto,
     knowledgeIntent: KnowledgeIntent = 'usage',
     routeMode: AiChatRouteMode = 'auto',
   ): Promise<AiSqlResult> {
     if (routeMode === 'help') {
-      return this.generalChat(messages, pageToolContext, knowledgePrompt, knowledgeContext, knowledgeIntent);
-    }
-
-    const shouldTryPageTool =
-      pageToolContext &&
-      routeMode !== 'mes' &&
-      (routeMode === 'do' || (this.looksLikePageWorkflowRequest(userMessage) && !this.looksLikeDataQueryRequest(userMessage)));
-    if (shouldTryPageTool) {
-      // 등록/처리 요청 → 페이지의 write 도구로 매핑(있으면 승인 카드로 제안)
-      const call = await this.selectPageTool(userMessage, pageToolContext.pageId);
-      if (call) {
-        return {
-          content: '아래 작업을 검토하고, 실행하려면 승인해 주세요.',
-          pageToolCall: call,
-          requiresApproval: true,
-        };
-      }
-      return this.generalChat(messages, pageToolContext, knowledgePrompt, knowledgeContext, knowledgeIntent);
+      return this.generalChat(messages, knowledgePrompt, knowledgeContext, knowledgeIntent);
     }
 
     // [1단계] 관련 테이블 선택 (없으면 일반 대화)
     const tables = await this.selectTables(userMessage);
-    if (tables.length === 0) return this.generalChat(messages, pageToolContext, knowledgePrompt, knowledgeContext, knowledgeIntent);
+    if (tables.length === 0) return this.generalChat(messages, knowledgePrompt, knowledgeContext, knowledgeIntent);
 
     // [2단계] SQL 생성 (스키마 + 카탈로그 관계(JOIN 키) 주입)
     const schemaText = await this.schemaInfo.getSchemaText(tables);
     const relations = await this.catalog.getRelationsText(tables);
     const rawSql = await this.generateSql(userMessage, relations ? `${schemaText}\n\n${relations}` : schemaText);
-    if (!rawSql) return this.generalChat(messages, pageToolContext, knowledgePrompt, knowledgeContext, knowledgeIntent);
+    if (!rawSql) return this.generalChat(messages, knowledgePrompt, knowledgeContext, knowledgeIntent);
 
     // [검증]
     const v = this.validator.validate(rawSql);
@@ -383,76 +320,8 @@ export class AiSqlService {
     ]);
   }
 
-  private looksLikePageWorkflowRequest(userMessage: string): boolean {
-    return PAGE_WORKFLOW_KEYWORDS.some((keyword) => userMessage.includes(keyword));
-  }
-
-  private looksLikeDataQueryRequest(userMessage: string): boolean {
-    const normalized = userMessage.replace(/\s+/g, '');
-    return (
-      /등록건수|건수|몇건|몇개|총수|전체수|카운트|count/i.test(normalized) ||
-      /(조회|목록|리스트|현황|검색|보여줘|찾아줘)/.test(userMessage)
-    );
-  }
-
-  /** 사용자 요청 → 페이지의 backend write 도구 호출 매핑(LLM). 없으면 null */
-  private async selectPageTool(userMessage: string, pageId: string): Promise<AiPageToolCallProposal | null> {
-    let tools;
-    try {
-      tools = this.pageTools.getManifest(pageId).tools;
-    } catch {
-      return null;
-    }
-    const writable = tools.filter((t) => t.source === 'backend' && t.riskLevel === 'write');
-    if (writable.length === 0) return null;
-
-    const toolDocs = writable.map((t) => ({
-      name: t.name,
-      label: t.label,
-      description: t.description,
-      inputSchema: t.inputSchema ?? {},
-    }));
-    const res = await this.aiService.complete([
-      { role: 'system', content: TOOL_SELECT_PROMPT },
-      { role: 'user', content: `## 도구 목록\n${JSON.stringify(toolDocs)}\n\n## 요청\n${userMessage}` },
-    ]);
-    try {
-      const start = res.indexOf('{');
-      const end = res.lastIndexOf('}');
-      if (start === -1 || end === -1) return null;
-      const parsed = JSON.parse(res.slice(start, end + 1)) as {
-        toolName?: string | null;
-        input?: Record<string, unknown>;
-      };
-      if (!parsed.toolName) return null;
-      const tool = writable.find((t) => t.name === parsed.toolName);
-      if (!tool) return null;
-      return { pageId, toolName: tool.name, label: tool.label, input: parsed.input ?? {} };
-    } catch {
-      return null;
-    }
-  }
-
-  private formatPageToolContext(pageToolContext?: AiPageToolContextDto): string {
-    if (!pageToolContext) return '';
-    const tools = pageToolContext.tools
-      .map((tool) => {
-        const persistRule = tool.neverPersists ? '저장 안 함' : '저장 가능성 확인 필요';
-        return `- ${tool.name} (${tool.label}): ${tool.description} / 위험도=${tool.riskLevel} / 출처=${tool.source} / ${persistRule} / 확인=${tool.confirmationPolicy ?? '명시 없음'}`;
-      })
-      .join('\n');
-    return [
-      '현재 사용자가 보고 있는 페이지에는 아래 도구가 노출되어 있습니다.',
-      `pageId=${pageToolContext.pageId}, executionLevel=${pageToolContext.executionLevel}`,
-      tools,
-      '등록/생성/작성 요청은 DB SQL을 직접 만들지 말고, 이 도구 절차 기준으로 필요한 입력값을 확인하고 초안 반영 방식으로 안내하세요.',
-      '필수 정보가 부족하면 품목, 수량, 계획일, 라인/공정/설비 등 필요한 값을 먼저 질문하세요.',
-    ].join('\n');
-  }
-
   private async generalChat(
     messages: AiChatMessageDto[],
-    pageToolContext?: AiPageToolContextDto,
     knowledgePrompt = '',
     knowledgeContext?: AiKnowledgeContextDto,
     knowledgeIntent: KnowledgeIntent = 'usage',
@@ -460,12 +329,11 @@ export class AiSqlService {
     if (!knowledgePrompt.trim()) {
       return { content: NO_KNOWLEDGE_RESPONSE };
     }
-    const pageToolPrompt = this.formatPageToolContext(pageToolContext);
     const personaPrompt = this.formatPersonaPrompt(knowledgeContext);
     const knowledgeSystem = knowledgePrompt
       ? `아래 참고 문서만 답변 근거로 사용할 수 있습니다. 선택된 페르소나에 맞는 출처를 먼저 반영하고, 다른 문서는 보조 근거로 사용하세요. 참고 문서에 없는 내용은 절대 추가하지 말고 "제공된 출처에서는 확인되지 않습니다"라고 답하세요. 참고한 문서가 있으면 확인한 근거로 표시하세요.\n\n## 참고 문서\n${knowledgePrompt}`
       : '';
-    const systemParts = [GENERAL_PROMPT, personaPrompt, this.formatIntentPrompt(knowledgeIntent), pageToolPrompt, knowledgeSystem]
+    const systemParts = [GENERAL_PROMPT, personaPrompt, this.formatIntentPrompt(knowledgeIntent), knowledgeSystem]
       .filter(Boolean)
       .join('\n\n');
     const content = await this.aiService.complete([

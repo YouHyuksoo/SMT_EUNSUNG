@@ -11,7 +11,6 @@ import { Calendar, Download, FileSpreadsheet, GitBranch, Layers, RefreshCw, Sear
 import { Button, Card, CardContent, Input } from "@/components/ui";
 import { useComCodeOptions } from "@/hooks/useComCode";
 import api from "@/services/api";
-import { usePageAiTools } from "@/ai-page-tools/usePageAiTools";
 import BomTab from "./components/BomTab";
 import BomUploadModal from "./components/BomUploadModal";
 import QualityConditionEditor from "../routing/components/QualityConditionEditor";
@@ -21,7 +20,6 @@ import type { SelectedProcess } from "../routing/types";
 import { getTodayLocal } from "@/utils/date";
 
 export default function BomPage() {
-  usePageAiTools("master.bom");
   const { t } = useTranslation();
   const router = useRouter();
   const itemTypeOptions = useComCodeOptions("ITEM_TYPE");

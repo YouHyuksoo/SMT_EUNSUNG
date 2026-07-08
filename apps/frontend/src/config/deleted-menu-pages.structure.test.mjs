@@ -116,6 +116,23 @@ const forbiddenRoutes = [
   "/inventory/material-physical-inv-apply",
   "/inventory/material-physical-inv-history",
   "/inventory/transaction",
+  "/equipment/daily-inspect",
+  "/equipment/inspect-calendar",
+  "/equipment/inspect-history",
+  "/equipment/mold",
+  "/equipment/mold-mgmt",
+  "/equipment/periodic-inspect",
+  "/equipment/periodic-inspect-calendar",
+  "/equipment/pm-calendar",
+  "/equipment/pm-plan",
+  "/equipment/pm-result",
+  "/equipment/status",
+  "/master/equip-inspect",
+  "/master/equip-inspect-item",
+  "/outsourcing/order",
+  "/outsourcing/receive",
+  "/outsourcing/vendor",
+  "/workflow",
 ];
 
 const forbiddenCodes = [
@@ -265,6 +282,23 @@ const deletedRouteDirs = [
   "apps/frontend/src/app/(authenticated)/inventory/material-physical-inv-history",
   "apps/frontend/src/app/(authenticated)/inventory/transaction",
   "apps/backend/src/modules/ai-page-tools/registry/vendor-barcode-tools.provider.ts",
+  "apps/frontend/src/app/(authenticated)/equipment/daily-inspect",
+  "apps/frontend/src/app/(authenticated)/equipment/inspect-calendar",
+  "apps/frontend/src/app/(authenticated)/equipment/inspect-history",
+  "apps/frontend/src/app/(authenticated)/equipment/mold",
+  "apps/frontend/src/app/(authenticated)/equipment/mold-mgmt",
+  "apps/frontend/src/app/(authenticated)/equipment/periodic-inspect",
+  "apps/frontend/src/app/(authenticated)/equipment/periodic-inspect-calendar",
+  "apps/frontend/src/app/(authenticated)/equipment/pm-calendar",
+  "apps/frontend/src/app/(authenticated)/equipment/pm-plan",
+  "apps/frontend/src/app/(authenticated)/equipment/pm-result",
+  "apps/frontend/src/app/(authenticated)/equipment/status",
+  "apps/frontend/src/app/(authenticated)/master/equip-inspect",
+  "apps/frontend/src/app/(authenticated)/master/equip-inspect-item",
+  "apps/frontend/src/app/(authenticated)/outsourcing",
+  "apps/frontend/src/app/(authenticated)/workflow",
+  "apps/frontend/src/config/workflowConfig.ts",
+  "apps/frontend/src/config/workflowMap.ts",
 ];
 
 const deletedRegistryFiles = [
@@ -388,17 +422,11 @@ test("삭제된 메뉴 페이지는 메뉴, 기본 카테고리, 레지스트리
     "apps/backend/src/modules/menu-categories/utils/default-menu-category-layout.ts",
     "apps/backend/src/seeds/menu-config.json",
     "apps/frontend/src/components/layout/pageRegistry.generated.ts",
-    "apps/frontend/src/config/workflowConfig.ts",
-    "apps/frontend/src/config/workflowMap.ts",
     "apps/frontend/public/help/manifest.json",
     "packages/shared/src/constants/menu.ts",
-    "apps/backend/src/modules/ai-page-tools/ai-page-tools.module.ts",
   ].map((path) => [path, read(path)]);
 
-  const codeSources = routeSources.filter(([path]) => ![
-    "apps/frontend/src/config/workflowConfig.ts",
-    "apps/frontend/src/config/workflowMap.ts",
-  ].includes(path));
+  const codeSources = routeSources;
 
   for (const [path, source] of routeSources) {
     for (const route of forbiddenRoutes) {

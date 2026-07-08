@@ -26,16 +26,6 @@
           "path": "/master/work-instruction"
         },
         {
-          "menuCode": "EQUIP_INSPECT_ITEM_MASTER",
-          "title": "점검항목 마스터",
-          "path": "/master/equip-inspect-item"
-        },
-        {
-          "menuCode": "EQUIP_INSPECT_ITEM",
-          "title": "설비별 점검항목",
-          "path": "/master/equip-inspect"
-        },
-        {
           "menuCode": "MST_PARTNER",
           "title": "거래처관리",
           "path": "/master/partner"
@@ -79,37 +69,6 @@
           "menuCode": "MST_PROCESS_CAPA",
           "title": "공정 CAPA 관리",
           "path": "/master/process-capa"
-        }
-      ]
-    },
-    {
-      "key": "equipment",
-      "title": "설비관리",
-      "items": [
-        {
-          "menuCode": "EQUIP_INSPECT_CALENDAR",
-          "title": "일상점검 캘린더",
-          "path": "/equipment/inspect-calendar"
-        },
-        {
-          "menuCode": "EQUIP_DAILY",
-          "title": "일상점검 결과",
-          "path": "/equipment/daily-inspect"
-        },
-        {
-          "menuCode": "EQUIP_PERIODIC_CALENDAR",
-          "title": "정기점검 캘린더",
-          "path": "/equipment/periodic-inspect-calendar"
-        },
-        {
-          "menuCode": "EQUIP_PERIODIC",
-          "title": "정기점검 결과",
-          "path": "/equipment/periodic-inspect"
-        },
-        {
-          "menuCode": "EQUIP_HISTORY",
-          "title": "점검이력 조회",
-          "path": "/equipment/inspect-history"
         }
       ]
     },

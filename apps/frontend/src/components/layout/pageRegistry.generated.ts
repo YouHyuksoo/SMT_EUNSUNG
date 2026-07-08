@@ -32,61 +32,6 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
       component = mod.getPageComponent();
       break;
     }
-    case "/equipment/daily-inspect": {
-      const mod = await import("./page-registries/equipment__daily-inspect.generated");
-      component = mod.getPageComponent();
-      break;
-    }
-    case "/equipment/inspect-calendar": {
-      const mod = await import("./page-registries/equipment__inspect-calendar.generated");
-      component = mod.getPageComponent();
-      break;
-    }
-    case "/equipment/inspect-history": {
-      const mod = await import("./page-registries/equipment__inspect-history.generated");
-      component = mod.getPageComponent();
-      break;
-    }
-    case "/equipment/mold": {
-      const mod = await import("./page-registries/equipment__mold.generated");
-      component = mod.getPageComponent();
-      break;
-    }
-    case "/equipment/mold-mgmt": {
-      const mod = await import("./page-registries/equipment__mold-mgmt.generated");
-      component = mod.getPageComponent();
-      break;
-    }
-    case "/equipment/periodic-inspect": {
-      const mod = await import("./page-registries/equipment__periodic-inspect.generated");
-      component = mod.getPageComponent();
-      break;
-    }
-    case "/equipment/periodic-inspect-calendar": {
-      const mod = await import("./page-registries/equipment__periodic-inspect-calendar.generated");
-      component = mod.getPageComponent();
-      break;
-    }
-    case "/equipment/pm-calendar": {
-      const mod = await import("./page-registries/equipment__pm-calendar.generated");
-      component = mod.getPageComponent();
-      break;
-    }
-    case "/equipment/pm-plan": {
-      const mod = await import("./page-registries/equipment__pm-plan.generated");
-      component = mod.getPageComponent();
-      break;
-    }
-    case "/equipment/pm-result": {
-      const mod = await import("./page-registries/equipment__pm-result.generated");
-      component = mod.getPageComponent();
-      break;
-    }
-    case "/equipment/status": {
-      const mod = await import("./page-registries/equipment__status.generated");
-      component = mod.getPageComponent();
-      break;
-    }
     case "/help": {
       const mod = await import("./page-registries/help.generated");
       component = mod.getPageComponent();
@@ -109,16 +54,6 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
     }
     case "/master/equip": {
       const mod = await import("./page-registries/master__equip.generated");
-      component = mod.getPageComponent();
-      break;
-    }
-    case "/master/equip-inspect": {
-      const mod = await import("./page-registries/master__equip-inspect.generated");
-      component = mod.getPageComponent();
-      break;
-    }
-    case "/master/equip-inspect-item": {
-      const mod = await import("./page-registries/master__equip-inspect-item.generated");
       component = mod.getPageComponent();
       break;
     }
@@ -207,21 +142,6 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
       component = mod.getPageComponent();
       break;
     }
-    case "/outsourcing/order": {
-      const mod = await import("./page-registries/outsourcing__order.generated");
-      component = mod.getPageComponent();
-      break;
-    }
-    case "/outsourcing/receive": {
-      const mod = await import("./page-registries/outsourcing__receive.generated");
-      component = mod.getPageComponent();
-      break;
-    }
-    case "/outsourcing/vendor": {
-      const mod = await import("./page-registries/outsourcing__vendor.generated");
-      component = mod.getPageComponent();
-      break;
-    }
     case "/system/config": {
       const mod = await import("./page-registries/system__config.generated");
       component = mod.getPageComponent();
@@ -254,11 +174,6 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
     }
     case "/system/users": {
       const mod = await import("./page-registries/system__users.generated");
-      component = mod.getPageComponent();
-      break;
-    }
-    case "/workflow": {
-      const mod = await import("./page-registries/workflow.generated");
       component = mod.getPageComponent();
       break;
     }
