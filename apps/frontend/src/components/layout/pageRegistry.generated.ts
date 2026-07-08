@@ -92,31 +92,6 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
       component = mod.getPageComponent();
       break;
     }
-    case "/inventory/material-physical-inv": {
-      const mod = await import("./page-registries/inventory__material-physical-inv.generated");
-      component = mod.getPageComponent();
-      break;
-    }
-    case "/inventory/material-physical-inv-apply": {
-      const mod = await import("./page-registries/inventory__material-physical-inv-apply.generated");
-      component = mod.getPageComponent();
-      break;
-    }
-    case "/inventory/material-physical-inv-history": {
-      const mod = await import("./page-registries/inventory__material-physical-inv-history.generated");
-      component = mod.getPageComponent();
-      break;
-    }
-    case "/inventory/material-stock": {
-      const mod = await import("./page-registries/inventory__material-stock.generated");
-      component = mod.getPageComponent();
-      break;
-    }
-    case "/inventory/transaction": {
-      const mod = await import("./page-registries/inventory__transaction.generated");
-      component = mod.getPageComponent();
-      break;
-    }
     case "/master/bom": {
       const mod = await import("./page-registries/master__bom.generated");
       component = mod.getPageComponent();
@@ -199,106 +174,6 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
     }
     case "/master/worker": {
       const mod = await import("./page-registries/master__worker.generated");
-      component = mod.getPageComponent();
-      break;
-    }
-    case "/material/adjustment": {
-      const mod = await import("./page-registries/material__adjustment.generated");
-      component = mod.getPageComponent();
-      break;
-    }
-    case "/material/hold": {
-      const mod = await import("./page-registries/material__hold.generated");
-      component = mod.getPageComponent();
-      break;
-    }
-    case "/material/issue": {
-      const mod = await import("./page-registries/material__issue.generated");
-      component = mod.getPageComponent();
-      break;
-    }
-    case "/material/issue-history": {
-      const mod = await import("./page-registries/material__issue-history.generated");
-      component = mod.getPageComponent();
-      break;
-    }
-    case "/material/issue-other": {
-      const mod = await import("./page-registries/material__issue-other.generated");
-      component = mod.getPageComponent();
-      break;
-    }
-    case "/material/lot": {
-      const mod = await import("./page-registries/material__lot.generated");
-      component = mod.getPageComponent();
-      break;
-    }
-    case "/material/lot-merge": {
-      const mod = await import("./page-registries/material__lot-merge.generated");
-      component = mod.getPageComponent();
-      break;
-    }
-    case "/material/lot-split": {
-      const mod = await import("./page-registries/material__lot-split.generated");
-      component = mod.getPageComponent();
-      break;
-    }
-    case "/material/misc-receipt": {
-      const mod = await import("./page-registries/material__misc-receipt.generated");
-      component = mod.getPageComponent();
-      break;
-    }
-    case "/material/physical-inv": {
-      const mod = await import("./page-registries/material__physical-inv.generated");
-      component = mod.getPageComponent();
-      break;
-    }
-    case "/material/physical-inv-history": {
-      const mod = await import("./page-registries/material__physical-inv-history.generated");
-      component = mod.getPageComponent();
-      break;
-    }
-    case "/material/receipt-cancel": {
-      const mod = await import("./page-registries/material__receipt-cancel.generated");
-      component = mod.getPageComponent();
-      break;
-    }
-    case "/material/request": {
-      const mod = await import("./page-registries/material__request.generated");
-      component = mod.getPageComponent();
-      break;
-    }
-    case "/material/request-other": {
-      const mod = await import("./page-registries/material__request-other.generated");
-      component = mod.getPageComponent();
-      break;
-    }
-    case "/material/scrap": {
-      const mod = await import("./page-registries/material__scrap.generated");
-      component = mod.getPageComponent();
-      break;
-    }
-    case "/material/shelf-life": {
-      const mod = await import("./page-registries/material__shelf-life.generated");
-      component = mod.getPageComponent();
-      break;
-    }
-    case "/material/shelf-life-history": {
-      const mod = await import("./page-registries/material__shelf-life-history.generated");
-      component = mod.getPageComponent();
-      break;
-    }
-    case "/material/shelf-life-reinspect": {
-      const mod = await import("./page-registries/material__shelf-life-reinspect.generated");
-      component = mod.getPageComponent();
-      break;
-    }
-    case "/material/stock": {
-      const mod = await import("./page-registries/material__stock.generated");
-      component = mod.getPageComponent();
-      break;
-    }
-    case "/material/stock-transfer": {
-      const mod = await import("./page-registries/material__stock-transfer.generated");
       component = mod.getPageComponent();
       break;
     }

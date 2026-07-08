@@ -10,7 +10,7 @@
  * 5. icon은 lucide-react 컴포넌트 (사이드 메뉴와 동일 스타일)
  */
 import {
-  Package, Wrench, Building2,
+  Wrench, Building2,
 } from "lucide-react";
 
 export interface WorkflowNode {
@@ -43,20 +43,6 @@ export interface WorkflowDefinition {
 }
 
 export const workflowConfigs: WorkflowDefinition[] = [
-  {
-    id: "MATERIAL",
-    titleKey: "workflow.material.title",
-    icon: Package,
-    accent: "border-green-500",
-    badgeColor: "bg-green-500",
-    nodes: [
-      { id: "ARRIVAL", labelKey: "workflow.material.arrival", statusKey: "workflow.status.pending", path: "/material/arrival", color: "text-green-500" },
-      { id: "LABEL", labelKey: "workflow.material.label", statusKey: "workflow.status.issuing", path: "/material/receive-label", color: "text-cyan-500" },
-      { id: "RECEIVE", labelKey: "workflow.material.receive", statusKey: "workflow.status.done", path: "/material/receive", color: "text-violet-500", reversePath: "/material/receipt-cancel", reverseKey: "workflow.action.cancelReceipt" },
-      { id: "REQUEST", labelKey: "workflow.material.request", statusKey: "workflow.status.requesting", path: "/material/request", color: "text-amber-500" },
-      { id: "ISSUE", labelKey: "workflow.material.issue", statusKey: "workflow.status.done", path: "/material/issue", color: "text-purple-500" },
-    ],
-  },
   {
     id: "EQUIPMENT",
     titleKey: "workflow.equipment.title",

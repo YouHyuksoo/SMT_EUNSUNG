@@ -46,12 +46,7 @@ exports.MENU_ITEMS = [
         labelEn: 'Material Transaction',
         labelVi: 'Quản lý xuất nhập vật tư',
         icon: 'Package',
-        children: [
-            { key: 'material-request', label: '출고요청', icon: 'ClipboardList', path: '/material/request' },
-            { key: 'material-issue', label: '출고관리', icon: 'PackageMinus', path: '/material/issue' },
-            { key: 'material-lot', label: 'LOT관리', icon: 'QrCode', path: '/material/lot' },
-            { key: 'material-transaction', label: '자재수불이력조회', icon: 'ArrowLeftRight', path: '/inventory/transaction' },
-        ],
+        children: [],
     },
     {
         key: 'process-transaction',

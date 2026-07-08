@@ -83,6 +83,37 @@ const forbiddenRoutes = [
   "/product/issue",
   "/product/issue-cancel",
   "/product/defect-transfer",
+  "/material/adjustment",
+  "/material/arrival",
+  "/material/arrival-result",
+  "/material/arrival-transaction",
+  "/material/hold",
+  "/material/issue",
+  "/material/issue-history",
+  "/material/issue-other",
+  "/material/lot",
+  "/material/lot-merge",
+  "/material/lot-split",
+  "/material/misc-receipt",
+  "/material/physical-inv",
+  "/material/physical-inv-history",
+  "/material/receipt-cancel",
+  "/material/receive",
+  "/material/receive-history",
+  "/material/receive-label",
+  "/material/request",
+  "/material/request-other",
+  "/material/scrap",
+  "/material/shelf-life",
+  "/material/shelf-life-history",
+  "/material/shelf-life-reinspect",
+  "/material/stock",
+  "/material/stock-transfer",
+  "/inventory/material-stock",
+  "/inventory/material-physical-inv",
+  "/inventory/material-physical-inv-apply",
+  "/inventory/material-physical-inv-history",
+  "/inventory/transaction",
 ];
 
 const forbiddenCodes = [
@@ -171,6 +202,34 @@ const forbiddenCodes = [
   "PROD_ISSUE",
   "PROD_ISSUE_CANCEL",
   "PROD_DEFECT_TRANSFER",
+  "MAT_ARRIVAL",
+  "MAT_ARRIVAL_RESULT",
+  "MAT_ARRIVAL_TRANSACTION",
+  "MAT_RECEIVE",
+  "MAT_RECEIVE_HISTORY",
+  "MAT_RECEIVE_LABEL",
+  "MAT_REQUEST",
+  "MAT_REQUEST_OTHER",
+  "MAT_ISSUE",
+  "MAT_ISSUE_OTHER",
+  "MAT_ISSUE_HIST",
+  "MAT_LOT",
+  "MAT_LOT_SPLIT",
+  "MAT_LOT_MERGE",
+  "MAT_SHELF_LIFE",
+  "MAT_SHELF_LIFE_REINSPECT",
+  "MAT_SHELF_LIFE_HISTORY",
+  "MAT_SCRAP",
+  "MAT_STOCK_TRANSFER",
+  "MAT_ADJUSTMENT",
+  "MAT_MISC_RECEIPT",
+  "MAT_RECEIPT_CANCEL",
+  "MAT_HOLD",
+  "INV_MAT_STOCK",
+  "INV_TRANSACTION",
+  "INV_MAT_PHYSICAL_INV",
+  "INV_MAT_PHYSICAL_INV_APPLY",
+  "INV_MAT_PHYSICAL_INV_HISTORY",
 ];
 
 const deletedRouteDirs = [
@@ -193,6 +252,12 @@ const deletedRouteDirs = [
   "apps/frontend/src/app/(authenticated)/system/training",
   "apps/frontend/src/app/(authenticated)/shipping",
   "apps/frontend/src/app/(authenticated)/product",
+  "apps/frontend/src/app/(authenticated)/material",
+  "apps/frontend/src/app/(authenticated)/inventory/material-stock",
+  "apps/frontend/src/app/(authenticated)/inventory/material-physical-inv",
+  "apps/frontend/src/app/(authenticated)/inventory/material-physical-inv-apply",
+  "apps/frontend/src/app/(authenticated)/inventory/material-physical-inv-history",
+  "apps/frontend/src/app/(authenticated)/inventory/transaction",
   "apps/backend/src/modules/ai-page-tools/registry/vendor-barcode-tools.provider.ts",
 ];
 
@@ -275,7 +340,38 @@ const deletedRegistryFiles = [
   "apps/frontend/src/components/layout/page-registries/product__issue.generated.ts",
   "apps/frontend/src/components/layout/page-registries/product__issue-cancel.generated.ts",
   "apps/frontend/src/components/layout/page-registries/product__defect-transfer.generated.ts",
+  "apps/frontend/src/components/layout/page-registries/material__adjustment.generated.ts",
+  "apps/frontend/src/components/layout/page-registries/material__arrival.generated.ts",
+  "apps/frontend/src/components/layout/page-registries/material__hold.generated.ts",
+  "apps/frontend/src/components/layout/page-registries/material__issue.generated.ts",
+  "apps/frontend/src/components/layout/page-registries/material__issue-history.generated.ts",
+  "apps/frontend/src/components/layout/page-registries/material__issue-other.generated.ts",
+  "apps/frontend/src/components/layout/page-registries/material__lot.generated.ts",
+  "apps/frontend/src/components/layout/page-registries/material__lot-merge.generated.ts",
+  "apps/frontend/src/components/layout/page-registries/material__lot-split.generated.ts",
+  "apps/frontend/src/components/layout/page-registries/material__misc-receipt.generated.ts",
+  "apps/frontend/src/components/layout/page-registries/material__physical-inv.generated.ts",
+  "apps/frontend/src/components/layout/page-registries/material__physical-inv-history.generated.ts",
+  "apps/frontend/src/components/layout/page-registries/material__receipt-cancel.generated.ts",
+  "apps/frontend/src/components/layout/page-registries/material__request.generated.ts",
+  "apps/frontend/src/components/layout/page-registries/material__request-other.generated.ts",
+  "apps/frontend/src/components/layout/page-registries/material__scrap.generated.ts",
+  "apps/frontend/src/components/layout/page-registries/material__shelf-life.generated.ts",
+  "apps/frontend/src/components/layout/page-registries/material__shelf-life-history.generated.ts",
+  "apps/frontend/src/components/layout/page-registries/material__shelf-life-reinspect.generated.ts",
+  "apps/frontend/src/components/layout/page-registries/material__stock.generated.ts",
+  "apps/frontend/src/components/layout/page-registries/material__stock-transfer.generated.ts",
+  "apps/frontend/src/components/layout/page-registries/inventory__material-stock.generated.ts",
+  "apps/frontend/src/components/layout/page-registries/inventory__material-physical-inv.generated.ts",
+  "apps/frontend/src/components/layout/page-registries/inventory__material-physical-inv-apply.generated.ts",
+  "apps/frontend/src/components/layout/page-registries/inventory__material-physical-inv-history.generated.ts",
+  "apps/frontend/src/components/layout/page-registries/inventory__transaction.generated.ts",
 ];
+
+const containsRouteLiteral = (source, route) =>
+  source.includes(`"${route}"`) ||
+  source.includes(`'${route}'`) ||
+  source.includes(`\`${route}\``);
 
 test("삭제된 메뉴 페이지는 메뉴, 기본 카테고리, 레지스트리에 남지 않는다", () => {
   const routeSources = [
@@ -298,7 +394,7 @@ test("삭제된 메뉴 페이지는 메뉴, 기본 카테고리, 레지스트리
 
   for (const [path, source] of routeSources) {
     for (const route of forbiddenRoutes) {
-      assert.equal(source.includes(route), false, `${path} must not reference deleted route ${route}`);
+      assert.equal(containsRouteLiteral(source, route), false, `${path} must not reference deleted route ${route}`);
     }
   }
 

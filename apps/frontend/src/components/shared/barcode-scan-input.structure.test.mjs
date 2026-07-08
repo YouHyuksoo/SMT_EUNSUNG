@@ -44,8 +44,6 @@ test("BarcodeScanInput accepts both manual key-in Enter and connected serial sca
 
 test("known scanner inputs use BarcodeScanInput instead of local Enter handlers", () => {
   const scannerFiles = [
-    "apps/frontend/src/app/(authenticated)/material/issue/components/IssueScanPanel.tsx",
-    "apps/frontend/src/app/(authenticated)/material/lot-merge/page.tsx",
     "apps/frontend/src/components/consumables/BarcodeScanPanel.tsx",
     "apps/frontend/src/components/consumables/IssueScanPanel.tsx",
     "apps/frontend/src/components/material/BarcodeScanTab.tsx",

@@ -165,7 +165,7 @@ describe('MenuCategoriesService', () => {
         expect.arrayContaining([
           expect.objectContaining({ organizationId: 7, menuCode: 'SYS_COMPANY', categoryCode: 'MASTER' }),
           expect.objectContaining({ organizationId: 7, menuCode: 'OEE_DASHBOARD', categoryCode: 'OEE' }),
-          expect.objectContaining({ organizationId: 7, menuCode: 'MAT_REQUEST', categoryCode: 'MATERIAL' }),
+          expect.objectContaining({ organizationId: 7, menuCode: 'SYS_CODE', categoryCode: 'MASTER' }),
         ]),
       );
     });
