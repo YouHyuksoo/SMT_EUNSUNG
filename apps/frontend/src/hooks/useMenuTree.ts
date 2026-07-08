@@ -54,6 +54,7 @@ export function useMenuTree() {
       }
     };
     walk(menuConfig);
+    const categoryLookup = new Map(menuConfig.map((item) => [item.code, item]));
     const allowedCategoryCodes = new Set(menuConfig.map((item) => item.code));
     const seenCategoryCodes = new Set<string>();
 
@@ -73,7 +74,7 @@ export function useMenuTree() {
       result.push({
         code: g.categoryCode,
         labelKey: g.labelKey,
-        icon: ICON_MAP[g.iconName || ''] ?? Folder,
+        icon: ICON_MAP[g.iconName || ''] ?? categoryLookup.get(g.categoryCode)?.icon ?? Folder,
         children: childrenLeaf,
       });
     }

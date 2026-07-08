@@ -48,6 +48,26 @@ test('sidebar keeps full help link in a fixed bottom area', () => {
   assert.match(sidebarSource, /isMenuDisabled=\{\(\) => false\}/);
 });
 
+test('DB menu categories fall back to the category-specific menuConfig icon', () => {
+  assert.match(useMenuTreeSource, /const categoryLookup = new Map/);
+  assert.match(useMenuTreeSource, /categoryLookup\.get\(g\.categoryCode\)\?\.icon/);
+  assert.match(useMenuTreeSource, /ICON_MAP\[g\.iconName \|\| ['"]['"]\] \?\? categoryLookup\.get\(g\.categoryCode\)\?\.icon \?\? Folder/);
+});
+
+test('top-level sidebar categories use distinct icons', () => {
+  const topLevelIcons = [...menuConfigSource.matchAll(/^    icon:\s*([A-Za-z0-9_]+),$/gm)].map((match) => match[1]);
+
+  assert.deepEqual(topLevelIcons, [
+    'Database',
+    'Activity',
+    'Package',
+    'GitBranch',
+    'Boxes',
+    'Building2',
+  ]);
+  assert.equal(new Set(topLevelIcons).size, topLevelIcons.length);
+});
+
 test('all sidebar menu label keys resolve in every locale', () => {
   const labelKeys = [...menuConfigSource.matchAll(/labelKey:\s*"([^"]+)"/g)].map((match) => match[1]);
   const localeFiles = ['ko', 'en', 'vi', 'zh'];
