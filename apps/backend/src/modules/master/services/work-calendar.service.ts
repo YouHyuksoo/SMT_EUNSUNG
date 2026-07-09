@@ -42,24 +42,22 @@ export class WorkCalendarService {
     private readonly tx: TransactionService,
   ) {}
 
-  private tenantWhere(company?: string, plant?: string) {
+  private tenantWhere(organizationId?: number) {
     return {
-      ...(company ? { company } : {}),
-      ...(plant ? { plant } : {}),
+      ...(organizationId != null ? { organizationId } : {}),
     };
   }
 
   // ─── 캘린더 CRUD ───
 
   /** 캘린더 목록 (페이징 + 필터) */
-  async findAll(query: WorkCalendarQueryDto, company?: string, plant?: string) {
+  async findAll(query: WorkCalendarQueryDto, organizationId?: number) {
     const { page = 1, limit = 50, calendarYear, processCd, status, search } = query;
     const skip = (page - 1) * limit;
 
     const qb = this.calendarRepo.createQueryBuilder('c');
 
-    if (company) qb.andWhere('c.company = :company', { company });
-    if (plant) qb.andWhere('c.plant = :plant', { plant });
+    if (organizationId != null) qb.andWhere('c.organizationId = :organizationId', { organizationId });
     if (calendarYear) qb.andWhere('c.calendarYear = :calendarYear', { calendarYear });
     if (processCd) qb.andWhere('c.processCd = :processCd', { processCd });
     if (status) qb.andWhere('c.status = :status', { status });
@@ -82,18 +80,18 @@ export class WorkCalendarService {
   }
 
   /** 캘린더 상세 조회 */
-  async findById(calendarId: string, company?: string, plant?: string) {
+  async findById(calendarId: string, organizationId?: number) {
     const calendar = await this.calendarRepo.findOne({
-      where: { calendarId, ...this.tenantWhere(company, plant) },
+      where: { calendarId, ...this.tenantWhere(organizationId) },
     });
     if (!calendar) throw new NotFoundException(`캘린더를 찾을 수 없습니다: ${calendarId}`);
     return calendar;
   }
 
   /** 캘린더 생성 (중복 체크) */
-  async create(dto: CreateWorkCalendarDto, company?: string, plant?: string) {
+  async create(dto: CreateWorkCalendarDto, organizationId?: number) {
     const existing = await this.calendarRepo.findOne({
-      where: { calendarId: dto.calendarId, ...this.tenantWhere(company, plant) },
+      where: { calendarId: dto.calendarId, ...this.tenantWhere(organizationId) },
     });
     if (existing) throw new ConflictException(`이미 존재하는 캘린더: ${dto.calendarId}`);
 
@@ -105,15 +103,14 @@ export class WorkCalendarService {
       defaultShifts: dto.defaultShifts ?? null,
       remark: dto.remark ?? null,
       status: 'DRAFT',
-      company,
-      plant,
+      organizationId,
     });
     return this.calendarRepo.save(entity);
   }
 
   /** 캘린더 수정 (확정 상태 시 불가) */
-  async update(calendarId: string, dto: UpdateWorkCalendarDto, company?: string, plant?: string) {
-    const calendar = await this.findById(calendarId, company, plant);
+  async update(calendarId: string, dto: UpdateWorkCalendarDto, organizationId?: number) {
+    const calendar = await this.findById(calendarId, organizationId);
     this.ensureNotConfirmed(calendar);
 
     const updateData: Partial<Pick<WorkCalendar,
@@ -129,16 +126,16 @@ export class WorkCalendarService {
       ...(dto.defaultShifts !== undefined ? { defaultShifts: dto.defaultShifts } : {}),
       ...(dto.remark !== undefined ? { remark: dto.remark } : {}),
     };
-    await this.calendarRepo.update({ calendarId, ...this.tenantWhere(company, plant) }, updateData);
-    return this.findById(calendarId, company, plant);
+    await this.calendarRepo.update({ calendarId, ...this.tenantWhere(organizationId) }, updateData);
+    return this.findById(calendarId, organizationId);
   }
 
   /** 캘린더 삭제 (확정 상태 시 불가, 하위 일자 포함) */
-  async delete(calendarId: string, company?: string, plant?: string) {
-    const calendar = await this.findById(calendarId, company, plant);
+  async delete(calendarId: string, organizationId?: number) {
+    const calendar = await this.findById(calendarId, organizationId);
     this.ensureNotConfirmed(calendar);
 
-    const where = { calendarId, ...this.tenantWhere(company, plant) };
+    const where = { calendarId, ...this.tenantWhere(organizationId) };
     await this.tx.run(async (queryRunner) => {
       await queryRunner.manager.delete(WorkCalendarDay, where);
       await queryRunner.manager.delete(WorkCalendar, where);
@@ -149,8 +146,8 @@ export class WorkCalendarService {
   // ─── 일별 근무 조회/수정 ───
 
   /** 특정 월의 일별 근무 조회 (month: 'YYYY-MM') */
-  async findDaysByMonth(calendarId: string, month: string, company?: string, plant?: string) {
-    await this.findById(calendarId, company, plant);
+  async findDaysByMonth(calendarId: string, month: string, organizationId?: number) {
+    await this.findById(calendarId, organizationId);
     const [yearStr, monthStr] = month.split('-');
     const year = parseInt(yearStr, 10);
     const mon = parseInt(monthStr, 10);
@@ -160,16 +157,15 @@ export class WorkCalendarService {
 
     return this.dayRepo.createQueryBuilder('d')
       .where('d.calendarId = :calendarId', { calendarId })
-      .andWhere(company ? 'd.company = :company' : '1=1', { company })
-      .andWhere(plant ? 'd.plant = :plant' : '1=1', { plant })
+      .andWhere(organizationId != null ? 'd.organizationId = :organizationId' : '1=1', { organizationId })
       .andWhere("d.workDate BETWEEN TO_DATE(:start, 'YYYY-MM-DD') AND TO_DATE(:end, 'YYYY-MM-DD')", { start, end })
       .orderBy('d.workDate', 'ASC')
       .getMany();
   }
 
   /** 일별 근무 일괄 저장 (확정 상태 시 불가) */
-  async bulkUpdateDays(calendarId: string, dto: BulkUpdateDaysDto, company?: string, plant?: string) {
-    const calendar = await this.findById(calendarId, company, plant);
+  async bulkUpdateDays(calendarId: string, dto: BulkUpdateDaysDto, organizationId?: number) {
+    const calendar = await this.findById(calendarId, organizationId);
     this.ensureNotConfirmed(calendar);
 
     if (dto.days.length === 0) return [];
@@ -183,8 +179,7 @@ export class WorkCalendarService {
         .delete()
         .from(WorkCalendarDay)
         .where('calendarId = :calendarId', { calendarId })
-        .andWhere(company ? 'company = :company' : '1=1', { company })
-        .andWhere(plant ? 'plant = :plant' : '1=1', { plant })
+        .andWhere(organizationId != null ? 'organizationId = :organizationId' : '1=1', { organizationId })
         .andWhere(
           "workDate BETWEEN TO_DATE(:minDate, 'YYYY-MM-DD') AND TO_DATE(:maxDate, 'YYYY-MM-DD')",
           { minDate, maxDate },
@@ -202,8 +197,7 @@ export class WorkCalendarService {
           workMinutes: d.workMinutes ?? 0,
           otMinutes: d.otMinutes ?? 0,
           remark: d.remark ?? null,
-          company,
-          plant,
+          organizationId,
         }),
       );
       return queryRunner.manager.save(WorkCalendarDay, entities);
@@ -215,9 +209,9 @@ export class WorkCalendarService {
   /** 연간 일정 자동 생성 (주말·공휴일 휴무 적용) */
   async generateYear(
     calendarId: string, dto: GenerateCalendarDto,
-    company?: string, plant?: string,
+    organizationId?: number,
   ) {
-    const calendar = await this.findById(calendarId, company, plant);
+    const calendar = await this.findById(calendarId, organizationId);
     this.ensureNotConfirmed(calendar);
 
     const year = parseInt(calendar.calendarYear, 10);
@@ -227,9 +221,9 @@ export class WorkCalendarService {
 
     /** 기본 교대 패턴의 총 근무 시간(분) 계산 */
     let defaultWorkMinutes = 0;
-    if (calendar.defaultShifts && company && plant) {
+    if (calendar.defaultShifts && organizationId != null) {
       const shiftCodes = calendar.defaultShifts.split(',').map((s) => s.trim());
-      const shifts = await this.shiftRepo.find({ where: { company, plant } });
+      const shifts = await this.shiftRepo.find({ where: { organizationId } });
       for (const code of shiftCodes) {
         const found = shifts.find((s) => s.shiftCode === code);
         if (found) defaultWorkMinutes += found.workMinutes;
@@ -279,13 +273,12 @@ export class WorkCalendarService {
         workMinutes: workMin,
         otMinutes: 0,
         remark: null,
-        company,
-        plant,
+        organizationId,
       });
     }
 
     return this.tx.run(async (queryRunner) => {
-      await queryRunner.manager.delete(WorkCalendarDay, { calendarId, ...this.tenantWhere(company, plant) });
+      await queryRunner.manager.delete(WorkCalendarDay, { calendarId, ...this.tenantWhere(organizationId) });
 
       /** 배치 단위로 저장 (Oracle 제한 대응) */
       const BATCH_SIZE = 100;
@@ -304,20 +297,20 @@ export class WorkCalendarService {
   // ─── 복사 ───
 
   /** 다른 캘린더의 일정을 복사 */
-  async copyFrom(calendarId: string, sourceId: string, company?: string, plant?: string) {
-    const target = await this.findById(calendarId, company, plant);
+  async copyFrom(calendarId: string, sourceId: string, organizationId?: number) {
+    const target = await this.findById(calendarId, organizationId);
     this.ensureNotConfirmed(target);
 
-    await this.findById(sourceId, company, plant);
+    await this.findById(sourceId, organizationId);
     const sourceDays = await this.dayRepo.find({
-      where: { calendarId: sourceId, ...this.tenantWhere(company, plant) },
+      where: { calendarId: sourceId, ...this.tenantWhere(organizationId) },
     });
     if (sourceDays.length === 0) {
       throw new NotFoundException(`복사 원본 캘린더에 일정이 없습니다: ${sourceId}`);
     }
 
     return this.tx.run(async (queryRunner) => {
-      await queryRunner.manager.delete(WorkCalendarDay, { calendarId, ...this.tenantWhere(company, plant) });
+      await queryRunner.manager.delete(WorkCalendarDay, { calendarId, ...this.tenantWhere(organizationId) });
 
       const BATCH_SIZE = 100;
       const saved: WorkCalendarDay[] = [];
@@ -326,8 +319,7 @@ export class WorkCalendarService {
           queryRunner.manager.create(WorkCalendarDay, {
             ...day,
             calendarId,
-            company,
-            plant,
+            organizationId,
           }),
         );
         const result = await queryRunner.manager.save(WorkCalendarDay, batch);
@@ -340,24 +332,24 @@ export class WorkCalendarService {
   // ─── 확정/취소 ───
 
   /** 캘린더 확정 */
-  async confirm(calendarId: string, company?: string, plant?: string) {
-    await this.findById(calendarId, company, plant);
-    await this.calendarRepo.update({ calendarId, ...this.tenantWhere(company, plant) }, { status: 'CONFIRMED' });
-    return this.findById(calendarId, company, plant);
+  async confirm(calendarId: string, organizationId?: number) {
+    await this.findById(calendarId, organizationId);
+    await this.calendarRepo.update({ calendarId, ...this.tenantWhere(organizationId) }, { status: 'CONFIRMED' });
+    return this.findById(calendarId, organizationId);
   }
 
   /** 캘린더 확정 취소 */
-  async unconfirm(calendarId: string, company?: string, plant?: string) {
-    await this.findById(calendarId, company, plant);
-    await this.calendarRepo.update({ calendarId, ...this.tenantWhere(company, plant) }, { status: 'DRAFT' });
-    return this.findById(calendarId, company, plant);
+  async unconfirm(calendarId: string, organizationId?: number) {
+    await this.findById(calendarId, organizationId);
+    await this.calendarRepo.update({ calendarId, ...this.tenantWhere(organizationId) }, { status: 'DRAFT' });
+    return this.findById(calendarId, organizationId);
   }
 
   // ─── 요약 통계 ───
 
   /** 월별/연간 근무 요약 통계 */
-  async getSummary(calendarId: string, company?: string, plant?: string) {
-    await this.findById(calendarId, company, plant);
+  async getSummary(calendarId: string, organizationId?: number) {
+    await this.findById(calendarId, organizationId);
 
     const qb = this.dayRepo.createQueryBuilder('d')
       .select("TO_CHAR(d.workDate, 'YYYY-MM')", 'month')
@@ -371,8 +363,7 @@ export class WorkCalendarService {
       .groupBy("TO_CHAR(d.workDate, 'YYYY-MM')")
       .orderBy("TO_CHAR(d.workDate, 'YYYY-MM')", 'ASC');
 
-    if (company) qb.andWhere('d.company = :company', { company });
-    if (plant) qb.andWhere('d.plant = :plant', { plant });
+    if (organizationId != null) qb.andWhere('d.organizationId = :organizationId', { organizationId });
 
     const rows = await qb.getRawMany();
 

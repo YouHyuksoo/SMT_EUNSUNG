@@ -15,7 +15,7 @@ import {
   Body, Param, Query, HttpCode, HttpStatus,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
-import { Company, Plant } from '../../../common/decorators/tenant.decorator';
+import { OrganizationId } from '../../../common/decorators/tenant.decorator';
 import { WorkCalendarService } from '../services/work-calendar.service';
 import {
   CreateWorkCalendarDto, UpdateWorkCalendarDto, WorkCalendarQueryDto,
@@ -32,22 +32,22 @@ export class WorkCalendarController {
 
   @Get()
   @ApiOperation({ summary: '캘린더 목록' })
-  async findAll(@Query() q: WorkCalendarQueryDto, @Company() co: string, @Plant() pl: string) {
-    const r = await this.svc.findAll(q, co, pl);
+  async findAll(@Query() q: WorkCalendarQueryDto, @OrganizationId() organizationId: number) {
+    const r = await this.svc.findAll(q, organizationId);
     return ResponseUtil.paged(r.data, r.total, r.page, r.limit);
   }
 
   @Get(':calendarId')
   @ApiOperation({ summary: '캘린더 상세' })
-  async findOne(@Param('calendarId') calendarId: string, @Company() co: string, @Plant() pl: string) {
-    return ResponseUtil.success(await this.svc.findById(calendarId, co, pl));
+  async findOne(@Param('calendarId') calendarId: string, @OrganizationId() organizationId: number) {
+    return ResponseUtil.success(await this.svc.findById(calendarId, organizationId));
   }
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: '캘린더 생성' })
-  async create(@Body() dto: CreateWorkCalendarDto, @Company() co: string, @Plant() pl: string) {
-    return ResponseUtil.success(await this.svc.create(dto, co, pl), '캘린더가 생성되었습니다.');
+  async create(@Body() dto: CreateWorkCalendarDto, @OrganizationId() organizationId: number) {
+    return ResponseUtil.success(await this.svc.create(dto, organizationId), '캘린더가 생성되었습니다.');
   }
 
   @Put(':calendarId')
@@ -55,16 +55,15 @@ export class WorkCalendarController {
   async update(
     @Param('calendarId') calendarId: string,
     @Body() dto: UpdateWorkCalendarDto,
-    @Company() co: string,
-    @Plant() pl: string,
+    @OrganizationId() organizationId: number,
   ) {
-    return ResponseUtil.success(await this.svc.update(calendarId, dto, co, pl), '캘린더가 수정되었습니다.');
+    return ResponseUtil.success(await this.svc.update(calendarId, dto, organizationId), '캘린더가 수정되었습니다.');
   }
 
   @Delete(':calendarId')
   @ApiOperation({ summary: '캘린더 삭제 (하위 일자 포함)' })
-  async delete(@Param('calendarId') calendarId: string, @Company() co: string, @Plant() pl: string) {
-    await this.svc.delete(calendarId, co, pl);
+  async delete(@Param('calendarId') calendarId: string, @OrganizationId() organizationId: number) {
+    await this.svc.delete(calendarId, organizationId);
     return ResponseUtil.success(null, '캘린더가 삭제되었습니다.');
   }
 
@@ -76,9 +75,9 @@ export class WorkCalendarController {
   async generate(
     @Param('calendarId') calendarId: string,
     @Body() dto: GenerateCalendarDto,
-    @Company() co: string, @Plant() pl: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.svc.generateYear(calendarId, dto, co, pl);
+    const data = await this.svc.generateYear(calendarId, dto, organizationId);
     return ResponseUtil.success(data, '연간 일정이 생성되었습니다.');
   }
 
@@ -88,9 +87,9 @@ export class WorkCalendarController {
   async copyFrom(
     @Param('calendarId') calendarId: string,
     @Param('sourceId') sourceId: string,
-    @Company() co: string, @Plant() pl: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.svc.copyFrom(calendarId, sourceId, co, pl);
+    const data = await this.svc.copyFrom(calendarId, sourceId, organizationId);
     return ResponseUtil.success(data, '일정이 복사되었습니다.');
   }
 
@@ -101,10 +100,9 @@ export class WorkCalendarController {
   async findDays(
     @Param('calendarId') calendarId: string,
     @Query('month') month: string,
-    @Company() co: string,
-    @Plant() pl: string,
+    @OrganizationId() organizationId: number,
   ) {
-    return ResponseUtil.success(await this.svc.findDaysByMonth(calendarId, month, co, pl));
+    return ResponseUtil.success(await this.svc.findDaysByMonth(calendarId, month, organizationId));
   }
 
   @Put(':calendarId/days/bulk')
@@ -112,9 +110,9 @@ export class WorkCalendarController {
   async bulkUpdateDays(
     @Param('calendarId') calendarId: string,
     @Body() dto: BulkUpdateDaysDto,
-    @Company() co: string, @Plant() pl: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const data = await this.svc.bulkUpdateDays(calendarId, dto, co, pl);
+    const data = await this.svc.bulkUpdateDays(calendarId, dto, organizationId);
     return ResponseUtil.success(data, '일별 근무가 저장되었습니다.');
   }
 
@@ -123,22 +121,22 @@ export class WorkCalendarController {
   @Post(':calendarId/confirm')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: '캘린더 확정' })
-  async confirm(@Param('calendarId') calendarId: string, @Company() co: string, @Plant() pl: string) {
-    return ResponseUtil.success(await this.svc.confirm(calendarId, co, pl), '캘린더가 확정되었습니다.');
+  async confirm(@Param('calendarId') calendarId: string, @OrganizationId() organizationId: number) {
+    return ResponseUtil.success(await this.svc.confirm(calendarId, organizationId), '캘린더가 확정되었습니다.');
   }
 
   @Post(':calendarId/unconfirm')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: '캘린더 확정 취소' })
-  async unconfirm(@Param('calendarId') calendarId: string, @Company() co: string, @Plant() pl: string) {
-    return ResponseUtil.success(await this.svc.unconfirm(calendarId, co, pl), '확정이 취소되었습니다.');
+  async unconfirm(@Param('calendarId') calendarId: string, @OrganizationId() organizationId: number) {
+    return ResponseUtil.success(await this.svc.unconfirm(calendarId, organizationId), '확정이 취소되었습니다.');
   }
 
   // ─── 요약 ───
 
   @Get(':calendarId/summary')
   @ApiOperation({ summary: '월별/연간 근무 요약' })
-  async getSummary(@Param('calendarId') calendarId: string, @Company() co: string, @Plant() pl: string) {
-    return ResponseUtil.success(await this.svc.getSummary(calendarId, co, pl));
+  async getSummary(@Param('calendarId') calendarId: string, @OrganizationId() organizationId: number) {
+    return ResponseUtil.success(await this.svc.getSummary(calendarId, organizationId));
   }
 }

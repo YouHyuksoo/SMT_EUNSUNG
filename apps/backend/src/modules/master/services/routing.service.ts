@@ -24,20 +24,18 @@ export class RoutingService {
     private readonly partRepository: Repository<ItemMaster>,
   ) {}
 
-  private tenantWhere(company?: string, plant?: string) {
+  private tenantWhere(organizationId?: number) {
     return {
-      ...(company ? { company } : {}),
-      ...(plant ? { plant } : {}),
+      ...(organizationId != null ? { organizationId } : {}),
     };
   }
 
   private partJoinCondition = (
     'part.itemCode = routing.itemCode'
-    + ' AND part.company = routing.company'
-    + ' AND part.plant = routing.plant'
+    + ' AND part.organizationId = routing.organizationId'
   );
 
-  async findAll(query: RoutingQueryDto, company?: string, plant?: string) {
+  async findAll(query: RoutingQueryDto, organizationId?: number) {
     const { page = 1, limit = 10, itemCode, search, useYn } = query;
     const skip = (page - 1) * limit;
 
@@ -45,8 +43,7 @@ export class RoutingService {
       .leftJoin(ItemMaster, 'part', this.partJoinCondition)
       .addSelect(['part.itemName']);
 
-    if (company) queryBuilder.andWhere('routing.company = :company', { company });
-    if (plant) queryBuilder.andWhere('routing.plant = :plant', { plant });
+    if (organizationId != null) queryBuilder.andWhere('routing.organizationId = :organizationId', { organizationId });
     if (itemCode) queryBuilder.andWhere('routing.itemCode = :itemCode', { itemCode });
     if (useYn) queryBuilder.andWhere('routing.useYn = :useYn', { useYn });
     if (search) {
@@ -75,15 +72,14 @@ export class RoutingService {
     return { data, total, page, limit };
   }
 
-  async findByKey(itemCode: string, seq: number, company?: string, plant?: string) {
+  async findByKey(itemCode: string, seq: number, organizationId?: number) {
     const qb = this.routingRepository.createQueryBuilder('routing')
       .leftJoin(ItemMaster, 'part', this.partJoinCondition)
       .addSelect(['part.itemName'])
       .where('routing.itemCode = :itemCode', { itemCode })
       .andWhere('routing.seq = :seq', { seq });
 
-    if (company) qb.andWhere('routing.company = :company', { company });
-    if (plant) qb.andWhere('routing.plant = :plant', { plant });
+    if (organizationId != null) qb.andWhere('routing.organizationId = :organizationId', { organizationId });
 
     const { entities, raw } = await qb.getRawAndEntities();
     const item = entities[0];
@@ -92,9 +88,9 @@ export class RoutingService {
     return { ...item, itemName: raw[0]?.part_itemName ?? null };
   }
 
-  async create(dto: CreateRoutingDto, company?: string, plant?: string) {
+  async create(dto: CreateRoutingDto, organizationId?: number) {
     const existing = await this.routingRepository.findOne({
-      where: { itemCode: dto.itemCode, seq: dto.seq, ...this.tenantWhere(company, plant) },
+      where: { itemCode: dto.itemCode, seq: dto.seq, ...this.tenantWhere(organizationId) },
     });
     if (existing) {
       throw new ConflictException(`이미 존재하는 라우팅입니다: ${dto.itemCode} / seq ${dto.seq}`);
@@ -116,15 +112,14 @@ export class RoutingService {
       weldCondition: dto.weldCondition,
       processParams: dto.processParams,
       useYn: dto.useYn ?? 'Y',
-      company,
-      plant,
+      organizationId,
     });
 
     return this.routingRepository.save(routing);
   }
 
-  async update(itemCode: string, seq: number, dto: UpdateRoutingDto, company?: string, plant?: string) {
-    await this.findByKey(itemCode, seq, company, plant);
+  async update(itemCode: string, seq: number, dto: UpdateRoutingDto, organizationId?: number) {
+    await this.findByKey(itemCode, seq, organizationId);
     const updateData: Partial<Pick<
       ProcessMap,
       | 'processCode'
@@ -155,13 +150,13 @@ export class RoutingService {
       ...(dto.processParams !== undefined ? { processParams: dto.processParams } : {}),
       ...(dto.useYn !== undefined ? { useYn: dto.useYn } : {}),
     };
-    await this.routingRepository.update({ itemCode, seq, ...this.tenantWhere(company, plant) }, updateData);
-    return this.findByKey(itemCode, seq, company, plant);
+    await this.routingRepository.update({ itemCode, seq, ...this.tenantWhere(organizationId) }, updateData);
+    return this.findByKey(itemCode, seq, organizationId);
   }
 
-  async delete(itemCode: string, seq: number, company?: string, plant?: string) {
-    await this.findByKey(itemCode, seq, company, plant);
-    await this.routingRepository.delete({ itemCode, seq, ...this.tenantWhere(company, plant) });
+  async delete(itemCode: string, seq: number, organizationId?: number) {
+    await this.findByKey(itemCode, seq, organizationId);
+    await this.routingRepository.delete({ itemCode, seq, ...this.tenantWhere(organizationId) });
     return { itemCode, seq };
   }
 }

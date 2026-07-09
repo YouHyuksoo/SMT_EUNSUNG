@@ -38,28 +38,28 @@ describe('ProcessCapaService', () => {
 
   it('creates capa after validating process and part within tenant only', async () => {
     repo.findOne.mockResolvedValue(null);
-    processRepo.findOne.mockResolvedValue({ processCode: 'P01', company: 'C1', plant: 'P1' } as ProcessMaster);
-    partRepo.findOne.mockResolvedValue({ itemCode: 'ITEM01', company: 'C1', plant: 'P1' } as ItemMaster);
+    processRepo.findOne.mockResolvedValue({ processCode: 'P01', organizationId: 1 } as ProcessMaster);
+    partRepo.findOne.mockResolvedValue({ itemCode: 'ITEM01', organizationId: 1 } as ItemMaster);
     repo.create.mockImplementation((value) => value as ProcessCapa);
     repo.save.mockImplementation(async (value) => value as ProcessCapa);
 
-    await target.create({ processCode: 'P01', itemCode: 'ITEM01', stdTactTime: 10 } as any, 'C1', 'P1');
+    await target.create({ processCode: 'P01', itemCode: 'ITEM01', stdTactTime: 10 } as any, 1);
 
     expect(processRepo.findOne).toHaveBeenCalledWith({
-      where: { processCode: 'P01', company: 'C1', plant: 'P1' },
+      where: { processCode: 'P01', organizationId: 1 },
     });
     expect(partRepo.findOne).toHaveBeenCalledWith({
-      where: { itemCode: 'ITEM01', company: 'C1', plant: 'P1' },
+      where: { itemCode: 'ITEM01', organizationId: 1 },
     });
     expect(repo.create).toHaveBeenCalledWith(
-      expect.objectContaining({ company: 'C1', plant: 'P1', processCode: 'P01', itemCode: 'ITEM01' }),
+      expect.objectContaining({ organizationId: 1, processCode: 'P01', itemCode: 'ITEM01' }),
     );
   });
 
   it('rejects duplicate capa within tenant', async () => {
     repo.findOne.mockResolvedValue({ processCode: 'P01', itemCode: 'ITEM01' } as ProcessCapa);
 
-    await expect(target.create({ processCode: 'P01', itemCode: 'ITEM01', stdTactTime: 10 } as any, 'C1', 'P1'))
+    await expect(target.create({ processCode: 'P01', itemCode: 'ITEM01', stdTactTime: 10 } as any, 1))
       .rejects.toThrow(ConflictException);
   });
 
@@ -67,7 +67,7 @@ describe('ProcessCapaService', () => {
     repo.findOne.mockResolvedValue(null);
     processRepo.findOne.mockResolvedValue(null);
 
-    await expect(target.create({ processCode: 'P01', itemCode: 'ITEM01', stdTactTime: 10 } as any, 'C1', 'P1'))
+    await expect(target.create({ processCode: 'P01', itemCode: 'ITEM01', stdTactTime: 10 } as any, 1))
       .rejects.toThrow(BadRequestException);
   });
 
@@ -76,18 +76,18 @@ describe('ProcessCapaService', () => {
     repo.save.mockImplementation(async (value) => value as ProcessCapa);
     repo.delete.mockResolvedValue({ affected: 1 } as any);
 
-    await target.update('P01', 'ITEM01', { stdTactTime: 12 } as any, 'C1', 'P1');
-    await target.delete('P01', 'ITEM01', 'C1', 'P1');
+    await target.update('P01', 'ITEM01', { stdTactTime: 12 } as any, 1);
+    await target.delete('P01', 'ITEM01', 1);
 
     expect(repo.findOne).toHaveBeenCalledWith({
-      where: { company: 'C1', plant: 'P1', processCode: 'P01', itemCode: 'ITEM01' },
+      where: { organizationId: 1, processCode: 'P01', itemCode: 'ITEM01' },
     });
-    expect(repo.delete).toHaveBeenCalledWith({ company: 'C1', plant: 'P1', processCode: 'P01', itemCode: 'ITEM01' });
+    expect(repo.delete).toHaveBeenCalledWith({ organizationId: 1, processCode: 'P01', itemCode: 'ITEM01' });
   });
 
   it('throws when update target is missing in tenant', async () => {
     repo.findOne.mockResolvedValue(null);
 
-    await expect(target.update('P01', 'ITEM01', {} as any, 'C1', 'P1')).rejects.toThrow(NotFoundException);
+    await expect(target.update('P01', 'ITEM01', {} as any, 1)).rejects.toThrow(NotFoundException);
   });
 });

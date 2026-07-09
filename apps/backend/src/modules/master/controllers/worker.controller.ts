@@ -15,7 +15,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { existsSync, mkdirSync } from 'fs';
 import { extname } from 'path';
-import { Company, Plant } from '../../../common/decorators/tenant.decorator';
+import { OrganizationId } from '../../../common/decorators/tenant.decorator';
 import { ApiTags, ApiOperation, ApiConsumes } from '@nestjs/swagger';
 import { WorkerService } from '../services/worker.service';
 import { CreateWorkerDto, UpdateWorkerDto, WorkerQueryDto } from '../dto/worker.dto';
@@ -28,44 +28,44 @@ export class WorkerController {
 
   @Get()
   @ApiOperation({ summary: '작업자 목록 조회' })
-  async findAll(@Query() query: WorkerQueryDto, @Company() company: string, @Plant() plant: string) {
-    const result = await this.workerService.findAll(query, company, plant);
+  async findAll(@Query() query: WorkerQueryDto, @OrganizationId() organizationId: number) {
+    const result = await this.workerService.findAll(query, organizationId);
     return ResponseUtil.paged(result.data, result.total, result.page, result.limit);
   }
 
   @Get('by-qr/:qrCode')
   @ApiOperation({ summary: 'QR 코드로 작업자 조회 (PDA 연동)' })
-  async findByQrCode(@Param('qrCode') qrCode: string, @Company() company: string, @Plant() plant: string) {
-    const data = await this.workerService.findByQrCode(qrCode, company, plant);
+  async findByQrCode(@Param('qrCode') qrCode: string, @OrganizationId() organizationId: number) {
+    const data = await this.workerService.findByQrCode(qrCode, organizationId);
     return ResponseUtil.success(data);
   }
 
   @Get(':id')
   @ApiOperation({ summary: '작업자 상세 조회' })
-  async findById(@Param('id') id: string, @Company() company: string, @Plant() plant: string) {
-    const data = await this.workerService.findById(id, company, plant);
+  async findById(@Param('id') id: string, @OrganizationId() organizationId: number) {
+    const data = await this.workerService.findById(id, organizationId);
     return ResponseUtil.success(data);
   }
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: '작업자 생성' })
-  async create(@Body() dto: CreateWorkerDto, @Company() company: string, @Plant() plant: string) {
-    const data = await this.workerService.create(dto, company, plant);
+  async create(@Body() dto: CreateWorkerDto, @OrganizationId() organizationId: number) {
+    const data = await this.workerService.create(dto, organizationId);
     return ResponseUtil.success(data, '작업자가 생성되었습니다.');
   }
 
   @Put(':id')
   @ApiOperation({ summary: '작업자 수정' })
-  async update(@Param('id') id: string, @Body() dto: UpdateWorkerDto, @Company() company: string, @Plant() plant: string) {
-    const data = await this.workerService.update(id, dto, company, plant);
+  async update(@Param('id') id: string, @Body() dto: UpdateWorkerDto, @OrganizationId() organizationId: number) {
+    const data = await this.workerService.update(id, dto, organizationId);
     return ResponseUtil.success(data, '작업자가 수정되었습니다.');
   }
 
   @Delete(':id')
   @ApiOperation({ summary: '작업자 삭제' })
-  async delete(@Param('id') id: string, @Company() company: string, @Plant() plant: string) {
-    await this.workerService.delete(id, company, plant);
+  async delete(@Param('id') id: string, @OrganizationId() organizationId: number) {
+    await this.workerService.delete(id, organizationId);
     return ResponseUtil.success(null, '작업자가 삭제되었습니다.');
   }
 

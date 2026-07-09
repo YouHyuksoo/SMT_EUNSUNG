@@ -31,54 +31,53 @@ describe('WorkInstructionService', () => {
   });
 
   it('finds a work instruction within tenant only', async () => {
-    const item = { itemCode: 'ITEM01', processCode: 'P10', revision: 'A', company: 'C1', plant: 'P1' } as WorkInstruction;
+    const item = { itemCode: 'ITEM01', processCode: 'P10', revision: 'A', organizationId: 1 } as WorkInstruction;
     mockRepo.findOne.mockResolvedValue(item);
 
-    const result = await target.findById('ITEM01::P10::A', 'C1', 'P1');
+    const result = await target.findById('ITEM01::P10::A', 1);
 
     expect(result).toEqual(item);
     expect(mockRepo.findOne).toHaveBeenCalledWith({
-      where: { itemCode: 'ITEM01', processCode: 'P10', revision: 'A', company: 'C1', plant: 'P1' },
+      where: { itemCode: 'ITEM01', processCode: 'P10', revision: 'A', organizationId: 1 },
     });
   });
 
   it('throws when tenant scoped work instruction is missing', async () => {
     mockRepo.findOne.mockResolvedValue(null);
 
-    await expect(target.findById('ITEM01::P10::A', 'C1', 'P1')).rejects.toThrow(NotFoundException);
+    await expect(target.findById('ITEM01::P10::A', 1)).rejects.toThrow(NotFoundException);
   });
 
   it('creates a work instruction within tenant', async () => {
-    const created = { itemCode: 'ITEM01', processCode: 'P10', revision: 'A', company: 'C1', plant: 'P1' } as WorkInstruction;
+    const created = { itemCode: 'ITEM01', processCode: 'P10', revision: 'A', organizationId: 1 } as WorkInstruction;
     mockRepo.findOne.mockResolvedValue(null);
     mockRepo.create.mockReturnValue(created);
     mockRepo.save.mockResolvedValue(created);
 
-    await target.create({ itemCode: 'ITEM01', processCode: 'P10', title: 'Guide', revision: 'A' } as any, 'C1', 'P1');
+    await target.create({ itemCode: 'ITEM01', processCode: 'P10', title: 'Guide', revision: 'A' } as any, 1);
 
     expect(mockRepo.create).toHaveBeenCalledWith(expect.objectContaining({
       itemCode: 'ITEM01',
       processCode: 'P10',
       revision: 'A',
-      company: 'C1',
-      plant: 'P1',
+      organizationId: 1,
     }));
   });
 
   it('rejects duplicate item, process, and revision within tenant', async () => {
-    mockRepo.findOne.mockResolvedValue({ itemCode: 'ITEM01', processCode: 'P10', revision: 'A', company: 'C1', plant: 'P1' } as WorkInstruction);
+    mockRepo.findOne.mockResolvedValue({ itemCode: 'ITEM01', processCode: 'P10', revision: 'A', organizationId: 1 } as WorkInstruction);
 
     await expect(target.create({
       itemCode: 'ITEM01',
       processCode: 'P10',
       title: 'Guide',
       revision: 'A',
-    } as any, 'C1', 'P1')).rejects.toThrow(ConflictException);
+    } as any, 1)).rejects.toThrow(ConflictException);
     expect(mockRepo.save).not.toHaveBeenCalled();
   });
 
   it('updates a work instruction within tenant and strips key columns from payload', async () => {
-    const item = { itemCode: 'ITEM01', processCode: 'P10', revision: 'A', title: 'Old', company: 'C1', plant: 'P1' } as WorkInstruction;
+    const item = { itemCode: 'ITEM01', processCode: 'P10', revision: 'A', title: 'Old', organizationId: 1 } as WorkInstruction;
     mockRepo.findOne.mockResolvedValue(item);
     mockRepo.update.mockResolvedValue({ affected: 1 } as any);
 
@@ -87,35 +86,30 @@ describe('WorkInstructionService', () => {
       processCode: 'P99',
       revision: 'Z',
       title: 'New',
-      company: 'C2',
-      plant: 'P2',
-    } as any, 'C1', 'P1');
+    } as any, 1);
 
     expect(mockRepo.update).toHaveBeenCalledWith(
-      { itemCode: 'ITEM01', processCode: 'P10', revision: 'A', company: 'C1', plant: 'P1' },
+      { itemCode: 'ITEM01', processCode: 'P10', revision: 'A', organizationId: 1 },
       expect.not.objectContaining({
         itemCode: expect.anything(),
         processCode: expect.anything(),
         revision: expect.anything(),
-        company: expect.anything(),
-        plant: expect.anything(),
       }),
     );
   });
 
   it('deletes a work instruction within tenant only', async () => {
-    const item = { itemCode: 'ITEM01', processCode: 'P10', revision: 'A', company: 'C1', plant: 'P1' } as WorkInstruction;
+    const item = { itemCode: 'ITEM01', processCode: 'P10', revision: 'A', organizationId: 1 } as WorkInstruction;
     mockRepo.findOne.mockResolvedValue(item);
     mockRepo.delete.mockResolvedValue({ affected: 1 } as any);
 
-    await target.delete('ITEM01::P10::A', 'C1', 'P1');
+    await target.delete('ITEM01::P10::A', 1);
 
     expect(mockRepo.delete).toHaveBeenCalledWith({
       itemCode: 'ITEM01',
       processCode: 'P10',
       revision: 'A',
-      company: 'C1',
-      plant: 'P1',
+      organizationId: 1,
     });
   });
 });

@@ -11,7 +11,7 @@
 
 import { Controller, Get, Post, Put, Delete, Body, Param, Query, HttpCode, HttpStatus, ParseIntPipe } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
-import { Company, Plant } from '../../../common/decorators/tenant.decorator';
+import { OrganizationId } from '../../../common/decorators/tenant.decorator';
 import { RoutingService } from '../services/routing.service';
 import { CreateRoutingDto, UpdateRoutingDto, RoutingQueryDto } from '../dto/routing.dto';
 import { ResponseUtil } from '../../../common/dto/response.dto';
@@ -23,37 +23,37 @@ export class RoutingController {
 
   @Get()
   @ApiOperation({ summary: '라우팅 목록 조회' })
-  async findAll(@Query() query: RoutingQueryDto, @Company() company: string, @Plant() plant: string) {
-    const result = await this.routingService.findAll(query, company, plant);
+  async findAll(@Query() query: RoutingQueryDto, @OrganizationId() organizationId: number) {
+    const result = await this.routingService.findAll(query, organizationId);
     return ResponseUtil.paged(result.data, result.total, result.page, result.limit);
   }
 
   @Get(':itemCode/:seq')
   @ApiOperation({ summary: '라우팅 상세 조회' })
-  async findByKey(@Param('itemCode') itemCode: string, @Param('seq', ParseIntPipe) seq: number, @Company() company: string, @Plant() plant: string) {
-    const data = await this.routingService.findByKey(itemCode, seq, company, plant);
+  async findByKey(@Param('itemCode') itemCode: string, @Param('seq', ParseIntPipe) seq: number, @OrganizationId() organizationId: number) {
+    const data = await this.routingService.findByKey(itemCode, seq, organizationId);
     return ResponseUtil.success(data);
   }
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: '라우팅 생성' })
-  async create(@Body() dto: CreateRoutingDto, @Company() company: string, @Plant() plant: string) {
-    const data = await this.routingService.create(dto, company, plant);
+  async create(@Body() dto: CreateRoutingDto, @OrganizationId() organizationId: number) {
+    const data = await this.routingService.create(dto, organizationId);
     return ResponseUtil.success(data, '라우팅이 생성되었습니다.');
   }
 
   @Put(':itemCode/:seq')
   @ApiOperation({ summary: '라우팅 수정' })
-  async update(@Param('itemCode') itemCode: string, @Param('seq', ParseIntPipe) seq: number, @Body() dto: UpdateRoutingDto, @Company() company: string, @Plant() plant: string) {
-    const data = await this.routingService.update(itemCode, seq, dto, company, plant);
+  async update(@Param('itemCode') itemCode: string, @Param('seq', ParseIntPipe) seq: number, @Body() dto: UpdateRoutingDto, @OrganizationId() organizationId: number) {
+    const data = await this.routingService.update(itemCode, seq, dto, organizationId);
     return ResponseUtil.success(data, '라우팅이 수정되었습니다.');
   }
 
   @Delete(':itemCode/:seq')
   @ApiOperation({ summary: '라우팅 삭제' })
-  async delete(@Param('itemCode') itemCode: string, @Param('seq', ParseIntPipe) seq: number, @Company() company: string, @Plant() plant: string) {
-    await this.routingService.delete(itemCode, seq, company, plant);
+  async delete(@Param('itemCode') itemCode: string, @Param('seq', ParseIntPipe) seq: number, @OrganizationId() organizationId: number) {
+    await this.routingService.delete(itemCode, seq, organizationId);
     return ResponseUtil.success(null, '라우팅이 삭제되었습니다.');
   }
 }

@@ -63,7 +63,7 @@ export default function PartPage() {
 
   useEffect(() => {
     let cancelled = false;
-    api.get("/quality/aql/policies", { params: { useYn: "Y" } })
+    api.get("/quality/aql/policies", { params: { useYn: "Y" }, suppressErrorModal: true })
       .then((res) => {
         if (cancelled) return;
         const policies: IqcAqlPolicyOption[] = res.data?.data ?? [];

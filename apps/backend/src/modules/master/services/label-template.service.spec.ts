@@ -40,60 +40,58 @@ describe('LabelTemplateService', () => {
   });
 
   it('finds a template within tenant only', async () => {
-    const item = { templateName: 'BOX', category: 'FG', company: 'C1', plant: 'P1' } as LabelTemplate;
+    const item = { templateName: 'BOX', category: 'FG', organizationId: 1 } as LabelTemplate;
     mockRepo.findOne.mockResolvedValue(item);
 
-    const result = await target.findById('BOX::FG', 'C1', 'P1');
+    const result = await target.findById('BOX::FG', 1);
 
     expect(result).toEqual(item);
     expect(mockRepo.findOne).toHaveBeenCalledWith({
-      where: { templateName: 'BOX', category: 'FG', company: 'C1', plant: 'P1' },
+      where: { templateName: 'BOX', category: 'FG', organizationId: 1 },
     });
   });
 
   it('throws when tenant scoped template is missing', async () => {
     mockRepo.findOne.mockResolvedValue(null);
 
-    await expect(target.findById('BOX::FG', 'C1', 'P1')).rejects.toThrow(NotFoundException);
+    await expect(target.findById('BOX::FG', 1)).rejects.toThrow(NotFoundException);
   });
 
   it('throws when matched template tenant differs from request tenant', async () => {
-    mockRepo.findOne.mockResolvedValue({ templateName: 'BOX', category: 'FG', company: 'OTHER', plant: 'P1' } as LabelTemplate);
+    mockRepo.findOne.mockResolvedValue({ templateName: 'BOX', category: 'FG', organizationId: 2 } as LabelTemplate);
 
-    await expect(target.findById('BOX::FG', 'C1', 'P1')).rejects.toThrow(BadRequestException);
+    await expect(target.findById('BOX::FG', 1)).rejects.toThrow(BadRequestException);
   });
 
   it('creates a template within tenant and clears default only in tenant', async () => {
-    const created = { templateName: 'BOX', category: 'FG', company: 'C1', plant: 'P1' } as LabelTemplate;
+    const created = { templateName: 'BOX', category: 'FG', organizationId: 1 } as LabelTemplate;
     mockRepo.findOne.mockResolvedValue(null);
     mockRepo.create.mockReturnValue(created);
     mockRepo.save.mockResolvedValue(created);
 
-    await target.create({ templateName: 'BOX', category: 'FG', designData: {}, isDefault: true } as any, 'C1', 'P1');
+    await target.create({ templateName: 'BOX', category: 'FG', designData: {}, isDefault: true } as any, 1);
 
     expect(mockRepo.create).toHaveBeenCalledWith(expect.objectContaining({
       templateName: 'BOX',
       category: 'FG',
-      company: 'C1',
-      plant: 'P1',
+      organizationId: 1,
     }));
-    expect(mockQb.andWhere).toHaveBeenCalledWith('company = :company', { company: 'C1' });
-    expect(mockQb.andWhere).toHaveBeenCalledWith('plant = :plant', { plant: 'P1' });
+    expect(mockQb.andWhere).toHaveBeenCalledWith('organizationId = :organizationId', { organizationId: 1 });
   });
 
   it('rejects duplicate template name and category within tenant', async () => {
-    mockRepo.findOne.mockResolvedValue({ templateName: 'BOX', category: 'FG', company: 'C1', plant: 'P1' } as LabelTemplate);
+    mockRepo.findOne.mockResolvedValue({ templateName: 'BOX', category: 'FG', organizationId: 1 } as LabelTemplate);
 
     await expect(target.create({
       templateName: 'BOX',
       category: 'FG',
       designData: {},
-    } as any, 'C1', 'P1')).rejects.toThrow(ConflictException);
+    } as any, 1)).rejects.toThrow(ConflictException);
     expect(mockRepo.save).not.toHaveBeenCalled();
   });
 
   it('updates a template within tenant and strips key columns from payload', async () => {
-    const item = { templateName: 'BOX', category: 'FG', designData: '{}', company: 'C1', plant: 'P1' } as LabelTemplate;
+    const item = { templateName: 'BOX', category: 'FG', designData: '{}', organizationId: 1 } as LabelTemplate;
     mockRepo.findOne.mockResolvedValue(item);
     mockRepo.save.mockImplementation(async (value) => value as LabelTemplate);
 
@@ -101,28 +99,25 @@ describe('LabelTemplateService', () => {
       templateName: 'OTHER',
       category: 'WIP',
       remark: 'New',
-      company: 'C2',
-      plant: 'P2',
-    } as any, 'C1', 'P1');
+    } as any, 1);
 
     expect(result).toEqual(expect.objectContaining({
       templateName: 'BOX',
       category: 'FG',
       remark: 'New',
-      company: 'C1',
-      plant: 'P1',
+      organizationId: 1,
     }));
   });
 
   it('deletes a template within tenant only', async () => {
-    const item = { templateName: 'BOX', category: 'FG', company: 'C1', plant: 'P1' } as LabelTemplate;
+    const item = { templateName: 'BOX', category: 'FG', organizationId: 1 } as LabelTemplate;
     mockRepo.findOne.mockResolvedValue(item);
     mockRepo.remove.mockResolvedValue(item);
 
-    await target.delete('BOX::FG', 'C1', 'P1');
+    await target.delete('BOX::FG', 1);
 
     expect(mockRepo.findOne).toHaveBeenCalledWith({
-      where: { templateName: 'BOX', category: 'FG', company: 'C1', plant: 'P1' },
+      where: { templateName: 'BOX', category: 'FG', organizationId: 1 },
     });
   });
 });

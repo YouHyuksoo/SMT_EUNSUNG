@@ -31,6 +31,17 @@ import { MasterCompanyModule } from './modules/master/master-company.module';
 import { MasterDepartmentModule } from './modules/master/master-department.module';
 import { MasterPartModule } from './modules/master/master-part.module';
 import { MasterEquipModule } from './modules/master/master-equip.module';
+import { MasterBomModule } from './modules/master/master-bom.module';
+import { MasterPartnerModule } from './modules/master/master-partner.module';
+import { MasterProdLineModule } from './modules/master/master-prod-line.module';
+import { MasterWorkerModule } from './modules/master/master-worker.module';
+import { MasterWorkInstructionModule } from './modules/master/master-work-instruction.module';
+import { MasterWorkCalendarModule } from './modules/master/master-work-calendar.module';
+import { MasterLabelModule } from './modules/master/master-label.module';
+import { MasterProcessCapaModule } from './modules/master/master-process-capa.module';
+import { MasterProcessModule } from './modules/master/master-process.module';
+import { MasterRoutingModule } from './modules/master/master-routing.module';
+import { MasterRoutingGroupModule } from './modules/master/master-routing-group.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { SharedModule } from './shared/shared.module';
 
@@ -83,6 +94,39 @@ import { SharedModule } from './shared/shared.module';
 
     // 기준정보 설비정보 (/equipment/equips) — IMCN_MACHINE 기반
     MasterEquipModule,
+
+    // 기준정보 BOM (/master/boms) — ID_ENG_BOM 기반
+    MasterBomModule,
+
+    // 기준정보 거래처정보 (/master/partners)
+    MasterPartnerModule,
+
+    // 기준정보 생산라인정보 (/master/prod-lines)
+    MasterProdLineModule,
+
+    // 기준정보 작업자정보 (/master/workers)
+    MasterWorkerModule,
+
+    // 기준정보 작업지도서 (/master/work-instructions)
+    MasterWorkInstructionModule,
+
+    // 기준정보 생산월력 (/master/work-calendars)
+    MasterWorkCalendarModule,
+
+    // 기준정보 라벨 템플릿 (/master/label-templates)
+    MasterLabelModule,
+
+    // 기준정보 공정 CAPA (/master/process-capas)
+    MasterProcessCapaModule,
+
+    // 기준정보 공정마스터 (/master/processes)
+    MasterProcessModule,
+
+    // 기준정보 공정라우팅 (/master/routings)
+    MasterRoutingModule,
+
+    // 기준정보 라우팅 그룹 (/master/routing-groups)
+    MasterRoutingGroupModule,
 
     // 대시보드 (/dashboard/summary)
     DashboardModule,

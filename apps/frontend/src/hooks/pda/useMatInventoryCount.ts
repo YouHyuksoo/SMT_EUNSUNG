@@ -95,7 +95,7 @@ export function useMatInventoryCount(): UseMatInventoryCountReturn {
     let cancelled = false;
     (async () => {
       try {
-        const { data } = await api.get("/material/physical-inv/session/active");
+        const { data } = await api.get("/material/physical-inv/session/active", { suppressErrorModal: true });
         const sessionData = data?.data ?? data;
         if (!cancelled) {
           if (sessionData) {

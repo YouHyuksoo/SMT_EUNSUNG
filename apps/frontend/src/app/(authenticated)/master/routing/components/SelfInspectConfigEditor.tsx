@@ -54,6 +54,7 @@ export default function SelfInspectConfigEditor({ selectedProcess }: Props) {
     try {
       const res = await api.get("/production/self-inspect/items/all", {
         params: { processCode: selectedProcess.processCode },
+        suppressErrorModal: true,
       });
       const items: SelfInspectItem[] = res.data?.data ?? [];
       setRows(items.map((item) => ({ ...item, dirty: false })));

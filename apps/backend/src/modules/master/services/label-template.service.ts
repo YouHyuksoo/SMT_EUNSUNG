@@ -24,37 +24,29 @@ export class LabelTemplateService {
     private readonly labelTemplateRepository: Repository<LabelTemplate>,
   ) {}
 
-  private tenantWhere(company?: string, plant?: string) {
+  private tenantWhere(organizationId?: number) {
     return {
-      ...(company ? { company } : {}),
-      ...(plant ? { plant } : {}),
+      ...(organizationId != null ? { organizationId } : {}),
     };
   }
 
   private assertSameTenant(
     context: string,
-    row: { company?: string | null; plant?: string | null },
-    company?: string | null,
-    plant?: string | null,
+    row: { organizationId?: number | null },
+    organizationId?: number | null,
   ) {
-    if (company && row.company !== company) {
-      throw new BadRequestException(`${context} 회사 정보가 일치하지 않습니다. request=${company}, row=${row.company ?? 'NULL'}`);
-    }
-    if (plant && row.plant !== plant) {
-      throw new BadRequestException(`${context} 사업장 정보가 일치하지 않습니다. request=${plant}, row=${row.plant ?? 'NULL'}`);
+    if (organizationId != null && row.organizationId !== organizationId) {
+      throw new BadRequestException(`${context} 조직 정보가 일치하지 않습니다. request=${organizationId}, row=${row.organizationId ?? 'NULL'}`);
     }
   }
 
-  async findAll(query: LabelTemplateQueryDto, company?: string, plant?: string) {
+  async findAll(query: LabelTemplateQueryDto, organizationId?: number) {
     const { page = 1, limit = 50, category, search } = query;
 
     const queryBuilder = this.labelTemplateRepository.createQueryBuilder('template');
 
-    if (company) {
-      queryBuilder.andWhere('template.company = :company', { company });
-    }
-    if (plant) {
-      queryBuilder.andWhere('template.plant = :plant', { plant });
+    if (organizationId != null) {
+      queryBuilder.andWhere('template.organizationId = :organizationId', { organizationId });
     }
 
     if (category) {
@@ -77,7 +69,7 @@ export class LabelTemplateService {
     return { data, total, page, limit };
   }
 
-  async findById(id: string, company?: string, plant?: string) {
+  async findById(id: string, organizationId?: number) {
     // id는 "templateName::category" 형식 또는 단순 조회용
     const [templateName, category] = id.includes('::') ? id.split('::') : [id, undefined];
     const where: FindOptionsWhere<LabelTemplate> = category
@@ -85,40 +77,40 @@ export class LabelTemplateService {
       : { templateName };
 
     const template = await this.labelTemplateRepository.findOne({
-      where: { ...where, ...this.tenantWhere(company, plant) },
+      where: { ...where, ...this.tenantWhere(organizationId) },
     });
 
     if (!template) {
       throw new NotFoundException('라벨 템플릿을 찾을 수 없습니다.');
     }
-    this.assertSameTenant('라벨 템플릿', template, company, plant);
+    this.assertSameTenant('라벨 템플릿', template, organizationId);
 
     return template;
   }
 
-  async findByKey(templateName: string, category: string, company?: string, plant?: string) {
+  async findByKey(templateName: string, category: string, organizationId?: number) {
     const template = await this.labelTemplateRepository.findOne({
-      where: { templateName, category, ...this.tenantWhere(company, plant) },
+      where: { templateName, category, ...this.tenantWhere(organizationId) },
     });
 
     if (!template) {
       throw new NotFoundException('라벨 템플릿을 찾을 수 없습니다.');
     }
-    this.assertSameTenant('라벨 템플릿', template, company, plant);
+    this.assertSameTenant('라벨 템플릿', template, organizationId);
 
     return template;
   }
 
-  async create(dto: CreateLabelTemplateDto, company?: string, plant?: string) {
+  async create(dto: CreateLabelTemplateDto, organizationId?: number) {
     const existing = await this.labelTemplateRepository.findOne({
-      where: { templateName: dto.templateName, category: dto.category, ...this.tenantWhere(company, plant) },
+      where: { templateName: dto.templateName, category: dto.category, ...this.tenantWhere(organizationId) },
     });
     if (existing) {
       throw new ConflictException(`이미 등록된 라벨 템플릿입니다: ${dto.templateName}/${dto.category}`);
     }
 
     if (dto.isDefault) {
-      await this.clearDefaultByCategory(dto.category, company, plant);
+      await this.clearDefaultByCategory(dto.category, organizationId);
     }
 
     const entity = this.labelTemplateRepository.create({
@@ -131,18 +123,17 @@ export class LabelTemplateService {
       printMode: dto.printMode ?? 'BROWSER',
       printerId: dto.printerId ?? null,
       useYn: 'Y',
-      company: company || null,
-      plant: plant || null,
+      organizationId,
     });
     const saved = await this.labelTemplateRepository.save(entity);
     return saved;
   }
 
-  async update(id: string, dto: UpdateLabelTemplateDto, company?: string, plant?: string) {
-    const template = await this.findById(id, company, plant);
+  async update(id: string, dto: UpdateLabelTemplateDto, organizationId?: number) {
+    const template = await this.findById(id, organizationId);
 
     if (dto.isDefault) {
-      await this.clearDefaultByCategory(template.category, company, plant);
+      await this.clearDefaultByCategory(template.category, organizationId);
     }
 
     // Build update data manually to handle type conversion
@@ -163,22 +154,21 @@ export class LabelTemplateService {
       ...updateData,
       templateName: template.templateName,
       category: template.category,
-      company: template.company,
-      plant: template.plant,
+      organizationId: template.organizationId,
     });
 
     return updated;
   }
 
-  async delete(id: string, company?: string, plant?: string) {
-    const template = await this.findById(id, company, plant);
+  async delete(id: string, organizationId?: number) {
+    const template = await this.findById(id, organizationId);
 
     await this.labelTemplateRepository.remove(template);
 
     return { templateName: template.templateName, category: template.category, deleted: true };
   }
 
-  private async clearDefaultByCategory(category: string, company?: string, plant?: string): Promise<void> {
+  private async clearDefaultByCategory(category: string, organizationId?: number): Promise<void> {
     const qb = this.labelTemplateRepository
       .createQueryBuilder()
       .update(LabelTemplate)
@@ -186,8 +176,7 @@ export class LabelTemplateService {
       .where('category = :category', { category })
       .andWhere('isDefault = :isDefault', { isDefault: true });
 
-    if (company) qb.andWhere('company = :company', { company });
-    if (plant) qb.andWhere('plant = :plant', { plant });
+    if (organizationId != null) qb.andWhere('organizationId = :organizationId', { organizationId });
 
     await qb.execute();
   }

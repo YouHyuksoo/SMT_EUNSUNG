@@ -42,104 +42,97 @@ describe('WorkCalendarService', () => {
   });
 
   it('finds a calendar within tenant only', async () => {
-    calendarRepo.findOne.mockResolvedValue({ calendarId: 'CAL-2026', company: 'C1', plant: 'P1' } as WorkCalendar);
+    calendarRepo.findOne.mockResolvedValue({ calendarId: 'CAL-2026', organizationId: 1 } as WorkCalendar);
 
-    await target.findById('CAL-2026', 'C1', 'P1');
+    await target.findById('CAL-2026', 1);
 
     expect(calendarRepo.findOne).toHaveBeenCalledWith({
-      where: { calendarId: 'CAL-2026', company: 'C1', plant: 'P1' },
+      where: { calendarId: 'CAL-2026', organizationId: 1 },
     });
   });
 
   it('throws when tenant scoped calendar is missing', async () => {
     calendarRepo.findOne.mockResolvedValue(null);
 
-    await expect(target.findById('CAL-2026', 'C1', 'P1')).rejects.toThrow(NotFoundException);
+    await expect(target.findById('CAL-2026', 1)).rejects.toThrow(NotFoundException);
   });
 
   it('checks duplicate calendar id within tenant when creating', async () => {
     calendarRepo.findOne.mockResolvedValue(null);
-    calendarRepo.create.mockReturnValue({ calendarId: 'CAL-2026', company: 'C1', plant: 'P1' } as WorkCalendar);
-    calendarRepo.save.mockResolvedValue({ calendarId: 'CAL-2026', company: 'C1', plant: 'P1' } as WorkCalendar);
+    calendarRepo.create.mockReturnValue({ calendarId: 'CAL-2026', organizationId: 1 } as WorkCalendar);
+    calendarRepo.save.mockResolvedValue({ calendarId: 'CAL-2026', organizationId: 1 } as WorkCalendar);
 
-    await target.create({ calendarId: 'CAL-2026', calendarYear: '2026' } as any, 'C1', 'P1');
+    await target.create({ calendarId: 'CAL-2026', calendarYear: '2026' } as any, 1);
 
     expect(calendarRepo.findOne).toHaveBeenCalledWith({
-      where: { calendarId: 'CAL-2026', company: 'C1', plant: 'P1' },
+      where: { calendarId: 'CAL-2026', organizationId: 1 },
     });
     expect(calendarRepo.create).toHaveBeenCalledWith(expect.objectContaining({
       calendarId: 'CAL-2026',
-      company: 'C1',
-      plant: 'P1',
+      organizationId: 1,
     }));
   });
 
   it('updates a calendar within tenant and strips key columns from payload', async () => {
-    calendarRepo.findOne.mockResolvedValue({ calendarId: 'CAL-2026', status: 'DRAFT', company: 'C1', plant: 'P1' } as WorkCalendar);
+    calendarRepo.findOne.mockResolvedValue({ calendarId: 'CAL-2026', status: 'DRAFT', organizationId: 1 } as WorkCalendar);
     calendarRepo.update.mockResolvedValue({ affected: 1 } as any);
 
     await target.update('CAL-2026', {
       calendarId: 'OTHER',
       calendarYear: '2027',
-      company: 'C2',
-      plant: 'P2',
-    } as any, 'C1', 'P1');
+    } as any, 1);
 
     expect(calendarRepo.update).toHaveBeenCalledWith(
-      { calendarId: 'CAL-2026', company: 'C1', plant: 'P1' },
+      { calendarId: 'CAL-2026', organizationId: 1 },
       { calendarYear: '2027' },
     );
   });
 
   it('does not pass arbitrary fields from update payload to the repository', async () => {
-    calendarRepo.findOne.mockResolvedValue({ calendarId: 'CAL-2026', status: 'DRAFT', company: 'C1', plant: 'P1' } as WorkCalendar);
+    calendarRepo.findOne.mockResolvedValue({ calendarId: 'CAL-2026', status: 'DRAFT', organizationId: 1 } as WorkCalendar);
     calendarRepo.update.mockResolvedValue({ affected: 1 } as any);
 
     await target.update('CAL-2026', {
       calendarYear: '2027',
       externalSource: 'ERP',
-    } as any, 'C1', 'P1');
+    } as any, 1);
 
     expect(calendarRepo.update).toHaveBeenCalledWith(
-      { calendarId: 'CAL-2026', company: 'C1', plant: 'P1' },
+      { calendarId: 'CAL-2026', organizationId: 1 },
       { calendarYear: '2027' },
     );
   });
 
   it('deletes a calendar and its days within tenant only', async () => {
     const manager = createMock<Pick<Repository<WorkCalendar>, 'delete'>>();
-    calendarRepo.findOne.mockResolvedValue({ calendarId: 'CAL-2026', status: 'DRAFT', company: 'C1', plant: 'P1' } as WorkCalendar);
+    calendarRepo.findOne.mockResolvedValue({ calendarId: 'CAL-2026', status: 'DRAFT', organizationId: 1 } as WorkCalendar);
     tx.run.mockImplementation(async (callback) => callback({ manager } as any));
 
-    await target.delete('CAL-2026', 'C1', 'P1');
+    await target.delete('CAL-2026', 1);
 
     expect(manager.delete).toHaveBeenNthCalledWith(1, WorkCalendarDay, {
       calendarId: 'CAL-2026',
-      company: 'C1',
-      plant: 'P1',
+      organizationId: 1,
     });
     expect(manager.delete).toHaveBeenNthCalledWith(2, WorkCalendar, {
       calendarId: 'CAL-2026',
-      company: 'C1',
-      plant: 'P1',
+      organizationId: 1,
     });
   });
 
   it('confirms and unconfirms a calendar within tenant only', async () => {
-    calendarRepo.findOne.mockResolvedValue({ calendarId: 'CAL-2026', company: 'C1', plant: 'P1' } as WorkCalendar);
+    calendarRepo.findOne.mockResolvedValue({ calendarId: 'CAL-2026', organizationId: 1 } as WorkCalendar);
 
-    await target.confirm('CAL-2026', 'C1', 'P1');
-    await target.unconfirm('CAL-2026', 'C1', 'P1');
+    await target.confirm('CAL-2026', 1);
+    await target.unconfirm('CAL-2026', 1);
 
     expect(calendarRepo.update).toHaveBeenNthCalledWith(1, {
       calendarId: 'CAL-2026',
-      company: 'C1',
-      plant: 'P1',
+      organizationId: 1,
     }, { status: 'CONFIRMED' });
     expect(calendarRepo.update).toHaveBeenNthCalledWith(2, {
       calendarId: 'CAL-2026',
-      company: 'C1',
-      plant: 'P1',
+      organizationId: 1,
     }, { status: 'DRAFT' });
   });
 });

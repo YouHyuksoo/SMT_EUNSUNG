@@ -17,24 +17,20 @@ export class WorkInstructionService {
     private readonly workInstructionRepository: Repository<WorkInstruction>,
   ) {}
 
-  private tenantWhere(company?: string, plant?: string) {
+  private tenantWhere(organizationId?: number) {
     return {
-      ...(company ? { company } : {}),
-      ...(plant ? { plant } : {}),
+      ...(organizationId != null ? { organizationId } : {}),
     };
   }
 
-  async findAll(query: WorkInstructionQueryDto, company?: string, plant?: string) {
+  async findAll(query: WorkInstructionQueryDto, organizationId?: number) {
     const { page = 1, limit = 10, search, itemCode, processCode, useYn } = query;
     const skip = (page - 1) * limit;
 
     const queryBuilder = this.workInstructionRepository.createQueryBuilder('wi')
 
-    if (company) {
-      queryBuilder.andWhere('wi.company = :company', { company });
-    }
-    if (plant) {
-      queryBuilder.andWhere('wi.plant = :plant', { plant });
+    if (organizationId != null) {
+      queryBuilder.andWhere('wi.organizationId = :organizationId', { organizationId });
     }
 
     if (itemCode) {
@@ -80,23 +76,23 @@ export class WorkInstructionService {
     throw new NotFoundException(`잘못된 작업지도서 ID 형식입니다: ${id}`);
   }
 
-  async findById(id: string, company?: string, plant?: string) {
+  async findById(id: string, organizationId?: number) {
     const key = this.parseCompositeId(id);
     const workInstruction = await this.workInstructionRepository.findOne({
-      where: { ...key, ...this.tenantWhere(company, plant) },
+      where: { ...key, ...this.tenantWhere(organizationId) },
     });
     if (!workInstruction) throw new NotFoundException(`작업지도서를 찾을 수 없습니다: ${id}`);
     return workInstruction;
   }
 
-  async create(dto: CreateWorkInstructionDto, company?: string, plant?: string) {
+  async create(dto: CreateWorkInstructionDto, organizationId?: number) {
     const key = {
       itemCode: dto.itemCode,
       processCode: dto.processCode ?? '',
       revision: dto.revision ?? 'A',
     };
     const existing = await this.workInstructionRepository.findOne({
-      where: { ...key, ...this.tenantWhere(company, plant) },
+      where: { ...key, ...this.tenantWhere(organizationId) },
     });
     if (existing) {
       throw new ConflictException(`이미 등록된 작업지도서입니다: ${key.itemCode}/${key.processCode}/${key.revision}`);
@@ -110,15 +106,14 @@ export class WorkInstructionService {
       imageUrl: dto.imageUrl,
       revision: key.revision,
       useYn: dto.useYn ?? 'Y',
-      company: company || null,
-      plant: plant || null,
+      organizationId,
     });
 
     return this.workInstructionRepository.save(workInstruction);
   }
 
-  async update(id: string, dto: UpdateWorkInstructionDto, company?: string, plant?: string) {
-    await this.findById(id, company, plant);
+  async update(id: string, dto: UpdateWorkInstructionDto, organizationId?: number) {
+    await this.findById(id, organizationId);
     const key = this.parseCompositeId(id);
     const updateData: Partial<WorkInstruction> = {
       ...(dto.title !== undefined ? { title: dto.title } : {}),
@@ -126,14 +121,14 @@ export class WorkInstructionService {
       ...(dto.imageUrl !== undefined ? { imageUrl: dto.imageUrl } : {}),
       ...(dto.useYn !== undefined ? { useYn: dto.useYn } : {}),
     };
-    await this.workInstructionRepository.update({ ...key, ...this.tenantWhere(company, plant) }, updateData);
-    return this.findById(id, company, plant);
+    await this.workInstructionRepository.update({ ...key, ...this.tenantWhere(organizationId) }, updateData);
+    return this.findById(id, organizationId);
   }
 
-  async delete(id: string, company?: string, plant?: string) {
-    await this.findById(id, company, plant);
+  async delete(id: string, organizationId?: number) {
+    await this.findById(id, organizationId);
     const key = this.parseCompositeId(id);
-    await this.workInstructionRepository.delete({ ...key, ...this.tenantWhere(company, plant) });
+    await this.workInstructionRepository.delete({ ...key, ...this.tenantWhere(organizationId) });
     return { id };
   }
 }

@@ -92,7 +92,7 @@ describe('RoutingGroupService', () => {
   });
 
   describe('tenant key metadata', () => {
-    it('includes tenant columns in routing hierarchy primary keys', () => {
+    it('includes tenant column in routing hierarchy primary keys', () => {
       const primaryColumnNames = (targetEntity: Function) =>
         getMetadataArgsStorage()
           .columns
@@ -100,7 +100,7 @@ describe('RoutingGroupService', () => {
           .map((column) => column.propertyName);
 
       for (const entity of [RoutingGroup, RoutingProcess, ProcessQualityCondition, RoutingMaterial]) {
-        expect(primaryColumnNames(entity)).toEqual(expect.arrayContaining(['company', 'plant']));
+        expect(primaryColumnNames(entity)).toEqual(expect.arrayContaining(['organizationId']));
       }
     });
   });
@@ -121,12 +121,12 @@ describe('RoutingGroupService', () => {
       };
       mockGroupRepo.createQueryBuilder.mockReturnValue(qb as any);
 
-      await target.findAllGroups({ page: 1, limit: 50 } as any, 'C1', 'P1');
+      await target.findAllGroups({ page: 1, limit: 50 } as any, 1);
 
       expect(qb.leftJoin).toHaveBeenCalledWith(
         'ITEM_MASTERS',
         'p',
-        'g.ITEM_CODE = p.ITEM_CODE AND g.COMPANY = p.COMPANY AND g.PLANT_CD = p.PLANT_CD',
+        'g.ITEM_CODE = p.ITEM_CODE AND g.ORGANIZATION_ID = p.ORGANIZATION_ID',
       );
     });
   });
@@ -153,12 +153,12 @@ describe('RoutingGroupService', () => {
     });
 
     it('should find group within tenant only', async () => {
-      mockGroupRepo.findOne.mockResolvedValue({ routingCode: 'RG01', company: 'C1', plant: 'P1' } as RoutingGroup);
+      mockGroupRepo.findOne.mockResolvedValue({ routingCode: 'RG01', organizationId: 1 } as RoutingGroup);
 
-      await target.findGroupByCode('RG01', 'C1', 'P1');
+      await target.findGroupByCode('RG01', 1);
 
       expect(mockGroupRepo.findOne).toHaveBeenCalledWith({
-        where: { routingCode: 'RG01', company: 'C1', plant: 'P1' },
+        where: { routingCode: 'RG01', organizationId: 1 },
       });
     });
   });
@@ -197,11 +197,11 @@ describe('RoutingGroupService', () => {
       mockGroupRepo.update.mockResolvedValue({ affected: 1 } as any);
 
       // Act
-      const result = await target.updateGroup('RG01', { routingName: 'New' } as any, 'C1', 'P1');
+      const result = await target.updateGroup('RG01', { routingName: 'New' } as any, 1);
 
       // Assert
       expect(mockGroupRepo.update).toHaveBeenCalledWith(
-        { routingCode: 'RG01', company: 'C1', plant: 'P1' },
+        { routingCode: 'RG01', organizationId: 1 },
         expect.objectContaining({ routingName: 'New' }),
       );
     });
@@ -241,12 +241,12 @@ describe('RoutingGroupService', () => {
       mockProcessRepo.find.mockResolvedValue(processes);
 
       // Act
-      const result = await target.findProcesses('RG01', 'C1', 'P1');
+      const result = await target.findProcesses('RG01', 1);
 
       // Assert
       expect(result).toEqual(processes);
       expect(mockProcessRepo.find).toHaveBeenCalledWith({
-        where: { routingCode: 'RG01', company: 'C1', plant: 'P1' },
+        where: { routingCode: 'RG01', organizationId: 1 },
         order: { seq: 'ASC' },
       });
     });
@@ -262,12 +262,12 @@ describe('RoutingGroupService', () => {
       mockProcessRepo.save.mockResolvedValue(created);
 
       // Act
-      const result = await target.createProcess(dto, 'C1', 'P1');
+      const result = await target.createProcess(dto, 1);
 
       // Assert
       expect(result).toEqual(created);
       expect(mockProcessRepo.findOne).toHaveBeenCalledWith({
-        where: { routingCode: 'RG01', seq: 10, company: 'C1', plant: 'P1' },
+        where: { routingCode: 'RG01', seq: 10, organizationId: 1 },
       });
     });
 
@@ -284,14 +284,13 @@ describe('RoutingGroupService', () => {
       mockProcessRepo.create.mockReturnValue(created);
       mockProcessRepo.save.mockResolvedValue(created);
 
-      await target.createProcess(dto, 'C1', 'P1');
+      await target.createProcess(dto, 1);
 
       expect(mockProcessRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({
           processName: 'Process',
           issueLabelType: 'SG',
-          company: 'C1',
-          plant: 'P1',
+          organizationId: 1,
         }),
       );
     });
@@ -309,14 +308,13 @@ describe('RoutingGroupService', () => {
       mockProcessRepo.create.mockReturnValue(created);
       mockProcessRepo.save.mockResolvedValue(created);
 
-      await target.createProcess(dto, 'C1', 'P1');
+      await target.createProcess(dto, 1);
 
       expect(mockProcessRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({
           executionType: 'SUBCON',
           subconVendorCode: 'SUB001',
-          company: 'C1',
-          plant: 'P1',
+          organizationId: 1,
         }),
       );
     });
@@ -333,13 +331,12 @@ describe('RoutingGroupService', () => {
       mockProcessRepo.create.mockReturnValue(created);
       mockProcessRepo.save.mockResolvedValue(created);
 
-      await target.createProcess(dto, 'C1', 'P1');
+      await target.createProcess(dto, 1);
 
       expect(mockProcessRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({
           jobOrderYn: 'N',
-          company: 'C1',
-          plant: 'P1',
+          organizationId: 1,
         }),
       );
     });
@@ -361,10 +358,10 @@ describe('RoutingGroupService', () => {
       mockProcessRepo.create.mockReturnValue(created);
       mockProcessRepo.save.mockResolvedValue(created);
 
-      await target.createProcess(dto, 'C1', 'P1');
+      await target.createProcess(dto, 1);
 
       expect(mockProcessMasterRepo.findOne).toHaveBeenCalledWith({
-        where: { processCode: 'P01', useYn: 'Y', company: 'C1', plant: 'P1' },
+        where: { processCode: 'P01', useYn: 'Y', organizationId: 1 },
       });
       expect(mockProcessRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -393,11 +390,11 @@ describe('RoutingGroupService', () => {
       mockProcessRepo.update.mockResolvedValue({ affected: 1 } as any);
 
       // Act
-      const result = await target.updateProcess('RG01', 10, { processCode: 'P02' } as any, 'C1', 'P1');
+      const result = await target.updateProcess('RG01', 10, { processCode: 'P02' } as any, 1);
 
       // Assert
       expect(mockProcessRepo.update).toHaveBeenCalledWith(
-        { routingCode: 'RG01', seq: 10, company: 'C1', plant: 'P1' },
+        { routingCode: 'RG01', seq: 10, organizationId: 1 },
         expect.objectContaining({ processCode: 'P02' }),
       );
     });
@@ -411,12 +408,11 @@ describe('RoutingGroupService', () => {
         'RG01',
         10,
         { issueLabelType: 'SG' } as any,
-        'C1',
-        'P1',
+        1,
       );
 
       expect(mockProcessRepo.update).toHaveBeenCalledWith(
-        { routingCode: 'RG01', seq: 10, company: 'C1', plant: 'P1' },
+        { routingCode: 'RG01', seq: 10, organizationId: 1 },
         expect.objectContaining({ issueLabelType: 'SG' }),
       );
     });
@@ -430,12 +426,11 @@ describe('RoutingGroupService', () => {
         'RG01',
         10,
         { executionType: 'SUBCON', subconVendorCode: 'SUB001' } as any,
-        'C1',
-        'P1',
+        1,
       );
 
       expect(mockProcessRepo.update).toHaveBeenCalledWith(
-        { routingCode: 'RG01', seq: 10, company: 'C1', plant: 'P1' },
+        { routingCode: 'RG01', seq: 10, organizationId: 1 },
         expect.objectContaining({ executionType: 'SUBCON', subconVendorCode: 'SUB001' }),
       );
     });
@@ -449,12 +444,11 @@ describe('RoutingGroupService', () => {
         'RG01',
         10,
         { jobOrderYn: 'N' } as any,
-        'C1',
-        'P1',
+        1,
       );
 
       expect(mockProcessRepo.update).toHaveBeenCalledWith(
-        { routingCode: 'RG01', seq: 10, company: 'C1', plant: 'P1' },
+        { routingCode: 'RG01', seq: 10, organizationId: 1 },
         expect.objectContaining({ jobOrderYn: 'N' }),
       );
     });
@@ -473,12 +467,11 @@ describe('RoutingGroupService', () => {
         'RG01',
         10,
         { executionType: 'IN_HOUSE' } as any,
-        'C1',
-        'P1',
+        1,
       );
 
       expect(mockProcessRepo.update).toHaveBeenCalledWith(
-        { routingCode: 'RG01', seq: 10, company: 'C1', plant: 'P1' },
+        { routingCode: 'RG01', seq: 10, organizationId: 1 },
         expect.objectContaining({ executionType: 'IN_HOUSE', subconVendorCode: null }),
       );
     });
@@ -497,15 +490,14 @@ describe('RoutingGroupService', () => {
         'RG01',
         10,
         { processCode: 'P02', processName: 'Spoofed Name' } as any,
-        'C1',
-        'P1',
+        1,
       );
 
       expect(mockProcessMasterRepo.findOne).toHaveBeenCalledWith({
-        where: { processCode: 'P02', useYn: 'Y', company: 'C1', plant: 'P1' },
+        where: { processCode: 'P02', useYn: 'Y', organizationId: 1 },
       });
       expect(mockProcessRepo.update).toHaveBeenCalledWith(
-        { routingCode: 'RG01', seq: 10, company: 'C1', plant: 'P1' },
+        { routingCode: 'RG01', seq: 10, organizationId: 1 },
         expect.objectContaining({
           processCode: 'P02',
           processName: 'Master Process 2',
@@ -548,12 +540,12 @@ describe('RoutingGroupService', () => {
       mockConditionRepo.find.mockResolvedValue(conditions);
 
       // Act
-      const result = await target.findConditions('RG01', 10, 'C1', 'P1');
+      const result = await target.findConditions('RG01', 10, 1);
 
       // Assert
       expect(result).toEqual(conditions);
       expect(mockConditionRepo.find).toHaveBeenCalledWith({
-        where: { routingCode: 'RG01', seq: 10, company: 'C1', plant: 'P1' },
+        where: { routingCode: 'RG01', seq: 10, organizationId: 1 },
         order: { conditionSeq: 'ASC' },
       });
     });
@@ -571,8 +563,7 @@ describe('RoutingGroupService', () => {
       mockProcessRepo.findOne.mockResolvedValue({
         routingCode: 'RG01',
         seq: 10,
-        company: 'COMP01',
-        plant: 'PLANT01',
+        organizationId: 1,
       } as RoutingProcess);
       mockEntityManager.delete.mockResolvedValue({ affected: 0 } as any);
       (mockEntityManager.create as jest.Mock).mockReturnValue(created);
@@ -586,12 +577,11 @@ describe('RoutingGroupService', () => {
       expect(mockEntityManager.delete).toHaveBeenCalledWith(ProcessQualityCondition, {
         routingCode: 'RG01',
         seq: 10,
-        company: 'COMP01',
-        plant: 'PLANT01',
+        organizationId: 1,
       });
       expect(mockEntityManager.create).toHaveBeenCalledWith(
         ProcessQualityCondition,
-        expect.objectContaining({ company: 'COMP01', plant: 'PLANT01' }),
+        expect.objectContaining({ organizationId: 1 }),
       );
     });
 
@@ -601,8 +591,7 @@ describe('RoutingGroupService', () => {
       mockProcessRepo.findOne.mockResolvedValue({
         routingCode: 'RG01',
         seq: 10,
-        company: 'COMP01',
-        plant: 'PLANT01',
+        organizationId: 1,
       } as RoutingProcess);
       mockEntityManager.delete.mockResolvedValue({ affected: 0 } as any);
 
@@ -618,27 +607,11 @@ describe('RoutingGroupService', () => {
       mockProcessRepo.findOne.mockResolvedValue({
         routingCode: 'RG01',
         seq: 10,
-        company: 'COMP01',
-        plant: 'PLANT01',
+        organizationId: 1,
       } as RoutingProcess);
 
       await expect(
-        target.bulkSaveConditions('RG01', 10, dto, 'OTHER', 'PLANT01'),
-      ).rejects.toThrow(ConflictException);
-      expect(mockDataSource.transaction).not.toHaveBeenCalled();
-    });
-
-    it('should throw when request tenant is present but routing process tenant is missing', async () => {
-      const dto = { conditions: [{ conditionSeq: 1, conditionCode: 'TEMP' }] } as any;
-      mockProcessRepo.findOne.mockResolvedValue({
-        routingCode: 'RG01',
-        seq: 10,
-        company: null,
-        plant: 'PLANT01',
-      } as RoutingProcess);
-
-      await expect(
-        target.bulkSaveConditions('RG01', 10, dto, 'COMP01', 'PLANT01'),
+        target.bulkSaveConditions('RG01', 10, dto, 2),
       ).rejects.toThrow(ConflictException);
       expect(mockDataSource.transaction).not.toHaveBeenCalled();
     });
@@ -658,7 +631,7 @@ describe('RoutingGroupService', () => {
         { itemCode: 'MAT01', itemName: 'Wire', itemNo: 'W-01', itemType: 'RAW_MATERIAL', unit: 'EA' },
       ] as ItemMaster[]);
 
-      const result = await target.findMaterials('RG01', 10, 'C1', 'P1');
+      const result = await target.findMaterials('RG01', 10, 1);
 
       expect(result).toEqual([
         expect.objectContaining({
@@ -671,14 +644,14 @@ describe('RoutingGroupService', () => {
         }),
       ]);
       expect(mockBomRepo.find).toHaveBeenCalledWith({
-        where: { parentItemCode: 'FG01', useYn: 'Y', company: 'C1', plant: 'P1' },
+        where: { parentItemCode: 'FG01', useYn: 'Y', organizationId: 1 },
         order: { seq: 'ASC' },
       });
       expect(mockMaterialRepo.find).toHaveBeenCalledWith({
-        where: { routingCode: 'RG01', seq: 10, useYn: 'Y', company: 'C1', plant: 'P1' },
+        where: { routingCode: 'RG01', seq: 10, useYn: 'Y', organizationId: 1 },
       });
       expect(mockPartRepo.find).toHaveBeenCalledWith({
-        where: { itemCode: expect.anything(), company: 'C1', plant: 'P1' },
+        where: { itemCode: expect.anything(), organizationId: 1 },
         select: ['itemCode', 'itemName', 'itemNo', 'itemType', 'unit'],
       });
     });
@@ -693,7 +666,7 @@ describe('RoutingGroupService', () => {
       mockPartRepo.find.mockResolvedValue([]);
       mockCircuitRepo.query.mockResolvedValue([]);
 
-      await target.findMaterials('RG01', 10, 'C1', 'P1');
+      await target.findMaterials('RG01', 10, 1);
 
       const [sql, params] = mockCircuitRepo.query.mock.calls[0] as [string, string[]];
       const placeholderOccurrences = [...sql.matchAll(/:\d+/g)].length;
@@ -701,12 +674,9 @@ describe('RoutingGroupService', () => {
       expect(placeholderOccurrences).toBe(params.length);
       expect(params).toEqual([
         'FG01',
-        'C1',
-        'C1',
-        'C1',
-        'P1',
-        'P1',
-        'P1',
+        1,
+        1,
+        1,
         'MAT01',
         'MAT02',
       ]);
@@ -714,7 +684,7 @@ describe('RoutingGroupService', () => {
 
     it('should reject material that is not in BOM for routing item', async () => {
       mockGroupRepo.findOne.mockResolvedValue({ routingCode: 'RG01', itemCode: 'FG01' } as RoutingGroup);
-      mockProcessRepo.findOne.mockResolvedValue({ routingCode: 'RG01', seq: 10, company: 'COMP01', plant: 'PLANT01' } as RoutingProcess);
+      mockProcessRepo.findOne.mockResolvedValue({ routingCode: 'RG01', seq: 10, organizationId: 1 } as RoutingProcess);
       mockBomRepo.find.mockResolvedValue([
         { parentItemCode: 'FG01', childItemCode: 'MAT01', useYn: 'Y' },
       ] as BomMaster[]);
@@ -726,7 +696,7 @@ describe('RoutingGroupService', () => {
 
     it('should save selected materials with process tenant fallback', async () => {
       mockGroupRepo.findOne.mockResolvedValue({ routingCode: 'RG01', itemCode: 'FG01' } as RoutingGroup);
-      mockProcessRepo.findOne.mockResolvedValue({ routingCode: 'RG01', seq: 10, company: 'COMP01', plant: 'PLANT01' } as RoutingProcess);
+      mockProcessRepo.findOne.mockResolvedValue({ routingCode: 'RG01', seq: 10, organizationId: 1 } as RoutingProcess);
       mockBomRepo.find.mockResolvedValue([
         { parentItemCode: 'FG01', childItemCode: 'MAT01', useYn: 'Y' },
       ] as BomMaster[]);
@@ -741,12 +711,11 @@ describe('RoutingGroupService', () => {
       expect(mockEntityManager.delete).toHaveBeenCalledWith(RoutingMaterial, {
         routingCode: 'RG01',
         seq: 10,
-        company: 'COMP01',
-        plant: 'PLANT01',
+        organizationId: 1,
       });
       expect(mockEntityManager.create).toHaveBeenCalledWith(
         RoutingMaterial,
-        expect.objectContaining({ childItemCode: 'MAT01', company: 'COMP01', plant: 'PLANT01' }),
+        expect.objectContaining({ childItemCode: 'MAT01', organizationId: 1 }),
       );
     });
   });
@@ -761,15 +730,15 @@ describe('RoutingGroupService', () => {
       mockProcessRepo.find.mockResolvedValue(processes);
 
       // Act
-      const result = await target.findByItemCode('ITEM01', 'C1', 'P1');
+      const result = await target.findByItemCode('ITEM01', 1);
 
       // Assert
       expect(result).toEqual({ ...group, processes });
       expect(mockGroupRepo.findOne).toHaveBeenCalledWith({
-        where: { itemCode: 'ITEM01', useYn: 'Y', company: 'C1', plant: 'P1' },
+        where: { itemCode: 'ITEM01', useYn: 'Y', organizationId: 1 },
       });
       expect(mockProcessRepo.find).toHaveBeenCalledWith({
-        where: { routingCode: 'RG01', company: 'C1', plant: 'P1' },
+        where: { routingCode: 'RG01', organizationId: 1 },
         order: { seq: 'ASC' },
       });
     });

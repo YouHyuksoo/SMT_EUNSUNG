@@ -39,7 +39,7 @@ export class ProcessCapaService {
   ) {}
 
   /** 공정 CAPA 목록 조회 (공정/품목 JOIN) */
-  async findAll(query: ProcessCapaQueryDto, company: string, plant: string) {
+  async findAll(query: ProcessCapaQueryDto, organizationId: number) {
     const { processCode, itemCode, search, page = 1, limit = 50 } = query;
     const skip = (page - 1) * limit;
 
@@ -49,8 +49,7 @@ export class ProcessCapaService {
       .addSelect(['proc.processCode', 'proc.processName'])
       .addSelect(['part.itemCode', 'part.itemName']);
 
-    if (company) qb.andWhere('capa.company = :company', { company });
-    if (plant) qb.andWhere('capa.plant = :plant', { plant });
+    if (organizationId != null) qb.andWhere('capa.organizationId = :organizationId', { organizationId });
 
     if (processCode) {
       qb.andWhere('capa.processCode = :processCode', { processCode });
@@ -79,12 +78,11 @@ export class ProcessCapaService {
   }
 
   /** 공정 CAPA 생성 (중복 체크 + FK 검증 + 자동계산) */
-  async create(dto: CreateProcessCapaDto, company: string, plant: string) {
+  async create(dto: CreateProcessCapaDto, organizationId: number) {
     // 중복 체크
     const existing = await this.repo.findOne({
       where: {
-        company,
-        plant,
+        organizationId,
         processCode: dto.processCode,
         itemCode: dto.itemCode,
       },
@@ -97,7 +95,7 @@ export class ProcessCapaService {
 
     // FK 검증 - ProcessMaster
     const proc = await this.processRepo.findOne({
-      where: { processCode: dto.processCode, company, plant },
+      where: { processCode: dto.processCode, organizationId },
     });
     if (!proc) {
       throw new BadRequestException(
@@ -107,7 +105,7 @@ export class ProcessCapaService {
 
     // FK 검증 - ItemMaster
     const part = await this.partRepo.findOne({
-      where: { itemCode: dto.itemCode, company, plant },
+      where: { itemCode: dto.itemCode, organizationId },
     });
     if (!part) {
       throw new BadRequestException(
@@ -119,8 +117,7 @@ export class ProcessCapaService {
     const stdUph = dto.stdUph ?? roundStdUph(dto.stdTactTime);
 
     const entity = this.repo.create({
-      company,
-      plant,
+      organizationId,
       processCode: dto.processCode,
       itemCode: dto.itemCode,
       stdTactTime: dto.stdTactTime,
@@ -145,11 +142,10 @@ export class ProcessCapaService {
     processCode: string,
     itemCode: string,
     dto: UpdateProcessCapaDto,
-    company: string,
-    plant: string,
+    organizationId: number,
   ) {
     const existing = await this.repo.findOne({
-      where: { company, plant, processCode, itemCode },
+      where: { organizationId, processCode, itemCode },
     });
     if (!existing) {
       throw new NotFoundException(
@@ -181,9 +177,9 @@ export class ProcessCapaService {
   }
 
   /** 공정 CAPA 삭제 */
-  async delete(processCode: string, itemCode: string, company: string, plant: string) {
+  async delete(processCode: string, itemCode: string, organizationId: number) {
     const existing = await this.repo.findOne({
-      where: { company, plant, processCode, itemCode },
+      where: { organizationId, processCode, itemCode },
     });
     if (!existing) {
       throw new NotFoundException(
@@ -191,7 +187,7 @@ export class ProcessCapaService {
       );
     }
 
-    await this.repo.delete({ company, plant, processCode, itemCode });
+    await this.repo.delete({ organizationId, processCode, itemCode });
     return { processCode, itemCode, deleted: true };
   }
 

@@ -13,7 +13,7 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, Query, HttpCode, HttpStatus, UseInterceptors, UploadedFile } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiConsumes } from '@nestjs/swagger';
-import { Company, Plant } from '../../../common/decorators/tenant.decorator';
+import { OrganizationId } from '../../../common/decorators/tenant.decorator';
 import { diskStorage } from 'multer';
 import { existsSync, mkdirSync } from 'fs';
 import { extname } from 'path';
@@ -68,37 +68,37 @@ export class WorkInstructionController {
 
   @Get()
   @ApiOperation({ summary: '작업지도서 목록 조회' })
-  async findAll(@Query() query: WorkInstructionQueryDto, @Company() company: string, @Plant() plant: string) {
-    const result = await this.workInstructionService.findAll(query, company, plant);
+  async findAll(@Query() query: WorkInstructionQueryDto, @OrganizationId() organizationId: number) {
+    const result = await this.workInstructionService.findAll(query, organizationId);
     return ResponseUtil.paged(result.data, result.total, result.page, result.limit);
   }
 
   @Get(':id')
   @ApiOperation({ summary: '작업지도서 상세 조회' })
-  async findById(@Param('id') id: string, @Company() company: string, @Plant() plant: string) {
-    const data = await this.workInstructionService.findById(id, company, plant);
+  async findById(@Param('id') id: string, @OrganizationId() organizationId: number) {
+    const data = await this.workInstructionService.findById(id, organizationId);
     return ResponseUtil.success(data);
   }
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: '작업지도서 생성' })
-  async create(@Body() dto: CreateWorkInstructionDto, @Company() company: string, @Plant() plant: string) {
-    const data = await this.workInstructionService.create(dto, company, plant);
+  async create(@Body() dto: CreateWorkInstructionDto, @OrganizationId() organizationId: number) {
+    const data = await this.workInstructionService.create(dto, organizationId);
     return ResponseUtil.success(data, '작업지도서가 생성되었습니다.');
   }
 
   @Put(':id')
   @ApiOperation({ summary: '작업지도서 수정' })
-  async update(@Param('id') id: string, @Body() dto: UpdateWorkInstructionDto, @Company() company: string, @Plant() plant: string) {
-    const data = await this.workInstructionService.update(id, dto, company, plant);
+  async update(@Param('id') id: string, @Body() dto: UpdateWorkInstructionDto, @OrganizationId() organizationId: number) {
+    const data = await this.workInstructionService.update(id, dto, organizationId);
     return ResponseUtil.success(data, '작업지도서가 수정되었습니다.');
   }
 
   @Delete(':id')
   @ApiOperation({ summary: '작업지도서 삭제' })
-  async delete(@Param('id') id: string, @Company() company: string, @Plant() plant: string) {
-    await this.workInstructionService.delete(id, company, plant);
+  async delete(@Param('id') id: string, @OrganizationId() organizationId: number) {
+    await this.workInstructionService.delete(id, organizationId);
     return ResponseUtil.success(null, '작업지도서가 삭제되었습니다.');
   }
 }

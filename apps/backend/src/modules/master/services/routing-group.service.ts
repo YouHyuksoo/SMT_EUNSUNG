@@ -1,11 +1,11 @@
-﻿/**
+/**
  * @file src/modules/master/services/routing-group.service.ts
- * @description ?쇱슦??洹몃９ + 怨듭젙?쒖꽌 + ?묓뭹議곌굔 鍮꾩쫰?덉뒪 濡쒖쭅
+ * @description 라우팅 그룹 + 공정순서 + 품질조건 비즈니스 로직
  *
- * 珥덈낫??媛?대뱶:
- * 1. ?쇱슦??洹몃９ CRUD: ROUTING_GROUPS ?뚯씠釉?
- * 2. 怨듭젙?쒖꽌 CRUD: ROUTING_PROCESSES ?뚯씠釉?
- * 3. ?묓뭹議곌굔 CRUD + bulk: PROCESS_QUALITY_CONDITIONS ?뚯씠釉?
+ * 초보자 가이드:
+ * 1. 라우팅 그룹 CRUD: ROUTING_GROUPS 테이블
+ * 2. 공정순서 CRUD: ROUTING_PROCESSES 테이블
+ * 3. 품질조건 CRUD + bulk: PROCESS_QUALITY_CONDITIONS 테이블
  */
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -47,14 +47,13 @@ export class RoutingGroupService {
     private readonly tx: TransactionService,
   ) {}
 
-  private tenantWhere(company?: string, plant?: string) {
+  private tenantWhere(organizationId?: number) {
     return {
-      ...(company ? { company } : {}),
-      ...(plant ? { plant } : {}),
+      ...(organizationId != null ? { organizationId } : {}),
     };
   }
 
-  private async findCircuitOptions(itemCode: string, childCodes: string[], company?: string, plant?: string) {
+  private async findCircuitOptions(itemCode: string, childCodes: string[], organizationId?: number) {
     if (childCodes.length === 0) return [];
     const binds: unknown[] = [itemCode];
     const bind = (value: unknown) => {
@@ -62,11 +61,8 @@ export class RoutingGroupService {
       return `:${binds.length}`;
     };
     let tenantFilter = '';
-    if (company) {
-      tenantFilter += ` AND m.COMPANY = ${bind(company)} AND r.COMPANY = ${bind(company)} AND c.COMPANY = ${bind(company)}`;
-    }
-    if (plant) {
-      tenantFilter += ` AND m.PLANT_CD = ${bind(plant)} AND r.PLANT_CD = ${bind(plant)} AND c.PLANT_CD = ${bind(plant)}`;
+    if (organizationId != null) {
+      tenantFilter += ` AND m.ORGANIZATION_ID = ${bind(organizationId)} AND r.ORGANIZATION_ID = ${bind(organizationId)} AND c.ORGANIZATION_ID = ${bind(organizationId)}`;
     }
     const childPlaceholders = childCodes.map((code) => bind(code)).join(', ');
 
@@ -92,8 +88,7 @@ export class RoutingGroupService {
   private async validateMaterialCircuitLinks(
     itemCode: string,
     materials: BulkSaveRoutingMaterialDto['materials'],
-    company?: string,
-    plant?: string,
+    organizationId?: number,
   ) {
     // 회로 연결이 지정된 자재만 검증 대상
     const targets = materials.filter((m) => m.circuitId != null);
@@ -101,7 +96,7 @@ export class RoutingGroupService {
 
     // 자식코드를 모아 한 번의 쿼리로 회로사양 조회 후 메모리에서 매칭(N+1 제거)
     const childCodes = [...new Set(targets.map((m) => m.childItemCode))];
-    const rows = await this.findCircuitOptions(itemCode, childCodes, company, plant);
+    const rows = await this.findCircuitOptions(itemCode, childCodes, organizationId);
     const valid = new Set(
       (rows as { circuitId: number | string; wireItemCode: string }[]).map(
         (r) => `${r.wireItemCode}::${Number(r.circuitId)}`,
@@ -115,26 +110,25 @@ export class RoutingGroupService {
     }
   }
 
-  private async resolveProcessMaster(processCode: string, company?: string, plant?: string) {
+  private async resolveProcessMaster(processCode: string, organizationId?: number) {
     const processMaster = await this.processMasterRepo.findOne({
-      where: { processCode, useYn: 'Y', ...this.tenantWhere(company, plant) },
+      where: { processCode, useYn: 'Y', ...this.tenantWhere(organizationId) },
     });
     if (!processMaster) throw new NotFoundException(`공정마스터를 찾을 수 없습니다: ${processCode}`);
     return processMaster;
   }
 
-  // ??? ?쇱슦??洹몃９ CRUD ???
+  // ─── 라우팅 그룹 CRUD ───
 
-  async findAllGroups(query: RoutingGroupQueryDto, company?: string, plant?: string) {
+  async findAllGroups(query: RoutingGroupQueryDto, organizationId?: number) {
     const { page = 1, limit = 50, search, useYn, itemType } = query;
     const skip = (page - 1) * limit;
     const qb = this.groupRepo.createQueryBuilder('g')
-      .leftJoin('ITEM_MASTERS', 'p', 'g.ITEM_CODE = p.ITEM_CODE AND g.COMPANY = p.COMPANY AND g.PLANT_CD = p.PLANT_CD')
+      .leftJoin('ITEM_MASTERS', 'p', 'g.ITEM_CODE = p.ITEM_CODE AND g.ORGANIZATION_ID = p.ORGANIZATION_ID')
       .addSelect('p.ITEM_NAME', 'itemName')
       .addSelect('p.ITEM_TYPE', 'itemType');
 
-    if (company) qb.andWhere('g.company = :company', { company });
-    if (plant) qb.andWhere('g.plant = :plant', { plant });
+    if (organizationId != null) qb.andWhere('g.organizationId = :organizationId', { organizationId });
     if (useYn) qb.andWhere('g.useYn = :useYn', { useYn });
     if (itemType) qb.andWhere('p.ITEM_TYPE = :itemType', { itemType });
     if (search) {
@@ -161,28 +155,28 @@ export class RoutingGroupService {
     return { data, total, page, limit };
   }
 
-  /** ?덈ぉ肄붾뱶濡??쇱슦??洹몃９ 議고쉶 (BOM ?섏씠吏?? */
-  async findByItemCode(itemCode: string, company?: string, plant?: string) {
-    const group = await this.groupRepo.findOne({ where: { itemCode, useYn: 'Y', ...this.tenantWhere(company, plant) } });
+  /** 품목코드로 라우팅 그룹 조회 (BOM 페이지용) */
+  async findByItemCode(itemCode: string, organizationId?: number) {
+    const group = await this.groupRepo.findOne({ where: { itemCode, useYn: 'Y', ...this.tenantWhere(organizationId) } });
     if (!group) return null;
 
     const processes = await this.processRepo.find({
-      where: { routingCode: group.routingCode, ...this.tenantWhere(company, plant) },
+      where: { routingCode: group.routingCode, ...this.tenantWhere(organizationId) },
       order: { seq: 'ASC' },
     });
 
     return { ...group, processes };
   }
 
-  async findGroupByCode(routingCode: string, company?: string, plant?: string) {
-    const group = await this.groupRepo.findOne({ where: { routingCode, ...this.tenantWhere(company, plant) } });
-    if (!group) throw new NotFoundException(`?쇱슦??洹몃９??李얠쓣 ???놁뒿?덈떎: ${routingCode}`);
+  async findGroupByCode(routingCode: string, organizationId?: number) {
+    const group = await this.groupRepo.findOne({ where: { routingCode, ...this.tenantWhere(organizationId) } });
+    if (!group) throw new NotFoundException(`라우팅 그룹을 찾을 수 없습니다: ${routingCode}`);
     return group;
   }
 
-  async createGroup(dto: CreateRoutingGroupDto, company?: string, plant?: string) {
-    const existing = await this.groupRepo.findOne({ where: { routingCode: dto.routingCode, ...this.tenantWhere(company, plant) } });
-    if (existing) throw new ConflictException(`?대? 議댁옱?섎뒗 ?쇱슦??洹몃９: ${dto.routingCode}`);
+  async createGroup(dto: CreateRoutingGroupDto, organizationId?: number) {
+    const existing = await this.groupRepo.findOne({ where: { routingCode: dto.routingCode, ...this.tenantWhere(organizationId) } });
+    if (existing) throw new ConflictException(`이미 존재하는 라우팅 그룹: ${dto.routingCode}`);
 
     const group = this.groupRepo.create({
       routingCode: dto.routingCode,
@@ -190,50 +184,49 @@ export class RoutingGroupService {
       itemCode: dto.itemCode ?? null,
       description: dto.description ?? null,
       useYn: dto.useYn ?? 'Y',
-      company,
-      plant,
+      organizationId,
     });
     return this.groupRepo.save(group);
   }
 
-  async updateGroup(routingCode: string, dto: UpdateRoutingGroupDto, company?: string, plant?: string) {
-    await this.findGroupByCode(routingCode, company, plant);
+  async updateGroup(routingCode: string, dto: UpdateRoutingGroupDto, organizationId?: number) {
+    await this.findGroupByCode(routingCode, organizationId);
     const updateData: Partial<Pick<RoutingGroup, 'routingName' | 'itemCode' | 'description' | 'useYn'>> = {
       ...(dto.routingName !== undefined ? { routingName: dto.routingName } : {}),
       ...(dto.itemCode !== undefined ? { itemCode: dto.itemCode } : {}),
       ...(dto.description !== undefined ? { description: dto.description } : {}),
       ...(dto.useYn !== undefined ? { useYn: dto.useYn } : {}),
     };
-    await this.groupRepo.update({ routingCode, ...this.tenantWhere(company, plant) }, updateData);
-    return this.findGroupByCode(routingCode, company, plant);
+    await this.groupRepo.update({ routingCode, ...this.tenantWhere(organizationId) }, updateData);
+    return this.findGroupByCode(routingCode, organizationId);
   }
 
-  async deleteGroup(routingCode: string, company?: string, plant?: string) {
-    await this.findGroupByCode(routingCode, company, plant);
+  async deleteGroup(routingCode: string, organizationId?: number) {
+    await this.findGroupByCode(routingCode, organizationId);
     await this.tx.run(async (queryRunner) => {
-      await queryRunner.manager.delete(ProcessQualityCondition, { routingCode, ...this.tenantWhere(company, plant) });
-      await queryRunner.manager.delete(RoutingMaterial, { routingCode, ...this.tenantWhere(company, plant) });
-      await queryRunner.manager.delete(RoutingProcess, { routingCode, ...this.tenantWhere(company, plant) });
-      await queryRunner.manager.delete(RoutingGroup, { routingCode, ...this.tenantWhere(company, plant) });
+      await queryRunner.manager.delete(ProcessQualityCondition, { routingCode, ...this.tenantWhere(organizationId) });
+      await queryRunner.manager.delete(RoutingMaterial, { routingCode, ...this.tenantWhere(organizationId) });
+      await queryRunner.manager.delete(RoutingProcess, { routingCode, ...this.tenantWhere(organizationId) });
+      await queryRunner.manager.delete(RoutingGroup, { routingCode, ...this.tenantWhere(organizationId) });
     });
     return { routingCode };
   }
 
-  // ??? 怨듭젙?쒖꽌 CRUD ???
+  // ─── 공정순서 CRUD ───
 
-  async findProcesses(routingCode: string, company?: string, plant?: string) {
+  async findProcesses(routingCode: string, organizationId?: number) {
     return this.processRepo.find({
-      where: { routingCode, ...this.tenantWhere(company, plant) },
+      where: { routingCode, ...this.tenantWhere(organizationId) },
       order: { seq: 'ASC' },
     });
   }
 
-  async createProcess(dto: CreateRoutingProcessDto, company?: string, plant?: string) {
+  async createProcess(dto: CreateRoutingProcessDto, organizationId?: number) {
     const existing = await this.processRepo.findOne({
-      where: { routingCode: dto.routingCode, seq: dto.seq, ...this.tenantWhere(company, plant) },
+      where: { routingCode: dto.routingCode, seq: dto.seq, ...this.tenantWhere(organizationId) },
     });
-    if (existing) throw new ConflictException(`?대? 議댁옱?섎뒗 怨듭젙?쒖꽌: ${dto.routingCode} / seq ${dto.seq}`);
-    const processMaster = await this.resolveProcessMaster(dto.processCode, company, plant);
+    if (existing) throw new ConflictException(`이미 존재하는 공정순서: ${dto.routingCode} / seq ${dto.seq}`);
+    const processMaster = await this.resolveProcessMaster(dto.processCode, organizationId);
 
     const proc = this.processRepo.create({
       routingCode: dto.routingCode,
@@ -254,17 +247,16 @@ export class RoutingGroupService {
       inspectMethod: dto.inspectMethod ?? 'DIRECT',
       destructiveYn: dto.destructiveYn ?? 'N',
       sampleQty: dto.sampleQty ?? 1,
-      company,
-      plant,
+      organizationId,
     });
     return this.processRepo.save(proc);
   }
 
-  async updateProcess(routingCode: string, seq: number, dto: UpdateRoutingProcessDto, company?: string, plant?: string) {
-    const existing = await this.processRepo.findOne({ where: { routingCode, seq, ...this.tenantWhere(company, plant) } });
-    if (!existing) throw new NotFoundException(`怨듭젙?쒖꽌瑜?李얠쓣 ???놁뒿?덈떎: ${routingCode}/${seq}`);
+  async updateProcess(routingCode: string, seq: number, dto: UpdateRoutingProcessDto, organizationId?: number) {
+    const existing = await this.processRepo.findOne({ where: { routingCode, seq, ...this.tenantWhere(organizationId) } });
+    if (!existing) throw new NotFoundException(`공정순서를 찾을 수 없습니다: ${routingCode}/${seq}`);
     const processMaster = dto.processCode !== undefined
-      ? await this.resolveProcessMaster(dto.processCode, company, plant)
+      ? await this.resolveProcessMaster(dto.processCode, organizationId)
       : null;
     const nextExecutionType = dto.executionType ?? existing.executionType ?? 'IN_HOUSE';
     const nextSubconVendorCode = dto.executionType !== undefined && nextExecutionType !== 'SUBCON'
@@ -311,64 +303,56 @@ export class RoutingGroupService {
       ...(dto.destructiveYn !== undefined ? { destructiveYn: dto.destructiveYn } : {}),
       ...(dto.sampleQty !== undefined ? { sampleQty: dto.sampleQty } : {}),
     };
-    await this.processRepo.update({ routingCode, seq, ...this.tenantWhere(company, plant) }, updateData);
-    return this.processRepo.findOne({ where: { routingCode, seq, ...this.tenantWhere(company, plant) } });
+    await this.processRepo.update({ routingCode, seq, ...this.tenantWhere(organizationId) }, updateData);
+    return this.processRepo.findOne({ where: { routingCode, seq, ...this.tenantWhere(organizationId) } });
   }
 
-  async deleteProcess(routingCode: string, seq: number, company?: string, plant?: string) {
-    const existing = await this.processRepo.findOne({ where: { routingCode, seq, ...this.tenantWhere(company, plant) } });
-    if (!existing) throw new NotFoundException(`怨듭젙?쒖꽌瑜?李얠쓣 ???놁뒿?덈떎: ${routingCode}/${seq}`);
+  async deleteProcess(routingCode: string, seq: number, organizationId?: number) {
+    const existing = await this.processRepo.findOne({ where: { routingCode, seq, ...this.tenantWhere(organizationId) } });
+    if (!existing) throw new NotFoundException(`공정순서를 찾을 수 없습니다: ${routingCode}/${seq}`);
 
     await this.tx.run(async (queryRunner) => {
-      await queryRunner.manager.delete(ProcessQualityCondition, { routingCode, seq, ...this.tenantWhere(company, plant) });
-      await queryRunner.manager.delete(RoutingMaterial, { routingCode, seq, ...this.tenantWhere(company, plant) });
-      await queryRunner.manager.delete(RoutingProcess, { routingCode, seq, ...this.tenantWhere(company, plant) });
+      await queryRunner.manager.delete(ProcessQualityCondition, { routingCode, seq, ...this.tenantWhere(organizationId) });
+      await queryRunner.manager.delete(RoutingMaterial, { routingCode, seq, ...this.tenantWhere(organizationId) });
+      await queryRunner.manager.delete(RoutingProcess, { routingCode, seq, ...this.tenantWhere(organizationId) });
     });
     return { routingCode, seq };
   }
 
-  // ??? ?묓뭹議곌굔 CRUD ???
+  // ─── 품질조건 CRUD ───
 
-  async findConditions(routingCode: string, seq: number, company?: string, plant?: string) {
+  async findConditions(routingCode: string, seq: number, organizationId?: number) {
     return this.conditionRepo.find({
-      where: { routingCode, seq, ...this.tenantWhere(company, plant) },
+      where: { routingCode, seq, ...this.tenantWhere(organizationId) },
       order: { conditionSeq: 'ASC' },
     });
   }
 
-  private async resolveProcessTenant(routingCode: string, seq: number, company?: string, plant?: string) {
+  private async resolveProcessTenant(routingCode: string, seq: number, organizationId?: number) {
     const process = await this.processRepo.findOne({
       where: { routingCode, seq },
-      select: ['routingCode', 'seq', 'company', 'plant'],
+      select: ['routingCode', 'seq', 'organizationId'],
     });
     if (!process) throw new NotFoundException(`공정순서를 찾을 수 없습니다: ${routingCode}/${seq}`);
 
-    if (company && company !== process.company) {
+    if (organizationId != null && organizationId !== process.organizationId) {
       throw new ConflictException(
-        `요청 회사와 라우팅 공정 회사가 일치하지 않습니다. request=${company}, process=${process.company}`,
-      );
-    }
-    if (plant && plant !== process.plant) {
-      throw new ConflictException(
-        `요청 사업장과 라우팅 공정 사업장이 일치하지 않습니다. request=${plant}, process=${process.plant}`,
+        `요청 조직과 라우팅 공정 조직이 일치하지 않습니다. request=${organizationId}, process=${process.organizationId}`,
       );
     }
 
-    return {
-      company: company ?? process.company,
-      plant: plant ?? process.plant,
-    };
+    return { organizationId: organizationId ?? process.organizationId };
   }
 
   async bulkSaveConditions(
     routingCode: string, seq: number,
     dto: BulkSaveConditionDto,
-    company?: string, plant?: string,
+    organizationId?: number,
   ) {
-    const tenant = await this.resolveProcessTenant(routingCode, seq, company, plant);
+    const tenant = await this.resolveProcessTenant(routingCode, seq, organizationId);
 
     return this.tx.run(async (queryRunner) => {
-      await queryRunner.manager.delete(ProcessQualityCondition, { routingCode, seq, company: tenant.company, plant: tenant.plant });
+      await queryRunner.manager.delete(ProcessQualityCondition, { routingCode, seq, organizationId: tenant.organizationId });
       if (dto.conditions.length === 0) return [];
 
       const entities = dto.conditions.map((c) =>
@@ -381,20 +365,19 @@ export class RoutingGroupService {
           unit: c.unit,
           equipInterfaceYn: c.equipInterfaceYn ?? 'N',
           useYn: 'Y',
-          company: tenant.company,
-          plant: tenant.plant,
+          organizationId: tenant.organizationId,
         }),
       );
       return queryRunner.manager.save(ProcessQualityCondition, entities);
     });
   }
 
-  async findMaterials(routingCode: string, seq: number, company?: string, plant?: string) {
-    const group = await this.findGroupByCode(routingCode, company, plant);
+  async findMaterials(routingCode: string, seq: number, organizationId?: number) {
+    const group = await this.findGroupByCode(routingCode, organizationId);
     if (!group.itemCode) return [];
 
     const bomItems = await this.bomRepo.find({
-      where: { parentItemCode: group.itemCode, useYn: 'Y', ...this.tenantWhere(company, plant) },
+      where: { parentItemCode: group.itemCode, useYn: 'Y', ...this.tenantWhere(organizationId) },
       order: { seq: 'ASC' },
     });
     if (bomItems.length === 0) return [];
@@ -402,17 +385,17 @@ export class RoutingGroupService {
     const childCodes = bomItems.map((b) => b.childItemCode);
     const [materials, parts] = await Promise.all([
       this.materialRepo.find({
-        where: { routingCode, seq, useYn: 'Y', ...this.tenantWhere(company, plant) },
+        where: { routingCode, seq, useYn: 'Y', ...this.tenantWhere(organizationId) },
       }),
       this.partRepo.find({
-        where: { itemCode: In(childCodes), ...this.tenantWhere(company, plant) },
+        where: { itemCode: In(childCodes), ...this.tenantWhere(organizationId) },
         select: ['itemCode', 'itemName', 'itemNo', 'itemType', 'unit'],
       }),
     ]);
 
     const materialMap = new Map(materials.map((m) => [m.childItemCode, m]));
     const partMap = new Map(parts.map((p) => [p.itemCode, p]));
-    const circuitOptions = await this.findCircuitOptions(group.itemCode, childCodes, company, plant);
+    const circuitOptions = await this.findCircuitOptions(group.itemCode, childCodes, organizationId);
     const circuitOptionsByWire = new Map<string, any[]>();
     for (const circuit of circuitOptions) {
       const key = String(circuit.wireItemCode);
@@ -450,14 +433,14 @@ export class RoutingGroupService {
   async bulkSaveMaterials(
     routingCode: string, seq: number,
     dto: BulkSaveRoutingMaterialDto,
-    company?: string, plant?: string,
+    organizationId?: number,
   ) {
-    const group = await this.findGroupByCode(routingCode, company, plant);
+    const group = await this.findGroupByCode(routingCode, organizationId);
     if (!group.itemCode) throw new ConflictException(`라우팅 그룹에 품목이 연결되어 있지 않습니다: ${routingCode}`);
 
-    const tenant = await this.resolveProcessTenant(routingCode, seq, company, plant);
+    const tenant = await this.resolveProcessTenant(routingCode, seq, organizationId);
     const bomItems = await this.bomRepo.find({
-      where: { parentItemCode: group.itemCode, useYn: 'Y', ...this.tenantWhere(company, plant) },
+      where: { parentItemCode: group.itemCode, useYn: 'Y', ...this.tenantWhere(organizationId) },
       select: ['parentItemCode', 'childItemCode', 'revision'],
     });
     const bomChildSet = new Set(bomItems.map((b) => b.childItemCode));
@@ -465,10 +448,10 @@ export class RoutingGroupService {
     if (invalid) {
       throw new ConflictException(`BOM에 없는 자재는 공정에 매핑할 수 없습니다: ${invalid.childItemCode}`);
     }
-    await this.validateMaterialCircuitLinks(group.itemCode, dto.materials, company, plant);
+    await this.validateMaterialCircuitLinks(group.itemCode, dto.materials, organizationId);
 
     return this.tx.run(async (queryRunner) => {
-      await queryRunner.manager.delete(RoutingMaterial, { routingCode, seq, company: tenant.company, plant: tenant.plant });
+      await queryRunner.manager.delete(RoutingMaterial, { routingCode, seq, organizationId: tenant.organizationId });
       if (dto.materials.length === 0) return [];
 
       const entities = dto.materials.map((m) =>
@@ -480,8 +463,7 @@ export class RoutingGroupService {
           allocQty: m.allocQty ?? 0,
           issueMethod: m.issueMethod ?? 'BACKFLUSH',
           useYn: 'Y',
-          company: tenant.company,
-          plant: tenant.plant,
+          organizationId: tenant.organizationId,
         }),
       );
       return queryRunner.manager.save(RoutingMaterial, entities);

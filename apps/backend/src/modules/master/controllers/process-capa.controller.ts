@@ -13,7 +13,7 @@ import {
   Body, Param, Query, HttpCode, HttpStatus,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
-import { Company, Plant } from '../../../common/decorators/tenant.decorator';
+import { OrganizationId } from '../../../common/decorators/tenant.decorator';
 import { ProcessCapaService } from '../services/process-capa.service';
 import {
   CreateProcessCapaDto,
@@ -31,10 +31,9 @@ export class ProcessCapaController {
   @ApiOperation({ summary: '공정 CAPA 목록 조회' })
   async findAll(
     @Query() query: ProcessCapaQueryDto,
-    @Company() co: string,
-    @Plant() pl: string,
+    @OrganizationId() organizationId: number,
   ) {
-    const result = await this.svc.findAll(query, co, pl);
+    const result = await this.svc.findAll(query, organizationId);
     return ResponseUtil.paged(result.data, result.total, result.page, result.limit);
   }
 
@@ -43,11 +42,10 @@ export class ProcessCapaController {
   @ApiOperation({ summary: '공정 CAPA 생성' })
   async create(
     @Body() dto: CreateProcessCapaDto,
-    @Company() co: string,
-    @Plant() pl: string,
+    @OrganizationId() organizationId: number,
   ) {
     return ResponseUtil.success(
-      await this.svc.create(dto, co, pl),
+      await this.svc.create(dto, organizationId),
       '공정 CAPA가 생성되었습니다.',
     );
   }
@@ -58,11 +56,10 @@ export class ProcessCapaController {
     @Param('processCode') processCode: string,
     @Param('itemCode') itemCode: string,
     @Body() dto: UpdateProcessCapaDto,
-    @Company() co: string,
-    @Plant() pl: string,
+    @OrganizationId() organizationId: number,
   ) {
     return ResponseUtil.success(
-      await this.svc.update(processCode, itemCode, dto, co, pl),
+      await this.svc.update(processCode, itemCode, dto, organizationId),
       '공정 CAPA가 수정되었습니다.',
     );
   }
@@ -72,10 +69,9 @@ export class ProcessCapaController {
   async delete(
     @Param('processCode') processCode: string,
     @Param('itemCode') itemCode: string,
-    @Company() co: string,
-    @Plant() pl: string,
+    @OrganizationId() organizationId: number,
   ) {
-    await this.svc.delete(processCode, itemCode, co, pl);
+    await this.svc.delete(processCode, itemCode, organizationId);
     return ResponseUtil.success(null, '공정 CAPA가 삭제되었습니다.');
   }
 }

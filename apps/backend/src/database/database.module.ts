@@ -37,6 +37,24 @@ import { SchedulerNotification } from '../entities/scheduler-notification.entity
 import { EquipMaster } from '../entities/equip-master.entity';
 import { EquipBomRel } from '../entities/equip-bom-rel.entity';
 import { EquipBomItem } from '../entities/equip-bom-item.entity';
+import { BomMaster } from '../entities/bom-master.entity';
+import { PartnerMaster } from '../entities/partner-master.entity';
+import { ProdLineMaster } from '../entities/prod-line-master.entity';
+import { WorkerMaster } from '../entities/worker-master.entity';
+import { WorkInstruction } from '../entities/work-instruction.entity';
+import { WorkCalendar } from '../entities/work-calendar.entity';
+import { WorkCalendarDay } from '../entities/work-calendar-day.entity';
+import { ShiftPattern } from '../entities/shift-pattern.entity';
+import { ProcessMaster } from '../entities/process-master.entity';
+import { LabelTemplate } from '../entities/label-template.entity';
+import { ProcessCapa } from '../entities/process-capa.entity';
+import { ProcessEquipment } from '../entities/process-equipment.entity';
+import { ProcessMap } from '../entities/process-map.entity';
+import { RoutingGroup } from '../entities/routing-group.entity';
+import { RoutingProcess } from '../entities/routing-process.entity';
+import { ProcessQualityCondition } from '../entities/process-quality-condition.entity';
+import { RoutingMaterial } from '../entities/routing-material.entity';
+import { HarnessCircuitSpec } from '../entities/harness-circuit-spec.entity';
 
 @Global()
 @Module({
@@ -91,6 +109,24 @@ import { EquipBomItem } from '../entities/equip-bom-item.entity';
             EquipMaster,
             EquipBomRel,
             EquipBomItem,
+            BomMaster,
+            PartnerMaster,
+            ProdLineMaster,
+            WorkerMaster,
+            WorkInstruction,
+            WorkCalendar,
+            WorkCalendarDay,
+            ShiftPattern,
+            ProcessMaster,
+            LabelTemplate,
+            ProcessCapa,
+            ProcessEquipment,
+            ProcessMap,
+            RoutingGroup,
+            RoutingProcess,
+            ProcessQualityCondition,
+            RoutingMaterial,
+            HarnessCircuitSpec,
           ],
           migrations: [],
           migrationsRun: false,

@@ -20,24 +20,20 @@ export class WorkerService {
     private readonly workerRepository: Repository<WorkerMaster>,
   ) {}
 
-  private tenantWhere(company?: string, plant?: string) {
+  private tenantWhere(organizationId?: number) {
     return {
-      ...(company ? { company } : {}),
-      ...(plant ? { plant } : {}),
+      ...(organizationId != null ? { organizationId } : {}),
     };
   }
 
-  async findAll(query: WorkerQueryDto, company?: string, plant?: string) {
+  async findAll(query: WorkerQueryDto, organizationId?: number) {
     const { page = 1, limit = 10, search, dept, useYn } = query;
     const skip = (page - 1) * limit;
 
     const queryBuilder = this.workerRepository.createQueryBuilder('worker')
 
-    if (company) {
-      queryBuilder.andWhere('worker.company = :company', { company });
-    }
-    if (plant) {
-      queryBuilder.andWhere('worker.plant = :plant', { plant });
+    if (organizationId != null) {
+      queryBuilder.andWhere('worker.organizationId = :organizationId', { organizationId });
     }
 
     if (dept) {
@@ -74,9 +70,9 @@ export class WorkerService {
     return { data: parsedData, total, page, limit };
   }
 
-  async findById(workerCode: string, company?: string, plant?: string) {
+  async findById(workerCode: string, organizationId?: number) {
     const item = await this.workerRepository.findOne({
-      where: { workerCode, ...this.tenantWhere(company, plant) },
+      where: { workerCode, ...this.tenantWhere(organizationId) },
     });
     if (!item) throw new NotFoundException(`작업자를 찾을 수 없습니다: ${workerCode}`);
 
@@ -93,16 +89,16 @@ export class WorkerService {
    * 2차: QR에 workerCode가 담긴 경우 대비해 WORKER_CODE로 재시도
    * 둘 다 없으면 NotFoundException 발생
    */
-  async findByQrCode(qrCode: string, company?: string, plant?: string) {
+  async findByQrCode(qrCode: string, organizationId?: number) {
     // 1차 시도: qrCode 컬럼으로 조회
     let item = await this.workerRepository.findOne({
-      where: { qrCode, ...this.tenantWhere(company, plant) },
+      where: { qrCode, ...this.tenantWhere(organizationId) },
     });
 
     // 2차 시도: workerCode로 조회 (QR에 사번이 인쇄된 경우)
     if (!item) {
       item = await this.workerRepository.findOne({
-        where: { workerCode: qrCode, ...this.tenantWhere(company, plant) },
+        where: { workerCode: qrCode, ...this.tenantWhere(organizationId) },
       });
     }
 
@@ -115,9 +111,9 @@ export class WorkerService {
     };
   }
 
-  async create(dto: CreateWorkerDto, company?: string, plant?: string) {
+  async create(dto: CreateWorkerDto, organizationId?: number) {
     const existing = await this.workerRepository.findOne({
-      where: { workerCode: dto.workerCode, ...this.tenantWhere(company, plant) },
+      where: { workerCode: dto.workerCode, ...this.tenantWhere(organizationId) },
     });
     if (existing) throw new ConflictException(`이미 존재하는 작업자 코드입니다: ${dto.workerCode}`);
 
@@ -136,8 +132,7 @@ export class WorkerService {
       processIds: dto.processIds ? JSON.stringify(dto.processIds) : null,
       remark: dto.remark,
       useYn: dto.useYn ?? 'Y',
-      company: company || null,
-      plant: plant || null,
+      organizationId,
     });
 
     const saved = await this.workerRepository.save(worker);
@@ -147,8 +142,8 @@ export class WorkerService {
     };
   }
 
-  async update(workerCode: string, dto: UpdateWorkerDto, company?: string, plant?: string) {
-    await this.findById(workerCode, company, plant);
+  async update(workerCode: string, dto: UpdateWorkerDto, organizationId?: number) {
+    await this.findById(workerCode, organizationId);
 
     const updateData: Partial<Pick<WorkerMaster,
       | 'workerName'
@@ -180,13 +175,13 @@ export class WorkerService {
       ...(dto.useYn !== undefined ? { useYn: dto.useYn } : {}),
     };
 
-    await this.workerRepository.update({ workerCode, ...this.tenantWhere(company, plant) }, updateData);
-    return this.findById(workerCode, company, plant);
+    await this.workerRepository.update({ workerCode, ...this.tenantWhere(organizationId) }, updateData);
+    return this.findById(workerCode, organizationId);
   }
 
-  async delete(workerCode: string, company?: string, plant?: string) {
-    await this.findById(workerCode, company, plant);
-    await this.workerRepository.delete({ workerCode, ...this.tenantWhere(company, plant) });
+  async delete(workerCode: string, organizationId?: number) {
+    await this.findById(workerCode, organizationId);
+    await this.workerRepository.delete({ workerCode, ...this.tenantWhere(organizationId) });
     return { workerCode };
   }
 }

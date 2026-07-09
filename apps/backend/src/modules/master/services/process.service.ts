@@ -97,7 +97,7 @@ export class ProcessService {
   }
 
   async update(processCode: string, dto: UpdateProcessDto, organizationId?: number) {
-    await this.findById(processCode, company, plant);
+    await this.findById(processCode, organizationId);
     const updateData: Partial<Pick<ProcessMaster,
       | 'processName'
       | 'processType'
@@ -116,17 +116,17 @@ export class ProcessService {
       ...(dto.useYn !== undefined ? { useYn: dto.useYn } : {}),
     };
     await this.processRepository.update({ processCode, ...this.tenantWhere(organizationId) }, updateData);
-    return this.findById(processCode, company, plant);
+    return this.findById(processCode, organizationId);
   }
 
   async delete(processCode: string, organizationId?: number) {
-    await this.findById(processCode, company, plant);
+    await this.findById(processCode, organizationId);
     await this.processRepository.delete({ processCode, ...this.tenantWhere(organizationId) });
     return { processCode };
   }
 
   async findEquipments(processCode: string, organizationId?: number) {
-    await this.findById(processCode, company, plant);
+    await this.findById(processCode, organizationId);
 
     const assignments = await this.processEquipmentRepository.find({
       where: { processCode, useYn: 'Y', ...this.tenantWhere(organizationId) },
@@ -159,7 +159,7 @@ export class ProcessService {
   }
 
   async assignEquipment(processCode: string, equipCode: string, organizationId?: number) {
-    await this.findById(processCode, company, plant);
+    await this.findById(processCode, organizationId);
 
     const equipment = await this.equipRepository.findOne({
       where: { equipCode, ...this.tenantWhere(organizationId) },
@@ -196,7 +196,7 @@ export class ProcessService {
   }
 
   async removeEquipment(processCode: string, equipCode: string, organizationId?: number) {
-    await this.findById(processCode, company, plant);
+    await this.findById(processCode, organizationId);
     await this.processEquipmentRepository.delete({ processCode, equipCode, ...this.tenantWhere(organizationId) });
     return { processCode, equipCode };
   }
