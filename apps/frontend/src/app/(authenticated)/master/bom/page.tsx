@@ -31,7 +31,7 @@ export default function BomPage() {
   const [routingPanelOpen, setRoutingPanelOpen] = useState(false);
   const [activeDetailTab, setActiveDetailTab] = useState<"conditions" | "materials">("conditions");
   const [searchText, setSearchText] = useState("");
-  const [typeFilter, setTypeFilter] = useState("FINISHED");
+  const [typeFilter, setTypeFilter] = useState("");
   const [bomDateMode, setBomDateMode] = useState<"effective" | "all">("effective");
   const [effectiveDate, setEffectiveDate] = useState(getTodayLocal());
   const [loadingParents, setLoadingParents] = useState(false);

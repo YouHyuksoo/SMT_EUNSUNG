@@ -45,6 +45,11 @@ test("BOM page supports date 기준 조회 and all-history lookup", () => {
   assert.match(pageSource, /effectiveDate=\{bomDateMode === "effective" \? effectiveDate : undefined\}/);
 });
 
+test("BOM parent list does not hide live ESDB item type codes by default", () => {
+  assert.match(pageSource, /const \[typeFilter, setTypeFilter\] = useState\(""\)/);
+  assert.doesNotMatch(pageSource, /const \[typeFilter, setTypeFilter\] = useState\("FINISHED"\)/);
+});
+
 test("BOM upload preview exposes effective and completion dates", () => {
   assert.match(bomUploadModalSource, /validFrom: string \| null/);
   assert.match(bomUploadModalSource, /validTo: string \| null/);
