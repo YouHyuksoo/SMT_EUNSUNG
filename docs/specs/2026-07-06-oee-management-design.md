@@ -2,6 +2,7 @@
 
 - 작성일: 2026-07-06
 - 근거: `260526_MES 고도화 제안서_REV1.pdf` (은성전자 홍성공장 MES 고도화 — Vision 2030)
+- 참조: `설비로그테이블_ESFA.xlsx` (ESFA 설비 자동수집 로그/프로시저 매핑)
 - 대상 저장소: Infinity21 MES SMT_EUNSUNG (은성 Oracle MES 위 Next.js WebDisplay)
 - 상태: 구현 전 설계 (specs)
 
@@ -10,7 +11,13 @@
 ## 1. 목적과 범위
 
 ### 1.1 목적
-제안서의 **OEE(생산종합효율) 관리 효율화** 요구를 이 저장소에 구현한다.
+제안서(표지=0페이지, 1페이지=MES As-Is/To-Be)는 현재 MES의 핵심 문제로
+**시간가동율·성능율·양품율 관리 미흡**을 지적하며, 특히
+**각 공정별 실제 가동 시간 대비 계획 가동 시간 체계화**가 불가능한 상황을 전제로 한다.
+즉, 가동율 계산에 필요한 실제가동시간·계획가동시간·비가동사유 데이터가 현재 MES에
+체계화되어 있지 않으며, 이 문제를 해결하는 것이 본 설계의 출발점이다.
+
+이에 따라 본 설계는 제안서의 **OEE(생산종합효율) 관리 효율화** 요구를 이 저장소에 구현한다.
 
 ```
 OEE = 가동율 × 성능율 × 양품율
@@ -46,15 +53,39 @@ OEE = 가동율 × 성능율 × 양품율
 > 계획가동·가동/비가동·생산수량·표준CT를 **모두 자체 테이블로 신규 구현**하며, 아래 기존 자산을
 > **런타임에 조회·조인하지 않는다**. 아래 표는 "우리가 무엇을 새로 만들어야 하는지"의 구조 참고일 뿐이다.
 
+이 원칙의 이유는 제안서 1페이지(MES As-Is/To-Be) 진단과 같다. 현재 MES는 가동율 계산의
+원천 데이터인 실제가동시간·비가동시간·비가동사유·계획가동시간을 하나의 체계로 관리하지 않는다.
+따라서 가동율 데이터는 기존 MES 조회로는 확보할 수 없으며, **OEE 도메인에서 신규 수집·관리하는
+것만이 제안서가 요구하는 가동율 관리 체계화를 달성하는 유일한 방법이다.**
+
 | 용도(설계 참고) | 기존 자산(참조만) | OEE 도메인 대응(신규 구현) |
 |---|---|---|
 | 설비/라인 식별 구조 | `IMCN_MACHINE`, `IP_PRODUCT_LINE` | `OEE_RESOURCE.ref_code` (문자 참조값, FK 아님) |
 | 표준시간 구조 | `IP_PRODUCT_MODEL_ST_MASTER` | `OEE_RESOURCE.ideal_ct` |
-| 생산수량/양품/불량 구조 | `F_GET_RUN_ACTUAL_QTY`, `F_GET_RUN_NG_QTY` 등 | `OEE_PRODUCTION_RESULT` (신규, §3-⑥) |
+| 생산수량/양품/불량 구조 | 기존 집계 함수(`F_GET_RUN_ACTUAL_QTY`, `F_GET_RUN_NG_QTY` 등) | `OEE_PRODUCTION_RESULT` (신규, §3-⑥, 집계 적재) |
 | 근무일 구조 | `IP_PRODUCT_COMPANY_CALENDAR` | `OEE_WORK_CALENDAR` (신규, §3-⑦) |
 | 근무시간대·휴식 구조 | `ICOM_WORKTIME_RANGES` (`RANGE_TYPE`, `START_TIME/END_TIME`, 휴식) | `OEE_WORKTIME_RANGE` (신규, §3-⑦) |
 
-> ⚠️ 구현 착수 시 확인: 작업자 사번 체계(문자열 저장), 공정별 근무패턴(주/야 정의), 생산수량 수집 경로(설비/PDA 신호 또는 입력).
+### 2.1 자동수집 설비 검사 데이터 참조
+ESFA_EXTDB 확인 결과, `설비로그테이블_ESFA.xlsx`의 `P_INSERT_*` 프로시저들은 대부분 `IQ_MACHINE_INSPECT_DATA_*` 테이블에 자동수집 데이터를 저장한다. 이 데이터는 **생산수량·양품·불량 산출 원천으로 직접 사용하지 않는다.** OEE 생산/양품/불량 수량은 기존 집계 함수 결과를 사용하고, 설비 자동수집 데이터는 공정별 대상 설비 확인, 자동수집 여부 확인, 검사결과/검사일자 참조에만 사용한다.
+
+| 공정 구분 | 프로시저/설비 | 대상 테이블 | 결과 컬럼 | 일자 컬럼 | OEE 활용 |
+|---|---|---|---|---|---|
+| SMT | REFLOW | `IQ_MACHINE_INSPECT_DATA_REFLOW` | 없음 | `MEASURE_DATE` | 설비조건/가동 참고 후보 |
+| SMT | AOI | `IQ_MACHINE_INSPECT_DATA_AOI` | `RESULT`, `REVIEW_RESULT` | `INSPECT_DATE` | 검사결과/검사일자 참조 |
+| SMT | SPI | `IQ_MACHINE_INSPECT_DATA_SPI` | `RESULT`, `REVIEW_RESULT` | `INSPECT_DATE` | 검사결과/검사일자 참조 |
+| SMT | ICT | `IQ_MACHINE_INSPECT_DATA_ICT` | `RESULT` | `INSPECT_DATE` | 검사결과/검사일자 참조 |
+| SMT | LMS/Marking | `IQ_MACHINE_INSPECT_DATA_MK` | `RESULT_CODE` | `DATESET` | 검사/마킹 결과 후보 |
+| SMT | SOLDER | `IQ_MACHINE_INSPECT_DATA_SOLDER` | 없음 | `MEASURE_DATE`, `TIME` | 설비조건 참고 후보 |
+| SMT | SP | `IQ_MACHINE_INSPECT_DATA_SP` | `RESULT` | `INSPECT_DATE` | 검사결과/검사일자 참조 |
+| SMT 후보 | SPLIT(MOUNTER 작업) | `IQ_MACHINE_INSPECT_DATA_SPLIT` | 없음 | `SPLIT_DATE`, `SPLIT_TIME` | 대상 설비 여부 재확인 |
+| IMD | WAVE/WAVE FLUX | `IQ_MACHINE_INSPECT_DATA_WAVE1`, `IQ_MACHINE_INSPECT_DATA_WAVE2` | `RESULT` | `INSPECT_DATE` | 검사/설비결과 후보 |
+| IMD | ICT2 | `IQ_MACHINE_INSPECT_DATA_ICT2` | `RESULT` | `INSPECT_DATE` | 검사결과/검사일자 참조 |
+| 성능검사 | AE-EV/CMA/DN8/ECM/ETT28/STWM/O1XX/LX2/EOP/MOC28/TTM28 | `IQ_MACHINE_INSPECT_DATA_AEEV`, `CMA`, `DN8`, `ECM`, `ETT28`, `STWM`, `O1XX`, `LX2`, `EOP`, `MOC28`, `TTM28` | `RESULT` | `INSPECT_DATE` | 검사결과/검사일자 참조 |
+
+주의: 엑셀의 `P_INSERT_PERFORM_DN8_RAW`는 오타이며, 실제 프로시저는 `P_INSERT_PERFORM_DN8A_RAW`, 대상 테이블은 `IQ_MACHINE_INSPECT_DATA_DN8`이다. 자동수집 테이블의 결과 컬럼명은 대부분 `INSPECT_RESULT`가 아니라 `RESULT`이며, AOI/SPI는 `REVIEW_RESULT`, LMS/Marking은 `RESULT_CODE`도 함께 검토한다. IMD 시트는 SMT 복사본 성격이 있으므로 IMD 대상 산정 시 SMT 설비를 제외한다.
+
+> ⚠️ 구현 착수 시 확인: 작업자 사번 체계(문자열 저장), 공정별 근무패턴(주/야 정의), 자동수집 결과값의 합격/불합격 코드 표준화, 설비별 OEE 대상 여부.
 
 ---
 
@@ -76,18 +107,25 @@ use_yn
 sort_order
 ```
 
-### ② `OEE_DOWNTIME_REASON` — 비가동사유 코드마스터
-제안서 로스 분류(자재대기·셋업/단품교체·설비고장·작업자부재·미세정지·속도저하 등)를 코드화, 6대 로스 버킷으로 그룹핑.
+### ② `OEE_LOSS_REASON` — OEE 저하요인 코드마스터
+제안서 2페이지의 OEE 저하요인(고장정지·셋업/단품교체·자재대기·미세정지·속도저하·불량·Rework·시작품 손실)을 코드화한다. 계산 귀속은 `oee_factor` 하나로만 강제하고, 분석 분류는 `loss_category`로 별도 관리한다. 한 사유가 가동율·성능율·양품율에 중복 귀속되면 OEE 손실이 이중 계산될 수 있으므로 허용하지 않는다.
 ```
 reason_code       PK
 organization_id
 process_code      -- 공통='*' 또는 공정별
 reason_name
-loss_bucket       -- AVAIL_DOWN / SETUP / MATERIAL / PERF_MINOR_STOP / PERF_SPEED / ...
-oee_factor        -- 가동율 / 성능율 귀속
+oee_factor        -- AVAILABILITY / PERFORMANCE / QUALITY 중 하나만 허용
+loss_category     -- MATERIAL / SETUP / MACHINE / LABOR / MINOR_STOP / SPEED / DEFECT / REWORK / STARTUP / ...
+input_type        -- TIME / QTY / BOTH (계산 반영 단위 안내)
 use_yn
 sort_order
 ```
+
+| oee_factor | 제안서 저하요인 | 대표 loss_category | 계산 반영 |
+|---|---|---|---|
+| AVAILABILITY | 고장정지, 셋업/단품교체, 자재대기 | MACHINE, SETUP, MATERIAL, LABOR | 실제가동시간/비가동시간 |
+| PERFORMANCE | 미세정지, 속도저하 | MINOR_STOP, SPEED | 성능 손실 분석, 표준 CT 대비 생산성 |
+| QUALITY | 불량, Rework, 시작품 손실 | DEFECT, REWORK, STARTUP | 양품/불량 수량 |
 
 ### ③ `OEE_OPERATION_LOG` — 가동/비가동 일지 (핵심 입력 테이블)
 한 행 = 한 리소스가 특정 상태로 머문 구간(interval).
@@ -102,7 +140,7 @@ start_time
 end_time
 duration_min
 status            -- RUN / DOWN
-reason_code       -- DOWN일 때 필수 → OEE_DOWNTIME_REASON
+reason_code       -- DOWN일 때 필수 → OEE_LOSS_REASON(oee_factor='AVAILABILITY')
 run_no            -- 생산 LOT 연계 (nullable)
 remark
 created_by        -- 작업자 사번
@@ -125,7 +163,7 @@ override_yn            -- 수동 보정 여부
 - override_yn='Y'인 행이 있으면 그 값을 우선.
 
 ### ⑥ `OEE_PRODUCTION_RESULT` — OEE 전용 생산실적 (신규, 성능·양품 원천)
-기존 RUN 실적을 런타임 조회하지 않고, OEE 도메인이 수량을 자체 보유.
+기존 집계 함수(`F_GET_RUN_ACTUAL_QTY`, `F_GET_RUN_NG_QTY` 등)를 수집/마감 단계에서 호출해 OEE 도메인에 수량을 적재한다. 대시보드는 기존 함수나 설비 검사 테이블을 직접 실시간 조인하지 않고, `OEE_PRODUCTION_RESULT`만 조회한다.
 ```
 result_id         PK
 organization_id
@@ -143,7 +181,7 @@ source            -- MANUAL / EQUIP / PDA (수집 경로)
 created_by
 created_date
 ```
-- 수집 경로: 가동일지 입력화면의 수량 섹션(MANUAL) 또는 설비/PDA 신호(EQUIP/PDA) — 후자는 후속 자동화.
+- 수집 경로: 기존 집계 함수 결과를 기본 원천으로 사용한다. 설비 자동수집 데이터(`IQ_MACHINE_INSPECT_DATA_*`)는 수량 산출에 직접 사용하지 않고, 공정별 대상 설비 확인 및 검사결과/검사일자 참조 자료로만 사용한다. 자동 집계 불가/보정 구간은 MANUAL 입력으로 보완한다.
 - **계획달성률** = output_qty / plan_qty. **UPH** = output_qty / (실가동분/60), **UPD** = 일자 output_qty 합. (파생 지표)
 - **pickup_rate**는 SMT 공정만 사용, 대시보드에서 SMT일 때만 표시.
 
@@ -227,6 +265,21 @@ oee
 OEE = 가동율 × 성능율 × 양품율
 ```
 
+### 4.1.1 가동율 데이터 확보 방안 — 신규 수집의 근거
+제안서 1페이지(MES As-Is/To-Be)는 현재 MES에 가동율 관리를 위한 데이터가
+체계화되어 있지 않다고 진단한다. 이에 따라 본 설계는 가동율 3요소를
+모두 OEE 도메인에서 신규 수집·관리한다.
+
+| 가동율 요소 | 데이터 원천 | 확보 방식 |
+|---|---|---|
+| 실제가동시간 | `OEE_OPERATION_LOG.status='RUN'` (실가동 구간 집계) | OEE 입력화면(/oee/entry)에서 작업자가 구간 등록 |
+| 비가동시간 | `OEE_OPERATION_LOG.status='DOWN'` (비가동 구간 집계) | 동일 입력화면, `oee_factor='AVAILABILITY'` 손실사유(`reason_code`) 필수 선택 |
+| 계획가동시간(순부하) | `OEE_WORK_CALENDAR × OEE_WORKTIME_RANGE` (근무마스터 파생) | 관리화면(/oee/master/worktime)에서 공정별·2교대 등록 |
+
+결론: 위 3요소가 모두 갖춰져야 비로소 공정별 가동율이 산출된다.
+기존 MES가 가동율을 제공하지 않으므로, 모든 요소를 OEE 입력/마스터 단에서
+직접 수집·저장·파생하는 것이 본 설계의 핵심 결정이다.
+
 ### 4.2 집계 전략 (2계층 + 폴백 없음)
 1. **`V_OEE_LIVE` (실시간 계층)** — **진행 중인 당일/현재 근무조에 한해** OEE_OPERATION_LOG + V_OEE_PLAN_TIME + OEE_PRODUCTION_RESULT에서 on-the-fly 계산(모두 자체 도메인). 마감 전 실시간 표시 전용.
 2. **`OEE_DAILY_SUMMARY` (확정 계층)** — **오직 `P_OEE_BUILD_SUMMARY`(Oracle 스케줄러 프로시저)만** 근무조 마감 시점에 스냅샷 생성. 과거 이력은 전적으로 이 스냅샷에서만 조회.
@@ -244,7 +297,7 @@ OEE = 가동율 × 성능율 × 양품율
 모니터링(display)과 분리된 신규 그룹 `/oee`:
 - `/oee/entry` — 가동/비가동 일지 + 생산수량(계획/실적/양품/불량/픽업) 입력 (핵심, 태블릿)
 - `/oee/master/resource` — 리소스 마스터
-- `/oee/master/reason` — 비가동사유 코드
+- `/oee/master/reason` — OEE 저하요인 코드 (`AVAILABILITY`/`PERFORMANCE`/`QUALITY` 단일 귀속)
 - `/oee/master/worktime` — 근무시간 마스터(공정별·2교대)
 - `/oee/master/plan-time` — 계획가동시간 예외 보정(override)
 - `/oee/input/material` — 원자재 준비율 입력 (원자재 공정)
@@ -252,7 +305,7 @@ OEE = 가동율 × 성능율 × 양품율
 
 ### 5.2 가동일지 입력 `/oee/entry`
 - 상단: **단말 프로파일**(공정·리소스·근무조) — localStorage 저장, 최초 1회 선택 후 고정.
-- 본문: 해당 근무조 **타임라인**. 구간 추가 = `start~end` + 상태(RUN/DOWN) + DOWN이면 비가동사유(6대 로스 그룹핑 그리드, 前공정대기 포함) + RUN_NO 연계(선택).
+- 본문: 해당 근무조 **타임라인**. 구간 추가 = `start~end` + 상태(RUN/DOWN) + DOWN이면 가동율 손실사유(`oee_factor='AVAILABILITY'`, 前공정대기 포함) + RUN_NO 연계(선택).
 - **생산수량 섹션**: LOT별 계획수량·생산(검사)수량·양품·불량, SMT면 픽업율. → `OEE_PRODUCTION_RESULT`.
 - **작업자 식별**: 입력·저장 시 작업자 사번 선택/스캔 → `created_by`.
 - 태블릿 친화: 큰 버튼, 시간 스텝퍼/슬라이더.
@@ -260,12 +313,12 @@ OEE = 가동율 × 성능율 × 양품율
 ### 5.3 검증 규칙 (프론트 + API 공유)
 - 구간 겹침 금지
 - 구간 합 ≤ 계획가동시간(근무시간)
-- `status='DOWN'` → `reason_code` 필수
+- `status='DOWN'` → `oee_factor='AVAILABILITY'`인 `reason_code` 필수
 - 미래시간/역전(start>end) 금지
 - 저장: 근무조 replace를 `executeTransaction`으로 원자화
 
 ### 5.4 마스터 화면
-리소스/사유/근무시간/예외보정 표준 CRUD + 원자재준비·고객불량 입력.
+리소스/OEE 저하요인/근무시간/예외보정 표준 CRUD + 원자재준비·고객불량 입력.
 
 ---
 
@@ -277,7 +330,7 @@ OEE = 가동율 × 성능율 × 양품율
 |---|---|---|---|
 | 44 | 공정별 OEE 종합 현황 | 6공정 카드, OEE 대형 수치 + 가동/성능/양품 3게이지 + UPH/UPD·계획달성률, SMT는 픽업율 | 당일=`V_OEE_LIVE` / 과거=`OEE_DAILY_SUMMARY` |
 | 45 | 리소스 드릴다운 | 공정 선택 → 설비/라인/작업그룹별 OEE 순위·비교, 리소스 실시간 상태 | 동일 |
-| 46 | 로스 분석 파레토 | 비가동사유별 시간 파레토(前공정대기·자재·셋업·고장·부재), 6대 로스 버킷 | `OEE_OPERATION_LOG` |
+| 46 | 로스 분석 파레토 | `oee_factor`별 손실요인 파레토. 가동율은 시간(前공정대기·자재·셋업·고장·부재), 성능율은 미세정지·속도저하, 양품율은 불량·Rework·시작품 손실 | `OEE_OPERATION_LOG` + `OEE_PRODUCTION_RESULT` + `OEE_LOSS_REASON` |
 
 - 44 카드에 부가지표(UPH/UPD/계획달성률) 표기, SMT 카드에만 픽업율 노출.
 - 원자재 준비율(`OEE_MATERIAL_READINESS`)·고객불량(`OEE_CUSTOMER_DEFECT`)은 44 상/하단 보조 위젯으로 표시(선행/사후 KPI).
@@ -360,11 +413,17 @@ src/lib/queries/sql-registry.ts  # SQL 뷰어 등록
 - [x] 작업자 사번 체계 → 숫자·문자 조합 문자열 (`VARCHAR2(50)`)
 - [x] 사업장 → `organization_id = 1` 단일 (다중사업장 고려 제거)
 - [x] 근무패턴 → **2교대(DAY/NIGHT)**, 근무시간은 **공정별 상이 가능** → `OEE_WORKTIME_RANGE.process_code` + 관리화면(`/oee/master/worktime`)
+- [x] 가동율 원천 데이터 → 기존 MES에 없음 → **OEE 신규 입력/마스터로 확보** (`OEE_OPERATION_LOG`·`OEE_WORK_CALENDAR`·`OEE_WORKTIME_RANGE`)
+- [x] 생산수량/양품/불량 원천 → 기존 집계 함수 사용 (`F_GET_RUN_ACTUAL_QTY`, `F_GET_RUN_NG_QTY` 등)
+- [x] 설비 자동수집 데이터 → ESFA_EXTDB의 `IQ_MACHINE_INSPECT_DATA_*` 테이블로 확인 (`RESULT`/`REVIEW_RESULT`/`RESULT_CODE`, `INSPECT_DATE` 등). 수량 원천이 아니라 대상 설비/검사결과 참조용
 - [ ] 공정별 실제 근무시간·휴식 값 (관리화면 등록 데이터, 개발 후 실무 입력)
 - [ ] 공정별 리소스 실제 단위 확정 (성능검사/코팅/라우팅/조립/검사·포장)
 - [ ] Oracle 스케줄러 사용 가능 여부 및 근무조 마감 시점 정의
-- [ ] 비가동사유 코드 6대 로스 매핑 실무 확정
-- [ ] 생산수량 수집 경로 확정 (MANUAL 입력 우선, EQUIP/PDA 자동화는 후속)
+- [ ] OEE 저하요인 코드 매핑 실무 확정 (`oee_factor` 단일 귀속: AVAILABILITY/PERFORMANCE/QUALITY, `loss_category` 분석 분류)
+- [ ] 기존 집계 함수의 공정별 입력 파라미터와 반환 기준 확인
+- [ ] 자동수집 결과 코드 표준화 (OK/PASS/GOOD 등 양품, NG/FAIL 등 불량) — 수량 산출용이 아니라 검사결과 참조/상세분석용
+- [ ] SPLIT(MOUNTER 작업)의 OEE 대상 설비 여부 재확인 (현재 SMT 후보, 확정 아님)
+- [ ] 자동수집 불가/누락 구간의 MANUAL 보정 운영 기준 확정
 
 ---
 
@@ -374,3 +433,5 @@ src/lib/queries/sql-registry.ts  # SQL 뷰어 등록
   - 영향: 플랜 1(테이블 5종)은 그대로 유효, 신규 테이블(⑥⑦)은 **플랜 3에서 추가 DDL**로 편입. 플랜 2(입력)는 자립적이라 변동 없음(생산수량 입력 섹션은 플랜 3에서 입력화면에 추가).
 - **REV3 (2026-07-06)**: 근무패턴 실무 확정. 2교대(DAY/NIGHT), `OEE_WORKTIME_RANGE`에 **`process_code` 추가**(공정별 근무시간 상이), **근무시간 마스터 관리화면**(`/oee/master/worktime`) 도입. `organization_id=1` 단일 확정. `V_OEE_PLAN_TIME` 파생 조인에 `process_code` 추가.
 - **REV4 (2026-07-06)**: OEE 관리 체계도(제안서 10쪽) 재점검 반영 — 부가지표 4종 전부 포함. ①前공정대기 사유 시드 + UPH/UPD 파생, ②`OEE_PRODUCTION_RESULT.plan_qty`(LOT 계획/실적)·`pickup_rate`(SMT), ③원자재준비율 `OEE_MATERIAL_READINESS`(⑧), ④고객불량 `OEE_CUSTOMER_DEFECT`(⑨). 원자재준비율·고객불량은 OEE 곱셈식에는 미포함되는 선행/사후 KPI로 대시보드에만 노출.
+- **REV5 (2026-07-07)**: 제안서 2페이지의 OEE 저하요인 설계 보강. `OEE_DOWNTIME_REASON`을 `OEE_LOSS_REASON` 개념으로 확장하고, 각 사유는 `oee_factor`(AVAILABILITY/PERFORMANCE/QUALITY) 중 하나에만 귀속하도록 정의. 중복 귀속은 금지하고, 현상 분석은 `loss_category`, 입력 단위는 `input_type`으로 분리.
+- **REV6 (2026-07-07)**: `설비로그테이블_ESFA.xlsx`와 ESFA_EXTDB 조회 결과 반영. `IQ_MACHINE_INSPECT_DATA_*` 테이블은 생산수량·양품·불량 산출 원천이 아니라 공정별 대상 설비 확인 및 검사결과/검사일자 참조 자료로 정리했다. OEE 수량 원천은 기존 집계 함수(`F_GET_RUN_ACTUAL_QTY`, `F_GET_RUN_NG_QTY` 등)를 사용한다. 자동수집 결과 컬럼은 대부분 `INSPECT_RESULT`가 아니라 `RESULT`이며, AOI/SPI는 `REVIEW_RESULT`, LMS/Marking은 `RESULT_CODE`를 함께 확인한다. `SPLIT`는 IMD가 아니라 SMT/MOUNTER 작업 후보로 재분류하되 OEE 대상 여부는 추후 확인으로 남김.
