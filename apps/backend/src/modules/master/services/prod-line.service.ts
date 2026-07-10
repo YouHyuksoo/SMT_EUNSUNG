@@ -1,6 +1,6 @@
 /**
  * @file src/modules/master/services/prod-line.service.ts
- * @description 생산라인마스터 비즈니스 로직 서비스 - TypeORM
+ * @description 생산라인마스터(IP_PRODUCT_LINE) 비즈니스 로직 서비스 - TypeORM
  */
 
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
@@ -23,24 +23,28 @@ export class ProdLineService {
   }
 
   async findAll(query: ProdLineQueryDto, organizationId?: number) {
-    const { page = 1, limit = 50, search, useYn } = query;
+    const { page = 1, limit = 50, search, lineDivision, activeYn } = query;
     const skip = (page - 1) * limit;
 
-    const queryBuilder = this.prodLineRepository.createQueryBuilder('prodLine')
+    const queryBuilder = this.prodLineRepository.createQueryBuilder('prodLine');
 
     if (organizationId != null) {
       queryBuilder.andWhere('prodLine.organizationId = :organizationId', { organizationId });
     }
 
-    if (useYn) {
-      queryBuilder.andWhere('prodLine.useYn = :useYn', { useYn });
+    if (lineDivision) {
+      queryBuilder.andWhere('prodLine.lineDivision = :lineDivision', { lineDivision });
+    }
+
+    if (activeYn) {
+      queryBuilder.andWhere('prodLine.activeYn = :activeYn', { activeYn });
     }
 
     if (search) {
       const upper = search.toUpperCase();
       queryBuilder.andWhere(
-        '(prodLine.lineCode LIKE :search OR prodLine.lineName LIKE :searchRaw)',
-        { search: `%${upper}%`, searchRaw: `%${search}%` }
+        '(UPPER(prodLine.lineCode) LIKE :search OR UPPER(prodLine.lineName) LIKE :search)',
+        { search: `%${upper}%` },
       );
     }
 
@@ -73,12 +77,17 @@ export class ProdLineService {
     const prodLine = this.prodLineRepository.create({
       lineCode: dto.lineCode,
       lineName: dto.lineName,
-      whLoc: dto.whLoc,
-      erpCode: dto.erpCode,
-      oper: dto.oper,
-      lineType: dto.lineType,
-      remark: dto.remark,
-      useYn: dto.useYn ?? 'Y',
+      lineDivision: dto.lineDivision,
+      lineProductDivision: dto.lineProductDivision ?? 'FIXED',
+      lineCodeGroup: dto.lineCodeGroup ?? null,
+      lineStatus: dto.lineStatus ?? 'N',
+      capacity: dto.capacity ?? null,
+      capacityUom: dto.capacityUom ?? null,
+      uphValue: dto.uphValue ?? null,
+      mesDisplayYn: dto.mesDisplayYn ?? 'N',
+      mesDisplaySequence: dto.mesDisplaySequence ?? null,
+      activeYn: dto.activeYn ?? 'N',
+      comments: dto.comments ?? null,
       organizationId,
     });
 
@@ -89,12 +98,17 @@ export class ProdLineService {
     await this.findById(lineCode, organizationId);
     const updateData: Partial<ProdLineMaster> = {
       ...(dto.lineName !== undefined ? { lineName: dto.lineName } : {}),
-      ...(dto.whLoc !== undefined ? { whLoc: dto.whLoc } : {}),
-      ...(dto.erpCode !== undefined ? { erpCode: dto.erpCode } : {}),
-      ...(dto.oper !== undefined ? { oper: dto.oper } : {}),
-      ...(dto.lineType !== undefined ? { lineType: dto.lineType } : {}),
-      ...(dto.remark !== undefined ? { remark: dto.remark } : {}),
-      ...(dto.useYn !== undefined ? { useYn: dto.useYn } : {}),
+      ...(dto.lineDivision !== undefined ? { lineDivision: dto.lineDivision } : {}),
+      ...(dto.lineProductDivision !== undefined ? { lineProductDivision: dto.lineProductDivision } : {}),
+      ...(dto.lineCodeGroup !== undefined ? { lineCodeGroup: dto.lineCodeGroup } : {}),
+      ...(dto.lineStatus !== undefined ? { lineStatus: dto.lineStatus } : {}),
+      ...(dto.capacity !== undefined ? { capacity: dto.capacity } : {}),
+      ...(dto.capacityUom !== undefined ? { capacityUom: dto.capacityUom } : {}),
+      ...(dto.uphValue !== undefined ? { uphValue: dto.uphValue } : {}),
+      ...(dto.mesDisplayYn !== undefined ? { mesDisplayYn: dto.mesDisplayYn } : {}),
+      ...(dto.mesDisplaySequence !== undefined ? { mesDisplaySequence: dto.mesDisplaySequence } : {}),
+      ...(dto.activeYn !== undefined ? { activeYn: dto.activeYn } : {}),
+      ...(dto.comments !== undefined ? { comments: dto.comments } : {}),
     };
     await this.prodLineRepository.update({ lineCode, ...this.tenantWhere(organizationId) }, updateData);
     return this.findById(lineCode, organizationId);

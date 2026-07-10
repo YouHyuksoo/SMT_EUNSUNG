@@ -2,11 +2,12 @@
 
 /**
  * @file components/master/ProdLineTab.tsx
- * @description 생산라인 탭 - Oracle API 연동 CRUD
+ * @description 생산라인 탭 - IP_PRODUCT_LINE 기반 Oracle API 연동 CRUD
  *
  * 초보자 가이드:
  * 1. API: GET/POST/PUT/DELETE /master/prod-lines
- * 2. DataGrid로 목록 표시 + 모달로 등록/수정
+ * 2. DataGrid로 목록 표시 + 우측 패널로 등록/수정
+ * 3. activeYn은 사용여부가 아니라 라인 가동 활성 상태(Y=활성, N=대기)다.
  */
 import { useState, useEffect, useCallback, useMemo, useRef, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
@@ -14,23 +15,70 @@ import { Plus, Edit2, Trash2, Search, RefreshCw } from "lucide-react";
 import { Card, CardContent, Button, Input, ConfirmModal } from "@/components/ui";
 import DataGrid from "@/components/data-grid/DataGrid";
 import { ColumnDef } from "@tanstack/react-table";
+import {
+  LINE_DIVISION_VALUES,
+  LINE_DIVISION_LABELS,
+  LINE_PRODUCT_DIVISION_VALUES,
+  LINE_PRODUCT_DIVISION_LABELS,
+  LINE_STATUS_VALUES,
+  LINE_STATUS_LABELS,
+  LINE_CAPACITY_UOM_VALUES,
+  LINE_ACTIVE_YN_VALUES,
+  LINE_ACTIVE_YN_LABELS,
+} from "@smt/shared";
 import api from "@/services/api";
-import { FieldInput } from "@/app/(authenticated)/master/prod-line/components/ProdLineFieldHelp";
+import { FieldInput, FieldSelect } from "@/app/(authenticated)/master/prod-line/components/ProdLineFieldHelp";
 import { useUnsavedGuard } from "@/hooks/useUnsavedGuard";
 
 interface ProdLine {
   lineCode: string;
   lineName: string;
-  whLoc?: string;
-  erpCode?: string;
-  oper?: string;
-  lineType?: string;
-  remark?: string;
-  useYn: string;
+  lineDivision: string;
+  lineProductDivision?: string;
+  lineCodeGroup?: string | null;
+  lineStatus?: string | null;
+  capacity?: number | null;
+  capacityUom?: string | null;
+  uphValue?: number | null;
+  mesDisplayYn?: string | null;
+  mesDisplaySequence?: number | null;
+  activeYn?: string | null;
+  comments?: string | null;
 }
 
 interface Props {
   onHeaderActions?: (actions: ReactNode) => void;
+}
+
+const LINE_DIVISION_OPTIONS = LINE_DIVISION_VALUES.map((v) => ({ value: v, label: `${v} · ${LINE_DIVISION_LABELS[v]}` }));
+const LINE_PRODUCT_DIVISION_OPTIONS = LINE_PRODUCT_DIVISION_VALUES.map((v) => ({ value: v, label: `${v} · ${LINE_PRODUCT_DIVISION_LABELS[v]}` }));
+const LINE_STATUS_OPTIONS = LINE_STATUS_VALUES.map((v) => ({ value: v, label: `${v} · ${LINE_STATUS_LABELS[v]}` }));
+const CAPACITY_UOM_OPTIONS = LINE_CAPACITY_UOM_VALUES.map((v) => ({ value: v, label: v }));
+const ACTIVE_YN_OPTIONS = LINE_ACTIVE_YN_VALUES.map((v) => ({ value: v, label: LINE_ACTIVE_YN_LABELS[v] }));
+const MES_DISPLAY_YN_OPTIONS = [
+  { value: "Y", label: "Y" },
+  { value: "N", label: "N" },
+];
+
+/** 빈 문자열을 보내면 Oracle NOT NULL/코드 검증에 걸리므로 undefined로 정리한다. */
+function toPayload(form: Partial<ProdLine>) {
+  const clean = <T,>(v: T | "" | null | undefined) => (v === "" || v === null ? undefined : v);
+  const num = (v: unknown) => (v === "" || v === null || v === undefined ? undefined : Number(v));
+  return {
+    lineCode: form.lineCode,
+    lineName: form.lineName,
+    lineDivision: form.lineDivision,
+    lineProductDivision: clean(form.lineProductDivision),
+    lineCodeGroup: clean(form.lineCodeGroup),
+    lineStatus: clean(form.lineStatus),
+    capacity: num(form.capacity),
+    capacityUom: clean(form.capacityUom),
+    uphValue: num(form.uphValue),
+    mesDisplayYn: clean(form.mesDisplayYn),
+    mesDisplaySequence: num(form.mesDisplaySequence),
+    activeYn: clean(form.activeYn),
+    comments: clean(form.comments),
+  };
 }
 
 export default function ProdLineTab({ onHeaderActions }: Props) {
@@ -65,7 +113,12 @@ export default function ProdLineTab({ onHeaderActions }: Props) {
 
   const openCreate = useCallback(() => {
     panelAnimateRef.current = true;
-    const init: Partial<ProdLine> = { useYn: "Y" };
+    const init: Partial<ProdLine> = {
+      lineProductDivision: "FIXED",
+      lineStatus: "N",
+      mesDisplayYn: "N",
+      activeYn: "N",
+    };
     setEditingLine(null);
     setFormData(init);
     initialFormRef.current = init;
@@ -101,18 +154,19 @@ export default function ProdLineTab({ onHeaderActions }: Props) {
   useEffect(() => { markDirty(dirty); }, [dirty, markDirty]);
 
   const handleSave = useCallback(async () => {
-    if (!formData.lineCode || !formData.lineName || !formData.lineType) return;
+    if (!formData.lineCode || !formData.lineName || !formData.lineDivision) return;
     setSaving(true);
     try {
+      const payload = toPayload(formData);
       if (editingLine) {
-        await api.put(`/master/prod-lines/${editingLine.lineCode}`, formData);
+        await api.put(`/master/prod-lines/${editingLine.lineCode}`, payload);
       } else {
-        await api.post("/master/prod-lines", formData);
+        await api.post("/master/prod-lines", payload);
       }
       markDirty(false);
       setIsPanelOpen(false);
       fetchLines();
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error("Save failed:", e);
     } finally {
       setSaving(false);
@@ -125,7 +179,7 @@ export default function ProdLineTab({ onHeaderActions }: Props) {
       await api.delete(`/master/prod-lines/${deleteTarget.lineCode}`);
       setDeleteTarget(null);
       fetchLines();
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error("Delete failed:", e);
     }
   }, [deleteTarget, fetchLines]);
@@ -144,35 +198,83 @@ export default function ProdLineTab({ onHeaderActions }: Props) {
         </div>
       ),
     },
-    { accessorKey: "lineCode", header: t("master.prodLine.lineCode"), size: 100, meta: { filterType: "text" as const } },
-    { accessorKey: "lineName", header: t("master.prodLine.lineName"), size: 200, meta: { filterType: "text" as const } },
-    { accessorKey: "oper", header: t("master.prodLine.oper"), size: 100,
-      meta: { filterType: "text" as const },
-      cell: ({ getValue }) => <span className="font-mono text-xs">{(getValue() as string) || "-"}</span>,
-    },
-    { accessorKey: "lineType", header: t("master.prodLine.lineType"), size: 100,
+    { accessorKey: "lineCode", header: t("master.prodLine.lineCode"), size: 90, meta: { filterType: "text" as const } },
+    { accessorKey: "lineName", header: t("master.prodLine.lineName"), size: 180, meta: { filterType: "text" as const } },
+    { accessorKey: "lineDivision", header: t("master.prodLine.lineDivision"), size: 110,
       meta: { filterType: "multi" as const },
       cell: ({ getValue }) => {
         const v = getValue() as string;
-        return v ? <span className="px-2 py-0.5 text-xs rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300">{v}</span> : <span className="text-text-muted">-</span>;
+        if (!v) return <span className="text-text-muted">-</span>;
+        const label = LINE_DIVISION_LABELS[v as keyof typeof LINE_DIVISION_LABELS] ?? v;
+        return <span className="px-2 py-0.5 text-xs rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300">{label}</span>;
       },
     },
-    { accessorKey: "whLoc", header: t("master.prodLine.whLoc"), size: 100, meta: { filterType: "text" as const } },
-    { accessorKey: "erpCode", header: t("master.prodLine.erpCode"), size: 100,
-      meta: { filterType: "text" as const },
-      cell: ({ getValue }) => (getValue() as string) || "-",
-    },
-    { accessorKey: "remark", header: t("master.prodLine.remark"), size: 150,
-      meta: { filterType: "text" as const },
-      cell: ({ getValue }) => (getValue() as string) || "-",
-    },
-    { accessorKey: "useYn", header: t("master.prodLine.use"), size: 60,
+    { accessorKey: "lineCodeGroup", header: t("master.prodLine.lineCodeGroup"), size: 100,
       meta: { filterType: "multi" as const },
+      cell: ({ getValue }) => (getValue() as string) || "-",
+    },
+    { accessorKey: "lineProductDivision", header: t("master.prodLine.lineProductDivision"), size: 100,
+      meta: { filterType: "multi" as const },
+      cell: ({ getValue }) => {
+        const v = getValue() as string;
+        return v ? (LINE_PRODUCT_DIVISION_LABELS[v as keyof typeof LINE_PRODUCT_DIVISION_LABELS] ?? v) : "-";
+      },
+    },
+    { accessorKey: "lineStatus", header: t("master.prodLine.lineStatus"), size: 100,
+      meta: { filterType: "multi" as const },
+      cell: ({ getValue }) => {
+        const v = getValue() as string;
+        if (!v) return <span className="text-text-muted">-</span>;
+        const label = LINE_STATUS_LABELS[v as keyof typeof LINE_STATUS_LABELS] ?? v;
+        return <span className={v === "N" ? "text-text" : "text-amber-600 dark:text-amber-400"}>{label}</span>;
+      },
+    },
+    { accessorKey: "capacity", header: t("master.prodLine.capacity"), size: 90,
+      meta: { align: "right" as const, filterType: "text" as const },
+      cell: ({ row }) => {
+        const { capacity, capacityUom } = row.original;
+        if (capacity === null || capacity === undefined) return <span className="text-text-muted">-</span>;
+        return <span className="font-mono text-xs">{capacity.toLocaleString()}{capacityUom ? ` ${capacityUom}` : ""}</span>;
+      },
+    },
+    { accessorKey: "uphValue", header: t("master.prodLine.uphValue"), size: 80,
+      meta: { align: "right" as const, filterType: "text" as const },
+      cell: ({ getValue }) => {
+        const v = getValue() as number | null;
+        return v === null || v === undefined ? <span className="text-text-muted">-</span> : <span className="font-mono text-xs">{v.toLocaleString()}</span>;
+      },
+    },
+    { accessorKey: "mesDisplayYn", header: t("master.prodLine.mesDisplayYn"), size: 80,
+      meta: { align: "center" as const, filterType: "multi" as const },
       cell: ({ getValue }) => (
         <span className={`w-2 h-2 rounded-full inline-block ${getValue() === "Y" ? "bg-green-500" : "bg-gray-400"}`} />
       ),
     },
-  ], [t, openEdit, guard, handleDelete]);
+    { accessorKey: "mesDisplaySequence", header: t("master.prodLine.mesDisplaySequence"), size: 80,
+      meta: { align: "right" as const, filterType: "text" as const },
+      cell: ({ getValue }) => {
+        const v = getValue() as number | null;
+        return v === null || v === undefined ? "-" : <span className="font-mono text-xs">{v}</span>;
+      },
+    },
+    { accessorKey: "activeYn", header: t("master.prodLine.activeYn"), size: 70,
+      meta: { align: "center" as const, filterType: "multi" as const },
+      cell: ({ getValue }) => {
+        const v = getValue() as string | null;
+        return (
+          <span className={`px-2 py-0.5 text-xs rounded-full ${v === "Y"
+            ? "bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300"
+            : "bg-gray-100 dark:bg-gray-800 text-text-muted"}`}>
+            {v === "Y" ? LINE_ACTIVE_YN_LABELS.Y : LINE_ACTIVE_YN_LABELS.N}
+          </span>
+        );
+      },
+    },
+    { accessorKey: "comments", header: t("master.prodLine.comments"), size: 160,
+      meta: { filterType: "text" as const },
+      cell: ({ getValue }) => (getValue() as string) || "-",
+    },
+  ], [t, openEdit, guard]);
 
   return (
     <div className="h-full flex overflow-hidden">
@@ -180,7 +282,7 @@ export default function ProdLineTab({ onHeaderActions }: Props) {
         <Card className="flex-1 min-h-0 overflow-hidden">
           <CardContent className="h-full">
             <DataGrid
-        sqlQuery={`SELECT *\nFROM PROD_LINE_MASTERS\nWHERE COMPANY = '40'\n  AND PLANT_CD = '1000'\nORDER BY CREATED_AT DESC`}
+              sqlQuery={`SELECT LINE_CODE, LINE_NAME, LINE_DIVISION, LINE_CODE_GROUP,\n       LINE_PRODUCT_DIVISION, LINE_STATUS, CAPACITY, CAPACITY_UOM,\n       UPH_VALUE, MES_DISPLAY_YN, MES_DISPLAY_SEQUENCE, ACTIVE_YN, COMMENTS\nFROM IP_PRODUCT_LINE\nWHERE ORGANIZATION_ID = :organizationId\nORDER BY LINE_CODE ASC`}
               data={lines}
               columns={columns}
               isLoading={loading}
@@ -211,28 +313,46 @@ export default function ProdLineTab({ onHeaderActions }: Props) {
               <Button size="sm" variant="secondary" onClick={() => guard(() => setIsPanelOpen(false))}>
                 {t("common.cancel")}
               </Button>
-              <Button size="sm" onClick={handleSave} disabled={saving || !formData.lineCode || !formData.lineName || !formData.lineType}>
+              <Button size="sm" onClick={handleSave} disabled={saving || !formData.lineCode || !formData.lineName || !formData.lineDivision}>
                 {saving ? t("common.saving") : t("common.save", "저장")}
               </Button>
             </div>
           </div>
           <div className="flex-1 overflow-y-auto px-5 py-3 space-y-4">
             <div className="grid grid-cols-2 gap-3">
-              <FieldInput field="lineCode" label={t("master.prodLine.lineCode")} placeholder="P2001"
+              <FieldInput field="lineCode" label={t("master.prodLine.lineCode")} placeholder="38"
                 value={formData.lineCode || ""} onChange={(e) => setFormData((p) => ({ ...p, lineCode: e.target.value }))}
-                disabled={!!editingLine} />
+                disabled={!!editingLine} required />
               <FieldInput field="lineName" label={t("master.prodLine.lineName")} placeholder={t("master.prodLine.lineName")}
-                value={formData.lineName || ""} onChange={(e) => setFormData((p) => ({ ...p, lineName: e.target.value }))} />
-              <FieldInput field="oper" label={t("master.prodLine.oper")} placeholder="#0100"
-                value={formData.oper || ""} onChange={(e) => setFormData((p) => ({ ...p, oper: e.target.value }))} />
-              <FieldInput field="lineType" label={t("master.prodLine.lineType")} placeholder="PACKING"
-                value={formData.lineType || ""} onChange={(e) => setFormData((p) => ({ ...p, lineType: e.target.value }))} required />
-              <FieldInput field="whLoc" label={t("master.prodLine.whLoc")} placeholder="LOC002"
-                value={formData.whLoc || ""} onChange={(e) => setFormData((p) => ({ ...p, whLoc: e.target.value }))} />
-              <FieldInput field="erpCode" label={t("master.prodLine.erpCode")} placeholder="ERP Code"
-                value={formData.erpCode || ""} onChange={(e) => setFormData((p) => ({ ...p, erpCode: e.target.value }))} />
-              <FieldInput field="remark" label={t("master.prodLine.remark")} placeholder={t("master.prodLine.remark")}
-                value={formData.remark || ""} onChange={(e) => setFormData((p) => ({ ...p, remark: e.target.value }))}
+                value={formData.lineName || ""} onChange={(e) => setFormData((p) => ({ ...p, lineName: e.target.value }))} required />
+
+              <FieldSelect field="lineDivision" label={t("master.prodLine.lineDivision")} options={LINE_DIVISION_OPTIONS}
+                value={formData.lineDivision || ""} onChange={(v) => setFormData((p) => ({ ...p, lineDivision: v }))} required />
+              <FieldInput field="lineCodeGroup" label={t("master.prodLine.lineCodeGroup")} placeholder="ASM"
+                value={formData.lineCodeGroup || ""} onChange={(e) => setFormData((p) => ({ ...p, lineCodeGroup: e.target.value }))} />
+
+              <FieldSelect field="lineProductDivision" label={t("master.prodLine.lineProductDivision")} options={LINE_PRODUCT_DIVISION_OPTIONS}
+                value={formData.lineProductDivision || ""} onChange={(v) => setFormData((p) => ({ ...p, lineProductDivision: v }))} />
+              <FieldSelect field="lineStatus" label={t("master.prodLine.lineStatus")} options={LINE_STATUS_OPTIONS}
+                value={formData.lineStatus || ""} onChange={(v) => setFormData((p) => ({ ...p, lineStatus: v }))} />
+
+              <FieldInput field="capacity" label={t("master.prodLine.capacity")} type="number" placeholder="0"
+                value={formData.capacity ?? ""} onChange={(e) => setFormData((p) => ({ ...p, capacity: e.target.value === "" ? null : Number(e.target.value) }))} />
+              <FieldSelect field="capacityUom" label={t("master.prodLine.capacityUom")} options={CAPACITY_UOM_OPTIONS}
+                value={formData.capacityUom || ""} onChange={(v) => setFormData((p) => ({ ...p, capacityUom: v }))} />
+
+              <FieldInput field="uphValue" label={t("master.prodLine.uphValue")} type="number" placeholder="0"
+                value={formData.uphValue ?? ""} onChange={(e) => setFormData((p) => ({ ...p, uphValue: e.target.value === "" ? null : Number(e.target.value) }))} />
+              <FieldSelect field="activeYn" label={t("master.prodLine.activeYn")} options={ACTIVE_YN_OPTIONS}
+                value={formData.activeYn || ""} onChange={(v) => setFormData((p) => ({ ...p, activeYn: v }))} />
+
+              <FieldSelect field="mesDisplayYn" label={t("master.prodLine.mesDisplayYn")} options={MES_DISPLAY_YN_OPTIONS}
+                value={formData.mesDisplayYn || ""} onChange={(v) => setFormData((p) => ({ ...p, mesDisplayYn: v }))} />
+              <FieldInput field="mesDisplaySequence" label={t("master.prodLine.mesDisplaySequence")} type="number" placeholder="0"
+                value={formData.mesDisplaySequence ?? ""} onChange={(e) => setFormData((p) => ({ ...p, mesDisplaySequence: e.target.value === "" ? null : Number(e.target.value) }))} />
+
+              <FieldInput field="comments" label={t("master.prodLine.comments")} placeholder={t("master.prodLine.comments")}
+                value={formData.comments || ""} onChange={(e) => setFormData((p) => ({ ...p, comments: e.target.value }))}
                 wrapperClassName="col-span-2" />
             </div>
           </div>

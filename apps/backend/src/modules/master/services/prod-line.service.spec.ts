@@ -49,8 +49,8 @@ describe('ProdLineService', () => {
   });
 
   it('creates production line within tenant only', async () => {
-    const dto = { lineCode: 'L01', lineName: 'Line 1' } as any;
-    const created = { ...dto, organizationId: 1, useYn: 'Y' } as ProdLineMaster;
+    const dto = { lineCode: 'L01', lineName: 'Line 1', lineDivision: 'L' } as any;
+    const created = { ...dto, organizationId: 1, lineProductDivision: 'FIXED' } as ProdLineMaster;
     mockRepo.findOne.mockResolvedValue(null);
     mockRepo.create.mockReturnValue(created);
     mockRepo.save.mockResolvedValue(created);

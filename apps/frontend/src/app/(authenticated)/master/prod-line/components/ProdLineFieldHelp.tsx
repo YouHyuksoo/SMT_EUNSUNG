@@ -2,18 +2,24 @@
 
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { Input } from "@/components/ui";
-import type { InputProps } from "@/components/ui";
+import { Input, Select } from "@/components/ui";
+import type { InputProps, SelectProps } from "@/components/ui";
 import { HelpTooltip } from "@/components/shared";
 
 export const PROD_LINE_FIELD_HELP = {
-  lineCode: { db: "PROD_LINE_MASTERS.LINE_CODE", description: "MES 내부에서 생산라인을 식별하는 고유 코드입니다. 등록 후에는 변경할 수 없습니다." },
-  lineName: { db: "PROD_LINE_MASTERS.LINE_NAME", description: "현장에서 식별할 생산라인 이름입니다." },
-  oper: { db: "PROD_LINE_MASTERS.OPER", description: "이 라인에 매핑되는 ERP 공정코드입니다." },
-  lineType: { db: "PROD_LINE_MASTERS.LINE_TYPE", description: "조립, 포장 등 라인 유형을 구분하는 분류입니다." },
-  whLoc: { db: "PROD_LINE_MASTERS.WH_LOC", description: "이 라인에 연계되는 기본 창고 로케이션입니다." },
-  erpCode: { db: "PROD_LINE_MASTERS.ERP_CODE", description: "ERP 시스템에서 사용하는 라인 연계 코드입니다." },
-  remark: { db: "PROD_LINE_MASTERS.REMARK", description: "생산라인 관리 참고사항입니다." },
+  lineCode: { db: "IP_PRODUCT_LINE.LINE_CODE", description: "MES 내부에서 생산라인을 식별하는 고유 코드입니다. 등록 후에는 변경할 수 없습니다." },
+  lineName: { db: "IP_PRODUCT_LINE.LINE_NAME", description: "현장에서 식별할 생산라인 이름입니다." },
+  lineDivision: { db: "IP_PRODUCT_LINE.LINE_DIVISION", description: "SMT, 조립라인, 검사라인, 가공공정 등 라인의 성격을 구분하는 코드입니다." },
+  lineCodeGroup: { db: "IP_PRODUCT_LINE.LINE_CODE_GROUP", description: "라인을 묶는 그룹 코드입니다. (예: SMD, ASM, SUB, INSP, COMMON)" },
+  lineProductDivision: { db: "IP_PRODUCT_LINE.LINE_PRODUCT_DIVISION", description: "이 라인에서 생산하는 제품의 사급 구분입니다. 고정/자작/유상/무상." },
+  lineStatus: { db: "IP_PRODUCT_LINE.LINE_STATUS", description: "라인의 현재 운전 상태입니다. 정상, 고장, 정지, 모델변경 등." },
+  capacity: { db: "IP_PRODUCT_LINE.CAPACITY", description: "라인의 용량입니다. 단위는 용량단위 항목으로 지정합니다." },
+  capacityUom: { db: "IP_PRODUCT_LINE.CAPACITY_UOM", description: "용량 값의 단위입니다. (KG 또는 ST)" },
+  uphValue: { db: "IP_PRODUCT_LINE.UPH_VALUE", description: "이 라인의 시간당 생산량(UPH) 기준값입니다." },
+  mesDisplayYn: { db: "IP_PRODUCT_LINE.MES_DISPLAY_YN", description: "현장 모니터링 화면(Display)에 이 라인을 노출할지 여부입니다." },
+  mesDisplaySequence: { db: "IP_PRODUCT_LINE.MES_DISPLAY_SEQUENCE", description: "모니터링 화면에서의 표시 순서입니다. 작은 값이 먼저 표시됩니다." },
+  activeYn: { db: "IP_PRODUCT_LINE.ACTIVE_YN", description: "라인의 가동 활성 상태입니다. Y=활성, N=대기. 마스터 사용여부가 아닙니다." },
+  comments: { db: "IP_PRODUCT_LINE.COMMENTS", description: "생산라인 관리 참고사항입니다." },
 } as const;
 
 export type ProdLineFieldKey = keyof typeof PROD_LINE_FIELD_HELP;
@@ -58,6 +64,20 @@ export function FieldInput({ field, label, required, wrapperClassName, ...props 
   return (
     <Field field={field} label={label} required={required} className={wrapperClassName}>
       <Input {...props} required={required} fullWidth />
+    </Field>
+  );
+}
+
+type FieldSelectProps = Omit<SelectProps, "label"> & {
+  field: ProdLineFieldKey;
+  label: string;
+  wrapperClassName?: string;
+};
+
+export function FieldSelect({ field, label, required, wrapperClassName, ...props }: FieldSelectProps) {
+  return (
+    <Field field={field} label={label} required={required} className={wrapperClassName}>
+      <Select {...props} required={required} fullWidth />
     </Field>
   );
 }
