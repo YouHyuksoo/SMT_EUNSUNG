@@ -110,9 +110,10 @@ export class RoutingGroupService {
     }
   }
 
+  // IP_PRODUCT_WORKSTAGE에는 사용여부(USE_YN) 컬럼이 없어 공정코드로만 조회한다.
   private async resolveProcessMaster(processCode: string, organizationId?: number) {
     const processMaster = await this.processMasterRepo.findOne({
-      where: { processCode, useYn: 'Y', ...this.tenantWhere(organizationId) },
+      where: { processCode, ...this.tenantWhere(organizationId) },
     });
     if (!processMaster) throw new NotFoundException(`공정마스터를 찾을 수 없습니다: ${processCode}`);
     return processMaster;

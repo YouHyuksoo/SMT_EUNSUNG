@@ -8,17 +8,7 @@ import DataGrid from "@/components/data-grid/DataGrid";
 import StatusHeaderHelp from "@/components/shared/StatusHeaderHelp";
 import StatusBadge from "@/components/shared/StatusBadge";
 import { ColumnDef } from "@tanstack/react-table";
-
-interface Equipment {
-  equipCode: string;
-  equipName: string;
-  equipType: string | null;
-  modelName: string | null;
-  maker: string | null;
-  lineCode: string | null;
-  status: string;
-  useYn: string;
-}
+import type { Equipment } from "../types";
 
 interface ProcessEquipGridProps {
   processCode: string;
@@ -129,8 +119,8 @@ export default function ProcessEquipGrid({
           enableColumnFilter
           enableExport
           exportFileName={`${processCode}_${t("master.process.assignedEquipments")}`}
-
-        sqlQuery={`SELECT *\nFROM PROCESS_EQUIPMENTS\nWHERE COMPANY = '40'\n  AND PLANT_CD = '1000'\nORDER BY CREATED_AT DESC`}/>
+          sqlQuery={`SELECT *\nFROM IMCN_MACHINE\nWHERE WORKSTAGE_CODE = :processCode\n  AND ORGANIZATION_ID = :organizationId\nORDER BY MACHINE_CODE`}
+        />
       </CardContent>
     </Card>
   );

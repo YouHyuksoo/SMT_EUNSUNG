@@ -48,7 +48,6 @@ import { ShiftPattern } from '../entities/shift-pattern.entity';
 import { ProcessMaster } from '../entities/process-master.entity';
 import { LabelTemplate } from '../entities/label-template.entity';
 import { ProcessCapa } from '../entities/process-capa.entity';
-import { ProcessEquipment } from '../entities/process-equipment.entity';
 import { ProcessMap } from '../entities/process-map.entity';
 import { RoutingGroup } from '../entities/routing-group.entity';
 import { RoutingProcess } from '../entities/routing-process.entity';
@@ -120,7 +119,6 @@ import { HarnessCircuitSpec } from '../entities/harness-circuit-spec.entity';
             ProcessMaster,
             LabelTemplate,
             ProcessCapa,
-            ProcessEquipment,
             ProcessMap,
             RoutingGroup,
             RoutingProcess,

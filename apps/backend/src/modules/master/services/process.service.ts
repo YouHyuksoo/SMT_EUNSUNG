@@ -1,6 +1,9 @@
 /**
  * @file src/modules/master/services/process.service.ts
- * @description 공정마스터 비즈니스 로직 서비스 - TypeORM
+ * @description 공정(Workstage)마스터 비즈니스 로직 서비스 - TypeORM / IP_PRODUCT_WORKSTAGE
+ *
+ * 설비 배치는 별도 중간 테이블 없이 IMCN_MACHINE.WORKSTAGE_CODE(= EquipMaster.processCode)로
+ * 관리한다. 설비는 한 번에 하나의 공정에만 속하며, 배치 해제는 UNASSIGNED_PROCESS_CODE로 되돌린다.
  */
 
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
@@ -8,8 +11,54 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ProcessMaster } from '../../../entities/process-master.entity';
 import { EquipMaster } from '../../../entities/equip-master.entity';
-import { ProcessEquipment } from '../../../entities/process-equipment.entity';
 import { CreateProcessDto, UpdateProcessDto, ProcessQueryDto } from '../dto/process.dto';
+
+/** IMCN_MACHINE.WORKSTAGE_CODE에서 "공정 미배치"를 나타내는 현장 관례값 */
+const UNASSIGNED_PROCESS_CODE = '*';
+
+/** update 시 반영을 허용하는 컬럼 (PK/테넌트/감사 컬럼 제외) */
+const UPDATABLE_FIELDS = [
+  'processName',
+  'processType',
+  'sortOrder',
+  'startYn',
+  'codeGroup',
+  'workstageStatus',
+  'lineCode',
+  'departmentCode',
+  'shiftCode',
+  'machineCode',
+  'costCenterCode',
+  'mesDisplayGroup',
+  'actualPlcAddress',
+  'stValue',
+  'otValue',
+  'standardQty',
+  'uphValue',
+  'capacity',
+  'capacityUom',
+  'useRate',
+  'waitTime',
+  'moveTime',
+  'prepareTime',
+  'totalWorkTime',
+  'workerWorkTime',
+  'machineWorkTime',
+  'workerQty',
+  'machineQty',
+  'workingEfficiency',
+  'machineEfficiency',
+  'wageRate',
+  'expenseRate',
+  'machineryRate',
+  'badRateControl',
+  'badMaxRate',
+  'badQtyExtractYn',
+  'genSubMfsYn',
+  'assyExpYn',
+] as const satisfies readonly (keyof ProcessMaster)[];
+
+type UpdatableField = (typeof UPDATABLE_FIELDS)[number];
 
 @Injectable()
 export class ProcessService {
@@ -18,8 +67,6 @@ export class ProcessService {
     private readonly processRepository: Repository<ProcessMaster>,
     @InjectRepository(EquipMaster)
     private readonly equipRepository: Repository<EquipMaster>,
-    @InjectRepository(ProcessEquipment)
-    private readonly processEquipmentRepository: Repository<ProcessEquipment>,
   ) {}
 
   private tenantWhere(organizationId?: number) {
@@ -29,10 +76,10 @@ export class ProcessService {
   }
 
   async findAll(query: ProcessQueryDto, organizationId?: number) {
-    const { page = 1, limit = 10, search, processType, useYn } = query;
+    const { page = 1, limit = 10, search, processType, codeGroup, lineCode } = query;
     const skip = (page - 1) * limit;
 
-    const queryBuilder = this.processRepository.createQueryBuilder('process')
+    const queryBuilder = this.processRepository.createQueryBuilder('process');
 
     if (organizationId != null) {
       queryBuilder.andWhere('process.organizationId = :organizationId', { organizationId });
@@ -42,8 +89,12 @@ export class ProcessService {
       queryBuilder.andWhere('process.processType = :processType', { processType });
     }
 
-    if (useYn) {
-      queryBuilder.andWhere('process.useYn = :useYn', { useYn });
+    if (codeGroup) {
+      queryBuilder.andWhere('process.codeGroup = :codeGroup', { codeGroup });
+    }
+
+    if (lineCode) {
+      queryBuilder.andWhere('process.lineCode = :lineCode', { lineCode });
     }
 
     if (search) {
@@ -82,14 +133,11 @@ export class ProcessService {
     if (existing) throw new ConflictException(`이미 존재하는 공정 코드입니다: ${dto.processCode}`);
 
     const process = this.processRepository.create({
-      processCode: dto.processCode,
-      processName: dto.processName,
-      processType: dto.processType,
-      processCategory: dto.processCategory ?? null,
-      lineType: dto.lineType ?? null,
-      sortOrder: dto.sortOrder ?? 0,
-      remark: dto.remark,
-      useYn: dto.useYn ?? 'Y',
+      ...dto,
+      processType: dto.processType ?? 'I',
+      startYn: dto.startYn ?? 'N',
+      lineCode: dto.lineCode ?? UNASSIGNED_PROCESS_CODE,
+      mesDisplayGroup: dto.mesDisplayGroup ?? UNASSIGNED_PROCESS_CODE,
       organizationId,
     });
 
@@ -98,23 +146,15 @@ export class ProcessService {
 
   async update(processCode: string, dto: UpdateProcessDto, organizationId?: number) {
     await this.findById(processCode, organizationId);
-    const updateData: Partial<Pick<ProcessMaster,
-      | 'processName'
-      | 'processType'
-      | 'processCategory'
-      | 'lineType'
-      | 'sortOrder'
-      | 'remark'
-      | 'useYn'
-    >> = {
-      ...(dto.processName !== undefined ? { processName: dto.processName } : {}),
-      ...(dto.processType !== undefined ? { processType: dto.processType } : {}),
-      ...(dto.processCategory !== undefined ? { processCategory: dto.processCategory } : {}),
-      ...(dto.lineType !== undefined ? { lineType: dto.lineType } : {}),
-      ...(dto.sortOrder !== undefined ? { sortOrder: dto.sortOrder } : {}),
-      ...(dto.remark !== undefined ? { remark: dto.remark } : {}),
-      ...(dto.useYn !== undefined ? { useYn: dto.useYn } : {}),
-    };
+
+    const updateData: Partial<Pick<ProcessMaster, UpdatableField>> = {};
+    for (const field of UPDATABLE_FIELDS) {
+      const value = dto[field];
+      if (value !== undefined) {
+        Object.assign(updateData, { [field]: value });
+      }
+    }
+
     await this.processRepository.update({ processCode, ...this.tenantWhere(organizationId) }, updateData);
     return this.findById(processCode, organizationId);
   }
@@ -125,31 +165,27 @@ export class ProcessService {
     return { processCode };
   }
 
-  async findEquipments(processCode: string, organizationId?: number) {
+  async findEquipments(processCode: string, organizationId?: number): Promise<EquipMaster[]> {
     await this.findById(processCode, organizationId);
 
-    const assignments = await this.processEquipmentRepository.find({
-      where: { processCode, useYn: 'Y', ...this.tenantWhere(organizationId) },
-      relations: ['equipment'],
+    return this.equipRepository.find({
+      where: { processCode, ...this.tenantWhere(organizationId) },
       order: { equipCode: 'ASC' },
     });
-
-    return assignments
-      .map((assignment) => assignment.equipment)
-      .filter((equipment): equipment is EquipMaster => !!equipment);
   }
 
   async getEquipmentCounts(organizationId?: number): Promise<Record<string, number>> {
-    const qb = this.processEquipmentRepository
-      .createQueryBuilder('pe')
-      .select('pe.processCode', 'processCode')
+    const qb = this.equipRepository
+      .createQueryBuilder('equip')
+      .select('equip.processCode', 'processCode')
       .addSelect('COUNT(*)', 'count')
-      .where('pe.useYn = :useYn', { useYn: 'Y' });
+      .where('equip.processCode IS NOT NULL')
+      .andWhere('equip.processCode != :unassigned', { unassigned: UNASSIGNED_PROCESS_CODE });
 
-    if (organizationId != null) qb.andWhere('pe.organizationId = :organizationId', { organizationId });
+    if (organizationId != null) qb.andWhere('equip.organizationId = :organizationId', { organizationId });
 
     const rows = await qb
-      .groupBy('pe.processCode')
+      .groupBy('equip.processCode')
       .getRawMany<{ processCode: string; count: string }>();
 
     return rows.reduce<Record<string, number>>((acc, row) => {
@@ -168,36 +204,26 @@ export class ProcessService {
       throw new NotFoundException(`설비를 찾을 수 없습니다: ${equipCode}`);
     }
 
-    const existing = await this.processEquipmentRepository.findOne({
-      where: { processCode, equipCode, ...this.tenantWhere(organizationId) },
-    });
-
-    if (existing) {
-      if (existing.useYn === 'Y') {
-        throw new ConflictException(`이미 배치된 설비입니다: ${equipCode}`);
-      }
-      await this.processEquipmentRepository.update(
-        { processCode, equipCode, ...this.tenantWhere(organizationId) },
-        { useYn: 'Y' },
-      );
-      return this.processEquipmentRepository.findOne({
-        where: { processCode, equipCode, ...this.tenantWhere(organizationId) },
-      });
+    if (equipment.processCode === processCode) {
+      throw new ConflictException(`이미 배치된 설비입니다: ${equipCode}`);
     }
 
-    const assignment = this.processEquipmentRepository.create({
-      organizationId,
-      processCode,
-      equipCode,
-      useYn: 'Y',
-    });
+    await this.equipRepository.update(
+      { equipCode, ...this.tenantWhere(organizationId) },
+      { processCode },
+    );
 
-    return this.processEquipmentRepository.save(assignment);
+    return { processCode, equipCode };
   }
 
   async removeEquipment(processCode: string, equipCode: string, organizationId?: number) {
     await this.findById(processCode, organizationId);
-    await this.processEquipmentRepository.delete({ processCode, equipCode, ...this.tenantWhere(organizationId) });
+
+    await this.equipRepository.update(
+      { equipCode, processCode, ...this.tenantWhere(organizationId) },
+      { processCode: UNASSIGNED_PROCESS_CODE },
+    );
+
     return { processCode, equipCode };
   }
 }

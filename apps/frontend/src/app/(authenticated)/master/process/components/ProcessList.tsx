@@ -2,31 +2,24 @@
 
 /**
  * @file master/process/components/ProcessList.tsx
- * @description 공정관리 좌측 패널 - DataGrid 형태의 공정 목록
+ * @description 공정관리 좌측 패널 - DataGrid 형태의 공정 목록 (IP_PRODUCT_WORKSTAGE)
  *
  * 초보자 가이드:
- * 1. DataGrid로 공정 목록 표시, 행 클릭 시 우측에 설비 표시
+ * 1. DataGrid로 공정 목록 표시, 행 클릭 시 우측에 배치 설비 표시
  * 2. 선택된 행 하이라이트 (selectedRowId)
  * 3. 수정/삭제 액션 버튼 포함
  */
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { Edit2, Trash2, Plus, Search } from "lucide-react";
-import { Card, CardContent, ComCodeBadge, Button, Input } from "@/components/ui";
+import { Edit2, Trash2, Plus } from "lucide-react";
+import { Card, CardContent, ComCodeBadge, Button } from "@/components/ui";
 import DataGrid from "@/components/data-grid/DataGrid";
+import StatusHeaderHelp from "@/components/shared/StatusHeaderHelp";
 import { useComCodeOptions } from "@/hooks/useComCode";
 import { ColumnDef } from "@tanstack/react-table";
+import type { Process } from "../types";
 
-export interface Process {
-  processCode: string;
-  processName: string;
-  processType: string;
-  processCategory?: string;
-  lineType?: string;
-  sortOrder: number;
-  remark?: string;
-  useYn: string;
-}
+export type { Process };
 
 interface ProcessListProps {
   processes: Process[];
@@ -51,8 +44,8 @@ export default function ProcessList({
 }: ProcessListProps) {
   const { t } = useTranslation();
 
-  const processCategoryOptions = useComCodeOptions("PROCESS_CATEGORY");
-  const lineTypeOptions = useComCodeOptions("LINE_TYPE");
+  const codeGroupOptions = useComCodeOptions("WORKSTAGE CODE GROUP");
+  const lineCodeOptions = useComCodeOptions("LINE CODE");
 
   const columns = useMemo<ColumnDef<Process>[]>(
     () => [
@@ -87,7 +80,7 @@ export default function ProcessList({
       {
         accessorKey: "processCode",
         header: t("master.process.processCode"),
-        size: 100,
+        size: 90,
       },
       {
         accessorKey: "processName",
@@ -95,37 +88,62 @@ export default function ProcessList({
         size: 140,
       },
       {
-        accessorKey: "lineType",
-        header: t("master.process.lineType", { defaultValue: "라인" }),
-        size: 70,
-        meta: {
-          filterType: "multi" as const,
-          filterOptions: lineTypeOptions,
-        },
-        cell: ({ getValue }) => {
-          const v = getValue() as string;
-          return v ? <ComCodeBadge groupCode="LINE_TYPE" code={v} /> : "-";
-        },
-      },
-      {
         accessorKey: "processType",
-        header: t("master.process.processType"),
+        header: () => (
+          <StatusHeaderHelp
+            label={t("master.process.processType")}
+            codeType="WORKSTAGE TYPE"
+            align="center"
+          />
+        ),
         size: 90,
         cell: ({ getValue }) => (
-          <ComCodeBadge groupCode="PROCESS_TYPE" code={getValue() as string} />
+          <ComCodeBadge groupCode="WORKSTAGE TYPE" code={getValue() as string} />
         ),
       },
       {
-        accessorKey: "processCategory",
-        header: t("master.process.processCategory"),
+        accessorKey: "codeGroup",
+        header: t("master.process.codeGroup"),
+        size: 90,
+        meta: {
+          filterType: "multi" as const,
+          filterOptions: codeGroupOptions,
+        },
+        cell: ({ getValue }) => {
+          const v = getValue() as string | null;
+          return v ? <ComCodeBadge groupCode="WORKSTAGE CODE GROUP" code={v} /> : "-";
+        },
+      },
+      {
+        accessorKey: "lineCode",
+        header: t("master.process.lineCode"),
         size: 80,
         meta: {
           filterType: "multi" as const,
-          filterOptions: processCategoryOptions,
+          filterOptions: lineCodeOptions,
         },
+        cell: ({ getValue }) => (getValue() as string) || "-",
+      },
+      {
+        accessorKey: "startYn",
+        header: () => (
+          <StatusHeaderHelp
+            label={t("master.process.startYn")}
+            codeType="WORKSTAGE START YN"
+            align="center"
+          />
+        ),
+        size: 70,
+        meta: { align: "center" as const, filterType: "multi" as const },
         cell: ({ getValue }) => {
-          const v = getValue() as string;
-          return v ? <ComCodeBadge groupCode="PROCESS_CATEGORY" code={v} /> : "-";
+          const v = getValue() as string | null;
+          return v === "Y" ? (
+            <span className="px-1.5 py-0.5 text-xs rounded bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300">
+              {t("master.process.startYn")}
+            </span>
+          ) : (
+            "-"
+          );
         },
       },
       {
@@ -149,32 +167,23 @@ export default function ProcessList({
         },
       },
       {
+        accessorKey: "uphValue",
+        header: t("master.process.uphValue"),
+        size: 70,
+        meta: { align: "right" as const },
+        cell: ({ getValue }) => {
+          const v = getValue() as number | null;
+          return v == null ? "-" : v.toLocaleString();
+        },
+      },
+      {
         accessorKey: "sortOrder",
         header: t("master.process.sortOrder"),
         size: 60,
-      },
-      {
-        accessorKey: "useYn",
-        header: t("common.useYn", { defaultValue: "사용여부" }),
-        size: 50,
-        meta: { filterType: "multi" as const },
-        cell: ({ getValue }) => {
-          const v = getValue() as string;
-          return (
-            <span
-              className={`px-1.5 py-0.5 text-xs rounded ${
-                v === "Y"
-                  ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
-                  : "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300"
-              }`}
-            >
-              {v}
-            </span>
-          );
-        },
+        meta: { align: "right" as const },
       },
     ],
-    [t, equipCounts, onEdit, onDelete, processCategoryOptions, lineTypeOptions],
+    [t, equipCounts, onEdit, onDelete, codeGroupOptions, lineCodeOptions],
   );
 
   return (
@@ -196,8 +205,8 @@ export default function ProcessList({
               {t("master.process.addProcess")}
             </Button>
           }
-
-        sqlQuery={`SELECT *\nFROM PROCESS_MASTERS\nWHERE COMPANY = '40'\n  AND PLANT_CD = '1000'\nORDER BY CREATED_AT DESC`}/>
+          sqlQuery={`SELECT *\nFROM IP_PRODUCT_WORKSTAGE\nWHERE ORGANIZATION_ID = :organizationId\nORDER BY WORKSTAGE_SORT_ORDER, WORKSTAGE_CODE`}
+        />
       </CardContent>
     </Card>
   );

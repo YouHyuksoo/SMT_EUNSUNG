@@ -6,12 +6,11 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ProcessMaster } from '../../entities/process-master.entity';
 import { EquipMaster } from '../../entities/equip-master.entity';
-import { ProcessEquipment } from '../../entities/process-equipment.entity';
 import { ProcessController } from './controllers/process.controller';
 import { ProcessService } from './services/process.service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([ProcessMaster, EquipMaster, ProcessEquipment])],
+  imports: [TypeOrmModule.forFeature([ProcessMaster, EquipMaster])],
   controllers: [ProcessController],
   providers: [ProcessService],
   exports: [ProcessService],

@@ -361,7 +361,7 @@ describe('RoutingGroupService', () => {
       await target.createProcess(dto, 1);
 
       expect(mockProcessMasterRepo.findOne).toHaveBeenCalledWith({
-        where: { processCode: 'P01', useYn: 'Y', organizationId: 1 },
+        where: { processCode: 'P01', organizationId: 1 },
       });
       expect(mockProcessRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -494,7 +494,7 @@ describe('RoutingGroupService', () => {
       );
 
       expect(mockProcessMasterRepo.findOne).toHaveBeenCalledWith({
-        where: { processCode: 'P02', useYn: 'Y', organizationId: 1 },
+        where: { processCode: 'P02', organizationId: 1 },
       });
       expect(mockProcessRepo.update).toHaveBeenCalledWith(
         { routingCode: 'RG01', seq: 10, organizationId: 1 },

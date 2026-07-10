@@ -6,26 +6,22 @@ import { getMetadataArgsStorage } from 'typeorm';
 import { ProcessService } from './process.service';
 import { ProcessMaster } from '../../../entities/process-master.entity';
 import { EquipMaster } from '../../../entities/equip-master.entity';
-import { ProcessEquipment } from '../../../entities/process-equipment.entity';
 import { MockLoggerService } from '@test/mock-logger.service';
 
 describe('ProcessService equipment assignments', () => {
   let target: ProcessService;
   let processRepo: DeepMocked<Repository<ProcessMaster>>;
   let equipRepo: DeepMocked<Repository<EquipMaster>>;
-  let assignmentRepo: DeepMocked<Repository<ProcessEquipment>>;
 
   beforeEach(async () => {
     processRepo = createMock<Repository<ProcessMaster>>();
     equipRepo = createMock<Repository<EquipMaster>>();
-    assignmentRepo = createMock<Repository<ProcessEquipment>>();
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ProcessService,
         { provide: getRepositoryToken(ProcessMaster), useValue: processRepo },
         { provide: getRepositoryToken(EquipMaster), useValue: equipRepo },
-        { provide: getRepositoryToken(ProcessEquipment), useValue: assignmentRepo },
       ],
     })
       .setLogger(new MockLoggerService())
@@ -38,145 +34,160 @@ describe('ProcessService equipment assignments', () => {
     jest.clearAllMocks();
   });
 
-  it('includes tenant column in process equipment primary key metadata', () => {
+  it('maps the process master onto IP_PRODUCT_WORKSTAGE with a tenant-composite key', () => {
+    const table = getMetadataArgsStorage().tables.find((t) => t.target === ProcessMaster);
+    expect(table?.name).toBe('IP_PRODUCT_WORKSTAGE');
+
     const primaryColumnNames = getMetadataArgsStorage()
       .columns
-      .filter((column) => column.target === ProcessEquipment && column.options.primary)
+      .filter((column) => column.target === ProcessMaster && column.options.primary)
       .map((column) => column.propertyName);
 
-    expect(primaryColumnNames).toEqual(expect.arrayContaining(['organizationId']));
+    expect(primaryColumnNames).toEqual(expect.arrayContaining(['processCode', 'organizationId']));
   });
 
-  it('allows the same equipment to be assigned to different processes', async () => {
-    processRepo.findOne
-      .mockResolvedValueOnce({ processCode: 'PROC-A' } as ProcessMaster)
-      .mockResolvedValueOnce({ processCode: 'PROC-B' } as ProcessMaster);
-    equipRepo.findOne.mockResolvedValue({ equipCode: 'EQ-001' } as EquipMaster);
-    assignmentRepo.findOne.mockResolvedValue(null);
-    assignmentRepo.create.mockImplementation((value) => value as ProcessEquipment);
-    assignmentRepo.save.mockImplementation(async (value) => value as ProcessEquipment);
+  it('assigns equipment by moving IMCN_MACHINE.WORKSTAGE_CODE within tenant only', async () => {
+    processRepo.findOne.mockResolvedValue({ processCode: 'W020', organizationId: 1 } as ProcessMaster);
+    equipRepo.findOne.mockResolvedValue({ equipCode: 'EQ-001', processCode: '*', organizationId: 1 } as EquipMaster);
+    equipRepo.update.mockResolvedValue({ affected: 1 } as never);
 
-    await target.assignEquipment('PROC-A', 'EQ-001');
-    await target.assignEquipment('PROC-B', 'EQ-001');
-
-    expect(assignmentRepo.save).toHaveBeenCalledWith(
-      expect.objectContaining({ processCode: 'PROC-A', equipCode: 'EQ-001' }),
-    );
-    expect(assignmentRepo.save).toHaveBeenCalledWith(
-      expect.objectContaining({ processCode: 'PROC-B', equipCode: 'EQ-001' }),
-    );
-  });
-
-  it('assigns equipment using process, equipment, and existing assignment within tenant only', async () => {
-    processRepo.findOne.mockResolvedValue({ processCode: 'PROC-A', organizationId: 1 } as ProcessMaster);
-    equipRepo.findOne.mockResolvedValue({ equipCode: 'EQ-001', organizationId: 1 } as EquipMaster);
-    assignmentRepo.findOne.mockResolvedValue(null);
-    assignmentRepo.create.mockImplementation((value) => value as ProcessEquipment);
-    assignmentRepo.save.mockImplementation(async (value) => value as ProcessEquipment);
-
-    await target.assignEquipment('PROC-A', 'EQ-001', 1);
+    await target.assignEquipment('W020', 'EQ-001', 1);
 
     expect(processRepo.findOne).toHaveBeenCalledWith({
-      where: { processCode: 'PROC-A', organizationId: 1 },
+      where: { processCode: 'W020', organizationId: 1 },
     });
     expect(equipRepo.findOne).toHaveBeenCalledWith({
       where: { equipCode: 'EQ-001', organizationId: 1 },
     });
-    expect(assignmentRepo.findOne).toHaveBeenCalledWith({
-      where: { processCode: 'PROC-A', equipCode: 'EQ-001', organizationId: 1 },
-    });
-    expect(assignmentRepo.create).toHaveBeenCalledWith({
-      organizationId: 1,
-      processCode: 'PROC-A',
-      equipCode: 'EQ-001',
-      useYn: 'Y',
-    });
+    expect(equipRepo.update).toHaveBeenCalledWith(
+      { equipCode: 'EQ-001', organizationId: 1 },
+      { processCode: 'W020' },
+    );
   });
 
-  it('rejects duplicate active equipment assignment within the same tenant', async () => {
-    processRepo.findOne.mockResolvedValue({ processCode: 'PROC-A', organizationId: 1 } as ProcessMaster);
-    equipRepo.findOne.mockResolvedValue({ equipCode: 'EQ-001', organizationId: 1 } as EquipMaster);
-    assignmentRepo.findOne.mockResolvedValue({
-      processCode: 'PROC-A',
-      equipCode: 'EQ-001',
-      organizationId: 1,
-      useYn: 'Y',
-    } as ProcessEquipment);
+  it('reassigns equipment that currently belongs to another process', async () => {
+    processRepo.findOne.mockResolvedValue({ processCode: 'W030', organizationId: 1 } as ProcessMaster);
+    equipRepo.findOne.mockResolvedValue({ equipCode: 'EQ-001', processCode: 'W020', organizationId: 1 } as EquipMaster);
+    equipRepo.update.mockResolvedValue({ affected: 1 } as never);
 
-    await expect(target.assignEquipment('PROC-A', 'EQ-001', 1)).rejects.toThrow('이미 배치된 설비입니다');
-    expect(assignmentRepo.save).not.toHaveBeenCalled();
+    await target.assignEquipment('W030', 'EQ-001', 1);
+
+    expect(equipRepo.update).toHaveBeenCalledWith(
+      { equipCode: 'EQ-001', organizationId: 1 },
+      { processCode: 'W030' },
+    );
+  });
+
+  it('rejects assigning equipment that already belongs to the same process', async () => {
+    processRepo.findOne.mockResolvedValue({ processCode: 'W020', organizationId: 1 } as ProcessMaster);
+    equipRepo.findOne.mockResolvedValue({ equipCode: 'EQ-001', processCode: 'W020', organizationId: 1 } as EquipMaster);
+
+    await expect(target.assignEquipment('W020', 'EQ-001', 1)).rejects.toThrow('이미 배치된 설비입니다');
+    expect(equipRepo.update).not.toHaveBeenCalled();
+  });
+
+  it('rejects assigning an equipment code that does not exist', async () => {
+    processRepo.findOne.mockResolvedValue({ processCode: 'W020', organizationId: 1 } as ProcessMaster);
+    equipRepo.findOne.mockResolvedValue(null);
+
+    await expect(target.assignEquipment('W020', 'MISSING', 1)).rejects.toThrow('설비를 찾을 수 없습니다');
+    expect(equipRepo.update).not.toHaveBeenCalled();
   });
 
   it('finds assigned equipment within tenant only', async () => {
-    processRepo.findOne.mockResolvedValue({ processCode: 'PROC-A', organizationId: 1 } as ProcessMaster);
-    assignmentRepo.find.mockResolvedValue([]);
+    processRepo.findOne.mockResolvedValue({ processCode: 'W020', organizationId: 1 } as ProcessMaster);
+    equipRepo.find.mockResolvedValue([]);
 
-    await target.findEquipments('PROC-A', 1);
+    await target.findEquipments('W020', 1);
 
-    expect(assignmentRepo.find).toHaveBeenCalledWith({
-      where: { processCode: 'PROC-A', useYn: 'Y', organizationId: 1 },
-      relations: ['equipment'],
+    expect(equipRepo.find).toHaveBeenCalledWith({
+      where: { processCode: 'W020', organizationId: 1 },
       order: { equipCode: 'ASC' },
     });
   });
 
-  it('removes equipment assignment within tenant only', async () => {
-    processRepo.findOne.mockResolvedValue({ processCode: 'PROC-A', organizationId: 1 } as ProcessMaster);
-    assignmentRepo.delete.mockResolvedValue({ affected: 1 } as any);
+  it('releases equipment back to the unassigned sentinel', async () => {
+    processRepo.findOne.mockResolvedValue({ processCode: 'W020', organizationId: 1 } as ProcessMaster);
+    equipRepo.update.mockResolvedValue({ affected: 1 } as never);
 
-    await target.removeEquipment('PROC-A', 'EQ-001', 1);
+    await target.removeEquipment('W020', 'EQ-001', 1);
 
-    expect(assignmentRepo.delete).toHaveBeenCalledWith({
-      processCode: 'PROC-A',
-      equipCode: 'EQ-001',
-      organizationId: 1,
-    });
+    expect(equipRepo.update).toHaveBeenCalledWith(
+      { equipCode: 'EQ-001', processCode: 'W020', organizationId: 1 },
+      { processCode: '*' },
+    );
   });
 
-  it('counts assigned equipment within tenant only', async () => {
-    const qb: any = {
+  it('counts assigned equipment per process, excluding the unassigned sentinel', async () => {
+    const qb: {
+      select: jest.Mock;
+      addSelect: jest.Mock;
+      where: jest.Mock;
+      andWhere: jest.Mock;
+      groupBy: jest.Mock;
+      getRawMany: jest.Mock;
+    } = {
       select: jest.fn().mockReturnThis(),
       addSelect: jest.fn().mockReturnThis(),
       where: jest.fn().mockReturnThis(),
       andWhere: jest.fn().mockReturnThis(),
       groupBy: jest.fn().mockReturnThis(),
-      getRawMany: jest.fn().mockResolvedValue([{ processCode: 'PROC-A', count: '2' }]),
+      getRawMany: jest.fn().mockResolvedValue([{ processCode: 'W020', count: '18' }]),
     };
-    assignmentRepo.createQueryBuilder.mockReturnValue(qb);
+    equipRepo.createQueryBuilder.mockReturnValue(qb as never);
 
     const result = await target.getEquipmentCounts(1);
 
-    expect(result).toEqual({ 'PROC-A': 2 });
-    expect(qb.andWhere).toHaveBeenCalledWith('pe.organizationId = :organizationId', { organizationId: 1 });
+    expect(result).toEqual({ W020: 18 });
+    expect(qb.andWhere).toHaveBeenCalledWith('equip.processCode != :unassigned', { unassigned: '*' });
+    expect(qb.andWhere).toHaveBeenCalledWith('equip.organizationId = :organizationId', { organizationId: 1 });
   });
 
   it('updates a process within tenant and strips key/tenant columns from payload', async () => {
-    processRepo.findOne.mockResolvedValue({ processCode: 'PROC-A', organizationId: 1 } as ProcessMaster);
-    processRepo.update.mockResolvedValue({ affected: 1 } as any);
+    processRepo.findOne.mockResolvedValue({ processCode: 'W020', organizationId: 1 } as ProcessMaster);
+    processRepo.update.mockResolvedValue({ affected: 1 } as never);
 
-    await target.update('PROC-A', {
-      processCode: 'PROC-B',
-      processName: 'Cutting',
-    } as any, 1);
+    await target.update('W020', {
+      processCode: 'W021',
+      processName: 'SOLDER PASTE PRINTER',
+    } as never, 1);
 
     expect(processRepo.update).toHaveBeenCalledWith(
-      { processCode: 'PROC-A', organizationId: 1 },
-      { processName: 'Cutting' },
+      { processCode: 'W020', organizationId: 1 },
+      { processName: 'SOLDER PASTE PRINTER' },
     );
   });
 
   it('does not pass arbitrary fields from update payload to the repository', async () => {
-    processRepo.findOne.mockResolvedValue({ processCode: 'PROC-A', organizationId: 1 } as ProcessMaster);
-    processRepo.update.mockResolvedValue({ affected: 1 } as any);
+    processRepo.findOne.mockResolvedValue({ processCode: 'W020', organizationId: 1 } as ProcessMaster);
+    processRepo.update.mockResolvedValue({ affected: 1 } as never);
 
-    await target.update('PROC-A', {
-      processName: 'Cutting',
+    await target.update('W020', {
+      processName: 'SP',
       externalSource: 'ERP',
-    } as any, 1);
+    } as never, 1);
 
     expect(processRepo.update).toHaveBeenCalledWith(
-      { processCode: 'PROC-A', organizationId: 1 },
-      { processName: 'Cutting' },
+      { processCode: 'W020', organizationId: 1 },
+      { processName: 'SP' },
+    );
+  });
+
+  it('persists the legacy workstage fields on update', async () => {
+    processRepo.findOne.mockResolvedValue({ processCode: 'W020', organizationId: 1 } as ProcessMaster);
+    processRepo.update.mockResolvedValue({ affected: 1 } as never);
+
+    await target.update('W020', {
+      uphValue: 1200,
+      badRateControl: 'Y',
+      badMaxRate: 3.5,
+      codeGroup: 'SMT',
+      startYn: 'Y',
+    }, 1);
+
+    expect(processRepo.update).toHaveBeenCalledWith(
+      { processCode: 'W020', organizationId: 1 },
+      { uphValue: 1200, badRateControl: 'Y', badMaxRate: 3.5, codeGroup: 'SMT', startYn: 'Y' },
     );
   });
 });
