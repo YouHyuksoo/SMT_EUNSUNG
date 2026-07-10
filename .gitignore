@@ -44,6 +44,11 @@ yarn-error.log*
 /config/database.json
 /apps/frontend/config/database.json
 
+# Oracle 설정/헬퍼 (실 IP·접속정보 포함, 공유 브랜치 제외)
+/network/admin/tnsnames.ora
+/scripts/create-oracle-user.mjs
+/scripts/test-oracle-connection.mjs
+
 # Slack settings (contains webhook URL)
 /data/slack-settings.json
 
