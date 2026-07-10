@@ -9,7 +9,7 @@
  * 2. **확장 시**: 새 값 추가 후 관련 상수(constants/)도 함께 업데이트
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ShipmentStatus = exports.InspectionType = exports.JobOrderType = exports.BomType = exports.ItemType = exports.CancelType = exports.IqcStatus = exports.EquipmentStatus = exports.InterfaceStatus = exports.RepairStatus = exports.WarehouseType = exports.InventoryMoveType = exports.DefectDisposition = exports.QualityJudgment = exports.Status = exports.WorkStatus = exports.ProcessType = void 0;
+exports.ShipmentStatus = exports.InspectionType = exports.JobOrderType = exports.BomType = exports.ItemType = exports.CancelType = exports.EquipmentStatus = exports.InterfaceStatus = exports.RepairStatus = exports.WarehouseType = exports.InventoryMoveType = exports.DefectDisposition = exports.QualityJudgment = exports.Status = exports.WorkStatus = exports.ProcessType = void 0;
 /** 공정 유형 */
 var ProcessType;
 (function (ProcessType) {
@@ -97,15 +97,6 @@ var EquipmentStatus;
     EquipmentStatus["BREAKDOWN"] = "BREAKDOWN";
     EquipmentStatus["SETUP"] = "SETUP";
 })(EquipmentStatus || (exports.EquipmentStatus = EquipmentStatus = {}));
-/** IQC 상태 */
-var IqcStatus;
-(function (IqcStatus) {
-    IqcStatus["WAITING"] = "WAITING";
-    IqcStatus["IN_PROGRESS"] = "IN_PROGRESS";
-    IqcStatus["PASSED"] = "PASSED";
-    IqcStatus["FAILED"] = "FAILED";
-    IqcStatus["HOLD"] = "HOLD";
-})(IqcStatus || (exports.IqcStatus = IqcStatus = {}));
 /** 트랜잭션 취소 유형 */
 var CancelType;
 (function (CancelType) {

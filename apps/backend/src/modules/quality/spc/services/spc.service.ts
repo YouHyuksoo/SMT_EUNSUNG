@@ -417,7 +417,6 @@ export class SpcService {
 
   /**
    * 데이터 소스별로 SPC 측정값을 조회한다.
-   * - IQC: SAMPLE_INSPECT_RESULTS (수입검사 실적)
    * - PROCESS: INSPECT_RESULTS (공정검사 실적)
    * - OQC: OQC_REQUESTS (출하검사 실적)
    * - MANUAL: 빈 배열 반환 (수동입력 전용)
@@ -445,9 +444,6 @@ export class SpcService {
 
     try {
       switch (dataSource) {
-        case 'IQC':
-          measurements = await this.fetchFromIqc(chart, from, to);
-          break;
         case 'PROCESS':
           measurements = await this.fetchFromProcess(chart, from, to);
           break;
@@ -460,23 +456,6 @@ export class SpcService {
     }
 
     return { dataSource, measurements };
-  }
-
-  /** IQC: SAMPLE_INSPECT_RESULTS에서 측정값 조회 */
-  private async fetchFromIqc(
-    chart: SpcChart, from?: string, to?: string,
-  ): Promise<{ source: string; date: string; values: number[] }[]> {
-    const bind: unknown[] = [chart.company, chart.plant];
-    let sql = `SELECT TO_CHAR(INSPECT_DATE, 'YYYY-MM-DD') AS "date", MEASURED_VALUE AS "value"
-               FROM SAMPLE_INSPECT_RESULTS
-               WHERE COMPANY = :1 AND PLANT_CD = :2
-                 AND MEASURED_VALUE IS NOT NULL`;
-    if (from) { bind.push(from); sql += ` AND INSPECT_DATE >= TO_DATE(:${bind.length}, 'YYYY-MM-DD')`; }
-    if (to) { bind.push(to); sql += ` AND INSPECT_DATE < TO_DATE(:${bind.length}, 'YYYY-MM-DD') + 1`; }
-    sql += ` ORDER BY INSPECT_DATE ASC`;
-
-    const rows: { date: string; value: number }[] = await this.dataSource.query(sql, bind);
-    return this.groupMeasurements(rows, 'IQC', chart.subgroupSize);
   }
 
   /** PROCESS: INSPECT_RESULTS에서 측정값 조회 */

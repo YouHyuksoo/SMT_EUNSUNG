@@ -51,24 +51,6 @@ export const QUALITY_JUDGMENT_COLORS: Record<string, string> = {
   CONDITIONAL: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
 } as const;
 
-/** IQC 상태 라벨 */
-export const IQC_STATUS_LABELS: Record<string, StatusLabel> = {
-  WAITING: { ko: '검사대기', en: 'Waiting', vi: 'Chờ kiểm tra' },
-  IN_PROGRESS: { ko: '검사중', en: 'In Progress', vi: 'Đang kiểm tra' },
-  PASSED: { ko: '합격', en: 'Passed', vi: 'Đạt' },
-  FAILED: { ko: '불합격', en: 'Failed', vi: 'Không đạt' },
-  HOLD: { ko: '보류', en: 'Hold', vi: 'Tạm giữ' },
-} as const;
-
-/** IQC 상태 색상 */
-export const IQC_STATUS_COLORS: Record<string, string> = {
-  WAITING: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
-  IN_PROGRESS: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
-  PASSED: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
-  FAILED: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
-  HOLD: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
-} as const;
-
 /** 설비 상태 라벨 */
 export const EQUIPMENT_STATUS_LABELS: Record<string, StatusLabel> = {
   RUNNING: { ko: '가동중', en: 'Running', vi: 'Đang chạy' },

@@ -35,7 +35,6 @@ import { ProductGenealogy } from '../../../entities/product-genealogy.entity';
 import { SgLabel } from '../../../entities/sg-label.entity';
 import { PurchaseOrder } from '../../../entities/purchase-order.entity';
 import { MatArrival } from '../../../entities/mat-arrival.entity';
-import { IqcLog } from '../../../entities/iqc-log.entity';
 import { MatReceiving } from '../../../entities/mat-receiving.entity';
 import { ShipmentOrder } from '../../../entities/shipment-order.entity';
 import { StockTransaction } from '../../../entities/stock-transaction.entity';
@@ -70,7 +69,6 @@ import { SharedModule } from '../../../shared/shared.module';
       SgLabel,
       PurchaseOrder,
       MatArrival,
-      IqcLog,
       MatReceiving,
       ShipmentOrder,
       StockTransaction,

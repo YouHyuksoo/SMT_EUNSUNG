@@ -84,14 +84,6 @@ export declare enum EquipmentStatus {
     BREAKDOWN = "BREAKDOWN",// 고장
     SETUP = "SETUP"
 }
-/** IQC 상태 */
-export declare enum IqcStatus {
-    WAITING = "WAITING",// 검사대기
-    IN_PROGRESS = "IN_PROGRESS",// 검사중
-    PASSED = "PASSED",// 합격
-    FAILED = "FAILED",// 불합격
-    HOLD = "HOLD"
-}
 /** 트랜잭션 취소 유형 */
 export declare enum CancelType {
     RECEIPT_CANCEL = "RECEIPT_CANCEL",// 입고취소

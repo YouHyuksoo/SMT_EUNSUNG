@@ -234,13 +234,6 @@ export default function MaterialReceivingPage() {
         />
       )}
 
-      {/* 특채 안내 */}
-      {scannedData?.isConcession && (
-        <div className="mx-4 mt-2 px-3 py-2 rounded-lg border border-amber-500 text-amber-600 text-xs font-medium">
-          {t("material.concession.accepted", "특채")}
-        </div>
-      )}
-
       {/* 스캔 전 안내 */}
       {!scannedData && !isScanning && currentWorker && (
         <div className="mx-4 mt-4 p-8 rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900">

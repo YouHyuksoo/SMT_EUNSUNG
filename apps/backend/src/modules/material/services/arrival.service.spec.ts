@@ -25,7 +25,6 @@ import { StockTransaction } from '../../../entities/stock-transaction.entity';
 import { ItemMaster } from '../../../entities/item-master.entity';
 import { Warehouse } from '../../../entities/warehouse.entity';
 import { VendorBarcodeMapping } from '../../../entities/vendor-barcode-mapping.entity';
-import { IqcLog } from '../../../entities/iqc-log.entity';
 import { PartnerMaster } from '../../../entities/partner-master.entity';
 import { NumberingService } from '../../../shared/numbering.service';
 import { TransactionService } from '../../../shared/transaction.service';
@@ -44,7 +43,6 @@ describe('ArrivalService', () => {
   let mockItemMasterRepo: DeepMocked<Repository<ItemMaster>>;
   let mockWarehouseRepo: DeepMocked<Repository<Warehouse>>;
   let mockVendorBarcodeRepo: DeepMocked<Repository<VendorBarcodeMapping>>;
-  let mockIqcLogRepo: DeepMocked<Repository<IqcLog>>;
   let mockPartnerMasterRepo: DeepMocked<Repository<PartnerMaster>>;
   let mockDataSource: DeepMocked<DataSource>;
   let mockQueryRunner: DeepMocked<QueryRunner>;
@@ -63,7 +61,6 @@ describe('ArrivalService', () => {
     mockItemMasterRepo = createMock<Repository<ItemMaster>>();
     mockWarehouseRepo = createMock<Repository<Warehouse>>();
     mockVendorBarcodeRepo = createMock<Repository<VendorBarcodeMapping>>();
-    mockIqcLogRepo = createMock<Repository<IqcLog>>();
     mockPartnerMasterRepo = createMock<Repository<PartnerMaster>>();
     mockDataSource = createMock<DataSource>();
     mockQueryRunner = createMock<QueryRunner>();
@@ -92,7 +89,6 @@ describe('ArrivalService', () => {
         { provide: getRepositoryToken(ItemMaster), useValue: mockItemMasterRepo },
         { provide: getRepositoryToken(Warehouse), useValue: mockWarehouseRepo },
         { provide: getRepositoryToken(VendorBarcodeMapping), useValue: mockVendorBarcodeRepo },
-        { provide: getRepositoryToken(IqcLog), useValue: mockIqcLogRepo },
         { provide: getRepositoryToken(PartnerMaster), useValue: mockPartnerMasterRepo },
         { provide: DataSource, useValue: mockDataSource },
         { provide: NumberingService, useValue: mockNumbering },
@@ -680,7 +676,6 @@ describe('ArrivalService', () => {
         qty: 10,
         warehouseCode: 'WH-001',
       } as MatArrivalTransaction);
-      mockIqcLogRepo.findOne.mockResolvedValue(null);
 
       const matIssueRepo = {
         findOne: jest.fn().mockResolvedValue({
@@ -731,7 +726,6 @@ describe('ArrivalService', () => {
         company: 'CO',
         plant: 'P01',
       } as MatArrivalTransaction);
-      mockIqcLogRepo.findOne.mockResolvedValue(null);
       mockItemMasterRepo.findOne.mockResolvedValue({ itemCode: 'ITEM-001', itemName: 'Item', unit: 'EA' } as ItemMaster);
       mockWarehouseRepo.findOne.mockResolvedValue({ warehouseCode: 'WH-001', warehouseName: 'Warehouse' } as Warehouse);
       mockDataSource.getRepository.mockReturnValue({
@@ -781,7 +775,6 @@ describe('ArrivalService', () => {
         target.cancel({ transactionId: 'TX-003', reason: 'cancel', workerId: 'user' } as any, 'CO', 'P01'),
       ).rejects.toThrow(BadRequestException);
 
-      expect(mockIqcLogRepo.findOne).not.toHaveBeenCalled();
       expect(mockTx.run).not.toHaveBeenCalled();
     });
 
@@ -799,7 +792,6 @@ describe('ArrivalService', () => {
         company: 'CO',
         plant: 'P01',
       } as MatArrivalTransaction);
-      mockIqcLogRepo.findOne.mockResolvedValue(null);
       mockItemMasterRepo.findOne.mockResolvedValue(null);
       mockMatLotRepo.findOne.mockResolvedValue(null);
       mockWarehouseRepo.findOne.mockResolvedValue(null);
@@ -832,7 +824,7 @@ describe('ArrivalService', () => {
       );
     });
 
-    it('입하 취소의 IQC/품목마스터 보강 조회도 요청 테넌트 범위로 제한한다', async () => {
+    it('입하 취소의 품목마스터 보강 조회도 요청 테넌트 범위로 제한한다', async () => {
       mockMatArrivalTxRepo.findOne.mockResolvedValue({
         transNo: 'TX-005',
         status: 'DONE',
@@ -846,7 +838,6 @@ describe('ArrivalService', () => {
         company: 'C1',
         plant: 'P1',
       } as MatArrivalTransaction);
-      mockIqcLogRepo.findOne.mockResolvedValue(null);
       mockItemMasterRepo.findOne.mockResolvedValue({ itemCode: 'ITEM-001', itemName: 'Item', unit: 'EA' } as ItemMaster);
       mockWarehouseRepo.findOne.mockResolvedValue({ warehouseCode: 'WH-001', warehouseName: 'Warehouse' } as Warehouse);
       mockDataSource.getRepository.mockReturnValue({
@@ -866,10 +857,6 @@ describe('ArrivalService', () => {
 
       await target.cancel({ transactionId: 'TX-005', reason: 'cancel', workerId: 'user' } as any, 'C1', 'P1');
 
-      expect(mockIqcLogRepo.findOne).toHaveBeenCalledWith({
-        where: { arrivalNo: 'ARR-001', itemCode: 'ITEM-001', company: 'C1', plant: 'P1' },
-        order: { inspectDate: 'DESC' },
-      });
       expect(mockItemMasterRepo.findOne).toHaveBeenCalledWith({
         where: { itemCode: 'ITEM-001', company: 'C1', plant: 'P1' },
       });
@@ -1024,15 +1011,14 @@ describe('ArrivalService', () => {
       const arrival = {
         arrivalNo: 'ARR-001', seq: 1, itemCode: 'ITEM-001',
         qty: 100, vendorName: 'VENDOR-A', poId: null, poItemId: null,
-        poNo: null, iqcStatus: 'PASS',
+        poNo: null,
       } as MatArrival;
       mockMatArrivalRepo.findOne.mockResolvedValueOnce(arrival);
-      mockItemMasterRepo.findOne.mockResolvedValue({ itemCode: 'ITEM-001', itemName: '커넥터A', unit: 'EA', iqcYn: 'N' } as ItemMaster);
+      mockItemMasterRepo.findOne.mockResolvedValue({ itemCode: 'ITEM-001', itemName: '커넥터A', unit: 'EA' } as ItemMaster);
 
       const result = await target.findByBarcode('ARR-001');
 
       expect(result.arrivalNo).toBe('ARR-001');
-      expect(result.iqcStatus).toBe('NONE');
     });
 
     it('바코드에 해당하는 입하가 없으면 NotFoundException', async () => {
@@ -1052,7 +1038,6 @@ describe('ArrivalService', () => {
         poId: null,
         poItemId: null,
         poNo: null,
-        iqcStatus: 'PASS',
         company: 'C1',
         plant: 'P1',
       } as MatArrival;

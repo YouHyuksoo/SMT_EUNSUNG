@@ -9,7 +9,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
+import { NotFoundException, ConflictException } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { PartService } from './part.service';
 import { ItemMaster } from '../../../entities/item-master.entity';
@@ -39,7 +39,7 @@ describe('PartService', () => {
   });
 
   describe('findAll', () => {
-    it('should apply IQC and AQL policy filters to the query builder', async () => {
+    it('should apply useYn filter to the query builder', async () => {
       const qb = {
         andWhere: jest.fn().mockReturnThis(),
         orderBy: jest.fn().mockReturnThis(),
@@ -53,30 +53,10 @@ describe('PartService', () => {
       await target.findAll({
         page: 1,
         limit: 20,
-        iqcYn: 'Y',
-        inspectMethod: 'FULL',
-        iqcAqlPolicyCode: 'AQLP-II-1.0-2.5',
+        useYn: 'Y',
       } as any, 1);
 
-      expect(qb.andWhere).toHaveBeenCalledWith('p.iqcYn = :iqcYn', { iqcYn: 'Y' });
-      expect(qb.andWhere).toHaveBeenCalledWith('p.inspectMethod = :inspectMethod', { inspectMethod: 'FULL' });
-      expect(qb.andWhere).toHaveBeenCalledWith('p.iqcAqlPolicyCode = :iqcAqlPolicyCode', { iqcAqlPolicyCode: 'AQLP-II-1.0-2.5' });
-    });
-
-    it('should allow filtering parts with no IQC AQL policy', async () => {
-      const qb = {
-        andWhere: jest.fn().mockReturnThis(),
-        orderBy: jest.fn().mockReturnThis(),
-        skip: jest.fn().mockReturnThis(),
-        take: jest.fn().mockReturnThis(),
-        getMany: jest.fn().mockResolvedValue([]),
-        getCount: jest.fn().mockResolvedValue(0),
-      };
-      mockRepo.createQueryBuilder.mockReturnValue(qb as any);
-
-      await target.findAll({ iqcAqlPolicyCode: '__NONE__' } as any, 1);
-
-      expect(qb.andWhere).toHaveBeenCalledWith('p.iqcAqlPolicyCode IS NULL');
+      expect(qb.andWhere).toHaveBeenCalledWith('p.useYn = :useYn', { useYn: 'Y' });
     });
   });
 
@@ -122,7 +102,6 @@ describe('PartService', () => {
         itemCode: 'ITEM01',
         itemName: 'Part1',
         itemType: 'RM',
-        iqcAqlPolicyCode: 'AQLP-II-1.0-2.5',
       } as any;
       const created = { ...dto, useYn: 'Y' } as ItemMaster;
       mockRepo.findOne.mockResolvedValue(null);
@@ -148,39 +127,6 @@ describe('PartService', () => {
       await expect(target.create(dto)).rejects.toThrow(ConflictException);
     });
 
-    it('should require AQL policy for IQC inspected parts', async () => {
-      const dto = {
-        itemCode: 'ITEM01',
-        itemName: 'Part1',
-        itemNo: 'NO1',
-        itemType: 'RM',
-        iqcYn: 'Y',
-        inspectMethod: 'FULL',
-      } as any;
-      mockRepo.findOne.mockResolvedValue(null);
-
-      await expect(target.create(dto, 1)).rejects.toThrow(BadRequestException);
-      expect(mockRepo.save).not.toHaveBeenCalled();
-    });
-
-    it('should allow no AQL policy for IQC skip-inspection parts', async () => {
-      const dto = {
-        itemCode: 'ITEM01',
-        itemName: 'Part1',
-        itemNo: 'NO1',
-        itemType: 'RM',
-        iqcYn: 'Y',
-        inspectMethod: 'SKIP',
-      } as any;
-      const created = { ...dto, iqcAqlPolicyCode: null } as ItemMaster;
-      mockRepo.findOne.mockResolvedValue(null);
-      mockRepo.create.mockReturnValue(created);
-      mockRepo.save.mockResolvedValue(created);
-
-      const result = await target.create(dto, 1);
-
-      expect(result).toEqual(created);
-    });
   });
 
   // ─── update ───
@@ -190,9 +136,6 @@ describe('PartService', () => {
       const existing = {
         itemCode: 'ITEM01',
         itemName: 'Old',
-        iqcYn: 'Y',
-        inspectMethod: 'FULL',
-        iqcAqlPolicyCode: 'AQLP-II-1.0-2.5',
       } as ItemMaster;
       mockRepo.findOne.mockResolvedValue(existing);
       mockRepo.update.mockResolvedValue({ affected: 1 } as any);
@@ -213,9 +156,6 @@ describe('PartService', () => {
         itemCode: 'ITEM01',
         itemName: 'Old',
         organizationId: 1,
-        iqcYn: 'Y',
-        inspectMethod: 'FULL',
-        iqcAqlPolicyCode: 'AQLP-II-1.0-2.5',
       } as ItemMaster;
       mockRepo.findOne.mockResolvedValue(existing);
       mockRepo.update.mockResolvedValue({ affected: 1 } as any);
@@ -237,9 +177,6 @@ describe('PartService', () => {
         itemCode: 'ITEM01',
         itemName: 'Old',
         organizationId: 1,
-        iqcYn: 'Y',
-        inspectMethod: 'FULL',
-        iqcAqlPolicyCode: 'AQLP-II-1.0-2.5',
       } as ItemMaster;
       mockRepo.findOne.mockResolvedValue(existing);
       mockRepo.update.mockResolvedValue({ affected: 1 } as any);
@@ -252,39 +189,6 @@ describe('PartService', () => {
       expect(mockRepo.update).toHaveBeenCalledWith(
         { itemCode: 'ITEM01', organizationId: 1 },
         { itemName: 'New' },
-      );
-    });
-
-    it('should reject clearing AQL policy when the effective part remains IQC inspected', async () => {
-      const existing = {
-        itemCode: 'ITEM01',
-        itemName: 'Old',
-        iqcYn: 'Y',
-        inspectMethod: 'FULL',
-        iqcAqlPolicyCode: 'AQLP-II-1.0-2.5',
-      } as ItemMaster;
-      mockRepo.findOne.mockResolvedValue(existing);
-
-      await expect(target.update('ITEM01', { iqcAqlPolicyCode: '' } as any, 1)).rejects.toThrow(BadRequestException);
-      expect(mockRepo.update).not.toHaveBeenCalled();
-    });
-
-    it('should allow clearing AQL policy when the effective inspection method is SKIP', async () => {
-      const existing = {
-        itemCode: 'ITEM01',
-        itemName: 'Old',
-        iqcYn: 'Y',
-        inspectMethod: 'FULL',
-        iqcAqlPolicyCode: 'AQLP-II-1.0-2.5',
-      } as ItemMaster;
-      mockRepo.findOne.mockResolvedValue(existing);
-      mockRepo.update.mockResolvedValue({ affected: 1 } as any);
-
-      await target.update('ITEM01', { inspectMethod: 'SKIP', iqcAqlPolicyCode: '' } as any, 1);
-
-      expect(mockRepo.update).toHaveBeenCalledWith(
-        { itemCode: 'ITEM01', organizationId: 1 },
-        { inspectMethod: 'SKIP', iqcAqlPolicyCode: null },
       );
     });
   });

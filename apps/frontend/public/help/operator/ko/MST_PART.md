@@ -4,7 +4,7 @@ audience: operator
 title: 품목마스터
 summary: 은성전장 품목 기준정보 화면의 실제 소스, API, ID_ITEM 컬럼 매핑, 검증 규칙을 정리한 운영자 도움말
 tags: [기준정보, 품목, 운영, ID_ITEM]
-keywords: [ID_ITEM, ORGANIZATION_ID, ITEM_CODE, PART_NO, ITEM_CLASS, RECEIPT_LOT_CHECK_YN, MATERIAL_TYPE, SVC_CODE, MES_DISPLAY_YN, FEEDER_LAYOUT_COMMENTS, master parts]
+keywords: [ID_ITEM, ORGANIZATION_ID, ITEM_CODE, PART_NO, ITEM_CLASS, MES_DISPLAY_YN, FEEDER_LAYOUT_COMMENTS, master parts]
 related: [MST_BOM, MST_WAREHOUSE, MST_ROUTING]
 ---
 
@@ -50,12 +50,8 @@ related: [MST_BOM, MST_WAREHOUSE, MST_ROUTING]
 | lotUnitQty | MATERIAL_QTY | 묶음단위수량 |
 | boxQty | ISSUE_PACKING_QTY | 박스장입수량 |
 | minPackQty | MATERIAL_QTY2 | 최소불출단위수량 |
-| iqcYn | RECEIPT_LOT_CHECK_YN | IQC대상 |
-| inspectMethod | MATERIAL_TYPE | 검사구분 |
 | expiryDate | LIFE_CYCLE | 유효기간 |
 | expiryExtDays | MSL_MAX_TIME | 유효기간 연장 |
-| sampleQty | MATERIAL_QTY3 | 기본시료수 |
-| iqcAqlPolicyCode | SVC_CODE | AQL 정책 코드 |
 | packUnit | CARRIER_SIZE | 팔레트구성단위 |
 | storageLocation | LOCATION_ADDRESS | 품목고정 적재로케이션 |
 | imageUrl | FEEDER_LAYOUT_COMMENTS | 품목 사진 경로 호환 저장 |
@@ -78,15 +74,13 @@ related: [MST_BOM, MST_WAREHOUSE, MST_ROUTING]
 | POST | `/master/parts/:id/image` | 품목 사진 업로드 |
 | DELETE | `/master/parts/:id/image` | 품목 사진 삭제 |
 | POST | `/interface/inbound/item-master` | ERP 품목 마스터 동기화 |
-| GET | `/quality/aql/policies` | AQL 정책 선택 목록 |
 
-목록 조회는 `itemType`, `useYn`, `iqcYn`, `inspectMethod`, `iqcAqlPolicyCode`, `search`, `limit` 쿼리를 사용합니다. 검색어는 품목코드, 품목명, 품번, 고객품번, 차종, 규격, 마킹문구에 적용됩니다.
+목록 조회는 `itemType`, `useYn`, `search`, `limit` 쿼리를 사용합니다. 검색어는 품목코드, 품목명, 품번, 고객품번, 차종, 규격, 마킹문구에 적용됩니다.
 
 ## 화면 동작
 
 - 화면 최초 진입 시 `/master/parts?limit=5000` 기준으로 목록을 조회합니다.
 - 검색어 입력은 300ms 디바운스를 거쳐 목록을 다시 조회합니다.
-- AQL 정책 목록은 `/quality/aql/policies`에서 사용 가능한 정책을 가져와 필터와 입력 패널에서 함께 사용합니다.
 - 행 수정, 행 더블클릭, **품목 추가** 버튼은 모두 우측 `PartFormPanel`을 사용합니다.
 - 변경 중 다른 행을 선택하거나 패널을 닫으면 변경사항 유실 방지 확인을 거칩니다.
 
@@ -96,11 +90,10 @@ related: [MST_BOM, MST_WAREHOUSE, MST_ROUTING]
 |------|------|
 | 품목코드, 품번, 품목명, 제품유형은 저장 필수 | `PartFormPanel.tsx`, `part.dto.ts` |
 | 품목코드는 등록 후 수정 불가 | `PartFormPanel.tsx`, `PartService.update()` |
-| `IQC대상=Y` + `검사구분=FULL`이면 AQL 정책 필수 | `@smt/shared`의 `requiresIqcAqlPolicy`, `PartService` |
 | 중복 품목코드는 등록 불가 | `PartService.create()` |
 | 삭제 전 참조 데이터 확인 | `PartService.assertDeletable()` |
 
-삭제 차단 대상에는 입고, 수입검사, 재고, LOT, BOM 상위/하위 품목, 생산계획 참조가 포함됩니다. 참조가 있으면 실제 삭제 대신 `useYn=N` 처리를 우선 검토합니다.
+삭제 차단 대상에는 입고, 재고, LOT, BOM 상위/하위 품목, 생산계획 참조가 포함됩니다. 참조가 있으면 실제 삭제 대신 `useYn=N` 처리를 우선 검토합니다.
 
 ## 공통코드와 참조 데이터
 
@@ -110,9 +103,7 @@ related: [MST_BOM, MST_WAREHOUSE, MST_ROUTING]
 | 제품유형 | 공통코드 `PRODUCT_TYPE` |
 | 모델구분 | 공통코드 `DEFECT_MODEL_GROUP` |
 | 단위 | 공통코드 `UNIT_TYPE` |
-| 검사구분 | 공통코드 `IQC_INSPECT_METHOD` |
-| 사용여부 / IQC대상 | `Y/N` 선택 |
-| AQL 정책 | `/quality/aql/policies` |
+| 사용여부 | `Y/N` 선택 |
 | 적재로케이션 | 공용 위치 옵션 훅의 창고/로케이션 기준정보 |
 
 ## 운영 점검 포인트
@@ -121,7 +112,6 @@ related: [MST_BOM, MST_WAREHOUSE, MST_ROUTING]
 - 그리드의 SQL 표시 문자열은 사용자 안내용일 수 있으므로 실제 테이블 판단은 백엔드 엔티티와 서비스 SQL을 기준으로 합니다.
 - ERP 동기화 후에는 신규/변경 건수, `ITEM_CODE`, `PART_NO`, `MES_DISPLAY_YN`, `ENTER_BY` 값을 확인합니다.
 - 사진이 목록에 표시되지 않으면 `FEEDER_LAYOUT_COMMENTS`의 경로와 `/master/parts/:id/image` 응답을 함께 확인합니다.
-- AQL 저장 오류는 `RECEIPT_LOT_CHECK_YN`, `MATERIAL_TYPE`, `SVC_CODE` 조합을 먼저 확인합니다.
 
 ## 변경 시 영향 범위
 

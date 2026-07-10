@@ -78,12 +78,6 @@ export class ItemMaster {
   @Column({ name: 'MATERIAL_QTY2', type: 'number', nullable: true })
   minPackQty: number;
 
-  @Column({ name: 'RECEIPT_LOT_CHECK_YN', length: 1, nullable: true })
-  iqcYn: string;
-
-  @Column({ type: 'varchar2', name: 'MATERIAL_TYPE', length: 10, nullable: true })
-  inspectMethod: string | null; // 검사구분 (FULL/SKIP)
-
   @Column({ name: 'CAPACITY', type: 'number', nullable: true })
   tactTime: number;
 
@@ -98,12 +92,6 @@ export class ItemMaster {
 
   @Column({ name: 'SET_ITEM_YN', length: 1, nullable: true })
   isSplittable: string; // 자재 분할 가능 여부 (Y/N)
-
-  @Column({ name: 'MATERIAL_QTY3', type: 'number', nullable: true })
-  sampleQty: number | null; // 기본시료수. AQL 산출 샘플수량과 별개
-
-  @Column({ type: 'varchar2', name: 'SVC_CODE', length: 20, nullable: true })
-  iqcAqlPolicyCode: string | null;
 
   @Column({ type: 'number', name: 'CARRIER_SIZE', nullable: true })
   packUnit: number | null; // 팔레트 구성 단위(팔레트당 박스 수)

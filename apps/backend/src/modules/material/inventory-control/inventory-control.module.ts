@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { InvAdjLog } from '../../../entities/inv-adj-log.entity';
-import { IqcLog } from '../../../entities/iqc-log.entity';
 import { MatLot } from '../../../entities/mat-lot.entity';
 import { MatStock } from '../../../entities/mat-stock.entity';
 import { ItemMaster } from '../../../entities/item-master.entity';
@@ -18,14 +17,12 @@ import { MiscReceiptController } from '../controllers/misc-receipt.controller';
 import { PhysicalInvController } from '../controllers/physical-inv.controller';
 import { ScrapController } from '../controllers/scrap.controller';
 import { ShelfLifeController } from '../controllers/shelf-life.controller';
-import { ShelfLifeReInspectController } from '../controllers/shelf-life-reinspect.controller';
 import { AdjustmentService } from '../services/adjustment.service';
 import { HoldService } from '../services/hold.service';
 import { MatStockService } from '../services/mat-stock.service';
 import { MiscReceiptService } from '../services/misc-receipt.service';
 import { PhysicalInvService } from '../services/physical-inv.service';
 import { ScrapService } from '../services/scrap.service';
-import { ShelfLifeReInspectService } from '../services/shelf-life-reinspect.service';
 import { ShelfLifeService } from '../services/shelf-life.service';
 
 @Module({
@@ -33,7 +30,6 @@ import { ShelfLifeService } from '../services/shelf-life.service';
     SystemModule,
     TypeOrmModule.forFeature([
       InvAdjLog,
-      IqcLog,
       MatLot,
       MatStock,
       ItemMaster,
@@ -47,7 +43,6 @@ import { ShelfLifeService } from '../services/shelf-life.service';
   controllers: [
     MatStockController,
     ShelfLifeController,
-    ShelfLifeReInspectController,
     HoldController,
     ScrapController,
     AdjustmentController,
@@ -62,7 +57,6 @@ import { ShelfLifeService } from '../services/shelf-life.service';
     AdjustmentService,
     MiscReceiptService,
     PhysicalInvService,
-    ShelfLifeReInspectService,
   ],
   exports: [MatStockService],
 })

@@ -81,7 +81,7 @@ describe('ReceiveLabelService', () => {
         andWhere: jest.fn().mockReturnThis(),
         orderBy: jest.fn().mockReturnThis(),
         getMany: jest.fn().mockResolvedValue([
-          { arrivalNo: 'ARR-001', seq: 1, itemCode: 'ITEM-001', qty: 100, iqcStatus: 'PASS', poNo: 'PO-001', vendorName: 'V-A', arrivalDate: new Date() } as MatArrival,
+          { arrivalNo: 'ARR-001', seq: 1, itemCode: 'ITEM-001', qty: 100, poNo: 'PO-001', vendorName: 'V-A', arrivalDate: new Date() } as MatArrival,
         ]),
       };
       mockArrivalRepo.createQueryBuilder.mockReturnValue(mockQb as any);
@@ -111,7 +111,6 @@ describe('ReceiveLabelService', () => {
             seq: 1,
             itemCode: 'ITEM-001',
             qty: 100,
-            iqcStatus: 'PASS',
             poNo: 'PO-001',
             company: 'C1',
             plant: 'P1',
@@ -151,19 +150,9 @@ describe('ReceiveLabelService', () => {
       ).rejects.toThrow(NotFoundException);
     });
 
-    it('IQC 미합격이면 NotFoundException', async () => {
-      mockArrivalRepo.findOne.mockResolvedValue({
-        arrivalNo: 'ARR-001', seq: 1, iqcStatus: 'PENDING',
-      } as MatArrival);
-
-      await expect(
-        target.createMatLabels({ arrivalId: 'ARR-001', qty: 1 } as any),
-      ).rejects.toThrow(NotFoundException);
-    });
-
     it('정상적으로 MatLot을 생성하고 라벨을 발행한다', async () => {
       const arrival = {
-        arrivalNo: 'ARR-001', seq: 1, iqcStatus: 'PASS',
+        arrivalNo: 'ARR-001', seq: 1,
         itemCode: 'ITEM-001', poNo: 'PO-001', vendorName: 'V-A',
         company: 'HANES', plant: 'P01', supUid: null,
       } as MatArrival;
@@ -185,7 +174,7 @@ describe('ReceiveLabelService', () => {
 
     it('라벨 생성도 입하건/품목 보강 조회를 요청 테넌트 범위로 제한한다', async () => {
       const arrival = {
-        arrivalNo: 'ARR-001', seq: 1, iqcStatus: 'PASS',
+        arrivalNo: 'ARR-001', seq: 1,
         itemCode: 'ITEM-001', poNo: 'PO-001', vendorName: 'V-A',
         company: 'C1', plant: 'P1', supUid: null,
       } as MatArrival;
@@ -209,7 +198,6 @@ describe('ReceiveLabelService', () => {
       mockArrivalRepo.findOne.mockResolvedValue({
         arrivalNo: 'ARR-001',
         seq: 1,
-        iqcStatus: 'PASS',
         itemCode: 'ITEM-001',
         company: 'OTHER',
         plant: 'P1',

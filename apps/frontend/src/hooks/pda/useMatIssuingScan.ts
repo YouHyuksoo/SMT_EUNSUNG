@@ -264,7 +264,7 @@ export function useMatIssuingScan(): UseMatIssuingScanReturn {
   /**
    * 출고 확인 처리
    * - 스캔 LOT마다 웹과 동일 계약 POST /material/issues/scan { matUid, issueType } 호출
-   *   (백엔드 scanIssue = LOT 전량 출고, IQC/재고/HOLD 검증 포함)
+   *   (백엔드 scanIssue = LOT 전량 출고, 재고/HOLD 검증 포함)
    * - 작업지시 연계는 remark로 기록
    * - 부분 실패 시: 성공분은 출고된 상태 유지, 실패 LOT만 스캔 목록에 남기고 에러 표시
    */

@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { IqcLog } from '../../../entities/iqc-log.entity';
 import { LabelPrintLog } from '../../../entities/label-print-log.entity';
 import { MatArrival } from '../../../entities/mat-arrival.entity';
 import { MatArrivalStock } from '../../../entities/mat-arrival-stock.entity';
@@ -18,24 +17,17 @@ import { VendorBarcodeMapping } from '../../../entities/vendor-barcode-mapping.e
 import { Warehouse } from '../../../entities/warehouse.entity';
 import { WorkerMaster } from '../../../entities/worker-master.entity';
 import { SystemModule } from '../../system/system.module';
-import { AqlModule } from '../../quality/aql/aql.module';
 import { ArrivalController } from '../controllers/arrival.controller';
-import { ConcessionController } from '../controllers/concession.controller';
-import { IqcHistoryController } from '../controllers/iqc-history.controller';
 import { ReceiptCancelController } from '../controllers/receipt-cancel.controller';
 import { ReceivingController } from '../controllers/receiving.controller';
 import { ArrivalService } from '../services/arrival.service';
-import { ConcessionService } from '../services/concession.service';
-import { IqcHistoryService } from '../services/iqc-history.service';
 import { ReceiptCancelService } from '../services/receipt-cancel.service';
 import { ReceivingService } from '../services/receiving.service';
 
 @Module({
   imports: [
     SystemModule,
-    AqlModule,
     TypeOrmModule.forFeature([
-      IqcLog,
       LabelPrintLog,
       MatArrival,
       MatArrivalStock,
@@ -57,16 +49,12 @@ import { ReceivingService } from '../services/receiving.service';
   controllers: [
     ArrivalController,
     ReceivingController,
-    IqcHistoryController,
     ReceiptCancelController,
-    ConcessionController,
   ],
   providers: [
     ArrivalService,
     ReceivingService,
-    IqcHistoryService,
     ReceiptCancelService,
-    ConcessionService,
   ],
 })
 export class ReceivingModule {}

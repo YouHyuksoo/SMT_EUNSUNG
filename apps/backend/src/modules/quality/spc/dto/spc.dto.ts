@@ -77,9 +77,9 @@ export class CreateSpcChartDto {
   @IsNumber()
   target?: number;
 
-  @ApiPropertyOptional({ description: '데이터 소스 (IQC/PROCESS/OQC/MANUAL)', default: 'MANUAL' })
+  @ApiPropertyOptional({ description: '데이터 소스 (PROCESS/OQC/MANUAL)', default: 'MANUAL' })
   @IsOptional()
-  @IsIn(['IQC', 'PROCESS', 'OQC', 'MANUAL'])
+  @IsIn(['PROCESS', 'OQC', 'MANUAL'])
   dataSource?: string;
 
   @ApiPropertyOptional({ description: '소스 검사항목명', maxLength: 100 })

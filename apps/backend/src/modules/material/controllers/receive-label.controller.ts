@@ -1,6 +1,6 @@
 /**
  * @file receive-label.controller.ts
- * @description 자재 라벨 발행 API — IQC PASS 입하건 조회 + matUid 채번 + 라벨 발행
+ * @description 자재 라벨 발행 API — 입하건 조회 + matUid 채번 + 라벨 발행
  *
  * 초보자 가이드:
  * 1. GET /material/receive-label/arrivals: 라벨 발행 가능한 입하건 목록
@@ -19,7 +19,7 @@ export class ReceiveLabelController {
   constructor(private readonly service: ReceiveLabelService) {}
 
   @Get('arrivals')
-  @ApiOperation({ summary: '라벨 발행 가능 입하건 목록 (IQC PASS)' })
+  @ApiOperation({ summary: '라벨 발행 가능 입하건 목록' })
   async findLabelable(@Company() company: string, @Plant() plant: string) {
     const data = await this.service.findLabelableArrivals(company, plant);
     return ResponseUtil.success(data);

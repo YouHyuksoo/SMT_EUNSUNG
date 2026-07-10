@@ -32,7 +32,6 @@ test("MST_PART user help documents actual screen actions", () => {
   const body = read(files.user);
   assert.match(body, /ERP 동기화/);
   assert.match(body, /품목 추가/);
-  assert.match(body, /AQL 정책/);
   assert.match(body, /품목 사진/);
 });
 

@@ -11,4 +11,4 @@
 - 1번째 줄부터 frontmatter `---` (BOM 금지, `audience`=폴더명, 배열은 `[a, b]` 인라인)
 - 화면의 **모든 컬럼**을 역할·의미까지 표로 작성
 - `manifest.json`에 항목 등재해야 `/help` 목차에 노출
-- 모범 예시: `public/help/user/QC_AQL.md`, `public/help/operator/QC_AQL.md`
+- 모범 예시: `public/help/user/ko/MST_PART.md`, `public/help/operator/ko/MST_PART.md`

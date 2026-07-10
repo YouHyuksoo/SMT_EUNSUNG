@@ -184,27 +184,6 @@
     "monitoring": "모니터링",
     "master": "기준정보",
     "master.part": "품목관리",
-    "master.part.iqc.header": "IQC",
-    "master.part.iqc.title": "IQC 검사기준",
-    "master.part.iqc.setup": "설정",
-    "master.part.iqc.inspectMethod": "검사구분",
-    "master.part.iqc.methodFull": "검사",
-    "master.part.iqc.methodSkip": "무검사",
-    "master.part.iqc.sampleQty": "샘플수량",
-    "master.part.iqc.shelfLifeDays": "유수명(일)",
-    "master.part.iqc.inspectItems": "검사항목",
-    "master.part.iqc.addItem": "항목추가",
-    "master.part.iqc.noItems": "등록된 검사항목이 없습니다",
-    "master.part.iqc.itemName": "항목명",
-    "master.part.iqc.judgeMethod": "판정방법",
-    "master.part.iqc.visual": "육안",
-    "master.part.iqc.measure": "계측",
-    "master.part.iqc.criteria": "판정기준",
-    "master.part.iqc.unit": "단위",
-    "master.part.iqc.skipDesc": "무검사 설정 - 입고 시 검사를 생략합니다",
-    "master.part.iqc.linkItem": "항목 연결",
-    "master.part.iqc.linkConfirm": "연결",
-    "master.part.iqc.noAvailable": "연결 가능한 항목이 없습니다",
     "master.bom": "BOM관리",
     "master.equip": "설비관리",
     "master.code": "코드관리",
@@ -248,12 +227,6 @@
     "master.worker.workerList": "작업자 목록",
     "master.worker.totalCount": "총 {{count}}건",
     "master.worker.emptyMessage": "등록된 작업자가 없습니다.",
-    "master.iqcItem": "검사항목마스터",
-    "master.iqcPartSpec": "품목별 IQC 항목관리",
-    "master.iqcItem.itemCode": "항목코드",
-    "master.iqcItem.judgeMethod": "판정방법",
-    "master.iqcItem.visual": "육안",
-    "master.iqcItem.measureMethod": "계측",
     "master.equipInspect": "설비별 점검항목",
     "master.inspectItem": "점검항목마스터",
     "master.box": "포장박스관리",
@@ -288,7 +261,6 @@
     "productMgmt.issue": "제품출고관리",
     "productMgmt.issueCancel": "제품출고취소",
     "productMgmt.defectTransfer": "불량창고입고",
-    "material.iqc": "수입검사(IQC)",
     "material.request": "출고요청관리",
     "material.requestOther": "기타출고요청",
     "material.issue": "자재출고관리",
@@ -299,7 +271,6 @@
     "material.lot": "LOT관리",
     "material.po": "PO관리",
     "material.poStatus": "PO현황조회",
-    "material.iqcHistory": "수입검사이력조회",
     "material.lotSplit": "자재분할관리",
     "material.lotMerge": "자재병합관리",
     "material.shelfLife": "자재유수명관리",
@@ -341,7 +312,6 @@
     "production.wipMaterialTrans": "원자재공정수불",
     "production.repair": "수리관리",
     "quality": "품질관리",
-    "quality.aql": "AQL 기준관리",
     "quality.defect": "불량등록관리",
     "quality.defectCode": "불량코드관리",
     "quality.inspect": "외관검사",
@@ -1291,10 +1261,6 @@
   "master": {
     "part": {
       "title": "품목마스터",
-      "iqc": {
-        "methodFull": "검사"
-      },
-      "basicSampleQty": "기본시료수",
       "expiryExtDays": "유효기간 연장(일)",
       "image": "사진",
       "imageChange": "사진 변경",
@@ -1326,11 +1292,6 @@
       "lotUnitQty": "묶음단위수량(생산공정품)",
       "storageLocation": "품목고정 적재로케이션",
       "color": "색상",
-      "iqcFlag": "IQC대상",
-      "inspectMethod": "검사구분",
-      "iqcAqlPolicyCode": "AQL 정책",
-      "inspectFull": "검사",
-      "inspectSkip": "무검사",
       "expiryDate": "유효기간(일)",
       "sectionBasic": "기본정보",
       "sectionQty": "",
@@ -1343,8 +1304,6 @@
       "erpSyncFailed": "동기화 실패: {{message}}",
       "daysSuffix": "{{count}}일",
       "deleteConfirmMessage": "'{{itemCode}} ({{itemName}})'을(를) 삭제하시겠습니까?",
-      "iqcTarget": "Y (대상)",
-      "iqcNotTarget": "N (비대상)",
       "fieldHelp": {
         "itemCode": "MES 내부에서 품목을 식별하는 고유 코드입니다.",
         "itemNo": "도면, ERP, 고객 문서에서 쓰는 품번입니다.",
@@ -1358,10 +1317,6 @@
         "spec": "품목 규격, 사양, 치수 등 보조 설명입니다.",
         "color": "전선색 등 품목 색상 정보입니다.",
         "unit": "수량을 해석하는 기본 단위입니다.",
-        "iqcYn": "수입검사 기준 적용 대상 여부입니다.",
-        "inspectMethod": "IQC 검사 또는 무검사 적용 방식을 구분합니다.",
-        "sampleQty": "IQC 검사 시 사용할 기본시료수입니다. AQL 산출 샘플수량과 별개입니다.",
-        "iqcAqlPolicyCode": "이 품목의 수입검사(IQC)에 적용할 AQL(합격품질한계) 정책입니다.\n\n• AQL이란: LOT을 합격으로 인정하는 허용 불량 수준입니다. 값이 작을수록 더 엄격한 기준입니다.\n• 정책 구성: 하나의 정책에 Major(중결함)·Minor(경결함) 결함등급별 AQL 값과 검사수준(보통 II)이 묶여 있습니다.\n• 판정 방식: 입고 LOT 검사 시 LOT 크기에 맞춰 샘플수(n)·합격(Ac)·불합격(Re) 판정개수를 자동 산출하여, 불량수 ≤ Ac면 합격, ≥ Re면 불합격으로 판정합니다.\n• 등록 위치: [품질관리 > AQL 기준관리]에서 정책과 LOT별 판정기준을 관리합니다.\n• 비워두면: AQL 자동 판정이 적용되지 않습니다(무검사 또는 수동 판정).",
         "useYn": "신규 조회, 선택, 사용 가능 여부입니다.",
         "boxQty": "박스 하나에 장입하는 기준 수량입니다. 10 단위 후보를 선택하거나 직접 입력할 수 있습니다.",
         "minPackQty": "자재 불출 시 최소 단위로 취급할 수량입니다.",
@@ -1595,15 +1550,20 @@
       "subtitle": "생산라인 정보를 등록하고 관리합니다.",
       "lineCode": "라인코드",
       "lineName": "라인명",
-      "oper": "공정코드",
-      "lineType": "라인유형",
-      "whLoc": "창고위치",
-      "erpCode": "ERP코드",
-      "remark": "비고",
-      "use": "사용",
+      "lineDivision": "라인구분",
+      "lineCodeGroup": "라인그룹",
+      "lineProductDivision": "제품구분",
+      "lineStatus": "라인상태",
+      "capacity": "용량",
+      "capacityUom": "용량단위",
+      "uphValue": "UPH",
+      "mesDisplayYn": "MES표시",
+      "mesDisplaySequence": "표시순서",
+      "activeYn": "활성",
+      "comments": "설명",
       "addLine": "라인 추가",
       "editLine": "라인 수정",
-      "searchPlaceholder": "라인코드, 라인명, 공정코드 검색..."
+      "searchPlaceholder": "라인코드, 라인명 검색..."
     },
     "process": {
       "title": "공정마스터",
@@ -1857,93 +1817,6 @@
       "cropReselectBtn": "다른 이미지 선택",
       "cropProcessing": "처리 중...",
       "deleteConfirm": "을(를) 삭제하시겠습니까?"
-    },
-    "iqcGroup": {
-      "methodFull": "검사",
-      "methodSkip": "무검사"
-    },
-    "iqcLink": {
-      "group": "검사그룹"
-    },
-    "iqcItem": {
-      "title": "검사항목마스터",
-      "sectionBasic": "기본정보",
-      "subtitle": "IQC 검사에 사용할 전역 검사항목을 등록하고 관리합니다.",
-      "seq": "순번",
-      "inspectItem": "검사항목",
-      "spec": "규격/기준",
-      "shelfLife": "유효기간(일)",
-      "use": "사용",
-      "addItem": "항목 추가",
-      "editItem": "항목 수정",
-      "searchPlaceholder": "품목코드, 검사항목 검색...",
-      "partSelect": "품목 선택",
-      "retestCycle": "재검주기(일)",
-      "visual": "육안",
-      "measureMethod": "계측",
-      "judgeMethod": "판정방법",
-      "itemCode": "항목코드",
-      "revision": "Rev",
-      "deleteItem": "검사항목 삭제",
-      "deleteConfirm": "이 검사항목을 삭제하시겠습니까?",
-      "tabItems": "검사항목",
-      "materialList": "자재 품목 목록",
-      "linkedGroup": "연결된 검사그룹",
-      "noItemSelected": "좌측에서 품목을 선택해주세요",
-      "noGroupLinked": "연결된 검사그룹이 없습니다",
-      "linkGroup": "그룹 연결",
-      "changeGroup": "그룹 변경",
-      "unlinkGroup": "연결 해제",
-      "measureItems": "측정형 검사항목",
-      "judgeItems": "판정형 검사항목",
-      "perItemIqc": "품목별 IQC 항목관리",
-      "perItemIqcSubtitle": "품목별 시료수, 파괴검사 여부, 검사항목과 규격을 관리합니다.",
-      "itemPool": "검사항목마스터",
-      "itemPoolSubtitle": "IQC 검사에 사용할 전역 검사항목을 등록하고 관리합니다.",
-      "linkedGroupCount": "연결그룹",
-      "unlinkConfirm": "이 검사그룹 연결을 해제하시겠습니까?",
-      "selectGroup": "검사그룹을 선택하세요",
-      "judgeCriteria": "판정기준",
-      "typeMeasure": "측정형",
-      "typeVisual": "판정형",
-      "sampleQty": "시료수",
-      "destructive": "파괴",
-      "nonDestructive": "비파괴",
-      "inspItem": "검사항목",
-      "type": "종류",
-      "inspectionType": "검사유형",
-      "sampleQtyCol": "샘플수",
-      "defectGrade": "불량등급",
-      "inspectionLevel": "검사수준",
-      "selectItemHint": "좌측에서 품목을 선택하세요.",
-      "defaultSampleQty": "기본 시료수",
-      "destInspection": "파괴검사",
-      "templateManage": "템플릿 불러오기/관리",
-      "lsl": "하한(LSL)",
-      "usl": "상한(USL)",
-      "noInspItems": "검사항목이 없습니다. [항목 추가]를 눌러 추가하세요.",
-      "selectOption": "-- 선택 --",
-      "fixedQtyPlaceholder": "고정수",
-      "auto": "자동",
-      "lslPlaceholder": "하한",
-      "uslPlaceholder": "상한",
-      "judgeCriteriaPlaceholder": "판정기준 입력",
-      "confirm": "확인",
-      "notSelected": "미선택",
-      "deleteRow": "행 삭제"
-    },
-    "iqcTemplate": {
-      "title": "IQC 항목 템플릿 관리",
-      "currentItem": "현재 품목",
-      "namePlaceholder": "템플릿명 입력",
-      "saveAs": "템플릿으로 저장",
-      "list": "템플릿 목록",
-      "empty": "저장된 템플릿이 없습니다.",
-      "itemsUnit": "개",
-      "preview": "미리보기",
-      "apply": "현재 품목에 적용",
-      "selectHint": "템플릿을 선택하세요.",
-      "applyHint": "적용 시 현재 품목 항목을 통째로 대체합니다. 적용 후 [변경 저장]을 눌러야 확정됩니다."
     },
     "equipInspect": {
       "title": "설비점검항목",
@@ -2279,16 +2152,6 @@
       "createSuccess": "바코드 매핑이 생성되었습니다.",
       "updateSuccess": "바코드 매핑이 수정되었습니다.",
       "deleteSuccess": "바코드 매핑이 삭제되었습니다."
-    },
-    "iqcPartSpec": {
-      "aqlCriteria": "AQL 기준",
-      "lotQtyPreview": "LOT 수량 미리보기",
-      "aqlPolicy": "AQL 정책",
-      "defaultSampleQty": "기본시료수",
-      "sampleQty": "샘플수량",
-      "inspItemCriteria": "검사항목 기준",
-      "destFixed": "파괴/고정",
-      "countCases": "{{count}}건"
     }
   },
   "material": {
@@ -2676,8 +2539,6 @@
     },
     "ARRIVAL_RESULT_STATUS": {
       "ARRIVED": "자재가 입하 등록되어 검사를 기다리는 상태",
-      "IQC_PROGRESS": "입하 자재의 수입검사가 진행 중인 상태",
-      "IQC_DONE": "수입검사가 완료되어 입고 처리만 남은 상태",
       "RECEIVED": "입고까지 완료되어 재고에 반영된 상태",
       "CANCELED": "입하 처리가 취소되어 무효화된 상태"
     },
@@ -2870,12 +2731,6 @@
       "FAILED": "전송 중 오류로 실패한 상태",
       "CONFIRMED": "상대 시스템 수신이 확인된 상태"
     },
-    "IQC_STATUS": {
-      "PENDING": "입고된 자재가 수입검사(IQC)를 기다리는 상태",
-      "PASS": "수입검사에 합격해 입고·사용 가능한 상태",
-      "FAIL": "수입검사 불합격으로 반품·격리 대상인 상태",
-      "HOLD": "판정 보류로 사용 불가하며 추가 검토 대기 중"
-    },
     "ISSUE_STATUS": {
       "PENDING": "출고 요청이 등록되어 처리를 기다리는 상태",
       "IN_PROGRESS": "출고 작업이 진행 중인 상태",
@@ -2978,7 +2833,6 @@
     },
     "RECEIVE_STATUS": {
       "PENDING": "입하 등록 후 IQC 검사를 기다리는 상태",
-      "IQC_IN_PROGRESS": "수입검사(IQC)가 진행 중인 상태",
       "PASSED": "IQC 검사에 합격해 입고 가능한 상태",
       "FAILED": "IQC 검사에 불합격해 입고가 막힌 상태"
     },
@@ -3115,8 +2969,6 @@
     },
     "ARRIVAL_RESULT_STATUS": {
       "ARRIVED": "입하완료",
-      "IQC_PROGRESS": "IQC진행중",
-      "IQC_DONE": "IQC완료",
       "RECEIVED": "입고완료",
       "CANCELED": "취소"
     },
@@ -3172,10 +3024,6 @@
       "RING_GAUGE": "링게이지",
       "FORCE_GAUGE": "포스게이지",
       "OTHER": "기타"
-    },
-    "IQC_INSPECT_TYPE": {
-      "INITIAL": "초기검사",
-      "RETEST": "재검사"
     },
     "PPAP_REASON": {
       "NEW_PART": "신규부품",
@@ -3240,15 +3088,6 @@
       "ONLINE": "온라인교육",
       "EXTERNAL": "외부교육",
       "SAFETY": "안전교육"
-    },
-    "AQL_INSP_LEVEL": {
-      "S-1": "특별검사수준 S-1",
-      "S-2": "특별검사수준 S-2",
-      "S-3": "특별검사수준 S-3",
-      "S-4": "특별검사수준 S-4",
-      "I": "일반검사수준 I",
-      "II": "일반검사수준 II",
-      "III": "일반검사수준 III"
     },
     "PRODUCT_TYPE": {
       "SMT": "SMT",
@@ -3336,7 +3175,6 @@
     },
     "RECEIVE_STATUS": {
       "PENDING": "입하대기",
-      "IQC_IN_PROGRESS": "IQC진행",
       "PASSED": "합격",
       "FAILED": "불합격"
     },
@@ -3425,12 +3263,6 @@
       "POKA_YOKE": "포카요케",
       "FIRST_ARTICLE": "초품검사",
       "AUTO_INSPECT": "자동검사"
-    },
-    "IQC_TYPE": {
-      "IQC": "수입검사",
-      "PQC": "공정검사",
-      "FQC": "최종검사",
-      "OQC": "출하검사"
     },
     "QUALITY_JUDGMENT": {
       "PASS": "합격",
@@ -3536,12 +3368,6 @@
       "DEFECT": "불량",
       "SCRAP": "폐기",
       "SUBCON": "외주"
-    },
-    "IQC_STATUS": {
-      "PENDING": "대기",
-      "PASS": "합격",
-      "FAIL": "불합격",
-      "HOLD": "보류"
     },
     "OQC_STATUS": {
       "PENDING": "대기",
@@ -4036,7 +3862,6 @@
     "SAMPLE_SIZE": "시료 크기",
     "SAMPLE_FREQ": "시료 빈도",
     "CONTROL_METHOD": "관리 방법",
-    "IQC_TYPE": "IQC 검사 유형",
     "QUALITY_JUDGMENT": "품질 판정",
     "APPROVAL_STATUS": "승인 상태",
     "INTERFACE_STATUS": "인터페이스 상태",
@@ -4054,7 +3879,6 @@
     "PARTNER_TYPE": "거래처 유형",
     "VENDOR_TYPE": "협력사 유형",
     "WAREHOUSE_TYPE_DTO": "창고 유형(DTO)",
-    "IQC_STATUS": "IQC 상태",
     "MAT_LOT_STATUS": "자재 LOT 상태",
     "ISSUE_TYPE": "출고 유형",
     "TRANSACTION_TYPE": "재고 트랜잭션 유형",
@@ -4219,12 +4043,6 @@
       "receiveFailed": "입고 처리에 실패했습니다",
       "location": "로케이션",
       "scanLocation": "로케이션 바코드를 스캔하세요",
-      "iqcPass": "합격",
-      "iqcFail": "미합격",
-      "iqcInProgress": "검사중",
-      "iqcNone": "무검사",
-      "iqcFailMsg": "IQC 미합격 자재입니다. 입고 불가",
-      "iqcInProgressMsg": "IQC 검사 진행 중입니다. 입고 불가",
       "workerRequired": "작업자를 먼저 스캔해 주세요",
       "changeWorker": "작업자 변경",
       "scanWorker": "작업자 스캔",
@@ -4571,8 +4389,6 @@
       "arrival": "입하",
       "arrivalResult": "입하실적조회",
       "label": "입고라벨",
-      "iqc": "IQC",
-      "iqcHistory": "검사이력",
       "concession": "특채처리",
       "receive": "입고",
       "request": "출고요청",
@@ -4591,7 +4407,6 @@
     },
     "quality": {
       "title": "품질관리",
-      "iqc": "IQC",
       "processInspect": "공정검사",
       "oqc": "OQC",
       "defect": "불량등록",

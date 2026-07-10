@@ -3,7 +3,7 @@
  * @description 입고 전용 테이블 엔티티 - 입고 업무 관리용 (StockTransaction은 수불원장)
  *
  * 초보자 가이드:
- * 1. **MAT_RECEIVINGS**: IQC 합격건의 입고 이력을 관리하는 전용 테이블
+ * 1. **MAT_RECEIVINGS**: 입고 이력을 관리하는 전용 테이블
  * 2. **receiveNo**: 같은 배치의 입고 아이템은 동일한 입고번호를 가짐
  * 3. **StockTransaction과의 관계**: 입고 시 MatReceiving + StockTransaction 모두 생성
  * 4. **복합 PK**: receiveNo + seq (같은 입고번호의 여러 품목 행)

@@ -285,7 +285,6 @@ export class LotMergeService {
         mfgPartnerCode: base.mfgPartnerCode,
         invoiceNo: base.invoiceNo,
         poNo: base.poNo,
-        iqcStatus: base.iqcStatus,
         status: 'NORMAL',
         organizationId: base.organizationId,
         createdBy: userId ?? null,

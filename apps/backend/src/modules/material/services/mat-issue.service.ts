@@ -195,10 +195,6 @@ export class MatIssueService {
       }
       this.assertSameTenant('출고 LOT', lot, organizationId);
 
-      if (lot.iqcStatus !== 'PASS') {
-        throw new BadRequestException(`IQC 합격 상태가 아닌 LOT입니다: ${lot.matUid}`);
-      }
-
       if (lot.status === 'HOLD') {
         throw new BadRequestException(`보류 상태의 LOT는 출고할 수 없습니다: ${lot.matUid}`);
       }
@@ -318,11 +314,6 @@ export class MatIssueService {
     });
     if (!lot) {
       throw new BadRequestException(`LOT를 찾을 수 없습니다: ${dto.matUid}`);
-    }
-    if (lot.iqcStatus !== 'PASS') {
-      throw new BadRequestException(
-        `IQC 미합격 LOT입니다: ${dto.matUid} (상태: ${lot.iqcStatus})`,
-      );
     }
     if (lot.status === 'HOLD') {
       throw new BadRequestException(

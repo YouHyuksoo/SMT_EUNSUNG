@@ -862,10 +862,10 @@ export class ErViewService {
   }
 
   private moduleFor(tableName: string): string {
-    if (/^(ITEM_|BOM_|ROUTING_|PROCESS_|WORKER_|VENDOR_|PARTNER_|COMPANY_|WAREHOUSE_|LABEL_|IQC_PART_SPEC)/.test(tableName)) return 'Master Data';
+    if (/^(ITEM_|BOM_|ROUTING_|PROCESS_|WORKER_|VENDOR_|PARTNER_|COMPANY_|WAREHOUSE_|LABEL_)/.test(tableName)) return 'Master Data';
     if (/^(MAT_|MATERIAL_|PURCHASE_|ARRIVAL|RECEIV|ISSUE|INVENTORY|STOCK|LOT_)/.test(tableName)) return 'Material/Inventory';
     if (/^(PROD_|JOB_|WORK_ORDER|INPUT_|WIP_|BOX_|PALLET_)/.test(tableName)) return 'Production';
-    if (/^(QUALITY_|IQC_|OQC_|INSPECT|DEFECT|FAI_|MSA_|GAUGE_|CALIBRATION_)/.test(tableName)) return 'Quality';
+    if (/^(QUALITY_|OQC_|INSPECT|DEFECT|FAI_|MSA_|GAUGE_|CALIBRATION_)/.test(tableName)) return 'Quality';
     if (/^(USERS|ROLES|MENU_|PDA_|COM_|SYS_|ACTIVITY_|TRAINING_|DEPARTMENT)/.test(tableName)) return 'System/Auth';
     return 'Other';
   }

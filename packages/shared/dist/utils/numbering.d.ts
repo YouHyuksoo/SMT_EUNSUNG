@@ -78,11 +78,11 @@ export declare function generateJobOrderNumber(options?: NumberingOptions): stri
 export declare function generateShipmentNumber(options?: NumberingOptions): string;
 /**
  * 검사 번호 생성
- * @param inspType 검사 유형 (IQC, PQC, FQC, OQC)
+ * @param inspType 검사 유형 (PQC, FQC, OQC)
  * @param options 생성 옵션
- * @returns 검사 번호 (예: IQC20240115001)
+ * @returns 검사 번호 (예: PQC20240115001)
  */
-export declare function generateInspectionNumber(inspType: 'IQC' | 'PQC' | 'FQC' | 'OQC', options?: NumberingOptions): string;
+export declare function generateInspectionNumber(inspType: 'PQC' | 'FQC' | 'OQC', options?: NumberingOptions): string;
 /**
  * 불량 번호 생성
  * @param processCode 공정 코드 (CUT, CRM, ASM 등)

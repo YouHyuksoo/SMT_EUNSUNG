@@ -9,7 +9,7 @@
  * 3. **getStatusLabel()**: 상태 코드를 라벨로 변환
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.INTERFACE_STATUS_COLORS = exports.INTERFACE_STATUS_LABELS = exports.DEFECT_DISPOSITION_COLORS = exports.DEFECT_DISPOSITION_LABELS = exports.SHIPMENT_STATUS_COLORS = exports.SHIPMENT_STATUS_LABELS = exports.EQUIPMENT_STATUS_COLORS = exports.EQUIPMENT_STATUS_LABELS = exports.IQC_STATUS_COLORS = exports.IQC_STATUS_LABELS = exports.QUALITY_JUDGMENT_COLORS = exports.QUALITY_JUDGMENT_LABELS = exports.WORK_STATUS_COLORS = exports.WORK_STATUS_LABELS = void 0;
+exports.INTERFACE_STATUS_COLORS = exports.INTERFACE_STATUS_LABELS = exports.DEFECT_DISPOSITION_COLORS = exports.DEFECT_DISPOSITION_LABELS = exports.SHIPMENT_STATUS_COLORS = exports.SHIPMENT_STATUS_LABELS = exports.EQUIPMENT_STATUS_COLORS = exports.EQUIPMENT_STATUS_LABELS = exports.QUALITY_JUDGMENT_COLORS = exports.QUALITY_JUDGMENT_LABELS = exports.WORK_STATUS_COLORS = exports.WORK_STATUS_LABELS = void 0;
 exports.getStatusLabel = getStatusLabel;
 exports.getStatusColor = getStatusColor;
 /** 작업 상태 라벨 */
@@ -41,22 +41,6 @@ exports.QUALITY_JUDGMENT_COLORS = {
     FAIL: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
     PENDING: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
     CONDITIONAL: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
-};
-/** IQC 상태 라벨 */
-exports.IQC_STATUS_LABELS = {
-    WAITING: { ko: '검사대기', en: 'Waiting', vi: 'Chờ kiểm tra' },
-    IN_PROGRESS: { ko: '검사중', en: 'In Progress', vi: 'Đang kiểm tra' },
-    PASSED: { ko: '합격', en: 'Passed', vi: 'Đạt' },
-    FAILED: { ko: '불합격', en: 'Failed', vi: 'Không đạt' },
-    HOLD: { ko: '보류', en: 'Hold', vi: 'Tạm giữ' },
-};
-/** IQC 상태 색상 */
-exports.IQC_STATUS_COLORS = {
-    WAITING: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
-    IN_PROGRESS: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
-    PASSED: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
-    FAILED: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
-    HOLD: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
 };
 /** 설비 상태 라벨 */
 exports.EQUIPMENT_STATUS_LABELS = {

@@ -12,7 +12,6 @@ const fieldHelp = fs.readFileSync('apps/frontend/src/app/(authenticated)/master/
 const partDto = fs.readFileSync('apps/backend/src/modules/master/dto/part.dto.ts', 'utf8');
 const partEntity = fs.readFileSync('apps/backend/src/entities/item-master.entity.ts', 'utf8');
 const partService = fs.readFileSync('apps/backend/src/modules/master/services/part.service.ts', 'utf8');
-const implementationRules = fs.readFileSync('docs/standards/implementation-rules.md', 'utf8');
 const ko = JSON.parse(fs.readFileSync('apps/frontend/src/locales/ko.json', 'utf8'));
 const combined = [page, partColumns, panel, modal].join('\n');
 
@@ -61,7 +60,7 @@ test('/master/part renames fixed storage location label', () => {
 test('/master/part input labels expose help icons with db column names', () => {
   const expectedFields = [
     'itemCode', 'itemNo', 'itemName', 'custPartNo', 'rev', 'markingText',
-    'itemType', 'productType', 'spec', 'color', 'unit', 'iqcYn', 'inspectMethod', 'useYn', 'boxQty', 'minPackQty',
+    'itemType', 'productType', 'spec', 'color', 'unit', 'useYn', 'boxQty', 'minPackQty',
     'lotUnitQty', 'safetyStock', 'expiryDate', 'expiryExtDays', 'packUnit',
     'storageLocation', 'remark',
   ];
@@ -83,42 +82,15 @@ test('/master/part removes unused tact time from the management screen', () => {
   assert.doesNotMatch(combined, /택타임/);
 });
 
-test('/master/part uses an IQC AQL policy code selector and decimal input for basic sample quantity', () => {
-  for (const source of [panel, modal]) {
-    for (const field of ['inspectionLevel', 'aqlCritical', 'aqlMajor', 'aqlMinor']) {
-      assert.doesNotMatch(source, new RegExp(`<FieldInput field="${field}"`));
-      assert.doesNotMatch(source, new RegExp(`field="${field}"`));
-      assert.doesNotMatch(source, new RegExp(`${field}: editingPart`));
-      assert.doesNotMatch(source, new RegExp(`${field}: form`));
-    }
-
-    assert.match(source, /useComCodeOptions\("IQC_INSPECT_METHOD", false\)/);
-    assert.doesNotMatch(source, /<FieldSelect field="sampleQty"/);
-    assert.match(source, /<FieldInput field="sampleQty" label=\{t\("master\.part\.basicSampleQty", "기본시료수"\)\} type="number" step="0\.001"/);
-    assert.match(source, /api\.get\(["']\/quality\/aql\/policies["']/);
-    assert.match(source, /<FieldSelect field="iqcAqlPolicyCode" label=\{t\("master\.part\.iqcAqlPolicyCode", "AQL 정책"\)\}/);
+test('/master/part no longer manages IQC fields', () => {
+  for (const source of [page, partColumns, types, panel, modal, fieldHelp, partDto, partService, partEntity]) {
+    assert.doesNotMatch(source, /iqcAqlPolicyCode/);
+    assert.doesNotMatch(source, /quality\/aql\/policies/);
+    assert.doesNotMatch(source, /iqcYn/);
+    assert.doesNotMatch(source, /inspectMethod/);
+    assert.doesNotMatch(source, /sampleQty/);
+    assert.doesNotMatch(source, /IQC_INSPECT_METHOD/);
   }
-
-  assert.doesNotMatch(modal, /value: "FULL"/);
-  assert.doesNotMatch(modal, /value: "SKIP"/);
-  assert.match(partDto, /@ApiPropertyOptional\(\{ description: '샘플검사 수량', example: 0\.5 \}\)[\s\S]*?@IsNumber\(\)[\s\S]*?sampleQty\?: number;/);
-  assert.doesNotMatch(partDto, /@ApiPropertyOptional\(\{ description: '샘플검사 수량'[\s\S]*?@IsInt\(\)[\s\S]*?sampleQty\?: number;/);
-  assert.match(types, /iqcAqlPolicyCode\?: string \| null; \/\/ IQC AQL 정책 코드/);
-  assert.match(partColumns, /accessorKey: "iqcAqlPolicyCode"[\s\S]*header: t\("master\.part\.iqcAqlPolicyCode", "AQL 정책"\)/);
-  assert.match(partDto, /@ApiPropertyOptional\(\{ description: 'IQC AQL 정책 코드', example: 'AQLP-II-1\.0-2\.5' \}\)[\s\S]*?iqcAqlPolicyCode\?: string;/);
-  assert.match(partEntity, /@Column\(\{ type: 'varchar2', name: 'IQC_AQL_POLICY_CODE', length: 50, nullable: true \}\)[\s\S]*?iqcAqlPolicyCode: string \| null;/);
-  assert.match(partService, /iqcAqlPolicyCode: dto\.iqcAqlPolicyCode \?\? null/);
-  for (const source of [types, partColumns, fieldHelp, partDto, partEntity, partService]) {
-    assert.doesNotMatch(source, /inspectionLevel\?: string \| null; \/\/ AQL 검사수준/);
-    assert.doesNotMatch(source, /aqlCritical\?: number \| null/);
-    assert.doesNotMatch(source, /aqlMajor\?: number \| null/);
-    assert.doesNotMatch(source, /aqlMinor\?: number \| null/);
-    assert.doesNotMatch(source, /ITEM_MASTERS\.INSPECTION_LEVEL/);
-    assert.doesNotMatch(source, /ITEM_MASTERS\.AQL_CRITICAL/);
-    assert.doesNotMatch(source, /ITEM_MASTERS\.AQL_MAJOR/);
-    assert.doesNotMatch(source, /ITEM_MASTERS\.AQL_MINOR/);
-  }
-  assert.match(implementationRules, /코드성·기준정보성 값은 자유입력 대신 공통코드 또는 기준정보 선택 컴포넌트를 우선 사용한다/);
 });
 
 test('/master/part exposes vehicle model name from ITEM_MASTERS.MODEL_NAME', () => {

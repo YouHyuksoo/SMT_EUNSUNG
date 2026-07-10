@@ -22,10 +22,6 @@ export declare const WORK_STATUS_COLORS: Record<string, string>;
 export declare const QUALITY_JUDGMENT_LABELS: Record<string, StatusLabel>;
 /** 품질 판정 색상 */
 export declare const QUALITY_JUDGMENT_COLORS: Record<string, string>;
-/** IQC 상태 라벨 */
-export declare const IQC_STATUS_LABELS: Record<string, StatusLabel>;
-/** IQC 상태 색상 */
-export declare const IQC_STATUS_COLORS: Record<string, string>;
 /** 설비 상태 라벨 */
 export declare const EQUIPMENT_STATUS_LABELS: Record<string, StatusLabel>;
 /** 설비 상태 색상 */

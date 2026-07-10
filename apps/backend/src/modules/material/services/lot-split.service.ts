@@ -316,7 +316,6 @@ export class LotSplitService {
       mfgPartnerCode: sourceLot.mfgPartnerCode,
       invoiceNo: sourceLot.invoiceNo,
       poNo: sourceLot.poNo,
-      iqcStatus: sourceLot.iqcStatus,
       status: 'NORMAL',
       organizationId: sourceLot.organizationId,
       createdBy: userId ?? null,

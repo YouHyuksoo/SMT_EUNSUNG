@@ -341,11 +341,11 @@ describe('MatLotService', () => {
       mockMatLotRepo.update.mockResolvedValue({ affected: 1 } as any);
       mockItemMasterRepo.findOne.mockResolvedValue(createItemMaster({ organizationId: 1 } as Partial<ItemMaster>));
 
-      await target.update('MAT-001', { iqcStatus: 'FAIL' } as any, 1);
+      await target.update('MAT-001', { vendor: 'VND-01' } as any, 1);
 
       expect(mockMatLotRepo.update).toHaveBeenCalledWith(
         { matUid: 'MAT-001', organizationId: 1 },
-        { iqcStatus: 'FAIL' },
+        { vendor: 'VND-01' },
       );
       expect(mockMatLotRepo.findOne).toHaveBeenLastCalledWith({
         where: { matUid: 'MAT-001', organizationId: 1 },

@@ -27,10 +27,6 @@ export interface Part {
   lotUnitQty?: number; // LOT 단위수량 (Oracle LOTUNITQTY)
   boxQty?: number; // 박스 장입수량 (Oracle BOXQTY) (기본값: 0)
   minPackQty?: number; // 최소포장단위 수량 (기본값: 0)
-  iqcYn?: UseYnValue; // IQC 대상여부 Y/N (Oracle IQCFLAG) (기본값: Y)
-  inspectMethod?: string; // 검사구분 (FULL/SKIP)
-  sampleQty?: number | null; // 기본시료수
-  iqcAqlPolicyCode?: string | null; // IQC AQL 정책 코드
   expiryDate?: number; // 유효기간 일 (Oracle EXPIRYDATE) (기본값: 0)
   expiryExtDays?: number; // 유효기간 연장 최대 일수 (Oracle EXPIRY_EXT_DAYS) (기본값: 0)
   packUnit?: number; // 팔레트 구성 단위(팔레트당 박스 수)

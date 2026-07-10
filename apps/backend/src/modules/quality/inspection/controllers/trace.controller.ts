@@ -8,7 +8,7 @@
  * 3. 결과가 없으면 data: null 반환 (404 아님)
  *
  * @dependencies
- * - ProductTraceabilityService: 제품+반제품+자재 PO/IQC 종합 추적
+ * - ProductTraceabilityService: 제품+반제품+자재 PO 종합 추적
  * - JwtAuthGuard: JWT 인증
  * - Company, Plant: 멀티테넌시 데코레이터
  */

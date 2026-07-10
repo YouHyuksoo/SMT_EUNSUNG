@@ -15,7 +15,6 @@ interface CreatePartGridColumnsOptions {
   productTypeLabels: Record<string, string>;
   defectModelGroupLabels: Record<string, string>;
   unitMap: ComCodeMap;
-  iqcInspectMethodMap: ComCodeMap;
   isPanelOpen: boolean;
   panelAnimateRef: MutableRefObject<boolean>;
   guard: (action: () => void) => void;
@@ -43,7 +42,6 @@ export function createPartGridColumns({
   productTypeLabels,
   defectModelGroupLabels,
   unitMap,
-  iqcInspectMethodMap,
   isPanelOpen,
   panelAnimateRef,
   guard,
@@ -149,27 +147,6 @@ export function createPartGridColumns({
     { accessorKey: "boxQty", header: t("master.part.boxQty", "박스장입수량"), size: 90, meta: { filterType: "number" as const }, cell: ({ getValue }) => { const v = getValue() as number; return v ? v.toLocaleString() : "-"; } },
     { accessorKey: "minPackQty", header: t("master.part.minPackQty", "최소불출단위수량(자재)"), size: 135, meta: { filterType: "number" as const }, cell: ({ getValue }) => { const v = getValue() as number; return v > 0 ? v.toLocaleString() : "-"; } },
     { accessorKey: "lotUnitQty", header: t("master.part.lotUnitQty", "묶음단위수량(생산공정품)"), size: 150, meta: { filterType: "number" as const }, cell: ({ getValue }) => { const v = getValue() as number; return v != null ? v.toLocaleString() : "-"; } },
-    {
-      accessorKey: "inspectMethod",
-      header: t("master.part.inspectMethod", "검사구분"),
-      size: 80,
-      meta: { filterType: "multi" as const },
-      cell: ({ getValue }) => {
-        const v = getValue() as string;
-        if (!v) return <span className="text-xs text-text-muted">-</span>;
-        const colors: Record<string, string> = {
-          FULL: "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300",
-          SKIP: "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400",
-        };
-        const labels: Record<string, string> = {
-          FULL: iqcInspectMethodMap.FULL?.codeName ?? t("master.part.iqc.methodFull", "검사"),
-          SKIP: iqcInspectMethodMap.SKIP?.codeName ?? t("master.part.inspectSkip", "무검사"),
-        };
-        return <span className={`px-2 py-0.5 text-xs rounded-full ${colors[v] || ""}`}>{labels[v] || v}</span>;
-      },
-    },
-    { accessorKey: "sampleQty", header: t("master.part.basicSampleQty", "기본시료수"), size: 80, meta: { filterType: "number" as const }, cell: ({ getValue }) => { const v = getValue() as number; return v != null ? v.toLocaleString() : "-"; } },
-    { accessorKey: "iqcAqlPolicyCode", header: t("master.part.iqcAqlPolicyCode", "AQL 정책"), size: 130, meta: { filterType: "text" as const }, cell: ({ getValue }) => getValue() || "-" },
     { accessorKey: "expiryDate", header: t("master.part.expiryDate", "유효기간"), size: 70, meta: { filterType: "number" as const }, cell: ({ getValue }) => { const v = getValue() as number; return v > 0 ? t("master.part.daysSuffix", "{{count}}일", { count: v }) : "-"; } },
     { accessorKey: "expiryExtDays", header: t("master.part.expiryExtDays", "연장기간"), size: 70, meta: { filterType: "number" as const }, cell: ({ getValue }) => { const v = getValue() as number; return v > 0 ? t("master.part.daysSuffix", "{{count}}일", { count: v }) : "-"; } },
     { accessorKey: "packUnit", header: t("master.part.palletUnit", "팔레트구성단위"), size: 90, meta: { filterType: "number" as const }, cell: ({ getValue }) => { const v = getValue() as number; return v ? v.toLocaleString() : "-"; } },

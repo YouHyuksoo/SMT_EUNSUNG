@@ -3,7 +3,7 @@
  * @description 자재 라벨 발행(matUid 채번) 요청/응답 DTO
  *
  * 초보자 가이드:
- * 1. CreateMatLabelsDto: IQC PASS 입하건에서 matUid 채번 + MatLot 생성 요청
+ * 1. CreateMatLabelsDto: 입하건에서 matUid 채번 + MatLot 생성 요청
  * 2. arrivalId: 입하번호 (ARRIVAL_NO)
  * 3. arrivalSeq: 입하 순번 (SEQ), 기본값 1
  * 4. qty: 발행 수량 (= matUid 채번 수, 각 qty=1)

@@ -33,7 +33,7 @@ export const SHIPMENT_STATUS_VALUES = ['PREPARING', 'LOADED', 'SHIPPED', 'DELIVE
 export type ShipmentStatusValue = typeof SHIPMENT_STATUS_VALUES[number];
 
 // ===== 입하 상태 =====
-export const RECEIVE_STATUS_VALUES = ['PENDING', 'IQC_IN_PROGRESS', 'PASSED', 'FAILED'] as const;
+export const RECEIVE_STATUS_VALUES = ['PENDING', 'PASSED', 'FAILED'] as const;
 export type ReceiveStatusValue = typeof RECEIVE_STATUS_VALUES[number];
 
 // ===== 출고 상태 =====
@@ -67,14 +67,6 @@ export type InspectTypeValue = typeof INSPECT_TYPE_VALUES[number];
 // ===== 검사 방법 =====
 export const INSPECT_METHOD_VALUES = ['VISUAL', 'MEASUREMENT', 'FUNCTIONAL', 'ELECTRICAL', 'DESTRUCTIVE'] as const;
 export type InspectMethodValue = typeof INSPECT_METHOD_VALUES[number];
-
-// ===== IQC 검사구분 =====
-export const IQC_INSPECT_METHOD_VALUES = ['FULL', 'SKIP'] as const;
-export type IqcInspectMethodValue = typeof IQC_INSPECT_METHOD_VALUES[number];
-
-// ===== IQC 검사 유형 =====
-export const IQC_INSPECT_TYPE_VALUES = ['INITIAL', 'RETEST'] as const;
-export type IqcInspectTypeValue = typeof IQC_INSPECT_TYPE_VALUES[number];
 
 // ===== 폐기 사유 =====
 export const SCRAP_REASON_VALUES = ['DAMAGE', 'EXPIRY', 'QUALITY', 'SURPLUS', 'OBSOLETE', 'ETC'] as const;
@@ -181,9 +173,6 @@ export type UseYnValue = typeof USE_YN_VALUES[number];
 export const PLANT_TYPE_VALUES = ['PLANT', 'SHOP', 'LINE', 'CELL'] as const;
 export type PlantTypeValue = typeof PLANT_TYPE_VALUES[number];
 
-// ===== 자재 LOT IQC 상태 =====
-export const IQC_STATUS_VALUES = ['PENDING', 'PASS', 'FAIL', 'HOLD'] as const;
-export type IqcStatusValue = typeof IQC_STATUS_VALUES[number];
 
 // ===== 자재 LOT 상태 =====
 export const MAT_LOT_STATUS_VALUES = ['NORMAL', 'HOLD', 'DEPLETED'] as const;
@@ -335,3 +324,66 @@ export type TransactionTypeValue = typeof TRANSACTION_TYPE_VALUES[number];
 // ===== 참조 유형 =====
 export const REF_TYPE_VALUES = ['JOB_ORDER', 'SUBCON_ORDER', 'SHIPMENT', 'CUSTOMS', 'ADJUST', 'PROD_RESULT'] as const;
 export type RefTypeValue = typeof REF_TYPE_VALUES[number];
+
+// ===== 생산라인 (IP_PRODUCT_LINE) =====
+// 값/한글명은 은성 DB의 ISYS_BASECODE 및 컬럼 주석 정의를 그대로 옮긴 것이다.
+
+/** 라인구분 (IP_PRODUCT_LINE.LINE_DIVISION) */
+export const LINE_DIVISION_VALUES = [
+  'C', 'D', 'E', 'ETC', 'I', 'KIPAN', 'L', 'M', 'REBALL', 'REPAIR', 'S', 'SMT', 'T', 'W',
+] as const;
+export type LineDivisionValue = typeof LINE_DIVISION_VALUES[number];
+export const LINE_DIVISION_LABELS: Record<LineDivisionValue, string> = {
+  C: 'CELL',
+  D: 'SMT',
+  E: '외주',
+  ETC: 'ETC',
+  I: '사내',
+  KIPAN: '기판',
+  L: '조립라인',
+  M: '무상사급',
+  REBALL: '리볼',
+  REPAIR: '수리',
+  S: '유상사급',
+  SMT: 'SMT',
+  T: '검사라인',
+  W: '가공공정',
+};
+
+/** 라인제품구분 (IP_PRODUCT_LINE.LINE_PRODUCT_DIVISION) */
+export const LINE_PRODUCT_DIVISION_VALUES = ['FIXED', 'ONESELF', 'SALE', 'SUBLET'] as const;
+export type LineProductDivisionValue = typeof LINE_PRODUCT_DIVISION_VALUES[number];
+export const LINE_PRODUCT_DIVISION_LABELS: Record<LineProductDivisionValue, string> = {
+  FIXED: '고정',
+  ONESELF: '자작',
+  SALE: '유상',
+  SUBLET: '무상',
+};
+
+/** 라인상태 (IP_PRODUCT_LINE.LINE_STATUS) */
+export const LINE_STATUS_VALUES = ['C', 'D', 'E', 'M', 'N', 'Q', 'R', 'S', 'T', 'Z'] as const;
+export type LineStatusValue = typeof LINE_STATUS_VALUES[number];
+export const LINE_STATUS_LABELS: Record<LineStatusValue, string> = {
+  C: '모델변경',
+  D: '고장',
+  E: '오삽발생',
+  M: '자재교환',
+  N: '정상',
+  Q: '기타',
+  R: '수리중',
+  S: '정지',
+  T: '일시정지',
+  Z: '샘플생산',
+};
+
+/** 용량단위 (IP_PRODUCT_LINE.CAPACITY_UOM) */
+export const LINE_CAPACITY_UOM_VALUES = ['KG', 'ST'] as const;
+export type LineCapacityUomValue = typeof LINE_CAPACITY_UOM_VALUES[number];
+
+/** 활성유무 (IP_PRODUCT_LINE.ACTIVE_YN) — 사용여부가 아니라 라인 가동 활성 상태다. */
+export const LINE_ACTIVE_YN_VALUES = ['Y', 'N'] as const;
+export type LineActiveYnValue = typeof LINE_ACTIVE_YN_VALUES[number];
+export const LINE_ACTIVE_YN_LABELS: Record<LineActiveYnValue, string> = {
+  Y: '활성',
+  N: '대기',
+};

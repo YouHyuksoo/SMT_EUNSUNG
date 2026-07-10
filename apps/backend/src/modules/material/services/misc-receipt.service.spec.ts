@@ -214,7 +214,6 @@ describe('MiscReceiptService', () => {
         recvDate: expect.any(Date),
         origin: 'VH1-RM260701-00001',
         vendor: 'MISC',
-        iqcStatus: 'PASS',
         status: 'NORMAL',
         company: 'HANES',
         plant: 'P01',

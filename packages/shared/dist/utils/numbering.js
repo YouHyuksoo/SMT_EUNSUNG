@@ -120,9 +120,9 @@ function generateShipmentNumber(options = {}) {
 }
 /**
  * 검사 번호 생성
- * @param inspType 검사 유형 (IQC, PQC, FQC, OQC)
+ * @param inspType 검사 유형 (PQC, FQC, OQC)
  * @param options 생성 옵션
- * @returns 검사 번호 (예: IQC20240115001)
+ * @returns 검사 번호 (예: PQC20240115001)
  */
 function generateInspectionNumber(inspType, options = {}) {
     return generateLotNumber({

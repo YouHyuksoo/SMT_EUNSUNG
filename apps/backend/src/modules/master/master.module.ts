@@ -24,8 +24,6 @@ import { RoutingController } from './controllers/routing.controller';
 import { RoutingService } from './services/routing.service';
 import { WorkerController } from './controllers/worker.controller';
 import { WorkerService } from './services/worker.service';
-import { IqcItemController } from './controllers/iqc-item.controller';
-import { IqcItemService } from './services/iqc-item.service';
 import { EquipInspectController } from './controllers/equip-inspect.controller';
 import { EquipInspectService } from './services/equip-inspect.service';
 import { EquipInspectItemPoolController } from './controllers/equip-inspect-item-pool.controller';
@@ -46,12 +44,6 @@ import { CompanyService } from './services/company.service';
 import { DepartmentService } from './services/department.service';
 import { VendorBarcodeMappingController } from './controllers/vendor-barcode-mapping.controller';
 import { VendorBarcodeMappingService } from './services/vendor-barcode-mapping.service';
-import { IqcItemPoolController } from './controllers/iqc-item-pool.controller';
-import { IqcItemPoolService } from './services/iqc-item-pool.service';
-import { IqcPartSpecController } from './controllers/iqc-part-spec.controller';
-import { IqcPartSpecService } from './services/iqc-part-spec.service';
-import { IqcTemplateController } from './controllers/iqc-template.controller';
-import { IqcTemplateService } from './services/iqc-template.service';
 import { RoutingGroupController } from './controllers/routing-group.controller';
 import { RoutingGroupService } from './services/routing-group.service';
 import { ShiftPatternController } from './controllers/shift-pattern.controller';
@@ -78,19 +70,11 @@ import { WorkerMaster } from '../../entities/worker-master.entity';
 import { PartnerMaster } from '../../entities/partner-master.entity';
 import { EquipInspectItemPool } from '../../entities/equip-inspect-item-pool.entity';
 import { EquipInspectItemMaster } from '../../entities/equip-inspect-item-master.entity';
-import { IqcItemMaster } from '../../entities/iqc-item-master.entity';
 import { LabelTemplate } from '../../entities/label-template.entity';
 import { EquipBomItem } from '../../entities/equip-bom-item.entity';
 import { EquipBomRel } from '../../entities/equip-bom-rel.entity';
 import { ModelSuffix } from '../../entities/model-suffix.entity';
 import { VendorBarcodeMapping } from '../../entities/vendor-barcode-mapping.entity';
-import { IqcItemPool } from '../../entities/iqc-item-pool.entity';
-import { IqcPartSpec } from '../../entities/iqc-part-spec.entity';
-import { IqcPartSpecItem } from '../../entities/iqc-part-spec-item.entity';
-import { AqlStandard } from '../../entities/aql-standard.entity';
-import { AqlSamplingRule } from '../../entities/aql-sampling-rule.entity';
-import { IqcTemplate } from '../../entities/iqc-template.entity';
-import { IqcTemplateItem } from '../../entities/iqc-template-item.entity';
 import { ProcessQualityCondition } from '../../entities/process-quality-condition.entity';
 import { RoutingGroup } from '../../entities/routing-group.entity';
 import { RoutingProcess } from '../../entities/routing-process.entity';
@@ -120,19 +104,11 @@ import { WorkCalendarDay } from '../../entities/work-calendar-day.entity';
       PartnerMaster,
       EquipInspectItemMaster,
       EquipInspectItemPool,
-      IqcItemMaster,
       LabelTemplate,
       ModelSuffix,
       EquipBomItem,
       EquipBomRel,
       VendorBarcodeMapping,
-      IqcItemPool,
-      IqcPartSpec,
-      IqcPartSpecItem,
-      AqlStandard,
-      AqlSamplingRule,
-      IqcTemplate,
-      IqcTemplateItem,
       ProcessQualityCondition,
       RoutingGroup,
       RoutingProcess,
@@ -151,7 +127,6 @@ import { WorkCalendarDay } from '../../entities/work-calendar-day.entity';
     ProcessController,
     RoutingController,
     WorkerController,
-    IqcItemController,
     EquipInspectController,
     EquipInspectItemPoolController,
     EquipBomController,
@@ -161,9 +136,6 @@ import { WorkCalendarDay } from '../../entities/work-calendar-day.entity';
     LabelTemplateController,
     ProdLineController,
     VendorBarcodeMappingController,
-    IqcItemPoolController,
-    IqcPartSpecController,
-    IqcTemplateController,
     RoutingGroupController,
     ShiftPatternController,
     WorkCalendarController,
@@ -178,7 +150,6 @@ import { WorkCalendarDay } from '../../entities/work-calendar-day.entity';
     ProcessService,
     RoutingService,
     WorkerService,
-    IqcItemService,
     EquipInspectService,
     EquipInspectItemPoolService,
     EquipBomService,
@@ -190,9 +161,6 @@ import { WorkCalendarDay } from '../../entities/work-calendar-day.entity';
     CompanyService,
     DepartmentService,
     VendorBarcodeMappingService,
-    IqcItemPoolService,
-    IqcPartSpecService,
-    IqcTemplateService,
     RoutingGroupService,
     ShiftPatternService,
     WorkCalendarService,
@@ -207,7 +175,6 @@ import { WorkCalendarDay } from '../../entities/work-calendar-day.entity';
     ProcessService,
     RoutingService,
     WorkerService,
-    IqcItemService,
     EquipInspectService,
     EquipInspectItemPoolService,
     EquipBomService,
@@ -219,7 +186,6 @@ import { WorkCalendarDay } from '../../entities/work-calendar-day.entity';
     CompanyService,
     DepartmentService,
     VendorBarcodeMappingService,
-    IqcItemPoolService,
     RoutingGroupService,
     ShiftPatternService,
     WorkCalendarService,

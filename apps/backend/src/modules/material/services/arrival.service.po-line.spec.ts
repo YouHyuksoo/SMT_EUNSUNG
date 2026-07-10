@@ -30,7 +30,6 @@ import { ItemMaster } from '../../../entities/item-master.entity';
 import { PartnerMaster } from '../../../entities/partner-master.entity';
 import { Warehouse } from '../../../entities/warehouse.entity';
 import { VendorBarcodeMapping } from '../../../entities/vendor-barcode-mapping.entity';
-import { IqcLog } from '../../../entities/iqc-log.entity';
 
 describe('ArrivalService.receivePoLine (IQC005 Phase A)', () => {
   let target: ArrivalService;
@@ -74,7 +73,6 @@ describe('ArrivalService.receivePoLine (IQC005 Phase A)', () => {
         { provide: getRepositoryToken(ItemMaster), useValue: createMock<Repository<ItemMaster>>() },
         { provide: getRepositoryToken(Warehouse), useValue: createMock<Repository<Warehouse>>() },
         { provide: getRepositoryToken(VendorBarcodeMapping), useValue: createMock<Repository<VendorBarcodeMapping>>() },
-        { provide: getRepositoryToken(IqcLog), useValue: createMock<Repository<IqcLog>>() },
         { provide: getRepositoryToken(PartnerMaster), useValue: createMock<Repository<PartnerMaster>>() },
         { provide: DataSource, useValue: { manager: mockManager, createQueryRunner: () => mockQueryRunner } },
         { provide: NumberingService, useValue: mockNumbering },

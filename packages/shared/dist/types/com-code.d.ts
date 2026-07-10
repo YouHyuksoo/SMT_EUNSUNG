@@ -52,12 +52,6 @@ export declare const COM_CODE_GROUPS: {
     readonly INSPECT_RESULT: "INSPECT_RESULT";
     /** 검사 유형 */
     readonly INSPECT_TYPE: "INSPECT_TYPE";
-    /** IQC 검사구분 */
-    readonly IQC_INSPECT_METHOD: "IQC_INSPECT_METHOD";
-    /** IQC 검사유형 */
-    readonly IQC_INSPECT_TYPE: "IQC_INSPECT_TYPE";
-    /** IQC 유형 */
-    readonly IQC_TYPE: "IQC_TYPE";
     /** 품질 판정 */
     readonly QUALITY_JUDGMENT: "QUALITY_JUDGMENT";
     /** 승인 상태 */

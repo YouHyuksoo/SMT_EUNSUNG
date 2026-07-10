@@ -61,9 +61,6 @@ export * from './rework-order.entity';
 export * from './rework-inspect.entity';
 export * from './rework-process.entity';
 export * from './rework-result.entity';
-export * from './iqc-log.entity';
-export * from './iqc-item-master.entity';
-export * from './iqc-item-pool.entity';
 export * from './equip-inspect-item-master.entity';
 export * from './equip-inspect-item-pool.entity';
 export * from './equip-inspect-log.entity';
@@ -71,11 +68,6 @@ export * from './oqc-request.entity';
 export * from './oqc-request-box.entity';
 export * from './self-inspect-item.entity';
 export * from './self-inspect-result.entity';
-export * from './aql-standard.entity';
-export * from './aql-code-letter-rule.entity';
-export * from './aql-code-letter-sample.entity';
-export * from './aql-acceptance-rule.entity';
-export * from './iqc-aql-policy.entity';
 
 // Shipping
 export * from './box-master.entity';

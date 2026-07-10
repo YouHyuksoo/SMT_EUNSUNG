@@ -5,7 +5,6 @@
  * 초보자 가이드:
  * - MatLot의 PK는 matUid (자재 고유 식별자)
  * - itemCode로 품목마스터(ItemMaster)와 연결
- * - iqcStatus: IQC 검사 상태 (PENDING/PASS/FAIL)
  * - status: LOT 상태 (NORMAL/HOLD/SCRAPPED/DEPLETED)
  */
 
@@ -42,14 +41,13 @@ export class MatLotService {
   }
 
   async findAll(query: MatLotQueryDto, organizationId?: number) {
-    const { page = 1, limit = 10, itemCode, matUid, vendor, iqcStatus, status } = query;
+    const { page = 1, limit = 10, itemCode, matUid, vendor, status } = query;
     const skip = (page - 1) * limit;
 
     const where: FindOptionsWhere<MatLot> = {
       ...(itemCode && { itemCode }),
       ...(matUid && { matUid: Like(`%${matUid}%`) }),
       ...(vendor && { vendor: Like(`%${vendor}%`) }),
-      ...(iqcStatus && { iqcStatus }),
       ...(status && { status }),
       ...(organizationId != null && { organizationId }),
     };
@@ -157,7 +155,6 @@ export class MatLotService {
       vendor: dto.vendor,
       invoiceNo: dto.invoiceNo,
       poNo: dto.poNo,
-      iqcStatus: dto.iqcStatus ?? 'PENDING',
       status: dto.status ?? 'NORMAL',
       organizationId,
     });
@@ -182,8 +179,7 @@ export class MatLotService {
       );
     }
 
-    const updateData: Partial<Pick<MatLot, 'iqcStatus' | 'expireDate' | 'vendor' | 'origin'>> = {};
-    if (dto.iqcStatus) updateData.iqcStatus = dto.iqcStatus;
+    const updateData: Partial<Pick<MatLot, 'expireDate' | 'vendor' | 'origin'>> = {};
     if (dto.expireDate) updateData.expireDate = parseDateStart(dto.expireDate);
     if (dto.vendor) updateData.vendor = dto.vendor;
     if (dto.origin) updateData.origin = dto.origin;

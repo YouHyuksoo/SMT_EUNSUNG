@@ -16,12 +16,10 @@ import { ImageIcon, RefreshCw, Trash2, Upload } from "lucide-react";
 // X 아이콘 제거됨 — 헤더에 취소/저장 버튼 사용
 import { Button, ConfirmModal } from "@/components/ui";
 import { useLocationOptions } from "@/hooks/useMasterOptions";
-import { useComCodeOptions } from "@/hooks/useComCode";
 import api from "@/services/api";
 import { Part } from "../types";
 import { FieldComCodeSelect, FieldInput, FieldLabel, FieldSelect, FieldYnRadio, Field } from "./PartFieldHelp";
 import { QtyInput } from "@/components/shared";
-import { requiresIqcAqlPolicy as isIqcAqlPolicyRequired } from "@smt/shared";
 
 interface Props {
   editingPart: Part | null;
@@ -54,10 +52,6 @@ const buildForm = (editingPart: Part | null) => ({
   safetyStock: editingPart?.safetyStock ?? 0,
   expiryDate: editingPart?.expiryDate ?? 0,
   expiryExtDays: editingPart?.expiryExtDays ?? 0,
-  iqcYn: editingPart?.iqcYn || "Y",
-  inspectMethod: editingPart?.inspectMethod || "",
-  sampleQty: editingPart?.sampleQty ?? 0,
-  iqcAqlPolicyCode: editingPart?.iqcAqlPolicyCode || "",
   useYn: editingPart?.useYn || "Y",
   packUnit: editingPart?.packUnit ?? 0,
   storageLocation: editingPart?.storageLocation || "",
@@ -65,13 +59,6 @@ const buildForm = (editingPart: Part | null) => ({
 });
 
 const PACKAGING_QTY_OPTIONS = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
-
-type IqcAqlPolicyOption = {
-  policyCode: string;
-  policyName?: string | null;
-  majorAqlCode?: string | null;
-  minorAqlCode?: string | null;
-};
 
 export default function PartFormPanel({ editingPart, onClose, onSave, animate = true, onDirtyChange }: Props) {
   const { t } = useTranslation();
@@ -83,40 +70,6 @@ export default function PartFormPanel({ editingPart, onClose, onSave, animate = 
     [rawLocationOptions, t],
   );
 
-  const iqcOptions = useMemo(() => [
-    { value: "Y", label: t("master.part.iqcTarget", "Y (대상)") },
-    { value: "N", label: t("master.part.iqcNotTarget", "N (비대상)") },
-  ], [t]);
-
-  // 제품유형: 코드마스터(PRODUCT_TYPE) 기반 — 화면 하드코딩 금지
-  const rawIqcInspectMethodOptions = useComCodeOptions("IQC_INSPECT_METHOD", false);
-  const iqcInspectMethodOptions = useMemo(
-    () => [{ value: "", label: "-" }, ...rawIqcInspectMethodOptions],
-    [rawIqcInspectMethodOptions],
-  );
-  const [iqcAqlPolicyOptions, setIqcAqlPolicyOptions] = useState([{ value: "", label: "-" }]);
-
-  useEffect(() => {
-    let cancelled = false;
-    api.get("/quality/aql/policies", { params: { useYn: "Y" }, suppressErrorModal: true })
-      .then((res) => {
-        if (cancelled) return;
-        const policies: IqcAqlPolicyOption[] = res.data?.data ?? [];
-        setIqcAqlPolicyOptions([
-          { value: "", label: "-" },
-          ...policies.map((policy) => ({
-            value: policy.policyCode,
-            label: `${policy.policyCode} - ${policy.policyName || policy.policyCode}`,
-          })),
-        ]);
-      })
-      .catch(() => {
-        if (!cancelled) setIqcAqlPolicyOptions([{ value: "", label: "-" }]);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   const [form, setForm] = useState(() => buildForm(editingPart));
   const initialFormRef = useRef(form);
@@ -125,13 +78,11 @@ export default function PartFormPanel({ editingPart, onClose, onSave, animate = 
   const [previewUrl, setPreviewUrl] = useState<string | null>(editingPart?.imageUrl ?? null);
   const [imageError, setImageError] = useState(false);
   const [imageDeleteConfirmOpen, setImageDeleteConfirmOpen] = useState(false);
-  const requiresIqcAqlPolicy = isIqcAqlPolicyRequired(form.iqcYn, form.inspectMethod);
   const canSave = !saving
     && !!form.itemCode.trim()
     && !!form.itemNo.trim()
     && !!form.itemName.trim()
-    && !!form.productType
-    && (!requiresIqcAqlPolicy || !!form.iqcAqlPolicyCode);
+    && !!form.productType;
 
   // editingPart 변경 시 폼 리셋
   useEffect(() => {
@@ -223,10 +174,6 @@ export default function PartFormPanel({ editingPart, onClose, onSave, animate = 
         safetyStock: form.safetyStock,
         expiryDate: form.expiryDate,
         expiryExtDays: form.expiryExtDays,
-        iqcYn: form.iqcYn,
-        inspectMethod: form.inspectMethod || undefined,
-        sampleQty: form.sampleQty || undefined,
-        iqcAqlPolicyCode: form.iqcAqlPolicyCode || null,
         useYn: form.useYn,
         packUnit: form.packUnit || undefined,
         storageLocation: form.storageLocation || undefined,
@@ -313,17 +260,6 @@ export default function PartFormPanel({ editingPart, onClose, onSave, animate = 
               value={form.color} onChange={e => setField("color", e.target.value)} fullWidth />
             <FieldComCodeSelect field="unit" groupCode="UNIT_TYPE" label={t("master.part.unit")} includeAll={false} showCode
               value={form.unit} onChange={v => setField("unit", v)} fullWidth />
-            <FieldSelect field="iqcYn" label={t("master.part.iqcFlag", "IQC대상")} options={iqcOptions}
-              value={form.iqcYn} onChange={v => setField("iqcYn", v)} fullWidth />
-            <FieldSelect field="inspectMethod" label={t("master.part.inspectMethod", "검사구분")}
-              options={iqcInspectMethodOptions}
-              value={form.inspectMethod} onChange={v => setField("inspectMethod", v)} fullWidth />
-            <FieldInput field="sampleQty" label={t("master.part.basicSampleQty", "기본시료수")} type="number" step="0.001"
-              value={String(form.sampleQty)} onChange={e => setField("sampleQty", Number(e.target.value))} fullWidth />
-            <FieldSelect field="iqcAqlPolicyCode" label={t("master.part.iqcAqlPolicyCode", "AQL 정책")}
-              options={iqcAqlPolicyOptions}
-              value={form.iqcAqlPolicyCode} onChange={v => setField("iqcAqlPolicyCode", v)} fullWidth
-              required={requiresIqcAqlPolicy} />
             <FieldYnRadio field="useYn" label={t("common.useYn", "사용여부")} value={form.useYn} onChange={v => setField("useYn", v)} />
           </div>
         </div>

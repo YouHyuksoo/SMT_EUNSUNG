@@ -3,10 +3,9 @@
  * @description 품목마스터 비즈니스 로직 서비스 - TypeORM Repository 패턴
  */
 
-import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { requiresIqcAqlPolicy } from '@smt/shared';
 import { ItemMaster } from '../../../entities/item-master.entity';
 import { CreatePartDto, UpdatePartDto, PartQueryDto } from '../dto/part.dto';
 
@@ -23,20 +22,8 @@ export class PartService {
     };
   }
 
-  private assertIqcAqlPolicySelected(input: {
-    iqcYn?: string | null;
-    inspectMethod?: string | null;
-    iqcAqlPolicyCode?: string | null;
-  }): void {
-    if (!requiresIqcAqlPolicy(input.iqcYn, input.inspectMethod)) return;
-
-    if (!input.iqcAqlPolicyCode?.trim()) {
-      throw new BadRequestException('유검사 IQC 대상 품목은 AQL 정책을 선택해야 합니다.');
-    }
-  }
-
   async findAll(query: PartQueryDto, organizationId?: number) {
-    const { page = 1, limit = 20, itemType, itemTypes, search, useYn, iqcYn, inspectMethod, iqcAqlPolicyCode } = query;
+    const { page = 1, limit = 20, itemType, itemTypes, search, useYn } = query;
     const skip = (page - 1) * limit;
 
     const queryBuilder = this.partRepository.createQueryBuilder('p')
@@ -53,22 +40,6 @@ export class PartService {
 
     if (useYn) {
       queryBuilder.andWhere('p.useYn = :useYn', { useYn });
-    }
-
-    if (iqcYn) {
-      queryBuilder.andWhere('p.iqcYn = :iqcYn', { iqcYn });
-    }
-
-    if (inspectMethod) {
-      queryBuilder.andWhere('p.inspectMethod = :inspectMethod', { inspectMethod });
-    }
-
-    if (iqcAqlPolicyCode) {
-      if (iqcAqlPolicyCode === '__NONE__') {
-        queryBuilder.andWhere('p.iqcAqlPolicyCode IS NULL');
-      } else {
-        queryBuilder.andWhere('p.iqcAqlPolicyCode = :iqcAqlPolicyCode', { iqcAqlPolicyCode });
-      }
     }
 
     if (search) {
@@ -114,12 +85,6 @@ export class PartService {
 
     if (existing) throw new ConflictException(`이미 존재하는 품목 코드입니다: ${dto.itemCode}`);
 
-    this.assertIqcAqlPolicySelected({
-      iqcYn: dto.iqcYn ?? 'Y',
-      inspectMethod: dto.inspectMethod ?? null,
-      iqcAqlPolicyCode: dto.iqcAqlPolicyCode ?? null,
-    });
-
     const part = this.partRepository.create({
       itemCode: dto.itemCode,
       itemName: dto.itemName ?? dto.itemCode,
@@ -142,15 +107,11 @@ export class PartService {
       lotUnitQty: dto.lotUnitQty,
       boxQty: dto.boxQty ?? 0,
       minPackQty: dto.minPackQty ?? 0,
-      iqcYn: dto.iqcYn ?? 'Y',
-      inspectMethod: dto.inspectMethod ?? null,
-      iqcAqlPolicyCode: dto.iqcAqlPolicyCode ?? null,
       tactTime: dto.tactTime ?? 0,
       expiryDate: dto.expiryDate ?? 0,
       expiryExtDays: dto.expiryExtDays ?? 0,
       toleranceRate: dto.toleranceRate ?? 5,
       isSplittable: dto.isSplittable ?? 'Y',
-      sampleQty: dto.sampleQty ?? null,
       packUnit: dto.packUnit ?? null,
       storageLocation: dto.storageLocation ?? null,
       remark: dto.remark,
@@ -163,12 +124,7 @@ export class PartService {
   }
 
   async update(itemCode: string, dto: UpdatePartDto, organizationId?: number) {
-    const existing = await this.findById(itemCode, organizationId);
-    this.assertIqcAqlPolicySelected({
-      iqcYn: dto.iqcYn !== undefined ? dto.iqcYn : existing.iqcYn,
-      inspectMethod: dto.inspectMethod !== undefined ? dto.inspectMethod : existing.inspectMethod,
-      iqcAqlPolicyCode: dto.iqcAqlPolicyCode !== undefined ? dto.iqcAqlPolicyCode : existing.iqcAqlPolicyCode,
-    });
+    await this.findById(itemCode, organizationId);
 
     const updateData: Partial<Pick<ItemMaster,
       | 'itemName'
@@ -188,15 +144,11 @@ export class PartService {
       | 'safetyStock'
       | 'lotUnitQty'
       | 'boxQty'
-      | 'iqcYn'
-      | 'inspectMethod'
-      | 'iqcAqlPolicyCode'
       | 'tactTime'
       | 'expiryDate'
       | 'expiryExtDays'
       | 'toleranceRate'
       | 'isSplittable'
-      | 'sampleQty'
       | 'packUnit'
       | 'storageLocation'
       | 'imageUrl'
@@ -220,15 +172,11 @@ export class PartService {
       ...(dto.safetyStock !== undefined ? { safetyStock: dto.safetyStock } : {}),
       ...(dto.lotUnitQty !== undefined ? { lotUnitQty: dto.lotUnitQty } : {}),
       ...(dto.boxQty !== undefined ? { boxQty: dto.boxQty } : {}),
-      ...(dto.iqcYn !== undefined ? { iqcYn: dto.iqcYn } : {}),
-      ...(dto.inspectMethod !== undefined ? { inspectMethod: dto.inspectMethod } : {}),
-      ...(dto.iqcAqlPolicyCode !== undefined ? { iqcAqlPolicyCode: dto.iqcAqlPolicyCode || null } : {}),
       ...(dto.tactTime !== undefined ? { tactTime: dto.tactTime } : {}),
       ...(dto.expiryDate !== undefined ? { expiryDate: dto.expiryDate } : {}),
       ...(dto.expiryExtDays !== undefined ? { expiryExtDays: dto.expiryExtDays } : {}),
       ...(dto.toleranceRate !== undefined ? { toleranceRate: dto.toleranceRate } : {}),
       ...(dto.isSplittable !== undefined ? { isSplittable: dto.isSplittable } : {}),
-      ...(dto.sampleQty !== undefined ? { sampleQty: dto.sampleQty } : {}),
       ...(dto.packUnit !== undefined ? { packUnit: dto.packUnit } : {}),
       ...(dto.storageLocation !== undefined ? { storageLocation: dto.storageLocation } : {}),
       ...(dto.imageUrl !== undefined ? { imageUrl: dto.imageUrl } : {}),

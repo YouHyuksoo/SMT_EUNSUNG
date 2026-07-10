@@ -27,7 +27,6 @@ import { ItemMaster } from '../../../entities/item-master.entity';
 import { PartnerMaster } from '../../../entities/partner-master.entity';
 import { Warehouse } from '../../../entities/warehouse.entity';
 import { VendorBarcodeMapping } from '../../../entities/vendor-barcode-mapping.entity';
-import { IqcLog } from '../../../entities/iqc-log.entity';
 import { MatIssue } from '../../../entities/mat-issue.entity';
 import { ProdResult } from '../../../entities/prod-result.entity';
 import { FgLabel } from '../../../entities/fg-label.entity';
@@ -70,8 +69,6 @@ export class ArrivalService {
     private readonly warehouseRepository: Repository<Warehouse>,
     @InjectRepository(VendorBarcodeMapping)
     private readonly vendorBarcodeMappingRepository: Repository<VendorBarcodeMapping>,
-    @InjectRepository(IqcLog)
-    private readonly iqcLogRepository: Repository<IqcLog>,
     @InjectRepository(PartnerMaster)
     private readonly partnerMasterRepository: Repository<PartnerMaster>,
     private readonly dataSource: DataSource,
@@ -265,7 +262,6 @@ export class ArrivalService {
           arrivalType: 'PO',
           workerId: dto.workerId,
           remark: item.remark || dto.remark,
-          iqcStatus: 'PENDING',
           status: 'DONE',
           company: po.company,
           plant: po.plant,
@@ -288,7 +284,6 @@ export class ArrivalService {
           invoiceNo: item.invoiceNo || dto.invoiceNo || null,
           poNo: po.poNo,
           mfgPartnerCode: null,
-          iqcStatus: 'PENDING',
           status: 'NORMAL',
           company: po.company,
           plant: po.plant,
@@ -366,7 +361,6 @@ export class ArrivalService {
         arrivalType: 'MANUAL',
         workerId: dto.workerId,
         remark: dto.remark,
-        iqcStatus: 'PENDING',
         status: 'DONE',
         company,
         plant,
@@ -389,7 +383,6 @@ export class ArrivalService {
         invoiceNo: dto.invoiceNo ?? null,
         poNo: null,
         mfgPartnerCode: null,
-        iqcStatus: 'PENDING',
         status: 'NORMAL',
         company,
         plant,
@@ -583,7 +576,7 @@ export class ArrivalService {
 
   /**
    * IQC006 — 입하실적 목록 (입하번호+SEQ 단위 집계)
-   * 상태 도출(우선순위): 취소 → 입고완료 → IQC완료 → IQC진행중 → 입하완료
+   * 상태 도출(우선순위): 취소 → 입고완료 → 입하완료
    */
   async listArrivalResults(query: ArrivalResultQueryDto, company?: string, plant?: string) {
     const { page = 1, limit = 20, fromDate, toDate, itemCode, arrivalNo, status } = query;
@@ -605,8 +598,8 @@ export class ArrivalService {
     const grouped =
       `SELECT a."ARRIVAL_NO" AS "arrivalNo", a."PO_NO" AS "poNo", a."ITEM_CODE" AS "itemCode",` +
       ` MIN(a."SEQ") AS "seq", MIN(a."ARRIVAL_DATE") AS "arrivalDate", MAX(a."CREATED_AT") AS "createdAt", SUM(a."QTY") AS "qty",` +
-      ` MAX(a."IQC_STATUS") AS "iqcStatus", MAX(a."VENDOR_CODE") AS "vendorCode", MAX(a."VENDOR_NAME") AS "vendorName",` +
-      ` MAX(i."ITEM_NAME") AS "itemName", MAX(i."ITEM_TYPE") AS "itemType", MAX(NVL(i."IQC_FLAG",'N')) AS "iqcFlag",` +
+      ` MAX(a."VENDOR_CODE") AS "vendorCode", MAX(a."VENDOR_NAME") AS "vendorName",` +
+      ` MAX(i."ITEM_NAME") AS "itemName", MAX(i."ITEM_TYPE") AS "itemType",` +
       ` COUNT(CASE WHEN a."STATUS" <> 'CANCELED' THEN 1 END) AS "activeCount",` +
       ` (SELECT MIN(poi."LINE_NO") FROM "PURCHASE_ORDER_ITEMS" poi WHERE poi."PO_ID"=a."PO_NO" AND poi."ITEM_CODE"=a."ITEM_CODE" AND poi."COMPANY"=a."COMPANY" AND poi."PLANT_CD"=a."PLANT_CD") AS "lineNo",` +
       ` NVL((SELECT MIN(poi."REV_NO") FROM "PURCHASE_ORDER_ITEMS" poi WHERE poi."PO_ID"=a."PO_NO" AND poi."ITEM_CODE"=a."ITEM_CODE" AND poi."COMPANY"=a."COMPANY" AND poi."PLANT_CD"=a."PLANT_CD"), 1) AS "relNo",` +
@@ -619,13 +612,11 @@ export class ArrivalService {
       ` WHERE ${cond.join(' AND ')}` +
       ` GROUP BY a."ARRIVAL_NO", a."PO_NO", a."ITEM_CODE", a."COMPANY", a."PLANT_CD"`;
 
-    // 그룹 대표 상태(우선순위): 전량취소 → 입고완료 → IQC완료 → IQC진행중 → 입하완료
+    // 그룹 대표 상태(우선순위): 전량취소 → 입고완료 → 입하완료
     const inner =
       `SELECT g.*, CASE` +
       ` WHEN g."activeCount"=0 THEN 'CANCELED'` +
       ` WHEN g."serialCount">0 AND g."receivedCount">=g."serialCount" THEN 'RECEIVED'` +
-      ` WHEN g."iqcStatus" IN ('PASS','FAIL') THEN 'IQC_DONE'` +
-      ` WHEN g."iqcFlag"='Y' THEN 'IQC_PROGRESS'` +
       ` ELSE 'ARRIVED' END AS "derivedStatus"` +
       ` FROM (${grouped}) g`;
 
@@ -663,10 +654,9 @@ export class ArrivalService {
         qty: Number(r.qty ?? 0),
         serialCount,
         receivedCount,
-        // 구분: 소모품=CM, 그 외(원자재 등)=RM (목업 IqcType)
+        // 구분: 소모품=CM, 그 외(원자재 등)=RM
         poType: r.itemType === 'CONSUMABLE' ? 'CM' : 'RM',
         status: derivedStatus,
-        iqcStatus: r.iqcStatus ?? null,
         vendorCode: r.vendorCode ?? null,
         vendorName: r.vendorName ?? null,
         mfgPartnerCode: r.mfgPartnerCode ?? null,
@@ -683,7 +673,7 @@ export class ArrivalService {
   async getArrivalSerials(arrivalNo: string, itemCode: string, company?: string, plant?: string) {
     const binds: unknown[] = [arrivalNo, itemCode, company ?? null, plant ?? null];
     const sql =
-      `SELECT ml."MAT_UID" AS "matUid", ml."INIT_QTY" AS "qty", ml."STATUS" AS "lotStatus", ml."IQC_STATUS" AS "iqcStatus",` +
+      `SELECT ml."MAT_UID" AS "matUid", ml."INIT_QTY" AS "qty", ml."STATUS" AS "lotStatus",` +
       ` NVL((SELECT SUM(st."QTY") FROM "STOCK_TRANSACTIONS" st WHERE st."MAT_UID"=ml."MAT_UID" AND st."TRANS_TYPE"='RECEIVE' AND st."STATUS"<>'CANCELED'),0) AS "receivedQty"` +
       ` FROM "MAT_LOTS" ml` +
       ` WHERE ml."ARRIVAL_NO"=:1 AND ml."ITEM_CODE"=:2 AND ml."COMPANY"=:3 AND ml."PLANT_CD"=:4` +
@@ -698,7 +688,6 @@ export class ArrivalService {
       return {
         matUid: r.matUid,
         qty,
-        iqcStatus: r.iqcStatus ?? null,
         stockInYn: stockIn ? 'Y' : 'N',
         cancelYn: canceled ? 'Y' : 'N',
         checkable: !stockIn && !canceled,
@@ -805,20 +794,10 @@ export class ArrivalService {
     if (original.transType !== 'ARRIVAL_IN') throw new BadRequestException('입하 트랜잭션만 취소할 수 있습니다.');
     this.assertSameTenant('입하 원본 트랜잭션', { company, plant }, original);
 
-    // G3: 입하 취소 조건 제한 — IQC 판정 이후 취소 불가 (무검사품은 입고 전)
     const tenantWhere = {
       ...(original.company ? { company: original.company } : company ? { company } : {}),
       ...(original.plant ? { plant: original.plant } : plant ? { plant } : {}),
     };
-    if (original.itemCode) {
-      const iqcRecord = await this.iqcLogRepository.findOne({
-        where: { arrivalNo: original.refId ?? undefined, itemCode: original.itemCode, ...tenantWhere },
-        order: { inspectDate: 'DESC' },
-      });
-      if (iqcRecord && (iqcRecord.result === 'PASS' || iqcRecord.result === 'FAIL')) {
-        throw new BadRequestException('IQC 판정이 완료된 입하는 취소할 수 없습니다.');
-      }
-    }
 
     await this.ensureNoDownstreamProgress(original, company, plant);
 
@@ -1132,7 +1111,6 @@ export class ArrivalService {
    *
    * 1차: MAT_ARRIVALS 테이블에서 ARRIVAL_NO 또는 PO_NO로 바코드 직접 조회
    * 2차 (1차 실패): VENDOR_BARCODE_MAPPINGS에서 ITEM_CODE 매핑 후 최신 입하 조회
-   * IQC 상태는 iqcYn='N'이면 NONE, 'Y'이면 IQC_LOGS 최신 결과로 결정
    */
   async findByBarcode(barcode: string, company?: string, plant?: string) {
     // 1차 시도: arrivalNo 또는 poNo로 직접 조회
@@ -1171,29 +1149,6 @@ export class ArrivalService {
       where: { itemCode: arrival.itemCode, ...(company ? { company } : {}), ...(plant ? { plant } : {}) },
     });
 
-    const iqcYn = part?.iqcYn ?? 'Y';
-
-    // IQC 상태 결정
-    let iqcStatus: 'PASS' | 'FAIL' | 'IN_PROGRESS' | 'NONE' = 'NONE';
-
-    if (iqcYn === 'Y') {
-      // IQC_LOGS에서 해당 입하번호의 최신 검사 결과 조회
-      const latestIqcLog = await this.iqcLogRepository.findOne({
-        where: { arrivalNo: arrival.arrivalNo },
-        order: { inspectDate: 'DESC' },
-      });
-
-      if (!latestIqcLog) {
-        iqcStatus = 'IN_PROGRESS'; // IQC 대상이지만 아직 검사 미완
-      } else if (latestIqcLog.result === 'PASS') {
-        iqcStatus = 'PASS';
-      } else if (latestIqcLog.result === 'FAIL') {
-        iqcStatus = 'FAIL';
-      } else {
-        iqcStatus = 'IN_PROGRESS';
-      }
-    }
-
     // PO 기반 입하의 경우 발주수량 조회
     let orderQty = 0;
     if (arrival.poId && arrival.poItemId) {
@@ -1218,8 +1173,6 @@ export class ArrivalService {
       receivedQty: arrival.qty,
       unit: part?.unit ?? '',
       supplier: arrival.vendorName,
-      iqcYn,
-      iqcStatus,
     };
   }
 
@@ -1485,7 +1438,6 @@ export class ArrivalService {
           invoiceNo: '',
           poNo: po.poNo,
           mfgPartnerCode: dto.mfgPartnerCode,
-          iqcStatus: 'PENDING',
           status: 'NORMAL',
           company: user?.company ?? null,
           plant: user?.plant ?? null,
@@ -1528,7 +1480,6 @@ export class ArrivalService {
           arrivalType: 'PO',
           workerId: username,
           remark: dto.remark ?? null,
-          iqcStatus: 'PENDING',
           supUid: lot.matUid,
           status: 'DONE',
           company: user?.company ?? null,

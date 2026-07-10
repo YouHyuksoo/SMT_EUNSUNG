@@ -5,5 +5,4 @@
 export declare const IQC_NO_INSPECTION_METHOD_VALUES: readonly ["SKIP", "NONE"];
 export type IqcNoInspectionMethodValue = typeof IQC_NO_INSPECTION_METHOD_VALUES[number];
 export declare function isIqcNoInspectionMethod(inspectMethod?: string | null): boolean;
-export declare function requiresIqcAqlPolicy(iqcYn?: string | null, inspectMethod?: string | null): boolean;
 //# sourceMappingURL=part-rules.d.ts.map

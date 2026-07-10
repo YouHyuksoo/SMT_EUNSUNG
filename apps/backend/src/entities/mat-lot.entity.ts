@@ -5,7 +5,6 @@
  * 초보자 가이드:
  * - matUid가 PK (자재시리얼) - 자재 고유식별자로 직접 식별
  * - itemCode로 품목마스터(ITEM_MASTERS)와 연결
- * - iqcStatus: IQC 검사 상태 (PENDING/PASS/FAIL/HOLD)
  * - status: LOT 상태 (NORMAL/HOLD/DEPLETED/SPLIT/MERGED)
  */
 import {
@@ -20,7 +19,6 @@ import {
 @Entity({ name: 'MAT_LOTS' })
 @Index(['itemCode'])
 @Index(['status'])
-@Index(['iqcStatus'])
 @Index(['arrivalNo'])
 export class MatLot {
   @PrimaryColumn({ name: 'MAT_UID', length: 50 })
@@ -66,17 +64,6 @@ export class MatLot {
 
   @Column({ type: 'varchar2', name: 'PO_NO', length: 50, nullable: true })
   poNo: string | null;
-
-  @Column({ name: 'IQC_STATUS', length: 20, default: 'PENDING' })
-  iqcStatus: string;
-
-  /** 특채여부: Y=특별채택(불합격 자재 양품입고 허용), N=일반 */
-  @Column({ name: 'SPECIAL_ACCEPT_YN', length: 1, default: 'N' })
-  specialAcceptYn: string;
-
-  /** 특채 처리 작업자 코드 */
-  @Column({ type: 'varchar2', name: 'SPECIAL_ACCEPT_WORKER_CODE', length: 50, nullable: true })
-  specialAcceptWorkerCode: string | null;
 
   @Column({ name: 'STATUS', length: 20, default: 'NORMAL' })
   status: string;

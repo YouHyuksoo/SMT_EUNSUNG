@@ -76,7 +76,7 @@ export class SpcChart {
   @Column({ name: 'CL', type: 'decimal', precision: 12, scale: 4, nullable: true })
   cl: number;
 
-  /** 데이터 소스 (IQC/PROCESS/OQC/MANUAL) — ComCode SPC_DATA_SRC */
+  /** 데이터 소스 (PROCESS/OQC/MANUAL) — ComCode SPC_DATA_SRC */
   @Column({ name: 'DATA_SOURCE', length: 20, default: 'MANUAL' })
   dataSource: string;
 

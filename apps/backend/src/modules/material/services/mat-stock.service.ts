@@ -141,7 +141,6 @@ export class MatStockService {
         vendorName: lot?.vendor ? (partnerMap.get(lot.vendor) ?? lot.vendor) : null,
         manufactureDate: lot?.manufactureDate || null,
         expireDate: lot?.expireDate || null,
-        specialAcceptYn: lot?.specialAcceptYn ?? 'N',
         elapsedDays,
         remainingDays,
       };
@@ -165,7 +164,7 @@ export class MatStockService {
     return { data: result, total, page, limit };
   }
 
-  /** 출고 가능 재고 조회 (IQC PASS + 잔량 > 0 인 LOT만) */
+  /** 출고 가능 재고 조회 (잔량 > 0 인 LOT만) */
   async findAvailable(query: StockQueryDto, company?: string, plant?: string) {
     const { page = 1, limit = 10, itemCode, warehouseCode, search } = query;
     const where: FindOptionsWhere<MatStock> = { ...(itemCode && { itemCode }), ...(warehouseCode && { warehouseCode }), ...(company && { company }), ...(plant && { plant }) };
@@ -195,9 +194,9 @@ export class MatStockService {
         itemCode: stock.itemCode, itemName: part?.itemName ?? null,
         unit: part?.unit ?? null, matUid: stock.matUid,
         recvDate: lot?.recvDate ?? null,
-        iqcStatus: lot?.iqcStatus ?? null, lotStatus: lot?.status ?? null,
+        lotStatus: lot?.status ?? null,
       };
-    }).filter((s) => s.iqcStatus === 'PASS' && s.qty > 0 && s.lotStatus !== 'HOLD');
+    }).filter((s) => s.qty > 0 && s.lotStatus !== 'HOLD');
 
     if (search) {
       const s = search.toLowerCase();

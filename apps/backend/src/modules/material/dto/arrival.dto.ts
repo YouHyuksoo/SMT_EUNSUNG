@@ -264,7 +264,7 @@ export class PoLineReceiptDto {
 
 /**
  * IQC006 입하실적조회 — 입하실적 목록 조회 쿼리 DTO
- * status: 도출 상태 코드 (ARRIVED/IQC_PROGRESS/IQC_DONE/RECEIVED/CANCELED)
+ * status: 도출 상태 코드 (ARRIVED/RECEIVED/CANCELED)
  */
 export class ArrivalResultQueryDto extends PaginationQueryDto {
   @ApiPropertyOptional({ description: '입하 시작일' })
@@ -287,7 +287,7 @@ export class ArrivalResultQueryDto extends PaginationQueryDto {
   @IsString()
   arrivalNo?: string;
 
-  @ApiPropertyOptional({ description: '도출 상태 (ARRIVED/IQC_PROGRESS/IQC_DONE/RECEIVED/CANCELED)' })
+  @ApiPropertyOptional({ description: '도출 상태 (ARRIVED/RECEIVED/CANCELED)' })
   @IsOptional()
   @IsString()
   status?: string;

@@ -23,7 +23,7 @@ export class MatStockController {
   }
 
   @Get('available')
-  @ApiOperation({ summary: '출고 가능 재고 조회 (IQC PASS만)' })
+  @ApiOperation({ summary: '출고 가능 재고 조회' })
   async findAvailable(@Query() query: StockQueryDto, @OrganizationId() organizationId: number) {
     const result = await this.matStockService.findAvailable(query, organizationId);
     return ResponseUtil.paged(result.data, result.total, result.page, result.limit);

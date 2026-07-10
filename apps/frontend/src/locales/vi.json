@@ -184,27 +184,6 @@
     "monitoring": "Giám sát",
     "master": "Dữ liệu cơ sở",
     "master.part": "Quản lý vật tư",
-    "master.part.iqc.header": "IQC",
-    "master.part.iqc.title": "Tiêu chuẩn kiểm tra IQC",
-    "master.part.iqc.setup": "Cài đặt",
-    "master.part.iqc.inspectMethod": "Phân biệt kiểm tra",
-    "master.part.iqc.methodFull": "Kiểm tra",
-    "master.part.iqc.methodSkip": "Miễn kiểm",
-    "master.part.iqc.sampleQty": "Số lượng mẫu",
-    "master.part.iqc.shelfLifeDays": "Hạn sử dụng (ngày)",
-    "master.part.iqc.inspectItems": "Hạng mục kiểm tra",
-    "master.part.iqc.addItem": "Thêm hạng mục",
-    "master.part.iqc.noItems": "Chưa có hạng mục kiểm tra",
-    "master.part.iqc.itemName": "Tên hạng mục",
-    "master.part.iqc.judgeMethod": "Phương pháp đánh giá",
-    "master.part.iqc.visual": "Bằng mắt",
-    "master.part.iqc.measure": "Đo lường",
-    "master.part.iqc.criteria": "Tiêu chí",
-    "master.part.iqc.unit": "Đơn vị",
-    "master.part.iqc.skipDesc": "Miễn kiểm - bỏ qua kiểm tra khi nhập kho",
-    "master.part.iqc.linkItem": "Liên kết hạng mục",
-    "master.part.iqc.linkConfirm": "Liên kết",
-    "master.part.iqc.noAvailable": "Không có hạng mục để liên kết",
     "master.bom": "Quản lý BOM",
     "master.equip": "Quản lý thiết bị",
     "master.code": "Quản lý mã",
@@ -248,12 +227,6 @@
     "master.worker.workerList": "Danh sách nhân viên",
     "master.worker.totalCount": "Tổng {{count}} bản ghi",
     "master.worker.emptyMessage": "Chưa có nhân viên nào.",
-    "master.iqcItem": "Danh mục kiểm tra",
-    "master.iqcPartSpec": "Hạng mục IQC theo phẩm mục",
-    "master.iqcItem.itemCode": "Mã hạng mục",
-    "master.iqcItem.judgeMethod": "Phương pháp",
-    "master.iqcItem.visual": "Bằng mắt",
-    "master.iqcItem.measureMethod": "Đo lường",
     "master.equipInspect": "Hạng mục kiểm tra theo TB",
     "master.inspectItem": "Danh mục hạng mục kiểm tra",
     "master.box": "Quản lý thùng đóng gói",
@@ -288,7 +261,6 @@
     "productMgmt.issue": "Xuất kho sản phẩm",
     "productMgmt.issueCancel": "Hủy xuất kho sản phẩm",
     "productMgmt.defectTransfer": "Nhập kho lỗi",
-    "material.iqc": "Kiểm tra đầu vào (IQC)",
     "material.request": "Quản lý yêu cầu xuất kho",
     "material.requestOther": "Yêu cầu xuất khác",
     "material.issue": "Xuất kho vật tư",
@@ -299,7 +271,6 @@
     "material.lot": "Quản lý LOT",
     "material.po": "Quản lý PO",
     "material.poStatus": "Tra cứu tình trạng PO",
-    "material.iqcHistory": "Tra cứu lịch sử kiểm tra đầu vào",
     "material.lotSplit": "Quản lý phân tách lô",
     "material.lotMerge": "Gộp LOT",
     "material.shelfLife": "Hạn sử dụng vật tư",
@@ -341,7 +312,6 @@
     "production.wipMaterialTrans": "Xuất nhập vật tư công đoạn",
     "production.repair": "Quản lý sửa chữa",
     "quality": "Quản lý chất lượng",
-    "quality.aql": "Quản lý tiêu chuẩn AQL",
     "quality.defect": "Đăng ký lỗi",
     "quality.defectCode": "Quản lý mã lỗi",
     "quality.inspect": "Kiểm tra ngoại quan",
@@ -881,10 +851,6 @@
   "master": {
     "part": {
       "title": "Danh mục linh kiện",
-      "iqc": {
-        "methodFull": "Kiểm tra"
-      },
-      "basicSampleQty": "Số mẫu cơ bản",
       "expiryExtDays": "Gia hạn HSD (ngày)",
       "image": "Ảnh",
       "imageChange": "Đổi ảnh",
@@ -915,12 +881,7 @@
       "minPackQty": "SL đóng gói tối thiểu",
       "lotUnitQty": "SL đơn vị bó",
       "color": "Màu sắc",
-      "iqcFlag": "Đối tượng IQC",
-      "inspectMethod": "Phân biệt kiểm tra",
-      "iqcAqlPolicyCode": "Chính sách AQL",
       "storageLocation": "Vị trí lưu trữ cố định",
-      "inspectFull": "Kiểm tra",
-      "inspectSkip": "Bỏ qua",
       "tactTime": "Thời gian tact (giây)",
       "expiryDate": "Hạn sử dụng (ngày)",
       "sectionBasic": "Thông tin cơ bản",
@@ -934,8 +895,6 @@
       "erpSyncFailed": "Đồng bộ thất bại: {{message}}",
       "daysSuffix": "{{count}} ngày",
       "deleteConfirmMessage": "Xóa '{{itemCode}} ({{itemName}})'?",
-      "iqcTarget": "Y (Áp dụng)",
-      "iqcNotTarget": "N (Không áp dụng)",
       "fieldHelp": {
         "itemCode": "Mã duy nhất nhận diện vật tư trong MES.",
         "itemNo": "Số part dùng trong bản vẽ, ERP và tài liệu khách hàng.",
@@ -949,10 +908,6 @@
         "spec": "Mô tả bổ sung như quy cách, kích thước vật tư.",
         "color": "Thông tin màu vật tư như màu dây.",
         "unit": "Đơn vị cơ bản để diễn giải số lượng.",
-        "iqcYn": "Có áp dụng tiêu chí kiểm tra đầu vào hay không.",
-        "inspectMethod": "Phân biệt phương thức kiểm IQC hoặc miễn kiểm.",
-        "sampleQty": "Số mẫu cơ bản dùng khi kiểm IQC. Khác với cỡ mẫu tính theo AQL.",
-        "iqcAqlPolicyCode": "Chính sách AQL (Giới hạn chất lượng chấp nhận) áp dụng cho kiểm tra đầu vào (IQC) của vật tư này.\n\n• AQL là gì: mức lỗi tối đa mà LOT vẫn được chấp nhận. Giá trị càng nhỏ tiêu chuẩn càng nghiêm.\n• Cấu thành: mỗi chính sách gồm giá trị AQL theo cấp lỗi Major (lỗi nặng)·Minor (lỗi nhẹ) và mức kiểm tra (thường là II).\n• Cách phán định: khi kiểm tra LOT đầu vào, tự tính cỡ mẫu (n)·số chấp nhận (Ac)·số từ chối (Re) theo cỡ LOT — số lỗi ≤ Ac thì đạt, ≥ Re thì không đạt.\n• Nơi đăng ký: quản lý chính sách và tiêu chí theo LOT tại [Quản lý chất lượng > Quản lý chuẩn AQL].\n• Để trống: không áp dụng phán định AQL tự động (không kiểm tra hoặc phán định thủ công).",
         "useYn": "Có thể tra cứu, chọn và sử dụng hay không.",
         "boxQty": "Số lượng chuẩn đóng trong một thùng. Chọn bội số 10 hoặc nhập trực tiếp.",
         "minPackQty": "Số lượng xử lý làm đơn vị tối thiểu khi xuất vật tư.",
@@ -1181,19 +1136,24 @@
       "searchPlaceholder": "Tìm theo mã, tên, MST, người liên hệ..."
     },
     "prodLine": {
-      "title": "Quản lý dây chuyền",
+      "title": "Quản lý dây chuyền sản xuất",
       "subtitle": "Đăng ký và quản lý thông tin dây chuyền sản xuất.",
       "lineCode": "Mã dây chuyền",
       "lineName": "Tên dây chuyền",
-      "oper": "Mã công đoạn",
-      "lineType": "Loại dây chuyền",
-      "whLoc": "Vị trí kho",
-      "erpCode": "Mã ERP",
-      "remark": "Ghi chú",
-      "use": "Sử dụng",
+      "lineDivision": "Phân loại dây chuyền",
+      "lineCodeGroup": "Nhóm dây chuyền",
+      "lineProductDivision": "Phân loại sản phẩm",
+      "lineStatus": "Trạng thái dây chuyền",
+      "capacity": "Công suất",
+      "capacityUom": "Đơn vị công suất",
+      "uphValue": "UPH",
+      "mesDisplayYn": "Hiển thị MES",
+      "mesDisplaySequence": "Thứ tự hiển thị",
+      "activeYn": "Hoạt động",
+      "comments": "Ghi chú",
       "addLine": "Thêm dây chuyền",
       "editLine": "Sửa dây chuyền",
-      "searchPlaceholder": "Tìm kiếm mã, tên dây chuyền, mã công đoạn..."
+      "searchPlaceholder": "Tìm mã dây chuyền, tên dây chuyền..."
     },
     "process": {
       "title": "Dữ liệu công đoạn",
@@ -1447,93 +1407,6 @@
       "cropReselectBtn": "Chọn ảnh khác",
       "cropProcessing": "Đang xử lý...",
       "deleteConfirm": "Bạn có chắc muốn xóa?"
-    },
-    "iqcGroup": {
-      "methodFull": "Kiểm tra",
-      "methodSkip": "Miễn kiểm"
-    },
-    "iqcLink": {
-      "group": "Nhóm kiểm tra"
-    },
-    "iqcItem": {
-      "title": "Danh mục kiểm tra",
-      "sectionBasic": "Thông tin cơ bản",
-      "subtitle": "Đăng ký và quản lý các hạng mục kiểm tra IQC dùng chung.",
-      "seq": "STT",
-      "inspectItem": "Hạng mục kiểm tra",
-      "spec": "Quy cách/Tiêu chuẩn",
-      "shelfLife": "Hạn sử dụng (ngày)",
-      "use": "Sử dụng",
-      "addItem": "Thêm hạng mục",
-      "editItem": "Sửa hạng mục",
-      "searchPlaceholder": "Tìm mã linh kiện, hạng mục kiểm tra...",
-      "partSelect": "Chọn linh kiện",
-      "retestCycle": "Chu kỳ kiểm tra lại (ngày)",
-      "visual": "Trực quan",
-      "measureMethod": "Đo lường",
-      "judgeMethod": "Phương pháp",
-      "itemCode": "Mã hạng mục",
-      "revision": "Rev",
-      "deleteItem": "Xóa hạng mục kiểm tra",
-      "deleteConfirm": "Bạn có chắc chắn muốn xóa hạng mục kiểm tra này không?",
-      "tabItems": "Hạng mục kiểm tra",
-      "materialList": "Danh sách vật tư",
-      "linkedGroup": "Nhóm kiểm tra liên kết",
-      "noItemSelected": "Vui lòng chọn phẩm mục bên trái",
-      "noGroupLinked": "Không có nhóm kiểm tra liên kết",
-      "linkGroup": "Liên kết nhóm",
-      "changeGroup": "Thay đổi nhóm",
-      "unlinkGroup": "Hủy liên kết",
-      "measureItems": "Mục kiểm tra đo lường",
-      "judgeItems": "Mục kiểm tra đánh giá",
-      "perItemIqc": "Hạng mục IQC theo phẩm mục",
-      "perItemIqcSubtitle": "Quản lý số mẫu, kiểm tra phá hủy, hạng mục kiểm tra và quy cách theo phẩm mục.",
-      "itemPool": "Danh mục kiểm tra",
-      "itemPoolSubtitle": "Đăng ký và quản lý các hạng mục kiểm tra IQC dùng chung.",
-      "linkedGroupCount": "Nhóm liên kết",
-      "unlinkConfirm": "Bạn có chắc muốn hủy liên kết nhóm kiểm tra này?",
-      "selectGroup": "Vui lòng chọn nhóm kiểm tra",
-      "judgeCriteria": "Tiêu chí đánh giá",
-      "typeMeasure": "Đo lường",
-      "typeVisual": "Đánh giá",
-      "sampleQty": "SL mẫu",
-      "destructive": "Phá hủy",
-      "nonDestructive": "Không phá hủy",
-      "inspItem": "Hạng mục kiểm tra",
-      "type": "Loại",
-      "inspectionType": "Loại kiểm tra",
-      "sampleQtyCol": "Số mẫu",
-      "defectGrade": "Cấp lỗi",
-      "inspectionLevel": "Mức kiểm tra",
-      "selectItemHint": "Vui lòng chọn mặt hàng ở bên trái.",
-      "defaultSampleQty": "Số mẫu mặc định",
-      "destInspection": "Kiểm tra phá hủy",
-      "templateManage": "Tải/Quản lý mẫu",
-      "lsl": "Cận dưới (LSL)",
-      "usl": "Cận trên (USL)",
-      "noInspItems": "Không có hạng mục kiểm tra. Nhấn [Thêm hạng mục] để thêm.",
-      "selectOption": "-- Chọn --",
-      "fixedQtyPlaceholder": "Số cố định",
-      "auto": "Tự động",
-      "lslPlaceholder": "Cận dưới",
-      "uslPlaceholder": "Cận trên",
-      "judgeCriteriaPlaceholder": "Nhập tiêu chí phán định",
-      "confirm": "Xác nhận",
-      "notSelected": "Chưa chọn",
-      "deleteRow": "Xóa dòng"
-    },
-    "iqcTemplate": {
-      "title": "Quản lý mẫu hạng mục IQC",
-      "currentItem": "Sản phẩm hiện tại",
-      "namePlaceholder": "Nhập tên mẫu",
-      "saveAs": "Lưu thành mẫu",
-      "list": "Danh sách mẫu",
-      "empty": "Không có mẫu đã lưu.",
-      "itemsUnit": " mục",
-      "preview": "Xem trước",
-      "apply": "Áp dụng cho SP hiện tại",
-      "selectHint": "Vui lòng chọn mẫu.",
-      "applyHint": "Khi áp dụng sẽ thay thế toàn bộ hạng mục sản phẩm hiện tại. Nhấn [Lưu thay đổi] để xác nhận."
     },
     "equipInspect": {
       "title": "Hạng mục kiểm tra thiết bị",
@@ -1869,16 +1742,6 @@
       "createSuccess": "Tạo ánh xạ mã vạch thành công.",
       "updateSuccess": "Cập nhật ánh xạ mã vạch thành công.",
       "deleteSuccess": "Xóa ánh xạ mã vạch thành công."
-    },
-    "iqcPartSpec": {
-      "aqlCriteria": "Tiêu chuẩn AQL",
-      "lotQtyPreview": "Xem trước số lượng LOT",
-      "aqlPolicy": "Chính sách AQL",
-      "defaultSampleQty": "Số mẫu mặc định",
-      "sampleQty": "Số lượng mẫu",
-      "inspItemCriteria": "Tiêu chuẩn hạng mục kiểm tra",
-      "destFixed": "Phá hủy/Cố định",
-      "countCases": "{{count}}"
     }
   },
   "material": {
@@ -2672,8 +2535,6 @@
     },
     "ARRIVAL_RESULT_STATUS": {
       "ARRIVED": "Hàng đã đến và đăng ký, chờ kiểm tra",
-      "IQC_PROGRESS": "Đang kiểm tra IQC hàng đã đến",
-      "IQC_DONE": "Đã kiểm tra xong, chờ nhập kho",
       "RECEIVED": "Đã nhập kho và cập nhật tồn kho",
       "CANCELED": "Việc nhập hàng đã hủy, vô hiệu"
     },
@@ -2865,12 +2726,6 @@
       "FAILED": "Gửi dữ liệu thất bại",
       "CONFIRMED": "Hệ thống đối tác đã xác nhận nhận"
     },
-    "IQC_STATUS": {
-      "PENDING": "Vật tư nhập chờ kiểm tra đầu vào (IQC)",
-      "PASS": "Đạt IQC; có thể nhập kho và sử dụng",
-      "FAIL": "Không đạt IQC; phải trả lại hoặc cách ly",
-      "HOLD": "Tạm giữ chờ xem xét; chưa dùng được"
-    },
     "ISSUE_STATUS": {
       "PENDING": "Yêu cầu xuất kho đã đăng ký, chờ xử lý",
       "IN_PROGRESS": "Đang tiến hành xuất kho",
@@ -2973,7 +2828,6 @@
     },
     "RECEIVE_STATUS": {
       "PENDING": "Đã nhập hàng, đang chờ kiểm tra IQC",
-      "IQC_IN_PROGRESS": "Đang tiến hành kiểm tra chất lượng IQC",
       "PASSED": "Đạt IQC, đủ điều kiện nhập kho",
       "FAILED": "Không đạt IQC, bị chặn nhập kho"
     },
@@ -3110,8 +2964,6 @@
     },
     "ARRIVAL_RESULT_STATUS": {
       "ARRIVED": "Đã đến",
-      "IQC_PROGRESS": "Đang IQC",
-      "IQC_DONE": "IQC xong",
       "RECEIVED": "Đã nhập kho",
       "CANCELED": "Đã hủy"
     },
@@ -3167,10 +3019,6 @@
       "RING_GAUGE": "Dưỡng vòng",
       "FORCE_GAUGE": "Lực kế",
       "OTHER": "Khác"
-    },
-    "IQC_INSPECT_TYPE": {
-      "INITIAL": "Kiểm tra ban đầu",
-      "RETEST": "Kiểm tra lại"
     },
     "PPAP_REASON": {
       "NEW_PART": "Linh kiện mới",
@@ -3235,15 +3083,6 @@
       "ONLINE": "Đào tạo trực tuyến",
       "EXTERNAL": "Đào tạo bên ngoài",
       "SAFETY": "Đào tạo an toàn"
-    },
-    "AQL_INSP_LEVEL": {
-      "S-1": "Mức kiểm tra đặc biệt S-1",
-      "S-2": "Mức kiểm tra đặc biệt S-2",
-      "S-3": "Mức kiểm tra đặc biệt S-3",
-      "S-4": "Mức kiểm tra đặc biệt S-4",
-      "I": "Mức kiểm tra chung I",
-      "II": "Mức kiểm tra chung II",
-      "III": "Mức kiểm tra chung III"
     },
     "PRODUCT_TYPE": {
       "SMT": "Bó dây",
@@ -3331,7 +3170,6 @@
     },
     "RECEIVE_STATUS": {
       "PENDING": "Chờ nhập kho",
-      "IQC_IN_PROGRESS": "Đang kiểm tra IQC",
       "PASSED": "Đạt",
       "FAILED": "Không đạt"
     },
@@ -3420,12 +3258,6 @@
       "POKA_YOKE": "Poka-Yoke",
       "FIRST_ARTICLE": "Kiểm tra mẫu đầu",
       "AUTO_INSPECT": "Kiểm tra tự động"
-    },
-    "IQC_TYPE": {
-      "IQC": "Kiểm tra nhập kho",
-      "PQC": "Kiểm tra quy trình",
-      "FQC": "Kiểm tra cuối cùng",
-      "OQC": "Kiểm tra xuất kho"
     },
     "QUALITY_JUDGMENT": {
       "PASS": "Đạt",
@@ -3531,12 +3363,6 @@
       "DEFECT": "Lỗi",
       "SCRAP": "Loại bỏ",
       "SUBCON": "Gia công"
-    },
-    "IQC_STATUS": {
-      "PENDING": "Đang chờ",
-      "PASS": "Đạt",
-      "FAIL": "Không đạt",
-      "HOLD": "Giữ lại"
     },
     "OQC_STATUS": {
       "PENDING": "Đang chờ",
@@ -4030,7 +3856,6 @@
     "SAMPLE_SIZE": "Kích thước mẫu",
     "SAMPLE_FREQ": "Tần suất lấy mẫu",
     "CONTROL_METHOD": "Phương pháp kiểm soát",
-    "IQC_TYPE": "Loại kiểm tra IQC",
     "QUALITY_JUDGMENT": "Đánh giá chất lượng",
     "APPROVAL_STATUS": "Trạng thái phê duyệt",
     "INTERFACE_STATUS": "Trạng thái giao diện",
@@ -4048,7 +3873,6 @@
     "PARTNER_TYPE": "Loại đối tác",
     "VENDOR_TYPE": "Loại nhà thầu",
     "WAREHOUSE_TYPE_DTO": "Loại kho (DTO)",
-    "IQC_STATUS": "Trạng thái IQC",
     "MAT_LOT_STATUS": "Trạng thái LOT nguyên liệu",
     "ISSUE_TYPE": "Loại xuất kho",
     "TRANSACTION_TYPE": "Loại giao dịch kho",
@@ -4213,12 +4037,6 @@
       "receiveFailed": "Nhập kho thất bại",
       "location": "Vị trí",
       "scanLocation": "Quét mã vạch vị trí",
-      "iqcPass": "Đạt",
-      "iqcFail": "Không đạt",
-      "iqcInProgress": "Đang kiểm tra",
-      "iqcNone": "Miễn kiểm",
-      "iqcFailMsg": "IQC không đạt. Không thể nhập kho",
-      "iqcInProgressMsg": "Đang kiểm tra IQC. Không thể nhập kho",
       "workerRequired": "Vui lòng quét công nhân trước",
       "changeWorker": "Đổi công nhân",
       "scanWorker": "Quét công nhân",
@@ -4565,8 +4383,6 @@
       "arrival": "Nhập hàng",
       "arrivalResult": "Kết quả nhập hàng",
       "label": "Nhãn",
-      "iqc": "IQC",
-      "iqcHistory": "Lịch sử kiểm tra",
       "concession": "Xử lý đặc cách",
       "receive": "Nhập kho",
       "request": "Yêu cầu xuất",
@@ -4585,7 +4401,6 @@
     },
     "quality": {
       "title": "Chất lượng",
-      "iqc": "IQC",
       "processInspect": "KT công đoạn",
       "oqc": "OQC",
       "defect": "Lỗi",

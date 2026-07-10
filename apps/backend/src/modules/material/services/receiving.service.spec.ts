@@ -16,7 +16,6 @@ import { PurchaseOrder } from '../../../entities/purchase-order.entity';
 import { PurchaseOrderItem } from '../../../entities/purchase-order-item.entity';
 import { Warehouse } from '../../../entities/warehouse.entity';
 import { LabelPrintLog } from '../../../entities/label-print-log.entity';
-import { IqcLog } from '../../../entities/iqc-log.entity';
 import { NumberingService } from '../../../shared/numbering.service';
 import { TransactionService } from '../../../shared/transaction.service';
 import { SysConfigService } from '../../system/services/sys-config.service';
@@ -36,7 +35,6 @@ describe('ReceivingService', () => {
   let mockPurchaseOrderItemRepo: DeepMocked<Repository<PurchaseOrderItem>>;
   let mockWarehouseRepo: DeepMocked<Repository<Warehouse>>;
   let mockLabelPrintLogRepo: DeepMocked<Repository<LabelPrintLog>>;
-  let mockIqcLogRepo: DeepMocked<Repository<IqcLog>>;
   let mockDataSource: DeepMocked<DataSource>;
   let mockQueryRunner: DeepMocked<QueryRunner>;
   let mockNumbering: DeepMocked<NumberingService>;
@@ -56,7 +54,6 @@ describe('ReceivingService', () => {
     mockPurchaseOrderItemRepo = createMock<Repository<PurchaseOrderItem>>();
     mockWarehouseRepo = createMock<Repository<Warehouse>>();
     mockLabelPrintLogRepo = createMock<Repository<LabelPrintLog>>();
-    mockIqcLogRepo = createMock<Repository<IqcLog>>();
     mockDataSource = createMock<DataSource>();
     mockQueryRunner = createMock<QueryRunner>();
     mockNumbering = createMock<NumberingService>();
@@ -80,7 +77,6 @@ describe('ReceivingService', () => {
         { provide: getRepositoryToken(PurchaseOrderItem), useValue: mockPurchaseOrderItemRepo },
         { provide: getRepositoryToken(Warehouse), useValue: mockWarehouseRepo },
         { provide: getRepositoryToken(LabelPrintLog), useValue: mockLabelPrintLogRepo },
-        { provide: getRepositoryToken(IqcLog), useValue: mockIqcLogRepo },
         { provide: DataSource, useValue: mockDataSource },
         { provide: NumberingService, useValue: mockNumbering },
         { provide: TransactionService, useValue: mockTx },
@@ -124,8 +120,6 @@ describe('ReceivingService', () => {
       {
         matUid: 'MAT-001',
         poNo: 'PO-001',
-        iqcStatus: 'FAIL',
-        specialAcceptYn: 'Y',
         company: 'C1',
         plant: 'P1',
       } as MatLot,
@@ -143,15 +137,9 @@ describe('ReceivingService', () => {
     expect(mockWarehouseRepo.find).toHaveBeenCalledWith({
       where: expect.objectContaining({ company: 'C1', plant: 'P1' }),
     });
-    expect(result.data[0]).toEqual(expect.objectContaining({
-      isConcession: true,
-      specialAcceptYn: 'Y',
-    }));
     expect(result.data[0].lot).toEqual(expect.objectContaining({
       matUid: 'MAT-001',
       poNo: 'PO-001',
-      iqcStatus: 'FAIL',
-      specialAcceptYn: 'Y',
     }));
   });
 
@@ -322,7 +310,6 @@ describe('ReceivingService', () => {
       matUid: 'MAT-001',
       itemCode: 'ITEM-001',
       initQty: 10,
-      iqcStatus: 'PASS',
       arrivalNo: 'ARR-001',
       arrivalSeq: 1,
       company: 'CO',
@@ -373,7 +360,6 @@ describe('ReceivingService', () => {
       matUid: 'MAT-001',
       itemCode: 'ITEM-001',
       initQty: 10,
-      iqcStatus: 'PASS',
       arrivalNo: 'ARR-001',
       arrivalSeq: 1,
       company: 'CO',
@@ -420,184 +406,11 @@ describe('ReceivingService', () => {
     }));
   });
 
-  it('findReceivable는 IQC 대상품의 PASS 성적서가 없어도 입고 차단 사유를 만들지 않는다', async () => {
-    mockMatLotRepo.createQueryBuilder.mockReturnValue({
-      where: jest.fn().mockReturnThis(),
-      andWhere: jest.fn().mockReturnThis(),
-      orderBy: jest.fn().mockReturnThis(),
-      getMany: jest.fn().mockResolvedValue([
-        {
-          matUid: 'MAT-001',
-          itemCode: 'ITEM-001',
-          initQty: 10,
-          iqcStatus: 'PASS',
-          arrivalNo: 'ARR-001',
-          arrivalSeq: 1,
-          company: 'CO',
-          plant: 'P01',
-        } as MatLot,
-      ]),
-    } as any);
-    mockStockTxRepo.createQueryBuilder.mockReturnValue({
-      select: jest.fn().mockReturnThis(),
-      addSelect: jest.fn().mockReturnThis(),
-      where: jest.fn().mockReturnThis(),
-      andWhere: jest.fn().mockReturnThis(),
-      groupBy: jest.fn().mockReturnThis(),
-      getRawMany: jest.fn().mockResolvedValue([]),
-    } as any);
-    mockMatArrivalRepo.find.mockResolvedValue([
-      { arrivalNo: 'ARR-001', seq: 1, itemCode: 'ITEM-001', warehouseCode: 'ARR-WH' } as MatArrival,
-    ]);
-    mockWarehouseRepo.findOne.mockResolvedValue({ warehouseCode: 'DEF', warehouseName: 'Default' } as Warehouse);
-    mockWarehouseRepo.find.mockResolvedValue([
-      { warehouseCode: 'ARR-WH', warehouseName: 'Arrival Warehouse' } as Warehouse,
-    ]);
-    mockItemMasterRepo.find.mockResolvedValue([
-      { itemCode: 'ITEM-001', itemName: 'Item', unit: 'EA', iqcYn: 'Y' } as ItemMaster,
-    ]);
-    mockIqcLogRepo.find.mockResolvedValue([
-      {
-        arrivalNo: 'ARR-001',
-        itemCode: 'ITEM-001',
-        result: 'PASS',
-        status: 'DONE',
-        certFilePath: null,
-        company: 'CO',
-        plant: 'P01',
-      } as IqcLog,
-    ]);
-    mockLabelPrintLogRepo.createQueryBuilder.mockReturnValue({
-      select: jest.fn().mockReturnThis(),
-      where: jest.fn().mockReturnThis(),
-      andWhere: jest.fn().mockReturnThis(),
-      getMany: jest.fn().mockResolvedValue([]),
-    } as any);
-
-    const result = await target.findReceivable('CO', 'P01');
-
-    expect(result[0].certRequired).toBe(false);
-    expect(result[0].receivingBlockedReason).toBeNull();
-  });
-
-  it('createBulkReceive는 IQC 대상품의 PASS 성적서가 없어도 입고를 허용한다', async () => {
-    const lot = {
-      matUid: 'MAT-001',
-      itemCode: 'ITEM-001',
-      initQty: 10,
-      iqcStatus: 'PASS',
-      arrivalNo: 'ARR-001',
-      arrivalSeq: 1,
-      company: 'CO',
-      plant: 'P01',
-    } as MatLot;
-    mockMatLotRepo.findOne.mockResolvedValue(lot);
-    mockStockTxRepo.createQueryBuilder.mockReturnValue({
-      select: jest.fn().mockReturnThis(),
-      where: jest.fn().mockReturnThis(),
-      andWhere: jest.fn().mockReturnThis(),
-      getRawOne: jest.fn().mockResolvedValue({ sumQty: '0' }),
-    } as any);
-    mockItemMasterRepo.findOne.mockResolvedValue({ itemCode: 'ITEM-001', iqcYn: 'Y' } as ItemMaster);
-    mockIqcLogRepo.findOne.mockResolvedValue({
-      arrivalNo: 'ARR-001',
-      itemCode: 'ITEM-001',
-      result: 'PASS',
-      status: 'DONE',
-      certFilePath: null,
-      company: 'CO',
-      plant: 'P01',
-    } as IqcLog);
-    mockNumbering.nextInTx
-      .mockResolvedValueOnce('RCV-001')
-      .mockResolvedValueOnce('TX-001');
-
-    const manager = {
-      findOne: jest
-        .fn()
-        .mockResolvedValueOnce(lot)
-        .mockResolvedValueOnce({ arrivalNo: 'ARR-001', seq: 1, warehouseCode: 'ARR-WH', company: 'CO', plant: 'P01' } as MatArrival)
-        .mockResolvedValueOnce({ matUid: 'MAT-001', itemCode: 'ITEM-001', qty: 10, availableQty: 10, company: 'CO', plant: 'P01' } as MatArrivalStock)
-        .mockResolvedValueOnce(null)
-        .mockResolvedValueOnce(null),
-      create: jest.fn((entity, payload) => ({ ...payload })),
-      save: jest.fn().mockImplementation(async (entity) => entity),
-      update: jest.fn().mockResolvedValue(undefined),
-    };
-    (mockQueryRunner as any).manager = manager;
-
-    await target.createBulkReceive({
-      workerId: 'user',
-      items: [{ matUid: 'MAT-001', qty: 5, warehouseId: 'MAIN-WH' }],
-    } as any, 'CO', 'P01');
-
-    expect(mockTx.run).toHaveBeenCalledTimes(1);
-    expect(manager.save).toHaveBeenCalledWith(expect.objectContaining({ receiveNo: 'RCV-001' }));
-  });
-
-  it('createBulkReceive는 IQC 대상품의 PASS 성적서가 있으면 입고를 허용한다', async () => {
-    const lot = {
-      matUid: 'MAT-001',
-      itemCode: 'ITEM-001',
-      initQty: 10,
-      iqcStatus: 'PASS',
-      arrivalNo: 'ARR-001',
-      arrivalSeq: 1,
-      company: 'CO',
-      plant: 'P01',
-    } as MatLot;
-    mockMatLotRepo.findOne.mockResolvedValue(lot);
-    mockStockTxRepo.createQueryBuilder.mockReturnValue({
-      select: jest.fn().mockReturnThis(),
-      where: jest.fn().mockReturnThis(),
-      andWhere: jest.fn().mockReturnThis(),
-      getRawOne: jest.fn().mockResolvedValue({ sumQty: '0' }),
-    } as any);
-    mockItemMasterRepo.findOne.mockResolvedValue({ itemCode: 'ITEM-001', iqcYn: 'Y' } as ItemMaster);
-    mockIqcLogRepo.findOne.mockResolvedValue({
-      arrivalNo: 'ARR-001',
-      itemCode: 'ITEM-001',
-      result: 'PASS',
-      status: 'DONE',
-      certFilePath: 'uploads/iqc-certs/test.pdf',
-      company: 'CO',
-      plant: 'P01',
-    } as IqcLog);
-    mockNumbering.nextInTx
-      .mockResolvedValueOnce('RCV-001')
-      .mockResolvedValueOnce('TX-001');
-
-    const manager = {
-      findOne: jest
-        .fn()
-        .mockResolvedValueOnce(lot)
-        .mockResolvedValueOnce({ arrivalNo: 'ARR-001', seq: 1, warehouseCode: 'ARR-WH', company: 'CO', plant: 'P01' } as MatArrival)
-        .mockResolvedValueOnce({ matUid: 'MAT-001', itemCode: 'ITEM-001', qty: 10, availableQty: 10, company: 'CO', plant: 'P01' } as MatArrivalStock)
-        .mockResolvedValueOnce(null)
-        .mockResolvedValueOnce(null),
-      create: jest.fn((entity, payload) => ({ ...payload })),
-      save: jest.fn().mockImplementation(async (entity) => entity),
-      update: jest.fn().mockResolvedValue(undefined),
-    };
-    (mockQueryRunner as any).manager = manager;
-
-    await target.createBulkReceive({
-      workerId: 'user',
-      items: [{ matUid: 'MAT-001', qty: 5, warehouseId: 'MAIN-WH' }],
-    } as any, 'CO', 'P01');
-
-    expect(mockTx.run).toHaveBeenCalledTimes(1);
-    expect(manager.findOne).toHaveBeenCalledWith(MatArrivalStock, {
-      where: { matUid: 'MAT-001', itemCode: 'ITEM-001', company: 'CO', plant: 'P01' },
-    });
-  });
-
   it('createBulkReceive는 요청 테넌트와 LOT 테넌트가 다르면 차단한다', async () => {
     mockMatLotRepo.findOne.mockResolvedValue({
       matUid: 'MAT-001',
       itemCode: 'ITEM-001',
       initQty: 10,
-      iqcStatus: 'PASS',
       company: 'OTHER',
       plant: 'P01',
     } as MatLot);
@@ -615,7 +428,6 @@ describe('ReceivingService', () => {
       matUid: 'MAT-001',
       itemCode: 'ITEM-001',
       initQty: 10,
-      iqcStatus: 'PASS',
       poNo: 'PO-001',
       arrivalNo: 'ARR-001',
       arrivalSeq: 1,

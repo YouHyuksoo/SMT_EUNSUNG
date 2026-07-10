@@ -13,7 +13,6 @@ import { MatIssue } from '../../../../entities/mat-issue.entity';
 import { MatLot } from '../../../../entities/mat-lot.entity';
 import { PurchaseOrder } from '../../../../entities/purchase-order.entity';
 import { MatArrival } from '../../../../entities/mat-arrival.entity';
-import { IqcLog } from '../../../../entities/iqc-log.entity';
 import { MatReceiving } from '../../../../entities/mat-receiving.entity';
 import { ItemMaster } from '../../../../entities/item-master.entity';
 import { BoxMaster } from '../../../../entities/box-master.entity';
@@ -66,7 +65,6 @@ export class ProductTraceabilityService {
     @InjectRepository(MatLot) private readonly matLotRepo: Repository<MatLot>,
     @InjectRepository(PurchaseOrder) private readonly poRepo: Repository<PurchaseOrder>,
     @InjectRepository(MatArrival) private readonly arrivalRepo: Repository<MatArrival>,
-    @InjectRepository(IqcLog) private readonly iqcRepo: Repository<IqcLog>,
     @InjectRepository(MatReceiving) private readonly receivingRepo: Repository<MatReceiving>,
     @InjectRepository(ItemMaster) private readonly itemMasterRepo: Repository<ItemMaster>,
     @InjectRepository(BoxMaster) private readonly boxMasterRepo: Repository<BoxMaster>,
@@ -91,7 +89,7 @@ export class ProductTraceabilityService {
   }
 
   /**
-   * 자재 LOT 집합을 PO→입하→IQC→입고까지 역추적해 MaterialTrace[]로 조립한다.
+   * 자재 LOT 집합을 PO→입하→입고까지 역추적해 MaterialTrace[]로 조립한다.
    * @param matUidToCtx matUid → { usedQty, orderNo(투입 작업지시) }
    */
   private async resolveMaterialTraces(
@@ -133,21 +131,6 @@ export class ProductTraceabilityService {
     for (const a of arrivals) arrivalMap.set(`${a.arrivalNo}#${a.seq}`, a);
     const arrivalFirst = new Map<string, MatArrival>();
     for (const a of arrivals) if (!arrivalFirst.has(a.arrivalNo)) arrivalFirst.set(a.arrivalNo, a);
-
-    // IQC: matUid 우선, 없으면 arrivalNo
-    const iqcByMat = new Map<string, IqcLog>();
-    const iqcByArrival = new Map<string, IqcLog>();
-    const iqcs = await this.iqcRepo.find({
-      where: [
-        { matUid: In(matUids), company, plant },
-        ...(arrivalNos.length ? [{ arrivalNo: In(arrivalNos), company, plant }] : []),
-      ],
-      order: { inspectDate: 'DESC' },
-    });
-    for (const q of iqcs) {
-      if (q.matUid && !iqcByMat.has(q.matUid)) iqcByMat.set(q.matUid, q);
-      if (q.arrivalNo && !iqcByArrival.has(q.arrivalNo)) iqcByArrival.set(q.arrivalNo, q);
-    }
 
     const receivings = await this.receivingRepo.find({ where: { matUid: In(matUids), company, plant }, order: { receiveDate: 'ASC' } });
     const recvMap = new Map<string, MatReceiving>();
@@ -192,7 +175,6 @@ export class ProductTraceabilityService {
       const arrival = lot?.arrivalNo
         ? (lot.arrivalSeq != null ? arrivalMap.get(`${lot.arrivalNo}#${lot.arrivalSeq}`) : undefined) ?? arrivalFirst.get(lot.arrivalNo)
         : undefined;
-      const iqc = iqcByMat.get(matUid) ?? (lot?.arrivalNo ? iqcByArrival.get(lot.arrivalNo) : undefined);
       const recv = recvMap.get(matUid);
 
       result.push({
@@ -205,7 +187,6 @@ export class ProductTraceabilityService {
         vendorName: lot?.vendor ? (partnerNameMap.get(lot.vendor) ?? lot.vendor) : null,
         po: po ? { poNo: po.poNo, orderDate: this.fmtDate(po.orderDate), partnerName: po.partnerName } : null,
         arrival: arrival ? { arrivalNo: arrival.arrivalNo, arrivalDate: this.fmtDate(arrival.arrivalDate), qty: arrival.qty } : null,
-        iqc: iqc ? { result: iqc.result, inspectType: iqc.inspectType, inspectorName: iqc.inspectorName, inspectDate: this.fmtDate(iqc.inspectDate), certFilePath: iqc.certFilePath } : null,
         receiving: recv ? { receiveNo: recv.receiveNo, receiveDate: this.fmtDate(recv.receiveDate) } : null,
         issue: { orderNo: ctx.orderNo, issueQty: ctx.issueQty, issueDate: this.fmtDate(ctx.issueDate) },
         stockHistory: stockByMat.get(matUid) ?? [],

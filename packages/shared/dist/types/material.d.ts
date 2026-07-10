@@ -7,7 +7,7 @@
  * 2. **재고(Stock)**: 현재 창고에 있는 수량
  * 3. **출고(Issue)**: 생산 라인으로 자재 투입
  */
-import { InventoryMoveType, IqcStatus, WarehouseType } from './enums';
+import { InventoryMoveType, WarehouseType } from './enums';
 /** 자재 LOT */
 export interface MatLot {
     id: string;
@@ -27,9 +27,6 @@ export interface MatLot {
     locationCode?: string;
     expiryDate?: string;
     manufacturingDate?: string;
-    iqcStatus: IqcStatus;
-    iqcDate?: string;
-    iqcBy?: string;
     isBlocked: boolean;
     blockReason?: string;
     isBonded: boolean;
@@ -107,8 +104,7 @@ export interface MatReceipt {
     locationId?: string;
     receivedBy: string;
     receivedByName: string;
-    iqcRequired: boolean;
-    status: 'RECEIVED' | 'IQC_WAITING' | 'IQC_PASSED' | 'IQC_FAILED' | 'STOCKED';
+    status: 'RECEIVED' | 'STOCKED';
     description?: string;
     createdAt: string;
     updatedAt: string;

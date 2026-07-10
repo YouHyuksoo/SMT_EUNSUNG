@@ -8,15 +8,12 @@
  * - 입고 확정은 공통 계약 POST /material/receiving { items: [{ matUid, qty, warehouseId }] } 사용.
  *
  * 1. handleScan(matUid): GET /material/receiving/receivable/by-barcode/:matUid 로 입고가능 LOT 조회
- *    (IQC 합격 또는 특채 승인 + 미입고 잔량 보유 LOT만 반환, 그 외는 에러)
+ *    (미입고 잔량 보유 LOT만 반환, 그 외는 에러)
  * 2. handleConfirm(qty, warehouseCode): 공통 입고 API로 확정
  * 3. handleReset(): 스캔 데이터 초기화
  */
 import { useState, useCallback } from "react";
 import { api } from "@/services/api";
-
-/** IQC 검사 상태 */
-export type IqcStatus = "PASS" | "FAIL" | "IN_PROGRESS" | "NONE";
 
 /** 서버에서 받아오는 입고가능 LOT 데이터 (findReceivable 가공 결과) */
 export interface MatReceivableLot {
@@ -24,9 +21,7 @@ export interface MatReceivableLot {
   itemCode: string;
   poNo?: string | null;
   vendor?: string | null;
-  iqcStatus: string;
   remainingQty: number;
-  isConcession?: boolean;
   part?: { itemCode: string; itemName: string; unit: string } | null;
 }
 

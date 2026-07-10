@@ -1,9 +1,9 @@
 /**
  * @file src/modules/material/dto/receiving.dto.ts
- * @description 입고관리 DTO - IQC 합격건 일괄/분할 입고 처리, 자동입고(라벨 발행 시)
+ * @description 입고관리 DTO - 입하건 일괄/분할 입고 처리, 자동입고(라벨 발행 시)
  *
  * 초보자 가이드:
- * 1. **입고 대상**: 입하(Arrival)를 통해 생성된 자재 중 IQC 합격(PASS)된 건
+ * 1. **입고 대상**: 입하(Arrival)를 통해 생성된 자재
  * 2. **일괄 입고**: 여러 자재를 한번에 입고 확정
  * 3. **분할 입고**: 자재 수량의 일부만 입고 (나머지는 추후 입고)
  */

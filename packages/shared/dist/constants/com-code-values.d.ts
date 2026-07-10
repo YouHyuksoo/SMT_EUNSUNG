@@ -19,7 +19,7 @@ export declare const PALLET_STATUS_VALUES: readonly ["OPEN", "CLOSED", "LOADED",
 export type PalletStatusValue = typeof PALLET_STATUS_VALUES[number];
 export declare const SHIPMENT_STATUS_VALUES: readonly ["PREPARING", "LOADED", "SHIPPED", "DELIVERED", "CANCELED"];
 export type ShipmentStatusValue = typeof SHIPMENT_STATUS_VALUES[number];
-export declare const RECEIVE_STATUS_VALUES: readonly ["PENDING", "IQC_IN_PROGRESS", "PASSED", "FAILED"];
+export declare const RECEIVE_STATUS_VALUES: readonly ["PENDING", "PASSED", "FAILED"];
 export type ReceiveStatusValue = typeof RECEIVE_STATUS_VALUES[number];
 export declare const ISSUE_STATUS_VALUES: readonly ["PENDING", "IN_PROGRESS", "COMPLETED"];
 export type IssueStatusValue = typeof ISSUE_STATUS_VALUES[number];
@@ -37,10 +37,6 @@ export declare const INSPECT_TYPE_VALUES: readonly ["CONTINUITY", "INSULATION", 
 export type InspectTypeValue = typeof INSPECT_TYPE_VALUES[number];
 export declare const INSPECT_METHOD_VALUES: readonly ["VISUAL", "MEASUREMENT", "FUNCTIONAL", "ELECTRICAL", "DESTRUCTIVE"];
 export type InspectMethodValue = typeof INSPECT_METHOD_VALUES[number];
-export declare const IQC_INSPECT_METHOD_VALUES: readonly ["FULL", "SKIP"];
-export type IqcInspectMethodValue = typeof IQC_INSPECT_METHOD_VALUES[number];
-export declare const IQC_INSPECT_TYPE_VALUES: readonly ["INITIAL", "RETEST"];
-export type IqcInspectTypeValue = typeof IQC_INSPECT_TYPE_VALUES[number];
 export declare const SCRAP_REASON_VALUES: readonly ["DAMAGE", "EXPIRY", "QUALITY", "SURPLUS", "OBSOLETE", "ETC"];
 export type ScrapReasonValue = typeof SCRAP_REASON_VALUES[number];
 export declare const BOM_SIDE_VALUES: readonly ["N", "L", "R"];
@@ -85,8 +81,6 @@ export declare const USE_YN_VALUES: readonly ["Y", "N"];
 export type UseYnValue = typeof USE_YN_VALUES[number];
 export declare const PLANT_TYPE_VALUES: readonly ["PLANT", "SHOP", "LINE", "CELL"];
 export type PlantTypeValue = typeof PLANT_TYPE_VALUES[number];
-export declare const IQC_STATUS_VALUES: readonly ["PENDING", "PASS", "FAIL", "HOLD"];
-export type IqcStatusValue = typeof IQC_STATUS_VALUES[number];
 export declare const MAT_LOT_STATUS_VALUES: readonly ["NORMAL", "HOLD", "DEPLETED"];
 export type MatLotStatusValue = typeof MAT_LOT_STATUS_VALUES[number];
 export declare const PROD_RESULT_STATUS_VALUES: readonly ["RUNNING", "DONE", "CANCELED"];
@@ -153,4 +147,23 @@ export declare const TRANSACTION_TYPE_VALUES: readonly ["MAT_IN", "MAT_IN_CANCEL
 export type TransactionTypeValue = typeof TRANSACTION_TYPE_VALUES[number];
 export declare const REF_TYPE_VALUES: readonly ["JOB_ORDER", "SUBCON_ORDER", "SHIPMENT", "CUSTOMS", "ADJUST", "PROD_RESULT"];
 export type RefTypeValue = typeof REF_TYPE_VALUES[number];
+/** 라인구분 (IP_PRODUCT_LINE.LINE_DIVISION) */
+export declare const LINE_DIVISION_VALUES: readonly ["C", "D", "E", "ETC", "I", "KIPAN", "L", "M", "REBALL", "REPAIR", "S", "SMT", "T", "W"];
+export type LineDivisionValue = typeof LINE_DIVISION_VALUES[number];
+export declare const LINE_DIVISION_LABELS: Record<LineDivisionValue, string>;
+/** 라인제품구분 (IP_PRODUCT_LINE.LINE_PRODUCT_DIVISION) */
+export declare const LINE_PRODUCT_DIVISION_VALUES: readonly ["FIXED", "ONESELF", "SALE", "SUBLET"];
+export type LineProductDivisionValue = typeof LINE_PRODUCT_DIVISION_VALUES[number];
+export declare const LINE_PRODUCT_DIVISION_LABELS: Record<LineProductDivisionValue, string>;
+/** 라인상태 (IP_PRODUCT_LINE.LINE_STATUS) */
+export declare const LINE_STATUS_VALUES: readonly ["C", "D", "E", "M", "N", "Q", "R", "S", "T", "Z"];
+export type LineStatusValue = typeof LINE_STATUS_VALUES[number];
+export declare const LINE_STATUS_LABELS: Record<LineStatusValue, string>;
+/** 용량단위 (IP_PRODUCT_LINE.CAPACITY_UOM) */
+export declare const LINE_CAPACITY_UOM_VALUES: readonly ["KG", "ST"];
+export type LineCapacityUomValue = typeof LINE_CAPACITY_UOM_VALUES[number];
+/** 활성유무 (IP_PRODUCT_LINE.ACTIVE_YN) — 사용여부가 아니라 라인 가동 활성 상태다. */
+export declare const LINE_ACTIVE_YN_VALUES: readonly ["Y", "N"];
+export type LineActiveYnValue = typeof LINE_ACTIVE_YN_VALUES[number];
+export declare const LINE_ACTIVE_YN_LABELS: Record<LineActiveYnValue, string>;
 //# sourceMappingURL=com-code-values.d.ts.map

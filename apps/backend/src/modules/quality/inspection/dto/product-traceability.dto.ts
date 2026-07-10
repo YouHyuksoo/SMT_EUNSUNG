@@ -76,7 +76,6 @@ export interface MaterialTrace {
   vendorName: string | null;
   po: { poNo: string; orderDate: string | null; partnerName: string | null } | null;
   arrival: { arrivalNo: string; arrivalDate: string | null; qty: number } | null;
-  iqc: { result: string; inspectType: string; inspectorName: string | null; inspectDate: string | null; certFilePath: string | null } | null;
   receiving: { receiveNo: string; receiveDate: string | null } | null;
   issue: { orderNo: string | null; issueQty: number; issueDate: string | null } | null;
   stockHistory: StockMove[];

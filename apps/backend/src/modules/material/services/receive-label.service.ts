@@ -1,9 +1,9 @@
 /**
  * @file receive-label.service.ts
- * @description 자재 라벨 발행 서비스 — IQC PASS 입하건 → matUid 채번 → MatLot 생성 → 라벨 인쇄
+ * @description 자재 라벨 발행 서비스 — 입하건 → matUid 채번 → MatLot 생성 → 라벨 인쇄
  *
  * 초보자 가이드:
- * 1. findLabelableArrivals(): IQC PASS 상태인 입하건 목록 조회
+ * 1. findLabelableArrivals(): 라벨 발행 대상 입하건 목록 조회
  * 2. createMatLabels(): 입하건 선택 → qty만큼 matUid 채번 → MatLot N건 생성 → 인쇄 로그 저장
  * 3. matUid 채번은 Oracle DB Function(F_GET_MAT_UID) 호출
  */
@@ -54,13 +54,12 @@ export class ReceiveLabelService {
     }
   }
 
-  /** IQC PASS + 라벨 미발행 입하건 조회 */
+  /** 라벨 미발행 입하건 조회 */
   async findLabelableArrivals(company?: string, plant?: string) {
     const tenantWhere = this.tenantWhere(company, plant);
     const queryBuilder = this.arrivalRepo
       .createQueryBuilder('a')
-      .where('a.iqcStatus = :status', { status: 'PASS' })
-      .andWhere('a.status != :cancelled', { cancelled: 'CANCELLED' });
+      .where('a.status != :cancelled', { cancelled: 'CANCELLED' });
 
     if (company) queryBuilder.andWhere('a.company = :company', { company });
     if (plant) queryBuilder.andWhere('a.plant = :plant', { plant });
@@ -120,7 +119,6 @@ export class ReceiveLabelService {
         vendor: a.vendorName,
         supUid: a.supUid,
         invoiceNo: a.invoiceNo,
-        iqcStatus: a.iqcStatus,
         arrivalDate: a.arrivalDate,
         labelPrinted: labeledArrivalKeys.has(`${a.arrivalNo}-${a.seq}`),
       };
@@ -133,10 +131,6 @@ export class ReceiveLabelService {
     const arrival = await this.arrivalRepo.findOne({ where: { arrivalNo: dto.arrivalId, seq: dto.arrivalSeq ?? 1, ...tenantWhere } });
     if (!arrival) throw new NotFoundException('입하건을 찾을 수 없습니다.');
     this.assertSameTenant('자재라벨 입하건', arrival, company, plant);
-    if (arrival.iqcStatus !== 'PASS') {
-      throw new NotFoundException('IQC 합격 상태가 아닙니다.');
-    }
-
     const part = await this.partRepo.findOne({ where: { itemCode: arrival.itemCode, ...tenantWhere } });
 
     return this.tx.run(async (queryRunner) => {
@@ -160,7 +154,6 @@ export class ReceiveLabelService {
           arrivalNo: arrival.arrivalNo,
           arrivalSeq: arrival.seq,
           origin: matUid,
-          iqcStatus: 'PASS',
           status: 'NORMAL',
         });
         await queryRunner.manager.save(lot);

@@ -38,7 +38,6 @@ import { SpcModule } from './spc/spc.module';
 import { PpapModule } from './ppap/ppap.module';
 import { FaiModule } from './fai/fai.module';
 import { ContinuityInspectModule } from './continuity-inspect/continuity-inspect.module';
-import { AqlModule } from './aql/aql.module';
 import { DefectCodesModule } from './defect-codes/defect-codes.module';
 
 @Module({
@@ -54,7 +53,6 @@ import { DefectCodesModule } from './defect-codes/defect-codes.module';
     PpapModule,
     FaiModule,
     ContinuityInspectModule,
-    AqlModule,
     DefectCodesModule,
   ],
   controllers: [],
@@ -71,7 +69,6 @@ import { DefectCodesModule } from './defect-codes/defect-codes.module';
     PpapModule,
     FaiModule,
     ContinuityInspectModule,
-    AqlModule,
     DefectCodesModule,
   ],
 })

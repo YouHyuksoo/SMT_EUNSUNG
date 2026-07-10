@@ -127,18 +127,6 @@ export class CreatePartDto {
   @Min(0)
   minPackQty?: number;
 
-  @ApiPropertyOptional({ description: 'IQC 대상여부', default: 'Y', enum: USE_YN_VALUES })
-  @IsOptional()
-  @IsString()
-  @IsIn([...USE_YN_VALUES])
-  iqcYn?: string;
-
-  @ApiPropertyOptional({ description: 'IQC 검사방법 (FULL/SKIP/NONE)', enum: ['FULL', 'SKIP', 'NONE'] })
-  @IsOptional()
-  @IsString()
-  @IsIn(['FULL', 'SKIP', 'NONE'])
-  inspectMethod?: string;
-
   @ApiPropertyOptional({ description: '택타임 (초)', default: 0 })
   @IsOptional()
   @Type(() => Number)
@@ -173,19 +161,6 @@ export class CreatePartDto {
   @IsString()
   @IsIn([...USE_YN_VALUES])
   isSplittable?: string;
-
-  @ApiPropertyOptional({ description: '샘플검사 수량', example: 0.5 })
-  @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  @Min(0)
-  sampleQty?: number;
-
-  @ApiPropertyOptional({ description: 'IQC AQL 정책 코드', example: 'AQLP-II-1.0-2.5' })
-  @IsOptional()
-  @IsString()
-  @MaxLength(50)
-  iqcAqlPolicyCode?: string;
 
   @ApiPropertyOptional({ description: '팔레트 구성 단위(팔레트당 박스 수)', example: 40 })
   @IsOptional()
@@ -252,21 +227,4 @@ export class PartQueryDto extends PaginationQueryDto {
   @IsIn([...USE_YN_VALUES])
   useYn?: string;
 
-  @ApiPropertyOptional({ description: 'IQC 대상여부 필터', enum: USE_YN_VALUES })
-  @IsOptional()
-  @IsString()
-  @IsIn([...USE_YN_VALUES])
-  iqcYn?: string;
-
-  @ApiPropertyOptional({ description: 'IQC 검사방법 필터', enum: ['FULL', 'SKIP', 'NONE'] })
-  @IsOptional()
-  @IsString()
-  @IsIn(['FULL', 'SKIP', 'NONE'])
-  inspectMethod?: string;
-
-  @ApiPropertyOptional({ description: 'IQC AQL 정책 코드 필터. __NONE__이면 정책 미설정 품목 조회' })
-  @IsOptional()
-  @IsString()
-  @MaxLength(50)
-  iqcAqlPolicyCode?: string;
 }

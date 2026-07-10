@@ -6,7 +6,7 @@
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { IsString, IsOptional, IsInt, Min, Max, MaxLength, IsDateString, IsIn } from 'class-validator';
 import { Type } from 'class-transformer';
-import { IQC_STATUS_VALUES, MAT_LOT_STATUS_VALUES } from '@smt/shared';
+import { MAT_LOT_STATUS_VALUES } from '@smt/shared';
 import { PaginationQueryDto } from '../../../common/dto/base-query.dto';
 
 export class CreateMatLotDto {
@@ -56,12 +56,6 @@ export class CreateMatLotDto {
   @MaxLength(50)
   poNo?: string;
 
-  @ApiPropertyOptional({ description: 'IQC 상태', enum: IQC_STATUS_VALUES })
-  @IsOptional()
-  @IsString()
-  @IsIn([...IQC_STATUS_VALUES])
-  iqcStatus?: string;
-
   @ApiPropertyOptional({ description: 'LOT 상태', enum: MAT_LOT_STATUS_VALUES })
   @IsOptional()
   @IsString()
@@ -88,12 +82,6 @@ export class MatLotQueryDto extends PaginationQueryDto {
   @IsOptional()
   @IsString()
   vendor?: string;
-
-  @ApiPropertyOptional({ enum: IQC_STATUS_VALUES })
-  @IsOptional()
-  @IsString()
-  @IsIn([...IQC_STATUS_VALUES])
-  iqcStatus?: string;
 
   @ApiPropertyOptional({ enum: MAT_LOT_STATUS_VALUES })
   @IsOptional()

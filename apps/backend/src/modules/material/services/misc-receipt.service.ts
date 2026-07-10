@@ -206,8 +206,6 @@ export class MiscReceiptService {
           poNo: null,
           arrivalNo: null,
           arrivalSeq: null,
-          iqcStatus: 'PASS',
-          specialAcceptYn: 'N',
           status: 'NORMAL',
           company: resolvedCompany,
           plant: resolvedPlant,
