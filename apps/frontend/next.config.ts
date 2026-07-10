@@ -1,0 +1,82 @@
+/**
+ * @file next.config.ts
+ * @description Next.js 설정 - API 프록시, PWA, 패키지 트랜스파일
+ *
+ * 초보자 가이드:
+ * 1. **withPWA**: PDA 페이지를 PWA(Progressive Web App)로 변환
+ * 2. **rewrites**: /api 요청을 NestJS 백엔드로 프록시
+ * 3. **transpilePackages**: 모노레포 내 패키지 트랜스파일
+ * 4. **compiler.removeConsole**: production 빌드 시 console.log 제거
+ */
+import type { NextConfig } from "next";
+import withPWAInit from "@ducanh2912/next-pwa";
+
+const withPWA = withPWAInit({
+  dest: "public",
+  scope: "/pda/",
+  disable: process.env.NODE_ENV === "development",
+  register: true,
+  reloadOnOnline: true,
+  workboxOptions: {
+    runtimeCaching: [
+      {
+        urlPattern: /^https?:\/\/.*\/api\/.*/i,
+        handler: "NetworkOnly",
+        options: {
+          cacheName: "api-cache",
+        },
+      },
+      {
+        urlPattern: /^https?:\/\/.*\/sounds\/.*/i,
+        handler: "CacheFirst",
+        options: {
+          cacheName: "sound-cache",
+          expiration: {
+            maxEntries: 10,
+            maxAgeSeconds: 60 * 60 * 24 * 30,
+          },
+        },
+      },
+    ],
+  },
+});
+
+const nextConfig: NextConfig = {
+  reactStrictMode: false,
+  transpilePackages: ["@smt/shared"],
+
+  // oracledb는 네이티브 애드온이므로 번들링하지 않고 런타임에 node_modules에서 로드한다.
+  // Turbopack이 번들에 포함하면 db.ts의 thick 클라이언트 초기화가 무력화되어
+  // thin 모드로 폴백 → 11g/12c(0x939 verifier) 접속 시 NJS-116이 발생한다.
+  serverExternalPackages: ["oracledb"],
+
+  compiler: {
+    removeConsole: process.env.NODE_ENV === "production",
+  },
+
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+
+  // rewrite 프록시 기본 타임아웃은 30초. AI 채팅의 text-to-SQL 파이프라인은
+  // LLM을 여러 번 직렬 호출해 30초를 넘길 수 있으므로 120초로 늘린다.
+  experimental: {
+    proxyTimeout: 120_000,
+  },
+
+  async rewrites() {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3003";
+    return [
+      {
+        source: "/api/:path*",
+        destination: `${apiUrl}/api/v1/:path*`,
+      },
+      {
+        source: "/uploads/:path*",
+        destination: `${apiUrl}/uploads/:path*`,
+      },
+    ];
+  },
+};
+
+export default process.env.NODE_ENV === "development" ? nextConfig : withPWA(nextConfig);

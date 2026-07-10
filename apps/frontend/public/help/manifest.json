@@ -1,0 +1,87 @@
+{
+  "version": 1,
+  "categories": [
+    {
+      "key": "master",
+      "title": "기준정보",
+      "items": [
+        {
+          "menuCode": "MST_PART",
+          "title": "품목마스터",
+          "path": "/master/part"
+        },
+        {
+          "menuCode": "MST_BOM",
+          "title": "BOM관리",
+          "path": "/master/bom"
+        },
+        {
+          "menuCode": "MST_WAREHOUSE",
+          "title": "창고/로케이션 관리",
+          "path": "/master/warehouse"
+        },
+        {
+          "menuCode": "MST_WORK_INST",
+          "title": "작업지도서 관리",
+          "path": "/master/work-instruction"
+        },
+        {
+          "menuCode": "MST_PARTNER",
+          "title": "거래처관리",
+          "path": "/master/partner"
+        },
+        {
+          "menuCode": "EQUIP_MASTER",
+          "title": "설비마스터",
+          "path": "/master/equip"
+        },
+        {
+          "menuCode": "MST_PROCESS",
+          "title": "공정마스터",
+          "path": "/master/process"
+        },
+        {
+          "menuCode": "MST_PROD_LINE",
+          "title": "생산라인관리",
+          "path": "/master/prod-line"
+        },
+        {
+          "menuCode": "MST_ROUTING",
+          "title": "라우팅관리",
+          "path": "/master/routing"
+        },
+        {
+          "menuCode": "MST_WORK_CALENDAR",
+          "title": "생산월력관리",
+          "path": "/master/work-calendar"
+        },
+        {
+          "menuCode": "MST_WORKER",
+          "title": "작업자관리",
+          "path": "/master/worker"
+        },
+        {
+          "menuCode": "MST_LABEL",
+          "title": "라벨관리",
+          "path": "/master/label"
+        },
+        {
+          "menuCode": "MST_PROCESS_CAPA",
+          "title": "공정 CAPA 관리",
+          "path": "/master/process-capa"
+        }
+      ]
+    },
+    {
+      "key": "system",
+      "title": "시스템관리",
+      "items": [
+        {
+          "menuCode": "SYS_CONFIG",
+          "title": "환경설정",
+          "path": "/system/config"
+        }
+      ]
+    }
+  ]
+}

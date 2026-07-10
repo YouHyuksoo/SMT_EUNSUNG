@@ -1,0 +1,326 @@
+/**
+ * @file src/modules/master/services/com-code.service.ts
+ * @description 공통코드 비즈니스 로직 서비스 - TypeORM Repository 패턴
+ *
+ * 초보자 가이드:
+ * 1. **CRUD 메서드**: 생성, 조회, 수정, 삭제 로직 구현
+ * 2. **TypeORM 사용**: Repository 패턴을 통해 DB 접근
+ * 3. **에러 처리**: NotFoundException 등 적절한 예외 발생
+ *
+ * 실제 DB 스키마 (ISYS_BASECODE):
+ * - CODE_TYPE이 groupCode, CODE_NAME이 detailCode에 대응
+ * - CODE_TYPE + CODE_NAME + ORGANIZATION_ID가 키
+ */
+
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+  Logger,
+} from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { ComCode } from '../../../entities/com-code.entity';
+import {
+  CreateComCodeDto,
+  UpdateComCodeDto,
+  ComCodeQueryDto,
+} from '../dto/com-code.dto';
+
+type ComCodeView = ComCode & {
+  codeName: string;
+  codeDesc: string | null;
+  parentCode: string | null;
+  sortOrder: number;
+  useYn: string;
+  attr2: string | null;
+  attr3: string | null;
+  defectGrade: 'CRITICAL' | 'MAJOR' | 'MINOR' | null;
+};
+
+@Injectable()
+export class ComCodeService {
+  private readonly logger = new Logger(ComCodeService.name);
+
+  constructor(
+    @InjectRepository(ComCode)
+    private readonly comCodeRepository: Repository<ComCode>,
+  ) {}
+
+  private tenantWhere(organizationId?: number) {
+    return {
+      ...(organizationId != null ? { organizationId } : {}),
+    };
+  }
+
+  private parseId(id: string) {
+    const [groupCode, detailCode] = id.split('::');
+    return { groupCode, detailCode };
+  }
+
+  private toView(code: ComCode): ComCodeView {
+    return {
+      ...code,
+      codeName: code.codeName || code.codeNameLocal || code.codeNameEng || code.detailCode,
+      codeDesc: code.codeDesc || code.codeTypeDescKor,
+      parentCode: null,
+      sortOrder: 0,
+      useYn: 'Y',
+      attr1: code.attr1,
+      attr2: code.codeNameLocal,
+      attr3: code.codeNameEng,
+      defectGrade: null,
+    };
+  }
+
+  /**
+   * 전체 활성 코드를 groupCode별 그룹핑하여 반환
+   * 프론트엔드에서 한 번의 호출로 모든 공통코드를 로드할 때 사용
+   */
+  async findAllActive(organizationId?: number): Promise<Record<string, Array<{
+    detailCode: string;
+    codeName: string;
+    codeDesc: string | null;
+    sortOrder: number;
+    attr1: string | null;
+    attr2: string | null;
+    attr3: string | null;
+    defectGrade: string | null;
+  }>>> {
+    const codes = await this.comCodeRepository.find({
+      where: this.tenantWhere(organizationId),
+      order: { groupCode: 'asc', detailCode: 'asc' },
+      select: {
+        groupCode: true,
+        detailCode: true,
+        codeName: true,
+        codeDesc: true,
+        attr1: true,
+        codeNameLocal: true,
+        codeNameEng: true,
+      },
+    });
+
+    const grouped: Record<string, Array<{
+      detailCode: string;
+      codeName: string;
+      codeDesc: string | null;
+      sortOrder: number;
+      attr1: string | null;
+      attr2: string | null;
+      attr3: string | null;
+      defectGrade: string | null;
+    }>> = {};
+
+    for (const code of codes) {
+      const view = this.toView(code);
+      const { groupCode, ...rest } = view;
+      if (!grouped[groupCode]) {
+        grouped[groupCode] = [];
+      }
+      grouped[groupCode].push(rest);
+    }
+
+    return grouped;
+  }
+
+  /**
+   * 그룹 코드 목록 조회 (중복 제거)
+   */
+  async findAllGroups(organizationId?: number) {
+    const queryBuilder = this.comCodeRepository.createQueryBuilder('code')
+      .select('code.groupCode', 'groupCode')
+      .addSelect('COUNT(*)', 'count')
+      .addSelect("LISTAGG(code.detailCode, ' ') WITHIN GROUP (ORDER BY code.detailCode)", 'detailCodes')
+      .addSelect("LISTAGG(code.codeName, ' ') WITHIN GROUP (ORDER BY code.detailCode)", 'searchTextKo')
+      .addSelect("LISTAGG(code.codeNameEng, ' ') WITHIN GROUP (ORDER BY code.detailCode)", 'searchTextEn')
+      .addSelect("LISTAGG(code.codeNameLocal, ' ') WITHIN GROUP (ORDER BY code.detailCode)", 'searchTextLocal')
+      .groupBy('code.groupCode')
+      .orderBy('code.groupCode', 'ASC');
+
+    if (organizationId != null) {
+      queryBuilder.andWhere('code.organizationId = :organizationId', { organizationId });
+    }
+
+    const groups = await queryBuilder.getRawMany();
+
+    return groups.map((g) => ({
+      groupCode: g.groupCode,
+      count: parseInt(g.count, 10),
+      detailCodes: typeof g.detailCodes === 'string'
+        ? g.detailCodes.split(' ').filter(Boolean)
+        : [],
+      searchText: {
+        ko: g.searchTextKo ?? '',
+        en: g.searchTextEn ?? '',
+        zh: g.searchTextLocal ?? '',
+        vi: g.searchTextLocal ?? '',
+      },
+    }));
+  }
+
+  /**
+   * 공통코드 목록 조회
+   */
+  async findAll(query: ComCodeQueryDto, organizationId?: number) {
+    const { page = 1, limit = 10, groupCode, search, useYn } = query;
+    const skip = (page - 1) * limit;
+
+    const queryBuilder = this.comCodeRepository.createQueryBuilder('code');
+
+    if (organizationId != null) {
+      queryBuilder.andWhere('code.organizationId = :organizationId', { organizationId });
+    }
+
+    if (groupCode) {
+      queryBuilder.andWhere('code.groupCode = :groupCode', { groupCode });
+    }
+
+    if (useYn && useYn !== 'Y') {
+      return { data: [], total: 0, page, limit };
+    }
+
+    if (search) {
+      const upper = search.toUpperCase();
+      queryBuilder.andWhere(
+        '(code.detailCode LIKE :searchUpper OR code.codeName LIKE :searchRaw OR code.codeNameEng LIKE :searchRaw OR code.codeNameLocal LIKE :searchRaw)',
+        { searchUpper: `%${upper}%`, searchRaw: `%${search}%` },
+      );
+    }
+
+    const [data, total] = await Promise.all([
+      queryBuilder
+        .orderBy('code.groupCode', 'ASC')
+        .addOrderBy('code.detailCode', 'ASC')
+        .skip(skip)
+        .take(limit)
+        .getMany(),
+      queryBuilder.getCount(),
+    ]);
+
+    return { data: data.map((code) => this.toView(code)), total, page, limit };
+  }
+
+  /**
+   * 그룹 코드로 상세 코드 목록 조회
+   */
+  async findByGroupCode(groupCode: string, organizationId?: number) {
+    return this.comCodeRepository.find({
+      where: { groupCode, ...this.tenantWhere(organizationId) },
+      order: { detailCode: 'asc' },
+    }).then((codes) => codes.map((code) => this.toView(code)));
+  }
+
+  /**
+   * 공통코드 단건 조회 (ID)
+   */
+  async findById(id: string, organizationId?: number) {
+    // id is composite key encoded as "groupCode::detailCode"
+    const { groupCode, detailCode } = this.parseId(id);
+    const code = await this.comCodeRepository.findOne({
+      where: { groupCode, detailCode, ...this.tenantWhere(organizationId) },
+    });
+
+    if (!code) {
+      throw new NotFoundException(`공통코드를 찾을 수 없습니다: ${id}`);
+    }
+
+    return this.toView(code);
+  }
+
+  /**
+   * 공통코드 단건 조회 (그룹코드 + 상세코드)
+   */
+  async findByCode(groupCode: string, detailCode: string, organizationId?: number) {
+    const code = await this.comCodeRepository.findOne({
+      where: { groupCode, detailCode, ...this.tenantWhere(organizationId) },
+    });
+
+    if (!code) {
+      throw new NotFoundException(
+        `공통코드를 찾을 수 없습니다: ${groupCode}.${detailCode}`,
+      );
+    }
+
+    return this.toView(code);
+  }
+
+  /**
+   * 공통코드 생성
+   */
+  async create(dto: CreateComCodeDto, organizationId?: number) {
+    // 중복 체크
+    const existing = await this.comCodeRepository.findOne({
+      where: {
+        groupCode: dto.groupCode,
+        detailCode: dto.detailCode,
+        ...this.tenantWhere(organizationId),
+      },
+    });
+
+    if (existing) {
+      throw new ConflictException(
+        `이미 존재하는 코드입니다: ${dto.groupCode}.${dto.detailCode}`,
+      );
+    }
+
+    const comCode = this.comCodeRepository.create({
+      groupCode: dto.groupCode,
+      detailCode: dto.detailCode,
+      codeName: dto.codeName,
+      codeDesc: dto.codeDesc,
+      attr1: dto.attr1,
+      codeNameLocal: dto.attr2,
+      codeNameEng: dto.attr3,
+      organizationId: organizationId ?? 1,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    return this.toView(await this.comCodeRepository.save(comCode));
+  }
+
+  /**
+   * 공통코드 수정
+   */
+  async update(id: string, dto: UpdateComCodeDto, organizationId?: number) {
+    await this.findById(id, organizationId); // 존재 확인
+    const { groupCode, detailCode } = this.parseId(id);
+
+    const updateData: Partial<ComCode> = {};
+    if (dto.codeName !== undefined) updateData.codeName = dto.codeName;
+    if (dto.codeDesc !== undefined) updateData.codeDesc = dto.codeDesc;
+    if (dto.attr1 !== undefined) updateData.attr1 = dto.attr1;
+    if (dto.attr2 !== undefined) updateData.codeNameLocal = dto.attr2;
+    if (dto.attr3 !== undefined) updateData.codeNameEng = dto.attr3;
+    updateData.updatedAt = new Date();
+
+    await this.comCodeRepository.update(
+      { groupCode, detailCode, ...this.tenantWhere(organizationId) },
+      updateData,
+    );
+    return this.findById(id, organizationId);
+  }
+
+  /**
+   * 공통코드 삭제
+   */
+  async delete(id: string, organizationId?: number) {
+    await this.findById(id, organizationId); // 존재 확인
+    const { groupCode, detailCode } = this.parseId(id);
+
+    await this.comCodeRepository.delete({ groupCode, detailCode, ...this.tenantWhere(organizationId) });
+    return { id, deleted: true };
+  }
+
+  /**
+   * 공통코드 일괄 삭제 (그룹 코드 기준)
+   */
+  async deleteByGroupCode(groupCode: string, organizationId?: number) {
+    const result = await this.comCodeRepository.delete({
+      groupCode,
+      ...this.tenantWhere(organizationId),
+    });
+    return { count: result.affected || 0 };
+  }
+}

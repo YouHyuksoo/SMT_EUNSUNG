@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" role="img" aria-label="KS_L2_SHLDCABLE 육각압착 작업지도서">
+  <rect width="1280" height="720" fill="#f1f5f9"/>
+  <rect x="40" y="40" width="1200" height="640" rx="24" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+  <rect x="40" y="40" width="1200" height="120" rx="24" fill="#1e3a8a"/>
+  <rect x="40" y="136" width="1200" height="24" fill="#1e3a8a"/>
+  <text x="80" y="104" fill="#ffffff" font-family="Arial, 'Malgun Gothic', sans-serif" font-size="40" font-weight="800">육각압착 작업지도서</text>
+  <text x="80" y="146" fill="#bfdbfe" font-family="Arial, 'Malgun Gothic', sans-serif" font-size="20">KS_L2_SHLDCABLE · KS_HEXCP · Rev A</text>
+  <rect x="900" y="64" width="300" height="72" rx="14" fill="#ffffff" fill-opacity="0.12" stroke="#bfdbfe" stroke-width="1.5"/>
+  <text x="1050" y="100" fill="#ffffff" font-family="Arial, 'Malgun Gothic', sans-serif" font-size="18" text-anchor="middle">품목 KS_L2_SHLDCABLE</text>
+  <text x="1050" y="124" fill="#bfdbfe" font-family="Arial, 'Malgun Gothic', sans-serif" font-size="16" text-anchor="middle">공정 육각압착</text>
+  <text x="80" y="210" fill="#1e3a8a" font-family="Arial, 'Malgun Gothic', sans-serif" font-size="26" font-weight="700">표준 작업 순서</text>
+  <circle cx="92" cy="244" r="20" fill="#2563eb"/>
+  <text x="92" y="251" fill="#ffffff" font-family="Arial, 'Malgun Gothic', sans-serif" font-size="22" font-weight="700" text-anchor="middle">1</text>
+  <text x="130" y="251" fill="#0f172a" font-family="Arial, 'Malgun Gothic', sans-serif" font-size="22">작업지시와 품목 KS_L2_SHLDCABLE 을(를) 확인한다.</text>
+  <circle cx="92" cy="322" r="20" fill="#2563eb"/>
+  <text x="92" y="329" fill="#ffffff" font-family="Arial, 'Malgun Gothic', sans-serif" font-size="22" font-weight="700" text-anchor="middle">2</text>
+  <text x="130" y="329" fill="#0f172a" font-family="Arial, 'Malgun Gothic', sans-serif" font-size="22">육각압착(KS_HEXCP) 공정의 설비 상태와 투입 자재를 확인한다.</text>
+  <circle cx="92" cy="400" r="20" fill="#2563eb"/>
+  <text x="92" y="407" fill="#ffffff" font-family="Arial, 'Malgun Gothic', sans-serif" font-size="22" font-weight="700" text-anchor="middle">3</text>
+  <text x="130" y="407" fill="#0f172a" font-family="Arial, 'Malgun Gothic', sans-serif" font-size="22">작업표준에 따라 육각압착 을(를) 수행하고 규격·외관을 확인한다.</text>
+  <circle cx="92" cy="478" r="20" fill="#2563eb"/>
+  <text x="92" y="485" fill="#ffffff" font-family="Arial, 'Malgun Gothic', sans-serif" font-size="22" font-weight="700" text-anchor="middle">4</text>
+  <text x="130" y="485" fill="#0f172a" font-family="Arial, 'Malgun Gothic', sans-serif" font-size="22">이상 발생 시 설비를 정지하고 작업자설비점검 및 품질 담당자에게 알린다.</text>
+  <rect x="80" y="590" width="1120" height="60" rx="12" fill="#fff7ed" stroke="#fdba74" stroke-width="2"/>
+  <text x="104" y="628" fill="#9a3412" font-family="Arial, 'Malgun Gothic', sans-serif" font-size="20" font-weight="700">※ 본 작업지도서는 샘플입니다. 실제 이미지/PDF/PPTX 파일을 업로드하면 교체됩니다.</text>
+</svg>

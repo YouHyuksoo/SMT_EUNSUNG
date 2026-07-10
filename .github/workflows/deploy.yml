@@ -1,17 +1,17 @@
 ##
 # @file .github/workflows/deploy.yml
-# @description WebDisplayID(인도) 자동 배포 워크플로우 (SMIND PDA와 동일한 PM2 방식)
+# @description WebDisplayID(은성전장) 자동 배포 워크플로우 (SMIND PDA와 동일한 PM2 방식)
 #
 # Flow: main push -> Git Pull -> npm ci -> Build -> PM2 Restart -> Health Check
 #
-# Prerequisites (인도 서버 10.110.100.13):
-# - Self-hosted Runner(india-webdisplay-runner) 설치됨 (WebDisplayID repo 전용)
-# - D:\Project\WebDisplayID git cloned
-# - config\database.json 존재 (인도 SOLIND, gitignore되어 서버에만 존재)
+# Prerequisites (은성전장 서버):
+# - Self-hosted Runner(eunsung-webdisplay-runner) 설치됨 (WebDisplayID repo 전용)
+# - D:\Project\SMT_EUNSUNG git cloned
+# - config\database.json 존재 (은성전장 ESDB, gitignore되어 서버에만 존재)
 # - PM2가 독립 Windows 서비스로 운영됨 (PM2_HOME=C:\ProgramData\pm2\home)
 ##
 
-name: Deploy WebDisplayID (India)
+name: Deploy SMT MES (EUNSUNG)
 
 on:
   push:
@@ -22,12 +22,12 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: deploy-webdisplay-india
+  group: deploy-webdisplay-eunsung
   cancel-in-progress: false
 
 env:
-  DEPLOY_PATH: D:\Project\WebDisplayID
-  DEPLOY_DIR_WEBDISPLAY: D:\Project\WebDisplayID
+  DEPLOY_PATH: D:\Project\SMT_EUNSUNG
+  DEPLOY_DIR_WEBDISPLAY: D:\Project\SMT_EUNSUNG
   PM2_APP_NAME: mes-display
   # PM2를 러너와 독립된 Windows 서비스(LocalService)로 운영 → job 종료/재부팅 후에도 앱 생존.
   # pm2 CLI가 이 서비스 데몬과 통신하도록 PM2_HOME을 서비스 홈으로 고정.
@@ -37,14 +37,14 @@ env:
 
 jobs:
   deploy:
-    name: Deploy to India Server
+    name: Deploy to EUNSUNG Server
     runs-on: [self-hosted, Windows, X64]
 
     steps:
       - name: Check Environment
         run: |
           Write-Host "========================================="
-          Write-Host "  WebDisplayID (India) Deploy Start"
+          Write-Host "  WebDisplayID (EUNSUNG) Deploy Start"
           Write-Host "========================================="
           Write-Host "Runner: $env:COMPUTERNAME"
           Write-Host "User: $env:USERNAME"
@@ -69,10 +69,10 @@ jobs:
         working-directory: ${{ env.DEPLOY_PATH }}
         run: |
           Write-Host "[1/4] Pulling latest code..."
-          git -c safe.directory=D:/Project/WebDisplayID fetch "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" main
+          git -c safe.directory=D:/Project/SMT_EUNSUNG fetch "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" main
           if ($LASTEXITCODE -ne 0) { exit 1 }
-          git -c safe.directory=D:/Project/WebDisplayID reset --hard FETCH_HEAD
-          git -c safe.directory=D:/Project/WebDisplayID log --oneline -3
+          git -c safe.directory=D:/Project/SMT_EUNSUNG reset --hard FETCH_HEAD
+          git -c safe.directory=D:/Project/SMT_EUNSUNG log --oneline -3
           Write-Host "[OK] Git Pull done"
 
       - name: Stop PM2 Process (release node_modules file locks)

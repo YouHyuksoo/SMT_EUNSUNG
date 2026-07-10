@@ -1,0 +1,56 @@
+{
+  "extends": "../../packages/config/typescript/nest.json",
+  "compilerOptions": {
+    "baseUrl": "./",
+    "outDir": "./dist",
+    "paths": {
+      "@/*": ["src/*"],
+      "@common/*": ["src/common/*"],
+      "@modules/*": ["src/modules/*"],
+      "@test/*": ["test/utils/*"]
+    },
+    "skipLibCheck": true,
+    "strictNullChecks": false,
+    "strictPropertyInitialization": false,
+    "forceConsistentCasingInFileNames": true,
+    "noImplicitAny": false,
+    "strictBindCallApply": true,
+    "noFallthroughCasesInSwitch": true,
+    "noEmit": false
+  },
+  "//": "은성 로그인부터 살리는 단계 — auth + 인프라만 컴파일한다. 나머지 HANES 모듈은 화면별로 은성화하며 include에 추가한다. (전체 구성은 app.module.full.ts.bak 참고)",
+  "include": [
+    "src/main.ts",
+    "src/app.module.ts",
+    "src/app.controller.ts",
+    "src/app.service.ts",
+    "src/config/**/*.ts",
+    "src/database/**/*.ts",
+    "src/common/**/*.ts",
+    "src/modules/auth/**/*.ts",
+    "src/modules/oee/**/*.ts",
+    "src/modules/menu-categories/**/*.ts",
+    "src/shared/transaction.service.ts",
+    "src/entities/isys-user.entity.ts",
+    "src/entities/isys-organization.entity.ts",
+    "src/entities/oee-resource.entity.ts",
+    "src/entities/oee-downtime-reason.entity.ts",
+    "src/entities/oee-operation-log.entity.ts",
+    "src/entities/menu-category.entity.ts",
+    "src/entities/menu-category-item.entity.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "test",
+    "**/*.spec.ts",
+    "src/database/migrate-*.ts",
+    "src/database/test-connection.ts",
+    "src/database/data-source.ts",
+    "src/database/oracle-data-source.ts",
+    "src/common/guards/inventory-freeze.guard.ts",
+    "src/common/guards/roles.guard.ts",
+    "src/common/modules/guard.module.ts",
+    "src/common/interfaces/stock-manager.interface.ts"
+  ]
+}

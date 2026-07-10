@@ -53,7 +53,7 @@ standardVersion: 1
 
 ## 프로젝트 참고사항
 
-- 이 저장소는 SOLUEM India MES Display (솔루엠인도 현장 Next.js 모니터링 앱)의 문서 루트다.
+- 이 저장소는 은성전장 MES Display (은성전장 현장 Next.js 모니터링 앱)의 문서 루트다.
 - 과거 superpowers 계열 스킬이 `docs/superpowers/{plans,specs,sql,test-checklist}`에 저장하던 문서는
   2026-07-05 표준 폴더(`plans/`, `specs/`, `sql/`, `test-checklists/`)로 흡수했다. 이후 spec/plan은
   `docs/superpowers/`가 아니라 core 폴더에 직접 생성한다.

@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="420" viewBox="0 0 720 420" role="img" aria-label="CM-JG-HV1 내전압검사 치구">
+  <rect width="720" height="420" fill="#f8fafc"/>
+  <rect x="32" y="30" width="656" height="360" rx="20" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+  <rect x="64" y="62" width="158" height="42" rx="21" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+  <text x="92" y="90" fill="#1d4ed8" font-family="Arial, 'Malgun Gothic', sans-serif" font-size="20" font-weight="700">JIG</text>
+  <text x="246" y="90" fill="#0f172a" font-family="Arial, 'Malgun Gothic', sans-serif" font-size="26" font-weight="700">검사/고정 지그</text>
+  
+  <rect x="160" y="156" width="400" height="116" rx="18" fill="#bfdbfe" stroke="#2563eb" stroke-width="5"/>
+  <rect x="202" y="188" width="98" height="46" rx="10" fill="#eff6ff" stroke="#1d4ed8" stroke-width="4"/>
+  <rect x="420" y="188" width="98" height="46" rx="10" fill="#eff6ff" stroke="#1d4ed8" stroke-width="4"/>
+  <path d="M318 214h84" stroke="#1d4ed8" stroke-width="12" stroke-linecap="round"/>
+  <circle cx="188" cy="272" r="16" fill="#1d4ed8"/>
+  <circle cx="532" cy="272" r="16" fill="#1d4ed8"/>
+  <rect x="70" y="306" width="580" height="54" rx="14" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2"/>
+  <text x="94" y="329" fill="#475569" font-family="Arial, 'Malgun Gothic', sans-serif" font-size="15">CM-JG-HV1</text>
+  <text x="94" y="352" fill="#0f172a" font-family="Arial, 'Malgun Gothic', sans-serif" font-size="22" font-weight="700">내전압검사 치구</text>
+  <text x="472" y="352" fill="#64748b" font-family="Arial, 'Malgun Gothic', sans-serif" font-size="16">지그실-E3</text>
+</svg>

@@ -1,0 +1,114 @@
+/**
+ * @file src/modules/material/dto/receiving.dto.ts
+ * @description 입고관리 DTO - 입하건 일괄/분할 입고 처리, 자동입고(라벨 발행 시)
+ *
+ * 초보자 가이드:
+ * 1. **입고 대상**: 입하(Arrival)를 통해 생성된 자재
+ * 2. **일괄 입고**: 여러 자재를 한번에 입고 확정
+ * 3. **분할 입고**: 자재 수량의 일부만 입고 (나머지는 추후 입고)
+ */
+
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  IsString, IsOptional, IsInt, Min, Max,
+  MaxLength, IsDateString, IsArray, ValidateNested,
+} from 'class-validator';
+import { Type } from 'class-transformer';
+import { PaginationQueryDto } from '../../../common/dto/base-query.dto';
+
+/** 입고 품목 DTO (matUid 단위) */
+export class ReceiveItemDto {
+  @ApiProperty({ description: '자재 UID' })
+  @IsString()
+  matUid: string;
+
+  @ApiProperty({ description: '입고 수량 (분할 입고 시 자재 잔량 이하)' })
+  @IsInt()
+  @Min(1)
+  qty: number;
+
+  @ApiPropertyOptional({ description: '입고 창고 ID' })
+  @IsOptional()
+  @IsString()
+  warehouseId?: string;
+
+  @ApiPropertyOptional({ description: '입고 창고 코드 (프론트 호환)' })
+  @IsOptional()
+  @IsString()
+  warehouseCode?: string;
+
+  @ApiPropertyOptional({ description: '제조일자 (YYYY-MM-DD) - 수정 시 유효기한 재계산' })
+  @IsOptional()
+  @IsDateString()
+  manufactureDate?: string;
+
+  @ApiPropertyOptional({ description: '거래처/제조사 부착 바코드 원본' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  vendorBarcode?: string;
+
+  @ApiPropertyOptional({ description: '비고' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  remark?: string;
+
+  @ApiPropertyOptional({ description: '적재 로케이션 코드(수동 지정). 미지정 시 품목마스터 STORAGE_LOCATION 자동 적용' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(50)
+  locationCode?: string;
+}
+
+/** 일괄 입고 등록 DTO */
+export class CreateBulkReceiveDto {
+  @ApiProperty({ description: '입고 품목 목록', type: [ReceiveItemDto] })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ReceiveItemDto)
+  items: ReceiveItemDto[];
+
+  @ApiPropertyOptional({ description: '작업자 ID' })
+  @IsOptional()
+  @IsString()
+  workerId?: string;
+}
+
+/** 입고 이력 조회 DTO */
+export class ReceivingQueryDto extends PaginationQueryDto {
+
+
+  @ApiPropertyOptional({ description: '검색어' })
+  @IsOptional()
+  @IsString()
+  search?: string;
+
+  @ApiPropertyOptional({ description: '시작일' })
+  @IsOptional()
+  @IsDateString()
+  fromDate?: string;
+
+  @ApiPropertyOptional({ description: '종료일' })
+  @IsOptional()
+  @IsDateString()
+  toDate?: string;
+
+  @ApiPropertyOptional({ description: '자재 시리얼(LOT/matUid) 부분 일치' })
+  @IsOptional()
+  @IsString()
+  matUid?: string;
+}
+
+/** 자동입고 요청 DTO (라벨 발행 시 호출) */
+export class AutoReceiveDto {
+  @ApiProperty({ description: '입고 대상 자재 UID 목록' })
+  @IsArray()
+  @IsString({ each: true })
+  matUids: string[];
+
+  @ApiPropertyOptional({ description: '작업자 ID' })
+  @IsOptional()
+  @IsString()
+  workerId?: string;
+}

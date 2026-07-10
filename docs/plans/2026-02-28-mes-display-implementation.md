@@ -1,4 +1,4 @@
-# SOLUEM India MES Display Implementation Plan
+# 은성전장 MES Display Implementation Plan
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
@@ -96,7 +96,7 @@ import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "SOLUEM India MES Display",
+  title: "은성전장 MES Display",
   description: "Manufacturing Execution System Display Monitor",
 };
 
@@ -899,7 +899,7 @@ git commit -m "feat: Oracle DB connection pool with executeQuery helper"
 export const SQL_CHECK_ITEMS = `
   SELECT /* d_display_machine_status_check_items_smd */
     -- PB DataWindow SQL을 여기에 복사
-    -- SOLUEM India MES_DISP의 d_display_machine_status_check_items_smd.srd에서 추출
+    -- 은성전장 MES_DISP의 d_display_machine_status_check_items_smd.srd에서 추출
     *
   FROM dual
   WHERE 1=0
