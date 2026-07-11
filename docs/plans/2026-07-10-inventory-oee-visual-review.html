@@ -154,20 +154,20 @@
     color: transparent; -webkit-text-stroke: 1.2px var(--line-strong);
   }
 
-  .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); gap: 14px; }
-  .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 14px; }
-  .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+  .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 20px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 20px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 20px; }
 
   .card {
-    padding: 18px 20px; border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 24px 26px; border: 1px solid var(--line); border-radius: var(--radius);
     background: var(--surface);
   }
-  .card h3 { margin: 0 0 8px; font-size: 15px; display: flex; gap: 8px; align-items: center; }
-  .card h4 { margin: 0 0 6px; font-size: 13.5px; }
-  .card p { margin: 0 0 8px; font-size: 13.5px; color: var(--ink-soft); }
+  .card h3 { margin: 0 0 10px; font-size: 16px; display: flex; gap: 8px; align-items: center; }
+  .card h4 { margin: 0 0 8px; font-size: 15px; }
+  .card p { margin: 0 0 9px; font-size: 14px; color: var(--ink-soft); }
   .card p:last-child { margin-bottom: 0; }
-  .card ul { margin: 6px 0 0; padding-left: 18px; font-size: 13.5px; color: var(--ink-soft); }
-  .card li { margin: 3px 0; }
+  .card ul { margin: 8px 0 0; padding-left: 18px; font-size: 14px; color: var(--ink-soft); }
+  .card li { margin: 5px 0; }
   .card.line-cyan { border-top: 3px solid var(--cyan); }
   .card.line-amber { border-top: 3px solid var(--amber); }
   .card.line-green { border-top: 3px solid var(--green); }
@@ -346,6 +346,24 @@
 
   footer { border-top: 1px solid var(--line); padding: 26px; text-align: center; color: var(--faint); font-size: 12px; font-family: var(--mono); }
 
+  /* scroll reveal + progress */
+  .scroll-progress {
+    position: fixed; top: 0; left: 0; z-index: 60;
+    height: 2.5px; width: 0%;
+    background: linear-gradient(90deg, var(--cyan-deep), var(--cyan), var(--amber));
+    box-shadow: 0 0 10px rgba(63, 214, 226, .45);
+    pointer-events: none;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .rv {
+      opacity: 0; transform: translateY(22px);
+      transition: opacity .65s ease, transform .65s cubic-bezier(.22, .9, .3, 1);
+      transition-delay: var(--rvd, 0s);
+      will-change: opacity, transform;
+    }
+    .rv.in { opacity: 1; transform: none; }
+  }
+
   @media (max-width: 760px) {
     .sec-num { display: none; }
     .hero { padding-top: 46px; }
@@ -361,6 +379,7 @@
     <span>VISUAL REVIEW · 2026-07-10 · DRAFT FOR CUSTOMER DECISION</span>
   </div>
   <nav class="topnav">
+    <a href="#purpose">GAP 분석</a>
     <a href="#scope">범위</a>
     <a href="#terms">용어</a>
     <a href="#tables">테이블</a>
@@ -381,12 +400,11 @@
 
 <div class="hero">
   <p class="hero-flag">EUNSUNG MES ENHANCEMENT — INVENTORY LEDGER &amp; OEE</p>
-  <h1>수불관리와 OEE, <br /><em>보고 판단할 수 있게</em> 펼친 검토서</h1>
+  <h1>수불관리·OEE 고도화 <br /><em>개발 검토 보고서</em></h1>
   <p class="hero-sub">
-    이 문서는 개발계획서 초안(MD)과 1차 인터랙티브 문서(HTML) 두 근거문서의 내용을 요약하지 않고
-    <b>전부 시각화</b>한 검토서입니다. 각 절은 "무엇을 만들 것인가"뿐 아니라 <b>왜 그렇게 정했는가(근거)</b>,
-    <b>어떤 대안이 있었는가</b>, <b>실제 사례로는 어떻게 움직이는가</b>를 함께 보여 줍니다.
-    특히 모니터링 화면은 서로 다른 4가지 디자인을 나란히 놓고 직접 전환해 보며 고를 수 있습니다.
+    이 문서는 개발계획서 초안(MD)과 1차 인터랙티브 문서(HTML) 두 근거문서의 내용을 요약 없이
+    시각 자료로 정리한 검토 보고서입니다. 각 절에는 설계 내용과 함께 <b>결정 근거, 검토했던 대안,
+    실제 운영 사례</b>를 기재했습니다. 모니터링 화면은 4가지 디자인 시안을 화면에서 전환하며 비교할 수 있습니다.
   </p>
   <div class="hero-meta">
     <span>작성일 <b>2026-07-10</b></span>
@@ -433,15 +451,16 @@
       <p class="kicker">00 · Document Map</p>
       <h2>이 문서를 읽는 방법</h2>
       <p class="lede">
-        절 순서는 근거문서의 논리 순서를 따릅니다 — <b>범위와 용어를 먼저 못 박고 → 데이터(테이블)와 흐름(수불)을 그리고 →
-        돈(평가)과 자동화(백플러시)를 정한 뒤 → 마감으로 잠그고 → OEE로 확장</b>합니다.
-        시간이 없으면 주황색으로 표시된 절(모니터링 디자인 비교, 합의 체크리스트)만 먼저 보셔도 판단이 가능합니다.
+        이 보고서는 01절의 AS-IS/TO-BE/GAP 분석에서 출발하고, 이후 절 순서는 GAP 해소 순서를 따릅니다 —
+        <b>용어 표준(3) → 테이블·수불 흐름(4·5) → 재고평가(6) → 백플러시(7) → 수불부·실사·마감(8·9) →
+        기준정보(10) → OEE(11~14) → 화면(15~17)</b>.
+        검토 시간이 부족하면 01절 GAP 분석표와 주황색 절(모니터링 디자인 비교, 합의 체크리스트)을 먼저 확인하시면 됩니다.
       </p>
     </div>
     <div class="sec-num">00</div>
   </div>
   <div class="roadmap">
-    <a class="rm-item" href="#purpose"><span class="no">01</span><span><strong>목적과 배경</strong><span>왜 지금 수불과 OEE인가</span></span></a>
+    <a class="rm-item" href="#purpose"><span class="no">01</span><span><strong>현황 분석 — AS-IS · TO-BE · GAP</strong><span>현재 문제점 · 목표 운영 형태 · 격차 분석표</span></span></a>
     <a class="rm-item" href="#scope"><span class="no">02</span><span><strong>전체 범위 지도</strong><span>12개 기능 영역, 포함/제외</span></span></a>
     <a class="rm-item" href="#terms"><span class="no">03</span><span><strong>재고 구분 용어 사전</strong><span>6종 표준 용어 + 금지 용어</span></span></a>
     <a class="rm-item" href="#tables"><span class="no">04</span><span><strong>테이블 지도</strong><span>현행 유지 vs 신규 설계</span></span></a>
@@ -468,18 +487,25 @@
 <section id="purpose">
   <div class="sec-head">
     <div>
-      <p class="kicker">01 · Purpose &amp; Background</p>
-      <h2>목적과 배경 — 왜 지금 수불과 OEE인가</h2>
+      <p class="kicker">01 · AS-IS · TO-BE · GAP</p>
+      <h2>현황 분석 — AS-IS / TO-BE / GAP</h2>
       <p class="lede">
-        은성은 현재 일부 기능을 파워빌더 MES로 운영 중입니다. 원자재 입출고와 LOT 분할은 이미 돌아가지만,
-        <b>공정 이후의 재고(공정창고·반제품·완제품)는 원장이 없고</b>, 단가·판가를 재고평가에 쓰지 않아
-        <b>재고금액을 산출할 수 없으며</b>, 백플러시가 없어 <b>자재 소비가 장부에 남지 않습니다</b>.
-        OEE는 지표 화면조차 없는 상태에서 고객 제안서 수준(단순 지표)보다 깊은 분석 구조로 새로 설계합니다.
+        본 문서는 분석보고서 구조를 따릅니다. 현재 운영 상태(AS-IS), 개발 완료 후의 운영 형태(TO-BE),
+        그 사이의 격차(GAP)를 먼저 정리하고, 이후 절은 GAP 해소에 필요한 설계 내용을 항목 순서대로 다룹니다.
       </p>
     </div>
     <div class="sec-num">01</div>
   </div>
 
+  <div class="flow" style="margin-bottom:26px;">
+    <div class="flow-step" style="border-color:rgba(255,125,110,.55); flex:1.2;"><span class="n" style="color:var(--red);">AS-IS</span><strong>현재 — 파워빌더 MES 부분 운영</strong><small>원자재 입출고·LOT 분할까지만 원장 존재. 공정 이후 재고 추적 불가, 재고금액 산출 불가, 자재 소비 미기록, OEE 지표 없음.</small></div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step hl" style="flex:1.2;"><span class="n">이번 개발</span><strong>GAP 항목별 해소</strong><small>용어 표준 → 수불 테이블 신설 → 수불 흐름 정의 → 재고평가 → 백플러시 → 실사·마감 → 기준정보 → OEE → 화면 개발 순서로 진행.</small></div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step" style="border-color:rgba(82,214,138,.55); flex:1.2;"><span class="n" style="color:var(--green);">TO-BE</span><strong>개발 완료 후 운영 형태</strong><small>6개 재고구분 수불 원장 운영, 월마감 시 재고금액 산출, 실적 등록 시 자재 소비 자동 기록, OEE·직행율 집계.</small></div>
+  </div>
+
+  <h3 style="margin:0 0 12px; font-size:17px;">AS-IS — 현재 운영의 4가지 문제점</h3>
   <div class="grid-3">
     <div class="card line-red">
       <h3><span class="bdg bad">현재 공백 1</span></h3>
@@ -499,6 +525,12 @@
       <p>생산실적을 등록해도 BOM/라우팅 기준 자재 소비(출고)가 자동으로 일어나지 않습니다.</p>
       <p><b>결과:</b> 공정창고 재고가 실제 소비와 무관하게 쌓이고, 수불부의 출고 열이 비게 됩니다.</p>
     </div>
+    <div class="card line-red">
+      <h3><span class="bdg bad">현재 공백 4</span></h3>
+      <h4>OEE를 측정할 수 없다</h4>
+      <p>무작업/비가공 사유, CT 기준 성능, 직행율이 어디에도 기록되지 않아 설비·라인이 <b>왜 멈췄는지, 얼마나 느리게 돌았는지</b> 데이터로 답할 수 없습니다.</p>
+      <p><b>결과:</b> 손실 개선이 데이터가 아니라 감(感)에 의존하고, 라인 간·기간 간 비교가 불가능합니다.</p>
+    </div>
   </div>
 
   <div class="callout why">
@@ -510,6 +542,53 @@
       <b>수불 기반 안정화 → 마감으로 데이터 잠금 → OEE 집계</b> 순서로 쌓습니다.
       같은 이유로 ERP 인터페이스는 수불/마감 기준이 안정된 뒤 후속 과제로 미룹니다 — 흔들리는 원장을 ERP로 보내면 정합성 문제가 양쪽으로 번지기 때문입니다.</p>
     </div>
+  </div>
+
+  <h3 style="margin:30px 0 12px; font-size:17px;">TO-BE — 개발 완료 후 운영 형태</h3>
+  <div class="grid-4">
+    <div class="card line-green">
+      <h4>재고 원장 운영</h4>
+      <p>6개 재고 구분 전체에 수불 원장이 생성되고, 바코드/UID 단위로 보유 위치·수량·거래 이력을 조회할 수 있습니다.</p>
+    </div>
+    <div class="card line-green">
+      <h4>재고금액 산출</h4>
+      <p>월마감 시 총평균법으로 원자재 재고금액·출고금액이 산출되고, 마감 스냅샷으로 확정됩니다.</p>
+    </div>
+    <div class="card line-green">
+      <h4>자재 소비 자동 기록</h4>
+      <p>공정실적 등록 시 생성유형(BOM/라우팅) 기준 백플러시로 소비가 원장에 기록됩니다. 기준정보 미등록 모델은 보류 처리되어 잘못된 소비가 발생하지 않습니다.</p>
+    </div>
+    <div class="card line-green">
+      <h4>OEE 지표 운영</h4>
+      <p>OEE(가동율×성능율×양품율)와 직행율이 공정/라인/셀/설비 단위로 집계되고, 무작업 사유별 손실 시간을 확인할 수 있습니다.</p>
+    </div>
+  </div>
+
+  <h3 style="margin:30px 0 6px; font-size:17px;">GAP 분석 — 항목별 격차와 해소 방안</h3>
+  <p style="color:var(--ink-soft); font-size:13.5px; max-width:860px; margin-top:0;">
+    각 GAP의 해소 방안은 본문 해당 절에서 상세히 다룹니다. 마지막 열의 절 번호가 곧 이 보고서의 읽기 경로입니다.
+  </p>
+  <div class="tblwrap">
+    <table class="tbl">
+      <thead><tr><th>영역</th><th>AS-IS (오늘)</th><th>TO-BE (내일)</th><th>GAP (격차)</th><th>해소 절</th></tr></thead>
+      <tbody>
+        <tr><td><b>용어/기준</b></td><td>"재공", "완제품대기재고" 등 혼용 — 대화마다 다른 의미</td><td>창고+재고 결합 6종 표준 용어로 통일</td><td>용어 표준 확정과 화면/코드 반영</td><td><span class="bdg cy">3절</span></td></tr>
+        <tr><td><b>재고 원장</b></td><td>원자재창고까지만 원장. 공정창고·반제품·완제품 구간은 추적 사각지대</td><td>6개 재고 구분 전 구간 원장, 낱개(바코드/UID) 단위 추적</td><td>신규 수불 테이블 9종 설계·생성, 매거진/포장 매핑</td><td><span class="bdg cy">4·5절</span></td></tr>
+        <tr><td><b>재고금액</b></td><td>단가 테이블은 있으나 평가 미연결 — 재고금액 산출 불가</td><td>총평균법 월마감 평가 (원자재 한정)</td><td>평가 로직 개발 + 단가 등록 운영 정착</td><td><span class="bdg cy">6절</span></td></tr>
+        <tr><td><b>자재 소비</b></td><td>백플러시 없음 — 소비가 장부에 남지 않음</td><td>실적 등록 시 생성유형 3종 기준 자동 백플러시</td><td>생성유형 기준정보 + BOM/라우팅 정비</td><td><span class="bdg cy">7절</span></td></tr>
+        <tr><td><b>실사/마감</b></td><td>실사·마감 프로세스 부재 — 과거 데이터가 잠기지 않음</td><td>조정 거래 실사 + 오류 해소형 마감 + 스냅샷</td><td>검증 규칙·스냅샷 구조·실사 주기 확정</td><td><span class="bdg cy">8·9절</span></td></tr>
+        <tr><td><b>기준정보</b></td><td>CT/ST·라우팅·월력 등 미등록 또는 산재 — 관리 주체/주기 없음</td><td>15종 기준정보를 3원칙(버전/마감연동/이력승인)으로 관리</td><td>기준정보 수집·정비 (개발보다 선행)</td><td><span class="bdg warn">10절</span></td></tr>
+        <tr><td><b>OEE</b></td><td>지표 없음 — 정지/저속 원인을 데이터로 답할 수 없음</td><td>공정 기본, 라인/셀/설비 상세의 OEE·직행율 + 마감 스냅샷</td><td>시간 기준정보·사유코드·입력 체계 신설</td><td><span class="bdg cy">11~14절</span></td></tr>
+        <tr><td><b>가시성</b></td><td>현황 파악 화면 부재</td><td>모니터링 디자인 4종 시안 + 재고 조회 8관점 + PC/PDA 입력</td><td>화면 개발 + 디자인 시안 선택(고객)</td><td><span class="bdg warn">15~17절</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout ex" style="margin-top:16px;">
+    <div class="ico">순서</div>
+    <div><p><b>읽는 순서:</b> 위 GAP 표의 해소 절 번호 순서대로 읽으면 됩니다 —
+    용어 표준(3) → 테이블·수불 흐름(4·5) → 재고평가(6) → 백플러시(7) → 수불부·실사·마감(8·9) →
+    기준정보(10) → OEE(11~14) → 화면(15~17). 이후 합의 체크리스트(18), 남은 협의 항목(19), 근거 기록(20)이 이어집니다.
+    주황 배지는 고객 의사결정이 필요한 비중이 큰 항목입니다.</p></div>
   </div>
 </section>
 
@@ -639,8 +718,8 @@
     <div>
       <p><b>사례 — 같은 물건, 다른 재고 구분.</b>
       메탈 PCB 완제품 1,000개가 포장까지 끝났지만 아직 제품창고 담당자가 스캔하지 않았다면,
-      이 1,000개는 <b>⑤ 공정창고 완제품재고</b>입니다. 담당자가 매거진 바코드를 스캔해 입고 처리하는 순간
-      <b>⑥ 완제품창고 완제품재고</b>로 바뀝니다. 물건은 그대로인데 장부 위치가 바뀌는 것 — 이것이 수불(受拂)의 본질입니다.</p>
+      이 1,000개는 <b>⑤ 공정창고 완제품재고</b>입니다. 담당자가 매거진 바코드를 스캔해 입고 처리하면
+      <b>⑥ 완제품창고 완제품재고</b>로 바뀝니다. 실물은 그대로 있고 장부상 보관 위치만 바뀌며, 이 위치 변경을 기록하는 것이 수불 처리입니다.</p>
     </div>
   </div>
 </section>
@@ -736,7 +815,8 @@
       <h2>수불 흐름 3종 — 원자재 · 반제품 · 완제품</h2>
       <p class="lede">
         세 가지 물건은 이동 단위가 다릅니다. <b>원자재는 바코드</b>, <b>반제품은 매거진(원장은 바코드/UID)</b>,
-        <b>완제품은 포장(원장은 제품 바코드/UID)</b>. 공통 원칙은 하나 — <b>스캔은 묶음 단위로 편하게, 원장은 낱개 단위로 정확하게.</b>
+        <b>완제품은 포장(원장은 제품 바코드/UID)</b>. 공통 원칙은 스캔(현장 작업)은 묶음 단위로 하고,
+        수불 원장 기록은 낱개(바코드/UID) 단위로 생성한다는 것입니다.
       </p>
     </div>
     <div class="sec-num">05</div>
@@ -945,7 +1025,7 @@
     <div><p><b>생성유형이 비어 있으면 기본값을 임의 적용하지 않고 보류합니다.</b>
     "비어 있으면 일단 BOM_LEVEL로" 같은 임시 기본값은 잘못된 자재 소비를 조용히 만들어 냅니다.
     빈 값은 <b>기준정보 오류</b>로 식별해 보류 목록에 올리고, 담당자가 유형을 지정해야 백플러시가 재개됩니다.
-    — "일은 항상 마무리되어야 하며 제한하고 끝나면 안 된다"는 마감 철학과 같은 원칙입니다.</p></div>
+    — 마감의 오류 해소형 운영 원칙(고객 요구사항: "일은 항상 마무리가 되어야 한다")과 같은 기준입니다.</p></div>
   </div>
 
   <div class="mock">
@@ -1039,9 +1119,10 @@
       <p class="kicker">09 · Stocktaking &amp; Warehouse Closing</p>
       <h2>재고실사와 창고마감 — 오류 해소형 프로세스</h2>
       <p class="lede">
-        실사와 마감의 공통 철학은 하나입니다: <b>"막고 끝내지 않고, 해소되게 만든다."</b>
-        실사는 현재고를 덮어쓰지 않고 조정 거래를 만들며, 마감은 오류가 있으면 잠그기만 하는 게 아니라
-        오류 목록 → 담당자 조치 → 재실행의 루프를 돌아 반드시 마감에 도달하게 합니다.
+        실사와 마감의 공통 원칙은 오류를 차단하고 끝내는 것이 아니라 해소까지 이어지게 하는 것입니다
+        (고객 요구사항: "일은 항상 마무리가 되어야 하며 제한하고 끝나면 안 된다").
+        실사는 현재고를 덮어쓰지 않고 조정 거래를 생성하며, 마감은 오류 발견 시
+        오류 목록 → 담당자 조치 → 재실행 절차를 거쳐 마감 완료까지 진행합니다.
       </p>
     </div>
     <div class="sec-num">09</div>
@@ -1081,6 +1162,19 @@
     </div>
   </div>
 
+  <div class="callout ex" style="margin-top:18px;">
+    <div class="ico">운영</div>
+    <div>
+      <p><b>실사 없이 마감만 하는 달 — 정상 운영 시나리오입니다.</b>
+      마감의 전제 조건은 실사가 아니라 <b>원장 정합성 검증</b>입니다. 실사를 못 한 달에도 마감 오류(미확정 전표, 음수재고,
+      단가 미등록 등)만 해소되면 마감 스냅샷이 생성되고, <b>차월 기초재고는 장부(원장) 기준으로 이월</b>되어 운영은 그대로 계속됩니다.</p>
+      <p>· <b>실사를 한 달:</b> 조정 거래(<code class="tb">ADJ_IN</code>/<code class="tb">ADJ_OUT</code>)까지 반영된 기초로 이월 — 장부와 실물이 일치한 상태에서 새 달 시작.<br />
+      · <b>실사를 건너뛴 달:</b> 장부 기준 이월 — 마감·수불부·재고평가는 정상 동작하지만, 장부-실물 차이는 다음 실사까지 <b>누적된 채 이월</b>됩니다.</p>
+      <p><b>리스크 관리:</b> 실사 공백이 길어질수록 차이 누적 위험이 커지므로, 재고 연령 분석(16절 ⑥)과 이동 중 재고 경보(16절 ①)를
+      실사 없는 달의 보조 신호로 활용하고, 실사 주기(매월 / 분기 순환실사 / 연 1회 전수)는 창고별로 협의해 확정합니다(19절).</p>
+    </div>
+  </div>
+
   <h3 style="margin:26px 0 10px; font-size:16px;">마감 사전 검증 항목 (오류 예시 9종)</h3>
   <div class="grid-3">
     <div class="card"><h4>미확정 입고/출고</h4><p>전표가 임시 상태로 남은 채 월을 넘기려는 경우.</p></div>
@@ -1100,7 +1194,7 @@
   <div class="sec-head">
     <div>
       <p class="kicker">10 · Master Data Management</p>
-      <h2>기준정보 관리 — 수불과 OEE를 받치는 뿌리</h2>
+      <h2>기준정보 관리 — 항목, 사용처, 관리 기준</h2>
       <p class="lede">
         마감 오류 예시를 다시 보면 <b>단가 미등록 · CT/ST 미등록 · 라우팅 누락 · 라인/셀/설비 매핑 누락 · 월력/근무시간 미등록</b> —
         절반이 기준정보 문제입니다. 기준정보는 "한 번 등록하고 끝"이 아니라 <b>사용처 · 관리 형식 · 관리 주기 · 관리 주체 ·
@@ -1167,7 +1261,7 @@
         <tr><td><b>라우팅</b></td><td>거래처×모델 공정 순서 (a/b/c)</td><td>ROUTING 백플러시 · OEE 분모 · 직행율</td><td>매트릭스 화면 + 적용 시작/종료일</td><td><span class="bdg warn">변경 시</span> 신모델/공정흐름 변경</td><td>생산기술</td><td>라우팅 누락 마감 오류, OEE 왜곡</td></tr>
         <tr><td><b>공정 마스터</b></td><td><code class="tb">IP_PRODUCT_WORKSTAGE</code></td><td>공정창고 수불 · OEE 기본 집계 축</td><td>화면 단건</td><td><span class="bdg mut">드묾</span> 공정 신설/폐지 시</td><td>생산기술</td><td>집계 축 부재 — 화면 전체 영향</td></tr>
         <tr><td><b>설비 마스터</b></td><td><code class="tb">IMCN_MACHINE</code></td><td>OEE 설비 상세 · 무작업 입력(설비 스캔)</td><td>화면 단건</td><td><span class="bdg warn">변경 시</span> 설비 도입/이설/폐기</td><td>설비</td><td>설비 매핑 누락 마감 오류</td></tr>
-        <tr><td><b>라인/셀·설비 매핑</b></td><td>라인/셀 코드 ↔ 설비</td><td>SMT 라인 · 후공정 셀 집계 (11절)</td><td>매핑 화면 + 적용기간</td><td><span class="bdg warn">변경 시</span> 레이아웃/증설 변경</td><td>생산기술+설비</td><td>라인/셀/설비 매핑 누락 오류</td></tr>
+        <tr><td><b>라인/셀·설비 매핑</b></td><td>라인 <code class="tb">IP_PRODUCT_LINE</code> ↔ 설비 · 셀 코드는 신설 협의</td><td>SMT 라인 · 후공정 셀 집계 (11절)</td><td>매핑 화면 + 적용기간</td><td><span class="bdg warn">변경 시</span> 레이아웃/증설 변경</td><td>생산기술+설비</td><td>라인/셀/설비 매핑 누락 오류</td></tr>
         <tr><td><b>구매단가</b></td><td><code class="tb">IM_ITEM_UNIT_PRICE</code></td><td>재고금액 · 출고금액 평가 (6절)</td><td>화면 + 엑셀 · 적용일 관리</td><td><span class="bdg info">월</span> + 단가 계약 갱신 시</td><td>구매</td><td>단가 미등록 마감 오류 — 평가 불가</td></tr>
         <tr><td><b>판매단가</b></td><td><code class="tb">IS_PRODUCT_SALE_PRICE</code></td><td>판매/분석 전용 (평가 미사용)</td><td>화면 단건</td><td><span class="bdg warn">변경 시</span> 계약 갱신</td><td>영업</td><td>판매 분석 공백 (수불 영향 없음)</td></tr>
         <tr><td><b>월력</b></td><td>근무일/휴일/특근일</td><td>OEE 부하시간 산출 (11절)</td><td>연 단위 일괄 + 월 보정</td><td><span class="bdg info">연 1회</span> + 특근/휴무 발생 시</td><td>생산관리</td><td>월력 미등록 OEE 마감 오류</td></tr>
@@ -1907,7 +2001,7 @@
                 </tbody>
               </table>
             </div>
-            <p style="font-size:12px; color:var(--muted); margin:8px 0 0;">이동 중 수량은 어느 창고 현재고에도 없는 "허공의 재고" — 마감 오류(이동 중 미입고)의 사전 경보입니다.</p>
+            <p style="font-size:12px; color:var(--muted); margin:8px 0 0;">이동 중 수량은 출발 창고에서 차감됐지만 도착 창고에 아직 입고되지 않은 상태로, 방치하면 마감 오류(이동 중 미입고)로 이어지므로 사전 점검 대상입니다.</p>
           </div>
           <div class="card line-amber">
             <h4>오늘의 재고 이상 신호</h4>
@@ -2009,7 +2103,7 @@
             </div>
           </div>
           <div class="card line-blue">
-            <h4>이 화면이 답하는 질문</h4>
+            <h4>이 화면의 용도</h4>
             <ul>
               <li><b>정방향:</b> "이 LOT이 어느 작업지시·어느 제품에 들어갔나?" — 자재 품질 이슈 시 영향 제품 범위 산정.</li>
               <li><b>역방향:</b> "이 완제품(제품 바코드/UID)에 어떤 자재 LOT이 쓰였나?" — 고객 클레임 역추적. 방향 전환 버튼으로 제공.</li>
@@ -2265,7 +2359,7 @@
   <div class="grid-3">
     <div class="card"><h4>1. 공정창고 인수 자동확정 조건</h4><p>자재 품목별 설정이라는 방향까지만 합의 — 구체 조건 미정.</p></div>
     <div class="card"><h4>2. 신규 테이블 컬럼 상세</h4><p>9종 신규 테이블의 컬럼 설계.</p></div>
-    <div class="card"><h4>3. 실사/마감 스냅샷 상세 구조</h4><p>스냅샷 테이블과 취소/재마감 이력 구조.</p></div>
+    <div class="card"><h4>3. 실사/마감 스냅샷 상세 구조</h4><p>스냅샷 테이블과 취소/재마감 이력 구조. 창고별 실사 주기(매월/분기 순환/연 전수)와 실사 없는 달의 장부 기준 이월 운영(9절) 포함.</p></div>
     <div class="card"><h4>4. 수불부 화면 컬럼·조회 기준</h4><p>화면별 컬럼 확정.</p></div>
     <div class="card"><h4>5. 권한 · 승인 · 마감취소/재마감 절차</h4><p>누가 취소할 수 있고 어떤 승인 절차를 거치는가.</p></div>
     <div class="card"><h4>6. 무작업/비가공 사유코드 확정 목록</h4><p>13절 초안 기준 고객 검토 후 확정.</p></div>
@@ -2404,6 +2498,44 @@
         });
       });
     });
+  }
+
+  // scroll progress bar
+  var progress = document.createElement('div');
+  progress.className = 'scroll-progress';
+  document.body.appendChild(progress);
+  var onScroll = function () {
+    var doc = document.documentElement;
+    var max = doc.scrollHeight - doc.clientHeight;
+    progress.style.width = (max > 0 ? (doc.scrollTop / max) * 100 : 0) + '%';
+  };
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  // scroll reveal (IntersectionObserver), skipped for reduced-motion users
+  if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches && 'IntersectionObserver' in window) {
+    var revealTargets = document.querySelectorAll(
+      '.sec-head, .card, .mock, .callout, .formula, .kpi, .rm-item, .src-card, .flow-step, details.acc, .dp-card, label.chk'
+    );
+    var perParent = new Map();
+    revealTargets.forEach(function (el) {
+      el.classList.add('rv');
+      var p = el.parentElement;
+      var i = perParent.get(p) || 0;
+      perParent.set(p, i + 1);
+      el.style.setProperty('--rvd', Math.min(i * 60, 420) + 'ms');
+    });
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (!entry.isIntersecting) return;
+        var el = entry.target;
+        el.classList.add('in');
+        io.unobserve(el);
+        // 애니메이션 종료 후 rv 클래스를 걷어내 hover transform(카드/로드맵)과 충돌하지 않게 한다
+        setTimeout(function () { el.classList.remove('rv', 'in'); el.style.removeProperty('--rvd'); }, 1200);
+      });
+    }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+    revealTargets.forEach(function (el) { io.observe(el); });
   }
 
   // agreement checklist progress
