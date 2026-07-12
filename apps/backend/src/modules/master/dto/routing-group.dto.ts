@@ -1,198 +1,121 @@
-/**
- * @file src/modules/master/dto/routing-group.dto.ts
- * @description 라우팅 그룹 + 공정순서 + 양품조건 DTO
- *
- * 초보자 가이드:
- * 1. CreateRoutingGroupDto: 라우팅 그룹 생성
- * 2. CreateRoutingProcessDto: 그룹 내 공정순서 생성
- * 3. BulkSaveConditionDto: 양품조건 일괄 저장
- */
-import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
-import {
-  IsString, IsOptional, IsInt, IsNumber, IsIn,
-  IsArray, ValidateNested, Min, MaxLength,
-} from 'class-validator';
 import { Type } from 'class-transformer';
+import { ApiProperty, ApiPropertyOptional, OmitType, PartialType } from '@nestjs/swagger';
+import {
+  IsArray,
+  IsIn,
+  IsInt,
+  IsNumber,
+  IsOptional,
+  IsPositive,
+  IsString,
+  MaxLength,
+  Min,
+  ValidateNested,
+} from 'class-validator';
 import { PaginationQueryDto } from '../../../common/dto/base-query.dto';
 
-import { USE_YN_VALUES } from '@smt/shared';
-// ─── 라우팅 그룹 ───
+const YN_VALUES = ['Y', 'N'] as const;
+const EXECUTION_TYPES = ['INTERNAL', 'SUBCON'] as const;
+const ISSUE_METHODS = ['BACKFLUSH', 'PRE_ISSUE'] as const;
 
 export class CreateRoutingGroupDto {
-  @ApiProperty({ description: '라우팅 그룹 코드' })
-  @IsString() @MaxLength(50)
+  @ApiProperty() @IsString() @MaxLength(50)
   routingCode: string;
 
-  @ApiProperty({ description: '라우팅 그룹명' })
-  @IsString() @MaxLength(200)
+  @ApiProperty() @IsString() @MaxLength(20)
+  itemCode: string;
+
+  @ApiProperty() @IsString() @MaxLength(200)
   routingName: string;
 
-  @ApiPropertyOptional({ description: '연결 품목 코드' })
-  @IsOptional() @IsString() @MaxLength(50)
-  itemCode?: string;
-
-  @ApiPropertyOptional({ description: '설명' })
-  @IsOptional() @IsString() @MaxLength(500)
+  @ApiPropertyOptional() @IsOptional() @IsString() @MaxLength(500)
   description?: string;
 
-  @ApiPropertyOptional({ description: '사용 여부', default: 'Y' })
-  @IsOptional() @IsString() @IsIn([...USE_YN_VALUES])
-  useYn?: string;
+  @ApiPropertyOptional({ enum: YN_VALUES, default: 'Y' })
+  @IsOptional() @IsIn(YN_VALUES)
+  useYn?: 'Y' | 'N';
 }
 
-export class UpdateRoutingGroupDto extends PartialType(CreateRoutingGroupDto) {}
+export class UpdateRoutingGroupDto extends PartialType(
+  OmitType(CreateRoutingGroupDto, ['routingCode', 'itemCode'] as const),
+) {}
 
 export class RoutingGroupQueryDto extends PaginationQueryDto {
-
-  @ApiPropertyOptional()
-  @IsOptional() @IsString()
+  @ApiPropertyOptional() @IsOptional() @IsString()
   search?: string;
 
-  @ApiPropertyOptional()
-  @IsOptional() @IsString() @IsIn([...USE_YN_VALUES])
-  useYn?: string;
-
-  @ApiPropertyOptional({ description: '연결 품목 유형 필터 (예: FINISHED)' })
-  @IsOptional() @IsString()
-  itemType?: string;
+  @ApiPropertyOptional({ enum: YN_VALUES }) @IsOptional() @IsIn(YN_VALUES)
+  useYn?: 'Y' | 'N';
 }
-
-// ─── 공정순서 ───
 
 export class CreateRoutingProcessDto {
-  @ApiProperty({ description: '라우팅 그룹 코드' })
-  @IsString()
-  routingCode: string;
-
-  @ApiProperty({ description: '공정 순서' })
-  @Type(() => Number) @IsInt() @Min(1)
+  @ApiProperty() @Type(() => Number) @IsInt() @Min(1)
   seq: number;
 
-  @ApiProperty({ description: '공정 코드' })
-  @IsString() @MaxLength(50)
-  processCode: string;
+  @ApiProperty() @IsString() @MaxLength(10)
+  workstageCode: string;
 
-  @ApiPropertyOptional({ description: '공정명은 공정코드 기준 PROCESS_MASTERS에서 자동 적용된다.' })
-  @IsOptional() @IsString() @MaxLength(200)
-  processName?: string;
+  @ApiPropertyOptional({ enum: EXECUTION_TYPES, default: 'INTERNAL' })
+  @IsOptional() @IsIn(EXECUTION_TYPES)
+  executionType?: 'INTERNAL' | 'SUBCON';
 
-  @ApiPropertyOptional({ description: '공정 유형' })
-  @IsOptional() @IsString() @MaxLength(50)
-  processType?: string;
+  @ApiPropertyOptional({ enum: YN_VALUES, default: 'Y' }) @IsOptional() @IsIn(YN_VALUES)
+  jobOrderYn?: 'Y' | 'N';
 
-  @ApiPropertyOptional({ description: '설비 타입' })
-  @IsOptional() @IsString() @MaxLength(50)
-  equipType?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() @MaxLength(20)
+  subconSupplierCode?: string;
 
-  @ApiPropertyOptional({ description: '공정 실행 유형', enum: ['IN_HOUSE', 'SUBCON'], default: 'IN_HOUSE' })
-  @IsOptional() @IsString() @IsIn(['IN_HOUSE', 'SUBCON'])
-  executionType?: 'IN_HOUSE' | 'SUBCON';
+  @ApiPropertyOptional() @IsOptional() @Type(() => Number) @IsNumber() @Min(0)
+  standardTime?: number;
 
-  @ApiPropertyOptional({ description: '공정 작업지시 생성 여부', enum: USE_YN_VALUES, default: 'Y' })
-  @IsOptional() @IsString() @IsIn([...USE_YN_VALUES])
-  jobOrderYn?: string;
-
-  @ApiPropertyOptional({ description: '외주처 코드' })
-  @IsOptional() @IsString() @MaxLength(50)
-  subconVendorCode?: string;
-
-  @ApiPropertyOptional({ description: '표준 시간' })
-  @IsOptional() @Type(() => Number) @IsNumber()
-  stdTime?: number;
-
-  @ApiPropertyOptional({ description: '셋업 시간' })
-  @IsOptional() @Type(() => Number) @IsNumber()
+  @ApiPropertyOptional() @IsOptional() @Type(() => Number) @IsNumber() @Min(0)
   setupTime?: number;
 
-  @ApiPropertyOptional({ description: '샘플검사 필요 여부', default: 'N' })
-  @IsOptional() @IsString() @IsIn([...USE_YN_VALUES])
-  sampleInspectYn?: string;
-
-  @ApiPropertyOptional({ description: '라벨 발행 종류 (NONE/BUNDLE/SG/FG)', default: 'NONE' })
-  @IsOptional()
-  @IsString()
-  @IsIn(['NONE', 'BUNDLE', 'SG', 'FG'])
-  issueLabelType?: string;
-
-  @ApiPropertyOptional({ description: '자주검사 여부', default: 'N' })
-  @IsOptional()
-  @IsString()
-  @IsIn([...USE_YN_VALUES])
-  qcSelfYn?: string;
-
-  @ApiPropertyOptional({ description: '기본 검사방법 (DIRECT/DELEGATE)', default: 'DIRECT' })
-  @IsOptional()
-  @IsString()
-  @IsIn(['DIRECT', 'DELEGATE'])
-  inspectMethod?: string;
-
-  @ApiPropertyOptional({ description: '파괴검사 여부', default: 'N' })
-  @IsOptional()
-  @IsString()
-  @IsIn([...USE_YN_VALUES])
-  destructiveYn?: string;
-
-  @ApiPropertyOptional({ description: '기본 샘플 수량', default: 1 })
-  @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  sampleQty?: number;
-
-  @ApiPropertyOptional({ description: '사용 여부', default: 'Y' })
-  @IsOptional() @IsString() @IsIn([...USE_YN_VALUES])
-  useYn?: string;
+  @ApiPropertyOptional({ enum: YN_VALUES, default: 'Y' }) @IsOptional() @IsIn(YN_VALUES)
+  useYn?: 'Y' | 'N';
 }
 
-export class UpdateRoutingProcessDto extends PartialType(CreateRoutingProcessDto) {}
+export class UpdateRoutingProcessDto extends PartialType(
+  OmitType(CreateRoutingProcessDto, ['seq'] as const),
+) {}
 
-// ─── 양품조건 ───
-
-export class ConditionItemDto {
+export class ReorderRoutingProcessChangeDto {
   @ApiProperty() @Type(() => Number) @IsInt() @Min(1)
-  conditionSeq: number;
+  fromSeq: number;
 
-  @ApiPropertyOptional() @IsOptional() @IsString()
-  conditionCode?: string;
-
-  @ApiPropertyOptional() @IsOptional() @Type(() => Number) @IsNumber()
-  minValue?: number;
-
-  @ApiPropertyOptional() @IsOptional() @Type(() => Number) @IsNumber()
-  maxValue?: number;
-
-  @ApiPropertyOptional() @IsOptional() @IsString()
-  unit?: string;
-
-  @ApiPropertyOptional() @IsOptional() @IsString() @IsIn([...USE_YN_VALUES])
-  equipInterfaceYn?: string;
+  @ApiProperty() @Type(() => Number) @IsInt() @Min(1)
+  toSeq: number;
 }
 
-export class BulkSaveConditionDto {
-  @ApiProperty({ type: [ConditionItemDto] })
-  @IsArray() @ValidateNested({ each: true }) @Type(() => ConditionItemDto)
-  conditions: ConditionItemDto[];
+export class ReorderRoutingProcessesDto {
+  @ApiProperty({ type: [ReorderRoutingProcessChangeDto] })
+  @IsArray() @ValidateNested({ each: true }) @Type(() => ReorderRoutingProcessChangeDto)
+  changes: ReorderRoutingProcessChangeDto[];
 }
 
-export class MaterialItemDto {
-  @ApiProperty()
-  @IsString() @MaxLength(50)
+export class RoutingMaterialUpsertDto {
+  @ApiProperty() @IsString() @MaxLength(20)
   childItemCode: string;
 
-  @ApiPropertyOptional()
-  @IsOptional() @Type(() => Number) @IsNumber() @Min(1)
-  circuitId?: number;
+  @ApiProperty() @Type(() => Number) @IsNumber() @IsPositive()
+  allocQty: number;
 
-  @ApiPropertyOptional()
-  @IsOptional() @Type(() => Number) @IsNumber() @Min(0)
-  allocQty?: number;
+  @ApiPropertyOptional({ enum: ISSUE_METHODS, default: 'BACKFLUSH' })
+  @IsOptional() @IsIn(ISSUE_METHODS)
+  issueMethod?: 'BACKFLUSH' | 'PRE_ISSUE';
+}
 
-  @ApiPropertyOptional()
-  @IsOptional() @IsString() @MaxLength(20)
-  issueMethod?: string;
+export class RoutingMaterialDeleteDto {
+  @ApiProperty() @IsString() @MaxLength(20)
+  childItemCode: string;
 }
 
 export class BulkSaveRoutingMaterialDto {
-  @ApiProperty({ type: [MaterialItemDto] })
-  @IsArray() @ValidateNested({ each: true }) @Type(() => MaterialItemDto)
-  materials: MaterialItemDto[];
+  @ApiProperty({ type: [RoutingMaterialUpsertDto] })
+  @IsArray() @ValidateNested({ each: true }) @Type(() => RoutingMaterialUpsertDto)
+  upserts: RoutingMaterialUpsertDto[];
+
+  @ApiProperty({ type: [RoutingMaterialDeleteDto] })
+  @IsArray() @ValidateNested({ each: true }) @Type(() => RoutingMaterialDeleteDto)
+  deletes: RoutingMaterialDeleteDto[];
 }
