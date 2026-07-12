@@ -159,6 +159,9 @@ import { CustomerMaster } from '../entities/customer-master.entity';
         };
       },
     }),
+    // 은성 인증 엔티티 리포지토리를 전역 제공 — @UseGuards(JwtAuthGuard)를 쓰는
+    // 각 모듈이 IsysUser/IsysOrganization forFeature 없이도 가드 의존성을 해결한다.
+    TypeOrmModule.forFeature([IsysUser, IsysOrganization]),
   ],
   exports: [TypeOrmModule],
 })
