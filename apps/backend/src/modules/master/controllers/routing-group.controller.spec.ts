@@ -1,4 +1,4 @@
-import { RequestMethod } from '@nestjs/common';
+import { RequestMethod, ValidationPipe } from '@nestjs/common';
 import { GUARDS_METADATA, METHOD_METADATA, PATH_METADATA } from '@nestjs/common/constants';
 import { plainToInstance } from 'class-transformer';
 import { getMetadataStorage, validate } from 'class-validator';
@@ -65,6 +65,37 @@ describe('RoutingGroupController contract', () => {
 
 describe('routing DTO validation', () => {
   const errors = (type: new () => object, value: object) => validate(plainToInstance(type, value));
+  const pipe = new ValidationPipe({ transform: true, whitelist: true });
+  const throughPipe = (type: new () => object, value: object) => pipe.transform(value, {
+    type: 'body', metatype: type,
+  });
+
+  it('accepts numeric strings but rejects boolean, empty string, and null numeric inputs', async () => {
+    await expect(throughPipe(CreateRoutingProcessDto, {
+      seq: '10', workstageCode: 'SMT', standardTime: '0', setupTime: '1.5',
+    })).resolves.toMatchObject({ seq: 10, standardTime: 0, setupTime: 1.5 });
+
+    for (const value of [true, '', null]) {
+      await expect(throughPipe(CreateRoutingProcessDto, { seq: value, workstageCode: 'SMT' })).rejects.toThrow();
+      await expect(throughPipe(CreateRoutingProcessDto, { seq: 1, workstageCode: 'SMT', standardTime: value })).rejects.toThrow();
+      await expect(throughPipe(ReorderRoutingProcessesDto, { changes: [{ fromSeq: value, toSeq: 2 }] })).rejects.toThrow();
+      await expect(throughPipe(BulkSaveRoutingMaterialDto, {
+        upserts: [{ childItemCode: 'C', allocQty: value }], deletes: [],
+      })).rejects.toThrow();
+    }
+  });
+
+  it('rejects empty and whitespace-only required identifiers and names', async () => {
+    for (const field of ['routingCode', 'itemCode', 'routingName'] as const) {
+      await expect(throughPipe(CreateRoutingGroupDto, {
+        routingCode: 'R', itemCode: 'I', routingName: 'Name', [field]: '   ',
+      })).rejects.toThrow();
+    }
+    await expect(throughPipe(CreateRoutingProcessDto, { seq: 1, workstageCode: '   ' })).rejects.toThrow();
+    await expect(throughPipe(BulkSaveRoutingMaterialDto, {
+      upserts: [{ childItemCode: '   ', allocQty: 1 }], deletes: [],
+    })).rejects.toThrow();
+  });
 
   it('requires an ID_ITEM item code and exact Y/N values for a group', async () => {
     expect(await errors(CreateRoutingGroupDto, { routingCode: 'R1', routingName: 'R', useYn: 'YES' })).not.toHaveLength(0);
