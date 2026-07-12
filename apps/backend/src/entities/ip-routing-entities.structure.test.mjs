@@ -4,38 +4,69 @@ import test from 'node:test';
 
 const read = (name) => readFileSync(new URL(name, import.meta.url), 'utf8');
 
-test('IP routing entities map only the live Oracle tables and columns', () => {
-  const group = read('./routing-group.entity.ts');
-  const process = read('./routing-process.entity.ts');
-  const material = read('./routing-material.entity.ts');
+function mappings(source) {
+  return [...source.matchAll(/@(PrimaryColumn|Column|CreateDateColumn|UpdateDateColumn)\(\{([^}]*)\}\)\s*(\w+)!?:/g)]
+    .map(([, decorator, options, property]) => ({ decorator, options, property }));
+}
 
-  assert.match(group, /@Entity\(\{ name: 'IP_ROUTING_GROUPS' \}\)/);
-  for (const column of ['ORGANIZATION_ID', 'ROUTING_CODE', 'ITEM_CODE', 'ROUTING_NAME', 'DESCRIPTION', 'USE_YN', 'CREATED_BY', 'CREATED_AT', 'UPDATED_BY', 'UPDATED_AT']) {
-    assert.match(group, new RegExp(`name: '${column}'`));
-  }
+function assertEntity(source, table, expected) {
+  assert.match(source, new RegExp(`@Entity\\(\\{ name: '${table}' \\}\\)`));
+  const actual = mappings(source);
+  assert.deepEqual(actual.map(({ property }) => property), Object.keys(expected));
 
-  assert.match(process, /@Entity\(\{ name: 'IP_ROUTING_PROCESSES' \}\)/);
-  for (const [property, column] of [
-    ['processSeq', 'PROCESS_SEQ'], ['workstageCode', 'WORKSTAGE_CODE'],
-    ['subconSupplierCode', 'SUBCON_SUPPLIER_CODE'], ['standardTime', 'STANDARD_TIME'],
-  ]) {
-    assert.match(process, new RegExp(`name: '${column}'[^\\n]*\\n\\s*${property}[:!]`));
+  for (const mapping of actual) {
+    const spec = expected[mapping.property];
+    assert.equal(mapping.decorator, spec.decorator, `${mapping.property} decorator`);
+    for (const token of spec.options) {
+      assert.match(mapping.options, new RegExp(token), `${mapping.property} missing ${token}`);
+    }
   }
-  for (const removed of ['PROCESS_NAME', 'PROCESS_TYPE', 'EQUIP_TYPE', 'SAMPLE_INSPECT_YN', 'QC_SELF_YN', 'INSPECT_METHOD', 'DESTRUCTIVE_YN', 'ISSUE_LABEL_TYPE', 'SAMPLE_QTY']) {
-    assert.doesNotMatch(process, new RegExp(`name: '${removed}'`));
-  }
+}
 
-  assert.match(material, /@Entity\(\{ name: 'IP_ROUTING_MATERIALS' \}\)/);
-  assert.match(material, /name: 'PROCESS_SEQ'[^\n]*\n\s*processSeq[:!]/);
-  for (const removed of ['CIRCUIT_ID', 'USE_YN']) {
-    assert.doesNotMatch(material, new RegExp(`name: '${removed}'`));
-  }
+const audit = {
+  createdBy: { decorator: 'Column', options: ["name: 'CREATED_BY'", "type: 'varchar2'", 'length: 50', 'nullable: true'] },
+  createdAt: { decorator: 'CreateDateColumn', options: ["name: 'CREATED_AT'", "type: 'timestamp'", 'precision: 6', "default: \\(\\) => 'SYSTIMESTAMP'", 'nullable: false'] },
+  updatedBy: { decorator: 'Column', options: ["name: 'UPDATED_BY'", "type: 'varchar2'", 'length: 50', 'nullable: true'] },
+  updatedAt: { decorator: 'UpdateDateColumn', options: ["name: 'UPDATED_AT'", "type: 'timestamp'", 'precision: 6', "default: \\(\\) => 'SYSTIMESTAMP'", 'nullable: false'] },
+};
+
+test('IP routing entities exactly map the live Oracle schema', () => {
+  assertEntity(read('./routing-group.entity.ts'), 'IP_ROUTING_GROUPS', {
+    organizationId: { decorator: 'PrimaryColumn', options: ["name: 'ORGANIZATION_ID'", "type: 'number'", 'nullable: false'] },
+    routingCode: { decorator: 'PrimaryColumn', options: ["name: 'ROUTING_CODE'", "type: 'varchar2'", 'length: 50', 'nullable: false'] },
+    itemCode: { decorator: 'Column', options: ["name: 'ITEM_CODE'", "type: 'varchar2'", 'length: 20', 'nullable: false'] },
+    routingName: { decorator: 'Column', options: ["name: 'ROUTING_NAME'", "type: 'varchar2'", 'length: 200', 'nullable: false'] },
+    description: { decorator: 'Column', options: ["name: 'DESCRIPTION'", "type: 'varchar2'", 'length: 500', 'nullable: true'] },
+    useYn: { decorator: 'Column', options: ["name: 'USE_YN'", "type: 'varchar2'", 'length: 1', "default: 'Y'", 'nullable: false'] },
+    ...audit,
+  });
+
+  assertEntity(read('./routing-process.entity.ts'), 'IP_ROUTING_PROCESSES', {
+    organizationId: { decorator: 'PrimaryColumn', options: ["name: 'ORGANIZATION_ID'", "type: 'number'", 'nullable: false'] },
+    routingCode: { decorator: 'PrimaryColumn', options: ["name: 'ROUTING_CODE'", "type: 'varchar2'", 'length: 50', 'nullable: false'] },
+    processSeq: { decorator: 'PrimaryColumn', options: ["name: 'PROCESS_SEQ'", "type: 'number'", 'precision: 10', 'nullable: false'] },
+    workstageCode: { decorator: 'Column', options: ["name: 'WORKSTAGE_CODE'", "type: 'varchar2'", 'length: 10', 'nullable: false'] },
+    executionType: { decorator: 'Column', options: ["name: 'EXECUTION_TYPE'", "type: 'varchar2'", 'length: 20', "default: 'INTERNAL'", 'nullable: false'] },
+    jobOrderYn: { decorator: 'Column', options: ["name: 'JOB_ORDER_YN'", "type: 'varchar2'", 'length: 1', "default: 'Y'", 'nullable: false'] },
+    subconSupplierCode: { decorator: 'Column', options: ["name: 'SUBCON_SUPPLIER_CODE'", "type: 'varchar2'", 'length: 20', 'nullable: true'] },
+    standardTime: { decorator: 'Column', options: ["name: 'STANDARD_TIME'", "type: 'number'", 'precision: 10', 'scale: 4', 'nullable: true'] },
+    setupTime: { decorator: 'Column', options: ["name: 'SETUP_TIME'", "type: 'number'", 'precision: 10', 'scale: 4', 'nullable: true'] },
+    useYn: { decorator: 'Column', options: ["name: 'USE_YN'", "type: 'varchar2'", 'length: 1', "default: 'Y'", 'nullable: false'] },
+    ...audit,
+  });
+
+  assertEntity(read('./routing-material.entity.ts'), 'IP_ROUTING_MATERIALS', {
+    organizationId: { decorator: 'PrimaryColumn', options: ["name: 'ORGANIZATION_ID'", "type: 'number'", 'nullable: false'] },
+    routingCode: { decorator: 'PrimaryColumn', options: ["name: 'ROUTING_CODE'", "type: 'varchar2'", 'length: 50', 'nullable: false'] },
+    processSeq: { decorator: 'PrimaryColumn', options: ["name: 'PROCESS_SEQ'", "type: 'number'", 'precision: 10', 'nullable: false'] },
+    childItemCode: { decorator: 'PrimaryColumn', options: ["name: 'CHILD_ITEM_CODE'", "type: 'varchar2'", 'length: 20', 'nullable: false'] },
+    allocQty: { decorator: 'Column', options: ["name: 'ALLOC_QTY'", "type: 'number'", 'precision: 18', 'scale: 6', 'nullable: false'] },
+    issueMethod: { decorator: 'Column', options: ["name: 'ISSUE_METHOD'", "type: 'varchar2'", 'length: 20', "default: 'BACKFLUSH'", 'nullable: false'] },
+    ...audit,
+  });
 });
 
 test('routing module does not register excluded routing repositories', () => {
-  const databaseModule = read('../database/database.module.ts');
-  const routingModule = read('../modules/master/master-routing-group.module.ts');
-
-  assert.doesNotMatch(databaseModule, /ProcessQualityCondition/);
-  assert.doesNotMatch(routingModule, /ProcessQualityCondition|HarnessCircuitSpec/);
+  assert.doesNotMatch(read('../database/database.module.ts'), /ProcessQualityCondition/);
+  assert.doesNotMatch(read('../modules/master/master-routing-group.module.ts'), /ProcessQualityCondition|HarnessCircuitSpec/);
 });
