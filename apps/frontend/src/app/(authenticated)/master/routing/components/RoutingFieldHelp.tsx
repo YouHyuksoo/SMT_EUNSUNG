@@ -7,28 +7,21 @@ import type { InputProps } from "@/components/ui";
 import { HelpTooltip } from "@/components/shared";
 
 export const ROUTING_FIELD_HELP = {
-  // 라우팅 그룹 (ROUTING_GROUPS)
-  routingCode: { db: "ROUTING_GROUPS.ROUTING_CODE", description: "라우팅 그룹을 식별하는 고유 코드입니다. 등록 후에는 변경할 수 없습니다." },
-  routingName: { db: "ROUTING_GROUPS.ROUTING_NAME", description: "라우팅 그룹을 식별할 명칭입니다." },
-  itemCode: { db: "ROUTING_GROUPS.ITEM_CODE", description: "이 라우팅이 적용될 대상 품목입니다." },
-  description: { db: "ROUTING_GROUPS.DESCRIPTION", description: "라우팅 관리 참고 설명입니다." },
-  // 공정 순서 (ROUTING_PROCESSES)
-  seq: { db: "ROUTING_PROCESSES.SEQ", description: "공정의 진행 순서입니다. 보통 10 단위로 부여해 중간 삽입 여지를 둡니다." },
-  processCode: { db: "ROUTING_PROCESSES.PROCESS_CODE", description: "이 단계에서 수행할 공정을 선택합니다. 공정 마스터에서 등록된 코드입니다." },
-  processName: { db: "ROUTING_PROCESSES.PROCESS_NAME", description: "선택한 공정의 명칭입니다. 공정 코드 선택 시 자동으로 표시됩니다." },
-  processType: { db: "ROUTING_PROCESSES.PROCESS_TYPE", description: "선택한 공정의 유형입니다. 공정 코드 선택 시 자동으로 표시됩니다." },
-  equipType: { db: "ROUTING_PROCESSES.EQUIP_TYPE", description: "이 공정에서 사용할 설비 유형입니다." },
-  executionType: { db: "ROUTING_PROCESSES.EXECUTION_TYPE", description: "이 공정을 사내에서 수행할지 외주처로 보낼지 지정합니다." },
-  jobOrderYn: { db: "ROUTING_PROCESSES.JOB_ORDER_YN", description: "이 공정에 대해 생산 작업지시를 생성할지 지정합니다. 검사/참조 공정은 끄면 됩니다." },
-  subconVendorCode: { db: "ROUTING_PROCESSES.SUBCON_VENDOR_CODE", description: "외주 공정일 때 기본 외주처를 지정합니다." },
-  stdTime: { db: "ROUTING_PROCESSES.STD_TIME", description: "단위 작업 1회에 소요되는 표준 작업시간(초)입니다." },
-  setupTime: { db: "ROUTING_PROCESSES.SETUP_TIME", description: "공정 시작 전 준비(셋업)에 소요되는 시간(초)입니다." },
-  sampleInspectYn: { db: "ROUTING_PROCESSES.SAMPLE_INSPECT_YN", description: "이 공정에서 샘플검사(자주검사)를 수행할지 여부입니다." },
-  issueLabelType: { db: "ROUTING_PROCESSES.ISSUE_LABEL_TYPE", description: "이 공정 완료 시 발행할 라벨 종류입니다(없음/묶음/SG/FG). 한 공정은 한 종류만 발행합니다." },
-  labelIssue: {
-    db: "ROUTING_PROCESSES.ISSUE_LABEL_TYPE",
-    description: "이 공정 완료 시 발행할 라벨 종류를 지정합니다. 없음·묶음 추적 라벨·반제품(SFG)·완제품(FG) 중 하나를 선택합니다(한 공정 한 종류).",
-  },
+  routingCode: { db: "IP_ROUTING_GROUPS.ROUTING_CODE", description: "라우팅 그룹의 고유 코드입니다. 등록 후에는 변경할 수 없습니다." },
+  routingName: { db: "IP_ROUTING_GROUPS.ROUTING_NAME", description: "라우팅 그룹을 목록에서 식별할 명칭입니다." },
+  itemCode: { db: "IP_ROUTING_GROUPS.ITEM_CODE", description: "이 라우팅 그룹이 적용되는 상위 품목입니다. 품목마다 활성 라우팅은 하나만 둘 수 있습니다." },
+  description: { db: "IP_ROUTING_GROUPS.DESCRIPTION", description: "라우팅 그룹에 대한 참고 설명입니다." },
+  useYn: { db: "IP_ROUTING_GROUPS.USE_YN", description: "라우팅 그룹 또는 공정을 사용할지 지정합니다." },
+  seq: { db: "IP_ROUTING_PROCESSES.PROCESS_SEQ", description: "공정 진행 순번입니다. 신규 등록 시 보통 마지막 순번에 10을 더합니다." },
+  workstageCode: { db: "IP_ROUTING_PROCESSES.WORKSTAGE_CODE", description: "공정 마스터에서 선택한 공정 코드입니다. 공정명은 선택한 코드에서 표시됩니다." },
+  executionType: { db: "IP_ROUTING_PROCESSES.EXECUTION_TYPE", description: "INTERNAL은 내작, SUBCON은 외주 공정입니다." },
+  jobOrderYn: { db: "IP_ROUTING_PROCESSES.JOB_ORDER_YN", description: "이 공정에 생산 작업지시를 생성할지 지정합니다." },
+  subconSupplierCode: { db: "IP_ROUTING_PROCESSES.SUBCON_SUPPLIER_CODE", description: "SUBCON 외주 공정의 공급처입니다. 외주일 때 필수이며 INTERNAL이면 저장하지 않습니다." },
+  standardTime: { db: "IP_ROUTING_PROCESSES.STANDARD_TIME", description: "단위 작업에 필요한 표준시간입니다. 0 이상의 값을 입력합니다." },
+  setupTime: { db: "IP_ROUTING_PROCESSES.SETUP_TIME", description: "공정 시작 전 준비시간입니다. 0 이상의 값을 입력합니다." },
+  childItemCode: { db: "IP_ROUTING_MATERIALS.CHILD_ITEM_CODE", description: "현재 유효 BOM에서 가져온 하위 자재입니다. 라우팅 그룹 안에서 한 공정에만 배정할 수 있습니다." },
+  allocQty: { db: "IP_ROUTING_MATERIALS.ALLOC_QTY", description: "선택 공정에 배정할 투입수량입니다. 0보다 커야 합니다." },
+  issueMethod: { db: "IP_ROUTING_MATERIALS.ISSUE_METHOD", description: "BACKFLUSH는 실적 시 자동 차감, PRE_ISSUE는 작업 전 선투입입니다." },
 } as const;
 
 export type RoutingFieldKey = keyof typeof ROUTING_FIELD_HELP;
