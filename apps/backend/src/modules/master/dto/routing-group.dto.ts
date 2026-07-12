@@ -11,6 +11,7 @@ import {
   IsString,
   Matches,
   MaxLength,
+  Max,
   Min,
   ValidateIf,
   ValidateNested,
@@ -113,10 +114,10 @@ export class UpdateRoutingProcessDto {
 }
 
 export class ReorderRoutingProcessChangeDto {
-  @ApiProperty() @StrictNumber() @IsInt() @Min(1)
+  @ApiProperty() @StrictNumber() @IsInt() @Min(1) @Max(9_999_999_999)
   fromSeq: number;
 
-  @ApiProperty() @StrictNumber() @IsInt() @Min(1)
+  @ApiProperty() @StrictNumber() @IsInt() @Min(1) @Max(9_999_999_999)
   toSeq: number;
 }
 

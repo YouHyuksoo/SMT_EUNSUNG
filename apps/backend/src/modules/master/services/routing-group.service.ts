@@ -55,6 +55,15 @@ export class RoutingGroupService {
     throw error;
   }
 
+  private conflictIntegrity(error: unknown): never {
+    const message = error instanceof Error ? error.message : '';
+    const code = error && typeof error === 'object' && 'code' in error ? String(error.code) : '';
+    if (['ORA-00001', 'ORA-02291', 'ORA-02292'].some((value) => code === value || message.includes(value))) {
+      throw new ConflictException('동시 변경으로 데이터 무결성 충돌이 발생했습니다. 다시 조회 후 시도해 주세요.');
+    }
+    throw error;
+  }
+
   async createGroup(dto: CreateRoutingGroupDto, organizationId: number) {
     await this.ensureItem(dto.itemCode, organizationId);
     if (await this.groupRepo.findOne({ where: { routingCode: dto.routingCode, organizationId } })) throw new ConflictException(`이미 존재하는 라우팅 그룹: ${dto.routingCode}`);
@@ -117,7 +126,8 @@ export class RoutingGroupService {
   async deleteProcess(routingCode: string, seq: number, organizationId: number) {
     if (!await this.processRepo.findOne({ where: { routingCode, processSeq: seq, organizationId } })) throw new NotFoundException(`공정순서를 찾을 수 없습니다: ${routingCode}/${seq}`);
     if (await this.materialRepo.count({ where: { routingCode, processSeq: seq, organizationId } })) throw new ConflictException('투입자재가 있는 공정은 삭제할 수 없습니다.');
-    await this.processRepo.delete({ routingCode, processSeq: seq, organizationId });
+    try { await this.processRepo.delete({ routingCode, processSeq: seq, organizationId }); }
+    catch (error: unknown) { return this.conflictIntegrity(error); }
     return { routingCode, seq };
   }
 
@@ -126,12 +136,14 @@ export class RoutingGroupService {
     const current = rows.map((r) => r.processSeq).sort((a, b) => a - b);
     const from = dto.changes.map((c) => c.fromSeq).sort((a, b) => a - b);
     const to = dto.changes.map((c) => c.toSeq);
+    if (dto.changes.some((c) => c.fromSeq < 1 || c.fromSeq > 9_999_999_999 || c.toSeq < 1 || c.toSeq > 9_999_999_999)) throw new ConflictException('공정순번은 NUMBER(10) 양수 범위여야 합니다.');
     if (new Set(from).size !== from.length || new Set(to).size !== to.length || current.length !== from.length || current.some((v, i) => v !== from[i])) throw new ConflictException('현재 전체 공정의 정확한 순번 매핑이 필요합니다.');
     const occupied = new Set([...current, ...to]);
     let nextTemp = 9_999_999_999;
     const changes = dto.changes.map((change) => { while (occupied.has(nextTemp)) nextTemp--; if (nextTemp < 1) throw new ConflictException('충돌 없는 임시 공정순번을 만들 수 없습니다.'); occupied.add(nextTemp); return { ...change, tempSeq: nextTemp-- }; });
-    return this.tx.run(async ({ manager }) => {
-      await manager.query('SET CONSTRAINT FK_IP_RM_PROCESS DEFERRED');
+    try {
+      await this.tx.run(async ({ manager }) => {
+      await manager.query('SET CONSTRAINTS FK_IP_RM_PROCESS DEFERRED');
       for (const c of changes) {
         await manager.query('UPDATE IP_ROUTING_MATERIALS SET PROCESS_SEQ = :tempSeq WHERE ORGANIZATION_ID = :organizationId AND ROUTING_CODE = :routingCode AND PROCESS_SEQ = :fromSeq', { organizationId, routingCode, fromSeq: c.fromSeq, tempSeq: c.tempSeq } as never);
         await manager.query('UPDATE IP_ROUTING_PROCESSES SET PROCESS_SEQ = :tempSeq WHERE ORGANIZATION_ID = :organizationId AND ROUTING_CODE = :routingCode AND PROCESS_SEQ = :fromSeq', { organizationId, routingCode, fromSeq: c.fromSeq, tempSeq: c.tempSeq } as never);
@@ -140,8 +152,9 @@ export class RoutingGroupService {
         await manager.query('UPDATE IP_ROUTING_PROCESSES SET PROCESS_SEQ = :toSeq WHERE ORGANIZATION_ID = :organizationId AND ROUTING_CODE = :routingCode AND PROCESS_SEQ = :tempSeq', { organizationId, routingCode, tempSeq: c.tempSeq, toSeq: c.toSeq } as never);
         await manager.query('UPDATE IP_ROUTING_MATERIALS SET PROCESS_SEQ = :toSeq WHERE ORGANIZATION_ID = :organizationId AND ROUTING_CODE = :routingCode AND PROCESS_SEQ = :tempSeq', { organizationId, routingCode, tempSeq: c.tempSeq, toSeq: c.toSeq } as never);
       }
-      return this.findProcesses(routingCode, organizationId);
-    });
+      });
+    } catch (error: unknown) { this.conflictIntegrity(error); }
+    return this.findProcesses(routingCode, organizationId);
   }
 
   async findMaterials(routingCode: string, seq: number, organizationId: number) {
