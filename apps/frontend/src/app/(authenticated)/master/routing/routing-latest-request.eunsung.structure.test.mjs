@@ -19,3 +19,11 @@ test("existing material assignment can only be removed by confirmed explicit del
   assert.match(source,/setDeleteRow\(x\)/);
   assert.match(source,/ConfirmModal/);
 });
+test("switching process during save resets only the superseded save state",()=>{
+  const source=read("RoutingMaterialEditor.tsx");
+  assert.match(source,/saveGeneration/);
+  assert.match(source,/const saveToken=\+\+saveGeneration\.current/);
+  assert.match(source,/saveGeneration\.current\+\+/);
+  assert.match(source,/setSaving\(false\)/);
+  assert.match(source,/saveToken===saveGeneration\.current/);
+});
