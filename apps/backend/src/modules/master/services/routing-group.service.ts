@@ -1,6 +1,6 @@
 import { ConflictException, Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { EntityManager, In, LessThanOrEqual, MoreThanOrEqual, Repository } from 'typeorm';
+import { EntityManager, In, Repository } from 'typeorm';
 import { BomMaster } from '../../../entities/bom-master.entity';
 import { ItemMaster } from '../../../entities/item-master.entity';
 import { ProcessMaster } from '../../../entities/process-master.entity';
@@ -66,10 +66,11 @@ export class RoutingGroupService {
 
   private async lockRoutingGroup(manager: EntityManager, routingCode: string, organizationId: number) {
     const rows = await manager.query(
-      'SELECT ROUTING_CODE AS "routingCode" FROM IP_ROUTING_GROUPS WHERE ORGANIZATION_ID = :organizationId AND ROUTING_CODE = :routingCode FOR UPDATE',
+      'SELECT ROUTING_CODE AS "routingCode", ITEM_CODE AS "itemCode" FROM IP_ROUTING_GROUPS WHERE ORGANIZATION_ID = :organizationId AND ROUTING_CODE = :routingCode FOR UPDATE',
       { organizationId, routingCode } as never,
-    ) as { routingCode: string }[];
+    ) as { routingCode: string; itemCode: string }[];
     if (rows.length !== 1) throw new NotFoundException(`라우팅 그룹을 찾을 수 없습니다: ${routingCode}`);
+    return rows[0];
   }
 
   async createGroup(dto: CreateRoutingGroupDto, organizationId: number) {
@@ -204,33 +205,82 @@ export class RoutingGroupService {
 
   async findMaterials(routingCode: string, seq: number, organizationId: number) {
     const group = await this.findGroupByCode(routingCode, organizationId);
-    const today = new Date();
-    const [bom, assigned, items] = await Promise.all([
-      this.bomRepo.find({ where: { parentItemCode: group.itemCode, organizationId, validFrom: LessThanOrEqual(today), validTo: MoreThanOrEqual(today) }, order: { seq: 'ASC' } }),
-      this.materialRepo.find({ where: { routingCode, organizationId } }), this.itemRepo.find({ where: { organizationId } }),
+    const [bom, assigned] = await Promise.all([
+      this.findCurrentBom(this.bomRepo, group.itemCode, organizationId),
+      this.materialRepo.find({ where: { routingCode, organizationId } }),
     ]);
+    this.assertNoOverlappingCurrentBom(bom);
+    const codes = [...new Set([...bom.map((b) => b.childItemCode), ...assigned.map((m) => m.childItemCode)])];
+    const items = codes.length ? await this.itemRepo.find({ where: { organizationId, itemCode: In(codes) } }) : [];
     const bomMap = new Map(bom.map((b) => [b.childItemCode, b])); const itemMap = new Map(items.map((i) => [i.itemCode, i]));
-    return [...new Set([...bom.map((b) => b.childItemCode), ...assigned.map((m) => m.childItemCode)])].map((code) => {
-      const b = bomMap.get(code); const a = assigned.find((m) => m.childItemCode === code); const mine = a?.processSeq === seq;
-      return { childItemCode: code, childItemName: itemMap.get(code)?.itemName ?? null, bomQty: b?.qtyPer ?? null, allocQty: mine ? a?.allocQty : b?.qtyPer ?? null,
+    const assignedMap = new Map(assigned.map((m) => [m.childItemCode, m]));
+    return codes.map((code) => {
+      const b = bomMap.get(code); const a = assignedMap.get(code); const mine = a?.processSeq === seq;
+      return { childItemCode: code, childItemName: itemMap.get(code)?.itemName ?? null, bomQty: b?.bomQty ?? null, allocQty: mine ? a?.allocQty : b?.bomQty ?? null,
         bomMatchYn: b ? 'Y' : 'N', mismatchReason: b ? null : '현재 유효 BOM에 없음', assignedProcessSeq: a?.processSeq ?? null,
         selectableYn: !a || mine ? 'Y' : 'N', issueMethod: mine ? a?.issueMethod : 'BACKFLUSH' };
     });
   }
 
+  private async findCurrentBom(
+    source: Pick<Repository<BomMaster>, 'query'> | Pick<EntityManager, 'query'>,
+    parentItemCode: string,
+    organizationId: number,
+    childCodes?: string[],
+  ): Promise<{ childItemCode: string; bomQty: number }[]> {
+    const binds: Record<string, unknown> = { parentItemCode, organizationId };
+    let childFilter = '';
+    if (childCodes?.length) {
+      const placeholders = childCodes.map((code, index) => {
+        const key = `child${index}`; binds[key] = code; return `:${key}`;
+      });
+      childFilter = ` AND CHILD_ITEM_CODE IN (${placeholders.join(', ')})`;
+    }
+    return source.query(
+      `SELECT CHILD_ITEM_CODE AS "childItemCode", ITEM_UNIT_QTY AS "bomQty"
+         FROM ID_ENG_BOM
+        WHERE ORGANIZATION_ID = :organizationId
+          AND PARENT_ITEM_CODE = :parentItemCode
+          AND DATESET <= TRUNC(SYSDATE)
+          AND DATEEND >= TRUNC(SYSDATE)${childFilter}
+        ORDER BY SORT_SEQUENCE, CHILD_ITEM_CODE`,
+      binds as never,
+    ) as Promise<{ childItemCode: string; bomQty: number }[]>;
+  }
+
+  private assertNoOverlappingCurrentBom(rows: { childItemCode: string }[]) {
+    const seen = new Set<string>();
+    const duplicate = rows.find((row) => seen.has(row.childItemCode) || !seen.add(row.childItemCode));
+    if (duplicate) throw new UnprocessableEntityException(`현재 BOM 적용기간이 중복된 자재입니다: ${duplicate.childItemCode}`);
+  }
+
   async bulkSaveMaterials(routingCode: string, seq: number, dto: BulkSaveRoutingMaterialDto, organizationId: number) {
     const group = await this.findGroupByCode(routingCode, organizationId);
-    if (!await this.processRepo.findOne({ where: { routingCode, processSeq: seq, organizationId } })) throw new NotFoundException(`공정순서를 찾을 수 없습니다: ${routingCode}/${seq}`);
-    const codes = dto.upserts.map((u) => u.childItemCode); const today = new Date();
-    const bom = codes.length ? await this.bomRepo.find({ where: { parentItemCode: group.itemCode, childItemCode: In(codes), organizationId, validFrom: LessThanOrEqual(today), validTo: MoreThanOrEqual(today) } }) : [];
-    const valid = new Set(bom.map((b) => b.childItemCode)); const invalid = codes.find((c) => !valid.has(c));
-    if (invalid) throw new UnprocessableEntityException(`현재 유효 BOM에 없는 자재입니다: ${invalid}`);
-    const existing = codes.length ? await this.materialRepo.find({ where: { routingCode, childItemCode: In(codes), organizationId } }) : [];
-    const conflict = existing.find((m) => m.processSeq !== seq); if (conflict) throw new ConflictException(`자재가 공정 ${conflict.processSeq}에 이미 배정되어 있습니다: ${conflict.childItemCode}`);
-    return this.tx.run(async ({ manager }) => {
-      for (const d of dto.deletes) await manager.delete(RoutingMaterial, { routingCode, processSeq: seq, childItemCode: d.childItemCode, organizationId });
-      for (const u of dto.upserts) await manager.save(RoutingMaterial, manager.create(RoutingMaterial, { routingCode, processSeq: seq, childItemCode: u.childItemCode, allocQty: u.allocQty, issueMethod: u.issueMethod ?? 'BACKFLUSH', organizationId }));
-      return this.findMaterials(routingCode, seq, organizationId);
-    });
+    const upsertCodes = dto.upserts.map((u) => u.childItemCode);
+    const deleteCodes = dto.deletes.map((d) => d.childItemCode);
+    const allCodes = [...upsertCodes, ...deleteCodes];
+    if (new Set(allCodes).size !== allCodes.length) throw new ConflictException('동일 자재를 요청에서 중복 변경할 수 없습니다.');
+    const nonPositive = dto.upserts.find((u) => !Number.isFinite(u.allocQty) || u.allocQty <= 0);
+    if (nonPositive) throw new UnprocessableEntityException(`투입수량은 양수여야 합니다: ${nonPositive.childItemCode}`);
+    try {
+      await this.tx.run(async ({ manager }) => {
+        const lockedGroup = await this.lockRoutingGroup(manager, routingCode, organizationId);
+        if (!await manager.findOne(RoutingProcess, { where: { routingCode, processSeq: seq, organizationId } })) throw new NotFoundException(`공정순서를 찾을 수 없습니다: ${routingCode}/${seq}`);
+        const bom = upsertCodes.length ? await this.findCurrentBom(manager, lockedGroup.itemCode, organizationId, upsertCodes) : [];
+        this.assertNoOverlappingCurrentBom(bom);
+        const valid = new Set(bom.map((b) => b.childItemCode));
+        const invalid = upsertCodes.find((code) => !valid.has(code));
+        if (invalid) throw new UnprocessableEntityException(`현재 유효 BOM에 없는 자재입니다: ${invalid}`);
+        const existing = allCodes.length ? await manager.find(RoutingMaterial, { where: { routingCode, childItemCode: In(allCodes), organizationId } }) : [];
+        const ownership = existing.find((material) => material.processSeq !== seq);
+        if (ownership) throw new ConflictException(`자재가 공정 ${ownership.processSeq}에 이미 배정되어 있습니다: ${ownership.childItemCode}`);
+        for (const item of dto.deletes) await manager.delete(RoutingMaterial, { routingCode, processSeq: seq, childItemCode: item.childItemCode, organizationId });
+        for (const item of dto.upserts) await manager.save(RoutingMaterial, manager.create(RoutingMaterial, {
+          routingCode, processSeq: seq, childItemCode: item.childItemCode, allocQty: item.allocQty,
+          issueMethod: item.issueMethod ?? 'BACKFLUSH', organizationId,
+        }));
+      });
+    } catch (error: unknown) { this.conflictIntegrity(error); }
+    return this.findMaterials(routingCode, seq, organizationId);
   }
 }

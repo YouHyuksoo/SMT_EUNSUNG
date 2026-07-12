@@ -1,4 +1,4 @@
-import { ConflictException, NotFoundException } from '@nestjs/common';
+import { ConflictException, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { RoutingGroupService } from './routing-group.service';
 import { plainToInstance } from 'class-transformer';
 import { validateSync } from 'class-validator';
@@ -9,7 +9,7 @@ describe('RoutingGroupService group/process rules', () => {
     const dto = plainToInstance(ReorderRoutingProcessChangeDto, { fromSeq: seq, toSeq: seq });
     expect(validateSync(dto)).not.toHaveLength(0);
   });
-  const repo = () => ({ findOne: jest.fn(), find: jest.fn(), count: jest.fn(), create: jest.fn((v) => v), save: jest.fn(async (v) => v), update: jest.fn(), delete: jest.fn(), createQueryBuilder: jest.fn() });
+  const repo = () => ({ findOne: jest.fn(), find: jest.fn(), query: jest.fn(), count: jest.fn(), create: jest.fn((v) => v), save: jest.fn(async (v) => v), update: jest.fn(), delete: jest.fn(), createQueryBuilder: jest.fn() });
   let groupRepo: ReturnType<typeof repo>;
   let processRepo: ReturnType<typeof repo>;
   let workstageRepo: ReturnType<typeof repo>;
@@ -210,5 +210,90 @@ describe('RoutingGroupService group/process rules', () => {
     await expect(service.reorderProcesses('R1', { changes: [{ fromSeq: 10, toSeq: 20 }] }, 7)).rejects.toThrow(ConflictException);
     expect(rollback).toHaveBeenCalledTimes(1);
     expect(processRepo.find).not.toHaveBeenCalled();
+  });
+
+  describe('routing materials', () => {
+    beforeEach(() => {
+      groupRepo.findOne.mockResolvedValue({ routingCode: 'R1', itemCode: 'FG1' });
+      processRepo.findOne.mockResolvedValue({ routingCode: 'R1', processSeq: 10 });
+      bomRepo.query.mockResolvedValue([{ childItemCode: 'M1', bomQty: 2 }]);
+      materialRepo.find.mockResolvedValue([]);
+      itemRepo.find.mockResolvedValue([{ itemCode: 'M1', itemName: 'Material 1' }]);
+    });
+
+    it('returns the union of current BOM candidates and stale assignments with bounded item lookup', async () => {
+      materialRepo.find.mockResolvedValue([
+        { childItemCode: 'M1', processSeq: 10, allocQty: 1, issueMethod: 'PRE_ISSUE' },
+        { childItemCode: 'OLD', processSeq: 20, allocQty: 3, issueMethod: 'BACKFLUSH' },
+      ]);
+      itemRepo.find.mockResolvedValue([{ itemCode: 'M1', itemName: 'Material 1' }, { itemCode: 'OLD', itemName: 'Old' }]);
+
+      const result = await service.findMaterials('R1', 10, 7);
+
+      expect(result).toEqual([
+        expect.objectContaining({ childItemCode: 'M1', bomQty: 2, allocQty: 1, bomMatchYn: 'Y', assignedProcessSeq: 10, selectableYn: 'Y', issueMethod: 'PRE_ISSUE' }),
+        expect.objectContaining({ childItemCode: 'OLD', bomQty: null, allocQty: null, bomMatchYn: 'N', mismatchReason: '현재 유효 BOM에 없음', assignedProcessSeq: 20, selectableYn: 'N', issueMethod: 'BACKFLUSH' }),
+      ]);
+      expect(bomRepo.query.mock.calls[0][0]).toContain('DATESET <= TRUNC(SYSDATE)');
+      expect(bomRepo.query.mock.calls[0][0]).toContain('DATEEND >= TRUNC(SYSDATE)');
+      expect(itemRepo.find).toHaveBeenCalledWith({ where: { organizationId: 7, itemCode: expect.anything() } });
+    });
+
+    it('rejects overlapping current BOM rows for the same child', async () => {
+      bomRepo.query.mockResolvedValue([{ childItemCode: 'M1', bomQty: 2 }, { childItemCode: 'M1', bomQty: 3 }]);
+      await expect(service.findMaterials('R1', 10, 7)).rejects.toThrow(UnprocessableEntityException);
+    });
+
+    it('rejects duplicate mutation payload before writes', async () => {
+      await expect(service.bulkSaveMaterials('R1', 10, {
+        upserts: [{ childItemCode: 'M1', allocQty: 1 }], deletes: [{ childItemCode: 'M1' }],
+      } as any, 7)).rejects.toThrow(ConflictException);
+      expect(manager.delete).not.toHaveBeenCalled();
+      expect(manager.save).not.toHaveBeenCalled();
+    });
+
+    it('rejects mutation or deletion of material owned by another process with its sequence', async () => {
+      manager.query.mockImplementation(async (sql: string) => sql.includes('FOR UPDATE') ? [{ routingCode: 'R1' }] : []);
+      manager.findOne.mockResolvedValue({ processSeq: 10 });
+      manager.find = jest.fn(async () => [{ childItemCode: 'OLD', processSeq: 20 }]);
+      await expect(service.bulkSaveMaterials('R1', 10, { upserts: [], deletes: [{ childItemCode: 'OLD' }] } as any, 7))
+        .rejects.toThrow('공정 20');
+      expect(manager.delete).not.toHaveBeenCalled();
+    });
+
+    it('locks, explicitly deletes and upserts, then reads only after commit', async () => {
+      const events: string[] = [];
+      manager.query.mockImplementation(async (sql: string) => {
+        if (sql.includes('FOR UPDATE')) { events.push('lock'); return [{ routingCode: 'R1' }]; }
+        if (sql.includes('FROM ID_ENG_BOM')) return [{ childItemCode: 'M1', bomQty: 2 }];
+        return [];
+      });
+      manager.findOne.mockResolvedValue({ processSeq: 10 });
+      manager.find = jest.fn(async () => []);
+      manager.delete.mockImplementation(async () => { events.push('delete'); return { affected: 1 }; });
+      manager.save.mockImplementation(async () => { events.push('save'); return {}; });
+      tx.run.mockImplementation(async (fn: any) => { const value = await fn({ manager }); events.push('commit'); return value; });
+      const originalFind = service.findMaterials.bind(service);
+      jest.spyOn(service, 'findMaterials').mockImplementation(async (...args: any[]) => { events.push('read'); return originalFind(...args as [string, number, number]); });
+
+      await service.bulkSaveMaterials('R1', 10, {
+        upserts: [{ childItemCode: 'M1', allocQty: 1 }], deletes: [{ childItemCode: 'OLD' }],
+      } as any, 7);
+
+      expect(events.slice(0, 5)).toEqual(['lock', 'delete', 'save', 'commit', 'read']);
+    });
+
+    it('maps integrity races and does not perform a post-rollback read', async () => {
+      manager.query.mockImplementation(async (sql: string) => sql.includes('FOR UPDATE') ? [{ routingCode: 'R1' }] : [{ childItemCode: 'M1', bomQty: 2 }]);
+      manager.findOne.mockResolvedValue({ processSeq: 10 }); manager.find = jest.fn(async () => []);
+      manager.save.mockRejectedValue(Object.assign(new Error('ORA-00001'), { code: 'ORA-00001' }));
+      const rollback = jest.fn();
+      tx.run.mockImplementation(async (fn: any) => { try { return await fn({ manager }); } catch (error) { rollback(); throw error; } });
+      const read = jest.spyOn(service, 'findMaterials');
+      await expect(service.bulkSaveMaterials('R1', 10, { upserts: [{ childItemCode: 'M1', allocQty: 1 }], deletes: [] } as any, 7))
+        .rejects.toThrow(ConflictException);
+      expect(rollback).toHaveBeenCalledTimes(1);
+      expect(read).not.toHaveBeenCalled();
+    });
   });
 });
