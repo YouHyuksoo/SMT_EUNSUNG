@@ -89,9 +89,28 @@ export class CreateRoutingProcessDto {
   useYn?: 'Y' | 'N';
 }
 
-export class UpdateRoutingProcessDto extends PartialType(
-  OmitType(CreateRoutingProcessDto, ['seq'] as const),
-) {}
+export class UpdateRoutingProcessDto {
+  @ApiPropertyOptional() @IsOptional() @RequiredText() @MaxLength(10)
+  workstageCode?: string;
+
+  @ApiPropertyOptional({ enum: EXECUTION_TYPES }) @IsOptional() @IsIn(EXECUTION_TYPES)
+  executionType?: 'INTERNAL' | 'SUBCON';
+
+  @ApiPropertyOptional({ enum: YN_VALUES }) @IsOptional() @IsIn(YN_VALUES)
+  jobOrderYn?: 'Y' | 'N';
+
+  @ApiPropertyOptional() @IsOptional() @IsString() @MaxLength(20)
+  subconSupplierCode?: string;
+
+  @ApiPropertyOptional() @ValidateIf((_, value) => value !== undefined) @StrictNumber() @IsNumber() @Min(0)
+  standardTime?: number;
+
+  @ApiPropertyOptional() @ValidateIf((_, value) => value !== undefined) @StrictNumber() @IsNumber() @Min(0)
+  setupTime?: number;
+
+  @ApiPropertyOptional({ enum: YN_VALUES }) @IsOptional() @IsIn(YN_VALUES)
+  useYn?: 'Y' | 'N';
+}
 
 export class ReorderRoutingProcessChangeDto {
   @ApiProperty() @StrictNumber() @IsInt() @Min(1)

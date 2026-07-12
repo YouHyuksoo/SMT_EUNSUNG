@@ -126,6 +126,13 @@ describe('routing DTO validation', () => {
     ]) expect(properties).not.toContain(excluded);
   });
 
+  it('allows omitted update times but rejects null update times', async () => {
+    await expect(throughPipe(UpdateRoutingProcessDto, { workstageCode: 'SMT' }))
+      .resolves.toMatchObject({ workstageCode: 'SMT' });
+    await expect(throughPipe(UpdateRoutingProcessDto, { standardTime: null })).rejects.toThrow();
+    await expect(throughPipe(UpdateRoutingProcessDto, { setupTime: null })).rejects.toThrow();
+  });
+
   it('validates reorder changes as positive integer pairs', async () => {
     expect(await errors(ReorderRoutingProcessesDto, { changes: [{ fromSeq: 10, toSeq: 20 }] })).toHaveLength(0);
     expect(await errors(ReorderRoutingProcessesDto, { changes: [{ fromSeq: 0, toSeq: 20 }] })).not.toHaveLength(0);
