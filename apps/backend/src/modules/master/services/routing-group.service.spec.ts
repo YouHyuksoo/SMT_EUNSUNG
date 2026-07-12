@@ -25,6 +25,14 @@ describe('RoutingGroupService group/process rules', () => {
     groupRepo = repo(); processRepo = repo(); workstageRepo = repo(); itemRepo = repo();
     bomRepo = repo(); materialRepo = repo(); supplierRepo = repo();
     manager = { query: jest.fn(), update: jest.fn(), delete: jest.fn() };
+    manager.query.mockImplementation(async (sql: string) => {
+      if (sql.includes('FROM IP_ROUTING_GROUPS')) return [{ routingCode: 'R1' }];
+      if (sql.includes('FROM IP_ROUTING_PROCESSES p')) return [{ processSeq: 10 }, { processSeq: 20 }];
+      if (sql.includes('FROM IP_ROUTING_MATERIALS')) return [];
+      if (sql.startsWith('UPDATE IP_ROUTING_MATERIALS')) return 0;
+      if (sql.startsWith('UPDATE')) return 1;
+      return {};
+    });
     tx = { run: jest.fn(async (fn) => fn({ manager })) };
     service = new RoutingGroupService(groupRepo as any, processRepo as any, workstageRepo as any,
       itemRepo as any, bomRepo as any, materialRepo as any, supplierRepo as any, tx);
@@ -87,12 +95,16 @@ describe('RoutingGroupService group/process rules', () => {
 
   it('reorders processes and materials atomically with deferred named FK and fresh bind objects', async () => {
     processRepo.find.mockResolvedValue([{ processSeq: 10 }, { processSeq: 20 }]);
-    manager.query.mockResolvedValue({});
     await service.reorderProcesses('R1', { changes: [{ fromSeq: 10, toSeq: 20 }, { fromSeq: 20, toSeq: 10 }] }, 7);
     expect(tx.run).toHaveBeenCalledTimes(1);
-    expect(manager.query.mock.calls[0][0]).toBe('SET CONSTRAINTS FK_IP_RM_PROCESS DEFERRED');
+    expect(manager.query.mock.calls[0][0]).toContain('FROM IP_ROUTING_GROUPS');
+    expect(manager.query.mock.calls[0][0]).toContain('FOR UPDATE');
+    expect(manager.query.mock.calls[1][0]).toContain('FROM IP_ROUTING_PROCESSES p');
+    expect(manager.query.mock.calls[1][0]).toContain('FOR UPDATE');
+    expect(manager.query.mock.calls[2][0]).toContain('FROM IP_ROUTING_MATERIALS');
+    expect(manager.query.mock.calls[3][0]).toBe('SET CONSTRAINTS FK_IP_RM_PROCESS DEFERRED');
     expect(manager.query.mock.calls.filter((c: any[]) => /UPDATE IP_ROUTING_(PROCESSES|MATERIALS)/.test(c[0]))).toHaveLength(8);
-    const binds = manager.query.mock.calls.slice(1).map((c: any[]) => c[1]);
+    const binds = manager.query.mock.calls.filter((c: any[]) => c[1]).map((c: any[]) => c[1]);
     expect(new Set(binds.map((b: object) => b)).size).toBe(binds.length);
     expect(binds.every((b: any) => b.organizationId === 7 && b.routingCode === 'R1')).toBe(true);
   });
@@ -100,14 +112,29 @@ describe('RoutingGroupService group/process rules', () => {
   it('reads reordered processes only after the transaction has completed', async () => {
     const events: string[] = [];
     tx.run.mockImplementation(async (fn: any) => { events.push('tx-start'); await fn({ manager }); events.push('tx-end'); });
-    processRepo.find.mockImplementationOnce(async () => [{ processSeq: 10 }] as any).mockImplementationOnce(async () => { events.push('read'); return [{ processSeq: 20 }] as any; });
+    manager.query.mockImplementation(async (sql: string) => {
+      if (sql.includes('FROM IP_ROUTING_GROUPS')) return [{ routingCode: 'R1' }];
+      if (sql.includes('FROM IP_ROUTING_PROCESSES p')) return [{ processSeq: 10 }];
+      if (sql.includes('FROM IP_ROUTING_MATERIALS')) return [];
+      if (sql.startsWith('UPDATE IP_ROUTING_MATERIALS')) return 0;
+      if (sql.startsWith('UPDATE')) return 1;
+      return {};
+    });
+    processRepo.find.mockImplementation(async () => { events.push('read'); return [{ processSeq: 20 }] as any; });
     await expect(service.reorderProcesses('R1', { changes: [{ fromSeq: 10, toSeq: 20 }] }, 7)).resolves.toEqual([{ processSeq: 20 }]);
     expect(events).toEqual(['tx-start', 'tx-end', 'read']);
   });
 
   it('propagates a mid-reorder failure and performs no post-transaction read', async () => {
-    processRepo.find.mockResolvedValue([{ processSeq: 10 }, { processSeq: 20 }]);
-    manager.query.mockResolvedValueOnce({}).mockResolvedValueOnce({}).mockRejectedValueOnce(new Error('mid-update'));
+    manager.query.mockImplementation(async (sql: string) => {
+      if (sql.includes('FROM IP_ROUTING_GROUPS')) return [{ routingCode: 'R1' }];
+      if (sql.includes('FROM IP_ROUTING_PROCESSES p')) return [{ processSeq: 10 }, { processSeq: 20 }];
+      if (sql.includes('FROM IP_ROUTING_MATERIALS')) return [];
+      if (sql.startsWith('UPDATE IP_ROUTING_PROCESSES')) throw new Error('mid-update');
+      if (sql.startsWith('UPDATE IP_ROUTING_MATERIALS')) return 0;
+      if (sql.startsWith('UPDATE')) return 1;
+      return {};
+    });
     const commit = jest.fn(); const rollback = jest.fn();
     tx.run.mockImplementation(async (fn: any) => {
       try { const result = await fn({ manager }); await commit(); return result; }
@@ -116,11 +143,10 @@ describe('RoutingGroupService group/process rules', () => {
     await expect(service.reorderProcesses('R1', { changes: [{ fromSeq: 10, toSeq: 20 }, { fromSeq: 20, toSeq: 10 }] }, 7)).rejects.toThrow('mid-update');
     expect(rollback).toHaveBeenCalledTimes(1);
     expect(commit).not.toHaveBeenCalled();
-    expect(processRepo.find).toHaveBeenCalledTimes(1);
+    expect(processRepo.find).not.toHaveBeenCalled();
   });
 
   it.each([0, 10_000_000_000])('rejects out-of-range final sequence %s before transaction', async (toSeq) => {
-    processRepo.find.mockResolvedValue([{ processSeq: 10 }]);
     await expect(service.reorderProcesses('R1', { changes: [{ fromSeq: 10, toSeq }] }, 7)).rejects.toThrow(ConflictException);
     expect(tx.run).not.toHaveBeenCalled();
   });
@@ -132,15 +158,34 @@ describe('RoutingGroupService group/process rules', () => {
   });
 
   it('maps concurrent integrity errors during reorder to conflict', async () => {
-    processRepo.find.mockResolvedValue([{ processSeq: 10 }]);
-    manager.query.mockResolvedValueOnce({}).mockRejectedValueOnce(Object.assign(new Error('ORA-00001'), { code: 'ORA-00001' }));
+    manager.query.mockImplementation(async (sql: string) => {
+      if (sql.includes('FROM IP_ROUTING_GROUPS')) return [{ routingCode: 'R1' }];
+      if (sql.includes('FROM IP_ROUTING_PROCESSES p')) return [{ processSeq: 10 }];
+      if (sql.includes('FROM IP_ROUTING_MATERIALS')) return [];
+      throw Object.assign(new Error('ORA-00001'), { code: 'ORA-00001' });
+    });
     await expect(service.reorderProcesses('R1', { changes: [{ fromSeq: 10, toSeq: 20 }] }, 7)).rejects.toThrow(ConflictException);
   });
 
   it('rejects incomplete reorder mappings before opening a transaction', async () => {
-    processRepo.find.mockResolvedValue([{ processSeq: 10 }, { processSeq: 20 }]);
     await expect(service.reorderProcesses('R1', { changes: [{ fromSeq: 10, toSeq: 20 }] }, 7))
       .rejects.toThrow(ConflictException);
-    expect(tx.run).not.toHaveBeenCalled();
+    expect(tx.run).toHaveBeenCalledTimes(1);
+  });
+
+  it('rolls back with conflict when a concurrent change makes an update affect the wrong row count', async () => {
+    manager.query.mockImplementation(async (sql: string) => {
+      if (sql.includes('FROM IP_ROUTING_GROUPS')) return [{ routingCode: 'R1' }];
+      if (sql.includes('FROM IP_ROUTING_PROCESSES p')) return [{ processSeq: 10 }];
+      if (sql.includes('FROM IP_ROUTING_MATERIALS')) return [{ processSeq: 10, materialCount: 1 }];
+      if (sql.startsWith('UPDATE IP_ROUTING_MATERIALS')) return 0;
+      if (sql.startsWith('UPDATE')) return 1;
+      return {};
+    });
+    const rollback = jest.fn();
+    tx.run.mockImplementation(async (fn: any) => { try { return await fn({ manager }); } catch (error) { rollback(); throw error; } });
+    await expect(service.reorderProcesses('R1', { changes: [{ fromSeq: 10, toSeq: 20 }] }, 7)).rejects.toThrow(ConflictException);
+    expect(rollback).toHaveBeenCalledTimes(1);
+    expect(processRepo.find).not.toHaveBeenCalled();
   });
 });

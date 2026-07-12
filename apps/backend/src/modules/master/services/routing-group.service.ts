@@ -132,26 +132,60 @@ export class RoutingGroupService {
   }
 
   async reorderProcesses(routingCode: string, dto: ReorderRoutingProcessesDto, organizationId: number) {
-    const rows = await this.processRepo.find({ where: { routingCode, organizationId }, select: ['processSeq'] });
-    const current = rows.map((r) => r.processSeq).sort((a, b) => a - b);
-    const from = dto.changes.map((c) => c.fromSeq).sort((a, b) => a - b);
-    const to = dto.changes.map((c) => c.toSeq);
     if (dto.changes.some((c) => c.fromSeq < 1 || c.fromSeq > 9_999_999_999 || c.toSeq < 1 || c.toSeq > 9_999_999_999)) throw new ConflictException('공정순번은 NUMBER(10) 양수 범위여야 합니다.');
-    if (new Set(from).size !== from.length || new Set(to).size !== to.length || current.length !== from.length || current.some((v, i) => v !== from[i])) throw new ConflictException('현재 전체 공정의 정확한 순번 매핑이 필요합니다.');
-    const occupied = new Set([...current, ...to]);
-    let nextTemp = 9_999_999_999;
-    const changes = dto.changes.map((change) => { while (occupied.has(nextTemp)) nextTemp--; if (nextTemp < 1) throw new ConflictException('충돌 없는 임시 공정순번을 만들 수 없습니다.'); occupied.add(nextTemp); return { ...change, tempSeq: nextTemp-- }; });
     try {
       await this.tx.run(async ({ manager }) => {
-      await manager.query('SET CONSTRAINTS FK_IP_RM_PROCESS DEFERRED');
-      for (const c of changes) {
-        await manager.query('UPDATE IP_ROUTING_MATERIALS SET PROCESS_SEQ = :tempSeq WHERE ORGANIZATION_ID = :organizationId AND ROUTING_CODE = :routingCode AND PROCESS_SEQ = :fromSeq', { organizationId, routingCode, fromSeq: c.fromSeq, tempSeq: c.tempSeq } as never);
-        await manager.query('UPDATE IP_ROUTING_PROCESSES SET PROCESS_SEQ = :tempSeq WHERE ORGANIZATION_ID = :organizationId AND ROUTING_CODE = :routingCode AND PROCESS_SEQ = :fromSeq', { organizationId, routingCode, fromSeq: c.fromSeq, tempSeq: c.tempSeq } as never);
-      }
-      for (const c of changes) {
-        await manager.query('UPDATE IP_ROUTING_PROCESSES SET PROCESS_SEQ = :toSeq WHERE ORGANIZATION_ID = :organizationId AND ROUTING_CODE = :routingCode AND PROCESS_SEQ = :tempSeq', { organizationId, routingCode, tempSeq: c.tempSeq, toSeq: c.toSeq } as never);
-        await manager.query('UPDATE IP_ROUTING_MATERIALS SET PROCESS_SEQ = :toSeq WHERE ORGANIZATION_ID = :organizationId AND ROUTING_CODE = :routingCode AND PROCESS_SEQ = :tempSeq', { organizationId, routingCode, tempSeq: c.tempSeq, toSeq: c.toSeq } as never);
-      }
+        const routeRows = await manager.query(
+          'SELECT ROUTING_CODE AS "routingCode" FROM IP_ROUTING_GROUPS WHERE ORGANIZATION_ID = :organizationId AND ROUTING_CODE = :routingCode FOR UPDATE',
+          { organizationId, routingCode } as never,
+        ) as { routingCode: string }[];
+        if (routeRows.length !== 1) throw new ConflictException(`라우팅 그룹을 찾을 수 없습니다: ${routingCode}`);
+
+        const processRows = await manager.query(
+          'SELECT p.PROCESS_SEQ AS "processSeq" FROM IP_ROUTING_PROCESSES p WHERE p.ORGANIZATION_ID = :organizationId AND p.ROUTING_CODE = :routingCode ORDER BY p.PROCESS_SEQ FOR UPDATE',
+          { organizationId, routingCode } as never,
+        ) as { processSeq: number }[];
+        const materialRows = await manager.query(
+          'SELECT PROCESS_SEQ AS "processSeq", COUNT(*) AS "materialCount" FROM IP_ROUTING_MATERIALS WHERE ORGANIZATION_ID = :organizationId AND ROUTING_CODE = :routingCode GROUP BY PROCESS_SEQ',
+          { organizationId, routingCode } as never,
+        ) as { processSeq: number; materialCount: number }[];
+        const materialCounts = new Map(materialRows.map((row) => [Number(row.processSeq), Number(row.materialCount)]));
+        const current = processRows.map((row) => Number(row.processSeq)).sort((a, b) => a - b);
+        const from = dto.changes.map((change) => change.fromSeq).sort((a, b) => a - b);
+        const to = dto.changes.map((change) => change.toSeq);
+        if (new Set(from).size !== from.length || new Set(to).size !== to.length || current.length !== from.length || current.some((value, index) => value !== from[index])) {
+          throw new ConflictException('현재 전체 공정의 정확한 순번 매핑이 필요합니다.');
+        }
+        const occupied = new Set([...current, ...to]);
+        let nextTemp = 9_999_999_999;
+        const changes = dto.changes.map((change) => {
+          while (occupied.has(nextTemp)) nextTemp--;
+          if (nextTemp < 1) throw new ConflictException('충돌 없는 임시 공정순번을 만들 수 없습니다.');
+          occupied.add(nextTemp);
+          return { ...change, tempSeq: nextTemp--, materialCount: materialCounts.get(change.fromSeq) ?? 0 };
+        });
+        const assertAffected = (result: unknown, expected: number) => {
+          const affected = typeof result === 'number'
+            ? result
+            : result && typeof result === 'object' && 'rowsAffected' in result
+              ? Number(result.rowsAffected)
+              : -1;
+          if (affected !== expected) throw new ConflictException('재정렬 중 동시 변경이 감지되었습니다. 다시 조회 후 시도해 주세요.');
+        };
+
+        await manager.query('SET CONSTRAINTS FK_IP_RM_PROCESS DEFERRED');
+        for (const c of changes) {
+          const materialResult = await manager.query('UPDATE IP_ROUTING_MATERIALS SET PROCESS_SEQ = :tempSeq WHERE ORGANIZATION_ID = :organizationId AND ROUTING_CODE = :routingCode AND PROCESS_SEQ = :fromSeq', { organizationId, routingCode, fromSeq: c.fromSeq, tempSeq: c.tempSeq } as never);
+          assertAffected(materialResult, c.materialCount);
+          const processResult = await manager.query('UPDATE IP_ROUTING_PROCESSES SET PROCESS_SEQ = :tempSeq WHERE ORGANIZATION_ID = :organizationId AND ROUTING_CODE = :routingCode AND PROCESS_SEQ = :fromSeq', { organizationId, routingCode, fromSeq: c.fromSeq, tempSeq: c.tempSeq } as never);
+          assertAffected(processResult, 1);
+        }
+        for (const c of changes) {
+          const processResult = await manager.query('UPDATE IP_ROUTING_PROCESSES SET PROCESS_SEQ = :toSeq WHERE ORGANIZATION_ID = :organizationId AND ROUTING_CODE = :routingCode AND PROCESS_SEQ = :tempSeq', { organizationId, routingCode, tempSeq: c.tempSeq, toSeq: c.toSeq } as never);
+          assertAffected(processResult, 1);
+          const materialResult = await manager.query('UPDATE IP_ROUTING_MATERIALS SET PROCESS_SEQ = :toSeq WHERE ORGANIZATION_ID = :organizationId AND ROUTING_CODE = :routingCode AND PROCESS_SEQ = :tempSeq', { organizationId, routingCode, tempSeq: c.tempSeq, toSeq: c.toSeq } as never);
+          assertAffected(materialResult, c.materialCount);
+        }
       });
     } catch (error: unknown) { this.conflictIntegrity(error); }
     return this.findProcesses(routingCode, organizationId);
