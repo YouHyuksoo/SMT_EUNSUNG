@@ -52,8 +52,18 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
       component = mod.getPageComponent();
       break;
     }
+    case "/master/customer": {
+      const mod = await import("./page-registries/master__customer.generated");
+      component = mod.getPageComponent();
+      break;
+    }
     case "/master/equip": {
       const mod = await import("./page-registries/master__equip.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/master/item-supplier": {
+      const mod = await import("./page-registries/master__item-supplier.generated");
       component = mod.getPageComponent();
       break;
     }
@@ -77,18 +87,23 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
       component = mod.getPageComponent();
       break;
     }
-    case "/master/process-capa": {
-      const mod = await import("./page-registries/master__process-capa.generated");
-      component = mod.getPageComponent();
-      break;
-    }
     case "/master/prod-line": {
       const mod = await import("./page-registries/master__prod-line.generated");
       component = mod.getPageComponent();
       break;
     }
+    case "/master/purchase-price": {
+      const mod = await import("./page-registries/master__purchase-price.generated");
+      component = mod.getPageComponent();
+      break;
+    }
     case "/master/routing": {
       const mod = await import("./page-registries/master__routing.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/master/sale-price": {
+      const mod = await import("./page-registries/master__sale-price.generated");
       component = mod.getPageComponent();
       break;
     }

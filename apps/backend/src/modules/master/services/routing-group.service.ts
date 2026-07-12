@@ -125,7 +125,7 @@ export class RoutingGroupService {
     const { page = 1, limit = 50, search, useYn, itemType } = query;
     const skip = (page - 1) * limit;
     const qb = this.groupRepo.createQueryBuilder('g')
-      .leftJoin('ITEM_MASTERS', 'p', 'g.ITEM_CODE = p.ITEM_CODE AND g.ORGANIZATION_ID = p.ORGANIZATION_ID')
+      .leftJoin('ID_ITEM', 'p', 'g.ITEM_CODE = p.ITEM_CODE AND g.ORGANIZATION_ID = p.ORGANIZATION_ID')
       .addSelect('p.ITEM_NAME', 'itemName')
       .addSelect('p.ITEM_TYPE', 'itemType');
 
@@ -390,7 +390,7 @@ export class RoutingGroupService {
       }),
       this.partRepo.find({
         where: { itemCode: In(childCodes), ...this.tenantWhere(organizationId) },
-        select: ['itemCode', 'itemName', 'itemNo', 'itemType', 'unit'],
+        select: ['itemCode', 'itemName', 'itemNo', 'itemType', 'itemUom'],
       }),
     ]);
 
@@ -415,7 +415,7 @@ export class RoutingGroupService {
         childItemName: part?.itemName ?? null,
         childItemNo: part?.itemNo ?? null,
         childItemType: part?.itemType ?? null,
-        unit: part?.unit ?? null,
+        itemUom: part?.itemUom ?? null,
         qtyPer: bom.qtyPer,
         selected: !!material,
         circuitId: material?.circuitId ?? null,

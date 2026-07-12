@@ -1,0 +1,53 @@
+version: 1
+project: eunsung-mes
+
+frontend:
+  framework: nextjs-app-router
+  workspace: apps/frontend
+  pageRoots:
+    - apps/frontend/src/app/(authenticated)
+  routeFile: page.tsx
+
+registration:
+  frontendMenu: apps/frontend/src/config/menuConfig.ts
+  backendMenuSeed: apps/backend/src/seeds/menu-config.json
+  permissionFiles:
+    - apps/backend/src/modules/menu-categories/utils/menu-code-validator.ts
+    - apps/backend/src/modules/menu-categories/utils/default-menu-category-layout.ts
+  routeRegistries:
+    - apps/frontend/src/components/layout/pageRegistry.generated.ts
+    - apps/frontend/src/components/layout/page-registries/
+  generatedFiles:
+    - apps/frontend/src/components/layout/pageRegistry.generated.ts
+    - apps/frontend/src/components/layout/page-registries/
+  localeFiles:
+    - apps/frontend/src/locales/ko.json
+    - apps/frontend/src/locales/en.json
+    - apps/frontend/src/locales/zh.json
+    - apps/frontend/src/locales/vi.json
+  helpManifest: apps/frontend/public/help/manifest.json
+
+commands:
+  generators:
+    - node apps/frontend/scripts/gen-page-registry.mjs
+  validators:
+    - pnpm --filter @eunsung/frontend check:pages
+    - pnpm --filter @eunsung/frontend typecheck
+    - pnpm --filter @eunsung/frontend test
+
+runtime:
+  startServers: false
+  frontendUrl: http://localhost:3100
+  backendUrl: http://localhost:3003
+  browserTool: Codex-in-chrome
+
+data:
+  database: Oracle
+  connector: oracle-db
+  verifySchemaBeforeQueryChanges: true
+
+requiredChecks:
+  - menu click changes URL, active menu, top tab, and body without refresh
+  - switching away and back preserves the expected keep-alive state
+  - direct route open and refresh render the same page
+  - browser console and failed network requests contain no new page errors

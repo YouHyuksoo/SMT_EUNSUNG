@@ -4,17 +4,12 @@ import { useState, type MutableRefObject } from "react";
 import type { TFunction } from "i18next";
 import { Edit2, ImageIcon, Trash2 } from "lucide-react";
 import type { ColumnDef } from "@tanstack/react-table";
+import { ComCodeBadge } from "@/components/ui";
 import { createPartColumns as createBasePartColumns } from "@/lib/table-utils";
-import { Part, PART_TYPE_COLORS } from "./types";
-
-type ComCodeMap = Record<string, { codeName?: string } | undefined>;
+import { Part } from "./types";
 
 interface CreatePartGridColumnsOptions {
   t: TFunction;
-  typeLabels: Record<string, string>;
-  productTypeLabels: Record<string, string>;
-  defectModelGroupLabels: Record<string, string>;
-  unitMap: ComCodeMap;
   isPanelOpen: boolean;
   panelAnimateRef: MutableRefObject<boolean>;
   guard: (action: () => void) => void;
@@ -38,10 +33,6 @@ function PartImageThumb({ src, alt }: { src: string; alt: string }) {
 
 export function createPartGridColumns({
   t,
-  typeLabels,
-  productTypeLabels,
-  defectModelGroupLabels,
-  unitMap,
   isPanelOpen,
   panelAnimateRef,
   guard,
@@ -101,31 +92,24 @@ export function createPartGridColumns({
       header: t("master.part.type"),
       size: 70,
       meta: { filterType: "multi" as const },
-      cell: ({ getValue }) => {
-        const v = getValue() as Part["itemType"];
-        const cfg = PART_TYPE_COLORS[v];
-        return <span className={`px-2 py-0.5 text-xs rounded-full ${cfg?.color || ""}`}>{typeLabels[v] || v}</span>;
-      },
+      cell: ({ getValue }) => <ComCodeBadge groupCode="ITEM_TYPE" code={getValue() as string} />,
     },
     {
-      accessorKey: "productType",
-      header: t("master.part.productType", "품목그룹"),
+      accessorKey: "itemClass",
+      header: t("master.part.itemClass", "품목분류"),
       size: 80,
       meta: { filterType: "multi" as const },
-      cell: ({ getValue }) => {
-        const v = getValue() as string;
-        return <span className="text-xs">{productTypeLabels[v] || v || "-"}</span>;
-      },
+      cell: ({ getValue }) => <ComCodeBadge groupCode="ITEM_CLASS" code={getValue() as string} />,
     },
     { accessorKey: "modelName", header: t("master.part.modelName", "차종"), size: 100, meta: { filterType: "text" as const }, cell: ({ getValue }) => getValue() || "-" },
     {
-      accessorKey: "defectModelGroup",
-      header: t("master.part.defectModelGroup", "모델구분"),
+      accessorKey: "modelSuffix",
+      header: t("master.part.modelSuffix", "모델접미"),
       size: 80,
       meta: { filterType: "multi" as const },
       cell: ({ getValue }) => {
         const v = getValue() as string;
-        return <span className="text-xs">{defectModelGroupLabels[v] || v || "-"}</span>;
+        return <span className="text-xs">{v || "-"}</span>;
       },
     },
     { accessorKey: "spec", header: t("master.part.spec"), size: 130, meta: { filterType: "text" as const } },
@@ -133,15 +117,10 @@ export function createPartGridColumns({
     { accessorKey: "markingText", header: t("master.part.markingText", "마킹문구"), size: 120, meta: { filterType: "text" as const }, cell: ({ getValue }) => getValue() || "-" },
     { accessorKey: "custPartNo", header: t("master.part.custPartNo", "고객품번"), size: 120, meta: { filterType: "text" as const }, cell: ({ getValue }) => getValue() || "-" },
     {
-      accessorKey: "unit",
+      accessorKey: "itemUom",
       header: t("master.part.unit"),
       size: 90,
-      cell: ({ getValue }) => {
-        const code = getValue() as string;
-        if (!code) return "-";
-        const name = unitMap[code]?.codeName;
-        return name ? `${code} - ${name}` : code;
-      },
+      cell: ({ getValue }) => <ComCodeBadge groupCode="ITEM_UOM" code={getValue() as string} />,
     },
     { accessorKey: "color", header: t("master.part.color", "색상"), size: 80, meta: { filterType: "text" as const }, cell: ({ getValue }) => getValue() || "-" },
     { accessorKey: "boxQty", header: t("master.part.boxQty", "박스장입수량"), size: 90, meta: { filterType: "number" as const }, cell: ({ getValue }) => { const v = getValue() as number; return v ? v.toLocaleString() : "-"; } },
@@ -152,7 +131,7 @@ export function createPartGridColumns({
     { accessorKey: "packUnit", header: t("master.part.palletUnit", "팔레트구성단위"), size: 90, meta: { filterType: "number" as const }, cell: ({ getValue }) => { const v = getValue() as number; return v ? v.toLocaleString() : "-"; } },
     { accessorKey: "storageLocation", header: t("master.part.storageLocation", "품목고정 적재로케이션"), size: 130, cell: ({ getValue }) => getValue() || "-" },
     {
-      accessorKey: "useYn",
+      accessorKey: "mesDisplayYn",
       header: t("common.useYn", "사용여부"),
       size: 60,
       meta: { filterType: "multi" as const },

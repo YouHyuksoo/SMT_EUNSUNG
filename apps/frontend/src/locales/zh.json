@@ -188,6 +188,7 @@
     "master.equip": "设备管理",
     "master.code": "代码管理",
     "master.partner": "合作伙伴管理",
+    "master.customer": "客户主数据",
     "master.prodLine": "生产线管理",
     "master.process": "工序管理",
     "master.routing": "工艺路线管理",
@@ -237,7 +238,9 @@
     "master.company": "公司管理",
     "master.label": "标签管理",
     "master.vendorBarcode": "供应商条码映射",
-    "master.processCapa": "工序产能",
+    "master.purchasePrice": "采购单价管理",
+    "master.itemSupplier": "物料供应商管理",
+    "master.salePrice": "产品销售单价管理",
     "matInventory": "材料库存管理",
     "productInventory": "产品库存管理",
     "inventory": "库存管理",
@@ -291,7 +294,6 @@
     "crimping.mold": "模具管理",
     "production": "生产管理",
     "production.monthlyPlan": "产品生产计划",
-    "production.simulation": "计划模拟",
     "production.specificationSetup": "产品图纸管理",
     "production.kitting": "实绩录入（子工序）",
     "production.inputAssembly": "组装实绩输入",
@@ -4352,26 +4354,10 @@
     "scriptPath": "脚本路径",
     "scriptArgs": "执行参数"
   },
-  "processCapa": {
-    "title": "工序产能管理",
-    "description": "管理工序×产品的生产能力。",
-    "addCapa": "添加产能",
-    "processCode": "工序",
-    "itemCode": "产品",
-    "stdTactTime": "标准节拍时间(秒)",
-    "stdUph": "标准UPH",
-    "workerCnt": "作业人员数",
-    "boardCnt": "板/夹具数",
-    "equipCnt": "设备数",
-    "setupTime": "换型时间(分)",
-    "balanceEff": "平衡效率(%)",
-    "dailyCapa": "日产能",
-    "stats": {
-      "total": "全部",
-      "equipBased": "设备型",
-      "workerBased": "人力型",
-      "inactive": "停用"
-    }
+  "salePrice": { "title": "产品销售单价管理", "description": "按客户管理产品销售单价。" },
+  "purchasePrice": {
+    "title": "采购单价管理",
+    "description": "按物料和供应商管理采购单价及有效期。"
   },
   "workflow": {
     "title": "工作流程",

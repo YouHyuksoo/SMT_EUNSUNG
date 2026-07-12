@@ -1,6 +1,6 @@
 /**
  * @file src/app/(authenticated)/master/part/components/PartFormModal.tsx
- * @description 품목 추가/수정 모달 - API 연동 (Oracle TM_ITEMS 기준 10개 핵심 컬럼)
+ * @description ID_ITEM 품목 추가/수정 모달
  *
  * 초보자 가이드:
  * 1. **기본정보**: 품목코드, 품번, 품명, 유형, 규격, 리비전 등
@@ -43,13 +43,13 @@ export default function PartFormModal({ isOpen, onClose, editingPart, onSave }: 
     itemName: editingPart?.itemName || "",
     itemNo: editingPart?.itemNo || "",
     custPartNo: editingPart?.custPartNo || "",
-    itemType: (editingPart?.itemType || "RAW_MATERIAL") as Part["itemType"],
-    productType: editingPart?.productType || "",
+    itemType: editingPart?.itemType || "T",
+    itemClass: editingPart?.itemClass || "*",
     modelName: editingPart?.modelName || "",
     spec: editingPart?.spec || "",
     rev: editingPart?.rev || "",
     markingText: editingPart?.markingText || "",
-    unit: editingPart?.unit || "EA",
+    itemUom: editingPart?.itemUom || "EA",
     color: editingPart?.color || "",
     boxQty: editingPart?.boxQty ?? 0,
     minPackQty: editingPart?.minPackQty ?? 0,
@@ -57,7 +57,7 @@ export default function PartFormModal({ isOpen, onClose, editingPart, onSave }: 
     safetyStock: editingPart?.safetyStock ?? 0,
     expiryDate: editingPart?.expiryDate ?? 0,
     expiryExtDays: editingPart?.expiryExtDays ?? 0,
-    useYn: editingPart?.useYn || "Y",
+    mesDisplayYn: editingPart?.mesDisplayYn || "Y",
     packUnit: editingPart?.packUnit ?? 0,
     storageLocation: editingPart?.storageLocation || "",
     remark: editingPart?.remark || "",
@@ -80,7 +80,7 @@ export default function PartFormModal({ isOpen, onClose, editingPart, onSave }: 
         ...form,
         itemNo: form.itemNo,
         custPartNo: form.custPartNo || undefined,
-        productType: form.productType || undefined,
+        itemClass: form.itemClass,
         modelName: form.modelName || undefined,
         spec: form.spec || undefined,
         rev: form.rev || undefined,
@@ -92,7 +92,7 @@ export default function PartFormModal({ isOpen, onClose, editingPart, onSave }: 
         lotUnitQty: form.lotUnitQty || undefined,
         minPackQty: form.minPackQty,
         expiryExtDays: form.expiryExtDays,
-        useYn: form.useYn,
+        mesDisplayYn: form.mesDisplayYn,
       };
 
       if (isEdit && editingPart?.itemCode) {
@@ -134,18 +134,18 @@ export default function PartFormModal({ isOpen, onClose, editingPart, onSave }: 
           value={form.itemName} onChange={e => setField("itemName", e.target.value)} fullWidth />
         <FieldComCodeSelect field="itemType" groupCode="ITEM_TYPE" includeAll={false} label={t("master.part.type")}
           value={form.itemType} onChange={v => setField("itemType", v)} fullWidth required />
-        <FieldComCodeSelect field="productType" groupCode="PRODUCT_TYPE" includeAll={false}
-          label={t("master.part.productType", "제품유형")}
-          value={form.productType} onChange={v => setField("productType", v)} fullWidth />
+        <FieldComCodeSelect field="itemClass" groupCode="ITEM_CLASS" includeAll={false}
+          label={t("master.part.itemClass", "품목분류")}
+          value={form.itemClass} onChange={v => setField("itemClass", v)} fullWidth />
         <FieldInput field="modelName" label={t("master.part.modelName", "차종")}
           value={form.modelName} onChange={e => setField("modelName", e.target.value)} fullWidth />
         <FieldInput field="spec" label={t("master.part.spec")} wrapperClassName="col-span-2"
           value={form.spec} onChange={e => setField("spec", e.target.value)} fullWidth />
-        <FieldInput field="unit" label={t("master.part.unit")}
-          value={form.unit} onChange={e => setField("unit", e.target.value)} fullWidth />
+        <FieldComCodeSelect field="itemUom" groupCode="ITEM_UOM" includeAll={false} label={t("master.part.unit")}
+          value={form.itemUom} onChange={v => setField("itemUom", v)} fullWidth />
         <FieldInput field="color" label={t("master.part.color", "색상")}
           value={form.color} onChange={e => setField("color", e.target.value)} fullWidth />
-        <FieldYnRadio field="useYn" label={t("common.useYn", "사용여부")} value={form.useYn} onChange={v => setField("useYn", v)} />
+        <FieldYnRadio field="mesDisplayYn" label={t("common.useYn", "사용여부")} value={form.mesDisplayYn} onChange={v => setField("mesDisplayYn", v)} />
       </div>
 
       {/* 수량 섹션 */}

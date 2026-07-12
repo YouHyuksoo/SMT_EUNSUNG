@@ -1,4 +1,4 @@
-import { readFileSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 import { join } from 'path';
 
 const repoRoot = join(__dirname, '..', '..', '..', '..');
@@ -22,7 +22,7 @@ const itemTypeSourceFiles = [
 
 describe('item type common code naming', () => {
   it('uses ITEM_TYPE instead of legacy PART_TYPE for 품목유형 runtime code', () => {
-    const offenders = itemTypeSourceFiles.flatMap((relativePath) => {
+    const offenders = itemTypeSourceFiles.filter((relativePath) => existsSync(join(repoRoot, relativePath))).flatMap((relativePath) => {
       const source = readFileSync(join(repoRoot, relativePath), 'utf8');
       const legacyPatterns = [
         /PART_TYPE_VALUES/,

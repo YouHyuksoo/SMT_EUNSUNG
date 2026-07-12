@@ -1,0 +1,11 @@
+import {ApiProperty,ApiPropertyOptional,PartialType} from '@nestjs/swagger';import {Type} from 'class-transformer';import {IsNumber,IsOptional,IsString,MaxLength,Min} from 'class-validator';import {PaginationQueryDto} from '../../../common/dto/base-query.dto';
+export class CreateCustomerMasterDto{
+ @ApiProperty()@IsString()@MaxLength(20)customerCode:string;@ApiProperty()@IsString()@MaxLength(100)customerName:string;@ApiProperty()@IsString()@MaxLength(100)customerNameEng:string;
+ @ApiPropertyOptional()@IsOptional()@IsString()@MaxLength(50)businessNo?:string;@ApiPropertyOptional()@IsOptional()@IsString()@MaxLength(50)businessTaxNo?:string;@ApiPropertyOptional()@IsOptional()@IsString()@MaxLength(20)businessCategory?:string;
+ @ApiProperty()@IsString()@MaxLength(1)businessStatus:string;@ApiProperty()@IsString()@MaxLength(1)businessType:string;@ApiProperty()@IsString()@MaxLength(20)paymentType:string;@ApiProperty()@IsString()@MaxLength(1)creditGrade:string;
+ @ApiPropertyOptional()@IsOptional()@IsString()@MaxLength(20)customerChargeName?:string;@ApiPropertyOptional()@IsOptional()@IsString()@MaxLength(20)ownerName?:string;@ApiProperty()@IsString()@MaxLength(100)address:string;@ApiProperty()@IsString()@MaxLength(40)telNo:string;
+ @ApiPropertyOptional()@IsOptional()@IsString()@MaxLength(40)faxNo?:string;@ApiProperty()@IsString()dateset:string;@ApiProperty()@IsString()dateend:string;@ApiPropertyOptional()@IsOptional()@IsString()@MaxLength(40)handphoneNo?:string;@ApiPropertyOptional()@IsOptional()@IsString()@MaxLength(100)homePage?:string;@ApiPropertyOptional()@IsOptional()@IsString()@MaxLength(50)emailAddress?:string;
+ @ApiPropertyOptional()@IsOptional()@Type(()=>Number)@IsNumber()@Min(0)creditAmount?:number;@ApiPropertyOptional()@IsOptional()@IsString()@MaxLength(3)nationCode?:string;@ApiPropertyOptional()@IsOptional()@IsString()@MaxLength(20)saleCharge?:string;
+}
+export class UpdateCustomerMasterDto extends PartialType(CreateCustomerMasterDto){}
+export class CustomerMasterQueryDto extends PaginationQueryDto{@ApiPropertyOptional()@IsOptional()@IsString()search?:string;@ApiPropertyOptional()@IsOptional()@IsString()businessStatus?:string;@ApiPropertyOptional()@IsOptional()@IsString()paymentType?:string;}

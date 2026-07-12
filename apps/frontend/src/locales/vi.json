@@ -188,6 +188,7 @@
     "master.equip": "Quản lý thiết bị",
     "master.code": "Quản lý mã",
     "master.partner": "Quản lý đối tác",
+    "master.customer": "Dữ liệu khách hàng",
     "master.prodLine": "Quản lý dây chuyền",
     "master.process": "Quản lý công đoạn",
     "master.routing": "Quản lý định tuyến",
@@ -237,7 +238,9 @@
     "master.company": "Quản lý công ty",
     "master.label": "Quản lý nhãn",
     "master.vendorBarcode": "Ánh xạ mã vạch nhà cung cấp",
-    "master.processCapa": "Năng lực công đoạn",
+    "master.purchasePrice": "Quản lý đơn giá mua",
+    "master.itemSupplier": "Quản lý nhà cung cấp theo mặt hàng",
+    "master.salePrice": "Quản lý đơn giá bán sản phẩm",
     "matInventory": "Quản lý kho vật tư",
     "productInventory": "Quản lý kho sản phẩm",
     "inventory": "Quản lý kho",
@@ -291,7 +294,6 @@
     "crimping.mold": "Quản lý khuôn",
     "production": "Quản lý sản xuất",
     "production.monthlyPlan": "Kế hoạch sản xuất sản phẩm",
-    "production.simulation": "Mô phỏng kế hoạch",
     "production.specificationSetup": "Quản lý bản vẽ sản phẩm",
     "production.kitting": "Nhập kết quả (công đoạn phụ)",
     "production.inputAssembly": "Nhập Thực Tích Lắp Ráp",
@@ -4352,26 +4354,10 @@
     "scriptPath": "Đường dẫn script",
     "scriptArgs": "Tham số"
   },
-  "processCapa": {
-    "title": "Quản lý năng lực công đoạn",
-    "description": "Quản lý năng lực sản xuất theo công đoạn và sản phẩm.",
-    "addCapa": "Thêm CAPA",
-    "processCode": "Công đoạn",
-    "itemCode": "Sản phẩm",
-    "stdTactTime": "Tact time chuẩn (giây)",
-    "stdUph": "UPH chuẩn",
-    "workerCnt": "Số công nhân",
-    "boardCnt": "Số board/jig",
-    "equipCnt": "Số thiết bị",
-    "setupTime": "Thời gian chuyển đổi (phút)",
-    "balanceEff": "Hiệu suất cân bằng (%)",
-    "dailyCapa": "CAPA ngày",
-    "stats": {
-      "total": "Tổng",
-      "equipBased": "Thiết bị",
-      "workerBased": "Nhân lực",
-      "inactive": "Ngưng"
-    }
+  "salePrice": { "title": "Quản lý đơn giá bán sản phẩm", "description": "Quản lý đơn giá bán sản phẩm theo khách hàng." },
+  "purchasePrice": {
+    "title": "Quản lý đơn giá mua",
+    "description": "Quản lý đơn giá mua và thời hạn áp dụng theo mặt hàng và nhà cung cấp."
   },
   "workflow": {
     "title": "Quy trình",

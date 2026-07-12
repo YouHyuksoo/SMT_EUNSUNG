@@ -12,17 +12,17 @@ import { PaginationQueryDto } from '../../../common/dto/base-query.dto';
 export class CreatePartnerDto {
   @ApiProperty({ description: '거래처 코드', example: 'SUP-001' })
   @IsString()
-  @MaxLength(50)
+  @MaxLength(20)
   partnerCode: string;
 
   @ApiProperty({ description: '거래처명', example: '대한전선' })
   @IsString()
-  @MaxLength(200)
+  @MaxLength(100)
   partnerName: string;
 
-  @ApiProperty({ description: '거래처 유형', enum: PARTNER_TYPE_VALUES })
+  @ApiProperty({ description: '거래처 유형', enum: ['SUPPLIER'] })
   @IsString()
-  @IsIn([...PARTNER_TYPE_VALUES])
+  @IsIn(['SUPPLIER'])
   partnerType: string;
 
   @ApiPropertyOptional({ description: '사업자번호', example: '123-45-67890' })
@@ -34,19 +34,19 @@ export class CreatePartnerDto {
   @ApiPropertyOptional({ description: '대표자명' })
   @IsOptional()
   @IsString()
-  @MaxLength(50)
+  @MaxLength(20)
   ceoName?: string;
 
   @ApiPropertyOptional({ description: '주소' })
   @IsOptional()
   @IsString()
-  @MaxLength(500)
+  @MaxLength(100)
   address?: string;
 
   @ApiPropertyOptional({ description: '전화번호' })
   @IsOptional()
   @IsString()
-  @MaxLength(20)
+  @MaxLength(40)
   tel?: string;
 
   @ApiPropertyOptional({ description: '팩스번호' })
@@ -58,13 +58,13 @@ export class CreatePartnerDto {
   @ApiPropertyOptional({ description: '이메일' })
   @IsOptional()
   @IsString()
-  @MaxLength(100)
+  @MaxLength(50)
   email?: string;
 
   @ApiPropertyOptional({ description: '담당자명' })
   @IsOptional()
   @IsString()
-  @MaxLength(50)
+  @MaxLength(20)
   contactPerson?: string;
 
   @ApiPropertyOptional({ description: '품질등급', example: 'A' })

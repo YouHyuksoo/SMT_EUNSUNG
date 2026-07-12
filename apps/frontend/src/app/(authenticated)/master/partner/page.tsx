@@ -5,15 +5,15 @@
  * @description 거래처 마스터 관리 페이지 - DB API 연동
  *
  * 초보자 가이드:
- * 1. **거래처 유형**: SUPPLIER(공급상) / CUSTOMER(고객)
- * 2. **검색/필터**: 유형별 필터 + 텍스트 검색 (API 서버측 처리)
+ * 1. **거래처 유형**: ICOM_SUPPLIER 기반 공급사
+ * 2. **검색/필터**: 텍스트 + 사용여부 검색 (API 서버측 처리)
  * 3. **CRUD**: 추가/수정은 우측 슬라이드 패널, 삭제는 소프트삭제
  */
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Plus, Search, RefreshCw, Building2 } from "lucide-react";
 import { Card, CardContent, Button, Input, ConfirmModal } from "@/components/ui";
-import { ComCodeSelect, UseYnSelect } from "@/components/shared";
+import { UseYnSelect } from "@/components/shared";
 import DataGrid from "@/components/data-grid/DataGrid";
 import api from "@/services/api";
 import { useUnsavedGuard } from "@/hooks/useUnsavedGuard";
@@ -27,7 +27,6 @@ function PartnerPage() {
   const [partners, setPartners] = useState<Partner[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchText, setSearchText] = useState("");
-  const [typeFilter, setTypeFilter] = useState("");
   const [useYnFilter, setUseYnFilter] = useState("");
 
   const [isPanelOpen, setIsPanelOpen] = useState(false);
@@ -43,7 +42,6 @@ function PartnerPage() {
     try {
       const params: Record<string, string> = { limit: "5000" };
       if (searchText) params.search = searchText;
-      if (typeFilter) params.partnerType = typeFilter;
       if (useYnFilter) params.useYn = useYnFilter;
       const res = await api.get("/master/partners", { params });
       if (res.data.success) setPartners(res.data.data || []);
@@ -52,7 +50,7 @@ function PartnerPage() {
     } finally {
       setLoading(false);
     }
-  }, [searchText, typeFilter, useYnFilter]);
+  }, [searchText, useYnFilter]);
 
   useEffect(() => { fetchPartners(); }, [fetchPartners]);
 
@@ -147,18 +145,14 @@ function PartnerPage() {
                   <Input placeholder={t("master.partner.searchPlaceholder")} value={searchText}
                     onChange={(e) => setSearchText(e.target.value)} leftIcon={<Search className="w-4 h-4" />} fullWidth />
                 </div>
-                <div className="w-40 flex-shrink-0">
-                  <ComCodeSelect groupCode="PARTNER_TYPE" value={typeFilter} onChange={setTypeFilter}
-                    labelPrefix={t("master.partner.partnerType")} fullWidth />
-                </div>
                 <div className="w-36 flex-shrink-0">
                   <UseYnSelect value={useYnFilter} onChange={setUseYnFilter} fullWidth />
                 </div>
               </div>
             }
 
-          sqlQuery={`SELECT *\nFROM PARTNER_MASTERS\nWHERE COMPANY = '40'\n  AND PLANT_CD = '1000'\nORDER BY CREATED_AT DESC`}
-          sqlFilters={{ search: searchText, partnerType: typeFilter, useYn: useYnFilter }}/>
+          sqlQuery={`SELECT *\nFROM ICOM_SUPPLIER\nWHERE ORGANIZATION_ID = :organizationId\nORDER BY SUPPLIER_CODE`}
+          sqlFilters={{ search: searchText, useYn: useYnFilter }}/>
         </CardContent></Card>
       </div>
 

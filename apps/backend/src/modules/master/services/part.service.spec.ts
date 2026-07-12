@@ -39,7 +39,7 @@ describe('PartService', () => {
   });
 
   describe('findAll', () => {
-    it('should apply useYn filter to the query builder', async () => {
+    it('should apply mesDisplayYn filter to the query builder', async () => {
       const qb = {
         andWhere: jest.fn().mockReturnThis(),
         orderBy: jest.fn().mockReturnThis(),
@@ -53,10 +53,10 @@ describe('PartService', () => {
       await target.findAll({
         page: 1,
         limit: 20,
-        useYn: 'Y',
+        mesDisplayYn: 'Y',
       } as any, 1);
 
-      expect(qb.andWhere).toHaveBeenCalledWith('p.useYn = :useYn', { useYn: 'Y' });
+      expect(qb.andWhere).toHaveBeenCalledWith('p.mesDisplayYn = :mesDisplayYn', { mesDisplayYn: 'Y' });
     });
   });
 
@@ -231,16 +231,16 @@ describe('PartService', () => {
   describe('findByType', () => {
     it('should return active parts of given type', async () => {
       // Arrange
-      const parts = [{ itemCode: 'ITEM01', itemType: 'RM' }] as ItemMaster[];
+      const parts = [{ itemCode: 'ITEM01', itemType: 'T' }] as ItemMaster[];
       mockRepo.find.mockResolvedValue(parts);
 
       // Act
-      const result = await target.findByType('RM', 1);
+      const result = await target.findByType('T', 1);
 
       // Assert
       expect(result).toEqual(parts);
       expect(mockRepo.find).toHaveBeenCalledWith({
-        where: { itemType: 'RM', useYn: 'Y', organizationId: 1 },
+        where: { itemType: 'T', mesDisplayYn: 'Y', organizationId: 1 },
         order: { itemCode: 'asc' },
       });
     });

@@ -7,18 +7,18 @@ import type { InputProps } from "@/components/ui";
 import { ComCodeSelect, HelpTooltip } from "@/components/shared";
 
 export const PARTNER_FIELD_HELP = {
-  partnerCode: { db: "PARTNER_MASTERS.PARTNER_CODE", description: "MES 내부에서 거래처를 식별하는 고유 코드입니다. 등록 후에는 변경할 수 없습니다." },
-  partnerType: { db: "PARTNER_MASTERS.PARTNER_TYPE", description: "고객사, 공급사, 제조사 등 거래처 유형 분류입니다." },
-  partnerName: { db: "PARTNER_MASTERS.PARTNER_NAME", description: "거래처(회사) 이름입니다." },
-  bizNo: { db: "PARTNER_MASTERS.BIZ_NO", description: "사업자등록번호입니다." },
-  ceoName: { db: "PARTNER_MASTERS.CEO_NAME", description: "거래처 대표자 이름입니다." },
-  address: { db: "PARTNER_MASTERS.ADDRESS", description: "거래처 주소입니다." },
-  tel: { db: "PARTNER_MASTERS.TEL", description: "거래처 대표 전화번호입니다." },
-  fax: { db: "PARTNER_MASTERS.FAX", description: "거래처 팩스번호입니다." },
-  email: { db: "PARTNER_MASTERS.EMAIL", description: "거래처 대표 이메일 주소입니다." },
-  contactPerson: { db: "PARTNER_MASTERS.CONTACT_PERSON", description: "거래처 담당자(연락 담당) 이름입니다." },
-  remark: { db: "PARTNER_MASTERS.REMARK", description: "거래처 관리 참고사항입니다." },
-  useYn: { db: "PARTNER_MASTERS.USE_YN", description: "신규 조회, 선택, 사용 가능 여부입니다." },
+  partnerCode: { db: "ICOM_SUPPLIER.SUPPLIER_CODE", description: "공급사를 식별하는 고유 코드입니다. 등록 후에는 변경할 수 없습니다." },
+  partnerType: { db: "ICOM_SUPPLIER", description: "공급사 테이블을 사용하므로 SUPPLIER로 고정됩니다." },
+  partnerName: { db: "ICOM_SUPPLIER.SUPPLIER_NAME", description: "공급사 이름입니다." },
+  bizNo: { db: "ICOM_SUPPLIER.BUSINESS_NO", description: "사업자등록번호입니다." },
+  ceoName: { db: "ICOM_SUPPLIER.OWNER_NAME", description: "대표자 이름입니다." },
+  address: { db: "ICOM_SUPPLIER.ADDRESS", description: "공급사 주소입니다." },
+  tel: { db: "ICOM_SUPPLIER.TEL_NO", description: "대표 전화번호입니다." },
+  fax: { db: "ICOM_SUPPLIER.FAX_NO", description: "팩스번호입니다." },
+  email: { db: "ICOM_SUPPLIER.EMAIL_ADDRESS", description: "대표 이메일 주소입니다." },
+  contactPerson: { db: "ICOM_SUPPLIER.SUPPLIER_CHARGE_NAME", description: "연락 담당자 이름입니다." },
+  remark: { db: "ICOM_SUPPLIER (미지원)", description: "ICOM_SUPPLIER에는 비고 컬럼이 없어 저장되지 않습니다." },
+  useYn: { db: "ICOM_SUPPLIER.BUSINESS_STATUS", description: "A는 사용, 그 외 값은 미사용으로 표시합니다." },
 } as const;
 
 export type PartnerFieldKey = keyof typeof PARTNER_FIELD_HELP;

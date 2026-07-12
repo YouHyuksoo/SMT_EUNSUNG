@@ -2,7 +2,7 @@
 
 /**
  * @file src/app/(authenticated)/master/part/page.tsx
- * @description 품목 마스터 관리 페이지 - DB API 연동 (Oracle TM_ITEMS 기준 보강)
+ * @description ID_ITEM 품목 기준정보 관리 페이지
  *
  * 초보자 가이드:
  * 1. **품목 목록**: GET /master/parts API로 실제 DB 데이터 조회
@@ -14,7 +14,6 @@ import { useTranslation } from "react-i18next";
 import { Plus, Search, Package, RefreshCw, Download } from "lucide-react";
 import { Card, CardContent, Button, Input, ConfirmModal } from "@/components/ui";
 import { ComCodeSelect, UseYnSelect } from "@/components/shared";
-import { useComCodeMap, useComCodeOptions } from "@/hooks/useComCode";
 import DataGrid from "@/components/data-grid/DataGrid";
 import api from "@/services/api";
 import { Part } from "./types";
@@ -31,7 +30,7 @@ export default function PartPage() {
   const [searchText, setSearchText] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [partTypeFilter, setPartTypeFilter] = useState("");
-  const [useYnFilter, setUseYnFilter] = useState("");
+  const [mesDisplayYnFilter, setMesDisplayYnFilter] = useState("");
 
   const [erpSyncing, setErpSyncing] = useState(false);
   const [erpSyncConfirmOpen, setErpSyncConfirmOpen] = useState(false);
@@ -54,7 +53,7 @@ export default function PartPage() {
     try {
       const params: Record<string, string | number> = { limit: 5000 };
       if (partTypeFilter) params.itemType = partTypeFilter;
-      if (useYnFilter) params.useYn = useYnFilter;
+      if (mesDisplayYnFilter) params.mesDisplayYn = mesDisplayYnFilter;
       if (debouncedSearch) params.search = debouncedSearch;
 
       const partsRes = await api.get("/master/parts", { params });
@@ -68,7 +67,7 @@ export default function PartPage() {
     } finally {
       setLoading(false);
     }
-  }, [partTypeFilter, useYnFilter, debouncedSearch]);
+  }, [partTypeFilter, mesDisplayYnFilter, debouncedSearch]);
 
   /** 초기 로드 */
   useEffect(() => { fetchParts(); }, [fetchParts]);
@@ -88,37 +87,8 @@ export default function PartPage() {
     }
   }, [deleteTarget, fetchParts]);
 
-  const typeLabels = useMemo<Record<string, string>>(() => ({
-    RAW_MATERIAL: t("inventory.stock.raw", "원자재"),
-    SEMI_PRODUCT: t("inventory.stock.wip", "반제품"),
-    FINISHED: t("inventory.stock.fg", "완제품"),
-    CONSUMABLE: t("inventory.stock.consumable", "소모품"),
-  }), [t]);
-
-  // 제품유형: 코드마스터(PRODUCT_TYPE) 기반 — 화면 하드코딩 금지
-  const productTypeOptions = useComCodeOptions("PRODUCT_TYPE");
-  const productTypeLabels = useMemo<Record<string, string>>(() => {
-    const map: Record<string, string> = {};
-    productTypeOptions.forEach((o) => { map[o.value] = o.label; });
-    return map;
-  }, [productTypeOptions]);
-  const defectModelGroupOptions = useComCodeOptions("DEFECT_MODEL_GROUP");
-  const defectModelGroupLabels = useMemo<Record<string, string>>(() => {
-    const map: Record<string, string> = {};
-    defectModelGroupOptions.forEach((o) => { map[o.value] = o.label; });
-    return map;
-  }, [defectModelGroupOptions]);
-
-  // 단위 공통코드 맵 (예: EA→개) — 단위 컬럼에 "코드 - 명칭" 표시용
-  const unitMap = useComCodeMap("UNIT_TYPE");
-
-
   const columns = useMemo(() => createPartGridColumns({
     t,
-    typeLabels,
-    productTypeLabels,
-    defectModelGroupLabels,
-    unitMap,
     isPanelOpen,
     panelAnimateRef,
     guard,
@@ -127,7 +97,7 @@ export default function PartPage() {
       setIsPanelOpen(true);
     },
     onDeletePart: setDeleteTarget,
-  }), [t, typeLabels, productTypeLabels, defectModelGroupLabels, unitMap, isPanelOpen, guard]);
+  }), [t, isPanelOpen, guard]);
 
   const handlePanelClose = useCallback(() => {
     setIsPanelOpen(false);
@@ -194,7 +164,7 @@ export default function PartPage() {
             enableColumnPinning
             exportFileName={t("master.part.title")}
             onRowClick={(row) => { if (isPanelOpen) guard(() => setEditingPart(row)); }}
-            rowClassName={(row) => row.useYn === "N" ? "!text-red-500 dark:!text-red-400" : ""}
+            rowClassName={(row) => row.mesDisplayYn === "N" ? "!text-red-500 dark:!text-red-400" : ""}
             toolbarLeft={
               <div className="flex flex-wrap gap-3 flex-1 min-w-0">
                 <div className="flex-1 min-w-0">
@@ -206,12 +176,12 @@ export default function PartPage() {
                   <ComCodeSelect groupCode="ITEM_TYPE" value={partTypeFilter} onChange={handleTypeFilter} labelPrefix={t("master.part.type")} fullWidth />
                 </div>
                 <div className="w-36 flex-shrink-0">
-                  <UseYnSelect value={useYnFilter} onChange={setUseYnFilter} fullWidth />
+                  <UseYnSelect value={mesDisplayYnFilter} onChange={setMesDisplayYnFilter} fullWidth />
                 </div>
               </div>
             }
 
-          sqlQuery={`SELECT *\nFROM ITEM_MASTERS\nWHERE COMPANY = '40'\n  AND PLANT_CD = '1000'\nORDER BY CREATED_AT DESC`}/>
+          sqlQuery={`SELECT *\nFROM ID_ITEM\nWHERE ORGANIZATION_ID = :organizationId\nORDER BY ITEM_CODE`}/>
         </CardContent></Card>
       </div>
 

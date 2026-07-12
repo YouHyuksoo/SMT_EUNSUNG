@@ -188,6 +188,7 @@
     "master.equip": "Equipment Management",
     "master.code": "Code Management",
     "master.partner": "Partner Management",
+    "master.customer": "Customer Master",
     "master.prodLine": "Production Line",
     "master.process": "Process Management",
     "master.routing": "Routing Management",
@@ -237,7 +238,9 @@
     "master.company": "Company Mgmt",
     "master.label": "Label Mgmt",
     "master.vendorBarcode": "Vendor Barcode Mapping",
-    "master.processCapa": "Process CAPA",
+    "master.purchasePrice": "Purchase Price",
+    "master.itemSupplier": "Item Supplier Management",
+    "master.salePrice": "Product Sale Price",
     "matInventory": "Material Inventory",
     "productInventory": "Product Inventory",
     "inventory": "Inventory",
@@ -291,7 +294,6 @@
     "crimping.mold": "Mold Management",
     "production": "Production",
     "production.monthlyPlan": "Product Plan",
-    "production.simulation": "Plan Simulation",
     "production.specificationSetup": "Product Drawing Management",
     "production.kitting": "Result Input (Sub-process)",
     "production.inputAssembly": "Assembly Input",
@@ -4352,26 +4354,10 @@
     "scriptPath": "Script Path",
     "scriptArgs": "Arguments"
   },
-  "processCapa": {
-    "title": "Process CAPA Management",
-    "description": "Manage production capacity by process and product.",
-    "addCapa": "Add CAPA",
-    "processCode": "Process",
-    "itemCode": "Item",
-    "stdTactTime": "Std. Tact Time (sec)",
-    "stdUph": "Std. UPH",
-    "workerCnt": "Workers",
-    "boardCnt": "Board/Jig Count",
-    "equipCnt": "Equipment Count",
-    "setupTime": "Setup Time (min)",
-    "balanceEff": "Balance Efficiency (%)",
-    "dailyCapa": "Daily CAPA",
-    "stats": {
-      "total": "Total",
-      "equipBased": "Equipment-based",
-      "workerBased": "Worker-based",
-      "inactive": "Inactive"
-    }
+  "salePrice": { "title": "Product Sale Price", "description": "Manage product sale prices by customer." },
+  "purchasePrice": {
+    "title": "Purchase Price",
+    "description": "Manage purchase prices and effective periods by item and supplier."
   },
   "workflow": {
     "title": "Workflow",

@@ -31,6 +31,11 @@
           "path": "/master/partner"
         },
         {
+          "menuCode": "MST_CUSTOMER",
+          "title": "고객마스터",
+          "path": "/master/customer"
+        },
+        {
           "menuCode": "EQUIP_MASTER",
           "title": "설비마스터",
           "path": "/master/equip"
@@ -66,9 +71,19 @@
           "path": "/master/label"
         },
         {
-          "menuCode": "MST_PROCESS_CAPA",
-          "title": "공정 CAPA 관리",
-          "path": "/master/process-capa"
+          "menuCode": "MST_PURCHASE_PRICE",
+          "title": "구매단가관리",
+          "path": "/master/purchase-price"
+        },
+        {
+          "menuCode": "MST_ITEM_SUPPLIER",
+          "title": "품목별 공급처 관리",
+          "path": "/master/item-supplier"
+        },
+        {
+          "menuCode": "MST_SALE_PRICE",
+          "title": "제품판매단가관리",
+          "path": "/master/sale-price"
         }
       ]
     },

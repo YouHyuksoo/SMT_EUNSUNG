@@ -38,8 +38,9 @@ import { EquipMaster } from '../entities/equip-master.entity';
 import { EquipBomRel } from '../entities/equip-bom-rel.entity';
 import { EquipBomItem } from '../entities/equip-bom-item.entity';
 import { BomMaster } from '../entities/bom-master.entity';
-import { PartnerMaster } from '../entities/partner-master.entity';
 import { ProdLineMaster } from '../entities/prod-line-master.entity';
+import { Warehouse } from '../entities/warehouse.entity';
+import { WarehouseLocation } from '../entities/warehouse-location.entity';
 import { WorkerMaster } from '../entities/worker-master.entity';
 import { WorkInstruction } from '../entities/work-instruction.entity';
 import { WorkCalendar } from '../entities/work-calendar.entity';
@@ -47,13 +48,17 @@ import { WorkCalendarDay } from '../entities/work-calendar-day.entity';
 import { ShiftPattern } from '../entities/shift-pattern.entity';
 import { ProcessMaster } from '../entities/process-master.entity';
 import { LabelTemplate } from '../entities/label-template.entity';
-import { ProcessCapa } from '../entities/process-capa.entity';
 import { ProcessMap } from '../entities/process-map.entity';
 import { RoutingGroup } from '../entities/routing-group.entity';
 import { RoutingProcess } from '../entities/routing-process.entity';
 import { ProcessQualityCondition } from '../entities/process-quality-condition.entity';
 import { RoutingMaterial } from '../entities/routing-material.entity';
 import { HarnessCircuitSpec } from '../entities/harness-circuit-spec.entity';
+import { PurchaseUnitPrice } from '../entities/purchase-unit-price.entity';
+import { SupplierMaster } from '../entities/supplier-master.entity';
+import { ProductSalePrice } from '../entities/product-sale-price.entity';
+import { ItemSupplier } from '../entities/item-supplier.entity';
+import { CustomerMaster } from '../entities/customer-master.entity';
 
 @Global()
 @Module({
@@ -109,8 +114,9 @@ import { HarnessCircuitSpec } from '../entities/harness-circuit-spec.entity';
             EquipBomRel,
             EquipBomItem,
             BomMaster,
-            PartnerMaster,
             ProdLineMaster,
+            Warehouse,
+            WarehouseLocation,
             WorkerMaster,
             WorkInstruction,
             WorkCalendar,
@@ -118,13 +124,17 @@ import { HarnessCircuitSpec } from '../entities/harness-circuit-spec.entity';
             ShiftPattern,
             ProcessMaster,
             LabelTemplate,
-            ProcessCapa,
             ProcessMap,
             RoutingGroup,
             RoutingProcess,
             ProcessQualityCondition,
             RoutingMaterial,
             HarnessCircuitSpec,
+            PurchaseUnitPrice,
+            SupplierMaster,
+            ProductSalePrice,
+            ItemSupplier,
+            CustomerMaster,
           ],
           migrations: [],
           migrationsRun: false,

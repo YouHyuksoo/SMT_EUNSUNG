@@ -4,12 +4,12 @@
  */
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { PartnerMaster } from '../../entities/partner-master.entity';
+import { SupplierMaster } from '../../entities/supplier-master.entity';
 import { PartnerController } from './controllers/partner.controller';
 import { PartnerService } from './services/partner.service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([PartnerMaster])],
+  imports: [TypeOrmModule.forFeature([SupplierMaster])],
   controllers: [PartnerController],
   providers: [PartnerService],
   exports: [PartnerService],

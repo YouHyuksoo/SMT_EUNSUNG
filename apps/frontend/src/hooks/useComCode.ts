@@ -27,6 +27,27 @@ export interface ComCodeItem {
 
 export type ComCodeMap = Record<string, ComCodeItem[]>;
 
+/** DB 컬럼명과 ISYS_BASECODE.CODE_TYPE을 같은 키로 비교한다. */
+export function normalizeComCodeType(value: string): string {
+  return value.toUpperCase().replace(/[^A-Z0-9]+/g, "");
+}
+
+export function resolveComCodeGroup(
+  groups: ComCodeMap | undefined,
+  requestedType: string,
+): { groupCode: string; codes: ComCodeItem[] } {
+  if (!groups) return { groupCode: requestedType, codes: [] };
+  if (groups[requestedType]) return { groupCode: requestedType, codes: groups[requestedType] };
+
+  const normalized = normalizeComCodeType(requestedType);
+  const groupCode = Object.keys(groups).find(
+    (candidate) => normalizeComCodeType(candidate) === normalized,
+  );
+  return groupCode
+    ? { groupCode, codes: groups[groupCode] }
+    : { groupCode: requestedType, codes: [] };
+}
+
 const COM_CODE_QUERY_KEY = ["com-codes", "all-active"];
 const COM_CODE_URL = "/master/com-codes/all-active";
 
@@ -66,9 +87,10 @@ export function useComCodeOptions(
   const { data } = useComCodes();
   const { t } = useTranslation();
   return useMemo(() => {
-    const codes = data?.data?.[groupCode] ?? [];
+    const resolved = resolveComCodeGroup(data?.data, groupCode);
+    const codes = resolved.codes;
     const options = codes.map((c: ComCodeItem) => {
-      const name = getLocalizedCodeName(t, groupCode, c.detailCode, c.codeName);
+      const name = getLocalizedCodeName(t, resolved.groupCode, c.detailCode, c.codeName);
       // showCode: 코드와 명칭을 함께 노출 (예: "EA - 개"). 코드가 곧 의미인 단위류에 사용.
       return {
         value: c.detailCode,
@@ -89,12 +111,13 @@ export function useComCodeLabel(
   const { data } = useComCodes();
   const { t } = useTranslation();
   return useMemo(() => {
-    const codes = data?.data?.[groupCode] ?? [];
+    const resolved = resolveComCodeGroup(data?.data, groupCode);
+    const codes = resolved.codes;
     const found = codes.find(
       (c: ComCodeItem) => c.detailCode === detailCode,
     );
     if (!found) return detailCode;
-    return getLocalizedCodeName(t, groupCode, detailCode, found.codeName);
+    return getLocalizedCodeName(t, resolved.groupCode, detailCode, found.codeName);
   }, [data, groupCode, detailCode, t]);
 }
 
@@ -104,7 +127,7 @@ export function useComCodeColor(
 ): string {
   const { data } = useComCodes();
   return useMemo(() => {
-    const codes = data?.data?.[groupCode] ?? [];
+    const codes = resolveComCodeGroup(data?.data, groupCode).codes;
     const found = codes.find(
       (c: ComCodeItem) => c.detailCode === detailCode,
     );
@@ -118,7 +141,7 @@ export function useComCodeItem(
 ): ComCodeItem | null {
   const { data } = useComCodes();
   return useMemo(() => {
-    const codes = data?.data?.[groupCode] ?? [];
+    const codes = resolveComCodeGroup(data?.data, groupCode).codes;
     return (
       codes.find((c: ComCodeItem) => c.detailCode === detailCode) ?? null
     );
@@ -128,7 +151,7 @@ export function useComCodeItem(
 export function useComCodeList(groupCode: string): ComCodeItem[] {
   const { data } = useComCodes();
   return useMemo(() => {
-    return data?.data?.[groupCode] ?? [];
+    return resolveComCodeGroup(data?.data, groupCode).codes;
   }, [data, groupCode]);
 }
 
@@ -137,7 +160,7 @@ export function useComCodeMap(
 ): Record<string, ComCodeItem> {
   const { data } = useComCodes();
   return useMemo(() => {
-    const codes = data?.data?.[groupCode] ?? [];
+    const codes = resolveComCodeGroup(data?.data, groupCode).codes;
     const map: Record<string, ComCodeItem> = {};
     for (const c of codes) {
       map[c.detailCode] = c;

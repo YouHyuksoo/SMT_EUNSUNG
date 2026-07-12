@@ -37,14 +37,14 @@ const buildForm = (editingPart: Part | null) => ({
   itemName: editingPart?.itemName || "",
   itemNo: editingPart?.itemNo || "",
   custPartNo: editingPart?.custPartNo || "",
-  itemType: (editingPart?.itemType || "RAW_MATERIAL") as Part["itemType"],
-  productType: editingPart?.productType || "",
+  itemType: editingPart?.itemType || "T",
+  itemClass: editingPart?.itemClass || "*",
   modelName: editingPart?.modelName || "",
-  defectModelGroup: editingPart?.defectModelGroup || "",
+  modelSuffix: editingPart?.modelSuffix || "",
   spec: editingPart?.spec || "",
   rev: editingPart?.rev || "",
   markingText: editingPart?.markingText || "",
-  unit: editingPart?.unit || "EA",
+  itemUom: editingPart?.itemUom || "EA",
   color: editingPart?.color || "",
   boxQty: editingPart?.boxQty ?? 0,
   minPackQty: editingPart?.minPackQty ?? 0,
@@ -52,7 +52,7 @@ const buildForm = (editingPart: Part | null) => ({
   safetyStock: editingPart?.safetyStock ?? 0,
   expiryDate: editingPart?.expiryDate ?? 0,
   expiryExtDays: editingPart?.expiryExtDays ?? 0,
-  useYn: editingPart?.useYn || "Y",
+  mesDisplayYn: editingPart?.mesDisplayYn || "Y",
   packUnit: editingPart?.packUnit ?? 0,
   storageLocation: editingPart?.storageLocation || "",
   remark: editingPart?.remark || "",
@@ -82,7 +82,7 @@ export default function PartFormPanel({ editingPart, onClose, onSave, animate = 
     && !!form.itemCode.trim()
     && !!form.itemNo.trim()
     && !!form.itemName.trim()
-    && !!form.productType;
+    && !!form.itemClass;
 
   // editingPart 변경 시 폼 리셋
   useEffect(() => {
@@ -160,13 +160,13 @@ export default function PartFormPanel({ editingPart, onClose, onSave, animate = 
         itemType: form.itemType,
         itemNo: form.itemNo,
         custPartNo: form.custPartNo || undefined,
-        productType: form.productType || undefined,
+        itemClass: form.itemClass,
         modelName: form.modelName || undefined,
-        defectModelGroup: form.defectModelGroup || undefined,
+        modelSuffix: form.modelSuffix || undefined,
         spec: form.spec || undefined,
         rev: form.rev || undefined,
         markingText: form.markingText || undefined,
-        unit: form.unit,
+        itemUom: form.itemUom,
         color: form.color || undefined,
         boxQty: form.boxQty,
         minPackQty: form.minPackQty,
@@ -174,7 +174,7 @@ export default function PartFormPanel({ editingPart, onClose, onSave, animate = 
         safetyStock: form.safetyStock,
         expiryDate: form.expiryDate,
         expiryExtDays: form.expiryExtDays,
-        useYn: form.useYn,
+        mesDisplayYn: form.mesDisplayYn,
         packUnit: form.packUnit || undefined,
         storageLocation: form.storageLocation || undefined,
         remark: form.remark || undefined,
@@ -246,21 +246,21 @@ export default function PartFormPanel({ editingPart, onClose, onSave, animate = 
               value={form.itemType}
               onChange={v => setField("itemType", v)}
               fullWidth required />
-            <FieldComCodeSelect field="productType" groupCode="PRODUCT_TYPE" includeAll={false}
-              label={t("master.part.productType", "품목그룹")}
-              value={form.productType} onChange={v => setField("productType", v)} fullWidth required />
+            <FieldComCodeSelect field="itemClass" groupCode="ITEM_CLASS" includeAll={false}
+              label={t("master.part.itemClass", "품목분류")}
+              value={form.itemClass} onChange={v => setField("itemClass", v)} fullWidth required />
             <FieldInput field="modelName" label={t("master.part.modelName", "차종")}
               value={form.modelName} onChange={e => setField("modelName", e.target.value)} fullWidth />
-            <FieldComCodeSelect field="defectModelGroup" groupCode="DEFECT_MODEL_GROUP" includeAll={false}
-              label={t("master.part.defectModelGroup", "모델구분")}
-              value={form.defectModelGroup} onChange={v => setField("defectModelGroup", v)} fullWidth />
+            <FieldInput field="modelSuffix"
+              label={t("master.part.modelSuffix", "모델접미")}
+              value={form.modelSuffix} onChange={e => setField("modelSuffix", e.target.value)} fullWidth />
             <FieldInput field="spec" label={t("master.part.spec")} wrapperClassName="col-span-2"
               value={form.spec} onChange={e => setField("spec", e.target.value)} fullWidth />
             <FieldInput field="color" label={t("master.part.color", "색상")}
               value={form.color} onChange={e => setField("color", e.target.value)} fullWidth />
-            <FieldComCodeSelect field="unit" groupCode="UNIT_TYPE" label={t("master.part.unit")} includeAll={false} showCode
-              value={form.unit} onChange={v => setField("unit", v)} fullWidth />
-            <FieldYnRadio field="useYn" label={t("common.useYn", "사용여부")} value={form.useYn} onChange={v => setField("useYn", v)} />
+            <FieldComCodeSelect field="itemUom" groupCode="ITEM_UOM" label={t("master.part.unit")} includeAll={false} showCode
+              value={form.itemUom} onChange={v => setField("itemUom", v)} fullWidth />
+            <FieldYnRadio field="mesDisplayYn" label={t("common.useYn", "사용여부")} value={form.mesDisplayYn} onChange={v => setField("mesDisplayYn", v)} />
           </div>
         </div>
 

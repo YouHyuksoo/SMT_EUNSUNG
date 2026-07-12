@@ -188,6 +188,7 @@
     "master.equip": "설비관리",
     "master.code": "코드관리",
     "master.partner": "거래처관리",
+    "master.customer": "고객마스터",
     "master.prodLine": "생산라인관리",
     "master.process": "공정관리",
     "master.routing": "라우팅관리",
@@ -237,7 +238,9 @@
     "master.company": "회사관리",
     "master.label": "라벨다자인관리",
     "master.vendorBarcode": "제조사 바코드 매핑",
-    "master.processCapa": "공정 CAPA",
+    "master.purchasePrice": "구매단가관리",
+    "master.itemSupplier": "품목별 공급처 관리",
+    "master.salePrice": "제품판매단가관리",
     "matInventory": "자재재고관리",
     "productInventory": "제품재고관리",
     "inventory": "재고관리",
@@ -291,7 +294,6 @@
     "crimping.mold": "금형관리",
     "production": "생산관리",
     "production.monthlyPlan": "제품생산계획",
-    "production.simulation": "생산계획 시뮬레이션",
     "production.specificationSetup": "제품 도면관리",
     "production.kitting": "실적입력(서브공정)",
     "production.inputAssembly": "실적입력(조립)",
@@ -4358,26 +4360,10 @@
     "scriptPath": "스크립트 경로",
     "scriptArgs": "실행 인자"
   },
-  "processCapa": {
-    "title": "공정 CAPA 관리",
-    "description": "공정×제품별 생산능력을 관리합니다.",
-    "addCapa": "CAPA 추가",
-    "processCode": "공정",
-    "itemCode": "품목",
-    "stdTactTime": "표준 택트타임(초)",
-    "stdUph": "표준 UPH",
-    "workerCnt": "작업자 수",
-    "boardCnt": "보드/지그 수",
-    "equipCnt": "설비 대수",
-    "setupTime": "전환시간(분)",
-    "balanceEff": "밸런싱 효율(%)",
-    "dailyCapa": "일일 CAPA",
-    "stats": {
-      "total": "전체",
-      "equipBased": "설비종속",
-      "workerBased": "인력종속",
-      "inactive": "비활성"
-    }
+  "salePrice": { "title": "제품판매단가관리", "description": "고객·제품별 판매단가와 적용 기간을 관리합니다." },
+  "purchasePrice": {
+    "title": "구매단가관리",
+    "description": "품목·공급사별 구매단가와 적용 기간을 관리합니다."
   },
   "workflow": {
     "title": "워크플로우",
