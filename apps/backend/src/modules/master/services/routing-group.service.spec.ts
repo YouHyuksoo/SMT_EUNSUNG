@@ -24,7 +24,7 @@ describe('RoutingGroupService group/process rules', () => {
   beforeEach(() => {
     groupRepo = repo(); processRepo = repo(); workstageRepo = repo(); itemRepo = repo();
     bomRepo = repo(); materialRepo = repo(); supplierRepo = repo();
-    manager = { query: jest.fn(), update: jest.fn(), delete: jest.fn() };
+    manager = { query: jest.fn(), findOne: jest.fn(), count: jest.fn(), create: jest.fn((_entity: any, value: any) => value), save: jest.fn(async (_entity: any, value: any) => value), delete: jest.fn() };
     manager.query.mockImplementation(async (sql: string) => {
       if (sql.includes('FROM IP_ROUTING_GROUPS')) return [{ routingCode: 'R1' }];
       if (sql.includes('FROM IP_ROUTING_PROCESSES p')) return [{ processSeq: 10 }, { processSeq: 20 }];
@@ -79,18 +79,41 @@ describe('RoutingGroupService group/process rules', () => {
 
   it('clears supplier for INTERNAL and uses exact new entity properties', async () => {
     groupRepo.findOne.mockResolvedValue({ routingCode: 'R1' });
-    processRepo.findOne.mockResolvedValue(null);
+    manager.findOne.mockResolvedValue(null);
     workstageRepo.findOne.mockResolvedValue({ processCode: 'W1' });
     await service.createProcess('R1', { seq: 10, workstageCode: 'W1', executionType: 'INTERNAL', subconSupplierCode: 'IGNORED' }, 7);
-    expect(processRepo.create).toHaveBeenCalledWith(expect.objectContaining({
+    expect(manager.create).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({
       routingCode: 'R1', processSeq: 10, workstageCode: 'W1', executionType: 'INTERNAL', subconSupplierCode: null,
     }));
   });
 
+  it('serializes process creation with reorder by locking the routing group in the same transaction', async () => {
+    workstageRepo.findOne.mockResolvedValue({ processCode: 'W1' }); manager.findOne.mockResolvedValue(null);
+    const events: string[] = [];
+    manager.query.mockImplementation(async (sql: string) => { if (sql.includes('FOR UPDATE')) events.push('route-lock'); return [{ routingCode: 'R1' }]; });
+    manager.findOne.mockImplementation(async () => { events.push('process-check'); return null; });
+    manager.save.mockImplementation(async (_entity: any, value: any) => { events.push('process-save'); return value; });
+    await service.createProcess('R1', { seq: 10, workstageCode: 'W1' }, 7);
+    expect(events).toEqual(['route-lock', 'process-check', 'process-save']);
+    expect(tx.run).toHaveBeenCalledTimes(1);
+    expect(processRepo.save).not.toHaveBeenCalled();
+  });
+
   it('rejects process deletion when materials exist', async () => {
-    processRepo.findOne.mockResolvedValue({ routingCode: 'R1', processSeq: 10 });
-    materialRepo.count.mockResolvedValue(1);
+    manager.findOne.mockResolvedValue({ routingCode: 'R1', processSeq: 10 });
+    manager.count.mockResolvedValue(1);
     await expect(service.deleteProcess('R1', 10, 7)).rejects.toThrow(ConflictException);
+  });
+
+  it('serializes process deletion with reorder and deletes on the transaction manager', async () => {
+    const events: string[] = [];
+    manager.query.mockImplementation(async (sql: string) => { if (sql.includes('FOR UPDATE')) events.push('route-lock'); return [{ routingCode: 'R1' }]; });
+    manager.findOne.mockImplementation(async () => { events.push('process-check'); return { processSeq: 10 }; });
+    manager.count.mockImplementation(async () => { events.push('material-check'); return 0; });
+    manager.delete.mockImplementation(async () => { events.push('process-delete'); return { affected: 1 }; });
+    await service.deleteProcess('R1', 10, 7);
+    expect(events).toEqual(['route-lock', 'process-check', 'material-check', 'process-delete']);
+    expect(processRepo.delete).not.toHaveBeenCalled();
   });
 
   it('reorders processes and materials atomically with deferred named FK and fresh bind objects', async () => {
@@ -152,8 +175,8 @@ describe('RoutingGroupService group/process rules', () => {
   });
 
   it('maps concurrent integrity errors during process deletion to conflict', async () => {
-    processRepo.findOne.mockResolvedValue({ processSeq: 10 }); materialRepo.count.mockResolvedValue(0);
-    processRepo.delete.mockRejectedValue(Object.assign(new Error('ORA-02292'), { code: 'ORA-02292' }));
+    manager.findOne.mockResolvedValue({ processSeq: 10 }); manager.count.mockResolvedValue(0);
+    manager.delete.mockRejectedValue(Object.assign(new Error('ORA-02292'), { code: 'ORA-02292' }));
     await expect(service.deleteProcess('R1', 10, 7)).rejects.toThrow(ConflictException);
   });
 

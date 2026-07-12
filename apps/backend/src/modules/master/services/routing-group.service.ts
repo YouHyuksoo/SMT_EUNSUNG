@@ -1,6 +1,6 @@
 import { ConflictException, Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, LessThanOrEqual, MoreThanOrEqual, Repository } from 'typeorm';
+import { EntityManager, In, LessThanOrEqual, MoreThanOrEqual, Repository } from 'typeorm';
 import { BomMaster } from '../../../entities/bom-master.entity';
 import { ItemMaster } from '../../../entities/item-master.entity';
 import { ProcessMaster } from '../../../entities/process-master.entity';
@@ -64,6 +64,14 @@ export class RoutingGroupService {
     throw error;
   }
 
+  private async lockRoutingGroup(manager: EntityManager, routingCode: string, organizationId: number) {
+    const rows = await manager.query(
+      'SELECT ROUTING_CODE AS "routingCode" FROM IP_ROUTING_GROUPS WHERE ORGANIZATION_ID = :organizationId AND ROUTING_CODE = :routingCode FOR UPDATE',
+      { organizationId, routingCode } as never,
+    ) as { routingCode: string }[];
+    if (rows.length !== 1) throw new NotFoundException(`라우팅 그룹을 찾을 수 없습니다: ${routingCode}`);
+  }
+
   async createGroup(dto: CreateRoutingGroupDto, organizationId: number) {
     await this.ensureItem(dto.itemCode, organizationId);
     if (await this.groupRepo.findOne({ where: { routingCode: dto.routingCode, organizationId } })) throw new ConflictException(`이미 존재하는 라우팅 그룹: ${dto.routingCode}`);
@@ -101,14 +109,17 @@ export class RoutingGroupService {
   }
 
   async createProcess(routingCode: string, dto: CreateRoutingProcessDto, organizationId: number) {
-    await this.findGroupByCode(routingCode, organizationId);
-    if (await this.processRepo.findOne({ where: { routingCode, processSeq: dto.seq, organizationId } })) throw new ConflictException(`이미 존재하는 공정순서: ${routingCode}/${dto.seq}`);
     const executionType = dto.executionType ?? 'INTERNAL';
     await this.validateProcessRefs(dto.workstageCode, executionType, dto.subconSupplierCode, organizationId);
     try {
-      return await this.processRepo.save(this.processRepo.create({ routingCode, processSeq: dto.seq, workstageCode: dto.workstageCode, executionType,
-        jobOrderYn: dto.jobOrderYn ?? 'Y', subconSupplierCode: executionType === 'SUBCON' ? dto.subconSupplierCode! : null,
-        standardTime: dto.standardTime ?? null, setupTime: dto.setupTime ?? null, useYn: dto.useYn ?? 'Y', organizationId }));
+      return await this.tx.run(async ({ manager }) => {
+        await this.lockRoutingGroup(manager, routingCode, organizationId);
+        if (await manager.findOne(RoutingProcess, { where: { routingCode, processSeq: dto.seq, organizationId } })) throw new ConflictException(`이미 존재하는 공정순서: ${routingCode}/${dto.seq}`);
+        const process = manager.create(RoutingProcess, { routingCode, processSeq: dto.seq, workstageCode: dto.workstageCode, executionType,
+          jobOrderYn: dto.jobOrderYn ?? 'Y', subconSupplierCode: executionType === 'SUBCON' ? dto.subconSupplierCode! : null,
+          standardTime: dto.standardTime ?? null, setupTime: dto.setupTime ?? null, useYn: dto.useYn ?? 'Y', organizationId });
+        return manager.save(RoutingProcess, process);
+      });
     } catch (error: unknown) { return this.conflictUnique(error); }
   }
 
@@ -124,10 +135,14 @@ export class RoutingGroupService {
   }
 
   async deleteProcess(routingCode: string, seq: number, organizationId: number) {
-    if (!await this.processRepo.findOne({ where: { routingCode, processSeq: seq, organizationId } })) throw new NotFoundException(`공정순서를 찾을 수 없습니다: ${routingCode}/${seq}`);
-    if (await this.materialRepo.count({ where: { routingCode, processSeq: seq, organizationId } })) throw new ConflictException('투입자재가 있는 공정은 삭제할 수 없습니다.');
-    try { await this.processRepo.delete({ routingCode, processSeq: seq, organizationId }); }
-    catch (error: unknown) { return this.conflictIntegrity(error); }
+    try {
+      await this.tx.run(async ({ manager }) => {
+        await this.lockRoutingGroup(manager, routingCode, organizationId);
+        if (!await manager.findOne(RoutingProcess, { where: { routingCode, processSeq: seq, organizationId } })) throw new NotFoundException(`공정순서를 찾을 수 없습니다: ${routingCode}/${seq}`);
+        if (await manager.count(RoutingMaterial, { where: { routingCode, processSeq: seq, organizationId } })) throw new ConflictException('투입자재가 있는 공정은 삭제할 수 없습니다.');
+        await manager.delete(RoutingProcess, { routingCode, processSeq: seq, organizationId });
+      });
+    } catch (error: unknown) { this.conflictIntegrity(error); }
     return { routingCode, seq };
   }
 
@@ -135,11 +150,7 @@ export class RoutingGroupService {
     if (dto.changes.some((c) => c.fromSeq < 1 || c.fromSeq > 9_999_999_999 || c.toSeq < 1 || c.toSeq > 9_999_999_999)) throw new ConflictException('공정순번은 NUMBER(10) 양수 범위여야 합니다.');
     try {
       await this.tx.run(async ({ manager }) => {
-        const routeRows = await manager.query(
-          'SELECT ROUTING_CODE AS "routingCode" FROM IP_ROUTING_GROUPS WHERE ORGANIZATION_ID = :organizationId AND ROUTING_CODE = :routingCode FOR UPDATE',
-          { organizationId, routingCode } as never,
-        ) as { routingCode: string }[];
-        if (routeRows.length !== 1) throw new ConflictException(`라우팅 그룹을 찾을 수 없습니다: ${routingCode}`);
+        await this.lockRoutingGroup(manager, routingCode, organizationId);
 
         const processRows = await manager.query(
           'SELECT p.PROCESS_SEQ AS "processSeq" FROM IP_ROUTING_PROCESSES p WHERE p.ORGANIZATION_ID = :organizationId AND p.ROUTING_CODE = :routingCode ORDER BY p.PROCESS_SEQ FOR UPDATE',
