@@ -1,25 +1,39 @@
 import { RequestMethod } from '@nestjs/common';
 import { GUARDS_METADATA, METHOD_METADATA, PATH_METADATA } from '@nestjs/common/constants';
 import { plainToInstance } from 'class-transformer';
-import { validate } from 'class-validator';
+import { getMetadataStorage, validate } from 'class-validator';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import {
   BulkSaveRoutingMaterialDto,
   CreateRoutingGroupDto,
   CreateRoutingProcessDto,
   ReorderRoutingProcessesDto,
+  RoutingMaterialUpsertDto,
   UpdateRoutingGroupDto,
   UpdateRoutingProcessDto,
 } from '../dto/routing-group.dto';
 import { RoutingGroupController } from './routing-group.controller';
 
-const route = (methodName: keyof RoutingGroupController) => {
-  const handler = RoutingGroupController.prototype[methodName];
-  return {
-    path: Reflect.getMetadata(PATH_METADATA, handler),
-    method: Reflect.getMetadata(METHOD_METADATA, handler),
-  };
+const controllerRoutes = () => {
+  const prototype = RoutingGroupController.prototype;
+  return Object.getOwnPropertyNames(prototype)
+    .filter((name) => name !== 'constructor')
+    .map((name) => {
+      const handler = prototype[name as keyof RoutingGroupController];
+      return {
+        method: Reflect.getMetadata(METHOD_METADATA, handler) as RequestMethod | undefined,
+        path: Reflect.getMetadata(PATH_METADATA, handler) as string | undefined,
+      };
+    })
+    .filter((route) => route.method !== undefined && route.path !== undefined)
+    .map((route) => `${RequestMethod[route.method!]} ${route.path}`)
+    .sort();
 };
+
+const validatedProperties = (type: new () => object) => new Set(
+  getMetadataStorage().getTargetValidationMetadatas(type, '', true, false)
+    .map((metadata) => metadata.propertyName),
+);
 
 describe('RoutingGroupController contract', () => {
   it('protects the controller with JwtAuthGuard', () => {
@@ -27,14 +41,25 @@ describe('RoutingGroupController contract', () => {
     expect(guards).toContain(JwtAuthGuard);
   });
 
-  it('exposes process reorder and material patch routes without legacy bulk/conditions routes', () => {
-    expect(route('reorderProcesses')).toEqual({ path: ':code/process-order', method: RequestMethod.PUT });
-    expect(route('saveMaterials')).toEqual({ path: ':code/processes/:seq/materials', method: RequestMethod.PUT });
+  it('exposes exactly the approved routing API paths', () => {
+    expect(controllerRoutes()).toEqual([
+      'DELETE :code',
+      'DELETE :code/processes/:seq',
+      'GET /',
+      'GET :code',
+      'GET :code/processes',
+      'GET :code/processes/:seq/materials',
+      'POST /',
+      'POST :code/processes',
+      'PUT :code',
+      'PUT :code/process-order',
+      'PUT :code/processes/:seq',
+      'PUT :code/processes/:seq/materials',
+    ].sort());
 
-    const methods = Object.getOwnPropertyNames(RoutingGroupController.prototype);
-    expect(methods).not.toContain('findByItem');
-    expect(methods).not.toContain('findConditions');
-    expect(methods).not.toContain('bulkSave');
+    expect(controllerRoutes().some((route) => route.includes('by-item'))).toBe(false);
+    expect(controllerRoutes().some((route) => route.includes('conditions'))).toBe(false);
+    expect(controllerRoutes().some((route) => route.endsWith('/materials/bulk'))).toBe(false);
   });
 });
 
@@ -47,7 +72,9 @@ describe('routing DTO validation', () => {
   });
 
   it('does not allow routingCode to be updated', () => {
-    expect('routingCode' in new UpdateRoutingGroupDto()).toBe(false);
+    const properties = validatedProperties(UpdateRoutingGroupDto);
+    expect(properties).not.toContain('routingCode');
+    expect(properties).not.toContain('itemCode');
   });
 
   it('accepts only positive seq, nonnegative times, exact execution type, and Y/N flags', async () => {
@@ -60,10 +87,12 @@ describe('routing DTO validation', () => {
   });
 
   it('does not allow ordinary process update to change seq', () => {
-    expect('seq' in new UpdateRoutingProcessDto()).toBe(false);
-    expect(Object.keys(new CreateRoutingProcessDto())).not.toEqual(expect.arrayContaining([
-      'organizationId', 'sampleInspectYn', 'issueLabelType', 'qcSelfYn', 'inspectMethod', 'destructiveYn',
-    ]));
+    const properties = validatedProperties(UpdateRoutingProcessDto);
+    expect(properties).not.toContain('seq');
+    for (const excluded of [
+      'organizationId', 'sampleInspectYn', 'issueLabelType', 'qcSelfYn', 'inspectMethod',
+      'destructiveYn', 'sampleQty', 'circuitId',
+    ]) expect(properties).not.toContain(excluded);
   });
 
   it('validates reorder changes as positive integer pairs', async () => {
@@ -79,6 +108,6 @@ describe('routing DTO validation', () => {
     expect(await errors(BulkSaveRoutingMaterialDto, {
       upserts: [{ childItemCode: 'CHILD', allocQty: 0, issueMethod: 'ISSUE' }], deletes: [],
     })).not.toHaveLength(0);
-    expect('circuitId' in new BulkSaveRoutingMaterialDto()).toBe(false);
+    expect(validatedProperties(RoutingMaterialUpsertDto)).not.toContain('circuitId');
   });
 });
