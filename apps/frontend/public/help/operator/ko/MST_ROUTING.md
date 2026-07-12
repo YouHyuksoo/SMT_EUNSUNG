@@ -24,6 +24,19 @@ IP_ROUTING_GROUPS (ORGANIZATION_ID, ROUTING_CODE)
 - `EXECUTION_TYPE`은 `INTERNAL` 또는 `SUBCON`입니다. `SUBCON`이면 유효한 `SUBCON_SUPPLIER_CODE`가 필수이고, `INTERNAL`이면 공급처를 `NULL`로 저장합니다.
 - 자재의 고유 제약은 `(ORGANIZATION_ID, ROUTING_CODE, CHILD_ITEM_CODE)`입니다. 따라서 하위 자재 하나는 같은 그룹의 공정 하나에만 배정됩니다.
 
+## 화면 동작과 API
+
+| 화면 동작 | API | 주요 DB 영향 |
+|---|---|---|
+| 그룹 조회·검색 | `GET /master/routing-groups` | `IP_ROUTING_GROUPS` 조회 |
+| 그룹 등록/수정 | `POST /master/routing-groups`, `PUT /master/routing-groups/:code` | `IP_ROUTING_GROUPS` INSERT/UPDATE |
+| 그룹 삭제 확인 | `DELETE /master/routing-groups/:code` | 하위 공정이 없을 때 그룹 DELETE |
+| 공정 조회·등록·수정 | `GET/POST /master/routing-groups/:code/processes`, `PUT .../processes/:seq` | `IP_ROUTING_PROCESSES` 조회/INSERT/UPDATE |
+| 공정 삭제 확인 | `DELETE /master/routing-groups/:code/processes/:seq` | 연결 자재가 없을 때 공정 DELETE |
+| 자재 조회·저장 | `GET/PUT /master/routing-groups/:code/processes/:seq/materials` | `IP_ROUTING_MATERIALS` 명시적 DELETE 및 UPSERT |
+
+화면에는 공정 순번 일괄 변경 버튼이 없지만 백엔드는 `PUT /master/routing-groups/:code/process-order` 계약을 제공합니다. 화면의 수정 폼에서는 기존 순번을 변경하지 않습니다.
+
 ## 자재 후보와 저장 규칙
 
 조회 결과는 다음 두 집합의 합집합입니다.
@@ -39,13 +52,20 @@ IP_ROUTING_GROUPS (ORGANIZATION_ID, ROUTING_CODE)
 - `deletes`: 사용자가 휴지통으로 삭제 요청한 기존 배정만 전달합니다. 체크 해제나 BOM 변경만으로 삭제하지 않습니다.
 - 동일 요청에서 같은 자재를 중복 변경하거나 다른 공정 소유 자재를 변경하면 충돌로 처리합니다.
 - 그룹 잠금 후 삭제·저장을 수행하고 커밋 이후 다시 조회합니다.
+- DB cascade나 체크 해제에 의존하지 않습니다. 삭제 대상은 `deletes`에 명시된 현재 공정 소유 자재만 삭제합니다.
 
 ## 삭제와 장애 대응
 
 - 공정에 `IP_ROUTING_MATERIALS`가 남아 있으면 공정 삭제를 거절합니다. 자재를 명시적으로 삭제한 뒤 재시도합니다.
 - 하위 공정이 남아 있으면 라우팅 그룹 삭제를 거절합니다.
 - 동시 변경 또는 FK/UK 충돌(`ORA-00001`, `ORA-02291`, `ORA-02292`)은 무결성 충돌로 반환하므로 새로 조회한 뒤 재시도합니다.
+- HTTP `409 Conflict`: 중복 활성 라우팅, 중복 키, 다른 공정이 소유한 자재, 동시 변경 또는 삭제 제약입니다.
+- HTTP `422 Unprocessable Entity`: 외주 공급처 누락, 현재 BOM이 아닌 자재, BOM 적용기간 중복, 0 이하 투입수량 등 입력 의미가 유효하지 않은 경우입니다.
 - Oracle `IN` 목록은 1,000개 단위로 분할 조회합니다.
+
+## 접근 범위
+
+모든 라우팅 API는 `JwtAuthGuard`와 토큰의 `organizationId`를 사용합니다. 화면 접근은 메뉴 코드 `MST_ROUTING` 등록을 따르며, 컨트롤러에는 라우팅 전용 세부 CRUD 권한 Guard가 별도로 선언되어 있지 않습니다.
 
 ## 화면 범위
 
