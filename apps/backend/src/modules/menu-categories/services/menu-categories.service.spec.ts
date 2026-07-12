@@ -222,7 +222,6 @@ describe('MenuCategoriesService', () => {
         { menuCode: 'MST_WORK_INST' },
         { menuCode: 'MST_WAREHOUSE' },
         { menuCode: 'MST_LABEL' },
-        { menuCode: 'MST_PROCESS_CAPA' },
         { menuCode: 'SYS_COMPANY' },
         { menuCode: 'SYS_CODE' },
         { menuCode: 'SYS_CONFIG' },
