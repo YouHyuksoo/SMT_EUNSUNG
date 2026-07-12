@@ -1,7 +1,6 @@
-import { Column, CreateDateColumn, Entity, Index, PrimaryColumn, UpdateDateColumn } from 'typeorm';
+import { Column, CreateDateColumn, Entity, PrimaryColumn, UpdateDateColumn } from 'typeorm';
 
 @Entity({ name: 'IP_ROUTING_PROCESSES' })
-@Index(['organizationId', 'routingCode'])
 export class RoutingProcess {
   @PrimaryColumn({ name: 'ORGANIZATION_ID', type: 'number', nullable: false })
   organizationId!: number;

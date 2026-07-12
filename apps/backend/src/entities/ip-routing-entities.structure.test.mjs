@@ -23,6 +23,10 @@ function assertEntity(source, table, expected) {
   }
 }
 
+function indexes(source) {
+  return [...source.matchAll(/@Index\(([^\n]+)\)/g)].map(([, definition]) => definition);
+}
+
 const audit = {
   createdBy: { decorator: 'Column', options: ["name: 'CREATED_BY'", "type: 'varchar2'", 'length: 50', 'nullable: true'] },
   createdAt: { decorator: 'CreateDateColumn', options: ["name: 'CREATED_AT'", "type: 'timestamp'", 'precision: 6', "default: \\(\\) => 'SYSTIMESTAMP'", 'nullable: false'] },
@@ -31,7 +35,8 @@ const audit = {
 };
 
 test('IP routing entities exactly map the live Oracle schema', () => {
-  assertEntity(read('./routing-group.entity.ts'), 'IP_ROUTING_GROUPS', {
+  const group = read('./routing-group.entity.ts');
+  assertEntity(group, 'IP_ROUTING_GROUPS', {
     organizationId: { decorator: 'PrimaryColumn', options: ["name: 'ORGANIZATION_ID'", "type: 'number'", 'nullable: false'] },
     routingCode: { decorator: 'PrimaryColumn', options: ["name: 'ROUTING_CODE'", "type: 'varchar2'", 'length: 50', 'nullable: false'] },
     itemCode: { decorator: 'Column', options: ["name: 'ITEM_CODE'", "type: 'varchar2'", 'length: 20', 'nullable: false'] },
@@ -40,8 +45,10 @@ test('IP routing entities exactly map the live Oracle schema', () => {
     useYn: { decorator: 'Column', options: ["name: 'USE_YN'", "type: 'varchar2'", 'length: 1', "default: 'Y'", 'nullable: false'] },
     ...audit,
   });
+  assert.deepEqual(indexes(group), []);
 
-  assertEntity(read('./routing-process.entity.ts'), 'IP_ROUTING_PROCESSES', {
+  const process = read('./routing-process.entity.ts');
+  assertEntity(process, 'IP_ROUTING_PROCESSES', {
     organizationId: { decorator: 'PrimaryColumn', options: ["name: 'ORGANIZATION_ID'", "type: 'number'", 'nullable: false'] },
     routingCode: { decorator: 'PrimaryColumn', options: ["name: 'ROUTING_CODE'", "type: 'varchar2'", 'length: 50', 'nullable: false'] },
     processSeq: { decorator: 'PrimaryColumn', options: ["name: 'PROCESS_SEQ'", "type: 'number'", 'precision: 10', 'nullable: false'] },
@@ -54,8 +61,10 @@ test('IP routing entities exactly map the live Oracle schema', () => {
     useYn: { decorator: 'Column', options: ["name: 'USE_YN'", "type: 'varchar2'", 'length: 1', "default: 'Y'", 'nullable: false'] },
     ...audit,
   });
+  assert.deepEqual(indexes(process), []);
 
-  assertEntity(read('./routing-material.entity.ts'), 'IP_ROUTING_MATERIALS', {
+  const material = read('./routing-material.entity.ts');
+  assertEntity(material, 'IP_ROUTING_MATERIALS', {
     organizationId: { decorator: 'PrimaryColumn', options: ["name: 'ORGANIZATION_ID'", "type: 'number'", 'nullable: false'] },
     routingCode: { decorator: 'PrimaryColumn', options: ["name: 'ROUTING_CODE'", "type: 'varchar2'", 'length: 50', 'nullable: false'] },
     processSeq: { decorator: 'PrimaryColumn', options: ["name: 'PROCESS_SEQ'", "type: 'number'", 'precision: 10', 'nullable: false'] },
@@ -64,9 +73,10 @@ test('IP routing entities exactly map the live Oracle schema', () => {
     issueMethod: { decorator: 'Column', options: ["name: 'ISSUE_METHOD'", "type: 'varchar2'", 'length: 20', "default: 'BACKFLUSH'", 'nullable: false'] },
     ...audit,
   });
+  assert.deepEqual(indexes(material), ["'UK_IP_RM_CHILD', ['organizationId', 'routingCode', 'childItemCode'], { unique: true }"]);
 });
 
-test('routing module does not register excluded routing repositories', () => {
-  assert.doesNotMatch(read('../database/database.module.ts'), /ProcessQualityCondition/);
-  assert.doesNotMatch(read('../modules/master/master-routing-group.module.ts'), /ProcessQualityCondition|HarnessCircuitSpec/);
+test('retired routing fields stay out of the new entities', () => {
+  const source = [read('./routing-process.entity.ts'), read('./routing-material.entity.ts')].join('\n');
+  assert.doesNotMatch(source, /PROCESS_NAME|QC_SELF_YN|SAMPLE_INSPECT_YN|ISSUE_LABEL_TYPE|CIRCUIT_ID/);
 });

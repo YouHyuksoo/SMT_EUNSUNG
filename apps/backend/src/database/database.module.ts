@@ -51,6 +51,7 @@ import { LabelTemplate } from '../entities/label-template.entity';
 import { ProcessMap } from '../entities/process-map.entity';
 import { RoutingGroup } from '../entities/routing-group.entity';
 import { RoutingProcess } from '../entities/routing-process.entity';
+import { ProcessQualityCondition } from '../entities/process-quality-condition.entity';
 import { RoutingMaterial } from '../entities/routing-material.entity';
 import { HarnessCircuitSpec } from '../entities/harness-circuit-spec.entity';
 import { PurchaseUnitPrice } from '../entities/purchase-unit-price.entity';
@@ -126,6 +127,7 @@ import { CustomerMaster } from '../entities/customer-master.entity';
             ProcessMap,
             RoutingGroup,
             RoutingProcess,
+            ProcessQualityCondition,
             RoutingMaterial,
             HarnessCircuitSpec,
             PurchaseUnitPrice,
