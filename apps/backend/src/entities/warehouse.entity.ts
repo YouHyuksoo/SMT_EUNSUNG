@@ -18,7 +18,7 @@ import {
   Index,
 } from 'typeorm';
 
-@Entity({ name: 'WAREHOUSES' })
+@Entity({ name: 'ICOM_WAREHOUSE' })
 @Index(['warehouseType'])
 @Index(['plantCode'])
 @Index(['lineCode'])

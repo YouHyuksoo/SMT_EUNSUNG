@@ -12,7 +12,7 @@
 
 - `IP_` 접두사를 쓰는 신규 라우팅 테이블 3개
 - 품목별 복수 라우팅 그룹과 단일 활성 라우팅 제약
-- 공정 순서, 내작/외주, 외주 공급처, 표준시간 및 라벨 발행 설정
+- 공정 순서, 내작/외주, 외주 공급처 및 표준시간 설정
 - 현재 유효 BOM을 후보로 하는 공정별 투입자재 배정
 - 동일 하위품목을 한 라우팅 안의 한 공정에만 배정하는 제약
 - 신규 테이블에 맞춘 백엔드 엔티티, DTO, 서비스, 컨트롤러
@@ -23,6 +23,7 @@
 
 - `IP_PROCESS_QUALITY_CONDITIONS`
 - `IP_SELF_INSPECT_ITEMS`
+- SG/FG 라벨 발행 플래그와 라우팅 자재 회로 연결
 - 레거시 `IP_PRODUCT_ROUTING_MASTER`, `IP_PRODUCT_ROUTING` 정리 또는 데이터 이관
 - ECO 연계
 - 미래 BOM 버전에 대한 라우팅 선등록
@@ -83,7 +84,6 @@
 | `SUBCON_SUPPLIER_CODE` | `VARCHAR2(20) NULL` | 외주 공급처 코드 |
 | `STANDARD_TIME` | `NUMBER(10,4) NULL` | 표준 작업시간 |
 | `SETUP_TIME` | `NUMBER(10,4) NULL` | 준비시간 |
-| `ISSUE_LABEL_TYPE` | `VARCHAR2(20) DEFAULT 'NONE' NOT NULL` | `NONE/BUNDLE/SG/FG` |
 | `USE_YN` | `VARCHAR2(1) DEFAULT 'Y' NOT NULL` | 사용 여부 |
 | `CREATED_BY`, `UPDATED_BY` | `VARCHAR2(50) NULL` | 생성·수정 사용자 |
 | `CREATED_AT`, `UPDATED_AT` | `TIMESTAMP(6) DEFAULT SYSTIMESTAMP NOT NULL` | 생성·수정 일시 |

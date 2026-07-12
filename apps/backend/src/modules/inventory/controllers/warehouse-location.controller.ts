@@ -18,7 +18,7 @@ import {
   Param,
   Query,
 } from '@nestjs/common';
-import { Company, Plant } from '../../../common/decorators/tenant.decorator';
+import { OrganizationId } from '../../../common/decorators/tenant.decorator';
 import { WarehouseLocationService } from '../services/warehouse-location.service';
 import {
   CreateWarehouseLocationDto,
@@ -30,27 +30,26 @@ export class WarehouseLocationController {
   constructor(private readonly service: WarehouseLocationService) {}
 
   @Get()
-  findAll(@Query('warehouseId') warehouseId?: string, @Company() company?: string, @Plant() plant?: string) {
-    return this.service.findAll(warehouseId, company, plant);
+  findAll(@Query('warehouseCode') warehouseCode?: string, @OrganizationId() organizationId?: number) {
+    return this.service.findAll(warehouseCode, organizationId);
   }
 
   @Post()
-  create(@Body() dto: CreateWarehouseLocationDto, @Company() company: string, @Plant() plant: string) {
-    return this.service.create(dto, company, plant);
+  create(@Body() dto: CreateWarehouseLocationDto, @OrganizationId() organizationId: number) {
+    return this.service.create(dto, organizationId);
   }
 
   @Put(':id')
   update(
     @Param('id') id: string,
     @Body() dto: UpdateWarehouseLocationDto,
-    @Company() company?: string,
-    @Plant() plant?: string,
+    @OrganizationId() organizationId?: number,
   ) {
-    return this.service.update(id, dto, company, plant);
+    return this.service.update(id, dto, organizationId);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string, @Company() company?: string, @Plant() plant?: string) {
-    return this.service.remove(id, company, plant);
+  remove(@Param('id') id: string, @OrganizationId() organizationId?: number) {
+    return this.service.remove(id, organizationId);
   }
 }
