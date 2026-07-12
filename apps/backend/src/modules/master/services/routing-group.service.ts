@@ -13,6 +13,8 @@ import { BulkSaveRoutingMaterialDto, CreateRoutingGroupDto, CreateRoutingProcess
 
 @Injectable()
 export class RoutingGroupService {
+  private static readonly ORACLE_IN_LIMIT = 1000;
+
   constructor(
     @InjectRepository(RoutingGroup) private readonly groupRepo: Repository<RoutingGroup>,
     @InjectRepository(RoutingProcess) private readonly processRepo: Repository<RoutingProcess>,
@@ -211,7 +213,9 @@ export class RoutingGroupService {
     ]);
     this.assertNoOverlappingCurrentBom(bom);
     const codes = [...new Set([...bom.map((b) => b.childItemCode), ...assigned.map((m) => m.childItemCode)])];
-    const items = codes.length ? await this.itemRepo.find({ where: { organizationId, itemCode: In(codes) } }) : [];
+    const items = (await Promise.all(this.chunkOracleIn(codes).map((chunk) =>
+      this.itemRepo.find({ where: { organizationId, itemCode: In(chunk) } }),
+    ))).flat();
     const bomMap = new Map(bom.map((b) => [b.childItemCode, b])); const itemMap = new Map(items.map((i) => [i.itemCode, i]));
     const assignedMap = new Map(assigned.map((m) => [m.childItemCode, m]));
     return codes.map((code) => {
@@ -223,6 +227,22 @@ export class RoutingGroupService {
   }
 
   private async findCurrentBom(
+    source: Pick<Repository<BomMaster>, 'query'> | Pick<EntityManager, 'query'>,
+    parentItemCode: string,
+    organizationId: number,
+    childCodes?: string[],
+  ): Promise<{ childItemCode: string; bomQty: number }[]> {
+    if (childCodes) {
+      const chunks = this.chunkOracleIn(childCodes);
+      if (chunks.length === 0) return [];
+      return (await Promise.all(chunks.map((chunk) =>
+        this.queryCurrentBom(source, parentItemCode, organizationId, chunk),
+      ))).flat();
+    }
+    return this.queryCurrentBom(source, parentItemCode, organizationId);
+  }
+
+  private async queryCurrentBom(
     source: Pick<Repository<BomMaster>, 'query'> | Pick<EntityManager, 'query'>,
     parentItemCode: string,
     organizationId: number,
@@ -248,6 +268,14 @@ export class RoutingGroupService {
     ) as Promise<{ childItemCode: string; bomQty: number }[]>;
   }
 
+  private chunkOracleIn<T>(values: T[]): T[][] {
+    const chunks: T[][] = [];
+    for (let index = 0; index < values.length; index += RoutingGroupService.ORACLE_IN_LIMIT) {
+      chunks.push(values.slice(index, index + RoutingGroupService.ORACLE_IN_LIMIT));
+    }
+    return chunks;
+  }
+
   private assertNoOverlappingCurrentBom(rows: { childItemCode: string }[]) {
     const seen = new Set<string>();
     const duplicate = rows.find((row) => seen.has(row.childItemCode) || !seen.add(row.childItemCode));
@@ -271,7 +299,9 @@ export class RoutingGroupService {
         const valid = new Set(bom.map((b) => b.childItemCode));
         const invalid = upsertCodes.find((code) => !valid.has(code));
         if (invalid) throw new UnprocessableEntityException(`현재 유효 BOM에 없는 자재입니다: ${invalid}`);
-        const existing = allCodes.length ? await manager.find(RoutingMaterial, { where: { routingCode, childItemCode: In(allCodes), organizationId } }) : [];
+        const existing = (await Promise.all(this.chunkOracleIn(allCodes).map((chunk) =>
+          manager.find(RoutingMaterial, { where: { routingCode, childItemCode: In(chunk), organizationId } }),
+        ))).flat();
         const ownership = existing.find((material) => material.processSeq !== seq);
         if (ownership) throw new ConflictException(`자재가 공정 ${ownership.processSeq}에 이미 배정되어 있습니다: ${ownership.childItemCode}`);
         for (const item of dto.deletes) await manager.delete(RoutingMaterial, { routingCode, processSeq: seq, childItemCode: item.childItemCode, organizationId });

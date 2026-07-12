@@ -244,6 +244,20 @@ describe('RoutingGroupService group/process rules', () => {
       await expect(service.findMaterials('R1', 10, 7)).rejects.toThrow(UnprocessableEntityException);
     });
 
+    it.each([[1000, 1], [1001, 2]])('chunks %i union item codes into %i Oracle-safe lookups', async (count, expectedCalls) => {
+      bomRepo.query.mockResolvedValue([]);
+      materialRepo.find.mockResolvedValue(Array.from({ length: count }, (_, index) => ({
+        childItemCode: `M${index}`, processSeq: 20, allocQty: 1, issueMethod: 'BACKFLUSH',
+      })));
+      itemRepo.find.mockImplementation(async (options: any) => options.where.itemCode.value.map((itemCode: string) => ({ itemCode })));
+
+      const result = await service.findMaterials('R1', 10, 7);
+
+      expect(itemRepo.find).toHaveBeenCalledTimes(expectedCalls);
+      expect(itemRepo.find.mock.calls.every(([options]) => (options as any).where.itemCode.value.length <= 1000)).toBe(true);
+      expect(result.map((row) => row.childItemCode)).toEqual(Array.from({ length: count }, (_, index) => `M${index}`));
+    });
+
     it('rejects duplicate mutation payload before writes', async () => {
       await expect(service.bulkSaveMaterials('R1', 10, {
         upserts: [{ childItemCode: 'M1', allocQty: 1 }], deletes: [{ childItemCode: 'M1' }],
@@ -294,6 +308,25 @@ describe('RoutingGroupService group/process rules', () => {
         .rejects.toThrow(ConflictException);
       expect(rollback).toHaveBeenCalledTimes(1);
       expect(read).not.toHaveBeenCalled();
+    });
+
+    it.each([[1000, 1], [1001, 2]])('chunks %i BOM and ownership expressions into %i Oracle-safe queries', async (count, expectedCalls) => {
+      const upserts = Array.from({ length: count }, (_, index) => ({ childItemCode: `M${index}`, allocQty: 1 }));
+      manager.query.mockImplementation(async (sql: string, binds: Record<string, unknown>) => {
+        if (sql.includes('FOR UPDATE')) return [{ routingCode: 'R1', itemCode: 'FG1' }];
+        return Object.keys(binds).filter((key) => key.startsWith('child')).map((key) => ({ childItemCode: binds[key], bomQty: 1 }));
+      });
+      manager.findOne.mockResolvedValue({ processSeq: 10 });
+      manager.find = jest.fn(async () => []);
+      jest.spyOn(service, 'findMaterials').mockResolvedValue([]);
+
+      await service.bulkSaveMaterials('R1', 10, { upserts, deletes: [] } as any, 7);
+
+      const bomCalls = manager.query.mock.calls.filter(([sql]: [string]) => sql.includes('FROM ID_ENG_BOM'));
+      expect(bomCalls).toHaveLength(expectedCalls);
+      expect(bomCalls.every(([, binds]: [string, Record<string, unknown>]) => Object.keys(binds).filter((key) => key.startsWith('child')).length <= 1000)).toBe(true);
+      expect(manager.find).toHaveBeenCalledTimes(expectedCalls);
+      expect(manager.find.mock.calls.every(([_, options]: any[]) => options.where.childItemCode.value.length <= 1000)).toBe(true);
     });
   });
 });
