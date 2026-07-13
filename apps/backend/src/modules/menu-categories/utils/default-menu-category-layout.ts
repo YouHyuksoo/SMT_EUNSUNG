@@ -1,6 +1,8 @@
 /**
- * Default menu category layout copied from the frontend sidebar menuConfig.
- * Keep this file in sync with apps/frontend/src/config/menuConfig.ts.
+ * @file AUTO-GENERATED — 직접 편집하지 마세요.
+ * @description 기본 메뉴 카테고리 레이아웃 (menuConfig 카테고리 구조)
+ * Source: apps/frontend/src/config/menuConfig.ts
+ * Regenerate: pnpm --filter @eunsung/frontend gen:menu (또는 pnpm --filter @eunsung/frontend test)
  */
 export interface DefaultMenuCategoryLayout {
   categoryCode: string;

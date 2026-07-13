@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "gen:registry": "node scripts/gen-page-registry.mjs",
+    "gen:menu": "node scripts/gen-menu-registration.mjs",
     "check:pages": "node scripts/check-page-registration.mjs",
     "predev": "node scripts/gen-page-registry.mjs && node scripts/check-page-registration.mjs",
     "prebuild": "node scripts/gen-page-registry.mjs && node scripts/check-page-registration.mjs",
@@ -12,7 +13,7 @@
     "start": "next start -H 0.0.0.0 -p 3100",
     "lint": "next lint",
     "typecheck": "node scripts/gen-page-registry.mjs && node scripts/check-page-registration.mjs && tsc --noEmit --pretty false",
-    "test": "node scripts/gen-page-registry.mjs && node scripts/check-page-registration.mjs && node --test \"src/**/*.eunsung.structure.test.mjs\"",
+    "test": "node scripts/gen-page-registry.mjs && node scripts/gen-menu-registration.mjs && node scripts/check-page-registration.mjs && node --test \"src/**/*.eunsung.structure.test.mjs\"",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:report": "playwright show-report"
