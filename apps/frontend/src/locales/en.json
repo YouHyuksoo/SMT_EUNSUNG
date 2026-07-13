@@ -391,7 +391,8 @@
     "oee.entry": "Operation Log",
     "oee.resource": "Resource Master",
     "oee.reason": "Downtime Reason Master",
-    "oee.standardTime": "Standard Time"
+    "oee.standardTime": "Standard Time",
+    "oee.idleReason": "Idle Reason Code"
   },
   "header": {
     "theme": "Theme",
