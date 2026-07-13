@@ -92,7 +92,7 @@ export const useMenuTreeStore = create<MenuTreeStore>()(
       },
     }),
     {
-      name: 'hanes-menu-tree',
+      name: 'eunsung-menu-tree',
       storage: createJSONStorage(() => sessionStorage),
       // groups만 persist (loading/error는 휘발성)
       partialize: (state) => ({ groups: state.groups }),

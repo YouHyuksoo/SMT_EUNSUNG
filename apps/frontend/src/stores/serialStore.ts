@@ -12,7 +12,7 @@
 import { create } from "zustand";
 import api from "@/services/api";
 
-const LS_KEY = "hanes_serial_config_id";
+const LS_KEY = "eunsung_serial_config_id";
 
 /** 스캔 이벤트 리스너 타입 */
 type ScanListener = (data: string) => void;

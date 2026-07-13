@@ -58,7 +58,7 @@ test('AI chat panel opens at double width and accepts pasted screenshots', () =>
 test('AI chat store persists conversation history and persona', () => {
   const source = read('apps/frontend/src/stores/aiChatStore.ts');
   assert.match(source, /persist/);
-  assert.match(source, /hanes\.aiChat\.v1/);
+  assert.match(source, /eunsung\.aiChat\.v1/);
   assert.match(source, /messages/);
   assert.match(source, /persona/);
   assert.match(source, /setPersona/);

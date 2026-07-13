@@ -8,8 +8,6 @@ const itemTypeSourceFiles = [
   'apps/backend/src/modules/master/controllers/part.controller.ts',
   'apps/frontend/src/app/(authenticated)/master/bom/page.tsx',
   'apps/frontend/src/app/(authenticated)/inventory/product-hold/page.tsx',
-  'apps/backend/src/database/create-hanes-schema.sql',
-  'apps/backend/src/database/migrations/001-initial-schema.sql',
   'scripts/create_product_stocks.sql',
   'scripts/create_product_transactions.sql',
   'scripts/fix_product_tables_id.sql',

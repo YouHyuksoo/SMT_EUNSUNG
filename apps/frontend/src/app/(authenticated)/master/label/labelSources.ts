@@ -56,7 +56,7 @@ export const labelSources: Record<LabelSourceTable, LabelSourceDefinition> = {
     label: "자재 LOT",
     fields: [
       { key: "matUid", label: "자재 UID", sample: "MLT-RM260617-00001" },
-      { key: "itemCode", label: "품목코드", sample: "HNS02C1ABCD" },
+      { key: "itemCode", label: "품목코드", sample: "ITEM-0001" },
       { key: "itemName", label: "품목명", sample: "SMT 부품" },
       { key: "qty", label: "수량", sample: "100" },
       { key: "unit", label: "단위", sample: "EA" },
@@ -69,7 +69,7 @@ export const labelSources: Record<LabelSourceTable, LabelSourceDefinition> = {
     label: "제품포장",
     fields: [
       { key: "boxNo", label: "박스번호", sample: "BX26061700001" },
-      { key: "itemCode", label: "제품코드", sample: "HNS02C1ABCD" },
+      { key: "itemCode", label: "제품코드", sample: "ITEM-0001" },
       { key: "itemName", label: "제품명", sample: "SMT 완제품" },
       { key: "qty", label: "수량", sample: "20" },
       { key: "boxQty", label: "박스입수량", sample: "20" },
@@ -86,7 +86,7 @@ export const labelSources: Record<LabelSourceTable, LabelSourceDefinition> = {
       { key: "status", label: "상태", sample: "CLOSED" },
       { key: "shipOrderNo", label: "출하지시번호", sample: "SO-260617-001" },
       { key: "customerName", label: "고객사", sample: "EUNSUNG" },
-      { key: "itemCode", label: "대표제품코드", sample: "HNS02C1ABCD" },
+      { key: "itemCode", label: "대표제품코드", sample: "ITEM-0001" },
       { key: "itemName", label: "대표제품명", sample: "SMT 완제품" },
       { key: "createdAt", label: "생성일시", sample: "2026-06-17 09:30" },
     ],
@@ -96,7 +96,7 @@ export const labelSources: Record<LabelSourceTable, LabelSourceDefinition> = {
     label: "반제품 SG",
     fields: [
       { key: "sgBarcode", label: "SG 바코드", sample: "SG26061700001" },
-      { key: "itemCode", label: "반제품코드", sample: "HNS02S1ABCD" },
+      { key: "itemCode", label: "반제품코드", sample: "SEMI-0001" },
       { key: "initQty", label: "수량", sample: "20" },
       { key: "orderNo", label: "작업지시번호", sample: "W26061700001" },
       { key: "issueProcessCode", label: "발행공정", sample: "ASSY" },
@@ -108,7 +108,7 @@ export const labelSources: Record<LabelSourceTable, LabelSourceDefinition> = {
     label: "완제품 FG",
     fields: [
       { key: "fgBarcode", label: "FG 바코드", sample: "FG26061700001" },
-      { key: "itemCode", label: "완제품코드", sample: "HNS02C1ABCD" },
+      { key: "itemCode", label: "완제품코드", sample: "ITEM-0001" },
       { key: "orderNo", label: "작업지시번호", sample: "W26061700001" },
       { key: "equipCode", label: "설비코드", sample: "EQ-ACTUT-01" },
       { key: "lineCode", label: "라인", sample: "LINE-01" },

@@ -180,7 +180,7 @@ export async function executeQuery<T = Record<string, unknown>>(
 }
 
 // ---------------------------------------------------------------------------
-// 프로필 기반 보조 커넥션 풀 (SVEHICLEPDB 등 다른 DB 인스턴스 접속용)
+// 프로필 기반 보조 커넥션 풀 (보조DB 등 다른 DB 인스턴스 접속용)
 // ---------------------------------------------------------------------------
 
 /** 프로필 이름별 보조 커넥션 풀 캐시 */
@@ -225,7 +225,7 @@ function getPoolByProfile(profileName: string): Promise<oracledb.Pool> {
 
 /**
  * 특정 프로필의 DB에서 SQL 쿼리를 실행한다.
- * 메인 DB가 아닌 다른 인스턴스(예: SVEHICLEPDB)에 접속할 때 사용.
+ * 메인 DB가 아닌 다른 인스턴스(예: 보조DB)에 접속할 때 사용.
  * @param profileName - database.json의 프로필 이름
  * @param sql - 실행할 SQL 문
  * @param binds - 바인드 변수

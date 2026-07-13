@@ -2,7 +2,7 @@ import { defineConfig, devices } from '@playwright/test';
 import path from 'path';
 
 /**
- * Playwright E2E 설정 — HANES MES 프론트엔드.
+ * Playwright E2E 설정 — 은성 MES 프론트엔드.
  *
  * - 실제 사용자 UI 흐름·컴포넌트 경계 검증에만 사용한다(CLAUDE.md 규칙).
  * - dev 서버(포트 3002)가 이미 떠 있으면 그대로 재사용한다.

@@ -144,7 +144,7 @@ describe('PdaRoleService', () => {
       await expect(target.create(dto, 'C1', 'P1')).rejects.toThrow(ConflictException);
     });
 
-    it('should reject create when tenant is missing instead of defaulting to HANES/P01', async () => {
+    it('should reject create when tenant is missing instead of defaulting to EUNSUNG/P01', async () => {
       mockRoleRepo.findOne.mockResolvedValue(null);
 
       await expect(target.create({ code: 'NEW', name: 'New Role' } as any)).rejects.toThrow(BadRequestException);
@@ -183,7 +183,7 @@ describe('PdaRoleService', () => {
       await expect(target.update('NONE', {} as any, 'C1', 'P1')).rejects.toThrow(NotFoundException);
     });
 
-    it('should reject menu replacement when tenant is missing instead of defaulting to HANES/P01', async () => {
+    it('should reject menu replacement when tenant is missing instead of defaulting to EUNSUNG/P01', async () => {
       mockRoleRepo.findOne.mockResolvedValue({ code: 'R1' } as any);
 
       await expect(target.update('R1', { menuCodes: ['PDA_SHIPPING'] } as any)).rejects.toThrow(BadRequestException);

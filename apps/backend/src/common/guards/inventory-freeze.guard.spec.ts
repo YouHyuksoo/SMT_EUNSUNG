@@ -45,7 +45,7 @@ describe('InventoryFreezeGuard (HTTP)', () => {
 
     await request(app.getHttpServer())
       .post('/guard-test/apply')
-      .set('x-company', 'HANES')
+      .set('x-company', 'EUNSUNG')
       .set('x-plant', 'P01')
       .send({ stockId: 'WH-01::ITEM-001::MAT-001', countedQty: 8 })
       .expect(400);
@@ -56,14 +56,14 @@ describe('InventoryFreezeGuard (HTTP)', () => {
 
     const res = await request(app.getHttpServer())
       .post('/guard-test/apply')
-      .set('x-company', 'HANES')
+      .set('x-company', 'EUNSUNG')
       .set('x-plant', 'P01')
       .send({ stockId: 'WH-01::ITEM-001::MAT-001', countedQty: 8 })
       .expect(201);
 
     expect(res.body.ok).toBe(true);
     expect(dataSourceMock.query).toHaveBeenCalledTimes(1);
-    expect(dataSourceMock.query.mock.calls[0][1]).toEqual(['HANES', 'P01']);
+    expect(dataSourceMock.query.mock.calls[0][1]).toEqual(['EUNSUNG', 'P01']);
   });
 
   it('uses JwtAuthGuard user tenant when tenant headers are absent', async () => {
@@ -73,7 +73,7 @@ describe('InventoryFreezeGuard (HTTP)', () => {
       switchToHttp: () => ({
         getRequest: () => ({
           headers: {},
-          user: { company: 'HANES', plant: 'P01' },
+          user: { company: 'EUNSUNG', plant: 'P01' },
           path: '/guard-test/apply',
         }),
       }),
@@ -81,7 +81,7 @@ describe('InventoryFreezeGuard (HTTP)', () => {
 
     await expect(guard.canActivate(context)).resolves.toBe(true);
 
-    expect(dataSourceMock.query.mock.calls[0][1]).toEqual(['HANES', 'P01']);
+    expect(dataSourceMock.query.mock.calls[0][1]).toEqual(['EUNSUNG', 'P01']);
   });
 
   it('blocks request when freeze status query throws', async () => {
@@ -89,7 +89,7 @@ describe('InventoryFreezeGuard (HTTP)', () => {
 
     await request(app.getHttpServer())
       .post('/guard-test/apply')
-      .set('x-company', 'HANES')
+      .set('x-company', 'EUNSUNG')
       .set('x-plant', 'P01')
       .send({ stockId: 'WH-01::ITEM-001::MAT-001', countedQty: 8 })
       .expect(400);

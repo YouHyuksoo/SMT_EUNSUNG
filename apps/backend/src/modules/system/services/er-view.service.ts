@@ -924,12 +924,12 @@ export class ErViewService {
     try {
       execFileSync('python', ['tools/generate_db_schema_doc.py'], {
         cwd: process.cwd(),
-        env: { ...process.env, ORACLE_SITE: process.env.ORACLE_SITE ?? 'JSHANES' },
+        env: { ...process.env, ORACLE_SITE: process.env.ORACLE_SITE ?? 'ESDBext' },
         stdio: 'pipe',
       });
       return { status: 'SUCCESS' };
     } catch (error) {
-      return { status: 'FAILED', errorMessage: String(error), command: 'ORACLE_SITE=JSHANES python tools/generate_db_schema_doc.py' };
+      return { status: 'FAILED', errorMessage: String(error), command: 'ORACLE_SITE=ESDBext python tools/generate_db_schema_doc.py' };
     }
   }
 

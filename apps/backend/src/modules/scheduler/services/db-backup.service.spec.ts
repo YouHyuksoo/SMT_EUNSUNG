@@ -182,7 +182,7 @@ describe('DbBackupService', () => {
       // ZIP 파일이 생성되었는지 확인
       const zipFiles = fs.readdirSync(backupDir).filter((f) => f.endsWith('.zip'));
       expect(zipFiles.length).toBe(1);
-      expect(zipFiles[0]).toMatch(/^HANES_MES_.*\.zip$/);
+      expect(zipFiles[0]).toMatch(/^EUNSUNG_MES_.*\.zip$/);
     });
 
     it('빈 테이블만 있을 때도 정상 동작해야 한다', async () => {
@@ -248,7 +248,7 @@ describe('DbBackupService', () => {
       );
 
       // 헤더 확인
-      expect(content).toContain('HANES MES 복원 스크립트');
+      expect(content).toContain('은성 MES 복원 스크립트');
       expect(content).toContain('MY_SCHEMA');
 
       // 1단계: FK 비활성화
@@ -369,16 +369,16 @@ describe('DbBackupService', () => {
       fs.mkdirSync(backupRoot, { recursive: true });
 
       // 오래된 파일 (8일 전)
-      const oldFile = path.join(backupRoot, 'HANES_MES_2026-03-01.zip');
+      const oldFile = path.join(backupRoot, 'EUNSUNG_MES_2026-03-01.zip');
       fs.writeFileSync(oldFile, 'old-backup');
       const oldTime = Date.now() - 8 * 24 * 60 * 60 * 1000;
       fs.utimesSync(oldFile, new Date(oldTime), new Date(oldTime));
 
       // 최근 파일 (1일 전)
-      const recentFile = path.join(backupRoot, 'HANES_MES_2026-03-19.zip');
+      const recentFile = path.join(backupRoot, 'EUNSUNG_MES_2026-03-19.zip');
       fs.writeFileSync(recentFile, 'recent-backup');
 
-      // HANES_MES_ 접두사가 아닌 파일 — 삭제 대상 아님
+      // EUNSUNG_MES_ 접두사가 아닌 파일 — 삭제 대상 아님
       const otherFile = path.join(backupRoot, 'other_backup.zip');
       fs.writeFileSync(otherFile, 'other');
 

@@ -2,7 +2,7 @@
  * @file src/modules/auth/auth.service.ts
  * @description 인증 서비스 (은성전장) - ISYS_USERS 직접 비밀번호 체크 방식.
  *
- * HANES 아키텍처(토큰=식별자, JWT 미사용, DB 평문 비교)를 참조하되,
+ * 기존 인증 방식(토큰=식별자, JWT 미사용, DB 평문 비교)를 참조하되,
  * 은성전장 스키마(ISYS_USERS / ISYS_ORGANIZATION / ISYS_COMPANY)에 맞게 구현한다.
  *
  * 초보자 가이드:
