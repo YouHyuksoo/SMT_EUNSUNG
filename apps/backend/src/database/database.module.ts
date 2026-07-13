@@ -54,6 +54,7 @@ import { RoutingProcess } from '../entities/routing-process.entity';
 import { ProcessQualityCondition } from '../entities/process-quality-condition.entity';
 import { RoutingMaterial } from '../entities/routing-material.entity';
 import { HarnessCircuitSpec } from '../entities/harness-circuit-spec.entity';
+import { FileAttachment } from '../entities/file-attachment.entity';
 
 @Global()
 @Module({
@@ -125,6 +126,7 @@ import { HarnessCircuitSpec } from '../entities/harness-circuit-spec.entity';
             ProcessQualityCondition,
             RoutingMaterial,
             HarnessCircuitSpec,
+            FileAttachment,
           ],
           migrations: [],
           migrationsRun: false,

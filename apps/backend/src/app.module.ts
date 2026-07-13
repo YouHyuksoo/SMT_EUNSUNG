@@ -43,6 +43,7 @@ import { MasterProcessModule } from './modules/master/master-process.module';
 import { MasterRoutingModule } from './modules/master/master-routing.module';
 import { MasterRoutingGroupModule } from './modules/master/master-routing-group.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { AttachmentModule } from './modules/attachment/attachment.module';
 import { SharedModule } from './shared/shared.module';
 
 @Module({
@@ -130,6 +131,7 @@ import { SharedModule } from './shared/shared.module';
 
     // 대시보드 (/dashboard/summary)
     DashboardModule,
+    AttachmentModule,
   ],
   controllers: [AppController],
   providers: [AppService],
