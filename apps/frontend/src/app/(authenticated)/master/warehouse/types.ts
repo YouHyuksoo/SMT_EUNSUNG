@@ -1,6 +1,6 @@
 /**
  * @file src/app/(authenticated)/master/warehouse/types.ts
- * @description 창고 관리 타입 정의 (창고 마스터 + 이동규칙)
+ * @description 창고 관리 타입 정의 (창고 마스터)
  */
 
 export interface WarehouseData {
@@ -14,15 +14,6 @@ export interface WarehouseData {
   isDefault: boolean;
   useYn: string;
   createdAt: string;
-}
-
-export interface TransferRule {
-  fromWarehouseCode: string;
-  fromWarehouseName: string;
-  toWarehouseCode: string;
-  toWarehouseName: string;
-  allowYn: string;
-  remark?: string;
 }
 
 export const WAREHOUSE_TYPE_COLORS: Record<string, string> = {

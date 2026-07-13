@@ -2,31 +2,27 @@
 menuCode: MST_WAREHOUSE
 audience: operator
 title: 仓库/位置管理 — 操作指南
-summary: 仓库·位置·移动规则3个表的全部列DB映射, 仓库类型代码值, 自动创建仓库, 权限, 故障排除, 多租户范围
-tags: [标准信息, 仓库, 位置, 移动规则, 操作]
-keywords: [WAREHOUSES, WAREHOUSE_LOCATIONS, WAREHOUSE_TRANSFER_RULES, WAREHOUSE_TYPE, WAREHOUSE_GROUP, FROM_WAREHOUSE_ID, TO_WAREHOUSE_ID, ALLOW_YN, IS_DEFAULT, 仓库类型, FLOOR, SUBCON, 自然键, 复合键, 多租户, COMPANY, PLANT_CD]
+summary: 仓库·位置2个表的全部列DB映射, 仓库类型代码值, 自动创建仓库, 权限, 故障排除, 多租户范围
+tags: [标准信息, 仓库, 位置, 操作]
+keywords: [WAREHOUSES, WAREHOUSE_LOCATIONS, WAREHOUSE_TYPE, WAREHOUSE_GROUP, IS_DEFAULT, 仓库类型, FLOOR, SUBCON, 自然键, 复合键, 多租户, COMPANY, PLANT_CD]
 related: [MST_PART]
 ---
 
 # 仓库/位置管理 — 操作指南
 
 ## 系统目的·角色
-管理库存保管·移动的物理/逻辑单位——**仓库**及其内部的**位置**，以及仓库间的**移动规则**的主表界面。入库·发放·库存(`MAT_STOCK`/`PRODUCT_STOCKS`)·生产实绩·库存移动均通过`WAREHOUSE_CODE`引用此主表。
+管理库存保管·移动的物理/逻辑单位——**仓库**及其内部的**位置**的主表界面。入库·发放·库存(`MAT_STOCK`/`PRODUCT_STOCKS`)·生产实绩·库存移动均通过`WAREHOUSE_CODE`引用此主表。
 
 ## 数据结构
 ```
 WAREHOUSES (PK: COMPANY, PLANT_CD, WAREHOUSE_CODE)
-   ├─ WAREHOUSE_LOCATIONS (PK: COMPANY, PLANT_CD, WAREHOUSE_CODE, LOCATION_CODE)
-   │       仓库 1 : N 位置 (通过WAREHOUSE_CODE连接)
-   └─ WAREHOUSE_TRANSFER_RULES (PK: COMPANY, PLANT_CD, FROM_WAREHOUSE_ID, TO_WAREHOUSE_ID)
-            FROM/TO_WAREHOUSE_ID值 = WAREHOUSES.WAREHOUSE_CODE (存储代码，列名仅为_ID)
+   └─ WAREHOUSE_LOCATIONS (PK: COMPANY, PLANT_CD, WAREHOUSE_CODE, LOCATION_CODE)
+           仓库 1 : N 位置 (通过WAREHOUSE_CODE连接)
 ```
-> **注意**: `WAREHOUSE_TRANSFER_RULES`的`FROM_WAREHOUSE_ID`/`TO_WAREHOUSE_ID`名称虽为`_ID`，实际存储值为**仓库代码(WAREHOUSE_CODE)**。服务通过`fw.WAREHOUSE_CODE = rule.FROM_WAREHOUSE_ID` JOIN获取出发/到达仓库名。不是外键约束(FK)列，而是自然键JOIN。
 
 各区域的CRUD API:
 - 仓库: `GET/POST/PUT/DELETE /inventory/warehouses[/{code}]`
 - 位置: `GET/POST/PUT/DELETE /inventory/warehouse-locations[/{warehouseCode}::{locationCode}]`
-- 移动规则: `GET/POST/PUT/DELETE /master/transfer-rules[/{fromId}/{toId}]`
 
 ---
 
@@ -66,19 +62,6 @@ WAREHOUSES (PK: COMPANY, PLANT_CD, WAREHOUSE_CODE)
 
 > 修改/删除API通过`{WAREHOUSE_CODE}::{LOCATION_CODE}`形式(`::`分隔符)传递复合键。
 
-## ③ 仓库移动规则 — WAREHOUSE_TRANSFER_RULES (全部列)
-
-| 界面项目 | DB列 | 角色 / 含义 · 操作要点 |
-|------|------|------|
-| 出发仓库(代码/名称) | `FROM_WAREHOUSE_ID` | PK组成。**值=出发仓库代码**。与`WAREHOUSES.WAREHOUSE_CODE` JOIN显示代码·名称。 |
-| 到达仓库(代码/名称) | `TO_WAREHOUSE_ID` | PK组成。**值=到达仓库代码**。相同方式JOIN。 |
-| 允许与否 | `ALLOW_YN` | `'Y'`=允许移动, `'N'`=禁止。默认`'Y'`。 |
-| 备注 | `REMARK` | 备注(nullable)。 |
-| 审计 | `CREATED_BY`, `UPDATED_BY`, `CREATED_AT`, `UPDATED_AT` | 创建/修改记录。 |
-| 多租户 | `COMPANY`, `PLANT_CD` | PK部分。`40` / `1000` 范围。 |
-
-> (出发→到达)配对唯一。重复登记时报409 Conflict。修改/删除API通过`/{fromWarehouseId}/{toWarehouseId}`路径传递复合键。
-
 ---
 
 ## 仓库自动创建 (基于代码的操作)
@@ -94,8 +77,7 @@ WAREHOUSES (PK: COMPANY, PLANT_CD, WAREHOUSE_CODE)
 ## 操作流程
 1. 在仓库管理中登记运营仓库(指定类型·默认仓库)。
 2. 为需要的仓库登记位置(区域/行/列/层)。
-3. 为需要控制的仓库对登记移动规则(允许/禁止)。
-4. 停用仓库时建议以`USE_YN='N'`禁用而非删除(保留库存/记录)。
+3. 停用仓库时建议以`USE_YN='N'`禁用而非删除(保留库存/记录)。
 
 ## 权限
 标准信息管理员(登记/修改/删除)。普通用户仅查询。
@@ -106,11 +88,9 @@ WAREHOUSES (PK: COMPANY, PLANT_CD, WAREHOUSE_CODE)
 | 仓库删除失败 | 该仓库存在库存余量(`有库存的仓库不可删除`) | 转移/清空库存后删除，或以`USE_YN='N'`禁用 |
 | 表单中不显示线·工序栏 | 仓库类型不是FLOOR | 将类型改为`FLOOR`(工序在制) |
 | 自动放置到错误仓库 | 该类型缺少`IS_DEFAULT='Y'`仓库/存在多个 | 每种类型仅保留1个默认仓库为`IS_DEFAULT='Y'` |
-| 移动规则保存时409 | 同一(出发→到达)配对已存在 | 通过修改已有规则处理 |
-| 移动规则出发/到达名称为空 | `FROM/TO_WAREHOUSE_ID`指向的仓库代码不在WAREHOUSES中 | 确认仓库代码一致性(修正为有效仓库代码) |
 | 仓库/位置在选择列表中不存在 | `USE_YN='N'` | 将使用与否设为`Y`激活 |
 
 ## 数据·关联
-- 表: `WAREHOUSES`, `WAREHOUSE_LOCATIONS`, `WAREHOUSE_TRANSFER_RULES`
+- 表: `WAREHOUSES`, `WAREHOUSE_LOCATIONS`
 - 关联: 入库/发放, 库存(`MAT_STOCK`, `PRODUCT_STOCKS`), 生产实绩, 库存移动, 物料主表(默认存放位置)
 - 范围: `COMPANY='40'`, `PLANT_CD='1000'`

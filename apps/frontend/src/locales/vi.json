@@ -232,7 +232,6 @@
     "master.inspectItem": "Danh mục hạng mục kiểm tra",
     "master.box": "Quản lý thùng đóng gói",
     "master.workInstruction": "Quản lý hướng dẫn công việc",
-    "master.transferRule": "Quản lý quy tắc chuyển kho",
     "master.modelSuffix": "Quản lý hậu tố model",
     "master.warehouse": "Quản lý kho hàng",
     "master.company": "Quản lý công ty",
@@ -1511,25 +1510,6 @@
       "noContent": "Không có nội dung nào được đăng ký.",
       "deleteTitle": "Xóa hướng dẫn công việc",
       "deleteConfirm": "Bạn có chắc muốn xóa hướng dẫn công việc này? Hành động này không thể hoàn tác."
-    },
-    "transferRule": {
-      "title": "Quy tắc chuyển kho",
-      "deleteConfirm": "Xóa quy tắc chuyển kho này?",
-      "deleteRule": "Xóa quy tắc",
-      "subtitle": "Quản lý quy tắc cho phép chuyển kho.",
-      "fromWarehouseCode": "Mã kho đi",
-      "fromWarehouseName": "Tên kho đi",
-      "toWarehouseCode": "Mã kho đến",
-      "toWarehouseName": "Tên kho đến",
-      "allow": "Cho phép",
-      "allowed": "Cho phép",
-      "denied": "Cấm",
-      "addRule": "Thêm quy tắc",
-      "editRule": "Sửa quy tắc",
-      "searchPlaceholder": "Tìm mã kho, tên kho...",
-      "fromWarehouse": "Kho đi",
-      "toWarehouse": "Kho đến",
-      "allowYn": "Cho phép/Cấm"
     },
     "modelSuffix": {
       "title": "Quản lý hậu tố model",

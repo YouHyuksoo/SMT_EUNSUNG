@@ -35,37 +35,37 @@ const features: Feature[] = [
     icon: Database,
     title: "기준정보",
     description: "품목, 라우팅, 설비, 작업자, 공정 조건을 ESDB 기준으로 관리",
-    color: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
+    color: "text-blue-600 dark:text-blue-400",
   },
   {
     icon: Boxes,
     title: "수불관리",
     description: "입고, 출고, 재고, LOT 흐름을 공정 투입과 실시간 연결",
-    color: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+    color: "text-amber-600 dark:text-amber-400",
   },
   {
     icon: Factory,
     title: "SMT 생산",
     description: "PCB 투입부터 조립 공정 실적과 재공 상태를 라인별로 추적",
-    color: "bg-green-500/10 text-green-600 dark:text-green-400",
+    color: "text-green-600 dark:text-green-400",
   },
   {
     icon: Gauge,
     title: "OEE 관리",
     description: "설비 가동, 성능, 품질 지표를 집계해 병목과 손실을 분석",
-    color: "bg-purple-500/10 text-purple-600 dark:text-purple-400",
+    color: "text-purple-600 dark:text-purple-400",
   },
   {
     icon: ScanLine,
     title: "품질추적",
     description: "SPI, AOI, FCT, VISION 검사 결과와 LOT 추적성을 통합 조회",
-    color: "bg-red-500/10 text-red-600 dark:text-red-400",
+    color: "text-red-600 dark:text-red-400",
   },
   {
     icon: Monitor,
     title: "현장 모니터링",
     description: "대형 현황판은 별도 모니터링 라우트에서 독립적으로 운영",
-    color: "bg-cyan-500/10 text-cyan-600 dark:text-cyan-400",
+    color: "text-cyan-600 dark:text-cyan-400",
   },
 ];
 
@@ -99,12 +99,7 @@ function FeatureCard({ feature }: { feature: Feature }) {
         hover:border-primary/30 hover:shadow-lg
       "
     >
-      <div className={`
-        w-11 h-11 rounded-lg flex items-center justify-center mb-4
-        ${feature.color}
-      `}>
-        <Icon className="w-5 h-5" />
-      </div>
+      <Icon className={`w-6 h-6 mb-4 ${feature.color}`} strokeWidth={1.5} />
       <h3 className="text-lg font-semibold text-text mb-2">
         {feature.title}
       </h3>

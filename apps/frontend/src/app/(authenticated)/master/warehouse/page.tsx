@@ -2,22 +2,20 @@
 
 /**
  * @file src/app/(authenticated)/master/warehouse/page.tsx
- * @description 창고 관리 페이지 - 창고 마스터 + 로케이션 + 이동규칙 탭 구조
+ * @description 창고 관리 페이지 - 창고 마스터 + 로케이션 탭 구조
  *
  * 초보자 가이드:
  * 1. **창고 목록 탭**: 창고 마스터 CRUD (유형별 필터, 검색, 초기화)
  * 2. **로케이션 탭**: 창고 내 세부 위치 관리
- * 3. **이동규칙 탭**: 창고 간 이동 허용/금지 규칙 관리
- * 4. **헤더 버튼**: 탭 전환 시 우상단 버튼이 해당 탭의 새로고침/등록 버튼으로 교체
+ * 3. **헤더 버튼**: 탭 전환 시 우상단 버튼이 해당 탭의 새로고침/등록 버튼으로 교체
  */
 import { useState, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Warehouse, ArrowRightLeft, MapPin } from 'lucide-react';
+import { Warehouse, MapPin } from 'lucide-react';
 import WarehouseList from './components/WarehouseList';
-import TransferRuleList from './components/TransferRuleList';
 import LocationList from './components/LocationList';
 
-type TabType = 'warehouse' | 'location' | 'transfer-rule';
+type TabType = 'warehouse' | 'location';
 
 export default function WarehousePage() {
   const { t } = useTranslation();
@@ -29,7 +27,6 @@ export default function WarehousePage() {
   const tabs: { key: TabType; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
     { key: 'warehouse', label: t('inventory.warehouse.title'), icon: Warehouse },
     { key: 'location', label: t('inventory.location.title'), icon: MapPin },
-    { key: 'transfer-rule', label: t('master.transferRule.title'), icon: ArrowRightLeft },
   ];
 
   return (
@@ -68,7 +65,6 @@ export default function WarehousePage() {
       <div className="flex-1 min-h-0 overflow-hidden">
         {activeTab === 'warehouse' && <WarehouseList onHeaderActions={setHeaderActions} />}
         {activeTab === 'location' && <LocationList onHeaderActions={setHeaderActions} />}
-        {activeTab === 'transfer-rule' && <TransferRuleList onHeaderActions={setHeaderActions} />}
       </div>
     </div>
   );

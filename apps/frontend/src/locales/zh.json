@@ -232,7 +232,6 @@
     "master.inspectItem": "点检项目主数据",
     "master.box": "包装箱管理",
     "master.workInstruction": "作业指导书管理",
-    "master.transferRule": "仓库移动规则管理",
     "master.modelSuffix": "型号后缀管理",
     "master.warehouse": "仓库管理",
     "master.company": "公司管理",
@@ -1511,25 +1510,6 @@
       "noContent": "没有注册的内容。",
       "deleteTitle": "删除作业指导书",
       "deleteConfirm": "确定要删除此作业指导书吗？删除后无法恢复。"
-    },
-    "transferRule": {
-      "title": "仓库移转规则",
-      "deleteConfirm": "确定删除此移库规则吗？",
-      "deleteRule": "删除规则",
-      "subtitle": "管理仓库间移转许可规则。",
-      "fromWarehouseCode": "出发仓代码",
-      "fromWarehouseName": "出发仓名称",
-      "toWarehouseCode": "到达仓代码",
-      "toWarehouseName": "到达仓名称",
-      "allow": "许可",
-      "allowed": "允许",
-      "denied": "禁止",
-      "addRule": "添加规则",
-      "editRule": "编辑规则",
-      "searchPlaceholder": "搜索仓库代码、名称...",
-      "fromWarehouse": "出发仓库",
-      "toWarehouse": "到达仓库",
-      "allowYn": "许可与否"
     },
     "modelSuffix": {
       "title": "型号后缀管理",

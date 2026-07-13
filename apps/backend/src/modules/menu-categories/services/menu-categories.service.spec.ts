@@ -213,6 +213,7 @@ describe('MenuCategoriesService', () => {
         { menuCode: 'MST_PART' },
         { menuCode: 'MST_BOM' },
         { menuCode: 'MST_PARTNER' },
+        { menuCode: 'MST_CUSTOMER' },
         { menuCode: 'EQUIP_MASTER' },
         { menuCode: 'MST_PROCESS' },
         { menuCode: 'MST_PROD_LINE' },
@@ -222,6 +223,9 @@ describe('MenuCategoriesService', () => {
         { menuCode: 'MST_WORK_INST' },
         { menuCode: 'MST_WAREHOUSE' },
         { menuCode: 'MST_LABEL' },
+        { menuCode: 'MST_PURCHASE_PRICE' },
+        { menuCode: 'MST_ITEM_SUPPLIER' },
+        { menuCode: 'MST_SALE_PRICE' },
         { menuCode: 'SYS_COMPANY' },
         { menuCode: 'SYS_CODE' },
         { menuCode: 'SYS_CONFIG' },
@@ -237,6 +241,8 @@ describe('MenuCategoriesService', () => {
         { menuCode: 'OEE_ENTRY' },
         { menuCode: 'OEE_MST_RESOURCE' },
         { menuCode: 'OEE_MST_REASON' },
+        { menuCode: 'OEE_MST_STD_TIME' },
+        { menuCode: 'OEE_MST_IDLE_REASON' },
       ] as any);
 
       await service.ensureDefaultLayout({ organizationId: 7, userId: 'tester' });

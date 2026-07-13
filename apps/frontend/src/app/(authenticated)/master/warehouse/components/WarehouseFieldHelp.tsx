@@ -24,12 +24,6 @@ export const WAREHOUSE_FIELD_HELP = {
   colNo: { db: "WAREHOUSE_LOCATIONS.COL_NO", description: "랙/선반의 열(column) 번호입니다." },
   levelNo: { db: "WAREHOUSE_LOCATIONS.LEVEL_NO", description: "랙/선반의 단(level) 번호입니다." },
   locationRemark: { db: "WAREHOUSE_LOCATIONS.REMARK", description: "로케이션 관리 참고사항입니다." },
-
-  // 이동 규칙 (WAREHOUSE_TRANSFER_RULES)
-  fromWarehouse: { db: "WAREHOUSE_TRANSFER_RULES.FROM_WAREHOUSE_ID", description: "이동 규칙의 출발 창고입니다." },
-  toWarehouse: { db: "WAREHOUSE_TRANSFER_RULES.TO_WAREHOUSE_ID", description: "이동 규칙의 도착 창고입니다." },
-  allowYn: { db: "WAREHOUSE_TRANSFER_RULES.ALLOW_YN", description: "출발 창고에서 도착 창고로의 이동 허용 여부입니다." },
-  ruleRemark: { db: "WAREHOUSE_TRANSFER_RULES.REMARK", description: "이동 규칙 관리 참고사항입니다." },
 } as const;
 
 export type WarehouseFieldKey = keyof typeof WAREHOUSE_FIELD_HELP;

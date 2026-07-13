@@ -2,31 +2,27 @@
 menuCode: MST_WAREHOUSE
 audience: operator
 title: Quản lý kho/vị trí — Hướng dẫn vận hành
-summary: DB mapping toàn bộ cột 3 bảng kho·vị trí·quy tắc di chuyển, giá trị mã loại kho, kho tự động tạo, phân quyền, xử lý sự cố, phạm vi đa khách hàng
-tags: [thông tin cơ sở, kho, vị trí, quy tắc di chuyển, vận hành]
-keywords: [WAREHOUSES, WAREHOUSE_LOCATIONS, WAREHOUSE_TRANSFER_RULES, WAREHOUSE_TYPE, WAREHOUSE_GROUP, FROM_WAREHOUSE_ID, TO_WAREHOUSE_ID, ALLOW_YN, IS_DEFAULT, loại kho, FLOOR, SUBCON, khóa tự nhiên, khóa phức hợp, đa khách hàng, COMPANY, PLANT_CD]
+summary: DB mapping toàn bộ cột 2 bảng kho·vị trí, giá trị mã loại kho, kho tự động tạo, phân quyền, xử lý sự cố, phạm vi đa khách hàng
+tags: [thông tin cơ sở, kho, vị trí, vận hành]
+keywords: [WAREHOUSES, WAREHOUSE_LOCATIONS, WAREHOUSE_TYPE, WAREHOUSE_GROUP, IS_DEFAULT, loại kho, FLOOR, SUBCON, khóa tự nhiên, khóa phức hợp, đa khách hàng, COMPANY, PLANT_CD]
 related: [MST_PART]
 ---
 
 # Quản lý kho/vị trí — Hướng dẫn vận hành
 
 ## Mục đích & vai trò hệ thống
-Màn hình master chứa **kho** (đơn vị vật lý/logic nơi tồn kho được lưu trữ·di chuyển), **vị trí** trong kho, và **quy tắc di chuyển** giữa các kho. Nhập kho·cấp phát·tồn kho (`MAT_STOCK`/`PRODUCT_STOCKS`)·kết quả sản xuất·di chuyển tồn kho đều tham chiếu master này qua `WAREHOUSE_CODE`.
+Màn hình master chứa **kho** (đơn vị vật lý/logic nơi tồn kho được lưu trữ·di chuyển) và **vị trí** trong kho. Nhập kho·cấp phát·tồn kho (`MAT_STOCK`/`PRODUCT_STOCKS`)·kết quả sản xuất·di chuyển tồn kho đều tham chiếu master này qua `WAREHOUSE_CODE`.
 
 ## Cấu trúc dữ liệu
 ```
 WAREHOUSES (PK: COMPANY, PLANT_CD, WAREHOUSE_CODE)
-   ├─ WAREHOUSE_LOCATIONS (PK: COMPANY, PLANT_CD, WAREHOUSE_CODE, LOCATION_CODE)
-   │       Kho 1 : N Vị trí (kết nối qua WAREHOUSE_CODE)
-   └─ WAREHOUSE_TRANSFER_RULES (PK: COMPANY, PLANT_CD, FROM_WAREHOUSE_ID, TO_WAREHOUSE_ID)
-            Giá trị FROM/TO_WAREHOUSE_ID = WAREHOUSES.WAREHOUSE_CODE (lưu mã, chỉ tên cột là _ID)
+   └─ WAREHOUSE_LOCATIONS (PK: COMPANY, PLANT_CD, WAREHOUSE_CODE, LOCATION_CODE)
+           Kho 1 : N Vị trí (kết nối qua WAREHOUSE_CODE)
 ```
-> **Lưu ý**: `FROM_WAREHOUSE_ID`/`TO_WAREHOUSE_ID` trong `WAREHOUSE_TRANSFER_RULES` chỉ tên là `_ID`, giá trị lưu thực tế là **mã kho (WAREHOUSE_CODE)**. Service JOIN bằng `fw.WAREHOUSE_CODE = rule.FROM_WAREHOUSE_ID` để lấy tên kho đi/đến. Đây là cột JOIN khóa tự nhiên, không phải cột FK ràng buộc.
 
 API CRUD từng khu vực:
 - Kho: `GET/POST/PUT/DELETE /inventory/warehouses[/{code}]`
 - Vị trí: `GET/POST/PUT/DELETE /inventory/warehouse-locations[/{warehouseCode}::{locationCode}]`
-- Quy tắc di chuyển: `GET/POST/PUT/DELETE /master/transfer-rules[/{fromId}/{toId}]`
 
 ---
 
@@ -66,19 +62,6 @@ API CRUD từng khu vực:
 
 > API sửa/xóa truyền khóa phức hợp dạng `{WAREHOUSE_CODE}::{LOCATION_CODE}` (phân cách `::`).
 
-## ③ Quy tắc di chuyển kho — WAREHOUSE_TRANSFER_RULES (toàn bộ cột)
-
-| Mục màn hình | Cột DB | Vai trò / Ý nghĩa · Lưu ý vận hành |
-|------|------|------|
-| Kho đi (mã/tên) | `FROM_WAREHOUSE_ID` | Thành phần PK. **Giá trị=mã kho đi**. JOIN với `WAREHOUSES.WAREHOUSE_CODE` để hiển thị mã·tên. |
-| Kho đến (mã/tên) | `TO_WAREHOUSE_ID` | Thành phần PK. **Giá trị=mã kho đến**. JOIN cùng cách. |
-| Cho phép | `ALLOW_YN` | `'Y'`=cho phép di chuyển, `'N'`=cấm. Mặc định `'Y'`. |
-| Ghi chú | `REMARK` | Ghi nhớ (nullable). |
-| Kiểm toán | `CREATED_BY`, `UPDATED_BY`, `CREATED_AT`, `UPDATED_AT` | Lịch sử tạo/sửa. |
-| Đa khách hàng | `COMPANY`, `PLANT_CD` | Một phần PK. Phạm vi `40` / `1000`. |
-
-> Cặp (đi→đến) là duy nhất. Đăng ký trùng thì 409 Conflict. API sửa/xóa truyền khóa phức hợp qua đường dẫn `/{fromWarehouseId}/{toWarehouseId}`.
-
 ---
 
 ## Kho tự động tạo (hoạt động dựa trên code)
@@ -94,8 +77,7 @@ Một số kho được hệ thống tự động tạo trong quá trình vận 
 ## Quy trình vận hành
 1. Đăng ký kho vận hành tại Quản lý kho (xác định loại·kho mặc định).
 2. Đăng ký vị trí (khu vực/hàng/cột/tầng) cho kho cần thiết.
-3. Đăng ký quy tắc di chuyển (cho phép/cấm) cho các cặp kho cần kiểm soát.
-4. Kho ngừng sử dụng: không xóa mà đặt `USE_YN='N'` (bảo tồn tồn kho/lịch sử).
+3. Kho ngừng sử dụng: không xóa mà đặt `USE_YN='N'` (bảo tồn tồn kho/lịch sử).
 
 ## Phân quyền
 Quản trị viên thông tin cơ sở (đăng ký/sửa/xóa). Người dùng thông thường chỉ tra cứu.
@@ -106,11 +88,9 @@ Quản trị viên thông tin cơ sở (đăng ký/sửa/xóa). Người dùng t
 | Xóa kho thất bại | Kho còn tồn kho (`Không thể xóa kho còn tồn kho`) | Di chuyển/làm trống tồn kho rồi xóa, hoặc đặt `USE_YN='N'` |
 | Form không hiện ô dây chuyền·công đoạn | Loại kho không phải FLOOR | Đổi loại thành `FLOOR`(công đoạn) |
 | Tự động chất kho sai kho | Thiếu/trùng `IS_DEFAULT='Y'` theo loại | Chỉnh 1 kho mặc định cho mỗi loại thành `IS_DEFAULT='Y'` |
-| Lưu quy tắc di chuyển bị 409 | Đã tồn tại cặp (đi→đến) giống | Xử lý bằng sửa quy tắc cũ |
-| Tên kho đi/đến trong quy tắc di chuyển bị trống | Mã kho mà `FROM/TO_WAREHOUSE_ID` trỏ đến không có trong WAREHOUSES | Kiểm tra tính hợp lệ mã kho (sửa thành mã kho hợp lệ) |
 | Kho/vị trí không có trong danh sách chọn | `USE_YN='N'` | Kích hoạt USE_YN thành Y |
 
 ## Dữ liệu & Liên kết
-- Bảng: `WAREHOUSES`, `WAREHOUSE_LOCATIONS`, `WAREHOUSE_TRANSFER_RULES`
+- Bảng: `WAREHOUSES`, `WAREHOUSE_LOCATIONS`
 - Liên kết: Nhập kho/cấp phát, Tồn kho (`MAT_STOCK`, `PRODUCT_STOCKS`), Kết quả sản xuất, Di chuyển tồn kho, Master hạng mục (vị trí lưu mặc định)
 - Phạm vi: `COMPANY='40'`, `PLANT_CD='1000'`

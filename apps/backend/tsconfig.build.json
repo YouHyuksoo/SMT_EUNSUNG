@@ -17,7 +17,6 @@
     "src/modules/master/services/model-suffix.service.ts",
     "src/modules/master/services/process.service.ts",
     "src/modules/master/services/prod-line.service.ts",
-    "src/modules/master/services/transfer-rule.service.ts",
     "src/modules/master/services/work-instruction.service.ts",
     "src/modules/material/services/adjustment.service.ts",
     "src/modules/material/services/hold.service.ts",

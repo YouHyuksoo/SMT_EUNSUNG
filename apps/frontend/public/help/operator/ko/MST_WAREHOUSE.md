@@ -2,31 +2,27 @@
 menuCode: MST_WAREHOUSE
 audience: operator
 title: 창고/로케이션 관리 — 운영 가이드
-summary: 창고·로케이션·이동규칙 3개 테이블의 전체 컬럼 DB 매핑, 창고유형 코드값, 자동 생성 창고, 권한, 트러블슈팅, 멀티테넌시 스코프
-tags: [기준정보, 창고, 로케이션, 이동규칙, 운영]
-keywords: [WAREHOUSES, WAREHOUSE_LOCATIONS, WAREHOUSE_TRANSFER_RULES, WAREHOUSE_TYPE, WAREHOUSE_GROUP, FROM_WAREHOUSE_ID, TO_WAREHOUSE_ID, ALLOW_YN, IS_DEFAULT, 창고유형, FLOOR, SUBCON, 자연키, 복합키, 멀티테넌시, COMPANY, PLANT_CD]
+summary: 창고·로케이션 2개 테이블의 전체 컬럼 DB 매핑, 창고유형 코드값, 자동 생성 창고, 권한, 트러블슈팅, 멀티테넌시 스코프
+tags: [기준정보, 창고, 로케이션, 운영]
+keywords: [WAREHOUSES, WAREHOUSE_LOCATIONS, WAREHOUSE_TYPE, WAREHOUSE_GROUP, IS_DEFAULT, 창고유형, FLOOR, SUBCON, 자연키, 복합키, 멀티테넌시, COMPANY, PLANT_CD]
 related: [MST_PART]
 ---
 
 # 창고/로케이션 관리 — 운영 가이드
 
 ## 시스템 목적·역할
-재고가 보관·이동되는 물리/논리 단위인 **창고**와 그 안의 **로케이션**, 창고 간 **이동규칙**을 보유하는 마스터 화면입니다. 입고·불출·재고(`MAT_STOCK`/`PRODUCT_STOCKS`)·생산실적·재고이동이 모두 `WAREHOUSE_CODE`로 이 마스터를 참조합니다.
+재고가 보관·이동되는 물리/논리 단위인 **창고**와 그 안의 **로케이션**을 보유하는 마스터 화면입니다. 입고·불출·재고(`MAT_STOCK`/`PRODUCT_STOCKS`)·생산실적·재고이동이 모두 `WAREHOUSE_CODE`로 이 마스터를 참조합니다.
 
 ## 데이터 구조
 ```
 WAREHOUSES (PK: COMPANY, PLANT_CD, WAREHOUSE_CODE)
-   ├─ WAREHOUSE_LOCATIONS (PK: COMPANY, PLANT_CD, WAREHOUSE_CODE, LOCATION_CODE)
-   │        창고 1 : N 로케이션 (WAREHOUSE_CODE로 연결)
-   └─ WAREHOUSE_TRANSFER_RULES (PK: COMPANY, PLANT_CD, FROM_WAREHOUSE_ID, TO_WAREHOUSE_ID)
-            FROM/TO_WAREHOUSE_ID 값 = WAREHOUSES.WAREHOUSE_CODE (코드 저장, 컬럼명만 _ID)
+   └─ WAREHOUSE_LOCATIONS (PK: COMPANY, PLANT_CD, WAREHOUSE_CODE, LOCATION_CODE)
+            창고 1 : N 로케이션 (WAREHOUSE_CODE로 연결)
 ```
-> **주의**: `WAREHOUSE_TRANSFER_RULES`의 `FROM_WAREHOUSE_ID`/`TO_WAREHOUSE_ID`는 이름만 `_ID`이고 실제 저장값은 **창고코드(WAREHOUSE_CODE)**입니다. 서비스가 `fw.WAREHOUSE_CODE = rule.FROM_WAREHOUSE_ID`로 JOIN해 출발/도착 창고명을 가져옵니다. 외래키 제약(FK) 컬럼이 아니라 자연키 조인입니다.
 
 각 영역의 CRUD API:
 - 창고: `GET/POST/PUT/DELETE /inventory/warehouses[/{code}]`
 - 로케이션: `GET/POST/PUT/DELETE /inventory/warehouse-locations[/{warehouseCode}::{locationCode}]`
-- 이동규칙: `GET/POST/PUT/DELETE /master/transfer-rules[/{fromId}/{toId}]`
 
 ---
 
@@ -66,19 +62,6 @@ WAREHOUSES (PK: COMPANY, PLANT_CD, WAREHOUSE_CODE)
 
 > 수정/삭제 API는 복합키를 `{WAREHOUSE_CODE}::{LOCATION_CODE}` 형태(`::` 구분자)로 전달합니다.
 
-## ③ 창고이동규칙 — WAREHOUSE_TRANSFER_RULES (전체 컬럼)
-
-| 화면 항목 | DB 컬럼 | 역할 / 의미 · 운영 포인트 |
-|------|------|------|
-| 출발창고(코드/명) | `FROM_WAREHOUSE_ID` | PK 구성. **값=출발 창고코드**. `WAREHOUSES.WAREHOUSE_CODE`와 조인해 코드·명 표시. |
-| 도착창고(코드/명) | `TO_WAREHOUSE_ID` | PK 구성. **값=도착 창고코드**. 동일 방식 조인. |
-| 허용여부 | `ALLOW_YN` | `'Y'`=이동 허용, `'N'`=금지. 기본 `'Y'`. |
-| 비고 | `REMARK` | 메모(nullable). |
-| 감사 | `CREATED_BY`, `UPDATED_BY`, `CREATED_AT`, `UPDATED_AT` | 생성/수정 이력. |
-| 멀티테넌시 | `COMPANY`, `PLANT_CD` | PK 일부. `40` / `1000` 스코프. |
-
-> (출발→도착) 쌍은 유일. 중복 등록 시 409 Conflict. 수정/삭제 API는 `/{fromWarehouseId}/{toWarehouseId}` 경로로 복합키 전달.
-
 ---
 
 ## 창고 자동 생성 (코드 기반 동작)
@@ -94,8 +77,7 @@ WAREHOUSES (PK: COMPANY, PLANT_CD, WAREHOUSE_CODE)
 ## 운영 절차
 1. 창고관리에서 운영 창고 등록(유형·기본창고 지정).
 2. 필요 창고에 로케이션(존/행/열/단) 등록.
-3. 통제가 필요한 창고 쌍에 이동규칙 등록(허용/금지).
-4. 단종 창고는 삭제 대신 `USE_YN='N'`으로 비활성(재고/이력 보존).
+3. 단종 창고는 삭제 대신 `USE_YN='N'`으로 비활성(재고/이력 보존).
 
 ## 권한
 기준정보 관리자(등록/수정/삭제). 일반 사용자는 조회.
@@ -106,11 +88,9 @@ WAREHOUSES (PK: COMPANY, PLANT_CD, WAREHOUSE_CODE)
 | 창고 삭제 실패 | 해당 창고에 재고 잔량 존재(`재고가 있는 창고는 삭제 불가`) | 재고 이관/비우기 후 삭제, 또는 `USE_YN='N'` 비활성 |
 | 폼에 라인·공정 칸 안 보임 | 창고유형이 FLOOR가 아님 | 유형을 `FLOOR`(공정재공)로 변경 |
 | 자동 적치가 엉뚱한 창고로 감 | 유형별 `IS_DEFAULT='Y'` 창고 부재/중복 | 유형별 기본창고 1개만 `IS_DEFAULT='Y'`로 정리 |
-| 이동규칙 저장 시 409 | 동일 (출발→도착) 쌍 이미 존재 | 기존 규칙 수정으로 처리 |
-| 이동규칙 출발/도착명이 빈 값 | `FROM/TO_WAREHOUSE_ID`가 가리키는 창고코드가 WAREHOUSES에 없음 | 창고코드 정합성 확인(유효 창고코드로 정정) |
 | 창고/로케이션이 선택 목록에 없음 | `USE_YN='N'` | 사용여부 `Y`로 활성화 |
 
 ## 데이터·연계
-- 테이블: `WAREHOUSES`, `WAREHOUSE_LOCATIONS`, `WAREHOUSE_TRANSFER_RULES`
+- 테이블: `WAREHOUSES`, `WAREHOUSE_LOCATIONS`
 - 연계: 입고/불출, 재고(`MAT_STOCK`, `PRODUCT_STOCKS`), 생산실적, 재고이동, 품목마스터(기본 적재위치)
 - 스코프: `COMPANY='40'`, `PLANT_CD='1000'`

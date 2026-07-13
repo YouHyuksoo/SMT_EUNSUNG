@@ -23,7 +23,6 @@ export * from './process-map.entity';
 // Material/Inventory
 export * from './warehouse.entity';
 export * from './mat-stock.entity';
-export * from './warehouse-transfer-rule.entity';
 export * from './warehouse-location.entity';
 
 // PM (Preventive Maintenance)

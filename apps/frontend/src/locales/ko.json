@@ -232,7 +232,6 @@
     "master.inspectItem": "점검항목마스터",
     "master.box": "포장박스관리",
     "master.workInstruction": "작업지도서관리",
-    "master.transferRule": "창고이동규칙관리",
     "master.modelSuffix": "모델접미사관리",
     "master.warehouse": "창고관리",
     "master.company": "회사관리",
@@ -1923,25 +1922,6 @@
       "noContent": "등록된 내용이 없습니다.",
       "deleteTitle": "작업지도서 삭제",
       "deleteConfirm": "이 작업지도서를 삭제하시겠습니까? 삭제 후에는 복구할 수 없습니다."
-    },
-    "transferRule": {
-      "title": "창고이동규칙",
-      "deleteConfirm": "이 이송규칙을 삭제하시겠습니까?",
-      "deleteRule": "규칙 삭제",
-      "subtitle": "창고 간 이동 허용 규칙을 관리합니다.",
-      "fromWarehouseCode": "출발창고코드",
-      "fromWarehouseName": "출발창고명",
-      "toWarehouseCode": "도착창고코드",
-      "toWarehouseName": "도착창고명",
-      "allow": "허용",
-      "allowed": "허용",
-      "denied": "금지",
-      "addRule": "규칙 추가",
-      "editRule": "규칙 수정",
-      "searchPlaceholder": "창고코드, 창고명 검색...",
-      "fromWarehouse": "출발창고",
-      "toWarehouse": "도착창고",
-      "allowYn": "허용여부"
     },
     "modelSuffix": {
       "title": "모델접미사관리",

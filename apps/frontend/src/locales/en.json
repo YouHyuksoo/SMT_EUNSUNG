@@ -232,7 +232,6 @@
     "master.inspectItem": "Inspect Item Master",
     "master.box": "Box Management",
     "master.workInstruction": "Work Instruction Mgmt",
-    "master.transferRule": "Transfer Rule Mgmt",
     "master.modelSuffix": "Model Suffix Mgmt",
     "master.warehouse": "Warehouse Mgmt",
     "master.company": "Company Mgmt",
@@ -1513,25 +1512,6 @@
       "noContent": "No content registered.",
       "deleteTitle": "Delete Work Instruction",
       "deleteConfirm": "Are you sure you want to delete this work instruction? This action cannot be undone."
-    },
-    "transferRule": {
-      "title": "Transfer Rules",
-      "deleteConfirm": "Delete this transfer rule?",
-      "deleteRule": "Delete Rule",
-      "subtitle": "Manage warehouse transfer permission rules.",
-      "fromWarehouseCode": "From WH Code",
-      "fromWarehouseName": "From WH Name",
-      "toWarehouseCode": "To WH Code",
-      "toWarehouseName": "To WH Name",
-      "allow": "Allow",
-      "allowed": "Allowed",
-      "denied": "Denied",
-      "addRule": "Add Rule",
-      "editRule": "Edit Rule",
-      "searchPlaceholder": "Search warehouse code, name...",
-      "fromWarehouse": "From Warehouse",
-      "toWarehouse": "To Warehouse",
-      "allowYn": "Allow/Deny"
     },
     "modelSuffix": {
       "title": "Model Suffix Management",
