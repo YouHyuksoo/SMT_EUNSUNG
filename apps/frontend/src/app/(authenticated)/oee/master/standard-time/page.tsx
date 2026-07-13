@@ -5,7 +5,11 @@
  * @description 표준시간 관리 — 모델 기준 ST/CT/NT/TT 표준시간 등록·조회 (Mock-up, 실 DB 미연결)
  */
 import { useMemo, useState } from 'react';
+import type { ColumnDef } from '@tanstack/react-table';
+import { Search, Edit2 } from 'lucide-react';
 import Modal from '@/components/ui/Modal';
+import { Card, CardContent, Input } from '@/components/ui';
+import DataGrid from '@/components/data-grid/DataGrid';
 
 // 로그인 사용자(등록자 자동 적용) — Mock. 실 구현 시 인증 스토어에서 취득.
 const CURRENT_USER = '관리자';
@@ -117,8 +121,51 @@ export default function StandardTimeMasterPage() {
   const [viewId, setViewId] = useState<number | null>(null);
   const [form, setForm] = useState<EditForm | null>(null);
   const [modelPickerOpen, setModelPickerOpen] = useState(false);
+  const [search, setSearch] = useState({ modelCode: '', modelName: '' });
 
   const viewRec = useMemo(() => records.find((r) => r.id === viewId) ?? null, [records, viewId]);
+  const filtered = useMemo(
+    () =>
+      records.filter(
+        (r) =>
+          (!search.modelCode || r.modelCode.toLowerCase().includes(search.modelCode.toLowerCase())) &&
+          (!search.modelName || r.modelName.toLowerCase().includes(search.modelName.toLowerCase())),
+      ),
+    [records, search],
+  );
+
+  const columns = useMemo<ColumnDef<StdTimeRecord>[]>(
+    () => [
+      {
+        id: 'actions',
+        header: '관리',
+        size: 70,
+        meta: { align: 'center' as const, filterType: 'none' as const },
+        cell: ({ row }) => (
+          <button onClick={(e) => { e.stopPropagation(); openEdit(row.original); }} className="p-1 hover:bg-surface rounded" title="편집">
+            <Edit2 className="w-4 h-4 text-primary" />
+          </button>
+        ),
+      },
+      { accessorKey: 'modelCode', header: '모델코드', cell: ({ getValue }) => <span className="font-mono">{String(getValue() ?? '')}</span> },
+      { accessorKey: 'modelName', header: '모델명' },
+      {
+        id: 'stdtime',
+        header: '표준시간',
+        size: 110,
+        meta: { align: 'center' as const, filterType: 'none' as const },
+        cell: ({ row }) => (
+          <button onClick={(e) => { e.stopPropagation(); setViewId(row.original.id); }} className="border border-border rounded px-2 py-0.5 text-primary hover:bg-surface text-xs">
+            확인 ({row.original.lines.length})
+          </button>
+        ),
+      },
+      { id: 'period', header: '적용기간', cell: ({ row }) => periodText(row.original.validFrom, row.original.validTo) },
+      { accessorKey: 'registeredBy', header: '등록자' },
+      { accessorKey: 'updatedAt', header: '최근업데이트일자', cell: ({ getValue }) => <span className="font-mono text-text-muted">{String(getValue() ?? '')}</span> },
+    ],
+    [],
+  );
 
   function openCreate() {
     lineSeq = 0;
@@ -159,8 +206,10 @@ export default function StandardTimeMasterPage() {
   }
 
   return (
-    <div className="p-6 space-y-4">
-      <div className="flex items-center justify-between">
+    <div className="flex h-full overflow-hidden">
+      {/* 좌측: 메인 콘텐츠 (목록) — 독립 세로 스크롤 */}
+      <div className="flex-1 min-w-0 flex flex-col overflow-hidden p-6 gap-4">
+      <div className="flex items-center justify-between flex-shrink-0">
         <div>
           <h1 className="text-xl font-bold text-text">표준시간 관리</h1>
           <p className="text-sm text-text-muted mt-1">모델 기준 ST/CT/NT/TT 표준시간 · 적용기간 리비전 관리 (Mock-up)</p>
@@ -168,43 +217,32 @@ export default function StandardTimeMasterPage() {
         <button onClick={openCreate} className="bg-primary text-white px-4 py-2 rounded h-10">표준시간 등록</button>
       </div>
 
-      {/* 목록 화면 */}
-      <div className="border border-border rounded-lg overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="bg-surface text-text-muted">
-              <th className="p-2 text-left">모델코드</th>
-              <th className="p-2 text-left">모델명</th>
-              <th className="p-2 text-left">표준시간</th>
-              <th className="p-2 text-left">적용기간</th>
-              <th className="p-2 text-left">등록자</th>
-              <th className="p-2 text-left">최근업데이트일자</th>
-              <th className="p-2"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {records.map((r) => (
-              <tr key={r.id} className="border-t border-border">
-                <td className="p-2 font-mono">{r.modelCode}</td>
-                <td className="p-2">{r.modelName}</td>
-                <td className="p-2">
-                  <button onClick={() => setViewId(r.id)} className="border border-border rounded px-2 py-1 text-primary hover:bg-surface">
-                    확인 ({r.lines.length})
-                  </button>
-                </td>
-                <td className="p-2">{periodText(r.validFrom, r.validTo)}</td>
-                <td className="p-2">{r.registeredBy}</td>
-                <td className="p-2 font-mono text-text-muted">{r.updatedAt}</td>
-                <td className="p-2 text-right">
-                  <button onClick={() => openEdit(r)} className="text-primary">편집</button>
-                </td>
-              </tr>
-            ))}
-            {!records.length && (
-              <tr><td colSpan={7} className="p-4 text-center text-text-muted">등록된 표준시간이 없습니다</td></tr>
-            )}
-          </tbody>
-        </table>
+      {/* 목록 화면 — 품목관리와 동일한 DataGrid 형식 */}
+      <Card className="flex-1 min-h-0 overflow-hidden" padding="none">
+        <CardContent className="h-full p-4">
+          <DataGrid
+            data={filtered}
+            columns={columns}
+            pageSize={50}
+            enableColumnFilter
+            enableExport
+            enableFullscreen
+            exportFileName="표준시간관리"
+            emptyMessage={records.length ? '조회 결과가 없습니다' : '등록된 표준시간이 없습니다'}
+            getRowId={(r) => String(r.id)}
+            toolbarLeft={
+              <div className="flex flex-wrap gap-3 flex-1 min-w-0">
+                <div className="w-44 flex-shrink-0">
+                  <Input placeholder="모델코드" value={search.modelCode} onChange={(e) => setSearch({ ...search, modelCode: e.target.value })} leftIcon={<Search className="w-4 h-4" />} fullWidth />
+                </div>
+                <div className="w-56 flex-shrink-0">
+                  <Input placeholder="모델명" value={search.modelName} onChange={(e) => setSearch({ ...search, modelName: e.target.value })} leftIcon={<Search className="w-4 h-4" />} fullWidth />
+                </div>
+              </div>
+            }
+          />
+        </CardContent>
+      </Card>
       </div>
 
       {/* 표준시간 확인 팝업 — 분류값 복수 출력 */}
@@ -236,21 +274,19 @@ export default function StandardTimeMasterPage() {
         )}
       </Modal>
 
-      {/* 등록/수정 화면 */}
-      <Modal
-        isOpen={!!form}
-        onClose={() => setForm(null)}
-        title={form?.id == null ? '표준시간 등록' : '표준시간 수정'}
-        size="2xl"
-        footer={
-          <div className="flex justify-end gap-2">
-            <button onClick={() => setForm(null)} className="px-3 py-2 rounded border border-border text-text-muted">취소</button>
-            <button onClick={save} className="px-4 py-2 rounded bg-primary text-white">저장</button>
+      {/* 등록/수정 — 우측 슬라이드 패널 (품목관리 방식) */}
+      {form && (
+        <div className="w-[540px] flex-shrink-0 border-l border-border bg-background flex flex-col h-full overflow-hidden shadow-2xl animate-slide-in-right">
+          {/* 헤더: 저장/닫기 (상단) */}
+          <div className="px-5 py-3 border-b border-border flex items-center justify-between flex-shrink-0">
+            <h2 className="text-sm font-bold text-text">{form.id == null ? '표준시간 등록' : '표준시간 수정'}</h2>
+            <div className="flex items-center gap-2">
+              <button onClick={save} className="px-4 py-2 rounded bg-primary text-white text-sm">저장</button>
+              <button onClick={() => setForm(null)} className="px-3 py-2 rounded border border-border text-text-muted text-sm">닫기</button>
+            </div>
           </div>
-        }
-      >
-        {form && (
-          <div className="space-y-4">
+          {/* 바디 — 독립 세로 스크롤 */}
+          <div className="flex-1 min-h-0 overflow-y-auto px-5 py-4 space-y-4">
             {/* 모델선택 */}
             <div className="flex items-end gap-2">
               <label className="text-sm text-text-muted flex flex-col gap-1">
@@ -335,13 +371,15 @@ export default function StandardTimeMasterPage() {
             </div>
 
             {/* 등록자/업데이트 — 자동 */}
-            <div className="flex gap-6 text-sm text-text-muted">
+            <div className="flex gap-6 text-sm text-text-muted border-t border-border pt-4">
               <span>등록자 <b className="text-text">{form.id == null ? CURRENT_USER : records.find((r) => r.id === form.id)?.registeredBy}</b> (로그인 사용자 자동)</span>
               <span>업데이트일시 <b className="text-text">저장 시 자동 기록</b></span>
             </div>
           </div>
-        )}
-      </Modal>
+          {/* 패널 최하단 라인 */}
+          <div className="flex-shrink-0 border-t border-border" />
+        </div>
+      )}
 
       {/* 모델선택 팝업 — 기존 마스터 참조, 단일 선택 */}
       <Modal isOpen={modelPickerOpen} onClose={() => setModelPickerOpen(false)} title="모델 선택" size="lg">
