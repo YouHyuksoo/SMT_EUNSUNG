@@ -390,7 +390,8 @@
     "oee.loss": "Loss Pareto",
     "oee.entry": "Operation Log",
     "oee.resource": "Resource Master",
-    "oee.reason": "Downtime Reason Master"
+    "oee.reason": "Downtime Reason Master",
+    "oee.standardTime": "Standard Time"
   },
   "header": {
     "theme": "Theme",
