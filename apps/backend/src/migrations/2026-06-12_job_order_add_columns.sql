@@ -1,6 +1,0 @@
--- 작업지시 테이블에 루트 참조·공정·설비 컬럼 추가
-ALTER TABLE JOB_ORDERS ADD (
-  ROOT_ORDER_NO VARCHAR2(50),
-  PROCESS_CODE  VARCHAR2(50),
-  EQUIP_CODE    VARCHAR2(50)
-);
