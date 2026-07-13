@@ -63,6 +63,7 @@ export const menuConfig: MenuConfigItem[] = [
       { code: "OEE_ENTRY", labelKey: "menu.oee.entry", path: "/oee/entry" },
       { code: "OEE_MST_RESOURCE", labelKey: "menu.oee.resource", path: "/oee/master/resource" },
       { code: "OEE_MST_REASON", labelKey: "menu.oee.reason", path: "/oee/master/reason" },
+      { code: "OEE_MST_STD_TIME", labelKey: "menu.oee.standardTime", path: "/oee/master/standard-time" },
     ],
   },
   {
