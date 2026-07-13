@@ -28,3 +28,5 @@ export { default as FilterBar } from "./FilterBar";
 export type { FilterBarProps } from "./FilterBar";
 export { default as BarcodeScanInput } from "./BarcodeScanInput";
 export type { BarcodeScanInputProps } from "./BarcodeScanInput";
+export { default as FileAttachment } from "./FileAttachment";
+export type { FileAttachmentProps, AttachedFile } from "./FileAttachment";
