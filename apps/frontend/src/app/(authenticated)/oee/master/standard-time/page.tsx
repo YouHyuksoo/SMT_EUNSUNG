@@ -186,6 +186,7 @@ export default function StandardTimeMasterPage() {
     if (!form) return;
     if (!form.modelCode) return alert('모델을 선택하세요');
     if (!form.validFrom) return alert('적용 시작일을 입력하세요');
+    if (form.validTo !== OPEN_END && form.validTo < form.validFrom) return alert('적용 종료일은 적용 시작일보다 빠를 수 없습니다');
     if (!form.lines.length) return alert('표준시간 분류를 1건 이상 입력하세요');
 
     const stamp = nowStamp();
@@ -290,7 +291,7 @@ export default function StandardTimeMasterPage() {
             {/* 모델선택 */}
             <div className="flex items-end gap-2">
               <label className="text-sm text-text-muted flex flex-col gap-1">
-                모델코드
+                <span>모델코드 <span className="text-red-500">*</span></span>
                 <input value={form.modelCode} readOnly placeholder="모델선택" className="border border-border rounded p-2 bg-surface text-text w-40" />
               </label>
               <label className="text-sm text-text-muted flex flex-col gap-1 flex-1">
@@ -303,7 +304,7 @@ export default function StandardTimeMasterPage() {
             {/* 적용기간 (리비전) */}
             <div className="flex items-end gap-3">
               <label className="text-sm text-text-muted flex flex-col gap-1">
-                적용 시작일
+                <span>적용 시작일 <span className="text-red-500">*</span></span>
                 <input type="date" value={form.validFrom} onChange={(e) => setForm({ ...form, validFrom: e.target.value })} className="border border-border rounded p-2 bg-background text-text" />
               </label>
               <label className="text-sm text-text-muted flex flex-col gap-1">
