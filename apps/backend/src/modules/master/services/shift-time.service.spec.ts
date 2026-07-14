@@ -5,6 +5,7 @@ import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { Repository } from 'typeorm';
 import { ShiftTimeMaster } from '../../../entities/shift-time-master.entity';
 import { ShiftTimeService } from './shift-time.service';
+import { UpdateShiftTimeDto } from '../dto/work-calendar.dto';
 
 describe('ShiftTimeService', () => {
   let target: ShiftTimeService;
@@ -70,6 +71,92 @@ describe('ShiftTimeService', () => {
       );
       expect(saved.organizationId).toBe(1);
       expect(repo.save).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('update', () => {
+    it('없는 행이면 404', async () => {
+      repo.findOne.mockResolvedValue(null);
+      await expect(target.update('2026-07-01', {}, 1)).rejects.toBeInstanceOf(NotFoundException);
+    });
+
+    it('dateend가 dto에 없으면(undefined) 기존 값을 유지한다', async () => {
+      const existing = row('2026-07-01', '2026-12-31');
+      repo.findOne.mockResolvedValue(existing);
+      repo.find.mockResolvedValue([existing]);
+      repo.save.mockImplementation(async (v) => v as ShiftTimeMaster);
+
+      const saved = await target.update('2026-07-01', { dayTimeStart: '09:00' }, 1);
+
+      expect(saved.dateend).toEqual(new Date('2026-12-31T00:00:00'));
+    });
+
+    it('dateend: null이면 무기한으로 변경한다', async () => {
+      const existing = row('2026-07-01', '2026-12-31');
+      repo.findOne.mockResolvedValue(existing);
+      repo.find.mockResolvedValue([existing]);
+      repo.save.mockImplementation(async (v) => v as ShiftTimeMaster);
+
+      // UpdateShiftTimeDto.dateend는 타입상 string|undefined지만, 컨트롤러는 바디를 그대로 넘기므로
+      // 실제 런타임에는 무기한 해제를 위한 null이 들어온다. DTO/서비스는 변경 대상이 아니므로 브리지 캐스팅.
+      const saved = await target.update(
+        '2026-07-01',
+        { dateend: null } as unknown as UpdateShiftTimeDto,
+        1,
+      );
+
+      expect(saved.dateend).toBeNull();
+    });
+
+    it("dateend: '2026-12-31'이면 해당 값으로 설정한다", async () => {
+      const existing = row('2026-07-01', null);
+      repo.findOne.mockResolvedValue(existing);
+      repo.find.mockResolvedValue([existing]);
+      repo.save.mockImplementation(async (v) => v as ShiftTimeMaster);
+
+      const saved = await target.update('2026-07-01', { dateend: '2026-12-31' }, 1);
+
+      expect(saved.dateend).toEqual(new Date('2026-12-31T00:00:00'));
+    });
+
+    it('확장한 구간이 인접 구간과 겹치면 409이고 저장하지 않는다', async () => {
+      const existing = row('2026-07-01', '2026-07-31');
+      const neighbour = row('2026-08-01', null);
+      repo.findOne.mockResolvedValue(existing);
+      repo.find.mockResolvedValue([existing, neighbour]);
+
+      await expect(
+        target.update('2026-07-01', { dateend: '2026-08-15' }, 1),
+      ).rejects.toBeInstanceOf(ConflictException);
+      expect(repo.save).not.toHaveBeenCalled();
+    });
+
+    it('겹치지 않는 확장은 저장되며, 자기 자신의 dateset과는 겹침으로 판정하지 않는다', async () => {
+      const existing = row('2026-07-01', '2026-07-31');
+      repo.findOne.mockResolvedValue(existing);
+      repo.find.mockResolvedValue([existing]);
+      repo.save.mockImplementation(async (v) => v as ShiftTimeMaster);
+
+      const saved = await target.update('2026-07-01', { dateend: '2026-09-30' }, 1);
+
+      expect(saved.dateend).toEqual(new Date('2026-09-30T00:00:00'));
+      expect(repo.save).toHaveBeenCalledTimes(1);
+    });
+
+    it('dto에 있는 교대시간 필드만 적용되고 나머지는 유지된다', async () => {
+      const existing = row('2026-07-01', null);
+      repo.findOne.mockResolvedValue(existing);
+      repo.find.mockResolvedValue([existing]);
+      repo.save.mockImplementation(async (v) => v as ShiftTimeMaster);
+
+      const saved = await target.update('2026-07-01', { dayTimeStart: '09:00' }, 1);
+
+      expect(saved.dayTimeStart).toBe('09:00');
+      expect(saved.dayTimeEnd).toBe('20:00');
+      expect(saved.dayBreakMinutes).toBe(60);
+      expect(saved.nightTimeStart).toBe('20:00');
+      expect(saved.nightTimeEnd).toBe('08:00');
+      expect(saved.nightBreakMinutes).toBe(60);
     });
   });
 
