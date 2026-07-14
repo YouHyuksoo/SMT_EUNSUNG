@@ -1313,6 +1313,7 @@
       "dayType": "Loại ngày",
       "offReason": "Lý do nghỉ",
       "workMinutes": "Thời gian làm việc (phút)",
+      "workMinutesAutoPlaceholder": "Để trống để tự động tính theo loại ngày",
       "otMinutes": "Thời gian tăng ca (phút)",
       "remark": "Ghi chú",
       "workDays": "Ngày làm việc",
@@ -1333,10 +1334,10 @@
       "editShiftTime": "Sửa giờ ca",
       "deleteShiftTimeMsg": "Xóa giờ ca này?",
       "confirmMsg": {
-        "generate": "Tạo lịch làm việc cho năm này. Dữ liệu ngày hiện có sẽ bị ghi đè. Chỉ ngày cuối tuần và ngày lễ dương lịch cố định được tự động đánh dấu nghỉ; Tết Nguyên đán, Trung thu và ngày nghỉ bù phải chỉnh sửa thủ công.",
-        "copy": "Sao chép lịch toàn công ty sang chuyền này. Ngoại lệ hiện có của chuyền này sẽ bị ghi đè.",
-        "confirm": "Xác nhận lịch làm việc cho năm này. Không thể chỉnh sửa sau khi xác nhận.",
-        "unconfirm": "Hủy xác nhận để có thể chỉnh sửa lịch lại."
+        "generate": "Tạo lịch làm việc cho năm {{year}}. Dữ liệu ngày hiện có sẽ bị ghi đè. Chỉ ngày cuối tuần và ngày lễ dương lịch cố định được tự động đánh dấu nghỉ; Tết Nguyên đán, Trung thu và ngày nghỉ bù phải chỉnh sửa thủ công.",
+        "copy": "Sao chép lịch toàn công ty năm {{year}} sang chuyền này. Ngoại lệ hiện có của chuyền này sẽ bị ghi đè.",
+        "confirm": "Xác nhận lịch làm việc năm {{year}}. Không thể chỉnh sửa sau khi xác nhận.",
+        "unconfirm": "Hủy xác nhận lịch năm {{year}} để có thể chỉnh sửa lại."
       }
     },
     "worker": {

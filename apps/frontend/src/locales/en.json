@@ -1315,6 +1315,7 @@
       "dayType": "Day Type",
       "offReason": "Off Reason",
       "workMinutes": "Work Minutes",
+      "workMinutesAutoPlaceholder": "Leave blank to auto-calculate from day type",
       "otMinutes": "OT Minutes",
       "remark": "Remark",
       "workDays": "Work Days",
@@ -1335,10 +1336,10 @@
       "editShiftTime": "Edit Shift Time",
       "deleteShiftTimeMsg": "Delete this shift time?",
       "confirmMsg": {
-        "generate": "Generate the calendar for this year. Existing days will be overwritten. Only weekends and fixed solar holidays are marked off automatically; Lunar New Year, Chuseok, and substitute holidays must be edited manually.",
-        "copy": "Copy the company-wide calendar to this line. This line's existing exceptions will be overwritten.",
-        "confirm": "Confirm the calendar for this year. It cannot be edited after confirmation.",
-        "unconfirm": "Cancel the confirmation so the calendar can be edited again."
+        "generate": "Generate the calendar for {{year}}. Existing days will be overwritten. Only weekends and fixed solar holidays are marked off automatically; Lunar New Year, Chuseok, and substitute holidays must be edited manually.",
+        "copy": "Copy the company-wide {{year}} calendar to this line. This line's existing exceptions will be overwritten.",
+        "confirm": "Confirm the {{year}} calendar. It cannot be edited after confirmation.",
+        "unconfirm": "Cancel the confirmation for the {{year}} calendar so it can be edited again."
       }
     },
     "worker": {

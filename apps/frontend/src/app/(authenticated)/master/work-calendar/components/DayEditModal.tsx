@@ -7,7 +7,10 @@
  * 초보자 가이드:
  * 1. 근무유형·휴무사유는 자유입력이 아니라 공통코드(WORK_DAY_TYPE / DAY_OFF_TYPE)다.
  * 2. 휴무사유는 dayType='OFF'일 때만 노출된다.
- * 3. 근무분은 근무유형이 바뀔 때 @smt/shared의 규칙으로 자동 채워지고, 사용자가 덮어쓸 수 있다.
+ * 3. 근무분을 비워두면(빈 문자열) 저장 시 키 자체를 보내지 않아 서버가 @smt/shared의
+ *    defaultWorkMinutes 규칙(교대시간 마스터 기준)으로 자동 파생한다. 값을 입력하면
+ *    그 값이 명시적 override로 저장된다. 근무유형을 바꾸면 이전 값은 더 이상 유효하지
+ *    않으므로 필드를 비워 자동계산으로 되돌린다.
  */
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -28,7 +31,7 @@ export default function DayEditModal({ isOpen, onClose, selectedDate, currentDat
 
   const [dayType, setDayType] = useState<WorkDayType>("WORK");
   const [offReason, setOffReason] = useState("");
-  const [workMinutes, setWorkMinutes] = useState("0");
+  const [workMinutes, setWorkMinutes] = useState("");
   const [otMinutes, setOtMinutes] = useState("0");
   const [comment, setComment] = useState("");
 
@@ -36,12 +39,20 @@ export default function DayEditModal({ isOpen, onClose, selectedDate, currentDat
     if (!isOpen) return;
     setDayType((currentData?.dayType as WorkDayType) ?? "WORK");
     setOffReason(currentData?.offReason ?? "");
-    setWorkMinutes(String(currentData?.workMinutes ?? 0));
+    // 기존 값이 없으면 비워 둔다 → 저장 시 키 생략 → 서버가 교대시간 마스터로 자동 파생.
+    setWorkMinutes(currentData?.workMinutes != null ? String(currentData.workMinutes) : "");
     setOtMinutes(String(currentData?.otMinutes ?? 0));
     setComment(currentData?.comment ?? "");
   }, [isOpen, currentData]);
 
   if (!selectedDate) return null;
+
+  // 근무유형이 바뀌면 이전 근무유형 기준 근무분은 더 이상 유효하지 않다.
+  // 필드를 비워 자동계산(서버 파생)으로 되돌린다.
+  const handleDayTypeChange = (v: string) => {
+    setDayType(v as WorkDayType);
+    setWorkMinutes("");
+  };
 
   const handleSave = () => {
     const payload: Partial<WorkCalendarDay> & { workDate: string } = {
@@ -67,7 +78,7 @@ export default function DayEditModal({ isOpen, onClose, selectedDate, currentDat
             groupCode="WORK_DAY_TYPE"
             includeAll={false}
             value={dayType}
-            onChange={(v) => setDayType(v as WorkDayType)}
+            onChange={handleDayTypeChange}
             fullWidth
           />
         </div>
@@ -93,7 +104,9 @@ export default function DayEditModal({ isOpen, onClose, selectedDate, currentDat
               {t("master.workCalendar.workMinutes")}
             </label>
             <Input type="number" min={0} value={workMinutes}
-              onChange={(e) => setWorkMinutes(e.target.value)} fullWidth />
+              onChange={(e) => setWorkMinutes(e.target.value)}
+              placeholder={t("master.workCalendar.workMinutesAutoPlaceholder")}
+              fullWidth />
           </div>
           <div>
             <label className="mb-1.5 block text-sm font-medium text-text dark:text-gray-200">

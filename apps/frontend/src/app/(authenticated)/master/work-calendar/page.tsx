@@ -28,12 +28,19 @@ export default function WorkCalendarPage() {
   const { t } = useTranslation();
 
   const [activeTab, setActiveTab] = useState<TabType>("calendar");
-  const [year, setYear] = useState(() => String(new Date().getFullYear()));
   const [lineCode, setLineCode] = useState("");
   const [currentMonth, setCurrentMonth] = useState(() => {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   });
+  // 연도는 표시 중인 월(currentMonth)에서 파생한다 — 월 그리드가 연도 경계를 넘어가도
+  // year가 화면에 보이는 월과 어긋날 수 없다(Bug 3: 일괄작업 대상연도 불일치 방지).
+  const year = useMemo(() => currentMonth.split("-")[0], [currentMonth]);
+  const handleYearChange = useCallback((v: string) => {
+    const y = v.replace(/\D/g, "").slice(0, 4);
+    if (!y) return; // 빈 연도로는 currentMonth를 만들 수 없다 — 그대로 무시한다.
+    setCurrentMonth((prev) => `${y}-${prev.split("-")[1]}`);
+  }, []);
 
   const [days, setDays] = useState<WorkCalendarDay[]>([]);
   const [summary, setSummary] = useState<WorkCalendarSummary | null>(null);
@@ -71,11 +78,6 @@ export default function WorkCalendarPage() {
   useEffect(() => { fetchDays(); }, [fetchDays]);
   useEffect(() => { fetchSummary(); }, [fetchSummary]);
   useEffect(() => { fetchShiftTimes(); }, [fetchShiftTimes]);
-
-  /* 연도 변경 시 표시 월도 그 연도로 옮긴다 */
-  useEffect(() => {
-    setCurrentMonth((prev) => `${year}-${prev.split("-")[1]}`);
-  }, [year]);
 
   /* ── 쓰기 ── */
   const refreshAll = useCallback(async () => {
@@ -185,7 +187,7 @@ export default function WorkCalendarPage() {
                   <label className="mb-1.5 block text-sm font-medium text-text dark:text-gray-200">
                     {t("master.workCalendar.year")}
                   </label>
-                  <Input value={year} onChange={(e) => setYear(e.target.value)} maxLength={4} fullWidth />
+                  <Input value={year} onChange={(e) => handleYearChange(e.target.value)} maxLength={4} fullWidth />
                 </div>
                 <div>
                   <label className="mb-1.5 block text-sm font-medium text-text dark:text-gray-200">
@@ -270,7 +272,9 @@ export default function WorkCalendarPage() {
         title={t("master.workCalendar.generateYear")}
         message={
           <div>
-            <p className="mb-3">{t("master.workCalendar.confirmMsg.generate")}</p>
+            <p className="mb-3">
+              {t("master.workCalendar.confirmMsg.generate", "{{year}}년 월력을 생성합니다. 기존 일자는 덮어써집니다. 주말과 양력 고정공휴일만 자동 휴무 처리되며, 설·추석·대체공휴일은 직접 수정해야 합니다.", { year })}
+            </p>
             <div className="space-y-2">
               <label className="flex items-center gap-2 text-sm text-text dark:text-gray-200 cursor-pointer">
                 <input type="checkbox" checked={genSatWork} onChange={(e) => setGenSatWork(e.target.checked)}
@@ -292,7 +296,7 @@ export default function WorkCalendarPage() {
         onClose={() => setTopAction(null)}
         onConfirm={handleCopyFromCompany}
         title={t("master.workCalendar.copyFromCompany")}
-        message={t("master.workCalendar.confirmMsg.copy")}
+        message={t("master.workCalendar.confirmMsg.copy", "전사 {{year}}년 월력을 이 라인으로 복사합니다. 이 라인의 기존 예외는 덮어써집니다.", { year })}
       />
 
       <ConfirmModal
@@ -300,7 +304,7 @@ export default function WorkCalendarPage() {
         onClose={() => setTopAction(null)}
         onConfirm={() => handleConfirm(true)}
         title={t("master.workCalendar.confirm")}
-        message={t("master.workCalendar.confirmMsg.confirm")}
+        message={t("master.workCalendar.confirmMsg.confirm", "{{year}}년 월력을 확정합니다. 확정 후에는 수정할 수 없습니다.", { year })}
       />
 
       <ConfirmModal
@@ -308,7 +312,7 @@ export default function WorkCalendarPage() {
         onClose={() => setTopAction(null)}
         onConfirm={() => handleConfirm(false)}
         title={t("master.workCalendar.unconfirm")}
-        message={t("master.workCalendar.confirmMsg.unconfirm")}
+        message={t("master.workCalendar.confirmMsg.unconfirm", "{{year}}년 월력의 확정을 취소하고 다시 수정할 수 있게 합니다.", { year })}
         variant="danger"
       />
     </div>
