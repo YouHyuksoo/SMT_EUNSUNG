@@ -391,8 +391,7 @@
     "oee.drilldown": "Chi tiết nguồn lực",
     "oee.loss": "Pareto tổn thất",
     "oee.entry": "Nhật ký vận hành",
-    "oee.resource": "Danh mục nguồn lực",
-    "oee.reason": "Danh mục lý do dừng máy"
+    "oee.resource": "Danh mục nguồn lực"
   },
   "header": {
     "theme": "Giao diện",

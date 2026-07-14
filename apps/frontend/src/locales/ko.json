@@ -392,9 +392,8 @@
     "oee.loss": "로스 파레토",
     "oee.entry": "가동일지 입력",
     "oee.resource": "리소스 마스터",
-    "oee.reason": "비가동사유 마스터",
     "oee.standardTime": "표준시간 관리",
-    "oee.idleReason": "무작업 사유코드 관리"
+    "oee.idleReason": "설비 비가동 사유코드"
   },
   "header": {
     "theme": "테마",

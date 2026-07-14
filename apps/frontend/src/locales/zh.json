@@ -391,8 +391,7 @@
     "oee.drilldown": "资源钻取",
     "oee.loss": "损失帕累托",
     "oee.entry": "运行日志录入",
-    "oee.resource": "资源主数据",
-    "oee.reason": "停机原因主数据"
+    "oee.resource": "资源主数据"
   },
   "header": {
     "theme": "主题",

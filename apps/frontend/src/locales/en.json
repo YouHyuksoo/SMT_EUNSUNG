@@ -392,9 +392,8 @@
     "oee.loss": "Loss Pareto",
     "oee.entry": "Operation Log",
     "oee.resource": "Resource Master",
-    "oee.reason": "Downtime Reason Master",
     "oee.standardTime": "Standard Time",
-    "oee.idleReason": "Idle Reason Code"
+    "oee.idleReason": "Equipment Downtime Reason"
   },
   "header": {
     "theme": "Theme",
