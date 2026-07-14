@@ -19,29 +19,24 @@ import type { InputProps } from "@/components/ui";
 import { HelpTooltip } from "@/components/shared";
 
 export const WORK_CALENDAR_FIELD_HELP = {
-  // ── WORK_CALENDARS (캘린더 헤더) ──
-  calendarId: { db: "WORK_CALENDARS.CALENDAR_ID", description: "근무캘린더를 식별하는 고유 ID입니다. 연도와 공장 조합의 자연키입니다(예: WC-2026-PLANT01)." },
-  calendarYear: { db: "WORK_CALENDARS.CALENDAR_YEAR", description: "이 캘린더가 적용되는 연도(4자리)입니다." },
-  processCd: { db: "WORK_CALENDARS.PROCESS_CD", description: "특정 공정 전용 캘린더일 때 지정합니다. 비워두면 공장 공통 캘린더로 등록됩니다." },
-  defaultShiftCount: { db: "WORK_CALENDARS.DEFAULT_SHIFT_COUNT", description: "캘린더 생성 시 일자별 기본 교대수입니다(1~3)." },
-  defaultShifts: { db: "WORK_CALENDARS.DEFAULT_SHIFTS", description: "기본 교대 패턴 코드를 콤마로 나열한 값입니다(예: DAY,NIGHT)." },
-  status: { db: "WORK_CALENDARS.STATUS", description: "캘린더 상태입니다. 확정(CONFIRMED) 시 편집·생성·복사가 제한됩니다." },
-  remark: { db: "WORK_CALENDARS.REMARK", description: "캘린더 관리 참고사항입니다." },
+  // 전사 월력 (IP_PRODUCT_COMPANY_CALENDAR) / 라인 예외 (IP_PRODUCT_LINE_CALENDAR)
+  dayType: { db: "IP_PRODUCT_COMPANY_CALENDAR.DAY_TYPE", description: "근무/휴무/반일/특근 구분입니다. 휴무(OFF)로 지정하면 HOLIDAY_YN이 'Y'로 함께 설정됩니다." },
+  offReason: { db: "IP_PRODUCT_COMPANY_CALENDAR.OFF_REASON", description: "휴무 사유입니다. 근무유형이 휴무일 때만 입력합니다." },
+  workMinutes: { db: "IP_PRODUCT_COMPANY_CALENDAR.WORK_MINUTES", description: "그날의 순근무분입니다. 비워두면 교대시간 마스터에서 자동 계산됩니다." },
+  otMinutes: { db: "IP_PRODUCT_COMPANY_CALENDAR.OT_MINUTES", description: "그날의 잔업분입니다." },
+  confirmYn: { db: "IP_PRODUCT_COMPANY_CALENDAR.CONFIRM_YN", description: "확정 여부입니다. 확정된 일자는 수정·생성·복사가 차단됩니다." },
+  comment: { db: "IP_PRODUCT_COMPANY_CALENDAR.CALENDAR_COMMENT", description: "월력 비고입니다." },
+  lineCode: { db: "IP_PRODUCT_LINE_CALENDAR.LINE_CODE", description: "라인 예외 월력의 대상 라인입니다. 해당 (일자, 라인) 행이 있으면 전사 월력을 덮어씁니다." },
 
-  // ── WORK_CALENDAR_DAYS (일자별 상세) ──
-  dayType: { db: "WORK_CALENDAR_DAYS.DAY_TYPE", description: "해당 날짜의 근무 유형입니다(근무/휴무/반일 등, 공통코드 WORK_DAY_TYPE)." },
-  offReason: { db: "WORK_CALENDAR_DAYS.OFF_REASON", description: "휴무일 때의 사유입니다(공휴일/연차 등, 공통코드 DAY_OFF_TYPE). 근무 유형이 휴무(OFF)일 때만 사용됩니다." },
-  shiftCount: { db: "WORK_CALENDAR_DAYS.SHIFT_COUNT", description: "해당 날짜에 운영할 교대수입니다(1~3)." },
-  shifts: { db: "WORK_CALENDAR_DAYS.SHIFTS", description: "해당 날짜에 적용할 교대 패턴을 다중 선택합니다. 선택값은 콤마로 묶여 저장됩니다." },
-  otMinutes: { db: "WORK_CALENDAR_DAYS.OT_MINUTES", description: "해당 날짜의 잔업 시간(분)입니다." },
-
-  // ── SHIFT_PATTERNS (교대 패턴 마스터) ──
-  shiftCode: { db: "SHIFT_PATTERNS.SHIFT_CODE", description: "교대 패턴을 식별하는 코드입니다(예: DAY, NIGHT). 등록 후에는 변경할 수 없습니다." },
-  shiftName: { db: "SHIFT_PATTERNS.SHIFT_NAME", description: "교대 패턴의 표시 이름입니다(예: 주간, 야간)." },
-  startTime: { db: "SHIFT_PATTERNS.START_TIME", description: "교대 시작 시각입니다(HH:MM 형식)." },
-  endTime: { db: "SHIFT_PATTERNS.END_TIME", description: "교대 종료 시각입니다(HH:MM 형식)." },
-  breakMinutes: { db: "SHIFT_PATTERNS.BREAK_MINUTES", description: "교대 중 휴게 시간(분)입니다." },
-  workMinutes: { db: "SHIFT_PATTERNS.WORK_MINUTES", description: "휴게를 제외한 실작업 시간(분)입니다." },
+  // 교대시간 (IP_SHIFT_TIME_MASTER)
+  dateset: { db: "IP_SHIFT_TIME_MASTER.DATESET", description: "교대시간 적용 시작일입니다. 등록 후에는 변경할 수 없습니다." },
+  dateend: { db: "IP_SHIFT_TIME_MASTER.DATEEND", description: "교대시간 적용 종료일입니다. 비우면 무기한입니다." },
+  dayTimeStart: { db: "IP_SHIFT_TIME_MASTER.DAY_TIME_START", description: "주간 교대 시작 시각입니다." },
+  dayTimeEnd: { db: "IP_SHIFT_TIME_MASTER.DAY_TIME_END", description: "주간 교대 종료 시각입니다." },
+  dayBreakMinutes: { db: "IP_SHIFT_TIME_MASTER.DAY_BREAK_MINUTES", description: "주간 교대의 휴식시간(분)입니다. 순근무분 계산에서 차감됩니다." },
+  nightTimeStart: { db: "IP_SHIFT_TIME_MASTER.NIGHT_TIME_START", description: "야간 교대 시작 시각입니다. 자정을 넘길 수 있습니다." },
+  nightTimeEnd: { db: "IP_SHIFT_TIME_MASTER.NIGHT_TIME_END", description: "야간 교대 종료 시각입니다." },
+  nightBreakMinutes: { db: "IP_SHIFT_TIME_MASTER.NIGHT_BREAK_MINUTES", description: "야간 교대의 휴식시간(분)입니다." },
 } as const;
 
 export type WorkCalendarFieldKey = keyof typeof WORK_CALENDAR_FIELD_HELP;

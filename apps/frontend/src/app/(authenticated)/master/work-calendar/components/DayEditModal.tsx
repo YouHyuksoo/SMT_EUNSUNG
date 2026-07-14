@@ -2,157 +2,119 @@
 
 /**
  * @file master/work-calendar/components/DayEditModal.tsx
- * @description 근무일 편집 모달 — 일별 근무유형/교대/잔업 등 설정
+ * @description 일자 편집 모달 — 근무유형/휴무사유/근무분/잔업분/비고
  *
  * 초보자 가이드:
- * 1. 선택한 날짜의 근무 정보를 편집하는 모달
- * 2. dayType에 따라 OFF_REASON 필드가 조건부 노출
- * 3. SHIFTS는 교대 패턴 목록에서 다중 선택(CSV)
+ * 1. 근무유형·휴무사유는 자유입력이 아니라 공통코드(WORK_DAY_TYPE / DAY_OFF_TYPE)다.
+ * 2. 휴무사유는 dayType='OFF'일 때만 노출된다.
+ * 3. 근무분은 근무유형이 바뀔 때 @smt/shared의 규칙으로 자동 채워지고, 사용자가 덮어쓸 수 있다.
  */
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import Modal from "@/components/ui/Modal";
-import { Button } from "@/components/ui";
-import { useComCodeOptions } from "@/hooks/useComCode";
-import type { WorkCalendarDay, ShiftPatternItem } from "./CalendarGrid";
-import { Field, FieldInput } from "./WorkCalendarFieldHelp";
-import QtyInput from "@/components/shared/QtyInput";
+import { Modal, Button, Input } from "@/components/ui";
+import { ComCodeSelect } from "@/components/shared";
+import type { WorkCalendarDay, WorkDayType } from "../types";
 
-interface DayEditModalProps {
+interface Props {
   isOpen: boolean;
   onClose: () => void;
   selectedDate: string | null;
   currentData: WorkCalendarDay | null;
-  shiftPatterns: ShiftPatternItem[];
-  onSave: (data: Partial<WorkCalendarDay>) => void;
+  onSave: (day: Partial<WorkCalendarDay> & { workDate: string }) => void;
 }
 
-export default function DayEditModal({
-  isOpen,
-  onClose,
-  selectedDate,
-  currentData,
-  shiftPatterns,
-  onSave,
-}: DayEditModalProps) {
+export default function DayEditModal({ isOpen, onClose, selectedDate, currentData, onSave }: Props) {
   const { t } = useTranslation();
-  const dayTypeOptions = useComCodeOptions("WORK_DAY_TYPE");
-  const offReasonOptions = useComCodeOptions("DAY_OFF_TYPE");
 
-  const [dayType, setDayType] = useState("WORK");
+  const [dayType, setDayType] = useState<WorkDayType>("WORK");
   const [offReason, setOffReason] = useState("");
-  const [shiftCount, setShiftCount] = useState(1);
-  const [shifts, setShifts] = useState<string[]>([]);
-  const [otMinutes, setOtMinutes] = useState(0);
-  const [remark, setRemark] = useState("");
+  const [workMinutes, setWorkMinutes] = useState("0");
+  const [otMinutes, setOtMinutes] = useState("0");
+  const [comment, setComment] = useState("");
 
   useEffect(() => {
     if (!isOpen) return;
-    if (currentData) {
-      setDayType(currentData.dayType);
-      setOffReason(currentData.offReason ?? "");
-      setShiftCount(currentData.shiftCount);
-      setShifts(currentData.shifts ? currentData.shifts.split(",") : []);
-      setOtMinutes(currentData.otMinutes);
-      setRemark(currentData.remark ?? "");
-    } else {
-      setDayType("WORK");
-      setOffReason("");
-      setShiftCount(1);
-      setShifts([]);
-      setOtMinutes(0);
-      setRemark("");
-    }
+    setDayType((currentData?.dayType as WorkDayType) ?? "WORK");
+    setOffReason(currentData?.offReason ?? "");
+    setWorkMinutes(String(currentData?.workMinutes ?? 0));
+    setOtMinutes(String(currentData?.otMinutes ?? 0));
+    setComment(currentData?.comment ?? "");
   }, [isOpen, currentData]);
 
-  const toggleShift = (code: string) => {
-    setShifts((prev) =>
-      prev.includes(code) ? prev.filter((s) => s !== code) : [...prev, code],
-    );
-  };
+  if (!selectedDate) return null;
 
   const handleSave = () => {
-    onSave({
-      workDate: selectedDate ?? "",
+    const payload: Partial<WorkCalendarDay> & { workDate: string } = {
+      workDate: selectedDate,
       dayType,
-      offReason: dayType === "OFF" ? offReason : null,
-      shiftCount,
-      shifts: shifts.length > 0 ? shifts.join(",") : null,
-      otMinutes,
-      remark: remark || null,
-    });
-    onClose();
+      offReason: dayType === "OFF" ? (offReason || null) : null,
+      otMinutes: Number(otMinutes) || 0,
+      comment: comment || null,
+    };
+    // 근무분을 비우면 키를 보내지 않아 서버가 교대시간 마스터에서 파생시킨다(Task 5 buildRow).
+    if (workMinutes !== "") payload.workMinutes = Number(workMinutes) || 0;
+    onSave(payload);
   };
 
-  const selectCls =
-    "w-full rounded border border-border dark:border-gray-600 bg-white dark:bg-slate-900 text-text dark:text-gray-200 px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary";
-
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={`${t("master.workCalendar.editDay")} — ${selectedDate ?? ""}`} size="md">
-      <div className="flex flex-col gap-4 p-1">
-        {/* 근무유형 */}
-        <Field field="dayType" label={t("master.workCalendar.dayType")}>
-          <select value={dayType} onChange={(e) => setDayType(e.target.value)} className={selectCls}>
-            {dayTypeOptions.map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
-            ))}
-          </select>
-        </Field>
+    <Modal isOpen={isOpen} onClose={onClose} title={`${t("master.workCalendar.editDay")} — ${selectedDate}`}>
+      <div className="space-y-4">
+        <div>
+          <label className="mb-1.5 block text-sm font-medium text-text dark:text-gray-200">
+            {t("master.workCalendar.dayType")}
+          </label>
+          <ComCodeSelect
+            groupCode="WORK_DAY_TYPE"
+            includeAll={false}
+            value={dayType}
+            onChange={(v) => setDayType(v as WorkDayType)}
+            fullWidth
+          />
+        </div>
 
-        {/* 휴무사유 (OFF일 때만) */}
         {dayType === "OFF" && (
-          <Field field="offReason" label={t("master.workCalendar.offReason")}>
-            <select value={offReason} onChange={(e) => setOffReason(e.target.value)} className={selectCls}>
-              <option value="">-- {t("common.select")} --</option>
-              {offReasonOptions.map((o) => (
-                <option key={o.value} value={o.value}>{o.label}</option>
-              ))}
-            </select>
-          </Field>
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-text dark:text-gray-200">
+              {t("master.workCalendar.offReason")}
+            </label>
+            <ComCodeSelect
+              groupCode="DAY_OFF_TYPE"
+              includeAll={false}
+              value={offReason}
+              onChange={setOffReason}
+              fullWidth
+            />
+          </div>
         )}
 
-        {/* 교대수 */}
-        <Field field="shiftCount" label={t("master.workCalendar.shiftCount")}>
-          <QtyInput value={shiftCount} onChange={(n) => setShiftCount(n)} maxValue={3} />
-        </Field>
-
-        {/* 교대 선택 */}
-        <Field field="shifts" label={t("master.workCalendar.shifts")}>
-          <div className="flex flex-wrap gap-2">
-            {shiftPatterns.filter((s) => s.useYn === "Y").map((sp) => (
-              <button
-                key={sp.shiftCode}
-                type="button"
-                onClick={() => toggleShift(sp.shiftCode)}
-                className={`px-3 py-1 text-xs rounded border transition-colors
-                  ${shifts.includes(sp.shiftCode)
-                    ? "bg-primary text-white border-primary"
-                    : "bg-white dark:bg-slate-800 text-text dark:text-gray-300 border-border dark:border-gray-600 hover:border-primary"}`}
-              >
-                {sp.shiftName} ({sp.startTime}~{sp.endTime})
-              </button>
-            ))}
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-text dark:text-gray-200">
+              {t("master.workCalendar.workMinutes")}
+            </label>
+            <Input type="number" min={0} value={workMinutes}
+              onChange={(e) => setWorkMinutes(e.target.value)} fullWidth />
           </div>
-        </Field>
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-text dark:text-gray-200">
+              {t("master.workCalendar.otMinutes")}
+            </label>
+            <Input type="number" min={0} value={otMinutes}
+              onChange={(e) => setOtMinutes(e.target.value)} fullWidth />
+          </div>
+        </div>
 
-        {/* 잔업시간 */}
-        <Field field="otMinutes" label={t("master.workCalendar.otMinutes")}>
-          <QtyInput value={otMinutes} onChange={(n) => setOtMinutes(n)} />
-        </Field>
+        <div>
+          <label className="mb-1.5 block text-sm font-medium text-text dark:text-gray-200">
+            {t("master.workCalendar.remark")}
+          </label>
+          <Input value={comment} onChange={(e) => setComment(e.target.value)} fullWidth />
+        </div>
 
-        {/* 비고 */}
-        <FieldInput
-          field="remark"
-          label={t("master.workCalendar.remark")}
-          value={remark}
-          onChange={(e) => setRemark(e.target.value)}
-        />
-      </div>
-
-      {/* 버튼 */}
-      <div className="flex justify-end gap-2 mt-4 pt-3 border-t border-border dark:border-gray-700">
-        <Button variant="secondary" onClick={onClose}>{t("common.cancel")}</Button>
-        <Button variant="primary" onClick={handleSave}>{t("common.save")}</Button>
+        <div className="flex justify-end gap-2 pt-2">
+          <Button variant="secondary" onClick={onClose}>{t("common.cancel")}</Button>
+          <Button onClick={handleSave}>{t("common.save")}</Button>
+        </div>
       </div>
     </Modal>
   );
