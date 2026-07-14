@@ -4,8 +4,12 @@ sources:
   - AGENTS.md
   - docs/README.md
   - apps/backend/src/database/
+  - apps/backend/src/entities/routing-group.entity.ts
+  - apps/backend/src/entities/routing-process.entity.ts
+  - apps/backend/src/entities/routing-material.entity.ts
+  - apps/backend/src/modules/master/services/routing-group.service.ts
   - apps/frontend/src/lib/screens.ts
-verifiedCommit: 1bd1735
+verifiedCommit: 60adf9d
 ---
 
 # CONTEXT — 은성 MES 도메인 용어집 (ubiquitous language)
@@ -61,6 +65,8 @@ verifiedCommit: 1bd1735
 | **라인 현재생산정보** | 생산라인에 현재 투입된 모델·품목·RUN을 나타내는 상태 정보. 생산계획이나 실적 원장이 아니라 라인 화면·인터록을 위한 현재 상태다. | 업무 합의, IP_PRODUCT_LINE 실데이터 |
 | **설비 마스터** | 생산에 사용하는 개별 설비의 코드·명칭·유형·모델·능력·사용상태를 관리한다. 설비는 생산라인에 소속되며 현행 테이블에는 통신설정과 현재상태도 함께 저장된다. | 업무 합의, IMCN_MACHINE 실데이터 |
 | **공정 마스터** | 제품이 거치는 작업 단계의 코드·명칭·순서·유형·표준시간·능력을 관리한다. 생산라인은 물리적 생산 구역, 설비는 개별 장비, 공정은 작업 단계다. | 업무 합의, IP_PRODUCT_WORKSTAGE 실데이터 |
+| **생산 라우팅** | 현재 유효한 생산 BOM을 가진 반제품 또는 완제품의 고정 공정 순서와 공정별 하위품목 배정을 묶은 생산 기준정보다. | 업무 합의, IP_ROUTING_* 및 라우팅 서비스 |
+| **라우팅 그룹** | 반제품 또는 완제품 품목 하나에 고정된 단일 생산 라우팅으로, 라우팅 코드는 품목코드와 같다. | 업무 합의, IP_ROUTING_GROUPS |
 
 ## 미확정 — grilling으로 채움
 
@@ -68,6 +74,6 @@ verifiedCommit: 1bd1735
      용어가 확정되는 순간 위 용어집으로 승격하고 이 목록에서 지운다. 추측으로 미리 채우지 않는다. -->
 
 - 재고/수불 핵심 엔티티의 경계 (예: 창고 vs 위치, Lot/시리얼 단위, 입고/출고/이동/실사)
-- 생산 단위 용어 (지시/작업/공정/라우팅 간 관계)
+- 생산 단위 용어 (지시/작업과 공정·생산 라우팅 간 관계)
 - OEE 계산에서 쓰는 시간·수량 정의 (가동/부하/정지/양품 기준 — `packages/shared` OEE 로직과 대조)
 - 품질 판정 용어 (검사결과 코드, IQC/AQL 정책 등)
