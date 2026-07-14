@@ -82,19 +82,19 @@ const emptyForm = (): EditForm => ({ id: null, reasonCode: '', reasonName: '', d
 export default function IdleReasonMasterPage() {
   const [records, setRecords] = useState<IdleReasonRecord[]>(SEED);
   const [form, setForm] = useState<EditForm | null>(null);
-  const [search, setSearch] = useState({ reasonCode: '', reasonName: '' });
+  const [search, setSearch] = useState('');
 
-  const filtered = useMemo(
-    () =>
-      records
-        .filter(
-          (r) =>
-            (!search.reasonCode || r.reasonCode.toLowerCase().includes(search.reasonCode.toLowerCase())) &&
-            (!search.reasonName || r.reasonName.toLowerCase().includes(search.reasonName.toLowerCase())),
-        )
-        .sort((a, b) => a.displayOrder - b.displayOrder), // 화면 표시 순서 오름차순
-    [records, search],
-  );
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    // 통합검색 — 사유코드·사유명에서 매칭
+    const base = q
+      ? records.filter((r) => {
+          const hay = [r.reasonCode, r.reasonName].join(' ').toLowerCase();
+          return hay.includes(q);
+        })
+      : records;
+    return [...base].sort((a, b) => a.displayOrder - b.displayOrder); // 화면 표시 순서 오름차순
+  }, [records, search]);
 
   const columns = useMemo<ColumnDef<IdleReasonRecord>[]>(
     () => [
@@ -207,11 +207,8 @@ export default function IdleReasonMasterPage() {
               getRowId={(r) => String(r.id)}
               toolbarLeft={
                 <div className="flex flex-wrap gap-3 flex-1 min-w-0">
-                  <div className="w-44 flex-shrink-0">
-                    <Input placeholder="사유코드" value={search.reasonCode} onChange={(e) => setSearch({ ...search, reasonCode: e.target.value })} leftIcon={<Search className="w-4 h-4" />} fullWidth />
-                  </div>
-                  <div className="w-56 flex-shrink-0">
-                    <Input placeholder="사유명" value={search.reasonName} onChange={(e) => setSearch({ ...search, reasonName: e.target.value })} leftIcon={<Search className="w-4 h-4" />} fullWidth />
+                  <div className="w-96 flex-shrink-0">
+                    <Input placeholder="통합검색 (사유코드·사유명)" value={search} onChange={(e) => setSearch(e.target.value)} leftIcon={<Search className="w-4 h-4" />} fullWidth />
                   </div>
                 </div>
               }
@@ -223,12 +220,12 @@ export default function IdleReasonMasterPage() {
       {/* 등록/수정 — 우측 슬라이드 패널 (표준시간관리 방식) */}
       {form && (
         <div className="w-[540px] flex-shrink-0 border-l border-border bg-background flex flex-col h-full overflow-hidden shadow-2xl animate-slide-in-right">
-          {/* 헤더: 저장/닫기 (상단) */}
+          {/* 헤더: 취소/저장 (상단) */}
           <div className="px-5 py-3 border-b border-border flex items-center justify-between flex-shrink-0">
             <h2 className="text-sm font-bold text-text">{form.id == null ? '설비 비가동 사유코드 등록' : '설비 비가동 사유코드 수정'}</h2>
             <div className="flex items-center gap-2">
+              <button onClick={() => setForm(null)} className="px-3 py-2 rounded border border-border text-text-muted text-sm">취소</button>
               <button onClick={save} className="px-4 py-2 rounded bg-primary text-white text-sm">저장</button>
-              <button onClick={() => setForm(null)} className="px-3 py-2 rounded border border-border text-text-muted text-sm">닫기</button>
             </div>
           </div>
           {/* 바디 — 독립 세로 스크롤 */}
