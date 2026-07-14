@@ -2,14 +2,16 @@
  * @file src/modules/master/controllers/shift-time.controller.ts
  * @description 2교대 시간 마스터(IP_SHIFT_TIME_MASTER) API 컨트롤러
  */
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Put } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Put, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { OrganizationId } from '../../../common/decorators/tenant.decorator';
+import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { ResponseUtil } from '../../../common/dto/response.dto';
 import { ShiftTimeService } from '../services/shift-time.service';
 import { CreateShiftTimeDto, UpdateShiftTimeDto } from '../dto/work-calendar.dto';
 
 @ApiTags('기준정보 - 교대시간')
+@UseGuards(JwtAuthGuard)
 @Controller('master/shift-times')
 export class ShiftTimeController {
   constructor(private readonly svc: ShiftTimeService) {}

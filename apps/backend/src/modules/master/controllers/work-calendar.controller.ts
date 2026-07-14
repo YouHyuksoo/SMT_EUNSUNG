@@ -6,9 +6,10 @@
  * 1. lineCode 미지정 = 전사 월력, 지정 = 라인 예외 월력.
  * 2. 조회(GET /days)는 전사+라인 병합 결과를 돌려준다.
  */
-import { Body, Controller, Get, HttpCode, HttpStatus, Post, Put, Query } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { OrganizationId } from '../../../common/decorators/tenant.decorator';
+import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { ResponseUtil } from '../../../common/dto/response.dto';
 import { WorkCalendarService } from '../services/work-calendar.service';
 import {
@@ -21,6 +22,7 @@ import {
 } from '../dto/work-calendar.dto';
 
 @ApiTags('기준정보 - 생산월력')
+@UseGuards(JwtAuthGuard)
 @Controller('master/work-calendar')
 export class WorkCalendarController {
   constructor(private readonly svc: WorkCalendarService) {}
