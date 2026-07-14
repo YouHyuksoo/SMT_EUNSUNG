@@ -43,9 +43,9 @@ import { Warehouse } from '../entities/warehouse.entity';
 import { WarehouseLocation } from '../entities/warehouse-location.entity';
 import { WorkerMaster } from '../entities/worker-master.entity';
 import { WorkInstruction } from '../entities/work-instruction.entity';
-import { WorkCalendar } from '../entities/work-calendar.entity';
-import { WorkCalendarDay } from '../entities/work-calendar-day.entity';
-import { ShiftPattern } from '../entities/shift-pattern.entity';
+import { ProductCompanyCalendar } from '../entities/product-company-calendar.entity';
+import { ProductLineCalendar } from '../entities/product-line-calendar.entity';
+import { ShiftTimeMaster } from '../entities/shift-time-master.entity';
 import { ProcessMaster } from '../entities/process-master.entity';
 import { LabelTemplate } from '../entities/label-template.entity';
 import { ProcessMap } from '../entities/process-map.entity';
@@ -120,9 +120,9 @@ import { FileAttachment } from '../entities/file-attachment.entity';
             WarehouseLocation,
             WorkerMaster,
             WorkInstruction,
-            WorkCalendar,
-            WorkCalendarDay,
-            ShiftPattern,
+            ProductCompanyCalendar,
+            ProductLineCalendar,
+            ShiftTimeMaster,
             ProcessMaster,
             LabelTemplate,
             ProcessMap,
