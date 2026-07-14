@@ -357,11 +357,10 @@ describe('WorkCalendarService', () => {
       companyRepo.find.mockResolvedValue([companyRow('2026-07-14', 'WORK')]);
       lineRepo.find.mockResolvedValue([]); // ensureNotConfirmed가 lineCode 지정 시 라인 테이블을 조회한다
       lineRepo.create.mockImplementation((v) => v as ProductLineCalendar);
-      lineRepo.save.mockImplementation(async (v) => v as ProductLineCalendar);
 
       await target.copyFromCompany({ year: '2026', lineCode: 'L1' }, 1, 'HONG');
 
-      const saved = lineRepo.save.mock.calls[0][0] as ProductLineCalendar[];
+      const saved = lineRepo.insert.mock.calls[0][0] as ProductLineCalendar[];
       expect(saved[0].enterBy).toBe('HONG');
       expect(saved[0].lastModifyBy).toBe('HONG');
     });
@@ -370,13 +369,60 @@ describe('WorkCalendarService', () => {
       companyRepo.find.mockResolvedValue([companyRow('2026-07-14', 'WORK')]);
       lineRepo.find.mockResolvedValue([]);
       lineRepo.create.mockImplementation((v) => v as ProductLineCalendar);
-      lineRepo.save.mockImplementation(async (v) => v as ProductLineCalendar);
 
       await target.copyFromCompany({ year: '2026', lineCode: 'L1' }, 1, 'HONG');
 
-      const saved = lineRepo.save.mock.calls[0][0] as ProductLineCalendar[];
+      const saved = lineRepo.insert.mock.calls[0][0] as ProductLineCalendar[];
       expect(saved[0].enterDate).toBeInstanceOf(Date);
       expect(saved[0].lastModifyDate).toBeInstanceOf(Date);
+    });
+
+    it('전사 월력이 비어있으면 409로 거부한다', async () => {
+      companyRepo.find.mockResolvedValue([]);
+      lineRepo.find.mockResolvedValue([]);
+
+      await expect(
+        target.copyFromCompany({ year: '2026', lineCode: 'L1' }, 1),
+      ).rejects.toBeInstanceOf(ConflictException);
+      expect(lineRepo.delete).not.toHaveBeenCalled();
+      expect(lineRepo.insert).not.toHaveBeenCalled();
+    });
+
+    it('확정된 라인 일자가 있으면 409로 거부하고 복사를 시도하지 않는다', async () => {
+      lineRepo.find.mockResolvedValue([
+        { ...companyRow('2026-07-14', 'WORK', 'Y'), lineCode: 'L1' } as unknown as ProductLineCalendar,
+      ]);
+
+      await expect(
+        target.copyFromCompany({ year: '2026', lineCode: 'L1' }, 1),
+      ).rejects.toBeInstanceOf(ConflictException);
+      expect(companyRepo.find).not.toHaveBeenCalled();
+      expect(lineRepo.delete).not.toHaveBeenCalled();
+      expect(lineRepo.insert).not.toHaveBeenCalled();
+    });
+
+    it('이미 해당 라인/연도 행이 존재해도(재복사) save() upsert가 아니라 delete 후 insert로 덮어쓴다 (PK 충돌 회귀 방지)', async () => {
+      // find()는 ensureNotConfirmed에서만 쓰인다 — 이미 라인에 예외 행이 있어도(확정 전) 재복사는
+      // 항상 허용되어야 한다. repo.save()를 다시 쓰면 이 시나리오에서
+      // ORA-00001(XPKIP_PRODUCT_LINE_CALENDAR)이 재현된다.
+      companyRepo.find.mockResolvedValue([companyRow('2026-07-14', 'WORK')]);
+      lineRepo.find.mockResolvedValue([
+        { ...companyRow('2026-07-14', 'WORK', 'N'), lineCode: 'L1' } as unknown as ProductLineCalendar,
+      ]);
+      lineRepo.create.mockImplementation((v) => v as ProductLineCalendar);
+
+      await target.copyFromCompany({ year: '2026', lineCode: 'L1' }, 1);
+
+      expect(lineRepo.delete).toHaveBeenCalledTimes(1);
+      expect(lineRepo.save).not.toHaveBeenCalled();
+      expect(lineRepo.insert).toHaveBeenCalledTimes(1);
+      // delete가 insert보다 먼저 호출되어야 한다 (덮어쓰기 순서)
+      const deleteOrder = lineRepo.delete.mock.invocationCallOrder[0];
+      const insertOrder = lineRepo.insert.mock.invocationCallOrder[0];
+      expect(deleteOrder).toBeLessThan(insertOrder);
+      const insertedRows = lineRepo.insert.mock.calls[0][0] as ProductLineCalendar[];
+      expect(insertedRows.length).toBe(1);
+      expect(insertedRows[0].lineCode).toBe('L1');
     });
   });
 });

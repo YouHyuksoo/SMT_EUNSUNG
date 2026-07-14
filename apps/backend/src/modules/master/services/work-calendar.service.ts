@@ -257,7 +257,9 @@ export class WorkCalendarService {
         lastModifyDate: now,
       }),
     );
-    await this.lineRepo.save(rows);
+    // save()가 아니라 delete()+insert()를 쓰는 이유는 replaceRowsInRange() 주석 참고
+    // (PLAN_DATE Date vs 문자열 hydrate 불일치로 save()가 매번 INSERT를 시도해 ORA-00001 발생).
+    await this.replaceRowsInRange(dto.lineCode, organizationId, from, to, rows);
     return rows.length;
   }
 
