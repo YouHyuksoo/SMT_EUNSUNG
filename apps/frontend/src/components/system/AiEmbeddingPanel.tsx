@@ -26,7 +26,7 @@ const EMBEDDING_MODEL_OPTIONS: Record<string, { value: string; label: string; di
 
 // v2: 백엔드 DEFAULT_KNOWLEDGE_TARGETS(ai-knowledge.service.ts)와 동일 집합으로 맞춤.
 // 두 목록은 같은 개념이므로 폴더 추가/개명 시 양쪽을 함께 갱신한다.
-const KNOWLEDGE_TARGET_STORAGE_KEY = "hanes.aiEmbedding.chunkTargets.v2";
+const KNOWLEDGE_TARGET_STORAGE_KEY = "eunsung.aiEmbedding.chunkTargets.v2";
 const DEFAULT_KNOWLEDGE_TARGETS = [
   { path: "apps/frontend/public/help/user/ko", label: "사용자 도움말" },
   { path: "apps/frontend/public/help/operator/ko", label: "작업자 도움말" },

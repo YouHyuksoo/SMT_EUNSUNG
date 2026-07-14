@@ -9,6 +9,8 @@ import { SchedulerJob } from './scheduler-job.entity';
 import { SchedulerLog } from './scheduler-log.entity';
 import { SchedulerNotification } from './scheduler-notification.entity';
 import { EquipMaster } from './equip-master.entity';
+import { ItemSupplier } from './item-supplier.entity';
+import { CustomerMaster } from './customer-master.entity';
 
 function tableName(target: Function) {
   return getMetadataArgsStorage().tables.find((table) => table.target === target)?.name;
@@ -57,6 +59,21 @@ describe('ISYS master table mappings', () => {
     expect(columnName(ItemMaster, 'itemCode')).toBe('ITEM_CODE');
     expect(columnName(ItemMaster, 'itemName')).toBe('ITEM_NAME');
     expect(columnName(ItemMaster, 'spec')).toBe('ITEM_SPEC');
+  });
+
+  it('maps /master/item-suppliers to IM_ITEM_MASTER', () => {
+    expect(tableName(ItemSupplier)).toBe('IM_ITEM_MASTER');
+    expect(columnName(ItemSupplier, 'supplierCode')).toBe('SUPPLIER_CODE');
+    expect(columnName(ItemSupplier, 'itemCode')).toBe('ITEM_CODE');
+    expect(columnName(ItemSupplier, 'orderType')).toBe('ORDER_TYPE');
+    expect(columnName(ItemSupplier, 'inspectRule')).toBe('INSPECT_RULE');
+  });
+
+  it('maps /master/customer to ICOM_CUSTOMER', () => {
+    expect(tableName(CustomerMaster)).toBe('ICOM_CUSTOMER');
+    expect(columnName(CustomerMaster, 'customerCode')).toBe('CUSTOMER_CODE');
+    expect(columnName(CustomerMaster, 'businessStatus')).toBe('BUSINESS_STATUS');
+    expect(columnName(CustomerMaster, 'paymentType')).toBe('PAYMENT_TYPE');
   });
 
   it('maps /master/equip to IMCN_MACHINE', () => {

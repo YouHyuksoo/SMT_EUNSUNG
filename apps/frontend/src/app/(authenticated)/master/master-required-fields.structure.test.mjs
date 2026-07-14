@@ -37,7 +37,6 @@ test("master side-panel forms mark required save-blocking fields", () => {
     ["./process/page.tsx", "process", ["processCode", "processName", "processType"]],
     ["./equip/components/EquipMasterTab.tsx", "equip", ["equipCode", "equipName"]],
     ["./gauge/page.tsx", "gauge", ["gaugeCode", "gaugeName", "gaugeType"]],
-    ["./process-capa/components/CapaFormPanel.tsx", "process-capa", ["processCode", "itemCode"]],
     ["./warehouse/components/LocationList.tsx", "warehouse-location", ["warehouseCode", "locationCode", "locationName"]],
   ];
 

@@ -15,7 +15,7 @@ export class CreateCompanyDto {
   @MaxLength(50)
   companyCode: string;
 
-  @ApiProperty({ description: '회사명', example: 'HANES Vietnam' })
+  @ApiProperty({ description: '회사명', example: '은성전장' })
   @IsString()
   @MaxLength(200)
   companyName: string;

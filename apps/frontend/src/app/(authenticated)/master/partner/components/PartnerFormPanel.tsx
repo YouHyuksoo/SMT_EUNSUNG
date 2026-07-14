@@ -14,7 +14,7 @@ import { useTranslation } from "react-i18next";
 // X 아이콘 제거됨 — 헤더에 취소/저장 버튼 사용
 import { Button } from "@/components/ui";
 import api from "@/services/api";
-import { FieldInput, FieldComCodeSelect, FieldYnRadio } from "./PartnerFieldHelp";
+import { FieldInput, FieldYnRadio } from "./PartnerFieldHelp";
 
 interface Partner {
   partnerCode: string;
@@ -27,7 +27,6 @@ interface Partner {
   fax?: string;
   email?: string;
   contactPerson?: string;
-  remark?: string;
   useYn: string;
 }
 
@@ -54,7 +53,6 @@ const EMPTY_FORM = {
   fax: "",
   email: "",
   contactPerson: "",
-  remark: "",
   useYn: "Y",
 };
 
@@ -71,7 +69,6 @@ const getInitialForm = (partner: Partner | null, isEdit: boolean) => {
     fax: partner.fax || "",
     email: partner.email || "",
     contactPerson: partner.contactPerson || "",
-    remark: partner.remark || "",
     useYn: partner.useYn || "Y",
   };
 };
@@ -117,7 +114,6 @@ export default function PartnerFormPanel({ mode, editingPartner, onClose, onSave
         fax: form.fax || undefined,
         email: form.email || undefined,
         contactPerson: form.contactPerson || undefined,
-        remark: form.remark || undefined,
       };
       if (isEdit && editingPartner?.partnerCode) {
         await api.put(`/master/partners/${editingPartner.partnerCode}`, payload);
@@ -155,9 +151,8 @@ export default function PartnerFormPanel({ mode, editingPartner, onClose, onSave
             <FieldInput field="partnerCode" label={t("master.partner.partnerCode")}
               value={form.partnerCode} onChange={e => setField("partnerCode", e.target.value)}
               disabled={isEdit} required />
-            <FieldComCodeSelect field="partnerType" groupCode="PARTNER_TYPE" includeAll={false}
-              label={t("master.partner.partnerType")}
-              value={form.partnerType} onChange={v => setField("partnerType", v)} required />
+            <FieldInput field="partnerType" label={t("master.partner.partnerType")}
+              value="SUPPLIER" readOnly required />
             <FieldInput field="partnerName" label={t("master.partner.partnerName")}
               wrapperClassName="col-span-2"
               value={form.partnerName} onChange={e => setField("partnerName", e.target.value)} required />
@@ -186,8 +181,6 @@ export default function PartnerFormPanel({ mode, editingPartner, onClose, onSave
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <FieldInput field="remark" label={t("common.remark")}
-            value={form.remark} onChange={e => setField("remark", e.target.value)} />
           <FieldYnRadio field="useYn" label={t("common.useYn", "사용여부")}
             value={form.useYn} onChange={v => setField("useYn", v)} />
         </div>

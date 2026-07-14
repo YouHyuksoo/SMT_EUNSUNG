@@ -2,7 +2,7 @@
 
 - 작성일: 2026-07-10
 - 대상: 은성 MES OEE 시스템 운영을 위한 기준정보(Master Data) 관리
-- 근거문서: `docs/plans/2026-07-10-inventory-oee-visual-review.html` (10절 기준정보 관리 · 11절 OEE 관리 기준)
+- 근거문서: `docs/presentations/2026-07-10-inventory-oee-visual-review.html` (10절 기준정보 관리 · 11절 OEE 관리 기준)
 - 상태: 설계 확정(grill-me 8개 결정) · 구현 착수 전
 
 ---

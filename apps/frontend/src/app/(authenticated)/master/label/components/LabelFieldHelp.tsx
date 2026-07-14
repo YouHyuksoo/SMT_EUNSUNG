@@ -14,7 +14,7 @@ import { HelpTooltip } from "@/components/shared";
 
 export const LABEL_FIELD_HELP = {
   templateName: {
-    db: "LABEL_TEMPLATES.TEMPLATE_NAME",
+    db: "ICOM_LABEL_TEMPLATES.TEMPLATE_NAME",
     description: "라벨 템플릿을 식별할 이름입니다. 같은 카테고리 안에서 중복될 수 없습니다.",
   },
 } as const;

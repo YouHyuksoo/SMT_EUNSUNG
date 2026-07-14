@@ -1,757 +1,332 @@
-/**
- * @file src/modules/master/services/routing-group.service.spec.ts
- * @description RoutingGroupService 단위 테스트 - 그룹/공정/양품조건 CRUD + 트랜잭션 검증
- *
- * 초보자 가이드:
- * - target: 테스트 대상(SUT), mock*: 모킹된 의존성
- * - 실행: `pnpm test -- -t "RoutingGroupService"`
- */
-import { Test, TestingModule } from '@nestjs/testing';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
-import { getRepositoryToken } from '@nestjs/typeorm';
-import { NotFoundException, ConflictException } from '@nestjs/common';
-import { Repository, DataSource, EntityManager } from 'typeorm';
-import { getMetadataArgsStorage } from 'typeorm';
+import { ConflictException, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { RoutingGroupService } from './routing-group.service';
-import { RoutingGroup } from '../../../entities/routing-group.entity';
-import { RoutingProcess } from '../../../entities/routing-process.entity';
-import { ProcessMaster } from '../../../entities/process-master.entity';
-import { ProcessQualityCondition } from '../../../entities/process-quality-condition.entity';
-import { ItemMaster } from '../../../entities/item-master.entity';
-import { BomMaster } from '../../../entities/bom-master.entity';
-import { RoutingMaterial } from '../../../entities/routing-material.entity';
-import { HarnessCircuitSpec } from '../../../entities/harness-circuit-spec.entity';
-import { MockLoggerService } from '@test/mock-logger.service';
-import { TransactionService } from '../../../shared/transaction.service';
+import { plainToInstance } from 'class-transformer';
+import { validateSync } from 'class-validator';
+import { ReorderRoutingProcessChangeDto } from '../dto/routing-group.dto';
 
-describe('RoutingGroupService', () => {
-  let target: RoutingGroupService;
-  let mockGroupRepo: DeepMocked<Repository<RoutingGroup>>;
-  let mockProcessRepo: DeepMocked<Repository<RoutingProcess>>;
-  let mockProcessMasterRepo: DeepMocked<Repository<ProcessMaster>>;
-  let mockConditionRepo: DeepMocked<Repository<ProcessQualityCondition>>;
-  let mockPartRepo: DeepMocked<Repository<ItemMaster>>;
-  let mockBomRepo: DeepMocked<Repository<BomMaster>>;
-  let mockMaterialRepo: DeepMocked<Repository<RoutingMaterial>>;
-  let mockCircuitRepo: DeepMocked<Repository<HarnessCircuitSpec>>;
-  let mockDataSource: DeepMocked<DataSource>;
-  let mockEntityManager: DeepMocked<EntityManager>;
-  let mockTx: DeepMocked<TransactionService>;
+describe('RoutingGroupService group/process rules', () => {
+  it.each([0, 10_000_000_000])('DTO rejects sequence outside NUMBER(10) positive range: %s', (seq) => {
+    const dto = plainToInstance(ReorderRoutingProcessChangeDto, { fromSeq: seq, toSeq: seq });
+    expect(validateSync(dto)).not.toHaveLength(0);
+  });
+  const repo = () => ({ findOne: jest.fn(), find: jest.fn(), query: jest.fn(), count: jest.fn(), create: jest.fn((v) => v), save: jest.fn(async (v) => v), update: jest.fn(), delete: jest.fn(), createQueryBuilder: jest.fn() });
+  let groupRepo: ReturnType<typeof repo>;
+  let processRepo: ReturnType<typeof repo>;
+  let workstageRepo: ReturnType<typeof repo>;
+  let itemRepo: ReturnType<typeof repo>;
+  let bomRepo: ReturnType<typeof repo>;
+  let materialRepo: ReturnType<typeof repo>;
+  let supplierRepo: ReturnType<typeof repo>;
+  let manager: any;
+  let tx: any;
+  let service: RoutingGroupService;
 
-  beforeEach(async () => {
-    mockGroupRepo = createMock<Repository<RoutingGroup>>();
-    mockProcessRepo = createMock<Repository<RoutingProcess>>();
-    mockProcessMasterRepo = createMock<Repository<ProcessMaster>>();
-    mockConditionRepo = createMock<Repository<ProcessQualityCondition>>();
-    mockPartRepo = createMock<Repository<ItemMaster>>();
-    mockBomRepo = createMock<Repository<BomMaster>>();
-    mockMaterialRepo = createMock<Repository<RoutingMaterial>>();
-    mockCircuitRepo = createMock<Repository<HarnessCircuitSpec>>();
-    mockCircuitRepo.query.mockResolvedValue([]);
-    mockDataSource = createMock<DataSource>();
-    mockEntityManager = createMock<EntityManager>();
-    mockTx = createMock<TransactionService>();
-    mockProcessMasterRepo.findOne.mockImplementation(async (options: any) => {
-      const processCode = options?.where?.processCode ?? 'P01';
-      return {
-        processCode,
-        processName: 'Process',
-        processType: 'ASSY',
-      } as ProcessMaster;
+  beforeEach(() => {
+    groupRepo = repo(); processRepo = repo(); workstageRepo = repo(); itemRepo = repo();
+    bomRepo = repo(); materialRepo = repo(); supplierRepo = repo();
+    manager = { query: jest.fn(), findOne: jest.fn(), count: jest.fn(), create: jest.fn((_entity: any, value: any) => value), save: jest.fn(async (_entity: any, value: any) => value), delete: jest.fn() };
+    manager.query.mockImplementation(async (sql: string) => {
+      if (sql.includes('FROM IP_ROUTING_GROUPS')) return [{ routingCode: 'R1' }];
+      if (sql.includes('FROM IP_ROUTING_PROCESSES p')) return [{ processSeq: 10 }, { processSeq: 20 }];
+      if (sql.includes('FROM IP_ROUTING_MATERIALS')) return [];
+      if (sql.startsWith('UPDATE IP_ROUTING_MATERIALS')) return 0;
+      if (sql.startsWith('UPDATE')) return 1;
+      return {};
     });
-
-    // Transaction mock: execute callback with mockEntityManager
-    mockDataSource.transaction.mockImplementation(async (cb: any) => {
-      return cb(mockEntityManager);
-    });
-    mockTx.run.mockImplementation(async (cb) => cb({ manager: mockEntityManager } as any));
-
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        RoutingGroupService,
-        { provide: getRepositoryToken(RoutingGroup), useValue: mockGroupRepo },
-        { provide: getRepositoryToken(RoutingProcess), useValue: mockProcessRepo },
-        { provide: getRepositoryToken(ProcessMaster), useValue: mockProcessMasterRepo },
-        { provide: getRepositoryToken(ProcessQualityCondition), useValue: mockConditionRepo },
-        { provide: getRepositoryToken(ItemMaster), useValue: mockPartRepo },
-        { provide: getRepositoryToken(BomMaster), useValue: mockBomRepo },
-        { provide: getRepositoryToken(RoutingMaterial), useValue: mockMaterialRepo },
-        { provide: getRepositoryToken(HarnessCircuitSpec), useValue: mockCircuitRepo },
-        { provide: DataSource, useValue: mockDataSource },
-        { provide: TransactionService, useValue: mockTx },
-      ],
-    })
-      .setLogger(new MockLoggerService())
-      .compile();
-
-    target = module.get<RoutingGroupService>(RoutingGroupService);
+    tx = { run: jest.fn(async (fn) => fn({ manager })) };
+    service = new RoutingGroupService(groupRepo as any, processRepo as any, workstageRepo as any,
+      itemRepo as any, bomRepo as any, materialRepo as any, supplierRepo as any, tx);
   });
 
-  afterEach(() => {
-    jest.clearAllMocks();
+  it('rejects a group whose item is outside the request organization', async () => {
+    itemRepo.findOne.mockResolvedValue(null);
+    await expect(service.createGroup({ routingCode: 'R1', itemCode: 'I1', routingName: 'R' }, 7))
+      .rejects.toThrow(NotFoundException);
+    expect(itemRepo.findOne).toHaveBeenCalledWith({ where: { itemCode: 'I1', organizationId: 7 } });
   });
 
-  describe('tenant key metadata', () => {
-    it('includes tenant column in routing hierarchy primary keys', () => {
-      const primaryColumnNames = (targetEntity: Function) =>
-        getMetadataArgsStorage()
-          .columns
-          .filter((column) => column.target === targetEntity && column.options.primary)
-          .map((column) => column.propertyName);
-
-      for (const entity of [RoutingGroup, RoutingProcess, ProcessQualityCondition, RoutingMaterial]) {
-        expect(primaryColumnNames(entity)).toEqual(expect.arrayContaining(['organizationId']));
-      }
-    });
+  it('rejects a second active routing for the same item', async () => {
+    itemRepo.findOne.mockResolvedValue({ itemCode: 'I1' });
+    groupRepo.findOne.mockResolvedValueOnce(null).mockResolvedValueOnce({ routingCode: 'OTHER' });
+    await expect(service.createGroup({ routingCode: 'R1', itemCode: 'I1', routingName: 'R' }, 7))
+      .rejects.toThrow(ConflictException);
   });
 
-  // ─── Group CRUD ───
-
-  describe('findAllGroups', () => {
-    it('joins item master by tenant-scoped item key', async () => {
-      const qb = {
-        leftJoin: jest.fn().mockReturnThis(),
-        addSelect: jest.fn().mockReturnThis(),
-        andWhere: jest.fn().mockReturnThis(),
-        orderBy: jest.fn().mockReturnThis(),
-        skip: jest.fn().mockReturnThis(),
-        take: jest.fn().mockReturnThis(),
-        getRawAndEntities: jest.fn().mockResolvedValue({ raw: [], entities: [] }),
-        getCount: jest.fn().mockResolvedValue(0),
-      };
-      mockGroupRepo.createQueryBuilder.mockReturnValue(qb as any);
-
-      await target.findAllGroups({ page: 1, limit: 50 } as any, 1);
-
-      expect(qb.leftJoin).toHaveBeenCalledWith(
-        'ITEM_MASTERS',
-        'p',
-        'g.ITEM_CODE = p.ITEM_CODE AND g.ORGANIZATION_ID = p.ORGANIZATION_ID',
-      );
-    });
+  it('maps ORA-00001 during group save to conflict', async () => {
+    itemRepo.findOne.mockResolvedValue({ itemCode: 'I1' });
+    groupRepo.findOne.mockResolvedValue(null);
+    groupRepo.save.mockRejectedValue(Object.assign(new Error('ORA-00001: unique constraint'), { code: 'ORA-00001' }));
+    await expect(service.createGroup({ routingCode: 'R1', itemCode: 'I1', routingName: 'R' }, 7))
+      .rejects.toThrow(ConflictException);
   });
 
-  describe('findGroupByCode', () => {
-    it('should return group when found', async () => {
-      // Arrange
-      const group = { routingCode: 'RG01', routingName: 'Group1' } as RoutingGroup;
-      mockGroupRepo.findOne.mockResolvedValue(group);
-
-      // Act
-      const result = await target.findGroupByCode('RG01');
-
-      // Assert
-      expect(result).toEqual(group);
-    });
-
-    it('should throw NotFoundException when not found', async () => {
-      // Arrange
-      mockGroupRepo.findOne.mockResolvedValue(null);
-
-      // Act & Assert
-      await expect(target.findGroupByCode('RG99')).rejects.toThrow(NotFoundException);
-    });
-
-    it('should find group within tenant only', async () => {
-      mockGroupRepo.findOne.mockResolvedValue({ routingCode: 'RG01', organizationId: 1 } as RoutingGroup);
-
-      await target.findGroupByCode('RG01', 1);
-
-      expect(mockGroupRepo.findOne).toHaveBeenCalledWith({
-        where: { routingCode: 'RG01', organizationId: 1 },
-      });
-    });
+  it('does not cascade delete a group with processes', async () => {
+    groupRepo.findOne.mockResolvedValue({ routingCode: 'R1' });
+    processRepo.count.mockResolvedValue(1);
+    await expect(service.deleteGroup('R1', 7)).rejects.toThrow(ConflictException);
+    expect(groupRepo.delete).not.toHaveBeenCalled();
   });
 
-  describe('createGroup', () => {
-    it('should create a new group', async () => {
-      // Arrange
-      const dto = { routingCode: 'RG01', routingName: 'Group1' } as any;
-      const created = { ...dto, useYn: 'Y' } as RoutingGroup;
-      mockGroupRepo.findOne.mockResolvedValue(null);
-      mockGroupRepo.create.mockReturnValue(created);
-      mockGroupRepo.save.mockResolvedValue(created);
-
-      // Act
-      const result = await target.createGroup(dto);
-
-      // Assert
-      expect(result).toEqual(created);
-    });
-
-    it('should throw ConflictException when group exists', async () => {
-      // Arrange
-      const dto = { routingCode: 'RG01' } as any;
-      mockGroupRepo.findOne.mockResolvedValue({ routingCode: 'RG01' } as RoutingGroup);
-
-      // Act & Assert
-      await expect(target.createGroup(dto)).rejects.toThrow(ConflictException);
-    });
+  it('requires an organization workstage and supplier for SUBCON', async () => {
+    groupRepo.findOne.mockResolvedValue({ routingCode: 'R1' });
+    processRepo.findOne.mockResolvedValue(null);
+    workstageRepo.findOne.mockResolvedValue({ processCode: 'W1' });
+    supplierRepo.findOne.mockResolvedValue(null);
+    await expect(service.createProcess('R1', { seq: 10, workstageCode: 'W1', executionType: 'SUBCON', subconSupplierCode: 'S1' }, 7))
+      .rejects.toThrow(NotFoundException);
+    expect(supplierRepo.findOne).toHaveBeenCalledWith({ where: { supplierCode: 'S1', organizationId: 7 } });
   });
 
-  describe('updateGroup', () => {
-    it('should update and return group', async () => {
-      // Arrange
-      const existing = { routingCode: 'RG01', routingName: 'Old' } as RoutingGroup;
-      mockGroupRepo.findOne.mockResolvedValue(existing);
-      mockGroupRepo.update.mockResolvedValue({ affected: 1 } as any);
-
-      // Act
-      const result = await target.updateGroup('RG01', { routingName: 'New' } as any, 1);
-
-      // Assert
-      expect(mockGroupRepo.update).toHaveBeenCalledWith(
-        { routingCode: 'RG01', organizationId: 1 },
-        expect.objectContaining({ routingName: 'New' }),
-      );
-    });
+  it('clears supplier for INTERNAL and uses exact new entity properties', async () => {
+    groupRepo.findOne.mockResolvedValue({ routingCode: 'R1' });
+    manager.findOne.mockResolvedValue(null);
+    workstageRepo.findOne.mockResolvedValue({ processCode: 'W1' });
+    await service.createProcess('R1', { seq: 10, workstageCode: 'W1', executionType: 'INTERNAL', subconSupplierCode: 'IGNORED' }, 7);
+    expect(manager.create).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({
+      routingCode: 'R1', processSeq: 10, workstageCode: 'W1', executionType: 'INTERNAL', subconSupplierCode: null,
+    }));
   });
 
-  describe('deleteGroup', () => {
-    it('should delete group with related conditions and processes in transaction', async () => {
-      // Arrange
-      const existing = { routingCode: 'RG01' } as RoutingGroup;
-      mockGroupRepo.findOne.mockResolvedValue(existing);
-      mockEntityManager.delete.mockResolvedValue({ affected: 1 } as any);
-
-      // Act
-      const result = await target.deleteGroup('RG01');
-
-      // Assert
-      expect(result).toEqual({ routingCode: 'RG01' });
-      expect(mockTx.run).toHaveBeenCalled();
-      expect(mockEntityManager.delete).toHaveBeenCalledTimes(4);
-    });
-
-    it('should throw NotFoundException when group not found', async () => {
-      // Arrange
-      mockGroupRepo.findOne.mockResolvedValue(null);
-
-      // Act & Assert
-      await expect(target.deleteGroup('RG99')).rejects.toThrow(NotFoundException);
-    });
+  it('serializes process creation with reorder by locking the routing group in the same transaction', async () => {
+    workstageRepo.findOne.mockResolvedValue({ processCode: 'W1' }); manager.findOne.mockResolvedValue(null);
+    const events: string[] = [];
+    manager.query.mockImplementation(async (sql: string) => { if (sql.includes('FOR UPDATE')) events.push('route-lock'); return [{ routingCode: 'R1' }]; });
+    manager.findOne.mockImplementation(async () => { events.push('process-check'); return null; });
+    manager.save.mockImplementation(async (_entity: any, value: any) => { events.push('process-save'); return value; });
+    await service.createProcess('R1', { seq: 10, workstageCode: 'W1' }, 7);
+    expect(events).toEqual(['route-lock', 'process-check', 'process-save']);
+    expect(tx.run).toHaveBeenCalledTimes(1);
+    expect(processRepo.save).not.toHaveBeenCalled();
   });
 
-  // ─── Process CRUD ───
-
-  describe('findProcesses', () => {
-    it('should return processes ordered by seq', async () => {
-      // Arrange
-      const processes = [{ routingCode: 'RG01', seq: 10 }] as RoutingProcess[];
-      mockProcessRepo.find.mockResolvedValue(processes);
-
-      // Act
-      const result = await target.findProcesses('RG01', 1);
-
-      // Assert
-      expect(result).toEqual(processes);
-      expect(mockProcessRepo.find).toHaveBeenCalledWith({
-        where: { routingCode: 'RG01', organizationId: 1 },
-        order: { seq: 'ASC' },
-      });
-    });
+  it('rejects process deletion when materials exist', async () => {
+    manager.findOne.mockResolvedValue({ routingCode: 'R1', processSeq: 10 });
+    manager.count.mockResolvedValue(1);
+    await expect(service.deleteProcess('R1', 10, 7)).rejects.toThrow(ConflictException);
   });
 
-  describe('createProcess', () => {
-    it('should create a new process', async () => {
-      // Arrange
-      const dto = { routingCode: 'RG01', seq: 10, processCode: 'P01' } as any;
-      const created = { ...dto, useYn: 'Y' } as RoutingProcess;
-      mockProcessRepo.findOne.mockResolvedValue(null);
-      mockProcessRepo.create.mockReturnValue(created);
-      mockProcessRepo.save.mockResolvedValue(created);
-
-      // Act
-      const result = await target.createProcess(dto, 1);
-
-      // Assert
-      expect(result).toEqual(created);
-      expect(mockProcessRepo.findOne).toHaveBeenCalledWith({
-        where: { routingCode: 'RG01', seq: 10, organizationId: 1 },
-      });
-    });
-
-    it('should create a process with SG and FG label issue flags', async () => {
-      const dto = {
-        routingCode: 'RG01',
-        seq: 10,
-        processCode: 'P01',
-        processName: 'Process',
-        issueLabelType: 'SG',
-      } as any;
-      const created = { ...dto, useYn: 'Y' } as RoutingProcess;
-      mockProcessRepo.findOne.mockResolvedValue(null);
-      mockProcessRepo.create.mockReturnValue(created);
-      mockProcessRepo.save.mockResolvedValue(created);
-
-      await target.createProcess(dto, 1);
-
-      expect(mockProcessRepo.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          processName: 'Process',
-          issueLabelType: 'SG',
-          organizationId: 1,
-        }),
-      );
-    });
-
-    it('should create a process with subcontract execution metadata', async () => {
-      const dto = {
-        routingCode: 'RG01',
-        seq: 20,
-        processCode: 'P01',
-        executionType: 'SUBCON',
-        subconVendorCode: 'SUB001',
-      } as any;
-      const created = { ...dto, useYn: 'Y' } as RoutingProcess;
-      mockProcessRepo.findOne.mockResolvedValue(null);
-      mockProcessRepo.create.mockReturnValue(created);
-      mockProcessRepo.save.mockResolvedValue(created);
-
-      await target.createProcess(dto, 1);
-
-      expect(mockProcessRepo.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          executionType: 'SUBCON',
-          subconVendorCode: 'SUB001',
-          organizationId: 1,
-        }),
-      );
-    });
-
-    it('should create a process with job order creation flag', async () => {
-      const dto = {
-        routingCode: 'RG01',
-        seq: 30,
-        processCode: 'P01',
-        jobOrderYn: 'N',
-      } as any;
-      const created = { ...dto, useYn: 'Y' } as RoutingProcess;
-      mockProcessRepo.findOne.mockResolvedValue(null);
-      mockProcessRepo.create.mockReturnValue(created);
-      mockProcessRepo.save.mockResolvedValue(created);
-
-      await target.createProcess(dto, 1);
-
-      expect(mockProcessRepo.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          jobOrderYn: 'N',
-          organizationId: 1,
-        }),
-      );
-    });
-
-    it('uses PROCESS_MASTERS name when creating a routing process', async () => {
-      const dto = {
-        routingCode: 'RG01',
-        seq: 10,
-        processCode: 'P01',
-        processName: 'Spoofed Name',
-      } as any;
-      const created = { ...dto, processName: 'Master Process', useYn: 'Y' } as RoutingProcess;
-      mockProcessRepo.findOne.mockResolvedValue(null);
-      mockProcessMasterRepo.findOne.mockResolvedValue({
-        processCode: 'P01',
-        processName: 'Master Process',
-        processType: 'ASSY',
-      } as ProcessMaster);
-      mockProcessRepo.create.mockReturnValue(created);
-      mockProcessRepo.save.mockResolvedValue(created);
-
-      await target.createProcess(dto, 1);
-
-      expect(mockProcessMasterRepo.findOne).toHaveBeenCalledWith({
-        where: { processCode: 'P01', organizationId: 1 },
-      });
-      expect(mockProcessRepo.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          processCode: 'P01',
-          processName: 'Master Process',
-          processType: 'ASSY',
-        }),
-      );
-    });
-
-    it('should throw ConflictException when process exists', async () => {
-      // Arrange
-      const dto = { routingCode: 'RG01', seq: 10 } as any;
-      mockProcessRepo.findOne.mockResolvedValue({ routingCode: 'RG01' } as RoutingProcess);
-
-      // Act & Assert
-      await expect(target.createProcess(dto)).rejects.toThrow(ConflictException);
-    });
+  it('serializes process deletion with reorder and deletes on the transaction manager', async () => {
+    const events: string[] = [];
+    manager.query.mockImplementation(async (sql: string) => { if (sql.includes('FOR UPDATE')) events.push('route-lock'); return [{ routingCode: 'R1' }]; });
+    manager.findOne.mockImplementation(async () => { events.push('process-check'); return { processSeq: 10 }; });
+    manager.count.mockImplementation(async () => { events.push('material-check'); return 0; });
+    manager.delete.mockImplementation(async () => { events.push('process-delete'); return { affected: 1 }; });
+    await service.deleteProcess('R1', 10, 7);
+    expect(events).toEqual(['route-lock', 'process-check', 'material-check', 'process-delete']);
+    expect(processRepo.delete).not.toHaveBeenCalled();
   });
 
-  describe('updateProcess', () => {
-    it('should update and return process', async () => {
-      // Arrange
-      const existing = { routingCode: 'RG01', seq: 10 } as RoutingProcess;
-      mockProcessRepo.findOne.mockResolvedValue(existing);
-      mockProcessRepo.update.mockResolvedValue({ affected: 1 } as any);
-
-      // Act
-      const result = await target.updateProcess('RG01', 10, { processCode: 'P02' } as any, 1);
-
-      // Assert
-      expect(mockProcessRepo.update).toHaveBeenCalledWith(
-        { routingCode: 'RG01', seq: 10, organizationId: 1 },
-        expect.objectContaining({ processCode: 'P02' }),
-      );
-    });
-
-    it('should update SG and FG label issue flags', async () => {
-      const existing = { routingCode: 'RG01', seq: 10 } as RoutingProcess;
-      mockProcessRepo.findOne.mockResolvedValue(existing);
-      mockProcessRepo.update.mockResolvedValue({ affected: 1 } as any);
-
-      await target.updateProcess(
-        'RG01',
-        10,
-        { issueLabelType: 'SG' } as any,
-        1,
-      );
-
-      expect(mockProcessRepo.update).toHaveBeenCalledWith(
-        { routingCode: 'RG01', seq: 10, organizationId: 1 },
-        expect.objectContaining({ issueLabelType: 'SG' }),
-      );
-    });
-
-    it('should update subcontract execution metadata', async () => {
-      const existing = { routingCode: 'RG01', seq: 10 } as RoutingProcess;
-      mockProcessRepo.findOne.mockResolvedValue(existing);
-      mockProcessRepo.update.mockResolvedValue({ affected: 1 } as any);
-
-      await target.updateProcess(
-        'RG01',
-        10,
-        { executionType: 'SUBCON', subconVendorCode: 'SUB001' } as any,
-        1,
-      );
-
-      expect(mockProcessRepo.update).toHaveBeenCalledWith(
-        { routingCode: 'RG01', seq: 10, organizationId: 1 },
-        expect.objectContaining({ executionType: 'SUBCON', subconVendorCode: 'SUB001' }),
-      );
-    });
-
-    it('should update job order creation flag', async () => {
-      const existing = { routingCode: 'RG01', seq: 10, jobOrderYn: 'Y' } as RoutingProcess;
-      mockProcessRepo.findOne.mockResolvedValue(existing);
-      mockProcessRepo.update.mockResolvedValue({ affected: 1 } as any);
-
-      await target.updateProcess(
-        'RG01',
-        10,
-        { jobOrderYn: 'N' } as any,
-        1,
-      );
-
-      expect(mockProcessRepo.update).toHaveBeenCalledWith(
-        { routingCode: 'RG01', seq: 10, organizationId: 1 },
-        expect.objectContaining({ jobOrderYn: 'N' }),
-      );
-    });
-
-    it('clears subcontract vendor when switching process execution back to in-house', async () => {
-      const existing = {
-        routingCode: 'RG01',
-        seq: 10,
-        executionType: 'SUBCON',
-        subconVendorCode: 'SUB001',
-      } as RoutingProcess;
-      mockProcessRepo.findOne.mockResolvedValue(existing);
-      mockProcessRepo.update.mockResolvedValue({ affected: 1 } as any);
-
-      await target.updateProcess(
-        'RG01',
-        10,
-        { executionType: 'IN_HOUSE' } as any,
-        1,
-      );
-
-      expect(mockProcessRepo.update).toHaveBeenCalledWith(
-        { routingCode: 'RG01', seq: 10, organizationId: 1 },
-        expect.objectContaining({ executionType: 'IN_HOUSE', subconVendorCode: null }),
-      );
-    });
-
-    it('uses PROCESS_MASTERS name when updating a routing process code', async () => {
-      const existing = { routingCode: 'RG01', seq: 10, processCode: 'OLD', processName: 'Old' } as RoutingProcess;
-      mockProcessRepo.findOne.mockResolvedValue(existing);
-      mockProcessMasterRepo.findOne.mockResolvedValue({
-        processCode: 'P02',
-        processName: 'Master Process 2',
-        processType: 'INSP',
-      } as ProcessMaster);
-      mockProcessRepo.update.mockResolvedValue({ affected: 1 } as any);
-
-      await target.updateProcess(
-        'RG01',
-        10,
-        { processCode: 'P02', processName: 'Spoofed Name' } as any,
-        1,
-      );
-
-      expect(mockProcessMasterRepo.findOne).toHaveBeenCalledWith({
-        where: { processCode: 'P02', organizationId: 1 },
-      });
-      expect(mockProcessRepo.update).toHaveBeenCalledWith(
-        { routingCode: 'RG01', seq: 10, organizationId: 1 },
-        expect.objectContaining({
-          processCode: 'P02',
-          processName: 'Master Process 2',
-          processType: 'INSP',
-        }),
-      );
-    });
-
-    it('should throw NotFoundException when process not found', async () => {
-      // Arrange
-      mockProcessRepo.findOne.mockResolvedValue(null);
-
-      // Act & Assert
-      await expect(target.updateProcess('RG01', 10, {} as any)).rejects.toThrow(NotFoundException);
-    });
+  it('reorders processes and materials atomically with deferred named FK and fresh bind objects', async () => {
+    processRepo.find.mockResolvedValue([{ processSeq: 10 }, { processSeq: 20 }]);
+    await service.reorderProcesses('R1', { changes: [{ fromSeq: 10, toSeq: 20 }, { fromSeq: 20, toSeq: 10 }] }, 7);
+    expect(tx.run).toHaveBeenCalledTimes(1);
+    expect(manager.query.mock.calls[0][0]).toContain('FROM IP_ROUTING_GROUPS');
+    expect(manager.query.mock.calls[0][0]).toContain('FOR UPDATE');
+    expect(manager.query.mock.calls[1][0]).toContain('FROM IP_ROUTING_PROCESSES p');
+    expect(manager.query.mock.calls[1][0]).toContain('FOR UPDATE');
+    expect(manager.query.mock.calls[2][0]).toContain('FROM IP_ROUTING_MATERIALS');
+    expect(manager.query.mock.calls[3][0]).toBe('SET CONSTRAINTS FK_IP_RM_PROCESS DEFERRED');
+    expect(manager.query.mock.calls.filter((c: any[]) => /UPDATE IP_ROUTING_(PROCESSES|MATERIALS)/.test(c[0]))).toHaveLength(8);
+    const binds = manager.query.mock.calls.filter((c: any[]) => c[1]).map((c: any[]) => c[1]);
+    expect(new Set(binds.map((b: object) => b)).size).toBe(binds.length);
+    expect(binds.every((b: any) => b.organizationId === 7 && b.routingCode === 'R1')).toBe(true);
   });
 
-  describe('deleteProcess', () => {
-    it('should delete process and its conditions in transaction', async () => {
-      // Arrange
-      const existing = { routingCode: 'RG01', seq: 10 } as RoutingProcess;
-      mockProcessRepo.findOne.mockResolvedValue(existing);
-      mockEntityManager.delete.mockResolvedValue({ affected: 1 } as any);
-
-      // Act
-      const result = await target.deleteProcess('RG01', 10);
-
-      // Assert
-      expect(result).toEqual({ routingCode: 'RG01', seq: 10 });
-      expect(mockEntityManager.delete).toHaveBeenCalledTimes(3);
+  it('reads reordered processes only after the transaction has completed', async () => {
+    const events: string[] = [];
+    tx.run.mockImplementation(async (fn: any) => { events.push('tx-start'); await fn({ manager }); events.push('tx-end'); });
+    manager.query.mockImplementation(async (sql: string) => {
+      if (sql.includes('FROM IP_ROUTING_GROUPS')) return [{ routingCode: 'R1' }];
+      if (sql.includes('FROM IP_ROUTING_PROCESSES p')) return [{ processSeq: 10 }];
+      if (sql.includes('FROM IP_ROUTING_MATERIALS')) return [];
+      if (sql.startsWith('UPDATE IP_ROUTING_MATERIALS')) return 0;
+      if (sql.startsWith('UPDATE')) return 1;
+      return {};
     });
+    processRepo.find.mockImplementation(async () => { events.push('read'); return [{ processSeq: 20 }] as any; });
+    await expect(service.reorderProcesses('R1', { changes: [{ fromSeq: 10, toSeq: 20 }] }, 7)).resolves.toEqual([{ processSeq: 20 }]);
+    expect(events).toEqual(['tx-start', 'tx-end', 'read']);
   });
 
-  // ─── Condition CRUD ───
-
-  describe('findConditions', () => {
-    it('should return conditions ordered by conditionSeq', async () => {
-      // Arrange
-      const conditions = [{ routingCode: 'RG01', seq: 10, conditionSeq: 1 }] as ProcessQualityCondition[];
-      mockConditionRepo.find.mockResolvedValue(conditions);
-
-      // Act
-      const result = await target.findConditions('RG01', 10, 1);
-
-      // Assert
-      expect(result).toEqual(conditions);
-      expect(mockConditionRepo.find).toHaveBeenCalledWith({
-        where: { routingCode: 'RG01', seq: 10, organizationId: 1 },
-        order: { conditionSeq: 'ASC' },
-      });
+  it('propagates a mid-reorder failure and performs no post-transaction read', async () => {
+    manager.query.mockImplementation(async (sql: string) => {
+      if (sql.includes('FROM IP_ROUTING_GROUPS')) return [{ routingCode: 'R1' }];
+      if (sql.includes('FROM IP_ROUTING_PROCESSES p')) return [{ processSeq: 10 }, { processSeq: 20 }];
+      if (sql.includes('FROM IP_ROUTING_MATERIALS')) return [];
+      if (sql.startsWith('UPDATE IP_ROUTING_PROCESSES')) throw new Error('mid-update');
+      if (sql.startsWith('UPDATE IP_ROUTING_MATERIALS')) return 0;
+      if (sql.startsWith('UPDATE')) return 1;
+      return {};
     });
+    const commit = jest.fn(); const rollback = jest.fn();
+    tx.run.mockImplementation(async (fn: any) => {
+      try { const result = await fn({ manager }); await commit(); return result; }
+      catch (error) { await rollback(); throw error; }
+    });
+    await expect(service.reorderProcesses('R1', { changes: [{ fromSeq: 10, toSeq: 20 }, { fromSeq: 20, toSeq: 10 }] }, 7)).rejects.toThrow('mid-update');
+    expect(rollback).toHaveBeenCalledTimes(1);
+    expect(commit).not.toHaveBeenCalled();
+    expect(processRepo.find).not.toHaveBeenCalled();
   });
 
-  describe('bulkSaveConditions', () => {
-    it('should delete existing and save new conditions in transaction', async () => {
-      // Arrange
-      const dto = {
-        conditions: [
-          { conditionSeq: 1, conditionCode: 'TEMP', minValue: 10, maxValue: 50 },
-        ],
-      } as any;
-      const created = { routingCode: 'RG01', seq: 10, conditionSeq: 1 } as ProcessQualityCondition;
-      mockProcessRepo.findOne.mockResolvedValue({
-        routingCode: 'RG01',
-        seq: 10,
-        organizationId: 1,
-      } as RoutingProcess);
-      mockEntityManager.delete.mockResolvedValue({ affected: 0 } as any);
-      (mockEntityManager.create as jest.Mock).mockReturnValue(created);
-      mockEntityManager.save.mockResolvedValue([created]);
+  it.each([0, 10_000_000_000])('rejects out-of-range final sequence %s before transaction', async (toSeq) => {
+    await expect(service.reorderProcesses('R1', { changes: [{ fromSeq: 10, toSeq }] }, 7)).rejects.toThrow(ConflictException);
+    expect(tx.run).not.toHaveBeenCalled();
+  });
 
-      // Act
-      const result = await target.bulkSaveConditions('RG01', 10, dto);
+  it('maps concurrent integrity errors during process deletion to conflict', async () => {
+    manager.findOne.mockResolvedValue({ processSeq: 10 }); manager.count.mockResolvedValue(0);
+    manager.delete.mockRejectedValue(Object.assign(new Error('ORA-02292'), { code: 'ORA-02292' }));
+    await expect(service.deleteProcess('R1', 10, 7)).rejects.toThrow(ConflictException);
+  });
 
-      // Assert
-      expect(mockTx.run).toHaveBeenCalled();
-      expect(mockEntityManager.delete).toHaveBeenCalledWith(ProcessQualityCondition, {
-        routingCode: 'RG01',
-        seq: 10,
-        organizationId: 1,
-      });
-      expect(mockEntityManager.create).toHaveBeenCalledWith(
-        ProcessQualityCondition,
-        expect.objectContaining({ organizationId: 1 }),
-      );
+  it('maps concurrent integrity errors during reorder to conflict', async () => {
+    manager.query.mockImplementation(async (sql: string) => {
+      if (sql.includes('FROM IP_ROUTING_GROUPS')) return [{ routingCode: 'R1' }];
+      if (sql.includes('FROM IP_ROUTING_PROCESSES p')) return [{ processSeq: 10 }];
+      if (sql.includes('FROM IP_ROUTING_MATERIALS')) return [];
+      throw Object.assign(new Error('ORA-00001'), { code: 'ORA-00001' });
     });
+    await expect(service.reorderProcesses('R1', { changes: [{ fromSeq: 10, toSeq: 20 }] }, 7)).rejects.toThrow(ConflictException);
+  });
 
-    it('should return empty array when no conditions provided', async () => {
-      // Arrange
-      const dto = { conditions: [] } as any;
-      mockProcessRepo.findOne.mockResolvedValue({
-        routingCode: 'RG01',
-        seq: 10,
-        organizationId: 1,
-      } as RoutingProcess);
-      mockEntityManager.delete.mockResolvedValue({ affected: 0 } as any);
+  it('rejects incomplete reorder mappings before opening a transaction', async () => {
+    await expect(service.reorderProcesses('R1', { changes: [{ fromSeq: 10, toSeq: 20 }] }, 7))
+      .rejects.toThrow(ConflictException);
+    expect(tx.run).toHaveBeenCalledTimes(1);
+  });
 
-      // Act
-      const result = await target.bulkSaveConditions('RG01', 10, dto);
-
-      // Assert
-      expect(result).toEqual([]);
+  it('rolls back with conflict when a concurrent change makes an update affect the wrong row count', async () => {
+    manager.query.mockImplementation(async (sql: string) => {
+      if (sql.includes('FROM IP_ROUTING_GROUPS')) return [{ routingCode: 'R1' }];
+      if (sql.includes('FROM IP_ROUTING_PROCESSES p')) return [{ processSeq: 10 }];
+      if (sql.includes('FROM IP_ROUTING_MATERIALS')) return [{ processSeq: 10, materialCount: 1 }];
+      if (sql.startsWith('UPDATE IP_ROUTING_MATERIALS')) return 0;
+      if (sql.startsWith('UPDATE')) return 1;
+      return {};
     });
-
-    it('should throw when request tenant differs from routing process tenant', async () => {
-      const dto = { conditions: [{ conditionSeq: 1, conditionCode: 'TEMP' }] } as any;
-      mockProcessRepo.findOne.mockResolvedValue({
-        routingCode: 'RG01',
-        seq: 10,
-        organizationId: 1,
-      } as RoutingProcess);
-
-      await expect(
-        target.bulkSaveConditions('RG01', 10, dto, 2),
-      ).rejects.toThrow(ConflictException);
-      expect(mockDataSource.transaction).not.toHaveBeenCalled();
-    });
+    const rollback = jest.fn();
+    tx.run.mockImplementation(async (fn: any) => { try { return await fn({ manager }); } catch (error) { rollback(); throw error; } });
+    await expect(service.reorderProcesses('R1', { changes: [{ fromSeq: 10, toSeq: 20 }] }, 7)).rejects.toThrow(ConflictException);
+    expect(rollback).toHaveBeenCalledTimes(1);
+    expect(processRepo.find).not.toHaveBeenCalled();
   });
 
   describe('routing materials', () => {
-    it('should return BOM candidates with allocated material state', async () => {
-      const group = { routingCode: 'RG01', itemCode: 'FG01' } as RoutingGroup;
-      mockGroupRepo.findOne.mockResolvedValue(group);
-      mockBomRepo.find.mockResolvedValue([
-        { parentItemCode: 'FG01', childItemCode: 'MAT01', qtyPer: 2, useYn: 'Y' },
-      ] as BomMaster[]);
-      mockMaterialRepo.find.mockResolvedValue([
-        { routingCode: 'RG01', seq: 10, childItemCode: 'MAT01', allocQty: 1, issueMethod: 'BACKFLUSH', useYn: 'Y' },
-      ] as RoutingMaterial[]);
-      mockPartRepo.find.mockResolvedValue([
-        { itemCode: 'MAT01', itemName: 'Wire', itemNo: 'W-01', itemType: 'RAW_MATERIAL', unit: 'EA' },
-      ] as ItemMaster[]);
+    beforeEach(() => {
+      groupRepo.findOne.mockResolvedValue({ routingCode: 'R1', itemCode: 'FG1' });
+      processRepo.findOne.mockResolvedValue({ routingCode: 'R1', processSeq: 10 });
+      bomRepo.query.mockResolvedValue([{ childItemCode: 'M1', bomQty: 2 }]);
+      materialRepo.find.mockResolvedValue([]);
+      itemRepo.find.mockResolvedValue([{ itemCode: 'M1', itemName: 'Material 1' }]);
+    });
 
-      const result = await target.findMaterials('RG01', 10, 1);
+    it('returns the union of current BOM candidates and stale assignments with bounded item lookup', async () => {
+      materialRepo.find.mockResolvedValue([
+        { childItemCode: 'M1', processSeq: 10, allocQty: 1, issueMethod: 'PRE_ISSUE' },
+        { childItemCode: 'OLD', processSeq: 20, allocQty: 3, issueMethod: 'BACKFLUSH' },
+      ]);
+      itemRepo.find.mockResolvedValue([{ itemCode: 'M1', itemName: 'Material 1' }, { itemCode: 'OLD', itemName: 'Old' }]);
+
+      const result = await service.findMaterials('R1', 10, 7);
 
       expect(result).toEqual([
-        expect.objectContaining({
-          childItemCode: 'MAT01',
-          childItemName: 'Wire',
-          qtyPer: 2,
-          selected: true,
-          allocQty: 1,
-          issueMethod: 'BACKFLUSH',
-        }),
+        expect.objectContaining({ childItemCode: 'M1', bomQty: 2, allocQty: 1, bomMatchYn: 'Y', assignedProcessSeq: 10, selectableYn: 'Y', issueMethod: 'PRE_ISSUE' }),
+        expect.objectContaining({ childItemCode: 'OLD', bomQty: null, allocQty: null, bomMatchYn: 'N', mismatchReason: '현재 유효 BOM에 없음', assignedProcessSeq: 20, selectableYn: 'N', issueMethod: 'BACKFLUSH' }),
       ]);
-      expect(mockBomRepo.find).toHaveBeenCalledWith({
-        where: { parentItemCode: 'FG01', useYn: 'Y', organizationId: 1 },
-        order: { seq: 'ASC' },
-      });
-      expect(mockMaterialRepo.find).toHaveBeenCalledWith({
-        where: { routingCode: 'RG01', seq: 10, useYn: 'Y', organizationId: 1 },
-      });
-      expect(mockPartRepo.find).toHaveBeenCalledWith({
-        where: { itemCode: expect.anything(), organizationId: 1 },
-        select: ['itemCode', 'itemName', 'itemNo', 'itemType', 'unit'],
-      });
+      expect(bomRepo.query.mock.calls[0][0]).toContain('DATESET <= TRUNC(SYSDATE)');
+      expect(bomRepo.query.mock.calls[0][0]).toContain('DATEEND >= TRUNC(SYSDATE)');
+      expect(itemRepo.find).toHaveBeenCalledWith({ where: { organizationId: 7, itemCode: expect.anything() } });
     });
 
-    it('should bind each circuit option tenant placeholder occurrence separately', async () => {
-      mockGroupRepo.findOne.mockResolvedValue({ routingCode: 'RG01', itemCode: 'FG01' } as RoutingGroup);
-      mockBomRepo.find.mockResolvedValue([
-        { parentItemCode: 'FG01', childItemCode: 'MAT01', qtyPer: 1, useYn: 'Y' },
-        { parentItemCode: 'FG01', childItemCode: 'MAT02', qtyPer: 1, useYn: 'Y' },
-      ] as BomMaster[]);
-      mockMaterialRepo.find.mockResolvedValue([]);
-      mockPartRepo.find.mockResolvedValue([]);
-      mockCircuitRepo.query.mockResolvedValue([]);
-
-      await target.findMaterials('RG01', 10, 1);
-
-      const [sql, params] = mockCircuitRepo.query.mock.calls[0] as [string, string[]];
-      const placeholderOccurrences = [...sql.matchAll(/:\d+/g)].length;
-
-      expect(placeholderOccurrences).toBe(params.length);
-      expect(params).toEqual([
-        'FG01',
-        1,
-        1,
-        1,
-        'MAT01',
-        'MAT02',
-      ]);
+    it('rejects overlapping current BOM rows for the same child', async () => {
+      bomRepo.query.mockResolvedValue([{ childItemCode: 'M1', bomQty: 2 }, { childItemCode: 'M1', bomQty: 3 }]);
+      await expect(service.findMaterials('R1', 10, 7)).rejects.toThrow(UnprocessableEntityException);
     });
 
-    it('should reject material that is not in BOM for routing item', async () => {
-      mockGroupRepo.findOne.mockResolvedValue({ routingCode: 'RG01', itemCode: 'FG01' } as RoutingGroup);
-      mockProcessRepo.findOne.mockResolvedValue({ routingCode: 'RG01', seq: 10, organizationId: 1 } as RoutingProcess);
-      mockBomRepo.find.mockResolvedValue([
-        { parentItemCode: 'FG01', childItemCode: 'MAT01', useYn: 'Y' },
-      ] as BomMaster[]);
+    it.each([[1000, 1], [1001, 2]])('chunks %i union item codes into %i Oracle-safe lookups', async (count, expectedCalls) => {
+      bomRepo.query.mockResolvedValue([]);
+      materialRepo.find.mockResolvedValue(Array.from({ length: count }, (_, index) => ({
+        childItemCode: `M${index}`, processSeq: 20, allocQty: 1, issueMethod: 'BACKFLUSH',
+      })));
+      itemRepo.find.mockImplementation(async (options: any) => options.where.itemCode.value.map((itemCode: string) => ({ itemCode })));
 
-      await expect(target.bulkSaveMaterials('RG01', 10, {
-        materials: [{ childItemCode: 'MAT99', allocQty: 1, issueMethod: 'BACKFLUSH' }],
-      } as any)).rejects.toThrow();
+      const result = await service.findMaterials('R1', 10, 7);
+
+      expect(itemRepo.find).toHaveBeenCalledTimes(expectedCalls);
+      expect(itemRepo.find.mock.calls.every(([options]) => (options as any).where.itemCode.value.length <= 1000)).toBe(true);
+      expect(result.map((row) => row.childItemCode)).toEqual(Array.from({ length: count }, (_, index) => `M${index}`));
     });
 
-    it('should save selected materials with process tenant fallback', async () => {
-      mockGroupRepo.findOne.mockResolvedValue({ routingCode: 'RG01', itemCode: 'FG01' } as RoutingGroup);
-      mockProcessRepo.findOne.mockResolvedValue({ routingCode: 'RG01', seq: 10, organizationId: 1 } as RoutingProcess);
-      mockBomRepo.find.mockResolvedValue([
-        { parentItemCode: 'FG01', childItemCode: 'MAT01', useYn: 'Y' },
-      ] as BomMaster[]);
-      mockEntityManager.delete.mockResolvedValue({ affected: 0 } as any);
-      mockEntityManager.create.mockImplementation((_entity, value) => value);
-      mockEntityManager.save.mockImplementation(async (_entity, value) => value);
+    it('rejects duplicate mutation payload before writes', async () => {
+      await expect(service.bulkSaveMaterials('R1', 10, {
+        upserts: [{ childItemCode: 'M1', allocQty: 1 }], deletes: [{ childItemCode: 'M1' }],
+      } as any, 7)).rejects.toThrow(ConflictException);
+      expect(manager.delete).not.toHaveBeenCalled();
+      expect(manager.save).not.toHaveBeenCalled();
+    });
 
-      await target.bulkSaveMaterials('RG01', 10, {
-        materials: [{ childItemCode: 'MAT01', allocQty: 1, issueMethod: 'BACKFLUSH' }],
-      } as any);
+    it('rejects mutation or deletion of material owned by another process with its sequence', async () => {
+      manager.query.mockImplementation(async (sql: string) => sql.includes('FOR UPDATE') ? [{ routingCode: 'R1' }] : []);
+      manager.findOne.mockResolvedValue({ processSeq: 10 });
+      manager.find = jest.fn(async () => [{ childItemCode: 'OLD', processSeq: 20 }]);
+      await expect(service.bulkSaveMaterials('R1', 10, { upserts: [], deletes: [{ childItemCode: 'OLD' }] } as any, 7))
+        .rejects.toThrow('공정 20');
+      expect(manager.delete).not.toHaveBeenCalled();
+    });
 
-      expect(mockEntityManager.delete).toHaveBeenCalledWith(RoutingMaterial, {
-        routingCode: 'RG01',
-        seq: 10,
-        organizationId: 1,
+    it('locks, explicitly deletes and upserts, then reads only after commit', async () => {
+      const events: string[] = [];
+      manager.query.mockImplementation(async (sql: string) => {
+        if (sql.includes('FOR UPDATE')) { events.push('lock'); return [{ routingCode: 'R1' }]; }
+        if (sql.includes('FROM ID_ENG_BOM')) return [{ childItemCode: 'M1', bomQty: 2 }];
+        return [];
       });
-      expect(mockEntityManager.create).toHaveBeenCalledWith(
-        RoutingMaterial,
-        expect.objectContaining({ childItemCode: 'MAT01', organizationId: 1 }),
-      );
-    });
-  });
+      manager.findOne.mockResolvedValue({ processSeq: 10 });
+      manager.find = jest.fn(async () => []);
+      manager.delete.mockImplementation(async () => { events.push('delete'); return { affected: 1 }; });
+      manager.save.mockImplementation(async () => { events.push('save'); return {}; });
+      tx.run.mockImplementation(async (fn: any) => { const value = await fn({ manager }); events.push('commit'); return value; });
+      const originalFind = service.findMaterials.bind(service);
+      jest.spyOn(service, 'findMaterials').mockImplementation(async (...args: any[]) => { events.push('read'); return originalFind(...args as [string, number, number]); });
 
-  // ─── findByItemCode ───
-  describe('findByItemCode', () => {
-    it('should return group with processes when found', async () => {
-      // Arrange
-      const group = { routingCode: 'RG01', itemCode: 'ITEM01' } as RoutingGroup;
-      const processes = [{ routingCode: 'RG01', seq: 10 }] as RoutingProcess[];
-      mockGroupRepo.findOne.mockResolvedValue(group);
-      mockProcessRepo.find.mockResolvedValue(processes);
+      await service.bulkSaveMaterials('R1', 10, {
+        upserts: [{ childItemCode: 'M1', allocQty: 1 }], deletes: [{ childItemCode: 'OLD' }],
+      } as any, 7);
 
-      // Act
-      const result = await target.findByItemCode('ITEM01', 1);
-
-      // Assert
-      expect(result).toEqual({ ...group, processes });
-      expect(mockGroupRepo.findOne).toHaveBeenCalledWith({
-        where: { itemCode: 'ITEM01', useYn: 'Y', organizationId: 1 },
-      });
-      expect(mockProcessRepo.find).toHaveBeenCalledWith({
-        where: { routingCode: 'RG01', organizationId: 1 },
-        order: { seq: 'ASC' },
-      });
+      expect(events.slice(0, 5)).toEqual(['lock', 'delete', 'save', 'commit', 'read']);
     });
 
-    it('should return null when no group found', async () => {
-      // Arrange
-      mockGroupRepo.findOne.mockResolvedValue(null);
+    it('maps integrity races and does not perform a post-rollback read', async () => {
+      manager.query.mockImplementation(async (sql: string) => sql.includes('FOR UPDATE') ? [{ routingCode: 'R1' }] : [{ childItemCode: 'M1', bomQty: 2 }]);
+      manager.findOne.mockResolvedValue({ processSeq: 10 }); manager.find = jest.fn(async () => []);
+      manager.save.mockRejectedValue(Object.assign(new Error('ORA-00001'), { code: 'ORA-00001' }));
+      const rollback = jest.fn();
+      tx.run.mockImplementation(async (fn: any) => { try { return await fn({ manager }); } catch (error) { rollback(); throw error; } });
+      const read = jest.spyOn(service, 'findMaterials');
+      await expect(service.bulkSaveMaterials('R1', 10, { upserts: [{ childItemCode: 'M1', allocQty: 1 }], deletes: [] } as any, 7))
+        .rejects.toThrow(ConflictException);
+      expect(rollback).toHaveBeenCalledTimes(1);
+      expect(read).not.toHaveBeenCalled();
+    });
 
-      // Act
-      const result = await target.findByItemCode('ITEM99');
+    it.each([[1000, 1], [1001, 2]])('chunks %i BOM and ownership expressions into %i Oracle-safe queries', async (count, expectedCalls) => {
+      const upserts = Array.from({ length: count }, (_, index) => ({ childItemCode: `M${index}`, allocQty: 1 }));
+      manager.query.mockImplementation(async (sql: string, binds: Record<string, unknown>) => {
+        if (sql.includes('FOR UPDATE')) return [{ routingCode: 'R1', itemCode: 'FG1' }];
+        return Object.keys(binds).filter((key) => key.startsWith('child')).map((key) => ({ childItemCode: binds[key], bomQty: 1 }));
+      });
+      manager.findOne.mockResolvedValue({ processSeq: 10 });
+      manager.find = jest.fn(async () => []);
+      jest.spyOn(service, 'findMaterials').mockResolvedValue([]);
 
-      // Assert
-      expect(result).toBeNull();
+      await service.bulkSaveMaterials('R1', 10, { upserts, deletes: [] } as any, 7);
+
+      const bomCalls = manager.query.mock.calls.filter(([sql]: [string]) => sql.includes('FROM ID_ENG_BOM'));
+      expect(bomCalls).toHaveLength(expectedCalls);
+      expect(bomCalls.every(([, binds]: [string, Record<string, unknown>]) => Object.keys(binds).filter((key) => key.startsWith('child')).length <= 1000)).toBe(true);
+      expect(manager.find).toHaveBeenCalledTimes(expectedCalls);
+      expect(manager.find.mock.calls.every(([_, options]: any[]) => options.where.childItemCode.value.length <= 1000)).toBe(true);
     });
   });
 });

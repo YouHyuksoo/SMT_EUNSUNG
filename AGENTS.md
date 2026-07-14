@@ -53,6 +53,18 @@ Define success criteria and verify them.
 - Use targeted verification first, then broader checks when the change surface warrants it.
 - Do not say "done" unless the requested behavior was checked, or clearly state what could not be verified.
 
+### 5. Incident Learning and Rule Promotion
+
+Do not leave reusable engineering lessons in chat or one feature document only.
+
+- After a defect, identify both the direct code cause and the process gap that allowed it to pass verification.
+- Classify the lesson as one-off, project-wide, or user-wide. Promote it only to the narrowest scope where it remains true.
+- Project-wide rules belong in `AGENTS.md`; detailed procedures and evidence belong in `docs/standards/`.
+- A promoted rule must include an executable enforcement mechanism: regression test, architecture test, static check, or mandatory verification command.
+- Update the relevant completion criteria so the same false-positive "done" claim cannot recur.
+- Do not edit generated user-wide instruction files directly. User-wide promotion must follow the instruction-manager workflow.
+- Follow `docs/standards/incident-to-standard-process.md` for the promotion decision and required artifacts.
+
 ## Project Identity
 
 은성전장 MES(`eunsung-mes`)는 은성전장 현장용 풀스택 MES 모노레포입니다.
@@ -84,7 +96,7 @@ pnpm dev:frontend                          # @eunsung/frontend  → http://local
 pnpm dev:backend                           # @eunsung/backend   → http://localhost:3003
 
 # 검증 (focused typecheck 우선)
-pnpm --filter @eunsung/frontend exec tsc --noEmit --pretty false
+pnpm --filter @eunsung/frontend typecheck  # registry 자동 생성·전수 검증 + tsc
 pnpm --filter @eunsung/backend  exec tsc --noEmit --pretty false
 pnpm --filter @eunsung/frontend lint
 pnpm --filter @eunsung/frontend test       # node --test 구조 테스트
@@ -143,6 +155,10 @@ oracle_db_scripts/          # 주석 처리된 PL/SQL 소스 스냅샷
 - focused test와 typecheck를 먼저 수행하고, 변경 범위가 넓을 때만 전체 검사로 확장한다.
 - `pnpm build`는 사용자가 요청했거나 dev 서버가 없고 전체 빌드 확인이 필요한 경우에만 실행한다.
 - 변경이 프론트·백엔드·shared 중 둘 이상에 걸치면 각 워크스페이스에서 개별 검증한다.
+- **Oracle DB 기반 화면은 컴파일·단위 테스트·Swagger·HTTP 200만으로 완료 처리하지 않는다.** Oracle 기대 건수 → 인증된 백엔드 API → 프론트 프록시 API → 렌더된 행 순서로 실제 데이터를 확인한다.
+- `@OrganizationId()`를 사용하는 컨트롤러는 `JwtAuthGuard` 적용과 Guard 메타데이터 테스트가 필수다. 서비스는 요청 body/query의 조직 ID를 신뢰하지 않는다.
+- TypeORM Oracle raw query는 named bind 객체를 여러 호출에 재사용하지 않는다. 호출마다 새 객체를 전달하고 드라이버가 첫 bind 객체를 변경하는 회귀 테스트를 둔다.
+- 상세 절차와 실패 진단 순서는 `docs/standards/oracle-db-backed-screen-verification.md`를 따른다.
 
 ## DB Work
 
@@ -159,8 +175,11 @@ Oracle is the system of record for both backend (TypeORM) and the legacy Display
 
 ## UI & Code Quality
 
+- `apps/frontend/src/app/(authenticated)/**/page.tsx`를 추가·이동·삭제하면 `pnpm --filter @eunsung/frontend typecheck` 또는 `test`를 실행한다. 두 명령은 registry를 자동 생성하고 모든 페이지·메뉴·백엔드 메뉴 등록을 전수 검증한다. 생성 파일을 직접 수정하지 않는다.
 - `alert()`, `confirm()`, `prompt()` 대신 프로젝트의 모달/토스트 컴포넌트를 사용한다.
 - 코드성/기준정보성 값은 자유 입력 대신 공통코드·기준정보 선택 컴포넌트를 우선한다.
+- Oracle 코드성 컬럼은 `ISYS_BASECODE`를 기준으로 처리한다. 테이블 컬럼명과 `CODE_TYPE`은 대문자화한 뒤 공백과 `_`를 제거한 정규키로 매칭하며, 필터·폼은 `ComCodeSelect`, 그리드는 `ComCodeBadge` 또는 공용 코드명 렌더러를 사용한다. 원시 코드만 표시하지 않는다.
+- DB 기반 신규 화면의 엔티티·DTO·API·프론트 타입·폼 상태 이름은 실제 DB 컬럼의 lowerCamelCase를 사용한다(예: `ITEM_CLASS` → `itemClass`, `ITEM_UOM` → `itemUom`). 복사 프로젝트의 의미 별칭이나 호환 필드(`productType`, `unit`, `useYn` 등)를 새 계약에 유지하지 않는다.
 - 새 UI/필터/입력을 만들기 전에 `apps/frontend/src/components`(특히 `shared`/`common`)와 기존 훅·스토어에 재사용 가능한 패턴이 있는지 먼저 확인한다.
 - 규칙을 프론트·백엔드 양쪽에서 강제해야 하면 `packages/shared`에 한 번 정의하고 양쪽이 호출한다. 같은 조건을 여러 계층에 복붙하지 않는다.
 - `catch (error: unknown)` 형태를 유지하고 `as any` 사용을 피한다.

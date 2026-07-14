@@ -599,11 +599,11 @@ describe('ErViewService', () => {
   it('resolves schema governance migration directory from repo or backend cwd', () => {
     const cwdSpy = jest.spyOn(process, 'cwd');
 
-    cwdSpy.mockReturnValue('C:\\Project\\HANES');
-    expect((service as any).backendMigrationsDir()).toBe('C:\\Project\\HANES\\apps\\backend\\src\\migrations');
+    cwdSpy.mockReturnValue('C:\\Project\\EUNSUNG');
+    expect((service as any).backendMigrationsDir()).toBe('C:\\Project\\EUNSUNG\\apps\\backend\\src\\migrations');
 
-    cwdSpy.mockReturnValue('C:\\Project\\HANES\\apps\\backend');
-    expect((service as any).backendMigrationsDir()).toBe('C:\\Project\\HANES\\apps\\backend\\src\\migrations');
+    cwdSpy.mockReturnValue('C:\\Project\\EUNSUNG\\apps\\backend');
+    expect((service as any).backendMigrationsDir()).toBe('C:\\Project\\EUNSUNG\\apps\\backend\\src\\migrations');
 
     cwdSpy.mockRestore();
   });

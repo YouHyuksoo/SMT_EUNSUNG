@@ -37,6 +37,7 @@ export const menuConfig: MenuConfigItem[] = [
       { code: "MST_PART", labelKey: "menu.master.part", path: "/master/part" },
       { code: "MST_BOM", labelKey: "menu.master.bom", path: "/master/bom" },
       { code: "MST_PARTNER", labelKey: "menu.master.partner", path: "/master/partner" },
+      { code: "MST_CUSTOMER", labelKey: "menu.master.customer", path: "/master/customer" },
       { code: "EQUIP_MASTER", labelKey: "menu.equipment.master", path: "/master/equip" },
       { code: "MST_PROCESS", labelKey: "menu.master.process", path: "/master/process" },
       { code: "MST_PROD_LINE", labelKey: "menu.master.prodLine", path: "/master/prod-line" },
@@ -46,7 +47,9 @@ export const menuConfig: MenuConfigItem[] = [
       { code: "MST_WORK_INST", labelKey: "menu.master.workInstruction", path: "/master/work-instruction" },
       { code: "MST_WAREHOUSE", labelKey: "menu.master.warehouse", path: "/master/warehouse" },
       { code: "MST_LABEL", labelKey: "menu.master.label", path: "/master/label" },
-      { code: "MST_PROCESS_CAPA", labelKey: "menu.master.processCapa", path: "/master/process-capa" },
+      { code: "MST_PURCHASE_PRICE", labelKey: "menu.master.purchasePrice", path: "/master/purchase-price" },
+      { code: "MST_ITEM_SUPPLIER", labelKey: "menu.master.itemSupplier", path: "/master/item-supplier" },
+      { code: "MST_SALE_PRICE", labelKey: "menu.master.salePrice", path: "/master/sale-price" },
     ],
   },
   {

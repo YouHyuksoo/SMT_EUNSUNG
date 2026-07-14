@@ -31,7 +31,7 @@ export class ItemMaster {
   itemType: string;
 
   @Column({ type: 'varchar2', name: 'ITEM_CLASS', length: 20 })
-  productType: string;
+  itemClass: string;
 
   @Column({ type: 'varchar2', name: 'LINE_TYPE', length: 10 })
   lineType: string;
@@ -43,7 +43,7 @@ export class ItemMaster {
   modelName: string | null;
 
   @Column({ type: 'varchar2', name: 'MODEL_SUFFIX', length: 50, nullable: true })
-  defectModelGroup: string | null;
+  modelSuffix: string | null;
 
   @Column({ type: 'varchar2', name: 'ITEM_SPEC', length: 300 })
   spec: string | null;
@@ -55,7 +55,7 @@ export class ItemMaster {
   markingText: string | null;
 
   @Column({ name: 'ITEM_UOM', length: 3, default: 'EA' })
-  unit: string;
+  itemUom: string;
 
   @Column({ type: 'varchar2', name: 'MODEL_COLOR', length: 20, nullable: true })
   color: string | null;
@@ -106,7 +106,7 @@ export class ItemMaster {
   remark: string | null;
 
   @Column({ name: 'MES_DISPLAY_YN', length: 1, nullable: true })
-  useYn: string;
+  mesDisplayYn: string;
 
   @Column({ type: 'varchar2', name: 'ENTER_BY', length: 20, nullable: true })
   createdBy: string | null;

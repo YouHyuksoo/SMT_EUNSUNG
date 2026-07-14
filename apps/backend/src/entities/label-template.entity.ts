@@ -18,7 +18,7 @@ import {
   Index,
 } from 'typeorm';
 
-@Entity({ name: 'LABEL_TEMPLATES' })
+@Entity({ name: 'ICOM_LABEL_TEMPLATES' })
 @Index(['category'])
 @Index(['isDefault'])
 export class LabelTemplate {

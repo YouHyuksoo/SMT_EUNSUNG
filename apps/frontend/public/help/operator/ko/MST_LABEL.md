@@ -2,20 +2,20 @@
 menuCode: MST_LABEL
 audience: operator
 title: 라벨관리 — 운영 가이드
-summary: 라벨 템플릿(LABEL_TEMPLATES) 전체 컬럼 DB 매핑, 카테고리/소스테이블 체계, 디자인 JSON(DESIGN_DATA) 구조, CRUD API, 멀티테넌시, 트러블슈팅
+summary: 라벨 템플릿(ICOM_LABEL_TEMPLATES) 전체 컬럼 DB 매핑, 카테고리/소스테이블 체계, 디자인 JSON(DESIGN_DATA) 구조, CRUD API, 멀티테넌시, 트러블슈팅
 tags: [기준정보, 라벨, 디자인, 마스터, 운영]
-keywords: [LABEL_TEMPLATES, label-templates, DESIGN_DATA, ZPL_CODE, PRINT_MODE, IS_DEFAULT, TEMPLATE_NAME, CATEGORY, 복합키, 자연키, 카테고리, 소스테이블, 라벨디자인, 바코드, 멀티테넌시, COMPANY, PLANT_CD]
+keywords: [ICOM_LABEL_TEMPLATES, label-templates, DESIGN_DATA, ZPL_CODE, PRINT_MODE, IS_DEFAULT, TEMPLATE_NAME, CATEGORY, 복합키, 자연키, 카테고리, 소스테이블, 라벨디자인, 바코드, 멀티테넌시, COMPANY, PLANT_CD]
 related: [MST_PART]
 ---
 
 # 라벨관리 — 운영 가이드
 
 ## 시스템 목적·역할
-바코드 라벨의 **디자인 템플릿을 보유하는 마스터 테이블 `LABEL_TEMPLATES`** 관리 화면입니다. 각 업무 화면(입고라벨발행·소모품라벨발행·포장 등)이 **카테고리(CATEGORY)**로 이 테이블에서 디자인을 조회해 라벨을 발행합니다. 디자인 본문은 객체 배치·라벨 크기를 담은 **JSON(`DESIGN_DATA`)**으로 저장됩니다. 이 화면 자체는 출력을 수행하지 않습니다(디자인·템플릿 CRUD 전용).
+바코드 라벨의 **디자인 템플릿을 보유하는 마스터 테이블 `ICOM_LABEL_TEMPLATES`** 관리 화면입니다. 각 업무 화면(입고라벨발행·소모품라벨발행·포장 등)이 **카테고리(CATEGORY)**로 이 테이블에서 디자인을 조회해 라벨을 발행합니다. 디자인 본문은 객체 배치·라벨 크기를 담은 **JSON(`DESIGN_DATA`)**으로 저장됩니다. 이 화면 자체는 출력을 수행하지 않습니다(디자인·템플릿 CRUD 전용).
 
 ## 데이터 구조
 ```
-LABEL_TEMPLATES (PK: TEMPLATE_NAME, CATEGORY)   ← 자연 복합키
+ICOM_LABEL_TEMPLATES (PK: TEMPLATE_NAME, CATEGORY)   ← 자연 복합키
    ├─ DESIGN_DATA (CLOB / JSON)  : 객체 배열 + 라벨 크기 + 소스테이블
    ├─ ZPL_CODE    (CLOB)         : ZPL 직접출력 코드(선택)
    ├─ CATEGORY                   : equip/jig/worker/mat_lot/box/pallet/sg (+ part)
@@ -25,7 +25,7 @@ LABEL_TEMPLATES (PK: TEMPLATE_NAME, CATEGORY)   ← 자연 복합키
    mat_lot→mat_lot, box→box, pallet→pallet, sg→sg_label
 ```
 
-## ① 라벨 템플릿 — LABEL_TEMPLATES (전체 컬럼)
+## ① 라벨 템플릿 — ICOM_LABEL_TEMPLATES (전체 컬럼)
 
 | 화면 항목 | DB 컬럼 | 역할 / 의미 · 운영 포인트 |
 |------|------|------|
@@ -90,7 +90,7 @@ LABEL_TEMPLATES (PK: TEMPLATE_NAME, CATEGORY)   ← 자연 복합키
 | ZPL 출력 안 됨 | `PRINT_MODE` 미설정 또는 `ZPL_CODE`/`PRINTER_ID` 누락 | PRINT_MODE=ZPL/BOTH + ZPL_CODE + PRINTER_ID 보강 |
 
 ## 데이터·연계
-- 테이블: `LABEL_TEMPLATES` (PK `TEMPLATE_NAME`+`CATEGORY`)
+- 테이블: `ICOM_LABEL_TEMPLATES` (PK `TEMPLATE_NAME`+`CATEGORY`)
 - 연계: 입고라벨발행·소모품라벨발행·포장(박스/팔레트)·반제품 SG 라벨 등 발행 화면이 카테고리로 디자인 조회
 - 소스 마스터: 설비·소모품·작업자·자재 LOT·박스·팔레트·반제품(발행 시 값 공급)
 - 스코프: `COMPANY='40'`, `PLANT_CD='1000'`

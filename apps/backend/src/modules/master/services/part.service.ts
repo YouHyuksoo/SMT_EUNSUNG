@@ -23,7 +23,7 @@ export class PartService {
   }
 
   async findAll(query: PartQueryDto, organizationId?: number) {
-    const { page = 1, limit = 20, itemType, itemTypes, search, useYn } = query;
+    const { page = 1, limit = 20, itemType, itemTypes, search, mesDisplayYn } = query;
     const skip = (page - 1) * limit;
 
     const queryBuilder = this.partRepository.createQueryBuilder('p')
@@ -38,8 +38,8 @@ export class PartService {
       queryBuilder.andWhere('p.itemType = :itemType', { itemType });
     }
 
-    if (useYn) {
-      queryBuilder.andWhere('p.useYn = :useYn', { useYn });
+    if (mesDisplayYn) {
+      queryBuilder.andWhere('p.mesDisplayYn = :mesDisplayYn', { mesDisplayYn });
     }
 
     if (search) {
@@ -91,15 +91,15 @@ export class PartService {
       itemNo: dto.itemNo ?? dto.itemCode,
       custPartNo: dto.custPartNo,
       itemType: dto.itemType,
-      productType: dto.productType ?? dto.itemType,
+      itemClass: dto.itemClass,
       lineType: '*',
       itemDivision: dto.itemType,
       modelName: dto.modelName ?? null,
-      defectModelGroup: dto.defectModelGroup ?? null,
+      modelSuffix: dto.modelSuffix ?? null,
       spec: dto.spec ?? '*',
       rev: dto.rev ?? 'A',
       markingText: dto.markingText,
-      unit: dto.unit ?? 'EA',
+      itemUom: dto.itemUom ?? 'EA',
       color: dto.color ?? null,
       drawNo: dto.drawNo,
       leadTime: dto.leadTime ?? 0,
@@ -115,7 +115,7 @@ export class PartService {
       packUnit: dto.packUnit ?? null,
       storageLocation: dto.storageLocation ?? null,
       remark: dto.remark,
-      useYn: dto.useYn ?? 'Y',
+      mesDisplayYn: dto.mesDisplayYn ?? 'Y',
       imageUrl: dto.imageUrl,
       organizationId,
     });
@@ -131,13 +131,13 @@ export class PartService {
       | 'itemNo'
       | 'custPartNo'
       | 'itemType'
-      | 'productType'
+      | 'itemClass'
       | 'modelName'
-      | 'defectModelGroup'
+      | 'modelSuffix'
       | 'spec'
       | 'rev'
       | 'markingText'
-      | 'unit'
+      | 'itemUom'
       | 'color'
       | 'drawNo'
       | 'leadTime'
@@ -153,19 +153,19 @@ export class PartService {
       | 'storageLocation'
       | 'imageUrl'
       | 'remark'
-      | 'useYn'
+      | 'mesDisplayYn'
     >> = {
       ...(dto.itemName !== undefined ? { itemName: dto.itemName } : {}),
       ...(dto.itemNo !== undefined ? { itemNo: dto.itemNo } : {}),
       ...(dto.custPartNo !== undefined ? { custPartNo: dto.custPartNo } : {}),
       ...(dto.itemType !== undefined ? { itemType: dto.itemType } : {}),
-      ...(dto.productType !== undefined ? { productType: dto.productType } : {}),
+      ...(dto.itemClass !== undefined ? { itemClass: dto.itemClass } : {}),
       ...(dto.modelName !== undefined ? { modelName: dto.modelName || null } : {}),
-      ...(dto.defectModelGroup !== undefined ? { defectModelGroup: dto.defectModelGroup || null } : {}),
+      ...(dto.modelSuffix !== undefined ? { modelSuffix: dto.modelSuffix || null } : {}),
       ...(dto.spec !== undefined ? { spec: dto.spec } : {}),
       ...(dto.rev !== undefined ? { rev: dto.rev } : {}),
       ...(dto.markingText !== undefined ? { markingText: dto.markingText } : {}),
-      ...(dto.unit !== undefined ? { unit: dto.unit } : {}),
+      ...(dto.itemUom !== undefined ? { itemUom: dto.itemUom } : {}),
       ...(dto.color !== undefined ? { color: dto.color } : {}),
       ...(dto.drawNo !== undefined ? { drawNo: dto.drawNo } : {}),
       ...(dto.leadTime !== undefined ? { leadTime: dto.leadTime } : {}),
@@ -181,7 +181,7 @@ export class PartService {
       ...(dto.storageLocation !== undefined ? { storageLocation: dto.storageLocation } : {}),
       ...(dto.imageUrl !== undefined ? { imageUrl: dto.imageUrl } : {}),
       ...(dto.remark !== undefined ? { remark: dto.remark } : {}),
-      ...(dto.useYn !== undefined ? { useYn: dto.useYn } : {}),
+      ...(dto.mesDisplayYn !== undefined ? { mesDisplayYn: dto.mesDisplayYn } : {}),
     };
     await this.partRepository.update({ itemCode, ...this.tenantWhere(organizationId) }, updateData);
     return this.findById(itemCode, organizationId);
@@ -189,7 +189,7 @@ export class PartService {
 
   /**
    * 품목 삭제 가능 여부 검사 — 이력/사용처(FK 무관)가 있으면 삭제 차단.
-   * 입하/입고/재고/롯트/BOM/생산계획 테이블은 ITEM_MASTERS와 FK로 묶여있지 않으므로
+   * 입하/입고/재고/롯트/BOM/생산계획 테이블은 ID_ITEM과 FK로 묶여있지 않으므로
    * (FK는 PROD_PLANS 하나뿐) DB가 막아주지 못한다. 애플리케이션에서 참조 존재를 확인한다.
    */
   private async assertDeletable(itemCode: string, organizationId?: number): Promise<void> {
@@ -233,7 +233,7 @@ export class PartService {
     if (blockers.length > 0) {
       throw new ConflictException(
         `이력/사용처가 있는 품목은 삭제할 수 없습니다 (${blockers.join(', ')}). ` +
-        `먼저 관련 데이터를 정리하거나, 품목을 미사용(useYn=N)으로 변경하세요.`,
+        `먼저 관련 데이터를 정리하거나, 품목의 MES_DISPLAY_YN을 N으로 변경하세요.`,
       );
     }
   }
@@ -253,7 +253,7 @@ export class PartService {
 
   async findByType(itemType: string, organizationId?: number) {
     return this.partRepository.find({
-      where: { itemType, useYn: 'Y', ...this.tenantWhere(organizationId) },
+      where: { itemType, mesDisplayYn: 'Y', ...this.tenantWhere(organizationId) },
       order: { itemCode: 'asc' },
     });
   }

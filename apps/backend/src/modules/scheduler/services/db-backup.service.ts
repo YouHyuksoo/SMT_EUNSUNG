@@ -78,7 +78,7 @@ export class DbBackupService {
       .toISOString()
       .replace(/:/g, '-')
       .replace(/\.\d+Z$/, '');
-    const backupName = `HANES_MES_${timestamp}`;
+    const backupName = `EUNSUNG_MES_${timestamp}`;
     const backupDir = path.join(backupRoot, backupName);
     const ddlDir = path.join(backupDir, '01_ddl');
     const dataDir = path.join(backupDir, '02_data');
@@ -327,7 +327,7 @@ export class DbBackupService {
 
     const lines: string[] = [];
     lines.push('-- ============================================');
-    lines.push('-- HANES MES 복원 스크립트 (자동 생성)');
+    lines.push('-- 은성 MES 복원 스크립트 (자동 생성)');
     lines.push(`-- 스키마: ${schema}`);
     lines.push(`-- 생성일시: ${new Date().toISOString()}`);
     lines.push('-- ============================================');
@@ -426,7 +426,7 @@ export class DbBackupService {
     const files = fs.readdirSync(backupRoot);
 
     for (const file of files) {
-      if (!file.startsWith('HANES_MES_') || !file.endsWith('.zip')) continue;
+      if (!file.startsWith('EUNSUNG_MES_') || !file.endsWith('.zip')) continue;
 
       const filePath = path.join(backupRoot, file);
       const stat = fs.statSync(filePath);

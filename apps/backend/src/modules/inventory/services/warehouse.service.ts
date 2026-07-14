@@ -6,7 +6,7 @@ import { Injectable, NotFoundException, ConflictException } from '@nestjs/common
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource, FindOptionsWhere } from 'typeorm';
 import { Warehouse } from '../../../entities/warehouse.entity';
-import { MatStock } from '../../../entities/mat-stock.entity';
+import { WarehouseLocation } from '../../../entities/warehouse-location.entity';
 import { CreateWarehouseDto, UpdateWarehouseDto } from '../dto/inventory.dto';
 
 @Injectable()
@@ -14,8 +14,8 @@ export class WarehouseService {
   constructor(
     @InjectRepository(Warehouse)
     private readonly warehouseRepository: Repository<Warehouse>,
-    @InjectRepository(MatStock)
-    private readonly stockRepository: Repository<MatStock>,
+    @InjectRepository(WarehouseLocation)
+    private readonly locationRepository: Repository<WarehouseLocation>,
     private readonly dataSource: DataSource,
   ) {}
 
@@ -141,13 +141,35 @@ export class WarehouseService {
       throw new NotFoundException('창고를 찾을 수 없습니다.');
     }
 
-    // 해당 창고에 재고가 있는지 확인
-    const stockCount = await this.stockRepository.count({
+    // 해당 창고에 재고가 있는지 확인.
+    // IM_ITEM_INVENTORY에는 창고 컬럼이 없고 LOCATION_CODE만 있으므로,
+    // 이 창고에 속한 로케이션을 거쳐 재고 존재 여부를 판단한다.
+    const locations = await this.locationRepository.find({
       where: { warehouseCode: warehouse.warehouseCode, ...tenantWhere },
+      select: ['locationCode'],
     });
 
-    if (stockCount > 0) {
-      throw new ConflictException('해당 창고에 재고가 존재하여 삭제할 수 없습니다.');
+    if (locations.length > 0) {
+      const params: unknown[] = locations.map((l) => l.locationCode);
+      const inList = params.map((_, i) => `:${i + 1}`).join(', ');
+
+      let orgFilter = '';
+      if (organizationId != null) {
+        params.push(organizationId);
+        orgFilter = ` AND ORGANIZATION_ID = :${params.length}`;
+      }
+
+      const rows = await this.dataSource.query(
+        `SELECT 1 AS HAS_STOCK FROM IM_ITEM_INVENTORY
+          WHERE LOCATION_CODE IN (${inList})${orgFilter}
+            AND NVL(INVENTORY_QTY, 0) > 0
+            AND ROWNUM = 1`,
+        params,
+      );
+
+      if (rows.length > 0) {
+        throw new ConflictException('해당 창고에 재고가 존재하여 삭제할 수 없습니다.');
+      }
     }
 
     await this.warehouseRepository.delete({ warehouseCode, ...tenantWhere });

@@ -49,7 +49,7 @@ describe('JwtAuthGuard viewer read-only policy', () => {
     email: 'viewer@example.com',
     role: 'VIEWER',
     status: 'ACTIVE',
-    company: 'HANES',
+    company: 'EUNSUNG',
     plant: 'P01',
   };
 

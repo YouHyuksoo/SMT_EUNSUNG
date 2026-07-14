@@ -39,15 +39,15 @@ describe('EquipInspectItemPoolService', () => {
       cycle: 'DAILY',
       useYn: 'Y',
     };
-    const created = { ...dto, company: 'HANES', plant: '1000' } as EquipInspectItemMaster;
+    const created = { ...dto, company: 'EUNSUNG', plant: '1000' } as EquipInspectItemMaster;
 
     mockRepo.findOne.mockResolvedValue(null);
     mockRepo.create.mockReturnValue(created);
     mockRepo.save.mockResolvedValue(created);
 
-    await expect(target.create(dto, 'HANES', '1000')).resolves.toEqual(created);
+    await expect(target.create(dto, 'EUNSUNG', '1000')).resolves.toEqual(created);
     expect(mockRepo.create).toHaveBeenCalledWith({
-      company: 'HANES',
+      company: 'EUNSUNG',
       plant: '1000',
       itemCode: 'EIP-001',
       itemName: 'Air pressure check',
@@ -73,10 +73,10 @@ describe('EquipInspectItemPoolService', () => {
     mockRepo.findOne.mockResolvedValueOnce(existing).mockResolvedValueOnce(updated);
     mockRepo.update.mockResolvedValue({ affected: 1 } as any);
 
-    const result = await target.updateImage('EIP-001', '/uploads/equip-inspect-items/item.png', 'HANES', '1000');
+    const result = await target.updateImage('EIP-001', '/uploads/equip-inspect-items/item.png', 'EUNSUNG', '1000');
 
     expect(mockRepo.update).toHaveBeenCalledWith(
-      { company: 'HANES', plant: '1000', itemCode: 'EIP-001' },
+      { company: 'EUNSUNG', plant: '1000', itemCode: 'EIP-001' },
       { imageUrl: '/uploads/equip-inspect-items/item.png' },
     );
     expect(result).toEqual(updated);
@@ -85,7 +85,7 @@ describe('EquipInspectItemPoolService', () => {
   it('rejects duplicate pool item codes in the same tenant', async () => {
     mockRepo.findOne.mockResolvedValue({ itemCode: 'EIP-001' } as EquipInspectItemMaster);
 
-    await expect(target.create({ itemCode: 'EIP-001', itemName: 'Air pressure check', inspectType: 'DAILY' } as any, 'HANES', '1000'))
+    await expect(target.create({ itemCode: 'EIP-001', itemName: 'Air pressure check', inspectType: 'DAILY' } as any, 'EUNSUNG', '1000'))
       .rejects.toThrow(ConflictException);
   });
 
@@ -93,18 +93,18 @@ describe('EquipInspectItemPoolService', () => {
     const item = { itemCode: 'EIP-001', itemName: 'Air pressure check', useYn: 'Y' } as EquipInspectItemMaster;
     mockRepo.findOne.mockResolvedValue(item);
 
-    await expect(target.findByCode('HANES', '1000', 'EIP-001')).resolves.toEqual(item);
+    await expect(target.findByCode('EUNSUNG', '1000', 'EIP-001')).resolves.toEqual(item);
   });
 
   it('throws when a pool item code is missing', async () => {
     mockRepo.findOne.mockResolvedValue(null);
 
-    await expect(target.findByCode('HANES', '1000', 'EIP-999')).rejects.toThrow(NotFoundException);
+    await expect(target.findByCode('EUNSUNG', '1000', 'EIP-999')).rejects.toThrow(NotFoundException);
   });
 
   it('keeps tenant and item key columns from the matched pool item when update payload contains them', async () => {
     const existing = {
-      company: 'HANES',
+      company: 'EUNSUNG',
       plant: '1000',
       itemCode: 'EIP-001',
       itemName: 'Air pressure check',
@@ -117,19 +117,19 @@ describe('EquipInspectItemPoolService', () => {
     mockRepo.findOne.mockResolvedValue(existing);
     mockRepo.save.mockImplementation(async (item) => item as EquipInspectItemMaster);
 
-    const result = await target.update('HANES', '1000', 'EIP-001', {
+    const result = await target.update('EUNSUNG', '1000', 'EIP-001', {
       company: 'OTHER',
       plant: '9999',
       itemCode: 'EIP-999',
       itemName: 'Updated pressure check',
     } as any);
 
-    expect(result.company).toBe('HANES');
+    expect(result.company).toBe('EUNSUNG');
     expect(result.plant).toBe('1000');
     expect(result.itemCode).toBe('EIP-001');
     expect(result.itemName).toBe('Updated pressure check');
     expect(mockRepo.save).toHaveBeenCalledWith(expect.objectContaining({
-      company: 'HANES',
+      company: 'EUNSUNG',
       plant: '1000',
       itemCode: 'EIP-001',
       itemName: 'Updated pressure check',

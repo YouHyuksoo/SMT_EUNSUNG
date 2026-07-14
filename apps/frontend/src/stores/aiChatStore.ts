@@ -67,7 +67,7 @@ export const useAiChatStore = create<AiChatState>()(
       clear: () => set({ messages: [] }),
     }),
     {
-      name: "hanes.aiChat.v1",
+      name: "eunsung.aiChat.v1",
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({ messages: state.messages, persona: state.persona }),
     },

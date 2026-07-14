@@ -78,6 +78,12 @@ interface PartnerItem {
   partnerType: string;
 }
 
+interface SupplierItem {
+  supplierCode: string;
+  supplierName: string;
+}
+interface CustomerItem { customerCode: string; customerName: string; }
+
 /** 백엔드 findAll 응답: { data: T[], total, page, limit } */
 interface PaginatedResponse<T> {
   data: T[];
@@ -145,7 +151,7 @@ export function useWarehouseOptions(warehouseType?: string) {
  * @remarks value=로케이션코드, label="로케이션코드 - 로케이션명" (창고 종속이라 창고명 접두)
  */
 export function useLocationOptions(warehouseCode?: string) {
-  const params = warehouseCode ? `?warehouseId=${encodeURIComponent(warehouseCode)}` : "";
+  const params = warehouseCode ? `?warehouseCode=${encodeURIComponent(warehouseCode)}` : "";
   const { data, isLoading } = useApiQuery<{ data: LocationItem[] }>(
     ["warehouse-locations", "options", warehouseCode ?? "all"],
     `/inventory/warehouse-locations${params}`,
@@ -365,6 +371,33 @@ export function usePartnerOptions(partnerType?: "SUPPLIER" | "CUSTOMER" | "VENDO
     }));
   }, [data]);
 
+  return { options, isLoading };
+}
+
+/** 은성 레거시 공급사(ICOM_SUPPLIER) 옵션 */
+export function useSupplierOptions() {
+  const { data, isLoading } = useApiQuery<{ data: SupplierItem[] }>(
+    ["suppliers", "options"],
+    "/master/suppliers?limit=500",
+    { staleTime: 5 * 60 * 1000 },
+  );
+  const options = useMemo<SelectOption[]>(() => {
+    const raw = data?.data;
+    const list = Array.isArray(raw) ? raw : raw?.data ?? [];
+    return list.map((supplier) => ({
+      value: supplier.supplierCode,
+      label: `${supplier.supplierCode} - ${supplier.supplierName}`,
+    }));
+  }, [data]);
+  return { options, isLoading };
+}
+
+export function useCustomerOptions() {
+  const { data, isLoading } = useApiQuery<{ data: CustomerItem[] }>(["customers", "options"], "/master/customers?limit=500", { staleTime: 5 * 60 * 1000 });
+  const options = useMemo<SelectOption[]>(() => {
+    const raw = data?.data; const list = Array.isArray(raw) ? raw : raw?.data ?? [];
+    return list.map((customer) => ({ value: customer.customerCode, label: `${customer.customerCode} - ${customer.customerName}` }));
+  }, [data]);
   return { options, isLoading };
 }
 

@@ -206,7 +206,7 @@ export class BomService {
 
     const parts = await this.partRepository.find({
       where: { itemCode: In(allCodes), ...(organizationId != null ? { organizationId } : {}) },
-      select: ['itemCode', 'itemName', 'itemNo', 'itemType', 'productType', 'spec', 'unit'],
+      select: ['itemCode', 'itemName', 'itemNo', 'itemType', 'itemClass', 'spec', 'itemUom'],
     });
     const partMap = new Map(parts.map((p) => [p.itemCode, p]));
 
@@ -233,7 +233,7 @@ export class BomService {
 
     const parts = await this.partRepository.find({
       where: { itemCode: In([parentItemCode, childItemCode]), ...(organizationId != null ? { organizationId } : {}) },
-      select: ['itemCode', 'itemName', 'itemNo', 'itemType', 'productType', 'spec', 'unit'],
+      select: ['itemCode', 'itemName', 'itemNo', 'itemType', 'itemClass', 'spec', 'itemUom'],
     });
     const partMap = new Map(parts.map((p) => [p.itemCode, p]));
 
@@ -289,7 +289,7 @@ export class BomService {
     const childCodes = rows.map((r) => r.childItemCode);
     const parts = await this.partRepository.find({
       where: { itemCode: In(childCodes), ...(organizationId != null ? { organizationId } : {}) },
-      select: ['itemCode', 'itemName', 'itemNo', 'itemType', 'productType', 'spec', 'unit'],
+      select: ['itemCode', 'itemName', 'itemNo', 'itemType', 'itemClass', 'spec', 'itemUom'],
     });
     const partMap = new Map(parts.map((p) => [p.itemCode, p]));
 

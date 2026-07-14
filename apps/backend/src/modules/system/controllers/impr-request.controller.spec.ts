@@ -37,7 +37,7 @@ describe('ImprRequestController', () => {
     );
   });
 
-  it('does not silently default missing tenant to JSHANES', async () => {
+  it('does not silently default missing tenant', async () => {
     const service = {
       findAll: jest.fn(),
     } as unknown as ImprRequestService;

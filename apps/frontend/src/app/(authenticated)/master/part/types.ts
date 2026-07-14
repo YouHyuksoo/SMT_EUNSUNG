@@ -1,12 +1,7 @@
 /**
  * @file src/app/(authenticated)/master/part/types.ts
- * @description 품목 마스터 타입 + 상수 정의 (Oracle TM_ITEMS 기준 보강)
+ * @description ID_ITEM API 계약 타입
  */
-
-import type { ItemTypeValue, UseYnValue } from "@smt/shared";
-
-/** 품목 분류 */
-export type PartType = ItemTypeValue;
 
 /** 품목 인터페이스 */
 export interface Part {
@@ -15,13 +10,13 @@ export interface Part {
   itemNo?: string; // 품번 (Oracle PARTNO)
   custPartNo?: string; // 고객사 품번 (Oracle CUSTPARTNO)
   modelName?: string | null; // 차종
-  defectModelGroup?: string | null; // 불량 모델구분
-  itemType: PartType;
-  productType?: string; // 제품유형 코드 (Oracle PRODUCTTYPE)
+  modelSuffix?: string | null;
+  itemType: string;
+  itemClass: string;
   spec?: string;
   rev?: string; // 리비전 (Oracle REV)
   markingText?: string | null; // 마킹 문구
-  unit?: string; // 단위 (기본값: EA)
+  itemUom?: string;
   color?: string | null; // 색상 (Oracle COLOR)
   safetyStock?: number; // 안전재고 (기본값: 0)
   lotUnitQty?: number; // LOT 단위수량 (Oracle LOTUNITQTY)
@@ -33,28 +28,5 @@ export interface Part {
   storageLocation?: string; // 적재 로케이션 (창고 내 위치)
   remark?: string; // 비고 (Oracle REMARKS)
   imageUrl?: string | null;
-  useYn: UseYnValue;
+  mesDisplayYn: string;
 }
-
-/** 품목 분류별 색상 */
-export const PART_TYPE_COLORS: Record<
-  PartType,
-  { label: string; color: string }
-> = {
-  RAW_MATERIAL: {
-    label: "원자재",
-    color: "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300",
-  },
-  SEMI_PRODUCT: {
-    label: "반제품",
-    color: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300",
-  },
-  FINISHED: {
-    label: "완제품",
-    color: "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300",
-  },
-  CONSUMABLE: {
-    label: "소모품",
-    color: "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300",
-  },
-};

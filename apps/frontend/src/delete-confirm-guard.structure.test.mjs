@@ -3,9 +3,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 
 const filesThatMustUseConfirmModal = [
-  "apps/frontend/src/components/master/RoutingTab.tsx",
   "apps/frontend/src/components/master/ProdLineTab.tsx",
-  "apps/frontend/src/components/master/ProcessTab.tsx",
   "apps/frontend/src/app/(authenticated)/system/users/components/UserFormPanel.tsx",
   "apps/frontend/src/app/(authenticated)/master/process/page.tsx",
   "apps/frontend/src/app/(authenticated)/master/part/components/PartFormPanel.tsx",

@@ -13,7 +13,6 @@ import { useComCodeOptions } from "@/hooks/useComCode";
 import api from "@/services/api";
 import BomTab from "./components/BomTab";
 import BomUploadModal from "./components/BomUploadModal";
-import QualityConditionEditor from "../routing/components/QualityConditionEditor";
 import RoutingMaterialEditor from "../routing/components/RoutingMaterialEditor";
 import type { BomRoutingInfo, BomRoutingProcess, ParentPart, RoutingTarget } from "./types";
 import type { SelectedProcess } from "../routing/types";
@@ -29,7 +28,6 @@ export default function BomPage() {
   const [routingInfo, setRoutingInfo] = useState<BomRoutingInfo | null>(null);
   const [selectedProcess, setSelectedProcess] = useState<SelectedProcess | null>(null);
   const [routingPanelOpen, setRoutingPanelOpen] = useState(false);
-  const [activeDetailTab, setActiveDetailTab] = useState<"conditions" | "materials">("conditions");
   const [searchText, setSearchText] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
   const [bomDateMode, setBomDateMode] = useState<"effective" | "all">("effective");
@@ -81,8 +79,10 @@ export default function BomPage() {
 
     setLoadingRouting(true);
     try {
-      const res = await api.get(`/master/routing-groups/by-item/${selectedBomItem.itemCode}`);
-      const data: BomRoutingInfo | null = res.data?.data ?? null;
+      const groupsRes = await api.get("/master/routing-groups", { params: { search: selectedBomItem.itemCode, limit: 5000 } });
+      const group = (groupsRes.data?.data ?? []).find((row: BomRoutingInfo) => row.itemCode === selectedBomItem.itemCode) ?? null;
+      const processRes = group ? await api.get(`/master/routing-groups/${group.routingCode}/processes`) : null;
+      const data: BomRoutingInfo | null = group ? { ...group, processes: processRes?.data?.data ?? [] } : null;
       setRoutingInfo(data);
       setSelectedProcess((prev) => {
         const nextProcesses = data?.processes ?? [];
@@ -93,8 +93,8 @@ export default function BomPage() {
               routingCode: first.routingCode,
               routingName: data.routingName,
               seq: first.seq,
-              processCode: first.processCode,
-              processName: first.processName,
+              workstageCode: (first as BomRoutingProcess & { workstageCode: string }).workstageCode,
+              workstageName: (first as BomRoutingProcess & { workstageName?: string }).workstageName ?? (first as BomRoutingProcess & { workstageCode: string }).workstageCode,
             }
           : null;
       });
@@ -143,8 +143,8 @@ export default function BomPage() {
       routingCode: process.routingCode,
       routingName: routingInfo.routingName,
       seq: process.seq,
-      processCode: process.processCode,
-      processName: process.processName,
+      workstageCode: (process as BomRoutingProcess & { workstageCode: string }).workstageCode,
+      workstageName: (process as BomRoutingProcess & { workstageName?: string }).workstageName ?? (process as BomRoutingProcess & { workstageCode: string }).workstageCode,
     });
   }, [routingInfo]);
 
@@ -380,8 +380,8 @@ export default function BomPage() {
                             }`}
                           >
                             <td className="py-2 text-center font-mono">{process.seq}</td>
-                            <td className="py-2 font-medium truncate">{process.processName}</td>
-                            <td className="py-2 text-center font-mono">{process.processCode}</td>
+                            <td className="py-2 font-medium truncate">{(process as BomRoutingProcess & { workstageName?: string }).workstageName ?? (process as BomRoutingProcess & { workstageCode: string }).workstageCode}</td>
+                            <td className="py-2 text-center font-mono">{(process as BomRoutingProcess & { workstageCode: string }).workstageCode}</td>
                           </tr>
                         );
                       })}
@@ -396,36 +396,9 @@ export default function BomPage() {
             <CardContent className="flex-1 flex flex-col min-h-0 p-3">
               {selectedProcess ? (
                 <>
-                  <div className="flex items-center gap-1 mb-3 shrink-0 border-b border-border">
-                    <button
-                      type="button"
-                      onClick={() => setActiveDetailTab("conditions")}
-                      className={`px-3 py-2 text-xs font-medium border-b-2 transition-colors ${
-                        activeDetailTab === "conditions"
-                          ? "border-primary text-primary"
-                          : "border-transparent text-text-muted hover:text-text"
-                      }`}
-                    >
-                      {t("master.routing.conditionEditorTitle")}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setActiveDetailTab("materials")}
-                      className={`px-3 py-2 text-xs font-medium border-b-2 transition-colors ${
-                        activeDetailTab === "materials"
-                          ? "border-primary text-primary"
-                          : "border-transparent text-text-muted hover:text-text"
-                      }`}
-                    >
-                      {t("master.routing.materialEditorTitle", { defaultValue: "투입자재" })}
-                    </button>
-                  </div>
+                  <div className="mb-3 shrink-0 border-b border-border px-3 py-2 text-xs font-medium text-primary">{t("master.routing.materialEditorTitle", { defaultValue: "투입자재" })}</div>
                   <div className="flex-1 min-h-0">
-                    {activeDetailTab === "conditions" ? (
-                      <QualityConditionEditor selectedProcess={selectedProcess} />
-                    ) : (
-                      <RoutingMaterialEditor selectedProcess={selectedProcess} />
-                    )}
+                    <RoutingMaterialEditor selectedProcess={selectedProcess} />
                   </div>
                 </>
               ) : (

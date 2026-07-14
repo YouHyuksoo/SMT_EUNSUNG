@@ -2,9 +2,8 @@
  * @file src/app.module.ts
  * @description 애플리케이션 루트 모듈 (은성전장).
  *
- * 현재는 로그인부터 살리는 단계이므로 auth 경로에 필요한 모듈만 활성화한다.
- * HANES에서 통째로 복사한 전체 모듈 구성은 `app.module.full.ts.bak`에 보존되어 있으며,
- * 화면을 하나씩 은성화하면서 아래 imports에 모듈을 되살린다.
+ * 은성 현재 메뉴에 포함된 화면의 모듈만 활성화한다.
+ * (미사용 잔재 모듈/엔티티는 제거됨 — 필요 시 git 이력에서 복구)
  *
  * 초보자 가이드:
  * 1. **ConfigModule**: 환경변수 로드 (.env)
@@ -34,14 +33,18 @@ import { MasterEquipModule } from './modules/master/master-equip.module';
 import { MasterBomModule } from './modules/master/master-bom.module';
 import { MasterPartnerModule } from './modules/master/master-partner.module';
 import { MasterProdLineModule } from './modules/master/master-prod-line.module';
+import { WarehouseModule } from './modules/inventory/warehouse.module';
 import { MasterWorkerModule } from './modules/master/master-worker.module';
 import { MasterWorkInstructionModule } from './modules/master/master-work-instruction.module';
 import { MasterWorkCalendarModule } from './modules/master/master-work-calendar.module';
 import { MasterLabelModule } from './modules/master/master-label.module';
-import { MasterProcessCapaModule } from './modules/master/master-process-capa.module';
 import { MasterProcessModule } from './modules/master/master-process.module';
 import { MasterRoutingModule } from './modules/master/master-routing.module';
 import { MasterRoutingGroupModule } from './modules/master/master-routing-group.module';
+import { MasterPurchasePriceModule } from './modules/master/master-purchase-price.module';
+import { MasterSalePriceModule } from './modules/master/master-sale-price.module';
+import { MasterItemSupplierModule } from './modules/master/master-item-supplier.module';
+import { MasterCustomerModule } from './modules/master/master-customer.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { AttachmentModule } from './modules/attachment/attachment.module';
 import { SharedModule } from './shared/shared.module';
@@ -92,6 +95,8 @@ import { SharedModule } from './shared/shared.module';
 
     // 기준정보 품목정보 (/master/parts) — ID_ITEM 기반
     MasterPartModule,
+    MasterItemSupplierModule,
+    MasterCustomerModule,
 
     // 기준정보 설비정보 (/equipment/equips) — IMCN_MACHINE 기반
     MasterEquipModule,
@@ -105,6 +110,9 @@ import { SharedModule } from './shared/shared.module';
     // 기준정보 생산라인정보 (/master/prod-lines)
     MasterProdLineModule,
 
+    // 기준정보 창고/로케이션 (/inventory/warehouses, /inventory/warehouse-locations)
+    WarehouseModule,
+
     // 기준정보 작업자정보 (/master/workers)
     MasterWorkerModule,
 
@@ -117,8 +125,6 @@ import { SharedModule } from './shared/shared.module';
     // 기준정보 라벨 템플릿 (/master/label-templates)
     MasterLabelModule,
 
-    // 기준정보 공정 CAPA (/master/process-capas)
-    MasterProcessCapaModule,
 
     // 기준정보 공정마스터 (/master/processes)
     MasterProcessModule,
@@ -128,6 +134,8 @@ import { SharedModule } from './shared/shared.module';
 
     // 기준정보 라우팅 그룹 (/master/routing-groups)
     MasterRoutingGroupModule,
+    MasterPurchasePriceModule,
+    MasterSalePriceModule,
 
     // 대시보드 (/dashboard/summary)
     DashboardModule,

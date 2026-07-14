@@ -16,7 +16,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
-@Entity({ name: 'WAREHOUSE_LOCATIONS' })
+@Entity({ name: 'ICOM_WAREHOUSE_LOCATIONS' })
 export class WarehouseLocation {
   @PrimaryColumn({ name: 'ORGANIZATION_ID', type: 'number' })
   organizationId!: number;

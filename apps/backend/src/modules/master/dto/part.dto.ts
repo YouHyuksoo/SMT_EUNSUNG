@@ -1,12 +1,12 @@
 /**
  * @file src/modules/master/dto/part.dto.ts
- * @description 품목마스터 관련 DTO 정의 - Oracle TM_ITEMS 기준 10개 컬럼 보강
+ * @description ID_ITEM 품목 API DTO
  */
 
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { IsString, IsOptional, IsInt, IsNumber, Min, Max, MaxLength, IsIn, IsBoolean, IsArray, IsNotEmpty } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
-import { ITEM_TYPE_VALUES, PRODUCT_TYPE_VALUES, USE_YN_VALUES } from '@smt/shared';
+import { USE_YN_VALUES } from '@smt/shared';
 import { PaginationQueryDto } from '../../../common/dto/base-query.dto';
 
 export class CreatePartDto {
@@ -20,9 +20,9 @@ export class CreatePartDto {
   @MaxLength(200)
   itemName: string;
 
-  @ApiProperty({ description: '품목 유형', enum: ITEM_TYPE_VALUES })
+  @ApiProperty({ description: 'ID_ITEM.ITEM_TYPE', example: 'T' })
   @IsString()
-  @IsIn([...ITEM_TYPE_VALUES])
+  @MaxLength(10)
   itemType: string;
 
   @ApiProperty({ description: '품번 (Part Number)', example: 'WIRE-AWG18-R' })
@@ -37,12 +37,11 @@ export class CreatePartDto {
   @MaxLength(100)
   custPartNo?: string;
 
-  @ApiProperty({ description: '제품유형 코드', example: 'HARNESS', enum: PRODUCT_TYPE_VALUES })
+  @ApiProperty({ description: 'ID_ITEM.ITEM_CLASS', example: 'PCB' })
   @IsNotEmpty()
   @IsString()
-  @IsIn([...PRODUCT_TYPE_VALUES])
   @MaxLength(20)
-  productType: string;
+  itemClass: string;
 
   @ApiPropertyOptional({ description: '차종', example: 'CN7' })
   @IsOptional()
@@ -50,11 +49,11 @@ export class CreatePartDto {
   @MaxLength(100)
   modelName?: string;
 
-  @ApiPropertyOptional({ description: '불량 모델구분', example: 'LV' })
+  @ApiPropertyOptional({ description: 'ID_ITEM.MODEL_SUFFIX', example: '*' })
   @IsOptional()
   @IsString()
   @MaxLength(50)
-  defectModelGroup?: string;
+  modelSuffix?: string;
 
   @ApiPropertyOptional({ description: '규격' })
   @IsOptional()
@@ -74,11 +73,11 @@ export class CreatePartDto {
   @MaxLength(100)
   markingText?: string;
 
-  @ApiPropertyOptional({ description: '단위', default: 'EA' })
+  @ApiPropertyOptional({ description: 'ID_ITEM.ITEM_UOM', default: 'EA' })
   @IsOptional()
   @IsString()
   @MaxLength(20)
-  unit?: string;
+  itemUom?: string;
 
   @ApiPropertyOptional({ description: '색상' })
   @IsOptional()
@@ -191,7 +190,7 @@ export class CreatePartDto {
   @IsOptional()
   @IsString()
   @IsIn([...USE_YN_VALUES])
-  useYn?: string;
+  mesDisplayYn?: string;
 }
 
 export class UpdatePartDto extends PartialType(CreatePartDto) {}
@@ -199,13 +198,12 @@ export class UpdatePartDto extends PartialType(CreatePartDto) {}
 export class PartQueryDto extends PaginationQueryDto {
 
 
-  @ApiPropertyOptional({ enum: ITEM_TYPE_VALUES })
+  @ApiPropertyOptional({ description: 'ID_ITEM.ITEM_TYPE' })
   @IsOptional()
   @IsString()
-  @IsIn([...ITEM_TYPE_VALUES])
   itemType?: string;
 
-  @ApiPropertyOptional({ description: '품목 유형 다중 필터 (콤마 구분)', example: 'FINISHED,SEMI_PRODUCT' })
+  @ApiPropertyOptional({ description: 'ID_ITEM.ITEM_TYPE 다중 필터 (콤마 구분)', example: 'T,S' })
   @IsOptional()
   @Transform(({ value }) =>
     typeof value === 'string'
@@ -213,7 +211,6 @@ export class PartQueryDto extends PaginationQueryDto {
       : value,
   )
   @IsArray()
-  @IsIn([...ITEM_TYPE_VALUES], { each: true })
   itemTypes?: string[];
 
   @ApiPropertyOptional()
@@ -225,6 +222,6 @@ export class PartQueryDto extends PaginationQueryDto {
   @IsOptional()
   @IsString()
   @IsIn([...USE_YN_VALUES])
-  useYn?: string;
+  mesDisplayYn?: string;
 
 }

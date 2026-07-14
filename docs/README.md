@@ -44,12 +44,13 @@ standardVersion: 1
 |---|---|---|
 | sql/ | 화면/기능 개발 근거가 된 Oracle SQL·PL-SQL 원본 스냅샷 (기록형) | `대문자_함수명.sql` 또는 `kebab-case.sql` |
 | test-checklists/ | 구현 후 수동 검증 체크리스트 (기록형) | `YYYY-MM-DD-주제.md` |
+| presentations/ | 발표·데모용 렌더 산출물 (계획/설계문서의 발표본, HTML·PDF·PPTX 등, 기록형) | `YYYY-MM-DD-주제.html` (또는 `.pdf`/`.pptx`) |
 
 ## 외부 문서 집합 (위치를 앱이 결정하는 문서)
 
 | 위치 | 용도 | 관리 규정 (audit 점검 명령 포함) |
 |---|---|---|
-| (없음) | | |
+| 루트 `CONTEXT.md` (다중 컨텍스트면 루트 `CONTEXT-MAP.md` + 모듈별 `apps/**/CONTEXT.md`) | 도메인 용어집(ubiquitous language) — 용어·경계·불변식을 적는 **살아있는 문서**. `/grill-with-docs`·`/wayfinder`가 용어가 확정되는 순간 갱신한다. | audit: CONTEXT.md가 있으면 코드 최신 상태와 용어 정합성을 확인. 결정 **근거**(왜 이렇게 정했나)는 여기 적지 말고 core `adr/`에 남긴다. |
 
 ## 프로젝트 참고사항
 
@@ -58,5 +59,7 @@ standardVersion: 1
   2026-07-05 표준 폴더(`plans/`, `specs/`, `sql/`, `test-checklists/`)로 흡수했다. 이후 spec/plan은
   `docs/superpowers/`가 아니라 core 폴더에 직접 생성한다.
 - `config/database.json`은 자격증명 포함 — git 미추적. 관련 스키마 문서는 `database/`에 둔다.
+- 도메인 지식은 두 곳으로 나눈다: **용어/경계**는 루트 `CONTEXT.md`(외부 문서 집합), **결정 근거**는 core `adr/`.
+  `/grill-with-docs`·`/wayfinder`가 이 둘을 갱신하며, mattpocock 계열 스킬의 `CONTEXT.md`+`docs/adr/` 컨벤션과 그대로 맞물린다.
 
 <!-- LOCAL:END -->
