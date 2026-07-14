@@ -6,7 +6,7 @@
  *
  * 초보자 가이드:
  * 1. month(YYYY-MM) 기준으로 달력 셀을 생성하고 days 데이터를 매핑
- * 2. 날짜 클릭 시 onDayClick 호출 → 부모에서 DayEditModal 오픈
+ * 2. 날짜 클릭 시 onDayClick 호출 → 부모에서 DayEditModal 오픈. 확정(confirmYn=Y) 일자는 잠김.
  * 3. 하단 요약바에 근무일/휴일 수와 총 근무분 표시
  */
 import { useMemo } from "react";
@@ -14,40 +14,13 @@ import { useTranslation } from "react-i18next";
 import { ChevronLeft, ChevronRight, Lock } from "lucide-react";
 import { Button } from "@/components/ui";
 import { ComCodeBadge } from "@/components/ui";
-
-/** 일별 캘린더 데이터 */
-export interface WorkCalendarDay {
-  workDate: string;
-  dayType: string;
-  offReason: string | null;
-  shiftCount: number;
-  shifts: string | null;
-  workMinutes: number;
-  otMinutes: number;
-  remark: string | null;
-}
-
-/** 교대 패턴 마스터 */
-export interface ShiftPatternItem {
-  company: string;
-  plant: string;
-  shiftCode: string;
-  shiftName: string;
-  startTime: string;
-  endTime: string;
-  breakMinutes: number;
-  workMinutes: number;
-  sortOrder: number;
-  useYn: string;
-}
+import type { WorkCalendarDay } from "../types";
 
 interface CalendarGridProps {
-  calendarId: string;
   month: string;
   days: WorkCalendarDay[];
   onDayClick: (date: string, day: WorkCalendarDay | null) => void;
   onMonthChange: (month: string) => void;
-  isConfirmed: boolean;
 }
 
 const TYPE_COLORS: Record<string, string> = {
@@ -60,12 +33,10 @@ const TYPE_COLORS: Record<string, string> = {
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 export default function CalendarGrid({
-  calendarId,
   month,
   days,
   onDayClick,
   onMonthChange,
-  isConfirmed,
 }: CalendarGridProps) {
   const { t } = useTranslation();
 
@@ -112,7 +83,6 @@ export default function CalendarGrid({
         </Button>
         <span className="text-sm font-bold text-text dark:text-gray-100">
           {month}
-          {isConfirmed && <Lock className="w-3.5 h-3.5 inline ml-1 text-green-500" />}
         </span>
         <Button variant="ghost" size="sm" onClick={() => changeMonth(1)}>
           <ChevronRight className="w-4 h-4" />
@@ -135,18 +105,25 @@ export default function CalendarGrid({
           const ds = toDateStr(day);
           const info = dateMap.get(ds);
           const color = info ? TYPE_COLORS[info.dayType] ?? "" : "border-border dark:border-gray-700";
+          const locked = info?.confirmYn === "Y";
           return (
             <button
               key={ds}
-              onClick={() => !isConfirmed && onDayClick(ds, info ?? null)}
-              disabled={isConfirmed}
+              onClick={() => !locked && onDayClick(ds, info ?? null)}
+              disabled={locked}
               className={`h-16 rounded border p-1 text-left flex flex-col transition-colors
-                ${color} ${isConfirmed ? "cursor-default opacity-80" : "hover:ring-1 hover:ring-primary cursor-pointer"}`}
+                ${color} ${locked ? "cursor-default opacity-80" : "hover:ring-1 hover:ring-primary cursor-pointer"}`}
             >
               <span className="text-xs font-medium text-text dark:text-gray-200">{day}</span>
               {info && (
-                <div className="mt-auto">
+                <div className="mt-auto flex items-center gap-1">
                   <ComCodeBadge groupCode="WORK_DAY_TYPE" code={info.dayType} />
+                  {info.source === "LINE" && (
+                    <span className="text-[9px] px-1 rounded bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300">
+                      예외
+                    </span>
+                  )}
+                  {locked && <Lock className="w-3 h-3 text-green-500" />}
                 </div>
               )}
             </button>
