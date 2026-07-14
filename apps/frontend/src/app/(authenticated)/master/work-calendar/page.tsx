@@ -10,7 +10,7 @@
  * 3. 상단 버튼: 연간 생성 / 전사에서 복사(라인 모드) / 확정 / 확정취소.
  * 4. 교대시간 탭: IP_SHIFT_TIME_MASTER 유효기간 행 CRUD.
  */
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Calendar, RefreshCw, CalendarPlus, Copy, Lock, Unlock } from "lucide-react";
 import { Card, CardContent, Button, Input, ConfirmModal } from "@/components/ui";
@@ -54,30 +54,64 @@ export default function WorkCalendarPage() {
 
   const lineParam = useMemo(() => (lineCode ? `&lineCode=${lineCode}` : ""), [lineCode]);
 
-  /* ── 조회 ── */
+  /* ── 조회 ──
+   * 각 로더는 자체 AbortController + 단조증가 requestGeneration을 갖는다.
+   * 이전 요청을 abort하고, 응답이 와도 최신 generation이 아니면 state를 덮어쓰지 않는다.
+   * (routing/components/RoutingGroupManager.tsx, RoutingMaterialEditor.tsx와 동일한 패턴)
+   */
+  const daysRequestGeneration = useRef(0);
+  const daysRequestController = useRef<AbortController | null>(null);
+  const summaryRequestGeneration = useRef(0);
+  const summaryRequestController = useRef<AbortController | null>(null);
+  const shiftRequestGeneration = useRef(0);
+  const shiftRequestController = useRef<AbortController | null>(null);
+
   const fetchDays = useCallback(async () => {
+    daysRequestController.current?.abort();
+    const controller = new AbortController();
+    daysRequestController.current = controller;
+    const generation = ++daysRequestGeneration.current;
     setLoading(true);
     try {
-      const res = await api.get(`/master/work-calendar/days?month=${currentMonth}${lineParam}`);
+      const res = await api.get(`/master/work-calendar/days?month=${currentMonth}${lineParam}`, { signal: controller.signal });
+      if (generation !== daysRequestGeneration.current) return;
       setDays(res.data?.data ?? []);
-    } catch { setDays([]); } finally { setLoading(false); }
+    } catch {
+      if (!controller.signal.aborted && generation === daysRequestGeneration.current) setDays([]);
+    } finally {
+      if (generation === daysRequestGeneration.current) setLoading(false);
+    }
   }, [currentMonth, lineParam]);
 
   const fetchSummary = useCallback(async () => {
+    summaryRequestController.current?.abort();
+    const controller = new AbortController();
+    summaryRequestController.current = controller;
+    const generation = ++summaryRequestGeneration.current;
     try {
-      const res = await api.get(`/master/work-calendar/summary?year=${year}${lineParam}`);
+      const res = await api.get(`/master/work-calendar/summary?year=${year}${lineParam}`, { signal: controller.signal });
+      if (generation !== summaryRequestGeneration.current) return;
       setSummary(res.data?.data ?? null);
-    } catch { setSummary(null); }
+    } catch {
+      if (!controller.signal.aborted && generation === summaryRequestGeneration.current) setSummary(null);
+    }
   }, [year, lineParam]);
 
   const fetchShiftTimes = useCallback(async () => {
-    try { setShiftTimes((await api.get("/master/shift-times")).data?.data ?? []); }
-    catch { /* interceptor */ }
+    shiftRequestController.current?.abort();
+    const controller = new AbortController();
+    shiftRequestController.current = controller;
+    const generation = ++shiftRequestGeneration.current;
+    try {
+      const res = await api.get("/master/shift-times", { signal: controller.signal });
+      if (generation !== shiftRequestGeneration.current) return;
+      setShiftTimes(res.data?.data ?? []);
+    } catch { /* interceptor */ }
   }, []);
 
-  useEffect(() => { fetchDays(); }, [fetchDays]);
-  useEffect(() => { fetchSummary(); }, [fetchSummary]);
-  useEffect(() => { fetchShiftTimes(); }, [fetchShiftTimes]);
+  useEffect(() => { void fetchDays(); return () => daysRequestController.current?.abort(); }, [fetchDays]);
+  useEffect(() => { void fetchSummary(); return () => summaryRequestController.current?.abort(); }, [fetchSummary]);
+  useEffect(() => { void fetchShiftTimes(); return () => shiftRequestController.current?.abort(); }, [fetchShiftTimes]);
 
   /* ── 쓰기 ── */
   const refreshAll = useCallback(async () => {

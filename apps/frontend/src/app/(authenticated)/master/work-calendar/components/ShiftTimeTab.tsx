@@ -88,13 +88,13 @@ export default function ShiftTimeTab({ shiftTimes, onRefresh }: Props) {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border dark:border-gray-700 text-text-muted dark:text-gray-400">
-              <th className="py-2 text-left">{t("master.workCalendar.dateset")}</th>
-              <th className="py-2 text-left">{t("master.workCalendar.dateend")}</th>
-              <th className="py-2 text-left">{t("master.workCalendar.dayShift")}</th>
-              <th className="py-2 text-right">{t("master.workCalendar.dayNet")}</th>
-              <th className="py-2 text-left">{t("master.workCalendar.nightShift")}</th>
-              <th className="py-2 text-right">{t("master.workCalendar.nightNet")}</th>
-              <th className="py-2 text-right">{t("common.actions")}</th>
+              <th className="px-3 py-2 text-left">{t("master.workCalendar.dateset")}</th>
+              <th className="px-3 py-2 text-left">{t("master.workCalendar.dateend")}</th>
+              <th className="px-3 py-2 text-left">{t("master.workCalendar.dayShift")}</th>
+              <th className="px-3 py-2 text-right">{t("master.workCalendar.dayNet")}</th>
+              <th className="px-3 py-2 text-left">{t("master.workCalendar.nightShift")}</th>
+              <th className="px-3 py-2 text-right">{t("master.workCalendar.nightNet")}</th>
+              <th className="px-3 py-2 text-right">{t("common.actions")}</th>
             </tr>
           </thead>
           <tbody>
@@ -104,15 +104,15 @@ export default function ShiftTimeTab({ shiftTimes, onRefresh }: Props) {
               </td></tr>
             ) : shiftTimes.map((s) => (
               <tr key={s.dateset} className="border-b border-border dark:border-gray-700">
-                <td className="py-2">{s.dateset}</td>
-                <td className="py-2">{s.dateend ?? "—"}</td>
-                <td className="py-2">{s.dayTimeStart} ~ {s.dayTimeEnd} (휴식 {s.dayBreakMinutes}분)</td>
-                <td className="py-2 text-right">{netOf(s.dayTimeStart, s.dayTimeEnd, s.dayBreakMinutes)}</td>
-                <td className="py-2">
+                <td className="px-3 py-2">{s.dateset}</td>
+                <td className="px-3 py-2">{s.dateend ?? "—"}</td>
+                <td className="px-3 py-2">{s.dayTimeStart} ~ {s.dayTimeEnd} (휴식 {s.dayBreakMinutes}분)</td>
+                <td className="px-3 py-2 text-right">{netOf(s.dayTimeStart, s.dayTimeEnd, s.dayBreakMinutes)}</td>
+                <td className="px-3 py-2">
                   {s.nightTimeStart ? `${s.nightTimeStart} ~ ${s.nightTimeEnd} (휴식 ${s.nightBreakMinutes}분)` : "—"}
                 </td>
-                <td className="py-2 text-right">{netOf(s.nightTimeStart, s.nightTimeEnd, s.nightBreakMinutes)}</td>
-                <td className="py-2 text-right">
+                <td className="px-3 py-2 text-right">{netOf(s.nightTimeStart, s.nightTimeEnd, s.nightBreakMinutes)}</td>
+                <td className="px-3 py-2 text-right">
                   <button onClick={() => { setForm({ ...s }); setIsEdit(true); }}
                     className="p-1 rounded hover:bg-primary/10 text-primary">
                     <Pencil className="w-3.5 h-3.5" />
