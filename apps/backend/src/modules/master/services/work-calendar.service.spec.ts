@@ -179,6 +179,18 @@ describe('WorkCalendarService', () => {
       expect(saved.every((d) => d.enterBy === 'SYSTEM')).toBe(true);
       expect(saved.every((d) => d.lastModifyBy === 'SYSTEM')).toBe(true);
     });
+
+    it('ENTER_DATE/LAST_MODIFY_DATE를 채운다 (NOT NULL 컬럼이라 비면 ORA-01400)', async () => {
+      companyRepo.find.mockResolvedValue([]);
+      companyRepo.save.mockImplementation(async (v) => v as ProductCompanyCalendar);
+
+      await target.generateYear({ year: '2026' }, 1);
+
+      const saved = companyRepo.save.mock.calls[0][0] as ProductCompanyCalendar[];
+      expect(saved.length).toBeGreaterThan(0);
+      expect(saved.every((d) => d.enterDate instanceof Date)).toBe(true);
+      expect(saved.every((d) => d.lastModifyDate instanceof Date)).toBe(true);
+    });
   });
 
   describe('bulkUpdateDays', () => {
@@ -240,6 +252,20 @@ describe('WorkCalendarService', () => {
       expect(saved[0].enterBy).toBe('HONG');
       expect(saved[0].lastModifyBy).toBe('HONG');
     });
+
+    it('ENTER_DATE/LAST_MODIFY_DATE를 채운다 (NOT NULL 컬럼이라 비면 ORA-01400)', async () => {
+      companyRepo.find.mockResolvedValue([]);
+      companyRepo.save.mockImplementation(async (v) => v as ProductCompanyCalendar);
+
+      await target.bulkUpdateDays(
+        { days: [{ workDate: '2026-07-14', dayType: 'WORK' }] },
+        1,
+      );
+
+      const saved = companyRepo.save.mock.calls[0][0] as ProductCompanyCalendar[];
+      expect(saved[0].enterDate).toBeInstanceOf(Date);
+      expect(saved[0].lastModifyDate).toBeInstanceOf(Date);
+    });
   });
 
   describe('confirm/unconfirm', () => {
@@ -255,6 +281,22 @@ describe('WorkCalendarService', () => {
       expect(saved[0].lastModifyBy).toBe('HONG');
       expect(saved[0].lastModifyDate).toBeInstanceOf(Date);
     });
+
+    it('확정/확정취소 모두 기존 행의 ENTER_DATE를 non-null로 유지한다 (원본 생성시각 보존)', async () => {
+      const row = { ...companyRow('2026-07-14', 'WORK', 'N'), enterDate: new Date('2026-01-01T00:00:00') };
+      companyRepo.find.mockResolvedValue([row]);
+      companyRepo.save.mockImplementation(async (v) => v as ProductCompanyCalendar);
+
+      await target.confirm({ year: '2026' }, 1, 'HONG');
+      let saved = companyRepo.save.mock.calls[0][0] as ProductCompanyCalendar[];
+      expect(saved[0].enterDate).toBeInstanceOf(Date);
+      expect(saved[0].enterDate).toEqual(new Date('2026-01-01T00:00:00'));
+
+      await target.unconfirm({ year: '2026' }, 1, 'HONG');
+      saved = companyRepo.save.mock.calls[1][0] as ProductCompanyCalendar[];
+      expect(saved[0].enterDate).toBeInstanceOf(Date);
+      expect(saved[0].enterDate).toEqual(new Date('2026-01-01T00:00:00'));
+    });
   });
 
   describe('copyFromCompany', () => {
@@ -269,6 +311,19 @@ describe('WorkCalendarService', () => {
       const saved = lineRepo.save.mock.calls[0][0] as ProductLineCalendar[];
       expect(saved[0].enterBy).toBe('HONG');
       expect(saved[0].lastModifyBy).toBe('HONG');
+    });
+
+    it('라인 월력에 ENTER_DATE/LAST_MODIFY_DATE를 채운다 (NOT NULL 컬럼이라 비면 ORA-01400)', async () => {
+      companyRepo.find.mockResolvedValue([companyRow('2026-07-14', 'WORK')]);
+      lineRepo.find.mockResolvedValue([]);
+      lineRepo.create.mockImplementation((v) => v as ProductLineCalendar);
+      lineRepo.save.mockImplementation(async (v) => v as ProductLineCalendar);
+
+      await target.copyFromCompany({ year: '2026', lineCode: 'L1' }, 1, 'HONG');
+
+      const saved = lineRepo.save.mock.calls[0][0] as ProductLineCalendar[];
+      expect(saved[0].enterDate).toBeInstanceOf(Date);
+      expect(saved[0].lastModifyDate).toBeInstanceOf(Date);
     });
   });
 });

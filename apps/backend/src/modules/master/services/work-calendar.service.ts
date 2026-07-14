@@ -237,6 +237,7 @@ export class WorkCalendarService {
     }
 
     const enterBy = userId ?? 'SYSTEM';
+    const now = new Date();
     const rows = companyRows.map((src) =>
       this.lineRepo.create({
         planDate: new Date(src.planDate),
@@ -250,8 +251,9 @@ export class WorkCalendarService {
         confirmYn: 'N',
         calendarComment: src.calendarComment,
         enterBy,
+        enterDate: now,
         lastModifyBy: enterBy,
-        lastModifyDate: new Date(),
+        lastModifyDate: now,
       }),
     );
     await this.lineRepo.save(rows);
@@ -326,9 +328,17 @@ export class WorkCalendarService {
       day.workDate,
     ) as ShiftTimeMasterLike | null;
 
-    // ENTER_DATE는 @CreateDateColumn 기본값으로 INSERT 시에만 채워지고 UPDATE에는 손대지 않는다.
-    // LAST_MODIFY_BY/LAST_MODIFY_DATE는 신규/기존 여부를 구분하지 않고 매번 명시적으로 찍는다.
+    // buildRow()는 repo.create()를 거치지 않는 평범한 객체 리터럴을 반환하므로,
+    // @CreateDateColumn(ENTER_DATE)/@UpdateDateColumn(LAST_MODIFY_DATE) 기본값이 적용되지 않는다
+    // (엔티티 메타데이터 기반 초기화는 repo.create()/실제 엔티티 인스턴스에서만 동작한다).
+    // 그래서 ENTER_BY/CONFIRM_YN과 마찬가지로 ENTER_DATE/LAST_MODIFY_DATE도 신규·기존 여부를
+    // 구분하지 않고 매번 명시적으로 찍는다. 이 함수는 신규 삽입과 기존 일자 덮어쓰기(같은 PK로
+    // save()) 양쪽에 다 쓰이므로, 기존 일자를 수정하면 ENTER_DATE가 "최초 생성 시각"이 아니라
+    // "마지막 저장 시각"으로 갱신된다 — ENTER_BY/CONFIRM_YN을 무조건 리셋하는 기존 동작과 같은
+    // 절충이다. 원본 생성 시각을 보존하려면 저장 전 기존 행을 조회해야 하므로(추가 쿼리 1회),
+    // 여기서는 단순함을 택한다.
     const enterBy = userId ?? 'SYSTEM';
+    const now = new Date();
     const base = {
       planDate: parseYmd(day.workDate),
       organizationId,
@@ -340,8 +350,9 @@ export class WorkCalendarService {
       confirmYn: 'N',
       calendarComment: day.comment ?? null,
       enterBy,
+      enterDate: now,
       lastModifyBy: enterBy,
-      lastModifyDate: new Date(),
+      lastModifyDate: now,
     };
 
     // repo.create()는 새 엔티티 인스턴스에 필드를 병합해줄 뿐이므로,

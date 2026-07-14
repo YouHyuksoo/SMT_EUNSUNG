@@ -61,6 +61,11 @@ export class ShiftTimeService {
     userId?: string,
   ): Promise<ShiftTimeMaster> {
     await this.ensureNoOverlap(dto.dateset, dto.dateend ?? null, organizationId, null);
+    const enterBy = userId ?? 'SYSTEM';
+    const now = new Date();
+    // repo.create()로 만든 엔티티도 ENTER_DATE/LAST_MODIFY_DATE를 자동으로 채운다고 가정하지
+    // 않는다 (work-calendar.service.ts의 buildRow()에서 같은 가정이 실제 DB에서 깨진 전례가
+    // 있다). NOT NULL 컬럼이므로 매번 명시적으로 찍는다.
     const entity = this.repo.create({
       organizationId,
       dateset: parseYmd(dto.dateset),
@@ -71,8 +76,10 @@ export class ShiftTimeService {
       nightTimeStart: dto.nightTimeStart ?? null,
       nightTimeEnd: dto.nightTimeEnd ?? null,
       nightBreakMinutes: dto.nightBreakMinutes ?? 0,
-      enterBy: userId ?? 'SYSTEM',
-      lastModifyBy: userId ?? 'SYSTEM',
+      enterBy,
+      enterDate: now,
+      lastModifyBy: enterBy,
+      lastModifyDate: now,
     });
     return this.repo.save(entity);
   }

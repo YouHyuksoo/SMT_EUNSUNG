@@ -22,6 +22,11 @@ describe('ShiftTimeService', () => {
       nightTimeStart: '20:00',
       nightTimeEnd: '08:00',
       nightBreakMinutes: 60,
+      // 실제 DB 조회 결과는 NOT NULL 컬럼이라 항상 채워져 있다 — 로드된 엔티티를 흉내낸다.
+      enterBy: 'SYSTEM',
+      enterDate: new Date('2026-01-01T00:00:00'),
+      lastModifyBy: 'SYSTEM',
+      lastModifyDate: new Date('2026-01-01T00:00:00'),
     }) as ShiftTimeMaster;
 
   beforeEach(async () => {
@@ -100,6 +105,20 @@ describe('ShiftTimeService', () => {
 
       expect(saved.enterBy).toBe('SYSTEM');
       expect(saved.lastModifyBy).toBe('SYSTEM');
+    });
+
+    it('ENTER_DATE/LAST_MODIFY_DATE를 채운다 (NOT NULL 컬럼이라 비면 ORA-01400)', async () => {
+      repo.find.mockResolvedValue([]);
+      repo.create.mockImplementation((v) => v as ShiftTimeMaster);
+      repo.save.mockImplementation(async (v) => v as ShiftTimeMaster);
+
+      const saved = await target.create(
+        { dateset: '2026-07-01', dayTimeStart: '08:00', dayTimeEnd: '20:00' },
+        1,
+      );
+
+      expect(saved.enterDate).toBeInstanceOf(Date);
+      expect(saved.lastModifyDate).toBeInstanceOf(Date);
     });
   });
 
@@ -198,6 +217,18 @@ describe('ShiftTimeService', () => {
 
       expect(saved.lastModifyBy).toBe('HONG');
       expect(saved.lastModifyDate).toBeInstanceOf(Date);
+    });
+
+    it('ENTER_DATE는 건드리지 않고 원본 생성시각을 보존한다 (NOT NULL 컬럼이라 비면 ORA-01400)', async () => {
+      const existing = row('2026-07-01', null);
+      repo.findOne.mockResolvedValue(existing);
+      repo.find.mockResolvedValue([existing]);
+      repo.save.mockImplementation(async (v) => v as ShiftTimeMaster);
+
+      const saved = await target.update('2026-07-01', { dayTimeStart: '09:00' }, 1, 'HONG');
+
+      expect(saved.enterDate).toBeInstanceOf(Date);
+      expect(saved.enterDate).toEqual(new Date('2026-01-01T00:00:00'));
     });
   });
 
