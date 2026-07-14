@@ -2,117 +2,162 @@
 menuCode: MST_WORK_CALENDAR
 audience: operator
 title: 생산월력관리 — 운영 가이드
-summary: WORK_CALENDARS·WORK_CALENDAR_DAYS·SHIFT_PATTERNS 전체 컬럼 DB 매핑, 연간 생성·복사·확정 로직, 공통코드 연계, 권한, 트러블슈팅, 멀티테넌시 스코프
-tags: [기준정보, 생산월력, 작업캘린더, 운영, 교대]
-keywords: [WORK_CALENDARS, WORK_CALENDAR_DAYS, SHIFT_PATTERNS, CALENDAR_ID, DAY_TYPE, OFF_REASON, WORK_DAY_TYPE, DAY_OFF_TYPE, 연간생성, generateYear, copyFrom, confirm, unconfirm, CONFIRMED, DRAFT, 공휴일, 가용시간, 멀티테넌시]
-related: [MST_PROCESS]
+summary: IP_PRODUCT_COMPANY_CALENDAR/IP_PRODUCT_LINE_CALENDAR/IP_SHIFT_TIME_MASTER 전체 컬럼 DB 매핑, 병합·연간생성·복사·확정 로직, HOLIDAY_YN 파생 규칙, API 목록, 트러블슈팅, 멀티테넌시 스코프
+tags: [기준정보, 생산월력, 작업캘린더, 운영, 교대시간]
+keywords: [IP_PRODUCT_COMPANY_CALENDAR, IP_PRODUCT_LINE_CALENDAR, IP_SHIFT_TIME_MASTER, PLAN_DATE, DAY_TYPE, OFF_REASON, HOLIDAY_YN, WORK_DAY_TYPE, DAY_OFF_TYPE, CONFIRM_YN, generateYear, copyFromCompany, F_GET_DELIVERY_DATE, CK_IPCC_HOLIDAY_SYNC, CK_IPLC_HOLIDAY_SYNC, ORGANIZATION_ID, 멀티테넌시]
+related: [MST_PROD_LINE]
 ---
 
 # 생산월력관리 — 운영 가이드
 
 ## 시스템 목적·역할
-연도·공정별 근무 캘린더를 보유하는 기준정보 화면입니다. 헤더 **`WORK_CALENDARS`**, 일자별 상세 **`WORK_CALENDAR_DAYS`**, 교대 시간대 마스터 **`SHIFT_PATTERNS`** 세 테이블을 관리합니다. 여기서 확정한 가동일·가용시간(분)은 생산계획·CAPA·가동 캘린더 산정의 기준 데이터가 됩니다.
+전사 근무 캘린더와 라인별 예외 캘린더, 2교대 근무시간 마스터를 보유하는 기준정보 화면입니다. 세 개의 은성 레거시 테이블 **`IP_PRODUCT_COMPANY_CALENDAR`**(전사), **`IP_PRODUCT_LINE_CALENDAR`**(라인 예외), **`IP_SHIFT_TIME_MASTER`**(교대시간)를 관리합니다. 여기서 확정한 가동일·근무시간(분)은 생산계획·CAPA 산정의 기준이 되고, `HOLIDAY_YN`은 PL/SQL 납기일 계산 함수가 읽습니다.
 
 ## 데이터 구조
 ```
-WORK_CALENDARS (PK: CALENDAR_ID)
-   │  UQ_WORK_CAL_YEAR_PROC: (COMPANY, PLANT_CD, CALENDAR_YEAR, PROCESS_CD) 유니크
-   │  PROCESS_CD ──▶ PROCESS_MASTERS (null이면 공장 공통)
-   └─ 1:N ─▶ WORK_CALENDAR_DAYS (PK: CALENDAR_ID, WORK_DATE)
-                 · DAY_TYPE   ─▶ 공통코드 WORK_DAY_TYPE
-                 · OFF_REASON ─▶ 공통코드 DAY_OFF_TYPE
-                 · SHIFTS(CSV) ─▶ SHIFT_PATTERNS.SHIFT_CODE
+IP_PRODUCT_COMPANY_CALENDAR (PK: PLAN_DATE, ORGANIZATION_ID)   ── 전사 월력
+IP_PRODUCT_LINE_CALENDAR    (PK: PLAN_DATE, ORGANIZATION_ID, LINE_CODE) ── 라인 예외 월력
 
-SHIFT_PATTERNS (PK: COMPANY, PLANT_CD, SHIFT_CODE)  ── 독립 교대 마스터(탭)
+IP_SHIFT_TIME_MASTER (PK: ORGANIZATION_ID, DATESET) ── 유효기간형 2교대 시간 마스터
+   (원본 테이블에는 PK가 없었다. 2026-07-14 마이그레이션으로 PK 부여)
 ```
 
-## ① 캘린더 헤더 — WORK_CALENDARS (전체 컬럼)
+**조회 병합 규칙**: 월 조회(`GET /days`)는 두 테이블을 항상 함께 읽습니다. 같은 날짜에 라인 예외 행(`IP_PRODUCT_LINE_CALENDAR`)이 있으면 그 값이 이기고(`source=LINE`), 없으면 전사 행(`IP_PRODUCT_COMPANY_CALENDAR`)이 표시됩니다(`source=COMPANY`). 이 병합은 매 조회마다 애플리케이션 레벨에서 수행되며, DB에 물리적으로 병합된 테이블은 없습니다.
+
+## ① 전사 월력 — IP_PRODUCT_COMPANY_CALENDAR / 라인 예외 — IP_PRODUCT_LINE_CALENDAR (전체 컬럼)
+
+두 테이블은 `LINE_CODE` 유무만 다르고 나머지 컬럼은 동일합니다.
 
 | 화면 항목 | DB 컬럼 | 역할 / 의미 · 운영 포인트 |
 |------|------|------|
-| 캘린더ID | `CALENDAR_ID` | PK(자연키, VARCHAR2 50). 예 `WC-2026-PLANT01`. 일자(`WORK_CALENDAR_DAYS`)가 이 키로 연결되므로 불변. |
-| 연도 | `CALENDAR_YEAR` | 적용 연도(VARCHAR2 4, YYYY). 연간 생성 범위(1/1~12/31)의 기준. |
-| 공정 | `PROCESS_CD` | 공정 전용 캘린더 코드(nullable). null이면 공장 공통. `PROCESS_MASTERS` 참조(COMPANY/PLANT_CD/PROCESS_CD 조인). |
-| 기본교대수 | `DEFAULT_SHIFT_COUNT` | NUMBER(1), 기본 1, 범위 1~3. 연간 생성·일자 기본값. |
-| 기본교대패턴 | `DEFAULT_SHIFTS` | 교대코드 CSV(VARCHAR2 100, 예 `DAY,NIGHT`). 연간 생성 시 근무일 SHIFTS·가용시간 산출 기준. |
-| 상태 | `STATUS` | `DRAFT`(기본)/`CONFIRMED`. CONFIRMED면 수정·생성·복사·삭제 차단(`ensureNotConfirmed`). |
-| 비고 | `REMARK` | 메모(VARCHAR2 500). |
-| 감사 | `CREATED_BY`, `UPDATED_BY`, `CREATED_AT`, `UPDATED_AT` | 생성/수정 이력. CREATED_AT/UPDATED_AT은 TypeORM 타임스탬프. |
-| 멀티테넌시 | `COMPANY`, `PLANT_CD` | 회사/공장 스코프(`40`/`1000`). 모든 조회·저장에 적용. |
+| 일자 | `PLAN_DATE` | PK 구성(DATE). 월 조회는 `Between(월초, 월말)`로 필터. |
+| (라인 예외만) 라인 | `LINE_CODE` | `IP_PRODUCT_LINE_CALENDAR`의 PK 구성. 전사 테이블에는 없음. |
+| 근무유형 | `DAY_TYPE` | 기본 `WORK`. 공통코드 `WORK_DAY_TYPE`. DTO에서 `IsIn(['WORK','OFF','HALF','SPECIAL'])` 검증. |
+| 휴무사유 | `OFF_REASON` | nullable, 공통코드 `DAY_OFF_TYPE`. `DAY_TYPE='OFF'`가 아니면 항상 null로 저장(서버가 강제). 연간 생성은 주말=`WEEKEND`, 고정공휴일=`HOLIDAY`. |
+| **휴일유무** | **`HOLIDAY_YN`** | **`DAY_TYPE`의 미러**(`OFF`→`'Y'`, 그 외→`'N'`). 클라이언트가 값을 보내지 않으며, 서버가 `@smt/shared`의 `holidayYnOf(dayType)`로만 파생시킨다(`work-calendar.service.ts` `buildRow()`). PL/SQL `F_GET_DELIVERY_DATE`(납기일 계산)가 이 컬럼을 직접 읽으므로 **절대 직접 UPDATE하지 않는다**. DB CHECK 제약 `CK_IPCC_HOLIDAY_SYNC`(전사)/`CK_IPLC_HOLIDAY_SYNC`(라인)가 `DAY_TYPE`↔`HOLIDAY_YN` 불일치를 막는다. |
+| 근무시간 | `WORK_MINUTES` | NUMBER. 미지정 시 `defaultWorkMinutes(dayType, shift)`로 자동 산출(아래 파생식 참고). 지정 시 override로 그대로 저장. |
+| 잔업시간 | `OT_MINUTES` | NUMBER, 기본 0. |
+| 확정 | `CONFIRM_YN` | `'Y'`/`'N'`, 기본 `'N'`. `'Y'`인 일자가 범위에 하나라도 있으면 저장/연간생성/복사가 `ConflictException`(409)으로 거부된다(`ensureNotConfirmed`). |
+| 비고 | `CALENDAR_COMMENT` | VARCHAR2 500, nullable. |
+| 감사 | `ENTER_BY`, `LAST_MODIFY_BY`, `ENTER_DATE`, `LAST_MODIFY_DATE` | 저장할 때마다 명시적으로 다시 찍는다(신규/기존 구분 없이 매번 갱신 — 아래 "구현 메모" 참고). |
+| 멀티테넌시 | `ORGANIZATION_ID` | PK 구성. `@OrganizationId()` 데코레이터가 `req.user.organizationId`에서 추출. `COMPANY`/`PLANT_CD` 컬럼은 이 두 테이블에 없다. |
 
-## ② 일자 상세 — WORK_CALENDAR_DAYS (전체 컬럼)
-
-| 화면 항목 | DB 컬럼 | 역할 / 의미 · 운영 포인트 |
-|------|------|------|
-| (헤더 연결) | `CALENDAR_ID` | PK 구성. 소속 캘린더. |
-| 근무일자 | `WORK_DATE` | PK 구성(DATE). 월 조회는 `BETWEEN TO_DATE(...)`로 month(YYYY-MM) 범위 필터. |
-| 근무유형 | `DAY_TYPE` | 기본 `WORK`. 공통코드 `WORK_DAY_TYPE`(WORK/OFF/HALF/SPECIAL). DTO에서 `IsIn(['WORK','OFF','HALF','SPECIAL'])` 검증. WORK/HALF/SPECIAL=가동일 집계, OFF=비가동. |
-| 휴무사유 | `OFF_REASON` | nullable. 공통코드 `DAY_OFF_TYPE`. OFF일 때만 저장(프론트가 OFF 아니면 null 전송). 연간 생성은 주말=`WEEKEND`, 공휴일=`HOLIDAY`. |
-| 교대수 | `SHIFT_COUNT` | NUMBER(1). 미지정 시 헤더 `DEFAULT_SHIFT_COUNT`. 휴무일 생성 시 0. |
-| 교대패턴 | `SHIFTS` | 교대코드 CSV(VARCHAR2 100). 미지정 시 헤더 `DEFAULT_SHIFTS`. 휴무일 생성 시 null. |
-| 가용시간 | `WORK_MINUTES` | NUMBER(5). 정규 가용 근무분. 연간 생성 시 기본교대패턴 근무분 합. 휴무 0. 요약에서 SUM. |
-| 잔업시간 | `OT_MINUTES` | NUMBER(5), 기본 0. 잔업(분). 총가용시간 = WORK_MINUTES + OT_MINUTES. |
-| 비고 | `REMARK` | 일자 메모(VARCHAR2 500). |
-| 감사/테넌시 | `CREATED_BY`, `UPDATED_BY`, `CREATED_AT`, `UPDATED_AT`, `COMPANY`, `PLANT_CD` | 이력 + 회사/공장 스코프. |
-
-## ③ 교대패턴 — SHIFT_PATTERNS (전체 컬럼)
+## ② 교대시간 — IP_SHIFT_TIME_MASTER (전체 컬럼)
 
 | 화면 항목 | DB 컬럼 | 역할 / 의미 · 운영 포인트 |
 |------|------|------|
-| 교대코드 | `SHIFT_CODE` | PK 구성(COMPANY/PLANT_CD/SHIFT_CODE 복합PK, VARCHAR2 20). 캘린더 SHIFTS가 참조. 수정 시 변경 불가. |
-| 교대명 | `SHIFT_NAME` | 표시명(VARCHAR2 100, 예 주간/야간). |
-| 시작시간 | `START_TIME` | HH:MM(VARCHAR2 5, 예 `08:00`). |
-| 종료시간 | `END_TIME` | HH:MM(VARCHAR2 5, 예 `17:00`). |
-| 휴식(분) | `BREAK_MINUTES` | NUMBER(4), 기본 60. 휴게 시간. |
-| 근무(분) | `WORK_MINUTES` | NUMBER(5). 실 근무분. 캘린더 연간 생성 시 근무일 가용시간 = 기본교대패턴 코드들의 이 값 합. |
-| 정렬순서 | `SORT_ORDER` | NUMBER(3). 목록 정렬(화면은 추가 시 length+1 자동 제안). |
-| 사용여부 | `USE_YN` | `Y`/`N`, 기본 Y. 일자 편집 교대 선택 버튼은 `USE_YN='Y'`만 노출. |
-| 감사/테넌시 | `CREATED_BY`, `UPDATED_BY`, `CREATED_AT`, `UPDATED_AT`, `COMPANY`, `PLANT_CD` | 이력 + 공장 스코프. |
+| 적용시작일 | `DATESET` | PK 구성(DATE). |
+| 적용종료일 | `DATEEND` | nullable=무기한. |
+| 주간 시작/종료 | `DAY_TIME_START` / `DAY_TIME_END` | VARCHAR2(8), `HH:MM`. |
+| 주간 휴식(분) | `DAY_BREAK_MINUTES` | NUMBER, 기본 0. |
+| 야간 시작/종료 | `NIGHT_TIME_START` / `NIGHT_TIME_END` | VARCHAR2(8). **야간은 자정을 넘길 수 있다**(예: `20:00`~`08:00`). 순근무분 계산 시 `end < start`면 +24h로 처리(`shiftNetMinutes`, `@smt/shared`). |
+| 야간 휴식(분) | `NIGHT_BREAK_MINUTES` | NUMBER, 기본 0. |
+| 감사 | `ENTER_BY`, `LAST_MODIFY_BY`, `ENTER_DATE`, `LAST_MODIFY_DATE` | `@CreateDateColumn`/`@UpdateDateColumn`이지만, 서비스는 이 값들을 매번 명시적으로 채운다(자동 채움을 신뢰하지 않는다 — 엔티티 주석 참고). |
+| 멀티테넌시 | `ORGANIZATION_ID` | PK 구성. |
 
-## 연간 생성·복사·확정 로직
-- **연간 생성** `POST /master/work-calendars/:id/generate` (`generateYear`): 입력 `{ saturdayWork, sundayWork, applyHolidays(기본 true) }`.
-  1. 확정 캘린더면 차단.
-  2. 기본교대패턴 코드별 `SHIFT_PATTERNS.WORK_MINUTES` 합 = `defaultWorkMinutes`.
-  3. 한국 고정 공휴일 Set 생성(1/1, 3/1, 5/5, 6/6, 8/15, 10/3, 10/9, 12/25). **음력·대체공휴일·임시공휴일은 미포함** — 운영자가 일자 편집으로 보정.
-  4. 1/1~12/31 순회: 주말(미근무 옵션)→OFF/`WEEKEND`, 공휴일→OFF/`HOLIDAY`, 그 외 WORK. WORK는 SHIFT_COUNT=기본교대수·SHIFTS=기본교대패턴·WORK_MINUTES=defaultWorkMinutes.
-  5. 트랜잭션으로 기존 일자 **전체 DELETE 후** 100건 배치 INSERT(덮어쓰기).
-- **복사** `POST /:id/copy-from/:sourceId` (`copyFrom`): 원본 일자를 대상 CALENDAR_ID로 복제. 원본 일자 0건이면 404. 대상 기존 일자 DELETE 후 배치 INSERT.
-- **일괄 저장** `PUT /:id/days/bulk`: 전달된 날짜의 min~max 범위를 DELETE 후 재INSERT(달력 1일 편집도 단건 배열로 호출).
-- **확정/취소** `POST /:id/confirm`·`/unconfirm`: STATUS를 CONFIRMED/DRAFT로 토글. 확정 시 후속 수정 차단.
-- **요약** `GET /:id/summary` (`getSummary`): `TO_CHAR(WORK_DATE,'YYYY-MM')` 그룹으로 월별·연간 근무/휴무/반일/특근일수·가용분·잔업분 집계.
+> 화면에 표시되는 "주간/야간 순근무(분)"은 저장 컬럼이 아니라 `shiftNetMinutes()`로 매번 계산해 보여주는 값이다.
+> 적용기간이 겹치는 행은 등록/수정할 수 없다(`ensureNoOverlap`, DB CHECK로 표현 불가하여 서비스 레벨에서 검증).
+
+---
+
+## API 목록
+
+`master/work-calendar` (`work-calendar.controller.ts`)
+
+| 메서드/경로 | 설명 |
+|------|------|
+| `GET /master/work-calendar/days?month=YYYY-MM&lineCode=` | 월별 일자 조회. 전사+라인 예외 병합 결과 반환. |
+| `PUT /master/work-calendar/days/bulk` | 일자 일괄 저장(`lineCode` 미지정 시 전사). |
+| `POST /master/work-calendar/generate` | 연간 생성. |
+| `POST /master/work-calendar/copy-from-company` | 라인 월력을 전사 월력에서 복제(라인 필수). |
+| `POST /master/work-calendar/confirm` | 확정(연 또는 월 단위, `lineCode` 옵션). |
+| `POST /master/work-calendar/unconfirm` | 확정 취소. |
+| `GET /master/work-calendar/summary?year=YYYY&lineCode=` | 연간 요약(가동일수·비가동일수·반일·특근·총가용시간). |
+
+`master/shift-times` (`shift-time.controller.ts`)
+
+| 메서드/경로 | 설명 |
+|------|------|
+| `GET /master/shift-times` | 목록(적용시작일 내림차순). |
+| `POST /master/shift-times` | 등록. |
+| `PUT /master/shift-times/:dateset` | 수정(적용시작일은 불변, 경로 파라미터). |
+| `DELETE /master/shift-times/:dateset` | 삭제. |
+
+모든 API는 `JwtAuthGuard`로 로그인이 필요하며, `ORGANIZATION_ID`로 스코프된다.
+
+## 알고리즘
+
+### 근무시간 자동 파생 (`defaultWorkMinutes`, `@smt/shared/work-calendar/work-calendar-rules.ts`)
+근무시간을 지정하지 않고 저장하면(`WorkCalendarDayItemDto.workMinutes` 미지정) 서버가 해당 일자에 유효한 `IP_SHIFT_TIME_MASTER` 행을 찾아 아래처럼 계산합니다.
+
+| DAY_TYPE | WORK_MINUTES |
+|------|------|
+| `OFF` | 0 |
+| `WORK` | 주간 순근무분 + 야간 순근무분 |
+| `HALF` | 주간 순근무분 ÷ 2 (내림) |
+| `SPECIAL` | 주간 순근무분 |
+
+순근무분 = `(종료 - 시작) - 휴식분`. 값을 지정해서 저장하면 그 값이 override로 그대로 저장됩니다.
+
+### 연간 생성 (`generateYear`, `POST /generate`)
+1. 확정된 일자가 대상 범위(연도, `lineCode`)에 있으면 409로 차단(`ensureNotConfirmed`).
+2. `IP_SHIFT_TIME_MASTER` 전체를 1회 조회해 재사용(`findAll`, 일자마다 재조회하지 않음).
+3. 1/1~12/31 순회: 주말이고 `saturdayWork`/`sundayWork`가 꺼져 있으면 `OFF`/`WEEKEND`. 그 외 `applyHolidays`(기본 true)이고 고정공휴일이면 `OFF`/`HOLIDAY`. 나머지는 `WORK`.
+4. **양력 고정공휴일만** 자동 적용된다(`isFixedHoliday`): 1/1, 3/1, 5/5, 6/6, 8/15, 10/3, 10/9, 12/25. 음력 공휴일(설·추석)·대체공휴일·임시공휴일은 포함되지 않는다 — 운영자가 일자 편집으로 보정해야 한다.
+5. 해당 범위의 기존 행을 **DELETE 후 전량 INSERT**(덮어쓰기). `lineCode` 유무에 따라 대상 테이블이 갈린다.
+
+### 전사에서 복사 (`copyFromCompany`, `POST /copy-from-company`)
+- 대상 연도·라인에 확정 일자가 있으면 409.
+- 원본(전사) 일자가 0건이면 409(`복사할 전사 월력이 없습니다`).
+- 전사 행을 그대로 복제해 `IP_PRODUCT_LINE_CALENDAR`에 저장(`CONFIRM_YN`은 항상 `'N'`으로 리셋). 대상 라인의 해당 연도 **기존 예외를 DELETE 후 전량 INSERT**(덮어쓰기).
+
+### 확정 / 확정취소 (`confirm`/`unconfirm`, `setConfirm`)
+- `ConfirmDaysDto`의 `month` 유무로 월 단위/연 단위 범위를 정한다.
+- `repo.update()`로 `CONFIRM_YN`·감사 컬럼만 직접 UPDATE한다(재조회 후 `save()`를 쓰지 않는다 — 아래 구현 메모 참고).
+
+### 일괄 저장 (`bulkUpdateDays`, `PUT /days/bulk`)
+- 저장 대상 날짜들의 확정 여부를 먼저 확인(`ensureNotConfirmed`, min~max 범위).
+- 날짜별로 `buildRow()`가 `HOLIDAY_YN` 파생 + 근무시간 자동/override 처리.
+- 전달된 날짜만 골라 DELETE 후 INSERT(`replaceRowsByDates`, 불연속 날짜 가능).
+
+### 구현 메모 (재발 방지용)
+- `IP_PRODUCT_COMPANY_CALENDAR`/`IP_PRODUCT_LINE_CALENDAR`/`IP_SHIFT_TIME_MASTER` 저장 경로는 TypeORM `save()`를 쓰지 않고 **`delete()` + `insert()`/`update()`**를 쓴다. `PLAN_DATE`가 `type:'date'` 복합 PK인데 Oracle 드라이버가 조회 시 이를 문자열로 hydrate하고, `save()`는 내부적으로 Date 객체 식별자와 재비교하면서 항상 불일치로 판정해 `ORA-00001`(유니크 제약 위반)을 낸다. 이 저장 로직을 손대는 경우 이 제약을 유지해야 한다.
+- `ENTER_BY`/`ENTER_DATE`/`LAST_MODIFY_BY`/`LAST_MODIFY_DATE`/`CONFIRM_YN`은 `buildRow()`에서 신규·기존 여부를 구분하지 않고 매번 명시적으로 다시 찍는다. 기존 일자를 수정하면 `ENTER_DATE`가 "최초 생성 시각"이 아니라 "마지막 저장 시각"으로 갱신된다.
 
 ## 사전 설정 (마스터·공통코드)
-- 공통코드: `WORK_DAY_TYPE`(근무유형), `DAY_OFF_TYPE`(휴무사유). 미등록 시 일자 편집 셀렉트/달력 배지가 비거나 코드로만 표시.
-- 마스터: `SHIFT_PATTERNS`(교대패턴 탭에서 선행 등록), `PROCESS_MASTERS`(공정 전용 캘린더용).
-- 캘린더 생성 전 교대패턴을 먼저 등록해야 기본교대패턴·가용시간 자동 산출이 동작합니다.
+- 공통코드: `WORK_DAY_TYPE`(근무유형), `DAY_OFF_TYPE`(휴무사유). 미등록 시 일자 편집 드롭다운과 달력 배지가 비어 보인다.
+- 라인 마스터(생산라인관리, `IP_PRODUCT_LINE` 계열): 라인 선택 목록의 원천. 미등록 시 라인 선택 목록이 빈다.
+- **교대시간(`IP_SHIFT_TIME_MASTER`)을 캘린더보다 먼저 등록해야 한다.** 미등록 상태로 연간 생성을 실행하면 근무일의 `WORK_MINUTES`가 0으로 채워진다.
 
 ## 운영 절차
-1. 교대패턴(`SHIFT_PATTERNS`) 등록/점검 → 코드·시간·근무분.
-2. 캘린더(`WORK_CALENDARS`) 생성: 연도·공정(또는 공장기본)·기본교대수·기본교대패턴.
-3. 연간 생성으로 365/366일 골격 생성(주말·공휴일 옵션).
-4. 음력 공휴일·대체공휴일·특근·반일·잔업 등 예외를 달력에서 일자 편집으로 보정.
-5. 검증 후 **확정**으로 잠금. 변경 필요 시 확정취소 → 수정 → 재확정.
+1. 교대시간 등록/점검: 적용기간·주간/야간 시작·종료·휴식.
+2. 전사 월력 연간 생성(주말·고정공휴일 옵션 확인).
+3. 음력 공휴일·대체공휴일·특근·반일·잔업 등 예외를 달력에서 일자 편집으로 보정.
+4. 필요한 라인만 전사에서 복사 후 라인별 예외를 보정.
+5. 검증 후 확정. 변경이 필요하면 확정취소 → 수정 → 재확정.
 
 ## 권한
-- 기준정보 관리자: 캘린더/교대패턴 등록·수정·연간생성·복사·확정·삭제.
+- 기준정보 관리자: 월력/교대시간 등록·수정·연간생성·복사·확정·삭제.
 - 일반 사용자: 조회. (별도 권한 게이트는 메뉴/라우트 권한 정책을 따름)
 
 ## 문제 해결 (트러블슈팅)
 | 증상 | 원인 | 조치 |
 |------|------|------|
-| 저장·생성·복사·삭제가 막힘 | 캘린더가 `CONFIRMED` 상태 | 확정취소(`/unconfirm`)로 DRAFT 전환 후 재시도 |
-| 캘린더 생성 시 중복 오류(409) | 동일 CALENDAR_ID, 또는 `UQ_WORK_CAL_YEAR_PROC`(회사/공장/연도/공정) 충돌 | ID 또는 공정 구분 변경. 공장기본은 공정 빈 1건만 허용 |
-| 복사 시 "원본에 일정 없음"(404) | 원본 캘린더에 일자 데이터 미생성 | 원본을 먼저 연간 생성 후 복사 |
-| 연간 생성 후 가용시간이 0 | 기본교대패턴 미지정 또는 해당 교대 WORK_MINUTES=0 | 헤더 기본교대패턴 지정 + 교대패턴 근무분 입력 |
-| 음력 공휴일(설·추석 등)이 근무로 잡힘 | 고정 공휴일만 자동 적용(음력·대체공휴일 미포함) | 해당 일자를 OFF/`HOLIDAY`로 수동 보정 |
-| 손으로 고친 휴무가 사라짐 | 연간 생성/복사 재실행이 일자 전체 덮어씀 | 보정은 생성/복사 이후에 수행 |
-| 일자 편집에서 교대가 안 보임 | 교대패턴 `USE_YN='N'` | 교대패턴 사용여부 Y로 활성화 |
-| 달력 셀 클릭이 안 됨 | 확정 상태(클릭 비활성) | 확정취소 후 편집 |
+| 저장·연간생성·복사가 409로 막힘 | 대상 범위(연도/라인)에 `CONFIRM_YN='Y'`인 일자 존재 | 확정취소(`/unconfirm`)로 되돌린 후 재시도 |
+| 교대시간 등록/수정이 409로 막힘 | 새 적용기간이 기존 `IP_SHIFT_TIME_MASTER` 행과 겹침 | 기존 행의 적용종료일을 채우거나, 겹치지 않는 시작일로 재입력 |
+| 연간 생성 후 근무시간이 0 | 교대시간 마스터 미등록, 또는 해당 일자에 적용되는 교대시간이 없음 | 교대시간 탭에서 해당 기간을 포함하는 행을 먼저 등록 |
+| 전사에서 복사 시 409(복사할 전사 월력이 없음) | 대상 연도의 전사 월력이 아직 생성되지 않음 | 전사 월력을 먼저 연간 생성한 뒤 복사 |
+| 음력 공휴일(설·추석 등)이 근무로 잡힘 | 고정 공휴일만 자동 적용(음력·대체공휴일 미포함) | 해당 일자를 달력에서 OFF/`HOLIDAY`로 수동 보정 |
+| 손으로 고친 예외가 사라짐 | 연간 생성/전사에서 복사 재실행이 해당 범위를 전체 덮어씀 | 보정은 생성/복사 이후에 수행 |
+| 라인 선택 목록이 빔 | 라인 마스터(`IP_PRODUCT_LINE` 계열) 미등록 | 생산라인관리에서 라인 등록 |
+| 달력 셀 클릭이 안 됨 | 해당 일자가 확정 상태(자물쇠 아이콘) | 확정취소 후 편집 |
+| `HOLIDAY_YN` 값이 `DAY_TYPE`과 안 맞는 데이터 발견 | 애플리케이션 경로를 거치지 않고 DB를 직접 수정 | `HOLIDAY_YN`을 직접 고치지 말고 `DAY_TYPE`을 정정 후 저장 API로 재저장(CHECK 제약이 재검증) |
 
 ## 데이터·연계
-- 테이블: `WORK_CALENDARS`, `WORK_CALENDAR_DAYS`, `SHIFT_PATTERNS`
+- 테이블: `IP_PRODUCT_COMPANY_CALENDAR`, `IP_PRODUCT_LINE_CALENDAR`, `IP_SHIFT_TIME_MASTER`
 - 공통코드: `WORK_DAY_TYPE`, `DAY_OFF_TYPE`
-- 참조 마스터: `PROCESS_MASTERS`(공정 전용 캘린더)
-- 활용: 생산계획·CAPA·가동 캘린더 등 가동일/가용시간 기준
-- API: `/master/work-calendars`(CRUD, generate, copy-from, days, days/bulk, confirm, unconfirm, summary), `/master/shift-patterns`(CRUD)
-- 스코프: `COMPANY='40'`, `PLANT_CD='1000'`
+- 공유 규칙 모듈: `@smt/shared/work-calendar`(`defaultWorkMinutes`, `holidayYnOf`, `isFixedHoliday`, `shiftNetMinutes`) — 프론트(미리보기)와 백엔드(저장값)가 동일 함수를 호출한다.
+- 연계: PL/SQL `F_GET_DELIVERY_DATE`(납기일 계산, `HOLIDAY_YN` 참조), DB CHECK 제약 `CK_IPCC_HOLIDAY_SYNC`/`CK_IPLC_HOLIDAY_SYNC`
+- 참조 마스터: 생산라인관리(라인 예외 지정 대상)
+- 활용: 생산계획·CAPA 등 가동일/가용시간 기준
+- 스코프: `ORGANIZATION_ID`(로그인 사용자 소속 조직). `COMPANY`/`PLANT_CD` 컬럼은 이 세 테이블에 없다.
