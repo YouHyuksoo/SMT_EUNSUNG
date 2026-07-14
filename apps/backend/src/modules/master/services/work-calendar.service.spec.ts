@@ -1,138 +1,195 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { createMock, DeepMocked } from '@golevelup/ts-jest';
-import { NotFoundException } from '@nestjs/common';
+import { Test } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
-import { WorkCalendar } from '../../../entities/work-calendar.entity';
-import { WorkCalendarDay } from '../../../entities/work-calendar-day.entity';
-import { ShiftPattern } from '../../../entities/shift-pattern.entity';
-import { MockLoggerService } from '@test/mock-logger.service';
+import { ConflictException } from '@nestjs/common';
+import { createMock, DeepMocked } from '@golevelup/ts-jest';
+import { Repository } from 'typeorm';
+import { ProductCompanyCalendar } from '../../../entities/product-company-calendar.entity';
+import { ProductLineCalendar } from '../../../entities/product-line-calendar.entity';
+import { ShiftTimeMaster } from '../../../entities/shift-time-master.entity';
+import { ShiftTimeService } from './shift-time.service';
 import { WorkCalendarService } from './work-calendar.service';
-import { TransactionService } from '../../../shared/transaction.service';
+
+const SHIFT = {
+  organizationId: 1,
+  dateset: new Date('2026-01-01T00:00:00'),
+  dateend: null,
+  dayTimeStart: '08:00',
+  dayTimeEnd: '20:00',
+  dayBreakMinutes: 60,
+  nightTimeStart: '20:00',
+  nightTimeEnd: '08:00',
+  nightBreakMinutes: 60,
+} as ShiftTimeMaster;
 
 describe('WorkCalendarService', () => {
   let target: WorkCalendarService;
-  let calendarRepo: DeepMocked<Repository<WorkCalendar>>;
-  let dataSource: DeepMocked<DataSource>;
-  let tx: DeepMocked<TransactionService>;
+  let companyRepo: DeepMocked<Repository<ProductCompanyCalendar>>;
+  let lineRepo: DeepMocked<Repository<ProductLineCalendar>>;
+  let shiftTime: DeepMocked<ShiftTimeService>;
 
   beforeEach(async () => {
-    calendarRepo = createMock<Repository<WorkCalendar>>();
-    dataSource = createMock<DataSource>();
-    tx = createMock<TransactionService>();
+    companyRepo = createMock<Repository<ProductCompanyCalendar>>();
+    lineRepo = createMock<Repository<ProductLineCalendar>>();
+    shiftTime = createMock<ShiftTimeService>();
+    shiftTime.resolveForDate.mockResolvedValue(SHIFT);
 
-    const module: TestingModule = await Test.createTestingModule({
+    const moduleRef = await Test.createTestingModule({
       providers: [
         WorkCalendarService,
-        { provide: getRepositoryToken(WorkCalendar), useValue: calendarRepo },
-        { provide: getRepositoryToken(WorkCalendarDay), useValue: createMock<Repository<WorkCalendarDay>>() },
-        { provide: getRepositoryToken(ShiftPattern), useValue: createMock<Repository<ShiftPattern>>() },
-        { provide: DataSource, useValue: dataSource },
-        { provide: TransactionService, useValue: tx },
+        { provide: getRepositoryToken(ProductCompanyCalendar), useValue: companyRepo },
+        { provide: getRepositoryToken(ProductLineCalendar), useValue: lineRepo },
+        { provide: ShiftTimeService, useValue: shiftTime },
       ],
-    })
-      .setLogger(new MockLoggerService())
-      .compile();
-
-    target = module.get(WorkCalendarService);
+    }).compile();
+    target = moduleRef.get(WorkCalendarService);
   });
 
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
+  const companyRow = (date: string, dayType: string, confirmYn = 'N') =>
+    ({
+      planDate: new Date(`${date}T00:00:00`),
+      organizationId: 1,
+      dayType,
+      holidayYn: dayType === 'OFF' ? 'Y' : 'N',
+      offReason: dayType === 'OFF' ? 'WEEKEND' : null,
+      workMinutes: dayType === 'OFF' ? 0 : 1320,
+      otMinutes: 0,
+      confirmYn,
+      calendarComment: null,
+    }) as ProductCompanyCalendar;
 
-  it('finds a calendar within tenant only', async () => {
-    calendarRepo.findOne.mockResolvedValue({ calendarId: 'CAL-2026', organizationId: 1 } as WorkCalendar);
+  describe('findDays — 전사 + 라인 예외 병합', () => {
+    it('라인 예외 행이 전사 행을 덮어쓴다', async () => {
+      companyRepo.find.mockResolvedValue([companyRow('2026-07-14', 'WORK')]);
+      lineRepo.find.mockResolvedValue([
+        {
+          planDate: new Date('2026-07-14T00:00:00'),
+          organizationId: 1,
+          lineCode: 'L1',
+          dayType: 'OFF',
+          holidayYn: 'Y',
+          offReason: 'LINE_STOP',
+          workMinutes: 0,
+          otMinutes: 0,
+          confirmYn: 'N',
+          calendarComment: null,
+        } as ProductLineCalendar,
+      ]);
 
-    await target.findById('CAL-2026', 1);
+      const days = await target.findDays({ month: '2026-07', lineCode: 'L1' }, 1);
+      const day = days.find((d) => d.workDate === '2026-07-14');
+      expect(day?.dayType).toBe('OFF');
+      expect(day?.source).toBe('LINE');
+    });
 
-    expect(calendarRepo.findOne).toHaveBeenCalledWith({
-      where: { calendarId: 'CAL-2026', organizationId: 1 },
+    it('라인 예외가 없으면 전사 행이 그대로 보이고 source=COMPANY', async () => {
+      companyRepo.find.mockResolvedValue([companyRow('2026-07-14', 'WORK')]);
+      lineRepo.find.mockResolvedValue([]);
+
+      const days = await target.findDays({ month: '2026-07', lineCode: 'L1' }, 1);
+      const day = days.find((d) => d.workDate === '2026-07-14');
+      expect(day?.dayType).toBe('WORK');
+      expect(day?.source).toBe('COMPANY');
+    });
+
+    it('lineCode가 없으면 라인 테이블을 조회하지 않는다', async () => {
+      companyRepo.find.mockResolvedValue([companyRow('2026-07-14', 'WORK')]);
+      await target.findDays({ month: '2026-07' }, 1);
+      expect(lineRepo.find).not.toHaveBeenCalled();
     });
   });
 
-  it('throws when tenant scoped calendar is missing', async () => {
-    calendarRepo.findOne.mockResolvedValue(null);
+  describe('generateYear', () => {
+    it('토/일 미근무면 OFF/WEEKEND로 생성한다', async () => {
+      companyRepo.find.mockResolvedValue([]);
+      companyRepo.save.mockImplementation(async (v) => v as ProductCompanyCalendar);
 
-    await expect(target.findById('CAL-2026', 1)).rejects.toThrow(NotFoundException);
-  });
+      await target.generateYear({ year: '2026', saturdayWork: false, sundayWork: false }, 1);
 
-  it('checks duplicate calendar id within tenant when creating', async () => {
-    calendarRepo.findOne.mockResolvedValue(null);
-    calendarRepo.create.mockReturnValue({ calendarId: 'CAL-2026', organizationId: 1 } as WorkCalendar);
-    calendarRepo.save.mockResolvedValue({ calendarId: 'CAL-2026', organizationId: 1 } as WorkCalendar);
-
-    await target.create({ calendarId: 'CAL-2026', calendarYear: '2026' } as any, 1);
-
-    expect(calendarRepo.findOne).toHaveBeenCalledWith({
-      where: { calendarId: 'CAL-2026', organizationId: 1 },
+      const saved = companyRepo.save.mock.calls[0][0] as ProductCompanyCalendar[];
+      // 2026-01-03은 토요일
+      const sat = saved.find((d) => d.planDate.getTime() === new Date('2026-01-03T00:00:00').getTime());
+      expect(sat?.dayType).toBe('OFF');
+      expect(sat?.offReason).toBe('WEEKEND');
+      expect(sat?.workMinutes).toBe(0);
+      expect(sat?.holidayYn).toBe('Y');
     });
-    expect(calendarRepo.create).toHaveBeenCalledWith(expect.objectContaining({
-      calendarId: 'CAL-2026',
-      organizationId: 1,
-    }));
-  });
 
-  it('updates a calendar within tenant and strips key columns from payload', async () => {
-    calendarRepo.findOne.mockResolvedValue({ calendarId: 'CAL-2026', status: 'DRAFT', organizationId: 1 } as WorkCalendar);
-    calendarRepo.update.mockResolvedValue({ affected: 1 } as any);
+    it('양력 고정공휴일은 OFF/HOLIDAY로 생성한다', async () => {
+      companyRepo.find.mockResolvedValue([]);
+      companyRepo.save.mockImplementation(async (v) => v as ProductCompanyCalendar);
 
-    await target.update('CAL-2026', {
-      calendarId: 'OTHER',
-      calendarYear: '2027',
-    } as any, 1);
+      await target.generateYear({ year: '2026', saturdayWork: true, sundayWork: true }, 1);
 
-    expect(calendarRepo.update).toHaveBeenCalledWith(
-      { calendarId: 'CAL-2026', organizationId: 1 },
-      { calendarYear: '2027' },
-    );
-  });
-
-  it('does not pass arbitrary fields from update payload to the repository', async () => {
-    calendarRepo.findOne.mockResolvedValue({ calendarId: 'CAL-2026', status: 'DRAFT', organizationId: 1 } as WorkCalendar);
-    calendarRepo.update.mockResolvedValue({ affected: 1 } as any);
-
-    await target.update('CAL-2026', {
-      calendarYear: '2027',
-      externalSource: 'ERP',
-    } as any, 1);
-
-    expect(calendarRepo.update).toHaveBeenCalledWith(
-      { calendarId: 'CAL-2026', organizationId: 1 },
-      { calendarYear: '2027' },
-    );
-  });
-
-  it('deletes a calendar and its days within tenant only', async () => {
-    const manager = createMock<Pick<Repository<WorkCalendar>, 'delete'>>();
-    calendarRepo.findOne.mockResolvedValue({ calendarId: 'CAL-2026', status: 'DRAFT', organizationId: 1 } as WorkCalendar);
-    tx.run.mockImplementation(async (callback) => callback({ manager } as any));
-
-    await target.delete('CAL-2026', 1);
-
-    expect(manager.delete).toHaveBeenNthCalledWith(1, WorkCalendarDay, {
-      calendarId: 'CAL-2026',
-      organizationId: 1,
+      const saved = companyRepo.save.mock.calls[0][0] as ProductCompanyCalendar[];
+      const day = saved.find((d) => d.planDate.getTime() === new Date('2026-03-01T00:00:00').getTime());
+      expect(day?.dayType).toBe('OFF');
+      expect(day?.offReason).toBe('HOLIDAY');
     });
-    expect(manager.delete).toHaveBeenNthCalledWith(2, WorkCalendar, {
-      calendarId: 'CAL-2026',
-      organizationId: 1,
+
+    it('평일은 WORK이고 근무분은 교대시간에서 파생된다 (주간660+야간660=1320)', async () => {
+      companyRepo.find.mockResolvedValue([]);
+      companyRepo.save.mockImplementation(async (v) => v as ProductCompanyCalendar);
+
+      await target.generateYear({ year: '2026', applyHolidays: false }, 1);
+
+      const saved = companyRepo.save.mock.calls[0][0] as ProductCompanyCalendar[];
+      // 2026-07-14는 화요일
+      const day = saved.find((d) => d.planDate.getTime() === new Date('2026-07-14T00:00:00').getTime());
+      expect(day?.dayType).toBe('WORK');
+      expect(day?.workMinutes).toBe(1320);
+      expect(day?.holidayYn).toBe('N');
+    });
+
+    it('확정된 일자가 하나라도 있으면 409로 거부한다', async () => {
+      companyRepo.find.mockResolvedValue([companyRow('2026-07-14', 'WORK', 'Y')]);
+      await expect(target.generateYear({ year: '2026' }, 1)).rejects.toBeInstanceOf(ConflictException);
+      expect(companyRepo.save).not.toHaveBeenCalled();
     });
   });
 
-  it('confirms and unconfirms a calendar within tenant only', async () => {
-    calendarRepo.findOne.mockResolvedValue({ calendarId: 'CAL-2026', organizationId: 1 } as WorkCalendar);
+  describe('bulkUpdateDays', () => {
+    it('확정된 일자를 수정하려 하면 409', async () => {
+      companyRepo.find.mockResolvedValue([companyRow('2026-07-14', 'WORK', 'Y')]);
+      await expect(
+        target.bulkUpdateDays({ days: [{ workDate: '2026-07-14', dayType: 'OFF' }] }, 1),
+      ).rejects.toBeInstanceOf(ConflictException);
+    });
 
-    await target.confirm('CAL-2026', 1);
-    await target.unconfirm('CAL-2026', 1);
+    it('workMinutes 미지정이면 dayType에서 파생시킨다', async () => {
+      companyRepo.find.mockResolvedValue([]);
+      companyRepo.save.mockImplementation(async (v) => v as ProductCompanyCalendar);
 
-    expect(calendarRepo.update).toHaveBeenNthCalledWith(1, {
-      calendarId: 'CAL-2026',
-      organizationId: 1,
-    }, { status: 'CONFIRMED' });
-    expect(calendarRepo.update).toHaveBeenNthCalledWith(2, {
-      calendarId: 'CAL-2026',
-      organizationId: 1,
-    }, { status: 'DRAFT' });
+      await target.bulkUpdateDays({ days: [{ workDate: '2026-07-14', dayType: 'HALF' }] }, 1);
+
+      const saved = companyRepo.save.mock.calls[0][0] as ProductCompanyCalendar[];
+      expect(saved[0].workMinutes).toBe(330); // 주간 660 ÷ 2
+    });
+
+    it('workMinutes를 명시하면 그 값을 그대로 저장한다 (override)', async () => {
+      companyRepo.find.mockResolvedValue([]);
+      companyRepo.save.mockImplementation(async (v) => v as ProductCompanyCalendar);
+
+      await target.bulkUpdateDays(
+        { days: [{ workDate: '2026-07-14', dayType: 'WORK', workMinutes: 480 }] },
+        1,
+      );
+
+      const saved = companyRepo.save.mock.calls[0][0] as ProductCompanyCalendar[];
+      expect(saved[0].workMinutes).toBe(480);
+    });
+
+    it('OFF가 아니면 offReason을 null로 강제한다', async () => {
+      companyRepo.find.mockResolvedValue([]);
+      companyRepo.save.mockImplementation(async (v) => v as ProductCompanyCalendar);
+
+      await target.bulkUpdateDays(
+        { days: [{ workDate: '2026-07-14', dayType: 'WORK', offReason: 'WEEKEND' }] },
+        1,
+      );
+
+      const saved = companyRepo.save.mock.calls[0][0] as ProductCompanyCalendar[];
+      expect(saved[0].offReason).toBeNull();
+      expect(saved[0].holidayYn).toBe('N');
+    });
   });
 });

@@ -1,142 +1,81 @@
 /**
  * @file src/modules/master/controllers/work-calendar.controller.ts
- * @description 생산월력(Work Calendar) API 컨트롤러
+ * @description 생산월력(IP_ 모델) API 컨트롤러
  *
  * 초보자 가이드:
- * 1. GET/POST/PUT/DELETE /master/work-calendars       — 캘린더 CRUD
- * 2. POST /:id/generate                               — 연간 일정 자동 생성
- * 3. POST /:id/copy-from/:sourceId                    — 다른 캘린더에서 복사
- * 4. GET/PUT  /:id/days, /:id/days/bulk               — 일별 근무 조회/일괄 수정
- * 5. POST /:id/confirm, /:id/unconfirm                — 확정/취소
- * 6. GET  /:id/summary                                — 월별/연간 요약
+ * 1. lineCode 미지정 = 전사 월력, 지정 = 라인 예외 월력.
+ * 2. 조회(GET /days)는 전사+라인 병합 결과를 돌려준다.
  */
-import {
-  Controller, Get, Post, Put, Delete,
-  Body, Param, Query, HttpCode, HttpStatus,
-} from '@nestjs/common';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { Body, Controller, Get, HttpCode, HttpStatus, Post, Put, Query } from '@nestjs/common';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { OrganizationId } from '../../../common/decorators/tenant.decorator';
+import { ResponseUtil } from '../../../common/dto/response.dto';
 import { WorkCalendarService } from '../services/work-calendar.service';
 import {
-  CreateWorkCalendarDto, UpdateWorkCalendarDto, WorkCalendarQueryDto,
-  BulkUpdateDaysDto, GenerateCalendarDto,
+  BulkUpdateDaysDto,
+  ConfirmDaysDto,
+  CopyFromCompanyDto,
+  GenerateCalendarDto,
+  SummaryQueryDto,
+  WorkCalendarDaysQueryDto,
 } from '../dto/work-calendar.dto';
-import { ResponseUtil } from '../../../common/dto/response.dto';
 
 @ApiTags('기준정보 - 생산월력')
-@Controller('master/work-calendars')
+@Controller('master/work-calendar')
 export class WorkCalendarController {
   constructor(private readonly svc: WorkCalendarService) {}
 
-  // ─── 캘린더 CRUD ───
-
-  @Get()
-  @ApiOperation({ summary: '캘린더 목록' })
-  async findAll(@Query() q: WorkCalendarQueryDto, @OrganizationId() organizationId: number) {
-    const r = await this.svc.findAll(q, organizationId);
-    return ResponseUtil.paged(r.data, r.total, r.page, r.limit);
+  @Get('days')
+  @ApiOperation({ summary: '월별 일자 조회 (전사 + 라인 예외 병합)' })
+  async findDays(@Query() q: WorkCalendarDaysQueryDto, @OrganizationId() organizationId: number) {
+    return ResponseUtil.success(await this.svc.findDays(q, organizationId));
   }
 
-  @Get(':calendarId')
-  @ApiOperation({ summary: '캘린더 상세' })
-  async findOne(@Param('calendarId') calendarId: string, @OrganizationId() organizationId: number) {
-    return ResponseUtil.success(await this.svc.findById(calendarId, organizationId));
+  @Put('days/bulk')
+  @ApiOperation({ summary: '일자 일괄 저장' })
+  async bulkUpdateDays(@Body() dto: BulkUpdateDaysDto, @OrganizationId() organizationId: number) {
+    const count = await this.svc.bulkUpdateDays(dto, organizationId);
+    return ResponseUtil.success({ count }, '월력이 저장되었습니다.');
   }
 
-  @Post()
-  @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ summary: '캘린더 생성' })
-  async create(@Body() dto: CreateWorkCalendarDto, @OrganizationId() organizationId: number) {
-    return ResponseUtil.success(await this.svc.create(dto, organizationId), '캘린더가 생성되었습니다.');
-  }
-
-  @Put(':calendarId')
-  @ApiOperation({ summary: '캘린더 수정' })
-  async update(
-    @Param('calendarId') calendarId: string,
-    @Body() dto: UpdateWorkCalendarDto,
-    @OrganizationId() organizationId: number,
-  ) {
-    return ResponseUtil.success(await this.svc.update(calendarId, dto, organizationId), '캘린더가 수정되었습니다.');
-  }
-
-  @Delete(':calendarId')
-  @ApiOperation({ summary: '캘린더 삭제 (하위 일자 포함)' })
-  async delete(@Param('calendarId') calendarId: string, @OrganizationId() organizationId: number) {
-    await this.svc.delete(calendarId, organizationId);
-    return ResponseUtil.success(null, '캘린더가 삭제되었습니다.');
-  }
-
-  // ─── 연간 생성 / 복사 ───
-
-  @Post(':calendarId/generate')
+  @Post('generate')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: '연간 일정 자동 생성' })
-  async generate(
-    @Param('calendarId') calendarId: string,
-    @Body() dto: GenerateCalendarDto,
-    @OrganizationId() organizationId: number,
-  ) {
-    const data = await this.svc.generateYear(calendarId, dto, organizationId);
-    return ResponseUtil.success(data, '연간 일정이 생성되었습니다.');
+  @ApiOperation({ summary: '연간 생성 (주말·양력 고정공휴일 자동 반영)' })
+  async generate(@Body() dto: GenerateCalendarDto, @OrganizationId() organizationId: number) {
+    const count = await this.svc.generateYear(dto, organizationId);
+    return ResponseUtil.success({ count }, '연간 월력이 생성되었습니다.');
   }
 
-  @Post(':calendarId/copy-from/:sourceId')
+  @Post('copy-from-company')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: '다른 캘린더에서 일정 복사' })
-  async copyFrom(
-    @Param('calendarId') calendarId: string,
-    @Param('sourceId') sourceId: string,
+  @ApiOperation({ summary: '라인 월력을 전사 월력에서 복제' })
+  async copyFromCompany(
+    @Body() dto: CopyFromCompanyDto,
     @OrganizationId() organizationId: number,
   ) {
-    const data = await this.svc.copyFrom(calendarId, sourceId, organizationId);
-    return ResponseUtil.success(data, '일정이 복사되었습니다.');
+    const count = await this.svc.copyFromCompany(dto, organizationId);
+    return ResponseUtil.success({ count }, '전사 월력을 복사했습니다.');
   }
 
-  // ─── 일별 근무 ───
-
-  @Get(':calendarId/days')
-  @ApiOperation({ summary: '월별 일자 조회 (query: month=YYYY-MM)' })
-  async findDays(
-    @Param('calendarId') calendarId: string,
-    @Query('month') month: string,
-    @OrganizationId() organizationId: number,
-  ) {
-    return ResponseUtil.success(await this.svc.findDaysByMonth(calendarId, month, organizationId));
-  }
-
-  @Put(':calendarId/days/bulk')
-  @ApiOperation({ summary: '일별 근무 일괄 저장' })
-  async bulkUpdateDays(
-    @Param('calendarId') calendarId: string,
-    @Body() dto: BulkUpdateDaysDto,
-    @OrganizationId() organizationId: number,
-  ) {
-    const data = await this.svc.bulkUpdateDays(calendarId, dto, organizationId);
-    return ResponseUtil.success(data, '일별 근무가 저장되었습니다.');
-  }
-
-  // ─── 확정 / 취소 ───
-
-  @Post(':calendarId/confirm')
+  @Post('confirm')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: '캘린더 확정' })
-  async confirm(@Param('calendarId') calendarId: string, @OrganizationId() organizationId: number) {
-    return ResponseUtil.success(await this.svc.confirm(calendarId, organizationId), '캘린더가 확정되었습니다.');
+  @ApiOperation({ summary: '월력 확정' })
+  async confirm(@Body() dto: ConfirmDaysDto, @OrganizationId() organizationId: number) {
+    const count = await this.svc.confirm(dto, organizationId);
+    return ResponseUtil.success({ count }, '월력이 확정되었습니다.');
   }
 
-  @Post(':calendarId/unconfirm')
+  @Post('unconfirm')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: '캘린더 확정 취소' })
-  async unconfirm(@Param('calendarId') calendarId: string, @OrganizationId() organizationId: number) {
-    return ResponseUtil.success(await this.svc.unconfirm(calendarId, organizationId), '확정이 취소되었습니다.');
+  @ApiOperation({ summary: '월력 확정 취소' })
+  async unconfirm(@Body() dto: ConfirmDaysDto, @OrganizationId() organizationId: number) {
+    const count = await this.svc.unconfirm(dto, organizationId);
+    return ResponseUtil.success({ count }, '확정이 취소되었습니다.');
   }
 
-  // ─── 요약 ───
-
-  @Get(':calendarId/summary')
-  @ApiOperation({ summary: '월별/연간 근무 요약' })
-  async getSummary(@Param('calendarId') calendarId: string, @OrganizationId() organizationId: number) {
-    return ResponseUtil.success(await this.svc.getSummary(calendarId, organizationId));
+  @Get('summary')
+  @ApiOperation({ summary: '연간 요약 (가동일수·비가동일수·총가용시간)' })
+  async getSummary(@Query() q: SummaryQueryDto, @OrganizationId() organizationId: number) {
+    return ResponseUtil.success(await this.svc.getSummary(q, organizationId));
   }
 }

@@ -1,160 +1,158 @@
 /**
  * @file src/modules/master/dto/work-calendar.dto.ts
- * @description 근무 캘린더 + 교대 패턴 + 일별 근무 설정 DTO
+ * @description 생산월력(IP_ 모델) DTO
  *
  * 초보자 가이드:
- * 1. CreateShiftPatternDto: 교대(주간/야간 등) 패턴 생성
- * 2. CreateWorkCalendarDto: 연간 근무 캘린더 생성
- * 3. WorkCalendarDayItemDto: 일별 근무 유형 설정 (근무/휴무/반일 등)
- * 4. BulkUpdateDaysDto: 여러 날짜의 근무 설정 일괄 변경
- * 5. GenerateCalendarDto: 캘린더 자동 생성 옵션 (주말 휴무, 공휴일 적용)
+ * 1. lineCode가 없으면 전사 월력(IP_PRODUCT_COMPANY_CALENDAR), 있으면 라인 예외(IP_PRODUCT_LINE_CALENDAR).
+ * 2. HOLIDAY_YN은 클라이언트가 보내지 않는다 — dayType에서 서버가 파생시킨다.
  */
-import { ApiProperty, ApiPropertyOptional, PartialType, OmitType } from '@nestjs/swagger';
-import {
-  IsString, IsOptional, IsInt, IsIn, IsBoolean,
-  IsArray, ValidateNested, Min, Max, MaxLength, Matches,
-} from 'class-validator';
+import { ApiProperty, ApiPropertyOptional, OmitType, PartialType } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { PaginationQueryDto } from '../../../common/dto/base-query.dto';
+import {
+  IsArray,
+  IsIn,
+  IsInt,
+  IsOptional,
+  IsString,
+  Matches,
+  Max,
+  MaxLength,
+  Min,
+  ValidateNested,
+  IsBoolean,
+} from 'class-validator';
 
-// ─── 교대 패턴 ───
+export const WORK_DAY_TYPES = ['WORK', 'OFF', 'HALF', 'SPECIAL'] as const;
 
-export class CreateShiftPatternDto {
-  @ApiProperty({ description: '교대 코드', maxLength: 20 })
-  @IsString() @MaxLength(20)
-  shiftCode: string;
+export class WorkCalendarDaysQueryDto {
+  @ApiProperty({ description: '조회 월 (YYYY-MM)', example: '2026-07' })
+  @Matches(/^\d{4}-\d{2}$/, { message: 'month는 YYYY-MM 형식이어야 합니다.' })
+  month: string;
 
-  @ApiProperty({ description: '교대명', maxLength: 100 })
-  @IsString() @MaxLength(100)
-  shiftName: string;
-
-  @ApiProperty({ description: '시작 시간 (HH:MM)', maxLength: 5 })
-  @IsString() @MaxLength(5)
-  startTime: string;
-
-  @ApiProperty({ description: '종료 시간 (HH:MM)', maxLength: 5 })
-  @IsString() @MaxLength(5)
-  endTime: string;
-
-  @ApiPropertyOptional({ description: '휴게 시간(분)', default: 60 })
-  @IsOptional() @Type(() => Number) @IsInt() @Min(0)
-  breakMinutes?: number;
-
-  @ApiPropertyOptional({ description: '실 근무 시간(분)' })
-  @IsOptional() @Type(() => Number) @IsInt() @Min(0)
-  workMinutes?: number;
-
-  @ApiPropertyOptional({ description: '정렬 순서' })
-  @IsOptional() @Type(() => Number) @IsInt() @Min(0)
-  sortOrder?: number;
+  @ApiPropertyOptional({ description: '라인코드. 미지정이면 전사 월력' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  lineCode?: string;
 }
-
-export class UpdateShiftPatternDto extends PartialType(CreateShiftPatternDto) {}
-
-// ─── 근무 캘린더 ───
-
-export class CreateWorkCalendarDto {
-  @ApiProperty({ description: '캘린더 ID', maxLength: 50 })
-  @IsString() @MaxLength(50)
-  calendarId: string;
-
-  @ApiProperty({ description: '캘린더 연도 (YYYY)', maxLength: 4 })
-  @IsString() @MaxLength(4)
-  calendarYear: string;
-
-  @ApiPropertyOptional({ description: '공정 코드 (null = 공장 기본)', maxLength: 50 })
-  @IsOptional() @IsString() @MaxLength(50)
-  processCd?: string;
-
-  @ApiPropertyOptional({ description: '기본 교대 횟수 (1~3)', default: 1 })
-  @IsOptional() @Type(() => Number) @IsInt() @Min(1) @Max(3)
-  defaultShiftCount?: number;
-
-  @ApiPropertyOptional({ description: '기본 교대 목록 (CSV, 예: "DAY,NIGHT")', maxLength: 100 })
-  @IsOptional() @IsString() @MaxLength(100)
-  defaultShifts?: string;
-
-  @ApiPropertyOptional({ description: '비고', maxLength: 500 })
-  @IsOptional() @IsString() @MaxLength(500)
-  remark?: string;
-}
-
-export class UpdateWorkCalendarDto extends PartialType(CreateWorkCalendarDto) {}
-
-export class WorkCalendarQueryDto extends PaginationQueryDto {
-
-
-  @ApiPropertyOptional({ description: '캘린더 연도' })
-  @IsOptional() @IsString()
-  calendarYear?: string;
-
-  @ApiPropertyOptional({ description: '공정 코드' })
-  @IsOptional() @IsString()
-  processCd?: string;
-
-  @ApiPropertyOptional({ description: '상태' })
-  @IsOptional() @IsString()
-  status?: string;
-
-  @ApiPropertyOptional({ description: '검색어' })
-  @IsOptional() @IsString()
-  search?: string;
-}
-
-// ─── 일별 근무 설정 ───
 
 export class WorkCalendarDayItemDto {
-  @ApiProperty({ description: '근무 일자 (YYYY-MM-DD)' })
-  @IsString()
+  @ApiProperty({ description: '일자 (YYYY-MM-DD)', example: '2026-07-14' })
+  @Matches(/^\d{4}-\d{2}-\d{2}$/, { message: 'workDate는 YYYY-MM-DD 형식이어야 합니다.' })
   workDate: string;
 
-  @ApiProperty({ description: '일자 유형', enum: ['WORK', 'OFF', 'HALF', 'SPECIAL'] })
-  @IsString() @IsIn(['WORK', 'OFF', 'HALF', 'SPECIAL'])
+  @ApiProperty({ description: '근무유형', enum: WORK_DAY_TYPES })
+  @IsIn(WORK_DAY_TYPES as unknown as string[])
   dayType: string;
 
-  @ApiPropertyOptional({ description: '휴무 사유 코드', maxLength: 20 })
-  @IsOptional() @IsString() @MaxLength(20)
-  offReason?: string;
+  @ApiPropertyOptional({ description: '휴무사유 (dayType=OFF일 때만 유효)' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  offReason?: string | null;
 
-  @ApiPropertyOptional({ description: '교대 횟수' })
-  @IsOptional() @Type(() => Number) @IsInt() @Min(1) @Max(3)
-  shiftCount?: number;
-
-  @ApiPropertyOptional({ description: '교대 목록 (CSV)', maxLength: 100 })
-  @IsOptional() @IsString() @MaxLength(100)
-  shifts?: string;
-
-  @ApiPropertyOptional({ description: '근무 시간(분)' })
-  @IsOptional() @Type(() => Number) @IsInt() @Min(0)
+  @ApiPropertyOptional({ description: '근무분. 미지정이면 교대시간 마스터에서 파생' })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(2880)
   workMinutes?: number;
 
-  @ApiPropertyOptional({ description: '잔업 시간(분)', default: 0 })
-  @IsOptional() @Type(() => Number) @IsInt() @Min(0)
+  @ApiPropertyOptional({ description: '잔업분', default: 0 })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(1440)
   otMinutes?: number;
 
-  @ApiPropertyOptional({ description: '비고', maxLength: 500 })
-  @IsOptional() @IsString() @MaxLength(500)
-  remark?: string;
+  @ApiPropertyOptional({ description: '비고' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  comment?: string | null;
 }
 
 export class BulkUpdateDaysDto {
-  @ApiProperty({ type: [WorkCalendarDayItemDto], description: '일별 근무 설정 목록' })
-  @IsArray() @ValidateNested({ each: true }) @Type(() => WorkCalendarDayItemDto)
+  @ApiPropertyOptional({ description: '라인코드. 미지정이면 전사 월력' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  lineCode?: string;
+
+  @ApiProperty({ type: [WorkCalendarDayItemDto] })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => WorkCalendarDayItemDto)
   days: WorkCalendarDayItemDto[];
 }
 
 export class GenerateCalendarDto {
+  @ApiProperty({ description: '대상 연도 (YYYY)', example: '2026' })
+  @Matches(/^\d{4}$/, { message: 'year는 YYYY 형식이어야 합니다.' })
+  year: string;
+
+  @ApiPropertyOptional({ description: '라인코드. 미지정이면 전사 월력' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  lineCode?: string;
+
   @ApiPropertyOptional({ description: '토요일 근무 여부', default: false })
-  @IsOptional() @Type(() => Boolean) @IsBoolean()
+  @IsOptional()
+  @IsBoolean()
   saturdayWork?: boolean;
 
   @ApiPropertyOptional({ description: '일요일 근무 여부', default: false })
-  @IsOptional() @Type(() => Boolean) @IsBoolean()
+  @IsOptional()
+  @IsBoolean()
   sundayWork?: boolean;
 
-  @ApiPropertyOptional({ description: '공휴일 적용 여부', default: true })
-  @IsOptional() @Type(() => Boolean) @IsBoolean()
+  @ApiPropertyOptional({ description: '양력 고정공휴일 자동 반영', default: true })
+  @IsOptional()
+  @IsBoolean()
   applyHolidays?: boolean;
+}
+
+export class CopyFromCompanyDto {
+  @ApiProperty({ description: '대상 연도 (YYYY)', example: '2026' })
+  @Matches(/^\d{4}$/, { message: 'year는 YYYY 형식이어야 합니다.' })
+  year: string;
+
+  @ApiProperty({ description: '복사 대상 라인코드' })
+  @IsString()
+  @MaxLength(20)
+  lineCode: string;
+}
+
+export class ConfirmDaysDto {
+  @ApiProperty({ description: '대상 연도 (YYYY)', example: '2026' })
+  @Matches(/^\d{4}$/, { message: 'year는 YYYY 형식이어야 합니다.' })
+  year: string;
+
+  @ApiPropertyOptional({ description: '대상 월 (1~12). 미지정이면 연 전체' })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(12)
+  month?: number;
+
+  @ApiPropertyOptional({ description: '라인코드. 미지정이면 전사 월력' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  lineCode?: string;
+}
+
+export class SummaryQueryDto {
+  @ApiProperty({ description: '대상 연도 (YYYY)', example: '2026' })
+  @Matches(/^\d{4}$/, { message: 'year는 YYYY 형식이어야 합니다.' })
+  year: string;
+
+  @ApiPropertyOptional({ description: '라인코드. 미지정이면 전사 월력' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  lineCode?: string;
 }
 
 // ─── 교대시간 마스터 ───

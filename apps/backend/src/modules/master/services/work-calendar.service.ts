@@ -1,403 +1,362 @@
 /**
  * @file src/modules/master/services/work-calendar.service.ts
- * @description 생산월력(Work Calendar) 비즈니스 로직 — 캘린더 CRUD, 일별 근무 관리,
- *              연간 자동 생성, 복사, 확정/취소, 요약 통계 기능을 제공한다.
+ * @description 생산월력(IP_ 모델) 서비스 — 전사 월력 + 라인 예외
  *
  * 초보자 가이드:
- * 1. 캘린더 헤더(WORK_CALENDARS) CRUD
- * 2. 일별 근무(WORK_CALENDAR_DAYS) 조회/일괄 저장
- * 3. generateYear: 연간 365/366일 자동 생성 (주말·공휴일 휴무 적용)
- * 4. copyFrom: 기존 캘린더 일정을 다른 캘린더로 복사
- * 5. confirm/unconfirm: 확정 상태 관리 — 확정 후에는 수정 불가
- * 6. getSummary: 월별/연간 근무일수·시간 요약 통계
+ * 1. lineCode가 없으면 IP_PRODUCT_COMPANY_CALENDAR, 있으면 IP_PRODUCT_LINE_CALENDAR를 쓴다.
+ * 2. 조회는 병합이다: 라인 예외 행이 있으면 그것이 이기고(source=LINE), 없으면 전사 행(source=COMPANY).
+ * 3. HOLIDAY_YN은 절대 클라이언트 값을 믿지 않는다 — holidayYnOf(dayType)로 파생시킨다.
+ *    DB CHECK 제약(CK_*_HOLIDAY_SYNC)이 이 불변식을 다시 한 번 강제한다.
+ * 4. CONFIRM_YN='Y'인 일자가 범위에 하나라도 있으면 쓰기(저장/생성/복사)를 거부한다.
  */
-import {
-  Injectable, NotFoundException, ConflictException, BadRequestException,
-} from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { TransactionService } from '../../../shared/transaction.service';
-import { WorkCalendar } from '../../../entities/work-calendar.entity';
-import { WorkCalendarDay } from '../../../entities/work-calendar-day.entity';
-import { ShiftPattern } from '../../../entities/shift-pattern.entity';
+import { Between, Repository } from 'typeorm';
 import {
-  CreateWorkCalendarDto, UpdateWorkCalendarDto, WorkCalendarQueryDto,
-  BulkUpdateDaysDto, GenerateCalendarDto,
+  defaultWorkMinutes,
+  holidayYnOf,
+  isFixedHoliday,
+  type ShiftTimeMasterLike,
+  type WorkDayType,
+} from '@smt/shared';
+import { ProductCompanyCalendar } from '../../../entities/product-company-calendar.entity';
+import { ProductLineCalendar } from '../../../entities/product-line-calendar.entity';
+import { ShiftTimeService } from './shift-time.service';
+import {
+  BulkUpdateDaysDto,
+  ConfirmDaysDto,
+  CopyFromCompanyDto,
+  GenerateCalendarDto,
+  SummaryQueryDto,
+  WorkCalendarDaysQueryDto,
 } from '../dto/work-calendar.dto';
 
-/** 한국 고정 공휴일 [월, 일] */
-const KOREAN_FIXED_HOLIDAYS: [number, number][] = [
-  [1, 1], [3, 1], [5, 5], [6, 6], [8, 15], [10, 3], [10, 9], [12, 25],
-];
+export interface WorkCalendarDayView {
+  workDate: string;
+  dayType: WorkDayType;
+  offReason: string | null;
+  workMinutes: number;
+  otMinutes: number;
+  comment: string | null;
+  confirmYn: 'Y' | 'N';
+  source: 'COMPANY' | 'LINE';
+}
+
+export interface WorkCalendarSummary {
+  workDays: number;
+  offDays: number;
+  halfDays: number;
+  specialDays: number;
+  totalMinutes: number;
+}
+
+function parseYmd(isoDate: string): Date {
+  const [y, m, d] = isoDate.split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+
+function toIso(d: Date): string {
+  const date = new Date(d);
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+/** 'YYYY-MM' → [해당 월 1일, 말일] */
+function monthRange(month: string): [Date, Date] {
+  const [y, m] = month.split('-').map(Number);
+  return [new Date(y, m - 1, 1), new Date(y, m, 0)];
+}
+
+function yearRange(year: string): [Date, Date] {
+  const y = Number(year);
+  return [new Date(y, 0, 1), new Date(y, 11, 31)];
+}
 
 @Injectable()
 export class WorkCalendarService {
   constructor(
-    @InjectRepository(WorkCalendar)
-    private readonly calendarRepo: Repository<WorkCalendar>,
-    @InjectRepository(WorkCalendarDay)
-    private readonly dayRepo: Repository<WorkCalendarDay>,
-    @InjectRepository(ShiftPattern)
-    private readonly shiftRepo: Repository<ShiftPattern>,
-    private readonly tx: TransactionService,
+    @InjectRepository(ProductCompanyCalendar)
+    private readonly companyRepo: Repository<ProductCompanyCalendar>,
+    @InjectRepository(ProductLineCalendar)
+    private readonly lineRepo: Repository<ProductLineCalendar>,
+    private readonly shiftTime: ShiftTimeService,
   ) {}
 
-  private tenantWhere(organizationId?: number) {
-    return {
-      ...(organizationId != null ? { organizationId } : {}),
-    };
-  }
+  /* ── 조회 ── */
 
-  // ─── 캘린더 CRUD ───
+  async findDays(
+    query: WorkCalendarDaysQueryDto,
+    organizationId: number,
+  ): Promise<WorkCalendarDayView[]> {
+    const [from, to] = monthRange(query.month);
 
-  /** 캘린더 목록 (페이징 + 필터) */
-  async findAll(query: WorkCalendarQueryDto, organizationId?: number) {
-    const { page = 1, limit = 50, calendarYear, processCd, status, search } = query;
-    const skip = (page - 1) * limit;
+    const companyRows = await this.companyRepo.find({
+      where: { organizationId, planDate: Between(from, to) },
+    });
 
-    const qb = this.calendarRepo.createQueryBuilder('c');
+    const lineRows = query.lineCode
+      ? await this.lineRepo.find({
+          where: { organizationId, lineCode: query.lineCode, planDate: Between(from, to) },
+        })
+      : [];
 
-    if (organizationId != null) qb.andWhere('c.organizationId = :organizationId', { organizationId });
-    if (calendarYear) qb.andWhere('c.calendarYear = :calendarYear', { calendarYear });
-    if (processCd) qb.andWhere('c.processCd = :processCd', { processCd });
-    if (status) qb.andWhere('c.status = :status', { status });
-    if (search) {
-      const upper = search.toUpperCase();
-      qb.andWhere(
-        '(c.calendarId LIKE :sCode OR c.remark LIKE :sRaw)',
-        { sCode: `%${upper}%`, sRaw: `%${search}%` },
-      );
+    const merged = new Map<string, WorkCalendarDayView>();
+    for (const row of companyRows) {
+      merged.set(toIso(row.planDate), this.toView(row, 'COMPANY'));
     }
-
-    const total = await qb.getCount();
-    const data = await qb
-      .orderBy('c.calendarYear', 'DESC')
-      .addOrderBy('c.calendarId', 'ASC')
-      .skip(skip).take(limit)
-      .getMany();
-
-    return { data, total, page, limit };
+    for (const row of lineRows) {
+      merged.set(toIso(row.planDate), this.toView(row, 'LINE'));
+    }
+    return [...merged.values()].sort((a, b) => a.workDate.localeCompare(b.workDate));
   }
 
-  /** 캘린더 상세 조회 */
-  async findById(calendarId: string, organizationId?: number) {
-    const calendar = await this.calendarRepo.findOne({
-      where: { calendarId, ...this.tenantWhere(organizationId) },
+  async getSummary(
+    query: SummaryQueryDto,
+    organizationId: number,
+  ): Promise<WorkCalendarSummary> {
+    const [from, to] = yearRange(query.year);
+    const companyRows = await this.companyRepo.find({
+      where: { organizationId, planDate: Between(from, to) },
     });
-    if (!calendar) throw new NotFoundException(`캘린더를 찾을 수 없습니다: ${calendarId}`);
-    return calendar;
+    const lineRows = query.lineCode
+      ? await this.lineRepo.find({
+          where: { organizationId, lineCode: query.lineCode, planDate: Between(from, to) },
+        })
+      : [];
+
+    const merged = new Map<string, WorkCalendarDayView>();
+    for (const row of companyRows) merged.set(toIso(row.planDate), this.toView(row, 'COMPANY'));
+    for (const row of lineRows) merged.set(toIso(row.planDate), this.toView(row, 'LINE'));
+
+    const summary: WorkCalendarSummary = {
+      workDays: 0,
+      offDays: 0,
+      halfDays: 0,
+      specialDays: 0,
+      totalMinutes: 0,
+    };
+    for (const day of merged.values()) {
+      if (day.dayType === 'WORK') summary.workDays += 1;
+      else if (day.dayType === 'OFF') summary.offDays += 1;
+      else if (day.dayType === 'HALF') summary.halfDays += 1;
+      else summary.specialDays += 1;
+      summary.totalMinutes += day.workMinutes + day.otMinutes;
+    }
+    return summary;
   }
 
-  /** 캘린더 생성 (중복 체크) */
-  async create(dto: CreateWorkCalendarDto, organizationId?: number) {
-    const existing = await this.calendarRepo.findOne({
-      where: { calendarId: dto.calendarId, ...this.tenantWhere(organizationId) },
-    });
-    if (existing) throw new ConflictException(`이미 존재하는 캘린더: ${dto.calendarId}`);
+  /* ── 쓰기 ── */
 
-    const entity = this.calendarRepo.create({
-      calendarId: dto.calendarId,
-      calendarYear: dto.calendarYear,
-      processCd: dto.processCd ?? null,
-      defaultShiftCount: dto.defaultShiftCount ?? 1,
-      defaultShifts: dto.defaultShifts ?? null,
-      remark: dto.remark ?? null,
-      status: 'DRAFT',
+  async bulkUpdateDays(dto: BulkUpdateDaysDto, organizationId: number): Promise<number> {
+    if (dto.days.length === 0) return 0;
+
+    const dates = dto.days.map((d) => d.workDate).sort();
+    await this.ensureNotConfirmed(
+      parseYmd(dates[0]),
+      parseYmd(dates[dates.length - 1]),
+      dto.lineCode,
       organizationId,
-    });
-    return this.calendarRepo.save(entity);
-  }
-
-  /** 캘린더 수정 (확정 상태 시 불가) */
-  async update(calendarId: string, dto: UpdateWorkCalendarDto, organizationId?: number) {
-    const calendar = await this.findById(calendarId, organizationId);
-    this.ensureNotConfirmed(calendar);
-
-    const updateData: Partial<Pick<WorkCalendar,
-      | 'calendarYear'
-      | 'processCd'
-      | 'defaultShiftCount'
-      | 'defaultShifts'
-      | 'remark'
-    >> = {
-      ...(dto.calendarYear !== undefined ? { calendarYear: dto.calendarYear } : {}),
-      ...(dto.processCd !== undefined ? { processCd: dto.processCd } : {}),
-      ...(dto.defaultShiftCount !== undefined ? { defaultShiftCount: dto.defaultShiftCount } : {}),
-      ...(dto.defaultShifts !== undefined ? { defaultShifts: dto.defaultShifts } : {}),
-      ...(dto.remark !== undefined ? { remark: dto.remark } : {}),
-    };
-    await this.calendarRepo.update({ calendarId, ...this.tenantWhere(organizationId) }, updateData);
-    return this.findById(calendarId, organizationId);
-  }
-
-  /** 캘린더 삭제 (확정 상태 시 불가, 하위 일자 포함) */
-  async delete(calendarId: string, organizationId?: number) {
-    const calendar = await this.findById(calendarId, organizationId);
-    this.ensureNotConfirmed(calendar);
-
-    const where = { calendarId, ...this.tenantWhere(organizationId) };
-    await this.tx.run(async (queryRunner) => {
-      await queryRunner.manager.delete(WorkCalendarDay, where);
-      await queryRunner.manager.delete(WorkCalendar, where);
-    });
-    return { calendarId };
-  }
-
-  // ─── 일별 근무 조회/수정 ───
-
-  /** 특정 월의 일별 근무 조회 (month: 'YYYY-MM') */
-  async findDaysByMonth(calendarId: string, month: string, organizationId?: number) {
-    await this.findById(calendarId, organizationId);
-    const [yearStr, monthStr] = month.split('-');
-    const year = parseInt(yearStr, 10);
-    const mon = parseInt(monthStr, 10);
-    const lastDay = new Date(year, mon, 0).getDate();
-    const start = `${yearStr}-${monthStr}-01`;
-    const end = `${yearStr}-${monthStr}-${String(lastDay).padStart(2, '0')}`;
-
-    return this.dayRepo.createQueryBuilder('d')
-      .where('d.calendarId = :calendarId', { calendarId })
-      .andWhere(organizationId != null ? 'd.organizationId = :organizationId' : '1=1', { organizationId })
-      .andWhere("d.workDate BETWEEN TO_DATE(:start, 'YYYY-MM-DD') AND TO_DATE(:end, 'YYYY-MM-DD')", { start, end })
-      .orderBy('d.workDate', 'ASC')
-      .getMany();
-  }
-
-  /** 일별 근무 일괄 저장 (확정 상태 시 불가) */
-  async bulkUpdateDays(calendarId: string, dto: BulkUpdateDaysDto, organizationId?: number) {
-    const calendar = await this.findById(calendarId, organizationId);
-    this.ensureNotConfirmed(calendar);
-
-    if (dto.days.length === 0) return [];
-
-    const dates = dto.days.map((d) => d.workDate);
-    const minDate = dates.reduce((a, b) => (a < b ? a : b));
-    const maxDate = dates.reduce((a, b) => (a > b ? a : b));
-
-    return this.tx.run(async (queryRunner) => {
-      await queryRunner.manager.createQueryBuilder()
-        .delete()
-        .from(WorkCalendarDay)
-        .where('calendarId = :calendarId', { calendarId })
-        .andWhere(organizationId != null ? 'organizationId = :organizationId' : '1=1', { organizationId })
-        .andWhere(
-          "workDate BETWEEN TO_DATE(:minDate, 'YYYY-MM-DD') AND TO_DATE(:maxDate, 'YYYY-MM-DD')",
-          { minDate, maxDate },
-        )
-        .execute();
-
-      const entities = dto.days.map((d) =>
-        queryRunner.manager.create(WorkCalendarDay, {
-          calendarId,
-          workDate: d.workDate,
-          dayType: d.dayType,
-          offReason: d.offReason ?? null,
-          shiftCount: d.shiftCount ?? calendar.defaultShiftCount,
-          shifts: d.shifts ?? calendar.defaultShifts,
-          workMinutes: d.workMinutes ?? 0,
-          otMinutes: d.otMinutes ?? 0,
-          remark: d.remark ?? null,
-          organizationId,
-        }),
-      );
-      return queryRunner.manager.save(WorkCalendarDay, entities);
-    });
-  }
-
-  // ─── 연간 자동 생성 ───
-
-  /** 연간 일정 자동 생성 (주말·공휴일 휴무 적용) */
-  async generateYear(
-    calendarId: string, dto: GenerateCalendarDto,
-    organizationId?: number,
-  ) {
-    const calendar = await this.findById(calendarId, organizationId);
-    this.ensureNotConfirmed(calendar);
-
-    const year = parseInt(calendar.calendarYear, 10);
-    const saturdayWork = dto.saturdayWork ?? false;
-    const sundayWork = dto.sundayWork ?? false;
-    const applyHolidays = dto.applyHolidays ?? true;
-
-    /** 기본 교대 패턴의 총 근무 시간(분) 계산 */
-    let defaultWorkMinutes = 0;
-    if (calendar.defaultShifts && organizationId != null) {
-      const shiftCodes = calendar.defaultShifts.split(',').map((s) => s.trim());
-      const shifts = await this.shiftRepo.find({ where: { organizationId } });
-      for (const code of shiftCodes) {
-        const found = shifts.find((s) => s.shiftCode === code);
-        if (found) defaultWorkMinutes += found.workMinutes;
-      }
-    }
-
-    /** 공휴일 Set 생성 */
-    const holidaySet = new Set<string>();
-    if (applyHolidays) {
-      for (const [m, d] of KOREAN_FIXED_HOLIDAYS) {
-        holidaySet.add(`${year}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`);
-      }
-    }
-
-    /** 365/366일 생성 */
-    const days: Partial<WorkCalendarDay>[] = [];
-    const startDate = new Date(year, 0, 1);
-    const endDate = new Date(year + 1, 0, 1);
-
-    for (let d = new Date(startDate); d < endDate; d.setDate(d.getDate() + 1)) {
-      const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-      const dow = d.getDay(); // 0=Sun, 6=Sat
-
-      let dayType = 'WORK';
-      let offReason: string | null = null;
-      let workMin = defaultWorkMinutes;
-
-      const isSaturday = dow === 6;
-      const isSunday = dow === 0;
-      if ((isSaturday && !saturdayWork) || (isSunday && !sundayWork)) {
-        dayType = 'OFF';
-        offReason = 'WEEKEND';
-        workMin = 0;
-      } else if (holidaySet.has(dateStr)) {
-        dayType = 'OFF';
-        offReason = 'HOLIDAY';
-        workMin = 0;
-      }
-
-      days.push({
-        calendarId,
-        workDate: dateStr,
-        dayType,
-        offReason,
-        shiftCount: dayType === 'WORK' ? calendar.defaultShiftCount : 0,
-        shifts: dayType === 'WORK' ? calendar.defaultShifts : null,
-        workMinutes: workMin,
-        otMinutes: 0,
-        remark: null,
-        organizationId,
-      });
-    }
-
-    return this.tx.run(async (queryRunner) => {
-      await queryRunner.manager.delete(WorkCalendarDay, { calendarId, ...this.tenantWhere(organizationId) });
-
-      /** 배치 단위로 저장 (Oracle 제한 대응) */
-      const BATCH_SIZE = 100;
-      const saved: WorkCalendarDay[] = [];
-      for (let i = 0; i < days.length; i += BATCH_SIZE) {
-        const batch = days.slice(i, i + BATCH_SIZE).map((item) =>
-          queryRunner.manager.create(WorkCalendarDay, item),
-        );
-        const result = await queryRunner.manager.save(WorkCalendarDay, batch);
-        saved.push(...result);
-      }
-      return saved;
-    });
-  }
-
-  // ─── 복사 ───
-
-  /** 다른 캘린더의 일정을 복사 */
-  async copyFrom(calendarId: string, sourceId: string, organizationId?: number) {
-    const target = await this.findById(calendarId, organizationId);
-    this.ensureNotConfirmed(target);
-
-    await this.findById(sourceId, organizationId);
-    const sourceDays = await this.dayRepo.find({
-      where: { calendarId: sourceId, ...this.tenantWhere(organizationId) },
-    });
-    if (sourceDays.length === 0) {
-      throw new NotFoundException(`복사 원본 캘린더에 일정이 없습니다: ${sourceId}`);
-    }
-
-    return this.tx.run(async (queryRunner) => {
-      await queryRunner.manager.delete(WorkCalendarDay, { calendarId, ...this.tenantWhere(organizationId) });
-
-      const BATCH_SIZE = 100;
-      const saved: WorkCalendarDay[] = [];
-      for (let i = 0; i < sourceDays.length; i += BATCH_SIZE) {
-        const batch = sourceDays.slice(i, i + BATCH_SIZE).map((day) =>
-          queryRunner.manager.create(WorkCalendarDay, {
-            ...day,
-            calendarId,
-            organizationId,
-          }),
-        );
-        const result = await queryRunner.manager.save(WorkCalendarDay, batch);
-        saved.push(...result);
-      }
-      return saved;
-    });
-  }
-
-  // ─── 확정/취소 ───
-
-  /** 캘린더 확정 */
-  async confirm(calendarId: string, organizationId?: number) {
-    await this.findById(calendarId, organizationId);
-    await this.calendarRepo.update({ calendarId, ...this.tenantWhere(organizationId) }, { status: 'CONFIRMED' });
-    return this.findById(calendarId, organizationId);
-  }
-
-  /** 캘린더 확정 취소 */
-  async unconfirm(calendarId: string, organizationId?: number) {
-    await this.findById(calendarId, organizationId);
-    await this.calendarRepo.update({ calendarId, ...this.tenantWhere(organizationId) }, { status: 'DRAFT' });
-    return this.findById(calendarId, organizationId);
-  }
-
-  // ─── 요약 통계 ───
-
-  /** 월별/연간 근무 요약 통계 */
-  async getSummary(calendarId: string, organizationId?: number) {
-    await this.findById(calendarId, organizationId);
-
-    const qb = this.dayRepo.createQueryBuilder('d')
-      .select("TO_CHAR(d.workDate, 'YYYY-MM')", 'month')
-      .addSelect("SUM(CASE WHEN d.dayType = 'WORK' THEN 1 ELSE 0 END)", 'workDays')
-      .addSelect("SUM(CASE WHEN d.dayType = 'OFF' THEN 1 ELSE 0 END)", 'offDays')
-      .addSelect("SUM(CASE WHEN d.dayType = 'HALF' THEN 1 ELSE 0 END)", 'halfDays')
-      .addSelect("SUM(CASE WHEN d.dayType = 'SPECIAL' THEN 1 ELSE 0 END)", 'specialDays')
-      .addSelect('SUM(NVL(d.workMinutes, 0))', 'workMinutes')
-      .addSelect('SUM(NVL(d.otMinutes, 0))', 'otMinutes')
-      .where('d.calendarId = :calendarId', { calendarId })
-      .groupBy("TO_CHAR(d.workDate, 'YYYY-MM')")
-      .orderBy("TO_CHAR(d.workDate, 'YYYY-MM')", 'ASC');
-
-    if (organizationId != null) qb.andWhere('d.organizationId = :organizationId', { organizationId });
-
-    const rows = await qb.getRawMany();
-
-    const monthly = rows.map((r) => ({
-      month: r.month as string,
-      workDays: parseInt(r.workDays ?? '0', 10),
-      offDays: parseInt(r.offDays ?? '0', 10),
-      halfDays: parseInt(r.halfDays ?? '0', 10),
-      specialDays: parseInt(r.specialDays ?? '0', 10),
-      workMinutes: parseInt(r.workMinutes ?? '0', 10),
-      otMinutes: parseInt(r.otMinutes ?? '0', 10),
-    }));
-
-    const yearly = monthly.reduce(
-      (acc, m) => ({
-        workDays: acc.workDays + m.workDays,
-        offDays: acc.offDays + m.offDays,
-        halfDays: acc.halfDays + m.halfDays,
-        specialDays: acc.specialDays + m.specialDays,
-        workMinutes: acc.workMinutes + m.workMinutes,
-        otMinutes: acc.otMinutes + m.otMinutes,
-      }),
-      { workDays: 0, offDays: 0, halfDays: 0, specialDays: 0, workMinutes: 0, otMinutes: 0 },
     );
 
-    return { monthly, yearly };
+    const rows = [];
+    for (const day of dto.days) {
+      rows.push(await this.buildRow(day, dto.lineCode, organizationId));
+    }
+    await this.saveRows(dto.lineCode, rows);
+    return rows.length;
   }
 
-  // ─── Private Helpers ───
+  async generateYear(dto: GenerateCalendarDto, organizationId: number): Promise<number> {
+    const [from, to] = yearRange(dto.year);
+    await this.ensureNotConfirmed(from, to, dto.lineCode, organizationId);
 
-  /** 확정 상태인 캘린더의 수정을 차단 */
-  private ensureNotConfirmed(calendar: WorkCalendar): void {
-    if (calendar.status === 'CONFIRMED') {
-      throw new BadRequestException('확정된 캘린더는 수정할 수 없습니다. 확정 취소 후 수정하세요.');
+    const applyHolidays = dto.applyHolidays ?? true;
+    const rows = [];
+
+    for (const cursor = new Date(from); cursor <= to; cursor.setDate(cursor.getDate() + 1)) {
+      const isoDate = toIso(cursor);
+      const dow = cursor.getDay(); // 0=일, 6=토
+
+      let dayType: WorkDayType = 'WORK';
+      let offReason: string | null = null;
+
+      const weekendOff =
+        (dow === 6 && !(dto.saturdayWork ?? false)) || (dow === 0 && !(dto.sundayWork ?? false));
+
+      if (weekendOff) {
+        dayType = 'OFF';
+        offReason = 'WEEKEND';
+      } else if (applyHolidays && isFixedHoliday(isoDate)) {
+        dayType = 'OFF';
+        offReason = 'HOLIDAY';
+      }
+
+      rows.push(
+        await this.buildRow(
+          { workDate: isoDate, dayType, offReason, otMinutes: 0, comment: null },
+          dto.lineCode,
+          organizationId,
+        ),
+      );
     }
+
+    await this.saveRows(dto.lineCode, rows);
+    return rows.length;
+  }
+
+  /** 라인 월력을 전사 월력에서 복제한다 (해당 연도 전체 덮어쓰기). */
+  async copyFromCompany(dto: CopyFromCompanyDto, organizationId: number): Promise<number> {
+    const [from, to] = yearRange(dto.year);
+    await this.ensureNotConfirmed(from, to, dto.lineCode, organizationId);
+
+    const companyRows = await this.companyRepo.find({
+      where: { organizationId, planDate: Between(from, to) },
+    });
+    if (companyRows.length === 0) {
+      throw new ConflictException(`복사할 전사 월력이 없습니다: ${dto.year}년`);
+    }
+
+    const rows = companyRows.map((src) =>
+      this.lineRepo.create({
+        planDate: new Date(src.planDate),
+        organizationId,
+        lineCode: dto.lineCode,
+        dayType: src.dayType,
+        holidayYn: src.holidayYn,
+        offReason: src.offReason,
+        workMinutes: src.workMinutes,
+        otMinutes: src.otMinutes,
+        confirmYn: 'N',
+        calendarComment: src.calendarComment,
+      }),
+    );
+    await this.lineRepo.save(rows);
+    return rows.length;
+  }
+
+  async confirm(dto: ConfirmDaysDto, organizationId: number): Promise<number> {
+    return this.setConfirm(dto, 'Y', organizationId);
+  }
+
+  async unconfirm(dto: ConfirmDaysDto, organizationId: number): Promise<number> {
+    return this.setConfirm(dto, 'N', organizationId);
+  }
+
+  /* ── 내부 ── */
+
+  private repoFor(lineCode?: string) {
+    return lineCode ? this.lineRepo : this.companyRepo;
+  }
+
+  /**
+   * repoFor()의 반환 타입은 두 Repository의 유니온이라 TypeORM의 오버로드된
+   * save()를 그 유니온 위에서 직접 호출할 수 없다(TS2349). 분기해서 각자의
+   * 구체 타입으로 저장한다.
+   */
+  private async saveRows(lineCode: string | undefined, rows: unknown[]): Promise<void> {
+    if (lineCode) {
+      await this.lineRepo.save(rows as ProductLineCalendar[]);
+    } else {
+      await this.companyRepo.save(rows as ProductCompanyCalendar[]);
+    }
+  }
+
+  private toView(
+    row: ProductCompanyCalendar | ProductLineCalendar,
+    source: 'COMPANY' | 'LINE',
+  ): WorkCalendarDayView {
+    return {
+      workDate: toIso(row.planDate),
+      dayType: row.dayType as WorkDayType,
+      offReason: row.offReason,
+      workMinutes: row.workMinutes,
+      otMinutes: row.otMinutes,
+      comment: row.calendarComment,
+      confirmYn: row.confirmYn === 'Y' ? 'Y' : 'N',
+      source,
+    };
+  }
+
+  /** 일자 1건을 엔티티로 만든다. HOLIDAY_YN과 근무분은 여기서만 파생된다. */
+  private async buildRow(
+    day: {
+      workDate: string;
+      dayType: string;
+      offReason?: string | null;
+      workMinutes?: number;
+      otMinutes?: number;
+      comment?: string | null;
+    },
+    lineCode: string | undefined,
+    organizationId: number,
+  ) {
+    const dayType = day.dayType as WorkDayType;
+    const shift = (await this.shiftTime.resolveForDate(
+      day.workDate,
+      organizationId,
+    )) as ShiftTimeMasterLike | null;
+
+    const base = {
+      planDate: parseYmd(day.workDate),
+      organizationId,
+      dayType,
+      holidayYn: holidayYnOf(dayType),
+      offReason: dayType === 'OFF' ? (day.offReason ?? null) : null,
+      workMinutes: day.workMinutes ?? defaultWorkMinutes(dayType, shift),
+      otMinutes: day.otMinutes ?? 0,
+      confirmYn: 'N',
+      calendarComment: day.comment ?? null,
+    };
+
+    // repo.create()는 새 엔티티 인스턴스에 필드를 병합해줄 뿐이므로,
+    // save()에 넘길 값 자체는 이 평범한 객체로 충분하다.
+    return lineCode ? { ...base, lineCode } : base;
+  }
+
+  /** 범위 안에 확정(CONFIRM_YN='Y') 일자가 하나라도 있으면 거부한다. */
+  private async ensureNotConfirmed(
+    from: Date,
+    to: Date,
+    lineCode: string | undefined,
+    organizationId: number,
+  ): Promise<void> {
+    const rows = lineCode
+      ? await this.lineRepo.find({
+          where: { organizationId, lineCode, planDate: Between(from, to) },
+        })
+      : await this.companyRepo.find({
+          where: { organizationId, planDate: Between(from, to) },
+        });
+
+    const locked = rows.find((r) => r.confirmYn === 'Y');
+    if (locked) {
+      throw new ConflictException(
+        `확정된 월력은 수정할 수 없습니다. 확정 취소 후 진행하세요: ${toIso(locked.planDate)}`,
+      );
+    }
+  }
+
+  private async setConfirm(
+    dto: ConfirmDaysDto,
+    confirmYn: 'Y' | 'N',
+    organizationId: number,
+  ): Promise<number> {
+    const [from, to] = dto.month
+      ? monthRange(`${dto.year}-${String(dto.month).padStart(2, '0')}`)
+      : yearRange(dto.year);
+
+    const rows = dto.lineCode
+      ? await this.lineRepo.find({
+          where: { organizationId, lineCode: dto.lineCode, planDate: Between(from, to) },
+        })
+      : await this.companyRepo.find({
+          where: { organizationId, planDate: Between(from, to) },
+        });
+
+    for (const row of rows) row.confirmYn = confirmYn;
+    await this.saveRows(dto.lineCode, rows);
+    return rows.length;
   }
 }
