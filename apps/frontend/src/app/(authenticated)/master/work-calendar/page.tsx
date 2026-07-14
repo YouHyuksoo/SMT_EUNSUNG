@@ -36,9 +36,17 @@ export default function WorkCalendarPage() {
   // 연도는 표시 중인 월(currentMonth)에서 파생한다 — 월 그리드가 연도 경계를 넘어가도
   // year가 화면에 보이는 월과 어긋날 수 없다(Bug 3: 일괄작업 대상연도 불일치 방지).
   const year = useMemo(() => currentMonth.split("-")[0], [currentMonth]);
+
+  // I2 회귀 방지: 연도 입력은 로컬 draft로 받는다. currentMonth를 매 keystroke마다 갱신하면
+  // "2026" -> "2027"을 입력하는 중간값(예: "202")까지 fetchDays/fetchSummary를 발화시켜
+  // DTO의 @Matches(/^\d{4}/) 검증에 걸려 400이 반복되고, axios 인터셉터가 400마다 전체 에러
+  // 모달을 띄워 모달이 여러 개 쌓인다. 4자리가 채워졌을 때만 currentMonth를 커밋해 조회를 튼다.
+  const [yearDraft, setYearDraft] = useState(year);
+  useEffect(() => { setYearDraft(year); }, [year]);
   const handleYearChange = useCallback((v: string) => {
     const y = v.replace(/\D/g, "").slice(0, 4);
-    if (!y) return; // 빈 연도로는 currentMonth를 만들 수 없다 — 그대로 무시한다.
+    setYearDraft(y);
+    if (y.length !== 4) return; // 4자리가 되기 전에는 currentMonth(=조회 트리거)를 건드리지 않는다.
     setCurrentMonth((prev) => `${y}-${prev.split("-")[1]}`);
   }, []);
 
@@ -221,7 +229,7 @@ export default function WorkCalendarPage() {
                   <label className="mb-1.5 block text-sm font-medium text-text dark:text-gray-200">
                     {t("master.workCalendar.year")}
                   </label>
-                  <Input value={year} onChange={(e) => handleYearChange(e.target.value)} maxLength={4} fullWidth />
+                  <Input value={yearDraft} onChange={(e) => handleYearChange(e.target.value)} maxLength={4} fullWidth />
                 </div>
                 <div>
                   <label className="mb-1.5 block text-sm font-medium text-text dark:text-gray-200">

@@ -21,6 +21,23 @@ function parseYmd(isoDate: string): Date {
   return new Date(y, m - 1, d);
 }
 
+/**
+ * DB에서 읽은 date 컬럼 값을 로컬 자정 Date로 정규화한다.
+ *
+ * I1 회귀 방지: Oracle 드라이버(OracleDriver.prepareHydratedValue)는 `type:'date'` 컬럼을
+ * 조회 시 문자열('YYYY-MM-DD')로 hydrate한다. 이 문자열을 그냥 `new Date(str)`에 넘기면
+ * UTC 자정으로 해석되는데, parseYmd()가 만드는 비교 대상(target)은 로컬(KST) 자정이다.
+ * KST(UTC+9)에서는 로컬 자정이 UTC 자정보다 9시간 빠르므로, DATESET 당일 자체가
+ * "target >= from" 비교에서 항상 탈락한다(교대기간 첫날이 0분으로 계산되는 버그).
+ * repo.create()로 막 만든 엔티티(아직 저장 전)나 단위 테스트 목(mock)은 진짜 Date 객체를
+ * 주므로, 문자열/Date 두 모양을 이 함수 하나로 흡수해 resolveFromRows()/ensureNoOverlap()
+ * 양쪽에서 동일하게 쓴다.
+ */
+function toLocalMidnight(value: Date | string): Date {
+  if (typeof value === 'string') return parseYmd(value.slice(0, 10));
+  return new Date(value.getFullYear(), value.getMonth(), value.getDate());
+}
+
 @Injectable()
 export class ShiftTimeService {
   constructor(
@@ -48,8 +65,8 @@ export class ShiftTimeService {
   resolveFromRows(rows: ShiftTimeMaster[], isoDate: string): ShiftTimeMaster | null {
     const target = parseYmd(isoDate).getTime();
     const hit = rows.find((r) => {
-      const from = new Date(r.dateset).getTime();
-      const to = r.dateend ? new Date(r.dateend).getTime() : Number.POSITIVE_INFINITY;
+      const from = toLocalMidnight(r.dateset).getTime();
+      const to = r.dateend ? toLocalMidnight(r.dateend).getTime() : Number.POSITIVE_INFINITY;
       return target >= from && target <= to;
     });
     return hit ?? null;
@@ -91,28 +108,45 @@ export class ShiftTimeService {
     userId?: string,
   ): Promise<ShiftTimeMaster> {
     const found = await this.findOneOrThrow(dateset, organizationId);
-    const nextEnd = dto.dateend !== undefined ? (dto.dateend ? parseYmd(dto.dateend) : null) : found.dateend;
-    await this.ensureNoOverlap(
-      dateset,
-      nextEnd ? this.toIso(nextEnd) : null,
-      organizationId,
-      dateset,
-    );
-    found.dateend = nextEnd;
-    if (dto.dayTimeStart !== undefined) found.dayTimeStart = dto.dayTimeStart ?? null;
-    if (dto.dayTimeEnd !== undefined) found.dayTimeEnd = dto.dayTimeEnd ?? null;
-    if (dto.dayBreakMinutes !== undefined) found.dayBreakMinutes = dto.dayBreakMinutes;
-    if (dto.nightTimeStart !== undefined) found.nightTimeStart = dto.nightTimeStart ?? null;
-    if (dto.nightTimeEnd !== undefined) found.nightTimeEnd = dto.nightTimeEnd ?? null;
-    if (dto.nightBreakMinutes !== undefined) found.nightBreakMinutes = dto.nightBreakMinutes;
-    found.lastModifyBy = userId ?? 'SYSTEM';
-    found.lastModifyDate = new Date();
-    return this.repo.save(found);
+    // I4 회귀 방지: dto.dateend가 없으면(PartialType이라 합법) found.dateend를 그대로 써야 하는데,
+    // found.dateend는 findOne()이 돌려준 런타임 문자열이다. 예전 코드는 이걸 this.toIso(Date)에
+    // 그대로 넘겨 d.getFullYear()에서 TypeError를 던졌다. toLocalMidnight()로 정규화한 뒤에만
+    // toIso()를 호출한다.
+    const nextEndIso =
+      dto.dateend !== undefined
+        ? (dto.dateend ?? null)
+        : found.dateend
+          ? this.toIso(toLocalMidnight(found.dateend))
+          : null;
+    await this.ensureNoOverlap(dateset, nextEndIso, organizationId, dateset);
+
+    const partial: Partial<ShiftTimeMaster> = {
+      lastModifyBy: userId ?? 'SYSTEM',
+      lastModifyDate: new Date(),
+    };
+    if (dto.dateend !== undefined) partial.dateend = dto.dateend ? parseYmd(dto.dateend) : null;
+    if (dto.dayTimeStart !== undefined) partial.dayTimeStart = dto.dayTimeStart ?? null;
+    if (dto.dayTimeEnd !== undefined) partial.dayTimeEnd = dto.dayTimeEnd ?? null;
+    if (dto.dayBreakMinutes !== undefined) partial.dayBreakMinutes = dto.dayBreakMinutes;
+    if (dto.nightTimeStart !== undefined) partial.nightTimeStart = dto.nightTimeStart ?? null;
+    if (dto.nightTimeEnd !== undefined) partial.nightTimeEnd = dto.nightTimeEnd ?? null;
+    if (dto.nightBreakMinutes !== undefined) partial.nightBreakMinutes = dto.nightBreakMinutes;
+
+    // repo.update(criteria, partial)로 직접 UPDATE한다. found를 save(found)로 되돌려 쓰지 않는
+    // 이유(C1, Bug 회귀 방지): find()/findOne()이 반환하는 DATESET은 Oracle 드라이버가 이미
+    // 문자열('YYYY-MM-DD')로 hydrate해 둔다. save()는 저장 전 "정말 존재하는가"를 다시 확인하려고
+    // 그 문자열 PK를 TO_DATE 변환 없이 그대로 재바인딩하는 SELECT를 날리는데, 세션
+    // NLS_DATE_FORMAT과 형식이 안 맞아 ORA-01861(literal does not match format string)이 난다.
+    // work-calendar.service.ts의 setConfirm()과 동일한 회피다.
+    await this.repo.update({ organizationId, dateset: parseYmd(dateset) }, partial);
+    return this.findOneOrThrow(dateset, organizationId);
   }
 
   async remove(dateset: string, organizationId: number): Promise<void> {
-    const found = await this.findOneOrThrow(dateset, organizationId);
-    await this.repo.remove(found);
+    await this.findOneOrThrow(dateset, organizationId);
+    // C1 회귀 방지: repo.remove(entity)도 save()와 같은 SubjectDatabaseEntityLoader 재확인
+    // SELECT 경로를 타서 ORA-01861을 낸다. criteria 기반 delete()로 그 경로를 우회한다.
+    await this.repo.delete({ organizationId, dateset: parseYmd(dateset) });
   }
 
   private async findOneOrThrow(dateset: string, organizationId: number): Promise<ShiftTimeMaster> {
@@ -144,15 +178,15 @@ export class ShiftTimeService {
     }
     const rows = await this.repo.find({ where: { organizationId } });
     const clash = rows.find((r) => {
-      const rFromDate = new Date(r.dateset);
+      const rFromDate = toLocalMidnight(r.dateset);
       if (excludeDateset && this.toIso(rFromDate) === excludeDateset) return false;
       const rFrom = rFromDate.getTime();
-      const rTo = r.dateend ? new Date(r.dateend).getTime() : Number.POSITIVE_INFINITY;
+      const rTo = r.dateend ? toLocalMidnight(r.dateend).getTime() : Number.POSITIVE_INFINITY;
       return from <= rTo && rFrom <= to;
     });
     if (clash) {
       throw new ConflictException(
-        `적용기간이 겹치는 교대시간이 있습니다: ${this.toIso(new Date(clash.dateset))}`,
+        `적용기간이 겹치는 교대시간이 있습니다: ${this.toIso(toLocalMidnight(clash.dateset))}`,
       );
     }
   }

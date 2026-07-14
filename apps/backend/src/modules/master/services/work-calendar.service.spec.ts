@@ -2,11 +2,12 @@ import { Test } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { ConflictException } from '@nestjs/common';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
-import { Repository } from 'typeorm';
+import { QueryRunner, Repository } from 'typeorm';
 import { ProductCompanyCalendar } from '../../../entities/product-company-calendar.entity';
 import { ProductLineCalendar } from '../../../entities/product-line-calendar.entity';
 import { ShiftTimeMaster } from '../../../entities/shift-time-master.entity';
 import { ShiftTimeService } from './shift-time.service';
+import { TransactionService } from '../../../shared/transaction.service';
 import { WorkCalendarService } from './work-calendar.service';
 
 const SHIFT = {
@@ -26,6 +27,7 @@ describe('WorkCalendarService', () => {
   let companyRepo: DeepMocked<Repository<ProductCompanyCalendar>>;
   let lineRepo: DeepMocked<Repository<ProductLineCalendar>>;
   let shiftTime: DeepMocked<ShiftTimeService>;
+  let tx: DeepMocked<TransactionService>;
 
   beforeEach(async () => {
     companyRepo = createMock<Repository<ProductCompanyCalendar>>();
@@ -34,20 +36,47 @@ describe('WorkCalendarService', () => {
     shiftTime.findAll.mockResolvedValue([SHIFT]);
     shiftTime.resolveFromRows.mockReturnValue(SHIFT);
 
+    // C2 회귀 방지: replaceRowsInRange()/replaceRowsByDates()는 delete+insert를
+    // tx.run(async (qr) => ...)으로 감싼다. qr.manager.delete/insert/getRepository를 그대로
+    // companyRepo/lineRepo 목으로 라우팅해, 기존 테스트의 companyRepo.delete/insert 단언을
+    // 그대로 재사용하면서 "쓰기 경로가 실제로 트랜잭션을 거치는가"도 별도로 검증한다.
+    tx = createMock<TransactionService>();
+    const mockManager = {
+      delete: jest.fn((entity: unknown, criteria: unknown) =>
+        entity === ProductCompanyCalendar
+          ? companyRepo.delete(criteria as never)
+          : lineRepo.delete(criteria as never),
+      ),
+      insert: jest.fn((entity: unknown, data: unknown) =>
+        entity === ProductCompanyCalendar
+          ? companyRepo.insert(data as never)
+          : lineRepo.insert(data as never),
+      ),
+      getRepository: jest.fn((entity: unknown) =>
+        entity === ProductCompanyCalendar ? companyRepo : lineRepo,
+      ),
+    };
+    const mockQr = { manager: mockManager } as unknown as QueryRunner;
+    tx.run.mockImplementation(async (callback) => callback(mockQr));
+
     const moduleRef = await Test.createTestingModule({
       providers: [
         WorkCalendarService,
         { provide: getRepositoryToken(ProductCompanyCalendar), useValue: companyRepo },
         { provide: getRepositoryToken(ProductLineCalendar), useValue: lineRepo },
         { provide: ShiftTimeService, useValue: shiftTime },
+        { provide: TransactionService, useValue: tx },
       ],
     }).compile();
     target = moduleRef.get(WorkCalendarService);
   });
 
+  // planDate는 Oracle 드라이버가 문자열('YYYY-MM-DD')로 hydrate하는 실제 모양을 흉내낸다.
+  // (buildRow()가 만드는 insert 대상 rows는 parseYmd()로 만든 진짜 Date이므로 별개 — 그건
+  // companyRepo.insert.mock.calls에서 검증하며 여기 영향받지 않는다.)
   const companyRow = (date: string, dayType: string, confirmYn = 'N') =>
     ({
-      planDate: new Date(`${date}T00:00:00`),
+      planDate: date,
       organizationId: 1,
       dayType,
       holidayYn: dayType === 'OFF' ? 'Y' : 'N',
@@ -56,14 +85,14 @@ describe('WorkCalendarService', () => {
       otMinutes: 0,
       confirmYn,
       calendarComment: null,
-    }) as ProductCompanyCalendar;
+    }) as unknown as ProductCompanyCalendar;
 
   describe('findDays — 전사 + 라인 예외 병합', () => {
     it('라인 예외 행이 전사 행을 덮어쓴다', async () => {
       companyRepo.find.mockResolvedValue([companyRow('2026-07-14', 'WORK')]);
       lineRepo.find.mockResolvedValue([
         {
-          planDate: new Date('2026-07-14T00:00:00'),
+          planDate: '2026-07-14',
           organizationId: 1,
           lineCode: 'L1',
           dayType: 'OFF',
@@ -73,7 +102,7 @@ describe('WorkCalendarService', () => {
           otMinutes: 0,
           confirmYn: 'N',
           calendarComment: null,
-        } as ProductLineCalendar,
+        } as unknown as ProductLineCalendar,
       ]);
 
       const days = await target.findDays({ month: '2026-07', lineCode: 'L1' }, 1);
@@ -423,6 +452,58 @@ describe('WorkCalendarService', () => {
       const insertedRows = lineRepo.insert.mock.calls[0][0] as ProductLineCalendar[];
       expect(insertedRows.length).toBe(1);
       expect(insertedRows[0].lineCode).toBe('L1');
+    });
+  });
+
+  // C2 회귀 방지: delete()와 insert()가 각각 별도 autocommit이면, insert 실패 시 delete만
+  // 반영되어 그 연도 월력이 통째로 0건으로 남는다(영구 데이터 손실). tx.run() 한 트랜잭션
+  // 안에서 delete+insert가 실행되는지, 그리고 그 안에서 확정 여부가 다시 확인되는지를
+  // 검증한다.
+  describe('C2 — delete+insert 트랜잭션', () => {
+    it('generateYear의 delete+insert는 하나의 tx.run() 안에서 실행된다', async () => {
+      companyRepo.find.mockResolvedValue([]);
+
+      await target.generateYear({ year: '2026' }, 1);
+
+      expect(tx.run).toHaveBeenCalledTimes(1);
+    });
+
+    it('bulkUpdateDays의 delete+insert도 하나의 tx.run() 안에서 실행된다', async () => {
+      companyRepo.find.mockResolvedValue([]);
+
+      await target.bulkUpdateDays({ days: [{ workDate: '2026-07-14', dayType: 'WORK' }] }, 1);
+
+      expect(tx.run).toHaveBeenCalledTimes(1);
+    });
+
+    it('copyFromCompany의 delete+insert도 하나의 tx.run() 안에서 실행된다', async () => {
+      companyRepo.find.mockResolvedValue([companyRow('2026-07-14', 'WORK')]);
+      lineRepo.find.mockResolvedValue([]);
+      lineRepo.create.mockImplementation((v) => v as ProductLineCalendar);
+
+      await target.copyFromCompany({ year: '2026', lineCode: 'L1' }, 1);
+
+      expect(tx.run).toHaveBeenCalledTimes(1);
+    });
+
+    it('insert가 실패하면 트랜잭션 전체가 실패로 전파된다 (delete만 커밋되는 영구 데이터 손실 재현 방지)', async () => {
+      companyRepo.find.mockResolvedValue([]);
+      companyRepo.insert.mockRejectedValueOnce(new Error('ORA-00001: unique constraint violated'));
+
+      await expect(target.generateYear({ year: '2026' }, 1)).rejects.toThrow('ORA-00001');
+    });
+
+    it('트랜잭션 내부에서 ensureNotConfirmed를 다시 확인한다 (check-then-act 창 축소)', async () => {
+      // 최초 확인 시점엔 확정행이 없었지만, 트랜잭션 진입 직후 다른 트랜잭션이 확정 처리를
+      // 끼워넣은 상황을 흉내낸다 — 트랜잭션 내부 재확인이 없으면 이 케이스가 그대로
+      // delete+insert로 덮어써진다.
+      companyRepo.find
+        .mockResolvedValueOnce([companyRow('2026-07-14', 'WORK', 'N')]) // 최초 확인 (통과)
+        .mockResolvedValueOnce([companyRow('2026-07-14', 'WORK', 'Y')]); // 트랜잭션 내부 재확인 (거부)
+
+      await expect(target.generateYear({ year: '2026' }, 1)).rejects.toBeInstanceOf(ConflictException);
+      expect(companyRepo.delete).not.toHaveBeenCalled();
+      expect(companyRepo.insert).not.toHaveBeenCalled();
     });
   });
 });

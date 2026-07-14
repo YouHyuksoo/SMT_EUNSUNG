@@ -11,7 +11,7 @@
  */
 import { ConflictException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Between, In, Repository } from 'typeorm';
+import { Between, EntityManager, In, Repository } from 'typeorm';
 import {
   defaultWorkMinutes,
   holidayYnOf,
@@ -23,6 +23,7 @@ import { ProductCompanyCalendar } from '../../../entities/product-company-calend
 import { ProductLineCalendar } from '../../../entities/product-line-calendar.entity';
 import { ShiftTimeMaster } from '../../../entities/shift-time-master.entity';
 import { ShiftTimeService } from './shift-time.service';
+import { TransactionService } from '../../../shared/transaction.service';
 import {
   BulkUpdateDaysDto,
   ConfirmDaysDto,
@@ -83,6 +84,7 @@ export class WorkCalendarService {
     @InjectRepository(ProductLineCalendar)
     private readonly lineRepo: Repository<ProductLineCalendar>,
     private readonly shiftTime: ShiftTimeService,
+    private readonly tx: TransactionService,
   ) {}
 
   /* ── 조회 ── */
@@ -158,12 +160,9 @@ export class WorkCalendarService {
     if (dto.days.length === 0) return 0;
 
     const dates = dto.days.map((d) => d.workDate).sort();
-    await this.ensureNotConfirmed(
-      parseYmd(dates[0]),
-      parseYmd(dates[dates.length - 1]),
-      dto.lineCode,
-      organizationId,
-    );
+    const from = parseYmd(dates[0]);
+    const to = parseYmd(dates[dates.length - 1]);
+    await this.ensureNotConfirmed(from, to, dto.lineCode, organizationId);
 
     // 일자마다 다시 조회하지 않도록, 교대시간 rows는 요청당 1회만 불러와 재사용한다.
     const shiftRows = await this.shiftTime.findAll(organizationId);
@@ -171,7 +170,7 @@ export class WorkCalendarService {
       this.buildRow(day, dto.lineCode, organizationId, shiftRows, userId),
     );
     const planDates = dto.days.map((day) => parseYmd(day.workDate));
-    await this.replaceRowsByDates(dto.lineCode, organizationId, planDates, rows);
+    await this.replaceRowsByDates(dto.lineCode, organizationId, from, to, planDates, rows);
     return rows.length;
   }
 
@@ -286,6 +285,16 @@ export class WorkCalendarService {
    * (ORA-00001) — 두 번째 generate, 또는 이미 존재하는 날짜에 대한 bulkUpdateDays에서 재현됨.
    * delete()+insert()는 둘 다 QueryBuilder로 Date를 직접 바인딩해 저장하므로 이 판정 경로를
    * 완전히 우회한다(Between()/insert()는 findDays 등 읽기 경로에서 이미 정상 동작이 검증됨).
+   *
+   * C2 회귀 방지 — 트랜잭션으로 감싸는 이유:
+   * delete()와 insert()가 각각 별도 autocommit이면, insert가 실패했을 때(동시 generate로 인한
+   * ORA-00001, 타임아웃, 커넥션 끊김 등) delete만 반영되어 그 연도 월력이 통째로 0건으로
+   * 남는다(영구 데이터 손실). 게다가 delete 커밋과 insert 커밋 사이에는 그 구간이 0건인
+   * 읽기 창이 실제로 존재해서, 그 사이 F_GET_DELIVERY_DATE(납기일 계산 PL/SQL)가
+   * HOLIDAY_YN을 하나도 없는 캘린더로 읽는다. tx.run()으로 delete+insert를 한 트랜잭션에 묶어
+   * 둘 다 성공하거나 둘 다 롤백되게 한다. 또한 ensureNotConfirmed()를 트랜잭션 안에서
+   * 같은 매니저로 다시 확인해, "확인 후 쓰기 전" 사이에 다른 트랜잭션이 확정 처리를 끼워넣는
+   * 창을 좁힌다.
    */
   private async replaceRowsInRange(
     lineCode: string | undefined,
@@ -294,35 +303,44 @@ export class WorkCalendarService {
     to: Date,
     rows: unknown[],
   ): Promise<void> {
-    if (lineCode) {
-      await this.lineRepo.delete({ organizationId, lineCode, planDate: Between(from, to) });
-      if (rows.length > 0) await this.lineRepo.insert(rows as ProductLineCalendar[]);
-    } else {
-      await this.companyRepo.delete({ organizationId, planDate: Between(from, to) });
-      if (rows.length > 0) await this.companyRepo.insert(rows as ProductCompanyCalendar[]);
-    }
+    await this.tx.run(async (qr) => {
+      await this.ensureNotConfirmed(from, to, lineCode, organizationId, qr.manager);
+      if (lineCode) {
+        await qr.manager.delete(ProductLineCalendar, { organizationId, lineCode, planDate: Between(from, to) });
+        if (rows.length > 0) await qr.manager.insert(ProductLineCalendar, rows as ProductLineCalendar[]);
+      } else {
+        await qr.manager.delete(ProductCompanyCalendar, { organizationId, planDate: Between(from, to) });
+        if (rows.length > 0) await qr.manager.insert(ProductCompanyCalendar, rows as ProductCompanyCalendar[]);
+      }
+    });
   }
 
   /**
    * 특정 일자 목록(불연속 가능)에 대해서만 기존 행을 삭제하고 새 rows를 삽입한다.
    * bulkUpdateDays가 이미 존재하는 날짜를 수정할 때 쓴다 — replaceRowsInRange와 같은 이유로
-   * save() 대신 delete()+insert()를 쓴다. 날짜 수는 화면에서 오는 값(최대 1년 366개)이라
-   * Oracle의 IN 리스트 1000개 제한(ORA-01795)에 안전하게 들어온다.
+   * save() 대신 delete()+insert()를 쓰고, 같은 이유로 트랜잭션(C2)으로 감싼다. 날짜 수는
+   * 화면에서 오는 값(최대 1년 366개)이라 Oracle의 IN 리스트 1000개 제한(ORA-01795)에
+   * 안전하게 들어온다.
    */
   private async replaceRowsByDates(
     lineCode: string | undefined,
     organizationId: number,
+    from: Date,
+    to: Date,
     planDates: Date[],
     rows: unknown[],
   ): Promise<void> {
     if (planDates.length === 0) return;
-    if (lineCode) {
-      await this.lineRepo.delete({ organizationId, lineCode, planDate: In(planDates) });
-      await this.lineRepo.insert(rows as ProductLineCalendar[]);
-    } else {
-      await this.companyRepo.delete({ organizationId, planDate: In(planDates) });
-      await this.companyRepo.insert(rows as ProductCompanyCalendar[]);
-    }
+    await this.tx.run(async (qr) => {
+      await this.ensureNotConfirmed(from, to, lineCode, organizationId, qr.manager);
+      if (lineCode) {
+        await qr.manager.delete(ProductLineCalendar, { organizationId, lineCode, planDate: In(planDates) });
+        await qr.manager.insert(ProductLineCalendar, rows as ProductLineCalendar[]);
+      } else {
+        await qr.manager.delete(ProductCompanyCalendar, { organizationId, planDate: In(planDates) });
+        await qr.manager.insert(ProductCompanyCalendar, rows as ProductCompanyCalendar[]);
+      }
+    });
   }
 
   private toView(
@@ -398,18 +416,25 @@ export class WorkCalendarService {
     return lineCode ? { ...base, lineCode } : base;
   }
 
-  /** 범위 안에 확정(CONFIRM_YN='Y') 일자가 하나라도 있으면 거부한다. */
+  /**
+   * 범위 안에 확정(CONFIRM_YN='Y') 일자가 하나라도 있으면 거부한다.
+   * manager가 주어지면(트랜잭션 내부 재확인, C2) 그 매니저의 리포지토리로 조회해 같은
+   * 트랜잭션 안에서 최신 상태를 다시 본다. 없으면(쓰기 전 최초 확인) 평소 리포지토리를 쓴다.
+   */
   private async ensureNotConfirmed(
     from: Date,
     to: Date,
     lineCode: string | undefined,
     organizationId: number,
+    manager?: EntityManager,
   ): Promise<void> {
+    const companyRepo = manager ? manager.getRepository(ProductCompanyCalendar) : this.companyRepo;
+    const lineRepo = manager ? manager.getRepository(ProductLineCalendar) : this.lineRepo;
     const rows = lineCode
-      ? await this.lineRepo.find({
+      ? await lineRepo.find({
           where: { organizationId, lineCode, planDate: Between(from, to) },
         })
-      : await this.companyRepo.find({
+      : await companyRepo.find({
           where: { organizationId, planDate: Between(from, to) },
         });
 
