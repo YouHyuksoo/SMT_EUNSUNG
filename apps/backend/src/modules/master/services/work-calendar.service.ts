@@ -11,7 +11,7 @@
  */
 import { ConflictException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Between, Repository } from 'typeorm';
+import { Between, In, Repository } from 'typeorm';
 import {
   defaultWorkMinutes,
   holidayYnOf,
@@ -170,7 +170,8 @@ export class WorkCalendarService {
     const rows = dto.days.map((day) =>
       this.buildRow(day, dto.lineCode, organizationId, shiftRows, userId),
     );
-    await this.saveRows(dto.lineCode, rows);
+    const planDates = dto.days.map((day) => parseYmd(day.workDate));
+    await this.replaceRowsByDates(dto.lineCode, organizationId, planDates, rows);
     return rows.length;
   }
 
@@ -216,7 +217,7 @@ export class WorkCalendarService {
       );
     }
 
-    await this.saveRows(dto.lineCode, rows);
+    await this.replaceRowsInRange(dto.lineCode, organizationId, from, to, rows);
     return rows.length;
   }
 
@@ -270,20 +271,55 @@ export class WorkCalendarService {
 
   /* ── 내부 ── */
 
-  private repoFor(lineCode?: string) {
-    return lineCode ? this.lineRepo : this.companyRepo;
+  /**
+   * 지정한 [from,to] 범위의 기존 행을 전부 삭제한 뒤 새 rows를 삽입한다 — "연간/기간 재생성은
+   * 해당 구간을 덮어쓴다"는 문서화된 동작을 그대로 구현한다.
+   *
+   * repo.save()를 여기 쓰지 않는 이유(중요, Bug 회귀 방지):
+   * PLAN_DATE는 `type:'date'` 복합 PK다. Oracle 드라이버는 이 타입의 컬럼을 조회 시
+   * 문자열('YYYY-MM-DD')로 hydrate하는데, save()는 내부적으로 "이 PK가 이미 있는가"를
+   * 판정하려고 SubjectDatabaseEntityLoader로 재조회한 뒤 OrmUtils.compareIds로 우리가 만든
+   * 식별자(Date 객체)와 비교한다. Date 객체 vs 문자열은 항상 불일치로 판정되므로 save()는
+   * 기존 PK가 있어도 매번 INSERT를 시도해 XPKIP_PRODUCT_*_CALENDAR 유니크 제약을 위반한다
+   * (ORA-00001) — 두 번째 generate, 또는 이미 존재하는 날짜에 대한 bulkUpdateDays에서 재현됨.
+   * delete()+insert()는 둘 다 QueryBuilder로 Date를 직접 바인딩해 저장하므로 이 판정 경로를
+   * 완전히 우회한다(Between()/insert()는 findDays 등 읽기 경로에서 이미 정상 동작이 검증됨).
+   */
+  private async replaceRowsInRange(
+    lineCode: string | undefined,
+    organizationId: number,
+    from: Date,
+    to: Date,
+    rows: unknown[],
+  ): Promise<void> {
+    if (lineCode) {
+      await this.lineRepo.delete({ organizationId, lineCode, planDate: Between(from, to) });
+      if (rows.length > 0) await this.lineRepo.insert(rows as ProductLineCalendar[]);
+    } else {
+      await this.companyRepo.delete({ organizationId, planDate: Between(from, to) });
+      if (rows.length > 0) await this.companyRepo.insert(rows as ProductCompanyCalendar[]);
+    }
   }
 
   /**
-   * repoFor()의 반환 타입은 두 Repository의 유니온이라 TypeORM의 오버로드된
-   * save()를 그 유니온 위에서 직접 호출할 수 없다(TS2349). 분기해서 각자의
-   * 구체 타입으로 저장한다.
+   * 특정 일자 목록(불연속 가능)에 대해서만 기존 행을 삭제하고 새 rows를 삽입한다.
+   * bulkUpdateDays가 이미 존재하는 날짜를 수정할 때 쓴다 — replaceRowsInRange와 같은 이유로
+   * save() 대신 delete()+insert()를 쓴다. 날짜 수는 화면에서 오는 값(최대 1년 366개)이라
+   * Oracle의 IN 리스트 1000개 제한(ORA-01795)에 안전하게 들어온다.
    */
-  private async saveRows(lineCode: string | undefined, rows: unknown[]): Promise<void> {
+  private async replaceRowsByDates(
+    lineCode: string | undefined,
+    organizationId: number,
+    planDates: Date[],
+    rows: unknown[],
+  ): Promise<void> {
+    if (planDates.length === 0) return;
     if (lineCode) {
-      await this.lineRepo.save(rows as ProductLineCalendar[]);
+      await this.lineRepo.delete({ organizationId, lineCode, planDate: In(planDates) });
+      await this.lineRepo.insert(rows as ProductLineCalendar[]);
     } else {
-      await this.companyRepo.save(rows as ProductCompanyCalendar[]);
+      await this.companyRepo.delete({ organizationId, planDate: In(planDates) });
+      await this.companyRepo.insert(rows as ProductCompanyCalendar[]);
     }
   }
 
@@ -356,7 +392,7 @@ export class WorkCalendarService {
     };
 
     // repo.create()는 새 엔티티 인스턴스에 필드를 병합해줄 뿐이므로,
-    // save()에 넘길 값 자체는 이 평범한 객체로 충분하다.
+    // insert()/save()에 넘길 값 자체는 이 평범한 객체로 충분하다.
     return lineCode ? { ...base, lineCode } : base;
   }
 
@@ -393,22 +429,27 @@ export class WorkCalendarService {
       ? monthRange(`${dto.year}-${String(dto.month).padStart(2, '0')}`)
       : yearRange(dto.year);
 
-    const rows = dto.lineCode
-      ? await this.lineRepo.find({
-          where: { organizationId, lineCode: dto.lineCode, planDate: Between(from, to) },
-        })
-      : await this.companyRepo.find({
-          where: { organizationId, planDate: Between(from, to) },
-        });
-
     const lastModifyBy = userId ?? 'SYSTEM';
     const lastModifyDate = new Date();
-    for (const row of rows) {
-      row.confirmYn = confirmYn;
-      row.lastModifyBy = lastModifyBy;
-      row.lastModifyDate = lastModifyDate;
-    }
-    await this.saveRows(dto.lineCode, rows);
-    return rows.length;
+
+    // repo.update(criteria, partial)로 CONFIRM_YN/감사 컬럼만 직접 UPDATE한다. find() 후
+    // save(rows)로 되돌려 쓰지 않는 이유(Bug 회귀 방지):
+    // find()가 반환하는 행은 PLAN_DATE(type:'date')가 Oracle 드라이버에 의해 이미 문자열
+    // ('YYYY-MM-DD')로 hydrate돼 있다. save()는 저장 전 "정말 존재하는가"를 다시 확인하려고
+    // 내부적으로 그 문자열 PLAN_DATE를 TO_DATE 변환 없이 그대로 재바인딩하는 SELECT를 날리는데,
+    // 세션 NLS_DATE_FORMAT과 형식이 안 맞아 ORA-01861(literal does not match format string)이
+    // 난다. update()는 QueryBuilder로 WHERE 절을 직접 구성해 이 재확인 경로 자체를 타지 않는다
+    // (Between()은 findDays 등 읽기 경로에서 이미 정상 동작이 검증됨).
+    const result = dto.lineCode
+      ? await this.lineRepo.update(
+          { organizationId, lineCode: dto.lineCode, planDate: Between(from, to) },
+          { confirmYn, lastModifyBy, lastModifyDate },
+        )
+      : await this.companyRepo.update(
+          { organizationId, planDate: Between(from, to) },
+          { confirmYn, lastModifyBy, lastModifyDate },
+        );
+
+    return typeof result.affected === 'number' ? result.affected : 0;
   }
 }
