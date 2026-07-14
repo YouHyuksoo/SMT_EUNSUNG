@@ -21,6 +21,7 @@ import {
 } from '@smt/shared';
 import { ProductCompanyCalendar } from '../../../entities/product-company-calendar.entity';
 import { ProductLineCalendar } from '../../../entities/product-line-calendar.entity';
+import { ShiftTimeMaster } from '../../../entities/shift-time-master.entity';
 import { ShiftTimeService } from './shift-time.service';
 import {
   BulkUpdateDaysDto,
@@ -160,10 +161,9 @@ export class WorkCalendarService {
       organizationId,
     );
 
-    const rows = [];
-    for (const day of dto.days) {
-      rows.push(await this.buildRow(day, dto.lineCode, organizationId));
-    }
+    // 일자마다 다시 조회하지 않도록, 교대시간 rows는 요청당 1회만 불러와 재사용한다.
+    const shiftRows = await this.shiftTime.findAll(organizationId);
+    const rows = dto.days.map((day) => this.buildRow(day, dto.lineCode, organizationId, shiftRows));
     await this.saveRows(dto.lineCode, rows);
     return rows.length;
   }
@@ -173,6 +173,8 @@ export class WorkCalendarService {
     await this.ensureNotConfirmed(from, to, dto.lineCode, organizationId);
 
     const applyHolidays = dto.applyHolidays ?? true;
+    // 일자마다 다시 조회하지 않도록, 교대시간 rows는 요청당 1회만 불러와 재사용한다.
+    const shiftRows = await this.shiftTime.findAll(organizationId);
     const rows = [];
 
     for (const cursor = new Date(from); cursor <= to; cursor.setDate(cursor.getDate() + 1)) {
@@ -194,10 +196,11 @@ export class WorkCalendarService {
       }
 
       rows.push(
-        await this.buildRow(
+        this.buildRow(
           { workDate: isoDate, dayType, offReason, otMinutes: 0, comment: null },
           dto.lineCode,
           organizationId,
+          shiftRows,
         ),
       );
     }
@@ -279,8 +282,12 @@ export class WorkCalendarService {
     };
   }
 
-  /** 일자 1건을 엔티티로 만든다. HOLIDAY_YN과 근무분은 여기서만 파생된다. */
-  private async buildRow(
+  /**
+   * 일자 1건을 엔티티로 만든다. HOLIDAY_YN과 근무분은 여기서만 파생된다.
+   * shiftRows는 호출자가 findAll()로 미리 불러온 rows다 — 이 함수는 일자 수만큼
+   * 반복 호출되므로, 여기서 직접 DB를 조회하지 않고 resolveFromRows()로만 판정한다.
+   */
+  private buildRow(
     day: {
       workDate: string;
       dayType: string;
@@ -291,12 +298,13 @@ export class WorkCalendarService {
     },
     lineCode: string | undefined,
     organizationId: number,
+    shiftRows: ShiftTimeMaster[],
   ) {
     const dayType = day.dayType as WorkDayType;
-    const shift = (await this.shiftTime.resolveForDate(
+    const shift = this.shiftTime.resolveFromRows(
+      shiftRows,
       day.workDate,
-      organizationId,
-    )) as ShiftTimeMasterLike | null;
+    ) as ShiftTimeMasterLike | null;
 
     const base = {
       planDate: parseYmd(day.workDate),

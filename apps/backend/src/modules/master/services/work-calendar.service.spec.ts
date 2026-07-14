@@ -31,7 +31,8 @@ describe('WorkCalendarService', () => {
     companyRepo = createMock<Repository<ProductCompanyCalendar>>();
     lineRepo = createMock<Repository<ProductLineCalendar>>();
     shiftTime = createMock<ShiftTimeService>();
-    shiftTime.resolveForDate.mockResolvedValue(SHIFT);
+    shiftTime.findAll.mockResolvedValue([SHIFT]);
+    shiftTime.resolveFromRows.mockReturnValue(SHIFT);
 
     const moduleRef = await Test.createTestingModule({
       providers: [
@@ -144,6 +145,16 @@ describe('WorkCalendarService', () => {
       companyRepo.find.mockResolvedValue([companyRow('2026-07-14', 'WORK', 'Y')]);
       await expect(target.generateYear({ year: '2026' }, 1)).rejects.toBeInstanceOf(ConflictException);
       expect(companyRepo.save).not.toHaveBeenCalled();
+    });
+
+    it('365일 생성 중 교대시간 rows는 요청당 1회만 불러온다 (일자마다 재조회 금지)', async () => {
+      companyRepo.find.mockResolvedValue([]);
+      companyRepo.save.mockImplementation(async (v) => v as ProductCompanyCalendar);
+
+      await target.generateYear({ year: '2026' }, 1);
+
+      expect(shiftTime.findAll).toHaveBeenCalledTimes(1);
+      expect(shiftTime.resolveForDate).not.toHaveBeenCalled();
     });
   });
 

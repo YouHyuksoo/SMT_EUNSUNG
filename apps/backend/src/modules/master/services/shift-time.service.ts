@@ -6,6 +6,8 @@
  * 1. 유효기간형이다. DATESET ~ DATEEND(null=무기한) 구간이 겹치면 안 된다.
  *    Oracle 제약으로 표현할 수 없어 서비스에서 검증한다.
  * 2. resolveForDate()가 특정 일자에 적용될 교대시간을 돌려주며, 월력 서비스가 근무분 계산에 쓴다.
+ *    여러 일자를 한 번에 처리할 때는 findAll()로 rows를 1회만 불러온 뒤 resolveFromRows()를
+ *    반복 호출한다 — 일자 수만큼 DB를 다시 조회하지 않기 위함이다.
  */
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -35,8 +37,16 @@ export class ShiftTimeService {
 
   /** 해당 일자에 유효한 교대시간 1건. 없으면 null. */
   async resolveForDate(isoDate: string, organizationId: number): Promise<ShiftTimeMaster | null> {
+    const rows = await this.findAll(organizationId);
+    return this.resolveFromRows(rows, isoDate);
+  }
+
+  /**
+   * 이미 불러온 rows(예: findAll() 1회 호출 결과)에서 해당 일자에 유효한 교대시간 1건을 고른다.
+   * 여러 일자를 순회하며 매번 DB를 다시 조회하지 않도록, 호출자가 rows를 미리 로드해 재사용한다.
+   */
+  resolveFromRows(rows: ShiftTimeMaster[], isoDate: string): ShiftTimeMaster | null {
     const target = parseYmd(isoDate).getTime();
-    const rows = await this.repo.find({ where: { organizationId } });
     const hit = rows.find((r) => {
       const from = new Date(r.dateset).getTime();
       const to = r.dateend ? new Date(r.dateend).getTime() : Number.POSITIVE_INFINITY;
