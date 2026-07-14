@@ -9,10 +9,10 @@
  * 4. BulkUpdateDaysDto: 여러 날짜의 근무 설정 일괄 변경
  * 5. GenerateCalendarDto: 캘린더 자동 생성 옵션 (주말 휴무, 공휴일 적용)
  */
-import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional, PartialType, OmitType } from '@nestjs/swagger';
 import {
   IsString, IsOptional, IsInt, IsIn, IsBoolean,
-  IsArray, ValidateNested, Min, Max, MaxLength,
+  IsArray, ValidateNested, Min, Max, MaxLength, Matches,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { PaginationQueryDto } from '../../../common/dto/base-query.dto';
@@ -156,3 +156,51 @@ export class GenerateCalendarDto {
   @IsOptional() @Type(() => Boolean) @IsBoolean()
   applyHolidays?: boolean;
 }
+
+// ─── 교대시간 마스터 ───
+
+export class CreateShiftTimeDto {
+  @ApiProperty({ description: '적용 시작일 (YYYY-MM-DD)', example: '2026-01-01' })
+  @IsString()
+  @Matches(/^\d{4}-\d{2}-\d{2}$/, { message: 'dateset은 YYYY-MM-DD 형식이어야 합니다.' })
+  dateset: string;
+
+  @ApiPropertyOptional({ description: '적용 종료일 (YYYY-MM-DD). 미지정이면 무기한' })
+  @IsOptional()
+  @Matches(/^\d{4}-\d{2}-\d{2}$/, { message: 'dateend는 YYYY-MM-DD 형식이어야 합니다.' })
+  dateend?: string;
+
+  @ApiPropertyOptional({ description: '주간 시작 (HH:MM)', example: '08:00' })
+  @IsOptional()
+  @Matches(/^\d{2}:\d{2}$/, { message: 'dayTimeStart는 HH:MM 형식이어야 합니다.' })
+  dayTimeStart?: string;
+
+  @ApiPropertyOptional({ description: '주간 종료 (HH:MM)', example: '20:00' })
+  @IsOptional()
+  @Matches(/^\d{2}:\d{2}$/, { message: 'dayTimeEnd는 HH:MM 형식이어야 합니다.' })
+  dayTimeEnd?: string;
+
+  @ApiPropertyOptional({ description: '주간 휴식(분)', default: 0 })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  dayBreakMinutes?: number;
+
+  @ApiPropertyOptional({ description: '야간 시작 (HH:MM)', example: '20:00' })
+  @IsOptional()
+  @Matches(/^\d{2}:\d{2}$/, { message: 'nightTimeStart는 HH:MM 형식이어야 합니다.' })
+  nightTimeStart?: string;
+
+  @ApiPropertyOptional({ description: '야간 종료 (HH:MM)', example: '08:00' })
+  @IsOptional()
+  @Matches(/^\d{2}:\d{2}$/, { message: 'nightTimeEnd는 HH:MM 형식이어야 합니다.' })
+  nightTimeEnd?: string;
+
+  @ApiPropertyOptional({ description: '야간 휴식(분)', default: 0 })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  nightBreakMinutes?: number;
+}
+
+export class UpdateShiftTimeDto extends PartialType(OmitType(CreateShiftTimeDto, ['dateset'] as const)) {}
