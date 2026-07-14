@@ -156,6 +156,29 @@ describe('WorkCalendarService', () => {
       expect(shiftTime.findAll).toHaveBeenCalledTimes(1);
       expect(shiftTime.resolveForDate).not.toHaveBeenCalled();
     });
+
+    it('ENTER_BY/LAST_MODIFY_BY에 호출자 userId를 채운다 (NOT NULL 컬럼이라 비면 ORA-01400)', async () => {
+      companyRepo.find.mockResolvedValue([]);
+      companyRepo.save.mockImplementation(async (v) => v as ProductCompanyCalendar);
+
+      await target.generateYear({ year: '2026' }, 1, 'HONG');
+
+      const saved = companyRepo.save.mock.calls[0][0] as ProductCompanyCalendar[];
+      expect(saved.length).toBeGreaterThan(0);
+      expect(saved.every((d) => d.enterBy === 'HONG')).toBe(true);
+      expect(saved.every((d) => d.lastModifyBy === 'HONG')).toBe(true);
+    });
+
+    it('userId가 없으면 ENTER_BY/LAST_MODIFY_BY를 SYSTEM으로 채운다', async () => {
+      companyRepo.find.mockResolvedValue([]);
+      companyRepo.save.mockImplementation(async (v) => v as ProductCompanyCalendar);
+
+      await target.generateYear({ year: '2026' }, 1);
+
+      const saved = companyRepo.save.mock.calls[0][0] as ProductCompanyCalendar[];
+      expect(saved.every((d) => d.enterBy === 'SYSTEM')).toBe(true);
+      expect(saved.every((d) => d.lastModifyBy === 'SYSTEM')).toBe(true);
+    });
   });
 
   describe('bulkUpdateDays', () => {
@@ -201,6 +224,51 @@ describe('WorkCalendarService', () => {
       const saved = companyRepo.save.mock.calls[0][0] as ProductCompanyCalendar[];
       expect(saved[0].offReason).toBeNull();
       expect(saved[0].holidayYn).toBe('N');
+    });
+
+    it('ENTER_BY/LAST_MODIFY_BY에 호출자 userId를 채운다', async () => {
+      companyRepo.find.mockResolvedValue([]);
+      companyRepo.save.mockImplementation(async (v) => v as ProductCompanyCalendar);
+
+      await target.bulkUpdateDays(
+        { days: [{ workDate: '2026-07-14', dayType: 'WORK' }] },
+        1,
+        'HONG',
+      );
+
+      const saved = companyRepo.save.mock.calls[0][0] as ProductCompanyCalendar[];
+      expect(saved[0].enterBy).toBe('HONG');
+      expect(saved[0].lastModifyBy).toBe('HONG');
+    });
+  });
+
+  describe('confirm/unconfirm', () => {
+    it('확정 시 LAST_MODIFY_BY/LAST_MODIFY_DATE를 찍는다', async () => {
+      const row = companyRow('2026-07-14', 'WORK', 'N');
+      companyRepo.find.mockResolvedValue([row]);
+      companyRepo.save.mockImplementation(async (v) => v as ProductCompanyCalendar);
+
+      await target.confirm({ year: '2026' }, 1, 'HONG');
+
+      const saved = companyRepo.save.mock.calls[0][0] as ProductCompanyCalendar[];
+      expect(saved[0].confirmYn).toBe('Y');
+      expect(saved[0].lastModifyBy).toBe('HONG');
+      expect(saved[0].lastModifyDate).toBeInstanceOf(Date);
+    });
+  });
+
+  describe('copyFromCompany', () => {
+    it('라인 월력에 ENTER_BY/LAST_MODIFY_BY를 채운다', async () => {
+      companyRepo.find.mockResolvedValue([companyRow('2026-07-14', 'WORK')]);
+      lineRepo.find.mockResolvedValue([]); // ensureNotConfirmed가 lineCode 지정 시 라인 테이블을 조회한다
+      lineRepo.create.mockImplementation((v) => v as ProductLineCalendar);
+      lineRepo.save.mockImplementation(async (v) => v as ProductLineCalendar);
+
+      await target.copyFromCompany({ year: '2026', lineCode: 'L1' }, 1, 'HONG');
+
+      const saved = lineRepo.save.mock.calls[0][0] as ProductLineCalendar[];
+      expect(saved[0].enterBy).toBe('HONG');
+      expect(saved[0].lastModifyBy).toBe('HONG');
     });
   });
 });

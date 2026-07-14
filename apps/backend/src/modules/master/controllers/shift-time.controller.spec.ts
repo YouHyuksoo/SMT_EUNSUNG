@@ -32,13 +32,13 @@ describe('ShiftTimeController', () => {
     const updateDto = { dayTimeStart: '09:00' } as never;
 
     await target.findAll(40);
-    await target.create(createDto, 40);
-    await target.update('2026-07-01', updateDto, 40);
+    await target.create(createDto, 40, 'tester');
+    await target.update('2026-07-01', updateDto, 40, 'tester');
     await target.remove('2026-07-01', 40);
 
     expect(service.findAll).toHaveBeenCalledWith(40);
-    expect(service.create).toHaveBeenCalledWith(createDto, 40);
-    expect(service.update).toHaveBeenCalledWith('2026-07-01', updateDto, 40);
+    expect(service.create).toHaveBeenCalledWith(createDto, 40, 'tester');
+    expect(service.update).toHaveBeenCalledWith('2026-07-01', updateDto, 40, 'tester');
     expect(service.remove).toHaveBeenCalledWith('2026-07-01', 40);
   });
 });

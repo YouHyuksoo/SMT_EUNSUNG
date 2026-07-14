@@ -26,6 +26,18 @@ export const OrganizationId = createParamDecorator(
 );
 
 /**
+ * req.user.id 값을 파라미터로 추출하는 데코레이터 (감사컬럼 ENTER_BY/LAST_MODIFY_BY용).
+ * JwtAuthGuard가 인증한 사용자의 USER_ID를 그대로 반환한다.
+ * @example @UserId() userId: string | undefined
+ */
+export const UserId = createParamDecorator(
+  (_data: unknown, ctx: ExecutionContext): string | undefined => {
+    const req = ctx.switchToHttp().getRequest<AuthenticatedRequest>();
+    return req.user?.id;
+  },
+);
+
+/**
  * req.user.company 값을 파라미터로 추출하는 데코레이터
  * @example @Company() company: string
  */

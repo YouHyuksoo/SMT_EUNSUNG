@@ -4,7 +4,7 @@
  */
 import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Put, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { OrganizationId } from '../../../common/decorators/tenant.decorator';
+import { OrganizationId, UserId } from '../../../common/decorators/tenant.decorator';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { ResponseUtil } from '../../../common/dto/response.dto';
 import { ShiftTimeService } from '../services/shift-time.service';
@@ -25,8 +25,15 @@ export class ShiftTimeController {
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: '교대시간 등록' })
-  async create(@Body() dto: CreateShiftTimeDto, @OrganizationId() organizationId: number) {
-    return ResponseUtil.success(await this.svc.create(dto, organizationId), '교대시간이 등록되었습니다.');
+  async create(
+    @Body() dto: CreateShiftTimeDto,
+    @OrganizationId() organizationId: number,
+    @UserId() userId: string | undefined,
+  ) {
+    return ResponseUtil.success(
+      await this.svc.create(dto, organizationId, userId),
+      '교대시간이 등록되었습니다.',
+    );
   }
 
   @Put(':dateset')
@@ -35,9 +42,10 @@ export class ShiftTimeController {
     @Param('dateset') dateset: string,
     @Body() dto: UpdateShiftTimeDto,
     @OrganizationId() organizationId: number,
+    @UserId() userId: string | undefined,
   ) {
     return ResponseUtil.success(
-      await this.svc.update(dateset, dto, organizationId),
+      await this.svc.update(dateset, dto, organizationId, userId),
       '교대시간이 수정되었습니다.',
     );
   }

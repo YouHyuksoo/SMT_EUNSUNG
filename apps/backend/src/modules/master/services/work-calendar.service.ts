@@ -150,7 +150,11 @@ export class WorkCalendarService {
 
   /* ── 쓰기 ── */
 
-  async bulkUpdateDays(dto: BulkUpdateDaysDto, organizationId: number): Promise<number> {
+  async bulkUpdateDays(
+    dto: BulkUpdateDaysDto,
+    organizationId: number,
+    userId?: string,
+  ): Promise<number> {
     if (dto.days.length === 0) return 0;
 
     const dates = dto.days.map((d) => d.workDate).sort();
@@ -163,12 +167,18 @@ export class WorkCalendarService {
 
     // 일자마다 다시 조회하지 않도록, 교대시간 rows는 요청당 1회만 불러와 재사용한다.
     const shiftRows = await this.shiftTime.findAll(organizationId);
-    const rows = dto.days.map((day) => this.buildRow(day, dto.lineCode, organizationId, shiftRows));
+    const rows = dto.days.map((day) =>
+      this.buildRow(day, dto.lineCode, organizationId, shiftRows, userId),
+    );
     await this.saveRows(dto.lineCode, rows);
     return rows.length;
   }
 
-  async generateYear(dto: GenerateCalendarDto, organizationId: number): Promise<number> {
+  async generateYear(
+    dto: GenerateCalendarDto,
+    organizationId: number,
+    userId?: string,
+  ): Promise<number> {
     const [from, to] = yearRange(dto.year);
     await this.ensureNotConfirmed(from, to, dto.lineCode, organizationId);
 
@@ -201,6 +211,7 @@ export class WorkCalendarService {
           dto.lineCode,
           organizationId,
           shiftRows,
+          userId,
         ),
       );
     }
@@ -210,7 +221,11 @@ export class WorkCalendarService {
   }
 
   /** 라인 월력을 전사 월력에서 복제한다 (해당 연도 전체 덮어쓰기). */
-  async copyFromCompany(dto: CopyFromCompanyDto, organizationId: number): Promise<number> {
+  async copyFromCompany(
+    dto: CopyFromCompanyDto,
+    organizationId: number,
+    userId?: string,
+  ): Promise<number> {
     const [from, to] = yearRange(dto.year);
     await this.ensureNotConfirmed(from, to, dto.lineCode, organizationId);
 
@@ -221,6 +236,7 @@ export class WorkCalendarService {
       throw new ConflictException(`복사할 전사 월력이 없습니다: ${dto.year}년`);
     }
 
+    const enterBy = userId ?? 'SYSTEM';
     const rows = companyRows.map((src) =>
       this.lineRepo.create({
         planDate: new Date(src.planDate),
@@ -233,18 +249,21 @@ export class WorkCalendarService {
         otMinutes: src.otMinutes,
         confirmYn: 'N',
         calendarComment: src.calendarComment,
+        enterBy,
+        lastModifyBy: enterBy,
+        lastModifyDate: new Date(),
       }),
     );
     await this.lineRepo.save(rows);
     return rows.length;
   }
 
-  async confirm(dto: ConfirmDaysDto, organizationId: number): Promise<number> {
-    return this.setConfirm(dto, 'Y', organizationId);
+  async confirm(dto: ConfirmDaysDto, organizationId: number, userId?: string): Promise<number> {
+    return this.setConfirm(dto, 'Y', organizationId, userId);
   }
 
-  async unconfirm(dto: ConfirmDaysDto, organizationId: number): Promise<number> {
-    return this.setConfirm(dto, 'N', organizationId);
+  async unconfirm(dto: ConfirmDaysDto, organizationId: number, userId?: string): Promise<number> {
+    return this.setConfirm(dto, 'N', organizationId, userId);
   }
 
   /* ── 내부 ── */
@@ -299,6 +318,7 @@ export class WorkCalendarService {
     lineCode: string | undefined,
     organizationId: number,
     shiftRows: ShiftTimeMaster[],
+    userId?: string,
   ) {
     const dayType = day.dayType as WorkDayType;
     const shift = this.shiftTime.resolveFromRows(
@@ -306,6 +326,9 @@ export class WorkCalendarService {
       day.workDate,
     ) as ShiftTimeMasterLike | null;
 
+    // ENTER_DATE는 @CreateDateColumn 기본값으로 INSERT 시에만 채워지고 UPDATE에는 손대지 않는다.
+    // LAST_MODIFY_BY/LAST_MODIFY_DATE는 신규/기존 여부를 구분하지 않고 매번 명시적으로 찍는다.
+    const enterBy = userId ?? 'SYSTEM';
     const base = {
       planDate: parseYmd(day.workDate),
       organizationId,
@@ -316,6 +339,9 @@ export class WorkCalendarService {
       otMinutes: day.otMinutes ?? 0,
       confirmYn: 'N',
       calendarComment: day.comment ?? null,
+      enterBy,
+      lastModifyBy: enterBy,
+      lastModifyDate: new Date(),
     };
 
     // repo.create()는 새 엔티티 인스턴스에 필드를 병합해줄 뿐이므로,
@@ -350,6 +376,7 @@ export class WorkCalendarService {
     dto: ConfirmDaysDto,
     confirmYn: 'Y' | 'N',
     organizationId: number,
+    userId?: string,
   ): Promise<number> {
     const [from, to] = dto.month
       ? monthRange(`${dto.year}-${String(dto.month).padStart(2, '0')}`)
@@ -363,7 +390,13 @@ export class WorkCalendarService {
           where: { organizationId, planDate: Between(from, to) },
         });
 
-    for (const row of rows) row.confirmYn = confirmYn;
+    const lastModifyBy = userId ?? 'SYSTEM';
+    const lastModifyDate = new Date();
+    for (const row of rows) {
+      row.confirmYn = confirmYn;
+      row.lastModifyBy = lastModifyBy;
+      row.lastModifyDate = lastModifyDate;
+    }
     await this.saveRows(dto.lineCode, rows);
     return rows.length;
   }

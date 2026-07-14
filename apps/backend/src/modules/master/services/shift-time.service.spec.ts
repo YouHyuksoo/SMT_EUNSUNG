@@ -72,6 +72,35 @@ describe('ShiftTimeService', () => {
       expect(saved.organizationId).toBe(1);
       expect(repo.save).toHaveBeenCalledTimes(1);
     });
+
+    it('ENTER_BY/LAST_MODIFY_BY에 호출자 userId를 채운다', async () => {
+      repo.find.mockResolvedValue([]);
+      repo.create.mockImplementation((v) => v as ShiftTimeMaster);
+      repo.save.mockImplementation(async (v) => v as ShiftTimeMaster);
+
+      const saved = await target.create(
+        { dateset: '2026-07-01', dayTimeStart: '08:00', dayTimeEnd: '20:00' },
+        1,
+        'HONG',
+      );
+
+      expect(saved.enterBy).toBe('HONG');
+      expect(saved.lastModifyBy).toBe('HONG');
+    });
+
+    it('userId가 없으면 ENTER_BY/LAST_MODIFY_BY를 SYSTEM으로 채운다', async () => {
+      repo.find.mockResolvedValue([]);
+      repo.create.mockImplementation((v) => v as ShiftTimeMaster);
+      repo.save.mockImplementation(async (v) => v as ShiftTimeMaster);
+
+      const saved = await target.create(
+        { dateset: '2026-07-01', dayTimeStart: '08:00', dayTimeEnd: '20:00' },
+        1,
+      );
+
+      expect(saved.enterBy).toBe('SYSTEM');
+      expect(saved.lastModifyBy).toBe('SYSTEM');
+    });
   });
 
   describe('update', () => {
@@ -157,6 +186,18 @@ describe('ShiftTimeService', () => {
       expect(saved.nightTimeStart).toBe('20:00');
       expect(saved.nightTimeEnd).toBe('08:00');
       expect(saved.nightBreakMinutes).toBe(60);
+    });
+
+    it('LAST_MODIFY_BY/LAST_MODIFY_DATE를 호출자 userId로 갱신한다', async () => {
+      const existing = row('2026-07-01', null);
+      repo.findOne.mockResolvedValue(existing);
+      repo.find.mockResolvedValue([existing]);
+      repo.save.mockImplementation(async (v) => v as ShiftTimeMaster);
+
+      const saved = await target.update('2026-07-01', { dayTimeStart: '09:00' }, 1, 'HONG');
+
+      expect(saved.lastModifyBy).toBe('HONG');
+      expect(saved.lastModifyDate).toBeInstanceOf(Date);
     });
   });
 

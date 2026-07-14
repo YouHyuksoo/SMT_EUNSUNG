@@ -8,7 +8,7 @@
  */
 import { Body, Controller, Get, HttpCode, HttpStatus, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { OrganizationId } from '../../../common/decorators/tenant.decorator';
+import { OrganizationId, UserId } from '../../../common/decorators/tenant.decorator';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { ResponseUtil } from '../../../common/dto/response.dto';
 import { WorkCalendarService } from '../services/work-calendar.service';
@@ -35,16 +35,24 @@ export class WorkCalendarController {
 
   @Put('days/bulk')
   @ApiOperation({ summary: '일자 일괄 저장' })
-  async bulkUpdateDays(@Body() dto: BulkUpdateDaysDto, @OrganizationId() organizationId: number) {
-    const count = await this.svc.bulkUpdateDays(dto, organizationId);
+  async bulkUpdateDays(
+    @Body() dto: BulkUpdateDaysDto,
+    @OrganizationId() organizationId: number,
+    @UserId() userId: string | undefined,
+  ) {
+    const count = await this.svc.bulkUpdateDays(dto, organizationId, userId);
     return ResponseUtil.success({ count }, '월력이 저장되었습니다.');
   }
 
   @Post('generate')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: '연간 생성 (주말·양력 고정공휴일 자동 반영)' })
-  async generate(@Body() dto: GenerateCalendarDto, @OrganizationId() organizationId: number) {
-    const count = await this.svc.generateYear(dto, organizationId);
+  async generate(
+    @Body() dto: GenerateCalendarDto,
+    @OrganizationId() organizationId: number,
+    @UserId() userId: string | undefined,
+  ) {
+    const count = await this.svc.generateYear(dto, organizationId, userId);
     return ResponseUtil.success({ count }, '연간 월력이 생성되었습니다.');
   }
 
@@ -54,24 +62,33 @@ export class WorkCalendarController {
   async copyFromCompany(
     @Body() dto: CopyFromCompanyDto,
     @OrganizationId() organizationId: number,
+    @UserId() userId: string | undefined,
   ) {
-    const count = await this.svc.copyFromCompany(dto, organizationId);
+    const count = await this.svc.copyFromCompany(dto, organizationId, userId);
     return ResponseUtil.success({ count }, '전사 월력을 복사했습니다.');
   }
 
   @Post('confirm')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: '월력 확정' })
-  async confirm(@Body() dto: ConfirmDaysDto, @OrganizationId() organizationId: number) {
-    const count = await this.svc.confirm(dto, organizationId);
+  async confirm(
+    @Body() dto: ConfirmDaysDto,
+    @OrganizationId() organizationId: number,
+    @UserId() userId: string | undefined,
+  ) {
+    const count = await this.svc.confirm(dto, organizationId, userId);
     return ResponseUtil.success({ count }, '월력이 확정되었습니다.');
   }
 
   @Post('unconfirm')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: '월력 확정 취소' })
-  async unconfirm(@Body() dto: ConfirmDaysDto, @OrganizationId() organizationId: number) {
-    const count = await this.svc.unconfirm(dto, organizationId);
+  async unconfirm(
+    @Body() dto: ConfirmDaysDto,
+    @OrganizationId() organizationId: number,
+    @UserId() userId: string | undefined,
+  ) {
+    const count = await this.svc.unconfirm(dto, organizationId, userId);
     return ResponseUtil.success({ count }, '확정이 취소되었습니다.');
   }
 

@@ -55,7 +55,11 @@ export class ShiftTimeService {
     return hit ?? null;
   }
 
-  async create(dto: CreateShiftTimeDto, organizationId: number): Promise<ShiftTimeMaster> {
+  async create(
+    dto: CreateShiftTimeDto,
+    organizationId: number,
+    userId?: string,
+  ): Promise<ShiftTimeMaster> {
     await this.ensureNoOverlap(dto.dateset, dto.dateend ?? null, organizationId, null);
     const entity = this.repo.create({
       organizationId,
@@ -67,6 +71,8 @@ export class ShiftTimeService {
       nightTimeStart: dto.nightTimeStart ?? null,
       nightTimeEnd: dto.nightTimeEnd ?? null,
       nightBreakMinutes: dto.nightBreakMinutes ?? 0,
+      enterBy: userId ?? 'SYSTEM',
+      lastModifyBy: userId ?? 'SYSTEM',
     });
     return this.repo.save(entity);
   }
@@ -75,6 +81,7 @@ export class ShiftTimeService {
     dateset: string,
     dto: UpdateShiftTimeDto,
     organizationId: number,
+    userId?: string,
   ): Promise<ShiftTimeMaster> {
     const found = await this.findOneOrThrow(dateset, organizationId);
     const nextEnd = dto.dateend !== undefined ? (dto.dateend ? parseYmd(dto.dateend) : null) : found.dateend;
@@ -91,6 +98,8 @@ export class ShiftTimeService {
     if (dto.nightTimeStart !== undefined) found.nightTimeStart = dto.nightTimeStart ?? null;
     if (dto.nightTimeEnd !== undefined) found.nightTimeEnd = dto.nightTimeEnd ?? null;
     if (dto.nightBreakMinutes !== undefined) found.nightBreakMinutes = dto.nightBreakMinutes;
+    found.lastModifyBy = userId ?? 'SYSTEM';
+    found.lastModifyDate = new Date();
     return this.repo.save(found);
   }
 

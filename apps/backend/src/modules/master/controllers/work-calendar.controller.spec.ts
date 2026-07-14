@@ -48,16 +48,25 @@ describe('WorkCalendarController', () => {
     const copyDto = { year: '2026', lineCode: 'L1' } as never;
     const confirmDto = { year: '2026' } as never;
 
-    await target.bulkUpdateDays(daysDto, 40);
-    await target.generate(generateDto, 40);
-    await target.copyFromCompany(copyDto, 40);
-    await target.confirm(confirmDto, 40);
-    await target.unconfirm(confirmDto, 40);
+    await target.bulkUpdateDays(daysDto, 40, 'tester');
+    await target.generate(generateDto, 40, 'tester');
+    await target.copyFromCompany(copyDto, 40, 'tester');
+    await target.confirm(confirmDto, 40, 'tester');
+    await target.unconfirm(confirmDto, 40, 'tester');
 
-    expect(service.bulkUpdateDays).toHaveBeenCalledWith(daysDto, 40);
-    expect(service.generateYear).toHaveBeenCalledWith(generateDto, 40);
-    expect(service.copyFromCompany).toHaveBeenCalledWith(copyDto, 40);
-    expect(service.confirm).toHaveBeenCalledWith(confirmDto, 40);
-    expect(service.unconfirm).toHaveBeenCalledWith(confirmDto, 40);
+    expect(service.bulkUpdateDays).toHaveBeenCalledWith(daysDto, 40, 'tester');
+    expect(service.generateYear).toHaveBeenCalledWith(generateDto, 40, 'tester');
+    expect(service.copyFromCompany).toHaveBeenCalledWith(copyDto, 40, 'tester');
+    expect(service.confirm).toHaveBeenCalledWith(confirmDto, 40, 'tester');
+    expect(service.unconfirm).toHaveBeenCalledWith(confirmDto, 40, 'tester');
+  });
+
+  it('forwards undefined userId when the request carries no authenticated user id', async () => {
+    service.generateYear.mockResolvedValue(0);
+    const generateDto = { year: '2026' } as never;
+
+    await target.generate(generateDto, 40, undefined);
+
+    expect(service.generateYear).toHaveBeenCalledWith(generateDto, 40, undefined);
   });
 });
