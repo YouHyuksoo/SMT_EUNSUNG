@@ -20,3 +20,6 @@ export * from './utils';
 
 // OEE 도메인(계산·검증·타입) 내보내기
 export * from './oee';
+
+// 생산월력 도메인(근무분 계산·휴일 판정) 내보내기
+export * from './work-calendar';

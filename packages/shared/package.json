@@ -24,6 +24,10 @@
     "./oee": {
       "types": "./dist/oee/index.d.ts",
       "default": "./dist/oee/index.js"
+    },
+    "./work-calendar": {
+      "types": "./dist/work-calendar/index.d.ts",
+      "default": "./dist/work-calendar/index.js"
     }
   },
   "scripts": {

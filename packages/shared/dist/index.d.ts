@@ -12,4 +12,5 @@ export * from './types';
 export * from './constants';
 export * from './utils';
 export * from './oee';
+export * from './work-calendar';
 //# sourceMappingURL=index.d.ts.map
