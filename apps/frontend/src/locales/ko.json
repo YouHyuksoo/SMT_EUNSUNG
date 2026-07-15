@@ -392,7 +392,8 @@
     "oee.entry": "가동일지 입력",
     "oee.resource": "리소스 마스터",
     "oee.standardTime": "표준시간 관리",
-    "oee.idleReason": "설비 비가동 사유코드"
+    "oee.idleReason": "설비 비가동 사유코드",
+    "oee.equipReason": "설비별 비가동 사유 연계"
   },
   "header": {
     "theme": "테마",

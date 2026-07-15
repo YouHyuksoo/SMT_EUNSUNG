@@ -64,6 +64,7 @@ export const menuConfig: MenuConfigItem[] = [
       { code: "OEE_MST_RESOURCE", labelKey: "menu.oee.resource", path: "/oee/master/resource" },
       { code: "OEE_MST_STD_TIME", labelKey: "menu.oee.standardTime", path: "/oee/master/standard-time" },
       { code: "OEE_MST_IDLE_REASON", labelKey: "menu.oee.idleReason", path: "/oee/master/idle-reason" },
+      { code: "OEE_MST_EQUIP_REASON", labelKey: "menu.oee.equipReason", path: "/oee/master/equip-reason-map" },
     ],
   },
   {

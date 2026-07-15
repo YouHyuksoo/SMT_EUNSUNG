@@ -392,7 +392,8 @@
     "oee.entry": "Operation Log",
     "oee.resource": "Resource Master",
     "oee.standardTime": "Standard Time",
-    "oee.idleReason": "Equipment Downtime Reason"
+    "oee.idleReason": "Equipment Downtime Reason",
+    "oee.equipReason": "Equipment-Downtime Reason Mapping"
   },
   "header": {
     "theme": "Theme",
