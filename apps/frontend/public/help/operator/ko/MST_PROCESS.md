@@ -85,7 +85,7 @@ IMCN_MACHINE (PK: MACHINE_CODE, ORGANIZATION_ID)   ── 오른쪽 그리드 �
 
 > **화면에 노출하지 않는 컬럼**: `ACTION_DATE`, `MES_DISPLAY_SEQUENCE`. 레거시 PB 화면에도 없던 항목이라 그대로 둡니다.
 >
-> **테이블에 없는 필드**: `USE_YN`, `REMARK`, `LINE_TYPE`(LV/HV/CM). 과거 `PROCESS_MASTERS` 시절 필드로, 현재 화면에서 제거되었습니다.
+> **테이블에 없는 필드**: `USE_YN`, `REMARK`, `LINE_TYPE`(LV/HV/CM). 현재 모델에 없는 필드로 화면에서 제거되었습니다.
 
 ## ② 배치 설비 표시값 — IMCN_MACHINE (오른쪽 그리드, 읽기 전용)
 
