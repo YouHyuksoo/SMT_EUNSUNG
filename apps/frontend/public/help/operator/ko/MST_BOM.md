@@ -1,0 +1,17 @@
+---
+menuCode: MST_BOM
+audience: operator
+title: BOM관리
+summary: 도움말 작성 예정
+tags: []
+keywords: []
+related: []
+---
+
+# BOM관리 - 운영 가이드
+
+## 도움말 초기화됨
+이 화면의 도움말은 현재 사이트 기준으로 다시 작성할 예정입니다.
+
+## 초기화 메모
+기존 사이트 기준 설명은 제거되었습니다.
