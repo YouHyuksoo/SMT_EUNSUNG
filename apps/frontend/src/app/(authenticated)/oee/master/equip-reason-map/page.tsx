@@ -144,7 +144,7 @@ export default function EquipReasonMapPage() {
       { accessorKey: 'processName', header: '공정명', size: 100, meta: { align: 'center' as const } },
       {
         id: 'reasons',
-        header: '사유코드',
+        header: '비가동 사유코드',
         size: 110,
         meta: { align: 'center' as const, filterType: 'none' as const },
         cell: ({ row }) => (
