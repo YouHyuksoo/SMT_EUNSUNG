@@ -20,6 +20,20 @@ const CURRENT_USER = '관리자';
 // 목업 회사 목록
 const COMPANIES = [{ code: 'ES', name: '은성전장' }];
 
+// 부적합(불량) 유형 — 자동차 하네스/전장부품 기준 (Mock, 10종)
+const DEFECT_TYPES = [
+  '납땜불량(냉납)', '미삽(부품 누락)', '오삽(오부착)', '극성 반대', '솔더 브릿지(단락)',
+  '부품 들뜸(Tombstone)', '크림프 불량', '커넥터 체결불량', '피복 손상', '외관/이물',
+];
+
+// 정지(비가동) 사유코드 — 설비 비가동 사유코드에서 코드·사유명·사유구분을 가져옴 (Mock)
+const STOP_REASONS = [
+  { code: 'DWN-CHG', name: '모델 교체', type: '계획' },
+  { code: 'DWN-MAT', name: '자재 대기', type: '비계획' },
+  { code: 'DWN-BRK', name: '설비 고장', type: '비계획' },
+  { code: 'DWN-CLN', name: '청소/5S', type: '계획' },
+];
+
 interface WorkResult {
   id: number;
   woNo: string;              // 작업지시 발행번호
@@ -52,6 +66,20 @@ function nowStamp() {
   const p = (n: number) => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
 }
+// datetime-local(초 포함) 값
+function nowLocal() {
+  const d = new Date();
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+}
+
+interface DowntimeState {
+  status: 'RUNNING' | 'STOPPED';   // 편집 중(미저장) 상태
+  savedStatus: 'RUNNING' | 'STOPPED'; // 마지막 저장된 상태 — 토글 잠금 기준
+  initialStatus: 'RUNNING' | 'STOPPED'; // 팝업 최초 구성 시점 상태 — '현재 상태' 표기용(토글/저장에도 불변)
+  stopAt: string; stopReasonCode: string; stopMemo: string; stopWorker: string; stopBy: string;
+  resumeAt: string; resumeBy: string;
+}
 
 type PanelMode = 'result' | 'workorder' | 'defect' | 'downtime';
 
@@ -76,6 +104,8 @@ export default function EquipWorkResultPage() {
   const [panelMode, setPanelMode] = useState<PanelMode | null>(null);
   const [panelId, setPanelId] = useState<number | null>(null);
   const [form, setForm] = useState<ResultForm | null>(null);
+  const [defectRows, setDefectRows] = useState<{ name: string; qty: number; remark: string }[]>([]);
+  const [downtime, setDowntime] = useState<DowntimeState | null>(null);
 
   const filtered = useMemo(() => {
     const q = equipSearch.trim().toLowerCase();
@@ -88,6 +118,9 @@ export default function EquipWorkResultPage() {
   }, [records, equipSearch, statusFilter]);
 
   const panelRec = useMemo(() => records.find((r) => r.id === panelId) ?? null, [records, panelId]);
+  // 토글 표시 규칙: 미전환이면 '선택 가능한 반대 상태'를, 전환됨(미저장)이면 '선택한 현재 상태'를 그대로 표시
+  const dtToggled = !!downtime && downtime.status !== downtime.savedStatus;
+  const dtLabelStop = downtime ? (dtToggled ? downtime.status === 'STOPPED' : downtime.status === 'RUNNING') : false;
 
   function openResult(r: WorkResult) {
     setSelectedId(r.id);
@@ -99,6 +132,32 @@ export default function EquipWorkResultPage() {
     if (selectedId == null) { toast('작업지시 행을 먼저 선택하세요'); return; }
     setPanelId(selectedId);
     setPanelMode(mode);
+    if (mode === 'defect') setDefectRows(DEFECT_TYPES.map((name) => ({ name, qty: 0, remark: '' })));
+    if (mode === 'downtime') {
+      const rec = records.find((r) => r.id === selectedId);
+      const running = rec?.machineRunning ?? true;
+      setDowntime({
+        status: running ? 'RUNNING' : 'STOPPED', savedStatus: running ? 'RUNNING' : 'STOPPED',
+        initialStatus: running ? 'RUNNING' : 'STOPPED',
+        stopAt: running ? '' : nowLocal(), stopReasonCode: '', stopMemo: '', stopWorker: '',
+        stopBy: running ? '' : CURRENT_USER, resumeAt: '', resumeBy: '',
+      });
+    }
+  }
+  function toggleDowntime() {
+    setDowntime((d) => {
+      if (!d) return d;
+      if (d.status !== d.savedStatus) return d; // 이미 전환됨 — 저장 전까지 최초 토글값 유지(잠금)
+      return d.status === 'RUNNING'
+        ? { ...d, status: 'STOPPED', stopAt: nowLocal(), stopBy: CURRENT_USER, resumeAt: '', resumeBy: '' }
+        : { ...d, status: 'RUNNING', resumeAt: nowLocal(), resumeBy: CURRENT_USER };
+    });
+  }
+  function saveDowntime() {
+    if (!panelRec || !downtime) return;
+    setRecords((prev) => prev.map((r) => (r.id === panelRec.id ? { ...r, machineRunning: downtime.status === 'RUNNING' } : r)));
+    setDowntime({ ...downtime, savedStatus: downtime.status });
+    toast.success('설비 가동상태가 저장되었습니다');
   }
   function closePanel() { setPanelMode(null); setPanelId(null); setForm(null); }
 
@@ -224,14 +283,17 @@ export default function EquipWorkResultPage() {
               <span className="ml-2 font-mono text-text-muted text-xs">{panelRec.woNo}</span>
             </h2>
             <div className="flex items-center gap-2">
-              {panelMode === 'result' && <button onClick={closePanel} className="px-3 py-2 rounded border border-border text-text-muted text-sm">취소</button>}
+              {(panelMode === 'result' || panelMode === 'downtime') && <button onClick={closePanel} className="px-3 py-2 rounded border border-border text-text-muted text-sm">취소</button>}
               {panelMode === 'result'
                 ? <button onClick={saveResult} className="px-4 py-2 rounded bg-primary text-white text-sm">저장</button>
-                : <button onClick={closePanel} className="px-4 py-2 rounded border border-border text-text-muted text-sm">닫기</button>}
+                : panelMode === 'downtime'
+                  ? <button onClick={saveDowntime} className="px-4 py-2 rounded bg-primary text-white text-sm">저장</button>
+                  : <button onClick={closePanel} className="px-4 py-2 rounded border border-border text-text-muted text-sm">닫기</button>}
             </div>
           </div>
           <div className="flex-1 min-h-0 overflow-y-auto px-5 py-4 space-y-4">
-            {/* 공통: 작업지시 헤더 정보 (읽기전용) */}
+            {/* 공통: 작업지시 헤더 정보 (읽기전용) — 실적등록·작업지시서만 */}
+            {(panelMode === 'result' || panelMode === 'workorder') && (
             <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
               {[
                 ['설비', `${panelRec.machineCode} · ${panelRec.machineName}`],
@@ -254,12 +316,13 @@ export default function EquipWorkResultPage() {
                 </div>
               ))}
             </div>
+            )}
 
             {/* 실적등록 입력 */}
             {panelMode === 'result' && form && (
               <div className="border-t border-border pt-4 space-y-3">
                 <div className="grid grid-cols-2 gap-3">
-                  <label className="text-sm text-text-muted flex flex-col gap-1">실적수량 <span className="text-red-500">*</span>
+                  <label className="text-sm text-text-muted flex flex-col gap-1"><span>실적수량 <span className="text-red-500">*</span></span>
                     <input type="number" min="0" value={form.resultQty} onChange={(e) => setForm({ ...form, resultQty: Number(e.target.value) })} className="border border-border rounded p-2 bg-background text-text text-right font-mono" />
                   </label>
                   <label className="text-sm text-text-muted flex flex-col gap-1">작업시간(분)
@@ -299,44 +362,134 @@ export default function EquipWorkResultPage() {
               </div>
             )}
 
-            {/* 불량 등록 (목업 폼) */}
+            {/* 불량 등록 (목업) — 전용 헤더 + 부적합 유형 리스트 */}
             {panelMode === 'defect' && (
-              <div className="border-t border-border pt-4 space-y-3">
-                <label className="text-sm text-text-muted flex flex-col gap-1">불량유형
-                  <select className="border border-border rounded p-2 bg-background text-text">
-                    <option>납땜불량</option><option>미삽</option><option>이물</option><option>기타</option>
-                  </select>
-                </label>
-                <label className="text-sm text-text-muted flex flex-col gap-1">불량수량
-                  <input type="number" min="0" defaultValue={0} className="border border-border rounded p-2 bg-background text-text text-right font-mono" />
-                </label>
-                <label className="text-sm text-text-muted flex flex-col gap-1">비고
-                  <textarea rows={2} className="border border-border rounded p-2 bg-background text-text resize-none" />
-                </label>
-                <p className="text-[11px] text-text-muted">불량 등록 (Mock-up) — 실제 저장은 미구현.</p>
+              <div className="space-y-4">
+                {/* 최상단 헤더 (읽기전용) */}
+                <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                  {[
+                    ['작업지시번호', panelRec.woNo],
+                    ['설비코드', panelRec.machineCode],
+                    ['설비명', panelRec.machineName],
+                    ['라인코드', panelRec.lineCode],
+                    ['라인명', panelRec.lineName],
+                    ['공정명', panelRec.processName],
+                    ['품번', panelRec.itemNo],
+                    ['품명', panelRec.itemName],
+                  ].map(([k, v]) => (
+                    <div key={k} className="flex flex-col">
+                      <span className="text-[11px] text-text-muted">{k}</span>
+                      <span className="text-text">{v}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* 부적합 유형별 발생수량·비고 (1열 세로) */}
+                <div className="border-t border-border pt-4">
+                  <span className="text-sm font-semibold text-text">부적합 유형별 발생 등록</span>
+                  <div className="flex flex-col gap-2 mt-2">
+                    {defectRows.map((d, i) => (
+                      <div key={d.name} className="border border-border rounded p-2 flex items-center gap-2">
+                        <div className="w-36 flex-shrink-0 text-sm font-medium text-text truncate" title={d.name}>{d.name}</div>
+                        <label className="text-[11px] text-text-muted flex flex-col gap-0.5">발생수량
+                          <input type="number" min="0" value={d.qty}
+                            onChange={(e) => setDefectRows((prev) => prev.map((x, j) => j === i ? { ...x, qty: Number(e.target.value) } : x))}
+                            className="w-20 border border-border rounded p-1.5 bg-background text-text text-right font-mono" />
+                        </label>
+                        <label className="text-[11px] text-text-muted flex flex-col gap-0.5 flex-1 min-w-0">비고
+                          <input value={d.remark}
+                            onChange={(e) => setDefectRows((prev) => prev.map((x, j) => j === i ? { ...x, remark: e.target.value } : x))}
+                            className="w-full border border-border rounded p-1.5 bg-background text-text" />
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-[11px] text-text-muted mt-2">부적합 유형은 자동차 하네스/전장부품 기준 예시입니다 (Mock-up).</p>
+                </div>
               </div>
             )}
 
-            {/* 설비비가동 (목업 폼) */}
-            {panelMode === 'downtime' && (
-              <div className="border-t border-border pt-4 space-y-3">
-                <label className="text-sm text-text-muted flex flex-col gap-1">비가동 사유
-                  <select className="border border-border rounded p-2 bg-background text-text">
-                    <option>모델 교체</option><option>자재 대기</option><option>설비 고장</option><option>청소/5S</option>
-                  </select>
-                </label>
-                <div className="grid grid-cols-2 gap-3">
-                  <label className="text-sm text-text-muted flex flex-col gap-1">시작시각
-                    <input type="datetime-local" className="border border-border rounded p-2 bg-background text-text" />
-                  </label>
-                  <label className="text-sm text-text-muted flex flex-col gap-1">종료시각
-                    <input type="datetime-local" className="border border-border rounded p-2 bg-background text-text" />
-                  </label>
+            {/* 설비비가동 (목업) — 상태 토글 + 정지사유/작업자/처리담당자 */}
+            {panelMode === 'downtime' && downtime && (
+              <div className="space-y-4">
+                {/* 설비코드/설비명/라인코드/라인명 */}
+                <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                  <div className="flex flex-col"><span className="text-[11px] text-text-muted">설비코드</span><span className="text-text font-mono">{panelRec.machineCode}</span></div>
+                  <div className="flex flex-col"><span className="text-[11px] text-text-muted">설비명</span><span className="text-text">{panelRec.machineName}</span></div>
+                  <div className="flex flex-col"><span className="text-[11px] text-text-muted">라인코드</span><span className="text-text font-mono">{panelRec.lineCode}</span></div>
+                  <div className="flex flex-col"><span className="text-[11px] text-text-muted">라인명</span><span className="text-text">{panelRec.lineName}</span></div>
                 </div>
-                <label className="text-sm text-text-muted flex flex-col gap-1">비고
-                  <textarea rows={2} className="border border-border rounded p-2 bg-background text-text resize-none" />
-                </label>
-                <p className="text-[11px] text-text-muted">설비비가동 등록 (Mock-up) — 실제 저장은 미구현.</p>
+
+                {/* 상태 토글 (큰 버튼) — 현재 상태의 반대(선택 가능한) 상태를 표시 */}
+                <div>
+                  <span className="text-sm font-semibold text-text">설비 가동 상태</span>
+                  <div className="text-xs text-text-muted mt-1">현재 상태: <b className={downtime.initialStatus === 'RUNNING' ? 'text-emerald-600' : 'text-red-600'}>{downtime.initialStatus === 'RUNNING' ? '정상가동' : '정지(비가동)'}</b>{dtToggled && <span className="text-amber-600"> · 전환 대기(미저장)</span>}</div>
+                  <button onClick={toggleDowntime} disabled={dtToggled}
+                    className={`w-full mt-2 py-5 rounded-lg text-lg font-bold text-white ${dtLabelStop ? 'bg-red-500 hover:bg-red-600' : 'bg-emerald-500 hover:bg-emerald-600'} ${dtToggled ? 'opacity-60 cursor-not-allowed' : ''}`}>
+                    {dtLabelStop ? '■ 정지' : '● 정상'}
+                    <span className="block text-xs font-normal opacity-90 mt-1">{dtToggled ? '선택된 상태 · 저장 전까지 유지' : (downtime.status === 'RUNNING' ? '클릭하면 비가동 시작 · 시작일시 기록' : '클릭하면 비가동 종료 · 종료일시 기록')}</span>
+                  </button>
+                  {dtToggled && <p className="text-[11px] text-amber-600 mt-1">전환 값은 저장 전까지 유지됩니다. 저장하면 상태를 다시 전환할 수 있습니다.</p>}
+                </div>
+
+                {/* 시작일시 + 처리담당자(정지) — 정지 이력 (정상 전환 후에도 유지) */}
+                {downtime.stopAt && (
+                  <div className="border border-red-300 rounded p-3 space-y-2 bg-red-500/5">
+                    <label className="text-sm text-text-muted flex flex-col gap-1">시작일시 (비가동 시작)
+                      <input type="datetime-local" step={1} value={downtime.stopAt} onChange={(e) => setDowntime({ ...downtime, stopAt: e.target.value })} className="border border-border rounded p-2 bg-background text-text" />
+                    </label>
+                    <div className="text-sm text-text-muted">처리담당자(정지) <b className="text-text">{downtime.stopBy || CURRENT_USER}</b> (자동)</div>
+                  </div>
+                )}
+
+                {/* 정지 상태 입력: 정지사유 그리드 + 상세 + 작업자 */}
+                {downtime.status === 'STOPPED' && (
+                  <div className="space-y-3">
+                    <div className="flex flex-col gap-1">
+                      <span className="text-sm text-text-muted">정지 사유 <span className="text-red-500">*</span></span>
+                      <div className="border border-border rounded overflow-hidden bg-background">
+                        <div className="flex bg-surface text-text-muted text-xs font-semibold">
+                          <div className="flex-1 p-2">비가동 사유</div>
+                          <div className="w-24 p-2 text-center">사유구분</div>
+                          <div className="w-20 p-2 text-center">선택</div>
+                        </div>
+                        {STOP_REASONS.map((r) => {
+                          const sel = downtime.stopReasonCode === r.code;
+                          return (
+                            <div key={r.code} className={`flex items-center text-sm border-t border-border ${sel ? 'ring-2 ring-inset ring-primary bg-primary/10' : ''}`}>
+                              <div className="flex-1 p-2"><span className="font-mono">{r.code}</span> · {r.name}</div>
+                              <div className="w-24 p-2 text-center">{r.type}</div>
+                              <div className="w-20 p-2 text-center">
+                                <button onClick={() => setDowntime({ ...downtime, stopReasonCode: r.code })}
+                                  className={`px-2 py-0.5 rounded text-xs ${sel ? 'bg-primary text-white' : 'border border-primary text-primary hover:bg-surface'}`}>
+                                  {sel ? '선택됨' : '선택'}
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    <label className="text-sm text-text-muted flex flex-col gap-1">비가동 사유(상세)
+                      <textarea rows={2} value={downtime.stopMemo} onChange={(e) => setDowntime({ ...downtime, stopMemo: e.target.value })} className="border border-border rounded p-2 bg-background text-text resize-none" />
+                    </label>
+                    <label className="text-sm text-text-muted flex flex-col gap-1">작업자
+                      <input value={downtime.stopWorker} onChange={(e) => setDowntime({ ...downtime, stopWorker: e.target.value })} className="border border-border rounded p-2 bg-background text-text" />
+                    </label>
+                  </div>
+                )}
+
+                {/* 종료일시 + 처리담당자(정상전환) — 정상 클릭 시점 (정지 이력과 함께 표시) */}
+                {downtime.resumeAt && (
+                  <div className="border border-emerald-300 rounded p-3 space-y-2 bg-emerald-500/5">
+                    <label className="text-sm text-text-muted flex flex-col gap-1">종료일시 (비가동 종료)
+                      <input type="datetime-local" step={1} value={downtime.resumeAt} onChange={(e) => setDowntime({ ...downtime, resumeAt: e.target.value })} className="border border-border rounded p-2 bg-background text-text" />
+                    </label>
+                    <div className="text-sm text-text-muted">처리담당자(정상전환) <b className="text-text">{downtime.resumeBy || CURRENT_USER}</b> (자동)</div>
+                  </div>
+                )}
+
+                <p className="text-[11px] text-text-muted">정지 클릭 시 시작일시, 정상 클릭 시 종료일시와 처리담당자가 자동 기록됩니다 (Mock-up).</p>
               </div>
             )}
           </div>
