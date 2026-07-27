@@ -63,6 +63,7 @@ export const menuConfig: MenuConfigItem[] = [
       { code: "OEE_ENTRY", labelKey: "menu.oee.entry", path: "/oee/entry" },
       { code: "OEE_EQUIP_WORK_RESULT", labelKey: "menu.oee.equipWorkResult", path: "/oee/equip-work-result" },
       { code: "OEE_EQUIP_OPS_ANALYSIS", labelKey: "menu.oee.equipOpsAnalysis", path: "/oee/equip-ops-analysis" },
+      { code: "OEE_EQUIP_DOWNTIME_MOBILE", labelKey: "menu.oee.equipDowntimeMobile", path: "/oee/equip-downtime-mobile" },
       { code: "OEE_MST_RESOURCE", labelKey: "menu.oee.resource", path: "/oee/master/resource" },
       { code: "OEE_MST_STD_TIME", labelKey: "menu.oee.standardTime", path: "/oee/master/standard-time" },
       { code: "OEE_MST_IDLE_REASON", labelKey: "menu.oee.idleReason", path: "/oee/master/idle-reason" },

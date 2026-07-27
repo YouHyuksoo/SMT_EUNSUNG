@@ -147,6 +147,11 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
       component = mod.getPageComponent();
       break;
     }
+    case "/oee/equip-downtime-mobile": {
+      const mod = await import("./page-registries/oee__equip-downtime-mobile.generated");
+      component = mod.getPageComponent();
+      break;
+    }
     case "/oee/equip-ops-analysis": {
       const mod = await import("./page-registries/oee__equip-ops-analysis.generated");
       component = mod.getPageComponent();

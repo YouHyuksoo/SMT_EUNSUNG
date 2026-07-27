@@ -395,7 +395,8 @@
     "oee.idleReason": "Equipment Downtime Reason",
     "oee.equipReason": "Equipment-Downtime Reason Mapping",
     "oee.equipWorkResult": "Equipment Work Result",
-    "oee.equipOpsAnalysis": "Equipment Ops Analysis"
+    "oee.equipOpsAnalysis": "Equipment Ops Analysis",
+    "oee.equipDowntimeMobile": "Equipment Downtime (Mobile)"
   },
   "header": {
     "theme": "Theme",
