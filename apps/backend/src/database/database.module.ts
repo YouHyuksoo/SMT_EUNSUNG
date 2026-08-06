@@ -60,6 +60,7 @@ import { ProductSalePrice } from '../entities/product-sale-price.entity';
 import { ItemSupplier } from '../entities/item-supplier.entity';
 import { CustomerMaster } from '../entities/customer-master.entity';
 import { FileAttachment } from '../entities/file-attachment.entity';
+import { ProductStMaster } from '../entities/product-st-master.entity';
 
 @Global()
 @Module({
@@ -137,6 +138,7 @@ import { FileAttachment } from '../entities/file-attachment.entity';
             ItemSupplier,
             CustomerMaster,
             FileAttachment,
+            ProductStMaster,
           ],
           migrations: [],
           migrationsRun: false,
