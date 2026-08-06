@@ -52,8 +52,10 @@ interface EditForm {
   validTo: string;
   times: StdTimes;
   remark: string;
+  registeredBy: string; // 편집 시 표시용(읽기전용)
+  updatedAt: string;    // 편집 시 표시용(읽기전용)
 }
-const emptyForm = (): EditForm => ({ originalItemCode: null, originalValidFrom: null, modelCode: '', modelName: '', validFrom: '', validTo: OPEN_END, times: emptyTimes(), remark: '' });
+const emptyForm = (): EditForm => ({ originalItemCode: null, originalValidFrom: null, modelCode: '', modelName: '', validFrom: '', validTo: OPEN_END, times: emptyTimes(), remark: '', registeredBy: '', updatedAt: '' });
 
 // API 응답 타입
 interface ApiStdRow { itemCode: string; modelName: string | null; validFrom: string; validTo: string; st: number | null; ct: number | null; nt: number | null; tt: number | null; remark: string | null; registeredBy: string | null; updatedAt: string | null; }
@@ -149,6 +151,7 @@ export default function StandardTimeMasterPage() {
       originalItemCode: r.modelCode, originalValidFrom: r.validFrom,
       modelCode: r.modelCode, modelName: r.modelName, validFrom: r.validFrom, validTo: r.validTo,
       times: { ...r.times }, remark: r.remark,
+      registeredBy: r.registeredBy, updatedAt: r.updatedAt,
     });
   }
   function openPicker() { setPickerQuery(''); loadItems(); setModelPickerOpen(true); }
@@ -173,8 +176,13 @@ export default function StandardTimeMasterPage() {
       toast.success('저장되었습니다');
       setForm(null);
       await load();
-    } catch {
-      toast.error('저장에 실패했습니다');
+    } catch (e: unknown) {
+      // 서버가 내려준 메시지(중복 등) 우선 표시
+      const msg =
+        e && typeof e === 'object' && 'response' in e
+          ? (e as { response?: { data?: { message?: string } } }).response?.data?.message
+          : undefined;
+      toast.error(msg || '저장에 실패했습니다');
     }
   }
 
@@ -271,8 +279,8 @@ export default function StandardTimeMasterPage() {
             </label>
 
             <div className="flex gap-6 text-sm text-text-muted border-t border-border pt-4">
-              <span>등록자 <b className="text-text">저장 시 자동 기록</b></span>
-              <span>업데이트일시 <b className="text-text">저장 시 자동 기록</b></span>
+              <span>등록자 <b className="text-text">{form.originalItemCode == null ? '저장 시 자동(로그인 사용자)' : (form.registeredBy || '-')}</b></span>
+              <span>업데이트일시 <b className="text-text">{form.originalItemCode == null ? '저장 시 자동 기록' : (form.updatedAt || '-')}</b></span>
             </div>
           </div>
           <div className="flex-shrink-0 border-t border-border" />
@@ -280,27 +288,27 @@ export default function StandardTimeMasterPage() {
       )}
 
       {/* 모델선택 팝업 — ID_ITEM 품목마스터 참조, 단일 선택 */}
-      <Modal isOpen={modelPickerOpen} onClose={() => setModelPickerOpen(false)} title="모델(품목) 선택" size="lg">
+      <Modal isOpen={modelPickerOpen} onClose={() => setModelPickerOpen(false)} title="모델(품목) 선택" size="2xl">
         <div className="space-y-2">
           <Input placeholder="모델코드/모델명 검색" value={pickerQuery} onChange={(e) => setPickerQuery(e.target.value)} leftIcon={<Search className="w-4 h-4" />} fullWidth />
-          <div className="max-h-[50vh] overflow-y-auto border border-border rounded">
+          <div className="max-h-[50vh] overflow-auto border border-border rounded">
             <table className="w-full text-sm">
               <thead className="sticky top-0">
                 <tr className="bg-surface text-text-muted">
-                  <th className="p-2 text-left">모델코드</th>
+                  <th className="p-2 text-left whitespace-nowrap">모델코드</th>
                   <th className="p-2 text-left">모델명</th>
                   <th className="p-2 text-left">규격</th>
-                  <th className="p-2"></th>
+                  <th className="p-2 text-center w-20">선택</th>
                 </tr>
               </thead>
               <tbody>
                 {pickerItems.map((m) => (
                   <tr key={m.modelCode} className="border-t border-border">
-                    <td className="p-2 font-mono">{m.modelCode}</td>
+                    <td className="p-2 font-mono whitespace-nowrap">{m.modelCode}</td>
                     <td className="p-2">{m.modelName}</td>
                     <td className="p-2 text-text-muted">{m.spec}</td>
-                    <td className="p-2 text-right">
-                      <button onClick={() => { if (form) setForm({ ...form, modelCode: m.modelCode, modelName: m.modelName }); setModelPickerOpen(false); }} className="text-primary">선택</button>
+                    <td className="p-2 text-center w-20">
+                      <button onClick={() => { if (form) setForm({ ...form, modelCode: m.modelCode, modelName: m.modelName }); setModelPickerOpen(false); }} className="px-3 py-1 rounded border border-primary text-primary hover:bg-surface text-xs whitespace-nowrap">선택</button>
                     </td>
                   </tr>
                 ))}

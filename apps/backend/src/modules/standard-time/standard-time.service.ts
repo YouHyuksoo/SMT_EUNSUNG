@@ -1,5 +1,5 @@
 // 표준시간 관리 — IP_PRODUCT_ST_MASTER CRUD + ID_ITEM(모델) 조인 조회
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ProductStMaster } from '../../entities/product-st-master.entity';
@@ -52,21 +52,36 @@ export class StandardTimeService {
 
   /** 신규/수정 — 원본 키가 오면 삭제 후 삽입(모델/시작일 변경 대응). 날짜는 문자열 매칭. */
   async upsert(dto: StdTimeUpsertDto): Promise<void> {
-    const m = this.repo.manager;
     const isEdit = !!dto.originalItemCode && !!dto.originalValidFrom;
-    if (isEdit) {
-      await m.query(
-        `DELETE FROM IP_PRODUCT_ST_MASTER WHERE ITEM_CODE = :1 AND TO_CHAR(DATESET,'YYYY-MM-DD') = :2 AND ORGANIZATION_ID = :3`,
-        [dto.originalItemCode, dto.originalValidFrom, ORG],
-      );
-    }
+    const keyChanged = isEdit && (dto.originalItemCode !== dto.itemCode || dto.originalValidFrom !== dto.validFrom);
     const user = dto.userId ?? DEFAULT_USER;
-    await m.query(
-      `INSERT INTO IP_PRODUCT_ST_MASTER
-         (ITEM_CODE, DATESET, ORGANIZATION_ID, DATEEND, ST_VALUE, CT_VALUE, NT_VALUE, TT_VALUE, REMARK, ENTER_BY, ENTER_DATE, LAST_MODIFY_BY, LAST_MODIFY_DATE)
-       VALUES (:1, TO_DATE(:2,'YYYY-MM-DD'), :3, TO_DATE(:4,'YYYY-MM-DD'), :5, :6, :7, :8, :9, :10, SYSDATE, :11, ${isEdit ? 'SYSDATE' : 'NULL'})`,
-      [dto.itemCode, dto.validFrom, ORG, dto.validTo, dto.st ?? 0, dto.ct ?? 0, dto.nt ?? 0, dto.tt ?? 0, dto.remark ?? null, user, isEdit ? user : null],
-    );
+
+    // 트랜잭션: (중복체크 →) 원본 삭제 → 신규 삽입. 실패 시 전체 롤백(원본 유실 방지)
+    await this.repo.manager.transaction(async (mgr) => {
+      // 중복 체크: 신규이거나 키(모델코드+적용시작일) 변경 시 대상 키 존재 여부
+      // (같은 모델코드라도 적용시작일이 다르면 리비전으로 허용)
+      if (!isEdit || keyChanged) {
+        const dup: Array<{ cnt: number }> = await mgr.query(
+          `SELECT COUNT(*) AS "cnt" FROM IP_PRODUCT_ST_MASTER WHERE ITEM_CODE = :1 AND TO_CHAR(DATESET,'YYYY-MM-DD') = :2 AND ORGANIZATION_ID = :3`,
+          [dto.itemCode, dto.validFrom, ORG],
+        );
+        if (Number(dup?.[0]?.cnt ?? 0) > 0) {
+          throw new ConflictException(`이미 등록된 모델코드·적용시작일입니다 (${dto.itemCode} / ${dto.validFrom})`);
+        }
+      }
+      if (isEdit) {
+        await mgr.query(
+          `DELETE FROM IP_PRODUCT_ST_MASTER WHERE ITEM_CODE = :1 AND TO_CHAR(DATESET,'YYYY-MM-DD') = :2 AND ORGANIZATION_ID = :3`,
+          [dto.originalItemCode, dto.originalValidFrom, ORG],
+        );
+      }
+      await mgr.query(
+        `INSERT INTO IP_PRODUCT_ST_MASTER
+           (ITEM_CODE, DATESET, ORGANIZATION_ID, DATEEND, ST_VALUE, CT_VALUE, NT_VALUE, TT_VALUE, REMARK, ENTER_BY, ENTER_DATE, LAST_MODIFY_BY, LAST_MODIFY_DATE)
+         VALUES (:1, TO_DATE(:2,'YYYY-MM-DD'), :3, TO_DATE(:4,'YYYY-MM-DD'), :5, :6, :7, :8, :9, :10, SYSDATE, :11, ${isEdit ? 'SYSDATE' : 'NULL'})`,
+        [dto.itemCode, dto.validFrom, ORG, dto.validTo, dto.st ?? 0, dto.ct ?? 0, dto.nt ?? 0, dto.tt ?? 0, dto.remark ?? null, user, isEdit ? user : null],
+      );
+    });
   }
 
   async remove(itemCode: string, validFrom: string): Promise<void> {
