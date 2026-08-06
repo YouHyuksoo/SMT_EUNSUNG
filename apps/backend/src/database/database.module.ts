@@ -61,6 +61,9 @@ import { ItemSupplier } from '../entities/item-supplier.entity';
 import { CustomerMaster } from '../entities/customer-master.entity';
 import { FileAttachment } from '../entities/file-attachment.entity';
 import { ProductStMaster } from '../entities/product-st-master.entity';
+import { EquipDowntimeReason } from '../entities/equip-downtime-reason.entity';
+import { EquipDowntimeMap } from '../entities/equip-downtime-map.entity';
+import { EquipDowntimeMapDtl } from '../entities/equip-downtime-map-dtl.entity';
 
 @Global()
 @Module({
@@ -139,6 +142,9 @@ import { ProductStMaster } from '../entities/product-st-master.entity';
             CustomerMaster,
             FileAttachment,
             ProductStMaster,
+            EquipDowntimeReason,
+            EquipDowntimeMap,
+            EquipDowntimeMapDtl,
           ],
           migrations: [],
           migrationsRun: false,

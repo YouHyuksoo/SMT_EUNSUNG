@@ -22,6 +22,8 @@ import configuration from './config/configuration';
 import { AuthModule } from './modules/auth/auth.module';
 import { OeeModule } from './modules/oee/oee.module';
 import { StandardTimeModule } from './modules/standard-time/standard-time.module';
+import { IdleReasonModule } from './modules/idle-reason/idle-reason.module';
+import { EquipReasonMapModule } from './modules/equip-reason-map/equip-reason-map.module';
 import { MenuCategoriesModule } from './modules/menu-categories/menu-categories.module';
 import { SystemModule } from './modules/system/system.module';
 import { SchedulerModule } from './modules/scheduler/scheduler.module';
@@ -73,6 +75,8 @@ import { SharedModule } from './shared/shared.module';
     // OEE (설비종합효율) — 입력·마스터
     OeeModule,
     StandardTimeModule,
+    IdleReasonModule,
+    EquipReasonMapModule,
 
     // 메뉴 카테고리 관리 (/system/menu-categories)
     MenuCategoriesModule,
