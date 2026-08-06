@@ -137,16 +137,6 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
       component = mod.getPageComponent();
       break;
     }
-    case "/oee/dashboard/loss": {
-      const mod = await import("./page-registries/oee__dashboard__loss.generated");
-      component = mod.getPageComponent();
-      break;
-    }
-    case "/oee/entry": {
-      const mod = await import("./page-registries/oee__entry.generated");
-      component = mod.getPageComponent();
-      break;
-    }
     case "/oee/equip-downtime-mobile": {
       const mod = await import("./page-registries/oee__equip-downtime-mobile.generated");
       component = mod.getPageComponent();
@@ -169,11 +159,6 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
     }
     case "/oee/master/idle-reason": {
       const mod = await import("./page-registries/oee__master__idle-reason.generated");
-      component = mod.getPageComponent();
-      break;
-    }
-    case "/oee/master/resource": {
-      const mod = await import("./page-registries/oee__master__resource.generated");
       component = mod.getPageComponent();
       break;
     }

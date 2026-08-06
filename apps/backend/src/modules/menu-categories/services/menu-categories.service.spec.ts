@@ -237,12 +237,12 @@ describe('MenuCategoriesService', () => {
         { menuCode: 'SYS_IMPR_REQ' },
         { menuCode: 'OEE_DASHBOARD' },
         { menuCode: 'OEE_DRILLDOWN' },
-        { menuCode: 'OEE_LOSS' },
-        { menuCode: 'OEE_ENTRY' },
-        { menuCode: 'OEE_MST_RESOURCE' },
-        { menuCode: 'OEE_MST_REASON' },
+        { menuCode: 'OEE_EQUIP_WORK_RESULT' },
+        { menuCode: 'OEE_EQUIP_OPS_ANALYSIS' },
+        { menuCode: 'OEE_EQUIP_DOWNTIME_MOBILE' },
         { menuCode: 'OEE_MST_STD_TIME' },
         { menuCode: 'OEE_MST_IDLE_REASON' },
+        { menuCode: 'OEE_MST_EQUIP_REASON' },
       ] as any);
 
       await service.ensureDefaultLayout({ organizationId: 7, userId: 'tester' });

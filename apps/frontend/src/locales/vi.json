@@ -388,9 +388,12 @@
     "oee": "Quản lý OEE",
     "oee.dashboard": "Tổng quan OEE",
     "oee.drilldown": "Chi tiết nguồn lực",
-    "oee.loss": "Pareto tổn thất",
-    "oee.entry": "Nhật ký vận hành",
-    "oee.resource": "Danh mục nguồn lực"
+    "oee.equipWorkResult": "Quản lý kết quả sản xuất theo thiết bị",
+    "oee.equipOpsAnalysis": "Tình trạng & phân tích vận hành thiết bị",
+    "oee.equipDowntimeMobile": "Quản lý dừng máy (di động)",
+    "oee.standardTime": "Quản lý thời gian tiêu chuẩn",
+    "oee.idleReason": "Mã lý do dừng thiết bị",
+    "oee.equipReason": "Liên kết lý do dừng theo thiết bị"
   },
   "header": {
     "theme": "Giao diện",

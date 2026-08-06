@@ -80,9 +80,6 @@ export default function OeeOverviewPage() {
           <Link href="/oee/dashboard/drilldown" className="text-primary hover:underline">
             리소스 드릴다운 →
           </Link>
-          <Link href="/oee/dashboard/loss" className="text-primary hover:underline">
-            로스 파레토 →
-          </Link>
         </div>
       </div>
 
