@@ -7,14 +7,35 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { OeeResource } from '../../entities/oee-resource.entity';
 import { OeeDowntimeReason } from '../../entities/oee-downtime-reason.entity';
 import { OeeOperationLog } from '../../entities/oee-operation-log.entity';
+import { OeeDowntimeEvent } from '../../entities/oee-downtime-event.entity';
+import { WorktimeRange } from '../../entities/worktime-range.entity';
+import { IsysUser } from '../../entities/isys-user.entity';
+import { ComCode } from '../../entities/com-code.entity';
 import { OeeController } from './oee.controller';
 import { OeeMasterService } from './oee-master.service';
 import { OeeLogService } from './oee-log.service';
 import { OeeDashboardService } from './oee-dashboard.service';
+import { Plant } from '../../entities/plant.entity';
+import { ProdLineMaster } from '../../entities/prod-line-master.entity';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { OeeMobileController } from './oee-mobile.controller';
+import { OeeMobileService } from './oee-mobile.service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([OeeResource, OeeDowntimeReason, OeeOperationLog])],
-  controllers: [OeeController],
-  providers: [OeeMasterService, OeeLogService, OeeDashboardService],
+  imports: [
+    TypeOrmModule.forFeature([
+      OeeResource,
+      OeeDowntimeReason,
+      OeeOperationLog,
+      OeeDowntimeEvent,
+      WorktimeRange,
+      IsysUser,
+      ComCode,
+      ProdLineMaster,
+      Plant,
+    ]),
+  ],
+  controllers: [OeeController, OeeMobileController],
+  providers: [OeeMasterService, OeeLogService, OeeDashboardService, OeeMobileService, JwtAuthGuard],
 })
 export class OeeModule {}

@@ -16,9 +16,12 @@ import { SqlDebugTypeormLogger } from '../common/sql-debug/typeorm-sql-debug.log
 import { IsysUser } from '../entities/isys-user.entity';
 import { IsysOrganization } from '../entities/isys-organization.entity';
 import { DepartmentMaster } from '../entities/department-master.entity';
+import { Plant } from '../entities/plant.entity';
 import { OeeResource } from '../entities/oee-resource.entity';
 import { OeeDowntimeReason } from '../entities/oee-downtime-reason.entity';
 import { OeeOperationLog } from '../entities/oee-operation-log.entity';
+import { OeeDowntimeEvent } from '../entities/oee-downtime-event.entity';
+import { WorktimeRange } from '../entities/worktime-range.entity';
 import { MenuCategory } from '../entities/menu-category.entity';
 import { MenuCategoryItem } from '../entities/menu-category-item.entity';
 import { ComCode } from '../entities/com-code.entity';
@@ -97,9 +100,12 @@ import { EquipDowntimeMapDtl } from '../entities/equip-downtime-map-dtl.entity';
             IsysUser,
             IsysOrganization,
             DepartmentMaster,
+            Plant,
             OeeResource,
             OeeDowntimeReason,
             OeeOperationLog,
+            OeeDowntimeEvent,
+            WorktimeRange,
             MenuCategory,
             MenuCategoryItem,
             ComCode,

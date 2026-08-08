@@ -16,7 +16,8 @@ import { useTranslation } from "react-i18next";
 import { X, Plus, Trash2, MapPin } from "lucide-react";
 import { Button, Input, ConfirmModal } from "@/components/ui";
 import api from "@/services/api";
-import { Company, Plant, getCompanyKey, getPlantKey } from "../types";
+import CellManagementSection from "./CellManagementSection";
+import { Company, Plant, getCompanyKey, getPlantKey, getPlantPath } from "../types";
 
 interface Props {
   editingCompany: Company | null;
@@ -46,6 +47,7 @@ export default function CompanyFormPanel({ editingCompany, onClose, onSave, anim
 
   const [form, setForm] = useState(() => buildForm(editingCompany));
   const initialFormRef = useRef(form);
+  const [formBaselineVersion, setFormBaselineVersion] = useState(0);
   const [saving, setSaving] = useState(false);
 
   // 사업장 관련 상태
@@ -53,6 +55,7 @@ export default function CompanyFormPanel({ editingCompany, onClose, onSave, anim
   const [newPlant, setNewPlant] = useState({ plantCode: "", plantName: "" });
   const [addingPlant, setAddingPlant] = useState(false);
   const [deletePlantTarget, setDeletePlantTarget] = useState<Plant | null>(null);
+  const [cellDirty, setCellDirty] = useState(false);
 
   useEffect(() => {
     const init = buildForm(editingCompany);
@@ -60,13 +63,15 @@ export default function CompanyFormPanel({ editingCompany, onClose, onSave, anim
     initialFormRef.current = init;
     setNewPlant({ plantCode: "", plantName: "" });
     setAddingPlant(false);
+    setCellDirty(false);
   }, [editingCompany]);
 
-  // 작성 중(저장 안 됨) 여부 계산 후 부모에 보고 — 행 전환 시 유실 방어
-  const dirty = useMemo(
+  // 회사 폼과 CELL 편집 중 하나라도 변경되면 부모에 dirty로 보고한다.
+  const companyDirty = useMemo(
     () => JSON.stringify(form) !== JSON.stringify(initialFormRef.current),
-    [form],
+    [form, formBaselineVersion],
   );
+  const dirty = companyDirty || cellDirty;
   useEffect(() => {
     onDirtyChange?.(dirty);
   }, [dirty, onDirtyChange]);
@@ -77,7 +82,7 @@ export default function CompanyFormPanel({ editingCompany, onClose, onSave, anim
     if (!editingCompany?.companyCode) { setPlants([]); return; }
     try {
       const res = await api.get("/master/plants", {
-        params: { plantType: "PLANT", search: "", limit: "100" },
+        params: { plantType: "PLANT", search: "", page: "1", limit: "100" },
       });
       // company 필드로 필터링
       const all: Plant[] = res.data?.data ?? [];
@@ -114,7 +119,10 @@ export default function CompanyFormPanel({ editingCompany, onClose, onSave, anim
       } else {
         await api.post("/master/companies", payload);
       }
-      onDirtyChange?.(false);
+      initialFormRef.current = form;
+      setFormBaselineVersion((version) => version + 1);
+      // CELL 초안이 남아 있으면 회사 저장만으로 dirty 상태를 지우지 않는다.
+      onDirtyChange?.(cellDirty);
       onSave();
       onClose();
     } catch {
@@ -132,7 +140,6 @@ export default function CompanyFormPanel({ editingCompany, onClose, onSave, anim
         plantCode: newPlant.plantCode,
         plantName: newPlant.plantName,
         plantType: "PLANT",
-        company: editingCompany?.companyCode,
       });
       setNewPlant({ plantCode: "", plantName: "" });
       setAddingPlant(false);
@@ -146,7 +153,7 @@ export default function CompanyFormPanel({ editingCompany, onClose, onSave, anim
   const handleDeletePlantConfirm = async () => {
     if (!deletePlantTarget) return;
     try {
-      await api.delete(`/master/plants/${deletePlantTarget.plantCode}`);
+      await api.delete(`/master/plants/${getPlantPath(deletePlantTarget)}`);
       fetchPlants();
     } catch {
       // 에러는 api 인터셉터에서 처리
@@ -210,6 +217,7 @@ export default function CompanyFormPanel({ editingCompany, onClose, onSave, anim
 
         {/* 사업장 관리 (수정 모드에서만 표시) */}
         {isEdit && (
+          <>
           <div>
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-xs font-semibold text-text-muted flex items-center gap-1">
@@ -277,6 +285,8 @@ export default function CompanyFormPanel({ editingCompany, onClose, onSave, anim
               </div>
             )}
           </div>
+          <CellManagementSection onDirtyChange={setCellDirty} />
+          </>
         )}
       </div>
 

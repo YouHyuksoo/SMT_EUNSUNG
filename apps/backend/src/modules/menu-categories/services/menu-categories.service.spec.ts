@@ -237,6 +237,7 @@ describe('MenuCategoriesService', () => {
         { menuCode: 'SYS_IMPR_REQ' },
         { menuCode: 'OEE_DASHBOARD' },
         { menuCode: 'OEE_DRILLDOWN' },
+        { menuCode: 'OEE_ENTRY' },
         { menuCode: 'OEE_EQUIP_WORK_RESULT' },
         { menuCode: 'OEE_EQUIP_OPS_ANALYSIS' },
         { menuCode: 'OEE_EQUIP_DOWNTIME_MOBILE' },

@@ -3,7 +3,7 @@
  * @description 공장/라인 관련 DTO 정의
  */
 
-import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsOptional, IsInt, Min, Max, MaxLength, IsIn } from 'class-validator';
 import { Type } from 'class-transformer';
 import { PLANT_TYPE_VALUES, USE_YN_VALUES } from '@smt/shared';
@@ -35,14 +35,14 @@ export class CreatePlantDto {
 
   @ApiProperty({ description: '공장/라인명', example: '1공장' })
   @IsString()
-  @MaxLength(100)
+  @MaxLength(200)
   plantName: string;
 
   @ApiPropertyOptional({ description: '타입', enum: PLANT_TYPE_VALUES })
   @IsOptional()
   @IsString()
   @IsIn([...PLANT_TYPE_VALUES])
-  plantType?: string;
+  plantType?: string | null;
 
   @ApiPropertyOptional({ description: '정렬 순서', default: 0 })
   @IsOptional()
@@ -57,7 +57,31 @@ export class CreatePlantDto {
   useYn?: string;
 }
 
-export class UpdatePlantDto extends PartialType(CreatePlantDto) {}
+export class UpdatePlantDto {
+  @ApiPropertyOptional({ description: '공장/라인명', example: '생산2팀' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  plantName?: string;
+
+  @ApiPropertyOptional({ description: '타입', enum: PLANT_TYPE_VALUES })
+  @IsOptional()
+  @IsString()
+  @IsIn([...PLANT_TYPE_VALUES])
+  plantType?: string | null;
+
+  @ApiPropertyOptional({ description: '정렬 순서' })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  sortOrder?: number;
+
+  @ApiPropertyOptional({ description: '사용 여부', enum: USE_YN_VALUES })
+  @IsOptional()
+  @IsString()
+  @IsIn([...USE_YN_VALUES])
+  useYn?: string;
+}
 
 export class PlantQueryDto extends PaginationQueryDto {
 

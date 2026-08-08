@@ -8,7 +8,7 @@
  * 1. 복합 PK: plantCode + shopCode + lineCode + cellCode
  * 2. plantType: PLANT(공장), SHOP(공장동), LINE(라인), CELL(셀)
  * 3. parent/children: 자기참조 관계 (트리 구조)
- * 4. shopCode/lineCode/cellCode가 null이면 상위 레벨
+ * 4. shopCode/lineCode/cellCode가 '-'이면 상위 레벨
  */
 import {
   Entity,
@@ -34,20 +34,23 @@ export class Plant {
   @PrimaryColumn({ name: 'CELL_CODE', length: 50, default: '-' })
   cellCode: string;
 
-  @Column({ name: 'PLANT_NAME', length: 100 })
+  @Column({ type: 'varchar2', name: 'COMPANY', length: 50 })
+  company: string;
+
+  @Column({ type: 'varchar2', name: 'PLANT_CD', length: 50 })
+  plantCd: string;
+
+  @Column({ name: 'PLANT_NAME', length: 200 })
   plantName: string;
 
   @Column({ type: 'varchar2', name: 'PLANT_TYPE', length: 50, nullable: true })
   plantType: string | null;
 
-  @Column({ name: 'SORT_ORDER', type: 'int', default: 0 })
+  @Column({ name: 'SORT_ORDER', type: 'number', default: 0 })
   sortOrder: number;
 
   @Column({ name: 'USE_YN', length: 1, default: 'Y' })
   useYn: string;
-
-  @Column({ name: 'ORGANIZATION_ID', type: 'number' })
-  organizationId!: number;
 
   @Column({ type: 'varchar2', name: 'CREATED_BY', length: 50, nullable: true })
   createdBy: string | null;
