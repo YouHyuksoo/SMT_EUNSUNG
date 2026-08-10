@@ -1,6 +1,15 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import test from "node:test";
+import ts from "typescript";
+
+const helperSource = fs.readFileSync(new URL("./_lib/oee-entry.ts", import.meta.url), "utf8");
+const helperModule = ts.transpileModule(helperSource, {
+  compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 },
+}).outputText;
+const { createRequestId, formatServerTimestamp, normalizeStatus } = await import(
+  `data:text/javascript;base64,${Buffer.from(helperModule).toString("base64")}`
+);
 
 const frontendRoot = fs.existsSync("src/app") ? "." : "apps/frontend";
 const pagePath = `${frontendRoot}/src/app/(authenticated)/oee/entry/page.tsx`;
@@ -67,12 +76,54 @@ test("request IDs are stable for failed retries and invalidated by command chang
   assert.match(lib, /stableStartSignature/);
   assert.match(page, /pendingStartRef/);
   assert.match(page, /pendingEndRef/);
-  assert.match(page, /crypto\.randomUUID\(\)/);
+  assert.match(lib, /createRequestId/);
+  assert.doesNotMatch(page, /crypto\.randomUUID\(\)/);
+  assert.match(page, /try \{[\s\S]*createRequestId\(\)/);
+  assert.equal(
+    page.match(/const requestId = pending\?\.signature === signature \? pending\.requestId : createRequestId\(\);/g)?.length,
+    2,
+  );
   assert.match(page, /pendingStartRef\.current\s*=\s*null/);
   assert.match(page, /pendingEndRef\.current\s*=\s*null/);
   assert.match(page, /stableStartSignature\(/);
   assert.match(page, /setStartSubmitting\(true\)/);
   assert.match(page, /setEndSubmitting\(true\)/);
+});
+
+test("request ID fallback is UUID-like and bounded when randomUUID is unavailable", () => {
+  const fallback = createRequestId({ randomUUID: undefined, getRandomValues: undefined });
+  assert.match(fallback, /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
+  assert.ok(fallback.length <= 64);
+
+  const supplied = createRequestId({ randomUUID: () => "123e4567-e89b-42d3-a456-426614174000" });
+  assert.equal(supplied, "123e4567-e89b-42d3-a456-426614174000");
+});
+
+test("server timestamps are formatted in Asia/Seoul", () => {
+  assert.equal(formatServerTimestamp("2026-08-10T00:30:00.000Z"), "2026-08-10 09:30:00");
+  assert.equal(formatServerTimestamp("2026-08-10T00:30:00.000"), "2026-08-10 00:30:00");
+  assert.doesNotMatch(formatServerTimestamp("2026-08-10T00:30:00.000Z"), /Z|UTC/);
+});
+
+test("status normalization rejects contradictory open-event state", () => {
+  const base = { workDate: "2026-08-10", workSegment: "DAY", events: [] };
+  assert.throws(
+    () => normalizeStatus({ ...base, state: "DOWNTIME", openEvent: null }),
+    /DOWNTIME.*openEvent/,
+  );
+  assert.throws(
+    () => normalizeStatus({ ...base, state: "DOWNTIME", openEvent: { eventId: 0 } }),
+    /DOWNTIME.*openEvent/,
+  );
+  assert.throws(
+    () => normalizeStatus({ ...base, state: "RUNNING", openEvent: { eventId: 42 } }),
+    /RUNNING.*openEvent/,
+  );
+  assert.equal(
+    normalizeStatus({ ...base, state: "DOWNTIME", openEvent: { eventId: 42 } }).openEvent?.eventId,
+    42,
+  );
+  assert.equal(normalizeStatus({ ...base, state: "RUNNING", openEvent: null }).openEvent, null);
 });
 
 test("malformed command responses cannot move the screen into a successful state", () => {

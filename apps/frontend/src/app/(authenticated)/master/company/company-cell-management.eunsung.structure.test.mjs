@@ -17,7 +17,7 @@ const types = fs.readFileSync(typesPath, "utf8");
 test("CELL 조회는 승인된 2F/PROD2 계약과 페이지 파라미터를 사용한다", () => {
   assert.match(
     section,
-    /api\.get\("\/master\/plants",\s*\{\s*params:\s*\{\s*plantType:\s*"CELL",\s*page:\s*"1",\s*limit:\s*"100"\s*\}\s*,[\s\S]*?\}\s*\)/,
+    /api\.get\("\/master\/plants",\s*\{\s*params:\s*\{\s*plantType:\s*"CELL",\s*page:\s*"1",\s*limit:\s*"10000"\s*\}\s*,[\s\S]*?\}\s*\)/,
   );
   assert.match(section, /plant\.plantCode\s*===\s*"EUNSUNG"/);
   assert.match(section, /plant\.shopCode\s*===\s*"2F"/);
@@ -40,6 +40,7 @@ test("CELL 수정은 4-key URL과 encodeURIComponent를 사용하고 editable �
   assert.match(section, /value=\{draft\.plantName\}/);
   assert.match(section, /<UseYnSelect[\s\S]*?value=\{draft\.useYn\}/);
   assert.match(section, /type="number"[^>]*min=\{0\}[^>]*value=\{draft\.sortOrder\}/);
+  assert.match(section, /label=\{t\("master\.company\.cellName"[\s\S]*?maxLength=\{200\}/);
   assert.match(section, /plantCode[\s\S]*aria-readonly="true"/);
   assert.match(section, /shopCode[\s\S]*aria-readonly="true"/);
   assert.match(section, /lineCode[\s\S]*aria-readonly="true"/);

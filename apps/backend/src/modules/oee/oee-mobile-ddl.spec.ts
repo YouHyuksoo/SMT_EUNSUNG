@@ -6,6 +6,10 @@ describe('OEE MOBILE prerequisite DDL', () => {
     join(__dirname, '../../../../../oracle_db_scripts/oee/07_mobile_prerequisites.sql'),
     'utf8',
   );
+  const cellSeed = readFileSync(
+    join(__dirname, '../../../../../oracle_db_scripts/oee/08_seed_production2_cells.sql'),
+    'utf8',
+  );
 
   it('contains the event contract and guarded Oracle objects', () => {
     expect(source.trimStart()).toMatch(/^DECLARE\b/);
@@ -25,5 +29,14 @@ describe('OEE MOBILE prerequisite DDL', () => {
     expect(source).toMatch(/USER_CONSTRAINTS/);
     expect(source).toMatch(/USER_INDEXES/);
     expect(source.split(/\r?\n/).filter((line) => line.trim() === '/').length).toBeGreaterThan(1);
+  });
+
+  it('keeps existing CELL master values and rejects cross-tenant key ownership', () => {
+    expect(cellSeed.trimStart()).toMatch(/^DECLARE\b/);
+    expect(cellSeed).toContain('RAISE_APPLICATION_ERROR');
+    expect(cellSeed).toContain('WHEN NOT MATCHED THEN INSERT');
+    expect(cellSeed).not.toContain('WHEN MATCHED THEN UPDATE');
+    expect(cellSeed).not.toMatch(/UPDATE\s+SET/i);
+    expect(cellSeed.match(/'CELL'\s*,\s*\d+\s*,\s*'Y'\s+FROM DUAL/g)).toHaveLength(15);
   });
 });

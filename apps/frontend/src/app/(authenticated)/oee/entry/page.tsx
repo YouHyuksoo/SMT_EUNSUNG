@@ -22,6 +22,8 @@ import { api } from '@/services/api';
 import {
   ASSY_PARENT_LINE_CODE,
   NO_ASSEMBLY_CELL_MASTER,
+  createRequestId,
+  formatServerTimestamp,
   makeEndPayload,
   makeStartPayload,
   normalizeCommandResult,
@@ -82,11 +84,6 @@ function parseWorker(response: unknown): OeeWorker | null {
   const value = unwrap<unknown>(response);
   if (!isRecord(value) || typeof value.workerId !== 'string' || typeof value.workerName !== 'string') return null;
   return { workerId: value.workerId, workerName: value.workerName };
-}
-
-function formatServerValue(value: string | null | undefined): string {
-  if (!value) return '—';
-  return value.replace('T', ' ').replace(/\.\d+$/, '');
 }
 
 function StateBadge({
@@ -416,12 +413,12 @@ export default function OeeEntryPage() {
       memo: startCommandFields.memo,
     });
     const pending = pendingStartRef.current;
-    const requestId = pending?.signature === signature ? pending.requestId : crypto.randomUUID();
-    pendingStartRef.current = { signature, requestId };
-    const payload = makeStartPayload({ ...startCommandFields, requestId });
 
     setStartSubmitting(true);
     try {
+      const requestId = pending?.signature === signature ? pending.requestId : createRequestId();
+      pendingStartRef.current = { signature, requestId };
+      const payload = makeStartPayload({ ...startCommandFields, requestId });
       const response = await api.post('/oee/mobile/downtime/start', payload, {
         suppressErrorModal: true,
         skipSuccessToast: true,
@@ -488,12 +485,12 @@ export default function OeeEntryPage() {
     }
     const signature = stableEndSignature(endCommandFields);
     const pending = pendingEndRef.current;
-    const requestId = pending?.signature === signature ? pending.requestId : crypto.randomUUID();
-    pendingEndRef.current = { signature, requestId };
-    const payload = makeEndPayload({ ...endCommandFields, requestId });
 
     setEndSubmitting(true);
     try {
+      const requestId = pending?.signature === signature ? pending.requestId : createRequestId();
+      pendingEndRef.current = { signature, requestId };
+      const payload = makeEndPayload({ ...endCommandFields, requestId });
       const response = await api.post('/oee/mobile/downtime/end', payload, {
         suppressErrorModal: true,
         skipSuccessToast: true,
@@ -779,7 +776,7 @@ export default function OeeEntryPage() {
                   <div className="rounded-xl border border-red-300 bg-red-500/5 p-3 text-sm">
                     <div className="grid grid-cols-2 gap-2">
                       <div><span className="block text-xs font-semibold text-text-muted">{t('oeeEntry.reason')}</span><strong>{reasonName(activeEvent.reasonCode)}</strong></div>
-                      <div><span className="block text-xs font-semibold text-text-muted">{t('oeeEntry.startedAt')}</span><strong>{formatServerValue(activeEvent.startTime)}</strong></div>
+                      <div><span className="block text-xs font-semibold text-text-muted">{t('oeeEntry.startedAt')}</span><strong>{formatServerTimestamp(activeEvent.startTime)}</strong></div>
                       <div><span className="block text-xs font-semibold text-text-muted">{t('oeeEntry.workerId')}</span><strong>{activeEvent.workerId ?? worker?.workerId ?? '—'}</strong></div>
                       <div><span className="block text-xs font-semibold text-text-muted">EVENT_ID</span><strong>{activeEvent.eventId}</strong></div>
                     </div>
@@ -902,7 +899,7 @@ export default function OeeEntryPage() {
                       <div className={active ? 'text-error' : 'text-emerald-600'}><Square className="h-5 w-5" fill="currentColor" aria-hidden="true" /></div>
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 font-semibold text-text">
-                          <span>{formatServerValue(event.startTime)} → {event.endTime ? formatServerValue(event.endTime) : t('oeeEntry.inProgress')}</span>
+                          <span>{formatServerTimestamp(event.startTime)} → {event.endTime ? formatServerTimestamp(event.endTime) : t('oeeEntry.inProgress')}</span>
                           <span className={active ? 'text-error' : 'text-text-muted'}>{active ? t('oeeEntry.downtime') : t('oeeEntry.completed')}</span>
                         </div>
                         <p className="truncate text-text-muted">{reasonName(event.reasonCode)} · {event.workerId ?? '—'} · {selectedResource.resourceCode}</p>
@@ -926,7 +923,7 @@ export default function OeeEntryPage() {
         title={t('oeeEntry.endConfirmTitle')}
         message={t('oeeEntry.endConfirmMessage', {
           resource: selectedResource?.resourceName ?? selectedResource?.resourceCode ?? '—',
-          startedAt: formatServerValue(activeEvent?.startTime),
+          startedAt: formatServerTimestamp(activeEvent?.startTime),
         })}
         confirmText={t('oeeEntry.endDowntime')}
         cancelText={t('common.cancel')}

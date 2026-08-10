@@ -413,7 +413,17 @@ describe('OeeMobileService', () => {
       reasonCode: 'A',
       requestId: 'start-1',
     } as const;
-    const replay = { eventId: 10, startRequestId: 'start-1' } as OeeDowntimeEvent;
+    const replay = {
+      eventId: 10,
+      startRequestId: 'start-1',
+      processCode: 'SMT',
+      resourceType: 'LINE',
+      resourceCode: '01',
+      parentLineCode: '01',
+      workerId: 'WORKER01',
+      reasonCode: 'A',
+      memo: null,
+    } as OeeDowntimeEvent;
     eventRepository.findOne.mockResolvedValueOnce(replay);
 
     await expect(target.startDowntime(command, 7, 'EUNSUNG', '1', 'LOGIN01')).resolves.toEqual({
@@ -456,6 +466,43 @@ describe('OeeMobileService', () => {
     } finally {
       jest.useRealTimers();
     }
+  });
+
+  it.each([
+    ['process', { processCode: 'ASSY' }],
+    ['resource type', { resourceType: 'CELL' }],
+    ['resource code', { resourceCode: '02' }],
+    ['parent line', { parentLineCode: '02' }],
+    ['worker', { workerId: 'WORKER02' }],
+    ['reason', { reasonCode: 'B' }],
+    ['memo', { memo: 'different memo' }],
+  ])('rejects a start replay when the %s command field differs', async (_field, change) => {
+    const command = {
+      processCode: 'SMT',
+      resourceType: 'LINE',
+      resourceCode: '01',
+      parentLineCode: '01',
+      workerId: 'WORKER01',
+      reasonCode: 'A',
+      memo: 'original memo',
+      requestId: 'start-1',
+    } as const;
+    const replay = {
+      eventId: 10,
+      startRequestId: 'start-1',
+      processCode: 'SMT',
+      resourceType: 'LINE',
+      resourceCode: '01',
+      parentLineCode: '01',
+      workerId: 'WORKER01',
+      reasonCode: 'A',
+      memo: 'original memo',
+    } as OeeDowntimeEvent;
+    eventRepository.findOne.mockResolvedValueOnce(replay);
+
+    await expect(
+      target.startDowntime({ ...command, ...change }, 7, 'EUNSUNG', '1', 'LOGIN01'),
+    ).rejects.toThrow(ConflictException);
   });
 
   it.each([
@@ -513,6 +560,16 @@ describe('OeeMobileService', () => {
     expect(eventRepository.update).not.toHaveBeenCalled();
   });
 
+  it('rejects an end replay when the request ID is reused for another event', async () => {
+    const replay = { eventId: 11, organizationId: 7, endRequestId: 'end-1' } as OeeDowntimeEvent;
+    eventRepository.findOne.mockResolvedValueOnce(replay);
+
+    await expect(target.endDowntime({ eventId: 10, requestId: 'end-1' }, 7, 'LOGIN01')).rejects.toThrow(
+      ConflictException,
+    );
+    expect(eventRepository.update).not.toHaveBeenCalled();
+  });
+
   it('resolves current status from current work date, events, and open event', async () => {
     const now = new Date('2026-08-07T22:30:00+09:00');
     jest.useFakeTimers().setSystemTime(now);
@@ -559,7 +616,17 @@ describe('OeeMobileService', () => {
       reasonCode: 'A',
       requestId: 'start-1',
     } as const;
-    const replay = { eventId: 20, startRequestId: 'start-1' } as OeeDowntimeEvent;
+    const replay = {
+      eventId: 20,
+      startRequestId: 'start-1',
+      processCode: 'SMT',
+      resourceType: 'LINE',
+      resourceCode: '01',
+      parentLineCode: '01',
+      workerId: 'WORKER01',
+      reasonCode: 'A',
+      memo: null,
+    } as OeeDowntimeEvent;
     jest.useFakeTimers().setSystemTime(new Date('2026-08-07T08:30:00+09:00'));
     try {
       lineRepository.find.mockResolvedValue([
@@ -608,6 +675,67 @@ describe('OeeMobileService', () => {
     }
   });
 
+  it('rejects a concurrent start replay when the unique-request row has different command fields', async () => {
+    const command = {
+      processCode: 'SMT',
+      resourceType: 'LINE',
+      resourceCode: '01',
+      parentLineCode: '01',
+      workerId: 'WORKER01',
+      reasonCode: 'A',
+      requestId: 'start-1',
+    } as const;
+    const replay = {
+      eventId: 20,
+      startRequestId: 'start-1',
+      processCode: 'SMT',
+      resourceType: 'LINE',
+      resourceCode: '02',
+      parentLineCode: '02',
+      workerId: 'WORKER01',
+      reasonCode: 'A',
+      memo: null,
+    } as OeeDowntimeEvent;
+    jest.useFakeTimers().setSystemTime(new Date('2026-08-07T08:30:00+09:00'));
+    try {
+      lineRepository.find.mockResolvedValue([
+        { lineCode: '01', lineName: 'A', organizationId: 7, lineDivision: 'D' },
+      ] as ProdLineMaster[]);
+      userRepository.findOne.mockResolvedValue({ userId: 'WORKER01', organizationId: 7 } as IsysUser);
+      codeRepository.findOne.mockResolvedValue({
+        groupCode: 'MACHINE STATUS CODE',
+        detailCode: 'A',
+        organizationId: 7,
+      } as ComCode);
+      worktimeRepository.find.mockResolvedValue([
+        {
+          rangeType: 'SMTWORKTIME',
+          workType: 'A',
+          startTime: '083000',
+          endTime: '103000',
+          attribute01: null,
+          attribute02: null,
+        },
+      ] as WorktimeRange[]);
+      eventRepository.findOne
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(replay);
+      eventRepository.create.mockImplementation(
+        (value) => value as unknown as OeeDowntimeEvent,
+      );
+      eventRepository.save.mockRejectedValue(
+        Object.assign(new Error('unique constraint violated'), { code: 'ORA-00001' }),
+      );
+
+      await expect(target.startDowntime(command, 7, 'EUNSUNG', '1', 'LOGIN01')).rejects.toThrow(
+        ConflictException,
+      );
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
   it.each([
     ['same request', true],
     ['different request', false],
@@ -633,6 +761,22 @@ describe('OeeMobileService', () => {
     expect(eventRepository.update).toHaveBeenCalledWith(
       { eventId: 10, organizationId: 7, endTime: IsNull() },
       expect.objectContaining({ endRequestId: 'end-1', endedBy: 'LOGIN01' }),
+    );
+  });
+
+  it('rejects a concurrent end replay when the unique-request row belongs to another event', async () => {
+    const openEvent = { eventId: 10, organizationId: 7, endTime: null } as OeeDowntimeEvent;
+    const replay = { eventId: 11, organizationId: 7, endRequestId: 'end-1' } as OeeDowntimeEvent;
+    eventRepository.findOne
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(openEvent)
+      .mockResolvedValueOnce(replay);
+    eventRepository.update.mockRejectedValue(
+      Object.assign(new Error('ORA-00001: unique constraint violated'), { code: 'ORA-00001' }),
+    );
+
+    await expect(target.endDowntime({ eventId: 10, requestId: 'end-1' }, 7, 'LOGIN01')).rejects.toThrow(
+      ConflictException,
     );
   });
 

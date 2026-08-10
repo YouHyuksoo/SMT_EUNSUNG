@@ -43,11 +43,11 @@ const ASSY_PARENT_LINE_CODE = 'PROD2';
 
 function errorText(error: unknown): string[] {
   if (error == null) return [];
-  if (error instanceof Error) return [error.message];
   if (typeof error !== 'object') return [String(error)];
 
   const record = error as Record<string, unknown>;
   const values: string[] = [];
+  if (error instanceof Error) values.push(error.message);
   for (const key of ['code', 'message']) {
     if (typeof record[key] === 'string') values.push(record[key] as string);
   }
@@ -198,7 +198,10 @@ export class OeeMobileService {
     const replay = await this.eventRepository.findOne({
       where: { organizationId: organization, startRequestId: dto.requestId },
     });
-    if (replay) return { event: replay, replayed: true };
+    if (replay) {
+      this.assertStartReplayMatches(replay, dto);
+      return { event: replay, replayed: true };
+    }
 
     const resource = await this.resolveResourceContract(
       dto.processCode,
@@ -261,7 +264,10 @@ export class OeeMobileService {
       const requestReplay = await this.eventRepository.findOne({
         where: { organizationId: organization, startRequestId: dto.requestId },
       });
-      if (requestReplay) return { event: requestReplay, replayed: true };
+      if (requestReplay) {
+        this.assertStartReplayMatches(requestReplay, dto);
+        return { event: requestReplay, replayed: true };
+      }
       throw new ConflictException('이미 처리 중이거나 열린 비가동 이벤트가 있습니다.');
     }
   }
@@ -278,7 +284,10 @@ export class OeeMobileService {
     const requestReplay = await this.eventRepository.findOne({
       where: { organizationId: organization, endRequestId: dto.requestId },
     });
-    if (requestReplay) return { event: requestReplay, replayed: true };
+    if (requestReplay) {
+      this.assertEndReplayMatches(requestReplay, dto);
+      return { event: requestReplay, replayed: true };
+    }
 
     const event = await this.eventRepository.findOne({
       where: { organizationId: organization, eventId: dto.eventId },
@@ -298,7 +307,10 @@ export class OeeMobileService {
       const concurrentReplay = await this.eventRepository.findOne({
         where: { organizationId: organization, endRequestId: dto.requestId },
       });
-      if (concurrentReplay) return { event: concurrentReplay, replayed: true };
+      if (concurrentReplay) {
+        this.assertEndReplayMatches(concurrentReplay, dto);
+        return { event: concurrentReplay, replayed: true };
+      }
       throw new ConflictException('이미 처리된 비가동 종료 요청입니다.');
     }
 
@@ -306,7 +318,10 @@ export class OeeMobileService {
       const conditionalReplay = await this.eventRepository.findOne({
         where: { organizationId: organization, endRequestId: dto.requestId },
       });
-      if (conditionalReplay) return { event: conditionalReplay, replayed: true };
+      if (conditionalReplay) {
+        this.assertEndReplayMatches(conditionalReplay, dto);
+        return { event: conditionalReplay, replayed: true };
+      }
       throw new ConflictException('비가동 이벤트가 이미 종료되었습니다.');
     }
 
@@ -540,6 +555,30 @@ export class OeeMobileService {
       throw new BadRequestException('이벤트 ID가 올바르지 않습니다.');
     }
     this.assertBoundedString(dto.requestId, '요청 ID', 64);
+  }
+
+  private assertStartReplayMatches(
+    event: OeeDowntimeEvent,
+    dto: OeeMobileStartDowntimeDto,
+  ): void {
+    const matches =
+      event.processCode === dto.processCode &&
+      event.resourceType === dto.resourceType &&
+      event.resourceCode === dto.resourceCode &&
+      event.parentLineCode === dto.parentLineCode &&
+      event.workerId === dto.workerId &&
+      event.reasonCode === dto.reasonCode &&
+      (event.memo ?? null) === (dto.memo ?? null);
+
+    if (!matches) {
+      throw new ConflictException('동일한 시작 요청 ID가 다른 비가동 명령에 사용되었습니다.');
+    }
+  }
+
+  private assertEndReplayMatches(event: OeeDowntimeEvent, dto: OeeMobileEndDowntimeDto): void {
+    if (event.eventId !== dto.eventId) {
+      throw new ConflictException('동일한 종료 요청 ID가 다른 이벤트에 사용되었습니다.');
+    }
   }
 
   private toKstMidnight(workDate: string): Date {

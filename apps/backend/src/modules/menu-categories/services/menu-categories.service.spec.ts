@@ -199,6 +199,38 @@ describe('MenuCategoriesService', () => {
       ]);
     });
 
+    it('uses the full OEE menu layout position when only OEE_ENTRY is missing', async () => {
+      categoryRepo.find.mockResolvedValue([
+        { organizationId: 7, categoryCode: 'MASTER' },
+        { organizationId: 7, categoryCode: 'OEE' },
+        { organizationId: 7, categoryCode: 'MATERIAL' },
+        { organizationId: 7, categoryCode: 'PROCESS_TRANSACTION' },
+        { organizationId: 7, categoryCode: 'PRODUCT_MGMT' },
+        { organizationId: 7, categoryCode: 'OUTSOURCING' },
+        { organizationId: 7, categoryCode: 'SYSTEM' },
+      ] as any);
+      itemRepo.find.mockResolvedValue([
+        { menuCode: 'OEE_DASHBOARD' },
+        { menuCode: 'OEE_DRILLDOWN' },
+      ] as any);
+      itemRepo.save.mockImplementation(async (e: any) => e);
+      tx.run.mockImplementationOnce(async (cb: any) =>
+        cb({
+          manager: {
+            getRepository: (entity: unknown) => (entity === MenuCategory ? categoryRepo : itemRepo),
+          },
+        }),
+      );
+
+      await service.ensureDefaultLayout({ organizationId: 7, userId: 'tester' });
+
+      expect(itemRepo.save).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({ menuCode: 'OEE_ENTRY', categoryCode: 'OEE', sortOrder: 30 }),
+        ]),
+      );
+    });
+
     it('does not rewrite a fully configured tenant layout', async () => {
       categoryRepo.find.mockResolvedValueOnce([
         { organizationId: 7, categoryCode: 'MASTER' },

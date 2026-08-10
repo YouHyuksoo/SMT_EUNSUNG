@@ -146,6 +146,11 @@ export class PlantService {
     plantCd: string,
   ) {
     const tenantWhere = this.tenantWhere(company, plantCd);
+    const hasUpdate = [dto.plantName, dto.plantType, dto.sortOrder, dto.useYn].some(
+      (value) => value !== undefined,
+    );
+    if (!hasUpdate) throw new BadRequestException('수정할 항목이 하나 이상 필요합니다.');
+
     const key = { plantCode, shopCode, lineCode, cellCode };
     await this.findById(plantCode, shopCode, lineCode, cellCode, company, plantCd);
 

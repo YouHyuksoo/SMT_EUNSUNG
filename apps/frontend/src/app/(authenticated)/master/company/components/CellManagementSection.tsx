@@ -53,7 +53,7 @@ export default function CellManagementSection({ onDirtyChange }: Props) {
     setLoadError(false);
     try {
       const res = await api.get("/master/plants", {
-        params: { plantType: "CELL", page: "1", limit: "100" },
+        params: { plantType: "CELL", page: "1", limit: "10000" },
         suppressErrorModal: true,
       });
       const all: Plant[] = Array.isArray(res.data?.data) ? res.data.data : [];
@@ -276,6 +276,7 @@ export default function CellManagementSection({ onDirtyChange }: Props) {
             <Input
               label={t("master.company.cellName", "CELL 명칭")}
               value={draft.plantName}
+              maxLength={200}
               onChange={(event) => setDraft((current) => current ? { ...current, plantName: event.target.value } : current)}
               error={attempted && !nameValid ? t("master.company.cellNameRequired", "CELL 명칭을 입력하세요.") : undefined}
               disabled={saving}

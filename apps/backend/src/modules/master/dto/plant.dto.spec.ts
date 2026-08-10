@@ -26,4 +26,31 @@ describe('Plant DTO tenant and identifier boundaries', () => {
       expect.arrayContaining(['company', 'plantCode', 'cellCode']),
     );
   });
+
+  it('rejects blank required names and hierarchy keys', async () => {
+    const create = Object.assign(new CreatePlantDto(), {
+      plantCode: ' ',
+      shopCode: ' ',
+      lineCode: ' ',
+      cellCode: ' ',
+      plantName: ' ',
+    });
+    const update = Object.assign(new UpdatePlantDto(), { plantName: ' ' });
+
+    const [createErrors, updateErrors] = await Promise.all([
+      validate(create),
+      validate(update),
+    ]);
+
+    expect(createErrors.map((error) => error.property)).toEqual(
+      expect.arrayContaining(['plantCode', 'shopCode', 'lineCode', 'cellCode', 'plantName']),
+    );
+    expect(updateErrors.map((error) => error.property)).toContain('plantName');
+  });
+
+  it('rejects an empty update body', async () => {
+    const errors = await validate(new UpdatePlantDto());
+
+    expect(errors.length).toBeGreaterThan(0);
+  });
 });

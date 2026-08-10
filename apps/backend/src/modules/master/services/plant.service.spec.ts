@@ -200,6 +200,21 @@ describe('PlantService', () => {
 
   // ─── update ───
   describe('update', () => {
+    it('rejects an empty update body before reading the plant', async () => {
+      await expect(
+        target.update(
+          cellKey.plantCode,
+          {},
+          cellKey.shopCode,
+          cellKey.lineCode,
+          cellKey.cellCode,
+          tenant.company,
+          tenant.plantCd,
+        ),
+      ).rejects.toThrow(BadRequestException);
+      expect(mockRepo.findOne).not.toHaveBeenCalled();
+    });
+
     it('should update and return plant', async () => {
       // Arrange
       const existing = { ...cellKey } as Plant;

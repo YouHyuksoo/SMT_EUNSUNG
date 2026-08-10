@@ -85,6 +85,73 @@ export interface OeeEndPayload {
   requestId: string;
 }
 
+interface RequestIdCrypto {
+  randomUUID?: () => string;
+  getRandomValues?: (array: Uint8Array) => Uint8Array;
+}
+
+const UUID_V4_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function formatUuid(bytes: Uint8Array): string {
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  const hex = Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+}
+
+/** Generates an idempotency key in browsers where randomUUID is unavailable on plain HTTP. */
+export function createRequestId(source: RequestIdCrypto | undefined = globalThis.crypto): string {
+  try {
+    const candidate = source?.randomUUID?.();
+    if (typeof candidate === 'string' && candidate.length <= 64 && UUID_V4_PATTERN.test(candidate)) return candidate;
+  } catch (error: unknown) {
+    // Fall back to getRandomValues or Math.random below.
+  }
+
+  const bytes = new Uint8Array(16);
+  let filled = false;
+  try {
+    if (source?.getRandomValues) {
+      source.getRandomValues(bytes);
+      filled = true;
+    }
+  } catch (error: unknown) {
+    // Math.random remains available on older/insecure browser contexts.
+  }
+  if (!filled) {
+    for (let index = 0; index < bytes.length; index += 1) bytes[index] = Math.floor(Math.random() * 256);
+  }
+  return formatUuid(bytes);
+}
+
+function timestampPart(parts: Intl.DateTimeFormatPart[], type: Intl.DateTimeFormatPartTypes): string {
+  return parts.find((part) => part.type === type)?.value ?? '';
+}
+
+/** Formats server timestamps in the fixed MES business display timezone. */
+export function formatServerTimestamp(value: string | null | undefined): string {
+  if (!value?.trim()) return '—';
+
+  const input = value.trim();
+  const normalized = input.replace(' ', 'T');
+  const hasTimeZone = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(normalized);
+  const date = new Date(hasTimeZone ? normalized : `${normalized}+09:00`);
+  if (Number.isNaN(date.getTime())) return input.replace('T', ' ').replace(/\.\d+$/, '').replace(/Z$/i, '');
+
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Seoul',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(date);
+
+  return `${timestampPart(parts, 'year')}-${timestampPart(parts, 'month')}-${timestampPart(parts, 'day')} ${timestampPart(parts, 'hour')}:${timestampPart(parts, 'minute')}:${timestampPart(parts, 'second')}`;
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
@@ -215,12 +282,16 @@ export function normalizeStatus(response: unknown): OeeStatus {
   const events = Array.isArray(value.events)
     ? value.events.map(normalizeEvent).filter((event): event is OeeDowntimeEvent => event !== null)
     : [];
+  const openEvent = normalizeEvent(value.openEvent);
+  const hasOpenEvent = value.openEvent !== null && value.openEvent !== undefined;
+  if (state === 'DOWNTIME' && !openEvent) throw new Error('DOWNTIME 상태에는 유효한 openEvent가 필요합니다.');
+  if (state === 'RUNNING' && hasOpenEvent) throw new Error('RUNNING 상태에는 openEvent가 없어야 합니다.');
 
   return {
     workDate,
     workSegment,
     state,
     events,
-    openEvent: normalizeEvent(value.openEvent),
+    openEvent,
   };
 }

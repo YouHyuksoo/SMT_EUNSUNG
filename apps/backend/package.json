@@ -6,7 +6,9 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "dev": "node ../../scripts/dev-backend-with-oracle-profile.mjs",
+    "dev": "nest start --watch",
+    "dev:oracle-profile": "node ../../scripts/dev-backend-with-oracle-profile.mjs",
+    "dev:oracle-profile:check": "node ../../scripts/dev-backend-with-oracle-profile.mjs --check",
     "build": "nest build",
     "start": "node dist/main",
     "start:debug": "nest start --debug --watch",
