@@ -1,27 +1,34 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { getMetadataArgsStorage } from 'typeorm';
 import { ProcessService } from './process.service';
 import { ProcessMaster } from '../../../entities/process-master.entity';
 import { EquipMaster } from '../../../entities/equip-master.entity';
+import { ProcessLine } from '../../../entities/process-line.entity';
 import { MockLoggerService } from '@test/mock-logger.service';
 
 describe('ProcessService equipment assignments', () => {
   let target: ProcessService;
   let processRepo: DeepMocked<Repository<ProcessMaster>>;
   let equipRepo: DeepMocked<Repository<EquipMaster>>;
+  let processLineRepo: DeepMocked<Repository<ProcessLine>>;
+  let dataSource: DeepMocked<DataSource>;
 
   beforeEach(async () => {
     processRepo = createMock<Repository<ProcessMaster>>();
     equipRepo = createMock<Repository<EquipMaster>>();
+    processLineRepo = createMock<Repository<ProcessLine>>();
+    dataSource = createMock<DataSource>();
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ProcessService,
         { provide: getRepositoryToken(ProcessMaster), useValue: processRepo },
         { provide: getRepositoryToken(EquipMaster), useValue: equipRepo },
+        { provide: getRepositoryToken(ProcessLine), useValue: processLineRepo },
+        { provide: DataSource, useValue: dataSource },
       ],
     })
       .setLogger(new MockLoggerService())
