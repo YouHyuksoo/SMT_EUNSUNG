@@ -55,6 +55,16 @@ export interface Process {
   /* 기타 */
   genSubMfsYn?: string | null;
   assyExpYn?: string | null;
+  appliedLineCodes?: string[];
+}
+
+export interface ProcessUploadResult {
+  inputRows: number;
+  duplicateRows: number;
+  processesCreated: number;
+  processesReused: number;
+  relationsCreated: number;
+  relationsSkipped: number;
 }
 
 /**

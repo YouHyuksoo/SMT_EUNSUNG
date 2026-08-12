@@ -11,12 +11,13 @@
  */
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { Workflow, RefreshCw } from "lucide-react";
+import { Workflow, RefreshCw, Upload } from "lucide-react";
 import { Button, Modal, Select, ConfirmModal } from "@/components/ui";
 import { useUnsavedGuard } from "@/hooks/useUnsavedGuard";
 import api from "@/services/api";
 import ProcessList from "./components/ProcessList";
 import ProcessEquipGrid from "./components/ProcessEquipGrid";
+import ProcessUploadModal from "./components/ProcessUploadModal";
 import { FieldCodeSelect, FieldInput, FieldSelect } from "./components/ProcessFieldHelp";
 import type { Equipment, NumericProcessField, Process } from "./types";
 import { WILDCARD_CODE } from "./types";
@@ -69,6 +70,7 @@ export default function ProcessPage() {
   const [deleteTarget, setDeleteTarget] = useState<Process | null>(null);
   const [removeEquipmentTarget, setRemoveEquipmentTarget] = useState<Equipment | null>(null);
   const [assignModalOpen, setAssignModalOpen] = useState(false);
+  const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [assignEquipCode, setAssignEquipCode] = useState("");
 
   /* ── 공정 목록 조회 ── */
@@ -332,12 +334,14 @@ export default function ProcessPage() {
           <p className="text-text-muted mt-1">{t("master.process.subtitle")}</p>
         </div>
         <div className="flex gap-2">
+          <Button variant="secondary" size="sm" onClick={() => setUploadModalOpen(true)}><Upload className="w-4 h-4 mr-1" />엑셀 업로드</Button>
           <Button variant="secondary" size="sm" onClick={handleRefresh}>
             <RefreshCw className={`w-4 h-4 mr-1 ${loading ? "animate-spin" : ""}`} />
             {t("common.refresh")}
           </Button>
         </div>
       </div>
+      <ProcessUploadModal isOpen={uploadModalOpen} onClose={() => setUploadModalOpen(false)} onComplete={fetchProcesses} />
 
       {/* 본문: 좌측 공정 + 우측 설비 + 슬라이드 패널 */}
       <div className="flex-1 min-h-0 flex overflow-hidden">

@@ -125,6 +125,12 @@ export default function ProcessList({
         cell: ({ getValue }) => (getValue() as string) || "-",
       },
       {
+        accessorKey: "appliedLineCodes",
+        header: "적용라인",
+        size: 140,
+        cell: ({ row }) => <div className="flex flex-wrap gap-1">{(row.original.appliedLineCodes ?? []).map((code) => <span key={code} className="px-1.5 py-0.5 rounded bg-primary/10 text-primary text-xs">{code}</span>)}</div>,
+      },
+      {
         accessorKey: "startYn",
         header: () => (
           <StatusHeaderHelp

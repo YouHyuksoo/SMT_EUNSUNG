@@ -9,17 +9,38 @@
  * 4. **DELETE /master/processes/:id**: 공정 삭제 (소프트)
  */
 
-import { Controller, Get, Post, Put, Delete, Body, Param, Query, HttpCode, HttpStatus } from '@nestjs/common';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
-import { OrganizationId } from '../../../common/decorators/tenant.decorator';
+import { BadRequestException, Controller, Get, Post, Put, Delete, Body, Param, Query, HttpCode, HttpStatus, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiConsumes } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
+import { Request } from 'express';
+import { OrganizationId, UserId } from '../../../common/decorators/tenant.decorator';
+import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { ProcessService } from '../services/process.service';
 import { CreateProcessDto, UpdateProcessDto, ProcessQueryDto } from '../dto/process.dto';
 import { ResponseUtil } from '../../../common/dto/response.dto';
 
 @ApiTags('기준정보 - 공정마스터')
+@UseGuards(JwtAuthGuard)
 @Controller('master/processes')
 export class ProcessController {
   constructor(private readonly processService: ProcessService) {}
+
+  @Post('upload')
+  @ApiOperation({ summary: '공정마스터 엑셀 업로드' })
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FileInterceptor('file', {
+    storage: memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 },
+    fileFilter: (_req: Request, file: Express.Multer.File, callback: (error: Error | null, accept: boolean) => void) => {
+      if (!/\.xlsx$/i.test(file.originalname)) return callback(new BadRequestException('.xlsx 파일만 업로드할 수 있습니다.'), false);
+      callback(null, true);
+    },
+  }))
+  async upload(@UploadedFile() file: Express.Multer.File, @Body('departmentCode') departmentCode: string, @OrganizationId() organizationId: number, @UserId() userId?: string) {
+    if (!file) throw new BadRequestException('파일이 필요합니다.');
+    if (!departmentCode) throw new BadRequestException('부서를 선택하세요.');
+    return ResponseUtil.success(await this.processService.uploadWorkbook(file.buffer, departmentCode, organizationId, userId));
+  }
 
   @Get()
   @ApiOperation({ summary: '공정 목록 조회' })
