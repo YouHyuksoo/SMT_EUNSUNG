@@ -14,6 +14,7 @@ export * from './equip-bom-rel.entity';
 export * from './department-master.entity';
 export * from './prod-line-master.entity';
 export * from './process-master.entity';
+export * from './process-line.entity';
 export * from './worker-master.entity';
 export * from './vendor-barcode-mapping.entity';
 export * from './product-company-calendar.entity';

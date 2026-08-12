@@ -47,6 +47,7 @@ import { ProductCompanyCalendar } from '../entities/product-company-calendar.ent
 import { ProductLineCalendar } from '../entities/product-line-calendar.entity';
 import { ShiftTimeMaster } from '../entities/shift-time-master.entity';
 import { ProcessMaster } from '../entities/process-master.entity';
+import { ProcessLine } from '../entities/process-line.entity';
 import { LabelTemplate } from '../entities/label-template.entity';
 import { ProcessMap } from '../entities/process-map.entity';
 import { RoutingGroup } from '../entities/routing-group.entity';
@@ -128,6 +129,7 @@ import { EquipDowntimeMapDtl } from '../entities/equip-downtime-map-dtl.entity';
             ProductLineCalendar,
             ShiftTimeMaster,
             ProcessMaster,
+            ProcessLine,
             LabelTemplate,
             ProcessMap,
             RoutingGroup,
