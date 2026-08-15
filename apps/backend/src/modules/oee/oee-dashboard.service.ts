@@ -29,7 +29,15 @@ export interface OverviewRow {
 /** 리소스 드릴다운 행 */
 export interface DrilldownRow {
   RESOURCE_ID: number;
+  RESOURCE_CODE: string;
+  RESOURCE_TYPE: string;
   RESOURCE_NAME: string;
+  SHIFT: string;
+  NET_LOAD_MIN: number | null;
+  IDEAL_CT: number | null;
+  PLAN_QTY: number | null;
+  GOOD_QTY: number | null;
+  TOTAL_QTY: number | null;
   AVAILABILITY: number;
   PERFORMANCE: number;
   QUALITY: number;
@@ -55,7 +63,7 @@ export class OeeDashboardService {
 
   /** KST(백엔드 고정 TZ) 기준 오늘 날짜 문자열 YYYY-MM-DD */
   private todayKst(): string {
-    const d = new Date();
+    const d = new Date(Date.now() - 8.5 * 60 * 60 * 1000);
     const y = d.getFullYear();
     const m = String(d.getMonth() + 1).padStart(2, '0');
     const day = String(d.getDate()).padStart(2, '0');
@@ -131,14 +139,19 @@ export class OeeDashboardService {
     const live = this.isLive(workDate);
 
     const rows: DrilldownRow[] = await this.dataSource.query(
-      `SELECT v.RESOURCE_ID, r.RESOURCE_NAME,
-              v.AVAILABILITY, v.PERFORMANCE, v.QUALITY, v.OEE,
+       `SELECT v.RESOURCE_ID, l.LINE_CODE AS RESOURCE_CODE, r.RESOURCE_TYPE,
+               l.LINE_NAME AS RESOURCE_NAME, v.SHIFT,
+               v.NET_LOAD_MIN, v.IDEAL_CT, v.PLAN_QTY, v.GOOD_QTY, v.TOTAL_QTY,
+               v.AVAILABILITY, v.PERFORMANCE, v.QUALITY, v.OEE,
               v.UPH, v.PLAN_ACHIEVE, v.RUN_MIN, v.DOWNTIME_MIN, v.OUTPUT_QTY
          FROM ${this.source(live)} v
          JOIN OEE_RESOURCE r ON r.RESOURCE_ID = v.RESOURCE_ID
+         JOIN IP_PRODUCT_LINE l
+           ON l.ORGANIZATION_ID = r.ORGANIZATION_ID
+          AND l.LINE_CODE = r.REF_CODE
         WHERE v.WORK_DATE = TO_DATE(:1, 'YYYY-MM-DD')
           AND v.PROCESS_CODE = :2
-        ORDER BY v.OEE`,
+         ORDER BY v.OEE, v.RESOURCE_ID, v.SHIFT`,
       [workDate, processCode],
     );
 
@@ -147,29 +160,22 @@ export class OeeDashboardService {
     return { workDate, live, processCode, rows };
   }
 
-  /**
-   * 로스 파레토 — 사유별 비가동시간(내림차순). 당일/과거 공통으로 OEE_OPERATION_LOG를 집계한다
-   * (일지 원장은 마감 후에도 남으므로 스냅샷 분기·409가 필요 없다).
-   * 사유 마스터는 (코드,공정) 다중행일 수 있어 코드 단위로 먼저 축약해 조인 fan-out을 막는다.
-   */
+  /** 모바일 비가동 이벤트를 사유별로 집계한다. */
   async lossPareto(dateParam?: string) {
     const workDate = dateParam || this.todayKst();
 
     const rows: LossRow[] = await this.dataSource.query(
-      `SELECT ol.REASON_CODE,
-              NVL(dr.REASON_NAME, ol.REASON_CODE) AS REASON_NAME,
-              dr.LOSS_BUCKET,
-              SUM(ol.DURATION_MIN) AS DOWN_MIN
-         FROM OEE_OPERATION_LOG ol
-         LEFT JOIN (
-           SELECT REASON_CODE, MAX(REASON_NAME) AS REASON_NAME, MAX(LOSS_BUCKET) AS LOSS_BUCKET
-             FROM OEE_DOWNTIME_REASON
-            WHERE ORGANIZATION_ID = 1
-            GROUP BY REASON_CODE
-         ) dr ON dr.REASON_CODE = ol.REASON_CODE
-        WHERE ol.WORK_DATE = TO_DATE(:1, 'YYYY-MM-DD')
-          AND ol.STATUS = 'DOWN'
-        GROUP BY ol.REASON_CODE, dr.REASON_NAME, dr.LOSS_BUCKET
+      `SELECT e.REASON_CODE,
+              NVL(MAX(c.CODE_MEAN_KOR), e.REASON_CODE) AS REASON_NAME,
+              CAST(NULL AS VARCHAR2(30)) AS LOSS_BUCKET,
+              SUM((CAST(NVL(e.END_TIME, SYSTIMESTAMP) AS DATE) - CAST(e.START_TIME AS DATE)) * 1440) AS DOWN_MIN
+         FROM OEE_DOWNTIME_EVENT e
+         LEFT JOIN ISYS_BASECODE c
+           ON c.ORGANIZATION_ID = e.ORGANIZATION_ID
+          AND c.CODE_TYPE = 'MACHINE STATUS CODE'
+          AND c.CODE_NAME = e.REASON_CODE
+        WHERE e.WORK_DATE = TO_DATE(:1, 'YYYY-MM-DD')
+        GROUP BY e.REASON_CODE
         ORDER BY DOWN_MIN DESC`,
       [workDate],
     );

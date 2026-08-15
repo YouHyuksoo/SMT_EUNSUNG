@@ -6,8 +6,36 @@ describe('OEE MOBILE prerequisite DDL', () => {
     join(__dirname, '../../../../../oracle_db_scripts/oee/07_mobile_prerequisites.sql'),
     'utf8',
   );
-  const cellSeed = readFileSync(
-    join(__dirname, '../../../../../oracle_db_scripts/oee/08_seed_production2_cells.sql'),
+  const resourceSeed = readFileSync(
+    join(__dirname, '../../../../../oracle_db_scripts/oee/09_seed_dashboard_resources.sql'),
+    'utf8',
+  );
+  const legacyPlantCleanup = readFileSync(
+    join(__dirname, '../../../../../oracle_db_scripts/oee/08_cleanup_legacy_oee_plants.sql'),
+    'utf8',
+  );
+  const unapprovedResourceCleanup = readFileSync(
+    join(__dirname, '../../../../../oracle_db_scripts/oee/10_cleanup_unapproved_oee_resources.sql'),
+    'utf8',
+  );
+  const baseTables = readFileSync(
+    join(__dirname, '../../../../../oracle_db_scripts/oee/01_tables.sql'),
+    'utf8',
+  );
+  const extendedTables = readFileSync(
+    join(__dirname, '../../../../../oracle_db_scripts/oee/03_tables_ext.sql'),
+    'utf8',
+  );
+  const planView = readFileSync(
+    join(__dirname, '../../../../../oracle_db_scripts/oee/04_view_plan_time.sql'),
+    'utf8',
+  );
+  const liveView = readFileSync(
+    join(__dirname, '../../../../../oracle_db_scripts/oee/05_view_live.sql'),
+    'utf8',
+  );
+  const summaryProcedure = readFileSync(
+    join(__dirname, '../../../../../oracle_db_scripts/oee/06_proc_build_summary.sql'),
     'utf8',
   );
 
@@ -31,12 +59,54 @@ describe('OEE MOBILE prerequisite DDL', () => {
     expect(source.split(/\r?\n/).filter((line) => line.trim() === '/').length).toBeGreaterThan(1);
   });
 
-  it('keeps existing CELL master values and rejects cross-tenant key ownership', () => {
-    expect(cellSeed.trimStart()).toMatch(/^DECLARE\b/);
-    expect(cellSeed).toContain('RAISE_APPLICATION_ERROR');
-    expect(cellSeed).toContain('WHEN NOT MATCHED THEN INSERT');
-    expect(cellSeed).not.toContain('WHEN MATCHED THEN UPDATE');
-    expect(cellSeed).not.toMatch(/UPDATE\s+SET/i);
-    expect(cellSeed.match(/'CELL'\s*,\s*\d+\s*,\s*'Y'\s+FROM DUAL/g)).toHaveLength(15);
+  it('synchronizes SMT and ASM resources only from IP_PRODUCT_LINE', () => {
+    expect(resourceSeed.trimStart()).toMatch(/^DECLARE\b/);
+    expect(resourceSeed).toContain('IP_PRODUCT_LINE');
+    expect(resourceSeed).toContain("'01','02','03','04','05','06','07','08','09','10','11','12'");
+    expect(resourceSeed).toContain("'19','20','21','22','23','24'");
+    expect(resourceSeed).not.toContain('PLANTS');
+    expect(resourceSeed).not.toContain('PROD2');
+  });
+
+  it('only deletes the exact legacy OEE PLANTS seed hierarchy', () => {
+    expect(legacyPlantCleanup.trimStart()).toMatch(/^BEGIN\b/);
+    expect(legacyPlantCleanup).toContain('DELETE FROM PLANTS');
+    expect(legacyPlantCleanup).toContain("CREATED_BY = 'SYSTEM'");
+    expect(legacyPlantCleanup).toContain("LINE_CODE = 'PROD2'");
+    expect(legacyPlantCleanup).not.toMatch(/\b(?:INSERT|MERGE|UPDATE)\b/);
+  });
+
+  it('guards cleanup of the unapproved 50-64 OEE projection and exact verification event', () => {
+    expect(unapprovedResourceCleanup.trimStart()).toMatch(/^DECLARE\b/);
+    expect(unapprovedResourceCleanup).toContain('EVENT_ID = 22');
+    expect(unapprovedResourceCleanup).toContain('START_REQUEST_ID');
+    expect(unapprovedResourceCleanup).toContain('END_REQUEST_ID');
+    expect(unapprovedResourceCleanup).toContain('RAISE_APPLICATION_ERROR');
+    expect(unapprovedResourceCleanup).toContain("REF_CODE BETWEEN '50' AND '64'");
+    expect(unapprovedResourceCleanup).not.toMatch(/DELETE FROM IP_PRODUCT_LINE/);
+  });
+
+  it('deploys the dashboard schema as guarded A-J objects without temporary shift seeds', () => {
+    expect(baseTables.trimStart()).toMatch(/^DECLARE\b/);
+    expect(extendedTables.trimStart()).toMatch(/^DECLARE\b/);
+    expect(baseTables).toContain("SHIFT IN ('A','B','C','D','E','F','G','H','I','J')");
+    expect(extendedTables).toContain("SHIFT IN ('A','B','C','D','E','F','G','H','I','J')");
+    expect(extendedTables).not.toContain('INSERT INTO OEE_WORKTIME_RANGE');
+    expect(extendedTables).not.toMatch(/'DAY'|'NIGHT'/);
+  });
+
+  it('builds live OEE from the real A-J worktime and mobile downtime sources', () => {
+    expect(planView).toContain('ICOM_WORKTIME_RANGES');
+    expect(planView).not.toContain('OEE_WORKTIME_RANGE');
+    expect(planView).toContain('WORK_TYPE AS SHIFT');
+    expect(planView).toContain("LENGTH(TRIM(START_TIME)) = 4");
+    expect(planView).toContain("TRIM(START_TIME) || '00'");
+    expect(liveView).toContain('OEE_DOWNTIME_EVENT');
+    expect(liveView).not.toContain('OEE_OPERATION_LOG');
+    expect(liveView).toContain('SEGMENT_START_TIME');
+    expect(liveView).toContain('SEGMENT_END_TIME');
+    expect(liveView).not.toContain("pt.WORK_DATE = TRUNC(SYSDATE - (8.5 / 24))");
+    expect(summaryProcedure.trimStart()).toMatch(/^BEGIN\b/);
+    expect(summaryProcedure).toContain('CREATE OR REPLACE NONEDITIONABLE PROCEDURE');
   });
 });
