@@ -5,11 +5,13 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { EquipMaster } from '../../entities/equip-master.entity';
+import { ProdLineMaster } from '../../entities/prod-line-master.entity';
+import { ProcessMaster } from '../../entities/process-master.entity';
 import { EquipMasterController } from '../equipment/controllers/equip-master.controller';
 import { EquipMasterService } from '../equipment/services/equip-master.service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([EquipMaster])],
+  imports: [TypeOrmModule.forFeature([EquipMaster, ProdLineMaster, ProcessMaster])],
   controllers: [EquipMasterController],
   providers: [EquipMasterService],
   exports: [EquipMasterService],

@@ -2,7 +2,7 @@
 
 /**
  * @file (authenticated)/oee/equip-downtime-mobile/page.tsx
- * @description 설비비가동 관리(모바일) — 카메라 QR/바코드로 설비 식별 후 비가동 처리 (Mock-up)
+ * @description 설비비가동 관리(모바일) — IMCN_MACHINE 설비 식별
  *
  * 태블릿(아이패드/갤럭시탭 11") 세로 우선 · 가로 대응.
  * 스캔: getUserMedia + BarcodeDetector(네이티브). 미지원 시 설비코드 수동입력/샘플 스캔 폴백.
@@ -11,19 +11,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Camera, ScanLine, RefreshCw, CheckCircle2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import api from '@/services/api';
 
 const CURRENT_USER = '관리자';
 
-interface MachineRef { machineCode: string; machineName: string; lineCode: string; lineName: string; }
-// 샘플 설비마스터 (IMCN_MACHINE 참조) — 스캔/수동조회 대상 (Mock)
-const SAMPLE_MACHINES: MachineRef[] = [
-  { machineCode: 'E01', machineName: '마운터 B라인 1호기', lineCode: '02', lineName: 'B라인' },
-  { machineCode: 'E02', machineName: '스크린프린터 A라인', lineCode: '01', lineName: 'A라인' },
-  { machineCode: 'E03', machineName: 'AOI A라인', lineCode: '01', lineName: 'A라인' },
-  { machineCode: 'E04', machineName: 'SPI A라인', lineCode: '01', lineName: 'A라인' },
-  { machineCode: 'E05', machineName: 'ICT 1호기', lineCode: '26', lineName: 'ICT라인' },
-];
-const findMachine = (code: string) => SAMPLE_MACHINES.find((m) => m.machineCode.toUpperCase() === code.trim().toUpperCase()) ?? null;
+interface MachineRef { machineCode: string; machineName: string; lineCode: string; lineName: string; processCode: string; processName: string; }
 
 // 정지(비가동) 사유코드 — 설비 비가동 사유코드 (코드·사유명·사유구분)
 const STOP_REASONS = [
@@ -73,13 +65,27 @@ export default function EquipDowntimeMobilePage() {
     setCameraOn(false);
   }, []);
 
-  const onScanned = useCallback((code: string) => {
-    const m = findMachine(code);
-    if (!m) { setScanErr(`설비코드 '${code}'를 찾을 수 없습니다`); return; }
-    setScanErr('');
-    setMachine(m);
-    setDowntime(initDowntime());
-    stopCamera();
+  const onScanned = useCallback(async (code: string) => {
+    const normalized = code.trim();
+    if (!normalized) { setScanErr('설비코드를 입력하세요.'); return; }
+    try {
+      const response = await api.get(`/equipment/equips/code/${encodeURIComponent(normalized)}`);
+      const row = response.data?.data ?? response.data;
+      const m: MachineRef = {
+        machineCode: row.equipCode,
+        machineName: row.equipName,
+        lineCode: row.lineCode ?? '',
+        lineName: row.lineName ?? '미매핑',
+        processCode: row.processCode ?? '',
+        processName: row.processName ?? '미매핑',
+      };
+      setScanErr('');
+      setMachine(m);
+      setDowntime(initDowntime());
+      stopCamera();
+    } catch (error: unknown) {
+      setScanErr(`설비코드 '${normalized}'를 IMCN_MACHINE에서 찾을 수 없습니다.`);
+    }
   }, [stopCamera]);
 
   const startCamera = useCallback(async () => {
@@ -146,7 +152,7 @@ export default function EquipDowntimeMobilePage() {
       <div className="mx-auto w-full max-w-md landscape:max-w-5xl">
         <div className="mb-4">
           <h1 className="text-xl font-bold text-text flex items-center gap-2"><ScanLine className="w-6 h-6 text-primary" /> 설비비가동 관리 (모바일)</h1>
-          <p className="text-sm text-text-muted mt-1">QR/바코드로 설비를 스캔하여 비가동을 처리합니다 (Mock-up)</p>
+          <p className="text-sm text-text-muted mt-1">IMCN_MACHINE 설비코드를 스캔하거나 입력합니다.</p>
         </div>
 
         <div className="flex flex-col gap-4 landscape:grid landscape:grid-cols-2 landscape:gap-6 landscape:items-start">
@@ -172,12 +178,11 @@ export default function EquipDowntimeMobilePage() {
                 <div className="mt-4 border-t border-border pt-4">
                   <label className="text-sm text-text-muted flex flex-col gap-1">설비코드 수동 입력
                     <div className="flex gap-2">
-                      <input value={manualCode} onChange={(e) => setManualCode(e.target.value)} placeholder="예: E01" className={inputCls} onKeyDown={(e) => { if (e.key === 'Enter') onScanned(manualCode); }} />
+                      <input value={manualCode} onChange={(e) => setManualCode(e.target.value)} placeholder="설비코드" className={inputCls} onKeyDown={(e) => { if (e.key === 'Enter') void onScanned(manualCode); }} />
                       <button onClick={() => onScanned(manualCode)} className="px-4 rounded-lg border border-primary text-primary font-semibold whitespace-nowrap">조회</button>
                     </div>
                   </label>
-                  <button onClick={() => onScanned(SAMPLE_MACHINES[0].machineCode)} className="mt-2 text-sm text-text-muted underline">샘플 스캔(데모)</button>
-                  {!barcodeSupported && <p className="text-[11px] text-amber-600 mt-2">※ 이 브라우저는 바코드 자동인식 미지원 — 수동 입력/샘플 스캔을 사용하세요.</p>}
+                   {!barcodeSupported && <p className="text-[11px] text-amber-600 mt-2">※ 이 브라우저는 바코드 자동인식 미지원 — 수동 입력을 사용하세요.</p>}
                 </div>
               </>
             ) : (
@@ -189,6 +194,8 @@ export default function EquipDowntimeMobilePage() {
                   <div className="flex flex-col"><span className="text-[11px] text-text-muted">설비명</span><span className="text-text">{machine.machineName}</span></div>
                   <div className="flex flex-col"><span className="text-[11px] text-text-muted">라인코드</span><span className="text-text font-mono">{machine.lineCode}</span></div>
                   <div className="flex flex-col"><span className="text-[11px] text-text-muted">라인명</span><span className="text-text">{machine.lineName}</span></div>
+                  <div className="flex flex-col"><span className="text-[11px] text-text-muted">공정코드</span><span className="text-text font-mono">{machine.processCode || '—'}</span></div>
+                  <div className="flex flex-col"><span className="text-[11px] text-text-muted">공정명</span><span className="text-text">{machine.processName}</span></div>
                 </div>
               </div>
             )}
