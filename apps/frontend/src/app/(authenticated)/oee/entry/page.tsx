@@ -20,8 +20,6 @@ import toast from 'react-hot-toast';
 import { ConfirmModal } from '@/components/ui';
 import { api } from '@/services/api';
 import {
-  ASSY_PARENT_LINE_CODE,
-  NO_ASSEMBLY_CELL_MASTER,
   createRequestId,
   formatServerTimestamp,
   makeEndPayload,
@@ -240,19 +238,17 @@ export default function OeeEntryPage() {
     if (generation !== contextGeneration.current) return;
 
     if (resourceResult.status === 'fulfilled') {
-      const expectedResourceType = nextProcess === 'SMT' ? 'LINE' : 'CELL';
+      const expectedResourceType = 'LINE';
       const rows = readCollection<OeeResource>(resourceResult.value, 'resources')
         .filter((resource) => resource.processCode === nextProcess && resource.resourceType === expectedResourceType)
         .map(normalizeResource);
       setResources(rows);
       if (rows.length === 0) {
-        setResourcesError(nextProcess === 'ASSY' ? NO_ASSEMBLY_CELL_MASTER : t('oeeEntry.noResourceMaster'));
+        setResourcesError(t('oeeEntry.noResourceMaster'));
       }
     } else {
       const message = readApiMessage(resourceResult.reason, t('oeeEntry.resourceLoadError'));
-      setResourcesError(
-        nextProcess === 'ASSY' && message.includes(NO_ASSEMBLY_CELL_MASTER) ? NO_ASSEMBLY_CELL_MASTER : message,
-      );
+      setResourcesError(message);
     }
     setResourcesLoading(false);
 
@@ -546,9 +542,7 @@ export default function OeeEntryPage() {
   );
 
   const historyRows = status?.events ?? [];
-  const resourceErrorLabel = resourcesError === NO_ASSEMBLY_CELL_MASTER
-    ? NO_ASSEMBLY_CELL_MASTER
-    : resourcesError;
+  const resourceErrorLabel = resourcesError;
 
   return (
     <div className="oee-entry-page flex h-full min-h-0 flex-col overflow-hidden bg-background text-text">
@@ -677,7 +671,6 @@ export default function OeeEntryPage() {
                 <div className="flex flex-1 flex-col items-center justify-center gap-2 py-8 text-center">
                   <AlertTriangle className="h-9 w-9 text-warning" aria-hidden="true" />
                   <p className="font-bold text-error">{resourceErrorLabel}</p>
-                  {resourcesError === NO_ASSEMBLY_CELL_MASTER && <p className="max-w-sm text-sm text-text-muted">{t('oeeEntry.noAssemblyCellMaster')}</p>}
                       {processCode && (
                         <button type="button" onClick={retryContext} className="mt-2 inline-flex min-h-[64px] items-center gap-2 rounded-xl border border-primary px-5 font-bold text-primary hover:bg-primary/5">
                       <RefreshCw className="h-5 w-5" aria-hidden="true" />
@@ -711,7 +704,7 @@ export default function OeeEntryPage() {
                           <span className="block font-mono text-lg font-black text-text">{resource.resourceCode}</span>
                           <span className="mt-0.5 block truncate text-sm font-semibold text-text">{resource.resourceName}</span>
                           <span className="mt-1 block text-xs text-text-muted">
-                            {resource.resourceType}{resource.processCode === 'ASSY' ? ` · ${ASSY_PARENT_LINE_CODE}` : ''}
+                            {resource.resourceType}
                           </span>
                         </button>
                       );

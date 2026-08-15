@@ -15,7 +15,6 @@ import { OeeController } from './oee.controller';
 import { OeeMasterService } from './oee-master.service';
 import { OeeLogService } from './oee-log.service';
 import { OeeDashboardService } from './oee-dashboard.service';
-import { Plant } from '../../entities/plant.entity';
 import { ProdLineMaster } from '../../entities/prod-line-master.entity';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { OeeMobileController } from './oee-mobile.controller';
@@ -32,7 +31,6 @@ import { OeeMobileService } from './oee-mobile.service';
       IsysUser,
       ComCode,
       ProdLineMaster,
-      Plant,
     ]),
   ],
   controllers: [OeeController, OeeMobileController],

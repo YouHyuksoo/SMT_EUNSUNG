@@ -2,11 +2,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
-import { FindOperator, In, IsNull, Not, Repository } from 'typeorm';
+import { FindOperator, IsNull, Not, Repository } from 'typeorm';
 import { ComCode } from '../../entities/com-code.entity';
 import { IsysUser } from '../../entities/isys-user.entity';
 import { OeeDowntimeEvent } from '../../entities/oee-downtime-event.entity';
-import { Plant } from '../../entities/plant.entity';
 import { ProdLineMaster } from '../../entities/prod-line-master.entity';
 import { WorktimeRange } from '../../entities/worktime-range.entity';
 import { MockLoggerService } from '@test/mock-logger.service';
@@ -15,7 +14,6 @@ import { OeeMobileService } from './oee-mobile.service';
 describe('OeeMobileService', () => {
   let target: OeeMobileService;
   let lineRepository: DeepMocked<Repository<ProdLineMaster>>;
-  let plantRepository: DeepMocked<Repository<Plant>>;
   let userRepository: DeepMocked<Repository<IsysUser>>;
   let codeRepository: DeepMocked<Repository<ComCode>>;
   let eventRepository: DeepMocked<Repository<OeeDowntimeEvent>>;
@@ -23,7 +21,6 @@ describe('OeeMobileService', () => {
 
   beforeEach(async () => {
     lineRepository = createMock<Repository<ProdLineMaster>>();
-    plantRepository = createMock<Repository<Plant>>();
     userRepository = createMock<Repository<IsysUser>>();
     codeRepository = createMock<Repository<ComCode>>();
     eventRepository = createMock<Repository<OeeDowntimeEvent>>();
@@ -35,7 +32,6 @@ describe('OeeMobileService', () => {
       providers: [
         OeeMobileService,
         { provide: getRepositoryToken(ProdLineMaster), useValue: lineRepository },
-        { provide: getRepositoryToken(Plant), useValue: plantRepository },
         { provide: getRepositoryToken(IsysUser), useValue: userRepository },
         { provide: getRepositoryToken(ComCode), useValue: codeRepository },
         { provide: getRepositoryToken(OeeDowntimeEvent), useValue: eventRepository },
@@ -63,6 +59,11 @@ describe('OeeMobileService', () => {
         activeYn: 'N',
       } as ProdLineMaster,
       {
+        lineCode: '50',
+        lineName: 'Unapproved',
+        organizationId: 7,
+      } as ProdLineMaster,
+      {
         lineCode: '01',
         lineName: 'A',
         organizationId: 7,
@@ -77,13 +78,11 @@ describe('OeeMobileService', () => {
       where: Record<string, unknown>;
       order: Record<string, string>;
     };
-    const lineCodeFilter = options.where.lineCode as FindOperator<string>;
-
     expect(options.where).toEqual({
       organizationId: 7,
-      lineDivision: 'D',
-      lineCode: expect.any(FindOperator),
+      lineCode: expect.any(Object),
     });
+    const lineCodeFilter = options.where.lineCode as FindOperator<string>;
     expect(lineCodeFilter.type).toBe('in');
     expect(lineCodeFilter.value).toEqual([
       '01',
@@ -108,80 +107,64 @@ describe('OeeMobileService', () => {
         resourceType: 'LINE',
         resourceCode: '01',
         resourceName: 'A',
-        parentLineCode: null,
+        parentLineCode: '01',
       },
       {
         processCode: 'SMT',
         resourceType: 'LINE',
         resourceCode: '12',
         resourceName: 'L',
-        parentLineCode: null,
+        parentLineCode: '12',
       },
     ]);
-    expect(plantRepository.find).not.toHaveBeenCalled();
   });
 
-  it('queries only enabled PROD2 CELL rows in the authenticated company and plant and maps them', async () => {
-    plantRepository.find.mockResolvedValue([
+  it('queries confirmed assembly lines 19-24 from IP_PRODUCT_LINE', async () => {
+    lineRepository.find.mockResolvedValue([
       {
-        plantCode: 'EUNSUNG',
-        shopCode: '2F',
-        lineCode: 'PROD2',
-        cellCode: '51',
-        company: 'EUNSUNG',
-        plantCd: '1',
-        plantType: 'CELL',
-        plantName: 'CELL 51',
-        sortOrder: 2,
-        useYn: 'Y',
-      } as Plant,
+        lineCode: '24', lineName: 'ROUTER', organizationId: 7,
+      } as ProdLineMaster,
       {
-        plantCode: 'EUNSUNG',
-        shopCode: '2F',
-        lineCode: 'PROD2',
-        cellCode: '50',
-        company: 'EUNSUNG',
-        plantCd: '1',
-        plantType: 'CELL',
-        plantName: 'CELL 50',
-        sortOrder: 1,
-        useYn: 'Y',
-      } as Plant,
+        lineCode: '19', lineName: 'Wave 1라인', organizationId: 7,
+      } as ProdLineMaster,
+      {
+        lineCode: '50', lineName: 'Unapproved 50', organizationId: 7,
+      } as ProdLineMaster,
+      {
+        lineCode: '64', lineName: 'Unapproved 64', organizationId: 7,
+      } as ProdLineMaster,
     ]);
 
     const result = await target.listResources('ASSY', 7, 'EUNSUNG', '1');
-    const options = plantRepository.find.mock.calls[0][0] as {
+    const options = lineRepository.find.mock.calls[0][0] as {
       where: Record<string, unknown>;
       order: Record<string, string>;
     };
 
     expect(options.where).toEqual({
-      company: 'EUNSUNG',
-      plantCd: '1',
-      plantCode: 'EUNSUNG',
-      shopCode: '2F',
-      lineCode: 'PROD2',
-      plantType: 'CELL',
-      useYn: 'Y',
+      organizationId: 7,
+      lineCode: expect.any(Object),
     });
-    expect(options.order).toEqual({ sortOrder: 'ASC', cellCode: 'ASC' });
+    const lineCodeFilter = options.where.lineCode as FindOperator<string>;
+    expect(lineCodeFilter.type).toBe('in');
+    expect(lineCodeFilter.value).toEqual(['19', '20', '21', '22', '23', '24']);
+    expect(options.order).toEqual({ mesDisplaySequence: 'ASC', lineCode: 'ASC' });
     expect(result).toEqual([
       {
         processCode: 'ASSY',
-        resourceType: 'CELL',
-        resourceCode: '50',
-        resourceName: 'CELL 50',
-        parentLineCode: 'PROD2',
+        resourceType: 'LINE',
+        resourceCode: '19',
+        resourceName: 'Wave 1라인',
+        parentLineCode: '19',
       },
       {
         processCode: 'ASSY',
-        resourceType: 'CELL',
-        resourceCode: '51',
-        resourceName: 'CELL 51',
-        parentLineCode: 'PROD2',
+        resourceType: 'LINE',
+        resourceCode: '24',
+        resourceName: 'ROUTER',
+        parentLineCode: '24',
       },
     ]);
-    expect(lineRepository.find).not.toHaveBeenCalled();
   });
 
   it('rejects incomplete tenant context before querying', async () => {
@@ -194,7 +177,6 @@ describe('OeeMobileService', () => {
     );
 
     expect(lineRepository.find).not.toHaveBeenCalled();
-    expect(plantRepository.find).not.toHaveBeenCalled();
   });
 
   it('rejects an unsupported process code without falling back to a resource source', async () => {
@@ -203,11 +185,10 @@ describe('OeeMobileService', () => {
     ).rejects.toThrow(BadRequestException);
 
     expect(lineRepository.find).not.toHaveBeenCalled();
-    expect(plantRepository.find).not.toHaveBeenCalled();
   });
 
   it('returns an empty list when no ASSY cells match the scoped contract', async () => {
-    plantRepository.find.mockResolvedValue([]);
+    lineRepository.find.mockResolvedValue([]);
 
     await expect(target.listResources('ASSY', 7, 'EUNSUNG', '1')).resolves.toEqual([]);
   });
@@ -269,8 +250,8 @@ describe('OeeMobileService', () => {
         {
           processCode: 'SMT',
           resourceType: 'CELL',
-          resourceCode: '50',
-          parentLineCode: 'PROD2',
+          resourceCode: '19',
+          parentLineCode: '19',
           workerId: 'WORKER01',
           reasonCode: 'A',
           requestId: 'start-1',
@@ -282,7 +263,6 @@ describe('OeeMobileService', () => {
       ),
     ).rejects.toThrow(BadRequestException);
     expect(lineRepository.find).not.toHaveBeenCalled();
-    expect(plantRepository.find).not.toHaveBeenCalled();
   });
 
   it('rejects missing worker, reason, and worktime prerequisites', async () => {
@@ -332,7 +312,7 @@ describe('OeeMobileService', () => {
       processCode: 'SMT',
       resourceType: 'LINE',
       resourceCode: '01',
-      parentLineCode: 'ignored-by-normalization',
+      parentLineCode: '01',
       workerId: 'WORKER01',
       reasonCode: 'A',
       memo: 'jam',
@@ -470,7 +450,6 @@ describe('OeeMobileService', () => {
 
   it.each([
     ['process', { processCode: 'ASSY' }],
-    ['resource type', { resourceType: 'CELL' }],
     ['resource code', { resourceCode: '02' }],
     ['parent line', { parentLineCode: '02' }],
     ['worker', { workerId: 'WORKER02' }],

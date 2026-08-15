@@ -91,9 +91,9 @@ describe('OeeMobileController', () => {
   it('passes resource query and authenticated tenant to status', async () => {
     const query = {
       processCode: 'ASSY',
-      resourceType: 'CELL',
-      resourceCode: '50',
-      parentLineCode: 'PROD2',
+      resourceType: 'LINE',
+      resourceCode: '19',
+      parentLineCode: '19',
     } as OeeMobileStatusQueryDto;
     const status = { workDate: '2026-08-07', workSegment: 'A', state: 'RUNNING', events: [], openEvent: null };
     service.getStatus.mockResolvedValue(status);
@@ -101,9 +101,9 @@ describe('OeeMobileController', () => {
     await expect(target.getStatus(query, 7, 'EUNSUNG', '1')).resolves.toEqual(status);
     expect(service.getStatus).toHaveBeenCalledWith(
       'ASSY',
-      'CELL',
-      '50',
-      'PROD2',
+      'LINE',
+      '19',
+      '19',
       7,
       'EUNSUNG',
       '1',

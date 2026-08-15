@@ -9,7 +9,6 @@ import { In, IsNull, Not, Repository } from 'typeorm';
 import { ComCode } from '../../entities/com-code.entity';
 import { IsysUser } from '../../entities/isys-user.entity';
 import { OeeDowntimeEvent } from '../../entities/oee-downtime-event.entity';
-import { Plant } from '../../entities/plant.entity';
 import { ProdLineMaster } from '../../entities/prod-line-master.entity';
 import { WorktimeRange } from '../../entities/worktime-range.entity';
 import {
@@ -24,6 +23,7 @@ import {
 } from './oee-mobile.dto';
 import { resolveOeeMobileWorkContext } from './oee-mobile-worktime';
 
+const MACHINE_STATUS_CODE = 'MACHINE STATUS CODE';
 const SMT_LINE_CODES = [
   '01',
   '02',
@@ -38,8 +38,7 @@ const SMT_LINE_CODES = [
   '11',
   '12',
 ];
-const MACHINE_STATUS_CODE = 'MACHINE STATUS CODE';
-const ASSY_PARENT_LINE_CODE = 'PROD2';
+const ASSY_LINE_CODES = ['19', '20', '21', '22', '23', '24'];
 
 function errorText(error: unknown): string[] {
   if (error == null) return [];
@@ -70,8 +69,6 @@ export class OeeMobileService {
   constructor(
     @InjectRepository(ProdLineMaster)
     private readonly lineRepository: Repository<ProdLineMaster>,
-    @InjectRepository(Plant)
-    private readonly plantRepository: Repository<Plant>,
     @InjectRepository(IsysUser)
     private readonly userRepository: Repository<IsysUser>,
     @InjectRepository(ComCode)
@@ -95,10 +92,10 @@ export class OeeMobileService {
     }
 
     if (processCode === 'SMT') {
-      return this.listSmtResources(organizationId);
+      return this.listLineResources('SMT', organizationId);
     }
 
-    return this.listAssyResources(company, plantCd);
+    return this.listLineResources('ASSY', organizationId);
   }
 
   async getWorker(
@@ -342,52 +339,31 @@ export class OeeMobileService {
     };
   }
 
-  private async listSmtResources(organizationId: number): Promise<OeeMobileResource[]> {
+  private async listLineResources(
+    processCode: OeeMobileProcessCode,
+    organizationId: number,
+  ): Promise<OeeMobileResource[]> {
+    const isSmt = processCode === 'SMT';
+    const lineCodes = isSmt ? SMT_LINE_CODES : ASSY_LINE_CODES;
     const lines = await this.lineRepository.find({
       where: {
         organizationId,
-        lineDivision: 'D',
-        lineCode: In(SMT_LINE_CODES),
+        lineCode: In(lineCodes),
       },
-      order: { lineCode: 'ASC' },
+      order: isSmt
+        ? { lineCode: 'ASC' }
+        : { mesDisplaySequence: 'ASC', lineCode: 'ASC' },
     });
 
     return [...lines]
+      .filter((line) => lineCodes.includes(line.lineCode))
       .sort((left, right) => left.lineCode.localeCompare(right.lineCode))
       .map((line) => ({
-        processCode: 'SMT',
+        processCode,
         resourceType: 'LINE',
         resourceCode: line.lineCode,
         resourceName: line.lineName,
-        parentLineCode: null,
-      }));
-  }
-
-  private async listAssyResources(company: string, plantCd: string): Promise<OeeMobileResource[]> {
-    const cells = await this.plantRepository.find({
-      where: {
-        company,
-        plantCd,
-        plantCode: 'EUNSUNG',
-        shopCode: '2F',
-        lineCode: ASSY_PARENT_LINE_CODE,
-        plantType: 'CELL',
-        useYn: 'Y',
-      },
-      order: { sortOrder: 'ASC', cellCode: 'ASC' },
-    });
-
-    return [...cells]
-      .sort((left, right) => {
-        const sortOrderDifference = (left.sortOrder ?? 0) - (right.sortOrder ?? 0);
-        return sortOrderDifference || left.cellCode.localeCompare(right.cellCode);
-      })
-      .map((cell) => ({
-        processCode: 'ASSY',
-        resourceType: 'CELL',
-        resourceCode: cell.cellCode,
-        resourceName: cell.plantName,
-        parentLineCode: ASSY_PARENT_LINE_CODE,
+        parentLineCode: line.lineCode,
       }));
   }
 
@@ -412,21 +388,21 @@ export class OeeMobileService {
     if (processCode === 'SMT' && resourceType !== 'LINE') {
       throw new BadRequestException('SMT 공정은 LINE 리소스만 사용할 수 있습니다.');
     }
-    if (processCode === 'ASSY' && resourceType !== 'CELL') {
-      throw new BadRequestException('ASSY 공정은 CELL 리소스만 사용할 수 있습니다.');
+    if (processCode === 'ASSY' && resourceType !== 'LINE') {
+      throw new BadRequestException('ASSY 공정은 확정 조립 LINE 리소스만 사용할 수 있습니다.');
     }
-    if (processCode === 'ASSY' && parentLineCode !== ASSY_PARENT_LINE_CODE) {
-      throw new BadRequestException('ASSY CELL의 상위 라인은 PROD2여야 합니다.');
+    if (parentLineCode !== resourceCode) {
+      throw new BadRequestException('OEE 리소스 기준 코드는 라인 마스터 코드와 같아야 합니다.');
     }
 
     const resources = await this.listResources(processCode, organizationId, company, plantCd);
     const found = resources.find((resource) => {
       if (resource.resourceCode !== resourceCode) return false;
-      return processCode === 'SMT' || resource.parentLineCode === parentLineCode;
+      return resource.parentLineCode === parentLineCode;
     });
     if (!found) throw new BadRequestException('인증 테넌트의 OEE 리소스가 아닙니다.');
 
-    return processCode === 'SMT' ? { ...found, parentLineCode: found.resourceCode } : found;
+    return found;
   }
 
   private async findReason(organizationId: number, reasonCode: string): Promise<ComCode | null> {

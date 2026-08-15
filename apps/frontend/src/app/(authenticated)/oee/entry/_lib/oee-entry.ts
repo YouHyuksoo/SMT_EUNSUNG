@@ -1,8 +1,5 @@
 export type OeeProcessCode = 'SMT' | 'ASSY';
-export type OeeResourceType = 'LINE' | 'CELL';
-
-export const ASSY_PARENT_LINE_CODE = 'PROD2';
-export const NO_ASSEMBLY_CELL_MASTER = 'NO_ASSEMBLY_CELL_MASTER';
+export type OeeResourceType = 'LINE';
 
 export interface OeeWorker {
   workerId: string;
@@ -175,19 +172,10 @@ export function readCollection<T>(response: unknown, key: string): T[] {
 }
 
 export function normalizeResource(resource: OeeResource): OeeResource {
-  if (resource.processCode === 'SMT') {
-    return {
-      ...resource,
-      resourceType: 'LINE',
-      parentLineCode: resource.parentLineCode ?? resource.resourceCode,
-    };
-  }
-
   return {
     ...resource,
-    processCode: 'ASSY',
-    resourceType: 'CELL',
-    parentLineCode: ASSY_PARENT_LINE_CODE,
+    resourceType: 'LINE',
+    parentLineCode: resource.resourceCode,
   };
 }
 
@@ -248,7 +236,7 @@ export function normalizeEvent(value: unknown): OeeDowntimeEvent | null {
   return {
     eventId,
     processCode: value.processCode === 'SMT' || value.processCode === 'ASSY' ? value.processCode : undefined,
-    resourceType: value.resourceType === 'LINE' || value.resourceType === 'CELL' ? value.resourceType : undefined,
+    resourceType: value.resourceType === 'LINE' ? 'LINE' : undefined,
     resourceCode: readString(value, 'resourceCode') ?? undefined,
     parentLineCode: readString(value, 'parentLineCode'),
     reasonCode: readString(value, 'reasonCode'),

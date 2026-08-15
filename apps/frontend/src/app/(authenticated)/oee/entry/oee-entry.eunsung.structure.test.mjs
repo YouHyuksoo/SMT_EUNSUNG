@@ -7,7 +7,7 @@ const helperSource = fs.readFileSync(new URL("./_lib/oee-entry.ts", import.meta.
 const helperModule = ts.transpileModule(helperSource, {
   compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 },
 }).outputText;
-const { createRequestId, formatServerTimestamp, normalizeStatus } = await import(
+const { createRequestId, formatServerTimestamp, normalizeEvent, normalizeStatus } = await import(
   `data:text/javascript;base64,${Buffer.from(helperModule).toString("base64")}`
 );
 
@@ -48,7 +48,7 @@ test("worker lookup gates context loading and unwraps both envelope shapes", () 
 
 test("resource normalization and payload builders preserve the approved mobile contract", () => {
   assert.match(lib, /parentLineCode.*resourceCode/);
-  assert.match(lib, /PROD2/);
+  assert.doesNotMatch(lib, /CELL|PROD2|ASSY_PARENT_LINE_CODE/);
   assert.match(lib, /export function makeStartPayload/);
   assert.match(lib, /export function makeEndPayload/);
 
@@ -70,6 +70,11 @@ test("resource normalization and payload builders preserve the approved mobile c
   assert.match(endBuilder, /eventId/);
   assert.match(endBuilder, /requestId/);
   assert.doesNotMatch(endBuilder, /workerId|processCode|resourceCode|parentLineCode|reasonCode|memo/);
+});
+
+test("resource parsing is line-only", () => {
+  assert.equal(normalizeEvent({ eventId: 1, resourceType: "LINE" })?.resourceType, "LINE");
+  assert.equal(normalizeEvent({ eventId: 2, resourceType: "CELL" })?.resourceType, undefined);
 });
 
 test("request IDs are stable for failed retries and invalidated by command changes", () => {
@@ -134,7 +139,7 @@ test("malformed command responses cannot move the screen into a successful state
 test("state failures keep transitions blocked and the page has industrial responsive touch targets", () => {
   assert.match(page, /statusError/);
   assert.match(page, /if \(statusError/);
-  assert.match(page, /NO_ASSEMBLY_CELL_MASTER/);
+  assert.doesNotMatch(page, /NO_ASSEMBLY_CELL_MASTER|noAssemblyCellMaster/);
   assert.match(page, /ConfirmModal/);
   assert.match(page, /grid-cols-1[\s\S]*min-\[1024px\]:grid-cols-2/);
   assert.match(page, /min-h-\[64px\]/);
