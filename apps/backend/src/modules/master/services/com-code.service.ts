@@ -128,33 +128,53 @@ export class ComCodeService {
    * 그룹 코드 목록 조회 (중복 제거)
    */
   async findAllGroups(organizationId?: number) {
-    const queryBuilder = this.comCodeRepository.createQueryBuilder('code')
-      .select('code.groupCode', 'groupCode')
-      .addSelect('COUNT(*)', 'count')
-      .addSelect("LISTAGG(code.detailCode, ' ') WITHIN GROUP (ORDER BY code.detailCode)", 'detailCodes')
-      .addSelect("LISTAGG(code.codeName, ' ') WITHIN GROUP (ORDER BY code.detailCode)", 'searchTextKo')
-      .addSelect("LISTAGG(code.codeNameEng, ' ') WITHIN GROUP (ORDER BY code.detailCode)", 'searchTextEn')
-      .addSelect("LISTAGG(code.codeNameLocal, ' ') WITHIN GROUP (ORDER BY code.detailCode)", 'searchTextLocal')
-      .groupBy('code.groupCode')
-      .orderBy('code.groupCode', 'ASC');
+    const codes = await this.comCodeRepository.find({
+      where: this.tenantWhere(organizationId),
+      order: { groupCode: 'asc', detailCode: 'asc' },
+      select: {
+        groupCode: true,
+        detailCode: true,
+        codeName: true,
+        codeNameEng: true,
+        codeNameLocal: true,
+      },
+    });
 
-    if (organizationId != null) {
-      queryBuilder.andWhere('code.organizationId = :organizationId', { organizationId });
+    const groups = new Map<string, {
+      groupCode: string;
+      count: number;
+      detailCodes: string[];
+      searchTextParts: { ko: string[]; en: string[]; local: string[] };
+    }>();
+
+    for (const code of codes) {
+      let group = groups.get(code.groupCode);
+      if (!group) {
+        group = {
+          groupCode: code.groupCode,
+          count: 0,
+          detailCodes: [],
+          searchTextParts: { ko: [], en: [], local: [] },
+        };
+        groups.set(code.groupCode, group);
+      }
+
+      group.count += 1;
+      group.detailCodes.push(code.detailCode);
+      if (code.codeName) group.searchTextParts.ko.push(code.codeName);
+      if (code.codeNameEng) group.searchTextParts.en.push(code.codeNameEng);
+      if (code.codeNameLocal) group.searchTextParts.local.push(code.codeNameLocal);
     }
 
-    const groups = await queryBuilder.getRawMany();
-
-    return groups.map((g) => ({
-      groupCode: g.groupCode,
-      count: parseInt(g.count, 10),
-      detailCodes: typeof g.detailCodes === 'string'
-        ? g.detailCodes.split(' ').filter(Boolean)
-        : [],
+    return Array.from(groups.values(), (group) => ({
+      groupCode: group.groupCode,
+      count: group.count,
+      detailCodes: group.detailCodes,
       searchText: {
-        ko: g.searchTextKo ?? '',
-        en: g.searchTextEn ?? '',
-        zh: g.searchTextLocal ?? '',
-        vi: g.searchTextLocal ?? '',
+        ko: group.searchTextParts.ko.join(' '),
+        en: group.searchTextParts.en.join(' '),
+        zh: group.searchTextParts.local.join(' '),
+        vi: group.searchTextParts.local.join(' '),
       },
     }));
   }
