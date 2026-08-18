@@ -1567,7 +1567,7 @@
       "assignEquipmentHint": "설비는 한 공정에만 배치됩니다. 다른 공정에 배치된 설비를 선택하면 이 공정으로 옮겨집니다.",
       "removeEquipmentConfirm": "설비 배치 해제",
       "removeEquipmentMessage": "의 배치를 해제하시겠습니까? 설비는 미배치 상태가 됩니다.",
-      "noProcessSelected": "좌측에서 공정을 선택해주세요.",
+      "noProcessSelected": "상단에서 공정을 선택해주세요.",
       "equipCount": "설비",
       "sectionBasic": "기본 정보",
       "sectionCapacity": "생산능력",

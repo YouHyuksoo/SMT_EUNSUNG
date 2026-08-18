@@ -2,11 +2,11 @@
 
 /**
  * @file src/app/(authenticated)/master/process/page.tsx
- * @description 공정관리 페이지 - 좌측 공정 목록 + 우측 배치 설비 목록 (IP_PRODUCT_WORKSTAGE)
+ * @description 공정관리 페이지 - 상단 공정 목록 + 하단 배치 설비 목록 (IP_PRODUCT_WORKSTAGE)
  *
  * 초보자 가이드:
- * 1. 좌측: 공정 목록 - 클릭 시 해당 공정 선택
- * 2. 우측: 선택된 공정에 배치된 설비 DataGrid (IMCN_MACHINE.WORKSTAGE_CODE 기준)
+ * 1. 상단: 공정 목록 - 클릭 시 해당 공정 선택
+ * 2. 하단: 선택된 공정에 배치된 설비 DataGrid (IMCN_MACHINE.WORKSTAGE_CODE 기준)
  * 3. 공정 CRUD는 우측 슬라이드 패널로 처리
  */
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
@@ -343,10 +343,10 @@ export default function ProcessPage() {
       </div>
       <ProcessUploadModal isOpen={uploadModalOpen} onClose={() => setUploadModalOpen(false)} onComplete={fetchProcesses} />
 
-      {/* 본문: 좌측 공정 + 우측 설비 + 슬라이드 패널 */}
+      {/* 본문: 상단 공정 + 하단 설비 + 슬라이드 패널 */}
       <div className="flex-1 min-h-0 flex overflow-hidden">
-        <div className="flex-1 min-w-0 grid grid-cols-12 gap-6">
-          <div className="col-span-7 flex flex-col min-h-0">
+        <div className="flex-1 min-w-0 grid grid-rows-[minmax(0,3fr)_minmax(0,2fr)] gap-6">
+          <div className="flex flex-col min-h-0">
             <ProcessList
               processes={processes}
               selectedCode={selectedCode}
@@ -358,7 +358,7 @@ export default function ProcessPage() {
               onDelete={setDeleteTarget}
             />
           </div>
-          <div className="col-span-5 flex flex-col min-h-0">
+          <div className="flex flex-col min-h-0">
             <ProcessEquipGrid
               processCode={selectedCode}
               processName={selectedProcess?.processName ?? ""}

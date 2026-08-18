@@ -19,7 +19,7 @@ IP_PRODUCT_WORKSTAGE (PK: WORKSTAGE_CODE, ORGANIZATION_ID)
    ▲
    │ WORKSTAGE_CODE  (설비가 소속 공정을 가리킴 — 중간 테이블 없음)
    │
-IMCN_MACHINE (PK: MACHINE_CODE, ORGANIZATION_ID)   ── 오른쪽 그리드 표시값 출처
+IMCN_MACHINE (PK: MACHINE_CODE, ORGANIZATION_ID)   ── 하단 그리드 표시값 출처
 ```
 
 - **공정 1 : 설비 N.** 설비는 한 공정에만 속합니다.
@@ -87,7 +87,7 @@ IMCN_MACHINE (PK: MACHINE_CODE, ORGANIZATION_ID)   ── 오른쪽 그리드 �
 >
 > **테이블에 없는 필드**: `USE_YN`, `REMARK`, `LINE_TYPE`(LV/HV/CM). 현재 모델에 없는 필드로 화면에서 제거되었습니다.
 
-## ② 배치 설비 표시값 — IMCN_MACHINE (오른쪽 그리드, 읽기 전용)
+## ② 배치 설비 표시값 — IMCN_MACHINE (하단 그리드, 읽기 전용)
 
 > `findEquipments`가 `IMCN_MACHINE`에서 `WORKSTAGE_CODE = :processCode`로 직접 조회합니다. 값 편집은 설비마스터에서 합니다.
 
