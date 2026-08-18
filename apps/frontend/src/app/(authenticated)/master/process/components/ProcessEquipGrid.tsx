@@ -80,7 +80,7 @@ export default function ProcessEquipGrid({
 
   if (!processCode) {
     return (
-      <Card className="flex-1 flex items-center justify-center min-h-0">
+      <Card className="flex-1 flex items-center justify-center min-w-0 min-h-0 w-full max-w-full overflow-hidden">
         <div className="text-center text-text-muted">
           <Monitor className="w-12 h-12 mx-auto mb-3 opacity-30" />
           <p className="text-sm">{t("master.process.noProcessSelected")}</p>
@@ -90,11 +90,11 @@ export default function ProcessEquipGrid({
   }
 
   return (
-    <Card padding="none" className="flex-1 flex flex-col min-h-0">
-      <div className="px-4 pt-4 pb-2 border-b border-border flex-shrink-0">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h3 className="text-sm font-semibold text-text flex items-center gap-2">
+    <Card padding="none" className="flex-1 flex flex-col min-w-0 min-h-0 w-full max-w-full overflow-hidden">
+      <div className="px-4 pt-3 pb-1 border-b border-border flex-shrink-0">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex-1 min-w-0">
+            <h3 className="text-sm font-semibold text-text flex flex-wrap items-center gap-2">
               <Monitor className="w-4 h-4 text-primary" />
               {t("master.process.assignedEquipments")}
               <span className="text-text-muted font-normal">
@@ -102,13 +102,13 @@ export default function ProcessEquipGrid({
               </span>
             </h3>
           </div>
-          <Button size="sm" onClick={onAdd}>
+          <Button size="sm" className="flex-shrink-0" onClick={onAdd}>
             <Plus className="w-4 h-4 mr-1" />
             {t("master.process.assignEquipment", "설비 배치")}
           </Button>
         </div>
       </div>
-      <CardContent className="flex-1 min-h-0 overflow-hidden">
+      <CardContent className="flex-1 min-w-0 min-h-0 overflow-hidden px-4 py-3">
         <DataGrid
           data={equipments}
           columns={columns}

@@ -193,8 +193,8 @@ export default function ProcessList({
   );
 
   return (
-    <Card padding="none" className="flex-1 flex flex-col min-h-0">
-      <CardContent className="flex-1 min-h-0 overflow-hidden px-4 py-3">
+    <Card padding="none" className="flex-1 flex flex-col min-w-0 min-h-0 w-full max-w-full overflow-hidden">
+      <CardContent className="flex-1 min-w-0 min-h-0 overflow-hidden px-4 py-3">
         <DataGrid
           data={processes}
           columns={columns}
