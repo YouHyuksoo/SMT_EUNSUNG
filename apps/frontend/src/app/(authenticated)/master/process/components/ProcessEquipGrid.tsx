@@ -98,12 +98,9 @@ export default function ProcessEquipGrid({
               <Monitor className="w-4 h-4 text-primary" />
               {t("master.process.assignedEquipments")}
               <span className="text-text-muted font-normal">
-                - {processCode} ({processName})
+                - {processCode} ({processName}) · {equipments.length}{t("common.count", { defaultValue: "건" })}
               </span>
             </h3>
-            <p className="text-xs text-text-muted mt-0.5">
-              {equipments.length}{t("common.count", { defaultValue: "건" })}
-            </p>
           </div>
           <Button size="sm" onClick={onAdd}>
             <Plus className="w-4 h-4 mr-1" />

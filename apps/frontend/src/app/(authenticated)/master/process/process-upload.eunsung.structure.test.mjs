@@ -5,6 +5,7 @@ import { test } from 'node:test';
 const modal = readFileSync(new URL('./components/ProcessUploadModal.tsx', import.meta.url), 'utf8');
 const page = readFileSync(new URL('./page.tsx', import.meta.url), 'utf8');
 const list = readFileSync(new URL('./components/ProcessList.tsx', import.meta.url), 'utf8');
+const equipmentGrid = readFileSync(new URL('./components/ProcessEquipGrid.tsx', import.meta.url), 'utf8');
 const ko = readFileSync(new URL('../../../../locales/ko.json', import.meta.url), 'utf8');
 
 test('uploads a validated workbook with the selected department', () => {
@@ -40,4 +41,17 @@ test('process and assigned-equipment grids use a 60:40 vertical layout', () => {
 test('directs users to select a process from the upper grid', () => {
   assert.match(ko, /"noProcessSelected": "상단에서 공정을 선택해주세요\."/);
   assert.doesNotMatch(ko, /"noProcessSelected": "좌측에서 공정을 선택해주세요\."/);
+});
+
+test('uses compact process-card padding and an inline assigned-equipment count', () => {
+  assert.match(list, /<Card padding="none" className="flex-1 flex flex-col min-h-0">/);
+  assert.match(list, /<CardContent className="flex-1 min-h-0 overflow-hidden px-4 py-3">/);
+  assert.match(
+    equipmentGrid,
+    /<h3[^>]*>[\s\S]*?assignedEquipments[\s\S]*?<span className="text-text-muted font-normal">\s*- \{processCode\} \(\{processName\}\) · \{equipments\.length\}\{t\("common\.count"[\s\S]*?<\/span>\s*<\/h3>/,
+  );
+  assert.doesNotMatch(
+    equipmentGrid,
+    /<p[^>]*>(?:(?!<\/p>)[\s\S])*\{equipments\.length\}(?:(?!<\/p>)[\s\S])*<\/p>/,
+  );
 });
