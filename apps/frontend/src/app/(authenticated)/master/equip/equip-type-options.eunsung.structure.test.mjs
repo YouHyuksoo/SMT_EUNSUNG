@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import test from "node:test";
+import { buildComCodeOptions } from "../../../../hooks/comCodeOptions.ts";
+import { hasRequiredEquipMasterFields } from "./equipMasterValidation.ts";
 
 const root = new URL("../../../../../", import.meta.url);
 const read = (path) => fs.readFileSync(new URL(path, root), "utf8");
@@ -18,4 +20,35 @@ test("equipment types come from common codes without fabricated fallbacks", () =
   assert.match(tab, /\.\.\.equipTypeOptions\.map/);
   assert.match(tab, /options=\{equipTypeOptions\}/);
   assert.doesNotMatch(tab, /equipTypeOptions\.length\s*\?/);
+});
+
+test("all MACHINE TYPE common codes become code and name options without equipment data", () => {
+  const machineTypes = Array.from({ length: 9 }, (_, index) => ({
+    detailCode: `TYPE${index + 1}`,
+    codeName: `설비유형 ${index + 1}`,
+    codeDesc: null,
+    sortOrder: index + 1,
+    attr1: null,
+    attr2: null,
+    attr3: null,
+    defectGrade: null,
+  }));
+
+  const options = buildComCodeOptions(
+    { "MACHINE TYPE": machineTypes },
+    "MACHINE TYPE",
+    (_groupCode, _detailCode, fallback) => fallback,
+    false,
+    true,
+    "전체",
+  );
+
+  assert.equal(options.length, 9);
+  assert.deepEqual(options[0], { value: "TYPE1", label: "TYPE1 - 설비유형 1" });
+  assert.deepEqual(options[8], { value: "TYPE9", label: "TYPE9 - 설비유형 9" });
+});
+
+test("blank equipment type prevents save", () => {
+  assert.equal(hasRequiredEquipMasterFields({ equipCode: "MC-01", equipName: "검사기", equipType: "" }), false);
+  assert.equal(hasRequiredEquipMasterFields({ equipCode: "MC-01", equipName: "검사기", equipType: "AOI" }), true);
 });

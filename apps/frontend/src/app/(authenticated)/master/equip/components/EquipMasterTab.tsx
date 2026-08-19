@@ -28,6 +28,7 @@ import { ComCodeSelect, LineSelect } from '@/components/shared';
 import { useEquipTypeOptions } from "@/hooks/useMasterOptions";
 import { Field, FieldInput, FieldComCodeSelect, FieldLineSelect } from "./EquipFieldHelp";
 import EquipBomPanel from "./EquipBomPanel";
+import { hasRequiredEquipMasterFields } from "../equipMasterValidation";
 
 function EquipImageThumb({ src, alt }: { src: string; alt: string }) {
   const [errored, setErrored] = useState(false);
@@ -97,6 +98,7 @@ export default function EquipMasterTab() {
   const [imageError, setImageError] = useState(false);
   const [imageDeleteConfirmOpen, setImageDeleteConfirmOpen] = useState(false);
   const { options: equipTypeOptions, isLoading: equipTypeLoading } = useEquipTypeOptions();
+  const canSave = hasRequiredEquipMasterFields(form);
 
   // API에서 설비 목록 조회
   const fetchEquipments = useCallback(async () => {
@@ -214,7 +216,7 @@ export default function EquipMasterTab() {
   };
 
   const handleSave = async () => {
-    if (!form.equipCode.trim() || !form.equipName.trim() || !form.equipType) return;
+    if (!canSave) return;
     try {
       const body = {
         equipCode: form.equipCode,
@@ -424,7 +426,7 @@ export default function EquipMasterTab() {
               <Button size="sm" variant="secondary" onClick={() => guard(() => setPanelOpen(false))}>
                 {t("common.cancel", "취소")}
               </Button>
-              <Button size="sm" onClick={handleSave} disabled={!form.equipCode.trim() || !form.equipName.trim() || !form.equipType}>
+              <Button size="sm" onClick={handleSave} disabled={!canSave}>
                 {t("common.save", "저장")}
               </Button>
             </div>

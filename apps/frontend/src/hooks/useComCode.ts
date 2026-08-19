@@ -13,6 +13,9 @@
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useApiQuery } from "./useApi";
+import { buildComCodeOptions, resolveComCodeGroup } from "./comCodeOptions";
+
+export { normalizeComCodeType, resolveComCodeGroup } from "./comCodeOptions";
 
 export interface ComCodeItem {
   detailCode: string;
@@ -28,26 +31,6 @@ export interface ComCodeItem {
 export type ComCodeMap = Record<string, ComCodeItem[]>;
 
 /** DB 컬럼명과 ISYS_BASECODE.CODE_TYPE을 같은 키로 비교한다. */
-export function normalizeComCodeType(value: string): string {
-  return value.toUpperCase().replace(/[^A-Z0-9]+/g, "");
-}
-
-export function resolveComCodeGroup(
-  groups: ComCodeMap | undefined,
-  requestedType: string,
-): { groupCode: string; codes: ComCodeItem[] } {
-  if (!groups) return { groupCode: requestedType, codes: [] };
-  if (groups[requestedType]) return { groupCode: requestedType, codes: groups[requestedType] };
-
-  const normalized = normalizeComCodeType(requestedType);
-  const groupCode = Object.keys(groups).find(
-    (candidate) => normalizeComCodeType(candidate) === normalized,
-  );
-  return groupCode
-    ? { groupCode, codes: groups[groupCode] }
-    : { groupCode: requestedType, codes: [] };
-}
-
 const COM_CODE_QUERY_KEY = ["com-codes", "all-active"];
 const COM_CODE_URL = "/master/com-codes/all-active";
 
@@ -86,22 +69,18 @@ export function useComCodeOptions(
 ) {
   const { data } = useComCodes();
   const { t } = useTranslation();
-  return useMemo(() => {
-    const resolved = resolveComCodeGroup(data?.data, groupCode);
-    const codes = resolved.codes;
-    const options = codes.map((c: ComCodeItem) => {
-      const name = getLocalizedCodeName(t, resolved.groupCode, c.detailCode, c.codeName);
-      // showCode: 코드와 명칭을 함께 노출 (예: "EA - 개"). 코드가 곧 의미인 단위류에 사용.
-      return {
-        value: c.detailCode,
-        label: showCode && name !== c.detailCode ? `${c.detailCode} - ${name}` : name,
-      };
-    });
-    if (includeAll) {
-      return [{ value: "", label: t("common.all", { defaultValue: "전체" }) }, ...options];
-    }
-    return options;
-  }, [data, groupCode, includeAll, showCode, t]);
+  return useMemo(
+    () => buildComCodeOptions(
+      data?.data,
+      groupCode,
+      (resolvedGroup, detailCode, fallback) =>
+        getLocalizedCodeName(t, resolvedGroup, detailCode, fallback),
+      includeAll,
+      showCode,
+      t("common.all", { defaultValue: "전체" }),
+    ),
+    [data, groupCode, includeAll, showCode, t],
+  );
 }
 
 export function useComCodeLabel(

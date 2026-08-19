@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import test from 'node:test';
 
 const hook = fs.readFileSync(new URL('./useComCode.ts', import.meta.url), 'utf8');
+const optionHelper = fs.readFileSync(new URL('./comCodeOptions.ts', import.meta.url), 'utf8');
 const purchaseColumns = fs.readFileSync(new URL('../app/(authenticated)/master/purchase-price/purchasePriceColumns.tsx', import.meta.url), 'utf8');
 const saleColumns = fs.readFileSync(new URL('../app/(authenticated)/master/sale-price/salePriceColumns.tsx', import.meta.url), 'utf8');
 const partPage = fs.readFileSync(new URL('../app/(authenticated)/master/part/page.tsx', import.meta.url), 'utf8');
@@ -10,9 +11,10 @@ const partColumns = fs.readFileSync(new URL('../app/(authenticated)/master/part/
 const partPanel = fs.readFileSync(new URL('../app/(authenticated)/master/part/components/PartFormPanel.tsx', import.meta.url), 'utf8');
 
 test('common code lookup normalizes column names and CODE_TYPE spacing', () => {
-  assert.match(hook, /export function normalizeComCodeType/);
-  assert.match(hook, /replace\(\/\[\^A-Z0-9\]\+\/g, ""\)/);
-  assert.match(hook, /resolveComCodeGroup/);
+  const commonCodeSources = `${hook}\n${optionHelper}`;
+  assert.match(commonCodeSources, /export function normalizeComCodeType/);
+  assert.match(commonCodeSources, /replace\(\/\[\^A-Z0-9\]\+\/g, ""\)/);
+  assert.match(commonCodeSources, /resolveComCodeGroup/);
 });
 
 test('/master/part uses ID_ITEM column names for base-code lookup and rendering', () => {
