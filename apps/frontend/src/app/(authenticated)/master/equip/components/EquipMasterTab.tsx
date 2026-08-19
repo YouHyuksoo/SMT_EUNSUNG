@@ -62,7 +62,7 @@ interface FormState {
 const EMPTY_FORM: FormState = {
   equipCode: "",
   equipName: "",
-  equipType: "TEMP",
+  equipType: "",
   lineCode: "",
   modelName: "",
   maker: "",
@@ -437,7 +437,7 @@ export default function EquipMasterTab() {
                 <FieldInput field="equipName" label={t("master.equip.equipName", "설비명")} value={form.equipName} onChange={(e) => setForm({ ...form, equipName: e.target.value })} required />
                 <Field field="equipType" label={t("master.equip.type", "유형")} required>
                   <Select
-                    options={equipTypeOptions.length ? equipTypeOptions : [{ value: form.equipType, label: form.equipType }]}
+                    options={equipTypeOptions}
                     value={form.equipType}
                     onChange={(v) => setForm({ ...form, equipType: v as EquipType })}
                     disabled={equipTypeLoading}

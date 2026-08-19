@@ -13,6 +13,7 @@
 
 import { useMemo } from "react";
 import { useApiQuery } from "./useApi";
+import { useComCodeOptions, useComCodes } from "./useComCode";
 import type { SelectOption } from "@/components/ui/Select";
 
 /** API 응답 래퍼 타입 */
@@ -64,11 +65,6 @@ interface EquipItem {
   equipName: string;
   equipType?: string;
   lineCode?: string;
-}
-
-interface EquipTypeItem {
-  equipType: string;
-  equipTypeName: string;
 }
 
 interface PartnerItem {
@@ -303,22 +299,8 @@ export function useEquipOptions(processCode?: string) {
  * 설비유형 목록을 SelectOption[]으로 반환
  */
 export function useEquipTypeOptions() {
-  const { data, isLoading } = useApiQuery<{ data: EquipTypeItem[] }>(
-    ["equip-types", "options"],
-    "/equipment/equips/metadata/types",
-    { staleTime: 5 * 60 * 1000 },
-  );
-
-  const options = useMemo<SelectOption[]>(() => {
-    const response = data?.data as unknown as ApiResponse<EquipTypeItem[]> | EquipTypeItem[] | undefined;
-    const list = Array.isArray(response) ? response : response?.data ?? [];
-    return list.map((type) => ({
-      value: type.equipType,
-      label: type.equipTypeName && type.equipTypeName !== type.equipType
-        ? `${type.equipType} - ${type.equipTypeName}`
-        : type.equipType,
-    }));
-  }, [data]);
+  const options = useComCodeOptions("MACHINE TYPE", false, true);
+  const { isLoading } = useComCodes();
 
   return { options, isLoading };
 }
