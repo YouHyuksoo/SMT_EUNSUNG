@@ -1052,7 +1052,7 @@
       "equipName": "Equipment Name",
       "type": "Type",
       "line": "Line",
-      "process": "Process",
+      "process": "Applied Process",
       "commType": "Comm Type",
       "ipPort": "IP/Port",
       "manufacturer": "Manufacturer",

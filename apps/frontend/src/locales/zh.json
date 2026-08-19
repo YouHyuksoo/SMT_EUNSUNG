@@ -1052,7 +1052,7 @@
       "equipName": "设备名称",
       "type": "类型",
       "line": "产线",
-      "process": "工序",
+      "process": "应用工序",
       "commType": "通信方式",
       "ipPort": "IP/端口",
       "manufacturer": "制造商",
