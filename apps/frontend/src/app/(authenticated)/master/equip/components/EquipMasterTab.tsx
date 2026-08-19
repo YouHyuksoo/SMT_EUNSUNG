@@ -28,7 +28,7 @@ import { ComCodeSelect, LineSelect } from '@/components/shared';
 import { useEquipTypeOptions } from "@/hooks/useMasterOptions";
 import { Field, FieldInput, FieldComCodeSelect, FieldLineSelect } from "./EquipFieldHelp";
 import EquipBomPanel from "./EquipBomPanel";
-import { hasRequiredEquipMasterFields } from "../equipMasterValidation";
+import { hasRequiredEquipMasterFields } from "../equipMasterValidation.mjs";
 
 function EquipImageThumb({ src, alt }: { src: string; alt: string }) {
   const [errored, setErrored] = useState(false);

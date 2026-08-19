@@ -1,18 +1,20 @@
-export interface ComCodeOptionItem {
-  detailCode: string;
-  codeName: string;
-}
+/** @typedef {{ detailCode: string, codeName: string }} ComCodeOptionItem */
 
-export type ComCodeOptionMap = Record<string, ComCodeOptionItem[]>;
-
-export function normalizeComCodeType(value: string): string {
+/**
+ * @param {string} value
+ * @returns {string}
+ */
+export function normalizeComCodeType(value) {
   return value.toUpperCase().replace(/[^A-Z0-9]+/g, "");
 }
 
-export function resolveComCodeGroup<T extends ComCodeOptionItem>(
-  groups: Record<string, T[]> | undefined,
-  requestedType: string,
-): { groupCode: string; codes: T[] } {
+/**
+ * @template {ComCodeOptionItem} T
+ * @param {Record<string, T[]> | undefined} groups
+ * @param {string} requestedType
+ * @returns {{ groupCode: string, codes: T[] }}
+ */
+export function resolveComCodeGroup(groups, requestedType) {
   if (!groups) return { groupCode: requestedType, codes: [] };
   if (groups[requestedType]) return { groupCode: requestedType, codes: groups[requestedType] };
 
@@ -25,13 +27,22 @@ export function resolveComCodeGroup<T extends ComCodeOptionItem>(
     : { groupCode: requestedType, codes: [] };
 }
 
-export function buildComCodeOptions<T extends ComCodeOptionItem>(
-  groups: Record<string, T[]> | undefined,
-  requestedType: string,
-  getName: (groupCode: string, detailCode: string, fallback: string) => string,
-  includeAll: boolean,
-  showCode: boolean,
-  allLabel: string,
+/**
+ * @template {ComCodeOptionItem} T
+ * @param {Record<string, T[]> | undefined} groups
+ * @param {string} requestedType
+ * @param {(groupCode: string, detailCode: string, fallback: string) => string} getName
+ * @param {boolean} includeAll
+ * @param {boolean} showCode
+ * @param {string} allLabel
+ */
+export function buildComCodeOptions(
+  groups,
+  requestedType,
+  getName,
+  includeAll,
+  showCode,
+  allLabel,
 ) {
   const resolved = resolveComCodeGroup(groups, requestedType);
   const options = resolved.codes.map((code) => {

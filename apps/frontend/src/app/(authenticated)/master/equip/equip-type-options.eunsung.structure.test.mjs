@@ -1,11 +1,17 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import test from "node:test";
-import { buildComCodeOptions } from "../../../../hooks/comCodeOptions.ts";
-import { hasRequiredEquipMasterFields } from "./equipMasterValidation.ts";
+import { buildComCodeOptions } from "../../../../hooks/comCodeOptions.mjs";
+import { hasRequiredEquipMasterFields } from "./equipMasterValidation.mjs";
 
 const root = new URL("../../../../../", import.meta.url);
 const read = (path) => fs.readFileSync(new URL(path, root), "utf8");
+const testSource = fs.readFileSync(new URL("./equip-type-options.eunsung.structure.test.mjs", import.meta.url), "utf8");
+
+test("Node tests import runtime-compatible JavaScript helpers", () => {
+  assert.match(testSource, /from "\.\.\/\.\.\/\.\.\/\.\.\/hooks\/comCodeOptions\.mjs"/);
+  assert.match(testSource, /from "\.\/equipMasterValidation\.mjs"/);
+});
 
 test("equipment types come from common codes without fabricated fallbacks", () => {
   const hooks = read("src/hooks/useMasterOptions.ts");

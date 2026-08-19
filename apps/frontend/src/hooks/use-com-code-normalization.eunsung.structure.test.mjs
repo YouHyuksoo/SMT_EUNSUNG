@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import test from 'node:test';
 
 const hook = fs.readFileSync(new URL('./useComCode.ts', import.meta.url), 'utf8');
-const optionHelper = fs.readFileSync(new URL('./comCodeOptions.ts', import.meta.url), 'utf8');
+const optionHelper = fs.readFileSync(new URL('./comCodeOptions.mjs', import.meta.url), 'utf8');
 const purchaseColumns = fs.readFileSync(new URL('../app/(authenticated)/master/purchase-price/purchasePriceColumns.tsx', import.meta.url), 'utf8');
 const saleColumns = fs.readFileSync(new URL('../app/(authenticated)/master/sale-price/salePriceColumns.tsx', import.meta.url), 'utf8');
 const partPage = fs.readFileSync(new URL('../app/(authenticated)/master/part/page.tsx', import.meta.url), 'utf8');

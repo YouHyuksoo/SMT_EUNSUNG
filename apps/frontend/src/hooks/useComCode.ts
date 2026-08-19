@@ -13,9 +13,9 @@
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useApiQuery } from "./useApi";
-import { buildComCodeOptions, resolveComCodeGroup } from "./comCodeOptions";
+import { buildComCodeOptions, resolveComCodeGroup } from "./comCodeOptions.mjs";
 
-export { normalizeComCodeType, resolveComCodeGroup } from "./comCodeOptions";
+export { normalizeComCodeType, resolveComCodeGroup } from "./comCodeOptions.mjs";
 
 export interface ComCodeItem {
   detailCode: string;
