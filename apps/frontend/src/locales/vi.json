@@ -1052,7 +1052,7 @@
       "equipName": "Tên thiết bị",
       "type": "Loại",
       "line": "Dây chuyền",
-      "process": "Công đoạn",
+      "process": "Công đoạn áp dụng",
       "commType": "Phương thức truyền thông",
       "ipPort": "IP/Port",
       "manufacturer": "Nhà sản xuất",

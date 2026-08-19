@@ -1462,7 +1462,7 @@
       "equipName": "설비명",
       "type": "유형",
       "line": "라인",
-      "process": "공정",
+      "process": "적용공정",
       "commType": "통신방식",
       "ipPort": "IP/Port",
       "manufacturer": "제조사",

@@ -58,6 +58,7 @@ interface LineItem {
 interface ProcessItem {
   processCode: string;
   processName: string;
+  processType: string;
 }
 
 interface EquipItem {
@@ -248,16 +249,14 @@ export function useLineOptions() {
  * 공정 목록을 SelectOption[]으로 반환
  */
 export function useProcessOptions() {
-  const { data, isLoading } = useApiQuery<{ data: ProcessItem[] }>(
+  const { data, isLoading } = useApiQuery<ProcessItem[]>(
     ["processes", "options"],
-    "/equipment/equips/metadata/processes",
+    "/master/processes?limit=5000",
     { staleTime: 5 * 60 * 1000 },
   );
 
   const rawData = useMemo<ProcessItem[]>(() => {
-    const response = data?.data as unknown as ApiResponse<ProcessItem[]> | ProcessItem[] | undefined;
-    const list = Array.isArray(response) ? response : response?.data ?? [];
-    return list;
+    return Array.isArray(data?.data) ? data.data : [];
   }, [data]);
 
   const options = useMemo<SelectOption[]>(() =>
