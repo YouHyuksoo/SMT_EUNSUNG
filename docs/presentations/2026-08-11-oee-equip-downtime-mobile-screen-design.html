@@ -1,0 +1,1265 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>설비비가동 관리 모바일 화면설계서 · MOCK</title>
+    <style>
+      :root {
+        --ink: #172033;
+        --muted: #667085;
+        --line: #b8c4d6;
+        --soft: #d8e0eb;
+        --navy: #102a43;
+        --blue: #26669c;
+        --blue2: #d9e9f8;
+        --blue3: #eef6fd;
+        --green: #16794a;
+        --greenbg: #e8f6ef;
+        --red: #b42318;
+        --redbg: #fff0ed;
+        --amber: #9a6700;
+        --amberbg: #fff7d6;
+        --paper: #fff;
+        --canvas: #e7ebf1;
+        --mock: #8f1d2c;
+        --mockbg: #fff0f2;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: var(--canvas);
+        font-family: "Noto Sans KR", "Malgun Gothic", Arial, sans-serif;
+        font-size: 10.5px;
+        line-height: 1.42;
+      }
+      .mono {
+        font-family: Consolas, "Courier New", monospace;
+        overflow-wrap: anywhere;
+      }
+      .toolbar {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 9px 16px;
+        color: #fff;
+        background: rgba(143, 29, 44, 0.98);
+        box-shadow: 0 4px 16px rgba(80, 20, 30, 0.2);
+      }
+      .toolbar strong {
+        font-size: 13px;
+      }
+      .toolbar-nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+      .toolbar a,
+      .toolbar button {
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        border-radius: 6px;
+        padding: 5px 9px;
+        color: #fff;
+        background: rgba(255, 255, 255, 0.1);
+        font: inherit;
+        font-weight: 800;
+        text-decoration: none;
+        cursor: pointer;
+      }
+      .toolbar a:hover,
+      .toolbar button:hover {
+        background: rgba(255, 255, 255, 0.2);
+      }
+      main {
+        padding: 18px 0 36px;
+      }
+      .sheet {
+        width: min(1580px, calc(100vw - 28px));
+        min-height: 990px;
+        margin: 0 auto 20px;
+        padding: 21px 24px 17px;
+        background: var(--paper);
+        border: 1px solid #c8d0dc;
+        box-shadow: 0 14px 36px rgba(20, 35, 60, 0.13);
+        page-break-after: always;
+        break-after: page;
+      }
+      .sheet:last-child {
+        page-break-after: auto;
+        break-after: auto;
+      }
+      .doc-head {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: end;
+        gap: 14px;
+        padding-bottom: 10px;
+        border-bottom: 3px solid var(--blue);
+      }
+      .eyebrow {
+        margin: 0 0 2px;
+        color: var(--blue);
+        font-size: 10px;
+        font-weight: 900;
+        letter-spacing: 0.13em;
+      }
+      h1 {
+        margin: 0;
+        font-size: 25px;
+        letter-spacing: -0.045em;
+      }
+      .subtitle {
+        margin: 4px 0 0;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .meta {
+        border-collapse: collapse;
+        font-size: 9px;
+      }
+      .meta th,
+      .meta td {
+        border: 1px solid var(--line);
+        padding: 3px 6px;
+      }
+      .meta th {
+        color: var(--navy);
+        background: var(--blue2);
+      }
+      .section-title {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        margin: 13px 0 7px;
+        padding: 6px 9px;
+        color: var(--navy);
+        background: linear-gradient(90deg, var(--blue2), var(--blue3));
+        border-left: 4px solid var(--blue);
+        font-size: 13px;
+        font-weight: 900;
+      }
+      .section-title .no {
+        display: inline-grid;
+        place-items: center;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        color: #fff;
+        background: var(--blue);
+        font-size: 9px;
+      }
+      .grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+      .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+      }
+      .card {
+        min-width: 0;
+        padding: 9px 11px;
+        border: 1px solid var(--soft);
+        border-radius: 8px;
+        background: #fff;
+      }
+      .card h2 {
+        margin: 0 0 5px;
+        color: var(--navy);
+        font-size: 14px;
+      }
+      .card h3 {
+        margin: 4px 0;
+        color: var(--blue);
+        font-size: 11px;
+      }
+      .card p {
+        margin: 3px 0;
+      }
+      .card ul,
+      .card ol {
+        margin: 3px 0 0;
+        padding-left: 16px;
+      }
+      .card li {
+        margin: 2px 0;
+      }
+      .micro {
+        color: var(--muted);
+        font-size: 9px;
+      }
+      .pill {
+        display: inline-block;
+        margin: 1px 2px 1px 0;
+        padding: 1px 6px;
+        border: 1px solid #bfd7ec;
+        border-radius: 999px;
+        color: var(--blue);
+        background: var(--blue3);
+        font-size: 9px;
+        font-weight: 800;
+      }
+      .pill.warn {
+        color: var(--amber);
+        background: var(--amberbg);
+        border-color: #f1d09b;
+      }
+      .pill.red {
+        color: var(--red);
+        background: var(--redbg);
+        border-color: #efb7b0;
+      }
+      .pill.green {
+        color: var(--green);
+        background: var(--greenbg);
+        border-color: #a8dac1;
+      }
+      .mark {
+        display: inline-block;
+        margin-right: 4px;
+        padding: 1px 5px;
+        border-radius: 4px;
+        font-size: 8px;
+        font-weight: 900;
+      }
+      .ok {
+        color: var(--green);
+        background: var(--greenbg);
+      }
+      .gap {
+        color: var(--amber);
+        background: var(--amberbg);
+      }
+      .risk {
+        color: var(--red);
+        background: var(--redbg);
+      }
+      .flow {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 7px;
+        margin: 6px 0;
+      }
+      .flow div {
+        position: relative;
+        padding: 7px 5px;
+        border: 1px solid #bfd7ec;
+        border-radius: 6px;
+        color: var(--navy);
+        background: var(--blue3);
+        text-align: center;
+        font-size: 9px;
+        font-weight: 800;
+      }
+      .flow div:not(:last-child)::after {
+        content: "→";
+        position: absolute;
+        right: -10px;
+        top: 7px;
+        z-index: 2;
+        color: var(--blue);
+        font-weight: 900;
+      }
+      .data {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 9px;
+      }
+      .data th,
+      .data td {
+        border: 1px solid var(--soft);
+        padding: 4px 5px;
+        vertical-align: top;
+        overflow-wrap: anywhere;
+      }
+      .data th {
+        color: var(--navy);
+        background: #f3f7fb;
+        text-align: left;
+      }
+      .data tr:nth-child(even) td {
+        background: #fbfcfe;
+      }
+      .compact th,
+      .compact td {
+        padding: 3px 4px;
+      }
+      .callout {
+        padding: 7px 9px;
+        border: 1px solid #f1d09b;
+        border-left: 4px solid var(--amber);
+        border-radius: 6px;
+        background: var(--amberbg);
+      }
+      .callout.red {
+        border-color: #efb7b0;
+        border-left-color: var(--red);
+        background: var(--redbg);
+      }
+      .mock-banner {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 9px 0;
+        padding: 9px 12px;
+        border: 2px solid var(--mock);
+        border-radius: 8px;
+        color: var(--mock);
+        background: var(--mockbg);
+        font-size: 12px;
+        font-weight: 900;
+      }
+      .mock-banner span {
+        font-size: 9px;
+        font-weight: 700;
+      }
+      .state-row {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 6px;
+      }
+      .state {
+        padding: 6px;
+        border-left: 3px solid var(--blue);
+        background: #f8fafc;
+      }
+      .state strong {
+        display: block;
+        font-size: 9px;
+      }
+      .state span {
+        color: var(--muted);
+        font-size: 8px;
+      }
+      .wire {
+        padding: 10px;
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        background: #f4f7fb;
+      }
+      .phone-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 9px;
+      }
+      .phone {
+        max-width: 330px;
+        margin: auto;
+        padding: 10px;
+        border: 7px solid #28384d;
+        border-radius: 22px;
+        background: #f8fafc;
+        box-shadow: 0 6px 14px rgba(20, 35, 60, 0.15);
+      }
+      .phone-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 6px;
+        border-radius: 6px;
+        background: #fff;
+        font-size: 10px;
+        font-weight: 900;
+      }
+      .camera {
+        display: grid;
+        place-items: center;
+        min-height: 112px;
+        margin-top: 7px;
+        border-radius: 7px;
+        color: #fff;
+        background: linear-gradient(135deg, #111827, #334155);
+        font-size: 12px;
+      }
+      .scan-frame {
+        width: 100px;
+        height: 68px;
+        border: 2px solid #a8e0bb;
+        border-radius: 7px;
+      }
+      .phone-card {
+        margin-top: 7px;
+        padding: 7px;
+        border: 1px solid #c6d2e1;
+        border-radius: 7px;
+        background: #fff;
+      }
+      .phone-card h4 {
+        margin: 0 0 5px;
+        font-size: 10px;
+      }
+      .big-action {
+        margin-top: 7px;
+        padding: 15px;
+        border-radius: 8px;
+        color: #fff;
+        background: #e05252;
+        text-align: center;
+        font-size: 18px;
+        font-weight: 900;
+      }
+      .big-action.green {
+        background: #43a879;
+      }
+      .field {
+        display: grid;
+        grid-template-columns: 84px 1fr;
+        gap: 5px;
+        align-items: center;
+        margin: 4px 0;
+      }
+      .field label {
+        color: var(--muted);
+        font-size: 8px;
+      }
+      .field b,
+      .input {
+        padding: 5px;
+        border: 1px solid #c6d2e1;
+        border-radius: 5px;
+        background: #fafbfd;
+        font-size: 9px;
+      }
+      .reason-grid {
+        display: grid;
+        grid-template-columns: 1fr 46px;
+        gap: 3px;
+        margin-top: 5px;
+      }
+      .reason-grid div {
+        padding: 4px;
+        border: 1px solid #d4dce7;
+        background: #fff;
+      }
+      .footer {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        margin-top: 11px;
+        padding-top: 6px;
+        border-top: 1px solid var(--soft);
+        color: var(--muted);
+        font-size: 8px;
+      }
+      .source-list {
+        margin: 4px 0 0;
+        padding-left: 16px;
+        columns: 2;
+        column-gap: 18px;
+        font-size: 8px;
+      }
+      .source-list li {
+        break-inside: avoid;
+        margin: 2px 0;
+      }
+      @media (max-width: 1100px) {
+        .grid-3,
+        .grid-2 {
+          grid-template-columns: 1fr;
+        }
+        .flow {
+          grid-template-columns: 1fr 1fr;
+        }
+        .flow div:not(:last-child)::after {
+          display: none;
+        }
+        .phone-row {
+          grid-template-columns: 1fr;
+        }
+        .sheet {
+          min-height: auto;
+        }
+        .source-list {
+          columns: 1;
+        }
+      }
+      @media print {
+        @page {
+          size: 594mm 420mm;
+          margin: 8mm;
+        }
+        body {
+          background: #fff;
+          font-size: 9px;
+          print-color-adjust: exact;
+          -webkit-print-color-adjust: exact;
+        }
+        .toolbar {
+          display: none;
+        }
+        main {
+          padding: 0;
+        }
+        .sheet {
+          width: 100%;
+          height: 404mm;
+          min-height: 404mm;
+          margin: 0;
+          padding: 7mm 8mm 5mm;
+          border: 0;
+          box-shadow: none;
+          overflow: hidden;
+        }
+        h1 {
+          font-size: 22px;
+        }
+        .section-title {
+          margin-top: 9px;
+          padding: 5px 7px;
+          font-size: 11px;
+        }
+        .card {
+          padding: 7px 8px;
+        }
+        .flow {
+          grid-template-columns: repeat(6, 1fr);
+        }
+        .flow div:not(:last-child)::after {
+          display: block;
+        }
+        .phone {
+          transform: scale(0.92);
+          transform-origin: top center;
+        }
+        .footer {
+          margin-top: 7px;
+        }
+        .source-list {
+          columns: 2;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="toolbar">
+      <strong>MOCK · 설비비가동 관리 (모바일)</strong>
+      <nav class="toolbar-nav">
+        <a href="#page-1">01 요구사항</a><a href="#page-2">02 UI·DATA</a
+        ><a href="#page-3">03 상태·한계</a
+        ><button type="button" onclick="window.print()">인쇄 / PDF</button>
+      </nav>
+    </div>
+    <main>
+      <section class="sheet" id="page-1">
+        <header class="doc-head">
+          <div>
+            <p class="eyebrow">SCREEN DESIGN · MOBILE PROTOTYPE</p>
+            <h1>설비비가동 관리 (모바일)</h1>
+            <p class="subtitle">
+              태블릿 세로 우선 화면에서 QR/바코드 또는 수동 설비코드로 샘플
+              설비를 찾고, 가동/정지 전환 상호작용을 검토한다.
+            </p>
+          </div>
+          <table class="meta">
+            <tr>
+              <th>경로</th>
+              <td class="mono">/oee/equip-downtime-mobile</td>
+            </tr>
+            <tr>
+              <th>메뉴</th>
+              <td class="mono">OEE_EQUIP_DOWNTIME_MOBILE</td>
+            </tr>
+            <tr>
+              <th>기준</th>
+              <td>2026-08-11 / 95bd09a</td>
+            </tr>
+            <tr>
+              <th>계약</th>
+              <td><span class="pill red">MOCK · NO API/DB</span></td>
+            </tr>
+          </table>
+        </header>
+        <div class="mock-banner">
+          MOCK ONLY
+          <span
+            >현재 구현은 로컬 샘플 배열·React state·toast만 사용하며 API 호출,
+            Oracle 저장, 실설비 제어를 하지 않는다. 이 문서는 프로토타입 동작을
+            설명할 뿐 production persistence를 약속하지 않는다.</span
+          >
+        </div>
+        <div class="section-title">
+          <span class="no">01</span>목적·사용자·프로토타입 흐름
+        </div>
+        <div class="grid-3">
+          <article class="card">
+            <h3>목적</h3>
+            <p>
+              현장 태블릿에서 후면 카메라로 설비 식별 UX와 정지/정상 전환 입력
+              밀도를 검토한다.
+            </p>
+            <p class="micro">
+              실제 설비 상태 조회·기록의 업무 계약은 아직 정의되지 않았다.
+            </p>
+          </article>
+          <article class="card">
+            <h3>대상 기기</h3>
+            <p>
+              아이패드/갤럭시탭 11인치, 세로 우선·가로 대응. 주요 버튼은 큰 터치
+              영역으로 표현한다.
+            </p>
+            <p>
+              <span class="pill">getUserMedia</span
+              ><span class="pill">BarcodeDetector</span
+              ><span class="pill">manual fallback</span>
+            </p>
+          </article>
+          <article class="card">
+            <h3>사용자</h3>
+            <p>
+              현재 화면의 처리담당자는 상수
+              <span class="mono">CURRENT_USER='관리자'</span>다. 로그인·작업자
+              인증을 사용하지 않는다.
+            </p>
+          </article>
+        </div>
+        <div class="flow">
+          <div>
+            카메라 자동 시도<br /><span class="micro">mount useEffect</span>
+          </div>
+          <div>
+            QR/바코드 감지<br /><span class="micro">400ms polling</span>
+          </div>
+          <div>수동/샘플 조회<br /><span class="micro">E01–E05</span></div>
+          <div>
+            설비 정보 확인<br /><span class="micro">code/name/line</span>
+          </div>
+          <div>상태 토글<br /><span class="micro">RUNNING/STOPPED</span></div>
+          <div>로컬 저장 토스트<br /><span class="micro">state only</span></div>
+        </div>
+        <div class="section-title">
+          <span class="no">02</span>행동 규칙·오류 규칙
+        </div>
+        <table class="data">
+          <colgroup>
+            <col style="width: 17%" />
+            <col style="width: 43%" />
+            <col style="width: 40%" />
+          </colgroup>
+          <thead>
+            <tr>
+              <th>구분</th>
+              <th>현재 프로토타입 동작</th>
+              <th>오류·주의</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>카메라</td>
+              <td>
+                마운트 후
+                <span class="mono"
+                  >getUserMedia({video:{facingMode:'environment'}})</span
+                >를 자동 요청한다.
+              </td>
+              <td>
+                권한/기기 실패 시 수동 입력 안내. 언마운트·재스캔 시 track과
+                interval 정리.
+              </td>
+            </tr>
+            <tr>
+              <td>바코드</td>
+              <td>
+                BarcodeDetector가 있으면 QR/code128/EAN13/code39/data_matrix를
+                400ms마다 감지한다.
+              </td>
+              <td>
+                미지원 브라우저는 오류 문구와 수동 입력을 보여준다. 프레임 감지
+                예외는 무시한다.
+              </td>
+            </tr>
+            <tr>
+              <td>샘플 원천</td>
+              <td>
+                <span class="mono">SAMPLE_MACHINES</span>의 E01~E05만 대문자
+                trim 비교로 찾는다.
+              </td>
+              <td>
+                존재하지 않는 code는 “찾을 수 없습니다”. 실 DB 검색이 아니다.
+              </td>
+            </tr>
+            <tr>
+              <td>상태</td>
+              <td>
+                설비를 인식하면 <span class="mono">initDowntime()</span>으로
+                RUNNING 상태를 새로 만든다.
+              </td>
+              <td>
+                서버의 현재 상태를 읽지 않으므로 화면 상태는 실제 설비 상태가
+                아니다.
+              </td>
+            </tr>
+            <tr>
+              <td>토글</td>
+              <td>
+                저장 전 한 번만 반대 상태를 선택하고, stop/resume 일시와 담당자
+                상수를 채운다.
+              </td>
+              <td>미저장 토글 중 버튼을 잠그며 저장 후 다시 전환 가능하다.</td>
+            </tr>
+            <tr>
+              <td>저장</td>
+              <td>
+                <span class="mono">savedStatus</span>만 로컬 state에 반영하고
+                성공 toast를 낸다.
+              </td>
+              <td>
+                reason 필수 표시는 있으나 save 함수의 필수 검증·API 호출·DB
+                commit은 없다.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="section-title"><span class="no">03</span>범위</div>
+        <div class="grid-2">
+          <article class="card">
+            <h3><span class="mark ok">PROTOTYPE IN</span></h3>
+            <p>
+              <span class="pill">카메라 프리뷰</span
+              ><span class="pill">권한/지원 오류</span
+              ><span class="pill">수동 입력</span
+              ><span class="pill">샘플 스캔</span
+              ><span class="pill">설비 요약</span
+              ><span class="pill">RUNNING/STOPPED</span
+              ><span class="pill">시작·종료 시각 필드</span
+              ><span class="pill">사유 그리드</span
+              ><span class="pill">메모·작업자 입력</span>
+            </p>
+          </article>
+          <article class="card">
+            <h3><span class="mark risk">NOT A PRODUCTION CONTRACT</span></h3>
+            <p>
+              <span class="pill red">실제 설비 조회</span
+              ><span class="pill red">작업자 인증</span
+              ><span class="pill red">현재 상태 API</span
+              ><span class="pill red">비가동 이벤트 저장</span
+              ><span class="pill red">Oracle transaction</span
+              ><span class="pill red">offline queue</span
+              ><span class="pill red">긴급정지 제어</span>
+            </p>
+            <p class="micro">
+              후속 계약 없이는 위 동작을 화면설계의 persistence로 해석하지
+              않는다.
+            </p>
+          </article>
+        </div>
+        <footer class="footer">
+          <span>Page 1 / 3 · 요구사항·워크플로·범위</span
+          ><span
+            >근거: equip-downtime-mobile/page.tsx · collaboration
+            checkpoint</span
+          >
+        </footer>
+      </section>
+
+      <section class="sheet" id="page-2">
+        <header class="doc-head">
+          <div>
+            <p class="eyebrow">UI SPECIFICATION · MOCK INTERACTION</p>
+            <h1>모바일 와이어프레임 및 입력 정의</h1>
+            <p class="subtitle">
+              카메라/수동 입력 영역과 인식 후 상태 처리 영역의 반응형 분할을
+              표시한다. 모든 값은 화면 메모리에서만 움직인다.
+            </p>
+          </div>
+          <table class="meta">
+            <tr>
+              <th>세로</th>
+              <td>단일 column · max-w-md</td>
+            </tr>
+            <tr>
+              <th>가로</th>
+              <td>scan / downtime 2열</td>
+            </tr>
+            <tr>
+              <th>터치</th>
+              <td>큰 상태 버튼·64dp 지향</td>
+            </tr>
+          </table>
+        </header>
+        <div class="grid-2">
+          <article>
+            <div class="section-title">
+              <span class="no">01</span>와이어프레임
+            </div>
+            <div class="wire">
+              <div class="phone-row">
+                <div class="phone">
+                  <div class="phone-head">
+                    <span>⌁ 설비비가동 관리</span
+                    ><span style="color: var(--blue)">MOCK</span>
+                  </div>
+                  <div class="micro" style="margin: 5px 0">
+                    QR/바코드로 설비를 스캔하여 비가동을 처리합니다
+                  </div>
+                  <div class="camera">
+                    <div>
+                      <div class="scan-frame"></div>
+                      <div style="margin-top: 6px; text-align: center">
+                        카메라 준비 중…
+                      </div>
+                    </div>
+                  </div>
+                  <div class="field">
+                    <label>설비코드 수동 입력</label>
+                    <div class="input">
+                      예: E01&nbsp;
+                      <b style="float: right; color: var(--blue)">조회</b>
+                    </div>
+                  </div>
+                  <div
+                    class="micro"
+                    style="text-align: center; text-decoration: underline"
+                  >
+                    샘플 스캔(데모)
+                  </div>
+                </div>
+                <div class="phone">
+                  <div class="phone-head">
+                    <span>✓ 설비 인식 완료</span
+                    ><span class="pill green">E01</span>
+                  </div>
+                  <div class="phone-card">
+                    <div class="field"><label>설비코드</label><b>E01</b></div>
+                    <div class="field">
+                      <label>설비명</label><b>마운터 B라인 1호기</b>
+                    </div>
+                    <div class="field">
+                      <label>라인</label><b>02 · B라인</b>
+                    </div>
+                  </div>
+                  <div class="phone-card">
+                    <b>설비 가동 상태</b
+                    ><button
+                      class="big-action"
+                      style="display: block; width: 100%; border: 0"
+                    >
+                      ■ 정지<small
+                        style="display: block; font-size: 9px; font-weight: 400"
+                        >탭하면 비가동 시작 · 시작일시 기록</small
+                      >
+                    </button>
+                    <div class="reason-grid">
+                      <div>
+                        정지 사유<br /><span class="micro"
+                          >DWN-MAT · 자재 대기</span
+                        >
+                      </div>
+                      <div style="text-align: center; color: var(--blue)">
+                        선택
+                      </div>
+                    </div>
+                    <div class="field">
+                      <label>상세</label><b>자재 투입 대기</b>
+                    </div>
+                    <div class="field"><label>작업자</label><b>홍길동</b></div>
+                    <div
+                      class="big-action green"
+                      style="font-size: 11px; padding: 8px"
+                    >
+                      저장 · 로컬 state
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </article>
+          <article>
+            <div class="section-title">
+              <span class="no">02</span>UI·컨트롤 정의
+            </div>
+            <table class="data compact">
+              <colgroup>
+                <col style="width: 21%" />
+                <col style="width: 21%" />
+                <col style="width: 26%" />
+                <col style="width: 32%" />
+              </colgroup>
+              <thead>
+                <tr>
+                  <th>오브젝트</th>
+                  <th>컨트롤</th>
+                  <th>동작</th>
+                  <th>현재 데이터·상태</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>카메라 preview</td>
+                  <td class="mono">video</td>
+                  <td>stream 연결·play, scan frame overlay</td>
+                  <td>streamRef는 cleanup 시 stop</td>
+                </tr>
+                <tr>
+                  <td>카메라 시작</td>
+                  <td>primary button</td>
+                  <td>수동 재시도</td>
+                  <td>
+                    미지원·권한 오류를 <span class="mono">scanErr</span>에 기록
+                  </td>
+                </tr>
+                <tr>
+                  <td>수동 설비코드</td>
+                  <td class="mono">input + Enter/조회</td>
+                  <td>trim/대문자 findMachine</td>
+                  <td>샘플 배열과만 비교</td>
+                </tr>
+                <tr>
+                  <td>재스캔</td>
+                  <td>icon+text button</td>
+                  <td>machine/downtime/manual/error reset 후 camera 시작</td>
+                  <td>dirty confirmation 없음</td>
+                </tr>
+                <tr>
+                  <td>설비 요약</td>
+                  <td>read-only card</td>
+                  <td>인식 완료 후 표시</td>
+                  <td>machineCode/name/lineCode/lineName</td>
+                </tr>
+                <tr>
+                  <td>상태 버튼</td>
+                  <td>large button</td>
+                  <td>저장 전 반대 상태 1회 선택</td>
+                  <td>dtToggled이면 disabled</td>
+                </tr>
+                <tr>
+                  <td>시작/종료 일시</td>
+                  <td class="mono">datetime-local</td>
+                  <td>자동값을 사용자가 편집 가능</td>
+                  <td>nowLocal() 브라우저 local time</td>
+                </tr>
+                <tr>
+                  <td>정지 사유</td>
+                  <td>reason grid + select</td>
+                  <td>선택된 code 저장 state에만 반영</td>
+                  <td>
+                    4개 <span class="mono">STOP_REASONS</span>; 필수 표시는
+                    시각적
+                  </td>
+                </tr>
+                <tr>
+                  <td>저장</td>
+                  <td>primary button</td>
+                  <td>savedStatus 갱신 + toast</td>
+                  <td>API/DB persistence 없음</td>
+                </tr>
+              </tbody>
+            </table>
+          </article>
+        </div>
+        <div class="section-title">
+          <span class="no">03</span>오브젝트·속성·스키마·함수·비고 맵
+        </div>
+        <table class="data compact">
+          <colgroup>
+            <col style="width: 16%" />
+            <col style="width: 27%" />
+            <col style="width: 21%" />
+            <col style="width: 22%" />
+            <col style="width: 14%" />
+          </colgroup>
+          <thead>
+            <tr>
+              <th>오브젝트</th>
+              <th>속성(DATA)</th>
+              <th>스키마 원천</th>
+              <th>함수·처리</th>
+              <th>비고</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>MachineRef</td>
+              <td class="mono">machineCode, machineName, lineCode, lineName</td>
+              <td>로컬 <span class="mono">SAMPLE_MACHINES</span></td>
+              <td class="mono">findMachine(code)</td>
+              <td>IMCN_MACHINE 주석은 참조일 뿐 조회하지 않음</td>
+            </tr>
+            <tr>
+              <td>DowntimeState</td>
+              <td class="mono">
+                status, savedStatus, initialStatus, stopAt, stopReasonCode,
+                stopMemo, stopWorker, stopBy, resumeAt, resumeBy
+              </td>
+              <td>React state</td>
+              <td class="mono">
+                initDowntime(), toggleDowntime(), saveDowntime()
+              </td>
+              <td>컴포넌트 unmount/reload 시 유실</td>
+            </tr>
+            <tr>
+              <td>STOP_REASONS</td>
+              <td class="mono">code, name, type</td>
+              <td>로컬 상수 4건</td>
+              <td>reason grid map</td>
+              <td>승인 코드·공통코드 계약 아님</td>
+            </tr>
+            <tr>
+              <td>Camera</td>
+              <td class="mono">MediaStream, BarcodeDetectorLike</td>
+              <td>브라우저 capability</td>
+              <td class="mono">startCamera/stopCamera</td>
+              <td>보안 context/권한 필요</td>
+            </tr>
+            <tr>
+              <td>저장 결과</td>
+              <td class="mono">savedStatus</td>
+              <td>React state only</td>
+              <td>toast.success</td>
+              <td>이벤트 ID·request ID·감사 컬럼 없음</td>
+            </tr>
+          </tbody>
+        </table>
+        <footer class="footer">
+          <span>Page 2 / 3 · 와이어프레임·UI·DATA</span
+          ><span class="pill red">MOCK · UI STATE ONLY</span>
+        </footer>
+        <div class="callout blue">
+          <b>Form / chart definition:</b> 설비 수동코드 form과 인식 후 downtime
+          form(상태·시각·사유·메모·작업자)을 정의한다. chart는 없으며 모든 값은
+          mock state다.
+        </div>
+      </section>
+
+      <section class="sheet" id="page-3">
+        <header class="doc-head">
+          <div>
+            <p class="eyebrow">MOCK STATE · NO API · NO DB</p>
+            <h1>프로토타입 상태·검증·한계</h1>
+            <p class="subtitle">
+              현재 파일에 존재하는 브라우저 상호작용과 아직 정해지지 않은
+              production 계약을 분리한다.
+            </p>
+          </div>
+          <table class="meta">
+            <tr>
+              <th>API</th>
+              <td class="pill red">없음</td>
+            </tr>
+            <tr>
+              <th>DB</th>
+              <td class="pill red">쓰기 없음</td>
+            </tr>
+            <tr>
+              <th>권위 시각</th>
+              <td>브라우저 local time</td>
+            </tr>
+          </table>
+        </header>
+        <div class="mock-banner">
+          MOCK BOUNDARY
+          <span
+            >아래 state diagram은 React state의 시각화다. 이것을
+            OEE_DOWNTIME_EVENT의 저장 상태, 서버 상태, 실제 설비 제어 상태로
+            읽지 않는다.</span
+          >
+        </div>
+        <div class="grid-2">
+          <article>
+            <div class="section-title"><span class="no">01</span>상태전이</div>
+            <div class="state-row">
+              <div class="state">
+                <strong>UNIDENTIFIED</strong><span>machine=null</span>
+              </div>
+              <div class="state">
+                <strong>CAMERA_READY</strong><span>cameraOn=true</span>
+              </div>
+              <div class="state">
+                <strong>IDENTIFIED</strong><span>machine + init state</span>
+              </div>
+              <div class="state">
+                <strong>EDIT_PENDING</strong><span>status ≠ savedStatus</span>
+              </div>
+              <div class="state">
+                <strong>LOCAL_SAVED</strong><span>savedStatus 갱신</span>
+              </div>
+            </div>
+            <table class="data compact" style="margin-top: 7px">
+              <thead>
+                <tr>
+                  <th>전이</th>
+                  <th>선행조건</th>
+                  <th>결과</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>mount→camera</td>
+                  <td>useEffect 실행</td>
+                  <td>BarcodeDetector 지원 판정 후 카메라 자동 시도</td>
+                </tr>
+                <tr>
+                  <td>camera→identified</td>
+                  <td>샘플 code find 성공</td>
+                  <td>stream 중지, downtime 초기화</td>
+                </tr>
+                <tr>
+                  <td>identified→pending</td>
+                  <td>status=savedStatus에서 버튼 탭</td>
+                  <td>STOPPED 또는 RUNNING, nowLocal 기록</td>
+                </tr>
+                <tr>
+                  <td>pending→local saved</td>
+                  <td>저장 탭</td>
+                  <td>savedStatus만 갱신, toast success</td>
+                </tr>
+                <tr>
+                  <td>rescan</td>
+                  <td>재스캔 탭</td>
+                  <td>모든 state 초기화 후 camera 재시작; 확인 modal 없음</td>
+                </tr>
+              </tbody>
+            </table>
+          </article>
+          <article>
+            <div class="section-title">
+              <span class="no">02</span>API·DB·계산 경계
+            </div>
+            <table class="data compact">
+              <thead>
+                <tr>
+                  <th>영역</th>
+                  <th>현재 구현</th>
+                  <th>production 의미</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>API</td>
+                  <td>
+                    호출 없음. <span class="mono">api.ts</span>, fetcher, route
+                    handler 미사용.
+                  </td>
+                  <td>
+                    endpoint·request/response·인증 계약을 별도 승인해야 한다.
+                  </td>
+                </tr>
+                <tr>
+                  <td>DB</td>
+                  <td>Oracle entity/table을 import하지 않는다.</td>
+                  <td>
+                    샘플 배열은 <span class="mono">IMCN_MACHINE</span>을 흉내낸
+                    표시 데이터일 뿐이다.
+                  </td>
+                </tr>
+                <tr>
+                  <td>시간</td>
+                  <td class="mono">new Date()</td>
+                  <td>서버 KST, 업무일/구간, 이벤트 start/end 정책 미정.</td>
+                </tr>
+                <tr>
+                  <td>사용자</td>
+                  <td class="mono">CURRENT_USER='관리자'</td>
+                  <td>로그인 실행자·현장 작업자·감사 ID 매핑 미정.</td>
+                </tr>
+                <tr>
+                  <td>상태</td>
+                  <td>RUNNING/STOPPED 로컬 토글</td>
+                  <td>
+                    backend의 RUN/DOWN 또는 OEE_DOWNTIME_EVENT와 매핑 미정.
+                  </td>
+                </tr>
+                <tr>
+                  <td>계산</td>
+                  <td>OEE·duration·업무일 계산 없음</td>
+                  <td>저장·집계·분모·사유 영향은 다른 계약에서 정의.</td>
+                </tr>
+              </tbody>
+            </table>
+          </article>
+        </div>
+        <div class="section-title">
+          <span class="no">03</span>프로토타입 수락 기준·검증·불일치
+        </div>
+        <div class="grid-3">
+          <article class="card">
+            <h3>UI Acceptance</h3>
+            <ul>
+              <li>카메라 미지원/권한 실패가 수동 입력 안내로 이어진다.</li>
+              <li>E01 샘플 스캔 후 설비 요약과 상태 영역이 나타난다.</li>
+              <li>
+                알 수 없는 코드는 inline 오류로 남고 machine을 선택하지 않는다.
+              </li>
+              <li>상태 버튼 탭 후 미저장 상태와 시각 필드가 표시된다.</li>
+              <li>저장 후에만 재토글이 가능하다.</li>
+            </ul>
+          </article>
+          <article class="card">
+            <h3>명시적 비수락</h3>
+            <ul>
+              <li>새로고침 후 값 유지</li>
+              <li>다른 단말과 상태 동기화</li>
+              <li>DB 행·EVENT_ID 생성</li>
+              <li>실제 설비 RUN/DOWN 변경</li>
+              <li>오프라인 큐·재전송·중복방지</li>
+            </ul>
+            <p class="micro">위 항목을 통과했다고 주장하지 않는다.</p>
+          </article>
+          <article class="card">
+            <h3>현재 불일치</h3>
+            <ul>
+              <li>협업 요구의 dirty 재스캔 확인이 구현되지 않음.</li>
+              <li>정지 사유 필수 UI와 save 검증이 불일치.</li>
+              <li>stopAt/resumeAt를 사용자가 편집할 수 있음.</li>
+              <li>
+                운영 사유는 샘플 <span class="mono">DWN-*</span>이며 승인 DB
+                코드가 아님.
+              </li>
+              <li>페이지 설명의 IMCN_MACHINE은 로컬 mock 주석임.</li>
+            </ul>
+          </article>
+        </div>
+        <div class="callout red" style="margin-top: 8px">
+          <b class="mark risk">후속 결정 필요</b>실제 저장을 추가하려면
+          `/oee/mobile`의 인증 Guard·조직 범위·LINE/CELL 리소스·작업자·사유·KST
+          업무일·idempotency를 승인된 모바일 계약에 맞추고, 현재 MOCK UI와 별도
+          production 구현으로 연결한다. 이 문서에는 그 API/DB를 설계한 것으로
+          표시하지 않는다.
+        </div>
+        <ul class="source-list">
+          <li class="mono">
+            apps/frontend/src/app/(authenticated)/oee/equip-downtime-mobile/page.tsx
+          </li>
+          <li class="mono">
+            apps/backend/src/modules/oee/oee-mobile.controller.ts ·
+            oee-mobile.service.ts
+          </li>
+          <li class="mono">
+            apps/backend/src/entities/oee-downtime-event.entity.ts
+          </li>
+          <li class="mono">
+            docs/specs/2026-08-06-oee-mobile-prerequisite-contract-design.md
+          </li>
+          <li class="mono">
+            docs/reports/oee-mobile-collaboration/2026-08-04-initial-coordination.md
+          </li>
+        </ul>
+        <footer class="footer">
+          <span>Page 3 / 3 · MOCK 상태·한계·수락</span
+          ><span class="pill red">NO API/DB PERSISTENCE IMPLIED</span>
+        </footer>
+      </section>
+    </main>
+    <script>
+      document.querySelectorAll(".toolbar a").forEach((a) =>
+        a.addEventListener("click", (e) => {
+          e.preventDefault();
+          document
+            .querySelector(a.getAttribute("href"))
+            .scrollIntoView({ behavior: "smooth" });
+        }),
+      );
+    </script>
+  </body>
+</html>
