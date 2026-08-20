@@ -9,16 +9,17 @@ describe('OeeDashboardService drilldown', () => {
     const query = jest.fn().mockResolvedValue([]);
     const service = new OeeDashboardService({ query } as unknown as DataSource);
 
-    await service.drilldown('SMT');
+    await service.drilldown('SMT', undefined, 7);
 
-    expect(query.mock.calls[0][1]).toEqual(['2026-08-12', 'SMT']);
+    expect(query.mock.calls[0][1]).toEqual(['2026-08-12', 'SMT', 7]);
+    expect(query.mock.calls[0][0]).toContain('v.ORGANIZATION_ID = :3');
   });
 
   it('returns the source operands required to verify each OEE calculation', async () => {
     const query = jest.fn().mockResolvedValue([]);
     const service = new OeeDashboardService({ query } as unknown as DataSource);
 
-    await service.drilldown('SMT', '2999-01-01');
+    await service.drilldown('SMT', '2999-01-01', 7);
 
     const sql = query.mock.calls[0][0] as string;
     for (const column of [
@@ -43,12 +44,27 @@ describe('OeeDashboardService drilldown', () => {
     const query = jest.fn().mockResolvedValue([]);
     const service = new OeeDashboardService({ query } as unknown as DataSource);
 
-    await service.lossPareto('2026-08-08');
+    await service.lossPareto('2026-08-08', 7);
 
     const sql = query.mock.calls[0][0] as string;
     expect(sql).toContain('OEE_DOWNTIME_EVENT');
     expect(sql).not.toContain('OEE_OPERATION_LOG');
     expect(sql).toContain('START_TIME');
     expect(sql).toContain('END_TIME');
+    expect(sql).toContain('e.ORGANIZATION_ID = :2');
+    expect(query.mock.calls[0][1]).toEqual(['2026-08-08', 7]);
+  });
+
+  it('binds the authenticated organization for the overview source and widgets', async () => {
+    const query = jest.fn().mockResolvedValue([]);
+    const service = new OeeDashboardService({ query } as unknown as DataSource);
+
+    await service.overview('2999-01-01', 7);
+
+    expect(query).toHaveBeenCalledTimes(3);
+    for (const [sql, binds] of query.mock.calls) {
+      expect(sql).toContain('ORGANIZATION_ID = :2');
+      expect(binds).toEqual(['2999-01-01', 7]);
+    }
   });
 });

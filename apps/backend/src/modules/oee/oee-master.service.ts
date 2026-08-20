@@ -2,7 +2,7 @@
  * @file src/modules/oee/oee-master.service.ts
  * @description OEE 리소스·비가동사유 마스터 CRUD.
  */
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { OeeResource } from '../../entities/oee-resource.entity';
@@ -18,16 +18,18 @@ export class OeeMasterService {
     private readonly reasonRepo: Repository<OeeDowntimeReason>,
   ) {}
 
-  listResources(): Promise<OeeResource[]> {
+  async listResources(organizationId?: number): Promise<OeeResource[]> {
+    const organization = this.requireOrganization(organizationId);
     return this.resourceRepo.find({
-      where: { useYn: 'Y' },
+      where: { organizationId: organization, useYn: 'Y' },
       order: { processCode: 'ASC', sortOrder: 'ASC' },
     });
   }
 
-  async upsertResource(dto: ResourceUpsertDto): Promise<void> {
+  async upsertResource(dto: ResourceUpsertDto, organizationId?: number): Promise<void> {
+    const organization = this.requireOrganization(organizationId);
     const fields = {
-      organizationId: dto.organizationId,
+      organizationId: organization,
       processCode: dto.processCode,
       resourceType: dto.resourceType,
       refCode: dto.refCode ?? null,
@@ -37,22 +39,30 @@ export class OeeMasterService {
       sortOrder: dto.sortOrder ?? 0,
     };
     if (dto.resourceId) {
-      await this.resourceRepo.update(dto.resourceId, fields);
+      const result = await this.resourceRepo.update(
+        { resourceId: dto.resourceId, organizationId: organization },
+        fields,
+      );
+      if (result.affected !== 1) {
+        throw new NotFoundException('인증 조직의 OEE 리소스를 찾을 수 없습니다.');
+      }
     } else {
       await this.resourceRepo.insert(fields);
     }
   }
 
-  listReasons(): Promise<OeeDowntimeReason[]> {
+  async listReasons(organizationId?: number): Promise<OeeDowntimeReason[]> {
+    const organization = this.requireOrganization(organizationId);
     return this.reasonRepo.find({
-      where: { useYn: 'Y' },
+      where: { organizationId: organization, useYn: 'Y' },
       order: { sortOrder: 'ASC' },
     });
   }
 
-  async upsertReason(dto: ReasonUpsertDto, isUpdate: boolean): Promise<void> {
+  async upsertReason(dto: ReasonUpsertDto, isUpdate: boolean, organizationId?: number): Promise<void> {
+    const organization = this.requireOrganization(organizationId);
     const fields = {
-      organizationId: dto.organizationId,
+      organizationId: organization,
       processCode: dto.processCode ?? '*',
       reasonName: dto.reasonName,
       lossBucket: dto.lossBucket,
@@ -61,9 +71,22 @@ export class OeeMasterService {
       sortOrder: dto.sortOrder ?? 0,
     };
     if (isUpdate) {
-      await this.reasonRepo.update(dto.reasonCode, fields);
+      const result = await this.reasonRepo.update(
+        { reasonCode: dto.reasonCode, organizationId: organization },
+        fields,
+      );
+      if (result.affected !== 1) {
+        throw new NotFoundException('인증 조직의 OEE 비가동 사유를 찾을 수 없습니다.');
+      }
     } else {
       await this.reasonRepo.insert({ reasonCode: dto.reasonCode, ...fields });
     }
+  }
+
+  private requireOrganization(organizationId?: number): number {
+    if (organizationId == null || !Number.isInteger(organizationId) || organizationId <= 0) {
+      throw new BadRequestException('인증 조직 정보가 필요합니다.');
+    }
+    return organizationId;
   }
 }

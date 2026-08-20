@@ -10,6 +10,7 @@ import { OeeOperationLog } from '../../entities/oee-operation-log.entity';
 import { OeeDowntimeEvent } from '../../entities/oee-downtime-event.entity';
 import { WorktimeRange } from '../../entities/worktime-range.entity';
 import { IsysUser } from '../../entities/isys-user.entity';
+import { IsysOrganization } from '../../entities/isys-organization.entity';
 import { ComCode } from '../../entities/com-code.entity';
 import { OeeController } from './oee.controller';
 import { OeeMasterService } from './oee-master.service';
@@ -29,6 +30,7 @@ import { OeeMobileService } from './oee-mobile.service';
       OeeDowntimeEvent,
       WorktimeRange,
       IsysUser,
+      IsysOrganization,
       ComCode,
       ProdLineMaster,
     ]),

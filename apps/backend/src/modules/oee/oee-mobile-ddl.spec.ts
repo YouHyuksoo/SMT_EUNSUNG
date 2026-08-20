@@ -1,5 +1,62 @@
-import { readFileSync } from 'fs';
+import { existsSync, readdirSync, readFileSync } from 'fs';
 import { join } from 'path';
+
+const oeeScriptRoot = join(__dirname, '../../../../../oracle_db_scripts/oee');
+const deploymentManifestPath = join(oeeScriptRoot, 'deployment-manifest.json');
+const routineDeploymentFiles = [
+  '01_tables.sql',
+  '03_tables_ext.sql',
+  '07_mobile_prerequisites.sql',
+  '09_seed_dashboard_resources.sql',
+  '04_view_plan_time.sql',
+  '05_view_live.sql',
+  '06_proc_build_summary.sql',
+];
+const manualCleanupFiles = [
+  'manual/08_cleanup_legacy_oee_plants.sql',
+  'manual/10_cleanup_unapproved_oee_resources.sql',
+];
+const protectedMasterTables = new Set([
+  'IP_PRODUCT_WORKSTAGE',
+  'IP_PRODUCT_LINE',
+  'IMCN_MACHINE',
+  'IP_PRODUCT_ST_MASTER',
+  'IS_PRODUCT_SALE_PRICE',
+  'IM_ITEM_UNIT_PRICE',
+]);
+
+function collectOeeSqlFiles(directory: string): string[] {
+  if (!existsSync(directory)) {
+    return [];
+  }
+
+  return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+    const filePath = join(directory, entry.name);
+    if (entry.isDirectory()) {
+      return collectOeeSqlFiles(filePath);
+    }
+    return entry.isFile() && filePath.endsWith('.sql') ? [filePath] : [];
+  });
+}
+
+function stripSqlComments(source: string): string {
+  return source.replace(/--[^\r\n]*/g, ' ').replace(/\/\*[\s\S]*?\*\//g, ' ');
+}
+
+function extractTargets(source: string, operation: 'write' | 'read'): string[] {
+  const keyword = operation === 'write'
+    ? '(?:INSERT\\s+INTO|UPDATE(?!\\s+SET\\b)|DELETE\\s+FROM|MERGE\\s+INTO)'
+    : '(?:FROM|JOIN)';
+  const identifier = '(?:"([^"]+)"|([A-Z0-9_$#]+))';
+  const pattern = new RegExp(
+    `\\b${keyword}\\s+(?:${identifier}\\s*\\.\\s*)?${identifier}`,
+    'gi',
+  );
+
+  return [...stripSqlComments(source).matchAll(pattern)].map((match) =>
+    (match[3] ?? match[4]).toUpperCase(),
+  );
+}
 
 describe('OEE MOBILE prerequisite DDL', () => {
   const source = readFileSync(
@@ -11,11 +68,11 @@ describe('OEE MOBILE prerequisite DDL', () => {
     'utf8',
   );
   const legacyPlantCleanup = readFileSync(
-    join(__dirname, '../../../../../oracle_db_scripts/oee/08_cleanup_legacy_oee_plants.sql'),
+    join(__dirname, '../../../../../oracle_db_scripts/oee/manual/08_cleanup_legacy_oee_plants.sql'),
     'utf8',
   );
   const unapprovedResourceCleanup = readFileSync(
-    join(__dirname, '../../../../../oracle_db_scripts/oee/10_cleanup_unapproved_oee_resources.sql'),
+    join(__dirname, '../../../../../oracle_db_scripts/oee/manual/10_cleanup_unapproved_oee_resources.sql'),
     'utf8',
   );
   const baseTables = readFileSync(
@@ -108,5 +165,58 @@ describe('OEE MOBILE prerequisite DDL', () => {
     expect(liveView).not.toContain("pt.WORK_DATE = TRUNC(SYSDATE - (8.5 / 24))");
     expect(summaryProcedure.trimStart()).toMatch(/^BEGIN\b/);
     expect(summaryProcedure).toContain('CREATE OR REPLACE NONEDITIONABLE PROCEDURE');
+  });
+
+  it('keeps routine deployment separate from manual cleanup and the removed production2 seed', () => {
+    expect(existsSync(deploymentManifestPath)).toBe(true);
+    expect(existsSync(join(oeeScriptRoot, manualCleanupFiles[0]))).toBe(true);
+    expect(existsSync(join(oeeScriptRoot, manualCleanupFiles[1]))).toBe(true);
+    expect(existsSync(join(oeeScriptRoot, '08_cleanup_legacy_oee_plants.sql'))).toBe(false);
+    expect(existsSync(join(oeeScriptRoot, '10_cleanup_unapproved_oee_resources.sql'))).toBe(false);
+    expect(existsSync(join(oeeScriptRoot, '11_seed_production2_equipment.sql'))).toBe(false);
+
+    const manifest = JSON.parse(readFileSync(deploymentManifestPath, 'utf8')) as {
+      routineDeployment: string[];
+      manualCleanup: string[];
+    };
+
+    expect(manifest.routineDeployment).toEqual(routineDeploymentFiles);
+    expect(manifest.manualCleanup).toEqual(manualCleanupFiles);
+
+    for (const referencedFile of [...manifest.routineDeployment, ...manifest.manualCleanup]) {
+      expect(existsSync(join(oeeScriptRoot, referencedFile))).toBe(true);
+    }
+  });
+
+  it('does not target protected master tables from any OEE SQL file', () => {
+    const violations = collectOeeSqlFiles(oeeScriptRoot).flatMap((filePath) => {
+      const source = readFileSync(filePath, 'utf8');
+      return extractTargets(source, 'write')
+        .filter((target) => protectedMasterTables.has(target))
+        .map((target) => `${filePath}: ${target}`);
+    });
+
+    expect(violations).toEqual([]);
+  });
+
+  it('reads dashboard lines from IP_PRODUCT_LINE and writes only OEE_RESOURCE', () => {
+    const writeTargets = extractTargets(resourceSeed, 'write');
+    const protectedReadTargets = extractTargets(resourceSeed, 'read')
+      .filter((target) => protectedMasterTables.has(target));
+
+    expect(resourceSeed).toMatch(/\bFROM\s+IP_PRODUCT_LINE\b/i);
+    expect(new Set(writeTargets)).toEqual(new Set(['OEE_RESOURCE']));
+    expect(new Set(protectedReadTargets)).toEqual(new Set(['IP_PRODUCT_LINE']));
+  });
+
+  it('detects Oracle hint variants that write protected masters', () => {
+    for (const sql of [
+      'INSERT /*+ APPEND */ INTO IP_PRODUCT_LINE (LINE_CODE) VALUES (\'01\')',
+      'UPDATE /*+ INDEX(t) */ IMCN_MACHINE t SET t.MACHINE_NAME = \'X\'',
+      'DELETE /*+ FULL(t) */ FROM IP_PRODUCT_ST_MASTER t',
+      'MERGE /*+ USE_NL(t) */ INTO IS_PRODUCT_SALE_PRICE t USING DUAL ON (1=0)',
+    ]) {
+      expect(extractTargets(sql, 'write').some((target) => protectedMasterTables.has(target))).toBe(true);
+    }
   });
 });

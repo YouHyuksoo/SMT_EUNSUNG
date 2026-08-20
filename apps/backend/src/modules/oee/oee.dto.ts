@@ -19,9 +19,6 @@ export class ResourceUpsertDto {
   @IsInt()
   resourceId?: number; // 있으면 수정
 
-  @IsInt()
-  organizationId: number;
-
   @IsString()
   @IsNotEmpty()
   processCode: string;
@@ -55,9 +52,6 @@ export class ReasonUpsertDto {
   @IsString()
   @IsNotEmpty()
   reasonCode: string;
-
-  @IsInt()
-  organizationId: number;
 
   @IsOptional()
   @IsString()
@@ -111,14 +105,7 @@ export class SaveIntervalDto {
 /** 근무조 가동일지 저장 (기존 replace) */
 export class LogSaveDto {
   @IsInt()
-  organizationId: number;
-
-  @IsInt()
   resourceId: number;
-
-  @IsString()
-  @IsNotEmpty()
-  processCode: string;
 
   @IsString()
   @IsNotEmpty()
@@ -130,10 +117,6 @@ export class LogSaveDto {
 
   @IsInt()
   netLoadMinutes: number;
-
-  @IsString()
-  @IsNotEmpty()
-  createdBy: string; // 작업자 사번
 
   @IsArray()
   @ValidateNested({ each: true })

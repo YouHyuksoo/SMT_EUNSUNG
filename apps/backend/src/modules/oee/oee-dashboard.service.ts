@@ -10,7 +10,7 @@
  *
  * 원자재준비율/고객불량은 OEE 곱셈식 밖의 선행/사후 KPI라 별도 테이블에서 조회해 종합화면 위젯으로 반환한다.
  */
-import { ConflictException, Injectable } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 
 /** 공정별 종합 행 */
@@ -87,7 +87,8 @@ export class OeeDashboardService {
   }
 
   /** 공정별 종합 + 원자재준비/고객불량 위젯 */
-  async overview(dateParam?: string) {
+  async overview(dateParam?: string, organizationId?: number) {
+    const organization = this.requireOrganization(organizationId);
     const workDate = dateParam || this.todayKst();
     const live = this.isLive(workDate);
 
@@ -103,9 +104,10 @@ export class OeeDashboardService {
               ROUND(AVG(PICKUP_RATE), 2)  AS PICKUP_RATE
          FROM ${this.source(live)}
         WHERE WORK_DATE = TO_DATE(:1, 'YYYY-MM-DD')
+          AND ORGANIZATION_ID = :2
         GROUP BY PROCESS_CODE
         ORDER BY PROCESS_CODE`,
-      [workDate],
+      [workDate, organization],
     );
 
     if (!live && rows.length === 0) this.notBuilt();
@@ -114,14 +116,16 @@ export class OeeDashboardService {
       `SELECT PROCESS_CODE, PLAN_QTY, READY_QTY, READINESS_RATE
          FROM OEE_MATERIAL_READINESS
         WHERE WORK_DATE = TO_DATE(:1, 'YYYY-MM-DD')
+          AND ORGANIZATION_ID = :2
         ORDER BY PROCESS_CODE`,
-      [workDate],
+      [workDate, organization],
     );
     const customer: Array<{ RETURN_QTY: number }> = await this.dataSource.query(
       `SELECT NVL(SUM(RETURN_QTY), 0) AS RETURN_QTY
          FROM OEE_CUSTOMER_DEFECT
-        WHERE WORK_DATE = TO_DATE(:1, 'YYYY-MM-DD')`,
-      [workDate],
+         WHERE WORK_DATE = TO_DATE(:1, 'YYYY-MM-DD')
+           AND ORGANIZATION_ID = :2`,
+      [workDate, organization],
     );
 
     return {
@@ -134,7 +138,8 @@ export class OeeDashboardService {
   }
 
   /** 특정 공정 리소스별 드릴다운 */
-  async drilldown(processCode: string, dateParam?: string) {
+  async drilldown(processCode: string, dateParam?: string, organizationId?: number) {
+    const organization = this.requireOrganization(organizationId);
     const workDate = dateParam || this.todayKst();
     const live = this.isLive(workDate);
 
@@ -146,13 +151,15 @@ export class OeeDashboardService {
               v.UPH, v.PLAN_ACHIEVE, v.RUN_MIN, v.DOWNTIME_MIN, v.OUTPUT_QTY
          FROM ${this.source(live)} v
          JOIN OEE_RESOURCE r ON r.RESOURCE_ID = v.RESOURCE_ID
+                              AND r.ORGANIZATION_ID = :3
          JOIN IP_PRODUCT_LINE l
            ON l.ORGANIZATION_ID = r.ORGANIZATION_ID
           AND l.LINE_CODE = r.REF_CODE
-        WHERE v.WORK_DATE = TO_DATE(:1, 'YYYY-MM-DD')
-          AND v.PROCESS_CODE = :2
-         ORDER BY v.OEE, v.RESOURCE_ID, v.SHIFT`,
-      [workDate, processCode],
+         WHERE v.WORK_DATE = TO_DATE(:1, 'YYYY-MM-DD')
+           AND v.PROCESS_CODE = :2
+           AND v.ORGANIZATION_ID = :3
+          ORDER BY v.OEE, v.RESOURCE_ID, v.SHIFT`,
+       [workDate, processCode, organization],
     );
 
     if (!live && rows.length === 0) this.notBuilt();
@@ -161,7 +168,8 @@ export class OeeDashboardService {
   }
 
   /** 모바일 비가동 이벤트를 사유별로 집계한다. */
-  async lossPareto(dateParam?: string) {
+  async lossPareto(dateParam?: string, organizationId?: number) {
+    const organization = this.requireOrganization(organizationId);
     const workDate = dateParam || this.todayKst();
 
     const rows: LossRow[] = await this.dataSource.query(
@@ -172,14 +180,22 @@ export class OeeDashboardService {
          FROM OEE_DOWNTIME_EVENT e
          LEFT JOIN ISYS_BASECODE c
            ON c.ORGANIZATION_ID = e.ORGANIZATION_ID
-          AND c.CODE_TYPE = 'MACHINE STATUS CODE'
-          AND c.CODE_NAME = e.REASON_CODE
-        WHERE e.WORK_DATE = TO_DATE(:1, 'YYYY-MM-DD')
-        GROUP BY e.REASON_CODE
-        ORDER BY DOWN_MIN DESC`,
-      [workDate],
+         AND c.CODE_TYPE = 'MACHINE STATUS CODE'
+           AND c.CODE_NAME = e.REASON_CODE
+         WHERE e.WORK_DATE = TO_DATE(:1, 'YYYY-MM-DD')
+           AND e.ORGANIZATION_ID = :2
+         GROUP BY e.REASON_CODE
+         ORDER BY DOWN_MIN DESC`,
+       [workDate, organization],
     );
 
     return { workDate, rows };
+  }
+
+  private requireOrganization(organizationId?: number): number {
+    if (organizationId == null || !Number.isInteger(organizationId) || organizationId <= 0) {
+      throw new BadRequestException('인증 조직 정보가 필요합니다.');
+    }
+    return organizationId;
   }
 }

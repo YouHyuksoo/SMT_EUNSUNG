@@ -5,16 +5,17 @@
  *   GET/POST/PUT /oee/resource, /oee/reason
  *   GET /oee/log?resourceId=&workDate=&shift= , POST /oee/log
  */
-import { Body, Controller, Get, Post, Put, Query } from '@nestjs/common';
+import { Body, Controller, Get, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
-import { Public } from '../../common/decorators/public.decorator';
+import { OrganizationId, UserId } from '../../common/decorators/tenant.decorator';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { OeeMasterService } from './oee-master.service';
 import { OeeLogService } from './oee-log.service';
 import { OeeDashboardService } from './oee-dashboard.service';
 import { ResourceUpsertDto, ReasonUpsertDto, LogSaveDto } from './oee.dto';
 
 @ApiTags('OEE')
-@Public()
+@UseGuards(JwtAuthGuard)
 @Controller('oee')
 export class OeeController {
   constructor(
@@ -25,41 +26,53 @@ export class OeeController {
 
   @Get('resource')
   @ApiOperation({ summary: 'OEE 리소스 목록' })
-  async listResources() {
-    return { resources: await this.master.listResources() };
+  async listResources(@OrganizationId() organizationId: number | undefined) {
+    return { resources: await this.master.listResources(organizationId) };
   }
 
   @Post('resource')
   @ApiOperation({ summary: 'OEE 리소스 신규' })
-  async createResource(@Body() dto: ResourceUpsertDto) {
-    await this.master.upsertResource({ ...dto, resourceId: undefined });
+  async createResource(
+    @Body() dto: ResourceUpsertDto,
+    @OrganizationId() organizationId: number | undefined,
+  ) {
+    await this.master.upsertResource({ ...dto, resourceId: undefined }, organizationId);
     return { ok: true };
   }
 
   @Put('resource')
   @ApiOperation({ summary: 'OEE 리소스 수정' })
-  async updateResource(@Body() dto: ResourceUpsertDto) {
-    await this.master.upsertResource(dto);
+  async updateResource(
+    @Body() dto: ResourceUpsertDto,
+    @OrganizationId() organizationId: number | undefined,
+  ) {
+    await this.master.upsertResource(dto, organizationId);
     return { ok: true };
   }
 
   @Get('reason')
   @ApiOperation({ summary: 'OEE 비가동사유 목록' })
-  async listReasons() {
-    return { reasons: await this.master.listReasons() };
+  async listReasons(@OrganizationId() organizationId: number | undefined) {
+    return { reasons: await this.master.listReasons(organizationId) };
   }
 
   @Post('reason')
   @ApiOperation({ summary: 'OEE 비가동사유 신규' })
-  async createReason(@Body() dto: ReasonUpsertDto) {
-    await this.master.upsertReason(dto, false);
+  async createReason(
+    @Body() dto: ReasonUpsertDto,
+    @OrganizationId() organizationId: number | undefined,
+  ) {
+    await this.master.upsertReason(dto, false, organizationId);
     return { ok: true };
   }
 
   @Put('reason')
   @ApiOperation({ summary: 'OEE 비가동사유 수정' })
-  async updateReason(@Body() dto: ReasonUpsertDto) {
-    await this.master.upsertReason(dto, true);
+  async updateReason(
+    @Body() dto: ReasonUpsertDto,
+    @OrganizationId() organizationId: number | undefined,
+  ) {
+    await this.master.upsertReason(dto, true, organizationId);
     return { ok: true };
   }
 
@@ -69,14 +82,19 @@ export class OeeController {
     @Query('resourceId') resourceId: string,
     @Query('workDate') workDate: string,
     @Query('shift') shift: string,
+    @OrganizationId() organizationId: number | undefined,
   ) {
-    return { rows: await this.log.loadShift(Number(resourceId), workDate, shift) };
+    return { rows: await this.log.loadShift(Number(resourceId), workDate, shift, organizationId) };
   }
 
   @Post('log')
   @ApiOperation({ summary: 'OEE 근무조 가동일지 저장(원자 replace)' })
-  async saveLog(@Body() dto: LogSaveDto) {
-    await this.log.saveShift(dto);
+  async saveLog(
+    @Body() dto: LogSaveDto,
+    @OrganizationId() organizationId: number | undefined,
+    @UserId() userId: string | undefined,
+  ) {
+    await this.log.saveShift(dto, organizationId, userId);
     return { ok: true };
   }
 
@@ -84,8 +102,11 @@ export class OeeController {
 
   @Get('dashboard/overview')
   @ApiOperation({ summary: '공정별 OEE 종합 + 원자재준비/고객불량 위젯' })
-  async dashboardOverview(@Query('date') date?: string) {
-    return this.dashboard.overview(date);
+  async dashboardOverview(
+    @Query('date') date: string | undefined,
+    @OrganizationId() organizationId: number | undefined,
+  ) {
+    return this.dashboard.overview(date, organizationId);
   }
 
   @Get('dashboard/drilldown')
@@ -93,13 +114,17 @@ export class OeeController {
   async dashboardDrilldown(
     @Query('processCode') processCode: string,
     @Query('date') date?: string,
+    @OrganizationId() organizationId?: number,
   ) {
-    return this.dashboard.drilldown(processCode, date);
+    return this.dashboard.drilldown(processCode, date, organizationId);
   }
 
   @Get('dashboard/loss')
   @ApiOperation({ summary: 'OEE 로스 파레토(비가동 사유별 시간)' })
-  async dashboardLoss(@Query('date') date?: string) {
-    return this.dashboard.lossPareto(date);
+  async dashboardLoss(
+    @Query('date') date: string | undefined,
+    @OrganizationId() organizationId: number | undefined,
+  ) {
+    return this.dashboard.lossPareto(date, organizationId);
   }
 }
