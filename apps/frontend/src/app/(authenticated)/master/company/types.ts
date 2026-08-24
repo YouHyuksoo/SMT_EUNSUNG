@@ -28,7 +28,7 @@ export interface Plant {
   sortOrder: number;
   useYn: string;
   company?: string;
-  plant?: string;
+  plantCd?: string;
 }
 
 export const getCompanyKey = (company: Pick<Company, "companyCode" | "plant">) =>
@@ -38,3 +38,11 @@ export const getPlantKey = (
   plant: Pick<Plant, "plantCode" | "shopCode" | "lineCode" | "cellCode">,
 ) =>
   [plant.plantCode, plant.shopCode || "-", plant.lineCode || "-", plant.cellCode || "-"].join("::");
+
+/** PLANTS 복합키를 API 경로에 넣을 때 각 segment를 개별 인코딩한다. */
+export const getPlantPath = (
+  plant: Pick<Plant, "plantCode" | "shopCode" | "lineCode" | "cellCode">,
+) =>
+  [plant.plantCode, plant.shopCode || "-", plant.lineCode || "-", plant.cellCode || "-"]
+    .map((segment) => encodeURIComponent(segment))
+    .join("/");

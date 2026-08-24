@@ -2,19 +2,26 @@
 
 /**
  * @file (authenticated)/oee/master/idle-reason/page.tsx
- * @description 설비 비가동 사유코드 관리 — 사유코드·표준시간(대상/비대상)·매뉴얼 첨부 등록·조회 (Mock-up, 실 DB 미연결)
+ * @description 설비 비가동 사유코드 관리 — 사유코드·표준시간(대상/비대상)·분류별 매뉴얼(BFILE) 등록·조회 (IP_EQUIP_DOWNTIME_REASON 실 DB 연결)
+ *
+ * API(글로벌 prefix /api → 백엔드 /api/v1):
+ *   GET/POST/PUT /oee/idle-reason , DELETE /oee/idle-reason/:reasonCode
+ *   매뉴얼 첨부는 공통 파일첨부(BFILE): businessType='설비비가동사유', refKey=사유코드
+ * 코드값(사유구분·OEE반영·사용구분·단위)은 기준정보가 아닌 소스 고정 코드다.
  */
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ColumnDef } from '@tanstack/react-table';
-import { Search, Edit2, Paperclip } from 'lucide-react';
+import { Search, Edit2, Paperclip, RefreshCw } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { Card, CardContent, Input } from '@/components/ui';
 import DataGrid from '@/components/data-grid/DataGrid';
 import { FileAttachment, type AttachedFile } from '@/components/shared';
+import api from '@/services/api';
 
-// 로그인 사용자(최종수정자 자동 적용) — Mock. 실 구현 시 인증 스토어에서 취득.
-const CURRENT_USER = '관리자';
+// 매뉴얼 첨부 업무구분 — 백엔드 count 서브쿼리와 일치
+const MANUAL_BIZ = '설비비가동사유';
 
-// 설비 비가동 표준시간 단위 구분
+// 설비 비가동 표준시간 단위 구분 (소스 고정 코드)
 const UNITS = [
   { code: 'HOUR', name: '시간' },
   { code: 'MIN', name: '분' },
@@ -23,7 +30,7 @@ const UNITS = [
 type UnitCode = (typeof UNITS)[number]['code'];
 const unitName = (c: string) => UNITS.find((u) => u.code === c)?.name ?? c;
 
-// 비가동 사유 구분 — 계획/비계획
+// 비가동 사유 구분 — 계획/비계획 (소스 고정 코드)
 const REASON_TYPES = [
   { code: 'PLAN', name: '계획' },
   { code: 'UNPLAN', name: '비계획' },
@@ -32,7 +39,6 @@ type ReasonTypeCode = (typeof REASON_TYPES)[number]['code'];
 const reasonTypeName = (c: string) => REASON_TYPES.find((t) => t.code === c)?.name ?? c;
 
 interface IdleReasonRecord {
-  id: number;
   reasonCode: string;
   reasonName: string;
   description: string;
@@ -42,29 +48,24 @@ interface IdleReasonRecord {
   stdTimeEnabled: boolean; // 설비 비가동 표준시간 대상 여부
   stdTimeValue: number;
   stdTimeUnit: UnitCode;
-  manualFiles: AttachedFile[]; // 분류별 매뉴얼 첨부 (복수, 공통 컴포넌트)
+  manualCount: number; // 분류별 매뉴얼 첨부 건수 (BFILE)
   useYn: 'Y' | 'N'; // 코드 사용구분
   updatedAt: string; // YYYY-MM-DD HH:mm
   updatedBy: string;
 }
 
-// 화면 검증용 샘플 데이터
-const SEED: IdleReasonRecord[] = [
-  { id: 1, reasonCode: 'DWN-CHG', reasonName: '모델 교체', description: '생산 모델 전환에 따른 셋업 정지', reasonType: 'PLAN', oeeReflect: 'Y', displayOrder: 1, stdTimeEnabled: true, stdTimeValue: 30, stdTimeUnit: 'MIN', manualFiles: [{ id: 's1a', name: '모델교체_절차서.pdf' }, { id: 's1b', name: '셋업_체크리스트.xlsx' }], useYn: 'Y', updatedAt: '2026-07-01 09:20', updatedBy: '김생기' },
-  { id: 2, reasonCode: 'DWN-MAT', reasonName: '자재 대기', description: '자재 미공급으로 인한 대기', reasonType: 'UNPLAN', oeeReflect: 'Y', displayOrder: 2, stdTimeEnabled: false, stdTimeValue: 0, stdTimeUnit: 'MIN', manualFiles: [], useYn: 'Y', updatedAt: '2026-07-05 14:05', updatedBy: '박공정' },
-  { id: 3, reasonCode: 'DWN-BRK', reasonName: '설비 고장', description: '설비 이상으로 인한 비가동', reasonType: 'UNPLAN', oeeReflect: 'Y', displayOrder: 3, stdTimeEnabled: true, stdTimeValue: 2, stdTimeUnit: 'HOUR', manualFiles: [{ id: 's3a', name: '설비고장_대응매뉴얼.pdf' }], useYn: 'Y', updatedAt: '2026-07-09 11:41', updatedBy: '이설비' },
-  { id: 4, reasonCode: 'DWN-CLN', reasonName: '청소/5S', description: '라인 청소 및 정리정돈', reasonType: 'PLAN', oeeReflect: 'N', displayOrder: 4, stdTimeEnabled: true, stdTimeValue: 600, stdTimeUnit: 'SEC', manualFiles: [], useYn: 'N', updatedAt: '2026-06-20 17:30', updatedBy: '김생기' },
-];
-
-function nowStamp() {
-  const d = new Date();
-  const p = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+// API 응답 행 타입
+interface ApiRow {
+  reasonCode: string; reasonName: string; description: string | null;
+  reasonType: ReasonTypeCode | null; oeeReflect: 'Y' | 'N' | null; displayOrder: number | null;
+  stdTimeEnabled: boolean; stdTimeValue: number | null; stdTimeUnit: UnitCode | null;
+  useYn: 'Y' | 'N' | null; manualCount: number; updatedBy: string | null; updatedAt: string | null;
 }
+
 const stdTimeText = (r: IdleReasonRecord) => (r.stdTimeEnabled ? `${r.stdTimeValue} ${unitName(r.stdTimeUnit)}` : '비대상');
 
 interface EditForm {
-  id: number | null;
+  isEdit: boolean;
   reasonCode: string;
   reasonName: string;
   description: string;
@@ -76,22 +77,50 @@ interface EditForm {
   stdTimeUnit: UnitCode;
   manualFiles: AttachedFile[];
   useYn: 'Y' | 'N';
+  updatedAt: string; // 편집 시 표시용(읽기전용)
+  updatedBy: string;
 }
-const emptyForm = (): EditForm => ({ id: null, reasonCode: '', reasonName: '', description: '', reasonType: 'PLAN', oeeReflect: 'Y', displayOrder: 0, stdTimeEnabled: false, stdTimeValue: 0, stdTimeUnit: 'MIN', manualFiles: [], useYn: 'Y' });
+const emptyForm = (): EditForm => ({ isEdit: false, reasonCode: '', reasonName: '', description: '', reasonType: 'PLAN', oeeReflect: 'Y', displayOrder: 0, stdTimeEnabled: false, stdTimeValue: 0, stdTimeUnit: 'MIN', manualFiles: [], useYn: 'Y', updatedAt: '', updatedBy: '' });
 
 export default function IdleReasonMasterPage() {
-  const [records, setRecords] = useState<IdleReasonRecord[]>(SEED);
+  const [records, setRecords] = useState<IdleReasonRecord[]>([]);
+  const [loading, setLoading] = useState(false);
   const [form, setForm] = useState<EditForm | null>(null);
   const [search, setSearch] = useState('');
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await api.get('/oee/idle-reason');
+      const list: ApiRow[] = res.data?.data?.list ?? [];
+      setRecords(list.map((r) => ({
+        reasonCode: r.reasonCode,
+        reasonName: r.reasonName ?? '',
+        description: r.description ?? '',
+        reasonType: r.reasonType ?? 'PLAN',
+        oeeReflect: r.oeeReflect ?? 'N',
+        displayOrder: r.displayOrder ?? 0,
+        stdTimeEnabled: r.stdTimeEnabled,
+        stdTimeValue: r.stdTimeValue ?? 0,
+        stdTimeUnit: r.stdTimeUnit ?? 'MIN',
+        manualCount: r.manualCount ?? 0,
+        useYn: r.useYn ?? 'Y',
+        updatedAt: r.updatedAt ?? '',
+        updatedBy: r.updatedBy ?? '',
+      })));
+    } catch {
+      toast.error('사유코드 목록 조회에 실패했습니다');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+  useEffect(() => { load(); }, [load]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     // 통합검색 — 사유코드·사유명에서 매칭
     const base = q
-      ? records.filter((r) => {
-          const hay = [r.reasonCode, r.reasonName].join(' ').toLowerCase();
-          return hay.includes(q);
-        })
+      ? records.filter((r) => [r.reasonCode, r.reasonName].join(' ').toLowerCase().includes(q))
       : records;
     return [...base].sort((a, b) => a.displayOrder - b.displayOrder); // 화면 표시 순서 오름차순
   }, [records, search]);
@@ -121,7 +150,7 @@ export default function IdleReasonMasterPage() {
         header: '매뉴얼',
         size: 90,
         meta: { align: 'center' as const, filterType: 'none' as const },
-        cell: ({ row }) => (row.original.manualFiles.length ? <span className="inline-flex items-center gap-1 text-primary text-xs"><Paperclip className="w-3 h-3" />첨부 {row.original.manualFiles.length}</span> : <span className="text-text-muted">-</span>),
+        cell: ({ row }) => (row.original.manualCount ? <span className="inline-flex items-center gap-1 text-primary text-xs"><Paperclip className="w-3 h-3" />첨부 {row.original.manualCount}</span> : <span className="text-text-muted">-</span>),
       },
       { id: 'useYn', header: '사용구분', size: 90, meta: { align: 'center' as const }, cell: ({ row }) => (row.original.useYn === 'Y' ? '사용' : '미사용') },
       { accessorKey: 'updatedAt', header: '최종수정일', cell: ({ getValue }) => <span className="font-mono text-text-muted">{String(getValue() ?? '')}</span> },
@@ -133,9 +162,9 @@ export default function IdleReasonMasterPage() {
   function openCreate() {
     setForm(emptyForm());
   }
-  function openEdit(r: IdleReasonRecord) {
+  async function openEdit(r: IdleReasonRecord) {
     setForm({
-      id: r.id,
+      isEdit: true,
       reasonCode: r.reasonCode,
       reasonName: r.reasonName,
       description: r.description,
@@ -145,17 +174,27 @@ export default function IdleReasonMasterPage() {
       stdTimeEnabled: r.stdTimeEnabled,
       stdTimeValue: r.stdTimeValue,
       stdTimeUnit: r.stdTimeUnit,
-      manualFiles: r.manualFiles,
+      manualFiles: [],
       useYn: r.useYn,
+      updatedAt: r.updatedAt,
+      updatedBy: r.updatedBy,
     });
+    // 기존 매뉴얼 첨부 로드 (BFILE)
+    try {
+      const res = await api.get('/files', { params: { businessType: MANUAL_BIZ, refKey: r.reasonCode } });
+      const dtos = (res.data?.data ?? []) as Array<{ id: string; name: string; size: number | null; url: string }>;
+      const files: AttachedFile[] = dtos.map((d) => ({ id: d.id, name: d.name, size: d.size ?? undefined, url: d.url }));
+      setForm((prev) => (prev && prev.reasonCode === r.reasonCode ? { ...prev, manualFiles: files } : prev));
+    } catch {
+      // 첨부 조회 실패는 등록/수정 자체를 막지 않는다
+    }
   }
 
-  function save() {
+  async function save() {
     if (!form) return;
-    if (!form.reasonCode) return alert('설비 비가동 사유코드를 입력하세요');
-    if (!form.reasonName) return alert('설비 비가동 사유명을 입력하세요');
+    if (!form.reasonCode) return toast.error('설비 비가동 사유코드를 입력하세요');
+    if (!form.reasonName) return toast.error('설비 비가동 사유명을 입력하세요');
 
-    const stamp = nowStamp();
     const payload = {
       reasonCode: form.reasonCode,
       reasonName: form.reasonName,
@@ -166,18 +205,25 @@ export default function IdleReasonMasterPage() {
       stdTimeEnabled: form.stdTimeEnabled,
       stdTimeValue: form.stdTimeEnabled ? form.stdTimeValue : 0,
       stdTimeUnit: form.stdTimeUnit,
-      manualFiles: form.manualFiles,
       useYn: form.useYn,
-      updatedAt: stamp,
-      updatedBy: CURRENT_USER,
     };
-    if (form.id == null) {
-      const id = Math.max(0, ...records.map((r) => r.id)) + 1;
-      setRecords((prev) => [{ id, ...payload }, ...prev]);
-    } else {
-      setRecords((prev) => prev.map((r) => (r.id === form.id ? { ...r, ...payload } : r)));
+    try {
+      if (form.isEdit) {
+        await api.put('/oee/idle-reason', payload);
+      } else {
+        await api.post('/oee/idle-reason', payload);
+      }
+      toast.success('저장되었습니다');
+      setForm(null);
+      await load();
+    } catch (e: unknown) {
+      // 서버가 내려준 메시지(중복 등) 우선 표시
+      const msg =
+        e && typeof e === 'object' && 'response' in e
+          ? (e as { response?: { data?: { message?: string } } }).response?.data?.message
+          : undefined;
+      toast.error(msg || '저장에 실패했습니다');
     }
-    setForm(null);
   }
 
   return (
@@ -187,9 +233,12 @@ export default function IdleReasonMasterPage() {
         <div className="flex items-center justify-between flex-shrink-0">
           <div>
             <h1 className="text-xl font-bold text-text">설비 비가동 사유코드 관리</h1>
-            <p className="text-sm text-text-muted mt-1">설비 비가동 사유코드 · 표준시간 · 분류별 매뉴얼 관리 (Mock-up)</p>
+            <p className="text-sm text-text-muted mt-1">설비 비가동 사유코드 · 표준시간 · 분류별 매뉴얼(BFILE) 관리</p>
           </div>
-          <button onClick={openCreate} className="bg-primary text-white px-4 py-2 rounded h-10">사유코드 등록</button>
+          <div className="flex items-center gap-2">
+            <button onClick={load} className="border border-border rounded px-3 h-10 text-text-muted hover:bg-surface flex items-center gap-1"><RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />새로고침</button>
+            <button onClick={openCreate} className="bg-primary text-white px-4 py-2 rounded h-10">사유코드 등록</button>
+          </div>
         </div>
 
         {/* 목록 화면 — 표준시간관리와 동일한 DataGrid 형식 */}
@@ -198,13 +247,14 @@ export default function IdleReasonMasterPage() {
             <DataGrid
               data={filtered}
               columns={columns}
+              isLoading={loading}
               pageSize={50}
               enableColumnFilter
               enableExport
               enableFullscreen
               exportFileName="설비비가동사유코드관리"
               emptyMessage={records.length ? '조회 결과가 없습니다' : '등록된 사유코드가 없습니다'}
-              getRowId={(r) => String(r.id)}
+              getRowId={(r) => r.reasonCode}
               toolbarLeft={
                 <div className="flex flex-wrap gap-3 flex-1 min-w-0">
                   <div className="w-96 flex-shrink-0">
@@ -222,7 +272,7 @@ export default function IdleReasonMasterPage() {
         <div className="w-[540px] flex-shrink-0 border-l border-border bg-background flex flex-col h-full overflow-hidden shadow-2xl animate-slide-in-right">
           {/* 헤더: 취소/저장 (상단) */}
           <div className="px-5 py-3 border-b border-border flex items-center justify-between flex-shrink-0">
-            <h2 className="text-sm font-bold text-text">{form.id == null ? '설비 비가동 사유코드 등록' : '설비 비가동 사유코드 수정'}</h2>
+            <h2 className="text-sm font-bold text-text">{form.isEdit ? '설비 비가동 사유코드 수정' : '설비 비가동 사유코드 등록'}</h2>
             <div className="flex items-center gap-2">
               <button onClick={() => setForm(null)} className="px-3 py-2 rounded border border-border text-text-muted text-sm">취소</button>
               <button onClick={save} className="px-4 py-2 rounded bg-primary text-white text-sm">저장</button>
@@ -234,7 +284,7 @@ export default function IdleReasonMasterPage() {
             <div className="flex gap-3">
               <label className="text-sm text-text-muted flex flex-col gap-1 w-40">
                 <span>설비 비가동 사유코드 <span className="text-red-500">*</span></span>
-                <input value={form.reasonCode} disabled={form.id != null} onChange={(e) => setForm({ ...form, reasonCode: e.target.value.toUpperCase() })} className="border border-border rounded p-2 bg-background text-text disabled:opacity-50 disabled:bg-surface" />
+                <input value={form.reasonCode} disabled={form.isEdit} onChange={(e) => setForm({ ...form, reasonCode: e.target.value.toUpperCase() })} className="border border-border rounded p-2 bg-background text-text disabled:opacity-50 disabled:bg-surface" />
               </label>
               <label className="text-sm text-text-muted flex flex-col gap-1 flex-1">
                 <span>설비 비가동 사유명 <span className="text-red-500">*</span></span>
@@ -302,15 +352,18 @@ export default function IdleReasonMasterPage() {
               </div>
             </div>
 
-            {/* 분류별 매뉴얼 첨부 — 파일첨부 공통 컴포넌트 (복수 첨부) */}
-            <FileAttachment
-              label="설비 비가동 분류별 매뉴얼 첨부"
-              businessType="설비비가동사유"
-              refKey={form.reasonCode}
-              value={form.manualFiles}
-              onChange={(files) => setForm({ ...form, manualFiles: files })}
-              mock
-            />
+            {/* 분류별 매뉴얼 첨부 — 파일첨부 공통 컴포넌트 (BFILE, 복수 첨부). 사유코드가 refKey이므로 코드 입력 후 첨부 */}
+            {form.reasonCode ? (
+              <FileAttachment
+                label="설비 비가동 분류별 매뉴얼 첨부"
+                businessType={MANUAL_BIZ}
+                refKey={form.reasonCode}
+                value={form.manualFiles}
+                onChange={(files) => setForm({ ...form, manualFiles: files })}
+              />
+            ) : (
+              <div className="border border-dashed border-border rounded p-4 text-center text-xs text-text-muted">사유코드를 먼저 입력하면 매뉴얼을 첨부할 수 있습니다.</div>
+            )}
 
             {/* 코드 사용구분 */}
             <label className="text-sm text-text-muted flex flex-col gap-1 w-40">
@@ -323,8 +376,8 @@ export default function IdleReasonMasterPage() {
 
             {/* 최종수정자/일 — 자동 */}
             <div className="flex gap-6 text-sm text-text-muted border-t border-border pt-4">
-              <span>최종수정자 <b className="text-text">{CURRENT_USER}</b> (로그인 사용자 자동)</span>
-              <span>최종수정일 <b className="text-text">저장 시 자동 기록</b></span>
+              <span>최종수정자 <b className="text-text">{form.isEdit ? (form.updatedBy || '-') : '저장 시 자동(로그인 사용자)'}</b></span>
+              <span>최종수정일 <b className="text-text">{form.isEdit ? (form.updatedAt || '-') : '저장 시 자동 기록'}</b></span>
             </div>
           </div>
           {/* 패널 최하단 라인 */}

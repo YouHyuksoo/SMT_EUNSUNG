@@ -6,12 +6,16 @@
  * 관리한다. 설비는 한 번에 하나의 공정에만 속하며, 배치 해제는 UNASSIGNED_PROCESS_CODE로 되돌린다.
  */
 
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, In, Repository } from 'typeorm';
 import { ProcessMaster } from '../../../entities/process-master.entity';
 import { EquipMaster } from '../../../entities/equip-master.entity';
+import { ProcessLine } from '../../../entities/process-line.entity';
+import { DepartmentMaster } from '../../../entities/department-master.entity';
+import { ProdLineMaster } from '../../../entities/prod-line-master.entity';
 import { CreateProcessDto, UpdateProcessDto, ProcessQueryDto } from '../dto/process.dto';
+import { parseProcessWorkbook } from './process-upload.parser';
 
 /** IMCN_MACHINE.WORKSTAGE_CODE에서 "공정 미배치"를 나타내는 현장 관례값 */
 const UNASSIGNED_PROCESS_CODE = '*';
@@ -67,6 +71,9 @@ export class ProcessService {
     private readonly processRepository: Repository<ProcessMaster>,
     @InjectRepository(EquipMaster)
     private readonly equipRepository: Repository<EquipMaster>,
+    @InjectRepository(ProcessLine)
+    private readonly processLineRepository: Repository<ProcessLine>,
+    private readonly dataSource: DataSource,
   ) {}
 
   private tenantWhere(organizationId?: number) {
@@ -115,7 +122,60 @@ export class ProcessService {
       queryBuilder.getCount(),
     ]);
 
-    return { data, total, page, limit };
+    const lines = data.length ? await this.processLineRepository.find({
+      where: { organizationId, processCode: In(data.map((item) => item.processCode)) },
+      order: { lineCode: 'ASC' },
+    }) : [];
+    const lineMap = lines.reduce<Record<string, string[]>>((acc, line) => {
+      (acc[line.processCode] ??= []).push(line.lineCode);
+      return acc;
+    }, {});
+    return { data: data.map((item) => ({ ...item, appliedLineCodes: lineMap[item.processCode] ?? [] })), total, page, limit };
+  }
+
+  async uploadWorkbook(buffer: Buffer, departmentCode: string, organizationId: number, userId?: string) {
+    const parsed = parseProcessWorkbook(buffer);
+    return this.dataSource.transaction(async (manager) => {
+      const department = await manager.findOneBy(DepartmentMaster, { deptCode: departmentCode, organizationId });
+      if (!department) throw new BadRequestException(`존재하지 않는 부서 코드입니다: ${departmentCode}`);
+      const lineCodes = [...new Set(parsed.relations.map((item) => item.lineCode))];
+      const lines = await manager.find(ProdLineMaster, { where: { organizationId, lineCode: In(lineCodes) } });
+      const foundLines = new Set(lines.map((item) => item.lineCode));
+      const missingLines = lineCodes.filter((code) => !foundLines.has(code));
+      if (missingLines.length) throw new BadRequestException(`존재하지 않는 라인 코드입니다: ${missingLines.join(', ')}`);
+
+      const codes = parsed.processes.map((item) => item.processCode);
+      const existingProcesses = codes.length ? await manager.find(ProcessMaster, { where: { organizationId, processCode: In(codes) } }) : [];
+      const existingMap = new Map(existingProcesses.map((item) => [item.processCode, item]));
+      for (const item of parsed.processes) {
+        const existing = existingMap.get(item.processCode);
+        if (existing && (existing.processName !== item.processName || existing.processType !== item.processType || existing.startYn !== item.startYn || existing.departmentCode !== departmentCode || existing.lineCode !== '*')) {
+          throw new ConflictException(`기존 공정 정보가 업로드 파일과 다릅니다: ${item.processCode}`);
+        }
+      }
+
+      const newProcesses = parsed.processes.filter((item) => !existingMap.has(item.processCode)).map((item) => manager.create(ProcessMaster, {
+        ...item, organizationId, departmentCode, lineCode: '*', mesDisplayGroup: '*',
+      }));
+      if (newProcesses.length) await manager.save(ProcessMaster, newProcesses);
+
+      const existingRelations = parsed.relations.length ? await manager.find(ProcessLine, {
+        where: parsed.relations.map((item) => ({ ...item, organizationId })),
+      }) : [];
+      const existingKeys = new Set(existingRelations.map((item) => `${item.processCode}|${item.processType}|${item.lineCode}`));
+      const newRelations = parsed.relations.filter((item) => !existingKeys.has(`${item.processCode}|${item.processType}|${item.lineCode}`)).map((item) => manager.create(ProcessLine, {
+        ...item, organizationId, enterBy: userId ?? null, lastModifyBy: userId ?? null,
+      }));
+      if (newRelations.length) await manager.save(ProcessLine, newRelations);
+      return {
+        inputRows: parsed.inputRows,
+        duplicateRows: parsed.duplicateRows,
+        processesCreated: newProcesses.length,
+        processesReused: existingProcesses.length,
+        relationsCreated: newRelations.length,
+        relationsSkipped: existingRelations.length,
+      };
+    });
   }
 
   async findById(processCode: string, organizationId?: number) {
@@ -145,7 +205,11 @@ export class ProcessService {
   }
 
   async update(processCode: string, dto: UpdateProcessDto, organizationId?: number) {
-    await this.findById(processCode, organizationId);
+    const current = await this.findById(processCode, organizationId);
+    if (dto.processType !== undefined && dto.processType !== current.processType) {
+      const relationCount = await this.processLineRepository.count({ where: { processCode, organizationId } });
+      if (relationCount > 0) throw new ConflictException('적용라인 관계가 있는 공정의 유형은 변경할 수 없습니다.');
+    }
 
     const updateData: Partial<Pick<ProcessMaster, UpdatableField>> = {};
     for (const field of UPDATABLE_FIELDS) {
@@ -194,7 +258,7 @@ export class ProcessService {
     }, {});
   }
 
-  async assignEquipment(processCode: string, equipCode: string, organizationId?: number) {
+  async assignEquipment(processCode: string, equipCode: string, organizationId?: number, lineCode?: string) {
     await this.findById(processCode, organizationId);
 
     const equipment = await this.equipRepository.findOne({
@@ -210,10 +274,23 @@ export class ProcessService {
 
     await this.equipRepository.update(
       { equipCode, ...this.tenantWhere(organizationId) },
-      { processCode },
+      { processCode, ...(lineCode ? { lineCode } : {}) },
     );
 
-    return { processCode, equipCode };
+    return { processCode, equipCode, lineCode: lineCode ?? equipment.lineCode };
+  }
+
+  /** 배치 설비의 라인코드 수정 (IMCN_MACHINE.LINE_CODE) */
+  async updateEquipmentLine(processCode: string, equipCode: string, lineCode: string, organizationId?: number) {
+    const equipment = await this.equipRepository.findOne({
+      where: { equipCode, ...this.tenantWhere(organizationId) },
+    });
+    if (!equipment) throw new NotFoundException(`설비를 찾을 수 없습니다: ${equipCode}`);
+    await this.equipRepository.update(
+      { equipCode, ...this.tenantWhere(organizationId) },
+      { lineCode: lineCode || null },
+    );
+    return { processCode, equipCode, lineCode };
   }
 
   async removeEquipment(processCode: string, equipCode: string, organizationId?: number) {

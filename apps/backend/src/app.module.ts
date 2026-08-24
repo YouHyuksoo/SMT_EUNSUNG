@@ -21,12 +21,18 @@ import configuration from './config/configuration';
 // 기능 모듈 (은성화 진행하며 하나씩 추가)
 import { AuthModule } from './modules/auth/auth.module';
 import { OeeModule } from './modules/oee/oee.module';
+import { StandardTimeModule } from './modules/standard-time/standard-time.module';
+import { IdleReasonModule } from './modules/idle-reason/idle-reason.module';
+import { EquipReasonMapModule } from './modules/equip-reason-map/equip-reason-map.module';
+import { ProductModelModule } from './modules/product-model/product-model.module';
+import { WorkResultModule } from './modules/work-result/work-result.module';
 import { MenuCategoriesModule } from './modules/menu-categories/menu-categories.module';
 import { SystemModule } from './modules/system/system.module';
 import { SchedulerModule } from './modules/scheduler/scheduler.module';
 import { UserModule } from './modules/user/user.module';
 import { MasterCodeModule } from './modules/master/master-code.module';
 import { MasterCompanyModule } from './modules/master/master-company.module';
+import { MasterPlantModule } from './modules/master/master-plant.module';
 import { MasterDepartmentModule } from './modules/master/master-department.module';
 import { MasterPartModule } from './modules/master/master-part.module';
 import { MasterEquipModule } from './modules/master/master-equip.module';
@@ -71,6 +77,11 @@ import { SharedModule } from './shared/shared.module';
 
     // OEE (설비종합효율) — 입력·마스터
     OeeModule,
+    StandardTimeModule,
+    IdleReasonModule,
+    EquipReasonMapModule,
+    ProductModelModule,
+    WorkResultModule,
 
     // 메뉴 카테고리 관리 (/system/menu-categories)
     MenuCategoriesModule,
@@ -89,6 +100,9 @@ import { SharedModule } from './shared/shared.module';
 
     // 기준정보 회사정보 (/master/companies) — ISYS_ORGANIZATION 기반
     MasterCompanyModule,
+
+    // 기준정보 공장/작업장/라인/CELL (/master/plants) — PLANTS 기반
+    MasterPlantModule,
 
     // 시스템 부서정보 (/system/departments) — ISYS_DEPARTMENT 기반
     MasterDepartmentModule,

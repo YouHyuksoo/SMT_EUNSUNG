@@ -16,9 +16,12 @@ import { SqlDebugTypeormLogger } from '../common/sql-debug/typeorm-sql-debug.log
 import { IsysUser } from '../entities/isys-user.entity';
 import { IsysOrganization } from '../entities/isys-organization.entity';
 import { DepartmentMaster } from '../entities/department-master.entity';
+import { Plant } from '../entities/plant.entity';
 import { OeeResource } from '../entities/oee-resource.entity';
 import { OeeDowntimeReason } from '../entities/oee-downtime-reason.entity';
 import { OeeOperationLog } from '../entities/oee-operation-log.entity';
+import { OeeDowntimeEvent } from '../entities/oee-downtime-event.entity';
+import { WorktimeRange } from '../entities/worktime-range.entity';
 import { MenuCategory } from '../entities/menu-category.entity';
 import { MenuCategoryItem } from '../entities/menu-category-item.entity';
 import { ComCode } from '../entities/com-code.entity';
@@ -47,6 +50,7 @@ import { ProductCompanyCalendar } from '../entities/product-company-calendar.ent
 import { ProductLineCalendar } from '../entities/product-line-calendar.entity';
 import { ShiftTimeMaster } from '../entities/shift-time-master.entity';
 import { ProcessMaster } from '../entities/process-master.entity';
+import { ProcessLine } from '../entities/process-line.entity';
 import { LabelTemplate } from '../entities/label-template.entity';
 import { ProcessMap } from '../entities/process-map.entity';
 import { RoutingGroup } from '../entities/routing-group.entity';
@@ -60,6 +64,14 @@ import { ProductSalePrice } from '../entities/product-sale-price.entity';
 import { ItemSupplier } from '../entities/item-supplier.entity';
 import { CustomerMaster } from '../entities/customer-master.entity';
 import { FileAttachment } from '../entities/file-attachment.entity';
+import { ProductStMaster } from '../entities/product-st-master.entity';
+import { EquipDowntimeReason } from '../entities/equip-downtime-reason.entity';
+import { EquipDowntimeMap } from '../entities/equip-downtime-map.entity';
+import { EquipDowntimeMapDtl } from '../entities/equip-downtime-map-dtl.entity';
+import { ProductModelMaster } from '../entities/product-model-master.entity';
+import { ProductWorkResult } from '../entities/product-work-result.entity';
+import { ProductWorkDefect } from '../entities/product-work-defect.entity';
+import { EquipDowntimeResult } from '../entities/equip-downtime-result.entity';
 
 @Global()
 @Module({
@@ -93,9 +105,12 @@ import { FileAttachment } from '../entities/file-attachment.entity';
             IsysUser,
             IsysOrganization,
             DepartmentMaster,
+            Plant,
             OeeResource,
             OeeDowntimeReason,
             OeeOperationLog,
+            OeeDowntimeEvent,
+            WorktimeRange,
             MenuCategory,
             MenuCategoryItem,
             ComCode,
@@ -124,6 +139,7 @@ import { FileAttachment } from '../entities/file-attachment.entity';
             ProductLineCalendar,
             ShiftTimeMaster,
             ProcessMaster,
+            ProcessLine,
             LabelTemplate,
             ProcessMap,
             RoutingGroup,
@@ -137,6 +153,14 @@ import { FileAttachment } from '../entities/file-attachment.entity';
             ItemSupplier,
             CustomerMaster,
             FileAttachment,
+            ProductStMaster,
+            EquipDowntimeReason,
+            EquipDowntimeMap,
+            EquipDowntimeMapDtl,
+            ProductModelMaster,
+            ProductWorkResult,
+            ProductWorkDefect,
+            EquipDowntimeResult,
           ],
           migrations: [],
           migrationsRun: false,

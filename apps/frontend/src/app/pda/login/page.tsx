@@ -173,8 +173,8 @@ export default function PdaLoginPage() {
 
             <Input
               label={t("auth.email")}
-              type="email"
-              placeholder="admin@eunsung.com"
+              type="text"
+              placeholder="ADMIN"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               fullWidth

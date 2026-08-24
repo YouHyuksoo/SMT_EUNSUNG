@@ -7,7 +7,7 @@
  * 초보자 가이드:
  * 1. API: GET/POST/PUT/DELETE /equipment/masters
  * 2. 통신 설정: MQTT, Serial, TCP 지원
- * 3. 라인, 설비유형, 상태 필터링 지원
+ * 3. 적용공정, 설비유형, 상태 필터링 지원
  */
 
 import { useState, useMemo, useEffect, useCallback, useRef } from "react";
@@ -24,10 +24,11 @@ import StatusHeaderHelp from "@/components/shared/StatusHeaderHelp";
 import { EquipMaster, EquipType, CommType, COMM_TYPE_COLORS, COMM_TYPE_LABELS } from "../types";
 import api from "@/services/api";
 import { useUnsavedGuard } from "@/hooks/useUnsavedGuard";
-import { ComCodeSelect, LineSelect } from '@/components/shared';
+import { ComCodeSelect, ProcessSelect } from '@/components/shared';
 import { useEquipTypeOptions } from "@/hooks/useMasterOptions";
-import { Field, FieldInput, FieldComCodeSelect, FieldLineSelect } from "./EquipFieldHelp";
+import { Field, FieldInput, FieldComCodeSelect, FieldProcessSelect } from "./EquipFieldHelp";
 import EquipBomPanel from "./EquipBomPanel";
+import { hasRequiredEquipMasterFields } from "../equipMasterValidation.mjs";
 
 function EquipImageThumb({ src, alt }: { src: string; alt: string }) {
   const [errored, setErrored] = useState(false);
@@ -46,7 +47,7 @@ interface FormState {
   equipCode: string;
   equipName: string;
   equipType: EquipType;
-  lineCode: string;
+  processCode: string;
   modelName: string;
   imageUrl?: string | null;
   maker: string;
@@ -62,8 +63,8 @@ interface FormState {
 const EMPTY_FORM: FormState = {
   equipCode: "",
   equipName: "",
-  equipType: "TEMP",
-  lineCode: "",
+  equipType: "",
+  processCode: "",
   modelName: "",
   maker: "",
   commType: "NONE",
@@ -81,7 +82,7 @@ export default function EquipMasterTab() {
   const [loading, setLoading] = useState(false);
   const [searchText, setSearchText] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
-  const [lineFilter, setLineFilter] = useState("");
+  const [processFilter, setProcessFilter] = useState("");
   const [commFilter, setCommFilter] = useState("");
   const [panelOpen, setPanelOpen] = useState(false);
   const [editing, setEditing] = useState<EquipMaster | null>(null);
@@ -97,6 +98,7 @@ export default function EquipMasterTab() {
   const [imageError, setImageError] = useState(false);
   const [imageDeleteConfirmOpen, setImageDeleteConfirmOpen] = useState(false);
   const { options: equipTypeOptions, isLoading: equipTypeLoading } = useEquipTypeOptions();
+  const canSave = hasRequiredEquipMasterFields(form);
 
   // API에서 설비 목록 조회
   const fetchEquipments = useCallback(async () => {
@@ -105,7 +107,7 @@ export default function EquipMasterTab() {
       const params: Record<string, string> = { limit: "100" };
       if (searchText) params.search = searchText;
       if (typeFilter) params.equipType = typeFilter;
-      if (lineFilter) params.lineCode = lineFilter;
+      if (processFilter) params.processCode = processFilter;
       if (commFilter) params.commType = commFilter;
 
       const res = await api.get("/equipment/equips", { params });
@@ -118,7 +120,7 @@ export default function EquipMasterTab() {
     } finally {
       setLoading(false);
     }
-  }, [searchText, typeFilter, lineFilter, commFilter]);
+  }, [searchText, typeFilter, processFilter, commFilter]);
 
   useEffect(() => {
     fetchEquipments();
@@ -148,7 +150,7 @@ export default function EquipMasterTab() {
       equipCode: equip.equipCode,
       equipName: equip.equipName,
       equipType: equip.equipType,
-      lineCode: equip.lineCode || "",
+      processCode: equip.processCode || "",
       modelName: equip.modelName || "",
       imageUrl: equip.imageUrl || null,
       maker: equip.maker || "",
@@ -214,13 +216,13 @@ export default function EquipMasterTab() {
   };
 
   const handleSave = async () => {
-    if (!form.equipCode.trim() || !form.equipName.trim() || !form.equipType) return;
+    if (!canSave) return;
     try {
       const body = {
         equipCode: form.equipCode,
         equipName: form.equipName,
         equipType: form.equipType,
-        lineCode: form.lineCode || undefined,
+        processCode: form.processCode || undefined,
         modelName: form.modelName || undefined,
         imageUrl: form.imageUrl || undefined,
         maker: form.maker || undefined,
@@ -304,7 +306,7 @@ export default function EquipMasterTab() {
       },
     },
     {
-      accessorKey: "processCode", header: t("master.equip.process", "공정"), size: 110,
+      accessorKey: "processCode", header: t("master.equip.process", "적용공정"), size: 110,
       cell: ({ row }) => {
         const e = row.original;
         if (!e.processCode) return <span className="text-text-muted">-</span>;
@@ -405,7 +407,7 @@ export default function EquipMasterTab() {
                     onChange={setTypeFilter}
                     disabled={equipTypeLoading}
                   />
-                  <LineSelect value={lineFilter} onChange={setLineFilter} placeholder={t("master.equip.line", "라인")} />
+                  <ProcessSelect showProcessType value={processFilter} onChange={setProcessFilter} labelPrefix={t("master.equip.process", "적용공정")} />
                   <ComCodeSelect groupCode="COMM_TYPE" value={commFilter} onChange={setCommFilter} labelPrefix={t("master.equip.commTypeShort", "통신")} />
                 </div>
               }
@@ -424,7 +426,7 @@ export default function EquipMasterTab() {
               <Button size="sm" variant="secondary" onClick={() => guard(() => setPanelOpen(false))}>
                 {t("common.cancel", "취소")}
               </Button>
-              <Button size="sm" onClick={handleSave} disabled={!form.equipCode.trim() || !form.equipName.trim() || !form.equipType}>
+              <Button size="sm" onClick={handleSave} disabled={!canSave}>
                 {t("common.save", "저장")}
               </Button>
             </div>
@@ -437,7 +439,7 @@ export default function EquipMasterTab() {
                 <FieldInput field="equipName" label={t("master.equip.equipName", "설비명")} value={form.equipName} onChange={(e) => setForm({ ...form, equipName: e.target.value })} required />
                 <Field field="equipType" label={t("master.equip.type", "유형")} required>
                   <Select
-                    options={equipTypeOptions.length ? equipTypeOptions : [{ value: form.equipType, label: form.equipType }]}
+                    options={equipTypeOptions}
                     value={form.equipType}
                     onChange={(v) => setForm({ ...form, equipType: v as EquipType })}
                     disabled={equipTypeLoading}
@@ -445,7 +447,7 @@ export default function EquipMasterTab() {
                   />
                 </Field>
                 <FieldComCodeSelect field="commType" groupCode="COMM_TYPE" includeAll={false} label={t("master.equip.commType", "통신방식")} value={form.commType} onChange={(v) => setForm({ ...form, commType: v as CommType })} />
-                <FieldLineSelect field="lineCode" label={t("master.equip.line", "라인")} value={form.lineCode} onChange={(v) => setForm({ ...form, lineCode: v })} wrapperClassName="col-span-2" />
+                <FieldProcessSelect field="processCode" label={t("master.equip.process", "적용공정")} showProcessType value={form.processCode} onChange={(v) => setForm({ ...form, processCode: v })} wrapperClassName="col-span-2" />
               </div>
             </div>
             {(form.commType === "TCP" || form.commType === "MQTT") && (

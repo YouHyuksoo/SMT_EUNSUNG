@@ -108,6 +108,8 @@ export interface DataGridProps<T> {
   showColumnBorder?: boolean;
   /** 전체화면 버튼 표시 여부 (기본: false) */
   enableFullscreen?: boolean;
+  /** 하단 Footer(전체 건수 + 페이지네이션) 표시 여부 (기본: true) */
+  showFooter?: boolean;
   /** SQL 조회문 — 지정 시 툴바에 DB 아이콘 버튼 표시 */
   sqlQuery?: string;
   /** 서버사이드 필터 상태 — SQL 뷰어에 WHERE 조건으로 반영 (빈 문자열/null/undefined 자동 제외) */
@@ -139,6 +141,7 @@ function DataGrid<T>({
   getRowId,
   showColumnBorder = true,
   enableFullscreen = true,
+  showFooter = true,
   sqlQuery,
   sqlFilters,
   initialSorting,
@@ -625,6 +628,7 @@ function DataGrid<T>({
       </div>
 
       {/* Footer — 건수 + 페이지네이션 + 페이지 크기 */}
+      {showFooter && (
       <PaginationControls
         table={table}
         totalCount={data.length}
@@ -633,6 +637,7 @@ function DataGrid<T>({
         pagination={pagination}
         onPaginationChange={setPagination}
       />
+      )}
       {showSql && sqlQuery && (
         <SqlViewerModal
           sql={sqlQuery}
