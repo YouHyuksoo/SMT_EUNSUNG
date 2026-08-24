@@ -258,7 +258,7 @@ export class ProcessService {
     }, {});
   }
 
-  async assignEquipment(processCode: string, equipCode: string, organizationId?: number) {
+  async assignEquipment(processCode: string, equipCode: string, organizationId?: number, lineCode?: string) {
     await this.findById(processCode, organizationId);
 
     const equipment = await this.equipRepository.findOne({
@@ -274,10 +274,23 @@ export class ProcessService {
 
     await this.equipRepository.update(
       { equipCode, ...this.tenantWhere(organizationId) },
-      { processCode },
+      { processCode, ...(lineCode ? { lineCode } : {}) },
     );
 
-    return { processCode, equipCode };
+    return { processCode, equipCode, lineCode: lineCode ?? equipment.lineCode };
+  }
+
+  /** 배치 설비의 라인코드 수정 (IMCN_MACHINE.LINE_CODE) */
+  async updateEquipmentLine(processCode: string, equipCode: string, lineCode: string, organizationId?: number) {
+    const equipment = await this.equipRepository.findOne({
+      where: { equipCode, ...this.tenantWhere(organizationId) },
+    });
+    if (!equipment) throw new NotFoundException(`설비를 찾을 수 없습니다: ${equipCode}`);
+    await this.equipRepository.update(
+      { equipCode, ...this.tenantWhere(organizationId) },
+      { lineCode: lineCode || null },
+    );
+    return { processCode, equipCode, lineCode };
   }
 
   async removeEquipment(processCode: string, equipCode: string, organizationId?: number) {

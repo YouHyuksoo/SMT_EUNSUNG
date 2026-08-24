@@ -14,7 +14,6 @@ export interface StdTimeRow {
   st: number | null; ct: number | null; nt: number | null; tt: number | null;
   remark: string | null; registeredBy: string | null; updatedBy: string | null; updatedAt: string | null;
 }
-export interface ItemRow { itemCode: string; itemName: string | null; itemSpec: string | null; }
 
 @Injectable()
 export class StandardTimeService {
@@ -23,11 +22,12 @@ export class StandardTimeService {
     private readonly repo: Repository<ProductStMaster>,
   ) {}
 
-  /** 표준시간 목록 (ID_ITEM 조인으로 모델명 표시) */
+  /** 표준시간 목록 (IP_PRODUCT_MODEL_MASTER의 PART_NO→MODEL_NAME으로 모델명 표시) */
   list(): Promise<StdTimeRow[]> {
     return this.repo.manager.query(
       `SELECT s.ITEM_CODE AS "itemCode",
-              i.ITEM_NAME AS "modelName",
+              (SELECT MAX(m.MODEL_NAME) FROM IP_PRODUCT_MODEL_MASTER m
+                WHERE m.PART_NO = s.ITEM_CODE AND m.ORGANIZATION_ID = s.ORGANIZATION_ID) AS "modelName",
               TO_CHAR(s.DATESET,'YYYY-MM-DD') AS "validFrom",
               TO_CHAR(s.DATEEND,'YYYY-MM-DD') AS "validTo",
               s.ST_VALUE AS "st", s.CT_VALUE AS "ct", s.NT_VALUE AS "nt", s.TT_VALUE AS "tt",
@@ -36,17 +36,8 @@ export class StandardTimeService {
               NVL(s.LAST_MODIFY_BY, s.ENTER_BY) AS "updatedBy",
               TO_CHAR(NVL(s.LAST_MODIFY_DATE, s.ENTER_DATE),'YYYY-MM-DD HH24:MI') AS "updatedAt"
          FROM IP_PRODUCT_ST_MASTER s
-         LEFT JOIN ID_ITEM i ON i.ITEM_CODE = s.ITEM_CODE AND i.ORGANIZATION_ID = s.ORGANIZATION_ID
         WHERE s.ORGANIZATION_ID = ${ORG}
         ORDER BY s.ITEM_CODE, s.DATESET`,
-    );
-  }
-
-  /** 모델선택 팝업용 품목 목록 (ID_ITEM) */
-  items(): Promise<ItemRow[]> {
-    return this.repo.manager.query(
-      `SELECT ITEM_CODE AS "itemCode", ITEM_NAME AS "itemName", ITEM_SPEC AS "itemSpec"
-         FROM ID_ITEM WHERE ORGANIZATION_ID = ${ORG} ORDER BY ITEM_CODE`,
     );
   }
 

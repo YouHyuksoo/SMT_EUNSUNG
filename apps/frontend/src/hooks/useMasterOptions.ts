@@ -12,6 +12,7 @@
  */
 
 import { useMemo } from "react";
+import { LINE_DIVISION_LABELS } from "@smt/shared";
 import { useApiQuery } from "./useApi";
 import { useComCodeOptions, useComCodes } from "./useComCode";
 import type { SelectOption } from "@/components/ui/Select";
@@ -240,6 +241,42 @@ export function useLineOptions() {
       value: l.lineCode,
       label: `${l.lineCode} - ${l.lineName}`,
     })),
+  [rawData]);
+
+  return { options, isLoading, rawData };
+}
+
+/** 생산라인관리(IP_PRODUCT_LINE) 항목 */
+interface ProdLineItem {
+  lineCode: string;
+  lineName: string;
+  lineDivision: string;
+}
+
+/**
+ * 생산라인관리(라인마스터) 기준 라인 옵션 — label: "라인코드 - 라인명 - 라인구분", value: 라인코드
+ */
+export function useProdLineOptions() {
+  const { data, isLoading } = useApiQuery<{ data: ProdLineItem[] }>(
+    ["prod-lines", "options"],
+    "/master/prod-lines?limit=1000",
+    { staleTime: 5 * 60 * 1000 },
+  );
+
+  const rawData = useMemo<ProdLineItem[]>(() => {
+    const response = data?.data as unknown as ApiResponse<ProdLineItem[]> | ProdLineItem[] | undefined;
+    const list = Array.isArray(response) ? response : response?.data ?? [];
+    return list;
+  }, [data]);
+
+  const options = useMemo<SelectOption[]>(() =>
+    rawData.map((l) => {
+      const division = LINE_DIVISION_LABELS[l.lineDivision as keyof typeof LINE_DIVISION_LABELS] ?? l.lineDivision;
+      return {
+        value: l.lineCode,
+        label: `${l.lineCode} - ${l.lineName} - ${division}`,
+      };
+    }),
   [rawData]);
 
   return { options, isLoading, rawData };

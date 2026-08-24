@@ -17,6 +17,8 @@ import { useUnsavedGuard } from "@/hooks/useUnsavedGuard";
 import api from "@/services/api";
 import ProcessList from "./components/ProcessList";
 import ProcessEquipGrid from "./components/ProcessEquipGrid";
+import { ProdLineSelect } from "@/components/shared";
+import toast from "react-hot-toast";
 import ProcessUploadModal from "./components/ProcessUploadModal";
 import { FieldCodeSelect, FieldInput, FieldSelect } from "./components/ProcessFieldHelp";
 import type { Equipment, NumericProcessField, Process } from "./types";
@@ -72,6 +74,7 @@ export default function ProcessPage() {
   const [assignModalOpen, setAssignModalOpen] = useState(false);
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [assignEquipCode, setAssignEquipCode] = useState("");
+  const [assignLineCode, setAssignLineCode] = useState("");
 
   /* ── 공정 목록 조회 ── */
   const fetchProcesses = useCallback(async () => {
@@ -238,6 +241,7 @@ export default function ProcessPage() {
 
   const handleOpenAssign = useCallback(() => {
     setAssignEquipCode("");
+    setAssignLineCode("");
     setAssignModalOpen(true);
   }, []);
 
@@ -252,14 +256,32 @@ export default function ProcessPage() {
     try {
       await api.post(`/master/processes/${encodeURIComponent(selectedCode)}/equipments`, {
         equipCode: assignEquipCode,
+        lineCode: assignLineCode || undefined,
       });
       setAssignModalOpen(false);
       setAssignEquipCode("");
+      setAssignLineCode("");
       refreshEquipmentViews();
     } catch (e: unknown) {
       console.error("Assign equipment failed:", e);
     }
-  }, [selectedCode, assignEquipCode, refreshEquipmentViews]);
+  }, [selectedCode, assignEquipCode, assignLineCode, refreshEquipmentViews]);
+
+  /* 배치 설비의 라인코드 인라인 수정 (IMCN_MACHINE.LINE_CODE) */
+  const handleUpdateEquipLine = useCallback(async (equipment: Equipment, lineCode: string) => {
+    if (!selectedCode) return;
+    try {
+      await api.put(
+        `/master/processes/${encodeURIComponent(selectedCode)}/equipments/${encodeURIComponent(equipment.equipCode)}/line`,
+        { lineCode },
+      );
+      refreshEquipmentViews();
+      toast.success(`${equipment.equipCode} 라인이 저장되었습니다`);
+    } catch (e: unknown) {
+      console.error("Update equipment line failed:", e);
+      toast.error("라인 저장에 실패했습니다");
+    }
+  }, [selectedCode, refreshEquipmentViews]);
 
   const confirmEquipmentRemoval = useCallback(async () => {
     if (!selectedCode || !removeEquipmentTarget) return;
@@ -345,8 +367,8 @@ export default function ProcessPage() {
 
       {/* 본문: 상단 공정 + 하단 설비 + 슬라이드 패널 */}
       <div className="flex-1 min-h-0 flex overflow-hidden">
-        <div className="flex-1 min-w-0 grid grid-rows-[minmax(0,3fr)_minmax(0,2fr)] gap-6">
-          <div className="flex flex-col min-h-0">
+        <div className="flex-1 min-w-0 grid grid-rows-[minmax(0,2.85fr)_minmax(220px,2.3fr)] gap-6">
+          <div className="flex flex-col min-w-0 min-h-0 overflow-hidden">
             <ProcessList
               processes={processes}
               selectedCode={selectedCode}
@@ -358,7 +380,7 @@ export default function ProcessPage() {
               onDelete={setDeleteTarget}
             />
           </div>
-          <div className="flex flex-col min-h-0">
+          <div className="flex flex-col min-w-0 min-h-0 overflow-hidden">
             <ProcessEquipGrid
               processCode={selectedCode}
               processName={selectedProcess?.processName ?? ""}
@@ -366,6 +388,7 @@ export default function ProcessPage() {
               isLoading={equipLoading}
               onAdd={handleOpenAssign}
               onRemove={setRemoveEquipmentTarget}
+              onLineChange={handleUpdateEquipLine}
             />
           </div>
         </div>
@@ -585,6 +608,11 @@ export default function ProcessPage() {
             onChange={setAssignEquipCode}
             fullWidth
           />
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-text">{t("equipment.master.lineCode", { defaultValue: "라인코드" })}</label>
+            <ProdLineSelect value={assignLineCode} onChange={setAssignLineCode} includeUnassigned fullWidth />
+            <p className="mt-1 text-xs text-text-muted">미선택 시 설비의 기존 라인을 유지합니다.</p>
+          </div>
           <p className="text-xs text-text-muted">{t("master.process.assignEquipmentHint")}</p>
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="secondary" onClick={() => setAssignModalOpen(false)}>

@@ -17,12 +17,6 @@ export class StandardTimeController {
     return { list: await this.svc.list() };
   }
 
-  @Get('items')
-  @ApiOperation({ summary: '모델선택 팝업용 품목 목록' })
-  async items() {
-    return { items: await this.svc.items() };
-  }
-
   @Post()
   @ApiOperation({ summary: '표준시간 신규' })
   async create(@Body() dto: StdTimeUpsertDto) {

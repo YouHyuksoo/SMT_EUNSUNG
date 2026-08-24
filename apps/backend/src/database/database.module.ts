@@ -65,6 +65,10 @@ import { ProductStMaster } from '../entities/product-st-master.entity';
 import { EquipDowntimeReason } from '../entities/equip-downtime-reason.entity';
 import { EquipDowntimeMap } from '../entities/equip-downtime-map.entity';
 import { EquipDowntimeMapDtl } from '../entities/equip-downtime-map-dtl.entity';
+import { ProductModelMaster } from '../entities/product-model-master.entity';
+import { ProductWorkResult } from '../entities/product-work-result.entity';
+import { ProductWorkDefect } from '../entities/product-work-defect.entity';
+import { EquipDowntimeResult } from '../entities/equip-downtime-result.entity';
 
 @Global()
 @Module({
@@ -147,6 +151,10 @@ import { EquipDowntimeMapDtl } from '../entities/equip-downtime-map-dtl.entity';
             EquipDowntimeReason,
             EquipDowntimeMap,
             EquipDowntimeMapDtl,
+            ProductModelMaster,
+            ProductWorkResult,
+            ProductWorkDefect,
+            EquipDowntimeResult,
           ],
           migrations: [],
           migrationsRun: false,

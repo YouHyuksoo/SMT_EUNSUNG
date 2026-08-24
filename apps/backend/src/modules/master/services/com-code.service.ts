@@ -131,10 +131,12 @@ export class ComCodeService {
     const queryBuilder = this.comCodeRepository.createQueryBuilder('code')
       .select('code.groupCode', 'groupCode')
       .addSelect('COUNT(*)', 'count')
-      .addSelect("LISTAGG(code.detailCode, ' ') WITHIN GROUP (ORDER BY code.detailCode)", 'detailCodes')
-      .addSelect("LISTAGG(code.codeName, ' ') WITHIN GROUP (ORDER BY code.detailCode)", 'searchTextKo')
-      .addSelect("LISTAGG(code.codeNameEng, ' ') WITHIN GROUP (ORDER BY code.detailCode)", 'searchTextEn')
-      .addSelect("LISTAGG(code.codeNameLocal, ' ') WITHIN GROUP (ORDER BY code.detailCode)", 'searchTextLocal')
+      // ON OVERFLOW TRUNCATE: 그룹 내 코드가 많아 연결 결과가 VARCHAR2(4000B)를 넘어도
+      // ORA-01489로 실패하지 않고 안전하게 절삭한다(검색·표시용 문자열이라 절삭 허용).
+      .addSelect("LISTAGG(code.detailCode, ' ' ON OVERFLOW TRUNCATE '' WITHOUT COUNT) WITHIN GROUP (ORDER BY code.detailCode)", 'detailCodes')
+      .addSelect("LISTAGG(code.codeName, ' ' ON OVERFLOW TRUNCATE '' WITHOUT COUNT) WITHIN GROUP (ORDER BY code.detailCode)", 'searchTextKo')
+      .addSelect("LISTAGG(code.codeNameEng, ' ' ON OVERFLOW TRUNCATE '' WITHOUT COUNT) WITHIN GROUP (ORDER BY code.detailCode)", 'searchTextEn')
+      .addSelect("LISTAGG(code.codeNameLocal, ' ' ON OVERFLOW TRUNCATE '' WITHOUT COUNT) WITHIN GROUP (ORDER BY code.detailCode)", 'searchTextLocal')
       .groupBy('code.groupCode')
       .orderBy('code.groupCode', 'ASC');
 

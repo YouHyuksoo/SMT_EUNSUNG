@@ -14,7 +14,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Calendar, RefreshCw, CalendarPlus, Copy, Lock, Unlock } from "lucide-react";
 import { Card, CardContent, Button, Input, ConfirmModal } from "@/components/ui";
-import { LineSelect } from "@/components/shared";
+import { ProdLineSelect } from "@/components/shared";
 import api from "@/services/api";
 import CalendarGrid from "./components/CalendarGrid";
 import DayEditModal from "./components/DayEditModal";
@@ -235,7 +235,7 @@ export default function WorkCalendarPage() {
                   <label className="mb-1.5 block text-sm font-medium text-text dark:text-gray-200">
                     {t("master.workCalendar.line")}
                   </label>
-                  <LineSelect value={lineCode} onChange={setLineCode} fullWidth />
+                  <ProdLineSelect value={lineCode} onChange={setLineCode} fullWidth />
                   <p className="mt-1 text-xs text-text-muted dark:text-gray-400">
                     {lineCode
                       ? t("master.workCalendar.lineModeHint")

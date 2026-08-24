@@ -68,10 +68,23 @@ export class ProcessController {
   async assignEquipment(
     @Param('id') id: string,
     @Body('equipCode') equipCode: string,
+    @Body('lineCode') lineCode: string,
     @OrganizationId() organizationId: number,
   ) {
-    const data = await this.processService.assignEquipment(id, equipCode, organizationId);
+    const data = await this.processService.assignEquipment(id, equipCode, organizationId, lineCode);
     return ResponseUtil.success(data, '설비가 공정에 배치되었습니다.');
+  }
+
+  @Put(':id/equipments/:equipCode/line')
+  @ApiOperation({ summary: '배치 설비 라인코드 수정' })
+  async updateEquipmentLine(
+    @Param('id') id: string,
+    @Param('equipCode') equipCode: string,
+    @Body('lineCode') lineCode: string,
+    @OrganizationId() organizationId: number,
+  ) {
+    const data = await this.processService.updateEquipmentLine(id, equipCode, lineCode, organizationId);
+    return ResponseUtil.success(data, '배치 설비 라인이 수정되었습니다.');
   }
 
   @Delete(':id/equipments/:equipCode')

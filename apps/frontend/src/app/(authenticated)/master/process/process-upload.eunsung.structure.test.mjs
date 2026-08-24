@@ -31,8 +31,8 @@ test('preserves the process editor panel and equipment assignment modal composit
   assert.match(page, /<Select[\s\S]*?options=\{assignOptions\}[\s\S]*?onChange=\{setAssignEquipCode\}/);
 });
 
-test('process and assigned-equipment grids use a 60:40 vertical layout', () => {
-  assert.match(page, /grid-rows-\[minmax\(0,3fr\)_minmax\(0,2fr\)\]/);
+test('process and assigned-equipment grids use a 60:40 vertical layout with room for three equipment rows', () => {
+  assert.match(page, /grid-rows-\[minmax\(0,3fr\)_minmax\(220px,2fr\)\]/);
   assert.doesNotMatch(page, /grid-cols-12/);
   assert.doesNotMatch(page, /col-span-7/);
   assert.doesNotMatch(page, /col-span-5/);
@@ -57,6 +57,10 @@ test('uses compact process-card padding and an inline assigned-equipment count',
 });
 
 test('contains both grids and keeps the equipment action visible', () => {
+  assert.equal(
+    (page.match(/className="flex flex-col min-w-0 min-h-0 overflow-hidden"/g) ?? []).length,
+    2,
+  );
   assert.match(equipmentGrid, /<Card padding="none" className="flex-1 flex flex-col min-w-0 min-h-0 w-full max-w-full overflow-hidden">/);
   assert.match(equipmentGrid, /<Card className="flex-1 flex items-center justify-center min-w-0 min-h-0 w-full max-w-full overflow-hidden">/);
   assert.match(equipmentGrid, /className="px-4 pt-3 pb-1 border-b border-border flex-shrink-0"/);
@@ -64,5 +68,5 @@ test('contains both grids and keeps the equipment action visible', () => {
   assert.match(equipmentGrid, /className="flex-1 min-w-0"/);
   assert.match(equipmentGrid, /className="text-sm font-semibold text-text flex flex-wrap items-center gap-2"/);
   assert.match(equipmentGrid, /<Button size="sm" className="flex-shrink-0" onClick=\{onAdd\}>/);
-  assert.match(equipmentGrid, /<CardContent className="flex-1 min-w-0 min-h-0 overflow-hidden px-4 py-3">/);
+  assert.match(equipmentGrid, /<CardContent className="flex-1 min-w-0 min-h-0 overflow-hidden px-4 pt-1 pb-3">/);
 });
