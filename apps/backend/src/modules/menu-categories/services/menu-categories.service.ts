@@ -61,13 +61,12 @@ export class MenuCategoriesService {
     );
     const missingItems = DEFAULT_MENU_CATEGORY_LAYOUT.flatMap((category) =>
       category.menuCodes
-        .filter(isValidMenuCode)
-        .filter((menuCode) => !existingMenuCodes.has(menuCode))
         .map((menuCode, index) => ({
           menuCode,
           categoryCode: category.categoryCode,
           sortOrder: (index + 1) * 10,
-        })),
+        }))
+        .filter((item) => isValidMenuCode(item.menuCode) && !existingMenuCodes.has(item.menuCode)),
     );
 
     if (missingCategories.length === 0 && missingItems.length === 0) return;

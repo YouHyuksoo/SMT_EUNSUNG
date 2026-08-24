@@ -1,13 +1,21 @@
 /**
  * @file src/modules/master/services/plant.service.ts
- * @description 공장/라인 비즈니스 로직 서비스 - TypeORM Repository 패턴
+ * @description PLANTS 공장/작업장/라인/CELL 비즈니스 로직 서비스.
  */
 
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindOptionsWhere } from 'typeorm';
+import { Repository } from 'typeorm';
 import { Plant } from '../../../entities/plant.entity';
-import { CreatePlantDto, UpdatePlantDto, PlantQueryDto } from '../dto/plant.dto';
+import { CreatePlantDto, PlantQueryDto, UpdatePlantDto } from '../dto/plant.dto';
+
+const PLANT_ORDER = {
+  sortOrder: 'ASC' as const,
+  plantCode: 'ASC' as const,
+  shopCode: 'ASC' as const,
+  lineCode: 'ASC' as const,
+  cellCode: 'ASC' as const,
+};
 
 @Injectable()
 export class PlantService {
@@ -16,15 +24,22 @@ export class PlantService {
     private readonly plantRepository: Repository<Plant>,
   ) {}
 
-  async findAll(query: PlantQueryDto, organizationId?: number) {
+  private tenantWhere(company: string, plantCd: string) {
+    if (!company?.trim() || !plantCd?.trim()) {
+      throw new BadRequestException('회사와 사업장 테넌트가 필요합니다.');
+    }
+    return { company, plantCd };
+  }
+
+  async findAll(query: PlantQueryDto, company: string, plantCd: string) {
+    const tenantWhere = this.tenantWhere(company, plantCd);
     const { page = 1, limit = 10, plantType, search, useYn } = query;
     const skip = (page - 1) * limit;
 
-    const queryBuilder = this.plantRepository.createQueryBuilder('plant')
-
-    if (organizationId != null) {
-      queryBuilder.andWhere('plant.organizationId = :organizationId', { organizationId });
-    }
+    const queryBuilder = this.plantRepository.createQueryBuilder('plant');
+    queryBuilder
+      .where('plant.company = :company', { company: tenantWhere.company })
+      .andWhere('plant.plantCd = :plantCd', { plantCd: tenantWhere.plantCd });
 
     if (plantType) {
       queryBuilder.andWhere('plant.plantType = :plantType', { plantType });
@@ -37,15 +52,18 @@ export class PlantService {
     if (search) {
       const upper = search.toUpperCase();
       queryBuilder.andWhere(
-        '(plant.plantCode LIKE :search OR plant.plantName LIKE :searchRaw)',
-        { search: `%${upper}%`, searchRaw: `%${search}%` }
+        '(UPPER(plant.plantCode) LIKE :search OR UPPER(plant.shopCode) LIKE :search OR UPPER(plant.lineCode) LIKE :search OR UPPER(plant.cellCode) LIKE :search OR UPPER(plant.plantName) LIKE :search)',
+        { search: `%${upper}%` },
       );
     }
 
     const [data, total] = await Promise.all([
       queryBuilder
-        .orderBy('plant.plantType', 'ASC')
-        .addOrderBy('plant.sortOrder', 'ASC')
+        .orderBy('plant.sortOrder', 'ASC')
+        .addOrderBy('plant.plantCode', 'ASC')
+        .addOrderBy('plant.shopCode', 'ASC')
+        .addOrderBy('plant.lineCode', 'ASC')
+        .addOrderBy('plant.cellCode', 'ASC')
         .skip(skip)
         .take(limit)
         .getMany(),
@@ -55,88 +73,118 @@ export class PlantService {
     return { data, total, page, limit };
   }
 
-  async findById(plantCode: string, shopCode = '-', lineCode = '-', cellCode = '-', organizationId?: number) {
+  async findById(
+    plantCode: string,
+    shopCode: string,
+    lineCode: string,
+    cellCode: string,
+    company: string,
+    plantCd: string,
+  ) {
     const plantEntity = await this.plantRepository.findOne({
       where: {
         plantCode,
         shopCode,
         lineCode,
         cellCode,
-        ...(organizationId != null ? { organizationId } : {}),
+        ...this.tenantWhere(company, plantCd),
       },
     });
 
-    if (!plantEntity) throw new NotFoundException(`공장/라인을 찾을 수 없습니다: ${plantCode}/${shopCode}/${lineCode}/${cellCode}`);
+    if (!plantEntity) {
+      throw new NotFoundException(`공장/라인을 찾을 수 없습니다: ${plantCode}/${shopCode}/${lineCode}/${cellCode}`);
+    }
     return plantEntity;
   }
 
-  async findHierarchy(plantCode?: string) {
-    const where: FindOptionsWhere<Plant> = {};
-    if (plantCode) {
-      where.plantCode = plantCode;
-    }
+  async findHierarchy(plantCode: string | undefined, company: string, plantCd: string) {
+    const where = {
+      ...this.tenantWhere(company, plantCd),
+      ...(plantCode ? { plantCode } : {}),
+    };
 
     return this.plantRepository.find({
       where,
-      order: { sortOrder: 'asc' },
+      order: PLANT_ORDER,
     });
   }
 
-  async create(dto: CreatePlantDto, organizationId?: number) {
-    const existing = await this.plantRepository.findOne({
-      where: {
-        plantCode: dto.plantCode,
-        shopCode: dto.shopCode ?? '-',
-        lineCode: dto.lineCode ?? '-',
-        cellCode: dto.cellCode ?? '-',
-        ...(organizationId != null ? { organizationId } : {}),
-      },
-    });
-
-    if (existing) throw new ConflictException(`이미 존재하는 공장/라인입니다`);
-
-    const plantEntity = this.plantRepository.create({
+  async create(dto: CreatePlantDto, company: string, plantCd: string) {
+    const tenantWhere = this.tenantWhere(company, plantCd);
+    const key = {
       plantCode: dto.plantCode,
       shopCode: dto.shopCode ?? '-',
       lineCode: dto.lineCode ?? '-',
       cellCode: dto.cellCode ?? '-',
+    };
+
+    const existing = await this.plantRepository.findOne({
+      where: { ...key, ...tenantWhere },
+    });
+
+    if (existing) throw new ConflictException('이미 존재하는 공장/라인입니다');
+
+    const plantEntity = this.plantRepository.create({
+      ...key,
+      ...tenantWhere,
       plantName: dto.plantName,
-      plantType: dto.plantType,
+      plantType: dto.plantType ?? null,
       sortOrder: dto.sortOrder ?? 0,
       useYn: dto.useYn ?? 'Y',
-      organizationId,
     });
 
     return this.plantRepository.save(plantEntity);
   }
 
-  async update(plantCode: string, dto: UpdatePlantDto, shopCode = '-', lineCode = '-', cellCode = '-', organizationId?: number) {
-    await this.findById(plantCode, shopCode, lineCode, cellCode, organizationId);
+  async update(
+    plantCode: string,
+    dto: UpdatePlantDto,
+    shopCode: string,
+    lineCode: string,
+    cellCode: string,
+    company: string,
+    plantCd: string,
+  ) {
+    const tenantWhere = this.tenantWhere(company, plantCd);
+    const hasUpdate = [dto.plantName, dto.plantType, dto.sortOrder, dto.useYn].some(
+      (value) => value !== undefined,
+    );
+    if (!hasUpdate) throw new BadRequestException('수정할 항목이 하나 이상 필요합니다.');
+
+    const key = { plantCode, shopCode, lineCode, cellCode };
+    await this.findById(plantCode, shopCode, lineCode, cellCode, company, plantCd);
+
     const updateData: Partial<Pick<Plant, 'plantName' | 'plantType' | 'sortOrder' | 'useYn'>> = {
       ...(dto.plantName !== undefined ? { plantName: dto.plantName } : {}),
       ...(dto.plantType !== undefined ? { plantType: dto.plantType } : {}),
       ...(dto.sortOrder !== undefined ? { sortOrder: dto.sortOrder } : {}),
       ...(dto.useYn !== undefined ? { useYn: dto.useYn } : {}),
     };
-    await this.plantRepository.update(
-      { plantCode, shopCode, lineCode, cellCode, ...(organizationId != null ? { organizationId } : {}) },
-      updateData,
-    );
-    return this.findById(plantCode, shopCode, lineCode, cellCode, organizationId);
+
+    await this.plantRepository.update({ ...key, ...tenantWhere }, updateData);
+    return this.findById(plantCode, shopCode, lineCode, cellCode, company, plantCd);
   }
 
-  async delete(plantCode: string, shopCode = '-', lineCode = '-', cellCode = '-', organizationId?: number) {
-    await this.findById(plantCode, shopCode, lineCode, cellCode, organizationId);
+  async delete(
+    plantCode: string,
+    shopCode: string,
+    lineCode: string,
+    cellCode: string,
+    company: string,
+    plantCd: string,
+  ) {
+    const tenantWhere = this.tenantWhere(company, plantCd);
+    const key = { plantCode, shopCode, lineCode, cellCode };
+    await this.findById(plantCode, shopCode, lineCode, cellCode, company, plantCd);
 
-    await this.plantRepository.delete({ plantCode, shopCode, lineCode, cellCode, ...(organizationId != null ? { organizationId } : {}) });
-    return { plantCode, shopCode, lineCode, cellCode };
+    await this.plantRepository.delete({ ...key, ...tenantWhere });
+    return key;
   }
 
-  async findByType(plantType: string) {
+  async findByType(plantType: string, company: string, plantCd: string) {
     return this.plantRepository.find({
-      where: { plantType, useYn: 'Y' },
-      order: { sortOrder: 'asc' },
+      where: { plantType, useYn: 'Y', ...this.tenantWhere(company, plantCd) },
+      order: PLANT_ORDER,
     });
   }
-
 }

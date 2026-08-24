@@ -3,46 +3,82 @@
  * @description 공장/라인 관련 DTO 정의
  */
 
-import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
-import { IsString, IsOptional, IsInt, Min, Max, MaxLength, IsIn } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  IsString,
+  IsOptional,
+  IsInt,
+  Min,
+  Max,
+  MaxLength,
+  IsIn,
+  IsNotEmpty,
+  Matches,
+  Validate,
+  ValidationArguments,
+  ValidatorConstraint,
+  ValidatorConstraintInterface,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { PLANT_TYPE_VALUES, USE_YN_VALUES } from '@smt/shared';
 import { PaginationQueryDto } from '../../../common/dto/base-query.dto';
 
+@ValidatorConstraint({ name: 'hasPlantUpdateField', async: false })
+class HasPlantUpdateFieldConstraint implements ValidatorConstraintInterface {
+  validate(_value: unknown, args: ValidationArguments): boolean {
+    const update = args.object as Record<string, unknown>;
+    return ['plantName', 'plantType', 'sortOrder', 'useYn'].some((field) => update[field] !== undefined);
+  }
+
+  defaultMessage(): string {
+    return '수정할 항목이 하나 이상 필요합니다.';
+  }
+}
+
 export class CreatePlantDto {
   @ApiProperty({ description: '공장 코드', example: 'P001' })
   @IsString()
+  @IsNotEmpty()
+  @Matches(/\S/)
   @MaxLength(50)
   plantCode: string;
 
   @ApiPropertyOptional({ description: '작업장 코드' })
   @IsOptional()
   @IsString()
+  @IsNotEmpty()
+  @Matches(/\S/)
   @MaxLength(50)
   shopCode?: string;
 
   @ApiPropertyOptional({ description: '라인 코드' })
   @IsOptional()
   @IsString()
+  @IsNotEmpty()
+  @Matches(/\S/)
   @MaxLength(50)
   lineCode?: string;
 
   @ApiPropertyOptional({ description: '셀 코드' })
   @IsOptional()
   @IsString()
+  @IsNotEmpty()
+  @Matches(/\S/)
   @MaxLength(50)
   cellCode?: string;
 
   @ApiProperty({ description: '공장/라인명', example: '1공장' })
   @IsString()
-  @MaxLength(100)
+  @IsNotEmpty()
+  @Matches(/\S/)
+  @MaxLength(200)
   plantName: string;
 
   @ApiPropertyOptional({ description: '타입', enum: PLANT_TYPE_VALUES })
   @IsOptional()
   @IsString()
   @IsIn([...PLANT_TYPE_VALUES])
-  plantType?: string;
+  plantType?: string | null;
 
   @ApiPropertyOptional({ description: '정렬 순서', default: 0 })
   @IsOptional()
@@ -57,7 +93,36 @@ export class CreatePlantDto {
   useYn?: string;
 }
 
-export class UpdatePlantDto extends PartialType(CreatePlantDto) {}
+export class UpdatePlantDto {
+  @Validate(HasPlantUpdateFieldConstraint)
+  private readonly _updatePresence?: never;
+
+  @ApiPropertyOptional({ description: '공장/라인명', example: '생산2팀' })
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  @Matches(/\S/)
+  @MaxLength(200)
+  plantName?: string;
+
+  @ApiPropertyOptional({ description: '타입', enum: PLANT_TYPE_VALUES })
+  @IsOptional()
+  @IsString()
+  @IsIn([...PLANT_TYPE_VALUES])
+  plantType?: string | null;
+
+  @ApiPropertyOptional({ description: '정렬 순서' })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  sortOrder?: number;
+
+  @ApiPropertyOptional({ description: '사용 여부', enum: USE_YN_VALUES })
+  @IsOptional()
+  @IsString()
+  @IsIn([...USE_YN_VALUES])
+  useYn?: string;
+}
 
 export class PlantQueryDto extends PaginationQueryDto {
 

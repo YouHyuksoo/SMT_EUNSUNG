@@ -32,6 +32,7 @@ import { SchedulerModule } from './modules/scheduler/scheduler.module';
 import { UserModule } from './modules/user/user.module';
 import { MasterCodeModule } from './modules/master/master-code.module';
 import { MasterCompanyModule } from './modules/master/master-company.module';
+import { MasterPlantModule } from './modules/master/master-plant.module';
 import { MasterDepartmentModule } from './modules/master/master-department.module';
 import { MasterPartModule } from './modules/master/master-part.module';
 import { MasterEquipModule } from './modules/master/master-equip.module';
@@ -99,6 +100,9 @@ import { SharedModule } from './shared/shared.module';
 
     // 기준정보 회사정보 (/master/companies) — ISYS_ORGANIZATION 기반
     MasterCompanyModule,
+
+    // 기준정보 공장/작업장/라인/CELL (/master/plants) — PLANTS 기반
+    MasterPlantModule,
 
     // 시스템 부서정보 (/system/departments) — ISYS_DEPARTMENT 기반
     MasterDepartmentModule,

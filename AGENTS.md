@@ -169,6 +169,8 @@ Oracle is the system of record for both backend (TypeORM) and the legacy Display
 - **DDL/DML 실행 전 실제 스키마를 확인한다.** 라이브 컬럼이 없으면 필드를 지어내지 말고 쿼리/UI 의존성을 고친다.
 - DB 스키마는 명시 요청이 없으면 변경하지 않는다.
 - Raw SQL / 스키마 점검 / 운영 데이터 DML은 `oracle-db` connector 또는 검증된 raw SQL 파일 경로를 우선한다. **SQL 파일만 만들고 끝내지 않는다** — 사용자가 보류를 명시하지 않으면 connector로 실제 적용하고 pre/post 결과를 기록한다.
+- `oracle-db --execute-file`로 여러 블록을 실행하는 파일의 첫 익명 PL/SQL 블록은 파일 첫 토큰을 `DECLARE` 또는 `BEGIN`으로 둔다. 선행 주석 때문에 connector가 SQL로 오인하지 않도록 정적 테스트를 두고 실제 재실행으로 확인한다.
+- Oracle에서 `(tenant_key, nullable_request_id)` 일반 UNIQUE를 부분 unique로 사용하지 않는다. null 요청 ID를 제외하는 함수기반 unique index를 사용하고, 같은 tenant의 null 2건 허용과 non-null 중복 차단 DML을 검증한다. OEE 계약은 `oee-mobile-ddl.spec.ts`가 이를 강제한다.
 - Oracle/driver 오류(`ORA-*`, `NJS-*`)는 원문 그대로 보존한다. API가 `Database query failed`만 반환하면 같은 헬퍼 경로나 read-only 쿼리로 실제 SQL을 재현해 진짜 오류를 드러낸다.
 - 대형 테이블은 사용 가능한 인덱스 컬럼을 먼저 파악한 뒤 광범위 집계를 한다.
 - 모니터링/집계는 비즈니스 날짜 정의를 먼저 맞추고 그 다음 쿼리 형태를 최적화한다.
