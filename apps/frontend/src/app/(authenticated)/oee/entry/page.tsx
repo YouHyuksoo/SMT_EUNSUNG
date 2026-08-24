@@ -28,6 +28,7 @@ import {
   normalizeResource,
   normalizeStatus,
   readCollection,
+  resourceIdentity,
   stableEndSignature,
   stableStartSignature,
   unwrap,
@@ -238,9 +239,8 @@ export default function OeeEntryPage() {
     if (generation !== contextGeneration.current) return;
 
     if (resourceResult.status === 'fulfilled') {
-      const expectedResourceType = 'LINE';
       const rows = readCollection<OeeResource>(resourceResult.value, 'resources')
-        .filter((resource) => resource.processCode === nextProcess && resource.resourceType === expectedResourceType)
+        .filter((resource) => resource.processCode === nextProcess && (resource.resourceType === 'LINE' || resource.resourceType === 'CELL'))
         .map(normalizeResource);
       setResources(rows);
       if (rows.length === 0) {
@@ -689,10 +689,10 @@ export default function OeeEntryPage() {
                 <div className="mt-2 min-h-0 flex-1 overflow-y-auto pr-1">
                   <div className="grid grid-cols-2 gap-2 xl:grid-cols-3">
                     {resources.map((resource) => {
-                      const selected = selectedResource?.resourceCode === resource.resourceCode;
+                      const selected = selectedResource ? resourceIdentity(selectedResource) === resourceIdentity(resource) : false;
                       return (
                         <button
-                          key={`${resource.resourceType}-${resource.resourceCode}`}
+                          key={resourceIdentity(resource)}
                           type="button"
                           onClick={() => selectResource(resource)}
                           disabled={contextLocked}

@@ -7,7 +7,7 @@ const routineDeploymentFiles = [
   '01_tables.sql',
   '03_tables_ext.sql',
   '07_mobile_prerequisites.sql',
-  '09_seed_dashboard_resources.sql',
+  '12_resource_management_contract.sql',
   '04_view_plan_time.sql',
   '05_view_live.sql',
   '06_proc_build_summary.sql',
@@ -16,6 +16,7 @@ const manualCleanupFiles = [
   'manual/08_cleanup_legacy_oee_plants.sql',
   'manual/10_cleanup_unapproved_oee_resources.sql',
 ];
+const manualBootstrapFiles = ['manual/09_bootstrap_dashboard_resources.sql'];
 const protectedMasterTables = new Set([
   'IP_PRODUCT_WORKSTAGE',
   'IP_PRODUCT_LINE',
@@ -63,8 +64,12 @@ describe('OEE MOBILE prerequisite DDL', () => {
     join(__dirname, '../../../../../oracle_db_scripts/oee/07_mobile_prerequisites.sql'),
     'utf8',
   );
-  const resourceSeed = readFileSync(
-    join(__dirname, '../../../../../oracle_db_scripts/oee/09_seed_dashboard_resources.sql'),
+  const resourceBootstrap = readFileSync(
+    join(__dirname, '../../../../../oracle_db_scripts/oee/manual/09_bootstrap_dashboard_resources.sql'),
+    'utf8',
+  );
+  const resourceContract = readFileSync(
+    join(__dirname, '../../../../../oracle_db_scripts/oee/12_resource_management_contract.sql'),
     'utf8',
   );
   const legacyPlantCleanup = readFileSync(
@@ -116,13 +121,22 @@ describe('OEE MOBILE prerequisite DDL', () => {
     expect(source.split(/\r?\n/).filter((line) => line.trim() === '/').length).toBeGreaterThan(1);
   });
 
-  it('synchronizes SMT and ASM resources only from IP_PRODUCT_LINE', () => {
-    expect(resourceSeed.trimStart()).toMatch(/^DECLARE\b/);
-    expect(resourceSeed).toContain('IP_PRODUCT_LINE');
-    expect(resourceSeed).toContain("'01','02','03','04','05','06','07','08','09','10','11','12'");
-    expect(resourceSeed).toContain("'19','20','21','22','23','24'");
-    expect(resourceSeed).not.toContain('PLANTS');
-    expect(resourceSeed).not.toContain('PROD2');
+  it('keeps the fixed resource projection as a manual bootstrap only', () => {
+    expect(resourceBootstrap).toContain('One-time bootstrap only');
+    expect(resourceBootstrap).toContain('IP_PRODUCT_LINE');
+    expect(resourceBootstrap).not.toContain('PLANTS');
+    expect(resourceBootstrap).not.toContain('PROD2');
+  });
+
+  it('enforces one managed OEE resource per organization and line', () => {
+    expect(resourceContract.trimStart()).toMatch(/^DECLARE\b/);
+    expect(resourceContract).toContain('REF_CODE NOT NULL');
+    expect(resourceContract).toContain('ORGANIZATION_ID, REF_CODE');
+    expect(resourceContract).toContain('CK_OEE_RESOURCE_PROCESS');
+    expect(resourceContract).toContain('CK_OEE_RESOURCE_TYPE');
+    expect(resourceContract).toContain('CK_OEE_RESOURCE_USE');
+    expect(baseTables).toContain("RESOURCE_TYPE IN ('LINE', 'CELL')");
+    expect(baseTables).toContain('OEE_RESOURCE (ORGANIZATION_ID, REF_CODE)');
   });
 
   it('only deletes the exact legacy OEE PLANTS seed hierarchy', () => {
@@ -158,6 +172,8 @@ describe('OEE MOBILE prerequisite DDL', () => {
     expect(planView).toContain('WORK_TYPE AS SHIFT');
     expect(planView).toContain("LENGTH(TRIM(START_TIME)) = 4");
     expect(planView).toContain("TRIM(START_TIME) || '00'");
+    expect(planView).toContain("r.PROCESS_CODE IN ('SMT', 'ASSY')");
+    expect(planView).toContain("r.RESOURCE_TYPE IN ('LINE', 'CELL')");
     expect(liveView).toContain('OEE_DOWNTIME_EVENT');
     expect(liveView).not.toContain('OEE_OPERATION_LOG');
     expect(liveView).toContain('SEGMENT_START_TIME');
@@ -174,16 +190,24 @@ describe('OEE MOBILE prerequisite DDL', () => {
     expect(existsSync(join(oeeScriptRoot, '08_cleanup_legacy_oee_plants.sql'))).toBe(false);
     expect(existsSync(join(oeeScriptRoot, '10_cleanup_unapproved_oee_resources.sql'))).toBe(false);
     expect(existsSync(join(oeeScriptRoot, '11_seed_production2_equipment.sql'))).toBe(false);
+    expect(existsSync(join(oeeScriptRoot, '09_seed_dashboard_resources.sql'))).toBe(false);
 
     const manifest = JSON.parse(readFileSync(deploymentManifestPath, 'utf8')) as {
       routineDeployment: string[];
+      manualBootstrap: string[];
       manualCleanup: string[];
     };
 
     expect(manifest.routineDeployment).toEqual(routineDeploymentFiles);
+    expect(manifest.manualBootstrap).toEqual(manualBootstrapFiles);
     expect(manifest.manualCleanup).toEqual(manualCleanupFiles);
+    expect(manifest.routineDeployment).not.toContain('09_seed_dashboard_resources.sql');
 
-    for (const referencedFile of [...manifest.routineDeployment, ...manifest.manualCleanup]) {
+    for (const referencedFile of [
+      ...manifest.routineDeployment,
+      ...manifest.manualBootstrap,
+      ...manifest.manualCleanup,
+    ]) {
       expect(existsSync(join(oeeScriptRoot, referencedFile))).toBe(true);
     }
   });
@@ -199,12 +223,12 @@ describe('OEE MOBILE prerequisite DDL', () => {
     expect(violations).toEqual([]);
   });
 
-  it('reads dashboard lines from IP_PRODUCT_LINE and writes only OEE_RESOURCE', () => {
-    const writeTargets = extractTargets(resourceSeed, 'write');
-    const protectedReadTargets = extractTargets(resourceSeed, 'read')
+  it('keeps the manual bootstrap read-only for IP_PRODUCT_LINE', () => {
+    const writeTargets = extractTargets(resourceBootstrap, 'write');
+    const protectedReadTargets = extractTargets(resourceBootstrap, 'read')
       .filter((target) => protectedMasterTables.has(target));
 
-    expect(resourceSeed).toMatch(/\bFROM\s+IP_PRODUCT_LINE\b/i);
+    expect(resourceBootstrap).toMatch(/\bFROM\s+IP_PRODUCT_LINE\b/i);
     expect(new Set(writeTargets)).toEqual(new Set(['OEE_RESOURCE']));
     expect(new Set(protectedReadTargets)).toEqual(new Set(['IP_PRODUCT_LINE']));
   });

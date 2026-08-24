@@ -7,7 +7,7 @@ const helperSource = fs.readFileSync(new URL("./_lib/oee-entry.ts", import.meta.
 const helperModule = ts.transpileModule(helperSource, {
   compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 },
 }).outputText;
-const { createRequestId, formatServerTimestamp, normalizeEvent, normalizeStatus } = await import(
+const { createRequestId, formatServerTimestamp, normalizeEvent, normalizeResource, normalizeStatus, resourceIdentity } = await import(
   `data:text/javascript;base64,${Buffer.from(helperModule).toString("base64")}`
 );
 
@@ -47,8 +47,9 @@ test("worker lookup gates context loading and unwraps both envelope shapes", () 
 });
 
 test("resource normalization and payload builders preserve the approved mobile contract", () => {
-  assert.match(lib, /parentLineCode.*resourceCode/);
-  assert.doesNotMatch(lib, /CELL|PROD2|ASSY_PARENT_LINE_CODE/);
+  assert.match(lib, /parentLineCode/);
+  assert.match(lib, /resourceCode/);
+  assert.match(lib, /CELL/);
   assert.match(lib, /export function makeStartPayload/);
   assert.match(lib, /export function makeEndPayload/);
 
@@ -72,9 +73,38 @@ test("resource normalization and payload builders preserve the approved mobile c
   assert.doesNotMatch(endBuilder, /workerId|processCode|resourceCode|parentLineCode|reasonCode|memo/);
 });
 
-test("resource parsing is line-only", () => {
+test("resource parsing preserves LINE and CELL types and parent line codes", () => {
   assert.equal(normalizeEvent({ eventId: 1, resourceType: "LINE" })?.resourceType, "LINE");
-  assert.equal(normalizeEvent({ eventId: 2, resourceType: "CELL" })?.resourceType, undefined);
+  assert.equal(normalizeEvent({ eventId: 2, resourceType: "CELL" })?.resourceType, "CELL");
+
+  const line = normalizeResource({
+    processCode: "SMT",
+    resourceType: "LINE",
+    resourceCode: "L-01",
+    resourceName: "Line 01",
+    parentLineCode: "P-01",
+  });
+  const cell = normalizeResource({
+    processCode: "ASSY",
+    resourceType: "CELL",
+    resourceCode: "C-01",
+    resourceName: "Cell 01",
+    parentLineCode: "L-02",
+  });
+
+  assert.equal(line.resourceType, "LINE");
+  assert.equal(line.parentLineCode, "P-01");
+  assert.equal(cell.resourceType, "CELL");
+  assert.equal(cell.parentLineCode, "L-02");
+  assert.notEqual(resourceIdentity(line), resourceIdentity(cell));
+});
+
+test("resource selection filters supported server resource types and compares full identity", () => {
+  assert.doesNotMatch(page, /const expectedResourceType = ['"]LINE['"]/);
+  assert.match(page, /resource\.resourceType === ['"]LINE['"] \|\| resource\.resourceType === ['"]CELL['"]/);
+  assert.match(page, /resourceIdentity\(selectedResource\)/);
+  assert.match(page, /resourceIdentity\(resource\)/);
+  assert.match(page, /resource\.processCode/);
 });
 
 test("request IDs are stable for failed retries and invalidated by command changes", () => {

@@ -1,3 +1,4 @@
+-- One-time bootstrap only. Routine deployment must not overwrite user-managed OEE resources.
 DECLARE
 BEGIN
   MERGE INTO OEE_RESOURCE target

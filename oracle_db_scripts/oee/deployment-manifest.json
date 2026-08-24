@@ -3,10 +3,13 @@
     "01_tables.sql",
     "03_tables_ext.sql",
     "07_mobile_prerequisites.sql",
-    "09_seed_dashboard_resources.sql",
+    "12_resource_management_contract.sql",
     "04_view_plan_time.sql",
     "05_view_live.sql",
     "06_proc_build_summary.sql"
+  ],
+  "manualBootstrap": [
+    "manual/09_bootstrap_dashboard_resources.sql"
   ],
   "manualCleanup": [
     "manual/08_cleanup_legacy_oee_plants.sql",

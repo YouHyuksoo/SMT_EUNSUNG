@@ -30,6 +30,7 @@ const KNOWN_LEAF_CODES: ReadonlySet<string> = new Set<string>([
   'OEE_MST_STD_TIME',
   'OEE_MST_IDLE_REASON',
   'OEE_MST_EQUIP_REASON',
+  'OEE_MST_RESOURCE',
   'SYS_COMPANY',
   'SYS_CODE',
   'SYS_CONFIG',

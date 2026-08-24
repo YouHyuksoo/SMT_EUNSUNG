@@ -394,7 +394,8 @@
     "oee.equipDowntimeMobile": "Quét dừng máy (Mock)",
     "oee.standardTime": "Quản lý thời gian tiêu chuẩn",
     "oee.idleReason": "Mã lý do dừng thiết bị",
-    "oee.equipReason": "Liên kết lý do dừng theo thiết bị"
+    "oee.equipReason": "Liên kết lý do dừng theo thiết bị",
+    "oee.resource": "Quản lý tài nguyên OEE"
   },
   "header": {
     "theme": "Giao diện",

@@ -20,6 +20,7 @@ import { ProdLineMaster } from '../../entities/prod-line-master.entity';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { OeeMobileController } from './oee-mobile.controller';
 import { OeeMobileService } from './oee-mobile.service';
+import { SmtCloseRunPreviewService } from './smt-close-run-preview.service';
 
 @Module({
   imports: [
@@ -36,6 +37,13 @@ import { OeeMobileService } from './oee-mobile.service';
     ]),
   ],
   controllers: [OeeController, OeeMobileController],
-  providers: [OeeMasterService, OeeLogService, OeeDashboardService, OeeMobileService, JwtAuthGuard],
+  providers: [
+    OeeMasterService,
+    OeeLogService,
+    OeeDashboardService,
+    OeeMobileService,
+    SmtCloseRunPreviewService,
+    JwtAuthGuard,
+  ],
 })
 export class OeeModule {}

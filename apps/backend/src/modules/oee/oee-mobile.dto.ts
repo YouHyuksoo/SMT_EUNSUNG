@@ -13,7 +13,7 @@ import {
 export const OEE_MOBILE_PROCESS_CODES = ['SMT', 'ASSY'] as const;
 export type OeeMobileProcessCode = (typeof OEE_MOBILE_PROCESS_CODES)[number];
 
-export const OEE_MOBILE_RESOURCE_TYPES = ['LINE'] as const;
+export const OEE_MOBILE_RESOURCE_TYPES = ['LINE', 'CELL'] as const;
 export type OeeMobileResourceType = (typeof OEE_MOBILE_RESOURCE_TYPES)[number];
 
 export interface OeeMobileResource {
@@ -21,7 +21,7 @@ export interface OeeMobileResource {
   resourceType: OeeMobileResourceType;
   resourceCode: string;
   resourceName: string;
-  parentLineCode: string | null;
+  parentLineCode: string;
 }
 
 export interface OeeMobileReason {

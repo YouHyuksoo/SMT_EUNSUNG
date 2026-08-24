@@ -392,6 +392,7 @@
     "oee.standardTime": "Standard Time",
     "oee.idleReason": "Equipment Downtime Reason",
     "oee.equipReason": "Equipment-Downtime Reason Mapping",
+    "oee.resource": "OEE Resource Management",
     "oee.equipWorkResult": "Equipment Work Result",
     "oee.equipOpsAnalysis": "Equipment Ops Analysis",
     "oee.equipDowntimeMobile": "Equipment Downtime Scan (Mock)"

@@ -59,7 +59,7 @@ describe('OeeMobileController', () => {
         resourceType: 'LINE',
         resourceCode: '01',
         resourceName: 'A',
-        parentLineCode: null,
+        parentLineCode: '01',
       },
     ];
     service.listResources.mockResolvedValue(resources);

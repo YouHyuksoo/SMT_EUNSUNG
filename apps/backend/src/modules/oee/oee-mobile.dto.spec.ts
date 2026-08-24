@@ -57,7 +57,7 @@ describe('OeeMobileStartDowntimeDto', () => {
   it('rejects invalid lengths, enums, event-owned fields, and tenant fields', async () => {
     const dto = Object.assign(new OeeMobileStartDowntimeDto(), {
       processCode: 'PROCESS_X',
-      resourceType: 'CELL',
+      resourceType: 'MACHINE',
       resourceCode: 'x'.repeat(51),
       parentLineCode: 'x'.repeat(51),
       workerId: 'x'.repeat(21),
@@ -128,16 +128,14 @@ describe('OeeMobileStatusQueryDto', () => {
     await expect(validate(dto)).resolves.toHaveLength(0);
   });
 
-  it('rejects CELL resources from the line-only status contract', async () => {
+  it('accepts CELL resources in the status contract', async () => {
     const dto = Object.assign(new OeeMobileStatusQueryDto(), {
       processCode: 'ASSY',
       resourceType: 'CELL',
-      resourceCode: '50',
-      parentLineCode: '50',
+      resourceCode: '19',
+      parentLineCode: '19',
     });
 
-    const errors = await validate(dto);
-
-    expect(errors.map((error) => error.property)).toContain('resourceType');
+    await expect(validate(dto)).resolves.toHaveLength(0);
   });
 });

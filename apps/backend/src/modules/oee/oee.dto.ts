@@ -10,42 +10,38 @@ import {
   IsString,
   ValidateNested,
   IsIn,
+  MaxLength,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
-/** OEE 리소스 마스터 신규/수정 */
-export class ResourceUpsertDto {
-  @IsOptional()
-  @IsInt()
-  resourceId?: number; // 있으면 수정
+export const OEE_PROCESS_CODES = ['SMT', 'ASSY'] as const;
+export type OeeProcessCode = (typeof OEE_PROCESS_CODES)[number];
+
+export const OEE_RESOURCE_TYPES = ['LINE', 'CELL'] as const;
+export type OeeResourceType = (typeof OEE_RESOURCE_TYPES)[number];
+
+/** OEE 리소스 마스터 신규 등록 */
+export class ResourceCreateDto {
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(50)
+  lineCode: string;
 
   @IsString()
   @IsNotEmpty()
-  processCode: string;
+  @MaxLength(20)
+  @IsIn([...OEE_PROCESS_CODES])
+  processCode: OeeProcessCode;
 
   @IsString()
   @IsNotEmpty()
-  resourceType: string;
-
-  @IsOptional()
-  @IsString()
-  refCode?: string | null;
-
-  @IsString()
-  @IsNotEmpty()
-  resourceName: string;
-
-  @IsOptional()
-  idealCt?: number | null;
-
-  @IsOptional()
-  @IsString()
-  useYn?: string;
-
-  @IsOptional()
-  @IsInt()
-  sortOrder?: number;
+  @MaxLength(10)
+  @IsIn([...OEE_RESOURCE_TYPES])
+  resourceType: OeeResourceType;
 }
+
+/** OEE 리소스 마스터 수정 — lineCode는 기존 값과 동일해야 한다. */
+export class ResourceUpdateDto extends ResourceCreateDto {}
 
 /** OEE 비가동사유 마스터 신규/수정 */
 export class ReasonUpsertDto {

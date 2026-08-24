@@ -1,5 +1,5 @@
 export type OeeProcessCode = 'SMT' | 'ASSY';
-export type OeeResourceType = 'LINE';
+export type OeeResourceType = 'LINE' | 'CELL';
 
 export interface OeeWorker {
   workerId: string;
@@ -174,9 +174,13 @@ export function readCollection<T>(response: unknown, key: string): T[] {
 export function normalizeResource(resource: OeeResource): OeeResource {
   return {
     ...resource,
-    resourceType: 'LINE',
-    parentLineCode: resource.resourceCode,
+    resourceType: resource.resourceType === 'CELL' ? 'CELL' : 'LINE',
+    parentLineCode: typeof resource.parentLineCode === 'string' ? resource.parentLineCode : null,
   };
+}
+
+export function resourceIdentity(resource: Pick<OeeResource, 'processCode' | 'resourceType' | 'resourceCode'>): string {
+  return `${resource.processCode}:${resource.resourceType}:${resource.resourceCode}`;
 }
 
 export function stableStartSignature(fields: Omit<StartCommandFields, 'requestId'>): string {
@@ -236,7 +240,7 @@ export function normalizeEvent(value: unknown): OeeDowntimeEvent | null {
   return {
     eventId,
     processCode: value.processCode === 'SMT' || value.processCode === 'ASSY' ? value.processCode : undefined,
-    resourceType: value.resourceType === 'LINE' ? 'LINE' : undefined,
+    resourceType: value.resourceType === 'LINE' || value.resourceType === 'CELL' ? value.resourceType : undefined,
     resourceCode: readString(value, 'resourceCode') ?? undefined,
     parentLineCode: readString(value, 'parentLineCode'),
     reasonCode: readString(value, 'reasonCode'),

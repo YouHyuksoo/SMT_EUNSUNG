@@ -2,17 +2,39 @@
  * @file src/modules/oee/oee.controller.ts
  * @description OEE 입력 API — 리소스/사유 마스터, 가동일지 로드/저장.
  * 라우트(글로벌 prefix api/v1):
- *   GET/POST/PUT /oee/resource, /oee/reason
+ *   GET/POST/PUT/DELETE /oee/resource, /oee/resource/candidates, /oee/reason
+ *   GET /oee/smt-close-run/preview?runNo=&ctDate= (read-only)
  *   GET /oee/log?resourceId=&workDate=&shift= , POST /oee/log
  */
-import { Body, Controller, Get, Post, Put, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseIntPipe,
+  Post,
+  Put,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
-import { OrganizationId, UserId } from '../../common/decorators/tenant.decorator';
+import {
+  OrganizationId,
+  UserId,
+} from '../../common/decorators/tenant.decorator';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { OeeMasterService } from './oee-master.service';
 import { OeeLogService } from './oee-log.service';
 import { OeeDashboardService } from './oee-dashboard.service';
-import { ResourceUpsertDto, ReasonUpsertDto, LogSaveDto } from './oee.dto';
+import {
+  ResourceCreateDto,
+  ResourceUpdateDto,
+  ReasonUpsertDto,
+  LogSaveDto,
+} from './oee.dto';
+import { SmtCloseRunPreviewQueryDto } from './smt-close-run-preview.dto';
+import { SmtCloseRunPreviewService } from './smt-close-run-preview.service';
 
 @ApiTags('OEE')
 @UseGuards(JwtAuthGuard)
@@ -22,6 +44,7 @@ export class OeeController {
     private readonly master: OeeMasterService,
     private readonly log: OeeLogService,
     private readonly dashboard: OeeDashboardService,
+    private readonly smtCloseRunPreview: SmtCloseRunPreviewService,
   ) {}
 
   @Get('resource')
@@ -30,23 +53,53 @@ export class OeeController {
     return { resources: await this.master.listResources(organizationId) };
   }
 
+  @Get('resource/candidates')
+  @ApiOperation({ summary: 'OEE 리소스 등록 라인 후보' })
+  async listResourceCandidates(
+    @OrganizationId() organizationId: number | undefined,
+  ) {
+    return {
+      candidates: await this.master.listResourceCandidates(organizationId),
+    };
+  }
+
+  @Get('smt-close-run/preview')
+  @ApiOperation({ summary: 'SMT 마감 RUN 원천 검증 미리보기(읽기 전용)' })
+  async previewSmtCloseRun(
+    @Query() query: SmtCloseRunPreviewQueryDto,
+    @OrganizationId() organizationId: number | undefined,
+  ) {
+    return this.smtCloseRunPreview.preview(query, organizationId);
+  }
+
   @Post('resource')
   @ApiOperation({ summary: 'OEE 리소스 신규' })
   async createResource(
-    @Body() dto: ResourceUpsertDto,
+    @Body() dto: ResourceCreateDto,
     @OrganizationId() organizationId: number | undefined,
   ) {
-    await this.master.upsertResource({ ...dto, resourceId: undefined }, organizationId);
+    await this.master.createResource(dto, organizationId);
     return { ok: true };
   }
 
-  @Put('resource')
+  @Put('resource/:resourceId')
   @ApiOperation({ summary: 'OEE 리소스 수정' })
   async updateResource(
-    @Body() dto: ResourceUpsertDto,
+    @Param('resourceId', ParseIntPipe) resourceId: number,
+    @Body() dto: ResourceUpdateDto,
     @OrganizationId() organizationId: number | undefined,
   ) {
-    await this.master.upsertResource(dto, organizationId);
+    await this.master.updateResource(resourceId, dto, organizationId);
+    return { ok: true };
+  }
+
+  @Delete('resource/:resourceId')
+  @ApiOperation({ summary: 'OEE 리소스 삭제' })
+  async deleteResource(
+    @Param('resourceId', ParseIntPipe) resourceId: number,
+    @OrganizationId() organizationId: number | undefined,
+  ) {
+    await this.master.deleteResource(resourceId, organizationId);
     return { ok: true };
   }
 
@@ -84,7 +137,14 @@ export class OeeController {
     @Query('shift') shift: string,
     @OrganizationId() organizationId: number | undefined,
   ) {
-    return { rows: await this.log.loadShift(Number(resourceId), workDate, shift, organizationId) };
+    return {
+      rows: await this.log.loadShift(
+        Number(resourceId),
+        workDate,
+        shift,
+        organizationId,
+      ),
+    };
   }
 
   @Post('log')
