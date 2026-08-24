@@ -125,6 +125,12 @@ export default function ProcessList({
         cell: ({ getValue }) => (getValue() as string) || "-",
       },
       {
+        accessorKey: "appliedLineCodes",
+        header: "적용라인",
+        size: 140,
+        cell: ({ row }) => <div className="flex flex-wrap gap-1">{(row.original.appliedLineCodes ?? []).map((code) => <span key={code} className="px-1.5 py-0.5 rounded bg-primary/10 text-primary text-xs">{code}</span>)}</div>,
+      },
+      {
         accessorKey: "startYn",
         header: () => (
           <StatusHeaderHelp
@@ -187,8 +193,8 @@ export default function ProcessList({
   );
 
   return (
-    <Card className="flex-1 flex flex-col min-h-0">
-      <CardContent className="flex-1 min-h-0 overflow-hidden">
+    <Card padding="none" className="flex-1 flex flex-col min-w-0 min-h-0 w-full max-w-full overflow-hidden">
+      <CardContent className="flex-1 min-w-0 min-h-0 overflow-hidden px-4 py-3">
         <DataGrid
           data={processes}
           columns={columns}

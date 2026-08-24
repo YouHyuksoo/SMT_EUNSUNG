@@ -12,7 +12,9 @@
  */
 
 import { useMemo } from "react";
+import { LINE_DIVISION_LABELS } from "@smt/shared";
 import { useApiQuery } from "./useApi";
+import { useComCodeOptions, useComCodes } from "./useComCode";
 import type { SelectOption } from "@/components/ui/Select";
 
 /** API 응답 래퍼 타입 */
@@ -57,6 +59,7 @@ interface LineItem {
 interface ProcessItem {
   processCode: string;
   processName: string;
+  processType: string;
 }
 
 interface EquipItem {
@@ -64,11 +67,6 @@ interface EquipItem {
   equipName: string;
   equipType?: string;
   lineCode?: string;
-}
-
-interface EquipTypeItem {
-  equipType: string;
-  equipTypeName: string;
 }
 
 interface PartnerItem {
@@ -248,20 +246,54 @@ export function useLineOptions() {
   return { options, isLoading, rawData };
 }
 
+/** 생산라인관리(IP_PRODUCT_LINE) 항목 */
+interface ProdLineItem {
+  lineCode: string;
+  lineName: string;
+  lineDivision: string;
+}
+
+/**
+ * 생산라인관리(라인마스터) 기준 라인 옵션 — label: "라인코드 - 라인명 - 라인구분", value: 라인코드
+ */
+export function useProdLineOptions() {
+  const { data, isLoading } = useApiQuery<{ data: ProdLineItem[] }>(
+    ["prod-lines", "options"],
+    "/master/prod-lines?limit=1000",
+    { staleTime: 5 * 60 * 1000 },
+  );
+
+  const rawData = useMemo<ProdLineItem[]>(() => {
+    const response = data?.data as unknown as ApiResponse<ProdLineItem[]> | ProdLineItem[] | undefined;
+    const list = Array.isArray(response) ? response : response?.data ?? [];
+    return list;
+  }, [data]);
+
+  const options = useMemo<SelectOption[]>(() =>
+    rawData.map((l) => {
+      const division = LINE_DIVISION_LABELS[l.lineDivision as keyof typeof LINE_DIVISION_LABELS] ?? l.lineDivision;
+      return {
+        value: l.lineCode,
+        label: `${l.lineCode} - ${l.lineName} - ${division}`,
+      };
+    }),
+  [rawData]);
+
+  return { options, isLoading, rawData };
+}
+
 /**
  * 공정 목록을 SelectOption[]으로 반환
  */
 export function useProcessOptions() {
-  const { data, isLoading } = useApiQuery<{ data: ProcessItem[] }>(
+  const { data, isLoading } = useApiQuery<ProcessItem[]>(
     ["processes", "options"],
-    "/equipment/equips/metadata/processes",
+    "/master/processes?limit=5000",
     { staleTime: 5 * 60 * 1000 },
   );
 
   const rawData = useMemo<ProcessItem[]>(() => {
-    const response = data?.data as unknown as ApiResponse<ProcessItem[]> | ProcessItem[] | undefined;
-    const list = Array.isArray(response) ? response : response?.data ?? [];
-    return list;
+    return Array.isArray(data?.data) ? data.data : [];
   }, [data]);
 
   const options = useMemo<SelectOption[]>(() =>
@@ -303,22 +335,8 @@ export function useEquipOptions(processCode?: string) {
  * 설비유형 목록을 SelectOption[]으로 반환
  */
 export function useEquipTypeOptions() {
-  const { data, isLoading } = useApiQuery<{ data: EquipTypeItem[] }>(
-    ["equip-types", "options"],
-    "/equipment/equips/metadata/types",
-    { staleTime: 5 * 60 * 1000 },
-  );
-
-  const options = useMemo<SelectOption[]>(() => {
-    const response = data?.data as unknown as ApiResponse<EquipTypeItem[]> | EquipTypeItem[] | undefined;
-    const list = Array.isArray(response) ? response : response?.data ?? [];
-    return list.map((type) => ({
-      value: type.equipType,
-      label: type.equipTypeName && type.equipTypeName !== type.equipType
-        ? `${type.equipType} - ${type.equipTypeName}`
-        : type.equipType,
-    }));
-  }, [data]);
+  const options = useComCodeOptions("MACHINE TYPE", false, true);
+  const { isLoading } = useComCodes();
 
   return { options, isLoading };
 }

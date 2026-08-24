@@ -50,6 +50,7 @@ import { ProductCompanyCalendar } from '../entities/product-company-calendar.ent
 import { ProductLineCalendar } from '../entities/product-line-calendar.entity';
 import { ShiftTimeMaster } from '../entities/shift-time-master.entity';
 import { ProcessMaster } from '../entities/process-master.entity';
+import { ProcessLine } from '../entities/process-line.entity';
 import { LabelTemplate } from '../entities/label-template.entity';
 import { ProcessMap } from '../entities/process-map.entity';
 import { RoutingGroup } from '../entities/routing-group.entity';
@@ -67,6 +68,10 @@ import { ProductStMaster } from '../entities/product-st-master.entity';
 import { EquipDowntimeReason } from '../entities/equip-downtime-reason.entity';
 import { EquipDowntimeMap } from '../entities/equip-downtime-map.entity';
 import { EquipDowntimeMapDtl } from '../entities/equip-downtime-map-dtl.entity';
+import { ProductModelMaster } from '../entities/product-model-master.entity';
+import { ProductWorkResult } from '../entities/product-work-result.entity';
+import { ProductWorkDefect } from '../entities/product-work-defect.entity';
+import { EquipDowntimeResult } from '../entities/equip-downtime-result.entity';
 
 @Global()
 @Module({
@@ -134,6 +139,7 @@ import { EquipDowntimeMapDtl } from '../entities/equip-downtime-map-dtl.entity';
             ProductLineCalendar,
             ShiftTimeMaster,
             ProcessMaster,
+            ProcessLine,
             LabelTemplate,
             ProcessMap,
             RoutingGroup,
@@ -151,6 +157,10 @@ import { EquipDowntimeMapDtl } from '../entities/equip-downtime-map-dtl.entity';
             EquipDowntimeReason,
             EquipDowntimeMap,
             EquipDowntimeMapDtl,
+            ProductModelMaster,
+            ProductWorkResult,
+            ProductWorkDefect,
+            EquipDowntimeResult,
           ],
           migrations: [],
           migrationsRun: false,

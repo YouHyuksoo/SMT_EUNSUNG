@@ -1,12 +1,13 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Monitor, Plus, Trash2 } from "lucide-react";
+import { Monitor, Plus, Trash2, Save } from "lucide-react";
 import { Card, CardContent, ComCodeBadge, Button } from "@/components/ui";
 import DataGrid from "@/components/data-grid/DataGrid";
 import StatusHeaderHelp from "@/components/shared/StatusHeaderHelp";
 import StatusBadge from "@/components/shared/StatusBadge";
+import { ProdLineSelect } from "@/components/shared";
 import { ColumnDef } from "@tanstack/react-table";
 import type { Equipment } from "../types";
 
@@ -17,6 +18,7 @@ interface ProcessEquipGridProps {
   isLoading: boolean;
   onAdd: () => void;
   onRemove: (equipment: Equipment) => void;
+  onLineChange: (equipment: Equipment, lineCode: string) => void;
 }
 
 export default function ProcessEquipGrid({
@@ -26,8 +28,11 @@ export default function ProcessEquipGrid({
   isLoading,
   onAdd,
   onRemove,
+  onLineChange,
 }: ProcessEquipGridProps) {
   const { t } = useTranslation();
+  // 라인 편집 대기값 (행별) — 저장 버튼으로 확정
+  const [pendingLines, setPendingLines] = useState<Record<string, string>>({});
 
   const columns = useMemo<ColumnDef<Equipment>[]>(
     () => [
@@ -44,7 +49,42 @@ export default function ProcessEquipGrid({
       },
       { accessorKey: "modelName", header: t("equipment.master.modelName", { defaultValue: "모델명" }), size: 130, cell: ({ getValue }) => (getValue() as string) || "-" },
       { accessorKey: "maker", header: t("equipment.master.maker", { defaultValue: "제조사" }), size: 110, cell: ({ getValue }) => (getValue() as string) || "-" },
-      { accessorKey: "lineCode", header: t("equipment.master.lineCode", { defaultValue: "라인코드" }), size: 100, cell: ({ getValue }) => (getValue() as string) || "-" },
+      {
+        accessorKey: "lineCode",
+        header: t("equipment.master.lineCode", { defaultValue: "라인코드" }),
+        size: 230,
+        meta: { filterType: "none" as const },
+        cell: ({ row }) => {
+          const orig = (row.original.lineCode as string) || "";
+          const pending = pendingLines[row.original.equipCode];
+          const current = pending ?? orig;
+          const dirty = pending !== undefined && pending !== orig;
+          return (
+            <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+              <div className="flex-1 min-w-0">
+                <ProdLineSelect
+                  value={current}
+                  onChange={(v) => setPendingLines((p) => ({ ...p, [row.original.equipCode]: v }))}
+                  includeUnassigned
+                  fullWidth
+                  className="!h-8 text-xs"
+                />
+              </div>
+              <button
+                onClick={() => {
+                  onLineChange(row.original, current);
+                  setPendingLines((p) => { const n = { ...p }; delete n[row.original.equipCode]; return n; });
+                }}
+                disabled={!dirty}
+                title={t("common.save", { defaultValue: "저장" })}
+                className="p-1.5 rounded text-primary hover:bg-surface disabled:opacity-30 disabled:cursor-not-allowed flex-shrink-0"
+              >
+                <Save className="w-4 h-4" />
+              </button>
+            </div>
+          );
+        },
+      },
       {
         accessorKey: "status",
         header: () => <StatusHeaderHelp label={t("equipment.master.status", { defaultValue: "상태" })} codeType="EQUIP_STATUS" align="center" />,
@@ -75,12 +115,12 @@ export default function ProcessEquipGrid({
         ),
       },
     ],
-    [t, onRemove],
+    [t, onRemove, onLineChange, pendingLines],
   );
 
   if (!processCode) {
     return (
-      <Card className="flex-1 flex items-center justify-center min-h-0">
+      <Card className="flex-1 flex items-center justify-center min-w-0 min-h-0 w-full max-w-full overflow-hidden">
         <div className="text-center text-text-muted">
           <Monitor className="w-12 h-12 mx-auto mb-3 opacity-30" />
           <p className="text-sm">{t("master.process.noProcessSelected")}</p>
@@ -90,28 +130,25 @@ export default function ProcessEquipGrid({
   }
 
   return (
-    <Card padding="none" className="flex-1 flex flex-col min-h-0">
-      <div className="px-4 pt-4 pb-2 border-b border-border flex-shrink-0">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h3 className="text-sm font-semibold text-text flex items-center gap-2">
+    <Card padding="none" className="flex-1 flex flex-col min-w-0 min-h-0 w-full max-w-full overflow-hidden">
+      <div className="px-4 pt-3 pb-1 border-b border-border flex-shrink-0">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex-1 min-w-0">
+            <h3 className="text-sm font-semibold text-text flex flex-wrap items-center gap-2">
               <Monitor className="w-4 h-4 text-primary" />
               {t("master.process.assignedEquipments")}
               <span className="text-text-muted font-normal">
-                - {processCode} ({processName})
+                - {processCode} ({processName}) · {equipments.length}{t("common.count", { defaultValue: "건" })}
               </span>
             </h3>
-            <p className="text-xs text-text-muted mt-0.5">
-              {equipments.length}{t("common.count", { defaultValue: "건" })}
-            </p>
           </div>
-          <Button size="sm" onClick={onAdd}>
+          <Button size="sm" className="flex-shrink-0" onClick={onAdd}>
             <Plus className="w-4 h-4 mr-1" />
             {t("master.process.assignEquipment", "설비 배치")}
           </Button>
         </div>
       </div>
-      <CardContent className="flex-1 min-h-0 overflow-hidden">
+      <CardContent className="flex-1 min-w-0 min-h-0 overflow-hidden px-4 pt-1 pb-3">
         <DataGrid
           data={equipments}
           columns={columns}

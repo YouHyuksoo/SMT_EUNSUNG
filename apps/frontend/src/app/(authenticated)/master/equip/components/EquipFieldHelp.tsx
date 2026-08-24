@@ -4,14 +4,14 @@ import type { ComponentProps, ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Input } from "@/components/ui";
 import type { InputProps } from "@/components/ui";
-import { ComCodeSelect, LineSelect, HelpTooltip } from "@/components/shared";
+import { ComCodeSelect, ProcessSelect, HelpTooltip } from "@/components/shared";
 
 export const EQUIP_FIELD_HELP = {
   equipCode: { db: "IMCN_MACHINE.MACHINE_CODE", description: "MES 내부에서 설비를 식별하는 고유 코드입니다. 등록 후에는 변경할 수 없습니다." },
   equipName: { db: "IMCN_MACHINE.MACHINE_NAME", description: "현장에서 설비를 식별할 설비명입니다." },
   equipType: { db: "IMCN_MACHINE.MACHINE_TYPE", description: "은성전장 설비 유형 코드입니다." },
   commType: { db: "IMCN_MACHINE (화면 호환 필드)", description: "IMCN_MACHINE에는 별도 통신방식 컬럼이 없어 화면 호환용으로 표시합니다." },
-  lineCode: { db: "IMCN_MACHINE.LINE_CODE", description: "설비가 배치된 생산 라인입니다." },
+  processCode: { db: "IMCN_MACHINE.WORKSTAGE_CODE", description: "설비에 적용할 공정입니다." },
   ipAddress: { db: "IMCN_MACHINE.IP_ADDRESS", description: "TCP·MQTT 통신 시 설비에 접속할 IP 주소입니다." },
   port: { db: "IMCN_MACHINE.PORT_NO", description: "TCP·MQTT 통신 시 설비에 접속할 포트 번호입니다." },
   mqttTopic: { db: "IMCN_MACHINE (미저장)", description: "IMCN_MACHINE에는 MQTT 토픽 저장 컬럼이 없습니다." },
@@ -82,16 +82,16 @@ export function FieldComCodeSelect({ field, label, required, wrapperClassName, .
   );
 }
 
-type FieldLineSelectProps = Omit<ComponentProps<typeof LineSelect>, "label"> & {
+type FieldProcessSelectProps = Omit<ComponentProps<typeof ProcessSelect>, "label"> & {
   field: EquipFieldKey;
   label: string;
   wrapperClassName?: string;
 };
 
-export function FieldLineSelect({ field, label, required, wrapperClassName, ...props }: FieldLineSelectProps) {
+export function FieldProcessSelect({ field, label, required, wrapperClassName, ...props }: FieldProcessSelectProps) {
   return (
     <Field field={field} label={label} required={required} className={wrapperClassName}>
-      <LineSelect {...props} required={required} fullWidth />
+      <ProcessSelect {...props} required={required} fullWidth />
     </Field>
   );
 }

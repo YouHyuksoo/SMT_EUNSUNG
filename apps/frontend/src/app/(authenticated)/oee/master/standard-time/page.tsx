@@ -11,9 +11,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ColumnDef } from '@tanstack/react-table';
 import { Search, Edit2, RefreshCw } from 'lucide-react';
 import toast from 'react-hot-toast';
-import Modal from '@/components/ui/Modal';
 import { Card, CardContent, Input } from '@/components/ui';
 import DataGrid from '@/components/data-grid/DataGrid';
+import { ModelSearchModal } from '@/components/shared';
 import api from '@/services/api';
 
 // 표준시간 분류코드 — ST/CT/NT/TT 4개 고정 컬럼. 각 분류는 시간(초)만 관리한다.
@@ -41,8 +41,6 @@ interface StdTimeRecord {
   registeredBy: string;
   updatedAt: string;
 }
-interface ItemPick { modelCode: string; modelName: string; spec: string; }
-
 interface EditForm {
   originalItemCode: string | null; // 수정 시 원본 키
   originalValidFrom: string | null;
@@ -59,15 +57,12 @@ const emptyForm = (): EditForm => ({ originalItemCode: null, originalValidFrom: 
 
 // API 응답 타입
 interface ApiStdRow { itemCode: string; modelName: string | null; validFrom: string; validTo: string; st: number | null; ct: number | null; nt: number | null; tt: number | null; remark: string | null; registeredBy: string | null; updatedAt: string | null; }
-interface ApiItemRow { itemCode: string; itemName: string | null; itemSpec: string | null; }
 
 export default function StandardTimeMasterPage() {
   const [records, setRecords] = useState<StdTimeRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState<EditForm | null>(null);
   const [modelPickerOpen, setModelPickerOpen] = useState(false);
-  const [items, setItems] = useState<ItemPick[]>([]);
-  const [pickerQuery, setPickerQuery] = useState('');
   const [search, setSearch] = useState('');
 
   const load = useCallback(async () => {
@@ -94,28 +89,11 @@ export default function StandardTimeMasterPage() {
   }, []);
   useEffect(() => { load(); }, [load]);
 
-  const loadItems = useCallback(async () => {
-    if (items.length) return;
-    try {
-      const res = await api.get('/oee/standard-time/items');
-      const rows: ApiItemRow[] = res.data?.data?.items ?? [];
-      setItems(rows.map((r) => ({ modelCode: r.itemCode, modelName: r.itemName ?? '', spec: r.itemSpec ?? '' })));
-    } catch {
-      toast.error('품목 목록 조회에 실패했습니다');
-    }
-  }, [items.length]);
-
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return records;
     return records.filter((r) => [r.modelCode, r.modelName].join(' ').toLowerCase().includes(q));
   }, [records, search]);
-
-  const pickerItems = useMemo(() => {
-    const q = pickerQuery.trim().toLowerCase();
-    const base = q ? items.filter((m) => `${m.modelCode} ${m.modelName}`.toLowerCase().includes(q)) : items;
-    return base.slice(0, 300);
-  }, [items, pickerQuery]);
 
   const columns = useMemo<ColumnDef<StdTimeRecord>[]>(
     () => [
@@ -154,7 +132,7 @@ export default function StandardTimeMasterPage() {
       registeredBy: r.registeredBy, updatedAt: r.updatedAt,
     });
   }
-  function openPicker() { setPickerQuery(''); loadItems(); setModelPickerOpen(true); }
+  function openPicker() { setModelPickerOpen(true); }
 
   async function save() {
     if (!form) return;
@@ -287,38 +265,12 @@ export default function StandardTimeMasterPage() {
         </div>
       )}
 
-      {/* 모델선택 팝업 — ID_ITEM 품목마스터 참조, 단일 선택 */}
-      <Modal isOpen={modelPickerOpen} onClose={() => setModelPickerOpen(false)} title="모델(품목) 선택" size="2xl">
-        <div className="space-y-2">
-          <Input placeholder="모델코드/모델명 검색" value={pickerQuery} onChange={(e) => setPickerQuery(e.target.value)} leftIcon={<Search className="w-4 h-4" />} fullWidth />
-          <div className="max-h-[50vh] overflow-auto border border-border rounded">
-            <table className="w-full text-sm">
-              <thead className="sticky top-0">
-                <tr className="bg-surface text-text-muted">
-                  <th className="p-2 text-left whitespace-nowrap">모델코드</th>
-                  <th className="p-2 text-left">모델명</th>
-                  <th className="p-2 text-left">규격</th>
-                  <th className="p-2 text-center w-20">선택</th>
-                </tr>
-              </thead>
-              <tbody>
-                {pickerItems.map((m) => (
-                  <tr key={m.modelCode} className="border-t border-border">
-                    <td className="p-2 font-mono whitespace-nowrap">{m.modelCode}</td>
-                    <td className="p-2">{m.modelName}</td>
-                    <td className="p-2 text-text-muted">{m.spec}</td>
-                    <td className="p-2 text-center w-20">
-                      <button onClick={() => { if (form) setForm({ ...form, modelCode: m.modelCode, modelName: m.modelName }); setModelPickerOpen(false); }} className="px-3 py-1 rounded border border-primary text-primary hover:bg-surface text-xs whitespace-nowrap">선택</button>
-                    </td>
-                  </tr>
-                ))}
-                {!pickerItems.length && <tr><td colSpan={4} className="p-4 text-center text-text-muted">품목이 없습니다</td></tr>}
-              </tbody>
-            </table>
-          </div>
-          <p className="text-[11px] text-text-muted">최대 300건 표시. 검색으로 좁혀 선택하세요.</p>
-        </div>
-      </Modal>
+      {/* 모델선택 팝업 — IP_PRODUCT_MODEL_MASTER 참조 공용 모달, 단일 선택 */}
+      <ModelSearchModal
+        isOpen={modelPickerOpen}
+        onClose={() => setModelPickerOpen(false)}
+        onSelect={(m) => setForm((prev) => (prev ? { ...prev, modelCode: m.partNo, modelName: m.modelName } : prev))}
+      />
     </div>
   );
 }
