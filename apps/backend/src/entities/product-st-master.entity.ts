@@ -6,6 +6,9 @@ export class ProductStMaster {
   @PrimaryColumn({ name: 'ITEM_CODE', length: 20 })
   itemCode: string;
 
+  @PrimaryColumn({ name: 'MACHINE_CODE', length: 30 })
+  machineCode: string; // 설비코드 (IMCN_MACHINE.MACHINE_CODE) — 설비별 표준시간
+
   @PrimaryColumn({ name: 'DATESET', type: 'date' })
   dateset: Date;
 

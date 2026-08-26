@@ -13,7 +13,7 @@ import { Search, Edit2, RefreshCw } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Card, CardContent, Input } from '@/components/ui';
 import DataGrid from '@/components/data-grid/DataGrid';
-import { ModelSearchModal } from '@/components/shared';
+import { ModelSearchModal, EquipSearchModal } from '@/components/shared';
 import api from '@/services/api';
 
 // 표준시간 분류코드 — ST/CT/NT/TT 4개 고정 컬럼. 각 분류는 시간(초)만 관리한다.
@@ -31,9 +31,11 @@ const OPEN_END = '9999-12-31';
 const periodText = (f: string, t: string) => `${f} ~ ${t === OPEN_END ? '현재 적용' : t}`;
 
 interface StdTimeRecord {
-  id: string;            // itemCode__validFrom (행 키)
+  id: string;            // itemCode__machineCode__validFrom (행 키)
   modelCode: string;     // 품목코드(모델코드)
   modelName: string;
+  machineCode: string;   // 설비코드
+  machineName: string;
   validFrom: string;
   validTo: string;       // 개방형 '9999-12-31'
   times: StdTimes;
@@ -43,9 +45,12 @@ interface StdTimeRecord {
 }
 interface EditForm {
   originalItemCode: string | null; // 수정 시 원본 키
+  originalMachineCode: string | null;
   originalValidFrom: string | null;
   modelCode: string;
   modelName: string;
+  machineCode: string;
+  machineName: string;
   validFrom: string;
   validTo: string;
   times: StdTimes;
@@ -53,16 +58,17 @@ interface EditForm {
   registeredBy: string; // 편집 시 표시용(읽기전용)
   updatedAt: string;    // 편집 시 표시용(읽기전용)
 }
-const emptyForm = (): EditForm => ({ originalItemCode: null, originalValidFrom: null, modelCode: '', modelName: '', validFrom: '', validTo: OPEN_END, times: emptyTimes(), remark: '', registeredBy: '', updatedAt: '' });
+const emptyForm = (): EditForm => ({ originalItemCode: null, originalMachineCode: null, originalValidFrom: null, modelCode: '', modelName: '', machineCode: '', machineName: '', validFrom: '', validTo: OPEN_END, times: emptyTimes(), remark: '', registeredBy: '', updatedAt: '' });
 
 // API 응답 타입
-interface ApiStdRow { itemCode: string; modelName: string | null; validFrom: string; validTo: string; st: number | null; ct: number | null; nt: number | null; tt: number | null; remark: string | null; registeredBy: string | null; updatedAt: string | null; }
+interface ApiStdRow { itemCode: string; modelName: string | null; machineCode: string | null; machineName: string | null; validFrom: string; validTo: string; st: number | null; ct: number | null; nt: number | null; tt: number | null; remark: string | null; registeredBy: string | null; updatedAt: string | null; }
 
 export default function StandardTimeMasterPage() {
   const [records, setRecords] = useState<StdTimeRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState<EditForm | null>(null);
   const [modelPickerOpen, setModelPickerOpen] = useState(false);
+  const [equipPickerOpen, setEquipPickerOpen] = useState(false);
   const [search, setSearch] = useState('');
 
   const load = useCallback(async () => {
@@ -71,9 +77,11 @@ export default function StandardTimeMasterPage() {
       const res = await api.get('/oee/standard-time');
       const list: ApiStdRow[] = res.data?.data?.list ?? [];
       setRecords(list.map((r) => ({
-        id: `${r.itemCode}__${r.validFrom}`,
+        id: `${r.itemCode}__${r.machineCode ?? ''}__${r.validFrom}`,
         modelCode: r.itemCode,
         modelName: r.modelName ?? '',
+        machineCode: r.machineCode ?? '',
+        machineName: r.machineName ?? '',
         validFrom: r.validFrom,
         validTo: r.validTo,
         times: { ST: r.st ?? 0, CT: r.ct ?? 0, NT: r.nt ?? 0, TT: r.tt ?? 0 },
@@ -92,7 +100,7 @@ export default function StandardTimeMasterPage() {
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return records;
-    return records.filter((r) => [r.modelCode, r.modelName].join(' ').toLowerCase().includes(q));
+    return records.filter((r) => [r.modelCode, r.modelName, r.machineCode, r.machineName].join(' ').toLowerCase().includes(q));
   }, [records, search]);
 
   const columns = useMemo<ColumnDef<StdTimeRecord>[]>(
@@ -108,6 +116,8 @@ export default function StandardTimeMasterPage() {
       },
       { accessorKey: 'modelCode', header: '모델코드', cell: ({ getValue }) => <span className="font-mono">{String(getValue() ?? '')}</span> },
       { accessorKey: 'modelName', header: '모델명' },
+      { accessorKey: 'machineCode', header: '설비코드', cell: ({ getValue }) => <span className="font-mono">{String(getValue() ?? '') || '-'}</span> },
+      { accessorKey: 'machineName', header: '설비명', cell: ({ getValue }) => String(getValue() ?? '') || '-' },
       ...TIME_CATEGORIES.map((c) => ({
         id: `time_${c.code}`, header: `${c.code}(초)`, size: 80,
         meta: { align: 'center' as const, filterType: 'none' as const },
@@ -126,8 +136,9 @@ export default function StandardTimeMasterPage() {
   function openCreate() { setForm(emptyForm()); }
   function openEdit(r: StdTimeRecord) {
     setForm({
-      originalItemCode: r.modelCode, originalValidFrom: r.validFrom,
-      modelCode: r.modelCode, modelName: r.modelName, validFrom: r.validFrom, validTo: r.validTo,
+      originalItemCode: r.modelCode, originalMachineCode: r.machineCode, originalValidFrom: r.validFrom,
+      modelCode: r.modelCode, modelName: r.modelName, machineCode: r.machineCode, machineName: r.machineName,
+      validFrom: r.validFrom, validTo: r.validTo,
       times: { ...r.times }, remark: r.remark,
       registeredBy: r.registeredBy, updatedAt: r.updatedAt,
     });
@@ -137,19 +148,20 @@ export default function StandardTimeMasterPage() {
   async function save() {
     if (!form) return;
     if (!form.modelCode) return alert('모델을 선택하세요');
+    if (!form.machineCode) return alert('설비를 선택하세요');
     if (!form.validFrom) return alert('적용 시작일을 입력하세요');
     if (form.validTo !== OPEN_END && form.validTo < form.validFrom) return alert('적용 종료일은 적용 시작일보다 빠를 수 없습니다');
     if (!TIME_CATEGORIES.some((c) => form.times[c.code] > 0)) return alert('분류별 표준시간을 1개 이상 입력하세요');
 
     const payload = {
-      itemCode: form.modelCode, validFrom: form.validFrom, validTo: form.validTo,
+      itemCode: form.modelCode, machineCode: form.machineCode, validFrom: form.validFrom, validTo: form.validTo,
       st: form.times.ST, ct: form.times.CT, nt: form.times.NT, tt: form.times.TT, remark: form.remark,
     };
     try {
       if (form.originalItemCode == null) {
         await api.post('/oee/standard-time', payload);
       } else {
-        await api.put('/oee/standard-time', { ...payload, originalItemCode: form.originalItemCode, originalValidFrom: form.originalValidFrom });
+        await api.put('/oee/standard-time', { ...payload, originalItemCode: form.originalItemCode, originalMachineCode: form.originalMachineCode, originalValidFrom: form.originalValidFrom });
       }
       toast.success('저장되었습니다');
       setForm(null);
@@ -225,6 +237,18 @@ export default function StandardTimeMasterPage() {
               <button onClick={openPicker} className="border border-border rounded px-3 py-2 h-10 text-primary hover:bg-surface">모델선택</button>
             </div>
 
+            <div className="flex items-end gap-2">
+              <label className="text-sm text-text-muted flex flex-col gap-1">
+                <span>설비코드 <span className="text-red-500">*</span></span>
+                <input value={form.machineCode} readOnly placeholder="설비선택" className="border border-border rounded p-2 bg-surface text-text w-40 font-mono" />
+              </label>
+              <label className="text-sm text-text-muted flex flex-col gap-1 flex-1">
+                설비명
+                <input value={form.machineName} readOnly className="border border-border rounded p-2 bg-surface text-text w-full" />
+              </label>
+              <button onClick={() => setEquipPickerOpen(true)} className="border border-border rounded px-3 py-2 h-10 text-primary hover:bg-surface">설비선택</button>
+            </div>
+
             <div className="flex items-end gap-3">
               <label className="text-sm text-text-muted flex flex-col gap-1">
                 <span>적용 시작일 <span className="text-red-500">*</span></span>
@@ -270,6 +294,13 @@ export default function StandardTimeMasterPage() {
         isOpen={modelPickerOpen}
         onClose={() => setModelPickerOpen(false)}
         onSelect={(m) => setForm((prev) => (prev ? { ...prev, modelCode: m.partNo, modelName: m.modelName } : prev))}
+      />
+
+      {/* 설비선택 팝업 — 설비마스터(IMCN_MACHINE) 전체 검색, 단일 선택 */}
+      <EquipSearchModal
+        isOpen={equipPickerOpen}
+        onClose={() => setEquipPickerOpen(false)}
+        onSelect={(e) => setForm((prev) => (prev ? { ...prev, machineCode: e.equipCode, machineName: e.equipName } : prev))}
       />
     </div>
   );
