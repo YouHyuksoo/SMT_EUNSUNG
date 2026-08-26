@@ -22,11 +22,6 @@ function todayStr() {
   const p = (n: number) => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 }
-function nowMinute() {
-  const d = new Date();
-  const p = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
-}
 
 interface RunRow {
   runNo: string; machineCode: string | null; machineName: string | null;
@@ -118,6 +113,14 @@ export default function EquipWorkResultPage() {
   const [downtimes, setDowntimes] = useState<DowntimeRow[]>([]);
   const [dtReasons, setDtReasons] = useState<Code[]>([]);
   const [dtForm, setDtForm] = useState<{ machineCode: string; machineName: string; workstageCode: string; reasonCode: string; memo: string; worker: string }>({ machineCode: '', machineName: '', workstageCode: '', reasonCode: '', memo: '', worker: '' });
+  // 선택 설비의 진행중(종료 안 된) 비가동 이벤트 — 있으면 '비가동 종료' 토글
+  const openDowntimeEvent = useMemo(
+    () => downtimes.find((d) => !d.endTime && (!dtForm.machineCode || d.machineCode === dtForm.machineCode)) ?? null,
+    [downtimes, dtForm.machineCode],
+  );
+  // 종료 상태에서 변경 가능한 비가동 사유 (진행중 이벤트의 현재 사유로 초기화)
+  const [endReasonCode, setEndReasonCode] = useState('');
+  useEffect(() => { setEndReasonCode(openDowntimeEvent?.reasonCode ?? ''); }, [openDowntimeEvent]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -241,10 +244,10 @@ export default function EquipWorkResultPage() {
       await reloadDowntimes();
     } catch { toast.error('비가동 시작 실패'); }
   }
-  async function endDowntime(dtSeq: number, machineCode: string) {
+  async function endDowntime(dtSeq: number, machineCode: string, reasonCode?: string) {
     if (!panelRun) return;
     try {
-      await api.put('/oee/work-result/downtimes', { runNo: panelRun.runNo, dtSeq, machineCode, endTime: nowMinute() });
+      await api.put('/oee/work-result/downtimes', { runNo: panelRun.runNo, dtSeq, machineCode, endNow: true, reasonCode: reasonCode || undefined });
       toast.success('비가동 종료');
       await reloadDowntimes();
     } catch { toast.error('비가동 종료 실패'); }
@@ -541,24 +544,42 @@ export default function EquipWorkResultPage() {
               </table>
             </div>
 
-            {/* 비가동 시작 등록 */}
-            <div className="border-t border-border pt-3 space-y-2">
-              <span className="text-sm font-semibold text-text">비가동 시작 등록</span>
-              <label className="text-sm text-text-muted flex flex-col gap-1"><span>비가동 사유 <span className="text-red-500">*</span></span>
-                <select value={dtForm.reasonCode} onChange={(e) => setDtForm({ ...dtForm, reasonCode: e.target.value })} className="border border-border rounded p-2 bg-background text-text">
-                  <option value="">선택</option>
-                  {dtReasons.map((r) => <option key={r.code} value={r.code}>{r.code} · {r.name}</option>)}
-                </select>
-              </label>
-              <label className="text-sm text-text-muted flex flex-col gap-1">메모
-                <textarea rows={2} value={dtForm.memo} onChange={(e) => setDtForm({ ...dtForm, memo: e.target.value })} className="border border-border rounded p-2 bg-background text-text resize-none" />
-              </label>
-              <label className="text-sm text-text-muted flex flex-col gap-1">작업자
-                <input value={dtForm.worker} onChange={(e) => setDtForm({ ...dtForm, worker: e.target.value })} className="border border-border rounded p-2 bg-background text-text" />
-              </label>
-              <button onClick={startDowntime} className="w-full py-2.5 rounded bg-rose-500 text-white text-sm font-semibold hover:bg-rose-600">비가동 시작 (현재시각)</button>
-              <p className="text-[11px] text-text-muted">시작 시각은 현재시각으로 기록됩니다. 종료는 이력의 [종료] 버튼으로 처리합니다.</p>
-            </div>
+            {/* 비가동 시작/종료 — 진행중이면 종료로 토글 */}
+            {openDowntimeEvent ? (
+              <div className="border-t border-border pt-3 space-y-2">
+                <span className="text-sm font-semibold text-red-600">비가동 진행중 — 종료</span>
+                <div className="border border-red-300 rounded p-2 bg-red-500/5 text-sm space-y-0.5">
+                  <div className="text-text-muted">시작 <span className="font-mono text-text">{openDowntimeEvent.startTime ?? '-'}</span></div>
+                  {openDowntimeEvent.memo && <div className="text-text-muted">메모 <span className="text-text">{openDowntimeEvent.memo}</span></div>}
+                </div>
+                <label className="text-sm text-text-muted flex flex-col gap-1"><span>비가동 사유 <span className="text-red-500">*</span> (변경 가능)</span>
+                  <select value={endReasonCode} onChange={(e) => setEndReasonCode(e.target.value)} className="border border-border rounded p-2 bg-background text-text">
+                    <option value="">선택</option>
+                    {dtReasons.map((r) => <option key={r.code} value={r.code}>{r.code} · {r.name}</option>)}
+                  </select>
+                </label>
+                <button onClick={() => { if (!endReasonCode) return toast.error('비가동 사유를 선택하세요'); endDowntime(openDowntimeEvent.dtSeq, openDowntimeEvent.machineCode, endReasonCode); }} className="w-full py-2.5 rounded bg-emerald-500 text-white text-sm font-semibold hover:bg-emerald-600">비가동 종료 (현재시각)</button>
+                <p className="text-[11px] text-text-muted">현재 이 설비는 비가동 중입니다. 종료 시각은 현재시각으로 기록됩니다.</p>
+              </div>
+            ) : (
+              <div className="border-t border-border pt-3 space-y-2">
+                <span className="text-sm font-semibold text-text">비가동 시작 등록</span>
+                <label className="text-sm text-text-muted flex flex-col gap-1"><span>비가동 사유 <span className="text-red-500">*</span></span>
+                  <select value={dtForm.reasonCode} onChange={(e) => setDtForm({ ...dtForm, reasonCode: e.target.value })} className="border border-border rounded p-2 bg-background text-text">
+                    <option value="">선택</option>
+                    {dtReasons.map((r) => <option key={r.code} value={r.code}>{r.code} · {r.name}</option>)}
+                  </select>
+                </label>
+                <label className="text-sm text-text-muted flex flex-col gap-1">메모
+                  <textarea rows={2} value={dtForm.memo} onChange={(e) => setDtForm({ ...dtForm, memo: e.target.value })} className="border border-border rounded p-2 bg-background text-text resize-none" />
+                </label>
+                <label className="text-sm text-text-muted flex flex-col gap-1">작업자
+                  <input value={dtForm.worker} onChange={(e) => setDtForm({ ...dtForm, worker: e.target.value })} className="border border-border rounded p-2 bg-background text-text" />
+                </label>
+                <button onClick={startDowntime} className="w-full py-2.5 rounded bg-rose-500 text-white text-sm font-semibold hover:bg-rose-600">비가동 시작 (현재시각)</button>
+                <p className="text-[11px] text-text-muted">시작 시각은 현재시각으로 기록됩니다.</p>
+              </div>
+            )}
           </div>
         </div>
       )}
