@@ -11,9 +11,9 @@
  *   비가동 GET /downtimes?runNo · POST/PUT /downtimes
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Search, Factory, FileText, AlertTriangle, PauseCircle, RefreshCw, Plus } from 'lucide-react';
+import { Search, Factory, FileText, AlertTriangle, PauseCircle, RefreshCw, Plus, ChevronDown, ChevronRight } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { Card, CardContent, Input } from '@/components/ui';
+import { Card, CardContent, Input, Modal } from '@/components/ui';
 import { ProdLineSelect } from '@/components/shared';
 import api from '@/services/api';
 
@@ -108,6 +108,7 @@ export default function EquipWorkResultPage() {
 
   // 불량 패널 (작업지시 단위 대표불량 단일)
   const [defect, setDefect] = useState<{ badCode: string; badQty: number; remark: string }>({ badCode: '', badQty: 0, remark: '' });
+  const [defectInfoOpen, setDefectInfoOpen] = useState(false); // 기본정보 접힘(기본값)
 
   // 비가동 패널
   const [downtimes, setDowntimes] = useState<DowntimeRow[]>([]);
@@ -121,6 +122,21 @@ export default function EquipWorkResultPage() {
   // 종료 상태에서 변경 가능한 비가동 사유 (진행중 이벤트의 현재 사유로 초기화)
   const [endReasonCode, setEndReasonCode] = useState('');
   useEffect(() => { setEndReasonCode(openDowntimeEvent?.reasonCode ?? ''); }, [openDowntimeEvent]);
+  // 비가동 이력: 최신(마지막 DT_SEQ) 1건만 표시, 나머지는 상세보기 팝업
+  const [dtHistoryOpen, setDtHistoryOpen] = useState(false);
+  const latestDowntime = downtimes.length ? downtimes[downtimes.length - 1] : null;
+  const dtRow = (d: DowntimeRow) => (
+    <tr key={d.dtSeq} className="border-t border-border">
+      <td className="p-1.5">{d.reasonName ?? d.reasonCode ?? '-'}</td>
+      <td className="p-1.5 font-mono">{d.startTime ?? '-'}</td>
+      <td className="p-1.5 font-mono">{d.endTime ?? <span className="text-red-500">진행중</span>}</td>
+      <td className="p-1.5 text-center">
+        {d.endTime
+          ? <span className="px-2 py-0.5 rounded bg-blue-500 text-white text-xs">완료</span>
+          : <span className="px-2 py-0.5 rounded bg-amber-500 text-white text-xs">진행중</span>}
+      </td>
+    </tr>
+  );
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -236,9 +252,9 @@ export default function EquipWorkResultPage() {
   async function startDowntime() {
     if (!panelRun) return;
     if (!dtForm.machineCode) return toast.error('설비를 선택하세요');
-    if (!dtForm.reasonCode) return toast.error('비가동 사유를 선택하세요');
+    // 최초 비가동 시작은 사유 없이도 가능(종료 시 필수 선택)
     try {
-      await api.post('/oee/work-result/downtimes', { runNo: panelRun.runNo, machineCode: dtForm.machineCode, workstageCode: dtForm.workstageCode || undefined, reasonCode: dtForm.reasonCode, memo: dtForm.memo || undefined, worker: dtForm.worker || undefined });
+      await api.post('/oee/work-result/downtimes', { runNo: panelRun.runNo, machineCode: dtForm.machineCode, workstageCode: dtForm.workstageCode || undefined, reasonCode: dtForm.reasonCode || undefined, memo: dtForm.memo || undefined, worker: dtForm.worker || undefined });
       toast.success('비가동 시작 등록');
       setDtForm({ ...dtForm, reasonCode: '', memo: '', worker: '' });
       await reloadDowntimes();
@@ -459,42 +475,62 @@ export default function EquipWorkResultPage() {
             </div>
           </div>
           <div className="flex-1 min-h-0 overflow-y-auto px-5 py-4 space-y-4">
-            {/* 작업지시 기본 정보 (읽기전용, 설비/공정 포함) */}
-            <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-sm border border-border rounded p-3 bg-surface/40">
-              {([
-                ['설비', panelRun.machineCode ? `${panelRun.machineCode} · ${panelRun.machineName ?? ''}` : '-'],
-                ['공정', panelRun.workstageCode ? `${panelRun.workstageCode} · ${panelRun.workstageName ?? ''}` : '-'],
-                ['라인', panelRun.lineCode ?? '-'],
-                ['교대조', panelRun.shiftCode ?? '-'],
-                ['품번 | 리비전', `${panelRun.itemCode ?? ''} | ${panelRun.revision ?? ''}`],
-                ['품명', panelRun.modelName ?? '-'],
-                ['차종', panelRun.carModel ?? '-'],
-                ['품목분류', panelRun.itemClass ?? '-'],
-                ['단위', panelRun.unit ?? '-'],
-                ['표준시간(C/T)', panelRun.ct != null ? `${panelRun.ct}s` : '-'],
-                ['계획일', panelRun.runDate],
-                ['계획수량', (panelRun.planQty ?? 0).toLocaleString()],
-                ['실적수량', panelRun.resultQty.toLocaleString()],
-              ] as [string, string][]).map(([k, v]) => (
-                <div key={k} className="flex flex-col">
-                  <span className="text-[11px] text-text-muted">{k}</span>
-                  <span className="text-text">{v}</span>
+            {/* 작업지시 기본 정보 (읽기전용, 설비/공정 포함) — 접기/펼치기, 기본 접힘 */}
+            <div className="border border-border rounded bg-surface/40">
+              <button type="button" onClick={() => setDefectInfoOpen((v) => !v)}
+                className="w-full flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-text">
+                {defectInfoOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                기본정보
+                {!defectInfoOpen && <span className="ml-1 font-normal text-text-muted text-xs truncate">{panelRun.itemCode ?? ''} · {panelRun.modelName ?? ''}</span>}
+              </button>
+              {defectInfoOpen && (
+                <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-sm px-3 pb-3 pt-1 border-t border-border">
+                  {([
+                    ['설비', panelRun.machineCode ? `${panelRun.machineCode} · ${panelRun.machineName ?? ''}` : '-'],
+                    ['공정', panelRun.workstageCode ? `${panelRun.workstageCode} · ${panelRun.workstageName ?? ''}` : '-'],
+                    ['라인', panelRun.lineCode ?? '-'],
+                    ['교대조', panelRun.shiftCode ?? '-'],
+                    ['품번 | 리비전', `${panelRun.itemCode ?? ''} | ${panelRun.revision ?? ''}`],
+                    ['품명', panelRun.modelName ?? '-'],
+                    ['차종', panelRun.carModel ?? '-'],
+                    ['품목분류', panelRun.itemClass ?? '-'],
+                    ['단위', panelRun.unit ?? '-'],
+                    ['표준시간(C/T)', panelRun.ct != null ? `${panelRun.ct}s` : '-'],
+                    ['계획일', panelRun.runDate],
+                    ['계획수량', (panelRun.planQty ?? 0).toLocaleString()],
+                    ['실적수량', panelRun.resultQty.toLocaleString()],
+                  ] as [string, string][]).map(([k, v]) => (
+                    <div key={k} className="flex flex-col">
+                      <span className="text-[11px] text-text-muted">{k}</span>
+                      <span className="text-text">{v}</span>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              )}
             </div>
 
             {/* 대표불량 단일 등록 */}
             <div className="border-t border-border pt-4 space-y-3">
               <span className="text-sm font-semibold text-text">대표 불량 (단일 등록)</span>
-              <label className="text-sm text-text-muted flex flex-col gap-1"><span>대표 불량유형 (WQC) <span className="text-red-500">*</span></span>
-                <select value={defect.badCode} onChange={(e) => setDefect({ ...defect, badCode: e.target.value })} className="border border-border rounded p-2 bg-background text-text">
-                  <option value="">선택</option>
-                  {badReasons.map((b) => <option key={b.code} value={b.code}>{b.code} · {b.name}</option>)}
-                </select>
-              </label>
               <label className="text-sm text-text-muted flex flex-col gap-1"><span>불량수량 <span className="text-red-500">*</span></span>
                 <input type="number" min="0" value={defect.badQty} onChange={(e) => setDefect({ ...defect, badQty: Number(e.target.value) })} className="border border-border rounded p-2 bg-background text-text text-right font-mono" />
               </label>
+              <div className="flex flex-col gap-1.5">
+                <span className="text-sm text-text-muted">대표 불량유형 (WQC) <span className="text-red-500">*</span></span>
+                <div className="grid grid-cols-3 gap-2">
+                  {badReasons.map((b) => {
+                    const active = defect.badCode === b.code;
+                    return (
+                      <button key={b.code} type="button" onClick={() => setDefect({ ...defect, badCode: b.code })}
+                        className={`px-2 py-2 rounded border text-xs text-center transition-colors ${active ? 'bg-primary text-white border-primary' : 'border-border bg-background text-text hover:border-primary/60'}`}>
+                        <span className="block font-medium leading-tight">{b.name}</span>
+                        <span className={`block text-[10px] font-mono ${active ? 'text-white/80' : 'text-text-muted'}`}>{b.code}</span>
+                      </button>
+                    );
+                  })}
+                  {!badReasons.length && <span className="col-span-3 text-xs text-text-muted py-2">불량유형이 없습니다</span>}
+                </div>
+              </div>
               <label className="text-sm text-text-muted flex flex-col gap-1">비고
                 <textarea rows={2} value={defect.remark} onChange={(e) => setDefect({ ...defect, remark: e.target.value })} className="border border-border rounded p-2 bg-background text-text resize-none" />
               </label>
@@ -525,30 +561,33 @@ export default function EquipWorkResultPage() {
               )}
             </div>
 
-            {/* 비가동 이력 */}
+            {/* 비가동 이력 — 최신 1건만, 과거 이력은 상세보기 팝업 */}
             <div>
-              <span className="text-sm font-semibold text-text">비가동 이력</span>
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-semibold text-text">비가동 이력 <span className="font-normal text-text-muted text-xs">(최신)</span></span>
+                <button type="button" onClick={() => setDtHistoryOpen(true)} disabled={downtimes.length <= 1}
+                  className="text-xs text-primary hover:underline disabled:text-text-muted disabled:no-underline disabled:cursor-default">
+                  상세보기{downtimes.length > 1 ? ` (${downtimes.length})` : ''}
+                </button>
+              </div>
               <table className="w-full text-xs border border-border mt-1">
                 <thead><tr className="bg-surface text-text-muted"><th className="p-1.5">사유</th><th className="p-1.5">시작</th><th className="p-1.5">종료</th><th className="p-1.5 text-center">상태</th></tr></thead>
                 <tbody>
-                  {downtimes.map((d) => (
-                    <tr key={d.dtSeq} className="border-t border-border">
-                      <td className="p-1.5">{d.reasonName ?? d.reasonCode ?? '-'}</td>
-                      <td className="p-1.5 font-mono">{d.startTime ?? '-'}</td>
-                      <td className="p-1.5 font-mono">{d.endTime ?? <span className="text-red-500">진행중</span>}</td>
-                      <td className="p-1.5 text-center">
-                        {d.endTime
-                          ? <span className="px-2 py-0.5 rounded bg-blue-500 text-white text-xs">완료</span>
-                          : <span className="px-2 py-0.5 rounded bg-amber-500 text-white text-xs">진행중</span>}
-                      </td>
-                    </tr>
-                  ))}
-                  {!downtimes.length && <tr><td colSpan={4} className="p-3 text-center text-text-muted">비가동 이력이 없습니다</td></tr>}
+                  {latestDowntime
+                    ? dtRow(latestDowntime)
+                    : <tr><td colSpan={4} className="p-3 text-center text-text-muted">비가동 이력이 없습니다</td></tr>}
                 </tbody>
               </table>
             </div>
 
-            {/* 비가동 시작/종료 — 진행중이면 종료로 토글 */}
+            {/* 비가동 시작/종료 버튼 — 비가동 이력 바로 아래 */}
+            {openDowntimeEvent ? (
+              <button onClick={() => { if (!endReasonCode) return toast.error('비가동 사유를 선택하세요'); endDowntime(openDowntimeEvent.dtSeq, openDowntimeEvent.machineCode, endReasonCode); }} className="w-full py-5 rounded bg-emerald-500 text-white text-sm font-semibold hover:bg-emerald-600">비가동 종료 (현재시각)</button>
+            ) : (
+              <button onClick={startDowntime} className="w-full py-5 rounded bg-rose-500 text-white text-sm font-semibold hover:bg-rose-600">비가동 시작 (현재시각)</button>
+            )}
+
+            {/* 비가동 사유(박스 버튼 2열) / 상세 입력 */}
             {openDowntimeEvent ? (
               <div className="border-t border-border pt-3 space-y-2">
                 <span className="text-sm font-semibold text-red-600">비가동 진행중 — 종료</span>
@@ -556,37 +595,78 @@ export default function EquipWorkResultPage() {
                   <div className="text-text-muted">시작 <span className="font-mono text-text">{openDowntimeEvent.startTime ?? '-'}</span></div>
                   {openDowntimeEvent.memo && <div className="text-text-muted">메모 <span className="text-text">{openDowntimeEvent.memo}</span></div>}
                 </div>
-                <label className="text-sm text-text-muted flex flex-col gap-1"><span>비가동 사유 <span className="text-red-500">*</span> (변경 가능)</span>
-                  <select value={endReasonCode} onChange={(e) => setEndReasonCode(e.target.value)} className="border border-border rounded p-2 bg-background text-text">
-                    <option value="">선택</option>
-                    {dtReasons.map((r) => <option key={r.code} value={r.code}>{r.code} · {r.name}</option>)}
-                  </select>
-                </label>
-                <button onClick={() => { if (!endReasonCode) return toast.error('비가동 사유를 선택하세요'); endDowntime(openDowntimeEvent.dtSeq, openDowntimeEvent.machineCode, endReasonCode); }} className="w-full py-2.5 rounded bg-emerald-500 text-white text-sm font-semibold hover:bg-emerald-600">비가동 종료 (현재시각)</button>
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-sm text-text-muted">비가동 사유 <span className="text-red-500">*</span> (변경 가능)</span>
+                  <div className="grid grid-cols-2 gap-2">
+                    {dtReasons.map((r) => {
+                      const active = endReasonCode === r.code;
+                      return (
+                        <button key={r.code} type="button" onClick={() => setEndReasonCode(active ? '' : r.code)}
+                          className={`px-2 py-2 rounded border text-xs text-center transition-colors ${active ? 'bg-primary text-white border-primary' : 'border-border bg-background text-text hover:border-primary/60'}`}>
+                          <span className="block font-medium leading-tight">{r.name}</span>
+                          <span className={`block text-[10px] font-mono ${active ? 'text-white/80' : 'text-text-muted'}`}>{r.code}</span>
+                        </button>
+                      );
+                    })}
+                    {!dtReasons.length && <span className="col-span-2 text-xs text-text-muted py-2">연계된 비가동 사유가 없습니다</span>}
+                  </div>
+                </div>
                 <p className="text-[11px] text-text-muted">현재 이 설비는 비가동 중입니다. 종료 시각은 현재시각으로 기록됩니다.</p>
               </div>
             ) : (
               <div className="border-t border-border pt-3 space-y-2">
                 <span className="text-sm font-semibold text-text">비가동 시작 등록</span>
-                <label className="text-sm text-text-muted flex flex-col gap-1"><span>비가동 사유 <span className="text-red-500">*</span></span>
-                  <select value={dtForm.reasonCode} onChange={(e) => setDtForm({ ...dtForm, reasonCode: e.target.value })} className="border border-border rounded p-2 bg-background text-text">
-                    <option value="">선택</option>
-                    {dtReasons.map((r) => <option key={r.code} value={r.code}>{r.code} · {r.name}</option>)}
-                  </select>
-                </label>
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-sm text-text-muted">비가동 사유 <span className="text-red-500">*</span></span>
+                  <div className="grid grid-cols-2 gap-2">
+                    {dtReasons.map((r) => {
+                      const active = dtForm.reasonCode === r.code;
+                      return (
+                        <button key={r.code} type="button" onClick={() => setDtForm({ ...dtForm, reasonCode: active ? '' : r.code })}
+                          className={`px-2 py-2 rounded border text-xs text-center transition-colors ${active ? 'bg-primary text-white border-primary' : 'border-border bg-background text-text hover:border-primary/60'}`}>
+                          <span className="block font-medium leading-tight">{r.name}</span>
+                          <span className={`block text-[10px] font-mono ${active ? 'text-white/80' : 'text-text-muted'}`}>{r.code}</span>
+                        </button>
+                      );
+                    })}
+                    {!dtReasons.length && <span className="col-span-2 text-xs text-text-muted py-2">연계된 비가동 사유가 없습니다</span>}
+                  </div>
+                </div>
                 <label className="text-sm text-text-muted flex flex-col gap-1">메모
                   <textarea rows={2} value={dtForm.memo} onChange={(e) => setDtForm({ ...dtForm, memo: e.target.value })} className="border border-border rounded p-2 bg-background text-text resize-none" />
                 </label>
                 <label className="text-sm text-text-muted flex flex-col gap-1">작업자
                   <input value={dtForm.worker} onChange={(e) => setDtForm({ ...dtForm, worker: e.target.value })} className="border border-border rounded p-2 bg-background text-text" />
                 </label>
-                <button onClick={startDowntime} className="w-full py-2.5 rounded bg-rose-500 text-white text-sm font-semibold hover:bg-rose-600">비가동 시작 (현재시각)</button>
                 <p className="text-[11px] text-text-muted">시작 시각은 현재시각으로 기록됩니다.</p>
               </div>
             )}
           </div>
         </div>
       )}
+
+      {/* 비가동 이력 상세보기 (전체 이력) */}
+      <Modal isOpen={dtHistoryOpen} onClose={() => setDtHistoryOpen(false)} title="비가동 이력 상세" size="lg">
+        <table className="w-full text-xs border border-border">
+          <thead><tr className="bg-surface text-text-muted"><th className="p-1.5 text-center">순번</th><th className="p-1.5">사유</th><th className="p-1.5">시작</th><th className="p-1.5">종료</th><th className="p-1.5 text-center">상태</th></tr></thead>
+          <tbody>
+            {[...downtimes].reverse().map((d) => (
+              <tr key={d.dtSeq} className="border-t border-border">
+                <td className="p-1.5 text-center font-mono">{d.dtSeq}</td>
+                <td className="p-1.5">{d.reasonName ?? d.reasonCode ?? '-'}</td>
+                <td className="p-1.5 font-mono">{d.startTime ?? '-'}</td>
+                <td className="p-1.5 font-mono">{d.endTime ?? <span className="text-red-500">진행중</span>}</td>
+                <td className="p-1.5 text-center">
+                  {d.endTime
+                    ? <span className="px-2 py-0.5 rounded bg-blue-500 text-white text-xs">완료</span>
+                    : <span className="px-2 py-0.5 rounded bg-amber-500 text-white text-xs">진행중</span>}
+                </td>
+              </tr>
+            ))}
+            {!downtimes.length && <tr><td colSpan={5} className="p-3 text-center text-text-muted">비가동 이력이 없습니다</td></tr>}
+          </tbody>
+        </table>
+      </Modal>
     </div>
   );
 }
