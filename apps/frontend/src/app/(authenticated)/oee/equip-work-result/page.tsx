@@ -529,14 +529,18 @@ export default function EquipWorkResultPage() {
             <div>
               <span className="text-sm font-semibold text-text">비가동 이력</span>
               <table className="w-full text-xs border border-border mt-1">
-                <thead><tr className="bg-surface text-text-muted"><th className="p-1.5">사유</th><th className="p-1.5">시작</th><th className="p-1.5">종료</th><th className="p-1.5 text-center">처리</th></tr></thead>
+                <thead><tr className="bg-surface text-text-muted"><th className="p-1.5">사유</th><th className="p-1.5">시작</th><th className="p-1.5">종료</th><th className="p-1.5 text-center">상태</th></tr></thead>
                 <tbody>
                   {downtimes.map((d) => (
                     <tr key={d.dtSeq} className="border-t border-border">
                       <td className="p-1.5">{d.reasonName ?? d.reasonCode ?? '-'}</td>
                       <td className="p-1.5 font-mono">{d.startTime ?? '-'}</td>
                       <td className="p-1.5 font-mono">{d.endTime ?? <span className="text-red-500">진행중</span>}</td>
-                      <td className="p-1.5 text-center">{!d.endTime && <button onClick={() => endDowntime(d.dtSeq, d.machineCode)} className="px-2 py-0.5 rounded bg-emerald-500 text-white text-xs">종료</button>}</td>
+                      <td className="p-1.5 text-center">
+                        {d.endTime
+                          ? <span className="px-2 py-0.5 rounded bg-blue-500 text-white text-xs">완료</span>
+                          : <span className="px-2 py-0.5 rounded bg-amber-500 text-white text-xs">진행중</span>}
+                      </td>
                     </tr>
                   ))}
                   {!downtimes.length && <tr><td colSpan={4} className="p-3 text-center text-text-muted">비가동 이력이 없습니다</td></tr>}
