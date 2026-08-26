@@ -20,7 +20,7 @@ export class StandardTimeController {
   @Post()
   @ApiOperation({ summary: '표준시간 신규' })
   async create(@Body() dto: StdTimeUpsertDto) {
-    await this.svc.upsert({ ...dto, originalItemCode: undefined, originalValidFrom: undefined });
+    await this.svc.upsert({ ...dto, originalItemCode: undefined, originalMachineCode: undefined, originalValidFrom: undefined });
     return { ok: true };
   }
 
@@ -33,8 +33,8 @@ export class StandardTimeController {
 
   @Delete()
   @ApiOperation({ summary: '표준시간 삭제' })
-  async remove(@Query('itemCode') itemCode: string, @Query('validFrom') validFrom: string) {
-    await this.svc.remove(itemCode, validFrom);
+  async remove(@Query('itemCode') itemCode: string, @Query('machineCode') machineCode: string, @Query('validFrom') validFrom: string) {
+    await this.svc.remove(itemCode, machineCode, validFrom);
     return { ok: true };
   }
 }

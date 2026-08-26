@@ -329,24 +329,26 @@ export class WorkResultService {
     return this.repo.manager.transaction(async (mgr) => {
       let dtSeq = dto.dtSeq;
       if (dtSeq != null) {
-        await mgr.query(
-          `UPDATE IP_EQUIP_DOWNTIME_RESULT SET REASON_CODE=:1,
-             START_TIME=NVL(TO_DATE(:2,'YYYY-MM-DD HH24:MI'), START_TIME),
-             END_TIME=NVL(TO_DATE(:3,'YYYY-MM-DD HH24:MI'), END_TIME),
-             MEMO=:4, WORKER=:5, LAST_MODIFY_BY=:6, LAST_MODIFY_DATE=SYSDATE
-           WHERE RUN_NO=:7 AND DT_SEQ=:8 AND ORGANIZATION_ID=:9`,
-          [
-            dto.reasonCode ?? null,
-            dto.startTime ?? null,
-            dto.endTime ?? null,
-            dto.memo ?? null,
-            dto.worker ?? null,
-            user,
-            dto.runNo,
-            dtSeq,
-            organization,
-          ],
-        );
+        if (dto.endNow) {
+          // 종료시각을 DB 현재시각(SYSDATE)으로 — 시작(SYSDATE)과 동일 시계 사용
+          await mgr.query(
+            `UPDATE IP_EQUIP_DOWNTIME_RESULT SET REASON_CODE=NVL(:1, REASON_CODE),
+               START_TIME=NVL(TO_DATE(:2,'YYYY-MM-DD HH24:MI'), START_TIME),
+               END_TIME=SYSDATE,
+               MEMO=NVL(:3, MEMO), WORKER=NVL(:4, WORKER), LAST_MODIFY_BY=:5, LAST_MODIFY_DATE=SYSDATE
+             WHERE RUN_NO=:6 AND DT_SEQ=:7 AND ORGANIZATION_ID=:8`,
+            [dto.reasonCode ?? null, dto.startTime ?? null, dto.memo ?? null, dto.worker ?? null, user, dto.runNo, dtSeq, organization],
+          );
+        } else {
+          await mgr.query(
+            `UPDATE IP_EQUIP_DOWNTIME_RESULT SET REASON_CODE=NVL(:1, REASON_CODE),
+               START_TIME=NVL(TO_DATE(:2,'YYYY-MM-DD HH24:MI'), START_TIME),
+               END_TIME=NVL(TO_DATE(:3,'YYYY-MM-DD HH24:MI'), END_TIME),
+               MEMO=NVL(:4, MEMO), WORKER=NVL(:5, WORKER), LAST_MODIFY_BY=:6, LAST_MODIFY_DATE=SYSDATE
+             WHERE RUN_NO=:7 AND DT_SEQ=:8 AND ORGANIZATION_ID=:9`,
+            [dto.reasonCode ?? null, dto.startTime ?? null, dto.endTime ?? null, dto.memo ?? null, dto.worker ?? null, user, dto.runNo, dtSeq, organization],
+          );
+        }
       } else {
         const mx = (await mgr.query(
           `SELECT NVL(MAX(DT_SEQ),0) AS "mx" FROM IP_EQUIP_DOWNTIME_RESULT WHERE RUN_NO=:1 AND ORGANIZATION_ID=:2`,
