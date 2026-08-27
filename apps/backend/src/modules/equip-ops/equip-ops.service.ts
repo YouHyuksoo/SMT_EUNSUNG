@@ -101,24 +101,20 @@ export class EquipOpsService {
     };
   }
 
-  /** 당월 비가동 이력 + 합계 요약 — 달력 기준(1일 00:00 ~ 익월 1일 00:00) */
-  async monthly(scope: ScopeParams) {
+  /** 이전 30일 비가동 이력 + 합계 요약 — 당일 포함 최근 30일(TRUNC(SYSDATE)-29 ~ 지금) */
+  async recent(scope: ScopeParams) {
     const params: unknown[] = [];
     const scopeSql = this.scopeClause(scope, 'd', params);
     const list = await this.q(
       `SELECT d.DT_SEQ AS "dtSeq", d.MACHINE_CODE AS "machineCode",
               (SELECT MAX(m.MACHINE_NAME) FROM IMCN_MACHINE m
                 WHERE m.MACHINE_CODE=d.MACHINE_CODE AND m.ORGANIZATION_ID=d.ORGANIZATION_ID) AS "machineName",
-              d.REASON_CODE AS "reasonCode",
-              (SELECT MAX(r.REASON_NAME) FROM IP_EQUIP_DOWNTIME_REASON r
-                WHERE r.REASON_CODE=d.REASON_CODE AND r.ORGANIZATION_ID=d.ORGANIZATION_ID) AS "reasonName",
               TO_CHAR(d.START_TIME,'MM-DD HH24:MI') AS "startTime",
               TO_CHAR(d.END_TIME,'MM-DD HH24:MI') AS "endTime",
               ROUND((NVL(d.END_TIME, SYSDATE) - d.START_TIME) * 24 * 60) AS "durationMin"
          FROM IP_EQUIP_DOWNTIME_RESULT d
         WHERE d.ORGANIZATION_ID = ${ORG}
-          AND d.START_TIME >= TRUNC(SYSDATE,'MM')
-          AND d.START_TIME < ADD_MONTHS(TRUNC(SYSDATE,'MM'), 1)${scopeSql}
+          AND d.START_TIME >= TRUNC(SYSDATE) - 29${scopeSql}
         ORDER BY d.DT_SEQ DESC`,
       params,
     );

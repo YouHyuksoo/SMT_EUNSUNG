@@ -41,10 +41,10 @@ export class EquipOpsController {
     });
   }
 
-  /** 당월 비가동 이력 + 합계 */
-  @Get('monthly')
-  async monthly(@Query('machineCode') machineCode?: string, @Query('lineCode') lineCode?: string) {
-    return await this.service.monthly({
+  /** 이전 30일 비가동 이력 + 합계 */
+  @Get('recent')
+  async recent(@Query('machineCode') machineCode?: string, @Query('lineCode') lineCode?: string) {
+    return await this.service.recent({
       machineCode: machineCode || undefined,
       lineCode: lineCode || undefined,
     });

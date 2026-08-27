@@ -2,7 +2,7 @@
 
 /**
  * @file (authenticated)/oee/equip-ops-status/components/DowntimeTab.tsx
- * @description 설비 운영 현황 - 비가동 처리 탭. 라인/설비 선택(바코드) 후 지표·현재상태·당월이력
+ * @description 설비 운영 현황 - 비가동 처리 탭. 라인/설비 선택(바코드) 후 지표·현재상태·이전 30일 이력
  *
  * 라인 모드는 대상 설비 전체에 일괄 적용하고, 설비 모드는 그 설비만 처리한다.
  * 토글은 하나만 두되 "하나라도 비가동이면 가동 전환"으로 판정한다 (결정 #11).
@@ -16,7 +16,7 @@ import { Card, CardContent, Input, Select } from '@/components/ui';
 import { ElapsedTime, parseLocalTime } from '@/components/shared/EquipDowntimePanel';
 import api from '@/services/api';
 import DailyMetrics from './DailyMetrics';
-import type { MonthlyRow, OpsLine, OpsMachine, RefreshInterval } from '../types';
+import type { OpsLine, OpsMachine, RecentRow, RefreshInterval } from '../types';
 
 interface Code { code: string; name: string; }
 type ScopeMode = 'LINE' | 'MACHINE';
@@ -38,7 +38,7 @@ export default function DowntimeTab({ machines, lines, refreshSec, onChanged }: 
   const [reasons, setReasons] = useState<Code[]>([]);
   const [reasonCode, setReasonCode] = useState('');
   const [summary, setSummary] = useState({ downMinutes: 0, stopCount: 0 });
-  const [monthly, setMonthly] = useState<{ list: MonthlyRow[]; totalCount: number; totalMinutes: number }>({ list: [], totalCount: 0, totalMinutes: 0 });
+  const [recent, setRecent] = useState<{ list: RecentRow[]; totalCount: number; totalMinutes: number }>({ list: [], totalCount: 0, totalMinutes: 0 });
   const [openStarts, setOpenStarts] = useState<Record<string, string | null>>({});
   const [clockSkew, setClockSkew] = useState(0);
   const [busy, setBusy] = useState(false);
@@ -66,21 +66,21 @@ export default function DowntimeTab({ machines, lines, refreshSec, onChanged }: 
     [mode, lineCode, machineCode],
   );
 
-  /** 지표·당월이력·사유·진행중 시작시각을 한 번에 읽는다 */
+  /** 지표·이전 30일 이력·사유·진행중 시작시각을 한 번에 읽는다 */
   const loadScope = useCallback(async () => {
     if (!scopeParams) {
       setSummary({ downMinutes: 0, stopCount: 0 });
-      setMonthly({ list: [], totalCount: 0, totalMinutes: 0 });
+      setRecent({ list: [], totalCount: 0, totalMinutes: 0 });
       setOpenStarts({});
       return;
     }
     try {
       const [s, m] = await Promise.all([
         api.get('/oee/equip-ops/summary', { params: scopeParams }),
-        api.get('/oee/equip-ops/monthly', { params: scopeParams }),
+        api.get('/oee/equip-ops/recent', { params: scopeParams }),
       ]);
       setSummary(s.data?.data ?? { downMinutes: 0, stopCount: 0 });
-      setMonthly(m.data?.data ?? { list: [], totalCount: 0, totalMinutes: 0 });
+      setRecent(m.data?.data ?? { list: [], totalCount: 0, totalMinutes: 0 });
     } catch { /* 조회 실패는 빈 화면으로 둔다 */ }
   }, [scopeParams]);
 
@@ -292,34 +292,33 @@ export default function DowntimeTab({ machines, lines, refreshSec, onChanged }: 
           </CardContent>
         </Card>
 
-        {/* 우 — 당월 이력 */}
+        {/* 우 — 이전 30일 이력 */}
         <Card className="h-full overflow-hidden" padding="none">
           <CardContent className="h-full p-4 overflow-hidden flex flex-col gap-2">
             <div className="flex items-baseline justify-between flex-shrink-0">
-              <span className="text-sm font-semibold text-text">당월 이력</span>
+              <span className="text-sm font-semibold text-text">이전 30일</span>
               <span className="text-[11px] text-text-muted">
-                총 <span className="font-semibold text-text">{monthly.totalCount}</span>회 ·
-                <span className="font-semibold text-text"> {monthly.totalMinutes.toLocaleString()}</span>분
+                총 <span className="font-semibold text-text">{recent.totalCount}</span>회 ·
+                <span className="font-semibold text-text"> {recent.totalMinutes.toLocaleString()}</span>분
               </span>
             </div>
             <div className="flex-1 min-h-0 overflow-auto border border-border rounded">
               <table className="w-full text-xs">
                 <thead className="sticky top-0 bg-surface text-text-muted">
-                  <tr><th className="p-1.5 text-left font-medium">설비</th><th className="p-1.5 text-left font-medium">사유</th><th className="p-1.5 text-left font-medium">시작</th><th className="p-1.5 text-left font-medium">종료</th><th className="p-1.5 text-right font-medium">소요</th></tr>
+                  <tr><th className="p-1.5 text-left font-medium">설비</th><th className="p-1.5 text-left font-medium">시작</th><th className="p-1.5 text-left font-medium">종료</th><th className="p-1.5 text-right font-medium">소요</th></tr>
                 </thead>
                 <tbody>
-                  {monthly.list.map((d) => (
+                  {recent.list.map((d) => (
                     <tr key={d.dtSeq} className="border-t border-border">
                       <td className="p-1.5 font-mono">{d.machineCode}</td>
-                      <td className="p-1.5">{d.reasonName ?? d.reasonCode ?? '-'}</td>
                       <td className="p-1.5 font-mono">{d.startTime ?? '-'}</td>
                       <td className="p-1.5 font-mono">{d.endTime ?? <span className="text-red-500">진행중</span>}</td>
                       <td className="p-1.5 text-right font-mono tabular-nums">{d.durationMin.toLocaleString()}분</td>
                     </tr>
                   ))}
-                  {!monthly.list.length && (
-                    <tr><td colSpan={5} className="p-6 text-center text-text-muted">
-                      {scopeParams ? '당월 비가동 이력이 없습니다' : '대상을 선택하세요'}
+                  {!recent.list.length && (
+                    <tr><td colSpan={4} className="p-6 text-center text-text-muted">
+                      {scopeParams ? '이전 30일 비가동 이력이 없습니다' : '대상을 선택하세요'}
                     </td></tr>
                   )}
                 </tbody>

@@ -6,7 +6,7 @@
  *
  * API(글로벌 prefix /api → 백엔드 /api/v1)
  *   설비/라인 GET /oee/equip-ops/machines · /lines
- *   지표/이력 GET /oee/equip-ops/summary · /monthly
+ *   지표/이력 GET /oee/equip-ops/summary · /recent(이전 30일)
  *   비가동    POST /oee/work-result/downtimes(단건) · /downtimes/bulk(일괄)
  *
  * 설계 근거: docs/plans/2026-08-27-equip-ops-status.md, docs/adr/0002-equip-downtime-machine-scoped.md

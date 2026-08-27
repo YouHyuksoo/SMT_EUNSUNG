@@ -22,13 +22,11 @@ export interface OpsLine {
   machineCount: number;
 }
 
-/** GET /oee/equip-ops/monthly 한 행 */
-export interface MonthlyRow {
+/** GET /oee/equip-ops/recent 한 행 (당일 포함 최근 30일) */
+export interface RecentRow {
   dtSeq: number;
   machineCode: string;
   machineName: string | null;
-  reasonCode: string | null;
-  reasonName: string | null;
   startTime: string | null;
   endTime: string | null;
   durationMin: number;
