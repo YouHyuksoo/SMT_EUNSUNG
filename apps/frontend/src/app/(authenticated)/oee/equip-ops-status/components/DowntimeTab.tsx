@@ -225,16 +225,16 @@ export default function DowntimeTab({ machines, lines, refreshSec, onChanged }: 
             <div className="border border-border rounded overflow-hidden flex-shrink-0">
               <table className="w-full text-xs">
                 <thead className="bg-surface text-text-muted">
-                  <tr><th className="p-1.5 text-left font-medium">설비코드</th><th className="p-1.5 text-left font-medium">설비명</th><th className="p-1.5 text-left font-medium">유형</th><th className="p-1.5 text-center font-medium w-28">상태</th></tr>
+                  <tr><th className="p-1.5 text-center font-medium">설비코드</th><th className="p-1.5 text-center font-medium">설비명</th><th className="p-1.5 text-center font-medium">유형</th><th className="p-1.5 text-center font-medium w-28">상태</th></tr>
                 </thead>
                 <tbody>
                   {targets.map((m) => {
                     const down = m.openDtSeq != null;
                     return (
                       <tr key={m.machineCode} className="border-t border-border">
-                        <td className="p-1.5 font-mono">{m.machineCode}</td>
-                        <td className="p-1.5">{m.machineName ?? '-'}</td>
-                        <td className="p-1.5">{m.machineTypeName ?? m.machineType ?? '-'}</td>
+                        <td className="p-1.5 text-center font-mono">{m.machineCode}</td>
+                        <td className="p-1.5 text-center">{m.machineName ?? '-'}</td>
+                        <td className="p-1.5 text-center">{m.machineTypeName ?? m.machineType ?? '-'}</td>
                         <td className="p-1.5 text-center">
                           {down ? (
                             <span className="px-2 py-0.5 rounded bg-red-500 text-white">
@@ -308,15 +308,15 @@ export default function DowntimeTab({ machines, lines, refreshSec, onChanged }: 
             <div className="flex-1 min-h-0 overflow-auto border border-border rounded">
               <table className="w-full text-xs">
                 <thead className="sticky top-0 bg-surface text-text-muted">
-                  <tr><th className="p-1.5 text-left font-medium">설비</th><th className="p-1.5 text-left font-medium">시작</th><th className="p-1.5 text-left font-medium">종료</th><th className="p-1.5 text-right font-medium">소요</th></tr>
+                  <tr><th className="p-1.5 text-center font-medium">설비</th><th className="p-1.5 text-center font-medium">시작</th><th className="p-1.5 text-center font-medium">종료</th><th className="p-1.5 text-center font-medium">소요</th></tr>
                 </thead>
                 <tbody>
                   {recent.list.map((d) => (
                     <tr key={d.dtSeq} className="border-t border-border">
-                      <td className="p-1.5 font-mono">{d.machineCode}</td>
-                      <td className="p-1.5 font-mono">{d.startTime ?? '-'}</td>
-                      <td className="p-1.5 font-mono">{d.endTime ?? <span className="text-red-500">진행중</span>}</td>
-                      <td className="p-1.5 text-right font-mono tabular-nums">{d.durationMin.toLocaleString()}분</td>
+                      <td className="p-1.5 text-center font-mono">{d.machineCode}</td>
+                      <td className="p-1.5 text-center font-mono">{d.startTime ?? '-'}</td>
+                      <td className="p-1.5 text-center font-mono">{d.endTime ?? <span className="text-red-500">진행중</span>}</td>
+                      <td className="p-1.5 text-center font-mono tabular-nums">{d.durationMin.toLocaleString()}분</td>
                     </tr>
                   ))}
                   {!recent.list.length && (
