@@ -144,7 +144,7 @@ export default function EquipWorkResultPage() {
   // 종료 상태에서 변경 가능한 비가동 사유 (진행중 이벤트의 현재 사유로 초기화)
   const [endReasonCode, setEndReasonCode] = useState('');
   useEffect(() => { setEndReasonCode(openDowntimeEvent?.reasonCode ?? ''); }, [openDowntimeEvent]);
-  // 비가동 이력: 최신(마지막 DT_SEQ) 1건만 표시, 나머지는 상세보기 팝업
+  // 비가동 이력: 최신(마지막 DT_SEQ) 1건만 표시, 나머지는 이력보기 팝업
   const [dtHistoryOpen, setDtHistoryOpen] = useState(false);
   const latestDowntime = downtimes.length ? downtimes[downtimes.length - 1] : null;
   const dtRow = (d: DowntimeRow) => (
@@ -602,13 +602,13 @@ export default function EquipWorkResultPage() {
               )}
             </div>
 
-            {/* 비가동 이력 — 최신 1건만, 과거 이력은 상세보기 팝업 */}
+            {/* 비가동 이력 — 최신 1건만, 과거 이력은 이력보기 팝업 */}
             <div>
               <div className="flex items-center justify-between">
                 <span className="text-sm font-semibold text-text">비가동 이력 <span className="font-normal text-text-muted text-xs">(최신)</span></span>
                 <button type="button" onClick={() => setDtHistoryOpen(true)} disabled={downtimes.length <= 1}
                   className="text-xs text-primary hover:underline disabled:text-text-muted disabled:no-underline disabled:cursor-default">
-                  상세보기{downtimes.length > 1 ? ` (${downtimes.length})` : ''}
+                  이력보기{downtimes.length > 1 ? ` (${downtimes.length})` : ''}
                 </button>
               </div>
               <table className="w-full text-xs border border-border mt-1">
