@@ -99,42 +99,71 @@
 
 ### 1. 백엔드
 
-- [ ] `GET /oee/equip-ops/machines` — 설비 목록 + 유형명·공정명·모델 + 진행중 비가동 여부
-- [ ] `GET /oee/equip-ops/lines` — 라인 목록(라인코드·라인명·라인구분 `LINE_DIVISION`)
-- [ ] `GET /oee/equip-ops/summary?machineCode|lineCode` — 당일 비가동 분·정지 회수 (실측)
-- [ ] `GET /oee/equip-ops/monthly?machineCode|lineCode` — 당월 이력 + 합계 요약
-- [ ] `POST /oee/work-result/downtimes/bulk` — 일괄 시작/종료, 건너뛴 설비 반환
-- [ ] `tsc --noEmit` 통과
+- [x] `GET /oee/equip-ops/machines` — 설비 목록 + 유형명·공정명·모델 + 진행중 비가동 여부
+- [x] `GET /oee/equip-ops/lines` — 라인 목록(라인코드·라인명·라인구분 `LINE_DIVISION`)
+- [x] `GET /oee/equip-ops/summary?machineCode|lineCode` — 당일 비가동 분·정지 회수 (실측)
+- [x] `GET /oee/equip-ops/monthly?machineCode|lineCode` — 당월 이력 + 합계 요약
+- [x] `POST /oee/work-result/downtimes/bulk` — 일괄 시작/종료, 건너뛴 설비 반환
+- [x] `tsc --noEmit` 통과
 
 ### 2. 공용 컴포넌트
 
-- [ ] `components/shared/EquipDowntimePanel.tsx` 추출 (컨테이너 비의존 — 패널/모달/인라인 어디든)
-- [ ] `ElapsedTime`·`parseLocalTime`·시계보정 로직 함께 이동
-- [ ] 기존 `equip-work-result/page.tsx`가 이 컴포넌트를 쓰도록 교체
+- [x] `components/shared/EquipDowntimePanel.tsx` 추출 (컨테이너 비의존 — 패널/모달/인라인 어디든)
+- [x] `ElapsedTime`·`parseLocalTime`·시계보정 로직 함께 이동
+- [x] 기존 `equip-work-result/page.tsx`가 이 컴포넌트를 쓰도록 교체
 - [ ] 기존 화면 회귀 확인 (시작·종료·이력·타이머)
 
 ### 3. 모니터링 탭
 
-- [ ] 목록 + 4개 조회조건
-- [ ] 상태 배지(비가동/정상)
-- [ ] 행별 `비가동 관리` → 우측 슬라이드 패널
-- [ ] 자동갱신 주기 토글(끄기/10/30/60초)
+- [x] 목록 + 4개 조회조건
+- [x] 상태 배지(비가동/정상)
+- [x] 행별 `비가동 관리` → 우측 슬라이드 패널
+- [x] 자동갱신 주기 토글(끄기/10/30/60초)
 
 ### 4. 비가동 처리 탭
 
-- [ ] 상단 라인/설비 박스형 단일선택 + 콤보 + 바코드 입력폼(Enter 조회)
-- [ ] 좌측 당일지표 — 파이·막대 3개(mock, 한 곳에 모아 교체 쉽게) + 비가동 분·정지 회수(실측)
-- [ ] 중앙 현재상태 — 대상 목록 + 사유 선택 + 토글 버튼
-- [ ] 라인 모드 일괄 적용 / 설비 모드 단건 적용
-- [ ] 우측 당월 이력 — 요약 + 5컬럼
-- [ ] 라인에 설비 0대일 때 빈 상태 안내
+- [x] 상단 라인/설비 박스형 단일선택 + 콤보 + 바코드 입력폼(Enter 조회)
+- [x] 좌측 당일지표 — 파이·막대 3개(mock, 한 곳에 모아 교체 쉽게) + 비가동 분·정지 회수(실측)
+- [x] 중앙 현재상태 — 대상 목록 + 사유 선택 + 토글 버튼
+- [x] 라인 모드 일괄 적용 / 설비 모드 단건 적용
+- [x] 우측 당월 이력 — 요약 + 5컬럼
+- [x] 라인에 설비 0대일 때 빈 상태 안내
 
 ### 5. 메뉴·마무리
 
-- [ ] `menuConfig.ts`에 `OEE_EQUIP_OPS_STATUS` 추가 + `gen:menu` 재생성
-- [ ] `locales/ko.json`에 `menu.oee.equipOpsStatus` 라벨
-- [ ] `tsc --noEmit` (프론트·백엔드), lint 신규 오류 없음
-- [ ] 실 DB로 동작 검증 후 검증행 정리
+- [x] `menuConfig.ts`에 `OEE_EQUIP_OPS_STATUS` 추가 + `gen:menu` 재생성
+- [x] `locales/ko.json`에 `menu.oee.equipOpsStatus` 라벨
+- [x] `tsc --noEmit` (프론트·백엔드) 통과
+- [x] 백엔드 API 실 DB 검증 후 검증행 정리
+- [ ] **미완료** — 브라우저에서 실제 화면 동작 확인
+
+## 검증 결과 (2026-08-27)
+
+백엔드 API는 실 DB(ES_JSIDC)로 전 경로를 확인했다.
+
+| 호출 | 결과 |
+|---|---|
+| `machines` | 120대 · 유형명 `코팅 설비` 정상 · 유형필터 37대 · 검색 2대 |
+| `lines` | 18건 · `machineCount` 전부 0 (매핑 부재, 예상대로) |
+| `summary` | `{downMinutes: 103, stopCount: 1}` |
+| `monthly` | 총 4회 / 107분 |
+| `bulk START` | 이미 비가동 1대 skip, 정상 1대 시작 |
+| `bulk END` (사유 없음) | 400 `종료 시 비가동 사유를 선택하세요` |
+| `bulk END` (사유 있음) | 2대 종료 |
+| `bulk` 라인(설비 0대) | `targets: 0` |
+
+검증용 행 4건은 삭제해 기존 3건 + 사용자 진행중 1건 상태로 되돌렸다.
+
+화면은 `/oee/equip-ops-status` HTTP 200, 컴파일 정상. 다만 `(authenticated)` 레이아웃이
+클라이언트 인증 후 본문을 그리므로 curl로는 내용 검증이 불가하다 — 브라우저 확인이 필요하다.
+
+## 알려진 lint 상태
+
+신규 파일에 `Calling setState synchronously within an effect` 3건이 남는다
+(`page.tsx` 1 · `DowntimeTab.tsx` 2). 전부 `useEffect(() => { load(); }, [load])`
+형태로, 형제 화면 `equip-work-result/page.tsx`가 쓰는 것과 같은 관용구다.
+이 규칙은 저장소 전체에서 이미 실패 중이라 주변 스타일에 맞췄다.
+정리하려면 저장소 차원에서 `useApiQuery`(TanStack Query)로 옮기는 별도 작업이 맞다.
 
 ## 미확정 (추후)
 
