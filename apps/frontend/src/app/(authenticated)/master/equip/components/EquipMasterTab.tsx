@@ -26,6 +26,7 @@ import api from "@/services/api";
 import { useUnsavedGuard } from "@/hooks/useUnsavedGuard";
 import { ComCodeSelect, ProcessSelect } from '@/components/shared';
 import { useEquipTypeOptions } from "@/hooks/useMasterOptions";
+import { useComCodeMap } from "@/hooks/useComCode";
 import { Field, FieldInput, FieldComCodeSelect, FieldProcessSelect } from "./EquipFieldHelp";
 import EquipBomPanel from "./EquipBomPanel";
 import { hasRequiredEquipMasterFields } from "../equipMasterValidation.mjs";
@@ -98,6 +99,8 @@ export default function EquipMasterTab() {
   const [imageError, setImageError] = useState(false);
   const [imageDeleteConfirmOpen, setImageDeleteConfirmOpen] = useState(false);
   const { options: equipTypeOptions, isLoading: equipTypeLoading } = useEquipTypeOptions();
+  // 그리드 유형 컬럼은 코드(M0160) 대신 코드명(코팅 설비)을 보여준다
+  const equipTypeMap = useComCodeMap("MACHINE TYPE");
   const canSave = hasRequiredEquipMasterFields(form);
 
   // API에서 설비 목록 조회
@@ -302,7 +305,7 @@ export default function EquipMasterTab() {
       accessorKey: "equipType", header: t("master.equip.type", "유형"), size: 80,
       cell: ({ getValue }) => {
         const v = getValue() as EquipType;
-        return <span className="text-xs">{t(`master.equip.${v.toLowerCase()}`, v)}</span>;
+        return <span className="text-xs">{equipTypeMap[v]?.codeName || v}</span>;
       },
     },
     {
@@ -353,7 +356,7 @@ export default function EquipMasterTab() {
         <span className={`w-2 h-2 rounded-full inline-block ${getValue() === "Y" ? "bg-green-500" : "bg-gray-400"}`} />
       ),
     },
-  ], [t, guard]);
+  ], [t, guard, equipTypeMap]);
 
   return (
     <div className="flex h-full animate-fade-in">
