@@ -1,0 +1,41 @@
+-- OEE 카테고리 메뉴 배치 정리 — '설비 운영 현황'을 '설비별 작업 실적관리' 아래로 이동
+-- 대상: MENU_CATEGORY_ITEMS (ORGANIZATION_ID=1, CATEGORY_CODE='OEE')
+-- 적용일: 2026-08-27 / 사이트: ES_JSIDC
+--
+-- 기존 SORT_ORDER가 10/10/10/10/10, 20/20/20 으로 중복되어 있어 특정 메뉴 바로 아래에
+-- 끼워 넣을 수 없었다. menuConfig.ts 순서대로 10단위로 다시 채번한다.
+--
+-- '설비별 운영 현황 및 분석'(OEE_EQUIP_OPS_ANALYSIS)은 미사용 처리한다.
+-- menuConfig.ts에서 주석 처리해 화이트리스트(isValidMenuCode)에서 빠졌으므로
+-- ensureDefaultLayout이 다시 만들지 않는다. 화면 코드와 라우트는 남겨둔다.
+--
+-- 적용 전 : DASHBOARD10 OPS_ANALYSIS10 WORK_RESULT10 MST_EQUIP_REASON10 MST_STD_TIME10
+--           DRILLDOWN20 ENTRY20 MST_IDLE_REASON20 OPS_STATUS50 DOWNTIME_MOBILE70
+-- 적용 후 : 아래 9건이 10~90, OPS_ANALYSIS 행 삭제
+--
+-- 참고: OEE_MULTI_ENTRY(40)·OEE_MST_RESOURCE(110)는 menuConfig에 없는 기존 stale 행이라
+--       트리에서 이미 제외된다. 이번 작업 범위가 아니므로 건드리지 않는다.
+
+DELETE FROM MENU_CATEGORY_ITEMS
+ WHERE ORGANIZATION_ID = 1 AND MENU_CODE = 'OEE_EQUIP_OPS_ANALYSIS'
+/
+
+UPDATE MENU_CATEGORY_ITEMS SET SORT_ORDER =
+  CASE MENU_CODE
+    WHEN 'OEE_DASHBOARD'             THEN 10
+    WHEN 'OEE_DRILLDOWN'             THEN 20
+    WHEN 'OEE_ENTRY'                 THEN 30
+    WHEN 'OEE_EQUIP_WORK_RESULT'     THEN 40
+    WHEN 'OEE_EQUIP_OPS_STATUS'      THEN 50
+    WHEN 'OEE_EQUIP_DOWNTIME_MOBILE' THEN 60
+    WHEN 'OEE_MST_STD_TIME'          THEN 70
+    WHEN 'OEE_MST_IDLE_REASON'       THEN 80
+    WHEN 'OEE_MST_EQUIP_REASON'      THEN 90
+  END,
+  UPDATED_AT = SYSTIMESTAMP, UPDATED_BY = 'ADMIN'
+ WHERE ORGANIZATION_ID = 1
+   AND CATEGORY_CODE = 'OEE'
+   AND MENU_CODE IN ('OEE_DASHBOARD','OEE_DRILLDOWN','OEE_ENTRY','OEE_EQUIP_WORK_RESULT',
+                     'OEE_EQUIP_OPS_STATUS','OEE_EQUIP_DOWNTIME_MOBILE',
+                     'OEE_MST_STD_TIME','OEE_MST_IDLE_REASON','OEE_MST_EQUIP_REASON')
+/
