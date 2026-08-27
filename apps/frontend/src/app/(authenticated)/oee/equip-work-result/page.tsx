@@ -607,7 +607,7 @@ export default function EquipWorkResultPage() {
               <div className="flex items-center justify-between">
                 <span className="text-sm font-semibold text-text">비가동 이력 <span className="font-normal text-text-muted text-xs">(최신)</span></span>
                 <button type="button" onClick={() => setDtHistoryOpen(true)} disabled={downtimes.length <= 1}
-                  className="text-xs text-primary hover:underline disabled:text-text-muted disabled:no-underline disabled:cursor-default">
+                  className="text-xs border border-primary text-primary rounded px-2 py-1 hover:bg-surface disabled:border-border disabled:text-text-muted disabled:hover:bg-transparent disabled:cursor-not-allowed">
                   이력보기{downtimes.length > 1 ? ` (${downtimes.length})` : ''}
                 </button>
               </div>
