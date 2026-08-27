@@ -85,11 +85,11 @@ export default function MonitoringTab({ machines, loading, onChanged }: Props) {
             <table className="w-full text-sm">
               <thead className="sticky top-0 bg-surface text-text-muted text-xs z-10">
                 <tr>
-                  <th className="p-2 text-left font-medium">설비코드</th>
-                  <th className="p-2 text-left font-medium">설비명</th>
-                  <th className="p-2 text-left font-medium">유형</th>
-                  <th className="p-2 text-left font-medium">적용공정</th>
-                  <th className="p-2 text-left font-medium">모델</th>
+                  <th className="p-2 text-center font-medium">설비코드</th>
+                  <th className="p-2 text-center font-medium">설비명</th>
+                  <th className="p-2 text-center font-medium">유형</th>
+                  <th className="p-2 text-center font-medium">적용공정</th>
+                  <th className="p-2 text-center font-medium">모델</th>
                   <th className="p-2 text-center font-medium w-24">상태</th>
                   <th className="p-2 text-center font-medium w-32">비가동 처리</th>
                 </tr>
@@ -102,7 +102,7 @@ export default function MonitoringTab({ machines, loading, onChanged }: Props) {
                     <tr key={m.machineCode} className={`border-t border-border hover:bg-surface ${selected ? 'bg-primary/10' : ''}`}>
                       <td className="p-2 font-mono">{m.machineCode}</td>
                       <td className="p-2">{m.machineName ?? '-'}</td>
-                      <td className="p-2">{m.machineTypeName ?? m.machineType ?? '-'}</td>
+                      <td className="p-2 text-center">{m.machineTypeName ?? m.machineType ?? '-'}</td>
                       <td className="p-2">{m.workstageCode ? `${m.workstageCode} · ${m.workstageName ?? ''}` : '-'}</td>
                       <td className="p-2 text-text-muted">{m.modelName ?? '-'}</td>
                       <td className="p-2 text-center">
