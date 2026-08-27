@@ -24,7 +24,7 @@ export class DefectSaveDto {
 }
 
 export class DowntimeUpsertDto {
-  @IsString() @IsNotEmpty() runNo: string;
+  @IsOptional() @IsString() runNo?: string; // 작업지시 없이 발생한 비가동은 미지정
   @IsOptional() @IsInt() dtSeq?: number; // 신규(시작)면 미지정, 종료/수정이면 지정
   @IsString() @IsNotEmpty() machineCode: string;
   @IsOptional() @IsString() workstageCode?: string;

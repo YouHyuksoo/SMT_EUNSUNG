@@ -215,22 +215,22 @@ export class WorkResultService {
     );
   }
 
-  /** 비가동 실적 목록 (작업지시별) */
-  downtimes(runNo: string) {
+  /** 비가동 실적 목록 (설비별 — 작업지시 선택 여부와 무관, ADR 0002) */
+  downtimes(machineCode: string) {
     return this.q(
-      `SELECT DT_SEQ AS "dtSeq", MACHINE_CODE AS "machineCode", WORKSTAGE_CODE AS "workstageCode",
+      `SELECT DT_SEQ AS "dtSeq", RUN_NO AS "runNo", MACHINE_CODE AS "machineCode", WORKSTAGE_CODE AS "workstageCode",
               REASON_CODE AS "reasonCode",
               (SELECT MAX(r.REASON_NAME) FROM IP_EQUIP_DOWNTIME_REASON r WHERE r.REASON_CODE=d.REASON_CODE AND r.ORGANIZATION_ID=d.ORGANIZATION_ID) AS "reasonName",
               TO_CHAR(START_TIME,'YYYY-MM-DD HH24:MI') AS "startTime",
               TO_CHAR(END_TIME,'YYYY-MM-DD HH24:MI') AS "endTime",
               MEMO AS "memo", WORKER AS "worker"
          FROM IP_EQUIP_DOWNTIME_RESULT d
-        WHERE RUN_NO=:1 AND ORGANIZATION_ID=${ORG} ORDER BY DT_SEQ`,
-      [runNo],
+        WHERE MACHINE_CODE=:1 AND ORGANIZATION_ID=${ORG} ORDER BY DT_SEQ`,
+      [machineCode],
     );
   }
 
-  /** 비가동 시작(신규)/종료·수정 */
+  /** 비가동 시작(신규)/종료·수정 — 식별은 DT_SEQ 단독, RUN_NO는 선택 맥락 (ADR 0002) */
   async upsertDowntime(dto: DowntimeUpsertDto): Promise<{ dtSeq: number }> {
     const user = dto.userId ?? DEFAULT_USER;
     return this.repo.manager.transaction(async (mgr) => {
@@ -243,8 +243,8 @@ export class WorkResultService {
                START_TIME=NVL(TO_DATE(:2,'YYYY-MM-DD HH24:MI'), START_TIME),
                END_TIME=SYSDATE,
                MEMO=NVL(:3, MEMO), WORKER=NVL(:4, WORKER), LAST_MODIFY_BY=:5, LAST_MODIFY_DATE=SYSDATE
-             WHERE RUN_NO=:6 AND DT_SEQ=:7 AND ORGANIZATION_ID=:8`,
-            [dto.reasonCode ?? null, dto.startTime ?? null, dto.memo ?? null, dto.worker ?? null, user, dto.runNo, dtSeq, ORG],
+             WHERE DT_SEQ=:6 AND ORGANIZATION_ID=:7`,
+            [dto.reasonCode ?? null, dto.startTime ?? null, dto.memo ?? null, dto.worker ?? null, user, dtSeq, ORG],
           );
         } else {
           await mgr.query(
@@ -252,16 +252,23 @@ export class WorkResultService {
                START_TIME=NVL(TO_DATE(:2,'YYYY-MM-DD HH24:MI'), START_TIME),
                END_TIME=NVL(TO_DATE(:3,'YYYY-MM-DD HH24:MI'), END_TIME),
                MEMO=NVL(:4, MEMO), WORKER=NVL(:5, WORKER), LAST_MODIFY_BY=:6, LAST_MODIFY_DATE=SYSDATE
-             WHERE RUN_NO=:7 AND DT_SEQ=:8 AND ORGANIZATION_ID=:9`,
-            [dto.reasonCode ?? null, dto.startTime ?? null, dto.endTime ?? null, dto.memo ?? null, dto.worker ?? null, user, dto.runNo, dtSeq, ORG],
+             WHERE DT_SEQ=:7 AND ORGANIZATION_ID=:8`,
+            [dto.reasonCode ?? null, dto.startTime ?? null, dto.endTime ?? null, dto.memo ?? null, dto.worker ?? null, user, dtSeq, ORG],
           );
         }
       } else {
-        const mx = (await mgr.query(
-          `SELECT NVL(MAX(DT_SEQ),0) AS "mx" FROM IP_EQUIP_DOWNTIME_RESULT WHERE RUN_NO=:1 AND ORGANIZATION_ID=:2`,
-          [dto.runNo, ORG],
-        )) as Array<{ mx: number }>;
-        dtSeq = Number(mx[0]?.mx ?? 0) + 1;
+        // 같은 설비에 진행중 비가동이 이미 있으면 중복 시작을 막는다 (ADR 0002)
+        const open = (await mgr.query(
+          `SELECT DT_SEQ AS "dtSeq" FROM IP_EQUIP_DOWNTIME_RESULT
+            WHERE MACHINE_CODE=:1 AND ORGANIZATION_ID=:2 AND END_TIME IS NULL`,
+          [dto.machineCode, ORG],
+        )) as Array<{ dtSeq: number }>;
+        if (open.length) throw new BadRequestException('이미 진행중인 비가동이 있습니다. 먼저 종료하세요.');
+
+        const nx = (await mgr.query(
+          `SELECT SEQ_IP_EQUIP_DOWNTIME.NEXTVAL AS "seq" FROM DUAL`,
+        )) as Array<{ seq: number }>;
+        dtSeq = Number(nx[0]?.seq);
         await mgr.query(
           `INSERT INTO IP_EQUIP_DOWNTIME_RESULT
              (RUN_NO, DT_SEQ, ORGANIZATION_ID, MACHINE_CODE, WORKSTAGE_CODE, REASON_CODE, START_TIME, END_TIME, MEMO, WORKER, ENTER_BY, ENTER_DATE)
@@ -269,7 +276,7 @@ export class WorkResultService {
              NVL(TO_DATE(:7,'YYYY-MM-DD HH24:MI'), SYSDATE),
              TO_DATE(:8,'YYYY-MM-DD HH24:MI'),
              :9,:10,:11,SYSDATE)`,
-          [dto.runNo, dtSeq, ORG, dto.machineCode, dto.workstageCode ?? null, dto.reasonCode ?? null, dto.startTime ?? null, dto.endTime ?? null, dto.memo ?? null, dto.worker ?? null, user],
+          [dto.runNo ?? null, dtSeq, ORG, dto.machineCode, dto.workstageCode ?? null, dto.reasonCode ?? null, dto.startTime ?? null, dto.endTime ?? null, dto.memo ?? null, dto.worker ?? null, user],
         );
       }
       return { dtSeq: dtSeq! };

@@ -8,7 +8,7 @@
  *   목록 GET ?fromDate&toDate&lineCode&keyword · 실적이력 GET /results?runNo
  *   실적상세 GET /results/:runNo/:seqNo · 실적 POST/PUT /results
  *   부적합유형 GET /bad-reasons(WQC) · 후공정설비 GET /machines · 비가동사유 GET /downtime-reasons
- *   비가동 GET /downtimes?runNo · POST/PUT /downtimes
+ *   비가동 GET /downtimes?machineCode(설비기준) · POST/PUT /downtimes
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Search, Factory, FileText, AlertTriangle, PauseCircle, RefreshCw, Plus, ChevronDown, ChevronRight } from 'lucide-react';
@@ -35,7 +35,7 @@ interface RunRow {
 interface ResultRow { seqNo: string; machineCode: string; workstageCode: string; resultQty: number; workTime: number; workerCount: number; workerName: string; resultStatus: string; itemCode: string; modelName: string; defectQty: number; updatedAt: string; }
 interface Machine { machineCode: string; machineName: string; workstageCode: string; workstageName: string; lineCode: string; }
 interface Code { code: string; name: string; }
-interface DowntimeRow { dtSeq: number; machineCode: string; workstageCode: string | null; reasonCode: string | null; reasonName: string | null; startTime: string | null; endTime: string | null; memo: string | null; worker: string | null; }
+interface DowntimeRow { dtSeq: number; runNo: string | null; machineCode: string; workstageCode: string | null; reasonCode: string | null; reasonName: string | null; startTime: string | null; endTime: string | null; memo: string | null; worker: string | null; }
 
 interface ResultForm { seqNo: string | null; machineCode: string; machineName: string; workstageCode: string; workstageName: string; resultQty: number; workTime: number; workerCount: number; workerName: string; resultStatus: 'WIP' | 'DONE'; savedStatus: 'WIP' | 'DONE'; }
 
@@ -115,10 +115,8 @@ export default function EquipWorkResultPage() {
   const [dtReasons, setDtReasons] = useState<Code[]>([]);
   const [dtForm, setDtForm] = useState<{ machineCode: string; machineName: string; workstageCode: string; reasonCode: string; memo: string; worker: string }>({ machineCode: '', machineName: '', workstageCode: '', reasonCode: '', memo: '', worker: '' });
   // 선택 설비의 진행중(종료 안 된) 비가동 이벤트 — 있으면 '비가동 종료' 토글
-  const openDowntimeEvent = useMemo(
-    () => downtimes.find((d) => !d.endTime && (!dtForm.machineCode || d.machineCode === dtForm.machineCode)) ?? null,
-    [downtimes, dtForm.machineCode],
-  );
+  // downtimes는 설비 기준으로 조회되므로 종료여부만 보면 된다 (ADR 0002)
+  const openDowntimeEvent = useMemo(() => downtimes.find((d) => !d.endTime) ?? null, [downtimes]);
   // 종료 상태에서 변경 가능한 비가동 사유 (진행중 이벤트의 현재 사유로 초기화)
   const [endReasonCode, setEndReasonCode] = useState('');
   useEffect(() => { setEndReasonCode(openDowntimeEvent?.reasonCode ?? ''); }, [openDowntimeEvent]);
@@ -236,37 +234,47 @@ export default function EquipWorkResultPage() {
     }
   }
 
-  // ---- 비가동 패널 ----
-  async function openDowntimePanel(r: RunRow) {
-    setSelectedRun(r.runNo); setPanelRun(r); setPanelMode('downtime');
-    setDtForm({ machineCode: r.machineCode ?? '', machineName: r.machineName ?? '', workstageCode: r.workstageCode ?? '', reasonCode: '', memo: '', worker: '' });
-    try { const res = await api.get('/oee/work-result/downtimes', { params: { runNo: r.runNo } }); setDowntimes(res.data?.data?.list ?? []); } catch { setDowntimes([]); }
-    try { const res = await api.get('/oee/work-result/downtime-reasons', { params: { machineCode: r.machineCode || undefined } }); setDtReasons(res.data?.data?.list ?? []); } catch { setDtReasons([]); }
+  // ---- 비가동 패널 (설비 기준 — 작업지시 선택은 선택사항, ADR 0002) ----
+  // 설비 하나의 비가동 이력과 사유를 함께 가져온다
+  async function loadDowntimeFor(machineCode: string) {
+    if (!machineCode) { setDowntimes([]); setDtReasons([]); return; }
+    try { const res = await api.get('/oee/work-result/downtimes', { params: { machineCode } }); setDowntimes(res.data?.data?.list ?? []); } catch { setDowntimes([]); }
+    try { const res = await api.get('/oee/work-result/downtime-reasons', { params: { machineCode } }); setDtReasons(res.data?.data?.list ?? []); } catch { setDtReasons([]); }
+  }
+  // r=null 이면 작업지시 없이 설비만 선택해 등록하는 흐름
+  async function openDowntimePanel(r: RunRow | null) {
+    setSelectedRun(r?.runNo ?? null); setPanelRun(r); setPanelMode('downtime');
+    setDtForm({ machineCode: r?.machineCode ?? '', machineName: r?.machineName ?? '', workstageCode: r?.workstageCode ?? '', reasonCode: '', memo: '', worker: '' });
+    await loadDowntimeFor(r?.machineCode ?? '');
   }
   async function reloadDowntimes() {
-    if (!panelRun) return;
-    const res = await api.get('/oee/work-result/downtimes', { params: { runNo: panelRun.runNo } });
+    if (!dtForm.machineCode) return;
+    const res = await api.get('/oee/work-result/downtimes', { params: { machineCode: dtForm.machineCode } });
     setDowntimes(res.data?.data?.list ?? []);
     await load();
   }
   async function startDowntime() {
-    if (!panelRun) return;
     if (!dtForm.machineCode) return toast.error('설비를 선택하세요');
     // 최초 비가동 시작은 사유 없이도 가능(종료 시 필수 선택)
     try {
-      await api.post('/oee/work-result/downtimes', { runNo: panelRun.runNo, machineCode: dtForm.machineCode, workstageCode: dtForm.workstageCode || undefined, reasonCode: dtForm.reasonCode || undefined, memo: dtForm.memo || undefined, worker: dtForm.worker || undefined });
+      await api.post('/oee/work-result/downtimes', { runNo: panelRun?.runNo || undefined, machineCode: dtForm.machineCode, workstageCode: dtForm.workstageCode || undefined, reasonCode: dtForm.reasonCode || undefined, memo: dtForm.memo || undefined, worker: dtForm.worker || undefined });
       toast.success('비가동 시작 등록');
       setDtForm({ ...dtForm, reasonCode: '', memo: '', worker: '' });
       await reloadDowntimes();
-    } catch { toast.error('비가동 시작 실패'); }
+    } catch (e: unknown) {
+      const msg = e && typeof e === 'object' && 'response' in e ? (e as { response?: { data?: { message?: string } } }).response?.data?.message : undefined;
+      toast.error(msg || '비가동 시작 실패');
+    }
   }
   async function endDowntime(dtSeq: number, machineCode: string, reasonCode?: string) {
-    if (!panelRun) return;
     try {
-      await api.put('/oee/work-result/downtimes', { runNo: panelRun.runNo, dtSeq, machineCode, endNow: true, reasonCode: reasonCode || undefined });
+      await api.put('/oee/work-result/downtimes', { dtSeq, machineCode, endNow: true, reasonCode: reasonCode || undefined });
       toast.success('비가동 종료');
       await reloadDowntimes();
-    } catch { toast.error('비가동 종료 실패'); }
+    } catch (e: unknown) {
+      const msg = e && typeof e === 'object' && 'response' in e ? (e as { response?: { data?: { message?: string } } }).response?.data?.message : undefined;
+      toast.error(msg || '비가동 종료 실패');
+    }
   }
 
   function closePanel() { setPanelMode(null); setPanelRun(null); setForm(null); }
@@ -365,11 +373,11 @@ export default function EquipWorkResultPage() {
             <button disabled className="flex flex-col items-center justify-center gap-1.5 border border-border rounded-lg bg-surface py-5 opacity-50 cursor-not-allowed">
               <FileText className="w-7 h-7 text-sky-600" /><span className="text-xs font-semibold text-text text-center leading-tight">작업지시서<br/>상세보기</span><span className="text-[10px] text-text-muted">추후</span>
             </button>
-            <button onClick={() => { const r = rows.find((x) => x.runNo === selectedRun); if (!r) return toast('작업지시를 먼저 선택하세요'); openDowntimePanel(r); }}
+            <button onClick={() => openDowntimePanel(rows.find((x) => x.runNo === selectedRun) ?? null)}
               className="flex flex-col items-center justify-center gap-1.5 border border-border rounded-lg bg-surface hover:bg-background hover:border-primary transition-colors py-5">
               <PauseCircle className="w-7 h-7 text-rose-600" /><span className="text-xs font-semibold text-text text-center leading-tight">설비<br/>비가동</span>
             </button>
-            <p className="text-[11px] text-text-muted mt-1 px-1">실적·불량은 행의 버튼을 누르세요.</p>
+            <p className="text-[11px] text-text-muted mt-1 px-1">실적·불량은 행의 버튼을 누르세요. 비가동은 작업지시 없이 설비만 선택해도 등록됩니다.</p>
           </div>
         </div>
       </div>
@@ -541,22 +549,24 @@ export default function EquipWorkResultPage() {
       )}
 
       {/* 설비비가동 패널 */}
-      {panelMode === 'downtime' && panelRun && (
+      {panelMode === 'downtime' && (
         <div className="w-[560px] flex-shrink-0 border-l border-border bg-background flex flex-col h-full overflow-hidden shadow-2xl animate-slide-in-right">
           <div className="px-5 py-3 border-b border-border flex items-center justify-between flex-shrink-0">
-            <h2 className="text-sm font-bold text-text">설비비가동 <span className="ml-2 font-mono text-text-muted text-xs">{panelRun.runNo}</span></h2>
+            <h2 className="text-sm font-bold text-text">설비비가동 {panelRun
+              ? <span className="ml-2 font-mono text-text-muted text-xs">{panelRun.runNo}</span>
+              : <span className="ml-2 text-text-muted text-xs font-normal">작업지시 없음</span>}</h2>
             <button onClick={closePanel} className="px-3 py-2 rounded border border-border text-text-muted text-sm">닫기</button>
           </div>
           <div className="flex-1 min-h-0 overflow-y-auto px-5 py-4 space-y-4">
-            {/* 설비: 기본 고정 or 선택 */}
+            {/* 설비: 작업지시에 설비가 있으면 고정, 없으면(또는 작업지시 미선택이면) 직접 선택 */}
             <div>
-              <span className="text-sm font-semibold text-text">설비 {panelRun.machineCode ? '(작업지시 등록 설비)' : '(설비 선택)'}</span>
-              {panelRun.machineCode ? (
+              <span className="text-sm font-semibold text-text">설비 {panelRun?.machineCode ? '(작업지시 등록 설비)' : '(설비 선택)'} <span className="text-red-500">*</span></span>
+              {panelRun?.machineCode ? (
                 <div className="mt-1 border border-border rounded p-2 bg-surface text-sm"><span className="font-mono">{panelRun.machineCode}</span> · {panelRun.machineName} <span className="text-text-muted text-xs">({panelRun.workstageCode})</span></div>
               ) : (
                 <div className="mt-1">
                   <MachineCombo machines={machines} value={dtForm.machineCode}
-                    onSelect={(m) => { setDtForm({ ...dtForm, machineCode: m.machineCode, machineName: m.machineName, workstageCode: m.workstageCode }); api.get('/oee/work-result/downtime-reasons', { params: { machineCode: m.machineCode } }).then((r) => setDtReasons(r.data?.data?.list ?? [])).catch(() => {}); }} />
+                    onSelect={(m) => { setDtForm({ ...dtForm, machineCode: m.machineCode, machineName: m.machineName, workstageCode: m.workstageCode }); loadDowntimeFor(m.machineCode); }} />
                 </div>
               )}
             </div>
@@ -575,7 +585,7 @@ export default function EquipWorkResultPage() {
                 <tbody>
                   {latestDowntime
                     ? dtRow(latestDowntime)
-                    : <tr><td colSpan={4} className="p-3 text-center text-text-muted">비가동 이력이 없습니다</td></tr>}
+                    : <tr><td colSpan={4} className="p-3 text-center text-text-muted">{dtForm.machineCode ? '비가동 이력이 없습니다' : '설비를 먼저 선택하세요'}</td></tr>}
                 </tbody>
               </table>
             </div>
@@ -584,7 +594,10 @@ export default function EquipWorkResultPage() {
             {openDowntimeEvent ? (
               <button onClick={() => { if (!endReasonCode) return toast.error('비가동 사유를 선택하세요'); endDowntime(openDowntimeEvent.dtSeq, openDowntimeEvent.machineCode, endReasonCode); }} className="w-full py-5 rounded bg-emerald-500 text-white text-sm font-semibold hover:bg-emerald-600">비가동 종료 (현재시각)</button>
             ) : (
-              <button onClick={startDowntime} className="w-full py-5 rounded bg-rose-500 text-white text-sm font-semibold hover:bg-rose-600">비가동 시작 (현재시각)</button>
+              <button onClick={startDowntime} disabled={!dtForm.machineCode}
+                className="w-full py-5 rounded bg-rose-500 text-white text-sm font-semibold hover:bg-rose-600 disabled:bg-surface disabled:text-text-muted disabled:cursor-not-allowed">
+                {dtForm.machineCode ? '비가동 시작 (현재시각)' : '설비를 선택하세요'}
+              </button>
             )}
 
             {/* 비가동 사유(박스 버튼 2열) / 상세 입력 */}
@@ -648,11 +661,12 @@ export default function EquipWorkResultPage() {
       {/* 비가동 이력 상세보기 (전체 이력) */}
       <Modal isOpen={dtHistoryOpen} onClose={() => setDtHistoryOpen(false)} title="비가동 이력 상세" size="lg">
         <table className="w-full text-xs border border-border">
-          <thead><tr className="bg-surface text-text-muted"><th className="p-1.5 text-center">순번</th><th className="p-1.5">사유</th><th className="p-1.5">시작</th><th className="p-1.5">종료</th><th className="p-1.5 text-center">상태</th></tr></thead>
+          <thead><tr className="bg-surface text-text-muted"><th className="p-1.5 text-center">순번</th><th className="p-1.5">작업지시</th><th className="p-1.5">사유</th><th className="p-1.5">시작</th><th className="p-1.5">종료</th><th className="p-1.5 text-center">상태</th></tr></thead>
           <tbody>
             {[...downtimes].reverse().map((d) => (
               <tr key={d.dtSeq} className="border-t border-border">
                 <td className="p-1.5 text-center font-mono">{d.dtSeq}</td>
+                <td className="p-1.5 font-mono">{d.runNo ?? <span className="text-text-muted font-sans">없음</span>}</td>
                 <td className="p-1.5">{d.reasonName ?? d.reasonCode ?? '-'}</td>
                 <td className="p-1.5 font-mono">{d.startTime ?? '-'}</td>
                 <td className="p-1.5 font-mono">{d.endTime ?? <span className="text-red-500">진행중</span>}</td>
@@ -663,7 +677,7 @@ export default function EquipWorkResultPage() {
                 </td>
               </tr>
             ))}
-            {!downtimes.length && <tr><td colSpan={5} className="p-3 text-center text-text-muted">비가동 이력이 없습니다</td></tr>}
+            {!downtimes.length && <tr><td colSpan={6} className="p-3 text-center text-text-muted">비가동 이력이 없습니다</td></tr>}
           </tbody>
         </table>
       </Modal>
