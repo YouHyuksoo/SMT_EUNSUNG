@@ -75,10 +75,10 @@ export class WorkResultController {
     return { list: await this.service.downtimeReasons(machineCode || undefined) };
   }
 
-  /** 비가동 실적 목록 (설비별) */
+  /** 비가동 실적 목록 (설비별) + DB 현재시각 */
   @Get('downtimes')
   async downtimes(@Query('machineCode') machineCode: string) {
-    return { list: await this.service.downtimes(machineCode) };
+    return await this.service.downtimes(machineCode);
   }
 
   /** 비가동 시작(신규) */

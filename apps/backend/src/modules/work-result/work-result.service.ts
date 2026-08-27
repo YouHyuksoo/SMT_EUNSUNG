@@ -215,19 +215,26 @@ export class WorkResultService {
     );
   }
 
-  /** 비가동 실적 목록 (설비별 — 작업지시 선택 여부와 무관, ADR 0002) */
-  downtimes(machineCode: string) {
-    return this.q(
+  /** 비가동 실적 목록 (설비별 — 작업지시 선택 여부와 무관, ADR 0002)
+   *  serverNow(DB SYSDATE)를 함께 반환한다. 경과 타이머가 브라우저 시계로 계산하면
+   *  DB 서버와의 시계 차이만큼 어긋나므로 클라이언트에서 이 값으로 보정한다. */
+  async downtimes(machineCode: string) {
+    const list = await this.q(
       `SELECT DT_SEQ AS "dtSeq", RUN_NO AS "runNo", MACHINE_CODE AS "machineCode", WORKSTAGE_CODE AS "workstageCode",
               REASON_CODE AS "reasonCode",
               (SELECT MAX(r.REASON_NAME) FROM IP_EQUIP_DOWNTIME_REASON r WHERE r.REASON_CODE=d.REASON_CODE AND r.ORGANIZATION_ID=d.ORGANIZATION_ID) AS "reasonName",
               TO_CHAR(START_TIME,'YYYY-MM-DD HH24:MI') AS "startTime",
+              TO_CHAR(START_TIME,'YYYY-MM-DD HH24:MI:SS') AS "startAt",
               TO_CHAR(END_TIME,'YYYY-MM-DD HH24:MI') AS "endTime",
               MEMO AS "memo", WORKER AS "worker"
          FROM IP_EQUIP_DOWNTIME_RESULT d
         WHERE MACHINE_CODE=:1 AND ORGANIZATION_ID=${ORG} ORDER BY DT_SEQ`,
       [machineCode],
     );
+    const now = await this.q<{ now: string }>(
+      `SELECT TO_CHAR(SYSDATE,'YYYY-MM-DD HH24:MI:SS') AS "now" FROM DUAL`,
+    );
+    return { list, serverNow: now[0]?.now ?? null };
   }
 
   /** 비가동 시작(신규)/종료·수정 — 식별은 DT_SEQ 단독, RUN_NO는 선택 맥락 (ADR 0002) */
