@@ -1,7 +1,7 @@
 // 설비별 작업 실적관리 REST 컨트롤러 (글로벌 prefix /api/v1): /oee/work-result
 import { Body, Controller, Get, Param, Post, Put, Query } from '@nestjs/common';
 import { Public } from '../../common/decorators/public.decorator';
-import { DefectSaveDto, DowntimeUpsertDto, WorkResultUpsertDto } from './work-result.dto';
+import { DefectSaveDto, DowntimeBulkDto, DowntimeUpsertDto, WorkResultUpsertDto } from './work-result.dto';
 import { WorkResultService } from './work-result.service';
 
 @Public()
@@ -91,5 +91,11 @@ export class WorkResultController {
   @Put('downtimes')
   async updateDowntime(@Body() dto: DowntimeUpsertDto) {
     return await this.service.upsertDowntime(dto);
+  }
+
+  /** 라인/설비 일괄 비가동 시작·종료 */
+  @Post('downtimes/bulk')
+  async bulkDowntime(@Body() dto: DowntimeBulkDto) {
+    return await this.service.bulkDowntime(dto);
   }
 }

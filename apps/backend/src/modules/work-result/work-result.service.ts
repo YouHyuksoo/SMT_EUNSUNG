@@ -3,7 +3,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ProductWorkResult } from '../../entities/product-work-result.entity';
-import { DowntimeUpsertDto, WorkResultUpsertDto } from './work-result.dto';
+import { DowntimeBulkDto, DowntimeUpsertDto, WorkResultUpsertDto } from './work-result.dto';
 
 const ORG = 1;
 const DEFAULT_USER = 'ADMIN';
@@ -235,6 +235,73 @@ export class WorkResultService {
       `SELECT TO_CHAR(SYSDATE,'YYYY-MM-DD HH24:MI:SS') AS "now" FROM DUAL`,
     );
     return { list, serverNow: now[0]?.now ?? null };
+  }
+
+  /** 라인/설비 일괄 비가동 시작·종료.
+   *  이미 요청한 상태인 설비는 건너뛰고 결과를 요약해 돌려준다 — 한 대 때문에 전체가 막히지 않게. */
+  async bulkDowntime(dto: DowntimeBulkDto) {
+    const user = dto.userId ?? DEFAULT_USER;
+    const isEnd = dto.action === 'END';
+    if (isEnd && !dto.reasonCode) throw new BadRequestException('종료 시 비가동 사유를 선택하세요');
+
+    return this.repo.manager.transaction(async (mgr) => {
+      // 대상 설비 확정 — 설비 직접 지정이 우선, 없으면 라인 배정 설비
+      let targets: string[];
+      if (dto.machineCodes?.length) {
+        targets = dto.machineCodes;
+      } else if (dto.lineCode) {
+        const rows = (await mgr.query(
+          `SELECT MACHINE_CODE AS "machineCode" FROM IMCN_MACHINE
+            WHERE ORGANIZATION_ID=:1 AND LINE_CODE=:2 ORDER BY MACHINE_CODE`,
+          [ORG, dto.lineCode],
+        )) as Array<{ machineCode: string }>;
+        targets = rows.map((r) => r.machineCode);
+      } else {
+        throw new BadRequestException('대상 라인 또는 설비를 지정하세요');
+      }
+      if (!targets.length) return { affected: 0, skipped: 0, targets: 0, skippedMachines: [] as string[] };
+
+      // 진행중 비가동을 한 번에 조회해 대상/건너뛸 설비를 가른다
+      const binds = targets.map((_, i) => `:${i + 2}`).join(',');
+      const open = (await mgr.query(
+        `SELECT MACHINE_CODE AS "machineCode", DT_SEQ AS "dtSeq" FROM IP_EQUIP_DOWNTIME_RESULT
+          WHERE ORGANIZATION_ID=:1 AND END_TIME IS NULL AND MACHINE_CODE IN (${binds})`,
+        [ORG, ...targets],
+      )) as Array<{ machineCode: string; dtSeq: number }>;
+      const openMap = new Map(open.map((o) => [o.machineCode, o.dtSeq]));
+
+      const acted: string[] = [];
+      const skipped: string[] = [];
+      for (const machineCode of targets) {
+        const openSeq = openMap.get(machineCode);
+        if (isEnd) {
+          if (openSeq == null) { skipped.push(machineCode); continue; }
+          await mgr.query(
+            `UPDATE IP_EQUIP_DOWNTIME_RESULT
+                SET REASON_CODE=:1, END_TIME=SYSDATE, LAST_MODIFY_BY=:2, LAST_MODIFY_DATE=SYSDATE
+              WHERE DT_SEQ=:3 AND ORGANIZATION_ID=:4`,
+            [dto.reasonCode, user, openSeq, ORG],
+          );
+        } else {
+          if (openSeq != null) { skipped.push(machineCode); continue; }
+          const nx = (await mgr.query(
+            `SELECT SEQ_IP_EQUIP_DOWNTIME.NEXTVAL AS "seq" FROM DUAL`,
+          )) as Array<{ seq: number }>;
+          const ws = (await mgr.query(
+            `SELECT WORKSTAGE_CODE AS "ws" FROM IMCN_MACHINE WHERE MACHINE_CODE=:1 AND ORGANIZATION_ID=:2`,
+            [machineCode, ORG],
+          )) as Array<{ ws: string | null }>;
+          await mgr.query(
+            `INSERT INTO IP_EQUIP_DOWNTIME_RESULT
+               (RUN_NO, DT_SEQ, ORGANIZATION_ID, MACHINE_CODE, WORKSTAGE_CODE, REASON_CODE, START_TIME, MEMO, WORKER, ENTER_BY, ENTER_DATE)
+             VALUES (NULL,:1,:2,:3,:4,:5,SYSDATE,:6,:7,:8,SYSDATE)`,
+            [Number(nx[0]?.seq), ORG, machineCode, ws[0]?.ws ?? null, dto.reasonCode ?? null, dto.memo ?? null, dto.worker ?? null, user],
+          );
+        }
+        acted.push(machineCode);
+      }
+      return { affected: acted.length, skipped: skipped.length, targets: targets.length, skippedMachines: skipped };
+    });
   }
 
   /** 비가동 시작(신규)/종료·수정 — 식별은 DT_SEQ 단독, RUN_NO는 선택 맥락 (ADR 0002) */

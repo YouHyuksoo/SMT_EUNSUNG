@@ -1,5 +1,5 @@
 // 설비별 작업 실적관리 DTO
-import { IsBoolean, IsIn, IsInt, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsBoolean, IsIn, IsInt, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class WorkResultUpsertDto {
   @IsString() @IsNotEmpty() runNo: string;
@@ -20,6 +20,17 @@ export class DefectSaveDto {
   @IsString() @IsNotEmpty() badCode: string;
   @IsInt() badQty: number;
   @IsOptional() @IsString() remark?: string;
+  @IsOptional() @IsString() userId?: string;
+}
+
+// 라인/설비 일괄 비가동 시작·종료 (ADR 0002 — 이미 그 상태인 설비는 건너뛴다)
+export class DowntimeBulkDto {
+  @IsIn(['START', 'END']) action: string;
+  @IsOptional() @IsString() lineCode?: string;   // 라인 전체 대상
+  @IsOptional() @IsArray() @IsString({ each: true }) machineCodes?: string[]; // 설비 직접 지정
+  @IsOptional() @IsString() reasonCode?: string; // 종료 시 필수, 시작 시 선택
+  @IsOptional() @IsString() memo?: string;
+  @IsOptional() @IsString() worker?: string;
   @IsOptional() @IsString() userId?: string;
 }
 
