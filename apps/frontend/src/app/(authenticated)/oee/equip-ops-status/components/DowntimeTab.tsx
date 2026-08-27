@@ -123,20 +123,23 @@ export default function DowntimeTab({ machines, lines, refreshSec, onChanged }: 
     return () => clearInterval(id);
   }, [refreshSec, loadScope]);
 
-  /** 바코드/수기 입력 → 설비코드로 대상 확정. 라인 모드면 그 설비의 라인을 선택한다 */
+  /** 바코드/수기 입력 → 선택 모드에 맞는 코드로 대상 확정 (라인 모드=라인코드, 설비 모드=설비코드) */
   function resolveScan(raw: string) {
     const code = raw.trim().toUpperCase();
     if (!code) return;
-    const found = machines.find((m) => m.machineCode.toUpperCase() === code);
-    if (!found) { toast.error(`설비코드 '${raw.trim()}'를 찾을 수 없습니다`); return; }
     if (mode === 'LINE') {
-      if (!found.lineCode || found.lineCode === '*') { toast.error(`${found.machineCode}는 라인이 배정되어 있지 않습니다`); return; }
-      setLineCode(found.lineCode);
-    } else {
-      setMachineCode(found.machineCode);
+      const line = lines.find((l) => l.lineCode.toUpperCase() === code);
+      if (!line) { toast.error(`라인코드 '${raw.trim()}'를 찾을 수 없습니다`); return; }
+      setLineCode(line.lineCode);
+      setScan('');
+      toast.success(`${line.lineCode} · ${line.lineName ?? ''} 선택`);
+      return;
     }
+    const machine = machines.find((m) => m.machineCode.toUpperCase() === code);
+    if (!machine) { toast.error(`설비코드 '${raw.trim()}'를 찾을 수 없습니다`); return; }
+    setMachineCode(machine.machineCode);
     setScan('');
-    toast.success(`${found.machineCode} 선택`);
+    toast.success(`${machine.machineCode} · ${machine.machineName ?? ''} 선택`);
   }
 
   async function apply() {
@@ -193,7 +196,7 @@ export default function DowntimeTab({ machines, lines, refreshSec, onChanged }: 
           </label>
         )}
 
-        <label className="text-xs text-text-muted flex flex-col gap-1">바코드 (설비코드 스캔 또는 직접 입력)
+        <label className="text-xs text-text-muted flex flex-col gap-1">바코드 ({mode === 'LINE' ? '라인코드' : '설비코드'} 스캔 또는 직접 입력)
           <div className="w-64">
             <Input ref={scanRef} placeholder="스캔 후 Enter" value={scan}
               onChange={(e) => setScan(e.target.value)}
