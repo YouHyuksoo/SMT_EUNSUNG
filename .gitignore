@@ -106,3 +106,9 @@ next-env.d.ts
 # 은성: AI 지식 sqlite 캐시(대용량, 재생성 가능)
 apps/backend/data/ai-knowledge/
 *.sqlite
+
+# pnpm 로컬 스토어 캐시
+.pnpm-store/
+
+# 운영 데이터 백업 스냅샷(대용량, 로컬 보관)
+backups/
