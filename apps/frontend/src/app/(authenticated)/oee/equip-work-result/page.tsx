@@ -8,13 +8,14 @@
  *   목록 GET ?fromDate&toDate&lineCode&keyword · 실적이력 GET /results?runNo
  *   실적상세 GET /results/:runNo/:seqNo · 실적 POST/PUT /results
  *   부적합유형 GET /bad-reasons(WQC) · 후공정설비 GET /machines · 비가동사유 GET /downtime-reasons
- *   비가동 GET /downtimes?machineCode(설비기준, serverNow 동반) · POST/PUT /downtimes
+ *   비가동 처리는 공용 컴포넌트 components/shared/EquipDowntimePanel 이 담당
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Search, Factory, FileText, AlertTriangle, PauseCircle, RefreshCw, Plus, ChevronDown, ChevronRight } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { Card, CardContent, Input, Modal } from '@/components/ui';
+import { Card, CardContent, Input } from '@/components/ui';
 import { ProdLineSelect } from '@/components/shared';
+import EquipDowntimePanel from '@/components/shared/EquipDowntimePanel';
 import api from '@/services/api';
 
 function todayStr() {
@@ -35,7 +36,6 @@ interface RunRow {
 interface ResultRow { seqNo: string; machineCode: string; workstageCode: string; resultQty: number; workTime: number; workerCount: number; workerName: string; resultStatus: string; itemCode: string; modelName: string; defectQty: number; updatedAt: string; }
 interface Machine { machineCode: string; machineName: string; workstageCode: string; workstageName: string; lineCode: string; }
 interface Code { code: string; name: string; }
-interface DowntimeRow { dtSeq: number; runNo: string | null; machineCode: string; workstageCode: string | null; reasonCode: string | null; reasonName: string | null; startTime: string | null; startAt: string | null; endTime: string | null; memo: string | null; worker: string | null; }
 
 interface ResultForm { seqNo: string | null; machineCode: string; machineName: string; workstageCode: string; workstageName: string; resultQty: number; workTime: number; workerCount: number; workerName: string; resultStatus: 'WIP' | 'DONE'; savedStatus: 'WIP' | 'DONE'; }
 
@@ -86,28 +86,6 @@ function MachineCombo({ machines, value, onSelect, disabled }: { machines: Machi
   );
 }
 
-/** 'YYYY-MM-DD HH:MM:SS' 를 로컬 시각으로 파싱 (브라우저별 문자열 파싱 차이 회피) */
-function parseLocalTime(s: string): number | null {
-  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2}))?$/);
-  if (!m) return null;
-  return new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +(m[6] ?? '0')).getTime();
-}
-
-/** 비가동 시작시각부터의 경과시간을 1초마다 HH:MM:SS로 갱신 (진행중일 때만 마운트).
- *  startAt은 DB 시각이므로 브라우저 시계와의 차이(skewMs)를 더해 맞춘다. */
-function ElapsedTime({ startAt, skewMs }: { startAt: string | null; skewMs: number }) {
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(id);
-  }, []);
-  const started = startAt ? parseLocalTime(startAt) : null;
-  if (started == null) return <>--:--:--</>;
-  const sec = Math.max(0, Math.floor((now + skewMs - started) / 1000));
-  const p = (n: number) => String(n).padStart(2, '0');
-  return <>{p(Math.floor(sec / 3600))}:{p(Math.floor((sec % 3600) / 60))}:{p(sec % 60)}</>;
-}
-
 export default function EquipWorkResultPage() {
   const [fromDate, setFromDate] = useState(todayStr());
   const [toDate, setToDate] = useState(todayStr());
@@ -131,34 +109,6 @@ export default function EquipWorkResultPage() {
   // 불량 패널 (작업지시 단위 대표불량 단일)
   const [defect, setDefect] = useState<{ badCode: string; badQty: number; remark: string }>({ badCode: '', badQty: 0, remark: '' });
   const [defectInfoOpen, setDefectInfoOpen] = useState(false); // 기본정보 접힘(기본값)
-
-  // 비가동 패널
-  const [downtimes, setDowntimes] = useState<DowntimeRow[]>([]);
-  const [dtReasons, setDtReasons] = useState<Code[]>([]);
-  // DB 시각 − 브라우저 시각 (경과 타이머 보정용)
-  const [clockSkew, setClockSkew] = useState(0);
-  const [dtForm, setDtForm] = useState<{ machineCode: string; machineName: string; workstageCode: string; reasonCode: string; memo: string; worker: string }>({ machineCode: '', machineName: '', workstageCode: '', reasonCode: '', memo: '', worker: '' });
-  // 선택 설비의 진행중(종료 안 된) 비가동 이벤트 — 있으면 '비가동 종료' 토글
-  // downtimes는 설비 기준으로 조회되므로 종료여부만 보면 된다 (ADR 0002)
-  const openDowntimeEvent = useMemo(() => downtimes.find((d) => !d.endTime) ?? null, [downtimes]);
-  // 종료 상태에서 변경 가능한 비가동 사유 (진행중 이벤트의 현재 사유로 초기화)
-  const [endReasonCode, setEndReasonCode] = useState('');
-  useEffect(() => { setEndReasonCode(openDowntimeEvent?.reasonCode ?? ''); }, [openDowntimeEvent]);
-  // 비가동 이력: 최신(마지막 DT_SEQ) 1건만 표시, 나머지는 이력보기 팝업
-  const [dtHistoryOpen, setDtHistoryOpen] = useState(false);
-  const latestDowntime = downtimes.length ? downtimes[downtimes.length - 1] : null;
-  const dtRow = (d: DowntimeRow) => (
-    <tr key={d.dtSeq} className="border-t border-border">
-      <td className="p-1.5">{d.reasonName ?? d.reasonCode ?? '-'}</td>
-      <td className="p-1.5 font-mono">{d.startTime ?? '-'}</td>
-      <td className="p-1.5 font-mono">{d.endTime ?? <span className="text-red-500">진행중</span>}</td>
-      <td className="p-1.5 text-center">
-        {d.endTime
-          ? <span className="px-2 py-0.5 rounded bg-blue-500 text-white text-xs">완료</span>
-          : <span className="px-2 py-0.5 rounded bg-amber-500 text-white text-xs">진행중</span>}
-      </td>
-    </tr>
-  );
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -259,53 +209,10 @@ export default function EquipWorkResultPage() {
   }
 
   // ---- 비가동 패널 (설비 기준 — 작업지시 선택은 선택사항, ADR 0002) ----
-  // 비가동 이력 조회 + DB 현재시각으로 브라우저 시계 오차 보정
-  async function fetchDowntimes(machineCode: string) {
-    const res = await api.get('/oee/work-result/downtimes', { params: { machineCode } });
-    setDowntimes(res.data?.data?.list ?? []);
-    const serverNow: string | undefined = res.data?.data?.serverNow;
-    const t = serverNow ? parseLocalTime(serverNow) : null;
-    setClockSkew(t == null ? 0 : t - Date.now());
-  }
-  // 설비 하나의 비가동 이력과 사유를 함께 가져온다
-  async function loadDowntimeFor(machineCode: string) {
-    if (!machineCode) { setDowntimes([]); setDtReasons([]); return; }
-    try { await fetchDowntimes(machineCode); } catch { setDowntimes([]); }
-    try { const res = await api.get('/oee/work-result/downtime-reasons', { params: { machineCode } }); setDtReasons(res.data?.data?.list ?? []); } catch { setDtReasons([]); }
-  }
+  // 실제 조회·시작·종료는 공용 컴포넌트 EquipDowntimePanel이 담당한다.
   // r=null 이면 작업지시 없이 설비만 선택해 등록하는 흐름
-  async function openDowntimePanel(r: RunRow | null) {
+  function openDowntimePanel(r: RunRow | null) {
     setSelectedRun(r?.runNo ?? null); setPanelRun(r); setPanelMode('downtime');
-    setDtForm({ machineCode: r?.machineCode ?? '', machineName: r?.machineName ?? '', workstageCode: r?.workstageCode ?? '', reasonCode: '', memo: '', worker: '' });
-    await loadDowntimeFor(r?.machineCode ?? '');
-  }
-  async function reloadDowntimes() {
-    if (!dtForm.machineCode) return;
-    await fetchDowntimes(dtForm.machineCode);
-    await load();
-  }
-  async function startDowntime() {
-    if (!dtForm.machineCode) return toast.error('설비를 선택하세요');
-    // 최초 비가동 시작은 사유 없이도 가능(종료 시 필수 선택)
-    try {
-      await api.post('/oee/work-result/downtimes', { runNo: panelRun?.runNo || undefined, machineCode: dtForm.machineCode, workstageCode: dtForm.workstageCode || undefined, reasonCode: dtForm.reasonCode || undefined, memo: dtForm.memo || undefined, worker: dtForm.worker || undefined });
-      toast.success('비가동 시작 등록');
-      setDtForm({ ...dtForm, reasonCode: '', memo: '', worker: '' });
-      await reloadDowntimes();
-    } catch (e: unknown) {
-      const msg = e && typeof e === 'object' && 'response' in e ? (e as { response?: { data?: { message?: string } } }).response?.data?.message : undefined;
-      toast.error(msg || '비가동 시작 실패');
-    }
-  }
-  async function endDowntime(dtSeq: number, machineCode: string, reasonCode?: string) {
-    try {
-      await api.put('/oee/work-result/downtimes', { dtSeq, machineCode, endNow: true, reasonCode: reasonCode || undefined });
-      toast.success('비가동 종료');
-      await reloadDowntimes();
-    } catch (e: unknown) {
-      const msg = e && typeof e === 'object' && 'response' in e ? (e as { response?: { data?: { message?: string } } }).response?.data?.message : undefined;
-      toast.error(msg || '비가동 종료 실패');
-    }
   }
 
   function closePanel() { setPanelMode(null); setPanelRun(null); setForm(null); }
@@ -579,7 +486,7 @@ export default function EquipWorkResultPage() {
         </div>
       )}
 
-      {/* 설비비가동 패널 */}
+      {/* 설비비가동 패널 — 공용 컴포넌트 (components/shared/EquipDowntimePanel) */}
       {panelMode === 'downtime' && (
         <div className="w-[560px] flex-shrink-0 border-l border-border bg-background flex flex-col h-full overflow-hidden shadow-2xl animate-slide-in-right">
           <div className="px-5 py-3 border-b border-border flex items-center justify-between flex-shrink-0">
@@ -588,132 +495,17 @@ export default function EquipWorkResultPage() {
               : <span className="ml-2 text-text-muted text-xs font-normal">작업지시 없음</span>}</h2>
             <button onClick={closePanel} className="px-3 py-2 rounded border border-border text-text-muted text-sm">닫기</button>
           </div>
-          <div className="flex-1 min-h-0 overflow-y-auto px-5 py-4 space-y-4">
-            {/* 설비: 작업지시에 설비가 있으면 고정, 없으면(또는 작업지시 미선택이면) 직접 선택 */}
-            <div>
-              <span className="text-sm font-semibold text-text">설비 {panelRun?.machineCode ? '(작업지시 등록 설비)' : '(설비 선택)'} <span className="text-red-500">*</span></span>
-              {panelRun?.machineCode ? (
-                <div className="mt-1 border border-border rounded p-2 bg-surface text-sm"><span className="font-mono">{panelRun.machineCode}</span> · {panelRun.machineName} <span className="text-text-muted text-xs">({panelRun.workstageCode})</span></div>
-              ) : (
-                <div className="mt-1">
-                  <MachineCombo machines={machines} value={dtForm.machineCode}
-                    onSelect={(m) => { setDtForm({ ...dtForm, machineCode: m.machineCode, machineName: m.machineName, workstageCode: m.workstageCode }); loadDowntimeFor(m.machineCode); }} />
-                </div>
-              )}
-            </div>
-
-            {/* 비가동 이력 — 최신 1건만, 과거 이력은 이력보기 팝업 */}
-            <div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-semibold text-text">비가동 이력 <span className="font-normal text-text-muted text-xs">(최신)</span></span>
-                <button type="button" onClick={() => setDtHistoryOpen(true)} disabled={downtimes.length <= 1}
-                  className="text-xs border border-primary text-primary rounded px-2 py-1 hover:bg-surface disabled:border-border disabled:text-text-muted disabled:hover:bg-transparent disabled:cursor-not-allowed">
-                  이력보기{downtimes.length > 1 ? ` (${downtimes.length})` : ''}
-                </button>
-              </div>
-              <table className="w-full text-xs border border-border mt-1">
-                <thead><tr className="bg-surface text-text-muted"><th className="p-1.5">사유</th><th className="p-1.5">시작</th><th className="p-1.5">종료</th><th className="p-1.5 text-center">상태</th></tr></thead>
-                <tbody>
-                  {latestDowntime
-                    ? dtRow(latestDowntime)
-                    : <tr><td colSpan={4} className="p-3 text-center text-text-muted">{dtForm.machineCode ? '비가동 이력이 없습니다' : '설비를 먼저 선택하세요'}</td></tr>}
-                </tbody>
-              </table>
-            </div>
-
-            {/* 비가동 시작/종료 버튼 — 비가동 이력 바로 아래 */}
-            {openDowntimeEvent ? (
-              <button onClick={() => { if (!endReasonCode) return toast.error('비가동 사유를 선택하세요'); endDowntime(openDowntimeEvent.dtSeq, openDowntimeEvent.machineCode, endReasonCode); }} className="w-full py-5 rounded bg-emerald-500 text-white text-sm font-semibold hover:bg-emerald-600">
-                비가동 종료 (<span className="font-mono tabular-nums"><ElapsedTime startAt={openDowntimeEvent.startAt} skewMs={clockSkew} /></span> 경과)
-              </button>
-            ) : (
-              <button onClick={startDowntime} disabled={!dtForm.machineCode}
-                className="w-full py-5 rounded bg-rose-500 text-white text-sm font-semibold hover:bg-rose-600 disabled:bg-surface disabled:text-text-muted disabled:cursor-not-allowed">
-                {dtForm.machineCode ? '비가동 시작 (현재시각)' : '설비를 선택하세요'}
-              </button>
-            )}
-
-            {/* 비가동 사유(박스 버튼 2열) / 상세 입력 */}
-            {openDowntimeEvent ? (
-              <div className="border-t border-border pt-3 space-y-2">
-                <span className="text-sm font-semibold text-red-600">비가동 진행중 — 종료</span>
-                <div className="border border-red-300 rounded p-2 bg-red-500/5 text-sm space-y-0.5">
-                  <div className="text-text-muted">시작 <span className="font-mono text-text">{openDowntimeEvent.startTime ?? '-'}</span></div>
-                  {openDowntimeEvent.memo && <div className="text-text-muted">메모 <span className="text-text">{openDowntimeEvent.memo}</span></div>}
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <span className="text-sm text-text-muted">비가동 사유 <span className="text-red-500">*</span> (변경 가능)</span>
-                  <div className="grid grid-cols-2 gap-2">
-                    {dtReasons.map((r) => {
-                      const active = endReasonCode === r.code;
-                      return (
-                        <button key={r.code} type="button" onClick={() => setEndReasonCode(active ? '' : r.code)}
-                          className={`px-2 py-2 rounded border text-xs text-center transition-colors ${active ? 'bg-primary text-white border-primary' : 'border-border bg-background text-text hover:border-primary/60'}`}>
-                          <span className="block font-medium leading-tight">{r.name}</span>
-                          <span className={`block text-[10px] font-mono ${active ? 'text-white/80' : 'text-text-muted'}`}>{r.code}</span>
-                        </button>
-                      );
-                    })}
-                    {!dtReasons.length && <span className="col-span-2 text-xs text-text-muted py-2">연계된 비가동 사유가 없습니다</span>}
-                  </div>
-                </div>
-                <p className="text-[11px] text-text-muted">현재 이 설비는 비가동 중입니다. 종료 시각은 현재시각으로 기록됩니다.</p>
-              </div>
-            ) : (
-              <div className="border-t border-border pt-3 space-y-2">
-                <span className="text-sm font-semibold text-text">비가동 시작 등록</span>
-                <div className="flex flex-col gap-1.5">
-                  <span className="text-sm text-text-muted">비가동 사유 <span className="text-red-500">*</span></span>
-                  <div className="grid grid-cols-2 gap-2">
-                    {dtReasons.map((r) => {
-                      const active = dtForm.reasonCode === r.code;
-                      return (
-                        <button key={r.code} type="button" onClick={() => setDtForm({ ...dtForm, reasonCode: active ? '' : r.code })}
-                          className={`px-2 py-2 rounded border text-xs text-center transition-colors ${active ? 'bg-primary text-white border-primary' : 'border-border bg-background text-text hover:border-primary/60'}`}>
-                          <span className="block font-medium leading-tight">{r.name}</span>
-                          <span className={`block text-[10px] font-mono ${active ? 'text-white/80' : 'text-text-muted'}`}>{r.code}</span>
-                        </button>
-                      );
-                    })}
-                    {!dtReasons.length && <span className="col-span-2 text-xs text-text-muted py-2">연계된 비가동 사유가 없습니다</span>}
-                  </div>
-                </div>
-                <label className="text-sm text-text-muted flex flex-col gap-1">메모
-                  <textarea rows={2} value={dtForm.memo} onChange={(e) => setDtForm({ ...dtForm, memo: e.target.value })} className="border border-border rounded p-2 bg-background text-text resize-none" />
-                </label>
-                <label className="text-sm text-text-muted flex flex-col gap-1">작업자
-                  <input value={dtForm.worker} onChange={(e) => setDtForm({ ...dtForm, worker: e.target.value })} className="border border-border rounded p-2 bg-background text-text" />
-                </label>
-                <p className="text-[11px] text-text-muted">시작 시각은 현재시각으로 기록됩니다.</p>
-              </div>
-            )}
+          <div className="flex-1 min-h-0 overflow-y-auto px-5 py-4">
+            <EquipDowntimePanel
+              machine={panelRun?.machineCode ? { machineCode: panelRun.machineCode, machineName: panelRun.machineName, workstageCode: panelRun.workstageCode } : null}
+              selectableMachines={machines}
+              runNo={panelRun?.runNo ?? null}
+              onChanged={load}
+            />
           </div>
         </div>
       )}
 
-      {/* 비가동 이력 상세보기 (전체 이력) */}
-      <Modal isOpen={dtHistoryOpen} onClose={() => setDtHistoryOpen(false)} title="비가동 이력 상세" size="lg">
-        <table className="w-full text-xs border border-border">
-          <thead><tr className="bg-surface text-text-muted"><th className="p-1.5 text-center">순번</th><th className="p-1.5">작업지시</th><th className="p-1.5">사유</th><th className="p-1.5">시작</th><th className="p-1.5">종료</th><th className="p-1.5 text-center">상태</th></tr></thead>
-          <tbody>
-            {[...downtimes].reverse().map((d) => (
-              <tr key={d.dtSeq} className="border-t border-border">
-                <td className="p-1.5 text-center font-mono">{d.dtSeq}</td>
-                <td className="p-1.5 font-mono">{d.runNo ?? <span className="text-text-muted font-sans">없음</span>}</td>
-                <td className="p-1.5">{d.reasonName ?? d.reasonCode ?? '-'}</td>
-                <td className="p-1.5 font-mono">{d.startTime ?? '-'}</td>
-                <td className="p-1.5 font-mono">{d.endTime ?? <span className="text-red-500">진행중</span>}</td>
-                <td className="p-1.5 text-center">
-                  {d.endTime
-                    ? <span className="px-2 py-0.5 rounded bg-blue-500 text-white text-xs">완료</span>
-                    : <span className="px-2 py-0.5 rounded bg-amber-500 text-white text-xs">진행중</span>}
-                </td>
-              </tr>
-            ))}
-            {!downtimes.length && <tr><td colSpan={6} className="p-3 text-center text-text-muted">비가동 이력이 없습니다</td></tr>}
-          </tbody>
-        </table>
-      </Modal>
     </div>
   );
 }
