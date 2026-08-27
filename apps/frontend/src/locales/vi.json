@@ -390,6 +390,7 @@
     "oee.drilldown": "Chi tiết nguồn lực",
     "oee.entry": "Nhập thời gian dừng OEE",
     "oee.equipWorkResult": "Quản lý kết quả sản xuất theo thiết bị",
+    "oee.equipOpsStatus": "Tình trạng vận hành thiết bị",
     "oee.equipOpsAnalysis": "Tình trạng & phân tích vận hành thiết bị",
     "oee.equipDowntimeMobile": "Quét dừng máy (Mock)",
     "oee.standardTime": "Quản lý thời gian tiêu chuẩn",

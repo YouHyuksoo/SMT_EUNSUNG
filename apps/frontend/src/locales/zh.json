@@ -390,6 +390,7 @@
     "oee.drilldown": "资源钻取",
     "oee.entry": "OEE停机录入",
     "oee.equipWorkResult": "设备作业实绩管理",
+    "oee.equipOpsStatus": "设备运行现况",
     "oee.equipOpsAnalysis": "设备运行现况及分析",
     "oee.equipDowntimeMobile": "设备停机扫描（Mock）",
     "oee.standardTime": "标准时间管理",

@@ -393,6 +393,7 @@
     "oee.idleReason": "Equipment Downtime Reason",
     "oee.equipReason": "Equipment-Downtime Reason Mapping",
     "oee.equipWorkResult": "Equipment Work Result",
+    "oee.equipOpsStatus": "Equipment Ops Status",
     "oee.equipOpsAnalysis": "Equipment Ops Analysis",
     "oee.equipDowntimeMobile": "Equipment Downtime Scan (Mock)"
   },
