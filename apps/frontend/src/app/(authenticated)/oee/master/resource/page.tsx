@@ -249,7 +249,7 @@ export default function OeeResourceMasterPage() {
       { accessorKey: 'lineName', header: '라인명' },
       { accessorKey: 'resourceName', header: '리소스명' },
       { accessorKey: 'processCode', header: '작업장', size: 90, meta: { align: 'center' as const }, cell: ({ getValue }) => <span className="font-mono">{String(getValue() ?? '')}</span> },
-      { accessorKey: 'resourceType', header: '리소스 유형', size: 110, meta: { align: 'center' as const }, cell: ({ getValue }) => <span className="font-mono">{String(getValue() ?? '')}</span> },
+      { accessorKey: 'resourceType', header: 'OEE 유형', size: 110, meta: { align: 'center' as const }, cell: ({ getValue }) => <span className="font-mono">{String(getValue() ?? '')}</span> },
       { accessorKey: 'parentLineCode', header: '상위라인', size: 100, meta: { align: 'center' as const }, cell: ({ getValue }) => <span className="font-mono">{String(getValue() ?? '') || '-'}</span> },
     ],
     [],
@@ -296,7 +296,7 @@ export default function OeeResourceMasterPage() {
       return;
     }
     if (!isProcessCode(form.processCode) || !isResourceType(form.resourceType)) {
-      toast.error('작업장과 리소스 유형을 확인하세요');
+      toast.error('작업장과 OEE 유형을 확인하세요');
       return;
     }
     if (form.isEdit && !form.resourceName.trim()) {
@@ -344,7 +344,7 @@ export default function OeeResourceMasterPage() {
        <div className="flex min-w-0 flex-1 flex-col gap-4 overflow-hidden p-3 sm:p-6">
         <div className="flex flex-shrink-0 items-center justify-between">
           <div>
-            <h1 className="text-xl font-bold text-text">OEE 리소스 관리</h1>
+            <h1 className="text-xl font-bold text-text">OEE 라인 관리</h1>
             <p className="mt-1 text-sm text-text-muted">작업장별 라인·셀 리소스 기준정보를 관리합니다.</p>
           </div>
           <div className="flex items-center gap-2">
@@ -365,7 +365,7 @@ export default function OeeResourceMasterPage() {
               enableColumnFilter
               enableExport
               enableFullscreen
-              exportFileName="OEE리소스관리"
+              exportFileName="OEE라인관리"
               emptyMessage={records.length ? '조회 결과가 없습니다' : '등록된 OEE 리소스가 없습니다'}
               getRowId={(record) => `${record.resourceId}-${record.processCode}-${record.resourceType}-${record.lineCode}`}
               toolbarLeft={
@@ -441,7 +441,7 @@ export default function OeeResourceMasterPage() {
                     </select>
                   </label>
                   <label className="flex flex-col gap-1 text-sm text-text-muted">
-                    <span>리소스 유형 <span className="text-red-500">*</span></span>
+                    <span>OEE 유형 <span className="text-red-500">*</span></span>
                     <select value={form.resourceType} onChange={(event) => setForm({ ...form, resourceType: event.target.value as OeeResourceType })} className="rounded border border-border bg-background p-2 text-text">
                       <option value="LINE">LINE</option>
                       <option value="CELL">CELL</option>

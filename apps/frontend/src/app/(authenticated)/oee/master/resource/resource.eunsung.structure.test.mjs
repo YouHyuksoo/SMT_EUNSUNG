@@ -53,9 +53,10 @@ test("resource master keeps the OEE resource name separate from the canonical li
 test("resource master uses workplace terminology and displays the DB LINE/CELL values", () => {
   assert.match(page, /작업장별\s+라인·셀\s+리소스\s+기준정보/);
   assert.match(page, /통합검색\s*\(라인코드·라인명·리소스명·작업장·유형\)/);
-  assert.match(page, /toast\.error\(['"]작업장과 리소스 유형을 확인하세요['"]\)/);
+  assert.match(page, /toast\.error\(['"]작업장과 OEE 유형을 확인하세요['"]\)/);
   assert.match(page, /header:\s*['"]작업장['"]/);
-  assert.match(page, /header:\s*['"]리소스 유형['"]/);
+  assert.match(page, /header:\s*['"]OEE 유형['"]/);
+  assert.match(page, /<span>OEE 유형 <span className=['"]text-red-500['"]>\*<\/span><\/span>/);
   assert.doesNotMatch(page, /RESOURCE_TYPE_LABELS/);
   assert.match(page, /accessorKey:\s*['"]resourceType['"][^\n]*String\(getValue\(\)/);
   assert.match(page, /value=["']LINE["'][^>]*>LINE/);
@@ -69,6 +70,8 @@ test("resource master uses workplace terminology and displays the DB LINE/CELL v
 });
 
 test("resource master menu and active locale labels are present", () => {
+  assert.match(page, />OEE 라인 관리<\/h1>/);
+  assert.match(page, /exportFileName=["']OEE라인관리["']/);
   assert.match(menu, /code:\s*["']OEE_MST_RESOURCE["']/);
   assert.match(menu, /path:\s*["']\/oee\/master\/resource["']/);
   assert.match(menu, /labelKey:\s*["']menu\.oee\.resource["']/);
@@ -76,5 +79,6 @@ test("resource master menu and active locale labels are present", () => {
   for (const locale of locales) {
     const messages = JSON.parse(fs.readFileSync(`${frontendRoot}/src/locales/${locale}.json`, "utf8"));
     assert.equal(typeof messages.menu?.["oee.resource"], "string", `${locale}: menu.oee.resource`);
+    if (locale === "ko") assert.equal(messages.menu["oee.resource"], "OEE 라인 관리");
   }
 });

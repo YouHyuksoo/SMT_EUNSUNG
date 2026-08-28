@@ -392,7 +392,7 @@
     "oee.standardTime": "표준시간 관리",
     "oee.idleReason": "설비 비가동 사유코드",
     "oee.equipReason": "설비별 비가동 사유 연계",
-    "oee.resource": "OEE 리소스 관리",
+    "oee.resource": "OEE 라인 관리",
     "oee.equipWorkResult": "설비별 작업 실적관리",
     "oee.equipOpsAnalysis": "설비별 운영 현황 및 분석",
     "oee.equipDowntimeMobile": "설비비가동 스캔 (Mock)"
