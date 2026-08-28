@@ -185,7 +185,7 @@ describe('OEE MOBILE prerequisite DDL', () => {
     expect(planView).toContain("'20:30:00'");
     expect(planView).toContain("'05:30:00'");
     expect(planView).toMatch(/'NIGHT'[\s\S]*'20:30:00'[\s\S]*'05:30:00'[\s\S]*0,\s*1/);
-    expect(planView).toContain('NVL(ov.PLANNED_MINUTES,\n         540)');
+    expect(planView).toMatch(/NVL\(ov\.PLANNED_MINUTES,\s*540\)/);
     expect(planView).toContain('NVL(ov.PLANNED_STOP_MINUTES, 60)');
     expect(planView).toContain('NVL(ov.NET_LOAD_MINUTES, 480)');
     expect(planView).toContain('OVERRIDE_YN = \'Y\'');
