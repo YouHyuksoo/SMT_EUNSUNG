@@ -7,17 +7,34 @@ const frontendRoot = existsSync("src/app") ? "." : "apps/frontend";
 const routeRoot = `${frontendRoot}/src/app/(authenticated)/oee/multi-entry`;
 const pagePath = `${routeRoot}/page.tsx`;
 const helperPath = `${routeRoot}/_lib/multi-entry.ts`;
+const mobileHelperPath = `${routeRoot}/_lib/oee-mobile.ts`;
 const menuPath = `${frontendRoot}/src/config/menuConfig.ts`;
 const page = existsSync(pagePath) ? readFileSync(pagePath, "utf8") : "";
 const helper = existsSync(helperPath) ? readFileSync(helperPath, "utf8") : "";
+const mobileHelper = readFileSync(mobileHelperPath, "utf8");
 const menu = readFileSync(menuPath, "utf8");
 const locales = ["ko", "en", "zh", "vi"];
 const helperModule = ts.transpileModule(helper, {
   compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 },
 }).outputText;
+const mobileHelperModule = ts.transpileModule(mobileHelper, {
+  compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 },
+}).outputText;
 const { commandKey, isTerminalSuccess, selectRetryableResources } = await import(
   `data:text/javascript;base64,${Buffer.from(helperModule).toString("base64")}`,
 );
+const {
+  createRequestId,
+  formatServerTimestamp,
+  makeEndPayload,
+  makeStartPayload,
+  normalizeCommandResult,
+  normalizeEvent,
+  normalizeResource,
+  normalizeStatus,
+  resourceIdentity,
+  stableStartSignature,
+} = await import(`data:text/javascript;base64,${Buffer.from(mobileHelperModule).toString("base64")}`);
 
 test("multi-resource OEE route is registered with the approved menu contract", () => {
   assert.equal(existsSync(pagePath), true, "the approved route page must exist");
@@ -37,6 +54,139 @@ test("multi-resource OEE route is registered with the approved menu contract", (
   }
   assert.doesNotMatch(page, /\/oee\/mobile\/(?:health|heartbeat|metrics)/);
   assert.doesNotMatch(page, /organizationId|tenantKey|clientTime/);
+});
+
+test("mobile helper preserves resource normalization and the approved payload field limits", () => {
+  assert.match(mobileHelper, /parentLineCode/);
+  assert.match(mobileHelper, /resourceCode/);
+  assert.match(mobileHelper, /CELL/);
+  assert.match(mobileHelper, /export function makeStartPayload/);
+  assert.match(mobileHelper, /export function makeEndPayload/);
+
+  const startBuilder = mobileHelper.match(/export function makeStartPayload[\s\S]*?\n\}/)?.[0] ?? "";
+  for (const field of [
+    "processCode",
+    "resourceType",
+    "resourceCode",
+    "parentLineCode",
+    "workerId",
+    "reasonCode",
+    "requestId",
+  ]) {
+    assert.match(startBuilder, new RegExp(`\\b${field}\\b`));
+  }
+  assert.doesNotMatch(startBuilder, /organizationId|tenant|clientTime|workDate|workSegment|shift|netLoad|quantity/);
+
+  const endBuilder = mobileHelper.match(/export function makeEndPayload[\s\S]*?\n\}/)?.[0] ?? "";
+  assert.match(endBuilder, /eventId/);
+  assert.match(endBuilder, /requestId/);
+  assert.doesNotMatch(endBuilder, /workerId|processCode|resourceCode|parentLineCode|reasonCode|memo/);
+
+  const startFields = {
+    processCode: "SMT",
+    resourceType: "LINE",
+    resourceCode: "L-01",
+    parentLineCode: "P-01",
+    workerId: "W-01",
+    reasonCode: "R-01",
+    memo: "note",
+    requestId: "req-1",
+  };
+  assert.deepEqual(makeStartPayload(startFields), startFields);
+  assert.deepEqual(
+    makeEndPayload({
+      eventId: 42,
+      requestId: "req-2",
+      processCode: "SMT",
+      resourceType: "LINE",
+      resourceCode: "L-01",
+      parentLineCode: "P-01",
+      workerId: "W-01",
+    }),
+    { eventId: 42, requestId: "req-2" },
+  );
+});
+
+test("mobile resource normalization preserves LINE/CELL identity and parent line codes", () => {
+  assert.equal(normalizeEvent({ eventId: 1, resourceType: "LINE" })?.resourceType, "LINE");
+  assert.equal(normalizeEvent({ eventId: 2, resourceType: "CELL" })?.resourceType, "CELL");
+
+  const line = normalizeResource({
+    resourceId: 1,
+    processCode: "SMT",
+    resourceType: "LINE",
+    resourceCode: "L-01",
+    resourceName: "Line 01",
+    parentLineCode: "P-01",
+  });
+  const cell = normalizeResource({
+    resourceId: 2,
+    processCode: "ASSY",
+    resourceType: "CELL",
+    resourceCode: "C-01",
+    resourceName: "Cell 01",
+    parentLineCode: "L-02",
+  });
+
+  assert.equal(line.resourceType, "LINE");
+  assert.equal(line.parentLineCode, "P-01");
+  assert.equal(cell.resourceType, "CELL");
+  assert.equal(cell.parentLineCode, "L-02");
+  assert.notEqual(resourceIdentity(line), resourceIdentity(cell));
+});
+
+test("mobile request IDs retain stable command signatures and have a bounded UUID fallback", () => {
+  assert.match(mobileHelper, /stableStartSignature/);
+  assert.match(mobileHelper, /createRequestId/);
+  const signatureFields = {
+    processCode: "SMT",
+    resourceType: "LINE",
+    resourceCode: "L-01",
+    parentLineCode: "P-01",
+    workerId: "W-01",
+    reasonCode: "R-01",
+    memo: "note",
+  };
+  assert.equal(stableStartSignature(signatureFields), stableStartSignature({ ...signatureFields }));
+  assert.notEqual(stableStartSignature(signatureFields), stableStartSignature({ ...signatureFields, memo: "changed" }));
+  const fallback = createRequestId({ randomUUID: undefined, getRandomValues: undefined });
+  assert.match(fallback, /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
+  assert.ok(fallback.length <= 64);
+
+  const supplied = createRequestId({ randomUUID: () => "123e4567-e89b-42d3-a456-426614174000" });
+  assert.equal(supplied, "123e4567-e89b-42d3-a456-426614174000");
+});
+
+test("mobile status normalization rejects contradictory open-event state", () => {
+  const base = { workDate: "2026-08-10", workSegment: "DAY", events: [] };
+  assert.throws(
+    () => normalizeStatus({ ...base, state: "DOWNTIME", openEvent: null }),
+    /DOWNTIME.*openEvent/,
+  );
+  assert.throws(
+    () => normalizeStatus({ ...base, state: "DOWNTIME", openEvent: { eventId: 0 } }),
+    /DOWNTIME.*openEvent/,
+  );
+  assert.throws(
+    () => normalizeStatus({ ...base, state: "RUNNING", openEvent: { eventId: 42 } }),
+    /RUNNING.*openEvent/,
+  );
+  assert.equal(
+    normalizeStatus({ ...base, state: "DOWNTIME", openEvent: { eventId: 42 } }).openEvent?.eventId,
+    42,
+  );
+  assert.equal(normalizeStatus({ ...base, state: "RUNNING", openEvent: null }).openEvent, null);
+});
+
+test("mobile server timestamps are formatted in Asia/Seoul", () => {
+  assert.equal(formatServerTimestamp("2026-08-10T00:30:00.000Z"), "2026-08-10 09:30:00");
+  assert.equal(formatServerTimestamp("2026-08-10T00:30:00.000"), "2026-08-10 00:30:00");
+  assert.doesNotMatch(formatServerTimestamp("2026-08-10T00:30:00.000Z"), /Z|UTC/);
+});
+
+test("mobile helper rejects malformed command responses before a success state", () => {
+  assert.match(mobileHelper, /normalizeCommandResult[\s\S]*if \(!event\) throw new Error/);
+  assert.throws(() => normalizeCommandResult({ data: {} }), /이벤트가 없습니다/);
 });
 
 test("workplace selection is an exclusive ALL, SMT, or ASSY choice", () => {
@@ -315,10 +465,8 @@ test("START reason selection uses a compact COMMAND summary and an xl modal pick
 });
 
 test("reasons expose PLAN/UNPLAN ordering and render two-column modal slots", () => {
-  const entryLibPath = `${frontendRoot}/src/app/(authenticated)/oee/entry/_lib/oee-entry.ts`;
-  const entryLib = readFileSync(entryLibPath, "utf8");
-  assert.match(entryLib, /reasonType:\s*['"]PLAN['"]\s*\|\s*['"]UNPLAN['"]/);
-  assert.match(entryLib, /displayOrder:\s*number/);
+  assert.match(mobileHelper, /reasonType:\s*['"]PLAN['"]\s*\|\s*['"]UNPLAN['"]/);
+  assert.match(mobileHelper, /displayOrder:\s*number/);
 
   assert.match(page, /reasonGroups|groupedReasons/);
   assert.match(page, /reason\.reasonType/);

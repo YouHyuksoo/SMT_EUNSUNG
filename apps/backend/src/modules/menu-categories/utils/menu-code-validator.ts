@@ -23,7 +23,6 @@ const KNOWN_LEAF_CODES: ReadonlySet<string> = new Set<string>([
   'MST_SALE_PRICE',
   'OEE_DASHBOARD',
   'OEE_DRILLDOWN',
-  'OEE_ENTRY',
   'OEE_MULTI_ENTRY',
   'OEE_EQUIP_WORK_RESULT',
   'OEE_EQUIP_OPS_ANALYSIS',

@@ -1,4 +1,4 @@
-import type { OeeResource } from '../../entry/_lib/oee-entry';
+import type { OeeResource } from './oee-mobile';
 
 export type MultiEntryMode = 'START' | 'END';
 export type CommandOutcomeState = 'success' | 'replayed' | 'conflict' | 'error';

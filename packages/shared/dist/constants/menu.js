@@ -35,7 +35,6 @@ exports.MENU_ITEMS = [
         icon: 'Activity',
         children: [
             { key: 'oee-dashboard', label: '공정별 OEE 종합', icon: 'Activity', path: '/oee/dashboard' },
-            { key: 'oee-entry', label: 'OEE 비가동 입력', icon: 'ClipboardEdit', path: '/oee/entry' },
         ],
     },
     {

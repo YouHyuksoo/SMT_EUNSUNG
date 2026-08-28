@@ -48,7 +48,7 @@ import {
   type OeeStatus,
   type OeeWorker,
   type StartCommandFields,
-} from '../entry/_lib/oee-entry';
+} from './_lib/oee-mobile';
 import {
   commandKey,
   isRetryableOutcome,
