@@ -16,7 +16,11 @@ export type OeeMobileProcessCode = (typeof OEE_MOBILE_PROCESS_CODES)[number];
 export const OEE_MOBILE_RESOURCE_TYPES = ['LINE', 'CELL'] as const;
 export type OeeMobileResourceType = (typeof OEE_MOBILE_RESOURCE_TYPES)[number];
 
+export const OEE_MOBILE_REASON_TYPES = ['PLAN', 'UNPLAN'] as const;
+export type OeeMobileReasonType = (typeof OEE_MOBILE_REASON_TYPES)[number];
+
 export interface OeeMobileResource {
+  resourceId: number;
   processCode: OeeMobileProcessCode;
   resourceType: OeeMobileResourceType;
   resourceCode: string;
@@ -27,6 +31,8 @@ export interface OeeMobileResource {
 export interface OeeMobileReason {
   reasonCode: string;
   reasonName: string;
+  reasonType: OeeMobileReasonType;
+  displayOrder: number;
 }
 
 export class OeeMobileResourcesQueryDto {

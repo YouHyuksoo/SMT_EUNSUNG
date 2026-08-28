@@ -3,7 +3,7 @@ import { BadRequestException, ConflictException, NotFoundException } from '@nest
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { FindOperator, IsNull, Not, Repository } from 'typeorm';
-import { ComCode } from '../../entities/com-code.entity';
+import { EquipDowntimeReason } from '../../entities/equip-downtime-reason.entity';
 import { IsysUser } from '../../entities/isys-user.entity';
 import { OeeDowntimeEvent } from '../../entities/oee-downtime-event.entity';
 import { OeeResource } from '../../entities/oee-resource.entity';
@@ -17,7 +17,7 @@ describe('OeeMobileService', () => {
   let lineRepository: DeepMocked<Repository<ProdLineMaster>>;
   let resourceRepository: DeepMocked<Repository<OeeResource>>;
   let userRepository: DeepMocked<Repository<IsysUser>>;
-  let codeRepository: DeepMocked<Repository<ComCode>>;
+  let reasonRepository: DeepMocked<Repository<EquipDowntimeReason>>;
   let eventRepository: DeepMocked<Repository<OeeDowntimeEvent>>;
   let worktimeRepository: DeepMocked<Repository<WorktimeRange>>;
 
@@ -25,7 +25,7 @@ describe('OeeMobileService', () => {
     lineRepository = createMock<Repository<ProdLineMaster>>();
     resourceRepository = createMock<Repository<OeeResource>>();
     userRepository = createMock<Repository<IsysUser>>();
-    codeRepository = createMock<Repository<ComCode>>();
+    reasonRepository = createMock<Repository<EquipDowntimeReason>>();
     eventRepository = createMock<Repository<OeeDowntimeEvent>>();
     worktimeRepository = createMock<Repository<WorktimeRange>>();
     eventRepository.findOne.mockResolvedValue(null);
@@ -49,7 +49,7 @@ describe('OeeMobileService', () => {
         { provide: getRepositoryToken(ProdLineMaster), useValue: lineRepository },
         { provide: getRepositoryToken(OeeResource), useValue: resourceRepository },
         { provide: getRepositoryToken(IsysUser), useValue: userRepository },
-        { provide: getRepositoryToken(ComCode), useValue: codeRepository },
+        { provide: getRepositoryToken(EquipDowntimeReason), useValue: reasonRepository },
         { provide: getRepositoryToken(OeeDowntimeEvent), useValue: eventRepository },
         { provide: getRepositoryToken(WorktimeRange), useValue: worktimeRepository },
       ],
@@ -64,7 +64,7 @@ describe('OeeMobileService', () => {
     jest.clearAllMocks();
   });
 
-  it('lists active configured resources joined to canonical same-organization lines', async () => {
+  it('lists active OEE resources with canonical same-organization line names', async () => {
     resourceRepository.find.mockResolvedValue([
       {
         resourceId: 2,
@@ -72,7 +72,7 @@ describe('OeeMobileService', () => {
         processCode: 'SMT',
         resourceType: 'CELL',
         refCode: '02',
-        resourceName: 'Spoofed cell name',
+        resourceName: 'Stale OEE cell name',
         useYn: 'Y',
         sortOrder: 10,
       } as OeeResource,
@@ -82,7 +82,7 @@ describe('OeeMobileService', () => {
         processCode: 'SMT',
         resourceType: 'LINE',
         refCode: '01',
-        resourceName: 'Spoofed line name',
+        resourceName: 'Stale OEE line name',
         useYn: 'Y',
         sortOrder: 10,
       } as OeeResource,
@@ -167,6 +167,7 @@ describe('OeeMobileService', () => {
     expect((lineOptions.where.lineCode as FindOperator<string>).value).toEqual(['02', '01']);
     expect(result).toEqual([
       {
+        resourceId: 1,
         processCode: 'SMT',
         resourceType: 'LINE',
         resourceCode: '01',
@@ -174,6 +175,7 @@ describe('OeeMobileService', () => {
         parentLineCode: '01',
       },
       {
+        resourceId: 2,
         processCode: 'SMT',
         resourceType: 'CELL',
         resourceCode: '02',
@@ -190,24 +192,25 @@ describe('OeeMobileService', () => {
         organizationId: 7,
         processCode: 'ASSY',
         resourceType: 'CELL',
-        refCode: '88',
-        resourceName: 'Configured assembly cell',
+        refCode: '20',
+        resourceName: 'Wave 2라인',
         useYn: 'Y',
         sortOrder: 2,
       } as OeeResource,
     ]);
     lineRepository.find.mockResolvedValue([
-      { lineCode: '88', lineName: 'Configured assembly line', organizationId: 7 } as ProdLineMaster,
+      { lineCode: '20', lineName: 'ICT', organizationId: 7 } as ProdLineMaster,
     ]);
 
     const result = await target.listResources('ASSY', 7, 'EUNSUNG', '1');
     expect(result).toEqual([
       {
+        resourceId: 20,
         processCode: 'ASSY',
         resourceType: 'CELL',
-        resourceCode: '88',
-        resourceName: 'Configured assembly line',
-        parentLineCode: '88',
+        resourceCode: '20',
+        resourceName: 'ICT',
+        parentLineCode: '20',
       },
     ]);
   });
@@ -257,36 +260,106 @@ describe('OeeMobileService', () => {
     await expect(target.getWorker('WORKER01', 8)).rejects.toThrow(NotFoundException);
   });
 
-  it('lists only approved MACHINE STATUS CODE reasons for the organization in code order', async () => {
-    codeRepository.find.mockResolvedValue([
+  it('lists active PLAN and UNPLAN idle reasons from the authenticated organization in contract order', async () => {
+    reasonRepository.find.mockResolvedValue([
       {
-        groupCode: 'MACHINE STATUS CODE',
+        reasonCode: 'U-NULL',
+        reasonName: 'Unplanned without order',
+        reasonType: 'UNPLAN',
+        displayOrder: null,
         organizationId: 7,
-        detailCode: 'B',
-        codeName: 'B reason',
+        useYn: 'Y',
       },
       {
-        groupCode: 'MACHINE STATUS CODE',
+        reasonCode: 'P-02',
+        reasonName: 'Planned second',
+        reasonType: 'PLAN',
+        displayOrder: 1,
         organizationId: 7,
-        detailCode: 'A',
-        codeName: 'A reason',
+        useYn: 'Y',
       },
-    ] as ComCode[]);
+      {
+        reasonCode: 'P-01',
+        reasonName: 'Planned first',
+        reasonType: 'PLAN',
+        displayOrder: 1,
+        organizationId: 7,
+        useYn: 'Y',
+      },
+      {
+        reasonCode: 'P-NULL',
+        reasonName: 'Planned without order',
+        reasonType: 'PLAN',
+        displayOrder: null,
+        organizationId: 7,
+        useYn: 'Y',
+      },
+      {
+        reasonCode: 'U-01',
+        reasonName: 'Unplanned first',
+        reasonType: 'UNPLAN',
+        displayOrder: 1,
+        organizationId: 7,
+        useYn: 'Y',
+      },
+      {
+        reasonCode: 'NO-TYPE',
+        reasonName: 'Missing type',
+        reasonType: null,
+        displayOrder: 1,
+        organizationId: 7,
+        useYn: 'Y',
+      },
+      {
+        reasonCode: 'OTHER-TYPE',
+        reasonName: 'Unsupported type',
+        reasonType: 'OTHER',
+        displayOrder: 1,
+        organizationId: 7,
+        useYn: 'Y',
+      },
+      {
+        reasonCode: 'INACTIVE',
+        reasonName: 'Inactive reason',
+        reasonType: 'PLAN',
+        displayOrder: 1,
+        organizationId: 7,
+        useYn: 'N',
+      },
+      {
+        reasonCode: 'OTHER-ORG',
+        reasonName: 'Other organization',
+        reasonType: 'PLAN',
+        displayOrder: 1,
+        organizationId: 8,
+        useYn: 'Y',
+      },
+    ] as EquipDowntimeReason[]);
 
     await expect(target.listReasons(7)).resolves.toEqual([
-      { reasonCode: 'A', reasonName: 'A reason' },
-      { reasonCode: 'B', reasonName: 'B reason' },
+      { reasonCode: 'P-01', reasonName: 'Planned first', reasonType: 'PLAN', displayOrder: 1 },
+      { reasonCode: 'P-02', reasonName: 'Planned second', reasonType: 'PLAN', displayOrder: 1 },
+      {
+        reasonCode: 'P-NULL',
+        reasonName: 'Planned without order',
+        reasonType: 'PLAN',
+        displayOrder: Number.MAX_SAFE_INTEGER,
+      },
+      { reasonCode: 'U-01', reasonName: 'Unplanned first', reasonType: 'UNPLAN', displayOrder: 1 },
+      {
+        reasonCode: 'U-NULL',
+        reasonName: 'Unplanned without order',
+        reasonType: 'UNPLAN',
+        displayOrder: Number.MAX_SAFE_INTEGER,
+      },
     ]);
 
-    const options = codeRepository.find.mock.calls[0][0] as {
+    const options = reasonRepository.find.mock.calls[0][0] as {
       where: Record<string, unknown>;
       order: Record<string, string>;
     };
-    expect(options.where).toMatchObject({ groupCode: 'MACHINE STATUS CODE', organizationId: 7 });
-    expect((options.where.detailCode as ReturnType<typeof Not>).type).toBe('not');
-    const excluded = (options.where.detailCode as ReturnType<typeof Not>).value;
-    expect(excluded).toEqual(['N', '*']);
-    expect(options.order).toEqual({ detailCode: 'ASC' });
+    expect(options.where).toMatchObject({ organizationId: 7, useYn: 'Y' });
+    expect(options.order).toEqual({ reasonType: 'ASC', displayOrder: 'ASC', reasonCode: 'ASC' });
   });
 
   it('allows both LINE and CELL resource types for either mobile process', async () => {
@@ -330,6 +403,7 @@ describe('OeeMobileService', () => {
 
     await expect(target.listResources('SMT', 7, 'EUNSUNG', '1')).resolves.toEqual([
       {
+        resourceId: 2,
         processCode: 'SMT',
         resourceType: 'CELL',
         resourceCode: '02',
@@ -339,6 +413,7 @@ describe('OeeMobileService', () => {
     ]);
     await expect(target.listResources('ASSY', 7, 'EUNSUNG', '1')).resolves.toEqual([
       {
+        resourceId: 3,
         processCode: 'ASSY',
         resourceType: 'LINE',
         resourceCode: '19',
@@ -346,6 +421,7 @@ describe('OeeMobileService', () => {
         parentLineCode: '19',
       },
       {
+        resourceId: 4,
         processCode: 'ASSY',
         resourceType: 'CELL',
         resourceCode: '20',
@@ -488,17 +564,19 @@ describe('OeeMobileService', () => {
       organizationId: 7,
       userName: '작업자',
     } as IsysUser);
-    codeRepository.findOne.mockResolvedValue(null);
+    reasonRepository.findOne.mockResolvedValue(null);
     await expect(target.startDowntime(command, 7, 'EUNSUNG', '1', 'LOGIN01')).rejects.toThrow(
       NotFoundException,
     );
 
-    codeRepository.findOne.mockResolvedValue({
-      groupCode: 'MACHINE STATUS CODE',
-      detailCode: 'A',
+    reasonRepository.findOne.mockResolvedValue({
+      reasonCode: 'A',
+      reasonName: '정지',
+      reasonType: 'PLAN',
+      displayOrder: 1,
       organizationId: 7,
-      codeName: '정지',
-    } as ComCode);
+      useYn: 'Y',
+    } as EquipDowntimeReason);
     worktimeRepository.find.mockResolvedValue([]);
     await expect(target.startDowntime(command, 7, 'EUNSUNG', '1', 'LOGIN01')).rejects.toThrow(
       BadRequestException,
@@ -529,12 +607,14 @@ describe('OeeMobileService', () => {
         organizationId: 7,
         userName: '작업자',
       } as IsysUser);
-      codeRepository.findOne.mockResolvedValue({
-        groupCode: 'MACHINE STATUS CODE',
-        detailCode: 'A',
+      reasonRepository.findOne.mockResolvedValue({
+        reasonCode: 'A',
+        reasonName: '정지',
+        reasonType: 'PLAN',
+        displayOrder: 1,
         organizationId: 7,
-        codeName: '정지',
-      } as ComCode);
+        useYn: 'Y',
+      } as EquipDowntimeReason);
       worktimeRepository.find.mockResolvedValue([
         {
           organizationId: 7,
@@ -554,6 +634,10 @@ describe('OeeMobileService', () => {
       await expect(target.startDowntime(command, 7, 'EUNSUNG', '1', 'LOGIN01')).resolves.toEqual({
         event: created,
         replayed: false,
+      });
+
+      expect(reasonRepository.findOne).toHaveBeenCalledWith({
+        where: { reasonCode: 'A', organizationId: 7, useYn: 'Y' },
       });
 
       const inserted = eventRepository.save.mock.calls[0][0] as OeeDowntimeEvent;
@@ -579,6 +663,41 @@ describe('OeeMobileService', () => {
     } finally {
       jest.useRealTimers();
     }
+  });
+
+  it.each([
+    ['inactive', { organizationId: 7, useYn: 'N', reasonType: 'PLAN' }],
+    ['other organization', { organizationId: 8, useYn: 'Y', reasonType: 'PLAN' }],
+    ['missing type', { organizationId: 7, useYn: 'Y', reasonType: null }],
+    ['unsupported type', { organizationId: 7, useYn: 'Y', reasonType: 'OTHER' }],
+  ] as const)('rejects a %s reason from the mobile start contract', async (_label, reasonFields) => {
+    const command = {
+      processCode: 'SMT',
+      resourceType: 'LINE',
+      resourceCode: '01',
+      parentLineCode: '01',
+      workerId: 'WORKER01',
+      reasonCode: 'A',
+      requestId: 'start-1',
+    } as const;
+    lineRepository.find.mockResolvedValue([
+      { lineCode: '01', lineName: 'A', organizationId: 7, lineDivision: 'D' },
+    ] as ProdLineMaster[]);
+    userRepository.findOne.mockResolvedValue({ userId: 'WORKER01', organizationId: 7 } as IsysUser);
+    reasonRepository.findOne.mockResolvedValue({
+      reasonCode: 'A',
+      reasonName: '정지',
+      displayOrder: 1,
+      ...reasonFields,
+    } as EquipDowntimeReason);
+
+    await expect(target.startDowntime(command, 7, 'EUNSUNG', '1', 'LOGIN01')).rejects.toThrow(
+      NotFoundException,
+    );
+    expect(reasonRepository.findOne).toHaveBeenCalledWith({
+      where: { reasonCode: 'A', organizationId: 7, useYn: 'Y' },
+    });
+    expect(eventRepository.create).not.toHaveBeenCalled();
   });
 
   it('replays the same start request and rejects another open event', async () => {
@@ -621,12 +740,14 @@ describe('OeeMobileService', () => {
         { lineCode: '01', lineName: 'A', organizationId: 7, lineDivision: 'D' },
       ] as ProdLineMaster[]);
       userRepository.findOne.mockResolvedValue({ userId: 'WORKER01', organizationId: 7 } as IsysUser);
-      codeRepository.findOne.mockResolvedValue({
-        groupCode: 'MACHINE STATUS CODE',
-        detailCode: 'A',
+      reasonRepository.findOne.mockResolvedValue({
+        reasonCode: 'A',
+        reasonName: '정지',
+        reasonType: 'PLAN',
+        displayOrder: 1,
         organizationId: 7,
-        codeName: '정지',
-      } as ComCode);
+        useYn: 'Y',
+      } as EquipDowntimeReason);
       worktimeRepository.find.mockResolvedValue([
         {
           rangeType: 'SMTWORKTIME',
@@ -810,12 +931,14 @@ describe('OeeMobileService', () => {
         { lineCode: '01', lineName: 'A', organizationId: 7, lineDivision: 'D' },
       ] as ProdLineMaster[]);
       userRepository.findOne.mockResolvedValue({ userId: 'WORKER01', organizationId: 7 } as IsysUser);
-      codeRepository.findOne.mockResolvedValue({
-        groupCode: 'MACHINE STATUS CODE',
-        detailCode: 'A',
+      reasonRepository.findOne.mockResolvedValue({
+        reasonCode: 'A',
+        reasonName: '정지',
+        reasonType: 'PLAN',
+        displayOrder: 1,
         organizationId: 7,
-        codeName: '정지',
-      } as ComCode);
+        useYn: 'Y',
+      } as EquipDowntimeReason);
       worktimeRepository.find.mockResolvedValue([
         {
           rangeType: 'SMTWORKTIME',
@@ -879,11 +1002,14 @@ describe('OeeMobileService', () => {
         { lineCode: '01', lineName: 'A', organizationId: 7, lineDivision: 'D' },
       ] as ProdLineMaster[]);
       userRepository.findOne.mockResolvedValue({ userId: 'WORKER01', organizationId: 7 } as IsysUser);
-      codeRepository.findOne.mockResolvedValue({
-        groupCode: 'MACHINE STATUS CODE',
-        detailCode: 'A',
+      reasonRepository.findOne.mockResolvedValue({
+        reasonCode: 'A',
+        reasonName: '정지',
+        reasonType: 'PLAN',
+        displayOrder: 1,
         organizationId: 7,
-      } as ComCode);
+        useYn: 'Y',
+      } as EquipDowntimeReason);
       worktimeRepository.find.mockResolvedValue([
         {
           rangeType: 'SMTWORKTIME',

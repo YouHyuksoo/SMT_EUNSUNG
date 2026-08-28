@@ -7,6 +7,7 @@ export interface OeeWorker {
 }
 
 export interface OeeResource {
+  resourceId: number;
   processCode: OeeProcessCode;
   resourceType: OeeResourceType;
   resourceCode: string;
@@ -17,6 +18,8 @@ export interface OeeResource {
 export interface OeeReason {
   reasonCode: string;
   reasonName: string;
+  reasonType: 'PLAN' | 'UNPLAN';
+  displayOrder: number;
 }
 
 export interface OeeDowntimeEvent {
@@ -179,8 +182,8 @@ export function normalizeResource(resource: OeeResource): OeeResource {
   };
 }
 
-export function resourceIdentity(resource: Pick<OeeResource, 'processCode' | 'resourceType' | 'resourceCode'>): string {
-  return `${resource.processCode}:${resource.resourceType}:${resource.resourceCode}`;
+export function resourceIdentity(resource: Pick<OeeResource, 'resourceId'>): string {
+  return String(resource.resourceId);
 }
 
 export function stableStartSignature(fields: Omit<StartCommandFields, 'requestId'>): string {

@@ -12,6 +12,7 @@ import { WorktimeRange } from '../../entities/worktime-range.entity';
 import { IsysUser } from '../../entities/isys-user.entity';
 import { IsysOrganization } from '../../entities/isys-organization.entity';
 import { ComCode } from '../../entities/com-code.entity';
+import { EquipDowntimeReason } from '../../entities/equip-downtime-reason.entity';
 import { OeeController } from './oee.controller';
 import { OeeMasterService } from './oee-master.service';
 import { OeeLogService } from './oee-log.service';
@@ -33,6 +34,7 @@ import { SmtCloseRunPreviewService } from './smt-close-run-preview.service';
       IsysUser,
       IsysOrganization,
       ComCode,
+      EquipDowntimeReason,
       ProdLineMaster,
     ]),
   ],

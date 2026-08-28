@@ -26,7 +26,7 @@ const RESOURCE_LIST_SQL = `
          l.LINE_CODE AS "lineCode",
          l.LINE_NAME AS "lineName",
          l.LINE_CODE AS "resourceCode",
-         l.LINE_NAME AS "resourceName",
+         r.RESOURCE_NAME AS "resourceName",
          l.LINE_CODE AS "parentLineCode",
          r.PROCESS_CODE AS "processCode",
          r.RESOURCE_TYPE AS "resourceType",
@@ -125,7 +125,8 @@ BEGIN
      AND RESOURCE_ID = :resourceId;
 
   UPDATE OEE_RESOURCE
-     SET PROCESS_CODE = :newProcessCode,
+     SET RESOURCE_NAME = :newResourceName,
+         PROCESS_CODE = :newProcessCode,
          RESOURCE_TYPE = :newResourceType
    WHERE ORGANIZATION_ID = :organizationId
      AND RESOURCE_ID = :resourceId
@@ -267,6 +268,7 @@ export class OeeMasterService {
     const organization = this.requireOrganization(organizationId);
     this.assertResourceId(resourceId);
     this.assertResourceDto(dto);
+    this.assertResourceName(dto.resourceName);
 
     const resource = await this.resourceRepo.findOne({
       where: { resourceId, organizationId: organization },
@@ -282,7 +284,9 @@ export class OeeMasterService {
 
     const processChanged = resource.processCode !== dto.processCode;
     const typeChanged = resource.resourceType !== dto.resourceType;
-    if (!processChanged && !typeChanged) return;
+    const resourceName = dto.resourceName.trim();
+    const nameChanged = resource.resourceName !== resourceName;
+    if (!processChanged && !typeChanged && !nameChanged) return;
 
     try {
       await this.query(RESOURCE_HISTORY_MIGRATION_SQL, {
@@ -291,6 +295,7 @@ export class OeeMasterService {
         resourceCode: resource.refCode,
         oldProcessCode: resource.processCode,
         oldResourceType: resource.resourceType,
+        newResourceName: resourceName,
         newProcessCode: dto.processCode,
         newResourceType: dto.resourceType,
       });
@@ -464,6 +469,15 @@ export class OeeMasterService {
     }
     if (!OEE_RESOURCE_TYPES.includes(dto.resourceType)) {
       throw new BadRequestException('지원하지 않는 OEE 리소스 유형입니다.');
+    }
+  }
+
+  private assertResourceName(resourceName: unknown): asserts resourceName is string {
+    if (typeof resourceName !== 'string' || resourceName.trim().length === 0) {
+      throw new BadRequestException('리소스명이 필요합니다.');
+    }
+    if (resourceName.trim().length > 100) {
+      throw new BadRequestException('리소스명은 100자 이하여야 합니다.');
     }
   }
 

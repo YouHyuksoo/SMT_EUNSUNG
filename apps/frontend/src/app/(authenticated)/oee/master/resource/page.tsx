@@ -2,7 +2,7 @@
 
 /**
  * @file (authenticated)/oee/master/resource/page.tsx
- * @description OEE 리소스(LINE/CELL) 마스터 관리 — 라인 후보를 선택해 공정별 리소스를 등록·수정·삭제한다.
+ * @description OEE 리소스(LINE/CELL) 마스터 관리 — 라인 후보를 선택해 작업장별 리소스를 등록·수정·삭제한다.
  *
  * API(글로벌 prefix /api → 백엔드 /api/v1):
  *   GET /oee/resource, GET /oee/resource/candidates
@@ -27,6 +27,7 @@ interface ResourceRecord {
   resourceId: number;
   lineCode: string;
   lineName: string;
+  resourceName: string;
   processCode: OeeProcessCode;
   resourceType: OeeResourceType;
   parentLineCode: string;
@@ -37,6 +38,7 @@ interface ResourceForm {
   resourceId: number | null;
   lineCode: string;
   lineName: string;
+  resourceName: string;
   processCode: OeeProcessCode;
   resourceType: OeeResourceType;
   parentLineCode: string;
@@ -73,6 +75,7 @@ const emptyForm = (): ResourceForm => ({
   resourceId: null,
   lineCode: '',
   lineName: '',
+  resourceName: '',
   processCode: 'SMT',
   resourceType: 'LINE',
   parentLineCode: '',
@@ -122,7 +125,8 @@ function toResourceRecord(row: ApiResourceRow, index: number): ResourceRecord | 
   return {
     resourceId: Number.isFinite(parsedId) ? parsedId : index,
     lineCode,
-    lineName: text(row.lineName ?? row.resourceName).trim(),
+    lineName: text(row.lineName).trim(),
+    resourceName: text(row.resourceName).trim(),
     processCode,
     resourceType,
     parentLineCode: text(row.parentLineCode).trim(),
@@ -198,6 +202,7 @@ export default function OeeResourceMasterPage() {
     return records.filter((record) => [
       record.lineCode,
       record.lineName,
+      record.resourceName,
       record.processCode,
       record.resourceType,
       record.parentLineCode,
@@ -242,8 +247,9 @@ export default function OeeResourceMasterPage() {
       },
       { accessorKey: 'lineCode', header: '라인코드', cell: ({ getValue }) => <span className="font-mono">{String(getValue() ?? '')}</span> },
       { accessorKey: 'lineName', header: '라인명' },
-      { accessorKey: 'processCode', header: '공정', size: 90, meta: { align: 'center' as const }, cell: ({ getValue }) => <span className="font-mono">{String(getValue() ?? '')}</span> },
-      { accessorKey: 'resourceType', header: '리소스유형', size: 110, meta: { align: 'center' as const }, cell: ({ getValue }) => <span className="font-mono">{String(getValue() ?? '')}</span> },
+      { accessorKey: 'resourceName', header: '리소스명' },
+      { accessorKey: 'processCode', header: '작업장', size: 90, meta: { align: 'center' as const }, cell: ({ getValue }) => <span className="font-mono">{String(getValue() ?? '')}</span> },
+      { accessorKey: 'resourceType', header: '리소스 유형', size: 110, meta: { align: 'center' as const }, cell: ({ getValue }) => <span className="font-mono">{String(getValue() ?? '')}</span> },
       { accessorKey: 'parentLineCode', header: '상위라인', size: 100, meta: { align: 'center' as const }, cell: ({ getValue }) => <span className="font-mono">{String(getValue() ?? '') || '-'}</span> },
     ],
     [],
@@ -259,6 +265,7 @@ export default function OeeResourceMasterPage() {
       resourceId: record.resourceId,
       lineCode: record.lineCode,
       lineName: record.lineName,
+      resourceName: record.resourceName,
       processCode: record.processCode,
       resourceType: record.resourceType,
       parentLineCode: record.parentLineCode,
@@ -289,12 +296,17 @@ export default function OeeResourceMasterPage() {
       return;
     }
     if (!isProcessCode(form.processCode) || !isResourceType(form.resourceType)) {
-      toast.error('공정과 리소스 유형을 확인하세요');
+      toast.error('작업장과 리소스 유형을 확인하세요');
+      return;
+    }
+    if (form.isEdit && !form.resourceName.trim()) {
+      toast.error('리소스명을 입력하세요');
       return;
     }
 
     const payload = {
       lineCode: form.lineCode,
+      ...(form.isEdit ? { resourceName: form.resourceName.trim() } : {}),
       processCode: form.processCode,
       resourceType: form.resourceType,
     };
@@ -333,7 +345,7 @@ export default function OeeResourceMasterPage() {
         <div className="flex flex-shrink-0 items-center justify-between">
           <div>
             <h1 className="text-xl font-bold text-text">OEE 리소스 관리</h1>
-            <p className="mt-1 text-sm text-text-muted">공정별 LINE·CELL 리소스 기준정보를 관리합니다.</p>
+            <p className="mt-1 text-sm text-text-muted">작업장별 라인·셀 리소스 기준정보를 관리합니다.</p>
           </div>
           <div className="flex items-center gap-2">
             <button type="button" onClick={() => void load()} className="flex h-10 items-center gap-1 rounded border border-border px-3 text-text-muted hover:bg-surface">
@@ -360,7 +372,7 @@ export default function OeeResourceMasterPage() {
                 <div className="flex min-w-0 flex-1 flex-wrap gap-3">
                   <div className="w-96 flex-shrink-0">
                     <Input
-                      placeholder="통합검색 (라인코드·라인명·공정·유형)"
+                      placeholder="통합검색 (라인코드·라인명·리소스명·작업장·유형)"
                       value={search}
                       onChange={(event) => setSearch(event.target.value)}
                       leftIcon={<Search className="h-4 w-4" />}
@@ -407,9 +419,22 @@ export default function OeeResourceMasterPage() {
                   <input value={form.lineName} readOnly className="rounded border border-border bg-surface p-2 text-text" />
                 </label>
 
+                {form.isEdit && (
+                  <label className="flex flex-col gap-1 text-sm text-text-muted">
+                    <span>리소스명 <span className="text-red-500">*</span></span>
+                    <input
+                      value={form.resourceName}
+                      onChange={(event) => setForm({ ...form, resourceName: event.target.value })}
+                      maxLength={100}
+                      required
+                      className="rounded border border-border bg-background p-2 text-text"
+                    />
+                  </label>
+                )}
+
                 <div className="grid grid-cols-2 gap-3">
                   <label className="flex flex-col gap-1 text-sm text-text-muted">
-                    <span>공정 <span className="text-red-500">*</span></span>
+                    <span>작업장 <span className="text-red-500">*</span></span>
                     <select value={form.processCode} onChange={(event) => setForm({ ...form, processCode: event.target.value as OeeProcessCode })} className="rounded border border-border bg-background p-2 text-text">
                       <option value="SMT">SMT</option>
                       <option value="ASSY">ASSY</option>

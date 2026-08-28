@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OEE 다공정 비가동 현장보드 화면설계 · 2026-08-26</title>
+  <style>
+    @page { size: 594mm 420mm; margin: 0; }
+    :root { --ink:#101828; --muted:#667085; --line:#d0d5dd; --paper:#fff; --canvas:#e8ebf0; --accent:#ffb020; --accent-dark:#8a5700; --accent-soft:#fff7df; --navy:#07111d; --card:#0d1a2a; --card2:#101f31; --text:#f8fafc; --sub:#b7c3d4; --green:#36c992; --red:#ff6b6b; --blue:#67c7ff; --gray:#98a2b3; }
+    * { box-sizing:border-box; }
+    html { scroll-behavior:smooth; }
+    body { margin:0; color:var(--ink); background:var(--canvas); font-family:"Malgun Gothic","Apple SD Gothic Neo",Arial,sans-serif; font-size:10px; line-height:1.38; }
+    button { font:inherit; }
+    .toolbar { position:sticky; top:0; z-index:20; display:flex; align-items:center; justify-content:space-between; gap:12px; padding:9px 16px; color:#fff; background:rgba(16,24,40,.97); box-shadow:0 4px 18px rgba(16,24,40,.25); }
+    .toolbar strong { font-size:13px; }
+    .toolbar nav { display:flex; gap:7px; flex-wrap:wrap; justify-content:flex-end; }
+    .toolbar a,.toolbar button { padding:6px 10px; color:#fff; border:1px solid rgba(255,255,255,.25); border-radius:7px; background:rgba(255,255,255,.07); text-decoration:none; font-weight:800; cursor:pointer; }
+    main { padding:18px 0 36px; }
+    .sheet { position:relative; width:min(1580px,calc(100vw - 28px)); height:404mm; min-height:404mm; margin:0 auto 20px; padding:19px 23px 16px; overflow:hidden; background:var(--paper); border:1px solid #c7cdd6; box-shadow:0 14px 38px rgba(16,24,40,.14); page-break-after:always; break-after:page; }
+    .sheet:last-child { page-break-after:auto; break-after:auto; }
+    .doc-head { display:grid; grid-template-columns:1fr auto; gap:18px; align-items:end; padding-bottom:10px; border-bottom:3px solid var(--accent); }
+    .eyebrow { margin:0 0 3px; color:var(--accent-dark); font-size:10px; font-weight:950; letter-spacing:.14em; }
+    h1 { margin:0; font-size:25px; line-height:1.12; letter-spacing:-.04em; }
+    .subtitle { margin:4px 0 0; color:var(--muted); font-size:11px; }
+    .meta { border-collapse:collapse; font-size:9px; }
+    .meta th,.meta td { padding:4px 7px; border:1px solid var(--line); }
+    .meta th { color:#344054; background:#f2f4f7; }
+    .badge { display:inline-flex; align-items:center; gap:4px; padding:3px 7px; border-radius:999px; border:1px solid var(--line); background:#fff; font-size:8.5px; font-weight:850; }
+    .badge.rec { color:#604000; border-color:#e8be68; background:var(--accent-soft); }
+    .badge.good { color:#087a55; border-color:#86d7ba; background:#e8f8f1; }
+    .badge.warn { color:#a15c00; border-color:#e8be68; background:#fff5dd; }
+    .badge.red { color:#b42318; border-color:#f5a6a0; background:#fff0ef; }
+    .badge.blue { color:#175cd3; border-color:#a6c5f7; background:#eff6ff; }
+    .section-title { display:flex; align-items:center; gap:8px; margin:10px 0 6px; color:#344054; font-size:12px; font-weight:950; }
+    .section-title::before { content:""; width:5px; height:16px; border-radius:4px; background:var(--accent); }
+    .summary-grid { display:grid; grid-template-columns:1.35fr .85fr .85fr .85fr; gap:7px; margin-top:8px; }
+    .summary { padding:7px 9px; border:1px solid var(--line); border-radius:9px; background:#f9fafb; }
+    .summary b { display:block; margin-bottom:2px; font-size:10px; }
+    .summary p { margin:0; color:var(--muted); }
+    .source-strip { margin-top:7px; padding:6px 9px; border-left:4px solid var(--accent); color:#475467; background:#fffaf0; }
+    .mono { font-family:Consolas,"Courier New",monospace; }
+    .mock-shell { margin-top:8px; padding:8px; border-radius:13px; color:var(--text); background:var(--navy); border:1px solid #344054; }
+    .mock-top { display:grid; grid-template-columns:1fr auto auto auto; align-items:center; gap:7px; padding:7px 9px; border-radius:9px; background:var(--card); border:1px solid #344054; }
+    .brand { display:flex; align-items:center; gap:8px; font-size:13px; font-weight:950; }
+    .brand-mark { display:grid; place-items:center; width:27px; height:27px; color:#101828; border-radius:8px; background:var(--accent); }
+    .context-chip { min-height:32px; display:flex; align-items:center; gap:6px; padding:5px 9px; border-radius:8px; border:1px solid #475467; background:#243247; font-weight:800; }
+    .dot { width:7px; height:7px; border-radius:50%; background:currentColor; }
+    .ok { color:#62e1b2; }
+    .attention { color:#ffd166; }
+    .danger { color:#ff9d9d; }
+    .mock-body { display:grid; grid-template-columns:.9fr 1.3fr; gap:8px; margin-top:8px; }
+    .panel { min-width:0; padding:9px; border:1px solid #344054; border-radius:10px; background:var(--card); }
+    .panel-head { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:7px; }
+    .panel-head h3 { margin:0; font-size:11px; }
+    .panel-head small { color:#98a2b3; }
+    .control-row { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+    .control { min-height:52px; display:flex; align-items:center; justify-content:center; gap:6px; padding:7px; color:#e4e7ec; border:1px solid #475467; border-radius:8px; background:#1d2b3f; font-weight:850; }
+    .control.active { color:#fff; border:2px solid var(--accent); background:#513a10; }
+    .process-row { display:grid; grid-template-columns:1.25fr 1fr 1fr; gap:5px; margin-top:7px; }
+    .process { min-height:48px; padding:6px; text-align:left; color:#e4e7ec; border:1px solid #475467; border-radius:8px; background:#1d2b3f; font-weight:850; }
+    .process.active { color:#fff; border:2px solid var(--accent); background:#513a10; }
+    .process small { display:block; margin-top:2px; color:#98a2b3; font-weight:650; }
+    .group { margin-top:7px; padding:7px; border:1px solid #344054; border-radius:8px; background:#101f31; }
+    .group-head { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:5px; }
+    .group-head b { font-size:10px; }
+    .check { display:inline-flex; align-items:center; gap:5px; color:#d0d5dd; font-size:9px; font-weight:800; }
+    .box { display:inline-grid; place-items:center; width:16px; height:16px; color:#101828; border:1px solid #98a2b3; border-radius:3px; background:#1d2b3f; }
+    .box.checked { border-color:var(--accent); background:var(--accent); }
+    .box.mixed { color:#101828; border-color:var(--accent); background:linear-gradient(90deg,var(--accent) 0 45%,#1d2b3f 45%); }
+    .resource-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:5px; }
+    .resource { min-height:52px; padding:6px; color:#f8fafc; border:1px solid #475467; border-radius:7px; background:#1d2b3f; }
+    .resource.selected { color:#fff; border:2px solid var(--accent); background:#513a10; }
+    .resource.disabled { color:#98a2b3; background:#172335; }
+    .resource b { display:block; font-size:11px; }
+    .resource small { display:block; margin-top:2px; color:#98a2b3; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .reason-shell { display:grid; grid-template-columns:1fr .75fr; gap:7px; }
+    .reason-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:5px; }
+    .reason { min-height:58px; padding:8px; text-align:left; color:#e4e7ec; border:1px solid #475467; border-radius:8px; background:#1d2b3f; font-weight:850; }
+    .reason.active { color:#fff; border:2px solid var(--accent); background:#513a10; }
+    .memo { min-height:86px; padding:8px; border:1px solid #475467; border-radius:8px; color:#98a2b3; background:#07111d; }
+    .command-bar { display:grid; grid-template-columns:repeat(3,1fr); gap:5px; margin-top:7px; }
+    .metric { padding:6px; border:1px solid #475467; border-radius:7px; background:#1d2b3f; }
+    .metric small { display:block; color:#98a2b3; }
+    .metric b { font-size:15px; }
+    .cta { min-height:64px; display:grid; place-items:center; margin-top:7px; color:#101828; border-radius:10px; background:var(--accent); font-size:15px; font-weight:950; }
+    .result-list { display:grid; gap:5px; margin-top:7px; }
+    .result { display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:7px; padding:7px; border:1px solid #344054; border-radius:7px; background:#101f31; }
+    .result strong { display:block; }
+    .result small { color:#98a2b3; }
+    .result.success { border-color:#287f65; }
+    .result.failure { border-color:#a9444b; background:#2a1820; }
+    .icon { display:grid; place-items:center; width:24px; height:24px; border-radius:50%; color:#101828; background:#62e1b2; font-weight:950; }
+    .icon.fail { color:#fff; background:#e35d65; }
+    .notes { display:grid; grid-template-columns:repeat(3,1fr); gap:7px; margin-top:7px; }
+    .note { padding:7px 8px; border-left:3px solid var(--accent); background:#f8fafc; }
+    .note b { display:block; margin-bottom:2px; }
+    .note p { margin:0; color:var(--muted); }
+    table.data { width:100%; border-collapse:collapse; margin-top:7px; font-size:8.5px; }
+    table.data th,table.data td { padding:4px 6px; border:1px solid var(--line); text-align:left; vertical-align:top; }
+    table.data th { color:#344054; background:#f2f4f7; }
+    .pill { display:inline-block; padding:2px 6px; border-radius:999px; color:#475467; background:#f2f4f7; font-weight:850; }
+    .pill.in { color:#087a55; background:#e8f8f1; }
+    .pill.out { color:#b42318; background:#fff0ef; }
+    .flow { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin-top:7px; }
+    .flow-step { min-height:66px; padding:6px; border:1px solid var(--line); border-radius:8px; background:#f9fafb; }
+    .flow-step b { display:block; color:#344054; }
+    .flow-step small { display:block; margin-top:2px; color:var(--muted); }
+    .arrow { display:grid; place-items:center; color:var(--accent-dark); font-size:16px; font-weight:950; }
+    .state-grid { display:grid; grid-template-columns:1fr 1fr; gap:7px; margin-top:7px; }
+    .state-card { padding:8px; border:1px solid var(--line); border-radius:9px; background:#f9fafb; }
+    .state-card h3 { margin:0 0 4px; font-size:11px; }
+    .state-card p { margin:0; color:var(--muted); }
+    .state-card ul { margin:4px 0 0 16px; padding:0; color:#475467; }
+    .checklist { display:grid; grid-template-columns:1fr 1fr; gap:5px 14px; margin-top:7px; padding:8px 10px; border:1px solid var(--line); border-radius:9px; background:#f9fafb; }
+    .checklist div { position:relative; padding-left:17px; }
+    .checklist div::before { content:"✓"; position:absolute; left:0; color:#087a55; font-weight:950; }
+    .footer { position:absolute; left:23px; right:23px; bottom:12px; display:flex; justify-content:space-between; gap:12px; padding-top:6px; border-top:1px solid var(--line); color:var(--muted); font-size:8.5px; }
+    @media (max-width:1100px) { .sheet { width:calc(100vw - 18px); height:auto; min-height:404mm; } .summary-grid,.notes { grid-template-columns:1fr 1fr; } .mock-top { grid-template-columns:1fr 1fr; } .flow { grid-template-columns:repeat(4,1fr); } }
+    @media print { body { background:#fff; print-color-adjust:exact; -webkit-print-color-adjust:exact; } .toolbar { display:none; } main { padding:0; } .sheet { width:100%; height:404mm; min-height:404mm; margin:0; padding:7mm 8mm 5mm; border:0; box-shadow:none; overflow:hidden; } .footer { left:8mm; right:8mm; bottom:5mm; } }
+  </style>
+</head><body>
+  <div class="toolbar"><strong>OEE 다공정 비가동 현장보드 · 상세 화면설계</strong><nav><a href="#page-1">1 UI</a><a href="#page-2">2 계약</a><a href="#page-3">3 상태·검증</a><button type="button" onclick="window.print()">인쇄 / PDF</button></nav></div>
+  <main>
+    <section class="sheet" id="page-1">
+      <header class="doc-head">
+        <div><p class="eyebrow">APPROVED TARGET · OEE_MULTI_ENTRY · OPERATIONS BOARD</p><h1>다공정 비가동 현장보드</h1><p class="subtitle">로그인 작업자를 기본값으로 확인하고, SMT·ASSY를 한 화면에서 선택하되 비가동 사유와 결과를 넓게 유지하는 공용 태블릿용 보드.</p></div>
+        <table class="meta"><tr><th>경로</th><td class="mono">/oee/multi-entry</td></tr><tr><th>메뉴</th><td class="mono">OEE_MULTI_ENTRY</td></tr><tr><th>대상</th><td>데스크톱 · 10.1인치 Android 가로</td></tr><tr><th>범위</th><td><span class="badge rec">IN · 1 screen</span></td></tr></table>
+      </header>
+      <div class="summary-grid"><article class="summary"><b>사용자·목표</b><p>현장 작업자가 여러 LINE/CELL의 동일 비가동 명령을 빠르게 기록하고, 각 리소스의 현재 상태와 저장 결과를 즉시 판별한다.</p></article><article class="summary"><b>요구 01</b><p>로그인 사용자를 기본 작업자로 확인. 변경 입력은 클릭 후에만 노출.</p></article><article class="summary"><b>요구 02–03</b><p>리소스 전체 선택 + 공정 전체 선택(SMT+ASSY)을 독립적으로 제공.</p></article><article class="summary"><b>요구 04</b><p>선택 영역을 압축하고 사유·메모 영역을 우선 확장.</p></article></div>
+      <div class="source-strip"><b>확인된 근거:</b> 현재 페이지는 단일 <span class="mono">processCode</span>와 하나의 리소스 목록을 사용한다(<span class="mono">page.tsx:169-189, 291-342</span>). 현재 UI의 작업자·네트워크·상태·명령 구조는 <span class="mono">page.tsx:674-1061</span>에 있고, 공용 태블릿 기준은 64dp 터치 타깃·가로 1920×1200 또는 1280×800이다(<span class="mono">2026-08-04-initial-coordination.md:105-113</span>).</div>
+      <div class="section-title">1.1 정보 위계와 실제 UI 제안</div>
+      <div class="mock-shell">
+        <div class="mock-top"><div class="brand"><span class="brand-mark">H</span>OEE 다공정 기록</div><div class="context-chip"><span class="dot attention"></span><span>ADMIN · 작업자 변경</span></div><div class="context-chip"><span class="dot ok"></span><span>기기 네트워크 · 온라인</span></div><div class="context-chip"><span class="dot ok"></span><span>MES 최근 통신 · 14:32:08</span></div></div>
+        <div class="mock-body">
+          <div class="panel"><div class="panel-head"><div><h3>01 / 선택 컨텍스트</h3><small>공정 선택과 리소스 선택은 별도 판단</small></div><span class="badge rec">SMT 12 · ASSY 15</span></div>
+            <div class="control-row"><div class="control active">▶ <b>비가동 시작</b></div><div class="control">■ <b>비가동 종료</b></div></div>
+            <div class="process-row"><div class="process active"><span class="box mixed">—</span> 전체 공정<small>SMT + ASSY · 일부 선택</small></div><div class="process active"><span class="box checked">✓</span> SMT<small>LINE 12개 로드</small></div><div class="process active"><span class="box checked">✓</span> ASSY<small>CELL 15개 로드</small></div></div>
+            <div class="group"><div class="group-head"><b>SMT · LINE <span class="badge good">12개 준비</span></b><span class="check"><span class="box checked">✓</span> 전체 선택</span></div><div class="resource-grid"><div class="resource selected"><b>01 · LINE</b><small>현재 가동 · 선택</small></div><div class="resource selected"><b>02 · LINE</b><small>현재 가동 · 선택</small></div><div class="resource"><b>03 · LINE</b><small>현재 가동</small></div><div class="resource disabled"><b>04 · LINE</b><small>상태 확인 중</small></div><div class="resource disabled"><b>05 · LINE</b><small>비가동 · 시작 불가</small></div><div class="resource"><b>06 · LINE</b><small>현재 가동</small></div></div></div>
+            <div class="group"><div class="group-head"><b>ASSY · CELL <span class="badge warn">15개 중 12개 표시</span></b><span class="check"><span class="box mixed">—</span> 전체 선택</span></div><div class="resource-grid"><div class="resource selected"><b>50 · CELL</b><small>현재 가동 · 선택</small></div><div class="resource selected"><b>51 · CELL</b><small>현재 가동 · 선택</small></div><div class="resource"><b>52 · CELL</b><small>현재 가동</small></div><div class="resource disabled"><b>53 · CELL</b><small>조회 실패 · 재시도</small></div><div class="resource"><b>54 · CELL</b><small>현재 가동</small></div><div class="resource disabled"><b>55 · CELL</b><small>비가동 · 시작 불가</small></div></div></div>
+          </div>
+          <div class="panel"><div class="panel-head"><div><h3>02 / 공통 기록·결과</h3><small>선택 리소스 전체에 동일한 사유를 적용</small></div><span class="badge rec">선택 4 · 실행 가능 4</span></div>
+            <div class="reason-shell"><div><div class="panel-head"><h3>비가동 사유 <span class="danger">*</span></h3><small>17개 · 서버 기준</small></div><div class="reason-grid"><div class="reason active">설비점검</div><div class="reason">자재대기</div><div class="reason">품질확인</div><div class="reason">금형교체</div><div class="reason">작업자부재</div><div class="reason">기타</div></div></div><div><div class="panel-head"><h3>메모</h3><small>선택 · 0/500</small></div><div class="memo">현장 메모를 입력합니다…</div><div class="summary" style="margin-top:6px"><b>저장 전 확인</b><p>4개 리소스에 서버 시각으로 비가동을 시작합니다.</p></div></div></div>
+            <div class="command-bar"><div class="metric"><small>선택</small><b>4</b></div><div class="metric"><small>실행 가능</small><b class="ok">4</b></div><div class="metric"><small>재시도 대상</small><b class="danger">0</b></div></div><div class="cta">▶ 선택 리소스 비가동 시작</div>
+            <div class="result-list"><div class="result success"><span class="icon">✓</span><div><strong>SMT 01 · START</strong><small>저장 완료 · requestId 표시 가능</small></div><span class="badge good">success</span></div><div class="result failure"><span class="icon fail">!</span><div><strong>ASSY 53 · START</strong><small>상태 조회 실패 또는 409 · 선택 유지</small></div><span class="badge red">retry</span></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="section-title">1.2 화면 원칙·범위</div>
+      <div class="notes"><article class="note"><b>작업자</b><p>확인된 이름/ID는 헤더 한 줄에 유지한다. 변경 버튼을 누르기 전에는 입력창을 만들지 않아 선택 영역의 높이를 차지하지 않는다.</p></article><article class="note"><b>선택</b><p>공정 전체 선택은 두 공정 그룹을 열 뿐이다. 리소스 전체 선택은 상태가 확인되고 현재 모드에 적용 가능한 행만 선택한다.</p></article><article class="note"><b>사유 우선</b><p>데스크톱/가로 태블릿은 선택 패널을 약 40%, 기록 패널을 약 60%로 배분한다. 리소스는 내부 스크롤로 압축한다.</p></article></div>
+      <table class="data"><thead><tr><th>대상</th><th>상태</th><th>이유</th><th>상세 설계 경계</th></tr></thead><tbody><tr><td class="mono">/oee/multi-entry</td><td><span class="pill in">IN SCOPE</span></td><td>승인된 4개 요구사항이 모두 이 기존 route에 귀속된다.</td><td>동일 route 내부의 worker disclosure, process/resource selection, reason, outcome panel까지 포함.</td></tr><tr><td class="mono">/oee/entry</td><td><span class="pill out">OUT</span></td><td>기존 단일 리소스 canonical 화면이며 이번 다공정 보드의 변경 대상이 아니다.</td><td>공용 계약의 근거로만 참조. 별도 화면 변경·리디렉션은 설계하지 않는다.</td></tr><tr><td class="mono">/oee/equip-downtime-mobile</td><td><span class="pill out">OUT</span></td><td>현재 Mock/설비 스캔 흐름으로 새 OEE resource board와 목적이 다르다.</td><td>삭제·통합·리디렉션 결정은 별도 범위.</td></tr><tr><td>API·DB·스키마</td><td><span class="pill out">OUT</span></td><td>기존 인증 mobile contract와 이벤트 저장 규칙을 소비한다.</td><td>새 batch endpoint, offline queue, DDL, API payload 변경 금지.</td></tr></tbody></table>
+      <footer class="footer"><span>Page 1 / 3 · UI hierarchy / wireframe / scope</span><span>판정: 기존 보드 언어 유지 + 선택 영역 압축 + 사유 영역 확장</span></footer>
+    </section>    <section class="sheet" id="page-2">
+      <header class="doc-head"><div><p class="eyebrow">IMPLEMENTATION-GROUNDED SPECIFICATION · STATE · API · COMPONENTS</p><h1>상태 모델과 명령 fan-out</h1><p class="subtitle">두 공정의 resource/status 조회는 독립적으로 관리하고, 명령은 선택 리소스 단위로 기존 idempotent endpoint에 보낸다.</p></div><table class="meta"><tr><th>프론트 근거</th><td class="mono">page.tsx:174-193</td></tr><tr><th>계약 근거</th><td class="mono">controller.ts:14-89</td></tr><tr><th>DTO 제한</th><td class="mono">dto.ts:13-26,48-140</td></tr></table></header>
+      <div class="section-title">2.1 사용자 흐름</div>
+      <div class="flow"><div class="flow-step"><b>1 · Auth ready</b><small><span class="mono">user.id</span>를 후보 workerId로 채움. persisted PDA worker를 자동 우선하지 않음.</small></div><div class="arrow">→</div><div class="flow-step"><b>2 · Verify worker</b><small><span class="mono">GET /workers/:workerId</span>. 성공 전 명령 잠금.</small></div><div class="arrow">→</div><div class="flow-step"><b>3 · Load groups</b><small>SMT/ASSY resource GET를 독립 호출. reasons는 별도 1회 조회.</small></div><div class="arrow">→</div><div class="flow-step"><b>4 · Load status</b><small>각 resource의 status와 openEvent를 독립 조회.</small></div><div class="arrow">→</div><div class="flow-step"><b>5 · Preflight</b><small>모드·사유·온라인·status를 재검증. 한 명령이라도 만들 수 없으면 POST 전 중단.</small></div><div class="arrow">→</div><div class="flow-step"><b>6 · Fan-out</b><small><span class="mono">Promise.allSettled</span>로 리소스별 POST. 결과를 숨기지 않음.</small></div><div class="arrow">→</div><div class="flow-step"><b>7 · Refresh</b><small>완료/실패 후 모든 표시 resource status를 새로 조회.</small></div></div>
+      <div class="section-title">2.2 제안 state model <span class="badge rec">PROPOSAL</span></div>
+      <table class="data"><thead><tr><th>상태</th><th>필드 / derived selector</th><th>동작 규칙</th><th>근거·변경 이유</th></tr></thead><tbody>
+        <tr><td>Worker</td><td><span class="mono">workerInput</span>, <span class="mono">worker</span>, <span class="mono">workerLoading</span>, <span class="mono">workerError</span>, <span class="mono">workerEditorOpen</span></td><td>auth hydration 후 <span class="mono">user.id</span>를 후보로 검증. 편집 중에는 기존 confirmed worker를 유지하되 명령은 잠근다.</td><td>현재 input이 비어 있고 worker 확인이 수동이다(<span class="mono">page.tsx:169-172,346-374</span>). Auth shape는 <span class="mono">authStore.ts:19-48</span>.</td></tr>
+        <tr><td>Process</td><td><span class="mono">selectedProcesses: Set&lt;OeeProcessCode&gt;</span>; <span class="mono">allProcessesSelected</span>; <span class="mono">processIndeterminate</span></td><td>전체 공정 클릭은 SMT와 ASSY를 동시에 add/remove. API에는 ALL을 전송하지 않는다. 공정 선택은 resource 자동선택과 독립.</td><td>DTO가 SMT/ASSY만 허용(<span class="mono">oee-mobile.dto.ts:13-17,33-39</span>). 현재 단일 state는 <span class="mono">page.tsx:174</span>.</td></tr>
+        <tr><td>Resources</td><td><span class="mono">resourcesByProcess[SMT|ASSY]</span> = items/loading/loaded/error; <span class="mono">selectedResourceIds: Set&lt;string&gt;</span></td><td>process별 group을 유지. 전체 resource selector는 visible + loaded + eligible 집합에만 적용. 현재 helper의 <span class="mono">resourceIdentity(resource)</span>는 <span class="mono">resourceId</span> 문자열을 사용.</td><td>현재 resourceId 단일 목록과 load state는 <span class="mono">page.tsx:175-182</span>, helper identity는 <span class="mono">oee-entry.ts:175-185</span>.</td></tr>
+        <tr><td>Status</td><td><span class="mono">statusByResource[id]</span> = loading/status/error</td><td>모든 status row는 resource의 process/type/code/parentLineCode로 조회. START는 RUNNING, END는 DOWNTIME + openEvent.eventId만 선택 가능.</td><td>현재 eligibility 함수 <span class="mono">page.tsx:128-153</span>; backend status는 server workDate/state/openEvent를 반환(<span class="mono">service.ts:126-169</span>).</td></tr>
+        <tr><td>Draft</td><td><span class="mono">mode</span>, <span class="mono">reasonCode</span>, <span class="mono">memo</span></td><td>START에서 reason 필수, memo 최대 500자. draft 변경은 기존 command outcome을 무효화해 payload signature 혼합을 막음.</td><td>DTO 제약 <span class="mono">dto.ts:103-126</span>, 현재 validation <span class="mono">page.tsx:544-560</span>.</td></tr>
+        <tr><td>Outcome</td><td><span class="mono">commandOutcomes</span>, <span class="mono">pendingCommandsRef</span>, <span class="mono">outcomesRef</span></td><td><span class="mono">success/replayed</span>는 terminal success. <span class="mono">conflict/error</span>만 retry. operation + resource + signature + requestId 관계를 보존.</td><td><span class="mono">multi-entry.ts:20-41</span>, 현재 allSettled/결과 표시는 <span class="mono">page.tsx:574-638,1012-1044</span>.</td></tr>
+      </tbody></table>
+      <div class="section-title">2.3 API·데이터·인터페이스 매핑</div>
+      <table class="data"><thead><tr><th>화면 오브젝트</th><th>요청</th><th>응답 사용</th><th>실패 / empty UI</th></tr></thead><tbody>
+        <tr><td>Worker context</td><td class="mono">GET /oee/mobile/workers/:workerId</td><td><span class="mono">workerId, workerName</span></td><td>inline error + 입력 재시도. 확인 전 process/resource/action disabled.</td></tr>
+        <tr><td>SMT/ASSY group</td><td class="mono">GET /oee/mobile/resources?processCode=SMT|ASSY</td><td><span class="mono">resourceId, processCode, resourceType, resourceCode, resourceName, parentLineCode</span></td><td>그룹별 skeleton/error/retry/empty. 다른 그룹 성공분은 유지.</td></tr>
+        <tr><td>Resource status row</td><td class="mono">GET /oee/mobile/status?processCode=&amp;resourceType=&amp;resourceCode=&amp;parentLineCode=</td><td><span class="mono">workDate, workSegment, state, events, openEvent</span></td><td>unknown disables checkbox; retry row or refresh all.</td></tr>
+        <tr><td>Reason panel</td><td class="mono">GET /oee/mobile/reasons</td><td><span class="mono">reasonCode, reasonName</span></td><td>START only blocks until loaded; END does not require reason.</td></tr>
+        <tr><td>START fan-out</td><td class="mono">POST /oee/mobile/downtime/start</td><td><span class="mono">event, replayed</span></td><td>per-resource success/replayed/conflict/error; preserve retryable selection.</td></tr>
+        <tr><td>END fan-out</td><td class="mono">POST /oee/mobile/downtime/end</td><td><span class="mono">event, replayed</span></td><td>eventId is taken from each row's openEvent; confirmation remains required.</td></tr>
+      </tbody></table>
+      <div class="source-strip"><b>계약 경계:</b> controller는 모든 mobile route에 <span class="mono">JwtAuthGuard</span>를 적용하고(<span class="mono">oee-mobile.controller.ts:14-16</span>), resources는 query processCode를 service에 전달한다(<span class="mono">:20-30</span>). start DTO는 process/resource/worker/reason/memo/requestId를 요구하고 end DTO는 eventId/requestId만 요구한다(<span class="mono">oee-mobile.dto.ts:76-140</span>).</div>
+      <div class="section-title">2.4 컴포넌트 계약</div>
+      <table class="data"><thead><tr><th>컴포넌트</th><th>행동</th><th>접근성/상태</th><th>범위</th></tr></thead><tbody><tr><td class="mono">CompactWorkerContext</td><td>confirmed name/ID 표시, change click 후 input disclose, confirm/cancel</td><td>label 연결, error는 input 근처, editor open 중 action lock</td><td>new UI composition, existing API</td></tr><tr><td class="mono">ProcessSelector</td><td>SMT, ASSY, 전체 공정 toggle</td><td>checkbox/pressed/mixed 상태를 text+aria로 노출</td><td>helper selectors 필요</td></tr><tr><td class="mono">ProcessResourceGroup</td><td>group all + resource cards + retry</td><td>status text/icon 병기, unknown/inapplicable disabled</td><td>resource fetch fan-out</td></tr><tr><td class="mono">ReasonCommandPanel</td><td>reason/memo, start/end CTA, result list, retry failed</td><td>required marker, live result region, ConfirmModal 유지</td><td>기존 command rail 확장</td></tr></tbody></table>
+      <footer class="footer"><span>Page 2 / 3 · state / fan-out / API and component mapping</span><span>원칙: 기존 6개 endpoint 소비, client fan-out만 추가</span></footer>
+    </section>    <section class="sheet" id="page-3">
+      <header class="doc-head"><div><p class="eyebrow">VALIDATION · STATES · RISKS · ACCEPTANCE</p><h1>상태전이와 수락 기준</h1><p class="subtitle">사용자가 막힌 이유를 같은 위치에서 이해하고, 부분 성공을 재시도할 수 있어야 한다. 미확정 계약은 구현 전에 coordinator 결정으로 남긴다.</p></div><table class="meta"><tr><th>기준</th><td>서버 상태 우선</td></tr><tr><th>업무일</th><td>KST 08:30 경계</td></tr><tr><th>검증 target</th><td>desktop · 1280×800 · tablet</td></tr></table></header>
+      <div class="section-title">3.1 화면 상태 매트릭스</div>
+      <table class="data"><thead><tr><th>상태</th><th>화면 표현</th><th>가능 행동</th><th>차단 행동 / 회복</th></tr></thead><tbody>
+        <tr><td>AUTH HYDRATING</td><td>worker row skeleton; process/resource disabled</td><td>인증 완료까지 대기</td><td>임의 worker fallback 금지. auth 실패는 로그인 흐름으로 반환.</td></tr>
+        <tr><td>WORKER CONFIRMING</td><td>compact input + spinner + inline status</td><td>입력 취소/재시도</td><td>process/mode/submit 잠금. 성공 시에만 confirmed worker 교체.</td></tr>
+        <tr><td>GROUP LOADING</td><td>SMT와 ASSY 각각 skeleton; process all는 두 요청을 시작</td><td>이미 성공한 그룹 선택/상태 조회</td><td>loading row는 resource-all에서 제외. 완료 후 자동 선택하지 않고 사용자가 다시 all을 누름.</td></tr>
+        <tr><td>PARTIAL GROUP ERROR</td><td>성공 그룹은 정상 목록, 실패 그룹은 inline error + retry</td><td>성공 그룹만 선택·제출; 실패 그룹 retry</td><td>실패 그룹 리소스를 숨기지 않음. 두 그룹 모두 실패하고 usable selection이 없으면 submit 차단.</td></tr>
+        <tr><td>READY / MIXED STATUS</td><td>RUNNING/DOWNTIME/UNKNOWN을 카드 text+icon으로 표시</td><td>현재 mode에 적용 가능한 resource만 체크</td><td>inapplicable·unknown·status error는 disabled. mode 변경 시 selection을 eligible 교집합으로 정리.</td></tr>
+        <tr><td>SUBMITTING</td><td>contextLocked, spinner, live status; all controls disabled</td><td>결과 대기</td><td>worker/process/mode/resource/draft 변경 및 duplicate click 차단.</td></tr>
+        <tr><td>PARTIAL RESULT</td><td>리소스별 success/replayed/conflict/error 카드</td><td>retry failed/conflict만 재전송</td><td>성공/replayed는 retry 대상 제외. 완료 후 status refresh.</td></tr>
+        <tr><td>EMPTY</td><td>worker first / select process / no resources / no reasons 메시지를 구분</td><td>선행조건 완료, retry</td><td>빈 목록을 성공으로 간주하지 않음. START는 reason empty에서 차단.</td></tr>
+      </tbody></table>
+      <div class="section-title">3.2 입력·업무 validation</div>
+      <div class="state-grid"><article class="state-card"><h3>START</h3><ul><li>온라인 + confirmed worker + SMT/ASSY 중 하나 이상 + resource 선택.</li><li>모든 POST 후보는 status.state = RUNNING.</li><li>reasonCode 필수, memo는 500자 이하.</li><li>resource별 processCode/type/code/parentLineCode를 payload에 사용.</li></ul></article><article class="state-card"><h3>END</h3><ul><li>온라인 + confirmed worker + 선택 resource.</li><li>모든 POST 후보는 DOWNTIME이고 openEvent.eventId가 존재.</li><li>각 resource의 eventId를 end payload에 사용.</li><li>기존 danger ConfirmModal에서 count와 대상 확인 후 실행.</li></ul></article><article class="state-card"><h3>PRE-FLIGHT / STALE</h3><ul><li>선택된 resource마다 command를 만들 수 있어야 한다.</li><li>하나라도 status가 바뀌거나 필요한 event/reason이 없으면 POST 전에 refreshStatuses 후 중단.</li><li>서버가 409를 반환하면 conflict로 보존하고 전체를 실패로 덮지 않는다.</li></ul></article><article class="state-card"><h3>IDEMPOTENCY</h3><ul><li>같은 mode/resource/signature에는 pending requestId를 재사용.</li><li>서버 replayed는 성공 완료로 표시.</li><li>다른 requestId로 열린 이벤트가 경쟁하면 409를 오류가 아닌 재시도 가능한 conflict로 표시.</li></ul></article></div>
+      <div class="section-title">3.3 responsive·접근성 validation</div>
+      <table class="data"><thead><tr><th>환경</th><th>레이아웃</th><th>확인 항목</th></tr></thead><tbody><tr><td>wide desktop / landscape tablet<br><span class="mono">content ≥ 960px</span></td><td>header 1 row; selection 40% / command-reason 60%; resource group 내부 scroll</td><td>CTA가 첫 화면에 보임, 사유 grid가 2열 이상, horizontal overflow 없음.</td></tr><tr><td>narrow tablet / portrait</td><td>header compact; selection → reason → result stack; action bar는 safe-area를 고려한 sticky 영역</td><td>키보드가 memo를 가리지 않음, focus가 viewport 밖으로 숨지 않음, 목록은 한 개의 주 스크롤.</td></tr><tr><td>all</td><td>기존 dark board surface와 semantic green/red/amber를 유지</td><td>primary controls 최소 64px 기준(<span class="mono">structure.test.mjs:117-130</span>), visible focus ring, color+text+icon, native label/aria.</td></tr></tbody></table>
+      <div class="section-title">3.4 acceptance criteria <span class="badge good">TESTABLE</span></div>
+      <div class="checklist"><div>auth hydration 후 로그인 사용자가 자동 worker 후보가 되고, worker 확인 전 제출할 수 없다.</div><div>worker 변경 입력은 기본 숨김이며 click 시 compact editor로 나타난다.</div><div>전체 공정은 SMT와 ASSY를 모두 선택/해제하고 각 process별 resource GET을 호출한다.</div><div>resource 전체 선택은 현재 mode에서 status-confirmed인 리소스만 대상으로 한다.</div><div>SMT/ASSY 중 한 요청이 실패해도 성공 그룹은 표시·사용 가능하고 실패 그룹은 재시도 가능하다.</div><div>각 command payload의 processCode는 resource.processCode와 일치하고 ALL은 전송되지 않는다.</div><div>START/END는 RUNNING/DOWNTIME+openEvent 규칙을 지키며 stale 상태는 첫 POST 전에 중단한다.</div><div>partial result는 resource별로 보이고 success/replayed를 retry에서 제외한다.</div><div>START reason, memo 500자, offline, empty, unknown, 409 상태가 사용자에게 설명된다.</div><div>기존 6개 API·tenant/auth/idempotency contract와 ConfirmModal/네트워크 표시는 보존된다.</div><div>1280×800 desktop 및 10.1인치 Android 가로에서 사유·CTA·결과가 스크롤 없이 우선 보인다.</div><div>구조 테스트와 frontend typecheck가 통과하고, 실제 인증 API→프록시→렌더 row 검증을 별도로 기록한다.</div></div>
+      <div class="section-title">3.5 assumptions · open decisions · evidence</div>
+      <table class="data"><thead><tr><th>분류</th><th>내용</th><th>결정 필요 시 영향</th></tr></thead><tbody><tr><td><span class="badge good">VERIFIED</span></td><td>backend mobile controller는 guard 적용, process/resource/status/start/end contract를 제공한다(<span class="mono">oee-mobile.controller.ts:14-89</span>). Oracle 검증 report는 SMT 12 LINE, ASSY 15 CELL을 기록한다(<span class="mono">2026-08-08-oee-mobile-implementation-verification.md:58-66</span>).</td><td>현재 범위에서 신규 API가 필요하지 않다.</td></tr><tr><td><span class="badge rec">ASSUMPTION</span></td><td><span class="mono">resourceId</span>가 SMT/ASSY 응답 전체에서 unique하므로 기존 <span class="mono">resourceIdentity</span>를 유지한다. parentLineCode가 null이면 기존 fallback인 resourceCode를 사용한다.</td><td>resourceId가 공정 간 중복될 수 있으면 helper key를 composite로 바꾸는 계약 결정이 선행되어야 한다.</td></tr><tr><td><span class="badge warn">OPEN</span></td><td>Auth <span class="mono">user.id</span>를 OEE worker 기본값으로 할지, persisted <span class="mono">currentWorker.workerCode</span>를 우선할지 명시적 업무 결정이 없다. 본 설계 권고는 “로그인 사용자 우선”이다.</td><td>worker default, 표시 이름, 권한·감사 주체가 달라진다. coordinator 확인 없이 fallback을 구현하지 않는다.</td></tr><tr><td><span class="badge warn">OPEN</span></td><td>실제 Android 1280×800 고정 viewport/키보드/터치는 이전 report에서 미완료다(<span class="mono">2026-08-08-oee-mobile-http-render-verification.md:48-52</span>).</td><td>실기기 또는 지원 브라우저에서 최종 시각·터치 검증이 필요하다.</td></tr></tbody></table>
+      <div class="source-strip"><b>주요 evidence:</b> <span class="mono">apps/frontend/src/app/(authenticated)/oee/multi-entry/page.tsx:128-153,174-218,231-342,346-410,476-638,674-1061</span> · <span class="mono">_lib/multi-entry.ts:20-41</span> · <span class="mono">apps/backend/src/modules/oee/oee-mobile.dto.ts:13-140</span> · <span class="mono">docs/specs/2026-08-06-oee-mobile-prerequisite-contract-design.md:72-125</span> · <span class="mono">docs/reports/oee-mobile-collaboration/2026-08-08-oee-mobile-http-render-verification.md:16-52</span>.</div>
+      <footer class="footer"><span>Page 3 / 3 · state / validation / risks / acceptance</span><span>남은 결정: worker identity 우선순위 · resourceId uniqueness 확인 · 실제 tablet render</span></footer>
+    </section>  </main>
+  <script>
+    document.querySelectorAll('.toolbar a').forEach((link) => link.addEventListener('click', (event) => {
+      event.preventDefault();
+      document.querySelector(link.getAttribute('href'))?.scrollIntoView({ behavior: 'smooth' });
+    }));
+  </script>
+</body>
+</html>

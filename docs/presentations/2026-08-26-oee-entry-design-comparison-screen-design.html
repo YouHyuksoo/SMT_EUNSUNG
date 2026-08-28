@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OEE 비가동 입력 개선안 비교 · 2026-08-26</title>
+  <style>
+    @page { size: 594mm 420mm; margin: 0; }
+    :root {
+      --ink:#101828; --muted:#667085; --line:#d0d5dd; --paper:#fff; --canvas:#e8ebf0;
+      --magenta:#f000b9; --magenta-dark:#be008f; --magenta-soft:#fff0fb;
+      --green:#087a55; --green-soft:#e8f8f1; --red:#c62828; --red-soft:#fff0ef;
+      --amber:#a15c00; --amber-soft:#fff5dd; --blue:#175cd3; --blue-soft:#eff6ff;
+      --navy:#101828; --slate:#344054; --dark:#0d1726; --dark-card:#172335;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin:0; color:var(--ink); background:var(--canvas); font-family:"Malgun Gothic","Apple SD Gothic Neo",Arial,sans-serif; font-size:10px; line-height:1.38; }
+    button { font:inherit; }
+    .toolbar { position:sticky; top:0; z-index:20; display:flex; align-items:center; justify-content:space-between; gap:12px; padding:9px 16px; color:#fff; background:rgba(16,24,40,.97); box-shadow:0 4px 18px rgba(16,24,40,.25); }
+    .toolbar strong { font-size:13px; }
+    .toolbar nav { display:flex; gap:7px; }
+    .toolbar a,.toolbar button { padding:6px 10px; color:#fff; border:1px solid rgba(255,255,255,.25); border-radius:7px; background:rgba(255,255,255,.07); text-decoration:none; font-weight:800; cursor:pointer; }
+    .toolbar a:hover,.toolbar button:hover { background:rgba(255,255,255,.16); }
+    main { padding:18px 0 36px; }
+    .sheet { position:relative; width:min(1580px,calc(100vw - 28px)); height:404mm; min-height:404mm; margin:0 auto 20px; padding:19px 23px 16px; overflow:hidden; background:var(--paper); border:1px solid #c7cdd6; box-shadow:0 14px 38px rgba(16,24,40,.14); page-break-after:always; break-after:page; }
+    .sheet:last-child { page-break-after:auto; break-after:auto; }
+    .doc-head { display:grid; grid-template-columns:1fr auto; gap:18px; align-items:end; padding-bottom:10px; border-bottom:3px solid var(--accent,var(--magenta)); }
+    .eyebrow { margin:0 0 3px; color:var(--accent,var(--magenta)); font-size:10px; font-weight:900; letter-spacing:.14em; }
+    h1 { margin:0; font-size:25px; line-height:1.12; letter-spacing:-.04em; }
+    .subtitle { margin:4px 0 0; color:var(--muted); font-size:11px; }
+    .meta { border-collapse:collapse; font-size:9px; }
+    .meta th,.meta td { padding:4px 7px; border:1px solid var(--line); }
+    .meta th { color:var(--slate); background:#f2f4f7; }
+    .badge { display:inline-flex; align-items:center; gap:4px; padding:3px 7px; border-radius:999px; border:1px solid var(--line); background:#fff; font-size:8.5px; font-weight:800; }
+    .badge.rec { color:#fff; border-color:var(--magenta); background:var(--magenta); }
+    .badge.good { color:var(--green); border-color:#86d7ba; background:var(--green-soft); }
+    .badge.warn { color:var(--amber); border-color:#e8be68; background:var(--amber-soft); }
+    .badge.blue { color:var(--blue); border-color:#a6c5f7; background:var(--blue-soft); }
+    .section-title { display:flex; align-items:center; gap:8px; margin:10px 0 6px; color:var(--slate); font-size:12px; font-weight:900; }
+    .section-title::before { content:""; width:5px; height:16px; border-radius:4px; background:var(--accent,var(--magenta)); }
+    .summary-grid { display:grid; grid-template-columns:1.35fr .8fr .8fr .8fr; gap:7px; margin-top:8px; }
+    .summary { padding:7px 9px; border:1px solid var(--line); border-radius:9px; background:#f9fafb; }
+    .summary b { display:block; margin-bottom:2px; font-size:10px; }
+    .summary p { margin:0; color:var(--muted); }
+    .score { font-size:17px; font-weight:950; color:var(--accent,var(--magenta)); }
+    .mock-shell { margin-top:8px; padding:8px; border-radius:13px; background:#eef1f5; border:1px solid #cfd5dd; }
+    .mock-top { display:grid; grid-template-columns:1fr auto auto auto; align-items:center; gap:7px; padding:7px 9px; border-radius:9px; background:#fff; border:1px solid var(--line); }
+    .brand { display:flex; align-items:center; gap:8px; font-size:13px; font-weight:950; }
+    .brand-mark { display:grid; place-items:center; width:27px; height:27px; color:#fff; border-radius:8px; background:var(--magenta); }
+    .context-chip { min-height:32px; display:flex; align-items:center; gap:6px; padding:5px 9px; border-radius:8px; border:1px solid var(--line); background:#f9fafb; font-weight:800; }
+    .dot { width:7px; height:7px; border-radius:50%; background:currentColor; }
+    .ok { color:var(--green); }
+    .stale { color:var(--amber); }
+    .mock-body { display:grid; gap:8px; margin-top:8px; }
+    .panel { min-width:0; padding:9px; border:1px solid var(--line); border-radius:10px; background:#fff; }
+    .panel-head { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:7px; }
+    .panel-head h3 { margin:0; font-size:11px; }
+    .panel-head small { color:var(--muted); }
+    .process-row { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+    .process,.resource { min-height:45px; padding:7px; border:1px solid var(--line); border-radius:8px; background:#fff; font-weight:850; }
+    .process.active,.resource.active { color:var(--magenta-dark); border:2px solid var(--magenta); background:var(--magenta-soft); }
+    .process small,.resource small { display:block; margin-top:2px; color:var(--muted); font-weight:650; }
+    .resource-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-top:7px; }
+    .resource b { font-size:12px; }
+    .state-card { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px; border:1px solid #72d3b0; border-radius:9px; color:var(--green); background:var(--green-soft); }
+    .state-card strong { font-size:18px; }
+    .state-icon { display:grid; place-items:center; width:38px; height:38px; border:3px solid currentColor; border-radius:50%; font-size:20px; font-weight:950; }
+    .facts { display:grid; grid-template-columns:repeat(3,1fr); gap:5px; margin-bottom:7px; }
+    .fact { padding:6px; border-radius:7px; background:#f2f4f7; }
+    .fact small { display:block; color:var(--muted); }
+    .cta { display:flex; align-items:center; justify-content:center; min-height:52px; padding:8px 12px; border:0; border-radius:9px; color:#fff; background:var(--magenta); font-size:14px; font-weight:950; }
+    .cta.stop { background:var(--red); }
+    .history { display:grid; gap:4px; }
+    .history-row { display:grid; grid-template-columns:75px 1fr auto; align-items:center; gap:7px; padding:6px 7px; border-radius:7px; background:#f7f8fa; }
+    .history-row span:first-child { font-family:Consolas,monospace; font-weight:800; }
+    .mobile { border:6px solid #1d2939; border-radius:17px; padding:7px; background:#f5f6f8; box-shadow:0 5px 14px rgba(16,24,40,.16); }
+    .mobile-bar { display:flex; justify-content:space-between; align-items:center; gap:5px; padding:6px; border-radius:7px; background:#fff; font-size:8px; font-weight:850; }
+    .mobile-main { display:grid; gap:5px; margin-top:5px; }
+    .mini-card { padding:6px; border:1px solid var(--line); border-radius:7px; background:#fff; }
+    .mini-resources { display:grid; grid-template-columns:repeat(3,1fr); gap:4px; }
+    .mini-resource { padding:6px 3px; text-align:center; border:1px solid var(--line); border-radius:6px; background:#fff; font-weight:900; }
+    .mini-resource.active { color:var(--magenta-dark); border:2px solid var(--magenta); background:var(--magenta-soft); }
+    .mobile-cta { min-height:38px; display:grid; place-items:center; margin-top:5px; color:#fff; border-radius:8px; background:var(--magenta); font-size:11px; font-weight:950; }
+    .notes { display:grid; grid-template-columns:1fr 1fr 1fr; gap:7px; margin-top:7px; }
+    .note { padding:7px 8px; border-left:3px solid var(--accent,var(--magenta)); background:#f8fafc; }
+    .note b { display:block; margin-bottom:2px; }
+    .note p { margin:0; color:var(--muted); }
+    .comparison { width:100%; border-collapse:collapse; margin-top:7px; font-size:8.5px; }
+    .comparison th,.comparison td { padding:4px 6px; border:1px solid var(--line); text-align:left; }
+    .comparison th { background:#f2f4f7; }
+    .footer { position:absolute; left:23px; right:23px; bottom:12px; display:flex; justify-content:space-between; gap:12px; padding-top:6px; border-top:1px solid var(--line); color:var(--muted); font-size:8.5px; }
+    .mono { font-family:Consolas,"Courier New",monospace; }
+
+    /* A: fixed action rail */
+    #page-1 { --accent:var(--magenta); }
+    #page-1 .mock-body { grid-template-columns:1.35fr .8fr; }
+    .action-rail { display:flex; flex-direction:column; gap:7px; }
+    .action-rail .cta { margin-top:auto; }
+    .sticky-tag { padding:4px 7px; color:var(--magenta-dark); border-radius:6px; background:var(--magenta-soft); font-weight:900; }
+
+    /* B: guided workflow */
+    #page-2 { --accent:var(--blue); }
+    .stepper { display:grid; grid-template-columns:repeat(4,1fr); gap:0; margin-top:8px; }
+    .step { position:relative; padding:7px 10px; color:var(--muted); border-block:1px solid var(--line); background:#f8fafc; font-weight:850; }
+    .step:first-child { border-left:1px solid var(--line); border-radius:8px 0 0 8px; }
+    .step:last-child { border-right:1px solid var(--line); border-radius:0 8px 8px 0; }
+    .step.done { color:var(--green); background:var(--green-soft); }
+    .step.current { color:#fff; background:var(--blue); }
+    #page-2 .mock-body { grid-template-columns:.68fr 1.32fr; }
+    .selection-summary { display:grid; gap:6px; }
+    .selection-row { display:flex; justify-content:space-between; gap:8px; padding:7px; border-bottom:1px solid var(--line); }
+    .selection-row:last-child { border:0; }
+    .focus-stage { display:grid; grid-template-columns:1.15fr .85fr; gap:7px; }
+    .reason-grid { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+    .reason { min-height:40px; padding:7px; border:1px solid var(--line); border-radius:7px; background:#fff; font-weight:800; }
+    .reason.active { color:var(--blue); border:2px solid var(--blue); background:var(--blue-soft); }
+    #page-2 .mobile-cta { background:var(--blue); }
+
+    /* C: operations board */
+    #page-3 { --accent:#ffb020; }
+    #page-3 .mock-shell { color:#f8fafc; border-color:#344054; background:var(--dark); }
+    #page-3 .mock-top,#page-3 .panel { color:#f8fafc; border-color:#344054; background:var(--dark-card); }
+    #page-3 .context-chip { color:#e4e7ec; border-color:#475467; background:#243247; }
+    #page-3 .mock-body { grid-template-columns:.72fr 1.28fr .8fr; }
+    #page-3 .panel-head small,#page-3 .resource small { color:#98a2b3; }
+    #page-3 .process,#page-3 .resource { color:#f8fafc; border-color:#475467; background:#1d2b3f; }
+    #page-3 .process.active,#page-3 .resource.active { color:#fff; border-color:#ffb020; background:#513a10; }
+    .hero-state { display:grid; place-items:center; min-height:115px; text-align:center; border:2px solid #46c99a; border-radius:13px; color:#62e1b2; background:#0e332b; }
+    .hero-state strong { font-size:28px; letter-spacing:-.03em; }
+    .hero-state small { color:#b6f1dc; }
+    .board-cta { min-height:64px; display:grid; place-items:center; margin-top:7px; color:#101828; border-radius:11px; background:#ffb020; font-size:16px; font-weight:950; }
+    .metric { padding:7px; border:1px solid #475467; border-radius:8px; background:#1d2b3f; }
+    .metric small { display:block; color:#98a2b3; }
+    #page-3 .history-row { color:#e4e7ec; background:#1d2b3f; }
+    #page-3 .mobile { color:#f8fafc; background:var(--dark); }
+    #page-3 .mobile-bar,#page-3 .mini-card,#page-3 .mini-resource { color:#f8fafc; border-color:#475467; background:var(--dark-card); }
+    #page-3 .mobile-cta { color:#101828; background:#ffb020; }
+
+    @media (max-width:1100px) {
+      .sheet { width:calc(100vw - 18px); height:auto; min-height:404mm; }
+      .summary-grid,.notes { grid-template-columns:1fr 1fr; }
+    }
+    @media print {
+      body { background:#fff; print-color-adjust:exact; -webkit-print-color-adjust:exact; }
+      .toolbar { display:none; }
+      main { padding:0; }
+      .sheet { width:100%; height:404mm; min-height:404mm; margin:0; padding:7mm 8mm 5mm; border:0; box-shadow:none; overflow:hidden; }
+      .footer { left:8mm; right:8mm; bottom:5mm; }
+    }
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <strong>OEE 비가동 입력 · 개선 디자인 비교</strong>
+    <nav><a href="#page-1">A 고정 CTA</a><a href="#page-2">B 단계형</a><a href="#page-3">C 현장 보드</a><button type="button" onclick="window.print()">인쇄 / PDF</button></nav>
+  </div>
+  <main>
+    <section class="sheet" id="page-1">
+      <header class="doc-head">
+        <div><p class="eyebrow">OPTION A · RECOMMENDED · FIXED ACTION RAIL</p><h1>고정 CTA·상태 우선</h1><p class="subtitle">숙련 작업자의 반복 입력을 위해 선택은 왼쪽, 현재 상태와 유일한 다음 행동은 오른쪽에 고정한다.</p></div>
+        <table class="meta"><tr><th>경로</th><td class="mono">/oee/entry</td></tr><tr><th>대상</th><td>반복 작업 · 데스크톱/10인치</td></tr><tr><th>판정</th><td><span class="badge rec">추천안</span></td></tr></table>
+      </header>
+
+      <div class="summary-grid">
+        <article class="summary"><b>업무 목적·요구사항</b><p>작업자 확인 → 공정/리소스 선택 → 서버 상태 확인 → 비가동 시작/종료. CTA는 스크롤 없이 항상 보이며 상태 미확정·오프라인·전이 중에는 잠긴다.</p></article>
+        <article class="summary"><b>속도</b><span class="score">5/5</span><p>최소 이동</p></article>
+        <article class="summary"><b>오류 예방</b><span class="score">4/5</span><p>상태 rail 고정</p></article>
+        <article class="summary"><b>학습 난이도</b><span class="score">4/5</span><p>현재 UI와 유사</p></article>
+      </div>
+
+      <div class="section-title">Desktop 실제 UI 제안 wireframe</div>
+      <div class="mock-shell">
+        <div class="mock-top"><div class="brand"><span class="brand-mark">H</span>OEE 비가동 입력</div><div class="context-chip ok"><span class="dot"></span>기기 네트워크</div><div class="context-chip ok"><span class="dot"></span>MES 최근 통신 14:32:08</div><div class="context-chip">ADMIN · 작업자 변경</div></div>
+        <div class="mock-body">
+          <div class="panel">
+            <div class="panel-head"><h3>공정 및 리소스</h3><span class="sticky-tag">ASSY · 6개</span></div>
+            <div class="process-row"><button class="process">SMT 공정<small>라인 리소스</small></button><button class="process active">조립 공정<small>ASSY</small></button></div>
+            <div class="resource-grid"><button class="resource"><b>19</b><small>WAVE · CELL</small></button><button class="resource"><b>20</b><small>ICT · CELL</small></button><button class="resource"><b>21</b><small>성능검사기 · CELL</small></button><button class="resource active"><b>22</b><small>COATING MACHINE</small></button><button class="resource"><b>23</b><small>JETTING MACHINE</small></button><button class="resource"><b>24</b><small>ROUTER · CELL</small></button></div>
+            <div class="panel-head" style="margin-top:8px"><h3>현재 업무일 이력</h3><small>2026-08-25 · I</small></div>
+            <div class="history"><div class="history-row"><span>12:18–12:31</span><b>자재대기 · ADMIN</b><span class="badge good">완료</span></div><div class="history-row"><span>10:05–10:12</span><b>설비점검 · KIM01</b><span class="badge good">완료</span></div></div>
+          </div>
+          <aside class="panel action-rail">
+            <div class="panel-head"><h3>현재 상태</h3><span class="badge good">최신</span></div>
+            <div class="facts"><div class="fact"><small>업무일</small><b>2026-08-25</b></div><div class="fact"><small>근무구간</small><b>I</b></div><div class="fact"><small>리소스</small><b>22</b></div></div>
+            <div class="state-card"><div><small>COATING MACHINE</small><strong>현재 가동</strong></div><span class="state-icon">✓</span></div>
+            <div class="summary" style="margin-top:7px"><b>다음 작업</b><p>비가동 사유를 기록하려면 아래 버튼을 누르세요. 서버 시각으로 시작됩니다.</p></div>
+            <button class="cta">▶ 비가동 시작</button>
+          </aside>
+        </div>
+      </div>
+
+      <div class="section-title">10인치 Android 가로 / mobile 구조</div>
+      <div style="display:grid;grid-template-columns:1.45fr .55fr;gap:9px">
+        <div class="notes"><article class="note"><b>고정 액션 바</b><p>하단 safe-area 위에 상태+CTA를 고정하고, 입력 키보드가 열리면 draft 안으로 이동한다.</p></article><article class="note"><b>단일 목록 스크롤</b><p>페이지는 한 번만 스크롤한다. 공정 변경 시 리소스 목록은 첫 행으로 복귀한다.</p></article><article class="note"><b>연결 상태</b><p>`온라인` 대신 기기 네트워크와 최근 MES 통신 시각을 분리한다.</p></article></div>
+        <div class="mobile"><div class="mobile-bar"><span>ADMIN · ASSY</span><span class="ok">● MES 14:32</span></div><div class="mobile-main"><div class="mini-card"><b>리소스</b><div class="mini-resources"><span class="mini-resource">19<br>WAVE</span><span class="mini-resource">20<br>ICT</span><span class="mini-resource active">22<br>COATING</span></div></div><div class="mini-card state-card"><b>22 · 현재 가동</b><span>✓</span></div></div><div class="mobile-cta">비가동 시작</div></div>
+      </div>
+
+      <table class="comparison"><thead><tr><th>컴포넌트/컨트롤</th><th>상태·validation</th><th>데이터/API 인터페이스</th><th>위험과 대응</th></tr></thead><tbody><tr><td>CompactWorker, ConnectionPair, ResourceGrid, StickyStatusRail, ActionBar</td><td>status known + network + 최근 API 성공일 때만 CTA 활성. DOWNTIME 중 context 잠금.</td><td>기존 6개 `/oee/mobile/*` endpoint 유지. 서버 표시는 최근 성공/실패 결과 기반 proposal.</td><td>작은 화면에서 고정 bar가 내용을 가릴 위험 → safe-area·키보드 상태 수락검증.</td></tr></tbody></table>
+      <footer class="footer"><span>Page 1 / 3 · A 고정 CTA·상태 우선</span><span>추천 이유: 현재 구조와 가장 가깝고 핵심 행동 가시성을 직접 해결</span></footer>
+    </section>
+
+    <section class="sheet" id="page-2">
+      <header class="doc-head">
+        <div><p class="eyebrow">OPTION B · GUIDED WORKFLOW</p><h1>단계형 집중 흐름</h1><p class="subtitle">초보 작업자와 교대 인력을 위해 한 번에 하나의 판단만 요구하고, 완료한 컨텍스트는 접힌 요약으로 보존한다.</p></div>
+        <table class="meta"><tr><th>주 사용자</th><td>초보 · 다공정 작업자</td></tr><tr><th>강점</th><td>누락 방지 · 오류 복구</td></tr><tr><th>트레이드오프</th><td><span class="badge blue">반복 속도 감소</span></td></tr></table>
+      </header>
+
+      <div class="summary-grid">
+        <article class="summary"><b>업무 목적·요구사항</b><p>선행조건을 순서대로 완료해야 다음 단계가 열린다. 현재 단계의 설명·오류·재시도를 같은 영역에 두고 상태 CTA는 우측에 계속 노출한다.</p></article>
+        <article class="summary"><b>속도</b><span class="score">3/5</span><p>단계 이동 필요</p></article>
+        <article class="summary"><b>오류 예방</b><span class="score">5/5</span><p>선행조건 명확</p></article>
+        <article class="summary"><b>학습 난이도</b><span class="score">5/5</span><p>안내 중심</p></article>
+      </div>
+
+      <div class="stepper"><div class="step done">✓ 작업자 확인</div><div class="step done">✓ 공정 선택</div><div class="step current">3 리소스 선택</div><div class="step">4 상태·기록</div></div>
+
+      <div class="section-title">Desktop 실제 UI 제안 wireframe</div>
+      <div class="mock-shell">
+        <div class="mock-top"><div class="brand"><span class="brand-mark">H</span>비가동 기록 안내</div><div class="context-chip ok"><span class="dot"></span>기기 연결됨</div><div class="context-chip ok"><span class="dot"></span>MES 응답 정상</div><div class="context-chip">도움말</div></div>
+        <div class="mock-body">
+          <aside class="panel selection-summary">
+            <div class="panel-head"><h3>확인한 정보</h3><span class="badge blue">2/4 완료</span></div>
+            <div class="selection-row"><span>작업자</span><b>ADMIN</b></div><div class="selection-row"><span>공정</span><b>ASSY</b></div><div class="selection-row"><span>리소스</span><b style="color:var(--blue)">선택 필요</b></div>
+            <div class="summary"><b>잠금 안내</b><p>비가동이 시작되면 작업자·공정·리소스를 변경할 수 없습니다.</p></div>
+          </aside>
+          <section class="panel">
+            <div class="panel-head"><div><small>3단계</small><h3>어느 리소스에서 비가동이 발생했나요?</h3></div><span class="badge blue">ASSY · 6개</span></div>
+            <div class="resource-grid"><button class="resource"><b>19</b><small>WAVE</small></button><button class="resource"><b>20</b><small>ICT</small></button><button class="resource"><b>21</b><small>성능검사기</small></button><button class="resource active"><b>22</b><small>COATING MACHINE</small></button><button class="resource"><b>23</b><small>JETTING MACHINE</small></button><button class="resource"><b>24</b><small>ROUTER</small></button></div>
+            <div class="focus-stage" style="margin-top:8px"><div class="state-card"><div><small>선택 리소스 22</small><strong>현재 가동</strong></div><span class="state-icon">✓</span></div><button class="cta" style="background:var(--blue)">선택 완료 · 다음</button></div>
+          </section>
+        </div>
+      </div>
+
+      <div class="section-title">시작 입력 단계와 mobile 구조</div>
+      <div style="display:grid;grid-template-columns:1.42fr .58fr;gap:9px">
+        <div class="panel focus-stage"><div><div class="panel-head"><h3>비가동 사유 선택</h3><span class="badge warn">입력 중</span></div><div class="reason-grid"><button class="reason active">설비점검</button><button class="reason">자재대기</button><button class="reason">품질확인</button><button class="reason">기타</button></div></div><div class="action-rail"><div class="facts"><div class="fact"><small>리소스</small><b>22</b></div><div class="fact"><small>상태</small><b>가동</b></div><div class="fact"><small>시각</small><b>서버</b></div></div><div class="summary"><b>저장 전 확인</b><p>22 COATING MACHINE의 비가동을 시작합니다.</p></div><button class="cta" style="background:var(--blue)">비가동 시작 저장</button></div></div>
+        <div class="mobile"><div class="mobile-bar"><span>3/4 리소스</span><span class="ok">● MES 정상</span></div><div class="mobile-main"><div class="mini-card"><b>ASSY 리소스 선택</b><div class="mini-resources"><span class="mini-resource">19</span><span class="mini-resource">20</span><span class="mini-resource active">22</span></div></div><div class="mini-card"><small>선택</small><b>22 · COATING MACHINE</b></div></div><div class="mobile-cta">선택 완료 · 다음</div></div>
+      </div>
+
+      <div class="notes"><article class="note"><b>상태·validation</b><p>각 단계가 worker/process/resource/status 조건을 직접 설명한다. 오류는 해당 단계 안에서 재시도한다.</p></article><article class="note"><b>현장 용어</b><p>DRAFT는 `입력 중`, EVENT_ID는 기본 화면에서 숨기고 감사 상세에서 `기록번호`로 제공한다.</p></article><article class="note"><b>스크롤 정책</b><p>현재 단계 본문만 스크롤한다. 이전 단계는 compact summary라 중첩 스크롤이 없다.</p></article></div>
+      <table class="comparison"><thead><tr><th>컴포넌트/컨트롤</th><th>데이터/API 인터페이스</th><th>적합 환경</th><th>위험과 대응</th></tr></thead><tbody><tr><td>ProgressStepper, ContextSummary, FocusStage, InlineRetry, PersistentNextAction</td><td>현재 API 순서를 UI 단계로 반영. 계약·payload·idempotency 변경 없음.</td><td>신규 투입, 공정 이동이 잦은 작업자, 교육 모드</td><td>숙련자에게 느림 → 완료 컨텍스트의 빠른 변경과 최근 선택 기억은 별도 승인 후 고려.</td></tr></tbody></table>
+      <footer class="footer"><span>Page 2 / 3 · B 단계형 집중 흐름</span><span>강점: 선행조건과 복구 행동을 가장 명확하게 설명</span></footer>
+    </section>
+
+    <section class="sheet" id="page-3">
+      <header class="doc-head">
+        <div><p class="eyebrow">OPTION C · OPERATIONS BOARD</p><h1>현장 보드·카드형</h1><p class="subtitle">멀리서도 현재 상태를 읽고 공용 태블릿에서 빠르게 터치하도록, 상태 hero와 대형 리소스 카드에 시각적 무게를 집중한다.</p></div>
+        <table class="meta"><tr><th>주 환경</th><td>공용 태블릿 · 저조도 현장</td></tr><tr><th>강점</th><td>원거리 상태 인지</td></tr><tr><th>트레이드오프</th><td><span class="badge warn">정보 밀도 관리</span></td></tr></table>
+      </header>
+
+      <div class="summary-grid">
+        <article class="summary"><b>업무 목적·요구사항</b><p>상태가 화면의 중심이며, 선택된 컨텍스트와 다음 행동을 대형 보드로 제시한다. 녹색/적색은 아이콘·문구와 함께 사용해 색상만으로 의미를 전달하지 않는다.</p></article>
+        <article class="summary"><b>속도</b><span class="score">4/5</span><p>큰 조작면</p></article>
+        <article class="summary"><b>오류 예방</b><span class="score">4/5</span><p>상태 강조</p></article>
+        <article class="summary"><b>원거리 인지</b><span class="score">5/5</span><p>대형 hero</p></article>
+      </div>
+
+      <div class="section-title">Desktop / 10인치 Android 가로 실제 UI 제안 wireframe</div>
+      <div class="mock-shell">
+        <div class="mock-top"><div class="brand"><span class="brand-mark">H</span>OEE 현장 기록</div><div class="context-chip">ADMIN</div><div class="context-chip ok"><span class="dot"></span>기기 연결</div><div class="context-chip ok"><span class="dot"></span>MES 14:32:08</div></div>
+        <div class="mock-body">
+          <section class="panel">
+            <div class="panel-head"><h3>ASSY 리소스</h3><span class="badge warn">6</span></div>
+            <div class="resource-grid" style="grid-template-columns:1fr 1fr"><button class="resource"><b>19</b><small>WAVE</small></button><button class="resource"><b>20</b><small>ICT</small></button><button class="resource"><b>21</b><small>성능검사기</small></button><button class="resource active"><b>22</b><small>COATING</small></button><button class="resource"><b>23</b><small>JETTING</small></button><button class="resource"><b>24</b><small>ROUTER</small></button></div>
+          </section>
+          <section class="panel">
+            <div class="hero-state"><div><small>22 · COATING MACHINE</small><strong>✓ 현재 가동</strong><small>업무일 2026-08-25 · 근무구간 I</small></div></div>
+            <div class="board-cta">▶ 비가동 시작</div>
+            <div class="facts" style="margin-top:7px"><div class="metric"><small>현재 이벤트</small><b>없음</b></div><div class="metric"><small>최근 완료</small><b>12:31</b></div><div class="metric"><small>서버 상태</small><b class="ok">정상</b></div></div>
+          </section>
+          <aside class="panel">
+            <div class="panel-head"><h3>오늘 이력</h3><span class="badge good">2건</span></div>
+            <div class="history"><div class="history-row"><span>12:18</span><b>자재대기<br><small>13분 · ADMIN</small></b><span>완료</span></div><div class="history-row"><span>10:05</span><b>설비점검<br><small>7분 · KIM01</small></b><span>완료</span></div></div>
+            <div class="summary" style="margin-top:7px;background:#243247;border-color:#475467"><b style="color:#fff">감사 상세</b><p style="color:#b8c2d1">기록번호는 상세 보기에서만 노출한다.</p></div>
+          </aside>
+        </div>
+      </div>
+
+      <div class="section-title">Mobile 세로형과 상태 변화</div>
+      <div style="display:grid;grid-template-columns:.48fr 1.52fr;gap:9px">
+        <div class="mobile"><div class="mobile-bar"><span>22 · COATING</span><span class="ok">● MES 정상</span></div><div class="mobile-main"><div class="hero-state" style="min-height:70px"><div><small>현재 상태</small><strong style="font-size:20px">✓ 가동</strong></div></div><div class="mini-card"><div class="mini-resources"><span class="mini-resource">19</span><span class="mini-resource">20</span><span class="mini-resource active">22</span></div></div></div><div class="mobile-cta">비가동 시작</div></div>
+        <div><div class="notes"><article class="note"><b>RUNNING</b><p>녹색 hero + 체크 아이콘 + `현재 가동`. 다음 행동은 황색/브랜드 CTA로 분리한다.</p></article><article class="note"><b>DOWNTIME</b><p>적색 hero + 정지 아이콘 + 시작 시각·사유. CTA는 `비가동 종료`로 단일 전환한다.</p></article><article class="note"><b>UNKNOWN</b><p>회색 hero + 경고 아이콘. 시작/종료를 잠그고 `상태 다시 조회`를 유일 행동으로 제공한다.</p></article></div><table class="comparison"><thead><tr><th>상태·validation</th><th>데이터/API 인터페이스</th><th>위험</th><th>대응</th></tr></thead><tbody><tr><td>RUNNING/DOWNTIME/UNKNOWN을 hero 전체로 표현. 저장 중에는 CTA에 진행 상태 표시.</td><td>현재 status/events 응답 그대로 사용. MES 배지는 최근 API 결과 기반 proposal.</td><td>색 대비 과장, 정보 과밀, 기존 밝은 테마와 이질감.</td><td>WCAG 대비 확인, 색+아이콘+텍스트 병행, 보드 내부만 dark surface로 제한.</td></tr></tbody></table></div>
+      </div>
+
+      <div class="section-title">세 안 비교·공통 acceptance·evidence</div>
+      <table class="comparison"><thead><tr><th>항목</th><th>A 고정 CTA</th><th>B 단계형</th><th>C 현장 보드</th><th>공통 수락 기준</th></tr></thead><tbody><tr><td>핵심 행동</td><td><b>항상 노출 · 가장 빠름</b></td><td>현재 단계의 다음 행동</td><td>상태 hero 바로 아래</td><td>시작/종료 CTA가 첫 화면에 보이고 64px 이상</td></tr><tr><td>스크롤</td><td>페이지 + 리소스 목록 1개</td><td>현재 단계만 1개</td><td>이력만 1개</td><td>중첩 스크롤 제거, 공정 변경 시 목록 상단 복귀</td></tr><tr><td>추천 환경</td><td>숙련 반복 작업</td><td>초보·교대·교육</td><td>공용 태블릿·원거리</td><td>375/768/1024/1440px, focus와 키보드 안전</td></tr><tr><td>공통 계약</td><td colspan="3">작업 중 contextLocked, 오류/409 재조회, requestId 재시도, 색+아이콘+문구, 사유 필수·메모 500자</td><td>기존 API/DB/테넌트 계약 변경 없음</td></tr></tbody></table>
+      <p style="margin:6px 0 0;color:var(--muted)"><b>근거:</b> <span class="mono">apps/frontend/src/app/(authenticated)/oee/entry/page.tsx:150-166, 519-534, 547-925</span> · <span class="mono">_lib/oee-entry.ts</span> · <span class="mono">oee-mobile.controller.ts</span> · 실제 렌더 2026-08-26. <b>추천:</b> A를 기본안으로 구현하고 B의 inline 오류 설명을 결합한다.</p>
+      <footer class="footer"><span>Page 3 / 3 · C 현장 보드 + 최종 비교</span><span>결론: A 기본 구조 + B의 단계별 오류 안내 조합 권장</span></footer>
+    </section>
+  </main>
+  <script>
+    document.querySelectorAll('.toolbar a').forEach((link) => link.addEventListener('click', (event) => {
+      event.preventDefault();
+      document.querySelector(link.getAttribute('href'))?.scrollIntoView({ behavior: 'smooth' });
+    }));
+  </script>
+</body>
+</html>

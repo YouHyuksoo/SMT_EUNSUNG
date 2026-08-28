@@ -6,14 +6,15 @@ import {
   AlertTriangle,
   CheckCircle2,
   Circle,
-  Cloud,
-  CloudOff,
   History,
   Loader2,
   Play,
   RefreshCw,
+  Send,
   Square,
   UserRound,
+  Wifi,
+  WifiOff,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
@@ -51,6 +52,13 @@ interface StartDraft {
 interface PendingCommand {
   signature: string;
   requestId: string;
+}
+
+type MesCommunicationOutcome = 'success' | 'failure';
+
+interface MesCommunication {
+  outcome: MesCommunicationOutcome;
+  at: number;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -118,6 +126,7 @@ function StateBadge({
 export default function OeeEntryPage() {
   const { t } = useTranslation();
   const [online, setOnline] = useState(true);
+  const [lastMesCommunication, setLastMesCommunication] = useState<MesCommunication | null>(null);
 
   const [workerInput, setWorkerInput] = useState('');
   const [worker, setWorker] = useState<OeeWorker | null>(null);
@@ -146,6 +155,11 @@ export default function OeeEntryPage() {
   const statusGeneration = useRef(0);
   const pendingStartRef = useRef<PendingCommand | null>(null);
   const pendingEndRef = useRef<PendingCommand | null>(null);
+  const resourceListRef = useRef<HTMLDivElement | null>(null);
+
+  const markMesCommunication = useCallback((outcome: MesCommunicationOutcome) => {
+    setLastMesCommunication({ outcome, at: Date.now() });
+  }, []);
 
   useEffect(() => {
     const updateOnline = () => setOnline(navigator.onLine);
@@ -157,6 +171,10 @@ export default function OeeEntryPage() {
       window.removeEventListener('offline', updateOnline);
     };
   }, []);
+
+  useEffect(() => {
+    resourceListRef.current?.scrollTo({ top: 0, behavior: 'auto' });
+  }, [processCode, resourcesLoading, resources.length]);
 
   const contextLocked = Boolean(
     startDraft ||
@@ -195,6 +213,7 @@ export default function OeeEntryPage() {
       });
       const nextWorker = parseWorker(response);
       if (!nextWorker) throw new Error(t('oeeEntry.workerResponseError'));
+      markMesCommunication('success');
 
       setWorker(nextWorker);
       setWorkerInput(nextWorker.workerId);
@@ -202,13 +221,14 @@ export default function OeeEntryPage() {
       clearContext();
       toast.success(t('oeeEntry.workerConfirmed'));
     } catch (error: unknown) {
+      markMesCommunication('failure');
       const message = readApiMessage(error, t('oeeEntry.workerNotFound'));
       setWorkerError(message);
       toast.error(message);
     } finally {
       setWorkerLoading(false);
     }
-  }, [clearContext, t, workerInput]);
+  }, [clearContext, markMesCommunication, t, workerInput]);
 
   const changeWorker = useCallback(() => {
     if (contextLocked) return;
@@ -236,6 +256,10 @@ export default function OeeEntryPage() {
       api.get('/oee/mobile/reasons', { suppressErrorModal: true }),
     ]);
 
+    markMesCommunication(
+      resourceResult.status === 'fulfilled' && reasonResult.status === 'fulfilled' ? 'success' : 'failure',
+    );
+
     if (generation !== contextGeneration.current) return;
 
     if (resourceResult.status === 'fulfilled') {
@@ -260,7 +284,7 @@ export default function OeeEntryPage() {
       setReasonsError(readApiMessage(reasonResult.reason, t('oeeEntry.reasonLoadError')));
     }
     setReasonsLoading(false);
-  }, [t]);
+  }, [markMesCommunication, t]);
 
   const selectProcess = useCallback(
     (nextProcess: OeeProcessCode) => {
@@ -297,11 +321,13 @@ export default function OeeEntryPage() {
           suppressErrorModal: true,
         });
         const nextStatus = normalizeStatus(response);
+        markMesCommunication('success');
         if (generation !== statusGeneration.current) return null;
         setStatus(nextStatus);
         setStatusError(null);
         return nextStatus;
       } catch (error: unknown) {
+        markMesCommunication('failure');
         if (generation !== statusGeneration.current) return null;
         const message = readApiMessage(error, t('oeeEntry.statusLoadError'));
         setStatusError(message);
@@ -311,7 +337,7 @@ export default function OeeEntryPage() {
         if (generation === statusGeneration.current) setStatusLoading(false);
       }
     },
-    [processCode, selectedResource, t],
+    [markMesCommunication, processCode, selectedResource, t],
   );
 
   const selectResource = useCallback(
@@ -420,6 +446,7 @@ export default function OeeEntryPage() {
         skipSuccessToast: true,
       });
       const result = normalizeCommandResult(response);
+      markMesCommunication('success');
       pendingStartRef.current = null;
       setStartDraft(null);
       applyStartResult(result);
@@ -427,6 +454,7 @@ export default function OeeEntryPage() {
       const refreshed = await loadStatus();
       if (!refreshed) toast.error(t('oeeEntry.refreshAfterSaveError'));
     } catch (error: unknown) {
+      markMesCommunication('failure');
       if (responseStatus(error) === 409) {
         toast.error(t('oeeEntry.conflictRefreshing'));
         const refreshed = await loadStatus();
@@ -442,7 +470,7 @@ export default function OeeEntryPage() {
     } finally {
       setStartSubmitting(false);
     }
-  }, [applyStartResult, loadStatus, online, startCommandFields, startDraft, status, statusError, statusLoading, t]);
+  }, [applyStartResult, loadStatus, markMesCommunication, online, startCommandFields, startDraft, status, statusError, statusLoading, t]);
 
   const activeEvent = status?.openEvent ?? null;
   const endCommandFields = useMemo<EndCommandFields | null>(() => {
@@ -492,6 +520,7 @@ export default function OeeEntryPage() {
         skipSuccessToast: true,
       });
       const result = normalizeCommandResult(response);
+      markMesCommunication('success');
       pendingEndRef.current = null;
       setEndConfirmOpen(false);
       applyEndResult(result);
@@ -499,6 +528,7 @@ export default function OeeEntryPage() {
       const refreshed = await loadStatus();
       if (!refreshed) toast.error(t('oeeEntry.refreshAfterSaveError'));
     } catch (error: unknown) {
+      markMesCommunication('failure');
       if (responseStatus(error) === 409) {
         toast.error(t('oeeEntry.conflictRefreshing'));
         const refreshed = await loadStatus();
@@ -514,7 +544,7 @@ export default function OeeEntryPage() {
     } finally {
       setEndSubmitting(false);
     }
-  }, [applyEndResult, endCommandFields, loadStatus, online, status, statusError, statusLoading, t]);
+  }, [applyEndResult, endCommandFields, loadStatus, markMesCommunication, online, status, statusError, statusLoading, t]);
 
   const statusKnown = Boolean(status && !statusLoading && !statusError);
   const transitionBlocked = useCallback(() => {
@@ -543,77 +573,123 @@ export default function OeeEntryPage() {
 
   const historyRows = status?.events ?? [];
   const resourceErrorLabel = resourcesError;
+  const deviceNetworkLabel = t('oeeMultiEntry.deviceNetwork', '기기 네트워크');
+  const recentMesCommunicationLabel = t('oeeMultiEntry.recentMesCommunication', '최근 MES 통신');
+  const recentMesCommunicationValue = lastMesCommunication
+    ? `${
+        lastMesCommunication.outcome === 'success'
+          ? t('oeeMultiEntry.success', '성공')
+          : t('oeeMultiEntry.error', '오류')
+      } · ${new Date(lastMesCommunication.at).toLocaleTimeString(undefined, {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+      })}`
+    : t('oeeMultiEntry.notYet', '아직 통신 없음');
+  const mesCommunicationTone = lastMesCommunication?.outcome === 'failure'
+    ? 'border-red-300 bg-red-500/10 text-red-700'
+    : lastMesCommunication?.outcome === 'success'
+      ? 'border-emerald-300 bg-emerald-500/10 text-emerald-700'
+      : 'border-border bg-surface text-text';
 
   return (
     <div className="oee-entry-page flex h-full min-h-0 flex-col overflow-hidden bg-background text-text">
-      <div className="mx-auto flex min-h-0 w-full max-w-[1600px] flex-1 flex-col gap-3 overflow-y-auto p-3 sm:p-4 lg:p-5">
+      <div
+        className="mx-auto flex min-h-0 w-full max-w-[1600px] flex-1 flex-col gap-3 overflow-y-auto p-3 pb-[calc(7rem+env(safe-area-inset-bottom))] sm:p-4 sm:pb-[calc(7rem+env(safe-area-inset-bottom))] lg:p-5 min-[1024px]:pb-5"
+        style={{ scrollPaddingBottom: 'calc(7rem + env(safe-area-inset-bottom))' }}
+      >
         <header className="shrink-0 rounded-2xl border border-border bg-card p-3 shadow-sm sm:p-4">
-          <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-            <div className="flex items-start gap-3">
+          <div className="flex min-w-0 flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+            <div className="flex min-w-0 items-start gap-3 xl:flex-1">
               <div className="rounded-xl bg-primary/10 p-2.5 text-primary">
                 <History className="h-7 w-7" aria-hidden="true" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <h1 className="text-xl font-black tracking-tight text-text sm:text-2xl">{t('oeeEntry.title')}</h1>
                 <p className="mt-0.5 text-sm text-text-muted">{t('oeeEntry.subtitle')}</p>
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2 text-sm">
-              <span className={`inline-flex min-h-[64px] items-center gap-2 rounded-xl border px-4 font-semibold ${online ? 'border-emerald-300 bg-emerald-500/10 text-emerald-700' : 'border-red-300 bg-red-500/10 text-red-700'}`}>
-                {online ? <Cloud className="h-5 w-5" aria-hidden="true" /> : <CloudOff className="h-5 w-5" aria-hidden="true" />}
-                {online ? t('oeeEntry.online') : t('oeeEntry.offline')}
-              </span>
-              <span className="inline-flex min-h-[64px] items-center gap-2 rounded-xl border border-border bg-surface px-4 font-semibold text-text">
-                <UserRound className="h-5 w-5 text-primary" aria-hidden="true" />
-                {worker ? `${worker.workerName} (${worker.workerId})` : t('oeeEntry.workerRequired')}
-              </span>
+            <div className="grid min-w-0 grid-cols-1 gap-2 text-sm sm:grid-cols-2 xl:w-[min(44rem,100%)] xl:shrink-0">
+              <div
+                data-testid="device-network-status"
+                className={`flex min-h-[64px] items-center gap-3 rounded-xl border px-4 ${online ? 'border-emerald-300 bg-emerald-500/10' : 'border-red-300 bg-red-500/10'}`}
+                role="status"
+                aria-label={deviceNetworkLabel}
+              >
+                {online ? <Wifi className="h-6 w-6 text-emerald-700" aria-hidden="true" /> : <WifiOff className="h-6 w-6 text-red-700" aria-hidden="true" />}
+                <div>
+                  <span className="block text-xs font-bold uppercase tracking-wider text-text-muted">{deviceNetworkLabel}</span>
+                  <strong className={online ? 'text-emerald-700' : 'text-red-700'}>{online ? t('oeeEntry.online') : t('oeeEntry.offline')}</strong>
+                </div>
+              </div>
+              <div
+                data-testid="mes-communication-status"
+                className={`flex min-h-[64px] items-center gap-3 rounded-xl border px-4 ${mesCommunicationTone}`}
+                role="status"
+                aria-label={recentMesCommunicationLabel}
+              >
+                <Send className="h-6 w-6 shrink-0" aria-hidden="true" />
+                <div className="min-w-0">
+                  <span className="block text-xs font-bold uppercase tracking-wider text-text-muted">{recentMesCommunicationLabel}</span>
+                  <strong className="font-mono text-sm">{recentMesCommunicationValue}</strong>
+                </div>
+              </div>
             </div>
           </div>
 
-          <form
-            className="mt-3 flex flex-col gap-2 border-t border-border pt-3 sm:flex-row sm:items-end"
-            onSubmit={(event) => {
-              event.preventDefault();
-              void confirmWorker();
-            }}
-          >
-            <label className="flex min-w-0 flex-1 flex-col gap-1 text-sm font-semibold text-text-muted">
-              {t('oeeEntry.workerId')}
-              <input
-                value={workerInput}
-                onChange={(event) => setWorkerInput(event.target.value)}
-                disabled={Boolean(worker) || workerLoading || contextLocked}
-                placeholder={t('oeeEntry.workerPlaceholder')}
-                autoComplete="off"
-                className="min-h-[64px] w-full rounded-xl border border-border bg-background px-4 text-lg font-semibold text-text outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/30 disabled:cursor-not-allowed disabled:opacity-60"
-                aria-describedby={workerError ? 'oee-worker-error' : undefined}
-              />
-            </label>
-            {worker ? (
+          {worker ? (
+            <div className="oee-entry-worker-context mt-3 flex flex-col gap-2 border-t border-border pt-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex min-w-0 items-center gap-3 rounded-xl bg-surface px-4 py-3">
+                <UserRound className="h-5 w-5 shrink-0 text-primary" aria-hidden="true" />
+                <div className="min-w-0">
+                  <span className="block text-xs font-bold uppercase tracking-wider text-text-muted">{t('oeeEntry.workerId')}</span>
+                  <strong className="block truncate text-base text-text">{worker.workerName} · {worker.workerId}</strong>
+                </div>
+              </div>
               <button
                 type="button"
                 onClick={changeWorker}
                 disabled={contextLocked}
-                className="min-h-[64px] rounded-xl border border-border px-5 text-base font-bold text-text transition hover:bg-surface disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex min-h-[64px] items-center justify-center gap-2 rounded-xl border border-border px-5 text-base font-bold text-text transition hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {t('oeeEntry.changeWorker')}
               </button>
-            ) : (
+            </div>
+          ) : (
+            <form
+              className="mt-3 flex flex-col gap-2 border-t border-border pt-3 sm:flex-row sm:items-end"
+              onSubmit={(event) => {
+                event.preventDefault();
+                void confirmWorker();
+              }}
+            >
+              <label className="flex min-w-0 flex-1 flex-col gap-1 text-sm font-semibold text-text-muted">
+                {t('oeeEntry.workerId')}
+                <input
+                  value={workerInput}
+                  onChange={(event) => setWorkerInput(event.target.value)}
+                  disabled={workerLoading || contextLocked}
+                  placeholder={t('oeeEntry.workerPlaceholder')}
+                  autoComplete="off"
+                  className="min-h-[64px] w-full rounded-xl border border-border bg-background px-4 text-lg font-semibold text-text outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/30 disabled:cursor-not-allowed disabled:opacity-60"
+                  aria-describedby={workerError ? 'oee-worker-error' : undefined}
+                />
+              </label>
               <button
                 type="submit"
-                disabled={workerLoading || !workerInput.trim()}
-                className="inline-flex min-h-[64px] items-center justify-center gap-2 rounded-xl bg-primary px-6 text-base font-bold text-white shadow-lg shadow-primary/20 transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50"
+                disabled={workerLoading || !workerInput.trim() || contextLocked}
+                className="inline-flex min-h-[64px] items-center justify-center gap-2 rounded-xl bg-primary px-6 text-base font-bold text-white shadow-lg shadow-primary/20 transition hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {workerLoading && <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />}
                 {t('oeeEntry.workerConfirm')}
               </button>
-            )}
-          </form>
+            </form>
+          )}
           {workerError && <p id="oee-worker-error" className="mt-2 text-sm font-semibold text-error">{workerError}</p>}
         </header>
 
-        <div className="grid min-h-0 shrink-0 grid-cols-1 gap-3 min-[1024px]:flex-1 min-[1024px]:grid-cols-2">
+        <div className="grid min-h-0 shrink-0 grid-cols-1 gap-3 min-[1024px]:grid-cols-[minmax(0,1fr)_minmax(320px,0.8fr)]">
           <section className="flex min-h-[360px] min-w-0 flex-col overflow-hidden rounded-2xl border border-border bg-card p-3 shadow-sm sm:p-4" aria-labelledby="oee-process-title">
             <div className="flex shrink-0 items-center justify-between gap-2">
               <div>
@@ -635,7 +711,7 @@ export default function OeeEntryPage() {
                     processCode === nextProcess
                       ? 'border-primary bg-primary text-white shadow-lg shadow-primary/20'
                       : 'border-border bg-background text-text hover:border-primary/60 hover:bg-primary/5'
-                  } disabled:cursor-not-allowed disabled:opacity-50`}
+                  } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50`}
                 >
                   {nextProcess === 'SMT' ? t('oeeEntry.processSmt') : t('oeeEntry.processAssy')}
                   <span className="mt-0.5 block text-xs font-semibold opacity-80">{nextProcess}</span>
@@ -671,8 +747,8 @@ export default function OeeEntryPage() {
                 <div className="flex flex-1 flex-col items-center justify-center gap-2 py-8 text-center">
                   <AlertTriangle className="h-9 w-9 text-warning" aria-hidden="true" />
                   <p className="font-bold text-error">{resourceErrorLabel}</p>
-                      {processCode && (
-                        <button type="button" onClick={retryContext} className="mt-2 inline-flex min-h-[64px] items-center gap-2 rounded-xl border border-primary px-5 font-bold text-primary hover:bg-primary/5">
+                  {processCode && (
+                    <button type="button" onClick={retryContext} className="mt-2 inline-flex min-h-[64px] items-center gap-2 rounded-xl border border-primary px-5 font-bold text-primary hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
                       <RefreshCw className="h-5 w-5" aria-hidden="true" />
                       {t('oeeEntry.retry')}
                     </button>
@@ -686,7 +762,7 @@ export default function OeeEntryPage() {
                 </div>
               )}
               {processCode && !resourcesLoading && !resourcesError && resources.length > 0 && (
-                <div className="mt-2 min-h-0 flex-1 overflow-y-auto pr-1">
+                <div ref={resourceListRef} className="mt-2 min-h-0 flex-1 overflow-y-auto pr-1" aria-label={t('oeeEntry.resource')}>
                   <div className="grid grid-cols-2 gap-2 xl:grid-cols-3">
                     {resources.map((resource) => {
                       const selected = selectedResource ? resourceIdentity(selectedResource) === resourceIdentity(resource) : false;
@@ -697,12 +773,12 @@ export default function OeeEntryPage() {
                           onClick={() => selectResource(resource)}
                           disabled={contextLocked}
                           aria-pressed={selected}
-                          className={`min-h-[64px] rounded-xl border p-3 text-left transition ${
-                            selected ? 'border-primary bg-primary/10 ring-2 ring-primary/30' : 'border-border bg-card hover:border-primary/60'
+                          className={`min-h-[64px] cursor-pointer rounded-xl border p-3 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
+                            selected ? 'border-primary bg-primary/10 ring-2 ring-primary/30' : 'border-border bg-card hover:border-primary/60 active:bg-primary/5'
                           } disabled:cursor-not-allowed disabled:opacity-50`}
                         >
                           <span className="block font-mono text-lg font-black text-text">{resource.resourceCode}</span>
-                          <span className="mt-0.5 block truncate text-sm font-semibold text-text">{resource.resourceName}</span>
+                          <span className="mt-0.5 block break-words text-sm font-semibold text-text">{resource.resourceName}</span>
                           <span className="mt-1 block text-xs text-text-muted">
                             {resource.resourceType}
                           </span>
@@ -715,7 +791,7 @@ export default function OeeEntryPage() {
             </div>
           </section>
 
-          <section className="flex min-h-[360px] min-w-0 flex-col overflow-y-auto rounded-2xl border border-border bg-card p-3 shadow-sm sm:p-4" aria-labelledby="oee-state-title">
+          <aside className="oee-entry-status-rail flex min-h-[360px] min-w-0 flex-col overflow-visible rounded-2xl border border-border bg-card p-3 shadow-sm min-[1024px]:sticky min-[1024px]:top-3 min-[1024px]:self-start sm:p-4" aria-labelledby="oee-state-title">
             <div className="flex shrink-0 items-center justify-between gap-2">
               <div>
                 <p className="text-xs font-bold uppercase tracking-wider text-primary">02</p>
@@ -745,12 +821,12 @@ export default function OeeEntryPage() {
             {selectedResource && !statusLoading && statusError && (
               <div className="mt-3 flex flex-1 flex-col items-center justify-center gap-3 rounded-xl border border-red-300 bg-red-500/5 p-6 text-center">
                 <AlertTriangle className="h-9 w-9 text-error" aria-hidden="true" />
-                    <p className="font-semibold text-error">{t('oeeEntry.statusUnknown')}</p>
-                    <p className="text-sm text-text-muted">{statusError}</p>
-                    {status?.state === 'DOWNTIME' && status.openEvent && (
-                      <p className="text-sm font-semibold text-warning">{t('oeeEntry.lastKnownEvent')} #{status.openEvent.eventId}</p>
-                    )}
-                    <button type="button" onClick={retryStatus} className="inline-flex min-h-[64px] items-center gap-2 rounded-xl border border-primary px-5 font-bold text-primary hover:bg-primary/5">
+                <p className="font-semibold text-error">{t('oeeEntry.statusUnknown')}</p>
+                <p className="text-sm text-text-muted">{statusError}</p>
+                {status?.state === 'DOWNTIME' && status.openEvent && (
+                  <p className="text-sm font-semibold text-warning">{t('oeeEntry.lastKnownEvent')} #{status.openEvent.eventId}</p>
+                )}
+                <button type="button" onClick={retryStatus} className="inline-flex min-h-[64px] items-center gap-2 rounded-xl border border-primary px-5 font-bold text-primary hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
                   <RefreshCw className="h-5 w-5" aria-hidden="true" />
                   {t('oeeEntry.retry')}
                 </button>
@@ -758,12 +834,50 @@ export default function OeeEntryPage() {
             )}
             {selectedResource && !statusLoading && !statusError && status && (
               <div className="mt-3 flex flex-col gap-3">
-                    <StateBadge
-                      state={status.state}
-                      statusLabel={t('oeeEntry.status')}
-                      runningLabel={t('oeeEntry.running')}
-                      downtimeLabel={t('oeeEntry.downtime')}
-                    />
+                <StateBadge
+                  state={status.state}
+                  statusLabel={t('oeeEntry.status')}
+                  runningLabel={t('oeeEntry.running')}
+                  downtimeLabel={t('oeeEntry.downtime')}
+                />
+
+                <div className="oee-entry-action-bar sticky bottom-0 z-20 -mx-3 mt-0 border-t border-border bg-card/95 px-3 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur sm:-mx-4 sm:px-4 min-[1024px]:static min-[1024px]:mx-0 min-[1024px]:border-0 min-[1024px]:bg-transparent min-[1024px]:px-0 min-[1024px]:pt-0 min-[1024px]:pb-0 min-[1024px]:backdrop-blur-none">
+                  {status.state === 'RUNNING' && !startDraft && (
+                    <button
+                      type="button"
+                      onClick={beginStartDraft}
+                      disabled={transitionBlocked() || !online}
+                      className="inline-flex min-h-[72px] w-full items-center justify-center gap-3 rounded-xl bg-primary px-5 text-xl font-black text-white shadow-lg shadow-primary/20 transition hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <Play className="h-7 w-7" fill="currentColor" aria-hidden="true" />
+                      {t('oeeEntry.startDowntime')}
+                    </button>
+                  )}
+
+                  {status.state === 'DOWNTIME' && activeEvent && (
+                    <button
+                      type="button"
+                      onClick={() => setEndConfirmOpen(true)}
+                      disabled={!canEnd}
+                      className="inline-flex min-h-[72px] w-full items-center justify-center gap-3 rounded-xl bg-error px-5 text-xl font-black text-white shadow-lg shadow-error/20 transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <Square className="h-7 w-7" fill="currentColor" aria-hidden="true" />
+                      {t('oeeEntry.endDowntime')}
+                    </button>
+                  )}
+
+                  {status.state === 'RUNNING' && startDraft && (
+                    <button
+                      type="button"
+                      onClick={() => void submitStart()}
+                      disabled={!canStart}
+                      className="inline-flex min-h-[72px] w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 text-lg font-black text-white shadow-lg shadow-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {startSubmitting && <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />}
+                      {t('oeeEntry.saveStart')}
+                    </button>
+                  )}
+                </div>
 
                 {status.state === 'DOWNTIME' && activeEvent && (
                   <div className="rounded-xl border border-red-300 bg-red-500/5 p-3 text-sm">
@@ -776,35 +890,11 @@ export default function OeeEntryPage() {
                   </div>
                 )}
 
-                {status.state === 'RUNNING' && !startDraft && (
-                  <button
-                    type="button"
-                    onClick={beginStartDraft}
-                    disabled={transitionBlocked() || !online}
-                    className="inline-flex min-h-[72px] items-center justify-center gap-3 rounded-xl bg-primary px-5 text-xl font-black text-white shadow-lg shadow-primary/20 transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    <Play className="h-7 w-7" fill="currentColor" aria-hidden="true" />
-                    {t('oeeEntry.startDowntime')}
-                  </button>
-                )}
-
-                {status.state === 'DOWNTIME' && activeEvent && (
-                  <button
-                    type="button"
-                    onClick={() => setEndConfirmOpen(true)}
-                    disabled={!canEnd}
-                    className="inline-flex min-h-[72px] items-center justify-center gap-3 rounded-xl bg-error px-5 text-xl font-black text-white shadow-lg shadow-error/20 transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    <Square className="h-7 w-7" fill="currentColor" aria-hidden="true" />
-                    {t('oeeEntry.endDowntime')}
-                  </button>
-                )}
-
                 {status.state === 'RUNNING' && startDraft && (
                   <div className="rounded-xl border border-warning/50 bg-warning/10 p-3">
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <p className="text-xs font-bold uppercase tracking-wider text-warning">DRAFT</p>
+                        <p className="text-xs font-bold uppercase tracking-wider text-warning">{t('oeeEntry.startDraft')}</p>
                         <h3 className="text-lg font-black text-text">{t('oeeEntry.startDraft')}</h3>
                       </div>
                       <span className="text-xs font-semibold text-text-muted">{t('oeeEntry.serverTimeNotice')}</span>
@@ -816,12 +906,12 @@ export default function OeeEntryPage() {
                       {reasonsError && (
                         <div className="rounded-lg border border-red-300 bg-red-500/5 p-3 text-sm text-error">
                           <p>{reasonsError}</p>
-                          <button type="button" onClick={retryContext} className="mt-2 inline-flex min-h-[64px] items-center gap-2 rounded-lg border border-primary px-4 font-bold text-primary"><RefreshCw className="h-4 w-4" aria-hidden="true" />{t('oeeEntry.retry')}</button>
+                          <button type="button" onClick={retryContext} className="mt-2 inline-flex min-h-[64px] items-center gap-2 rounded-lg border border-primary px-4 font-bold text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"><RefreshCw className="h-4 w-4" aria-hidden="true" />{t('oeeEntry.retry')}</button>
                         </div>
                       )}
                       {!reasonsLoading && !reasonsError && reasons.length === 0 && <p className="text-sm text-error">{t('oeeEntry.noReasonMaster')}</p>}
                       {!reasonsLoading && !reasonsError && reasons.length > 0 && (
-                        <div className="grid max-h-40 grid-cols-1 gap-2 overflow-y-auto sm:grid-cols-2">
+                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                           {reasons.map((reason) => {
                             const selected = startDraft.reasonCode === reason.reasonCode;
                             return (
@@ -830,7 +920,7 @@ export default function OeeEntryPage() {
                                 type="button"
                                 onClick={() => updateDraftReason(reason.reasonCode)}
                                 aria-pressed={selected}
-                                className={`min-h-[64px] rounded-lg border px-3 text-left text-sm font-bold transition ${selected ? 'border-primary bg-primary text-white' : 'border-border bg-background text-text hover:border-primary/60'}`}
+                                className={`min-h-[64px] rounded-lg border px-3 text-left text-sm font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${selected ? 'border-primary bg-primary text-white' : 'border-border bg-background text-text hover:border-primary/60'}`}
                               >
                                 {reason.reasonName}
                               </button>
@@ -854,12 +944,8 @@ export default function OeeEntryPage() {
                       <span className={`mt-1 block text-right text-xs ${startDraft.memo.length > 500 ? 'text-error' : 'text-text-muted'}`}>{startDraft.memo.length} / 500</span>
                     </label>
 
-                    <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-                      <button type="button" onClick={() => void submitStart()} disabled={!canStart} className="inline-flex min-h-[72px] flex-1 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-lg font-black text-white shadow-lg shadow-primary/20 disabled:cursor-not-allowed disabled:opacity-50">
-                        {startSubmitting && <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />}
-                        {t('oeeEntry.saveStart')}
-                      </button>
-                      <button type="button" onClick={cancelStartDraft} disabled={startSubmitting} className="min-h-[64px] rounded-xl border border-border px-5 text-base font-bold text-text hover:bg-background disabled:cursor-not-allowed disabled:opacity-50">
+                    <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:justify-end">
+                      <button type="button" onClick={cancelStartDraft} disabled={startSubmitting} className="min-h-[64px] rounded-xl border border-border px-5 text-base font-bold text-text hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-50">
                         {t('common.cancel')}
                       </button>
                     </div>
@@ -867,7 +953,7 @@ export default function OeeEntryPage() {
                 )}
               </div>
             )}
-          </section>
+          </aside>
         </div>
 
         <section className="flex min-h-[180px] shrink-0 flex-col overflow-hidden rounded-2xl border border-border bg-card p-3 shadow-sm sm:p-4" aria-labelledby="oee-history-title">
@@ -878,10 +964,10 @@ export default function OeeEntryPage() {
             </div>
             {status?.workDate && <span className="text-sm font-semibold text-text-muted">{status.workDate} · {status.workSegment}</span>}
           </div>
-          <div className="mt-2 min-h-0 flex-1 overflow-y-auto rounded-xl border border-border bg-background">
+          <div className="mt-2 rounded-xl border border-border bg-background">
             {!selectedResource && <p className="p-5 text-center text-sm font-semibold text-text-muted">{t('oeeEntry.resourceFirst')}</p>}
             {selectedResource && statusLoading && <p className="flex items-center justify-center gap-2 p-5 text-sm text-text-muted"><Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />{t('oeeEntry.statusLoading')}</p>}
-            {selectedResource && !statusLoading && statusError && <div className="flex items-center justify-center gap-3 p-5 text-sm text-error"><AlertTriangle className="h-5 w-5" aria-hidden="true" />{t('oeeEntry.historyUnavailable')}<button type="button" onClick={retryStatus} className="inline-flex min-h-[64px] items-center gap-2 rounded-lg border border-primary px-4 font-bold text-primary"><RefreshCw className="h-4 w-4" aria-hidden="true" />{t('oeeEntry.retry')}</button></div>}
+            {selectedResource && !statusLoading && statusError && <div className="flex items-center justify-center gap-3 p-5 text-sm text-error"><AlertTriangle className="h-5 w-5" aria-hidden="true" />{t('oeeEntry.historyUnavailable')}<button type="button" onClick={retryStatus} className="inline-flex min-h-[64px] items-center gap-2 rounded-lg border border-primary px-4 font-bold text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"><RefreshCw className="h-4 w-4" aria-hidden="true" />{t('oeeEntry.retry')}</button></div>}
             {selectedResource && !statusLoading && !statusError && status && historyRows.length === 0 && <p className="p-5 text-center text-sm font-semibold text-text-muted">{t('oeeEntry.emptyHistory')}</p>}
             {selectedResource && !statusLoading && !statusError && historyRows.length > 0 && (
               <div className="divide-y divide-border">

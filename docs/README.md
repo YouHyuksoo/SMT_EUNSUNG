@@ -59,6 +59,7 @@ standardVersion: 1
   2026-07-05 표준 폴더(`plans/`, `specs/`, `sql/`, `test-checklists/`)로 흡수했다. 이후 spec/plan은
   `docs/superpowers/`가 아니라 core 폴더에 직접 생성한다.
 - `config/database.json`은 자격증명 포함 — git 미추적. 관련 스키마 문서는 `database/`에 둔다.
+- `PBL Library 10.5` 소스 검토 문서와 DB 추출 CSV는 `reports/PBL Library 10.5/`에 저장한다.
 - 도메인 지식은 두 곳으로 나눈다: **용어/경계**는 루트 `CONTEXT.md`(외부 문서 집합), **결정 근거**는 core `adr/`.
   `/grill-with-docs`·`/wayfinder`가 이 둘을 갱신하며, mattpocock 계열 스킬의 `CONTEXT.md`+`docs/adr/` 컨벤션과 그대로 맞물린다.
 

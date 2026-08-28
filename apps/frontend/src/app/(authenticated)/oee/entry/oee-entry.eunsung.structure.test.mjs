@@ -78,6 +78,7 @@ test("resource parsing preserves LINE and CELL types and parent line codes", () 
   assert.equal(normalizeEvent({ eventId: 2, resourceType: "CELL" })?.resourceType, "CELL");
 
   const line = normalizeResource({
+    resourceId: 1,
     processCode: "SMT",
     resourceType: "LINE",
     resourceCode: "L-01",
@@ -85,6 +86,7 @@ test("resource parsing preserves LINE and CELL types and parent line codes", () 
     parentLineCode: "P-01",
   });
   const cell = normalizeResource({
+    resourceId: 2,
     processCode: "ASSY",
     resourceType: "CELL",
     resourceCode: "C-01",
@@ -99,12 +101,13 @@ test("resource parsing preserves LINE and CELL types and parent line codes", () 
   assert.notEqual(resourceIdentity(line), resourceIdentity(cell));
 });
 
-test("resource selection filters supported server resource types and compares full identity", () => {
+test("resource selection filters supported server resource types and uses the OEE resource ID", () => {
   assert.doesNotMatch(page, /const expectedResourceType = ['"]LINE['"]/);
   assert.match(page, /resource\.resourceType === ['"]LINE['"] \|\| resource\.resourceType === ['"]CELL['"]/);
   assert.match(page, /resourceIdentity\(selectedResource\)/);
   assert.match(page, /resourceIdentity\(resource\)/);
   assert.match(page, /resource\.processCode/);
+  assert.match(lib, /resourceId/);
 });
 
 test("request IDs are stable for failed retries and invalidated by command changes", () => {
@@ -171,11 +174,42 @@ test("state failures keep transitions blocked and the page has industrial respon
   assert.match(page, /if \(statusError/);
   assert.doesNotMatch(page, /NO_ASSEMBLY_CELL_MASTER|noAssemblyCellMaster/);
   assert.match(page, /ConfirmModal/);
-  assert.match(page, /grid-cols-1[\s\S]*min-\[1024px\]:grid-cols-2/);
+  assert.match(page, /grid-cols-1[\s\S]*min-\[1024px\]:grid-cols-\[minmax\(0,1fr\)_minmax\(320px,0\.8fr\)\]/);
   assert.match(page, /min-h-\[64px\]/);
   assert.match(page, /min-h-\[72px\]/);
   assert.doesNotMatch(page, /\b(?:alert|confirm|prompt)\s*\(/);
   assert.match(page, /StateBadge|aria-label=\{isRunning/);
+});
+
+test("Option A keeps worker context compact and separates device network from evidence-backed MES communication", () => {
+  assert.match(page, /oee-entry-worker-context/);
+  assert.match(page, /deviceNetwork/);
+  assert.match(page, /recentMesCommunication/);
+  assert.match(page, /lastMesCommunication/);
+  assert.match(page, /markMesCommunication/);
+  assert.match(page, /type MesCommunicationOutcome = ['"]success['"] \| ['"]failure['"]/);
+  assert.doesNotMatch(page, /\/oee\/mobile\/(?:health|healthz|ping)(?:["'`?/]|$)/i);
+});
+
+test("Option A keeps the desktop action rail visible, protects mobile safe areas, and resets resource scrolling", () => {
+  assert.match(page, /oee-entry-status-rail/);
+  assert.match(page, /min-\[1024px\]:grid-cols-\[minmax\(0,1fr\)_minmax\(320px,0\.8fr\)\]/);
+  assert.match(page, /oee-entry-action-bar/);
+  assert.match(page, /sticky bottom-0/);
+  assert.match(page, /env\(safe-area-inset-bottom\)/);
+  assert.match(page, /scrollPaddingBottom|scroll-pb-/);
+
+  const statusStart = page.indexOf('aria-labelledby="oee-state-title"');
+  const historyStart = page.indexOf('aria-labelledby="oee-history-title"');
+  assert.ok(statusStart >= 0 && historyStart > statusStart, 'status rail and history must be ordered');
+  assert.doesNotMatch(page.slice(statusStart, historyStart), /overflow-y-auto/);
+
+  assert.match(page, /const resourceListRef = useRef/);
+  assert.match(page, /resourceListRef\.current\?\.scrollTo\(\{\s*top:\s*0/);
+  assert.match(page, /ref=\{resourceListRef\}/);
+  assert.match(page, /\[processCode, resourcesLoading, resources\.length\]/);
+  assert.match(page, /xl:w-\[min\(44rem,100%\)\]/);
+  assert.doesNotMatch(page, /min-\[1024px\]:flex-1/);
 });
 
 test("legacy profile/editor files are removed after the canonical replacement", () => {

@@ -266,6 +266,14 @@ TRUNC(SYSDATE - (7.5 / 24)) + (7.5 / 24)
 - `docs/` 아래 문서 생성·이동·삭제는 `docs/README.md` manifest 규정을 먼저 읽고 따른다. 관리 작업은 `managing-docs` 스킬을 사용한다.
 - 이 저장소에는 상시 `.ai-coordination` 보드가 없다. multi-AI coordination(lock/handoff/task board)은 사용자가 명시적으로 요청할 때만 `ai-coordination` 스킬로 켠다.
 
+### Requirements and screen design delegation
+
+- 범위, 입력, 산출물이 명확하고 독립적으로 완료 가능한 요구사항 분석·화면설계 작업은 `.opencode/agent/luna-planner.md`의 `luna_planner`를 우선 사용한다.
+- `luna_planner`는 구현이나 전체 목표 변경을 맡지 않는다. 아키텍처 결정, 불명확한 업무 규칙, API·DB 계약 판단, 여러 모듈에 큰 영향을 주는 문제는 메인 coordinator가 소유한다.
+- `luna_planner`는 요구사항과 화면 후보 범위를 먼저 정리하고 메인 coordinator에게 설계 대상 확정을 요청한다. 확정 전에는 상세 화면설계를 시작하지 않는다.
+- Orca orchestration으로 위임할 때는 한 Task에 하나의 명확한 산출물만 지정하고, 결과 또는 escalation을 메인 coordinator가 검토한다.
+- 승인된 요구사항·화면설계와 테스트 가능한 완료 기준이 준비된 뒤의 제한된 구현은 `.opencode/agent/lunar-impl.md`의 `lunar_impl`에 맡긴다. `lunar_impl`은 집중 테스트를 먼저 실패시킨 뒤 최소 구현으로 통과시키며, 설계나 계약이 불명확해지면 구현을 멈추고 메인 coordinator로 escalation한다.
+
 ## Encoding
 
 - Store source files as UTF-8.

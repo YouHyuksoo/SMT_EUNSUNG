@@ -69,19 +69,25 @@ describe('OeeMasterService tenant isolation', () => {
         resourceId: 10,
         lineCode: '01',
         lineName: 'Canonical line',
+        resourceName: 'Stored resource name',
         processCode: 'SMT',
         resourceType: 'LINE',
       },
     ]);
 
     await expect(target.listResources(7)).resolves.toEqual([
-      expect.objectContaining({ lineCode: '01', lineName: 'Canonical line' }),
+      expect.objectContaining({
+        lineCode: '01',
+        lineName: 'Canonical line',
+        resourceName: 'Stored resource name',
+      }),
     ]);
 
     const [sql, binds] = (dataSource.query as jest.Mock).mock.calls[0];
     expect(sql).toContain('IP_PRODUCT_LINE');
     expect(sql).toContain('LINE_CODE');
     expect(sql).toContain('LINE_NAME');
+    expect(sql).toContain('r.RESOURCE_NAME AS "resourceName"');
     expect(sql).toContain(':organizationId');
     expect(sql).not.toContain('l.ACTIVE_YN');
     expect(binds).toEqual({ organizationId: 7 });
@@ -179,7 +185,7 @@ describe('OeeMasterService tenant isolation', () => {
     });
     await target.updateResource(
       10,
-      { lineCode: '01', processCode: 'ASSY', resourceType: 'CELL' },
+      { lineCode: '01', resourceName: 'Assembly cell', processCode: 'ASSY', resourceType: 'CELL' },
       7,
     );
 
@@ -189,12 +195,14 @@ describe('OeeMasterService tenant isolation', () => {
     expect(sql).toContain('UPDATE OEE_PRODUCTION_RESULT');
     expect(sql).toContain('UPDATE OEE_DAILY_SUMMARY');
     expect(sql).toContain('UPDATE OEE_RESOURCE');
+    expect(sql).toContain('RESOURCE_NAME = :newResourceName');
     expect(binds).toEqual({
       organizationId: 7,
       resourceId: 10,
       resourceCode: '01',
       oldProcessCode: 'SMT',
       oldResourceType: 'LINE',
+      newResourceName: 'Assembly cell',
       newProcessCode: 'ASSY',
       newResourceType: 'CELL',
     });
@@ -211,7 +219,7 @@ describe('OeeMasterService tenant isolation', () => {
     });
 
     await expect(
-      target.updateResource(10, { lineCode: '02', processCode: 'SMT', resourceType: 'LINE' }, 7),
+      target.updateResource(10, { lineCode: '02', resourceName: 'Canonical line', processCode: 'SMT', resourceType: 'LINE' }, 7),
     ).rejects.toThrow(BadRequestException);
     expect(resourceRepo.update).not.toHaveBeenCalled();
   });
@@ -226,9 +234,49 @@ describe('OeeMasterService tenant isolation', () => {
       resourceType: 'LINE',
     });
     await expect(
-      target.updateResource(10, { lineCode: '01', processCode: 'ASSY', resourceType: 'CELL' }, 7),
+      target.updateResource(10, { lineCode: '01', resourceName: 'Assembly cell', processCode: 'ASSY', resourceType: 'CELL' }, 7),
     ).resolves.toBeUndefined();
     expect(dataSource.query).toHaveBeenCalledTimes(1);
+  });
+
+  it('updates a trimmed resource name even when process and type stay unchanged', async () => {
+    const target = createTarget();
+    (resourceRepo.findOne as jest.Mock).mockResolvedValueOnce({
+      resourceId: 10,
+      organizationId: 7,
+      refCode: '01',
+      resourceName: 'Old name',
+      processCode: 'SMT',
+      resourceType: 'LINE',
+    });
+
+    await target.updateResource(
+      10,
+      { lineCode: '01', resourceName: '  New name  ', processCode: 'SMT', resourceType: 'LINE' },
+      7,
+    );
+
+    expect(dataSource.query).toHaveBeenCalledWith(
+      expect.stringContaining('RESOURCE_NAME = :newResourceName'),
+      expect.objectContaining({
+        organizationId: 7,
+        resourceId: 10,
+        newResourceName: 'New name',
+      }),
+    );
+  });
+
+  it('rejects an empty resource name', async () => {
+    const target = createTarget();
+
+    await expect(
+      target.updateResource(
+        10,
+        { lineCode: '01', resourceName: '   ', processCode: 'SMT', resourceType: 'LINE' },
+        7,
+      ),
+    ).rejects.toThrow(BadRequestException);
+    expect(resourceRepo.findOne).not.toHaveBeenCalled();
   });
 
   it('physically deletes an unreferenced tenant resource', async () => {
@@ -364,7 +412,7 @@ describe('OeeMasterService tenant isolation', () => {
     });
 
     await expect(
-      target.updateResource(10, { lineCode: '01', processCode: 'ASSY', resourceType: 'CELL' }, 7),
+      target.updateResource(10, { lineCode: '01', resourceName: 'Assembly cell', processCode: 'ASSY', resourceType: 'CELL' }, 7),
     ).rejects.toThrow(NotFoundException);
   });
 });

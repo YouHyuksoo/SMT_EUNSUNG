@@ -41,7 +41,12 @@ export class ResourceCreateDto {
 }
 
 /** OEE 리소스 마스터 수정 — lineCode는 기존 값과 동일해야 한다. */
-export class ResourceUpdateDto extends ResourceCreateDto {}
+export class ResourceUpdateDto extends ResourceCreateDto {
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(100)
+  resourceName: string;
+}
 
 /** OEE 비가동사유 마스터 신규/수정 */
 export class ReasonUpsertDto {

@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, IsNull, Not, Repository } from 'typeorm';
-import { ComCode } from '../../entities/com-code.entity';
+import { EquipDowntimeReason } from '../../entities/equip-downtime-reason.entity';
 import { IsysUser } from '../../entities/isys-user.entity';
 import { OeeDowntimeEvent } from '../../entities/oee-downtime-event.entity';
 import { OeeResource } from '../../entities/oee-resource.entity';
@@ -14,17 +14,26 @@ import { ProdLineMaster } from '../../entities/prod-line-master.entity';
 import { WorktimeRange } from '../../entities/worktime-range.entity';
 import {
   OEE_MOBILE_PROCESS_CODES,
+  OEE_MOBILE_REASON_TYPES,
   OEE_MOBILE_RESOURCE_TYPES,
   OeeMobileEndDowntimeDto,
   OeeMobileProcessCode,
   OeeMobileReason,
+  OeeMobileReasonType,
   OeeMobileResource,
   OeeMobileResourceType,
   OeeMobileStartDowntimeDto,
 } from './oee-mobile.dto';
 import { resolveOeeMobileWorkContext } from './oee-mobile-worktime';
 
-const MACHINE_STATUS_CODE = 'MACHINE STATUS CODE';
+// Keep the mobile response numeric while retaining null DISPLAY_ORDER rows at the end.
+const NULL_DISPLAY_ORDER = Number.MAX_SAFE_INTEGER;
+
+function isOeeMobileReasonType(
+  value: string | null | undefined,
+): value is (typeof OEE_MOBILE_REASON_TYPES)[number] {
+  return OEE_MOBILE_REASON_TYPES.includes(value as (typeof OEE_MOBILE_REASON_TYPES)[number]);
+}
 
 function errorText(error: unknown): string[] {
   if (error == null) return [];
@@ -59,8 +68,8 @@ export class OeeMobileService {
     private readonly resourceRepository: Repository<OeeResource>,
     @InjectRepository(IsysUser)
     private readonly userRepository: Repository<IsysUser>,
-    @InjectRepository(ComCode)
-    private readonly codeRepository: Repository<ComCode>,
+    @InjectRepository(EquipDowntimeReason)
+    private readonly reasonRepository: Repository<EquipDowntimeReason>,
     @InjectRepository(OeeDowntimeEvent)
     private readonly eventRepository: Repository<OeeDowntimeEvent>,
     @InjectRepository(WorktimeRange)
@@ -102,25 +111,43 @@ export class OeeMobileService {
 
   async listReasons(organizationId?: number): Promise<OeeMobileReason[]> {
     const organization = this.requireOrganization(organizationId);
-    const rows = await this.codeRepository.find({
+    const rows = await this.reasonRepository.find({
       where: {
-        groupCode: MACHINE_STATUS_CODE,
         organizationId: organization,
-        detailCode: Not(In(['N', '*'])),
+        useYn: 'Y',
       },
-      order: { detailCode: 'ASC' },
+      order: { reasonType: 'ASC', displayOrder: 'ASC', reasonCode: 'ASC' },
     });
 
     return rows
       .filter(
-        (row) =>
-          row.groupCode === MACHINE_STATUS_CODE &&
+        (row): row is EquipDowntimeReason & { reasonType: OeeMobileReasonType } =>
           row.organizationId === organization &&
-          row.detailCode !== 'N' &&
-          row.detailCode !== '*',
+          row.useYn === 'Y' &&
+          isOeeMobileReasonType(row.reasonType),
       )
-      .sort((left, right) => left.detailCode.localeCompare(right.detailCode))
-      .map((row) => ({ reasonCode: row.detailCode, reasonName: row.codeName ?? '' }));
+      .sort((left, right) => {
+        const leftTypeOrder = left.reasonType === 'PLAN' ? 0 : 1;
+        const rightTypeOrder = right.reasonType === 'PLAN' ? 0 : 1;
+        if (leftTypeOrder !== rightTypeOrder) return leftTypeOrder - rightTypeOrder;
+
+        if (left.displayOrder == null && right.displayOrder != null) return 1;
+        if (left.displayOrder != null && right.displayOrder == null) return -1;
+        if (
+          left.displayOrder != null &&
+          right.displayOrder != null &&
+          left.displayOrder !== right.displayOrder
+        ) {
+          return left.displayOrder - right.displayOrder;
+        }
+        return left.reasonCode.localeCompare(right.reasonCode);
+      })
+      .map((row) => ({
+        reasonCode: row.reasonCode,
+        reasonName: row.reasonName ?? '',
+        reasonType: row.reasonType,
+        displayOrder: row.displayOrder ?? NULL_DISPLAY_ORDER,
+      }));
   }
 
   async getStatus(
@@ -230,7 +257,7 @@ export class OeeMobileService {
       workSegment: context.workSegment,
       startTime: now,
       endTime: null,
-      reasonCode: reason.detailCode,
+      reasonCode: reason.reasonCode,
       memo: dto.memo ?? null,
       workerId: worker.userId,
       startRequestId: dto.requestId,
@@ -384,6 +411,7 @@ export class OeeMobileService {
         return left.resource.resourceType.localeCompare(right.resource.resourceType);
       })
       .map(({ resource, line, refCode }) => ({
+        resourceId: resource.resourceId,
         processCode,
         resourceType: resource.resourceType as OeeMobileResourceType,
         resourceCode: refCode,
@@ -428,21 +456,23 @@ export class OeeMobileService {
     return found;
   }
 
-  private async findReason(organizationId: number, reasonCode: string): Promise<ComCode | null> {
+  private async findReason(
+    organizationId: number,
+    reasonCode: string,
+  ): Promise<EquipDowntimeReason | null> {
     if (reasonCode === 'N' || reasonCode === '*') return null;
-    const reason = await this.codeRepository.findOne({
+    const reason = await this.reasonRepository.findOne({
       where: {
-        groupCode: MACHINE_STATUS_CODE,
-        detailCode: reasonCode,
+        reasonCode,
         organizationId,
+        useYn: 'Y',
       },
     });
     if (
       !reason ||
-      reason.groupCode !== MACHINE_STATUS_CODE ||
       reason.organizationId !== organizationId ||
-      reason.detailCode === 'N' ||
-      reason.detailCode === '*'
+      reason.useYn !== 'Y' ||
+      !isOeeMobileReasonType(reason.reasonType)
     ) {
       return null;
     }

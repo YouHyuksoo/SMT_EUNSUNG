@@ -1,0 +1,523 @@
+ORGANIZATION_ID,MENU_NAME,MENU_DESCRIPTION,MENU_ITEM_ORDER,MENU_ITEM_LEVEL,MENU_ITEM_INDEX,MENU_ITEM_NAME,MENU_ITEM_TEXT,MENU_VISIBLE_YN,MENU_TAG,MENU_PATH_1,MENU_PATH_2,MENU_PATH_3,MENU_PATH_4,MENU_PATH_5,MENU_PATH,SCREEN_MATCH_STATUS,WINDOW_NAME,WINDOW_DESCRIPTION_KOR,WINDOW_DESCRIPTION_ENG,WINDOW_DESCRIPTION_LOCAL,WINDOW_OPEN_YN
+1,M_MAIN_FRAME_MENU,화일,1,1,1,M_FILE,화일,Y,,화일,,,,,화일,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,작업탭,2,2,1,M_3,작업탭,Y,,화일,작업탭,,,,화일 > 작업탭,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,게시판,3,2,2,M_BULLETINBOARD,게시판,Y,,화일,게시판,,,,화일 > 게시판,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,경보,4,2,3,M_SHOWALERT,경보,Y,,화일,경보,,,,화일 > 경보,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,경보쓰기,5,3,1,M_WRITEALERT,경보쓰기,Y,,화일,경보,경보쓰기,,,화일 > 경보 > 경보쓰기,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,경보보기,6,3,2,M_SHOWALERT0,경보보기,Y,,화일,경보,경보보기,,,화일 > 경보 > 경보보기,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,-,7,2,4,M_-0,-,Y,,화일,-,,,,화일 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,사용자변경,8,2,5,M_USERCHANGE,사용자변경,Y,,화일,사용자변경,,,,화일 > 사용자변경,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,언어변경,9,2,6,M_LANGUAGECHANGE,언어변경,Y,,화일,언어변경,,,,화일 > 언어변경,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,한국어,10,3,1,M_KOERAN,한국어,Y,,화일,언어변경,한국어,,,화일 > 언어변경 > 한국어,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,中国语,11,3,2,M_CHINESS,中国语,Y,Chinese,화일,언어변경,中国语,,,화일 > 언어변경 > 中国语,UNMATCHED,,,,,
+1,M_MAIN_FRAME_MENU,にほんご프,12,3,3,M_日本语,にほんご프,Y,,화일,언어변경,にほんご프,,,화일 > 언어변경 > にほんご프,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,영어,13,3,4,M_ENGLISH,영어,Y,,화일,언어변경,영어,,,화일 > 언어변경 > 영어,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,조직변경,14,2,7,M_CHANGEORGANIZATION,조직변경,Y,,화일,조직변경,,,,화일 > 조직변경,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,-,15,2,8,M_-4,-,Y,,화일,-,,,,화일 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,시스템잠금,16,2,9,M_43,시스템잠금,Y,,화일,시스템잠금,,,,화일 > 시스템잠금,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,내메뉴,17,2,10,M_MYMENU,내메뉴,Y,,화일,내메뉴,,,,화일 > 내메뉴,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,즐겨찾기,18,3,1,M_FAVORITESMENU,즐겨찾기,Y,,화일,내메뉴,즐겨찾기,,,화일 > 내메뉴 > 즐겨찾기,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,자동등록,19,3,2,M_GETMYMENU,자동등록,Y,,화일,내메뉴,자동등록,,,화일 > 내메뉴 > 자동등록,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,메뉴갱신,20,3,3,M_MENUREFRESH,메뉴갱신,Y,,화일,내메뉴,메뉴갱신,,,화일 > 내메뉴 > 메뉴갱신,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,메뉴추가,21,3,4,M_MYMENU_APPEND,메뉴추가,Y,,화일,내메뉴,메뉴추가,,,화일 > 내메뉴 > 메뉴추가,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,메뉴삭제,22,3,5,M_DELETEMENU,메뉴삭제,Y,,화일,내메뉴,메뉴삭제,,,화일 > 내메뉴 > 메뉴삭제,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,메뉴변경,23,3,6,M_UPDATEMENU,메뉴변경,Y,,화일,내메뉴,메뉴변경,,,화일 > 내메뉴 > 메뉴변경,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,프린트,24,2,11,M_PRINT,프린트,Y,,화일,프린트,,,,화일 > 프린트,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,조정,25,3,1,M_2,조정,Y,,화일,프린트,조정,,,화일 > 프린트 > 조정,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,가로,26,4,1,M_HOLIZONTAL,가로,Y,,화일,프린트,조정,가로,,화일 > 프린트 > 조정 > 가로,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,세로,27,4,2,M_VERTICAL,세로,Y,,화일,프린트,조정,세로,,화일 > 프린트 > 조정 > 세로,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,-,28,4,3,M_66,-,Y,,화일,프린트,조정,-,,화일 > 프린트 > 조정 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,여백,29,4,4,M_MARGIN,여백,Y,,화일,프린트,조정,여백,,화일 > 프린트 > 조정 > 여백,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,-,30,4,5,M_69,-,Y,,화일,프린트,조정,-,,화일 > 프린트 > 조정 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,작게,31,4,6,M_ZOOMIN,작게,Y,,화일,프린트,조정,작게,,화일 > 프린트 > 조정 > 작게,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,크게,32,4,7,M_ZOOMOUT,크게,Y,,화일,프린트,조정,크게,,화일 > 프린트 > 조정 > 크게,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,크기조절,33,4,8,M_ZOOMSETUP,크기조절,Y,,화일,프린트,조정,크기조절,,화일 > 프린트 > 조정 > 크기조절,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,미리보기,34,3,2,M_116,미리보기,Y,,화일,프린트,미리보기,,,화일 > 프린트 > 미리보기,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,설정값으로미리보기,35,4,1,M_PREVIEWBYSETUP,설정값으로미리보기,Y,,화일,프린트,미리보기,설정값으로미리보기,,화일 > 프린트 > 미리보기 > 설정값으로미리보기,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,-,36,4,2,M_143,-,Y,,화일,프린트,미리보기,-,,화일 > 프린트 > 미리보기 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,미리보기(예),37,4,3,M_PREVIEWON,미리보기(예),Y,,화일,프린트,미리보기,미리보기(예),,화일 > 프린트 > 미리보기 > 미리보기(예),NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,미리보기(아니오),38,4,4,M_PREVEIWOFF,미리보기(아니오),Y,,화일,프린트,미리보기,미리보기(아니오),,화일 > 프린트 > 미리보기 > 미리보기(아니오),NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,프린트...,39,3,3,M_PRINT0,프린트...,Y,,화일,프린트,프린트...,,,화일 > 프린트 > 프린트...,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,프린터설정...,40,2,12,M_PRINTERSETUP,프린터설정...,Y,,화일,프린터설정...,,,,화일 > 프린터설정...,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,-,41,2,13,M_-5,-,Y,,화일,-,,,,화일 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,저장/열기,42,2,14,M_SAVEOPEN,저장/열기,Y,,화일,저장/열기,,,,화일 > 저장/열기,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,PSR리포트열기,43,3,1,M_OPENPSRREPORT,PSR리포트열기,Y,,화일,저장/열기,PSR리포트열기,,,화일 > 저장/열기 > PSR리포트열기,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,엑셀로열기,44,3,2,M_OPENWITHEXCEL,엑셀로열기,Y,,화일,저장/열기,엑셀로열기,,,화일 > 저장/열기 > 엑셀로열기,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,-,45,3,3,M_-30,-,Y,,화일,저장/열기,-,,,화일 > 저장/열기 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,다른이름으로저장...,46,3,4,M_SAVEAS,다른이름으로저장...,Y,,화일,저장/열기,다른이름으로저장...,,,화일 > 저장/열기 > 다른이름으로저장...,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,-,47,3,5,M_-29,-,Y,,화일,저장/열기,-,,,화일 > 저장/열기 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,PDF 로저장,48,3,6,M_SAVEASEXCEL,PDF 로저장,Y,,화일,저장/열기,PDF 로저장,,,화일 > 저장/열기 > PDF 로저장,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,엑셀에서가져오기,49,3,7,M_IMPORTFROMEXCEL,엑셀에서가져오기,Y,,화일,저장/열기,엑셀에서가져오기,,,화일 > 저장/열기 > 엑셀에서가져오기,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,XML에서불러오기,50,3,8,M_IMPROTFROMXML,XML에서불러오기,Y,,화일,저장/열기,XML에서불러오기,,,화일 > 저장/열기 > XML에서불러오기,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,-,51,3,9,M_-27,-,Y,,화일,저장/열기,-,,,화일 > 저장/열기 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,워드로저장,52,3,10,M_SAVEASWORD,워드로저장,Y,,화일,저장/열기,워드로저장,,,화일 > 저장/열기 > 워드로저장,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,Save Form As Excel,53,3,11,M_SAVEFORMASEXCEL,Save Form As Excel,Y,,화일,저장/열기,Save Form As Excel,,,화일 > 저장/열기 > Save Form As Excel,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,-,54,2,15,M_-88,-,Y,,화일,-,,,,화일 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,브라우져열기,55,2,16,M_33,브라우져열기,Y,,화일,브라우져열기,,,,화일 > 브라우져열기,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,메일보내기,56,2,17,M_SENDMAIL,메일보내기,Y,,화일,메일보내기,,,,화일 > 메일보내기,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,-,57,2,18,M_-,-,Y,,화일,-,,,,화일 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,재시작,58,2,19,M_RESTART,재시작,Y,,화일,재시작,,,,화일 > 재시작,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,닫기,59,2,20,M_CLOSEWINDOW,닫기,Y,,화일,닫기,,,,화일 > 닫기,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,-,60,2,21,M_-20,-,Y,,화일,-,,,,화일 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,나가기	Alt+F4,61,2,22,M_QUIT,나가기	Alt+F4,Y,,화일,나가기	Alt+F4,,,,화일 > 나가기	Alt+F4,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,수정,62,1,2,M_EDIT,수정,Y,,수정,,,,,수정,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,행복사	Ctrl+D,63,2,1,M_ROWCOPY,행복사	Ctrl+D,Y,,수정,행복사	Ctrl+D,,,,수정 > 행복사	Ctrl+D,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,컬럼값복사	F8,64,2,2,M_COLUMNCOPY,컬럼값복사	F8,Y,,수정,컬럼값복사	F8,,,,수정 > 컬럼값복사	F8,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,컬럼값붙여넣기	F9,65,2,3,M_COLUMNPASTE,컬럼값붙여넣기	F9,Y,,수정,컬럼값붙여넣기	F9,,,,수정 > 컬럼값붙여넣기	F9,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,클립보드에서불러오기,66,2,4,M_IMPROTCLIPBOARD,클립보드에서불러오기,Y,,수정,클립보드에서불러오기,,,,수정 > 클립보드에서불러오기,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,-,67,2,5,M_-21,-,Y,,수정,-,,,,수정 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,데이타그룹	Ctrl+G,68,2,6,M_DATAGROUP,데이타그룹	Ctrl+G,Y,,수정,데이타그룹	Ctrl+G,,,,수정 > 데이타그룹	Ctrl+G,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,데이타정렬	Ctrl+T,69,2,7,M_DATASORT,데이타정렬	Ctrl+T,Y,,수정,데이타정렬	Ctrl+T,,,,수정 > 데이타정렬	Ctrl+T,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,데이타필터,70,2,8,M_DATAFILTER,데이타필터,Y,,수정,데이타필터,,,,수정 > 데이타필터,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,-,71,2,9,M_-16,-,Y,,수정,-,,,,수정 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,그룹보기/감추기	Ctrl+S,72,2,10,M_GROUPSHOWHIDE,그룹보기/감추기	Ctrl+S,Y,,수정,그룹보기/감추기	Ctrl+S,,,,수정 > 그룹보기/감추기	Ctrl+S,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,상세내역보기/감추기	Ctrl+A,73,2,11,M_DETAILSHOWHIDE,상세내역보기/감추기	Ctrl+A,Y,,수정,상세내역보기/감추기	Ctrl+A,,,,수정 > 상세내역보기/감추기	Ctrl+A,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,-,74,2,12,M_-9,-,Y,,수정,-,,,,수정 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,찾기...	Ctrl+F,75,2,13,M_FIND,찾기...	Ctrl+F,Y,,수정,찾기...	Ctrl+F,,,,수정 > 찾기...	Ctrl+F,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,바꾸기...	Ctrl+R,76,2,14,M_REPLACE,바꾸기...	Ctrl+R,Y,,수정,바꾸기...	Ctrl+R,,,,수정 > 바꾸기...	Ctrl+R,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,-,77,2,15,M_-11,-,Y,,수정,-,,,,수정 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,편집창	Ctrl+E,78,2,16,M_EDITWINDOW,편집창	Ctrl+E,Y,,수정,편집창	Ctrl+E,,,,수정 > 편집창	Ctrl+E,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,클립보드...	CTRL+L,79,2,17,M_CLIPBOARD,클립보드...	CTRL+L,Y,,수정,클립보드...	CTRL+L,,,,수정 > 클립보드...	CTRL+L,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,-,80,2,18,M_-103,-,Y,,수정,-,,,,수정 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,그래프보기,81,2,19,M_SHOW_GRAPH,그래프보기,Y,,수정,그래프보기,,,,수정 > 그래프보기,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,보기,82,3,1,M_SHOWGRAPH,보기,Y,,수정,그래프보기,보기,,,수정 > 그래프보기 > 보기,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,추가,83,3,2,M_ADDGRAPH,추가,Y,,수정,그래프보기,추가,,,수정 > 그래프보기 > 추가,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,삭제,84,3,3,M_DELETEGRAPH,삭제,Y,,수정,그래프보기,삭제,,,수정 > 그래프보기 > 삭제,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,조작,85,1,3,M_CONTROL,조작,Y,,조작,,,,,조작,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,조회	F1,86,2,1,M_RETRIEVE,조회	F1,Y,,조작,조회	F1,,,,조작 > 조회	F1,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,동적조회,87,2,2,M_DYNAMICRETRIEVE,동적조회,Y,,조작,동적조회,,,,조작 > 동적조회,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,중지	F2,88,2,3,M_STOP,중지	F2,Y,,조작,중지	F2,,,,조작 > 중지	F2,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,-,89,2,4,M_-14,-,Y,,조작,-,,,,조작 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,입력	F3,90,2,5,M_INSERT,입력	F3,Y,,조작,입력	F3,,,,조작 > 입력	F3,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,추가	F4,91,2,6,M_APPEND,추가	F4,Y,,조작,추가	F4,,,,조작 > 추가	F4,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,-,92,2,7,M_-12,-,Y,,조작,-,,,,조작 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,삭제	F5,93,2,8,M_DELETE,삭제	F5,Y,,조작,삭제	F5,,,,조작 > 삭제	F5,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,삭제취소,94,2,9,M_UNDELETE,삭제취소,Y,,조작,삭제취소,,,,조작 > 삭제취소,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,일괄삭제,95,2,10,M_DELETESELECTED,일괄삭제,Y,,조작,일괄삭제,,,,조작 > 일괄삭제,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,-,96,2,11,M_-13,-,Y,,조작,-,,,,조작 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,저장	F6,97,2,12,M_UPDATE,저장	F6,Y,,조작,저장	F6,,,,조작 > 저장	F6,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,-,98,2,13,M_-64,-,Y,,조작,-,,,,조작 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,전체확장,99,2,14,M_EXPANDALL,전체확장,Y,,조작,전체확장,,,,조작 > 전체확장,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,전체축소,100,2,15,M_COLLAPSEALL,전체축소,Y,,조작,전체축소,,,,조작 > 전체축소,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,크기조절,101,2,16,M_PREVIEWSETUP,크기조절,Y,,조작,크기조절,,,,조작 > 크기조절,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,-,102,2,17,M_-23,-,Y,,조작,-,,,,조작 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,기본값	F7,103,2,18,M_DEFAULTVALUE,기본값	F7,Y,,조작,기본값	F7,,,,조작 > 기본값	F7,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,선택/체크,104,2,19,M_SELECTCHECK,선택/체크,Y,,조작,선택/체크,,,,조작 > 선택/체크,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,모든행선택,105,3,1,M_SELECTROWALL,모든행선택,Y,,조작,선택/체크,모든행선택,,,조작 > 선택/체크 > 모든행선택,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,모든행해제,106,3,2,M_RELEASEROWALL,모든행해제,Y,,조작,선택/체크,모든행해제,,,조작 > 선택/체크 > 모든행해제,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,-,107,3,3,M_-111,-,Y,,조작,선택/체크,-,,,조작 > 선택/체크 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,전부선택,108,3,4,M_CHECKALL,전부선택,Y,,조작,선택/체크,전부선택,,,조작 > 선택/체크 > 전부선택,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,전부해제,109,3,5,M_RELEASEALL,전부해제,Y,,조작,선택/체크,전부해제,,,조작 > 선택/체크 > 전부해제,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,오른쪽버튼메뉴,110,2,20,M_RBUTTONMENU,오른쪽버튼메뉴,Y,,조작,오른쪽버튼메뉴,,,,조작 > 오른쪽버튼메뉴,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,복사,111,3,1,M_8,복사,Y,,조작,오른쪽버튼메뉴,복사,,,조작 > 오른쪽버튼메뉴 > 복사,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,행복사,112,3,2,M_10,행복사,Y,,조작,오른쪽버튼메뉴,행복사,,,조작 > 오른쪽버튼메뉴 > 행복사,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,Show Summary,113,3,3,M_12,Show Summary,Y,,조작,오른쪽버튼메뉴,Show Summary,,,조작 > 오른쪽버튼메뉴 > Show Summary,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,컬럼숨기기,114,3,4,M_COLUMNPROPERTY,컬럼숨기기,Y,,조작,오른쪽버튼메뉴,컬럼숨기기,,,조작 > 오른쪽버튼메뉴 > 컬럼숨기기,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,동적필터,115,3,5,M_DYNAMICFILTER,동적필터,Y,,조작,오른쪽버튼메뉴,동적필터,,,조작 > 오른쪽버튼메뉴 > 동적필터,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,-,116,2,21,M_-6,-,Y,,조작,-,,,,조작 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,기초정보재설정,117,2,22,M_BASECODERELOAD,기초정보재설정,Y,,조작,기초정보재설정,,,,조작 > 기초정보재설정,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,기준정보,118,1,4,M_BASIS1,기준정보,Y,,기준정보,,,,,기준정보,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,고객관리,119,2,1,M_CUSTOMERMASTER,고객관리,Y,w_com_customer_master,기준정보,고객관리,,,,기준정보 > 고객관리,MATCHED,W_COM_CUSTOMER_MASTER,고객관리,CUSTOMER INFROMATION MANAGE,CUSTOMER INFROMATION MANAGE,Y
+1,M_MAIN_FRAME_MENU,협력사관리,120,2,2,M_SUPPLIERMASTER,협력사관리,Y,w_com_supplier_master,기준정보,협력사관리,,,,기준정보 > 협력사관리,MATCHED,W_COM_SUPPLIER_MASTER,협력사관리,CUSTOMER INFROMATION MANAGE,CUSTOMER INFROMATION MANAGE,Y
+1,M_MAIN_FRAME_MENU,-,121,2,3,M_-57,-,Y,,기준정보,-,,,,기준정보 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,품목관리,122,2,4,M_ITEMMASTER,품목관리,Y,w_des_item_master,기준정보,품목관리,,,,기준정보 > 품목관리,MATCHED,W_DES_ITEM_MASTER,품목관리,부품 마스터,부품 마스터,Y
+1,M_MAIN_FRAME_MENU,제품모델관리,123,2,5,M_PRODUCTMODELMASTER,제품모델관리,Y,w_pln_product_model_master,기준정보,제품모델관리,,,,기준정보 > 제품모델관리,MATCHED,W_PLN_PRODUCT_MODEL_MASTER,승인원의모델에 대한 특성을 관리,승인원의모델에 대한 특성을 관리,승인원의모델에 대한 특성을 관리,Y
+1,M_MAIN_FRAME_MENU,품목(공급상)관리,124,2,6,M_MATEIALMASTER,품목(공급상)관리,Y,w_mat_item_master,기준정보,품목(공급상)관리,,,,기준정보 > 품목(공급상)관리,MATCHED,W_MAT_ITEM_MASTER,품목(공급상)관리,MATERIAL ITEM MASTER,MATERIAL ITEM MASTER,Y
+1,M_MAIN_FRAME_MENU,LED RANK 관리,125,2,7,M_LEDRANKMASTER,LED RANK 관리,Y,w_com_mat_rank_master,기준정보,LED RANK 관리,,,,기준정보 > LED RANK 관리,MATCHED,W_COM_MAT_RANK_MASTER,LED RANK 관리,부품 마스터,부품 마스터,Y
+1,M_MAIN_FRAME_MENU,환율관리,126,2,8,M_1,환율관리,Y,w_com_exchange_rate_master,기준정보,환율관리,,,,기준정보 > 환율관리,MATCHED,W_COM_EXCHANGE_RATE_MASTER,EXCHANGE RATE MASTER WINDOW,EXCHANGE RATE MASTER WINDOW,EXCHANGE RATE MASTER WINDOW,Y
+1,M_MAIN_FRAME_MENU,-,127,2,9,M_-1,-,Y,,기준정보,-,,,,기준정보 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,제품류관리,128,2,10,M_PRODUCTCLASSMASTER,제품류관리,Y,w_des_product_class_master,기준정보,제품류관리,,,,기준정보 > 제품류관리,MATCHED,W_DES_PRODUCT_CLASS_MASTER,제품류관리,부품 마스터,부품 마스터,Y
+1,M_MAIN_FRAME_MENU,라인관리,129,2,11,M_PRODUCTLINEMASTER,라인관리,Y,w_pln_line_master,기준정보,라인관리,,,,기준정보 > 라인관리,MATCHED,W_PLN_LINE_MASTER,라인관리,LINE MASTER,LINE MASTER,Y
+1,M_MAIN_FRAME_MENU,공정관리마스터,130,2,12,M_PRODUCTWOKSTAGEMASTER,공정관리마스터,Y,w_pln_workstage_master,기준정보,공정관리마스터,,,,기준정보 > 공정관리마스터,MATCHED,W_PLN_WORKSTAGE_MASTER,공정관리마스터,LINE MASTER,LINE MASTER,Y
+1,M_MAIN_FRAME_MENU,모델별 ST관리,131,2,13,M_PRODUCTSTMASTER,모델별 ST관리,Y,w_pln_product_model_st_master,기준정보,모델별 ST관리,,,,기준정보 > 모델별 ST관리,MATCHED,W_PLN_PRODUCT_MODEL_ST_MASTER,모델별 ST관리,LINE MASTER,LINE MASTER,Y
+1,M_MAIN_FRAME_MENU,생산월력,132,2,14,M_PRODUCTCARENDAR,생산월력,Y,w_pln_product_calendar,기준정보,생산월력,,,,기준정보 > 생산월력,MATCHED,W_PLN_PRODUCT_CALENDAR,생산월력,LINE MASTER,LINE MASTER,Y
+1,M_MAIN_FRAME_MENU,생산라인보유공수관리,133,2,15,M_20,생산라인보유공수관리,Y,w_pln_line_capacity_master,기준정보,생산라인보유공수관리,,,,기준정보 > 생산라인보유공수관리,MATCHED,W_PLN_LINE_CAPACITY_MASTER,생산라인보유공수관리,LINE CAPACITY MASTER,LINE CAPACITY MASTER,Y
+1,M_MAIN_FRAME_MENU,제품별 라벨양식 관리,134,2,16,M_PRODUCTLABELMASTER,제품별 라벨양식 관리,Y,w_product_label_master,기준정보,제품별 라벨양식 관리,,,,기준정보 > 제품별 라벨양식 관리,MATCHED,W_PRODUCT_LABEL_MASTER,제품별 라벨양식 관리,LINE MASTER,LINE MASTER,Y
+1,M_MAIN_FRAME_MENU,문서관리,135,2,17,M_DOCUMENTMASTER,문서관리,Y,w_com_document_master,기준정보,문서관리,,,,기준정보 > 문서관리,MATCHED,W_COM_DOCUMENT_MASTER,문서관리,BASE INFORMATION MANAGE,BASE INFORMATION MANAGE,Y
+1,M_MAIN_FRAME_MENU,-,136,2,18,M_-48,-,Y,,기준정보,-,,,,기준정보 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,인터락조건관리,137,2,19,M_INTERLOCKINSEPCTCONDITIONMASTER,인터락조건관리,Y,w_com_interlock_inspect_condition_master,기준정보,인터락조건관리,,,,기준정보 > 인터락조건관리,MATCHED,W_COM_INTERLOCK_INSPECT_CONDITION_MASTER,인터락조건관리,LINE MASTER,LINE MASTER,Y
+1,M_MAIN_FRAME_MENU,QC 품질판정조건표,138,2,20,M_QCINSPECTCONDITION,QC 품질판정조건표,Y,,기준정보,QC 품질판정조건표,,,,기준정보 > QC 품질판정조건표,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,-,139,2,21,M_-47,-,Y,,기준정보,-,,,,기준정보 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,풀체크시간관리,140,2,22,M_FULLCHECKTIMEMASTER,풀체크시간관리,Y,w_com_full_check_time_master,기준정보,풀체크시간관리,,,,기준정보 > 풀체크시간관리,MATCHED,W_COM_FULL_CHECK_TIME_MASTER,풀체크시간관리,LINE MASTER,LINE MASTER,Y
+1,M_MAIN_FRAME_MENU,-,141,2,23,M_-10,-,Y,,기준정보,-,,,,기준정보 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,자재구매단가,142,2,24,M_MATERIALPRICEMASTER,자재구매단가,Y,w_mat_buy_price_master,기준정보,자재구매단가,,,,기준정보 > 자재구매단가,MATCHED,W_MAT_BUY_PRICE_MASTER,자재구매단가,MATERIAL BUY PRICE MASTER,MATERIAL BUY PRICE MASTER,Y
+1,M_MAIN_FRAME_MENU,제(상)품판매단가,143,2,25,M_PRODUCTSALEPRICE,제(상)품판매단가,Y,w_sal_sale_price_master,기준정보,제(상)품판매단가,,,,기준정보 > 제(상)품판매단가,MATCHED,W_SAL_SALE_PRICE_MASTER,제(상)품판매단가,SHIPPING SALE PRICE MASTER,SHIPPING SALE PRICE MASTER,Y
+1,M_MAIN_FRAME_MENU,설계,144,1,5,M_DESIGN,설계,Y,,설계,,,,,설계,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,설계BOM관리,145,2,1,M_BOMMASTER,설계BOM관리,Y,w_des_bom_modify_master,설계,설계BOM관리,,,,설계 > 설계BOM관리,MATCHED,W_DES_BOM_MODIFY_MASTER,설계BOM관리,BOM 수정관리,BOM 수정관리,Y
+1,M_MAIN_FRAME_MENU,제조BOM관리,146,2,2,M_MFSBOMMASTER,제조BOM관리,Y,w_des_mfs_bom_master,설계,제조BOM관리,,,,설계 > 제조BOM관리,MATCHED,W_DES_MFS_BOM_MASTER,BOM 수정관리,BOM 수정관리,BOM 수정관리,Y
+1,M_MAIN_FRAME_MENU,대체BOM관리,147,2,3,M_ENGBOMREPLACEMASTER,대체BOM관리,Y,w_des_replace_bom_master,설계,대체BOM관리,,,,설계 > 대체BOM관리,MATCHED,W_DES_REPLACE_BOM_MASTER,대체BOM관리,대체 BOM관리,대체 BOM관리,Y
+1,M_MAIN_FRAME_MENU,원단위BOM마스터,148,2,4,M_ENGBOMRAWMASTER,원단위BOM마스터,Y,w_des_raw_bom_master,설계,원단위BOM마스터,,,,설계 > 원단위BOM마스터,MATCHED,W_DES_RAW_BOM_MASTER,원단위BOM마스터,원단위BOM관리,원단위BOM관리,Y
+1,M_MAIN_FRAME_MENU,적용모델관리,149,2,5,M_APPLYMODELMASTER,적용모델관리,Y,w_des_apply_item_master,설계,적용모델관리,,,,설계 > 적용모델관리,MATCHED,W_DES_APPLY_ITEM_MASTER,적용모델관리,적용모델조회마스터,적용모델조회마스터,Y
+1,M_MAIN_FRAME_MENU,SMT,150,1,6,M_SMT,SMT,Y,,SMT,,,,,SMT,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,SMT 라인관리,151,2,1,M_SMTLINEMASTER,SMT 라인관리,Y,w_smt_line_master,SMT,SMT 라인관리,,,,SMT > SMT 라인관리,MATCHED,W_SMT_LINE_MASTER,SMT 라인관리,부품 마스터,부품 마스터,Y
+1,M_MAIN_FRAME_MENU,라인별 테이블 관리,152,2,2,M_SMTLOCATIONMASTER,라인별 테이블 관리,Y,w_smt_location_master,SMT,라인별 테이블 관리,,,,SMT > 라인별 테이블 관리,MATCHED,W_SMT_LOCATION_MASTER,라인별 테이블 관리,부품 마스터,부품 마스터,Y
+1,M_MAIN_FRAME_MENU,SMT BOM 대체관리,153,2,3,M_SMTBOMREPLACEMASTER,SMT BOM 대체관리,Y,w_smt_bom_replace_master,SMT,SMT BOM 대체관리,,,,SMT > SMT BOM 대체관리,MATCHED,W_SMT_BOM_REPLACE_MASTER,SMT BOM 대체관리,부품 마스터,부품 마스터,Y
+1,M_MAIN_FRAME_MENU,-,154,2,4,M_-31,-,Y,,SMT,-,,,,SMT > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,SMT 피더레이아웃 등록,155,2,5,M_SMTUPLOADNCMASTER,SMT 피더레이아웃 등록,Y,w_smt_upload_nc_master,SMT,SMT 피더레이아웃 등록,,,,SMT > SMT 피더레이아웃 등록,MATCHED,W_SMT_UPLOAD_NC_MASTER,SMT 피더레이아웃 등록,생산계획,생산계획,Y
+1,M_MAIN_FRAME_MENU,SMT BOM 관리,156,2,6,M_MESBOMMASTER,SMT BOM 관리,Y,w_smt_bom_create_master,SMT,SMT BOM 관리,,,,SMT > SMT BOM 관리,MATCHED,W_SMT_BOM_CREATE_MASTER,SMT BOM 관리,BOM 수정관리,BOM 수정관리,Y
+1,M_MAIN_FRAME_MENU,SMT 계획배포관리,157,2,7,M_SMTPLANDATA,SMT 계획배포관리,Y,w_smt_plan_master,SMT,SMT 계획배포관리,,,,SMT > SMT 계획배포관리,MATCHED,W_SMT_PLAN_MASTER,SMT 계획배포관리,SMT Plan Master,Gestión de distribución del plan SMT,Y
+1,M_MAIN_FRAME_MENU,-,158,2,8,M_-25,-,Y,,SMT,-,,,,SMT > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,SMT BOM 관리리포트,159,2,9,M_SMTBOMMASTERREPORT,SMT BOM 관리리포트,Y,w_smt_bom_master_rpt,SMT,SMT BOM 관리리포트,,,,SMT > SMT BOM 관리리포트,MATCHED,W_SMT_BOM_MASTER_RPT,SMT BOM 관리리포트,BOM리포트,BOM리포트,Y
+1,M_MAIN_FRAME_MENU,피더레이아웃 비교,160,2,10,M_SMTBOMCOMPARISIONREPORT,피더레이아웃 비교,Y,w_smt_bom_comparison_master_rpt,SMT,피더레이아웃 비교,,,,SMT > 피더레이아웃 비교,MATCHED,W_SMT_BOM_COMPARISON_MASTER_RPT,피더레이아웃 비교,SMT BOM Comparision Report,BOM리포트,Y
+1,M_MAIN_FRAME_MENU,-,161,2,11,M_-56,-,Y,,SMT,-,,,,SMT > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,마운터 픽업정보관리,162,2,12,M_MOUNTPICKUPMASTER0,마운터 픽업정보관리,Y,w_mcn_feeder_pickup_master,SMT,마운터 픽업정보관리,,,,SMT > 마운터 픽업정보관리,MATCHED,W_MCN_FEEDER_PICKUP_MASTER,피더 낙점율 관리,"MANUAL INPUT MAT TO PRODUCTION LINE, AND INQUERY","MANUAL INPUT MAT TO PRODUCTION LINE, AND INQUERY",Y
+1,M_MAIN_FRAME_MENU,설비,163,1,7,M_JIG,설비,Y,,설비,,,,,설비,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,설비자주보전관리,164,2,1,M_MACHINEPMMASTER,설비자주보전관리,Y,w_mcn_machine_pm_master,설비,설비자주보전관리,,,,설비 > 설비자주보전관리,MATCHED,W_MCN_MACHINE_PM_MASTER,설비자주보전관리,CUSTOMER INFROMATION MANAGE,CUSTOMER INFROMATION MANAGE,Y
+1,M_MAIN_FRAME_MENU,AOI 검사결과조회,164,2,8,M_AOITIMEQUERY,AOI 검사결과조회,Y,,설비,AOI 검사결과조회,,,,설비 > AOI 검사결과조회,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,설비관리,165,2,2,M_MACHINEMASTER,설비관리,Y,w_mcn_machine_master,설비,설비관리,,,,설비 > 설비관리,MATCHED,W_MCN_MACHINE_MASTER,설비관리,CUSTOMER INFROMATION MANAGE,CUSTOMER INFROMATION MANAGE,Y
+1,M_MAIN_FRAME_MENU,설비수리이력관리,166,2,3,M_MACHINEREPAIRREQUESTMASTER,설비수리이력관리,Y,w_mcn_machine_repair_request_master,설비,설비수리이력관리,,,,설비 > 설비수리이력관리,MATCHED,W_MCN_MACHINE_REPAIR_REQUEST_MASTER,설비수리이력관리,MATERIAL RECEIPT MASTER,MATERIAL RECEIPT MASTER,Y
+1,M_MAIN_FRAME_MENU,설비수리관리,167,2,4,M_MACHINEREPAIRMASTER,설비수리관리,Y,w_mcn_machine_repair_master,설비,설비수리관리,,,,설비 > 설비수리관리,MATCHED,W_MCN_MACHINE_REPAIR_MASTER,설비수리관리,CUSTOMER INFROMATION MANAGE,CUSTOMER INFROMATION MANAGE,Y
+1,M_MAIN_FRAME_MENU,설비자주보전관리,168,2,5,M_MACHINEPMMASTER0,설비자주보전관리,Y,w_mcn_machine_pm_master,설비,설비자주보전관리,,,,설비 > 설비자주보전관리,MATCHED,W_MCN_MACHINE_PM_MASTER,설비자주보전관리,CUSTOMER INFROMATION MANAGE,CUSTOMER INFROMATION MANAGE,Y
+1,M_MAIN_FRAME_MENU,설비일일운행관리,169,2,6,M_MACHINELOSSMASTER,설비일일운행관리,Y,w_mcn_machine_daily_operation,설비,설비일일운행관리,,,,설비 > 설비일일운행관리,MATCHED,W_MCN_MACHINE_DAILY_OPERATION,설비일일운행관리,CUSTOMER INFROMATION MANAGE,CUSTOMER INFROMATION MANAGE,Y
+1,M_MAIN_FRAME_MENU,-,170,2,7,M_-36,-,Y,,설비,-,,,,설비 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,SP 작업결과조회,171,2,8,M_SPRESULTQUERY,SP 작업결과조회,Y,w_qc_machine_inspect_data_sp_query,설비,SP 작업결과조회,,,,설비 > SP 작업결과조회,MATCHED,W_QC_MACHINE_INSPECT_DATA_SP_QUERY,SP 작업결과조회,TEST,TEST,Y
+1,M_MAIN_FRAME_MENU,SPI 검사결과조회,172,2,9,M_SPITIMEQUERY,SPI 검사결과조회,Y,w_spi_time_query,설비,SPI 검사결과조회,,,,설비 > SPI 검사결과조회,MATCHED,W_SPI_TIME_QUERY,SPI 검사결과조회,SPI Result Query,SPI_TIME_QUERY,Y
+1,M_MAIN_FRAME_MENU,ICT 검사결과조회,173,2,10,M_IICTRESULTQUERY,ICT 검사결과조회,Y,w_qc_machine_inspect_data_ict_query,설비,ICT 검사결과조회,,,,설비 > ICT 검사결과조회,MATCHED,W_QC_MACHINE_INSPECT_DATA_ICT_QUERY,ICT 검사결과조회,배트남,배트남,Y
+1,M_MAIN_FRAME_MENU,AOI 검사결과조회,174,2,11,M_AOIRESULTQUERY,AOI 검사결과조회,Y,w_aoi_header_detail_query,설비,AOI 검사결과조회,,,,설비 > AOI 검사결과조회,MATCHED,W_AOI_HEADER_DETAIL_QUERY,AOI 검사결과조회,AOI Result Query,배트남,Y
+1,M_MAIN_FRAME_MENU,Router작업결과조회,175,2,12,M_ROUTERRSULTQUERY,Router작업결과조회,Y,w_qc_machine_inspect_data_rt_query,설비,Router작업결과조회,,,,설비 > Router작업결과조회,MATCHED,W_QC_MACHINE_INSPECT_DATA_RT_QUERY,ROUTER 작업결과조회,배트남,배트남,Y
+1,M_MAIN_FRAME_MENU,RomWrite작업결과조회,176,2,13,M_ROMWRITERESULTQUERY,RomWrite작업결과조회,Y,,설비,RomWrite작업결과조회,,,,설비 > RomWrite작업결과조회,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,솔더점도 검사결과조회,177,2,14,M_SOLDERVISCOSITYRESULTQUERY,솔더점도 검사결과조회,Y,,설비,솔더점도 검사결과조회,,,,설비 > 솔더점도 검사결과조회,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,Reflow 작업결과조회,178,2,15,M_REFLOWRESULTQUERY,Reflow 작업결과조회,Y,,설비,Reflow 작업결과조회,,,,설비 > Reflow 작업결과조회,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,AE-EV BUSBAR Result Query,179,2,16,M_AE-EVBUSBARRESULTQUERY,AE-EV BUSBAR Result Query,Y,,설비,AE-EV BUSBAR Result Query,,,,설비 > AE-EV BUSBAR Result Query,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,EOL Result Query,180,2,17,M_EOLRESULTQUERY,EOL Result Query,Y,w_qc_machine_inspect_data_eol_query,설비,EOL Result Query,,,,설비 > EOL Result Query,MATCHED,W_QC_MACHINE_INSPECT_DATA_EOL_QUERY,EOL,배트남,배트남,Y
+1,M_MAIN_FRAME_MENU,BMA Result Query,181,2,18,M_BMARESULTQUERY,BMA Result Query,Y,w_qc_machine_inspect_data_bma_query,설비,BMA Result Query,,,,설비 > BMA Result Query,MATCHED,W_QC_MACHINE_INSPECT_DATA_BMA_QUERY,BMA,배트남,배트남,Y
+1,M_MAIN_FRAME_MENU,-,182,2,19,M_-60,-,Y,,설비,-,,,,설비 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,라인/설비일일운행일지,183,2,20,M_LINEMACHINEDAILYOPERATIONREPORT,라인/설비일일운행일지,Y,w_line_machine_daily_operation_rpt,설비,라인/설비일일운행일지,,,,설비 > 라인/설비일일운행일지,MATCHED,W_LINE_MACHINE_DAILY_OPERATION_RPT,라인/설비일일운행일지,,,Y
+1,M_MAIN_FRAME_MENU,지그,184,1,8,M_JIG0,지그,Y,,지그,,,,,지그,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,지그마스터,185,2,1,M_JIGMASTER,지그마스터,Y,w_mcn_jig_master,지그,지그마스터,,,,지그 > 지그마스터,MATCHED,W_MCN_JIG_MASTER,지그마스터,JIG Master,CUSTOMER INFROMATION MANAGE,Y
+1,M_MAIN_FRAME_MENU,지그출고관리,186,2,2,M_JIGISSUEMASTER,지그출고관리,Y,w_mcn_jig_issue_master,지그,지그출고관리,,,,지그 > 지그출고관리,MATCHED,W_MCN_JIG_ISSUE_MASTER,지그출고관리,MATERIAL RECEIPT MASTER,MATERIAL RECEIPT MASTER,Y
+1,M_MAIN_FRAME_MENU,지그수리신청,187,2,3,M_JIGREPAIRREQUESTMASTER,지그수리신청,Y,w_mcn_jig_repair_request_master,지그,지그수리신청,,,,지그 > 지그수리신청,MATCHED,W_MCN_JIG_REPAIR_REQUEST_MASTER,지그수리신청,MATERIAL RECEIPT MASTER,MATERIAL RECEIPT MASTER,Y
+1,M_MAIN_FRAME_MENU,지그수리관리,188,2,4,M_JIGREPAIRMASTER,지그수리관리,Y,w_mcn_jig_repair_master,지그,지그수리관리,,,,지그 > 지그수리관리,MATCHED,W_MCN_JIG_REPAIR_MASTER,지그수리관리,MATERIAL RECEIPT MASTER,MATERIAL RECEIPT MASTER,Y
+1,M_MAIN_FRAME_MENU,지그자주보전관리,189,2,5,M_JIGPMMASTER,지그자주보전관리,Y,w_mcn_jig_pm_master,지그,지그자주보전관리,,,,지그 > 지그자주보전관리,MATCHED,W_MCN_JIG_PM_MASTER,지그자주보전관리,CUSTOMER INFROMATION MANAGE,CUSTOMER INFROMATION MANAGE,Y
+1,M_MAIN_FRAME_MENU,-,190,2,6,M_-44,-,Y,,지그,-,,,,지그 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,지그마스터 투입이력조회,191,2,7,M_JIGINPUTHISTORY,지그마스터 투입이력조회,Y,w_mcn_jig_input_history_master,지그,지그마스터 투입이력조회,,,,지그 > 지그마스터 투입이력조회,MATCHED,W_MCN_JIG_INPUT_HISTORY_MASTER,지그마스터 투입이력조회,JIG Input History,JIG INPUT HISTORY,Y
+1,M_MAIN_FRAME_MENU,-,192,2,8,M_4,-,Y,,지그,-,,,,지그 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,스퀴즈검사관리,193,2,9,M_JIGSQUEEZECHECKMASTER,스퀴즈검사관리,Y,w_mcn_jig_squeeze_check_master,지그,스퀴즈검사관리,,,,지그 > 스퀴즈검사관리,MATCHED,W_MCN_JIG_SQUEEZE_CHECK_MASTER,금형검사이력관리,금형검사이력관리,금형검사이력관리,Y
+1,M_MAIN_FRAME_MENU,메탈마스크텐션관리,194,2,10,M_MASKTENSIONCHECKMASTER,메탈마스크텐션관리,Y,w_mcn_jig_mask_tension_check_master,지그,메탈마스크텐션관리,,,,지그 > 메탈마스크텐션관리,MATCHED,W_MCN_JIG_MASK_TENSION_CHECK_MASTER,메탈마스크텐션관리,Mask Tension Check Master,금형검사이력관리,Y
+1,M_MAIN_FRAME_MENU,스퀴지검사관리,195,2,11,M_SQUEEZECLEANCHECKMASTER,스퀴지검사관리,Y,w_mcn_jig_squeeze_clean_check_master,지그,스퀴지검사관리,,,,지그 > 스퀴지검사관리,MATCHED,W_MCN_JIG_SQUEEZE_CLEAN_CHECK_MASTER,스퀴지검사관리,금형검사이력관리,금형검사이력관리,Y
+1,M_MAIN_FRAME_MENU,-,196,2,12,M_-46,-,Y,,지그,-,,,,지그 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,샘플마스터 관리,197,2,13,M_SAMPLEMASTER,샘플마스터 관리,Y,w_mcn_sample_master,지그,샘플마스터 관리,,,,지그 > 샘플마스터 관리,MATCHED,W_MCN_SAMPLE_MASTER,샘플마스터 관리,SAMPLE MASTER INFROMATION MANAGE,SAMPLE MASTER INFROMATION MANAGE,Y
+1,M_MAIN_FRAME_MENU,샘플마스터 장착이력조회,198,2,14,M_SAMPLEINPUTHISTORY,샘플마스터 장착이력조회,Y,w_mcn_sample_input_history_master,지그,샘플마스터 장착이력조회,,,,지그 > 샘플마스터 장착이력조회,MATCHED,W_MCN_SAMPLE_INPUT_HISTORY_MASTER,샘플마스터 장착이력조회,SAMPLE INPUT HISTORY,SAMPLE INPUT HISTORY,Y
+1,M_MAIN_FRAME_MENU,샘플마스터 투입이력조회,199,2,15,M_SAMPLEINPUTHISTORY0,샘플마스터 투입이력조회,Y,w_mcn_sample_bcr_input_history_master,지그,샘플마스터 투입이력조회,,,,지그 > 샘플마스터 투입이력조회,MATCHED,W_MCN_SAMPLE_BCR_INPUT_HISTORY_MASTER,샘플마스터 투입이력조회,SAMPLE INPUT HISTORY,SAMPLE INPUT HISTORY,Y
+1,M_MAIN_FRAME_MENU,피더,200,1,9,M_FEEDER,피더,Y,,피더,,,,,피더,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,피더관리,201,2,1,M_FEEDERMASTER,피더관리,Y,w_mcn_feeder_master,피더,피더관리,,,,피더 > 피더관리,MATCHED,W_MCN_FEEDER_MASTER,피더관리,CUSTOMER INFROMATION MANAGE,CUSTOMER INFROMATION MANAGE,Y
+1,M_MAIN_FRAME_MENU,피더수리신청,202,2,2,M_FEEDERREPAIRREQUESTMASTER,피더수리신청,Y,w_mcn_feeder_repair_request_master,피더,피더수리신청,,,,피더 > 피더수리신청,MATCHED,W_MCN_FEEDER_REPAIR_REQUEST_MASTER,피더수리신청,MATERIAL RECEIPT MASTER,MATERIAL RECEIPT MASTER,Y
+1,M_MAIN_FRAME_MENU,피더수리관리,203,2,3,M_FEEDERREPAIRMASTER,피더수리관리,Y,w_mcn_feeder_repair_master,피더,피더수리관리,,,,피더 > 피더수리관리,MATCHED,W_MCN_FEEDER_REPAIR_MASTER,피더수리관리,MATERIAL RECEIPT MASTER,MATERIAL RECEIPT MASTER,Y
+1,M_MAIN_FRAME_MENU,피더교정관리,204,2,4,M_JIGFEEDERADJUST,피더교정관리,Y,w_mcn_jig_feeder_adjust_master,피더,피더교정관리,,,,피더 > 피더교정관리,MATCHED,W_MCN_JIG_FEEDER_ADJUST_MASTER,피더교정관리,금형검사이력관리,금형검사이력관리,Y
+1,M_MAIN_FRAME_MENU,S-PARTS,205,1,10,M_MOLD,S-PARTS,Y,,S-PARTS,,,,,S-PARTS,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,S-PARTS관리,206,2,1,M_MOLDMASTER,S-PARTS관리,Y,w_mcn_mold_master,S-PARTS,S-PARTS관리,,,,S-PARTS > S-PARTS관리,MATCHED,W_MCN_MOLD_MASTER,CUSTOMER INFROMATION MANAGE,CUSTOMER INFROMATION MANAGE,CUSTOMER INFROMATION MANAGE,Y
+1,M_MAIN_FRAME_MENU,S-PARTS주문관리,207,2,2,M_MOLDPURCHASEORDERMASTER,S-PARTS주문관리,Y,w_mcn_mold_purchase_order_master,S-PARTS,S-PARTS주문관리,,,,S-PARTS > S-PARTS주문관리,MATCHED,W_MCN_MOLD_PURCHASE_ORDER_MASTER,MATERIAL PURCHASE ORDER MASTER,MATERIAL PURCHASE ORDER MASTER,MATERIAL PURCHASE ORDER MASTER,Y
+1,M_MAIN_FRAME_MENU,S-PARTS입고관리,208,2,3,M_MOLDRECEIPTMASTER,S-PARTS입고관리,Y,w_mcn_mold_receipt_master,S-PARTS,S-PARTS입고관리,,,,S-PARTS > S-PARTS입고관리,MATCHED,W_MCN_MOLD_RECEIPT_MASTER,MATERIAL RECEIPT MASTER,MATERIAL RECEIPT MASTER,MATERIAL RECEIPT MASTER,Y
+1,M_MAIN_FRAME_MENU,S-PARTS출고관리,209,2,4,M_MOLDISSUEMASTER,S-PARTS출고관리,Y,w_mcn_mold_issue_master,S-PARTS,S-PARTS출고관리,,,,S-PARTS > S-PARTS출고관리,MATCHED,W_MCN_MOLD_ISSUE_MASTER,MATERIAL RECEIPT MASTER,MATERIAL RECEIPT MASTER,MATERIAL RECEIPT MASTER,Y
+1,M_MAIN_FRAME_MENU,S-PARTS재고관리,210,2,5,M_MOLDINVENTORYMASTER,S-PARTS재고관리,Y,w_mcn_mold_inventory_master,S-PARTS,S-PARTS재고관리,,,,S-PARTS > S-PARTS재고관리,MATCHED,W_MCN_MOLD_INVENTORY_MASTER,CUSTOMER INFROMATION MANAGE,CUSTOMER INFROMATION MANAGE,CUSTOMER INFROMATION MANAGE,Y
+1,M_MAIN_FRAME_MENU,-,211,2,6,M_-17,-,Y,,S-PARTS,-,,,,S-PARTS > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,S-PARTS수리신청관리,212,2,7,M_MOLDREPAIRREQUESTMASTER,S-PARTS수리신청관리,Y,w_mcn_mold_repair_request_master,S-PARTS,S-PARTS수리신청관리,,,,S-PARTS > S-PARTS수리신청관리,MATCHED,W_MCN_MOLD_REPAIR_REQUEST_MASTER,MATERIAL RECEIPT MASTER,MATERIAL RECEIPT MASTER,MATERIAL RECEIPT MASTER,Y
+1,M_MAIN_FRAME_MENU,S-PARTS수리관리,213,2,8,M_MOLDREPAIRMASTER,S-PARTS수리관리,Y,w_mcn_mold_repair_master,S-PARTS,S-PARTS수리관리,,,,S-PARTS > S-PARTS수리관리,MATCHED,W_MCN_MOLD_REPAIR_MASTER,MATERIAL RECEIPT MASTER,MATERIAL RECEIPT MASTER,MATERIAL RECEIPT MASTER,Y
+1,M_MAIN_FRAME_MENU,-,214,2,9,M_-41,-,Y,,S-PARTS,-,,,,S-PARTS > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,S-PARTS구매단가관리,215,2,10,M_MOLDUNITPRICEMASTER,S-PARTS구매단가관리,Y,w_mcn_mold_buy_price_master,S-PARTS,S-PARTS구매단가관리,,,,S-PARTS > S-PARTS구매단가관리,MATCHED,W_MCN_MOLD_BUY_PRICE_MASTER,CUSTOMER INFROMATION MANAGE,CUSTOMER INFROMATION MANAGE,CUSTOMER INFROMATION MANAGE,Y
+1,M_MAIN_FRAME_MENU,생산,216,1,11,M_PLANNING,생산,Y,,생산,,,,,생산,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,제품생산계획,217,2,1,M_PRODUCTMASTERPLAN,제품생산계획,Y,w_pln_product_master_plan_master,생산,제품생산계획,,,,생산 > 제품생산계획,MATCHED,W_PLN_PRODUCT_MASTER_PLAN_MASTER,제품생산계획,PLANNING MASTER PLAN  MASTER,PLANNING MASTER PLAN  MASTER,Y
+1,M_MAIN_FRAME_MENU,반제품생산계획,218,2,2,M_ASSEMBLYMASERPLAN,반제품생산계획,Y,w_pln_assembly_master_plan_master,생산,반제품생산계획,,,,생산 > 반제품생산계획,MATCHED,W_PLN_ASSEMBLY_MASTER_PLAN_MASTER,반제품생산계획,PLANNING MASTER PLAN  MASTER,PLANNING MASTER PLAN  MASTER,Y
+1,M_MAIN_FRAME_MENU,반제품생산실적관리,219,2,3,M_ASSEMBLYACTUALMASTER,반제품생산실적관리,Y,w_pln_assembly_actual_master,생산,반제품생산실적관리,,,,생산 > 반제품생산실적관리,MATCHED,W_PLN_ASSEMBLY_ACTUAL_MASTER,반제품생산실적관리,PLANNING MASTER PLAN  MASTER,PLANNING MASTER PLAN  MASTER,Y
+1,M_MAIN_FRAME_MENU,-,220,2,4,M_5,-,Y,,생산,-,,,,생산 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,롯트카드관리,221,2,5,M_MASTERPLAN,롯트카드관리,Y,w_product_run_card_duckil,생산,롯트카드관리,,,,생산 > 롯트카드관리,MATCHED,W_PRODUCT_RUN_CARD_DUCKIL,롯트카드관리,NEW A LED PROJECT,NEW A LED PROJECT,Y
+1,M_MAIN_FRAME_MENU,롯트카드-PID 매핑관리,222,2,6,M_PCBPIDINSPECTSCANMASTER,롯트카드-PID 매핑관리,Y,w_pln_product_pcb_kitting_scan_master,생산,롯트카드-PID 매핑관리,,,,생산 > 롯트카드-PID 매핑관리,MATCHED,W_PLN_PRODUCT_PCB_KITTING_SCAN_MASTER,LINE MASTER,LINE MASTER,LINE MASTER,Y
+1,M_MAIN_FRAME_MENU,-,223,2,7,M_-61,-,Y,,생산,-,,,,생산 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,기간별 생산실적 조회,224,2,8,M_PRODUCTIONRESULTS,기간별 생산실적 조회,Y,w_pln_product_pcb_result_query,생산,기간별 생산실적 조회,,,,생산 > 기간별 생산실적 조회,MATCHED,W_PLN_PRODUCT_PCB_RESULT_QUERY,기간별 생산실적 조회,LINE MASTER,LINE MASTER,Y
+1,M_MAIN_FRAME_MENU,생산일보 리포트,225,2,9,M_DAILYPRODUCTIONREPORT,생산일보 리포트,Y,w_pln_product_pcb_result_report,생산,생산일보 리포트,,,,생산 > 생산일보 리포트,MATCHED,W_PLN_PRODUCT_PCB_RESULT_REPORT,생산일보 리포트,LINE MASTER,LINE MASTER,Y
+1,M_MAIN_FRAME_MENU,공정,226,1,12,M_WORKSTAGE0,공정,Y,,공정,,,,,공정,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,제품공정인아웃스캔관리,227,2,1,M_PRODUCWORKSTAGEINOUTSCANMASTER,제품공정인아웃스캔관리,Y,w_pln_product_inout_scan_master,공정,제품공정인아웃스캔관리,,,,공정 > 제품공정인아웃스캔관리,MATCHED,W_PLN_PRODUCT_INOUT_SCAN_MASTER,제품공정인아웃스캔관리,승인원의모델에 대한 특성을 관리,승인원의모델에 대한 특성을 관리,Y
+1,M_MAIN_FRAME_MENU,-,228,2,2,M_-22,-,Y,,공정,-,,,,공정 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,매거진라벨 발행,229,2,3,M_SMTMAGEZINELABELMASTER,매거진라벨 발행,Y,w_pln_product_magazine_label_master,공정,매거진라벨 발행,,,,공정 > 매거진라벨 발행,MATCHED,W_PLN_PRODUCT_MAGAZINE_LABEL_MASTER,매거진라벨 발행,승인원의모델에 대한 특성을 관리,승인원의모델에 대한 특성을 관리,Y
+1,M_MAIN_FRAME_MENU,매거진라벨 분할,230,2,4,M_MAGAZINELABELSPLITMASTER,매거진라벨 분할,Y,w_pln_product_magazine_label_split_master,공정,매거진라벨 분할,,,,공정 > 매거진라벨 분할,MATCHED,W_PLN_PRODUCT_MAGAZINE_LABEL_SPLIT_MASTER,매거진라벨 분할,승인원의모델에 대한 특성을 관리,승인원의모델에 대한 특성을 관리,Y
+1,M_MAIN_FRAME_MENU,매거진-PID 매핑관리,231,2,5,M_PIDCREATEMATER,매거진-PID 매핑관리,Y,w_pln_product_barcode_create_master,공정,매거진-PID 매핑관리,,,,공정 > 매거진-PID 매핑관리,MATCHED,W_PLN_PRODUCT_BARCODE_CREATE_MASTER,매거진-PID 매핑관리,LINE MASTER,LINE MASTER,Y
+1,M_MAIN_FRAME_MENU,-,232,2,6,M_-49,-,Y,,공정,-,,,,공정 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,매거진라벨이력조회,233,2,7,M_MAGAZINELABELQUERY,매거진라벨이력조회,Y,w_pln_product_magazine_label_query,공정,매거진라벨이력조회,,,,공정 > 매거진라벨이력조회,MATCHED,W_PLN_PRODUCT_MAGAZINE_LABEL_QUERY,매거진라벨이력조회,승인원의모델에 대한 특성을 관리,승인원의모델에 대한 특성을 관리,Y
+1,M_MAIN_FRAME_MENU,자재창고,234,1,13,M_WAREHOUSE,자재창고,Y,,자재창고,,,,,자재창고,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,자재입고전표관리,235,2,1,M_19,자재입고전표관리,Y,w_mat_receipt_slip_master,자재창고,자재입고전표관리,,,,자재창고 > 자재입고전표관리,MATCHED,W_MAT_RECEIPT_SLIP_MASTER,자재입고전표관리,MATERIAL MASS ISSUE RETURN MASTER,MATERIAL MASS ISSUE RETURN MASTER,Y
+1,M_MAIN_FRAME_MENU,-,236,2,2,M_-54,-,Y,,자재창고,-,,,,자재창고 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,자재바코드입고관리,237,2,3,M_34,자재바코드입고관리,Y,,자재창고,자재바코드입고관리,,,,자재창고 > 자재바코드입고관리,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,자재바코드출고관리,238,2,4,M_48,자재바코드출고관리,Y,,자재창고,자재바코드출고관리,,,,자재창고 > 자재바코드출고관리,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,IMD 라인 자재투입관리,239,2,5,M_MANUALINPUTMATERIAL,IMD 라인 자재투입관리,Y,w_mat_manual_input_history_query,자재창고,IMD 라인 자재투입관리,,,,자재창고 > IMD 라인 자재투입관리,MATCHED,W_MAT_MANUAL_INPUT_HISTORY_QUERY,IMD 라인 자재투입관리,"MANUAL INPUT MAT TO PRODUCTION LINE, AND INQUERY","MANUAL INPUT MAT TO PRODUCTION LINE, AND INQUERY",Y
+1,M_MAIN_FRAME_MENU,자재분할관리,240,2,6,M_49,자재분할관리,Y,w_mat_receipt_barcode_divide_master,자재창고,자재분할관리,,,,자재창고 > 자재분할관리,MATCHED,W_MAT_RECEIPT_BARCODE_DIVIDE_MASTER,자재분할관리,MATERIAL MASS ISSUE RETURN MASTER,MATERIAL MASS ISSUE RETURN MASTER,Y
+1,M_MAIN_FRAME_MENU,자재바코드재발행,241,2,7,M_MATERIALBARCODEREPRINT,자재바코드재발행,Y,w_mat_receipt_barcode_reprint_master,자재창고,자재바코드재발행,,,,자재창고 > 자재바코드재발행,MATCHED,W_MAT_RECEIPT_BARCODE_REPRINT_MASTER,자재바코드재발행,MATERIAL MASS ISSUE RETURN MASTER,MATERIAL MASS ISSUE RETURN MASTER,Y
+1,M_MAIN_FRAME_MENU,-,242,2,8,M_-58,-,Y,,자재창고,-,,,,자재창고 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,솔더라벨 발행,243,2,9,M_SOLDERLABELPRINT,솔더라벨 발행,Y,w_mat_receipt_slip_master_onetek_solder,자재창고,솔더라벨 발행,,,,자재창고 > 솔더라벨 발행,MATCHED,W_MAT_RECEIPT_SLIP_MASTER_ONETEK_SOLDER,솔더라벨 발행,MATERIAL MASS ISSUE RETURN MASTER,MATERIAL MASS ISSUE RETURN MASTER,Y
+1,M_MAIN_FRAME_MENU,솔더입출고조회,244,2,10,M_SOLDERRECEIPTISSUEQUERY,솔더입출고조회,Y,w_mat_solder_receipt_issue_master,자재창고,솔더입출고조회,,,,자재창고 > 솔더입출고조회,MATCHED,W_MAT_SOLDER_RECEIPT_ISSUE_MASTER,솔더입출고조회,Solder Receipt Issue Query,금형검사이력관리,Y
+1,M_MAIN_FRAME_MENU,솔더라인투입이력조회,245,2,11,M_SOLDERINPUTHISTORY,솔더라인투입이력조회,Y,w_mat_solder_input_move_query,자재창고,솔더라인투입이력조회,,,,자재창고 > 솔더라인투입이력조회,MATCHED,W_MAT_SOLDER_INPUT_MOVE_QUERY,솔더라인투입이력조회,솔드 투입 및 이동이력 조회,솔드 투입 및 이동이력 조회,Y
+1,M_MAIN_FRAME_MENU,-,246,2,12,M_-55,-,Y,,자재창고,-,,,,자재창고 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,자재입출고수불원장,247,2,13,M_45,자재입출고수불원장,Y,w_mat_ledger_report,자재창고,자재입출고수불원장,,,,자재창고 > 자재입출고수불원장,MATCHED,W_MAT_LEDGER_REPORT,자재입출고수불원장,MATERIAL LEDGER REPORT,MATERIAL LEDGER REPORT,Y
+1,M_MAIN_FRAME_MENU,바코드,248,2,14,M_BARCODE0,바코드,Y,,자재창고,바코드,,,,자재창고 > 바코드,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,-,249,3,1,M_-43,-,Y,,자재창고,바코드,-,,,자재창고 > 바코드 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,출고바코드반품(양산/벌크)관리,250,3,2,M_61,출고바코드반품(양산/벌크)관리,Y,w_mat_other_mass_issue_barcode_return_master,자재창고,바코드,출고바코드반품(양산/벌크)관리,,,자재창고 > 바코드 > 출고바코드반품(양산/벌크)관리,MATCHED,W_MAT_OTHER_MASS_ISSUE_BARCODE_RETURN_MASTER,MATERIAL MASS ISSUE RETURN MASTER,MATERIAL MASS ISSUE RETURN MASTER,MATERIAL MASS ISSUE RETURN MASTER,Y
+1,M_MAIN_FRAME_MENU,-,251,3,3,M_-32,-,Y,,자재창고,바코드,-,,,자재창고 > 바코드 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,정상,252,2,15,M_NORMAL,정상,Y,,자재창고,정상,,,,자재창고 > 정상,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,자재입고관리,253,3,1,M_30,자재입고관리,Y,w_mat_receipt_master,자재창고,정상,자재입고관리,,,자재창고 > 정상 > 자재입고관리,MATCHED,W_MAT_RECEIPT_MASTER,자재입고관리,MATERIAL RECEIPT MASTER,MATERIAL RECEIPT MASTER,Y
+1,M_MAIN_FRAME_MENU,자재기타입고관리,254,3,2,M_31,자재기타입고관리,Y,w_mat_other_receipt_master,자재창고,정상,자재기타입고관리,,,자재창고 > 정상 > 자재기타입고관리,MATCHED,W_MAT_OTHER_RECEIPT_MASTER,자재기타입고관리,MATERIAL RECEIPT MASTER,MATERIAL RECEIPT MASTER,Y
+1,M_MAIN_FRAME_MENU,자재입고취소,255,3,3,M_MATERIALRECEIPTCANCEL,자재입고취소,Y,,자재창고,정상,자재입고취소,,,자재창고 > 정상 > 자재입고취소,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,-,256,3,4,M_-38,-,Y,,자재창고,정상,-,,,자재창고 > 정상 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,자재기타출고,257,3,5,M_52,자재기타출고,Y,w_mat_other_issue_master,자재창고,정상,자재기타출고,,,자재창고 > 정상 > 자재기타출고,MATCHED,W_MAT_OTHER_ISSUE_MASTER,자재기타출고,MATERIAL MASS ISSUE MASTER,MATERIAL MASS ISSUE MASTER,Y
+1,M_MAIN_FRAME_MENU,자재출고취소,258,3,6,M_56,자재출고취소,Y,w_mat_mass_issue_cancel_master,자재창고,정상,자재출고취소,,,자재창고 > 정상 > 자재출고취소,MATCHED,W_MAT_MASS_ISSUE_CANCEL_MASTER,자재출고취소,MATERIAL MASS ISSUE MASTER,MATERIAL MASS ISSUE MASTER,Y
+1,M_MAIN_FRAME_MENU,-,259,2,16,M_-33,-,Y,,자재창고,-,,,,자재창고 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,MSL 이상품목 처리이력관리,260,2,17,M_MSLITEMCHECKMASTER,MSL 이상품목 처리이력관리,Y,w_mat_msl_item_check_master,자재창고,MSL 이상품목 처리이력관리,,,,자재창고 > MSL 이상품목 처리이력관리,MATCHED,W_MAT_MSL_ITEM_CHECK_MASTER,MSL 이상품목 처리이력관리,부품 마스터,부품 마스터,Y
+1,M_MAIN_FRAME_MENU,베이킹이력관리,261,2,18,M_BAKINGHISTORYQUERY,베이킹이력관리,Y,w_mat_baking_dehumi_scan_master,자재창고,베이킹이력관리,,,,자재창고 > 베이킹이력관리,MATCHED,W_MAT_BAKING_DEHUMI_SCAN_MASTER,베이킹이력관리,LINE MASTER,LINE MASTER,Y
+1,M_MAIN_FRAME_MENU,베이킹재고조회,262,2,19,M_BAKINGSTOCKQUERY,베이킹재고조회,Y,w_mat_baking_scan_query,자재창고,베이킹재고조회,,,,자재창고 > 베이킹재고조회,MATCHED,W_MAT_BAKING_SCAN_QUERY,베이킹재고조회,,,Y
+1,M_MAIN_FRAME_MENU,진공포장재고조회,263,2,20,M_VACUUMSTOCKQUERY,진공포장재고조회,Y,w_mat_vacuum_scan_query,자재창고,진공포장재고조회,,,,자재창고 > 진공포장재고조회,MATCHED,W_MAT_VACUUM_SCAN_QUERY,진공포장재고조회,,,Y
+1,M_MAIN_FRAME_MENU,제습함재고조회,264,2,21,M_DEHUMISTOCKQUERY,제습함재고조회,Y,w_mat_dehumi_scan_query,자재창고,제습함재고조회,,,,자재창고 > 제습함재고조회,MATCHED,W_MAT_DEHUMI_SCAN_QUERY,제습함재고조회,,,Y
+1,M_MAIN_FRAME_MENU,-,265,2,22,M_-59,-,Y,,자재창고,-,,,,자재창고 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,SMT 공릴체크,266,2,23,M_CHECKRECYCLEREEL,SMT 공릴체크,Y,w_smt_recycle_check_rpt,자재창고,SMT 공릴체크,,,,자재창고 > SMT 공릴체크,MATCHED,W_SMT_RECYCLE_CHECK_RPT,SMT 공릴체크,NEW A LED PROJECT,NEW A LED PROJECT,Y
+1,M_MAIN_FRAME_MENU,재고,267,1,14,M_INVENTORY,재고,Y,,재고,,,,,재고,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,현재고조회,268,2,1,M_CURRENTINVENTORYQUERY,현재고조회,Y,w_mat_current_inventory_master,재고,현재고조회,,,,재고 > 현재고조회,MATCHED,W_MAT_CURRENT_INVENTORY_MASTER,현재고조회,MATERIAL CURRENT INVENTORY MASTER,MATERIAL CURRENT INVENTORY MASTER,Y
+1,M_MAIN_FRAME_MENU,총재고조회,269,2,2,M_TOTALINVENTORYQUERY,총재고조회,Y,w_mat_total_inventory_query,재고,총재고조회,,,,재고 > 총재고조회,MATCHED,W_MAT_TOTAL_INVENTORY_QUERY,총재고조회,총재고조회,총재고조회,Y
+1,M_MAIN_FRAME_MENU,-,270,2,3,M_-35,-,Y,,재고,-,,,,재고 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,자재재고마감,271,2,4,M_62,자재재고마감,Y,w_mat_inventory_close_report,재고,자재재고마감,,,,재고 > 자재재고마감,MATCHED,W_MAT_INVENTORY_CLOSE_REPORT,자재재고마감,MATERIAL INVENTORY CLOSE REPORT,MATERIAL INVENTORY CLOSE REPORT,Y
+1,M_MAIN_FRAME_MENU,자재재고조사,272,2,5,M_63,자재재고조사,Y,w_mat_inventory_check_master,재고,자재재고조사,,,,재고 > 자재재고조사,MATCHED,W_MAT_INVENTORY_CHECK_MASTER,자재재고조사,MATERIAL INVENTORY CHECK MASTER,MATERIAL INVENTORY CHECK MASTER,Y
+1,M_MAIN_FRAME_MENU,-,273,2,6,M_-50,-,Y,,재고,-,,,,재고 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,자재바코드스캔실사,274,2,7,M_64,자재바코드스캔실사,Y,w_mat_barcode_check_master,재고,자재바코드스캔실사,,,,재고 > 자재바코드스캔실사,MATCHED,W_MAT_BARCODE_CHECK_MASTER,MATERIAL MASS ISSUE RETURN MASTER,MATERIAL MASS ISSUE RETURN MASTER,MATERIAL MASS ISSUE RETURN MASTER,Y
+1,M_MAIN_FRAME_MENU,수리,275,1,15,M_REPAIR,수리,Y,,수리,,,,,수리,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,공정수리관리(PID),276,2,1,M_WQCMANAGER,공정수리관리(PID),Y,w_pln_product_pcb_repair_master,수리,공정수리관리(PID),,,,수리 > 공정수리관리(PID),MATCHED,W_PLN_PRODUCT_PCB_REPAIR_MASTER,공정수리관리(PID),LINE MASTER,LINE MASTER,Y
+1,M_MAIN_FRAME_MENU,-,277,2,2,M_0,-,Y,,수리,-,,,,수리 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,공정폐기관리,278,2,3,M_WQCDESTROYMASTER,공정폐기관리,Y,w_pln_product_pcb_destroy_master,수리,공정폐기관리,,,,수리 > 공정폐기관리,MATCHED,W_PLN_PRODUCT_PCB_DESTROY_MASTER,공정폐기관리,LINE MASTER,LINE MASTER,Y
+1,M_MAIN_FRAME_MENU,-,279,2,4,M_-39,-,Y,,수리,-,,,,수리 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,수리자재신청,280,2,5,M_MATERIALREQUEST,수리자재신청,Y,w_mat_request_master,수리,수리자재신청,,,,수리 > 수리자재신청,MATCHED,W_MAT_REQUEST_MASTER,수리자재신청,MATERIAL REQUEST MASTER,MATERIAL REQUEST MASTER,Y
+1,M_MAIN_FRAME_MENU,공정수리이력조회,281,2,6,M_WQCREPAIRQUERY,공정수리이력조회,Y,,수리,공정수리이력조회,,,,수리 > 공정수리이력조회,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,품질관리,282,1,16,M_QC,품질관리,Y,w_qc_4m_master,품질관리,,,,,품질관리,MATCHED,W_QC_4M_MASTER,4M 이력관리,LINE MASTER,LINE MASTER,Y
+1,M_MAIN_FRAME_MENU,IQC 관리,283,2,1,M_IQCMASTER,IQC 관리,Y,w_qc_iqc_master,품질관리,IQC 관리,,,,품질관리 > IQC 관리,MATCHED,W_QC_IQC_MASTER,IQC 관리,최종라벨스캔이력조회,최종라벨스캔이력조회,Y
+1,M_MAIN_FRAME_MENU,IQC 이력등록관리,284,2,2,M_IQCINSPECTHISTORYMASTERPID,IQC 이력등록관리,Y,w_qc_iqc_inspect_history_master,품질관리,IQC 이력등록관리,,,,품질관리 > IQC 이력등록관리,MATCHED,W_QC_IQC_INSPECT_HISTORY_MASTER,IQC 이력등록관리,승인원의모델에 대한 특성을 관리,승인원의모델에 대한 특성을 관리,Y
+1,M_MAIN_FRAME_MENU,PCB 이슈발생스캔관리,285,2,3,M_PCBISSUESCANQUERY,PCB 이슈발생스캔관리,Y,w_pln_product_pid_issue_scan_master,품질관리,PCB 이슈발생스캔관리,,,,품질관리 > PCB 이슈발생스캔관리,MATCHED,W_PLN_PRODUCT_PID_ISSUE_SCAN_MASTER,LINE MASTER,LINE MASTER,LINE MASTER,Y
+1,M_MAIN_FRAME_MENU,-,286,2,4,M_-26,-,Y,,품질관리,-,,,,품질관리 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,재고통제관리,287,2,5,M_INVENTORYHOLDMANAGER,재고통제관리,Y,w_qc_inventory_hold_master,품질관리,재고통제관리,,,,품질관리 > 재고통제관리,MATCHED,W_QC_INVENTORY_HOLD_MASTER,재고통제관리,재고 홀딩관리,재고 홀딩관리,Y
+1,M_MAIN_FRAME_MENU,PID 홀딩관리,288,2,6,M_PIDBLOCKINGMASTER,PID 홀딩관리,Y,w_pln_product_barcode_holding,품질관리,PID 홀딩관리,,,,품질관리 > PID 홀딩관리,MATCHED,W_PLN_PRODUCT_BARCODE_HOLDING,PID 홀딩관리,LINE MASTER,LINE MASTER,Y
+1,M_MAIN_FRAME_MENU,품질이상발생관리,289,2,7,M_QCNOTIFYMASTER,품질이상발생관리,Y,w_qc_notify_master,품질관리,품질이상발생관리,,,,품질관리 > 품질이상발생관리,MATCHED,W_QC_NOTIFY_MASTER,품질이상발생관리,LINE MASTER,LINE MASTER,Y
+1,M_MAIN_FRAME_MENU,품질알림관리,290,2,8,M_ECONOTIFYMASTER,품질알림관리,Y,w_qc_eco_notify_master,품질관리,품질알림관리,,,,품질관리 > 품질알림관리,MATCHED,W_QC_ECO_NOTIFY_MASTER,품질알림관리,재고 홀딩관리,재고 홀딩관리,Y
+1,M_MAIN_FRAME_MENU,4M 이력관리,291,2,9,M_4MHISTORYMASTER,4M 이력관리,Y,w_qc_4m_master,품질관리,4M 이력관리,,,,품질관리 > 4M 이력관리,MATCHED,W_QC_4M_MASTER,4M 이력관리,LINE MASTER,LINE MASTER,Y
+1,M_MAIN_FRAME_MENU,-,292,2,10,M_-53,-,Y,,품질관리,-,,,,품질관리 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,공정품질검사이력관리,293,2,11,M_WORKSTAGEINSPECTHISTORYMASTER,공정품질검사이력관리,Y,w_qc_workstage_inspect_data_master,품질관리,공정품질검사이력관리,,,,품질관리 > 공정품질검사이력관리,MATCHED,W_QC_WORKSTAGE_INSPECT_DATA_MASTER,공정품질검사이력관리,설비검사이력데이터출력,설비검사이력데이터출력,Y
+1,M_MAIN_FRAME_MENU,OQC 검사이력관리(PID),294,2,12,M_OQCINSPECTHISTORYMASTER,OQC 검사이력관리(PID),Y,w_qc_oqc_inspect_history_master,품질관리,OQC 검사이력관리(PID),,,,품질관리 > OQC 검사이력관리(PID),MATCHED,W_QC_OQC_INSPECT_HISTORY_MASTER,승인원의모델에 대한 특성을 관리,승인원의모델에 대한 특성을 관리,승인원의모델에 대한 특성을 관리,Y
+1,M_MAIN_FRAME_MENU,OQC 검사이력관리(LOT),295,2,13,M_23,OQC 검사이력관리(LOT),Y,w_qc_oqc_inspect_history_4_lot_master,품질관리,OQC 검사이력관리(LOT),,,,품질관리 > OQC 검사이력관리(LOT),MATCHED,W_QC_OQC_INSPECT_HISTORY_4_LOT_MASTER,승인원의모델에 대한 특성을 관리,승인원의모델에 대한 특성을 관리,승인원의모델에 대한 특성을 관리,Y
+1,M_MAIN_FRAME_MENU,-,296,2,14,M_-42,-,Y,,품질관리,-,,,,품질관리 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,온도상태조회,297,2,15,M_TEMPRETURESTATUSQUERY,온도상태조회,Y,w_pln_product_tempreture_history_query,품질관리,온도상태조회,,,,품질관리 > 온도상태조회,MATCHED,W_PLN_PRODUCT_TEMPRETURE_HISTORY_QUERY,온도상태조회,LINE MASTER,LINE MASTER,Y
+1,M_MAIN_FRAME_MENU,출하현황,298,1,17,M_SHIPPING,출하현황,Y,,출하현황,,,,,출하현황,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,제품포장관리(PID),299,2,1,M_CELLBIZPACKING,제품포장관리(PID),Y,w_prd_product_packing_create_master,출하현황,제품포장관리(PID),,,,출하현황 > 제품포장관리(PID),MATCHED,W_PRD_PRODUCT_PACKING_CREATE_MASTER,제품포장관리(PID),CELL BIZ PACKING 작업,CELL BIZ PACKING 작업,Y
+1,M_MAIN_FRAME_MENU,제품포장관리(LOT),300,2,2,M_PRODUCTMAGAZINEPACKINGMASTER,제품포장관리(LOT),Y,w_prd_product_packing_4_magazine_create_master,출하현황,제품포장관리(LOT),,,,출하현황 > 제품포장관리(LOT),MATCHED,W_PRD_PRODUCT_PACKING_4_MAGAZINE_CREATE_MASTER,승인원의모델에 대한 특성을 관리,승인원의모델에 대한 특성을 관리,승인원의모델에 대한 특성을 관리,Y
+1,M_MAIN_FRAME_MENU,-,301,2,3,M_16,-,Y,,출하현황,-,,,,출하현황 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,제품입고관리(PID),302,2,4,M_PRODUCTRECEIPTMASTER,제품입고관리(PID),Y,,출하현황,제품입고관리(PID),,,,출하현황 > 제품입고관리(PID),NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,제품입고관리(LOT),303,2,5,M_PRODUCTMAGAZINERECEIPTMASTER,제품입고관리(LOT),Y,w_prd_product_fg_4_magazine_receipt,출하현황,제품입고관리(LOT),,,,출하현황 > 제품입고관리(LOT),MATCHED,W_PRD_PRODUCT_FG_4_MAGAZINE_RECEIPT,제품입고관리(LOT),FINISH GOODS 입고 / 입고 취소 2017.03.29,FINISH GOODS 입고 / 입고 취소 2017.03.29,Y
+1,M_MAIN_FRAME_MENU,제품입고관리 (모델단위),304,2,6,M_PRODUCTMODELRECEIPTMASTER,제품입고관리 (모델단위),Y,w_prd_product_fg_4_model_receipt,출하현황,제품입고관리 (모델단위),,,,출하현황 > 제품입고관리 (모델단위),MATCHED,W_PRD_PRODUCT_FG_4_MODEL_RECEIPT,제품입고관리 (모델단위),FINISH GOODS  모델단위 입고 / 입고 취소 2017.03.29,FINISH GOODS  모델단위 입고 / 입고 취소 2017.03.29,Y
+1,M_MAIN_FRAME_MENU,-,305,2,7,M_-40,-,Y,,출하현황,-,,,,출하현황 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,파렛타이징 관리,306,2,8,M_PRODUCTPALLETEMASTER,파렛타이징 관리,Y,w_prd_product_fg_palletizing,출하현황,파렛타이징 관리,,,,출하현황 > 파렛타이징 관리,MATCHED,W_PRD_PRODUCT_FG_PALLETIZING,파렛타이징 관리,파렛타이징 작업,파렛타이징 작업,Y
+1,M_MAIN_FRAME_MENU,제품출하관리,307,2,9,M_PRODUCTSHIPPINGQUERY,제품출하관리,Y,w_prd_product_fg_issue,출하현황,제품출하관리,,,,출하현황 > 제품출하관리,MATCHED,W_PRD_PRODUCT_FG_ISSUE,제품출하관리,FG 출하작업,FG 출하작업,Y
+1,M_MAIN_FRAME_MENU,제품출고관리 (모델단위),308,2,10,M_PRODUCTMODELISSUEMASTE,제품출고관리 (모델단위),Y,w_prd_product_fg_4_model_issue,출하현황,제품출고관리 (모델단위),,,,출하현황 > 제품출고관리 (모델단위),MATCHED,W_PRD_PRODUCT_FG_4_MODEL_ISSUE,제품출고관리 (모델단위),FG 출하작업,FG 출하작업,Y
+1,M_MAIN_FRAME_MENU,-,309,2,11,M_-45,-,Y,,출하현황,-,,,,출하현황 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,제품재고,310,2,12,M_PRODUCTINVENTORY,제품재고,Y,,출하현황,제품재고,,,,출하현황 > 제품재고,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,제품패킹이력,311,2,13,M_PRODUCTPACKINGHISORY,제품패킹이력,Y,w_prd_product_packing_history,출하현황,제품패킹이력,,,,출하현황 > 제품패킹이력,MATCHED,W_PRD_PRODUCT_PACKING_HISTORY,제품패킹이력,CELL BIZ PACKING 작업,CELL BIZ PACKING 작업,Y
+1,M_MAIN_FRAME_MENU,추적,312,1,18,M_TRACKING,추적,Y,,추적,,,,,추적,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,자재 제조번호 기준 추적,313,2,1,M_PIDTRACKINGQUERY,자재 제조번호 기준 추적,Y,w_product_pid_tracking_rpt,추적,자재 제조번호 기준 추적,,,,추적 > 자재 제조번호 기준 추적,MATCHED,W_PRODUCT_PID_TRACKING_RPT,자재 제조번호 기준 추적,NEW A LED PROJECT,NEW A LED PROJECT,Y
+1,M_MAIN_FRAME_MENU,자재추적조회(동적),314,2,2,M_MATERIALTRACKINGQUERY,자재추적조회(동적),Y,w_product_material_tracking_rpt,추적,자재추적조회(동적),,,,추적 > 자재추적조회(동적),MATCHED,W_PRODUCT_MATERIAL_TRACKING_RPT,자재추적조회(동적),NEW A LED PROJECT,NEW A LED PROJECT,Y
+1,M_MAIN_FRAME_MENU,자재사용이력조회,315,2,3,M_MATERIALUSEDHISTORY,자재사용이력조회,Y,w_product_material_tracking_msl_rpt,추적,자재사용이력조회,,,,추적 > 자재사용이력조회,MATCHED,W_PRODUCT_MATERIAL_TRACKING_MSL_RPT,자재사용이력조회,NEW A LED PROJECT,NEW A LED PROJECT,Y
+1,M_MAIN_FRAME_MENU,-,316,2,4,M_-24,-,Y,,추적,-,,,,추적 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,생산이력조회(PID),317,2,5,M_PIDTRACKING,생산이력조회(PID),Y,w_product_pid_tracking_fpcb_rpt,추적,생산이력조회(PID),,,,추적 > 생산이력조회(PID),MATCHED,W_PRODUCT_PID_TRACKING_FPCB_RPT,생산이력조회(PID),PID Tracking for The Production,NEW A LED PROJECT,Y
+1,M_MAIN_FRAME_MENU,생산이력조회(Run No),318,2,6,M_PIDTRACKINGFORTHEPRODUCTION,생산이력조회(Run No),Y,w_pln_product_barcode_tracking,추적,생산이력조회(Run No),,,,추적 > 생산이력조회(Run No),MATCHED,W_PLN_PRODUCT_BARCODE_TRACKING,생산이력조회(Run No),LINE MASTER,LINE MASTER,Y
+1,M_MAIN_FRAME_MENU,롯트추적조회(ALL),319,2,7,M_ALLTRACKINGFORTHEPRODUCTION,롯트추적조회(ALL),Y,w_pln_product_all_barcode_tracking,추적,롯트추적조회(ALL),,,,추적 > 롯트추적조회(ALL),MATCHED,W_PLN_PRODUCT_ALL_BARCODE_TRACKING,롯트추적조회(ALL),LINE MASTER,LINE MASTER,Y
+1,M_MAIN_FRAME_MENU,-,320,2,8,M_-65,-,Y,,추적,-,,,,추적 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,생산현황데쉬보드,321,2,9,M_PRODUCTIONSTATUSDASHBOARD,생산현황데쉬보드,Y,w_com_production_status_dashboard,추적,생산현황데쉬보드,,,,추적 > 생산현황데쉬보드,MATCHED,W_COM_PRODUCTION_STATUS_DASHBOARD,생산현황데쉬보드,PRODUCTION STATUS DASHBOARD,부품 마스터,Y
+1,M_MAIN_FRAME_MENU,조회,322,1,19,M_QUERY,조회,Y,,조회,,,,,조회,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,PID 정보조회,323,2,1,M_PIDMASTERQUERY,PID 정보조회,Y,,조회,PID 정보조회,,,,조회 > PID 정보조회,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,마킹이력조회,324,2,2,M_MARKINGHISTORYQUERY,마킹이력조회,Y,w_pln_product_pcb_marking_query,조회,마킹이력조회,,,,조회 > 마킹이력조회,MATCHED,W_PLN_PRODUCT_PCB_MARKING_QUERY,마킹이력조회,LINE MASTER,LINE MASTER,Y
+1,M_MAIN_FRAME_MENU,PCB 투입 리스트조회,325,2,3,M_PCBINPUTSCANLISTQUERY,PCB 투입 리스트조회,Y,w_qc_pcb_input_scan_master,조회,PCB 투입 리스트조회,,,,조회 > PCB 투입 리스트조회,MATCHED,W_QC_PCB_INPUT_SCAN_MASTER,PCB 투입 리스트조회,LINE MASTER,LINE MASTER,Y
+1,M_MAIN_FRAME_MENU,-,326,2,4,M_-52,-,Y,,조회,-,,,,조회 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,SMT 오장착 스캔 현황 조회,327,2,5,M_PDASCANLISTQUERY,SMT 오장착 스캔 현황 조회,Y,w_pln_product_pda_scan_query,조회,SMT 오장착 스캔 현황 조회,,,,조회 > SMT 오장착 스캔 현황 조회,MATCHED,W_PLN_PRODUCT_PDA_SCAN_QUERY,SMT 오장착 스캔 현황 조회,PDA Scan List Query,LINE MASTER,Y
+1,M_MAIN_FRAME_MENU,PDA 검사오류내역조회,328,2,6,M_PDASCANNGLISTQUERY,PDA 검사오류내역조회,Y,w_smt_plan_ng_check_master,조회,PDA 검사오류내역조회,,,,조회 > PDA 검사오류내역조회,MATCHED,W_SMT_PLAN_NG_CHECK_MASTER,PDA 검사오류내역조회,생산계획,생산계획,Y
+1,M_MAIN_FRAME_MENU,SMT 피더별 모니터링,329,2,7,M_SMTFEEDERMONITORING0,SMT 피더별 모니터링,Y,w_smt_plan_feeder_monitoring_master,조회,SMT 피더별 모니터링,,,,조회 > SMT 피더별 모니터링,MATCHED,W_SMT_PLAN_FEEDER_MONITORING_MASTER,SMT 피더별 모니터링,생산계획,생산계획,Y
+1,M_MAIN_FRAME_MENU,SMT 제품실적센서이력조회,330,2,8,M_SMTPRODUCTSENSORACTUALQUERY,SMT 제품실적센서이력조회,Y,w_pln_product_sensor_actual_master,조회,SMT 제품실적센서이력조회,,,,조회 > SMT 제품실적센서이력조회,MATCHED,W_PLN_PRODUCT_SENSOR_ACTUAL_MASTER,SMT 제품실적센서이력조회,부품 마스터,부품 마스터,Y
+1,M_MAIN_FRAME_MENU,마스크검사이력조회,331,2,9,M_MASKCHECKHISTORYQUERY,마스크검사이력조회,Y,w_mcn_jig_mask_check_history,조회,마스크검사이력조회,,,,조회 > 마스크검사이력조회,MATCHED,W_MCN_JIG_MASK_CHECK_HISTORY,마스크검사이력조회,금형검사이력관리,금형검사이력관리,Y
+1,M_MAIN_FRAME_MENU,스퀴지검사이력조회,332,2,10,M_SQUEEZECHECKHISTORYQUERY,스퀴지검사이력조회,Y,w_mcn_jig_squeeze_check_history,조회,스퀴지검사이력조회,,,,조회 > 스퀴지검사이력조회,MATCHED,W_MCN_JIG_SQUEEZE_CHECK_HISTORY,스퀴지검사이력조회,금형검사이력관리,금형검사이력관리,Y
+1,M_MAIN_FRAME_MENU,자재 바코드 상태 조회,333,2,11,M_MATERIALBARCODESTATUSQUERY,자재 바코드 상태 조회,Y,w_mat_barcode_status_report,조회,자재 바코드 상태 조회,,,,조회 > 자재 바코드 상태 조회,MATCHED,W_MAT_BARCODE_STATUS_REPORT,자재 바코드 상태 조회,MATERIAL PURCHASE ORDER REPORT,MATERIAL PURCHASE ORDER REPORT,Y
+1,M_MAIN_FRAME_MENU,-,334,2,12,M_-37,-,Y,,조회,-,,,,조회 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,NSNP 처리이력조회,335,2,13,M_NSNPPROESSHISTORYMASTER,NSNP 처리이력조회,Y,w_pln_product_nsnp_history_query,조회,NSNP 처리이력조회,,,,조회 > NSNP 처리이력조회,MATCHED,W_PLN_PRODUCT_NSNP_HISTORY_QUERY,NSNP 처리이력조회,NSNP Proess History Query,LINE MASTER,Y
+1,M_MAIN_FRAME_MENU,리포트,336,1,20,M_REPORT,리포트,Y,,리포트,,,,,리포트,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,기준정보,337,2,1,M_BASIS0,기준정보,Y,,리포트,기준정보,,,,리포트 > 기준정보,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,폼목마스터리포트,338,3,1,M_ITEMMASTERREPORT,폼목마스터리포트,Y,w_des_item_master_rpt,리포트,기준정보,폼목마스터리포트,,,리포트 > 기준정보 > 폼목마스터리포트,MATCHED,W_DES_ITEM_MASTER_RPT,BOM리포트,BOM리포트,BOM리포트,Y
+1,M_MAIN_FRAME_MENU,바코드,339,2,2,M_BARCODE,바코드,Y,,리포트,바코드,,,,리포트 > 바코드,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,라인설비바코드,340,3,1,M_LINEBARCODE,라인설비바코드,Y,w_barcode_rpt,리포트,바코드,라인설비바코드,,,리포트 > 바코드 > 라인설비바코드,UNMATCHED,,,,,
+1,M_MAIN_FRAME_MENU,캐리어바코드,341,3,2,M_CARRIERBARCODE,캐리어바코드,Y,w_product_carrier_barcode,리포트,바코드,캐리어바코드,,,리포트 > 바코드 > 캐리어바코드,MATCHED,W_PRODUCT_CARRIER_BARCODE,NEW A LED PROJECT,NEW A LED PROJECT,NEW A LED PROJECT,Y
+1,M_MAIN_FRAME_MENU,설비,342,2,3,M_MACHINE,설비,Y,,리포트,설비,,,,리포트 > 설비,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,설비리포트,343,3,1,M_MACHINEREPAIRREPORT,설비리포트,Y,w_mcn_machine_rpt,리포트,설비,설비리포트,,,리포트 > 설비 > 설비리포트,MATCHED,W_MCN_MACHINE_RPT,,,,Y
+1,M_MAIN_FRAME_MENU,SMT PICKUP 리포트,344,3,2,M_PICKUPRATEREPORT,SMT PICKUP 리포트,Y,w_smt_pickup_rate_rpt,리포트,설비,SMT PICKUP 리포트,,,리포트 > 설비 > SMT PICKUP 리포트,MATCHED,W_SMT_PICKUP_RATE_RPT,SMT 픽업율 리포트,,,Y
+1,M_MAIN_FRAME_MENU,제품,345,2,4,M_PRODUCT,제품,Y,,리포트,제품,,,,리포트 > 제품,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,생산계획리포트,346,3,1,M_PRODUCTMASTERPLANREPORT,생산계획리포트,Y,w_pln_master_plan_report,리포트,제품,생산계획리포트,,,리포트 > 제품 > 생산계획리포트,UNMATCHED,,,,,
+1,M_MAIN_FRAME_MENU,런카드리포트,347,3,2,M_PRODUCTRUNCARDREPORT,런카드리포트,Y,w_product_run_card_rpt,리포트,제품,런카드리포트,,,리포트 > 제품 > 런카드리포트,MATCHED,W_PRODUCT_RUN_CARD_RPT,NEW A LED PROJECT,NEW A LED PROJECT,NEW A LED PROJECT,Y
+1,M_MAIN_FRAME_MENU,제품 판매실적,348,3,3,M_PRODUCTSHIPPINGREPORT,제품 판매실적,Y,,리포트,제품,제품 판매실적,,,리포트 > 제품 > 제품 판매실적,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,공정,349,2,5,M_15,공정,Y,,리포트,공정,,,,리포트 > 공정,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,공정재공조회,350,3,1,M_50,공정재공조회,Y,w_product_workstage_stock_rpt,리포트,공정,공정재공조회,,,리포트 > 공정 > 공정재공조회,MATCHED,W_PRODUCT_WORKSTAGE_STOCK_RPT,,,,Y
+1,M_MAIN_FRAME_MENU,-,351,3,2,M_90,-,Y,,리포트,공정,-,,,리포트 > 공정 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,공정매거진조회,352,3,3,M_91,공정매거진조회,Y,w_product_workstage_magazine_stock_rpt,리포트,공정,공정매거진조회,,,리포트 > 공정 > 공정매거진조회,MATCHED,W_PRODUCT_WORKSTAGE_MAGAZINE_STOCK_RPT,,,,Y
+1,M_MAIN_FRAME_MENU,S-PARTS/지그,353,2,6,M_MOLDJIG,S-PARTS/지그,Y,,리포트,S-PARTS/지그,,,,리포트 > S-PARTS/지그,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,S-PARTS입고리포트,354,3,1,M_MOLDRECEIPTREPORT,S-PARTS입고리포트,Y,w_mcn_mold_receipt_rpt,리포트,S-PARTS/지그,S-PARTS입고리포트,,,리포트 > S-PARTS/지그 > S-PARTS입고리포트,MATCHED,W_MCN_MOLD_RECEIPT_RPT,,,,Y
+1,M_MAIN_FRAME_MENU,S-PARTS출고리포트,355,3,2,M_MOLDISSUEREPORT,S-PARTS출고리포트,Y,w_mcn_mold_issue_rpt,리포트,S-PARTS/지그,S-PARTS출고리포트,,,리포트 > S-PARTS/지그 > S-PARTS출고리포트,MATCHED,W_MCN_MOLD_ISSUE_RPT,,,,Y
+1,M_MAIN_FRAME_MENU,-,356,3,3,M_-19,-,Y,,리포트,S-PARTS/지그,-,,,리포트 > S-PARTS/지그 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,지그리포트,357,3,4,M_JIGMASTERREPORT,지그리포트,Y,w_mcn_jig_rpt,리포트,S-PARTS/지그,지그리포트,,,리포트 > S-PARTS/지그 > 지그리포트,MATCHED,W_MCN_JIG_RPT,,,,Y
+1,M_MAIN_FRAME_MENU,S-PARTS관리리포트,358,3,5,M_MOLDMASTERREPORT,S-PARTS관리리포트,Y,w_mcn_mold_rpt,리포트,S-PARTS/지그,S-PARTS관리리포트,,,리포트 > S-PARTS/지그 > S-PARTS관리리포트,MATCHED,W_MCN_MOLD_RPT,,,,Y
+1,M_MAIN_FRAME_MENU,품질관리,359,2,7,M_QC0,품질관리,Y,,리포트,품질관리,,,,리포트 > 품질관리,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,4M 변경이력,360,3,1,M_4MCHANGEHISTORY,4M 변경이력,Y,w_qc_4m_history_rpt,리포트,품질관리,4M 변경이력,,,리포트 > 품질관리 > 4M 변경이력,MATCHED,W_QC_4M_HISTORY_RPT,NEW A LED PROJECT,NEW A LED PROJECT,NEW A LED PROJECT,Y
+1,M_MAIN_FRAME_MENU,자재창고,361,2,8,M_WAREHOUSE0,자재창고,Y,,리포트,자재창고,,,,리포트 > 자재창고,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,자재전표바코드리포트,362,3,1,M_39,자재전표바코드리포트,Y,,리포트,자재창고,자재전표바코드리포트,,,리포트 > 자재창고 > 자재전표바코드리포트,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,자재입고리포트,363,3,2,M_40,자재입고리포트,Y,w_mat_receipt_report,리포트,자재창고,자재입고리포트,,,리포트 > 자재창고 > 자재입고리포트,MATCHED,W_MAT_RECEIPT_REPORT,MATERIAL PURCHASE ORDER REPORT,MATERIAL PURCHASE ORDER REPORT,MATERIAL PURCHASE ORDER REPORT,Y
+1,M_MAIN_FRAME_MENU,자재입고합계리포트,364,3,3,M_41,자재입고합계리포트,Y,w_mat_receipt_sum_report,리포트,자재창고,자재입고합계리포트,,,리포트 > 자재창고 > 자재입고합계리포트,MATCHED,W_MAT_RECEIPT_SUM_REPORT,MATERIAL RECEIPT SUM REPORT,MATERIAL RECEIPT SUM REPORT,MATERIAL RECEIPT SUM REPORT,Y
+1,M_MAIN_FRAME_MENU,자재출고리포트,365,3,4,M_42,자재출고리포트,Y,w_mat_issue_report,리포트,자재창고,자재출고리포트,,,리포트 > 자재창고 > 자재출고리포트,MATCHED,W_MAT_ISSUE_REPORT,MATERIAL ISSUE REPORT,MATERIAL ISSUE REPORT,MATERIAL ISSUE REPORT,Y
+1,M_MAIN_FRAME_MENU,자재출고합계리포트,366,3,5,M_44,자재출고합계리포트,Y,w_mat_issue_sum_report,리포트,자재창고,자재출고합계리포트,,,리포트 > 자재창고 > 자재출고합계리포트,MATCHED,W_MAT_ISSUE_SUM_REPORT,MATERIAL ISSUE SUM REPORT,MATERIAL ISSUE SUM REPORT,MATERIAL ISSUE SUM REPORT,Y
+1,M_MAIN_FRAME_MENU,자재랙이동리포트,367,3,6,M_51,자재랙이동리포트,Y,,리포트,자재창고,자재랙이동리포트,,,리포트 > 자재창고 > 자재랙이동리포트,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,자재장기재고리포트,368,3,7,M_53,자재장기재고리포트,Y,,리포트,자재창고,자재장기재고리포트,,,리포트 > 자재창고 > 자재장기재고리포트,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,재고리포트,369,3,8,M_ITEMINVENTORYREPORT,재고리포트,Y,w_mat_current_inventory_report,리포트,자재창고,재고리포트,,,리포트 > 자재창고 > 재고리포트,MATCHED,W_MAT_CURRENT_INVENTORY_REPORT,MATERIAL CURRENT MATERIAL REPORT,MATERIAL CURRENT MATERIAL REPORT,MATERIAL CURRENT MATERIAL REPORT,Y
+1,M_MAIN_FRAME_MENU,승인,370,1,21,M_CONFIRM,승인,Y,,승인,,,,,승인,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,반출반입승인,371,2,1,M_6,반출반입승인,Y,w_com_carrying_out_bring_in_confirm,승인,반출반입승인,,,,승인 > 반출반입승인,MATCHED,W_COM_CARRYING_OUT_BRING_IN_CONFIRM,MATERIAL BUY PRICE MASTER,MATERIAL BUY PRICE MASTER,MATERIAL BUY PRICE MASTER,Y
+1,M_MAIN_FRAME_MENU,반출반입승인(보안),372,2,2,M_7,반출반입승인(보안),Y,w_com_carrying_out_bring_in_security,승인,반출반입승인(보안),,,,승인 > 반출반입승인(보안),MATCHED,W_COM_CARRYING_OUT_BRING_IN_SECURITY,MATERIAL BUY PRICE MASTER,MATERIAL BUY PRICE MASTER,MATERIAL BUY PRICE MASTER,Y
+1,M_MAIN_FRAME_MENU,구매단가승인,373,2,3,M_BUYPRICECONFIRM,구매단가승인,Y,w_mat_buy_price_confirm,승인,구매단가승인,,,,승인 > 구매단가승인,MATCHED,W_MAT_BUY_PRICE_CONFIRM,구매단가승인,MATERIAL BUY PRICE MASTER,MATERIAL BUY PRICE MASTER,Y
+1,M_MAIN_FRAME_MENU,판매단가승인,374,2,4,M_SALEPRICECONFIRM,판매단가승인,Y,w_sal_sale_price_confirm,승인,판매단가승인,,,,승인 > 판매단가승인,MATCHED,W_SAL_SALE_PRICE_CONFIRM,판매단가승인,SHIPPING SALE PRICE MASTER,SHIPPING SALE PRICE MASTER,Y
+1,M_MAIN_FRAME_MENU,S-PARTS구매단가승인,375,2,5,M_MOLDBUYPRICECONFIRM,S-PARTS구매단가승인,Y,w_mcn_mold_buy_price_confirm,승인,S-PARTS구매단가승인,,,,승인 > S-PARTS구매단가승인,MATCHED,W_MCN_MOLD_BUY_PRICE_CONFIRM,MATERIAL BUY PRICE MASTER,MATERIAL BUY PRICE MASTER,MATERIAL BUY PRICE MASTER,Y
+1,M_MAIN_FRAME_MENU,-,376,2,6,M_-34,-,Y,,승인,-,,,,승인 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,설계BOM승인,377,2,7,M_ENGBOMCONFIRM,설계BOM승인,Y,w_des_bom_confirm_master,승인,설계BOM승인,,,,승인 > 설계BOM승인,MATCHED,W_DES_BOM_CONFIRM_MASTER,설계BOM승인,BOM관리,BOM관리,Y
+1,M_MAIN_FRAME_MENU,기본정보,378,1,22,M_MANAGE,기본정보,Y,,기본정보,,,,,기본정보,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,회사,379,2,1,M_COMPANYMANAGEMENT,회사,Y,w_company_master,기본정보,회사,,,,기본정보 > 회사,MATCHED,W_COMPANY_MASTER,회사,COMPANY INFROMATION MANAGE,COMPANY INFROMATION MANAGE,Y
+1,M_MAIN_FRAME_MENU,조직,380,2,2,M_ORGANIZATION,조직,Y,w_organization_master,기본정보,조직,,,,기본정보 > 조직,MATCHED,W_ORGANIZATION_MASTER,조직,ORGANIZATION  INFORMATION MANAGE,ORGANIZATION  INFORMATION MANAGE,Y
+1,M_MAIN_FRAME_MENU,부서,381,2,3,M_DEPARTMENT,부서,Y,w_department_master,기본정보,부서,,,,기본정보 > 부서,MATCHED,W_DEPARTMENT_MASTER,부서,DEPARTMENT INFORMATION MANAGE,DEPARTMENT INFORMATION MANAGE,Y
+1,M_MAIN_FRAME_MENU,사용자,382,2,4,M_USER,사용자,Y,w_user_master,기본정보,사용자,,,,기본정보 > 사용자,MATCHED,W_USER_MASTER,사용자,USER INFORMATION MANAGE,USER INFORMATION MANAGE,Y
+1,M_MAIN_FRAME_MENU,-,383,2,5,M_-8,-,Y,,기본정보,-,,,,기본정보 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,애플리케이션창,384,2,6,M_APPLICATIONWINDOW,애플리케이션창,Y,w_window_master,기본정보,애플리케이션창,,,,기본정보 > 애플리케이션창,MATCHED,W_WINDOW_MASTER,애플리케이션창,WINDOW INFORMATION MANAGE,WINDOW INFORMATION MANAGE,Y
+1,M_MAIN_FRAME_MENU,역할,385,2,7,M_ROLE,역할,Y,w_role_master,기본정보,역할,,,,기본정보 > 역할,MATCHED,W_ROLE_MASTER,역할,ROLE  INFORMATION MANAGE,ROLE  INFORMATION MANAGE,Y
+1,M_MAIN_FRAME_MENU,권한,386,2,8,M_PLIVILIAGE,권한,Y,,기본정보,권한,,,,기본정보 > 권한,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,프로그램사용권한,387,3,1,M_APPLICATIONPLIBILEGE,프로그램사용권한,Y,w_privilege_master,기본정보,권한,프로그램사용권한,,,기본정보 > 권한 > 프로그램사용권한,MATCHED,W_PRIVILEGE_MASTER,프로그램사용권한,PLIVILEGE  INFORMATION MANAGE,PLIVILEGE  INFORMATION MANAGE,Y
+1,M_MAIN_FRAME_MENU,-,388,2,9,M_-15,-,Y,,기본정보,-,,,,기본정보 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,메세지에이젼트,389,2,10,M_MESSAGEAGENT,메세지에이젼트,Y,w_agent_message_master,기본정보,메세지에이젼트,,,,기본정보 > 메세지에이젼트,MATCHED,W_AGENT_MESSAGE_MASTER,메세지에이젼트,DUAL MESSAGE  INFORMATION MANAGE,DUAL MESSAGE  INFORMATION MANAGE,Y
+1,M_MAIN_FRAME_MENU,-,390,2,11,M_-108,-,Y,,기본정보,-,,,,기본정보 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,기초코드관리,391,2,12,M_BASECODE,기초코드관리,Y,w_basecode_master,기본정보,기초코드관리,,,,기본정보 > 기초코드관리,MATCHED,W_BASECODE_MASTER,기초코드관리,BASE INFORMATION MANAGE,BASE INFORMATION MANAGE,Y
+1,M_MAIN_FRAME_MENU,표준코드관리,392,2,13,M_STANDARDCODEMANAGE,표준코드관리,Y,w_standard_code_master,기본정보,표준코드관리,,,,기본정보 > 표준코드관리,MATCHED,W_STANDARD_CODE_MASTER,표준코드관리,BASE INFORMATION MANAGE,BASE INFORMATION MANAGE,Y
+1,M_MAIN_FRAME_MENU,시스템,393,1,23,M_SYSTEM,시스템,Y,,시스템,,,,,시스템,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,언어관리,394,2,1,M_LANGUAGE,언어관리,Y,,시스템,언어관리,,,,시스템 > 언어관리,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,언어텍스트관리,395,3,1,M_LANGUAGESOURCEMANAGE,언어텍스트관리,Y,w_dual_language,시스템,언어관리,언어텍스트관리,,,시스템 > 언어관리 > 언어텍스트관리,MATCHED,W_DUAL_LANGUAGE,언어텍스트관리,DUAL LANGUAGE INFORMATION MANAGE,DUAL LANGUAGE INFORMATION MANAGE,Y
+1,M_MAIN_FRAME_MENU,메세지텍스트관리,396,3,2,M_MESSAGESOURCEMANAGE,메세지텍스트관리,Y,w_dual_message,시스템,언어관리,메세지텍스트관리,,,시스템 > 언어관리 > 메세지텍스트관리,MATCHED,W_DUAL_MESSAGE,메세지텍스트관리,DUAL MESSAGE  INFORMATION MANAGE,DUAL MESSAGE  INFORMATION MANAGE,Y
+1,M_MAIN_FRAME_MENU,-,397,3,3,M_-7,-,Y,,시스템,언어관리,-,,,시스템 > 언어관리 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,용어사전,398,3,4,M_WORDDICTIONARY,용어사전,Y,w_word_dictionary,시스템,언어관리,용어사전,,,시스템 > 언어관리 > 용어사전,MATCHED,W_WORD_DICTIONARY,용어사전,용어사전,용어사전,Y
+1,M_MAIN_FRAME_MENU,-,399,3,5,M_-28,-,Y,,시스템,언어관리,-,,,시스템 > 언어관리 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,윈도우언어변환대상찾기	Alt+F10,400,3,6,M_FINDWINDOWLANGUAGESOURCE,윈도우언어변환대상찾기	Alt+F10,Y,,시스템,언어관리,윈도우언어변환대상찾기	Alt+F10,,,시스템 > 언어관리 > 윈도우언어변환대상찾기	Alt+F10,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,메뉴언어변환대상찾기	Alt+F11,401,3,7,M_FINDMENULANGUAGESOURCE,메뉴언어변환대상찾기	Alt+F11,Y,,시스템,언어관리,메뉴언어변환대상찾기	Alt+F11,,,시스템 > 언어관리 > 메뉴언어변환대상찾기	Alt+F11,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,시스템특성,402,2,2,M_SYSTEMPROPERTY,시스템특성,Y,,시스템,시스템특성,,,,시스템 > 시스템특성,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,시스템환경,403,3,1,M_SYSYTEMENVIRONMENT,시스템환경,Y,w_system_config,시스템,시스템특성,시스템환경,,,시스템 > 시스템특성 > 시스템환경,MATCHED,W_SYSTEM_CONFIG,시스템환경,DUAL LANGUAGE INFORMATION MANAGE,DUAL LANGUAGE INFORMATION MANAGE,Y
+1,M_MAIN_FRAME_MENU,컬럼포맷	F12,404,3,2,M_COLUMNFORMAT,컬럼포맷	F12,Y,,시스템,시스템특성,컬럼포맷	F12,,,시스템 > 시스템특성 > 컬럼포맷	F12,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,재고마감일자설정,405,3,3,M_INVENTORYCLOSEDATESETUP,재고마감일자설정,Y,w_system_inventory_close_date_setup,시스템,시스템특성,재고마감일자설정,,,시스템 > 시스템특성 > 재고마감일자설정,MATCHED,W_SYSTEM_INVENTORY_CLOSE_DATE_SETUP,DUAL LANGUAGE INFORMATION MANAGE,DUAL LANGUAGE INFORMATION MANAGE,DUAL LANGUAGE INFORMATION MANAGE,Y
+1,M_MAIN_FRAME_MENU,-,406,3,4,M_-62,-,Y,,시스템,시스템특성,-,,,시스템 > 시스템특성 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,엔터키탭처럼사용안함,407,3,5,M_ENTERTOTABON,엔터키탭처럼사용안함,Y,,시스템,시스템특성,엔터키탭처럼사용안함,,,시스템 > 시스템특성 > 엔터키탭처럼사용안함,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,행변경이벤트켜기,408,3,6,M_ROWFOCUSCHANGEON,행변경이벤트켜기,Y,,시스템,시스템특성,행변경이벤트켜기,,,시스템 > 시스템특성 > 행변경이벤트켜기,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,-,409,3,7,M_-63,-,Y,,시스템,시스템특성,-,,,시스템 > 시스템특성 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,언어즉시변경켜기,410,3,8,M_LANGUAGEDIRECTCHANGOFF,언어즉시변경켜기,Y,,시스템,시스템특성,언어즉시변경켜기,,,시스템 > 시스템특성 > 언어즉시변경켜기,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,메뉴관리모드,411,2,3,M_MENUEDITMODE,메뉴관리모드,Y,,시스템,메뉴관리모드,,,,시스템 > 메뉴관리모드,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,메뉴재설정,412,3,1,M_MENURELOAD,메뉴재설정,Y,,시스템,메뉴관리모드,메뉴재설정,,,시스템 > 메뉴관리모드 > 메뉴재설정,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,메뉴관리,413,3,2,M_MENUMANAGE,메뉴관리,Y,w_menu_master,시스템,메뉴관리모드,메뉴관리,,,시스템 > 메뉴관리모드 > 메뉴관리,MATCHED,W_MENU_MASTER,메뉴관리,DYNAMIC MENU MANAGER,DYNAMIC MENU MANAGER,Y
+1,M_MAIN_FRAME_MENU,시스템데이타보기,414,2,4,M_SHOWSYSTEMDATA,시스템데이타보기,Y,,시스템,시스템데이타보기,,,,시스템 > 시스템데이타보기,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,SQL 페인터,415,3,1,M_SQLPAINTER,SQL 페인터,Y,,시스템,시스템데이타보기,SQL 페인터,,,시스템 > 시스템데이타보기 > SQL 페인터,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,SQL보기,416,3,2,M_SHOWSQL,SQL보기,Y,,시스템,시스템데이타보기,SQL보기,,,시스템 > 시스템데이타보기 > SQL보기,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,기초코드보기	Ctrl+F1,417,3,3,M_SHOWVALUELIST,기초코드보기	Ctrl+F1,Y,,시스템,시스템데이타보기,기초코드보기	Ctrl+F1,,,시스템 > 시스템데이타보기 > 기초코드보기	Ctrl+F1,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,선택된데이타보기,418,3,4,M_SHOWSELECTEDDATA,선택된데이타보기,Y,,시스템,시스템데이타보기,선택된데이타보기,,,시스템 > 시스템데이타보기 > 선택된데이타보기,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,데이타창보기,419,3,5,M_SHOWDATAWINDOW,데이타창보기,Y,,시스템,시스템데이타보기,데이타창보기,,,시스템 > 시스템데이타보기 > 데이타창보기,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,테이블컬럼보기,420,3,6,M_SHOWTABLECOLUMN,테이블컬럼보기,Y,,시스템,시스템데이타보기,테이블컬럼보기,,,시스템 > 시스템데이타보기 > 테이블컬럼보기,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,오브젝트보기,421,3,7,M_SHOWSYSTEMOBJECT,오브젝트보기,Y,w_db_object_master,시스템,시스템데이타보기,오브젝트보기,,,시스템 > 시스템데이타보기 > 오브젝트보기,MATCHED,W_DB_OBJECT_MASTER,DB OBJECT  INFORMATION MANAGE,DB OBJECT  INFORMATION MANAGE,DB OBJECT  INFORMATION MANAGE,Y
+1,M_MAIN_FRAME_MENU,-,422,3,8,M_-107,-,Y,,시스템,시스템데이타보기,-,,,시스템 > 시스템데이타보기 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,인터페이스로그보기,423,3,9,M_SHOWINTERFACELOG,인터페이스로그보기,Y,,시스템,시스템데이타보기,인터페이스로그보기,,,시스템 > 시스템데이타보기 > 인터페이스로그보기,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,시스템오류내역보기,424,3,10,M_SHOWERRORLOG,시스템오류내역보기,Y,w_error_log_trace,시스템,시스템데이타보기,시스템오류내역보기,,,시스템 > 시스템데이타보기 > 시스템오류내역보기,MATCHED,W_ERROR_LOG_TRACE,시스템오류내역보기,DUAL LANGUAGE INFORMATION MANAGE,DUAL LANGUAGE INFORMATION MANAGE,Y
+1,M_MAIN_FRAME_MENU,시스템사용내역,425,3,11,M_SHOWSYSTEMACCESS,시스템사용내역,Y,w_system_access_master,시스템,시스템데이타보기,시스템사용내역,,,시스템 > 시스템데이타보기 > 시스템사용내역,MATCHED,W_SYSTEM_ACCESS_MASTER,시스템사용내역,SYSTEM ACCESS MASTER,SYSTEM ACCESS MASTER,Y
+1,M_MAIN_FRAME_MENU,리포트관리,426,2,5,M_REPORTMANAGE,리포트관리,Y,,시스템,리포트관리,,,,시스템 > 리포트관리,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,리포트수정모드,427,3,1,M_REPORTEDITMODE,리포트수정모드,Y,,시스템,리포트관리,리포트수정모드,,,시스템 > 리포트관리 > 리포트수정모드,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,수정모드켜기,428,4,1,M_EDITMODEON,수정모드켜기,Y,,시스템,리포트관리,리포트수정모드,수정모드켜기,,시스템 > 리포트관리 > 리포트수정모드 > 수정모드켜기,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,수정모드끄기,429,4,2,M_EDITMODEOFF,수정모드끄기,Y,,시스템,리포트관리,리포트수정모드,수정모드끄기,,시스템 > 리포트관리 > 리포트수정모드 > 수정모드끄기,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,-,430,4,3,M_9,-,Y,,시스템,리포트관리,리포트수정모드,-,,시스템 > 리포트관리 > 리포트수정모드 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,오브젝트삭제,431,4,4,M_DESTORYOBJECT,오브젝트삭제,Y,,시스템,리포트관리,리포트수정모드,오브젝트삭제,,시스템 > 리포트관리 > 리포트수정모드 > 오브젝트삭제,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,-,432,4,5,M_11,-,Y,,시스템,리포트관리,리포트수정모드,-,,시스템 > 리포트관리 > 리포트수정모드 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,라인가운데정렬,433,4,6,M_ALIGNLINECENTER,라인가운데정렬,Y,,시스템,리포트관리,리포트수정모드,라인가운데정렬,,시스템 > 리포트관리 > 리포트수정모드 > 라인가운데정렬,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,-,434,4,7,M_13,-,Y,,시스템,리포트관리,리포트수정모드,-,,시스템 > 리포트관리 > 리포트수정모드 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,위로정렬,435,4,8,M_ALIGNTOP,위로정렬,Y,,시스템,리포트관리,리포트수정모드,위로정렬,,시스템 > 리포트관리 > 리포트수정모드 > 위로정렬,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,아래로정렬,436,4,9,M_ALIGNBOTTOM,아래로정렬,Y,,시스템,리포트관리,리포트수정모드,아래로정렬,,시스템 > 리포트관리 > 리포트수정모드 > 아래로정렬,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,왼쪽정렬,437,4,10,M_ALIGNLEFT,왼쪽정렬,Y,,시스템,리포트관리,리포트수정모드,왼쪽정렬,,시스템 > 리포트관리 > 리포트수정모드 > 왼쪽정렬,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,오른쪽정렬,438,4,11,M_ALIGNRIGHT,오른쪽정렬,Y,,시스템,리포트관리,리포트수정모드,오른쪽정렬,,시스템 > 리포트관리 > 리포트수정모드 > 오른쪽정렬,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,-,439,4,12,M_18,-,Y,,시스템,리포트관리,리포트수정모드,-,,시스템 > 리포트관리 > 리포트수정모드 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,가로크기맞춤,440,4,13,M_SIZEWIDTHS,가로크기맞춤,Y,,시스템,리포트관리,리포트수정모드,가로크기맞춤,,시스템 > 리포트관리 > 리포트수정모드 > 가로크기맞춤,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,세로크기맞춤,441,4,14,M_SIZEHEIGHT,세로크기맞춤,Y,,시스템,리포트관리,리포트수정모드,세로크기맞춤,,시스템 > 리포트관리 > 리포트수정모드 > 세로크기맞춤,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,SMT 공릴체크,442,4,1,M_CHEKCRECYCLEREEL,SMT 공릴체크,Y,,시스템,리포트관리,리포트수정모드,SMT 공릴체크,,시스템 > 리포트관리 > 리포트수정모드 > SMT 공릴체크,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,-,442,4,15,M_21,-,Y,,시스템,리포트관리,리포트수정모드,-,,시스템 > 리포트관리 > 리포트수정모드 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,조정,443,4,16,M_ADJUST,조정,Y,,시스템,리포트관리,리포트수정모드,조정,,시스템 > 리포트관리 > 리포트수정모드 > 조정,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,왼쪽맞춤,444,5,1,M_ADJUSTLEFT,왼쪽맞춤,Y,,시스템,리포트관리,리포트수정모드,조정,왼쪽맞춤,시스템 > 리포트관리 > 리포트수정모드 > 조정 > 왼쪽맞춤,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,가운데맞춤,445,5,2,M_ADJUSTCENTER,가운데맞춤,Y,,시스템,리포트관리,리포트수정모드,조정,가운데맞춤,시스템 > 리포트관리 > 리포트수정모드 > 조정 > 가운데맞춤,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,오른쪽맞춤,446,5,3,M_ADJUSTRIGHT,오른쪽맞춤,Y,,시스템,리포트관리,리포트수정모드,조정,오른쪽맞춤,시스템 > 리포트관리 > 리포트수정모드 > 조정 > 오른쪽맞춤,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,박스보이기,447,3,2,M_SHOWBOLDER,박스보이기,Y,,시스템,리포트관리,박스보이기,,,시스템 > 리포트관리 > 박스보이기,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,박스보이기,448,4,1,M_SHOWBOLDER0,박스보이기,Y,,시스템,리포트관리,박스보이기,박스보이기,,시스템 > 리포트관리 > 박스보이기 > 박스보이기,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,박스없애기,449,4,2,M_SHOWNOBOLDER,박스없애기,Y,,시스템,리포트관리,박스보이기,박스없애기,,시스템 > 리포트관리 > 박스보이기 > 박스없애기,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,그림자보기,450,4,3,M_SHOWSHADOW,그림자보기,Y,,시스템,리포트관리,박스보이기,그림자보기,,시스템 > 리포트관리 > 박스보이기 > 그림자보기,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,런타임데이타창생성,451,3,3,M_RUNTIMEDWGENERATOR,런타임데이타창생성,Y,w_runtime_dw_generator,시스템,리포트관리,런타임데이타창생성,,,시스템 > 리포트관리 > 런타임데이타창생성,MATCHED,W_RUNTIME_DW_GENERATOR,DUAL LANGUAGE INFORMATION MANAGE,DUAL LANGUAGE INFORMATION MANAGE,DUAL LANGUAGE INFORMATION MANAGE,Y
+1,M_MAIN_FRAME_MENU,리포트생성기,452,3,4,M_REPORTGENERATOR,리포트생성기,Y,w_report_generator,시스템,리포트관리,리포트생성기,,,시스템 > 리포트관리 > 리포트생성기,MATCHED,W_REPORT_GENERATOR,조건절생성용윈도우,조건절생성용윈도우,조건절생성용윈도우,Y
+1,M_MAIN_FRAME_MENU,-,453,3,5,M_-51,-,Y,,시스템,리포트관리,-,,,시스템 > 리포트관리 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,리포트관리,454,3,6,M_REPORTMASTER,리포트관리,Y,w_dataobject_master,시스템,리포트관리,리포트관리,,,시스템 > 리포트관리 > 리포트관리,MATCHED,W_DATAOBJECT_MASTER,리포트관리,DB OBJECT  INFORMATION MANAGE,DB OBJECT  INFORMATION MANAGE,Y
+1,M_MAIN_FRAME_MENU,Unuse Program,455,2,6,M_UNUSEPROGRAM,Unuse Program,Y,,시스템,Unuse Program,,,,시스템 > Unuse Program,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,기준정보,456,3,1,M_BASIS,기준정보,Y,,시스템,Unuse Program,기준정보,,,시스템 > Unuse Program > 기준정보,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,IT 자산 현황,457,4,1,M_ITATSETMANAGEMENT,IT 자산 현황,Y,w_mcn_it_master,시스템,Unuse Program,기준정보,IT 자산 현황,,시스템 > Unuse Program > 기준정보 > IT 자산 현황,MATCHED,W_MCN_IT_MASTER,CUSTOMER INFROMATION MANAGE,CUSTOMER INFROMATION MANAGE,CUSTOMER INFROMATION MANAGE,Y
+1,M_MAIN_FRAME_MENU,설비,458,3,2,M_MACHINE0,설비,Y,,시스템,Unuse Program,설비,,,시스템 > Unuse Program > 설비,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,리플로우상태조회,459,4,1,M_REFLOWSTATUSQUERY,리플로우상태조회,Y,w_qc_interlock_reflow_status_master,시스템,Unuse Program,설비,리플로우상태조회,,시스템 > Unuse Program > 설비 > 리플로우상태조회,MATCHED,W_QC_INTERLOCK_REFLOW_STATUS_MASTER,리플로우상태조회,LINE MASTER,LINE MASTER,Y
+1,M_MAIN_FRAME_MENU,설비 픽업률조회,460,4,2,M_SMTPICKUPINQUERY,설비 픽업률조회,Y,w_smt_pickup_rate,시스템,Unuse Program,설비,설비 픽업률조회,,시스템 > Unuse Program > 설비 > 설비 픽업률조회,MATCHED,W_SMT_PICKUP_RATE,설비 픽업률조회,PICKUP RATE,PICKUP RATE,Y
+1,M_MAIN_FRAME_MENU,SMT 픽업율(최종데이터조회),461,4,3,M_SMTPICKUPLASTDATAINQUERY,SMT 픽업율(최종데이터조회),Y,w_smt_pickup_rate_last_data_query,시스템,Unuse Program,설비,SMT 픽업율(최종데이터조회),,시스템 > Unuse Program > 설비 > SMT 픽업율(최종데이터조회),MATCHED,W_SMT_PICKUP_RATE_LAST_DATA_QUERY,SMT 픽업율 (최종데이터조회),부품 마스터,부품 마스터,Y
+1,M_MAIN_FRAME_MENU,자재창고,462,3,3,M_WAREHOUSE1,자재창고,Y,,시스템,Unuse Program,자재창고,,,시스템 > Unuse Program > 자재창고,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,자재전표엑셀업로드관리,463,4,1,M_14,자재전표엑셀업로드관리,Y,w_mat_receipt_slip_excel_upload_master,시스템,Unuse Program,자재창고,자재전표엑셀업로드관리,,시스템 > Unuse Program > 자재창고 > 자재전표엑셀업로드관리,MATCHED,W_MAT_RECEIPT_SLIP_EXCEL_UPLOAD_MASTER,MATERIAL MASS ISSUE RETURN MASTER,MATERIAL MASS ISSUE RETURN MASTER,MATERIAL MASS ISSUE RETURN MASTER,Y
+1,M_MAIN_FRAME_MENU,자재(대여/차용)전표등록관리,464,4,2,M_28,자재(대여/차용)전표등록관리,Y,w_mat_receipt_slip_4_rental_borrowing_master,시스템,Unuse Program,자재창고,자재(대여/차용)전표등록관리,,시스템 > Unuse Program > 자재창고 > 자재(대여/차용)전표등록관리,MATCHED,W_MAT_RECEIPT_SLIP_4_RENTAL_BORROWING_MASTER,MATERIAL MASS ISSUE RETURN MASTER,MATERIAL MASS ISSUE RETURN MASTER,MATERIAL MASS ISSUE RETURN MASTER,Y
+1,M_MAIN_FRAME_MENU,자재(대여/차용상환)관리,465,4,3,M_35,자재(대여/차용상환)관리,Y,w_mat_other_receipt_rental_borrowing_barcode_master,시스템,Unuse Program,자재창고,자재(대여/차용상환)관리,,시스템 > Unuse Program > 자재창고 > 자재(대여/차용상환)관리,MATCHED,W_MAT_OTHER_RECEIPT_RENTAL_BORROWING_BARCODE_MASTER,MATERIAL MASS ISSUE RETURN MASTER,MATERIAL MASS ISSUE RETURN MASTER,MATERIAL MASS ISSUE RETURN MASTER,Y
+1,M_MAIN_FRAME_MENU,자재릴합침관리 ( PCB ),466,4,4,M_54,자재릴합침관리 ( PCB ),Y,,시스템,Unuse Program,자재창고,자재릴합침관리 ( PCB ),,시스템 > Unuse Program > 자재창고 > 자재릴합침관리 ( PCB ),NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,출고바코드반품(수리/리볼)관리,467,4,5,M_60,출고바코드반품(수리/리볼)관리,Y,,시스템,Unuse Program,자재창고,출고바코드반품(수리/리볼)관리,,시스템 > Unuse Program > 자재창고 > 출고바코드반품(수리/리볼)관리,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,자재요청조회,468,4,6,M_MATERIALREQUESTQUERY,자재요청조회,Y,w_mat_material_request_master,시스템,Unuse Program,자재창고,자재요청조회,,시스템 > Unuse Program > 자재창고 > 자재요청조회,MATCHED,W_MAT_MATERIAL_REQUEST_MASTER,자재요청조회,부품 마스터,부품 마스터,Y
+1,M_MAIN_FRAME_MENU,라인별 모니터링,469,4,7,M_SMTFEEDERMONITORINGLINEMASTER,라인별 모니터링,Y,w_smt_plan_feeder_monitoring_line_master,시스템,Unuse Program,자재창고,라인별 모니터링,,시스템 > Unuse Program > 자재창고 > 라인별 모니터링,MATCHED,W_SMT_PLAN_FEEDER_MONITORING_LINE_MASTER,라인별 모니터링,생산계획,생산계획,Y
+1,M_MAIN_FRAME_MENU,생산,470,3,4,M_PLANNING0,생산,Y,,시스템,Unuse Program,생산,,,시스템 > Unuse Program > 생산,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,자재요청관리,471,4,1,M_WORKSTAGEMATERIALRECEIPTCHECKMASTER,자재요청관리,Y,w_pln_workstage_material_receipt_check_master,시스템,Unuse Program,생산,자재요청관리,,시스템 > Unuse Program > 생산 > 자재요청관리,MATCHED,W_PLN_WORKSTAGE_MATERIAL_RECEIPT_CHECK_MASTER,부품 마스터,부품 마스터,부품 마스터,Y
+1,M_MAIN_FRAME_MENU,수리,472,3,5,M_REPAIR0,수리,Y,,시스템,Unuse Program,수리,,,시스템 > Unuse Program > 수리,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,반품수리관리,473,4,1,M_SHIPPINGRETURNREPAIRMASTER,반품수리관리,Y,w_sal_shipping_return_repair_master,시스템,Unuse Program,수리,반품수리관리,,시스템 > Unuse Program > 수리 > 반품수리관리,MATCHED,W_SAL_SHIPPING_RETURN_REPAIR_MASTER,LINE MASTER,LINE MASTER,LINE MASTER,Y
+1,M_MAIN_FRAME_MENU,재고,474,3,6,M_INVENTORY0,재고,Y,,시스템,Unuse Program,재고,,,시스템 > Unuse Program > 재고,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,반제품바코드스캔실사,475,4,1,M_65,반제품바코드스캔실사,Y,w_pln_barcode_check_master,시스템,Unuse Program,재고,반제품바코드스캔실사,,시스템 > Unuse Program > 재고 > 반제품바코드스캔실사,MATCHED,W_PLN_BARCODE_CHECK_MASTER,MATERIAL MASS ISSUE RETURN MASTER,MATERIAL MASS ISSUE RETURN MASTER,MATERIAL MASS ISSUE RETURN MASTER,Y
+1,M_MAIN_FRAME_MENU,발주,476,3,7,M_57,발주,Y,,시스템,Unuse Program,발주,,,시스템 > Unuse Program > 발주,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,자재소요량관리,477,4,1,M_59,자재소요량관리,Y,w_mat_requirment_plan_master,시스템,Unuse Program,발주,자재소요량관리,,시스템 > Unuse Program > 발주 > 자재소요량관리,MATCHED,W_MAT_REQUIRMENT_PLAN_MASTER,총소요량관리,총소요량관리,총소요량관리,Y
+1,M_MAIN_FRAME_MENU,자재발주계획,478,4,2,M_67,자재발주계획,Y,w_mat_purchase_order_plan_master,시스템,Unuse Program,발주,자재발주계획,,시스템 > Unuse Program > 발주 > 자재발주계획,MATCHED,W_MAT_PURCHASE_ORDER_PLAN_MASTER,자재발주계획,주문예정관리,주문예정관리,Y
+1,M_MAIN_FRAME_MENU,-,479,4,3,M_58,-,Y,,시스템,Unuse Program,발주,-,,시스템 > Unuse Program > 발주 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,자재주문예정관리,480,4,4,M_71,자재주문예정관리,Y,w_mat_forecast_order_master,시스템,Unuse Program,발주,자재주문예정관리,,시스템 > Unuse Program > 발주 > 자재주문예정관리,MATCHED,W_MAT_FORECAST_ORDER_MASTER,MATERIAL PURCHASE ORDER MASTER,MATERIAL PURCHASE ORDER MASTER,MATERIAL PURCHASE ORDER MASTER,Y
+1,M_MAIN_FRAME_MENU,자재주문관리,481,4,5,M_73,자재주문관리,Y,w_mat_purchase_order_plan_master,시스템,Unuse Program,발주,자재주문관리,,시스템 > Unuse Program > 발주 > 자재주문관리,MATCHED,W_MAT_PURCHASE_ORDER_PLAN_MASTER,자재발주계획,주문예정관리,주문예정관리,Y
+1,M_MAIN_FRAME_MENU,-,482,4,6,M_70,-,Y,,시스템,Unuse Program,발주,-,,시스템 > Unuse Program > 발주 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,자재출발관리,483,4,7,M_82,자재출발관리,Y,w_mat_departure_master,시스템,Unuse Program,발주,자재출발관리,,시스템 > Unuse Program > 발주 > 자재출발관리,MATCHED,W_MAT_DEPARTURE_MASTER,MATERIAL DEPARTURE MASTER,MATERIAL DEPARTURE MASTER,MATERIAL DEPARTURE MASTER,Y
+1,M_MAIN_FRAME_MENU,자재도착관리,484,4,8,M_84,자재도착관리,Y,w_mat_arrival_master,시스템,Unuse Program,발주,자재도착관리,,시스템 > Unuse Program > 발주 > 자재도착관리,MATCHED,W_MAT_ARRIVAL_MASTER,MATERIAL ARRIVAL MASTER,MATERIAL ARRIVAL MASTER,MATERIAL ARRIVAL MASTER,Y
+1,M_MAIN_FRAME_MENU,품질관리,485,3,8,M_QC1,품질관리,Y,,시스템,Unuse Program,품질관리,,,시스템 > Unuse Program > 품질관리,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,설비검사확인(스캔),486,4,1,M_MACHINEINSPECTMANUAL,설비검사확인(스캔),Y,w_qc_machine_inspect_manual,시스템,Unuse Program,품질관리,설비검사확인(스캔),,시스템 > Unuse Program > 품질관리 > 설비검사확인(스캔),MATCHED,W_QC_MACHINE_INSPECT_MANUAL,검사기록 수작업 등록 ( PID 기준 ),검사기록 수작업 등록 ( PID 기준 ),검사기록 수작업 등록 ( PID 기준 ),Y
+1,M_MAIN_FRAME_MENU,고객컴플레인관리,487,4,2,M_CUSTOMERCOMPLAINTSMANAGER,고객컴플레인관리,Y,w_customer_complaints_master,시스템,Unuse Program,품질관리,고객컴플레인관리,,시스템 > Unuse Program > 품질관리 > 고객컴플레인관리,MATCHED,W_CUSTOMER_COMPLAINTS_MASTER,도면관리,도면관리,도면관리,Y
+1,M_MAIN_FRAME_MENU,이상발생 모니터링,488,4,3,M_ACTIONHISTORYFORNGSOUND,이상발생 모니터링,Y,w_pln_product_sound_history_query,시스템,Unuse Program,품질관리,이상발생 모니터링,,시스템 > Unuse Program > 품질관리 > 이상발생 모니터링,MATCHED,W_PLN_PRODUCT_SOUND_HISTORY_QUERY,NG SOUND HISTORY MANAGEMENT,NG SOUND HISTORY MANAGEMENT,NG SOUND HISTORY MANAGEMENT,Y
+1,M_MAIN_FRAME_MENU,SMT,489,3,9,M_SMT0,SMT,Y,,시스템,Unuse Program,SMT,,,시스템 > Unuse Program > SMT,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,SMT 파트라이브러리관리,490,4,1,M_SMTUPLOADPARTLIBMASTER,SMT 파트라이브러리관리,Y,w_smt_upload_partlib_master,시스템,Unuse Program,SMT,SMT 파트라이브러리관리,,시스템 > Unuse Program > SMT > SMT 파트라이브러리관리,MATCHED,W_SMT_UPLOAD_PARTLIB_MASTER,생산계획,생산계획,생산계획,Y
+1,M_MAIN_FRAME_MENU,지그,491,3,10,M_JIG1,지그,Y,,시스템,Unuse Program,지그,,,시스템 > Unuse Program > 지그,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,메탈마스크텐션 수동 관리,492,4,1,M_MASKTENSIONMANUALCHECKMASTER,메탈마스크텐션 수동 관리,Y,w_mcn_jig_mask_check_master,시스템,Unuse Program,지그,메탈마스크텐션 수동 관리,,시스템 > Unuse Program > 지그 > 메탈마스크텐션 수동 관리,MATCHED,W_MCN_JIG_MASK_CHECK_MASTER,금형검사이력관리,금형검사이력관리,금형검사이력관리,Y
+1,M_MAIN_FRAME_MENU,픽스쳐검사관리,493,4,2,M_JIGFIXTURECHECKMASTER,픽스쳐검사관리,Y,w_mcn_jig_fixture_check_master,시스템,Unuse Program,지그,픽스쳐검사관리,,시스템 > Unuse Program > 지그 > 픽스쳐검사관리,MATCHED,W_MCN_JIG_FIXTURE_CHECK_MASTER,금형검사이력관리,금형검사이력관리,금형검사이력관리,Y
+1,M_MAIN_FRAME_MENU,출하현황,494,3,11,M_SHIPPING0,출하현황,Y,,시스템,Unuse Program,출하현황,,,시스템 > Unuse Program > 출하현황,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,제품납품계획,495,4,1,M_PRODUCTSALEPLAN,제품납품계획,Y,w_pln_product_delivery_master,시스템,Unuse Program,출하현황,제품납품계획,,시스템 > Unuse Program > 출하현황 > 제품납품계획,MATCHED,W_PLN_PRODUCT_DELIVERY_MASTER,제품납품계획,PLANNING MASTER PLAN  MASTER,PLANNING MASTER PLAN  MASTER,Y
+1,M_MAIN_FRAME_MENU,포장바코드중복체크관리,496,4,2,M_PACKINGDUPULICATECHECKMASTER,포장바코드중복체크관리,Y,w_pln_product_packing_dupulicate_check_master,시스템,Unuse Program,출하현황,포장바코드중복체크관리,,시스템 > Unuse Program > 출하현황 > 포장바코드중복체크관리,MATCHED,W_PLN_PRODUCT_PACKING_DUPULICATE_CHECK_MASTER,포장바코드중복체크관리,승인원의모델에 대한 특성을 관리,승인원의모델에 대한 특성을 관리,Y
+1,M_MAIN_FRAME_MENU,통문관리,497,3,12,M_DATA,통문관리,Y,,시스템,Unuse Program,통문관리,,,시스템 > Unuse Program > 통문관리,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,반출송장,498,4,1,M_17,반출송장,Y,w_com_carrying_out_master,시스템,Unuse Program,통문관리,반출송장,,시스템 > Unuse Program > 통문관리 > 반출송장,MATCHED,W_COM_CARRYING_OUT_MASTER,MATERIAL RECEIPT MASTER,MATERIAL RECEIPT MASTER,MATERIAL RECEIPT MASTER,Y
+1,M_MAIN_FRAME_MENU,반입송장,499,4,2,M_22,반입송장,Y,w_com_bring_in_master,시스템,Unuse Program,통문관리,반입송장,,시스템 > Unuse Program > 통문관리 > 반입송장,MATCHED,W_COM_BRING_IN_MASTER,MATERIAL RECEIPT MASTER,MATERIAL RECEIPT MASTER,MATERIAL RECEIPT MASTER,Y
+1,M_MAIN_FRAME_MENU,추적,500,3,13,M_TRACKING0,추적,Y,,시스템,Unuse Program,추적,,,시스템 > Unuse Program > 추적,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,워크오더추적조회,501,4,1,M_WORKORDERTRACKINGQUERY,워크오더추적조회,Y,w_product_material_tracking_4_workorder_rpt,시스템,Unuse Program,추적,워크오더추적조회,,시스템 > Unuse Program > 추적 > 워크오더추적조회,MATCHED,W_PRODUCT_MATERIAL_TRACKING_4_WORKORDER_RPT,NEW A LED PROJECT,NEW A LED PROJECT,NEW A LED PROJECT,Y
+1,M_MAIN_FRAME_MENU,자재추적조회(멀티/동적),502,4,2,M_MATERIALTRACKINGMULTIQUERY,자재추적조회(멀티/동적),Y,w_product_material_tracking_multi_rpt,시스템,Unuse Program,추적,자재추적조회(멀티/동적),,시스템 > Unuse Program > 추적 > 자재추적조회(멀티/동적),MATCHED,W_PRODUCT_MATERIAL_TRACKING_MULTI_RPT,NEW A LED PROJECT,NEW A LED PROJECT,NEW A LED PROJECT,Y
+1,M_MAIN_FRAME_MENU,제품 추적 조회,503,4,3,M_MATERIALTRACKINGQUERYHISTORY,제품 추적 조회,Y,w_product_material_tracking_history_rpt,시스템,Unuse Program,추적,제품 추적 조회,,시스템 > Unuse Program > 추적 > 제품 추적 조회,MATCHED,W_PRODUCT_MATERIAL_TRACKING_HISTORY_RPT,NEW A LED PROJECT,NEW A LED PROJECT,NEW A LED PROJECT,Y
+1,M_MAIN_FRAME_MENU,윈도우,504,1,24,M_WINDOW,윈도우,Y,,윈도우,,,,,윈도우,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,세로,505,2,1,M_TILEVERTICAL,세로,Y,,윈도우,세로,,,,윈도우 > 세로,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,가로,506,2,2,M_TILEHOLIZONTAL,가로,Y,,윈도우,가로,,,,윈도우 > 가로,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,겹치기,507,2,3,M_LAYER,겹치기,Y,,윈도우,겹치기,,,,윈도우 > 겹치기,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,계단식보기,508,2,4,M_CASECADE,계단식보기,Y,,윈도우,계단식보기,,,,윈도우 > 계단식보기,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,-,509,2,5,M_-3,-,Y,,윈도우,-,,,,윈도우 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,전부닫기,510,2,6,M_CLOSEALL,전부닫기,Y,,윈도우,전부닫기,,,,윈도우 > 전부닫기,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,도움말,511,1,25,M_HELP,도움말,Y,,도움말,,,,,도움말,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,도움말내역,512,2,1,M_CONTENTS,도움말내역,Y,,도움말,도움말내역,,,,도움말 > 도움말내역,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,도움말동영상보기,513,2,2,M_HELPSHOWVIDEO,도움말동영상보기,Y,w_help_video,도움말,도움말동영상보기,,,,도움말 > 도움말동영상보기,MATCHED,W_HELP_VIDEO,도움말동영상보기,HELP VIDEO MASTER,HELP VIDEO MASTER,Y
+1,M_MAIN_FRAME_MENU,-,514,2,3,M_46,-,Y,,도움말,-,,,,도움말 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,기성기술방문,515,2,4,M_47,기성기술방문,Y,,도움말,기성기술방문,,,,도움말 > 기성기술방문,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,-,516,2,5,M_-18,-,Y,,도움말,-,,,,도움말 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,컬럼설명,517,2,6,M_COLUMNEXPLANATION,컬럼설명,Y,w_column_explanation,도움말,컬럼설명,,,,도움말 > 컬럼설명,MATCHED,W_COLUMN_EXPLANATION,COLUMN EXPLANATION HELP POPUP,COLUMN EXPLANATION HELP POPUP,COLUMN EXPLANATION HELP POPUP,Y
+1,M_MAIN_FRAME_MENU,-,518,2,7,M_-2,-,Y,,도움말,-,,,,도움말 > -,NO_TAG,,,,,
+1,M_MAIN_FRAME_MENU,애플리케이션에관하여,519,2,8,M_ABOUTAPPLICATION,애플리케이션에관하여,Y,w_who_am_i,도움말,애플리케이션에관하여,,,,도움말 > 애플리케이션에관하여,MATCHED,W_WHO_AM_I,애플리케이션에대하여,애플리케이션에대하여,애플리케이션에대하여,Y
+1,M_MAIN_FRAME_MENU,&Infinity21에 대하여,520,2,9,M_ABOUT,&Infinity21에 대하여,Y,w_about,도움말,&Infinity21에 대하여,,,,도움말 > &Infinity21에 대하여,MATCHED,W_ABOUT,ABOUT WINDOW,ABOUT WINDOW,ABOUT WINDOW,Y

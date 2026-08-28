@@ -80,7 +80,9 @@ describe('OeeMobileController', () => {
   });
 
   it('passes only authenticated organization to reasons and wraps rows', async () => {
-    const reasons = [{ reasonCode: 'MACHINE_STOP', reasonName: '설비정지' }];
+    const reasons = [
+      { reasonCode: 'MACHINE_STOP', reasonName: '설비정지', reasonType: 'UNPLAN', displayOrder: 1 },
+    ];
     service.listReasons.mockResolvedValue(reasons);
 
     const query = {} as OeeMobileReasonsQueryDto;

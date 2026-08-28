@@ -86,6 +86,7 @@ describe('OeeController', () => {
     } as ResourceCreateDto;
     const resourceUpdateDto = {
       lineCode: '01',
+      resourceName: 'Assembly cell',
       processCode: 'ASSY',
       resourceType: 'CELL',
     } as ResourceUpdateDto;
