@@ -6,6 +6,7 @@ import {
   OeeMobileStartDowntimeDto,
   OeeMobileStatusQueryDto,
 } from './oee-mobile.dto';
+import { LogSaveDto } from './oee.dto';
 
 describe('OeeMobileResourcesQueryDto', () => {
   it.each(['SMT', 'ASSY'])('accepts processCode=%s', async (processCode) => {
@@ -137,5 +138,33 @@ describe('OeeMobileStatusQueryDto', () => {
     });
 
     await expect(validate(dto)).resolves.toHaveLength(0);
+  });
+});
+
+describe('LogSaveDto', () => {
+  it.each(['DAY', 'NIGHT'])('accepts the canonical %s shift', async (shift) => {
+    const dto = Object.assign(new LogSaveDto(), {
+      resourceId: 10,
+      workDate: '2026-08-20',
+      shift,
+      netLoadMinutes: 480,
+      intervals: [],
+    });
+
+    await expect(validate(dto)).resolves.toHaveLength(0);
+  });
+
+  it('rejects legacy A-J shifts', async () => {
+    const dto = Object.assign(new LogSaveDto(), {
+      resourceId: 10,
+      workDate: '2026-08-20',
+      shift: 'A',
+      netLoadMinutes: 480,
+      intervals: [],
+    });
+
+    const errors = await validate(dto);
+
+    expect(errors.map((error) => error.property)).toContain('shift');
   });
 });

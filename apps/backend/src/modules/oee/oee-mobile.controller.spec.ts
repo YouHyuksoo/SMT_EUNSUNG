@@ -97,7 +97,7 @@ describe('OeeMobileController', () => {
       resourceCode: '19',
       parentLineCode: '19',
     } as OeeMobileStatusQueryDto;
-    const status = { workDate: '2026-08-07', workSegment: 'A', state: 'RUNNING', events: [], openEvent: null };
+    const status = { workDate: '2026-08-07', workSegment: 'DAY', state: 'RUNNING', events: [], openEvent: null };
     service.getStatus.mockResolvedValue(status);
 
     await expect(target.getStatus(query, 7, 'EUNSUNG', '1')).resolves.toEqual(status);

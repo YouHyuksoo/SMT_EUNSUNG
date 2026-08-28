@@ -1,7 +1,7 @@
 const SEOUL_TIME_ZONE = 'Asia/Seoul';
 const DAY_MS = 24 * 60 * 60 * 1000;
 const BUSINESS_DAY_START_MINUTES = 8 * 60 + 30;
-export const OEE_MOBILE_WORK_SEGMENTS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'] as const;
+export const OEE_MOBILE_WORK_SEGMENTS = ['DAY', 'NIGHT'] as const;
 export type OeeMobileWorkSegment = (typeof OEE_MOBILE_WORK_SEGMENTS)[number];
 
 export interface WorktimeRangeRow {
@@ -134,6 +134,10 @@ function formatYmd(day: number): string {
   return new Date(day).toISOString().slice(0, 10);
 }
 
+function mapSourceWorkType(workType: string): OeeMobileWorkSegment {
+  return 'ABCDE'.includes(workType) ? 'DAY' : 'NIGHT';
+}
+
 /**
  * 서버 시각과 ICOM_WORKTIME_RANGES의 한 업무일 구간을 결합한다.
  * Date의 로컬 getter는 사용하지 않고 Intl의 Asia/Seoul 변환만 사용한다.
@@ -145,7 +149,7 @@ export function resolveOeeMobileWorkContext(
   const current = toSeoulDateTime(serverTime);
   const workDateDay = getWorkDate(current.day, current.milliseconds);
   const currentInstant = current.day + current.milliseconds;
-  const matches: string[] = [];
+  const matches: Array<{ workType: string; workSegment: OeeMobileWorkSegment }> = [];
 
   for (const row of rows) {
     if (!/^[A-J]$/.test(row.workType)) {
@@ -164,12 +168,14 @@ export function resolveOeeMobileWorkContext(
     }
 
     if (startInstant <= currentInstant && currentInstant < endInstant) {
-      matches.push(row.workType);
+      matches.push({ workType: row.workType, workSegment: mapSourceWorkType(row.workType) });
     }
   }
 
   if (matches.length === 0) throw new Error('일치하는 업무구간이 없습니다.');
-  if (matches.length > 1) throw new Error(`겹치는 업무구간이 있습니다: ${matches.join(',')}`);
+  if (matches.length > 1) {
+    throw new Error(`겹치는 업무구간이 있습니다: ${matches.map((match) => match.workType).join(',')}`);
+  }
 
-  return { workDate: formatYmd(workDateDay), workSegment: matches[0] as OeeMobileWorkSegment };
+  return { workDate: formatYmd(workDateDay), workSegment: matches[0].workSegment };
 }

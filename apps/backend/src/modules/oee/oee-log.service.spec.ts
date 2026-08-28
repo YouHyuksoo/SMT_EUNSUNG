@@ -62,6 +62,18 @@ describe('OeeLogService tenant isolation', () => {
     });
   });
 
+  it('rejects a legacy A-J shift before querying logs', async () => {
+    const target = new ServiceConstructor(
+      dataSource,
+      logRepo,
+      resourceRepo as unknown as Repository<OeeResource>,
+      reasonRepo as unknown as Repository<OeeDowntimeReason>,
+    ) as unknown as TenantScopedLog;
+
+    await expect(target.loadShift(10, '2026-08-20', 'A', 7)).rejects.toThrow(BadRequestException);
+    expect(logRepo.find).not.toHaveBeenCalled();
+  });
+
   it('validates the resource tenant and uses authenticated values for delete and insert', async () => {
     const target = new ServiceConstructor(
       dataSource,

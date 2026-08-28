@@ -529,7 +529,7 @@ describe('OeeMobileService', () => {
     try {
       await expect(
         target.getStatus(processCode, resourceType, refCode, refCode, 7, 'EUNSUNG', '1'),
-      ).resolves.toMatchObject({ state: 'RUNNING', workSegment: 'A' });
+      ).resolves.toMatchObject({ state: 'RUNNING', workSegment: 'DAY' });
       expect(worktimeRepository.find).toHaveBeenCalledWith({
         where: { organizationId: 7, rangeType },
         order: { workType: 'ASC' },
@@ -647,7 +647,7 @@ describe('OeeMobileService', () => {
         resourceCode: '01',
         parentLineCode: '01',
         processCode: 'SMT',
-        workSegment: 'A',
+        workSegment: 'DAY',
         reasonCode: 'A',
         memo: 'jam',
         workerId: 'WORKER01',
@@ -891,7 +891,7 @@ describe('OeeMobileService', () => {
 
       await expect(target.getStatus('SMT', 'LINE', '01', '01', 7, 'EUNSUNG', '1')).resolves.toEqual({
         workDate: '2026-08-07',
-        workSegment: 'G',
+        workSegment: 'NIGHT',
         state: 'DOWNTIME',
         events: [openEvent],
         openEvent,

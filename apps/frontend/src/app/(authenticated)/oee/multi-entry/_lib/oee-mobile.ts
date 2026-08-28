@@ -37,7 +37,7 @@ export interface OeeDowntimeEvent {
 
 export interface OeeStatus {
   workDate: string;
-  workSegment: string;
+  workSegment: 'DAY' | 'NIGHT';
   state: 'RUNNING' | 'DOWNTIME';
   events: OeeDowntimeEvent[];
   openEvent: OeeDowntimeEvent | null;
@@ -271,7 +271,9 @@ export function normalizeStatus(response: unknown): OeeStatus {
 
   const state = value.state === 'DOWNTIME' || value.state === 'RUNNING' ? value.state : null;
   const workDate = readString(value, 'workDate');
-  const workSegment = readString(value, 'workSegment');
+  const workSegment = value.workSegment === 'DAY' || value.workSegment === 'NIGHT'
+    ? value.workSegment
+    : null;
   if (!state || !workDate || !workSegment) throw new Error('상태 응답 형식이 올바르지 않습니다.');
 
   const events = Array.isArray(value.events)

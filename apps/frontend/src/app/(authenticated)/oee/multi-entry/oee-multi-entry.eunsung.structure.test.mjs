@@ -158,7 +158,17 @@ test("mobile request IDs retain stable command signatures and have a bounded UUI
 });
 
 test("mobile status normalization rejects contradictory open-event state", () => {
+  assert.match(mobileHelper, /workSegment:\s*['"]DAY['"]\s*\|\s*['"]NIGHT['"]/);
   const base = { workDate: "2026-08-10", workSegment: "DAY", events: [] };
+  assert.equal(normalizeStatus({ ...base, state: "RUNNING", openEvent: null }).workSegment, "DAY");
+  assert.equal(
+    normalizeStatus({ ...base, workSegment: "NIGHT", state: "RUNNING", openEvent: null }).workSegment,
+    "NIGHT",
+  );
+  assert.throws(
+    () => normalizeStatus({ ...base, workSegment: "A", state: "RUNNING", openEvent: null }),
+    /상태 응답 형식/,
+  );
   assert.throws(
     () => normalizeStatus({ ...base, state: "DOWNTIME", openEvent: null }),
     /DOWNTIME.*openEvent/,

@@ -12,7 +12,7 @@ import type { LogInterval } from '@smt/shared';
 import { OeeOperationLog } from '../../entities/oee-operation-log.entity';
 import { OeeDowntimeReason } from '../../entities/oee-downtime-reason.entity';
 import { OeeResource } from '../../entities/oee-resource.entity';
-import { LogSaveDto } from './oee.dto';
+import { OEE_SHIFT_CODES, LogSaveDto, OeeShift } from './oee.dto';
 
 /** 프론트로 반환하는 근무조 구간 행 */
 export interface ShiftLogRow {
@@ -53,6 +53,7 @@ export class OeeLogService {
     organizationId?: number,
   ): Promise<ShiftLogRow[]> {
     const organization = this.requireOrganization(organizationId);
+    this.assertShift(shift);
     const base = this.baseDate(workDate);
     const rows = await this.logRepo.find({
       where: { resourceId, workDate: base, shift, organizationId: organization },
@@ -72,6 +73,7 @@ export class OeeLogService {
   async saveShift(dto: LogSaveDto, organizationId?: number, userId?: string): Promise<void> {
     const organization = this.requireOrganization(organizationId);
     const executor = this.requireExecutor(userId);
+    this.assertShift(dto.shift);
     const resource = await this.resourceRepo.findOne({
       where: { resourceId: dto.resourceId, organizationId: organization },
     });
@@ -155,5 +157,11 @@ export class OeeLogService {
       throw new BadRequestException('인증 실행자 ID가 필요합니다.');
     }
     return userId;
+  }
+
+  private assertShift(shift: string): asserts shift is OeeShift {
+    if (!OEE_SHIFT_CODES.includes(shift as OeeShift)) {
+      throw new BadRequestException('지원하지 않는 OEE 근무조입니다.');
+    }
   }
 }

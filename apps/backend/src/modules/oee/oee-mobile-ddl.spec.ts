@@ -8,6 +8,7 @@ const routineDeploymentFiles = [
   '03_tables_ext.sql',
   '07_mobile_prerequisites.sql',
   '12_resource_management_contract.sql',
+  '13_day_night_shift_contract.sql',
   '04_view_plan_time.sql',
   '05_view_live.sql',
   '06_proc_build_summary.sql',
@@ -100,6 +101,10 @@ describe('OEE MOBILE prerequisite DDL', () => {
     join(__dirname, '../../../../../oracle_db_scripts/oee/06_proc_build_summary.sql'),
     'utf8',
   );
+  const shiftContract = readFileSync(
+    join(__dirname, '../../../../../oracle_db_scripts/oee/13_day_night_shift_contract.sql'),
+    'utf8',
+  );
 
   it('contains the event contract and guarded Oracle objects', () => {
     expect(source.trimStart()).toMatch(/^DECLARE\b/);
@@ -115,6 +120,8 @@ describe('OEE MOBILE prerequisite DDL', () => {
     expect(source).toContain('CK_OEE_DTE_RESOURCE');
     expect(source).toContain('CK_OEE_DTE_PROCESS');
     expect(source).toContain('CK_OEE_DTE_WORK_SEGMENT');
+    expect(source).toContain('WORK_SEGMENT      VARCHAR2(5)');
+    expect(source).toContain("WORK_SEGMENT IN ('DAY', 'NIGHT')");
     expect(source).toMatch(/USER_TABLES/);
     expect(source).toMatch(/USER_CONSTRAINTS/);
     expect(source).toMatch(/USER_INDEXES/);
@@ -157,30 +164,80 @@ describe('OEE MOBILE prerequisite DDL', () => {
     expect(unapprovedResourceCleanup).not.toMatch(/DELETE FROM IP_PRODUCT_LINE/);
   });
 
-  it('deploys the dashboard schema as guarded A-J objects without temporary shift seeds', () => {
+  it('deploys the dashboard schema as guarded DAY/NIGHT objects without temporary shift seeds', () => {
     expect(baseTables.trimStart()).toMatch(/^DECLARE\b/);
     expect(extendedTables.trimStart()).toMatch(/^DECLARE\b/);
-    expect(baseTables).toContain("SHIFT IN ('A','B','C','D','E','F','G','H','I','J')");
-    expect(extendedTables).toContain("SHIFT IN ('A','B','C','D','E','F','G','H','I','J')");
+    expect(baseTables).toContain("SHIFT IN ('DAY','NIGHT')");
+    expect(extendedTables).toContain("SHIFT IN ('DAY','NIGHT')");
+    expect(baseTables).not.toMatch(/SHIFT IN \(\s*'A'/);
+    expect(extendedTables).not.toMatch(/SHIFT IN \(\s*'A'/);
     expect(extendedTables).not.toContain('INSERT INTO OEE_WORKTIME_RANGE');
-    expect(extendedTables).not.toMatch(/'DAY'|'NIGHT'/);
   });
 
-  it('builds live OEE from the real A-J worktime and mobile downtime sources', () => {
-    expect(planView).toContain('ICOM_WORKTIME_RANGES');
+  it('builds plan windows from the exact DAY/NIGHT schedule and keeps mobile events out of blank time', () => {
+    expect(planView).not.toContain('ICOM_WORKTIME_RANGES');
     expect(planView).not.toContain('OEE_WORKTIME_RANGE');
-    expect(planView).toContain('WORK_TYPE AS SHIFT');
-    expect(planView).toContain("LENGTH(TRIM(START_TIME)) = 4");
-    expect(planView).toContain("TRIM(START_TIME) || '00'");
+    expect(planView).not.toContain('WORK_TYPE AS SHIFT');
+    expect(planView).toContain("'DAY' AS SHIFT");
+    expect(planView).toContain("'08:30:00' AS START_CLOCK");
+    expect(planView).toContain("'17:30:00' AS END_CLOCK");
+    expect(planView).toContain("'NIGHT'");
+    expect(planView).toContain("'20:30:00'");
+    expect(planView).toContain("'05:30:00'");
+    expect(planView).toMatch(/'NIGHT'[\s\S]*'20:30:00'[\s\S]*'05:30:00'[\s\S]*0,\s*1/);
+    expect(planView).toContain('NVL(ov.PLANNED_MINUTES,\n         540)');
+    expect(planView).toContain('NVL(ov.PLANNED_STOP_MINUTES, 60)');
+    expect(planView).toContain('NVL(ov.NET_LOAD_MINUTES, 480)');
+    expect(planView).toContain('OVERRIDE_YN = \'Y\'');
     expect(planView).toContain("r.PROCESS_CODE IN ('SMT', 'ASSY')");
     expect(planView).toContain("r.RESOURCE_TYPE IN ('LINE', 'CELL')");
     expect(liveView).toContain('OEE_DOWNTIME_EVENT');
     expect(liveView).not.toContain('OEE_OPERATION_LOG');
     expect(liveView).toContain('SEGMENT_START_TIME');
     expect(liveView).toContain('SEGMENT_END_TIME');
+    expect(liveView).toContain('e.START_TIME < p.EFFECTIVE_END_TIME');
+    expect(liveView).toContain('> p.SEGMENT_START_TIME');
     expect(liveView).not.toContain("pt.WORK_DATE = TRUNC(SYSDATE - (8.5 / 24))");
     expect(summaryProcedure.trimStart()).toMatch(/^BEGIN\b/);
     expect(summaryProcedure).toContain('CREATE OR REPLACE NONEDITIONABLE PROCEDURE');
+  });
+
+  it('rejects legacy A-J values wherever the OEE shift contract is authoritative', () => {
+    for (const sql of [source, baseTables, extendedTables, planView, shiftContract]) {
+      expect(sql).not.toMatch(/SHIFT\s+IN\s*\(\s*'A'/i);
+    }
+    expect(source).not.toMatch(/WORK_SEGMENT\s+IN\s*\(\s*'A'/i);
+    expect(planView).not.toMatch(/WORK_TYPE\s+AS\s+SHIFT/i);
+  });
+
+  it('uses an authoritative migration with complete preflight and explicit A-J event mapping', () => {
+    expect(shiftContract.trimStart()).toMatch(/^DECLARE\b/);
+    expect(shiftContract).toMatch(/USER_TABLES[\s\S]*OEE_OPERATION_LOG[\s\S]*OEE_PLAN_TIME[\s\S]*OEE_DAILY_SUMMARY[\s\S]*OEE_PRODUCTION_RESULT[\s\S]*OEE_DOWNTIME_EVENT/);
+    expect(shiftContract).toContain("SHIFT NOT IN ('DAY', 'NIGHT')");
+    expect(shiftContract).toContain("WORK_SEGMENT NOT IN ('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'DAY', 'NIGHT')");
+    expect(shiftContract).toContain('ALTER TABLE OEE_DOWNTIME_EVENT DROP CONSTRAINT CK_OEE_DTE_WORK_SEGMENT');
+    expect(shiftContract).toContain('MODIFY (WORK_SEGMENT VARCHAR2(5))');
+    expect(shiftContract).toContain("SET WORK_SEGMENT = 'DAY'");
+    expect(shiftContract).toContain("WORK_SEGMENT IN ('A', 'B', 'C', 'D', 'E')");
+    expect(shiftContract).toContain("SET WORK_SEGMENT = 'NIGHT'");
+    expect(shiftContract).toContain("WORK_SEGMENT IN ('F', 'G', 'H', 'I', 'J')");
+    expect(shiftContract).toContain("CHECK (WORK_SEGMENT IN ('DAY', 'NIGHT'))");
+    for (const constraint of [
+      'CK_OEE_OPLOG_SHIFT',
+      'CK_OEE_PLANTIME_SHIFT',
+      'CK_OEE_SUMMARY_SHIFT',
+      'CK_OEE_PROD_SHIFT',
+    ]) {
+      expect(shiftContract).toContain(`DROP CONSTRAINT ${constraint}`);
+      expect(shiftContract).toContain(`CONSTRAINT ${constraint} CHECK (SHIFT IN ('DAY', 'NIGHT'))`);
+    }
+
+    const firstApply = Math.min(
+      ...['ALTER TABLE', 'UPDATE OEE_'].map((marker) => shiftContract.indexOf(marker)),
+    );
+    const firstPreflightEnd = shiftContract.indexOf('\n/');
+    expect(firstPreflightEnd).toBeGreaterThanOrEqual(0);
+    expect(firstApply).toBeGreaterThan(firstPreflightEnd);
   });
 
   it('keeps routine deployment separate from manual cleanup and the removed production2 seed', () => {

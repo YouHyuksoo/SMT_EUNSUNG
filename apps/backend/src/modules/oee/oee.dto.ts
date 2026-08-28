@@ -20,6 +20,9 @@ export type OeeProcessCode = (typeof OEE_PROCESS_CODES)[number];
 export const OEE_RESOURCE_TYPES = ['LINE', 'CELL'] as const;
 export type OeeResourceType = (typeof OEE_RESOURCE_TYPES)[number];
 
+export const OEE_SHIFT_CODES = ['DAY', 'NIGHT'] as const;
+export type OeeShift = (typeof OEE_SHIFT_CODES)[number];
+
 /** OEE 리소스 마스터 신규 등록 */
 export class ResourceCreateDto {
   @IsString()
@@ -114,7 +117,8 @@ export class LogSaveDto {
 
   @IsString()
   @IsNotEmpty()
-  shift: string; // DAY/NIGHT
+  @IsIn([...OEE_SHIFT_CODES])
+  shift: OeeShift;
 
   @IsInt()
   netLoadMinutes: number;

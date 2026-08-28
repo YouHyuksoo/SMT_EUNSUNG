@@ -4,6 +4,7 @@
     "03_tables_ext.sql",
     "07_mobile_prerequisites.sql",
     "12_resource_management_contract.sql",
+    "13_day_night_shift_contract.sql",
     "04_view_plan_time.sql",
     "05_view_live.sql",
     "06_proc_build_summary.sql"
