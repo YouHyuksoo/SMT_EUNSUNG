@@ -50,23 +50,23 @@ describe('ComCodeService', () => {
     }));
   });
 
-  it('counts groups within organization id', async () => {
-    const qb: any = {
-      select: jest.fn().mockReturnThis(),
-      addSelect: jest.fn().mockReturnThis(),
-      groupBy: jest.fn().mockReturnThis(),
-      orderBy: jest.fn().mockReturnThis(),
-      andWhere: jest.fn().mockReturnThis(),
-      getRawMany: jest.fn().mockResolvedValue([{
+  it('counts and aggregates groups within organization id without Oracle LISTAGG', async () => {
+    mockRepo.find.mockResolvedValue([
+      {
         groupCode: 'PLAN STATUS',
-        count: '2',
-        detailCodes: 'C W',
-        searchTextKo: '완료 대기',
-        searchTextEn: 'COMPLETE WAIT',
-        searchTextLocal: 'COMPLETE WAIT',
-      }]),
-    };
-    mockRepo.createQueryBuilder.mockReturnValue(qb);
+        detailCode: 'C',
+        codeName: '완료',
+        codeNameEng: 'COMPLETE',
+        codeNameLocal: 'COMPLETE',
+      },
+      {
+        groupCode: 'PLAN STATUS',
+        detailCode: 'W',
+        codeName: '대기',
+        codeNameEng: 'WAIT',
+        codeNameLocal: 'WAIT',
+      },
+    ] as ComCode[]);
 
     const result = await target.findAllGroups(1);
 
@@ -81,7 +81,37 @@ describe('ComCodeService', () => {
         vi: 'COMPLETE WAIT',
       },
     }]);
-    expect(qb.andWhere).toHaveBeenCalledWith('code.organizationId = :organizationId', { organizationId: 1 });
+    expect(mockRepo.find).toHaveBeenCalledWith({
+      where: { organizationId: 1 },
+      order: { groupCode: 'asc', detailCode: 'asc' },
+      select: {
+        groupCode: true,
+        detailCode: true,
+        codeName: true,
+        codeNameEng: true,
+        codeNameLocal: true,
+      },
+    });
+    expect(mockRepo.createQueryBuilder).not.toHaveBeenCalled();
+  });
+
+  it('returns group search text beyond the Oracle VARCHAR2 aggregation limit', async () => {
+    const longName = '긴검색명'.repeat(300);
+    mockRepo.find.mockResolvedValue(Array.from({ length: 5 }, (_, index) => ({
+      groupCode: 'BARCODE TYPE',
+      detailCode: String(index + 1),
+      codeName: `${longName}${index}`,
+      codeNameEng: index === 2 ? null : `EN${index}`,
+      codeNameLocal: `LOCAL${index}`,
+    })) as ComCode[]);
+
+    const [result] = await target.findAllGroups(1);
+
+    expect(Buffer.byteLength(result.searchText.ko, 'utf8')).toBeGreaterThan(4000);
+    expect(result.count).toBe(5);
+    expect(result.detailCodes).toEqual(['1', '2', '3', '4', '5']);
+    expect(result.searchText.ko).toContain(`${longName}4`);
+    expect(result.searchText.en).toBe('EN0 EN1 EN3 EN4');
   });
 
   it('finds a base code by CODE_TYPE and CODE_NAME', async () => {

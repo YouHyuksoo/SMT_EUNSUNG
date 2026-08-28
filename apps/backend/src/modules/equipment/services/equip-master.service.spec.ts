@@ -9,18 +9,28 @@ import { NotFoundException, ConflictException } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { EquipMasterService } from './equip-master.service';
 import { EquipMaster } from '../../../entities/equip-master.entity';
+import { ProdLineMaster } from '../../../entities/prod-line-master.entity';
+import { ProcessMaster } from '../../../entities/process-master.entity';
 import { MockLoggerService } from '@test/mock-logger.service';
 
 describe('EquipMasterService', () => {
   let target: EquipMasterService;
   let mockEquipRepo: DeepMocked<Repository<EquipMaster>>;
+  let mockLineRepo: DeepMocked<Repository<ProdLineMaster>>;
+  let mockProcessRepo: DeepMocked<Repository<ProcessMaster>>;
 
   beforeEach(async () => {
     mockEquipRepo = createMock<Repository<EquipMaster>>();
+    mockLineRepo = createMock<Repository<ProdLineMaster>>();
+    mockProcessRepo = createMock<Repository<ProcessMaster>>();
+    mockLineRepo.find.mockResolvedValue([]);
+    mockProcessRepo.find.mockResolvedValue([]);
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         EquipMasterService,
         { provide: getRepositoryToken(EquipMaster), useValue: mockEquipRepo },
+        { provide: getRepositoryToken(ProdLineMaster), useValue: mockLineRepo },
+        { provide: getRepositoryToken(ProcessMaster), useValue: mockProcessRepo },
       ],
     }).setLogger(new MockLoggerService()).compile();
     target = module.get<EquipMasterService>(EquipMasterService);
@@ -28,10 +38,16 @@ describe('EquipMasterService', () => {
   afterEach(() => jest.clearAllMocks());
 
   describe('findAll', () => {
-    it('생산투입 화면 작업지시 배정 URL에서 사용할 id로 equipCode를 함께 반환한다', async () => {
+    it('returns canonical line and workstage names with the equipment identity', async () => {
       const rows = [
-        { equipCode: 'EQ-001', equipName: 'Cutting 1', processCode: 'CUT' },
+        { equipCode: 'EQ-001', equipName: 'Cutting 1', lineCode: '50', processCode: 'CUT', organizationId: 1 },
       ] as any;
+      mockLineRepo.find.mockResolvedValue([
+        { lineCode: '50', lineName: 'CMA', organizationId: 1 } as ProdLineMaster,
+      ]);
+      mockProcessRepo.find.mockResolvedValue([
+        { processCode: 'CUT', processName: '조립', organizationId: 1 } as ProcessMaster,
+      ]);
       const qb: any = {
         andWhere: jest.fn().mockReturnThis(),
         clone: jest.fn(),
@@ -49,7 +65,8 @@ describe('EquipMasterService', () => {
       expect(result.data[0]).toEqual(expect.objectContaining({
         id: 'EQ-001',
         equipCode: 'EQ-001',
-        processName: 'CUT',
+        lineName: 'CMA',
+        processName: '조립',
       }));
     });
   });
@@ -71,6 +88,36 @@ describe('EquipMasterService', () => {
     it('should throw NotFoundException', async () => {
       mockEquipRepo.findOne.mockResolvedValue(null);
       await expect(target.findById('X')).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('findByCode', () => {
+    it('returns canonical line and workstage names for the mobile equipment lookup', async () => {
+      mockEquipRepo.findOne.mockResolvedValue({
+        equipCode: 'ICT05',
+        equipName: 'ICT 5호기',
+        lineCode: '20',
+        processCode: 'W090',
+        organizationId: 1,
+      } as EquipMaster);
+      mockLineRepo.find.mockResolvedValue([
+        { lineCode: '20', lineName: 'ICT', organizationId: 1 } as ProdLineMaster,
+      ]);
+      mockProcessRepo.find.mockResolvedValue([
+        { processCode: 'W090', processName: '검사', organizationId: 1 } as ProcessMaster,
+      ]);
+
+      const result = await target.findByCode('ICT05', 1);
+
+      expect(mockEquipRepo.findOne).toHaveBeenCalledWith({
+        where: { equipCode: 'ICT05', organizationId: 1 },
+      });
+      expect(result).toEqual(expect.objectContaining({
+        id: 'ICT05',
+        equipCode: 'ICT05',
+        lineName: 'ICT',
+        processName: '검사',
+      }));
     });
   });
 

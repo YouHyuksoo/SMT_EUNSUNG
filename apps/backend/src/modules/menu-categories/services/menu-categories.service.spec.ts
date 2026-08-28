@@ -199,7 +199,7 @@ describe('MenuCategoriesService', () => {
       ]);
     });
 
-    it('uses the full OEE menu layout position when only OEE_ENTRY is missing', async () => {
+    it('uses the new OEE_MULTI_ENTRY menu layout position when it is missing', async () => {
       categoryRepo.find.mockResolvedValue([
         { organizationId: 7, categoryCode: 'MASTER' },
         { organizationId: 7, categoryCode: 'OEE' },
@@ -226,7 +226,7 @@ describe('MenuCategoriesService', () => {
 
       expect(itemRepo.save).toHaveBeenCalledWith(
         expect.arrayContaining([
-          expect.objectContaining({ menuCode: 'OEE_ENTRY', categoryCode: 'OEE', sortOrder: 30 }),
+          expect.objectContaining({ menuCode: 'OEE_MULTI_ENTRY', categoryCode: 'OEE', sortOrder: 30 }),
         ]),
       );
     });
@@ -269,13 +269,14 @@ describe('MenuCategoriesService', () => {
         { menuCode: 'SYS_IMPR_REQ' },
         { menuCode: 'OEE_DASHBOARD' },
         { menuCode: 'OEE_DRILLDOWN' },
-        { menuCode: 'OEE_ENTRY' },
+        { menuCode: 'OEE_MULTI_ENTRY' },
         { menuCode: 'OEE_EQUIP_WORK_RESULT' },
         { menuCode: 'OEE_EQUIP_OPS_ANALYSIS' },
         { menuCode: 'OEE_EQUIP_DOWNTIME_MOBILE' },
         { menuCode: 'OEE_MST_STD_TIME' },
         { menuCode: 'OEE_MST_IDLE_REASON' },
         { menuCode: 'OEE_MST_EQUIP_REASON' },
+        { menuCode: 'OEE_MST_RESOURCE' },
       ] as any);
 
       await service.ensureDefaultLayout({ organizationId: 7, userId: 'tester' });

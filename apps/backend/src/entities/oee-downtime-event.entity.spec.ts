@@ -18,6 +18,7 @@ describe('OEE_DOWNTIME_EVENT entity mapping', () => {
     ).toBe('identity');
     expect(column('endTime')?.options.nullable).toBe(true);
     expect(column('memo')?.options.length).toBe(500);
+    expect(column('workSegment')?.options.length).toBe(5);
     expect(column('startRequestId')?.options.length).toBe(64);
     expect(column('endRequestId')?.options.nullable).toBe(true);
 

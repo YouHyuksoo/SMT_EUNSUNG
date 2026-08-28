@@ -25,6 +25,8 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
 import { EquipMaster } from '../../../entities/equip-master.entity';
+import { ProdLineMaster } from '../../../entities/prod-line-master.entity';
+import { ProcessMaster } from '../../../entities/process-master.entity';
 import {
   CreateEquipMasterDto,
   UpdateEquipMasterDto,
@@ -42,7 +44,41 @@ export class EquipMasterService {
   constructor(
     @InjectRepository(EquipMaster)
     private readonly equipMasterRepository: Repository<EquipMaster>,
+    @InjectRepository(ProdLineMaster)
+    private readonly lineRepository: Repository<ProdLineMaster>,
+    @InjectRepository(ProcessMaster)
+    private readonly processRepository: Repository<ProcessMaster>,
   ) {}
+
+  private async enrichMasterNames(equips: EquipMaster[]) {
+    const organizationIds = [...new Set(equips.map((equip) => equip.organizationId))];
+    const lineCodes = [...new Set(equips.map((equip) => equip.lineCode).filter((code): code is string => !!code))];
+    const processCodes = [...new Set(equips.map((equip) => equip.processCode).filter((code): code is string => !!code))];
+    const [lines, processes] = await Promise.all([
+      organizationIds.length && lineCodes.length
+        ? this.lineRepository.find({ where: { organizationId: In(organizationIds), lineCode: In(lineCodes) } })
+        : [],
+      organizationIds.length && processCodes.length
+        ? this.processRepository.find({ where: { organizationId: In(organizationIds), processCode: In(processCodes) } })
+        : [],
+    ]);
+    const lineNames = new Map<string, string>(
+      lines.map((row): [string, string] => [`${row.organizationId}:${row.lineCode}`, row.lineName]),
+    );
+    const processNames = new Map<string, string>(
+      processes.map((row): [string, string] => [
+        `${row.organizationId}:${row.processCode}`,
+        row.processName,
+      ]),
+    );
+
+    return equips.map((equip) => ({
+      ...this.withClientId(equip),
+      lineName: equip.lineCode ? lineNames.get(`${equip.organizationId}:${equip.lineCode}`) ?? null : null,
+      processName: equip.processCode ? processNames.get(`${equip.organizationId}:${equip.processCode}`) ?? null : null,
+      lineType: null,
+    }));
+  }
 
   private tenantWhere(organizationId?: number) {
     return {
@@ -123,12 +159,7 @@ export class EquipMasterService {
       qb.clone().getCount(),
     ]);
 
-    const enriched = data.map((e) => ({
-      ...this.withClientId(e),
-      processName: e.processCode ?? null,
-      lineName: e.lineCode ?? null,
-      lineType: null,
-    }));
+    const enriched = await this.enrichMasterNames(data);
 
     return { data: enriched, total, page, limit };
   }
@@ -145,7 +176,7 @@ export class EquipMasterService {
       throw new NotFoundException(`설비를 찾을 수 없습니다: ${equipCode}`);
     }
 
-    return this.withClientId(equip);
+    return (await this.enrichMasterNames([equip]))[0];
   }
 
   /**
@@ -160,7 +191,7 @@ export class EquipMasterService {
       throw new NotFoundException(`설비를 찾을 수 없습니다: ${equipCode}`);
     }
 
-    return this.withClientId(equip);
+    return (await this.enrichMasterNames([equip]))[0];
   }
 
   /**

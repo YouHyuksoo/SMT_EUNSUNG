@@ -90,8 +90,7 @@ export default function TabBar() {
     setCtxMenu({ tab, x: e.clientX, y: e.clientY });
   };
 
-  const handleClose = (e: React.MouseEvent, tabId: string) => {
-    e.stopPropagation();
+  const closeTab = useCallback((tabId: string) => {
     const wasActive = useTabStore.getState().activeTabId === tabId;
     removeTab(tabId);
     // keep-alive: 탭을 닫으면 라우트도 살아남은 활성 탭으로 이동해야 페이지가 사라진다.
@@ -101,7 +100,30 @@ export default function TabBar() {
       const next = s.tabs.find((t) => t.id === s.activeTabId);
       if (next) navigateClientOnly(next.path);
     }
+  }, [removeTab]);
+
+  const handleClose = (e: React.MouseEvent, tabId: string) => {
+    e.stopPropagation();
+    closeTab(tabId);
   };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const isCloseShortcut =
+        e.ctrlKey && e.altKey && !e.shiftKey && e.key.toLowerCase() === "w";
+      if (e.defaultPrevented || e.repeat || !isCloseShortcut) return;
+
+      const state = useTabStore.getState();
+      const activeTab = state.tabs.find((tab) => tab.id === state.activeTabId);
+      if (!activeTab || activeTab.pinned) return;
+
+      e.preventDefault();
+      closeTab(activeTab.id);
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [closeTab]);
 
   if (tabs.length === 0) return null;
 

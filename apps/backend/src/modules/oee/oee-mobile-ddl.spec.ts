@@ -1,13 +1,108 @@
-import { readFileSync } from 'fs';
+import { existsSync, readdirSync, readFileSync } from 'fs';
 import { join } from 'path';
+
+const oeeScriptRoot = join(__dirname, '../../../../../oracle_db_scripts/oee');
+const deploymentManifestPath = join(oeeScriptRoot, 'deployment-manifest.json');
+const routineDeploymentFiles = [
+  '01_tables.sql',
+  '03_tables_ext.sql',
+  '07_mobile_prerequisites.sql',
+  '12_resource_management_contract.sql',
+  '13_day_night_shift_contract.sql',
+  '04_view_plan_time.sql',
+  '05_view_live.sql',
+  '06_proc_build_summary.sql',
+];
+const manualCleanupFiles = [
+  'manual/08_cleanup_legacy_oee_plants.sql',
+  'manual/10_cleanup_unapproved_oee_resources.sql',
+];
+const manualBootstrapFiles = ['manual/09_bootstrap_dashboard_resources.sql'];
+const protectedMasterTables = new Set([
+  'IP_PRODUCT_WORKSTAGE',
+  'IP_PRODUCT_LINE',
+  'IMCN_MACHINE',
+  'IP_PRODUCT_ST_MASTER',
+  'IS_PRODUCT_SALE_PRICE',
+  'IM_ITEM_UNIT_PRICE',
+]);
+
+function collectOeeSqlFiles(directory: string): string[] {
+  if (!existsSync(directory)) {
+    return [];
+  }
+
+  return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+    const filePath = join(directory, entry.name);
+    if (entry.isDirectory()) {
+      return collectOeeSqlFiles(filePath);
+    }
+    return entry.isFile() && filePath.endsWith('.sql') ? [filePath] : [];
+  });
+}
+
+function stripSqlComments(source: string): string {
+  return source.replace(/--[^\r\n]*/g, ' ').replace(/\/\*[\s\S]*?\*\//g, ' ');
+}
+
+function extractTargets(source: string, operation: 'write' | 'read'): string[] {
+  const keyword = operation === 'write'
+    ? '(?:INSERT\\s+INTO|UPDATE(?!\\s+SET\\b)|DELETE\\s+FROM|MERGE\\s+INTO)'
+    : '(?:FROM|JOIN)';
+  const identifier = '(?:"([^"]+)"|([A-Z0-9_$#]+))';
+  const pattern = new RegExp(
+    `\\b${keyword}\\s+(?:${identifier}\\s*\\.\\s*)?${identifier}`,
+    'gi',
+  );
+
+  return [...stripSqlComments(source).matchAll(pattern)].map((match) =>
+    (match[3] ?? match[4]).toUpperCase(),
+  );
+}
 
 describe('OEE MOBILE prerequisite DDL', () => {
   const source = readFileSync(
     join(__dirname, '../../../../../oracle_db_scripts/oee/07_mobile_prerequisites.sql'),
     'utf8',
   );
-  const cellSeed = readFileSync(
-    join(__dirname, '../../../../../oracle_db_scripts/oee/08_seed_production2_cells.sql'),
+  const resourceBootstrap = readFileSync(
+    join(__dirname, '../../../../../oracle_db_scripts/oee/manual/09_bootstrap_dashboard_resources.sql'),
+    'utf8',
+  );
+  const resourceContract = readFileSync(
+    join(__dirname, '../../../../../oracle_db_scripts/oee/12_resource_management_contract.sql'),
+    'utf8',
+  );
+  const legacyPlantCleanup = readFileSync(
+    join(__dirname, '../../../../../oracle_db_scripts/oee/manual/08_cleanup_legacy_oee_plants.sql'),
+    'utf8',
+  );
+  const unapprovedResourceCleanup = readFileSync(
+    join(__dirname, '../../../../../oracle_db_scripts/oee/manual/10_cleanup_unapproved_oee_resources.sql'),
+    'utf8',
+  );
+  const baseTables = readFileSync(
+    join(__dirname, '../../../../../oracle_db_scripts/oee/01_tables.sql'),
+    'utf8',
+  );
+  const extendedTables = readFileSync(
+    join(__dirname, '../../../../../oracle_db_scripts/oee/03_tables_ext.sql'),
+    'utf8',
+  );
+  const planView = readFileSync(
+    join(__dirname, '../../../../../oracle_db_scripts/oee/04_view_plan_time.sql'),
+    'utf8',
+  );
+  const liveView = readFileSync(
+    join(__dirname, '../../../../../oracle_db_scripts/oee/05_view_live.sql'),
+    'utf8',
+  );
+  const summaryProcedure = readFileSync(
+    join(__dirname, '../../../../../oracle_db_scripts/oee/06_proc_build_summary.sql'),
+    'utf8',
+  );
+  const shiftContract = readFileSync(
+    join(__dirname, '../../../../../oracle_db_scripts/oee/13_day_night_shift_contract.sql'),
     'utf8',
   );
 
@@ -25,18 +120,184 @@ describe('OEE MOBILE prerequisite DDL', () => {
     expect(source).toContain('CK_OEE_DTE_RESOURCE');
     expect(source).toContain('CK_OEE_DTE_PROCESS');
     expect(source).toContain('CK_OEE_DTE_WORK_SEGMENT');
+    expect(source).toContain('WORK_SEGMENT      VARCHAR2(5)');
+    expect(source).toContain("WORK_SEGMENT IN ('DAY', 'NIGHT')");
     expect(source).toMatch(/USER_TABLES/);
     expect(source).toMatch(/USER_CONSTRAINTS/);
     expect(source).toMatch(/USER_INDEXES/);
     expect(source.split(/\r?\n/).filter((line) => line.trim() === '/').length).toBeGreaterThan(1);
   });
 
-  it('keeps existing CELL master values and rejects cross-tenant key ownership', () => {
-    expect(cellSeed.trimStart()).toMatch(/^DECLARE\b/);
-    expect(cellSeed).toContain('RAISE_APPLICATION_ERROR');
-    expect(cellSeed).toContain('WHEN NOT MATCHED THEN INSERT');
-    expect(cellSeed).not.toContain('WHEN MATCHED THEN UPDATE');
-    expect(cellSeed).not.toMatch(/UPDATE\s+SET/i);
-    expect(cellSeed.match(/'CELL'\s*,\s*\d+\s*,\s*'Y'\s+FROM DUAL/g)).toHaveLength(15);
+  it('keeps the fixed resource projection as a manual bootstrap only', () => {
+    expect(resourceBootstrap).toContain('One-time bootstrap only');
+    expect(resourceBootstrap).toContain('IP_PRODUCT_LINE');
+    expect(resourceBootstrap).not.toContain('PLANTS');
+    expect(resourceBootstrap).not.toContain('PROD2');
+  });
+
+  it('enforces one managed OEE resource per organization and line', () => {
+    expect(resourceContract.trimStart()).toMatch(/^DECLARE\b/);
+    expect(resourceContract).toContain('REF_CODE NOT NULL');
+    expect(resourceContract).toContain('ORGANIZATION_ID, REF_CODE');
+    expect(resourceContract).toContain('CK_OEE_RESOURCE_PROCESS');
+    expect(resourceContract).toContain('CK_OEE_RESOURCE_TYPE');
+    expect(resourceContract).toContain('CK_OEE_RESOURCE_USE');
+    expect(baseTables).toContain("RESOURCE_TYPE IN ('LINE', 'CELL')");
+    expect(baseTables).toContain('OEE_RESOURCE (ORGANIZATION_ID, REF_CODE)');
+  });
+
+  it('only deletes the exact legacy OEE PLANTS seed hierarchy', () => {
+    expect(legacyPlantCleanup.trimStart()).toMatch(/^BEGIN\b/);
+    expect(legacyPlantCleanup).toContain('DELETE FROM PLANTS');
+    expect(legacyPlantCleanup).toContain("CREATED_BY = 'SYSTEM'");
+    expect(legacyPlantCleanup).toContain("LINE_CODE = 'PROD2'");
+    expect(legacyPlantCleanup).not.toMatch(/\b(?:INSERT|MERGE|UPDATE)\b/);
+  });
+
+  it('guards cleanup of the unapproved 50-64 OEE projection and exact verification event', () => {
+    expect(unapprovedResourceCleanup.trimStart()).toMatch(/^DECLARE\b/);
+    expect(unapprovedResourceCleanup).toContain('EVENT_ID = 22');
+    expect(unapprovedResourceCleanup).toContain('START_REQUEST_ID');
+    expect(unapprovedResourceCleanup).toContain('END_REQUEST_ID');
+    expect(unapprovedResourceCleanup).toContain('RAISE_APPLICATION_ERROR');
+    expect(unapprovedResourceCleanup).toContain("REF_CODE BETWEEN '50' AND '64'");
+    expect(unapprovedResourceCleanup).not.toMatch(/DELETE FROM IP_PRODUCT_LINE/);
+  });
+
+  it('deploys the dashboard schema as guarded DAY/NIGHT objects without temporary shift seeds', () => {
+    expect(baseTables.trimStart()).toMatch(/^DECLARE\b/);
+    expect(extendedTables.trimStart()).toMatch(/^DECLARE\b/);
+    expect(baseTables).toContain("SHIFT IN ('DAY','NIGHT')");
+    expect(extendedTables).toContain("SHIFT IN ('DAY','NIGHT')");
+    expect(baseTables).not.toMatch(/SHIFT IN \(\s*'A'/);
+    expect(extendedTables).not.toMatch(/SHIFT IN \(\s*'A'/);
+    expect(extendedTables).not.toContain('INSERT INTO OEE_WORKTIME_RANGE');
+  });
+
+  it('builds plan windows from the exact DAY/NIGHT schedule and keeps mobile events out of blank time', () => {
+    expect(planView).not.toContain('ICOM_WORKTIME_RANGES');
+    expect(planView).not.toContain('OEE_WORKTIME_RANGE');
+    expect(planView).not.toContain('WORK_TYPE AS SHIFT');
+    expect(planView).toContain("'DAY' AS SHIFT");
+    expect(planView).toContain("'08:30:00' AS START_CLOCK");
+    expect(planView).toContain("'17:30:00' AS END_CLOCK");
+    expect(planView).toContain("'NIGHT'");
+    expect(planView).toContain("'20:30:00'");
+    expect(planView).toContain("'05:30:00'");
+    expect(planView).toMatch(/'NIGHT'[\s\S]*'20:30:00'[\s\S]*'05:30:00'[\s\S]*0,\s*1/);
+    expect(planView).toContain('NVL(ov.PLANNED_MINUTES,\n         540)');
+    expect(planView).toContain('NVL(ov.PLANNED_STOP_MINUTES, 60)');
+    expect(planView).toContain('NVL(ov.NET_LOAD_MINUTES, 480)');
+    expect(planView).toContain('OVERRIDE_YN = \'Y\'');
+    expect(planView).toContain("r.PROCESS_CODE IN ('SMT', 'ASSY')");
+    expect(planView).toContain("r.RESOURCE_TYPE IN ('LINE', 'CELL')");
+    expect(liveView).toContain('OEE_DOWNTIME_EVENT');
+    expect(liveView).not.toContain('OEE_OPERATION_LOG');
+    expect(liveView).toContain('SEGMENT_START_TIME');
+    expect(liveView).toContain('SEGMENT_END_TIME');
+    expect(liveView).toContain('e.START_TIME < p.EFFECTIVE_END_TIME');
+    expect(liveView).toContain('> p.SEGMENT_START_TIME');
+    expect(liveView).not.toContain("pt.WORK_DATE = TRUNC(SYSDATE - (8.5 / 24))");
+    expect(summaryProcedure.trimStart()).toMatch(/^BEGIN\b/);
+    expect(summaryProcedure).toContain('CREATE OR REPLACE NONEDITIONABLE PROCEDURE');
+  });
+
+  it('rejects legacy A-J values wherever the OEE shift contract is authoritative', () => {
+    for (const sql of [source, baseTables, extendedTables, planView, shiftContract]) {
+      expect(sql).not.toMatch(/SHIFT\s+IN\s*\(\s*'A'/i);
+    }
+    expect(source).not.toMatch(/WORK_SEGMENT\s+IN\s*\(\s*'A'/i);
+    expect(planView).not.toMatch(/WORK_TYPE\s+AS\s+SHIFT/i);
+  });
+
+  it('uses an authoritative migration with complete preflight and explicit A-J event mapping', () => {
+    expect(shiftContract.trimStart()).toMatch(/^DECLARE\b/);
+    expect(shiftContract).toMatch(/USER_TABLES[\s\S]*OEE_OPERATION_LOG[\s\S]*OEE_PLAN_TIME[\s\S]*OEE_DAILY_SUMMARY[\s\S]*OEE_PRODUCTION_RESULT[\s\S]*OEE_DOWNTIME_EVENT/);
+    expect(shiftContract).toContain("SHIFT NOT IN ('DAY', 'NIGHT')");
+    expect(shiftContract).toContain("WORK_SEGMENT NOT IN ('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'DAY', 'NIGHT')");
+    expect(shiftContract).toContain('ALTER TABLE OEE_DOWNTIME_EVENT DROP CONSTRAINT CK_OEE_DTE_WORK_SEGMENT');
+    expect(shiftContract).toContain('MODIFY (WORK_SEGMENT VARCHAR2(5))');
+    expect(shiftContract).toContain("SET WORK_SEGMENT = 'DAY'");
+    expect(shiftContract).toContain("WORK_SEGMENT IN ('A', 'B', 'C', 'D', 'E')");
+    expect(shiftContract).toContain("SET WORK_SEGMENT = 'NIGHT'");
+    expect(shiftContract).toContain("WORK_SEGMENT IN ('F', 'G', 'H', 'I', 'J')");
+    expect(shiftContract).toContain("CHECK (WORK_SEGMENT IN ('DAY', 'NIGHT'))");
+    for (const constraint of [
+      'CK_OEE_OPLOG_SHIFT',
+      'CK_OEE_PLANTIME_SHIFT',
+      'CK_OEE_SUMMARY_SHIFT',
+      'CK_OEE_PROD_SHIFT',
+    ]) {
+      expect(shiftContract).toContain(`DROP CONSTRAINT ${constraint}`);
+      expect(shiftContract).toContain(`CONSTRAINT ${constraint} CHECK (SHIFT IN ('DAY', 'NIGHT'))`);
+    }
+
+    const firstApply = Math.min(
+      ...['ALTER TABLE', 'UPDATE OEE_'].map((marker) => shiftContract.indexOf(marker)),
+    );
+    const firstPreflightEnd = shiftContract.indexOf('\n/');
+    expect(firstPreflightEnd).toBeGreaterThanOrEqual(0);
+    expect(firstApply).toBeGreaterThan(firstPreflightEnd);
+  });
+
+  it('keeps routine deployment separate from manual cleanup and the removed production2 seed', () => {
+    expect(existsSync(deploymentManifestPath)).toBe(true);
+    expect(existsSync(join(oeeScriptRoot, manualCleanupFiles[0]))).toBe(true);
+    expect(existsSync(join(oeeScriptRoot, manualCleanupFiles[1]))).toBe(true);
+    expect(existsSync(join(oeeScriptRoot, '08_cleanup_legacy_oee_plants.sql'))).toBe(false);
+    expect(existsSync(join(oeeScriptRoot, '10_cleanup_unapproved_oee_resources.sql'))).toBe(false);
+    expect(existsSync(join(oeeScriptRoot, '11_seed_production2_equipment.sql'))).toBe(false);
+    expect(existsSync(join(oeeScriptRoot, '09_seed_dashboard_resources.sql'))).toBe(false);
+
+    const manifest = JSON.parse(readFileSync(deploymentManifestPath, 'utf8')) as {
+      routineDeployment: string[];
+      manualBootstrap: string[];
+      manualCleanup: string[];
+    };
+
+    expect(manifest.routineDeployment).toEqual(routineDeploymentFiles);
+    expect(manifest.manualBootstrap).toEqual(manualBootstrapFiles);
+    expect(manifest.manualCleanup).toEqual(manualCleanupFiles);
+    expect(manifest.routineDeployment).not.toContain('09_seed_dashboard_resources.sql');
+
+    for (const referencedFile of [
+      ...manifest.routineDeployment,
+      ...manifest.manualBootstrap,
+      ...manifest.manualCleanup,
+    ]) {
+      expect(existsSync(join(oeeScriptRoot, referencedFile))).toBe(true);
+    }
+  });
+
+  it('does not target protected master tables from any OEE SQL file', () => {
+    const violations = collectOeeSqlFiles(oeeScriptRoot).flatMap((filePath) => {
+      const source = readFileSync(filePath, 'utf8');
+      return extractTargets(source, 'write')
+        .filter((target) => protectedMasterTables.has(target))
+        .map((target) => `${filePath}: ${target}`);
+    });
+
+    expect(violations).toEqual([]);
+  });
+
+  it('keeps the manual bootstrap read-only for IP_PRODUCT_LINE', () => {
+    const writeTargets = extractTargets(resourceBootstrap, 'write');
+    const protectedReadTargets = extractTargets(resourceBootstrap, 'read')
+      .filter((target) => protectedMasterTables.has(target));
+
+    expect(resourceBootstrap).toMatch(/\bFROM\s+IP_PRODUCT_LINE\b/i);
+    expect(new Set(writeTargets)).toEqual(new Set(['OEE_RESOURCE']));
+    expect(new Set(protectedReadTargets)).toEqual(new Set(['IP_PRODUCT_LINE']));
+  });
+
+  it('detects Oracle hint variants that write protected masters', () => {
+    for (const sql of [
+      'INSERT /*+ APPEND */ INTO IP_PRODUCT_LINE (LINE_CODE) VALUES (\'01\')',
+      'UPDATE /*+ INDEX(t) */ IMCN_MACHINE t SET t.MACHINE_NAME = \'X\'',
+      'DELETE /*+ FULL(t) */ FROM IP_PRODUCT_ST_MASTER t',
+      'MERGE /*+ USE_NL(t) */ INTO IS_PRODUCT_SALE_PRICE t USING DUAL ON (1=0)',
+    ]) {
+      expect(extractTargets(sql, 'write').some((target) => protectedMasterTables.has(target))).toBe(true);
+    }
   });
 });
