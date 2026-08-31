@@ -52,11 +52,15 @@ Test-Case 'task contract requires exact S4U limited startup task' {
   $powershellPath = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
   $task = [pscustomobject]@{
     TaskName = 'EunsungMES-PM2-Resurrect'
+    TaskPath = '\EunsungMES\'
     Principal = [pscustomobject]@{ UserId=$deploySid.Value; LogonType='S4U'; RunLevel='Limited' }
     Actions = @([pscustomobject]@{ Execute=$powershellPath; Arguments='-NoProfile -NonInteractive -ExecutionPolicy Bypass -File "D:\deploy\Resurrect-EunsungPm2.ps1"' })
     Triggers = @([pscustomobject]@{ CimClass=[pscustomobject]@{ CimClassName='MSFT_TaskBootTrigger' } })
   }
   Assert-True (Test-EunsungScheduledTaskContract -Task $task -WrapperPath 'D:\deploy\Resurrect-EunsungPm2.ps1' -DeploySid $deploySid)
+  $task.TaskPath='\Wrong\'
+  Assert-True (-not (Test-EunsungScheduledTaskContract -Task $task -WrapperPath 'D:\deploy\Resurrect-EunsungPm2.ps1' -DeploySid $deploySid))
+  $task.TaskPath='\EunsungMES\'
   $task.Principal.RunLevel = 'Highest'
   Assert-True (-not (Test-EunsungScheduledTaskContract -Task $task -WrapperPath 'D:\deploy\Resurrect-EunsungPm2.ps1' -DeploySid $deploySid))
   $task.Principal.RunLevel = 'Limited'
@@ -198,6 +202,31 @@ Test-Case 'helper and wrapper ACL give deployment SID read execute without write
   finally{Remove-Item -LiteralPath $testFile -Force}
 }
 
+Test-Case 'protected bootstrap parent prevents deploy replacement and delete-child access' {
+  $deploySid=New-Object Security.Principal.SecurityIdentifier('S-1-5-21-1-2-3-1012')
+  $testRoot=Join-Path ([IO.Path]::GetTempPath()) ("eunsung-protected-"+[guid]::NewGuid().ToString('N'))
+  $bootstrap=Join-Path $testRoot 'bootstrap'
+  New-Item -ItemType Directory -Path $bootstrap -Force|Out-Null
+  try{
+    Set-EunsungDirectoryAcl -Path $testRoot -DeploySid $deploySid
+    Set-EunsungProtectedBootstrapDirectoryAcl -Path $bootstrap -DeploySid $deploySid
+    Assert-EunsungProtectedBootstrapDirectoryAcl -Path $bootstrap -DeploySid $deploySid
+    Set-EunsungProtectedBootstrapFile -BootstrapRoot $bootstrap -Path (Join-Path $bootstrap 'helper.ps1') -Content 'exit 0' -DeploySid $deploySid
+    Assert-EunsungBootstrapExecutableAcl -Path (Join-Path $bootstrap 'helper.ps1') -DeploySid $deploySid
+  }finally{Remove-Item -LiteralPath $testRoot -Recurse -Force}
+}
+
+Test-Case 'bootstrap path validation rejects hard-linked executable files' {
+  $testDir=Join-Path ([IO.Path]::GetTempPath()) ("eunsung-hardlink-"+[guid]::NewGuid().ToString('N'))
+  New-Item -ItemType Directory -Path $testDir|Out-Null
+  try{
+    $target=Join-Path $testDir 'target.ps1';$link=Join-Path $testDir 'helper.ps1'
+    [IO.File]::WriteAllText($target,'exit 0')
+    New-Item -ItemType HardLink -Path $link -Target $target|Out-Null
+    Assert-Throws { Assert-EunsungOrdinaryPath -Path $link } 'Hard links are not allowed'
+  }finally{Remove-Item -LiteralPath $testDir -Recurse -Force}
+}
+
 Test-Case 'registered profile is discovered by credentialed launch and checked against ProfileList' {
   $deploySid=New-Object Security.Principal.SecurityIdentifier('S-1-5-21-1-2-3-1008')
   $testDir=Join-Path ([IO.Path]::GetTempPath()) ("eunsung-bootstrap-"+[guid]::NewGuid().ToString('N'))
@@ -217,10 +246,22 @@ Test-Case 'compliant scheduled task rerun skips self-registration' {
   $deploySid=New-Object Security.Principal.SecurityIdentifier('S-1-5-21-1-2-3-1009')
   $powershellPath=Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
   $script:unregistered=$false
-  function Get-ScheduledTask { [pscustomobject]@{TaskName='EunsungMES-PM2-Resurrect';Principal=[pscustomobject]@{UserId=$deploySid.Value;LogonType='S4U';RunLevel='Limited'};Actions=@([pscustomobject]@{Execute=$powershellPath;Arguments='-NoProfile -NonInteractive -ExecutionPolicy Bypass -File "D:\deploy\wrapper.ps1"'});Triggers=@([pscustomobject]@{CimClass=[pscustomobject]@{CimClassName='MSFT_TaskBootTrigger'}})} }
+  function Get-ScheduledTask { [pscustomobject]@{TaskName='EunsungMES-PM2-Resurrect';TaskPath='\EunsungMES\';Principal=[pscustomobject]@{UserId=$deploySid.Value;LogonType='S4U';RunLevel='Limited'};Actions=@([pscustomobject]@{Execute=$powershellPath;Arguments='-NoProfile -NonInteractive -ExecutionPolicy Bypass -File "D:\deploy\wrapper.ps1"'});Triggers=@([pscustomobject]@{CimClass=[pscustomobject]@{CimClassName='MSFT_TaskBootTrigger'}})} }
   function Unregister-ScheduledTask {$script:unregistered=$true}
   Assert-True (-not (Prepare-EunsungResurrectTaskRegistration -WrapperPath 'D:\deploy\wrapper.ps1' -DeploySid $deploySid))
   Assert-True (-not $script:unregistered)
+}
+
+Test-Case 'failed replacement attempt preserves prior noncompliant exact task' {
+  $deploySid=New-Object Security.Principal.SecurityIdentifier('S-1-5-21-1-2-3-1011')
+  $script:prior=[pscustomobject]@{TaskName='EunsungMES-PM2-Resurrect';TaskPath='\EunsungMES\';Principal=[pscustomobject]@{UserId=$deploySid.Value;LogonType='Password';RunLevel='Limited'};Actions=@();Triggers=@()}
+  $script:unregistered=$false
+  function Get-ScheduledTask { $script:prior }
+  function Unregister-ScheduledTask {$script:unregistered=$true;$script:prior=$null}
+  Assert-True (Prepare-EunsungResurrectTaskRegistration -WrapperPath 'D:\deploy\wrapper.ps1' -DeploySid $deploySid)
+  Assert-Throws { throw 'simulated self-registration failure' } 'simulated self-registration failure'
+  Assert-True (-not $script:unregistered)
+  Assert-True ($null -ne $script:prior)
 }
 
 Test-Case 'PM2 process ownership ignores unrelated legacy PM2 and checks exact deploy SID' {

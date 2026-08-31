@@ -299,6 +299,9 @@ test('bootstrap is least privilege, idempotent, pinned, and reversible', () => {
   assert.match(bootstrap, /EunsungMES-PM2-Resurrect/g, 'the exact scheduled task name is required');
   assert.match(bootstrap, /New-ScheduledTaskTrigger\s+-AtStartup/i, 'the task must run at startup');
   assert.match(bootstrap, /New-ScheduledTaskPrincipal[\s\S]{0,200}-LogonType\s+S4U[\s\S]{0,100}-RunLevel\s+Limited/i, 'the task principal must be S4U and limited');
+  assert.match(bootstrap, /TaskPath\s*=\s*['"]\\EunsungMES\\['"]/i, 'the deployment task must use an exact dedicated scheduler path');
+  assert.match(bootstrap, /Register-ScheduledTask\s+-TaskPath[\s\S]{0,500}-Force/i, 'self-registration must atomically replace the exact task without pre-deletion');
+  assert.doesNotMatch(bootstrap, /Prepare-EunsungResurrectTaskRegistration[\s\S]{0,500}Unregister-ScheduledTask/i, 'replacement preparation must preserve the prior task on failure');
   assert.match(bootstrap, /Start-Process[\s\S]{0,1800}Credential[\s\S]{0,300}LoadUserProfile/i, 'task self-registration must launch under the deployment credential with its profile loaded');
   assert.match(bootstrap, /Set-LocalUser[\s\S]{0,200}-Password/i, 'the local deployment password must be rotated for credentialed self-registration');
   assert.doesNotMatch(bootstrap, /ArgumentList[^\n]*(?:password|secure)/i, 'password material must never enter the helper command line');
@@ -308,6 +311,7 @@ test('bootstrap is least privilege, idempotent, pinned, and reversible', () => {
   assert.match(bootstrap, /batchLogonRightAddedByBootstrap/i, 'rollback ownership must be persisted');
   assert.match(bootstrap, /FileSecurity[\s\S]{0,500}SetAccessRuleProtection\(\$true,\s*\$false\)/i, 'bootstrap state marker must have a protected file ACL');
   assert.match(bootstrap, /S-1-5-32-544[\s\S]{0,300}S-1-5-18/i, 'only Administrators and SYSTEM may own the bootstrap marker contract');
+  assert.match(bootstrap, /ProtectedBootstrapDirectoryAcl[\s\S]{0,1800}DeleteSubdirectoriesAndFiles/i, 'protected helper ancestry must reject deploy delete-child access');
   assert.doesNotMatch(bootstrap, /\bsecedit(?:\.exe)?\b/i, 'bootstrap must not overwrite security policy with secedit');
   assert.match(bootstrap, /Get-ScheduledTask[\s\S]{0,300}Register-ScheduledTask/i, 'task registration must be existence guarded');
   assert.match(bootstrap, /Start-ScheduledTask[\s\S]{0,1800}Stop-ScheduledTask/i, 'task verification must start and stop without rebooting');
@@ -322,5 +326,5 @@ test('bootstrap is least privilege, idempotent, pinned, and reversible', () => {
     { encoding: 'utf8', cwd: repositoryRoot, timeout: 60_000 },
   );
   assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
-  assert.match(result.stdout, /RESULT\s+passed=18\s+failed=0/i, 'all isolated bootstrap contracts must pass');
+  assert.match(result.stdout, /RESULT\s+passed=21\s+failed=0/i, 'all isolated bootstrap contracts must pass');
 });

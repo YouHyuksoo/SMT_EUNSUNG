@@ -21,6 +21,7 @@ Set-StrictMode -Version 2.0
 
 $script:AccountName = 'eunsung-deploy'
 $script:TaskName = 'EunsungMES-PM2-Resurrect'
+$script:TaskPath = '\EunsungMES\'
 $script:PnpmVersion = '10.28.1'
 $script:Pm2Version = '6.0.6'
 $script:BatchLogonRight = 'SeBatchLogonRight'
@@ -202,6 +203,7 @@ function Assert-EunsungOrdinaryPath {
     if (($item.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) {
       throw "Reparse points are not allowed in bootstrap paths: $current"
     }
+    if($item.PSObject.Properties.Name -contains 'LinkType' -and [string]$item.LinkType -eq 'HardLink'){throw "Hard links are not allowed in bootstrap paths: $current"}
     $parent = Split-Path -Parent $current
     if (-not $parent -or $parent -eq $current) { break }
     $current = $parent
@@ -235,7 +237,7 @@ function Set-EunsungDirectoryAcl {
   [void]$acl.AddAccessRule((New-Object Security.AccessControl.FileSystemAccessRule($systemSid, 'FullControl', $inherit, $propagation, $allow)))
   [void]$acl.AddAccessRule((New-Object Security.AccessControl.FileSystemAccessRule($DeploySid, 'Modify', $inherit, $propagation, $allow)))
   $acl.SetOwner($administratorsSid)
-  Set-Acl -LiteralPath $Path -AclObject $acl
+  (New-Object IO.DirectoryInfo($Path)).SetAccessControl($acl)
 }
 
 function Set-EunsungSshAcl {
@@ -262,7 +264,7 @@ function Set-EunsungSshAcl {
     }
   }
   $acl.SetOwner($DeploySid)
-  Set-Acl -LiteralPath $Path -AclObject $acl
+  if($Directory){(New-Object IO.DirectoryInfo($Path)).SetAccessControl($acl)}else{(New-Object IO.FileInfo($Path)).SetAccessControl($acl)}
 }
 
 function Set-EunsungBootstrapExecutableAcl {
@@ -276,6 +278,45 @@ function Set-EunsungBootstrapExecutableAcl {
   [void]$acl.AddAccessRule((New-Object Security.AccessControl.FileSystemAccessRule($DeploySid,'ReadAndExecute','Allow')))
   $acl.SetOwner($administratorsSid)
   (New-Object IO.FileInfo($Path)).SetAccessControl($acl)
+}
+
+function Set-EunsungProtectedBootstrapDirectoryAcl {
+  param([Parameter(Mandatory)][string]$Path,[Parameter(Mandatory)][Security.Principal.SecurityIdentifier]$DeploySid)
+  $administratorsSid=New-Object Security.Principal.SecurityIdentifier('S-1-5-32-544');$systemSid=New-Object Security.Principal.SecurityIdentifier('S-1-5-18')
+  $acl=New-Object Security.AccessControl.DirectorySecurity;$acl.SetAccessRuleProtection($true,$false)
+  $inherit=[Security.AccessControl.InheritanceFlags]'ContainerInherit, ObjectInherit';$none=[Security.AccessControl.PropagationFlags]::None;$allow=[Security.AccessControl.AccessControlType]::Allow
+  foreach($sid in @($administratorsSid,$systemSid)){[void]$acl.AddAccessRule((New-Object Security.AccessControl.FileSystemAccessRule($sid,'FullControl',$inherit,$none,$allow)))}
+  [void]$acl.AddAccessRule((New-Object Security.AccessControl.FileSystemAccessRule($DeploySid,'ReadAndExecute',$inherit,$none,$allow)))
+  $acl.SetOwner($administratorsSid);(New-Object IO.DirectoryInfo($Path)).SetAccessControl($acl)
+}
+
+function Assert-EunsungProtectedBootstrapDirectoryAcl {
+  param([Parameter(Mandatory)][string]$Path,[Parameter(Mandatory)][Security.Principal.SecurityIdentifier]$DeploySid)
+  Assert-EunsungOrdinaryPath -Path $Path
+  $acl=(New-Object IO.DirectoryInfo($Path)).GetAccessControl()
+  if(-not $acl.AreAccessRulesProtected){throw 'Protected bootstrap directory ACL inheritance must be disabled.'}
+  $owner=([Security.Principal.NTAccount]$acl.Owner).Translate([Security.Principal.SecurityIdentifier]).Value;if($owner -cne 'S-1-5-32-544'){throw 'Protected bootstrap directory owner must be Administrators.'}
+  $rules=@($acl.GetAccessRules($true,$true,[Security.Principal.SecurityIdentifier]));if($rules.Count -ne 3){throw 'Protected bootstrap directory ACL must contain exactly three principals.'}
+  $deploy=@($rules|Where-Object{$_.IdentityReference.Value -ceq $DeploySid.Value -and $_.AccessControlType -eq 'Allow' -and ($_.FileSystemRights -band 'ReadAndExecute') -eq 'ReadAndExecute' -and ($_.FileSystemRights -band ('Write,Delete,DeleteSubdirectoriesAndFiles')) -eq 0})
+  if($deploy.Count -ne 1){throw 'Deployment SID must not write, delete, or replace protected bootstrap files.'}
+  $parent=(New-Object IO.DirectoryInfo((Split-Path -Parent $Path))).GetAccessControl();$parentRules=@($parent.GetAccessRules($true,$true,[Security.Principal.SecurityIdentifier])|Where-Object{$_.IdentityReference.Value -ceq $DeploySid.Value})
+  if(@($parentRules|Where-Object{($_.FileSystemRights -band [Security.AccessControl.FileSystemRights]::DeleteSubdirectoriesAndFiles) -ne 0}).Count -ne 0){throw 'Deployment SID has DeleteChild access through the deployment root.'}
+}
+
+function Set-EunsungProtectedBootstrapFile {
+  param([Parameter(Mandatory)][string]$BootstrapRoot,[Parameter(Mandatory)][string]$Path,[Parameter(Mandatory)][string]$Content,[Parameter(Mandatory)][Security.Principal.SecurityIdentifier]$DeploySid)
+  $expected=Assert-EunsungBootstrapPath -Root $BootstrapRoot -Candidate $Path
+  Assert-EunsungProtectedBootstrapDirectoryAcl -Path $BootstrapRoot -DeploySid $DeploySid
+  if(Test-Path -LiteralPath $expected){Assert-EunsungOrdinaryPath -Path $expected;Assert-EunsungBootstrapExecutableAcl -Path $expected -DeploySid $DeploySid}
+  $temporary="$expected.$([guid]::NewGuid().ToString('N')).tmp"
+  $backup="$expected.$([guid]::NewGuid().ToString('N')).bak"
+  try{
+    [IO.File]::WriteAllText($temporary,$Content,(New-Object Text.UTF8Encoding($false)));Set-EunsungBootstrapExecutableAcl -Path $temporary -DeploySid $DeploySid;Assert-EunsungOrdinaryPath -Path $temporary;Assert-EunsungBootstrapExecutableAcl -Path $temporary -DeploySid $DeploySid
+    if(Test-Path -LiteralPath $expected){[IO.File]::Replace($temporary,$expected,$backup,$true)}else{[IO.File]::Move($temporary,$expected)}
+    Assert-EunsungOrdinaryPath -Path $expected;Assert-EunsungBootstrapExecutableAcl -Path $expected -DeploySid $DeploySid
+  }finally{
+    foreach($cleanup in @($temporary,$backup)){if(Test-Path -LiteralPath $cleanup){Assert-EunsungOrdinaryPath -Path $cleanup;Assert-EunsungBootstrapExecutableAcl -Path $cleanup -DeploySid $DeploySid;Remove-Item -LiteralPath $cleanup -Force}}
+  }
 }
 
 function Assert-EunsungBootstrapExecutableAcl {
@@ -310,6 +351,9 @@ if($Action -eq 'DiscoverProfile'){
 $current=[Security.Principal.WindowsIdentity]::GetCurrent().User.Value
 if($current -cne $DeploySid){throw 'Task helper is not running as the exact deployment SID.'}
 $taskName='EunsungMES-PM2-Resurrect'
+$taskPath='\EunsungMES\'
+$scheduler=New-Object -ComObject 'Schedule.Service';$scheduler.Connect()
+try{[void]$scheduler.GetFolder($taskPath)}catch{[void]$scheduler.GetFolder('\').CreateFolder('EunsungMES')}
 $arguments="-NoProfile -NonInteractive -ExecutionPolicy Bypass -File `"$([IO.Path]::GetFullPath($WrapperPath))`""
 $powershellPath=[IO.Path]::GetFullPath((Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'))
 $taskAction=New-ScheduledTaskAction -Execute $powershellPath -Argument $arguments
@@ -317,7 +361,7 @@ $trigger=New-ScheduledTaskTrigger -AtStartup
 $principal=New-ScheduledTaskPrincipal -UserId $DeploySid -LogonType S4U -RunLevel Limited
 $settings=New-ScheduledTaskSettingsSet -ExecutionTimeLimit (New-TimeSpan -Minutes 2) -StartWhenAvailable
 # A nonadministrator must self-register passwordless S4U; cross-user administrator registration requires a password.
-Register-ScheduledTask -TaskName $taskName -Action $taskAction -Trigger $trigger -Principal $principal -Settings $settings -Description 'Restore Eunsung MES PM2 processes at Windows startup.' | Out-Null
+Register-ScheduledTask -TaskPath $taskPath -TaskName $taskName -Action $taskAction -Trigger $trigger -Principal $principal -Settings $settings -Description 'Restore Eunsung MES PM2 processes at Windows startup.' -Force | Out-Null
 '@
 }
 
@@ -364,7 +408,8 @@ function Assert-EunsungReadExecuteAccess {
     'S-1-5-11',
     'S-1-1-0'
   )
-  $rules = (Get-Acl -LiteralPath $Path).GetAccessRules($true, $true, [Security.Principal.SecurityIdentifier])
+  $accessControl=if(Test-Path -LiteralPath $Path -PathType Container){(New-Object IO.DirectoryInfo($Path)).GetAccessControl()}else{(New-Object IO.FileInfo($Path)).GetAccessControl()}
+  $rules = $accessControl.GetAccessRules($true, $true, [Security.Principal.SecurityIdentifier])
   $matching = @($rules | Where-Object { $candidateSids -contains $_.IdentityReference.Value })
   $required = [Security.AccessControl.FileSystemRights]::ReadAndExecute
   $deny = @($matching | Where-Object {
@@ -414,6 +459,7 @@ function Test-EunsungScheduledTaskContract {
   )
 
   if ($Task.TaskName -cne $script:TaskName) { return $false }
+  if ([string]$Task.TaskPath -cne $script:TaskPath) { return $false }
   $allowedLocalPrincipals = @(
     $DeploySid.Value,
     ".\$($script:AccountName)",
@@ -444,11 +490,10 @@ function Prepare-EunsungResurrectTaskRegistration {
     [Parameter(Mandatory)][Security.Principal.SecurityIdentifier]$DeploySid
   )
 
-  $existing = Get-ScheduledTask -TaskName $script:TaskName -ErrorAction SilentlyContinue
+  $existing = Get-ScheduledTask -TaskPath $script:TaskPath -TaskName $script:TaskName -ErrorAction SilentlyContinue
   if ($existing -and (Test-EunsungScheduledTaskContract -Task $existing -WrapperPath $WrapperPath -DeploySid $DeploySid)) {
     return $false
   }
-  if ($existing) { Unregister-ScheduledTask -TaskName $script:TaskName -Confirm:$false }
   return $true
 }
 
@@ -486,15 +531,15 @@ function Test-EunsungResurrectTask {
     [int]$DelaySeconds = 1
   )
 
-  $previousInfo = Get-ScheduledTaskInfo -TaskName $script:TaskName
+  $previousInfo = Get-ScheduledTaskInfo -TaskPath $script:TaskPath -TaskName $script:TaskName
   $previousLastRunTime = [datetime]$previousInfo.LastRunTime
   $previousLastTaskResult = [int64]$previousInfo.LastTaskResult
-  Start-ScheduledTask -TaskName $script:TaskName
+  Start-ScheduledTask -TaskPath $script:TaskPath -TaskName $script:TaskName
   try {
     $completedInfo = $null
     for ($attempt = 1; $attempt -le $MaxAttempts; $attempt++) {
-      $task = Get-ScheduledTask -TaskName $script:TaskName
-      $currentInfo = Get-ScheduledTaskInfo -TaskName $script:TaskName
+      $task = Get-ScheduledTask -TaskPath $script:TaskPath -TaskName $script:TaskName
+      $currentInfo = Get-ScheduledTaskInfo -TaskPath $script:TaskPath -TaskName $script:TaskName
       $newInvocationObserved = [datetime]$currentInfo.LastRunTime -gt $previousLastRunTime
       if ($newInvocationObserved -and [string]$task.State -ne 'Running') {
         $completedInfo = $currentInfo
@@ -509,7 +554,7 @@ function Test-EunsungResurrectTask {
     $nodeProcesses = @(Get-CimInstance Win32_Process -Filter "Name = 'node.exe'" -ErrorAction SilentlyContinue)
     [void](Assert-EunsungPm2ProcessOwnership -Processes $nodeProcesses -Pm2Home $Pm2Home -Pm2Path $Pm2Path -DeploySid $DeploySid)
   } finally {
-    Stop-ScheduledTask -TaskName $script:TaskName -ErrorAction SilentlyContinue
+    Stop-ScheduledTask -TaskPath $script:TaskPath -TaskName $script:TaskName -ErrorAction SilentlyContinue
   }
 }
 
@@ -517,24 +562,29 @@ function Invoke-EunsungBootstrapRollback {
   param([Parameter(Mandatory)][string]$DeployRoot)
 
   $root = [IO.Path]::GetFullPath($DeployRoot)
-  $wrapperPath = Assert-EunsungBootstrapPath -Root $root -Candidate (Join-Path $root 'scripts\Resurrect-EunsungPm2.ps1')
-  $task = Get-ScheduledTask -TaskName $script:TaskName -ErrorAction SilentlyContinue
-  if ($task) { Unregister-ScheduledTask -TaskName $script:TaskName -Confirm:$false }
+  $bootstrapRoot=Assert-EunsungBootstrapPath -Root $root -Candidate (Join-Path $root 'bootstrap')
+  $wrapperPath = Assert-EunsungBootstrapPath -Root $bootstrapRoot -Candidate (Join-Path $bootstrapRoot 'Resurrect-EunsungPm2.ps1')
+  $helperPath=Assert-EunsungBootstrapPath -Root $bootstrapRoot -Candidate (Join-Path $bootstrapRoot 'Register-EunsungResurrectTask.ps1')
+  $task = Get-ScheduledTask -TaskPath $script:TaskPath -TaskName $script:TaskName -ErrorAction SilentlyContinue
+  if ($task) { Unregister-ScheduledTask -TaskPath $script:TaskPath -TaskName $script:TaskName -Confirm:$false }
   $account = Get-LocalUser -Name $script:AccountName -ErrorAction SilentlyContinue
   $markerPath = Assert-EunsungBootstrapPath -Root $root -Candidate (Join-Path $root "state\$($script:BootstrapStateFileName)")
+  $rollbackSid=if($account){$account.SID}elseif(Test-Path -LiteralPath $markerPath){New-Object Security.Principal.SecurityIdentifier((Get-EunsungBootstrapState -DeployRoot $root -MarkerPath $markerPath).deploySid)}else{$null}
   if ($account) {
     Remove-EunsungOwnedBatchLogonRight -DeployRoot $root -MarkerPath $markerPath -ExpectedDeploySid $account.SID
   } elseif (Test-Path -LiteralPath $markerPath) {
     Remove-EunsungOwnedBatchLogonRight -DeployRoot $root -MarkerPath $markerPath
   }
-  if (Test-Path -LiteralPath $wrapperPath) {
-    Assert-EunsungOrdinaryPath -Path $wrapperPath
-    $item = Get-Item -LiteralPath $wrapperPath -Force
-    if ($item.PSIsContainer) { throw "Refusing to remove non-file wrapper path: $wrapperPath" }
-    Remove-Item -LiteralPath $wrapperPath -Force
+  if(Test-Path -LiteralPath $bootstrapRoot){
+    if(-not $rollbackSid){throw 'Cannot validate protected bootstrap files without the exact deployment SID.'}
+    Assert-EunsungProtectedBootstrapDirectoryAcl -Path $bootstrapRoot -DeploySid $rollbackSid
+    foreach($protectedFile in @($wrapperPath,$helperPath)){
+      if(Test-Path -LiteralPath $protectedFile){Assert-EunsungOrdinaryPath -Path $protectedFile;Assert-EunsungBootstrapExecutableAcl -Path $protectedFile -DeploySid $rollbackSid;$item=Get-Item -LiteralPath $protectedFile -Force;if($item.PSIsContainer){throw "Refusing to remove non-file protected bootstrap path: $protectedFile"};Remove-Item -LiteralPath $protectedFile -Force}
+    }
+    if(@(Get-ChildItem -LiteralPath $bootstrapRoot -Force).Count -ne 0){throw 'Protected bootstrap directory contains unexpected files.'}
+    Remove-Item -LiteralPath $bootstrapRoot -Force
   }
-  $helperPath=Assert-EunsungBootstrapPath -Root $root -Candidate (Join-Path $root 'scripts\Register-EunsungResurrectTask.ps1')
-  if(Test-Path -LiteralPath $helperPath){Assert-EunsungOrdinaryPath -Path $helperPath;$item=Get-Item -LiteralPath $helperPath -Force;if($item.PSIsContainer){throw "Refusing to remove non-file helper path: $helperPath"};Remove-Item -LiteralPath $helperPath -Force}
+  $scheduler=New-Object -ComObject 'Schedule.Service';$scheduler.Connect();try{$folder=$scheduler.GetFolder($script:TaskPath);if($folder.GetTasks(1).Count -eq 0 -and $folder.GetFolders(0).Count -eq 0){$scheduler.GetFolder('\').DeleteFolder('EunsungMES',0)}}catch{if($_.Exception.HResult -ne -2147024894){throw}}
 }
 
 function Initialize-EunsungDeployServer {
@@ -575,15 +625,18 @@ function Initialize-EunsungDeployServer {
     Assert-EunsungOrdinaryPath -Path $path
     Set-EunsungDirectoryAcl -Path $path -DeploySid $account.SID
   }
+  $bootstrapRoot=Assert-EunsungBootstrapPath -Root $root -Candidate (Join-Path $root 'bootstrap')
+  if(-not (Test-Path -LiteralPath $bootstrapRoot)){New-Item -ItemType Directory -Path $bootstrapRoot|Out-Null}
+  Assert-EunsungOrdinaryPath -Path $bootstrapRoot
+  Set-EunsungProtectedBootstrapDirectoryAcl -Path $bootstrapRoot -DeploySid $account.SID
+  Assert-EunsungProtectedBootstrapDirectoryAcl -Path $bootstrapRoot -DeploySid $account.SID
 
   $bootstrapStatePath = Assert-EunsungBootstrapPath -Root $root -Candidate (Join-Path $root "state\$($script:BootstrapStateFileName)")
   Ensure-EunsungBatchLogonRight -DeploySid $account.SID -DeployRoot $root -MarkerPath $bootstrapStatePath
-  $helperPath=Assert-EunsungBootstrapPath -Root $root -Candidate (Join-Path $root 'scripts\Register-EunsungResurrectTask.ps1')
+  $helperPath=Assert-EunsungBootstrapPath -Root $bootstrapRoot -Candidate (Join-Path $bootstrapRoot 'Register-EunsungResurrectTask.ps1')
   $helperContent=Get-EunsungSelfRegistrationHelperContent
-  $existingHelper=if(Test-Path -LiteralPath $helperPath){Get-Content -Raw -LiteralPath $helperPath}else{$null}
-  if($existingHelper -cne $helperContent){[IO.File]::WriteAllText($helperPath,$helperContent,(New-Object Text.UTF8Encoding($false)))}
-  Assert-EunsungOrdinaryPath -Path $helperPath
-  Set-EunsungBootstrapExecutableAcl -Path $helperPath -DeploySid $account.SID
+  $existingHelper=if(Test-Path -LiteralPath $helperPath){Assert-EunsungOrdinaryPath -Path $helperPath;Assert-EunsungBootstrapExecutableAcl -Path $helperPath -DeploySid $account.SID;Get-Content -Raw -LiteralPath $helperPath}else{$null}
+  if($existingHelper -cne $helperContent){Set-EunsungProtectedBootstrapFile -BootstrapRoot $bootstrapRoot -Path $helperPath -Content $helperContent -DeploySid $account.SID}
   Assert-EunsungBootstrapExecutableAcl -Path $helperPath -DeploySid $account.SID
   $powershellPath=[IO.Path]::GetFullPath((Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'))
   $profilePath=Resolve-EunsungRegisteredProfilePath -DeployRoot $root -PowerShellPath $powershellPath -HelperPath $helperPath -Credential $credential -DeploySid $account.SID
@@ -627,17 +680,16 @@ function Initialize-EunsungDeployServer {
   $pm2Actual = [string]$pm2Package.version
   if ($pm2Actual -cne $script:Pm2Version) { throw "Expected PM2 $($script:Pm2Version), found '$pm2Actual'." }
 
-  $wrapperPath = Assert-EunsungBootstrapPath -Root $root -Candidate (Join-Path $root 'scripts\Resurrect-EunsungPm2.ps1')
+  $wrapperPath = Assert-EunsungBootstrapPath -Root $bootstrapRoot -Candidate (Join-Path $bootstrapRoot 'Resurrect-EunsungPm2.ps1')
   $wrapperContent = Get-EunsungWrapperContent -ProfilePath $profilePath -Pm2Path $pm2Path
-  $existingContent = if (Test-Path -LiteralPath $wrapperPath) { Get-Content -Raw -LiteralPath $wrapperPath } else { $null }
-  if ($existingContent -cne $wrapperContent) { [IO.File]::WriteAllText($wrapperPath, $wrapperContent, (New-Object Text.UTF8Encoding($false))) }
+  $existingContent = if (Test-Path -LiteralPath $wrapperPath) { Assert-EunsungOrdinaryPath -Path $wrapperPath;Assert-EunsungBootstrapExecutableAcl -Path $wrapperPath -DeploySid $account.SID;Get-Content -Raw -LiteralPath $wrapperPath } else { $null }
+  if ($existingContent -cne $wrapperContent) { Set-EunsungProtectedBootstrapFile -BootstrapRoot $bootstrapRoot -Path $wrapperPath -Content $wrapperContent -DeploySid $account.SID }
   Assert-EunsungOrdinaryPath -Path $wrapperPath
-  Set-EunsungBootstrapExecutableAcl -Path $wrapperPath -DeploySid $account.SID
   Assert-EunsungBootstrapExecutableAcl -Path $wrapperPath -DeploySid $account.SID
   if(Prepare-EunsungResurrectTaskRegistration -WrapperPath $wrapperPath -DeploySid $account.SID){
     Invoke-EunsungCredentialedHelper -PowerShellPath $powershellPath -HelperPath $helperPath -Action RegisterTask -Credential $credential -WrapperPath $wrapperPath -DeploySid $account.SID
   }
-  $registeredTask=Get-ScheduledTask -TaskName $script:TaskName -ErrorAction Stop
+  $registeredTask=Get-ScheduledTask -TaskPath $script:TaskPath -TaskName $script:TaskName -ErrorAction Stop
   if(-not (Test-EunsungScheduledTaskContract -Task $registeredTask -WrapperPath $wrapperPath -DeploySid $account.SID)){throw 'Self-registered scheduled task does not satisfy the exact contract.'}
   Test-EunsungResurrectTask -Pm2Home (Join-Path $profilePath '.pm2') -Pm2Path $pm2Path -DeploySid $account.SID
 
