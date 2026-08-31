@@ -1,0 +1,29 @@
+DECLARE
+  -- 교대시간 마스터 비작업(휴게/식사) 시간 — 교대 슬롯 x 비작업분류 (멱등)
+  -- SHIFT_SLOT: 'DAY'(=IP_SHIFT_TIME_MASTER.DAY_TIME_*), 'NIGHT'(=NIGHT_TIME_*).
+  -- 교대조명(1교대/2교대)은 공통코드 'SHIFT CODE'로 화면에서만 붙인다 — 마스터 자체가 주간/야간 구조다.
+  -- DAY_BREAK_MINUTES / NIGHT_BREAK_MINUTES는 이 테이블의 슬롯별 합으로 서버가 갱신하는 롤업 컬럼이 된다.
+  n NUMBER;
+BEGIN
+  SELECT COUNT(*) INTO n FROM USER_TABLES WHERE TABLE_NAME = 'IP_SHIFT_TIME_BREAK';
+  IF n = 0 THEN
+    EXECUTE IMMEDIATE '
+      CREATE TABLE IP_SHIFT_TIME_BREAK (
+        DATESET           DATE          NOT NULL,
+        ORGANIZATION_ID   NUMBER        NOT NULL,
+        SHIFT_SLOT        VARCHAR2(10)  NOT NULL,
+        BREAK_TYPE        VARCHAR2(20)  NOT NULL,
+        BREAK_MINUTES     NUMBER        DEFAULT 0 NOT NULL,
+        ENTER_BY          VARCHAR2(20)  NOT NULL,
+        ENTER_DATE        DATE          NOT NULL,
+        LAST_MODIFY_BY    VARCHAR2(20),
+        LAST_MODIFY_DATE  DATE,
+        CONSTRAINT XPKIP_SHIFT_TIME_BREAK
+          PRIMARY KEY (DATESET, ORGANIZATION_ID, SHIFT_SLOT, BREAK_TYPE),
+        CONSTRAINT CK_SHIFT_TIME_BREAK_SLOT
+          CHECK (SHIFT_SLOT IN (''DAY'', ''NIGHT''))
+      )';
+    EXECUTE IMMEDIATE 'COMMENT ON TABLE IP_SHIFT_TIME_BREAK IS ''교대시간 마스터의 슬롯별 비작업(휴게/식사) 시간. BREAK_TYPE은 공통코드 BREAK TYPE''';
+  END IF;
+END;
+/

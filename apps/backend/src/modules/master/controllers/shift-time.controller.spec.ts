@@ -5,7 +5,8 @@ import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 
 describe('ShiftTimeController', () => {
   const service = {
-    findAll: jest.fn(),
+    // 목록은 자식(슬롯별 비작업 시간)까지 붙여 돌려주는 findAllWithBreaks를 쓴다.
+    findAllWithBreaks: jest.fn(),
     create: jest.fn(),
     update: jest.fn(),
     remove: jest.fn(),
@@ -23,7 +24,7 @@ describe('ShiftTimeController', () => {
   });
 
   it('forwards the server organization id to every endpoint', async () => {
-    service.findAll.mockResolvedValue([]);
+    service.findAllWithBreaks.mockResolvedValue([]);
     service.create.mockResolvedValue({});
     service.update.mockResolvedValue({});
     service.remove.mockResolvedValue(undefined);
@@ -36,7 +37,7 @@ describe('ShiftTimeController', () => {
     await target.update('2026-07-01', updateDto, 40, 'tester');
     await target.remove('2026-07-01', 40);
 
-    expect(service.findAll).toHaveBeenCalledWith(40);
+    expect(service.findAllWithBreaks).toHaveBeenCalledWith(40);
     expect(service.create).toHaveBeenCalledWith(createDto, 40, 'tester');
     expect(service.update).toHaveBeenCalledWith('2026-07-01', updateDto, 40, 'tester');
     expect(service.remove).toHaveBeenCalledWith('2026-07-01', 40);

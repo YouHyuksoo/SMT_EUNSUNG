@@ -11,9 +11,26 @@
  */
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { EntityManager, Repository } from 'typeorm';
 import { ShiftTimeMaster } from '../../../entities/shift-time-master.entity';
-import { CreateShiftTimeDto, UpdateShiftTimeDto } from '../dto/work-calendar.dto';
+import { TransactionService } from '../../../shared/transaction.service';
+import { ShiftTimeBreak, type ShiftSlot } from '../../../entities/shift-time-break.entity';
+import {
+  CreateShiftTimeDto,
+  ShiftTimeBreakDto,
+  UpdateShiftTimeDto,
+} from '../dto/work-calendar.dto';
+
+/** 목록 화면이 쓰는 모양 — 마스터 행 + 슬롯별 비작업 시간 */
+export interface ShiftTimeView extends ShiftTimeMaster {
+  dayBreaks: { breakType: string; breakMinutes: number }[];
+  nightBreaks: { breakType: string; breakMinutes: number }[];
+}
+
+/** 0분 항목은 저장하지 않는다 — 화면이 모든 분류를 항상 보내기 때문이다. */
+function sumBreaks(breaks: ShiftTimeBreakDto[] | undefined): number {
+  return (breaks ?? []).reduce((acc, b) => acc + (b.breakMinutes > 0 ? b.breakMinutes : 0), 0);
+}
 
 /** 'YYYY-MM-DD' → 로컬 자정 Date (Oracle DATE 비교용) */
 function parseYmd(isoDate: string): Date {
@@ -43,7 +60,67 @@ export class ShiftTimeService {
   constructor(
     @InjectRepository(ShiftTimeMaster)
     private readonly repo: Repository<ShiftTimeMaster>,
+    @InjectRepository(ShiftTimeBreak)
+    private readonly breakRepo: Repository<ShiftTimeBreak>,
+    private readonly tx: TransactionService,
   ) {}
+
+  /**
+   * 마스터 + 슬롯별 비작업 시간. 화면(교대시간 탭)이 쓴다.
+   * findAll()은 월력 저장 경로가 일자마다 재사용하는 hot path라 그대로 두고, 자식 조회가
+   * 필요한 화면용 경로만 여기서 따로 합친다.
+   */
+  async findAllWithBreaks(organizationId: number): Promise<ShiftTimeView[]> {
+    const [rows, breaks] = await Promise.all([
+      this.findAll(organizationId),
+      this.breakRepo.find({ where: { organizationId } }),
+    ]);
+    return rows.map((row) => {
+      const key = this.toIso(toLocalMidnight(row.dateset));
+      const mine = breaks.filter((b) => this.toIso(toLocalMidnight(b.dateset)) === key);
+      const pick = (slot: ShiftSlot) =>
+        mine
+          .filter((b) => b.shiftSlot === slot)
+          .map((b) => ({ breakType: b.breakType, breakMinutes: b.breakMinutes }))
+          .sort((a, b) => a.breakType.localeCompare(b.breakType));
+      return { ...row, dayBreaks: pick('DAY'), nightBreaks: pick('NIGHT') } as ShiftTimeView;
+    });
+  }
+
+  /**
+   * 한 마스터 행의 비작업 자식행을 통째로 교체한다.
+   * 보낸 목록이 그 행의 전부다 — 0분 항목은 의미 없는 행이라 저장하지 않는다.
+   */
+  private async replaceBreaks(
+    manager: EntityManager,
+    dateset: string,
+    organizationId: number,
+    dayBreaks: ShiftTimeBreakDto[] | undefined,
+    nightBreaks: ShiftTimeBreakDto[] | undefined,
+    userId?: string,
+  ): Promise<void> {
+    if (dayBreaks === undefined && nightBreaks === undefined) return;
+    const planDate = parseYmd(dateset);
+    const enterBy = userId ?? 'SYSTEM';
+    const now = new Date();
+    const rows = (['DAY', 'NIGHT'] as const).flatMap((slot) =>
+      (slot === 'DAY' ? (dayBreaks ?? []) : (nightBreaks ?? []))
+        .filter((b) => b.breakMinutes > 0)
+        .map((b) => ({
+          dateset: planDate,
+          organizationId,
+          shiftSlot: slot,
+          breakType: b.breakType,
+          breakMinutes: b.breakMinutes,
+          enterBy,
+          enterDate: now,
+          lastModifyBy: enterBy,
+          lastModifyDate: now,
+        })),
+    );
+    await manager.delete(ShiftTimeBreak, { organizationId, dateset: planDate });
+    if (rows.length > 0) await manager.insert(ShiftTimeBreak, rows as ShiftTimeBreak[]);
+  }
 
   async findAll(organizationId: number): Promise<ShiftTimeMaster[]> {
     return this.repo.find({
@@ -89,16 +166,33 @@ export class ShiftTimeService {
       dateend: dto.dateend ? parseYmd(dto.dateend) : null,
       dayTimeStart: dto.dayTimeStart ?? null,
       dayTimeEnd: dto.dayTimeEnd ?? null,
-      dayBreakMinutes: dto.dayBreakMinutes ?? 0,
+      // 자식 목록이 오면 그 합이 이긴다 — 클라이언트가 보낸 총합을 그대로 믿지 않는다.
+      dayBreakMinutes: dto.dayBreaks ? sumBreaks(dto.dayBreaks) : (dto.dayBreakMinutes ?? 0),
       nightTimeStart: dto.nightTimeStart ?? null,
       nightTimeEnd: dto.nightTimeEnd ?? null,
-      nightBreakMinutes: dto.nightBreakMinutes ?? 0,
+      nightBreakMinutes: dto.nightBreaks
+        ? sumBreaks(dto.nightBreaks)
+        : (dto.nightBreakMinutes ?? 0),
       enterBy,
       enterDate: now,
       lastModifyBy: enterBy,
       lastModifyDate: now,
     });
-    return this.repo.save(entity);
+    // 마스터 저장과 자식(비작업) 저장을 한 트랜잭션에 묶는다. 나눠 놓으면 자식 저장이
+    // 실패했을 때 마스터만 커밋돼 "휴식분 롤업은 있는데 내역이 없는" 반쪽 행이 남고,
+    // 다음 저장 시도는 유효기간 겹침(409)으로 막혀 복구가 불가능해진다(실제로 발생).
+    return this.tx.run(async (qr) => {
+      const saved = await qr.manager.save(ShiftTimeMaster, entity);
+      await this.replaceBreaks(
+        qr.manager,
+        dto.dateset,
+        organizationId,
+        dto.dayBreaks,
+        dto.nightBreaks,
+        userId,
+      );
+      return saved;
+    });
   }
 
   async update(
@@ -127,10 +221,12 @@ export class ShiftTimeService {
     if (dto.dateend !== undefined) partial.dateend = dto.dateend ? parseYmd(dto.dateend) : null;
     if (dto.dayTimeStart !== undefined) partial.dayTimeStart = dto.dayTimeStart ?? null;
     if (dto.dayTimeEnd !== undefined) partial.dayTimeEnd = dto.dayTimeEnd ?? null;
-    if (dto.dayBreakMinutes !== undefined) partial.dayBreakMinutes = dto.dayBreakMinutes;
+    if (dto.dayBreaks !== undefined) partial.dayBreakMinutes = sumBreaks(dto.dayBreaks);
+    else if (dto.dayBreakMinutes !== undefined) partial.dayBreakMinutes = dto.dayBreakMinutes;
     if (dto.nightTimeStart !== undefined) partial.nightTimeStart = dto.nightTimeStart ?? null;
     if (dto.nightTimeEnd !== undefined) partial.nightTimeEnd = dto.nightTimeEnd ?? null;
-    if (dto.nightBreakMinutes !== undefined) partial.nightBreakMinutes = dto.nightBreakMinutes;
+    if (dto.nightBreaks !== undefined) partial.nightBreakMinutes = sumBreaks(dto.nightBreaks);
+    else if (dto.nightBreakMinutes !== undefined) partial.nightBreakMinutes = dto.nightBreakMinutes;
 
     // repo.update(criteria, partial)로 직접 UPDATE한다. found를 save(found)로 되돌려 쓰지 않는
     // 이유(C1, Bug 회귀 방지): find()/findOne()이 반환하는 DATESET은 Oracle 드라이버가 이미
@@ -138,7 +234,21 @@ export class ShiftTimeService {
     // 그 문자열 PK를 TO_DATE 변환 없이 그대로 재바인딩하는 SELECT를 날리는데, 세션
     // NLS_DATE_FORMAT과 형식이 안 맞아 ORA-01861(literal does not match format string)이 난다.
     // work-calendar.service.ts의 setConfirm()과 동일한 회피다.
-    await this.repo.update({ organizationId, dateset: parseYmd(dateset) }, partial);
+    await this.tx.run(async (qr) => {
+      await qr.manager.update(
+        ShiftTimeMaster,
+        { organizationId, dateset: parseYmd(dateset) },
+        partial,
+      );
+      await this.replaceBreaks(
+        qr.manager,
+        dateset,
+        organizationId,
+        dto.dayBreaks,
+        dto.nightBreaks,
+        userId,
+      );
+    });
     return this.findOneOrThrow(dateset, organizationId);
   }
 
@@ -146,7 +256,10 @@ export class ShiftTimeService {
     await this.findOneOrThrow(dateset, organizationId);
     // C1 회귀 방지: repo.remove(entity)도 save()와 같은 SubjectDatabaseEntityLoader 재확인
     // SELECT 경로를 타서 ORA-01861을 낸다. criteria 기반 delete()로 그 경로를 우회한다.
-    await this.repo.delete({ organizationId, dateset: parseYmd(dateset) });
+    await this.tx.run(async (qr) => {
+      await qr.manager.delete(ShiftTimeBreak, { organizationId, dateset: parseYmd(dateset) });
+      await qr.manager.delete(ShiftTimeMaster, { organizationId, dateset: parseYmd(dateset) });
+    });
   }
 
   private async findOneOrThrow(dateset: string, organizationId: number): Promise<ShiftTimeMaster> {

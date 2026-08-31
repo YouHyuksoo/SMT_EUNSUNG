@@ -49,6 +49,9 @@ import { WorkInstruction } from '../entities/work-instruction.entity';
 import { ProductCompanyCalendar } from '../entities/product-company-calendar.entity';
 import { ProductLineCalendar } from '../entities/product-line-calendar.entity';
 import { ShiftTimeMaster } from '../entities/shift-time-master.entity';
+import { ShiftTimeBreak } from '../entities/shift-time-break.entity';
+import { ProductCalendarShift } from '../entities/product-calendar-shift.entity';
+import { ProductCalendarBreak } from '../entities/product-calendar-break.entity';
 import { ProcessMaster } from '../entities/process-master.entity';
 import { ProcessLine } from '../entities/process-line.entity';
 import { LabelTemplate } from '../entities/label-template.entity';
@@ -137,7 +140,10 @@ import { EquipDowntimeResult } from '../entities/equip-downtime-result.entity';
             WorkInstruction,
             ProductCompanyCalendar,
             ProductLineCalendar,
+            ProductCalendarShift,
+            ProductCalendarBreak,
             ShiftTimeMaster,
+            ShiftTimeBreak,
             ProcessMaster,
             ProcessLine,
             LabelTemplate,

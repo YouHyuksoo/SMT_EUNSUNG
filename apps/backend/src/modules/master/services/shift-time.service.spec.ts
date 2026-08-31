@@ -2,14 +2,18 @@ import { Test } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { ConflictException, NotFoundException } from '@nestjs/common';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
-import { Repository } from 'typeorm';
+import { QueryRunner, Repository } from 'typeorm';
 import { ShiftTimeMaster } from '../../../entities/shift-time-master.entity';
+import { ShiftTimeBreak } from '../../../entities/shift-time-break.entity';
+import { TransactionService } from '../../../shared/transaction.service';
 import { ShiftTimeService } from './shift-time.service';
 import { UpdateShiftTimeDto } from '../dto/work-calendar.dto';
 
 describe('ShiftTimeService', () => {
   let target: ShiftTimeService;
   let repo: DeepMocked<Repository<ShiftTimeMaster>>;
+  let breakRepo: DeepMocked<Repository<ShiftTimeBreak>>;
+  let tx: DeepMocked<TransactionService>;
 
   // Oracle 드라이버(OracleDriver.prepareHydratedValue)는 `type:'date'` 컬럼을 조회 시
   // Date 객체가 아니라 문자열('YYYY-MM-DD')로 hydrate한다. find()/findOne()이 돌려주는 행은
@@ -34,10 +38,38 @@ describe('ShiftTimeService', () => {
 
   beforeEach(async () => {
     repo = createMock<Repository<ShiftTimeMaster>>();
+    // 비작업 자식행은 기본적으로 없다 — 기존 롤업 기대값(dto 값 그대로)이 유지된다.
+    breakRepo = createMock<Repository<ShiftTimeBreak>>();
+    breakRepo.find.mockResolvedValue([]);
+
+    // create/update/remove는 마스터와 자식 저장을 한 트랜잭션에 묶는다.
+    // qr.manager의 save/update/delete/insert를 각 리포지토리 목으로 라우팅해,
+    // 기존 repo.save/insert 단언을 그대로 재사용한다.
+    tx = createMock<TransactionService>();
+    const mockManager = {
+      save: jest.fn((entity: unknown, data: unknown) => repo.save(data as never)),
+      update: jest.fn((entity: unknown, criteria: unknown, partial: unknown) =>
+        repo.update(criteria as never, partial as never),
+      ),
+      delete: jest.fn((entity: unknown, criteria: unknown) =>
+        entity === ShiftTimeBreak
+          ? breakRepo.delete(criteria as never)
+          : repo.delete(criteria as never),
+      ),
+      insert: jest.fn((entity: unknown, data: unknown) =>
+        entity === ShiftTimeBreak
+          ? breakRepo.insert(data as never)
+          : repo.insert(data as never),
+      ),
+    };
+    const mockQr = { manager: mockManager } as unknown as QueryRunner;
+    tx.run.mockImplementation(async (callback) => callback(mockQr));
     const moduleRef = await Test.createTestingModule({
       providers: [
         ShiftTimeService,
         { provide: getRepositoryToken(ShiftTimeMaster), useValue: repo },
+        { provide: getRepositoryToken(ShiftTimeBreak), useValue: breakRepo },
+        { provide: TransactionService, useValue: tx },
       ],
     }).compile();
     target = moduleRef.get(ShiftTimeService);
@@ -86,6 +118,21 @@ describe('ShiftTimeService', () => {
     });
   });
 
+  describe('findAllWithBreaks', () => {
+    it('마스터 행에 슬롯별 비작업 시간을 붙여 돌려준다', async () => {
+      repo.find.mockResolvedValue([row('2026-07-01', null)]);
+      breakRepo.find.mockResolvedValue([
+        { dateset: '2026-07-01', shiftSlot: 'DAY', breakType: 'REST', breakMinutes: 30 },
+        { dateset: '2026-07-01', shiftSlot: 'NIGHT', breakType: 'MEAL', breakMinutes: 60 },
+      ] as unknown as ShiftTimeBreak[]);
+
+      const [view] = await target.findAllWithBreaks(1);
+
+      expect(view.dayBreaks).toEqual([{ breakType: 'REST', breakMinutes: 30 }]);
+      expect(view.nightBreaks).toEqual([{ breakType: 'MEAL', breakMinutes: 60 }]);
+    });
+  });
+
   describe('create', () => {
     it('유효기간이 겹치면 409', async () => {
       repo.find.mockResolvedValue([row('2026-01-01', null)]);
@@ -104,6 +151,58 @@ describe('ShiftTimeService', () => {
       );
       expect(saved.organizationId).toBe(1);
       expect(repo.save).toHaveBeenCalledTimes(1);
+    });
+
+    it('dayBreaks/nightBreaks 합으로 휴식분을 롤업한다', async () => {
+      repo.find.mockResolvedValue([]);
+      repo.create.mockImplementation((v) => v as ShiftTimeMaster);
+      repo.save.mockImplementation(async (v) => v as ShiftTimeMaster);
+
+      const saved = await target.create(
+        {
+          dateset: '2026-07-01',
+          dayTimeStart: '08:00',
+          dayTimeEnd: '20:00',
+          // 클라이언트가 보낸 총합은 무시하고 목록 합이 이겨야 한다.
+          dayBreakMinutes: 999,
+          dayBreaks: [
+            { breakType: 'REST', breakMinutes: 30 },
+            { breakType: 'MEAL', breakMinutes: 60 },
+          ],
+          nightBreaks: [{ breakType: 'REST', breakMinutes: 45 }],
+        },
+        1,
+      );
+
+      expect(saved.dayBreakMinutes).toBe(90);
+      expect(saved.nightBreakMinutes).toBe(45);
+    });
+
+    it('비작업 자식행을 슬롯별로 저장하고 0분은 빼놓는다', async () => {
+      repo.find.mockResolvedValue([]);
+      repo.create.mockImplementation((v) => v as ShiftTimeMaster);
+      repo.save.mockImplementation(async (v) => v as ShiftTimeMaster);
+
+      await target.create(
+        {
+          dateset: '2026-07-01',
+          dayBreaks: [
+            { breakType: 'REST', breakMinutes: 30 },
+            { breakType: 'MEAL', breakMinutes: 0 },
+          ],
+          nightBreaks: [{ breakType: 'MEAL', breakMinutes: 60 }],
+        },
+        1,
+      );
+
+      const rows = breakRepo.insert.mock.calls[0][0] as ShiftTimeBreak[];
+      expect(rows).toHaveLength(2);
+      expect(rows.map((r) => [r.shiftSlot, r.breakType, r.breakMinutes])).toEqual([
+        ['DAY', 'REST', 30],
+        ['NIGHT', 'MEAL', 60],
+      ]);
+      // 통째 교체 방식이므로 저장 전 그 DATESET의 기존 자식행을 지운다.
+      expect(breakRepo.delete).toHaveBeenCalled();
     });
 
     it('ENTER_BY/LAST_MODIFY_BY에 호출자 userId를 채운다', async () => {
