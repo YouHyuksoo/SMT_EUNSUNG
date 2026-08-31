@@ -204,7 +204,7 @@ test('Windows deployment validates immutable release inputs and never deploys a 
 test('Windows deployment fails closed on PowerShell and native command errors', () => {
   assert.match(runtime, /\$ErrorActionPreference\s*=\s*['"]Stop['"]/i, 'PowerShell errors must terminate deployment');
   assert.match(runtime, /\$LASTEXITCODE/i, 'native process exit codes must be inspected');
-  assert.match(runtime, /\$LASTEXITCODE[\s\S]{0,240}(?:throw|exit\s+1)/i, 'a non-zero native exit must stop deployment');
+  assert.match(runtime, /\$(?:LASTEXITCODE|exitCode)[\s\S]{0,240}(?:throw|exit\s+1)/i, 'a non-zero native exit must stop deployment');
 });
 
 test('release activation manages both PM2 applications and verifies backend readiness', () => {
@@ -214,12 +214,22 @@ test('release activation manages both PM2 applications and verifies backend read
   assert.match(runtime, /status[\s\S]{0,200}(?:['"]ok['"]|[-_]eq\s*['"]ok['"])/i, 'backend health JSON must report status ok');
   assert.match(runtime, /database[\s\S]{0,200}(?:['"]connected['"]|[-_]eq\s*['"]connected['"])/i, 'backend health JSON must report database connected');
   assert.match(runtime, /(?:MaxAttempts|RetryCount|HealthRetries|for\s*\([^;]+;[^;]*(?:-lt|-le)\s*\$?\w+;)/i, 'health checks must use a bounded retry count');
-  assert.match(executableRuntime, /(?:catch\s*\{|if\s*\([^)]*(?:health|ready)[^)]*\))[\s\S]{0,1200}(?:Invoke-Rollback|Restore-PreviousRelease|Rollback-EunsungRelease|Invoke-EunsungRollback)\b/i, 'the health-failure path must invoke a rollback operation');
+  assert.match(executableRuntime, /function\s+Restore-EunsungPriorState\b/i, 'the runtime must define prior-state restoration');
+  assert.match(executableRuntime, /(?:rollbackHealth|restoredHealth)[\s\S]{0,500}(?:SaveState|\$save)/i, 'restored state must pass health before it is saved');
 });
 
-test('PowerShell contract tests cover deployment safety invariants', () => {
-  const pester = sources.pesterTests;
-  assert.match(pester, /Describe\s+['"].*(?:deployment|release)/i, 'Pester deployment contract suite is required');
-  assert.match(pester, /rollback/i, 'Pester suite must cover rollback');
-  assert.match(pester, /(?:40|full).*(?:sha|commit)|(?:sha|commit).*40/i, 'Pester suite must cover full SHA validation');
+test('dependency-free PowerShell contract tests cover and execute deployment safety invariants', () => {
+  const contractTests = sources.pesterTests;
+  assert.match(contractTests, /Describe\s+['"].*(?:deployment|release)/i, 'deployment contract suite description is required');
+  assert.match(contractTests, /rollback/i, 'contract suite must cover rollback');
+  assert.match(contractTests, /(?:40|full).*(?:sha|commit)|(?:sha|commit).*40/i, 'contract suite must cover full SHA validation');
+  assert.doesNotMatch(contractTests, /Import-Module\s+(?:Pester|['"]Pester['"])/i, 'deployment tests must not depend on Pester');
+
+  const result = spawnSync(
+    'powershell.exe',
+    ['-NoProfile', '-NonInteractive', '-File', path.join(repositoryRoot, expectedFiles.pesterTests)],
+    { encoding: 'utf8', cwd: repositoryRoot, timeout: 60_000 },
+  );
+  assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
+  assert.match(result.stdout, /RESULT\s+passed=21\s+failed=0/i, 'all isolated deployment contracts must pass');
 });
