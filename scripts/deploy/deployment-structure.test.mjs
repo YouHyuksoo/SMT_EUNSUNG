@@ -14,6 +14,7 @@ const expectedFiles = {
   deployRelease: 'scripts/deploy/windows/Deploy-EunsungRelease.ps1',
   initializeServer: 'scripts/deploy/windows/Initialize-EunsungDeployServer.ps1',
   pesterTests: 'scripts/deploy/windows/tests/Deployment.Tests.ps1',
+  bootstrapTests: 'scripts/deploy/windows/tests/Bootstrap.Tests.ps1',
 };
 
 function readRepositoryFile(relativePath) {
@@ -232,4 +233,34 @@ test('dependency-free PowerShell contract tests cover and execute deployment saf
   );
   assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
   assert.match(result.stdout, /RESULT\s+passed=36\s+failed=0/i, 'all isolated deployment contracts must pass');
+});
+
+test('bootstrap is least privilege, idempotent, pinned, and reversible', () => {
+  const bootstrap = withoutCommentLines(sources.initializeServer);
+  assert.match(bootstrap, /Get-LocalUser[\s\S]{0,240}New-LocalUser/i, 'account creation must be existence guarded');
+  assert.doesNotMatch(bootstrap, /Add-LocalGroupMember|net\s+localgroup\s+administrators/i, 'deployment account must never be added to Administrators');
+  assert.match(bootstrap, /Get-LocalGroupMember[\s\S]{0,240}(?:throw|must not)/i, 'administrator membership must fail closed');
+  assert.match(bootstrap, /SetAccessRuleProtection\(\$true,\s*\$false\)/i, 'deployment ACL must not inherit broader parent permissions');
+  assert.match(bootstrap, /['"]Modify['"][\s\S]{0,300}DeploySid|DeploySid[\s\S]{0,300}['"]Modify['"]/i, 'deploy account must receive scoped Modify access');
+  assert.match(bootstrap, /authorized_keys/i, 'the supplied public key must be registered');
+  assert.match(bootstrap, /Assert-EunsungReadExecuteAccess[\s\S]{0,500}(?:NodePath|OracleClientLibDir)|(?:NodePath|OracleClientLibDir)[\s\S]{0,500}Assert-EunsungReadExecuteAccess/i, 'Node and Oracle access must be checked for the deployment account');
+  assert.match(bootstrap, /pnpm@\$?\(?\$?\w+|pnpm@10\.28\.1/i, 'pnpm must be installed at the pinned version');
+  assert.match(bootstrap, /pm2@\$?\(?\$?\w+|pm2@6\.0\.6/i, 'PM2 must be installed at the pinned version');
+  assert.match(bootstrap, /EunsungMES-PM2-Resurrect/g, 'the exact scheduled task name is required');
+  assert.match(bootstrap, /New-ScheduledTaskTrigger\s+-AtStartup/i, 'the task must run at startup');
+  assert.match(bootstrap, /New-ScheduledTaskPrincipal[\s\S]{0,200}-LogonType\s+S4U[\s\S]{0,100}-RunLevel\s+Limited/i, 'the task principal must be S4U and limited');
+  assert.match(bootstrap, /Get-ScheduledTask[\s\S]{0,300}Register-ScheduledTask/i, 'task registration must be existence guarded');
+  assert.match(bootstrap, /Start-ScheduledTask[\s\S]{0,1800}Stop-ScheduledTask/i, 'task verification must start and stop without rebooting');
+  assert.match(bootstrap, /pm2[^\n]*resurrect[\s\S]{0,160}\$LASTEXITCODE/i, 'the wrapper must check the PM2 exit code');
+  assert.match(bootstrap, /Invoke-EunsungBootstrapRollback[\s\S]{0,700}Unregister-ScheduledTask[\s\S]{0,700}Remove-Item/i, 'rollback must unregister the exact task and remove the wrapper');
+  assert.doesNotMatch(bootstrap, /Restart-Computer|Stop-Computer|shutdown(?:\.exe)?\b/i, 'bootstrap must never reboot or shut down the server');
+  assert.doesNotMatch(bootstrap, /ConvertTo-SecureString\s+['"][^'"]+['"]\s+-AsPlainText|Password\s*=\s*['"][^'"]+['"]/i, 'hard-coded credentials are forbidden');
+
+  const result = spawnSync(
+    'powershell.exe',
+    ['-NoProfile', '-NonInteractive', '-File', path.join(repositoryRoot, expectedFiles.bootstrapTests)],
+    { encoding: 'utf8', cwd: repositoryRoot, timeout: 60_000 },
+  );
+  assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
+  assert.match(result.stdout, /RESULT\s+passed=5\s+failed=0/i, 'all isolated bootstrap contracts must pass');
 });
