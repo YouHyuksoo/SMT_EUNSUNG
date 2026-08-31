@@ -111,6 +111,30 @@ try {
     Assert-True (-not (Test-Path -LiteralPath $prepareCopy)) 'one-shot preparation script must clean itself'
   }
 
+  Test-Case 'cleanup after simulated upload failure removes exact target and helper but preserves sibling' {
+    $root = Join-Path $tempRoot 'prepare-cleanup'
+    $incomingRoot = Join-Path $root 'incoming'
+    $incomingId = "$shaA-789-3"
+    $siblingId = "$shaA-789-4"
+    New-Item -ItemType Directory -Force -Path $incomingRoot | Out-Null
+    $prepareSource = Join-Path (Split-Path -Parent $PSScriptRoot) 'Prepare-EunsungIncoming.ps1'
+    $prepareCopy = Join-Path $incomingRoot "prepare-$incomingId.ps1"
+    Copy-Item -LiteralPath $prepareSource -Destination $prepareCopy
+    & $prepareCopy -DeployRoot $root -IncomingId $incomingId -TestMode
+    Assert-True (-not (Test-Path -LiteralPath $prepareCopy)) 'prepare helper must remove itself'
+    $target = Join-Path $incomingRoot $incomingId
+    Set-Content -LiteralPath (Join-Path $target 'partial-upload.zip') -Value 'partial' -Encoding UTF8
+    $sibling = Join-Path $incomingRoot $siblingId
+    New-Item -ItemType Directory -Path $sibling | Out-Null
+    Set-Content -LiteralPath (Join-Path $sibling 'sentinel.txt') -Value 'keep' -Encoding UTF8
+
+    Copy-Item -LiteralPath $prepareSource -Destination $prepareCopy
+    & $prepareCopy -DeployRoot $root -IncomingId $incomingId -Action Cleanup -TestMode
+    Assert-True (-not (Test-Path -LiteralPath $target)) 'partial upload target must be removed'
+    Assert-True (-not (Test-Path -LiteralPath $prepareCopy)) 'cleanup helper must remove itself'
+    Assert-Equal 'keep' (Get-Content -Raw -LiteralPath (Join-Path $sibling 'sentinel.txt')).Trim()
+  }
+
   Test-Case 'runner import failure cleans exact incoming directory and preserves sibling' {
     $root = Join-Path $tempRoot 'runner-import-failure'
     $incomingRoot = Join-Path $root 'incoming'

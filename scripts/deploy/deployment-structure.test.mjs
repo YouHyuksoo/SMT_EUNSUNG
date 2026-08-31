@@ -237,6 +237,8 @@ test('every remote call uses strict native SSH and a reviewed PowerShell file', 
   assert.match(sources.deployRelease, /GetOwner\(\[Security\.Principal\.SecurityIdentifier\]\)[\s\S]{0,1800}GetAccessRules/i, 'incoming execution must validate owner and write ACLs before importing deployment code');
   assert.match(sources.deployRelease, /finally\s*\{[\s\S]{0,900}Remove-Item\s+-LiteralPath\s+\$cleanupPath/i, 'incoming cleanup must be literal-path and finally-guarded');
   assert.match(sources.prepareIncoming, /Test-Path\s+-LiteralPath\s+\$target[\s\S]{0,120}already exists[\s\S]{0,180}New-Item[^\n]*\$target/i, 'stale incoming targets must fail before directory creation or upload');
+  assert.match(workflow, /if:\s*\$\{\{\s*always\(\)\s*&&\s*steps\.incoming\.outputs\.prepared\s*==\s*['"]true['"]\s*\}\}[\s\S]{0,1800}-Action\s+Cleanup/i, 'prepared incoming directories must be cleaned even after upload or deployment failure');
+  assert.match(sources.prepareIncoming, /GetOwner\(\[Security\.Principal\.SecurityIdentifier\]\)[\s\S]{0,1600}Remove-Item\s+-LiteralPath\s+\$target/i, 'cleanup must validate ownership and remove only the exact target');
 });
 
 test('Windows deployment validates immutable release inputs and never deploys a tracked worktree', () => {
@@ -278,7 +280,7 @@ test('dependency-free PowerShell contract tests cover and execute deployment saf
     { encoding: 'utf8', cwd: repositoryRoot, timeout: 60_000 },
   );
   assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
-  assert.match(result.stdout, /RESULT\s+passed=38\s+failed=0/i, 'all isolated deployment contracts must pass');
+  assert.match(result.stdout, /RESULT\s+passed=39\s+failed=0/i, 'all isolated deployment contracts must pass');
 });
 
 test('bootstrap is least privilege, idempotent, pinned, and reversible', () => {
