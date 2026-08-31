@@ -446,17 +446,14 @@ function Test-EunsungScheduledTaskContract {
   param(
     [Parameter(Mandatory)]$Task,
     [Parameter(Mandatory)][string]$WrapperPath,
-    [Parameter(Mandatory)][Security.Principal.SecurityIdentifier]$DeploySid
+    [Parameter(Mandatory)][Security.Principal.SecurityIdentifier]$DeploySid,
+    [scriptblock]$PrincipalSidResolver={param($UserId)if($UserId -match '^S-\d(?:-\d+)+$'){New-Object Security.Principal.SecurityIdentifier($UserId)}else{(New-Object Security.Principal.NTAccount($UserId)).Translate([Security.Principal.SecurityIdentifier])}}
   )
 
   if ($Task.TaskName -cne $script:TaskName) { return $false }
   if ([string]$Task.TaskPath -cne $script:TaskPath) { return $false }
-  $allowedLocalPrincipals = @(
-    $DeploySid.Value,
-    ".\$($script:AccountName)",
-    "$env:COMPUTERNAME\$($script:AccountName)"
-  )
-  if ($allowedLocalPrincipals -cnotcontains [string]$Task.Principal.UserId) { return $false }
+  try{$resolvedPrincipal=& $PrincipalSidResolver ([string]$Task.Principal.UserId);$resolvedSid=(New-Object Security.Principal.SecurityIdentifier([string]$resolvedPrincipal.Value)).Value}catch{return $false}
+  if($resolvedSid -cne $DeploySid.Value){return $false}
   if ([string]$Task.Principal.LogonType -ne 'Password') { return $false }
   if ([string]$Task.Principal.RunLevel -ne 'Limited') { return $false }
   $actions = @($Task.Actions)

@@ -84,6 +84,14 @@ Test-Case 'task contract requires exact Password limited startup task' {
     Triggers = @([pscustomobject]@{ CimClass=[pscustomobject]@{ CimClassName='MSFT_TaskBootTrigger' } })
   }
   Assert-True (Test-EunsungScheduledTaskContract -Task $task -WrapperPath 'D:\deploy\Resurrect-EunsungPm2.ps1' -DeploySid $deploySid)
+  $task.Principal.UserId='eunsung-deploy'
+  Assert-True (Test-EunsungScheduledTaskContract -Task $task -WrapperPath 'D:\deploy\Resurrect-EunsungPm2.ps1' -DeploySid $deploySid -PrincipalSidResolver {param($UserId)if($UserId -ceq 'eunsung-deploy'){$deploySid}else{throw 'unexpected principal'}})
+  $wrongSid=New-Object Security.Principal.SecurityIdentifier('S-1-5-21-9-8-7-1001')
+  $task.Principal.UserId='OTHERDOMAIN\eunsung-deploy'
+  Assert-True (-not (Test-EunsungScheduledTaskContract -Task $task -WrapperPath 'D:\deploy\Resurrect-EunsungPm2.ps1' -DeploySid $deploySid -PrincipalSidResolver {param($UserId)$wrongSid}))
+  $task.Principal.UserId='eunsung-deploy'
+  Assert-True (-not (Test-EunsungScheduledTaskContract -Task $task -WrapperPath 'D:\deploy\Resurrect-EunsungPm2.ps1' -DeploySid $deploySid -PrincipalSidResolver {param($UserId)throw 'unresolvable bare collision'}))
+  $task.Principal.UserId=$deploySid.Value
   $task.TaskPath='\Wrong\'
   Assert-True (-not (Test-EunsungScheduledTaskContract -Task $task -WrapperPath 'D:\deploy\Resurrect-EunsungPm2.ps1' -DeploySid $deploySid))
   $task.TaskPath='\EunsungMES\'
