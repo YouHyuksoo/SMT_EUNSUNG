@@ -129,6 +129,8 @@ test('PM2 config defines the two release apps and fails closed without deploymen
     assert.equal(app.restart_delay, 4000);
     assert.equal(app.exp_backoff_restart_delay, 1000);
     assert.equal(app.kill_timeout, 5000);
+    assert.equal(app.log_date_format, 'YYYY-MM-DD HH:mm:ss');
+    assert.equal(app.max_memory_restart, '1G');
   }
 
   const invalidEnvironments = [
@@ -137,6 +139,8 @@ test('PM2 config defines the two release apps and fails closed without deploymen
     [{ EUNSUNG_RELEASE_DIR: releaseDir, ORACLE_CLIENT_LIB_DIR: oracleClientLibDir }, /EUNSUNG_DEPLOY_ROOT is required/],
     [{ EUNSUNG_RELEASE_DIR: releaseDir, EUNSUNG_DEPLOY_ROOT: 'deploy-root', ORACLE_CLIENT_LIB_DIR: oracleClientLibDir }, /EUNSUNG_DEPLOY_ROOT must be an absolute path/],
     [{ EUNSUNG_RELEASE_DIR: releaseDir, EUNSUNG_DEPLOY_ROOT: deployRoot }, /ORACLE_CLIENT_LIB_DIR is required/],
+    [{ EUNSUNG_RELEASE_DIR: releaseDir, EUNSUNG_DEPLOY_ROOT: deployRoot, ORACLE_CLIENT_LIB_DIR: '   ' }, /ORACLE_CLIENT_LIB_DIR is required/],
+    [{ EUNSUNG_RELEASE_DIR: releaseDir, EUNSUNG_DEPLOY_ROOT: deployRoot, ORACLE_CLIENT_LIB_DIR: 'oracle\\relative' }, /ORACLE_CLIENT_LIB_DIR must be an absolute path/],
   ];
 
   for (const [environment, expectedError] of invalidEnvironments) {

@@ -1,7 +1,7 @@
 const path = require("path");
 
 function requireAbsolutePath(variableName) {
-  const value = process.env[variableName];
+  const value = process.env[variableName]?.trim();
 
   if (!value) {
     throw new Error(`${variableName} is required`);
@@ -16,11 +16,7 @@ function requireAbsolutePath(variableName) {
 
 const releaseDir = requireAbsolutePath("EUNSUNG_RELEASE_DIR");
 const deployRoot = requireAbsolutePath("EUNSUNG_DEPLOY_ROOT");
-const oracleClientLibDir = process.env.ORACLE_CLIENT_LIB_DIR;
-
-if (!oracleClientLibDir) {
-  throw new Error("ORACLE_CLIENT_LIB_DIR is required");
-}
+const oracleClientLibDir = requireAbsolutePath("ORACLE_CLIENT_LIB_DIR");
 
 const frontendDir = path.join(releaseDir, "apps", "frontend");
 const backendDir = path.join(releaseDir, "apps", "backend");
