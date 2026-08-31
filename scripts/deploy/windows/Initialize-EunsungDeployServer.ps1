@@ -441,12 +441,22 @@ function Get-EunsungWrapperContent {
 `$env:PM2_HOME = Join-Path `$env:USERPROFILE '.pm2'
 `$env:Path = (Split-Path -Parent '$escapedPm2') + ';C:\Program Files\nodejs;' + `$env:Path
 `$logPath = [IO.Path]::GetFullPath('$escapedLog')
-`$stage = 'preflight'; `$operation = 'none'; `$nativeExit = `$null; `$pm2Output = @()
+`$stage = 'preflight'; `$operation = 'none'; `$nativeExit = `$null
+function Assert-OrdinaryPm2LogFile {
+  param([string]`$Path)
+  if (Test-Path -LiteralPath `$Path) { `$item=Get-Item -LiteralPath `$Path -Force; if (`$item.PSIsContainer -or (`$item.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0 -or (`$item.PSObject.Properties.Name -contains 'LinkType' -and [string]`$item.LinkType -eq 'HardLink')) { throw 'PM2 bootstrap log must be an ordinary file.' } }
+}
 function Write-SafePm2BootstrapLog {
-  param([string]`$Status, [string]`$Message)
-  `$sanitized = ([string]`$Message) -replace '(?i)(password|token|secret|private[_ -]?key|api[_ -]?key)\s*[:=]\s*[^\s;]+', '`$1=[REDACTED]'
-  if (`$sanitized.Length -gt 2048) { `$sanitized = `$sanitized.Substring(0, 2048) }
-  `$line = "`$([DateTime]::UtcNow.ToString('o')) status=`$Status stage=`$stage operation=`$operation exit=`$nativeExit message=`$sanitized`r`n"
+  param([ValidateSet('ok','error')][string]`$Status, [ValidateSet('None','UnsafePath','NativeExit','Unexpected')][string]`$ErrorClass)
+  Assert-OrdinaryPm2LogFile -Path `$logPath
+  `$backupPath = `$logPath + '.1'
+  if ((Test-Path -LiteralPath `$logPath) -and (Get-Item -LiteralPath `$logPath -Force).Length -gt 65536) {
+    Assert-OrdinaryPm2LogFile -Path `$backupPath
+    if (Test-Path -LiteralPath `$backupPath) { Remove-Item -LiteralPath `$backupPath -Force }
+    [IO.File]::Move(`$logPath, `$backupPath)
+  }
+  `$exitField = if (`$null -eq `$nativeExit) { 'none' } else { [string]`$nativeExit }
+  `$line = "`$([DateTime]::UtcNow.ToString('o')) status=`$Status stage=`$stage operation=`$operation exit=`$exitField errorClass=`$ErrorClass`r`n"
   [IO.File]::AppendAllText(`$logPath, `$line, (New-Object Text.UTF8Encoding(`$false)))
 }
 try {
@@ -454,7 +464,7 @@ try {
 if (-not (Test-Path -LiteralPath `$logRoot -PathType Container)) { throw 'PM2 bootstrap log directory does not exist.' }
 `$logRootItem = Get-Item -LiteralPath `$logRoot -Force
 if ((`$logRootItem.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) { throw 'PM2 bootstrap log directory is unsafe.' }
-if (Test-Path -LiteralPath `$logPath) { `$logItem=Get-Item -LiteralPath `$logPath -Force; if (`$logItem.PSIsContainer -or (`$logItem.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0 -or (`$logItem.PSObject.Properties.Name -contains 'LinkType' -and [string]`$logItem.LinkType -eq 'HardLink')) { throw 'PM2 bootstrap log must be an ordinary file.' } }
+Assert-OrdinaryPm2LogFile -Path `$logPath
 foreach (`$candidate in @(`$profileRoot, `$env:PM2_HOME)) {
   if (Test-Path -LiteralPath `$candidate) {
     `$item = Get-Item -LiteralPath `$candidate -Force
@@ -468,19 +478,19 @@ if (Test-Path -LiteralPath `$dumpPath) {
   if (`$dump.PSIsContainer -or (`$dump.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0 -or (`$dump.PSObject.Properties.Name -contains 'LinkType' -and [string]`$dump.LinkType -eq 'HardLink')) { throw 'PM2 dump must be an ordinary file.' }
   `$operation = 'resurrect'
   `$stage = 'invoke'
-  `$pm2Output = @(& '$escapedPm2' resurrect 2>&1 | ForEach-Object { [string]`$_ })
+  & '$escapedPm2' resurrect 2>&1 | Out-Null
   `$nativeExit = `$LASTEXITCODE
 } else {
   `$operation = 'ping'
   `$stage = 'invoke'
-  `$pm2Output = @(& '$escapedPm2' ping 2>&1 | ForEach-Object { [string]`$_ })
+  & '$escapedPm2' ping 2>&1 | Out-Null
   `$nativeExit = `$LASTEXITCODE
 }
 if (`$nativeExit -ne 0) { throw "PM2 `$operation failed with exit code `$nativeExit" }
-`$stage='complete'; Write-SafePm2BootstrapLog -Status 'ok' -Message ((`$pm2Output -join ' ') -replace '[\r\n]+',' ')
+`$stage='complete'; Write-SafePm2BootstrapLog -Status 'ok' -ErrorClass 'None'
 } catch {
-  `$failure = ((`$pm2Output -join ' ') + ' ' + `$_.Exception.Message) -replace '[\r\n]+',' '
-  try { Write-SafePm2BootstrapLog -Status 'error' -Message `$failure } catch { }
+  `$errorClass = if (`$stage -eq 'preflight') { 'UnsafePath' } elseif (`$null -ne `$nativeExit -and `$nativeExit -ne 0) { 'NativeExit' } else { 'Unexpected' }
+  try { Write-SafePm2BootstrapLog -Status 'error' -ErrorClass `$errorClass } catch { }
   throw
 }
 "@

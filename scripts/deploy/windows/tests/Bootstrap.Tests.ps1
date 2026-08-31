@@ -99,7 +99,8 @@ Test-Case 'wrapper propagates native ping failure' {
   $testDir=Join-Path ([IO.Path]::GetTempPath()) ("eunsung-wrapper-"+[guid]::NewGuid().ToString('N'));$profile=Join-Path $testDir 'profile';$npm=Join-Path $testDir 'npm';$logs=Join-Path $testDir 'logs';New-Item -ItemType Directory -Path $profile,$npm,$logs|Out-Null;$pm2=Join-Path $npm 'pm2.cmd'
   $long='A'*3000;[IO.File]::WriteAllText($pm2,"@echo off`r`necho token=supersecret $long`r`nexit /b 7`r`n",[Text.Encoding]::ASCII)
   $log=Join-Path $logs 'pm2-bootstrap.log'
-  try{Assert-Throws { & ([scriptblock]::Create((Get-EunsungWrapperContent -ProfilePath $profile -Pm2Path $pm2 -LogPath $log))) } 'PM2 ping failed with exit code 7';$diagnostic=Get-Content -Raw -LiteralPath $log;Assert-True ($diagnostic -match 'status=error stage=invoke operation=ping exit=7');Assert-True ($diagnostic -match 'token=\[REDACTED\]');Assert-True ($diagnostic -notmatch 'supersecret');Assert-True ($diagnostic.Length -lt 2300)}
+  [IO.File]::WriteAllText($log,('X'*70000))
+  try{Assert-Throws { & ([scriptblock]::Create((Get-EunsungWrapperContent -ProfilePath $profile -Pm2Path $pm2 -LogPath $log))) } 'PM2 ping failed with exit code 7';$diagnostic=Get-Content -Raw -LiteralPath $log;Assert-True ($diagnostic -match 'status=error stage=invoke operation=ping exit=7 errorClass=NativeExit');Assert-True ($diagnostic -notmatch 'token|supersecret|Bearer|connection|string|\{|\}');Assert-True ($diagnostic.Length -lt 300);$backup="$log.1";Assert-True (Test-Path -LiteralPath $backup);Assert-Equal 70000 (Get-Item -LiteralPath $backup).Length;Assert-Equal 1 @((Get-ChildItem -LiteralPath $logs -Filter 'pm2-bootstrap.log.1')).Count;Assert-True ((Get-EunsungWrapperContent -ProfilePath $profile -Pm2Path $pm2 -LogPath $log) -notmatch '\$pm2Output\s*=\s*@\(')}
   finally{Remove-Item -LiteralPath $testDir -Recurse -Force}
 }
 
