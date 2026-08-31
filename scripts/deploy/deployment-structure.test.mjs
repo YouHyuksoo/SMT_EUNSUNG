@@ -30,8 +30,31 @@ const sources = Object.fromEntries(
 const runtime = [sources.module, sources.testRunner, sources.deployRelease, sources.initializeServer].join('\n');
 
 function topLevelSection(yaml, key) {
-  const match = yaml.match(new RegExp(`^${key}:\\s*\\n([\\s\\S]*?)(?=^[A-Za-z_][\\w-]*:\\s*(?:#.*)?$|\\Z)`, 'm'));
-  return match?.[1] ?? '';
+  const lines = yaml.split('\n');
+  const start = lines.findIndex((line) => new RegExp(`^${key}:\\s*(?:#.*)?$`).test(line));
+  if (start < 0) return '';
+  const endOffset = lines.slice(start + 1).findIndex((line) => /^[A-Za-z_][\w-]*:\s*(?:#.*)?$/.test(line));
+  return lines.slice(start + 1, endOffset < 0 ? undefined : start + 1 + endOffset).join('\n');
+}
+
+function withoutCommentLines(source) {
+  return source
+    .split('\n')
+    .filter((line) => !/^\s*#/.test(line))
+    .map((line) => line.replace(/\s+#.*$/, ''))
+    .join('\n');
+}
+
+function indentedSection(source, keyPattern, indentation) {
+  const lines = source.split('\n');
+  const heading = new RegExp(`^\\s{${indentation}}(?:${keyPattern}):\\s*$`);
+  const start = lines.findIndex((line) => heading.test(line));
+  if (start < 0) return '';
+  const endOffset = lines.slice(start + 1).findIndex((line) => {
+    if (!line.trim()) return false;
+    return (line.match(/^\s*/)?.[0].length ?? 0) <= indentation;
+  });
+  return lines.slice(start + 1, endOffset < 0 ? undefined : start + 1 + endOffset).join('\n');
 }
 
 test('declares every protected deployment entry point', () => {
@@ -42,7 +65,11 @@ test('declares every protected deployment entry point', () => {
 
 test('workflow exposes only the approved triggers and deployment boundary', () => {
   const workflow = sources.workflow;
-  assert.match(workflow, /^permissions:\s*\n(?:[ \t]+.*\n)*?[ \t]+contents:\s*read\s*$/m, 'workflow must grant only read access to repository contents');
+  const permissions = topLevelSection(workflow, 'permissions')
+    .split('\n')
+    .map((line) => line.replace(/\s+#.*$/, '').trim())
+    .filter(Boolean);
+  assert.deepEqual(permissions, ['contents: read'], 'top-level permissions must contain only contents: read');
   assert.match(workflow, /^\s*environment:\s*jisung-development\s*$/m, 'deploy job must use the jisung-development environment');
 
   const triggers = topLevelSection(workflow, 'on');
@@ -58,23 +85,30 @@ test('workflow exposes only the approved triggers and deployment boundary', () =
 
 test('workflow pins the exact commit and uses hardened key-only SSH', () => {
   const workflow = sources.workflow;
+  const executableWorkflow = withoutCommentLines(workflow);
   assert.match(workflow, /GITHUB_SHA\s*:\s*['"]?\$\{\{\s*github\.sha\s*\}\}['"]?/i, 'workflow must propagate github.sha as GITHUB_SHA');
-  assert.match(workflow, /StrictHostKeyChecking\s*=\s*yes/i, 'SSH host key checking must be mandatory');
-  assert.doesNotMatch(workflow, /secrets\.[A-Z0-9_]*PASSWORD/i, 'password secrets are forbidden; use key authentication');
-  assert.doesNotMatch(workflow, /reset\s+--hard/i, 'destructive git reset is forbidden');
+  assert.match(executableWorkflow, /(?:git\s+archive|archive\b)[\s\S]{0,300}GITHUB_SHA/i, 'the archive must be built from GITHUB_SHA');
+  assert.match(executableWorkflow, /(?:ssh|scp)[\s\S]{0,500}(?:Deploy-EunsungRelease|-CommitSha)[\s\S]{0,200}GITHUB_SHA|(?:Deploy-EunsungRelease|-CommitSha)[\s\S]{0,200}GITHUB_SHA[\s\S]{0,500}(?:ssh|scp)/i, 'the remote deploy invocation must receive the same GITHUB_SHA');
+  assert.match(executableWorkflow, /StrictHostKeyChecking\s*=\s*yes/i, 'SSH host key checking must be mandatory');
+  assert.doesNotMatch(executableWorkflow, /\bsshpass\b|PasswordAuthentication\s*=\s*(?:yes|true)|(?:secrets|env)\.[A-Z0-9_]*(?:PASSWORD|PASSWD|_PASS)(?:\b|_)|\$env:[A-Z0-9_]*(?:PASSWORD|PASSWD|_PASS)\b|^\s*[A-Z0-9_]*(?:PASSWORD|PASSWD|_PASS)\s*:/im, 'password authentication and password-like workflow variables are forbidden');
+  assert.doesNotMatch(executableWorkflow, /reset\s+--hard/i, 'destructive git reset is forbidden');
 });
 
 test('workflow keeps recovery modes manual and makes push a normal deployment', () => {
   const workflow = sources.workflow;
-  for (const mode of ['build_only', 'activate_existing', 'rollback_test']) {
-    assert.match(workflow, new RegExp(`(?:^|[^\\w])${mode}(?:$|[^\\w])`, 'm'), `workflow_dispatch must offer ${mode}`);
-  }
-  assert.match(workflow, /github\.event_name\s*==\s*['"]push['"][\s\S]{0,240}(?:mode|deploy_mode)[^\n]*(?:normal|deploy)/i, 'push events must hard-code normal deployment mode');
-  assert.doesNotMatch(workflow, /github\.event\.inputs[^\n]*(?:push|github\.event_name\s*==\s*['"]push)/i, 'push deployment must not consume a manual recovery mode');
+  const triggers = topLevelSection(workflow, 'on');
+  const modeBlock = indentedSection(triggers, 'mode|deploy_mode', 6);
+  const choices = [...modeBlock.matchAll(/^\s{10}-\s*['"]?([a-z_]+)['"]?\s*$/gm)].map((match) => match[1]);
+  assert.deepEqual(choices.sort(), ['activate_existing', 'build_only', 'deploy', 'rollback_test'].sort(), 'workflow_dispatch mode choices must be exactly the four approved modes');
+
+  const executableWorkflow = withoutCommentLines(workflow);
+  assert.match(executableWorkflow, /(?:github\.event_name\s*==\s*['"]push['"]\s*&&\s*['"]deploy['"]\s*\|\|\s*(?:inputs|github\.event\.inputs)\.(?:mode|deploy_mode)|github\.event_name\s*==\s*['"]workflow_dispatch['"]\s*&&\s*(?:inputs|github\.event\.inputs)\.(?:mode|deploy_mode)\s*\|\|\s*['"]deploy['"])/i, 'push must force deploy before manual mode is considered');
+  assert.doesNotMatch(executableWorkflow, /github\.event_name\s*==\s*['"]push['"]\s*&&\s*(?:inputs|github\.event\.inputs)\.(?:mode|deploy_mode)/i, 'push must never interpolate a manual deployment mode');
 });
 
 test('Windows deployment validates immutable release inputs and never deploys a tracked worktree', () => {
-  assert.match(runtime, /\^\[0-9a-fA-F\]\{40\}\$/m, 'remote deployment must validate a full 40-character commit SHA');
+  const fullShaPattern = String.raw`\^\[(?=[^\]\n]*0-9)(?=[^\]\n]*a-f)[0-9a-fA-F-]+\]\{40\}\$`;
+  assert.match(runtime, new RegExp(`(?:CommitSha|DeploySha|GITHUB_SHA)[^\\n]*(?:-notmatch|-notlike|match)[^\\n]*${fullShaPattern}|${fullShaPattern}[^\\n]*(?:CommitSha|DeploySha|GITHUB_SHA)`, 'im'), 'the deploy SHA variable must be validated as a full 40-character commit SHA');
   assert.match(runtime, /ReleaseRoot/i, 'a dedicated release root is required');
   assert.match(runtime, /(?:Resolve-Path|GetFullPath)[\s\S]{0,500}(?:StartsWith|ReleaseRoot)/i, 'release paths must be validated as descendants of the release root');
   assert.doesNotMatch(runtime, /git\s+(?:reset|pull|checkout|switch)\b/i, 'deployment must not mutate a tracked git worktree');
@@ -88,12 +122,13 @@ test('Windows deployment fails closed on PowerShell and native command errors', 
 });
 
 test('release activation manages both PM2 applications and verifies backend readiness', () => {
-  assert.match(runtime, /eunsung-frontend/i, 'frontend PM2 application name is required');
-  assert.match(runtime, /eunsung-backend/i, 'backend PM2 application name is required');
+  const executableRuntime = withoutCommentLines(runtime);
+  assert.match(executableRuntime, /(?:pm2[\s\S]{0,500}(?:start|reload|restart)[\s\S]{0,500}eunsung-frontend|eunsung-frontend[\s\S]{0,500}pm2[\s\S]{0,500}(?:start|reload|restart))/i, 'activation must start or reload eunsung-frontend with PM2');
+  assert.match(executableRuntime, /(?:pm2[\s\S]{0,500}(?:start|reload|restart)[\s\S]{0,500}eunsung-backend|eunsung-backend[\s\S]{0,500}pm2[\s\S]{0,500}(?:start|reload|restart))/i, 'activation must start or reload eunsung-backend with PM2');
   assert.match(runtime, /status[\s\S]{0,200}(?:['"]ok['"]|[-_]eq\s*['"]ok['"])/i, 'backend health JSON must report status ok');
   assert.match(runtime, /database[\s\S]{0,200}(?:['"]connected['"]|[-_]eq\s*['"]connected['"])/i, 'backend health JSON must report database connected');
   assert.match(runtime, /(?:MaxAttempts|RetryCount|HealthRetries|for\s*\([^;]+;[^;]*(?:-lt|-le)\s*\$?\w+;)/i, 'health checks must use a bounded retry count');
-  assert.match(runtime, /rollback/i, 'failed activation must invoke rollback');
+  assert.match(executableRuntime, /(?:catch\s*\{|if\s*\([^)]*(?:health|ready)[^)]*\))[\s\S]{0,1200}(?:Invoke-Rollback|Restore-PreviousRelease|Rollback-EunsungRelease|Invoke-EunsungRollback)\b/i, 'the health-failure path must invoke a rollback operation');
 });
 
 test('PowerShell contract tests cover deployment safety invariants', () => {
