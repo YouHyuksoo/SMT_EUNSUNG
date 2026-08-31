@@ -3,6 +3,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.FIXED_HOLIDAYS = void 0;
 exports.shiftNetMinutes = shiftNetMinutes;
 exports.defaultWorkMinutes = defaultWorkMinutes;
+exports.shiftSpanMinutes = shiftSpanMinutes;
+exports.calendarWorkMinutes = calendarWorkMinutes;
 exports.holidayYnOf = holidayYnOf;
 exports.isFixedHoliday = isFixedHoliday;
 /** 양력 고정공휴일 [월, 일] */
@@ -71,6 +73,26 @@ function defaultWorkMinutes(dayType, shift) {
     if (dayType === 'SPECIAL')
         return day;
     return day + nightNetMinutes(shift);
+}
+/** 교대 구간의 총 재실분 = 종료 - 시작. 자정 넘김 처리. 형식이 깨지면 0. */
+function shiftSpanMinutes(shift) {
+    const start = toMinutes(shift.startTime);
+    const end = toMinutes(shift.endTime);
+    if (start === null || end === null)
+        return 0;
+    return end > start ? end - start : end < start ? end + MINUTES_PER_DAY - start : 0;
+}
+/**
+ * 일자별 교대조/비작업 행이 있을 때의 근무분.
+ * OFF는 0, 그 외는 Σ(교대조 구간) - Σ(비작업분). 음수는 0으로 자른다.
+ * 잔업(OT_MINUTES)은 여기 포함하지 않는다 — 별도 컬럼으로 관리한다.
+ */
+function calendarWorkMinutes(dayType, shifts, breaks) {
+    if (dayType === 'OFF')
+        return 0;
+    const worked = shifts.reduce((sum, s) => sum + shiftSpanMinutes(s), 0);
+    const rested = breaks.reduce((sum, b) => sum + (b.breakMinutes > 0 ? b.breakMinutes : 0), 0);
+    return Math.max(0, worked - rested);
 }
 /** HOLIDAY_YN은 DAY_TYPE에서 파생한다. 직접 입력받지 않는다. */
 function holidayYnOf(dayType) {

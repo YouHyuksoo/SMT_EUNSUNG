@@ -8,19 +8,31 @@
  * 3. HOLIDAY_YN은 절대 클라이언트 값을 믿지 않는다 — holidayYnOf(dayType)로 파생시킨다.
  *    DB CHECK 제약(CK_*_HOLIDAY_SYNC)이 이 불변식을 다시 한 번 강제한다.
  * 4. CONFIRM_YN='Y'인 일자가 범위에 하나라도 있으면 쓰기(저장/생성/복사)를 거부한다.
+ * 5. 교대조 작업시간/비작업 시간은 자식 테이블(IP_PRODUCT_CALENDAR_SHIFT/_BREAK)에 있다.
+ *    자식은 "그 날만의 예외"라 행이 없을 수도 있고, 그때 근무분은 교대시간 마스터에서
+ *    파생된다(defaultWorkMinutes). 행이 있으면 calendarWorkMinutes가 이긴다.
+ *    LINE_CODE는 PK라 NULL을 못 써서 전사는 sentinel COMPANY_LINE_CODE('*')를 쓴다.
  */
 import { ConflictException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Between, EntityManager, In, Repository } from 'typeorm';
 import {
+  calendarWorkMinutes,
   defaultWorkMinutes,
   holidayYnOf,
   isFixedHoliday,
+  type CalendarBreak,
+  type CalendarShift,
   type ShiftTimeMasterLike,
   type WorkDayType,
 } from '@smt/shared';
 import { ProductCompanyCalendar } from '../../../entities/product-company-calendar.entity';
 import { ProductLineCalendar } from '../../../entities/product-line-calendar.entity';
+import {
+  COMPANY_LINE_CODE,
+  ProductCalendarShift,
+} from '../../../entities/product-calendar-shift.entity';
+import { ProductCalendarBreak } from '../../../entities/product-calendar-break.entity';
 import { ShiftTimeMaster } from '../../../entities/shift-time-master.entity';
 import { ShiftTimeService } from './shift-time.service';
 import { TransactionService } from '../../../shared/transaction.service';
@@ -42,6 +54,10 @@ export interface WorkCalendarDayView {
   comment: string | null;
   confirmYn: 'Y' | 'N';
   source: 'COMPANY' | 'LINE';
+  /** 그 일자에 저장된 교대조 작업시간. 없으면 빈 배열 = 교대시간 마스터를 따른다. */
+  shifts: CalendarShift[];
+  /** 그 일자에 저장된 비작업 시간. 없으면 빈 배열. */
+  breaks: CalendarBreak[];
 }
 
 export interface WorkCalendarSummary {
@@ -83,6 +99,10 @@ export class WorkCalendarService {
     private readonly companyRepo: Repository<ProductCompanyCalendar>,
     @InjectRepository(ProductLineCalendar)
     private readonly lineRepo: Repository<ProductLineCalendar>,
+    @InjectRepository(ProductCalendarShift)
+    private readonly shiftRepo: Repository<ProductCalendarShift>,
+    @InjectRepository(ProductCalendarBreak)
+    private readonly breakRepo: Repository<ProductCalendarBreak>,
     private readonly shiftTime: ShiftTimeService,
     private readonly tx: TransactionService,
   ) {}
@@ -112,6 +132,36 @@ export class WorkCalendarService {
     for (const row of lineRows) {
       merged.set(toIso(row.planDate), this.toView(row, 'LINE'));
     }
+
+    // 자식(교대조/비작업)은 부모와 같은 소유자를 따른다. 라인 모드면 라인 자식만 읽어
+    // 병합 결과의 source와 어긋나지 않게 한다.
+    const owner = query.lineCode ?? COMPANY_LINE_CODE;
+    const [shiftRows, breakRows] = await Promise.all([
+      this.shiftRepo.find({
+        where: { organizationId, lineCode: owner, planDate: Between(from, to) },
+      }),
+      this.breakRepo.find({
+        where: { organizationId, lineCode: owner, planDate: Between(from, to) },
+      }),
+    ]);
+    for (const row of shiftRows) {
+      merged.get(toIso(row.planDate))?.shifts.push({
+        shiftCode: row.shiftCode,
+        startTime: row.startTime,
+        endTime: row.endTime,
+      });
+    }
+    for (const row of breakRows) {
+      merged.get(toIso(row.planDate))?.breaks.push({
+        breakType: row.breakType,
+        breakMinutes: row.breakMinutes,
+      });
+    }
+    for (const day of merged.values()) {
+      day.shifts.sort((a, b) => a.shiftCode.localeCompare(b.shiftCode));
+      day.breaks.sort((a, b) => a.breakType.localeCompare(b.breakType));
+    }
+
     return [...merged.values()].sort((a, b) => a.workDate.localeCompare(b.workDate));
   }
 
@@ -170,7 +220,17 @@ export class WorkCalendarService {
       this.buildRow(day, dto.lineCode, organizationId, shiftRows, userId),
     );
     const planDates = dto.days.map((day) => parseYmd(day.workDate));
-    await this.replaceRowsByDates(dto.lineCode, organizationId, from, to, planDates, rows);
+    const { shifts, breaks } = this.buildChildRows(dto.days, dto.lineCode, organizationId, userId);
+    await this.replaceRowsByDates(
+      dto.lineCode,
+      organizationId,
+      from,
+      to,
+      planDates,
+      rows,
+      shifts,
+      breaks,
+    );
     return rows.length;
   }
 
@@ -256,9 +316,41 @@ export class WorkCalendarService {
         lastModifyDate: now,
       }),
     );
+    // 전사 자식행(교대조/비작업)도 같이 복제한다. 부모만 옮기면 라인 월력의 근무분 근거가
+    // 사라져 전사와 다른 값으로 보인다.
+    const companyShifts = await this.shiftRepo.find({
+      where: { organizationId, lineCode: COMPANY_LINE_CODE, planDate: Between(from, to) },
+    });
+    const companyBreaks = await this.breakRepo.find({
+      where: { organizationId, lineCode: COMPANY_LINE_CODE, planDate: Between(from, to) },
+    });
+    const shifts = companyShifts.map((src) => ({
+      planDate: new Date(src.planDate),
+      organizationId,
+      lineCode: dto.lineCode,
+      shiftCode: src.shiftCode,
+      startTime: src.startTime,
+      endTime: src.endTime,
+      enterBy,
+      enterDate: now,
+      lastModifyBy: enterBy,
+      lastModifyDate: now,
+    }));
+    const breaks = companyBreaks.map((src) => ({
+      planDate: new Date(src.planDate),
+      organizationId,
+      lineCode: dto.lineCode,
+      breakType: src.breakType,
+      breakMinutes: src.breakMinutes,
+      enterBy,
+      enterDate: now,
+      lastModifyBy: enterBy,
+      lastModifyDate: now,
+    }));
+
     // save()가 아니라 delete()+insert()를 쓰는 이유는 replaceRowsInRange() 주석 참고
     // (PLAN_DATE Date vs 문자열 hydrate 불일치로 save()가 매번 INSERT를 시도해 ORA-00001 발생).
-    await this.replaceRowsInRange(dto.lineCode, organizationId, from, to, rows);
+    await this.replaceRowsInRange(dto.lineCode, organizationId, from, to, rows, shifts, breaks);
     return rows.length;
   }
 
@@ -302,6 +394,8 @@ export class WorkCalendarService {
     from: Date,
     to: Date,
     rows: unknown[],
+    shifts: unknown[] = [],
+    breaks: unknown[] = [],
   ): Promise<void> {
     await this.tx.run(async (qr) => {
       await this.ensureNotConfirmed(from, to, lineCode, organizationId, qr.manager);
@@ -312,7 +406,35 @@ export class WorkCalendarService {
         await qr.manager.delete(ProductCompanyCalendar, { organizationId, planDate: Between(from, to) });
         if (rows.length > 0) await qr.manager.insert(ProductCompanyCalendar, rows as ProductCompanyCalendar[]);
       }
+      // 부모를 지웠으면 자식도 같은 범위에서 지운다. 남겨두면 새로 만든 일자에 옛 교대조
+      // 시간이 그대로 달라붙어 근무분이 사라진 근거로 계산된다.
+      await this.replaceChildrenInRange(qr.manager, lineCode, organizationId, from, to, shifts, breaks);
     });
+  }
+
+  /** 자식(교대조/비작업)만 범위 교체한다. 부모 교체 트랜잭션 안에서만 호출한다. */
+  private async replaceChildrenInRange(
+    manager: EntityManager,
+    lineCode: string | undefined,
+    organizationId: number,
+    from: Date,
+    to: Date,
+    shifts: unknown[],
+    breaks: unknown[],
+  ): Promise<void> {
+    const owner = lineCode ?? COMPANY_LINE_CODE;
+    await manager.delete(ProductCalendarShift, {
+      organizationId,
+      lineCode: owner,
+      planDate: Between(from, to),
+    });
+    await manager.delete(ProductCalendarBreak, {
+      organizationId,
+      lineCode: owner,
+      planDate: Between(from, to),
+    });
+    if (shifts.length > 0) await manager.insert(ProductCalendarShift, shifts as ProductCalendarShift[]);
+    if (breaks.length > 0) await manager.insert(ProductCalendarBreak, breaks as ProductCalendarBreak[]);
   }
 
   /**
@@ -329,8 +451,11 @@ export class WorkCalendarService {
     to: Date,
     planDates: Date[],
     rows: unknown[],
+    shifts: unknown[] = [],
+    breaks: unknown[] = [],
   ): Promise<void> {
     if (planDates.length === 0) return;
+    const owner = lineCode ?? COMPANY_LINE_CODE;
     await this.tx.run(async (qr) => {
       await this.ensureNotConfirmed(from, to, lineCode, organizationId, qr.manager);
       if (lineCode) {
@@ -340,6 +465,20 @@ export class WorkCalendarService {
         await qr.manager.delete(ProductCompanyCalendar, { organizationId, planDate: In(planDates) });
         await qr.manager.insert(ProductCompanyCalendar, rows as ProductCompanyCalendar[]);
       }
+      // 부모와 같은 의미로 "보낸 내용이 그 일자의 전부"다 — 요청에 shifts/breaks가 없으면
+      // 그 일자의 자식행은 비워진다(교대시간 마스터 기본값으로 되돌아간다).
+      await qr.manager.delete(ProductCalendarShift, {
+        organizationId,
+        lineCode: owner,
+        planDate: In(planDates),
+      });
+      await qr.manager.delete(ProductCalendarBreak, {
+        organizationId,
+        lineCode: owner,
+        planDate: In(planDates),
+      });
+      if (shifts.length > 0) await qr.manager.insert(ProductCalendarShift, shifts as ProductCalendarShift[]);
+      if (breaks.length > 0) await qr.manager.insert(ProductCalendarBreak, breaks as ProductCalendarBreak[]);
     });
   }
 
@@ -356,6 +495,9 @@ export class WorkCalendarService {
       comment: row.calendarComment,
       confirmYn: row.confirmYn === 'Y' ? 'Y' : 'N',
       source,
+      // 자식은 findDays가 별도 조회해서 채운다. getSummary는 쓰지 않으므로 빈 배열로 둔다.
+      shifts: [],
+      breaks: [],
     };
   }
 
@@ -372,6 +514,8 @@ export class WorkCalendarService {
       workMinutes?: number;
       otMinutes?: number;
       comment?: string | null;
+      shifts?: CalendarShift[];
+      breaks?: CalendarBreak[];
     },
     lineCode: string | undefined,
     organizationId: number,
@@ -401,7 +545,7 @@ export class WorkCalendarService {
       dayType,
       holidayYn: holidayYnOf(dayType),
       offReason: dayType === 'OFF' ? (day.offReason ?? null) : null,
-      workMinutes: day.workMinutes ?? defaultWorkMinutes(dayType, shift),
+      workMinutes: day.workMinutes ?? this.deriveWorkMinutes(day, dayType, shift),
       otMinutes: day.otMinutes ?? 0,
       confirmYn: 'N',
       calendarComment: day.comment ?? null,
@@ -414,6 +558,76 @@ export class WorkCalendarService {
     // repo.create()는 새 엔티티 인스턴스에 필드를 병합해줄 뿐이므로,
     // insert()/save()에 넘길 값 자체는 이 평범한 객체로 충분하다.
     return lineCode ? { ...base, lineCode } : base;
+  }
+
+  /**
+   * 근무분 파생. 그 일자에 교대조 행이 오면 그것이 근거이고(calendarWorkMinutes),
+   * 없으면 교대시간 마스터에서 파생시킨다(defaultWorkMinutes) — 연간 생성은 자식행을
+   * 만들지 않으므로 후자가 여전히 필요하다.
+   */
+  private deriveWorkMinutes(
+    day: { shifts?: CalendarShift[]; breaks?: CalendarBreak[] },
+    dayType: WorkDayType,
+    shift: ShiftTimeMasterLike | null,
+  ): number {
+    const shifts = day.shifts ?? [];
+    if (shifts.length === 0) return defaultWorkMinutes(dayType, shift);
+    return calendarWorkMinutes(dayType, shifts, day.breaks ?? []);
+  }
+
+  /**
+   * 요청의 days[]에서 자식(교대조/비작업) insert 행을 만든다.
+   * 분이 0인 비작업 항목은 저장하지 않는다 — 화면이 모든 분류를 항상 보내기 때문에
+   * 0을 그대로 넣으면 의미 없는 행이 일자마다 쌓인다.
+   */
+  private buildChildRows(
+    days: {
+      workDate: string;
+      shifts?: CalendarShift[];
+      breaks?: CalendarBreak[];
+    }[],
+    lineCode: string | undefined,
+    organizationId: number,
+    userId?: string,
+  ): { shifts: unknown[]; breaks: unknown[] } {
+    const owner = lineCode ?? COMPANY_LINE_CODE;
+    const enterBy = userId ?? 'SYSTEM';
+    const now = new Date();
+    const shifts: unknown[] = [];
+    const breaks: unknown[] = [];
+
+    for (const day of days) {
+      const planDate = parseYmd(day.workDate);
+      for (const s of day.shifts ?? []) {
+        shifts.push({
+          planDate,
+          organizationId,
+          lineCode: owner,
+          shiftCode: s.shiftCode,
+          startTime: s.startTime,
+          endTime: s.endTime,
+          enterBy,
+          enterDate: now,
+          lastModifyBy: enterBy,
+          lastModifyDate: now,
+        });
+      }
+      for (const b of day.breaks ?? []) {
+        if (!(b.breakMinutes > 0)) continue;
+        breaks.push({
+          planDate,
+          organizationId,
+          lineCode: owner,
+          breakType: b.breakType,
+          breakMinutes: b.breakMinutes,
+          enterBy,
+          enterDate: now,
+          lastModifyBy: enterBy,
+          lastModifyDate: now,
+        });
+      }
+    }
+    return { shifts, breaks };
   }
 
   /**

@@ -7,8 +7,10 @@
  *    DB CHECK 제약으로 정합이 강제되며, 애플리케이션은 holidayYnOf()로만 파생시킨다.
  * 2. 야간 교대는 자정을 넘긴다(20:00~08:00). end < start면 +24h로 계산한다.
  * 3. 공휴일 자동 반영은 양력 고정공휴일만이다. 설·추석·대체공휴일은 담당자가 수정한다.
+ * 4. 근무분에는 두 갈래가 있다. 일자에 교대조 행이 있으면 calendarWorkMinutes()가,
+ *    없으면(연간 생성 직후 등) defaultWorkMinutes()가 교대시간 마스터로 파생시킨다.
  */
-import type { ShiftTimeMasterLike, ShiftTimeSpan, WorkDayType } from './types';
+import type { CalendarBreak, CalendarShift, ShiftTimeMasterLike, ShiftTimeSpan, WorkDayType } from './types';
 /** 양력 고정공휴일 [월, 일] */
 export declare const FIXED_HOLIDAYS: readonly [number, number][];
 /** 교대 구간의 순근무분 = (종료 - 시작) - 휴식. 자정 넘김 처리. 음수는 0. */
@@ -19,6 +21,14 @@ export declare function shiftNetMinutes(span: ShiftTimeSpan): number;
  * 사용자가 일자편집에서 override할 수 있으며, 저장되는 값은 최종값이다.
  */
 export declare function defaultWorkMinutes(dayType: WorkDayType, shift: ShiftTimeMasterLike | null): number;
+/** 교대 구간의 총 재실분 = 종료 - 시작. 자정 넘김 처리. 형식이 깨지면 0. */
+export declare function shiftSpanMinutes(shift: CalendarShift): number;
+/**
+ * 일자별 교대조/비작업 행이 있을 때의 근무분.
+ * OFF는 0, 그 외는 Σ(교대조 구간) - Σ(비작업분). 음수는 0으로 자른다.
+ * 잔업(OT_MINUTES)은 여기 포함하지 않는다 — 별도 컬럼으로 관리한다.
+ */
+export declare function calendarWorkMinutes(dayType: WorkDayType, shifts: readonly CalendarShift[], breaks: readonly CalendarBreak[]): number;
 /** HOLIDAY_YN은 DAY_TYPE에서 파생한다. 직접 입력받지 않는다. */
 export declare function holidayYnOf(dayType: WorkDayType): 'Y' | 'N';
 /** 'YYYY-MM-DD'가 양력 고정공휴일인지. 음력·대체공휴일은 포함하지 않는다. */
