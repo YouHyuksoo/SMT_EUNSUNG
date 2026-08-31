@@ -1,5 +1,15 @@
 // 설비별 작업 실적관리 DTO
-import { IsArray, IsBoolean, IsIn, IsInt, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import {
+  ArrayNotEmpty,
+  IsArray,
+  IsBoolean,
+  IsIn,
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  Matches,
+} from 'class-validator';
 
 export class WorkResultUpsertDto {
   @IsString() @IsNotEmpty() runNo: string;
@@ -45,5 +55,29 @@ export class DowntimeUpsertDto {
   @IsOptional() @IsBoolean() endNow?: boolean; // true면 종료시각을 DB 현재시각(SYSDATE)으로 — 시작(SYSDATE)과 동일 시계
   @IsOptional() @IsString() memo?: string;
   @IsOptional() @IsString() worker?: string;
+  @IsOptional() @IsString() userId?: string;
+}
+
+/**
+ * 계획 비가동 일괄 등록 — 체크한 일자 x 선택한 설비에 같은 사유·시간을 적용한다.
+ * 자정 넘김은 허용하지 않는다(종료는 반드시 시작보다 늦다) — 화면과 서버 양쪽에서 막는다.
+ */
+export class PlanDowntimeCreateDto {
+  @IsArray() @ArrayNotEmpty() @IsString({ each: true }) machineCodes: string[];
+
+  @IsString() @IsNotEmpty() reasonCode: string;
+
+  /** 대상 일자 'YYYY-MM-DD' 목록 */
+  @IsArray()
+  @ArrayNotEmpty()
+  @Matches(/^\d{4}-\d{2}-\d{2}$/, { each: true, message: 'dates는 YYYY-MM-DD 형식이어야 합니다.' })
+  dates: string[];
+
+  @Matches(/^([01]\d|2[0-3]):[0-5]\d$/, { message: 'startHm은 HH:MM 형식이어야 합니다.' })
+  startHm: string;
+
+  @Matches(/^([01]\d|2[0-3]):[0-5]\d$/, { message: 'endHm은 HH:MM 형식이어야 합니다.' })
+  endHm: string;
+
   @IsOptional() @IsString() userId?: string;
 }

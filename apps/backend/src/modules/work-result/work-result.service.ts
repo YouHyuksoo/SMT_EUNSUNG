@@ -1,9 +1,14 @@
 // 설비별 작업 실적관리 — IP_PRODUCT_RUN_CARD 기준 실적/불량/비가동 실 구현
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ProductWorkResult } from '../../entities/product-work-result.entity';
-import { DowntimeBulkDto, DowntimeUpsertDto, WorkResultUpsertDto } from './work-result.dto';
+import {
+  DowntimeBulkDto,
+  DowntimeUpsertDto,
+  PlanDowntimeCreateDto,
+  WorkResultUpsertDto,
+} from './work-result.dto';
 
 const ORG = 1;
 const DEFAULT_USER = 'ADMIN';
@@ -197,7 +202,16 @@ export class WorkResultService {
   }
 
   /** 설비 연계 비가동 사유 (없으면 전체 사용중 사유) */
-  async downtimeReasons(machineCode?: string) {
+  async downtimeReasons(machineCode?: string, reasonType?: string) {
+    // 계획 비가동 화면은 설비 매핑과 무관하게 REASON_TYPE='PLAN' 전체를 쓴다.
+    if (reasonType) {
+      return this.q(
+        `SELECT REASON_CODE AS "code", REASON_NAME AS "name" FROM IP_EQUIP_DOWNTIME_REASON
+          WHERE ORGANIZATION_ID=${ORG} AND USE_YN='Y' AND REASON_TYPE=:1
+          ORDER BY DISPLAY_ORDER, REASON_CODE`,
+        [reasonType],
+      );
+    }
     if (machineCode) {
       const mapped = await this.q(
         `SELECT r.REASON_CODE AS "code", r.REASON_NAME AS "name"
@@ -239,6 +253,126 @@ export class WorkResultService {
 
   /** 라인/설비 일괄 비가동 시작·종료.
    *  이미 요청한 상태인 설비는 건너뛰고 결과를 요약해 돌려준다 — 한 대 때문에 전체가 막히지 않게. */
+  /* ── 계획 비가동 ──
+   * 체크한 일자 x 선택한 설비에 같은 사유·시간을 적용해 IP_EQUIP_DOWNTIME_RESULT에 넣는다.
+   * 기존 행과 시간대가 겹치면 그 행이 계획(PLAN)일 때만 지우고 다시 넣는다. 실제 발생한
+   * 비가동(UNPLAN)은 건드리지 않고 건너뛴 뒤 사유를 돌려준다.
+   */
+  async createPlanDowntime(dto: PlanDowntimeCreateDto) {
+    if (dto.endHm <= dto.startHm) {
+      throw new BadRequestException('종료시간은 시작시간보다 늦어야 합니다.');
+    }
+    const user = dto.userId ?? DEFAULT_USER;
+
+    return this.repo.manager.transaction(async (mgr) => {
+      // 설비의 공정코드를 한 번에 확보한다(일자 수만큼 재조회하지 않기 위함).
+      const binds = dto.machineCodes.map((_, i) => `:${i + 2}`).join(',');
+      const wsRows = (await mgr.query(
+        `SELECT MACHINE_CODE AS "machineCode", WORKSTAGE_CODE AS "workstageCode"
+           FROM IMCN_MACHINE WHERE ORGANIZATION_ID=:1 AND MACHINE_CODE IN (${binds})`,
+        [ORG, ...dto.machineCodes],
+      )) as Array<{ machineCode: string; workstageCode: string | null }>;
+      const wsMap = new Map(wsRows.map((r) => [r.machineCode, r.workstageCode]));
+
+      let inserted = 0;
+      let replaced = 0;
+      const skippedDetail: Array<{ date: string; machineCode: string; reasonName: string | null }> = [];
+
+      for (const date of dto.dates) {
+        const startAt = `${date} ${dto.startHm}`;
+        const endAt = `${date} ${dto.endHm}`;
+        for (const machineCode of dto.machineCodes) {
+          // 같은 설비에서 시간대가 겹치는 기존 행. END_TIME이 없으면(진행중) 무한으로 본다.
+          const clash = (await mgr.query(
+            `SELECT d.DT_SEQ AS "dtSeq", r.REASON_TYPE AS "reasonType", r.REASON_NAME AS "reasonName"
+               FROM IP_EQUIP_DOWNTIME_RESULT d
+               LEFT JOIN IP_EQUIP_DOWNTIME_REASON r
+                 ON r.REASON_CODE = d.REASON_CODE AND r.ORGANIZATION_ID = d.ORGANIZATION_ID
+              WHERE d.ORGANIZATION_ID = :1
+                AND d.MACHINE_CODE = :2
+                AND d.START_TIME < TO_DATE(:3,'YYYY-MM-DD HH24:MI')
+                AND NVL(d.END_TIME, DATE '9999-12-31') > TO_DATE(:4,'YYYY-MM-DD HH24:MI')`,
+            [ORG, machineCode, endAt, startAt],
+          )) as Array<{ dtSeq: number; reasonType: string | null; reasonName: string | null }>;
+
+          const blocking = clash.find((c) => c.reasonType !== 'PLAN');
+          if (blocking) {
+            skippedDetail.push({ date, machineCode, reasonName: blocking.reasonName });
+            continue;
+          }
+          for (const c of clash) {
+            await mgr.query(
+              `DELETE FROM IP_EQUIP_DOWNTIME_RESULT WHERE ORGANIZATION_ID=:1 AND DT_SEQ=:2`,
+              [ORG, c.dtSeq],
+            );
+            replaced += 1;
+          }
+
+          const nx = (await mgr.query(
+            `SELECT SEQ_IP_EQUIP_DOWNTIME.NEXTVAL AS "seq" FROM DUAL`,
+          )) as Array<{ seq: number }>;
+          await mgr.query(
+            `INSERT INTO IP_EQUIP_DOWNTIME_RESULT
+               (RUN_NO, DT_SEQ, ORGANIZATION_ID, MACHINE_CODE, WORKSTAGE_CODE, REASON_CODE,
+                START_TIME, END_TIME, ENTER_BY, ENTER_DATE)
+             VALUES (NULL, :1, :2, :3, :4, :5,
+                     TO_DATE(:6,'YYYY-MM-DD HH24:MI'), TO_DATE(:7,'YYYY-MM-DD HH24:MI'), :8, SYSDATE)`,
+            [
+              Number(nx[0]?.seq),
+              ORG,
+              machineCode,
+              wsMap.get(machineCode) ?? null,
+              dto.reasonCode,
+              startAt,
+              endAt,
+              user,
+            ],
+          );
+          inserted += 1;
+        }
+      }
+      return { inserted, replaced, skipped: skippedDetail.length, skippedDetail };
+    });
+  }
+
+  /** 기간 내 계획 비가동 목록 — 캘린더 뱃지와 일자별 목록 모달이 함께 쓴다. */
+  async planDowntimes(from: string, to: string) {
+    return this.q(
+      `SELECT d.DT_SEQ AS "dtSeq", d.MACHINE_CODE AS "machineCode",
+              m.MACHINE_NAME AS "machineName",
+              d.REASON_CODE AS "reasonCode", r.REASON_NAME AS "reasonName",
+              TO_CHAR(d.START_TIME,'YYYY-MM-DD') AS "planDate",
+              TO_CHAR(d.START_TIME,'HH24:MI') AS "startHm",
+              TO_CHAR(d.END_TIME,'HH24:MI') AS "endHm"
+         FROM IP_EQUIP_DOWNTIME_RESULT d
+         JOIN IP_EQUIP_DOWNTIME_REASON r
+           ON r.REASON_CODE = d.REASON_CODE AND r.ORGANIZATION_ID = d.ORGANIZATION_ID
+         LEFT JOIN IMCN_MACHINE m
+           ON m.MACHINE_CODE = d.MACHINE_CODE AND m.ORGANIZATION_ID = d.ORGANIZATION_ID
+        WHERE d.ORGANIZATION_ID = ${ORG}
+          AND r.REASON_TYPE = 'PLAN'
+          AND d.START_TIME >= TO_DATE(:1,'YYYY-MM-DD')
+          AND d.START_TIME < TO_DATE(:2,'YYYY-MM-DD') + 1
+        ORDER BY d.START_TIME, d.MACHINE_CODE`,
+      [from, to],
+    );
+  }
+
+  /** 비가동 1건 삭제 (계획 비가동 취소) */
+  async deleteDowntime(dtSeq: number) {
+    const rows = (await this.q(
+      `SELECT DT_SEQ AS "dtSeq" FROM IP_EQUIP_DOWNTIME_RESULT
+        WHERE ORGANIZATION_ID=${ORG} AND DT_SEQ=:1`,
+      [dtSeq],
+    )) as Array<{ dtSeq: number }>;
+    if (!rows.length) throw new NotFoundException(`비가동 이력을 찾을 수 없습니다: ${dtSeq}`);
+    await this.repo.manager.query(
+      `DELETE FROM IP_EQUIP_DOWNTIME_RESULT WHERE ORGANIZATION_ID=${ORG} AND DT_SEQ=:1`,
+      [dtSeq],
+    );
+    return { deleted: 1 };
+  }
+
   async bulkDowntime(dto: DowntimeBulkDto) {
     const user = dto.userId ?? DEFAULT_USER;
     const isEnd = dto.action === 'END';

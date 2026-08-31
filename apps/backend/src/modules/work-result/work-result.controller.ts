@@ -1,7 +1,13 @@
 // 설비별 작업 실적관리 REST 컨트롤러 (글로벌 prefix /api/v1): /oee/work-result
-import { Body, Controller, Get, Param, Post, Put, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/common';
 import { Public } from '../../common/decorators/public.decorator';
-import { DefectSaveDto, DowntimeBulkDto, DowntimeUpsertDto, WorkResultUpsertDto } from './work-result.dto';
+import {
+  DefectSaveDto,
+  DowntimeBulkDto,
+  DowntimeUpsertDto,
+  PlanDowntimeCreateDto,
+  WorkResultUpsertDto,
+} from './work-result.dto';
 import { WorkResultService } from './work-result.service';
 
 @Public()
@@ -71,8 +77,13 @@ export class WorkResultController {
 
   /** 비가동 사유 (설비 연계) */
   @Get('downtime-reasons')
-  async downtimeReasons(@Query('machineCode') machineCode?: string) {
-    return { list: await this.service.downtimeReasons(machineCode || undefined) };
+  async downtimeReasons(
+    @Query('machineCode') machineCode?: string,
+    @Query('reasonType') reasonType?: string,
+  ) {
+    return {
+      list: await this.service.downtimeReasons(machineCode || undefined, reasonType || undefined),
+    };
   }
 
   /** 비가동 실적 목록 (설비별) + DB 현재시각 */
@@ -94,6 +105,24 @@ export class WorkResultController {
   }
 
   /** 라인/설비 일괄 비가동 시작·종료 */
+  /** 계획 비가동 일괄 등록 (일자 x 설비) */
+  @Post('downtimes/plan')
+  async createPlanDowntime(@Body() dto: PlanDowntimeCreateDto) {
+    return await this.service.createPlanDowntime(dto);
+  }
+
+  /** 기간 내 계획 비가동 목록 (캘린더 뱃지 + 일자별 목록) */
+  @Get('downtimes/plan')
+  async planDowntimes(@Query('from') from: string, @Query('to') to: string) {
+    return { list: await this.service.planDowntimes(from, to) };
+  }
+
+  /** 비가동 1건 삭제 (계획 비가동 취소) */
+  @Delete('downtimes/:dtSeq')
+  async deleteDowntime(@Param('dtSeq') dtSeq: string) {
+    return await this.service.deleteDowntime(Number(dtSeq));
+  }
+
   @Post('downtimes/bulk')
   async bulkDowntime(@Body() dto: DowntimeBulkDto) {
     return await this.service.bulkDowntime(dto);
