@@ -182,61 +182,111 @@ function Test-EunsungScheduledTaskContract {
   param(
     [Parameter(Mandatory)]$Task,
     [Parameter(Mandatory)][string]$WrapperPath,
-    [Parameter(Mandatory)][string]$AccountName
+    [Parameter(Mandatory)][Security.Principal.SecurityIdentifier]$DeploySid
   )
 
   if ($Task.TaskName -cne $script:TaskName) { return $false }
-  if ($Task.Principal.UserId -notmatch "(^|\\)$([regex]::Escape($AccountName))$") { return $false }
+  $allowedLocalPrincipals = @(
+    $DeploySid.Value,
+    ".\$($script:AccountName)",
+    "$env:COMPUTERNAME\$($script:AccountName)"
+  )
+  if ($allowedLocalPrincipals -cnotcontains [string]$Task.Principal.UserId) { return $false }
   if ([string]$Task.Principal.LogonType -ne 'S4U') { return $false }
   if ([string]$Task.Principal.RunLevel -ne 'Limited') { return $false }
-  $action = @($Task.Actions)[0]
-  if ($action.Execute -ine 'powershell.exe') { return $false }
-  if ($action.Arguments -notmatch [regex]::Escape("-File `"$WrapperPath`"")) { return $false }
-  return @($Task.Triggers | Where-Object { $_.CimClass.CimClassName -eq 'MSFT_TaskBootTrigger' }).Count -eq 1
+  $actions = @($Task.Actions)
+  if ($actions.Count -ne 1) { return $false }
+  $expectedExecutable = [IO.Path]::GetFullPath((Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'))
+  $actualExecutable = if ([IO.Path]::IsPathRooted([string]$actions[0].Execute)) {
+    [IO.Path]::GetFullPath([string]$actions[0].Execute)
+  } else {
+    [IO.Path]::GetFullPath((Join-Path $env:SystemRoot "System32\WindowsPowerShell\v1.0\$($actions[0].Execute)"))
+  }
+  if ($actualExecutable -ine $expectedExecutable) { return $false }
+  $expectedArguments = "-NoProfile -NonInteractive -ExecutionPolicy Bypass -File `"$([IO.Path]::GetFullPath($WrapperPath))`""
+  if ([string]$actions[0].Arguments -cne $expectedArguments) { return $false }
+  $triggers = @($Task.Triggers)
+  if ($triggers.Count -ne 1) { return $false }
+  return $triggers[0].CimClass.CimClassName -eq 'MSFT_TaskBootTrigger'
 }
 
 function Register-EunsungResurrectTask {
   param(
     [Parameter(Mandatory)][string]$WrapperPath,
-    [Parameter(Mandatory)][string]$AccountName
+    [Parameter(Mandatory)][Security.Principal.SecurityIdentifier]$DeploySid
   )
 
   $existing = Get-ScheduledTask -TaskName $script:TaskName -ErrorAction SilentlyContinue
-  if ($existing -and (Test-EunsungScheduledTaskContract -Task $existing -WrapperPath $WrapperPath -AccountName $AccountName)) {
+  if ($existing -and (Test-EunsungScheduledTaskContract -Task $existing -WrapperPath $WrapperPath -DeploySid $DeploySid)) {
     return $existing
   }
   if ($existing) { Unregister-ScheduledTask -TaskName $script:TaskName -Confirm:$false }
 
   $arguments = "-NoProfile -NonInteractive -ExecutionPolicy Bypass -File `"$WrapperPath`""
-  $taskAction = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument $arguments
+  $powershellPath = [IO.Path]::GetFullPath((Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'))
+  $taskAction = New-ScheduledTaskAction -Execute $powershellPath -Argument $arguments
   $trigger = New-ScheduledTaskTrigger -AtStartup
-  $principal = New-ScheduledTaskPrincipal -UserId ".\$AccountName" -LogonType S4U -RunLevel Limited
+  $principal = New-ScheduledTaskPrincipal -UserId $DeploySid.Value -LogonType S4U -RunLevel Limited
   $settings = New-ScheduledTaskSettingsSet -ExecutionTimeLimit (New-TimeSpan -Minutes 2) -StartWhenAvailable
   return Register-ScheduledTask -TaskName $script:TaskName -Action $taskAction -Trigger $trigger -Principal $principal -Settings $settings -Description 'Restore Eunsung MES PM2 processes at Windows startup.'
 }
 
-function Test-EunsungResurrectTask {
-  param([int]$MaxAttempts = 20, [int]$DelaySeconds = 1)
+function Assert-EunsungPm2ProcessOwnership {
+  param(
+    [Parameter(Mandatory)][object[]]$Processes,
+    [Parameter(Mandatory)][string]$Pm2Home,
+    [Parameter(Mandatory)][string]$Pm2Path,
+    [Parameter(Mandatory)][Security.Principal.SecurityIdentifier]$DeploySid,
+    [scriptblock]$OwnerSidProvider = { param($Process) (Invoke-CimMethod -InputObject $Process -MethodName GetOwnerSid).Sid }
+  )
 
+  $pm2HomePattern = [regex]::Escape(([IO.Path]::GetFullPath($Pm2Home).TrimEnd('\')))
+  $expectedDaemonPath = Join-Path (Split-Path -Parent $Pm2Path) 'node_modules\pm2\lib\Daemon.js'
+  $daemonPattern = [regex]::Escape([IO.Path]::GetFullPath($expectedDaemonPath))
+  $matched = @($Processes | Where-Object {
+    [string]$_.CommandLine -match "(?i)(?:$pm2HomePattern(?:\\|\b)|$daemonPattern(?:\s|`"|'|$))"
+  })
+  if ($matched.Count -ne 1) { throw "Expected exactly one deployment-account PM2 daemon, found $($matched.Count)." }
+  foreach ($process in $matched) {
+    $ownerSid = & $OwnerSidProvider $process
+    if ([string]::IsNullOrWhiteSpace([string]$ownerSid) -or [string]$ownerSid -cne $DeploySid.Value) {
+      throw "PM2 process $($process.ProcessId) is not owned by the deployment account SID."
+    }
+  }
+  return $matched.Count
+}
+
+function Test-EunsungResurrectTask {
+  param(
+    [Parameter(Mandatory)][string]$Pm2Home,
+    [Parameter(Mandatory)][string]$Pm2Path,
+    [Parameter(Mandatory)][Security.Principal.SecurityIdentifier]$DeploySid,
+    [int]$MaxAttempts = 20,
+    [int]$DelaySeconds = 1
+  )
+
+  $previousInfo = Get-ScheduledTaskInfo -TaskName $script:TaskName
+  $previousLastRunTime = [datetime]$previousInfo.LastRunTime
+  $previousLastTaskResult = [int64]$previousInfo.LastTaskResult
   Start-ScheduledTask -TaskName $script:TaskName
   try {
+    $completedInfo = $null
     for ($attempt = 1; $attempt -le $MaxAttempts; $attempt++) {
       $task = Get-ScheduledTask -TaskName $script:TaskName
-      if ([string]$task.State -ne 'Running') { break }
+      $currentInfo = Get-ScheduledTaskInfo -TaskName $script:TaskName
+      $newInvocationObserved = [datetime]$currentInfo.LastRunTime -gt $previousLastRunTime
+      if ($newInvocationObserved -and [string]$task.State -ne 'Running') {
+        $completedInfo = $currentInfo
+        break
+      }
       if ($attempt -lt $MaxAttempts) { Start-Sleep -Seconds $DelaySeconds }
     }
-    $task = Get-ScheduledTask -TaskName $script:TaskName
-    if ([string]$task.State -eq 'Running') { throw 'PM2 resurrect scheduled task did not finish within the bounded verification window.' }
-    $info = Get-ScheduledTaskInfo -TaskName $script:TaskName
-    if ($info.LastTaskResult -ne 0) { throw "PM2 resurrect scheduled task failed with result $($info.LastTaskResult)." }
-    $pm2Processes = @(Get-CimInstance Win32_Process -Filter "Name = 'node.exe'" -ErrorAction SilentlyContinue | Where-Object { $_.CommandLine -match '(?i)\\pm2\\|PM2_HOME' })
-    foreach ($process in $pm2Processes) {
-      $owner = Invoke-CimMethod -InputObject $process -MethodName GetOwner
-      if ($owner.ReturnValue -ne 0 -or $owner.User -ine $script:AccountName) {
-        throw "PM2 process $($process.ProcessId) is not owned by the deployment account."
-      }
+    if ($null -eq $completedInfo) {
+      throw "A new PM2 resurrect task invocation did not complete within the bounded verification window (previous result $previousLastTaskResult at $previousLastRunTime)."
     }
-    if ($pm2Processes.Count -eq 0) { Write-Verbose 'No PM2-managed Node process is expected before the first deployment.' }
+    if ($completedInfo.LastTaskResult -ne 0) { throw "PM2 resurrect scheduled task failed with result $($completedInfo.LastTaskResult)." }
+    $nodeProcesses = @(Get-CimInstance Win32_Process -Filter "Name = 'node.exe'" -ErrorAction SilentlyContinue)
+    [void](Assert-EunsungPm2ProcessOwnership -Processes $nodeProcesses -Pm2Home $Pm2Home -Pm2Path $Pm2Path -DeploySid $DeploySid)
   } finally {
     Stop-ScheduledTask -TaskName $script:TaskName -ErrorAction SilentlyContinue
   }
@@ -327,16 +377,19 @@ function Initialize-EunsungDeployServer {
   Set-EunsungDirectoryAcl -Path $npmPrefix -DeploySid $account.SID
   $pnpmActual = (& $pnpmPath --version).Trim()
   if ($LASTEXITCODE -ne 0 -or $pnpmActual -cne $script:PnpmVersion) { throw "Expected pnpm $($script:PnpmVersion), found '$pnpmActual'." }
-  $pm2Actual = (& $pm2Path --version).Trim()
-  if ($LASTEXITCODE -ne 0 -or $pm2Actual -cne $script:Pm2Version) { throw "Expected PM2 $($script:Pm2Version), found '$pm2Actual'." }
+  $pm2PackagePath = Join-Path $npmPrefix 'node_modules\pm2\package.json'
+  Assert-EunsungOrdinaryPath -Path $pm2PackagePath
+  $pm2Package = Get-Content -Raw -LiteralPath $pm2PackagePath | ConvertFrom-Json
+  $pm2Actual = [string]$pm2Package.version
+  if ($pm2Actual -cne $script:Pm2Version) { throw "Expected PM2 $($script:Pm2Version), found '$pm2Actual'." }
 
   $wrapperPath = Assert-EunsungBootstrapPath -Root $root -Candidate (Join-Path $root 'scripts\Resurrect-EunsungPm2.ps1')
   $wrapperContent = Get-EunsungWrapperContent -ProfilePath $profilePath -Pm2Path $pm2Path
   $existingContent = if (Test-Path -LiteralPath $wrapperPath) { Get-Content -Raw -LiteralPath $wrapperPath } else { $null }
   if ($existingContent -cne $wrapperContent) { [IO.File]::WriteAllText($wrapperPath, $wrapperContent, (New-Object Text.UTF8Encoding($false))) }
   Assert-EunsungOrdinaryPath -Path $wrapperPath
-  Register-EunsungResurrectTask -WrapperPath $wrapperPath -AccountName $script:AccountName | Out-Null
-  Test-EunsungResurrectTask
+  Register-EunsungResurrectTask -WrapperPath $wrapperPath -DeploySid $account.SID | Out-Null
+  Test-EunsungResurrectTask -Pm2Home (Join-Path $profilePath '.pm2') -Pm2Path $pm2Path -DeploySid $account.SID
 
   Write-Host 'Eunsung deployment server bootstrap completed.'
 }

@@ -246,6 +246,8 @@ test('bootstrap is least privilege, idempotent, pinned, and reversible', () => {
   assert.match(bootstrap, /Assert-EunsungReadExecuteAccess[\s\S]{0,500}(?:NodePath|OracleClientLibDir)|(?:NodePath|OracleClientLibDir)[\s\S]{0,500}Assert-EunsungReadExecuteAccess/i, 'Node and Oracle access must be checked for the deployment account');
   assert.match(bootstrap, /pnpm@\$?\(?\$?\w+|pnpm@10\.28\.1/i, 'pnpm must be installed at the pinned version');
   assert.match(bootstrap, /pm2@\$?\(?\$?\w+|pm2@6\.0\.6/i, 'PM2 must be installed at the pinned version');
+  assert.match(bootstrap, /node_modules\\pm2\\package\.json[\s\S]{0,500}\.version/i, 'PM2 version must be read without starting an administrator PM2 daemon');
+  assert.doesNotMatch(bootstrap, /&\s*\$pm2Path\s+--version/i, 'bootstrap must not start PM2 under the administrator profile for version discovery');
   assert.match(bootstrap, /EunsungMES-PM2-Resurrect/g, 'the exact scheduled task name is required');
   assert.match(bootstrap, /New-ScheduledTaskTrigger\s+-AtStartup/i, 'the task must run at startup');
   assert.match(bootstrap, /New-ScheduledTaskPrincipal[\s\S]{0,200}-LogonType\s+S4U[\s\S]{0,100}-RunLevel\s+Limited/i, 'the task principal must be S4U and limited');
@@ -262,5 +264,5 @@ test('bootstrap is least privilege, idempotent, pinned, and reversible', () => {
     { encoding: 'utf8', cwd: repositoryRoot, timeout: 60_000 },
   );
   assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
-  assert.match(result.stdout, /RESULT\s+passed=5\s+failed=0/i, 'all isolated bootstrap contracts must pass');
+  assert.match(result.stdout, /RESULT\s+passed=8\s+failed=0/i, 'all isolated bootstrap contracts must pass');
 });
