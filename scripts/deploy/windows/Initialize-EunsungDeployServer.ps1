@@ -332,8 +332,10 @@ function Assert-EunsungBootstrapExecutableAcl {
 }
 
 function Get-EunsungRegisteredProfilePath {
-  param([Parameter(Mandatory)][Security.Principal.SecurityIdentifier]$DeploySid,[scriptblock]$RegistryProfileProvider={param($Sid)(Get-ItemProperty -LiteralPath "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList\$Sid" -Name ProfileImagePath -ErrorAction Stop).ProfileImagePath})
-  $registered=[IO.Path]::GetFullPath(([Environment]::ExpandEnvironmentVariables([string](& $RegistryProfileProvider $DeploySid.Value)))).TrimEnd('\')
+  param([Parameter(Mandatory)][Security.Principal.SecurityIdentifier]$DeploySid,[switch]$AllowMissing,[scriptblock]$RegistryProfileProvider={param($Sid)$entry=Get-ItemProperty -LiteralPath "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList\$Sid" -Name ProfileImagePath -ErrorAction SilentlyContinue;if($entry){$entry.ProfileImagePath}})
+  $raw=[string](& $RegistryProfileProvider $DeploySid.Value)
+  if([string]::IsNullOrWhiteSpace($raw)){if($AllowMissing){return $null};throw 'Windows deployment profile is not registered.'}
+  $registered=[IO.Path]::GetFullPath(([Environment]::ExpandEnvironmentVariables($raw))).TrimEnd('\')
   if(-not (Test-Path -LiteralPath $registered -PathType Container)){throw 'Registered Windows deployment profile does not exist.'}
   Assert-EunsungOrdinaryPath -Path $registered
   return $registered
@@ -342,11 +344,18 @@ function Get-EunsungRegisteredProfilePath {
 function Initialize-EunsungRegisteredProfile {
   param([Parameter(Mandatory)][string]$DeployRoot,[Parameter(Mandatory)][string]$PowerShellPath,[Parameter(Mandatory)][Management.Automation.PSCredential]$Credential,[Parameter(Mandatory)][Security.Principal.SecurityIdentifier]$DeploySid,[scriptblock]$ProcessStarter={param($StartInfo)Start-Process @StartInfo},[scriptblock]$RegistryProfileProvider={param($Sid)(Get-ItemProperty -LiteralPath "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList\$Sid" -Name ProfileImagePath -ErrorAction Stop).ProfileImagePath})
   $outputPath=Assert-EunsungBootstrapPath -Root $DeployRoot -Candidate (Join-Path $DeployRoot ("state\profile-"+[guid]::NewGuid().ToString('N')+'.txt'))
+  $preexisting=Get-EunsungRegisteredProfilePath -DeploySid $DeploySid -AllowMissing -RegistryProfileProvider $RegistryProfileProvider
+  if($preexisting){return $preexisting}
   $escaped=$outputPath.Replace("'","''")
   $command="[IO.File]::WriteAllText('$escaped',[Environment]::GetFolderPath([Environment+SpecialFolder]::UserProfile),(New-Object Text.UTF8Encoding(`$false)))"
   try{
     $process=& $ProcessStarter @{FilePath=$PowerShellPath;ArgumentList="-NoProfile -NonInteractive -ExecutionPolicy Bypass -Command `"$command`"";Credential=$Credential;LoadUserProfile=$true;Wait=$true;PassThru=$true;WindowStyle='Hidden'}
-    if($null -eq $process -or [int]$process.ExitCode -ne 0){throw "Credentialed profile initialization failed with exit code $([int]$process.ExitCode)."}
+    if($null -eq $process){throw 'Credentialed profile initialization did not return a process result.'}
+    if([int]$process.ExitCode -ne 0){
+      $registeredAfterFailure=Get-EunsungRegisteredProfilePath -DeploySid $DeploySid -AllowMissing -RegistryProfileProvider $RegistryProfileProvider
+      if($registeredAfterFailure){return $registeredAfterFailure}
+      throw "Credentialed profile initialization failed with exit code $([int]$process.ExitCode)."
+    }
     Assert-EunsungOrdinaryPath -Path $outputPath
     $reported=[IO.Path]::GetFullPath((Get-Content -Raw -LiteralPath $outputPath).Trim()).TrimEnd('\')
     $registered=Get-EunsungRegisteredProfilePath -DeploySid $DeploySid -RegistryProfileProvider $RegistryProfileProvider
@@ -613,7 +622,8 @@ function Initialize-EunsungDeployServer {
   if($registrationRequired){
     if(-not $password){$password=New-EunsungRandomPassword;Set-LocalUser -Name $script:AccountName -Password $password}
     $credential=New-Object Management.Automation.PSCredential(".\$($script:AccountName)",$password)
-    $profilePath=Initialize-EunsungRegisteredProfile -DeployRoot $root -PowerShellPath $powershellPath -Credential $credential -DeploySid $account.SID
+    $profilePath=Get-EunsungRegisteredProfilePath -DeploySid $account.SID -AllowMissing
+    if(-not $profilePath){$profilePath=Initialize-EunsungRegisteredProfile -DeployRoot $root -PowerShellPath $powershellPath -Credential $credential -DeploySid $account.SID}
   }else{$profilePath=Get-EunsungRegisteredProfilePath -DeploySid $account.SID}
   $sshPath = Join-Path $profilePath '.ssh'
   $authorizedKeysPath = Join-Path $sshPath 'authorized_keys'

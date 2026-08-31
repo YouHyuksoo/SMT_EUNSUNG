@@ -229,7 +229,7 @@ Test-Case 'bootstrap path validation rejects hard-linked executable files' {
   }finally{Remove-Item -LiteralPath $testDir -Recurse -Force}
 }
 
-Test-Case 'registered profile is discovered by credentialed launch and checked against ProfileList' {
+Test-Case 'preexisting valid ProfileList path skips credentialed child launch' {
   $deploySid=New-Object Security.Principal.SecurityIdentifier('S-1-5-21-1-2-3-1008')
   $testDir=Join-Path ([IO.Path]::GetTempPath()) ("eunsung-bootstrap-"+[guid]::NewGuid().ToString('N'))
   $profileDir=Join-Path $testDir 'actual-profile'
@@ -237,8 +237,27 @@ Test-Case 'registered profile is discovered by credentialed launch and checked a
   try{
     $secure=New-Object Security.SecureString;foreach($c in 'Temp!938475abc'.ToCharArray()){$secure.AppendChar($c)}
     $credential=New-Object Management.Automation.PSCredential('.\eunsung-deploy',$secure)
-    $starter={param($StartInfo)if($StartInfo.ArgumentList -match "WriteAllText\('([^']+)'") {[IO.File]::WriteAllText($matches[1],$profileDir)}else{throw 'missing output'};[pscustomobject]@{ExitCode=0}}
+    $script:startCalls=0
+    $starter={param($StartInfo)$script:startCalls++;throw 'credentialed child must be skipped'}
     $resolved=Initialize-EunsungRegisteredProfile -DeployRoot $testDir -PowerShellPath 'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe' -Credential $credential -DeploySid $deploySid -ProcessStarter $starter -RegistryProfileProvider {param($Sid)$profileDir}
+    Assert-Equal ([IO.Path]::GetFullPath($profileDir)) $resolved
+    Assert-Equal 0 $script:startCalls
+    Assert-Equal 0 @((Get-ChildItem -LiteralPath (Join-Path $testDir 'state') -Filter 'profile-*.txt')).Count
+  }finally{Remove-Item -LiteralPath $testDir -Recurse -Force}
+}
+
+Test-Case 'nonzero credentialed child accepts newly registered valid ProfileList path' {
+  $deploySid=New-Object Security.Principal.SecurityIdentifier('S-1-5-21-1-2-3-1013')
+  $testDir=Join-Path ([IO.Path]::GetTempPath()) ("eunsung-bootstrap-"+[guid]::NewGuid().ToString('N'))
+  $profileDir=Join-Path $testDir 'eunsung-deploy.SERVER'
+  New-Item -ItemType Directory -Path (Join-Path $testDir 'state'),$profileDir -Force|Out-Null
+  try{
+    $secure=New-Object Security.SecureString;foreach($c in 'Temp!938475xyz'.ToCharArray()){$secure.AppendChar($c)}
+    $credential=New-Object Management.Automation.PSCredential('.\eunsung-deploy',$secure)
+    $script:profileRegistered=$false
+    $starter={param($StartInfo)$script:profileRegistered=$true;[pscustomobject]@{ExitCode=-1073741502}}
+    $provider={param($Sid)if($script:profileRegistered){$profileDir}else{$null}}
+    $resolved=Initialize-EunsungRegisteredProfile -DeployRoot $testDir -PowerShellPath 'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe' -Credential $credential -DeploySid $deploySid -ProcessStarter $starter -RegistryProfileProvider $provider
     Assert-Equal ([IO.Path]::GetFullPath($profileDir)) $resolved
     Assert-Equal 0 @((Get-ChildItem -LiteralPath (Join-Path $testDir 'state') -Filter 'profile-*.txt')).Count
   }finally{Remove-Item -LiteralPath $testDir -Recurse -Force}
