@@ -42,8 +42,6 @@ jobs:
       DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
       DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
       DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
-      DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
-      DEPLOY_SSH_HOST_KEY: ${{ secrets.DEPLOY_SSH_HOST_KEY }}
       REMOTE_DEPLOY_ROOT_WIN: 'D:\Project\SMT_EUNSUNG\.deploy'
       REMOTE_INCOMING_ROOT_SCP: '/D:/Project/SMT_EUNSUNG/.deploy/incoming'
 
@@ -61,6 +59,7 @@ jobs:
           set -euo pipefail
           readonly full_sha_pattern='^[0-9a-f]{40}$'
           [[ "$GITHUB_SHA" =~ $full_sha_pattern ]] || { echo 'The triggering commit is not a lowercase full SHA.' >&2; exit 1; }
+          [[ "$GITHUB_RUN_ID" =~ ^[1-9][0-9]*$ && "$GITHUB_RUN_ATTEMPT" =~ ^[1-9][0-9]*$ ]] || { echo 'Invalid GitHub run identity.' >&2; exit 1; }
           git merge-base --is-ancestor "$GITHUB_SHA" refs/remotes/origin/main || { echo 'The triggering commit is not on origin/main.' >&2; exit 1; }
           [[ "$DEPLOY_PORT" =~ ^[0-9]{1,5}$ ]] && (( DEPLOY_PORT >= 1 && DEPLOY_PORT <= 65535 )) || { echo 'DEPLOY_PORT must be a valid TCP port.' >&2; exit 1; }
           [[ -n "$DEPLOY_HOST" && -n "$DEPLOY_USER" && "$DEPLOY_HOST" != -* && "$DEPLOY_USER" != -* ]] || { echo 'Invalid SSH host or user.' >&2; exit 1; }
@@ -77,7 +76,9 @@ jobs:
           esac
           [[ "$DEPLOY_MODE" == rollback_test || -z "$TARGET_RELEASE_SHA" ]] || { echo 'target_release_sha is accepted only for rollback_test.' >&2; exit 1; }
           echo "deploy_sha=$deploy_sha" >> "$GITHUB_OUTPUT"
-          echo "incoming_win=${REMOTE_DEPLOY_ROOT_WIN}\\incoming\\${deploy_sha}" >> "$GITHUB_OUTPUT"
+          incoming_id="${GITHUB_SHA}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          echo "incoming_id=$incoming_id" >> "$GITHUB_OUTPUT"
+          echo "incoming_win=${REMOTE_DEPLOY_ROOT_WIN}\\incoming\\${incoming_id}" >> "$GITHUB_OUTPUT"
 
       - name: Create exact-SHA release archive
         if: ${{ env.DEPLOY_MODE == 'deploy' || env.DEPLOY_MODE == 'build_only' }}
@@ -90,6 +91,9 @@ jobs:
           test -s "eunsung-${DEPLOY_SHA}.zip"
 
       - name: Configure key-only SSH
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_SSH_HOST_KEY: ${{ secrets.DEPLOY_SSH_HOST_KEY }}
         run: |
           set -euo pipefail
           install -d -m 700 "$RUNNER_TEMP/eunsung-ssh"
@@ -102,9 +106,10 @@ jobs:
       - name: Stage reviewed deployment payload
         env:
           DEPLOY_SHA: ${{ steps.deployment.outputs.deploy_sha }}
+          INCOMING_ID: ${{ steps.deployment.outputs.incoming_id }}
         run: |
           set -euo pipefail
-          readonly bundle="$RUNNER_TEMP/eunsung-incoming/$DEPLOY_SHA"
+          readonly bundle="$RUNNER_TEMP/eunsung-incoming/$INCOMING_ID"
           install -d -m 700 "$bundle"
           install -m 600 scripts/deploy/windows/Deploy-EunsungRelease.ps1 "$bundle/Deploy-EunsungRelease.ps1"
           install -m 600 scripts/deploy/windows/EunsungDeployment.psm1 "$bundle/EunsungDeployment.psm1"
@@ -116,19 +121,24 @@ jobs:
       - name: Upload to the SHA-specific incoming directory
         env:
           DEPLOY_SHA: ${{ steps.deployment.outputs.deploy_sha }}
+          INCOMING_ID: ${{ steps.deployment.outputs.incoming_id }}
         run: |
           set -euo pipefail
           scp_options=(-i "$RUNNER_TEMP/eunsung-ssh/id_ed25519" -P "$DEPLOY_PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$RUNNER_TEMP/eunsung-ssh/known_hosts" -o ConnectTimeout=15 -o ServerAliveInterval=15 -o ServerAliveCountMax=2)
-          scp "${scp_options[@]}" -r -- "$RUNNER_TEMP/eunsung-incoming/$DEPLOY_SHA" "$DEPLOY_USER@$DEPLOY_HOST:${REMOTE_INCOMING_ROOT_SCP}/"
+          ssh_options=(-i "$RUNNER_TEMP/eunsung-ssh/id_ed25519" -p "$DEPLOY_PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$RUNNER_TEMP/eunsung-ssh/known_hosts" -o ConnectTimeout=15 -o ServerAliveInterval=15 -o ServerAliveCountMax=2)
+          scp "${scp_options[@]}" -- scripts/deploy/windows/Prepare-EunsungIncoming.ps1 "$DEPLOY_USER@$DEPLOY_HOST:${REMOTE_INCOMING_ROOT_SCP}/prepare-${INCOMING_ID}.ps1"
+          ssh "${ssh_options[@]}" -- "$DEPLOY_USER@$DEPLOY_HOST" "powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File ${REMOTE_DEPLOY_ROOT_WIN}\\incoming\\prepare-${INCOMING_ID}.ps1 -DeployRoot ${REMOTE_DEPLOY_ROOT_WIN} -IncomingId ${INCOMING_ID}"
+          scp "${scp_options[@]}" -r -- "$RUNNER_TEMP/eunsung-incoming/$INCOMING_ID/." "$DEPLOY_USER@$DEPLOY_HOST:${REMOTE_INCOMING_ROOT_SCP}/${INCOMING_ID}/"
 
       - name: Run transactional deployment
         env:
           DEPLOY_SHA: ${{ steps.deployment.outputs.deploy_sha }}
+          INCOMING_ID: ${{ steps.deployment.outputs.incoming_id }}
           INCOMING_WIN: ${{ steps.deployment.outputs.incoming_win }}
         run: |
           set -euo pipefail
           ssh_options=(-i "$RUNNER_TEMP/eunsung-ssh/id_ed25519" -p "$DEPLOY_PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$RUNNER_TEMP/eunsung-ssh/known_hosts" -o ConnectTimeout=15 -o ServerAliveInterval=15 -o ServerAliveCountMax=2)
-          remote_args="-CommitSha $DEPLOY_SHA -CleanupIncoming"
+          remote_args="-CommitSha $DEPLOY_SHA -CleanupIncoming -IncomingId $INCOMING_ID"
           case "$DEPLOY_MODE" in
             deploy) remote_args="$remote_args -ArchivePath ${INCOMING_WIN}\\eunsung-${GITHUB_SHA}.zip" ;;
             build_only) remote_args="$remote_args -ArchivePath ${INCOMING_WIN}\\eunsung-${GITHUB_SHA}.zip -BuildOnly" ;;

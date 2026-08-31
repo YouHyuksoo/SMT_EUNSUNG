@@ -15,6 +15,8 @@ param(
 
   [switch]$CleanupIncoming,
 
+  [string]$IncomingId,
+
   # Non-default values are accepted only together with injected TestMode adapters.
   [string]$DeployRoot = 'D:\Project\SMT_EUNSUNG\.deploy',
 
@@ -35,7 +37,10 @@ if ($CleanupIncoming) {
   if (-not $isProductionRoot -and -not $isIsolatedTestMode) {
     throw 'Incoming cleanup is permitted only under the production deployment root'
   }
-  $expectedIncoming = [IO.Path]::GetFullPath((Join-Path (Join-Path $DeployRoot 'incoming') $CommitSha))
+  if ($IncomingId -cnotmatch '^[0-9a-f]{40}-[1-9][0-9]*-[1-9][0-9]*$') {
+    throw 'CleanupIncoming requires a validated unique incoming identifier'
+  }
+  $expectedIncoming = [IO.Path]::GetFullPath((Join-Path (Join-Path $DeployRoot 'incoming') $IncomingId))
   $scriptDirectory = [IO.Path]::GetFullPath($PSScriptRoot)
   if ($scriptDirectory -cne $expectedIncoming) {
     throw 'Deployment script is not running from its exact SHA-specific incoming directory'

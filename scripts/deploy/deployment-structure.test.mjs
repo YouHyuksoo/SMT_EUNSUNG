@@ -12,6 +12,7 @@ const expectedFiles = {
   module: 'scripts/deploy/windows/EunsungDeployment.psm1',
   testRunner: 'scripts/deploy/windows/Test-EunsungDeployment.ps1',
   deployRelease: 'scripts/deploy/windows/Deploy-EunsungRelease.ps1',
+  prepareIncoming: 'scripts/deploy/windows/Prepare-EunsungIncoming.ps1',
   initializeServer: 'scripts/deploy/windows/Initialize-EunsungDeployServer.ps1',
   pesterTests: 'scripts/deploy/windows/tests/Deployment.Tests.ps1',
   bootstrapTests: 'scripts/deploy/windows/tests/Bootstrap.Tests.ps1',
@@ -51,7 +52,7 @@ function portablePath(value) {
 const sources = Object.fromEntries(
   Object.entries(expectedFiles).map(([name, relativePath]) => [name, readRepositoryFile(relativePath)]),
 );
-const runtime = [sources.module, sources.testRunner, sources.deployRelease, sources.initializeServer].join('\n');
+const runtime = [sources.module, sources.testRunner, sources.deployRelease, sources.prepareIncoming, sources.initializeServer].join('\n');
 
 function topLevelSection(yaml, key) {
   const lines = yaml.split('\n');
@@ -205,6 +206,8 @@ test('workflow uses a fixed GitHub runner, pinned actions, and only environment-
   assert.deepEqual([...new Set(secretNames)].sort(), [
     'DEPLOY_HOST', 'DEPLOY_PORT', 'DEPLOY_SSH_HOST_KEY', 'DEPLOY_SSH_KEY', 'DEPLOY_USER',
   ], 'workflow must reference only the approved environment secrets');
+  const jobEnvironment = indentedSection(workflow, 'env', 4);
+  assert.doesNotMatch(jobEnvironment, /DEPLOY_SSH_(?:KEY|HOST_KEY)/, 'private key and host key must not be job-wide environment variables');
   assert.doesNotMatch(workflow, /actions\/upload-artifact|artifact\s+upload/i, 'deployment diagnostics must not upload artifacts');
 });
 
@@ -225,12 +228,15 @@ test('every remote call uses strict native SSH and a reviewed PowerShell file', 
     assert.match(workflow, new RegExp(required.replace('=', '\\s*=\\s*'), 'i'), `missing SSH hardening option: ${required}`);
   }
   assert.match(workflow, /REMOTE_INCOMING_ROOT_SCP[^\n]*\.deploy\/incoming/i, 'upload root must be the protected incoming directory');
-  assert.match(workflow, /scp[^\n]*eunsung-incoming\/\$DEPLOY_SHA[^\n]*REMOTE_INCOMING_ROOT_SCP/i, 'upload must use the validated SHA as its directory name');
+  assert.match(workflow, /incoming_id="\$\{GITHUB_SHA\}-\$\{GITHUB_RUN_ID\}-\$\{GITHUB_RUN_ATTEMPT\}"/i, 'incoming directory must be unique to workflow source SHA and run identity');
+  assert.match(workflow, /Prepare-EunsungIncoming\.ps1[^\n]*prepare-\$\{INCOMING_ID\}\.ps1[\s\S]{0,700}-IncomingId\s+\$\{INCOMING_ID\}/i, 'a reviewed preparation script must fail closed before payload upload');
+  assert.match(workflow, /scp[^\n]*eunsung-incoming\/\$INCOMING_ID\/\.[^\n]*REMOTE_INCOMING_ROOT_SCP[^\n]*INCOMING_ID/i, 'payload upload must target only the newly prepared unique directory');
   assert.match(workflow, /powershell\.exe\s+-NoProfile\s+-NonInteractive\s+-ExecutionPolicy\s+Bypass\s+-File\s+[^\n]*Deploy-EunsungRelease\.ps1/i, 'remote deployment must invoke the reviewed script with -File');
   assert.doesNotMatch(workflow, /powershell(?:\.exe)?[^\n]*(?:-Command|-EncodedCommand)\b/i, 'remote inline PowerShell is forbidden');
   assert.match(workflow, /-CleanupIncoming/i, 'remote script must clean only its validated incoming directory in finally');
   assert.match(sources.deployRelease, /GetOwner\(\[Security\.Principal\.SecurityIdentifier\]\)[\s\S]{0,1800}GetAccessRules/i, 'incoming execution must validate owner and write ACLs before importing deployment code');
   assert.match(sources.deployRelease, /finally\s*\{[\s\S]{0,900}Remove-Item\s+-LiteralPath\s+\$cleanupPath/i, 'incoming cleanup must be literal-path and finally-guarded');
+  assert.match(sources.prepareIncoming, /Test-Path\s+-LiteralPath\s+\$target[\s\S]{0,120}already exists[\s\S]{0,180}New-Item[^\n]*\$target/i, 'stale incoming targets must fail before directory creation or upload');
 });
 
 test('Windows deployment validates immutable release inputs and never deploys a tracked worktree', () => {
@@ -272,7 +278,7 @@ test('dependency-free PowerShell contract tests cover and execute deployment saf
     { encoding: 'utf8', cwd: repositoryRoot, timeout: 60_000 },
   );
   assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
-  assert.match(result.stdout, /RESULT\s+passed=37\s+failed=0/i, 'all isolated deployment contracts must pass');
+  assert.match(result.stdout, /RESULT\s+passed=38\s+failed=0/i, 'all isolated deployment contracts must pass');
 });
 
 test('bootstrap is least privilege, idempotent, pinned, and reversible', () => {

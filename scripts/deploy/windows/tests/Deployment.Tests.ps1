@@ -95,11 +95,29 @@ $tempRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("eunsung-deploy-tests-"
 New-Item -ItemType Directory -Path $tempRoot | Out-Null
 
 try {
+  Test-Case 'incoming preparation rejects stale unique target without changing its files' {
+    $root = Join-Path $tempRoot 'prepare-stale'
+    $incomingRoot = Join-Path $root 'incoming'
+    $incomingId = "$shaA-456-2"
+    $target = Join-Path $incomingRoot $incomingId
+    New-Item -ItemType Directory -Force -Path $target | Out-Null
+    $sentinel = Join-Path $target 'stale-runner.ps1'
+    Set-Content -LiteralPath $sentinel -Value 'must remain unchanged' -Encoding UTF8
+    $prepareSource = Join-Path (Split-Path -Parent $PSScriptRoot) 'Prepare-EunsungIncoming.ps1'
+    $prepareCopy = Join-Path $incomingRoot "prepare-$incomingId.ps1"
+    Copy-Item -LiteralPath $prepareSource -Destination $prepareCopy
+    Assert-Throws { & $prepareCopy -DeployRoot $root -IncomingId $incomingId -TestMode } 'already exists'
+    Assert-Equal 'must remain unchanged' (Get-Content -Raw -LiteralPath $sentinel).Trim()
+    Assert-True (-not (Test-Path -LiteralPath $prepareCopy)) 'one-shot preparation script must clean itself'
+  }
+
   Test-Case 'runner import failure cleans exact incoming directory and preserves sibling' {
     $root = Join-Path $tempRoot 'runner-import-failure'
     $incomingRoot = Join-Path $root 'incoming'
-    $incoming = Join-Path $incomingRoot $shaA
-    $sibling = Join-Path $incomingRoot $shaB
+    $incomingId = "$shaA-123-1"
+    $siblingId = "$shaA-123-2"
+    $incoming = Join-Path $incomingRoot $incomingId
+    $sibling = Join-Path $incomingRoot $siblingId
     New-Item -ItemType Directory -Force -Path $incoming, $sibling | Out-Null
     Set-Content -LiteralPath (Join-Path $sibling 'sentinel.txt') -Value 'keep' -Encoding UTF8
     $runnerSource = Join-Path (Split-Path -Parent $PSScriptRoot) 'Deploy-EunsungRelease.ps1'
@@ -108,15 +126,15 @@ try {
 
     $launcher = Join-Path $root 'invoke-runner.ps1'
     @'
-param([string]$Target, [string]$Root, [string]$Sha)
+param([string]$Target, [string]$Root, [string]$Sha, [string]$IncomingId)
 $adapters = @{ TestMode = $true }
-& $Target -CommitSha $Sha -CleanupIncoming -DeployRoot $Root -Adapters $adapters
+& $Target -CommitSha $Sha -CleanupIncoming -IncomingId $IncomingId -DeployRoot $Root -Adapters $adapters
 exit $LASTEXITCODE
 '@ | Set-Content -LiteralPath $launcher -Encoding UTF8
     $priorErrorPreference = $ErrorActionPreference
     try {
       $ErrorActionPreference = 'Continue'
-      $output = & powershell.exe -NoProfile -NonInteractive -File $launcher -Target $runnerCopy -Root $root -Sha $shaA 2>&1
+      $output = & powershell.exe -NoProfile -NonInteractive -File $launcher -Target $runnerCopy -Root $root -Sha $shaA -IncomingId $incomingId 2>&1
       $status = $LASTEXITCODE
     } finally {
       $ErrorActionPreference = $priorErrorPreference
