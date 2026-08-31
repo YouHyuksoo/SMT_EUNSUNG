@@ -281,9 +281,10 @@ try {
     New-Item -ItemType Directory -Force -Path $releases | Out-Null
     $names = @(1..5 | ForEach-Object { '{0:x40}' -f $_ })
     $names | ForEach-Object {
-      $path = Join-Path $releases $_
+      $name = $_
+      $path = Join-Path $releases $name
       New-Item -ItemType Directory -Path $path | Out-Null
-      Set-Content -LiteralPath (Join-Path $path 'deployment.success.json') -Value '{}' -Encoding UTF8
+      Set-Content -LiteralPath (Join-Path $path 'deployment.success.json') -Value ('{"commitSha":"' + $name + '"}') -Encoding UTF8
       (Get-Item -LiteralPath $path).LastWriteTimeUtc = [datetime]::UtcNow.AddMinutes(-[int]::Parse($_, [Globalization.NumberStyles]::HexNumber))
     }
     $invalid = Join-Path $releases 'failed'
@@ -304,7 +305,7 @@ try {
     foreach ($name in $names) {
       $path = Join-Path $releases $name
       New-Item -ItemType Directory -Path $path | Out-Null
-      Set-Content -LiteralPath (Join-Path $path 'deployment.success.json') -Value '{}' -Encoding UTF8
+      Set-Content -LiteralPath (Join-Path $path 'deployment.success.json') -Value ('{"commitSha":"' + $name + '"}') -Encoding UTF8
       (Get-Item -LiteralPath $path).LastWriteTimeUtc = [datetime]::UtcNow.AddMinutes(-[int]::Parse($name, [Globalization.NumberStyles]::HexNumber))
     }
     $blocked = Join-Path $releases $names[4]

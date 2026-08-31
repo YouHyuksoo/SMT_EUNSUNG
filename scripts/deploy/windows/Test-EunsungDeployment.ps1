@@ -56,6 +56,7 @@ try {
     $result = Test-EunsungReleaseHealth `
       -ExpectedSha $CommitSha `
       -ReleaseMarkerSha $releaseMarkerSha `
+      -ExpectedReleaseDir $ReleaseDir `
       -Pm2ListProvider $pm2Provider `
       -FrontendUrl $FrontendUrl `
       -BackendUrl $BackendUrl `

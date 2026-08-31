@@ -473,17 +473,27 @@ function Remove-EunsungOldSuccessfulReleases {
   if (-not (Test-Path -LiteralPath $ReleaseRoot)) { return }
   $releaseRootFull = (Resolve-Path -LiteralPath $ReleaseRoot).ProviderPath
   $currentFull = Resolve-EunsungContainedPath -Root $releaseRootFull -Candidate $CurrentRelease
-  $prior = @(Get-ChildItem -LiteralPath $releaseRootFull -Directory | Where-Object {
-    if (-not (Test-EunsungCommitSha $_.Name) -or $_.FullName -eq $currentFull) { return $false }
+  $prior = New-Object System.Collections.Generic.List[object]
+  foreach ($release in @(Get-ChildItem -LiteralPath $releaseRootFull -Directory)) {
+    if (-not (Test-EunsungCommitSha $release.Name) -or $release.FullName -eq $currentFull) { continue }
     try {
-      Assert-EunsungNoReparseAncestry -Root $releaseRootFull -Target $_.FullName -AttributeProvider $AttributeProvider
-      Assert-EunsungOrdinaryFile -Path (Join-Path $_.FullName 'deployment.success.json') -AttributeProvider $AttributeProvider
-      return $true
-    } catch { return $false }
-  } | Sort-Object LastWriteTimeUtc -Descending)
+      Assert-EunsungNoReparseAncestry -Root $releaseRootFull -Target $release.FullName -AttributeProvider $AttributeProvider
+      $markerPath = Join-Path $release.FullName 'deployment.success.json'
+      Assert-EunsungOrdinaryFile -Path $markerPath -AttributeProvider $AttributeProvider
+      $marker = Get-Content -Raw -LiteralPath $markerPath | ConvertFrom-Json
+      if ([string]$marker.commitSha -cne $release.Name) { continue }
+      $releaseDirProperty = $marker.PSObject.Properties['releaseDir']
+      if ($null -ne $releaseDirProperty -and -not [string]::IsNullOrWhiteSpace([string]$releaseDirProperty.Value) -and (Resolve-EunsungContainedPath -Root $releaseRootFull -Candidate ([string]$releaseDirProperty.Value)) -cne $release.FullName) { continue }
+      [void]$prior.Add($release)
+    } catch { continue }
+  }
+  $prior = @($prior | Sort-Object LastWriteTimeUtc -Descending)
   @($prior | Select-Object -Skip $PriorSuccessesToKeep) | ForEach-Object {
     Assert-EunsungNoReparseAncestry -Root $releaseRootFull -Target $_.FullName -AttributeProvider $AttributeProvider
-    Assert-EunsungOrdinaryFile -Path (Join-Path $_.FullName 'deployment.success.json') -AttributeProvider $AttributeProvider
+    $markerPath = Join-Path $_.FullName 'deployment.success.json'
+    Assert-EunsungOrdinaryFile -Path $markerPath -AttributeProvider $AttributeProvider
+    $marker = Get-Content -Raw -LiteralPath $markerPath | ConvertFrom-Json
+    if ([string]$marker.commitSha -cne $_.Name) { throw 'Successful release marker changed before retention' }
     Remove-Item -LiteralPath $_.FullName -Recurse -Force
   }
 }
@@ -636,6 +646,15 @@ function Assert-EunsungRollbackSnapshot {
   Assert-EunsungBuiltRelease -DeployRoot $DeployRoot -ReleaseDir $priorRelease -CommitSha $priorSha -AccessValidator $AccessValidator
   $captured = @($SwitchState.Apps)
   Assert-EunsungPm2DefinitionFidelity -CapturedApps $captured -RestoredApps $captured
+  $priorFull = (Resolve-Path -LiteralPath $priorRelease).ProviderPath.TrimEnd([IO.Path]::DirectorySeparatorChar, [IO.Path]::AltDirectorySeparatorChar)
+  foreach ($app in $captured) {
+    $name = [string]$app.name
+    $appSubdir = if ($name -ceq 'eunsung-frontend') { 'apps/frontend' } else { 'apps/backend' }
+    $expectedCwd = Join-Path $priorFull $appSubdir
+    $actualCwd = [IO.Path]::GetFullPath([string]$app.pm2_env.pm_cwd).TrimEnd([IO.Path]::DirectorySeparatorChar, [IO.Path]::AltDirectorySeparatorChar)
+    $actualExec = [IO.Path]::GetFullPath([string]$app.pm2_env.pm_exec_path)
+    if ($actualCwd -cne $expectedCwd -or -not $actualExec.StartsWith($expectedCwd + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) { throw "Captured prior PM2 path does not match prior release: $name" }
+  }
   $dumpBackup = [string]$SwitchState.DumpBackup
   if ([string]::IsNullOrWhiteSpace($dumpBackup)) { throw 'Prior PM2 dump backup is unavailable' }
   Assert-EunsungOrdinaryFile -Path $dumpBackup
@@ -698,6 +717,7 @@ function Invoke-EunsungActivation {
   $portOwnerProvider = Get-EunsungAdapter -Adapters $Adapters -Name 'PortOwnerProvider' -Default $null
   $httpInvoker = Get-EunsungAdapter -Adapters $Adapters -Name 'HttpInvoker' -Default $null
   $sleepAdapter = Get-EunsungAdapter -Adapters $Adapters -Name 'SleepAdapter' -Default $null
+  $accessValidator = Get-EunsungAdapter -Adapters $Adapters -Name 'AccessValidator' -Default $null
   $capture = Get-EunsungAdapter -Adapters $Adapters -Name 'CaptureSwitchState' -Default { param($Root) Get-EunsungSwitchState -DeployRoot $Root -NativeInvoker $native }
   $switch = Get-EunsungAdapter -Adapters $Adapters -Name 'SwitchApps' -Default { param($Release, $Root) Start-EunsungApps -ReleaseDir $Release -DeployRoot $Root -NativeInvoker $native }
   $stopNew = Get-EunsungAdapter -Adapters $Adapters -Name 'StopNewApps' -Default { Stop-EunsungNewApps -NativeInvoker $native }
@@ -715,7 +735,7 @@ function Invoke-EunsungActivation {
     Test-EunsungReleaseHealth -ExpectedSha ([string]$State.CurrentMarker.commitSha) -ReleaseMarkerSha $markerSha -ExpectedReleaseDir ([string]$State.CurrentMarker.releaseDir) -Pm2ListProvider $pm2ListProvider -PortOwnerProvider $portOwnerProvider -HttpInvoker $httpInvoker -SleepAdapter $sleepAdapter
   }
   $retention = Get-EunsungAdapter -Adapters $Adapters -Name 'Retention' -Default { param($Root, $Current) Remove-EunsungOldSuccessfulReleases -ReleaseRoot $Root -CurrentRelease $Current -PriorSuccessesToKeep 2 }
-  $preflight = Get-EunsungAdapter -Adapters $Adapters -Name 'PreflightSnapshot' -Default { param($State) Assert-EunsungRollbackSnapshot -DeployRoot $DeployRoot -SwitchState $State -AccessValidator $null }
+  $preflight = Get-EunsungAdapter -Adapters $Adapters -Name 'PreflightSnapshot' -Default { param($State) Assert-EunsungRollbackSnapshot -DeployRoot $DeployRoot -SwitchState $State -AccessValidator $accessValidator }
 
   $switchState = & $capture $DeployRoot
   & $preflight $switchState
