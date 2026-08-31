@@ -446,6 +446,24 @@ function Assert-OrdinaryPm2LogFile {
   param([string]`$Path)
   if (Test-Path -LiteralPath `$Path) { `$item=Get-Item -LiteralPath `$Path -Force; if (`$item.PSIsContainer -or (`$item.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0 -or (`$item.PSObject.Properties.Name -contains 'LinkType' -and [string]`$item.LinkType -eq 'HardLink')) { throw 'PM2 bootstrap log must be an ordinary file.' } }
 }
+function Invoke-QuietPm2Native {
+  param([ValidateSet('ping','resurrect')][string]`$Pm2Operation)
+  `$savedErrorActionPreference = `$ErrorActionPreference
+  `$nativeInvocationSucceeded = `$false
+  `$capturedExit = `$null
+  try {
+    `$ErrorActionPreference = 'Continue'
+    `$global:LASTEXITCODE = `$null
+    & '$escapedPm2' `$Pm2Operation 1>`$null 2>`$null
+    `$nativeInvocationSucceeded = `$?
+    `$capturedExit = `$global:LASTEXITCODE
+  } finally {
+    `$ErrorActionPreference = `$savedErrorActionPreference
+  }
+  if (-not `$nativeInvocationSucceeded -and `$null -eq `$capturedExit) { throw 'PM2 executable invocation failed.' }
+  if (`$null -eq `$capturedExit) { throw 'PM2 executable did not return an exit code.' }
+  return [int]`$capturedExit
+}
 function Write-SafePm2BootstrapLog {
   param([ValidateSet('ok','error')][string]`$Status, [ValidateSet('None','UnsafePath','NativeExit','Unexpected')][string]`$ErrorClass)
   Assert-OrdinaryPm2LogFile -Path `$logPath
@@ -478,13 +496,11 @@ if (Test-Path -LiteralPath `$dumpPath) {
   if (`$dump.PSIsContainer -or (`$dump.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0 -or (`$dump.PSObject.Properties.Name -contains 'LinkType' -and [string]`$dump.LinkType -eq 'HardLink')) { throw 'PM2 dump must be an ordinary file.' }
   `$operation = 'resurrect'
   `$stage = 'invoke'
-  & '$escapedPm2' resurrect 2>&1 | Out-Null
-  `$nativeExit = `$LASTEXITCODE
+  `$nativeExit = Invoke-QuietPm2Native -Pm2Operation resurrect
 } else {
   `$operation = 'ping'
   `$stage = 'invoke'
-  & '$escapedPm2' ping 2>&1 | Out-Null
-  `$nativeExit = `$LASTEXITCODE
+  `$nativeExit = Invoke-QuietPm2Native -Pm2Operation ping
 }
 if (`$nativeExit -ne 0) { throw "PM2 `$operation failed with exit code `$nativeExit" }
 `$stage='complete'; Write-SafePm2BootstrapLog -Status 'ok' -ErrorClass 'None'

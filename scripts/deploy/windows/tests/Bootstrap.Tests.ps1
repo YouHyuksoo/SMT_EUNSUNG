@@ -68,7 +68,7 @@ Test-Case 'wrapper fixes profile and PM2 home and checks native exit' {
   $content = Get-EunsungWrapperContent -ProfilePath 'C:\Users\eunsung-deploy' -Pm2Path 'C:\Users\eunsung-deploy\AppData\Roaming\npm\pm2.cmd' -LogPath 'D:\deploy\logs\pm2-bootstrap.log'
   Assert-True ($content -match "profileRoot = .*'C:\\Users\\eunsung-deploy'")
   Assert-True ($content -match 'PM2_HOME')
-  Assert-True ($content -match "pm2\.cmd' resurrect")
+  Assert-True ($content -match 'Invoke-QuietPm2Native -Pm2Operation resurrect')
   Assert-True ($content -match '\$nativeExit -ne 0')
   Assert-True ($content -match 'pm2-bootstrap\.log')
   [void][scriptblock]::Create($content)
@@ -78,9 +78,11 @@ Test-Case 'wrapper pings without dump and resurrects when ordinary dump exists' 
   $testDir=Join-Path ([IO.Path]::GetTempPath()) ("eunsung-wrapper-"+[guid]::NewGuid().ToString('N'));$profile=Join-Path $testDir 'profile';$npm=Join-Path $testDir 'npm';$logs=Join-Path $testDir 'logs';New-Item -ItemType Directory -Path $profile,$npm,$logs|Out-Null
   $pm2=Join-Path $npm 'pm2.cmd';$output=Join-Path $testDir 'operation.txt';$oldProfile=$env:USERPROFILE;$oldPm2=$env:PM2_HOME;$oldPath=$env:Path
   try{
-    [IO.File]::WriteAllText($pm2,"@echo off`r`necho %1> `"$output`"`r`nexit /b 0`r`n",[Text.Encoding]::ASCII)
+    [IO.File]::WriteAllText($pm2,"@echo off`r`necho daemon-starting 1>&2`r`necho %1> `"$output`"`r`nexit /b 0`r`n",[Text.Encoding]::ASCII)
     $wrapper=[scriptblock]::Create((Get-EunsungWrapperContent -ProfilePath $profile -Pm2Path $pm2 -LogPath (Join-Path $logs 'pm2-bootstrap.log')))
+    $expectedEap=$ErrorActionPreference
     & $wrapper
+    Assert-Equal $expectedEap $ErrorActionPreference
     Assert-Equal 'ping' ((Get-Content -Raw -LiteralPath $output).Trim())
     $pm2Home=Join-Path $profile '.pm2';New-Item -ItemType Directory -Path $pm2Home -Force|Out-Null;[IO.File]::WriteAllText((Join-Path $pm2Home 'dump.pm2'),'{}')
     & $wrapper
@@ -97,10 +99,16 @@ Test-Case 'wrapper rejects unsafe dump path before invoking PM2' {
 
 Test-Case 'wrapper propagates native ping failure' {
   $testDir=Join-Path ([IO.Path]::GetTempPath()) ("eunsung-wrapper-"+[guid]::NewGuid().ToString('N'));$profile=Join-Path $testDir 'profile';$npm=Join-Path $testDir 'npm';$logs=Join-Path $testDir 'logs';New-Item -ItemType Directory -Path $profile,$npm,$logs|Out-Null;$pm2=Join-Path $npm 'pm2.cmd'
-  $long='A'*3000;[IO.File]::WriteAllText($pm2,"@echo off`r`necho token=supersecret $long`r`nexit /b 7`r`n",[Text.Encoding]::ASCII)
+  $long='A'*3000;[IO.File]::WriteAllText($pm2,"@echo off`r`necho token=supersecret $long 1>&2`r`nexit /b 7`r`n",[Text.Encoding]::ASCII)
   $log=Join-Path $logs 'pm2-bootstrap.log'
   [IO.File]::WriteAllText($log,('X'*70000))
-  try{Assert-Throws { & ([scriptblock]::Create((Get-EunsungWrapperContent -ProfilePath $profile -Pm2Path $pm2 -LogPath $log))) } 'PM2 ping failed with exit code 7';$diagnostic=Get-Content -Raw -LiteralPath $log;Assert-True ($diagnostic -match 'status=error stage=invoke operation=ping exit=7 errorClass=NativeExit');Assert-True ($diagnostic -notmatch 'token|supersecret|Bearer|connection|string|\{|\}');Assert-True ($diagnostic.Length -lt 300);$backup="$log.1";Assert-True (Test-Path -LiteralPath $backup);Assert-Equal 70000 (Get-Item -LiteralPath $backup).Length;Assert-Equal 1 @((Get-ChildItem -LiteralPath $logs -Filter 'pm2-bootstrap.log.1')).Count;Assert-True ((Get-EunsungWrapperContent -ProfilePath $profile -Pm2Path $pm2 -LogPath $log) -notmatch '\$pm2Output\s*=\s*@\(')}
+  try{$expectedEap=$ErrorActionPreference;Assert-Throws { & ([scriptblock]::Create((Get-EunsungWrapperContent -ProfilePath $profile -Pm2Path $pm2 -LogPath $log))) } 'PM2 ping failed with exit code 7';Assert-Equal $expectedEap $ErrorActionPreference;$diagnostic=Get-Content -Raw -LiteralPath $log;Assert-True ($diagnostic -match 'status=error stage=invoke operation=ping exit=7 errorClass=NativeExit');Assert-True ($diagnostic -notmatch 'token|supersecret|Bearer|connection|string|\{|\}');Assert-True ($diagnostic.Length -lt 300);$backup="$log.1";Assert-True (Test-Path -LiteralPath $backup);Assert-Equal 70000 (Get-Item -LiteralPath $backup).Length;Assert-Equal 1 @((Get-ChildItem -LiteralPath $logs -Filter 'pm2-bootstrap.log.1')).Count;Assert-True ((Get-EunsungWrapperContent -ProfilePath $profile -Pm2Path $pm2 -LogPath $log) -notmatch '\$pm2Output\s*=\s*@\(')}
+  finally{Remove-Item -LiteralPath $testDir -Recurse -Force}
+}
+
+Test-Case 'wrapper keeps missing executable as Unexpected PowerShell invocation failure' {
+  $testDir=Join-Path ([IO.Path]::GetTempPath()) ("eunsung-wrapper-"+[guid]::NewGuid().ToString('N'));$profile=Join-Path $testDir 'profile';$logs=Join-Path $testDir 'logs';New-Item -ItemType Directory -Path $profile,$logs|Out-Null;$log=Join-Path $logs 'pm2-bootstrap.log'
+  try{Assert-Throws { & ([scriptblock]::Create((Get-EunsungWrapperContent -ProfilePath $profile -Pm2Path (Join-Path $testDir 'missing-pm2.cmd') -LogPath $log))) } 'not recognized|invocation failed';Assert-True ((Get-Content -Raw -LiteralPath $log) -match 'exit=none errorClass=Unexpected')}
   finally{Remove-Item -LiteralPath $testDir -Recurse -Force}
 }
 

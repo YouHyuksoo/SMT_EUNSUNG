@@ -316,7 +316,8 @@ test('bootstrap is least privilege, idempotent, pinned, and reversible', () => {
   assert.doesNotMatch(bootstrap, /\bsecedit(?:\.exe)?\b/i, 'bootstrap must not overwrite security policy with secedit');
   assert.match(bootstrap, /Get-ScheduledTask[\s\S]{0,300}Register-ScheduledTask/i, 'task registration must be existence guarded');
   assert.match(bootstrap, /Start-ScheduledTask[\s\S]{0,1800}Stop-ScheduledTask/i, 'task verification must start and stop without rebooting');
-  assert.match(bootstrap, /pm2[^\n]*resurrect[\s\S]{0,160}\$LASTEXITCODE/i, 'the wrapper must check the PM2 exit code');
+  assert.match(bootstrap, /global:LASTEXITCODE[\s\S]{0,500}capturedExit/i, 'the wrapper must capture the PM2 native exit code');
+  assert.match(bootstrap, /nativeExit\s+-ne\s+0/i, 'the wrapper must check the captured PM2 exit code');
   assert.match(bootstrap, /Invoke-EunsungBootstrapRollback[\s\S]{0,700}Unregister-ScheduledTask[\s\S]{0,1800}Remove-Item/i, 'rollback must unregister the exact task and remove the wrapper');
   assert.doesNotMatch(bootstrap, /Restart-Computer|Stop-Computer|shutdown(?:\.exe)?\b/i, 'bootstrap must never reboot or shut down the server');
   assert.doesNotMatch(bootstrap, /ConvertTo-SecureString\s+['"][^'"]+['"]\s+-AsPlainText|Password\s*=\s*['"][^'"]+['"]/i, 'hard-coded credentials are forbidden');
@@ -327,5 +328,5 @@ test('bootstrap is least privilege, idempotent, pinned, and reversible', () => {
     { encoding: 'utf8', cwd: repositoryRoot, timeout: 60_000 },
   );
   assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
-  assert.match(result.stdout, /RESULT\s+passed=29\s+failed=0/i, 'all isolated bootstrap contracts must pass');
+  assert.match(result.stdout, /RESULT\s+passed=30\s+failed=0/i, 'all isolated bootstrap contracts must pass');
 });
