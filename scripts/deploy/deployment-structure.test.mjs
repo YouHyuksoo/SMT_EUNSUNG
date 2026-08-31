@@ -31,9 +31,9 @@ const runtime = [sources.module, sources.testRunner, sources.deployRelease, sour
 
 function topLevelSection(yaml, key) {
   const lines = yaml.split('\n');
-  const start = lines.findIndex((line) => new RegExp(`^${key}:\\s*(?:#.*)?$`).test(line));
+  const start = lines.findIndex((line) => new RegExp(`^['"]?${key}['"]?:\\s*(?:#.*)?$`).test(line));
   if (start < 0) return '';
-  const endOffset = lines.slice(start + 1).findIndex((line) => /^[A-Za-z_][\w-]*:\s*(?:#.*)?$/.test(line));
+  const endOffset = lines.slice(start + 1).findIndex((line) => /^['"]?[A-Za-z_][\w-]*['"]?:\s*(?:#.*)?$/.test(line));
   return lines.slice(start + 1, endOffset < 0 ? undefined : start + 1 + endOffset).join('\n');
 }
 
@@ -73,10 +73,9 @@ test('workflow exposes only the approved triggers and deployment boundary', () =
   assert.match(workflow, /^\s*environment:\s*jisung-development\s*$/m, 'deploy job must use the jisung-development environment');
 
   const triggers = topLevelSection(workflow, 'on');
-  assert.match(triggers, /^\s{2}push:\s*$/m, 'push trigger is required');
+  const triggerKeys = [...triggers.matchAll(/^\s{2}['"]?([A-Za-z_][\w-]*)['"]?:/gm)].map((match) => match[1]);
+  assert.deepEqual(triggerKeys.sort(), ['push', 'workflow_dispatch'].sort(), 'workflow triggers must be exactly push and workflow_dispatch');
   assert.match(triggers, /^\s{4}branches:\s*(?:\[\s*['"]?main['"]?\s*\]|\n\s{6}-\s*['"]?main['"]?\s*)$/m, 'push must be limited to main');
-  assert.match(triggers, /^\s{2}workflow_dispatch:\s*$/m, 'manual workflow_dispatch trigger is required');
-  assert.doesNotMatch(triggers, /^\s{2}(?:pull_request|schedule|workflow_call):/m, 'no additional deployment trigger is allowed');
 
   const concurrency = topLevelSection(workflow, 'concurrency');
   assert.match(concurrency, /^\s{2}group:\s*\S+/m, 'deployment concurrency group is required');
