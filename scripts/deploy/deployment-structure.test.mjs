@@ -193,6 +193,46 @@ test('workflow keeps recovery modes manual and makes push a normal deployment', 
   assert.doesNotMatch(executableWorkflow, /github\.event_name\s*==\s*['"]push['"]\s*&&\s*(?:inputs|github\.event\.inputs)\.(?:mode|deploy_mode)/i, 'push must never interpolate a manual deployment mode');
 });
 
+test('workflow uses a fixed GitHub runner, pinned actions, and only environment-scoped SSH secrets', () => {
+  const workflow = sources.workflow;
+  assert.match(workflow, /^\s{4}runs-on:\s*ubuntu-24\.04\s*$/m, 'runner image must be fixed');
+  const actionUses = [...workflow.matchAll(/^\s*-?\s*uses:\s*([^\s#]+).*$/gm)].map((match) => match[1]);
+  assert.ok(actionUses.length > 0, 'at least checkout must be declared');
+  for (const action of actionUses) {
+    assert.match(action, /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+@[0-9a-f]{40}$/, `external action must be pinned to a full commit SHA: ${action}`);
+  }
+  const secretNames = [...workflow.matchAll(/secrets\.([A-Z0-9_]+)/g)].map((match) => match[1]);
+  assert.deepEqual([...new Set(secretNames)].sort(), [
+    'DEPLOY_HOST', 'DEPLOY_PORT', 'DEPLOY_SSH_HOST_KEY', 'DEPLOY_SSH_KEY', 'DEPLOY_USER',
+  ], 'workflow must reference only the approved environment secrets');
+  assert.doesNotMatch(workflow, /actions\/upload-artifact|artifact\s+upload/i, 'deployment diagnostics must not upload artifacts');
+});
+
+test('workflow validates exact SHAs and preserves manual activation semantics', () => {
+  const workflow = withoutCommentLines(sources.workflow);
+  assert.match(workflow, /\^\[0-9a-f\]\{40\}\$/i, 'workflow must validate a lowercase 40-character SHA');
+  assert.match(workflow, /git\s+merge-base\s+--is-ancestor[\s\S]{0,160}(?:origin\/main|refs\/remotes\/origin\/main)/i, 'rollback target must be an ancestor of origin/main');
+  assert.match(workflow, /git\s+archive\s+--format=zip[\s\S]{0,160}GITHUB_SHA/i, 'new releases must use a ZIP made from the triggering SHA');
+  assert.match(workflow, /build_only\)[^\n]*-ArchivePath[^\n]*-BuildOnly/i, 'build_only must upload and build without activation');
+  assert.match(workflow, /activate_existing\)[^\n]*-ActivateExisting/i, 'activate_existing must not request a rebuild');
+  assert.match(workflow, /rollback_test\)[^\n]*-ActivateExisting\s+-InjectHealthFailure\s+-AllowFailureInjection/i, 'rollback_test must use guarded failure injection');
+  assert.match(workflow, /deploy_status\s*==\s*30/i, 'rollback_test must accept only the successful-rollback exit code');
+});
+
+test('every remote call uses strict native SSH and a reviewed PowerShell file', () => {
+  const workflow = withoutCommentLines(sources.workflow);
+  for (const required of ['BatchMode=yes', 'StrictHostKeyChecking=yes', 'ConnectTimeout=15', 'ServerAliveInterval=15', 'ServerAliveCountMax=2']) {
+    assert.match(workflow, new RegExp(required.replace('=', '\\s*=\\s*'), 'i'), `missing SSH hardening option: ${required}`);
+  }
+  assert.match(workflow, /REMOTE_INCOMING_ROOT_SCP[^\n]*\.deploy\/incoming/i, 'upload root must be the protected incoming directory');
+  assert.match(workflow, /scp[^\n]*eunsung-incoming\/\$DEPLOY_SHA[^\n]*REMOTE_INCOMING_ROOT_SCP/i, 'upload must use the validated SHA as its directory name');
+  assert.match(workflow, /powershell\.exe\s+-NoProfile\s+-NonInteractive\s+-ExecutionPolicy\s+Bypass\s+-File\s+[^\n]*Deploy-EunsungRelease\.ps1/i, 'remote deployment must invoke the reviewed script with -File');
+  assert.doesNotMatch(workflow, /powershell(?:\.exe)?[^\n]*(?:-Command|-EncodedCommand)\b/i, 'remote inline PowerShell is forbidden');
+  assert.match(workflow, /-CleanupIncoming/i, 'remote script must clean only its validated incoming directory in finally');
+  assert.match(sources.deployRelease, /GetOwner\(\[Security\.Principal\.SecurityIdentifier\]\)[\s\S]{0,1800}GetAccessRules/i, 'incoming execution must validate owner and write ACLs before importing deployment code');
+  assert.match(sources.deployRelease, /finally\s*\{[\s\S]{0,900}Remove-Item\s+-LiteralPath\s+\$cleanupPath/i, 'incoming cleanup must be literal-path and finally-guarded');
+});
+
 test('Windows deployment validates immutable release inputs and never deploys a tracked worktree', () => {
   const fullShaPattern = String.raw`\^\[(?=[^\]\n]*0-9)(?=[^\]\n]*a-f)[0-9a-fA-F-]+\]\{40\}\$`;
   assert.match(runtime, new RegExp(`(?:CommitSha|DeploySha|GITHUB_SHA)[^\\n]*(?:-notmatch|-notlike|match)[^\\n]*${fullShaPattern}|${fullShaPattern}[^\\n]*(?:CommitSha|DeploySha|GITHUB_SHA)`, 'im'), 'the deploy SHA variable must be validated as a full 40-character commit SHA');
