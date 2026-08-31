@@ -12,6 +12,32 @@ function Test-Case {
 function Assert-True { param([bool]$Condition, [string]$Message = 'assertion failed') if (-not $Condition) { throw $Message } }
 function Assert-Equal { param($Expected, $Actual) if ($Expected -cne $Actual) { throw "expected '$Expected', actual '$Actual'" } }
 function Assert-Throws { param([scriptblock]$Body, [string]$Pattern) try { & $Body; throw 'expected exception' } catch { if ($_.Exception.Message -eq 'expected exception' -or $_.Exception.Message -notmatch $Pattern) { throw } } }
+function Set-TestProfileAcl {
+  param([string]$Path,[Security.Principal.SecurityIdentifier]$DeploySid)
+  $acl=New-Object Security.AccessControl.DirectorySecurity;$acl.SetAccessRuleProtection($true,$false)
+  $inherit=[Security.AccessControl.InheritanceFlags]'ContainerInherit, ObjectInherit';$none=[Security.AccessControl.PropagationFlags]::None;$allow=[Security.AccessControl.AccessControlType]::Allow
+  foreach($sid in @((New-Object Security.Principal.SecurityIdentifier('S-1-5-18')),(New-Object Security.Principal.SecurityIdentifier('S-1-5-32-544')),$DeploySid)){[void]$acl.AddAccessRule((New-Object Security.AccessControl.FileSystemAccessRule($sid,'FullControl',$inherit,$none,$allow)))}
+  $acl.SetOwner((New-Object Security.Principal.SecurityIdentifier('S-1-5-32-544')))
+  (New-Object IO.DirectoryInfo($Path)).SetAccessControl($acl)
+}
+function New-TestProfileAclVariant {
+  param([Security.Principal.SecurityIdentifier]$DeploySid,[string]$Variant)
+  $acl=New-Object Security.AccessControl.DirectorySecurity;$acl.SetAccessRuleProtection($true,$false)
+  $inherit=[Security.AccessControl.InheritanceFlags]'ContainerInherit, ObjectInherit';$none=[Security.AccessControl.PropagationFlags]::None;$allow=[Security.AccessControl.AccessControlType]::Allow
+  $entries=@('S-1-5-18','S-1-5-32-544',$DeploySid.Value)
+  if($Variant -eq 'missing-system'){$entries=@($entries|Where-Object{$_ -cne 'S-1-5-18'})}
+  if($Variant -eq 'missing-admin'){$entries=@($entries|Where-Object{$_ -cne 'S-1-5-32-544'})}
+  if($Variant -eq 'missing-deploy'){$entries=@($entries|Where-Object{$_ -cne $DeploySid.Value})}
+  foreach($sid in $entries){[void]$acl.AddAccessRule((New-Object Security.AccessControl.FileSystemAccessRule((New-Object Security.Principal.SecurityIdentifier($sid)),'FullControl',$inherit,$none,$allow)))}
+  if($Variant -eq 'unrelated-users'){[void]$acl.AddAccessRule((New-Object Security.AccessControl.FileSystemAccessRule((New-Object Security.Principal.SecurityIdentifier('S-1-5-32-545')),'FullControl',$inherit,$none,$allow)))}
+  if($Variant -eq 'unrelated-everyone-deletechild'){[void]$acl.AddAccessRule((New-Object Security.AccessControl.FileSystemAccessRule((New-Object Security.Principal.SecurityIdentifier('S-1-1-0')),'Write, DeleteSubdirectoriesAndFiles',$inherit,$none,$allow)))}
+  $owner=if($Variant -eq 'wrong-owner'){[Security.Principal.WindowsIdentity]::GetCurrent().User}else{New-Object Security.Principal.SecurityIdentifier('S-1-5-32-544')}
+  $acl.SetOwner($owner);return $acl
+}
+function Set-TestProfileAclVariant {
+  param([string]$Path,[Security.Principal.SecurityIdentifier]$DeploySid,[string]$Variant)
+  (New-Object IO.DirectoryInfo($Path)).SetAccessControl((New-TestProfileAclVariant -DeploySid $DeploySid -Variant $Variant))
+}
 
 $scriptPath = Join-Path (Split-Path -Parent $PSScriptRoot) 'Initialize-EunsungDeployServer.ps1'
 . $scriptPath -LibraryOnly
@@ -234,6 +260,7 @@ Test-Case 'preexisting valid ProfileList path skips credentialed child launch' {
   $testDir=Join-Path ([IO.Path]::GetTempPath()) ("eunsung-bootstrap-"+[guid]::NewGuid().ToString('N'))
   $profileDir=Join-Path $testDir 'actual-profile'
   New-Item -ItemType Directory -Path (Join-Path $testDir 'state'),$profileDir -Force|Out-Null
+  Set-TestProfileAcl -Path $profileDir -DeploySid $deploySid
   try{
     $secure=New-Object Security.SecureString;foreach($c in 'Temp!938475abc'.ToCharArray()){$secure.AppendChar($c)}
     $credential=New-Object Management.Automation.PSCredential('.\eunsung-deploy',$secure)
@@ -251,6 +278,7 @@ Test-Case 'nonzero credentialed child accepts newly registered valid ProfileList
   $testDir=Join-Path ([IO.Path]::GetTempPath()) ("eunsung-bootstrap-"+[guid]::NewGuid().ToString('N'))
   $profileDir=Join-Path $testDir 'eunsung-deploy.SERVER'
   New-Item -ItemType Directory -Path (Join-Path $testDir 'state'),$profileDir -Force|Out-Null
+  Set-TestProfileAcl -Path $profileDir -DeploySid $deploySid
   try{
     $secure=New-Object Security.SecureString;foreach($c in 'Temp!938475xyz'.ToCharArray()){$secure.AppendChar($c)}
     $credential=New-Object Management.Automation.PSCredential('.\eunsung-deploy',$secure)
@@ -261,6 +289,30 @@ Test-Case 'nonzero credentialed child accepts newly registered valid ProfileList
     Assert-Equal ([IO.Path]::GetFullPath($profileDir)) $resolved
     Assert-Equal 0 @((Get-ChildItem -LiteralPath (Join-Path $testDir 'state') -Filter 'profile-*.txt')).Count
   }finally{Remove-Item -LiteralPath $testDir -Recurse -Force}
+}
+
+Test-Case 'preexisting ProfileList path rejects owner unrelated ACE and every missing required principal' {
+  $deploySid=New-Object Security.Principal.SecurityIdentifier('S-1-5-21-1-2-3-1014')
+  $testDir=Join-Path ([IO.Path]::GetTempPath()) ("eunsung-profile-acl-"+[guid]::NewGuid().ToString('N'))
+  New-Item -ItemType Directory -Path $testDir|Out-Null
+  try{
+    foreach($variant in @('wrong-owner','unrelated-users','unrelated-everyone-deletechild','missing-system','missing-admin','missing-deploy')){
+      $script:testAcl=New-TestProfileAclVariant -DeploySid $deploySid -Variant $variant
+      Assert-Throws { Get-EunsungRegisteredProfilePath -DeploySid $deploySid -RegistryProfileProvider {param($Sid)$testDir} -ProfileAclProvider {param($Path)$script:testAcl} } 'profile (?:owner|ACL)'
+    }
+  }finally{Set-TestProfileAcl -Path $testDir -DeploySid $deploySid;Remove-Item -LiteralPath $testDir -Recurse -Force}
+}
+
+Test-Case 'nonzero child fallback rejects newly registered profile with missing deploy rights' {
+  $deploySid=New-Object Security.Principal.SecurityIdentifier('S-1-5-21-1-2-3-1015')
+  $testDir=Join-Path ([IO.Path]::GetTempPath()) ("eunsung-profile-fallback-"+[guid]::NewGuid().ToString('N'))
+  $profileDir=Join-Path $testDir 'profile';New-Item -ItemType Directory -Path (Join-Path $testDir 'state'),$profileDir -Force|Out-Null
+  try{
+    Set-TestProfileAclVariant -Path $profileDir -DeploySid $deploySid -Variant 'missing-deploy'
+    $secure=New-Object Security.SecureString;foreach($c in 'Temp!938475acl'.ToCharArray()){$secure.AppendChar($c)};$credential=New-Object Management.Automation.PSCredential('.\eunsung-deploy',$secure)
+    $script:profileRegistered=$false;$starter={param($StartInfo)$script:profileRegistered=$true;[pscustomobject]@{ExitCode=-1073741502}};$provider={param($Sid)if($script:profileRegistered){$profileDir}else{$null}}
+    Assert-Throws { Initialize-EunsungRegisteredProfile -DeployRoot $testDir -PowerShellPath 'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe' -Credential $credential -DeploySid $deploySid -ProcessStarter $starter -RegistryProfileProvider $provider } 'profile ACL'
+  }finally{Set-TestProfileAcl -Path $profileDir -DeploySid $deploySid;Remove-Item -LiteralPath $testDir -Recurse -Force}
 }
 
 Test-Case 'compliant Password task rerun skips rotation and registration' {

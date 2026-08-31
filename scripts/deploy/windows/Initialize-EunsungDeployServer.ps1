@@ -331,13 +331,35 @@ function Assert-EunsungBootstrapExecutableAcl {
   if(@($rules|Where-Object{$_.IdentityReference.Value -ceq $DeploySid.Value -and $_.AccessControlType -eq 'Allow' -and ($_.FileSystemRights -band 'ReadAndExecute') -eq 'ReadAndExecute' -and ($_.FileSystemRights -band 'Write') -eq 0}).Count -ne 1){throw 'Deployment SID must have read/execute only on bootstrap executables.'}
 }
 
+function Assert-EunsungRegisteredProfileRoot {
+  param([Parameter(Mandatory)][string]$Path,[Parameter(Mandatory)][Security.Principal.SecurityIdentifier]$DeploySid,[scriptblock]$AccessControlProvider={param($ProfilePath)(New-Object IO.DirectoryInfo($ProfilePath)).GetAccessControl()})
+  Assert-EunsungOrdinaryPath -Path $Path
+  $acl=& $AccessControlProvider $Path
+  if(-not $acl.AreAccessRulesProtected){throw 'Registered deployment profile ACL inheritance must be disabled.'}
+  $owner=([Security.Principal.NTAccount]$acl.Owner).Translate([Security.Principal.SecurityIdentifier]).Value
+  if($owner -cne 'S-1-5-32-544'){throw 'Registered deployment profile owner must be BUILTIN Administrators.'}
+  $rules=@($acl.GetAccessRules($true,$true,[Security.Principal.SecurityIdentifier]))
+  if($rules.Count -ne 3){throw 'Registered deployment profile ACL must contain exactly SYSTEM, Administrators, and the deployment SID.'}
+  foreach($sid in @('S-1-5-18','S-1-5-32-544',$DeploySid.Value)){
+    $matching=@($rules|Where-Object{
+      $_.IdentityReference.Value -ceq $sid -and
+      $_.AccessControlType -eq [Security.AccessControl.AccessControlType]::Allow -and
+      $_.FileSystemRights -eq [Security.AccessControl.FileSystemRights]::FullControl -and
+      $_.InheritanceFlags -eq [Security.AccessControl.InheritanceFlags]'ContainerInherit, ObjectInherit' -and
+      $_.PropagationFlags -eq [Security.AccessControl.PropagationFlags]::None -and
+      -not $_.IsInherited
+    })
+    if($matching.Count -ne 1){throw 'Registered deployment profile ACL does not match the exact live Server 2019 contract.'}
+  }
+}
+
 function Get-EunsungRegisteredProfilePath {
-  param([Parameter(Mandatory)][Security.Principal.SecurityIdentifier]$DeploySid,[switch]$AllowMissing,[scriptblock]$RegistryProfileProvider={param($Sid)$entry=Get-ItemProperty -LiteralPath "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList\$Sid" -Name ProfileImagePath -ErrorAction SilentlyContinue;if($entry){$entry.ProfileImagePath}})
+  param([Parameter(Mandatory)][Security.Principal.SecurityIdentifier]$DeploySid,[switch]$AllowMissing,[scriptblock]$RegistryProfileProvider={param($Sid)$entry=Get-ItemProperty -LiteralPath "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList\$Sid" -Name ProfileImagePath -ErrorAction SilentlyContinue;if($entry){$entry.ProfileImagePath}},[scriptblock]$ProfileAclProvider={param($ProfilePath)(New-Object IO.DirectoryInfo($ProfilePath)).GetAccessControl()})
   $raw=[string](& $RegistryProfileProvider $DeploySid.Value)
   if([string]::IsNullOrWhiteSpace($raw)){if($AllowMissing){return $null};throw 'Windows deployment profile is not registered.'}
   $registered=[IO.Path]::GetFullPath(([Environment]::ExpandEnvironmentVariables($raw))).TrimEnd('\')
   if(-not (Test-Path -LiteralPath $registered -PathType Container)){throw 'Registered Windows deployment profile does not exist.'}
-  Assert-EunsungOrdinaryPath -Path $registered
+  Assert-EunsungRegisteredProfileRoot -Path $registered -DeploySid $DeploySid -AccessControlProvider $ProfileAclProvider
   return $registered
 }
 
