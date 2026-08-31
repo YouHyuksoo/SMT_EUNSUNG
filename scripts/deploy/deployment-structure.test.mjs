@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
@@ -22,6 +23,28 @@ function readRepositoryFile(relativePath) {
     if (error?.code === 'ENOENT') return '';
     throw error;
   }
+}
+
+function loadEcosystemConfig(environment) {
+  const env = { ...process.env };
+  delete env.EUNSUNG_RELEASE_DIR;
+  delete env.EUNSUNG_DEPLOY_ROOT;
+  delete env.ORACLE_CLIENT_LIB_DIR;
+  Object.assign(env, environment);
+
+  return spawnSync(
+    process.execPath,
+    [
+      '-e',
+      "const path = require('node:path'); path.isAbsolute = path.win32.isAbsolute; path.normalize = path.win32.normalize; path.join = path.win32.join; process.stdout.write(JSON.stringify(require(process.argv[1])));",
+      path.join(repositoryRoot, 'ecosystem.config.js'),
+    ],
+    { encoding: 'utf8', env },
+  );
+}
+
+function portablePath(value) {
+  return value.replaceAll('\\', '/');
 }
 
 const sources = Object.fromEntries(
@@ -60,6 +83,66 @@ function indentedSection(source, keyPattern, indentation) {
 test('declares every protected deployment entry point', () => {
   for (const [name, relativePath] of Object.entries(expectedFiles)) {
     assert.notEqual(sources[name], '', `missing protected deployment file: ${relativePath}`);
+  }
+});
+
+test('PM2 config defines the two release apps and fails closed without deployment paths', () => {
+  const releaseDir = 'D:\\Eunsung\\releases\\0123456789abcdef';
+  const deployRoot = 'D:\\Eunsung';
+  const oracleClientLibDir = 'D:\\Oracle\\instantclient_19_25';
+  const loaded = loadEcosystemConfig({
+    EUNSUNG_RELEASE_DIR: releaseDir,
+    EUNSUNG_DEPLOY_ROOT: deployRoot,
+    ORACLE_CLIENT_LIB_DIR: oracleClientLibDir,
+  });
+
+  assert.equal(loaded.status, 0, loaded.stderr);
+  const config = JSON.parse(loaded.stdout);
+  assert.equal(config.apps.length, 2);
+
+  const [frontend, backend] = config.apps;
+  assert.equal(frontend.name, 'eunsung-frontend');
+  assert.equal(portablePath(frontend.cwd), 'D:/Eunsung/releases/0123456789abcdef/apps/frontend');
+  assert.equal(portablePath(frontend.script), 'D:/Eunsung/releases/0123456789abcdef/apps/frontend/node_modules/next/dist/bin/next');
+  assert.equal(frontend.args, 'start -H 0.0.0.0 -p 3100');
+  assert.equal(frontend.env.NODE_ENV, 'production');
+  assert.equal(frontend.env.TZ, 'Asia/Seoul');
+  assert.equal(portablePath(frontend.error_file), 'D:/Eunsung/logs/eunsung-frontend-error.log');
+  assert.equal(portablePath(frontend.out_file), 'D:/Eunsung/logs/eunsung-frontend-out.log');
+
+  assert.equal(backend.name, 'eunsung-backend');
+  assert.equal(portablePath(backend.cwd), 'D:/Eunsung/releases/0123456789abcdef/apps/backend');
+  assert.equal(portablePath(backend.script), 'D:/Eunsung/releases/0123456789abcdef/apps/backend/dist/main.js');
+  assert.equal(backend.interpreter, 'node');
+  assert.deepEqual(backend.env, {
+    NODE_ENV: 'production',
+    TZ: 'Asia/Seoul',
+    ORACLE_CLIENT_LIB_DIR: oracleClientLibDir,
+  });
+  assert.equal(portablePath(backend.error_file), 'D:/Eunsung/logs/eunsung-backend-error.log');
+  assert.equal(portablePath(backend.out_file), 'D:/Eunsung/logs/eunsung-backend-out.log');
+
+  for (const app of config.apps) {
+    assert.equal(app.watch, false);
+    assert.equal(app.min_uptime, '10s');
+    assert.equal(app.max_restarts, 5);
+    assert.equal(app.restart_delay, 4000);
+    assert.equal(app.exp_backoff_restart_delay, 1000);
+    assert.equal(app.kill_timeout, 5000);
+  }
+
+  const invalidEnvironments = [
+    [{ EUNSUNG_DEPLOY_ROOT: deployRoot, ORACLE_CLIENT_LIB_DIR: oracleClientLibDir }, /EUNSUNG_RELEASE_DIR is required/],
+    [{ EUNSUNG_RELEASE_DIR: 'releases\\relative', EUNSUNG_DEPLOY_ROOT: deployRoot, ORACLE_CLIENT_LIB_DIR: oracleClientLibDir }, /EUNSUNG_RELEASE_DIR must be an absolute path/],
+    [{ EUNSUNG_RELEASE_DIR: releaseDir, ORACLE_CLIENT_LIB_DIR: oracleClientLibDir }, /EUNSUNG_DEPLOY_ROOT is required/],
+    [{ EUNSUNG_RELEASE_DIR: releaseDir, EUNSUNG_DEPLOY_ROOT: 'deploy-root', ORACLE_CLIENT_LIB_DIR: oracleClientLibDir }, /EUNSUNG_DEPLOY_ROOT must be an absolute path/],
+    [{ EUNSUNG_RELEASE_DIR: releaseDir, EUNSUNG_DEPLOY_ROOT: deployRoot }, /ORACLE_CLIENT_LIB_DIR is required/],
+  ];
+
+  for (const [environment, expectedError] of invalidEnvironments) {
+    const failed = loadEcosystemConfig(environment);
+    assert.notEqual(failed.status, 0, `ecosystem config unexpectedly loaded with ${JSON.stringify(environment)}`);
+    assert.match(failed.stderr, expectedError);
   }
 });
 
