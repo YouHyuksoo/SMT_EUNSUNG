@@ -93,6 +93,27 @@ function Assert-EunsungNoReparseAncestry {
   }
 }
 
+function Assert-EunsungNoReparsePath {
+  [CmdletBinding()]
+  param(
+    [Parameter(Mandatory)][string]$Path,
+    [scriptblock]$AttributeProvider
+  )
+
+  $cursor = [IO.Path]::GetFullPath($Path)
+  while ($true) {
+    if (Test-Path -LiteralPath $cursor) {
+      $attributes = Get-EunsungFileAttributes -Path $cursor -AttributeProvider $AttributeProvider
+      if (($attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) {
+        throw 'Deployment path contains a reparse point'
+      }
+    }
+    $parent = Split-Path -Parent $cursor
+    if ([string]::IsNullOrWhiteSpace($parent) -or $parent -eq $cursor) { break }
+    $cursor = $parent
+  }
+}
+
 function Assert-EunsungOrdinaryFile {
   [CmdletBinding()]
   param(
@@ -521,8 +542,94 @@ function Get-EunsungAdapter {
   return $Default
 }
 
+function Test-EunsungRecoveryAccess {
+  param([string]$Path, [scriptblock]$AccessValidator)
+  if ($AccessValidator) { return [bool](& $AccessValidator $Path) }
+  return Test-EunsungAclAccess -Path $Path
+}
+
+function Assert-EunsungRecoveryStorage {
+  param(
+    [string]$DeployRoot,
+    [string]$Pm2Home,
+    [string]$StateDir,
+    [string]$DumpPath,
+    [scriptblock]$AttributeProvider,
+    [scriptblock]$AccessValidator
+  )
+
+  Assert-EunsungNoReparseAncestry -Root $DeployRoot -Target $StateDir -AttributeProvider $AttributeProvider
+  $resolvedState = Resolve-EunsungContainedPath -Root $DeployRoot -Candidate $StateDir -AllowMissing
+  Assert-EunsungNoReparseAncestry -Root $DeployRoot -Target $DeployRoot -AttributeProvider $AttributeProvider
+  if (Test-Path -LiteralPath $resolvedState) {
+    Assert-EunsungNoReparseAncestry -Root $DeployRoot -Target $resolvedState -AttributeProvider $AttributeProvider
+    if (-not (Test-EunsungRecoveryAccess -Path $resolvedState -AccessValidator $AccessValidator)) { throw 'Recovery state directory ACL validation failed' }
+  }
+  if (-not [IO.Directory]::Exists($Pm2Home)) { throw 'PM2_HOME directory is unavailable' }
+  Assert-EunsungNoReparsePath -Path $Pm2Home -AttributeProvider $AttributeProvider
+  if (-not (Test-EunsungRecoveryAccess -Path $Pm2Home -AccessValidator $AccessValidator)) { throw 'PM2_HOME ACL validation failed' }
+  Assert-EunsungNoReparsePath -Path $DumpPath -AttributeProvider $AttributeProvider
+  Assert-EunsungOrdinaryFile -Path $DumpPath -AttributeProvider $AttributeProvider
+  if (-not (Test-EunsungRecoveryAccess -Path $DumpPath -AccessValidator $AccessValidator)) { throw 'PM2 dump ACL validation failed' }
+  return $resolvedState
+}
+
+function Set-EunsungRecoveryBackupAcl {
+  param([string]$Path, [scriptblock]$AclSetter)
+  if ($AclSetter) { & $AclSetter $Path; return }
+  $deploySidValue = Resolve-EunsungIdentitySid -Identity 'eunsung-deploy'
+  $deploySid = New-Object -TypeName Security.Principal.SecurityIdentifier -ArgumentList $deploySidValue
+  $acl = Get-Acl -LiteralPath $Path
+  $acl.SetAccessRuleProtection($true, $false)
+  foreach ($existingRule in @($acl.Access)) { [void]$acl.RemoveAccessRuleAll($existingRule) }
+  $acl.SetOwner($deploySid)
+  $rule = New-Object -TypeName Security.AccessControl.FileSystemAccessRule -ArgumentList @($deploySid, [Security.AccessControl.FileSystemRights]::FullControl, [Security.AccessControl.AccessControlType]::Allow)
+  $acl.AddAccessRule($rule)
+  Set-Acl -LiteralPath $Path -AclObject $acl
+}
+
+function Remove-EunsungStaleRecoveryDumps {
+  param(
+    [string]$DeployRoot,
+    [string]$StateDir,
+    [ValidateRange(0, 5)][int]$Keep = 0,
+    [scriptblock]$AttributeProvider,
+    [scriptblock]$AccessValidator
+  )
+  if (-not (Test-Path -LiteralPath $StateDir -PathType Container)) { return }
+  Assert-EunsungNoReparseAncestry -Root $DeployRoot -Target $StateDir -AttributeProvider $AttributeProvider
+  $resolvedState = Resolve-EunsungContainedPath -Root $DeployRoot -Candidate $StateDir
+  Assert-EunsungNoReparseAncestry -Root $DeployRoot -Target $resolvedState -AttributeProvider $AttributeProvider
+  if (-not (Test-EunsungRecoveryAccess -Path $resolvedState -AccessValidator $AccessValidator)) { throw 'Recovery state directory ACL validation failed' }
+  $candidates = New-Object System.Collections.Generic.List[object]
+  foreach ($item in @(Get-ChildItem -LiteralPath $resolvedState -Force -File)) {
+    if ($item.Name -cnotmatch '^dump-before-[0-9a-f]{32}\.pm2$') { continue }
+    try {
+      $resolvedItem = Resolve-EunsungContainedPath -Root $resolvedState -Candidate $item.FullName
+      Assert-EunsungNoReparseAncestry -Root $resolvedState -Target $resolvedItem -AttributeProvider $AttributeProvider
+      Assert-EunsungOrdinaryFile -Path $resolvedItem -AttributeProvider $AttributeProvider
+      if (-not (Test-EunsungRecoveryAccess -Path $resolvedItem -AccessValidator $AccessValidator)) { continue }
+      [void]$candidates.Add($item)
+    } catch { continue }
+  }
+  $ordered = @($candidates | Sort-Object LastWriteTimeUtc -Descending)
+  foreach ($candidate in @($ordered | Select-Object -Skip $Keep)) {
+    $resolvedItem = Resolve-EunsungContainedPath -Root $resolvedState -Candidate $candidate.FullName
+    Assert-EunsungNoReparseAncestry -Root $resolvedState -Target $resolvedItem -AttributeProvider $AttributeProvider
+    Assert-EunsungOrdinaryFile -Path $resolvedItem -AttributeProvider $AttributeProvider
+    if (-not (Test-EunsungRecoveryAccess -Path $resolvedItem -AccessValidator $AccessValidator)) { continue }
+    Remove-Item -LiteralPath $resolvedItem -Force
+  }
+}
+
 function Get-EunsungSwitchState {
-  param([string]$DeployRoot, [scriptblock]$NativeInvoker)
+  param(
+    [string]$DeployRoot,
+    [scriptblock]$NativeInvoker,
+    [scriptblock]$AttributeProvider,
+    [scriptblock]$AccessValidator,
+    [scriptblock]$AclSetter
+  )
   $currentPath = Join-Path $DeployRoot 'current.json'
   $current = $null
   if (Test-Path -LiteralPath $currentPath -PathType Leaf) {
@@ -532,17 +639,28 @@ function Get-EunsungSwitchState {
   $capturedApps = @($apps | Where-Object { $script:AppPorts.Contains($_.name) })
   $pm2Home = [Environment]::GetEnvironmentVariable('PM2_HOME', 'Process')
   if ([string]::IsNullOrWhiteSpace($pm2Home)) { $pm2Home = Join-Path $env:USERPROFILE '.pm2' }
+  $pm2Home = [IO.Path]::GetFullPath($pm2Home)
   $dumpPath = Join-Path $pm2Home 'dump.pm2'
   $backup = $null
   $backupHash = $null
   $originalDumpExists = Test-Path -LiteralPath $dumpPath -PathType Leaf
   if ($originalDumpExists) {
     $stateDir = Join-Path $DeployRoot 'state'
+    Assert-EunsungNoReparseAncestry -Root $DeployRoot -Target $stateDir -AttributeProvider $AttributeProvider
+    $stateDir = Resolve-EunsungContainedPath -Root $DeployRoot -Candidate $stateDir -AllowMissing
     New-Item -ItemType Directory -Force -Path $stateDir | Out-Null
+    $stateDir = Assert-EunsungRecoveryStorage -DeployRoot $DeployRoot -Pm2Home $pm2Home -StateDir $stateDir -DumpPath $dumpPath -AttributeProvider $AttributeProvider -AccessValidator $AccessValidator
+    Remove-EunsungStaleRecoveryDumps -DeployRoot $DeployRoot -StateDir $stateDir -Keep 0 -AttributeProvider $AttributeProvider -AccessValidator $AccessValidator
     $backup = Join-Path $stateDir ("dump-before-$([guid]::NewGuid().ToString('N')).pm2")
     Copy-Item -LiteralPath $dumpPath -Destination $backup
-    Assert-EunsungOrdinaryFile -Path $backup
+    Assert-EunsungNoReparseAncestry -Root $DeployRoot -Target $backup -AttributeProvider $AttributeProvider
+    Assert-EunsungOrdinaryFile -Path $backup -AttributeProvider $AttributeProvider
+    Set-EunsungRecoveryBackupAcl -Path $backup -AclSetter $AclSetter
+    Assert-EunsungNoReparseAncestry -Root $DeployRoot -Target $backup -AttributeProvider $AttributeProvider
+    Assert-EunsungOrdinaryFile -Path $backup -AttributeProvider $AttributeProvider
+    if (-not (Test-EunsungRecoveryAccess -Path $backup -AccessValidator $AccessValidator)) { throw 'Recovery dump backup ACL validation failed' }
     $backupHash = Get-EunsungFileSha256 -Path $backup
+    if ((Get-EunsungFileSha256 -Path $dumpPath) -cne $backupHash) { throw 'PM2 dump backup copy validation failed' }
   }
   return @{
     HasPrior = ($null -ne $current)
@@ -615,12 +733,42 @@ function Assert-EunsungPm2DefinitionFidelity {
   }
 }
 
+function Assert-EunsungRecoveryDumpBackup {
+  param(
+    [string]$DeployRoot,
+    [string]$BackupPath,
+    [string]$DumpPath,
+    [scriptblock]$AttributeProvider,
+    [scriptblock]$AccessValidator
+  )
+  if ([string]::IsNullOrWhiteSpace($DeployRoot)) { return }
+  $stateDir = Join-Path $DeployRoot 'state'
+  Assert-EunsungNoReparseAncestry -Root $DeployRoot -Target $stateDir -AttributeProvider $AttributeProvider
+  $resolvedState = Resolve-EunsungContainedPath -Root $DeployRoot -Candidate $stateDir
+  $resolvedBackup = Resolve-EunsungContainedPath -Root $resolvedState -Candidate $BackupPath
+  if ((Split-Path -Leaf $resolvedBackup) -cnotmatch '^dump-before-[0-9a-f]{32}\.pm2$') { throw 'Recovery dump backup name is invalid' }
+  Assert-EunsungNoReparseAncestry -Root $DeployRoot -Target $resolvedBackup -AttributeProvider $AttributeProvider
+  Assert-EunsungOrdinaryFile -Path $resolvedBackup -AttributeProvider $AttributeProvider
+  if (-not (Test-EunsungRecoveryAccess -Path $resolvedState -AccessValidator $AccessValidator)) { throw 'Recovery state directory ACL validation failed' }
+  if (-not (Test-EunsungRecoveryAccess -Path $resolvedBackup -AccessValidator $AccessValidator)) { throw 'Recovery dump backup ACL validation failed' }
+  $pm2Home = Split-Path -Parent $DumpPath
+  if (-not [IO.Directory]::Exists($pm2Home)) { throw 'PM2 dump directory is unavailable' }
+  Assert-EunsungNoReparsePath -Path $pm2Home -AttributeProvider $AttributeProvider
+  if (-not (Test-EunsungRecoveryAccess -Path $pm2Home -AccessValidator $AccessValidator)) { throw 'PM2_HOME ACL validation failed' }
+  if (Test-Path -LiteralPath $DumpPath) {
+    Assert-EunsungNoReparsePath -Path $DumpPath -AttributeProvider $AttributeProvider
+    Assert-EunsungOrdinaryFile -Path $DumpPath -AttributeProvider $AttributeProvider
+    if (-not (Test-EunsungRecoveryAccess -Path $DumpPath -AccessValidator $AccessValidator)) { throw 'PM2 dump ACL validation failed' }
+  }
+}
+
 function Restore-EunsungPriorState {
-  param([hashtable]$SwitchState, [scriptblock]$NativeInvoker)
+  param([hashtable]$SwitchState, [scriptblock]$NativeInvoker, [string]$DeployRoot, [scriptblock]$AttributeProvider, [scriptblock]$AccessValidator)
   $captured = @($SwitchState.Apps)
   $dumpBackup = [string]$SwitchState.DumpBackup
   $dumpPath = [string]$SwitchState.DumpPath
   if ([string]::IsNullOrWhiteSpace($dumpBackup) -or [string]::IsNullOrWhiteSpace($dumpPath)) { throw 'Prior PM2 dump backup is unavailable' }
+  Assert-EunsungRecoveryDumpBackup -DeployRoot $DeployRoot -BackupPath $dumpBackup -DumpPath $dumpPath -AttributeProvider $AttributeProvider -AccessValidator $AccessValidator
   Assert-EunsungOrdinaryFile -Path $dumpBackup
   $dumpParent = Split-Path -Parent $dumpPath
   if (-not [IO.Directory]::Exists($dumpParent)) { throw 'PM2 dump directory is unavailable' }
@@ -662,20 +810,26 @@ function Assert-EunsungRollbackSnapshot {
 }
 
 function Remove-EunsungRecoveryDump {
-  param([hashtable]$SwitchState)
+  param([hashtable]$SwitchState, [string]$DeployRoot, [scriptblock]$AttributeProvider, [scriptblock]$AccessValidator)
   $backup = [string]$SwitchState.DumpBackup
   if ([string]::IsNullOrWhiteSpace($backup) -or -not (Test-Path -LiteralPath $backup)) { return }
+  $dumpPath = if ($SwitchState.ContainsKey('DumpPath')) { [string]$SwitchState.DumpPath } else { '' }
+  if (-not [string]::IsNullOrWhiteSpace($DeployRoot)) {
+    if ([string]::IsNullOrWhiteSpace($dumpPath)) { throw 'Recovery dump path is unavailable' }
+    Assert-EunsungRecoveryDumpBackup -DeployRoot $DeployRoot -BackupPath $backup -DumpPath $dumpPath -AttributeProvider $AttributeProvider -AccessValidator $AccessValidator
+  }
   Assert-EunsungOrdinaryFile -Path $backup
   Remove-Item -LiteralPath $backup -Force
 }
 
 function Restore-EunsungOriginalDump {
-  param([hashtable]$SwitchState)
+  param([hashtable]$SwitchState, [string]$DeployRoot, [scriptblock]$AttributeProvider, [scriptblock]$AccessValidator)
   $originalDumpExists = $SwitchState.ContainsKey('OriginalDumpExists') -and [bool]$SwitchState.OriginalDumpExists
   $dumpPath = if ($SwitchState.ContainsKey('DumpPath')) { [string]$SwitchState.DumpPath } else { '' }
   if ($originalDumpExists) {
     $backup = [string]$SwitchState.DumpBackup
     $destination = $dumpPath
+    Assert-EunsungRecoveryDumpBackup -DeployRoot $DeployRoot -BackupPath $backup -DumpPath $destination -AttributeProvider $AttributeProvider -AccessValidator $AccessValidator
     Assert-EunsungOrdinaryFile -Path $backup
     Copy-Item -LiteralPath $backup -Destination $destination -Force
     Assert-EunsungOrdinaryFile -Path $destination
@@ -718,10 +872,12 @@ function Invoke-EunsungActivation {
   $httpInvoker = Get-EunsungAdapter -Adapters $Adapters -Name 'HttpInvoker' -Default $null
   $sleepAdapter = Get-EunsungAdapter -Adapters $Adapters -Name 'SleepAdapter' -Default $null
   $accessValidator = Get-EunsungAdapter -Adapters $Adapters -Name 'AccessValidator' -Default $null
-  $capture = Get-EunsungAdapter -Adapters $Adapters -Name 'CaptureSwitchState' -Default { param($Root) Get-EunsungSwitchState -DeployRoot $Root -NativeInvoker $native }
+  $attributeProvider = Get-EunsungAdapter -Adapters $Adapters -Name 'AttributeProvider' -Default $null
+  $aclSetter = Get-EunsungAdapter -Adapters $Adapters -Name 'AclSetter' -Default $null
+  $capture = Get-EunsungAdapter -Adapters $Adapters -Name 'CaptureSwitchState' -Default { param($Root) Get-EunsungSwitchState -DeployRoot $Root -NativeInvoker $native -AttributeProvider $attributeProvider -AccessValidator $accessValidator -AclSetter $aclSetter }
   $switch = Get-EunsungAdapter -Adapters $Adapters -Name 'SwitchApps' -Default { param($Release, $Root) Start-EunsungApps -ReleaseDir $Release -DeployRoot $Root -NativeInvoker $native }
   $stopNew = Get-EunsungAdapter -Adapters $Adapters -Name 'StopNewApps' -Default { Stop-EunsungNewApps -NativeInvoker $native }
-  $restore = Get-EunsungAdapter -Adapters $Adapters -Name 'RestorePrior' -Default { param($State) Restore-EunsungPriorState -SwitchState $State -NativeInvoker $native }
+  $restore = Get-EunsungAdapter -Adapters $Adapters -Name 'RestorePrior' -Default { param($State) Restore-EunsungPriorState -SwitchState $State -NativeInvoker $native -DeployRoot $DeployRoot -AttributeProvider $attributeProvider -AccessValidator $accessValidator }
   $save = Get-EunsungAdapter -Adapters $Adapters -Name 'SaveState' -Default { Invoke-EunsungNative -FilePath 'pm2.cmd' -Arguments @('save') -NativeInvoker $native | Out-Null }
   $health = Get-EunsungAdapter -Adapters $Adapters -Name 'HealthCheck' -Default {
     param($Expected, $Release)
@@ -755,7 +911,7 @@ function Invoke-EunsungActivation {
     $currentMarker = [ordered]@{ commitSha = $CommitSha; releaseDir = $ReleaseDir; activatedAtUtc = [DateTime]::UtcNow.ToString('o') }
     Set-EunsungCurrentMarker -DeployRoot $DeployRoot -Marker $currentMarker
     Write-EunsungJsonAtomic -Path (Join-Path $ReleaseDir 'deployment.success.json') -Value $currentMarker
-    Remove-EunsungRecoveryDump -SwitchState $switchState
+    Remove-EunsungRecoveryDump -SwitchState $switchState -DeployRoot $DeployRoot -AttributeProvider $attributeProvider -AccessValidator $accessValidator
     try { & $retention (Join-Path $DeployRoot 'releases') $ReleaseDir } catch { Write-Warning 'Post-commit release retention failed' }
     return
   } catch {
@@ -765,9 +921,9 @@ function Invoke-EunsungActivation {
   $cleanupFailure = $null
   try { & $stopNew } catch { $cleanupFailure = ConvertTo-EunsungSanitizedDiagnostic $_.Exception.Message }
   if (-not $switchState.HasPrior) {
-    Restore-EunsungOriginalDump -SwitchState $switchState
+    Restore-EunsungOriginalDump -SwitchState $switchState -DeployRoot $DeployRoot -AttributeProvider $attributeProvider -AccessValidator $accessValidator
     Set-EunsungCurrentMarker -DeployRoot $DeployRoot -Marker $null
-    Remove-EunsungRecoveryDump -SwitchState $switchState
+    Remove-EunsungRecoveryDump -SwitchState $switchState -DeployRoot $DeployRoot -AttributeProvider $attributeProvider -AccessValidator $accessValidator
     if ($cleanupFailure) { throw (New-EunsungFailureException -Message "Deployment failed with no prior release and cleanup failed. new=[$failure] cleanup=[$cleanupFailure]" -ExitCode 31) }
     throw (New-EunsungFailureException -Message "Deployment failed with no prior release; new apps stopped. $failure" -ExitCode 30)
   }
@@ -782,7 +938,7 @@ function Invoke-EunsungActivation {
     & $save
     Set-EunsungCurrentMarker -DeployRoot $DeployRoot -Marker $switchState.CurrentMarker
     if (Test-Path -LiteralPath (Join-Path $ReleaseDir 'deployment.success.json')) { Remove-Item -LiteralPath (Join-Path $ReleaseDir 'deployment.success.json') -Force }
-    Remove-EunsungRecoveryDump -SwitchState $switchState
+    Remove-EunsungRecoveryDump -SwitchState $switchState -DeployRoot $DeployRoot -AttributeProvider $attributeProvider -AccessValidator $accessValidator
     if ($cleanupFailure) { throw "new-app cleanup failed. $cleanupFailure" }
   } catch {
     $safeRollbackFailure = ConvertTo-EunsungSanitizedDiagnostic $_.Exception.Message

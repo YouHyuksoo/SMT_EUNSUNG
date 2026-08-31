@@ -602,16 +602,88 @@ try {
     Assert-Equal 0 $script:deleteCalls
   }
 
+  Test-Case 'PM2 dump backup rejects reparse and unsafe ACL storage before any copy' {
+    $root = Join-Path $tempRoot 'recovery-storage-validation'
+    $pm2Home = Join-Path $root 'pm2-home'
+    New-Item -ItemType Directory -Force -Path $pm2Home | Out-Null
+    Set-Content -LiteralPath (Join-Path $pm2Home 'dump.pm2') -Value 'original' -Encoding UTF8
+    $previousPm2Home = [Environment]::GetEnvironmentVariable('PM2_HOME', 'Process')
+    $native = { param($FilePath,$Arguments,$WorkingDirectory,$Environment) @{ ExitCode=0; Output='[]' } }
+    $normalAttributes = { param($Path) if ([IO.Directory]::Exists($Path)) { [IO.FileAttributes]::Directory } else { [IO.FileAttributes]::Archive } }
+    try {
+      [Environment]::SetEnvironmentVariable('PM2_HOME', $pm2Home, 'Process')
+      $reparseAttributes = { param($Path) if ($Path -ceq $pm2Home) { [IO.FileAttributes]::Directory -bor [IO.FileAttributes]::ReparsePoint } elseif ([IO.Directory]::Exists($Path)) { [IO.FileAttributes]::Directory } else { [IO.FileAttributes]::Archive } }
+      Assert-Throws {
+        & (Get-Module EunsungDeployment) { param($Root,$Native,$Attributes) Get-EunsungSwitchState -DeployRoot $Root -NativeInvoker $Native -AttributeProvider $Attributes -AccessValidator { $true } -AclSetter { param($Path) } } $root $native $reparseAttributes
+      } 'reparse'
+      Assert-Equal 0 @((Get-ChildItem -LiteralPath (Join-Path $root 'state') -Filter 'dump-before-*.pm2' -ErrorAction SilentlyContinue)).Count
+      $stateDir = Join-Path $root 'state'
+      $stateReparseAttributes = { param($Path) if ($Path -ceq $stateDir) { [IO.FileAttributes]::Directory -bor [IO.FileAttributes]::ReparsePoint } elseif ([IO.Directory]::Exists($Path)) { [IO.FileAttributes]::Directory } else { [IO.FileAttributes]::Archive } }
+      Assert-Throws {
+        & (Get-Module EunsungDeployment) { param($Root,$Native,$Attributes) Get-EunsungSwitchState -DeployRoot $Root -NativeInvoker $Native -AttributeProvider $Attributes -AccessValidator { $true } -AclSetter { param($Path) } } $root $native $stateReparseAttributes
+      } 'reparse'
+      Assert-Equal 0 @((Get-ChildItem -LiteralPath $stateDir -Filter 'dump-before-*.pm2' -ErrorAction SilentlyContinue)).Count
+      Assert-Throws {
+        & (Get-Module EunsungDeployment) { param($Root,$Native,$Attributes) Get-EunsungSwitchState -DeployRoot $Root -NativeInvoker $Native -AttributeProvider $Attributes -AccessValidator { param($Path) $false } -AclSetter { param($Path) } } $root $native $normalAttributes
+      } 'ACL'
+      Assert-Equal 0 @((Get-ChildItem -LiteralPath (Join-Path $root 'state') -Filter 'dump-before-*.pm2' -ErrorAction SilentlyContinue)).Count
+    } finally {
+      [Environment]::SetEnvironmentVariable('PM2_HOME', $previousPm2Home, 'Process')
+    }
+  }
+
+  Test-Case 'recovery retention deletes only contained ordinary backups and caps repeated rollback failures at one' {
+    $root = Join-Path $tempRoot 'recovery-backup-bound'
+    $pm2Home = Join-Path $root 'pm2-home'
+    $stateDir = Join-Path $root 'state'
+    New-Item -ItemType Directory -Force -Path $pm2Home, $stateDir | Out-Null
+    Set-Content -LiteralPath (Join-Path $pm2Home 'dump.pm2') -Value 'original' -Encoding UTF8
+    $oldBackup = Join-Path $stateDir 'dump-before-00000000000000000000000000000000.pm2'
+    $unsafeBackup = Join-Path $stateDir 'dump-before-11111111111111111111111111111111.pm2'
+    $nonRecovery = Join-Path $stateDir 'notes.pm2'
+    Set-Content -LiteralPath $oldBackup -Value 'old' -Encoding UTF8
+    Set-Content -LiteralPath $unsafeBackup -Value 'unsafe' -Encoding UTF8
+    Set-Content -LiteralPath $nonRecovery -Value 'keep' -Encoding UTF8
+    $previousPm2Home = [Environment]::GetEnvironmentVariable('PM2_HOME', 'Process')
+    $release = New-TestRelease -DeployRoot $root -Sha $shaA
+    Set-Content -LiteralPath (Join-Path $root 'current.json') -Value (@{ commitSha=$shaA; releaseDir=$release } | ConvertTo-Json -Compress) -Encoding UTF8
+    $apps = @(
+      [pscustomobject]@{ name='eunsung-frontend'; pid=101; pm2_env=[pscustomobject]@{ pm_cwd=(Join-Path $release 'apps/frontend'); pm_exec_path=(Join-Path $release 'apps/frontend/server.js') } },
+      [pscustomobject]@{ name='eunsung-backend'; pid=102; pm2_env=[pscustomobject]@{ pm_cwd=(Join-Path $release 'apps/backend'); pm_exec_path=(Join-Path $release 'apps/backend/main.js') } }
+    )
+    $native = { param($FilePath,$Arguments,$WorkingDirectory,$Environment) @{ ExitCode=0; Output=($apps | ConvertTo-Json -Depth 12 -Compress) } }
+    $attributes = { param($Path) if ($Path -ceq $unsafeBackup) { [IO.FileAttributes]::Archive -bor [IO.FileAttributes]::ReparsePoint } elseif ([IO.Directory]::Exists($Path)) { [IO.FileAttributes]::Directory } else { [IO.FileAttributes]::Archive } }
+    $aclSet = [pscustomobject]@{ Count = 0 }
+    try {
+      [Environment]::SetEnvironmentVariable('PM2_HOME', $pm2Home, 'Process')
+      $adapters = @{ TestMode=$true; NativeInvoker=$native; AttributeProvider=$attributes; AccessValidator={ param($Path) $true }; AclSetter={ param($Path) $aclSet.Count++ }; SwitchApps={ throw 'switch failed' }; StopNewApps={}; RestorePrior={ throw 'rollback failed' } }
+      Assert-Throws { Invoke-EunsungActivation -DeployRoot $root -ReleaseDir $release -CommitSha $shaA -Adapters $adapters } 'rollback health failed'
+      Assert-True (-not (Test-Path -LiteralPath $oldBackup))
+      Assert-True (Test-Path -LiteralPath $unsafeBackup)
+      Assert-True (Test-Path -LiteralPath $nonRecovery)
+      $firstSafe = @((Get-ChildItem -LiteralPath $stateDir -Filter 'dump-before-*.pm2') | Where-Object { $_.FullName -ne $unsafeBackup })
+      Assert-Equal 1 $firstSafe.Count
+      Assert-Throws { Invoke-EunsungActivation -DeployRoot $root -ReleaseDir $release -CommitSha $shaA -Adapters $adapters } 'rollback health failed'
+      $safeBackups = @((Get-ChildItem -LiteralPath $stateDir -Filter 'dump-before-*.pm2') | Where-Object { $_.FullName -ne $unsafeBackup })
+      Assert-Equal 1 $safeBackups.Count
+      Assert-True (Test-Path -LiteralPath $unsafeBackup)
+      Assert-True (Test-Path -LiteralPath $nonRecovery)
+      Assert-Equal 2 $aclSet.Count
+    } finally {
+      [Environment]::SetEnvironmentVariable('PM2_HOME', $previousPm2Home, 'Process')
+    }
+  }
+
   Test-Case 'recovery dump is removed after success and retained as one copy after rollback failure' {
     $root = Join-Path $tempRoot 'dump-cleanup'
     $release = New-TestRelease -DeployRoot $root -Sha $shaA
     $state = Join-Path $root 'state'
     New-Item -ItemType Directory -Force -Path $state | Out-Null
-    $backup = Join-Path $state 'dump-before-one.pm2'
+    $backup = Join-Path $state 'dump-before-22222222222222222222222222222222.pm2'
     $dump = Join-Path $state 'dump.pm2'
     Set-Content -LiteralPath $backup -Value 'original' -Encoding UTF8
     Set-Content -LiteralPath $dump -Value 'current' -Encoding UTF8
-    $success = @{ TestMode=$true; CaptureSwitchState={ @{HasPrior=$false;CurrentMarker=$null;Apps=@();DumpBackup=$backup;DumpPath=$dump;OriginalDumpExists=$true} }; SwitchApps={}; HealthCheck={@{Success=$true;Diagnostics=@()}}; SaveState={}; Retention={} }
+    $success = @{ TestMode=$true; AccessValidator={ param($Path) $true }; CaptureSwitchState={ @{HasPrior=$false;CurrentMarker=$null;Apps=@();DumpBackup=$backup;DumpPath=$dump;OriginalDumpExists=$true} }; SwitchApps={}; HealthCheck={@{Success=$true;Diagnostics=@()}}; SaveState={}; Retention={} }
     Invoke-EunsungActivation -DeployRoot $root -ReleaseDir $release -CommitSha $shaA -Adapters $success
     Assert-True (-not (Test-Path -LiteralPath $backup))
     Set-Content -LiteralPath $backup -Value 'original' -Encoding UTF8
@@ -626,11 +698,11 @@ try {
     $release = New-TestRelease -DeployRoot $root -Sha $shaA
     $state = Join-Path $root 'state'
     New-Item -ItemType Directory -Force -Path $state | Out-Null
-    $backup = Join-Path $state 'dump-before-one.pm2'; $dump = Join-Path $state 'dump.pm2'
+    $backup = Join-Path $state 'dump-before-33333333333333333333333333333333.pm2'; $dump = Join-Path $state 'dump.pm2'
     Set-Content -LiteralPath $backup -Value 'original-dump' -NoNewline -Encoding UTF8
     Set-Content -LiteralPath $dump -Value 'mutated-dump' -NoNewline -Encoding UTF8
     Set-Content -LiteralPath (Join-Path $root 'current.json') -Value '{}' -Encoding UTF8
-    $adapters = @{ TestMode=$true; CaptureSwitchState={ @{HasPrior=$false;CurrentMarker=$null;Apps=@();DumpBackup=$backup;DumpPath=$dump;OriginalDumpExists=$true} }; SwitchApps={}; HealthCheck={@{Success=$false;Diagnostics=@('failed')}}; StopNewApps={} }
+    $adapters = @{ TestMode=$true; AccessValidator={ param($Path) $true }; CaptureSwitchState={ @{HasPrior=$false;CurrentMarker=$null;Apps=@();DumpBackup=$backup;DumpPath=$dump;OriginalDumpExists=$true} }; SwitchApps={}; HealthCheck={@{Success=$false;Diagnostics=@('failed')}}; StopNewApps={} }
     Assert-Throws { Invoke-EunsungActivation -DeployRoot $root -ReleaseDir $release -CommitSha $shaA -Adapters $adapters } 'no prior'
     Assert-Equal 'original-dump' (Get-Content -Raw -LiteralPath $dump)
     Assert-True (-not (Test-Path -LiteralPath $backup))
