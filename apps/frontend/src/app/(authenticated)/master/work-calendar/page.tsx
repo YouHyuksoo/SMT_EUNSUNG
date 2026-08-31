@@ -7,60 +7,58 @@
  * 초보자 가이드:
  * 1. 좌측: 연도 + 라인 선택(전사 / 특정 라인). 라인을 고르면 라인 예외 월력을 편집한다.
  * 2. 우측: 월 그리드 — 날짜 클릭 시 DayEditModal. 확정된 일자는 잠긴다.
+ *    셀 체크박스로 여러 날짜를 고르면 같은 모달로 일괄 수정한다(PUT days/bulk 한 번).
  * 3. 상단 버튼: 연간 생성 / 전사에서 복사(라인 모드) / 확정 / 확정취소.
  * 4. 교대시간 탭: IP_SHIFT_TIME_MASTER 유효기간 행 CRUD.
  */
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { Calendar, RefreshCw, CalendarPlus, Copy, Lock, Unlock } from "lucide-react";
-import { Card, CardContent, Button, Input, ConfirmModal } from "@/components/ui";
-import { ProdLineSelect } from "@/components/shared";
+import { Calendar, RefreshCw, CalendarPlus, Lock, Unlock } from "lucide-react";
+import { Card, CardContent, Button, ConfirmModal } from "@/components/ui";
 import api from "@/services/api";
 import CalendarGrid from "./components/CalendarGrid";
 import DayEditModal from "./components/DayEditModal";
+import PlanDowntimeListModal from "./components/PlanDowntimeListModal";
+import PlanDowntimePanel from "./components/PlanDowntimePanel";
 import ShiftTimeTab from "./components/ShiftTimeTab";
-import type { WorkCalendarDay, ShiftTimeItem, WorkCalendarSummary } from "./types";
+import type { WorkCalendarDay, PlanDowntime, ShiftTimeItem } from "./types";
 
 type TabType = "calendar" | "shift";
-type TopAction = "generate" | "copy" | "confirm" | "unconfirm" | null;
+type TopAction = "generate" | "confirm" | "unconfirm" | null;
 
 export default function WorkCalendarPage() {
   const { t } = useTranslation();
 
   const [activeTab, setActiveTab] = useState<TabType>("calendar");
-  const [lineCode, setLineCode] = useState("");
   const [currentMonth, setCurrentMonth] = useState(() => {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   });
+  // 캘린더 셀 체크박스로 고른 일자(YYYY-MM-DD). 월/라인이 바뀌면 비운다.
+  const [selectedDates, setSelectedDates] = useState<Set<string>>(new Set());
   // 연도는 표시 중인 월(currentMonth)에서 파생한다 — 월 그리드가 연도 경계를 넘어가도
   // year가 화면에 보이는 월과 어긋날 수 없다(Bug 3: 일괄작업 대상연도 불일치 방지).
   const year = useMemo(() => currentMonth.split("-")[0], [currentMonth]);
 
-  // I2 회귀 방지: 연도 입력은 로컬 draft로 받는다. currentMonth를 매 keystroke마다 갱신하면
-  // "2026" -> "2027"을 입력하는 중간값(예: "202")까지 fetchDays/fetchSummary를 발화시켜
-  // DTO의 @Matches(/^\d{4}/) 검증에 걸려 400이 반복되고, axios 인터셉터가 400마다 전체 에러
-  // 모달을 띄워 모달이 여러 개 쌓인다. 4자리가 채워졌을 때만 currentMonth를 커밋해 조회를 튼다.
-  const [yearDraft, setYearDraft] = useState(year);
-  useEffect(() => { setYearDraft(year); }, [year]);
-  const handleYearChange = useCallback((v: string) => {
-    const y = v.replace(/\D/g, "").slice(0, 4);
-    setYearDraft(y);
-    if (y.length !== 4) return; // 4자리가 되기 전에는 currentMonth(=조회 트리거)를 건드리지 않는다.
-    setCurrentMonth((prev) => `${y}-${prev.split("-")[1]}`);
-  }, []);
-
   const [days, setDays] = useState<WorkCalendarDay[]>([]);
-  const [summary, setSummary] = useState<WorkCalendarSummary | null>(null);
   const [shiftTimes, setShiftTimes] = useState<ShiftTimeItem[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const [editingDay, setEditingDay] = useState<{ date: string; data: WorkCalendarDay | null } | null>(null);
+  // 표시 중인 달의 계획 비가동. 캘린더 뱃지와 일자별 목록 모달이 함께 쓴다.
+  const [planDowntimes, setPlanDowntimes] = useState<PlanDowntime[]>([]);
+  const [planModalDate, setPlanModalDate] = useState<string | null>(null);
+
+  // 편집 대상 일자. 1건이면 단일 편집(data=기존 값), 여러 건이면 체크박스 일괄 수정(data=null).
+  const [editTargets, setEditTargets] = useState<{ dates: string[]; data: WorkCalendarDay | null } | null>(null);
   const [topAction, setTopAction] = useState<TopAction>(null);
   const [genSatWork, setGenSatWork] = useState(false);
   const [genSunWork, setGenSunWork] = useState(false);
 
-  const lineParam = useMemo(() => (lineCode ? `&lineCode=${lineCode}` : ""), [lineCode]);
+  const changeMonth = useCallback((m: string) => {
+    setCurrentMonth(m);
+    setSelectedDates(new Set());
+  }, []);
+
 
   /* ── 조회 ──
    * 각 로더는 자체 AbortController + 단조증가 requestGeneration을 갖는다.
@@ -69,8 +67,6 @@ export default function WorkCalendarPage() {
    */
   const daysRequestGeneration = useRef(0);
   const daysRequestController = useRef<AbortController | null>(null);
-  const summaryRequestGeneration = useRef(0);
-  const summaryRequestController = useRef<AbortController | null>(null);
   const shiftRequestGeneration = useRef(0);
   const shiftRequestController = useRef<AbortController | null>(null);
 
@@ -81,7 +77,7 @@ export default function WorkCalendarPage() {
     const generation = ++daysRequestGeneration.current;
     setLoading(true);
     try {
-      const res = await api.get(`/master/work-calendar/days?month=${currentMonth}${lineParam}`, { signal: controller.signal });
+      const res = await api.get(`/master/work-calendar/days?month=${currentMonth}`, { signal: controller.signal });
       if (generation !== daysRequestGeneration.current) return;
       setDays(res.data?.data ?? []);
     } catch {
@@ -89,21 +85,7 @@ export default function WorkCalendarPage() {
     } finally {
       if (generation === daysRequestGeneration.current) setLoading(false);
     }
-  }, [currentMonth, lineParam]);
-
-  const fetchSummary = useCallback(async () => {
-    summaryRequestController.current?.abort();
-    const controller = new AbortController();
-    summaryRequestController.current = controller;
-    const generation = ++summaryRequestGeneration.current;
-    try {
-      const res = await api.get(`/master/work-calendar/summary?year=${year}${lineParam}`, { signal: controller.signal });
-      if (generation !== summaryRequestGeneration.current) return;
-      setSummary(res.data?.data ?? null);
-    } catch {
-      if (!controller.signal.aborted && generation === summaryRequestGeneration.current) setSummary(null);
-    }
-  }, [year, lineParam]);
+  }, [currentMonth]);
 
   const fetchShiftTimes = useCallback(async () => {
     shiftRequestController.current?.abort();
@@ -117,56 +99,85 @@ export default function WorkCalendarPage() {
     } catch { /* interceptor */ }
   }, []);
 
+  const toggleSelect = useCallback((date: string) => {
+    setSelectedDates((prev) => {
+      const next = new Set(prev);
+      if (next.has(date)) next.delete(date); else next.add(date);
+      return next;
+    });
+  }, []);
+
+  const fetchPlanDowntimes = useCallback(async () => {
+    const [y, m] = currentMonth.split("-").map(Number);
+    const last = String(new Date(y, m, 0).getDate()).padStart(2, "0");
+    try {
+      const res = await api.get("/oee/work-result/downtimes/plan", {
+        params: { from: `${currentMonth}-01`, to: `${currentMonth}-${last}` },
+      });
+      setPlanDowntimes(res.data?.data?.list ?? []);
+    } catch { setPlanDowntimes([]); }
+  }, [currentMonth]);
+
+  useEffect(() => { void fetchPlanDowntimes(); }, [fetchPlanDowntimes]);
+
+  /** 일자 → 계획 비가동 건수 (캘린더 뱃지) */
+  const planCounts = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const p of planDowntimes) m.set(p.planDate, (m.get(p.planDate) ?? 0) + 1);
+    return m;
+  }, [planDowntimes]);
+
+  /** 등록 패널에 넘길 체크된 일자 (정렬된 배열) */
+  const selectedDateList = useMemo(() => [...selectedDates].sort(), [selectedDates]);
+
+  /**
+   * 계획 비가동 등록 성공 후 — 뱃지를 다시 읽고 캘린더 선택을 비운다.
+   * 선택을 남겨두면 같은 날짜에 실수로 다시 등록(= 기존 계획 덮어쓰기)하기 쉽다.
+   */
+  const handlePlanRegistered = useCallback(async () => {
+    setSelectedDates(new Set());
+    await fetchPlanDowntimes();
+  }, [fetchPlanDowntimes]);
+
   useEffect(() => { void fetchDays(); return () => daysRequestController.current?.abort(); }, [fetchDays]);
-  useEffect(() => { void fetchSummary(); return () => summaryRequestController.current?.abort(); }, [fetchSummary]);
   useEffect(() => { void fetchShiftTimes(); return () => shiftRequestController.current?.abort(); }, [fetchShiftTimes]);
 
   /* ── 쓰기 ── */
   const refreshAll = useCallback(async () => {
-    await Promise.all([fetchDays(), fetchSummary()]);
-  }, [fetchDays, fetchSummary]);
+    await fetchDays();
+  }, [fetchDays]);
 
-  const handleDaySave = useCallback(async (day: Partial<WorkCalendarDay>) => {
+  const handleDaySave = useCallback(async (days: Partial<WorkCalendarDay>[]) => {
     try {
       await api.put("/master/work-calendar/days/bulk", {
-        lineCode: lineCode || undefined,
-        days: [day],
+        days,
       });
-      setEditingDay(null);
+      setEditTargets(null);
+      setSelectedDates(new Set());
       await refreshAll();
     } catch { /* interceptor */ }
-  }, [lineCode, refreshAll]);
+  }, [refreshAll]);
 
   const handleGenerate = useCallback(async () => {
     try {
       await api.post("/master/work-calendar/generate", {
         year,
-        lineCode: lineCode || undefined,
         saturdayWork: genSatWork,
         sundayWork: genSunWork,
         applyHolidays: true,
       });
       await refreshAll();
     } catch { /* interceptor */ } finally { setTopAction(null); }
-  }, [year, lineCode, genSatWork, genSunWork, refreshAll]);
-
-  const handleCopyFromCompany = useCallback(async () => {
-    if (!lineCode) return;
-    try {
-      await api.post("/master/work-calendar/copy-from-company", { year, lineCode });
-      await refreshAll();
-    } catch { /* interceptor */ } finally { setTopAction(null); }
-  }, [year, lineCode, refreshAll]);
+  }, [year, genSatWork, genSunWork, refreshAll]);
 
   const handleConfirm = useCallback(async (confirmed: boolean) => {
     try {
       await api.post(`/master/work-calendar/${confirmed ? "confirm" : "unconfirm"}`, {
         year,
-        lineCode: lineCode || undefined,
       });
       await refreshAll();
     } catch { /* interceptor */ } finally { setTopAction(null); }
-  }, [year, lineCode, refreshAll]);
+  }, [year, refreshAll]);
 
   return (
     <div className="h-full flex flex-col overflow-hidden p-6 gap-4 animate-fade-in">
@@ -188,11 +199,6 @@ export default function WorkCalendarPage() {
               <Button variant="secondary" size="sm" onClick={() => setTopAction("generate")}>
                 <CalendarPlus className="w-4 h-4 mr-1" />{t("master.workCalendar.generateYear")}
               </Button>
-              {lineCode && (
-                <Button variant="secondary" size="sm" onClick={() => setTopAction("copy")}>
-                  <Copy className="w-4 h-4 mr-1" />{t("master.workCalendar.copyFromCompany")}
-                </Button>
-              )}
               <Button variant="secondary" size="sm" onClick={() => setTopAction("unconfirm")}>
                 <Unlock className="w-4 h-4 mr-1" />{t("master.workCalendar.unconfirm")}
               </Button>
@@ -221,60 +227,16 @@ export default function WorkCalendarPage() {
 
       {activeTab === "calendar" ? (
         <div className="grid grid-cols-12 gap-4 min-h-0 flex-1">
-          {/* 좌측: 연도 + 라인 + 요약 */}
-          <div className="col-span-3 flex flex-col min-h-0 gap-3">
-            <Card padding="none">
-              <CardContent className="p-3 space-y-3">
-                <div>
-                  <label className="mb-1.5 block text-sm font-medium text-text dark:text-gray-200">
-                    {t("master.workCalendar.year")}
-                  </label>
-                  <Input value={yearDraft} onChange={(e) => handleYearChange(e.target.value)} maxLength={4} fullWidth />
-                </div>
-                <div>
-                  <label className="mb-1.5 block text-sm font-medium text-text dark:text-gray-200">
-                    {t("master.workCalendar.line")}
-                  </label>
-                  <ProdLineSelect value={lineCode} onChange={setLineCode} fullWidth />
-                  <p className="mt-1 text-xs text-text-muted dark:text-gray-400">
-                    {lineCode
-                      ? t("master.workCalendar.lineModeHint")
-                      : t("master.workCalendar.companyModeHint")}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-
-            {summary && (
-              <Card padding="none">
-                <CardContent className="p-3 space-y-1.5 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-text-muted dark:text-gray-400">{t("master.workCalendar.workDays")}</span>
-                    <b className="text-blue-600 dark:text-blue-400">{summary.workDays}</b>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-text-muted dark:text-gray-400">{t("master.workCalendar.offDays")}</span>
-                    <b className="text-red-500 dark:text-red-400">{summary.offDays}</b>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-text-muted dark:text-gray-400">{t("master.workCalendar.halfDays")}</span>
-                    <b className="text-yellow-600 dark:text-yellow-400">{summary.halfDays}</b>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-text-muted dark:text-gray-400">{t("master.workCalendar.specialDays")}</span>
-                    <b className="text-green-600 dark:text-green-400">{summary.specialDays}</b>
-                  </div>
-                  <div className="flex justify-between border-t border-border dark:border-gray-700 pt-1.5">
-                    <span className="text-text-muted dark:text-gray-400">{t("master.workCalendar.totalMinutes")}</span>
-                    <b className="text-text dark:text-gray-200">{summary.totalMinutes.toLocaleString()}</b>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+          {/* 좌측: 설비 계획 비가동 등록 (설비/라인 · 사유 · 시간) */}
+          <div className="col-span-4 flex flex-col min-h-0 overflow-y-auto">
+            <PlanDowntimePanel
+              selectedDates={selectedDateList}
+              onRegistered={handlePlanRegistered}
+            />
           </div>
 
           {/* 우측: 월 그리드 */}
-          <div className="col-span-9 flex flex-col min-h-0">
+          <div className="col-span-8 flex flex-col min-h-0">
             <Card padding="none" className="flex-1 flex flex-col min-h-0">
               <CardContent className="flex-1 flex flex-col min-h-0 p-4 overflow-y-auto">
                 {loading ? (
@@ -285,8 +247,14 @@ export default function WorkCalendarPage() {
                   <CalendarGrid
                     month={currentMonth}
                     days={days}
-                    onDayClick={(date, day) => setEditingDay({ date, data: day })}
-                    onMonthChange={setCurrentMonth}
+                    selectedDates={selectedDates}
+                    planCounts={planCounts}
+                    onPlanBadgeClick={setPlanModalDate}
+                    onDayClick={(date, day) => setEditTargets({ dates: [date], data: day })}
+                    onToggleSelect={toggleSelect}
+                    onSelectDates={(dates) => setSelectedDates(new Set(dates))}
+                    onBulkEdit={() => setEditTargets({ dates: [...selectedDates].sort(), data: null })}
+                    onMonthChange={changeMonth}
                   />
                 )}
               </CardContent>
@@ -300,11 +268,20 @@ export default function WorkCalendarPage() {
       )}
 
       <DayEditModal
-        isOpen={editingDay !== null}
-        onClose={() => setEditingDay(null)}
-        selectedDate={editingDay?.date ?? null}
-        currentData={editingDay?.data ?? null}
+        isOpen={editTargets !== null}
+        onClose={() => setEditTargets(null)}
+        targetDates={editTargets?.dates ?? []}
+        currentData={editTargets?.data ?? null}
+        shiftTimes={shiftTimes}
         onSave={handleDaySave}
+      />
+
+      <PlanDowntimeListModal
+        isOpen={planModalDate !== null}
+        onClose={() => setPlanModalDate(null)}
+        date={planModalDate}
+        rows={planDowntimes.filter((p) => p.planDate === planModalDate)}
+        onChanged={fetchPlanDowntimes}
       />
 
       <ConfirmModal
@@ -333,13 +310,6 @@ export default function WorkCalendarPage() {
         }
       />
 
-      <ConfirmModal
-        isOpen={topAction === "copy"}
-        onClose={() => setTopAction(null)}
-        onConfirm={handleCopyFromCompany}
-        title={t("master.workCalendar.copyFromCompany")}
-        message={t("master.workCalendar.confirmMsg.copy", "전사 {{year}}년 월력을 이 라인으로 복사합니다. 이 라인의 기존 예외는 덮어써집니다.", { year })}
-      />
 
       <ConfirmModal
         isOpen={topAction === "confirm"}

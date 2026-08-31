@@ -20,13 +20,18 @@ import { HelpTooltip } from "@/components/shared";
 
 export const WORK_CALENDAR_FIELD_HELP = {
   // 전사 월력 (IP_PRODUCT_COMPANY_CALENDAR) / 라인 예외 (IP_PRODUCT_LINE_CALENDAR)
-  dayType: { db: "IP_PRODUCT_COMPANY_CALENDAR.DAY_TYPE", description: "근무/휴무/반일/특근 구분입니다. 휴무(OFF)로 지정하면 HOLIDAY_YN이 'Y'로 함께 설정됩니다." },
+  dayType: { db: "IP_PRODUCT_COMPANY_CALENDAR.DAY_TYPE", description: "정상/휴무/임시조정/공휴일(특근) 구분입니다. 휴무(OFF)로 지정하면 HOLIDAY_YN이 'Y'로 함께 설정됩니다." },
   offReason: { db: "IP_PRODUCT_COMPANY_CALENDAR.OFF_REASON", description: "휴무 사유입니다. 근무유형이 휴무일 때만 입력합니다." },
-  workMinutes: { db: "IP_PRODUCT_COMPANY_CALENDAR.WORK_MINUTES", description: "그날의 순근무분입니다. 비워두면 교대시간 마스터에서 자동 계산됩니다." },
+  workMinutes: { db: "IP_PRODUCT_COMPANY_CALENDAR.WORK_MINUTES", description: "그날의 순근무분입니다. 직접 입력하지 않고 (교대조 작업시간 합 - 비작업시간 합)으로 파생됩니다. 교대조 행이 없는 일자는 교대시간 마스터에서 계산됩니다." },
   otMinutes: { db: "IP_PRODUCT_COMPANY_CALENDAR.OT_MINUTES", description: "그날의 잔업분입니다." },
   confirmYn: { db: "IP_PRODUCT_COMPANY_CALENDAR.CONFIRM_YN", description: "확정 여부입니다. 확정된 일자는 수정·생성·복사가 차단됩니다." },
   comment: { db: "IP_PRODUCT_COMPANY_CALENDAR.CALENDAR_COMMENT", description: "월력 비고입니다." },
   lineCode: { db: "IP_PRODUCT_LINE_CALENDAR.LINE_CODE", description: "라인 예외 월력의 대상 라인입니다. 해당 (일자, 라인) 행이 있으면 전사 월력을 덮어씁니다." },
+
+  // 일자별 교대조 작업시간 (IP_PRODUCT_CALENDAR_SHIFT) / 비작업 시간 (IP_PRODUCT_CALENDAR_BREAK)
+  shiftStartTime: { db: "IP_PRODUCT_CALENDAR_SHIFT.START_TIME", description: "그 일자 해당 교대조의 시작 시각입니다. 비워두면 그 교대조는 운영하지 않는 것으로 저장됩니다." },
+  shiftEndTime: { db: "IP_PRODUCT_CALENDAR_SHIFT.END_TIME", description: "그 일자 해당 교대조의 종료 시각입니다. 시작보다 이르면 자정을 넘긴 야간 교대로 계산됩니다." },
+  breakMinutes: { db: "IP_PRODUCT_CALENDAR_BREAK.BREAK_MINUTES", description: "휴게·식사 등 비작업 시간(분)입니다. 근무시간에서 차감됩니다." },
 
   // 교대시간 (IP_SHIFT_TIME_MASTER)
   dateset: { db: "IP_SHIFT_TIME_MASTER.DATESET", description: "교대시간 적용 시작일입니다. 등록 후에는 변경할 수 없습니다." },
