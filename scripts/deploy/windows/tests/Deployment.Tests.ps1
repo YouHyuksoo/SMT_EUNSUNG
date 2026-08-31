@@ -264,6 +264,29 @@ try {
     Assert-Match 'outside expected release' ($result.Diagnostics -join ' ')
   }
 
+  Test-Case 'health runner passes ExpectedReleaseDir and rejects stale PM2 JSON' {
+    $root = Join-Path $tempRoot 'health-runner-stale'
+    $release = New-TestRelease -DeployRoot $root -Sha $shaA
+    $oldRelease = Join-Path (Join-Path $root 'releases') $shaB
+    New-Item -ItemType Directory -Force -Path $oldRelease | Out-Null
+    $pm2Cmd = Join-Path $root 'pm2-stale.cmd'
+    $json = (@(
+      @{ name='eunsung-frontend'; pid=101; pm2_env=@{ status='online'; pm_cwd=(Join-Path $oldRelease 'apps/frontend'); pm_exec_path=(Join-Path $oldRelease 'apps/frontend/server.js') } },
+      @{ name='eunsung-backend'; pid=102; pm2_env=@{ status='online'; pm_cwd=(Join-Path $oldRelease 'apps/backend'); pm_exec_path=(Join-Path $oldRelease 'apps/backend/main.js') } }
+    ) | ConvertTo-Json -Depth 8 -Compress)
+    Set-Content -LiteralPath $pm2Cmd -Value @('@echo off', ('echo ' + $json)) -Encoding ASCII
+    $runner = Join-Path (Split-Path -Parent $PSScriptRoot) 'Test-EunsungDeployment.ps1'
+    $output = ''
+    try {
+      $output = & 'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe' -NoProfile -ExecutionPolicy Bypass -File $runner -CommitSha $shaA -DeployRoot $root -ReleaseDir $release -Pm2Path $pm2Cmd -MaxAttempts 1 -RetryDelayMs 0 2>&1 | Out-String
+    } catch {
+      $output += $_.Exception.Message
+    }
+    $runnerExit = $LASTEXITCODE
+    Assert-True ($runnerExit -ne 0)
+    Assert-Match 'outside expected release' $output
+  }
+
   Test-Case 'diagnostics redact environment, config, key, token and password content' {
     $message = 'DB_PASSWORD=hunter2 TOKEN=abc key: xyz env={secret} config={password} {"API_KEY":"json-secret"} C:\secret\backend.env'
     $safe = ConvertTo-EunsungSanitizedDiagnostic $message
@@ -293,6 +316,23 @@ try {
     Remove-EunsungOldSuccessfulReleases -ReleaseRoot $releases -CurrentRelease (Join-Path $releases $names[0])
     Assert-True (Test-Path -LiteralPath $invalid)
     Assert-Equal 3 @((Get-ChildItem -LiteralPath $releases -Directory | Where-Object { (Test-EunsungCommitSha $_.Name) -and (Test-Path -LiteralPath (Join-Path $_.FullName 'deployment.success.json')) })).Count
+  }
+
+  Test-Case 'retention retains malformed, commit-mismatched, and releaseDir-mismatched markers' {
+    $root = Join-Path $tempRoot 'retention-invalid-markers'
+    $releases = Join-Path $root 'releases'
+    New-Item -ItemType Directory -Force -Path $releases | Out-Null
+    $current = '{0:x40}' -f 81
+    $malformed = '{0:x40}' -f 82
+    $wrongCommit = '{0:x40}' -f 83
+    $wrongReleaseDir = '{0:x40}' -f 84
+    foreach ($name in @($current, $malformed, $wrongCommit, $wrongReleaseDir)) { New-Item -ItemType Directory -Force -Path (Join-Path $releases $name) | Out-Null }
+    Set-Content -LiteralPath (Join-Path (Join-Path $releases $current) 'deployment.success.json') -Value ('{"commitSha":"' + $current + '"}') -Encoding UTF8
+    Set-Content -LiteralPath (Join-Path (Join-Path $releases $malformed) 'deployment.success.json') -Value '{not-json' -Encoding UTF8
+    Set-Content -LiteralPath (Join-Path (Join-Path $releases $wrongCommit) 'deployment.success.json') -Value ('{"commitSha":"' + $current + '"}') -Encoding UTF8
+    Set-Content -LiteralPath (Join-Path (Join-Path $releases $wrongReleaseDir) 'deployment.success.json') -Value (@{ commitSha=$wrongReleaseDir; releaseDir=(Join-Path $releases $wrongCommit) } | ConvertTo-Json -Compress) -Encoding UTF8
+    Remove-EunsungOldSuccessfulReleases -ReleaseRoot $releases -CurrentRelease (Join-Path $releases $current) -PriorSuccessesToKeep 0
+    foreach ($name in @($malformed, $wrongCommit, $wrongReleaseDir)) { Assert-True (Test-Path -LiteralPath (Join-Path $releases $name)) }
   }
 
   Test-Case 'retention skips a reparse candidate and leaves an external sentinel untouched' {
@@ -598,6 +638,30 @@ try {
       StopNewApps = { $script:deleteCalls++ }
     }
     Assert-Throws { Invoke-EunsungActivation -DeployRoot $root -ReleaseDir $release -CommitSha $shaA -Adapters $adapters } 'ACL|definitions|dump'
+    Assert-Equal 0 $script:switchCalls
+    Assert-Equal 0 $script:deleteCalls
+  }
+
+  Test-Case 'prior PM2 paths must match captured release before switch or delete' {
+    $root = Join-Path $tempRoot 'prior-path-snapshot'
+    $target = New-TestRelease -DeployRoot $root -Sha $shaA
+    $prior = New-TestRelease -DeployRoot $root -Sha $shaB
+    $stateDir = Join-Path $root 'state'
+    New-Item -ItemType Directory -Force -Path $stateDir | Out-Null
+    $backup = Join-Path $stateDir 'dump-before-44444444444444444444444444444444.pm2'
+    $dump = Join-Path $stateDir 'dump.pm2'
+    Set-Content -LiteralPath $backup -Value 'prior-dump' -Encoding UTF8
+    Set-Content -LiteralPath $dump -Value 'live-dump' -Encoding UTF8
+    $staleRoot = Join-Path $root 'stale-release'
+    $apps = @(
+      [pscustomobject]@{ name='eunsung-frontend'; pid=101; pm2_env=[pscustomobject]@{ pm_cwd=(Join-Path $staleRoot 'apps/frontend'); pm_exec_path=(Join-Path $staleRoot 'apps/frontend/server.js') } },
+      [pscustomobject]@{ name='eunsung-backend'; pid=102; pm2_env=[pscustomobject]@{ pm_cwd=(Join-Path $staleRoot 'apps/backend'); pm_exec_path=(Join-Path $staleRoot 'apps/backend/main.js') } }
+    )
+    $script:switchCalls = 0
+    $script:deleteCalls = 0
+    $snapshot = @{ HasPrior=$true; CurrentMarker=@{commitSha=$shaB;releaseDir=$prior}; Apps=$apps; DumpBackup=$backup; DumpBackupHash=(Get-TestFileSha256 -Path $backup); DumpPath=$dump; OriginalDumpExists=$true }
+    $adapters = @{ TestMode=$true; AccessValidator={ param($Path) $true }; CaptureSwitchState={ $snapshot }; SwitchApps={ $script:switchCalls++ }; StopNewApps={ $script:deleteCalls++ } }
+    Assert-Throws { Invoke-EunsungActivation -DeployRoot $root -ReleaseDir $target -CommitSha $shaA -Adapters $adapters } 'prior PM2 path'
     Assert-Equal 0 $script:switchCalls
     Assert-Equal 0 $script:deleteCalls
   }
