@@ -427,17 +427,34 @@ function Invoke-EunsungNative {
 function Get-EunsungWrapperContent {
   param(
     [Parameter(Mandatory)][string]$ProfilePath,
-    [Parameter(Mandatory)][string]$Pm2Path
+    [Parameter(Mandatory)][string]$Pm2Path,
+    [Parameter(Mandatory)][string]$LogPath
   )
 
   $escapedProfile = $ProfilePath.Replace("'", "''")
   $escapedPm2 = $Pm2Path.Replace("'", "''")
+  $escapedLog = $LogPath.Replace("'", "''")
   return @"
 `$ErrorActionPreference = 'Stop'
 `$profileRoot = [IO.Path]::GetFullPath('$escapedProfile').TrimEnd('\')
 `$env:USERPROFILE = `$profileRoot
 `$env:PM2_HOME = Join-Path `$env:USERPROFILE '.pm2'
 `$env:Path = (Split-Path -Parent '$escapedPm2') + ';C:\Program Files\nodejs;' + `$env:Path
+`$logPath = [IO.Path]::GetFullPath('$escapedLog')
+`$stage = 'preflight'; `$operation = 'none'; `$nativeExit = `$null; `$pm2Output = @()
+function Write-SafePm2BootstrapLog {
+  param([string]`$Status, [string]`$Message)
+  `$sanitized = ([string]`$Message) -replace '(?i)(password|token|secret|private[_ -]?key|api[_ -]?key)\s*[:=]\s*[^\s;]+', '`$1=[REDACTED]'
+  if (`$sanitized.Length -gt 2048) { `$sanitized = `$sanitized.Substring(0, 2048) }
+  `$line = "`$([DateTime]::UtcNow.ToString('o')) status=`$Status stage=`$stage operation=`$operation exit=`$nativeExit message=`$sanitized`r`n"
+  [IO.File]::AppendAllText(`$logPath, `$line, (New-Object Text.UTF8Encoding(`$false)))
+}
+try {
+`$logRoot = Split-Path -Parent `$logPath
+if (-not (Test-Path -LiteralPath `$logRoot -PathType Container)) { throw 'PM2 bootstrap log directory does not exist.' }
+`$logRootItem = Get-Item -LiteralPath `$logRoot -Force
+if ((`$logRootItem.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) { throw 'PM2 bootstrap log directory is unsafe.' }
+if (Test-Path -LiteralPath `$logPath) { `$logItem=Get-Item -LiteralPath `$logPath -Force; if (`$logItem.PSIsContainer -or (`$logItem.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0 -or (`$logItem.PSObject.Properties.Name -contains 'LinkType' -and [string]`$logItem.LinkType -eq 'HardLink')) { throw 'PM2 bootstrap log must be an ordinary file.' } }
 foreach (`$candidate in @(`$profileRoot, `$env:PM2_HOME)) {
   if (Test-Path -LiteralPath `$candidate) {
     `$item = Get-Item -LiteralPath `$candidate -Force
@@ -449,13 +466,23 @@ if (-not `$dumpPath.StartsWith(([IO.Path]::GetFullPath(`$env:PM2_HOME).TrimEnd('
 if (Test-Path -LiteralPath `$dumpPath) {
   `$dump = Get-Item -LiteralPath `$dumpPath -Force
   if (`$dump.PSIsContainer -or (`$dump.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0 -or (`$dump.PSObject.Properties.Name -contains 'LinkType' -and [string]`$dump.LinkType -eq 'HardLink')) { throw 'PM2 dump must be an ordinary file.' }
-  & '$escapedPm2' resurrect
   `$operation = 'resurrect'
+  `$stage = 'invoke'
+  `$pm2Output = @(& '$escapedPm2' resurrect 2>&1 | ForEach-Object { [string]`$_ })
+  `$nativeExit = `$LASTEXITCODE
 } else {
-  & '$escapedPm2' ping
   `$operation = 'ping'
+  `$stage = 'invoke'
+  `$pm2Output = @(& '$escapedPm2' ping 2>&1 | ForEach-Object { [string]`$_ })
+  `$nativeExit = `$LASTEXITCODE
 }
-if (`$LASTEXITCODE -ne 0) { throw "PM2 `$operation failed with exit code `$LASTEXITCODE" }
+if (`$nativeExit -ne 0) { throw "PM2 `$operation failed with exit code `$nativeExit" }
+`$stage='complete'; Write-SafePm2BootstrapLog -Status 'ok' -Message ((`$pm2Output -join ' ') -replace '[\r\n]+',' ')
+} catch {
+  `$failure = ((`$pm2Output -join ' ') + ' ' + `$_.Exception.Message) -replace '[\r\n]+',' '
+  try { Write-SafePm2BootstrapLog -Status 'error' -Message `$failure } catch { }
+  throw
+}
 "@
 }
 
@@ -714,7 +741,11 @@ function Initialize-EunsungDeployServer {
   $pm2Actual = [string]$pm2Package.version
   if ($pm2Actual -cne $script:Pm2Version) { throw "Expected PM2 $($script:Pm2Version), found '$pm2Actual'." }
 
-  $wrapperContent = Get-EunsungWrapperContent -ProfilePath $profilePath -Pm2Path $pm2Path
+  $logRoot=Assert-EunsungBootstrapPath -Root $root -Candidate (Join-Path $root 'logs') -AllowRoot
+  Assert-EunsungOrdinaryPath -Path $logRoot
+  $pm2BootstrapLog=Assert-EunsungBootstrapPath -Root $root -Candidate (Join-Path $logRoot 'pm2-bootstrap.log')
+  if(Test-Path -LiteralPath $pm2BootstrapLog){Assert-EunsungOrdinaryPath -Path $pm2BootstrapLog}
+  $wrapperContent = Get-EunsungWrapperContent -ProfilePath $profilePath -Pm2Path $pm2Path -LogPath $pm2BootstrapLog
   $existingContent = if (Test-Path -LiteralPath $wrapperPath) { Assert-EunsungOrdinaryPath -Path $wrapperPath;Assert-EunsungBootstrapExecutableAcl -Path $wrapperPath -DeploySid $account.SID;Get-Content -Raw -LiteralPath $wrapperPath } else { $null }
   if ($existingContent -cne $wrapperContent) { Set-EunsungProtectedBootstrapFile -BootstrapRoot $bootstrapRoot -Path $wrapperPath -Content $wrapperContent -DeploySid $account.SID }
   Assert-EunsungOrdinaryPath -Path $wrapperPath
