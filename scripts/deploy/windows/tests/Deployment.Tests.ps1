@@ -62,6 +62,10 @@ function New-TestRelease {
   Set-Content -LiteralPath (Join-Path $release 'ecosystem.config.js') -Value 'module.exports={apps:[]}' -Encoding UTF8
   Set-Content -LiteralPath (Join-Path $release 'package.json') -Value '{}' -Encoding UTF8
   Set-Content -LiteralPath (Join-Path $release 'pnpm-lock.yaml') -Value 'lockfileVersion: 9' -Encoding UTF8
+  New-Item -ItemType Directory -Force -Path (Join-Path $release 'scripts/deploy/windows') | Out-Null
+  foreach ($scriptName in @('EunsungDeployment.psm1', 'Deploy-EunsungRelease.ps1', 'Test-EunsungDeployment.ps1')) {
+    Set-Content -LiteralPath (Join-Path $release "scripts/deploy/windows/$scriptName") -Value "# $scriptName" -Encoding UTF8
+  }
   Set-Content -LiteralPath (Join-Path $release '.commit-sha') -Value $Sha -NoNewline -Encoding ASCII
   Write-EunsungBuildMarker -ReleaseDir $release -CommitSha $Sha
   if ($BadHash) {
@@ -141,6 +145,45 @@ try {
     Assert-Throws { Assert-EunsungOrdinaryFile -Path (Join-Path $tempRoot 'missing.env') } 'ordinary file'
   }
 
+  Test-Case 'protected shared directory ancestry rejects a mocked reparse point' {
+    $root = Join-Path $tempRoot 'shared-ancestry'
+    $release = Join-Path $root 'releases/test'
+    New-Item -ItemType Directory -Force -Path (Join-Path $root 'shared'), $release | Out-Null
+    Set-Content -LiteralPath (Join-Path $root 'shared/backend.env') -Value 'x' -Encoding UTF8
+    Set-Content -LiteralPath (Join-Path $root 'shared/frontend-database.json') -Value '{}' -Encoding UTF8
+    $provider = { param($Path) if ($Path -match 'shared$') { [IO.FileAttributes]::Directory -bor [IO.FileAttributes]::ReparsePoint } elseif ([IO.Directory]::Exists($Path)) { [IO.FileAttributes]::Directory } else { [IO.FileAttributes]::Archive } }
+    Assert-Throws {
+      & (Get-Module EunsungDeployment) { param($DeployRoot,$ReleaseDir,$Attributes) Copy-EunsungProtectedConfigs -DeployRoot $DeployRoot -ReleaseDir $ReleaseDir -AttributeProvider $Attributes -AccessValidator { $true } } $root $release $provider
+    } 'reparse'
+  }
+
+  Test-Case 'protected config rejects reparse ancestry and ACL validator accepts only narrow deployment access' {
+    $release = Join-Path $tempRoot 'protected-ancestry'
+    $config = Join-Path $release 'apps/backend/.env'
+    New-Item -ItemType Directory -Force -Path (Split-Path -Parent $config), (Join-Path $release 'apps/frontend/config') | Out-Null
+    Set-Content -LiteralPath $config -Value 'secret' -Encoding UTF8
+    Set-Content -LiteralPath (Join-Path $release 'apps/frontend/config/database.json') -Value '{}' -Encoding UTF8
+    $attributes = { param($Path) if ($Path -match 'apps\\backend$') { [IO.FileAttributes]::Directory -bor [IO.FileAttributes]::ReparsePoint } elseif ([IO.Directory]::Exists($Path)) { [IO.FileAttributes]::Directory } else { [IO.FileAttributes]::Archive } }
+    Assert-Throws { Assert-EunsungProtectedConfig -ReleaseDir $release -AttributeProvider $attributes -AccessValidator { $true } } 'reparse'
+
+    $allowedAcl = [pscustomobject]@{ Owner = 'BUILTIN\Administrators'; Access = @(
+      [pscustomobject]@{ IdentityReference = 'MACHINE\eunsung-deploy'; FileSystemRights = 'ReadAndExecute'; AccessControlType = 'Allow' },
+      [pscustomobject]@{ IdentityReference = 'BUILTIN\Users'; FileSystemRights = 'ReadAndExecute'; AccessControlType = 'Allow' }
+    ) }
+    $broadAcl = [pscustomobject]@{ Owner = 'BUILTIN\Administrators'; Access = @(
+      [pscustomobject]@{ IdentityReference = 'MACHINE\eunsung-deploy'; FileSystemRights = 'ReadAndExecute'; AccessControlType = 'Allow' },
+      [pscustomobject]@{ IdentityReference = 'BUILTIN\Users'; FileSystemRights = 'Modify'; AccessControlType = 'Allow' }
+    ) }
+    $unknownWriterAcl = [pscustomobject]@{ Owner = 'BUILTIN\Administrators'; Access = @(
+      [pscustomobject]@{ IdentityReference = 'MACHINE\eunsung-deploy'; FileSystemRights = 'ReadAndExecute'; AccessControlType = 'Allow' },
+      [pscustomobject]@{ IdentityReference = 'MACHINE\unapproved-writer'; FileSystemRights = 'Modify'; AccessControlType = 'Allow' }
+    ) }
+    Assert-True (Test-EunsungAclAccess -Path $config -AclProvider { $allowedAcl })
+    Assert-True (-not (Test-EunsungAclAccess -Path $config -AclProvider { $broadAcl }))
+    Assert-True (-not (Test-EunsungAclAccess -Path $config -AclProvider { $unknownWriterAcl }))
+    Assert-EunsungProtectedConfig -ReleaseDir $release -AclProvider { $allowedAcl }
+  }
+
   Test-Case 'native nonzero exit is a terminating failure' {
     $native = { param($FilePath, $Arguments, $WorkingDirectory, $Environment) @{ ExitCode = 17; Output = 'configuration payload impossible-to-redact-value' } }
     try {
@@ -211,9 +254,9 @@ try {
     }
     $failed = Join-Path $releases 'failed'
     New-Item -ItemType Directory -Path $failed | Out-Null
-    Remove-EunsungOldSuccessfulReleases -ReleaseRoot $releases -CurrentRelease (Join-Path $releases 'release1') -PriorSuccessesToKeep 3
+    Remove-EunsungOldSuccessfulReleases -ReleaseRoot $releases -CurrentRelease (Join-Path $releases 'release1')
     Assert-True (Test-Path -LiteralPath $failed)
-    Assert-Equal 4 @((Get-ChildItem -LiteralPath $releases -Directory | Where-Object { Test-Path -LiteralPath (Join-Path $_.FullName 'deployment.success.json') })).Count
+    Assert-Equal 3 @((Get-ChildItem -LiteralPath $releases -Directory | Where-Object { Test-Path -LiteralPath (Join-Path $_.FullName 'deployment.success.json') })).Count
   }
 
   Test-Case 'build marker records exact SHA, expected outputs and non-secret config hashes' {
@@ -223,15 +266,16 @@ try {
     Assert-Equal $shaA $marker.commitSha
     Assert-True ($marker.expectedOutputs.Count -ge 3)
     Assert-True ($null -ne $marker.configHashes.'ecosystem.config.js')
-    Assert-EunsungBuiltRelease -DeployRoot $root -ReleaseDir $release -CommitSha $shaA
+    Assert-True ($null -ne $marker.configHashes.'scripts/deploy/windows/EunsungDeployment.psm1')
+    Assert-EunsungBuiltRelease -DeployRoot $root -ReleaseDir $release -CommitSha $shaA -AccessValidator { $true }
   }
 
   Test-Case 'activation validation rejects marker, hash, and protected access failures' {
     $root = Join-Path $tempRoot 'rejects'
     $release = New-TestRelease -DeployRoot $root -Sha $shaA -BadHash
-    Assert-Throws { Assert-EunsungBuiltRelease -DeployRoot $root -ReleaseDir $release -CommitSha $shaA } 'hash'
+    Assert-Throws { Assert-EunsungBuiltRelease -DeployRoot $root -ReleaseDir $release -CommitSha $shaA -AccessValidator { $true } } 'hash'
     Set-Content -LiteralPath (Join-Path $release '.commit-sha') -Value $shaB -NoNewline -Encoding ASCII
-    Assert-Throws { Assert-EunsungBuiltRelease -DeployRoot $root -ReleaseDir $release -CommitSha $shaA } 'marker'
+    Assert-Throws { Assert-EunsungBuiltRelease -DeployRoot $root -ReleaseDir $release -CommitSha $shaA -AccessValidator { $true } } 'marker'
     $acl = { param($Path) $false }
     Assert-Throws { Assert-EunsungProtectedConfig -ReleaseDir $release -AccessValidator $acl } 'access'
   }
@@ -250,6 +294,7 @@ try {
     $script:events = New-Object System.Collections.ArrayList
     $adapters = @{
       TestMode = $true
+      AccessValidator = { $true }
       CaptureSwitchState = { param($DeployRoot) @{ HasPrior = $false; CurrentMarker = $null; Apps = @(); DumpBackup = $null } }
       SwitchApps = { param($ReleaseDir, $DeployRoot) [void]$script:events.Add("switch:$ReleaseDir") }
       HealthCheck = { param($ExpectedSha, $ReleaseDir) @{ Success = $true; Diagnostics = @() } }
@@ -269,6 +314,7 @@ try {
     $script:events = New-Object System.Collections.ArrayList
     $adapters = @{
       TestMode = $true
+      AccessValidator = { $true }
       CaptureSwitchState = { @{ HasPrior = $false; CurrentMarker = $null; Apps = @(); DumpBackup = 'original' } }
       HealthCheck = { [void]$script:events.Add('health'); @{ Success = $true; Diagnostics = @() } }
       Retention = { [void]$script:events.Add('retention') }
@@ -302,6 +348,7 @@ try {
     $script:events = New-Object System.Collections.ArrayList
     $adapters = @{
       TestMode = $true
+      AccessValidator = { $true }
       CaptureSwitchState = { @{ HasPrior = $true; CurrentMarker = $priorMarker; Apps = @(@{name='eunsung-frontend'},@{name='eunsung-backend'}); DumpBackup = 'copy' } }
       SwitchApps = { [void]$script:events.Add('switch'); throw 'backend partial start' }
       StopNewApps = { [void]$script:events.Add('stop-new') }
@@ -313,12 +360,48 @@ try {
     Assert-Equal 'switch,stop-new,restore-definitions-env-dump,save-restored' ($script:events -join ',')
   }
 
+  Test-Case 'production restore path reconstructs captured prior definitions and environment' {
+    $root = Join-Path $tempRoot 'real-restore'
+    New-TestRelease -DeployRoot $root -Sha $shaA | Out-Null
+    $prior = New-TestRelease -DeployRoot $root -Sha $shaB
+    $stateDir = Join-Path $root 'state'
+    New-Item -ItemType Directory -Force -Path $stateDir | Out-Null
+    $dumpBackup = Join-Path $stateDir 'dump-before.pm2'
+    Set-Content -LiteralPath $dumpBackup -Value '{}' -Encoding UTF8
+    $script:restoredCalls = New-Object System.Collections.ArrayList
+    $apps = @(
+      [pscustomobject]@{ name='eunsung-frontend'; pid=111; pm2_env=[pscustomobject]@{ pm_exec_path='C:\prior\next'; pm_cwd='C:\prior\frontend'; args=@('start'); exec_interpreter='node'; env=[pscustomobject]@{ RELEASE_TOKEN='frontend-old' } } },
+      [pscustomobject]@{ name='eunsung-backend'; pid=222; pm2_env=[pscustomobject]@{ pm_exec_path='C:\prior\main.js'; pm_cwd='C:\prior\backend'; args=@(); exec_interpreter='node'; env=[pscustomobject]@{ RELEASE_TOKEN='backend-old' } } }
+    )
+    $adapters = @{
+      TestMode = $true
+      AccessValidator = { $true }
+      CaptureSwitchState = { @{ HasPrior=$true; CurrentMarker=@{commitSha=$shaB;releaseDir=$prior}; Apps=$apps; DumpBackup=$dumpBackup; DumpPath=(Join-Path $stateDir 'dump.pm2') } }
+      SwitchApps = { throw 'partial switch' }
+      StopNewApps = { }
+      NativeInvoker = {
+        param($FilePath, $Arguments, $WorkingDirectory, $Environment)
+        if ($Arguments[0] -eq 'start') { [void]$script:restoredCalls.Add([pscustomobject]@{ Arguments=@($Arguments); Environment=@{} + $Environment }) }
+        @{ ExitCode=0; Output='' }
+      }
+      RollbackHealthCheck = { @{ Success=$true; Diagnostics=@() } }
+      SaveState = { }
+    }
+    Assert-Throws { Invoke-EunsungDeployment -CommitSha $shaA -ActivateExisting -DeployRoot $root -Adapters $adapters } 'rolled back'
+    Assert-Equal 2 $script:restoredCalls.Count
+    Assert-Match 'start C:\\prior\\next --name eunsung-frontend --cwd C:\\prior\\frontend' ($script:restoredCalls[0].Arguments -join ' ')
+    Assert-Equal 'frontend-old' $script:restoredCalls[0].Environment.RELEASE_TOKEN
+    Assert-Match 'start C:\\prior\\main.js --name eunsung-backend --cwd C:\\prior\\backend' ($script:restoredCalls[1].Arguments -join ' ')
+    Assert-Equal 'backend-old' $script:restoredCalls[1].Environment.RELEASE_TOKEN
+  }
+
   Test-Case 'rollback health failure is distinct and includes sanitized diagnostics' {
     $root = Join-Path $tempRoot 'rollback-fails'
     New-TestRelease -DeployRoot $root -Sha $shaA | Out-Null
     $prior = New-TestRelease -DeployRoot $root -Sha $shaB
     $adapters = @{
       TestMode = $true
+      AccessValidator = { $true }
       CaptureSwitchState = { @{ HasPrior = $true; CurrentMarker = @{commitSha=$shaB;releaseDir=$prior}; Apps = @(); DumpBackup = 'copy' } }
       SwitchApps = { throw 'new PASSWORD=hunter2' }
       StopNewApps = { }
@@ -344,6 +427,7 @@ try {
     $script:restored = $false
     $adapters = @{
       TestMode = $true
+      AccessValidator = { $true }
       CaptureSwitchState = { @{ HasPrior = $false; CurrentMarker = $null; Apps = @(); DumpBackup = 'original-untouched' } }
       SwitchApps = { }
       HealthCheck = { @{ Success = $false; Diagnostics = @('failed') } }
@@ -356,6 +440,62 @@ try {
     Assert-True (-not (Test-Path -LiteralPath (Join-Path $root 'current.json')))
   }
 
+  Test-Case 'cleanup native failure is propagated as distinct sanitized rollback failure' {
+    $root = Join-Path $tempRoot 'cleanup-fails'
+    New-TestRelease -DeployRoot $root -Sha $shaA | Out-Null
+    $script:deleteAttempts = New-Object System.Collections.ArrayList
+    $adapters = @{
+      TestMode = $true
+      AccessValidator = { $true }
+      CaptureSwitchState = { @{ HasPrior=$false; CurrentMarker=$null; Apps=@(); DumpBackup=$null } }
+      SwitchApps = { }
+      HealthCheck = { @{ Success=$false; Diagnostics=@('new failed') } }
+      NativeInvoker = {
+        param($FilePath, $Arguments, $WorkingDirectory, $Environment)
+        [void]$script:deleteAttempts.Add([string]$Arguments[1])
+        if ($Arguments[1] -eq 'eunsung-frontend') { return @{ ExitCode=9; Output='TOKEN=cleanup-secret' } }
+        return @{ ExitCode=0; Output='' }
+      }
+    }
+    try {
+      Invoke-EunsungDeployment -CommitSha $shaA -ActivateExisting -DeployRoot $root -Adapters $adapters
+      throw 'expected cleanup failure'
+    } catch {
+      Assert-Equal 31 $_.Exception.Data['ExitCode']
+      Assert-Match 'cleanup failed' $_.Exception.Message
+      Assert-True (-not $_.Exception.Message.Contains('cleanup-secret'))
+      Assert-Equal 'eunsung-frontend,eunsung-backend' ($script:deleteAttempts -join ',')
+    }
+  }
+
+  Test-Case 'BuildOnly validates complete release and never touches PM2 ports or health' {
+    $root = Join-Path $tempRoot 'build-only'
+    $sourceRoot = Join-Path $tempRoot 'build-only-source'
+    $sourceRelease = New-TestRelease -DeployRoot $sourceRoot -Sha $shaA
+    $archive = Join-Path $root 'incoming.zip'
+    New-Item -ItemType Directory -Force -Path $root, (Join-Path $root 'shared') | Out-Null
+    Set-Content -LiteralPath (Join-Path $root 'shared/backend.env') -Value 'DB=x' -Encoding UTF8
+    Set-Content -LiteralPath (Join-Path $root 'shared/frontend-database.json') -Value '{}' -Encoding UTF8
+    Compress-Archive -Path (Join-Path $sourceRelease '*') -DestinationPath $archive
+    $script:runtimeTouches = 0
+    $adapters = @{
+      TestMode = $true
+      AccessValidator = { $true }
+      NativeInvoker = {
+        param($FilePath, $Arguments, $WorkingDirectory, $Environment)
+        if ($FilePath -match 'pm2') { $script:runtimeTouches++ }
+        if ($Arguments -contains '--version') { return @{ ExitCode=0; Output='10.28.1' } }
+        return @{ ExitCode=0; Output='' }
+      }
+      CaptureSwitchState = { $script:runtimeTouches++; throw 'must not capture PM2' }
+      HealthCheck = { $script:runtimeTouches++; throw 'must not health check' }
+      PortOwnerProvider = { $script:runtimeTouches++; throw 'must not inspect ports' }
+    }
+    Invoke-EunsungDeployment -CommitSha $shaA -ArchivePath $archive -BuildOnly -DeployRoot $root -Adapters $adapters
+    Assert-Equal 0 $script:runtimeTouches
+    Assert-EunsungBuiltRelease -DeployRoot $root -ReleaseDir (Join-Path $root "releases/$shaA") -CommitSha $shaA -AccessValidator { $true }
+  }
+
   Test-Case 'injected post-switch health failure restores prior current release without config mutation' {
     $root = Join-Path $tempRoot 'inject'
     New-TestRelease -DeployRoot $root -Sha $shaA | Out-Null
@@ -366,6 +506,7 @@ try {
     $script:healthCalled = $false
     $adapters = @{
       TestMode = $true
+      AccessValidator = { $true }
       CaptureSwitchState = { @{ HasPrior = $true; CurrentMarker = $priorMarker; Apps = @(); DumpBackup = 'copy' } }
       SwitchApps = { }
       HealthCheck = { $script:healthCalled = $true; @{ Success = $true; Diagnostics = @() } }

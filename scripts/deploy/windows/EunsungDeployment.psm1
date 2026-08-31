@@ -7,7 +7,14 @@ $script:ExpectedOutputs = @(
   'apps/backend/dist/main.js',
   'apps/frontend/.next/BUILD_ID'
 )
-$script:NonSecretConfigFiles = @('ecosystem.config.js', 'package.json', 'pnpm-lock.yaml')
+$script:NonSecretConfigFiles = @(
+  'ecosystem.config.js',
+  'package.json',
+  'pnpm-lock.yaml',
+  'scripts/deploy/windows/EunsungDeployment.psm1',
+  'scripts/deploy/windows/Deploy-EunsungRelease.ps1',
+  'scripts/deploy/windows/Test-EunsungDeployment.ps1'
+)
 $script:AppPorts = [ordered]@{
   'eunsung-frontend' = 3100
   'eunsung-backend' = 3003
@@ -217,6 +224,8 @@ function Test-EunsungReleaseHealth {
     [ValidateRange(1, 60)][int]$TimeoutSec = 5,
     [ValidateRange(0, 60000)][int]$RetryDelayMs = 1000,
     [scriptblock]$SleepAdapter
+    ,[string]$FrontendUrl = 'http://127.0.0.1:3100/'
+    ,[string]$BackendUrl = 'http://127.0.0.1:3003/api/v1/health'
   )
 
   if (-not $Pm2ListProvider) {
@@ -259,11 +268,11 @@ function Test-EunsungReleaseHealth {
         }
       }
 
-      $frontend = & $HttpInvoker 'http://127.0.0.1:3100/' $TimeoutSec
+      $frontend = & $HttpInvoker $FrontendUrl $TimeoutSec
       if ([int]$frontend.StatusCode -lt 200 -or [int]$frontend.StatusCode -ge 400) {
         $diagnostics.Add('frontend HTTP request was not successful')
       }
-      $backend = & $HttpInvoker 'http://127.0.0.1:3003/api/v1/health' $TimeoutSec
+      $backend = & $HttpInvoker $BackendUrl $TimeoutSec
       if ([int]$backend.StatusCode -ne 200) {
         $diagnostics.Add('backend health HTTP status was not 200')
       } else {
@@ -335,12 +344,36 @@ function Write-EunsungBuildMarker {
   Write-EunsungJsonAtomic -Path (Join-Path $ReleaseDir 'build.complete.json') -Value $marker
 }
 
-function Test-EunsungDefaultAccess {
-  param([string]$Path)
+function Test-EunsungAclAccess {
+  [CmdletBinding()]
+  param([string]$Path, [scriptblock]$AclProvider)
   try {
     $stream = [IO.File]::Open($Path, [IO.FileMode]::Open, [IO.FileAccess]::Read, [IO.FileShare]::Read)
     $stream.Dispose()
-    return $true
+    if ($AclProvider) { $acl = & $AclProvider $Path } else { $acl = Get-Acl -LiteralPath $Path }
+    $owner = [string]$acl.Owner
+    if ($owner -notmatch '(?i)(^|\\)(eunsung-deploy|administrators|system)$') { return $false }
+    $deployReadable = $false
+    foreach ($rule in @($acl.Access)) {
+      $identity = [string]$rule.IdentityReference
+      $rights = [Security.AccessControl.FileSystemRights]$rule.FileSystemRights
+      $isAllow = [string]$rule.AccessControlType -eq 'Allow'
+      $writeMask = [Security.AccessControl.FileSystemRights]::WriteData `
+        -bor [Security.AccessControl.FileSystemRights]::CreateFiles `
+        -bor [Security.AccessControl.FileSystemRights]::AppendData `
+        -bor [Security.AccessControl.FileSystemRights]::CreateDirectories `
+        -bor [Security.AccessControl.FileSystemRights]::WriteAttributes `
+        -bor [Security.AccessControl.FileSystemRights]::WriteExtendedAttributes `
+        -bor [Security.AccessControl.FileSystemRights]::Delete `
+        -bor [Security.AccessControl.FileSystemRights]::DeleteSubdirectoriesAndFiles `
+        -bor [Security.AccessControl.FileSystemRights]::ChangePermissions `
+        -bor [Security.AccessControl.FileSystemRights]::TakeOwnership
+      $canWrite = ($rights -band $writeMask) -ne 0
+      $isTrustedIdentity = $identity -match '(?i)(^|\\)(eunsung-deploy|administrators|system)$'
+      if ($isAllow -and $identity -match '(?i)(^|\\)eunsung-deploy$') { $deployReadable = $true }
+      if ($isAllow -and $canWrite -and -not $isTrustedIdentity) { return $false }
+    }
+    return $deployReadable
   } catch {
     return $false
   }
@@ -351,13 +384,15 @@ function Assert-EunsungProtectedConfig {
   param(
     [Parameter(Mandatory)][string]$ReleaseDir,
     [scriptblock]$AccessValidator,
+    [scriptblock]$AclProvider,
     [scriptblock]$AttributeProvider
   )
-  if (-not $AccessValidator) { $AccessValidator = { param($Path) Test-EunsungDefaultAccess -Path $Path } }
+  if (-not $AccessValidator) { $AccessValidator = { param($Path) Test-EunsungAclAccess -Path $Path -AclProvider $AclProvider } }
   foreach ($relativePath in @('apps/backend/.env', 'apps/frontend/config/database.json')) {
     $path = Join-Path $ReleaseDir $relativePath
+    Assert-EunsungNoReparseAncestry -Root $ReleaseDir -Target $path -AttributeProvider $AttributeProvider
     Assert-EunsungOrdinaryFile -Path $path -AttributeProvider $AttributeProvider
-    if (-not (& $AccessValidator $path)) { throw 'Protected deployment config access validation failed' }
+    if (-not (& $AccessValidator $path)) { throw 'Protected deployment config ACL or access validation failed' }
   }
 }
 
@@ -400,7 +435,7 @@ function Remove-EunsungOldSuccessfulReleases {
   param(
     [Parameter(Mandatory)][string]$ReleaseRoot,
     [Parameter(Mandatory)][string]$CurrentRelease,
-    [ValidateRange(0, 20)][int]$PriorSuccessesToKeep = 3
+    [ValidateRange(0, 20)][int]$PriorSuccessesToKeep = 2
   )
   if (-not (Test-Path -LiteralPath $ReleaseRoot)) { return }
   $currentFull = [IO.Path]::GetFullPath($CurrentRelease)
@@ -477,16 +512,45 @@ function Start-EunsungApps {
 
 function Stop-EunsungNewApps {
   param([scriptblock]$NativeInvoker)
+  $failures = New-Object System.Collections.Generic.List[string]
   foreach ($name in $script:AppPorts.Keys) {
-    try { Invoke-EunsungNative -FilePath 'pm2.cmd' -Arguments @('delete', $name) -NativeInvoker $NativeInvoker | Out-Null } catch { }
+    try {
+      Invoke-EunsungNative -FilePath 'pm2.cmd' -Arguments @('delete', $name) -NativeInvoker $NativeInvoker | Out-Null
+    } catch {
+      $failures.Add("$name`: $(ConvertTo-EunsungSanitizedDiagnostic $_.Exception.Message)")
+    }
   }
+  if ($failures.Count -gt 0) { throw "PM2 cleanup failed. $($failures -join '; ')" }
 }
 
 function Restore-EunsungPriorState {
   param([hashtable]$SwitchState, [scriptblock]$NativeInvoker)
-  if ([string]::IsNullOrWhiteSpace([string]$SwitchState.DumpBackup)) { throw 'Prior PM2 dump backup is unavailable' }
-  Copy-Item -LiteralPath $SwitchState.DumpBackup -Destination $SwitchState.DumpPath -Force
-  Invoke-EunsungNative -FilePath 'pm2.cmd' -Arguments @('resurrect') -NativeInvoker $NativeInvoker | Out-Null
+  $captured = @($SwitchState.Apps)
+  if ($captured.Count -ne $script:AppPorts.Count) { throw 'Captured prior PM2 definitions are incomplete' }
+  try {
+    foreach ($app in $captured) {
+      if (-not $script:AppPorts.Contains([string]$app.name) -or [int]$app.pid -le 0) { throw 'Captured prior PM2 app identity or PID is invalid' }
+      $pm = $app.pm2_env
+      if ([string]::IsNullOrWhiteSpace([string]$pm.pm_exec_path) -or [string]::IsNullOrWhiteSpace([string]$pm.pm_cwd)) { throw 'Captured prior PM2 definition is incomplete' }
+      $environment = @{}
+      if ($null -ne $pm.env) {
+        if ($pm.env -is [Collections.IDictionary]) {
+          foreach ($key in $pm.env.Keys) { $environment[[string]$key] = [string]$pm.env[$key] }
+        } else {
+          foreach ($property in $pm.env.psobject.Properties) { $environment[$property.Name] = [string]$property.Value }
+        }
+      }
+      $arguments = @('start', [string]$pm.pm_exec_path, '--name', [string]$app.name, '--cwd', [string]$pm.pm_cwd)
+      if (-not [string]::IsNullOrWhiteSpace([string]$pm.exec_interpreter)) { $arguments += @('--interpreter', [string]$pm.exec_interpreter) }
+      $arguments += '--update-env'
+      if (@($pm.args).Count -gt 0) { $arguments += @('--') + @($pm.args | ForEach-Object { [string]$_ }) }
+      Invoke-EunsungNative -FilePath 'pm2.cmd' -Arguments $arguments -Environment $environment -NativeInvoker $NativeInvoker | Out-Null
+    }
+  } catch {
+    if ([string]::IsNullOrWhiteSpace([string]$SwitchState.DumpBackup) -or -not (Test-Path -LiteralPath $SwitchState.DumpBackup)) { throw }
+    Copy-Item -LiteralPath $SwitchState.DumpBackup -Destination $SwitchState.DumpPath -Force
+    Invoke-EunsungNative -FilePath 'pm2.cmd' -Arguments @('resurrect') -NativeInvoker $NativeInvoker | Out-Null
+  }
 }
 
 function Set-EunsungCurrentMarker {
@@ -536,7 +600,7 @@ function Invoke-EunsungActivation {
     $markerSha = (Get-Content -Raw -LiteralPath (Join-Path ([string]$State.CurrentMarker.releaseDir) '.commit-sha')).Trim()
     Test-EunsungReleaseHealth -ExpectedSha ([string]$State.CurrentMarker.commitSha) -ReleaseMarkerSha $markerSha -Pm2ListProvider $pm2ListProvider -PortOwnerProvider $portOwnerProvider -HttpInvoker $httpInvoker -SleepAdapter $sleepAdapter
   }
-  $retention = Get-EunsungAdapter -Adapters $Adapters -Name 'Retention' -Default { param($Root, $Current) Remove-EunsungOldSuccessfulReleases -ReleaseRoot $Root -CurrentRelease $Current -PriorSuccessesToKeep 3 }
+  $retention = Get-EunsungAdapter -Adapters $Adapters -Name 'Retention' -Default { param($Root, $Current) Remove-EunsungOldSuccessfulReleases -ReleaseRoot $Root -CurrentRelease $Current -PriorSuccessesToKeep 2 }
 
   $switchState = & $capture $DeployRoot
   $failure = $null
@@ -561,9 +625,11 @@ function Invoke-EunsungActivation {
     $failure = ConvertTo-EunsungSanitizedDiagnostic $_.Exception.Message
   }
 
-  & $stopNew
+  $cleanupFailure = $null
+  try { & $stopNew } catch { $cleanupFailure = ConvertTo-EunsungSanitizedDiagnostic $_.Exception.Message }
   if (-not $switchState.HasPrior) {
     Set-EunsungCurrentMarker -DeployRoot $DeployRoot -Marker $null
+    if ($cleanupFailure) { throw (New-EunsungFailureException -Message "Deployment failed with no prior release and cleanup failed. new=[$failure] cleanup=[$cleanupFailure]" -ExitCode 31) }
     throw (New-EunsungFailureException -Message "Deployment failed with no prior release; new apps stopped. $failure" -ExitCode 30)
   }
 
@@ -576,6 +642,7 @@ function Invoke-EunsungActivation {
       throw "rollback health failed. $safeRollback"
     }
     & $save
+    if ($cleanupFailure) { throw "new-app cleanup failed. $cleanupFailure" }
   } catch {
     $safeRollbackFailure = ConvertTo-EunsungSanitizedDiagnostic $_.Exception.Message
     throw (New-EunsungFailureException -Message "Deployment failed and rollback health failed. new=[$failure] rollback=[$safeRollbackFailure]" -ExitCode 31)
@@ -590,11 +657,14 @@ function Copy-EunsungProtectedConfigs {
     @{ Source = Join-Path (Join-Path $DeployRoot 'shared') 'frontend-database.json'; Destination = Join-Path $ReleaseDir 'apps/frontend/config/database.json' }
   )
   foreach ($mapping in $mappings) {
+    Assert-EunsungNoReparseAncestry -Root $DeployRoot -Target $mapping.Source -AttributeProvider $AttributeProvider
     Assert-EunsungOrdinaryFile -Path $mapping.Source -AttributeProvider $AttributeProvider
-    if ($AccessValidator -and -not (& $AccessValidator $mapping.Source)) { throw 'Protected shared file access validation failed' }
+    if ($AccessValidator) { $accessAllowed = & $AccessValidator $mapping.Source } else { $accessAllowed = Test-EunsungAclAccess -Path $mapping.Source }
+    if (-not $accessAllowed) { throw 'Protected shared file ACL or access validation failed' }
     $parent = Split-Path -Parent $mapping.Destination
     if (-not (Test-Path -LiteralPath $parent)) { New-Item -ItemType Directory -Force -Path $parent | Out-Null }
     Copy-Item -LiteralPath $mapping.Source -Destination $mapping.Destination
+    Assert-EunsungNoReparseAncestry -Root $ReleaseDir -Target $mapping.Destination -AttributeProvider $AttributeProvider
     Assert-EunsungOrdinaryFile -Path $mapping.Destination -AttributeProvider $AttributeProvider
   }
 }
@@ -656,7 +726,10 @@ function Invoke-EunsungDeployment {
     Invoke-EunsungBuild -ReleaseDir $releaseDir -CommitSha $CommitSha -NativeInvoker $native
   }
 
-  if ($BuildOnly) { return }
+  if ($BuildOnly) {
+    Assert-EunsungBuiltRelease -DeployRoot $DeployRoot -ReleaseDir $releaseDir -CommitSha $CommitSha -AccessValidator $accessValidator -AttributeProvider $attributeProvider
+    return
+  }
   Invoke-EunsungActivation -DeployRoot $DeployRoot -ReleaseDir $releaseDir -CommitSha $CommitSha -InjectHealthFailure:$InjectHealthFailure -Adapters $Adapters
 }
 
@@ -666,6 +739,7 @@ Export-ModuleMember -Function @(
   'Assert-EunsungNoReparseAncestry',
   'Assert-EunsungOrdinaryFile',
   'ConvertTo-EunsungSanitizedDiagnostic',
+  'Test-EunsungAclAccess',
   'Invoke-EunsungNative',
   'Invoke-EunsungBoundedHttp',
   'ConvertFrom-EunsungPm2Json',
