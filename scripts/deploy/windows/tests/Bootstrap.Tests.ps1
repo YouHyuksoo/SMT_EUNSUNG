@@ -47,13 +47,13 @@ Test-Case 'wrapper fixes profile and PM2 home and checks native exit' {
   [void][scriptblock]::Create($content)
 }
 
-Test-Case 'task contract requires exact S4U limited startup task' {
+Test-Case 'task contract requires exact Password limited startup task' {
   $deploySid = New-Object Security.Principal.SecurityIdentifier('S-1-5-21-1-2-3-1001')
   $powershellPath = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
   $task = [pscustomobject]@{
     TaskName = 'EunsungMES-PM2-Resurrect'
     TaskPath = '\EunsungMES\'
-    Principal = [pscustomobject]@{ UserId=$deploySid.Value; LogonType='S4U'; RunLevel='Limited' }
+    Principal = [pscustomobject]@{ UserId=$deploySid.Value; LogonType='Password'; RunLevel='Limited' }
     Actions = @([pscustomobject]@{ Execute=$powershellPath; Arguments='-NoProfile -NonInteractive -ExecutionPolicy Bypass -File "D:\deploy\Resurrect-EunsungPm2.ps1"' })
     Triggers = @([pscustomobject]@{ CimClass=[pscustomobject]@{ CimClassName='MSFT_TaskBootTrigger' } })
   }
@@ -95,7 +95,7 @@ Test-Case 'batch logon right is added once, recorded, and precedes task registra
     Assert-Equal $deploySid.Value ([string]$state.deploySid)
     Assert-True ([bool]$state.batchLogonRightAddedByBootstrap)
     $source = Get-Content -Raw -LiteralPath $scriptPath
-    Assert-True ($source.LastIndexOf('Ensure-EunsungBatchLogonRight -DeploySid $account.SID') -lt $source.LastIndexOf('Invoke-EunsungCredentialedHelper -PowerShellPath $powershellPath')) 'right grant must precede credentialed task registration'
+    Assert-True ($source.LastIndexOf('Ensure-EunsungBatchLogonRight -DeploySid $account.SID') -lt $source.LastIndexOf('Register-EunsungPasswordResurrectTask -WrapperPath $wrapperPath')) 'right grant must precede Password task registration'
   } finally { Remove-Item -LiteralPath $testDir -Recurse -Force }
 }
 
@@ -180,18 +180,20 @@ Test-Case 'rollback uses protected marker SID when local account is already abse
   } finally { Remove-Item -LiteralPath $testDir -Recurse -Force }
 }
 
-Test-Case 'credentialed helper loads profile without exposing password in process arguments' {
+Test-Case 'password task registration keeps plaintext in-process and uses exact elevated contract' {
   $secure=New-Object Security.SecureString
   foreach($c in 'DoNotLeak!938475'.ToCharArray()){$secure.AppendChar($c)}
-  $credential=New-Object Management.Automation.PSCredential('.\eunsung-deploy',$secure)
   $script:captured=$null
-  $starter={param($StartInfo)$script:captured=$StartInfo;[pscustomobject]@{ExitCode=0}}
-  Invoke-EunsungCredentialedHelper -PowerShellPath 'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe' -HelperPath 'D:\deploy\helper.ps1' -Action RegisterTask -Credential $credential -WrapperPath 'D:\deploy\wrapper.ps1' -DeploySid (New-Object Security.Principal.SecurityIdentifier('S-1-5-21-1-2-3-1007')) -ProcessStarter $starter
-  Assert-True ([bool]$script:captured.LoadUserProfile)
-  Assert-True ([bool]$script:captured.Wait)
-  Assert-True ($script:captured.Credential -eq $credential)
-  Assert-True ([string]$script:captured.ArgumentList -notmatch 'DoNotLeak')
-  Assert-True ((Get-EunsungSelfRegistrationHelperContent) -match 'WindowsIdentity.*GetCurrent')
+  $sid=New-Object Security.Principal.SecurityIdentifier('S-1-5-21-1-2-3-1007')
+  function New-ScheduledTaskAction {[pscustomobject]@{}}
+  function New-ScheduledTaskTrigger {[pscustomobject]@{}}
+  function New-ScheduledTaskSettingsSet {[pscustomobject]@{}}
+  Register-EunsungPasswordResurrectTask -WrapperPath 'D:\deploy\wrapper.ps1' -DeploySid $sid -Password $secure -UserSidResolver {param($User)$sid} -FolderEnsurer {param($TaskPath)Assert-Equal '\EunsungMES\' $TaskPath} -TaskRegistrar {param($Parameters)$script:captured=$Parameters}
+  Assert-Equal '\EunsungMES\' $script:captured.TaskPath
+  Assert-Equal 'Limited' $script:captured.RunLevel
+  Assert-True ([bool]$script:captured.Force)
+  Assert-Equal 'DoNotLeak!938475' $script:captured.Password
+  Assert-True ((Get-Content -Raw -LiteralPath $scriptPath) -notmatch 'ArgumentList[^\r\n]*DoNotLeak')
 }
 
 Test-Case 'helper and wrapper ACL give deployment SID read execute without write' {
@@ -235,31 +237,30 @@ Test-Case 'registered profile is discovered by credentialed launch and checked a
   try{
     $secure=New-Object Security.SecureString;foreach($c in 'Temp!938475abc'.ToCharArray()){$secure.AppendChar($c)}
     $credential=New-Object Management.Automation.PSCredential('.\eunsung-deploy',$secure)
-    $starter={param($StartInfo)if($StartInfo.ArgumentList -match '-OutputPath "([^"]+)"'){[IO.File]::WriteAllText($matches[1],$profileDir)}else{throw 'missing output'};[pscustomobject]@{ExitCode=0}}
-    $resolved=Resolve-EunsungRegisteredProfilePath -DeployRoot $testDir -PowerShellPath 'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe' -HelperPath (Join-Path $testDir 'helper.ps1') -Credential $credential -DeploySid $deploySid -ProcessStarter $starter -RegistryProfileProvider {param($Sid)$profileDir}
+    $starter={param($StartInfo)if($StartInfo.ArgumentList -match "WriteAllText\('([^']+)'") {[IO.File]::WriteAllText($matches[1],$profileDir)}else{throw 'missing output'};[pscustomobject]@{ExitCode=0}}
+    $resolved=Initialize-EunsungRegisteredProfile -DeployRoot $testDir -PowerShellPath 'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe' -Credential $credential -DeploySid $deploySid -ProcessStarter $starter -RegistryProfileProvider {param($Sid)$profileDir}
     Assert-Equal ([IO.Path]::GetFullPath($profileDir)) $resolved
     Assert-Equal 0 @((Get-ChildItem -LiteralPath (Join-Path $testDir 'state') -Filter 'profile-*.txt')).Count
   }finally{Remove-Item -LiteralPath $testDir -Recurse -Force}
 }
 
-Test-Case 'compliant scheduled task rerun skips self-registration' {
+Test-Case 'compliant Password task rerun skips rotation and registration' {
   $deploySid=New-Object Security.Principal.SecurityIdentifier('S-1-5-21-1-2-3-1009')
   $powershellPath=Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
   $script:unregistered=$false
-  function Get-ScheduledTask { [pscustomobject]@{TaskName='EunsungMES-PM2-Resurrect';TaskPath='\EunsungMES\';Principal=[pscustomobject]@{UserId=$deploySid.Value;LogonType='S4U';RunLevel='Limited'};Actions=@([pscustomobject]@{Execute=$powershellPath;Arguments='-NoProfile -NonInteractive -ExecutionPolicy Bypass -File "D:\deploy\wrapper.ps1"'});Triggers=@([pscustomobject]@{CimClass=[pscustomobject]@{CimClassName='MSFT_TaskBootTrigger'}})} }
+  function Get-ScheduledTask { [pscustomobject]@{TaskName='EunsungMES-PM2-Resurrect';TaskPath='\EunsungMES\';Principal=[pscustomobject]@{UserId=$deploySid.Value;LogonType='Password';RunLevel='Limited'};Actions=@([pscustomobject]@{Execute=$powershellPath;Arguments='-NoProfile -NonInteractive -ExecutionPolicy Bypass -File "D:\deploy\wrapper.ps1"'});Triggers=@([pscustomobject]@{CimClass=[pscustomobject]@{CimClassName='MSFT_TaskBootTrigger'}})} }
   function Unregister-ScheduledTask {$script:unregistered=$true}
   Assert-True (-not (Prepare-EunsungResurrectTaskRegistration -WrapperPath 'D:\deploy\wrapper.ps1' -DeploySid $deploySid))
   Assert-True (-not $script:unregistered)
 }
 
-Test-Case 'failed replacement attempt preserves prior noncompliant exact task' {
+Test-Case 'noncompliant existing task fails before password rotation or replacement' {
   $deploySid=New-Object Security.Principal.SecurityIdentifier('S-1-5-21-1-2-3-1011')
   $script:prior=[pscustomobject]@{TaskName='EunsungMES-PM2-Resurrect';TaskPath='\EunsungMES\';Principal=[pscustomobject]@{UserId=$deploySid.Value;LogonType='Password';RunLevel='Limited'};Actions=@();Triggers=@()}
   $script:unregistered=$false
   function Get-ScheduledTask { $script:prior }
   function Unregister-ScheduledTask {$script:unregistered=$true;$script:prior=$null}
-  Assert-True (Prepare-EunsungResurrectTaskRegistration -WrapperPath 'D:\deploy\wrapper.ps1' -DeploySid $deploySid)
-  Assert-Throws { throw 'simulated self-registration failure' } 'simulated self-registration failure'
+  Assert-Throws { Prepare-EunsungResurrectTaskRegistration -WrapperPath 'D:\deploy\wrapper.ps1' -DeploySid $deploySid } 'handled manually before password rotation'
   Assert-True (-not $script:unregistered)
   Assert-True ($null -ne $script:prior)
 }

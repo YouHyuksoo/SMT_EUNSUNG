@@ -298,12 +298,13 @@ test('bootstrap is least privilege, idempotent, pinned, and reversible', () => {
   assert.doesNotMatch(bootstrap, /&\s*\$pm2Path\s+--version/i, 'bootstrap must not start PM2 under the administrator profile for version discovery');
   assert.match(bootstrap, /EunsungMES-PM2-Resurrect/g, 'the exact scheduled task name is required');
   assert.match(bootstrap, /New-ScheduledTaskTrigger\s+-AtStartup/i, 'the task must run at startup');
-  assert.match(bootstrap, /New-ScheduledTaskPrincipal[\s\S]{0,200}-LogonType\s+S4U[\s\S]{0,100}-RunLevel\s+Limited/i, 'the task principal must be S4U and limited');
+  assert.match(bootstrap, /Password\s*=\s*\$plain[\s\S]{0,200}RunLevel\s*=\s*['"]Limited['"]/i, 'the elevated task registration must use Password logon and limited run level');
   assert.match(bootstrap, /TaskPath\s*=\s*['"]\\EunsungMES\\['"]/i, 'the deployment task must use an exact dedicated scheduler path');
-  assert.match(bootstrap, /Register-ScheduledTask\s+-TaskPath[\s\S]{0,500}-Force/i, 'self-registration must atomically replace the exact task without pre-deletion');
+  assert.match(bootstrap, /TaskPath\s*=\s*\$script:TaskPath[\s\S]{0,500}Force\s*=\s*\$true/i, 'elevated registration must atomically create the exact task');
   assert.doesNotMatch(bootstrap, /Prepare-EunsungResurrectTaskRegistration[\s\S]{0,500}Unregister-ScheduledTask/i, 'replacement preparation must preserve the prior task on failure');
-  assert.match(bootstrap, /Start-Process[\s\S]{0,1800}Credential[\s\S]{0,300}LoadUserProfile/i, 'task self-registration must launch under the deployment credential with its profile loaded');
-  assert.match(bootstrap, /Set-LocalUser[\s\S]{0,200}-Password/i, 'the local deployment password must be rotated for credentialed self-registration');
+  assert.match(bootstrap, /Start-Process[\s\S]{0,1800}Credential[\s\S]{0,300}LoadUserProfile/i, 'initial profile creation must load the deployment credential profile');
+  assert.match(bootstrap, /Set-LocalUser[\s\S]{0,200}-Password/i, 'the local deployment password must rotate only when registration is required');
+  assert.match(bootstrap, /SecureStringToBSTR[\s\S]{0,800}ZeroFreeBSTR/i, 'temporary plaintext task password conversion must zero its BSTR');
   assert.doesNotMatch(bootstrap, /ArgumentList[^\n]*(?:password|secure)/i, 'password material must never enter the helper command line');
   assert.match(bootstrap, /ProfileList[\s\S]{0,500}ProfileImagePath/i, 'the credentialed profile must be checked against Windows ProfileList');
   assert.match(bootstrap, /LsaAddAccountRights[\s\S]{0,800}LsaRemoveAccountRights/i, 'batch logon must use targeted LSA account-right APIs');
