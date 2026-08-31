@@ -498,9 +498,9 @@ if (Test-Path -LiteralPath `$dumpPath) {
   `$stage = 'invoke'
   `$nativeExit = Invoke-QuietPm2Native -Pm2Operation resurrect
 } else {
-  `$operation = 'ping'
-  `$stage = 'invoke'
-  `$nativeExit = Invoke-QuietPm2Native -Pm2Operation ping
+  `$operation = 'noop'
+  `$stage = 'complete'
+  `$nativeExit = 0
 }
 if (`$nativeExit -ne 0) { throw "PM2 `$operation failed with exit code `$nativeExit" }
 `$stage='complete'; Write-SafePm2BootstrapLog -Status 'ok' -ErrorClass 'None'
@@ -607,11 +607,20 @@ function Assert-EunsungPm2ProcessOwnership {
   return $matched.Count
 }
 
+function Assert-EunsungNoDeployPm2Daemon {
+  param([Parameter(Mandatory)][object[]]$Processes,[Parameter(Mandatory)][string]$Pm2Home,[Parameter(Mandatory)][string]$Pm2Path)
+  $pm2HomePattern=[regex]::Escape(([IO.Path]::GetFullPath($Pm2Home).TrimEnd('\')))
+  $daemonPattern=[regex]::Escape([IO.Path]::GetFullPath((Join-Path (Split-Path -Parent $Pm2Path) 'node_modules\pm2\lib\Daemon.js')))
+  $matched=@($Processes|Where-Object{[string]$_.CommandLine -match "(?i)(?:$pm2HomePattern(?:\\|\b)|$daemonPattern(?:\s|`"|'|$))"})
+  if($matched.Count -ne 0){throw "Expected zero deployment PM2 daemons before the first saved dump, found $($matched.Count)."}
+}
+
 function Test-EunsungResurrectTask {
   param(
     [Parameter(Mandatory)][string]$Pm2Home,
     [Parameter(Mandatory)][string]$Pm2Path,
     [Parameter(Mandatory)][Security.Principal.SecurityIdentifier]$DeploySid,
+    [Parameter(Mandatory)][bool]$ExpectSavedDump,
     [int]$MaxAttempts = 20,
     [int]$DelaySeconds = 1
   )
@@ -637,7 +646,7 @@ function Test-EunsungResurrectTask {
     }
     if ($completedInfo.LastTaskResult -ne 0) { throw "PM2 resurrect scheduled task failed with result $($completedInfo.LastTaskResult)." }
     $nodeProcesses = @(Get-CimInstance Win32_Process -Filter "Name = 'node.exe'" -ErrorAction SilentlyContinue)
-    [void](Assert-EunsungPm2ProcessOwnership -Processes $nodeProcesses -Pm2Home $Pm2Home -Pm2Path $Pm2Path -DeploySid $DeploySid)
+    if($ExpectSavedDump){[void](Assert-EunsungPm2ProcessOwnership -Processes $nodeProcesses -Pm2Home $Pm2Home -Pm2Path $Pm2Path -DeploySid $DeploySid)}else{Assert-EunsungNoDeployPm2Daemon -Processes $nodeProcesses -Pm2Home $Pm2Home -Pm2Path $Pm2Path}
   } finally {
     Stop-ScheduledTask -TaskPath $script:TaskPath -TaskName $script:TaskName -ErrorAction SilentlyContinue
   }
@@ -779,7 +788,9 @@ function Initialize-EunsungDeployServer {
   if($registrationRequired){Register-EunsungPasswordResurrectTask -WrapperPath $wrapperPath -DeploySid $account.SID -Password $password}
   $registeredTask=Get-ScheduledTask -TaskPath $script:TaskPath -TaskName $script:TaskName -ErrorAction Stop
   if(-not (Test-EunsungScheduledTaskContract -Task $registeredTask -WrapperPath $wrapperPath -DeploySid $account.SID)){throw 'Registered scheduled task does not satisfy the exact Password/Limited contract.'}
-  Test-EunsungResurrectTask -Pm2Home (Join-Path $profilePath '.pm2') -Pm2Path $pm2Path -DeploySid $account.SID
+  $pm2Home=Join-Path $profilePath '.pm2';$savedDumpPath=Join-Path $pm2Home 'dump.pm2';$expectSavedDump=$false
+  if(Test-Path -LiteralPath $savedDumpPath){Assert-EunsungOrdinaryPath -Path $savedDumpPath;$savedDumpItem=Get-Item -LiteralPath $savedDumpPath -Force;if($savedDumpItem.PSIsContainer){throw 'PM2 saved dump must be an ordinary file.'};$expectSavedDump=$true}
+  Test-EunsungResurrectTask -Pm2Home $pm2Home -Pm2Path $pm2Path -DeploySid $account.SID -ExpectSavedDump $expectSavedDump
 
   Write-Host 'Eunsung deployment server bootstrap completed.'
   } finally {

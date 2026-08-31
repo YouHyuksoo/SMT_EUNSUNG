@@ -74,7 +74,7 @@ Test-Case 'wrapper fixes profile and PM2 home and checks native exit' {
   [void][scriptblock]::Create($content)
 }
 
-Test-Case 'wrapper pings without dump and resurrects when ordinary dump exists' {
+Test-Case 'wrapper noops without dump and resurrects when ordinary dump exists' {
   $testDir=Join-Path ([IO.Path]::GetTempPath()) ("eunsung-wrapper-"+[guid]::NewGuid().ToString('N'));$profile=Join-Path $testDir 'profile';$npm=Join-Path $testDir 'npm';$logs=Join-Path $testDir 'logs';New-Item -ItemType Directory -Path $profile,$npm,$logs|Out-Null
   $pm2=Join-Path $npm 'pm2.cmd';$output=Join-Path $testDir 'operation.txt';$oldProfile=$env:USERPROFILE;$oldPm2=$env:PM2_HOME;$oldPath=$env:Path
   try{
@@ -83,7 +83,8 @@ Test-Case 'wrapper pings without dump and resurrects when ordinary dump exists' 
     $expectedEap=$ErrorActionPreference
     & $wrapper
     Assert-Equal $expectedEap $ErrorActionPreference
-    Assert-Equal 'ping' ((Get-Content -Raw -LiteralPath $output).Trim())
+    Assert-True (-not (Test-Path -LiteralPath $output))
+    Assert-True ((Get-Content -Raw -LiteralPath (Join-Path $logs 'pm2-bootstrap.log')) -match 'operation=noop exit=0 errorClass=None')
     $pm2Home=Join-Path $profile '.pm2';New-Item -ItemType Directory -Path $pm2Home -Force|Out-Null;[IO.File]::WriteAllText((Join-Path $pm2Home 'dump.pm2'),'{}')
     & $wrapper
     Assert-Equal 'resurrect' ((Get-Content -Raw -LiteralPath $output).Trim())
@@ -97,17 +98,19 @@ Test-Case 'wrapper rejects unsafe dump path before invoking PM2' {
   finally{Remove-Item -LiteralPath $testDir -Recurse -Force}
 }
 
-Test-Case 'wrapper propagates native ping failure' {
+Test-Case 'wrapper propagates native resurrect failure' {
   $testDir=Join-Path ([IO.Path]::GetTempPath()) ("eunsung-wrapper-"+[guid]::NewGuid().ToString('N'));$profile=Join-Path $testDir 'profile';$npm=Join-Path $testDir 'npm';$logs=Join-Path $testDir 'logs';New-Item -ItemType Directory -Path $profile,$npm,$logs|Out-Null;$pm2=Join-Path $npm 'pm2.cmd'
   $long='A'*3000;[IO.File]::WriteAllText($pm2,"@echo off`r`necho token=supersecret $long 1>&2`r`nexit /b 7`r`n",[Text.Encoding]::ASCII)
+  $pm2Home=Join-Path $profile '.pm2';New-Item -ItemType Directory -Path $pm2Home|Out-Null;[IO.File]::WriteAllText((Join-Path $pm2Home 'dump.pm2'),'{}')
   $log=Join-Path $logs 'pm2-bootstrap.log'
   [IO.File]::WriteAllText($log,('X'*70000))
-  try{$expectedEap=$ErrorActionPreference;Assert-Throws { & ([scriptblock]::Create((Get-EunsungWrapperContent -ProfilePath $profile -Pm2Path $pm2 -LogPath $log))) } 'PM2 ping failed with exit code 7';Assert-Equal $expectedEap $ErrorActionPreference;$diagnostic=Get-Content -Raw -LiteralPath $log;Assert-True ($diagnostic -match 'status=error stage=invoke operation=ping exit=7 errorClass=NativeExit');Assert-True ($diagnostic -notmatch 'token|supersecret|Bearer|connection|string|\{|\}');Assert-True ($diagnostic.Length -lt 300);$backup="$log.1";Assert-True (Test-Path -LiteralPath $backup);Assert-Equal 70000 (Get-Item -LiteralPath $backup).Length;Assert-Equal 1 @((Get-ChildItem -LiteralPath $logs -Filter 'pm2-bootstrap.log.1')).Count;Assert-True ((Get-EunsungWrapperContent -ProfilePath $profile -Pm2Path $pm2 -LogPath $log) -notmatch '\$pm2Output\s*=\s*@\(')}
+  try{$expectedEap=$ErrorActionPreference;Assert-Throws { & ([scriptblock]::Create((Get-EunsungWrapperContent -ProfilePath $profile -Pm2Path $pm2 -LogPath $log))) } 'PM2 resurrect failed with exit code 7';Assert-Equal $expectedEap $ErrorActionPreference;$diagnostic=Get-Content -Raw -LiteralPath $log;Assert-True ($diagnostic -match 'status=error stage=invoke operation=resurrect exit=7 errorClass=NativeExit');Assert-True ($diagnostic -notmatch 'token|supersecret|Bearer|connection|string|\{|\}');Assert-True ($diagnostic.Length -lt 300);$backup="$log.1";Assert-True (Test-Path -LiteralPath $backup);Assert-Equal 70000 (Get-Item -LiteralPath $backup).Length;Assert-Equal 1 @((Get-ChildItem -LiteralPath $logs -Filter 'pm2-bootstrap.log.1')).Count;Assert-True ((Get-EunsungWrapperContent -ProfilePath $profile -Pm2Path $pm2 -LogPath $log) -notmatch '\$pm2Output\s*=\s*@\(')}
   finally{Remove-Item -LiteralPath $testDir -Recurse -Force}
 }
 
 Test-Case 'wrapper keeps missing executable as Unexpected PowerShell invocation failure' {
   $testDir=Join-Path ([IO.Path]::GetTempPath()) ("eunsung-wrapper-"+[guid]::NewGuid().ToString('N'));$profile=Join-Path $testDir 'profile';$logs=Join-Path $testDir 'logs';New-Item -ItemType Directory -Path $profile,$logs|Out-Null;$log=Join-Path $logs 'pm2-bootstrap.log'
+  $pm2Home=Join-Path $profile '.pm2';New-Item -ItemType Directory -Path $pm2Home|Out-Null;[IO.File]::WriteAllText((Join-Path $pm2Home 'dump.pm2'),'{}')
   try{Assert-Throws { & ([scriptblock]::Create((Get-EunsungWrapperContent -ProfilePath $profile -Pm2Path (Join-Path $testDir 'missing-pm2.cmd') -LogPath $log))) } 'not recognized|invocation failed';Assert-True ((Get-Content -Raw -LiteralPath $log) -match 'exit=none errorClass=Unexpected')}
   finally{Remove-Item -LiteralPath $testDir -Recurse -Force}
 }
@@ -429,8 +432,28 @@ Test-Case 'scheduled task verification observes a fresh completed invocation' {
   function Stop-ScheduledTask { $script:stopped = $true }
   function Get-CimInstance { @([pscustomobject]@{ProcessId=20;CommandLine='node C:\Users\eunsung-deploy\AppData\Roaming\npm\node_modules\pm2\lib\Daemon.js'}) }
   function Invoke-CimMethod { [pscustomobject]@{Sid=$deploySid.Value} }
-  Test-EunsungResurrectTask -Pm2Home 'C:\Users\eunsung-deploy\.pm2' -Pm2Path 'C:\Users\eunsung-deploy\AppData\Roaming\npm\pm2.cmd' -DeploySid $deploySid -MaxAttempts 2 -DelaySeconds 0
+  Test-EunsungResurrectTask -Pm2Home 'C:\Users\eunsung-deploy\.pm2' -Pm2Path 'C:\Users\eunsung-deploy\AppData\Roaming\npm\pm2.cmd' -DeploySid $deploySid -ExpectSavedDump $true -MaxAttempts 2 -DelaySeconds 0
   Assert-True $script:stopped
+}
+
+Test-Case 'no-dump task verification succeeds with zero deployment PM2 daemons' {
+  $deploySid=New-Object Security.Principal.SecurityIdentifier('S-1-5-21-1-2-3-1020');$script:infoCalls=0
+  function Get-ScheduledTaskInfo {$script:infoCalls++;if($script:infoCalls -eq 1){[pscustomobject]@{LastRunTime=[datetime]'2026-08-31T10:00:00';LastTaskResult=0}}else{[pscustomobject]@{LastRunTime=[datetime]'2026-08-31T10:01:00';LastTaskResult=0}}}
+  function Start-ScheduledTask {}
+  function Get-ScheduledTask {[pscustomobject]@{State='Ready'}}
+  function Stop-ScheduledTask {}
+  function Get-CimInstance {@([pscustomobject]@{ProcessId=10;CommandLine='node unrelated-service.js'})}
+  Test-EunsungResurrectTask -Pm2Home 'C:\Users\eunsung-deploy\.pm2' -Pm2Path 'C:\Users\eunsung-deploy\AppData\Roaming\npm\pm2.cmd' -DeploySid $deploySid -ExpectSavedDump $false -MaxAttempts 2 -DelaySeconds 0
+}
+
+Test-Case 'no-dump task verification rejects an unexpected deployment PM2 daemon' {
+  $deploySid=New-Object Security.Principal.SecurityIdentifier('S-1-5-21-1-2-3-1021');$script:infoCalls=0
+  function Get-ScheduledTaskInfo {$script:infoCalls++;if($script:infoCalls -eq 1){[pscustomobject]@{LastRunTime=[datetime]'2026-08-31T10:00:00';LastTaskResult=0}}else{[pscustomobject]@{LastRunTime=[datetime]'2026-08-31T10:01:00';LastTaskResult=0}}}
+  function Start-ScheduledTask {}
+  function Get-ScheduledTask {[pscustomobject]@{State='Ready'}}
+  function Stop-ScheduledTask {}
+  function Get-CimInstance {@([pscustomobject]@{ProcessId=20;CommandLine='node C:\Users\eunsung-deploy\AppData\Roaming\npm\node_modules\pm2\lib\Daemon.js'})}
+  Assert-Throws { Test-EunsungResurrectTask -Pm2Home 'C:\Users\eunsung-deploy\.pm2' -Pm2Path 'C:\Users\eunsung-deploy\AppData\Roaming\npm\pm2.cmd' -DeploySid $deploySid -ExpectSavedDump $false -MaxAttempts 2 -DelaySeconds 0 } 'Expected zero deployment PM2 daemons'
 }
 
 Test-Case 'scheduled task verification rejects a stale prior result' {
@@ -439,7 +462,7 @@ Test-Case 'scheduled task verification rejects a stale prior result' {
   function Start-ScheduledTask { param($TaskName) }
   function Get-ScheduledTask { [pscustomobject]@{State='Ready'} }
   function Stop-ScheduledTask { param($TaskName) }
-  Assert-Throws { Test-EunsungResurrectTask -Pm2Home 'C:\Users\eunsung-deploy\.pm2' -Pm2Path 'C:\Users\eunsung-deploy\AppData\Roaming\npm\pm2.cmd' -DeploySid $deploySid -MaxAttempts 2 -DelaySeconds 0 } 'new PM2 resurrect task invocation'
+  Assert-Throws { Test-EunsungResurrectTask -Pm2Home 'C:\Users\eunsung-deploy\.pm2' -Pm2Path 'C:\Users\eunsung-deploy\AppData\Roaming\npm\pm2.cmd' -DeploySid $deploySid -ExpectSavedDump $false -MaxAttempts 2 -DelaySeconds 0 } 'new PM2 resurrect task invocation'
 }
 
 Test-Case 'script parses under Windows PowerShell 5.1 AST' {

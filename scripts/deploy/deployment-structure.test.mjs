@@ -328,5 +328,5 @@ test('bootstrap is least privilege, idempotent, pinned, and reversible', () => {
     { encoding: 'utf8', cwd: repositoryRoot, timeout: 60_000 },
   );
   assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
-  assert.match(result.stdout, /RESULT\s+passed=30\s+failed=0/i, 'all isolated bootstrap contracts must pass');
+  assert.match(result.stdout, /RESULT\s+passed=32\s+failed=0/i, 'all isolated bootstrap contracts must pass');
 });
