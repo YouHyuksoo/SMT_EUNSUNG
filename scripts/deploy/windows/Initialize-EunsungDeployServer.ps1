@@ -434,11 +434,28 @@ function Get-EunsungWrapperContent {
   $escapedPm2 = $Pm2Path.Replace("'", "''")
   return @"
 `$ErrorActionPreference = 'Stop'
-`$env:USERPROFILE = '$escapedProfile'
+`$profileRoot = [IO.Path]::GetFullPath('$escapedProfile').TrimEnd('\')
+`$env:USERPROFILE = `$profileRoot
 `$env:PM2_HOME = Join-Path `$env:USERPROFILE '.pm2'
 `$env:Path = (Split-Path -Parent '$escapedPm2') + ';C:\Program Files\nodejs;' + `$env:Path
-& '$escapedPm2' resurrect
-if (`$LASTEXITCODE -ne 0) { throw "PM2 resurrect failed with exit code `$LASTEXITCODE" }
+foreach (`$candidate in @(`$profileRoot, `$env:PM2_HOME)) {
+  if (Test-Path -LiteralPath `$candidate) {
+    `$item = Get-Item -LiteralPath `$candidate -Force
+    if (-not `$item.PSIsContainer -or (`$item.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) { throw "Unsafe PM2 path: `$candidate" }
+  }
+}
+`$dumpPath = [IO.Path]::GetFullPath((Join-Path `$env:PM2_HOME 'dump.pm2'))
+if (-not `$dumpPath.StartsWith(([IO.Path]::GetFullPath(`$env:PM2_HOME).TrimEnd('\') + '\'), [StringComparison]::OrdinalIgnoreCase)) { throw 'PM2 dump path escapes PM2_HOME.' }
+if (Test-Path -LiteralPath `$dumpPath) {
+  `$dump = Get-Item -LiteralPath `$dumpPath -Force
+  if (`$dump.PSIsContainer -or (`$dump.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0 -or (`$dump.PSObject.Properties.Name -contains 'LinkType' -and [string]`$dump.LinkType -eq 'HardLink')) { throw 'PM2 dump must be an ordinary file.' }
+  & '$escapedPm2' resurrect
+  `$operation = 'resurrect'
+} else {
+  & '$escapedPm2' ping
+  `$operation = 'ping'
+}
+if (`$LASTEXITCODE -ne 0) { throw "PM2 `$operation failed with exit code `$LASTEXITCODE" }
 "@
 }
 

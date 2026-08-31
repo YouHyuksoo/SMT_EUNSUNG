@@ -66,11 +66,39 @@ Test-Case 'generated password is nonconstant and sufficiently long' {
 
 Test-Case 'wrapper fixes profile and PM2 home and checks native exit' {
   $content = Get-EunsungWrapperContent -ProfilePath 'C:\Users\eunsung-deploy' -Pm2Path 'C:\Users\eunsung-deploy\AppData\Roaming\npm\pm2.cmd'
-  Assert-True ($content -match "USERPROFILE = 'C:\\Users\\eunsung-deploy'")
+  Assert-True ($content -match "profileRoot = .*'C:\\Users\\eunsung-deploy'")
   Assert-True ($content -match 'PM2_HOME')
   Assert-True ($content -match "pm2\.cmd' resurrect")
   Assert-True ($content -match '\$LASTEXITCODE -ne 0')
   [void][scriptblock]::Create($content)
+}
+
+Test-Case 'wrapper pings without dump and resurrects when ordinary dump exists' {
+  $testDir=Join-Path ([IO.Path]::GetTempPath()) ("eunsung-wrapper-"+[guid]::NewGuid().ToString('N'));$profile=Join-Path $testDir 'profile';$npm=Join-Path $testDir 'npm';New-Item -ItemType Directory -Path $profile,$npm|Out-Null
+  $pm2=Join-Path $npm 'pm2.cmd';$output=Join-Path $testDir 'operation.txt';$oldProfile=$env:USERPROFILE;$oldPm2=$env:PM2_HOME;$oldPath=$env:Path
+  try{
+    [IO.File]::WriteAllText($pm2,"@echo off`r`necho %1> `"$output`"`r`nexit /b 0`r`n",[Text.Encoding]::ASCII)
+    $wrapper=[scriptblock]::Create((Get-EunsungWrapperContent -ProfilePath $profile -Pm2Path $pm2))
+    & $wrapper
+    Assert-Equal 'ping' ((Get-Content -Raw -LiteralPath $output).Trim())
+    $pm2Home=Join-Path $profile '.pm2';New-Item -ItemType Directory -Path $pm2Home -Force|Out-Null;[IO.File]::WriteAllText((Join-Path $pm2Home 'dump.pm2'),'{}')
+    & $wrapper
+    Assert-Equal 'resurrect' ((Get-Content -Raw -LiteralPath $output).Trim())
+  }finally{$env:USERPROFILE=$oldProfile;$env:PM2_HOME=$oldPm2;$env:Path=$oldPath;Remove-Item -LiteralPath $testDir -Recurse -Force}
+}
+
+Test-Case 'wrapper rejects unsafe dump path before invoking PM2' {
+  $testDir=Join-Path ([IO.Path]::GetTempPath()) ("eunsung-wrapper-"+[guid]::NewGuid().ToString('N'));$profile=Join-Path $testDir 'profile';$npm=Join-Path $testDir 'npm';$pm2Home=Join-Path $profile '.pm2';New-Item -ItemType Directory -Path $pm2Home,$npm -Force|Out-Null
+  $pm2=Join-Path $npm 'pm2.cmd';$output=Join-Path $testDir 'operation.txt';New-Item -ItemType Directory -Path (Join-Path $pm2Home 'dump.pm2')|Out-Null;[IO.File]::WriteAllText($pm2,"@echo off`r`necho invoked> `"$output`"`r`nexit /b 0`r`n",[Text.Encoding]::ASCII)
+  try{Assert-Throws { & ([scriptblock]::Create((Get-EunsungWrapperContent -ProfilePath $profile -Pm2Path $pm2))) } 'ordinary file';Assert-True (-not (Test-Path -LiteralPath $output))}
+  finally{Remove-Item -LiteralPath $testDir -Recurse -Force}
+}
+
+Test-Case 'wrapper propagates native ping failure' {
+  $testDir=Join-Path ([IO.Path]::GetTempPath()) ("eunsung-wrapper-"+[guid]::NewGuid().ToString('N'));$profile=Join-Path $testDir 'profile';$npm=Join-Path $testDir 'npm';New-Item -ItemType Directory -Path $profile,$npm|Out-Null;$pm2=Join-Path $npm 'pm2.cmd'
+  [IO.File]::WriteAllText($pm2,"@echo off`r`nexit /b 7`r`n",[Text.Encoding]::ASCII)
+  try{Assert-Throws { & ([scriptblock]::Create((Get-EunsungWrapperContent -ProfilePath $profile -Pm2Path $pm2))) } 'PM2 ping failed with exit code 7'}
+  finally{Remove-Item -LiteralPath $testDir -Recurse -Force}
 }
 
 Test-Case 'task contract requires exact Password limited startup task' {
