@@ -195,6 +195,9 @@ try {
     Assert-True (-not (Test-EunsungAclAccess -Path $config -AclProvider { $unknownWriterAcl } -SidResolver $sidResolver))
     Assert-True (-not (Test-EunsungAclAccess -Path $config -AclProvider { $spoofedDeployAcl } -SidResolver $sidResolver))
     Assert-EunsungProtectedConfig -ReleaseDir $release -AclProvider { $allowedAcl } -SidResolver $sidResolver
+    Assert-Throws {
+      Assert-EunsungProtectedConfig -ReleaseDir $release -AclProvider { param($Path) if ($Path -eq $config) { $allowedAcl } else { $broadAcl } } -SidResolver $sidResolver
+    } 'ACL'
   }
 
   Test-Case 'native nonzero exit is a terminating failure' {
@@ -244,6 +247,23 @@ try {
     Assert-True $result.Success
   }
 
+  Test-Case 'health rejects online PM2 apps still pointing at an older release' {
+    $expected = Join-Path $tempRoot 'health-expected'
+    $old = Join-Path $tempRoot 'health-old'
+    New-Item -ItemType Directory -Force -Path $expected, $old | Out-Null
+    $pm2 = {
+      (@(
+        [pscustomobject]@{ name='eunsung-frontend'; pid=101; pm2_env=[pscustomobject]@{ status='online'; pm_cwd=(Join-Path $old 'apps/frontend'); pm_exec_path=(Join-Path $old 'apps/frontend/next.js') } },
+        [pscustomobject]@{ name='eunsung-backend'; pid=202; pm2_env=[pscustomobject]@{ status='online'; pm_cwd=(Join-Path $old 'apps/backend'); pm_exec_path=(Join-Path $old 'apps/backend/main.js') } }
+      ) | ConvertTo-Json -Compress)
+    }
+    $ports = { param($Port) if ($Port -eq 3100) { @(101) } else { @(202) } }
+    $http = { param($Uri, $TimeoutSec) @{ StatusCode=200; Body='{"status":"ok","database":{"status":"connected"}}' } }
+    $result = Test-EunsungReleaseHealth -ExpectedSha $shaA -ReleaseMarkerSha $shaA -ExpectedReleaseDir $expected -Pm2ListProvider $pm2 -PortOwnerProvider $ports -HttpInvoker $http -MaxAttempts 1
+    Assert-True (-not $result.Success)
+    Assert-Match 'outside expected release' ($result.Diagnostics -join ' ')
+  }
+
   Test-Case 'diagnostics redact environment, config, key, token and password content' {
     $message = 'DB_PASSWORD=hunter2 TOKEN=abc key: xyz env={secret} config={password} {"API_KEY":"json-secret"} C:\secret\backend.env'
     $safe = ConvertTo-EunsungSanitizedDiagnostic $message
@@ -272,6 +292,26 @@ try {
     Remove-EunsungOldSuccessfulReleases -ReleaseRoot $releases -CurrentRelease (Join-Path $releases $names[0])
     Assert-True (Test-Path -LiteralPath $invalid)
     Assert-Equal 3 @((Get-ChildItem -LiteralPath $releases -Directory | Where-Object { (Test-EunsungCommitSha $_.Name) -and (Test-Path -LiteralPath (Join-Path $_.FullName 'deployment.success.json')) })).Count
+  }
+
+  Test-Case 'retention skips a reparse candidate and leaves an external sentinel untouched' {
+    $root = Join-Path $tempRoot 'retention-reparse'
+    $releases = Join-Path $root 'releases'
+    $external = Join-Path $tempRoot 'retention-external'
+    New-Item -ItemType Directory -Force -Path $releases, $external | Out-Null
+    Set-Content -LiteralPath (Join-Path $external 'sentinel.txt') -Value 'keep' -Encoding UTF8
+    $names = @(11..15 | ForEach-Object { '{0:x40}' -f $_ })
+    foreach ($name in $names) {
+      $path = Join-Path $releases $name
+      New-Item -ItemType Directory -Path $path | Out-Null
+      Set-Content -LiteralPath (Join-Path $path 'deployment.success.json') -Value '{}' -Encoding UTF8
+      (Get-Item -LiteralPath $path).LastWriteTimeUtc = [datetime]::UtcNow.AddMinutes(-[int]::Parse($name, [Globalization.NumberStyles]::HexNumber))
+    }
+    $blocked = Join-Path $releases $names[4]
+    $attributes = { param($Path) if ($Path -eq $blocked) { [IO.FileAttributes]::Directory -bor [IO.FileAttributes]::ReparsePoint } elseif ([IO.Directory]::Exists($Path)) { [IO.FileAttributes]::Directory } else { [IO.FileAttributes]::Archive } }
+    Remove-EunsungOldSuccessfulReleases -ReleaseRoot $releases -CurrentRelease (Join-Path $releases $names[0]) -AttributeProvider $attributes
+    Assert-True (Test-Path -LiteralPath $blocked)
+    Assert-True (Test-Path -LiteralPath (Join-Path $external 'sentinel.txt'))
   }
 
   Test-Case 'build marker records exact SHA, expected outputs and non-secret config hashes' {
@@ -543,6 +583,57 @@ try {
     $current = Get-Content -Raw -LiteralPath (Join-Path $root 'current.json') | ConvertFrom-Json
     Assert-Equal $shaB $current.commitSha
     Assert-Equal $secretHash (Get-TestFileSha256 -Path $secretPath)
+  }
+
+  Test-Case 'invalid prior snapshot aborts before switch or delete' {
+    $root = Join-Path $tempRoot 'invalid-snapshot'
+    $release = New-TestRelease -DeployRoot $root -Sha $shaA
+    $script:switchCalls = 0
+    $script:deleteCalls = 0
+    $adapters = @{
+      TestMode = $true
+      CaptureSwitchState = { @{ HasPrior=$true; CurrentMarker=@{commitSha=$shaA;releaseDir=$release}; Apps=@(); DumpBackup=$null } }
+      SwitchApps = { $script:switchCalls++ }
+      StopNewApps = { $script:deleteCalls++ }
+    }
+    Assert-Throws { Invoke-EunsungActivation -DeployRoot $root -ReleaseDir $release -CommitSha $shaA -Adapters $adapters } 'ACL|definitions|dump'
+    Assert-Equal 0 $script:switchCalls
+    Assert-Equal 0 $script:deleteCalls
+  }
+
+  Test-Case 'recovery dump is removed after success and retained as one copy after rollback failure' {
+    $root = Join-Path $tempRoot 'dump-cleanup'
+    $release = New-TestRelease -DeployRoot $root -Sha $shaA
+    $state = Join-Path $root 'state'
+    New-Item -ItemType Directory -Force -Path $state | Out-Null
+    $backup = Join-Path $state 'dump-before-one.pm2'
+    $dump = Join-Path $state 'dump.pm2'
+    Set-Content -LiteralPath $backup -Value 'original' -Encoding UTF8
+    Set-Content -LiteralPath $dump -Value 'current' -Encoding UTF8
+    $success = @{ TestMode=$true; CaptureSwitchState={ @{HasPrior=$false;CurrentMarker=$null;Apps=@();DumpBackup=$backup;DumpPath=$dump;OriginalDumpExists=$true} }; SwitchApps={}; HealthCheck={@{Success=$true;Diagnostics=@()}}; SaveState={}; Retention={} }
+    Invoke-EunsungActivation -DeployRoot $root -ReleaseDir $release -CommitSha $shaA -Adapters $success
+    Assert-True (-not (Test-Path -LiteralPath $backup))
+    Set-Content -LiteralPath $backup -Value 'original' -Encoding UTF8
+    $failure = @{ TestMode=$true; PreflightSnapshot={}; CaptureSwitchState={ @{HasPrior=$true;CurrentMarker=@{commitSha=$shaA;releaseDir=$release};Apps=@();DumpBackup=$backup;DumpPath=$dump} }; SwitchApps={throw 'switch'}; StopNewApps={}; RestorePrior={throw 'rollback'} }
+    Assert-Throws { Invoke-EunsungActivation -DeployRoot $root -ReleaseDir $release -CommitSha $shaA -Adapters $failure } 'rollback health failed'
+    Assert-True (Test-Path -LiteralPath $backup)
+    Assert-Equal 1 @((Get-ChildItem -LiteralPath $state -Filter 'dump-before-*.pm2')).Count
+  }
+
+  Test-Case 'no-prior failure restores the original dump and removes stale markers' {
+    $root = Join-Path $tempRoot 'no-prior-dump'
+    $release = New-TestRelease -DeployRoot $root -Sha $shaA
+    $state = Join-Path $root 'state'
+    New-Item -ItemType Directory -Force -Path $state | Out-Null
+    $backup = Join-Path $state 'dump-before-one.pm2'; $dump = Join-Path $state 'dump.pm2'
+    Set-Content -LiteralPath $backup -Value 'original-dump' -NoNewline -Encoding UTF8
+    Set-Content -LiteralPath $dump -Value 'mutated-dump' -NoNewline -Encoding UTF8
+    Set-Content -LiteralPath (Join-Path $root 'current.json') -Value '{}' -Encoding UTF8
+    $adapters = @{ TestMode=$true; CaptureSwitchState={ @{HasPrior=$false;CurrentMarker=$null;Apps=@();DumpBackup=$backup;DumpPath=$dump;OriginalDumpExists=$true} }; SwitchApps={}; HealthCheck={@{Success=$false;Diagnostics=@('failed')}}; StopNewApps={} }
+    Assert-Throws { Invoke-EunsungActivation -DeployRoot $root -ReleaseDir $release -CommitSha $shaA -Adapters $adapters } 'no prior'
+    Assert-Equal 'original-dump' (Get-Content -Raw -LiteralPath $dump)
+    Assert-True (-not (Test-Path -LiteralPath $backup))
+    Assert-True (-not (Test-Path -LiteralPath (Join-Path $root 'current.json')))
   }
 } finally {
   if (Test-Path -LiteralPath $tempRoot) {
