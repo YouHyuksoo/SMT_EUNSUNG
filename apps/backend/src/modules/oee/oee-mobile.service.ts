@@ -6,40 +6,34 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, IsNull, Not, Repository } from 'typeorm';
-import { ComCode } from '../../entities/com-code.entity';
+import { EquipDowntimeReason } from '../../entities/equip-downtime-reason.entity';
 import { IsysUser } from '../../entities/isys-user.entity';
 import { OeeDowntimeEvent } from '../../entities/oee-downtime-event.entity';
-import { Plant } from '../../entities/plant.entity';
+import { OeeResource } from '../../entities/oee-resource.entity';
 import { ProdLineMaster } from '../../entities/prod-line-master.entity';
 import { WorktimeRange } from '../../entities/worktime-range.entity';
 import {
   OEE_MOBILE_PROCESS_CODES,
+  OEE_MOBILE_REASON_TYPES,
   OEE_MOBILE_RESOURCE_TYPES,
   OeeMobileEndDowntimeDto,
   OeeMobileProcessCode,
   OeeMobileReason,
+  OeeMobileReasonType,
   OeeMobileResource,
   OeeMobileResourceType,
   OeeMobileStartDowntimeDto,
 } from './oee-mobile.dto';
 import { resolveOeeMobileWorkContext } from './oee-mobile-worktime';
 
-const SMT_LINE_CODES = [
-  '01',
-  '02',
-  '03',
-  '04',
-  '05',
-  '06',
-  '07',
-  '08',
-  '09',
-  '10',
-  '11',
-  '12',
-];
-const MACHINE_STATUS_CODE = 'MACHINE STATUS CODE';
-const ASSY_PARENT_LINE_CODE = 'PROD2';
+// Keep the mobile response numeric while retaining null DISPLAY_ORDER rows at the end.
+const NULL_DISPLAY_ORDER = Number.MAX_SAFE_INTEGER;
+
+function isOeeMobileReasonType(
+  value: string | null | undefined,
+): value is (typeof OEE_MOBILE_REASON_TYPES)[number] {
+  return OEE_MOBILE_REASON_TYPES.includes(value as (typeof OEE_MOBILE_REASON_TYPES)[number]);
+}
 
 function errorText(error: unknown): string[] {
   if (error == null) return [];
@@ -70,12 +64,12 @@ export class OeeMobileService {
   constructor(
     @InjectRepository(ProdLineMaster)
     private readonly lineRepository: Repository<ProdLineMaster>,
-    @InjectRepository(Plant)
-    private readonly plantRepository: Repository<Plant>,
+    @InjectRepository(OeeResource)
+    private readonly resourceRepository: Repository<OeeResource>,
     @InjectRepository(IsysUser)
     private readonly userRepository: Repository<IsysUser>,
-    @InjectRepository(ComCode)
-    private readonly codeRepository: Repository<ComCode>,
+    @InjectRepository(EquipDowntimeReason)
+    private readonly reasonRepository: Repository<EquipDowntimeReason>,
     @InjectRepository(OeeDowntimeEvent)
     private readonly eventRepository: Repository<OeeDowntimeEvent>,
     @InjectRepository(WorktimeRange)
@@ -95,10 +89,10 @@ export class OeeMobileService {
     }
 
     if (processCode === 'SMT') {
-      return this.listSmtResources(organizationId);
+      return this.listLineResources('SMT', organizationId);
     }
 
-    return this.listAssyResources(company, plantCd);
+    return this.listLineResources('ASSY', organizationId);
   }
 
   async getWorker(
@@ -117,25 +111,43 @@ export class OeeMobileService {
 
   async listReasons(organizationId?: number): Promise<OeeMobileReason[]> {
     const organization = this.requireOrganization(organizationId);
-    const rows = await this.codeRepository.find({
+    const rows = await this.reasonRepository.find({
       where: {
-        groupCode: MACHINE_STATUS_CODE,
         organizationId: organization,
-        detailCode: Not(In(['N', '*'])),
+        useYn: 'Y',
       },
-      order: { detailCode: 'ASC' },
+      order: { reasonType: 'ASC', displayOrder: 'ASC', reasonCode: 'ASC' },
     });
 
     return rows
       .filter(
-        (row) =>
-          row.groupCode === MACHINE_STATUS_CODE &&
+        (row): row is EquipDowntimeReason & { reasonType: OeeMobileReasonType } =>
           row.organizationId === organization &&
-          row.detailCode !== 'N' &&
-          row.detailCode !== '*',
+          row.useYn === 'Y' &&
+          isOeeMobileReasonType(row.reasonType),
       )
-      .sort((left, right) => left.detailCode.localeCompare(right.detailCode))
-      .map((row) => ({ reasonCode: row.detailCode, reasonName: row.codeName ?? '' }));
+      .sort((left, right) => {
+        const leftTypeOrder = left.reasonType === 'PLAN' ? 0 : 1;
+        const rightTypeOrder = right.reasonType === 'PLAN' ? 0 : 1;
+        if (leftTypeOrder !== rightTypeOrder) return leftTypeOrder - rightTypeOrder;
+
+        if (left.displayOrder == null && right.displayOrder != null) return 1;
+        if (left.displayOrder != null && right.displayOrder == null) return -1;
+        if (
+          left.displayOrder != null &&
+          right.displayOrder != null &&
+          left.displayOrder !== right.displayOrder
+        ) {
+          return left.displayOrder - right.displayOrder;
+        }
+        return left.reasonCode.localeCompare(right.reasonCode);
+      })
+      .map((row) => ({
+        reasonCode: row.reasonCode,
+        reasonName: row.reasonName ?? '',
+        reasonType: row.reasonType,
+        displayOrder: row.displayOrder ?? NULL_DISPLAY_ORDER,
+      }));
   }
 
   async getStatus(
@@ -158,7 +170,7 @@ export class OeeMobileService {
       plantCd,
     );
     const now = new Date();
-    const context = await this.resolveCurrentWorkContext(processCode, resourceType, organization, now);
+    const context = await this.resolveCurrentWorkContext(processCode, organization, now);
     const events = await this.findCurrentEvents(
       organization,
       processCode,
@@ -221,7 +233,7 @@ export class OeeMobileService {
     if (!reason) throw new NotFoundException('비가동 사유를 찾을 수 없습니다.');
 
     const now = new Date();
-    const context = await this.resolveCurrentWorkContext(dto.processCode, dto.resourceType, organization, now);
+    const context = await this.resolveCurrentWorkContext(dto.processCode, organization, now);
     const normalizedParentLineCode = resource.parentLineCode ?? resource.resourceCode;
     const openEvent = await this.eventRepository.findOne({
       where: {
@@ -245,7 +257,7 @@ export class OeeMobileService {
       workSegment: context.workSegment,
       startTime: now,
       endTime: null,
-      reasonCode: reason.detailCode,
+      reasonCode: reason.reasonCode,
       memo: dto.memo ?? null,
       workerId: worker.userId,
       startRequestId: dto.requestId,
@@ -342,52 +354,69 @@ export class OeeMobileService {
     };
   }
 
-  private async listSmtResources(organizationId: number): Promise<OeeMobileResource[]> {
+  private async listLineResources(
+    processCode: OeeMobileProcessCode,
+    organizationId: number,
+  ): Promise<OeeMobileResource[]> {
+    const resources = await this.resourceRepository.find({
+      where: {
+        organizationId,
+        processCode,
+        resourceType: In([...OEE_MOBILE_RESOURCE_TYPES]),
+        useYn: 'Y',
+        refCode: Not(IsNull()),
+      },
+      order: { sortOrder: 'ASC', refCode: 'ASC' },
+    });
+    const configuredResources = resources.filter(
+      (resource) =>
+        resource.organizationId === organizationId &&
+        resource.processCode === processCode &&
+        resource.useYn === 'Y' &&
+        typeof resource.refCode === 'string' &&
+        resource.refCode.trim().length > 0 &&
+        OEE_MOBILE_RESOURCE_TYPES.includes(resource.resourceType as OeeMobileResourceType),
+    );
+    if (configuredResources.length === 0) return [];
+
+    const refCodes = configuredResources.map((resource) => resource.refCode as string);
     const lines = await this.lineRepository.find({
       where: {
         organizationId,
-        lineDivision: 'D',
-        lineCode: In(SMT_LINE_CODES),
+        lineCode: In(refCodes),
       },
-      order: { lineCode: 'ASC' },
     });
+    const linesByCode = new Map(
+      lines
+        .filter((line) => line.organizationId === organizationId)
+        .map((line) => [line.lineCode, line]),
+    );
 
-    return [...lines]
-      .sort((left, right) => left.lineCode.localeCompare(right.lineCode))
-      .map((line) => ({
-        processCode: 'SMT',
-        resourceType: 'LINE',
-        resourceCode: line.lineCode,
-        resourceName: line.lineName,
-        parentLineCode: null,
-      }));
-  }
-
-  private async listAssyResources(company: string, plantCd: string): Promise<OeeMobileResource[]> {
-    const cells = await this.plantRepository.find({
-      where: {
-        company,
-        plantCd,
-        plantCode: 'EUNSUNG',
-        shopCode: '2F',
-        lineCode: ASSY_PARENT_LINE_CODE,
-        plantType: 'CELL',
-        useYn: 'Y',
-      },
-      order: { sortOrder: 'ASC', cellCode: 'ASC' },
-    });
-
-    return [...cells]
-      .sort((left, right) => {
-        const sortOrderDifference = (left.sortOrder ?? 0) - (right.sortOrder ?? 0);
-        return sortOrderDifference || left.cellCode.localeCompare(right.cellCode);
+    return configuredResources
+      .flatMap((resource) => {
+        const refCode = resource.refCode as string;
+        const line = linesByCode.get(refCode);
+        return line ? [{ resource, line, refCode }] : [];
       })
-      .map((cell) => ({
-        processCode: 'ASSY',
-        resourceType: 'CELL',
-        resourceCode: cell.cellCode,
-        resourceName: cell.plantName,
-        parentLineCode: ASSY_PARENT_LINE_CODE,
+      .sort((left, right) => {
+        const leftSortOrder = Number.isFinite(left.resource.sortOrder)
+          ? left.resource.sortOrder
+          : Number.MAX_SAFE_INTEGER;
+        const rightSortOrder = Number.isFinite(right.resource.sortOrder)
+          ? right.resource.sortOrder
+          : Number.MAX_SAFE_INTEGER;
+        if (leftSortOrder !== rightSortOrder) return leftSortOrder - rightSortOrder;
+        const codeOrder = left.refCode.localeCompare(right.refCode);
+        if (codeOrder !== 0) return codeOrder;
+        return left.resource.resourceType.localeCompare(right.resource.resourceType);
+      })
+      .map(({ resource, line, refCode }) => ({
+        resourceId: resource.resourceId,
+        processCode,
+        resourceType: resource.resourceType as OeeMobileResourceType,
+        resourceCode: refCode,
+        resourceName: line.lineName,
+        parentLineCode: refCode,
       }));
   }
 
@@ -409,41 +438,41 @@ export class OeeMobileService {
     this.assertBoundedString(resourceCode, '리소스 코드', 50);
     this.assertBoundedString(parentLineCode, '상위 라인 코드', 50);
 
-    if (processCode === 'SMT' && resourceType !== 'LINE') {
-      throw new BadRequestException('SMT 공정은 LINE 리소스만 사용할 수 있습니다.');
-    }
-    if (processCode === 'ASSY' && resourceType !== 'CELL') {
-      throw new BadRequestException('ASSY 공정은 CELL 리소스만 사용할 수 있습니다.');
-    }
-    if (processCode === 'ASSY' && parentLineCode !== ASSY_PARENT_LINE_CODE) {
-      throw new BadRequestException('ASSY CELL의 상위 라인은 PROD2여야 합니다.');
+    if (parentLineCode !== resourceCode) {
+      throw new BadRequestException('OEE 리소스 기준 코드는 라인 마스터 코드와 같아야 합니다.');
     }
 
     const resources = await this.listResources(processCode, organizationId, company, plantCd);
     const found = resources.find((resource) => {
-      if (resource.resourceCode !== resourceCode) return false;
-      return processCode === 'SMT' || resource.parentLineCode === parentLineCode;
+      return (
+        resource.processCode === processCode &&
+        resource.resourceType === resourceType &&
+        resource.resourceCode === resourceCode &&
+        resource.parentLineCode === parentLineCode
+      );
     });
     if (!found) throw new BadRequestException('인증 테넌트의 OEE 리소스가 아닙니다.');
 
-    return processCode === 'SMT' ? { ...found, parentLineCode: found.resourceCode } : found;
+    return found;
   }
 
-  private async findReason(organizationId: number, reasonCode: string): Promise<ComCode | null> {
+  private async findReason(
+    organizationId: number,
+    reasonCode: string,
+  ): Promise<EquipDowntimeReason | null> {
     if (reasonCode === 'N' || reasonCode === '*') return null;
-    const reason = await this.codeRepository.findOne({
+    const reason = await this.reasonRepository.findOne({
       where: {
-        groupCode: MACHINE_STATUS_CODE,
-        detailCode: reasonCode,
+        reasonCode,
         organizationId,
+        useYn: 'Y',
       },
     });
     if (
       !reason ||
-      reason.groupCode !== MACHINE_STATUS_CODE ||
       reason.organizationId !== organizationId ||
-      reason.detailCode === 'N' ||
-      reason.detailCode === '*'
+      reason.useYn !== 'Y' ||
+      !isOeeMobileReasonType(reason.reasonType)
     ) {
       return null;
     }
@@ -452,11 +481,10 @@ export class OeeMobileService {
 
   private async resolveCurrentWorkContext(
     processCode: OeeMobileProcessCode,
-    resourceType: OeeMobileResourceType,
     organizationId: number,
     serverTime: Date,
   ) {
-    const rangeType = processCode === 'SMT' && resourceType === 'LINE' ? 'SMTWORKTIME' : 'WORKTIME';
+    const rangeType = processCode === 'SMT' ? 'SMTWORKTIME' : 'WORKTIME';
     const rows = await this.worktimeRepository.find({
       where: { organizationId, rangeType },
       order: { workType: 'ASC' },

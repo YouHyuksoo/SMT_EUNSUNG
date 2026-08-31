@@ -112,3 +112,5 @@ apps/backend/data/ai-knowledge/
 
 # 운영 데이터 백업 스냅샷(대용량, 로컬 보관)
 backups/
+
+/.vs/tech1_oee_mobile1

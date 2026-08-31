@@ -21,7 +21,6 @@ export class WorkResultUpsertDto {
   @IsOptional() @IsInt() workerCount?: number;
   @IsOptional() @IsString() workerName?: string;
   @IsIn(['WIP', 'DONE']) resultStatus: string;
-  @IsOptional() @IsString() userId?: string;
 }
 
 // 작업지시 대표불량 단일 저장 (실적과 독립)
@@ -30,7 +29,6 @@ export class DefectSaveDto {
   @IsString() @IsNotEmpty() badCode: string;
   @IsInt() badQty: number;
   @IsOptional() @IsString() remark?: string;
-  @IsOptional() @IsString() userId?: string;
 }
 
 // 라인/설비 일괄 비가동 시작·종료 (ADR 0002 — 이미 그 상태인 설비는 건너뛴다)
@@ -55,7 +53,6 @@ export class DowntimeUpsertDto {
   @IsOptional() @IsBoolean() endNow?: boolean; // true면 종료시각을 DB 현재시각(SYSDATE)으로 — 시작(SYSDATE)과 동일 시계
   @IsOptional() @IsString() memo?: string;
   @IsOptional() @IsString() worker?: string;
-  @IsOptional() @IsString() userId?: string;
 }
 
 /**

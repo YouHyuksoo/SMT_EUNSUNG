@@ -1,15 +1,13 @@
 export type OeeProcessCode = 'SMT' | 'ASSY';
 export type OeeResourceType = 'LINE' | 'CELL';
 
-export const ASSY_PARENT_LINE_CODE = 'PROD2';
-export const NO_ASSEMBLY_CELL_MASTER = 'NO_ASSEMBLY_CELL_MASTER';
-
 export interface OeeWorker {
   workerId: string;
   workerName: string;
 }
 
 export interface OeeResource {
+  resourceId: number;
   processCode: OeeProcessCode;
   resourceType: OeeResourceType;
   resourceCode: string;
@@ -20,6 +18,8 @@ export interface OeeResource {
 export interface OeeReason {
   reasonCode: string;
   reasonName: string;
+  reasonType: 'PLAN' | 'UNPLAN';
+  displayOrder: number;
 }
 
 export interface OeeDowntimeEvent {
@@ -37,7 +37,7 @@ export interface OeeDowntimeEvent {
 
 export interface OeeStatus {
   workDate: string;
-  workSegment: string;
+  workSegment: 'DAY' | 'NIGHT';
   state: 'RUNNING' | 'DOWNTIME';
   events: OeeDowntimeEvent[];
   openEvent: OeeDowntimeEvent | null;
@@ -175,20 +175,15 @@ export function readCollection<T>(response: unknown, key: string): T[] {
 }
 
 export function normalizeResource(resource: OeeResource): OeeResource {
-  if (resource.processCode === 'SMT') {
-    return {
-      ...resource,
-      resourceType: 'LINE',
-      parentLineCode: resource.parentLineCode ?? resource.resourceCode,
-    };
-  }
-
   return {
     ...resource,
-    processCode: 'ASSY',
-    resourceType: 'CELL',
-    parentLineCode: ASSY_PARENT_LINE_CODE,
+    resourceType: resource.resourceType === 'CELL' ? 'CELL' : 'LINE',
+    parentLineCode: typeof resource.parentLineCode === 'string' ? resource.parentLineCode : null,
   };
+}
+
+export function resourceIdentity(resource: Pick<OeeResource, 'resourceId'>): string {
+  return String(resource.resourceId);
 }
 
 export function stableStartSignature(fields: Omit<StartCommandFields, 'requestId'>): string {
@@ -276,7 +271,9 @@ export function normalizeStatus(response: unknown): OeeStatus {
 
   const state = value.state === 'DOWNTIME' || value.state === 'RUNNING' ? value.state : null;
   const workDate = readString(value, 'workDate');
-  const workSegment = readString(value, 'workSegment');
+  const workSegment = value.workSegment === 'DAY' || value.workSegment === 'NIGHT'
+    ? value.workSegment
+    : null;
   if (!state || !workDate || !workSegment) throw new Error('상태 응답 형식이 올바르지 않습니다.');
 
   const events = Array.isArray(value.events)

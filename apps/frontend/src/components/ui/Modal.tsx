@@ -12,7 +12,7 @@
  * 5. **headerActions**: 헤더 타이틀 줄 우측(닫기 X 왼쪽)에 놓을 액션. 취소/저장을 하단
  *    footer가 아니라 타이틀 높이에 배치하고 싶을 때 쓴다. footer와 함께 쓰지 않는다.
  */
-import { useEffect, useCallback, useState, Fragment } from 'react';
+import { useEffect, useCallback, useRef, useState, Fragment } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { X, AlertTriangle, HelpCircle, Copy, Check } from 'lucide-react';
@@ -30,6 +30,23 @@ export interface ModalProps {
   closeOnEsc?: boolean;
   footer?: React.ReactNode;
   headerActions?: React.ReactNode;
+  initialFocusRef?: React.RefObject<HTMLElement | null>;
+}
+
+const FOCUSABLE_SELECTOR = [
+  'a[href]:not([tabindex="-1"])',
+  'button:not([disabled]):not([tabindex="-1"])',
+  'input:not([disabled]):not([type="hidden"]):not([tabindex="-1"])',
+  'select:not([disabled]):not([tabindex="-1"])',
+  'textarea:not([disabled]):not([tabindex="-1"])',
+  '[contenteditable="true"]:not([tabindex="-1"])',
+  '[tabindex]:not([tabindex="-1"])',
+].join(',');
+
+function getFocusableElements(container: HTMLElement): HTMLElement[] {
+  return Array.from(container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)).filter(
+    (element) => !element.hasAttribute('hidden') && element.getAttribute('aria-hidden') !== 'true',
+  );
 }
 
 function Modal({
@@ -44,30 +61,91 @@ function Modal({
   closeOnEsc = true,
   footer,
   headerActions,
+  initialFocusRef,
 }: ModalProps) {
   const { t } = useTranslation();
+  const modalRef = useRef<HTMLDivElement>(null);
+  const openerRef = useRef<HTMLElement | null>(null);
+  const bodyOverflowRef = useRef('');
+  const openerCapturedRef = useRef(false);
+  const onCloseRef = useRef(onClose);
+  const closeOnEscRef = useRef(closeOnEsc);
 
-  // ESC 키로 닫기
+  useEffect(() => {
+    onCloseRef.current = onClose;
+    closeOnEscRef.current = closeOnEsc;
+  }, [closeOnEsc, onClose]);
+
+  // ESC 키로 닫고 Tab 키는 다이얼로그 내부에 가둔다.
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
-      if (closeOnEsc && e.key === 'Escape') {
-        onClose();
+      if (e.key === 'Escape') {
+        if (closeOnEscRef.current) onCloseRef.current();
+        return;
+      }
+
+      if (e.key !== 'Tab') return;
+
+      const panel = modalRef.current;
+      if (!panel) return;
+
+      const focusableElements = getFocusableElements(panel);
+      if (focusableElements.length === 0) {
+        e.preventDefault();
+        panel.focus();
+        return;
+      }
+
+      const firstFocusable = focusableElements[0];
+      const lastFocusable = focusableElements[focusableElements.length - 1];
+      const activeElement = document.activeElement;
+      const focusIsInside = activeElement instanceof HTMLElement && panel.contains(activeElement);
+
+      if (e.shiftKey && (!focusIsInside || activeElement === firstFocusable || activeElement === panel)) {
+        e.preventDefault();
+        lastFocusable.focus();
+      } else if (!e.shiftKey && (!focusIsInside || activeElement === lastFocusable || activeElement === panel)) {
+        e.preventDefault();
+        firstFocusable.focus();
       }
     },
-    [closeOnEsc, onClose]
+    [],
   );
 
   useEffect(() => {
-    if (isOpen) {
-      document.addEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = 'hidden';
+    if (!isOpen) return;
+
+    if (!openerCapturedRef.current) {
+      const activeElement = document.activeElement;
+      openerRef.current = activeElement instanceof HTMLElement ? activeElement : null;
+      bodyOverflowRef.current = document.body.style.overflow;
+      openerCapturedRef.current = true;
     }
+
+    document.addEventListener('keydown', handleKeyDown);
+    document.body.style.overflow = 'hidden';
+
+    const focusFrame = window.requestAnimationFrame(() => {
+      const panel = modalRef.current;
+      if (!panel) return;
+      const preferredFocus = initialFocusRef?.current;
+      const firstFocusable = getFocusableElements(panel)[0];
+      (preferredFocus && panel.contains(preferredFocus) ? preferredFocus : firstFocusable ?? panel).focus();
+    });
 
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = 'unset';
+      window.cancelAnimationFrame(focusFrame);
+      document.body.style.overflow = bodyOverflowRef.current;
+
+      if (openerCapturedRef.current) {
+        openerCapturedRef.current = false;
+        const opener = openerRef.current;
+        openerRef.current = null;
+        if (opener?.isConnected) opener.focus();
+      }
     };
-  }, [isOpen, handleKeyDown]);
+  }, [handleKeyDown, initialFocusRef, isOpen]);
 
   if (!isOpen) return null;
 
@@ -91,18 +169,20 @@ function Modal({
       />
 
       {/* Modal */}
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center p-4">
         <div
           className={`
-            w-full ${sizeStyles[size]}
+            pointer-events-auto w-full ${sizeStyles[size]}
             bg-surface
             rounded-[var(--radius)]
             shadow-2xl
             animate-slide-up
           `}
+          ref={modalRef}
           role="dialog"
           aria-modal="true"
           aria-labelledby={title ? 'modal-title' : undefined}
+          tabIndex={-1}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
@@ -129,6 +209,7 @@ function Modal({
                 {headerActions}
                 {showCloseButton && (
                   <button
+                    type="button"
                     onClick={onClose}
                     className="p-1 rounded-md text-text-muted hover:text-text hover:bg-background transition-colors"
                     aria-label={t('common.close')}
@@ -198,9 +279,10 @@ export function ConfirmModal({
   // 메시지가 문자열일 때만 복사 가능
   const copyText = typeof message === 'string' ? message : null;
 
-  useEffect(() => {
-    if (!isOpen) setCopied(false);
-  }, [isOpen]);
+  const handleClose = useCallback(() => {
+    setCopied(false);
+    onClose();
+  }, [onClose]);
 
   const handleCopy = useCallback(async () => {
     if (!copyText) return;
@@ -216,12 +298,12 @@ export function ConfirmModal({
   return (
     <Modal
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={handleClose}
       title={actualTitle}
       size="md"
       footer={
         <>
-          <Button variant="ghost" onClick={onClose} disabled={isLoading}>
+          <Button variant="ghost" onClick={handleClose} disabled={isLoading}>
             {actualCancelText}
           </Button>
           <Button

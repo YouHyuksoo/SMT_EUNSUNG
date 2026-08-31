@@ -23,8 +23,8 @@ export class OeeDowntimeEvent {
   @Column({ name: 'WORK_DATE', type: 'date' })
   workDate: Date;
 
-  @Column({ name: 'WORK_SEGMENT', type: 'varchar2', length: 1 })
-  workSegment: string;
+  @Column({ name: 'WORK_SEGMENT', type: 'varchar2', length: 5 })
+  workSegment: 'DAY' | 'NIGHT';
 
   @Column({ name: 'START_TIME', type: 'timestamp', precision: 6 })
   startTime: Date;

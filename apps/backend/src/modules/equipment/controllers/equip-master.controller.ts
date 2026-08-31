@@ -33,6 +33,7 @@ import {
   HttpStatus,
   UploadedFile,
   UseInterceptors,
+  UseGuards,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiParam, ApiResponse as SwaggerResponse, ApiConsumes } from '@nestjs/swagger';
@@ -51,8 +52,10 @@ import {
 } from '../dto/equip-master.dto';
 import { ResponseUtil } from '../../../common/dto/response.dto';
 import { OrganizationId } from '../../../common/decorators/tenant.decorator';
+import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 
 @ApiTags('설비관리 - 설비마스터')
+@UseGuards(JwtAuthGuard)
 @Controller('equipment/equips')
 export class EquipMasterController {
   constructor(private readonly equipMasterService: EquipMasterService) {}

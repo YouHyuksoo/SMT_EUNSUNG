@@ -367,7 +367,7 @@ export default function ProcessPage() {
 
       {/* 본문: 상단 공정 + 하단 설비 + 슬라이드 패널 */}
       <div className="flex-1 min-h-0 flex overflow-hidden">
-        <div className="flex-1 min-w-0 grid grid-rows-[minmax(0,2.85fr)_minmax(220px,2.3fr)] gap-6">
+        <div className="flex-1 min-w-0 grid grid-rows-[minmax(0,3fr)_minmax(220px,2fr)] gap-6">
           <div className="flex flex-col min-w-0 min-h-0 overflow-hidden">
             <ProcessList
               processes={processes}
