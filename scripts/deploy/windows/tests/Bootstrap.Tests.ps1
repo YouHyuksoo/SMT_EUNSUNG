@@ -70,6 +70,74 @@ Test-Case 'task contract requires exact S4U limited startup task' {
   Assert-True (-not (Test-EunsungScheduledTaskContract -Task $task -WrapperPath 'D:\deploy\Resurrect-EunsungPm2.ps1' -DeploySid $deploySid))
 }
 
+Test-Case 'batch logon right is added once, recorded, and precedes task registration' {
+  $deploySid = New-Object Security.Principal.SecurityIdentifier('S-1-5-21-1-2-3-1001')
+  $testDir = Join-Path ([IO.Path]::GetTempPath()) ("eunsung-bootstrap-" + [guid]::NewGuid().ToString('N'))
+  New-Item -ItemType Directory -Path $testDir | Out-Null
+  try {
+    $marker = Join-Path $testDir 'bootstrap-state.json'
+    $script:hasRight = $false; $script:addCalls = 0; $script:removeCalls = 0
+    $manager = @{
+      Has = { param($Sid,$Right) Assert-Equal $deploySid.Value $Sid; Assert-Equal 'SeBatchLogonRight' $Right; $script:hasRight }
+      Add = { param($Sid,$Right) $script:addCalls++; $script:hasRight = $true }
+      Remove = { param($Sid,$Right) $script:removeCalls++; $script:hasRight = $false }
+    }
+    Ensure-EunsungBatchLogonRight -DeploySid $deploySid -MarkerPath $marker -RightManager $manager
+    Ensure-EunsungBatchLogonRight -DeploySid $deploySid -MarkerPath $marker -RightManager $manager
+    Assert-Equal 1 $script:addCalls
+    Assert-Equal 0 $script:removeCalls
+    $state = Get-Content -Raw -LiteralPath $marker | ConvertFrom-Json
+    Assert-Equal $deploySid.Value ([string]$state.deploySid)
+    Assert-True ([bool]$state.batchLogonRightAddedByBootstrap)
+    $source = Get-Content -Raw -LiteralPath $scriptPath
+    Assert-True ($source.IndexOf('Ensure-EunsungBatchLogonRight -DeploySid $account.SID') -lt $source.IndexOf('Register-EunsungResurrectTask -WrapperPath $wrapperPath')) 'right grant must precede task registration'
+  } finally { Remove-Item -LiteralPath $testDir -Recurse -Force }
+}
+
+Test-Case 'preexisting batch logon right is recorded as unowned and rollback preserves it' {
+  $deploySid = New-Object Security.Principal.SecurityIdentifier('S-1-5-21-1-2-3-1002')
+  $testDir = Join-Path ([IO.Path]::GetTempPath()) ("eunsung-bootstrap-" + [guid]::NewGuid().ToString('N'))
+  New-Item -ItemType Directory -Path $testDir | Out-Null
+  try {
+    $marker = Join-Path $testDir 'bootstrap-state.json'
+    $script:hasRight = $true; $script:addCalls = 0; $script:removeCalls = 0
+    $manager = @{ Has={ $script:hasRight }; Add={ $script:addCalls++ }; Remove={ $script:removeCalls++; $script:hasRight=$false } }
+    Ensure-EunsungBatchLogonRight -DeploySid $deploySid -MarkerPath $marker -RightManager $manager
+    Assert-True (-not [bool]((Get-Content -Raw -LiteralPath $marker | ConvertFrom-Json).batchLogonRightAddedByBootstrap))
+    Remove-EunsungOwnedBatchLogonRight -DeploySid $deploySid -MarkerPath $marker -RightManager $manager
+    Assert-Equal 0 $script:addCalls; Assert-Equal 0 $script:removeCalls; Assert-True $script:hasRight
+  } finally { Remove-Item -LiteralPath $testDir -Recurse -Force }
+}
+
+Test-Case 'rollback removes only an owned batch logon right and partial rerun repairs it' {
+  $deploySid = New-Object Security.Principal.SecurityIdentifier('S-1-5-21-1-2-3-1003')
+  $testDir = Join-Path ([IO.Path]::GetTempPath()) ("eunsung-bootstrap-" + [guid]::NewGuid().ToString('N'))
+  New-Item -ItemType Directory -Path $testDir | Out-Null
+  try {
+    $marker = Join-Path $testDir 'bootstrap-state.json'
+    Set-EunsungBootstrapState -MarkerPath $marker -DeploySid $deploySid -Added $true
+    $script:hasRight = $false; $script:addCalls = 0; $script:removeCalls = 0
+    $manager = @{ Has={ $script:hasRight }; Add={ $script:addCalls++; $script:hasRight=$true }; Remove={ $script:removeCalls++; $script:hasRight=$false } }
+    Ensure-EunsungBatchLogonRight -DeploySid $deploySid -MarkerPath $marker -RightManager $manager
+    Assert-Equal 1 $script:addCalls
+    Assert-True ([bool]((Get-Content -Raw -LiteralPath $marker | ConvertFrom-Json).batchLogonRightAddedByBootstrap))
+    Remove-EunsungOwnedBatchLogonRight -DeploySid $deploySid -MarkerPath $marker -RightManager $manager
+    Assert-Equal 1 $script:removeCalls; Assert-True (-not $script:hasRight); Assert-True (-not (Test-Path -LiteralPath $marker))
+  } finally { Remove-Item -LiteralPath $testDir -Recurse -Force }
+}
+
+Test-Case 'batch logon right fails closed when native confirmation fails' {
+  $deploySid = New-Object Security.Principal.SecurityIdentifier('S-1-5-21-1-2-3-1004')
+  $testDir = Join-Path ([IO.Path]::GetTempPath()) ("eunsung-bootstrap-" + [guid]::NewGuid().ToString('N'))
+  New-Item -ItemType Directory -Path $testDir | Out-Null
+  try {
+    $marker = Join-Path $testDir 'bootstrap-state.json'; $script:checks=0
+    $manager = @{ Has={ $script:checks++; $false }; Add={}; Remove={} }
+    Assert-Throws { Ensure-EunsungBatchLogonRight -DeploySid $deploySid -MarkerPath $marker -RightManager $manager } 'did not confirm'
+    Assert-True (-not (Test-Path -LiteralPath $marker))
+  } finally { Remove-Item -LiteralPath $testDir -Recurse -Force }
+}
+
 Test-Case 'PM2 process ownership ignores unrelated legacy PM2 and checks exact deploy SID' {
   $deploySid = New-Object Security.Principal.SecurityIdentifier('S-1-5-21-1-2-3-1001')
   $deployHome = 'C:\Users\eunsung-deploy\.pm2'

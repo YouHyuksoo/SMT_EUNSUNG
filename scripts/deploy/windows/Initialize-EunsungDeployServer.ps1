@@ -23,6 +23,73 @@ $script:AccountName = 'eunsung-deploy'
 $script:TaskName = 'EunsungMES-PM2-Resurrect'
 $script:PnpmVersion = '10.28.1'
 $script:Pm2Version = '6.0.6'
+$script:BatchLogonRight = 'SeBatchLogonRight'
+$script:BootstrapStateFileName = 'bootstrap-state.json'
+
+function Initialize-EunsungLsaNativeType {
+  if ('Eunsung.Deployment.LsaRights' -as [type]) { return }
+  Add-Type -TypeDefinition @'
+using System;
+using System.ComponentModel;
+using System.Runtime.InteropServices;
+using System.Security.Principal;
+namespace Eunsung.Deployment {
+  public static class LsaRights {
+    [StructLayout(LayoutKind.Sequential)] private struct LSA_UNICODE_STRING { public UInt16 Length; public UInt16 MaximumLength; public IntPtr Buffer; }
+    [StructLayout(LayoutKind.Sequential)] private struct LSA_OBJECT_ATTRIBUTES { public UInt32 Length; public IntPtr RootDirectory; public IntPtr ObjectName; public UInt32 Attributes; public IntPtr SecurityDescriptor; public IntPtr SecurityQualityOfService; }
+    [DllImport("advapi32.dll", PreserveSig=true)] private static extern UInt32 LsaOpenPolicy(IntPtr systemName, ref LSA_OBJECT_ATTRIBUTES attributes, UInt32 access, out IntPtr handle);
+    [DllImport("advapi32.dll", PreserveSig=true)] private static extern UInt32 LsaClose(IntPtr handle);
+    [DllImport("advapi32.dll", PreserveSig=true)] private static extern UInt32 LsaNtStatusToWinError(UInt32 status);
+    [DllImport("advapi32.dll", PreserveSig=true)] private static extern UInt32 LsaEnumerateAccountRights(IntPtr policy, IntPtr sid, out IntPtr rights, out UInt32 count);
+    [DllImport("advapi32.dll", PreserveSig=true)] private static extern UInt32 LsaAddAccountRights(IntPtr policy, IntPtr sid, LSA_UNICODE_STRING[] rights, UInt32 count);
+    [DllImport("advapi32.dll", PreserveSig=true)] private static extern UInt32 LsaRemoveAccountRights(IntPtr policy, IntPtr sid, [MarshalAs(UnmanagedType.Bool)] bool allRights, LSA_UNICODE_STRING[] rights, UInt32 count);
+    [DllImport("advapi32.dll", PreserveSig=true)] private static extern UInt32 LsaFreeMemory(IntPtr buffer);
+    private const UInt32 POLICY_LOOKUP_NAMES=0x800, POLICY_CREATE_ACCOUNT=0x10, STATUS_OBJECT_NAME_NOT_FOUND=0xC0000034;
+    private static void Check(UInt32 status,string op) { if(status!=0) throw new Win32Exception((int)LsaNtStatusToWinError(status),op); }
+    private static LSA_UNICODE_STRING ToLsa(string value) { IntPtr p=Marshal.StringToHGlobalUni(value); return new LSA_UNICODE_STRING{Buffer=p,Length=(UInt16)(value.Length*2),MaximumLength=(UInt16)((value.Length+1)*2)}; }
+    private static IntPtr Open() { var a=new LSA_OBJECT_ATTRIBUTES(); a.Length=(UInt32)Marshal.SizeOf(typeof(LSA_OBJECT_ATTRIBUTES)); IntPtr h; Check(LsaOpenPolicy(IntPtr.Zero,ref a,POLICY_LOOKUP_NAMES|POLICY_CREATE_ACCOUNT,out h),"LsaOpenPolicy"); return h; }
+    private static IntPtr SidPtr(string sid) { var s=new SecurityIdentifier(sid); byte[] b=new byte[s.BinaryLength]; s.GetBinaryForm(b,0); IntPtr p=Marshal.AllocHGlobal(b.Length); Marshal.Copy(b,0,p,b.Length); return p; }
+    public static bool HasRight(string sid,string right) { IntPtr h=IntPtr.Zero,p=IntPtr.Zero,b=IntPtr.Zero; try { h=Open(); p=SidPtr(sid); UInt32 count; UInt32 status=LsaEnumerateAccountRights(h,p,out b,out count); if(status==STATUS_OBJECT_NAME_NOT_FOUND)return false; Check(status,"LsaEnumerateAccountRights"); int size=Marshal.SizeOf(typeof(LSA_UNICODE_STRING)); for(int i=0;i<count;i++){ var u=(LSA_UNICODE_STRING)Marshal.PtrToStructure(new IntPtr(b.ToInt64()+i*size),typeof(LSA_UNICODE_STRING)); if(String.Equals(Marshal.PtrToStringUni(u.Buffer,u.Length/2),right,StringComparison.Ordinal))return true; } return false; } finally { if(b!=IntPtr.Zero)LsaFreeMemory(b); if(p!=IntPtr.Zero)Marshal.FreeHGlobal(p); if(h!=IntPtr.Zero)LsaClose(h); } }
+    public static void AddRight(string sid,string right) { Change(sid,right,true); }
+    public static void RemoveRight(string sid,string right) { Change(sid,right,false); }
+    private static void Change(string sid,string right,bool add) { IntPtr h=IntPtr.Zero,p=IntPtr.Zero; var r=ToLsa(right); try { h=Open(); p=SidPtr(sid); var rights=new[]{r}; UInt32 status=add?LsaAddAccountRights(h,p,rights,1):LsaRemoveAccountRights(h,p,false,rights,1); Check(status,add?"LsaAddAccountRights":"LsaRemoveAccountRights"); } finally { if(r.Buffer!=IntPtr.Zero)Marshal.FreeHGlobal(r.Buffer); if(p!=IntPtr.Zero)Marshal.FreeHGlobal(p); if(h!=IntPtr.Zero)LsaClose(h); } }
+  }
+}
+'@
+}
+
+function Get-EunsungLsaRightManager {
+  Initialize-EunsungLsaNativeType
+  return @{ Has={ param($Sid,$Right) [Eunsung.Deployment.LsaRights]::HasRight($Sid,$Right) }; Add={ param($Sid,$Right) [Eunsung.Deployment.LsaRights]::AddRight($Sid,$Right) }; Remove={ param($Sid,$Right) [Eunsung.Deployment.LsaRights]::RemoveRight($Sid,$Right) } }
+}
+
+function Set-EunsungBootstrapState {
+  param([string]$MarkerPath,[Security.Principal.SecurityIdentifier]$DeploySid,[bool]$Added)
+  $temporary = "$MarkerPath.tmp"
+  $payload = [ordered]@{ schemaVersion=1; deploySid=$DeploySid.Value; batchLogonRightAddedByBootstrap=$Added }
+  [IO.File]::WriteAllText($temporary,($payload | ConvertTo-Json -Compress),(New-Object Text.UTF8Encoding($false)))
+  Move-Item -LiteralPath $temporary -Destination $MarkerPath -Force
+}
+
+function Ensure-EunsungBatchLogonRight {
+  param([Parameter(Mandatory)][Security.Principal.SecurityIdentifier]$DeploySid,[Parameter(Mandatory)][string]$MarkerPath,[hashtable]$RightManager=(Get-EunsungLsaRightManager))
+  $marker=$null
+  if(Test-Path -LiteralPath $MarkerPath){ Assert-EunsungOrdinaryPath -Path $MarkerPath; try{$marker=Get-Content -Raw -LiteralPath $MarkerPath|ConvertFrom-Json}catch{throw 'Deployment bootstrap state marker is invalid JSON.'}; if([int]$marker.schemaVersion -ne 1 -or [string]$marker.deploySid -cne $DeploySid.Value){throw 'Deployment bootstrap state marker does not match the exact deployment SID.'} }
+  if([bool](& $RightManager.Has $DeploySid.Value $script:BatchLogonRight)){ if($null -eq $marker){Set-EunsungBootstrapState -MarkerPath $MarkerPath -DeploySid $DeploySid -Added $false}; return }
+  & $RightManager.Add $DeploySid.Value $script:BatchLogonRight
+  if(-not [bool](& $RightManager.Has $DeploySid.Value $script:BatchLogonRight)){throw 'LSA did not confirm SeBatchLogonRight after adding it.'}
+  try{Set-EunsungBootstrapState -MarkerPath $MarkerPath -DeploySid $DeploySid -Added $true}catch{& $RightManager.Remove $DeploySid.Value $script:BatchLogonRight; throw}
+}
+
+function Remove-EunsungOwnedBatchLogonRight {
+  param([Parameter(Mandatory)][Security.Principal.SecurityIdentifier]$DeploySid,[Parameter(Mandatory)][string]$MarkerPath,[hashtable]$RightManager=(Get-EunsungLsaRightManager))
+  if(-not (Test-Path -LiteralPath $MarkerPath)){return}
+  Assert-EunsungOrdinaryPath -Path $MarkerPath
+  try{$marker=Get-Content -Raw -LiteralPath $MarkerPath|ConvertFrom-Json}catch{throw 'Deployment bootstrap state marker is invalid JSON.'}
+  if([int]$marker.schemaVersion -ne 1 -or [string]$marker.deploySid -cne $DeploySid.Value){throw 'Deployment bootstrap state marker does not match the exact deployment SID.'}
+  if([bool]$marker.batchLogonRightAddedByBootstrap -and [bool](& $RightManager.Has $DeploySid.Value $script:BatchLogonRight)){& $RightManager.Remove $DeploySid.Value $script:BatchLogonRight; if([bool](& $RightManager.Has $DeploySid.Value $script:BatchLogonRight)){throw 'LSA still reports SeBatchLogonRight after rollback removal.'}}
+  Remove-Item -LiteralPath $MarkerPath -Force
+}
 
 function Assert-EunsungAdministrator {
   $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
@@ -299,6 +366,11 @@ function Invoke-EunsungBootstrapRollback {
   $wrapperPath = Assert-EunsungBootstrapPath -Root $root -Candidate (Join-Path $root 'scripts\Resurrect-EunsungPm2.ps1')
   $task = Get-ScheduledTask -TaskName $script:TaskName -ErrorAction SilentlyContinue
   if ($task) { Unregister-ScheduledTask -TaskName $script:TaskName -Confirm:$false }
+  $account = Get-LocalUser -Name $script:AccountName -ErrorAction SilentlyContinue
+  if ($account) {
+    $markerPath = Assert-EunsungBootstrapPath -Root $root -Candidate (Join-Path $root "state\$($script:BootstrapStateFileName)")
+    Remove-EunsungOwnedBatchLogonRight -DeploySid $account.SID -MarkerPath $markerPath
+  }
   if (Test-Path -LiteralPath $wrapperPath) {
     Assert-EunsungOrdinaryPath -Path $wrapperPath
     $item = Get-Item -LiteralPath $wrapperPath -Force
@@ -388,6 +460,8 @@ function Initialize-EunsungDeployServer {
   $existingContent = if (Test-Path -LiteralPath $wrapperPath) { Get-Content -Raw -LiteralPath $wrapperPath } else { $null }
   if ($existingContent -cne $wrapperContent) { [IO.File]::WriteAllText($wrapperPath, $wrapperContent, (New-Object Text.UTF8Encoding($false))) }
   Assert-EunsungOrdinaryPath -Path $wrapperPath
+  $bootstrapStatePath = Assert-EunsungBootstrapPath -Root $root -Candidate (Join-Path $root "state\$($script:BootstrapStateFileName)")
+  Ensure-EunsungBatchLogonRight -DeploySid $account.SID -MarkerPath $bootstrapStatePath
   Register-EunsungResurrectTask -WrapperPath $wrapperPath -DeploySid $account.SID | Out-Null
   Test-EunsungResurrectTask -Pm2Home (Join-Path $profilePath '.pm2') -Pm2Path $pm2Path -DeploySid $account.SID
 
