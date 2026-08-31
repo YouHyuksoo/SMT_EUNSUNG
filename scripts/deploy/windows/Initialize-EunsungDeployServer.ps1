@@ -265,6 +265,93 @@ function Set-EunsungSshAcl {
   Set-Acl -LiteralPath $Path -AclObject $acl
 }
 
+function Set-EunsungBootstrapExecutableAcl {
+  param([Parameter(Mandatory)][string]$Path,[Parameter(Mandatory)][Security.Principal.SecurityIdentifier]$DeploySid)
+  $administratorsSid=New-Object Security.Principal.SecurityIdentifier('S-1-5-32-544')
+  $systemSid=New-Object Security.Principal.SecurityIdentifier('S-1-5-18')
+  $acl=New-Object Security.AccessControl.FileSecurity
+  $acl.SetAccessRuleProtection($true,$false)
+  [void]$acl.AddAccessRule((New-Object Security.AccessControl.FileSystemAccessRule($administratorsSid,'FullControl','Allow')))
+  [void]$acl.AddAccessRule((New-Object Security.AccessControl.FileSystemAccessRule($systemSid,'FullControl','Allow')))
+  [void]$acl.AddAccessRule((New-Object Security.AccessControl.FileSystemAccessRule($DeploySid,'ReadAndExecute','Allow')))
+  $acl.SetOwner($administratorsSid)
+  (New-Object IO.FileInfo($Path)).SetAccessControl($acl)
+}
+
+function Assert-EunsungBootstrapExecutableAcl {
+  param([Parameter(Mandatory)][string]$Path,[Parameter(Mandatory)][Security.Principal.SecurityIdentifier]$DeploySid)
+  $acl=(New-Object IO.FileInfo($Path)).GetAccessControl()
+  if(-not $acl.AreAccessRulesProtected){throw 'Bootstrap executable ACL inheritance must be disabled.'}
+  $owner=([Security.Principal.NTAccount]$acl.Owner).Translate([Security.Principal.SecurityIdentifier]).Value
+  if($owner -cne 'S-1-5-32-544'){throw 'Bootstrap executable owner must be Administrators.'}
+  $rules=@($acl.GetAccessRules($true,$true,[Security.Principal.SecurityIdentifier]))
+  if($rules.Count -ne 3){throw 'Bootstrap executable ACL must contain exactly Administrators, SYSTEM, and the deployment SID.'}
+  foreach($sid in @('S-1-5-32-544','S-1-5-18')){if(@($rules|Where-Object{$_.IdentityReference.Value -ceq $sid -and $_.AccessControlType -eq 'Allow' -and ($_.FileSystemRights -band 'FullControl') -eq 'FullControl'}).Count -ne 1){throw 'Bootstrap executable administrative ACL is invalid.'}}
+  if(@($rules|Where-Object{$_.IdentityReference.Value -ceq $DeploySid.Value -and $_.AccessControlType -eq 'Allow' -and ($_.FileSystemRights -band 'ReadAndExecute') -eq 'ReadAndExecute' -and ($_.FileSystemRights -band 'Write') -eq 0}).Count -ne 1){throw 'Deployment SID must have read/execute only on bootstrap executables.'}
+}
+
+function Get-EunsungSelfRegistrationHelperContent {
+  return @'
+[CmdletBinding()]
+param(
+  [Parameter(Mandatory)][ValidateSet('DiscoverProfile','RegisterTask')][string]$Action,
+  [string]$OutputPath,
+  [string]$WrapperPath,
+  [string]$DeploySid
+)
+$ErrorActionPreference='Stop'
+Set-StrictMode -Version 2.0
+if($Action -eq 'DiscoverProfile'){
+  $profile=[Environment]::GetFolderPath([Environment+SpecialFolder]::UserProfile)
+  if([string]::IsNullOrWhiteSpace($profile) -or -not (Test-Path -LiteralPath $profile -PathType Container)){throw 'Credentialed profile was not loaded.'}
+  [IO.File]::WriteAllText($OutputPath,[IO.Path]::GetFullPath($profile),(New-Object Text.UTF8Encoding($false)))
+  exit 0
+}
+$current=[Security.Principal.WindowsIdentity]::GetCurrent().User.Value
+if($current -cne $DeploySid){throw 'Task helper is not running as the exact deployment SID.'}
+$taskName='EunsungMES-PM2-Resurrect'
+$arguments="-NoProfile -NonInteractive -ExecutionPolicy Bypass -File `"$([IO.Path]::GetFullPath($WrapperPath))`""
+$powershellPath=[IO.Path]::GetFullPath((Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'))
+$taskAction=New-ScheduledTaskAction -Execute $powershellPath -Argument $arguments
+$trigger=New-ScheduledTaskTrigger -AtStartup
+$principal=New-ScheduledTaskPrincipal -UserId $DeploySid -LogonType S4U -RunLevel Limited
+$settings=New-ScheduledTaskSettingsSet -ExecutionTimeLimit (New-TimeSpan -Minutes 2) -StartWhenAvailable
+# A nonadministrator must self-register passwordless S4U; cross-user administrator registration requires a password.
+Register-ScheduledTask -TaskName $taskName -Action $taskAction -Trigger $trigger -Principal $principal -Settings $settings -Description 'Restore Eunsung MES PM2 processes at Windows startup.' | Out-Null
+'@
+}
+
+function Assert-EunsungSafeProcessArgument {
+  param([Parameter(Mandatory)][string]$Value)
+  if([string]::IsNullOrWhiteSpace($Value) -or $Value -match '["\r\n]'){throw 'Unsafe credentialed-helper process argument.'}
+}
+
+function Invoke-EunsungCredentialedHelper {
+  param([Parameter(Mandatory)][string]$PowerShellPath,[Parameter(Mandatory)][string]$HelperPath,[Parameter(Mandatory)][ValidateSet('DiscoverProfile','RegisterTask')][string]$Action,[Parameter(Mandatory)][Management.Automation.PSCredential]$Credential,[string]$OutputPath,[string]$WrapperPath,[Security.Principal.SecurityIdentifier]$DeploySid,[scriptblock]$ProcessStarter={param($StartInfo) Start-Process @StartInfo})
+  foreach($value in @($HelperPath,$Action)+@($OutputPath,$WrapperPath)|Where-Object{$_}){Assert-EunsungSafeProcessArgument -Value $value}
+  $arguments="-NoProfile -NonInteractive -ExecutionPolicy Bypass -File `"$HelperPath`" -Action $Action"
+  if($OutputPath){$arguments+=" -OutputPath `"$OutputPath`""}
+  if($WrapperPath){$arguments+=" -WrapperPath `"$WrapperPath`""}
+  if($DeploySid){$arguments+=" -DeploySid $($DeploySid.Value)"}
+  $startInfo=@{FilePath=$PowerShellPath;ArgumentList=$arguments;Credential=$Credential;LoadUserProfile=$true;Wait=$true;PassThru=$true;WindowStyle='Hidden'}
+  $process=& $ProcessStarter $startInfo
+  if($null -eq $process -or [int]$process.ExitCode -ne 0){throw "Credentialed deployment helper failed with exit code $([int]$process.ExitCode)."}
+}
+
+function Resolve-EunsungRegisteredProfilePath {
+  param([Parameter(Mandatory)][string]$DeployRoot,[Parameter(Mandatory)][string]$PowerShellPath,[Parameter(Mandatory)][string]$HelperPath,[Parameter(Mandatory)][Management.Automation.PSCredential]$Credential,[Parameter(Mandatory)][Security.Principal.SecurityIdentifier]$DeploySid,[scriptblock]$ProcessStarter={param($StartInfo) Start-Process @StartInfo},[scriptblock]$RegistryProfileProvider={param($Sid) (Get-ItemProperty -LiteralPath "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList\$Sid" -Name ProfileImagePath -ErrorAction Stop).ProfileImagePath})
+  $outputPath=Assert-EunsungBootstrapPath -Root $DeployRoot -Candidate (Join-Path $DeployRoot ("state\profile-"+[guid]::NewGuid().ToString('N')+'.txt'))
+  try{
+    Invoke-EunsungCredentialedHelper -PowerShellPath $PowerShellPath -HelperPath $HelperPath -Action DiscoverProfile -Credential $Credential -OutputPath $outputPath -ProcessStarter $ProcessStarter
+    Assert-EunsungOrdinaryPath -Path $outputPath
+    $reported=[IO.Path]::GetFullPath((Get-Content -Raw -LiteralPath $outputPath).Trim()).TrimEnd('\')
+    $registered=[IO.Path]::GetFullPath(([Environment]::ExpandEnvironmentVariables([string](& $RegistryProfileProvider $DeploySid.Value)))).TrimEnd('\')
+    if($reported -ine $registered -or -not (Test-Path -LiteralPath $registered -PathType Container)){throw 'Credentialed profile path does not match the registered Windows profile.'}
+    Assert-EunsungOrdinaryPath -Path $registered
+    return $registered
+  }finally{if(Test-Path -LiteralPath $outputPath){Assert-EunsungOrdinaryPath -Path $outputPath;Remove-Item -LiteralPath $outputPath -Force}}
+}
+
 function Assert-EunsungReadExecuteAccess {
   param(
     [Parameter(Mandatory)][string]$Path,
@@ -351,7 +438,7 @@ function Test-EunsungScheduledTaskContract {
   return $triggers[0].CimClass.CimClassName -eq 'MSFT_TaskBootTrigger'
 }
 
-function Register-EunsungResurrectTask {
+function Prepare-EunsungResurrectTaskRegistration {
   param(
     [Parameter(Mandatory)][string]$WrapperPath,
     [Parameter(Mandatory)][Security.Principal.SecurityIdentifier]$DeploySid
@@ -359,17 +446,10 @@ function Register-EunsungResurrectTask {
 
   $existing = Get-ScheduledTask -TaskName $script:TaskName -ErrorAction SilentlyContinue
   if ($existing -and (Test-EunsungScheduledTaskContract -Task $existing -WrapperPath $WrapperPath -DeploySid $DeploySid)) {
-    return $existing
+    return $false
   }
   if ($existing) { Unregister-ScheduledTask -TaskName $script:TaskName -Confirm:$false }
-
-  $arguments = "-NoProfile -NonInteractive -ExecutionPolicy Bypass -File `"$WrapperPath`""
-  $powershellPath = [IO.Path]::GetFullPath((Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'))
-  $taskAction = New-ScheduledTaskAction -Execute $powershellPath -Argument $arguments
-  $trigger = New-ScheduledTaskTrigger -AtStartup
-  $principal = New-ScheduledTaskPrincipal -UserId $DeploySid.Value -LogonType S4U -RunLevel Limited
-  $settings = New-ScheduledTaskSettingsSet -ExecutionTimeLimit (New-TimeSpan -Minutes 2) -StartWhenAvailable
-  return Register-ScheduledTask -TaskName $script:TaskName -Action $taskAction -Trigger $trigger -Principal $principal -Settings $settings -Description 'Restore Eunsung MES PM2 processes at Windows startup.'
+  return $true
 }
 
 function Assert-EunsungPm2ProcessOwnership {
@@ -453,6 +533,8 @@ function Invoke-EunsungBootstrapRollback {
     if ($item.PSIsContainer) { throw "Refusing to remove non-file wrapper path: $wrapperPath" }
     Remove-Item -LiteralPath $wrapperPath -Force
   }
+  $helperPath=Assert-EunsungBootstrapPath -Root $root -Candidate (Join-Path $root 'scripts\Register-EunsungResurrectTask.ps1')
+  if(Test-Path -LiteralPath $helperPath){Assert-EunsungOrdinaryPath -Path $helperPath;$item=Get-Item -LiteralPath $helperPath -Force;if($item.PSIsContainer){throw "Refusing to remove non-file helper path: $helperPath"};Remove-Item -LiteralPath $helperPath -Force}
 }
 
 function Initialize-EunsungDeployServer {
@@ -468,11 +550,16 @@ function Initialize-EunsungDeployServer {
   if ($PublicKey -match '[\r\n]') { throw 'PublicKey must not contain line breaks.' }
   Assert-EunsungAdministrator
 
+  $password = New-EunsungRandomPassword
+  $credential = $null
+  try {
   $account = Get-LocalUser -Name $script:AccountName -ErrorAction SilentlyContinue
   if (-not $account) {
-    $password = New-EunsungRandomPassword
     $account = New-LocalUser -Name $script:AccountName -Password $password -AccountNeverExpires -PasswordNeverExpires -UserMayNotChangePassword -Description 'Eunsung MES deployment account'
+  } else {
+    Set-LocalUser -Name $script:AccountName -Password $password
   }
+  $credential = New-Object Management.Automation.PSCredential(".\$($script:AccountName)",$password)
   if (-not $account.Enabled) { Enable-LocalUser -Name $script:AccountName }
   $adminGroup = Get-LocalGroup -SID 'S-1-5-32-544'
   $adminMember = Get-LocalGroupMember -Group $adminGroup -ErrorAction Stop | Where-Object { $_.SID -eq $account.SID }
@@ -489,8 +576,17 @@ function Initialize-EunsungDeployServer {
     Set-EunsungDirectoryAcl -Path $path -DeploySid $account.SID
   }
 
-  $profilePath = Join-Path $env:SystemDrive "Users\$($script:AccountName)"
-  if (-not (Test-Path -LiteralPath $profilePath)) { New-Item -ItemType Directory -Path $profilePath | Out-Null }
+  $bootstrapStatePath = Assert-EunsungBootstrapPath -Root $root -Candidate (Join-Path $root "state\$($script:BootstrapStateFileName)")
+  Ensure-EunsungBatchLogonRight -DeploySid $account.SID -DeployRoot $root -MarkerPath $bootstrapStatePath
+  $helperPath=Assert-EunsungBootstrapPath -Root $root -Candidate (Join-Path $root 'scripts\Register-EunsungResurrectTask.ps1')
+  $helperContent=Get-EunsungSelfRegistrationHelperContent
+  $existingHelper=if(Test-Path -LiteralPath $helperPath){Get-Content -Raw -LiteralPath $helperPath}else{$null}
+  if($existingHelper -cne $helperContent){[IO.File]::WriteAllText($helperPath,$helperContent,(New-Object Text.UTF8Encoding($false)))}
+  Assert-EunsungOrdinaryPath -Path $helperPath
+  Set-EunsungBootstrapExecutableAcl -Path $helperPath -DeploySid $account.SID
+  Assert-EunsungBootstrapExecutableAcl -Path $helperPath -DeploySid $account.SID
+  $powershellPath=[IO.Path]::GetFullPath((Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'))
+  $profilePath=Resolve-EunsungRegisteredProfilePath -DeployRoot $root -PowerShellPath $powershellPath -HelperPath $helperPath -Credential $credential -DeploySid $account.SID
   $sshPath = Join-Path $profilePath '.ssh'
   $authorizedKeysPath = Join-Path $sshPath 'authorized_keys'
   if (-not (Test-Path -LiteralPath $sshPath)) { New-Item -ItemType Directory -Path $sshPath | Out-Null }
@@ -536,12 +632,21 @@ function Initialize-EunsungDeployServer {
   $existingContent = if (Test-Path -LiteralPath $wrapperPath) { Get-Content -Raw -LiteralPath $wrapperPath } else { $null }
   if ($existingContent -cne $wrapperContent) { [IO.File]::WriteAllText($wrapperPath, $wrapperContent, (New-Object Text.UTF8Encoding($false))) }
   Assert-EunsungOrdinaryPath -Path $wrapperPath
-  $bootstrapStatePath = Assert-EunsungBootstrapPath -Root $root -Candidate (Join-Path $root "state\$($script:BootstrapStateFileName)")
-  Ensure-EunsungBatchLogonRight -DeploySid $account.SID -DeployRoot $root -MarkerPath $bootstrapStatePath
-  Register-EunsungResurrectTask -WrapperPath $wrapperPath -DeploySid $account.SID | Out-Null
+  Set-EunsungBootstrapExecutableAcl -Path $wrapperPath -DeploySid $account.SID
+  Assert-EunsungBootstrapExecutableAcl -Path $wrapperPath -DeploySid $account.SID
+  if(Prepare-EunsungResurrectTaskRegistration -WrapperPath $wrapperPath -DeploySid $account.SID){
+    Invoke-EunsungCredentialedHelper -PowerShellPath $powershellPath -HelperPath $helperPath -Action RegisterTask -Credential $credential -WrapperPath $wrapperPath -DeploySid $account.SID
+  }
+  $registeredTask=Get-ScheduledTask -TaskName $script:TaskName -ErrorAction Stop
+  if(-not (Test-EunsungScheduledTaskContract -Task $registeredTask -WrapperPath $wrapperPath -DeploySid $account.SID)){throw 'Self-registered scheduled task does not satisfy the exact contract.'}
   Test-EunsungResurrectTask -Pm2Home (Join-Path $profilePath '.pm2') -Pm2Path $pm2Path -DeploySid $account.SID
 
   Write-Host 'Eunsung deployment server bootstrap completed.'
+  } finally {
+    if($credential){$credential.Password.Dispose()}elseif($password){$password.Dispose()}
+    $credential=$null
+    $password=$null
+  }
 }
 
 if (-not $LibraryOnly) {

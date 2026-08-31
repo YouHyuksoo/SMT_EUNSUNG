@@ -299,6 +299,10 @@ test('bootstrap is least privilege, idempotent, pinned, and reversible', () => {
   assert.match(bootstrap, /EunsungMES-PM2-Resurrect/g, 'the exact scheduled task name is required');
   assert.match(bootstrap, /New-ScheduledTaskTrigger\s+-AtStartup/i, 'the task must run at startup');
   assert.match(bootstrap, /New-ScheduledTaskPrincipal[\s\S]{0,200}-LogonType\s+S4U[\s\S]{0,100}-RunLevel\s+Limited/i, 'the task principal must be S4U and limited');
+  assert.match(bootstrap, /Start-Process[\s\S]{0,1800}Credential[\s\S]{0,300}LoadUserProfile/i, 'task self-registration must launch under the deployment credential with its profile loaded');
+  assert.match(bootstrap, /Set-LocalUser[\s\S]{0,200}-Password/i, 'the local deployment password must be rotated for credentialed self-registration');
+  assert.doesNotMatch(bootstrap, /ArgumentList[^\n]*(?:password|secure)/i, 'password material must never enter the helper command line');
+  assert.match(bootstrap, /ProfileList[\s\S]{0,500}ProfileImagePath/i, 'the credentialed profile must be checked against Windows ProfileList');
   assert.match(bootstrap, /LsaAddAccountRights[\s\S]{0,800}LsaRemoveAccountRights/i, 'batch logon must use targeted LSA account-right APIs');
   assert.match(bootstrap, /SeBatchLogonRight/i, 'the exact batch logon right is required');
   assert.match(bootstrap, /batchLogonRightAddedByBootstrap/i, 'rollback ownership must be persisted');
@@ -318,5 +322,5 @@ test('bootstrap is least privilege, idempotent, pinned, and reversible', () => {
     { encoding: 'utf8', cwd: repositoryRoot, timeout: 60_000 },
   );
   assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
-  assert.match(result.stdout, /RESULT\s+passed=14\s+failed=0/i, 'all isolated bootstrap contracts must pass');
+  assert.match(result.stdout, /RESULT\s+passed=18\s+failed=0/i, 'all isolated bootstrap contracts must pass');
 });

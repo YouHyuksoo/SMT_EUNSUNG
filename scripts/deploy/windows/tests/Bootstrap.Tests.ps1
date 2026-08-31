@@ -91,7 +91,7 @@ Test-Case 'batch logon right is added once, recorded, and precedes task registra
     Assert-Equal $deploySid.Value ([string]$state.deploySid)
     Assert-True ([bool]$state.batchLogonRightAddedByBootstrap)
     $source = Get-Content -Raw -LiteralPath $scriptPath
-    Assert-True ($source.IndexOf('Ensure-EunsungBatchLogonRight -DeploySid $account.SID') -lt $source.IndexOf('Register-EunsungResurrectTask -WrapperPath $wrapperPath')) 'right grant must precede task registration'
+    Assert-True ($source.LastIndexOf('Ensure-EunsungBatchLogonRight -DeploySid $account.SID') -lt $source.LastIndexOf('Invoke-EunsungCredentialedHelper -PowerShellPath $powershellPath')) 'right grant must precede credentialed task registration'
   } finally { Remove-Item -LiteralPath $testDir -Recurse -Force }
 }
 
@@ -174,6 +174,53 @@ Test-Case 'rollback uses protected marker SID when local account is already abse
     Assert-Equal $deploySid.Value $script:removedSid
     Assert-True (-not (Test-Path -LiteralPath $marker))
   } finally { Remove-Item -LiteralPath $testDir -Recurse -Force }
+}
+
+Test-Case 'credentialed helper loads profile without exposing password in process arguments' {
+  $secure=New-Object Security.SecureString
+  foreach($c in 'DoNotLeak!938475'.ToCharArray()){$secure.AppendChar($c)}
+  $credential=New-Object Management.Automation.PSCredential('.\eunsung-deploy',$secure)
+  $script:captured=$null
+  $starter={param($StartInfo)$script:captured=$StartInfo;[pscustomobject]@{ExitCode=0}}
+  Invoke-EunsungCredentialedHelper -PowerShellPath 'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe' -HelperPath 'D:\deploy\helper.ps1' -Action RegisterTask -Credential $credential -WrapperPath 'D:\deploy\wrapper.ps1' -DeploySid (New-Object Security.Principal.SecurityIdentifier('S-1-5-21-1-2-3-1007')) -ProcessStarter $starter
+  Assert-True ([bool]$script:captured.LoadUserProfile)
+  Assert-True ([bool]$script:captured.Wait)
+  Assert-True ($script:captured.Credential -eq $credential)
+  Assert-True ([string]$script:captured.ArgumentList -notmatch 'DoNotLeak')
+  Assert-True ((Get-EunsungSelfRegistrationHelperContent) -match 'WindowsIdentity.*GetCurrent')
+}
+
+Test-Case 'helper and wrapper ACL give deployment SID read execute without write' {
+  $deploySid=New-Object Security.Principal.SecurityIdentifier('S-1-5-21-1-2-3-1010')
+  $testFile=Join-Path ([IO.Path]::GetTempPath()) ("eunsung-helper-"+[guid]::NewGuid().ToString('N')+'.ps1')
+  [IO.File]::WriteAllText($testFile,'exit 0')
+  try{Set-EunsungBootstrapExecutableAcl -Path $testFile -DeploySid $deploySid;Assert-EunsungBootstrapExecutableAcl -Path $testFile -DeploySid $deploySid}
+  finally{Remove-Item -LiteralPath $testFile -Force}
+}
+
+Test-Case 'registered profile is discovered by credentialed launch and checked against ProfileList' {
+  $deploySid=New-Object Security.Principal.SecurityIdentifier('S-1-5-21-1-2-3-1008')
+  $testDir=Join-Path ([IO.Path]::GetTempPath()) ("eunsung-bootstrap-"+[guid]::NewGuid().ToString('N'))
+  $profileDir=Join-Path $testDir 'actual-profile'
+  New-Item -ItemType Directory -Path (Join-Path $testDir 'state'),$profileDir -Force|Out-Null
+  try{
+    $secure=New-Object Security.SecureString;foreach($c in 'Temp!938475abc'.ToCharArray()){$secure.AppendChar($c)}
+    $credential=New-Object Management.Automation.PSCredential('.\eunsung-deploy',$secure)
+    $starter={param($StartInfo)if($StartInfo.ArgumentList -match '-OutputPath "([^"]+)"'){[IO.File]::WriteAllText($matches[1],$profileDir)}else{throw 'missing output'};[pscustomobject]@{ExitCode=0}}
+    $resolved=Resolve-EunsungRegisteredProfilePath -DeployRoot $testDir -PowerShellPath 'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe' -HelperPath (Join-Path $testDir 'helper.ps1') -Credential $credential -DeploySid $deploySid -ProcessStarter $starter -RegistryProfileProvider {param($Sid)$profileDir}
+    Assert-Equal ([IO.Path]::GetFullPath($profileDir)) $resolved
+    Assert-Equal 0 @((Get-ChildItem -LiteralPath (Join-Path $testDir 'state') -Filter 'profile-*.txt')).Count
+  }finally{Remove-Item -LiteralPath $testDir -Recurse -Force}
+}
+
+Test-Case 'compliant scheduled task rerun skips self-registration' {
+  $deploySid=New-Object Security.Principal.SecurityIdentifier('S-1-5-21-1-2-3-1009')
+  $powershellPath=Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
+  $script:unregistered=$false
+  function Get-ScheduledTask { [pscustomobject]@{TaskName='EunsungMES-PM2-Resurrect';Principal=[pscustomobject]@{UserId=$deploySid.Value;LogonType='S4U';RunLevel='Limited'};Actions=@([pscustomobject]@{Execute=$powershellPath;Arguments='-NoProfile -NonInteractive -ExecutionPolicy Bypass -File "D:\deploy\wrapper.ps1"'});Triggers=@([pscustomobject]@{CimClass=[pscustomobject]@{CimClassName='MSFT_TaskBootTrigger'}})} }
+  function Unregister-ScheduledTask {$script:unregistered=$true}
+  Assert-True (-not (Prepare-EunsungResurrectTaskRegistration -WrapperPath 'D:\deploy\wrapper.ps1' -DeploySid $deploySid))
+  Assert-True (-not $script:unregistered)
 }
 
 Test-Case 'PM2 process ownership ignores unrelated legacy PM2 and checks exact deploy SID' {
