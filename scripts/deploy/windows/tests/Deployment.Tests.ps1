@@ -178,10 +178,23 @@ try {
       [pscustomobject]@{ IdentityReference = 'MACHINE\eunsung-deploy'; FileSystemRights = 'ReadAndExecute'; AccessControlType = 'Allow' },
       [pscustomobject]@{ IdentityReference = 'MACHINE\unapproved-writer'; FileSystemRights = 'Modify'; AccessControlType = 'Allow' }
     ) }
-    Assert-True (Test-EunsungAclAccess -Path $config -AclProvider { $allowedAcl })
-    Assert-True (-not (Test-EunsungAclAccess -Path $config -AclProvider { $broadAcl }))
-    Assert-True (-not (Test-EunsungAclAccess -Path $config -AclProvider { $unknownWriterAcl }))
-    Assert-EunsungProtectedConfig -ReleaseDir $release -AclProvider { $allowedAcl }
+    $spoofedDeployAcl = [pscustomobject]@{ Owner = 'BUILTIN\Administrators'; Access = @(
+      [pscustomobject]@{ IdentityReference = 'EVIL\eunsung-deploy'; FileSystemRights = 'ReadAndExecute'; AccessControlType = 'Allow' }
+    ) }
+    $sidResolver = {
+      param($Identity)
+      if ($Identity -ceq 'eunsung-deploy' -or $Identity -ceq 'MACHINE\eunsung-deploy') { return 'S-1-5-21-1001' }
+      if ($Identity -match 'eunsung-deploy$') { return 'S-1-5-21-9997' }
+      if ($Identity -match 'Administrators$') { return 'S-1-5-32-544' }
+      if ($Identity -match 'Users$') { return 'S-1-5-32-545' }
+      if ($Identity -match 'unapproved-writer$') { return 'S-1-5-21-9999' }
+      return 'S-1-5-21-9998'
+    }
+    Assert-True (Test-EunsungAclAccess -Path $config -AclProvider { $allowedAcl } -SidResolver $sidResolver)
+    Assert-True (-not (Test-EunsungAclAccess -Path $config -AclProvider { $broadAcl } -SidResolver $sidResolver))
+    Assert-True (-not (Test-EunsungAclAccess -Path $config -AclProvider { $unknownWriterAcl } -SidResolver $sidResolver))
+    Assert-True (-not (Test-EunsungAclAccess -Path $config -AclProvider { $spoofedDeployAcl } -SidResolver $sidResolver))
+    Assert-EunsungProtectedConfig -ReleaseDir $release -AclProvider { $allowedAcl } -SidResolver $sidResolver
   }
 
   Test-Case 'native nonzero exit is a terminating failure' {
@@ -246,17 +259,19 @@ try {
     $root = Join-Path $tempRoot 'retention'
     $releases = Join-Path $root 'releases'
     New-Item -ItemType Directory -Force -Path $releases | Out-Null
-    1..5 | ForEach-Object {
-      $path = Join-Path $releases ("release$_")
+    $names = @(1..5 | ForEach-Object { '{0:x40}' -f $_ })
+    $names | ForEach-Object {
+      $path = Join-Path $releases $_
       New-Item -ItemType Directory -Path $path | Out-Null
       Set-Content -LiteralPath (Join-Path $path 'deployment.success.json') -Value '{}' -Encoding UTF8
-      (Get-Item -LiteralPath $path).LastWriteTimeUtc = [datetime]::UtcNow.AddMinutes(-$_)
+      (Get-Item -LiteralPath $path).LastWriteTimeUtc = [datetime]::UtcNow.AddMinutes(-[int]::Parse($_, [Globalization.NumberStyles]::HexNumber))
     }
-    $failed = Join-Path $releases 'failed'
-    New-Item -ItemType Directory -Path $failed | Out-Null
-    Remove-EunsungOldSuccessfulReleases -ReleaseRoot $releases -CurrentRelease (Join-Path $releases 'release1')
-    Assert-True (Test-Path -LiteralPath $failed)
-    Assert-Equal 3 @((Get-ChildItem -LiteralPath $releases -Directory | Where-Object { Test-Path -LiteralPath (Join-Path $_.FullName 'deployment.success.json') })).Count
+    $invalid = Join-Path $releases 'failed'
+    New-Item -ItemType Directory -Path $invalid | Out-Null
+    Set-Content -LiteralPath (Join-Path $invalid 'deployment.success.json') -Value '{}' -Encoding UTF8
+    Remove-EunsungOldSuccessfulReleases -ReleaseRoot $releases -CurrentRelease (Join-Path $releases $names[0])
+    Assert-True (Test-Path -LiteralPath $invalid)
+    Assert-Equal 3 @((Get-ChildItem -LiteralPath $releases -Directory | Where-Object { (Test-EunsungCommitSha $_.Name) -and (Test-Path -LiteralPath (Join-Path $_.FullName 'deployment.success.json')) })).Count
   }
 
   Test-Case 'build marker records exact SHA, expected outputs and non-secret config hashes' {
@@ -349,6 +364,7 @@ try {
     $adapters = @{
       TestMode = $true
       AccessValidator = { $true }
+      PreflightSnapshot = { }
       CaptureSwitchState = { @{ HasPrior = $true; CurrentMarker = $priorMarker; Apps = @(@{name='eunsung-frontend'},@{name='eunsung-backend'}); DumpBackup = 'copy' } }
       SwitchApps = { [void]$script:events.Add('switch'); throw 'backend partial start' }
       StopNewApps = { [void]$script:events.Add('stop-new') }
@@ -407,6 +423,7 @@ try {
     $adapters = @{
       TestMode = $true
       AccessValidator = { $true }
+      PreflightSnapshot = { }
       CaptureSwitchState = { @{ HasPrior = $true; CurrentMarker = @{commitSha=$shaB;releaseDir=$prior}; Apps = @(); DumpBackup = 'copy' } }
       SwitchApps = { throw 'new PASSWORD=hunter2' }
       StopNewApps = { }
@@ -512,6 +529,7 @@ try {
     $adapters = @{
       TestMode = $true
       AccessValidator = { $true }
+      PreflightSnapshot = { }
       CaptureSwitchState = { @{ HasPrior = $true; CurrentMarker = $priorMarker; Apps = @(); DumpBackup = 'copy' } }
       SwitchApps = { }
       HealthCheck = { $script:healthCalled = $true; @{ Success = $true; Diagnostics = @() } }
