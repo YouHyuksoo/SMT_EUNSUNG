@@ -63,31 +63,105 @@ function Get-EunsungLsaRightManager {
   return @{ Has={ param($Sid,$Right) [Eunsung.Deployment.LsaRights]::HasRight($Sid,$Right) }; Add={ param($Sid,$Right) [Eunsung.Deployment.LsaRights]::AddRight($Sid,$Right) }; Remove={ param($Sid,$Right) [Eunsung.Deployment.LsaRights]::RemoveRight($Sid,$Right) } }
 }
 
+function Assert-EunsungBootstrapStatePath {
+  param([Parameter(Mandatory)][string]$DeployRoot,[Parameter(Mandatory)][string]$MarkerPath)
+  $root = [IO.Path]::GetFullPath($DeployRoot).TrimEnd('\')
+  $expected = [IO.Path]::GetFullPath((Join-Path $root "state\$($script:BootstrapStateFileName)"))
+  if ([IO.Path]::GetFullPath($MarkerPath) -cne $expected) { throw 'Bootstrap state marker path is not the exact protected state path.' }
+  Assert-EunsungOrdinaryPath -Path $root
+  Assert-EunsungOrdinaryPath -Path (Split-Path -Parent $expected)
+  if (Test-Path -LiteralPath $expected) { Assert-EunsungOrdinaryPath -Path $expected }
+  return $expected
+}
+
+function Set-EunsungBootstrapStateAcl {
+  param([Parameter(Mandatory)][string]$Path)
+  $administratorsSid = New-Object Security.Principal.SecurityIdentifier('S-1-5-32-544')
+  $systemSid = New-Object Security.Principal.SecurityIdentifier('S-1-5-18')
+  $acl = New-Object Security.AccessControl.FileSecurity
+  $acl.SetAccessRuleProtection($true,$false)
+  foreach($sid in @($administratorsSid,$systemSid)){[void]$acl.AddAccessRule((New-Object Security.AccessControl.FileSystemAccessRule($sid,'FullControl','Allow')))}
+  $acl.SetOwner($administratorsSid)
+  (New-Object IO.FileInfo($Path)).SetAccessControl($acl)
+}
+
+function Assert-EunsungBootstrapStateAcl {
+  param([Parameter(Mandatory)][string]$Path)
+  $acl=(New-Object IO.FileInfo($Path)).GetAccessControl()
+  if(-not $acl.AreAccessRulesProtected){throw 'Bootstrap state marker ACL inheritance must be disabled.'}
+  $ownerSid=([Security.Principal.NTAccount]$acl.Owner).Translate([Security.Principal.SecurityIdentifier]).Value
+  if($ownerSid -cne 'S-1-5-32-544'){throw 'Bootstrap state marker owner must be Administrators.'}
+  $rules=@($acl.GetAccessRules($true,$true,[Security.Principal.SecurityIdentifier]))
+  if($rules.Count -ne 2){throw 'Bootstrap state marker ACL must contain exactly Administrators and SYSTEM.'}
+  foreach($sid in @('S-1-5-32-544','S-1-5-18')){
+    $matching=@($rules|Where-Object{$_.IdentityReference.Value -ceq $sid -and $_.AccessControlType -eq [Security.AccessControl.AccessControlType]::Allow -and ($_.FileSystemRights -band [Security.AccessControl.FileSystemRights]::FullControl) -eq [Security.AccessControl.FileSystemRights]::FullControl})
+    if($matching.Count -ne 1){throw 'Bootstrap state marker ACL is not the exact protected contract.'}
+  }
+}
+
+function Get-EunsungBootstrapState {
+  param([Parameter(Mandatory)][string]$DeployRoot,[Parameter(Mandatory)][string]$MarkerPath)
+  $path=Assert-EunsungBootstrapStatePath -DeployRoot $DeployRoot -MarkerPath $MarkerPath
+  if(-not (Test-Path -LiteralPath $path)){return $null}
+  Assert-EunsungBootstrapStateAcl -Path $path
+  try{$marker=Get-Content -Raw -LiteralPath $path|ConvertFrom-Json}catch{throw 'Deployment bootstrap state marker is invalid JSON.'}
+  $names=@($marker.PSObject.Properties.Name)
+  $missing=@(@('schemaVersion','deploySid','batchLogonRightAddedByBootstrap')|Where-Object{$names -cnotcontains $_})
+  if($names.Count -ne 3 -or $missing.Count -ne 0){throw 'Deployment bootstrap state marker schema is invalid.'}
+  if($marker.schemaVersion -isnot [int] -or $marker.schemaVersion -ne 1 -or $marker.deploySid -isnot [string] -or $marker.batchLogonRightAddedByBootstrap -isnot [bool]){throw 'Deployment bootstrap state marker types are invalid.'}
+  try{$normalized=(New-Object Security.Principal.SecurityIdentifier($marker.deploySid)).Value}catch{throw 'Deployment bootstrap state marker SID is invalid.'}
+  if($normalized -cne $marker.deploySid){throw 'Deployment bootstrap state marker SID is not canonical.'}
+  return $marker
+}
+
 function Set-EunsungBootstrapState {
-  param([string]$MarkerPath,[Security.Principal.SecurityIdentifier]$DeploySid,[bool]$Added)
-  $temporary = "$MarkerPath.tmp"
-  $payload = [ordered]@{ schemaVersion=1; deploySid=$DeploySid.Value; batchLogonRightAddedByBootstrap=$Added }
-  [IO.File]::WriteAllText($temporary,($payload | ConvertTo-Json -Compress),(New-Object Text.UTF8Encoding($false)))
-  Move-Item -LiteralPath $temporary -Destination $MarkerPath -Force
+  param([string]$DeployRoot,[string]$MarkerPath,[Security.Principal.SecurityIdentifier]$DeploySid,[bool]$Added)
+  $path=Assert-EunsungBootstrapStatePath -DeployRoot $DeployRoot -MarkerPath $MarkerPath
+  if(Test-Path -LiteralPath $path){[void](Get-EunsungBootstrapState -DeployRoot $DeployRoot -MarkerPath $path)}
+  $temporary="$path.tmp"
+  if(Test-Path -LiteralPath $temporary){Assert-EunsungOrdinaryPath -Path $temporary; throw 'Refusing to replace an existing bootstrap state temporary file.'}
+  try{
+    $payload=[ordered]@{schemaVersion=1;deploySid=$DeploySid.Value;batchLogonRightAddedByBootstrap=$Added}
+    [IO.File]::WriteAllText($temporary,($payload|ConvertTo-Json -Compress),(New-Object Text.UTF8Encoding($false)))
+    Set-EunsungBootstrapStateAcl -Path $temporary
+    Assert-EunsungBootstrapStateAcl -Path $temporary
+    Move-Item -LiteralPath $temporary -Destination $path -Force
+    Assert-EunsungBootstrapStateAcl -Path $path
+  }catch{
+    if(Test-Path -LiteralPath $temporary){
+      Assert-EunsungOrdinaryPath -Path $temporary
+      Set-EunsungBootstrapStateAcl -Path $temporary
+      Assert-EunsungBootstrapStateAcl -Path $temporary
+      Remove-Item -LiteralPath $temporary -Force
+    }
+    throw
+  }
 }
 
 function Ensure-EunsungBatchLogonRight {
-  param([Parameter(Mandatory)][Security.Principal.SecurityIdentifier]$DeploySid,[Parameter(Mandatory)][string]$MarkerPath,[hashtable]$RightManager=(Get-EunsungLsaRightManager))
-  $marker=$null
-  if(Test-Path -LiteralPath $MarkerPath){ Assert-EunsungOrdinaryPath -Path $MarkerPath; try{$marker=Get-Content -Raw -LiteralPath $MarkerPath|ConvertFrom-Json}catch{throw 'Deployment bootstrap state marker is invalid JSON.'}; if([int]$marker.schemaVersion -ne 1 -or [string]$marker.deploySid -cne $DeploySid.Value){throw 'Deployment bootstrap state marker does not match the exact deployment SID.'} }
-  if([bool](& $RightManager.Has $DeploySid.Value $script:BatchLogonRight)){ if($null -eq $marker){Set-EunsungBootstrapState -MarkerPath $MarkerPath -DeploySid $DeploySid -Added $false}; return }
+  param([Parameter(Mandatory)][Security.Principal.SecurityIdentifier]$DeploySid,[Parameter(Mandatory)][string]$DeployRoot,[Parameter(Mandatory)][string]$MarkerPath,[hashtable]$RightManager=(Get-EunsungLsaRightManager))
+  $marker=Get-EunsungBootstrapState -DeployRoot $DeployRoot -MarkerPath $MarkerPath
+  if($marker -and [string]$marker.deploySid -cne $DeploySid.Value){throw 'Deployment bootstrap state marker does not match the exact deployment SID.'}
+  if([bool](& $RightManager.Has $DeploySid.Value $script:BatchLogonRight)){if($null -eq $marker){Set-EunsungBootstrapState -DeployRoot $DeployRoot -MarkerPath $MarkerPath -DeploySid $DeploySid -Added $false};return}
   & $RightManager.Add $DeploySid.Value $script:BatchLogonRight
-  if(-not [bool](& $RightManager.Has $DeploySid.Value $script:BatchLogonRight)){throw 'LSA did not confirm SeBatchLogonRight after adding it.'}
-  try{Set-EunsungBootstrapState -MarkerPath $MarkerPath -DeploySid $DeploySid -Added $true}catch{& $RightManager.Remove $DeploySid.Value $script:BatchLogonRight; throw}
+  try{
+    if(-not [bool](& $RightManager.Has $DeploySid.Value $script:BatchLogonRight)){throw 'LSA did not confirm SeBatchLogonRight after adding it.'}
+    Set-EunsungBootstrapState -DeployRoot $DeployRoot -MarkerPath $MarkerPath -DeploySid $DeploySid -Added $true
+  }catch{
+    $primaryType=$_.Exception.GetType().Name;$cleanup='removed'
+    try{& $RightManager.Remove $DeploySid.Value $script:BatchLogonRight;if([bool](& $RightManager.Has $DeploySid.Value $script:BatchLogonRight)){$cleanup='removal-unconfirmed'}}catch{$cleanup='removal-failed-'+$_.Exception.GetType().Name}
+    throw "Batch logon right provisioning failed ($primaryType); cleanup=$cleanup."
+  }
 }
 
 function Remove-EunsungOwnedBatchLogonRight {
-  param([Parameter(Mandatory)][Security.Principal.SecurityIdentifier]$DeploySid,[Parameter(Mandatory)][string]$MarkerPath,[hashtable]$RightManager=(Get-EunsungLsaRightManager))
-  if(-not (Test-Path -LiteralPath $MarkerPath)){return}
-  Assert-EunsungOrdinaryPath -Path $MarkerPath
-  try{$marker=Get-Content -Raw -LiteralPath $MarkerPath|ConvertFrom-Json}catch{throw 'Deployment bootstrap state marker is invalid JSON.'}
-  if([int]$marker.schemaVersion -ne 1 -or [string]$marker.deploySid -cne $DeploySid.Value){throw 'Deployment bootstrap state marker does not match the exact deployment SID.'}
-  if([bool]$marker.batchLogonRightAddedByBootstrap -and [bool](& $RightManager.Has $DeploySid.Value $script:BatchLogonRight)){& $RightManager.Remove $DeploySid.Value $script:BatchLogonRight; if([bool](& $RightManager.Has $DeploySid.Value $script:BatchLogonRight)){throw 'LSA still reports SeBatchLogonRight after rollback removal.'}}
+  param([Parameter(Mandatory)][string]$DeployRoot,[Parameter(Mandatory)][string]$MarkerPath,[Security.Principal.SecurityIdentifier]$ExpectedDeploySid,[hashtable]$RightManager=(Get-EunsungLsaRightManager))
+  $marker=Get-EunsungBootstrapState -DeployRoot $DeployRoot -MarkerPath $MarkerPath
+  if($null -eq $marker){return}
+  if($ExpectedDeploySid -and [string]$marker.deploySid -cne $ExpectedDeploySid.Value){throw 'Deployment bootstrap state marker does not match the exact deployment SID.'}
+  $markerSid=New-Object Security.Principal.SecurityIdentifier($marker.deploySid)
+  if($marker.batchLogonRightAddedByBootstrap -and [bool](& $RightManager.Has $markerSid.Value $script:BatchLogonRight)){& $RightManager.Remove $markerSid.Value $script:BatchLogonRight;if([bool](& $RightManager.Has $markerSid.Value $script:BatchLogonRight)){throw 'LSA still reports SeBatchLogonRight after rollback removal.'}}
+  Assert-EunsungBootstrapStateAcl -Path $MarkerPath
   Remove-Item -LiteralPath $MarkerPath -Force
 }
 
@@ -367,9 +441,11 @@ function Invoke-EunsungBootstrapRollback {
   $task = Get-ScheduledTask -TaskName $script:TaskName -ErrorAction SilentlyContinue
   if ($task) { Unregister-ScheduledTask -TaskName $script:TaskName -Confirm:$false }
   $account = Get-LocalUser -Name $script:AccountName -ErrorAction SilentlyContinue
+  $markerPath = Assert-EunsungBootstrapPath -Root $root -Candidate (Join-Path $root "state\$($script:BootstrapStateFileName)")
   if ($account) {
-    $markerPath = Assert-EunsungBootstrapPath -Root $root -Candidate (Join-Path $root "state\$($script:BootstrapStateFileName)")
-    Remove-EunsungOwnedBatchLogonRight -DeploySid $account.SID -MarkerPath $markerPath
+    Remove-EunsungOwnedBatchLogonRight -DeployRoot $root -MarkerPath $markerPath -ExpectedDeploySid $account.SID
+  } elseif (Test-Path -LiteralPath $markerPath) {
+    Remove-EunsungOwnedBatchLogonRight -DeployRoot $root -MarkerPath $markerPath
   }
   if (Test-Path -LiteralPath $wrapperPath) {
     Assert-EunsungOrdinaryPath -Path $wrapperPath
@@ -461,7 +537,7 @@ function Initialize-EunsungDeployServer {
   if ($existingContent -cne $wrapperContent) { [IO.File]::WriteAllText($wrapperPath, $wrapperContent, (New-Object Text.UTF8Encoding($false))) }
   Assert-EunsungOrdinaryPath -Path $wrapperPath
   $bootstrapStatePath = Assert-EunsungBootstrapPath -Root $root -Candidate (Join-Path $root "state\$($script:BootstrapStateFileName)")
-  Ensure-EunsungBatchLogonRight -DeploySid $account.SID -MarkerPath $bootstrapStatePath
+  Ensure-EunsungBatchLogonRight -DeploySid $account.SID -DeployRoot $root -MarkerPath $bootstrapStatePath
   Register-EunsungResurrectTask -WrapperPath $wrapperPath -DeploySid $account.SID | Out-Null
   Test-EunsungResurrectTask -Pm2Home (Join-Path $profilePath '.pm2') -Pm2Path $pm2Path -DeploySid $account.SID
 

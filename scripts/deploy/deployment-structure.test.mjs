@@ -302,11 +302,13 @@ test('bootstrap is least privilege, idempotent, pinned, and reversible', () => {
   assert.match(bootstrap, /LsaAddAccountRights[\s\S]{0,800}LsaRemoveAccountRights/i, 'batch logon must use targeted LSA account-right APIs');
   assert.match(bootstrap, /SeBatchLogonRight/i, 'the exact batch logon right is required');
   assert.match(bootstrap, /batchLogonRightAddedByBootstrap/i, 'rollback ownership must be persisted');
+  assert.match(bootstrap, /FileSecurity[\s\S]{0,500}SetAccessRuleProtection\(\$true,\s*\$false\)/i, 'bootstrap state marker must have a protected file ACL');
+  assert.match(bootstrap, /S-1-5-32-544[\s\S]{0,300}S-1-5-18/i, 'only Administrators and SYSTEM may own the bootstrap marker contract');
   assert.doesNotMatch(bootstrap, /\bsecedit(?:\.exe)?\b/i, 'bootstrap must not overwrite security policy with secedit');
   assert.match(bootstrap, /Get-ScheduledTask[\s\S]{0,300}Register-ScheduledTask/i, 'task registration must be existence guarded');
   assert.match(bootstrap, /Start-ScheduledTask[\s\S]{0,1800}Stop-ScheduledTask/i, 'task verification must start and stop without rebooting');
   assert.match(bootstrap, /pm2[^\n]*resurrect[\s\S]{0,160}\$LASTEXITCODE/i, 'the wrapper must check the PM2 exit code');
-  assert.match(bootstrap, /Invoke-EunsungBootstrapRollback[\s\S]{0,700}Unregister-ScheduledTask[\s\S]{0,700}Remove-Item/i, 'rollback must unregister the exact task and remove the wrapper');
+  assert.match(bootstrap, /Invoke-EunsungBootstrapRollback[\s\S]{0,700}Unregister-ScheduledTask[\s\S]{0,1800}Remove-Item/i, 'rollback must unregister the exact task and remove the wrapper');
   assert.doesNotMatch(bootstrap, /Restart-Computer|Stop-Computer|shutdown(?:\.exe)?\b/i, 'bootstrap must never reboot or shut down the server');
   assert.doesNotMatch(bootstrap, /ConvertTo-SecureString\s+['"][^'"]+['"]\s+-AsPlainText|Password\s*=\s*['"][^'"]+['"]/i, 'hard-coded credentials are forbidden');
 
@@ -316,5 +318,5 @@ test('bootstrap is least privilege, idempotent, pinned, and reversible', () => {
     { encoding: 'utf8', cwd: repositoryRoot, timeout: 60_000 },
   );
   assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
-  assert.match(result.stdout, /RESULT\s+passed=12\s+failed=0/i, 'all isolated bootstrap contracts must pass');
+  assert.match(result.stdout, /RESULT\s+passed=14\s+failed=0/i, 'all isolated bootstrap contracts must pass');
 });
