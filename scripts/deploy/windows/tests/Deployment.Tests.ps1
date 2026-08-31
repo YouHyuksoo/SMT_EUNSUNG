@@ -360,39 +360,44 @@ try {
     Assert-Equal 'switch,stop-new,restore-definitions-env-dump,save-restored' ($script:events -join ',')
   }
 
-  Test-Case 'production restore path reconstructs captured prior definitions and environment' {
+  Test-Case 'production restore restores the PM2 dump and verifies complete captured definition fidelity' {
     $root = Join-Path $tempRoot 'real-restore'
-    New-TestRelease -DeployRoot $root -Sha $shaA | Out-Null
-    $prior = New-TestRelease -DeployRoot $root -Sha $shaB
     $stateDir = Join-Path $root 'state'
     New-Item -ItemType Directory -Force -Path $stateDir | Out-Null
     $dumpBackup = Join-Path $stateDir 'dump-before.pm2'
-    Set-Content -LiteralPath $dumpBackup -Value '{}' -Encoding UTF8
-    $script:restoredCalls = New-Object System.Collections.ArrayList
+    $dumpPath = Join-Path $stateDir 'dump.pm2'
+    $dumpPayload = '{"processes":["prior-exact-state"]}'
+    Set-Content -LiteralPath $dumpBackup -Value $dumpPayload -NoNewline -Encoding UTF8
+    Set-Content -LiteralPath $dumpPath -Value 'new-release-state' -NoNewline -Encoding UTF8
+    $script:pm2Calls = New-Object System.Collections.ArrayList
+    $script:resurrected = $false
     $apps = @(
-      [pscustomobject]@{ name='eunsung-frontend'; pid=111; pm2_env=[pscustomobject]@{ pm_exec_path='C:\prior\next'; pm_cwd='C:\prior\frontend'; args=@('start'); exec_interpreter='node'; env=[pscustomobject]@{ RELEASE_TOKEN='frontend-old' } } },
-      [pscustomobject]@{ name='eunsung-backend'; pid=222; pm2_env=[pscustomobject]@{ pm_exec_path='C:\prior\main.js'; pm_cwd='C:\prior\backend'; args=@(); exec_interpreter='node'; env=[pscustomobject]@{ RELEASE_TOKEN='backend-old' } } }
+      [pscustomobject]@{ name='eunsung-frontend'; pid=111; pm2_env=[pscustomobject]@{ pm_exec_path='C:\prior\next'; pm_cwd='C:\prior\frontend'; args=@('start','-p','3100'); exec_interpreter='node'; pm_out_log_path='C:\logs\frontend-out.log'; pm_err_log_path='C:\logs\frontend-error.log'; instances=2; exec_mode='cluster_mode'; autorestart=$true; watch=$false; min_uptime='10s'; max_restarts=5; restart_delay=4000; exp_backoff_restart_delay=1000; kill_timeout=5000; merge_logs=$true; log_date_format='YYYY-MM-DD HH:mm:ss'; max_memory_restart='1G'; env=[pscustomobject]@{ RELEASE_TOKEN='frontend-old' } } },
+      [pscustomobject]@{ name='eunsung-backend'; pid=222; pm2_env=[pscustomobject]@{ pm_exec_path='C:\prior\main.js'; pm_cwd='C:\prior\backend'; args=@(); exec_interpreter='node'; pm_out_log_path='C:\logs\backend-out.log'; pm_err_log_path='C:\logs\backend-error.log'; instances=1; exec_mode='fork_mode'; autorestart=$true; watch=$false; min_uptime='10s'; max_restarts=5; restart_delay=4000; exp_backoff_restart_delay=1000; kill_timeout=5000; merge_logs=$true; log_date_format='YYYY-MM-DD HH:mm:ss'; max_memory_restart='1G'; env=[pscustomobject]@{ RELEASE_TOKEN='backend-old' } } }
     )
-    $adapters = @{
-      TestMode = $true
-      AccessValidator = { $true }
-      CaptureSwitchState = { @{ HasPrior=$true; CurrentMarker=@{commitSha=$shaB;releaseDir=$prior}; Apps=$apps; DumpBackup=$dumpBackup; DumpPath=(Join-Path $stateDir 'dump.pm2') } }
-      SwitchApps = { throw 'partial switch' }
-      StopNewApps = { }
-      NativeInvoker = {
-        param($FilePath, $Arguments, $WorkingDirectory, $Environment)
-        if ($Arguments[0] -eq 'start') { [void]$script:restoredCalls.Add([pscustomobject]@{ Arguments=@($Arguments); Environment=@{} + $Environment }) }
-        @{ ExitCode=0; Output='' }
+    $native = {
+      param($FilePath, $Arguments, $WorkingDirectory, $Environment)
+      [void]$script:pm2Calls.Add(($Arguments -join ' '))
+      if ($Arguments[0] -eq 'resurrect') {
+        Assert-Equal $dumpPayload (Get-Content -Raw -LiteralPath $dumpPath)
+        $script:resurrected = $true
       }
-      RollbackHealthCheck = { @{ Success=$true; Diagnostics=@() } }
-      SaveState = { }
+      if ($Arguments[0] -eq 'jlist') {
+        Assert-True $script:resurrected
+        return @{ ExitCode=0; Output=($apps | ConvertTo-Json -Depth 12 -Compress) }
+      }
+      @{ ExitCode=0; Output='' }
     }
-    Assert-Throws { Invoke-EunsungDeployment -CommitSha $shaA -ActivateExisting -DeployRoot $root -Adapters $adapters } 'rolled back'
-    Assert-Equal 2 $script:restoredCalls.Count
-    Assert-Match 'start C:\\prior\\next --name eunsung-frontend --cwd C:\\prior\\frontend' ($script:restoredCalls[0].Arguments -join ' ')
-    Assert-Equal 'frontend-old' $script:restoredCalls[0].Environment.RELEASE_TOKEN
-    Assert-Match 'start C:\\prior\\main.js --name eunsung-backend --cwd C:\\prior\\backend' ($script:restoredCalls[1].Arguments -join ' ')
-    Assert-Equal 'backend-old' $script:restoredCalls[1].Environment.RELEASE_TOKEN
+    & (Get-Module EunsungDeployment) {
+      param($switchState, $nativeInvoker)
+      Restore-EunsungPriorState -SwitchState $switchState -NativeInvoker $nativeInvoker
+    } @{ Apps=$apps; DumpBackup=$dumpBackup; DumpPath=$dumpPath } $native
+    Assert-Equal $dumpPayload (Get-Content -Raw -LiteralPath $dumpPath)
+    Assert-True ($script:pm2Calls -contains 'resurrect')
+    Assert-True ($script:pm2Calls -contains 'describe eunsung-frontend')
+    Assert-True ($script:pm2Calls -contains 'describe eunsung-backend')
+    Assert-True ($script:pm2Calls -contains 'jlist')
+    Assert-True (-not ($script:pm2Calls | Where-Object { $_ -match '^start\s' }))
   }
 
   Test-Case 'rollback health failure is distinct and includes sanitized diagnostics' {

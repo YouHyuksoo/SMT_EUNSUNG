@@ -523,33 +523,60 @@ function Stop-EunsungNewApps {
   if ($failures.Count -gt 0) { throw "PM2 cleanup failed. $($failures -join '; ')" }
 }
 
+function Get-EunsungObjectMember {
+  param([AllowNull()][object]$Object, [Parameter(Mandatory)][string]$Name)
+  if ($null -eq $Object) { return @{ Present = $false; Value = $null } }
+  if ($Object -is [Collections.IDictionary]) {
+    if ($Object.Contains($Name)) { return @{ Present = $true; Value = $Object[$Name] } }
+    return @{ Present = $false; Value = $null }
+  }
+  $property = $Object.PSObject.Properties[$Name]
+  if ($null -eq $property) { return @{ Present = $false; Value = $null } }
+  return @{ Present = $true; Value = $property.Value }
+}
+
+function Assert-EunsungPm2DefinitionFidelity {
+  param([object[]]$CapturedApps, [object[]]$RestoredApps)
+  if (@($CapturedApps).Count -ne $script:AppPorts.Count) { throw 'Captured prior PM2 definitions are incomplete' }
+  foreach ($captured in @($CapturedApps)) {
+    $name = [string]$captured.name
+    if (-not $script:AppPorts.Contains($name) -or [int]$captured.pid -le 0) { throw 'Captured prior PM2 app identity or PID is invalid' }
+    $matches = @($RestoredApps | Where-Object { [string]$_.name -ceq $name })
+    if ($matches.Count -ne 1) { throw "Restored PM2 app is missing or duplicated: $name" }
+    $expectedPm = Get-EunsungObjectMember -Object $captured -Name 'pm2_env'
+    $actualPm = Get-EunsungObjectMember -Object $matches[0] -Name 'pm2_env'
+    if (-not $expectedPm.Present -or -not $actualPm.Present) { throw "PM2 definition is incomplete: $name" }
+    foreach ($option in @('pm_exec_path', 'pm_cwd', 'args', 'exec_interpreter', 'pm_out_log_path', 'pm_err_log_path', 'out_file', 'error_file', 'instances', 'exec_mode', 'autorestart', 'watch', 'min_uptime', 'max_restarts', 'restart_delay', 'exp_backoff_restart_delay', 'kill_timeout', 'merge_logs', 'log_date_format', 'max_memory_restart', 'env')) {
+      $expected = Get-EunsungObjectMember -Object $expectedPm.Value -Name $option
+      if (-not $expected.Present) { continue }
+      $actual = Get-EunsungObjectMember -Object $actualPm.Value -Name $option
+      if (-not $actual.Present) { throw "Restored PM2 option is missing: $name/$option" }
+      $expectedJson = ConvertTo-Json -InputObject $expected.Value -Depth 12 -Compress
+      $actualJson = ConvertTo-Json -InputObject $actual.Value -Depth 12 -Compress
+      if ($expectedJson -cne $actualJson) { throw "Restored PM2 option mismatch: $name/$option" }
+    }
+  }
+}
+
 function Restore-EunsungPriorState {
   param([hashtable]$SwitchState, [scriptblock]$NativeInvoker)
   $captured = @($SwitchState.Apps)
-  if ($captured.Count -ne $script:AppPorts.Count) { throw 'Captured prior PM2 definitions are incomplete' }
-  try {
-    foreach ($app in $captured) {
-      if (-not $script:AppPorts.Contains([string]$app.name) -or [int]$app.pid -le 0) { throw 'Captured prior PM2 app identity or PID is invalid' }
-      $pm = $app.pm2_env
-      if ([string]::IsNullOrWhiteSpace([string]$pm.pm_exec_path) -or [string]::IsNullOrWhiteSpace([string]$pm.pm_cwd)) { throw 'Captured prior PM2 definition is incomplete' }
-      $environment = @{}
-      if ($null -ne $pm.env) {
-        if ($pm.env -is [Collections.IDictionary]) {
-          foreach ($key in $pm.env.Keys) { $environment[[string]$key] = [string]$pm.env[$key] }
-        } else {
-          foreach ($property in $pm.env.psobject.Properties) { $environment[$property.Name] = [string]$property.Value }
-        }
-      }
-      $arguments = @('start', [string]$pm.pm_exec_path, '--name', [string]$app.name, '--cwd', [string]$pm.pm_cwd)
-      if (-not [string]::IsNullOrWhiteSpace([string]$pm.exec_interpreter)) { $arguments += @('--interpreter', [string]$pm.exec_interpreter) }
-      $arguments += '--update-env'
-      if (@($pm.args).Count -gt 0) { $arguments += @('--') + @($pm.args | ForEach-Object { [string]$_ }) }
-      Invoke-EunsungNative -FilePath 'pm2.cmd' -Arguments $arguments -Environment $environment -NativeInvoker $NativeInvoker | Out-Null
-    }
-  } catch {
-    if ([string]::IsNullOrWhiteSpace([string]$SwitchState.DumpBackup) -or -not (Test-Path -LiteralPath $SwitchState.DumpBackup)) { throw }
-    Copy-Item -LiteralPath $SwitchState.DumpBackup -Destination $SwitchState.DumpPath -Force
-    Invoke-EunsungNative -FilePath 'pm2.cmd' -Arguments @('resurrect') -NativeInvoker $NativeInvoker | Out-Null
+  $dumpBackup = [string]$SwitchState.DumpBackup
+  $dumpPath = [string]$SwitchState.DumpPath
+  if ([string]::IsNullOrWhiteSpace($dumpBackup) -or [string]::IsNullOrWhiteSpace($dumpPath)) { throw 'Prior PM2 dump backup is unavailable' }
+  Assert-EunsungOrdinaryFile -Path $dumpBackup
+  $dumpParent = Split-Path -Parent $dumpPath
+  if (-not [IO.Directory]::Exists($dumpParent)) { throw 'PM2 dump directory is unavailable' }
+  if (Test-Path -LiteralPath $dumpPath) { Assert-EunsungOrdinaryFile -Path $dumpPath }
+  $backupHash = Get-EunsungFileSha256 -Path $dumpBackup
+  Copy-Item -LiteralPath $dumpBackup -Destination $dumpPath -Force
+  Assert-EunsungOrdinaryFile -Path $dumpPath
+  if ($backupHash -cne (Get-EunsungFileSha256 -Path $dumpPath)) { throw 'PM2 dump backup copy validation failed' }
+  Invoke-EunsungNative -FilePath 'pm2.cmd' -Arguments @('resurrect') -NativeInvoker $NativeInvoker | Out-Null
+  $restored = ConvertFrom-EunsungPm2Json -Json (Invoke-EunsungNative -FilePath 'pm2.cmd' -Arguments @('jlist') -NativeInvoker $NativeInvoker)
+  Assert-EunsungPm2DefinitionFidelity -CapturedApps $captured -RestoredApps $restored
+  foreach ($name in $script:AppPorts.Keys) {
+    Invoke-EunsungNative -FilePath 'pm2.cmd' -Arguments @('describe', $name) -NativeInvoker $NativeInvoker | Out-Null
   }
 }
 
