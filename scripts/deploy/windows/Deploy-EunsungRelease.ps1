@@ -29,7 +29,10 @@ if ($CleanupIncoming) {
   if ($CommitSha -cnotmatch '^[0-9a-f]{40}$') {
     throw 'CommitSha must be a lowercase full SHA before incoming cleanup is enabled'
   }
-  if ($DeployRoot -ne 'D:\Project\SMT_EUNSUNG\.deploy') {
+  $isTestMode = ($Adapters -and $Adapters.ContainsKey('TestMode') -and $Adapters.TestMode)
+  $isProductionRoot = ($DeployRoot -eq 'D:\Project\SMT_EUNSUNG\.deploy')
+  $isIsolatedTestMode = ($isTestMode -and -not $isProductionRoot)
+  if (-not $isProductionRoot -and -not $isIsolatedTestMode) {
     throw 'Incoming cleanup is permitted only under the production deployment root'
   }
   $expectedIncoming = [IO.Path]::GetFullPath((Join-Path (Join-Path $DeployRoot 'incoming') $CommitSha))
@@ -37,34 +40,36 @@ if ($CleanupIncoming) {
   if ($scriptDirectory -cne $expectedIncoming) {
     throw 'Deployment script is not running from its exact SHA-specific incoming directory'
   }
-  $currentSid = [Security.Principal.WindowsIdentity]::GetCurrent().User.Value
-  $incomingAcl = Get-Acl -LiteralPath $scriptDirectory
-  $ownerSid = $incomingAcl.GetOwner([Security.Principal.SecurityIdentifier]).Value
-  if ($ownerSid -ne $currentSid) {
-    throw 'Incoming directory is not owned by the deployment identity'
-  }
-  $allowedWriteSids = @($currentSid, 'S-1-5-18', 'S-1-5-32-544')
-  $writeMask = [Security.AccessControl.FileSystemRights]::WriteData `
-    -bor [Security.AccessControl.FileSystemRights]::CreateFiles `
-    -bor [Security.AccessControl.FileSystemRights]::AppendData `
-    -bor [Security.AccessControl.FileSystemRights]::CreateDirectories `
-    -bor [Security.AccessControl.FileSystemRights]::Delete `
-    -bor [Security.AccessControl.FileSystemRights]::DeleteSubdirectoriesAndFiles `
-    -bor [Security.AccessControl.FileSystemRights]::ChangePermissions `
-    -bor [Security.AccessControl.FileSystemRights]::TakeOwnership
-  $currentHasWrite = $false
-  foreach ($rule in $incomingAcl.GetAccessRules($true, $true, [Security.Principal.SecurityIdentifier])) {
-    $ruleSid = $rule.IdentityReference.Value
-    $canWrite = (($rule.FileSystemRights -band $writeMask) -ne 0)
-    if ($rule.AccessControlType -eq [Security.AccessControl.AccessControlType]::Allow -and $canWrite) {
-      if ($allowedWriteSids -notcontains $ruleSid) {
-        throw 'Incoming directory grants write access outside the deployment identity and administrators'
-      }
-      if ($ruleSid -eq $currentSid) { $currentHasWrite = $true }
+  if (-not $isIsolatedTestMode) {
+    $currentSid = [Security.Principal.WindowsIdentity]::GetCurrent().User.Value
+    $incomingAcl = Get-Acl -LiteralPath $scriptDirectory
+    $ownerSid = $incomingAcl.GetOwner([Security.Principal.SecurityIdentifier]).Value
+    if ($ownerSid -ne $currentSid) {
+      throw 'Incoming directory is not owned by the deployment identity'
     }
-  }
-  if (-not $currentHasWrite) {
-    throw 'Incoming directory does not grant write access to the deployment identity'
+    $allowedWriteSids = @($currentSid, 'S-1-5-18', 'S-1-5-32-544')
+    $writeMask = [Security.AccessControl.FileSystemRights]::WriteData `
+      -bor [Security.AccessControl.FileSystemRights]::CreateFiles `
+      -bor [Security.AccessControl.FileSystemRights]::AppendData `
+      -bor [Security.AccessControl.FileSystemRights]::CreateDirectories `
+      -bor [Security.AccessControl.FileSystemRights]::Delete `
+      -bor [Security.AccessControl.FileSystemRights]::DeleteSubdirectoriesAndFiles `
+      -bor [Security.AccessControl.FileSystemRights]::ChangePermissions `
+      -bor [Security.AccessControl.FileSystemRights]::TakeOwnership
+    $currentHasWrite = $false
+    foreach ($rule in $incomingAcl.GetAccessRules($true, $true, [Security.Principal.SecurityIdentifier])) {
+      $ruleSid = $rule.IdentityReference.Value
+      $canWrite = (($rule.FileSystemRights -band $writeMask) -ne 0)
+      if ($rule.AccessControlType -eq [Security.AccessControl.AccessControlType]::Allow -and $canWrite) {
+        if ($allowedWriteSids -notcontains $ruleSid) {
+          throw 'Incoming directory grants write access outside the deployment identity and administrators'
+        }
+        if ($ruleSid -eq $currentSid) { $currentHasWrite = $true }
+      }
+    }
+    if (-not $currentHasWrite) {
+      throw 'Incoming directory does not grant write access to the deployment identity'
+    }
   }
   $cursor = $scriptDirectory
   $rootFull = [IO.Path]::GetFullPath($DeployRoot)
@@ -79,10 +84,9 @@ if ($CleanupIncoming) {
   $cleanupPath = $scriptDirectory
 }
 
-Import-Module (Join-Path $PSScriptRoot 'EunsungDeployment.psm1') -Force
-
 $exitCode = 0
 try {
+  Import-Module (Join-Path $PSScriptRoot 'EunsungDeployment.psm1') -Force
   Invoke-EunsungDeployment `
     -CommitSha $CommitSha `
     -ArchivePath $ArchivePath `
@@ -93,11 +97,15 @@ try {
     -DeployRoot $DeployRoot `
     -Adapters $Adapters
 } catch {
-  $safe = ConvertTo-EunsungSanitizedDiagnostic $_.Exception.Message
+  $sanitizer = Get-Command ConvertTo-EunsungSanitizedDiagnostic -ErrorAction SilentlyContinue
+  $safe = if ($sanitizer) { ConvertTo-EunsungSanitizedDiagnostic $_.Exception.Message } else { 'Deployment initialization failed before diagnostics were available' }
   [Console]::Error.WriteLine("Deployment failed: $safe")
   $exitCode = 1
   if ($_.Exception.Data.Contains('ExitCode')) {
-    $exitCode = [int]$_.Exception.Data['ExitCode']
+    $reportedExitCode = [int]$_.Exception.Data['ExitCode']
+    if ($reportedExitCode -ge 1 -and $reportedExitCode -le 255) {
+      $exitCode = $reportedExitCode
+    }
   }
 } finally {
   if ($cleanupPath) {

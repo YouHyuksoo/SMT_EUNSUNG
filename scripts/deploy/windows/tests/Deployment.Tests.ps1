@@ -95,6 +95,38 @@ $tempRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("eunsung-deploy-tests-"
 New-Item -ItemType Directory -Path $tempRoot | Out-Null
 
 try {
+  Test-Case 'runner import failure cleans exact incoming directory and preserves sibling' {
+    $root = Join-Path $tempRoot 'runner-import-failure'
+    $incomingRoot = Join-Path $root 'incoming'
+    $incoming = Join-Path $incomingRoot $shaA
+    $sibling = Join-Path $incomingRoot $shaB
+    New-Item -ItemType Directory -Force -Path $incoming, $sibling | Out-Null
+    Set-Content -LiteralPath (Join-Path $sibling 'sentinel.txt') -Value 'keep' -Encoding UTF8
+    $runnerSource = Join-Path (Split-Path -Parent $PSScriptRoot) 'Deploy-EunsungRelease.ps1'
+    $runnerCopy = Join-Path $incoming 'Deploy-EunsungRelease.ps1'
+    Copy-Item -LiteralPath $runnerSource -Destination $runnerCopy
+
+    $launcher = Join-Path $root 'invoke-runner.ps1'
+    @'
+param([string]$Target, [string]$Root, [string]$Sha)
+$adapters = @{ TestMode = $true }
+& $Target -CommitSha $Sha -CleanupIncoming -DeployRoot $Root -Adapters $adapters
+exit $LASTEXITCODE
+'@ | Set-Content -LiteralPath $launcher -Encoding UTF8
+    $priorErrorPreference = $ErrorActionPreference
+    try {
+      $ErrorActionPreference = 'Continue'
+      $output = & powershell.exe -NoProfile -NonInteractive -File $launcher -Target $runnerCopy -Root $root -Sha $shaA 2>&1
+      $status = $LASTEXITCODE
+    } finally {
+      $ErrorActionPreference = $priorErrorPreference
+    }
+    Assert-True ($status -ne 0) 'missing module must fail the runner'
+    Assert-Match 'initialization failed' ($output -join "`n")
+    Assert-True (-not (Test-Path -LiteralPath $incoming)) 'exact incoming directory must be removed'
+    Assert-True (Test-Path -LiteralPath (Join-Path $sibling 'sentinel.txt')) 'sibling incoming directory must remain'
+  }
+
   Test-Case 'full 40-lowerhex SHA validation rejects uppercase, short, and punctuation' {
     Assert-True (Test-EunsungCommitSha $shaA)
     Assert-True (-not (Test-EunsungCommitSha $shaA.ToUpperInvariant()))

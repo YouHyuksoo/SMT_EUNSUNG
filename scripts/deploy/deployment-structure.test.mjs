@@ -272,7 +272,7 @@ test('dependency-free PowerShell contract tests cover and execute deployment saf
     { encoding: 'utf8', cwd: repositoryRoot, timeout: 60_000 },
   );
   assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
-  assert.match(result.stdout, /RESULT\s+passed=36\s+failed=0/i, 'all isolated deployment contracts must pass');
+  assert.match(result.stdout, /RESULT\s+passed=37\s+failed=0/i, 'all isolated deployment contracts must pass');
 });
 
 test('bootstrap is least privilege, idempotent, pinned, and reversible', () => {
