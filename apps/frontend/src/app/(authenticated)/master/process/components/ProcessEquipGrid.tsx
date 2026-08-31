@@ -131,7 +131,24 @@ export default function ProcessEquipGrid({
 
   return (
     <Card padding="none" className="flex-1 flex flex-col min-w-0 min-h-0 w-full max-w-full overflow-hidden">
-      <CardContent className="flex-1 min-w-0 min-h-0 overflow-hidden px-4 pt-3 pb-3">
+      <div className="px-4 pt-3 pb-1 border-b border-border flex-shrink-0">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex-1 min-w-0">
+            <h3 className="text-sm font-semibold text-text flex flex-wrap items-center gap-2">
+              <Monitor className="w-4 h-4 text-primary" />
+              {t("master.process.assignedEquipments")}
+              <span className="text-text-muted font-normal">
+                - {processCode} ({processName}) · {equipments.length}{t("common.count", { defaultValue: "건" })}
+              </span>
+            </h3>
+          </div>
+          <Button size="sm" className="flex-shrink-0" onClick={onAdd}>
+            <Plus className="w-4 h-4 mr-1" />
+            {t("master.process.assignEquipment", "설비 배치")}
+          </Button>
+        </div>
+      </div>
+      <CardContent className="flex-1 min-w-0 min-h-0 overflow-hidden px-4 pt-1 pb-3">
         <DataGrid
           data={equipments}
           columns={columns}
@@ -140,21 +157,6 @@ export default function ProcessEquipGrid({
           enableExport
           exportFileName={`${processCode}_${t("master.process.assignedEquipments")}`}
           sqlQuery={`SELECT *\nFROM IMCN_MACHINE\nWHERE WORKSTAGE_CODE = :processCode\n  AND ORGANIZATION_ID = :organizationId\nORDER BY MACHINE_CODE`}
-          toolbarLeft={
-            <div className="flex items-center gap-4 min-w-0">
-              <Button size="sm" className="flex-shrink-0" onClick={onAdd}>
-                <Plus className="w-4 h-4 mr-1" />
-                {t("master.process.assignEquipment", "설비 배치")}
-              </Button>
-              <h3 className="text-sm font-semibold text-text flex flex-wrap items-center gap-2 min-w-0">
-                <Monitor className="w-4 h-4 text-primary" />
-                {t("master.process.assignedEquipments")}
-                <span className="text-text-muted font-normal">
-                  - {processCode} ({processName}) · {equipments.length}{t("common.count", { defaultValue: "건" })}
-                </span>
-              </h3>
-            </div>
-          }
         />
       </CardContent>
     </Card>

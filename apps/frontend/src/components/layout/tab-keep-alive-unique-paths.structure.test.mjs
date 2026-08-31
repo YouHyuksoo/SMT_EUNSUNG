@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 const source = readFileSync(new URL('./TabKeepAlive.tsx', import.meta.url), 'utf8');
+const tabBarSource = readFileSync(new URL('./TabBar.tsx', import.meta.url), 'utf8');
 const registrySource = readFileSync(new URL('./pageRegistry.generated.ts', import.meta.url), 'utf8');
 const masterPartRegistrySource = readFileSync(new URL('./page-registries/master__part.generated.ts', import.meta.url), 'utf8');
 
@@ -30,4 +31,12 @@ test('TabKeepAlive lazily keeps visited page components alive without importing 
   assert.match(registrySource, /export async function getPageComponent\(path: string\): Promise<ComponentType \| null>/);
   assert.match(registrySource, /case "\/master\/part": \{\s*const mod = await import\("\.\/page-registries\/master__part\.generated"\)/);
   assert.match(masterPartRegistrySource, /return dynamic\(\(\) => import\("@\/app\/\(authenticated\)\/master\/part\/page"\), \{ ssr: false \}\);/);
+});
+
+test('TabBar closes the active internal tab with Ctrl+Alt+W without using the browser Ctrl+W shortcut', () => {
+  assert.match(tabBarSource, /e\.ctrlKey\s*&&\s*e\.altKey/);
+  assert.match(tabBarSource, /e\.key\.toLowerCase\(\)\s*===\s*["']w["']/);
+  assert.match(tabBarSource, /closeTab\(activeTab\.id\)/);
+  assert.match(tabBarSource, /navigateClientOnly\(next\.path\)/);
+  assert.doesNotMatch(tabBarSource, /e\.ctrlKey\s*&&\s*!e\.altKey[\s\S]*e\.key\.toLowerCase\(\)\s*===\s*["']w["']/);
 });

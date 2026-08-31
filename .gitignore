@@ -106,3 +106,4 @@ next-env.d.ts
 # 은성: AI 지식 sqlite 캐시(대용량, 재생성 가능)
 apps/backend/data/ai-knowledge/
 *.sqlite
+/.vs/tech1_oee_mobile1

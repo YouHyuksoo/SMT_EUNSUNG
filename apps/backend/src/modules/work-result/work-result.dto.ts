@@ -1,5 +1,5 @@
 // 설비별 작업 실적관리 DTO
-import { IsIn, IsInt, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsIn, IsInt, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class WorkResultUpsertDto {
   @IsString() @IsNotEmpty() runNo: string;
@@ -11,7 +11,6 @@ export class WorkResultUpsertDto {
   @IsOptional() @IsInt() workerCount?: number;
   @IsOptional() @IsString() workerName?: string;
   @IsIn(['WIP', 'DONE']) resultStatus: string;
-  @IsOptional() @IsString() userId?: string;
 }
 
 // 작업지시 대표불량 단일 저장 (실적과 독립)
@@ -20,7 +19,6 @@ export class DefectSaveDto {
   @IsString() @IsNotEmpty() badCode: string;
   @IsInt() badQty: number;
   @IsOptional() @IsString() remark?: string;
-  @IsOptional() @IsString() userId?: string;
 }
 
 export class DowntimeUpsertDto {
@@ -31,7 +29,7 @@ export class DowntimeUpsertDto {
   @IsOptional() @IsString() reasonCode?: string;
   @IsOptional() @IsString() startTime?: string; // 'YYYY-MM-DD HH24:MI'
   @IsOptional() @IsString() endTime?: string;
+  @IsOptional() @IsBoolean() endNow?: boolean; // true면 종료시각을 DB 현재시각(SYSDATE)으로 — 시작(SYSDATE)과 동일 시계
   @IsOptional() @IsString() memo?: string;
   @IsOptional() @IsString() worker?: string;
-  @IsOptional() @IsString() userId?: string;
 }

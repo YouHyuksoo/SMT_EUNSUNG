@@ -26,4 +26,3 @@ export class ProcessLine {
   @UpdateDateColumn({ name: 'LAST_MODIFY_DATE', type: 'date', default: () => 'SYSDATE' })
   lastModifyDate!: Date;
 }
-

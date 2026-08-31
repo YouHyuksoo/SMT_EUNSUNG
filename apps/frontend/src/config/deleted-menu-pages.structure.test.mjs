@@ -134,6 +134,7 @@ const forbiddenRoutes = [
   "/outsourcing/receive",
   "/outsourcing/vendor",
   "/workflow",
+  "/oee/entry",
 ];
 
 const forbiddenCodes = [
@@ -253,6 +254,7 @@ const forbiddenCodes = [
   "INV_MAT_PHYSICAL_INV",
   "INV_MAT_PHYSICAL_INV_APPLY",
   "INV_MAT_PHYSICAL_INV_HISTORY",
+  "OEE_ENTRY",
 ];
 
 const deletedRouteDirs = [
@@ -300,6 +302,7 @@ const deletedRouteDirs = [
   "apps/frontend/src/app/(authenticated)/master/equip-inspect-item",
   "apps/frontend/src/app/(authenticated)/outsourcing",
   "apps/frontend/src/app/(authenticated)/workflow",
+  "apps/frontend/src/app/(authenticated)/oee/entry",
   "apps/frontend/src/config/workflowConfig.ts",
   "apps/frontend/src/config/workflowMap.ts",
 ];
@@ -412,6 +415,7 @@ const deletedRegistryFiles = [
   "apps/frontend/src/components/layout/page-registries/inventory__material-physical-inv-apply.generated.ts",
   "apps/frontend/src/components/layout/page-registries/inventory__material-physical-inv-history.generated.ts",
   "apps/frontend/src/components/layout/page-registries/inventory__transaction.generated.ts",
+  "apps/frontend/src/components/layout/page-registries/oee__entry.generated.ts",
 ];
 
 const containsRouteLiteral = (source, route) =>
