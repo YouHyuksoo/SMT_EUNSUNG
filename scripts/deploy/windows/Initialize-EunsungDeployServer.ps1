@@ -22,6 +22,7 @@ Set-StrictMode -Version 2.0
 $script:AccountName = 'eunsung-deploy'
 $script:TaskName = 'EunsungMES-PM2-Resurrect'
 $script:TaskPath = '\EunsungMES\'
+$script:TaskComFolderPath = '\EunsungMES'
 $script:PnpmVersion = '10.28.1'
 $script:Pm2Version = '6.0.6'
 $script:BatchLogonRight = 'SeBatchLogonRight'
@@ -488,13 +489,25 @@ function Prepare-EunsungResurrectTaskRegistration {
   return $true
 }
 
+function Ensure-EunsungScheduledTaskFolder {
+  param([Parameter(Mandatory)][string]$ComFolderPath,[scriptblock]$SchedulerProvider={New-Object -ComObject 'Schedule.Service'})
+  if($ComFolderPath -cne $script:TaskComFolderPath -or $ComFolderPath.EndsWith('\')){throw 'Task Scheduler COM folder path must be the exact no-trailing-slash path.'}
+  $scheduler=& $SchedulerProvider;$scheduler.Connect()
+  try{[void]$scheduler.GetFolder($ComFolderPath)}catch{
+    $exception=$_.Exception;$missing=$false
+    while($exception){if($exception.HResult -eq -2147024894){$missing=$true;break};$exception=$exception.InnerException}
+    if(-not $missing){throw}
+    [void]$scheduler.GetFolder('\').CreateFolder('EunsungMES')
+  }
+}
+
 function Register-EunsungPasswordResurrectTask {
-  param([Parameter(Mandatory)][string]$WrapperPath,[Parameter(Mandatory)][Security.Principal.SecurityIdentifier]$DeploySid,[Parameter(Mandatory)][Security.SecureString]$Password,[scriptblock]$UserSidResolver={param($User)(New-Object Security.Principal.NTAccount($User)).Translate([Security.Principal.SecurityIdentifier])},[scriptblock]$FolderEnsurer={param($TaskPath)$scheduler=New-Object -ComObject 'Schedule.Service';$scheduler.Connect();try{[void]$scheduler.GetFolder($TaskPath)}catch{if($_.Exception.HResult -ne -2147024894){throw};[void]$scheduler.GetFolder('\').CreateFolder('EunsungMES')}},[scriptblock]$TaskRegistrar={param($Parameters)Register-ScheduledTask @Parameters})
+  param([Parameter(Mandatory)][string]$WrapperPath,[Parameter(Mandatory)][Security.Principal.SecurityIdentifier]$DeploySid,[Parameter(Mandatory)][Security.SecureString]$Password,[scriptblock]$UserSidResolver={param($User)(New-Object Security.Principal.NTAccount($User)).Translate([Security.Principal.SecurityIdentifier])},[scriptblock]$FolderEnsurer={param($ComFolderPath)Ensure-EunsungScheduledTaskFolder -ComFolderPath $ComFolderPath},[scriptblock]$TaskRegistrar={param($Parameters)Register-ScheduledTask @Parameters})
   $arguments="-NoProfile -NonInteractive -ExecutionPolicy Bypass -File `"$([IO.Path]::GetFullPath($WrapperPath))`""
   $powershellPath=[IO.Path]::GetFullPath((Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'))
   $taskAction=New-ScheduledTaskAction -Execute $powershellPath -Argument $arguments;$trigger=New-ScheduledTaskTrigger -AtStartup;$settings=New-ScheduledTaskSettingsSet -ExecutionTimeLimit (New-TimeSpan -Minutes 2) -StartWhenAvailable
   $user="$env:COMPUTERNAME\$($script:AccountName)";$resolved=& $UserSidResolver $user;if($resolved.Value -cne $DeploySid.Value){throw 'Scheduled task user does not resolve to the exact deployment SID.'}
-  & $FolderEnsurer $script:TaskPath
+  & $FolderEnsurer $script:TaskComFolderPath
   $bstr=[IntPtr]::Zero;$plain=$null
   try{
     $bstr=[Runtime.InteropServices.Marshal]::SecureStringToBSTR($Password);$plain=[Runtime.InteropServices.Marshal]::PtrToStringBSTR($bstr)
@@ -589,7 +602,7 @@ function Invoke-EunsungBootstrapRollback {
     if(@(Get-ChildItem -LiteralPath $bootstrapRoot -Force).Count -ne 0){throw 'Protected bootstrap directory contains unexpected files.'}
     Remove-Item -LiteralPath $bootstrapRoot -Force
   }
-  $scheduler=New-Object -ComObject 'Schedule.Service';$scheduler.Connect();try{$folder=$scheduler.GetFolder($script:TaskPath);if($folder.GetTasks(1).Count -eq 0 -and $folder.GetFolders(0).Count -eq 0){$scheduler.GetFolder('\').DeleteFolder('EunsungMES',0)}}catch{if($_.Exception.HResult -ne -2147024894){throw}}
+  $scheduler=New-Object -ComObject 'Schedule.Service';$scheduler.Connect();try{$folder=$scheduler.GetFolder($script:TaskComFolderPath);if($folder.GetTasks(1).Count -eq 0 -and $folder.GetFolders(0).Count -eq 0){$scheduler.GetFolder('\').DeleteFolder('EunsungMES',0)}}catch{$exception=$_.Exception;$missing=$false;while($exception){if($exception.HResult -eq -2147024894){$missing=$true;break};$exception=$exception.InnerException};if(-not $missing){throw}}
 }
 
 function Initialize-EunsungDeployServer {

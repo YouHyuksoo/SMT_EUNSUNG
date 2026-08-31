@@ -214,12 +214,33 @@ Test-Case 'password task registration keeps plaintext in-process and uses exact 
   function New-ScheduledTaskAction {[pscustomobject]@{}}
   function New-ScheduledTaskTrigger {[pscustomobject]@{}}
   function New-ScheduledTaskSettingsSet {[pscustomobject]@{}}
-  Register-EunsungPasswordResurrectTask -WrapperPath 'D:\deploy\wrapper.ps1' -DeploySid $sid -Password $secure -UserSidResolver {param($User)$sid} -FolderEnsurer {param($TaskPath)Assert-Equal '\EunsungMES\' $TaskPath} -TaskRegistrar {param($Parameters)$script:captured=$Parameters}
+  Register-EunsungPasswordResurrectTask -WrapperPath 'D:\deploy\wrapper.ps1' -DeploySid $sid -Password $secure -UserSidResolver {param($User)$sid} -FolderEnsurer {param($TaskPath)Assert-Equal '\EunsungMES' $TaskPath} -TaskRegistrar {param($Parameters)$script:captured=$Parameters}
   Assert-Equal '\EunsungMES\' $script:captured.TaskPath
   Assert-Equal 'Limited' $script:captured.RunLevel
   Assert-True ([bool]$script:captured.Force)
   Assert-Equal 'DoNotLeak!938475' $script:captured.Password
   Assert-True ((Get-Content -Raw -LiteralPath $scriptPath) -notmatch 'ArgumentList[^\r\n]*DoNotLeak')
+}
+
+Test-Case 'scheduler cmdlet and COM folder paths remain exact distinct representations' {
+  Assert-Equal '\EunsungMES\' $script:TaskPath
+  Assert-Equal '\EunsungMES' $script:TaskComFolderPath
+  Assert-Throws { Ensure-EunsungScheduledTaskFolder -ComFolderPath '\EunsungMES\' -SchedulerProvider {throw 'provider must not run'} } 'no-trailing-slash'
+  $script:createdFolder=$null
+  $rootFolder=New-Object PSObject
+  Add-Member -InputObject $rootFolder -MemberType ScriptMethod -Name CreateFolder -Value {param($Name)$script:createdFolder=$Name}
+  $scheduler=New-Object PSObject
+  Add-Member -InputObject $scheduler -MemberType ScriptMethod -Name Connect -Value {}
+  Add-Member -InputObject $scheduler -MemberType ScriptMethod -Name GetFolder -Value {param($Path)if($Path -ceq '\'){return $rootFolder};throw (New-Object Runtime.InteropServices.COMException('missing',-2147024894))}
+  Ensure-EunsungScheduledTaskFolder -ComFolderPath '\EunsungMES' -SchedulerProvider {$scheduler}
+  Assert-Equal 'EunsungMES' $script:createdFolder
+}
+
+Test-Case 'scheduler invalid-name HRESULT is never swallowed as a missing folder' {
+  $scheduler=New-Object PSObject
+  Add-Member -InputObject $scheduler -MemberType ScriptMethod -Name Connect -Value {}
+  Add-Member -InputObject $scheduler -MemberType ScriptMethod -Name GetFolder -Value {param($Path)throw (New-Object Runtime.InteropServices.COMException('invalid-name',-2147024773))}
+  Assert-Throws { Ensure-EunsungScheduledTaskFolder -ComFolderPath '\EunsungMES' -SchedulerProvider {$scheduler} } 'invalid-name'
 }
 
 Test-Case 'helper and wrapper ACL give deployment SID read execute without write' {
