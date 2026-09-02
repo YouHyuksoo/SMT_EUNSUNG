@@ -8,7 +8,7 @@ sources:
   - apps/frontend/src/app/(authenticated)/master/routing/
   - docs/specs/2026-07-12-ip-routing-design.md
   - docs/specs/2026-07-14-fixed-item-routing-design.md
-verifiedCommit: 60adf9d
+verifiedCommit: dee4f7e
 ---
 
 # IP_ROUTING_* — 생산 라우팅

@@ -6,7 +6,7 @@ sources:
   - apps/backend/src/modules/master/controllers/
   - apps/backend/src/modules/master/services/
   - apps/frontend/src/services/api.ts
-verifiedCommit: 1bd1735
+verifiedCommit: dee4f7e
 ---
 
 # Oracle DB 기반 화면 개발·검증 표준
