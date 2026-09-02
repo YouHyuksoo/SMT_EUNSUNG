@@ -63,4 +63,76 @@ describe('WorkResultService tenancy', () => {
     expect(insertCall?.[1]).toContain('authenticated-user');
     expect(insertCall?.[1]).not.toContain('forged-user');
   });
+
+  it('binds null equipment and preserves the process when creating a result', async () => {
+    const manager = {
+      query: jest.fn().mockImplementation((sql: string) => {
+        if (sql.includes('SEQ_PRODUCT_SENSOR.NEXTVAL'))
+          return Promise.resolve([{ seq: 1 }]);
+        return Promise.resolve([]);
+      }),
+    };
+    transaction.mockImplementation(
+      (callback: (value: typeof manager) => unknown) => callback(manager),
+    );
+
+    await service.upsertResult(
+      {
+        runNo: 'RUN-1',
+        workstageCode: 'WS-1',
+        resultQty: 10,
+        resultStatus: 'WIP',
+      } as never,
+      7,
+      'user-7',
+    );
+
+    const insertCall = manager.query.mock.calls.find(([sql]) =>
+      String(sql).includes('INSERT INTO IP_PRODUCT_SENSOR_ACTUAL'),
+    );
+    const runCardCall = manager.query.mock.calls.find(([sql]) =>
+      String(sql).includes('UPDATE IP_PRODUCT_RUN_CARD'),
+    );
+    expect(insertCall?.[1]?.[3]).toBeNull();
+    expect(insertCall?.[1]?.[4]).toBe('WS-1');
+    expect(runCardCall?.[1]?.[0]).toBeNull();
+    expect(runCardCall?.[1]?.[1]).toBe('WS-1');
+  });
+
+  it('normalizes whitespace equipment on an existing result update', async () => {
+    const manager = {
+      query: jest.fn().mockImplementation((sql: string) => {
+        if (sql.includes("SELECT NVL(IS_LAST_YN,'N')"))
+          return Promise.resolve([{ st: 'N' }]);
+        return Promise.resolve([]);
+      }),
+    };
+    transaction.mockImplementation(
+      (callback: (value: typeof manager) => unknown) => callback(manager),
+    );
+
+    await service.upsertResult(
+      {
+        runNo: 'RUN-1',
+        seqNo: '1',
+        machineCode: '   ',
+        workstageCode: 'WS-1',
+        resultQty: 10,
+        resultStatus: 'WIP',
+      },
+      7,
+      'user-7',
+    );
+
+    const sensorUpdateCall = manager.query.mock.calls.find(([sql]) =>
+      String(sql).includes('UPDATE IP_PRODUCT_SENSOR_ACTUAL SET'),
+    );
+    const runCardCall = manager.query.mock.calls.find(([sql]) =>
+      String(sql).includes('UPDATE IP_PRODUCT_RUN_CARD'),
+    );
+    expect(sensorUpdateCall?.[1]?.[0]).toBeNull();
+    expect(sensorUpdateCall?.[1]?.[1]).toBe('WS-1');
+    expect(runCardCall?.[1]?.[0]).toBeNull();
+    expect(runCardCall?.[1]?.[1]).toBe('WS-1');
+  });
 });
