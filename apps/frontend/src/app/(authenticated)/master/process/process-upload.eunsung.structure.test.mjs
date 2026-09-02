@@ -31,8 +31,9 @@ test('preserves the process editor panel and equipment assignment modal composit
   assert.match(page, /<Select[\s\S]*?options=\{assignOptions\}[\s\S]*?onChange=\{setAssignEquipCode\}/);
 });
 
-test('process and assigned-equipment grids use a 60:40 vertical layout with room for three equipment rows', () => {
-  assert.match(page, /grid-rows-\[minmax\(0,3fr\)_minmax\(220px,2fr\)\]/);
+test('process and assigned-equipment grids use a 56:44 vertical layout with room for three equipment rows', () => {
+  assert.match(page, /grid-rows-\[minmax\(0,14fr\)_minmax\(220px,11fr\)\]/);
+  assert.doesNotMatch(page, /grid-rows-\[minmax\(0,3fr\)_minmax\(220px,2fr\)\]/);
   assert.doesNotMatch(page, /grid-cols-12/);
   assert.doesNotMatch(page, /col-span-7/);
   assert.doesNotMatch(page, /col-span-5/);
@@ -66,6 +67,12 @@ test('contains both grids and keeps the equipment action visible', () => {
   assert.doesNotMatch(equipmentGrid, /className="px-4 pt-3 pb-1 border-b border-border flex-shrink-0"/);
   assert.match(equipmentGrid, /toolbarLeft=\{/);
   assert.match(equipmentGrid, /className="flex min-w-0 items-center gap-2"/);
-  assert.match(equipmentGrid, /<Button size="sm" className="!h-7 flex-shrink-0 !px-2 !text-xs" onClick=\{onAdd\}>/);
+  const buttonPattern = /<Button size="sm" onClick=\{onAdd\}>/;
+  const iconPattern = /<Plus className="w-4 h-4 mr-1" \/>/;
+  assert.match(list, buttonPattern);
+  assert.match(equipmentGrid, buttonPattern);
+  assert.match(list, iconPattern);
+  assert.match(equipmentGrid, iconPattern);
+  assert.doesNotMatch(equipmentGrid, /!h-7|!px-2|!text-xs/);
   assert.match(equipmentGrid, /<CardContent className="flex-1 min-w-0 min-h-0 overflow-hidden px-4 pt-1 pb-3">/);
 });

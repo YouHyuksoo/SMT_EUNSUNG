@@ -11,7 +11,9 @@ test("places the assign action before the title in the DataGrid fullscreen toolb
 
   assert.ok(toolbar, "assigned equipment toolbar block must exist");
   assert.match(toolbar, /toolbarLeft=\{/);
-  assert.match(toolbar, /<Button[^>]*className="!h-7 flex-shrink-0 !px-2 !text-xs"[^>]*onClick=\{onAdd\}/);
+  assert.match(toolbar, /<Button size="sm" onClick=\{onAdd\}>/);
+  assert.match(toolbar, /<Plus className="w-4 h-4 mr-1" \/>/);
+  assert.doesNotMatch(toolbar, /!h-7|!px-2|!text-xs/);
   assert.match(toolbar, /assignEquipment/);
   assert.match(toolbar, /assignedEquipments/);
   assert.ok(toolbar.indexOf("assignEquipment") < toolbar.indexOf("assignedEquipments"));
