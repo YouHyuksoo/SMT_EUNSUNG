@@ -18,14 +18,19 @@
 
 - [ ] **Step 1: Write the failing test**
 
-Create a source structure test that reads `components/ProcessEquipGrid.tsx` and asserts:
+Create a source structure test that reads `components/ProcessEquipGrid.tsx`, extracts the explicitly marked toolbar block, and asserts:
 
 ```js
-assert.match(grid, /<DataGrid[\s\S]*?toolbarLeft=\{[\s\S]*?<Button[^>]*className="h-7[^"]*"[^>]*onClick=\{onAdd\}[\s\S]*?assignEquipment[\s\S]*?assignedEquipments[\s\S]*?equipments\.length/);
+const toolbar = grid.match(/\/\* assigned-equipment-toolbar:start \*\/[\s\S]*?\/\* assigned-equipment-toolbar:end \*\//)?.[0] ?? "";
+assert.ok(toolbar, "assigned equipment toolbar block must exist");
+assert.match(toolbar, /toolbarLeft=\{/);
+assert.match(toolbar, /<Button[^>]*className="!h-7 flex-shrink-0 !px-2 !text-xs"[^>]*onClick=\{onAdd\}/);
+assert.ok(toolbar.indexOf("assignEquipment") < toolbar.indexOf("assignedEquipments"));
+assert.match(toolbar, /\{equipments\.length\}\{t\("common\.count"/);
 assert.doesNotMatch(grid, /className="px-4 pt-3 pb-1 border-b border-border flex-shrink-0"/);
 ```
 
-The first assertion fixes the button → title/count order inside `toolbarLeft` and requires the compact `h-7` button. The second assertion prevents the old standalone card header from returning.
+These assertions delimit the exact `toolbarLeft` block, fix the button → title/count order, require the compact important height override, and prevent the old standalone card header from returning.
 
 - [ ] **Step 2: Run the test to verify RED**
 
@@ -66,8 +71,9 @@ Pass the following element to `DataGrid`:
 
 ```tsx
 toolbarLeft={
+  /* assigned-equipment-toolbar:start */
   <div className="flex min-w-0 items-center gap-2">
-    <Button size="sm" className="h-7 flex-shrink-0 px-2 text-xs" onClick={onAdd}>
+    <Button size="sm" className="!h-7 flex-shrink-0 !px-2 !text-xs" onClick={onAdd}>
       <Plus className="mr-1 h-3.5 w-3.5" />
       {t("master.process.assignEquipment", "설비 배치")}
     </Button>
@@ -79,6 +85,7 @@ toolbarLeft={
       </span>
     </h3>
   </div>
+  /* assigned-equipment-toolbar:end */
 }
 ```
 
