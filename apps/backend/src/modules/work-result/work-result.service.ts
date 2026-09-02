@@ -1,8 +1,16 @@
 // 설비별 작업 실적관리 — IP_PRODUCT_RUN_CARD 기준 실적/불량/비가동 실 구현
+//
+// 실적 저장 테이블(2026-09-02 변경): IP_PRODUCT_WORK_RESULT -> IP_PRODUCT_SENSOR_ACTUAL
+//   RECEIPT_DATE       = 등록일자(SYSDATE)
+//   RECEIPT_SEQUENCE   = 실적 차수 항번 (SEQ_PRODUCT_SENSOR 전역 시퀀스, 센서 배치와 공용)
+//   PRODUCT_ACTUAL_QTY = 실적수량
+//   IS_LAST_YN         = 처리구분 (Y=완료/수정불가, N=진행) — 화면에는 DONE/WIP로 되돌려 준다
+//   MACHINE_CODE / WORK_TIME / WORKER_NAME / WORKER_COUNT 는 2026-09-02 마이그레이션으로 추가한
+//   수기 실적 전용 컬럼이다. 센서 배치(P_INTERLOCK_SENSOR_ACTUAL_NEO)는 채우지 않는다.
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { ProductWorkResult } from '../../entities/product-work-result.entity';
+import { ProductSensorActual } from '../../entities/product-sensor-actual.entity';
 import {
   DowntimeBulkDto,
   DowntimeUpsertDto,
@@ -15,8 +23,8 @@ const DEFAULT_USER = 'ADMIN';
 @Injectable()
 export class WorkResultService {
   constructor(
-    @InjectRepository(ProductWorkResult)
-    private readonly repo: Repository<ProductWorkResult>,
+    @InjectRepository(ProductSensorActual)
+    private readonly repo: Repository<ProductSensorActual>,
   ) {}
 
   private q<T = Record<string, unknown>>(
@@ -77,9 +85,9 @@ export class WorkResultService {
              AND bc.CODE_NAME = (SELECT MAX(mm.PRODUCT_CLASS) FROM IP_PRODUCT_MODEL_MASTER mm WHERE mm.ITEM_CODE=r.ITEM_CODE AND mm.ORGANIZATION_ID=r.ORGANIZATION_ID)) AS "carModel",
           (SELECT MAX(st.CT_VALUE) FROM IP_PRODUCT_ST_MASTER st WHERE st.ITEM_CODE=r.ITEM_CODE AND st.ORGANIZATION_ID=r.ORGANIZATION_ID) AS "ct",
           r.LOT_SIZE AS "planQty",
-          NVL((SELECT SUM(wr.RESULT_QTY) FROM IP_PRODUCT_WORK_RESULT wr WHERE wr.RUN_NO=r.RUN_NO AND wr.ORGANIZATION_ID=r.ORGANIZATION_ID),0) AS "resultQty",
-          (SELECT COUNT(*) FROM IP_PRODUCT_WORK_RESULT wc WHERE wc.RUN_NO=r.RUN_NO AND wc.ORGANIZATION_ID=r.ORGANIZATION_ID) AS "resultCount",
-          (SELECT COUNT(*) FROM IP_PRODUCT_WORK_RESULT ww WHERE ww.RUN_NO=r.RUN_NO AND ww.ORGANIZATION_ID=r.ORGANIZATION_ID AND NVL(ww.RESULT_STATUS,'WIP')='WIP') AS "wipCount",
+          NVL((SELECT SUM(wr.PRODUCT_ACTUAL_QTY) FROM IP_PRODUCT_SENSOR_ACTUAL wr WHERE wr.RUN_NO=r.RUN_NO AND wr.ORGANIZATION_ID=r.ORGANIZATION_ID),0) AS "resultQty",
+          (SELECT COUNT(*) FROM IP_PRODUCT_SENSOR_ACTUAL wc WHERE wc.RUN_NO=r.RUN_NO AND wc.ORGANIZATION_ID=r.ORGANIZATION_ID) AS "resultCount",
+          (SELECT COUNT(*) FROM IP_PRODUCT_SENSOR_ACTUAL ww WHERE ww.RUN_NO=r.RUN_NO AND ww.ORGANIZATION_ID=r.ORGANIZATION_ID AND NVL(ww.IS_LAST_YN,'N')='N') AS "wipCount",
           NVL((SELECT df.BAD_QTY FROM IP_PRODUCT_WORK_DEFECT df WHERE df.RUN_NO=r.RUN_NO AND df.ORGANIZATION_ID=r.ORGANIZATION_ID),0) AS "defectQty",
           (SELECT COUNT(*) FROM IP_EQUIP_DOWNTIME_RESULT dr WHERE dr.MACHINE_CODE=r.MACHINE_CODE AND dr.ORGANIZATION_ID=r.ORGANIZATION_ID AND dr.END_TIME IS NULL) AS "openDowntime"
         FROM IP_PRODUCT_RUN_CARD r
@@ -94,15 +102,17 @@ export class WorkResultService {
   results(runNo: string, organizationId?: number) {
     const organization = this.requireOrganization(organizationId);
     return this.q(
-      `SELECT wr.SEQ_NO AS "seqNo", wr.MACHINE_CODE AS "machineCode", wr.WORKSTAGE_CODE AS "workstageCode",
-              wr.RESULT_QTY AS "resultQty", wr.WORK_TIME AS "workTime", wr.WORKER_COUNT AS "workerCount",
-              wr.WORKER_NAME AS "workerName", wr.RESULT_STATUS AS "resultStatus",
+      `SELECT TO_CHAR(wr.RECEIPT_SEQUENCE) AS "seqNo", wr.MACHINE_CODE AS "machineCode", wr.WORKSTAGE_CODE AS "workstageCode",
+              wr.PRODUCT_ACTUAL_QTY AS "resultQty", wr.WORK_TIME AS "workTime", wr.WORKER_COUNT AS "workerCount",
+              wr.WORKER_NAME AS "workerName",
+              CASE WHEN NVL(wr.IS_LAST_YN,'N')='Y' THEN 'DONE' ELSE 'WIP' END AS "resultStatus",
+              TO_CHAR(wr.RECEIPT_DATE,'YYYY-MM-DD HH24:MI') AS "receiptDate",
               (SELECT r.ITEM_CODE FROM IP_PRODUCT_RUN_CARD r WHERE r.RUN_NO=wr.RUN_NO AND r.ORGANIZATION_ID=wr.ORGANIZATION_ID AND ROWNUM=1) AS "itemCode",
               (SELECT r.MODEL_NAME FROM IP_PRODUCT_RUN_CARD r WHERE r.RUN_NO=wr.RUN_NO AND r.ORGANIZATION_ID=wr.ORGANIZATION_ID AND ROWNUM=1) AS "modelName",
               TO_CHAR(NVL(wr.LAST_MODIFY_DATE, wr.ENTER_DATE),'YYYY-MM-DD HH24:MI') AS "updatedAt"
-         FROM IP_PRODUCT_WORK_RESULT wr
+         FROM IP_PRODUCT_SENSOR_ACTUAL wr
         WHERE wr.RUN_NO = :1 AND wr.ORGANIZATION_ID = :2
-        ORDER BY wr.SEQ_NO`,
+        ORDER BY wr.RECEIPT_SEQUENCE`,
       [runNo, organization],
     );
   }
@@ -113,10 +123,13 @@ export class WorkResultService {
     const header =
       (
         await this.q(
-          `SELECT RUN_NO AS "runNo", SEQ_NO AS "seqNo", MACHINE_CODE AS "machineCode", WORKSTAGE_CODE AS "workstageCode",
-              RESULT_QTY AS "resultQty", WORK_TIME AS "workTime", WORKER_COUNT AS "workerCount",
-              WORKER_NAME AS "workerName", RESULT_STATUS AS "resultStatus"
-         FROM IP_PRODUCT_WORK_RESULT WHERE RUN_NO=:1 AND SEQ_NO=:2 AND ORGANIZATION_ID=:3`,
+          `SELECT RUN_NO AS "runNo", TO_CHAR(RECEIPT_SEQUENCE) AS "seqNo", MACHINE_CODE AS "machineCode",
+              WORKSTAGE_CODE AS "workstageCode",
+              PRODUCT_ACTUAL_QTY AS "resultQty", WORK_TIME AS "workTime", WORKER_COUNT AS "workerCount",
+              WORKER_NAME AS "workerName",
+              CASE WHEN NVL(IS_LAST_YN,'N')='Y' THEN 'DONE' ELSE 'WIP' END AS "resultStatus",
+              TO_CHAR(RECEIPT_DATE,'YYYY-MM-DD HH24:MI') AS "receiptDate"
+         FROM IP_PRODUCT_SENSOR_ACTUAL WHERE RUN_NO=:1 AND RECEIPT_SEQUENCE=:2 AND ORGANIZATION_ID=:3`,
           [runNo, seqNo, organization],
         )
       )[0] ?? null;
@@ -132,20 +145,23 @@ export class WorkResultService {
     const organization = this.requireOrganization(organizationId);
     const user = userId ?? DEFAULT_USER;
     return this.repo.manager.transaction(async (mgr) => {
+      // 처리구분(WIP/DONE) -> IS_LAST_YN(N/Y). 화면 계약은 그대로 두고 저장값만 바꾼다.
+      const isLastYn = dto.resultStatus === 'DONE' ? 'Y' : 'N';
       let seqNo = dto.seqNo;
       if (seqNo) {
         const cur = (await mgr.query(
-          `SELECT RESULT_STATUS AS "st" FROM IP_PRODUCT_WORK_RESULT WHERE RUN_NO=:1 AND SEQ_NO=:2 AND ORGANIZATION_ID=:3`,
+          `SELECT NVL(IS_LAST_YN,'N') AS "st" FROM IP_PRODUCT_SENSOR_ACTUAL
+            WHERE RUN_NO=:1 AND RECEIPT_SEQUENCE=:2 AND ORGANIZATION_ID=:3`,
           [dto.runNo, seqNo, organization],
         )) as Array<{ st: string }>;
         if (!cur.length)
           throw new BadRequestException('실적을 찾을 수 없습니다');
-        if (cur[0].st === 'DONE')
+        if (cur[0].st === 'Y')
           throw new BadRequestException('완료된 실적은 수정할 수 없습니다');
         await mgr.query(
-          `UPDATE IP_PRODUCT_WORK_RESULT SET MACHINE_CODE=:1, WORKSTAGE_CODE=:2, RESULT_QTY=:3, WORK_TIME=:4,
-             WORKER_COUNT=:5, WORKER_NAME=:6, RESULT_STATUS=:7, LAST_MODIFY_BY=:8, LAST_MODIFY_DATE=SYSDATE
-           WHERE RUN_NO=:9 AND SEQ_NO=:10 AND ORGANIZATION_ID=:11`,
+          `UPDATE IP_PRODUCT_SENSOR_ACTUAL SET MACHINE_CODE=:1, WORKSTAGE_CODE=:2, PRODUCT_ACTUAL_QTY=:3, WORK_TIME=:4,
+             WORKER_COUNT=:5, WORKER_NAME=:6, IS_LAST_YN=:7, LAST_MODIFY_BY=:8, LAST_MODIFY_DATE=SYSDATE
+           WHERE RUN_NO=:9 AND RECEIPT_SEQUENCE=:10 AND ORGANIZATION_ID=:11`,
           [
             dto.machineCode,
             dto.workstageCode,
@@ -153,7 +169,7 @@ export class WorkResultService {
             dto.workTime ?? 0,
             dto.workerCount ?? 0,
             dto.workerName ?? null,
-            dto.resultStatus,
+            isLastYn,
             user,
             dto.runNo,
             seqNo,
@@ -161,26 +177,30 @@ export class WorkResultService {
           ],
         );
       } else {
-        const mx = (await mgr.query(
-          `SELECT NVL(MAX(TO_NUMBER(SEQ_NO)),0) AS "mx" FROM IP_PRODUCT_WORK_RESULT WHERE RUN_NO=:1 AND ORGANIZATION_ID=:2`,
-          [dto.runNo, organization],
-        )) as Array<{ mx: number }>;
-        seqNo = String(Number(mx[0]?.mx ?? 0) + 1).padStart(2, '0');
+        // 항번은 레거시 전역 시퀀스로 채번한다. PK가 (RECEIPT_DATE, RECEIPT_SEQUENCE, ORG)라
+        // 작업지시별 01,02 방식으로 매기면 같은 등록시각에 다른 작업지시끼리 충돌할 수 있고,
+        // 센서 배치(P_INTERLOCK_SENSOR_ACTUAL_NEO)도 같은 시퀀스를 쓴다.
+        const nx = (await mgr.query(
+          `SELECT SEQ_PRODUCT_SENSOR.NEXTVAL AS "seq" FROM DUAL`,
+        )) as Array<{ seq: number }>;
+        seqNo = String(Number(nx[0]?.seq));
+        // 입고일자(RECEIPT_DATE)에 등록일자를 적용한다 — 둘 다 SYSDATE로 같은 시각을 찍는다.
         await mgr.query(
-          `INSERT INTO IP_PRODUCT_WORK_RESULT
-             (RUN_NO, SEQ_NO, ORGANIZATION_ID, MACHINE_CODE, WORKSTAGE_CODE, RESULT_QTY, WORK_TIME, WORKER_COUNT, WORKER_NAME, RESULT_STATUS, ENTER_BY, ENTER_DATE)
-           VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,SYSDATE)`,
+          `INSERT INTO IP_PRODUCT_SENSOR_ACTUAL
+             (RECEIPT_DATE, RECEIPT_SEQUENCE, ORGANIZATION_ID, RUN_NO, MACHINE_CODE, WORKSTAGE_CODE,
+              PRODUCT_ACTUAL_QTY, WORK_TIME, WORKER_COUNT, WORKER_NAME, IS_LAST_YN, ENTER_BY, ENTER_DATE)
+           VALUES (SYSDATE,:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,SYSDATE)`,
           [
-            dto.runNo,
             seqNo,
             organization,
+            dto.runNo,
             dto.machineCode,
             dto.workstageCode,
             dto.resultQty,
             dto.workTime ?? 0,
             dto.workerCount ?? 0,
             dto.workerName ?? null,
-            dto.resultStatus,
+            isLastYn,
             user,
           ],
         );
@@ -222,7 +242,7 @@ export class WorkResultService {
     const info = (
       await this.q(
         `SELECT NVL(r.LOT_SIZE,0) AS "planQty",
-              NVL((SELECT SUM(wr.RESULT_QTY) FROM IP_PRODUCT_WORK_RESULT wr WHERE wr.RUN_NO=r.RUN_NO AND wr.ORGANIZATION_ID=r.ORGANIZATION_ID),0) AS "resultQty"
+              NVL((SELECT SUM(wr.PRODUCT_ACTUAL_QTY) FROM IP_PRODUCT_SENSOR_ACTUAL wr WHERE wr.RUN_NO=r.RUN_NO AND wr.ORGANIZATION_ID=r.ORGANIZATION_ID),0) AS "resultQty"
          FROM IP_PRODUCT_RUN_CARD r WHERE r.RUN_NO=:1 AND r.ORGANIZATION_ID=:2`,
         [runNo, organization],
       )

@@ -72,7 +72,7 @@ import { EquipDowntimeReason } from '../entities/equip-downtime-reason.entity';
 import { EquipDowntimeMap } from '../entities/equip-downtime-map.entity';
 import { EquipDowntimeMapDtl } from '../entities/equip-downtime-map-dtl.entity';
 import { ProductModelMaster } from '../entities/product-model-master.entity';
-import { ProductWorkResult } from '../entities/product-work-result.entity';
+import { ProductSensorActual } from '../entities/product-sensor-actual.entity';
 import { ProductWorkDefect } from '../entities/product-work-defect.entity';
 import { EquipDowntimeResult } from '../entities/equip-downtime-result.entity';
 
@@ -164,7 +164,7 @@ import { EquipDowntimeResult } from '../entities/equip-downtime-result.entity';
             EquipDowntimeMap,
             EquipDowntimeMapDtl,
             ProductModelMaster,
-            ProductWorkResult,
+            ProductSensorActual,
             ProductWorkDefect,
             EquipDowntimeResult,
           ],

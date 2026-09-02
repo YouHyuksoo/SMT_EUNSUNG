@@ -1,6 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 import { Repository } from 'typeorm';
-import { ProductWorkResult } from '../../entities/product-work-result.entity';
+import { ProductSensorActual } from '../../entities/product-sensor-actual.entity';
 import { WorkResultService } from './work-result.service';
 
 describe('WorkResultService tenancy', () => {
@@ -8,7 +8,7 @@ describe('WorkResultService tenancy', () => {
   const transaction = jest.fn();
   const repository = {
     manager: { query, transaction },
-  } as unknown as Repository<ProductWorkResult>;
+  } as unknown as Repository<ProductSensorActual>;
   const service = new WorkResultService(repository);
 
   beforeEach(() => {
@@ -55,8 +55,9 @@ describe('WorkResultService tenancy', () => {
       'authenticated-user',
     );
 
+    // 2026-09-02: 실적 저장 테이블이 IP_PRODUCT_SENSOR_ACTUAL로 바뀌었다.
     const insertCall = manager.query.mock.calls.find(([sql]) =>
-      String(sql).includes('INSERT INTO IP_PRODUCT_WORK_RESULT'),
+      String(sql).includes('INSERT INTO IP_PRODUCT_SENSOR_ACTUAL'),
     );
     expect(insertCall?.[1]).toContain(7);
     expect(insertCall?.[1]).toContain('authenticated-user');
