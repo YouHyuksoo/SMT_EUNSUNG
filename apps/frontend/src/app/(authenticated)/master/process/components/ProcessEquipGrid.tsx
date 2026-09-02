@@ -44,7 +44,7 @@ export default function ProcessEquipGrid({
         size: 110,
         cell: ({ getValue }) => {
           const v = getValue() as string | null;
-          return v ? <ComCodeBadge groupCode="EQUIP_TYPE" code={v} /> : "-";
+          return v ? <ComCodeBadge groupCode="MACHINE TYPE" code={v} /> : "-";
         },
       },
       { accessorKey: "modelName", header: t("equipment.master.modelName", { defaultValue: "모델명" }), size: 130, cell: ({ getValue }) => (getValue() as string) || "-" },

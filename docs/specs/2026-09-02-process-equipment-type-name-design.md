@@ -17,6 +17,6 @@
 
 ## 검증
 
-- `apps/frontend/src/app/(authenticated)/master/process/process-equipment-type-name.structure.test.mjs` 구조 테스트가 `ProcessEquipGrid` 안의 `MACHINE TYPE` 사용을 강제하고 같은 파일의 `EQUIP_TYPE` 사용을 금지한다.
+- `apps/frontend/src/app/(authenticated)/master/process/process-equipment-type-name.eunsung.structure.test.mjs` 구조 테스트가 `ProcessEquipGrid` 안의 `MACHINE TYPE` 사용을 강제하고 같은 파일의 `EQUIP_TYPE` 사용을 금지한다.
 - 테스트를 변경 전에 실행해 실패를 확인하고, 최소 구현 후 재실행한다.
 - 프론트엔드 typecheck로 타입과 페이지 레지스트리를 검증한다.
