@@ -396,7 +396,8 @@
     "oee.equipWorkResult": "설비별 작업 실적관리",
     "oee.equipOpsStatus": "설비 운영 현황",
     "oee.equipOpsAnalysis": "설비별 운영 현황 및 분석",
-    "oee.equipDowntimeMobile": "설비비가동 스캔 (Mock)"
+    "oee.equipDowntimeMobile": "설비비가동 스캔 (Mock)",
+    "oee.overallStatus": "OEE 종합 현황"
   },
   "header": {
     "theme": "테마",
@@ -4224,6 +4225,33 @@
       "targetColumn": "대상 컬럼",
       "backlinks": "백링크 (이 테이블을 참조하는 곳)",
       "noBacklink": "참조하는 테이블 없음"
+    }
+  },
+  "oee": {
+    "overallStatus": {
+      "headline": "EUNSUNG SMT FACTORY — LIVE OEE",
+      "mockBadge": "목업 — 산식 미적용",
+      "dayShift": "주간조",
+      "lineSection": "라인",
+      "machineSection": "{{line}} 설비",
+      "noMachines": "이 라인에 배정된 설비가 없습니다.",
+      "availability": "가동율",
+      "performance": "성능율",
+      "quality": "양품율",
+      "status": {
+        "RUN": "가동",
+        "WARN": "주의",
+        "STOP": "정지",
+        "LINE_STOP": "비가동 포함"
+      },
+      "kpi": {
+        "factoryOee": "공장 종합 OEE",
+        "availability": "가동율",
+        "performance": "성능율",
+        "quality": "양품율",
+        "firstPass": "라우팅 직행율",
+        "downtimeOpen": "무작업 진행 중"
+      }
     }
   }
 }

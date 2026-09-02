@@ -396,7 +396,8 @@
     "oee.equipWorkResult": "Equipment Work Result",
     "oee.equipOpsStatus": "Equipment Ops Status",
     "oee.equipOpsAnalysis": "Equipment Ops Analysis",
-    "oee.equipDowntimeMobile": "Equipment Downtime Scan (Mock)"
+    "oee.equipDowntimeMobile": "Equipment Downtime Scan (Mock)",
+    "oee.overallStatus": "OEE Overall Status"
   },
   "header": {
     "theme": "Theme",
@@ -4222,6 +4223,33 @@
       "targetColumn": "Target column",
       "backlinks": "Backlinks (referenced by)",
       "noBacklink": "No referencing tables"
+    }
+  },
+  "oee": {
+    "overallStatus": {
+      "headline": "EUNSUNG SMT FACTORY — LIVE OEE",
+      "mockBadge": "Mock — formulas not applied",
+      "dayShift": "Day shift",
+      "lineSection": "Lines",
+      "machineSection": "{{line}} machines",
+      "noMachines": "No machines assigned to this line.",
+      "availability": "Availability",
+      "performance": "Performance",
+      "quality": "Quality",
+      "status": {
+        "RUN": "Running",
+        "WARN": "Warning",
+        "STOP": "Stopped",
+        "LINE_STOP": "Downtime present"
+      },
+      "kpi": {
+        "factoryOee": "Factory OEE",
+        "availability": "Availability",
+        "performance": "Performance",
+        "quality": "Quality",
+        "firstPass": "First Pass Yield",
+        "downtimeOpen": "Open downtime"
+      }
     }
   }
 }

@@ -396,7 +396,8 @@
     "oee.standardTime": "Quản lý thời gian tiêu chuẩn",
     "oee.idleReason": "Mã lý do dừng thiết bị",
     "oee.equipReason": "Liên kết lý do dừng theo thiết bị",
-    "oee.resource": "Quản lý tài nguyên OEE"
+    "oee.resource": "Quản lý tài nguyên OEE",
+    "oee.overallStatus": "Tổng quan OEE"
   },
   "header": {
     "theme": "Giao diện",
@@ -4222,6 +4223,33 @@
       "targetColumn": "Cột đích",
       "backlinks": "Liên kết ngược (được tham chiếu bởi)",
       "noBacklink": "Không có bảng tham chiếu"
+    }
+  },
+  "oee": {
+    "overallStatus": {
+      "headline": "EUNSUNG SMT FACTORY — LIVE OEE",
+      "mockBadge": "Bản mô phỏng — chưa áp dụng công thức",
+      "dayShift": "Ca ngày",
+      "lineSection": "Chuyền",
+      "machineSection": "Thiết bị {{line}}",
+      "noMachines": "Không có thiết bị nào thuộc chuyền này.",
+      "availability": "Tỷ lệ vận hành",
+      "performance": "Tỷ lệ hiệu suất",
+      "quality": "Tỷ lệ đạt",
+      "status": {
+        "RUN": "Đang chạy",
+        "WARN": "Cảnh báo",
+        "STOP": "Dừng",
+        "LINE_STOP": "Có dừng máy"
+      },
+      "kpi": {
+        "factoryOee": "OEE toàn nhà máy",
+        "availability": "Tỷ lệ vận hành",
+        "performance": "Tỷ lệ hiệu suất",
+        "quality": "Tỷ lệ đạt",
+        "firstPass": "Tỷ lệ đạt lần đầu",
+        "downtimeOpen": "Đang dừng máy"
+      }
     }
   }
 }

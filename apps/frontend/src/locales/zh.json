@@ -396,7 +396,8 @@
     "oee.standardTime": "标准时间管理",
     "oee.idleReason": "设备停机原因代码",
     "oee.equipReason": "设备停机原因关联",
-    "oee.resource": "OEE资源管理"
+    "oee.resource": "OEE资源管理",
+    "oee.overallStatus": "OEE 综合现况"
   },
   "header": {
     "theme": "主题",
@@ -4222,6 +4223,33 @@
       "targetColumn": "目标列",
       "backlinks": "反向链接（被哪些表引用）",
       "noBacklink": "无引用此表的表"
+    }
+  },
+  "oee": {
+    "overallStatus": {
+      "headline": "EUNSUNG SMT FACTORY — LIVE OEE",
+      "mockBadge": "模拟数据 — 未应用公式",
+      "dayShift": "白班",
+      "lineSection": "线体",
+      "machineSection": "{{line}} 设备",
+      "noMachines": "该线体没有分配设备。",
+      "availability": "稼动率",
+      "performance": "性能率",
+      "quality": "良品率",
+      "status": {
+        "RUN": "运行",
+        "WARN": "注意",
+        "STOP": "停止",
+        "LINE_STOP": "含停机"
+      },
+      "kpi": {
+        "factoryOee": "工厂综合 OEE",
+        "availability": "稼动率",
+        "performance": "性能率",
+        "quality": "良品率",
+        "firstPass": "直行率",
+        "downtimeOpen": "停机进行中"
+      }
     }
   }
 }
