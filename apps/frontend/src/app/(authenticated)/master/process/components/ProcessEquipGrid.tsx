@@ -143,8 +143,8 @@ export default function ProcessEquipGrid({
           toolbarLeft={
             /* assigned-equipment-toolbar:start */
             <div className="flex min-w-0 items-center gap-2">
-              <Button size="sm" className="!h-7 flex-shrink-0 !px-2 !text-xs" onClick={onAdd}>
-                <Plus className="mr-1 h-3.5 w-3.5" />
+              <Button size="sm" onClick={onAdd}>
+                <Plus className="w-4 h-4 mr-1" />
                 {t("master.process.assignEquipment", "설비 배치")}
               </Button>
               <h3 className="flex min-w-0 items-center gap-2 text-sm font-semibold text-text">
