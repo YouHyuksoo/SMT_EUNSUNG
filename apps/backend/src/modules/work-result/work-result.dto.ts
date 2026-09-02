@@ -14,7 +14,7 @@ import {
 export class WorkResultUpsertDto {
   @IsString() @IsNotEmpty() runNo: string;
   @IsOptional() @IsString() seqNo?: string; // 신규면 미지정(서버 생성), 수정이면 지정
-  @IsString() @IsNotEmpty() machineCode: string;
+  @IsOptional() @IsString() machineCode?: string;
   @IsString() @IsNotEmpty() workstageCode: string;
   @IsInt() resultQty: number;
   @IsOptional() @IsInt() workTime?: number;

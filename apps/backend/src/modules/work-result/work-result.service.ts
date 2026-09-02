@@ -145,6 +145,7 @@ export class WorkResultService {
     const organization = this.requireOrganization(organizationId);
     const user = userId ?? DEFAULT_USER;
     return this.repo.manager.transaction(async (mgr) => {
+      const machineCode = dto.machineCode?.trim() || null;
       // 처리구분(WIP/DONE) -> IS_LAST_YN(N/Y). 화면 계약은 그대로 두고 저장값만 바꾼다.
       const isLastYn = dto.resultStatus === 'DONE' ? 'Y' : 'N';
       let seqNo = dto.seqNo;
@@ -163,7 +164,7 @@ export class WorkResultService {
              WORKER_COUNT=:5, WORKER_NAME=:6, IS_LAST_YN=:7, LAST_MODIFY_BY=:8, LAST_MODIFY_DATE=SYSDATE
            WHERE RUN_NO=:9 AND RECEIPT_SEQUENCE=:10 AND ORGANIZATION_ID=:11`,
           [
-            dto.machineCode,
+            machineCode,
             dto.workstageCode,
             dto.resultQty,
             dto.workTime ?? 0,
@@ -194,7 +195,7 @@ export class WorkResultService {
             seqNo,
             organization,
             dto.runNo,
-            dto.machineCode,
+            machineCode,
             dto.workstageCode,
             dto.resultQty,
             dto.workTime ?? 0,
@@ -208,7 +209,7 @@ export class WorkResultService {
       // run card write-back (설비/공정)
       await mgr.query(
         `UPDATE IP_PRODUCT_RUN_CARD SET MACHINE_CODE=:1, WORKSTAGE_CODE=:2 WHERE RUN_NO=:3 AND ORGANIZATION_ID=:4`,
-        [dto.machineCode, dto.workstageCode, dto.runNo, organization],
+        [machineCode, dto.workstageCode, dto.runNo, organization],
       );
       return { seqNo: seqNo! };
     });

@@ -168,9 +168,8 @@ export default function EquipWorkResultPage() {
 
   async function saveResult() {
     if (!form || !panelRun) return;
-    if (!form.machineCode) return toast.error('설비를 선택하세요');
     if (!(form.resultQty >= 0)) return toast.error('실적수량을 입력하세요');
-    const payload = { runNo: panelRun.runNo, seqNo: form.seqNo ?? undefined, machineCode: form.machineCode, workstageCode: form.workstageCode, resultQty: form.resultQty, workTime: form.workTime, workerCount: form.workerCount, workerName: form.workerName, resultStatus: form.resultStatus };
+    const payload = { runNo: panelRun.runNo, seqNo: form.seqNo ?? undefined, machineCode: form.machineCode || undefined, workstageCode: form.workstageCode, resultQty: form.resultQty, workTime: form.workTime, workerCount: form.workerCount, workerName: form.workerName, resultStatus: form.resultStatus };
     try {
       if (form.seqNo) await api.put('/oee/work-result/results', payload);
       else await api.post('/oee/work-result/results', payload);
@@ -379,7 +378,7 @@ export default function EquipWorkResultPage() {
                   ))}
                 </div>
                 {/* 설비선택 → 공정 자동 */}
-                <label className="text-sm text-text-muted flex flex-col gap-1"><span>설비선택 <span className="text-red-500">*</span></span>
+                <label className="text-sm text-text-muted flex flex-col gap-1"><span>설비선택</span>
                   <MachineCombo machines={machines} value={form.machineCode} disabled={readOnly}
                     onSelect={(m) => setForm({ ...form, machineCode: m.machineCode, machineName: m.machineName, workstageCode: m.workstageCode, workstageName: m.workstageName })} />
                 </label>
