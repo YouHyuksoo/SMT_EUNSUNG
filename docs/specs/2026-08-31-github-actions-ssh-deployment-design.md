@@ -40,9 +40,9 @@ release 디렉터리는 신규 빈 디렉터리만 허용하며 reparse point를
 
 루트 PM2 설정은 프론트엔드와 백엔드를 각각 독립 앱으로 정의한다. `eunsung-frontend`는 release의 `apps/frontend`를 `cwd`로 하여 Next.js production server를 `3100`에서 실행한다. `eunsung-backend`는 release의 `apps/backend`를 `cwd`로 하여 `dist/main.js`를 실행하며 애플리케이션이 고정 포트 `3003`을 사용한다. `NODE_ENV`, `TZ`, Oracle Client 경로, 로그 경로를 명시하고 앱별 재시작 정책을 둔다.
 
-배포 전용 로컬 Windows 계정 `eunsung-deploy`를 만들고 관리자 그룹에는 추가하지 않는다. 이 계정에는 `D:\Project\SMT_EUNSUNG\.deploy`의 Modify 권한, Node/Oracle Client 실행 권한, 포트 `3100`/`3003`에서 자체 프로세스를 실행할 권한만 준다. 상위 저장소와 다른 `D:\Project` 프로젝트에는 쓰기 권한을 부여하지 않는다. SSH 키는 이 계정의 `authorized_keys`에만 등록하고 개인키는 `jisung-development` Environment Secret에 저장한다.
+배포 전용 로컬 Windows 계정 `eunsung-deploy`를 만들고 관리자 그룹에는 추가하지 않는다. 이 계정에는 `D:\Project\SMT_EUNSUNG\.deploy`의 업무 디렉터리 Modify 권한, Node/Oracle Client 실행 권한, 포트 `3100`/`3003`에서 자체 프로세스를 실행할 권한만 준다. `.deploy\bootstrap`은 Administrators/SYSTEM 소유로 보호하고 배포 계정에는 read/execute만 허용한다. 상위 저장소와 다른 `D:\Project` 프로젝트에는 쓰기 권한을 부여하지 않는다. SSH 키는 Windows ProfileList에서 확인한 실제 계정 프로필의 `authorized_keys`에만 등록하고 개인키는 `jisung-development` Environment Secret에 저장한다.
 
-PM2 실행 계정은 `eunsung-deploy`, `PM2_HOME=C:\Users\eunsung-deploy\.pm2`로 고정하고 `pm2 save`로 프로세스 목록을 보존한다. Windows 재부팅 자동 시작은 관리자 권한이 필요한 최초 bootstrap에서 이 계정 전용 PM2 서비스를 구성하고, 실제 재부팅 없이 서비스 시작·중지와 프로세스 복원을 검증한다.
+PM2 실행 계정은 `eunsung-deploy`로 고정하고 실제 등록 프로필 아래 `.pm2`를 `PM2_HOME`으로 사용하며 `pm2 save`로 프로세스 목록을 보존한다. Windows Server 2019 라이브 검증 결과 `AtStartup`은 비관리자 self-S4U 등록이 불가능하고 관리자 cross-account S4U도 거부되므로, 관리자 bootstrap이 전용 `\EunsungMES\EunsungMES-PM2-Resurrect` 작업을 `Password` 로그온과 Limited 권한으로 등록한다. 암호는 작업이 없을 때만 강한 난수로 생성·회전하고 Task Scheduler 호출 순간에만 프로세스 메모리에서 평문 변환한 뒤 버퍼를 지운다. 정상 작업 재실행은 암호를 회전하지 않으며 비정상 기존 작업은 회전 전에 실패한다. 실제 재부팅 없이 작업 시작·중지와 프로세스 복원을 검증한다.
 
 기존 Administrator 소유 `mes-display`가 `3100`을 점유하므로 최초 cutover만 등록된 관리자 SSH 세션에서 수행한다. 새 release 빌드 완료 후 기존 프로세스를 중지하고 새 계정의 두 앱을 시작해 health를 확인한다. 실패하면 새 앱을 중지하고 기존 `mes-display`를 즉시 재시작한다. 최초 cutover 성공 이후 일반 workflow는 `eunsung-deploy` 계정만 사용한다.
 
@@ -57,8 +57,8 @@ SSH 명령은 `powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass
 - Node: `C:\Program Files\nodejs\node.exe` (지원 버전 검증)
 - Git: `Get-Command git -All`로 확인
 - pnpm: `C:\Users\eunsung-deploy\AppData\Roaming\npm\pnpm.cmd`
-- PM2: `C:\Users\eunsung-deploy\AppData\Roaming\npm\pm2.cmd`
-- PM2 home: `C:\Users\eunsung-deploy\.pm2`
+- PM2: `<registered-profile>\AppData\Roaming\npm\pm2.cmd`
+- PM2 home: `<registered-profile>\.pm2`
 
 pnpm이 없으면 초기 구성에서만 `npm install --global pnpm@10.28.1`을 실행하고 새 SSH 세션에서 버전을 재검증한다. 일반 배포는 도구를 설치하거나 업그레이드하지 않는다.
 
