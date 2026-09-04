@@ -394,9 +394,11 @@
     "oee.equipReason": "Equipment-Downtime Reason Mapping",
     "oee.resource": "OEE Resource Management",
     "oee.equipWorkResult": "Equipment Work Result",
+    "oee.equipOpsStatus": "Equipment Ops Status",
     "oee.equipOpsAnalysis": "Equipment Ops Analysis",
     "oee.equipDowntimeMobile": "Equipment Downtime Scan (Mock)",
-    "production.runCard": "Work Order Management"
+    "production.runCard": "Work Order Management",
+    "oee.overallStatus": "OEE Overall Status"
   },
   "header": {
     "theme": "Theme",
@@ -1302,6 +1304,35 @@
       "noProcessForRouting": "No process registered in the routing of the selected item."
     },
     "workCalendar": {
+      "byMachine": "Machine",
+      "byLine": "Line",
+      "selectLine": "Select line",
+      "machineCode": "Machine Code",
+      "machineName": "Machine Name",
+      "pickLineFirst": "Select a line first.",
+      "noMachines": "No machines assigned to this line.",
+      "machineChecked": "{{count}} machine(s) selected",
+      "planReason": "Downtime Reason (Planned)",
+      "noPlanReasons": "No planned downtime reasons registered.",
+      "downtimeSpanHint": "(within the same day, 24h)",
+      "downtimeSpan": "Downtime Period",
+      "endBeforeStart": "End time must be later than start time.",
+      "registerPlanDowntime": "Register Planned Downtime",
+      "planTargetHint": "{{days}} day(s) x {{machines}} machine(s) = {{rows}} row(s).",
+      "planSaved": "Planned downtime has been saved.",
+      "planRegistered": "{{count}} registered",
+      "planReplaced": "{{count}} replaced",
+      "planSkipped": "{{count}} skipped (overlaps existing downtime)",
+      "planCountTitle": "{{count}} planned downtime(s)",
+      "planDowntimeList": "Planned Downtime",
+      "noPlanDowntime": "No planned downtime registered.",
+      "planDeleted": "Deleted.",
+      "selectMonth": "Select month",
+      "prevMonth": "Previous month",
+      "nextMonth": "Next month",
+      "selectAllDays": "All",
+      "selectWeekdays": "Weekdays",
+      "selectWeekends": "Weekends",
       "title": "Production Work Calendar",
       "subtitle": "Manage company-wide work days, per-line exceptions, and two-shift work hours.",
       "calendarManagement": "Calendar",
@@ -1314,11 +1345,18 @@
       "copyFromCompany": "Copy from Company",
       "confirm": "Confirm",
       "unconfirm": "Unconfirm",
+      "selectedCount": "{{count}} day(s) selected",
+      "bulkEdit": "Bulk Edit",
+      "bulkEditTitle": "Bulk Edit — {{count}} day(s)",
+      "bulkEditHint": "The values below will be applied to all {{count}} selected day(s).",
       "editDay": "Edit Day",
       "dayType": "Day Type",
       "offReason": "Off Reason",
-      "workMinutes": "Work Minutes",
-      "workMinutesAutoPlaceholder": "Leave blank to auto-calculate from day type",
+      "shiftWorkTime": "Work Time by Shift",
+      "breakTime": "Non-working Time (min)",
+      "derivedWorkMinutes": "Work Minutes (auto)",
+      "noShiftCodes": "No shift codes registered. Check common code 'SHIFT CODE'.",
+      "noBreakTypes": "No break types registered. Check common code 'BREAK TYPE'.",
       "otMinutes": "OT Minutes",
       "remark": "Remark",
       "workDays": "Work Days",
@@ -4186,6 +4224,33 @@
       "targetColumn": "Target column",
       "backlinks": "Backlinks (referenced by)",
       "noBacklink": "No referencing tables"
+    }
+  },
+  "oee": {
+    "overallStatus": {
+      "headline": "EUNSUNG SMT FACTORY — LIVE OEE",
+      "mockBadge": "Mock — formulas not applied",
+      "dayShift": "Day shift",
+      "lineSection": "Lines",
+      "machineSection": "{{line}} machines",
+      "noMachines": "No machines assigned to this line.",
+      "availability": "Availability",
+      "performance": "Performance",
+      "quality": "Quality",
+      "status": {
+        "RUN": "Running",
+        "WARN": "Warning",
+        "STOP": "Stopped",
+        "LINE_STOP": "Downtime present"
+      },
+      "kpi": {
+        "factoryOee": "Factory OEE",
+        "availability": "Availability",
+        "performance": "Performance",
+        "quality": "Quality",
+        "firstPass": "First Pass Yield",
+        "downtimeOpen": "Open downtime"
+      }
     }
   }
 }

@@ -5,6 +5,8 @@
  * 초보자 가이드:
  * 1. lineCode가 없으면 전사 월력(IP_PRODUCT_COMPANY_CALENDAR), 있으면 라인 예외(IP_PRODUCT_LINE_CALENDAR).
  * 2. HOLIDAY_YN은 클라이언트가 보내지 않는다 — dayType에서 서버가 파생시킨다.
+ * 3. shifts/breaks를 보내면 근무분도 서버가 파생시킨다(@smt/shared calendarWorkMinutes).
+ *    두 배열은 그 일자의 전체 목록이다 — 보낸 내용으로 자식행을 통째로 교체한다.
  */
 import { ApiProperty, ApiPropertyOptional, OmitType, PartialType } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
@@ -34,6 +36,34 @@ export class WorkCalendarDaysQueryDto {
   @IsString()
   @MaxLength(20)
   lineCode?: string;
+}
+
+export class CalendarShiftDto {
+  @ApiProperty({ description: "교대조 코드 (공통코드 'SHIFT CODE')", example: 'A' })
+  @IsString()
+  @MaxLength(10)
+  shiftCode: string;
+
+  @ApiProperty({ description: '시작시각 (HH:MM)', example: '08:00' })
+  @Matches(/^([01]\d|2[0-3]):[0-5]\d$/, { message: 'startTime은 HH:MM 형식이어야 합니다.' })
+  startTime: string;
+
+  @ApiProperty({ description: '종료시각 (HH:MM). 시작보다 이르면 자정을 넘긴 것으로 본다.', example: '20:00' })
+  @Matches(/^([01]\d|2[0-3]):[0-5]\d$/, { message: 'endTime은 HH:MM 형식이어야 합니다.' })
+  endTime: string;
+}
+
+export class CalendarBreakDto {
+  @ApiProperty({ description: "비작업 분류 (공통코드 'BREAK TYPE')", example: 'REST' })
+  @IsString()
+  @MaxLength(20)
+  breakType: string;
+
+  @ApiProperty({ description: '비작업 분', example: 30 })
+  @IsInt()
+  @Min(0)
+  @Max(1440)
+  breakMinutes: number;
 }
 
 export class WorkCalendarDayItemDto {
@@ -70,6 +100,20 @@ export class WorkCalendarDayItemDto {
   @IsString()
   @MaxLength(500)
   comment?: string | null;
+
+  @ApiPropertyOptional({ type: [CalendarShiftDto], description: '교대조별 작업시간. 이 일자의 전체 목록' })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CalendarShiftDto)
+  shifts?: CalendarShiftDto[];
+
+  @ApiPropertyOptional({ type: [CalendarBreakDto], description: '비작업 시간. 이 일자의 전체 목록' })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CalendarBreakDto)
+  breaks?: CalendarBreakDto[];
 }
 
 export class BulkUpdateDaysDto {
@@ -157,6 +201,19 @@ export class SummaryQueryDto {
 
 // ─── 교대시간 마스터 ───
 
+export class ShiftTimeBreakDto {
+  @ApiProperty({ description: "비작업 분류 (공통코드 'BREAK TYPE')", example: 'REST' })
+  @IsString()
+  @MaxLength(20)
+  breakType: string;
+
+  @ApiProperty({ description: '비작업 분', example: 30 })
+  @IsInt()
+  @Min(0)
+  @Max(1440)
+  breakMinutes: number;
+}
+
 export class CreateShiftTimeDto {
   @ApiProperty({ description: '적용 시작일 (YYYY-MM-DD)', example: '2026-01-01' })
   @IsString()
@@ -178,11 +235,21 @@ export class CreateShiftTimeDto {
   @Matches(/^\d{2}:\d{2}$/, { message: 'dayTimeEnd는 HH:MM 형식이어야 합니다.' })
   dayTimeEnd?: string;
 
-  @ApiPropertyOptional({ description: '주간 휴식(분)', default: 0 })
+  @ApiPropertyOptional({
+    description: '주간 휴식(분). dayBreaks를 보내면 그 합으로 서버가 덮어쓴다(롤업).',
+    default: 0,
+  })
   @IsOptional()
   @IsInt()
   @Min(0)
   dayBreakMinutes?: number;
+
+  @ApiPropertyOptional({ type: [ShiftTimeBreakDto], description: '주간 비작업 시간 전체 목록' })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ShiftTimeBreakDto)
+  dayBreaks?: ShiftTimeBreakDto[];
 
   @ApiPropertyOptional({ description: '야간 시작 (HH:MM)', example: '20:00' })
   @IsOptional()
@@ -194,11 +261,21 @@ export class CreateShiftTimeDto {
   @Matches(/^\d{2}:\d{2}$/, { message: 'nightTimeEnd는 HH:MM 형식이어야 합니다.' })
   nightTimeEnd?: string;
 
-  @ApiPropertyOptional({ description: '야간 휴식(분)', default: 0 })
+  @ApiPropertyOptional({
+    description: '야간 휴식(분). nightBreaks를 보내면 그 합으로 서버가 덮어쓴다(롤업).',
+    default: 0,
+  })
   @IsOptional()
   @IsInt()
   @Min(0)
   nightBreakMinutes?: number;
+
+  @ApiPropertyOptional({ type: [ShiftTimeBreakDto], description: '야간 비작업 시간 전체 목록' })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ShiftTimeBreakDto)
+  nightBreaks?: ShiftTimeBreakDto[];
 }
 
 export class UpdateShiftTimeDto extends PartialType(OmitType(CreateShiftTimeDto, ['dateset'] as const)) {}

@@ -5,7 +5,7 @@ sources:
   - docs/standards/
   - apps/backend/src/**/*.spec.ts
   - apps/frontend/src/**/*.structure.test.mjs
-verifiedCommit: 1bd1735
+verifiedCommit: dee4f7e
 ---
 
 # 장애 학습 정규화 및 규칙 승격 절차

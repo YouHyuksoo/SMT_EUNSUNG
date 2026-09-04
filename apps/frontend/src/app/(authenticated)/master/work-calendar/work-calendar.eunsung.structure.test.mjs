@@ -41,13 +41,26 @@ test('work calendar frontend calls only the approved API paths', () => {
     'src/app/(authenticated)/master/work-calendar/page.tsx',
     'src/app/(authenticated)/master/work-calendar/components/ShiftTimeTab.tsx',
     'src/app/(authenticated)/master/work-calendar/components/DayEditModal.tsx',
+    'src/app/(authenticated)/master/work-calendar/components/PlanDowntimePanel.tsx',
+    'src/app/(authenticated)/master/work-calendar/components/PlanDowntimeListModal.tsx',
     'src/app/(authenticated)/master/work-calendar/types.ts',
   ].map(read).join('\n');
 
   assert.match(front, /\/master\/work-calendar\/days/);
   assert.match(front, /\/master\/work-calendar\/generate/);
-  assert.match(front, /\/master\/work-calendar\/copy-from-company/);
   assert.match(front, /\/master\/shift-times/);
+
+  // 계획 비가동은 설비작업실적·설비 운영 현황과 같은 비가동 DB를 쓴다 (2026-08-31 개편).
+  assert.match(front, /\/oee\/work-result\/downtimes\/plan/);
+  assert.match(front, /\/oee\/work-result\/downtime-reasons/);
+  assert.match(front, /\/oee\/equip-ops\/machines/);
+  assert.match(front, /\/oee\/equip-ops\/lines/);
+
+  // 라인 예외 월력 편집은 이 화면에서 제거됐다 — 전사복사 경로가 되살아나면 안 된다.
+  assert.ok(
+    !front.includes('/master/work-calendar/copy-from-company'),
+    '라인 예외 월력 전용 전사복사가 다시 등장했습니다',
+  );
 
   // 구 API/모델 잔재 금지
   assert.ok(!front.includes('/master/work-calendars'), '구 복수형 API 경로가 남아 있습니다');

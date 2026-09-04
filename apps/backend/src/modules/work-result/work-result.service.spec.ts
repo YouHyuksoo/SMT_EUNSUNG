@@ -1,6 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 import { Repository } from 'typeorm';
-import { ProductWorkResult } from '../../entities/product-work-result.entity';
+import { ProductSensorActual } from '../../entities/product-sensor-actual.entity';
 import { WorkResultService } from './work-result.service';
 
 describe('WorkResultService tenancy', () => {
@@ -8,7 +8,7 @@ describe('WorkResultService tenancy', () => {
   const transaction = jest.fn();
   const repository = {
     manager: { query, transaction },
-  } as unknown as Repository<ProductWorkResult>;
+  } as unknown as Repository<ProductSensorActual>;
   const service = new WorkResultService(repository);
 
   beforeEach(() => {
@@ -55,11 +55,88 @@ describe('WorkResultService tenancy', () => {
       'authenticated-user',
     );
 
+    // 2026-09-02: 실적 저장 테이블이 IP_PRODUCT_SENSOR_ACTUAL로 바뀌었다.
     const insertCall = manager.query.mock.calls.find(([sql]) =>
-      String(sql).includes('INSERT INTO IP_PRODUCT_WORK_RESULT'),
+      String(sql).includes('INSERT INTO IP_PRODUCT_SENSOR_ACTUAL'),
     );
     expect(insertCall?.[1]).toContain(7);
     expect(insertCall?.[1]).toContain('authenticated-user');
     expect(insertCall?.[1]).not.toContain('forged-user');
+  });
+
+  it('binds null equipment and preserves the process when creating a result', async () => {
+    const manager = {
+      query: jest.fn().mockImplementation((sql: string) => {
+        if (sql.includes('SEQ_PRODUCT_SENSOR.NEXTVAL'))
+          return Promise.resolve([{ seq: 1 }]);
+        return Promise.resolve([]);
+      }),
+    };
+    transaction.mockImplementation(
+      (callback: (value: typeof manager) => unknown) => callback(manager),
+    );
+
+    await service.upsertResult(
+      {
+        runNo: 'RUN-1',
+        workstageCode: 'WS-1',
+        resultQty: 10,
+        resultStatus: 'WIP',
+      } as never,
+      7,
+      'user-7',
+    );
+
+    const insertCall = manager.query.mock.calls.find(([sql]) =>
+      String(sql).includes('INSERT INTO IP_PRODUCT_SENSOR_ACTUAL'),
+    );
+    const runCardCall = manager.query.mock.calls.find(([sql]) =>
+      String(sql).includes('UPDATE IP_PRODUCT_RUN_CARD'),
+    );
+    // [3]=lineCode(작업지시 조회 결과 없음 → null), [4]=machineCode, [5]=workstageCode
+    expect(insertCall?.[1]?.[3]).toBeNull();
+    expect(insertCall?.[1]?.[4]).toBeNull();
+    expect(insertCall?.[1]?.[5]).toBe('WS-1');
+    expect(runCardCall?.[1]?.[0]).toBeNull();
+    expect(runCardCall?.[1]?.[1]).toBe('WS-1');
+  });
+
+  it('normalizes whitespace equipment on an existing result update', async () => {
+    const manager = {
+      query: jest.fn().mockImplementation((sql: string) => {
+        if (sql.includes("SELECT NVL(IS_LAST_YN,'N')"))
+          return Promise.resolve([{ st: 'N' }]);
+        return Promise.resolve([]);
+      }),
+    };
+    transaction.mockImplementation(
+      (callback: (value: typeof manager) => unknown) => callback(manager),
+    );
+
+    await service.upsertResult(
+      {
+        runNo: 'RUN-1',
+        seqNo: '1',
+        machineCode: '   ',
+        workstageCode: 'WS-1',
+        resultQty: 10,
+        resultStatus: 'WIP',
+      },
+      7,
+      'user-7',
+    );
+
+    const sensorUpdateCall = manager.query.mock.calls.find(([sql]) =>
+      String(sql).includes('UPDATE IP_PRODUCT_SENSOR_ACTUAL SET'),
+    );
+    const runCardCall = manager.query.mock.calls.find(([sql]) =>
+      String(sql).includes('UPDATE IP_PRODUCT_RUN_CARD'),
+    );
+    // [0]=lineCode, [1]=machineCode(공백 정규화 → null), [2]=workstageCode
+    expect(sensorUpdateCall?.[1]?.[0]).toBeNull();
+    expect(sensorUpdateCall?.[1]?.[1]).toBeNull();
+    expect(sensorUpdateCall?.[1]?.[2]).toBe('WS-1');
+    expect(runCardCall?.[1]?.[0]).toBeNull();
+    expect(runCardCall?.[1]?.[1]).toBe('WS-1');
   });
 });

@@ -9,6 +9,8 @@
  * 2. **onClose**: 닫기 콜백
  * 3. **size**: 모달 크기 (sm, md, lg, xl, full)
  * 4. **Portal**: body에 직접 렌더링하여 z-index 문제 방지
+ * 5. **headerActions**: 헤더 타이틀 줄 우측(닫기 X 왼쪽)에 놓을 액션. 취소/저장을 하단
+ *    footer가 아니라 타이틀 높이에 배치하고 싶을 때 쓴다. footer와 함께 쓰지 않는다.
  */
 import { useEffect, useCallback, useRef, useState, Fragment } from 'react';
 import { createPortal } from 'react-dom';
@@ -27,6 +29,7 @@ export interface ModalProps {
   closeOnOverlayClick?: boolean;
   closeOnEsc?: boolean;
   footer?: React.ReactNode;
+  headerActions?: React.ReactNode;
   initialFocusRef?: React.RefObject<HTMLElement | null>;
 }
 
@@ -57,6 +60,7 @@ function Modal({
   closeOnOverlayClick = true,
   closeOnEsc = true,
   footer,
+  headerActions,
   initialFocusRef,
 }: ModalProps) {
   const { t } = useTranslation();
@@ -182,8 +186,8 @@ function Modal({
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          {(title || subtitle || showCloseButton) && (
-            <div className="flex items-center justify-between p-4 border-b border-border">
+          {(title || subtitle || showCloseButton || headerActions) && (
+            <div className="flex items-center justify-between gap-3 p-4 border-b border-border">
               {(title || subtitle) && (
                 <div>
                   {title && (
@@ -201,16 +205,19 @@ function Modal({
                   )}
                 </div>
               )}
-              {showCloseButton && (
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="p-1 rounded-md text-text-muted hover:text-text hover:bg-background transition-colors"
-                  aria-label={t('common.close')}
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              )}
+              <div className="flex flex-shrink-0 items-center gap-2">
+                {headerActions}
+                {showCloseButton && (
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="p-1 rounded-md text-text-muted hover:text-text hover:bg-background transition-colors"
+                    aria-label={t('common.close')}
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                )}
+              </div>
             </div>
           )}
 

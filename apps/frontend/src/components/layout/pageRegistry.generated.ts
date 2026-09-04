@@ -137,6 +137,11 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
       component = mod.getPageComponent();
       break;
     }
+    case "/oee/equip-ops-status": {
+      const mod = await import("./page-registries/oee__equip-ops-status.generated");
+      component = mod.getPageComponent();
+      break;
+    }
     case "/oee/equip-work-result": {
       const mod = await import("./page-registries/oee__equip-work-result.generated");
       component = mod.getPageComponent();
@@ -164,6 +169,11 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
     }
     case "/oee/multi-entry": {
       const mod = await import("./page-registries/oee__multi-entry.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/oee/overall-status": {
+      const mod = await import("./page-registries/oee__overall-status.generated");
       component = mod.getPageComponent();
       break;
     }

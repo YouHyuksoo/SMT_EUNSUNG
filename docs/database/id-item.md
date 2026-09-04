@@ -4,10 +4,14 @@ sources:
   - apps/backend/src/modules/master/services/part.service.ts
   - apps/backend/src/modules/interface/services/interface.service.ts
   - docs/database/generated/infinity21-jsmes-schema.json
-verifiedCommit: 0480e7d
+verifiedCommit: dee4f7e
 ---
 
 # ID_ITEM — 품목 마스터
+
+> **수치 출처** — 이 문서의 라이브 데이터 수치는 `docs/database/generated/infinity21-jsmes-schema.json`(사이트 `ESDBext`, 2026-07-12 추출)의 `row_count`이며,
+> 그 값은 `USER_TABLES.NUM_ROWS` 통계 추정치다. 운영 접속 대상(`ES_JSIDC`/`ESDBPDB`)의
+> 실제 건수와는 다를 수 있다 — 2026-09-02 실측 기준 설비 123, 라인 19, 공정 13이다.
 
 ## 확인된 역할
 

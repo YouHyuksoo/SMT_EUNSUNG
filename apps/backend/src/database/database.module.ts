@@ -49,6 +49,9 @@ import { WorkInstruction } from '../entities/work-instruction.entity';
 import { ProductCompanyCalendar } from '../entities/product-company-calendar.entity';
 import { ProductLineCalendar } from '../entities/product-line-calendar.entity';
 import { ShiftTimeMaster } from '../entities/shift-time-master.entity';
+import { ShiftTimeBreak } from '../entities/shift-time-break.entity';
+import { ProductCalendarShift } from '../entities/product-calendar-shift.entity';
+import { ProductCalendarBreak } from '../entities/product-calendar-break.entity';
 import { ProcessMaster } from '../entities/process-master.entity';
 import { ProcessLine } from '../entities/process-line.entity';
 import { LabelTemplate } from '../entities/label-template.entity';
@@ -69,8 +72,8 @@ import { EquipDowntimeReason } from '../entities/equip-downtime-reason.entity';
 import { EquipDowntimeMap } from '../entities/equip-downtime-map.entity';
 import { EquipDowntimeMapDtl } from '../entities/equip-downtime-map-dtl.entity';
 import { ProductModelMaster } from '../entities/product-model-master.entity';
-import { ProductWorkResult } from '../entities/product-work-result.entity';
 import { ProductRunCard } from '../entities/product-run-card.entity';
+import { ProductSensorActual } from '../entities/product-sensor-actual.entity';
 import { ProductWorkDefect } from '../entities/product-work-defect.entity';
 import { EquipDowntimeResult } from '../entities/equip-downtime-result.entity';
 
@@ -138,7 +141,10 @@ import { EquipDowntimeResult } from '../entities/equip-downtime-result.entity';
             WorkInstruction,
             ProductCompanyCalendar,
             ProductLineCalendar,
+            ProductCalendarShift,
+            ProductCalendarBreak,
             ShiftTimeMaster,
+            ShiftTimeBreak,
             ProcessMaster,
             ProcessLine,
             LabelTemplate,
@@ -159,9 +165,8 @@ import { EquipDowntimeResult } from '../entities/equip-downtime-result.entity';
             EquipDowntimeMap,
             EquipDowntimeMapDtl,
             ProductModelMaster,
-            ProductWorkResult,
-
             ProductRunCard,
+            ProductSensorActual,
             ProductWorkDefect,
             EquipDowntimeResult,
           ],

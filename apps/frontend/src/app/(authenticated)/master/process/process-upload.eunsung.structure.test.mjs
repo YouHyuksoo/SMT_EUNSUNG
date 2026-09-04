@@ -31,8 +31,9 @@ test('preserves the process editor panel and equipment assignment modal composit
   assert.match(page, /<Select[\s\S]*?options=\{assignOptions\}[\s\S]*?onChange=\{setAssignEquipCode\}/);
 });
 
-test('process and assigned-equipment grids use a 60:40 vertical layout with room for three equipment rows', () => {
-  assert.match(page, /grid-rows-\[minmax\(0,3fr\)_minmax\(220px,2fr\)\]/);
+test('process and assigned-equipment grids use a 56:44 vertical layout with room for three equipment rows', () => {
+  assert.match(page, /grid-rows-\[minmax\(0,14fr\)_minmax\(220px,11fr\)\]/);
+  assert.doesNotMatch(page, /grid-rows-\[minmax\(0,3fr\)_minmax\(220px,2fr\)\]/);
   assert.doesNotMatch(page, /grid-cols-12/);
   assert.doesNotMatch(page, /col-span-7/);
   assert.doesNotMatch(page, /col-span-5/);
@@ -43,12 +44,12 @@ test('directs users to select a process from the upper grid', () => {
   assert.doesNotMatch(ko, /"noProcessSelected": "좌측에서 공정을 선택해주세요\."/);
 });
 
-test('uses compact process-card padding and an inline assigned-equipment count', () => {
+test('uses compact process-card padding and an inline assigned-equipment toolbar count', () => {
   assert.match(list, /<Card padding="none" className="flex-1 flex flex-col min-w-0 min-h-0 w-full max-w-full overflow-hidden">/);
   assert.match(list, /<CardContent className="flex-1 min-w-0 min-h-0 overflow-hidden px-4 py-3">/);
   assert.match(
     equipmentGrid,
-    /<h3[^>]*>[\s\S]*?assignedEquipments[\s\S]*?<span className="text-text-muted font-normal">\s*- \{processCode\} \(\{processName\}\) · \{equipments\.length\}\{t\("common\.count"[\s\S]*?<\/span>\s*<\/h3>/,
+    /toolbarLeft=\{[\s\S]*?assignedEquipments[\s\S]*?<span className="truncate font-normal text-text-muted">\s*- \{processCode\} \(\{processName\}\) · \{equipments\.length\}\{t\("common\.count"/,
   );
   assert.doesNotMatch(
     equipmentGrid,
@@ -63,10 +64,15 @@ test('contains both grids and keeps the equipment action visible', () => {
   );
   assert.match(equipmentGrid, /<Card padding="none" className="flex-1 flex flex-col min-w-0 min-h-0 w-full max-w-full overflow-hidden">/);
   assert.match(equipmentGrid, /<Card className="flex-1 flex items-center justify-center min-w-0 min-h-0 w-full max-w-full overflow-hidden">/);
-  assert.match(equipmentGrid, /className="px-4 pt-3 pb-1 border-b border-border flex-shrink-0"/);
-  assert.match(equipmentGrid, /className="flex items-center justify-between gap-3"/);
-  assert.match(equipmentGrid, /className="flex-1 min-w-0"/);
-  assert.match(equipmentGrid, /className="text-sm font-semibold text-text flex flex-wrap items-center gap-2"/);
-  assert.match(equipmentGrid, /<Button size="sm" className="flex-shrink-0" onClick=\{onAdd\}>/);
+  assert.doesNotMatch(equipmentGrid, /className="px-4 pt-3 pb-1 border-b border-border flex-shrink-0"/);
+  assert.match(equipmentGrid, /toolbarLeft=\{/);
+  assert.match(equipmentGrid, /className="flex min-w-0 items-center gap-2"/);
+  const buttonPattern = /<Button size="sm" onClick=\{onAdd\}>/;
+  const iconPattern = /<Plus className="w-4 h-4 mr-1" \/>/;
+  assert.match(list, buttonPattern);
+  assert.match(equipmentGrid, buttonPattern);
+  assert.match(list, iconPattern);
+  assert.match(equipmentGrid, iconPattern);
+  assert.doesNotMatch(equipmentGrid, /!h-7|!px-2|!text-xs/);
   assert.match(equipmentGrid, /<CardContent className="flex-1 min-w-0 min-h-0 overflow-hidden px-4 pt-1 pb-3">/);
 });

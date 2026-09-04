@@ -1,10 +1,10 @@
 ---
 sources:
-  - tools/database/export-infinity21-schema.py
+  - docs/database/generated/infinity21-jsmes-schema.json
   - apps/backend/src/entities/
   - apps/backend/src/modules/
   - apps/frontend/src/lib/queries/
-verifiedCommit: 0480e7d
+verifiedCommit: dee4f7e
 ---
 
 # INFINITY21_JSMES 테이블 카탈로그

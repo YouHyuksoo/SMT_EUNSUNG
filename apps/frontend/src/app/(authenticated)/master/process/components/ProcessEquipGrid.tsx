@@ -44,7 +44,7 @@ export default function ProcessEquipGrid({
         size: 110,
         cell: ({ getValue }) => {
           const v = getValue() as string | null;
-          return v ? <ComCodeBadge groupCode="EQUIP_TYPE" code={v} /> : "-";
+          return v ? <ComCodeBadge groupCode="MACHINE TYPE" code={v} /> : "-";
         },
       },
       { accessorKey: "modelName", header: t("equipment.master.modelName", { defaultValue: "모델명" }), size: 130, cell: ({ getValue }) => (getValue() as string) || "-" },
@@ -131,23 +131,6 @@ export default function ProcessEquipGrid({
 
   return (
     <Card padding="none" className="flex-1 flex flex-col min-w-0 min-h-0 w-full max-w-full overflow-hidden">
-      <div className="px-4 pt-3 pb-1 border-b border-border flex-shrink-0">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex-1 min-w-0">
-            <h3 className="text-sm font-semibold text-text flex flex-wrap items-center gap-2">
-              <Monitor className="w-4 h-4 text-primary" />
-              {t("master.process.assignedEquipments")}
-              <span className="text-text-muted font-normal">
-                - {processCode} ({processName}) · {equipments.length}{t("common.count", { defaultValue: "건" })}
-              </span>
-            </h3>
-          </div>
-          <Button size="sm" className="flex-shrink-0" onClick={onAdd}>
-            <Plus className="w-4 h-4 mr-1" />
-            {t("master.process.assignEquipment", "설비 배치")}
-          </Button>
-        </div>
-      </div>
       <CardContent className="flex-1 min-w-0 min-h-0 overflow-hidden px-4 pt-1 pb-3">
         <DataGrid
           data={equipments}
@@ -157,6 +140,23 @@ export default function ProcessEquipGrid({
           enableExport
           exportFileName={`${processCode}_${t("master.process.assignedEquipments")}`}
           sqlQuery={`SELECT *\nFROM IMCN_MACHINE\nWHERE WORKSTAGE_CODE = :processCode\n  AND ORGANIZATION_ID = :organizationId\nORDER BY MACHINE_CODE`}
+          toolbarLeft={
+            /* assigned-equipment-toolbar:start */
+            <div className="flex min-w-0 items-center gap-2">
+              <Button size="sm" onClick={onAdd}>
+                <Plus className="w-4 h-4 mr-1" />
+                {t("master.process.assignEquipment", "설비 배치")}
+              </Button>
+              <h3 className="flex min-w-0 items-center gap-2 text-sm font-semibold text-text">
+                <Monitor className="h-4 w-4 flex-shrink-0 text-primary" />
+                <span className="whitespace-nowrap">{t("master.process.assignedEquipments")}</span>
+                <span className="truncate font-normal text-text-muted">
+                  - {processCode} ({processName}) · {equipments.length}{t("common.count", { defaultValue: "건" })}
+                </span>
+              </h3>
+            </div>
+            /* assigned-equipment-toolbar:end */
+          }
         />
       </CardContent>
     </Card>

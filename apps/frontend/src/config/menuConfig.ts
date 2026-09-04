@@ -59,8 +59,12 @@ export const menuConfig: MenuConfigItem[] = [
     children: [
       { code: "OEE_DASHBOARD", labelKey: "menu.oee.dashboard", path: "/oee/dashboard" },
       { code: "OEE_MULTI_ENTRY", labelKey: "menu.oee.multiEntry", path: "/oee/multi-entry" },
+      { code: "OEE_OVERALL_STATUS", labelKey: "menu.oee.overallStatus", path: "/oee/overall-status" },
       { code: "OEE_EQUIP_WORK_RESULT", labelKey: "menu.oee.equipWorkResult", path: "/oee/equip-work-result" },
-      { code: "OEE_EQUIP_OPS_ANALYSIS", labelKey: "menu.oee.equipOpsAnalysis", path: "/oee/equip-ops-analysis" },
+      { code: "OEE_EQUIP_OPS_STATUS", labelKey: "menu.oee.equipOpsStatus", path: "/oee/equip-ops-status" },
+      // 미사용(2026-08-27): 설비별 운영 현황 및 분석 → 설비 운영 현황(OEE_EQUIP_OPS_STATUS)으로 대체.
+      // 화면은 app/(authenticated)/oee/equip-ops-analysis 에 남아 있어 URL 직접 접근은 된다.
+      // 되살리려면 OEE_EQUIP_OPS_ANALYSIS 항목을 이 자리에 다시 넣고 gen:menu 를 실행한다.
       { code: "OEE_MST_STD_TIME", labelKey: "menu.oee.standardTime", path: "/oee/master/standard-time" },
       { code: "OEE_MST_IDLE_REASON", labelKey: "menu.oee.idleReason", path: "/oee/master/idle-reason" },
       { code: "OEE_MST_EQUIP_REASON", labelKey: "menu.oee.equipReason", path: "/oee/master/equip-reason-map" },

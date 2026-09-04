@@ -5,6 +5,8 @@ import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { QueryRunner, Repository } from 'typeorm';
 import { ProductCompanyCalendar } from '../../../entities/product-company-calendar.entity';
 import { ProductLineCalendar } from '../../../entities/product-line-calendar.entity';
+import { ProductCalendarShift } from '../../../entities/product-calendar-shift.entity';
+import { ProductCalendarBreak } from '../../../entities/product-calendar-break.entity';
 import { ShiftTimeMaster } from '../../../entities/shift-time-master.entity';
 import { ShiftTimeService } from './shift-time.service';
 import { TransactionService } from '../../../shared/transaction.service';
@@ -26,12 +28,20 @@ describe('WorkCalendarService', () => {
   let target: WorkCalendarService;
   let companyRepo: DeepMocked<Repository<ProductCompanyCalendar>>;
   let lineRepo: DeepMocked<Repository<ProductLineCalendar>>;
+  let shiftRepo: DeepMocked<Repository<ProductCalendarShift>>;
+  let breakRepo: DeepMocked<Repository<ProductCalendarBreak>>;
   let shiftTime: DeepMocked<ShiftTimeService>;
   let tx: DeepMocked<TransactionService>;
 
   beforeEach(async () => {
     companyRepo = createMock<Repository<ProductCompanyCalendar>>();
     lineRepo = createMock<Repository<ProductLineCalendar>>();
+    // 자식(교대조/비작업)은 기본적으로 행이 없다 — 그래야 근무분이 교대시간 마스터에서
+    // 파생되는 기존 기대값(defaultWorkMinutes)이 그대로 유지된다.
+    shiftRepo = createMock<Repository<ProductCalendarShift>>();
+    breakRepo = createMock<Repository<ProductCalendarBreak>>();
+    shiftRepo.find.mockResolvedValue([]);
+    breakRepo.find.mockResolvedValue([]);
     shiftTime = createMock<ShiftTimeService>();
     shiftTime.findAll.mockResolvedValue([SHIFT]);
     shiftTime.resolveFromRows.mockReturnValue(SHIFT);
@@ -42,16 +52,18 @@ describe('WorkCalendarService', () => {
     // 그대로 재사용하면서 "쓰기 경로가 실제로 트랜잭션을 거치는가"도 별도로 검증한다.
     tx = createMock<TransactionService>();
     const mockManager = {
-      delete: jest.fn((entity: unknown, criteria: unknown) =>
-        entity === ProductCompanyCalendar
-          ? companyRepo.delete(criteria as never)
-          : lineRepo.delete(criteria as never),
-      ),
-      insert: jest.fn((entity: unknown, data: unknown) =>
-        entity === ProductCompanyCalendar
-          ? companyRepo.insert(data as never)
-          : lineRepo.insert(data as never),
-      ),
+      delete: jest.fn((entity: unknown, criteria: unknown) => {
+        if (entity === ProductCompanyCalendar) return companyRepo.delete(criteria as never);
+        if (entity === ProductCalendarShift) return shiftRepo.delete(criteria as never);
+        if (entity === ProductCalendarBreak) return breakRepo.delete(criteria as never);
+        return lineRepo.delete(criteria as never);
+      }),
+      insert: jest.fn((entity: unknown, data: unknown) => {
+        if (entity === ProductCompanyCalendar) return companyRepo.insert(data as never);
+        if (entity === ProductCalendarShift) return shiftRepo.insert(data as never);
+        if (entity === ProductCalendarBreak) return breakRepo.insert(data as never);
+        return lineRepo.insert(data as never);
+      }),
       getRepository: jest.fn((entity: unknown) =>
         entity === ProductCompanyCalendar ? companyRepo : lineRepo,
       ),
@@ -64,6 +76,8 @@ describe('WorkCalendarService', () => {
         WorkCalendarService,
         { provide: getRepositoryToken(ProductCompanyCalendar), useValue: companyRepo },
         { provide: getRepositoryToken(ProductLineCalendar), useValue: lineRepo },
+        { provide: getRepositoryToken(ProductCalendarShift), useValue: shiftRepo },
+        { provide: getRepositoryToken(ProductCalendarBreak), useValue: breakRepo },
         { provide: ShiftTimeService, useValue: shiftTime },
         { provide: TransactionService, useValue: tx },
       ],
@@ -235,6 +249,40 @@ describe('WorkCalendarService', () => {
     });
   });
 
+  describe('findDays — 자식(교대조/비작업) 로드', () => {
+    it('전사 모드면 sentinel LINE_CODE의 자식행을 붙인다', async () => {
+      companyRepo.find.mockResolvedValue([companyRow('2026-07-14', 'WORK')]);
+      shiftRepo.find.mockResolvedValue([
+        {
+          planDate: '2026-07-14',
+          shiftCode: 'A',
+          startTime: '08:00',
+          endTime: '20:00',
+        },
+      ] as unknown as ProductCalendarShift[]);
+      breakRepo.find.mockResolvedValue([
+        { planDate: '2026-07-14', breakType: 'MEAL', breakMinutes: 60 },
+      ] as unknown as ProductCalendarBreak[]);
+
+      const [day] = await target.findDays({ month: '2026-07' }, 1);
+
+      expect(shiftRepo.find).toHaveBeenCalledWith(
+        expect.objectContaining({ where: expect.objectContaining({ lineCode: '*' }) }),
+      );
+      expect(day.shifts).toEqual([{ shiftCode: 'A', startTime: '08:00', endTime: '20:00' }]);
+      expect(day.breaks).toEqual([{ breakType: 'MEAL', breakMinutes: 60 }]);
+    });
+
+    it('자식행이 없으면 빈 배열로 돌려준다', async () => {
+      companyRepo.find.mockResolvedValue([companyRow('2026-07-14', 'WORK')]);
+
+      const [day] = await target.findDays({ month: '2026-07' }, 1);
+
+      expect(day.shifts).toEqual([]);
+      expect(day.breaks).toEqual([]);
+    });
+  });
+
   describe('bulkUpdateDays', () => {
     it('확정된 일자를 수정하려 하면 409', async () => {
       companyRepo.find.mockResolvedValue([companyRow('2026-07-14', 'WORK', 'Y')]);
@@ -262,6 +310,121 @@ describe('WorkCalendarService', () => {
 
       const saved = companyRepo.insert.mock.calls[0][0] as ProductCompanyCalendar[];
       expect(saved[0].workMinutes).toBe(480);
+    });
+
+    it('교대조 행을 보내면 근무분을 (교대조 합 - 비작업 합)으로 파생시킨다', async () => {
+      companyRepo.find.mockResolvedValue([]);
+
+      await target.bulkUpdateDays(
+        {
+          days: [
+            {
+              workDate: '2026-07-14',
+              dayType: 'WORK',
+              shifts: [
+                { shiftCode: 'A', startTime: '08:00', endTime: '20:00' },
+                { shiftCode: 'B', startTime: '20:00', endTime: '08:00' },
+              ],
+              breaks: [
+                { breakType: 'REST', breakMinutes: 30 },
+                { breakType: 'MEAL', breakMinutes: 60 },
+              ],
+            },
+          ],
+        },
+        1,
+      );
+
+      const saved = companyRepo.insert.mock.calls[0][0] as ProductCompanyCalendar[];
+      // A 720 + B 720 = 1440, 비작업 90 차감
+      expect(saved[0].workMinutes).toBe(1350);
+    });
+
+    it('교대조/비작업 자식행을 전사 sentinel LINE_CODE로 저장한다', async () => {
+      companyRepo.find.mockResolvedValue([]);
+
+      await target.bulkUpdateDays(
+        {
+          days: [
+            {
+              workDate: '2026-07-14',
+              dayType: 'WORK',
+              shifts: [{ shiftCode: 'A', startTime: '08:00', endTime: '20:00' }],
+              breaks: [
+                { breakType: 'REST', breakMinutes: 30 },
+                { breakType: 'MEAL', breakMinutes: 0 },
+              ],
+            },
+          ],
+        },
+        1,
+      );
+
+      const savedShifts = shiftRepo.insert.mock.calls[0][0] as ProductCalendarShift[];
+      expect(savedShifts).toHaveLength(1);
+      expect(savedShifts[0].lineCode).toBe('*');
+      expect(savedShifts[0].shiftCode).toBe('A');
+
+      // 0분 비작업은 의미 없는 행이므로 저장하지 않는다.
+      const savedBreaks = breakRepo.insert.mock.calls[0][0] as ProductCalendarBreak[];
+      expect(savedBreaks).toHaveLength(1);
+      expect(savedBreaks[0].breakType).toBe('REST');
+      expect(savedBreaks[0].breakMinutes).toBe(30);
+    });
+
+    it('라인 모드면 자식행도 그 라인코드로 저장한다', async () => {
+      lineRepo.find.mockResolvedValue([]);
+
+      await target.bulkUpdateDays(
+        {
+          lineCode: 'L1',
+          days: [
+            {
+              workDate: '2026-07-14',
+              dayType: 'WORK',
+              shifts: [{ shiftCode: 'A', startTime: '08:00', endTime: '17:00' }],
+            },
+          ],
+        },
+        1,
+      );
+
+      const savedShifts = shiftRepo.insert.mock.calls[0][0] as ProductCalendarShift[];
+      expect(savedShifts[0].lineCode).toBe('L1');
+    });
+
+    it('교대조 행이 없으면 기존대로 교대시간 마스터에서 파생시킨다', async () => {
+      companyRepo.find.mockResolvedValue([]);
+
+      await target.bulkUpdateDays(
+        { days: [{ workDate: '2026-07-14', dayType: 'WORK', shifts: [], breaks: [] }] },
+        1,
+      );
+
+      const saved = companyRepo.insert.mock.calls[0][0] as ProductCompanyCalendar[];
+      // 주간 660 + 야간 660 (각 휴식 60분 차감)
+      expect(saved[0].workMinutes).toBe(1320);
+      expect(shiftRepo.insert).not.toHaveBeenCalled();
+    });
+
+    it('OFF는 교대조 행이 있어도 근무분이 0이다', async () => {
+      companyRepo.find.mockResolvedValue([]);
+
+      await target.bulkUpdateDays(
+        {
+          days: [
+            {
+              workDate: '2026-07-14',
+              dayType: 'OFF',
+              shifts: [{ shiftCode: 'A', startTime: '08:00', endTime: '20:00' }],
+            },
+          ],
+        },
+        1,
+      );
+
+      const saved = companyRepo.insert.mock.calls[0][0] as ProductCompanyCalendar[];
+      expect(saved[0].workMinutes).toBe(0);
     });
 
     it('OFF가 아니면 offReason을 null로 강제한다', async () => {

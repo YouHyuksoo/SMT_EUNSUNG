@@ -5,7 +5,7 @@ sources:
   - apps/backend/src/modules/production/
   - apps/backend/src/modules/material/
   - docs/database/generated/infinity21-jsmes-schema.json
-verifiedCommit: 0480e7d
+verifiedCommit: dee4f7e
 ---
 
 # ID_ENG_BOM — 생산 BOM

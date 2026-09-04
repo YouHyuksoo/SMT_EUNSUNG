@@ -390,13 +390,15 @@
     "oee.drilldown": "资源钻取",
     "oee.multiEntry": "OEE停机录入",
     "oee.equipWorkResult": "设备作业实绩管理",
+    "oee.equipOpsStatus": "设备运行现况",
     "oee.equipOpsAnalysis": "设备运行现况及分析",
     "oee.equipDowntimeMobile": "设备停机扫描（Mock）",
     "oee.standardTime": "标准时间管理",
     "oee.idleReason": "设备停机原因代码",
     "oee.equipReason": "设备停机原因关联",
     "oee.resource": "OEE资源管理",
-    "production.runCard": "工单管理"
+    "production.runCard": "工单管理",
+    "oee.overallStatus": "OEE 综合现况"
   },
   "header": {
     "theme": "主题",
@@ -1302,6 +1304,35 @@
       "noProcessForRouting": "所选品目的工艺路线中没有已登记的工序。"
     },
     "workCalendar": {
+      "byMachine": "设备",
+      "byLine": "线体",
+      "selectLine": "选择线体",
+      "machineCode": "设备代码",
+      "machineName": "设备名称",
+      "pickLineFirst": "请先选择线体。",
+      "noMachines": "该线体没有分配设备。",
+      "machineChecked": "已选择 {{count}} 台设备",
+      "planReason": "停机原因(计划)",
+      "noPlanReasons": "未登记计划停机原因。",
+      "downtimeSpanHint": "(以当日 24 小时为准)",
+      "downtimeSpan": "停机时间",
+      "endBeforeStart": "结束时间必须晚于开始时间。",
+      "registerPlanDowntime": "登记计划停机",
+      "planTargetHint": "{{days}} 天 x {{machines}} 台 = {{rows}} 条。",
+      "planSaved": "计划停机已保存。",
+      "planRegistered": "登记 {{count}} 条",
+      "planReplaced": "替换 {{count}} 条",
+      "planSkipped": "跳过 {{count}} 条(与现有停机重叠)",
+      "planCountTitle": "计划停机 {{count}} 条",
+      "planDowntimeList": "计划停机",
+      "noPlanDowntime": "没有已登记的计划停机。",
+      "planDeleted": "已删除。",
+      "selectMonth": "选择年月",
+      "prevMonth": "上个月",
+      "nextMonth": "下个月",
+      "selectAllDays": "全部",
+      "selectWeekdays": "工作日",
+      "selectWeekends": "周末",
       "title": "生产月历管理",
       "subtitle": "管理全公司工作日、各产线例外及两班工作时间。",
       "calendarManagement": "月历",
@@ -1314,11 +1345,18 @@
       "copyFromCompany": "从全公司复制",
       "confirm": "确认",
       "unconfirm": "取消确认",
+      "selectedCount": "已选择 {{count}} 天",
+      "bulkEdit": "批量修改",
+      "bulkEditTitle": "批量修改 — {{count}} 天",
+      "bulkEditHint": "以下数值将应用于已选择的 {{count}} 天。",
       "editDay": "编辑日期",
       "dayType": "工作类型",
       "offReason": "休假原因",
-      "workMinutes": "工作时间(分)",
-      "workMinutesAutoPlaceholder": "留空则按工作类型自动计算",
+      "shiftWorkTime": "各班次作业时间",
+      "breakTime": "非作业时间(分钟)",
+      "derivedWorkMinutes": "作业时间(分钟，自动计算)",
+      "noShiftCodes": "未登记班次代码。请检查公共代码 'SHIFT CODE'。",
+      "noBreakTypes": "未登记非作业分类。请检查公共代码 'BREAK TYPE'。",
       "otMinutes": "加班时间(分)",
       "remark": "备注",
       "workDays": "工作天数",
@@ -4186,6 +4224,33 @@
       "targetColumn": "目标列",
       "backlinks": "反向链接（被哪些表引用）",
       "noBacklink": "无引用此表的表"
+    }
+  },
+  "oee": {
+    "overallStatus": {
+      "headline": "EUNSUNG SMT FACTORY — LIVE OEE",
+      "mockBadge": "模拟数据 — 未应用公式",
+      "dayShift": "白班",
+      "lineSection": "线体",
+      "machineSection": "{{line}} 设备",
+      "noMachines": "该线体没有分配设备。",
+      "availability": "稼动率",
+      "performance": "性能率",
+      "quality": "良品率",
+      "status": {
+        "RUN": "运行",
+        "WARN": "注意",
+        "STOP": "停止",
+        "LINE_STOP": "含停机"
+      },
+      "kpi": {
+        "factoryOee": "工厂综合 OEE",
+        "availability": "稼动率",
+        "performance": "性能率",
+        "quality": "良品率",
+        "firstPass": "直行率",
+        "downtimeOpen": "停机进行中"
+      }
     }
   }
 }

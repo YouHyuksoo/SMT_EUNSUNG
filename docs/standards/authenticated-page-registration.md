@@ -8,7 +8,7 @@ sources:
   - apps/frontend/src/components/layout/pageRegistry.generated.ts
   - apps/frontend/src/components/layout/page-registries/
   - apps/frontend/src/app/(authenticated)/
-verifiedCommit: 1bd1735
+verifiedCommit: dee4f7e
 ---
 
 # 인증 페이지 등록 표준

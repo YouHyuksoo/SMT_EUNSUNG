@@ -2,6 +2,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Post,
@@ -16,7 +17,9 @@ import {
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import {
   DefectSaveDto,
+  DowntimeBulkDto,
   DowntimeUpsertDto,
+  PlanDowntimeCreateDto,
   WorkResultUpsertDto,
 } from './work-result.dto';
 import { WorkResultService } from './work-result.service';
@@ -132,23 +135,54 @@ export class WorkResultController {
   @Get('downtime-reasons')
   async downtimeReasons(
     @Query('machineCode') machineCode: string | undefined,
+    @Query('reasonType') reasonType: string | undefined,
     @OrganizationId() organizationId?: number,
   ) {
     return {
       list: await this.service.downtimeReasons(
         machineCode || undefined,
         organizationId,
+        reasonType || undefined,
       ),
     };
   }
 
-  /** 비가동 실적 목록 */
+  /** 비가동 실적 목록 (설비별) + DB 현재시각 */
   @Get('downtimes')
   async downtimes(
-    @Query('runNo') runNo: string,
+    @Query('machineCode') machineCode: string,
     @OrganizationId() organizationId?: number,
   ) {
-    return { list: await this.service.downtimes(runNo, organizationId) };
+    return await this.service.downtimes(machineCode, organizationId);
+  }
+
+  /** 계획 비가동 일괄 등록 (일자 x 설비) */
+  @Post('downtimes/plan')
+  async createPlanDowntime(
+    @Body() dto: PlanDowntimeCreateDto,
+    @OrganizationId() organizationId?: number,
+    @UserId() userId?: string,
+  ) {
+    return await this.service.createPlanDowntime(dto, organizationId, userId);
+  }
+
+  /** 기간 내 계획 비가동 목록 (캘린더 뱃지 + 일자별 목록) */
+  @Get('downtimes/plan')
+  async planDowntimes(
+    @Query('from') from: string,
+    @Query('to') to: string,
+    @OrganizationId() organizationId?: number,
+  ) {
+    return { list: await this.service.planDowntimes(from, to, organizationId) };
+  }
+
+  /** 비가동 1건 삭제 (계획 비가동 취소) */
+  @Delete('downtimes/:dtSeq')
+  async deleteDowntime(
+    @Param('dtSeq') dtSeq: string,
+    @OrganizationId() organizationId?: number,
+  ) {
+    return await this.service.deleteDowntime(Number(dtSeq), organizationId);
   }
 
   /** 비가동 시작(신규) */
@@ -173,5 +207,15 @@ export class WorkResultController {
     @UserId() userId?: string,
   ) {
     return await this.service.upsertDowntime(dto, organizationId, userId);
+  }
+
+  /** 라인/설비 일괄 비가동 시작·종료 (ADR 0002) */
+  @Post('downtimes/bulk')
+  async bulkDowntime(
+    @Body() dto: DowntimeBulkDto,
+    @OrganizationId() organizationId?: number,
+    @UserId() userId?: string,
+  ) {
+    return await this.service.bulkDowntime(dto, organizationId, userId);
   }
 }

@@ -19,7 +19,7 @@ export class ShiftTimeController {
   @Get()
   @ApiOperation({ summary: '교대시간 목록 (적용 시작일 내림차순)' })
   async findAll(@OrganizationId() organizationId: number) {
-    return ResponseUtil.success(await this.svc.findAll(organizationId));
+    return ResponseUtil.success(await this.svc.findAllWithBreaks(organizationId));
   }
 
   @Post()

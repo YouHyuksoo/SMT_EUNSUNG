@@ -5,7 +5,7 @@ sources:
   - apps/frontend/src/hooks/useComCode.ts
   - apps/frontend/src/components/shared/ComCodeSelect.tsx
   - apps/frontend/src/components/ui/ComCodeBadge.tsx
-verifiedCommit: working-tree
+verifiedCommit: dee4f7e
 ---
 
 # ISYS_BASECODE 컬럼 매핑 표준
