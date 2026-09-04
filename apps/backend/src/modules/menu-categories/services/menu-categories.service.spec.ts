@@ -196,6 +196,7 @@ describe('MenuCategoriesService', () => {
 
       expect(categoryRepo.save).toHaveBeenCalledWith([
         expect.objectContaining({ organizationId: 7, categoryCode: 'PROCESS_TRANSACTION' }),
+        expect.objectContaining({ organizationId: 7, categoryCode: 'PRODUCTION' }),
       ]);
     });
 
@@ -206,12 +207,12 @@ describe('MenuCategoriesService', () => {
         { organizationId: 7, categoryCode: 'MATERIAL' },
         { organizationId: 7, categoryCode: 'PROCESS_TRANSACTION' },
         { organizationId: 7, categoryCode: 'PRODUCT_MGMT' },
+        { organizationId: 7, categoryCode: 'PRODUCTION' },
         { organizationId: 7, categoryCode: 'OUTSOURCING' },
         { organizationId: 7, categoryCode: 'SYSTEM' },
       ] as any);
       itemRepo.find.mockResolvedValue([
         { menuCode: 'OEE_DASHBOARD' },
-        { menuCode: 'OEE_DRILLDOWN' },
       ] as any);
       itemRepo.save.mockImplementation(async (e: any) => e);
       tx.run.mockImplementationOnce(async (cb: any) =>
@@ -226,7 +227,7 @@ describe('MenuCategoriesService', () => {
 
       expect(itemRepo.save).toHaveBeenCalledWith(
         expect.arrayContaining([
-          expect.objectContaining({ menuCode: 'OEE_MULTI_ENTRY', categoryCode: 'OEE', sortOrder: 30 }),
+          expect.objectContaining({ menuCode: 'OEE_MULTI_ENTRY', categoryCode: 'OEE', sortOrder: 20 }),
         ]),
       );
     });
@@ -239,6 +240,7 @@ describe('MenuCategoriesService', () => {
         { organizationId: 7, categoryCode: 'MATERIAL' },
         { organizationId: 7, categoryCode: 'PROCESS_TRANSACTION' },
         { organizationId: 7, categoryCode: 'PRODUCT_MGMT' },
+        { organizationId: 7, categoryCode: 'PRODUCTION' },
         { organizationId: 7, categoryCode: 'OUTSOURCING' },
       ] as any);
       itemRepo.find.mockResolvedValueOnce([
@@ -268,15 +270,14 @@ describe('MenuCategoriesService', () => {
         { menuCode: 'SYS_ER_VIEW' },
         { menuCode: 'SYS_IMPR_REQ' },
         { menuCode: 'OEE_DASHBOARD' },
-        { menuCode: 'OEE_DRILLDOWN' },
         { menuCode: 'OEE_MULTI_ENTRY' },
         { menuCode: 'OEE_EQUIP_WORK_RESULT' },
         { menuCode: 'OEE_EQUIP_OPS_ANALYSIS' },
-        { menuCode: 'OEE_EQUIP_DOWNTIME_MOBILE' },
         { menuCode: 'OEE_MST_STD_TIME' },
         { menuCode: 'OEE_MST_IDLE_REASON' },
         { menuCode: 'OEE_MST_EQUIP_REASON' },
         { menuCode: 'OEE_MST_RESOURCE' },
+        { menuCode: 'PRD_RUN_CARD' },
       ] as any);
 
       await service.ensureDefaultLayout({ organizationId: 7, userId: 'tester' });

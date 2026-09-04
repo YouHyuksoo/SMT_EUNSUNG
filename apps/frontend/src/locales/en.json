@@ -395,7 +395,8 @@
     "oee.resource": "OEE Resource Management",
     "oee.equipWorkResult": "Equipment Work Result",
     "oee.equipOpsAnalysis": "Equipment Ops Analysis",
-    "oee.equipDowntimeMobile": "Equipment Downtime Scan (Mock)"
+    "oee.equipDowntimeMobile": "Equipment Downtime Scan (Mock)",
+    "production.runCard": "Work Order Management"
   },
   "header": {
     "theme": "Theme",

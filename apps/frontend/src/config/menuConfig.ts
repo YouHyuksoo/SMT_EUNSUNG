@@ -9,7 +9,7 @@
  * 4. 새 메뉴 추가 시 반드시 고유 code를 부여할 것
  */
 import {
-  Activity, Boxes, Building2,
+  Activity, Boxes, Building2, ClipboardList,
   Database, GitBranch, Package, Settings,
 } from "lucide-react";
 
@@ -58,11 +58,9 @@ export const menuConfig: MenuConfigItem[] = [
     icon: Activity,
     children: [
       { code: "OEE_DASHBOARD", labelKey: "menu.oee.dashboard", path: "/oee/dashboard" },
-      { code: "OEE_DRILLDOWN", labelKey: "menu.oee.drilldown", path: "/oee/dashboard/drilldown" },
       { code: "OEE_MULTI_ENTRY", labelKey: "menu.oee.multiEntry", path: "/oee/multi-entry" },
       { code: "OEE_EQUIP_WORK_RESULT", labelKey: "menu.oee.equipWorkResult", path: "/oee/equip-work-result" },
       { code: "OEE_EQUIP_OPS_ANALYSIS", labelKey: "menu.oee.equipOpsAnalysis", path: "/oee/equip-ops-analysis" },
-      { code: "OEE_EQUIP_DOWNTIME_MOBILE", labelKey: "menu.oee.equipDowntimeMobile", path: "/oee/equip-downtime-mobile" },
       { code: "OEE_MST_STD_TIME", labelKey: "menu.oee.standardTime", path: "/oee/master/standard-time" },
       { code: "OEE_MST_IDLE_REASON", labelKey: "menu.oee.idleReason", path: "/oee/master/idle-reason" },
       { code: "OEE_MST_EQUIP_REASON", labelKey: "menu.oee.equipReason", path: "/oee/master/equip-reason-map" },
@@ -86,6 +84,14 @@ export const menuConfig: MenuConfigItem[] = [
     labelKey: "menu.productMgmt",
     icon: Boxes,
     children: [],
+  },
+  {
+    code: "PRODUCTION",
+    labelKey: "menu.production",
+    icon: ClipboardList,
+    children: [
+      { code: "PRD_RUN_CARD", labelKey: "menu.production.runCard", path: "/production/run-card" },
+    ],
   },
   {
     code: "OUTSOURCING",

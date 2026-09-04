@@ -70,6 +70,7 @@ import { EquipDowntimeMap } from '../entities/equip-downtime-map.entity';
 import { EquipDowntimeMapDtl } from '../entities/equip-downtime-map-dtl.entity';
 import { ProductModelMaster } from '../entities/product-model-master.entity';
 import { ProductWorkResult } from '../entities/product-work-result.entity';
+import { ProductRunCard } from '../entities/product-run-card.entity';
 import { ProductWorkDefect } from '../entities/product-work-defect.entity';
 import { EquipDowntimeResult } from '../entities/equip-downtime-result.entity';
 
@@ -159,6 +160,8 @@ import { EquipDowntimeResult } from '../entities/equip-downtime-result.entity';
             EquipDowntimeMapDtl,
             ProductModelMaster,
             ProductWorkResult,
+
+            ProductRunCard,
             ProductWorkDefect,
             EquipDowntimeResult,
           ],

@@ -395,7 +395,8 @@
     "oee.resource": "OEE 라인 관리",
     "oee.equipWorkResult": "설비별 작업 실적관리",
     "oee.equipOpsAnalysis": "설비별 운영 현황 및 분석",
-    "oee.equipDowntimeMobile": "설비비가동 스캔 (Mock)"
+    "oee.equipDowntimeMobile": "설비비가동 스캔 (Mock)",
+    "production.runCard": "작업지시관리"
   },
   "header": {
     "theme": "테마",

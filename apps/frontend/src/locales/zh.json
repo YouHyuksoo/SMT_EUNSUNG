@@ -395,7 +395,8 @@
     "oee.standardTime": "标准时间管理",
     "oee.idleReason": "设备停机原因代码",
     "oee.equipReason": "设备停机原因关联",
-    "oee.resource": "OEE资源管理"
+    "oee.resource": "OEE资源管理",
+    "production.runCard": "工单管理"
   },
   "header": {
     "theme": "主题",

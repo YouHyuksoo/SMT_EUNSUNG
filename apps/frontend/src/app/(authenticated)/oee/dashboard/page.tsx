@@ -7,7 +7,6 @@
  */
 import { useState } from 'react';
 import useSWR from 'swr';
-import Link from 'next/link';
 import { oeeFetch, todayStr, pct, type OeeResult } from './_lib/fetcher';
 
 interface OverviewRow {
@@ -76,11 +75,6 @@ export default function OeeOverviewPage() {
             {resp.live ? '실시간' : '마감 스냅샷'}
           </span>
         )}
-        <div className="ml-auto flex gap-3 text-sm">
-          <Link href="/oee/dashboard/drilldown" className="text-primary hover:underline">
-            리소스 드릴다운 →
-          </Link>
-        </div>
       </div>
 
       {notBuilt ? (
@@ -125,12 +119,6 @@ export default function OeeOverviewPage() {
                     <span>픽업 {r.PICKUP_RATE.toFixed(1)}%</span>
                   )}
                 </div>
-                <Link
-                  href={`/oee/dashboard/drilldown?processCode=${r.PROCESS_CODE}&date=${date}`}
-                  className="mt-3 inline-block text-xs text-primary hover:underline"
-                >
-                  리소스별 보기 →
-                </Link>
               </div>
             ))}
             {resp && resp.rows.length === 0 && (

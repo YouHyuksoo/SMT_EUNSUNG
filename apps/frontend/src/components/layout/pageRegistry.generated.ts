@@ -132,16 +132,6 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
       component = mod.getPageComponent();
       break;
     }
-    case "/oee/dashboard/drilldown": {
-      const mod = await import("./page-registries/oee__dashboard__drilldown.generated");
-      component = mod.getPageComponent();
-      break;
-    }
-    case "/oee/equip-downtime-mobile": {
-      const mod = await import("./page-registries/oee__equip-downtime-mobile.generated");
-      component = mod.getPageComponent();
-      break;
-    }
     case "/oee/equip-ops-analysis": {
       const mod = await import("./page-registries/oee__equip-ops-analysis.generated");
       component = mod.getPageComponent();
@@ -174,6 +164,11 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
     }
     case "/oee/multi-entry": {
       const mod = await import("./page-registries/oee__multi-entry.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/production/run-card": {
+      const mod = await import("./page-registries/production__run-card.generated");
       component = mod.getPageComponent();
       break;
     }
