@@ -148,6 +148,15 @@ export class WorkResultService {
       const machineCode = dto.machineCode?.trim() || null;
       // 처리구분(WIP/DONE) -> IS_LAST_YN(N/Y). 화면 계약은 그대로 두고 저장값만 바꾼다.
       const isLastYn = dto.resultStatus === 'DONE' ? 'Y' : 'N';
+      // 라인코드는 작업지시에서 가져온다. 이 테이블의 LINE_CODE는 센서 배치도 채우는 축이고
+      // 레거시 F_GET_RUN_LINE_ACTUAL_QTY가 (LINE_CODE, RUN_NO)로 조회하므로 비워두면
+      // 수기 실적만 라인 기준 집계에서 빠진다. 설비의 LINE_CODE는 전부 '*'(미배정)라 쓰지 않는다.
+      const runCard = (await mgr.query(
+        `SELECT LINE_CODE AS "lineCode" FROM IP_PRODUCT_RUN_CARD
+          WHERE RUN_NO=:1 AND ORGANIZATION_ID=:2`,
+        [dto.runNo, organization],
+      )) as Array<{ lineCode: string | null }>;
+      const lineCode = runCard[0]?.lineCode ?? null;
       let seqNo = dto.seqNo;
       if (seqNo) {
         const cur = (await mgr.query(
@@ -160,10 +169,12 @@ export class WorkResultService {
         if (cur[0].st === 'Y')
           throw new BadRequestException('완료된 실적은 수정할 수 없습니다');
         await mgr.query(
-          `UPDATE IP_PRODUCT_SENSOR_ACTUAL SET MACHINE_CODE=:1, WORKSTAGE_CODE=:2, PRODUCT_ACTUAL_QTY=:3, WORK_TIME=:4,
-             WORKER_COUNT=:5, WORKER_NAME=:6, IS_LAST_YN=:7, LAST_MODIFY_BY=:8, LAST_MODIFY_DATE=SYSDATE
-           WHERE RUN_NO=:9 AND RECEIPT_SEQUENCE=:10 AND ORGANIZATION_ID=:11`,
+          `UPDATE IP_PRODUCT_SENSOR_ACTUAL SET LINE_CODE=:1, MACHINE_CODE=:2, WORKSTAGE_CODE=:3,
+             PRODUCT_ACTUAL_QTY=:4, WORK_TIME=:5,
+             WORKER_COUNT=:6, WORKER_NAME=:7, IS_LAST_YN=:8, LAST_MODIFY_BY=:9, LAST_MODIFY_DATE=SYSDATE
+           WHERE RUN_NO=:10 AND RECEIPT_SEQUENCE=:11 AND ORGANIZATION_ID=:12`,
           [
+            lineCode,
             machineCode,
             dto.workstageCode,
             dto.resultQty,
@@ -188,13 +199,14 @@ export class WorkResultService {
         // 입고일자(RECEIPT_DATE)에 등록일자를 적용한다 — 둘 다 SYSDATE로 같은 시각을 찍는다.
         await mgr.query(
           `INSERT INTO IP_PRODUCT_SENSOR_ACTUAL
-             (RECEIPT_DATE, RECEIPT_SEQUENCE, ORGANIZATION_ID, RUN_NO, MACHINE_CODE, WORKSTAGE_CODE,
+             (RECEIPT_DATE, RECEIPT_SEQUENCE, ORGANIZATION_ID, RUN_NO, LINE_CODE, MACHINE_CODE, WORKSTAGE_CODE,
               PRODUCT_ACTUAL_QTY, WORK_TIME, WORKER_COUNT, WORKER_NAME, IS_LAST_YN, ENTER_BY, ENTER_DATE)
-           VALUES (SYSDATE,:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,SYSDATE)`,
+           VALUES (SYSDATE,:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12,SYSDATE)`,
           [
             seqNo,
             organization,
             dto.runNo,
+            lineCode,
             machineCode,
             dto.workstageCode,
             dto.resultQty,

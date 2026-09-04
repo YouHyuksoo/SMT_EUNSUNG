@@ -93,8 +93,10 @@ describe('WorkResultService tenancy', () => {
     const runCardCall = manager.query.mock.calls.find(([sql]) =>
       String(sql).includes('UPDATE IP_PRODUCT_RUN_CARD'),
     );
+    // [3]=lineCode(작업지시 조회 결과 없음 → null), [4]=machineCode, [5]=workstageCode
     expect(insertCall?.[1]?.[3]).toBeNull();
-    expect(insertCall?.[1]?.[4]).toBe('WS-1');
+    expect(insertCall?.[1]?.[4]).toBeNull();
+    expect(insertCall?.[1]?.[5]).toBe('WS-1');
     expect(runCardCall?.[1]?.[0]).toBeNull();
     expect(runCardCall?.[1]?.[1]).toBe('WS-1');
   });
@@ -130,8 +132,10 @@ describe('WorkResultService tenancy', () => {
     const runCardCall = manager.query.mock.calls.find(([sql]) =>
       String(sql).includes('UPDATE IP_PRODUCT_RUN_CARD'),
     );
+    // [0]=lineCode, [1]=machineCode(공백 정규화 → null), [2]=workstageCode
     expect(sensorUpdateCall?.[1]?.[0]).toBeNull();
-    expect(sensorUpdateCall?.[1]?.[1]).toBe('WS-1');
+    expect(sensorUpdateCall?.[1]?.[1]).toBeNull();
+    expect(sensorUpdateCall?.[1]?.[2]).toBe('WS-1');
     expect(runCardCall?.[1]?.[0]).toBeNull();
     expect(runCardCall?.[1]?.[1]).toBe('WS-1');
   });
