@@ -37,6 +37,9 @@ interface ProdLine {
   lineProductDivision?: string;
   lineCodeGroup?: string | null;
   lineStatus?: string | null;
+  processCode?: string | null;
+  resourceType?: string | null;
+  parentLineCode?: string | null;
   capacity?: number | null;
   capacityUom?: string | null;
   uphValue?: number | null;
@@ -71,6 +74,9 @@ function toPayload(form: Partial<ProdLine>) {
     lineProductDivision: clean(form.lineProductDivision),
     lineCodeGroup: clean(form.lineCodeGroup),
     lineStatus: clean(form.lineStatus),
+    processCode: clean(form.processCode),
+    resourceType: clean(form.resourceType),
+    parentLineCode: clean(form.parentLineCode),
     capacity: num(form.capacity),
     capacityUom: clean(form.capacityUom),
     uphValue: num(form.uphValue),
@@ -116,6 +122,8 @@ export default function ProdLineTab({ onHeaderActions }: Props) {
     const init: Partial<ProdLine> = {
       lineProductDivision: "FIXED",
       lineStatus: "N",
+      processCode: "SMT",
+      resourceType: "LINE",
       mesDisplayYn: "N",
       activeYn: "N",
     };
@@ -153,8 +161,22 @@ export default function ProdLineTab({ onHeaderActions }: Props) {
   );
   useEffect(() => { markDirty(dirty); }, [dirty, markDirty]);
 
+  const processCodeOptions = useMemo(() => [
+    { value: "SMT", label: t("master.prodLine.processSmt") },
+    { value: "ASSY", label: t("master.prodLine.processAssy") },
+  ], [t]);
+  const resourceTypeOptions = useMemo(() => [
+    { value: "LINE", label: t("master.prodLine.resourceLine") },
+    { value: "CELL", label: t("master.prodLine.resourceCell") },
+  ], [t]);
+  const parentLineOptions = useMemo(() => lines
+    .filter((line) => line.lineCode !== formData.lineCode)
+    .map((line) => ({ value: line.lineCode, label: `${line.lineCode} · ${line.lineName}` })),
+  [lines, formData.lineCode]);
+
   const handleSave = useCallback(async () => {
     if (!formData.lineCode || !formData.lineName || !formData.lineDivision) return;
+    if (formData.resourceType === "CELL" && !formData.parentLineCode) return;
     setSaving(true);
     try {
       const payload = toPayload(formData);
@@ -229,6 +251,28 @@ export default function ProdLineTab({ onHeaderActions }: Props) {
         return <span className={v === "N" ? "text-text" : "text-amber-600 dark:text-amber-400"}>{label}</span>;
       },
     },
+    { accessorKey: "processCode", header: t("master.prodLine.processCode"), size: 100,
+      meta: { filterType: "multi" as const },
+      cell: ({ getValue }) => {
+        const value = getValue() as string | null;
+        if (!value) return "-";
+        return value === "SMT" ? t("master.prodLine.processSmt")
+          : value === "ASSY" ? t("master.prodLine.processAssy") : value;
+      },
+    },
+    { accessorKey: "resourceType", header: t("master.prodLine.resourceType"), size: 100,
+      meta: { filterType: "multi" as const },
+      cell: ({ getValue }) => {
+        const value = getValue() as string | null;
+        if (!value) return "-";
+        return value === "LINE" ? t("master.prodLine.resourceLine")
+          : value === "CELL" ? t("master.prodLine.resourceCell") : value;
+      },
+    },
+    { accessorKey: "parentLineCode", header: t("master.prodLine.parentLineCode"), size: 120,
+      meta: { filterType: "multi" as const },
+      cell: ({ getValue }) => (getValue() as string | null) || "-",
+    },
     { accessorKey: "capacity", header: t("master.prodLine.capacity"), size: 90,
       meta: { align: "right" as const, filterType: "text" as const },
       cell: ({ row }) => {
@@ -282,7 +326,7 @@ export default function ProdLineTab({ onHeaderActions }: Props) {
         <Card className="flex-1 min-h-0 overflow-hidden">
           <CardContent className="h-full">
             <DataGrid
-              sqlQuery={`SELECT LINE_CODE, LINE_NAME, LINE_DIVISION, LINE_CODE_GROUP,\n       LINE_PRODUCT_DIVISION, LINE_STATUS, CAPACITY, CAPACITY_UOM,\n       UPH_VALUE, MES_DISPLAY_YN, MES_DISPLAY_SEQUENCE, ACTIVE_YN, COMMENTS\nFROM IP_PRODUCT_LINE\nWHERE ORGANIZATION_ID = :organizationId\nORDER BY LINE_CODE ASC`}
+              sqlQuery={`SELECT LINE_CODE, LINE_NAME, LINE_DIVISION, LINE_CODE_GROUP,\n       LINE_PRODUCT_DIVISION, LINE_STATUS, PROCESS_CODE, RESOURCE_TYPE,\n       PARENT_LINE_CODE, CAPACITY, CAPACITY_UOM, UPH_VALUE,\n       MES_DISPLAY_YN, MES_DISPLAY_SEQUENCE, ACTIVE_YN, COMMENTS\nFROM IP_PRODUCT_LINE\nWHERE ORGANIZATION_ID = :organizationId\nORDER BY LINE_CODE ASC`}
               data={lines}
               columns={columns}
               isLoading={loading}
@@ -313,7 +357,7 @@ export default function ProdLineTab({ onHeaderActions }: Props) {
               <Button size="sm" variant="secondary" onClick={() => guard(() => setIsPanelOpen(false))}>
                 {t("common.cancel")}
               </Button>
-              <Button size="sm" onClick={handleSave} disabled={saving || !formData.lineCode || !formData.lineName || !formData.lineDivision}>
+              <Button size="sm" onClick={handleSave} disabled={saving || !formData.lineCode || !formData.lineName || !formData.lineDivision || (formData.resourceType === "CELL" && !formData.parentLineCode)}>
                 {saving ? t("common.saving") : t("common.save", "저장")}
               </Button>
             </div>
@@ -321,7 +365,11 @@ export default function ProdLineTab({ onHeaderActions }: Props) {
           <div className="flex-1 overflow-y-auto px-5 py-3 space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <FieldInput field="lineCode" label={t("master.prodLine.lineCode")} placeholder="38"
-                value={formData.lineCode || ""} onChange={(e) => setFormData((p) => ({ ...p, lineCode: e.target.value }))}
+                value={formData.lineCode || ""} onChange={(e) => setFormData((p) => ({
+                  ...p,
+                  lineCode: e.target.value,
+                  parentLineCode: p.resourceType === "LINE" ? e.target.value : p.parentLineCode,
+                }))}
                 disabled={!!editingLine} required />
               <FieldInput field="lineName" label={t("master.prodLine.lineName")} placeholder={t("master.prodLine.lineName")}
                 value={formData.lineName || ""} onChange={(e) => setFormData((p) => ({ ...p, lineName: e.target.value }))} required />
@@ -335,6 +383,24 @@ export default function ProdLineTab({ onHeaderActions }: Props) {
                 value={formData.lineProductDivision || ""} onChange={(v) => setFormData((p) => ({ ...p, lineProductDivision: v }))} />
               <FieldSelect field="lineStatus" label={t("master.prodLine.lineStatus")} options={LINE_STATUS_OPTIONS}
                 value={formData.lineStatus || ""} onChange={(v) => setFormData((p) => ({ ...p, lineStatus: v }))} />
+
+              <FieldSelect field="processCode" label={t("master.prodLine.processCode")} options={processCodeOptions}
+                value={formData.processCode || ""} onChange={(v) => setFormData((p) => ({ ...p, processCode: v }))} />
+              <FieldSelect field="resourceType" label={t("master.prodLine.resourceType")} options={resourceTypeOptions}
+                value={formData.resourceType || ""} onChange={(v) => setFormData((p) => ({
+                  ...p,
+                  resourceType: v,
+                  parentLineCode: v === "LINE" ? p.lineCode : (p.parentLineCode === p.lineCode ? "" : p.parentLineCode),
+                }))} />
+              <FieldSelect field="parentLineCode" label={t("master.prodLine.parentLineCode")}
+                options={formData.resourceType === "LINE" && formData.lineCode
+                  ? [{ value: formData.lineCode, label: `${formData.lineCode} · ${formData.lineName || ""}` }]
+                  : parentLineOptions}
+                value={formData.parentLineCode || ""}
+                onChange={(v) => setFormData((p) => ({ ...p, parentLineCode: v }))}
+                disabled={formData.resourceType === "LINE"}
+                required={formData.resourceType === "CELL"}
+                wrapperClassName="col-span-2" />
 
               <FieldInput field="capacity" label={t("master.prodLine.capacity")} type="number" placeholder="0"
                 value={formData.capacity ?? ""} onChange={(e) => setFormData((p) => ({ ...p, capacity: e.target.value === "" ? null : Number(e.target.value) }))} />

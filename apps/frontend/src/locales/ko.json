@@ -1549,6 +1549,13 @@
       "lineCodeGroup": "라인그룹",
       "lineProductDivision": "제품구분",
       "lineStatus": "라인상태",
+      "processCode": "작업장",
+      "resourceType": "OEE유형",
+      "parentLineCode": "상위라인코드",
+      "processSmt": "SMT 작업장",
+      "processAssy": "조립 작업장",
+      "resourceLine": "라인",
+      "resourceCell": "셀",
       "capacity": "용량",
       "capacityUom": "용량단위",
       "uphValue": "UPH",
@@ -1558,7 +1565,12 @@
       "comments": "설명",
       "addLine": "라인 추가",
       "editLine": "라인 수정",
-      "searchPlaceholder": "라인코드, 라인명 검색..."
+      "searchPlaceholder": "라인코드, 라인명 검색...",
+      "fieldHelp": {
+        "processCode": "OEE 집계 기준 작업장입니다. SMT 또는 조립 작업장을 선택합니다.",
+        "resourceType": "OEE에서 라인 또는 셀로 집계할 유형입니다.",
+        "parentLineCode": "라인 유형은 자기 라인코드, 셀 유형은 소속될 다른 생산라인을 지정합니다."
+      }
     },
     "process": {
       "title": "공정마스터",

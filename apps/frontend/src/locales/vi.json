@@ -1139,6 +1139,13 @@
       "lineCodeGroup": "Nhóm dây chuyền",
       "lineProductDivision": "Phân loại sản phẩm",
       "lineStatus": "Trạng thái dây chuyền",
+      "processCode": "Khu vực làm việc",
+      "resourceType": "Loại OEE",
+      "parentLineCode": "Mã dây chuyền cha",
+      "processSmt": "Khu vực SMT",
+      "processAssy": "Khu vực lắp ráp",
+      "resourceLine": "Dây chuyền",
+      "resourceCell": "Cell",
       "capacity": "Công suất",
       "capacityUom": "Đơn vị công suất",
       "uphValue": "UPH",
@@ -1148,7 +1155,12 @@
       "comments": "Ghi chú",
       "addLine": "Thêm dây chuyền",
       "editLine": "Sửa dây chuyền",
-      "searchPlaceholder": "Tìm mã dây chuyền, tên dây chuyền..."
+      "searchPlaceholder": "Tìm mã dây chuyền, tên dây chuyền...",
+      "fieldHelp": {
+        "processCode": "Chọn khu vực SMT hoặc lắp ráp dùng để tổng hợp OEE.",
+        "resourceType": "Chọn tổng hợp OEE theo dây chuyền hoặc cell.",
+        "parentLineCode": "Dây chuyền dùng chính mã của nó; cell chọn một dây chuyền sản xuất khác làm cấp cha."
+      }
     },
     "process": {
       "title": "Dữ liệu công đoạn",
