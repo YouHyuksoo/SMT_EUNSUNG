@@ -5,6 +5,8 @@ import test from "node:test";
 const read = (path) => fs.readFileSync(path, "utf8");
 
 const forbiddenRoutes = [
+  "/oee/dashboard/drilldown",
+  "/oee/equip-downtime-mobile",
   "/system/pda-roles",
   "/system/comm-config",
   "/system/document",
@@ -138,6 +140,8 @@ const forbiddenRoutes = [
 ];
 
 const forbiddenCodes = [
+  "OEE_DRILLDOWN",
+  "OEE_EQUIP_DOWNTIME_MOBILE",
   "SYS_PDA_ROLE",
   "SYS_COMM",
   "SYS_DOCUMENT",
@@ -161,7 +165,6 @@ const forbiddenCodes = [
   "INV_PRODUCT_PHYSICAL_INV",
   "INV_PRODUCT_PHYSICAL_INV_HISTORY",
   "PROD_HOLD",
-  "PRODUCTION",
   "PROD_MONTHLY_PLAN",
   "PROD_SIMULATION",
   "PROD_SPEC_SETUP",
@@ -258,6 +261,8 @@ const forbiddenCodes = [
 ];
 
 const deletedRouteDirs = [
+  "apps/frontend/src/app/(authenticated)/oee/dashboard/drilldown",
+  "apps/frontend/src/app/(authenticated)/oee/equip-downtime-mobile",
   "apps/frontend/src/app/(authenticated)/system/pda-roles",
   "apps/frontend/src/app/(authenticated)/system/comm-config",
   "apps/frontend/src/app/(authenticated)/system/document",
@@ -276,7 +281,6 @@ const deletedRouteDirs = [
   "apps/frontend/src/app/(authenticated)/material/iqc",
   "apps/frontend/src/app/(authenticated)/material/iqc-history",
   "apps/frontend/src/app/(authenticated)/material/concession",
-  "apps/frontend/src/app/(authenticated)/production",
   "apps/frontend/src/app/(authenticated)/system/training",
   "apps/frontend/src/app/(authenticated)/shipping",
   "apps/frontend/src/app/(authenticated)/product",
@@ -308,6 +312,8 @@ const deletedRouteDirs = [
 ];
 
 const deletedRegistryFiles = [
+  "apps/frontend/src/components/layout/page-registries/oee__dashboard__drilldown.generated.ts",
+  "apps/frontend/src/components/layout/page-registries/oee__equip-downtime-mobile.generated.ts",
   "apps/frontend/src/components/layout/page-registries/system__pda-roles.generated.ts",
   "apps/frontend/src/components/layout/page-registries/system__comm-config.generated.ts",
   "apps/frontend/src/components/layout/page-registries/system__document.generated.ts",
@@ -466,6 +472,7 @@ test("은성 메뉴 상위 구조는 시스템 카테고리를 포함한다", ()
     "MATERIAL",
     "PROCESS_TRANSACTION",
     "PRODUCT_MGMT",
+    "PRODUCTION",
     "OUTSOURCING",
     "SYSTEM",
   ]);

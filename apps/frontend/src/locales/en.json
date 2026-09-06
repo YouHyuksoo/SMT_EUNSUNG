@@ -397,6 +397,7 @@
     "oee.equipOpsStatus": "Equipment Ops Status",
     "oee.equipOpsAnalysis": "Equipment Ops Analysis",
     "oee.equipDowntimeMobile": "Equipment Downtime Scan (Mock)",
+    "production.runCard": "Work Order Management",
     "oee.overallStatus": "OEE Overall Status"
   },
   "header": {

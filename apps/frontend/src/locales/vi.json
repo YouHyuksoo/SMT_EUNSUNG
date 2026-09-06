@@ -397,6 +397,7 @@
     "oee.idleReason": "Mã lý do dừng thiết bị",
     "oee.equipReason": "Liên kết lý do dừng theo thiết bị",
     "oee.resource": "Quản lý tài nguyên OEE",
+    "production.runCard": "Quản lý lệnh sản xuất",
     "oee.overallStatus": "Tổng quan OEE"
   },
   "header": {

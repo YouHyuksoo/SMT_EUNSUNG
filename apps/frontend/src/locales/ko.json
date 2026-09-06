@@ -397,6 +397,7 @@
     "oee.equipOpsStatus": "설비 운영 현황",
     "oee.equipOpsAnalysis": "설비별 운영 현황 및 분석",
     "oee.equipDowntimeMobile": "설비비가동 스캔 (Mock)",
+    "production.runCard": "작업지시관리",
     "oee.overallStatus": "OEE 종합 현황"
   },
   "header": {

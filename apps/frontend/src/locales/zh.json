@@ -397,6 +397,7 @@
     "oee.idleReason": "设备停机原因代码",
     "oee.equipReason": "设备停机原因关联",
     "oee.resource": "OEE资源管理",
+    "production.runCard": "工单管理",
     "oee.overallStatus": "OEE 综合现况"
   },
   "header": {

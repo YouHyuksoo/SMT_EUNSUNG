@@ -6,6 +6,7 @@
     "MATERIAL",
     "PROCESS_TRANSACTION",
     "PRODUCT_MGMT",
+    "PRODUCTION",
     "OUTSOURCING",
     "SYSTEM"
   ],
@@ -30,12 +31,10 @@
     ],
     "OEE": [
       "OEE_DASHBOARD",
-      "OEE_DRILLDOWN",
       "OEE_MULTI_ENTRY",
       "OEE_OVERALL_STATUS",
       "OEE_EQUIP_WORK_RESULT",
       "OEE_EQUIP_OPS_STATUS",
-      "OEE_EQUIP_DOWNTIME_MOBILE",
       "OEE_MST_STD_TIME",
       "OEE_MST_IDLE_REASON",
       "OEE_MST_EQUIP_REASON",
@@ -44,6 +43,9 @@
     "MATERIAL": [],
     "PROCESS_TRANSACTION": [],
     "PRODUCT_MGMT": [],
+    "PRODUCTION": [
+      "PRD_RUN_CARD"
+    ],
     "OUTSOURCING": [],
     "SYSTEM": [
       "SYS_COMPANY",

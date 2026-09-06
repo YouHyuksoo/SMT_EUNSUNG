@@ -46,3 +46,4 @@ export * from './comm-config.entity';
 export * from './label-template.entity';
 export * from './model-suffix.entity';
 export * from './work-instruction.entity';
+export * from './product-run-card.entity';
