@@ -22,3 +22,9 @@ test('legacy OEE resource menu is hidden while its direct page remains', () => {
   assert.match(legacyPage, /\/oee\/resource/);
   assert.match(legacyPage, />OEE 라인 관리<\/h1>/);
 });
+
+test('page registration ignores menu examples inside comments', () => {
+  const checker = read('scripts/check-page-registration.mjs');
+  assert.match(checker, /function stripComments/);
+  assert.match(checker, /stripComments\(menuSource\)\.matchAll/);
+});

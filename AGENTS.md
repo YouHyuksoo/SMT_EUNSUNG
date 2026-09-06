@@ -178,6 +178,7 @@ Oracle is the system of record for both backend (TypeORM) and the legacy Display
 ## UI & Code Quality
 
 - `apps/frontend/src/app/(authenticated)/**/page.tsx`를 추가·이동·삭제하면 `pnpm --filter @eunsung/frontend typecheck` 또는 `test`를 실행한다. 두 명령은 registry를 자동 생성하고 모든 페이지·메뉴·백엔드 메뉴 등록을 전수 검증한다. 생성 파일을 직접 수정하지 않는다.
+- 메뉴 등록 검사는 `menuConfig.ts`의 주석 예시를 활성 메뉴로 해석하지 않아야 한다. 메뉴를 숨기거나 주석으로 보존할 때 `pnpm --filter @eunsung/frontend test`로 `oee-resource-menu-hidden.eunsung.structure.test.mjs`를 포함한 등록 검사를 실행한다.
 - `alert()`, `confirm()`, `prompt()` 대신 프로젝트의 모달/토스트 컴포넌트를 사용한다.
 - 코드성/기준정보성 값은 자유 입력 대신 공통코드·기준정보 선택 컴포넌트를 우선한다.
 - Oracle 코드성 컬럼은 `ISYS_BASECODE`를 기준으로 처리한다. 테이블 컬럼명과 `CODE_TYPE`은 대문자화한 뒤 공백과 `_`를 제거한 정규키로 매칭하며, 필터·폼은 `ComCodeSelect`, 그리드는 `ComCodeBadge` 또는 공용 코드명 렌더러를 사용한다. 원시 코드만 표시하지 않는다.
