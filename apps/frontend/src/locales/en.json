@@ -1140,6 +1140,13 @@
       "lineCodeGroup": "Line Group",
       "lineProductDivision": "Product Division",
       "lineStatus": "Line Status",
+      "processCode": "Workplace",
+      "resourceType": "OEE Type",
+      "parentLineCode": "Parent Line Code",
+      "processSmt": "SMT Workplace",
+      "processAssy": "Assembly Workplace",
+      "resourceLine": "Line",
+      "resourceCell": "Cell",
       "capacity": "Capacity",
       "capacityUom": "Capacity UOM",
       "uphValue": "UPH",
@@ -1149,7 +1156,12 @@
       "comments": "Comments",
       "addLine": "Add Line",
       "editLine": "Edit Line",
-      "searchPlaceholder": "Search line code, line name..."
+      "searchPlaceholder": "Search line code, line name...",
+      "fieldHelp": {
+        "processCode": "Select the SMT or assembly workplace used for OEE aggregation.",
+        "resourceType": "Select whether OEE aggregates this production line as a line or cell.",
+        "parentLineCode": "A line uses its own code; a cell selects another production line as its parent."
+      }
     },
     "process": {
       "title": "Process Master",

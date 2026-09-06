@@ -25,6 +25,10 @@ function registryName(route) {
   return (route.split("/").filter(Boolean).join("__") || "root").replace(/[^a-zA-Z0-9_-]/g, "-");
 }
 
+function stripComments(source) {
+  return source.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/[^\r\n]*/g, "");
+}
+
 const failures = [];
 const registry = readFileSync(registryPath, "utf8");
 const routes = collectPages(authRoot).map((page) => ({ page, route: routeOf(page) }));
@@ -41,7 +45,7 @@ for (const { page, route } of routes) {
 }
 
 const menuSource = readFileSync(join(frontendRoot, "src", "config", "menuConfig.ts"), "utf8");
-const menuEntries = [...menuSource.matchAll(/code:\s*"([A-Z0-9_]+)"[^\n]*path:\s*"([^"]+)"/g)]
+const menuEntries = [...stripComments(menuSource).matchAll(/code:\s*"([A-Z0-9_]+)"[^\n]*path:\s*"([^"]+)"/g)]
   .map((match) => ({ code: match[1], route: match[2] }));
 const pageRouteSet = new Set(routes.map(({ route }) => route));
 const backendRegistries = [

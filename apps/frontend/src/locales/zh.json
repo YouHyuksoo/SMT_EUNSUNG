@@ -1140,6 +1140,13 @@
       "lineCodeGroup": "线体组",
       "lineProductDivision": "产品区分",
       "lineStatus": "线体状态",
+      "processCode": "作业区域",
+      "resourceType": "OEE类型",
+      "parentLineCode": "上级产线代码",
+      "processSmt": "SMT作业区",
+      "processAssy": "组装作业区",
+      "resourceLine": "产线",
+      "resourceCell": "单元",
       "capacity": "容量",
       "capacityUom": "容量单位",
       "uphValue": "UPH",
@@ -1149,7 +1156,12 @@
       "comments": "说明",
       "addLine": "添加线体",
       "editLine": "修改线体",
-      "searchPlaceholder": "搜索线体代码、线体名称..."
+      "searchPlaceholder": "搜索线体代码、线体名称...",
+      "fieldHelp": {
+        "processCode": "选择用于OEE汇总的SMT或组装作业区域。",
+        "resourceType": "选择按产线或单元进行OEE汇总。",
+        "parentLineCode": "产线使用自身代码；单元需选择另一条生产线作为上级。"
+      }
     },
     "process": {
       "title": "工序主数据",

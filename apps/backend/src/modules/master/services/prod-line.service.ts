@@ -3,7 +3,7 @@
  * @description 생산라인마스터(IP_PRODUCT_LINE) 비즈니스 로직 서비스 - TypeORM
  */
 
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ProdLineMaster } from '../../../entities/prod-line-master.entity';
@@ -20,6 +20,27 @@ export class ProdLineService {
     return {
       ...(organizationId != null ? { organizationId } : {}),
     };
+  }
+
+  private async normalizeParentLine(
+    lineCode: string,
+    resourceType: string | null | undefined,
+    parentLineCode: string | null | undefined,
+    organizationId?: number,
+  ): Promise<string | null> {
+    if (resourceType === 'LINE') return lineCode;
+    if (resourceType !== 'CELL') return parentLineCode?.trim() || null;
+
+    const parent = parentLineCode?.trim();
+    if (!parent) throw new BadRequestException('CELL 유형은 상위라인코드가 필요합니다.');
+    if (parent === lineCode) throw new BadRequestException('CELL 유형은 자기 자신을 상위라인으로 지정할 수 없습니다.');
+    if (organizationId == null) throw new BadRequestException('조직 정보가 필요합니다.');
+
+    const existingParent = await this.prodLineRepository.findOne({
+      where: { lineCode: parent, organizationId },
+    });
+    if (!existingParent) throw new BadRequestException(`같은 조직의 상위라인을 찾을 수 없습니다: ${parent}`);
+    return parent;
   }
 
   async findAll(query: ProdLineQueryDto, organizationId?: number) {
@@ -74,6 +95,13 @@ export class ProdLineService {
     });
     if (existing) throw new ConflictException(`이미 존재하는 라인 코드입니다: ${dto.lineCode}`);
 
+    const resourceType = dto.resourceType ?? 'LINE';
+    const parentLineCode = await this.normalizeParentLine(
+      dto.lineCode,
+      resourceType,
+      dto.parentLineCode,
+      organizationId,
+    );
     const prodLine = this.prodLineRepository.create({
       lineCode: dto.lineCode,
       lineName: dto.lineName,
@@ -81,6 +109,9 @@ export class ProdLineService {
       lineProductDivision: dto.lineProductDivision ?? 'FIXED',
       lineCodeGroup: dto.lineCodeGroup ?? null,
       lineStatus: dto.lineStatus ?? 'N',
+      processCode: dto.processCode ?? 'SMT',
+      resourceType,
+      parentLineCode,
       capacity: dto.capacity ?? null,
       capacityUom: dto.capacityUom ?? null,
       uphValue: dto.uphValue ?? null,
@@ -95,7 +126,10 @@ export class ProdLineService {
   }
 
   async update(lineCode: string, dto: UpdateProdLineDto, organizationId?: number) {
-    await this.findById(lineCode, organizationId);
+    const existing = await this.findById(lineCode, organizationId);
+    const oeeFieldsChanged = dto.processCode !== undefined
+      || dto.resourceType !== undefined
+      || dto.parentLineCode !== undefined;
     const updateData: Partial<ProdLineMaster> = {
       ...(dto.lineName !== undefined ? { lineName: dto.lineName } : {}),
       ...(dto.lineDivision !== undefined ? { lineDivision: dto.lineDivision } : {}),
@@ -110,6 +144,17 @@ export class ProdLineService {
       ...(dto.activeYn !== undefined ? { activeYn: dto.activeYn } : {}),
       ...(dto.comments !== undefined ? { comments: dto.comments } : {}),
     };
+    if (oeeFieldsChanged) {
+      const processCode = dto.processCode ?? existing.processCode;
+      const resourceType = dto.resourceType ?? existing.resourceType;
+      const parentLineCode = await this.normalizeParentLine(
+        lineCode,
+        resourceType,
+        dto.parentLineCode ?? existing.parentLineCode,
+        organizationId,
+      );
+      Object.assign(updateData, { processCode, resourceType, parentLineCode });
+    }
     await this.prodLineRepository.update({ lineCode, ...this.tenantWhere(organizationId) }, updateData);
     return this.findById(lineCode, organizationId);
   }

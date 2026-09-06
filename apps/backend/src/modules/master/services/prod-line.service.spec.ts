@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { createMock, DeepMocked } from '@golevelup/ts-jest';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { ConflictException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { ProdLineMaster } from '../../../entities/prod-line-master.entity';
 import { MockLoggerService } from '@test/mock-logger.service';
@@ -64,7 +64,89 @@ describe('ProdLineService', () => {
     expect(mockRepo.create).toHaveBeenCalledWith(expect.objectContaining({
       lineCode: 'L01',
       organizationId: 1,
+      processCode: 'SMT',
+      resourceType: 'LINE',
+      parentLineCode: 'L01',
     }));
+  });
+
+  it('normalizes a LINE parent to its own line code', async () => {
+    mockRepo.findOne.mockResolvedValue(null);
+    mockRepo.create.mockImplementation((value) => value as ProdLineMaster);
+    mockRepo.save.mockImplementation(async (value) => value as ProdLineMaster);
+
+    await target.create({
+      lineCode: 'L01', lineName: 'Line 1', lineDivision: 'L',
+      processCode: 'ASSY', resourceType: 'LINE', parentLineCode: 'L99',
+    }, 1);
+
+    expect(mockRepo.create).toHaveBeenCalledWith(expect.objectContaining({
+      processCode: 'ASSY', resourceType: 'LINE', parentLineCode: 'L01',
+    }));
+  });
+
+  it('accepts a tenant-scoped different parent for CELL', async () => {
+    mockRepo.findOne
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({ lineCode: 'L02', organizationId: 1 } as ProdLineMaster);
+    mockRepo.create.mockImplementation((value) => value as ProdLineMaster);
+    mockRepo.save.mockImplementation(async (value) => value as ProdLineMaster);
+
+    await target.create({
+      lineCode: 'C01', lineName: 'Cell 1', lineDivision: 'L',
+      resourceType: 'CELL', parentLineCode: 'L02',
+    }, 1);
+
+    expect(mockRepo.findOne).toHaveBeenNthCalledWith(2, {
+      where: { lineCode: 'L02', organizationId: 1 },
+    });
+    expect(mockRepo.create).toHaveBeenCalledWith(expect.objectContaining({
+      resourceType: 'CELL', parentLineCode: 'L02',
+    }));
+  });
+
+  it.each([
+    ['missing', undefined],
+    ['self', 'C01'],
+  ])('rejects a %s CELL parent', async (_caseName, parentLineCode) => {
+    mockRepo.findOne.mockResolvedValueOnce(null);
+
+    await expect(target.create({
+      lineCode: 'C01', lineName: 'Cell 1', lineDivision: 'L',
+      resourceType: 'CELL', parentLineCode,
+    }, 1)).rejects.toThrow(BadRequestException);
+  });
+
+  it('rejects a CELL parent missing from the same organization', async () => {
+    mockRepo.findOne.mockResolvedValueOnce(null).mockResolvedValueOnce(null);
+
+    await expect(target.create({
+      lineCode: 'C01', lineName: 'Cell 1', lineDivision: 'L',
+      resourceType: 'CELL', parentLineCode: 'L02',
+    }, 1)).rejects.toThrow(BadRequestException);
+
+    expect(mockRepo.findOne).toHaveBeenNthCalledWith(2, {
+      where: { lineCode: 'L02', organizationId: 1 },
+    });
+  });
+
+  it('validates a CELL parent when a partial update changes the resource type', async () => {
+    const existing = {
+      lineCode: 'C01', lineName: 'Cell 1', organizationId: 1,
+      processCode: 'SMT', resourceType: 'LINE', parentLineCode: 'C01',
+    } as ProdLineMaster;
+    mockRepo.findOne
+      .mockResolvedValueOnce(existing)
+      .mockResolvedValueOnce({ lineCode: 'L02', organizationId: 1 } as ProdLineMaster)
+      .mockResolvedValueOnce({ ...existing, resourceType: 'CELL', parentLineCode: 'L02' });
+    mockRepo.update.mockResolvedValue({ affected: 1 } as never);
+
+    await target.update('C01', { resourceType: 'CELL', parentLineCode: 'L02' }, 1);
+
+    expect(mockRepo.update).toHaveBeenCalledWith(
+      { lineCode: 'C01', organizationId: 1 },
+      expect.objectContaining({ processCode: 'SMT', resourceType: 'CELL', parentLineCode: 'L02' }),
+    );
   });
 
   it('throws ConflictException when line code exists in tenant', async () => {

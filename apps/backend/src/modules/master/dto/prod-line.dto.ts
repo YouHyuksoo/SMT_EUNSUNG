@@ -16,6 +16,9 @@ import {
 } from '@smt/shared';
 import { PaginationQueryDto } from '../../../common/dto/base-query.dto';
 
+export const PROD_LINE_PROCESS_CODES = ['SMT', 'ASSY'] as const;
+export const PROD_LINE_RESOURCE_TYPES = ['LINE', 'CELL'] as const;
+
 export class CreateProdLineDto {
   @ApiProperty({ description: '라인코드', example: '38' })
   @IsString()
@@ -51,6 +54,24 @@ export class CreateProdLineDto {
   @IsString()
   @IsIn([...LINE_STATUS_VALUES])
   lineStatus?: string;
+
+  @ApiPropertyOptional({ description: '작업장', enum: PROD_LINE_PROCESS_CODES, default: 'SMT' })
+  @IsOptional()
+  @IsString()
+  @IsIn([...PROD_LINE_PROCESS_CODES])
+  processCode?: string;
+
+  @ApiPropertyOptional({ description: 'OEE유형', enum: PROD_LINE_RESOURCE_TYPES, default: 'LINE' })
+  @IsOptional()
+  @IsString()
+  @IsIn([...PROD_LINE_RESOURCE_TYPES])
+  resourceType?: string;
+
+  @ApiPropertyOptional({ description: '상위라인코드' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  parentLineCode?: string;
 
   @ApiPropertyOptional({ description: '용량' })
   @IsOptional()

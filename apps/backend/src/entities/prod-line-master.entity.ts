@@ -44,6 +44,15 @@ export class ProdLineMaster {
   @Column({ type: 'varchar2', name: 'LINE_STATUS', length: 10, nullable: true })
   lineStatus: string | null;
 
+  @Column({ type: 'varchar2', name: 'PROCESS_CODE', length: 20, nullable: true })
+  processCode: string | null;
+
+  @Column({ type: 'varchar2', name: 'RESOURCE_TYPE', length: 20, nullable: true })
+  resourceType: string | null;
+
+  @Column({ type: 'varchar2', name: 'PARENT_LINE_CODE', length: 20, nullable: true })
+  parentLineCode: string | null;
+
   @Column({ type: 'number', name: 'CAPACITY', nullable: true })
   capacity: number | null;
 

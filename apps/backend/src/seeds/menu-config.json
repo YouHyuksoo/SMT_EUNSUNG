@@ -37,8 +37,7 @@
       "OEE_EQUIP_OPS_STATUS",
       "OEE_MST_STD_TIME",
       "OEE_MST_IDLE_REASON",
-      "OEE_MST_EQUIP_REASON",
-      "OEE_MST_RESOURCE"
+      "OEE_MST_EQUIP_REASON"
     ],
     "MATERIAL": [],
     "PROCESS_TRANSACTION": [],
