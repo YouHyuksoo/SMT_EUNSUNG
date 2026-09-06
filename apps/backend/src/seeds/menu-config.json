@@ -17,6 +17,9 @@
       "MST_PARTNER",
       "MST_CUSTOMER",
       "EQUIP_MASTER",
+      "OEE_MST_STD_TIME",
+      "OEE_MST_IDLE_REASON",
+      "OEE_MST_EQUIP_REASON",
       "MST_PROCESS",
       "MST_PROD_LINE",
       "MST_ROUTING",
@@ -34,10 +37,7 @@
       "OEE_MULTI_ENTRY",
       "OEE_OVERALL_STATUS",
       "OEE_EQUIP_WORK_RESULT",
-      "OEE_EQUIP_OPS_STATUS",
-      "OEE_MST_STD_TIME",
-      "OEE_MST_IDLE_REASON",
-      "OEE_MST_EQUIP_REASON"
+      "OEE_EQUIP_OPS_STATUS"
     ],
     "MATERIAL": [],
     "PROCESS_TRANSACTION": [],

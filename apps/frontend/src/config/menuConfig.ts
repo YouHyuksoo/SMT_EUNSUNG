@@ -39,6 +39,9 @@ export const menuConfig: MenuConfigItem[] = [
       { code: "MST_PARTNER", labelKey: "menu.master.partner", path: "/master/partner" },
       { code: "MST_CUSTOMER", labelKey: "menu.master.customer", path: "/master/customer" },
       { code: "EQUIP_MASTER", labelKey: "menu.equipment.master", path: "/master/equip" },
+      { code: "OEE_MST_STD_TIME", labelKey: "menu.oee.standardTime", path: "/oee/master/standard-time" },
+      { code: "OEE_MST_IDLE_REASON", labelKey: "menu.oee.idleReason", path: "/oee/master/idle-reason" },
+      { code: "OEE_MST_EQUIP_REASON", labelKey: "menu.oee.equipReason", path: "/oee/master/equip-reason-map" },
       { code: "MST_PROCESS", labelKey: "menu.master.process", path: "/master/process" },
       { code: "MST_PROD_LINE", labelKey: "menu.master.prodLine", path: "/master/prod-line" },
       { code: "MST_ROUTING", labelKey: "menu.master.routing", path: "/master/routing" },
@@ -65,9 +68,6 @@ export const menuConfig: MenuConfigItem[] = [
       // 미사용(2026-08-27): 설비별 운영 현황 및 분석 → 설비 운영 현황(OEE_EQUIP_OPS_STATUS)으로 대체.
       // 화면은 app/(authenticated)/oee/equip-ops-analysis 에 남아 있어 URL 직접 접근은 된다.
       // 되살리려면 OEE_EQUIP_OPS_ANALYSIS 항목을 이 자리에 다시 넣고 gen:menu 를 실행한다.
-      { code: "OEE_MST_STD_TIME", labelKey: "menu.oee.standardTime", path: "/oee/master/standard-time" },
-      { code: "OEE_MST_IDLE_REASON", labelKey: "menu.oee.idleReason", path: "/oee/master/idle-reason" },
-      { code: "OEE_MST_EQUIP_REASON", labelKey: "menu.oee.equipReason", path: "/oee/master/equip-reason-map" },
       // 숨김(2026-09-06): 생산라인관리에서 OEE 속성을 통합 관리한다.
       // 추후 삭제 전까지 직접 URL은 유지한다: { code: "OEE_MST_RESOURCE", labelKey: "menu.oee.resource", path: "/oee/master/resource" }
     ],
