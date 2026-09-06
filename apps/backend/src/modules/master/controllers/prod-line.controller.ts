@@ -3,14 +3,16 @@
  * @description 생산라인마스터 CRUD API 컨트롤러
  */
 
-import { Controller, Get, Post, Put, Delete, Body, Param, Query, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, Query, HttpCode, HttpStatus, UseGuards } from '@nestjs/common';
 import { OrganizationId } from '../../../common/decorators/tenant.decorator';
+import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { ProdLineService } from '../services/prod-line.service';
 import { CreateProdLineDto, UpdateProdLineDto, ProdLineQueryDto } from '../dto/prod-line.dto';
 import { ResponseUtil } from '../../../common/dto/response.dto';
 
 @ApiTags('기준정보 - 생산라인마스터')
+@UseGuards(JwtAuthGuard)
 @Controller('master/prod-lines')
 export class ProdLineController {
   constructor(private readonly prodLineService: ProdLineService) {}
