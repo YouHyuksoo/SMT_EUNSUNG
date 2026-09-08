@@ -82,12 +82,12 @@ export default function DailyMetrics({ downMinutes, stopCount, scopeLabel }: Pro
 
         {/* 실측 2종 */}
         <div className="grid grid-cols-2 gap-2 border-t border-border pt-3">
-          <div className="rounded border border-border p-3 text-center">
+          <div className="rounded border border-border px-3 py-2 text-center">
             <div className="text-[11px] text-text-muted">당일 비가동</div>
             <div className="text-xl font-bold text-red-500 font-mono tabular-nums">{downMinutes.toLocaleString()}</div>
             <div className="text-[11px] text-text-muted">분</div>
           </div>
-          <div className="rounded border border-border p-3 text-center">
+          <div className="rounded border border-border px-3 py-2 text-center">
             <div className="text-[11px] text-text-muted">당일 정지</div>
             <div className="text-xl font-bold text-text font-mono tabular-nums">{stopCount.toLocaleString()}</div>
             <div className="text-[11px] text-text-muted">회</div>
