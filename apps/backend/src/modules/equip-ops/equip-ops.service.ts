@@ -111,6 +111,7 @@ export class EquipOpsService {
                 WHERE m.MACHINE_CODE=d.MACHINE_CODE AND m.ORGANIZATION_ID=d.ORGANIZATION_ID) AS "machineName",
               TO_CHAR(d.START_TIME,'MM-DD HH24:MI') AS "startTime",
               TO_CHAR(d.END_TIME,'MM-DD HH24:MI') AS "endTime",
+              NVL(d.CAUSE_YN,'N') AS "causeYn",
               ROUND((NVL(d.END_TIME, SYSDATE) - d.START_TIME) * 24 * 60) AS "durationMin"
          FROM IP_EQUIP_DOWNTIME_RESULT d
         WHERE d.ORGANIZATION_ID = ${ORG}

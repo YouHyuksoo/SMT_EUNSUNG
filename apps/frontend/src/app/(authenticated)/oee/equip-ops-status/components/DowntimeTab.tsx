@@ -13,7 +13,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Barcode, Factory, PauseCircle, PlayCircle, Wrench } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Card, CardContent, Input, Select } from '@/components/ui';
-import { ElapsedTime, parseLocalTime } from '@/components/shared/EquipDowntimePanel';
 import api from '@/services/api';
 import DailyMetrics from './DailyMetrics';
 import type { OpsLine, OpsMachine, RecentRow, RefreshInterval } from '../types';
@@ -39,9 +38,10 @@ export default function DowntimeTab({ machines, lines, refreshSec, onChanged }: 
   const [reasonCode, setReasonCode] = useState('');
   const [summary, setSummary] = useState({ downMinutes: 0, stopCount: 0 });
   const [recent, setRecent] = useState<{ list: RecentRow[]; totalCount: number; totalMinutes: number }>({ list: [], totalCount: 0, totalMinutes: 0 });
-  const [openStarts, setOpenStarts] = useState<Record<string, string | null>>({});
-  const [clockSkew, setClockSkew] = useState(0);
   const [busy, setBusy] = useState(false);
+
+  // 라인 정지의 원인설비(복수 가능). 대상이 바뀌면 비운다 — 다른 라인의 설비가 남으면 안 된다.
+  const [causeCodes, setCauseCodes] = useState<Set<string>>(new Set());
 
   const selectedLine = lines.find((l) => l.lineCode === lineCode) ?? null;
   const selectedMachine = machines.find((m) => m.machineCode === machineCode) ?? null;
@@ -57,6 +57,18 @@ export default function DowntimeTab({ machines, lines, refreshSec, onChanged }: 
   const willEnd = downTargets.length > 0;
   const actionTargets = willEnd ? downTargets : targets.filter((m) => m.openDtSeq == null);
 
+  // 대상 선택을 바꾸는 모든 경로에서 원인설비를 비운다 — 다른 라인의 설비가 남으면 안 된다
+  const selectMode = (m: ScopeMode) => { setMode(m); setLineCode(''); setMachineCode(''); setCauseCodes(new Set()); };
+  const selectLine = (code: string) => { setLineCode(code); setCauseCodes(new Set()); };
+  const selectMachine = (code: string) => { setMachineCode(code); setCauseCodes(new Set()); };
+
+  const toggleCause = (code: string) =>
+    setCauseCodes((prev) => {
+      const next = new Set(prev);
+      if (next.has(code)) next.delete(code); else next.add(code);
+      return next;
+    });
+
   const scopeLabel = mode === 'LINE'
     ? (selectedLine ? `${selectedLine.lineCode} · ${selectedLine.lineName ?? ''}` : null)
     : (selectedMachine ? `${selectedMachine.machineCode} · ${selectedMachine.machineName ?? ''}` : null);
@@ -71,7 +83,6 @@ export default function DowntimeTab({ machines, lines, refreshSec, onChanged }: 
     if (!scopeParams) {
       setSummary({ downMinutes: 0, stopCount: 0 });
       setRecent({ list: [], totalCount: 0, totalMinutes: 0 });
-      setOpenStarts({});
       return;
     }
     try {
@@ -94,28 +105,6 @@ export default function DowntimeTab({ machines, lines, refreshSec, onChanged }: 
       .catch(() => setReasons([]));
   }, [reasonSeed]);
 
-  // 진행중 비가동의 시작시각(초 단위) — 경과 타이머용. DB 시각 기준이라 오차도 함께 받는다
-  const openCodes = downTargets.map((m) => m.machineCode).join(',');
-  useEffect(() => {
-    if (!openCodes) { setOpenStarts({}); return; }
-    const codes = openCodes.split(',');
-    Promise.all(codes.map((c) => api.get('/oee/work-result/downtimes', { params: { machineCode: c } })))
-      .then((res) => {
-        const next: Record<string, string | null> = {};
-        let skew = 0;
-        res.forEach((r, i) => {
-          const list = (r.data?.data?.list ?? []) as Array<{ endTime: string | null; startAt: string | null }>;
-          next[codes[i]] = list.find((d) => !d.endTime)?.startAt ?? null;
-          const sn: string | undefined = r.data?.data?.serverNow;
-          const t = sn ? parseLocalTime(sn) : null;
-          if (t != null) skew = t - Date.now();
-        });
-        setOpenStarts(next);
-        setClockSkew(skew);
-      })
-      .catch(() => setOpenStarts({}));
-  }, [openCodes]);
-
   // 자동갱신 — 페이지 헤더의 주기 설정을 그대로 따른다
   useEffect(() => {
     if (!refreshSec) return;
@@ -130,14 +119,14 @@ export default function DowntimeTab({ machines, lines, refreshSec, onChanged }: 
     if (mode === 'LINE') {
       const line = lines.find((l) => l.lineCode.toUpperCase() === code);
       if (!line) { toast.error(`라인코드 '${raw.trim()}'를 찾을 수 없습니다`); return; }
-      setLineCode(line.lineCode);
+      selectLine(line.lineCode);
       setScan('');
       toast.success(`${line.lineCode} · ${line.lineName ?? ''} 선택`);
       return;
     }
     const machine = machines.find((m) => m.machineCode.toUpperCase() === code);
     if (!machine) { toast.error(`설비코드 '${raw.trim()}'를 찾을 수 없습니다`); return; }
-    setMachineCode(machine.machineCode);
+    selectMachine(machine.machineCode);
     setScan('');
     toast.success(`${machine.machineCode} · ${machine.machineName ?? ''} 선택`);
   }
@@ -150,12 +139,17 @@ export default function DowntimeTab({ machines, lines, refreshSec, onChanged }: 
       const res = await api.post('/oee/work-result/downtimes/bulk', {
         action: willEnd ? 'END' : 'START',
         machineCodes: actionTargets.map((m) => m.machineCode),
+        // 원인설비는 비가동 시작에서만 의미가 있다. 실제로 처리되는 대상만 추린다.
+        causeMachineCodes: willEnd
+          ? undefined
+          : actionTargets.filter((m) => causeCodes.has(m.machineCode)).map((m) => m.machineCode),
         reasonCode: reasonCode || undefined,
       });
       const d = res.data?.data ?? {};
       const verb = willEnd ? '가동 전환' : '비가동 시작';
       toast.success(d.skipped ? `${d.affected}대 ${verb} (${d.skipped}대는 이미 해당 상태)` : `${d.affected}대 ${verb}`);
       setReasonCode('');
+      setCauseCodes(new Set());
       await onChanged();
       await loadScope();
     } catch (e: unknown) {
@@ -171,7 +165,7 @@ export default function DowntimeTab({ machines, lines, refreshSec, onChanged }: 
         <div className="flex gap-2">
           {([['LINE', '라인', Factory], ['MACHINE', '설비', Wrench]] as const).map(([key, label, Icon]) => (
             <button key={key} type="button"
-              onClick={() => { setMode(key); setLineCode(''); setMachineCode(''); }}
+              onClick={() => selectMode(key)}
               className={`w-24 h-[68px] rounded-lg border flex flex-col items-center justify-center gap-1 text-sm font-semibold transition-colors ${
                 mode === key ? 'bg-primary text-white border-primary' : 'border-border bg-background text-text hover:border-primary/60'
               }`}>
@@ -185,14 +179,14 @@ export default function DowntimeTab({ machines, lines, refreshSec, onChanged }: 
             <Select
               options={[{ value: '', label: '라인을 선택하세요' },
                 ...lines.map((l) => ({ value: l.lineCode, label: `${l.lineCode} · ${l.lineName ?? ''} · ${l.lineDivision ?? '-'} (${l.machineCount}대)` }))]}
-              value={lineCode} onChange={setLineCode} fullWidth />
+              value={lineCode} onChange={selectLine} fullWidth />
           </label>
         ) : (
           <label className="text-xs text-text-muted flex flex-col gap-1 w-72">설비 선택 (설비코드 · 설비명 · 유형)
             <Select
               options={[{ value: '', label: '설비를 선택하세요' },
                 ...machines.map((m) => ({ value: m.machineCode, label: `${m.machineCode} · ${m.machineName ?? ''} · ${m.machineTypeName ?? m.machineType ?? '-'}` }))]}
-              value={machineCode} onChange={setMachineCode} fullWidth />
+              value={machineCode} onChange={selectMachine} fullWidth />
           </label>
         )}
 
@@ -207,48 +201,58 @@ export default function DowntimeTab({ machines, lines, refreshSec, onChanged }: 
       </div>
 
       {/* 본문 3분할 */}
-      <div className="flex-1 min-h-0 grid grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)_minmax(0,1.2fr)] gap-3 overflow-hidden">
+      <div className="flex-1 min-h-0 grid grid-cols-[minmax(0,0.9fr)_minmax(0,1.5fr)_minmax(0,1.2fr)] gap-3 overflow-hidden">
         {/* 좌 — 당일 지표 */}
         <DailyMetrics downMinutes={summary.downMinutes} stopCount={summary.stopCount} scopeLabel={scopeLabel} />
 
-        {/* 중앙 — 현재 상태 + 처리 */}
+        {/* 중앙 — 비가동 대상 설비 + 처리 */}
         <Card className="h-full overflow-hidden" padding="none">
           <CardContent className="h-full p-4 overflow-y-auto flex flex-col gap-3">
             <div className="flex items-baseline justify-between flex-shrink-0">
-              <span className="text-sm font-semibold text-text">현재 상태</span>
+              <span className="text-sm font-semibold text-text">비가동 대상 설비</span>
               <span className="text-[11px] text-text-muted">
                 대상 {targets.length}대 · 비가동 <span className={downTargets.length ? 'text-red-500 font-semibold' : ''}>{downTargets.length}</span>대
+                {!willEnd && causeCodes.size > 0 && <> · 원인설비 <span className="text-amber-600 font-semibold">{causeCodes.size}</span>대</>}
               </span>
             </div>
 
             {/* 대상 설비 목록 */}
             <div className="border border-border rounded overflow-hidden flex-shrink-0">
-              <table className="w-full text-xs">
+              <table className="w-full table-fixed text-xs">
                 <thead className="bg-surface text-text-muted">
-                  <tr><th className="p-1.5 text-center font-medium">설비코드</th><th className="p-1.5 text-center font-medium">설비명</th><th className="p-1.5 text-center font-medium">유형</th><th className="p-1.5 text-center font-medium w-28">상태</th></tr>
+                  <tr><th className="py-1.5 px-0.5 text-center font-medium w-8">원인</th><th className="py-1.5 px-0.5 text-center font-medium w-[76px]">설비코드</th><th className="py-1.5 px-1 text-center font-medium">설비명</th><th className="py-1.5 px-0 text-center font-medium w-12">유형</th><th className="py-1.5 pl-0 pr-0.5 text-center font-medium w-16">상태</th></tr>
                 </thead>
                 <tbody>
                   {targets.map((m) => {
                     const down = m.openDtSeq != null;
                     return (
                       <tr key={m.machineCode} className="border-t border-border">
-                        <td className="p-1.5 text-center font-mono">{m.machineCode}</td>
-                        <td className="p-1.5 text-center">{m.machineName ?? '-'}</td>
-                        <td className="p-1.5 text-center">{m.machineTypeName ?? m.machineType ?? '-'}</td>
-                        <td className="p-1.5 text-center">
+                        <td className="py-1.5 px-0.5 text-center">
+                          <input
+                            type="checkbox"
+                            checked={causeCodes.has(m.machineCode)}
+                            onChange={() => toggleCause(m.machineCode)}
+                            disabled={willEnd || down}
+                            title={willEnd ? '종료 처리에는 원인설비를 지정하지 않습니다' : down ? '이미 비가동 중인 설비입니다' : '이 설비를 라인 정지의 원인으로 표시'}
+                            aria-label={`${m.machineCode} 원인설비`}
+                            className="w-3.5 h-3.5 cursor-pointer rounded border-border disabled:cursor-not-allowed disabled:opacity-40"
+                          />
+                        </td>
+                        <td className="py-1.5 px-0.5 text-center font-mono truncate">{m.machineCode}</td>
+                        <td className="py-1.5 px-1 text-center truncate">{m.machineName ?? '-'}</td>
+                        <td className="py-1.5 px-0 text-center truncate">{m.machineTypeName ?? m.machineType ?? '-'}</td>
+                        <td className="py-1.5 pl-0 pr-0.5 text-center">
                           {down ? (
-                            <span className="px-2 py-0.5 rounded bg-red-500 text-white">
-                              <span className="font-mono tabular-nums"><ElapsedTime startAt={openStarts[m.machineCode] ?? null} skewMs={clockSkew} /></span>
-                            </span>
+                            <span className="px-1.5 py-0.5 rounded bg-red-500 text-white">비가동</span>
                           ) : (
-                            <span className="px-2 py-0.5 rounded bg-emerald-500 text-white">가동</span>
+                            <span className="px-1.5 py-0.5 rounded bg-emerald-500 text-white">가동</span>
                           )}
                         </td>
                       </tr>
                     );
                   })}
                   {!targets.length && (
-                    <tr><td colSpan={4} className="p-6 text-center text-text-muted">
+                    <tr><td colSpan={5} className="p-6 text-center text-text-muted">
                       {scopeParams
                         ? (mode === 'LINE' ? '이 라인에 배정된 설비가 없습니다' : '설비를 찾을 수 없습니다')
                         : (mode === 'LINE' ? '라인을 선택하세요' : '설비를 선택하세요')}
@@ -313,14 +317,19 @@ export default function DowntimeTab({ machines, lines, refreshSec, onChanged }: 
                 <tbody>
                   {recent.list.map((d) => (
                     <tr key={d.dtSeq} className="border-t border-border">
-                      <td className="p-1.5 text-center font-mono">{d.machineCode}</td>
+                      <td className="p-1.5 text-center font-mono">
+                        {d.machineCode}
+                        {d.causeYn === 'Y' && (
+                          <span className="ml-1 px-1 py-0.5 rounded bg-amber-500/15 text-amber-600 text-[10px] font-sans" title="라인 정지의 원인설비">원인</span>
+                        )}
+                      </td>
                       <td className="p-1.5 text-center font-mono">{d.startTime ?? '-'}</td>
                       <td className="p-1.5 text-center font-mono">{d.endTime ?? <span className="text-red-500">진행중</span>}</td>
                       <td className="p-1.5 text-center font-mono tabular-nums">{d.durationMin.toLocaleString()}분</td>
                     </tr>
                   ))}
                   {!recent.list.length && (
-                    <tr><td colSpan={4} className="p-6 text-center text-text-muted">
+                    <tr><td colSpan={5} className="p-6 text-center text-text-muted">
                       {scopeParams ? '이전 30일 비가동 이력이 없습니다' : '대상을 선택하세요'}
                     </td></tr>
                   )}

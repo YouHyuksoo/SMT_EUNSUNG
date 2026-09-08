@@ -510,6 +510,8 @@ export class WorkResultService {
     const user = userId ?? dto.userId ?? DEFAULT_USER;
     const isEnd = dto.action === 'END';
     if (isEnd && !dto.reasonCode) throw new BadRequestException('종료 시 비가동 사유를 선택하세요');
+    // 원인설비는 START에서만 의미가 있다. 종료는 이미 시작된 행을 닫을 뿐이라 무시한다.
+    const causeSet = new Set(isEnd ? [] : (dto.causeMachineCodes ?? []));
 
     return this.repo.manager.transaction(async (mgr) => {
       // 대상 설비 확정 — 설비 직접 지정이 우선, 없으면 라인 배정 설비
@@ -560,9 +562,9 @@ export class WorkResultService {
           )) as Array<{ ws: string | null }>;
           await mgr.query(
             `INSERT INTO IP_EQUIP_DOWNTIME_RESULT
-               (RUN_NO, DT_SEQ, ORGANIZATION_ID, MACHINE_CODE, WORKSTAGE_CODE, REASON_CODE, START_TIME, MEMO, WORKER, ENTER_BY, ENTER_DATE)
-             VALUES (NULL,:1,:2,:3,:4,:5,SYSDATE,:6,:7,:8,SYSDATE)`,
-            [Number(nx[0]?.seq), organization, machineCode, ws[0]?.ws ?? null, dto.reasonCode ?? null, dto.memo ?? null, dto.worker ?? null, user],
+               (RUN_NO, DT_SEQ, ORGANIZATION_ID, MACHINE_CODE, WORKSTAGE_CODE, REASON_CODE, START_TIME, MEMO, WORKER, CAUSE_YN, ENTER_BY, ENTER_DATE)
+             VALUES (NULL,:1,:2,:3,:4,:5,SYSDATE,:6,:7,:8,:9,SYSDATE)`,
+            [Number(nx[0]?.seq), organization, machineCode, ws[0]?.ws ?? null, dto.reasonCode ?? null, dto.memo ?? null, dto.worker ?? null, causeSet.has(machineCode) ? 'Y' : 'N', user],
           );
         }
         acted.push(machineCode);

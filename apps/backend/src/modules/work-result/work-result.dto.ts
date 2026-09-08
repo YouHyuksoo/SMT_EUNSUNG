@@ -36,6 +36,9 @@ export class DowntimeBulkDto {
   @IsIn(['START', 'END']) action: string;
   @IsOptional() @IsString() lineCode?: string;   // 라인 전체 대상
   @IsOptional() @IsArray() @IsString({ each: true }) machineCodes?: string[]; // 설비 직접 지정
+  // 라인 정지의 원인설비. 여기 담긴 설비의 비가동 행에만 CAUSE_YN='Y'가 붙는다.
+  // 원인은 여러 대일 수 있다. START에서만 의미가 있다.
+  @IsOptional() @IsArray() @IsString({ each: true }) causeMachineCodes?: string[];
   @IsOptional() @IsString() reasonCode?: string; // 종료 시 필수, 시작 시 선택
   @IsOptional() @IsString() memo?: string;
   @IsOptional() @IsString() worker?: string;
