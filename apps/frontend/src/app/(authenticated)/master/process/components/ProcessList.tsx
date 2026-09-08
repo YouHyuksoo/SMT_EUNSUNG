@@ -45,7 +45,6 @@ export default function ProcessList({
   const { t } = useTranslation();
 
   const codeGroupOptions = useComCodeOptions("WORKSTAGE CODE GROUP");
-  const lineCodeOptions = useComCodeOptions("LINE CODE");
 
   const columns = useMemo<ColumnDef<Process>[]>(
     () => [
@@ -115,22 +114,6 @@ export default function ProcessList({
         },
       },
       {
-        accessorKey: "lineCode",
-        header: t("master.process.lineCode"),
-        size: 80,
-        meta: {
-          filterType: "multi" as const,
-          filterOptions: lineCodeOptions,
-        },
-        cell: ({ getValue }) => (getValue() as string) || "-",
-      },
-      {
-        accessorKey: "appliedLineCodes",
-        header: "적용라인",
-        size: 140,
-        cell: ({ row }) => <div className="flex flex-wrap gap-1">{(row.original.appliedLineCodes ?? []).map((code) => <span key={code} className="px-1.5 py-0.5 rounded bg-primary/10 text-primary text-xs">{code}</span>)}</div>,
-      },
-      {
         accessorKey: "startYn",
         header: () => (
           <StatusHeaderHelp
@@ -189,7 +172,7 @@ export default function ProcessList({
         meta: { align: "right" as const },
       },
     ],
-    [t, equipCounts, onEdit, onDelete, codeGroupOptions, lineCodeOptions],
+    [t, equipCounts, onEdit, onDelete, codeGroupOptions],
   );
 
   return (

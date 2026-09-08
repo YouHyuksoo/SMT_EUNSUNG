@@ -470,14 +470,6 @@ export default function ProcessPage() {
                   onChange={(v) => setField("workstageStatus", v)}
                 />
                 <FieldCodeSelect
-                  field="lineCode"
-                  groupCode="LINE CODE"
-                  label={t("master.process.lineCode")}
-                  sentinel={{ value: WILDCARD_CODE, label: t("master.process.lineAny") }}
-                  value={formData.lineCode || ""}
-                  onChange={(v) => setField("lineCode", v)}
-                />
-                <FieldCodeSelect
                   field="departmentCode"
                   groupCode="DEPARTMENT CODE"
                   label={t("master.process.departmentCode")}

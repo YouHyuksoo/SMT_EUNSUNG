@@ -17,10 +17,14 @@ test('uploads a validated workbook with the selected department', () => {
   assert.match(modal, /\/master\/processes\/upload/);
 });
 
-test('wires the modal and renders applied line codes', () => {
+test('wires the upload modal', () => {
   assert.match(page, /ProcessUploadModal/);
   assert.match(page, /엑셀 업로드/);
-  assert.match(list, /appliedLineCodes/);
+
+  // 2026-09-08: 공정마스터 그리드에서 라인코드·적용라인 컬럼을 뺐다.
+  // 업로드 양식에는 적용라인코드가 남아 있고(위 테스트), 목록에만 표시하지 않는다.
+  assert.ok(!list.includes('appliedLineCodes'), '적용라인 컬럼이 다시 등장했습니다');
+  assert.ok(!list.includes('"lineCode"'), '라인코드 컬럼이 다시 등장했습니다');
 });
 
 test('preserves the process editor panel and equipment assignment modal composition', () => {
