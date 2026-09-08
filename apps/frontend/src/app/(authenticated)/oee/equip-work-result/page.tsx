@@ -233,7 +233,7 @@ export default function EquipWorkResultPage() {
               <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="border border-border rounded p-2 bg-background text-text text-sm h-10" />
             </label>
             <label className="text-xs text-text-muted flex flex-col gap-1 w-44">라인
-              <ProdLineSelect value={lineCode} onChange={setLineCode} fullWidth />
+              <ProdLineSelect includeAll value={lineCode} onChange={setLineCode} fullWidth />
             </label>
             <label className="text-xs text-text-muted flex flex-col gap-1">통합검색
               <div className="w-56"><Input placeholder="품번·품명·설비코드/명" value={keyword} onChange={(e) => setKeyword(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && load()} leftIcon={<Search className="w-4 h-4" />} fullWidth /></div>

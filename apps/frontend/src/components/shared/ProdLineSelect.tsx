@@ -16,19 +16,21 @@ import { useProdLineOptions } from "@/hooks/useMasterOptions";
 interface ProdLineSelectProps extends Omit<SelectProps, "options"> {
   /** 필터용: 모든 옵션 라벨 앞에 접두어 추가 + "전체" 옵션 자동 추가 */
   labelPrefix?: string;
+  /** 필터용: 접두어 없이 "전체"(값 '') 옵션만 맨 앞에 추가. 바깥에 라벨이 따로 있는 조회조건용 */
+  includeAll?: boolean;
   /** '미지정'(값 '*') 옵션을 선택 가능하도록 맨 앞에 추가 */
   includeUnassigned?: boolean;
 }
 
-export default function ProdLineSelect({ labelPrefix, includeUnassigned, ...props }: ProdLineSelectProps) {
+export default function ProdLineSelect({ labelPrefix, includeAll, includeUnassigned, ...props }: ProdLineSelectProps) {
   const { options, isLoading } = useProdLineOptions();
   const finalOptions = useMemo(() => {
     const base = includeUnassigned ? [{ value: "*", label: "미지정" }, ...options] : options;
-    if (!labelPrefix) return base;
+    if (!labelPrefix) return includeAll ? [{ value: "", label: "전체" }, ...base] : base;
     return [
       { value: "", label: `${labelPrefix}: 전체` },
       ...base.map((o) => ({ ...o, label: `${labelPrefix}: ${o.label}` })),
     ];
-  }, [options, labelPrefix, includeUnassigned]);
+  }, [options, labelPrefix, includeAll, includeUnassigned]);
   return <Select options={finalOptions} disabled={isLoading || props.disabled} {...props} />;
 }
