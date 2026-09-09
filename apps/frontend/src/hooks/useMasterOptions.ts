@@ -200,7 +200,7 @@ export function usePartOptions(itemType?: string) {
 /**
  * 작업자 목록을 SelectOption[]으로 반환
  */
-export function useWorkerOptions(dept?: string, detailed?: boolean) {
+export function useWorkerOptions(dept?: string) {
   const query = new URLSearchParams({ limit: "100" });
   if (dept) query.set("dept", dept);
   const { data, isLoading } = useApiQuery<PaginatedResponse<WorkerItem>>(
@@ -214,14 +214,18 @@ export function useWorkerOptions(dept?: string, detailed?: boolean) {
     const list = Array.isArray(raw) ? raw : raw?.data ?? [];
     return list.map((w) => ({
       value: w.workerCode ?? w.id ?? "",
-      // detailed면 "사번 · 이름 · 부서". 현장 화면처럼 동명이인을 가려야 할 때 쓴다.
-      label: detailed
-        ? [w.workerCode ?? w.id, w.workerName, w.dept].filter(Boolean).join(" · ")
-        : w.workerName,
+      label: w.workerName,
     }));
-  }, [data, detailed]);
+  }, [data]);
 
-  return { options, isLoading };
+  // 라벨만으로 부족한 화면(사번·부서까지 보여주거나 이름을 따로 저장해야 하는 곳)을 위해
+  // 원본 목록도 함께 돌려준다.
+  const workers = useMemo<WorkerItem[]>(() => {
+    const raw = data?.data;
+    return Array.isArray(raw) ? raw : raw?.data ?? [];
+  }, [data]);
+
+  return { options, workers, isLoading };
 }
 
 /**

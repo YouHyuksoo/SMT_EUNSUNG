@@ -395,6 +395,7 @@
     "oee.resource": "OEE Resource Management",
     "oee.equipWorkResult": "Equipment Work Result",
     "oee.equipOpsStatus": "Equipment Ops Status",
+    "oee.fieldOps": "Equipment Ops & Work Results",
     "oee.equipOpsAnalysis": "Equipment Ops Analysis",
     "oee.equipDowntimeMobile": "Equipment Downtime Scan (Mock)",
     "production.runCard": "Work Order Management",

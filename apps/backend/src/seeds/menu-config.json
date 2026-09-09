@@ -37,7 +37,8 @@
       "OEE_MULTI_ENTRY",
       "OEE_OVERALL_STATUS",
       "OEE_EQUIP_WORK_RESULT",
-      "OEE_EQUIP_OPS_STATUS"
+      "OEE_EQUIP_OPS_STATUS",
+      "OEE_FIELD_OPS"
     ],
     "MATERIAL": [],
     "PROCESS_TRANSACTION": [],

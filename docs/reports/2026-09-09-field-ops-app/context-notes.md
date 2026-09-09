@@ -31,3 +31,31 @@ COMPANY/PLANT_CD 기본값)으로 등록 자체는 가능해졌다.
 사번을 어디에 넣을지 갈렸다. 비가동 `WORKER`는 사번, 실적 `WORKER_NAME`은 이름으로
 정리했다 — 컬럼 이름과 내용이 어긋나지 않게 하는 쪽을 택했다. 동명이인 구분이 필요해지면
 실적 쪽에 사번 컬럼을 따로 두는 게 맞다.
+
+## 2026-09-09 구현 중
+
+### 자동 생성 파일을 손으로 고쳤다
+`menu-code-validator.ts`, `default-menu-category-layout.ts`, `seeds/menu-config.json`은
+모두 `menuConfig.ts`에서 생성된다(헤더에 AUTO-GENERATED). 셋을 직접 편집했는데,
+`pnpm --filter @eunsung/frontend gen:menu`를 돌리니 같은 결과가 나와 문제는 없었다.
+다음부터는 `menuConfig.ts`만 고치고 생성기를 돌린다.
+
+### 실적 폼 추출이 구조 테스트를 깼다
+`equip-work-result-optional-machine.eunsung.structure.test.mjs`가
+`machineCode: form.machineCode || undefined`를 page.tsx에서 찾고 있었다. 규칙이 사는
+새 파일을 보도록 고치고, 페이지가 공용 컴포넌트에 위임하는지 검사를 하나 더 넣었다.
+
+### 컨트롤러 위치 인자가 밀렸다
+`@Query('machineCode')`를 `@OrganizationId()` 앞에 넣어 스펙의 위치 호출에서 조직ID가
+machineCode 자리로 들어갔다. 실제 HTTP는 데코레이터 바인딩이라 무해하지만, 위치로
+호출하는 테스트가 있으면 드러난다. 커밋 후에 발견해 별도 커밋으로 바로잡았다.
+
+### WorkerSelect는 쓰지 않았다
+`detailed` 옵션을 넣었다가 되돌렸다. 실적 팝업에 작업자 **이름**을 넘겨야 해서 원본
+목록이 어차피 필요했고, 그러면 라벨은 화면에서 만드는 게 낫다. 대신
+`useWorkerOptions`가 원본 목록(`workers`)도 반환하도록 했다.
+
+### 검증
+운영 DB에 작업자가 0건이라 E9001(김현장)을 임시 등록해 콤보·실적 기본값까지 확인한 뒤
+삭제했다. 이력보기 팝업, 실적 등록 팝업, 작업지시 2줄 그리드, 하단 고정 버튼 모두
+브라우저에서 확인했고 페이지 에러는 없었다.

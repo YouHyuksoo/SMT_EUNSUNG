@@ -15,12 +15,10 @@ import { useWorkerOptions } from "@/hooks/useMasterOptions";
 interface WorkerSelectProps extends Omit<SelectProps, "options"> {
   /** 필터용: 모든 옵션 라벨 앞에 접두어 추가 + "전체" 옵션 자동 추가 */
   labelPrefix?: string;
-  /** 라벨을 "사번 · 이름 · 부서"로 표시. 기본은 이름만 */
-  detailed?: boolean;
 }
 
-export default function WorkerSelect({ labelPrefix, detailed, ...props }: WorkerSelectProps) {
-  const { options, isLoading } = useWorkerOptions(undefined, detailed);
+export default function WorkerSelect({ labelPrefix, ...props }: WorkerSelectProps) {
+  const { options, isLoading } = useWorkerOptions();
   const finalOptions = useMemo(() => {
     if (!labelPrefix) return options;
     return [
