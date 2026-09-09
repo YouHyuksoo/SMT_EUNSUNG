@@ -59,7 +59,10 @@ export class EquipOpsService {
               m.MACHINE_MODEL_NAME AS "modelName",
               m.LINE_CODE AS "lineCode",
               (SELECT MAX(d.DT_SEQ) FROM IP_EQUIP_DOWNTIME_RESULT d
-                WHERE d.MACHINE_CODE=m.MACHINE_CODE AND d.ORGANIZATION_ID=m.ORGANIZATION_ID AND d.END_TIME IS NULL) AS "openDtSeq"
+                WHERE d.MACHINE_CODE=m.MACHINE_CODE AND d.ORGANIZATION_ID=m.ORGANIZATION_ID AND d.END_TIME IS NULL) AS "openDtSeq",
+              -- 시작 때 고른 사유. openDtSeq와 같은 행(진행중 중 DT_SEQ 최대)의 값이다.
+              (SELECT MAX(d.REASON_CODE) KEEP (DENSE_RANK LAST ORDER BY d.DT_SEQ) FROM IP_EQUIP_DOWNTIME_RESULT d
+                WHERE d.MACHINE_CODE=m.MACHINE_CODE AND d.ORGANIZATION_ID=m.ORGANIZATION_ID AND d.END_TIME IS NULL) AS "openReasonCode"
          FROM IMCN_MACHINE m
         WHERE ${where}
         ORDER BY m.MACHINE_CODE`,

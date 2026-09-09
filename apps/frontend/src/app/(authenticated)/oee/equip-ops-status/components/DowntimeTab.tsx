@@ -35,7 +35,7 @@ export default function DowntimeTab({ machines, lines, refreshSec, onChanged }: 
   const scanRef = useRef<HTMLInputElement>(null);
 
   const [reasons, setReasons] = useState<Code[]>([]);
-  const [reasonCode, setReasonCode] = useState('');
+  const [reasonPick, setReasonPick] = useState<string | null>(null);
   const [summary, setSummary] = useState({ downMinutes: 0, stopCount: 0 });
   const [recent, setRecent] = useState<{ list: RecentRow[]; totalCount: number; totalMinutes: number }>({ list: [], totalCount: 0, totalMinutes: 0 });
   const [busy, setBusy] = useState(false);
@@ -57,10 +57,17 @@ export default function DowntimeTab({ machines, lines, refreshSec, onChanged }: 
   const willEnd = downTargets.length > 0;
   const actionTargets = willEnd ? downTargets : targets.filter((m) => m.openDtSeq == null);
 
+  // 종료 화면에서는 첫 대상 설비가 '시작할 때 고른 사유'를 기본값으로 물고 온다.
+  // 다른 버튼을 누르면 그 선택이 이기고, 같은 버튼을 다시 누르면 빈 값이 된다.
+  const openReasonCode = willEnd ? (actionTargets[0]?.openReasonCode ?? '') : '';
+  const reasonCode = reasonPick ?? openReasonCode;
+
   // 대상 선택을 바꾸는 모든 경로에서 원인설비를 비운다 — 다른 라인의 설비가 남으면 안 된다
-  const selectMode = (m: ScopeMode) => { setMode(m); setLineCode(''); setMachineCode(''); setCauseCodes(new Set()); };
-  const selectLine = (code: string) => { setLineCode(code); setCauseCodes(new Set()); };
-  const selectMachine = (code: string) => { setMachineCode(code); setCauseCodes(new Set()); };
+  const selectMode = (m: ScopeMode) => {
+    setMode(m); setLineCode(''); setMachineCode(''); setCauseCodes(new Set()); setReasonPick(null);
+  };
+  const selectLine = (code: string) => { setLineCode(code); setCauseCodes(new Set()); setReasonPick(null); };
+  const selectMachine = (code: string) => { setMachineCode(code); setCauseCodes(new Set()); setReasonPick(null); };
 
   const toggleCause = (code: string) =>
     setCauseCodes((prev) => {
@@ -148,7 +155,7 @@ export default function DowntimeTab({ machines, lines, refreshSec, onChanged }: 
       const d = res.data?.data ?? {};
       const verb = willEnd ? '가동 전환' : '비가동 시작';
       toast.success(d.skipped ? `${d.affected}대 ${verb} (${d.skipped}대는 이미 해당 상태)` : `${d.affected}대 ${verb}`);
-      setReasonCode('');
+      setReasonPick(null);
       setCauseCodes(new Set());
       await onChanged();
       await loadScope();
@@ -272,7 +279,7 @@ export default function DowntimeTab({ machines, lines, refreshSec, onChanged }: 
                 {reasons.map((r) => {
                   const active = reasonCode === r.code;
                   return (
-                    <button key={r.code} type="button" onClick={() => setReasonCode(active ? '' : r.code)}
+                    <button key={r.code} type="button" onClick={() => setReasonPick(active ? '' : r.code)}
                       className={`px-2 py-2 rounded border text-xs text-center transition-colors ${active ? 'bg-primary text-white border-primary' : 'border-border bg-background text-text hover:border-primary/60'}`}>
                       <span className="block font-medium leading-tight">{r.name}</span>
                       <span className={`block text-[10px] font-mono ${active ? 'text-white/80' : 'text-text-muted'}`}>{r.code}</span>

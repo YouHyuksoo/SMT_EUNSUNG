@@ -12,6 +12,8 @@ export interface OpsMachine {
   lineCode: string | null;
   /** 진행중 비가동의 DT_SEQ. null이면 정상 가동 */
   openDtSeq: number | null;
+  /** 진행중 비가동을 시작할 때 고른 사유코드. 종료 화면의 기본값이 된다 */
+  openReasonCode: string | null;
 }
 
 /** GET /oee/equip-ops/lines 한 행 */
