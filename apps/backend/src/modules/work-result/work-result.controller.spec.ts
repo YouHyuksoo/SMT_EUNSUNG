@@ -45,7 +45,7 @@ describe('WorkResultController', () => {
       machineCode: 'MC-1',
     };
 
-    await controller.list('2026-08-01', '2026-08-25', '01', 'ITEM', 7);
+    await controller.list('2026-08-01', '2026-08-25', '01', 'ITEM', undefined, 7);
     await controller.createResult(resultDto, 7, 'user-7');
     await controller.saveDefect(
       { runNo: 'RUN-1', badCode: 'NG', badQty: 1 },
@@ -60,6 +60,7 @@ describe('WorkResultController', () => {
       '01',
       'ITEM',
       7,
+      undefined,
     );
     expect(service.upsertResult).toHaveBeenCalledWith(
       { ...resultDto, seqNo: undefined },
