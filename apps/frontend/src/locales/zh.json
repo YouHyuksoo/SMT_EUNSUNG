@@ -1377,6 +1377,8 @@
       "lineRunRemove": "删除行",
       "lineRunEmpty": "尚未登记产线追加运行。",
       "lineRunSelectLine": "请选择产线",
+      "lineRunBadge": "追加",
+      "lineRunBadgeTitle": "产线追加运行 {{count}} 条",
       "remark": "备注",
       "workDays": "工作天数",
       "offDays": "休息天数",

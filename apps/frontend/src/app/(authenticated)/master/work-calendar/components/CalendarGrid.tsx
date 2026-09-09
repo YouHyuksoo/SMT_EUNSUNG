@@ -235,6 +235,15 @@ export default function CalendarGrid({
                         예외
                       </span>
                     )}
+                    {/* 라인 추가 운영이 있는 날 — 계획 비가동(주황)과 구분되게 파란 계열 */}
+                    {info.lineRuns.length > 0 && (
+                      <span
+                        title={t("master.workCalendar.lineRunBadgeTitle", { count: info.lineRuns.length })}
+                        className="text-[9px] px-1 rounded bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300"
+                      >
+                        {t("master.workCalendar.lineRunBadge")}
+                      </span>
+                    )}
                     {locked && <Lock className="w-3 h-3 text-green-500" />}
                   </div>
                 )}

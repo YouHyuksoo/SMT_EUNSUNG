@@ -1377,6 +1377,8 @@
       "lineRunRemove": "Remove Row",
       "lineRunEmpty": "No additional line operation registered.",
       "lineRunSelectLine": "Select a line",
+      "lineRunBadge": "Extra",
+      "lineRunBadgeTitle": "{{count}} additional line operation(s)",
       "remark": "Remark",
       "workDays": "Work Days",
       "offDays": "Off Days",

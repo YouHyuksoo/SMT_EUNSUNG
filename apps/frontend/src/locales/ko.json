@@ -1787,6 +1787,8 @@
       "lineRunRemove": "행 삭제",
       "lineRunEmpty": "등록된 라인 추가 운영이 없습니다.",
       "lineRunSelectLine": "라인을 선택하세요",
+      "lineRunBadge": "추가",
+      "lineRunBadgeTitle": "라인 추가 운영 {{count}}건",
       "remark": "비고",
       "workDays": "가동일수",
       "offDays": "비가동일수",

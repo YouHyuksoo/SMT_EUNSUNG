@@ -1377,6 +1377,8 @@
       "lineRunRemove": "Xóa dòng",
       "lineRunEmpty": "Chưa đăng ký vận hành dây chuyền bổ sung.",
       "lineRunSelectLine": "Chọn dây chuyền",
+      "lineRunBadge": "Thêm",
+      "lineRunBadgeTitle": "{{count}} vận hành dây chuyền bổ sung",
       "remark": "Ghi chú",
       "workDays": "Ngày làm việc",
       "offDays": "Ngày nghỉ",
