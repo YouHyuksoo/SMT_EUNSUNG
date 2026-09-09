@@ -125,8 +125,8 @@ export default function FieldOpsPage() {
       </div>
 
       {/* 상단 — 라인/설비 선택 + 바코드 + 작업자 */}
-      <div className="flex items-end gap-3 flex-wrap flex-shrink-0 border border-border rounded-lg p-3">
-        <div className="flex gap-2">
+      <div className="flex items-end gap-3 flex-nowrap flex-shrink-0 border border-border rounded-lg p-3">
+        <div className="flex gap-2 flex-shrink-0">
           {([['LINE', '라인', Factory], ['MACHINE', '설비', Wrench]] as const).map(([key, label, Icon]) => (
             <button key={key} type="button" onClick={() => selectMode(key)}
               className={`w-24 h-[68px] rounded-lg border flex flex-col items-center justify-center gap-1 text-sm font-semibold transition-colors ${
@@ -138,14 +138,14 @@ export default function FieldOpsPage() {
         </div>
 
         {mode === 'LINE' ? (
-          <label className="text-xs text-text-muted flex flex-col gap-1 w-72">라인 선택 (라인코드 · 라인명 · 라인구분)
+          <label className="text-xs text-text-muted flex flex-col gap-1 flex-1 min-w-0 max-w-64">라인 선택 (라인코드 · 라인명 · 라인구분)
             <Select
               options={[{ value: '', label: '라인을 선택하세요' },
                 ...lines.map((l) => ({ value: l.lineCode, label: `${l.lineCode} · ${l.lineName ?? ''} · ${l.lineDivision ?? '-'} (${l.machineCount}대)` }))]}
               value={lineCode} onChange={setLineCode} fullWidth />
           </label>
         ) : (
-          <label className="text-xs text-text-muted flex flex-col gap-1 w-72">설비 선택 (설비코드 · 설비명 · 유형)
+          <label className="text-xs text-text-muted flex flex-col gap-1 flex-1 min-w-0 max-w-64">설비 선택 (설비코드 · 설비명 · 유형)
             <Select
               options={[{ value: '', label: '설비를 선택하세요' },
                 ...machines.map((m) => ({ value: m.machineCode, label: `${m.machineCode} · ${m.machineName ?? ''} · ${m.machineTypeName ?? m.machineType ?? '-'}` }))]}
@@ -153,8 +153,8 @@ export default function FieldOpsPage() {
           </label>
         )}
 
-        <label className="text-xs text-text-muted flex flex-col gap-1">바코드 ({mode === 'LINE' ? '라인코드' : '설비코드'} 스캔 또는 직접 입력)
-          <div className="w-64">
+        <label className="text-xs text-text-muted flex flex-col gap-1 flex-1 min-w-0 max-w-52 truncate">바코드 ({mode === 'LINE' ? '라인코드' : '설비코드'} 스캔)
+          <div className="w-full">
             <Input ref={scanRef} placeholder="스캔 후 Enter" value={scan}
               onChange={(e) => setScan(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); resolveScan(scan); } }}
@@ -162,7 +162,7 @@ export default function FieldOpsPage() {
           </div>
         </label>
 
-        <label className="text-xs text-text-muted flex flex-col gap-1 w-64">작업자 (사번 · 이름 · 부서)
+        <label className="text-xs text-text-muted flex flex-col gap-1 flex-1 min-w-0 max-w-64 truncate">작업자 (사번 · 이름 · 부서)
           <Select
             options={[{ value: '', label: '작업자를 선택하세요' },
               ...workers.map((w) => {
