@@ -147,18 +147,18 @@ export default function DowntimePanel({ targets, mode, workerCode, onHistoryClic
           <span className="text-xs text-text-muted">비가동 사유
             <span className="text-[11px]"> {willEnd ? '(종료 시 필수 — 대상 전체에 기록)' : '(선택)'}</span>
           </span>
-          <div className="grid grid-cols-2 gap-2 mt-1">
+          <div className="grid grid-cols-3 gap-2 mt-1">
             {reasons.map((r) => {
               const active = reasonCode === r.code;
               return (
                 <button key={r.code} type="button" onClick={() => setReasonPick(active ? '' : r.code)}
-                  className={`px-2 py-2 rounded border text-xs text-center transition-colors ${active ? 'bg-primary text-white border-primary' : 'border-border bg-background text-text hover:border-primary/60'}`}>
+                  className={`px-2 py-1.5 rounded border text-xs text-center transition-colors ${active ? 'bg-primary text-white border-primary' : 'border-border bg-background text-text hover:border-primary/60'}`}>
                   <span className="block font-medium leading-tight">{r.name}</span>
                   <span className={`block text-[10px] font-mono ${active ? 'text-white/80' : 'text-text-muted'}`}>{r.code}</span>
                 </button>
               );
             })}
-            {!reasons.length && <span className="col-span-2 text-xs text-text-muted py-2">연계된 비가동 사유가 없습니다</span>}
+            {!reasons.length && <span className="col-span-3 text-xs text-text-muted py-2">연계된 비가동 사유가 없습니다</span>}
           </div>
         </div>
 
@@ -169,9 +169,6 @@ export default function DowntimePanel({ targets, mode, workerCode, onHistoryClic
             ? `${willEnd ? '가동 전환' : '비가동 시작'} · ${actionTargets.length}대`
             : (targets.length ? '처리할 설비가 없습니다' : '대상을 선택하세요')}
         </button>
-        {mode === 'LINE' && !!actionTargets.length && (
-          <p className="text-[11px] text-text-muted flex-shrink-0">라인 대상 설비 전체에 적용됩니다.</p>
-        )}
       </CardContent>
     </Card>
   );
