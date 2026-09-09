@@ -152,7 +152,7 @@ export default function DowntimePanel({ targets, mode, workerCode, onHistoryClic
               const active = reasonCode === r.code;
               return (
                 <button key={r.code} type="button" onClick={() => setReasonPick(active ? '' : r.code)}
-                  className={`px-2 py-[5.5px] rounded border text-[11px] text-center transition-colors ${active ? 'bg-primary text-white border-primary' : 'border-border bg-background text-text hover:border-primary/60'}`}>
+                  className={`px-2 py-[3.4px] rounded border text-[11px] text-center transition-colors ${active ? 'bg-primary text-white border-primary' : 'border-border bg-background text-text hover:border-primary/60'}`}>
                   <span className="block font-medium leading-tight">{r.name}</span>
                   <span className={`block text-[9px] font-mono ${active ? 'text-white/80' : 'text-text-muted'}`}>{r.code}</span>
                 </button>
