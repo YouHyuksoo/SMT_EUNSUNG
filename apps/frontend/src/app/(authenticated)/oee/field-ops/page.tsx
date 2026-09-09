@@ -129,7 +129,7 @@ export default function FieldOpsPage() {
         <div className="flex gap-2 flex-shrink-0">
           {([['LINE', '라인', Factory], ['MACHINE', '설비', Wrench]] as const).map(([key, label, Icon]) => (
             <button key={key} type="button" onClick={() => selectMode(key)}
-              className={`w-24 h-[68px] rounded-lg border flex flex-col items-center justify-center gap-1 text-sm font-semibold transition-colors ${
+              className={`w-[86.4px] h-[61.2px] rounded-lg border flex flex-col items-center justify-center gap-1 text-sm font-semibold transition-colors ${
                 mode === key ? 'bg-primary text-white border-primary' : 'border-border bg-background text-text hover:border-primary/60'
               }`}>
               <Icon className="w-5 h-5" />{label}
