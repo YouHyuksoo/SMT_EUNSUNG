@@ -8,6 +8,7 @@ import { ProductCompanyCalendar } from '../../entities/product-company-calendar.
 import { ProductLineCalendar } from '../../entities/product-line-calendar.entity';
 import { ProductCalendarShift } from '../../entities/product-calendar-shift.entity';
 import { ProductCalendarBreak } from '../../entities/product-calendar-break.entity';
+import { ProductCalendarLineRun } from '../../entities/product-calendar-line-run.entity';
 import { ShiftTimeMaster } from '../../entities/shift-time-master.entity';
 import { ShiftTimeBreak } from '../../entities/shift-time-break.entity';
 import { WorkCalendarController } from './controllers/work-calendar.controller';
@@ -22,6 +23,7 @@ import { ShiftTimeService } from './services/shift-time.service';
       ProductLineCalendar,
       ProductCalendarShift,
       ProductCalendarBreak,
+      ProductCalendarLineRun,
       ShiftTimeMaster,
       ShiftTimeBreak,
     ]),

@@ -7,6 +7,7 @@ import { ProductCompanyCalendar } from '../../../entities/product-company-calend
 import { ProductLineCalendar } from '../../../entities/product-line-calendar.entity';
 import { ProductCalendarShift } from '../../../entities/product-calendar-shift.entity';
 import { ProductCalendarBreak } from '../../../entities/product-calendar-break.entity';
+import { ProductCalendarLineRun } from '../../../entities/product-calendar-line-run.entity';
 import { ShiftTimeMaster } from '../../../entities/shift-time-master.entity';
 import { ShiftTimeService } from './shift-time.service';
 import { TransactionService } from '../../../shared/transaction.service';
@@ -30,6 +31,7 @@ describe('WorkCalendarService', () => {
   let lineRepo: DeepMocked<Repository<ProductLineCalendar>>;
   let shiftRepo: DeepMocked<Repository<ProductCalendarShift>>;
   let breakRepo: DeepMocked<Repository<ProductCalendarBreak>>;
+  let lineRunRepo: DeepMocked<Repository<ProductCalendarLineRun>>;
   let shiftTime: DeepMocked<ShiftTimeService>;
   let tx: DeepMocked<TransactionService>;
 
@@ -40,8 +42,10 @@ describe('WorkCalendarService', () => {
     // 파생되는 기존 기대값(defaultWorkMinutes)이 그대로 유지된다.
     shiftRepo = createMock<Repository<ProductCalendarShift>>();
     breakRepo = createMock<Repository<ProductCalendarBreak>>();
+    lineRunRepo = createMock<Repository<ProductCalendarLineRun>>();
     shiftRepo.find.mockResolvedValue([]);
     breakRepo.find.mockResolvedValue([]);
+    lineRunRepo.find.mockResolvedValue([]);
     shiftTime = createMock<ShiftTimeService>();
     shiftTime.findAll.mockResolvedValue([SHIFT]);
     shiftTime.resolveFromRows.mockReturnValue(SHIFT);
@@ -56,12 +60,14 @@ describe('WorkCalendarService', () => {
         if (entity === ProductCompanyCalendar) return companyRepo.delete(criteria as never);
         if (entity === ProductCalendarShift) return shiftRepo.delete(criteria as never);
         if (entity === ProductCalendarBreak) return breakRepo.delete(criteria as never);
+        if (entity === ProductCalendarLineRun) return lineRunRepo.delete(criteria as never);
         return lineRepo.delete(criteria as never);
       }),
       insert: jest.fn((entity: unknown, data: unknown) => {
         if (entity === ProductCompanyCalendar) return companyRepo.insert(data as never);
         if (entity === ProductCalendarShift) return shiftRepo.insert(data as never);
         if (entity === ProductCalendarBreak) return breakRepo.insert(data as never);
+        if (entity === ProductCalendarLineRun) return lineRunRepo.insert(data as never);
         return lineRepo.insert(data as never);
       }),
       getRepository: jest.fn((entity: unknown) =>
@@ -78,6 +84,7 @@ describe('WorkCalendarService', () => {
         { provide: getRepositoryToken(ProductLineCalendar), useValue: lineRepo },
         { provide: getRepositoryToken(ProductCalendarShift), useValue: shiftRepo },
         { provide: getRepositoryToken(ProductCalendarBreak), useValue: breakRepo },
+        { provide: getRepositoryToken(ProductCalendarLineRun), useValue: lineRunRepo },
         { provide: ShiftTimeService, useValue: shiftTime },
         { provide: TransactionService, useValue: tx },
       ],

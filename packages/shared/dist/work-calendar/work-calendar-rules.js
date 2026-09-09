@@ -5,6 +5,7 @@ exports.shiftNetMinutes = shiftNetMinutes;
 exports.defaultWorkMinutes = defaultWorkMinutes;
 exports.shiftSpanMinutes = shiftSpanMinutes;
 exports.calendarWorkMinutes = calendarWorkMinutes;
+exports.lineRunMinutes = lineRunMinutes;
 exports.holidayYnOf = holidayYnOf;
 exports.isFixedHoliday = isFixedHoliday;
 /** 양력 고정공휴일 [월, 일] */
@@ -83,16 +84,23 @@ function shiftSpanMinutes(shift) {
     return end > start ? end - start : end < start ? end + MINUTES_PER_DAY - start : 0;
 }
 /**
- * 일자별 교대조/비작업 행이 있을 때의 근무분.
- * OFF는 0, 그 외는 Σ(교대조 구간) - Σ(비작업분). 음수는 0으로 자른다.
- * 잔업(OT_MINUTES)은 여기 포함하지 않는다 — 별도 컬럼으로 관리한다.
+ * 일자별 교대조/비작업/라인 추가 운영 행이 있을 때의 근무분.
+ * OFF는 0, 그 외는 Σ(교대조 구간) - Σ(비작업분) + Σ(라인 추가 운영). 음수는 0으로 자른다.
+ *
+ * 라인 추가 운영은 교대 밖의 별도 가동이라 이미 순수 가동시간이다. 비작업분을 다시
+ * 빼지 않는다(이중 차감 방지). 잔업(OT_MINUTES)은 여기 포함하지 않는다 — 별도 컬럼이다.
  */
-function calendarWorkMinutes(dayType, shifts, breaks) {
+function calendarWorkMinutes(dayType, shifts, breaks, lineRuns = []) {
     if (dayType === 'OFF')
         return 0;
     const worked = shifts.reduce((sum, s) => sum + shiftSpanMinutes(s), 0);
     const rested = breaks.reduce((sum, b) => sum + (b.breakMinutes > 0 ? b.breakMinutes : 0), 0);
-    return Math.max(0, worked - rested);
+    const extra = lineRuns.reduce((sum, r) => sum + lineRunMinutes(r), 0);
+    return Math.max(0, worked - rested + extra);
+}
+/** 라인 추가 운영 한 행의 가동분. 자정 넘김은 교대조와 같은 규칙이다. */
+function lineRunMinutes(run) {
+    return shiftSpanMinutes({ shiftCode: '', startTime: run.startTime, endTime: run.endTime });
 }
 /** HOLIDAY_YN은 DAY_TYPE에서 파생한다. 직접 입력받지 않는다. */
 function holidayYnOf(dayType) {

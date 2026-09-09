@@ -52,6 +52,7 @@ import { ShiftTimeMaster } from '../entities/shift-time-master.entity';
 import { ShiftTimeBreak } from '../entities/shift-time-break.entity';
 import { ProductCalendarShift } from '../entities/product-calendar-shift.entity';
 import { ProductCalendarBreak } from '../entities/product-calendar-break.entity';
+import { ProductCalendarLineRun } from '../entities/product-calendar-line-run.entity';
 import { ProcessMaster } from '../entities/process-master.entity';
 import { ProcessLine } from '../entities/process-line.entity';
 import { LabelTemplate } from '../entities/label-template.entity';
@@ -143,6 +144,7 @@ import { EquipDowntimeResult } from '../entities/equip-downtime-result.entity';
             ProductLineCalendar,
             ProductCalendarShift,
             ProductCalendarBreak,
+            ProductCalendarLineRun,
             ShiftTimeMaster,
             ShiftTimeBreak,
             ProcessMaster,

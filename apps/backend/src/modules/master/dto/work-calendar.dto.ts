@@ -5,7 +5,7 @@
  * 초보자 가이드:
  * 1. lineCode가 없으면 전사 월력(IP_PRODUCT_COMPANY_CALENDAR), 있으면 라인 예외(IP_PRODUCT_LINE_CALENDAR).
  * 2. HOLIDAY_YN은 클라이언트가 보내지 않는다 — dayType에서 서버가 파생시킨다.
- * 3. shifts/breaks를 보내면 근무분도 서버가 파생시킨다(@smt/shared calendarWorkMinutes).
+ * 3. shifts/breaks/lineRuns를 보내면 근무분도 서버가 파생시킨다(@smt/shared calendarWorkMinutes).
  *    두 배열은 그 일자의 전체 목록이다 — 보낸 내용으로 자식행을 통째로 교체한다.
  */
 import { ApiProperty, ApiPropertyOptional, OmitType, PartialType } from '@nestjs/swagger';
@@ -66,6 +66,21 @@ export class CalendarBreakDto {
   breakMinutes: number;
 }
 
+export class CalendarLineRunDto {
+  @ApiProperty({ description: '추가 운영 라인코드 (IP_PRODUCT_LINE)', example: 'L01' })
+  @IsString()
+  @MaxLength(20)
+  lineCode: string;
+
+  @ApiProperty({ description: '가동 시작시각 (HH:MM)', example: '18:00' })
+  @Matches(/^([01]\d|2[0-3]):[0-5]\d$/, { message: 'startTime은 HH:MM 형식이어야 합니다.' })
+  startTime: string;
+
+  @ApiProperty({ description: '가동 종료시각 (HH:MM). 시작보다 이르면 자정을 넘긴 것으로 본다.', example: '21:00' })
+  @Matches(/^([01]\d|2[0-3]):[0-5]\d$/, { message: 'endTime은 HH:MM 형식이어야 합니다.' })
+  endTime: string;
+}
+
 export class WorkCalendarDayItemDto {
   @ApiProperty({ description: '일자 (YYYY-MM-DD)', example: '2026-07-14' })
   @Matches(/^\d{4}-\d{2}-\d{2}$/, { message: 'workDate는 YYYY-MM-DD 형식이어야 합니다.' })
@@ -114,6 +129,13 @@ export class WorkCalendarDayItemDto {
   @ValidateNested({ each: true })
   @Type(() => CalendarBreakDto)
   breaks?: CalendarBreakDto[];
+
+  @ApiPropertyOptional({ type: [CalendarLineRunDto], description: '라인 추가 운영. 이 일자의 전체 목록' })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CalendarLineRunDto)
+  lineRuns?: CalendarLineRunDto[];
 }
 
 export class BulkUpdateDaysDto {

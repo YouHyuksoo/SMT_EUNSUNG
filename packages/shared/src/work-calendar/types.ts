@@ -25,6 +25,15 @@ export interface CalendarShift {
 }
 
 /** 일자별 비작업 시간 1건 (IP_PRODUCT_CALENDAR_BREAK) */
+export interface CalendarLineRun {
+  /** 추가 운영 대상 라인코드 (IP_PRODUCT_LINE) */
+  lineCode: string;
+  /** 'HH:MM'. end가 start보다 이르면 자정을 넘긴 것으로 본다. */
+  startTime: string;
+  endTime: string;
+}
+
+/** 일자별 비작업(휴게·식사) 분 */
 export interface CalendarBreak {
   /** 공통코드 'BREAK TYPE' (REST=휴게시간, MEAL=식사시간) */
   breakType: string;

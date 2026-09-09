@@ -2,9 +2,9 @@
  * @file master/work-calendar/types.ts
  * @description 생산월력 화면 타입 (백엔드 IP_ 모델 응답과 1:1)
  */
-import type { CalendarBreak, CalendarShift, WorkDayType } from "@smt/shared";
+import type { CalendarBreak, CalendarLineRun, CalendarShift, WorkDayType } from "@smt/shared";
 
-export type { CalendarBreak, CalendarShift, WorkDayType };
+export type { CalendarBreak, CalendarLineRun, CalendarShift, WorkDayType };
 
 /** GET /master/work-calendar/days 응답 1건 */
 export interface WorkCalendarDay {
@@ -21,6 +21,8 @@ export interface WorkCalendarDay {
   shifts: CalendarShift[];
   /** 그 일자에 저장된 비작업(휴게/식사) 시간. 비어 있으면 0분. */
   breaks: CalendarBreak[];
+  /** 그 일자의 라인 추가 운영. 가동시간이 근무분에 더해진다. */
+  lineRuns: CalendarLineRun[];
 }
 
 /** 교대시간 마스터의 슬롯별 비작업 시간 1건 (IP_SHIFT_TIME_BREAK) */

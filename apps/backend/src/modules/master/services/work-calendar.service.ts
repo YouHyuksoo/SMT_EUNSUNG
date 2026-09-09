@@ -21,7 +21,9 @@ import {
   defaultWorkMinutes,
   holidayYnOf,
   isFixedHoliday,
+  lineRunMinutes,
   type CalendarBreak,
+  type CalendarLineRun,
   type CalendarShift,
   type ShiftTimeMasterLike,
   type WorkDayType,
@@ -33,6 +35,7 @@ import {
   ProductCalendarShift,
 } from '../../../entities/product-calendar-shift.entity';
 import { ProductCalendarBreak } from '../../../entities/product-calendar-break.entity';
+import { ProductCalendarLineRun } from '../../../entities/product-calendar-line-run.entity';
 import { ShiftTimeMaster } from '../../../entities/shift-time-master.entity';
 import { ShiftTimeService } from './shift-time.service';
 import { TransactionService } from '../../../shared/transaction.service';
@@ -58,6 +61,8 @@ export interface WorkCalendarDayView {
   shifts: CalendarShift[];
   /** 그 일자에 저장된 비작업 시간. 없으면 빈 배열. */
   breaks: CalendarBreak[];
+  /** 그 일자의 라인 추가 운영. 없으면 빈 배열. */
+  lineRuns: CalendarLineRun[];
 }
 
 export interface WorkCalendarSummary {
@@ -103,6 +108,8 @@ export class WorkCalendarService {
     private readonly shiftRepo: Repository<ProductCalendarShift>,
     @InjectRepository(ProductCalendarBreak)
     private readonly breakRepo: Repository<ProductCalendarBreak>,
+    @InjectRepository(ProductCalendarLineRun)
+    private readonly lineRunRepo: Repository<ProductCalendarLineRun>,
     private readonly shiftTime: ShiftTimeService,
     private readonly tx: TransactionService,
   ) {}
@@ -136,11 +143,14 @@ export class WorkCalendarService {
     // 자식(교대조/비작업)은 부모와 같은 소유자를 따른다. 라인 모드면 라인 자식만 읽어
     // 병합 결과의 source와 어긋나지 않게 한다.
     const owner = query.lineCode ?? COMPANY_LINE_CODE;
-    const [shiftRows, breakRows] = await Promise.all([
+    const [shiftRows, breakRows, lineRunRows] = await Promise.all([
       this.shiftRepo.find({
         where: { organizationId, lineCode: owner, planDate: Between(from, to) },
       }),
       this.breakRepo.find({
+        where: { organizationId, lineCode: owner, planDate: Between(from, to) },
+      }),
+      this.lineRunRepo.find({
         where: { organizationId, lineCode: owner, planDate: Between(from, to) },
       }),
     ]);
@@ -155,6 +165,14 @@ export class WorkCalendarService {
       merged.get(toIso(row.planDate))?.breaks.push({
         breakType: row.breakType,
         breakMinutes: row.breakMinutes,
+      });
+    }
+    // RUN_LINE_CODE가 화면상의 '라인'이다. LINE_CODE는 월력 소유자라 여기서 쓰지 않는다.
+    for (const row of lineRunRows) {
+      merged.get(toIso(row.planDate))?.lineRuns.push({
+        lineCode: row.runLineCode,
+        startTime: row.startTime,
+        endTime: row.endTime,
       });
     }
     for (const day of merged.values()) {
@@ -220,7 +238,12 @@ export class WorkCalendarService {
       this.buildRow(day, dto.lineCode, organizationId, shiftRows, userId),
     );
     const planDates = dto.days.map((day) => parseYmd(day.workDate));
-    const { shifts, breaks } = this.buildChildRows(dto.days, dto.lineCode, organizationId, userId);
+    const { shifts, breaks, lineRuns } = this.buildChildRows(
+      dto.days,
+      dto.lineCode,
+      organizationId,
+      userId,
+    );
     await this.replaceRowsByDates(
       dto.lineCode,
       organizationId,
@@ -230,6 +253,7 @@ export class WorkCalendarService {
       rows,
       shifts,
       breaks,
+      lineRuns,
     );
     return rows.length;
   }
@@ -324,6 +348,9 @@ export class WorkCalendarService {
     const companyBreaks = await this.breakRepo.find({
       where: { organizationId, lineCode: COMPANY_LINE_CODE, planDate: Between(from, to) },
     });
+    const companyLineRuns = await this.lineRunRepo.find({
+      where: { organizationId, lineCode: COMPANY_LINE_CODE, planDate: Between(from, to) },
+    });
     const shifts = companyShifts.map((src) => ({
       planDate: new Date(src.planDate),
       organizationId,
@@ -347,10 +374,24 @@ export class WorkCalendarService {
       lastModifyBy: enterBy,
       lastModifyDate: now,
     }));
+    // RUN_LINE_CODE(운영 라인)는 그대로 두고 소유자(LINE_CODE)만 대상 라인으로 바꾼다.
+    const lineRuns = companyLineRuns.map((src) => ({
+      planDate: new Date(src.planDate),
+      organizationId,
+      lineCode: dto.lineCode,
+      runSeq: src.runSeq,
+      runLineCode: src.runLineCode,
+      startTime: src.startTime,
+      endTime: src.endTime,
+      enterBy,
+      enterDate: now,
+      lastModifyBy: enterBy,
+      lastModifyDate: now,
+    }));
 
     // save()가 아니라 delete()+insert()를 쓰는 이유는 replaceRowsInRange() 주석 참고
     // (PLAN_DATE Date vs 문자열 hydrate 불일치로 save()가 매번 INSERT를 시도해 ORA-00001 발생).
-    await this.replaceRowsInRange(dto.lineCode, organizationId, from, to, rows, shifts, breaks);
+    await this.replaceRowsInRange(dto.lineCode, organizationId, from, to, rows, shifts, breaks, lineRuns);
     return rows.length;
   }
 
@@ -396,6 +437,7 @@ export class WorkCalendarService {
     rows: unknown[],
     shifts: unknown[] = [],
     breaks: unknown[] = [],
+    lineRuns: unknown[] = [],
   ): Promise<void> {
     await this.tx.run(async (qr) => {
       await this.ensureNotConfirmed(from, to, lineCode, organizationId, qr.manager);
@@ -408,7 +450,7 @@ export class WorkCalendarService {
       }
       // 부모를 지웠으면 자식도 같은 범위에서 지운다. 남겨두면 새로 만든 일자에 옛 교대조
       // 시간이 그대로 달라붙어 근무분이 사라진 근거로 계산된다.
-      await this.replaceChildrenInRange(qr.manager, lineCode, organizationId, from, to, shifts, breaks);
+      await this.replaceChildrenInRange(qr.manager, lineCode, organizationId, from, to, shifts, breaks, lineRuns);
     });
   }
 
@@ -421,6 +463,7 @@ export class WorkCalendarService {
     to: Date,
     shifts: unknown[],
     breaks: unknown[],
+    lineRuns: unknown[] = [],
   ): Promise<void> {
     const owner = lineCode ?? COMPANY_LINE_CODE;
     await manager.delete(ProductCalendarShift, {
@@ -433,8 +476,15 @@ export class WorkCalendarService {
       lineCode: owner,
       planDate: Between(from, to),
     });
+    await manager.delete(ProductCalendarLineRun, {
+      organizationId,
+      lineCode: owner,
+      planDate: Between(from, to),
+    });
     if (shifts.length > 0) await manager.insert(ProductCalendarShift, shifts as ProductCalendarShift[]);
     if (breaks.length > 0) await manager.insert(ProductCalendarBreak, breaks as ProductCalendarBreak[]);
+    if (lineRuns.length > 0)
+      await manager.insert(ProductCalendarLineRun, lineRuns as ProductCalendarLineRun[]);
   }
 
   /**
@@ -453,6 +503,7 @@ export class WorkCalendarService {
     rows: unknown[],
     shifts: unknown[] = [],
     breaks: unknown[] = [],
+    lineRuns: unknown[] = [],
   ): Promise<void> {
     if (planDates.length === 0) return;
     const owner = lineCode ?? COMPANY_LINE_CODE;
@@ -477,8 +528,15 @@ export class WorkCalendarService {
         lineCode: owner,
         planDate: In(planDates),
       });
+      await qr.manager.delete(ProductCalendarLineRun, {
+        organizationId,
+        lineCode: owner,
+        planDate: In(planDates),
+      });
       if (shifts.length > 0) await qr.manager.insert(ProductCalendarShift, shifts as ProductCalendarShift[]);
       if (breaks.length > 0) await qr.manager.insert(ProductCalendarBreak, breaks as ProductCalendarBreak[]);
+      if (lineRuns.length > 0)
+        await qr.manager.insert(ProductCalendarLineRun, lineRuns as ProductCalendarLineRun[]);
     });
   }
 
@@ -498,6 +556,7 @@ export class WorkCalendarService {
       // 자식은 findDays가 별도 조회해서 채운다. getSummary는 쓰지 않으므로 빈 배열로 둔다.
       shifts: [],
       breaks: [],
+      lineRuns: [],
     };
   }
 
@@ -516,6 +575,7 @@ export class WorkCalendarService {
       comment?: string | null;
       shifts?: CalendarShift[];
       breaks?: CalendarBreak[];
+      lineRuns?: CalendarLineRun[];
     },
     lineCode: string | undefined,
     organizationId: number,
@@ -566,13 +626,19 @@ export class WorkCalendarService {
    * 만들지 않으므로 후자가 여전히 필요하다.
    */
   private deriveWorkMinutes(
-    day: { shifts?: CalendarShift[]; breaks?: CalendarBreak[] },
+    day: { shifts?: CalendarShift[]; breaks?: CalendarBreak[]; lineRuns?: CalendarLineRun[] },
     dayType: WorkDayType,
     shift: ShiftTimeMasterLike | null,
   ): number {
+    if (dayType === 'OFF') return 0;
     const shifts = day.shifts ?? [];
-    if (shifts.length === 0) return defaultWorkMinutes(dayType, shift);
-    return calendarWorkMinutes(dayType, shifts, day.breaks ?? []);
+    const lineRuns = day.lineRuns ?? [];
+    // 교대조 행이 없으면 근무분 근거가 교대시간 마스터다. 라인 추가 운영은 그 위에 더한다.
+    if (shifts.length === 0) {
+      const extra = lineRuns.reduce((sum, r) => sum + lineRunMinutes(r), 0);
+      return defaultWorkMinutes(dayType, shift) + extra;
+    }
+    return calendarWorkMinutes(dayType, shifts, day.breaks ?? [], lineRuns);
   }
 
   /**
@@ -585,16 +651,18 @@ export class WorkCalendarService {
       workDate: string;
       shifts?: CalendarShift[];
       breaks?: CalendarBreak[];
+      lineRuns?: CalendarLineRun[];
     }[],
     lineCode: string | undefined,
     organizationId: number,
     userId?: string,
-  ): { shifts: unknown[]; breaks: unknown[] } {
+  ): { shifts: unknown[]; breaks: unknown[]; lineRuns: unknown[] } {
     const owner = lineCode ?? COMPANY_LINE_CODE;
     const enterBy = userId ?? 'SYSTEM';
     const now = new Date();
     const shifts: unknown[] = [];
     const breaks: unknown[] = [];
+    const lineRuns: unknown[] = [];
 
     for (const day of days) {
       const planDate = parseYmd(day.workDate);
@@ -626,8 +694,24 @@ export class WorkCalendarService {
           lastModifyDate: now,
         });
       }
+      // RUN_SEQ는 요청에 온 순서대로 1부터 매긴다. 같은 라인이 여러 번 와도 행이 분리된다.
+      (day.lineRuns ?? []).forEach((r, idx) => {
+        lineRuns.push({
+          planDate,
+          organizationId,
+          lineCode: owner,
+          runSeq: idx + 1,
+          runLineCode: r.lineCode,
+          startTime: r.startTime,
+          endTime: r.endTime,
+          enterBy,
+          enterDate: now,
+          lastModifyBy: enterBy,
+          lastModifyDate: now,
+        });
+      });
     }
-    return { shifts, breaks };
+    return { shifts, breaks, lineRuns };
   }
 
   /**

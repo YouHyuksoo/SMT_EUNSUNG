@@ -16,17 +16,28 @@
  * 3-1. 비작업 시간도 같은 규칙이다. 저장값이 없으면 마스터의 주간·야간 비작업분을
  *    분류별로 **합산**해서 채운다(주간 휴게 30 + 야간 휴게 30 → 휴게 60). 일자 편집의
  *    비작업 시간은 교대조별이 아니라 일자 전체 단위이기 때문이다.
- * 4. 근무시간(분)은 더 이상 직접 입력하지 않는다 — Σ(교대조 구간) − Σ(비작업분)으로
+ * 3-2. 라인 추가 운영은 정규 교대 밖에서 특정 라인만 더 돌린 시간이다. 그리드로 복수 행을
+ *    관리하며 같은 라인을 여러 구간으로 넣을 수 있다. 가동시간은 근무시간에 '더해진다'
+ *    (비작업분을 다시 빼지 않는다 — 이미 순수 가동시간이라 이중 차감이 된다).
+ * 4. 근무시간(분)은 더 이상 직접 입력하지 않는다 — Σ(교대조 구간) − Σ(비작업분) + Σ(라인 추가 운영)으로
  *    파생되며(@smt/shared calendarWorkMinutes), 화면에는 계산 결과만 보여준다.
  *    잔업(OT)은 근무시간에 포함하지 않는 별도 값이다.
  */
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Plus, Trash2 } from "lucide-react";
 import { Modal, Button, Input } from "@/components/ui";
-import { ComCodeSelect } from "@/components/shared";
+import { ComCodeSelect, ProdLineSelect } from "@/components/shared";
 import { useComCodeList } from "@/hooks/useComCode";
 import { calendarWorkMinutes } from "@smt/shared";
-import type { CalendarBreak, CalendarShift, ShiftTimeItem, WorkCalendarDay, WorkDayType } from "../types";
+import type {
+  CalendarBreak,
+  CalendarLineRun,
+  CalendarShift,
+  ShiftTimeItem,
+  WorkCalendarDay,
+  WorkDayType,
+} from "../types";
 
 interface Props {
   isOpen: boolean;
@@ -93,6 +104,7 @@ export default function DayEditModal({
   const [shifts, setShifts] = useState<CalendarShift[]>([]);
   const [otMinutes, setOtMinutes] = useState("0");
   const [breakMinutes, setBreakMinutes] = useState<Record<string, string>>({});
+  const [lineRuns, setLineRuns] = useState<CalendarLineRun[]>([]);
   const [comment, setComment] = useState("");
 
   // 일괄 수정은 대상이 여러 날이라 특정 일자의 마스터를 고를 수 없다 — 첫 일자를 기준으로 삼는다.
@@ -123,6 +135,9 @@ export default function DayEditModal({
       next[type] = String(found?.breakMinutes ?? fromMaster[type] ?? 0);
     }
     setBreakMinutes(next);
+
+    // 라인 추가 운영은 마스터 prefill 근거가 없다 — 저장된 값만 싣는다.
+    setLineRuns(currentData?.lineRuns ?? []);
   }, [isOpen, currentData, shiftCodeList, breakTypeList, shiftTimes, baseDate]);
 
   const breaks = useMemo<CalendarBreak[]>(
@@ -134,10 +149,16 @@ export default function DayEditModal({
     [breakTypeList, breakMinutes],
   );
 
+  // 라인·시작·종료가 다 찬 행만 유효하다. 입력 중인 빈 행이 근무분을 흔들지 않게 한다.
+  const validLineRuns = useMemo(
+    () => lineRuns.filter((r) => r.lineCode && r.startTime && r.endTime),
+    [lineRuns],
+  );
+
   // 저장될 근무분과 같은 식이다 — 서버도 @smt/shared의 같은 함수로 다시 계산한다.
   const derivedWorkMinutes = useMemo(
-    () => calendarWorkMinutes(dayType, shifts, breaks),
-    [dayType, shifts, breaks],
+    () => calendarWorkMinutes(dayType, shifts, breaks, validLineRuns),
+    [dayType, shifts, breaks, validLineRuns],
   );
 
   if (targetDates.length === 0) return null;
@@ -150,6 +171,15 @@ export default function DayEditModal({
     );
   };
 
+  const addLineRun = () =>
+    setLineRuns((prev) => [...prev, { lineCode: "", startTime: "", endTime: "" }]);
+
+  const removeLineRun = (index: number) =>
+    setLineRuns((prev) => prev.filter((_, i) => i !== index));
+
+  const setLineRunField = (index: number, field: keyof CalendarLineRun, value: string) =>
+    setLineRuns((prev) => prev.map((r, i) => (i === index ? { ...r, [field]: value } : r)));
+
   const handleSave = () => {
     const base: Partial<WorkCalendarDay> = {
       dayType,
@@ -159,6 +189,8 @@ export default function DayEditModal({
       // 시각이 비어 있는 교대조는 보내지 않는다 — 그 교대조는 운영하지 않는다는 뜻이다.
       shifts: shifts.filter((s) => s.startTime && s.endTime),
       breaks,
+      // 덜 채운 행은 보내지 않는다 — 서버 DTO가 HH:MM을 강제한다.
+      lineRuns: validLineRuns,
     };
     onSave(targetDates.map((workDate) => ({ ...base, workDate })));
   };
@@ -263,6 +295,76 @@ export default function DayEditModal({
             onChange={(e) => setOtMinutes(e.target.value)}
             fullWidth
           />
+        </div>
+
+        {/* 라인 추가 운영 — 정규 교대 밖의 추가 가동. 행 단위로 여러 건을 등록한다 */}
+        <div>
+          <div className="mb-1.5 flex items-center justify-between">
+            <label className="block text-sm font-medium text-text dark:text-gray-200">
+              {t("master.workCalendar.lineRun")}
+            </label>
+            <Button variant="secondary" size="sm" onClick={addLineRun}>
+              <Plus className="mr-1 h-3.5 w-3.5" />
+              {t("master.workCalendar.lineRunAdd")}
+            </Button>
+          </div>
+          <div className="rounded border border-border dark:border-gray-700 p-2">
+            {lineRuns.length === 0 ? (
+              <p className="text-xs text-text-muted dark:text-gray-400">
+                {t("master.workCalendar.lineRunEmpty")}
+              </p>
+            ) : (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-xs text-text-muted dark:text-gray-400">
+                  <span className="min-w-0 flex-1">{t("master.workCalendar.lineRunLine")}</span>
+                  <span className="w-[264px] flex-shrink-0">
+                    {t("master.workCalendar.lineRunTime")}
+                  </span>
+                  <span className="w-7 flex-shrink-0" />
+                </div>
+                {lineRuns.map((r, idx) => (
+                  <div key={idx} className="flex items-center gap-2">
+                    <div className="min-w-0 flex-1">
+                      <ProdLineSelect
+                        value={r.lineCode}
+                        onChange={(v) => setLineRunField(idx, "lineCode", v)}
+                        placeholder={t("master.workCalendar.lineRunSelectLine")}
+                        fullWidth
+                      />
+                    </div>
+                    <div className="flex w-[264px] flex-shrink-0 items-center gap-1">
+                      <div className="min-w-0 flex-1">
+                        <Input
+                          type="time"
+                          value={r.startTime}
+                          onChange={(e) => setLineRunField(idx, "startTime", e.target.value)}
+                          fullWidth
+                        />
+                      </div>
+                      <span className="text-xs text-text-muted dark:text-gray-400">~</span>
+                      <div className="min-w-0 flex-1">
+                        <Input
+                          type="time"
+                          value={r.endTime}
+                          onChange={(e) => setLineRunField(idx, "endTime", e.target.value)}
+                          fullWidth
+                        />
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeLineRun(idx)}
+                      aria-label={t("master.workCalendar.lineRunRemove")}
+                      title={t("master.workCalendar.lineRunRemove")}
+                      className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded text-text-muted hover:bg-surface hover:text-red-500 dark:hover:bg-slate-800"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* 비작업 시간 — 공통코드 'BREAK TYPE'의 분류별 분 입력 */}
