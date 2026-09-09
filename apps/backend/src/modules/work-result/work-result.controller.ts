@@ -36,6 +36,7 @@ export class WorkResultController {
     @Query('toDate') toDate: string,
     @Query('lineCode') lineCode?: string,
     @Query('keyword') keyword?: string,
+    @Query('machineCode') machineCode?: string,
     @OrganizationId() organizationId?: number,
   ) {
     return {
@@ -45,6 +46,7 @@ export class WorkResultController {
         lineCode || undefined,
         keyword || undefined,
         organizationId,
+        machineCode || undefined,
       ),
     };
   }

@@ -52,6 +52,7 @@ export class WorkResultService {
     lineCode?: string,
     keyword?: string,
     organizationId?: number,
+    machineCode?: string,
   ) {
     const organization = this.requireOrganization(organizationId);
     const params: unknown[] = [organization, fromDate, toDate];
@@ -60,6 +61,11 @@ export class WorkResultService {
     if (lineCode) {
       params.push(lineCode);
       where += ` AND r.LINE_CODE = :${params.length}`;
+    }
+    // 설비 단위 조회. keyword는 품번·모델명에도 걸려서 설비만 추리는 용도로는 못 쓴다.
+    if (machineCode) {
+      params.push(machineCode);
+      where += ` AND r.MACHINE_CODE = :${params.length}`;
     }
     if (keyword) {
       const kw = `%${keyword.toUpperCase()}%`;
@@ -79,6 +85,7 @@ export class WorkResultService {
           TO_CHAR(r.RUN_DATE,'YYYY-MM-DD') AS "runDate",
           r.LINE_CODE AS "lineCode", r.SHIFT_CODE AS "shiftCode",
           r.ITEM_CODE AS "itemCode", r.REVISION AS "revision", r.MODEL_NAME AS "modelName",
+          (SELECT MAX(i.ITEM_NAME) FROM ID_ITEM i WHERE i.ITEM_CODE=r.ITEM_CODE AND i.ORGANIZATION_ID=r.ORGANIZATION_ID) AS "itemName",
           (SELECT MAX(i.ITEM_UOM) FROM ID_ITEM i WHERE i.ITEM_CODE=r.ITEM_CODE AND i.ORGANIZATION_ID=r.ORGANIZATION_ID) AS "unit",
           (SELECT MAX(i.ITEM_CLASS) FROM ID_ITEM i WHERE i.ITEM_CODE=r.ITEM_CODE AND i.ORGANIZATION_ID=r.ORGANIZATION_ID) AS "itemClass",
           (SELECT MAX(bc.CODE_MEAN_KOR) FROM ISYS_BASECODE bc WHERE bc.CODE_TYPE='PRODUCT CLASS'
