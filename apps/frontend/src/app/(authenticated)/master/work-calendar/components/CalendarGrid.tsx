@@ -207,7 +207,7 @@ export default function CalendarGrid({
       {/* 날짜 셀 */}
       <div className="grid grid-cols-7 gap-1">
         {calendarCells.map((day, idx) => {
-          if (day === null) return <div key={`e-${idx}`} className="h-16" />;
+          if (day === null) return <div key={`e-${idx}`} className="h-[4.4rem]" />;
           const ds = toDateStr(day);
           const info = dateMap.get(ds);
           const color = info ? TYPE_COLORS[info.dayType] ?? "" : "border-border dark:border-gray-700";
@@ -217,31 +217,22 @@ export default function CalendarGrid({
           return (
             <div
               key={ds}
-              className={`relative h-16 rounded border transition-colors
+              className={`relative h-[4.4rem] rounded border transition-colors
                 ${color} ${selected ? "ring-2 ring-primary" : ""}`}
             >
               <button
                 onClick={() => !locked && onDayClick(ds, info ?? null)}
                 disabled={locked}
-                className={`absolute inset-0 p-1 pr-5 pb-5 text-left flex flex-col rounded
+                className={`absolute inset-0 p-1 pr-9 text-left flex flex-col rounded
                   ${locked ? "cursor-default opacity-80" : "hover:ring-1 hover:ring-primary cursor-pointer"}`}
               >
                 <span className="text-xs font-medium text-text dark:text-gray-200">{day}</span>
                 {info && (
-                  <div className="mt-auto flex items-center gap-1">
+                  <div className="mt-auto flex flex-col items-start gap-0.5">
                     <ComCodeBadge groupCode="WORK_DAY_TYPE" code={info.dayType} />
                     {info.source === "LINE" && (
                       <span className="text-[9px] px-1 rounded bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300">
                         예외
-                      </span>
-                    )}
-                    {/* 라인 추가 운영이 있는 날 — 계획 비가동(주황)과 구분되게 파란 계열 */}
-                    {info.lineRuns.length > 0 && (
-                      <span
-                        title={t("master.workCalendar.lineRunBadgeTitle", { count: info.lineRuns.length })}
-                        className="text-[9px] px-1 rounded bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300"
-                      >
-                        {t("master.workCalendar.lineRunBadge")}
                       </span>
                     )}
                     {locked && <Lock className="w-3 h-3 text-green-500" />}
@@ -256,17 +247,30 @@ export default function CalendarGrid({
                 aria-label={ds}
                 className="absolute top-1 right-1 z-10 w-3.5 h-3.5 cursor-pointer rounded border-border dark:border-gray-600"
               />
-              {/* 계획 비가동 뱃지 — 누르면 그날 목록. 셀 버튼보다 위에 둔다 */}
-              {planCount > 0 && (
-                <button
-                  type="button"
-                  onClick={() => onPlanBadgeClick(ds)}
-                  title={t("master.workCalendar.planCountTitle", { count: planCount })}
-                  className="absolute bottom-1 right-1 z-10 flex items-center gap-0.5 rounded bg-amber-500 px-1 py-0.5 text-[10px] font-medium text-white hover:bg-amber-600"
-                >
-                  <PauseCircle className="w-3 h-3" />
-                  {planCount}
-                </button>
+              {/* 우측 하단 배지 스택 — 라인 추가 운영(파랑)이 위, 계획 비가동(주황)이 아래.
+                  한쪽만 있어도 아래에 붙도록 컨테이너를 bottom에 고정한다. 셀 버튼보다 위에 둔다 */}
+              {(info?.lineRuns.length || planCount > 0) && (
+                <div className="absolute bottom-1 right-1 z-10 flex flex-col items-end gap-0.5">
+                  {!!info?.lineRuns.length && (
+                    <span
+                      title={t("master.workCalendar.lineRunBadgeTitle", { count: info.lineRuns.length })}
+                      className="rounded bg-blue-100 dark:bg-blue-900/40 px-1 py-0.5 text-[10px] font-medium text-blue-700 dark:text-blue-300"
+                    >
+                      {t("master.workCalendar.lineRunBadge")}
+                    </span>
+                  )}
+                  {planCount > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => onPlanBadgeClick(ds)}
+                      title={t("master.workCalendar.planCountTitle", { count: planCount })}
+                      className="flex items-center gap-0.5 rounded bg-amber-500 px-1 py-0.5 text-[10px] font-medium text-white hover:bg-amber-600"
+                    >
+                      <PauseCircle className="w-3 h-3" />
+                      {planCount}
+                    </button>
+                  )}
+                </div>
               )}
             </div>
           );
