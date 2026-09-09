@@ -174,7 +174,7 @@ export default function FieldOpsPage() {
       </div>
 
       {/* 본문 3분할 */}
-      <div className="flex-1 min-h-0 grid grid-cols-[minmax(0,0.9fr)_minmax(0,1.5fr)_minmax(0,1.2fr)] gap-3 overflow-hidden">
+      <div className="flex-1 min-h-0 grid grid-rows-[minmax(0,1fr)] grid-cols-[minmax(0,0.9fr)_minmax(0,1.5fr)_minmax(0,1.2fr)] gap-3 overflow-hidden">
         <DailyMetrics downMinutes={summary.downMinutes} stopCount={summary.stopCount} scopeLabel={scopeLabel} />
         <DowntimePanel targets={targets} mode={mode} workerCode={workerCode}
           onHistoryClick={() => setHistoryOpen(true)} onChanged={afterChange} />

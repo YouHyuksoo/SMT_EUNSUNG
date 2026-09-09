@@ -86,7 +86,7 @@ export default function DowntimePanel({ targets, mode, workerCode, onHistoryClic
 
   return (
     <Card className="h-full overflow-hidden" padding="none">
-      <CardContent className="h-full p-4 overflow-y-auto flex flex-col gap-3">
+      <CardContent className="h-full p-4 overflow-hidden flex flex-col gap-3">
         <div className="flex items-center justify-between flex-shrink-0 gap-2">
           <div className="flex items-center gap-2">
             <span className="text-sm font-semibold text-text">비가동 대상 설비</span>
@@ -101,10 +101,10 @@ export default function DowntimePanel({ targets, mode, workerCode, onHistoryClic
           </span>
         </div>
 
-        {/* 대상 설비 목록 */}
-        <div className="border border-border rounded overflow-hidden flex-shrink-0">
+        {/* 대상 설비 목록 — 여기만 스크롤한다 (사유/전환 버튼은 항상 보인다) */}
+        <div className="border border-border rounded flex-1 min-h-0 overflow-y-auto">
           <table className="w-full table-fixed text-xs">
-            <thead className="bg-surface text-text-muted">
+            <thead className="bg-surface text-text-muted sticky top-0 z-10">
               <tr><th className="py-1.5 px-0.5 text-center font-medium w-8">원인</th><th className="py-1.5 px-0.5 text-center font-medium w-[76px]">설비코드</th><th className="py-1.5 px-1 text-center font-medium">설비명</th><th className="py-1.5 px-0 text-center font-medium w-12">유형</th><th className="py-1.5 pl-0 pr-0.5 text-center font-medium w-16">상태</th></tr>
             </thead>
             <tbody>
@@ -142,8 +142,8 @@ export default function DowntimePanel({ targets, mode, workerCode, onHistoryClic
           </table>
         </div>
 
-        {/* 비가동 사유 */}
-        <div className="flex-shrink-0">
+        {/* 비가동 사유 — 사유가 많아 자리가 모자라면 여기가 줄어들고 스크롤한다 */}
+        <div className="min-h-0 overflow-y-auto">
           <span className="text-xs text-text-muted">비가동 사유
             <span className="text-[11px]"> {willEnd ? '(종료 시 필수 — 대상 전체에 기록)' : '(선택)'}</span>
           </span>
