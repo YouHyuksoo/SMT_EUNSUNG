@@ -49,6 +49,7 @@ interface WorkerItem {
   id?: string;
   workerName: string;
   workerCode?: string;
+  dept?: string | null;
 }
 
 interface LineItem {
@@ -199,7 +200,7 @@ export function usePartOptions(itemType?: string) {
 /**
  * 작업자 목록을 SelectOption[]으로 반환
  */
-export function useWorkerOptions(dept?: string) {
+export function useWorkerOptions(dept?: string, detailed?: boolean) {
   const query = new URLSearchParams({ limit: "100" });
   if (dept) query.set("dept", dept);
   const { data, isLoading } = useApiQuery<PaginatedResponse<WorkerItem>>(
@@ -213,9 +214,12 @@ export function useWorkerOptions(dept?: string) {
     const list = Array.isArray(raw) ? raw : raw?.data ?? [];
     return list.map((w) => ({
       value: w.workerCode ?? w.id ?? "",
-      label: w.workerName,
+      // detailed면 "사번 · 이름 · 부서". 현장 화면처럼 동명이인을 가려야 할 때 쓴다.
+      label: detailed
+        ? [w.workerCode ?? w.id, w.workerName, w.dept].filter(Boolean).join(" · ")
+        : w.workerName,
     }));
-  }, [data]);
+  }, [data, detailed]);
 
   return { options, isLoading };
 }

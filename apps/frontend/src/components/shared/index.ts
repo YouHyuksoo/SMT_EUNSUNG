@@ -7,6 +7,8 @@ export { default as DepartmentSelect } from "./DepartmentSelect";
 export { default as WarehouseSelect } from "./WarehouseSelect";
 export { default as PartSelect } from "./PartSelect";
 export { default as WorkerSelect } from "./WorkerSelect";
+export { default as WorkResultForm } from "./WorkResultForm";
+export type { WorkResultRun, WorkResultMachine } from "./WorkResultForm";
 export { default as LineSelect } from "./LineSelect";
 export { default as ProdLineSelect } from "./ProdLineSelect";
 export { default as ProcessSelect } from "./ProcessSelect";

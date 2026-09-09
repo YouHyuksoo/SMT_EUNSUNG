@@ -10,11 +10,11 @@
  *   부적합유형 GET /bad-reasons(WQC) · 후공정설비 GET /machines · 비가동사유 GET /downtime-reasons
  *   비가동 처리는 공용 컴포넌트 components/shared/EquipDowntimePanel 이 담당
  */
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Search, Factory, FileText, AlertTriangle, PauseCircle, RefreshCw, Plus, ChevronDown, ChevronRight } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import { Search, Factory, FileText, AlertTriangle, PauseCircle, RefreshCw, ChevronDown, ChevronRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Card, CardContent, Input } from '@/components/ui';
-import { ProdLineSelect } from '@/components/shared';
+import { ProdLineSelect, WorkResultForm } from '@/components/shared';
 import EquipDowntimePanel from '@/components/shared/EquipDowntimePanel';
 import api from '@/services/api';
 
@@ -33,11 +33,8 @@ interface RunRow {
   ct: number | null; planQty: number | null; resultQty: number; defectQty: number; openDowntime: number;
   resultCount: number; wipCount: number;
 }
-interface ResultRow { seqNo: string; machineCode: string; workstageCode: string; resultQty: number; workTime: number; workerCount: number; workerName: string; resultStatus: string; itemCode: string; modelName: string; defectQty: number; updatedAt: string; }
 interface Machine { machineCode: string; machineName: string; workstageCode: string; workstageName: string; lineCode: string; }
 interface Code { code: string; name: string; }
-
-interface ResultForm { seqNo: string | null; machineCode: string; machineName: string; workstageCode: string; workstageName: string; resultQty: number; workTime: number; workerCount: number; workerName: string; resultStatus: 'WIP' | 'DONE'; savedStatus: 'WIP' | 'DONE'; }
 
 type PanelMode = 'result' | 'defect' | 'downtime';
 
@@ -47,41 +44,6 @@ function Cell({ label, children, className = '', style }: { label: string; child
     <div className={`px-2 py-1 border-r border-b border-border min-w-0 ${className}`} style={style}>
       <div className="text-[10px] text-text-muted leading-tight truncate">{label}</div>
       <div className="text-xs text-text font-medium leading-tight truncate">{children}</div>
-    </div>
-  );
-}
-
-/** 설비 검색 콤보 (native input + 필터 리스트) */
-function MachineCombo({ machines, value, onSelect, disabled }: { machines: Machine[]; value: string; onSelect: (m: Machine) => void; disabled?: boolean }) {
-  const [q, setQ] = useState('');
-  const [open, setOpen] = useState(false);
-  const list = useMemo(() => {
-    const s = q.trim().toLowerCase();
-    return (s ? machines.filter((m) => `${m.machineCode} ${m.machineName}`.toLowerCase().includes(s)) : machines).slice(0, 100);
-  }, [machines, q]);
-  const sel = machines.find((m) => m.machineCode === value);
-  return (
-    <div className="relative">
-      <button type="button" disabled={disabled} onClick={() => setOpen((o) => !o)}
-        className="w-full border border-border rounded p-2 bg-background text-text text-left text-sm disabled:opacity-50 disabled:bg-surface flex justify-between items-center">
-        <span className={sel ? '' : 'text-text-muted'}>{sel ? `${sel.machineCode} · ${sel.machineName}` : '설비선택'}</span>
-        <Search className="w-4 h-4 text-text-muted" />
-      </button>
-      {open && !disabled && (
-        <div className="absolute z-20 mt-1 w-full bg-background border border-border rounded shadow-lg max-h-64 overflow-auto">
-          <div className="p-1 sticky top-0 bg-background border-b border-border">
-            <Input placeholder="설비코드/명 검색" value={q} onChange={(e) => setQ(e.target.value)} leftIcon={<Search className="w-4 h-4" />} fullWidth />
-          </div>
-          {list.map((m) => (
-            <button key={m.machineCode} type="button" onClick={() => { onSelect(m); setOpen(false); setQ(''); }}
-              className="w-full text-left px-3 py-1.5 text-sm hover:bg-surface border-b border-border last:border-0">
-              <span className="font-mono">{m.machineCode}</span> · {m.machineName}
-              <span className="text-text-muted text-xs"> ({m.workstageCode} {m.workstageName})</span>
-            </button>
-          ))}
-          {!list.length && <div className="p-3 text-center text-text-muted text-xs">설비 없음</div>}
-        </div>
-      )}
     </div>
   );
 }
@@ -102,9 +64,6 @@ export default function EquipWorkResultPage() {
   const [machines, setMachines] = useState<Machine[]>([]);
   const [badReasons, setBadReasons] = useState<Code[]>([]);
 
-  // 실적 패널
-  const [history, setHistory] = useState<ResultRow[]>([]);
-  const [form, setForm] = useState<ResultForm | null>(null);
 
   // 불량 패널 (작업지시 단위 대표불량 단일)
   const [defect, setDefect] = useState<{ badCode: string; badQty: number; remark: string }>({ badCode: '', badQty: 0, remark: '' });
@@ -133,55 +92,9 @@ export default function EquipWorkResultPage() {
   const btnStateCls = (r: RunRow) => r.resultCount === 0 ? 'border border-primary text-primary hover:bg-surface' : r.wipCount > 0 ? 'bg-amber-400 text-white hover:bg-amber-500' : 'bg-blue-600 text-white hover:bg-blue-700';
 
   // ---- 실적 패널 ----
-  async function openResult(r: RunRow) {
+  function openResult(r: RunRow) {
     if (!canRegister(r)) { toast('후공정 대상이 아닙니다 (대상 제외)'); return; }
     setSelectedRun(r.runNo); setPanelRun(r); setPanelMode('result');
-    setForm(null);
-    try { const res = await api.get('/oee/work-result/results', { params: { runNo: r.runNo } }); setHistory(res.data?.data?.list ?? []); }
-    catch { setHistory([]); }
-  }
-  function newResultForm(r: RunRow): ResultForm {
-    return {
-      seqNo: null,
-      machineCode: r.machineCode ?? '', machineName: r.machineName ?? '',
-      workstageCode: r.workstageCode ?? '', workstageName: r.workstageName ?? '',
-      resultQty: 0, workTime: 0, workerCount: 0, workerName: '', resultStatus: 'WIP', savedStatus: 'WIP',
-    };
-  }
-  async function selectHistory(row: ResultRow) {
-    if (!panelRun) return;
-    try {
-      const res = await api.get(`/oee/work-result/results/${encodeURIComponent(panelRun.runNo)}/${row.seqNo}`);
-      const h = res.data?.data?.header;
-      const mc = machines.find((m) => m.machineCode === h.machineCode);
-      setForm({
-        seqNo: h.seqNo, machineCode: h.machineCode ?? '', machineName: mc?.machineName ?? '',
-        workstageCode: h.workstageCode ?? '', workstageName: mc?.workstageName ?? '',
-        resultQty: h.resultQty ?? 0, workTime: h.workTime ?? 0, workerCount: h.workerCount ?? 0,
-        workerName: h.workerName ?? '', resultStatus: (h.resultStatus ?? 'WIP') as 'WIP' | 'DONE',
-        savedStatus: (h.resultStatus ?? 'WIP') as 'WIP' | 'DONE',
-      });
-    } catch { toast.error('실적 상세 조회 실패'); }
-  }
-  // 이미 저장된 상태가 '완료'인 실적만 잠금(수정불가). 폼에서 방금 '완료'로 바꾼 값으로는 잠그지 않는다.
-  const readOnly = form?.savedStatus === 'DONE';
-
-  async function saveResult() {
-    if (!form || !panelRun) return;
-    if (!(form.resultQty >= 0)) return toast.error('실적수량을 입력하세요');
-    const payload = { runNo: panelRun.runNo, seqNo: form.seqNo ?? undefined, machineCode: form.machineCode || undefined, workstageCode: form.workstageCode, resultQty: form.resultQty, workTime: form.workTime, workerCount: form.workerCount, workerName: form.workerName, resultStatus: form.resultStatus };
-    try {
-      if (form.seqNo) await api.put('/oee/work-result/results', payload);
-      else await api.post('/oee/work-result/results', payload);
-      toast.success('실적이 저장되었습니다');
-      const res = await api.get('/oee/work-result/results', { params: { runNo: panelRun.runNo } });
-      setHistory(res.data?.data?.list ?? []);
-      setForm(null);
-      await load();
-    } catch (e: unknown) {
-      const msg = e && typeof e === 'object' && 'response' in e ? (e as { response?: { data?: { message?: string } } }).response?.data?.message : undefined;
-      toast.error(msg || '저장에 실패했습니다');
-    }
   }
 
   // ---- 불량 패널 (작업지시 단위 대표불량 단일, 실적과 독립) ----
@@ -214,7 +127,8 @@ export default function EquipWorkResultPage() {
     setSelectedRun(r?.runNo ?? null); setPanelRun(r); setPanelMode('downtime');
   }
 
-  function closePanel() { setPanelMode(null); setPanelRun(null); setForm(null); }
+  // 폼 상태는 WorkResultForm이 들고 있다 — 패널이 닫히며 언마운트되면 같이 사라진다
+  function closePanel() { setPanelMode(null); setPanelRun(null); }
 
   return (
     <div className="flex h-full overflow-hidden">
@@ -327,84 +241,7 @@ export default function EquipWorkResultPage() {
             <button onClick={closePanel} className="px-3 py-2 rounded border border-border text-text-muted text-sm">닫기</button>
           </div>
           <div className="flex-1 min-h-0 overflow-y-auto px-5 py-4 space-y-4">
-            {/* 실적 이력 그리드 */}
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-sm font-semibold text-text">실적 이력</span>
-                <button onClick={() => setForm(newResultForm(panelRun))} className="text-xs border border-primary text-primary rounded px-2 py-1 hover:bg-surface flex items-center gap-1"><Plus className="w-3 h-3" />신규 실적</button>
-              </div>
-              <table className="w-full text-xs border border-border">
-                <thead><tr className="bg-surface text-text-muted"><th className="p-1.5 text-center">일련</th><th className="p-1.5 text-left">품번/품명</th><th className="p-1.5 text-right">실적수량</th><th className="p-1.5 text-center">처리구분</th></tr></thead>
-                <tbody>
-                  {history.map((h) => (
-                    <tr key={h.seqNo} onClick={() => selectHistory(h)} className={`border-t border-border cursor-pointer hover:bg-surface ${form?.seqNo === h.seqNo ? 'bg-primary/10' : ''}`}>
-                      <td className="p-1.5 text-center font-mono">{h.seqNo}</td>
-                      <td className="p-1.5"><span className="font-mono">{h.itemCode}</span> {h.modelName}</td>
-                      <td className="p-1.5 text-right font-mono">{h.resultQty?.toLocaleString()}</td>
-                      <td className="p-1.5 text-center">{h.resultStatus === 'DONE' ? <span className="text-blue-600 font-semibold">완료</span> : '진행'}</td>
-                    </tr>
-                  ))}
-                  {!history.length && <tr><td colSpan={4} className="p-3 text-center text-text-muted">등록된 실적이 없습니다. [신규 실적]으로 등록하세요.</td></tr>}
-                </tbody>
-              </table>
-            </div>
-
-            {/* 실적 상세 입력 */}
-            {form && (
-              <div className="border-t border-border pt-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-semibold text-text">{form.seqNo ? `실적 상세 (일련 ${form.seqNo})` : '신규 실적'}</span>
-                  {!readOnly && <button onClick={saveResult} className="px-3 py-1.5 rounded bg-primary text-white text-sm">저장</button>}
-                  {readOnly && <span className="text-xs text-blue-600 font-semibold">완료 · 수정불가</span>}
-                </div>
-                {/* 작업지시 기본 정보 (읽기전용, 설비/공정 제외) */}
-                <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-sm border border-border rounded p-3 bg-surface/40">
-                  {([
-                    ['라인', panelRun.lineCode ?? '-'],
-                    ['교대조', panelRun.shiftCode ?? '-'],
-                    ['품번 | 리비전', `${panelRun.itemCode ?? ''} | ${panelRun.revision ?? ''}`],
-                    ['품명', panelRun.modelName ?? '-'],
-                    ['차종', panelRun.carModel ?? '-'],
-                    ['품목분류', panelRun.itemClass ?? '-'],
-                    ['단위', panelRun.unit ?? '-'],
-                    ['표준시간(C/T)', panelRun.ct != null ? `${panelRun.ct}s` : '-'],
-                    ['계획일', panelRun.runDate],
-                    ['계획수량', (panelRun.planQty ?? 0).toLocaleString()],
-                  ] as [string, string][]).map(([k, v]) => (
-                    <div key={k} className="flex flex-col">
-                      <span className="text-[11px] text-text-muted">{k}</span>
-                      <span className="text-text">{v}</span>
-                    </div>
-                  ))}
-                </div>
-                {/* 설비선택 → 공정 자동 */}
-                <label className="text-sm text-text-muted flex flex-col gap-1"><span>설비선택</span>
-                  <MachineCombo machines={machines} value={form.machineCode} disabled={readOnly}
-                    onSelect={(m) => setForm({ ...form, machineCode: m.machineCode, machineName: m.machineName, workstageCode: m.workstageCode, workstageName: m.workstageName })} />
-                </label>
-                <div className="text-xs text-text-muted">공정: <b className="text-text">{form.workstageCode ? `${form.workstageCode} · ${form.workstageName}` : '-'}</b></div>
-                <div className="grid grid-cols-2 gap-3">
-                  <label className="text-sm text-text-muted flex flex-col gap-1"><span>실적수량 <span className="text-red-500">*</span></span>
-                    <input type="number" min="0" value={form.resultQty} disabled={readOnly} onChange={(e) => setForm({ ...form, resultQty: Number(e.target.value) })} className="border border-border rounded p-2 bg-background text-text text-right font-mono disabled:opacity-50 disabled:bg-surface" />
-                  </label>
-                  <label className="text-sm text-text-muted flex flex-col gap-1">작업시간(분)
-                    <input type="number" min="0" value={form.workTime} disabled={readOnly} onChange={(e) => setForm({ ...form, workTime: Number(e.target.value) })} className="border border-border rounded p-2 bg-background text-text text-right font-mono disabled:opacity-50 disabled:bg-surface" />
-                  </label>
-                  <label className="text-sm text-text-muted flex flex-col gap-1">투입인원
-                    <input type="number" min="0" value={form.workerCount} disabled={readOnly} onChange={(e) => setForm({ ...form, workerCount: Number(e.target.value) })} className="border border-border rounded p-2 bg-background text-text text-right font-mono disabled:opacity-50 disabled:bg-surface" />
-                  </label>
-                  <label className="text-sm text-text-muted flex flex-col gap-1">처리구분
-                    <select value={form.resultStatus} disabled={readOnly} onChange={(e) => setForm({ ...form, resultStatus: e.target.value as 'WIP' | 'DONE' })} className="border border-border rounded p-2 bg-background text-text disabled:opacity-50 disabled:bg-surface">
-                      <option value="WIP">진행</option><option value="DONE">완료</option>
-                    </select>
-                  </label>
-                  <label className="text-sm text-text-muted flex flex-col gap-1 col-span-2">작업자
-                    <input value={form.workerName} disabled={readOnly} onChange={(e) => setForm({ ...form, workerName: e.target.value })} className="border border-border rounded p-2 bg-background text-text disabled:opacity-50 disabled:bg-surface" />
-                  </label>
-                </div>
-
-              </div>
-            )}
+            <WorkResultForm key={panelRun.runNo} run={panelRun} machines={machines} onSaved={load} />
           </div>
         </div>
       )}
