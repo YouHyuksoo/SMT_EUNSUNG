@@ -1368,6 +1368,7 @@
       "breakTime": "非作业时间(分钟)",
       "derivedWorkMinutes": "作业时间(分钟，自动计算)",
       "noShiftCodes": "未登记班次代码。请检查公共代码 'SHIFT CODE'。",
+      "shiftClear": "清除班次时间",
       "noBreakTypes": "未登记非作业分类。请检查公共代码 'BREAK TYPE'。",
       "otMinutes": "加班时间(分)",
       "lineRun": "产线追加运行",

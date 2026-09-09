@@ -171,6 +171,12 @@ export default function DayEditModal({
     );
   };
 
+  // 시각을 비우면 그 교대조는 운영하지 않는다는 뜻이다 — 저장 시 제외되고 근무분에서도 빠진다.
+  const clearShift = (shiftCode: string) =>
+    setShifts((prev) =>
+      prev.map((s) => (s.shiftCode === shiftCode ? { ...s, startTime: "", endTime: "" } : s)),
+    );
+
   const addLineRun = () =>
     setLineRuns((prev) => [...prev, { lineCode: "", startTime: "", endTime: "" }]);
 
@@ -277,6 +283,16 @@ export default function DayEditModal({
                       onChange={(e) => setShiftField(s.shiftCode, "endTime", e.target.value)}
                       fullWidth
                     />
+                    <button
+                      type="button"
+                      onClick={() => clearShift(s.shiftCode)}
+                      disabled={!s.startTime && !s.endTime}
+                      aria-label={`${label ?? s.shiftCode} ${t("master.workCalendar.shiftClear")}`}
+                      title={t("master.workCalendar.shiftClear")}
+                      className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded text-text-muted hover:bg-surface hover:text-red-500 disabled:cursor-not-allowed disabled:opacity-30 dark:hover:bg-slate-800"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
                   </div>
                 );
               })

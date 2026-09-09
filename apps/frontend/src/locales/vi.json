@@ -1368,6 +1368,7 @@
       "breakTime": "Thời gian không làm việc (phút)",
       "derivedWorkMinutes": "Số phút làm việc (tự động)",
       "noShiftCodes": "Chưa đăng ký mã ca. Kiểm tra mã dùng chung 'SHIFT CODE'.",
+      "shiftClear": "Xóa giờ ca",
       "noBreakTypes": "Chưa đăng ký loại nghỉ. Kiểm tra mã dùng chung 'BREAK TYPE'.",
       "otMinutes": "Thời gian tăng ca (phút)",
       "lineRun": "Vận hành dây chuyền bổ sung",

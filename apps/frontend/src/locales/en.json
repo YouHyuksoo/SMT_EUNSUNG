@@ -1368,6 +1368,7 @@
       "breakTime": "Non-working Time (min)",
       "derivedWorkMinutes": "Work Minutes (auto)",
       "noShiftCodes": "No shift codes registered. Check common code 'SHIFT CODE'.",
+      "shiftClear": "Clear shift time",
       "noBreakTypes": "No break types registered. Check common code 'BREAK TYPE'.",
       "otMinutes": "OT Minutes",
       "lineRun": "Additional Line Operation",
