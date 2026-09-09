@@ -87,6 +87,18 @@ export default function WorkOrderPanel({ scope, workerName }: Props) {
 
         {/* 작업지시 목록 — 한 건이 두 줄이다 */}
         <div className="flex-1 min-h-0 overflow-auto border border-border rounded">
+          {/* 그리드 타이틀 — 아래 데이터 행과 같은 두 줄 구성·같은 열 폭 */}
+          <div className="sticky top-0 z-10 bg-surface border-b border-border px-2 py-1.5 text-text-muted font-medium">
+            <div className="flex items-center gap-2 text-xs">
+              <span className="w-24 flex-shrink-0">작업지시번호</span>
+              <span className="w-24 flex-shrink-0">계획일</span>
+              <span>교대조</span>
+            </div>
+            <div className="flex items-center gap-2 text-[11px] mt-0.5">
+              <span className="w-32 flex-shrink-0">품번 | 리비전</span>
+              <span>품명</span>
+            </div>
+          </div>
           {rows.map((r) => {
             const active = r.runNo === selected;
             return (
@@ -95,12 +107,12 @@ export default function WorkOrderPanel({ scope, workerName }: Props) {
                   active ? 'bg-primary/10 ring-1 ring-inset ring-primary' : 'hover:bg-surface'
                 }`}>
                 <div className="flex items-center gap-2 text-xs">
-                  <span className="font-mono font-semibold text-text">{r.runNo}</span>
-                  <span className="text-text-muted">{r.runDate}</span>
-                  <span className="text-text-muted">교대 {r.shiftCode ?? '-'}</span>
+                  <span className="w-24 flex-shrink-0 font-mono font-semibold text-text truncate">{r.runNo}</span>
+                  <span className="w-24 flex-shrink-0 text-text-muted">{r.runDate}</span>
+                  <span className="text-text-muted truncate">{r.shiftCode ?? '-'}</span>
                 </div>
                 <div className="flex items-center gap-2 text-[11px] mt-0.5 min-w-0">
-                  <span className="font-mono text-text-muted flex-shrink-0">{r.itemCode ?? '-'} | {r.revision ?? '-'}</span>
+                  <span className="w-32 flex-shrink-0 font-mono text-text-muted truncate">{r.itemCode ?? '-'} | {r.revision ?? '-'}</span>
                   <span className="text-text truncate">{r.itemName ?? r.modelName ?? '-'}</span>
                 </div>
               </button>
