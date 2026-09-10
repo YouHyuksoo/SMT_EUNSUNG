@@ -119,7 +119,7 @@ export default function FieldOpsPage() {
     <div className="h-full flex flex-col overflow-hidden p-6 gap-3 animate-fade-in">
       <div className="flex-shrink-0">
         <h1 className="text-xl font-bold text-text flex items-center gap-2">
-          <HardHat className="w-6 h-6 text-primary" /> 설비 운영 및 실적관리
+          <HardHat className="w-6 h-6 text-primary" /> 설비 운영 및 실적관리(현장)
         </h1>
         <p className="text-sm text-text-muted mt-1">현장 작업자용 · 라인/설비 비가동 처리와 작업실적 등록</p>
       </div>
