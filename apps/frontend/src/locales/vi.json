@@ -391,7 +391,7 @@
     "oee.multiEntry": "Nhập thời gian dừng OEE",
     "oee.equipWorkResult": "Quản lý kết quả sản xuất theo thiết bị",
     "oee.equipOpsStatus": "Tình trạng vận hành thiết bị",
-    "oee.fieldOps": "Vận hành thiết bị & kết quả",
+    "oee.fieldOps": "Vận hành thiết bị & kết quả (hiện trường)",
     "oee.equipOpsAnalysis": "Tình trạng & phân tích vận hành thiết bị",
     "oee.equipDowntimeMobile": "Quét dừng máy (Mock)",
     "oee.standardTime": "Quản lý thời gian tiêu chuẩn",
