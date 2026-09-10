@@ -12,6 +12,7 @@ import {
 import { menuConfig, type MenuConfigItem } from "@/config/menuConfig";
 import { useAuthStore } from "@/stores/authStore";
 import { useMenuTreeStore } from "@/stores/menuTreeStore";
+import { isMenuAllowed } from "@/utils/menuAccess";
 
 const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   Activity, Boxes, LayoutDashboard, Package, Factory, ScanLine, Shield, Wrench, Truck,
@@ -84,8 +85,9 @@ export function useMenuTree() {
   const isMenuDisabled = useCallback(
     (item: MenuConfigItem): boolean => {
       if (isAdmin) return false;
-      if (item.children) return !item.children.some((child) => allowedMenus.includes(child.code));
-      return !allowedMenus.includes(item.code);
+      if (item.children)
+        return !item.children.some((child) => isMenuAllowed(child.code, allowedMenus, isAdmin));
+      return !isMenuAllowed(item.code, allowedMenus, isAdmin);
     },
     [isAdmin, allowedMenus],
   );

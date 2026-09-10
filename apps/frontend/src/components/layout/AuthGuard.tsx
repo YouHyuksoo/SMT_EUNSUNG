@@ -16,6 +16,7 @@ import { useTranslation } from "react-i18next";
 import { ShieldX } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { findMenuCodeByPath } from "@/config/menuConfig";
+import { isMenuAllowed } from "@/utils/menuAccess";
 import { useActivityLogger } from "@/hooks/useActivityLogger";
 
 interface AuthGuardProps {
@@ -62,8 +63,8 @@ export default function AuthGuard({ children }: AuthGuardProps) {
   const isAdmin = user?.role === "ADMIN";
   const menuCode = findMenuCodeByPath(pathname);
 
-  // ADMIN이면 항상 통과, 메뉴 코드를 찾을 수 없는 경로면 통과 (권한 체크 대상 아님)
-  if (!isAdmin && menuCode && !allowedMenus.includes(menuCode)) {
+  // 판정 기준은 isMenuAllowed 한 곳에 있다 (ADMIN·코드 없는 경로·권한 미연동 시 통과)
+  if (!isMenuAllowed(menuCode, allowedMenus, isAdmin)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-slate-900">
         <div className="text-center space-y-4 p-8">

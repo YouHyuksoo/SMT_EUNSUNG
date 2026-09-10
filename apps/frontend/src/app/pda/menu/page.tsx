@@ -14,6 +14,7 @@ import { useTranslation } from "react-i18next";
 import { useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
+import { isMenuAllowed } from "@/utils/menuAccess";
 import PdaHeader from "@/components/pda/PdaHeader";
 import PdaMenuGrid from "@/components/pda/PdaMenuGrid";
 import PwaInstallPrompt from "@/components/pda/PwaInstallPrompt";
@@ -30,12 +31,10 @@ export default function PdaMenuPage() {
 
   const isAdmin = user?.role === "ADMIN";
 
-  // ADMIN이면 전체 메뉴 표시, 일반 사용자는 pdaAllowedMenus 기반 필터링
-  const visibleItems = isAdmin
-    ? pdaMainMenuItems
-    : pdaMainMenuItems.filter(
-        (item) => !item.menuCode || pdaAllowedMenus.includes(item.menuCode)
-      );
+  // 판정 기준은 isMenuAllowed 한 곳에 있다 (ADMIN·코드 없는 메뉴·권한 미연동 시 통과)
+  const visibleItems = pdaMainMenuItems.filter((item) =>
+    isMenuAllowed(item.menuCode, pdaAllowedMenus, isAdmin)
+  );
 
   return (
     <>

@@ -11,6 +11,7 @@
  * 4. pdaAllowedMenus로 menuCode 필터링 (없으면 항상 표시)
  */
 import { useAuthStore } from "@/stores/authStore";
+import { isMenuAllowed } from "@/utils/menuAccess";
 import PdaHeader from "@/components/pda/PdaHeader";
 import PdaMenuGrid from "@/components/pda/PdaMenuGrid";
 import { pdaMaterialSubMenuItems } from "@/components/pda/pdaMenuConfig";
@@ -20,12 +21,10 @@ export default function MaterialMenuPage() {
 
   const isAdmin = user?.role === "ADMIN";
 
-  // ADMIN이면 전체 메뉴 표시, 일반 사용자는 pdaAllowedMenus 기반 필터링
-  const visibleItems = isAdmin
-    ? pdaMaterialSubMenuItems
-    : pdaMaterialSubMenuItems.filter(
-        (item) => !item.menuCode || pdaAllowedMenus.includes(item.menuCode)
-      );
+  // 판정 기준은 isMenuAllowed 한 곳에 있다 (ADMIN·코드 없는 메뉴·권한 미연동 시 통과)
+  const visibleItems = pdaMaterialSubMenuItems.filter((item) =>
+    isMenuAllowed(item.menuCode, pdaAllowedMenus, isAdmin)
+  );
 
   return (
     <>
