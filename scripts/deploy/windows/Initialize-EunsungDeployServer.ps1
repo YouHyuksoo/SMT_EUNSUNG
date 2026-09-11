@@ -768,6 +768,11 @@ function Initialize-EunsungDeployServer {
     Invoke-EunsungNative -FilePath $NpmPath -Arguments @('install', '--global', '--prefix', $npmPrefix, "pm2@$($script:Pm2Version)")
   }
   Set-EunsungDirectoryAcl -Path $npmPrefix -DeploySid $account.SID
+  $pm2Home = Join-Path $profilePath '.pm2'
+  if (-not (Test-Path -LiteralPath $pm2Home)) { New-Item -ItemType Directory -Path $pm2Home -Force | Out-Null }
+  Assert-EunsungOrdinaryPath -Path $pm2Home
+  Set-EunsungDirectoryAcl -Path $pm2Home -DeploySid $account.SID
+  Assert-EunsungOrdinaryPath -Path $pm2Home
   $pnpmActual = (& $pnpmPath --version).Trim()
   if ($LASTEXITCODE -ne 0 -or $pnpmActual -cne $script:PnpmVersion) { throw "Expected pnpm $($script:PnpmVersion), found '$pnpmActual'." }
   $pm2PackagePath = Join-Path $npmPrefix 'node_modules\pm2\package.json'
@@ -788,7 +793,7 @@ function Initialize-EunsungDeployServer {
   if($registrationRequired){Register-EunsungPasswordResurrectTask -WrapperPath $wrapperPath -DeploySid $account.SID -Password $password}
   $registeredTask=Get-ScheduledTask -TaskPath $script:TaskPath -TaskName $script:TaskName -ErrorAction Stop
   if(-not (Test-EunsungScheduledTaskContract -Task $registeredTask -WrapperPath $wrapperPath -DeploySid $account.SID)){throw 'Registered scheduled task does not satisfy the exact Password/Limited contract.'}
-  $pm2Home=Join-Path $profilePath '.pm2';$savedDumpPath=Join-Path $pm2Home 'dump.pm2';$expectSavedDump=$false
+  $savedDumpPath=Join-Path $pm2Home 'dump.pm2';$expectSavedDump=$false
   if(Test-Path -LiteralPath $savedDumpPath){Assert-EunsungOrdinaryPath -Path $savedDumpPath;$savedDumpItem=Get-Item -LiteralPath $savedDumpPath -Force;if($savedDumpItem.PSIsContainer){throw 'PM2 saved dump must be an ordinary file.'};$expectSavedDump=$true}
   Test-EunsungResurrectTask -Pm2Home $pm2Home -Pm2Path $pm2Path -DeploySid $account.SID -ExpectSavedDump $expectSavedDump
 

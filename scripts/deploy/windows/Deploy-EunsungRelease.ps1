@@ -92,6 +92,9 @@ if ($CleanupIncoming) {
 $exitCode = 0
 try {
   Import-Module (Join-Path $PSScriptRoot 'EunsungDeployment.psm1') -Force
+  if (-not ($Adapters -and $Adapters.ContainsKey('TestMode') -and $Adapters.TestMode)) {
+    Initialize-EunsungDeploymentEnvironment
+  }
   Invoke-EunsungDeployment `
     -CommitSha $CommitSha `
     -ArchivePath $ArchivePath `

@@ -142,6 +142,29 @@ function Get-EunsungBootstrappedToolPath {
   return [IO.Path]::GetFullPath((Join-Path $appData "npm\$Name.cmd"))
 }
 
+function Initialize-EunsungDeploymentEnvironment {
+  [CmdletBinding()]
+  param()
+
+  $currentSid = [Security.Principal.WindowsIdentity]::GetCurrent().User.Value
+  $profileKey = "Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList\$currentSid"
+  $profileRecord = Get-ItemProperty -LiteralPath $profileKey -ErrorAction Stop
+  $profilePath = [IO.Path]::GetFullPath([Environment]::ExpandEnvironmentVariables([string]$profileRecord.ProfileImagePath))
+  $appDataPath = [IO.Path]::GetFullPath((Join-Path $profilePath 'AppData\Roaming'))
+  $npmPath = [IO.Path]::GetFullPath((Join-Path $appDataPath 'npm'))
+  $pm2Home = [IO.Path]::GetFullPath((Join-Path $profilePath '.pm2'))
+
+  foreach ($path in @($profilePath, $appDataPath, $npmPath, $pm2Home)) {
+    if (-not [IO.Directory]::Exists($path)) { throw 'Registered deployment profile is incomplete' }
+    Assert-EunsungNoReparsePath -Path $path
+  }
+
+  $env:USERPROFILE = $profilePath
+  $env:APPDATA = $appDataPath
+  $env:PM2_HOME = $pm2Home
+  $env:Path = $npmPath + ';C:\Program Files\nodejs;' + $env:Path
+}
+
 function ConvertTo-EunsungSanitizedDiagnostic {
   [CmdletBinding()]
   param([AllowNull()][object]$Diagnostic)
@@ -1056,6 +1079,7 @@ Export-ModuleMember -Function @(
   'Assert-EunsungNoReparseAncestry',
   'Assert-EunsungOrdinaryFile',
   'Get-EunsungBootstrappedToolPath',
+  'Initialize-EunsungDeploymentEnvironment',
   'ConvertTo-EunsungSanitizedDiagnostic',
   'Test-EunsungAclAccess',
   'Invoke-EunsungNative',

@@ -29,6 +29,7 @@ $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version 2.0
 
 Import-Module (Join-Path $PSScriptRoot 'EunsungDeployment.psm1') -Force
+Initialize-EunsungDeploymentEnvironment
 
 if ([string]::IsNullOrWhiteSpace($Pm2Path)) {
   $Pm2Path = Get-EunsungBootstrappedToolPath -Name 'pm2'

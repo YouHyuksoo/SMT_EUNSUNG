@@ -254,6 +254,9 @@ test('Windows deployment fails closed on PowerShell and native command errors', 
   assert.match(runtime, /\$ErrorActionPreference\s*=\s*['"]Stop['"]/i, 'PowerShell errors must terminate deployment');
   assert.match(runtime, /\$LASTEXITCODE/i, 'native process exit codes must be inspected');
   assert.match(runtime, /\$(?:LASTEXITCODE|exitCode)[\s\S]{0,240}(?:throw|exit\s+1)/i, 'a non-zero native exit must stop deployment');
+  assert.match(sources.module, /ProfileList[\s\S]{0,500}ProfileImagePath[\s\S]{0,1200}\$env:USERPROFILE\s*=\s*\$profilePath[\s\S]{0,400}\$env:PM2_HOME\s*=\s*\$pm2Home/i, 'runtime environment must be anchored to the current SID registered Windows profile');
+  assert.match(sources.deployRelease, /Initialize-EunsungDeploymentEnvironment[\s\S]{0,500}Invoke-EunsungDeployment/i, 'deployment entrypoint must normalize the registered profile before invoking deployment');
+  assert.match(sources.testRunner, /Initialize-EunsungDeploymentEnvironment[\s\S]{0,500}Get-EunsungBootstrappedToolPath/i, 'standalone verifier must normalize the registered profile before resolving PM2');
 });
 
 test('release activation manages both PM2 applications and verifies backend readiness', () => {
@@ -297,6 +300,7 @@ test('bootstrap is least privilege, idempotent, pinned, and reversible', () => {
   assert.match(bootstrap, /Assert-EunsungReadExecuteAccess[\s\S]{0,500}(?:NodePath|OracleClientLibDir)|(?:NodePath|OracleClientLibDir)[\s\S]{0,500}Assert-EunsungReadExecuteAccess/i, 'Node and Oracle access must be checked for the deployment account');
   assert.match(bootstrap, /pnpm@\$?\(?\$?\w+|pnpm@10\.28\.1/i, 'pnpm must be installed at the pinned version');
   assert.match(bootstrap, /pm2@\$?\(?\$?\w+|pm2@6\.0\.6/i, 'PM2 must be installed at the pinned version');
+  assert.match(bootstrap, /\$pm2Home\s*=\s*Join-Path\s+\$profilePath\s+['"]\.pm2['"][\s\S]{0,500}Set-EunsungDirectoryAcl\s+-Path\s+\$pm2Home\s+-DeploySid/i, 'bootstrap must pre-create PM2_HOME with scoped deployment-account write access');
   assert.match(bootstrap, /node_modules\\pm2\\package\.json[\s\S]{0,500}\.version/i, 'PM2 version must be read without starting an administrator PM2 daemon');
   assert.doesNotMatch(bootstrap, /&\s*\$pm2Path\s+--version/i, 'bootstrap must not start PM2 under the administrator profile for version discovery');
   assert.match(bootstrap, /EunsungMES-PM2-Resurrect/g, 'the exact scheduled task name is required');
