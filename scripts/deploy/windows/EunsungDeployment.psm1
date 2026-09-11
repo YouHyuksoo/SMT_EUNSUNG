@@ -968,12 +968,14 @@ function Copy-EunsungProtectedConfigs {
 
 function Invoke-EunsungBuild {
   param([string]$ReleaseDir, [string]$CommitSha, [scriptblock]$NativeInvoker)
-  $versionOutput = Invoke-EunsungNative -FilePath 'corepack.cmd' -Arguments @('pnpm@10.28.1', '--version') -WorkingDirectory $ReleaseDir -NativeInvoker $NativeInvoker
+  $pnpmPath = [IO.Path]::GetFullPath((Join-Path $env:APPDATA 'npm\pnpm.cmd'))
+  if (-not $NativeInvoker) { Assert-EunsungOrdinaryFile -Path $pnpmPath }
+  $versionOutput = Invoke-EunsungNative -FilePath $pnpmPath -Arguments @('--version') -WorkingDirectory $ReleaseDir -NativeInvoker $NativeInvoker
   if ($versionOutput.Trim() -cne '10.28.1') { throw 'Explicit pnpm version 10.28.1 was not selected' }
-  Invoke-EunsungNative -FilePath 'corepack.cmd' -Arguments @('pnpm@10.28.1', 'install', '--frozen-lockfile') -WorkingDirectory $ReleaseDir -NativeInvoker $NativeInvoker | Out-Null
-  Invoke-EunsungNative -FilePath 'corepack.cmd' -Arguments @('pnpm@10.28.1', '--filter', '@smt/shared', 'build') -WorkingDirectory $ReleaseDir -NativeInvoker $NativeInvoker | Out-Null
-  Invoke-EunsungNative -FilePath 'corepack.cmd' -Arguments @('pnpm@10.28.1', '--filter', '@eunsung/backend', 'build') -WorkingDirectory $ReleaseDir -NativeInvoker $NativeInvoker | Out-Null
-  Invoke-EunsungNative -FilePath 'corepack.cmd' -Arguments @('pnpm@10.28.1', '--filter', '@eunsung/frontend', 'build') -WorkingDirectory $ReleaseDir -NativeInvoker $NativeInvoker | Out-Null
+  Invoke-EunsungNative -FilePath $pnpmPath -Arguments @('install', '--frozen-lockfile') -WorkingDirectory $ReleaseDir -NativeInvoker $NativeInvoker | Out-Null
+  Invoke-EunsungNative -FilePath $pnpmPath -Arguments @('--filter', '@smt/shared', 'build') -WorkingDirectory $ReleaseDir -NativeInvoker $NativeInvoker | Out-Null
+  Invoke-EunsungNative -FilePath $pnpmPath -Arguments @('--filter', '@eunsung/backend', 'build') -WorkingDirectory $ReleaseDir -NativeInvoker $NativeInvoker | Out-Null
+  Invoke-EunsungNative -FilePath $pnpmPath -Arguments @('--filter', '@eunsung/frontend', 'build') -WorkingDirectory $ReleaseDir -NativeInvoker $NativeInvoker | Out-Null
   Write-EunsungBuildMarker -ReleaseDir $ReleaseDir -CommitSha $CommitSha
 }
 

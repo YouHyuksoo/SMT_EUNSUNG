@@ -655,11 +655,15 @@ exit $LASTEXITCODE
     Set-Content -LiteralPath (Join-Path $root 'shared/frontend-database.json') -Value '{}' -Encoding UTF8
     Compress-Archive -Path (Join-Path $sourceRelease '*') -DestinationPath $archive
     $script:runtimeTouches = 0
+    $script:buildExecutables = @()
+    $script:buildArguments = @()
     $adapters = @{
       TestMode = $true
       AccessValidator = { $true }
       NativeInvoker = {
         param($FilePath, $Arguments, $WorkingDirectory, $Environment)
+        $script:buildExecutables += [string]$FilePath
+        $script:buildArguments += ,@($Arguments)
         if ($FilePath -match 'pm2') { $script:runtimeTouches++ }
         if ($Arguments -contains '--version') { return @{ ExitCode=0; Output='10.28.1' } }
         return @{ ExitCode=0; Output='' }
@@ -670,6 +674,11 @@ exit $LASTEXITCODE
     }
     Invoke-EunsungDeployment -CommitSha $shaA -ArchivePath $archive -BuildOnly -DeployRoot $root -Adapters $adapters
     Assert-Equal 0 $script:runtimeTouches
+    Assert-Equal 5 $script:buildExecutables.Count
+    Assert-True (@($script:buildExecutables | Where-Object { $_ -notmatch '(?i)\\pnpm\.cmd$' }).Count -eq 0) 'every build command must use the bootstrapped absolute pnpm.cmd path'
+    Assert-True (@($script:buildExecutables | Where-Object { $_ -match '(?i)corepack' }).Count -eq 0) 'build must not depend on corepack being present in noninteractive PATH'
+    Assert-Equal '--version' ([string]$script:buildArguments[0][0])
+    Assert-Equal 'install' ([string]$script:buildArguments[1][0])
     Assert-EunsungBuiltRelease -DeployRoot $root -ReleaseDir (Join-Path $root "releases/$shaA") -CommitSha $shaA -AccessValidator { $true }
   }
 
