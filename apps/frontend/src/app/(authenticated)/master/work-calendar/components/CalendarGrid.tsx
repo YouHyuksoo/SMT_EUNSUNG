@@ -207,7 +207,7 @@ export default function CalendarGrid({
       {/* 날짜 셀 */}
       <div className="grid grid-cols-7 gap-1">
         {calendarCells.map((day, idx) => {
-          if (day === null) return <div key={`e-${idx}`} className="h-[5.29rem]" />;
+          if (day === null) return <div key={`e-${idx}`} className="h-[5.03rem]" />;
           const ds = toDateStr(day);
           const info = dateMap.get(ds);
           const color = info ? TYPE_COLORS[info.dayType] ?? "" : "border-border dark:border-gray-700";
@@ -217,7 +217,7 @@ export default function CalendarGrid({
           return (
             <div
               key={ds}
-              className={`relative h-[5.29rem] rounded border transition-colors
+              className={`relative h-[5.03rem] rounded border transition-colors
                 ${color} ${selected ? "ring-2 ring-primary" : ""}`}
             >
               <button
