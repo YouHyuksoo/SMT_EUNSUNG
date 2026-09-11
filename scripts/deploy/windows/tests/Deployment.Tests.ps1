@@ -492,6 +492,7 @@ exit $LASTEXITCODE
     $root = Join-Path $tempRoot 'success'
     $release = New-TestRelease -DeployRoot $root -Sha $shaA
     $script:events = New-Object System.Collections.ArrayList
+    $script:pm2Executables = New-Object System.Collections.ArrayList
     $adapters = @{
       TestMode = $true
       AccessValidator = { $true }
@@ -500,6 +501,7 @@ exit $LASTEXITCODE
       Retention = { [void]$script:events.Add('retention') }
       NativeInvoker = {
         param($FilePath, $Arguments, $WorkingDirectory, $Environment)
+        [void]$script:pm2Executables.Add([string]$FilePath)
         [void]$script:events.Add("native:$($Arguments -join ' ')")
         @{ ExitCode = 0; Output = '' }
       }
@@ -515,6 +517,9 @@ exit $LASTEXITCODE
     Assert-Equal 'health' ([string]$script:events[1])
     Assert-Equal 'native:save' ([string]$script:events[2])
     Assert-Equal 'retention' ([string]$script:events[3])
+    Assert-Equal 2 $script:pm2Executables.Count
+    Assert-True (@($script:pm2Executables | Where-Object { -not [IO.Path]::IsPathRooted($_) }).Count -eq 0) 'all PM2 calls must use an absolute bootstrapped path'
+    Assert-True (@($script:pm2Executables | Where-Object { $_ -notmatch '(?i)\\pm2\.cmd$' }).Count -eq 0) 'all PM2 calls must target pm2.cmd'
     $current = Get-Content -Raw -LiteralPath (Join-Path $root 'current.json') | ConvertFrom-Json
     Assert-Equal $shaA $current.commitSha
     Assert-Equal $release $current.releaseDir

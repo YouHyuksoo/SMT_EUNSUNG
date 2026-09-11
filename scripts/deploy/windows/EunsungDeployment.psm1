@@ -133,6 +133,15 @@ function Assert-EunsungOrdinaryFile {
   }
 }
 
+function Get-EunsungBootstrappedToolPath {
+  [CmdletBinding()]
+  param([Parameter(Mandatory)][ValidateSet('pnpm', 'pm2')][string]$Name)
+
+  $appData = [Environment]::GetEnvironmentVariable('APPDATA', 'Process')
+  if ([string]::IsNullOrWhiteSpace($appData)) { throw 'APPDATA is unavailable for deployment tool resolution' }
+  return [IO.Path]::GetFullPath((Join-Path $appData "npm\$Name.cmd"))
+}
+
 function ConvertTo-EunsungSanitizedDiagnostic {
   [CmdletBinding()]
   param([AllowNull()][object]$Diagnostic)
@@ -159,6 +168,10 @@ function Invoke-EunsungNative {
     $exitCode = [int]$result.ExitCode
     $output = [string]$result.Output
   } else {
+    if ([IO.Path]::IsPathRooted($FilePath)) {
+      Assert-EunsungNoReparsePath -Path $FilePath
+      Assert-EunsungOrdinaryFile -Path $FilePath
+    }
     $original = @{}
     if ($Environment) {
       foreach ($key in $Environment.Keys) {
@@ -257,7 +270,7 @@ function Test-EunsungReleaseHealth {
   )
 
   if (-not $Pm2ListProvider) {
-    $Pm2ListProvider = { Invoke-EunsungNative -FilePath 'pm2.cmd' -Arguments @('jlist') }
+    $Pm2ListProvider = { Invoke-EunsungNative -FilePath (Get-EunsungBootstrappedToolPath -Name 'pm2') -Arguments @('jlist') }
   }
   if (-not $PortOwnerProvider) {
     $PortOwnerProvider = {
@@ -641,7 +654,7 @@ function Get-EunsungSwitchState {
   if (Test-Path -LiteralPath $currentPath -PathType Leaf) {
     try { $current = Get-Content -Raw -LiteralPath $currentPath | ConvertFrom-Json } catch { throw 'Current release marker is invalid' }
   }
-  $apps = ConvertFrom-EunsungPm2Json -Json (Invoke-EunsungNative -FilePath 'pm2.cmd' -Arguments @('jlist') -NativeInvoker $NativeInvoker)
+  $apps = ConvertFrom-EunsungPm2Json -Json (Invoke-EunsungNative -FilePath (Get-EunsungBootstrappedToolPath -Name 'pm2') -Arguments @('jlist') -NativeInvoker $NativeInvoker)
   $capturedApps = @($apps | Where-Object { $script:AppPorts.Contains($_.name) })
   $pm2Home = [Environment]::GetEnvironmentVariable('PM2_HOME', 'Process')
   if ([string]::IsNullOrWhiteSpace($pm2Home)) { $pm2Home = Join-Path $env:USERPROFILE '.pm2' }
@@ -688,7 +701,7 @@ function Start-EunsungApps {
     EUNSUNG_DEPLOY_ROOT = $DeployRoot
     ORACLE_CLIENT_LIB_DIR = $oracleClientLibDir
   }
-  Invoke-EunsungNative -FilePath 'pm2.cmd' -Arguments @('start', (Join-Path $ReleaseDir 'ecosystem.config.js'), '--only', 'eunsung-frontend,eunsung-backend', '--update-env') -Environment $environment -NativeInvoker $NativeInvoker | Out-Null
+  Invoke-EunsungNative -FilePath (Get-EunsungBootstrappedToolPath -Name 'pm2') -Arguments @('start', (Join-Path $ReleaseDir 'ecosystem.config.js'), '--only', 'eunsung-frontend,eunsung-backend', '--update-env') -Environment $environment -NativeInvoker $NativeInvoker | Out-Null
 }
 
 function Stop-EunsungNewApps {
@@ -696,7 +709,7 @@ function Stop-EunsungNewApps {
   $failures = New-Object System.Collections.Generic.List[string]
   foreach ($name in $script:AppPorts.Keys) {
     try {
-      Invoke-EunsungNative -FilePath 'pm2.cmd' -Arguments @('delete', $name) -NativeInvoker $NativeInvoker | Out-Null
+      Invoke-EunsungNative -FilePath (Get-EunsungBootstrappedToolPath -Name 'pm2') -Arguments @('delete', $name) -NativeInvoker $NativeInvoker | Out-Null
     } catch {
       $failures.Add("$name`: $(ConvertTo-EunsungSanitizedDiagnostic $_.Exception.Message)")
     }
@@ -783,11 +796,11 @@ function Restore-EunsungPriorState {
   Copy-Item -LiteralPath $dumpBackup -Destination $dumpPath -Force
   Assert-EunsungOrdinaryFile -Path $dumpPath
   if ($backupHash -cne (Get-EunsungFileSha256 -Path $dumpPath)) { throw 'PM2 dump backup copy validation failed' }
-  Invoke-EunsungNative -FilePath 'pm2.cmd' -Arguments @('resurrect') -NativeInvoker $NativeInvoker | Out-Null
-  $restored = ConvertFrom-EunsungPm2Json -Json (Invoke-EunsungNative -FilePath 'pm2.cmd' -Arguments @('jlist') -NativeInvoker $NativeInvoker)
+  Invoke-EunsungNative -FilePath (Get-EunsungBootstrappedToolPath -Name 'pm2') -Arguments @('resurrect') -NativeInvoker $NativeInvoker | Out-Null
+  $restored = ConvertFrom-EunsungPm2Json -Json (Invoke-EunsungNative -FilePath (Get-EunsungBootstrappedToolPath -Name 'pm2') -Arguments @('jlist') -NativeInvoker $NativeInvoker)
   Assert-EunsungPm2DefinitionFidelity -CapturedApps $captured -RestoredApps $restored
   foreach ($name in $script:AppPorts.Keys) {
-    Invoke-EunsungNative -FilePath 'pm2.cmd' -Arguments @('describe', $name) -NativeInvoker $NativeInvoker | Out-Null
+    Invoke-EunsungNative -FilePath (Get-EunsungBootstrappedToolPath -Name 'pm2') -Arguments @('describe', $name) -NativeInvoker $NativeInvoker | Out-Null
   }
 }
 
@@ -884,7 +897,7 @@ function Invoke-EunsungActivation {
   $switch = Get-EunsungAdapter -Adapters $Adapters -Name 'SwitchApps' -Default { param($Release, $Root) Start-EunsungApps -ReleaseDir $Release -DeployRoot $Root -NativeInvoker $native }
   $stopNew = Get-EunsungAdapter -Adapters $Adapters -Name 'StopNewApps' -Default { Stop-EunsungNewApps -NativeInvoker $native }
   $restore = Get-EunsungAdapter -Adapters $Adapters -Name 'RestorePrior' -Default { param($State) Restore-EunsungPriorState -SwitchState $State -NativeInvoker $native -DeployRoot $DeployRoot -AttributeProvider $attributeProvider -AccessValidator $accessValidator }
-  $save = Get-EunsungAdapter -Adapters $Adapters -Name 'SaveState' -Default { Invoke-EunsungNative -FilePath 'pm2.cmd' -Arguments @('save') -NativeInvoker $native | Out-Null }
+  $save = Get-EunsungAdapter -Adapters $Adapters -Name 'SaveState' -Default { Invoke-EunsungNative -FilePath (Get-EunsungBootstrappedToolPath -Name 'pm2') -Arguments @('save') -NativeInvoker $native | Out-Null }
   $health = Get-EunsungAdapter -Adapters $Adapters -Name 'HealthCheck' -Default {
     param($Expected, $Release)
     $markerSha = (Get-Content -Raw -LiteralPath (Join-Path $Release '.commit-sha')).Trim()
@@ -974,8 +987,7 @@ function Copy-EunsungProtectedConfigs {
 
 function Invoke-EunsungBuild {
   param([string]$ReleaseDir, [string]$CommitSha, [scriptblock]$NativeInvoker)
-  $pnpmPath = [IO.Path]::GetFullPath((Join-Path $env:APPDATA 'npm\pnpm.cmd'))
-  if (-not $NativeInvoker) { Assert-EunsungOrdinaryFile -Path $pnpmPath }
+  $pnpmPath = Get-EunsungBootstrappedToolPath -Name 'pnpm'
   $versionOutput = Invoke-EunsungNative -FilePath $pnpmPath -Arguments @('--version') -WorkingDirectory $ReleaseDir -NativeInvoker $NativeInvoker
   if ($versionOutput.Trim() -cne '10.28.1') { throw 'Explicit pnpm version 10.28.1 was not selected' }
   Invoke-EunsungNative -FilePath $pnpmPath -Arguments @('install', '--frozen-lockfile') -WorkingDirectory $ReleaseDir -NativeInvoker $NativeInvoker | Out-Null
@@ -1043,6 +1055,7 @@ Export-ModuleMember -Function @(
   'Resolve-EunsungContainedPath',
   'Assert-EunsungNoReparseAncestry',
   'Assert-EunsungOrdinaryFile',
+  'Get-EunsungBootstrappedToolPath',
   'ConvertTo-EunsungSanitizedDiagnostic',
   'Test-EunsungAclAccess',
   'Invoke-EunsungNative',

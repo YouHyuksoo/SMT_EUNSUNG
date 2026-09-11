@@ -258,6 +258,9 @@ test('Windows deployment fails closed on PowerShell and native command errors', 
 
 test('release activation manages both PM2 applications and verifies backend readiness', () => {
   const executableRuntime = withoutCommentLines(runtime);
+  assert.doesNotMatch(executableRuntime, /-FilePath\s+['"]pm2\.cmd['"]/i, 'production PM2 calls must not depend on noninteractive PATH lookup');
+  assert.doesNotMatch(sources.testRunner, /\$Pm2Path\s*=\s*['"]pm2\.cmd['"]/i, 'the standalone verifier must resolve the bootstrapped absolute PM2 path');
+  assert.match(sources.testRunner, /Get-EunsungBootstrappedToolPath\s+-Name\s+['"]pm2['"]/i, 'the standalone verifier must use the common PM2 resolver');
   assert.match(executableRuntime, /(?:pm2[\s\S]{0,500}(?:start|reload|restart)[\s\S]{0,500}eunsung-frontend|eunsung-frontend[\s\S]{0,500}pm2[\s\S]{0,500}(?:start|reload|restart))/i, 'activation must start or reload eunsung-frontend with PM2');
   assert.match(executableRuntime, /(?:pm2[\s\S]{0,500}(?:start|reload|restart)[\s\S]{0,500}eunsung-backend|eunsung-backend[\s\S]{0,500}pm2[\s\S]{0,500}(?:start|reload|restart))/i, 'activation must start or reload eunsung-backend with PM2');
   assert.match(runtime, /status[\s\S]{0,200}(?:['"]ok['"]|[-_]eq\s*['"]ok['"])/i, 'backend health JSON must report status ok');
