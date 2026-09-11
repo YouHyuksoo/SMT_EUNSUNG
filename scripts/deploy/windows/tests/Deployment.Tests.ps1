@@ -285,6 +285,16 @@ exit $LASTEXITCODE
     }
   }
 
+  Test-Case 'native stderr warning with zero exit remains successful under Stop preference' {
+    $shell = (Get-Command powershell.exe -ErrorAction Stop).Source
+    $output = Invoke-EunsungNative -FilePath $shell -Arguments @(
+      '-NoProfile', '-NonInteractive', '-Command',
+      "[Console]::Error.WriteLine('workspace warning'); exit 0"
+    )
+    Assert-Match 'workspace warning' $output
+    Assert-Equal 'Stop' ([string]$ErrorActionPreference) 'native invocation must restore the caller error preference'
+  }
+
   Test-Case 'HTTP retries are bounded and pass timeout to the adapter' {
     $script:httpAttempts = 0
     $script:seenTimeout = 0

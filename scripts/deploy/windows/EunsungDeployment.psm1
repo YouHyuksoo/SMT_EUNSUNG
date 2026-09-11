@@ -167,12 +167,18 @@ function Invoke-EunsungNative {
       }
     }
     $oldLocation = Get-Location
+    $nativeErrorActionPreference = $ErrorActionPreference
     try {
       if ($WorkingDirectory) { Set-Location -LiteralPath $WorkingDirectory }
+      # Windows PowerShell 5.1 wraps native stderr as ErrorRecord objects. Under a
+      # caller's Stop preference that can terminate even when the process exits 0.
+      # Capture both streams and make the checked native exit code authoritative.
+      $ErrorActionPreference = 'Continue'
       $outputLines = & $FilePath @Arguments 2>&1
       $exitCode = $LASTEXITCODE
       $output = ($outputLines | ForEach-Object { [string]$_ }) -join [Environment]::NewLine
     } finally {
+      $ErrorActionPreference = $nativeErrorActionPreference
       Set-Location -LiteralPath $oldLocation
       if ($Environment) {
         foreach ($key in $Environment.Keys) {
