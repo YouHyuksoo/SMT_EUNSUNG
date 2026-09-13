@@ -400,14 +400,15 @@ export class WorkResultService {
     const user = userId ?? dto.userId ?? DEFAULT_USER;
 
     return this.repo.manager.transaction(async (mgr) => {
-      // 설비의 공정코드를 한 번에 확보한다(일자 수만큼 재조회하지 않기 위함).
+      // 설비의 공정코드·라인코드를 한 번에 확보한다(일자 수만큼 재조회하지 않기 위함).
       const binds = dto.machineCodes.map((_, i) => `:${i + 2}`).join(',');
       const wsRows = (await mgr.query(
-        `SELECT MACHINE_CODE AS "machineCode", WORKSTAGE_CODE AS "workstageCode"
+        `SELECT MACHINE_CODE AS "machineCode", WORKSTAGE_CODE AS "workstageCode", LINE_CODE AS "lineCode"
            FROM IMCN_MACHINE WHERE ORGANIZATION_ID=:1 AND MACHINE_CODE IN (${binds})`,
         [organization, ...dto.machineCodes],
-      )) as Array<{ machineCode: string; workstageCode: string | null }>;
+      )) as Array<{ machineCode: string; workstageCode: string | null; lineCode: string | null }>;
       const wsMap = new Map(wsRows.map((r) => [r.machineCode, r.workstageCode]));
+      const lineMap = new Map(wsRows.map((r) => [r.machineCode, r.lineCode]));
 
       let inserted = 0;
       let replaced = 0;
@@ -448,15 +449,16 @@ export class WorkResultService {
           )) as Array<{ seq: number }>;
           await mgr.query(
             `INSERT INTO IP_EQUIP_DOWNTIME_RESULT
-               (RUN_NO, DT_SEQ, ORGANIZATION_ID, MACHINE_CODE, WORKSTAGE_CODE, REASON_CODE,
+               (RUN_NO, DT_SEQ, ORGANIZATION_ID, MACHINE_CODE, WORKSTAGE_CODE, LINE_CODE, REASON_CODE,
                 START_TIME, END_TIME, ENTER_BY, ENTER_DATE)
-             VALUES (NULL, :1, :2, :3, :4, :5,
-                     TO_DATE(:6,'YYYY-MM-DD HH24:MI'), TO_DATE(:7,'YYYY-MM-DD HH24:MI'), :8, SYSDATE)`,
+             VALUES (NULL, :1, :2, :3, :4, :5, :6,
+                     TO_DATE(:7,'YYYY-MM-DD HH24:MI'), TO_DATE(:8,'YYYY-MM-DD HH24:MI'), :9, SYSDATE)`,
             [
               Number(nx[0]?.seq),
               organization,
               machineCode,
               wsMap.get(machineCode) ?? null,
+              lineMap.get(machineCode) ?? null,
               dto.reasonCode,
               startAt,
               endAt,
@@ -564,14 +566,14 @@ export class WorkResultService {
             `SELECT SEQ_IP_EQUIP_DOWNTIME.NEXTVAL AS "seq" FROM DUAL`,
           )) as Array<{ seq: number }>;
           const ws = (await mgr.query(
-            `SELECT WORKSTAGE_CODE AS "ws" FROM IMCN_MACHINE WHERE MACHINE_CODE=:1 AND ORGANIZATION_ID=:2`,
+            `SELECT WORKSTAGE_CODE AS "ws", LINE_CODE AS "lineCode" FROM IMCN_MACHINE WHERE MACHINE_CODE=:1 AND ORGANIZATION_ID=:2`,
             [machineCode, organization],
-          )) as Array<{ ws: string | null }>;
+          )) as Array<{ ws: string | null; lineCode: string | null }>;
           await mgr.query(
             `INSERT INTO IP_EQUIP_DOWNTIME_RESULT
-               (RUN_NO, DT_SEQ, ORGANIZATION_ID, MACHINE_CODE, WORKSTAGE_CODE, REASON_CODE, START_TIME, MEMO, WORKER, CAUSE_YN, ENTER_BY, ENTER_DATE)
-             VALUES (NULL,:1,:2,:3,:4,:5,SYSDATE,:6,:7,:8,:9,SYSDATE)`,
-            [Number(nx[0]?.seq), organization, machineCode, ws[0]?.ws ?? null, dto.reasonCode ?? null, dto.memo ?? null, dto.worker ?? null, causeSet.has(machineCode) ? 'Y' : 'N', user],
+               (RUN_NO, DT_SEQ, ORGANIZATION_ID, MACHINE_CODE, WORKSTAGE_CODE, LINE_CODE, REASON_CODE, START_TIME, MEMO, WORKER, CAUSE_YN, ENTER_BY, ENTER_DATE)
+             VALUES (NULL,:1,:2,:3,:4,:5,:6,SYSDATE,:7,:8,:9,:10,SYSDATE)`,
+            [Number(nx[0]?.seq), organization, machineCode, ws[0]?.ws ?? null, ws[0]?.lineCode ?? dto.lineCode ?? null, dto.reasonCode ?? null, dto.memo ?? null, dto.worker ?? null, causeSet.has(machineCode) ? 'Y' : 'N', user],
           );
         }
         acted.push(machineCode);
@@ -625,14 +627,22 @@ export class WorkResultService {
           `SELECT SEQ_IP_EQUIP_DOWNTIME.NEXTVAL AS "seq" FROM DUAL`,
         )) as Array<{ seq: number }>;
         dtSeq = Number(nx[0]?.seq);
+
+        // 라인코드는 설비마스터 기준으로 채운다 (라인별 비가동 집계용)
+        const lineRows = (await mgr.query(
+          `SELECT LINE_CODE AS "lineCode" FROM IMCN_MACHINE WHERE MACHINE_CODE=:1 AND ORGANIZATION_ID=:2`,
+          [dto.machineCode, organization],
+        )) as Array<{ lineCode: string | null }>;
+        const lineCode = lineRows[0]?.lineCode ?? null;
+
         await mgr.query(
           `INSERT INTO IP_EQUIP_DOWNTIME_RESULT
-             (RUN_NO, DT_SEQ, ORGANIZATION_ID, MACHINE_CODE, WORKSTAGE_CODE, REASON_CODE, START_TIME, END_TIME, MEMO, WORKER, ENTER_BY, ENTER_DATE)
-           VALUES (:1,:2,:3,:4,:5,:6,
-             NVL(TO_DATE(:7,'YYYY-MM-DD HH24:MI'), SYSDATE),
-             TO_DATE(:8,'YYYY-MM-DD HH24:MI'),
-             :9,:10,:11,SYSDATE)`,
-          [dto.runNo ?? null, dtSeq, organization, dto.machineCode, dto.workstageCode ?? null, dto.reasonCode ?? null, dto.startTime ?? null, dto.endTime ?? null, dto.memo ?? null, dto.worker ?? null, user],
+             (RUN_NO, DT_SEQ, ORGANIZATION_ID, MACHINE_CODE, WORKSTAGE_CODE, LINE_CODE, REASON_CODE, START_TIME, END_TIME, MEMO, WORKER, ENTER_BY, ENTER_DATE)
+           VALUES (:1,:2,:3,:4,:5,:6,:7,
+             NVL(TO_DATE(:8,'YYYY-MM-DD HH24:MI'), SYSDATE),
+             TO_DATE(:9,'YYYY-MM-DD HH24:MI'),
+             :10,:11,:12,SYSDATE)`,
+          [dto.runNo ?? null, dtSeq, organization, dto.machineCode, dto.workstageCode ?? null, lineCode, dto.reasonCode ?? null, dto.startTime ?? null, dto.endTime ?? null, dto.memo ?? null, dto.worker ?? null, user],
         );
       }
       return { dtSeq: dtSeq! };

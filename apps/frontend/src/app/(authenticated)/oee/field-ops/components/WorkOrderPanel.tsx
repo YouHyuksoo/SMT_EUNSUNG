@@ -8,7 +8,7 @@
  * 타이틀 옆 날짜(기본 당일)와 조회 버튼으로 이 영역만 따로 조회한다 — 화면 상단에는
  * 조회 기능을 두지 않기 때문이다.
  */
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ClipboardList, RefreshCw } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Card, CardContent, Modal } from '@/components/ui';
@@ -41,6 +41,9 @@ export default function WorkOrderPanel({ scope, workerName }: Props) {
   const [selected, setSelected] = useState<string | null>(null);
   const [machines, setMachines] = useState<WorkResultMachine[]>([]);
   const [formRun, setFormRun] = useState<RunRow | null>(null);
+  // 저장은 모달 헤더에서 누르므로 폼이 넘겨준 저장 함수를 들고 있는다
+  const saveFnRef = useRef<(() => void) | null>(null);
+  const registerSave = useCallback((fn: () => void) => { saveFnRef.current = fn; }, []);
 
   const load = useCallback(async () => {
     if (!scope) { setRows([]); setSelected(null); return; }
@@ -133,11 +136,35 @@ export default function WorkOrderPanel({ scope, workerName }: Props) {
         </button>
       </CardContent>
 
-      <Modal isOpen={!!formRun} onClose={() => setFormRun(null)} size="lg"
-        title="작업 실적 등록" subtitle={formRun?.runNo}>
+      {/* 현장 모드 — 신규 실적 폼이 펼쳐진 채 열린다. 가로를 넓히고(xl) 본문 높이도
+          키워(88vh) 작업지시 정보를 크게 보여준다. 헤더는 X 대신 [닫기] 버튼을 쓰고
+          작업지시번호를 타이틀 우측에 둔다. */}
+      <Modal isOpen={!!formRun} onClose={() => setFormRun(null)} size="xl"
+        bodyMaxHeightClass="max-h-[88vh]" showCloseButton={false}
+        closeOnEsc={false}
+        title={
+          <span className="flex items-baseline gap-2">
+            작업 실적 등록
+            <span className="text-text-muted font-normal">-</span>
+            <span className="font-mono text-base text-text">{formRun?.runNo}</span>
+          </span>
+        }
+        headerActions={
+          <div className="flex items-center gap-2">
+            <button type="button" onClick={() => setFormRun(null)}
+              className="h-9 px-4 rounded-lg border border-border text-sm font-medium text-text hover:bg-surface">
+              닫기
+            </button>
+            <button type="button" onClick={() => saveFnRef.current?.()}
+              className="h-9 px-5 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary/90">
+              저장
+            </button>
+          </div>
+        }>
         {formRun && (
           <WorkResultForm key={formRun.runNo} run={formRun} machines={machines}
-            defaultWorkerName={workerName} onSaved={load} />
+            defaultWorkerName={workerName} fieldMode onRegisterSave={registerSave}
+            onSaved={async () => { setFormRun(null); await load(); }} />
         )}
       </Modal>
     </Card>

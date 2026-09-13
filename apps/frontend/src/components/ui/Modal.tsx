@@ -21,7 +21,7 @@ import Button from './Button';
 export interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
-  title?: string;
+  title?: React.ReactNode;
   subtitle?: string;
   children: React.ReactNode;
   size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | 'full';
@@ -30,6 +30,8 @@ export interface ModalProps {
   closeOnEsc?: boolean;
   footer?: React.ReactNode;
   headerActions?: React.ReactNode;
+  /** 본문 최대 높이 클래스. 기본 max-h-[75vh] — 더 큰 폼은 쓰는 쪽에서 키운다 */
+  bodyMaxHeightClass?: string;
   initialFocusRef?: React.RefObject<HTMLElement | null>;
 }
 
@@ -56,6 +58,7 @@ function Modal({
   subtitle,
   children,
   size = 'md',
+  bodyMaxHeightClass = 'max-h-[75vh]',
   showCloseButton = true,
   closeOnOverlayClick = true,
   closeOnEsc = true,
@@ -222,7 +225,7 @@ function Modal({
           )}
 
           {/* Content */}
-          <div className="p-4 overflow-y-auto max-h-[75vh]">{children}</div>
+          <div className={`p-4 overflow-y-auto ${bodyMaxHeightClass}`}>{children}</div>
 
           {/* Footer */}
           {footer && (
@@ -244,7 +247,7 @@ export interface ConfirmModalProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: () => void;
-  title?: string;
+  title?: React.ReactNode;
   message: React.ReactNode;
   confirmText?: string;
   cancelText?: string;
