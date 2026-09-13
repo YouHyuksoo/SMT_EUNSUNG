@@ -285,6 +285,16 @@ exit $LASTEXITCODE
     }
   }
 
+  Test-Case 'native stderr warning with zero exit remains successful under Stop preference' {
+    $shell = (Get-Command powershell.exe -ErrorAction Stop).Source
+    $output = Invoke-EunsungNative -FilePath $shell -Arguments @(
+      '-NoProfile', '-NonInteractive', '-Command',
+      "[Console]::Error.WriteLine('workspace warning'); exit 0"
+    )
+    Assert-Match 'workspace warning' $output
+    Assert-Equal 'Stop' ([string]$ErrorActionPreference) 'native invocation must restore the caller error preference'
+  }
+
   Test-Case 'HTTP retries are bounded and pass timeout to the adapter' {
     $script:httpAttempts = 0
     $script:seenTimeout = 0
@@ -482,6 +492,7 @@ exit $LASTEXITCODE
     $root = Join-Path $tempRoot 'success'
     $release = New-TestRelease -DeployRoot $root -Sha $shaA
     $script:events = New-Object System.Collections.ArrayList
+    $script:pm2Executables = New-Object System.Collections.ArrayList
     $adapters = @{
       TestMode = $true
       AccessValidator = { $true }
@@ -490,6 +501,7 @@ exit $LASTEXITCODE
       Retention = { [void]$script:events.Add('retention') }
       NativeInvoker = {
         param($FilePath, $Arguments, $WorkingDirectory, $Environment)
+        [void]$script:pm2Executables.Add([string]$FilePath)
         [void]$script:events.Add("native:$($Arguments -join ' ')")
         @{ ExitCode = 0; Output = '' }
       }
@@ -505,6 +517,9 @@ exit $LASTEXITCODE
     Assert-Equal 'health' ([string]$script:events[1])
     Assert-Equal 'native:save' ([string]$script:events[2])
     Assert-Equal 'retention' ([string]$script:events[3])
+    Assert-Equal 2 $script:pm2Executables.Count
+    Assert-True (@($script:pm2Executables | Where-Object { -not [IO.Path]::IsPathRooted($_) }).Count -eq 0) 'all PM2 calls must use an absolute bootstrapped path'
+    Assert-True (@($script:pm2Executables | Where-Object { $_ -notmatch '(?i)\\pm2\.cmd$' }).Count -eq 0) 'all PM2 calls must target pm2.cmd'
     $current = Get-Content -Raw -LiteralPath (Join-Path $root 'current.json') | ConvertFrom-Json
     Assert-Equal $shaA $current.commitSha
     Assert-Equal $release $current.releaseDir
@@ -655,11 +670,15 @@ exit $LASTEXITCODE
     Set-Content -LiteralPath (Join-Path $root 'shared/frontend-database.json') -Value '{}' -Encoding UTF8
     Compress-Archive -Path (Join-Path $sourceRelease '*') -DestinationPath $archive
     $script:runtimeTouches = 0
+    $script:buildExecutables = @()
+    $script:buildArguments = @()
     $adapters = @{
       TestMode = $true
       AccessValidator = { $true }
       NativeInvoker = {
         param($FilePath, $Arguments, $WorkingDirectory, $Environment)
+        $script:buildExecutables += [string]$FilePath
+        $script:buildArguments += ,@($Arguments)
         if ($FilePath -match 'pm2') { $script:runtimeTouches++ }
         if ($Arguments -contains '--version') { return @{ ExitCode=0; Output='10.28.1' } }
         return @{ ExitCode=0; Output='' }
@@ -670,6 +689,11 @@ exit $LASTEXITCODE
     }
     Invoke-EunsungDeployment -CommitSha $shaA -ArchivePath $archive -BuildOnly -DeployRoot $root -Adapters $adapters
     Assert-Equal 0 $script:runtimeTouches
+    Assert-Equal 5 $script:buildExecutables.Count
+    Assert-True (@($script:buildExecutables | Where-Object { $_ -notmatch '(?i)\\pnpm\.cmd$' }).Count -eq 0) 'every build command must use the bootstrapped absolute pnpm.cmd path'
+    Assert-True (@($script:buildExecutables | Where-Object { $_ -match '(?i)corepack' }).Count -eq 0) 'build must not depend on corepack being present in noninteractive PATH'
+    Assert-Equal '--version' ([string]$script:buildArguments[0][0])
+    Assert-Equal 'install' ([string]$script:buildArguments[1][0])
     Assert-EunsungBuiltRelease -DeployRoot $root -ReleaseDir (Join-Path $root "releases/$shaA") -CommitSha $shaA -AccessValidator { $true }
   }
 

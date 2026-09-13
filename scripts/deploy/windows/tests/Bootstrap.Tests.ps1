@@ -111,7 +111,12 @@ Test-Case 'wrapper propagates native resurrect failure' {
 Test-Case 'wrapper keeps missing executable as Unexpected PowerShell invocation failure' {
   $testDir=Join-Path ([IO.Path]::GetTempPath()) ("eunsung-wrapper-"+[guid]::NewGuid().ToString('N'));$profile=Join-Path $testDir 'profile';$logs=Join-Path $testDir 'logs';New-Item -ItemType Directory -Path $profile,$logs|Out-Null;$log=Join-Path $logs 'pm2-bootstrap.log'
   $pm2Home=Join-Path $profile '.pm2';New-Item -ItemType Directory -Path $pm2Home|Out-Null;[IO.File]::WriteAllText((Join-Path $pm2Home 'dump.pm2'),'{}')
-  try{Assert-Throws { & ([scriptblock]::Create((Get-EunsungWrapperContent -ProfilePath $profile -Pm2Path (Join-Path $testDir 'missing-pm2.cmd') -LogPath $log))) } 'not recognized|invocation failed';Assert-True ((Get-Content -Raw -LiteralPath $log) -match 'exit=none errorClass=Unexpected')}
+  try{
+    $threw=$false
+    try { & ([scriptblock]::Create((Get-EunsungWrapperContent -ProfilePath $profile -Pm2Path (Join-Path $testDir 'missing-pm2.cmd') -LogPath $log))) } catch { $threw=$true }
+    Assert-True $threw 'missing executable must throw regardless of the Windows display language'
+    Assert-True ((Get-Content -Raw -LiteralPath $log) -match 'exit=none errorClass=Unexpected')
+  }
   finally{Remove-Item -LiteralPath $testDir -Recurse -Force}
 }
 

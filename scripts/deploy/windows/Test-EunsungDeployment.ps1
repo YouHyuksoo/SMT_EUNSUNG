@@ -20,7 +20,7 @@ param(
 
   [string]$BackendUrl = 'http://127.0.0.1:3003/api/v1/health',
 
-  [string]$Pm2Path = 'pm2.cmd',
+  [string]$Pm2Path,
 
   [string]$Pm2Home
 )
@@ -29,6 +29,13 @@ $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version 2.0
 
 Import-Module (Join-Path $PSScriptRoot 'EunsungDeployment.psm1') -Force
+Initialize-EunsungDeploymentEnvironment
+
+if ([string]::IsNullOrWhiteSpace($Pm2Path)) {
+  $Pm2Path = Get-EunsungBootstrappedToolPath -Name 'pm2'
+} elseif (-not [IO.Path]::IsPathRooted($Pm2Path)) {
+  throw 'Pm2Path must be an absolute path'
+}
 
 try {
   if (-not (Test-EunsungCommitSha $CommitSha)) {
