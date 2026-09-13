@@ -14,7 +14,7 @@
  * 4. fieldMode(현장 화면 전용): 신규 실적 폼을 펼친 채로 열어 탭을 한 번 줄이고,
  *    모달(max-h-75vh) 안에서 스크롤이 생기지 않도록 조밀한 열 배치를 쓴다.
  */
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Plus, ChevronDown, ChevronUp } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '@/services/api';
@@ -89,13 +89,15 @@ interface Props {
   machines: WorkResultMachine[];
   /** 현장 화면 모드 — 신규 실적 폼을 펼친 채 시작하고 조밀한 레이아웃을 쓴다 */
   fieldMode?: boolean;
+  /** 저장 동작을 바깥(모달 헤더 등)에 넘긴다. 주면 폼 안의 저장 버튼은 감춘다 */
+  onRegisterSave?: (save: () => void) => void;
   /** 신규 실적의 작업자 기본값. 현장 앱이 상단에서 고른 작업자를 넣는다 */
   defaultWorkerName?: string;
   /** 저장 성공 후 부모 목록을 갱신하라는 신호 */
   onSaved?: () => void | Promise<void>;
 }
 
-export default function WorkResultForm({ run, machines, defaultWorkerName, onSaved, fieldMode }: Props) {
+export default function WorkResultForm({ run, machines, defaultWorkerName, onSaved, fieldMode, onRegisterSave }: Props) {
   const newResultForm = useCallback(
     (): ResultForm => ({
       seqNo: null,
@@ -145,6 +147,7 @@ export default function WorkResultForm({ run, machines, defaultWorkerName, onSav
 
   async function saveResult() {
     if (!form) return;
+    if (form.savedStatus === 'DONE') return toast.error('완료된 실적은 수정할 수 없습니다');
     if (!(form.resultQty >= 0)) return toast.error('실적수량을 입력하세요');
     const payload = {
       runNo: run.runNo, seqNo: form.seqNo ?? undefined,
@@ -165,6 +168,10 @@ export default function WorkResultForm({ run, machines, defaultWorkerName, onSav
       toast.error(msg || '저장에 실패했습니다');
     }
   }
+
+  const saveRef = useRef<() => void>(() => {});
+  useEffect(() => { saveRef.current = saveResult; });
+  useEffect(() => { onRegisterSave?.(() => saveRef.current()); }, [onRegisterSave]);
 
   return (
     <div className="space-y-4">
@@ -208,7 +215,7 @@ export default function WorkResultForm({ run, machines, defaultWorkerName, onSav
         <div className="border-t border-border pt-4 space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-sm font-semibold text-text">{form.seqNo ? `실적 상세 (일련 ${form.seqNo})` : '신규 실적'}</span>
-            {!readOnly && <button onClick={saveResult} className="px-3 py-1.5 rounded bg-primary text-white text-sm">저장</button>}
+            {!readOnly && !onRegisterSave && <button onClick={saveResult} className="px-3 py-1.5 rounded bg-primary text-white text-sm">저장</button>}
             {readOnly && <span className="text-xs text-blue-600 font-semibold">완료 · 수정불가</span>}
           </div>
           {/* 작업지시 기본 정보 (읽기전용, 설비/공정 제외) */}

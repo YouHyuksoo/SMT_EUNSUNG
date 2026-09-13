@@ -21,7 +21,7 @@ import Button from './Button';
 export interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
-  title?: string;
+  title?: React.ReactNode;
   subtitle?: string;
   children: React.ReactNode;
   size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | 'full';
@@ -247,7 +247,7 @@ export interface ConfirmModalProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: () => void;
-  title?: string;
+  title?: React.ReactNode;
   message: React.ReactNode;
   confirmText?: string;
   cancelText?: string;
