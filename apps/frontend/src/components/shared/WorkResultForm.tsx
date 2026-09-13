@@ -11,6 +11,7 @@
  * 2. 이미 저장된 상태가 '완료'인 실적만 잠근다. 폼에서 방금 '완료'로 바꾼 값으로는
  *    잠그지 않는다 — 저장 전에 되돌릴 수 있어야 하기 때문이다.
  * 3. 저장 후 이력을 다시 읽고 onSaved()로 부모 목록 갱신을 알린다.
+ *    현장 모드는 이력을 다시 읽지 않고 onSaved()만 부른다 — 쓰는 쪽이 모달을 닫는다.
  * 4. fieldMode(현장 화면 전용): 신규 실적 폼을 펼친 채로 열어 탭을 한 번 줄이고,
  *    모달(max-h-75vh) 안에서 스크롤이 생기지 않도록 조밀한 열 배치를 쓴다.
  */
@@ -161,6 +162,9 @@ export default function WorkResultForm({ run, machines, defaultWorkerName, onSav
       if (form.seqNo) await api.put('/oee/work-result/results', payload);
       else await api.post('/oee/work-result/results', payload);
       toast.success('실적이 저장되었습니다');
+      // 현장 모드는 저장하면 바로 모달을 닫는다(onSaved가 닫는다).
+      // 이력을 다시 읽거나 폼을 접으면 닫히기 직전에 이력 화면이 잠깐 비친다.
+      if (fieldMode) return void onSaved?.();
       await loadHistory();
       setForm(null);
       await onSaved?.();

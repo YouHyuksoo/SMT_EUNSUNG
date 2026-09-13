@@ -163,7 +163,8 @@ export default function WorkOrderPanel({ scope, workerName }: Props) {
         }>
         {formRun && (
           <WorkResultForm key={formRun.runNo} run={formRun} machines={machines}
-            defaultWorkerName={workerName} onSaved={load} fieldMode onRegisterSave={registerSave} />
+            defaultWorkerName={workerName} fieldMode onRegisterSave={registerSave}
+            onSaved={async () => { setFormRun(null); await load(); }} />
         )}
       </Modal>
     </Card>
