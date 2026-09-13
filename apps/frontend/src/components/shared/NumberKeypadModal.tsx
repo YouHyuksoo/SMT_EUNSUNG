@@ -41,7 +41,7 @@ export default function NumberKeypadModal({ isOpen, label, value, unit, onConfir
     <Modal isOpen={isOpen} onClose={onClose} size="md" title={label} showCloseButton={false}>
       <div className="space-y-3">
         {/* 입력값 표시 */}
-        <div className="flex items-baseline justify-end gap-2 rounded-lg border border-border bg-background px-4 py-3">
+        <div className="flex items-baseline justify-end gap-2 rounded-lg border-2 border-slate-300 dark:border-slate-600 bg-background px-4 py-3">
           <span className="font-mono text-3xl font-semibold text-text tabular-nums">
             {parsed.toLocaleString()}
           </span>
@@ -51,7 +51,7 @@ export default function NumberKeypadModal({ isOpen, label, value, unit, onConfir
         <div className="grid grid-cols-3 gap-2">
           {KEYS.map((k) => (
             <button key={k} type="button" onClick={() => push(k)}
-              className={`h-14 rounded-lg border border-border bg-surface text-xl font-semibold text-text hover:border-primary/60 active:bg-background ${
+              className={`h-14 rounded-lg border-2 border-slate-300 dark:border-slate-600 bg-surface text-xl font-semibold text-text shadow-sm hover:border-primary active:bg-background active:scale-[0.98] transition-[transform,border-color] ${
                 k === '0' ? 'col-span-2' : ''
               }`}>
               {k}
@@ -61,18 +61,18 @@ export default function NumberKeypadModal({ isOpen, label, value, unit, onConfir
 
         <div className="grid grid-cols-2 gap-2">
           <button type="button" onClick={() => setBuf((b) => b.slice(0, -1))}
-            className="h-12 rounded-lg border border-border text-sm font-medium text-text flex items-center justify-center gap-1.5 hover:bg-surface">
+            className="h-12 rounded-lg border-2 border-slate-300 dark:border-slate-600 text-sm font-medium text-text flex items-center justify-center gap-1.5 hover:bg-surface hover:border-primary">
             <Delete className="w-4 h-4" />삭제
           </button>
           <button type="button" onClick={() => setBuf('')}
-            className="h-12 rounded-lg border border-border text-sm font-medium text-text flex items-center justify-center gap-1.5 hover:bg-surface">
+            className="h-12 rounded-lg border-2 border-slate-300 dark:border-slate-600 text-sm font-medium text-text flex items-center justify-center gap-1.5 hover:bg-surface hover:border-primary">
             <RotateCcw className="w-4 h-4" />초기화
           </button>
         </div>
 
         <div className="grid grid-cols-2 gap-2">
           <button type="button" onClick={onClose}
-            className="h-12 rounded-lg border border-border text-sm font-medium text-text hover:bg-surface">
+            className="h-12 rounded-lg border-2 border-slate-300 dark:border-slate-600 text-sm font-medium text-text hover:bg-surface hover:border-primary">
             취소
           </button>
           <button type="button" onClick={() => { onConfirm(parsed); onClose(); }}
