@@ -199,8 +199,8 @@ export default function WorkResultForm({ run, machines, defaultWorkerName, onSav
             {readOnly && <span className="text-xs text-blue-600 font-semibold">완료 · 수정불가</span>}
           </div>
           {/* 작업지시 기본 정보 (읽기전용, 설비/공정 제외) */}
-          <div className={`grid gap-x-4 gap-y-1.5 text-sm border border-border rounded bg-surface/40 ${
-            fieldMode ? 'grid-cols-4 p-2' : 'grid-cols-2 p-3'
+          <div className={`grid gap-x-4 text-sm border border-border rounded bg-surface/40 ${
+            fieldMode ? 'grid-cols-4 gap-y-1 p-2' : 'grid-cols-2 gap-y-1.5 p-3'
           }`}>
             {([
               ['라인', run.lineCode ?? '-'],
@@ -214,9 +214,15 @@ export default function WorkResultForm({ run, machines, defaultWorkerName, onSav
               ['계획일', run.runDate],
               ['계획수량', (run.planQty ?? 0).toLocaleString()],
             ] as [string, string][]).map(([k, v]) => (
-              <div key={k} className="flex flex-col">
-                <span className="text-[11px] text-text-muted">{k}</span>
-                <span className="text-text">{v}</span>
+              // 현장 모드는 라벨과 값을 한 줄에 붙여 행 수를 줄인다(모달 스크롤 방지).
+              // 길이가 긴 품번·품명만 2칸을 줘서 잘리지 않게 한다 — 행 수는 그대로 3행이다.
+              <div key={k} className={
+                fieldMode
+                  ? `flex items-baseline gap-1 min-w-0 ${k === '품명' || k === '품번 | 리비전' ? 'col-span-2' : ''}`
+                  : 'flex flex-col'
+              }>
+                <span className="text-[11px] text-text-muted flex-shrink-0">{k}</span>
+                <span className={`text-text ${fieldMode ? 'text-xs truncate' : ''}`} title={fieldMode ? v : undefined}>{v}</span>
               </div>
             ))}
           </div>
