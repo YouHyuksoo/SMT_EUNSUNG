@@ -133,10 +133,21 @@ export default function WorkOrderPanel({ scope, workerName }: Props) {
         </button>
       </CardContent>
 
-      {/* 현장 모드 — 신규 실적 폼이 펼쳐진 채 열린다. 가로를 넓혀(xl) 줄바꿈을 줄이고
-          모달 본문(max-h-75vh) 안에서 스크롤이 생기지 않게 한다. */}
+      {/* 현장 모드 — 신규 실적 폼이 펼쳐진 채 열린다. 가로를 넓히고(xl) 본문 높이도
+          키워(88vh) 작업지시 정보를 크게 보여준다. 헤더는 X 대신 [닫기] 버튼을 쓰고
+          작업지시번호를 타이틀 우측에 둔다. */}
       <Modal isOpen={!!formRun} onClose={() => setFormRun(null)} size="xl"
-        title="작업 실적 등록" subtitle={formRun?.runNo}>
+        bodyMaxHeightClass="max-h-[88vh]" showCloseButton={false}
+        title="작업 실적 등록"
+        headerActions={
+          <div className="flex items-center gap-3">
+            <span className="font-mono text-sm font-semibold text-text">{formRun?.runNo}</span>
+            <button type="button" onClick={() => setFormRun(null)}
+              className="h-9 px-4 rounded-lg border border-border text-sm font-medium text-text hover:bg-surface">
+              닫기
+            </button>
+          </div>
+        }>
         {formRun && (
           <WorkResultForm key={formRun.runNo} run={formRun} machines={machines}
             defaultWorkerName={workerName} onSaved={load} fieldMode />

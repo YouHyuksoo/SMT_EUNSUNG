@@ -15,7 +15,7 @@
  *    모달(max-h-75vh) 안에서 스크롤이 생기지 않도록 조밀한 열 배치를 쓴다.
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Plus, ChevronDown } from 'lucide-react';
+import { Plus, ChevronDown, ChevronUp } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '@/services/api';
 
@@ -109,6 +109,8 @@ export default function WorkResultForm({ run, machines, defaultWorkerName, onSav
   );
 
   const [history, setHistory] = useState<ResultRow[]>([]);
+  // 현장 모드는 최신 1건만 보이고 나머지는 접어둔다
+  const [historyOpen, setHistoryOpen] = useState(false);
   // 현장 모드는 신규 실적 폼을 펼친 채로 연다 — [신규 실적] 탭 한 번을 줄인다.
   const [form, setForm] = useState<ResultForm | null>(() => (fieldMode ? newResultForm() : null));
 
@@ -170,13 +172,24 @@ export default function WorkResultForm({ run, machines, defaultWorkerName, onSav
       <div>
         <div className="flex items-center justify-between mb-1">
           <span className="text-sm font-semibold text-text">실적 이력</span>
-          <button onClick={() => setForm(newResultForm())} className="text-xs border border-primary text-primary rounded px-2 py-1 hover:bg-surface flex items-center gap-1"><Plus className="w-3 h-3" />신규 실적</button>
+          {fieldMode ? (
+            history.length > 1 && (
+              <button type="button" onClick={() => setHistoryOpen((v) => !v)}
+                className="text-xs border border-border text-text-muted rounded px-2 py-1 hover:bg-surface flex items-center gap-1">
+                {historyOpen
+                  ? <><ChevronUp className="w-3 h-3" />접기</>
+                  : <><ChevronDown className="w-3 h-3" />이전 이력 {history.length - 1}건</>}
+              </button>
+            )
+          ) : (
+            <button onClick={() => setForm(newResultForm())} className="text-xs border border-primary text-primary rounded px-2 py-1 hover:bg-surface flex items-center gap-1"><Plus className="w-3 h-3" />신규 실적</button>
+          )}
         </div>
-        <div className={fieldMode ? 'max-h-[104px] overflow-y-auto border border-border rounded' : ''}>
+        <div className={fieldMode && historyOpen ? 'max-h-[132px] overflow-y-auto border border-border rounded' : ''}>
         <table className="w-full text-xs border border-border">
           <thead><tr className="bg-surface text-text-muted"><th className="p-1.5 text-center">일련</th><th className="p-1.5 text-left">품번/품명</th><th className="p-1.5 text-right">실적수량</th><th className="p-1.5 text-center">처리구분</th></tr></thead>
           <tbody>
-            {history.map((h) => (
+            {(fieldMode && !historyOpen ? history.slice(0, 1) : history).map((h) => (
               <tr key={h.seqNo} onClick={() => selectHistory(h)} className={`border-t border-border cursor-pointer hover:bg-surface ${form?.seqNo === h.seqNo ? 'bg-primary/10' : ''}`}>
                 <td className="p-1.5 text-center font-mono">{h.seqNo}</td>
                 <td className="p-1.5"><span className="font-mono">{h.itemCode}</span> {h.modelName}</td>
@@ -200,7 +213,7 @@ export default function WorkResultForm({ run, machines, defaultWorkerName, onSav
           </div>
           {/* 작업지시 기본 정보 (읽기전용, 설비/공정 제외) */}
           <div className={`grid gap-x-4 text-sm border border-border rounded bg-surface/40 ${
-            fieldMode ? 'grid-cols-4 gap-y-1 p-2' : 'grid-cols-2 gap-y-1.5 p-3'
+            fieldMode ? 'grid-cols-4 gap-y-2 p-3' : 'grid-cols-2 gap-y-1.5 p-3'
           }`}>
             {([
               ['라인', run.lineCode ?? '-'],
@@ -221,8 +234,8 @@ export default function WorkResultForm({ run, machines, defaultWorkerName, onSav
                   ? `flex items-baseline gap-1 min-w-0 ${k === '품명' || k === '품번 | 리비전' ? 'col-span-2' : ''}`
                   : 'flex flex-col'
               }>
-                <span className="text-[11px] text-text-muted flex-shrink-0">{k}</span>
-                <span className={`text-text ${fieldMode ? 'text-xs truncate' : ''}`} title={fieldMode ? v : undefined}>{v}</span>
+                <span className={`text-text-muted flex-shrink-0 ${fieldMode ? 'text-xs' : 'text-[11px]'}`}>{k}</span>
+                <span className={`text-text ${fieldMode ? 'text-sm font-medium truncate' : ''}`} title={fieldMode ? v : undefined}>{v}</span>
               </div>
             ))}
           </div>
