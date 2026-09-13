@@ -11,6 +11,8 @@
  * 2. 이미 저장된 상태가 '완료'인 실적만 잠근다. 폼에서 방금 '완료'로 바꾼 값으로는
  *    잠그지 않는다 — 저장 전에 되돌릴 수 있어야 하기 때문이다.
  * 3. 저장 후 이력을 다시 읽고 onSaved()로 부모 목록 갱신을 알린다.
+ * 4. fieldMode(현장 화면 전용): 신규 실적 폼을 펼친 채로 열어 탭을 한 번 줄이고,
+ *    모달(max-h-75vh) 안에서 스크롤이 생기지 않도록 조밀한 열 배치를 쓴다.
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Plus, ChevronDown } from 'lucide-react';
@@ -85,15 +87,30 @@ function MachineCombo({ machines, value, onSelect, disabled }: {
 interface Props {
   run: WorkResultRun;
   machines: WorkResultMachine[];
+  /** 현장 화면 모드 — 신규 실적 폼을 펼친 채 시작하고 조밀한 레이아웃을 쓴다 */
+  fieldMode?: boolean;
   /** 신규 실적의 작업자 기본값. 현장 앱이 상단에서 고른 작업자를 넣는다 */
   defaultWorkerName?: string;
   /** 저장 성공 후 부모 목록을 갱신하라는 신호 */
   onSaved?: () => void | Promise<void>;
 }
 
-export default function WorkResultForm({ run, machines, defaultWorkerName, onSaved }: Props) {
+export default function WorkResultForm({ run, machines, defaultWorkerName, onSaved, fieldMode }: Props) {
+  const newResultForm = useCallback(
+    (): ResultForm => ({
+      seqNo: null,
+      machineCode: run.machineCode ?? '', machineName: run.machineName ?? '',
+      workstageCode: run.workstageCode ?? '', workstageName: run.workstageName ?? '',
+      resultQty: 0, workTime: 0, workerCount: 0,
+      workerName: defaultWorkerName ?? '',
+      resultStatus: 'WIP', savedStatus: 'WIP',
+    }),
+    [run, defaultWorkerName],
+  );
+
   const [history, setHistory] = useState<ResultRow[]>([]);
-  const [form, setForm] = useState<ResultForm | null>(null);
+  // 현장 모드는 신규 실적 폼을 펼친 채로 연다 — [신규 실적] 탭 한 번을 줄인다.
+  const [form, setForm] = useState<ResultForm | null>(() => (fieldMode ? newResultForm() : null));
 
   const loadHistory = useCallback(async () => {
     try {
@@ -105,15 +122,6 @@ export default function WorkResultForm({ run, machines, defaultWorkerName, onSav
   // 이력만 읽는다(비동기라 동기 setState가 아니다). 작업지시가 바뀌면 쓰는 쪽이
   // key={run.runNo}로 remount시켜 폼이 초기화된다.
   useEffect(() => { void loadHistory(); }, [loadHistory]);
-
-  const newResultForm = (): ResultForm => ({
-    seqNo: null,
-    machineCode: run.machineCode ?? '', machineName: run.machineName ?? '',
-    workstageCode: run.workstageCode ?? '', workstageName: run.workstageName ?? '',
-    resultQty: 0, workTime: 0, workerCount: 0,
-    workerName: defaultWorkerName ?? '',
-    resultStatus: 'WIP', savedStatus: 'WIP',
-  });
 
   async function selectHistory(row: ResultRow) {
     try {
@@ -164,6 +172,7 @@ export default function WorkResultForm({ run, machines, defaultWorkerName, onSav
           <span className="text-sm font-semibold text-text">실적 이력</span>
           <button onClick={() => setForm(newResultForm())} className="text-xs border border-primary text-primary rounded px-2 py-1 hover:bg-surface flex items-center gap-1"><Plus className="w-3 h-3" />신규 실적</button>
         </div>
+        <div className={fieldMode ? 'max-h-[104px] overflow-y-auto border border-border rounded' : ''}>
         <table className="w-full text-xs border border-border">
           <thead><tr className="bg-surface text-text-muted"><th className="p-1.5 text-center">일련</th><th className="p-1.5 text-left">품번/품명</th><th className="p-1.5 text-right">실적수량</th><th className="p-1.5 text-center">처리구분</th></tr></thead>
           <tbody>
@@ -178,6 +187,7 @@ export default function WorkResultForm({ run, machines, defaultWorkerName, onSav
             {!history.length && <tr><td colSpan={4} className="p-3 text-center text-text-muted">등록된 실적이 없습니다. [신규 실적]으로 등록하세요.</td></tr>}
           </tbody>
         </table>
+        </div>
       </div>
 
       {/* 실적 상세 입력 */}
@@ -189,7 +199,9 @@ export default function WorkResultForm({ run, machines, defaultWorkerName, onSav
             {readOnly && <span className="text-xs text-blue-600 font-semibold">완료 · 수정불가</span>}
           </div>
           {/* 작업지시 기본 정보 (읽기전용, 설비/공정 제외) */}
-          <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-sm border border-border rounded p-3 bg-surface/40">
+          <div className={`grid gap-x-4 gap-y-1.5 text-sm border border-border rounded bg-surface/40 ${
+            fieldMode ? 'grid-cols-4 p-2' : 'grid-cols-2 p-3'
+          }`}>
             {([
               ['라인', run.lineCode ?? '-'],
               ['교대조', run.shiftCode ?? '-'],
@@ -214,7 +226,7 @@ export default function WorkResultForm({ run, machines, defaultWorkerName, onSav
               onSelect={(m) => setForm({ ...form, machineCode: m.machineCode, machineName: m.machineName, workstageCode: m.workstageCode, workstageName: m.workstageName })} />
           </label>
           <div className="text-xs text-text-muted">공정: <b className="text-text">{form.workstageCode ? `${form.workstageCode} · ${form.workstageName}` : '-'}</b></div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className={`grid gap-3 ${fieldMode ? 'grid-cols-3' : 'grid-cols-2'}`}>
             <label className="text-sm text-text-muted flex flex-col gap-1"><span>실적수량 <span className="text-red-500">*</span></span>
               <input type="number" min="0" value={form.resultQty} disabled={readOnly} onChange={(e) => setForm({ ...form, resultQty: Number(e.target.value) })} className="border border-border rounded p-2 bg-background text-text text-right font-mono disabled:opacity-50 disabled:bg-surface" />
             </label>

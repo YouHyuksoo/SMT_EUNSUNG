@@ -133,11 +133,13 @@ export default function WorkOrderPanel({ scope, workerName }: Props) {
         </button>
       </CardContent>
 
-      <Modal isOpen={!!formRun} onClose={() => setFormRun(null)} size="lg"
+      {/* 현장 모드 — 신규 실적 폼이 펼쳐진 채 열린다. 가로를 넓혀(xl) 줄바꿈을 줄이고
+          모달 본문(max-h-75vh) 안에서 스크롤이 생기지 않게 한다. */}
+      <Modal isOpen={!!formRun} onClose={() => setFormRun(null)} size="xl"
         title="작업 실적 등록" subtitle={formRun?.runNo}>
         {formRun && (
           <WorkResultForm key={formRun.runNo} run={formRun} machines={machines}
-            defaultWorkerName={workerName} onSaved={load} />
+            defaultWorkerName={workerName} onSaved={load} fieldMode />
         )}
       </Modal>
     </Card>
