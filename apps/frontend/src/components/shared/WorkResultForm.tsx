@@ -18,6 +18,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Plus, ChevronDown, ChevronUp } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '@/services/api';
+import NumberKeypadModal from './NumberKeypadModal';
 
 /** 실적 등록에 필요한 작업지시 정보. 목록 행(RunRow)의 부분집합이다. */
 export interface WorkResultRun {
@@ -80,6 +81,7 @@ function MachineCombo({ machines, value, onSelect, disabled }: {
           {!list.length && <div className="p-3 text-center text-text-muted text-sm">검색 결과가 없습니다</div>}
         </div>
       )}
+
     </div>
   );
 }
@@ -169,6 +171,9 @@ export default function WorkResultForm({ run, machines, defaultWorkerName, onSav
     }
   }
 
+  // 현장 모드는 숫자 입력을 키패드 모달로 받는다
+  const [keypad, setKeypad] = useState<{ field: 'resultQty' | 'workTime' | 'workerCount'; label: string; unit?: string } | null>(null);
+
   const saveRef = useRef<() => void>(() => {});
   useEffect(() => { saveRef.current = saveResult; });
   useEffect(() => { onRegisterSave?.(() => saveRef.current()); }, [onRegisterSave]);
@@ -254,13 +259,34 @@ export default function WorkResultForm({ run, machines, defaultWorkerName, onSav
           <div className="text-xs text-text-muted">공정: <b className="text-text">{form.workstageCode ? `${form.workstageCode} · ${form.workstageName}` : '-'}</b></div>
           <div className={`grid gap-3 ${fieldMode ? 'grid-cols-3' : 'grid-cols-2'}`}>
             <label className="text-sm text-text-muted flex flex-col gap-1"><span>실적수량 <span className="text-red-500">*</span></span>
-              <input type="number" min="0" value={form.resultQty} disabled={readOnly} onChange={(e) => setForm({ ...form, resultQty: Number(e.target.value) })} className="border border-border rounded p-2 bg-background text-text text-right font-mono disabled:opacity-50 disabled:bg-surface" />
+              <input type={fieldMode ? 'text' : 'number'} min="0" inputMode="none"
+                value={fieldMode ? form.resultQty.toLocaleString() : form.resultQty}
+                readOnly={fieldMode} disabled={readOnly}
+                onClick={fieldMode && !readOnly
+                  ? () => setKeypad({ field: 'resultQty', label: '실적수량', unit: undefined })
+                  : undefined}
+                onChange={(e) => setForm({ ...form, resultQty: Number(e.target.value) })}
+                className={`border border-border rounded p-2 bg-background text-text text-right font-mono disabled:opacity-50 disabled:bg-surface ${fieldMode ? 'h-12 text-lg cursor-pointer' : ''}`} />
             </label>
             <label className="text-sm text-text-muted flex flex-col gap-1">작업시간(분)
-              <input type="number" min="0" value={form.workTime} disabled={readOnly} onChange={(e) => setForm({ ...form, workTime: Number(e.target.value) })} className="border border-border rounded p-2 bg-background text-text text-right font-mono disabled:opacity-50 disabled:bg-surface" />
+              <input type={fieldMode ? 'text' : 'number'} min="0" inputMode="none"
+                value={fieldMode ? form.workTime.toLocaleString() : form.workTime}
+                readOnly={fieldMode} disabled={readOnly}
+                onClick={fieldMode && !readOnly
+                  ? () => setKeypad({ field: 'workTime', label: '작업시간', unit: '분' })
+                  : undefined}
+                onChange={(e) => setForm({ ...form, workTime: Number(e.target.value) })}
+                className={`border border-border rounded p-2 bg-background text-text text-right font-mono disabled:opacity-50 disabled:bg-surface ${fieldMode ? 'h-12 text-lg cursor-pointer' : ''}`} />
             </label>
             <label className="text-sm text-text-muted flex flex-col gap-1">투입인원
-              <input type="number" min="0" value={form.workerCount} disabled={readOnly} onChange={(e) => setForm({ ...form, workerCount: Number(e.target.value) })} className="border border-border rounded p-2 bg-background text-text text-right font-mono disabled:opacity-50 disabled:bg-surface" />
+              <input type={fieldMode ? 'text' : 'number'} min="0" inputMode="none"
+                value={fieldMode ? form.workerCount.toLocaleString() : form.workerCount}
+                readOnly={fieldMode} disabled={readOnly}
+                onClick={fieldMode && !readOnly
+                  ? () => setKeypad({ field: 'workerCount', label: '투입인원', unit: '명' })
+                  : undefined}
+                onChange={(e) => setForm({ ...form, workerCount: Number(e.target.value) })}
+                className={`border border-border rounded p-2 bg-background text-text text-right font-mono disabled:opacity-50 disabled:bg-surface ${fieldMode ? 'h-12 text-lg cursor-pointer' : ''}`} />
             </label>
             <label className="text-sm text-text-muted flex flex-col gap-1">처리구분
               <select value={form.resultStatus} disabled={readOnly} onChange={(e) => setForm({ ...form, resultStatus: e.target.value as 'WIP' | 'DONE' })} className="border border-border rounded p-2 bg-background text-text disabled:opacity-50 disabled:bg-surface">
@@ -272,6 +298,18 @@ export default function WorkResultForm({ run, machines, defaultWorkerName, onSav
             </label>
           </div>
         </div>
+      )}
+
+      {keypad && form && (
+        <NumberKeypadModal
+          key={keypad.field}
+          isOpen
+          label={keypad.label}
+          unit={keypad.unit}
+          value={form[keypad.field]}
+          onConfirm={(v) => setForm({ ...form, [keypad.field]: v })}
+          onClose={() => setKeypad(null)}
+        />
       )}
     </div>
   );

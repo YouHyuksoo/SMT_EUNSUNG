@@ -141,6 +141,7 @@ export default function WorkOrderPanel({ scope, workerName }: Props) {
           작업지시번호를 타이틀 우측에 둔다. */}
       <Modal isOpen={!!formRun} onClose={() => setFormRun(null)} size="xl"
         bodyMaxHeightClass="max-h-[88vh]" showCloseButton={false}
+        closeOnEsc={false}
         title={
           <span className="flex items-baseline gap-2">
             작업 실적 등록
