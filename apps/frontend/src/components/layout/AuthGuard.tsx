@@ -18,6 +18,7 @@ import { useAuthStore } from "@/stores/authStore";
 import { findMenuCodeByPath } from "@/config/menuConfig";
 import { isMenuAllowed } from "@/utils/menuAccess";
 import { useActivityLogger } from "@/hooks/useActivityLogger";
+import { resolveOeeMenuPath } from "@/lib/oee-view-mode";
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -61,7 +62,7 @@ export default function AuthGuard({ children }: AuthGuardProps) {
 
   // --- RBAC: URL 권한 체크 ---
   const isAdmin = user?.role === "ADMIN";
-  const menuCode = findMenuCodeByPath(pathname);
+  const menuCode = findMenuCodeByPath(resolveOeeMenuPath(pathname));
 
   // 판정 기준은 isMenuAllowed 한 곳에 있다 (ADMIN·코드 없는 경로·권한 미연동 시 통과)
   if (!isMenuAllowed(menuCode, allowedMenus, isAdmin)) {

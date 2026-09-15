@@ -177,6 +177,11 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
       component = mod.getPageComponent();
       break;
     }
+    case "/oee/multi-entry-7in": {
+      const mod = await import("./page-registries/oee__multi-entry-7in.generated");
+      component = mod.getPageComponent();
+      break;
+    }
     case "/oee/overall-status": {
       const mod = await import("./page-registries/oee__overall-status.generated");
       component = mod.getPageComponent();

@@ -5,11 +5,14 @@ import ts from "typescript";
 
 const frontendRoot = existsSync("src/app") ? "." : "apps/frontend";
 const routeRoot = `${frontendRoot}/src/app/(authenticated)/oee/multi-entry`;
+const aliasRouteRoot = `${frontendRoot}/src/app/(authenticated)/oee/multi-entry-7in`;
 const pagePath = `${routeRoot}/page.tsx`;
+const aliasPagePath = `${aliasRouteRoot}/page.tsx`;
 const helperPath = `${routeRoot}/_lib/multi-entry.ts`;
 const mobileHelperPath = `${routeRoot}/_lib/oee-mobile.ts`;
 const menuPath = `${frontendRoot}/src/config/menuConfig.ts`;
 const page = existsSync(pagePath) ? readFileSync(pagePath, "utf8") : "";
+const aliasPage = existsSync(aliasPagePath) ? readFileSync(aliasPagePath, "utf8") : "";
 const helper = existsSync(helperPath) ? readFileSync(helperPath, "utf8") : "";
 const mobileHelper = readFileSync(mobileHelperPath, "utf8");
 const menu = readFileSync(menuPath, "utf8");
@@ -20,9 +23,13 @@ const helperModule = ts.transpileModule(helper, {
 const mobileHelperModule = ts.transpileModule(mobileHelper, {
   compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 },
 }).outputText;
-const { commandKey, isTerminalSuccess, selectRetryableResources } = await import(
-  `data:text/javascript;base64,${Buffer.from(helperModule).toString("base64")}`,
-);
+const {
+  makeEndBatchPayload,
+  makeStartBatchPayload,
+  normalizeBatchResponse,
+  utf8ByteLength,
+  validateBatchEvents,
+} = await import(`data:text/javascript;base64,${Buffer.from(helperModule).toString("base64")}`);
 const {
   createRequestId,
   formatServerTimestamp,
@@ -46,14 +53,75 @@ test("multi-resource OEE route is registered with the approved menu contract", (
     "/oee/mobile/workers/",
     "/oee/mobile/resources",
     "/oee/mobile/reasons",
-    "/oee/mobile/status",
-    "/oee/mobile/downtime/start",
-    "/oee/mobile/downtime/end",
+    "/oee/multi-entry/status",
   ]) {
     assert.match(page, new RegExp(endpoint.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
   }
+  assert.match(page, /\/oee\/multi-entry\/\$\{mode === ['"]START['"] \? ['"]start['"] : ['"]end['"]\}/);
+  assert.doesNotMatch(page, /\/oee\/mobile\/(?:status|downtime\/start|downtime\/end)/);
   assert.doesNotMatch(page, /\/oee\/mobile\/(?:health|heartbeat|metrics)/);
-  assert.doesNotMatch(page, /organizationId|tenantKey|clientTime/);
+  assert.doesNotMatch(page, /(?:organizationId|tenantKey|clientTime|requestId)\s*:/);
+});
+
+test("legacy OEE alias reuses the canonical page without a menu leaf", () => {
+  assert.equal(existsSync(aliasPagePath), true, "the approved legacy alias page must exist");
+  assert.match(aliasPage, /export\s+\{\s*default\s*\}\s+from\s+["']\.\.\/multi-entry\/page["']/);
+
+  assert.match(menu, /code:\s*["']OEE_MULTI_ENTRY["']/);
+  assert.doesNotMatch(menu, /OEE_MULTI_ENTRY_7IN|multiEntry7In|multi-entry-7in/);
+  for (const locale of locales) {
+    const messages = JSON.parse(readFileSync(`${frontendRoot}/src/locales/${locale}.json`, "utf8"));
+    assert.equal(messages.menu?.["oee.multiEntry7In"], undefined, `${locale}: obsolete alias menu label`);
+  }
+});
+
+test("memo validation and counter use the Oracle UTF-8 byte limit", () => {
+  assert.equal(utf8ByteLength("a".repeat(500)), 500);
+  assert.equal(utf8ByteLength("가".repeat(167)), 501);
+  assert.match(page, /utf8ByteLength\(memo\) > 500/);
+  assert.match(page, /\{utf8ByteLength\(memo\)\} \/ 500 B/);
+  assert.doesNotMatch(page, /memo\.length > 500/);
+});
+
+test("stale selected resources remain removable and block batch submission", () => {
+  assert.match(
+    page,
+    /const allSelectedEligible = selectedResources\.length > 0 && selectedEligibleCount === selectedResources\.length/,
+  );
+  assert.match(page, /if \(next\.has\(key\)\) next\.delete\(key\);\s*else if \(isEligibleStatus/);
+  assert.match(page, /disabled=\{contextLocked \|\| \(availability\.disabled && !selected\)\}/);
+});
+
+test("canonical OEE page enables the compact full view for the 7-inch alias pathname", () => {
+  assert.match(page, /import\s+\{[^}]*usePathname[^}]*\}\s+from\s+["']next\/navigation["']/);
+  assert.match(page, /const pathname = usePathname\(\);/);
+  assert.match(page, /resolveOeeViewMode\(pathname, searchParams\.get\(["']view["']\)\)/);
+  assert.match(page, /const isCompactFullView = viewMode === ["']full["']/);
+});
+
+test("normal menu mode defers the title/status header row until the sidebar leaves enough width", () => {
+  assert.match(
+    page,
+    /isCompactFullView\s*\?\s*["']xl:flex-row xl:items-center xl:justify-between["']\s*:\s*["']2xl:flex-row 2xl:items-center 2xl:justify-between["']/
+  );
+});
+
+test("the page-internal OEE view switch keeps the pathname, preserves page state, and locks during submit", () => {
+  assert.match(page, /useRouter/);
+  assert.match(page, /data-testid=["']oee-multi-view-switch["']/);
+  assert.match(page, /viewMode === 'normal' \? 'full' : 'normal'/);
+  assert.match(page, /viewMode === 'normal' \? t\('oeeMultiEntry\.viewFull'\) : t\('oeeMultiEntry\.viewNormal'\)/);
+  assert.match(page, /params\.set\(["']view["'], nextMode\)/);
+  assert.match(page, /router\.replace\([\s\S]*pathname[\s\S]*scroll:\s*false/);
+
+  const switchStart = page.indexOf('data-testid="oee-multi-view-switch"');
+  const switchEnd = page.indexOf('</div>', switchStart);
+  const switchBlock = switchStart >= 0 && switchEnd >= 0 ? page.slice(switchStart, switchEnd) : "";
+  assert.equal((switchBlock.match(/<button/g) ?? []).length, 1);
+  assert.match(switchBlock, /disabled=\{submitting \|\| contextLocked\}/);
+  assert.doesNotMatch(switchBlock, /aria-pressed/);
+  assert.doesNotMatch(switchBlock, /set(?:Worker|SelectedResourceIds|ReasonCode|Memo|CommandOutcomes)/);
+  assert.doesNotMatch(switchBlock, /\/oee\/multi-entry(?:-7in)?/);
 });
 
 test("mobile helper preserves resource normalization and the approved payload field limits", () => {
@@ -199,26 +267,24 @@ test("mobile helper rejects malformed command responses before a success state",
   assert.throws(() => normalizeCommandResult({ data: {} }), /이벤트가 없습니다/);
 });
 
-test("workplace selection is an exclusive ALL, SMT, or ASSY choice", () => {
+test("workplace selection is a single SMT or ASSY process with no ALL option", () => {
   assert.match(page, /['"]START['"][\s\S]*['"]END['"]/);
   assert.match(page, /selectedResourceIds/);
   assert.match(page, /new Set/);
   assert.match(page, /setSelectedResourceIds\(new Set\(\)\)/);
   assert.match(page, /selectedWorkplace/);
-  assert.match(page, /useState<\s*OeeProcessCode\s*\|\s*['"]ALL['"]\s*\|\s*null\s*>/);
-  assert.doesNotMatch(page, /useState<\s*Set<OeeProcessCode>\s*>/);
+  assert.match(page, /useState<\s*OeeProcessCode\s*\|\s*null\s*>/);
+  assert.doesNotMatch(page, /['"]ALL['"]/);
+  assert.doesNotMatch(page, /toggleAllProcesses|oee-multi-process-all|allProcesses/);
   assert.match(page, /selectedProcessList/);
   assert.match(page, /setSelectedWorkplace/);
-  assert.match(page, /selectedWorkplace\s*===\s*['"]ALL['"]/);
   assert.match(page, /aria-pressed=\{selected\}/);
-  assert.match(page, /aria-checked=\{processMasterState\}/);
   assert.doesNotMatch(page, /MultiEntryProcessFilter|processFilter/);
-  assert.match(page, /['"]ALL['"]/);
   assert.match(page, /selectedWorkplace\s*===\s*processCode/);
   assert.match(page, /resource\.processCode === requestedProcess/);
   assert.match(page, /status\.state === ['"]RUNNING['"]/);
   assert.match(page, /status\.state === ['"]DOWNTIME['"]/);
-  assert.match(page, /status\.openEvent/);
+  assert.match(page, /status\.openEvents/);
   assert.match(page, /statusLoading|statusError|unknown/);
   assert.match(page, /disabledReason|inapplicable|notApplicable/);
 });
@@ -254,10 +320,6 @@ test("pressing a selected workplace keeps it selected while switching clears hid
   assert.doesNotMatch(toggleWorkplaceBlock, /nextProcesses\.(delete|add)/);
   assert.match(toggleWorkplaceBlock, /resource\.processCode\s*!==\s*processCode/);
   assert.match(toggleWorkplaceBlock, /loadContext\(\[processCode\]\)/);
-
-  const toggleAllBlock = page.match(/const toggleAllProcesses[\s\S]*?\n  \);/)?.[0] ?? "";
-  assert.match(toggleAllBlock, /setSelectedWorkplace\(['"]ALL['"]\)/);
-  assert.match(toggleAllBlock, /loadContext\(RESOURCE_PROCESS_CODES\)/);
 });
 
 test("logged-in identity auto-resolves a worker with empNo-first fallback and keeps manual changes compact", () => {
@@ -273,7 +335,7 @@ test("logged-in identity auto-resolves a worker with empNo-first fallback and ke
   assert.doesNotMatch(autoResolver, /toast\.success/);
 });
 
-test("selected processes load concurrently, cache reasons for the worker context, and clear deselected resources", () => {
+test("the selected process loads resources, caches reasons, and clears deselected resources", () => {
   assert.match(page, /SMT/);
   assert.match(page, /ASSY/);
   assert.match(page, /RESOURCE_PROCESS_CODES/);
@@ -287,12 +349,9 @@ test("selected processes load concurrently, cache reasons for the worker context
   const toggleProcessBlock = page.match(/const toggleWorkplace[\s\S]*?\n  \);/)?.[0] ?? "";
   assert.match(toggleProcessBlock, /setSelectedResourceIds/);
   assert.match(toggleProcessBlock, /resource\.processCode/);
-  assert.match(page, /data-testid=["']oee-multi-process-all["']/);
   assert.match(page, /data-testid=\{`oee-multi-process-\$\{processCode\.toLowerCase\(\)\}`\}/);
-  assert.match(page, /processMasterState/);
-  const toggleAllBlock = page.match(/const toggleAllProcesses[\s\S]*?\n  \);/)?.[0] ?? "";
-  assert.match(toggleAllBlock, /setSelectedWorkplace\(['"]ALL['"]\)/);
-  assert.match(toggleAllBlock, /loadContext\(RESOURCE_PROCESS_CODES\)/);
+  assert.doesNotMatch(page, /data-testid=["']oee-multi-process-all["']/);
+  assert.doesNotMatch(page, /processMasterState|toggleAllProcesses/);
 });
 
 test("selected process groups share one responsive resource scroll and compact cards", () => {
@@ -344,14 +403,16 @@ test("resource cards keep actual status icons and labels separate from selection
   assert.doesNotMatch(resourceCard, /selected\s*\?\s*<Check[\s\S]*:\s*<StateIcon/);
 });
 
-test("status and command payloads use each resource's process code", () => {
+test("status and command payloads use the selected process and line-based batch contract", () => {
   assert.match(page, /processCode:\s*resource\.processCode/);
-  assert.equal(page.match(/processCode:\s*resource\.processCode/g)?.length >= 3, true);
-
-  const startCommandBlock = page.match(/const buildStartCommand[\s\S]*?const buildEndCommand/)?.[0] ?? "";
-  const endCommandBlock = page.match(/const buildEndCommand[\s\S]*?const refreshStatuses/)?.[0] ?? "";
-  assert.match(startCommandBlock, /processCode:\s*resource\.processCode/);
-  assert.match(endCommandBlock, /processCode:\s*resource\.processCode/);
+  assert.match(page, /lineCode:\s*resource\.resourceCode/);
+  assert.match(page, /\/oee\/multi-entry\/status/);
+  assert.match(page, /\/oee\/multi-entry\/\$\{mode === ['"]START['"] \? ['"]start['"] : ['"]end['"]\}/);
+  assert.match(page, /lineCodes/);
+  assert.match(page, /items/);
+  assert.match(page, /openEvents/);
+  assert.match(page, /endItems\.push\(\.\.\.openEvents\.map/);
+  assert.doesNotMatch(page, /\/oee\/mobile\/downtime\/(?:start|end)/);
 });
 
 test("eligible-resource select-all has checked and mixed semantics and only toggles visible eligible items", () => {
@@ -371,59 +432,131 @@ test("eligible-resource select-all has checked and mixed semantics and only togg
   assert.match(selectAll, /visibleEligibleResources\.length/);
 });
 
-test("each resource command has a stable request ID keyed by operation, resource, and signature", () => {
-  assert.match(page, /createRequestId\(\)/);
-  assert.match(page, /stableStartSignature\(/);
-  assert.match(page, /stableEndSignature\(/);
-  assert.match(page, /pendingCommandsRef/);
-  assert.match(page, /commandKey|operation.*resource.*signature|mode.*resourceIdentity.*signature/);
-  assert.match(page, /pending\?\.signature === signature \? pending\.requestId : createRequestId\(\)/);
-  assert.match(page, /makeStartPayload/);
-  assert.match(page, /makeEndPayload/);
-  assert.match(page, /reasonCode/);
-  assert.match(page, /memo/);
-  assert.match(page, /eventId/);
+test("one batch command is guarded and sends no legacy request metadata", () => {
+  assert.match(page, /makeStartBatchPayload/);
+  assert.match(page, /makeEndBatchPayload/);
+  assert.match(page, /validateBatchEvents/);
+  assert.match(page, /submissionLockRef/);
+  assert.match(page, /pendingSubmissionRef/);
+  assert.match(page, /writePendingSubmission/);
+  assert.match(page, /api\.post\(/);
+  assert.doesNotMatch(page, /createRequestId|stableStartSignature|stableEndSignature|pendingCommandsRef/);
+  assert.doesNotMatch(page, /\brequestId\b|\beventId\b|replayed/);
 });
 
-test("retry selection excludes successful and replayed resources while retaining failed resources", () => {
-  assert.notEqual(commandKey("START", "101", "same-signature"), commandKey("START", "102", "same-signature"));
-  assert.notEqual(commandKey("START", "101", "same-signature"), commandKey("END", "101", "same-signature"));
-  assert.equal(isTerminalSuccess("success"), true);
-  assert.equal(isTerminalSuccess("replayed"), true);
-  assert.equal(isTerminalSuccess("error"), false);
+test("durable pending-lock failures fail closed before POST and uncertain results auto-requery with GET", () => {
+  assert.match(page, /parseOrganizationId\(user\?\.plant\)/);
+  assert.match(page, /PendingSubmissionStorageError/);
+  assert.match(page, /pendingStorageError/);
+  assert.match(page, /contextLocked\s*=.*pendingStorageError/);
+  assert.match(page, /data-testid=["']oee-multi-storage-error["']/);
 
-  const selected = [
-    { resource: { resourceId: 101 }, resourceKey: "101" },
-    { resource: { resourceId: 102 }, resourceKey: "102" },
-    { resource: { resourceId: 103 }, resourceKey: "103" },
-    { resource: { resourceId: 104 }, resourceKey: "104" },
-  ];
-  const outcomes = new Map([
-    ["101", { resourceKey: "101", resourceCode: "L-101", mode: "START", requestId: "req-101", state: "success", message: "ok" }],
-    ["102", { resourceKey: "102", resourceCode: "L-102", mode: "START", requestId: "req-102", state: "replayed", message: "replayed" }],
-    ["103", { resourceKey: "103", resourceCode: "L-103", mode: "START", requestId: "req-103", state: "conflict", message: "conflict" }],
-  ]);
-
-  assert.deepEqual(selectRetryableResources(selected, outcomes).map((item) => item.resourceKey), ["103", "104"]);
+  const submitBlock = page.match(/const submitBatch = useCallback\(async \(\) => \{[\s\S]*?\n  \}, \[/)?.[0] ?? "";
+  const writeIndex = submitBlock.indexOf("writePendingSubmission");
+  const postIndex = submitBlock.indexOf("api.post");
+  assert.ok(writeIndex >= 0 && postIndex > writeIndex, "pending storage must be written before POST");
+  assert.match(submitBlock, /try \{[\s\S]*writePendingSubmission[\s\S]*catch \(error: unknown\)/);
+  assert.match(submitBlock, /setPendingStorageError|pendingStorageError/);
+  assert.match(submitBlock, /submissionLockRef\.current = false/);
+  assert.match(page, /batchOutcome\?\.state === ['"]needsConfirmation['"][\s\S]*requeryPendingStatus/);
+  assert.match(page, /const definitiveFailure = status !== null && status >= 400 && status < 500 && status !== 408/);
 });
 
-test("partial results are visible per resource and retries omit successful items while retaining failed IDs", () => {
-  for (const status of ["success", "replayed", "conflict", "error"]) {
+test("pending confirmation requires the latest complete query and clears only after durable unlock", () => {
+  assert.match(page, /canConfirmPendingSubmission/);
+  assert.match(page, /pendingStatusSnapshotGeneration/);
+  assert.match(page, /pendingQueryGenerationRef/);
+  assert.match(page, /data-testid=["']oee-multi-confirm-pending["']/);
+
+  const confirmButton = page.match(/data-testid=["']oee-multi-confirm-pending["'][\s\S]*?<\/button>/)?.[0] ?? "";
+  assert.match(confirmButton, /disabled=\{!canConfirmPending\}/);
+  assert.match(confirmButton, /min-h-\[44px\]/);
+
+  const confirmBlock = page.match(/const confirmPendingSubmission = useCallback\(\(\) => \{[\s\S]*?\n  \}, \[/)?.[0] ?? "";
+  assert.match(confirmBlock, /pendingSubmissionRef\.current === pending/);
+  assert.match(confirmBlock, /pendingStorageKeyRef\.current === storageKey/);
+  assert.match(confirmBlock, /pendingQueryGenerationRef\.current === queryGeneration/);
+  assert.match(confirmBlock, /try \{[\s\S]*clearPendingSubmission[\s\S]*catch \(error: unknown\)/);
+  assert.match(confirmBlock, /setPendingStorageError/);
+  assert.match(confirmBlock, /setStatusByResource/);
+  assert.match(confirmBlock, /processCode[\s\S]*pending\.processCode/);
+  assert.match(confirmBlock, /setSelectedResourceIds\(new Set\(\)\)/);
+  assert.match(confirmBlock, /setReasonCode\(['"]['"]\)/);
+  assert.match(confirmBlock, /setMemo\(['"]['"]\)/);
+  assert.match(confirmBlock, /setBatchOutcome\(null\)/);
+  assert.doesNotMatch(confirmBlock, /api\.post/);
+
+  assert.match(page, /const queryGeneration = pendingQueryGenerationRef\.current \+ 1/);
+  assert.match(page, /pendingSubmissionRef\.current === pending[\s\S]*pendingStorageKeyRef\.current === queryStorageKey[\s\S]*pendingQueryGenerationRef\.current === queryGeneration/);
+});
+
+test("pending confirmation invalidates ordinary status loads before copying the latest snapshot", () => {
+  const confirmBlock = page.match(/const confirmPendingSubmission = useCallback\(\(\) => \{[\s\S]*?\n  \}, \[/)?.[0] ?? "";
+  const invalidateIndex = confirmBlock.indexOf("statusGeneration.current += 1");
+  const snapshotIndex = confirmBlock.indexOf("setStatusByResource");
+  assert.ok(invalidateIndex >= 0, "confirmation must invalidate ordinary status loads");
+  assert.ok(snapshotIndex > invalidateIndex, "ordinary status invalidation must precede snapshot copy");
+});
+
+test("batch helper copies approved fields and rejects incomplete or legacy responses", () => {
+  assert.deepEqual(
+    makeStartBatchPayload({ processCode: "SMT", lineCodes: ["L-01"], workerId: "W-01", reasonCode: "R-01" }),
+    { processCode: "SMT", lineCodes: ["L-01"], workerId: "W-01", reasonCode: "R-01" },
+  );
+  assert.deepEqual(
+    makeEndBatchPayload({ processCode: "SMT", items: [{ lineCode: "L-01", dtSeq: 7 }], reasonCode: "R-02" }),
+    { processCode: "SMT", items: [{ lineCode: "L-01", dtSeq: 7 }], reasonCode: "R-02" },
+  );
+
+  const event = {
+    dtSeq: 7,
+    organizationId: 1,
+    lineCode: "L-01",
+    reasonCode: "R-02",
+    memo: null,
+    worker: "W-01",
+    startTime: "2026-09-10T01:00:00.000Z",
+    endTime: "2026-09-10T02:00:00.000Z",
+  };
+  assert.deepEqual(
+    validateBatchEvents(
+      normalizeBatchResponse({ events: [event] }).events,
+      { mode: "END", organizationId: 1, items: [{ lineCode: "L-01", dtSeq: 7 }], reasonCode: "R-02" },
+    ),
+    [event],
+  );
+  assert.throws(
+    () => normalizeBatchResponse({ events: [{ eventId: 7, lineCode: "L-01" }] }),
+    /응답|event|dtSeq/i,
+  );
+});
+
+test("batch results distinguish success, definitive failure, and uncertain submission without POST retry", () => {
+  for (const status of ["success", "definitiveFailure", "needsConfirmation"]) {
     assert.match(page, new RegExp(`['"]${status}['"]`));
   }
-  assert.match(page, /Promise\.allSettled/);
-  assert.match(page, /outcomes|commandOutcomes/);
-  assert.match(page, /success.*replayed|replayed.*success/);
-  assert.match(page, /retryFailed|failedOnly|status !== ['"]success['"]/);
-  assert.match(page, /refreshStatuses|loadStatuses/);
-  assert.match(page, /finally[\s\S]*refreshStatuses|refreshStatuses[\s\S]*finally/);
+  assert.match(page, /normalizeBatchResponse/);
+  assert.match(page, /validateBatchEvents/);
   assert.match(page, /setSubmitting\(true\)/);
-  assert.match(page, /contextLocked|submitting/);
+  assert.match(page, /contextLocked|pendingSubmission/);
+  assert.match(page, /statusRequery|requeryPendingStatus/);
+  assert.match(page, /const definitiveFailure = status !== null && status >= 400 && status < 500/);
+  assert.match(page, /const uncertain = !definitiveFailure/);
+  assert.doesNotMatch(page, /retryFailed|replayed|partialResult|commandOutcomes/);
 });
 
 test("stale resource status aborts the batch before any partial submission", () => {
-  assert.match(page, /commands\.length !== retryCandidates\.length/);
   assert.match(page, /statusChanged[\s\S]*refreshStatuses\(\)[\s\S]*return/);
+  assert.match(page, /openEvents\.length/);
+});
+
+test("legacy lines expose separate line and result-row counts for plural open events", () => {
+  assert.match(page, /selectedLineCount/);
+  assert.match(page, /readyLineCount/);
+  assert.match(page, /resultRowCount/);
+  assert.match(page, /selectedOpenEventCount/);
+  assert.match(page, /openEvents\.map\(\(event\)/);
+  assert.match(page, /batchTargetCount[\s\S]*itemCount/);
 });
 
 test("the primary START or END action stays visible in the command header", () => {
@@ -450,6 +583,28 @@ test("the tablet board exposes touch-sized accessible controls and never uses br
   assert.match(page, /xl:w-\[min\(44rem,100%\)\]/);
 });
 
+test("view=full uses a compact two-column board with internal resource and result scrolling", () => {
+  assert.match(page, /import \{[^}]*useSearchParams[^}]*\} from ['"]next\/navigation['"]/);
+  assert.match(page, /const searchParams = useSearchParams\(\);/);
+  assert.match(page, /const viewMode = resolveOeeViewMode\(pathname, searchParams\.get\(['"]view['"]\)\);/);
+  assert.match(page, /const isCompactFullView = viewMode === ['"]full['"];?/);
+
+  assert.match(
+    page,
+    /isCompactFullView \? ['"][^'"]*gap-2 overflow-hidden p-2[^'"]*['"] : ['"][^'"]*gap-3 overflow-y-auto p-3 sm:p-4 lg:p-5[^'"]*['"]/
+  );
+  assert.match(
+    page,
+    /isCompactFullView \? ['"][^'"]*flex-1[^'"]*grid-cols-\[minmax\(0,3fr\)_minmax\(0,2fr\)\][^'"]*gap-2[^'"]*['"] : ['"][^'"]*shrink-0[^'"]*grid-cols-1[^'"]*lg:flex-1[^'"]*lg:grid-cols-\[minmax\(0,3fr\)_minmax\(0,2fr\)\][^'"]*['"]/
+  );
+
+  const compactPanelBranches = page.match(/isCompactFullView \? ['"]min-h-0['"] : ['"]min-h-\[560px\]['"]/g) ?? [];
+  assert.equal(compactPanelBranches.length, 2, "both panels must drop the 560px minimum only in view=full");
+
+  assert.match(page, /data-testid=["']oee-multi-resource-groups["'][\s\S]*overflow-y-auto/);
+  assert.match(page, /resultsTitle[\s\S]*overflow-y-auto/);
+});
+
 test("START reason selection uses a compact COMMAND summary and an xl modal picker", () => {
   assert.match(page, /reasonEditorOpen/);
   assert.match(page, /setReasonEditorOpen\(false\)/);
@@ -462,16 +617,46 @@ test("START reason selection uses a compact COMMAND summary and an xl modal pick
   assert.match(page, /t\(['"]common\.change['"]\)/);
   assert.match(page, /t\(['"]oeeMultiEntry\.reasonSelect['"]\)/);
   assert.match(page, /maxLength=\{500\}/);
-  assert.match(page, /clearCommandState\(\)/);
+  assert.match(page, /clearBatchOutcome\(\)/);
   assert.match(page, /<Modal[\s\S]*size=["']xl["']/);
   assert.match(page, /initialFocusRef=\{firstReasonButtonRef\}/);
   assert.match(page, /ref=\{reason\.reasonCode === firstReasonCode \? firstReasonButtonRef : undefined\}/);
   assert.match(page, /const clearContext[\s\S]*setReasonEditorOpen\(false\)/);
   assert.match(page, /const selectMode[\s\S]*setReasonEditorOpen\(false\)/);
-  assert.match(page, /setReasonCode\(reason\.reasonCode\);\s*clearCommandState\(\);\s*setReasonEditorOpen\(false\)/);
+  assert.match(page, /mode === ['"]START['"][\s\S]*setReasonCode\(reason\.reasonCode\)[\s\S]*clearBatchOutcome\(\);\s*setReasonEditorOpen\(false\)/);
 
   const commandFieldset = page.match(/<fieldset[\s\S]*?<\/fieldset>/)?.[0] ?? "";
   assert.doesNotMatch(commandFieldset, /oee-multi-reason-group/);
+});
+
+test("END reason summary separates preserved metadata from an explicit override", () => {
+  for (const key of [
+    "endReasonSame",
+    "endReasonMixed",
+    "endReasonSomeMissing",
+    "endReasonAllMissing",
+    "changeReason",
+    "reasonMetadataUnavailable",
+  ]) {
+    assert.match(page, new RegExp(`oeeMultiEntry\\.${key}`));
+  }
+  assert.match(page, /summarizeEndReasons/);
+  assert.match(page, /createEndReasonOverride/);
+  assert.match(page, /getActiveEndReasonCode/);
+  assert.match(page, /endReasonSnapshotKey/);
+  assert.match(page, /setEndReasonOverride\(null\)/);
+  assert.match(page, /endReasonSummary\.state/);
+  assert.match(page, /endReasonOverrideCode/);
+  assert.match(page, /data-testid=["']oee-multi-end-reason-summary["']/);
+  assert.match(page, /data-testid=["']oee-multi-end-reason-change["']/);
+  assert.match(page, /reasonTypeLabel/);
+  assert.match(page, /reasonMetadataUnavailable/);
+  assert.match(page, /makeEndBatchPayload/);
+  assert.match(page, /validateBatchEvents/);
+
+  const endReasonSummary = page.match(/data-testid=["']oee-multi-end-reason-summary["'][\s\S]*?data-testid=["']oee-multi-end-reason-change["']/)?.[0] ?? "";
+  assert.doesNotMatch(endReasonSummary, /<button[^>]*data-testid=["']oee-multi-end-reason-summary/);
+  assert.match(endReasonSummary, /<button/);
 });
 
 test("reasons expose PLAN/UNPLAN ordering and render two-column modal slots", () => {
@@ -524,6 +709,13 @@ test("all active locale files contain the new menu label and board copy", () => 
   const requiredKeys = [
     "title",
     "subtitle",
+    "viewMode",
+    "viewNormal",
+    "viewFull",
+    "selectedLineCount",
+    "readyLineCount",
+    "resultRowCount",
+    "openEventCount",
     "startMode",
     "endMode",
     "deviceNetwork",
@@ -536,18 +728,37 @@ test("all active locale files contain the new menu label and board copy", () => 
     "startBatch",
     "endBatch",
     "success",
-    "replayed",
-    "conflict",
     "error",
-      "retryFailed",
-      "allProcesses",
-      "selectAll",
-      "selectAllEligible",
+    "definitiveFailure",
+    "needsConfirmation",
+    "uncertainSubmission",
+    "pendingSubmissionLock",
+    "noAutomaticUnlock",
+    "pendingStorageUnavailable",
+    "confirmPendingSubmission",
+    "pendingConfirmationComplete",
+    "statusRequery",
+    "statusRequeryComplete",
+    "selectAll",
+    "selectAllEligible",
     "visible",
     "partialResourceLoadError",
-      "reasonTypePlan",
-      "reasonTypeUnplan",
-      "reasonSelect",
+    "reasonTypePlan",
+    "reasonTypeUnplan",
+    "reasonSelect",
+    "endReasonSame",
+    "endReasonMixed",
+    "endReasonSomeMissing",
+    "endReasonAllMissing",
+    "changeReason",
+    "reasonMetadataUnavailable",
+    "duplicateLineSelection",
+    "endReasonFields",
+    "endReasonHint",
+    "required",
+    "result",
+    "responseReceived",
+    "batchTargetCount",
   ];
 
   const expectedTitle = {
@@ -567,6 +778,12 @@ test("all active locale files contain the new menu label and board copy", () => 
     en: { startMode: "ON", endMode: "OFF", startRule: "Running", endRule: "Downtime" },
     zh: { startMode: "ON", endMode: "OFF", startRule: "运行中", endRule: "停机中" },
     vi: { startMode: "ON", endMode: "OFF", startRule: "Đang chạy", endRule: "Đang dừng" },
+  };
+  const expectedViewCopy = {
+    ko: { viewNormal: "메뉴", viewFull: "전체화면" },
+    en: { viewNormal: "Menu", viewFull: "Fullscreen" },
+    zh: { viewNormal: "菜单", viewFull: "全屏" },
+    vi: { viewNormal: "Menu", viewFull: "Toàn màn hình" },
   };
   const expectedShortCopy = {
     ko: {
@@ -595,6 +812,40 @@ test("all active locale files contain the new menu label and board copy", () => 
     en: { reasonTypePlan: "Planned", reasonTypeUnplan: "Unplanned" },
     zh: { reasonTypePlan: "计划", reasonTypeUnplan: "非计划" },
     vi: { reasonTypePlan: "Có kế hoạch", reasonTypeUnplan: "Không có kế hoạch" },
+  };
+  const expectedEndReasonCopy = {
+    ko: {
+      endReasonSame: "사유가 동일함",
+      endReasonMixed: "사유가 서로 다름",
+      endReasonSomeMissing: "미입력 사유 포함",
+      endReasonAllMissing: "사유 선택",
+      changeReason: "사유변경",
+      reasonMetadataUnavailable: "사유 정보 미확인",
+    },
+    en: {
+      endReasonSame: "Same reason",
+      endReasonMixed: "Reasons differ",
+      endReasonSomeMissing: "Some reasons are missing",
+      endReasonAllMissing: "Select reason",
+      changeReason: "Change reason",
+      reasonMetadataUnavailable: "Reason information unavailable",
+    },
+    zh: {
+      endReasonSame: "原因相同",
+      endReasonMixed: "原因不同",
+      endReasonSomeMissing: "包含未填写原因",
+      endReasonAllMissing: "选择原因",
+      changeReason: "更改原因",
+      reasonMetadataUnavailable: "原因信息不可用",
+    },
+    vi: {
+      endReasonSame: "Cùng một lý do",
+      endReasonMixed: "Lý do khác nhau",
+      endReasonSomeMissing: "Có lý do chưa nhập",
+      endReasonAllMissing: "Chọn lý do",
+      changeReason: "Đổi lý do",
+      reasonMetadataUnavailable: "Không có thông tin lý do",
+    },
   };
   const expectedResourceCopy = {
     ko: {
@@ -672,6 +923,12 @@ test("all active locale files contain the new menu label and board copy", () => 
     zh: { startBatch: "停机 START", endBatch: "停机 END" },
     vi: { startBatch: "Dừng máy START", endBatch: "Dừng máy END" },
   };
+  const expectedConfirmationGuidance = {
+    ko: /GET.*확인/,
+    en: /GET.*confirm/i,
+    zh: /GET.*确认/,
+    vi: /GET.*xác nhận/i,
+  };
 
   for (const locale of locales) {
     const messages = JSON.parse(readFileSync(`${frontendRoot}/src/locales/${locale}.json`, "utf8"));
@@ -682,11 +939,20 @@ test("all active locale files contain the new menu label and board copy", () => 
     }
     assert.equal(messages.oeeMultiEntry?.title, expectedTitle[locale], `${locale}: board title`);
     assert.equal(messages.oeeMultiEntry?.subtitle, expectedSubtitle[locale], `${locale}: board subtitle`);
+    assert.deepEqual(
+      { viewNormal: messages.oeeMultiEntry?.viewNormal, viewFull: messages.oeeMultiEntry?.viewFull },
+      expectedViewCopy[locale],
+      `${locale}: view toggle labels`,
+    );
+    assert.doesNotMatch(JSON.stringify(messages.oeeMultiEntry), /7\s*-?inch|7인치|7英寸|7 inch|10인치|10英寸|10 inch/);
     for (const key of ["startMode", "endMode", "startRule", "endRule"]) {
       assert.equal(messages.oeeMultiEntry?.[key], expectedModeCopy[locale][key], `${locale}: oeeMultiEntry.${key}`);
     }
     for (const key of ["reasonTypePlan", "reasonTypeUnplan"]) {
       assert.equal(messages.oeeMultiEntry?.[key], expectedReasonTypeCopy[locale][key], `${locale}: oeeMultiEntry.${key}`);
+    }
+    for (const [key, value] of Object.entries(expectedEndReasonCopy[locale])) {
+      assert.equal(messages.oeeMultiEntry?.[key], value, `${locale}: oeeMultiEntry.${key}`);
     }
     for (const key of ["startBatch", "endBatch"]) {
       assert.equal(messages.oeeMultiEntry?.[key], expectedActionCopy[locale][key], `${locale}: oeeMultiEntry.${key}`);
@@ -697,6 +963,7 @@ test("all active locale files contain the new menu label and board copy", () => 
     for (const key of ["endSelectionHint", "selectAll", "reasonSelect"]) {
       assert.equal(messages.oeeMultiEntry?.[key], expectedShortCopy[locale][key], `${locale}: oeeMultiEntry.${key}`);
     }
+    assert.match(messages.oeeMultiEntry?.noAutomaticUnlock ?? "", expectedConfirmationGuidance[locale], `${locale}: confirmation guidance`);
   }
 
   const koCopy = JSON.stringify(JSON.parse(readFileSync(`${frontendRoot}/src/locales/ko.json`, "utf8")).oeeMultiEntry);

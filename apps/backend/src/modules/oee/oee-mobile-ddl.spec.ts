@@ -9,6 +9,7 @@ const routineDeploymentFiles = [
   '07_mobile_prerequisites.sql',
   '12_resource_management_contract.sql',
   '13_day_night_shift_contract.sql',
+  '15_downtime_line_code.sql',
   '04_view_plan_time.sql',
   '05_view_live.sql',
   '06_proc_build_summary.sql',
@@ -16,6 +17,7 @@ const routineDeploymentFiles = [
 const manualCleanupFiles = [
   'manual/08_cleanup_legacy_oee_plants.sql',
   'manual/10_cleanup_unapproved_oee_resources.sql',
+  'manual/16_remove_oee_multi_entry_7in_menu.sql',
 ];
 const manualBootstrapFiles = ['manual/09_bootstrap_dashboard_resources.sql'];
 const protectedMasterTables = new Set([
@@ -60,7 +62,41 @@ function extractTargets(source: string, operation: 'write' | 'read'): string[] {
   );
 }
 
+function extractDdlWriteTargets(source: string): string[] {
+  const normalized = stripSqlComments(source);
+  const tableTarget = '(?:"([^"]+)"|([A-Z0-9_$#]+))';
+  const targets = [
+    ...normalized.matchAll(new RegExp(`\\bCREATE\\s+TABLE\\s+${tableTarget}`, 'gi')),
+    ...normalized.matchAll(new RegExp(`\\bALTER\\s+TABLE\\s+${tableTarget}`, 'gi')),
+    ...normalized.matchAll(new RegExp(
+      `\\bCREATE\\s+(?:UNIQUE\\s+)?INDEX\\s+(?:"[^"]+"|[A-Z0-9_$#]+)\\s+ON\\s+${tableTarget}`,
+      'gi',
+    )),
+  ];
+
+  return targets.map((match) => (match[1] ?? match[2]).toUpperCase());
+}
+
 describe('OEE MOBILE prerequisite DDL', () => {
+  it('keeps the line-code migration connector-safe and preserves legacy rows', () => {
+    const migration = readFileSync(join(oeeScriptRoot, '15_downtime_line_code.sql'), 'utf8');
+    expect(migration).toMatch(/^DECLARE\b/);
+    expect(migration).toContain('LINE_CODE VARCHAR2(20 BYTE) NULL');
+    expect(migration).toContain('IF v_count = 0 THEN');
+    expect(extractTargets(migration, 'write')).toEqual([]);
+    expect(extractDdlWriteTargets(migration)).toEqual(['IP_EQUIP_DOWNTIME_RESULT']);
+  });
+
+  it('keeps the manual alias-menu cleanup connector-safe and explicit about commit', () => {
+    const cleanup = readFileSync(
+      join(oeeScriptRoot, 'manual/16_remove_oee_multi_entry_7in_menu.sql'),
+      'utf8',
+    );
+    expect(cleanup).toMatch(/^BEGIN\b/);
+    expect(cleanup).toContain("MENU_CODE = 'OEE_MULTI_ENTRY_7IN'");
+    expect(cleanup).toMatch(/\bCOMMIT\s*;/i);
+  });
+
   const source = readFileSync(
     join(__dirname, '../../../../../oracle_db_scripts/oee/07_mobile_prerequisites.sql'),
     'utf8',
