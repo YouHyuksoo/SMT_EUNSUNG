@@ -158,6 +158,7 @@ oracle_db_scripts/          # 주석 처리된 PL/SQL 소스 스냅샷
 - **Oracle DB 기반 화면은 컴파일·단위 테스트·Swagger·HTTP 200만으로 완료 처리하지 않는다.** Oracle 기대 건수 → 인증된 백엔드 API → 프론트 프록시 API → 렌더된 행 순서로 실제 데이터를 확인한다.
 - `@OrganizationId()`를 사용하는 컨트롤러는 `JwtAuthGuard` 적용과 Guard 메타데이터 테스트가 필수다. 서비스는 요청 body/query의 조직 ID를 신뢰하지 않는다.
 - TypeORM Oracle raw query는 named bind 객체를 여러 호출에 재사용하지 않는다. 호출마다 새 객체를 전달하고 드라이버가 첫 bind 객체를 변경하는 회귀 테스트를 둔다.
+- TypeORM Oracle raw DML 검증은 드라이버 반환값과 bind 규칙을 그대로 재현한다. 배열 bind는 SQL에서 placeholder가 나타나는 순서로 전달하고, `manager.query()`의 UPDATE 결과는 객체가 아닌 숫자 affected count일 수 있다. 관련 변경 시 실제 드라이버 경계 회귀 테스트와 `pnpm --filter @eunsung/backend test --runInBand --runTestsByPath src/modules/oee/oee-multi-entry.service.spec.ts`를 필수 실행한다. 상세 사례는 `docs/reports/2026-09-10-oee-multi-entry-batch-verification.md` 참조.
 - 상세 절차와 실패 진단 순서는 `docs/standards/oracle-db-backed-screen-verification.md`를 따른다.
 
 ## DB Work

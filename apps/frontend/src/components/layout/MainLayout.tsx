@@ -21,6 +21,7 @@ import { api } from "@/services/api";
 import ImprovementFAB from "@/components/improvement/ImprovementFAB";
 import AiChatPanel from "@/components/ai/AiChatPanel";
 import HelpPanel from "@/components/help/HelpPanel";
+import { isOeeMultiEntryPath, resolveOeeViewMode } from "@/lib/oee-view-mode";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -37,7 +38,9 @@ export default function MainLayout({ children }: MainLayoutProps) {
     pathname === "/production/input-kiosk" && searchParams.get("view") === "work";
   /** view=full: 헤더/사이드바/탭을 모두 숨기는 전체화면(chromeless) 모드 — 검사 키오스크 등 */
   const isFullscreenView = searchParams.get("view") === "full";
-  const isChromeless = isKioskWorkView || isFullscreenView;
+  const oeeViewMode = resolveOeeViewMode(pathname, searchParams.get("view"));
+  const isOeeMultiEntry = isOeeMultiEntryPath(pathname);
+  const isChromeless = isKioskWorkView || isFullscreenView || (isOeeMultiEntry && oeeViewMode === "full");
 
   useEffect(() => {
     const interceptor = api.interceptors.response.use(
@@ -75,38 +78,32 @@ export default function MainLayout({ children }: MainLayoutProps) {
     <div className="h-screen overflow-hidden bg-background">
       {showConnectionCheck && <ConnectionCheckOverlay onReady={handleReady} />}
 
-      {isChromeless ? (
-        <main className="h-screen overflow-hidden bg-background">
-          {children}
-        </main>
-      ) : (
-        <>
-          <Header
-            onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
-            collapsed={collapsed}
-            onToggleCollapse={() => setCollapsed(!collapsed)}
-          />
+      {!isChromeless && <Header
+        onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
+        collapsed={collapsed}
+        onToggleCollapse={() => setCollapsed(!collapsed)}
+      />}
 
-          <Sidebar
-            isOpen={sidebarOpen}
-            onClose={() => setSidebarOpen(false)}
-            collapsed={collapsed}
-            onToggleCollapse={() => setCollapsed(!collapsed)}
-          />
+      {!isChromeless && <Sidebar
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        collapsed={collapsed}
+        onToggleCollapse={() => setCollapsed(!collapsed)}
+      />}
 
-          <main
-            className={`
+      <main
+        className={isChromeless
+          ? "h-screen overflow-hidden bg-background"
+          : `
               pt-[var(--header-height)] h-screen flex flex-col overflow-hidden transition-all duration-300
               ${collapsed ? "lg:pl-[var(--sidebar-collapsed-width)]" : "lg:pl-[var(--sidebar-width)]"}
             `}
-          >
-            <TabBar />
-            <div className="flex-1 min-h-0 overflow-hidden">
-              <TabKeepAlive>{children}</TabKeepAlive>
-            </div>
-          </main>
-        </>
-      )}
+      >
+        {!isChromeless && <TabBar />}
+        <div className={isChromeless ? "h-full min-h-0 overflow-hidden" : "flex-1 min-h-0 overflow-hidden"}>
+          <TabKeepAlive>{children}</TabKeepAlive>
+        </div>
+      </main>
 
       <ImprovementFAB />
       <AiChatPanel />
