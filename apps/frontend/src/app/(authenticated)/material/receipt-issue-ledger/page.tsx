@@ -10,7 +10,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ClipboardList, RefreshCw } from "lucide-react";
+import { ClipboardList, RefreshCw, Search } from "lucide-react";
 import { Button, Card, CardContent } from "@/components/ui";
 import DataGrid from "@/components/data-grid/DataGrid";
 import { getRecentDaysRange } from "@/utils/date";
@@ -77,10 +77,17 @@ export default function ReceiptIssueLedgerPage() {
               : t("materialLedger.searchPrompt")}
           </p>
         </div>
-        <Button variant="secondary" onClick={runSearch} disabled={loading}>
-          <RefreshCw className={`mr-1 h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-          {t("common.refresh")}
-        </Button>
+        {/* 상단 액션 순서: 보조(secondary) → 주요(primary). docs/design/layout.md */}
+        <div className="flex gap-2">
+          <Button variant="secondary" onClick={runSearch} disabled={loading}>
+            <RefreshCw className={`mr-1 h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+            {t("common.refresh")}
+          </Button>
+          <Button onClick={runSearch} disabled={loading}>
+            <Search className="mr-1 h-4 w-4" />
+            {t("common.search")}
+          </Button>
+        </div>
       </header>
 
       <nav className="flex flex-wrap gap-1 border-b border-border" aria-label={t("materialLedger.modeTabs")}>
@@ -100,14 +107,6 @@ export default function ReceiptIssueLedgerPage() {
           </button>
         ))}
       </nav>
-
-      <LedgerFilters
-        mode={mode}
-        filters={filters}
-        onChange={patchFilters}
-        onSearch={runSearch}
-        loading={loading}
-      />
 
       {mode === "issueLoss" && (
         <p className="text-sm text-text-muted">{t("materialLedger.notice.issueLossEndDate")}</p>
@@ -133,6 +132,9 @@ export default function ReceiptIssueLedgerPage() {
             enableExport
             exportFileName={`material-ledger-${mode}`}
             emptyMessage={loaded ? t("common.noData") : t("materialLedger.searchPrompt")}
+            toolbarLeft={
+              <LedgerFilters mode={mode} filters={filters} onChange={patchFilters} />
+            }
           />
         </CardContent>
       </Card>

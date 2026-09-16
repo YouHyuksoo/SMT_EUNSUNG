@@ -15,7 +15,7 @@
  */
 
 import { useTranslation } from "react-i18next";
-import { Button, Input } from "@/components/ui";
+import { Input } from "@/components/ui";
 import ComCodeSelect from "@/components/shared/ComCodeSelect";
 import ProcessSelect from "@/components/shared/ProcessSelect";
 import ProdLineSelect from "@/components/shared/ProdLineSelect";
@@ -29,11 +29,10 @@ interface LedgerFiltersProps {
   mode: LedgerMode;
   filters: LedgerFilterState;
   onChange: (patch: Partial<LedgerFilterState>) => void;
-  onSearch: () => void;
-  loading: boolean;
 }
 
-export default function LedgerFilters({ mode, filters, onChange, onSearch, loading }: LedgerFiltersProps) {
+/** 조회 버튼은 페이지 헤더(새로고침 자리)에서 렌더한다. 여기엔 조건 입력만 둔다. */
+export default function LedgerFilters({ mode, filters, onChange }: LedgerFiltersProps) {
   const { t } = useTranslation();
   const f = (key: string) => t(`materialLedger.filter.${key}`);
   const set = <K extends keyof LedgerFilterState>(key: K) => (value: LedgerFilterState[K]) => onChange({ [key]: value } as Partial<LedgerFilterState>);
@@ -96,6 +95,7 @@ export default function LedgerFilters({ mode, filters, onChange, onSearch, loadi
           onChange={set("rcvIssCode")}
           labelPrefix={f("rcvIssCode")}
           aria-label={f("rcvIssCode")}
+          className="w-44"
           includeAll
         />
       )}
@@ -106,6 +106,7 @@ export default function LedgerFilters({ mode, filters, onChange, onSearch, loadi
           onChange={set("lineCode")}
           labelPrefix={f("lineCode")}
           aria-label={f("lineCode")}
+          className="w-44"
           includeAll
         />
       )}
@@ -118,6 +119,7 @@ export default function LedgerFilters({ mode, filters, onChange, onSearch, loadi
             onChange={set("locationCode")}
             labelPrefix={f("locationCode")}
             aria-label={f("locationCode")}
+            className="w-44"
             includeAll
           />
           <ComCodeSelect
@@ -126,6 +128,7 @@ export default function LedgerFilters({ mode, filters, onChange, onSearch, loadi
             onChange={set("inventoryType")}
             labelPrefix={f("inventoryType")}
             aria-label={f("inventoryType")}
+            className="w-44"
             includeAll
           />
           <ProcessSelect
@@ -133,6 +136,7 @@ export default function LedgerFilters({ mode, filters, onChange, onSearch, loadi
             onChange={set("workstageCode")}
             labelPrefix={f("workstageCode")}
             aria-label={f("workstageCode")}
+            className="w-44"
           />
           <ComCodeSelect
             groupCode="ISSUE DEFICIT"
@@ -140,24 +144,31 @@ export default function LedgerFilters({ mode, filters, onChange, onSearch, loadi
             onChange={set("issueDeficit")}
             labelPrefix={f("issueDeficit")}
             aria-label={f("issueDeficit")}
+            className="w-44"
             includeAll
           />
           <SupplierSelect
             value={filters.supplierCode}
             onChange={set("supplierCode")}
+            labelPrefix={f("supplierCode")}
             aria-label={f("supplierCode")}
+            className="w-44"
             includeAll
           />
           <SupplierSelect
             value={filters.fromSupplierCode}
             onChange={set("fromSupplierCode")}
+            labelPrefix={f("fromSupplierCode")}
             aria-label={f("fromSupplierCode")}
+            className="w-44"
             includeAll
           />
           <SupplierSelect
             value={filters.supplierIssue}
             onChange={set("supplierIssue")}
+            labelPrefix={f("supplierIssue")}
             aria-label={f("supplierIssue")}
+            className="w-44"
             includeAll
           />
           <label className="flex items-center gap-2 text-sm">
@@ -193,11 +204,14 @@ export default function LedgerFilters({ mode, filters, onChange, onSearch, loadi
             onChange={set("lotDivide")}
             labelPrefix={f("lotDivide")}
             aria-label={f("lotDivide")}
+            className="w-44"
           />
           <SupplierSelect
             value={filters.supplierCode}
             onChange={set("supplierCode")}
+            labelPrefix={f("supplierCode")}
             aria-label={f("supplierCode")}
+            className="w-44"
             includeAll
           />
         </>
@@ -209,12 +223,9 @@ export default function LedgerFilters({ mode, filters, onChange, onSearch, loadi
           onChange={set("keyitemYn")}
           labelPrefix={f("keyitemYn")}
           aria-label={f("keyitemYn")}
+          className="w-44"
         />
       )}
-
-      <Button onClick={onSearch} disabled={loading}>
-        {t("common.search")}
-      </Button>
     </FilterBar>
   );
 }

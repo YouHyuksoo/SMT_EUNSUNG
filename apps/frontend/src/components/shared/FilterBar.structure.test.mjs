@@ -11,7 +11,7 @@ test('FilterBar takes children + optional className', () => {
 });
 
 test('FilterBar standardizes the toolbar flex-wrap layout', () => {
-  assert.match(src, /flex gap-3 flex-1 min-w-0 items-center flex-wrap/);
+  assert.match(src, /flex min-w-0 flex-1 flex-wrap content-start items-center gap-2/);
 });
 
 test('shared barrel exports FilterBar', () => {
