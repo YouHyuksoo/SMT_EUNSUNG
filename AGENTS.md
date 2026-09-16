@@ -92,7 +92,7 @@ Package manager is **pnpm**. Do not use `npm` or `yarn`.
 ```bash
 # 개발 서버 (사용자가 직접 기동한다 — 아래 Execution & Verification 참고)
 pnpm dev                                   # turbo run dev (frontend+backend)
-pnpm dev:frontend                          # @eunsung/frontend  → http://localhost:3100
+pnpm dev:frontend                          # @eunsung/frontend  → http://localhost:3010
 pnpm dev:backend                           # @eunsung/backend   → http://localhost:3003
 
 # 검증 (focused typecheck 우선)
@@ -106,7 +106,7 @@ pnpm --filter @eunsung/backend  test       # jest
 pnpm build                                 # @eunsung/frontend build
 ```
 
-- Ports: frontend **3100**, backend **3003** (고정, `apps/backend/src/main.ts`). Swagger는 백엔드에서 제공.
+- Ports: frontend **3010**, backend **3003** (고정, `apps/backend/src/main.ts`). Swagger는 백엔드에서 제공.
 - Backend 시간은 `main.ts`에서 KST로 고정된다. 날짜 관련 로직 변경 시 이 전제를 유지한다.
 
 ## Repository Shape
