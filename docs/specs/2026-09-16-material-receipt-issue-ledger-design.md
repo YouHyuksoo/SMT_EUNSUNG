@@ -5,7 +5,7 @@
 PowerBuilder 동적 메뉴의 `자재입출고수불원장`(`ISYS_DYNAMIC_MENU.MENU_ITEM_TEXT`, `MENU_TAG = w_mat_ledger_report`) 화면을 Next.js + NestJS로 이식한다. 사용자는 아래를 승인했다.
 
 1. 레거시 창의 **라디오 5모드 전부**를 구현한다. 한 화면에서 모드를 전환하는 레거시 구조를 유지한다.
-2. 실제 필터링에 쓰이지 않는 파라미터(`arg_etc_line`, 그리고 메인 모드의 `arg_keyitem_yn`)는 제거한다.
+2. 실제 필터링에 쓰이지 않는 파라미터는 제거한다. `arg_etc_line`은 모든 모드에서, `arg_keyitem_yn`은 SQL이 쓰지 않는 모드 1·2에서 제거한다 (모드 3·4·5는 실사용이므로 유지).
 3. 검증 DB는 `JSIDCESDB`(ESDBPDB)를 그대로 쓴다. 데이터가 없는 모드는 검증 한계를 명시한다.
 
 범위 밖: 자재 입고/출고 등록·수정 기능, 월마감 적재 로직, `IM_ITEM_LEDGER` 기반 원장(본 화면과 무관한 별개 DataWindow다).
@@ -71,7 +71,7 @@ ISSUE_DATE   >= :dateFrom AND ISSUE_DATE   < :dateTo + 1
 ### 제거하는 파라미터와 근거
 
 - `arg_etc_line` (`stringlist`): 창의 인스턴스 변수 `ivs_line_code`로 전달되는데, `open` 이벤트에서 `ivs_line_code[1] = '%'`로 설정된 뒤 창 어디에서도 재할당되지 않는다. 따라서 `LINE_CODE NOT IN ('%')`는 어떤 행도 제외하지 않는 사(死)조건이다. PB `stringlist`는 `dataSource.query` 바인드로 옮길 수단도 없다. 제거한다.
-- `arg_keyitem_yn`: 이 DataWindow의 `retrieve` SQL 본문에 0회 등장한다(선언·전달만 됨). **모드 1에서만** 제거한다. 모드 3·4·5에서는 실제로 사용되므로 유지한다 (아래 참조).
+- `arg_keyitem_yn`: 이 DataWindow의 `retrieve` SQL 본문에 0회 등장한다(선언·전달만 됨). 모드 2도 같은 이유로 쓰지 않으므로 **모드 1·2에서 제거**한다. 모드 3·4·5에서는 `NVL(ID_ITEM.KEYITEM_YN,'N') LIKE`로 실제 사용되므로 유지한다.
 
 ### 표시 컬럼 (33)
 
@@ -118,7 +118,9 @@ ISSUE_DATE   >= :dateFrom AND ISSUE_DATE   < :dateTo + 1
 
 `IM_ITEM_ISSUE_LOSS` + `ID_ITEM`(outer join). 정렬 `LINE_CODE ASC, ISSUE_DATE ASC, ISSUE_SEQUENCE ASC`.
 
-파라미터 8개 전부 실사용: `dateFrom`, `dateTo`(주의: 이 모드만 `< :dateTo`로 **+1이 없다**. 레거시 그대로 유지), `lineCode`, `modelName`(`NVL(MODEL_NAME,'*') LIKE`), `itemCode`, `materialMfs`, `organizationId`, `keyitemYn`.
+파라미터 8개 전부 실사용: `dateFrom`, `dateTo`, `lineCode`, `modelName`(`NVL(MODEL_NAME,'*') LIKE`), `itemCode`, `materialMfs`, `organizationId`, `keyitemYn`.
+
+**종료일 경계 결정**: 이 모드만 `ISSUE_DATE < :dateTo`로 다른 모드의 `< :dateTo + 1`과 다르다. 즉 종료일 당일이 결과에서 빠진다. 레거시 동작을 그대로 유지하되, 화면 필터에 종료일이 포함되지 않음을 라벨로 명시한다. 실데이터가 있는 유일한 모드이므로 이 차이가 사용자에게 보인다. 운영 확인 후 `+1`로 통일하려면 별도 변경으로 처리한다.
 
 표시 컬럼 13개: `No` · `Issue Date` · `Issue Sequence` · `Item Code` · `Material Mfs` · `Line Code` · `Model Name` · `Issue Qty` · `Enter Date` · `Enter By` · `Last Modify Date` · `Last Modify By` · `Organization Id`
 
@@ -215,4 +217,4 @@ Oracle/드라이버 오류(`ORA-*`, `NJS-*`)는 원문 그대로 보존해 보�
 ## 미해결 사항
 
 - 모드 4의 조직 필터 부재는 레거시 동작을 그대로 옮긴 것이다. 운영에서 다조직 사용 시 의도치 않은 결과가 나올 수 있으나, 이번 범위에서는 변경하지 않는다.
-- 모드 5의 `ISSUE_DATE < :dateTo` (다른 모드와 달리 `+1` 없음)도 레거시 그대로다. 종료일 당일이 제외되는 동작이며, 의도된 것인지 운영 확인이 필요하다.
+- 모드 5의 종료일 경계(`< :dateTo`)는 위 모드 5 절에서 레거시 유지로 결정했다. 통일 여부는 운영 확인 후 별도 변경 대상이다.
