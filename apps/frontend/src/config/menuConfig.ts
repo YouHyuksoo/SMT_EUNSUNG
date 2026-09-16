@@ -35,6 +35,7 @@ export const menuConfig: MenuConfigItem[] = [
     icon: Database,
     children: [
       { code: "MST_PART", labelKey: "menu.master.part", path: "/master/part" },
+      { code: "MST_PRODUCT_MODEL", labelKey: "menu.master.productModel", path: "/master/product-model" },
       { code: "MST_BOM", labelKey: "menu.master.bom", path: "/master/bom" },
       { code: "MST_PARTNER", labelKey: "menu.master.partner", path: "/master/partner" },
       { code: "MST_CUSTOMER", labelKey: "menu.master.customer", path: "/master/customer" },

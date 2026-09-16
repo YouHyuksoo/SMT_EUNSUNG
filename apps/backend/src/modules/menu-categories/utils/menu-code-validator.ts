@@ -6,6 +6,7 @@
  */
 const KNOWN_LEAF_CODES: ReadonlySet<string> = new Set<string>([
   'MST_PART',
+  'MST_PRODUCT_MODEL',
   'MST_BOM',
   'MST_PARTNER',
   'MST_CUSTOMER',
