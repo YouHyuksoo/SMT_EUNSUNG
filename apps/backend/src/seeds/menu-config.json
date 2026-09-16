@@ -13,6 +13,7 @@
   "childMenuCodes": {
     "MASTER": [
       "MST_PART",
+      "MST_PRODUCT_MODEL",
       "MST_BOM",
       "MST_PARTNER",
       "MST_CUSTOMER",

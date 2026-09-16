@@ -1,4 +1,12 @@
 {
+  "productModel": {
+    "modelName": "Model Name",
+    "partNo": "Customer Part No.",
+    "modelSpec": "Model Specification",
+    "customerName": "Customer Name",
+    "readOnly": "Read only",
+    "search": "Search model, part no., specification or customer"
+  },
   "part": {
     "code": "Item Code",
     "name": "Item Name"
@@ -184,6 +192,7 @@
     "monitoring": "Monitoring",
     "master": "Master Data",
     "master.part": "Part Management",
+    "master.productModel": "Product Models",
     "master.bom": "BOM Management",
     "master.equip": "Equipment Management",
     "master.code": "Code Management",

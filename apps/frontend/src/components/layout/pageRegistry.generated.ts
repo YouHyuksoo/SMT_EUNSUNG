@@ -92,6 +92,11 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
       component = mod.getPageComponent();
       break;
     }
+    case "/master/product-model": {
+      const mod = await import("./page-registries/master__product-model.generated");
+      component = mod.getPageComponent();
+      break;
+    }
     case "/master/purchase-price": {
       const mod = await import("./page-registries/master__purchase-price.generated");
       component = mod.getPageComponent();

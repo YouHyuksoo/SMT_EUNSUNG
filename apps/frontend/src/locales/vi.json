@@ -1,4 +1,12 @@
 {
+  "productModel": {
+    "modelName": "Tên mẫu",
+    "partNo": "Mã linh kiện khách hàng",
+    "modelSpec": "Quy cách mẫu",
+    "customerName": "Tên khách hàng",
+    "readOnly": "Chỉ xem",
+    "search": "Tìm mẫu, mã linh kiện, quy cách hoặc khách hàng"
+  },
   "part": {
     "code": "Mã mặt hàng",
     "name": "Tên mặt hàng"
@@ -184,6 +192,7 @@
     "monitoring": "Giám sát",
     "master": "Dữ liệu cơ sở",
     "master.part": "Quản lý vật tư",
+    "master.productModel": "Quản lý mẫu sản phẩm",
     "master.bom": "Quản lý BOM",
     "master.equip": "Quản lý thiết bị",
     "master.code": "Quản lý mã",

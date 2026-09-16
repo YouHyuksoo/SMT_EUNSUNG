@@ -1,4 +1,12 @@
 {
+  "productModel": {
+    "modelName": "모델명",
+    "partNo": "고객사품번",
+    "modelSpec": "모델규격",
+    "customerName": "고객사명",
+    "readOnly": "조회 전용",
+    "search": "모델명·고객사품번·규격·고객사 검색"
+  },
   "part": {
     "code": "품목코드",
     "name": "품목명"
@@ -184,6 +192,7 @@
     "monitoring": "모니터링",
     "master": "기준정보",
     "master.part": "품목관리",
+    "master.productModel": "제품모델 관리",
     "master.bom": "BOM관리",
     "master.equip": "설비관리",
     "master.code": "코드관리",

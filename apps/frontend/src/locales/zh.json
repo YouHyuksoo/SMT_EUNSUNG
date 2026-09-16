@@ -1,4 +1,12 @@
 {
+  "productModel": {
+    "modelName": "型号名称",
+    "partNo": "客户零件号",
+    "modelSpec": "型号规格",
+    "customerName": "客户名称",
+    "readOnly": "仅供查询",
+    "search": "搜索型号、客户零件号、规格或客户"
+  },
   "part": {
     "code": "品目代码",
     "name": "品目名称"
@@ -184,6 +192,7 @@
     "monitoring": "监控",
     "master": "基础数据",
     "master.part": "零件管理",
+    "master.productModel": "产品型号管理",
     "master.bom": "BOM管理",
     "master.equip": "设备管理",
     "master.code": "代码管理",
