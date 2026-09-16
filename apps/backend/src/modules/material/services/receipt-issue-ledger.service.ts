@@ -29,10 +29,29 @@ interface PagedResult {
   limit: number;
 }
 
-/** LIKE 필터 기본값. 값이 없으면 전체를 의미하는 '%'를 바인드한다. */
-function like(value: string | undefined): string {
+/**
+ * LIKE 바인드 생성기.
+ *
+ * 레거시는 retrieve 호출부에서 인자마다 다르게 와일드카드를 붙인다(창 스크립트 line 395 등).
+ * 빈 값일 때 `'' + '%'` = `'%'`가 되어 전체를 의미하는 동작까지 그대로 옮긴다.
+ */
+
+/** 레거시 `X` (와일드카드 없음). 품목코드·주요자재여부가 여기 해당한다. */
+function likeExact(value: string | undefined): string {
   const trimmed = value?.trim();
   return trimmed ? trimmed : '%';
+}
+
+/** 레거시 `X + '%'` — 전방 일치. LIKE 인자 대부분이 여기 해당한다. */
+function likePrefix(value: string | undefined): string {
+  const trimmed = value?.trim();
+  return trimmed ? `${trimmed}%` : '%';
+}
+
+/** 레거시 `'%' + X + '%'` — 부분 일치. 모드 3의 LOT_NO만 해당한다. */
+function likeContains(value: string | undefined): string {
+  const trimmed = value?.trim();
+  return trimmed ? `%${trimmed}%` : '%';
 }
 
 @Injectable()
@@ -44,17 +63,17 @@ export class ReceiptIssueLedgerService {
     const binds: Record<string, unknown> = {
       dateFrom: query.dateFrom,
       dateTo: query.dateTo,
-      itemCode: like(query.itemCode),
-      lotNo: like(query.lotNo),
-      locationCode: like(query.locationCode),
-      inventoryType: like(query.inventoryType),
-      supplierCode: like(query.supplierCode),
-      fromSupplierCode: like(query.fromSupplierCode),
-      lineCode: like(query.lineCode),
-      workstageCode: like(query.workstageCode),
-      supplierIssue: like(query.supplierIssue),
-      issueDeficit: like(query.issueDeficit),
-      rcvIssCode: like(query.rcvIssCode),
+      itemCode: likeExact(query.itemCode),
+      lotNo: likePrefix(query.lotNo),
+      locationCode: likePrefix(query.locationCode),
+      inventoryType: likePrefix(query.inventoryType),
+      supplierCode: likePrefix(query.supplierCode),
+      fromSupplierCode: likePrefix(query.fromSupplierCode),
+      lineCode: likePrefix(query.lineCode),
+      workstageCode: likePrefix(query.workstageCode),
+      supplierIssue: likePrefix(query.supplierIssue),
+      issueDeficit: likePrefix(query.issueDeficit),
+      rcvIssCode: likePrefix(query.rcvIssCode),
       includeW00: query.includeW00 === 'N' ? 'N' : 'Y',
       excludeEtcLine: query.excludeEtcLine === 'Y' ? 'Y' : 'N',
       organizationId,
@@ -168,8 +187,8 @@ export class ReceiptIssueLedgerService {
     const binds: Record<string, unknown> = {
       dateFrom: query.dateFrom,
       dateTo: query.dateTo,
-      itemCode: like(query.itemCode),
-      rcvIssCode: like(query.rcvIssCode),
+      itemCode: likeExact(query.itemCode),
+      rcvIssCode: likePrefix(query.rcvIssCode),
       organizationId,
     };
 
@@ -223,12 +242,12 @@ export class ReceiptIssueLedgerService {
     const binds: Record<string, unknown> = {
       dateFrom: query.dateFrom,
       dateTo: query.dateTo,
-      itemCode: like(query.itemCode),
-      lotNo: like(query.lotNo),
-      slipNo: like(query.slipNo),
-      lotDivide: like(query.lotDivide),
-      supplierCode: like(query.supplierCode),
-      keyitemYn: like(query.keyitemYn),
+      itemCode: likeExact(query.itemCode),
+      lotNo: likeContains(query.lotNo),
+      slipNo: likePrefix(query.slipNo),
+      lotDivide: likePrefix(query.lotDivide),
+      supplierCode: likePrefix(query.supplierCode),
+      keyitemYn: likeExact(query.keyitemYn),
       organizationId,
     };
 
@@ -286,9 +305,9 @@ export class ReceiptIssueLedgerService {
    */
   async findFeederLayout(query: FeederLayoutQueryDto): Promise<PagedResult> {
     const binds: Record<string, unknown> = {
-      itemCode: like(query.itemCode),
-      modelName: like(query.modelName),
-      keyitemYn: like(query.keyitemYn),
+      itemCode: likeExact(query.itemCode),
+      modelName: likePrefix(query.modelName),
+      keyitemYn: likeExact(query.keyitemYn),
     };
 
     const from = `
@@ -330,11 +349,11 @@ export class ReceiptIssueLedgerService {
     const binds: Record<string, unknown> = {
       dateFrom: query.dateFrom,
       dateTo: query.dateTo,
-      lineCode: like(query.lineCode),
-      modelName: like(query.modelName),
-      itemCode: like(query.itemCode),
-      materialMfs: like(query.materialMfs),
-      keyitemYn: like(query.keyitemYn),
+      lineCode: likePrefix(query.lineCode),
+      modelName: likePrefix(query.modelName),
+      itemCode: likeExact(query.itemCode),
+      materialMfs: likePrefix(query.materialMfs),
+      keyitemYn: likeExact(query.keyitemYn),
       organizationId,
     };
 

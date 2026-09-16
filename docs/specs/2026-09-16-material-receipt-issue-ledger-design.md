@@ -71,6 +71,20 @@ ISSUE_DATE   >= :dateFrom AND ISSUE_DATE   < :dateTo + 1
 
 `rcvIssCode`(레거시 `arg_deficit`)와 `issueDeficit`(레거시 `arg_issue_deficit`)는 이름이 비슷하나 적용 위치와 의미가 다르다. 혼동 금지.
 
+### LIKE 와일드카드 규칙 (전 모드 공통)
+
+레거시는 SQL이 아니라 **retrieve 호출부에서 인자마다 다르게** 와일드카드를 붙인다(창 스크립트 line 395 등). 이걸 놓치면 전방 일치 필터가 정확 일치로 바뀌어 조용히 결과가 달라진다.
+
+| 레거시 표기 | 의미 | 해당 인자 |
+|---|---|---|
+| `X` (그대로) | 정확 일치 | `arg_item`(전 모드), `arg_keyitem_yn`(모드 3·4·5) |
+| `X + '%'` | 전방 일치 | `arg_lot_no`(모드 1), `arg_line_code`, `arg_workstage_code`, `arg_deficit`, `arg_supplier_code`, `arg_from_supplier_code`, `arg_location_code`, `arg_supplier_issue`, `arg_issue_deficit`, `arg_inventory_type`, `arg_slip_no`, `arg_lot_divide`, `arg_model_name`, `arg_material_mfs` |
+| `'%' + X + '%'` | 부분 일치 | `arg_lot_no`(모드 3만) |
+
+빈 값일 때 레거시는 `'' + '%'` = `'%'`가 되어 전체를 의미한다. 품목코드는 창 스크립트가 `lvs_item_code = '%'`로 따로 처리한다. 백엔드는 `likeExact` / `likePrefix` / `likeContains` 세 헬퍼로 이 규칙을 그대로 옮긴다.
+
+실데이터(`IM_ITEM_ISSUE_LOSS` 32,501건)로 확인한 동작: 라인 전방 일치 `'02%'` 4,684건, 품목 정확 일치 `'ERFJD1001ZA'` 113건, 같은 품목코드의 앞 5글자만 넣으면 0건(정확 일치가 맞게 동작), LOT 전방 일치 `'0AV%'` 195건.
+
 ### 제거하는 파라미터와 근거
 
 - `arg_keyitem_yn`: 이 DataWindow의 `retrieve` SQL 본문에 0회 등장한다(선언·전달만 됨). 모드 2도 같은 이유로 쓰지 않으므로 **모드 1·2에서 제거**한다. 모드 3·4·5에서는 `NVL(ID_ITEM.KEYITEM_YN,'N') LIKE`로 실제 사용되므로 유지한다.
@@ -127,6 +141,8 @@ PB `stringlist`는 `dataSource.query` 바인드로 옮길 수단이 없으므로
 `IM_ITEM_ISSUE_LOSS` + `ID_ITEM`(outer join). 정렬 `LINE_CODE ASC, ISSUE_DATE ASC, ISSUE_SEQUENCE ASC`.
 
 파라미터 8개 전부 실사용: `dateFrom`, `dateTo`, `lineCode`, `modelName`(`NVL(MODEL_NAME,'*') LIKE`), `itemCode`, `materialMfs`, `organizationId`, `keyitemYn`.
+
+**모델명 필터**: 레거시 `dw_4.retrieve`는 `arg_model_name`에 `'%'`를 고정 전달한다(창의 `sle_model_name`은 모드 4 전용이라 이 모드에서 쓰이지 않는다). SQL에는 `NVL(MODEL_NAME,'*') LIKE :arg_model_name` 필터가 살아 있으므로, 웹에서는 모델명 입력을 노출해 실제로 거를 수 있게 한다. **레거시 대비 유일한 기능 추가이며 의도한 것이다.**
 
 **종료일 경계 결정**: 이 모드만 `ISSUE_DATE < :dateTo`로 다른 모드의 `< :dateTo + 1`과 다르다. 즉 종료일 당일이 결과에서 빠진다. 레거시 동작을 그대로 유지하되, 화면 필터에 종료일이 포함되지 않음을 라벨로 명시한다. 실데이터가 있는 유일한 모드이므로 이 차이가 사용자에게 보인다. 운영 확인 후 `+1`로 통일하려면 별도 변경으로 처리한다.
 
