@@ -5,7 +5,7 @@
 PowerBuilder 동적 메뉴의 `자재입출고수불원장`(`ISYS_DYNAMIC_MENU.MENU_ITEM_TEXT`, `MENU_TAG = w_mat_ledger_report`) 화면을 Next.js + NestJS로 이식한다. 사용자는 아래를 승인했다.
 
 1. 레거시 창의 **라디오 5모드 전부**를 구현한다. 한 화면에서 모드를 전환하는 레거시 구조를 유지한다.
-2. 실제 필터링에 쓰이지 않는 파라미터는 제거한다. `arg_etc_line`은 모든 모드에서, `arg_keyitem_yn`은 SQL이 쓰지 않는 모드 1·2에서 제거한다 (모드 3·4·5는 실사용이므로 유지).
+2. 실제 필터링에 쓰이지 않는 파라미터는 제거한다. `arg_keyitem_yn`은 SQL이 쓰지 않는 모드 1·2에서 제거한다 (모드 3·4·5는 실사용이므로 유지). `arg_etc_line`은 처음 사(死)조건으로 오판했으나 `cbx_etc_line` 체크박스가 채우는 살아있는 필터임을 확인해 유지한다.
 3. 검증 DB는 `JSIDCESDB`(ESDBPDB)를 그대로 쓴다. 데이터가 없는 모드는 검증 한계를 명시한다.
 
 범위 밖: 자재 입고/출고 등록·수정 기능, 월마감 적재 로직, `IM_ITEM_LEDGER` 기반 원장(본 화면과 무관한 별개 DataWindow다).
@@ -34,7 +34,9 @@ PowerBuilder 동적 메뉴의 `자재입출고수불원장`(`ISYS_DYNAMIC_MENU.M
 
 ### 쿼리 계약
 
-`IM_ITEM_RECEIPT`를 `'R'`, `IM_ITEM_ISSUE`를 `'I'`로 `RCV_ISS_CODE` 부여하여 `UNION ALL`한 인라인 뷰 `A`에, `ID_ITEM B`(inner join, `ITEM_CODE` + `ORGANIZATION_ID`)와 `IM_ITEM_RECEIPT_BARCODE C`(outer join, `ITEM_CODE` + `MATERIAL_MFS = C.LOT_NO`)를 붙인다. 레거시 조인 형태를 그대로 유지한다.
+`IM_ITEM_RECEIPT`를 `'R'`, `IM_ITEM_ISSUE`를 `'I'`로 `RCV_ISS_CODE` 부여하여 `UNION ALL`한 인라인 뷰 `A`에, `ID_ITEM B`(inner join, **`ITEM_CODE` 단독** — 레거시는 `ORGANIZATION_ID`를 조인 조건에 넣지 않는다)와 `IM_ITEM_RECEIPT_BARCODE C`(outer join, `ITEM_CODE` + `MATERIAL_MFS = C.LOT_NO`)를 붙인다. 레거시 조인 형태를 그대로 유지한다.
+
+`ID_ITEM`의 PK는 `(ITEM_CODE, ORGANIZATION_ID)`라 다조직 데이터에서는 조직 조건 부재가 행을 불릴 수 있다. 개발 DB는 `ITEM_CODE` 2,519건이 모두 유일해 현재는 영향이 없다. 레거시 동작을 유지하고 이 전제를 기록한다.
 
 기간은 **일자 범위**다. 월 단위가 아니다.
 
@@ -47,14 +49,14 @@ ISSUE_DATE   >= :dateFrom AND ISSUE_DATE   < :dateTo + 1
 
 ### 바인드 파라미터
 
-레거시 17개 중 실사용 15개를 채택한다.
+레거시 17개 중 실사용 16개를 채택한다.
 
 | 파라미터 | 적용 위치 | 의미 |
 |---|---|---|
 | `dateFrom` / `dateTo` | 두 분기 각각 | 조회 기간 (일자) |
 | `itemCode` | 두 분기 | 품목코드 `LIKE`. 레거시는 빈 값이면 `'%'` |
 | `lotNo` | 두 분기 | `MATERIAL_MFS LIKE` |
-| `locationCode` | 두 분기 | 창고 `LIKE` |
+| `locationCode` | 두 분기 | 자재위치 `LIKE` (창고 마스터가 아니라 `MATERIAL LOCATION CODE` 공통코드) |
 | `inventoryType` | 두 분기 | `NVL(INVENTORY_TYPE,'*') LIKE` |
 | `organizationId` | 두 분기 | 조직 (= 컨텍스트) |
 | `supplierCode` | 입고 분기 | `NVL(SUPPLIER_CODE,'*') LIKE` |
@@ -65,13 +67,19 @@ ISSUE_DATE   >= :dateFrom AND ISSUE_DATE   < :dateTo + 1
 | `issueDeficit` | 출고 분기 | `ISSUE_DEFICIT LIKE` (3=출고+, 4=출고-) |
 | `includeW00` | 출고 분기 | `'N'`이면 `WORKSTAGE_CODE <> 'W00'` |
 | `rcvIssCode` | UNION **밖** | `A.RCV_ISS_CODE LIKE` (R=입고, I=출고) |
+| `excludeEtcLine` | 출고 분기 | `'Y'`이면 `IP_PRODUCT_LINE.LINE_DIVISION='ETC'` 라인을 제외 |
 
 `rcvIssCode`(레거시 `arg_deficit`)와 `issueDeficit`(레거시 `arg_issue_deficit`)는 이름이 비슷하나 적용 위치와 의미가 다르다. 혼동 금지.
 
 ### 제거하는 파라미터와 근거
 
-- `arg_etc_line` (`stringlist`): 창의 인스턴스 변수 `ivs_line_code`로 전달되는데, `open` 이벤트에서 `ivs_line_code[1] = '%'`로 설정된 뒤 창 어디에서도 재할당되지 않는다. 따라서 `LINE_CODE NOT IN ('%')`는 어떤 행도 제외하지 않는 사(死)조건이다. PB `stringlist`는 `dataSource.query` 바인드로 옮길 수단도 없다. 제거한다.
 - `arg_keyitem_yn`: 이 DataWindow의 `retrieve` SQL 본문에 0회 등장한다(선언·전달만 됨). 모드 2도 같은 이유로 쓰지 않으므로 **모드 1·2에서 제거**한다. 모드 3·4·5에서는 `NVL(ID_ITEM.KEYITEM_YN,'N') LIKE`로 실제 사용되므로 유지한다.
+
+### 유지하는 파라미터 — `arg_etc_line`
+
+`open` 이벤트가 `ivs_line_code[1] = '%'`로 초기화하는 것만 보고 사(死)조건으로 오판했으나, `cbx_etc_line`(`Etc Line YN`) 체크박스의 `clicked` 이벤트가 `IP_PRODUCT_LINE`에서 `LINE_DIVISION='ETC'`인 `LINE_CODE`를 커서로 읽어 배열을 채운다. 체크 시 기타라인 출고를 제외하는 실제 업무 규칙이다.
+
+PB `stringlist`는 `dataSource.query` 바인드로 옮길 수단이 없으므로 같은 의미의 서브쿼리로 옮기고 `excludeEtcLine` 플래그로 제어한다. `LINE_CODE IS NOT NULL`을 더해 `NOT IN`이 NULL로 전체를 배제하는 것을 막는다.
 
 ### 표시 컬럼 (33)
 
@@ -144,23 +152,36 @@ ISSUE_DATE   >= :dateFrom AND ISSUE_DATE   < :dateTo + 1
 `apps/frontend/src/app/(authenticated)/material/receipt-issue-ledger/`
 
 - `page.tsx`는 레이아웃·모드 전환·상태 배선만 담당한다
-- 컬럼 정의는 모드별 파일로 분리한다 (`ledgerColumns.ts`, `wsLedgerColumns.ts`, `barcodeColumns.ts`, `feederLayoutColumns.ts`, `issueLossColumns.ts`)
-- 데이터 조회는 모드별 훅으로 분리한다
-- 모드 전환은 탭. 필터 패널은 선택된 모드가 실제 사용하는 필터만 노출한다
+- 컬럼 정의는 `ledgerColumns.ts` 한 파일에 모드별 함수 5개로 둔다 (accessorKey/헤더 나열이라 파일을 쪼개면 오히려 추적이 어렵다)
+- 행 타입·필터 상태·모드별 파라미터 조립은 `types.ts`
+- 데이터 조회는 `useLedgerQuery.ts` 훅 하나가 모드를 인자로 받아 처리한다
+- 필터 패널은 `LedgerFilters.tsx`. 모드 전환은 탭이며, 선택된 모드가 실제 사용하는 필터만 렌더한다
+- 레거시는 모드 전환 시 자동 조회하지 않는다. 웹도 조회 버튼을 눌러야 요청한다
 
 코드성 값은 자유 입력을 만들지 않고 기존 공통코드·기준정보 선택 컴포넌트를 재사용한다. 레거시 컨트롤과의 대응은 다음과 같다.
 
 | 레거시 컨트롤 | 성격 | 대응 |
 |---|---|---|
-| `ddlb_deficit`, `ddlb_issue_deficit`, `ddlb_lot_divide`, `ddlb_inventory_type` (`uo_basecode`) | `ISYS_BASECODE` 공통코드 | 공통코드 선택 컴포넌트 |
-| `ddlb_line_code` (`uo_line_code`) | 라인 기준정보 | 라인 선택 컴포넌트 |
-| `ddlb_workstage_code` (`uo_workstage_code_all`) | 공정 기준정보 | 공정 선택 컴포넌트 |
-| `ddlb_supplier_code`, `ddlb_from_supplier_code` (`uo_supplier_code`) | 거래처 기준정보 | 거래처 선택 컴포넌트 |
-| `ddlb_item_code` (`uo_item_code`) | 품목 기준정보 | 품목 선택 컴포넌트 |
-| `uo_dateset` / `uo_dateend` (`uo_ymd_calendar`) | 일자 | 기존 날짜 입력 |
+| `ddlb_deficit` (`uo_basecode`) | 공통코드 `RCV ISS CODE` (R=입고, I=출고) | `ComCodeSelect groupCode="RCV ISS CODE"` |
+| `ddlb_location_code` (`uo_basecode`) | 공통코드 `MATERIAL LOCATION CODE` (M01 원재료양품 …) | `ComCodeSelect groupCode="MATERIAL LOCATION CODE"` |
+| `ddlb_inventory_type` (`uo_basecode`) | 공통코드 `INVENTORY TYPE` (P=양산, S=샘플) | `ComCodeSelect groupCode="INVENTORY TYPE"` |
+| `ddlb_issue_deficit` (`uo_issue_deficit`) | 공통코드 `ISSUE DEFICIT` (3=출고, 4=출고반품) | `ComCodeSelect groupCode="ISSUE DEFICIT"` |
+| `ddlb_line_code` (`uo_line_code`) | 라인 기준정보 | `ProdLineSelect` |
+| `ddlb_workstage_code` (`uo_workstage_code_all`) | 공정 기준정보 | `ProcessSelect` |
+| `ddlb_supplier_code`, `ddlb_from_supplier_code`, `ddlb_supplier_issue` (`uo_supplier_code`) | 거래처 기준정보 | `SupplierSelect` |
+| `ddlb_keyitem`, `ddlb_lot_divide` | 정적 `%`/`Y`/`N` 목록 | `UseYnSelect` |
+| `ddlb_item_code` (`uo_item_code`) | 품목 | 텍스트 입력 (`LIKE` 검색) |
+| `sle_material_mfs`, `sle_receipt_slip_no`, `sle_model_name` | 자유 입력 | 텍스트 입력 |
+| `uo_dateset` / `uo_dateend` (`uo_ymd_calendar`) | 일자 | `DateRangeFilter` |
 | `cbx_w00` | 체크박스 | 체크박스 (`includeW00`) |
+| `cbx_etc_line` | 체크박스 | 체크박스 (`excludeEtcLine`) |
+
+`uo_basecode` 컨트롤의 코드타입은 창의 `constructor` 이벤트에서 확인했다(`this.redraw('RCV ISS CODE')` 등).
+**`LOCATION_CODE`는 창고 마스터가 아니라 공통코드다.** 창고 선택 컴포넌트를 쓰면 안 된다.
 
 `ISYS_BASECODE`의 `RECEIPT ISSUE DEFICIT` 코드값은 1=입고, 2=입고반품, 3=출고+, 4=출고-다.
+
+레거시는 모드 1에서만 `ddlb_location_code.enabled = True`이고 나머지 모드는 `'%'` 고정 후 비활성화한다. 웹도 자재위치 필터를 모드 1에서만 노출한다.
 
 ### 메뉴 배선
 
@@ -198,11 +219,14 @@ ISSUE_DATE   >= :dateFrom AND ISSUE_DATE   < :dateTo + 1
 | `IM_ITEM_ISSUE_LOSS` | 32,501 | **모드 5 실데이터 검증 가능** |
 | `ID_ENG_BOM_SMT` | 28,246 | **모드 4 BOM 골격 검증 가능** |
 | `ID_ITEM` | 2,519 | 조인 대상 존재 |
+| `IP_PRODUCT_LINE` | 19 (D 12 / T 2 / W 5) | `LINE_DIVISION='ETC'` 0건 → `excludeEtcLine` 효과 검증 불가 |
 
 따라서 검증 수준은 모드별로 다르다.
 
 - 모드 4·5: 실데이터로 행 반환·필터 동작·정렬까지 검증한다.
 - 모드 1·2·3: SQL이 ORA 오류 없이 실행되고 바인드가 정상 동작하며 0행을 반환하는 것까지만 검증한다. **수치 정합성은 검증할 수 없다.**
+
+SQL 검증은 서비스 소스에서 `select`/`from`/`order` 템플릿을 추출해 `oracledb`로 직접 실행하는 방식으로 수행한다(구현 SQL과 검증 SQL이 어긋나지 않게 하기 위함).
 
 Oracle/드라이버 오류(`ORA-*`, `NJS-*`)는 원문 그대로 보존해 보고한다.
 
@@ -210,9 +234,17 @@ Oracle/드라이버 오류(`ORA-*`, `NJS-*`)는 원문 그대로 보존해 보�
 
 - `pnpm --filter @eunsung/backend exec tsc --noEmit --pretty false`
 - `pnpm --filter @eunsung/frontend exec tsc --noEmit --pretty false`
-- `pnpm --filter @eunsung/backend test` (신규 서비스 spec 포함)
+- `pnpm --filter @eunsung/backend test`
 - `pnpm --filter @eunsung/frontend test` (메뉴·페이지 등록 구조 테스트)
 - 렌더된 화면 확인 (dev 서버는 사용자가 기동)
+
+### 알려진 아키텍처 규칙 위반 1건
+
+`src/architecture/module-boundary.spec.ts`의 `does not add unsafe runtime type assertion escape hatches`는 `as unknown as`를 금지한다. 이 서비스의 `query` 헬퍼가 이를 사용한다.
+
+TypeORM `DataSource.query`는 파라미터를 배열로만 선언하지만 Oracle 드라이버는 객체(named bind)를 받는다. 이 원장 SQL은 같은 바인드를 UNION 양쪽에서 반복 참조하는데, oracledb는 위치 바인드를 등장 횟수만큼 요구하므로(`DPY-4009` 확인) 위치 바인드로 옮기면 SQL 한 줄 수정에도 값 순서가 어긋나 조용히 틀린 수불 결과가 나온다. 정확성을 우선해 named bind를 유지하고 단언을 이 헬퍼 한 곳에 가뒀다.
+
+이 테스트는 본 작업 이전부터 실패 상태였으며(동일 규칙 위반 4개 파일, 상위 `keeps shared guards…` 규칙 위반 10개 모듈 등), 본 작업은 위반을 1건만 추가한다.
 
 ## 미해결 사항
 

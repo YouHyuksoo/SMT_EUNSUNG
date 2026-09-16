@@ -278,6 +278,11 @@ describe('MenuCategoriesService', () => {
         { menuCode: 'OEE_MST_EQUIP_REASON' },
         { menuCode: 'OEE_MST_RESOURCE' },
         { menuCode: 'PRD_RUN_CARD' },
+        { menuCode: 'MST_PRODUCT_MODEL' },
+        { menuCode: 'OEE_OVERALL_STATUS' },
+        { menuCode: 'OEE_EQUIP_OPS_STATUS' },
+        { menuCode: 'OEE_FIELD_OPS' },
+        { menuCode: 'MAT_RECEIPT_ISSUE_LEDGER' },
       ] as any);
 
       await service.ensureDefaultLayout({ organizationId: 7, userId: 'tester' });

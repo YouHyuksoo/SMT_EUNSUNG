@@ -78,7 +78,9 @@ export const menuConfig: MenuConfigItem[] = [
     code: "MATERIAL",
     labelKey: "menu.material",
     icon: Package,
-    children: [],
+    children: [
+      { code: "MAT_RECEIPT_ISSUE_LEDGER", labelKey: "menu.material.receiptIssueLedger", path: "/material/receipt-issue-ledger" },
+    ],
   },
   {
     code: "PROCESS_TRANSACTION",

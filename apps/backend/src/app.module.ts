@@ -42,6 +42,7 @@ import { MasterBomModule } from './modules/master/master-bom.module';
 import { MasterPartnerModule } from './modules/master/master-partner.module';
 import { MasterProdLineModule } from './modules/master/master-prod-line.module';
 import { WarehouseModule } from './modules/inventory/warehouse.module';
+import { MaterialReceiptIssueLedgerModule } from './modules/material/material-receipt-issue-ledger.module';
 import { MasterWorkerModule } from './modules/master/master-worker.module';
 import { MasterWorkInstructionModule } from './modules/master/master-work-instruction.module';
 import { MasterWorkCalendarModule } from './modules/master/master-work-calendar.module';
@@ -131,6 +132,9 @@ import { SharedModule } from './shared/shared.module';
 
     // 기준정보 창고/로케이션 (/inventory/warehouses, /inventory/warehouse-locations)
     WarehouseModule,
+
+    // 자재관리 자재입출고수불원장 (/material/receipt-issue-ledger)
+    MaterialReceiptIssueLedgerModule,
 
     // 기준정보 작업자정보 (/master/workers)
     MasterWorkerModule,
