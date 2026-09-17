@@ -63,6 +63,8 @@ describe('ActivityLogService', () => {
       userId: 'user@test.com',
       activityType: 'LOGIN',
       pagePath: '/dashboard',
+      company: 'JSIDC',
+      plantCd: 'ESDB',
     };
 
     it('should save log when activity logging is enabled', async () => {
@@ -140,10 +142,11 @@ describe('ActivityLogService', () => {
         limit: 20,
         fromDate: '2026-01-01',
         toDate: '2026-01-31',
-      } as any, 101);
+      } as any, 'JSIDC', 'ESDB');
 
       // Assert - 테넌트 + 시작/종료일 조건 적용
-      expect(qb.andWhere).toHaveBeenCalledWith('al.organizationId = :organizationId', { organizationId: 101 });
+      expect(qb.andWhere).toHaveBeenCalledWith('al.company = :company', { company: 'JSIDC' });
+      expect(qb.andWhere).toHaveBeenCalledWith('al.plantCd = :plantCd', { plantCd: 'ESDB' });
       expect(qb.andWhere).toHaveBeenCalledWith(
         "al.createdAt >= TO_DATE(:fromDate, 'YYYY-MM-DD')",
         { fromDate: '2026-01-01' },

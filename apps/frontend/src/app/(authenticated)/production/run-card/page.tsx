@@ -24,6 +24,7 @@ import ModelSearchModal from '@/components/shared/ModelSearchModal';
 import DataGrid from '@/components/data-grid/DataGrid';
 import { useComCodeMap } from '@/hooks/useComCode';
 import api from '@/services/api';
+import { getTodayLocal } from '@/utils/date';
 
 /** 목록 행 — 백엔드 RunCardRow 와 1:1 */
 interface RunCard {
@@ -48,8 +49,8 @@ interface EditForm {
   pcbWeek: string; comments: string;
 }
 
-const today = () => new Date().toISOString().slice(0, 10);
-const daysAgo = (n: number) => new Date(Date.now() - n * 86400000).toISOString().slice(0, 10);
+const today = () => getTodayLocal();
+const daysAgo = (n: number) => { const date = new Date(); date.setDate(date.getDate() - n); return getTodayLocal(date); };
 
 const emptyForm = (): EditForm => ({
   isEdit: false, runNo: '', runDate: today(), lotNo: '', itemCode: '', modelName: '',

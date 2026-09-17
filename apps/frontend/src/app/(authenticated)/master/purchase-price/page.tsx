@@ -11,8 +11,9 @@ import api from "@/services/api";
 import { createPurchasePriceGridColumns } from "./purchasePriceColumns";
 import type { PurchasePriceItem } from "./types";
 import PurchasePriceFormPanel from "./components/PurchasePriceFormPanel";
+import { getTodayLocal } from "@/utils/date";
 
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => getTodayLocal();
 
 export default function PurchasePricePage() {
   const [data, setData] = useState<PurchasePriceItem[]>([]);

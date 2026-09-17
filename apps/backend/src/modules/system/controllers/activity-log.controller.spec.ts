@@ -15,7 +15,7 @@ describe('ActivityLogController', () => {
     } as any);
 
     expect(service.logActivity).toHaveBeenCalledWith(
-      expect.objectContaining({ company: 'C1', plant: 'P1' }),
+      expect.objectContaining({ company: 'C1', plantCd: 'P1' }),
     );
   });
 
@@ -32,7 +32,7 @@ describe('ActivityLogController', () => {
     } as any);
 
     expect(service.logActivity).toHaveBeenCalledWith(
-      expect.objectContaining({ userId: 'guard-user@test.com', company: 'C1', plant: 'P1' }),
+      expect.objectContaining({ userId: 'guard-user@test.com', company: 'C1', plantCd: 'P1' }),
     );
   });
 

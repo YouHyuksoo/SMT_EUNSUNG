@@ -63,11 +63,14 @@ export class OeeDashboardService {
 
   /** KST(백엔드 고정 TZ) 기준 오늘 날짜 문자열 YYYY-MM-DD */
   private todayKst(): string {
-    const d = new Date(Date.now() - 8.5 * 60 * 60 * 1000);
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${y}-${m}-${day}`;
+    const parts = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+    }).formatToParts(new Date());
+    const values = Object.fromEntries(parts.filter((part) => part.type !== 'literal').map((part) => [part.type, part.value]));
+    const current = new Date(Date.UTC(Number(values.year), Number(values.month) - 1, Number(values.day)));
+    if (Number(values.hour) < 8 || (Number(values.hour) === 8 && Number(values.minute) < 30)) current.setUTCDate(current.getUTCDate() - 1);
+    return `${current.getUTCFullYear()}-${String(current.getUTCMonth() + 1).padStart(2, '0')}-${String(current.getUTCDate()).padStart(2, '0')}`;
   }
 
   /** 당일 이상이면 실시간, 과거면 스냅샷 */

@@ -20,18 +20,16 @@ export class OeeOperationLog {
   @Column({ name: 'PROCESS_CODE', length: 20 })
   processCode: string;
 
-  // Oracle DATE 컬럼이지만 시각을 보존하기 위해 TypeORM 'timestamp'로 매핑한다
-  // ('date'는 date-only 문자열로 변환되어 START/END의 시각이 소실됨).
-  @Column({ name: 'WORK_DATE', type: 'timestamp' })
+  @Column({ name: 'WORK_DATE', type: 'date' })
   workDate: Date;
 
   @Column({ name: 'SHIFT', length: 10 })
   shift: string; // DAY/NIGHT
 
-  @Column({ name: 'START_TIME', type: 'timestamp' })
+  @Column({ name: 'START_TIME', type: 'date' })
   startTime: Date;
 
-  @Column({ name: 'END_TIME', type: 'timestamp' })
+  @Column({ name: 'END_TIME', type: 'date' })
   endTime: Date;
 
   @Column({ name: 'DURATION_MIN', type: 'number' })
@@ -52,6 +50,6 @@ export class OeeOperationLog {
   @Column({ name: 'CREATED_BY', length: 50 })
   createdBy: string;
 
-  @Column({ name: 'CREATED_DATE', type: 'timestamp', default: () => 'SYSDATE' })
+  @Column({ name: 'CREATED_DATE', type: 'date', default: () => 'SYSDATE' })
   createdDate: Date;
 }

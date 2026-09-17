@@ -20,4 +20,5 @@ export class EquipDowntimeResult {
   @Column({ name: 'ENTER_DATE', type: 'date', nullable: true }) enterDate: Date | null;
   @Column({ name: 'LAST_MODIFY_BY', length: 20, nullable: true }) lastModifyBy: string | null;
   @Column({ name: 'LAST_MODIFY_DATE', type: 'date', nullable: true }) lastModifyDate: Date | null;
+  @Column({ name: 'CAUSE_YN', length: 1, nullable: true }) causeYn: string | null;
 }
