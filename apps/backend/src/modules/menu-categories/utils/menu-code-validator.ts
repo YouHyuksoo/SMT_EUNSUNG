@@ -32,6 +32,7 @@ const KNOWN_LEAF_CODES: ReadonlySet<string> = new Set<string>([
   'OEE_EQUIP_OPS_STATUS',
   'OEE_FIELD_OPS',
   'MAT_RECEIPT_ISSUE_LEDGER',
+  'MAT_CURRENT_INVENTORY',
   'PRD_RUN_CARD',
   'SYS_COMPANY',
   'SYS_CODE',

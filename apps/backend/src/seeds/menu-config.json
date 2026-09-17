@@ -42,7 +42,8 @@
       "OEE_FIELD_OPS"
     ],
     "MATERIAL": [
-      "MAT_RECEIPT_ISSUE_LEDGER"
+      "MAT_RECEIPT_ISSUE_LEDGER",
+      "MAT_CURRENT_INVENTORY"
     ],
     "PROCESS_TRANSACTION": [],
     "PRODUCT_MGMT": [],

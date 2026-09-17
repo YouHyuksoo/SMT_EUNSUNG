@@ -80,6 +80,7 @@ export const menuConfig: MenuConfigItem[] = [
     icon: Package,
     children: [
       { code: "MAT_RECEIPT_ISSUE_LEDGER", labelKey: "menu.material.receiptIssueLedger", path: "/material/receipt-issue-ledger" },
+      { code: "MAT_CURRENT_INVENTORY", labelKey: "menu.material.currentInventory", path: "/material/current-inventory" },
     ],
   },
   {

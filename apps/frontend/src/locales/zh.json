@@ -409,7 +409,8 @@
     "oee.resource": "OEE资源管理",
     "production.runCard": "工单管理",
     "oee.overallStatus": "OEE 综合现况",
-    "material.receiptIssueLedger": "物料出入库收付台账"
+    "material.receiptIssueLedger": "物料出入库收付台账",
+    "material.currentInventory": "当前库存查询"
   },
   "header": {
     "theme": "主题",

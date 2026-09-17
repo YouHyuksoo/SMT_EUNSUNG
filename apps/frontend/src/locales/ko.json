@@ -409,7 +409,8 @@
     "oee.equipDowntimeMobile": "설비비가동 스캔 (Mock)",
     "production.runCard": "작업지시관리",
     "oee.overallStatus": "OEE 종합 현황",
-    "material.receiptIssueLedger": "자재입출고수불원장"
+    "material.receiptIssueLedger": "자재입출고수불원장",
+    "material.currentInventory": "현재고조회"
   },
   "header": {
     "theme": "테마",

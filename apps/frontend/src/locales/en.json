@@ -409,7 +409,8 @@
     "oee.equipDowntimeMobile": "Equipment Downtime Scan (Mock)",
     "production.runCard": "Work Order Management",
     "oee.overallStatus": "OEE Overall Status",
-    "material.receiptIssueLedger": "Material Receipt/Issue Ledger"
+    "material.receiptIssueLedger": "Material Receipt/Issue Ledger",
+    "material.currentInventory": "Current Inventory"
   },
   "header": {
     "theme": "Theme",

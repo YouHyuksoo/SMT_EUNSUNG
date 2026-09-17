@@ -409,7 +409,8 @@
     "oee.resource": "Quản lý tài nguyên OEE",
     "production.runCard": "Quản lý lệnh sản xuất",
     "oee.overallStatus": "Tổng quan OEE",
-    "material.receiptIssueLedger": "Sổ cái nhập xuất vật tư"
+    "material.receiptIssueLedger": "Sổ cái nhập xuất vật tư",
+    "material.currentInventory": "Tra cứu tồn kho hiện tại"
   },
   "header": {
     "theme": "Giao diện",
