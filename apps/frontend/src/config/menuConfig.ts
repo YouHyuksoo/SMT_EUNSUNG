@@ -93,7 +93,9 @@ export const menuConfig: MenuConfigItem[] = [
     code: "PRODUCT_MGMT",
     labelKey: "menu.productMgmt",
     icon: Boxes,
-    children: [],
+    children: [
+      { code: "PRD_CURRENT_INVENTORY", labelKey: "menu.productMgmt.currentInventory", path: "/product/current-inventory" },
+    ],
   },
   {
     code: "PRODUCTION",

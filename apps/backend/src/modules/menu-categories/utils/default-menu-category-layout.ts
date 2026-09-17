@@ -16,7 +16,7 @@ export const DEFAULT_MENU_CATEGORY_LAYOUT: readonly DefaultMenuCategoryLayout[] 
   { categoryCode: 'OEE', labelKey: 'menu.oee', sortOrder: 20, menuCodes: ['OEE_DASHBOARD', 'OEE_MULTI_ENTRY', 'OEE_OVERALL_STATUS', 'OEE_EQUIP_WORK_RESULT', 'OEE_EQUIP_OPS_STATUS', 'OEE_FIELD_OPS'] },
   { categoryCode: 'MATERIAL', labelKey: 'menu.material', sortOrder: 30, menuCodes: ['MAT_RECEIPT_ISSUE_LEDGER', 'MAT_CURRENT_INVENTORY'] },
   { categoryCode: 'PROCESS_TRANSACTION', labelKey: 'menu.processTransaction', sortOrder: 40, menuCodes: [] },
-  { categoryCode: 'PRODUCT_MGMT', labelKey: 'menu.productMgmt', sortOrder: 50, menuCodes: [] },
+  { categoryCode: 'PRODUCT_MGMT', labelKey: 'menu.productMgmt', sortOrder: 50, menuCodes: ['PRD_CURRENT_INVENTORY'] },
   { categoryCode: 'PRODUCTION', labelKey: 'menu.production', sortOrder: 60, menuCodes: ['PRD_RUN_CARD'] },
   { categoryCode: 'OUTSOURCING', labelKey: 'menu.outsourcing', sortOrder: 70, menuCodes: [] },
   { categoryCode: 'SYSTEM', labelKey: 'menu.system', sortOrder: 80, menuCodes: ['SYS_COMPANY', 'SYS_CODE', 'SYS_CONFIG', 'SYS_MENU_CATEGORY', 'SYS_DEPT', 'SYS_USER', 'SYS_SCHEDULER', 'SYS_ER_VIEW', 'SYS_IMPR_REQ'] },

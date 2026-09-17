@@ -272,6 +272,7 @@
     "productMgmt.issue": "Xuất kho sản phẩm",
     "productMgmt.issueCancel": "Hủy xuất kho sản phẩm",
     "productMgmt.defectTransfer": "Nhập kho lỗi",
+    "productMgmt.currentInventory": "Tra cứu tồn kho sản phẩm",
     "material.request": "Quản lý yêu cầu xuất kho",
     "material.requestOther": "Yêu cầu xuất khác",
     "material.issue": "Xuất kho vật tư",

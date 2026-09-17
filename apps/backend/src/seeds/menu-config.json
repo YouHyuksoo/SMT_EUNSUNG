@@ -46,7 +46,9 @@
       "MAT_CURRENT_INVENTORY"
     ],
     "PROCESS_TRANSACTION": [],
-    "PRODUCT_MGMT": [],
+    "PRODUCT_MGMT": [
+      "PRD_CURRENT_INVENTORY"
+    ],
     "PRODUCTION": [
       "PRD_RUN_CARD"
     ],

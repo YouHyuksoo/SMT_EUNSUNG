@@ -272,6 +272,7 @@
     "productMgmt.issue": "제품출고관리",
     "productMgmt.issueCancel": "제품출고취소",
     "productMgmt.defectTransfer": "불량창고입고",
+    "productMgmt.currentInventory": "제품재고조회",
     "material.request": "출고요청관리",
     "material.requestOther": "기타출고요청",
     "material.issue": "자재출고관리",

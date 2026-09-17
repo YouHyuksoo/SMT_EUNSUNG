@@ -272,6 +272,7 @@
     "productMgmt.issue": "Product Issue",
     "productMgmt.issueCancel": "Product Issue Cancel",
     "productMgmt.defectTransfer": "Defect Warehouse Receiving",
+    "productMgmt.currentInventory": "Product Inventory Inquiry",
     "material.request": "Issue Request Mgmt",
     "material.requestOther": "Other Issue Request",
     "material.issue": "Material Issuing",

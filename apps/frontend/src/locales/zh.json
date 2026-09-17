@@ -272,6 +272,7 @@
     "productMgmt.issue": "产品出库管理",
     "productMgmt.issueCancel": "产品出库取消",
     "productMgmt.defectTransfer": "不良仓入库",
+    "productMgmt.currentInventory": "产品库存查询",
     "material.request": "出库申请管理",
     "material.requestOther": "其他出库申请",
     "material.issue": "物料出库管理",
