@@ -13,14 +13,13 @@ import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { useTabStore } from "@/stores/tabStore";
 import { findMenuItemByPath } from "@/config/menuConfig";
-import { resolveOeeMenuPath } from "@/lib/oee-view-mode";
 
 export function useTabSync() {
   const pathname = usePathname();
 
   useEffect(() => {
     const { tabs, addTab, syncActiveTabByPath } = useTabStore.getState();
-    const menuPath = resolveOeeMenuPath(pathname);
+    const menuPath = pathname;
     const matched = tabs.find((t) => t.path === menuPath);
     if (matched) {
       syncActiveTabByPath(menuPath);

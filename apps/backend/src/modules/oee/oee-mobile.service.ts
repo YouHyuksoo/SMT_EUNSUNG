@@ -416,7 +416,7 @@ export class OeeMobileService {
         resourceType: resource.resourceType as OeeMobileResourceType,
         resourceCode: refCode,
         resourceName: line.lineName,
-        parentLineCode: refCode,
+        parentLineCode: line.parentLineCode?.trim() || refCode,
       }));
   }
 
@@ -437,10 +437,6 @@ export class OeeMobileService {
     }
     this.assertBoundedString(resourceCode, '리소스 코드', 50);
     this.assertBoundedString(parentLineCode, '상위 라인 코드', 50);
-
-    if (parentLineCode !== resourceCode) {
-      throw new BadRequestException('OEE 리소스 기준 코드는 라인 마스터 코드와 같아야 합니다.');
-    }
 
     const resources = await this.listResources(processCode, organizationId, company, plantCd);
     const found = resources.find((resource) => {

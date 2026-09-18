@@ -188,7 +188,7 @@ export default function OeeMultiEntryPage() {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const viewMode = resolveOeeViewMode(pathname, searchParams.get('view'));
+  const viewMode = resolveOeeViewMode(searchParams.get('view'));
   const isCompactFullView = viewMode === 'full';
   const user = useAuthStore((state) => state.user);
   const [online, setOnline] = useState(true);
@@ -1247,57 +1247,57 @@ export default function OeeMultiEntryPage() {
   return (
     <div className="oee-multi-entry-board flex h-full min-h-0 flex-col overflow-hidden bg-[#07111d] text-slate-100">
       <div className={`mx-auto flex min-h-0 w-full max-w-[1680px] flex-1 flex-col ${isCompactFullView ? 'gap-2 overflow-hidden p-2' : 'gap-3 overflow-y-auto p-3 sm:p-4 lg:p-5'}`}>
-        <header className="shrink-0 rounded-2xl border border-slate-700/80 bg-[#0d1a2a] p-3 shadow-[0_12px_32px_rgba(0,0,0,0.24)] sm:p-4">
-          <div className={`flex min-w-0 flex-col gap-3 ${isCompactFullView ? 'xl:flex-row xl:items-center xl:justify-between' : '2xl:flex-row 2xl:items-center 2xl:justify-between'}`}>
-            <div className="flex min-w-0 items-start gap-3 xl:flex-1">
-              <div className="rounded-xl border border-cyan-400/30 bg-cyan-400/10 p-2.5 text-cyan-300">
+        <header className="oee-multi-entry-header shrink-0 rounded-2xl border border-slate-700/80 bg-[#0d1a2a] p-3 shadow-[0_12px_32px_rgba(0,0,0,0.24)] sm:p-4">
+          <div className="oee-multi-entry-header-row flex min-w-0 flex-col gap-3 lg:grid lg:grid-cols-[minmax(10.5rem,1fr)_minmax(6.75rem,0.68fr)_minmax(8rem,0.82fr)_minmax(11rem,1.05fr)_3.5rem] lg:items-stretch lg:gap-1">
+            <div className="flex min-w-0 items-center gap-2">
+              <div className="oee-header-optional-icon shrink-0 rounded-xl border border-cyan-400/30 bg-cyan-400/10 p-2 text-cyan-300">
                 <PauseCircle className="h-8 w-8" aria-hidden="true" />
               </div>
               <div className="min-w-0">
-                <p className="font-mono text-xs font-bold uppercase tracking-[0.24em] text-cyan-300">C / OPERATIONS BOARD</p>
-                <h1 className="mt-1 text-xl font-black tracking-tight text-white sm:text-2xl">{t('oeeMultiEntry.title')}</h1>
-                <p className="mt-1 max-w-3xl text-sm text-slate-300">{t('oeeMultiEntry.subtitle')}</p>
+                <p className="font-mono text-xs font-bold uppercase tracking-[0.24em] text-cyan-300 lg:hidden">C / OPERATIONS BOARD</p>
+                <h1 className="truncate text-xl font-black tracking-tight text-white sm:text-2xl lg:text-lg xl:text-xl">{t('oeeMultiEntry.title')}</h1>
+                <p className="oee-header-optional-copy mt-0.5 truncate text-xs text-slate-300">{t('oeeMultiEntry.subtitle')}</p>
               </div>
             </div>
 
             <div
               data-testid="oee-multi-status-area"
-              className={`grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-2 ${worker ? 'xl:grid-cols-3' : 'xl:grid-cols-2'} xl:w-[min(44rem,100%)] xl:shrink-0`}
+              className="grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-2 lg:contents"
             >
               <div
-                className={`flex min-h-[48px] items-center gap-3 rounded-xl border px-3 ${
+                className={`flex min-h-[48px] min-w-0 items-center gap-2 rounded-xl border px-2 ${
                   online ? 'border-emerald-400/40 bg-emerald-400/10' : 'border-red-400/50 bg-red-400/10'
                 }`}
                 role="status"
                 aria-label={t('oeeMultiEntry.deviceNetwork')}
               >
-                {online ? <Wifi className="h-6 w-6 text-emerald-300" aria-hidden="true" /> : <WifiOff className="h-6 w-6 text-red-300" aria-hidden="true" />}
-                <div>
-                  <span className="block text-xs font-bold uppercase tracking-wider text-slate-400">{t('oeeMultiEntry.deviceNetwork')}</span>
-                  <strong className={online ? 'text-emerald-200' : 'text-red-200'}>{online ? t('oeeMultiEntry.online') : t('oeeMultiEntry.offline')}</strong>
+                {online ? <Wifi className="oee-header-optional-icon h-5 w-5 shrink-0 text-emerald-300" aria-hidden="true" /> : <WifiOff className="oee-header-optional-icon h-5 w-5 shrink-0 text-red-300" aria-hidden="true" />}
+                <div className="min-w-0">
+                  <span className="block truncate text-[11px] font-bold uppercase tracking-wide text-slate-400">{t('oeeMultiEntry.deviceNetwork')}</span>
+                  <strong className={`block truncate text-sm ${online ? 'text-emerald-200' : 'text-red-200'}`}>{online ? t('oeeMultiEntry.online') : t('oeeMultiEntry.offline')}</strong>
                 </div>
               </div>
               <div
-                className="flex min-h-[48px] items-center gap-3 rounded-xl border border-slate-700 bg-[#101f31] px-3"
+                className="flex min-h-[48px] min-w-0 items-center gap-2 rounded-xl border border-slate-700 bg-[#101f31] px-2"
                 role="status"
                 aria-label={t('oeeMultiEntry.recentMesCommunication')}
               >
-                <Send className="h-6 w-6 text-amber-300" aria-hidden="true" />
-                <div>
-                  <span className="block text-xs font-bold uppercase tracking-wider text-slate-400">{t('oeeMultiEntry.recentMesCommunication')}</span>
-                  <strong className="font-mono text-sm text-slate-100">{lastCommunicationLabel}</strong>
+                <Send className="oee-header-optional-icon h-5 w-5 shrink-0 text-amber-300" aria-hidden="true" />
+                <div className="min-w-0">
+                  <span className="block truncate text-[11px] font-bold uppercase tracking-wide text-slate-400">{t('oeeMultiEntry.recentMesCommunication')}</span>
+                  <strong className="block truncate font-mono text-xs text-slate-100">{lastCommunicationLabel}</strong>
                 </div>
               </div>
               {worker && (
                 <div
                   data-testid="oee-multi-worker-summary"
-                  className="worker-summary flex min-h-[48px] min-w-0 items-center justify-between gap-2 rounded-xl border border-emerald-400/30 bg-emerald-400/10 px-3"
+                  className="worker-summary flex min-h-[48px] min-w-0 items-center justify-between gap-1 rounded-xl border border-emerald-400/30 bg-emerald-400/10 px-2"
                   role="status"
                   aria-label={`${t('oeeMultiEntry.workerId')}: ${worker.workerName} · ${worker.workerId}`}
                 >
-                  <div className="flex min-w-0 items-center gap-2">
-                    <UserRound className="h-5 w-5 shrink-0 text-emerald-200" aria-hidden="true" />
-                    <span className="min-w-0 truncate text-sm font-bold text-emerald-100">
+                  <div className="flex min-w-0 items-center gap-1.5">
+                    <UserRound className="oee-header-optional-icon h-5 w-5 shrink-0 text-emerald-200" aria-hidden="true" />
+                    <span className="min-w-0 truncate text-xs font-bold text-emerald-100 xl:text-sm">
                       {worker.workerName} <span className="font-mono font-semibold text-emerald-200/80">· {worker.workerId}</span>
                     </span>
                   </div>
@@ -1305,17 +1305,49 @@ export default function OeeMultiEntryPage() {
                     type="button"
                     onClick={changeWorker}
                     disabled={contextLocked}
-                    className="inline-flex min-h-[44px] shrink-0 cursor-pointer items-center justify-center gap-2 rounded-lg border border-slate-600 px-3 text-sm font-bold text-slate-100 transition hover:border-cyan-300 hover:bg-cyan-300/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="inline-flex min-h-[44px] min-w-[44px] shrink-0 cursor-pointer flex-col items-center justify-center rounded-lg border border-slate-600 px-1.5 text-[11px] font-bold leading-tight text-slate-100 transition hover:border-cyan-300 hover:bg-cyan-300/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    {t('oeeMultiEntry.changeWorker')}
+                    <span>{t('oeeMultiEntry.changeWorkerLine1')}</span>
+                    <span>{t('oeeMultiEntry.changeWorkerLine2')}</span>
                   </button>
                 </div>
+              )}
+              {!worker && (
+                <form
+                  data-testid="oee-multi-worker-form"
+                  className="grid min-h-[48px] min-w-0 grid-cols-[minmax(0,1fr)_auto] items-end gap-1 rounded-xl border border-slate-700 bg-[#101f31] p-1 sm:col-span-2 lg:col-span-1"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    void confirmWorker();
+                  }}
+                >
+                  <label className="flex min-w-0 flex-col text-[10px] font-semibold leading-tight text-slate-300">
+                    <span className="truncate">{t('oeeMultiEntry.workerId')}</span>
+                    <input
+                      value={workerInput}
+                      onChange={(event) => setWorkerInput(event.target.value)}
+                      disabled={workerLoading || contextLocked}
+                      placeholder={t('oeeMultiEntry.workerPlaceholder')}
+                      autoComplete="off"
+                      className="mt-0.5 min-h-[44px] min-w-0 rounded-lg border border-slate-600 bg-[#07111d] px-2 text-sm font-semibold text-white outline-none transition focus:border-cyan-300 focus:ring-2 focus:ring-cyan-300/30 disabled:cursor-not-allowed disabled:opacity-50"
+                      aria-describedby={workerError ? 'oee-multi-worker-error' : undefined}
+                    />
+                  </label>
+                  <button
+                    type="submit"
+                    disabled={workerLoading || !workerInput.trim() || contextLocked}
+                    aria-label={t('oeeMultiEntry.workerConfirm')}
+                    className="inline-flex min-h-[44px] min-w-[44px] cursor-pointer items-center justify-center rounded-lg bg-cyan-400 px-2 text-xs font-black text-slate-950 shadow-lg shadow-cyan-400/20 transition hover:bg-cyan-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-200 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {workerLoading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : t('common.confirm')}
+                  </button>
+                </form>
               )}
             </div>
 
             <div
               data-testid="oee-multi-view-switch"
-              className="flex min-h-[44px] shrink-0 flex-wrap items-center gap-1 rounded-xl border border-slate-700 bg-[#101f31] p-1"
+              className="flex min-h-[48px] min-w-[48px] shrink-0 items-stretch rounded-xl border border-slate-700 bg-[#101f31] p-1"
               role="group"
               aria-label={t('oeeMultiEntry.viewMode')}
             >
@@ -1325,44 +1357,18 @@ export default function OeeMultiEntryPage() {
                 onClick={() => switchView(viewMode === 'normal' ? 'full' : 'normal')}
                 disabled={submitting || contextLocked}
                 aria-label={viewMode === 'normal' ? t('oeeMultiEntry.viewFull') : t('oeeMultiEntry.viewNormal')}
-                className="min-h-[44px] cursor-pointer rounded-lg px-3 text-xs font-black text-slate-100 transition hover:bg-cyan-300/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 disabled:cursor-not-allowed disabled:opacity-45"
+                className="flex min-h-[44px] min-w-[44px] flex-1 cursor-pointer flex-col items-center justify-center rounded-lg px-1 text-[11px] font-black leading-tight text-slate-100 transition hover:bg-cyan-300/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 disabled:cursor-not-allowed disabled:opacity-45"
               >
-                {viewMode === 'normal' ? t('oeeMultiEntry.viewFull') : t('oeeMultiEntry.viewNormal')}
+                {viewMode === 'normal' ? (
+                  <>
+                    <span>{t('oeeMultiEntry.viewFullLine1')}</span>
+                    <span>{t('oeeMultiEntry.viewFullLine2')}</span>
+                  </>
+                ) : t('oeeMultiEntry.viewNormal')}
               </button>
             </div>
           </div>
 
-          {!worker && (
-            <form
-              data-testid="oee-multi-worker-form"
-              className="mt-3 flex flex-col gap-2 border-t border-slate-700 pt-3 sm:flex-row sm:items-end"
-              onSubmit={(event) => {
-                event.preventDefault();
-                void confirmWorker();
-              }}
-            >
-              <label className="flex min-w-0 flex-1 flex-col gap-1 text-sm font-semibold text-slate-300">
-                {t('oeeMultiEntry.workerId')}
-                <input
-                  value={workerInput}
-                  onChange={(event) => setWorkerInput(event.target.value)}
-                  disabled={workerLoading || contextLocked}
-                  placeholder={t('oeeMultiEntry.workerPlaceholder')}
-                  autoComplete="off"
-                  className="min-h-[64px] w-full rounded-xl border border-slate-600 bg-[#07111d] px-4 text-lg font-semibold text-white outline-none transition focus:border-cyan-300 focus:ring-2 focus:ring-cyan-300/30 disabled:cursor-not-allowed disabled:opacity-50"
-                  aria-describedby={workerError ? 'oee-multi-worker-error' : undefined}
-                />
-              </label>
-              <button
-                type="submit"
-                disabled={workerLoading || !workerInput.trim() || contextLocked}
-                className="inline-flex min-h-[64px] cursor-pointer items-center justify-center gap-2 rounded-xl bg-cyan-400 px-5 text-base font-black text-slate-950 shadow-lg shadow-cyan-400/20 transition hover:bg-cyan-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-200 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {workerLoading && <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />}
-                {t('oeeMultiEntry.workerConfirm')}
-              </button>
-            </form>
-          )}
           {workerError && <p id="oee-multi-worker-error" className="mt-2 text-sm font-semibold text-red-300">{workerError}</p>}
         </header>
 

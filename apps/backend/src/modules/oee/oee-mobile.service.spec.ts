@@ -131,11 +131,13 @@ describe('OeeMobileService', () => {
       {
         lineCode: '02',
         lineName: 'Canonical cell line',
+        parentLineCode: '01',
         organizationId: 7,
       } as ProdLineMaster,
       {
         lineCode: '01',
         lineName: 'Canonical line',
+        parentLineCode: '01',
         organizationId: 7,
       } as ProdLineMaster,
     ]);
@@ -180,7 +182,7 @@ describe('OeeMobileService', () => {
         resourceType: 'CELL',
         resourceCode: '02',
         resourceName: 'Canonical cell line',
-        parentLineCode: '02',
+        parentLineCode: '01',
       },
     ]);
   });
@@ -396,7 +398,7 @@ describe('OeeMobileService', () => {
       } as OeeResource,
     ]);
     lineRepository.find.mockResolvedValue([
-      { lineCode: '02', lineName: 'SMT cell', organizationId: 7 } as ProdLineMaster,
+      { lineCode: '02', lineName: 'SMT cell', parentLineCode: '01', organizationId: 7 } as ProdLineMaster,
       { lineCode: '19', lineName: 'ASSY line', organizationId: 7 } as ProdLineMaster,
       { lineCode: '20', lineName: 'ASSY cell', organizationId: 7 } as ProdLineMaster,
     ]);
@@ -408,7 +410,7 @@ describe('OeeMobileService', () => {
         resourceType: 'CELL',
         resourceCode: '02',
         resourceName: 'SMT cell',
-        parentLineCode: '02',
+        parentLineCode: '01',
       },
     ]);
     await expect(target.listResources('ASSY', 7, 'EUNSUNG', '1')).resolves.toEqual([
@@ -445,7 +447,7 @@ describe('OeeMobileService', () => {
       } as OeeResource,
     ]);
     lineRepository.find.mockResolvedValue([
-      { lineCode: '02', lineName: 'SMT cell', organizationId: 7 } as ProdLineMaster,
+      { lineCode: '02', lineName: 'SMT cell', parentLineCode: '01', organizationId: 7 } as ProdLineMaster,
     ]);
 
     const now = new Date('2026-08-07T08:30:00+09:00');
@@ -464,7 +466,7 @@ describe('OeeMobileService', () => {
       ] as WorktimeRange[]);
 
       await expect(
-        target.getStatus('SMT', 'CELL', '02', '02', 7, 'EUNSUNG', '1'),
+        target.getStatus('SMT', 'CELL', '02', '01', 7, 'EUNSUNG', '1'),
       ).resolves.toMatchObject({ state: 'RUNNING', events: [], openEvent: null });
       await expect(
         target.getStatus('SMT', 'LINE', '02', '02', 7, 'EUNSUNG', '1'),

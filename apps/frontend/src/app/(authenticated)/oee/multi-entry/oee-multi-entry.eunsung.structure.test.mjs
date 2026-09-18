@@ -11,11 +11,12 @@ const aliasPagePath = `${aliasRouteRoot}/page.tsx`;
 const helperPath = `${routeRoot}/_lib/multi-entry.ts`;
 const mobileHelperPath = `${routeRoot}/_lib/oee-mobile.ts`;
 const menuPath = `${frontendRoot}/src/config/menuConfig.ts`;
+const globalStylesPath = `${frontendRoot}/src/app/globals.css`;
 const page = existsSync(pagePath) ? readFileSync(pagePath, "utf8") : "";
-const aliasPage = existsSync(aliasPagePath) ? readFileSync(aliasPagePath, "utf8") : "";
 const helper = existsSync(helperPath) ? readFileSync(helperPath, "utf8") : "";
 const mobileHelper = readFileSync(mobileHelperPath, "utf8");
 const menu = readFileSync(menuPath, "utf8");
+const globalStyles = readFileSync(globalStylesPath, "utf8");
 const locales = ["ko", "en", "zh", "vi"];
 const helperModule = ts.transpileModule(helper, {
   compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 },
@@ -63,10 +64,8 @@ test("multi-resource OEE route is registered with the approved menu contract", (
   assert.doesNotMatch(page, /(?:organizationId|tenantKey|clientTime|requestId)\s*:/);
 });
 
-test("legacy OEE alias reuses the canonical page without a menu leaf", () => {
-  assert.equal(existsSync(aliasPagePath), true, "the approved legacy alias page must exist");
-  assert.match(aliasPage, /export\s+\{\s*default\s*\}\s+from\s+["']\.\.\/multi-entry\/page["']/);
-
+test("removed OEE 7-inch route has no page or menu leaf", () => {
+  assert.equal(existsSync(aliasPagePath), false, "the removed route must resolve as 404");
   assert.match(menu, /code:\s*["']OEE_MULTI_ENTRY["']/);
   assert.doesNotMatch(menu, /OEE_MULTI_ENTRY_7IN|multiEntry7In|multi-entry-7in/);
   for (const locale of locales) {
@@ -92,18 +91,22 @@ test("stale selected resources remain removable and block batch submission", () 
   assert.match(page, /disabled=\{contextLocked \|\| \(availability\.disabled && !selected\)\}/);
 });
 
-test("canonical OEE page enables the compact full view for the 7-inch alias pathname", () => {
+test("canonical OEE page enables compact full view from its query parameter", () => {
   assert.match(page, /import\s+\{[^}]*usePathname[^}]*\}\s+from\s+["']next\/navigation["']/);
   assert.match(page, /const pathname = usePathname\(\);/);
-  assert.match(page, /resolveOeeViewMode\(pathname, searchParams\.get\(["']view["']\)\)/);
+  assert.match(page, /resolveOeeViewMode\(searchParams\.get\(["']view["']\)\)/);
   assert.match(page, /const isCompactFullView = viewMode === ["']full["']/);
 });
 
-test("normal menu mode defers the title/status header row until the sidebar leaves enough width", () => {
-  assert.match(
-    page,
-    /isCompactFullView\s*\?\s*["']xl:flex-row xl:items-center xl:justify-between["']\s*:\s*["']2xl:flex-row 2xl:items-center 2xl:justify-between["']/
-  );
+test("tablet header keeps title, statuses, worker, and view switch in one responsive row", () => {
+  assert.match(page, /oee-multi-entry-header-row/);
+  assert.match(page, /lg:grid-cols-\[minmax\(10\.5rem,1fr\)/);
+  assert.match(page, /data-testid=["']oee-multi-status-area["'][\s\S]*lg:contents/);
+  assert.match(page, /oee-header-optional-icon/);
+  assert.match(page, /oee-header-optional-copy/);
+  assert.match(globalStyles, /container-name:\s*oee-multi-entry-header/);
+  assert.match(globalStyles, /@container oee-multi-entry-header \(max-width: 46rem\)/);
+  assert.match(globalStyles, /\.oee-header-optional-icon,[\s\S]*\.oee-header-optional-copy[\s\S]*display:\s*none/);
 });
 
 test("the page-internal OEE view switch keeps the pathname, preserves page state, and locks during submit", () => {
@@ -580,13 +583,13 @@ test("the tablet board exposes touch-sized accessible controls and never uses br
   assert.match(page, /Device network|deviceNetwork|deviceNetworkLabel/);
   assert.match(page, /MES communication|mesCommunication|recentMes/);
   assert.match(page, /lg:grid-cols-\[minmax\(0,3fr\)_minmax\(0,2fr\)\]/);
-  assert.match(page, /xl:w-\[min\(44rem,100%\)\]/);
+  assert.match(page, /oee-multi-entry-header/);
 });
 
 test("view=full uses a compact two-column board with internal resource and result scrolling", () => {
   assert.match(page, /import \{[^}]*useSearchParams[^}]*\} from ['"]next\/navigation['"]/);
   assert.match(page, /const searchParams = useSearchParams\(\);/);
-  assert.match(page, /const viewMode = resolveOeeViewMode\(pathname, searchParams\.get\(['"]view['"]\)\);/);
+  assert.match(page, /const viewMode = resolveOeeViewMode\(searchParams\.get\(['"]view['"]\)\);/);
   assert.match(page, /const isCompactFullView = viewMode === ['"]full['"];?/);
 
   assert.match(
@@ -694,7 +697,7 @@ test("desktop selection and command panels use the approved 3:2 ratio", () => {
   assert.doesNotMatch(page, /lg:grid-cols-\[minmax\(0,0\.95fr\)_minmax\(0,1\.2fr\)\]/);
 });
 
-test("resolved worker identity shares the compact status area while the unresolved form stays usable", () => {
+test("resolved identity and unresolved worker form share the compact status row", () => {
   assert.match(page, /data-testid=["']oee-multi-status-area["']/);
   assert.match(page, /data-testid=["']oee-multi-status-area["'][\s\S]*data-testid=["']oee-multi-worker-summary["']/);
   assert.match(page, /data-testid=["']oee-multi-status-area["'][\s\S]*min-h-\[48px\]/);
@@ -702,7 +705,8 @@ test("resolved worker identity shares the compact status area while the unresolv
   assert.match(workerSummary, /min-h-\[48px\]/);
   assert.match(workerSummary, /min-h-\[44px\]/);
   const workerForm = page.match(/data-testid=["']oee-multi-worker-form["'][\s\S]*?\n\s*<\/form>/)?.[0] ?? "";
-  assert.match(workerForm, /min-h-\[64px\]/);
+  assert.match(workerForm, /min-h-\[48px\]/);
+  assert.match(workerForm, /min-h-\[44px\]/);
 });
 
 test("all active locale files contain the new menu label and board copy", () => {
@@ -712,6 +716,10 @@ test("all active locale files contain the new menu label and board copy", () => 
     "viewMode",
     "viewNormal",
     "viewFull",
+    "viewFullLine1",
+    "viewFullLine2",
+    "changeWorkerLine1",
+    "changeWorkerLine2",
     "selectedLineCount",
     "readyLineCount",
     "resultRowCount",

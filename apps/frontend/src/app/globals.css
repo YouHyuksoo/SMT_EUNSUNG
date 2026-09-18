@@ -649,6 +649,29 @@ textarea {
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 
+.oee-multi-entry-header {
+  container-name: oee-multi-entry-header;
+  container-type: inline-size;
+}
+
+@media (min-width: 1024px) {
+  @container oee-multi-entry-header (max-width: 46rem) {
+    .oee-header-optional-icon,
+    .oee-header-optional-copy {
+      display: none;
+    }
+
+    .oee-multi-entry-header-row {
+      grid-template-columns:
+        minmax(8rem, 0.9fr)
+        minmax(6.25rem, 0.65fr)
+        minmax(7.5rem, 0.8fr)
+        minmax(10.5rem, 1.05fr)
+        3.25rem;
+    }
+  }
+}
+
 /* ============================================
    로그인 페이지 브랜딩 애니메이션
    ============================================ */
