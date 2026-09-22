@@ -106,8 +106,8 @@ async function bootstrap() {
     },
   });
 
-  // 서버 시작 (포트 3003 고정)
-  const port = 3003;
+  // 서버 시작 (포트 4003 고정)
+  const port = 4003;
   await app.listen(port);
 
   logger.log(`Application is running on: http://localhost:${port}`);

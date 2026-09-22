@@ -1,88 +1,51 @@
 ---
 sources:
   - apps/frontend/src/config/menuConfig.ts
-  - apps/frontend/src/app/(authenticated)
-verifiedCommit: 0092d3f
+  - apps/frontend/scripts/data/pb-screen-inventory.json
+generator: apps/frontend/scripts/gen-migration-status.mjs
 ---
 
-# PowerBuilder 화면 → 은성 MES 이관 현황
+# PB 화면 이관 현황 (자동 생성)
 
-PB 메뉴 전체와 각 메뉴가 여는 PB 윈도우, 그리고 이 프로젝트로 이관(리팩토링)됐는지를 한 파일에서 관리한다.
-PB 메뉴 트리 원본 스냅샷(셸 메뉴 포함 전체)은 `docs/reports/2026-09-21-powerbuilder-menu-inventory.md` 에 있다.
-
-> **sync 한계** — frontmatter `sources` 는 `상태`·`MES 메뉴코드` 열의 신선도만 추적한다.
-> `PB 윈도우`·`원본` 열의 근거는 repo 밖(Oracle `ISYS_DYNAMIC_MENU`, PBL 내 `m_main_frame_menu`)이라 `managing-docs sync` 가 감지하지 못한다.
-> 이 둘이 바뀌면 아래 "갱신 방법"으로 수동 재추출해야 한다.
+> **이 문서는 자동 생성됩니다. 직접 수정하지 마세요.**
+> `menuConfig.ts` 의 각 화면에 `pbWindow: "w_..."` 를 달면 이 문서가 자동으로 완료로 반영합니다.
+> 재생성: `pnpm --filter @eunsung/frontend gen:migration` (pnpm test/dev 에서 자동 실행).
 
 ## 현황
 
 | 상태 | 건수 |
 |---|---:|
-| 전체 업무 화면 | 275 |
-| 완료 | 5 |
-| 진행중 | 0 |
-| 미착수 | 244 |
+| PB 업무화면(셸 메뉴 제외) | 275 |
+| 완료(개발됨, pbWindow 매핑) | 7 |
+| 미착수 | 242 |
 | 윈도우 미상 | 26 |
 
-## 상태 표기
-
-| 값 | 의미 |
-|---|---|
-| `완료` | 은성 MES에 화면이 있고 `menuConfig.ts`에 메뉴가 등록됨 |
-| `진행중` | 작업 착수됨 (수기 기록) |
-| `보류` | 이관 대상이나 뒤로 미룸 (수기 기록, 사유 함께) |
-| `대상아님` | 이관하지 않기로 결정 (수기 기록, 사유 함께) |
-| `미착수` | 위 어느 것도 아님 |
-| `윈도우미상` | 대상 PB 윈도우를 특정하지 못함 |
-
-**원본** 열: `srw` = `.srw` 있음 · `pbg` = PBL 안에는 있으나 `.srw` 미export (PBORCA export 필요) · `none` = 어디에도 없음
-
-## 갱신 방법
-
-상태(`완료`/`진행중`/`보류`/`대상아님`)는 **이 파일을 직접 수정**해서 기록한다. 아래는 PB 원천 데이터를 다시 뽑을 때만 쓴다.
-
-```bash
-# 1) PB 메뉴 트리 (Oracle, site=JSIDCESDB)
-#    SELECT MENU_ITEM_ORDER, MENU_ITEM_LEVEL, MENU_ITEM_TEXT, MENU_ITEM_NAME, MENU_TAG
-#    FROM ISYS_DYNAMIC_MENU WHERE ORGANIZATION_ID=1 AND MENU_NAME='M_MAIN_FRAME_MENU' ORDER BY MENU_ITEM_ORDER
-
-# 2) 메뉴 오브젝트 export (읽기 전용, 원본 PBL 무변경)
-#    스킬 원본 OrcaTool.cs 는 rc=-10(buffertoosmall) 재시도가 없어 실패한다 → 패치 사본으로 빌드할 것
-pborca105.exe export "PBL Library 10.5" infinity21 m_main_frame_menu menu out.srm
-
-# 3) out.srm 파싱 규칙 (중요)
-#    - 아이템 블록 경계는 다음 'type m_x from menu within m_y' 선언까지다.
-#      'on m_x.create' / 'on m_x.destroy' 에서 끊으면 그 뒤에 오는 event clicked 를 놓친다.
-#    - 아이템명에 하이픈이 들어간다(m_-38). 정규식 문자클래스에 '-' 를 포함할 것.
-#    - clicked 이벤트 안의 Opensheet(w_xxx) 와 f_user_role_check(.., 'w_xxx') 를 읽는다.
-```
-
-윈도우명은 **실행 코드(`.srm`)를 DB `MENU_TAG` 보다 우선**한다. 둘이 다른 건 부록 B 참고.
+개발됐지만 아직 PB 원본(pbWindow) 미지정 화면: **48개** — 이관 완료 판정에 포함되지 않습니다. 아래 목록 참고.
 
 ## 대분류별 진행률
 
-| 대분류 | 코드 | 전체 | 완료 | 진행중 | 미착수 | 윈도우미상 |
-|---|---|---:|---:|---:|---:|---:|
-| 기준정보 | `M_BASIS1` | 20 | 0 | 0 | 20 | 0 |
-| 설계 | `M_DESIGN` | 5 | 0 | 0 | 5 | 0 |
-| SMT | `M_SMT` | 9 | 0 | 0 | 9 | 0 |
-| 설비 | `M_JIG` | 19 | 0 | 0 | 17 | 2 |
-| 지그 | `M_JIG0` | 12 | 0 | 0 | 12 | 0 |
-| 피더 | `M_FEEDER` | 4 | 0 | 0 | 4 | 0 |
-| S-PARTS | `M_MOLD` | 8 | 0 | 0 | 8 | 0 |
-| 생산 | `M_PLANNING` | 7 | 0 | 0 | 7 | 0 |
-| 공정 | `M_WORKSTAGE0` | 5 | 0 | 0 | 5 | 0 |
-| 자재창고 | `M_WAREHOUSE` | 22 | 2 | 0 | 20 | 0 |
-| 재고 | `M_INVENTORY` | 5 | 1 | 0 | 4 | 0 |
-| 수리 | `M_REPAIR` | 4 | 1 | 0 | 3 | 0 |
-| 품질관리 | `M_QC` | 12 | 0 | 0 | 12 | 0 |
-| 출하현황 | `M_SHIPPING` | 10 | 1 | 0 | 9 | 0 |
-| 추적 | `M_TRACKING` | 7 | 0 | 0 | 7 | 0 |
-| 조회 | `M_QUERY` | 11 | 0 | 0 | 11 | 0 |
-| 리포트 | `M_REPORT` | 23 | 0 | 0 | 23 | 0 |
-| 승인 | `M_CONFIRM` | 6 | 0 | 0 | 6 | 0 |
-| 기본정보 | `M_MANAGE` | 10 | 0 | 0 | 10 | 0 |
-| 시스템 | `M_SYSTEM` | 76 | 0 | 0 | 52 | 24 |
+| 대분류 | 코드 | 전체 | 완료 | 미착수 | 윈도우미상 |
+|---|---|---:|---:|---:|---:|
+| 기준정보 | `M_BASIS1` | 20 | 0 | 20 | 0 |
+| 설계 | `M_DESIGN` | 5 | 1 | 4 | 0 |
+| SMT | `M_SMT` | 9 | 0 | 9 | 0 |
+| 설비 | `M_JIG` | 19 | 0 | 17 | 2 |
+| 지그 | `M_JIG0` | 12 | 0 | 12 | 0 |
+| 피더 | `M_FEEDER` | 4 | 0 | 4 | 0 |
+| S-PARTS | `M_MOLD` | 8 | 0 | 8 | 0 |
+| 생산 | `M_PLANNING` | 7 | 0 | 7 | 0 |
+| 공정 | `M_WORKSTAGE0` | 5 | 0 | 5 | 0 |
+| 자재창고 | `M_WAREHOUSE` | 22 | 2 | 20 | 0 |
+| 재고 | `M_INVENTORY` | 5 | 1 | 4 | 0 |
+| 수리 | `M_REPAIR` | 4 | 2 | 2 | 0 |
+| 품질관리 | `M_QC` | 12 | 0 | 12 | 0 |
+| 출하현황 | `M_SHIPPING` | 10 | 1 | 9 | 0 |
+| 추적 | `M_TRACKING` | 7 | 0 | 7 | 0 |
+| 조회 | `M_QUERY` | 11 | 0 | 11 | 0 |
+| 리포트 | `M_REPORT` | 23 | 0 | 23 | 0 |
+| 승인 | `M_CONFIRM` | 6 | 0 | 6 | 0 |
+| 기본정보 | `M_MANAGE` | 10 | 0 | 10 | 0 |
+| 시스템 | `M_SYSTEM` | 76 | 0 | 52 | 24 |
 
 ## 화면 목록
 
@@ -117,7 +80,7 @@ pborca105.exe export "PBL Library 10.5" infinity21 m_main_frame_menu menu out.sr
 |---:|---|---|:--:|---|---|---|
 | 145 | 설계BOM관리 | `w_des_bom_modify_master` | srw | 미착수 |  |  |
 | 146 | 제조BOM관리 | `w_des_mfs_bom_master` | srw | 미착수 |  |  |
-| 147 | 대체BOM관리 | `w_des_replace_bom_master` | srw | 미착수 |  |  |
+| 147 | 대체BOM관리 | `w_des_replace_bom_master` | srw | 완료 | `BOM_REPLACE` | `/bom/replace-bom` |
 | 148 | 원단위BOM마스터 | `w_des_raw_bom_master` | srw | 미착수 |  |  |
 | 149 | 적용모델관리 | `w_des_apply_item_master` | srw | 미착수 |  |  |
 
@@ -139,7 +102,7 @@ pborca105.exe export "PBL Library 10.5" infinity21 m_main_frame_menu menu out.sr
 
 | 순서 | 메뉴명 | PB 윈도우 | 원본 | 상태 | MES 메뉴코드 | 경로 |
 |---:|---|---|:--:|---|---|---|
-| 164 | AOI 검사결과조회 |  |  | 윈도우미상 |  |  |
+| 164 | AOI 검사결과조회 |  | — | 윈도우미상 |  |  |
 | 164 | 설비자주보전관리 | `w_mcn_machine_pm_master` | srw | 미착수 |  |  |
 | 165 | 설비관리 | `w_mcn_machine_master` | srw | 미착수 |  |  |
 | 166 | 설비수리이력관리 | `w_mcn_machine_repair_request_master` | pbg | 미착수 |  |  |
@@ -154,7 +117,7 @@ pborca105.exe export "PBL Library 10.5" infinity21 m_main_frame_menu menu out.sr
 | 176 | RomWrite작업결과조회 | `w_qc_machine_inspect_data_rw_query` | srw | 미착수 |  |  |
 | 177 | 솔더점도 검사결과조회 | `w_qc_machine_inspect_data_solder_query` | srw | 미착수 |  |  |
 | 178 | Reflow 작업결과조회 | `w_qc_machine_inspect_data_reflow_query` | srw | 미착수 |  |  |
-| 179 | AE-EV BUSBAR Result Query |  |  | 윈도우미상 |  |  |
+| 179 | AE-EV BUSBAR Result Query |  | — | 윈도우미상 |  |  |
 | 180 | EOL Result Query | `w_qc_machine_inspect_data_eol_query` | srw | 미착수 |  |  |
 | 181 | BMA Result Query | `w_qc_machine_inspect_data_bma_query` | srw | 미착수 |  |  |
 | 183 | 라인/설비일일운행일지 | `w_line_machine_daily_operation_rpt` | srw | 미착수 |  |  |
@@ -261,10 +224,10 @@ pborca105.exe export "PBL Library 10.5" infinity21 m_main_frame_menu menu out.sr
 
 | 순서 | 메뉴명 | PB 윈도우 | 원본 | 상태 | MES 메뉴코드 | 경로 |
 |---:|---|---|:--:|---|---|---|
-| 276 | 공정수리관리(PID) | `w_pln_product_pcb_repair_master` | srw | 미착수 |  |  |
-| 278 | 공정폐기관리 | `w_pln_product_pcb_destroy_master` | srw | 미착수 |  |  |
+| 276 | 공정수리관리(PID) | `w_pln_product_pcb_repair_master` | srw | 완료 | `QC_REPAIR_HISTORY` | `/quality/repair-history` |
+| 278 | 공정폐기관리 | `w_pln_product_pcb_destroy_master` | srw | 완료 | `QC_PRODUCT_DESTROY` | `/quality/product-destroy` |
 | 280 | 수리자재신청 | `w_mat_request_master` | srw | 미착수 |  |  |
-| 281 | 공정수리이력조회 | `w_pln_product_pcb_repair_query` | pbg | 완료 | `QC_REPAIR_HISTORY` | `/quality/repair-history` |
+| 281 | 공정수리이력조회 | `w_pln_product_pcb_repair_query` | pbg | 미착수 |  |  |
 
 ### 품질관리  `M_QC`
 
@@ -387,15 +350,15 @@ pborca105.exe export "PBL Library 10.5" infinity21 m_main_frame_menu menu out.sr
 | 395 | └ 언어텍스트관리 | `w_dual_language` | srw | 미착수 |  |  |
 | 396 | └ 메세지텍스트관리 | `w_dual_message` | srw | 미착수 |  |  |
 | 398 | └ 용어사전 | `w_word_dictionary` | srw | 미착수 |  |  |
-| 400 | └ 윈도우언어변환대상찾기	Alt+F10 |  |  | 윈도우미상 |  |  |
-| 401 | └ 메뉴언어변환대상찾기	Alt+F11 |  |  | 윈도우미상 |  |  |
+| 400 | └ 윈도우언어변환대상찾기	Alt+F10 |  | — | 윈도우미상 |  |  |
+| 401 | └ 메뉴언어변환대상찾기	Alt+F11 |  | — | 윈도우미상 |  |  |
 | 403 | └ 시스템환경 | `w_system_config` | srw | 미착수 |  |  |
 | 404 | └ 컬럼포맷	F12 | `w_col_info_popup` | srw | 미착수 |  |  |
 | 405 | └ 재고마감일자설정 | `w_system_inventory_close_date_setup` | srw | 미착수 |  |  |
-| 407 | └ 엔터키탭처럼사용안함 |  |  | 윈도우미상 |  |  |
-| 408 | └ 행변경이벤트켜기 |  |  | 윈도우미상 |  |  |
-| 410 | └ 언어즉시변경켜기 |  |  | 윈도우미상 |  |  |
-| 412 | └ 메뉴재설정 |  |  | 윈도우미상 |  |  |
+| 407 | └ 엔터키탭처럼사용안함 |  | — | 윈도우미상 |  |  |
+| 408 | └ 행변경이벤트켜기 |  | — | 윈도우미상 |  |  |
+| 410 | └ 언어즉시변경켜기 |  | — | 윈도우미상 |  |  |
+| 412 | └ 메뉴재설정 |  | — | 윈도우미상 |  |  |
 | 413 | └ 메뉴관리 | `w_menu_master` | srw | 미착수 |  |  |
 | 415 | └ SQL 페인터 | `w_sql_painter` | srw | 미착수 |  |  |
 | 416 | └ SQL보기 | `w_edit_window` | srw | 미착수 |  |  |
@@ -404,26 +367,26 @@ pborca105.exe export "PBL Library 10.5" infinity21 m_main_frame_menu menu out.sr
 | 419 | └ 데이타창보기 | `w_show_datawindow_popup` | srw | 미착수 |  |  |
 | 420 | └ 테이블컬럼보기 | `w_table_description_rpt` | srw | 미착수 |  |  |
 | 421 | └ 오브젝트보기 | `w_db_object_master` | srw | 미착수 |  |  |
-| 423 | └ 인터페이스로그보기 |  |  | 윈도우미상 |  |  |
+| 423 | └ 인터페이스로그보기 |  | — | 윈도우미상 |  |  |
 | 424 | └ 시스템오류내역보기 | `w_error_log_trace` | srw | 미착수 |  |  |
 | 425 | └ 시스템사용내역 | `w_system_access_master` | srw | 미착수 |  |  |
-| 428 | 수정모드켜기 |  |  | 윈도우미상 |  |  |
-| 429 | 수정모드끄기 |  |  | 윈도우미상 |  |  |
-| 431 | 오브젝트삭제 |  |  | 윈도우미상 |  |  |
-| 433 | 라인가운데정렬 |  |  | 윈도우미상 |  |  |
-| 435 | 위로정렬 |  |  | 윈도우미상 |  |  |
-| 436 | 아래로정렬 |  |  | 윈도우미상 |  |  |
-| 437 | 왼쪽정렬 |  |  | 윈도우미상 |  |  |
-| 438 | 오른쪽정렬 |  |  | 윈도우미상 |  |  |
-| 440 | 가로크기맞춤 |  |  | 윈도우미상 |  |  |
-| 441 | 세로크기맞춤 |  |  | 윈도우미상 |  |  |
-| 442 | SMT 공릴체크 |  |  | 윈도우미상 |  |  |
-| 444 | 왼쪽맞춤 |  |  | 윈도우미상 |  |  |
-| 445 | 가운데맞춤 |  |  | 윈도우미상 |  |  |
-| 446 | 오른쪽맞춤 |  |  | 윈도우미상 |  |  |
-| 448 | 박스보이기 |  |  | 윈도우미상 |  |  |
-| 449 | 박스없애기 |  |  | 윈도우미상 |  |  |
-| 450 | 그림자보기 |  |  | 윈도우미상 |  |  |
+| 428 | 수정모드켜기 |  | — | 윈도우미상 |  |  |
+| 429 | 수정모드끄기 |  | — | 윈도우미상 |  |  |
+| 431 | 오브젝트삭제 |  | — | 윈도우미상 |  |  |
+| 433 | 라인가운데정렬 |  | — | 윈도우미상 |  |  |
+| 435 | 위로정렬 |  | — | 윈도우미상 |  |  |
+| 436 | 아래로정렬 |  | — | 윈도우미상 |  |  |
+| 437 | 왼쪽정렬 |  | — | 윈도우미상 |  |  |
+| 438 | 오른쪽정렬 |  | — | 윈도우미상 |  |  |
+| 440 | 가로크기맞춤 |  | — | 윈도우미상 |  |  |
+| 441 | 세로크기맞춤 |  | — | 윈도우미상 |  |  |
+| 442 | SMT 공릴체크 |  | — | 윈도우미상 |  |  |
+| 444 | 왼쪽맞춤 |  | — | 윈도우미상 |  |  |
+| 445 | 가운데맞춤 |  | — | 윈도우미상 |  |  |
+| 446 | 오른쪽맞춤 |  | — | 윈도우미상 |  |  |
+| 448 | 박스보이기 |  | — | 윈도우미상 |  |  |
+| 449 | 박스없애기 |  | — | 윈도우미상 |  |  |
+| 450 | 그림자보기 |  | — | 윈도우미상 |  |  |
 | 451 | └ 런타임데이타창생성 | `w_runtime_dw_generator` | srw | 미착수 |  |  |
 | 452 | └ 리포트생성기 | `w_report_generator` | srw | 미착수 |  |  |
 | 454 | └ 리포트관리 | `w_dataobject_master` | srw | 미착수 |  |  |
@@ -461,86 +424,57 @@ pborca105.exe export "PBL Library 10.5" infinity21 m_main_frame_menu menu out.sr
 | 502 | 자재추적조회(멀티/동적) | `w_product_material_tracking_multi_rpt` | srw | 미착수 |  |  |
 | 503 | 제품 추적 조회 | `w_product_material_tracking_history_rpt` | srw | 미착수 |  |  |
 
-## 부록 A — 윈도우 미상 26건
+## PB 원본(pbWindow) 미지정 개발 화면
 
-`MENU_TAG` 도 비었고 `.srm` 의 `clicked` 이벤트에도 `Opensheet` 호출이 없는 항목. 대부분 화면이 아니라 PB 개발자용 레이아웃 편집 토글이다.
+menuConfig 에 있으나 `pbWindow` 가 없어 PB 이관 완료로 집계되지 않습니다. PB 원본을 아는 화면은 `pbWindow` 를 채우세요(신규/비PB 화면은 그대로 두면 됩니다).
 
-| 대분류 | 메뉴명 | `MENU_ITEM_NAME` |
-|---|---|---|
-| 설비 | AOI 검사결과조회 | `M_AOITIMEQUERY` |
-| 설비 | AE-EV BUSBAR Result Query | `M_AE-EVBUSBARRESULTQUERY` |
-| 시스템 | 윈도우언어변환대상찾기	Alt+F10 | `M_FINDWINDOWLANGUAGESOURCE` |
-| 시스템 | 메뉴언어변환대상찾기	Alt+F11 | `M_FINDMENULANGUAGESOURCE` |
-| 시스템 | 엔터키탭처럼사용안함 | `M_ENTERTOTABON` |
-| 시스템 | 행변경이벤트켜기 | `M_ROWFOCUSCHANGEON` |
-| 시스템 | 언어즉시변경켜기 | `M_LANGUAGEDIRECTCHANGOFF` |
-| 시스템 | 메뉴재설정 | `M_MENURELOAD` |
-| 시스템 | 인터페이스로그보기 | `M_SHOWINTERFACELOG` |
-| 시스템 | 수정모드켜기 | `M_EDITMODEON` |
-| 시스템 | 수정모드끄기 | `M_EDITMODEOFF` |
-| 시스템 | 오브젝트삭제 | `M_DESTORYOBJECT` |
-| 시스템 | 라인가운데정렬 | `M_ALIGNLINECENTER` |
-| 시스템 | 위로정렬 | `M_ALIGNTOP` |
-| 시스템 | 아래로정렬 | `M_ALIGNBOTTOM` |
-| 시스템 | 왼쪽정렬 | `M_ALIGNLEFT` |
-| 시스템 | 오른쪽정렬 | `M_ALIGNRIGHT` |
-| 시스템 | 가로크기맞춤 | `M_SIZEWIDTHS` |
-| 시스템 | 세로크기맞춤 | `M_SIZEHEIGHT` |
-| 시스템 | SMT 공릴체크 | `M_CHEKCRECYCLEREEL` |
-| 시스템 | 왼쪽맞춤 | `M_ADJUSTLEFT` |
-| 시스템 | 가운데맞춤 | `M_ADJUSTCENTER` |
-| 시스템 | 오른쪽맞춤 | `M_ADJUSTRIGHT` |
-| 시스템 | 박스보이기 | `M_SHOWBOLDER0` |
-| 시스템 | 박스없애기 | `M_SHOWNOBOLDER` |
-| 시스템 | 그림자보기 | `M_SHOWSHADOW` |
-
-## 부록 B — DB `MENU_TAG` ≠ 실행 코드 7건
-
-**실행 코드가 정본**이다.
-
-| 대분류 | 메뉴명 | DB `MENU_TAG` | 실제 실행(`.srm`) |
+| 그룹 | 화면 | 코드 | 경로 |
 |---|---|---|---|
-| 기준정보 | 제품모델관리 | `w_pln_product_model_master` | `w_pln_product_model_simple_master` |
-| 공정 | 매거진라벨 발행 | `w_pln_product_magazine_label_master` | `w_pln_product_magazine_label_master2` |
-| 품질관리 | 공정품질검사이력관리 | `w_qc_workstage_inspect_data_master` | `w_qc_workstage_inspect_data_master_es` |
-| 리포트 | 라인설비바코드 | `w_barcode_rpt` | `w_pln_line_barcode_rpt` |
-| 리포트 | 생산계획리포트 | `w_pln_master_plan_report` | `w_pln_master_plan_rpt` |
-| 시스템 | 설비 픽업률조회 | `w_smt_pickup_rate` | `w_smt_pickup_rate_head` |
-| 시스템 | 자재주문관리 | `w_mat_purchase_order_plan_master` | `w_mat_purchase_order_master` |
-
-## 부록 C — `.srw` 미export 23건
-
-PBL 안에는 있으나 `.srw` 미export. 이관 착수 전 PBORCA export가 필요하다.
-
-| 메뉴명 | 윈도우 | 소속 PBL |
-|---|---|---|
-| 품목관리 | `w_des_item_master` | `infinity21_uw_com.pbl` |
-| SMT 계획배포관리 | `w_smt_plan_master` | `infinity21_uw_smt.pbl` |
-| 설비수리이력관리 | `w_mcn_machine_repair_request_master` | `infinity21_uw_mac.pbl` |
-| AOI 검사결과조회 | `w_aoi_header_detail_query` | `infinity21_uw_iqc.pbl` |
-| 지그마스터 | `w_mcn_jig_master` | `infinity21_uw_mac.pbl` |
-| 메탈마스크텐션관리 | `w_mcn_jig_mask_tension_check_master` | `infinity21_uw_mac.pbl` |
-| 스퀴지검사관리 | `w_mcn_jig_squeeze_clean_check_master` | `infinity21_uw_mac.pbl` |
-| 반제품생산계획 | `w_pln_assembly_master_plan_master` | `infinity21_uw_pln.pbl` |
-| 매거진라벨 발행 | `w_pln_product_magazine_label_master2` | `infinity21_uw_pln.pbl` |
-| 자재바코드입고관리 | `w_mat_other_receipt_barcode_master` | `infinity21_uw_mat.pbl` |
-| 자재분할관리 | `w_mat_receipt_barcode_divide_master` | `infinity21_uw_mat.pbl` |
-| 자재입출고수불원장 | `w_mat_ledger_report` | `infinity21_uw_mat.pbl` |
-| SMT 공릴체크 | `w_smt_recycle_check_rpt` | `infinity21_urw_com.pbl` |
-| 현재고조회 | `w_mat_current_inventory_master` | `infinity21_uw_mat.pbl` |
-| 공정수리이력조회 | `w_pln_product_pcb_repair_query` | `infinity21_uw_pln.pbl` |
-| IQC 관리 | `w_qc_iqc_master` | `infinity21_uw_iqc.pbl` |
-| 공정품질검사이력관리 | `w_qc_workstage_inspect_data_master_es` | `infinity21_uw_iqc.pbl` |
-| 온도상태조회 | `w_pln_product_tempreture_history_query` | `infinity21_uw_pln.pbl` |
-| 제품포장관리(PID) | `w_prd_product_packing_create_master` | `infinity21_uw_pln.pbl` |
-| 제품입고관리(LOT) | `w_prd_product_fg_4_magazine_receipt` | `infinity21_uw_pln.pbl` |
-| 제품출하관리 | `w_prd_product_fg_issue` | `infinity21_uw_pln.pbl` |
-| NSNP 처리이력조회 | `w_pln_product_nsnp_history_query` | `infinity21_uw_pln.pbl` |
-| 설비 픽업률조회 | `w_smt_pickup_rate_head` | `infinity21_uw_smt.pbl` |
-
-## 갱신 이력
-
-- 2026-09-21 최초 작성. `.srm` 파서가 아이템 블록을 `on m_x.create/destroy` 에서 끊어 그 뒤의 `event clicked` 를 놓쳤고, 아이템명의 하이픈(`m_-38`)을 정규식이 거부했다. 그 결과 윈도우 206건만 추출돼 '윈도우 미상'을 35건으로 과다 집계했다.
-- 2026-09-21 정정. 블록 경계를 다음 `type ... from menu within` 선언까지로 바꾸고 하이픈을 허용해 재추출했다. 윈도우 292건 확보, 업무 화면 기준 미상은 26건(대부분 PB 편집 토글)으로 줄었다. 태그 불일치는 4→7건으로 늘었다.
-- 2026-09-21 `MAT_RECEIPT_CANCEL`(자재입고취소) 이관 완료. 화면·사이드바·조회 2모드 브라우저 확인, `MENU_CATEGORY_ITEMS` 등록 확인. `IM_ITEM_RECEIPT` 가 전 조직 0건이라 취소 DML 은 SQL 파싱까지만 검증됨.
-- 2026-09-22 `QC_REPAIR_HISTORY`(공정수리이력조회) 이관 완료. 원본은 별도 윈도우 `w_pln_product_pcb_repair_query` 가 아니라 `w_pln_product_pcb_repair_master` 의 dw_3("Repair History", `d_pln_product_work_qc_hst`) 를 이식했다 — 같은 이력 조회다. 조회 전용이며 master 의 수리접수·저장·출고(DML)는 미이식. 실데이터 2,423건으로 검증.
+| 기준정보 | 품목관리 | `MST_PART` | `/master/part` |
+| 기준정보 | 제품모델 관리 | `MST_PRODUCT_MODEL` | `/master/product-model` |
+| 기준정보 | BOM관리 | `MST_BOM` | `/master/bom` |
+| 기준정보 | 거래처관리 | `MST_PARTNER` | `/master/partner` |
+| 기준정보 | 고객마스터 | `MST_CUSTOMER` | `/master/customer` |
+| 기준정보 | 설비마스터 | `EQUIP_MASTER` | `/master/equip` |
+| 기준정보 | 표준시간 관리 | `OEE_MST_STD_TIME` | `/oee/master/standard-time` |
+| 기준정보 | 설비 비가동 사유코드 | `OEE_MST_IDLE_REASON` | `/oee/master/idle-reason` |
+| 기준정보 | 설비별 비가동 사유 연계 | `OEE_MST_EQUIP_REASON` | `/oee/master/equip-reason-map` |
+| 기준정보 | 공정관리 | `MST_PROCESS` | `/master/process` |
+| 기준정보 | 생산라인관리 | `MST_PROD_LINE` | `/master/prod-line` |
+| 기준정보 | 라우팅관리 | `MST_ROUTING` | `/master/routing` |
+| 기준정보 | 생산월력관리 | `MST_WORK_CALENDAR` | `/master/work-calendar` |
+| 기준정보 | 작업자관리 | `MST_WORKER` | `/master/worker` |
+| 기준정보 | 작업지도서관리 | `MST_WORK_INST` | `/master/work-instruction` |
+| 기준정보 | 창고관리 | `MST_WAREHOUSE` | `/master/warehouse` |
+| 기준정보 | 라벨다자인관리 | `MST_LABEL` | `/master/label` |
+| 기준정보 | 구매단가관리 | `MST_PURCHASE_PRICE` | `/master/purchase-price` |
+| 기준정보 | 품목별 공급처 관리 | `MST_ITEM_SUPPLIER` | `/master/item-supplier` |
+| 기준정보 | 제품판매단가관리 | `MST_SALE_PRICE` | `/master/sale-price` |
+| 설비관리 | SP 작업결과조회 | `EQUIP_RESULT_SP` | `/equipment/result-query/sp` |
+| 설비관리 | SPI 검사결과조회 | `EQUIP_RESULT_SPI` | `/equipment/result-query/spi` |
+| 설비관리 | ICT 검사결과조회 | `EQUIP_RESULT_ICT` | `/equipment/result-query/ict` |
+| 설비관리 | AOI 검사결과조회 | `EQUIP_RESULT_AOI` | `/equipment/result-query/aoi` |
+| 설비관리 | ROUTER 작업결과조회 | `EQUIP_RESULT_ROUTER` | `/equipment/result-query/router` |
+| 설비관리 | ROM WRITE 작업결과조회 | `EQUIP_RESULT_ROM_WRITE` | `/equipment/result-query/rom-write` |
+| 설비관리 | 솔더점도 검사결과조회 | `EQUIP_RESULT_SOLDER` | `/equipment/result-query/solder` |
+| 설비관리 | REFLOW 작업결과조회 | `EQUIP_RESULT_REFLOW` | `/equipment/result-query/reflow` |
+| 설비관리 | 성능 검사결과조회 | `EQUIP_RESULT_PERFORMANCE` | `/equipment/result-query/performance` |
+| OEE 관리 | 공정별 OEE 종합 | `OEE_DASHBOARD` | `/oee/dashboard` |
+| OEE 관리 | OEE 비가동 입력 | `OEE_MULTI_ENTRY` | `/oee/multi-entry` |
+| OEE 관리 | OEE 종합 현황 | `OEE_OVERALL_STATUS` | `/oee/overall-status` |
+| OEE 관리 | 설비별 작업 실적관리 | `OEE_EQUIP_WORK_RESULT` | `/oee/equip-work-result` |
+| OEE 관리 | 설비 운영 현황 | `OEE_EQUIP_OPS_STATUS` | `/oee/equip-ops-status` |
+| OEE 관리 | 설비 운영 및 실적관리(현장) | `OEE_FIELD_OPS` | `/oee/field-ops` |
+| 자재수불관리 | 공정재고조회 | `MAT_WORKSTAGE_INVENTORY` | `/material/workstage-inventory` |
+| 공정수불관리 | 공정통과이력 관리 | `PLN_WORKSTAGE_PASS` | `/process-transaction/workstage-pass` |
+| 공정수불관리 | 매거진발행이력 | `PLN_MAGAZINE_LABEL_HISTORY` | `/process-transaction/magazine-label-history` |
+| 생산관리 | 작업지시관리 | `PRD_RUN_CARD` | `/production/run-card` |
+| 시스템관리 | 회사관리 | `SYS_COMPANY` | `/master/company` |
+| 시스템관리 | 코드관리 | `SYS_CODE` | `/master/code` |
+| 시스템관리 | 환경설정 | `SYS_CONFIG` | `/system/config` |
+| 시스템관리 | 메뉴 카테고리 관리 | `SYS_MENU_CATEGORY` | `/system/menu-categories` |
+| 시스템관리 | 부서관리 | `SYS_DEPT` | `/system/department` |
+| 시스템관리 | 사용자관리 | `SYS_USER` | `/system/users` |
+| 시스템관리 | 스케줄러 | `SYS_SCHEDULER` | `/system/scheduler` |
+| 시스템관리 | ER VIEW | `SYS_ER_VIEW` | `/system/er-view` |
+| 시스템관리 | 개선요청 관리 | `SYS_IMPR_REQ` | `/system/improvement-requests` |

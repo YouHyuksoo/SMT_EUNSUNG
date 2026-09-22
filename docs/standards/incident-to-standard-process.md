@@ -4,7 +4,8 @@ sources:
   - docs/README.md
   - docs/standards/
   - apps/backend/src/**/*.spec.ts
-  - apps/frontend/src/**/*.structure.test.mjs
+  - apps/frontend/scripts/check-page-registration.mjs
+  - apps/frontend/src/config/deleted-menu-pages.json
 verifiedCommit: dee4f7e
 ---
 
@@ -58,8 +59,8 @@ verifiedCommit: dee4f7e
 1. **중앙 규칙**: `AGENTS.md`에 짧고 명령형으로 추가한다.
 2. **상세 표준**: 근거, 적용 조건, 올바른 예시, 진단 순서를 `docs/standards/`에 작성한다.
 3. **실행 가능한 강제 장치**: 아래 중 하나 이상을 추가한다.
-   - 회귀 단위 테스트
-   - Guard·모듈 경계 등의 architecture/structure test
+   - 회귀 단위 테스트 (백엔드 `*.spec.ts`)
+   - 등록·경로·삭제 규칙 위반을 막는 `apps/frontend/scripts/check-page-registration.mjs` 검사 추가
    - lint 또는 정적 검사
    - 인증된 실제 API 검증 명령
 4. **완료 기준 갱신**: 기존 검증이 만든 거짓 양성을 차단하는 확인 항목을 추가한다.

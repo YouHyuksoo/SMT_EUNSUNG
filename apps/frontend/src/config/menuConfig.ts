@@ -23,6 +23,8 @@ export interface MenuConfigItem {
   path?: string;
   /** 아이콘 컴포넌트 (최상위 메뉴만 사용) */
   icon?: React.ComponentType<{ className?: string }>;
+  /** 이관 원본 PowerBuilder 윈도우명 (예: w_mat_receipt_cancel_master). 신규/비PB 화면은 생략. */
+  pbWindow?: string;
   /** 하위 메뉴 항목 */
   children?: MenuConfigItem[];
 }
@@ -61,7 +63,7 @@ export const menuConfig: MenuConfigItem[] = [
     labelKey: "menu.bom",
     icon: Network,
     children: [
-      { code: "BOM_REPLACE", labelKey: "menu.bom.replace", path: "/bom/replace-bom" },
+      { code: "BOM_REPLACE", labelKey: "menu.bom.replace", path: "/bom/replace-bom", pbWindow: "w_des_replace_bom_master" },
     ],
   },
   {
@@ -103,10 +105,10 @@ export const menuConfig: MenuConfigItem[] = [
     labelKey: "menu.material",
     icon: Package,
     children: [
-      { code: "MAT_RECEIPT_ISSUE_LEDGER", labelKey: "menu.material.receiptIssueLedger", path: "/material/receipt-issue-ledger" },
-      { code: "MAT_CURRENT_INVENTORY", labelKey: "menu.material.currentInventory", path: "/material/current-inventory" },
+      { code: "MAT_RECEIPT_ISSUE_LEDGER", labelKey: "menu.material.receiptIssueLedger", path: "/material/receipt-issue-ledger", pbWindow: "w_mat_ledger_report" },
+      { code: "MAT_CURRENT_INVENTORY", labelKey: "menu.material.currentInventory", path: "/material/current-inventory", pbWindow: "w_mat_current_inventory_master" },
       { code: "MAT_WORKSTAGE_INVENTORY", labelKey: "menu.material.workstageInventory", path: "/material/workstage-inventory" },
-      { code: "MAT_RECEIPT_CANCEL", labelKey: "menu.material.receiptCancel", path: "/material/receipt-cancel" },
+      { code: "MAT_RECEIPT_CANCEL", labelKey: "menu.material.receiptCancel", path: "/material/receipt-cancel", pbWindow: "w_mat_receipt_cancel_master" },
     ],
   },
   {
@@ -131,7 +133,7 @@ export const menuConfig: MenuConfigItem[] = [
     labelKey: "menu.productInventory",
     icon: Warehouse,
     children: [
-      { code: "PRD_CURRENT_INVENTORY", labelKey: "menu.productMgmt.currentInventory", path: "/product/current-inventory" },
+      { code: "PRD_CURRENT_INVENTORY", labelKey: "menu.productMgmt.currentInventory", path: "/product/current-inventory", pbWindow: "w_prd_product_fg_inventory" },
     ],
   },
   {
@@ -147,8 +149,8 @@ export const menuConfig: MenuConfigItem[] = [
     labelKey: "menu.quality",
     icon: Wrench,
     children: [
-      { code: "QC_REPAIR_HISTORY", labelKey: "menu.quality.repairHistory", path: "/quality/repair-history" },
-      { code: "QC_PRODUCT_DESTROY", labelKey: "menu.quality.productDestroy", path: "/quality/product-destroy" },
+      { code: "QC_REPAIR_HISTORY", labelKey: "menu.quality.repairHistory", path: "/quality/repair-history", pbWindow: "w_pln_product_pcb_repair_master" },
+      { code: "QC_PRODUCT_DESTROY", labelKey: "menu.quality.productDestroy", path: "/quality/product-destroy", pbWindow: "w_pln_product_pcb_destroy_master" },
     ],
   },
   {

@@ -1,0 +1,2757 @@
+{
+ "_comment": "PB 업무화면 인벤토리 스냅샷. 원본: Oracle ISYS_DYNAMIC_MENU(M_MAIN_FRAME_MENU) + m_main_frame_menu.srm. gen-migration-status.mjs 가 menuConfig.pbWindow 와 대조한다. 갱신은 별도 추출 스크립트로.",
+ "source": "ISYS_DYNAMIC_MENU / m_main_frame_menu.srm",
+ "generatedAt": "2026-09-22",
+ "screens": [
+  {
+   "order": 119,
+   "level": "2",
+   "group": "기준정보",
+   "groupCode": "M_BASIS1",
+   "text": "고객관리",
+   "itemName": "M_CUSTOMERMASTER",
+   "window": "w_com_customer_master",
+   "origin": "srw"
+  },
+  {
+   "order": 120,
+   "level": "2",
+   "group": "기준정보",
+   "groupCode": "M_BASIS1",
+   "text": "협력사관리",
+   "itemName": "M_SUPPLIERMASTER",
+   "window": "w_com_supplier_master",
+   "origin": "srw"
+  },
+  {
+   "order": 122,
+   "level": "2",
+   "group": "기준정보",
+   "groupCode": "M_BASIS1",
+   "text": "품목관리",
+   "itemName": "M_ITEMMASTER",
+   "window": "w_des_item_master",
+   "origin": "pbg"
+  },
+  {
+   "order": 123,
+   "level": "2",
+   "group": "기준정보",
+   "groupCode": "M_BASIS1",
+   "text": "제품모델관리",
+   "itemName": "M_PRODUCTMODELMASTER",
+   "window": "w_pln_product_model_simple_master",
+   "origin": "srw"
+  },
+  {
+   "order": 124,
+   "level": "2",
+   "group": "기준정보",
+   "groupCode": "M_BASIS1",
+   "text": "품목(공급상)관리",
+   "itemName": "M_MATEIALMASTER",
+   "window": "w_mat_item_master",
+   "origin": "srw"
+  },
+  {
+   "order": 125,
+   "level": "2",
+   "group": "기준정보",
+   "groupCode": "M_BASIS1",
+   "text": "LED RANK 관리",
+   "itemName": "M_LEDRANKMASTER",
+   "window": "w_com_mat_rank_master",
+   "origin": "srw"
+  },
+  {
+   "order": 126,
+   "level": "2",
+   "group": "기준정보",
+   "groupCode": "M_BASIS1",
+   "text": "환율관리",
+   "itemName": "M_1",
+   "window": "w_com_exchange_rate_master",
+   "origin": "srw"
+  },
+  {
+   "order": 128,
+   "level": "2",
+   "group": "기준정보",
+   "groupCode": "M_BASIS1",
+   "text": "제품류관리",
+   "itemName": "M_PRODUCTCLASSMASTER",
+   "window": "w_des_product_class_master",
+   "origin": "srw"
+  },
+  {
+   "order": 129,
+   "level": "2",
+   "group": "기준정보",
+   "groupCode": "M_BASIS1",
+   "text": "라인관리",
+   "itemName": "M_PRODUCTLINEMASTER",
+   "window": "w_pln_line_master",
+   "origin": "srw"
+  },
+  {
+   "order": 130,
+   "level": "2",
+   "group": "기준정보",
+   "groupCode": "M_BASIS1",
+   "text": "공정관리마스터",
+   "itemName": "M_PRODUCTWOKSTAGEMASTER",
+   "window": "w_pln_workstage_master",
+   "origin": "srw"
+  },
+  {
+   "order": 131,
+   "level": "2",
+   "group": "기준정보",
+   "groupCode": "M_BASIS1",
+   "text": "모델별 ST관리",
+   "itemName": "M_PRODUCTSTMASTER",
+   "window": "w_pln_product_model_st_master",
+   "origin": "srw"
+  },
+  {
+   "order": 132,
+   "level": "2",
+   "group": "기준정보",
+   "groupCode": "M_BASIS1",
+   "text": "생산월력",
+   "itemName": "M_PRODUCTCARENDAR",
+   "window": "w_pln_product_calendar",
+   "origin": "srw"
+  },
+  {
+   "order": 133,
+   "level": "2",
+   "group": "기준정보",
+   "groupCode": "M_BASIS1",
+   "text": "생산라인보유공수관리",
+   "itemName": "M_20",
+   "window": "w_pln_line_capacity_master",
+   "origin": "srw"
+  },
+  {
+   "order": 134,
+   "level": "2",
+   "group": "기준정보",
+   "groupCode": "M_BASIS1",
+   "text": "제품별 라벨양식 관리",
+   "itemName": "M_PRODUCTLABELMASTER",
+   "window": "w_product_label_master",
+   "origin": "srw"
+  },
+  {
+   "order": 135,
+   "level": "2",
+   "group": "기준정보",
+   "groupCode": "M_BASIS1",
+   "text": "문서관리",
+   "itemName": "M_DOCUMENTMASTER",
+   "window": "w_com_document_master",
+   "origin": "srw"
+  },
+  {
+   "order": 137,
+   "level": "2",
+   "group": "기준정보",
+   "groupCode": "M_BASIS1",
+   "text": "인터락조건관리",
+   "itemName": "M_INTERLOCKINSEPCTCONDITIONMASTER",
+   "window": "w_com_interlock_inspect_condition_master",
+   "origin": "srw"
+  },
+  {
+   "order": 138,
+   "level": "2",
+   "group": "기준정보",
+   "groupCode": "M_BASIS1",
+   "text": "QC 품질판정조건표",
+   "itemName": "M_QCINSPECTCONDITION",
+   "window": "w_qc_led_inspect_condition_master",
+   "origin": "srw"
+  },
+  {
+   "order": 140,
+   "level": "2",
+   "group": "기준정보",
+   "groupCode": "M_BASIS1",
+   "text": "풀체크시간관리",
+   "itemName": "M_FULLCHECKTIMEMASTER",
+   "window": "w_com_full_check_time_master",
+   "origin": "srw"
+  },
+  {
+   "order": 142,
+   "level": "2",
+   "group": "기준정보",
+   "groupCode": "M_BASIS1",
+   "text": "자재구매단가",
+   "itemName": "M_MATERIALPRICEMASTER",
+   "window": "w_mat_buy_price_master",
+   "origin": "srw"
+  },
+  {
+   "order": 143,
+   "level": "2",
+   "group": "기준정보",
+   "groupCode": "M_BASIS1",
+   "text": "제(상)품판매단가",
+   "itemName": "M_PRODUCTSALEPRICE",
+   "window": "w_sal_sale_price_master",
+   "origin": "srw"
+  },
+  {
+   "order": 145,
+   "level": "2",
+   "group": "설계",
+   "groupCode": "M_DESIGN",
+   "text": "설계BOM관리",
+   "itemName": "M_BOMMASTER",
+   "window": "w_des_bom_modify_master",
+   "origin": "srw"
+  },
+  {
+   "order": 146,
+   "level": "2",
+   "group": "설계",
+   "groupCode": "M_DESIGN",
+   "text": "제조BOM관리",
+   "itemName": "M_MFSBOMMASTER",
+   "window": "w_des_mfs_bom_master",
+   "origin": "srw"
+  },
+  {
+   "order": 147,
+   "level": "2",
+   "group": "설계",
+   "groupCode": "M_DESIGN",
+   "text": "대체BOM관리",
+   "itemName": "M_ENGBOMREPLACEMASTER",
+   "window": "w_des_replace_bom_master",
+   "origin": "srw"
+  },
+  {
+   "order": 148,
+   "level": "2",
+   "group": "설계",
+   "groupCode": "M_DESIGN",
+   "text": "원단위BOM마스터",
+   "itemName": "M_ENGBOMRAWMASTER",
+   "window": "w_des_raw_bom_master",
+   "origin": "srw"
+  },
+  {
+   "order": 149,
+   "level": "2",
+   "group": "설계",
+   "groupCode": "M_DESIGN",
+   "text": "적용모델관리",
+   "itemName": "M_APPLYMODELMASTER",
+   "window": "w_des_apply_item_master",
+   "origin": "srw"
+  },
+  {
+   "order": 151,
+   "level": "2",
+   "group": "SMT",
+   "groupCode": "M_SMT",
+   "text": "SMT 라인관리",
+   "itemName": "M_SMTLINEMASTER",
+   "window": "w_smt_line_master",
+   "origin": "srw"
+  },
+  {
+   "order": 152,
+   "level": "2",
+   "group": "SMT",
+   "groupCode": "M_SMT",
+   "text": "라인별 테이블 관리",
+   "itemName": "M_SMTLOCATIONMASTER",
+   "window": "w_smt_location_master",
+   "origin": "srw"
+  },
+  {
+   "order": 153,
+   "level": "2",
+   "group": "SMT",
+   "groupCode": "M_SMT",
+   "text": "SMT BOM 대체관리",
+   "itemName": "M_SMTBOMREPLACEMASTER",
+   "window": "w_smt_bom_replace_master",
+   "origin": "srw"
+  },
+  {
+   "order": 155,
+   "level": "2",
+   "group": "SMT",
+   "groupCode": "M_SMT",
+   "text": "SMT 피더레이아웃 등록",
+   "itemName": "M_SMTUPLOADNCMASTER",
+   "window": "w_smt_upload_nc_master",
+   "origin": "srw"
+  },
+  {
+   "order": 156,
+   "level": "2",
+   "group": "SMT",
+   "groupCode": "M_SMT",
+   "text": "SMT BOM 관리",
+   "itemName": "M_MESBOMMASTER",
+   "window": "w_smt_bom_create_master",
+   "origin": "srw"
+  },
+  {
+   "order": 157,
+   "level": "2",
+   "group": "SMT",
+   "groupCode": "M_SMT",
+   "text": "SMT 계획배포관리",
+   "itemName": "M_SMTPLANDATA",
+   "window": "w_smt_plan_master",
+   "origin": "pbg"
+  },
+  {
+   "order": 159,
+   "level": "2",
+   "group": "SMT",
+   "groupCode": "M_SMT",
+   "text": "SMT BOM 관리리포트",
+   "itemName": "M_SMTBOMMASTERREPORT",
+   "window": "w_smt_bom_master_rpt",
+   "origin": "srw"
+  },
+  {
+   "order": 160,
+   "level": "2",
+   "group": "SMT",
+   "groupCode": "M_SMT",
+   "text": "피더레이아웃 비교",
+   "itemName": "M_SMTBOMCOMPARISIONREPORT",
+   "window": "w_smt_bom_comparison_master_rpt",
+   "origin": "srw"
+  },
+  {
+   "order": 162,
+   "level": "2",
+   "group": "SMT",
+   "groupCode": "M_SMT",
+   "text": "마운터 픽업정보관리",
+   "itemName": "M_MOUNTPICKUPMASTER0",
+   "window": "w_mcn_feeder_pickup_master",
+   "origin": "srw"
+  },
+  {
+   "order": 164,
+   "level": "2",
+   "group": "설비",
+   "groupCode": "M_JIG",
+   "text": "AOI 검사결과조회",
+   "itemName": "M_AOITIMEQUERY",
+   "window": "",
+   "origin": ""
+  },
+  {
+   "order": 164,
+   "level": "2",
+   "group": "설비",
+   "groupCode": "M_JIG",
+   "text": "설비자주보전관리",
+   "itemName": "M_MACHINEPMMASTER",
+   "window": "w_mcn_machine_pm_master",
+   "origin": "srw"
+  },
+  {
+   "order": 165,
+   "level": "2",
+   "group": "설비",
+   "groupCode": "M_JIG",
+   "text": "설비관리",
+   "itemName": "M_MACHINEMASTER",
+   "window": "w_mcn_machine_master",
+   "origin": "srw"
+  },
+  {
+   "order": 166,
+   "level": "2",
+   "group": "설비",
+   "groupCode": "M_JIG",
+   "text": "설비수리이력관리",
+   "itemName": "M_MACHINEREPAIRREQUESTMASTER",
+   "window": "w_mcn_machine_repair_request_master",
+   "origin": "pbg"
+  },
+  {
+   "order": 167,
+   "level": "2",
+   "group": "설비",
+   "groupCode": "M_JIG",
+   "text": "설비수리관리",
+   "itemName": "M_MACHINEREPAIRMASTER",
+   "window": "w_mcn_machine_repair_master",
+   "origin": "srw"
+  },
+  {
+   "order": 168,
+   "level": "2",
+   "group": "설비",
+   "groupCode": "M_JIG",
+   "text": "설비자주보전관리",
+   "itemName": "M_MACHINEPMMASTER0",
+   "window": "w_mcn_machine_pm_master",
+   "origin": "srw"
+  },
+  {
+   "order": 169,
+   "level": "2",
+   "group": "설비",
+   "groupCode": "M_JIG",
+   "text": "설비일일운행관리",
+   "itemName": "M_MACHINELOSSMASTER",
+   "window": "w_mcn_machine_daily_operation",
+   "origin": "srw"
+  },
+  {
+   "order": 171,
+   "level": "2",
+   "group": "설비",
+   "groupCode": "M_JIG",
+   "text": "SP 작업결과조회",
+   "itemName": "M_SPRESULTQUERY",
+   "window": "w_qc_machine_inspect_data_sp_query",
+   "origin": "srw"
+  },
+  {
+   "order": 172,
+   "level": "2",
+   "group": "설비",
+   "groupCode": "M_JIG",
+   "text": "SPI 검사결과조회",
+   "itemName": "M_SPITIMEQUERY",
+   "window": "w_spi_time_query",
+   "origin": "srw"
+  },
+  {
+   "order": 173,
+   "level": "2",
+   "group": "설비",
+   "groupCode": "M_JIG",
+   "text": "ICT 검사결과조회",
+   "itemName": "M_IICTRESULTQUERY",
+   "window": "w_qc_machine_inspect_data_ict_query",
+   "origin": "srw"
+  },
+  {
+   "order": 174,
+   "level": "2",
+   "group": "설비",
+   "groupCode": "M_JIG",
+   "text": "AOI 검사결과조회",
+   "itemName": "M_AOIRESULTQUERY",
+   "window": "w_aoi_header_detail_query",
+   "origin": "pbg"
+  },
+  {
+   "order": 175,
+   "level": "2",
+   "group": "설비",
+   "groupCode": "M_JIG",
+   "text": "Router작업결과조회",
+   "itemName": "M_ROUTERRSULTQUERY",
+   "window": "w_qc_machine_inspect_data_rt_query",
+   "origin": "srw"
+  },
+  {
+   "order": 176,
+   "level": "2",
+   "group": "설비",
+   "groupCode": "M_JIG",
+   "text": "RomWrite작업결과조회",
+   "itemName": "M_ROMWRITERESULTQUERY",
+   "window": "w_qc_machine_inspect_data_rw_query",
+   "origin": "srw"
+  },
+  {
+   "order": 177,
+   "level": "2",
+   "group": "설비",
+   "groupCode": "M_JIG",
+   "text": "솔더점도 검사결과조회",
+   "itemName": "M_SOLDERVISCOSITYRESULTQUERY",
+   "window": "w_qc_machine_inspect_data_solder_query",
+   "origin": "srw"
+  },
+  {
+   "order": 178,
+   "level": "2",
+   "group": "설비",
+   "groupCode": "M_JIG",
+   "text": "Reflow 작업결과조회",
+   "itemName": "M_REFLOWRESULTQUERY",
+   "window": "w_qc_machine_inspect_data_reflow_query",
+   "origin": "srw"
+  },
+  {
+   "order": 179,
+   "level": "2",
+   "group": "설비",
+   "groupCode": "M_JIG",
+   "text": "AE-EV BUSBAR Result Query",
+   "itemName": "M_AE-EVBUSBARRESULTQUERY",
+   "window": "",
+   "origin": ""
+  },
+  {
+   "order": 180,
+   "level": "2",
+   "group": "설비",
+   "groupCode": "M_JIG",
+   "text": "EOL Result Query",
+   "itemName": "M_EOLRESULTQUERY",
+   "window": "w_qc_machine_inspect_data_eol_query",
+   "origin": "srw"
+  },
+  {
+   "order": 181,
+   "level": "2",
+   "group": "설비",
+   "groupCode": "M_JIG",
+   "text": "BMA Result Query",
+   "itemName": "M_BMARESULTQUERY",
+   "window": "w_qc_machine_inspect_data_bma_query",
+   "origin": "srw"
+  },
+  {
+   "order": 183,
+   "level": "2",
+   "group": "설비",
+   "groupCode": "M_JIG",
+   "text": "라인/설비일일운행일지",
+   "itemName": "M_LINEMACHINEDAILYOPERATIONREPORT",
+   "window": "w_line_machine_daily_operation_rpt",
+   "origin": "srw"
+  },
+  {
+   "order": 185,
+   "level": "2",
+   "group": "지그",
+   "groupCode": "M_JIG0",
+   "text": "지그마스터",
+   "itemName": "M_JIGMASTER",
+   "window": "w_mcn_jig_master",
+   "origin": "pbg"
+  },
+  {
+   "order": 186,
+   "level": "2",
+   "group": "지그",
+   "groupCode": "M_JIG0",
+   "text": "지그출고관리",
+   "itemName": "M_JIGISSUEMASTER",
+   "window": "w_mcn_jig_issue_master",
+   "origin": "srw"
+  },
+  {
+   "order": 187,
+   "level": "2",
+   "group": "지그",
+   "groupCode": "M_JIG0",
+   "text": "지그수리신청",
+   "itemName": "M_JIGREPAIRREQUESTMASTER",
+   "window": "w_mcn_jig_repair_request_master",
+   "origin": "srw"
+  },
+  {
+   "order": 188,
+   "level": "2",
+   "group": "지그",
+   "groupCode": "M_JIG0",
+   "text": "지그수리관리",
+   "itemName": "M_JIGREPAIRMASTER",
+   "window": "w_mcn_jig_repair_master",
+   "origin": "srw"
+  },
+  {
+   "order": 189,
+   "level": "2",
+   "group": "지그",
+   "groupCode": "M_JIG0",
+   "text": "지그자주보전관리",
+   "itemName": "M_JIGPMMASTER",
+   "window": "w_mcn_jig_pm_master",
+   "origin": "srw"
+  },
+  {
+   "order": 191,
+   "level": "2",
+   "group": "지그",
+   "groupCode": "M_JIG0",
+   "text": "지그마스터 투입이력조회",
+   "itemName": "M_JIGINPUTHISTORY",
+   "window": "w_mcn_jig_input_history_master",
+   "origin": "srw"
+  },
+  {
+   "order": 193,
+   "level": "2",
+   "group": "지그",
+   "groupCode": "M_JIG0",
+   "text": "스퀴즈검사관리",
+   "itemName": "M_JIGSQUEEZECHECKMASTER",
+   "window": "w_mcn_jig_squeeze_check_master",
+   "origin": "srw"
+  },
+  {
+   "order": 194,
+   "level": "2",
+   "group": "지그",
+   "groupCode": "M_JIG0",
+   "text": "메탈마스크텐션관리",
+   "itemName": "M_MASKTENSIONCHECKMASTER",
+   "window": "w_mcn_jig_mask_tension_check_master",
+   "origin": "pbg"
+  },
+  {
+   "order": 195,
+   "level": "2",
+   "group": "지그",
+   "groupCode": "M_JIG0",
+   "text": "스퀴지검사관리",
+   "itemName": "M_SQUEEZECLEANCHECKMASTER",
+   "window": "w_mcn_jig_squeeze_clean_check_master",
+   "origin": "pbg"
+  },
+  {
+   "order": 197,
+   "level": "2",
+   "group": "지그",
+   "groupCode": "M_JIG0",
+   "text": "샘플마스터 관리",
+   "itemName": "M_SAMPLEMASTER",
+   "window": "w_mcn_sample_master",
+   "origin": "srw"
+  },
+  {
+   "order": 198,
+   "level": "2",
+   "group": "지그",
+   "groupCode": "M_JIG0",
+   "text": "샘플마스터 장착이력조회",
+   "itemName": "M_SAMPLEINPUTHISTORY",
+   "window": "w_mcn_sample_input_history_master",
+   "origin": "srw"
+  },
+  {
+   "order": 199,
+   "level": "2",
+   "group": "지그",
+   "groupCode": "M_JIG0",
+   "text": "샘플마스터 투입이력조회",
+   "itemName": "M_SAMPLEINPUTHISTORY0",
+   "window": "w_mcn_sample_bcr_input_history_master",
+   "origin": "srw"
+  },
+  {
+   "order": 201,
+   "level": "2",
+   "group": "피더",
+   "groupCode": "M_FEEDER",
+   "text": "피더관리",
+   "itemName": "M_FEEDERMASTER",
+   "window": "w_mcn_feeder_master",
+   "origin": "srw"
+  },
+  {
+   "order": 202,
+   "level": "2",
+   "group": "피더",
+   "groupCode": "M_FEEDER",
+   "text": "피더수리신청",
+   "itemName": "M_FEEDERREPAIRREQUESTMASTER",
+   "window": "w_mcn_feeder_repair_request_master",
+   "origin": "srw"
+  },
+  {
+   "order": 203,
+   "level": "2",
+   "group": "피더",
+   "groupCode": "M_FEEDER",
+   "text": "피더수리관리",
+   "itemName": "M_FEEDERREPAIRMASTER",
+   "window": "w_mcn_feeder_repair_master",
+   "origin": "srw"
+  },
+  {
+   "order": 204,
+   "level": "2",
+   "group": "피더",
+   "groupCode": "M_FEEDER",
+   "text": "피더교정관리",
+   "itemName": "M_JIGFEEDERADJUST",
+   "window": "w_mcn_jig_feeder_adjust_master",
+   "origin": "srw"
+  },
+  {
+   "order": 206,
+   "level": "2",
+   "group": "S-PARTS",
+   "groupCode": "M_MOLD",
+   "text": "S-PARTS관리",
+   "itemName": "M_MOLDMASTER",
+   "window": "w_mcn_mold_master",
+   "origin": "srw"
+  },
+  {
+   "order": 207,
+   "level": "2",
+   "group": "S-PARTS",
+   "groupCode": "M_MOLD",
+   "text": "S-PARTS주문관리",
+   "itemName": "M_MOLDPURCHASEORDERMASTER",
+   "window": "w_mcn_mold_purchase_order_master",
+   "origin": "srw"
+  },
+  {
+   "order": 208,
+   "level": "2",
+   "group": "S-PARTS",
+   "groupCode": "M_MOLD",
+   "text": "S-PARTS입고관리",
+   "itemName": "M_MOLDRECEIPTMASTER",
+   "window": "w_mcn_mold_receipt_master",
+   "origin": "srw"
+  },
+  {
+   "order": 209,
+   "level": "2",
+   "group": "S-PARTS",
+   "groupCode": "M_MOLD",
+   "text": "S-PARTS출고관리",
+   "itemName": "M_MOLDISSUEMASTER",
+   "window": "w_mcn_mold_issue_master",
+   "origin": "srw"
+  },
+  {
+   "order": 210,
+   "level": "2",
+   "group": "S-PARTS",
+   "groupCode": "M_MOLD",
+   "text": "S-PARTS재고관리",
+   "itemName": "M_MOLDINVENTORYMASTER",
+   "window": "w_mcn_mold_inventory_master",
+   "origin": "srw"
+  },
+  {
+   "order": 212,
+   "level": "2",
+   "group": "S-PARTS",
+   "groupCode": "M_MOLD",
+   "text": "S-PARTS수리신청관리",
+   "itemName": "M_MOLDREPAIRREQUESTMASTER",
+   "window": "w_mcn_mold_repair_request_master",
+   "origin": "srw"
+  },
+  {
+   "order": 213,
+   "level": "2",
+   "group": "S-PARTS",
+   "groupCode": "M_MOLD",
+   "text": "S-PARTS수리관리",
+   "itemName": "M_MOLDREPAIRMASTER",
+   "window": "w_mcn_mold_repair_master",
+   "origin": "srw"
+  },
+  {
+   "order": 215,
+   "level": "2",
+   "group": "S-PARTS",
+   "groupCode": "M_MOLD",
+   "text": "S-PARTS구매단가관리",
+   "itemName": "M_MOLDUNITPRICEMASTER",
+   "window": "w_mcn_mold_buy_price_master",
+   "origin": "srw"
+  },
+  {
+   "order": 217,
+   "level": "2",
+   "group": "생산",
+   "groupCode": "M_PLANNING",
+   "text": "제품생산계획",
+   "itemName": "M_PRODUCTMASTERPLAN",
+   "window": "w_pln_product_master_plan_master",
+   "origin": "srw"
+  },
+  {
+   "order": 218,
+   "level": "2",
+   "group": "생산",
+   "groupCode": "M_PLANNING",
+   "text": "반제품생산계획",
+   "itemName": "M_ASSEMBLYMASERPLAN",
+   "window": "w_pln_assembly_master_plan_master",
+   "origin": "pbg"
+  },
+  {
+   "order": 219,
+   "level": "2",
+   "group": "생산",
+   "groupCode": "M_PLANNING",
+   "text": "반제품생산실적관리",
+   "itemName": "M_ASSEMBLYACTUALMASTER",
+   "window": "w_pln_assembly_actual_master",
+   "origin": "srw"
+  },
+  {
+   "order": 221,
+   "level": "2",
+   "group": "생산",
+   "groupCode": "M_PLANNING",
+   "text": "롯트카드관리",
+   "itemName": "M_MASTERPLAN",
+   "window": "w_product_run_card_duckil",
+   "origin": "srw"
+  },
+  {
+   "order": 222,
+   "level": "2",
+   "group": "생산",
+   "groupCode": "M_PLANNING",
+   "text": "롯트카드-PID 매핑관리",
+   "itemName": "M_PCBPIDINSPECTSCANMASTER",
+   "window": "w_pln_product_pcb_kitting_scan_master",
+   "origin": "srw"
+  },
+  {
+   "order": 224,
+   "level": "2",
+   "group": "생산",
+   "groupCode": "M_PLANNING",
+   "text": "기간별 생산실적 조회",
+   "itemName": "M_PRODUCTIONRESULTS",
+   "window": "w_pln_product_pcb_result_query",
+   "origin": "srw"
+  },
+  {
+   "order": 225,
+   "level": "2",
+   "group": "생산",
+   "groupCode": "M_PLANNING",
+   "text": "생산일보 리포트",
+   "itemName": "M_DAILYPRODUCTIONREPORT",
+   "window": "w_pln_product_pcb_result_report",
+   "origin": "srw"
+  },
+  {
+   "order": 227,
+   "level": "2",
+   "group": "공정",
+   "groupCode": "M_WORKSTAGE0",
+   "text": "제품공정인아웃스캔관리",
+   "itemName": "M_PRODUCWORKSTAGEINOUTSCANMASTER",
+   "window": "w_pln_product_inout_scan_master",
+   "origin": "srw"
+  },
+  {
+   "order": 229,
+   "level": "2",
+   "group": "공정",
+   "groupCode": "M_WORKSTAGE0",
+   "text": "매거진라벨 발행",
+   "itemName": "M_SMTMAGEZINELABELMASTER",
+   "window": "w_pln_product_magazine_label_master2",
+   "origin": "pbg"
+  },
+  {
+   "order": 230,
+   "level": "2",
+   "group": "공정",
+   "groupCode": "M_WORKSTAGE0",
+   "text": "매거진라벨 분할",
+   "itemName": "M_MAGAZINELABELSPLITMASTER",
+   "window": "w_pln_product_magazine_label_split_master",
+   "origin": "srw"
+  },
+  {
+   "order": 231,
+   "level": "2",
+   "group": "공정",
+   "groupCode": "M_WORKSTAGE0",
+   "text": "매거진-PID 매핑관리",
+   "itemName": "M_PIDCREATEMATER",
+   "window": "w_pln_product_barcode_create_master",
+   "origin": "srw"
+  },
+  {
+   "order": 233,
+   "level": "2",
+   "group": "공정",
+   "groupCode": "M_WORKSTAGE0",
+   "text": "매거진라벨이력조회",
+   "itemName": "M_MAGAZINELABELQUERY",
+   "window": "w_pln_product_magazine_label_query",
+   "origin": "srw"
+  },
+  {
+   "order": 235,
+   "level": "2",
+   "group": "자재창고",
+   "groupCode": "M_WAREHOUSE",
+   "text": "자재입고전표관리",
+   "itemName": "M_19",
+   "window": "w_mat_receipt_slip_master",
+   "origin": "srw"
+  },
+  {
+   "order": 237,
+   "level": "2",
+   "group": "자재창고",
+   "groupCode": "M_WAREHOUSE",
+   "text": "자재바코드입고관리",
+   "itemName": "M_34",
+   "window": "w_mat_other_receipt_barcode_master",
+   "origin": "pbg"
+  },
+  {
+   "order": 238,
+   "level": "2",
+   "group": "자재창고",
+   "groupCode": "M_WAREHOUSE",
+   "text": "자재바코드출고관리",
+   "itemName": "M_48",
+   "window": "w_mat_other_issue_barcode_master",
+   "origin": "srw"
+  },
+  {
+   "order": 239,
+   "level": "2",
+   "group": "자재창고",
+   "groupCode": "M_WAREHOUSE",
+   "text": "IMD 라인 자재투입관리",
+   "itemName": "M_MANUALINPUTMATERIAL",
+   "window": "w_mat_manual_input_history_query",
+   "origin": "srw"
+  },
+  {
+   "order": 240,
+   "level": "2",
+   "group": "자재창고",
+   "groupCode": "M_WAREHOUSE",
+   "text": "자재분할관리",
+   "itemName": "M_49",
+   "window": "w_mat_receipt_barcode_divide_master",
+   "origin": "pbg"
+  },
+  {
+   "order": 241,
+   "level": "2",
+   "group": "자재창고",
+   "groupCode": "M_WAREHOUSE",
+   "text": "자재바코드재발행",
+   "itemName": "M_MATERIALBARCODEREPRINT",
+   "window": "w_mat_receipt_barcode_reprint_master",
+   "origin": "srw"
+  },
+  {
+   "order": 243,
+   "level": "2",
+   "group": "자재창고",
+   "groupCode": "M_WAREHOUSE",
+   "text": "솔더라벨 발행",
+   "itemName": "M_SOLDERLABELPRINT",
+   "window": "w_mat_receipt_slip_master_onetek_solder",
+   "origin": "srw"
+  },
+  {
+   "order": 244,
+   "level": "2",
+   "group": "자재창고",
+   "groupCode": "M_WAREHOUSE",
+   "text": "솔더입출고조회",
+   "itemName": "M_SOLDERRECEIPTISSUEQUERY",
+   "window": "w_mat_solder_receipt_issue_master",
+   "origin": "srw"
+  },
+  {
+   "order": 245,
+   "level": "2",
+   "group": "자재창고",
+   "groupCode": "M_WAREHOUSE",
+   "text": "솔더라인투입이력조회",
+   "itemName": "M_SOLDERINPUTHISTORY",
+   "window": "w_mat_solder_input_move_query",
+   "origin": "srw"
+  },
+  {
+   "order": 247,
+   "level": "2",
+   "group": "자재창고",
+   "groupCode": "M_WAREHOUSE",
+   "text": "자재입출고수불원장",
+   "itemName": "M_45",
+   "window": "w_mat_ledger_report",
+   "origin": "pbg"
+  },
+  {
+   "order": 250,
+   "level": "3",
+   "group": "자재창고",
+   "groupCode": "M_WAREHOUSE",
+   "text": "출고바코드반품(양산/벌크)관리",
+   "itemName": "M_61",
+   "window": "w_mat_other_mass_issue_barcode_return_master",
+   "origin": "srw"
+  },
+  {
+   "order": 253,
+   "level": "3",
+   "group": "자재창고",
+   "groupCode": "M_WAREHOUSE",
+   "text": "자재입고관리",
+   "itemName": "M_30",
+   "window": "w_mat_receipt_master",
+   "origin": "srw"
+  },
+  {
+   "order": 254,
+   "level": "3",
+   "group": "자재창고",
+   "groupCode": "M_WAREHOUSE",
+   "text": "자재기타입고관리",
+   "itemName": "M_31",
+   "window": "w_mat_other_receipt_master",
+   "origin": "srw"
+  },
+  {
+   "order": 255,
+   "level": "3",
+   "group": "자재창고",
+   "groupCode": "M_WAREHOUSE",
+   "text": "자재입고취소",
+   "itemName": "M_MATERIALRECEIPTCANCEL",
+   "window": "w_mat_receipt_cancel_master",
+   "origin": "srw"
+  },
+  {
+   "order": 257,
+   "level": "3",
+   "group": "자재창고",
+   "groupCode": "M_WAREHOUSE",
+   "text": "자재기타출고",
+   "itemName": "M_52",
+   "window": "w_mat_other_issue_master",
+   "origin": "srw"
+  },
+  {
+   "order": 258,
+   "level": "3",
+   "group": "자재창고",
+   "groupCode": "M_WAREHOUSE",
+   "text": "자재출고취소",
+   "itemName": "M_56",
+   "window": "w_mat_mass_issue_cancel_master",
+   "origin": "srw"
+  },
+  {
+   "order": 260,
+   "level": "2",
+   "group": "자재창고",
+   "groupCode": "M_WAREHOUSE",
+   "text": "MSL 이상품목 처리이력관리",
+   "itemName": "M_MSLITEMCHECKMASTER",
+   "window": "w_mat_msl_item_check_master",
+   "origin": "srw"
+  },
+  {
+   "order": 261,
+   "level": "2",
+   "group": "자재창고",
+   "groupCode": "M_WAREHOUSE",
+   "text": "베이킹이력관리",
+   "itemName": "M_BAKINGHISTORYQUERY",
+   "window": "w_mat_baking_dehumi_scan_master",
+   "origin": "srw"
+  },
+  {
+   "order": 262,
+   "level": "2",
+   "group": "자재창고",
+   "groupCode": "M_WAREHOUSE",
+   "text": "베이킹재고조회",
+   "itemName": "M_BAKINGSTOCKQUERY",
+   "window": "w_mat_baking_scan_query",
+   "origin": "srw"
+  },
+  {
+   "order": 263,
+   "level": "2",
+   "group": "자재창고",
+   "groupCode": "M_WAREHOUSE",
+   "text": "진공포장재고조회",
+   "itemName": "M_VACUUMSTOCKQUERY",
+   "window": "w_mat_vacuum_scan_query",
+   "origin": "srw"
+  },
+  {
+   "order": 264,
+   "level": "2",
+   "group": "자재창고",
+   "groupCode": "M_WAREHOUSE",
+   "text": "제습함재고조회",
+   "itemName": "M_DEHUMISTOCKQUERY",
+   "window": "w_mat_dehumi_scan_query",
+   "origin": "srw"
+  },
+  {
+   "order": 266,
+   "level": "2",
+   "group": "자재창고",
+   "groupCode": "M_WAREHOUSE",
+   "text": "SMT 공릴체크",
+   "itemName": "M_CHECKRECYCLEREEL",
+   "window": "w_smt_recycle_check_rpt",
+   "origin": "pbg"
+  },
+  {
+   "order": 268,
+   "level": "2",
+   "group": "재고",
+   "groupCode": "M_INVENTORY",
+   "text": "현재고조회",
+   "itemName": "M_CURRENTINVENTORYQUERY",
+   "window": "w_mat_current_inventory_master",
+   "origin": "pbg"
+  },
+  {
+   "order": 269,
+   "level": "2",
+   "group": "재고",
+   "groupCode": "M_INVENTORY",
+   "text": "총재고조회",
+   "itemName": "M_TOTALINVENTORYQUERY",
+   "window": "w_mat_total_inventory_query",
+   "origin": "srw"
+  },
+  {
+   "order": 271,
+   "level": "2",
+   "group": "재고",
+   "groupCode": "M_INVENTORY",
+   "text": "자재재고마감",
+   "itemName": "M_62",
+   "window": "w_mat_inventory_close_report",
+   "origin": "srw"
+  },
+  {
+   "order": 272,
+   "level": "2",
+   "group": "재고",
+   "groupCode": "M_INVENTORY",
+   "text": "자재재고조사",
+   "itemName": "M_63",
+   "window": "w_mat_inventory_check_master",
+   "origin": "srw"
+  },
+  {
+   "order": 274,
+   "level": "2",
+   "group": "재고",
+   "groupCode": "M_INVENTORY",
+   "text": "자재바코드스캔실사",
+   "itemName": "M_64",
+   "window": "w_mat_barcode_check_master",
+   "origin": "srw"
+  },
+  {
+   "order": 276,
+   "level": "2",
+   "group": "수리",
+   "groupCode": "M_REPAIR",
+   "text": "공정수리관리(PID)",
+   "itemName": "M_WQCMANAGER",
+   "window": "w_pln_product_pcb_repair_master",
+   "origin": "srw"
+  },
+  {
+   "order": 278,
+   "level": "2",
+   "group": "수리",
+   "groupCode": "M_REPAIR",
+   "text": "공정폐기관리",
+   "itemName": "M_WQCDESTROYMASTER",
+   "window": "w_pln_product_pcb_destroy_master",
+   "origin": "srw"
+  },
+  {
+   "order": 280,
+   "level": "2",
+   "group": "수리",
+   "groupCode": "M_REPAIR",
+   "text": "수리자재신청",
+   "itemName": "M_MATERIALREQUEST",
+   "window": "w_mat_request_master",
+   "origin": "srw"
+  },
+  {
+   "order": 281,
+   "level": "2",
+   "group": "수리",
+   "groupCode": "M_REPAIR",
+   "text": "공정수리이력조회",
+   "itemName": "M_WQCREPAIRQUERY",
+   "window": "w_pln_product_pcb_repair_query",
+   "origin": "pbg"
+  },
+  {
+   "order": 283,
+   "level": "2",
+   "group": "품질관리",
+   "groupCode": "M_QC",
+   "text": "IQC 관리",
+   "itemName": "M_IQCMASTER",
+   "window": "w_qc_iqc_master",
+   "origin": "pbg"
+  },
+  {
+   "order": 284,
+   "level": "2",
+   "group": "품질관리",
+   "groupCode": "M_QC",
+   "text": "IQC 이력등록관리",
+   "itemName": "M_IQCINSPECTHISTORYMASTERPID",
+   "window": "w_qc_iqc_inspect_history_master",
+   "origin": "srw"
+  },
+  {
+   "order": 285,
+   "level": "2",
+   "group": "품질관리",
+   "groupCode": "M_QC",
+   "text": "PCB 이슈발생스캔관리",
+   "itemName": "M_PCBISSUESCANQUERY",
+   "window": "w_pln_product_pid_issue_scan_master",
+   "origin": "srw"
+  },
+  {
+   "order": 287,
+   "level": "2",
+   "group": "품질관리",
+   "groupCode": "M_QC",
+   "text": "재고통제관리",
+   "itemName": "M_INVENTORYHOLDMANAGER",
+   "window": "w_qc_inventory_hold_master",
+   "origin": "srw"
+  },
+  {
+   "order": 288,
+   "level": "2",
+   "group": "품질관리",
+   "groupCode": "M_QC",
+   "text": "PID 홀딩관리",
+   "itemName": "M_PIDBLOCKINGMASTER",
+   "window": "w_pln_product_barcode_holding",
+   "origin": "srw"
+  },
+  {
+   "order": 289,
+   "level": "2",
+   "group": "품질관리",
+   "groupCode": "M_QC",
+   "text": "품질이상발생관리",
+   "itemName": "M_QCNOTIFYMASTER",
+   "window": "w_qc_notify_master",
+   "origin": "srw"
+  },
+  {
+   "order": 290,
+   "level": "2",
+   "group": "품질관리",
+   "groupCode": "M_QC",
+   "text": "품질알림관리",
+   "itemName": "M_ECONOTIFYMASTER",
+   "window": "w_qc_eco_notify_master",
+   "origin": "srw"
+  },
+  {
+   "order": 291,
+   "level": "2",
+   "group": "품질관리",
+   "groupCode": "M_QC",
+   "text": "4M 이력관리",
+   "itemName": "M_4MHISTORYMASTER",
+   "window": "w_qc_4m_master",
+   "origin": "srw"
+  },
+  {
+   "order": 293,
+   "level": "2",
+   "group": "품질관리",
+   "groupCode": "M_QC",
+   "text": "공정품질검사이력관리",
+   "itemName": "M_WORKSTAGEINSPECTHISTORYMASTER",
+   "window": "w_qc_workstage_inspect_data_master_es",
+   "origin": "pbg"
+  },
+  {
+   "order": 294,
+   "level": "2",
+   "group": "품질관리",
+   "groupCode": "M_QC",
+   "text": "OQC 검사이력관리(PID)",
+   "itemName": "M_OQCINSPECTHISTORYMASTER",
+   "window": "w_qc_oqc_inspect_history_master",
+   "origin": "srw"
+  },
+  {
+   "order": 295,
+   "level": "2",
+   "group": "품질관리",
+   "groupCode": "M_QC",
+   "text": "OQC 검사이력관리(LOT)",
+   "itemName": "M_23",
+   "window": "w_qc_oqc_inspect_history_4_lot_master",
+   "origin": "srw"
+  },
+  {
+   "order": 297,
+   "level": "2",
+   "group": "품질관리",
+   "groupCode": "M_QC",
+   "text": "온도상태조회",
+   "itemName": "M_TEMPRETURESTATUSQUERY",
+   "window": "w_pln_product_tempreture_history_query",
+   "origin": "pbg"
+  },
+  {
+   "order": 299,
+   "level": "2",
+   "group": "출하현황",
+   "groupCode": "M_SHIPPING",
+   "text": "제품포장관리(PID)",
+   "itemName": "M_CELLBIZPACKING",
+   "window": "w_prd_product_packing_create_master",
+   "origin": "pbg"
+  },
+  {
+   "order": 300,
+   "level": "2",
+   "group": "출하현황",
+   "groupCode": "M_SHIPPING",
+   "text": "제품포장관리(LOT)",
+   "itemName": "M_PRODUCTMAGAZINEPACKINGMASTER",
+   "window": "w_prd_product_packing_4_magazine_create_master",
+   "origin": "srw"
+  },
+  {
+   "order": 302,
+   "level": "2",
+   "group": "출하현황",
+   "groupCode": "M_SHIPPING",
+   "text": "제품입고관리(PID)",
+   "itemName": "M_PRODUCTRECEIPTMASTER",
+   "window": "w_prd_product_fg_receipt",
+   "origin": "srw"
+  },
+  {
+   "order": 303,
+   "level": "2",
+   "group": "출하현황",
+   "groupCode": "M_SHIPPING",
+   "text": "제품입고관리(LOT)",
+   "itemName": "M_PRODUCTMAGAZINERECEIPTMASTER",
+   "window": "w_prd_product_fg_4_magazine_receipt",
+   "origin": "pbg"
+  },
+  {
+   "order": 304,
+   "level": "2",
+   "group": "출하현황",
+   "groupCode": "M_SHIPPING",
+   "text": "제품입고관리 (모델단위)",
+   "itemName": "M_PRODUCTMODELRECEIPTMASTER",
+   "window": "w_prd_product_fg_4_model_receipt",
+   "origin": "srw"
+  },
+  {
+   "order": 306,
+   "level": "2",
+   "group": "출하현황",
+   "groupCode": "M_SHIPPING",
+   "text": "파렛타이징 관리",
+   "itemName": "M_PRODUCTPALLETEMASTER",
+   "window": "w_prd_product_fg_palletizing",
+   "origin": "srw"
+  },
+  {
+   "order": 307,
+   "level": "2",
+   "group": "출하현황",
+   "groupCode": "M_SHIPPING",
+   "text": "제품출하관리",
+   "itemName": "M_PRODUCTSHIPPINGQUERY",
+   "window": "w_prd_product_fg_issue",
+   "origin": "pbg"
+  },
+  {
+   "order": 308,
+   "level": "2",
+   "group": "출하현황",
+   "groupCode": "M_SHIPPING",
+   "text": "제품출고관리 (모델단위)",
+   "itemName": "M_PRODUCTMODELISSUEMASTE",
+   "window": "w_prd_product_fg_4_model_issue",
+   "origin": "srw"
+  },
+  {
+   "order": 310,
+   "level": "2",
+   "group": "출하현황",
+   "groupCode": "M_SHIPPING",
+   "text": "제품재고",
+   "itemName": "M_PRODUCTINVENTORY",
+   "window": "w_prd_product_fg_inventory",
+   "origin": "srw"
+  },
+  {
+   "order": 311,
+   "level": "2",
+   "group": "출하현황",
+   "groupCode": "M_SHIPPING",
+   "text": "제품패킹이력",
+   "itemName": "M_PRODUCTPACKINGHISORY",
+   "window": "w_prd_product_packing_history",
+   "origin": "srw"
+  },
+  {
+   "order": 313,
+   "level": "2",
+   "group": "추적",
+   "groupCode": "M_TRACKING",
+   "text": "자재 제조번호 기준 추적",
+   "itemName": "M_PIDTRACKINGQUERY",
+   "window": "w_product_pid_tracking_rpt",
+   "origin": "srw"
+  },
+  {
+   "order": 314,
+   "level": "2",
+   "group": "추적",
+   "groupCode": "M_TRACKING",
+   "text": "자재추적조회(동적)",
+   "itemName": "M_MATERIALTRACKINGQUERY",
+   "window": "w_product_material_tracking_rpt",
+   "origin": "srw"
+  },
+  {
+   "order": 315,
+   "level": "2",
+   "group": "추적",
+   "groupCode": "M_TRACKING",
+   "text": "자재사용이력조회",
+   "itemName": "M_MATERIALUSEDHISTORY",
+   "window": "w_product_material_tracking_msl_rpt",
+   "origin": "srw"
+  },
+  {
+   "order": 317,
+   "level": "2",
+   "group": "추적",
+   "groupCode": "M_TRACKING",
+   "text": "생산이력조회(PID)",
+   "itemName": "M_PIDTRACKING",
+   "window": "w_product_pid_tracking_fpcb_rpt",
+   "origin": "srw"
+  },
+  {
+   "order": 318,
+   "level": "2",
+   "group": "추적",
+   "groupCode": "M_TRACKING",
+   "text": "생산이력조회(Run No)",
+   "itemName": "M_PIDTRACKINGFORTHEPRODUCTION",
+   "window": "w_pln_product_barcode_tracking",
+   "origin": "srw"
+  },
+  {
+   "order": 319,
+   "level": "2",
+   "group": "추적",
+   "groupCode": "M_TRACKING",
+   "text": "롯트추적조회(ALL)",
+   "itemName": "M_ALLTRACKINGFORTHEPRODUCTION",
+   "window": "w_pln_product_all_barcode_tracking",
+   "origin": "srw"
+  },
+  {
+   "order": 321,
+   "level": "2",
+   "group": "추적",
+   "groupCode": "M_TRACKING",
+   "text": "생산현황데쉬보드",
+   "itemName": "M_PRODUCTIONSTATUSDASHBOARD",
+   "window": "w_com_production_status_dashboard",
+   "origin": "srw"
+  },
+  {
+   "order": 323,
+   "level": "2",
+   "group": "조회",
+   "groupCode": "M_QUERY",
+   "text": "PID 정보조회",
+   "itemName": "M_PIDMASTERQUERY",
+   "window": "w_pln_product_barcode_query",
+   "origin": "srw"
+  },
+  {
+   "order": 324,
+   "level": "2",
+   "group": "조회",
+   "groupCode": "M_QUERY",
+   "text": "마킹이력조회",
+   "itemName": "M_MARKINGHISTORYQUERY",
+   "window": "w_pln_product_pcb_marking_query",
+   "origin": "srw"
+  },
+  {
+   "order": 325,
+   "level": "2",
+   "group": "조회",
+   "groupCode": "M_QUERY",
+   "text": "PCB 투입 리스트조회",
+   "itemName": "M_PCBINPUTSCANLISTQUERY",
+   "window": "w_qc_pcb_input_scan_master",
+   "origin": "srw"
+  },
+  {
+   "order": 327,
+   "level": "2",
+   "group": "조회",
+   "groupCode": "M_QUERY",
+   "text": "SMT 오장착 스캔 현황 조회",
+   "itemName": "M_PDASCANLISTQUERY",
+   "window": "w_pln_product_pda_scan_query",
+   "origin": "srw"
+  },
+  {
+   "order": 328,
+   "level": "2",
+   "group": "조회",
+   "groupCode": "M_QUERY",
+   "text": "PDA 검사오류내역조회",
+   "itemName": "M_PDASCANNGLISTQUERY",
+   "window": "w_smt_plan_ng_check_master",
+   "origin": "srw"
+  },
+  {
+   "order": 329,
+   "level": "2",
+   "group": "조회",
+   "groupCode": "M_QUERY",
+   "text": "SMT 피더별 모니터링",
+   "itemName": "M_SMTFEEDERMONITORING0",
+   "window": "w_smt_plan_feeder_monitoring_master",
+   "origin": "srw"
+  },
+  {
+   "order": 330,
+   "level": "2",
+   "group": "조회",
+   "groupCode": "M_QUERY",
+   "text": "SMT 제품실적센서이력조회",
+   "itemName": "M_SMTPRODUCTSENSORACTUALQUERY",
+   "window": "w_pln_product_sensor_actual_master",
+   "origin": "srw"
+  },
+  {
+   "order": 331,
+   "level": "2",
+   "group": "조회",
+   "groupCode": "M_QUERY",
+   "text": "마스크검사이력조회",
+   "itemName": "M_MASKCHECKHISTORYQUERY",
+   "window": "w_mcn_jig_mask_check_history",
+   "origin": "srw"
+  },
+  {
+   "order": 332,
+   "level": "2",
+   "group": "조회",
+   "groupCode": "M_QUERY",
+   "text": "스퀴지검사이력조회",
+   "itemName": "M_SQUEEZECHECKHISTORYQUERY",
+   "window": "w_mcn_jig_squeeze_check_history",
+   "origin": "srw"
+  },
+  {
+   "order": 333,
+   "level": "2",
+   "group": "조회",
+   "groupCode": "M_QUERY",
+   "text": "자재 바코드 상태 조회",
+   "itemName": "M_MATERIALBARCODESTATUSQUERY",
+   "window": "w_mat_barcode_status_report",
+   "origin": "srw"
+  },
+  {
+   "order": 335,
+   "level": "2",
+   "group": "조회",
+   "groupCode": "M_QUERY",
+   "text": "NSNP 처리이력조회",
+   "itemName": "M_NSNPPROESSHISTORYMASTER",
+   "window": "w_pln_product_nsnp_history_query",
+   "origin": "pbg"
+  },
+  {
+   "order": 338,
+   "level": "3",
+   "group": "리포트",
+   "groupCode": "M_REPORT",
+   "text": "폼목마스터리포트",
+   "itemName": "M_ITEMMASTERREPORT",
+   "window": "w_des_item_master_rpt",
+   "origin": "srw"
+  },
+  {
+   "order": 340,
+   "level": "3",
+   "group": "리포트",
+   "groupCode": "M_REPORT",
+   "text": "라인설비바코드",
+   "itemName": "M_LINEBARCODE",
+   "window": "w_pln_line_barcode_rpt",
+   "origin": "srw"
+  },
+  {
+   "order": 341,
+   "level": "3",
+   "group": "리포트",
+   "groupCode": "M_REPORT",
+   "text": "캐리어바코드",
+   "itemName": "M_CARRIERBARCODE",
+   "window": "w_product_carrier_barcode",
+   "origin": "srw"
+  },
+  {
+   "order": 343,
+   "level": "3",
+   "group": "리포트",
+   "groupCode": "M_REPORT",
+   "text": "설비리포트",
+   "itemName": "M_MACHINEREPAIRREPORT",
+   "window": "w_mcn_machine_rpt",
+   "origin": "srw"
+  },
+  {
+   "order": 344,
+   "level": "3",
+   "group": "리포트",
+   "groupCode": "M_REPORT",
+   "text": "SMT PICKUP 리포트",
+   "itemName": "M_PICKUPRATEREPORT",
+   "window": "w_smt_pickup_rate_rpt",
+   "origin": "srw"
+  },
+  {
+   "order": 346,
+   "level": "3",
+   "group": "리포트",
+   "groupCode": "M_REPORT",
+   "text": "생산계획리포트",
+   "itemName": "M_PRODUCTMASTERPLANREPORT",
+   "window": "w_pln_master_plan_rpt",
+   "origin": "srw"
+  },
+  {
+   "order": 347,
+   "level": "3",
+   "group": "리포트",
+   "groupCode": "M_REPORT",
+   "text": "런카드리포트",
+   "itemName": "M_PRODUCTRUNCARDREPORT",
+   "window": "w_product_run_card_rpt",
+   "origin": "srw"
+  },
+  {
+   "order": 348,
+   "level": "3",
+   "group": "리포트",
+   "groupCode": "M_REPORT",
+   "text": "제품 판매실적",
+   "itemName": "M_PRODUCTSHIPPINGREPORT",
+   "window": "w_prd_product_fg_issue_rpt",
+   "origin": "srw"
+  },
+  {
+   "order": 350,
+   "level": "3",
+   "group": "리포트",
+   "groupCode": "M_REPORT",
+   "text": "공정재공조회",
+   "itemName": "M_50",
+   "window": "w_product_workstage_stock_rpt",
+   "origin": "srw"
+  },
+  {
+   "order": 352,
+   "level": "3",
+   "group": "리포트",
+   "groupCode": "M_REPORT",
+   "text": "공정매거진조회",
+   "itemName": "M_91",
+   "window": "w_product_workstage_magazine_stock_rpt",
+   "origin": "srw"
+  },
+  {
+   "order": 354,
+   "level": "3",
+   "group": "리포트",
+   "groupCode": "M_REPORT",
+   "text": "S-PARTS입고리포트",
+   "itemName": "M_MOLDRECEIPTREPORT",
+   "window": "w_mcn_mold_receipt_rpt",
+   "origin": "srw"
+  },
+  {
+   "order": 355,
+   "level": "3",
+   "group": "리포트",
+   "groupCode": "M_REPORT",
+   "text": "S-PARTS출고리포트",
+   "itemName": "M_MOLDISSUEREPORT",
+   "window": "w_mcn_mold_issue_rpt",
+   "origin": "srw"
+  },
+  {
+   "order": 357,
+   "level": "3",
+   "group": "리포트",
+   "groupCode": "M_REPORT",
+   "text": "지그리포트",
+   "itemName": "M_JIGMASTERREPORT",
+   "window": "w_mcn_jig_rpt",
+   "origin": "srw"
+  },
+  {
+   "order": 358,
+   "level": "3",
+   "group": "리포트",
+   "groupCode": "M_REPORT",
+   "text": "S-PARTS관리리포트",
+   "itemName": "M_MOLDMASTERREPORT",
+   "window": "w_mcn_mold_rpt",
+   "origin": "srw"
+  },
+  {
+   "order": 360,
+   "level": "3",
+   "group": "리포트",
+   "groupCode": "M_REPORT",
+   "text": "4M 변경이력",
+   "itemName": "M_4MCHANGEHISTORY",
+   "window": "w_qc_4m_history_rpt",
+   "origin": "srw"
+  },
+  {
+   "order": 362,
+   "level": "3",
+   "group": "리포트",
+   "groupCode": "M_REPORT",
+   "text": "자재전표바코드리포트",
+   "itemName": "M_39",
+   "window": "w_mat_receipt_issue_barcode_history_report",
+   "origin": "srw"
+  },
+  {
+   "order": 363,
+   "level": "3",
+   "group": "리포트",
+   "groupCode": "M_REPORT",
+   "text": "자재입고리포트",
+   "itemName": "M_40",
+   "window": "w_mat_receipt_report",
+   "origin": "srw"
+  },
+  {
+   "order": 364,
+   "level": "3",
+   "group": "리포트",
+   "groupCode": "M_REPORT",
+   "text": "자재입고합계리포트",
+   "itemName": "M_41",
+   "window": "w_mat_receipt_sum_report",
+   "origin": "srw"
+  },
+  {
+   "order": 365,
+   "level": "3",
+   "group": "리포트",
+   "groupCode": "M_REPORT",
+   "text": "자재출고리포트",
+   "itemName": "M_42",
+   "window": "w_mat_issue_report",
+   "origin": "srw"
+  },
+  {
+   "order": 366,
+   "level": "3",
+   "group": "리포트",
+   "groupCode": "M_REPORT",
+   "text": "자재출고합계리포트",
+   "itemName": "M_44",
+   "window": "w_mat_issue_sum_report",
+   "origin": "srw"
+  },
+  {
+   "order": 367,
+   "level": "3",
+   "group": "리포트",
+   "groupCode": "M_REPORT",
+   "text": "자재랙이동리포트",
+   "itemName": "M_51",
+   "window": "w_mat_location_address_move_report",
+   "origin": "srw"
+  },
+  {
+   "order": 368,
+   "level": "3",
+   "group": "리포트",
+   "groupCode": "M_REPORT",
+   "text": "자재장기재고리포트",
+   "itemName": "M_53",
+   "window": "w_mat_long_term_inventory_report",
+   "origin": "srw"
+  },
+  {
+   "order": 369,
+   "level": "3",
+   "group": "리포트",
+   "groupCode": "M_REPORT",
+   "text": "재고리포트",
+   "itemName": "M_ITEMINVENTORYREPORT",
+   "window": "w_mat_current_inventory_report",
+   "origin": "srw"
+  },
+  {
+   "order": 371,
+   "level": "2",
+   "group": "승인",
+   "groupCode": "M_CONFIRM",
+   "text": "반출반입승인",
+   "itemName": "M_6",
+   "window": "w_com_carrying_out_bring_in_confirm",
+   "origin": "srw"
+  },
+  {
+   "order": 372,
+   "level": "2",
+   "group": "승인",
+   "groupCode": "M_CONFIRM",
+   "text": "반출반입승인(보안)",
+   "itemName": "M_7",
+   "window": "w_com_carrying_out_bring_in_security",
+   "origin": "srw"
+  },
+  {
+   "order": 373,
+   "level": "2",
+   "group": "승인",
+   "groupCode": "M_CONFIRM",
+   "text": "구매단가승인",
+   "itemName": "M_BUYPRICECONFIRM",
+   "window": "w_mat_buy_price_confirm",
+   "origin": "srw"
+  },
+  {
+   "order": 374,
+   "level": "2",
+   "group": "승인",
+   "groupCode": "M_CONFIRM",
+   "text": "판매단가승인",
+   "itemName": "M_SALEPRICECONFIRM",
+   "window": "w_sal_sale_price_confirm",
+   "origin": "srw"
+  },
+  {
+   "order": 375,
+   "level": "2",
+   "group": "승인",
+   "groupCode": "M_CONFIRM",
+   "text": "S-PARTS구매단가승인",
+   "itemName": "M_MOLDBUYPRICECONFIRM",
+   "window": "w_mcn_mold_buy_price_confirm",
+   "origin": "srw"
+  },
+  {
+   "order": 377,
+   "level": "2",
+   "group": "승인",
+   "groupCode": "M_CONFIRM",
+   "text": "설계BOM승인",
+   "itemName": "M_ENGBOMCONFIRM",
+   "window": "w_des_bom_confirm_master",
+   "origin": "srw"
+  },
+  {
+   "order": 379,
+   "level": "2",
+   "group": "기본정보",
+   "groupCode": "M_MANAGE",
+   "text": "회사",
+   "itemName": "M_COMPANYMANAGEMENT",
+   "window": "w_company_master",
+   "origin": "srw"
+  },
+  {
+   "order": 380,
+   "level": "2",
+   "group": "기본정보",
+   "groupCode": "M_MANAGE",
+   "text": "조직",
+   "itemName": "M_ORGANIZATION",
+   "window": "w_organization_master",
+   "origin": "srw"
+  },
+  {
+   "order": 381,
+   "level": "2",
+   "group": "기본정보",
+   "groupCode": "M_MANAGE",
+   "text": "부서",
+   "itemName": "M_DEPARTMENT",
+   "window": "w_department_master",
+   "origin": "srw"
+  },
+  {
+   "order": 382,
+   "level": "2",
+   "group": "기본정보",
+   "groupCode": "M_MANAGE",
+   "text": "사용자",
+   "itemName": "M_USER",
+   "window": "w_user_master",
+   "origin": "srw"
+  },
+  {
+   "order": 384,
+   "level": "2",
+   "group": "기본정보",
+   "groupCode": "M_MANAGE",
+   "text": "애플리케이션창",
+   "itemName": "M_APPLICATIONWINDOW",
+   "window": "w_window_master",
+   "origin": "srw"
+  },
+  {
+   "order": 385,
+   "level": "2",
+   "group": "기본정보",
+   "groupCode": "M_MANAGE",
+   "text": "역할",
+   "itemName": "M_ROLE",
+   "window": "w_role_master",
+   "origin": "srw"
+  },
+  {
+   "order": 387,
+   "level": "3",
+   "group": "기본정보",
+   "groupCode": "M_MANAGE",
+   "text": "프로그램사용권한",
+   "itemName": "M_APPLICATIONPLIBILEGE",
+   "window": "w_privilege_master",
+   "origin": "srw"
+  },
+  {
+   "order": 389,
+   "level": "2",
+   "group": "기본정보",
+   "groupCode": "M_MANAGE",
+   "text": "메세지에이젼트",
+   "itemName": "M_MESSAGEAGENT",
+   "window": "w_agent_message_master",
+   "origin": "srw"
+  },
+  {
+   "order": 391,
+   "level": "2",
+   "group": "기본정보",
+   "groupCode": "M_MANAGE",
+   "text": "기초코드관리",
+   "itemName": "M_BASECODE",
+   "window": "w_basecode_master",
+   "origin": "srw"
+  },
+  {
+   "order": 392,
+   "level": "2",
+   "group": "기본정보",
+   "groupCode": "M_MANAGE",
+   "text": "표준코드관리",
+   "itemName": "M_STANDARDCODEMANAGE",
+   "window": "w_standard_code_master",
+   "origin": "srw"
+  },
+  {
+   "order": 395,
+   "level": "3",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "언어텍스트관리",
+   "itemName": "M_LANGUAGESOURCEMANAGE",
+   "window": "w_dual_language",
+   "origin": "srw"
+  },
+  {
+   "order": 396,
+   "level": "3",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "메세지텍스트관리",
+   "itemName": "M_MESSAGESOURCEMANAGE",
+   "window": "w_dual_message",
+   "origin": "srw"
+  },
+  {
+   "order": 398,
+   "level": "3",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "용어사전",
+   "itemName": "M_WORDDICTIONARY",
+   "window": "w_word_dictionary",
+   "origin": "srw"
+  },
+  {
+   "order": 400,
+   "level": "3",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "윈도우언어변환대상찾기\tAlt+F10",
+   "itemName": "M_FINDWINDOWLANGUAGESOURCE",
+   "window": "",
+   "origin": ""
+  },
+  {
+   "order": 401,
+   "level": "3",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "메뉴언어변환대상찾기\tAlt+F11",
+   "itemName": "M_FINDMENULANGUAGESOURCE",
+   "window": "",
+   "origin": ""
+  },
+  {
+   "order": 403,
+   "level": "3",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "시스템환경",
+   "itemName": "M_SYSYTEMENVIRONMENT",
+   "window": "w_system_config",
+   "origin": "srw"
+  },
+  {
+   "order": 404,
+   "level": "3",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "컬럼포맷\tF12",
+   "itemName": "M_COLUMNFORMAT",
+   "window": "w_col_info_popup",
+   "origin": "srw"
+  },
+  {
+   "order": 405,
+   "level": "3",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "재고마감일자설정",
+   "itemName": "M_INVENTORYCLOSEDATESETUP",
+   "window": "w_system_inventory_close_date_setup",
+   "origin": "srw"
+  },
+  {
+   "order": 407,
+   "level": "3",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "엔터키탭처럼사용안함",
+   "itemName": "M_ENTERTOTABON",
+   "window": "",
+   "origin": ""
+  },
+  {
+   "order": 408,
+   "level": "3",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "행변경이벤트켜기",
+   "itemName": "M_ROWFOCUSCHANGEON",
+   "window": "",
+   "origin": ""
+  },
+  {
+   "order": 410,
+   "level": "3",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "언어즉시변경켜기",
+   "itemName": "M_LANGUAGEDIRECTCHANGOFF",
+   "window": "",
+   "origin": ""
+  },
+  {
+   "order": 412,
+   "level": "3",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "메뉴재설정",
+   "itemName": "M_MENURELOAD",
+   "window": "",
+   "origin": ""
+  },
+  {
+   "order": 413,
+   "level": "3",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "메뉴관리",
+   "itemName": "M_MENUMANAGE",
+   "window": "w_menu_master",
+   "origin": "srw"
+  },
+  {
+   "order": 415,
+   "level": "3",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "SQL 페인터",
+   "itemName": "M_SQLPAINTER",
+   "window": "w_sql_painter",
+   "origin": "srw"
+  },
+  {
+   "order": 416,
+   "level": "3",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "SQL보기",
+   "itemName": "M_SHOWSQL",
+   "window": "w_edit_window",
+   "origin": "srw"
+  },
+  {
+   "order": 417,
+   "level": "3",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "기초코드보기\tCtrl+F1",
+   "itemName": "M_SHOWVALUELIST",
+   "window": "w_value_list_popup",
+   "origin": "srw"
+  },
+  {
+   "order": 418,
+   "level": "3",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "선택된데이타보기",
+   "itemName": "M_SHOWSELECTEDDATA",
+   "window": "w_edit_window",
+   "origin": "srw"
+  },
+  {
+   "order": 419,
+   "level": "3",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "데이타창보기",
+   "itemName": "M_SHOWDATAWINDOW",
+   "window": "w_show_datawindow_popup",
+   "origin": "srw"
+  },
+  {
+   "order": 420,
+   "level": "3",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "테이블컬럼보기",
+   "itemName": "M_SHOWTABLECOLUMN",
+   "window": "w_table_description_rpt",
+   "origin": "srw"
+  },
+  {
+   "order": 421,
+   "level": "3",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "오브젝트보기",
+   "itemName": "M_SHOWSYSTEMOBJECT",
+   "window": "w_db_object_master",
+   "origin": "srw"
+  },
+  {
+   "order": 423,
+   "level": "3",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "인터페이스로그보기",
+   "itemName": "M_SHOWINTERFACELOG",
+   "window": "",
+   "origin": ""
+  },
+  {
+   "order": 424,
+   "level": "3",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "시스템오류내역보기",
+   "itemName": "M_SHOWERRORLOG",
+   "window": "w_error_log_trace",
+   "origin": "srw"
+  },
+  {
+   "order": 425,
+   "level": "3",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "시스템사용내역",
+   "itemName": "M_SHOWSYSTEMACCESS",
+   "window": "w_system_access_master",
+   "origin": "srw"
+  },
+  {
+   "order": 428,
+   "level": "4",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "수정모드켜기",
+   "itemName": "M_EDITMODEON",
+   "window": "",
+   "origin": ""
+  },
+  {
+   "order": 429,
+   "level": "4",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "수정모드끄기",
+   "itemName": "M_EDITMODEOFF",
+   "window": "",
+   "origin": ""
+  },
+  {
+   "order": 431,
+   "level": "4",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "오브젝트삭제",
+   "itemName": "M_DESTORYOBJECT",
+   "window": "",
+   "origin": ""
+  },
+  {
+   "order": 433,
+   "level": "4",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "라인가운데정렬",
+   "itemName": "M_ALIGNLINECENTER",
+   "window": "",
+   "origin": ""
+  },
+  {
+   "order": 435,
+   "level": "4",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "위로정렬",
+   "itemName": "M_ALIGNTOP",
+   "window": "",
+   "origin": ""
+  },
+  {
+   "order": 436,
+   "level": "4",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "아래로정렬",
+   "itemName": "M_ALIGNBOTTOM",
+   "window": "",
+   "origin": ""
+  },
+  {
+   "order": 437,
+   "level": "4",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "왼쪽정렬",
+   "itemName": "M_ALIGNLEFT",
+   "window": "",
+   "origin": ""
+  },
+  {
+   "order": 438,
+   "level": "4",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "오른쪽정렬",
+   "itemName": "M_ALIGNRIGHT",
+   "window": "",
+   "origin": ""
+  },
+  {
+   "order": 440,
+   "level": "4",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "가로크기맞춤",
+   "itemName": "M_SIZEWIDTHS",
+   "window": "",
+   "origin": ""
+  },
+  {
+   "order": 441,
+   "level": "4",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "세로크기맞춤",
+   "itemName": "M_SIZEHEIGHT",
+   "window": "",
+   "origin": ""
+  },
+  {
+   "order": 442,
+   "level": "4",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "SMT 공릴체크",
+   "itemName": "M_CHEKCRECYCLEREEL",
+   "window": "",
+   "origin": ""
+  },
+  {
+   "order": 444,
+   "level": "5",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "왼쪽맞춤",
+   "itemName": "M_ADJUSTLEFT",
+   "window": "",
+   "origin": ""
+  },
+  {
+   "order": 445,
+   "level": "5",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "가운데맞춤",
+   "itemName": "M_ADJUSTCENTER",
+   "window": "",
+   "origin": ""
+  },
+  {
+   "order": 446,
+   "level": "5",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "오른쪽맞춤",
+   "itemName": "M_ADJUSTRIGHT",
+   "window": "",
+   "origin": ""
+  },
+  {
+   "order": 448,
+   "level": "4",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "박스보이기",
+   "itemName": "M_SHOWBOLDER0",
+   "window": "",
+   "origin": ""
+  },
+  {
+   "order": 449,
+   "level": "4",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "박스없애기",
+   "itemName": "M_SHOWNOBOLDER",
+   "window": "",
+   "origin": ""
+  },
+  {
+   "order": 450,
+   "level": "4",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "그림자보기",
+   "itemName": "M_SHOWSHADOW",
+   "window": "",
+   "origin": ""
+  },
+  {
+   "order": 451,
+   "level": "3",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "런타임데이타창생성",
+   "itemName": "M_RUNTIMEDWGENERATOR",
+   "window": "w_runtime_dw_generator",
+   "origin": "srw"
+  },
+  {
+   "order": 452,
+   "level": "3",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "리포트생성기",
+   "itemName": "M_REPORTGENERATOR",
+   "window": "w_report_generator",
+   "origin": "srw"
+  },
+  {
+   "order": 454,
+   "level": "3",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "리포트관리",
+   "itemName": "M_REPORTMASTER",
+   "window": "w_dataobject_master",
+   "origin": "srw"
+  },
+  {
+   "order": 457,
+   "level": "4",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "IT 자산 현황",
+   "itemName": "M_ITATSETMANAGEMENT",
+   "window": "w_mcn_it_master",
+   "origin": "srw"
+  },
+  {
+   "order": 459,
+   "level": "4",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "리플로우상태조회",
+   "itemName": "M_REFLOWSTATUSQUERY",
+   "window": "w_qc_interlock_reflow_status_master",
+   "origin": "srw"
+  },
+  {
+   "order": 460,
+   "level": "4",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "설비 픽업률조회",
+   "itemName": "M_SMTPICKUPINQUERY",
+   "window": "w_smt_pickup_rate_head",
+   "origin": "pbg"
+  },
+  {
+   "order": 461,
+   "level": "4",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "SMT 픽업율(최종데이터조회)",
+   "itemName": "M_SMTPICKUPLASTDATAINQUERY",
+   "window": "w_smt_pickup_rate_last_data_query",
+   "origin": "srw"
+  },
+  {
+   "order": 463,
+   "level": "4",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "자재전표엑셀업로드관리",
+   "itemName": "M_14",
+   "window": "w_mat_receipt_slip_excel_upload_master",
+   "origin": "srw"
+  },
+  {
+   "order": 464,
+   "level": "4",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "자재(대여/차용)전표등록관리",
+   "itemName": "M_28",
+   "window": "w_mat_receipt_slip_4_rental_borrowing_master",
+   "origin": "srw"
+  },
+  {
+   "order": 465,
+   "level": "4",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "자재(대여/차용상환)관리",
+   "itemName": "M_35",
+   "window": "w_mat_other_receipt_rental_borrowing_barcode_master",
+   "origin": "srw"
+  },
+  {
+   "order": 466,
+   "level": "4",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "자재릴합침관리 ( PCB )",
+   "itemName": "M_54",
+   "window": "w_mat_receipt_barcode_combine_master",
+   "origin": "srw"
+  },
+  {
+   "order": 467,
+   "level": "4",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "출고바코드반품(수리/리볼)관리",
+   "itemName": "M_60",
+   "window": "w_mat_other_issue_barcode_return_master",
+   "origin": "srw"
+  },
+  {
+   "order": 468,
+   "level": "4",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "자재요청조회",
+   "itemName": "M_MATERIALREQUESTQUERY",
+   "window": "w_mat_material_request_master",
+   "origin": "srw"
+  },
+  {
+   "order": 469,
+   "level": "4",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "라인별 모니터링",
+   "itemName": "M_SMTFEEDERMONITORINGLINEMASTER",
+   "window": "w_smt_plan_feeder_monitoring_line_master",
+   "origin": "srw"
+  },
+  {
+   "order": 471,
+   "level": "4",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "자재요청관리",
+   "itemName": "M_WORKSTAGEMATERIALRECEIPTCHECKMASTER",
+   "window": "w_pln_workstage_material_receipt_check_master",
+   "origin": "srw"
+  },
+  {
+   "order": 473,
+   "level": "4",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "반품수리관리",
+   "itemName": "M_SHIPPINGRETURNREPAIRMASTER",
+   "window": "w_sal_shipping_return_repair_master",
+   "origin": "srw"
+  },
+  {
+   "order": 475,
+   "level": "4",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "반제품바코드스캔실사",
+   "itemName": "M_65",
+   "window": "w_pln_barcode_check_master",
+   "origin": "srw"
+  },
+  {
+   "order": 477,
+   "level": "4",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "자재소요량관리",
+   "itemName": "M_59",
+   "window": "w_mat_requirment_plan_master",
+   "origin": "srw"
+  },
+  {
+   "order": 478,
+   "level": "4",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "자재발주계획",
+   "itemName": "M_67",
+   "window": "w_mat_purchase_order_plan_master",
+   "origin": "srw"
+  },
+  {
+   "order": 480,
+   "level": "4",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "자재주문예정관리",
+   "itemName": "M_71",
+   "window": "w_mat_forecast_order_master",
+   "origin": "srw"
+  },
+  {
+   "order": 481,
+   "level": "4",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "자재주문관리",
+   "itemName": "M_73",
+   "window": "w_mat_purchase_order_master",
+   "origin": "srw"
+  },
+  {
+   "order": 483,
+   "level": "4",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "자재출발관리",
+   "itemName": "M_82",
+   "window": "w_mat_departure_master",
+   "origin": "srw"
+  },
+  {
+   "order": 484,
+   "level": "4",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "자재도착관리",
+   "itemName": "M_84",
+   "window": "w_mat_arrival_master",
+   "origin": "srw"
+  },
+  {
+   "order": 486,
+   "level": "4",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "설비검사확인(스캔)",
+   "itemName": "M_MACHINEINSPECTMANUAL",
+   "window": "w_qc_machine_inspect_manual",
+   "origin": "srw"
+  },
+  {
+   "order": 487,
+   "level": "4",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "고객컴플레인관리",
+   "itemName": "M_CUSTOMERCOMPLAINTSMANAGER",
+   "window": "w_customer_complaints_master",
+   "origin": "srw"
+  },
+  {
+   "order": 488,
+   "level": "4",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "이상발생 모니터링",
+   "itemName": "M_ACTIONHISTORYFORNGSOUND",
+   "window": "w_pln_product_sound_history_query",
+   "origin": "srw"
+  },
+  {
+   "order": 490,
+   "level": "4",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "SMT 파트라이브러리관리",
+   "itemName": "M_SMTUPLOADPARTLIBMASTER",
+   "window": "w_smt_upload_partlib_master",
+   "origin": "srw"
+  },
+  {
+   "order": 492,
+   "level": "4",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "메탈마스크텐션 수동 관리",
+   "itemName": "M_MASKTENSIONMANUALCHECKMASTER",
+   "window": "w_mcn_jig_mask_check_master",
+   "origin": "srw"
+  },
+  {
+   "order": 493,
+   "level": "4",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "픽스쳐검사관리",
+   "itemName": "M_JIGFIXTURECHECKMASTER",
+   "window": "w_mcn_jig_fixture_check_master",
+   "origin": "srw"
+  },
+  {
+   "order": 495,
+   "level": "4",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "제품납품계획",
+   "itemName": "M_PRODUCTSALEPLAN",
+   "window": "w_pln_product_delivery_master",
+   "origin": "srw"
+  },
+  {
+   "order": 496,
+   "level": "4",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "포장바코드중복체크관리",
+   "itemName": "M_PACKINGDUPULICATECHECKMASTER",
+   "window": "w_pln_product_packing_dupulicate_check_master",
+   "origin": "srw"
+  },
+  {
+   "order": 498,
+   "level": "4",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "반출송장",
+   "itemName": "M_17",
+   "window": "w_com_carrying_out_master",
+   "origin": "srw"
+  },
+  {
+   "order": 499,
+   "level": "4",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "반입송장",
+   "itemName": "M_22",
+   "window": "w_com_bring_in_master",
+   "origin": "srw"
+  },
+  {
+   "order": 501,
+   "level": "4",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "워크오더추적조회",
+   "itemName": "M_WORKORDERTRACKINGQUERY",
+   "window": "w_product_material_tracking_4_workorder_rpt",
+   "origin": "srw"
+  },
+  {
+   "order": 502,
+   "level": "4",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "자재추적조회(멀티/동적)",
+   "itemName": "M_MATERIALTRACKINGMULTIQUERY",
+   "window": "w_product_material_tracking_multi_rpt",
+   "origin": "srw"
+  },
+  {
+   "order": 503,
+   "level": "4",
+   "group": "시스템",
+   "groupCode": "M_SYSTEM",
+   "text": "제품 추적 조회",
+   "itemName": "M_MATERIALTRACKINGQUERYHISTORY",
+   "window": "w_product_material_tracking_history_rpt",
+   "origin": "srw"
+  }
+ ]
+}

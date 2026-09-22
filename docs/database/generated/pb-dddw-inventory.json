@@ -1,0 +1,962 @@
+[
+  {
+    "name": "vd_account_code_all",
+    "defined": false,
+    "used_in_files": 1,
+    "column_bindings": 2,
+    "sample_columns": [
+      "dr_account_code",
+      "cr_account_code"
+    ],
+    "data_display": [
+      {
+        "data_column": "account_code",
+        "display_column": "code_mean",
+        "count": 2
+      }
+    ],
+    "note": "이 소스 폴더에 객체가 없다. 다른 PBL 에 있는지 확인할 것."
+  },
+  {
+    "name": "vd_basecode",
+    "defined": true,
+    "used_in_files": 710,
+    "column_bindings": 2607,
+    "sample_columns": [
+      "line_type",
+      "currency",
+      "item_type",
+      "delivery",
+      "item_division"
+    ],
+    "data_display": [
+      {
+        "data_column": "code_name",
+        "display_column": "code_mean",
+        "count": 2586
+      },
+      {
+        "data_column": "code_name",
+        "display_column": "code_name",
+        "count": 12
+      },
+      {
+        "data_column": "code_mean",
+        "display_column": "code_mean",
+        "count": 9
+      }
+    ],
+    "tables": [
+      "ISYS_BASECODE"
+    ],
+    "retrieve_args": [
+      "ARG_LANG",
+      "ARG_ORG",
+      "ARG_CODE_TYPE"
+    ],
+    "sql_format": "text",
+    "kind": "basecode",
+    "code_type_from_column": true
+  },
+  {
+    "name": "vd_basecode_label_step",
+    "defined": true,
+    "used_in_files": 2,
+    "column_bindings": 40,
+    "sample_columns": [
+      "v4",
+      "v5",
+      "v6",
+      "v7",
+      "v8"
+    ],
+    "data_display": [
+      {
+        "data_column": "code_name",
+        "display_column": "code_mean",
+        "count": 40
+      }
+    ],
+    "tables": [
+      "ISYS_BASECODE"
+    ],
+    "retrieve_args": [
+      "ARG_LANG",
+      "ARG_ORG"
+    ],
+    "sql_format": "text",
+    "kind": "basecode",
+    "code_type_from_column": false
+  },
+  {
+    "name": "vd_company_code",
+    "defined": true,
+    "used_in_files": 1,
+    "column_bindings": 1,
+    "sample_columns": [
+      "company_code"
+    ],
+    "data_display": [
+      {
+        "data_column": "company_code",
+        "display_column": "company_name",
+        "count": 1
+      }
+    ],
+    "tables": [
+      "ISYS_COMPANY"
+    ],
+    "retrieve_args": [],
+    "sql_format": "pbselect",
+    "kind": "master",
+    "code_type_from_column": false
+  },
+  {
+    "name": "vd_customer_code",
+    "defined": true,
+    "used_in_files": 15,
+    "column_bindings": 15,
+    "sample_columns": [
+      "customer_code"
+    ],
+    "data_display": [
+      {
+        "data_column": "customer_code",
+        "display_column": "customer_name",
+        "count": 15
+      }
+    ],
+    "tables": [
+      "ICOM_CUSTOMER"
+    ],
+    "retrieve_args": [
+      "ARG_ORG"
+    ],
+    "sql_format": "pbselect",
+    "kind": "master",
+    "code_type_from_column": false
+  },
+  {
+    "name": "vd_customer_model_name",
+    "defined": false,
+    "used_in_files": 1,
+    "column_bindings": 1,
+    "sample_columns": [
+      "model_name"
+    ],
+    "data_display": [
+      {
+        "data_column": "customer_model_name",
+        "display_column": "customer_model_name",
+        "count": 1
+      }
+    ],
+    "note": "이 소스 폴더에 객체가 없다. 다른 PBL 에 있는지 확인할 것."
+  },
+  {
+    "name": "vd_department_code",
+    "defined": true,
+    "used_in_files": 23,
+    "column_bindings": 25,
+    "sample_columns": [
+      "department_code",
+      "pre_department_code",
+      "detail_department_code",
+      "reversion_department_code"
+    ],
+    "data_display": [
+      {
+        "data_column": "department_code",
+        "display_column": "department_name",
+        "count": 23
+      },
+      {
+        "data_column": "department_code",
+        "display_column": "department_code",
+        "count": 2
+      }
+    ],
+    "tables": [
+      "ISYS_DEPARTMENT"
+    ],
+    "retrieve_args": [
+      "ARG_LANGUAGE",
+      "ARG_ORG"
+    ],
+    "sql_format": "text",
+    "kind": "master",
+    "code_type_from_column": false
+  },
+  {
+    "name": "vd_iqc_standard_code",
+    "defined": true,
+    "used_in_files": 2,
+    "column_bindings": 2,
+    "sample_columns": [
+      "bad_reason_code"
+    ],
+    "data_display": [
+      {
+        "data_column": "code_name",
+        "display_column": "code_mean",
+        "count": 2
+      }
+    ],
+    "tables": [
+      "ISYS_CODE_MASTER"
+    ],
+    "retrieve_args": [
+      "ARG_LANG",
+      "ARG_ORG"
+    ],
+    "sql_format": "text",
+    "kind": "codemaster",
+    "code_type_from_column": false
+  },
+  {
+    "name": "vd_item_class_code",
+    "defined": true,
+    "used_in_files": 4,
+    "column_bindings": 4,
+    "sample_columns": [
+      "item_class",
+      "raw_material"
+    ],
+    "data_display": [
+      {
+        "data_column": "item_class",
+        "display_column": "item_class_name",
+        "count": 4
+      }
+    ],
+    "tables": [
+      "ID_ITEM_CLASS"
+    ],
+    "retrieve_args": [],
+    "sql_format": "pbselect",
+    "kind": "master",
+    "code_type_from_column": false
+  },
+  {
+    "name": "vd_item_code",
+    "defined": true,
+    "used_in_files": 1,
+    "column_bindings": 1,
+    "sample_columns": [
+      "item_code"
+    ],
+    "data_display": [
+      {
+        "data_column": "item_code",
+        "display_column": "item_code",
+        "count": 1
+      }
+    ],
+    "tables": [
+      "ID_ITEM"
+    ],
+    "retrieve_args": [
+      "ARG_ORG"
+    ],
+    "sql_format": "pbselect",
+    "kind": "master",
+    "code_type_from_column": false
+  },
+  {
+    "name": "vd_line_code",
+    "defined": true,
+    "used_in_files": 265,
+    "column_bindings": 286,
+    "sample_columns": [
+      "line_code",
+      "line_code_1",
+      "dest_line_code",
+      "from_line_code",
+      "line_type"
+    ],
+    "data_display": [
+      {
+        "data_column": "line_code",
+        "display_column": "line_name",
+        "count": 281
+      },
+      {
+        "data_column": "line_code",
+        "display_column": "line_code",
+        "count": 4
+      },
+      {
+        "data_column": "line_code",
+        "display_column": "workstage_name",
+        "count": 1
+      }
+    ],
+    "tables": [
+      "IP_PRODUCT_LINE"
+    ],
+    "retrieve_args": [
+      "ARG_ORG"
+    ],
+    "sql_format": "text",
+    "kind": "master",
+    "code_type_from_column": false
+  },
+  {
+    "name": "vd_location_barcode",
+    "defined": true,
+    "used_in_files": 7,
+    "column_bindings": 7,
+    "sample_columns": [
+      "location_code"
+    ],
+    "data_display": [
+      {
+        "data_column": "barcode",
+        "display_column": "barcode",
+        "count": 4
+      },
+      {
+        "data_column": "barcode",
+        "display_column": "location_code",
+        "count": 3
+      }
+    ],
+    "tables": [
+      "IB_MACHINE_LOCATION"
+    ],
+    "retrieve_args": [
+      "ARG_ORG"
+    ],
+    "sql_format": "text",
+    "kind": "master",
+    "code_type_from_column": false
+  },
+  {
+    "name": "vd_machine_code",
+    "defined": true,
+    "used_in_files": 46,
+    "column_bindings": 46,
+    "sample_columns": [
+      "machine_code",
+      "p_equip",
+      "apply_machine_code"
+    ],
+    "data_display": [
+      {
+        "data_column": "machine_code",
+        "display_column": "machine_name",
+        "count": 41
+      },
+      {
+        "data_column": "machine_code",
+        "display_column": "machine_code",
+        "count": 4
+      },
+      {
+        "data_column": "compute_1",
+        "display_column": "machine_name",
+        "count": 1
+      }
+    ],
+    "tables": [
+      "IMCN_MACHINE"
+    ],
+    "retrieve_args": [
+      "ARG_ORG"
+    ],
+    "sql_format": "text",
+    "kind": "master",
+    "code_type_from_column": false
+  },
+  {
+    "name": "vd_material_location_code",
+    "defined": true,
+    "used_in_files": 4,
+    "column_bindings": 4,
+    "sample_columns": [
+      "dest_location_code",
+      "location_code"
+    ],
+    "data_display": [
+      {
+        "data_column": "code_name",
+        "display_column": "code_mean",
+        "count": 4
+      }
+    ],
+    "tables": [
+      "ISYS_BASECODE"
+    ],
+    "retrieve_args": [
+      "ARG_LANG",
+      "ARG_ORG"
+    ],
+    "sql_format": "text",
+    "kind": "basecode",
+    "code_type_from_column": false
+  },
+  {
+    "name": "vd_mfs_revision",
+    "defined": false,
+    "used_in_files": 1,
+    "column_bindings": 1,
+    "sample_columns": [
+      "mfs"
+    ],
+    "data_display": [
+      {
+        "data_column": "revision",
+        "display_column": "revision",
+        "count": 1
+      }
+    ],
+    "note": "이 소스 폴더에 객체가 없다. 다른 PBL 에 있는지 확인할 것."
+  },
+  {
+    "name": "vd_model_name",
+    "defined": false,
+    "used_in_files": 10,
+    "column_bindings": 10,
+    "sample_columns": [
+      "model_name"
+    ],
+    "data_display": [
+      {
+        "data_column": "model_name",
+        "display_column": "model_name",
+        "count": 10
+      }
+    ],
+    "note": "이 소스 폴더에 객체가 없다. 다른 PBL 에 있는지 확인할 것."
+  },
+  {
+    "name": "vd_model_suffix_by_model",
+    "defined": true,
+    "used_in_files": 1,
+    "column_bindings": 1,
+    "sample_columns": [
+      "model_suffix"
+    ],
+    "data_display": [
+      {
+        "data_column": "model_suffix",
+        "display_column": "model_suffix",
+        "count": 1
+      }
+    ],
+    "tables": [
+      "ID_ITEM"
+    ],
+    "retrieve_args": [
+      "ARG_MODEL_NAME",
+      "ARG_ORG"
+    ],
+    "sql_format": "text",
+    "kind": "master",
+    "code_type_from_column": false
+  },
+  {
+    "name": "vd_mold_code",
+    "defined": false,
+    "used_in_files": 1,
+    "column_bindings": 1,
+    "sample_columns": [
+      "mold_code"
+    ],
+    "data_display": [
+      {
+        "data_column": "mold_code",
+        "display_column": "mold_code",
+        "count": 1
+      }
+    ],
+    "note": "이 소스 폴더에 객체가 없다. 다른 PBL 에 있는지 확인할 것."
+  },
+  {
+    "name": "vd_mold_location_code",
+    "defined": false,
+    "used_in_files": 12,
+    "column_bindings": 12,
+    "sample_columns": [
+      "mold_location_code",
+      "location_code"
+    ],
+    "data_display": [
+      {
+        "data_column": "mold_location_code",
+        "display_column": "mold_location_code",
+        "count": 12
+      }
+    ],
+    "note": "이 소스 폴더에 객체가 없다. 다른 PBL 에 있는지 확인할 것."
+  },
+  {
+    "name": "vd_mold_warehouse_code",
+    "defined": false,
+    "used_in_files": 1,
+    "column_bindings": 1,
+    "sample_columns": [
+      "mold_warehouse_code"
+    ],
+    "data_display": [
+      {
+        "data_column": "customer_code",
+        "display_column": "customer_name",
+        "count": 1
+      }
+    ],
+    "note": "이 소스 폴더에 객체가 없다. 다른 PBL 에 있는지 확인할 것."
+  },
+  {
+    "name": "vd_oqc_standard_code",
+    "defined": true,
+    "used_in_files": 6,
+    "column_bindings": 6,
+    "sample_columns": [
+      "bad_reason_code"
+    ],
+    "data_display": [
+      {
+        "data_column": "code_name",
+        "display_column": "code_mean",
+        "count": 6
+      }
+    ],
+    "tables": [
+      "ISYS_CODE_MASTER"
+    ],
+    "retrieve_args": [
+      "ARG_LANG",
+      "ARG_ORG"
+    ],
+    "sql_format": "text",
+    "kind": "codemaster",
+    "code_type_from_column": false
+  },
+  {
+    "name": "vd_organization_name",
+    "defined": true,
+    "used_in_files": 62,
+    "column_bindings": 62,
+    "sample_columns": [
+      "organization_id"
+    ],
+    "data_display": [
+      {
+        "data_column": "organization_id",
+        "display_column": "organization_name",
+        "count": 62
+      }
+    ],
+    "tables": [
+      "ISYS_ORGANIZATION"
+    ],
+    "retrieve_args": [],
+    "sql_format": "pbselect",
+    "kind": "master",
+    "code_type_from_column": false
+  },
+  {
+    "name": "vd_plc_address_code",
+    "defined": false,
+    "used_in_files": 1,
+    "column_bindings": 1,
+    "sample_columns": [
+      "actual_plc_address"
+    ],
+    "data_display": [
+      {
+        "data_column": "plc_address",
+        "display_column": "plc_address",
+        "count": 1
+      }
+    ],
+    "note": "이 소스 폴더에 객체가 없다. 다른 PBL 에 있는지 확인할 것."
+  },
+  {
+    "name": "vd_product_class_code",
+    "defined": true,
+    "used_in_files": 13,
+    "column_bindings": 13,
+    "sample_columns": [
+      "item_class"
+    ],
+    "data_display": [
+      {
+        "data_column": "product_class_code",
+        "display_column": "product_class_name",
+        "count": 13
+      }
+    ],
+    "tables": [
+      "ID_PRODUCT_CLASS"
+    ],
+    "retrieve_args": [],
+    "sql_format": "pbselect",
+    "kind": "master",
+    "code_type_from_column": false
+  },
+  {
+    "name": "vd_set_item_code",
+    "defined": true,
+    "used_in_files": 6,
+    "column_bindings": 6,
+    "sample_columns": [
+      "item_code",
+      "model_name"
+    ],
+    "data_display": [
+      {
+        "data_column": "item_code",
+        "display_column": "item_code",
+        "count": 4
+      },
+      {
+        "data_column": "model_name",
+        "display_column": "model_name",
+        "count": 2
+      }
+    ],
+    "tables": [
+      "ID_ITEM"
+    ],
+    "retrieve_args": [
+      "ARG_ORG"
+    ],
+    "sql_format": "text",
+    "kind": "master",
+    "code_type_from_column": false
+  },
+  {
+    "name": "vd_set_item_yn",
+    "defined": false,
+    "used_in_files": 6,
+    "column_bindings": 6,
+    "sample_columns": [
+      "set_item_yn"
+    ],
+    "data_display": [
+      {
+        "data_column": "code_name",
+        "display_column": "code_mean",
+        "count": 6
+      }
+    ],
+    "note": "이 소스 폴더에 객체가 없다. 다른 PBL 에 있는지 확인할 것."
+  },
+  {
+    "name": "vd_smt_machine_code",
+    "defined": true,
+    "used_in_files": 2,
+    "column_bindings": 2,
+    "sample_columns": [
+      "machine"
+    ],
+    "data_display": [
+      {
+        "data_column": "machine",
+        "display_column": "machine_name",
+        "count": 2
+      }
+    ],
+    "tables": [
+      "IB_LINE_MASTER"
+    ],
+    "retrieve_args": [
+      "ARG_ORG"
+    ],
+    "sql_format": "text",
+    "kind": "master",
+    "code_type_from_column": false
+  },
+  {
+    "name": "vd_standard_code",
+    "defined": true,
+    "used_in_files": 11,
+    "column_bindings": 11,
+    "sample_columns": [
+      "bad_reason_code",
+      "wqc_line_stop_reason"
+    ],
+    "data_display": [
+      {
+        "data_column": "code_name",
+        "display_column": "code_mean",
+        "count": 10
+      },
+      {
+        "data_column": "code_name",
+        "display_column": "code_name",
+        "count": 1
+      }
+    ],
+    "tables": [
+      "ISYS_CODE_MASTER"
+    ],
+    "retrieve_args": [
+      "ARG_LANG",
+      "ARG_ORG",
+      "ARG_CODE_TYPE",
+      "ARG_CODE_GROUP",
+      "ARG_CODE_GROUP_SECOND",
+      "ARG_CODE_GROUP_THIRD"
+    ],
+    "sql_format": "text",
+    "kind": "codemaster",
+    "code_type_from_column": false
+  },
+  {
+    "name": "vd_supplier_code",
+    "defined": true,
+    "used_in_files": 28,
+    "column_bindings": 41,
+    "sample_columns": [
+      "supplier_code",
+      "from_supplier_code",
+      "repair_vendor_code",
+      "rent_supplier_code",
+      "supplier_code_1"
+    ],
+    "data_display": [
+      {
+        "data_column": "supplier_code",
+        "display_column": "supplier_name",
+        "count": 41
+      }
+    ],
+    "tables": [
+      "ICOM_SUPPLIER"
+    ],
+    "retrieve_args": [
+      "ARG_ORG"
+    ],
+    "sql_format": "pbselect",
+    "kind": "master",
+    "code_type_from_column": false
+  },
+  {
+    "name": "vd_supplier_code_by_item",
+    "defined": false,
+    "used_in_files": 1,
+    "column_bindings": 1,
+    "sample_columns": [
+      "origin_supplier_code"
+    ],
+    "data_display": [
+      {
+        "data_column": "supplier_code",
+        "display_column": "supplier_code",
+        "count": 1
+      }
+    ],
+    "note": "이 소스 폴더에 객체가 없다. 다른 PBL 에 있는지 확인할 것."
+  },
+  {
+    "name": "vd_table_column_select",
+    "defined": true,
+    "used_in_files": 1,
+    "column_bindings": 1,
+    "sample_columns": [
+      "column_name"
+    ],
+    "data_display": [
+      {
+        "data_column": "column_name",
+        "display_column": "column_name",
+        "count": 1
+      }
+    ],
+    "tables": [
+      "USER_TAB_COLUMNS"
+    ],
+    "retrieve_args": [
+      "ARG_LANGUAGE",
+      "ARG_TABLE_NAME"
+    ],
+    "sql_format": "text",
+    "kind": "master",
+    "code_type_from_column": false
+  },
+  {
+    "name": "vd_user_name",
+    "defined": true,
+    "used_in_files": 40,
+    "column_bindings": 77,
+    "sample_columns": [
+      "enter_by",
+      "confirm_by",
+      "last_modify_by",
+      "made_by",
+      "carrying_out_by"
+    ],
+    "data_display": [
+      {
+        "data_column": "user_id",
+        "display_column": "user_name",
+        "count": 76
+      },
+      {
+        "data_column": "user_id",
+        "display_column": "user_id",
+        "count": 1
+      }
+    ],
+    "tables": [
+      "ISYS_USERS"
+    ],
+    "retrieve_args": [
+      "ARG_ORG"
+    ],
+    "sql_format": "pbselect",
+    "kind": "master",
+    "code_type_from_column": false
+  },
+  {
+    "name": "vd_window_name",
+    "defined": true,
+    "used_in_files": 6,
+    "column_bindings": 8,
+    "sample_columns": [
+      "window_name",
+      "window_description"
+    ],
+    "data_display": [
+      {
+        "data_column": "window_name",
+        "display_column": "window_name",
+        "count": 4
+      },
+      {
+        "data_column": "window_name",
+        "display_column": "window_description",
+        "count": 4
+      }
+    ],
+    "tables": [
+      "ISYS_WINDOW"
+    ],
+    "retrieve_args": [
+      "ARG_LANGUAGE",
+      "ARG_ORGANIZATION_ID"
+    ],
+    "sql_format": "text",
+    "kind": "master",
+    "code_type_from_column": false
+  },
+  {
+    "name": "vd_workstage_code",
+    "defined": true,
+    "used_in_files": 175,
+    "column_bindings": 192,
+    "sample_columns": [
+      "workstage_code",
+      "dest_workstage_code",
+      "from_workstage_code",
+      "repair_workstage_code",
+      "last_workstage_code"
+    ],
+    "data_display": [
+      {
+        "data_column": "workstage_code",
+        "display_column": "workstage_name",
+        "count": 181
+      },
+      {
+        "data_column": "line_code",
+        "display_column": "line_name",
+        "count": 5
+      },
+      {
+        "data_column": "workstage_name",
+        "display_column": "workstage_name",
+        "count": 3
+      }
+    ],
+    "tables": [
+      "IP_PRODUCT_WORKSTAGE"
+    ],
+    "retrieve_args": [
+      "ARG_ORG"
+    ],
+    "sql_format": "pbselect",
+    "kind": "master",
+    "code_type_from_column": false
+  },
+  {
+    "name": "vd_workstage_routing_code",
+    "defined": true,
+    "used_in_files": 11,
+    "column_bindings": 11,
+    "sample_columns": [
+      "route_no"
+    ],
+    "data_display": [
+      {
+        "data_column": "route_no",
+        "display_column": "route_name",
+        "count": 11
+      }
+    ],
+    "tables": [
+      "IP_PRODUCT_ROUTING_MASTER"
+    ],
+    "retrieve_args": [
+      "ARG_ORG"
+    ],
+    "sql_format": "pbselect",
+    "kind": "master",
+    "code_type_from_column": false
+  },
+  {
+    "name": "vd_wqc_line_status_code",
+    "defined": true,
+    "used_in_files": 1,
+    "column_bindings": 1,
+    "sample_columns": [
+      "line_status"
+    ],
+    "data_display": [
+      {
+        "data_column": "code_name",
+        "display_column": "code_mean",
+        "count": 1
+      }
+    ],
+    "tables": [
+      "ISYS_CODE_MASTER"
+    ],
+    "retrieve_args": [
+      "ARG_LANG",
+      "ARG_ORG"
+    ],
+    "sql_format": "text",
+    "kind": "codemaster",
+    "code_type_from_column": false
+  },
+  {
+    "name": "vd_wqc_standard_code",
+    "defined": true,
+    "used_in_files": 12,
+    "column_bindings": 12,
+    "sample_columns": [
+      "bad_reason_code"
+    ],
+    "data_display": [
+      {
+        "data_column": "code_name",
+        "display_column": "code_mean",
+        "count": 12
+      }
+    ],
+    "tables": [
+      "ISYS_CODE_MASTER"
+    ],
+    "retrieve_args": [
+      "ARG_LANG",
+      "ARG_ORG"
+    ],
+    "sql_format": "text",
+    "kind": "codemaster",
+    "code_type_from_column": false
+  }
+]
