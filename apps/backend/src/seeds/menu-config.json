@@ -2,11 +2,14 @@
   "_comment": "AUTO-GENERATED from apps/frontend/src/config/menuConfig.ts — 직접 편집 금지. Regenerate: pnpm --filter @eunsung/frontend gen:menu",
   "topMenuCodes": [
     "MASTER",
+    "EQUIPMENT",
     "OEE",
     "MATERIAL",
     "PROCESS_TRANSACTION",
     "PRODUCT_MGMT",
+    "PRODUCT_INVENTORY",
     "PRODUCTION",
+    "QUALITY",
     "OUTSOURCING",
     "SYSTEM"
   ],
@@ -33,6 +36,17 @@
       "MST_ITEM_SUPPLIER",
       "MST_SALE_PRICE"
     ],
+    "EQUIPMENT": [
+      "EQUIP_RESULT_SP",
+      "EQUIP_RESULT_SPI",
+      "EQUIP_RESULT_ICT",
+      "EQUIP_RESULT_AOI",
+      "EQUIP_RESULT_ROUTER",
+      "EQUIP_RESULT_ROM_WRITE",
+      "EQUIP_RESULT_SOLDER",
+      "EQUIP_RESULT_REFLOW",
+      "EQUIP_RESULT_PERFORMANCE"
+    ],
     "OEE": [
       "OEE_DASHBOARD",
       "OEE_MULTI_ENTRY",
@@ -43,14 +57,20 @@
     ],
     "MATERIAL": [
       "MAT_RECEIPT_ISSUE_LEDGER",
-      "MAT_CURRENT_INVENTORY"
+      "MAT_CURRENT_INVENTORY",
+      "MAT_RECEIPT_CANCEL"
     ],
     "PROCESS_TRANSACTION": [],
-    "PRODUCT_MGMT": [
+    "PRODUCT_MGMT": [],
+    "PRODUCT_INVENTORY": [
       "PRD_CURRENT_INVENTORY"
     ],
     "PRODUCTION": [
       "PRD_RUN_CARD"
+    ],
+    "QUALITY": [
+      "QC_REPAIR_HISTORY",
+      "QC_PRODUCT_DESTROY"
     ],
     "OUTSOURCING": [],
     "SYSTEM": [

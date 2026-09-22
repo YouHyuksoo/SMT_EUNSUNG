@@ -88,6 +88,21 @@
       ]
     },
     {
+      "key": "equipment",
+      "title": "설비관리",
+      "items": [
+        { "menuCode": "EQUIP_RESULT_SP", "title": "SP 작업결과조회", "path": "/equipment/result-query/sp" },
+        { "menuCode": "EQUIP_RESULT_SPI", "title": "SPI 검사결과조회", "path": "/equipment/result-query/spi" },
+        { "menuCode": "EQUIP_RESULT_ICT", "title": "ICT 검사결과조회", "path": "/equipment/result-query/ict" },
+        { "menuCode": "EQUIP_RESULT_AOI", "title": "AOI 검사결과조회", "path": "/equipment/result-query/aoi" },
+        { "menuCode": "EQUIP_RESULT_ROUTER", "title": "ROUTER 작업결과조회", "path": "/equipment/result-query/router" },
+        { "menuCode": "EQUIP_RESULT_ROM_WRITE", "title": "ROM WRITE 작업결과조회", "path": "/equipment/result-query/rom-write" },
+        { "menuCode": "EQUIP_RESULT_SOLDER", "title": "솔더점도 검사결과조회", "path": "/equipment/result-query/solder" },
+        { "menuCode": "EQUIP_RESULT_REFLOW", "title": "REFLOW 작업결과조회", "path": "/equipment/result-query/reflow" },
+        { "menuCode": "EQUIP_RESULT_PERFORMANCE", "title": "성능 검사결과조회", "path": "/equipment/result-query/performance" }
+      ]
+    },
+    {
       "key": "system",
       "title": "시스템관리",
       "items": [

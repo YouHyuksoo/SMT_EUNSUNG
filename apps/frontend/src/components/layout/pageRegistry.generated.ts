@@ -32,6 +32,51 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
       component = mod.getPageComponent();
       break;
     }
+    case "/equipment/result-query/aoi": {
+      const mod = await import("./page-registries/equipment__result-query__aoi.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/equipment/result-query/ict": {
+      const mod = await import("./page-registries/equipment__result-query__ict.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/equipment/result-query/performance": {
+      const mod = await import("./page-registries/equipment__result-query__performance.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/equipment/result-query/reflow": {
+      const mod = await import("./page-registries/equipment__result-query__reflow.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/equipment/result-query/rom-write": {
+      const mod = await import("./page-registries/equipment__result-query__rom-write.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/equipment/result-query/router": {
+      const mod = await import("./page-registries/equipment__result-query__router.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/equipment/result-query/solder": {
+      const mod = await import("./page-registries/equipment__result-query__solder.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/equipment/result-query/sp": {
+      const mod = await import("./page-registries/equipment__result-query__sp.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/equipment/result-query/spi": {
+      const mod = await import("./page-registries/equipment__result-query__spi.generated");
+      component = mod.getPageComponent();
+      break;
+    }
     case "/help": {
       const mod = await import("./page-registries/help.generated");
       component = mod.getPageComponent();
@@ -137,6 +182,11 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
       component = mod.getPageComponent();
       break;
     }
+    case "/material/receipt-cancel": {
+      const mod = await import("./page-registries/material__receipt-cancel.generated");
+      component = mod.getPageComponent();
+      break;
+    }
     case "/material/receipt-issue-ledger": {
       const mod = await import("./page-registries/material__receipt-issue-ledger.generated");
       component = mod.getPageComponent();
@@ -209,6 +259,16 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
     }
     case "/production/run-card": {
       const mod = await import("./page-registries/production__run-card.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/quality/product-destroy": {
+      const mod = await import("./page-registries/quality__product-destroy.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/quality/repair-history": {
+      const mod = await import("./page-registries/quality__repair-history.generated");
       component = mod.getPageComponent();
       break;
     }

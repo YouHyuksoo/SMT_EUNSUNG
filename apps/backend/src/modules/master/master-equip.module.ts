@@ -12,6 +12,8 @@ import { IsysOrganization } from '../../entities/isys-organization.entity';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { EquipMasterController } from '../equipment/controllers/equip-master.controller';
 import { EquipMasterService } from '../equipment/services/equip-master.service';
+import { EquipmentResultQueryController } from '../equipment/controllers/equipment-result-query.controller';
+import { EquipmentResultQueryService } from '../equipment/services/equipment-result-query.service';
 
 @Module({
   imports: [
@@ -23,8 +25,8 @@ import { EquipMasterService } from '../equipment/services/equip-master.service';
       IsysOrganization,
     ]),
   ],
-  controllers: [EquipMasterController],
-  providers: [EquipMasterService, JwtAuthGuard],
+  controllers: [EquipMasterController, EquipmentResultQueryController],
+  providers: [EquipMasterService, EquipmentResultQueryService, JwtAuthGuard],
   exports: [EquipMasterService],
 })
 export class MasterEquipModule {}

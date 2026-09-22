@@ -10,7 +10,7 @@
  */
 import {
   Activity, Boxes, Building2, ClipboardList,
-  Database, GitBranch, Package, Settings,
+  Database, GitBranch, Package, Settings, Warehouse, Wrench,
 } from "lucide-react";
 
 /** 메뉴 설정 항목 인터페이스 */
@@ -57,6 +57,22 @@ export const menuConfig: MenuConfigItem[] = [
     ],
   },
   {
+    code: "EQUIPMENT",
+    labelKey: "menu.equipment",
+    icon: Wrench,
+    children: [
+      { code: "EQUIP_RESULT_SP", labelKey: "menu.equipment.resultSp", path: "/equipment/result-query/sp" },
+      { code: "EQUIP_RESULT_SPI", labelKey: "menu.equipment.resultSpi", path: "/equipment/result-query/spi" },
+      { code: "EQUIP_RESULT_ICT", labelKey: "menu.equipment.resultIct", path: "/equipment/result-query/ict" },
+      { code: "EQUIP_RESULT_AOI", labelKey: "menu.equipment.resultAoi", path: "/equipment/result-query/aoi" },
+      { code: "EQUIP_RESULT_ROUTER", labelKey: "menu.equipment.resultRouter", path: "/equipment/result-query/router" },
+      { code: "EQUIP_RESULT_ROM_WRITE", labelKey: "menu.equipment.resultRomWrite", path: "/equipment/result-query/rom-write" },
+      { code: "EQUIP_RESULT_SOLDER", labelKey: "menu.equipment.resultSolder", path: "/equipment/result-query/solder" },
+      { code: "EQUIP_RESULT_REFLOW", labelKey: "menu.equipment.resultReflow", path: "/equipment/result-query/reflow" },
+      { code: "EQUIP_RESULT_PERFORMANCE", labelKey: "menu.equipment.resultPerformance", path: "/equipment/result-query/performance" },
+    ],
+  },
+  {
     code: "OEE",
     labelKey: "menu.oee",
     icon: Activity,
@@ -81,6 +97,7 @@ export const menuConfig: MenuConfigItem[] = [
     children: [
       { code: "MAT_RECEIPT_ISSUE_LEDGER", labelKey: "menu.material.receiptIssueLedger", path: "/material/receipt-issue-ledger" },
       { code: "MAT_CURRENT_INVENTORY", labelKey: "menu.material.currentInventory", path: "/material/current-inventory" },
+      { code: "MAT_RECEIPT_CANCEL", labelKey: "menu.material.receiptCancel", path: "/material/receipt-cancel" },
     ],
   },
   {
@@ -93,6 +110,14 @@ export const menuConfig: MenuConfigItem[] = [
     code: "PRODUCT_MGMT",
     labelKey: "menu.productMgmt",
     icon: Boxes,
+    // 하위 화면 미배정. PB 메뉴(ISYS_DYNAMIC_MENU, M_MAIN_FRAME_MENU)에는 "제품입출고수불원장"이 없고
+    // 수불원장은 자재용(M_45 자재입출고수불원장, 자재창고 그룹)만 존재한다 → 대응 화면이 정해지면 추가한다.
+    children: [],
+  },
+  {
+    code: "PRODUCT_INVENTORY",
+    labelKey: "menu.productInventory",
+    icon: Warehouse,
     children: [
       { code: "PRD_CURRENT_INVENTORY", labelKey: "menu.productMgmt.currentInventory", path: "/product/current-inventory" },
     ],
@@ -103,6 +128,15 @@ export const menuConfig: MenuConfigItem[] = [
     icon: ClipboardList,
     children: [
       { code: "PRD_RUN_CARD", labelKey: "menu.production.runCard", path: "/production/run-card" },
+    ],
+  },
+  {
+    code: "QUALITY",
+    labelKey: "menu.quality",
+    icon: Wrench,
+    children: [
+      { code: "QC_REPAIR_HISTORY", labelKey: "menu.quality.repairHistory", path: "/quality/repair-history" },
+      { code: "QC_PRODUCT_DESTROY", labelKey: "menu.quality.productDestroy", path: "/quality/product-destroy" },
     ],
   },
   {
