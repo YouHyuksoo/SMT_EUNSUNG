@@ -5,7 +5,8 @@
  * @description 자재입고취소 — PB w_mat_receipt_cancel_master 이식
  *
  * 초보자 가이드:
- * 1. **모드**: 취소대상(RECEIPT_STATUS='N') / 이력(전체) 두 가지. PB 라디오버튼과 같다.
+ * 1. **모드**: 취소대상(RECEIPT_STATUS='N') / 이력(전체) 두 가지.
+ *    PB 는 라디오버튼(rb_cancel/rb_hst)이지만 웹은 화면 전환이므로 탭으로 만든다.
  * 2. **선택**: 취소대상 모드에서만 체크박스가 붙는다. 바코드 조인으로 행이 늘어나도
  *    선택은 입고건(PK) 단위라 같은 입고건의 여러 행이 함께 체크된다.
  * 3. **취소**: 행을 지우지 않고 수량·금액을 뒤집은 상계 행을 새로 만든다.
@@ -14,6 +15,10 @@ import { useCallback, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { RefreshCw, RotateCcw, Search, Undo2 } from 'lucide-react';
 import { Button, Card, CardContent, ConfirmModal, Input } from '@/components/ui';
+import ComCodeSelect from '@/components/shared/ComCodeSelect';
+import DateFilter from '@/components/shared/DateFilter';
+import DateRangeFilter from '@/components/shared/DateRangeFilter';
+import SupplierSelect from '@/components/shared/SupplierSelect';
 import DataGrid from '@/components/data-grid/DataGrid';
 import api from '@/services/api';
 import { buildReceiptCancelColumns } from './columns';
@@ -149,33 +154,30 @@ export default function ReceiptCancelPage() {
         </div>
       </header>
 
+      <nav className="flex flex-wrap gap-1 border-b border-border" aria-label="조회 모드">
+        {([['CANCEL', '취소대상'], ['HISTORY', '이력']] as const).map(([value, label]) => (
+          <button
+            key={value}
+            type="button"
+            onClick={() => changeMode(value)}
+            aria-current={mode === value ? 'page' : undefined}
+            className={`px-4 py-2 text-sm font-medium transition-colors ${
+              mode === value ? 'border-b-2 border-primary text-primary' : 'text-text-muted hover:text-text'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </nav>
+
       <Card className="shrink-0" padding="sm">
         <div className="flex flex-wrap items-center gap-2">
-          <div className="flex items-center gap-3 pr-2">
-            {([['CANCEL', '취소대상'], ['HISTORY', '이력']] as const).map(([value, label]) => (
-              <label key={value} className="flex items-center gap-1.5 whitespace-nowrap text-sm">
-                <input
-                  type="radio"
-                  name="receipt-cancel-mode"
-                  className="h-4 w-4 accent-primary"
-                  checked={mode === value}
-                  onChange={() => changeMode(value)}
-                />
-                {label}
-              </label>
-            ))}
-          </div>
           <Input aria-label="품목코드" placeholder="품목코드" value={itemCode} onChange={e => setItemCode(e.target.value)} className="w-36" />
           <Input aria-label="자재 MFS" placeholder="자재 MFS" value={materialMfs} onChange={e => setMaterialMfs(e.target.value)} className="w-36" />
-          <Input aria-label="공급업체" placeholder="공급업체" value={supplierCode} onChange={e => setSupplierCode(e.target.value)} className="w-32" />
-          <Input aria-label="로케이션" placeholder="로케이션" value={locationCode} onChange={e => setLocationCode(e.target.value)} className="w-32" />
+          <SupplierSelect aria-label="공급업체" value={supplierCode} onChange={setSupplierCode} className="w-40" />
+          <ComCodeSelect aria-label="자재위치" groupCode="MATERIAL LOCATION CODE" value={locationCode} onChange={setLocationCode} className="w-44" />
           <Input aria-label="Invoice No" placeholder="Invoice No" value={invoiceNo} onChange={e => setInvoiceNo(e.target.value)} className="w-36" />
-          <label className="flex items-center gap-1 whitespace-nowrap text-sm text-text-muted">
-            입고일
-            <Input aria-label="입고일 시작" type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="w-40" />
-            ~
-            <Input aria-label="입고일 종료" type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="w-40" />
-          </label>
+          <DateRangeFilter label="입고일" from={dateFrom} to={dateTo} onFromChange={setDateFrom} onToChange={setDateTo} />
         </div>
       </Card>
 
@@ -184,7 +186,7 @@ export default function ReceiptCancelPage() {
           <div className="flex flex-wrap items-center gap-3">
             <label className="flex items-center gap-1 whitespace-nowrap text-sm text-text-muted">
               취소일자
-              <Input aria-label="취소일자" type="date" value={cancelDate} onChange={e => setCancelDate(e.target.value)} className="w-40" />
+              <DateFilter value={cancelDate} onChange={setCancelDate} />
             </label>
             <label className="flex items-center gap-2 whitespace-nowrap text-sm">
               <input type="checkbox" checked={allowLastMonth} onChange={e => setAllowLastMonth(e.target.checked)} className="h-4 w-4 accent-primary" />

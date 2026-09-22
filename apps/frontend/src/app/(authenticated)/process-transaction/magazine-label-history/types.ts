@@ -7,7 +7,9 @@ export interface MagazineLabelHistoryRow {
   magazineLabelNo?: string | null;
   enterDate?: string | null;
   lineCode: string | null;
+  lineName: string | null;
   workstageCode?: string | null;
+  workstageName: string | null;
   receiptDate: string | null;
   modelName: string | null;
   modelSuffix?: string | null;

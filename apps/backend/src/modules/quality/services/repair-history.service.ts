@@ -39,6 +39,16 @@ export class RepairHistoryService {
     // PB 원본 그대로: QC_DATE >= :dateFrom AND QC_DATE < :dateTo + 1 (종료일 포함)
     const from = `
       FROM IP_PRODUCT_WORK_QC qc
+      -- PB 는 DDDW(vd_line_code/vd_workstage_code)로 코드 대신 이름을 보여준다.
+      -- 코드+조직이 유일해 조인으로 행이 늘지 않는다. 근거: docs/database/pb-dddw-inventory.md
+      LEFT JOIN IP_PRODUCT_LINE ln
+             ON ln.LINE_CODE = qc.LINE_CODE AND ln.ORGANIZATION_ID = qc.ORGANIZATION_ID
+      LEFT JOIN IP_PRODUCT_WORKSTAGE ws
+             ON ws.WORKSTAGE_CODE = qc.WORKSTAGE_CODE AND ws.ORGANIZATION_ID = qc.ORGANIZATION_ID
+      LEFT JOIN IP_PRODUCT_LINE rln
+             ON rln.LINE_CODE = qc.REPAIR_LINE_CODE AND rln.ORGANIZATION_ID = qc.ORGANIZATION_ID
+      LEFT JOIN IP_PRODUCT_WORKSTAGE rws
+             ON rws.WORKSTAGE_CODE = qc.REPAIR_WORKSTAGE_CODE AND rws.ORGANIZATION_ID = qc.ORGANIZATION_ID
       WHERE qc.ORGANIZATION_ID = :organizationId
         AND NVL(qc.MODEL_NAME, '*') LIKE :modelName
         AND NVL(qc.SERIAL_NO, '*') LIKE :serialNo
@@ -54,7 +64,9 @@ export class RepairHistoryService {
     const select = `
       SELECT qc.QC_SEQUENCE AS "qcSequence",
              qc.LINE_CODE AS "lineCode",
+             ln.LINE_NAME AS "lineName",
              qc.WORKSTAGE_CODE AS "workstageCode",
+             ws.WORKSTAGE_NAME AS "workstageName",
              qc.SERIAL_NO AS "serialNo",
              qc.QC_RESULT AS "qcResult",
              qc.BAD_REASON_CODE AS "badReasonCode",
@@ -69,7 +81,9 @@ export class RepairHistoryService {
              qc.REPAIR_RESULT_CODE AS "repairResultCode",
              qc.REPAIR_METHOD AS "repairMethod",
              qc.REPAIR_LINE_CODE AS "repairLineCode",
+             rln.LINE_NAME AS "repairLineName",
              qc.REPAIR_WORKSTAGE_CODE AS "repairWorkstageCode",
+             rws.WORKSTAGE_NAME AS "repairWorkstageName",
              qc.BAD_CAUSE_BY AS "badCauseBy",
              qc.LCR_MEASURE AS "lcrMeasure",
              qc.MACHINE_CODE AS "machineCode",

@@ -1,17 +1,17 @@
 import type { ColumnDef } from '@tanstack/react-table';
-import { ComCodeBadge } from '@/components/ui';
+import { comCodeCell } from '@/components/shared/codeCells';
 import type { MagazineLabelHistoryRow, MagazineLabelViewMode } from './types';
 
 const qty = (value: unknown) => value == null ? '' : Number(value).toLocaleString(undefined, { maximumFractionDigits: 3 });
 const dateTime = (value: unknown) => value ? new Date(String(value)).toLocaleString('ko-KR', { hour12: false }).replace(/\.\s?$/, '') : '';
 
 const historyColumns: ColumnDef<MagazineLabelHistoryRow>[] = [
-  { accessorKey: 'magazineLabelType', header: '라벨유형', size: 110, cell: ctx => ctx.getValue() ? <ComCodeBadge groupCode="MAGAZINE LABEL TYPE" code={String(ctx.getValue())} /> : null },
+  { accessorKey: 'magazineLabelType', header: '라벨유형', size: 110, cell: comCodeCell('MAGAZINE LABEL TYPE') },
   { accessorKey: 'runNo', header: 'RUN NO', size: 145 },
   { accessorKey: 'magazineLabelNo', header: '매거진 라벨번호', size: 180 },
   { accessorKey: 'enterDate', header: '발행일시', size: 165, cell: ctx => dateTime(ctx.getValue()) },
-  { accessorKey: 'lineCode', header: '라인', size: 100 },
-  { accessorKey: 'workstageCode', header: '공정', size: 110 },
+  { accessorKey: 'lineCode', header: '라인', size: 110, cell: ctx => ctx.row.original.lineName ?? ctx.getValue() ?? '' },
+  { accessorKey: 'workstageCode', header: '공정', size: 120, cell: ctx => ctx.row.original.workstageName ?? ctx.getValue() ?? '' },
   { accessorKey: 'receiptDate', header: '수불일시', size: 165, cell: ctx => dateTime(ctx.getValue()) },
   { accessorKey: 'modelName', header: '모델명', size: 150 },
   { accessorKey: 'modelSuffix', header: '서픽스', size: 85 },
@@ -28,7 +28,7 @@ export function magazineLabelColumns(mode: MagazineLabelViewMode, matrixColumnKe
   if (mode === 'history') return historyColumns;
   if (mode === 'summary') return summaryColumns;
   return [
-    { accessorKey: 'lineCode', header: '라인', size: 100 },
+    { accessorKey: 'lineCode', header: '라인', size: 110, cell: ctx => ctx.row.original.lineName ?? ctx.getValue() ?? '' },
     { accessorKey: 'runNo', header: 'RUN NO', size: 145 },
     { accessorKey: 'modelName', header: '모델명', size: 150 },
     { accessorKey: 'pcbItem', header: 'PCB 구분', size: 95 },

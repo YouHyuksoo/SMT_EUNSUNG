@@ -22,6 +22,12 @@ export class MagazineLabelHistoryService {
     };
     const from = `
       FROM IP_PRODUCT_RUN_CARD_IO io
+      -- PB 는 DDDW(vd_line_code/vd_workstage_code)로 코드 대신 이름을 보여준다.
+      -- 코드+조직이 유일해 조인으로 행이 늘지 않는다. 근거: docs/database/pb-dddw-inventory.md
+      LEFT JOIN IP_PRODUCT_LINE ln
+             ON ln.LINE_CODE = io.LINE_CODE AND ln.ORGANIZATION_ID = io.ORGANIZATION_ID
+      LEFT JOIN IP_PRODUCT_WORKSTAGE ws
+             ON ws.WORKSTAGE_CODE = io.WORKSTAGE_CODE AND ws.ORGANIZATION_ID = io.ORGANIZATION_ID
       WHERE io.LINE_CODE LIKE :lineCode
         AND io.WORKSTAGE_CODE LIKE :workstageCode
         AND io.MODEL_NAME LIKE :modelName
@@ -49,7 +55,8 @@ export class MagazineLabelHistoryService {
   private historySql(from: string) {
     return `SELECT io.MAGAZINE_LABEL_TYPE AS "magazineLabelType", io.RUN_NO AS "runNo",
       io.MAGAZINE_LABEL_NO AS "magazineLabelNo", io.ENTER_DATE AS "enterDate",
-      io.LINE_CODE AS "lineCode", io.WORKSTAGE_CODE AS "workstageCode",
+      io.LINE_CODE AS "lineCode", ln.LINE_NAME AS "lineName",
+      io.WORKSTAGE_CODE AS "workstageCode", ws.WORKSTAGE_NAME AS "workstageName",
       io.RECEIPT_DATE AS "receiptDate", io.MODEL_NAME AS "modelName",
       io.MODEL_SUFFIX AS "modelSuffix", io.ITEM_CODE AS "itemCode", io.PCB_ITEM AS "pcbItem",
       io.LOT_QTY AS "lotQty", io.BAD_QTY AS "badQty",
@@ -60,21 +67,23 @@ export class MagazineLabelHistoryService {
 
   private summarySql(from: string) {
     return `SELECT io.MAGAZINE_LABEL_TYPE AS "magazineLabelType", io.RUN_NO AS "runNo",
-      io.LINE_CODE AS "lineCode", io.WORKSTAGE_CODE AS "workstageCode",
+      io.LINE_CODE AS "lineCode", ln.LINE_NAME AS "lineName",
+      io.WORKSTAGE_CODE AS "workstageCode", ws.WORKSTAGE_NAME AS "workstageName",
       TRUNC(io.RECEIPT_DATE) AS "receiptDate", io.MODEL_NAME AS "modelName",
       io.ITEM_CODE AS "itemCode", io.PCB_ITEM AS "pcbItem", SUM(io.LOT_QTY) AS "lotQty",
       io.ORGANIZATION_ID AS "organizationId"
       ${from}
-      GROUP BY io.MAGAZINE_LABEL_TYPE, io.RUN_NO, io.LINE_CODE, io.WORKSTAGE_CODE,
+      GROUP BY io.MAGAZINE_LABEL_TYPE, io.RUN_NO, io.LINE_CODE, ln.LINE_NAME,
+        io.WORKSTAGE_CODE, ws.WORKSTAGE_NAME,
         TRUNC(io.RECEIPT_DATE), io.MODEL_NAME, io.ITEM_CODE, io.PCB_ITEM, io.ORGANIZATION_ID`;
   }
 
   private matrixSql(from: string) {
-    return `SELECT io.LINE_CODE AS "lineCode", io.RUN_NO AS "runNo", io.MODEL_NAME AS "modelName",
+    return `SELECT io.LINE_CODE AS "lineCode", ln.LINE_NAME AS "lineName", io.RUN_NO AS "runNo", io.MODEL_NAME AS "modelName",
       io.PCB_ITEM AS "pcbItem", TRUNC(io.RECEIPT_DATE) AS "receiptDate",
       io.MAGAZINE_LABEL_TYPE AS "magazineLabelType", SUM(io.LOT_QTY) AS "lotQty"
       ${from}
-      GROUP BY io.LINE_CODE, io.RUN_NO, io.MODEL_NAME, io.PCB_ITEM,
+      GROUP BY io.LINE_CODE, ln.LINE_NAME, io.RUN_NO, io.MODEL_NAME, io.PCB_ITEM,
         TRUNC(io.RECEIPT_DATE), io.MAGAZINE_LABEL_TYPE`;
   }
 

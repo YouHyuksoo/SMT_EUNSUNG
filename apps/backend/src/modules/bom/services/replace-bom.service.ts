@@ -41,6 +41,7 @@ const BOM_EXPAND_SQL = `
          t.ITEM_UNIT_QTY_EXT AS "itemUnitQtyExt",
          t.MODEL_UNIT_QTY AS "modelUnitQty",
          t.WORKSTAGE_CODE AS "workstageCode",
+         ws.WORKSTAGE_NAME AS "workstageName",
          t.LOCATION_INFO AS "locationInfo",
          t.ASSY_EXPLOSION_YN AS "assyExplosionYn",
          t.LOSS_RATE AS "lossRate",
@@ -48,6 +49,8 @@ const BOM_EXPAND_SQL = `
          t.DATESET AS "dateset",
          t.DATEEND AS "dateend"
     FROM ID_ENG_BOM_TEMP t
+    -- PB DDDW(vd_workstage_code) 대응. 코드+조직이 유일해 행이 늘지 않는다.
+    LEFT JOIN IP_PRODUCT_WORKSTAGE ws ON ws.WORKSTAGE_CODE = t.WORKSTAGE_CODE AND ws.ORGANIZATION_ID = t.ORGANIZATION_ID
     LEFT JOIN ID_ITEM a ON a.ITEM_CODE = t.PARENT_ITEM_CODE AND a.ORGANIZATION_ID = t.ORGANIZATION_ID
     LEFT JOIN ID_ITEM b ON b.ITEM_CODE = t.CHILD_ITEM_CODE AND b.ORGANIZATION_ID = t.ORGANIZATION_ID
    WHERE t.SESSION_ID = :sid AND t.ORGANIZATION_ID = :org
@@ -94,6 +97,7 @@ export class ReplaceBomService {
     };
     const from = `
       FROM ID_ITEM_REPLACE r
+      LEFT JOIN IP_PRODUCT_WORKSTAGE ws ON ws.WORKSTAGE_CODE = r.WORKSTAGE_CODE AND ws.ORGANIZATION_ID = r.ORGANIZATION_ID
       LEFT JOIN ID_ITEM i ON i.ITEM_CODE = r.REPLACE_ITEM_CODE AND i.ORGANIZATION_ID = r.ORGANIZATION_ID
       WHERE r.ORGANIZATION_ID = :organizationId
         AND r.PARENT_ITEM_CODE LIKE :setItemCode
@@ -110,6 +114,7 @@ export class ReplaceBomService {
              r.ITEM_UNIT_QTY AS "itemUnitQty",
              r.ITEM_UNIT_QTY_EXT AS "itemUnitQtyExt",
              r.WORKSTAGE_CODE AS "workstageCode",
+             ws.WORKSTAGE_NAME AS "workstageName",
              r.BOM_LOCATION_CODE AS "bomLocationCode",
              r.DATESET AS "dateset",
              r.DATEEND AS "dateend",

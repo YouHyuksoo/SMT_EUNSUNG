@@ -17,6 +17,7 @@ export interface BomExpandRow {
   itemUnitQtyExt: number | null;
   modelUnitQty: number | null;
   workstageCode: string | null;
+  workstageName: string | null;
   locationInfo: string | null;
   assyExplosionYn: string | null;
   lossRate: number | null;
@@ -37,6 +38,7 @@ export interface ReplaceRow {
   itemUnitQty: number | null;
   itemUnitQtyExt: number | null;
   workstageCode: string | null;
+  workstageName: string | null;
   bomLocationCode: string | null;
   dateset: string | null;
   dateend: string | null;

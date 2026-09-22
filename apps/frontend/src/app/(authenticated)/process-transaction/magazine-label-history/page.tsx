@@ -4,6 +4,7 @@ import { useCallback, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { History, RefreshCw, Search } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
+import DateRangeFilter from '@/components/shared/DateRangeFilter';
 import LineSelect from '@/components/shared/LineSelect';
 import ProcessSelect from '@/components/shared/ProcessSelect';
 import { Button, Card, CardContent, Input } from '@/components/ui';
@@ -62,10 +63,23 @@ export default function MagazineLabelHistoryPage() {
       <Input aria-label="모델명" placeholder="모델명" value={modelName} onChange={e => setModelName(e.target.value)} className="w-40" />
       <Input aria-label="매거진 라벨번호" placeholder="매거진 라벨번호" value={magazineLabelNo} onChange={e => setMagazineLabelNo(e.target.value)} className="w-48" />
       <Input aria-label="RUN NO" placeholder="RUN NO" value={runNo} onChange={e => setRunNo(e.target.value)} className="w-40" />
-      <Input aria-label="발행일 시작" type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="w-40" /><span>~</span>
-      <Input aria-label="발행일 종료" type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="w-40" />
-      <div className="flex rounded-md border border-border p-0.5">{(['history', 'summary', 'matrix'] as const).map(mode => <button key={mode} type="button" onClick={() => setViewMode(mode)} className={`rounded px-3 py-1.5 text-sm ${viewMode === mode ? 'bg-primary text-white' : 'text-text-muted'}`}>{mode === 'history' ? '이력' : mode === 'summary' ? '집계' : '매트릭스'}</button>)}</div>
+      <DateRangeFilter label="발행일" from={dateFrom} to={dateTo} onFromChange={setDateFrom} onToChange={setDateTo} />
     </div></Card>
+    <nav className="flex flex-wrap gap-1 border-b border-border" aria-label="조회 모드">
+      {([['history', '이력'], ['summary', '집계'], ['matrix', '매트릭스']] as const).map(([value, label]) => (
+        <button
+          key={value}
+          type="button"
+          onClick={() => setViewMode(value)}
+          aria-current={viewMode === value ? 'page' : undefined}
+          className={`px-4 py-2 text-sm font-medium transition-colors ${
+            viewMode === value ? 'border-b-2 border-primary text-primary' : 'text-text-muted hover:text-text'
+          }`}
+        >
+          {label}
+        </button>
+      ))}
+    </nav>
     <div className="text-sm text-text-muted">수량 합계: <strong className="text-text">{lotQty.toLocaleString(undefined, { maximumFractionDigits: 3 })}</strong></div>
     <Card className="min-h-0 flex-1 overflow-hidden" padding="none"><CardContent className="h-full p-3"><DataGrid data={displayedRows} columns={columns} isLoading={loading} pageSize={50} enableColumnFilter enableExport exportFileName="매거진발행이력" emptyMessage={searched ? '조회 결과가 없습니다.' : '조회 버튼을 눌러 발행이력을 확인하세요.'} /></CardContent></Card>
   </main>;

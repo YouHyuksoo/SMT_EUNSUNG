@@ -14,6 +14,7 @@ import toast from 'react-hot-toast';
 import { RefreshCw, Search, Wrench } from 'lucide-react';
 import { Button, Card, CardContent, Input } from '@/components/ui';
 import ComCodeSelect from '@/components/shared/ComCodeSelect';
+import DateRangeFilter from '@/components/shared/DateRangeFilter';
 import LineSelect from '@/components/shared/LineSelect';
 import ProcessSelect from '@/components/shared/ProcessSelect';
 import DataGrid from '@/components/data-grid/DataGrid';
@@ -110,12 +111,7 @@ export default function RepairHistoryPage() {
           <ComCodeSelect groupCode="RECEIPT DEFICIT" labelPrefix="불량구분" aria-label="불량구분" value={receiptDeficit} onChange={value => setReceiptDeficit(value)} className="w-40" />
           <ComCodeSelect groupCode="QC INSPECT HANDLING" labelPrefix="검사처리" aria-label="검사처리" value={inspectHandling} onChange={value => setInspectHandling(value)} className="w-40" />
           <ComCodeSelect groupCode="REPAIR RESULT CODE" labelPrefix="수리결과" aria-label="수리결과" value={repairResultCode} onChange={value => setRepairResultCode(value)} className="w-40" />
-          <label className="flex items-center gap-1 whitespace-nowrap text-sm text-text-muted">
-            QC일자
-            <Input aria-label="QC일자 시작" type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="w-40" />
-            ~
-            <Input aria-label="QC일자 종료" type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="w-40" />
-          </label>
+          <DateRangeFilter label="QC일자" from={dateFrom} to={dateTo} onFromChange={setDateFrom} onToChange={setDateTo} />
         </div>
       </Card>
 

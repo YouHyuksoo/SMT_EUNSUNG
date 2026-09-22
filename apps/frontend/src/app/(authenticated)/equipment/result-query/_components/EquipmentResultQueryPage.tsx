@@ -5,6 +5,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { ClipboardList, RefreshCw, Search } from 'lucide-react';
 import toast from 'react-hot-toast';
 import DataGrid from '@/components/data-grid/DataGrid';
+import DateRangeFilter from '@/components/shared/DateRangeFilter';
 import ProdLineSelect from '@/components/shared/ProdLineSelect';
 import { Button, Card, CardContent, Input, Select } from '@/components/ui';
 import api from '@/services/api';
@@ -61,7 +62,7 @@ export default function EquipmentResultQueryPage({ definition }: { definition: R
       <div className="flex gap-2"><Button variant="secondary" size="sm" onClick={search} disabled={loading}><RefreshCw className={`mr-1 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />새로고침</Button><Button size="sm" onClick={search} disabled={loading}><Search className="mr-1 h-4 w-4" />조회</Button></div>
     </header>
     <Card className="shrink-0" padding="sm"><div className="flex flex-wrap items-center gap-2">
-      <label className="flex items-center gap-1 whitespace-nowrap text-sm text-text-muted">기간 <Input aria-label="조회 시작일" type="date" value={dateFrom} onChange={event => setDateFrom(event.target.value)} className="w-40" />~<Input aria-label="조회 종료일" type="date" value={dateTo} onChange={event => setDateTo(event.target.value)} className="w-40" /></label>
+      <DateRangeFilter label="기간" from={dateFrom} to={dateTo} onFromChange={setDateFrom} onToChange={setDateTo} />
       {definition.filters.line ? <ProdLineSelect includeAll value={lineCode} onChange={setLineCode} className="w-40" /> : null}
       {definition.filters.pid ? <Input aria-label={definition.filters.pid} placeholder={definition.filters.pid} value={pid} onChange={event => setPid(event.target.value)} className="w-44" /> : null}
       {definition.filters.model ? <Input aria-label="모델명" placeholder="모델명" value={modelName} onChange={event => setModelName(event.target.value)} className="w-40" /> : null}

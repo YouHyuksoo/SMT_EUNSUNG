@@ -1,4 +1,5 @@
 import type { ColumnDef } from '@tanstack/react-table';
+import { comCodeCell } from '@/components/shared/codeCells';
 import { receiptKey, type ReceiptCancelMode, type ReceiptCancelRow } from './types';
 
 const qty = (value: unknown) => value == null ? '' : Number(value).toLocaleString(undefined, { maximumFractionDigits: 6 });
@@ -48,10 +49,10 @@ function checkColumn({ selected, toggle }: CheckOptions): ColumnDef<ReceiptCance
 const baseColumns: ColumnDef<ReceiptCancelRow>[] = [
   { accessorKey: 'receiptDate', header: '입고일', size: 110, cell: ctx => date(ctx.getValue()) },
   { accessorKey: 'receiptSequence', header: '입고순번', size: 110, meta: { align: 'right' } },
-  { accessorKey: 'receiptStatus', header: '입고상태', size: 90 },
-  { accessorKey: 'receiptType', header: '입고유형', size: 90 },
+  { accessorKey: 'receiptStatus', header: '입고상태', size: 90, cell: comCodeCell('RECEIPT STATUS') },
+  { accessorKey: 'receiptType', header: '입고유형', size: 90, cell: comCodeCell('RECEIPT TYPE') },
   { accessorKey: 'locationCode', header: '로케이션', size: 110 },
-  { accessorKey: 'lineType', header: '라인유형', size: 90 },
+  { accessorKey: 'lineType', header: '라인유형', size: 90, cell: comCodeCell('LINE TYPE') },
   { accessorKey: 'itemCode', header: '품목코드', size: 140 },
   { accessorKey: 'itemName', header: '품목명', size: 180 },
   { accessorKey: 'itemSpec', header: '규격', size: 160 },
@@ -62,7 +63,7 @@ const baseColumns: ColumnDef<ReceiptCancelRow>[] = [
   { accessorKey: 'receiptQty', header: '입고수량', size: 110, meta: { align: 'right' }, cell: ctx => qty(ctx.getValue()) },
   { accessorKey: 'unitPrice', header: '단가', size: 110, meta: { align: 'right' }, cell: ctx => money(ctx.getValue()) },
   { accessorKey: 'receiptAmt', header: '입고금액', size: 130, meta: { align: 'right' }, cell: ctx => money(ctx.getValue()) },
-  { accessorKey: 'currency', header: '통화', size: 70 },
+  { accessorKey: 'currency', header: '통화', size: 70, cell: comCodeCell('CURRENCY') },
   { accessorKey: 'receiptLotNo', header: '입고 LOT', size: 130 },
   { accessorKey: 'orderNo', header: '발주번호', size: 130 },
   { accessorKey: 'interfaceYn', header: 'I/F', size: 60 },

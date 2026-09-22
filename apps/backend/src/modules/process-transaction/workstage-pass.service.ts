@@ -17,20 +17,27 @@ export class WorkstagePassService {
       dateFrom: query.dateFrom ?? '1900-01-01', dateTo: query.dateTo ?? '2999-12-31',
     };
     const where = `FROM IP_PRODUCT_WORKSTAGE_IO io
+      -- PB DDDW(vd_line_code/vd_workstage_code) 대응. 코드+조직이 유일해 행이 늘지 않는다.
+      LEFT JOIN IP_PRODUCT_LINE ln
+             ON ln.LINE_CODE = io.LINE_CODE AND ln.ORGANIZATION_ID = io.ORGANIZATION_ID
+      LEFT JOIN IP_PRODUCT_WORKSTAGE ws
+             ON ws.WORKSTAGE_CODE = io.WORKSTAGE_CODE AND ws.ORGANIZATION_ID = io.ORGANIZATION_ID
       WHERE io.ORGANIZATION_ID = :organizationId
         AND io.LINE_CODE LIKE :lineCode AND io.WORKSTAGE_CODE LIKE :workstageCode
         AND NVL(io.MODEL_NAME, ' ') LIKE :modelName AND NVL(io.SERIAL_NO, ' ') LIKE :serialNo
         AND io.IO_DATE >= TO_DATE(:dateFrom, 'YYYY-MM-DD')
         AND io.IO_DATE < TO_DATE(:dateTo, 'YYYY-MM-DD') + 1`;
     const detail = `SELECT io.IO_DATE AS "ioDate", io.IO_SEQUENCE AS "ioSequence", io.RUN_NO AS "runNo",
-      io.ITEM_CODE AS "itemCode", io.SERIAL_NO AS "serialNo", io.LINE_CODE AS "lineCode",
-      io.WORKSTAGE_CODE AS "workstageCode", io.IO_DEFICIT AS "ioDeficit", io.IO_QTY AS "ioQty",
+      io.ITEM_CODE AS "itemCode", io.SERIAL_NO AS "serialNo",
+      io.LINE_CODE AS "lineCode", ln.LINE_NAME AS "lineName",
+      io.WORKSTAGE_CODE AS "workstageCode", ws.WORKSTAGE_NAME AS "workstageName",
+      io.IO_DEFICIT AS "ioDeficit", io.IO_QTY AS "ioQty",
       io.OUT_DATE AS "outDate", io.MODEL_NAME AS "modelName", io.MODEL_SUFFIX AS "modelSuffix",
       io.WORKSTAGE_TYPE AS "workstageType", io.LOT_NO AS "lotNo", io.WIP_SEQ AS "wipSeq" ${where}`;
     const body = mode === 'inventory'
-      ? `SELECT TRUNC(NVL(io.ACTUAL_DATE, io.IO_DATE)) AS "actualDate", io.WORKSTAGE_CODE AS "workstageCode", io.MODEL_NAME AS "modelName", SUM(io.IO_QTY) AS "ioQty" ${where} AND io.IO_DEFICIT = 'I' GROUP BY TRUNC(NVL(io.ACTUAL_DATE, io.IO_DATE)), io.WORKSTAGE_CODE, io.MODEL_NAME`
+      ? `SELECT TRUNC(NVL(io.ACTUAL_DATE, io.IO_DATE)) AS "actualDate", io.WORKSTAGE_CODE AS "workstageCode", ws.WORKSTAGE_NAME AS "workstageName", io.MODEL_NAME AS "modelName", SUM(io.IO_QTY) AS "ioQty" ${where} AND io.IO_DEFICIT = 'I' GROUP BY TRUNC(NVL(io.ACTUAL_DATE, io.IO_DATE)), io.WORKSTAGE_CODE, ws.WORKSTAGE_NAME, io.MODEL_NAME`
       : mode === 'workstageSummary'
-        ? `SELECT io.WORKSTAGE_CODE AS "workstageCode", io.MODEL_NAME AS "modelName", io.IO_DEFICIT AS "ioDeficit", SUM(io.IO_QTY) AS "ioQty" ${where} GROUP BY io.WORKSTAGE_CODE, io.MODEL_NAME, io.IO_DEFICIT`
+        ? `SELECT io.WORKSTAGE_CODE AS "workstageCode", ws.WORKSTAGE_NAME AS "workstageName", io.MODEL_NAME AS "modelName", io.IO_DEFICIT AS "ioDeficit", SUM(io.IO_QTY) AS "ioQty" ${where} GROUP BY io.WORKSTAGE_CODE, ws.WORKSTAGE_NAME, io.MODEL_NAME, io.IO_DEFICIT`
         : `${detail}${mode === 'wait' ? " AND io.IO_DEFICIT = 'I' AND io.OUT_DATE IS NULL" : ''}`;
     const totals = await this.dataSource.query(`SELECT COUNT(*) AS "total" FROM (${body})`, { ...binds } as never) as Row[];
     const page = query.page ?? 1; const limit = query.limit ?? 500;

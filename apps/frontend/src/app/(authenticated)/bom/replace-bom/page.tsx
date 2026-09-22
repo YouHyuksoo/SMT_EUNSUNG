@@ -13,6 +13,7 @@ import { useCallback, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { GitFork, RefreshCw, Save, Search } from 'lucide-react';
 import { Button, Card, CardContent, ConfirmModal, Input, Modal } from '@/components/ui';
+import DateFilter from '@/components/shared/DateFilter';
 import ProcessSelect from '@/components/shared/ProcessSelect';
 import DataGrid from '@/components/data-grid/DataGrid';
 import api from '@/services/api';
@@ -161,14 +162,21 @@ export default function ReplaceBomPage() {
           </h1>
           <p className="mt-1 text-sm text-text-muted">PB w_des_replace_bom_master · SET 품목 BOM 전개 후 구성품별 대체품 등록</p>
         </div>
-        <div className="flex items-center gap-3">
+        <nav className="flex flex-wrap gap-1 border-b border-border" aria-label="조회 모드">
           {([['MANAGE', '대체품 관리'], ['LIST', '대체품 목록']] as const).map(([value, label]) => (
-            <label key={value} className="flex items-center gap-1.5 whitespace-nowrap text-sm">
-              <input type="radio" name="replace-bom-mode" className="h-4 w-4 accent-primary" checked={mode === value} onChange={() => setMode(value)} />
+            <button
+              key={value}
+              type="button"
+              onClick={() => setMode(value)}
+              aria-current={mode === value ? 'page' : undefined}
+              className={`px-4 py-2 text-sm font-medium transition-colors ${
+                mode === value ? 'border-b-2 border-primary text-primary' : 'text-text-muted hover:text-text'
+              }`}
+            >
               {label}
-            </label>
+            </button>
           ))}
-        </div>
+        </nav>
       </header>
 
       {mode === 'MANAGE' ? (
@@ -178,7 +186,7 @@ export default function ReplaceBomPage() {
               <Input aria-label="SET 품목코드" placeholder="SET 품목코드" value={setItemCode} onChange={e => setSetItemCode(e.target.value)} className="w-52" />
               <label className="flex items-center gap-1 whitespace-nowrap text-sm text-text-muted">
                 기준일자
-                <Input aria-label="기준일자" type="date" value={expandDate} onChange={e => setExpandDate(e.target.value)} className="w-40" />
+                <DateFilter value={expandDate} onChange={setExpandDate} />
               </label>
               <Button size="sm" onClick={expandBom} disabled={loading}>
                 <Search className="mr-1 h-4 w-4" />BOM 전개

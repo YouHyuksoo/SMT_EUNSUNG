@@ -15,6 +15,7 @@ import toast from 'react-hot-toast';
 import { RefreshCw, RotateCcw, Search, Trash2 } from 'lucide-react';
 import { Button, Card, CardContent, ConfirmModal, Input } from '@/components/ui';
 import ComCodeSelect from '@/components/shared/ComCodeSelect';
+import DateRangeFilter from '@/components/shared/DateRangeFilter';
 import LineSelect from '@/components/shared/LineSelect';
 import ProcessSelect from '@/components/shared/ProcessSelect';
 import DataGrid from '@/components/data-grid/DataGrid';
@@ -146,18 +147,21 @@ export default function ProductDestroyPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          {([['DESTROY', '폐기등록'], ['HISTORY', '폐기이력']] as const).map(([value, label]) => (
-            <label key={value} className="flex items-center gap-1.5 whitespace-nowrap text-sm">
-              <input
-                type="radio"
-                name="destroy-mode"
-                className="h-4 w-4 accent-primary"
-                checked={mode === value}
-                onChange={() => setMode(value)}
-              />
-              {label}
-            </label>
-          ))}
+          <nav className="flex flex-wrap gap-1 border-b border-border" aria-label="조회 모드">
+            {([['DESTROY', '폐기등록'], ['HISTORY', '폐기이력']] as const).map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setMode(value)}
+                aria-current={mode === value ? 'page' : undefined}
+                className={`px-4 py-2 text-sm font-medium transition-colors ${
+                  mode === value ? 'border-b-2 border-primary text-primary' : 'text-text-muted hover:text-text'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </nav>
           {mode === 'HISTORY' && (
             <Button size="sm" onClick={searchHistory} disabled={loading}>
               <Search className="mr-1 h-4 w-4" />조회
@@ -243,12 +247,7 @@ export default function ProductDestroyPage() {
               <Input aria-label="모델명" placeholder="모델명" value={modelName} onChange={e => setModelName(e.target.value)} className="w-40" />
               <LineSelect aria-label="라인" labelPrefix="라인" value={lineCode} onChange={value => setLineCode(value)} className="w-40" />
               <ProcessSelect aria-label="공정" labelPrefix="공정" value={workstageCode} onChange={value => setWorkstageCode(value)} className="w-44" />
-              <label className="flex items-center gap-1 whitespace-nowrap text-sm text-text-muted">
-                폐기일자
-                <Input aria-label="폐기일자 시작" type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="w-40" />
-                ~
-                <Input aria-label="폐기일자 종료" type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="w-40" />
-              </label>
+              <DateRangeFilter label="폐기일자" from={dateFrom} to={dateTo} onFromChange={setDateFrom} onToChange={setDateTo} />
               <span className="text-sm text-text-muted">{searched ? `${rows.length}/${total}건` : '조회조건을 입력하세요'}</span>
             </div>
           </Card>

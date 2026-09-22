@@ -2,7 +2,9 @@
 export interface RepairHistoryRow {
   qcSequence: number;
   lineCode: string | null;
+  lineName: string | null;
   workstageCode: string | null;
+  workstageName: string | null;
   serialNo: string | null;
   qcResult: string | null;
   badReasonCode: string | null;
@@ -17,7 +19,9 @@ export interface RepairHistoryRow {
   repairResultCode: string | null;
   repairMethod: string | null;
   repairLineCode: string | null;
+  repairLineName: string | null;
   repairWorkstageCode: string | null;
+  repairWorkstageName: string | null;
   badCauseBy: string | null;
   lcrMeasure: string | null;
   machineCode: string | null;

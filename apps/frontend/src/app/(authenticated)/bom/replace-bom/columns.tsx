@@ -1,4 +1,5 @@
 import type { ColumnDef } from '@tanstack/react-table';
+import { comCodeCell } from '@/components/shared/codeCells';
 import type { BomExpandRow, ReplaceRow } from './types';
 
 const qty = (value: unknown) => value == null ? '' : Number(value).toLocaleString(undefined, { maximumFractionDigits: 6 });
@@ -22,12 +23,12 @@ export const bomExpandColumns: ColumnDef<BomExpandRow>[] = [
   { accessorKey: 'childItemName', header: '품목명', size: 180 },
   { accessorKey: 'childItemSpec', header: '규격', size: 160 },
   { accessorKey: 'childItemUom', header: '단위', size: 70 },
-  { accessorKey: 'childItemType', header: '품목유형', size: 90 },
+  { accessorKey: 'childItemType', header: '품목유형', size: 90, cell: comCodeCell('CHILD ITEM TYPE') },
   { accessorKey: 'itemUnitQty', header: '단위수량', size: 100, meta: { align: 'right' }, cell: ctx => qty(ctx.getValue()) },
-  { accessorKey: 'workstageCode', header: '공정', size: 100 },
+  { accessorKey: 'workstageCode', header: '공정', size: 110, cell: ctx => ctx.row.original.workstageName ?? ctx.getValue() ?? '' },
   { accessorKey: 'locationInfo', header: 'BOM 위치', size: 120 },
   { accessorKey: 'parentItemCode', header: '상위품목', size: 150 },
-  { accessorKey: 'assyExplosionYn', header: '전개', size: 60 },
+  { accessorKey: 'assyExplosionYn', header: '전개', size: 60, cell: comCodeCell('ASSY EXPLOSION YN') },
 ];
 
 /** 목록 모드 — 등록된 대체품 그리드 */
@@ -53,7 +54,7 @@ export function replaceColumns(
     { accessorKey: 'replaceItemSpec', header: '규격', size: 160 },
     { accessorKey: 'replaceSequence', header: '순번', size: 70, meta: { align: 'right' } },
     { accessorKey: 'itemUnitQty', header: '단위수량', size: 100, meta: { align: 'right' }, cell: ctx => qty(ctx.getValue()) },
-    { accessorKey: 'workstageCode', header: '공정', size: 100 },
+    { accessorKey: 'workstageCode', header: '공정', size: 110, cell: ctx => ctx.row.original.workstageName ?? ctx.getValue() ?? '' },
     { accessorKey: 'bomLocationCode', header: 'BOM 위치', size: 120 },
     { accessorKey: 'dateset', header: '적용시작', size: 110, cell: ctx => date(ctx.getValue()) },
     { accessorKey: 'dateend', header: '적용종료', size: 110, cell: ctx => date(ctx.getValue()) },
