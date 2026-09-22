@@ -10,7 +10,7 @@
  */
 import {
   Activity, Boxes, Building2, ClipboardList,
-  Database, GitBranch, Package, Settings, Warehouse, Wrench,
+  Database, GitBranch, Network, Package, Settings, Warehouse, Wrench,
 } from "lucide-react";
 
 /** 메뉴 설정 항목 인터페이스 */
@@ -57,6 +57,14 @@ export const menuConfig: MenuConfigItem[] = [
     ],
   },
   {
+    code: "BOM_MANAGEMENT",
+    labelKey: "menu.bom",
+    icon: Network,
+    children: [
+      { code: "BOM_REPLACE", labelKey: "menu.bom.replace", path: "/bom/replace-bom" },
+    ],
+  },
+  {
     code: "EQUIPMENT",
     labelKey: "menu.equipment",
     icon: Wrench,
@@ -97,6 +105,7 @@ export const menuConfig: MenuConfigItem[] = [
     children: [
       { code: "MAT_RECEIPT_ISSUE_LEDGER", labelKey: "menu.material.receiptIssueLedger", path: "/material/receipt-issue-ledger" },
       { code: "MAT_CURRENT_INVENTORY", labelKey: "menu.material.currentInventory", path: "/material/current-inventory" },
+      { code: "MAT_WORKSTAGE_INVENTORY", labelKey: "menu.material.workstageInventory", path: "/material/workstage-inventory" },
       { code: "MAT_RECEIPT_CANCEL", labelKey: "menu.material.receiptCancel", path: "/material/receipt-cancel" },
     ],
   },
@@ -104,7 +113,9 @@ export const menuConfig: MenuConfigItem[] = [
     code: "PROCESS_TRANSACTION",
     labelKey: "menu.processTransaction",
     icon: GitBranch,
-    children: [],
+    children: [
+      { code: "PLN_MAGAZINE_LABEL_HISTORY", labelKey: "menu.magazineLabelHistory", path: "/process-transaction/magazine-label-history" },
+    ],
   },
   {
     code: "PRODUCT_MGMT",

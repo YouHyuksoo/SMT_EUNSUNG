@@ -190,6 +190,8 @@
     "root": "Cấp cao nhất",
     "workflow": "Quy trình",
     "monitoring": "Giám sát",
+    "bom": "Quản lý BOM",
+    "bom.replace": "Quản lý BOM thay thế",
     "master": "Dữ liệu cơ sở",
     "master.part": "Quản lý vật tư",
     "master.productModel": "Quản lý mẫu sản phẩm",
@@ -266,6 +268,7 @@
     "material": "Quản lý xuất nhập vật tư",
     "materialMgmt": "Quản lý vật tư",
     "processTransaction": "Quản lý xuất nhập công đoạn",
+    "magazineLabelHistory": "Lịch sử phát hành nhãn magazine",
     "productMgmt": "Quản lý xuất nhập sản phẩm",
     "productMgmt.receive": "Nhập kho sản phẩm",
     "productMgmt.receiptCancel": "Hủy nhập kho sản phẩm",
@@ -422,7 +425,8 @@
     "production.runCard": "Quản lý lệnh sản xuất",
     "oee.overallStatus": "Tổng quan OEE",
     "material.receiptIssueLedger": "Sổ cái nhập xuất vật tư",
-    "material.currentInventory": "Tra cứu tồn kho hiện tại"
+    "material.currentInventory": "Tra cứu tồn kho hiện tại",
+    "material.workstageInventory": "Tra cứu tồn kho công đoạn"
   },
   "header": {
     "theme": "Giao diện",

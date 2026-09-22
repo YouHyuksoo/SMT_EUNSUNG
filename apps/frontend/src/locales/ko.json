@@ -190,6 +190,8 @@
     "root": "최상위",
     "workflow": "워크플로우",
     "monitoring": "모니터링",
+    "bom": "BOM 관리",
+    "bom.replace": "대체BOM관리",
     "master": "기준정보",
     "master.part": "품목관리",
     "master.productModel": "제품모델 관리",
@@ -266,6 +268,7 @@
     "material": "자재수불관리",
     "materialMgmt": "자재관리",
     "processTransaction": "공정수불관리",
+    "magazineLabelHistory": "매거진발행이력",
     "productMgmt": "제품수불관리",
     "productMgmt.receive": "제품입고관리",
     "productMgmt.receiptCancel": "제품입고취소",
@@ -422,7 +425,8 @@
     "production.runCard": "작업지시관리",
     "oee.overallStatus": "OEE 종합 현황",
     "material.receiptIssueLedger": "자재입출고수불원장",
-    "material.currentInventory": "현재고조회"
+    "material.currentInventory": "현재고조회",
+    "material.workstageInventory": "공정재고조회"
   },
   "header": {
     "theme": "테마",

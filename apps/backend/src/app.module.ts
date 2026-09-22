@@ -44,9 +44,12 @@ import { MasterProdLineModule } from './modules/master/master-prod-line.module';
 import { WarehouseModule } from './modules/inventory/warehouse.module';
 import { MaterialReceiptIssueLedgerModule } from './modules/material/material-receipt-issue-ledger.module';
 import { MaterialCurrentInventoryModule } from './modules/material/material-current-inventory.module';
+import { MaterialWorkstageInventoryModule } from './modules/material/material-workstage-inventory.module';
 import { MaterialReceiptCancelModule } from './modules/material/material-receipt-cancel.module';
+import { ProcessTransactionModule } from './modules/process-transaction/process-transaction.module';
 import { QualityRepairHistoryModule } from './modules/quality/quality-repair-history.module';
 import { QualityProductDestroyModule } from './modules/quality/quality-product-destroy.module';
+import { BomModule } from './modules/bom/bom.module';
 import { ProductInventoryModule } from './modules/product/product-inventory.module';
 import { MasterWorkerModule } from './modules/master/master-worker.module';
 import { MasterWorkInstructionModule } from './modules/master/master-work-instruction.module';
@@ -141,9 +144,12 @@ import { SharedModule } from './shared/shared.module';
     // 자재관리 자재입출고수불원장 (/material/receipt-issue-ledger)
     MaterialReceiptIssueLedgerModule,
     MaterialCurrentInventoryModule,
+    MaterialWorkstageInventoryModule,
     MaterialReceiptCancelModule,
+    ProcessTransactionModule,
     QualityRepairHistoryModule,
     QualityProductDestroyModule,
+    BomModule,
     ProductInventoryModule,
 
     // 기준정보 작업자정보 (/master/workers)

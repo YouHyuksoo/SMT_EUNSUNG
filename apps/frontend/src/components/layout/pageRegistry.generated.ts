@@ -27,6 +27,11 @@ export async function getPageComponent(path: string): Promise<ComponentType | nu
 async function loadPageComponent(path: string): Promise<ComponentType | null> {
   let component: ComponentType | null = null;
   switch (path) {
+    case "/bom/replace-bom": {
+      const mod = await import("./page-registries/bom__replace-bom.generated");
+      component = mod.getPageComponent();
+      break;
+    }
     case "/dashboard": {
       const mod = await import("./page-registries/dashboard.generated");
       component = mod.getPageComponent();
@@ -192,6 +197,11 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
       component = mod.getPageComponent();
       break;
     }
+    case "/material/workstage-inventory": {
+      const mod = await import("./page-registries/material__workstage-inventory.generated");
+      component = mod.getPageComponent();
+      break;
+    }
     case "/oee/dashboard": {
       const mod = await import("./page-registries/oee__dashboard.generated");
       component = mod.getPageComponent();
@@ -249,6 +259,11 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
     }
     case "/oee/overall-status": {
       const mod = await import("./page-registries/oee__overall-status.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/process-transaction/magazine-label-history": {
+      const mod = await import("./page-registries/process-transaction__magazine-label-history.generated");
       component = mod.getPageComponent();
       break;
     }

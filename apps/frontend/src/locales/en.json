@@ -190,6 +190,8 @@
     "root": "Root",
     "workflow": "Workflow",
     "monitoring": "Monitoring",
+    "bom": "BOM Management",
+    "bom.replace": "BOM Replace Management",
     "master": "Master Data",
     "master.part": "Part Management",
     "master.productModel": "Product Models",
@@ -266,6 +268,7 @@
     "material": "Material Mgmt",
     "materialMgmt": "Material Management",
     "processTransaction": "Process Transaction",
+    "magazineLabelHistory": "Magazine Label History",
     "productMgmt": "Product Mgmt",
     "productMgmt.receive": "Product Receive",
     "productMgmt.receiptCancel": "Product Receipt Cancel",
@@ -422,7 +425,8 @@
     "production.runCard": "Work Order Management",
     "oee.overallStatus": "OEE Overall Status",
     "material.receiptIssueLedger": "Material Receipt/Issue Ledger",
-    "material.currentInventory": "Current Inventory"
+    "material.currentInventory": "Current Inventory",
+    "material.workstageInventory": "Workstage Inventory"
   },
   "header": {
     "theme": "Theme",

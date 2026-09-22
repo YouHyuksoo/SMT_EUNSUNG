@@ -2,6 +2,7 @@
   "_comment": "AUTO-GENERATED from apps/frontend/src/config/menuConfig.ts — 직접 편집 금지. Regenerate: pnpm --filter @eunsung/frontend gen:menu",
   "topMenuCodes": [
     "MASTER",
+    "BOM_MANAGEMENT",
     "EQUIPMENT",
     "OEE",
     "MATERIAL",
@@ -36,6 +37,9 @@
       "MST_ITEM_SUPPLIER",
       "MST_SALE_PRICE"
     ],
+    "BOM_MANAGEMENT": [
+      "BOM_REPLACE"
+    ],
     "EQUIPMENT": [
       "EQUIP_RESULT_SP",
       "EQUIP_RESULT_SPI",
@@ -58,9 +62,12 @@
     "MATERIAL": [
       "MAT_RECEIPT_ISSUE_LEDGER",
       "MAT_CURRENT_INVENTORY",
+      "MAT_WORKSTAGE_INVENTORY",
       "MAT_RECEIPT_CANCEL"
     ],
-    "PROCESS_TRANSACTION": [],
+    "PROCESS_TRANSACTION": [
+      "PLN_MAGAZINE_LABEL_HISTORY"
+    ],
     "PRODUCT_MGMT": [],
     "PRODUCT_INVENTORY": [
       "PRD_CURRENT_INVENTORY"

@@ -88,6 +88,20 @@
       ]
     },
     {
+      "key": "material",
+      "title": "자재관리",
+      "items": [
+        { "menuCode": "MAT_WORKSTAGE_INVENTORY", "title": "공정재고조회", "path": "/material/workstage-inventory" }
+      ]
+    },
+    {
+      "key": "processTransaction",
+      "title": "공정수불관리",
+      "items": [
+        { "menuCode": "PLN_MAGAZINE_LABEL_HISTORY", "title": "매거진발행이력", "path": "/process-transaction/magazine-label-history" }
+      ]
+    },
+    {
       "key": "equipment",
       "title": "설비관리",
       "items": [

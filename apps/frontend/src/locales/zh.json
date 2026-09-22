@@ -190,6 +190,8 @@
     "root": "顶级",
     "workflow": "工作流程",
     "monitoring": "监控",
+    "bom": "BOM 管理",
+    "bom.replace": "替代BOM管理",
     "master": "基础数据",
     "master.part": "零件管理",
     "master.productModel": "产品型号管理",
@@ -266,6 +268,7 @@
     "material": "物料收发管理",
     "materialMgmt": "物料管理",
     "processTransaction": "工序收发管理",
+    "magazineLabelHistory": "料架标签发行记录",
     "productMgmt": "产品收发管理",
     "productMgmt.receive": "产品入库管理",
     "productMgmt.receiptCancel": "产品入库取消",
@@ -422,7 +425,8 @@
     "production.runCard": "工单管理",
     "oee.overallStatus": "OEE 综合现况",
     "material.receiptIssueLedger": "物料出入库收付台账",
-    "material.currentInventory": "当前库存查询"
+    "material.currentInventory": "当前库存查询",
+    "material.workstageInventory": "工序库存查询"
   },
   "header": {
     "theme": "主题",
