@@ -268,6 +268,7 @@
     "material": "物料收发管理",
     "materialMgmt": "物料管理",
     "processTransaction": "工序收发管理",
+    "workstagePass": "工序通过记录管理",
     "magazineLabelHistory": "料架标签发行记录",
     "productMgmt": "产品收发管理",
     "productMgmt.receive": "产品入库管理",

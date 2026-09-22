@@ -98,6 +98,7 @@
       "key": "processTransaction",
       "title": "공정수불관리",
       "items": [
+        { "menuCode": "PLN_WORKSTAGE_PASS", "title": "공정통과이력 관리", "path": "/process-transaction/workstage-pass" },
         { "menuCode": "PLN_MAGAZINE_LABEL_HISTORY", "title": "매거진발행이력", "path": "/process-transaction/magazine-label-history" }
       ]
     },

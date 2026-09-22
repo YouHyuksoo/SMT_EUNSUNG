@@ -66,6 +66,7 @@
       "MAT_RECEIPT_CANCEL"
     ],
     "PROCESS_TRANSACTION": [
+      "PLN_WORKSTAGE_PASS",
       "PLN_MAGAZINE_LABEL_HISTORY"
     ],
     "PRODUCT_MGMT": [],

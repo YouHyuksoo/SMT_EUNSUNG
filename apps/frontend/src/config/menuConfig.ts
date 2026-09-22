@@ -114,6 +114,7 @@ export const menuConfig: MenuConfigItem[] = [
     labelKey: "menu.processTransaction",
     icon: GitBranch,
     children: [
+      { code: "PLN_WORKSTAGE_PASS", labelKey: "menu.workstagePass", path: "/process-transaction/workstage-pass" },
       { code: "PLN_MAGAZINE_LABEL_HISTORY", labelKey: "menu.magazineLabelHistory", path: "/process-transaction/magazine-label-history" },
     ],
   },
