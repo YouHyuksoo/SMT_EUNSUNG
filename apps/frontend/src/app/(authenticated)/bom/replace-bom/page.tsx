@@ -11,12 +11,13 @@
  */
 import { useCallback, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
-import { GitFork, RefreshCw, Save, Search } from 'lucide-react';
-import { Button, Card, CardContent, ConfirmModal, Input, Modal } from '@/components/ui';
+import { GitFork, RefreshCw, Search } from 'lucide-react';
+import { Button, Card, CardContent, ConfirmModal, Input } from '@/components/ui';
 import DateFilter from '@/components/shared/DateFilter';
-import ProcessSelect from '@/components/shared/ProcessSelect';
 import DataGrid from '@/components/data-grid/DataGrid';
 import api from '@/services/api';
+import { useUnsavedGuard } from '@/hooks/useUnsavedGuard';
+import ReplaceBomFormPanel from './components/ReplaceBomFormPanel';
 import { bomExpandColumns, replaceColumns } from './columns';
 import type { BomExpandRow, ReplaceBomMode, ReplaceForm, ReplaceRow } from './types';
 
@@ -44,11 +45,11 @@ export default function ReplaceBomPage() {
   const [qChild, setQChild] = useState('');
   const [qReplace, setQReplace] = useState('');
 
-  // 등록/수정 폼 + 삭제
-  const [formOpen, setFormOpen] = useState(false);
+  // 등록/수정 우측 패널 + 삭제
+  const [isPanelOpen, setIsPanelOpen] = useState(false);
+  const [panelMode, setPanelMode] = useState<'create' | 'edit'>('create');
   const [form, setForm] = useState<ReplaceForm>(emptyForm);
-  const [editing, setEditing] = useState(false);
-  const [saving, setSaving] = useState(false);
+  const { markDirty, guard, guardModalProps } = useUnsavedGuard();
   const [deleteTarget, setDeleteTarget] = useState<ReplaceRow | null>(null);
 
   const expandBom = useCallback(async () => {
@@ -86,6 +87,7 @@ export default function ReplaceBomPage() {
 
   /** 관리 모드에서 BOM 구성품 행을 고르면 그 품목을 대상으로 대체품 등록 폼을 연다 */
   const openAddFromBom = useCallback((row: BomExpandRow) => {
+    guard(() => {
     setForm({
       ...emptyForm(),
       parentItemCode: row.parentItemCode ?? '',
@@ -93,11 +95,13 @@ export default function ReplaceBomPage() {
       workstageCode: row.workstageCode ?? '',
       itemUnitQty: Number(row.itemUnitQty ?? 1),
     });
-    setEditing(false);
-    setFormOpen(true);
-  }, []);
+    setPanelMode('create');
+    setIsPanelOpen(true);
+    });
+  }, [guard]);
 
   const openEdit = useCallback((row: ReplaceRow) => {
+    guard(() => {
     setForm({
       parentItemCode: row.parentItemCode, childItemCode: row.childItemCode,
       replaceItemCode: row.replaceItemCode, workstageCode: row.workstageCode ?? '',
@@ -106,33 +110,10 @@ export default function ReplaceBomPage() {
       dateend: (row.dateend ?? '9999-12-31').slice(0, 10),
       bomLocationCode: row.bomLocationCode ?? '',
     });
-    setEditing(true);
-    setFormOpen(true);
-  }, []);
-
-  const save = useCallback(async () => {
-    if (!form.parentItemCode || !form.childItemCode || !form.replaceItemCode || !form.workstageCode) {
-      toast.error('상위/구성/대체 품목과 공정은 필수입니다'); return;
-    }
-    setSaving(true);
-    try {
-      await api.put('/bom/replace', {
-        parentItemCode: form.parentItemCode, childItemCode: form.childItemCode,
-        replaceItemCode: form.replaceItemCode, workstageCode: form.workstageCode,
-        itemUnitQty: Number(form.itemUnitQty),
-        dateset: form.dateset || undefined, dateend: form.dateend || undefined,
-        bomLocationCode: form.bomLocationCode || undefined,
-      });
-      toast.success(editing ? '수정했습니다' : '등록했습니다');
-      setFormOpen(false);
-      if (mode === 'LIST' && searched) await searchList();
-    } catch (error: unknown) {
-      const msg = (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
-      toast.error(msg || '저장에 실패했습니다');
-    } finally {
-      setSaving(false);
-    }
-  }, [editing, form, mode, searchList, searched]);
+    setPanelMode('edit');
+    setIsPanelOpen(true);
+    });
+  }, [guard]);
 
   const doDelete = useCallback(async () => {
     if (!deleteTarget) return;
@@ -150,12 +131,23 @@ export default function ReplaceBomPage() {
     }
   }, [deleteTarget, searchList]);
 
+  // 작성 중이면 확인 모달을 거쳐 닫는다 (저장소 공용 useUnsavedGuard).
+  const closePanel = useCallback(() => {
+    guard(() => setIsPanelOpen(false));
+  }, [guard]);
+
+  const onPanelSaved = useCallback(async () => {
+    markDirty(false);
+    setIsPanelOpen(false);
+    if (mode === 'LIST' && searched) await searchList();
+  }, [markDirty, mode, searchList, searched]);
+
   const listColumns = useMemo(() => replaceColumns(openEdit, setDeleteTarget), [openEdit]);
-  const set = (key: keyof ReplaceForm, value: string | number) => setForm(prev => ({ ...prev, [key]: value }));
 
   return (
-    <main className="flex h-full min-w-0 flex-col gap-3 p-5">
-      <header className="flex items-center justify-between gap-4">
+    <div className="flex h-full animate-fade-in">
+      <main className="flex h-full min-w-0 flex-1 flex-col gap-3 p-5">
+        <header className="flex items-center justify-between gap-4">
         <div>
           <h1 className="flex items-center gap-2 text-xl font-bold text-text">
             <GitFork className="h-6 w-6 text-primary" />대체BOM관리
@@ -224,42 +216,23 @@ export default function ReplaceBomPage() {
         </>
       )}
 
-      <Modal isOpen={formOpen} onClose={() => setFormOpen(false)} title={editing ? '대체품 수정' : '대체품 등록'} size="md"
-        footer={<div className="flex justify-end gap-2">
-          <Button variant="secondary" size="sm" onClick={() => setFormOpen(false)}>취소</Button>
-          <Button size="sm" onClick={save} disabled={saving}><Save className="mr-1 h-4 w-4" />저장</Button>
-        </div>}>
-        <div className="grid grid-cols-2 gap-3">
-          <label className="col-span-1 text-sm text-text-muted">상위품목(SET)
-            <Input aria-label="상위품목" value={form.parentItemCode} onChange={e => set('parentItemCode', e.target.value)} disabled={editing} fullWidth />
-          </label>
-          <label className="col-span-1 text-sm text-text-muted">구성품목
-            <Input aria-label="구성품목" value={form.childItemCode} onChange={e => set('childItemCode', e.target.value)} disabled={editing} fullWidth />
-          </label>
-          <label className="col-span-2 text-sm text-text-muted">대체품목
-            <Input aria-label="대체품목" value={form.replaceItemCode} onChange={e => set('replaceItemCode', e.target.value)} disabled={editing} fullWidth />
-          </label>
-          <label className="col-span-1 text-sm text-text-muted">공정
-            <ProcessSelect aria-label="공정" value={form.workstageCode} onChange={v => set('workstageCode', v)} fullWidth />
-          </label>
-          <label className="col-span-1 text-sm text-text-muted">단위수량
-            <Input aria-label="단위수량" type="number" value={String(form.itemUnitQty)} onChange={e => set('itemUnitQty', Number(e.target.value))} fullWidth />
-          </label>
-          <label className="col-span-1 text-sm text-text-muted">적용시작
-            <Input aria-label="적용시작" type="date" value={form.dateset} onChange={e => set('dateset', e.target.value)} fullWidth />
-          </label>
-          <label className="col-span-1 text-sm text-text-muted">적용종료
-            <Input aria-label="적용종료" type="date" value={form.dateend} onChange={e => set('dateend', e.target.value)} fullWidth />
-          </label>
-          <label className="col-span-2 text-sm text-text-muted">BOM 위치
-            <Input aria-label="BOM 위치" value={form.bomLocationCode} onChange={e => set('bomLocationCode', e.target.value)} fullWidth />
-          </label>
-        </div>
-      </Modal>
+        <ConfirmModal isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} onConfirm={doDelete}
+          variant="danger" title="대체품 삭제" confirmText="삭제"
+          message={deleteTarget ? <span>{deleteTarget.parentItemCode} / {deleteTarget.childItemCode} → <strong>{deleteTarget.replaceItemCode}</strong> 대체품을 삭제합니다.</span> : ''} />
+      </main>
 
-      <ConfirmModal isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} onConfirm={doDelete}
-        variant="danger" title="대체품 삭제" confirmText="삭제"
-        message={deleteTarget ? <span>{deleteTarget.parentItemCode} / {deleteTarget.childItemCode} → <strong>{deleteTarget.replaceItemCode}</strong> 대체품을 삭제합니다.</span> : ''} />
-    </main>
+      {isPanelOpen && (
+        <ReplaceBomFormPanel
+          key={`${panelMode}-${form.parentItemCode}-${form.childItemCode}-${form.replaceItemCode}`}
+          mode={panelMode}
+          initialForm={form}
+          onClose={closePanel}
+          onSave={onPanelSaved}
+          onDirtyChange={markDirty}
+        />
+      )}
+
+      <ConfirmModal {...guardModalProps} />
+    </div>
   );
 }
