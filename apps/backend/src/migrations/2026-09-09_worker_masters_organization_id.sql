@@ -1,12 +1,16 @@
 DECLARE
   -- 작업자관리(WORKER_MASTERS) 조회·등록 복구 (멱등)
   --
-  -- 1) ORGANIZATION_ID 추가
+  -- 1) 테이블이 없으면 전체 계약 생성
+  --    JSIDC에는 기존 테이블이 있어 ALTER만으로 통과했지만 운영 ESDB에는 테이블 자체가
+  --    없어 ORA-00942가 발생했다. 신규 환경에서도 이 파일 하나로 복구되게 한다.
+  --
+  -- 2) ORGANIZATION_ID 추가
   --    2026-07-08 멀티테넌트 리팩터링(198e04a)이 WorkerMaster 엔티티에 ORGANIZATION_ID를
   --    PK 컬럼으로 넣었으나 ES_JSIDC에는 컬럼이 없어 조회가 ORA-00904로 실패했다.
   --    값 기준: 다른 테이블(IP_PRODUCT_RUN_CARD, ISYS_BASECODE 등)이 모두 1을 쓴다.
   --
-  -- 2) COMPANY / PLANT_CD 기본값
+  -- 3) COMPANY / PLANT_CD 기본값
   --    둘 다 NOT NULL PK인데 기본값이 없고 엔티티에 매핑도 안 돼 있어, 앱이 INSERT하면
   --    ORA-01400으로 막힌다. 형제 테이블(EQUIP_PROTOCOLS, FG_LABELS, PDA_ROLE_MENU,
   --    PROCESS_EQUIPMENTS)이 쓰는 '40'/'1000' 관례를 따른다.
@@ -15,6 +19,36 @@ DECLARE
   -- 만들기 때문에 DB PK가 달라도 동작하며, PK 재구성은 이 오류 해결에 필요하지 않다.
   n NUMBER;
 BEGIN
+  SELECT COUNT(*) INTO n FROM USER_TABLES WHERE TABLE_NAME = 'WORKER_MASTERS';
+  IF n = 0 THEN
+    EXECUTE IMMEDIATE q'[
+      CREATE TABLE WORKER_MASTERS (
+        WORKER_CODE    VARCHAR2(50) NOT NULL,
+        WORKER_NAME    VARCHAR2(255) NOT NULL,
+        USE_YN         VARCHAR2(1) DEFAULT 'Y' NOT NULL,
+        ENG_NAME       VARCHAR2(255),
+        DEPT           VARCHAR2(255),
+        POSITION       VARCHAR2(255),
+        PHONE          VARCHAR2(255),
+        EMAIL          VARCHAR2(255),
+        HIRE_DATE      VARCHAR2(255),
+        QUIT_DATE      VARCHAR2(255),
+        QR_CODE        VARCHAR2(255),
+        PHOTO_URL      VARCHAR2(255),
+        PROCESS_IDS    CLOB,
+        REMARK         VARCHAR2(500),
+        COMPANY        VARCHAR2(50) DEFAULT '40' NOT NULL,
+        PLANT_CD       VARCHAR2(50) DEFAULT '1000' NOT NULL,
+        CREATED_BY     VARCHAR2(50),
+        UPDATED_BY     VARCHAR2(50),
+        CREATED_AT     TIMESTAMP(6) DEFAULT SYSTIMESTAMP NOT NULL,
+        UPDATED_AT     TIMESTAMP(6) DEFAULT SYSTIMESTAMP NOT NULL,
+        ORGANIZATION_ID NUMBER DEFAULT 1 NOT NULL,
+        CONSTRAINT PK_WORKER_MASTERS PRIMARY KEY (COMPANY, PLANT_CD, WORKER_CODE)
+      )
+    ]';
+  END IF;
+
   SELECT COUNT(*) INTO n FROM USER_TAB_COLUMNS
    WHERE TABLE_NAME = 'WORKER_MASTERS' AND COLUMN_NAME = 'ORGANIZATION_ID';
   IF n = 0 THEN

@@ -109,7 +109,7 @@ export class RunCardService {
                r.MFS_GROUP_NO AS "mfsGroupNo", r.REVISION AS "revision",
                r.MODEL_CLASS AS "modelClass", r.PCB_WEEK AS "pcbWeek", r.COMMENTS AS "comments",
                (SELECT COUNT(*) FROM IP_PRODUCT_2D_BARCODE b WHERE b.RUN_NO=r.RUN_NO AND b.ORGANIZATION_ID=r.ORGANIZATION_ID) AS "pidCount",
-               (SELECT COUNT(*) FROM IP_PRODUCT_WORK_RESULT w WHERE w.RUN_NO=r.RUN_NO AND w.ORGANIZATION_ID=r.ORGANIZATION_ID) AS "resultCount",
+               (SELECT COUNT(*) FROM IP_PRODUCT_SENSOR_ACTUAL w WHERE w.RUN_NO=r.RUN_NO AND w.ORGANIZATION_ID=r.ORGANIZATION_ID) AS "resultCount",
                NVL(r.LAST_MODIFY_BY, r.ENTER_BY) AS "updatedBy",
                TO_CHAR(NVL(r.LAST_MODIFY_DATE, r.ENTER_DATE),'YYYY-MM-DD HH24:MI') AS "updatedAt"
           FROM IP_PRODUCT_RUN_CARD r
@@ -166,7 +166,7 @@ export class RunCardService {
   /**
    * 삭제 — PB 원본과 동일한 가드
    *  1) IP_PRODUCT_2D_BARCODE 에 PID 매핑이 있으면 차단
-   *  2) IP_PRODUCT_WORK_RESULT 에 작업실적이 있으면 차단 (웹 실적관리에서 생성한 자식)
+   *  2) IP_PRODUCT_SENSOR_ACTUAL 에 작업실적이 있으면 차단 (센서·수기 실적 통합 원장)
    *  3) 통과 시 IP_PRODUCT_SMD_PLAN 의 MFS 연결 해제 후 삭제
    */
   async remove(runNo: string): Promise<{ runNo: string }> {
@@ -182,7 +182,7 @@ export class RunCardService {
       const guards: Array<{ PID_CNT: number; RESULT_CNT: number; DETAIL_CNT: number }> = await m.query(
         `SELECT
            (SELECT COUNT(*) FROM IP_PRODUCT_2D_BARCODE WHERE RUN_NO = :1 AND ORGANIZATION_ID = ${ORG}) AS PID_CNT,
-           (SELECT COUNT(*) FROM IP_PRODUCT_WORK_RESULT WHERE RUN_NO = :1 AND ORGANIZATION_ID = ${ORG}) AS RESULT_CNT,
+           (SELECT COUNT(*) FROM IP_PRODUCT_SENSOR_ACTUAL WHERE RUN_NO = :1 AND ORGANIZATION_ID = ${ORG}) AS RESULT_CNT,
            (SELECT COUNT(*) FROM IP_PRODUCT_RUN_CARD_DETAIL WHERE RUN_NO = :1 AND ORGANIZATION_ID = ${ORG}) AS DETAIL_CNT
          FROM DUAL`,
         [runNo],

@@ -170,6 +170,8 @@ Oracle is the system of record for both backend (TypeORM) and the legacy Display
 - **DDL/DML 실행 전 실제 스키마를 확인한다.** 라이브 컬럼이 없으면 필드를 지어내지 말고 쿼리/UI 의존성을 고친다.
 - DB 스키마는 명시 요청이 없으면 변경하지 않는다.
 - Raw SQL / 스키마 점검 / 운영 데이터 DML은 `oracle-db` connector 또는 검증된 raw SQL 파일 경로를 우선한다. **SQL 파일만 만들고 끝내지 않는다** — 사용자가 보류를 명시하지 않으면 connector로 실제 적용하고 pre/post 결과를 기록한다.
+- 기존 환경에서 만든 Oracle 마이그레이션은 대상 운영 DB에 테이블이 없을 수 있음을 전제로 한다. 신규 테이블 계약은 `USER_TABLES` 존재 확인 후 `CREATE TABLE`, 기존 테이블은 컬럼 보정까지 한 파일에서 멱등 처리하고, 테이블 부재 상태를 잡는 구조 테스트를 둔다. 검증 절차는 `docs/standards/oracle-migration-deployment.md`를 따른다.
+- Oracle 테이블을 대체·폐기할 때는 백엔드 전체의 SELECT/DML 참조를 전수 검색해 새 원장으로 바꾸고, 폐기 테이블이 실행 SQL에 다시 등장하면 실패하는 정적 회귀 테스트를 둔다.
 - `oracle-db --execute-file`로 여러 블록을 실행하는 파일의 첫 익명 PL/SQL 블록은 파일 첫 토큰을 `DECLARE` 또는 `BEGIN`으로 둔다. 선행 주석 때문에 connector가 SQL로 오인하지 않도록 정적 테스트를 두고 실제 재실행으로 확인한다.
 - Oracle에서 `(tenant_key, nullable_request_id)` 일반 UNIQUE를 부분 unique로 사용하지 않는다. null 요청 ID를 제외하는 함수기반 unique index를 사용하고, 같은 tenant의 null 2건 허용과 non-null 중복 차단 DML을 검증한다. OEE 계약은 `oee-mobile-ddl.spec.ts`가 이를 강제한다.
 - Oracle/driver 오류(`ORA-*`, `NJS-*`)는 원문 그대로 보존한다. API가 `Database query failed`만 반환하면 같은 헬퍼 경로나 read-only 쿼리로 실제 SQL을 재현해 진짜 오류를 드러낸다.
