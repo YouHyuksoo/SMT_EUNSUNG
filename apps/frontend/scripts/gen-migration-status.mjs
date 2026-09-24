@@ -16,7 +16,8 @@
  * 사용: `node scripts/gen-migration-status.mjs` (pnpm test/dev 파이프라인에서 자동 실행)
  * 검증: `--check` 로 실행하면 menuConfig.pbWindow 의 오타/중복만 검사하고 문서를 쓰지 않는다.
  */
-import { readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -26,6 +27,7 @@ const repoRoot = join(frontendRoot, '..', '..');
 const menuConfigPath = join(frontendRoot, 'src', 'config', 'menuConfig.ts');
 const inventoryPath = join(scriptDir, 'data', 'pb-screen-inventory.json');
 const outPath = join(repoRoot, 'docs', 'business-logics', 'pb-screen-migration-status.md');
+const linkOutPath = join(repoRoot, 'docs', 'business-logics', 'pb-menu-route-links.md');
 
 /** menuConfig.ts 의 배열 리터럴을 파싱한다(icon 컴포넌트 제거 후 평가). gen-menu-registration 과 동일 패턴. */
 function parseMenuConfig() {
@@ -59,24 +61,65 @@ const developedByWindow = new Map();
 const developed = [];
 for (const cat of menu) {
   for (const child of cat.children ?? []) {
-    const entry = { code: child.code, path: child.path, label: label(child.labelKey), group: label(cat.labelKey), pbWindow: child.pbWindow ?? null };
+    const entry = {
+      code: child.code,
+      path: child.path,
+      label: label(child.labelKey),
+      group: label(cat.labelKey),
+      pbLinkStatus: child.pbLinkStatus ?? null,
+      pbWindow: child.pbWindow ?? null,
+      pbEvidence: child.pbEvidence ?? null,
+      pbLinkNote: child.pbLinkNote ?? null,
+    };
     developed.push(entry);
     if (child.pbWindow) developedByWindow.set(child.pbWindow.toLowerCase(), entry);
   }
 }
 
-// --- 검증: pbWindow 오타(인벤토리에 없음) / 중복 ---
+// --- 검증: 모든 웹 메뉴의 PB 연결 상태 / 윈도우 근거 / 중복 ---
 const inventoryWindows = new Set(inventory.screens.map((s) => (s.window || '').toLowerCase()).filter(Boolean));
 const errors = [];
 const seen = new Map();
 for (const e of developed) {
-  if (!e.pbWindow) continue;
+  if (!['powerbuilder', 'web-native', 'unresolved'].includes(e.pbLinkStatus)) {
+    errors.push(`${e.code} (${e.path})에 pbLinkStatus가 없습니다.`);
+    continue;
+  }
+  if (e.pbLinkStatus === 'web-native') {
+    if (e.pbWindow || e.pbEvidence || e.pbLinkNote) errors.push(`${e.code}는 web-native이므로 PB 윈도우/근거/미해결 사유를 가질 수 없습니다.`);
+    continue;
+  }
+  if (e.pbLinkStatus === 'unresolved') {
+    if (e.pbWindow || e.pbEvidence) errors.push(`${e.code}는 unresolved이므로 확정 PB 윈도우/근거를 가질 수 없습니다.`);
+    if (!e.pbLinkNote) errors.push(`${e.code}는 unresolved 사유(pbLinkNote)가 필요합니다.`);
+    continue;
+  }
+  if (!e.pbWindow) {
+    errors.push(`${e.code}는 powerbuilder 연결이므로 pbWindow가 필요합니다.`);
+    continue;
+  }
   const w = e.pbWindow.toLowerCase();
   if (!inventoryWindows.has(w)) {
-    errors.push(`menuConfig 의 pbWindow "${e.pbWindow}" (${e.code}) 가 PB 인벤토리에 없습니다. 오타이거나 인벤토리 갱신이 필요합니다.`);
+    if (!e.pbEvidence) {
+      errors.push(`pbWindow "${e.pbWindow}" (${e.code})가 PB 메뉴 인벤토리에 없으므로 pbEvidence가 필요합니다.`);
+    } else {
+      const evidencePath = join(repoRoot, e.pbEvidence);
+      if (!existsSync(evidencePath)) errors.push(`${e.code}의 pbEvidence 파일이 없습니다: ${e.pbEvidence}`);
+      else if (!readFileSync(evidencePath, 'utf8').toLowerCase().includes(w)) errors.push(`${e.code}의 pbEvidence에 ${e.pbWindow}가 없습니다: ${e.pbEvidence}`);
+    }
   }
   if (seen.has(w)) errors.push(`pbWindow "${e.pbWindow}" 가 ${seen.get(w)} 와 ${e.code} 두 화면에 중복 선언됐습니다.`);
   else seen.set(w, e.code);
+}
+
+// 장비 공통 화면 정의가 menuConfig의 연결 계약과 어긋나지 않게 한다.
+const equipmentDefinitionsPath = join(frontendRoot, 'src', 'app', '(authenticated)', 'equipment', 'result-query', '_lib', 'result-query-definitions.ts');
+const equipmentDefinitions = readFileSync(equipmentDefinitionsPath, 'utf8');
+for (const match of equipmentDefinitions.matchAll(/menuCode:\s*'([^']+)'[^\n]*pbWindow:\s*'([^']+)'/g)) {
+  const [, code, pbWindow] = match;
+  const linked = developed.find((e) => e.code === code);
+  if (!linked) errors.push(`장비 정의 ${code}가 menuConfig에 없습니다.`);
+  else if (linked.pbWindow?.toLowerCase() !== pbWindow.toLowerCase()) errors.push(`장비 정의 ${code}의 pbWindow(${pbWindow})가 menuConfig(${linked.pbWindow ?? '없음'})와 다릅니다.`);
 }
 if (errors.length > 0) {
   console.error('이관 현황 검증 실패:');
@@ -86,7 +129,10 @@ if (errors.length > 0) {
 
 const checkOnly = process.argv.includes('--check');
 if (checkOnly) {
-  console.log(`이관 현황 검증 OK: 개발 화면 ${developed.length}개, pbWindow 매핑 ${developedByWindow.size}개.`);
+  const mapped = developed.filter((e) => e.pbLinkStatus === 'powerbuilder').length;
+  const native = developed.filter((e) => e.pbLinkStatus === 'web-native').length;
+  const unresolved = developed.filter((e) => e.pbLinkStatus === 'unresolved').length;
+  console.log(`PB 연결 계약 OK: 웹 메뉴 ${developed.length}개 (PB ${mapped} / 웹 신규 ${native} / 미확정 ${unresolved}).`);
   process.exit(0);
 }
 
@@ -111,8 +157,10 @@ for (const sc of bizScreens) {
   const st = statusOf(sc).status;
   if (st === '완료') done++; else if (st === '윈도우미상') unknown++; else todo++;
 }
-// menuConfig 에 있으나 pbWindow 미지정(=PB 매핑 안 된 개발 화면)
-const developedNoPb = developed.filter((e) => !e.pbWindow);
+const mappedMenus = developed.filter((e) => e.pbLinkStatus === 'powerbuilder');
+const nativeMenus = developed.filter((e) => e.pbLinkStatus === 'web-native');
+const unresolvedMenus = developed.filter((e) => e.pbLinkStatus === 'unresolved');
+const verifiedCommit = execFileSync('git', ['rev-parse', '--short', 'HEAD'], { cwd: repoRoot, encoding: 'utf8' }).trim();
 
 const L = [];
 L.push('---');
@@ -120,6 +168,7 @@ L.push('sources:');
 L.push('  - apps/frontend/src/config/menuConfig.ts');
 L.push('  - apps/frontend/scripts/data/pb-screen-inventory.json');
 L.push('generator: apps/frontend/scripts/gen-migration-status.mjs');
+L.push(`verifiedCommit: ${verifiedCommit}`);
 L.push('---');
 L.push('');
 L.push('# PB 화면 이관 현황 (자동 생성)');
@@ -137,7 +186,7 @@ L.push(`| 완료(개발됨, pbWindow 매핑) | ${done} |`);
 L.push(`| 미착수 | ${todo} |`);
 L.push(`| 윈도우 미상 | ${unknown} |`);
 L.push('');
-L.push(`개발됐지만 아직 PB 원본(pbWindow) 미지정 화면: **${developedNoPb.length}개** — 이관 완료 판정에 포함되지 않습니다. 아래 목록 참고.`);
+L.push(`웹 메뉴 연결 계약: **PB ${mappedMenus.length}개 / 웹 신규 ${nativeMenus.length}개 / 미확정 ${unresolvedMenus.length}개**. PB 매핑과 웹 경로의 전체 연결표는 [pb-menu-route-links.md](pb-menu-route-links.md)에서 관리합니다.`);
 L.push('');
 L.push('## 대분류별 진행률');
 L.push('');
@@ -164,16 +213,52 @@ for (const g of groups) {
   }
   L.push('');
 }
-if (developedNoPb.length > 0) {
-  L.push('## PB 원본(pbWindow) 미지정 개발 화면');
+if (unresolvedMenus.length > 0) {
+  L.push('## PB 연결 미확정 웹 화면');
   L.push('');
-  L.push('menuConfig 에 있으나 `pbWindow` 가 없어 PB 이관 완료로 집계되지 않습니다. PB 원본을 아는 화면은 `pbWindow` 를 채우세요(신규/비PB 화면은 그대로 두면 됩니다).');
+  L.push('추정 연결을 금지한다. PB 원본이 소스나 메뉴 인벤토리로 확인되면 `menuConfig.ts`의 상태를 `powerbuilder`로 바꾸고 근거를 함께 기록한다.');
   L.push('');
-  L.push('| 그룹 | 화면 | 코드 | 경로 |');
-  L.push('|---|---|---|---|');
-  for (const e of developedNoPb) L.push(`| ${e.group} | ${e.label} | \`${e.code}\` | \`${e.path}\` |`);
+  L.push('| 그룹 | 화면 | 코드 | 경로 | 미확정 사유 |');
+  L.push('|---|---|---|---|---|');
+  for (const e of unresolvedMenus) L.push(`| ${e.group} | ${e.label} | \`${e.code}\` | \`${e.path}\` | ${e.pbLinkNote} |`);
   L.push('');
 }
 
 writeFileSync(outPath, L.join('\n'), 'utf8');
-console.log(`Generated migration status → docs/business-logics/pb-screen-migration-status.md (완료 ${done} / 미착수 ${todo} / 미상 ${unknown} / pbWindow미지정 ${developedNoPb.length})`);
+
+const R = [];
+R.push('---');
+R.push('sources:');
+R.push('  - apps/frontend/src/config/menuConfig.ts');
+R.push('  - apps/frontend/scripts/data/pb-screen-inventory.json');
+R.push('generator: apps/frontend/scripts/gen-migration-status.mjs');
+R.push(`verifiedCommit: ${verifiedCommit}`);
+R.push('---');
+R.push('');
+R.push('# PB 윈도우 ↔ 웹 메뉴·경로 연결표 (자동 생성)');
+R.push('');
+R.push('> **직접 수정하지 마세요.** 메뉴 클릭 경로와 PB 원본의 연결 계약은 `menuConfig.ts`에서 관리합니다.');
+R.push('> 새 메뉴는 `powerbuilder`, `web-native`, `unresolved` 중 하나를 반드시 선언해야 하며 `pnpm test`가 누락·중복·오타를 차단합니다.');
+R.push('');
+R.push('## 연결 현황');
+R.push('');
+R.push('| 전체 웹 메뉴 | PB 연결 | 웹 신규 | 미확정 |');
+R.push('|---:|---:|---:|---:|');
+R.push(`| ${developed.length} | ${mappedMenus.length} | ${nativeMenus.length} | ${unresolvedMenus.length} |`);
+R.push('');
+R.push('## 전체 연결표');
+R.push('');
+R.push('| 그룹 | 웹 메뉴 | 메뉴코드 | 웹 경로 | 연결 상태 | PB 윈도우 | 근거/사유 |');
+R.push('|---|---|---|---|---|---|---|');
+for (const e of developed) {
+  const status = e.pbLinkStatus === 'powerbuilder' ? 'PB 연결' : e.pbLinkStatus === 'web-native' ? '웹 신규' : '미확정';
+  const evidence = e.pbLinkStatus === 'powerbuilder'
+    ? (inventoryWindows.has(e.pbWindow.toLowerCase()) ? 'PB 메뉴 인벤토리' : `\`${e.pbEvidence}\``)
+    : (e.pbLinkNote ?? 'PB 대응 없음');
+  R.push(`| ${e.group} | ${e.label} | \`${e.code}\` | \`${e.path}\` | ${status} | ${e.pbWindow ? '\`' + e.pbWindow + '\`' : ''} | ${evidence} |`);
+}
+R.push('');
+writeFileSync(linkOutPath, R.join('\n'), 'utf8');
+
+console.log(`Generated migration status → docs/business-logics/pb-screen-migration-status.md (완료 ${done} / 미착수 ${todo} / 미상 ${unknown})`);
+console.log(`Generated PB route links → docs/business-logics/pb-menu-route-links.md (PB ${mappedMenus.length} / 웹 신규 ${nativeMenus.length} / 미확정 ${unresolvedMenus.length})`);

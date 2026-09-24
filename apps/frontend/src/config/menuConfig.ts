@@ -23,8 +23,14 @@ export interface MenuConfigItem {
   path?: string;
   /** 아이콘 컴포넌트 (최상위 메뉴만 사용) */
   icon?: React.ComponentType<{ className?: string }>;
-  /** 이관 원본 PowerBuilder 윈도우명 (예: w_mat_receipt_cancel_master). 신규/비PB 화면은 생략. */
+  /** PB 연결 상태. 경로가 있는 메뉴는 반드시 세 상태 중 하나를 명시한다. */
+  pbLinkStatus?: "powerbuilder" | "web-native" | "unresolved";
+  /** 이관 원본 PowerBuilder 윈도우명. pbLinkStatus=powerbuilder일 때 필수다. */
   pbWindow?: string;
+  /** PB 메뉴 인벤토리에 없는 윈도우를 연결할 때 사용하는 추적 가능한 소스 근거 경로. */
+  pbEvidence?: string;
+  /** pbLinkStatus=unresolved인 경우 추정하지 않은 이유. */
+  pbLinkNote?: string;
   /** 하위 메뉴 항목 */
   children?: MenuConfigItem[];
 }
@@ -36,26 +42,26 @@ export const menuConfig: MenuConfigItem[] = [
     labelKey: "menu.master",
     icon: Database,
     children: [
-      { code: "MST_PART", labelKey: "menu.master.part", path: "/master/part" },
-      { code: "MST_PRODUCT_MODEL", labelKey: "menu.master.productModel", path: "/master/product-model" },
-      { code: "MST_BOM", labelKey: "menu.master.bom", path: "/master/bom" },
-      { code: "MST_PARTNER", labelKey: "menu.master.partner", path: "/master/partner" },
-      { code: "MST_CUSTOMER", labelKey: "menu.master.customer", path: "/master/customer" },
-      { code: "EQUIP_MASTER", labelKey: "menu.equipment.master", path: "/master/equip" },
-      { code: "OEE_MST_STD_TIME", labelKey: "menu.oee.standardTime", path: "/oee/master/standard-time" },
-      { code: "OEE_MST_IDLE_REASON", labelKey: "menu.oee.idleReason", path: "/oee/master/idle-reason" },
-      { code: "OEE_MST_EQUIP_REASON", labelKey: "menu.oee.equipReason", path: "/oee/master/equip-reason-map" },
-      { code: "MST_PROCESS", labelKey: "menu.master.process", path: "/master/process" },
-      { code: "MST_PROD_LINE", labelKey: "menu.master.prodLine", path: "/master/prod-line" },
-      { code: "MST_ROUTING", labelKey: "menu.master.routing", path: "/master/routing" },
-      { code: "MST_WORK_CALENDAR", labelKey: "menu.master.workCalendar", path: "/master/work-calendar" },
-      { code: "MST_WORKER", labelKey: "menu.master.worker", path: "/master/worker" },
-      { code: "MST_WORK_INST", labelKey: "menu.master.workInstruction", path: "/master/work-instruction" },
-      { code: "MST_WAREHOUSE", labelKey: "menu.master.warehouse", path: "/master/warehouse" },
-      { code: "MST_LABEL", labelKey: "menu.master.label", path: "/master/label" },
-      { code: "MST_PURCHASE_PRICE", labelKey: "menu.master.purchasePrice", path: "/master/purchase-price" },
-      { code: "MST_ITEM_SUPPLIER", labelKey: "menu.master.itemSupplier", path: "/master/item-supplier" },
-      { code: "MST_SALE_PRICE", labelKey: "menu.master.salePrice", path: "/master/sale-price" },
+      { code: "MST_PART", labelKey: "menu.master.part", path: "/master/part", pbLinkStatus: "powerbuilder", pbWindow: "w_des_item_master" },
+      { code: "MST_PRODUCT_MODEL", labelKey: "menu.master.productModel", path: "/master/product-model", pbLinkStatus: "powerbuilder", pbWindow: "w_pln_product_model_simple_master" },
+      { code: "MST_BOM", labelKey: "menu.master.bom", path: "/master/bom", pbLinkStatus: "unresolved", pbLinkNote: "PB BOM 메뉴가 설계BOM·제조BOM·원단위BOM으로 분리되어 단일 원본을 확정할 수 없음" },
+      { code: "MST_PARTNER", labelKey: "menu.master.partner", path: "/master/partner", pbLinkStatus: "unresolved", pbLinkNote: "웹 거래처가 PB 고객·협력사 화면을 통합하므로 단일 원본을 확정할 수 없음" },
+      { code: "MST_CUSTOMER", labelKey: "menu.master.customer", path: "/master/customer", pbLinkStatus: "powerbuilder", pbWindow: "w_com_customer_master" },
+      { code: "EQUIP_MASTER", labelKey: "menu.equipment.master", path: "/master/equip", pbLinkStatus: "powerbuilder", pbWindow: "w_mcn_machine_master" },
+      { code: "OEE_MST_STD_TIME", labelKey: "menu.oee.standardTime", path: "/oee/master/standard-time", pbLinkStatus: "web-native" },
+      { code: "OEE_MST_IDLE_REASON", labelKey: "menu.oee.idleReason", path: "/oee/master/idle-reason", pbLinkStatus: "web-native" },
+      { code: "OEE_MST_EQUIP_REASON", labelKey: "menu.oee.equipReason", path: "/oee/master/equip-reason-map", pbLinkStatus: "web-native" },
+      { code: "MST_PROCESS", labelKey: "menu.master.process", path: "/master/process", pbLinkStatus: "powerbuilder", pbWindow: "w_pln_workstage_master" },
+      { code: "MST_PROD_LINE", labelKey: "menu.master.prodLine", path: "/master/prod-line", pbLinkStatus: "powerbuilder", pbWindow: "w_pln_line_master" },
+      { code: "MST_ROUTING", labelKey: "menu.master.routing", path: "/master/routing", pbLinkStatus: "web-native" },
+      { code: "MST_WORK_CALENDAR", labelKey: "menu.master.workCalendar", path: "/master/work-calendar", pbLinkStatus: "powerbuilder", pbWindow: "w_pln_product_calendar" },
+      { code: "MST_WORKER", labelKey: "menu.master.worker", path: "/master/worker", pbLinkStatus: "web-native" },
+      { code: "MST_WORK_INST", labelKey: "menu.master.workInstruction", path: "/master/work-instruction", pbLinkStatus: "web-native" },
+      { code: "MST_WAREHOUSE", labelKey: "menu.master.warehouse", path: "/master/warehouse", pbLinkStatus: "web-native" },
+      { code: "MST_LABEL", labelKey: "menu.master.label", path: "/master/label", pbLinkStatus: "powerbuilder", pbWindow: "w_product_label_master" },
+      { code: "MST_PURCHASE_PRICE", labelKey: "menu.master.purchasePrice", path: "/master/purchase-price", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_buy_price_master" },
+      { code: "MST_ITEM_SUPPLIER", labelKey: "menu.master.itemSupplier", path: "/master/item-supplier", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_item_master" },
+      { code: "MST_SALE_PRICE", labelKey: "menu.master.salePrice", path: "/master/sale-price", pbLinkStatus: "powerbuilder", pbWindow: "w_sal_sale_price_master" },
     ],
   },
   {
@@ -63,7 +69,7 @@ export const menuConfig: MenuConfigItem[] = [
     labelKey: "menu.bom",
     icon: Network,
     children: [
-      { code: "BOM_REPLACE", labelKey: "menu.bom.replace", path: "/bom/replace-bom", pbWindow: "w_des_replace_bom_master" },
+      { code: "BOM_REPLACE", labelKey: "menu.bom.replace", path: "/bom/replace-bom", pbLinkStatus: "powerbuilder", pbWindow: "w_des_replace_bom_master" },
     ],
   },
   {
@@ -71,15 +77,15 @@ export const menuConfig: MenuConfigItem[] = [
     labelKey: "menu.equipment",
     icon: Wrench,
     children: [
-      { code: "EQUIP_RESULT_SP", labelKey: "menu.equipment.resultSp", path: "/equipment/result-query/sp" },
-      { code: "EQUIP_RESULT_SPI", labelKey: "menu.equipment.resultSpi", path: "/equipment/result-query/spi" },
-      { code: "EQUIP_RESULT_ICT", labelKey: "menu.equipment.resultIct", path: "/equipment/result-query/ict" },
-      { code: "EQUIP_RESULT_AOI", labelKey: "menu.equipment.resultAoi", path: "/equipment/result-query/aoi" },
-      { code: "EQUIP_RESULT_ROUTER", labelKey: "menu.equipment.resultRouter", path: "/equipment/result-query/router" },
-      { code: "EQUIP_RESULT_ROM_WRITE", labelKey: "menu.equipment.resultRomWrite", path: "/equipment/result-query/rom-write" },
-      { code: "EQUIP_RESULT_SOLDER", labelKey: "menu.equipment.resultSolder", path: "/equipment/result-query/solder" },
-      { code: "EQUIP_RESULT_REFLOW", labelKey: "menu.equipment.resultReflow", path: "/equipment/result-query/reflow" },
-      { code: "EQUIP_RESULT_PERFORMANCE", labelKey: "menu.equipment.resultPerformance", path: "/equipment/result-query/performance" },
+      { code: "EQUIP_RESULT_SP", labelKey: "menu.equipment.resultSp", path: "/equipment/result-query/sp", pbLinkStatus: "powerbuilder", pbWindow: "w_qc_machine_inspect_data_sp_query" },
+      { code: "EQUIP_RESULT_SPI", labelKey: "menu.equipment.resultSpi", path: "/equipment/result-query/spi", pbLinkStatus: "powerbuilder", pbWindow: "w_spi_time_query" },
+      { code: "EQUIP_RESULT_ICT", labelKey: "menu.equipment.resultIct", path: "/equipment/result-query/ict", pbLinkStatus: "powerbuilder", pbWindow: "w_qc_machine_inspect_data_ict_query" },
+      { code: "EQUIP_RESULT_AOI", labelKey: "menu.equipment.resultAoi", path: "/equipment/result-query/aoi", pbLinkStatus: "powerbuilder", pbWindow: "w_aoi_header_detail_query" },
+      { code: "EQUIP_RESULT_ROUTER", labelKey: "menu.equipment.resultRouter", path: "/equipment/result-query/router", pbLinkStatus: "powerbuilder", pbWindow: "w_qc_machine_inspect_data_rt_query" },
+      { code: "EQUIP_RESULT_ROM_WRITE", labelKey: "menu.equipment.resultRomWrite", path: "/equipment/result-query/rom-write", pbLinkStatus: "powerbuilder", pbWindow: "w_qc_machine_inspect_data_rw_query" },
+      { code: "EQUIP_RESULT_SOLDER", labelKey: "menu.equipment.resultSolder", path: "/equipment/result-query/solder", pbLinkStatus: "powerbuilder", pbWindow: "w_qc_machine_inspect_data_solder_query" },
+      { code: "EQUIP_RESULT_REFLOW", labelKey: "menu.equipment.resultReflow", path: "/equipment/result-query/reflow", pbLinkStatus: "powerbuilder", pbWindow: "w_qc_machine_inspect_data_reflow_query" },
+      { code: "EQUIP_RESULT_PERFORMANCE", labelKey: "menu.equipment.resultPerformance", path: "/equipment/result-query/performance", pbLinkStatus: "powerbuilder", pbWindow: "w_qc_machine_inspect_data_eol_query" },
     ],
   },
   {
@@ -87,12 +93,12 @@ export const menuConfig: MenuConfigItem[] = [
     labelKey: "menu.oee",
     icon: Activity,
     children: [
-      { code: "OEE_DASHBOARD", labelKey: "menu.oee.dashboard", path: "/oee/dashboard" },
-      { code: "OEE_MULTI_ENTRY", labelKey: "menu.oee.multiEntry", path: "/oee/multi-entry" },
-      { code: "OEE_OVERALL_STATUS", labelKey: "menu.oee.overallStatus", path: "/oee/overall-status" },
-      { code: "OEE_EQUIP_WORK_RESULT", labelKey: "menu.oee.equipWorkResult", path: "/oee/equip-work-result" },
-      { code: "OEE_EQUIP_OPS_STATUS", labelKey: "menu.oee.equipOpsStatus", path: "/oee/equip-ops-status" },
-      { code: "OEE_FIELD_OPS", labelKey: "menu.oee.fieldOps", path: "/oee/field-ops" },
+      { code: "OEE_DASHBOARD", labelKey: "menu.oee.dashboard", path: "/oee/dashboard", pbLinkStatus: "web-native" },
+      { code: "OEE_MULTI_ENTRY", labelKey: "menu.oee.multiEntry", path: "/oee/multi-entry", pbLinkStatus: "web-native" },
+      { code: "OEE_OVERALL_STATUS", labelKey: "menu.oee.overallStatus", path: "/oee/overall-status", pbLinkStatus: "web-native" },
+      { code: "OEE_EQUIP_WORK_RESULT", labelKey: "menu.oee.equipWorkResult", path: "/oee/equip-work-result", pbLinkStatus: "web-native" },
+      { code: "OEE_EQUIP_OPS_STATUS", labelKey: "menu.oee.equipOpsStatus", path: "/oee/equip-ops-status", pbLinkStatus: "web-native" },
+      { code: "OEE_FIELD_OPS", labelKey: "menu.oee.fieldOps", path: "/oee/field-ops", pbLinkStatus: "web-native" },
       // 미사용(2026-08-27): 설비별 운영 현황 및 분석 → 설비 운영 현황(OEE_EQUIP_OPS_STATUS)으로 대체.
       // 화면은 app/(authenticated)/oee/equip-ops-analysis 에 남아 있어 URL 직접 접근은 된다.
       // 되살리려면 OEE_EQUIP_OPS_ANALYSIS 항목을 이 자리에 다시 넣고 gen:menu 를 실행한다.
@@ -105,10 +111,10 @@ export const menuConfig: MenuConfigItem[] = [
     labelKey: "menu.material",
     icon: Package,
     children: [
-      { code: "MAT_RECEIPT_ISSUE_LEDGER", labelKey: "menu.material.receiptIssueLedger", path: "/material/receipt-issue-ledger", pbWindow: "w_mat_ledger_report" },
-      { code: "MAT_CURRENT_INVENTORY", labelKey: "menu.material.currentInventory", path: "/material/current-inventory", pbWindow: "w_mat_current_inventory_master" },
-      { code: "MAT_WORKSTAGE_INVENTORY", labelKey: "menu.material.workstageInventory", path: "/material/workstage-inventory" },
-      { code: "MAT_RECEIPT_CANCEL", labelKey: "menu.material.receiptCancel", path: "/material/receipt-cancel", pbWindow: "w_mat_receipt_cancel_master" },
+      { code: "MAT_RECEIPT_ISSUE_LEDGER", labelKey: "menu.material.receiptIssueLedger", path: "/material/receipt-issue-ledger", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_ledger_report" },
+      { code: "MAT_CURRENT_INVENTORY", labelKey: "menu.material.currentInventory", path: "/material/current-inventory", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_current_inventory_master" },
+      { code: "MAT_WORKSTAGE_INVENTORY", labelKey: "menu.material.workstageInventory", path: "/material/workstage-inventory", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_workstage_inventory_query", pbEvidence: "apps/backend/src/modules/material/controllers/workstage-inventory.controller.ts" },
+      { code: "MAT_RECEIPT_CANCEL", labelKey: "menu.material.receiptCancel", path: "/material/receipt-cancel", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_receipt_cancel_master" },
     ],
   },
   {
@@ -116,8 +122,8 @@ export const menuConfig: MenuConfigItem[] = [
     labelKey: "menu.processTransaction",
     icon: GitBranch,
     children: [
-      { code: "PLN_WORKSTAGE_PASS", labelKey: "menu.workstagePass", path: "/process-transaction/workstage-pass" },
-      { code: "PLN_MAGAZINE_LABEL_HISTORY", labelKey: "menu.magazineLabelHistory", path: "/process-transaction/magazine-label-history" },
+      { code: "PLN_WORKSTAGE_PASS", labelKey: "menu.workstagePass", path: "/process-transaction/workstage-pass", pbLinkStatus: "powerbuilder", pbWindow: "w_pln_product_inout_scan_master", pbEvidence: "apps/backend/src/modules/process-transaction/workstage-pass.controller.ts" },
+      { code: "PLN_MAGAZINE_LABEL_HISTORY", labelKey: "menu.magazineLabelHistory", path: "/process-transaction/magazine-label-history", pbLinkStatus: "powerbuilder", pbWindow: "w_pln_product_magazine_label_query", pbEvidence: "apps/backend/src/modules/process-transaction/magazine-label-history.controller.ts" },
     ],
   },
   {
@@ -133,7 +139,7 @@ export const menuConfig: MenuConfigItem[] = [
     labelKey: "menu.productInventory",
     icon: Warehouse,
     children: [
-      { code: "PRD_CURRENT_INVENTORY", labelKey: "menu.productMgmt.currentInventory", path: "/product/current-inventory", pbWindow: "w_prd_product_fg_inventory" },
+      { code: "PRD_CURRENT_INVENTORY", labelKey: "menu.productMgmt.currentInventory", path: "/product/current-inventory", pbLinkStatus: "powerbuilder", pbWindow: "w_prd_product_fg_inventory" },
     ],
   },
   {
@@ -141,7 +147,7 @@ export const menuConfig: MenuConfigItem[] = [
     labelKey: "menu.production",
     icon: ClipboardList,
     children: [
-      { code: "PRD_RUN_CARD", labelKey: "menu.production.runCard", path: "/production/run-card" },
+      { code: "PRD_RUN_CARD", labelKey: "menu.production.runCard", path: "/production/run-card", pbLinkStatus: "powerbuilder", pbWindow: "w_product_run_card", pbEvidence: "apps/frontend/src/app/(authenticated)/production/run-card/page.tsx" },
     ],
   },
   {
@@ -149,8 +155,8 @@ export const menuConfig: MenuConfigItem[] = [
     labelKey: "menu.quality",
     icon: Wrench,
     children: [
-      { code: "QC_REPAIR_HISTORY", labelKey: "menu.quality.repairHistory", path: "/quality/repair-history", pbWindow: "w_pln_product_pcb_repair_master" },
-      { code: "QC_PRODUCT_DESTROY", labelKey: "menu.quality.productDestroy", path: "/quality/product-destroy", pbWindow: "w_pln_product_pcb_destroy_master" },
+      { code: "QC_REPAIR_HISTORY", labelKey: "menu.quality.repairHistory", path: "/quality/repair-history", pbLinkStatus: "powerbuilder", pbWindow: "w_pln_product_pcb_repair_master" },
+      { code: "QC_PRODUCT_DESTROY", labelKey: "menu.quality.productDestroy", path: "/quality/product-destroy", pbLinkStatus: "powerbuilder", pbWindow: "w_pln_product_pcb_destroy_master" },
     ],
   },
   {
@@ -164,15 +170,15 @@ export const menuConfig: MenuConfigItem[] = [
     labelKey: "menu.system",
     icon: Settings,
     children: [
-      { code: "SYS_COMPANY", labelKey: "menu.master.company", path: "/master/company" },
-      { code: "SYS_CODE", labelKey: "menu.master.code", path: "/master/code" },
-      { code: "SYS_CONFIG", labelKey: "menu.system.config", path: "/system/config" },
-      { code: "SYS_MENU_CATEGORY", labelKey: "menu.system.menuCategory", path: "/system/menu-categories" },
-      { code: "SYS_DEPT", labelKey: "menu.system.department", path: "/system/department" },
-      { code: "SYS_USER", labelKey: "menu.system.users", path: "/system/users" },
-      { code: "SYS_SCHEDULER", labelKey: "menu.system.scheduler", path: "/system/scheduler" },
-      { code: "SYS_ER_VIEW", labelKey: "menu.system.erView", path: "/system/er-view" },
-      { code: "SYS_IMPR_REQ", labelKey: "menu.system.improvementRequests", path: "/system/improvement-requests" },
+      { code: "SYS_COMPANY", labelKey: "menu.master.company", path: "/master/company", pbLinkStatus: "powerbuilder", pbWindow: "w_company_master" },
+      { code: "SYS_CODE", labelKey: "menu.master.code", path: "/master/code", pbLinkStatus: "powerbuilder", pbWindow: "w_basecode_master" },
+      { code: "SYS_CONFIG", labelKey: "menu.system.config", path: "/system/config", pbLinkStatus: "powerbuilder", pbWindow: "w_system_config" },
+      { code: "SYS_MENU_CATEGORY", labelKey: "menu.system.menuCategory", path: "/system/menu-categories", pbLinkStatus: "web-native" },
+      { code: "SYS_DEPT", labelKey: "menu.system.department", path: "/system/department", pbLinkStatus: "powerbuilder", pbWindow: "w_department_master" },
+      { code: "SYS_USER", labelKey: "menu.system.users", path: "/system/users", pbLinkStatus: "powerbuilder", pbWindow: "w_user_master" },
+      { code: "SYS_SCHEDULER", labelKey: "menu.system.scheduler", path: "/system/scheduler", pbLinkStatus: "web-native" },
+      { code: "SYS_ER_VIEW", labelKey: "menu.system.erView", path: "/system/er-view", pbLinkStatus: "web-native" },
+      { code: "SYS_IMPR_REQ", labelKey: "menu.system.improvementRequests", path: "/system/improvement-requests", pbLinkStatus: "web-native" },
     ],
   },
 ];
