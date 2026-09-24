@@ -34,3 +34,5 @@ __exportStar(require("./utils"), exports);
 __exportStar(require("./oee"), exports);
 // 생산월력 도메인(근무분 계산·휴일 판정) 내보내기
 __exportStar(require("./work-calendar"), exports);
+// PB 팝업 카탈로그(프론트 엔진 · 백엔드 화이트리스트 공용) 내보내기
+__exportStar(require("./popups"), exports);

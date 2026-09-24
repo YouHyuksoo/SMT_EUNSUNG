@@ -23,3 +23,6 @@ export * from './oee';
 
 // 생산월력 도메인(근무분 계산·휴일 판정) 내보내기
 export * from './work-calendar';
+
+// PB 팝업 카탈로그(프론트 엔진 · 백엔드 화이트리스트 공용) 내보내기
+export * from './popups';

@@ -50,6 +50,7 @@ import { ProcessTransactionModule } from './modules/process-transaction/process-
 import { QualityRepairHistoryModule } from './modules/quality/quality-repair-history.module';
 import { QualityProductDestroyModule } from './modules/quality/quality-product-destroy.module';
 import { BomModule } from './modules/bom/bom.module';
+import { PopupSearchModule } from './modules/popup-search/popup-search.module';
 import { ProductInventoryModule } from './modules/product/product-inventory.module';
 import { MasterWorkerModule } from './modules/master/master-worker.module';
 import { MasterWorkInstructionModule } from './modules/master/master-work-instruction.module';
@@ -150,6 +151,8 @@ import { SharedModule } from './shared/shared.module';
     QualityRepairHistoryModule,
     QualityProductDestroyModule,
     BomModule,
+    // 공용 팝업조회 (PB 팝업 카탈로그의 엔진 설정형 팝업)
+    PopupSearchModule,
     ProductInventoryModule,
 
     // 기준정보 작업자정보 (/master/workers)

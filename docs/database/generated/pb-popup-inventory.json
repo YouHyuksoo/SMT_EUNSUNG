@@ -1,0 +1,5107 @@
+{
+  "totalWindows": 547,
+  "popupCandidates": 221,
+  "byKind": {
+    "complex": 54,
+    "readonly": 23,
+    "search-select": 92,
+    "util": 52
+  },
+  "windows": [
+    {
+      "window": "w_progress_popup",
+      "kind": "util",
+      "callerCount": 41,
+      "callers": [
+        "w_col_info_popup",
+        "w_com_exchange_rate_master",
+        "w_des_bom_excel_form_default_popup",
+        "w_des_bom_excel_form_eunsung_popup",
+        "w_des_bom_excel_form_lg_4_compare_popup",
+        "w_des_bom_excel_form_lg_4_item_popup",
+        "w_des_bom_excel_form_lg_popup",
+        "w_des_bom_replace_item_excel_form_popup",
+        "w_des_item_excel_form_popup",
+        "w_dual_language",
+        "w_graph_root",
+        "w_main_root",
+        "w_mat_departure_4_goods_master",
+        "w_mat_departure_master",
+        "w_mat_inventory_check_master",
+        "w_mat_inventory_close_excel_import_popup",
+        "w_mat_item_departure_excel_form_popup",
+        "w_mat_item_purchase_excel_form_popup",
+        "w_mat_item_set_msl_location_popup",
+        "w_mat_mass_issue_master",
+        "w_mat_mass_material_issue_master",
+        "w_mat_material_issue_excel_form_popup",
+        "w_mat_material_receipt_excel_form_popup",
+        "w_mat_material_unit_price_excel_form_popup",
+        "w_mat_other_receipt_with_bom_master",
+        "w_mat_purchase_order_4_repair_master",
+        "w_mat_purchase_order_plan_master",
+        "w_mat_receipt_master",
+        "w_mat_receipt_slip_excel_import_popup",
+        "w_mat_requirment_plan_master",
+        "w_mat_workstage_inventory_check_master",
+        "w_mat_ws_inventory_close_excel_import_popup",
+        "w_menu_master",
+        "w_mrm_excel_form_popup",
+        "w_pln_line_capacity_master",
+        "w_pln_product_pcb_marking_query",
+        "w_product_carrier_barcode",
+        "w_product_run_card",
+        "w_product_run_card_duckil",
+        "w_qc_repair_receipt_excel_form_popup",
+        "w_sal_sale_price_excel_from_popup"
+      ],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [],
+      "dataobjects": [],
+      "dwCount": 0,
+      "tables": [],
+      "filterControlCount": 0
+    },
+    {
+      "window": "w_com_supplier_popup",
+      "kind": "search-select",
+      "callerCount": 24,
+      "callers": [
+        "w_com_bring_in_master",
+        "w_com_carrying_out_master",
+        "w_mat_buy_price_master",
+        "w_mat_departure_4_goods_master",
+        "w_mat_departure_master",
+        "w_mat_inventory_check_master",
+        "w_mat_item_master",
+        "w_mat_other_receipt_master",
+        "w_mat_request_issue_master",
+        "w_mat_workstage_inventory_check_master",
+        "w_mcn_feeder_master",
+        "w_mcn_feeder_repair_master",
+        "w_mcn_feeder_repair_request_master",
+        "w_mcn_jig_fixture_check_master",
+        "w_mcn_jig_input_history_master",
+        "w_mcn_jig_mask_check_history",
+        "w_mcn_jig_mask_check_master",
+        "w_mcn_jig_repair_master",
+        "w_mcn_jig_repair_request_master",
+        "w_mcn_machine_repair_master",
+        "w_mcn_mask_master",
+        "w_mcn_mold_repair_master",
+        "w_mcn_mold_repair_request_master",
+        "w_mcn_sample_input_history_master"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [
+        "supplier_code"
+      ],
+      "returnStyle": "close-with-return",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_com_supplier_popup"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "ICOM_SUPPLIER"
+      ],
+      "filterControlCount": 2
+    },
+    {
+      "window": "w_mat_item_popup",
+      "kind": "search-select",
+      "callerCount": 15,
+      "callers": [
+        "w_com_bring_in_master",
+        "w_mat_buy_price_master",
+        "w_mat_departure_4_goods_master",
+        "w_mat_departure_master",
+        "w_mat_mass_issue_master",
+        "w_mat_mass_issue_return_confirm_master",
+        "w_mat_mass_issue_return_master",
+        "w_mat_mass_material_issue_master",
+        "w_mat_other_issue_master",
+        "w_mat_other_receipt_with_bom_master",
+        "w_mat_purchase_order_4_repair_master",
+        "w_mat_request_master",
+        "w_mat_sub_issue_master",
+        "w_mat_workorder_master",
+        "w_mcn_mold_master"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [
+        "item_code",
+        "item_name",
+        "item_spec",
+        "supplier_code",
+        "supplier_name",
+        "line_type",
+        "item_uom",
+        "item_type"
+      ],
+      "returnStyle": "global-struct",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_mat_item_pop_tree"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "ICOM_SUPPLIER",
+        "ID_ITEM",
+        "IM_ITEM_MASTER"
+      ],
+      "filterControlCount": 10
+    },
+    {
+      "window": "w_mcn_mold_popup",
+      "kind": "search-select",
+      "callerCount": 15,
+      "callers": [
+        "w_com_carrying_out_master",
+        "w_des_bom_confirm_master",
+        "w_mat_inventory_close_excel_import_popup",
+        "w_mat_receipt_slip_excel_import_popup",
+        "w_mat_ws_inventory_close_excel_import_popup",
+        "w_mcn_feeder_master",
+        "w_mcn_jig_input_history_master",
+        "w_mcn_machine_daily_operation",
+        "w_mcn_mask_master",
+        "w_mcn_mold_buy_price_master",
+        "w_mcn_mold_issue_master",
+        "w_mcn_mold_purchase_order_master",
+        "w_mcn_mold_receipt_master",
+        "w_mcn_sample_input_history_master",
+        "w_sal_sale_price_excel_from_popup"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [
+        "mold_code"
+      ],
+      "returnStyle": "close-with-return",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_mcn_mold_popup"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "ICOM_SUPPLIER",
+        "IMCN_MOLD",
+        "IMCN_MOLD_INVENTORY"
+      ],
+      "filterControlCount": 3
+    },
+    {
+      "window": "w_com_customer_popup",
+      "kind": "search-select",
+      "callerCount": 13,
+      "callers": [
+        "w_customer_complaints_master",
+        "w_des_apply_item_master",
+        "w_mat_inventory_close_excel_import_popup",
+        "w_mat_item_receipt_invoice_master",
+        "w_mat_item_sale_invoice_master",
+        "w_mat_receipt_slip_excel_import_popup",
+        "w_mat_ws_inventory_close_excel_import_popup",
+        "w_mcn_feeder_master",
+        "w_mcn_jig_input_history_master",
+        "w_mcn_mask_master",
+        "w_mcn_sample_input_history_master",
+        "w_sal_sale_price_excel_from_popup",
+        "w_sal_sale_price_master"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [
+        "customer_code"
+      ],
+      "returnStyle": "close-with-return",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_com_customer_popup"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "ICOM_CUSTOMER"
+      ],
+      "filterControlCount": 2
+    },
+    {
+      "window": "w_des_bom_query_popup",
+      "kind": "readonly",
+      "callerCount": 12,
+      "callers": [
+        "w_des_apply_item_master",
+        "w_mat_mass_issue_master",
+        "w_mat_mass_issue_return_master",
+        "w_mat_mass_issue_return_request_master",
+        "w_mat_mass_material_issue_master",
+        "w_mat_purchase_order_plan_master",
+        "w_mat_requirment_plan_master",
+        "w_mat_workorder_master",
+        "w_mat_workstage_inventory_check_master",
+        "w_pln_product_model_master",
+        "w_pln_product_model_simple_master",
+        "w_pln_product_pcb_repair_master"
+      ],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_des_bom_query_popup"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "ID_ENG_BOM_TEMP"
+      ],
+      "filterControlCount": 6
+    },
+    {
+      "window": "w_des_model_master_popup",
+      "kind": "search-select",
+      "callerCount": 12,
+      "callers": [
+        "w_com_document_master",
+        "w_mcn_feeder_master",
+        "w_mcn_it_master",
+        "w_mcn_jig_input_history_master",
+        "w_mcn_mask_master",
+        "w_mcn_sample_bcr_input_history_master",
+        "w_mcn_sample_input_history_master",
+        "w_mcn_sample_master",
+        "w_pln_assembly_actual_master",
+        "w_pln_product_delivery_master",
+        "w_pln_product_master_plan_master",
+        "w_product_label_master"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [
+        "model_name"
+      ],
+      "returnStyle": "close-with-return",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_des_model_master_popup"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "IP_PRODUCT_MODEL_MASTER"
+      ],
+      "filterControlCount": 3
+    },
+    {
+      "window": "w_plan_run_no_status_popup",
+      "kind": "readonly",
+      "callerCount": 12,
+      "callers": [
+        "w_aoi_time_query",
+        "w_production_workstage_actual_query",
+        "w_qc_machine_inspect_data_bma_query",
+        "w_qc_machine_inspect_data_eol_query",
+        "w_qc_machine_inspect_data_ict_query",
+        "w_qc_machine_inspect_data_reflow_query",
+        "w_qc_machine_inspect_data_rt_query",
+        "w_qc_machine_inspect_data_rw_query",
+        "w_qc_machine_inspect_data_solder_query",
+        "w_qc_machine_inspect_data_sp_query",
+        "w_spi_query",
+        "w_spi_time_query"
+      ],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_product_run_card_io_out_status_popup"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "IP_PRODUCT_RUN_CARD_IO"
+      ],
+      "filterControlCount": 2
+    },
+    {
+      "window": "w_des_item_popup",
+      "kind": "search-select",
+      "callerCount": 11,
+      "callers": [
+        "w_com_carrying_out_master",
+        "w_customer_complaints_master",
+        "w_des_bom_modify_master",
+        "w_des_mfs_bom_query",
+        "w_des_raw_bom_master",
+        "w_mat_item_master",
+        "w_mat_workstage_inventory_check_master",
+        "w_qc_repair_item_popup",
+        "w_qc_supplier_lot_blocking_master",
+        "w_smt_bom_create_master",
+        "w_smt_bom_hw_revision_master"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [
+        "item_code"
+      ],
+      "returnStyle": "close-with-return",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_des_item_popup_tree"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "ID_ITEM"
+      ],
+      "filterControlCount": 14
+    },
+    {
+      "window": "w_des_set_item_popup",
+      "kind": "search-select",
+      "callerCount": 11,
+      "callers": [
+        "w_des_apply_item_master",
+        "w_mat_inventory_close_excel_import_popup",
+        "w_mat_purchase_order_plan_master",
+        "w_mat_receipt_slip_excel_import_popup",
+        "w_mat_requirment_plan_master",
+        "w_mat_ws_inventory_close_excel_import_popup",
+        "w_qc_4m_master",
+        "w_qc_led_inspect_condition_master",
+        "w_qc_notify_master",
+        "w_sal_sale_price_excel_from_popup",
+        "w_sal_sale_price_master"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [
+        "item_code"
+      ],
+      "returnStyle": "close-with-return",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_des_set_item_popup_tree"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "ID_ITEM"
+      ],
+      "filterControlCount": 9
+    },
+    {
+      "window": "w_zetprint",
+      "kind": "util",
+      "callerCount": 11,
+      "callers": [
+        "w_barcode_rpt",
+        "w_com_carrying_out_master",
+        "w_mat_item_request_monitoring_line_query",
+        "w_mat_other_issue_barcode_master",
+        "w_mat_other_receipt_rental_borrowing_barcode_master",
+        "w_mat_receipt_slip_master_onetek_solder",
+        "w_material_request_master",
+        "w_pln_line_barcode_rpt",
+        "w_product_pid_tracking_fpcb_rpt",
+        "w_product_run_card",
+        "w_smt_plan_feeder_monitoring_line_master"
+      ],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [
+        "powerobjectparm"
+      ],
+      "dataobjects": [],
+      "dwCount": 0,
+      "tables": [],
+      "filterControlCount": 13
+    },
+    {
+      "window": "w_edit_window",
+      "kind": "complex",
+      "callerCount": 10,
+      "callers": [
+        "w_bulletin_board",
+        "w_default_value_popup",
+        "w_dynamic_graph_popup",
+        "w_dynamic_where_condition_popup",
+        "w_mcn_machine_repair_master",
+        "w_popup_root",
+        "w_report_generator",
+        "w_report_source_manage_popup",
+        "w_report_window_where_condition_popup",
+        "w_wallpaper"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "close-with-return",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [],
+      "dwCount": 0,
+      "tables": [],
+      "filterControlCount": 0
+    },
+    {
+      "window": "w_machine_image_flat",
+      "kind": "util",
+      "callerCount": 7,
+      "callers": [
+        "w_mcn_feeder_master",
+        "w_mcn_it_master",
+        "w_mcn_jig_input_history_master",
+        "w_mcn_mask_master",
+        "w_mcn_sample_bcr_input_history_master",
+        "w_mcn_sample_input_history_master",
+        "w_mcn_sample_master"
+      ],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [],
+      "dwCount": 0,
+      "tables": [],
+      "filterControlCount": 0
+    },
+    {
+      "window": "w_user_popup",
+      "kind": "search-select",
+      "callerCount": 7,
+      "callers": [
+        "w_agent_message_master",
+        "w_bulletin_board",
+        "w_com_bring_in_master",
+        "w_com_carrying_out_master",
+        "w_mat_item_master",
+        "w_privilege_master",
+        "w_wallpaper"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [
+        "user_id"
+      ],
+      "returnStyle": "close-with-return",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_user_popup"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "ISYS_DEPARTMENT",
+        "ISYS_USERS"
+      ],
+      "filterControlCount": 1
+    },
+    {
+      "window": "w_please_wait_popup",
+      "kind": "util",
+      "callerCount": 6,
+      "callers": [
+        "w_graph_root",
+        "w_main_root",
+        "w_product_pid_tracking_fpcb_rpt",
+        "w_role_master",
+        "w_send_mail_dw_popup",
+        "w_send_mail_popup"
+      ],
+      "returnsValue": false,
+      "returnSuspected": true,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [],
+      "dataobjects": [],
+      "dwCount": 0,
+      "tables": [],
+      "filterControlCount": 0
+    },
+    {
+      "window": "w_bad_reason_select_popup",
+      "kind": "complex",
+      "callerCount": 5,
+      "callers": [
+        "w_pln_product_defect",
+        "w_pln_product_pcb_destroy_master",
+        "w_pln_product_pcb_repair_master",
+        "w_qc_machine_inspect_manual",
+        "w_sal_shipping_return_repair_master"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [
+        "code_name",
+        "code_mean"
+      ],
+      "returnStyle": "global-struct",
+      "inParms": [],
+      "dataobjects": [
+        "d_bad_reason_group_select_popup",
+        "d_bad_reason_select_popup"
+      ],
+      "dwCount": 2,
+      "tables": [
+        "ISYS_CODE_MASTER"
+      ],
+      "filterControlCount": 3
+    },
+    {
+      "window": "w_com_mold_supplier_popup",
+      "kind": "search-select",
+      "callerCount": 5,
+      "callers": [
+        "w_mcn_jig_issue_master",
+        "w_mcn_mold_buy_price_master",
+        "w_mcn_mold_issue_master",
+        "w_mcn_mold_master",
+        "w_mcn_mold_receipt_master"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [
+        "supplier_code"
+      ],
+      "returnStyle": "close-with-return",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_com_mold_supplier_popup"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "ICOM_SUPPLIER"
+      ],
+      "filterControlCount": 2
+    },
+    {
+      "window": "w_item_eco_notify_image_popup",
+      "kind": "util",
+      "callerCount": 5,
+      "callers": [
+        "w_mat_other_issue_barcode_master",
+        "w_mat_other_receipt_barcode_seoul_master",
+        "w_mat_receipt_slip_master",
+        "w_mat_receipt_slip_master_onetek_solder",
+        "w_qc_eco_notify_master"
+      ],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [],
+      "dwCount": 0,
+      "tables": [],
+      "filterControlCount": 0
+    },
+    {
+      "window": "w_mat_order_qty_divide_popup",
+      "kind": "util",
+      "callerCount": 5,
+      "callers": [
+        "w_mat_departure_master",
+        "w_mat_direct_order_master",
+        "w_mat_forecast_order_master",
+        "w_mat_purchase_order_4_subcontract_master",
+        "w_mat_purchase_order_master"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "global-struct",
+      "inParms": [
+        "doubleparm"
+      ],
+      "dataobjects": [],
+      "dwCount": 0,
+      "tables": [],
+      "filterControlCount": 2
+    },
+    {
+      "window": "w_plan_line_workstage_popup",
+      "kind": "search-select",
+      "callerCount": 5,
+      "callers": [
+        "w_mat_inventory_close_excel_import_popup",
+        "w_mat_other_issue_master",
+        "w_mat_receipt_slip_excel_import_popup",
+        "w_mat_ws_inventory_close_excel_import_popup",
+        "w_sal_sale_price_excel_from_popup"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [
+        "line_code"
+      ],
+      "returnStyle": "close-with-return",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_pln_line_workstage_popup_lst"
+      ],
+      "dwCount": 1,
+      "tables": [],
+      "filterControlCount": 1
+    },
+    {
+      "window": "w_item_image_flat",
+      "kind": "util",
+      "callerCount": 4,
+      "callers": [
+        "w_com_carrying_out_bring_in_confirm",
+        "w_com_carrying_out_bring_in_security",
+        "w_main_root",
+        "w_popup_root"
+      ],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [],
+      "dwCount": 0,
+      "tables": [],
+      "filterControlCount": 0
+    },
+    {
+      "window": "w_mat_unit_price_popup",
+      "kind": "search-select",
+      "callerCount": 4,
+      "callers": [
+        "w_mat_direct_order_master",
+        "w_mat_forecast_order_master",
+        "w_mat_other_receipt_master",
+        "w_mat_purchase_order_master"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [
+        "unit_price"
+      ],
+      "returnStyle": "close-with-return",
+      "inParms": [
+        "doubleparm",
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_mat_unit_price_popup"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "ICOM_SUPPLIER",
+        "ID_ITEM",
+        "IM_ITEM_MASTER",
+        "IM_ITEM_UNIT_PRICE"
+      ],
+      "filterControlCount": 9
+    },
+    {
+      "window": "w_qc_inspect_4_gmes_popup",
+      "kind": "search-select",
+      "callerCount": 4,
+      "callers": [
+        "w_pln_product_pid_issue_scan_master",
+        "w_qc_iqc_inspect_history_master",
+        "w_qc_machine_inspect_manual",
+        "w_qc_oqc_inspect_history_master"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "close-with-return",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_qc_pid_tracking_gmes_popup"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "IQ_PID_TRACKING_GMES"
+      ],
+      "filterControlCount": 1
+    },
+    {
+      "window": "w_sal_sale_price_popup",
+      "kind": "search-select",
+      "callerCount": 4,
+      "callers": [
+        "w_mat_item_departure_excel_form_popup",
+        "w_mat_item_purchase_excel_form_popup",
+        "w_mat_material_receipt_excel_form_popup",
+        "w_mat_material_unit_price_excel_form_popup"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [
+        "product_sale_price",
+        "customer_code",
+        "product_line_type",
+        "item_name",
+        "item_spec",
+        "item_uom"
+      ],
+      "returnStyle": "close-with-return",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_sal_sale_price_popup_tree"
+      ],
+      "dwCount": 1,
+      "tables": [],
+      "filterControlCount": 7
+    },
+    {
+      "window": "w_set_filter",
+      "kind": "complex",
+      "callerCount": 4,
+      "callers": [
+        "w_bulletin_board",
+        "w_graph_root",
+        "w_main_root",
+        "w_wallpaper"
+      ],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [
+        "powerobjectparm"
+      ],
+      "dataobjects": [
+        "d_data_filter_popup"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "ISYS_DATA_FILTER"
+      ],
+      "filterControlCount": 2
+    },
+    {
+      "window": "w_error_message",
+      "kind": "util",
+      "callerCount": 3,
+      "callers": [
+        "w_graph_root",
+        "w_main_root",
+        "w_popup_root"
+      ],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [],
+      "dataobjects": [],
+      "dwCount": 0,
+      "tables": [],
+      "filterControlCount": 4
+    },
+    {
+      "window": "w_graph_color",
+      "kind": "util",
+      "callerCount": 3,
+      "callers": [
+        "w_dynamic_graph_popup",
+        "w_graph_properties_popup",
+        "w_graph_root"
+      ],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [
+        "powerobjectparm"
+      ],
+      "dataobjects": [],
+      "dwCount": 0,
+      "tables": [],
+      "filterControlCount": 6
+    },
+    {
+      "window": "w_mat_item_barcode_inventory_popup",
+      "kind": "complex",
+      "callerCount": 3,
+      "callers": [
+        "w_mat_barcode_status_report",
+        "w_mat_current_inventory_search_master",
+        "w_mat_current_inventory_time"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "global-struct",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_mat_issue_4_barcode_lst",
+        "d_mat_rcviss_barcode_lst_popup",
+        "d_mat_receipt_4_barcode_popup"
+      ],
+      "dwCount": 3,
+      "tables": [
+        "ID_ITEM",
+        "IM_ITEM_ISSUE",
+        "IM_ITEM_RECEIPT",
+        "IM_ITEM_RECEIPT_BARCODE",
+        "SUPPLIER"
+      ],
+      "filterControlCount": 4
+    },
+    {
+      "window": "w_mat_item_inventory_popup",
+      "kind": "search-select",
+      "callerCount": 3,
+      "callers": [
+        "w_mat_current_inventory_search_master",
+        "w_mat_purchase_order_plan_master",
+        "w_smt_plan_feeder_monitoring_master"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [
+        "item_code",
+        "item_name",
+        "item_spec",
+        "supplier_code",
+        "supplier_name",
+        "line_type",
+        "item_uom",
+        "item_type"
+      ],
+      "returnStyle": "close-with-return",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_mat_current_inventory_detail_popup_tree"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "IM_ITEM_INVENTORY"
+      ],
+      "filterControlCount": 3
+    },
+    {
+      "window": "w_mat_new_item_set_msl_location_popup",
+      "kind": "search-select",
+      "callerCount": 3,
+      "callers": [
+        "w_mat_other_receipt_barcode_seoul_master",
+        "w_mat_receipt_slip_master",
+        "w_mat_receipt_slip_master_onetek_solder"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "close-with-return",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_mat_item_4_new_item_popup"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "ID_ITEM"
+      ],
+      "filterControlCount": 1
+    },
+    {
+      "window": "w_mat_slip_cancel_popup",
+      "kind": "util",
+      "callerCount": 3,
+      "callers": [
+        "w_mat_receipt_slip_4_rental_borrowing_master",
+        "w_mat_receipt_slip_master",
+        "w_mat_receipt_slip_master_onetek_solder"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "global-struct",
+      "inParms": [],
+      "dataobjects": [],
+      "dwCount": 0,
+      "tables": [],
+      "filterControlCount": 1
+    },
+    {
+      "window": "w_mcn_jig_popup",
+      "kind": "search-select",
+      "callerCount": 3,
+      "callers": [
+        "w_mcn_feeder_repair_master",
+        "w_mcn_jig_issue_master",
+        "w_mcn_jig_repair_master"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [
+        "jig_code"
+      ],
+      "returnStyle": "close-with-return",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_mcn_jig_popup"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "IMCN_JIG"
+      ],
+      "filterControlCount": 2
+    },
+    {
+      "window": "w_mold_image_flat",
+      "kind": "util",
+      "callerCount": 3,
+      "callers": [
+        "w_com_carrying_out_bring_in_confirm",
+        "w_com_carrying_out_bring_in_security",
+        "w_main_root"
+      ],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [],
+      "dwCount": 0,
+      "tables": [],
+      "filterControlCount": 0
+    },
+    {
+      "window": "w_pln_smd_plan_popup",
+      "kind": "search-select",
+      "callerCount": 3,
+      "callers": [
+        "w_mat_other_issue_barcode_master",
+        "w_product_run_card",
+        "w_product_run_card_duckil"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [
+        "item_code",
+        "parent_item_code",
+        "model_name",
+        "work_order_no",
+        "pcb_item",
+        "master_model_name",
+        "mfs_group_no",
+        "shift_code",
+        "line_code",
+        "production_type"
+      ],
+      "returnStyle": "close-with-return",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_pln_smd_plan_popup"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "IP_PRODUCT_RUN_CARD",
+        "IP_PRODUCT_SMD_PLAN"
+      ],
+      "filterControlCount": 8
+    },
+    {
+      "window": "w_calendar_popup",
+      "kind": "complex",
+      "callerCount": 2,
+      "callers": [
+        "w_graph_root",
+        "w_main_root"
+      ],
+      "returnsValue": false,
+      "returnSuspected": true,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [],
+      "dataobjects": [],
+      "dwCount": 0,
+      "tables": [],
+      "filterControlCount": 1
+    },
+    {
+      "window": "w_cancel_retrieve_pop",
+      "kind": "util",
+      "callerCount": 2,
+      "callers": [
+        "w_graph_root",
+        "w_main_root"
+      ],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [],
+      "dataobjects": [],
+      "dwCount": 0,
+      "tables": [],
+      "filterControlCount": 1
+    },
+    {
+      "window": "w_clipboard",
+      "kind": "readonly",
+      "callerCount": 2,
+      "callers": [
+        "w_graph_root",
+        "w_main_root"
+      ],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [],
+      "dataobjects": [
+        "d_clipboard"
+      ],
+      "dwCount": 1,
+      "tables": [],
+      "filterControlCount": 0
+    },
+    {
+      "window": "w_com_inbox_form_popup",
+      "kind": "search-select",
+      "callerCount": 2,
+      "callers": [
+        "w_prd_product_fg_palletizing",
+        "w_prd_product_fg_receipt"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "close-with-return",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_com_label_form_popup"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "ISYS_LABEL_FORM"
+      ],
+      "filterControlCount": 4
+    },
+    {
+      "window": "w_com_label_file_write_popup",
+      "kind": "search-select",
+      "callerCount": 2,
+      "callers": [
+        "w_product_run_card",
+        "w_product_run_card_duckil"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "global-struct",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_com_label_file_write_popup"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "IP_PRODUCT_2D_BARCODE",
+        "IP_PRODUCT_RUN_CARD"
+      ],
+      "filterControlCount": 3
+    },
+    {
+      "window": "w_department_popup",
+      "kind": "search-select",
+      "callerCount": 2,
+      "callers": [
+        "w_department_master",
+        "w_user_master"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [
+        "department_code"
+      ],
+      "returnStyle": "close-with-return",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_dept_popup"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "ISYS_DEPARTMENT"
+      ],
+      "filterControlCount": 2
+    },
+    {
+      "window": "w_dual_language_popup",
+      "kind": "readonly",
+      "callerCount": 2,
+      "callers": [
+        "w_graph_root",
+        "w_main_root"
+      ],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_dual_language_popup"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "ISYS_DUAL_LANGUAGE"
+      ],
+      "filterControlCount": 3
+    },
+    {
+      "window": "w_dynamic_where_condition_popup",
+      "kind": "complex",
+      "callerCount": 2,
+      "callers": [
+        "w_graph_root",
+        "w_main_root"
+      ],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [
+        "powerobjectparm"
+      ],
+      "dataobjects": [
+        "d_dynamic_where_condition_lst",
+        "d_dynamic_where_condition_popup"
+      ],
+      "dwCount": 2,
+      "tables": [
+        "ISYS_REPORT_WHERE_CONDITION"
+      ],
+      "filterControlCount": 2
+    },
+    {
+      "window": "w_mat_issue_return_cancel_4_barcode_popup",
+      "kind": "util",
+      "callerCount": 2,
+      "callers": [
+        "w_mat_other_issue_barcode_return_master",
+        "w_mat_other_mass_issue_barcode_return_master"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "global-struct",
+      "inParms": [],
+      "dataobjects": [],
+      "dwCount": 0,
+      "tables": [],
+      "filterControlCount": 2
+    },
+    {
+      "window": "w_mat_supplier_by_item_code_popup",
+      "kind": "search-select",
+      "callerCount": 2,
+      "callers": [
+        "w_mat_other_receipt_master",
+        "w_mat_requirment_plan_master"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [
+        "supplier_code"
+      ],
+      "returnStyle": "close-with-return",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_mat_material_popup"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "ICOM_SUPPLIER",
+        "ID_ITEM",
+        "IM_ITEM_MASTER",
+        "IM_ITEM_UNIT_PRICE"
+      ],
+      "filterControlCount": 3
+    },
+    {
+      "window": "w_mat_workorder_not_issued_popup",
+      "kind": "readonly",
+      "callerCount": 2,
+      "callers": [
+        "w_mat_other_receipt_with_bom_master",
+        "w_mat_purchase_order_4_repair_master"
+      ],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_mat_work_order_not_issued_lst_tree"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "IM_ITEM_WORK_ORDER"
+      ],
+      "filterControlCount": 3
+    },
+    {
+      "window": "w_mcn_master_popup",
+      "kind": "search-select",
+      "callerCount": 2,
+      "callers": [
+        "w_com_carrying_out_master",
+        "w_mcn_mold_repair_request_master"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [
+        "machine_name",
+        "machine_barcode"
+      ],
+      "returnStyle": "close-with-return",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_mcn_machine_popup"
+      ],
+      "dwCount": 1,
+      "tables": [],
+      "filterControlCount": 3
+    },
+    {
+      "window": "w_plan_master_plan_lot_popup",
+      "kind": "util",
+      "callerCount": 2,
+      "callers": [
+        "w_sal_sale_plan_4_master_plan_popup",
+        "w_sal_sale_plan_4_mobile_plan_popup"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "close-with-return",
+      "inParms": [
+        "doubleparm"
+      ],
+      "dataobjects": [],
+      "dwCount": 0,
+      "tables": [],
+      "filterControlCount": 4
+    },
+    {
+      "window": "w_plan_master_popup",
+      "kind": "complex",
+      "callerCount": 2,
+      "callers": [
+        "w_des_mfs_bom_copy_popup",
+        "w_des_mfs_bom_query"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [
+        "mfs",
+        "item_code",
+        "item_name",
+        "item_spec",
+        "item_uom"
+      ],
+      "returnStyle": "global-struct",
+      "inParms": [],
+      "dataobjects": [
+        "d_pln_assembly_plan_popup",
+        "d_pln_master_plan_popup"
+      ],
+      "dwCount": 2,
+      "tables": [],
+      "filterControlCount": 7
+    },
+    {
+      "window": "w_pln_product_model_master",
+      "kind": "complex",
+      "callerCount": 2,
+      "callers": [
+        "w_product_run_card",
+        "w_product_run_card_duckil"
+      ],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [],
+      "dataobjects": [
+        "d_pln_product_model_master_4_interlock_mst",
+        "d_pln_product_model_master_doc_lst",
+        "d_pln_product_model_master_lst",
+        "d_pln_product_model_master_mst",
+        "d_smt_sw_lst"
+      ],
+      "dwCount": 5,
+      "tables": [
+        "IB_SMT_SW",
+        "IP_PRODUCT_MODEL_MASTER",
+        "IP_PRODUCT_SPEC_CONFIRM_DOC"
+      ],
+      "filterControlCount": 8
+    },
+    {
+      "window": "w_pln_serial_info_popup",
+      "kind": "search-select",
+      "callerCount": 2,
+      "callers": [
+        "w_pln_product_pcb_marking_query",
+        "w_product_pid_tracking_fpcb_rpt"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [
+        "serial_no"
+      ],
+      "returnStyle": "close-with-return",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_pln_product_barcode_popup"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "IP_PRODUCT_2D_BARCODE"
+      ],
+      "filterControlCount": 7
+    },
+    {
+      "window": "w_qc_repair_item_popup",
+      "kind": "search-select",
+      "callerCount": 2,
+      "callers": [
+        "w_pln_product_pcb_repair_master",
+        "w_sal_shipping_return_repair_master"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "global-struct",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_qc_repair_item_popup"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "IP_PRODUCT_WORK_QC_REPAIR_ITEM"
+      ],
+      "filterControlCount": 5
+    },
+    {
+      "window": "w_qc_repair_receipt_excel_form_popup",
+      "kind": "complex",
+      "callerCount": 2,
+      "callers": [
+        "w_pln_product_pcb_repair_master",
+        "w_sal_shipping_return_repair_master"
+      ],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [],
+      "dataobjects": [
+        "d_qc_repair_receipt_excel_popup_lst"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "IP_PRODUCT_WORK_QC_EXCEL"
+      ],
+      "filterControlCount": 0
+    },
+    {
+      "window": "w_smt_plan_feeder_monitoring_popup",
+      "kind": "readonly",
+      "callerCount": 2,
+      "callers": [
+        "w_mat_item_request_monitoring_line_query",
+        "w_smt_plan_feeder_monitoring_line_master"
+      ],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [],
+      "dataobjects": [
+        "d_smt_plan_master_popup"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "IB_PRODUCT_PLANDATA",
+        "IM_ITEM_INVENTORY",
+        "IM_ITEM_RECEIPT_BARCODE"
+      ],
+      "filterControlCount": 0
+    },
+    {
+      "window": "w_tab_sheet",
+      "kind": "util",
+      "callerCount": 2,
+      "callers": [
+        "w_main_frame",
+        "w_main_root"
+      ],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [],
+      "dataobjects": [],
+      "dwCount": 0,
+      "tables": [],
+      "filterControlCount": 0
+    },
+    {
+      "window": "w_updateend_message_ontime",
+      "kind": "util",
+      "callerCount": 2,
+      "callers": [
+        "w_graph_root",
+        "w_main_root"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "global-struct",
+      "inParms": [
+        "doubleparm"
+      ],
+      "dataobjects": [],
+      "dwCount": 0,
+      "tables": [],
+      "filterControlCount": 3
+    },
+    {
+      "window": "w_user_4_bring_in_out_confirm_popup",
+      "kind": "search-select",
+      "callerCount": 2,
+      "callers": [
+        "w_com_bring_in_master",
+        "w_com_carrying_out_master"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [
+        "user_id"
+      ],
+      "returnStyle": "close-with-return",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_user_4_bring_in_out_confirm_popup"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "ISYS_DEPARTMENT",
+        "ISYS_USERS"
+      ],
+      "filterControlCount": 1
+    },
+    {
+      "window": "w_window_popup",
+      "kind": "search-select",
+      "callerCount": 2,
+      "callers": [
+        "w_privilege_master",
+        "w_role_master"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [
+        "window_name"
+      ],
+      "returnStyle": "close-with-return",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_window_lst_popup"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "ISYS_WINDOW"
+      ],
+      "filterControlCount": 1
+    },
+    {
+      "window": "w_alert",
+      "kind": "util",
+      "callerCount": 1,
+      "callers": [
+        "w_main_frame"
+      ],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [],
+      "dataobjects": [],
+      "dwCount": 0,
+      "tables": [],
+      "filterControlCount": 0
+    },
+    {
+      "window": "w_basecode_select_popup",
+      "kind": "search-select",
+      "callerCount": 1,
+      "callers": [
+        "w_default_value_popup"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [
+        "code_name"
+      ],
+      "returnStyle": "close-with-return",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_basecode_popup"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "ISYS_BASECODE"
+      ],
+      "filterControlCount": 2
+    },
+    {
+      "window": "w_com_bartneder_fg_receipt_form_popup",
+      "kind": "complex",
+      "callerCount": 1,
+      "callers": [
+        "w_prd_product_fg_receipt"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "close-with-return",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [],
+      "dwCount": 0,
+      "tables": [],
+      "filterControlCount": 2
+    },
+    {
+      "window": "w_com_bartneder_form_popup",
+      "kind": "complex",
+      "callerCount": 1,
+      "callers": [
+        "w_product_label_master"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "close-with-return",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [],
+      "dwCount": 0,
+      "tables": [],
+      "filterControlCount": 2
+    },
+    {
+      "window": "w_company_calendar_popup",
+      "kind": "complex",
+      "callerCount": 1,
+      "callers": [
+        "w_main_root"
+      ],
+      "returnsValue": false,
+      "returnSuspected": true,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [],
+      "dataobjects": [],
+      "dwCount": 0,
+      "tables": [],
+      "filterControlCount": 1
+    },
+    {
+      "window": "w_datawindow_source_popup",
+      "kind": "search-select",
+      "callerCount": 1,
+      "callers": [
+        "w_report_menu_insert_popup"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "close-with-return",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_datawindow_source_lst"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "ISYS_REPORT_SOURCE"
+      ],
+      "filterControlCount": 0
+    },
+    {
+      "window": "w_des_bom_copy_popup",
+      "kind": "complex",
+      "callerCount": 1,
+      "callers": [
+        "w_smt_bom_create_master"
+      ],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [
+        "doubleparm"
+      ],
+      "dataobjects": [],
+      "dwCount": 0,
+      "tables": [],
+      "filterControlCount": 7
+    },
+    {
+      "window": "w_des_bom_excel_form_eunsung_popup",
+      "kind": "complex",
+      "callerCount": 1,
+      "callers": [
+        "w_des_bom_modify_master"
+      ],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [],
+      "dataobjects": [
+        "d_des_bom_import_excel_eunsung"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "ID_ENG_BOM_EXCEL_ES"
+      ],
+      "filterControlCount": 8
+    },
+    {
+      "window": "w_des_bom_excel_form_lg_4_compare_popup",
+      "kind": "complex",
+      "callerCount": 1,
+      "callers": [
+        "w_smt_bom_comparison_master_rpt"
+      ],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [],
+      "dataobjects": [
+        "d_des_bom_import_excel_cpr1_lg",
+        "d_des_bom_import_excel_cpr2_lg"
+      ],
+      "dwCount": 2,
+      "tables": [
+        "ID_ENG_BOM_EXCEL_LG_CPR1",
+        "ID_ENG_BOM_EXCEL_LG_CPR2"
+      ],
+      "filterControlCount": 0
+    },
+    {
+      "window": "w_des_bom_excel_form_lg_popup",
+      "kind": "complex",
+      "callerCount": 1,
+      "callers": [
+        "w_des_bom_modify_master"
+      ],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [],
+      "dataobjects": [
+        "d_des_bom_import_excel_lcd",
+        "d_des_mfs_bom_lst"
+      ],
+      "dwCount": 2,
+      "tables": [
+        "ID_ENG_BOM_EXCEL_LG",
+        "ID_ITEM",
+        "ID_MFS_BOM"
+      ],
+      "filterControlCount": 13
+    },
+    {
+      "window": "w_des_bom_form_popup",
+      "kind": "search-select",
+      "callerCount": 1,
+      "callers": [
+        "w_smt_bom_create_master"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "global-struct",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_des_bom_form_popup"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "ID_ENG_BOM"
+      ],
+      "filterControlCount": 5
+    },
+    {
+      "window": "w_des_bom_line_copy_popup",
+      "kind": "complex",
+      "callerCount": 1,
+      "callers": [
+        "w_smt_bom_create_master"
+      ],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [
+        "doubleparm"
+      ],
+      "dataobjects": [],
+      "dwCount": 0,
+      "tables": [],
+      "filterControlCount": 6
+    },
+    {
+      "window": "w_des_bom_replace_item_excel_form_popup",
+      "kind": "complex",
+      "callerCount": 1,
+      "callers": [
+        "w_des_replace_bom_master"
+      ],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [],
+      "dataobjects": [
+        "d_des_bom_replace_item_import_excel",
+        "d_des_bom_replace_lst"
+      ],
+      "dwCount": 2,
+      "tables": [
+        "ID_ITEM_REPLACE"
+      ],
+      "filterControlCount": 0
+    },
+    {
+      "window": "w_des_bom_replace_select_popup",
+      "kind": "search-select",
+      "callerCount": 1,
+      "callers": [
+        "w_mat_mass_issue_master"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [
+        "child_item_code"
+      ],
+      "returnStyle": "close-with-return",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_des_bom_query"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "ID_ENG_BOM_TEMP"
+      ],
+      "filterControlCount": 6
+    },
+    {
+      "window": "w_des_material_item_popup",
+      "kind": "search-select",
+      "callerCount": 1,
+      "callers": [
+        "w_des_replace_bom_master"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [
+        "item_code"
+      ],
+      "returnStyle": "close-with-return",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_des_material_item_popup_tree"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "ID_ITEM"
+      ],
+      "filterControlCount": 2
+    },
+    {
+      "window": "w_des_mfs_bom_copy_popup",
+      "kind": "search-select",
+      "callerCount": 1,
+      "callers": [
+        "w_des_mfs_bom_master"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "global-struct",
+      "inParms": [
+        "doubleparm",
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_des_mfs_bom_popup"
+      ],
+      "dwCount": 1,
+      "tables": [],
+      "filterControlCount": 3
+    },
+    {
+      "window": "w_des_model_select_from_master_plan_pop",
+      "kind": "readonly",
+      "callerCount": 1,
+      "callers": [
+        "w_mat_requirment_plan_master"
+      ],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [
+        "powerobjectparm"
+      ],
+      "dataobjects": [
+        "d_pln_mi_plan_popup"
+      ],
+      "dwCount": 1,
+      "tables": [],
+      "filterControlCount": 4
+    },
+    {
+      "window": "w_des_model_select_from_sale_plan_pop",
+      "kind": "readonly",
+      "callerCount": 1,
+      "callers": [
+        "w_mat_requirment_plan_master"
+      ],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [
+        "powerobjectparm"
+      ],
+      "dataobjects": [
+        "d_pln_delivery_plan_popup"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "IP_PRODUCT_DELIVERY_PLAN"
+      ],
+      "filterControlCount": 4
+    },
+    {
+      "window": "w_des_new_item_popup",
+      "kind": "util",
+      "callerCount": 1,
+      "callers": [
+        "w_mcn_machine_master"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "close-with-return",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [],
+      "dwCount": 0,
+      "tables": [],
+      "filterControlCount": 13
+    },
+    {
+      "window": "w_des_set_item_select_popup",
+      "kind": "readonly",
+      "callerCount": 1,
+      "callers": [
+        "w_mat_requirment_plan_master"
+      ],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [
+        "powerobjectparm"
+      ],
+      "dataobjects": [
+        "d_des_set_item_select_popup_tree"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "ID_ITEM"
+      ],
+      "filterControlCount": 3
+    },
+    {
+      "window": "w_function_select_popup",
+      "kind": "search-select",
+      "callerCount": 1,
+      "callers": [
+        "w_default_value_popup"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [
+        "object_name"
+      ],
+      "returnStyle": "close-with-return",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_user_function_lst_popup"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "USER_OBJECTS",
+        "USER_SOURCE"
+      ],
+      "filterControlCount": 0
+    },
+    {
+      "window": "w_getin_new_role_code_name",
+      "kind": "util",
+      "callerCount": 1,
+      "callers": [
+        "w_role_master"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "global-struct",
+      "inParms": [],
+      "dataobjects": [],
+      "dwCount": 0,
+      "tables": [],
+      "filterControlCount": 2
+    },
+    {
+      "window": "w_graph_properties_popup",
+      "kind": "complex",
+      "callerCount": 1,
+      "callers": [
+        "w_graph_root"
+      ],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [
+        "powerobjectparm"
+      ],
+      "dataobjects": [],
+      "dwCount": 0,
+      "tables": [],
+      "filterControlCount": 12
+    },
+    {
+      "window": "w_graph_spacing",
+      "kind": "complex",
+      "callerCount": 1,
+      "callers": [
+        "w_graph_root"
+      ],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [
+        "powerobjectparm"
+      ],
+      "dataobjects": [],
+      "dwCount": 0,
+      "tables": [],
+      "filterControlCount": 1
+    },
+    {
+      "window": "w_graph_title",
+      "kind": "complex",
+      "callerCount": 1,
+      "callers": [
+        "w_graph_root"
+      ],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [
+        "powerobjectparm"
+      ],
+      "dataobjects": [],
+      "dwCount": 0,
+      "tables": [],
+      "filterControlCount": 1
+    },
+    {
+      "window": "w_iq_interlock_reult_load_popup",
+      "kind": "search-select",
+      "callerCount": 1,
+      "callers": [
+        "w_pln_product_pcb_bcr_scan_query"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "global-struct",
+      "inParms": [],
+      "dataobjects": [
+        "d_iq_interlock_check_result_upload_popup"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "IQ_INTERLOCK_CHECK_RESULT"
+      ],
+      "filterControlCount": 0
+    },
+    {
+      "window": "w_item_search_flat",
+      "kind": "search-select",
+      "callerCount": 1,
+      "callers": [
+        "w_mat_other_receipt_rental_borrowing_barcode_master"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "close-with-return",
+      "inParms": [
+        "powerobjectparm",
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_des_item_flat_popup"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "ID_ITEM"
+      ],
+      "filterControlCount": 2
+    },
+    {
+      "window": "w_library_select_popup",
+      "kind": "util",
+      "callerCount": 1,
+      "callers": [
+        "w_report_generator"
+      ],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [
+        "powerobjectparm"
+      ],
+      "dataobjects": [],
+      "dwCount": 0,
+      "tables": [],
+      "filterControlCount": 0
+    },
+    {
+      "window": "w_location_barcode_popup",
+      "kind": "search-select",
+      "callerCount": 1,
+      "callers": [
+        "w_smt_bom_create_master"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [
+        "location_code"
+      ],
+      "returnStyle": "close-with-return",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_location_barcode_popup"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "IB_MACHINE_LOCATION"
+      ],
+      "filterControlCount": 6
+    },
+    {
+      "window": "w_lock_by_admin",
+      "kind": "util",
+      "callerCount": 1,
+      "callers": [
+        "w_pln_product_packing_dupulicate_check_master"
+      ],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [],
+      "dataobjects": [],
+      "dwCount": 0,
+      "tables": [],
+      "filterControlCount": 2
+    },
+    {
+      "window": "w_lock_by_config",
+      "kind": "util",
+      "callerCount": 1,
+      "callers": [
+        "w_mat_other_issue_barcode_master"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "global-struct",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [],
+      "dwCount": 0,
+      "tables": [],
+      "filterControlCount": 2
+    },
+    {
+      "window": "w_logon",
+      "kind": "readonly",
+      "callerCount": 1,
+      "callers": [
+        "w_web_open"
+      ],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_userface_image"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "ISYS_USERS"
+      ],
+      "filterControlCount": 18
+    },
+    {
+      "window": "w_main_frame",
+      "kind": "util",
+      "callerCount": 1,
+      "callers": [
+        "w_logon"
+      ],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [],
+      "dataobjects": [],
+      "dwCount": 0,
+      "tables": [],
+      "filterControlCount": 0
+    },
+    {
+      "window": "w_mat_free_item_inventory_popup",
+      "kind": "search-select",
+      "callerCount": 1,
+      "callers": [
+        "w_mat_purchase_order_4_subcontract_master"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [
+        "item_code",
+        "item_name",
+        "item_spec",
+        "supplier_code",
+        "supplier_name",
+        "line_type",
+        "item_uom",
+        "item_type"
+      ],
+      "returnStyle": "close-with-return",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_mat_current_free_inventory_detail_popup_tree"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "ID_ITEM",
+        "IM_ITEM_FREE_INVENTORY"
+      ],
+      "filterControlCount": 5
+    },
+    {
+      "window": "w_mat_free_subcontract_invoice_no_popup",
+      "kind": "search-select",
+      "callerCount": 1,
+      "callers": [
+        "w_mat_purchase_order_4_subcontract_master"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "close-with-return",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_mat_free_receipt_subcont_invoice_no_lst"
+      ],
+      "dwCount": 1,
+      "tables": [],
+      "filterControlCount": 5
+    },
+    {
+      "window": "w_mat_issue_cancel_4_barcode_popup",
+      "kind": "util",
+      "callerCount": 1,
+      "callers": [
+        "w_mat_other_issue_barcode_master"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "global-struct",
+      "inParms": [],
+      "dataobjects": [],
+      "dwCount": 0,
+      "tables": [],
+      "filterControlCount": 2
+    },
+    {
+      "window": "w_mat_item_barcode_checkhist_4_feeder_popup",
+      "kind": "complex",
+      "callerCount": 1,
+      "callers": [
+        "w_smt_plan_feeder_monitoring_master"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "global-struct",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_mat_issue_4_barcode_lst",
+        "d_mat_receipt_4_barcode_popup",
+        "d_smt_checklist_4_feeder_popup"
+      ],
+      "dwCount": 3,
+      "tables": [
+        "IB_SMT_CHECKHIST",
+        "IM_ITEM_ISSUE",
+        "IM_ITEM_RECEIPT"
+      ],
+      "filterControlCount": 2
+    },
+    {
+      "window": "w_mat_item_barcode_inventory_4_feeder_popup",
+      "kind": "complex",
+      "callerCount": 1,
+      "callers": [
+        "w_smt_plan_feeder_monitoring_master"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "global-struct",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_mat_issue_4_barcode_lst",
+        "d_mat_rcviss_barcode_lst_4_feeder_popup",
+        "d_mat_receipt_4_barcode_popup"
+      ],
+      "dwCount": 3,
+      "tables": [
+        "ID_ITEM",
+        "IM_ITEM_ISSUE",
+        "IM_ITEM_RECEIPT",
+        "IM_ITEM_RECEIPT_BARCODE",
+        "SUPPLIER"
+      ],
+      "filterControlCount": 3
+    },
+    {
+      "window": "w_mat_item_check_popup",
+      "kind": "complex",
+      "callerCount": 1,
+      "callers": [
+        "w_mat_purchase_order_plan_master"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "global-struct",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_mat_item_popup_4_check_tree",
+        "d_mat_unit_price_popup_4_check_lst"
+      ],
+      "dwCount": 2,
+      "tables": [
+        "ICOM_SUPPLIER",
+        "ID_ITEM",
+        "IM_ITEM_MASTER",
+        "IM_ITEM_UNIT_PRICE"
+      ],
+      "filterControlCount": 1
+    },
+    {
+      "window": "w_mat_item_departure_excel_form_popup",
+      "kind": "complex",
+      "callerCount": 1,
+      "callers": [
+        "w_mat_departure_master"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "global-struct",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_mat_departure_confirm_lst",
+        "d_mat_item_departure_excel_popup"
+      ],
+      "dwCount": 2,
+      "tables": [
+        "ICOM_SUPPLIER",
+        "IM_ITEM_ARRIVAL"
+      ],
+      "filterControlCount": 1
+    },
+    {
+      "window": "w_mat_item_purchase_excel_form_popup",
+      "kind": "complex",
+      "callerCount": 1,
+      "callers": [
+        "w_mat_purchase_order_master"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "global-struct",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_mat_item_purchase_excel_popup",
+        "d_mat_purchase_order_mst"
+      ],
+      "dwCount": 2,
+      "tables": [
+        "ICOM_SUPPLIER",
+        "ID_ITEM",
+        "IM_ITEM_PURCHASE_ORDER"
+      ],
+      "filterControlCount": 2
+    },
+    {
+      "window": "w_mat_item_purchase_order_popup",
+      "kind": "search-select",
+      "callerCount": 1,
+      "callers": [
+        "w_mat_mass_issue_master"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [
+        "item_code",
+        "item_name",
+        "item_spec",
+        "supplier_code",
+        "supplier_name",
+        "line_type",
+        "item_uom",
+        "item_type"
+      ],
+      "returnStyle": "global-struct",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_mat_purchase_order_popup"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "IM_ITEM_PURCHASE_ORDER"
+      ],
+      "filterControlCount": 8
+    },
+    {
+      "window": "w_mat_item_receipt_barcode_scan_popup",
+      "kind": "util",
+      "callerCount": 1,
+      "callers": [
+        "w_mat_receipt_master"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "global-struct",
+      "inParms": [
+        "powerobjectparm"
+      ],
+      "dataobjects": [],
+      "dwCount": 0,
+      "tables": [],
+      "filterControlCount": 1
+    },
+    {
+      "window": "w_mat_item_safety_inventory_popup",
+      "kind": "search-select",
+      "callerCount": 1,
+      "callers": [
+        "w_mat_purchase_order_master"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [
+        "item_code",
+        "item_name",
+        "item_spec",
+        "supplier_code",
+        "supplier_name",
+        "line_type",
+        "item_uom",
+        "item_type"
+      ],
+      "returnStyle": "close-with-return",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_mat_current_inventory_4_safety_lst_tree"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "IM_ITEM_INVENTORY"
+      ],
+      "filterControlCount": 4
+    },
+    {
+      "window": "w_mat_item_vendor_popup",
+      "kind": "search-select",
+      "callerCount": 1,
+      "callers": [
+        "w_mat_other_receipt_barcode_seoul_master"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [
+        "vendor_code1"
+      ],
+      "returnStyle": "close-with-return",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_mat_item_vendor_popup"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "ID_ITEM"
+      ],
+      "filterControlCount": 1
+    },
+    {
+      "window": "w_mat_item_workstage_inventory_4_feeder_popup",
+      "kind": "search-select",
+      "callerCount": 1,
+      "callers": [
+        "w_smt_plan_feeder_monitoring_master"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "global-struct",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_mat_workstage_inventory_4_feeder_lst"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "IM_ITEM_RECEIPT_BARCODE"
+      ],
+      "filterControlCount": 3
+    },
+    {
+      "window": "w_mat_item_workstage_inventory_popup",
+      "kind": "search-select",
+      "callerCount": 1,
+      "callers": [
+        "w_mat_workstage_material_move_master"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [
+        "item_code",
+        "item_name",
+        "item_spec",
+        "line_type",
+        "item_uom"
+      ],
+      "returnStyle": "global-struct",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_mat_workstage_inventory_popup_tree"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "ID_ITEM",
+        "IM_ITEM_WORKSTAGE_INVENTORY"
+      ],
+      "filterControlCount": 4
+    },
+    {
+      "window": "w_mat_material_issue_excel_form_popup",
+      "kind": "complex",
+      "callerCount": 1,
+      "callers": [
+        "w_mat_other_issue_master"
+      ],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [],
+      "dataobjects": [
+        "d_mat_mass_issue_lst",
+        "d_mat_material_issue_excel_popup"
+      ],
+      "dwCount": 2,
+      "tables": [
+        "ID_ITEM",
+        "IM_ITEM_ISSUE"
+      ],
+      "filterControlCount": 3
+    },
+    {
+      "window": "w_mat_material_receipt_excel_form_popup",
+      "kind": "complex",
+      "callerCount": 1,
+      "callers": [
+        "w_mat_other_receipt_master"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "global-struct",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_mat_material_receipt_excel_popup",
+        "d_mat_receipt_mst"
+      ],
+      "dwCount": 2,
+      "tables": [
+        "IM_ITEM_RECEIPT"
+      ],
+      "filterControlCount": 2
+    },
+    {
+      "window": "w_mat_material_unit_price_excel_form_popup",
+      "kind": "complex",
+      "callerCount": 1,
+      "callers": [
+        "w_mat_buy_price_master"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "global-struct",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_mat_buy_price_mst",
+        "d_mat_material_unit_price_excel_popup"
+      ],
+      "dwCount": 2,
+      "tables": [
+        "IM_ITEM_UNIT_PRICE"
+      ],
+      "filterControlCount": 0
+    },
+    {
+      "window": "w_mat_purchase_order_condition_popup",
+      "kind": "util",
+      "callerCount": 1,
+      "callers": [
+        "w_mat_purchase_order_plan_master"
+      ],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [],
+      "dataobjects": [],
+      "dwCount": 0,
+      "tables": [],
+      "filterControlCount": 6
+    },
+    {
+      "window": "w_mat_receipt_cancel_4_barcode_popup",
+      "kind": "util",
+      "callerCount": 1,
+      "callers": [
+        "w_mat_other_receipt_rental_borrowing_barcode_master"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "global-struct",
+      "inParms": [],
+      "dataobjects": [],
+      "dwCount": 0,
+      "tables": [],
+      "filterControlCount": 2
+    },
+    {
+      "window": "w_mat_receipt_normal_cancel_4_barcode_popup",
+      "kind": "util",
+      "callerCount": 1,
+      "callers": [
+        "w_mat_other_receipt_barcode_seoul_master"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "global-struct",
+      "inParms": [],
+      "dataobjects": [],
+      "dwCount": 0,
+      "tables": [],
+      "filterControlCount": 3
+    },
+    {
+      "window": "w_mat_receipt_slip_excel_import_popup",
+      "kind": "search-select",
+      "callerCount": 1,
+      "callers": [
+        "w_mat_receipt_slip_excel_upload_master"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "global-struct",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_mat_receipt_slip_excel_lst"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "IM_ITEM_RECEIPT_SLIP_EXCEL"
+      ],
+      "filterControlCount": 0
+    },
+    {
+      "window": "w_mat_slip_manual_qty_popup",
+      "kind": "search-select",
+      "callerCount": 1,
+      "callers": [
+        "w_mat_receipt_slip_master"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "global-struct",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_mat_slip_receipt_qty_divide_pop"
+      ],
+      "dwCount": 1,
+      "tables": [],
+      "filterControlCount": 2
+    },
+    {
+      "window": "w_mat_slip_manual_qty_popup_onetek_solder",
+      "kind": "search-select",
+      "callerCount": 1,
+      "callers": [
+        "w_mat_receipt_slip_master_onetek_solder"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "global-struct",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_mat_slip_receipt_qty_divide_pop"
+      ],
+      "dwCount": 1,
+      "tables": [],
+      "filterControlCount": 2
+    },
+    {
+      "window": "w_mat_solder_scan_barcode_popup",
+      "kind": "util",
+      "callerCount": 1,
+      "callers": [
+        "w_mat_solder_receipt_issue_master"
+      ],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [],
+      "dataobjects": [],
+      "dwCount": 0,
+      "tables": [],
+      "filterControlCount": 11
+    },
+    {
+      "window": "w_mat_unit_price_4_free_purchase_order_popup",
+      "kind": "search-select",
+      "callerCount": 1,
+      "callers": [
+        "w_mat_purchase_order_4_subcontract_master"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "global-struct",
+      "inParms": [
+        "powerobjectparm",
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_mat_unit_price_4_purchase_order_popup"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "ICOM_SUPPLIER",
+        "ID_ITEM",
+        "IM_ITEM_MASTER",
+        "IM_ITEM_UNIT_PRICE"
+      ],
+      "filterControlCount": 11
+    },
+    {
+      "window": "w_mat_unit_price_4_purchase_order_popup",
+      "kind": "search-select",
+      "callerCount": 1,
+      "callers": [
+        "w_mat_purchase_order_master"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "global-struct",
+      "inParms": [
+        "powerobjectparm",
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_mat_unit_price_4_purchase_order_popup"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "ICOM_SUPPLIER",
+        "ID_ITEM",
+        "IM_ITEM_MASTER",
+        "IM_ITEM_UNIT_PRICE"
+      ],
+      "filterControlCount": 12
+    },
+    {
+      "window": "w_mat_work_price_popup",
+      "kind": "search-select",
+      "callerCount": 1,
+      "callers": [
+        "w_mat_purchase_order_4_subcontract_master"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [
+        "unit_price"
+      ],
+      "returnStyle": "close-with-return",
+      "inParms": [
+        "doubleparm",
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_mat_work_price_popup"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "IM_ITEM_UNIT_PRICE"
+      ],
+      "filterControlCount": 12
+    },
+    {
+      "window": "w_mat_ws_inventory_close_excel_import_popup",
+      "kind": "search-select",
+      "callerCount": 1,
+      "callers": [
+        "w_mat_workstage_inventory_check_master"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "global-struct",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_mat_item_ws_inventory_close_excel_import_popup"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "IM_ITEM_WS_INVE_CHECK_EXCEL"
+      ],
+      "filterControlCount": 1
+    },
+    {
+      "window": "w_mcn_jig_sample_query_popup",
+      "kind": "complex",
+      "callerCount": 1,
+      "callers": [
+        "w_pln_product_model_simple_master"
+      ],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_mcn_jig_lst_query_popup",
+        "d_mcn_sample_lst_query_popup"
+      ],
+      "dwCount": 2,
+      "tables": [
+        "IMCN_JIG_APPLY_MODEL",
+        "IMCN_SAMPLE_APPLY_MODEL"
+      ],
+      "filterControlCount": 1
+    },
+    {
+      "window": "w_mcn_mold_location_popup",
+      "kind": "search-select",
+      "callerCount": 1,
+      "callers": [
+        "w_mcn_mold_master"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [
+        "mold_location_code"
+      ],
+      "returnStyle": "close-with-return",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_mcn_mold_location_popup"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "IMCN_MOLD_LOCATION"
+      ],
+      "filterControlCount": 5
+    },
+    {
+      "window": "w_notify_flat",
+      "kind": "util",
+      "callerCount": 1,
+      "callers": [
+        "w_pln_assembly_actual_master"
+      ],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [],
+      "dataobjects": [],
+      "dwCount": 0,
+      "tables": [],
+      "filterControlCount": 0
+    },
+    {
+      "window": "w_notify_product_flat",
+      "kind": "util",
+      "callerCount": 1,
+      "callers": [
+        "w_pln_product_master_plan_master"
+      ],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [],
+      "dataobjects": [],
+      "dwCount": 0,
+      "tables": [],
+      "filterControlCount": 0
+    },
+    {
+      "window": "w_number_pad_popup",
+      "kind": "util",
+      "callerCount": 1,
+      "callers": [
+        "w_main_root"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "close-with-return",
+      "inParms": [
+        "doubleparm"
+      ],
+      "dataobjects": [],
+      "dwCount": 0,
+      "tables": [],
+      "filterControlCount": 2
+    },
+    {
+      "window": "w_openning_popup",
+      "kind": "util",
+      "callerCount": 1,
+      "callers": [
+        "w_about"
+      ],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [],
+      "dataobjects": [],
+      "dwCount": 0,
+      "tables": [],
+      "filterControlCount": 0
+    },
+    {
+      "window": "w_passchange",
+      "kind": "util",
+      "callerCount": 1,
+      "callers": [
+        "w_logon"
+      ],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [],
+      "dataobjects": [],
+      "dwCount": 0,
+      "tables": [],
+      "filterControlCount": 5
+    },
+    {
+      "window": "w_plan_routing_popup",
+      "kind": "search-select",
+      "callerCount": 1,
+      "callers": [
+        "w_sal_sale_price_master"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [
+        "route_no"
+      ],
+      "returnStyle": "close-with-return",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_pln_product_routing_query_lst_popup"
+      ],
+      "dwCount": 1,
+      "tables": [],
+      "filterControlCount": 1
+    },
+    {
+      "window": "w_pln_2d_baarcode_excel_popup",
+      "kind": "search-select",
+      "callerCount": 1,
+      "callers": [
+        "w_pln_product_barcode_create_master"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "global-struct",
+      "inParms": [],
+      "dataobjects": [
+        "d_pln_product_2d_barcode_excel_lst"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "IP_PRODUCT_2D_BARCODE_EXCEL"
+      ],
+      "filterControlCount": 0
+    },
+    {
+      "window": "w_pln_nsnp_history_popup",
+      "kind": "search-select",
+      "callerCount": 1,
+      "callers": [
+        "w_smt_plan_feeder_monitoring_master"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "global-struct",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_pln_product_nsnp_history_popup"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "IQ_MACHINE_INSPECT_NSNP"
+      ],
+      "filterControlCount": 1
+    },
+    {
+      "window": "w_pln_run_card_popup",
+      "kind": "search-select",
+      "callerCount": 1,
+      "callers": [
+        "w_pln_product_pcb_marking_query"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [
+        "run_no"
+      ],
+      "returnStyle": "close-with-return",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_qc_product_inspect_scan_popup"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "IP_PRODUCT_RUN_CARD"
+      ],
+      "filterControlCount": 3
+    },
+    {
+      "window": "w_pln_run_no_popup",
+      "kind": "search-select",
+      "callerCount": 1,
+      "callers": [
+        "w_pln_product_pcb_kitting_scan_master"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [
+        "run_no"
+      ],
+      "returnStyle": "close-with-return",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_qc_product_inspect_scan_popup"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "IP_PRODUCT_RUN_CARD"
+      ],
+      "filterControlCount": 3
+    },
+    {
+      "window": "w_pln_smd_plan_append_popup",
+      "kind": "search-select",
+      "callerCount": 1,
+      "callers": [
+        "w_pln_assembly_actual_master"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "global-struct",
+      "inParms": [],
+      "dataobjects": [
+        "d_des_model_master_by_master_model_popup"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "IP_PRODUCT_MODEL_MASTER"
+      ],
+      "filterControlCount": 7
+    },
+    {
+      "window": "w_pln_softwere_excel_load_popup",
+      "kind": "search-select",
+      "callerCount": 1,
+      "callers": [
+        "w_pln_product_software_version_master"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "global-struct",
+      "inParms": [],
+      "dataobjects": [
+        "d_pln_product_software_version_excel"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "IP_PRODUCT_SOFTWARE_EXCEL"
+      ],
+      "filterControlCount": 1
+    },
+    {
+      "window": "w_prd_fg_inv_loc_move",
+      "kind": "util",
+      "callerCount": 1,
+      "callers": [
+        "w_prd_product_fg_inventory"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "global-struct",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [],
+      "dwCount": 0,
+      "tables": [],
+      "filterControlCount": 3
+    },
+    {
+      "window": "w_prd_fg_magazine_divide",
+      "kind": "complex",
+      "callerCount": 1,
+      "callers": [
+        "w_prd_product_fg_inventory"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "global-struct",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_product_fg_inventory_divide",
+        "d_product_fg_magazine_label_rpt"
+      ],
+      "dwCount": 2,
+      "tables": [
+        "IP_PRODUCT_FG_INVENTORY",
+        "IP_PRODUCT_PACK_MASTER",
+        "IP_PRODUCT_PACK_SERIAL"
+      ],
+      "filterControlCount": 3
+    },
+    {
+      "window": "w_profile_edit_window",
+      "kind": "complex",
+      "callerCount": 1,
+      "callers": [
+        "w_logon"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "close-with-return",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [],
+      "dwCount": 0,
+      "tables": [],
+      "filterControlCount": 1
+    },
+    {
+      "window": "w_qc_4m_popup",
+      "kind": "complex",
+      "callerCount": 1,
+      "callers": [
+        "w_des_mfs_bom_master"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "close-with-return",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_qc_4m_mst_popup",
+        "d_qc_4m_popup_lst"
+      ],
+      "dwCount": 2,
+      "tables": [
+        "IP_PRODUCT_MODEL_MASTER",
+        "IQ_4M_MASTER"
+      ],
+      "filterControlCount": 1
+    },
+    {
+      "window": "w_qc_aoi_review_r_tf_popup",
+      "kind": "search-select",
+      "callerCount": 1,
+      "callers": [
+        "w_pln_product_pcb_bcr_scan_query"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "global-struct",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_qc_machine_inspect_data_4_ng_only_aoi_i_tf_popup"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "IQ_MACHINE_INSPECT_AOI_R_TF"
+      ],
+      "filterControlCount": 1
+    },
+    {
+      "window": "w_qc_iqc_lot_popup",
+      "kind": "util",
+      "callerCount": 1,
+      "callers": [
+        "w_mat_receipt_master"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "close-with-return",
+      "inParms": [
+        "doubleparm"
+      ],
+      "dataobjects": [],
+      "dwCount": 0,
+      "tables": [],
+      "filterControlCount": 2
+    },
+    {
+      "window": "w_qc_wqc_inspect_outside_request_popup",
+      "kind": "search-select",
+      "callerCount": 1,
+      "callers": [
+        "w_com_carrying_out_master"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "global-struct",
+      "inParms": [
+        "powerobjectparm"
+      ],
+      "dataobjects": [
+        "d_qc_wqc_inspect_outside_reuqest_popup"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "ID_ITEM",
+        "IQ_PRODUCT_WQC"
+      ],
+      "filterControlCount": 7
+    },
+    {
+      "window": "w_quick_filter",
+      "kind": "complex",
+      "callerCount": 1,
+      "callers": [
+        "w_main_root"
+      ],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [
+        "powerobjectparm"
+      ],
+      "dataobjects": [],
+      "dwCount": 0,
+      "tables": [],
+      "filterControlCount": 2
+    },
+    {
+      "window": "w_replace_popup",
+      "kind": "util",
+      "callerCount": 1,
+      "callers": [
+        "w_excel_loader_master"
+      ],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [],
+      "dataobjects": [],
+      "dwCount": 0,
+      "tables": [],
+      "filterControlCount": 11
+    },
+    {
+      "window": "w_report_menu_insert_popup",
+      "kind": "search-select",
+      "callerCount": 1,
+      "callers": [
+        "w_report_generator"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "global-struct",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_report_menu_insert_lst_tree"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "ISYS_REPORT_MENU"
+      ],
+      "filterControlCount": 1
+    },
+    {
+      "window": "w_report_where_condition_popup",
+      "kind": "readonly",
+      "callerCount": 1,
+      "callers": [
+        "w_report_master"
+      ],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [
+        "powerobjectparm"
+      ],
+      "dataobjects": [
+        "d_report_source_where_condition_lst"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "ISYS_REPORT_SOURCE_WHERE"
+      ],
+      "filterControlCount": 0
+    },
+    {
+      "window": "w_role_popup",
+      "kind": "search-select",
+      "callerCount": 1,
+      "callers": [
+        "w_privilege_master"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [
+        "role_code"
+      ],
+      "returnStyle": "close-with-return",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_role_popup"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "ISYS_ROLE"
+      ],
+      "filterControlCount": 1
+    },
+    {
+      "window": "w_sal_sale_price_excel_from_popup",
+      "kind": "complex",
+      "callerCount": 1,
+      "callers": [
+        "w_sal_sale_price_master"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "global-struct",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_sal_sale_price_excel_from_popup",
+        "d_sal_sale_price_mst"
+      ],
+      "dwCount": 2,
+      "tables": [
+        "ICOM_CUSTOMER",
+        "ID_ITEM",
+        "IS_PRODUCT_SALE_PRICE"
+      ],
+      "filterControlCount": 0
+    },
+    {
+      "window": "w_send_mail_dw_popup",
+      "kind": "util",
+      "callerCount": 1,
+      "callers": [
+        "w_mat_purchase_order_send_fax_email_master"
+      ],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [
+        "powerobjectparm"
+      ],
+      "dataobjects": [],
+      "dwCount": 0,
+      "tables": [],
+      "filterControlCount": 2
+    },
+    {
+      "window": "w_sequence_select_popup",
+      "kind": "search-select",
+      "callerCount": 1,
+      "callers": [
+        "w_default_value_popup"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [
+        "sequence_name"
+      ],
+      "returnStyle": "close-with-return",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_user_sequence_lst_popup"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "USER_SEQUENCES"
+      ],
+      "filterControlCount": 0
+    },
+    {
+      "window": "w_set_network",
+      "kind": "util",
+      "callerCount": 1,
+      "callers": [
+        "w_logon"
+      ],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [],
+      "dataobjects": [],
+      "dwCount": 0,
+      "tables": [],
+      "filterControlCount": 9
+    },
+    {
+      "window": "w_show_datawindow_popup",
+      "kind": "readonly",
+      "callerCount": 1,
+      "callers": [
+        "w_runtime_dw_generator"
+      ],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "de_column_sort"
+      ],
+      "dwCount": 1,
+      "tables": [],
+      "filterControlCount": 42
+    },
+    {
+      "window": "w_smt_bom_excel_load_popup",
+      "kind": "complex",
+      "callerCount": 1,
+      "callers": [
+        "w_smt_bom_create_master"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "global-struct",
+      "inParms": [],
+      "dataobjects": [
+        "d_des_bom_excel_load_2_popup",
+        "d_des_bom_query_4_blocking_comparision",
+        "d_smt_bom_excel_load_3_popup"
+      ],
+      "dwCount": 3,
+      "tables": [
+        "ID_ENG_BOM_EXCEL_2",
+        "ID_ENG_BOM_EXCEL_3",
+        "ID_ENG_BOM_TEMP"
+      ],
+      "filterControlCount": 9
+    },
+    {
+      "window": "w_sql_painter",
+      "kind": "readonly",
+      "callerCount": 1,
+      "callers": [
+        "w_excel_loader_master"
+      ],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [],
+      "dataobjects": [
+        "d_null_datawindow"
+      ],
+      "dwCount": 1,
+      "tables": [],
+      "filterControlCount": 1
+    },
+    {
+      "window": "w_user_role_group_popup",
+      "kind": "complex",
+      "callerCount": 1,
+      "callers": [
+        "w_privilege_master"
+      ],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [],
+      "dataobjects": [
+        "d_role_group_popup",
+        "d_user_role_group_popup"
+      ],
+      "dwCount": 2,
+      "tables": [
+        "ISYS_DEPARTMENT",
+        "ISYS_ROLE",
+        "ISYS_USERS"
+      ],
+      "filterControlCount": 2
+    },
+    {
+      "window": "w_value_list_popup",
+      "kind": "readonly",
+      "callerCount": 1,
+      "callers": [
+        "w_excel_loader_master"
+      ],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_value_list_popup"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "ISYS_BASECODE"
+      ],
+      "filterControlCount": 1
+    },
+    {
+      "window": "w_wallpaper",
+      "kind": "complex",
+      "callerCount": 1,
+      "callers": [
+        "w_main_frame"
+      ],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "global-struct",
+      "inParms": [],
+      "dataobjects": [
+        "d_data_monitor",
+        "d_my_menu_tree",
+        "d_sys_pub_work_board_rpt",
+        "d_work_board_content",
+        "d_work_board_title"
+      ],
+      "dwCount": 5,
+      "tables": [
+        "ISYS_MENU",
+        "ISYS_MONITOR",
+        "ISYS_PUB_WORK_BOARD",
+        "ISYS_USERS"
+      ],
+      "filterControlCount": 6
+    },
+    {
+      "window": "w_wallpaper_web",
+      "kind": "util",
+      "callerCount": 1,
+      "callers": [
+        "w_main_frame"
+      ],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [],
+      "dataobjects": [],
+      "dwCount": 0,
+      "tables": [],
+      "filterControlCount": 1
+    },
+    {
+      "window": "w_bad_reason_select_4_iqc_popup",
+      "kind": "search-select",
+      "callerCount": 0,
+      "callers": [],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [
+        "code_name"
+      ],
+      "returnStyle": "global-struct",
+      "inParms": [],
+      "dataobjects": [
+        "d_bad_reason_select_4_iqc_popup"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "ISYS_CODE_MASTER"
+      ],
+      "filterControlCount": 0
+    },
+    {
+      "window": "w_col_info_popup",
+      "kind": "readonly",
+      "callerCount": 0,
+      "callers": [],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [
+        "powerobjectparm"
+      ],
+      "dataobjects": [
+        "d_col_info_lst_popup_tree"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "ISYS_WINDOW_PROPERTY"
+      ],
+      "filterControlCount": 3
+    },
+    {
+      "window": "w_data_group_popup",
+      "kind": "util",
+      "callerCount": 0,
+      "callers": [],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [
+        "powerobjectparm"
+      ],
+      "dataobjects": [],
+      "dwCount": 0,
+      "tables": [],
+      "filterControlCount": 4
+    },
+    {
+      "window": "w_default_value_popup",
+      "kind": "readonly",
+      "callerCount": 0,
+      "callers": [],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [
+        "powerobjectparm",
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_initial_value_popup"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "ISYS_DEFAULT_VALUE"
+      ],
+      "filterControlCount": 2
+    },
+    {
+      "window": "w_des_assembly_item_popup",
+      "kind": "search-select",
+      "callerCount": 0,
+      "callers": [],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [
+        "item_code"
+      ],
+      "returnStyle": "close-with-return",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_des_assembly_item_popup"
+      ],
+      "dwCount": 1,
+      "tables": [],
+      "filterControlCount": 7
+    },
+    {
+      "window": "w_des_bom_copy_with_shaft_popup",
+      "kind": "complex",
+      "callerCount": 0,
+      "callers": [],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [
+        "doubleparm"
+      ],
+      "dataobjects": [],
+      "dwCount": 0,
+      "tables": [],
+      "filterControlCount": 7
+    },
+    {
+      "window": "w_des_bom_excel_form_default_popup",
+      "kind": "complex",
+      "callerCount": 0,
+      "callers": [],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [],
+      "dataobjects": [
+        "d_des_bom_import_excel_default"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "ID_ENG_BOM_EXCEL_LG"
+      ],
+      "filterControlCount": 7
+    },
+    {
+      "window": "w_des_bom_excel_form_lg_4_item_popup",
+      "kind": "complex",
+      "callerCount": 0,
+      "callers": [],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [],
+      "dataobjects": [
+        "d_des_bom_import_excel_lcd"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "ID_ENG_BOM_EXCEL_LG"
+      ],
+      "filterControlCount": 2
+    },
+    {
+      "window": "w_des_bom_excel_load_popup",
+      "kind": "search-select",
+      "callerCount": 0,
+      "callers": [],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "global-struct",
+      "inParms": [],
+      "dataobjects": [
+        "d_des_bom_excel_load_2_popup"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "ID_ENG_BOM_EXCEL_2"
+      ],
+      "filterControlCount": 0
+    },
+    {
+      "window": "w_des_bom_merge_popup",
+      "kind": "complex",
+      "callerCount": 0,
+      "callers": [],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [
+        "doubleparm"
+      ],
+      "dataobjects": [],
+      "dwCount": 0,
+      "tables": [],
+      "filterControlCount": 6
+    },
+    {
+      "window": "w_des_item_4_all_org_popup",
+      "kind": "search-select",
+      "callerCount": 0,
+      "callers": [],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [
+        "item_code"
+      ],
+      "returnStyle": "close-with-return",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_des_item_4_all_org_popup_tree"
+      ],
+      "dwCount": 1,
+      "tables": [],
+      "filterControlCount": 13
+    },
+    {
+      "window": "w_des_item_excel_form_popup",
+      "kind": "complex",
+      "callerCount": 0,
+      "callers": [],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [],
+      "dataobjects": [
+        "d_des_item_import_excel"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "ID_ITEM"
+      ],
+      "filterControlCount": 0
+    },
+    {
+      "window": "w_des_parent_item_from_bom_popup",
+      "kind": "search-select",
+      "callerCount": 0,
+      "callers": [],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [
+        "parent_item_code"
+      ],
+      "returnStyle": "close-with-return",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_des_parent_item_from_bom_popup"
+      ],
+      "dwCount": 1,
+      "tables": [],
+      "filterControlCount": 4
+    },
+    {
+      "window": "w_des_work_no_popup",
+      "kind": "search-select",
+      "callerCount": 0,
+      "callers": [],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [
+        "bom_work_no"
+      ],
+      "returnStyle": "close-with-return",
+      "inParms": [
+        "doubleparm"
+      ],
+      "dataobjects": [
+        "d_des_work_no_popup"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "ID_ENG_BOM_WORKSPACE"
+      ],
+      "filterControlCount": 1
+    },
+    {
+      "window": "w_drawing_batch_popup",
+      "kind": "complex",
+      "callerCount": 0,
+      "callers": [],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "global-struct",
+      "inParms": [],
+      "dataobjects": [],
+      "dwCount": 0,
+      "tables": [],
+      "filterControlCount": 1
+    },
+    {
+      "window": "w_dynamic_graph_popup",
+      "kind": "complex",
+      "callerCount": 0,
+      "callers": [],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [
+        "powerobjectparm"
+      ],
+      "dataobjects": [],
+      "dwCount": 0,
+      "tables": [],
+      "filterControlCount": 4
+    },
+    {
+      "window": "w_error_log_trace_popup",
+      "kind": "util",
+      "callerCount": 0,
+      "callers": [],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [],
+      "dataobjects": [],
+      "dwCount": 0,
+      "tables": [],
+      "filterControlCount": 0
+    },
+    {
+      "window": "w_find_popup",
+      "kind": "complex",
+      "callerCount": 0,
+      "callers": [],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [],
+      "dataobjects": [],
+      "dwCount": 0,
+      "tables": [],
+      "filterControlCount": 3
+    },
+    {
+      "window": "w_mat_arrival_invoice_popup",
+      "kind": "readonly",
+      "callerCount": 0,
+      "callers": [],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [],
+      "dataobjects": [
+        "d_mat_arrival_rpt"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "IM_ITEM_ARRIVAL"
+      ],
+      "filterControlCount": 3
+    },
+    {
+      "window": "w_mat_goods_price_4_purchase_order_popup",
+      "kind": "search-select",
+      "callerCount": 0,
+      "callers": [],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "global-struct",
+      "inParms": [
+        "powerobjectparm",
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_mat_goods_price_4_purchase_order_popup"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "ICOM_SUPPLIER",
+        "ID_ITEM",
+        "IM_ITEM_MASTER",
+        "IS_PRODUCT_BUY_PRICE"
+      ],
+      "filterControlCount": 12
+    },
+    {
+      "window": "w_mat_inventory_4_lv_analysis_popup",
+      "kind": "search-select",
+      "callerCount": 0,
+      "callers": [],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "global-struct",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_mat_item_inventory_4_lv_analysis_popup"
+      ],
+      "dwCount": 1,
+      "tables": [],
+      "filterControlCount": 2
+    },
+    {
+      "window": "w_mat_inventory_close_excel_import_popup",
+      "kind": "search-select",
+      "callerCount": 0,
+      "callers": [],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "global-struct",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_mat_item_inventory_close_excel_import_popup"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "IM_ITEM_INVENTORY_CHECK_EXCEL"
+      ],
+      "filterControlCount": 2
+    },
+    {
+      "window": "w_mat_item_4_inspect_rule_popup",
+      "kind": "search-select",
+      "callerCount": 0,
+      "callers": [],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [
+        "item_code",
+        "item_name",
+        "item_spec",
+        "supplier_code",
+        "supplier_name",
+        "line_type",
+        "item_uom",
+        "item_type"
+      ],
+      "returnStyle": "global-struct",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_mat_item_pop_tree"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "ICOM_SUPPLIER",
+        "ID_ITEM",
+        "IM_ITEM_MASTER"
+      ],
+      "filterControlCount": 10
+    },
+    {
+      "window": "w_mat_item_barcode_inventory_detail_popup",
+      "kind": "complex",
+      "callerCount": 0,
+      "callers": [],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "global-struct",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_mat_issue_4_barcode_detail_lst",
+        "d_mat_rcviss_barcode_detail_lst_popup",
+        "d_mat_receipt_4_barcode_popup",
+        "d_smt_checkhist_4_feeding_monitor_lst"
+      ],
+      "dwCount": 4,
+      "tables": [
+        "IB_SMT_CHECKHIST",
+        "ID_ITEM",
+        "IM_ITEM_ISSUE",
+        "IM_ITEM_RECEIPT",
+        "IM_ITEM_RECEIPT_BARCODE",
+        "SUPPLIER"
+      ],
+      "filterControlCount": 5
+    },
+    {
+      "window": "w_mat_item_receipt_4_distribute_popup",
+      "kind": "search-select",
+      "callerCount": 0,
+      "callers": [],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "close-with-return",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_mat_receipt_4_distribute_popup"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "ID_ITEM",
+        "IM_ITEM_RECEIPT"
+      ],
+      "filterControlCount": 5
+    },
+    {
+      "window": "w_mat_item_receipt_popup",
+      "kind": "search-select",
+      "callerCount": 0,
+      "callers": [],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [
+        "material_mfs",
+        "item_name",
+        "item_spec",
+        "supplier_code",
+        "line_type",
+        "item_type",
+        "invoice_no",
+        "receipt_lot_no",
+        "location_code"
+      ],
+      "returnStyle": "close-with-return",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_mat_receipt_hst1"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "ID_ITEM",
+        "IM_ITEM_RECEIPT"
+      ],
+      "filterControlCount": 6
+    },
+    {
+      "window": "w_mat_item_set_msl_location_popup",
+      "kind": "search-select",
+      "callerCount": 0,
+      "callers": [],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "global-struct",
+      "inParms": [],
+      "dataobjects": [
+        "d_des_item_set_msl_location_popup"
+      ],
+      "dwCount": 1,
+      "tables": [],
+      "filterControlCount": 2
+    },
+    {
+      "window": "w_mat_keyitem_popup",
+      "kind": "search-select",
+      "callerCount": 0,
+      "callers": [],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "close-with-return",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_mat_keyitem_lst"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "IF_KEYT_KEYITEM"
+      ],
+      "filterControlCount": 1
+    },
+    {
+      "window": "w_mat_reel_divide_cancel_popup",
+      "kind": "util",
+      "callerCount": 0,
+      "callers": [],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "global-struct",
+      "inParms": [],
+      "dataobjects": [],
+      "dwCount": 0,
+      "tables": [],
+      "filterControlCount": 1
+    },
+    {
+      "window": "w_mat_reel_divide_qty_popup",
+      "kind": "search-select",
+      "callerCount": 0,
+      "callers": [],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "global-struct",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_mat_slip_receipt_qty_divide_pop"
+      ],
+      "dwCount": 1,
+      "tables": [],
+      "filterControlCount": 2
+    },
+    {
+      "window": "w_mat_sale_price_popup",
+      "kind": "search-select",
+      "callerCount": 0,
+      "callers": [],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [
+        "unit_price"
+      ],
+      "returnStyle": "close-with-return",
+      "inParms": [
+        "doubleparm",
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_mat_sale_price_popup_tree"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "IM_ITEM_SALE_PRICE"
+      ],
+      "filterControlCount": 2
+    },
+    {
+      "window": "w_mat_smt_checkhist_popup",
+      "kind": "search-select",
+      "callerCount": 0,
+      "callers": [],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [
+        "item_code",
+        "item_name",
+        "item_spec",
+        "supplier_code",
+        "supplier_name",
+        "line_type",
+        "item_uom",
+        "item_type"
+      ],
+      "returnStyle": "close-with-return",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_mat_smt_checkhist_popup"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "IB_SMT_CHECKHIST"
+      ],
+      "filterControlCount": 1
+    },
+    {
+      "window": "w_mat_solder_issue_barcode_popup",
+      "kind": "util",
+      "callerCount": 0,
+      "callers": [],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [],
+      "dataobjects": [],
+      "dwCount": 0,
+      "tables": [],
+      "filterControlCount": 2
+    },
+    {
+      "window": "w_mat_solder_receipt_barcode_popup",
+      "kind": "util",
+      "callerCount": 0,
+      "callers": [],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [],
+      "dataobjects": [],
+      "dwCount": 0,
+      "tables": [],
+      "filterControlCount": 2
+    },
+    {
+      "window": "w_mat_unit_price_4_goods_popup",
+      "kind": "search-select",
+      "callerCount": 0,
+      "callers": [],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [
+        "unit_price"
+      ],
+      "returnStyle": "close-with-return",
+      "inParms": [
+        "doubleparm",
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_sal_buy_price_4_goods_popup"
+      ],
+      "dwCount": 1,
+      "tables": [],
+      "filterControlCount": 5
+    },
+    {
+      "window": "w_mat_ws_issue_qty_divide_popup",
+      "kind": "util",
+      "callerCount": 0,
+      "callers": [],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "global-struct",
+      "inParms": [
+        "doubleparm"
+      ],
+      "dataobjects": [],
+      "dwCount": 0,
+      "tables": [],
+      "filterControlCount": 2
+    },
+    {
+      "window": "w_mcn_jig_pm_result_popup",
+      "kind": "search-select",
+      "callerCount": 0,
+      "callers": [],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "global-struct",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_mcn_machine_pm_result_popup"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "IMCN_WEEKLY_PM_RESULT"
+      ],
+      "filterControlCount": 3
+    },
+    {
+      "window": "w_mrm_excel_form_popup",
+      "kind": "complex",
+      "callerCount": 0,
+      "callers": [],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [],
+      "dataobjects": [
+        "d_mrm_excel_popup",
+        "d_mrm_lst"
+      ],
+      "dwCount": 2,
+      "tables": [],
+      "filterControlCount": 1
+    },
+    {
+      "window": "w_pln_assembly_plan_popup",
+      "kind": "search-select",
+      "callerCount": 0,
+      "callers": [],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [
+        "item_code",
+        "parent_item_code",
+        "model_name",
+        "customer_order_no"
+      ],
+      "returnStyle": "close-with-return",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_pln_smd_plan_popup"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "IP_PRODUCT_RUN_CARD",
+        "IP_PRODUCT_SMD_PLAN"
+      ],
+      "filterControlCount": 12
+    },
+    {
+      "window": "w_pln_fg_delivery_info_input_popup",
+      "kind": "util",
+      "callerCount": 0,
+      "callers": [],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "global-struct",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [],
+      "dwCount": 0,
+      "tables": [],
+      "filterControlCount": 8
+    },
+    {
+      "window": "w_pln_master_plan_popup",
+      "kind": "search-select",
+      "callerCount": 0,
+      "callers": [],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [
+        "lot_qty"
+      ],
+      "returnStyle": "close-with-return",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_pln_master_plan_popup"
+      ],
+      "dwCount": 1,
+      "tables": [],
+      "filterControlCount": 11
+    },
+    {
+      "window": "w_privilege_warning_popup",
+      "kind": "readonly",
+      "callerCount": 0,
+      "callers": [],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_privilege_lst_popup_by_user"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "ISYS_PRIVILEGE"
+      ],
+      "filterControlCount": 0
+    },
+    {
+      "window": "w_qc_bad_reason_popup",
+      "kind": "search-select",
+      "callerCount": 0,
+      "callers": [],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [
+        "product_sale_price",
+        "customer_code",
+        "product_line_type"
+      ],
+      "returnStyle": "close-with-return",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_qc_bad_reason_popup"
+      ],
+      "dwCount": 1,
+      "tables": [],
+      "filterControlCount": 2
+    },
+    {
+      "window": "w_qc_ifts_ng_popup",
+      "kind": "search-select",
+      "callerCount": 0,
+      "callers": [],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "global-struct",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_qc_machine_inspect_ng_data_popup_ifts"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "IQ_MACHINE_INSPECT_DATA_IFTS"
+      ],
+      "filterControlCount": 1
+    },
+    {
+      "window": "w_qc_iqc_lot_multi_popup",
+      "kind": "util",
+      "callerCount": 0,
+      "callers": [],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "close-with-return",
+      "inParms": [
+        "doubleparm"
+      ],
+      "dataobjects": [],
+      "dwCount": 0,
+      "tables": [],
+      "filterControlCount": 4
+    },
+    {
+      "window": "w_report_source_manage_popup",
+      "kind": "complex",
+      "callerCount": 0,
+      "callers": [],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "global-struct",
+      "inParms": [],
+      "dataobjects": [
+        "d_datawindow_source_lst",
+        "d_report_object_list",
+        "d_report_source_where_lst"
+      ],
+      "dwCount": 3,
+      "tables": [
+        "ISYS_REPORT_SOURCE",
+        "ISYS_REPORT_SOURCE_WHERE"
+      ],
+      "filterControlCount": 0
+    },
+    {
+      "window": "w_report_window_where_condition_popup",
+      "kind": "readonly",
+      "callerCount": 0,
+      "callers": [],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [
+        "powerobjectparm"
+      ],
+      "dataobjects": [
+        "d_report_window_where_condition_popup"
+      ],
+      "dwCount": 1,
+      "tables": [],
+      "filterControlCount": 2
+    },
+    {
+      "window": "w_role_code_return_popup",
+      "kind": "util",
+      "callerCount": 0,
+      "callers": [],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "close-with-return",
+      "inParms": [],
+      "dataobjects": [],
+      "dwCount": 0,
+      "tables": [],
+      "filterControlCount": 2
+    },
+    {
+      "window": "w_sal_mobile_plan_4_assembly_plan_popup",
+      "kind": "readonly",
+      "callerCount": 0,
+      "callers": [],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_pln_mobilization_4_assembly_plan_lst_popup"
+      ],
+      "dwCount": 1,
+      "tables": [],
+      "filterControlCount": 10
+    },
+    {
+      "window": "w_sal_mobile_plan_4_master_plan_popup",
+      "kind": "readonly",
+      "callerCount": 0,
+      "callers": [],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_pln_mobilization_4_master_plan_lst_popup"
+      ],
+      "dwCount": 1,
+      "tables": [],
+      "filterControlCount": 15
+    },
+    {
+      "window": "w_sal_palette_popup",
+      "kind": "search-select",
+      "callerCount": 0,
+      "callers": [],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "global-struct",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_sal_shipping_palette_select_popup"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "ISAL_SHIPPING_LOT_DETAIL",
+        "ISAL_SHIPPING_LOT_MASTER"
+      ],
+      "filterControlCount": 5
+    },
+    {
+      "window": "w_sal_sale_plan_4_master_plan_popup",
+      "kind": "search-select",
+      "callerCount": 0,
+      "callers": [],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "global-struct",
+      "inParms": [
+        "doubleparm",
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_sal_product_sale_plan_4_mobilization_lst_tree"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "IS_PRODUCT_SALE_PLAN"
+      ],
+      "filterControlCount": 12
+    },
+    {
+      "window": "w_sal_sale_plan_4_mobile_plan_popup",
+      "kind": "search-select",
+      "callerCount": 0,
+      "callers": [],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "global-struct",
+      "inParms": [
+        "doubleparm",
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_sal_product_sale_plan_4_mobilization_lst_tree"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "IS_PRODUCT_SALE_PLAN"
+      ],
+      "filterControlCount": 12
+    },
+    {
+      "window": "w_sal_sale_price_4_sale_plan_popup",
+      "kind": "search-select",
+      "callerCount": 0,
+      "callers": [],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "global-struct",
+      "inParms": [
+        "powerobjectparm"
+      ],
+      "dataobjects": [
+        "d_sal_sale_price_4_sale_plan_popup_tree"
+      ],
+      "dwCount": 1,
+      "tables": [],
+      "filterControlCount": 7
+    },
+    {
+      "window": "w_sal_shipping_lot_master_popup",
+      "kind": "complex",
+      "callerCount": 0,
+      "callers": [],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "global-struct",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_sal_shipping_lot_detial_popup",
+        "d_sal_shipping_lot_master_popup"
+      ],
+      "dwCount": 2,
+      "tables": [
+        "ISAL_SHIPPING_LOT_DETAIL",
+        "ISAL_SHIPPING_LOT_MASTER"
+      ],
+      "filterControlCount": 1
+    },
+    {
+      "window": "w_sal_work_cost_popup",
+      "kind": "search-select",
+      "callerCount": 0,
+      "callers": [],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [
+        "product_work_cost"
+      ],
+      "returnStyle": "global-struct",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_sal_work_cost_popup_tree"
+      ],
+      "dwCount": 1,
+      "tables": [],
+      "filterControlCount": 2
+    },
+    {
+      "window": "w_send_mail_popup",
+      "kind": "readonly",
+      "callerCount": 0,
+      "callers": [],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [
+        "powerobjectparm"
+      ],
+      "dataobjects": [
+        "d_user_popup"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "ISYS_DEPARTMENT",
+        "ISYS_USERS"
+      ],
+      "filterControlCount": 1
+    },
+    {
+      "window": "w_smt_bom_replace_popup",
+      "kind": "complex",
+      "callerCount": 0,
+      "callers": [],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_des_bom_smt_replace_popup",
+        "d_des_item_replace_popup"
+      ],
+      "dwCount": 2,
+      "tables": [
+        "ID_ITEM_REPLACE",
+        "IP_PRODUCT_MODEL_MASTER"
+      ],
+      "filterControlCount": 1
+    },
+    {
+      "window": "w_smt_check_material_position_popup",
+      "kind": "util",
+      "callerCount": 0,
+      "callers": [],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [],
+      "dataobjects": [],
+      "dwCount": 0,
+      "tables": [],
+      "filterControlCount": 7
+    },
+    {
+      "window": "w_smt_plan_feeder_compare_popup",
+      "kind": "complex",
+      "callerCount": 0,
+      "callers": [],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [],
+      "dataobjects": [
+        "d_smt_feeder_compare_MOVE_lst",
+        "d_smt_feeder_compare_issue_lst",
+        "d_smt_feeder_compare_issue_return_lst"
+      ],
+      "dwCount": 3,
+      "tables": [
+        "IB_PRODUCT_PLANDATA",
+        "IM_ITEM_RECEIPT_BARCODE"
+      ],
+      "filterControlCount": 14
+    },
+    {
+      "window": "w_smt_plan_feeder_list_popup",
+      "kind": "readonly",
+      "callerCount": 0,
+      "callers": [],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_des_item_4_bom_smt_modify_lst"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "ID_ENG_BOM_SMT"
+      ],
+      "filterControlCount": 0
+    },
+    {
+      "window": "w_smt_plan_feeder_running_status_popup",
+      "kind": "complex",
+      "callerCount": 0,
+      "callers": [],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [],
+      "dataobjects": [
+        "d_mat_barcode_lst_4_issue_popup",
+        "d_smt_feeder_shaft_lst"
+      ],
+      "dwCount": 2,
+      "tables": [
+        "IB_PRODUCT_PLANDATA",
+        "IB_SMT_FEEDER_SHAFT",
+        "IM_ITEM_RECEIPT_BARCODE"
+      ],
+      "filterControlCount": 4
+    },
+    {
+      "window": "w_standard_code_select_popup",
+      "kind": "search-select",
+      "callerCount": 0,
+      "callers": [],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [
+        "code_name"
+      ],
+      "returnStyle": "close-with-return",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_standard_code_popup"
+      ],
+      "dwCount": 1,
+      "tables": [
+        "ISYS_CODE_MASTER"
+      ],
+      "filterControlCount": 4
+    },
+    {
+      "window": "w_sup_lot_divide_popup",
+      "kind": "util",
+      "callerCount": 0,
+      "callers": [],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "close-with-return",
+      "inParms": [
+        "doubleparm"
+      ],
+      "dataobjects": [],
+      "dwCount": 0,
+      "tables": [],
+      "filterControlCount": 2
+    },
+    {
+      "window": "w_system_config_popup",
+      "kind": "util",
+      "callerCount": 0,
+      "callers": [],
+      "returnsValue": false,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": null,
+      "inParms": [],
+      "dataobjects": [],
+      "dwCount": 0,
+      "tables": [],
+      "filterControlCount": 2
+    },
+    {
+      "window": "w_table_select_4_where_condition_popup",
+      "kind": "complex",
+      "callerCount": 0,
+      "callers": [],
+      "returnsValue": true,
+      "returnSuspected": false,
+      "returnColumns": [],
+      "returnStyle": "close-with-return",
+      "inParms": [
+        "stringparm"
+      ],
+      "dataobjects": [
+        "d_table_column_select_popup",
+        "d_table_name_select_popup"
+      ],
+      "dwCount": 2,
+      "tables": [
+        "TAB",
+        "USER_TAB_COLUMNS"
+      ],
+      "filterControlCount": 3
+    }
+  ]
+}

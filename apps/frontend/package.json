@@ -5,19 +5,20 @@
   "scripts": {
     "gen:registry": "node scripts/gen-page-registry.mjs",
     "gen:menu": "node scripts/gen-menu-registration.mjs",
-    "check:pages": "node scripts/check-page-registration.mjs && node scripts/gen-migration-status.mjs --check",
-    "predev": "node scripts/gen-page-registry.mjs && node scripts/check-page-registration.mjs && node scripts/gen-migration-status.mjs --check",
-    "prebuild": "node scripts/gen-page-registry.mjs && node scripts/check-page-registration.mjs && node scripts/gen-migration-status.mjs --check",
+    "check:pages": "node scripts/check-page-registration.mjs && node scripts/gen-migration-status.mjs --check && node scripts/gen-popup-status.mjs --check",
+    "predev": "node scripts/gen-page-registry.mjs && node scripts/check-page-registration.mjs && node scripts/gen-migration-status.mjs --check && node scripts/gen-popup-status.mjs --check",
+    "prebuild": "node scripts/gen-page-registry.mjs && node scripts/check-page-registration.mjs && node scripts/gen-migration-status.mjs --check && node scripts/gen-popup-status.mjs --check",
     "dev": "set NODE_NO_WARNINGS=1 && next dev --turbopack -H 0.0.0.0 -p 4010",
     "build": "next build",
     "start": "next start -H 0.0.0.0 -p 4010",
     "lint": "next lint",
-    "typecheck": "node scripts/gen-page-registry.mjs && node scripts/check-page-registration.mjs && node scripts/gen-migration-status.mjs --check && tsc --noEmit --pretty false",
-    "test": "node scripts/gen-page-registry.mjs && node scripts/gen-menu-registration.mjs && node scripts/check-page-registration.mjs && node scripts/gen-migration-status.mjs && node --test scripts/pb-menu-link-contract.test.mjs",
+    "typecheck": "node scripts/gen-page-registry.mjs && node scripts/check-page-registration.mjs && node scripts/gen-migration-status.mjs --check && node scripts/gen-popup-status.mjs --check && tsc --noEmit --pretty false",
+    "test": "node scripts/gen-page-registry.mjs && node scripts/gen-menu-registration.mjs && node scripts/check-page-registration.mjs && node scripts/gen-migration-status.mjs && node scripts/gen-popup-status.mjs && node --test scripts/pb-menu-link-contract.test.mjs",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:report": "playwright show-report",
-    "gen:migration": "node scripts/gen-migration-status.mjs"
+    "gen:migration": "node scripts/gen-migration-status.mjs",
+    "gen:popup-status": "node scripts/gen-popup-status.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
