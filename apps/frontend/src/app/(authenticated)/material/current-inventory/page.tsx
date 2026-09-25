@@ -57,7 +57,7 @@ export default function CurrentInventoryPage() {
           <h1 className="flex items-center gap-2 text-xl font-bold text-text">
             <ClipboardList className="h-6 w-6 text-primary" />현재고조회
           </h1>
-          <p className="mt-1 text-sm text-text-muted">PB DataWindow d_mat_current_inventory_detail_lst 기준 · {searched ? `${rows.length}/${total}건` : '조회조건을 입력하세요'}</p>
+          <p className="mt-1 text-sm text-text-muted">로케이션·품목별 자재 현재고 수량과 재고금액을 조회합니다 · {searched ? `${rows.length}/${total}건` : '조회조건을 입력하세요'}</p>
         </div>
         <div className="flex gap-2">
           <Button variant="secondary" size="sm" onClick={search} disabled={loading}><RefreshCw className={`mr-1 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />새로고침</Button>

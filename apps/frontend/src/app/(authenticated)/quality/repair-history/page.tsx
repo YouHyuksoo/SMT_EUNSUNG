@@ -89,7 +89,7 @@ export default function RepairHistoryPage() {
             <Wrench className="h-6 w-6 text-primary" />공정수리이력조회
           </h1>
           <p className="mt-1 text-sm text-text-muted">
-            PB w_pln_product_pcb_repair_master · Repair History 기준 · {searched ? `${rows.length}/${total}건` : '조회조건을 입력하세요'}
+            공정 수리 접수·완료 이력과 TAT(수리 소요시간)를 조회합니다 · {searched ? `${rows.length}/${total}건` : '조회조건을 입력하세요'}
           </p>
         </div>
         <div className="flex gap-2">

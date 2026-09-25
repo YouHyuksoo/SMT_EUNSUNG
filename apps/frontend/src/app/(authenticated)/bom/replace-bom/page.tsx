@@ -152,7 +152,7 @@ export default function ReplaceBomPage() {
           <h1 className="flex items-center gap-2 text-xl font-bold text-text">
             <GitFork className="h-6 w-6 text-primary" />대체BOM관리
           </h1>
-          <p className="mt-1 text-sm text-text-muted">PB w_des_replace_bom_master · SET 품목 BOM 전개 후 구성품별 대체품 등록</p>
+          <p className="mt-1 text-sm text-text-muted">SET 품목 BOM 을 전개해 구성품별 대체품을 등록·관리합니다</p>
         </div>
         <nav className="flex flex-wrap gap-1 border-b border-border" aria-label="조회 모드">
           {([['MANAGE', '대체품 관리'], ['LIST', '대체품 목록']] as const).map(([value, label]) => (

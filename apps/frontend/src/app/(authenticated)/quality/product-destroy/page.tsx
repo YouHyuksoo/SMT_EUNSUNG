@@ -143,7 +143,7 @@ export default function ProductDestroyPage() {
             <Trash2 className="h-6 w-6 text-primary" />공정폐기관리
           </h1>
           <p className="mt-1 text-sm text-text-muted">
-            PB w_pln_product_pcb_destroy_master 기준 · 폐기는 삭제가 아니라 검사처리 D 이력으로 쌓인다
+            시리얼별 공정 폐기를 등록하고 반품 여부를 관리합니다 · 폐기는 삭제가 아니라 검사처리 D 이력으로 쌓인다
           </p>
         </div>
         <div className="flex items-center gap-3">

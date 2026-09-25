@@ -141,7 +141,7 @@ export default function ReceiptCancelPage() {
             <Undo2 className="h-6 w-6 text-primary" />자재입고취소
           </h1>
           <p className="mt-1 text-sm text-text-muted">
-            PB w_mat_receipt_cancel_master 기준 · {searched ? `${rows.length}/${total}건` : '조회조건을 입력하세요'}
+            자재 입고건을 상계 행으로 취소하고 취소 이력을 조회합니다 · {searched ? `${rows.length}/${total}건` : '조회조건을 입력하세요'}
           </p>
         </div>
         <div className="flex gap-2">

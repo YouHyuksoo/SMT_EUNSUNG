@@ -2,10 +2,10 @@
  * @file src/modules/material/services/receipt-cancel.service.ts
  * @description 자재입고취소 — PB w_mat_receipt_cancel_master + f_mat_receipt_cancel 이식
  *
- * 취소는 행 삭제가 아니라 **상계(역분개)** 다:
- * 1. 원본 입고행의 RECEIPT_STATUS 를 'C' 로 바꾼다.
- * 2. SEQ_MAT_RECEIPT.NEXTVAL 로 새 순번을 받아 수량·금액을 음수로 뒤집은 행을 INSERT 한다.
- *    (RECEIPT_DEFICIT 는 1↔2 로 뒤집고, 입고일자는 사용자가 지정한 취소일자를 쓴다)
+ * 취소는 행 삭제가 아니라 **상계(역분개)** 다. 그 로직은 이 서비스가 아니라
+ * **PKG_MES_MAT.SP_RECEIPT_CANCEL** 에 있다 (PB f_mat_receipt_cancel 전환, 2026-09-25).
+ * PB 화면과 웹이 같은 DB 오브젝트를 호출해야 상계 결과가 갈리지 않는다.
+ * 이 서비스가 담당하는 것은 화면 단위 규칙이다: 중복 제거, 전월 이월분 스킵, 일괄 롤백.
  *
  * PB 원본에서 이미 주석 처리돼 있던 f_get_free_assy_issue_cost 호출과,
  * 합의로 제외한 인터페이스 연동(interface_yn 분기)은 이식하지 않았다.
@@ -21,20 +21,6 @@ import {
 } from '../dto/receipt-cancel.dto';
 
 type OracleRow = Record<string, unknown>;
-
-/** 상계 INSERT 시 부호를 뒤집는 수량/금액 컬럼 */
-const NEGATED = ['RECEIPT_QTY', 'MATERIAL_COST', 'MATERIAL_COST_AMT', 'RECEIPT_AMT', 'FOREIGN_RECEIPT_AMT'];
-
-/** 원본에서 그대로 복사하는 컬럼 (부호 반전·값 대체 대상 제외) */
-const COPIED = [
-  'LOCATION_CODE', 'DELIVERY', 'LINE_TYPE', 'UNIT_PRICE', 'INVOICE_NO', 'EXCHANGE_RATE',
-  'CONFIRM_YN', 'CONFIRM_DATE', 'RECEIPT_TYPE', 'MATERIAL_MFS', 'MFS', 'SUPPLIER_CODE',
-  'COMMENTS', 'CURRENCY', 'BARCODE', 'ITEM_CODE', 'ARRIVAL_DATE', 'ARRIVAL_SEQ_NO',
-  'ORGANIZATION_ID', 'VIRTUAL_RECEIPT_YN', 'WORK_ORDER_NO', 'INTERFACE_YN', 'INTERFACE_DATE',
-  'RECEIPT_LOT_NO', 'INCIDENTAL_EXPENSE_CODE', 'RECEIPT_EXPENSE_COST', 'INTERFACE_WORK_NO',
-  'TARIFF_RATE', 'TARIFF_AMT', 'ORDER_NO', 'ORIGIN_MFS', 'ORIGIN_SUPPLIER_CODE',
-  'INVOICE_OPEN_YN', 'INVOICE_OPEN_SEQUENCE', 'INVENTORY_TYPE',
-];
 
 @Injectable()
 export class ReceiptCancelService {
@@ -171,7 +157,13 @@ export class ReceiptCancelService {
     });
   }
 
-  /** f_mat_receipt_cancel 1건 처리: 원본 상태 'C' → 상계 행 INSERT */
+  /**
+   * f_mat_receipt_cancel 1건 처리 — PB f_mat_receipt_cancel → PKG_MES_MAT.SP_RECEIPT_CANCEL 전환.
+   *
+   * 상계 로직(상태 'C' + 부호 반전 행 INSERT)은 DB 프로시저가 단일 출처다.
+   * PB 화면과 웹이 같은 오브젝트를 호출하므로 두 시스템이 갈리지 않는다.
+   * 결과코드: 1 성공 / -1 조회·INSERT 실패 / -2 이미 취소됨 / -3 UPDATE 실패
+   */
   private async cancelOne(
     qr: QueryRunner,
     target: ReceiptCancelTargetDto,
@@ -180,43 +172,37 @@ export class ReceiptCancelService {
     organizationId: number,
     userId: string,
   ): Promise<void> {
-    const key = { receiptDate, receiptSequence: target.receiptSequence, organizationId };
-    const current = await qr.query(
-      `SELECT RECEIPT_STATUS AS "status" FROM IM_ITEM_RECEIPT
-        WHERE RECEIPT_DATE = :receiptDate AND RECEIPT_SEQUENCE = :receiptSequence
-          AND ORGANIZATION_ID = :organizationId FOR UPDATE`,
-      key as unknown as unknown[],
-    ) as OracleRow[];
-    if (current.length !== 1) {
-      throw new BadRequestException(`입고건을 찾을 수 없습니다 (순번 ${target.receiptSequence}).`);
+    // OUT 바인드를 쓰면 서비스에서 oracledb 드라이버를 직접 import 해야 하므로,
+    // 익명 블록에서 결과코드를 Oracle 오류로 바꿔 던지게 한다 (PB 의 rollback; return 과 동일).
+    try {
+      await qr.query(
+        `DECLARE
+           v_result NUMBER;
+         BEGIN
+           PKG_MES_MAT.SP_RECEIPT_CANCEL(:receiptDate, :receiptSequence, :cancelDate,
+                                         :organizationId, :userId, v_result);
+           IF v_result <> 1 THEN
+             RAISE_APPLICATION_ERROR(-20001, 'RECEIPT_CANCEL_FAILED:' || v_result);
+           END IF;
+         END;`,
+        {
+          receiptDate,
+          receiptSequence: target.receiptSequence,
+          cancelDate,
+          organizationId,
+          userId,
+        } as unknown as unknown[],
+      );
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      const matched = /RECEIPT_CANCEL_FAILED:(-?\d+)/.exec(message);
+      if (!matched) throw error;
+      const reason =
+        matched[1] === '-2' ? '이미 취소된 입고건입니다'
+        : matched[1] === '-3' ? '입고건 상태 변경에 실패했습니다'
+        : '입고건을 찾을 수 없습니다';
+      throw new BadRequestException(`${reason} (순번 ${target.receiptSequence}).`);
     }
-    if (current[0].status === 'C') {
-      throw new BadRequestException(`이미 취소된 입고건입니다 (순번 ${target.receiptSequence}).`);
-    }
-
-    await qr.query(
-      `UPDATE IM_ITEM_RECEIPT SET RECEIPT_STATUS = 'C'
-        WHERE RECEIPT_DATE = :receiptDate AND RECEIPT_SEQUENCE = :receiptSequence
-          AND ORGANIZATION_ID = :organizationId`,
-      key as unknown as unknown[],
-    );
-
-    const copied = COPIED.join(', ');
-    const negated = NEGATED.map((column) => `${column} * -1`).join(', ');
-    await qr.query(
-      `INSERT INTO IM_ITEM_RECEIPT (
-         RECEIPT_SEQUENCE, RECEIPT_DATE, RECEIPT_DEFICIT, RECEIPT_STATUS,
-         ENTER_BY, ENTER_DATE, LAST_MODIFY_BY, LAST_MODIFY_DATE,
-         ${NEGATED.join(', ')}, ${copied}
-       )
-       SELECT SEQ_MAT_RECEIPT.NEXTVAL, TRUNC(:cancelDate), DECODE(RECEIPT_DEFICIT, '1', '2', '2', '1'), 'C',
-              :userId, SYSDATE, :userId, SYSDATE,
-              ${negated}, ${copied}
-         FROM IM_ITEM_RECEIPT
-        WHERE RECEIPT_DATE = :receiptDate AND RECEIPT_SEQUENCE = :receiptSequence
-          AND ORGANIZATION_ID = :organizationId`,
-      { cancelDate, userId, ...key } as unknown as unknown[],
-    );
   }
 
   /** PB f_get_first_day() — 당월 1일 */
