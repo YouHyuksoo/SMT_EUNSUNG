@@ -427,7 +427,11 @@
     "oee.overallStatus": "OEE Overall Status",
     "material.receiptIssueLedger": "Material Receipt/Issue Ledger",
     "material.currentInventory": "Current Inventory",
-    "material.workstageInventory": "Workstage Inventory"
+    "material.workstageInventory": "Workstage Inventory",
+    "jig": "Jig Management",
+    "jig.inputHistory": "Jig Input History",
+    "jig.sampleInputHistory": "Sample Mount History",
+    "jig.sampleBcrHistory": "Sample Input History (BCR)"
   },
   "header": {
     "theme": "Theme",

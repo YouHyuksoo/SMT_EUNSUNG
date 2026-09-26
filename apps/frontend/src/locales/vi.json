@@ -427,7 +427,11 @@
     "oee.overallStatus": "Tổng quan OEE",
     "material.receiptIssueLedger": "Sổ cái nhập xuất vật tư",
     "material.currentInventory": "Tra cứu tồn kho hiện tại",
-    "material.workstageInventory": "Tra cứu tồn kho công đoạn"
+    "material.workstageInventory": "Tra cứu tồn kho công đoạn",
+    "jig": "Quản lý đồ gá",
+    "jig.inputHistory": "Lịch sử đưa đồ gá vào",
+    "jig.sampleInputHistory": "Lịch sử lắp mẫu chuẩn",
+    "jig.sampleBcrHistory": "Lịch sử đưa mẫu chuẩn vào (BCR)"
   },
   "header": {
     "theme": "Giao diện",

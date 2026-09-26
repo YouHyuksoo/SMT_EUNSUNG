@@ -87,6 +87,21 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
       component = mod.getPageComponent();
       break;
     }
+    case "/jig/input-history": {
+      const mod = await import("./page-registries/jig__input-history.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/jig/sample-bcr-history": {
+      const mod = await import("./page-registries/jig__sample-bcr-history.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/jig/sample-input-history": {
+      const mod = await import("./page-registries/jig__sample-input-history.generated");
+      component = mod.getPageComponent();
+      break;
+    }
     case "/master/bom": {
       const mod = await import("./page-registries/master__bom.generated");
       component = mod.getPageComponent();

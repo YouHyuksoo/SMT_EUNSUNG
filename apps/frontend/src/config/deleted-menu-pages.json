@@ -423,6 +423,7 @@
     "EQUIPMENT",
     "OEE",
     "MATERIAL",
+    "JIG",
     "PROCESS_TRANSACTION",
     "PRODUCT_MGMT",
     "PRODUCT_INVENTORY",

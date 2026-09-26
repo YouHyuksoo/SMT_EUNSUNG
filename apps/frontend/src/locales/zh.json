@@ -427,7 +427,11 @@
     "oee.overallStatus": "OEE 综合现况",
     "material.receiptIssueLedger": "物料出入库收付台账",
     "material.currentInventory": "当前库存查询",
-    "material.workstageInventory": "工序库存查询"
+    "material.workstageInventory": "工序库存查询",
+    "jig": "治具管理",
+    "jig.inputHistory": "治具投入履历查询",
+    "jig.sampleInputHistory": "标准样品安装履历查询",
+    "jig.sampleBcrHistory": "标准样品投入履历查询"
   },
   "header": {
     "theme": "主题",

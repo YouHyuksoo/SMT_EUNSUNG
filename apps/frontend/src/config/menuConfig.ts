@@ -10,7 +10,7 @@
  */
 import {
   Activity, Boxes, Building2, ClipboardList,
-  Database, GitBranch, Network, Package, Settings, Warehouse, Wrench,
+  Database, GitBranch, Grip, Network, Package, Settings, Warehouse, Wrench,
 } from "lucide-react";
 
 /** 메뉴 설정 항목 인터페이스 */
@@ -115,6 +115,16 @@ export const menuConfig: MenuConfigItem[] = [
       { code: "MAT_CURRENT_INVENTORY", labelKey: "menu.material.currentInventory", path: "/material/current-inventory", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_current_inventory_master" },
       { code: "MAT_WORKSTAGE_INVENTORY", labelKey: "menu.material.workstageInventory", path: "/material/workstage-inventory", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_workstage_inventory_query", pbEvidence: "apps/backend/src/modules/material/controllers/workstage-inventory.controller.ts" },
       { code: "MAT_RECEIPT_CANCEL", labelKey: "menu.material.receiptCancel", path: "/material/receipt-cancel", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_receipt_cancel_master" },
+    ],
+  },
+  {
+    code: "JIG",
+    labelKey: "menu.jig",
+    icon: Grip,
+    children: [
+      { code: "JIG_INPUT_HISTORY", labelKey: "menu.jig.inputHistory", path: "/jig/input-history", pbLinkStatus: "powerbuilder", pbWindow: "w_mcn_jig_input_history_master" },
+      { code: "JIG_SAMPLE_INPUT_HISTORY", labelKey: "menu.jig.sampleInputHistory", path: "/jig/sample-input-history", pbLinkStatus: "powerbuilder", pbWindow: "w_mcn_sample_input_history_master" },
+      { code: "JIG_SAMPLE_BCR_HISTORY", labelKey: "menu.jig.sampleBcrHistory", path: "/jig/sample-bcr-history", pbLinkStatus: "powerbuilder", pbWindow: "w_mcn_sample_bcr_input_history_master" },
     ],
   },
   {
