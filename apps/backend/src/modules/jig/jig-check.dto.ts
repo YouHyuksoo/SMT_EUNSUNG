@@ -1,5 +1,7 @@
 import { Type } from 'class-transformer';
-import { IsDateString, IsIn, IsInt, IsNumber, IsOptional, IsString, Max, Min } from 'class-validator';
+import {
+  IsDateString, IsIn, IsInt, IsNumber, IsOptional, IsString, Length, Max, Min,
+} from 'class-validator';
 
 /** 기간 + 지그LOT 을 공통으로 쓰는 검사이력 조회 */
 class CheckQueryBase {
@@ -126,4 +128,36 @@ export class JigRepairStatusDto {
   @IsOptional() @Type(() => Number) @IsNumber() repairTime?: number;
   @IsOptional() @Type(() => Number) @IsNumber() repairAmt?: number;
   @IsOptional() @IsString() repairComments?: string;
+}
+
+/**
+ * 샘플마스터 등록·수정 — PB w_mcn_sample_master 의 dw_2(d_mcn_sample_mst).
+ * 감사컬럼은 본문으로 받지 않는다 (PB f_set_security_row 가 하던 일을 서버가 한다).
+ */
+export class SampleMasterUpsertDto {
+  @IsString() @Length(1, 30) sampleCode!: string;
+  @IsString() @Length(1, 30) sampleLotNo!: string;
+  @IsString() @Length(1, 100) sampleName!: string;
+  @IsString() @Length(1, 10) sampleType!: string;
+
+  @IsOptional() @IsString() sampleSpec?: string;
+  @IsOptional() @IsString() sampleStatus?: string;
+  @IsOptional() @IsString() sampleSection?: string;
+  @IsOptional() @IsString() sampleGrade?: string;
+  @IsOptional() @IsString() useStatus?: string;
+  @IsOptional() @IsDateString() sampleApplyDate?: string;
+  @IsOptional() @Type(() => Number) @IsInt() validMonths?: number;
+  @IsOptional() @IsString() lineCode?: string;
+  @IsOptional() @IsString() workstageCode?: string;
+  @IsOptional() @IsString() modelName?: string;
+  @IsOptional() @IsString() sampleBarcode?: string;
+  @IsOptional() @IsString() locationAddress?: string;
+  @IsOptional() @IsString() managementCommnets?: string;
+  @IsOptional() @IsString() useNsnpYn?: string;
+}
+
+/** 샘플마스터 삭제 — PB 'DELETE' 분기 */
+export class SampleMasterDeleteDto {
+  @IsString() sampleCode!: string;
+  @IsString() sampleLotNo!: string;
 }

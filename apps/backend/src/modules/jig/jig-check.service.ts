@@ -16,7 +16,7 @@
  * SQL 을 새로 썼다. 조건과 인자는 PB 의 retrieve arguments 를 그대로 따른다.
  * PB 규약대로 문자열 조건은 `값 + '%'` LIKE 다 — 빈 값이면 전체 조회.
  */
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { TransactionService } from '../../shared/transaction.service';
 import {
@@ -29,7 +29,9 @@ import {
   MaskCheckQueryDto,
   MaskTensionSaveDto,
   SampleApplyModelQueryDto,
+  SampleMasterDeleteDto,
   SampleMasterQueryDto,
+  SampleMasterUpsertDto,
   SqueezeCheckQueryDto,
   SqueezeScanDto,
 } from './jig-check.dto';
@@ -581,6 +583,145 @@ export class JigCheckService {
         throw error;
       });
       return { repairSequence: dto.repairSequence, repairStatus: dto.repairStatus };
+    });
+  }
+
+  /** 샘플 등록·수정에서 사용자가 값을 넣는 컬럼. 감사컬럼은 여기에 없다. */
+  private static readonly SAMPLE_EDITABLE: Array<[column: string, field: keyof SampleMasterUpsertDto]> = [
+    ['SAMPLE_NAME', 'sampleName'], ['SAMPLE_TYPE', 'sampleType'], ['SAMPLE_SPEC', 'sampleSpec'],
+    ['SAMPLE_STATUS', 'sampleStatus'], ['SAMPLE_SECTION', 'sampleSection'],
+    ['SAMPLE_GRADE', 'sampleGrade'], ['USE_STATUS', 'useStatus'],
+    ['VALID_MONTHS', 'validMonths'], ['LINE_CODE', 'lineCode'],
+    ['WORKSTAGE_CODE', 'workstageCode'], ['MODEL_NAME', 'modelName'],
+    ['SAMPLE_BARCODE', 'sampleBarcode'], ['LOCATION_ADDRESS', 'locationAddress'],
+    ['MANAGEMENT_COMMNETS', 'managementCommnets'], ['USE_NSNP_YN', 'useNsnpYn'],
+  ];
+
+  private async sampleExists(sampleCode: string, sampleLotNo: string, organizationId: number) {
+    const rows = await this.dataSource.query(
+      `SELECT COUNT(*) AS "cnt" FROM IMCN_SAMPLE
+        WHERE SAMPLE_CODE = :sampleCode AND SAMPLE_LOT_NO = :sampleLotNo
+          AND ORGANIZATION_ID = :organizationId`,
+      { sampleCode, sampleLotNo, organizationId } as unknown as unknown[],
+    ) as OracleRow[];
+    return Number(rows[0]?.cnt ?? 0) > 0;
+  }
+
+  /**
+   * 샘플 등록 — PB 'INSERT' 분기의 기본값을 그대로 쓴다.
+   * USE_STATUS='U', LINE_CODE='*', WORKSTAGE_CODE='*', 적용일=오늘, 유효개월=12.
+   * 감사컬럼은 PB f_set_security_row('ALL') 과 같이 서버가 채운다.
+   */
+  async createSample(dto: SampleMasterUpsertDto, organizationId: number, userId: string) {
+    const sampleCode = dto.sampleCode.trim();
+    const sampleLotNo = dto.sampleLotNo.trim();
+    if (await this.sampleExists(sampleCode, sampleLotNo, organizationId)) {
+      throw new ConflictException(`이미 등록된 샘플입니다 (${sampleCode}/${sampleLotNo}).`);
+    }
+    // SAMPLE_LOT_NO 는 조직 안에서 유일하다 (IXIMCN_SAMPLE2)
+    const dupLot = await this.dataSource.query(
+      `SELECT COUNT(*) AS "cnt" FROM IMCN_SAMPLE
+        WHERE SAMPLE_LOT_NO = :sampleLotNo AND ORGANIZATION_ID = :organizationId`,
+      { sampleLotNo, organizationId } as unknown as unknown[],
+    ) as OracleRow[];
+    if (Number(dupLot[0]?.cnt ?? 0) > 0) {
+      throw new ConflictException(`이미 쓰이는 샘플LOT 입니다 (${sampleLotNo}).`);
+    }
+
+    const columns = ['SAMPLE_CODE', 'SAMPLE_LOT_NO', 'ORGANIZATION_ID'];
+    const values = [':sampleCode', ':sampleLotNo', ':organizationId'];
+    const binds: OracleRow = { sampleCode, sampleLotNo, organizationId, userId };
+    for (const [column, field] of JigCheckService.SAMPLE_EDITABLE) {
+      columns.push(column);
+      values.push(`:${field}`);
+      const fallback = field === 'useStatus' ? 'U'
+        : field === 'lineCode' || field === 'workstageCode' ? '*'
+          : field === 'validMonths' ? 12 : null;
+      binds[field] = dto[field] ?? fallback;
+    }
+    columns.push('SAMPLE_APPLY_DATE');
+    values.push("TO_DATE(:sampleApplyDate, 'YYYY-MM-DD')");
+    binds.sampleApplyDate = dto.sampleApplyDate ?? new Date().toISOString().slice(0, 10);
+    columns.push('ENTER_BY', 'ENTER_DATE', 'LAST_MODIFY_BY', 'LAST_MODIFY_DATE');
+    values.push(':userId', 'SYSDATE', ':userId', 'SYSDATE');
+
+    await this.dataSource.query(
+      `INSERT INTO IMCN_SAMPLE (${columns.join(', ')}) VALUES (${values.join(', ')})`,
+      binds as unknown as unknown[],
+    );
+    return { sampleCode, sampleLotNo };
+  }
+
+  /** 샘플 수정 — PB f_set_security_row('MODIFY') 와 같이 LAST_MODIFY_* 만 갱신한다. */
+  async updateSample(dto: SampleMasterUpsertDto, organizationId: number, userId: string) {
+    const sampleCode = dto.sampleCode.trim();
+    const sampleLotNo = dto.sampleLotNo.trim();
+    if (!await this.sampleExists(sampleCode, sampleLotNo, organizationId)) {
+      throw new NotFoundException(`샘플을 찾을 수 없습니다 (${sampleCode}/${sampleLotNo}).`);
+    }
+    const sets: string[] = [];
+    const binds: OracleRow = { sampleCode, sampleLotNo, organizationId, userId };
+    for (const [column, field] of JigCheckService.SAMPLE_EDITABLE) {
+      sets.push(`${column} = :${field}`);
+      binds[field] = dto[field] ?? null;
+    }
+    sets.push("SAMPLE_APPLY_DATE = TO_DATE(:sampleApplyDate, 'YYYY-MM-DD')");
+    binds.sampleApplyDate = dto.sampleApplyDate ?? null;
+    sets.push('LAST_MODIFY_BY = :userId', 'LAST_MODIFY_DATE = SYSDATE');
+
+    await this.dataSource.query(
+      `UPDATE IMCN_SAMPLE SET ${sets.join(', ')}
+        WHERE SAMPLE_CODE = :sampleCode AND SAMPLE_LOT_NO = :sampleLotNo
+          AND ORGANIZATION_ID = :organizationId`,
+      binds as unknown as unknown[],
+    );
+    return { sampleCode, sampleLotNo };
+  }
+
+  /**
+   * 샘플 삭제 — PB 'DELETE' 분기.
+   * 장착·투입이력이 있으면 지우지 않는다. PB 는 FK 가 없어 그대로 지워졌지만,
+   * 이력이 남은 샘플을 지우면 이력조회에서 마스터 정보를 못 찾는다.
+   */
+  async deleteSample(dto: SampleMasterDeleteDto, organizationId: number) {
+    const sampleCode = dto.sampleCode.trim();
+    const sampleLotNo = dto.sampleLotNo.trim();
+    if (!await this.sampleExists(sampleCode, sampleLotNo, organizationId)) {
+      throw new NotFoundException(`샘플을 찾을 수 없습니다 (${sampleCode}/${sampleLotNo}).`);
+    }
+    const used = await this.dataSource.query(
+      `SELECT
+         (SELECT COUNT(*) FROM IMCN_SAMPLE_INPUT_HIST
+           WHERE SAMPLE_CODE = :sampleCode AND SAMPLE_LOT_NO = :sampleLotNo
+             AND ORGANIZATION_ID = :organizationId) AS "mountCount",
+         (SELECT COUNT(*) FROM IMCN_SAMPLE_APPLY_MODEL
+           WHERE SAMPLE_CODE = :sampleCode AND SAMPLE_LOT_NO = :sampleLotNo
+             AND ORGANIZATION_ID = :organizationId) AS "applyCount"
+       FROM DUAL`,
+      { sampleCode, sampleLotNo, organizationId } as unknown as unknown[],
+    ) as OracleRow[];
+    const mount = Number(used[0]?.mountCount ?? 0);
+    const apply = Number(used[0]?.applyCount ?? 0);
+    if (mount > 0) {
+      throw new BadRequestException(`장착이력이 ${mount}건 있어 삭제할 수 없습니다.`);
+    }
+
+    return this.tx.run(async (qr) => {
+      if (apply > 0) {
+        await qr.query(
+          `DELETE FROM IMCN_SAMPLE_APPLY_MODEL
+            WHERE SAMPLE_CODE = :sampleCode AND SAMPLE_LOT_NO = :sampleLotNo
+              AND ORGANIZATION_ID = :organizationId`,
+          { sampleCode, sampleLotNo, organizationId } as unknown as unknown[],
+        );
+      }
+      await qr.query(
+        `DELETE FROM IMCN_SAMPLE
+          WHERE SAMPLE_CODE = :sampleCode AND SAMPLE_LOT_NO = :sampleLotNo
+            AND ORGANIZATION_ID = :organizationId`,
+        { sampleCode, sampleLotNo, organizationId } as unknown as unknown[],
+      );
+      return { sampleCode, sampleLotNo, deletedApplyModels: apply };
     });
   }
 }

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Put, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { OrganizationId, UserId } from '../../common/decorators/tenant.decorator';
 import { ResponseUtil } from '../../common/dto/response.dto';
@@ -13,7 +13,9 @@ import {
   MaskCheckQueryDto,
   MaskTensionSaveDto,
   SampleApplyModelQueryDto,
+  SampleMasterDeleteDto,
   SampleMasterQueryDto,
+  SampleMasterUpsertDto,
   SqueezeCheckQueryDto,
   SqueezeScanDto,
 } from './jig-check.dto';
@@ -130,5 +132,38 @@ export class JigCheckController {
     return ResponseUtil.success(
       await this.service.updateRepairStatus(dto, organizationId, userId || DEFAULT_USER),
     );
+  }
+
+  @Post('sample')
+  @ApiOperation({ summary: '샘플마스터 등록 (PB 기본값: 사용중/라인*/공정*/유효 12개월)' })
+  async createSample(
+    @Body() dto: SampleMasterUpsertDto,
+    @OrganizationId() organizationId: number,
+    @UserId() userId?: string,
+  ) {
+    return ResponseUtil.success(
+      await this.service.createSample(dto, organizationId, userId || DEFAULT_USER),
+    );
+  }
+
+  @Put('sample')
+  @ApiOperation({ summary: '샘플마스터 수정 (LAST_MODIFY_* 만 갱신)' })
+  async updateSample(
+    @Body() dto: SampleMasterUpsertDto,
+    @OrganizationId() organizationId: number,
+    @UserId() userId?: string,
+  ) {
+    return ResponseUtil.success(
+      await this.service.updateSample(dto, organizationId, userId || DEFAULT_USER),
+    );
+  }
+
+  @Delete('sample')
+  @ApiOperation({ summary: '샘플마스터 삭제 (장착이력이 있으면 차단)' })
+  async deleteSample(
+    @Body() dto: SampleMasterDeleteDto,
+    @OrganizationId() organizationId: number,
+  ) {
+    return ResponseUtil.success(await this.service.deleteSample(dto, organizationId));
   }
 }

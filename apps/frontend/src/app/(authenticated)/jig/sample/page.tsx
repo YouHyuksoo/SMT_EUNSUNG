@@ -2,21 +2,21 @@
 
 /**
  * @file src/app/(authenticated)/jig/sample/page.tsx
- * @description 샘플마스터 관리 — PB w_mcn_sample_master 이식 (조회 전용)
+ * @description 샘플마스터 관리 — PB w_mcn_sample_master 이식
  *
  * 초보자 가이드:
  * 1. **잔여일**: 적용일 + 유효개월 - 오늘. PB 는 이 값이 조회조건 이하인 것만 본다.
  *    0 이하면 만료라 그리드에서 빨간색으로 보인다.
  * 2. 샘플유형·상태·사용상태는 기초코드 선택이다. 자유 입력은 코드·이름·보관위치뿐이다.
  * 3. 행을 고르면 하단에서 그 샘플의 적용모델을 조회한다.
- * 4. 등록·수정은 PB 원본에 있으나 이번 범위에서 제외했다(조회 먼저).
+ * 4. 등록·수정은 우측 폼 패널에서 한다. 삭제는 장착이력이 있으면 서버가 막는다.
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
-import { FlaskConical, RefreshCw, Search } from 'lucide-react';
+import { Edit2, FlaskConical, Plus, RefreshCw, Search, Trash2 } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
 import ComCodeSelect from '@/components/shared/ComCodeSelect';
-import { Button, Card, CardContent, Input } from '@/components/ui';
+import { Button, Card, CardContent, ConfirmModal, Input } from '@/components/ui';
 import api from '@/services/api';
 import {
   sampleApplyModelColumns,
@@ -24,6 +24,7 @@ import {
   type SampleApplyModelRow,
   type SampleMasterRow,
 } from './columns';
+import SampleFormPanel, { emptySampleForm, toSampleForm, type SampleForm } from './components/SampleFormPanel';
 
 export default function SampleMasterPage() {
   const [rows, setRows] = useState<SampleMasterRow[]>([]);
@@ -41,6 +42,8 @@ export default function SampleMasterPage() {
   const [selected, setSelected] = useState<SampleMasterRow | null>(null);
   const [applyModels, setApplyModels] = useState<SampleApplyModelRow[]>([]);
   const [applyLoading, setApplyLoading] = useState(false);
+  const [panel, setPanel] = useState<{ mode: 'create' | 'edit'; form: SampleForm } | null>(null);
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   const search = useCallback(async () => {
     setLoading(true);
@@ -81,18 +84,33 @@ export default function SampleMasterPage() {
     return () => { cancelled = true; };
   }, [selected]);
 
+  const removeSample = useCallback(async () => {
+    if (!selected) return;
+    setDeleteOpen(false);
+    try {
+      await api.delete('/jig/sample', {
+        data: { sampleCode: selected.sampleCode, sampleLotNo: selected.sampleLotNo ?? '' },
+      });
+      toast.success('삭제되었습니다.');
+      void search();
+    } catch {
+      toast.error('장착이력이 있어 삭제할 수 없습니다.');
+    }
+  }, [selected, search]);
+
   const columns = useMemo(() => sampleMasterColumns, []);
   const applyColumns = useMemo(() => sampleApplyModelColumns, []);
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-4 p-6">
+    <div className="flex h-full">
+      <main className="flex min-w-0 flex-1 flex-col gap-4 p-6">
       <header className="flex items-center justify-between gap-4">
         <div>
           <h1 className="flex items-center gap-2 text-xl font-bold text-text">
             <FlaskConical className="h-6 w-6 text-primary" />샘플마스터 관리
           </h1>
           <p className="mt-1 text-sm text-text-muted">
-            샘플마스터의 유효기간·잔여일과 적용모델을 조회합니다 · {searched ? `${rows.length}/${total}건` : '조회조건을 선택하세요'}
+            샘플마스터의 유효기간·잔여일과 적용모델을 관리합니다 · {searched ? `${rows.length}/${total}건` : '조회조건을 선택하세요'}
           </p>
         </div>
         <div className="flex gap-2">
@@ -101,6 +119,17 @@ export default function SampleMasterPage() {
           </Button>
           <Button size="sm" onClick={search} disabled={loading}>
             <Search className="mr-1 h-4 w-4" />조회
+          </Button>
+          <Button size="sm" variant="secondary" disabled={!selected}
+            onClick={() => selected && setPanel({ mode: 'edit', form: toSampleForm(selected) })}>
+            <Edit2 className="mr-1 h-4 w-4" />수정
+          </Button>
+          <Button size="sm" variant="secondary" disabled={!selected}
+            onClick={() => setDeleteOpen(true)}>
+            <Trash2 className="mr-1 h-4 w-4 text-red-500" />삭제
+          </Button>
+          <Button size="sm" onClick={() => setPanel({ mode: 'create', form: emptySampleForm() })}>
+            <Plus className="mr-1 h-4 w-4" />등록
           </Button>
         </div>
       </header>
@@ -156,6 +185,26 @@ export default function SampleMasterPage() {
           </div>
         </CardContent>
       </Card>
+      </main>
+
+      {panel && (
+        <SampleFormPanel
+          key={`${panel.mode}-${panel.form.sampleCode}-${panel.form.sampleLotNo}`}
+          mode={panel.mode}
+          initialForm={panel.form}
+          onClose={() => setPanel(null)}
+          onSaved={() => { setPanel(null); void search(); }}
+        />
+      )}
+
+      <ConfirmModal
+        isOpen={deleteOpen}
+        onClose={() => setDeleteOpen(false)}
+        onConfirm={removeSample}
+        title="샘플 삭제"
+        message={selected ? `${selected.sampleCode} / ${selected.sampleLotNo ?? ''} 샘플을 삭제할까요?` : ''}
+        variant="danger"
+      />
     </div>
   );
 }
