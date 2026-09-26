@@ -84,11 +84,76 @@ const CUSTOMER_SEARCH: PopupQueryDef = {
   binds: { customerCode: 'prefix', customerName: 'contains', saleCharge: 'contains' },
 };
 
+/**
+ * S-PARTS 검색 — PB d_mcn_mold_popup.
+ * IMCN_MOLD 기준 좌측 외부조인이라 재고행이 없는 S-PARTS 도 나온다.
+ */
+const MOLD_SEARCH: PopupQueryDef = {
+  sql: `
+    SELECT m.MOLD_CODE            AS "moldCode",
+           m.MOLD_NAME            AS "moldName",
+           m.MOLD_GROUP           AS "moldGroup",
+           grp.CODE_MEAN_KOR      AS "moldGroupName",
+           m.MOLD_SPEC            AS "moldSpec",
+           m.SUPPLIER_CODE        AS "supplierCode",
+           s.SUPPLIER_NAME        AS "supplierName",
+           inv.MOLD_VERSION       AS "moldVersion",
+           inv.MOLD_SET_SERIAL    AS "moldSetSerial",
+           inv.MOLD_USE_STATUS    AS "moldUseStatus",
+           ust.CODE_MEAN_KOR      AS "moldUseStatusName",
+           inv.INVENTORY_QTY      AS "inventoryQty",
+           inv.LOCATION_CODE      AS "locationCode"
+      FROM IMCN_MOLD m
+      LEFT JOIN IMCN_MOLD_INVENTORY inv
+             ON inv.MOLD_CODE = m.MOLD_CODE
+            AND inv.ORGANIZATION_ID = m.ORGANIZATION_ID
+      LEFT JOIN ICOM_SUPPLIER s
+             ON s.SUPPLIER_CODE = m.SUPPLIER_CODE
+            AND s.ORGANIZATION_ID = m.ORGANIZATION_ID
+      LEFT JOIN ISYS_BASECODE grp
+             ON grp.CODE_TYPE = 'MOLD GROUP' AND grp.CODE_NAME = m.MOLD_GROUP
+            AND grp.ORGANIZATION_ID = m.ORGANIZATION_ID
+      LEFT JOIN ISYS_BASECODE ust
+             ON ust.CODE_TYPE = 'MOLD USE STATUS' AND ust.CODE_NAME = inv.MOLD_USE_STATUS
+            AND ust.ORGANIZATION_ID = m.ORGANIZATION_ID
+     WHERE m.ORGANIZATION_ID = :organizationId
+       AND m.MOLD_CODE <> '*'
+       AND UPPER(m.MOLD_CODE) LIKE :moldCode
+       AND UPPER(NVL(m.SUPPLIER_CODE, '*')) LIKE :supplierCode
+       AND NVL(m.MOLD_GROUP, '*') LIKE :moldGroup`,
+  orderBy: 'm.MOLD_CODE, inv.MOLD_VERSION, inv.MOLD_SET_SERIAL',
+  binds: { moldCode: 'prefix', supplierCode: 'prefix', moldGroup: 'prefix' },
+};
+
+/** S-PARTS 보관위치 검색 — PB d_mcn_mold_location_popup */
+const MOLD_LOCATION_SEARCH: PopupQueryDef = {
+  sql: `
+    SELECT l.MOLD_LOCATION_CODE   AS "moldLocationCode",
+           l.MOLD_LOCATION_NAME   AS "moldLocationName",
+           l.MOLD_LOCATION_GROUP  AS "moldLocationGroup",
+           l.MOLD_LOCATION_NO     AS "moldLocationNo",
+           l.MOLD_LOCATION_STATUS AS "moldLocationStatus",
+           l.MOLD_CODE            AS "moldCode",
+           l.MOLD_GROUP           AS "moldGroup",
+           grp.CODE_MEAN_KOR      AS "moldGroupName"
+      FROM IMCN_MOLD_LOCATION l
+      LEFT JOIN ISYS_BASECODE grp
+             ON grp.CODE_TYPE = 'MOLD GROUP' AND grp.CODE_NAME = l.MOLD_GROUP
+            AND grp.ORGANIZATION_ID = l.ORGANIZATION_ID
+     WHERE l.ORGANIZATION_ID = :organizationId
+       AND UPPER(NVL(l.MOLD_LOCATION_CODE, '*')) LIKE :moldLocationCode
+       AND NVL(l.MOLD_GROUP, '*') LIKE :moldGroup`,
+  orderBy: 'l.MOLD_LOCATION_GROUP, l.MOLD_LOCATION_NO, l.MOLD_LOCATION_CODE',
+  binds: { moldLocationCode: 'prefix', moldGroup: 'prefix' },
+};
+
 /** 쿼리명 → SQL 정의. 카탈로그의 `query` 와 짝이 맞아야 한다 */
 export const POPUP_QUERIES: Readonly<Record<string, PopupQueryDef>> = {
   'supplier-search': SUPPLIER_SEARCH,
   'mold-supplier-search': MOLD_SUPPLIER_SEARCH,
   'customer-search': CUSTOMER_SEARCH,
+  'mold-search': MOLD_SEARCH,
+  'mold-location-search': MOLD_LOCATION_SEARCH,
 };
 
 /** SELECT 전용인지 검사한다 — 등록 시점에 한 번, 그리고 테스트에서 다시 */

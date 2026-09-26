@@ -27,6 +27,7 @@ import { EquipReasonMapModule } from './modules/equip-reason-map/equip-reason-ma
 import { ProductModelModule } from './modules/product-model/product-model.module';
 import { WorkResultModule } from './modules/work-result/work-result.module';
 import { JigModule } from './modules/jig/jig.module';
+import { MoldModule } from './modules/mold/mold.module';
 import { RunCardModule } from './modules/run-card/run-card.module';
 import { EquipOpsModule } from './modules/equip-ops/equip-ops.module';
 import { MenuCategoriesModule } from './modules/menu-categories/menu-categories.module';
@@ -98,6 +99,7 @@ import { SharedModule } from './shared/shared.module';
     EquipOpsModule,
 
     JigModule,
+    MoldModule,
     RunCardModule,
 
     // 메뉴 카테고리 관리 (/system/menu-categories)
