@@ -108,6 +108,9 @@
     ],
     "QUALITY": [
       "QC_IQC_MASTER",
+      "QC_IQC_HISTORY_REG",
+      "QC_PID_ISSUE_SCAN",
+      "QC_PID_HOLDING",
       "QC_4M",
       "QC_WQC",
       "QC_TEMPERATURE",

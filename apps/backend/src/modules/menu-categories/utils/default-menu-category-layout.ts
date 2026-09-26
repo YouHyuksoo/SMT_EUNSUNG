@@ -24,7 +24,7 @@ export const DEFAULT_MENU_CATEGORY_LAYOUT: readonly DefaultMenuCategoryLayout[] 
   { categoryCode: 'PRODUCT_MGMT', labelKey: 'menu.productMgmt', sortOrder: 100, menuCodes: [] },
   { categoryCode: 'PRODUCT_INVENTORY', labelKey: 'menu.productInventory', sortOrder: 110, menuCodes: ['PRD_CURRENT_INVENTORY'] },
   { categoryCode: 'PRODUCTION', labelKey: 'menu.production', sortOrder: 120, menuCodes: ['PRD_RUN_CARD'] },
-  { categoryCode: 'QUALITY', labelKey: 'menu.quality', sortOrder: 130, menuCodes: ['QC_IQC_MASTER', 'QC_4M', 'QC_WQC', 'QC_TEMPERATURE', 'QC_REPAIR_HISTORY', 'QC_PRODUCT_DESTROY'] },
+  { categoryCode: 'QUALITY', labelKey: 'menu.quality', sortOrder: 130, menuCodes: ['QC_IQC_MASTER', 'QC_IQC_HISTORY_REG', 'QC_PID_ISSUE_SCAN', 'QC_PID_HOLDING', 'QC_4M', 'QC_WQC', 'QC_TEMPERATURE', 'QC_REPAIR_HISTORY', 'QC_PRODUCT_DESTROY'] },
   { categoryCode: 'OUTSOURCING', labelKey: 'menu.outsourcing', sortOrder: 140, menuCodes: [] },
   { categoryCode: 'SYSTEM', labelKey: 'menu.system', sortOrder: 150, menuCodes: ['SYS_COMPANY', 'SYS_CODE', 'SYS_CONFIG', 'SYS_MENU_CATEGORY', 'SYS_DEPT', 'SYS_USER', 'SYS_SCHEDULER', 'SYS_ER_VIEW', 'SYS_IMPR_REQ'] },
 ];

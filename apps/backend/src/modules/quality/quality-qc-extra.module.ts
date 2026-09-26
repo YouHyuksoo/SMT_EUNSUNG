@@ -1,7 +1,11 @@
 import { Module } from '@nestjs/common';
+import { IqcHistoryController } from './controllers/iqc-history.controller';
+import { PidHoldingController } from './controllers/pid-holding.controller';
 import { Qc4mController } from './controllers/qc-4m.controller';
 import { TemperatureController } from './controllers/temperature.controller';
 import { WqcController } from './controllers/wqc.controller';
+import { IqcHistoryService } from './services/iqc-history.service';
+import { PidHoldingService } from './services/pid-holding.service';
 import { Qc4mService } from './services/qc-4m.service';
 import { TemperatureService } from './services/temperature.service';
 import { WqcService } from './services/wqc.service';
@@ -12,7 +16,13 @@ import { WqcService } from './services/wqc.service';
  * w_pln_product_tempreture_history_query
  */
 @Module({
-  controllers: [Qc4mController, WqcController, TemperatureController],
-  providers: [Qc4mService, WqcService, TemperatureService],
+  controllers: [
+    Qc4mController, WqcController, TemperatureController,
+    IqcHistoryController, PidHoldingController,
+  ],
+  providers: [
+    Qc4mService, WqcService, TemperatureService,
+    IqcHistoryService, PidHoldingService,
+  ],
 })
 export class QualityQcExtraModule {}

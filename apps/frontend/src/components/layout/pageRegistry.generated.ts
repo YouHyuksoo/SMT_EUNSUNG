@@ -397,6 +397,21 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
       component = mod.getPageComponent();
       break;
     }
+    case "/quality/iqc-history": {
+      const mod = await import("./page-registries/quality__iqc-history.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/quality/pid-holding": {
+      const mod = await import("./page-registries/quality__pid-holding.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/quality/pid-issue-scan": {
+      const mod = await import("./page-registries/quality__pid-issue-scan.generated");
+      component = mod.getPageComponent();
+      break;
+    }
     case "/quality/product-destroy": {
       const mod = await import("./page-registries/quality__product-destroy.generated");
       component = mod.getPageComponent();

@@ -210,6 +210,9 @@ export const menuConfig: MenuConfigItem[] = [
     icon: Wrench,
     children: [
       { code: "QC_IQC_MASTER", labelKey: "menu.quality.iqc", path: "/quality/iqc", pbLinkStatus: "powerbuilder", pbWindow: "w_qc_iqc_master" },
+      { code: "QC_IQC_HISTORY_REG", labelKey: "menu.quality.iqcHistory", path: "/quality/iqc-history", pbLinkStatus: "powerbuilder", pbWindow: "w_qc_iqc_inspect_history_master" },
+      { code: "QC_PID_ISSUE_SCAN", labelKey: "menu.quality.pidIssueScan", path: "/quality/pid-issue-scan", pbLinkStatus: "powerbuilder", pbWindow: "w_pln_product_pid_issue_scan_master" },
+      { code: "QC_PID_HOLDING", labelKey: "menu.quality.pidHolding", path: "/quality/pid-holding", pbLinkStatus: "powerbuilder", pbWindow: "w_pln_product_barcode_holding" },
       { code: "QC_4M", labelKey: "menu.quality.fourM", path: "/quality/4m", pbLinkStatus: "powerbuilder", pbWindow: "w_qc_4m_master" },
       { code: "QC_WQC", labelKey: "menu.quality.wqc", path: "/quality/wqc", pbLinkStatus: "powerbuilder", pbWindow: "w_qc_workstage_inspect_data_master_es" },
       { code: "QC_TEMPERATURE", labelKey: "menu.quality.temperature", path: "/quality/temperature", pbLinkStatus: "powerbuilder", pbWindow: "w_pln_product_tempreture_history_query" },
