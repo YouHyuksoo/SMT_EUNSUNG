@@ -17,6 +17,7 @@ import ComCodeSelect from '@/components/shared/ComCodeSelect';
 import SupplierSelect from '@/components/shared/SupplierSelect';
 import { Button, Card, CardContent, ConfirmModal, Input } from '@/components/ui';
 import api from '@/services/api';
+import MoldCodeField from '../../components/MoldCodeField';
 import type { MoldOrderRow } from '../../types';
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -90,9 +91,15 @@ export default function OrderActionPanel({ selected, onChanged }: Props) {
         </div>
         <label className="text-xs text-text-muted">
           S-PARTS 코드
-          <Input value={moldCode} className="w-40"
-            onChange={(e) => setMoldCode(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') void create(); }} />
+          <MoldCodeField popupId="mold-search" returnKey="moldCode"
+            label="S-PARTS 코드" className="w-40"
+            value={moldCode} onChange={setMoldCode}
+            onPick={(row) => {
+              // 팝업이 공급처까지 돌려주므로 비어 있으면 같이 채운다 (PB 도 같이 끌어왔다)
+              const picked = String(row.supplierCode ?? '');
+              if (picked && !supplierCode) setSupplierCode(picked);
+            }}
+            onEnter={() => void create()} />
         </label>
         <label className="text-xs text-text-muted">
           공급처

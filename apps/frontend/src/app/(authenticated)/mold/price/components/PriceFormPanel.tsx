@@ -127,7 +127,7 @@ export default function PriceFormPanel({ mode, initialForm, onClose, onSaved }: 
         </label>
         <label className="block text-sm">
           <span className="text-text-muted">공급처</span>
-          <SupplierSelect includeAll={false} value={form.supplierCode}
+          <SupplierSelect includeAll={false} disabled={locked} value={form.supplierCode}
             onChange={(v) => set('supplierCode', v)} />
         </label>
         <div className="grid grid-cols-2 gap-3">

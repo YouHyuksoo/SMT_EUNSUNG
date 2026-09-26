@@ -22,6 +22,7 @@ import ComCodeSelect from '@/components/shared/ComCodeSelect';
 import SupplierSelect from '@/components/shared/SupplierSelect';
 import { Button, Card, CardContent, ConfirmModal, Input } from '@/components/ui';
 import api from '@/services/api';
+import MoldCodeField from '../components/MoldCodeField';
 import { moldPriceColumns } from '../columns';
 import type { MoldPriceRow } from '../types';
 import PriceFormPanel, {
@@ -168,8 +169,9 @@ export default function MoldPricePage() {
 
         <Card padding="none">
           <CardContent className="flex flex-wrap items-center gap-3 p-3">
-            <Input aria-label="S-PARTS 코드" placeholder="S-PARTS 코드" value={moldCode}
-              className="w-48" onChange={(e) => setMoldCode(e.target.value)} />
+            <MoldCodeField popupId="mold-search" returnKey="moldCode"
+              label="S-PARTS 코드" placeholder="S-PARTS 코드"
+              value={moldCode} onChange={setMoldCode} />
             <SupplierSelect labelPrefix="공급처" value={supplierCode}
               onChange={setSupplierCode} className="w-56" />
             <label className="text-sm">

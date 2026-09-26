@@ -24,6 +24,7 @@ import ProcessSelect from '@/components/shared/ProcessSelect';
 import SupplierSelect from '@/components/shared/SupplierSelect';
 import { Button, Card, CardContent, ConfirmModal, Input } from '@/components/ui';
 import api from '@/services/api';
+import MoldCodeField from '../components/MoldCodeField';
 import { moldIssueColumns, moldIssueTargetColumns, moldRequestColumns } from '../columns';
 import type { MoldIssueRow, MoldIssueTargetRow, MoldRequestRow } from '../types';
 
@@ -254,8 +255,9 @@ export default function MoldIssuePage() {
             <DateRangeFilter label="출고일" from={dateFrom} to={dateTo}
               onFromChange={setDateFrom} onToChange={setDateTo} />
           )}
-          <Input aria-label="S-PARTS 코드" placeholder="S-PARTS 코드" value={moldCode}
-            className="w-48" onChange={(e) => setMoldCode(e.target.value)} />
+          <MoldCodeField popupId="mold-search" returnKey="moldCode"
+            label="S-PARTS 코드" placeholder="S-PARTS 코드"
+            value={moldCode} onChange={setMoldCode} />
           {mode === 'targets' && (
             <>
               <SupplierSelect labelPrefix="공급처" value={supplierCode}

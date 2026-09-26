@@ -16,6 +16,7 @@ import DataGrid from '@/components/data-grid/DataGrid';
 import ComCodeSelect from '@/components/shared/ComCodeSelect';
 import { Button, Card, CardContent, Input } from '@/components/ui';
 import api from '@/services/api';
+import MoldCodeField from '../components/MoldCodeField';
 import { moldInventoryColumns, moldIssueColumns, moldRequestColumns } from '../columns';
 import type { MoldInventoryRow, MoldIssueRow, MoldRequestRow } from '../types';
 
@@ -105,8 +106,9 @@ export default function MoldInventoryPage() {
 
       <Card padding="none">
         <CardContent className="flex flex-wrap items-center gap-3 p-3">
-          <Input aria-label="S-PARTS 코드" placeholder="S-PARTS 코드" value={moldCode}
-            className="w-48" onChange={(e) => setMoldCode(e.target.value)} />
+          <MoldCodeField popupId="mold-search" returnKey="moldCode"
+            label="S-PARTS 코드" placeholder="S-PARTS 코드"
+            value={moldCode} onChange={setMoldCode} />
           <ComCodeSelect groupCode="MOLD USE STATUS" labelPrefix="사용상태"
             value={moldUseStatus} onChange={setMoldUseStatus} className="w-52" />
           <ComCodeSelect groupCode="MOLD GROUP" labelPrefix="그룹"

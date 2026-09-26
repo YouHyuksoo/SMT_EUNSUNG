@@ -138,12 +138,12 @@ export default function RepairProcessPanel({ selected, onChanged }: Props) {
         </label>
         <label className="text-xs text-text-muted">
           수리업체
-          <SupplierSelect includeAll={false} value={repairVendorCode}
+          <SupplierSelect includeAll={false} disabled={!selected || done} value={repairVendorCode}
             onChange={setRepairVendorCode} className="w-44" />
         </label>
         <label className="text-xs text-text-muted">
           수리원인
-          <ComCodeSelect groupCode="REPAIR REASON CODE" includeAll={false}
+          <ComCodeSelect groupCode="REPAIR REASON CODE" includeAll={false} disabled={!selected || done}
             value={repairReasonCode} onChange={setRepairReasonCode} className="w-36" />
         </label>
         <label className="text-xs text-text-muted">
@@ -163,7 +163,7 @@ export default function RepairProcessPanel({ selected, onChanged }: Props) {
         </label>
         <label className="text-xs text-text-muted">
           통화
-          <ComCodeSelect groupCode="CURRENCY" includeAll={false}
+          <ComCodeSelect groupCode="CURRENCY" includeAll={false} disabled={!selected || done}
             value={currency} onChange={setCurrency} className="w-32" />
         </label>
         <label className="text-xs text-text-muted">

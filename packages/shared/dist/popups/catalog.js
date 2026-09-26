@@ -146,7 +146,8 @@ exports.POPUP_CATALOG = [
             { key: 'locationCode', label: '보관위치', width: 110 },
         ],
         note: 'PB d_mcn_mold_popup — IMCN_MOLD 기준 좌측 외부조인으로 재고·공급처를 붙인다. ' +
-            "PB 의 MOLD_CODE <> '*' 제외 조건을 유지한다. 재고행이 없으면 버전·SET번호가 비어 나온다.",
+            "PB 의 MOLD_CODE <> '*' 제외 조건을 유지한다. 재고행이 없으면 버전·SET번호가 비어 나온다. " +
+            '연결: app/(authenticated)/mold/components/MoldCodeField.tsx (S-PARTS 8화면 조회조건 + 주문 등록).',
     },
     {
         id: 'mold-location-search',
@@ -170,7 +171,8 @@ exports.POPUP_CATALOG = [
             { key: 'moldGroupName', label: 'S-PARTS 그룹', width: 120 },
         ],
         note: 'PB d_mcn_mold_location_popup — IMCN_MOLD_LOCATION 단일 테이블. ' +
-            'PB 는 S-PARTS 코드로도 걸렀지만 웹에서는 위치코드·그룹으로 찾는 쪽이 쓰기 편해 필터를 그렇게 뒀다.',
+            'PB 는 S-PARTS 코드로도 걸렀지만 웹에서는 위치코드·그룹으로 찾는 쪽이 쓰기 편해 필터를 그렇게 뒀다. ' +
+            '연결: app/(authenticated)/mold/receipt (입고 등록의 보관위치).',
     },
 ];
 const BY_PB_WINDOW = new Map();

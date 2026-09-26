@@ -19,6 +19,7 @@ import DateRangeFilter from '@/components/shared/DateRangeFilter';
 import LineSelect from '@/components/shared/LineSelect';
 import { Button, Card, CardContent, Input } from '@/components/ui';
 import api from '@/services/api';
+import MoldCodeField from '../components/MoldCodeField';
 import { moldRepairColumns, moldRepairItemColumns } from '../columns';
 import type { MoldRepairItemRow, MoldRepairRow } from '../types';
 import RepairProcessPanel from './components/RepairProcessPanel';
@@ -110,8 +111,9 @@ export default function MoldRepairPage() {
         <CardContent className="flex flex-wrap items-center gap-3 p-3">
           <DateRangeFilter label="신청일" from={dateFrom} to={dateTo}
             onFromChange={setDateFrom} onToChange={setDateTo} />
-          <Input aria-label="S-PARTS 코드" placeholder="S-PARTS 코드" value={moldCode}
-            className="w-44" onChange={(e) => setMoldCode(e.target.value)} />
+          <MoldCodeField popupId="mold-search" returnKey="moldCode"
+            label="S-PARTS 코드" placeholder="S-PARTS 코드" className="w-44"
+            value={moldCode} onChange={setMoldCode} />
           <ComCodeSelect groupCode="MOLD GROUP" labelPrefix="그룹"
             value={moldGroup} onChange={setMoldGroup} className="w-52" />
           <ComCodeSelect groupCode="REPAIR STATUS" labelPrefix="수리상태"

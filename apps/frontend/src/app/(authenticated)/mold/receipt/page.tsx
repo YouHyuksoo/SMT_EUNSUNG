@@ -21,6 +21,7 @@ import DateRangeFilter from '@/components/shared/DateRangeFilter';
 import SupplierSelect from '@/components/shared/SupplierSelect';
 import { Button, Card, CardContent, ConfirmModal, Input } from '@/components/ui';
 import api from '@/services/api';
+import MoldCodeField from '../components/MoldCodeField';
 import { moldReceiptColumns, moldReceiptTargetColumns } from '../columns';
 import type { MoldReceiptRow, MoldReceiptTargetRow } from '../types';
 
@@ -51,6 +52,7 @@ export default function MoldReceiptPage() {
   const [selectedTarget, setSelectedTarget] = useState<MoldReceiptTargetRow | null>(null);
   const [receiptQty, setReceiptQty] = useState('1');
   const [invoiceNo, setInvoiceNo] = useState('');
+  const [locationCode, setLocationCode] = useState('');
   const [busy, setBusy] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
 
@@ -108,20 +110,21 @@ export default function MoldReceiptPage() {
         supplierCode: selectedTarget.supplierCode,
         receiptQty: Number(receiptQty),
         invoiceNo: invoiceNo || undefined,
-        locationCode: selectedTarget.locationCode ?? undefined,
+        locationCode: locationCode || selectedTarget.locationCode || undefined,
         moldVersion: selectedTarget.moldVersion ?? undefined,
         moldSetSerial: selectedTarget.moldSetSerial ?? undefined,
       });
       toast.success(`입고 ${response.data?.data?.receiptSequence ?? ''}번 등록`);
       setReceiptQty('1');
       setInvoiceNo('');
+      setLocationCode('');
       void search();
     } catch {
       toast.error('입고 등록에 실패했습니다.');
     } finally {
       setBusy(false);
     }
-  }, [selectedTarget, receiptQty, invoiceNo, search]);
+  }, [selectedTarget, receiptQty, invoiceNo, locationCode, search]);
 
   const cancel = useCallback(async () => {
     if (!selectedHistory) return;
@@ -168,8 +171,9 @@ export default function MoldReceiptPage() {
             <DateRangeFilter label="입고일" from={dateFrom} to={dateTo}
               onFromChange={setDateFrom} onToChange={setDateTo} />
           )}
-          <Input aria-label="S-PARTS 코드" placeholder="S-PARTS 코드" value={moldCode}
-            className="w-48" onChange={(e) => setMoldCode(e.target.value)} />
+          <MoldCodeField popupId="mold-search" returnKey="moldCode"
+            label="S-PARTS 코드" placeholder="S-PARTS 코드"
+            value={moldCode} onChange={setMoldCode} />
           <SupplierSelect labelPrefix="공급처" value={supplierCode}
             onChange={setSupplierCode} className="w-56" />
         </CardContent>
@@ -196,6 +200,12 @@ export default function MoldReceiptPage() {
               인보이스
               <Input value={invoiceNo} className="w-44"
                 onChange={(e) => setInvoiceNo(e.target.value)} />
+            </label>
+            <label className="text-xs text-text-muted">
+              보관위치 (비우면 재고 위치)
+              <MoldCodeField popupId="mold-location-search" returnKey="moldLocationCode"
+                label="보관위치" className="w-40"
+                value={locationCode} onChange={setLocationCode} />
             </label>
             <Button size="sm" onClick={create} disabled={!selectedTarget || busy}>
               <PackagePlus className="mr-1 h-4 w-4" />입고

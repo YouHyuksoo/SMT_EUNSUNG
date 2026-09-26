@@ -18,6 +18,7 @@ import ComCodeSelect from '@/components/shared/ComCodeSelect';
 import SupplierSelect from '@/components/shared/SupplierSelect';
 import { Button, Card, CardContent, Input } from '@/components/ui';
 import api from '@/services/api';
+import MoldCodeField from '../components/MoldCodeField';
 import { moldRepairColumns, moldRepairTargetColumns } from '../columns';
 import type { MoldRepairRow, MoldRepairTargetRow } from '../types';
 
@@ -128,8 +129,9 @@ export default function MoldRepairRequestPage() {
 
       <Card padding="none">
         <CardContent className="flex flex-wrap items-center gap-3 p-3">
-          <Input aria-label="S-PARTS 코드" placeholder="S-PARTS 코드" value={moldCode}
-            className="w-48" onChange={(e) => setMoldCode(e.target.value)} />
+          <MoldCodeField popupId="mold-search" returnKey="moldCode"
+            label="S-PARTS 코드" placeholder="S-PARTS 코드"
+            value={moldCode} onChange={setMoldCode} />
           <ComCodeSelect groupCode="MOLD GROUP" labelPrefix="그룹"
             value={moldGroup} onChange={setMoldGroup} className="w-56" />
         </CardContent>

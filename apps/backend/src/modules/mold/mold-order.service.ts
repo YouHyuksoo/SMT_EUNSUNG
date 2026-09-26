@@ -219,7 +219,15 @@ export class MoldOrderService {
     });
   }
 
-  /** 수정 — 주문금액은 수량 × 단가로 다시 계산한다. */
+  /**
+   * 수정 — 주문금액은 수량 × 단가로 다시 계산한다.
+   *
+   * ⚠ 금액식에서 ORDER_QTY / UNIT_PRICE 컬럼을 그대로 읽으면 안 된다.
+   * 한 UPDATE 문 안의 SET 우변은 **문장 시작 시점의 행 값**으로 평가되므로,
+   * 같은 문장이 수량을 바꿔도 금액은 바뀌기 전 수량으로 계산된다.
+   * 그래서 수량·단가는 바인드를 항상 넣고(안 넘긴 값은 NULL), 금액은 바인드를 먼저 보고
+   * 없을 때만 컬럼으로 떨어지게 쓴다.
+   */
   async update(dto: MoldOrderUpdateDto, organizationId: number, userId: string) {
     const sets: string[] = [];
     const binds: OracleRow = { orderNo: dto.orderNo, organizationId, userId };
@@ -232,7 +240,12 @@ export class MoldOrderService {
       sets.push(`DELIVERY_DATE = TO_DATE(:deliveryDate, 'YYYY-MM-DD')`);
       binds.deliveryDate = dto.deliveryDate.slice(0, 10);
     }
-    sets.push('ORDER_AMT = NVL(ORDER_QTY, 0) * NVL(UNIT_PRICE, 0)');
+    // 금액식이 읽을 바인드는 SET 목록에 없더라도 반드시 채워 둔다
+    binds.orderQty = dto.orderQty ?? null;
+    binds.unitPrice = dto.unitPrice ?? null;
+    sets.push(
+      'ORDER_AMT = NVL(NVL(:orderQty, ORDER_QTY), 0) * NVL(NVL(:unitPrice, UNIT_PRICE), 0)',
+    );
     sets.push('LAST_MODIFY_BY = :userId', 'LAST_MODIFY_DATE = SYSDATE');
 
     const result = await this.dataSource.query(

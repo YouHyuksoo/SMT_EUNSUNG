@@ -21,6 +21,7 @@ import DataGrid from '@/components/data-grid/DataGrid';
 import ComCodeSelect from '@/components/shared/ComCodeSelect';
 import { Button, Card, CardContent, ConfirmModal, Input } from '@/components/ui';
 import api from '@/services/api';
+import MoldCodeField from '../components/MoldCodeField';
 import {
   moldBillColumns,
   moldInventoryColumns,
@@ -162,8 +163,9 @@ export default function MoldMasterPage() {
 
         <Card padding="none">
           <CardContent className="flex flex-wrap items-center gap-3 p-3">
-            <Input aria-label="S-PARTS 코드" placeholder="S-PARTS 코드" value={moldCode}
-              className="w-48" onChange={(e) => setMoldCode(e.target.value)} />
+            <MoldCodeField popupId="mold-search" returnKey="moldCode"
+              label="S-PARTS 코드" placeholder="S-PARTS 코드"
+              value={moldCode} onChange={setMoldCode} />
             <ComCodeSelect groupCode="MOLD GROUP" labelPrefix="그룹"
               value={moldGroup} onChange={setMoldGroup} className="w-56" />
           </CardContent>
