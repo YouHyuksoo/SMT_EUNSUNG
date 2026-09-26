@@ -463,7 +463,17 @@
     "mold.issue": "Xuất kho S-PARTS",
     "mold.repairRequest": "Đăng ký sửa chữa S-PARTS",
     "mold.repair": "Sửa chữa S-PARTS",
-    "mold.price": "Đơn giá mua S-PARTS"
+    "mold.price": "Đơn giá mua S-PARTS",
+    "smt": "Quản lý SMT",
+    "smt.line": "Quản lý line SMT",
+    "smt.location": "Quản lý bàn theo line",
+    "smt.bomReplace": "Quản lý BOM thay thế SMT",
+    "smt.ncUpload": "Đăng ký layout feeder SMT",
+    "smt.bom": "Quản lý BOM SMT",
+    "smt.plan": "Quản lý triển khai kế hoạch SMT",
+    "smt.bomReport": "Báo cáo quản lý BOM SMT",
+    "smt.bomComparison": "So sánh layout feeder",
+    "smt.feederPickup": "Quản lý dữ liệu pickup mounter"
   },
   "header": {
     "theme": "Giao diện",

@@ -3,7 +3,7 @@ sources:
   - apps/frontend/scripts/data/pb-function-catalog.json
   - docs/database/generated/pb-function-inventory.json
 generator: apps/frontend/scripts/gen-function-status.mjs
-verifiedCommit: 45ca6bd
+verifiedCommit: 173add32
 ---
 
 # PB 함수 처리 현황 (자동 생성)
@@ -20,11 +20,11 @@ DB 함수는 웹에서도 **그대로 호출**합니다 — 재구현하면 PB �
 
 | 구분 | 건수 |
 |---|---:|
-| PB 창(실측) | 547 |
-| SQL 안 호출 = DB 함수 (조치 불필요) | 65 |
-| SQL 밖 호출 = PB 함수 | 219 |
-| 카탈로그 등록(처리 완료) | 45 |
-| 미처리 전환 후보 | 51 |
+| PB 창(실측) | 596 |
+| SQL 안 호출 = DB 함수 (조치 불필요) | 196 |
+| SQL 밖 호출 = PB 함수 | 226 |
+| 카탈로그 등록(처리 완료) | 49 |
+| 미처리 전환 후보 | 55 |
 
 ## 처리 완료 (카탈로그)
 
@@ -77,7 +77,7 @@ DB 함수는 웹에서도 **그대로 호출**합니다 — 재구현하면 PB �
 | `f_get_first_day` | `receipt-cancel.service.ts firstDayOfMonth()` | 한 화면 전용 날짜 계산이라 DB 오브젝트를 늘리지 않는다. |
 | `f_replace_string` | `String.prototype.replaceAll (대소문자 무시)` | SQL 없는 순수 문자열 치환. PB 는 소문자·대문자를 번갈아 찾는 방식이라 대소문자 무시 치환과 같다. |
 
-### 웹에서 직접 (`native`) — 6건
+### 웹에서 직접 (`native`) — 10건
 
 | PB 함수 | 대상 | 비고 |
 |---|---|---|
@@ -87,6 +87,10 @@ DB 함수는 웹에서도 **그대로 호출**합니다 — 재구현하면 PB �
 | `f_get_supplier_name` | `F_GET_SUPPLIER_NAME` | 이미 DB 함수로 존재한다(VALID). PB 가 SQL 밖에서 SELECT ... FROM DUAL 로 감싸 불렀을 뿐이라 전환 대상이 아니다. |
 | `f_get_dual_lang_text` | `F_GET_DUAL_LANG_TEXT` | 이미 DB 함수로 존재한다(VALID). 웹은 화면 문구를 i18n 으로 내므로 호출할 일은 없다. |
 | `f_get_work_shift_code` | `F_GET_WORK_SHIFT_CODE` | 이미 DB 함수로 존재한다(VALID). PB 가 SQL 밖에서 DUAL 로 감싸 불렀을 뿐이라 전환 대상이 아니다. 업무일·교대 판정은 PB 와 값이 갈리면 안 되므로 반드시 이 함수를 쓴다. |
+| `f_bom_query_prc` | `PKG_DESIGN.BOM_QUERY(p_parent_item_code, p_dateset, p_org)` | PB 는 SQLCA.BOM_QUERY 를 감싸기만 했다. 웹은 패키지 함수를 그대로 부른다. 세션번호를 돌려주고 ID_ENG_BOM_TEMP 에 전개행을 깐다 — 읽은 뒤 그 세션 행만 지운다 (이 표는 3,357,661행 / 세션 70,117개가 2020년부터 쌓여 있다). |
+| `f_get_listagg_location` | `F_GET_LISTAGG_LOCATION(p_line_code, p_model_name, p_item_code, p_pcb_item)` | SQL 안에서 불리던 DB 함수. 부품이 물린 피더 자리를 한 줄로 모아 준다. 그대로 호출한다. |
+| `f_get_mat_max_unit_price_cfm` | `F_GET_MAT_MAX_UNIT_PRICE_CFM(p_item_code, p_line_type, p_date, p_org)` | SQL 안에서 불리던 DB 함수. 확정단가. 그대로 호출한다. |
+| `f_get_pcb_item_by_name` | `F_GET_PCB_ITEM_BY_NAME(p_set_item_code)` | SQL 안에서 불리던 DB 함수. SET 품목의 PCB 면 코드. 라벨 바코드에 쓴다. |
 
 ### 전환 보류 (`blocked`) — 10건
 
@@ -110,11 +114,11 @@ DB 함수는 웹에서도 **그대로 호출**합니다 — 재구현하면 PB �
 
 | PB 함수 | 호출 | 창 수 | 대표 창 |
 |---|---:|---:|---|
-| `f_check_item_exists` | 60 | 33 | w_mat_baking_dehumi_scan_master, w_mat_baking_dehumi_scan_query |
+| `f_check_item_exists` | 65 | 37 | w_mat_baking_dehumi_scan_master, w_mat_baking_dehumi_scan_query |
 | `f_set_layered_window` | 14 | 14 | w_bad_reason_select_popup, w_com_message_popup_lg |
-| `f_get_line_type_from_item` | 13 | 9 | w_des_bom_modify_master, w_mat_other_issue_barcode_master |
+| `f_get_line_type_from_item` | 14 | 10 | w_des_bom_modify_master, w_mat_other_issue_barcode_master |
+| `f_play_mp3` | 45 | 9 | w_pln_product_magazine_label_split_master, w_prd_product_fg_4_magazine_receipt |
 | `f_get_tariff_rate` | 7 | 7 | w_mat_departure_4_goods_master, w_mat_departure_master |
-| `f_play_mp3` | 23 | 6 | w_pln_product_magazine_label_split_master, w_prd_product_fg_4_model_issue |
 | `f_get_token` | 15 | 5 | w_dynamic_graph_popup, w_dynamic_where_condition_popup |
 | `f_check_slip_exists` | 6 | 5 | w_mat_other_receipt_rental_borrowing_barcode_master, w_mat_receipt_slip_4_rental_borrowing_master |
 | `f_get_line_code_by_item` | 8 | 4 | w_mat_inventory_close_excel_import_popup, w_mat_receipt_slip_excel_import_popup |
@@ -124,19 +128,22 @@ DB 함수는 웹에서도 **그대로 호출**합니다 — 재구현하면 PB �
 | `f_get_purchase_order_qty` | 9 | 3 | w_mat_forecast_order_master, w_mat_purchase_order_4_subcontract_master |
 | `f_get_data_window_source` | 5 | 3 | w_report_generator, w_report_master |
 | `f_get_mat_inspect_rule` | 4 | 3 | w_mat_departure_4_goods_master, w_mat_departure_master |
+| `f_get_lot_size_by_run_no` | 4 | 3 | w_pln_product_magazine_label_master, w_pln_product_magazine_label_master2 |
+| `f_check_run_no` | 4 | 3 | w_pln_product_magazine_label_master, w_pln_product_magazine_label_master2 |
 | `f_get_item_type_from_item` | 3 | 3 | w_des_bom_modify_master, w_mat_request_issue_master |
+| `f_download_item_image` | 3 | 3 | w_des_item_master, w_item_image_flat |
 | `f_get_item_auto_issue_yn` | 3 | 3 | w_mat_material_receipt_excel_form_popup, w_mat_material_unit_price_excel_form_popup |
-| `f_download_item_image` | 2 | 2 | w_item_image_flat, w_machine_image_flat |
+| `f_get_magazine_size` | 3 | 2 | w_pln_product_magazine_label_master, w_pln_product_magazine_label_master2 |
 | `f_system_access` | 2 | 2 | w_logon, w_main_root |
 | `f_get_computer_name` | 2 | 2 | w_main_frame, w_user_change |
 | `f_get_computer_login_user_name` | 2 | 2 | w_main_frame, w_user_change |
 | `f_mat_issue_return` | 2 | 2 | w_mat_mass_issue_return_master, w_mat_receipt_barcode_reprint_master |
 | `f_mat_receipt_return` | 2 | 2 | w_mat_other_receipt_barcode_return_master, w_mat_receipt_return_master |
 | `f_get_run_no_by_serial` | 2 | 2 | w_plan_run_no_status_popup, w_product_pid_tracking_fpcb_rpt |
-| `f_get_lot_size_by_run_no` | 2 | 2 | w_pln_product_magazine_label_master, w_pln_product_pcb_kitting_scan_master |
-| `f_check_run_no` | 2 | 2 | w_pln_product_magazine_label_master, w_pln_product_magazine_label_split_master |
 | `f_get_model_name_by_run_no` | 2 | 2 | w_pln_product_pcb_kitting_scan_master, w_product_pid_tracking_fpcb_rpt |
+| `f_get_line_division` | 2 | 2 | w_product_run_card, w_product_run_card_duckil |
 | `f_get_new_scan_qty` | 6 | 1 | w_mat_other_issue_barcode_master |
+| `f_get_line_code_group` | 6 | 1 | w_pln_assembly_master_plan_master |
 | `f_check_return_request_slip_exists` | 2 | 1 | w_mat_other_receipt_rental_borrowing_barcode_master |
 | `f_get_order_property` | 2 | 1 | w_mat_purchase_order_plan_master |
 | `f_call_db_sql` | 1 | 1 | w_default_value_popup |
@@ -154,10 +161,11 @@ DB 함수는 웹에서도 **그대로 호출**합니다 — 재구현하면 PB �
 | `f_get_to_supplier_by_invoice` | 1 | 1 | w_mat_other_receipt_rental_borrowing_barcode_master |
 | `f_mat_receipt_return_auto_order` | 1 | 1 | w_mat_receipt_return_master |
 | `f_mat_issue_4_lot_divide_cancel` | 1 | 1 | w_mat_reel_divide_cancel_popup |
+| `f_mat_receipt_slip_cancel` | 1 | 1 | w_mat_slip_cancel_popup |
 | `f_gen_work_order_to_assy_plan` | 1 | 1 | w_mat_workorder_master |
 | `f_mcn_jig_issue_cancel` | 1 | 1 | w_mcn_jig_issue_master |
 | `f_download_mold_image` | 1 | 1 | w_mold_image_flat |
-| `f_get_magazine_size` | 1 | 1 | w_pln_product_magazine_label_master |
+| `f_get_master_model_name_by_model_name` | 1 | 1 | w_pln_assembly_master_plan_master |
 | `f_get_item_code_by_model_suffix` | 1 | 1 | w_pln_product_master_plan_master |
 | `f_get_ip_address` | 1 | 1 | w_user_change |
 | `f_get_code_name` | 1 | 1 | w_window_master |

@@ -463,7 +463,17 @@
     "mold.issue": "S-PARTS Issue",
     "mold.repairRequest": "S-PARTS Repair Request",
     "mold.repair": "S-PARTS Repair",
-    "mold.price": "S-PARTS Purchase Price"
+    "mold.price": "S-PARTS Purchase Price",
+    "smt": "SMT",
+    "smt.line": "SMT Line Master",
+    "smt.location": "Machine Table Master",
+    "smt.bomReplace": "SMT BOM Replacement",
+    "smt.ncUpload": "SMT Feeder Layout Upload",
+    "smt.bom": "SMT BOM Master",
+    "smt.plan": "SMT Plan Deployment",
+    "smt.bomReport": "SMT BOM Report",
+    "smt.bomComparison": "Feeder Layout Comparison",
+    "smt.feederPickup": "Mounter Pickup Data"
   },
   "header": {
     "theme": "Theme",

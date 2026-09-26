@@ -3,7 +3,7 @@ sources:
   - apps/frontend/src/config/menuConfig.ts
   - apps/frontend/scripts/data/pb-screen-inventory.json
 generator: apps/frontend/scripts/gen-migration-status.mjs
-verifiedCommit: ad03468
+verifiedCommit: 173add32
 ---
 
 # PB 화면 이관 현황 (자동 생성)
@@ -17,11 +17,11 @@ verifiedCommit: ad03468
 | 상태 | 건수 |
 |---|---:|
 | PB 업무화면(셸 메뉴 제외) | 275 |
-| 완료(개발됨, pbWindow 매핑) | 67 |
-| 미착수 | 182 |
+| 완료(개발됨, pbWindow 매핑) | 76 |
+| 미착수 | 173 |
 | 윈도우 미상 | 26 |
 
-웹 메뉴 연결 계약: **PB 69개 / 웹 신규 17개 / 미확정 2개**. PB 매핑과 웹 경로의 전체 연결표는 [pb-menu-route-links.md](pb-menu-route-links.md)에서 관리합니다.
+웹 메뉴 연결 계약: **PB 78개 / 웹 신규 17개 / 미확정 2개**. PB 매핑과 웹 경로의 전체 연결표는 [pb-menu-route-links.md](pb-menu-route-links.md)에서 관리합니다.
 
 ## 대분류별 진행률
 
@@ -29,7 +29,7 @@ verifiedCommit: ad03468
 |---|---|---:|---:|---:|---:|
 | 기준정보 | `M_BASIS1` | 20 | 10 | 10 | 0 |
 | 설계 | `M_DESIGN` | 5 | 1 | 4 | 0 |
-| SMT | `M_SMT` | 9 | 0 | 9 | 0 |
+| SMT | `M_SMT` | 9 | 9 | 0 | 0 |
 | 설비 | `M_JIG` | 19 | 10 | 7 | 2 |
 | 지그 | `M_JIG0` | 12 | 10 | 2 | 0 |
 | 피더 | `M_FEEDER` | 4 | 3 | 1 | 0 |
@@ -89,15 +89,15 @@ verifiedCommit: ad03468
 
 | 순서 | 메뉴명 | PB 윈도우 | 원본 | 상태 | MES 메뉴코드 | 경로 |
 |---:|---|---|:--:|---|---|---|
-| 151 | SMT 라인관리 | `w_smt_line_master` | srw | 미착수 |  |  |
-| 152 | 라인별 테이블 관리 | `w_smt_location_master` | srw | 미착수 |  |  |
-| 153 | SMT BOM 대체관리 | `w_smt_bom_replace_master` | srw | 미착수 |  |  |
-| 155 | SMT 피더레이아웃 등록 | `w_smt_upload_nc_master` | srw | 미착수 |  |  |
-| 156 | SMT BOM 관리 | `w_smt_bom_create_master` | srw | 미착수 |  |  |
-| 157 | SMT 계획배포관리 | `w_smt_plan_master` | srw | 미착수 |  |  |
-| 159 | SMT BOM 관리리포트 | `w_smt_bom_master_rpt` | srw | 미착수 |  |  |
-| 160 | 피더레이아웃 비교 | `w_smt_bom_comparison_master_rpt` | srw | 미착수 |  |  |
-| 162 | 마운터 픽업정보관리 | `w_mcn_feeder_pickup_master` | srw | 미착수 |  |  |
+| 151 | SMT 라인관리 | `w_smt_line_master` | srw | 완료 | `SMT_LINE` | `/smt/line` |
+| 152 | 라인별 테이블 관리 | `w_smt_location_master` | srw | 완료 | `SMT_LOCATION` | `/smt/location` |
+| 153 | SMT BOM 대체관리 | `w_smt_bom_replace_master` | srw | 완료 | `SMT_BOM_REPLACE` | `/smt/bom-replace` |
+| 155 | SMT 피더레이아웃 등록 | `w_smt_upload_nc_master` | srw | 완료 | `SMT_NC_UPLOAD` | `/smt/nc-upload` |
+| 156 | SMT BOM 관리 | `w_smt_bom_create_master` | srw | 완료 | `SMT_BOM` | `/smt/bom` |
+| 157 | SMT 계획배포관리 | `w_smt_plan_master` | srw | 완료 | `SMT_PLAN` | `/smt/plan` |
+| 159 | SMT BOM 관리리포트 | `w_smt_bom_master_rpt` | srw | 완료 | `SMT_BOM_REPORT` | `/smt/bom-report` |
+| 160 | 피더레이아웃 비교 | `w_smt_bom_comparison_master_rpt` | srw | 완료 | `SMT_BOM_COMPARISON` | `/smt/bom-comparison` |
+| 162 | 마운터 픽업정보관리 | `w_mcn_feeder_pickup_master` | srw | 완료 | `SMT_FEEDER_PICKUP` | `/smt/feeder-pickup` |
 
 ### 설비  `M_JIG`
 

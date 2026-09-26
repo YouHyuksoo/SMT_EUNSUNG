@@ -463,7 +463,17 @@
     "mold.issue": "S-PARTS出库管理",
     "mold.repairRequest": "S-PARTS维修申请管理",
     "mold.repair": "S-PARTS维修管理",
-    "mold.price": "S-PARTS采购单价管理"
+    "mold.price": "S-PARTS采购单价管理",
+    "smt": "SMT管理",
+    "smt.line": "SMT线体管理",
+    "smt.location": "线体工作台管理",
+    "smt.bomReplace": "SMT BOM替代管理",
+    "smt.ncUpload": "SMT供料器布局登记",
+    "smt.bom": "SMT BOM管理",
+    "smt.plan": "SMT计划下发管理",
+    "smt.bomReport": "SMT BOM管理报表",
+    "smt.bomComparison": "供料器布局比较",
+    "smt.feederPickup": "贴片机吸取信息管理"
   },
   "header": {
     "theme": "主题",

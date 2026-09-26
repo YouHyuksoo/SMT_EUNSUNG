@@ -457,6 +457,51 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
       component = mod.getPageComponent();
       break;
     }
+    case "/smt/bom": {
+      const mod = await import("./page-registries/smt__bom.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/smt/bom-comparison": {
+      const mod = await import("./page-registries/smt__bom-comparison.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/smt/bom-replace": {
+      const mod = await import("./page-registries/smt__bom-replace.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/smt/bom-report": {
+      const mod = await import("./page-registries/smt__bom-report.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/smt/feeder-pickup": {
+      const mod = await import("./page-registries/smt__feeder-pickup.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/smt/line": {
+      const mod = await import("./page-registries/smt__line.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/smt/location": {
+      const mod = await import("./page-registries/smt__location.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/smt/nc-upload": {
+      const mod = await import("./page-registries/smt__nc-upload.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/smt/plan": {
+      const mod = await import("./page-registries/smt__plan.generated");
+      component = mod.getPageComponent();
+      break;
+    }
     case "/system/config": {
       const mod = await import("./page-registries/system__config.generated");
       component = mod.getPageComponent();

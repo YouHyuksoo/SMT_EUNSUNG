@@ -3,7 +3,7 @@ sources:
   - packages/shared/src/popups/catalog.ts
   - docs/database/generated/pb-popup-inventory.json
 generator: apps/frontend/scripts/gen-popup-status.mjs
-verifiedCommit: e505f9b
+verifiedCommit: 173add32
 ---
 
 # PB 팝업 이관 현황 (자동 생성)
@@ -40,8 +40,8 @@ PB 팝업 판정 기준은 파일명이 아니라 호출관계입니다 — 다�
 | `supplier-search` | 연결가능 | 공급처검색 | 엔진(SearchSelectModal) | `/popup-search/supplier-search` | `w_com_supplier_popup` | PB d_com_supplier_popup — ARG_SUPPLIER_CODE(앞자리 LIKE) / ARG_SUPPLIER_NAME(부분 LIKE), SUPPLIER_CODE <> '*' 제외 조건 포함. 금형 공급처 팝업은 업종 조건이 달라 별도 엔트리다. |
 | `customer-search` | 연결가능 | 고객검색 | 엔진(SearchSelectModal) | `/popup-search/customer-search` | `w_com_customer_popup` | PB d_com_customer_popup — 정렬도 PB 와 같다(BUSINESS_TYPE, CUSTOMER_CODE). CUSTOMER_CODE <> '*' 제외 조건과 NVL(SALE_CHARGE,'*') 비교를 그대로 옮겼다. |
 | `mold-supplier-search` | 연결가능 | 금형 공급처검색 | 엔진(SearchSelectModal) | `/popup-search/mold-supplier-search` | `w_com_mold_supplier_popup` | PB d_com_mold_supplier_popup — 공급처 팝업과 필터는 같지만 BUSINESS_CATEGORY = 'M' 조건이 더 있다. 그래서 공급처검색과 합치지 않았다. 은성 DB 는 현재 모든 공급처의 BUSINESS_CATEGORY 가 NULL 이라 결과가 0건이다. |
-| `mold-search` | 연결가능 | S-PARTS 검색 | 엔진(SearchSelectModal) | `/popup-search/mold-search` | `w_mcn_mold_popup` | PB d_mcn_mold_popup — IMCN_MOLD 기준 좌측 외부조인으로 재고·공급처를 붙인다. PB 의 MOLD_CODE <> '*' 제외 조건을 유지한다. 재고행이 없으면 버전·SET번호가 비어 나온다. |
-| `mold-location-search` | 연결가능 | S-PARTS 보관위치 검색 | 엔진(SearchSelectModal) | `/popup-search/mold-location-search` | `w_mcn_mold_location_popup` | PB d_mcn_mold_location_popup — IMCN_MOLD_LOCATION 단일 테이블. PB 는 S-PARTS 코드로도 걸렀지만 웹에서는 위치코드·그룹으로 찾는 쪽이 쓰기 편해 필터를 그렇게 뒀다. |
+| `mold-search` | 연결가능 | S-PARTS 검색 | 엔진(SearchSelectModal) | `/popup-search/mold-search` | `w_mcn_mold_popup` | PB d_mcn_mold_popup — IMCN_MOLD 기준 좌측 외부조인으로 재고·공급처를 붙인다. PB 의 MOLD_CODE <> '*' 제외 조건을 유지한다. 재고행이 없으면 버전·SET번호가 비어 나온다. 연결: app/(authenticated)/mold/components/MoldCodeField.tsx (S-PARTS 8화면 조회조건 + 주문 등록). |
+| `mold-location-search` | 연결가능 | S-PARTS 보관위치 검색 | 엔진(SearchSelectModal) | `/popup-search/mold-location-search` | `w_mcn_mold_location_popup` | PB d_mcn_mold_location_popup — IMCN_MOLD_LOCATION 단일 테이블. PB 는 S-PARTS 코드로도 걸렀지만 웹에서는 위치코드·그룹으로 찾는 쪽이 쓰기 편해 필터를 그렇게 뒀다. 연결: app/(authenticated)/mold/receipt (입고 등록의 보관위치). |
 
 ## 미착수 PB 팝업 (호출 많은 순)
 

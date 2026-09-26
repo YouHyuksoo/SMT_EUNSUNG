@@ -463,7 +463,17 @@
     "mold.issue": "S-PARTS출고관리",
     "mold.repairRequest": "S-PARTS수리신청관리",
     "mold.repair": "S-PARTS수리관리",
-    "mold.price": "S-PARTS구매단가관리"
+    "mold.price": "S-PARTS구매단가관리",
+    "smt": "SMT관리",
+    "smt.line": "SMT 라인관리",
+    "smt.location": "라인별 테이블 관리",
+    "smt.bomReplace": "SMT BOM 대체관리",
+    "smt.ncUpload": "SMT 피더레이아웃 등록",
+    "smt.bom": "SMT BOM 관리",
+    "smt.plan": "SMT 계획배포관리",
+    "smt.bomReport": "SMT BOM 관리리포트",
+    "smt.bomComparison": "피더레이아웃 비교",
+    "smt.feederPickup": "마운터 픽업정보관리"
   },
   "header": {
     "theme": "테마",

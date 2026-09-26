@@ -3,7 +3,7 @@ sources:
   - apps/frontend/src/config/menuConfig.ts
   - apps/frontend/scripts/data/pb-screen-inventory.json
 generator: apps/frontend/scripts/gen-migration-status.mjs
-verifiedCommit: ad03468
+verifiedCommit: 173add32
 ---
 
 # PB 윈도우 ↔ 웹 메뉴·경로 연결표 (자동 생성)
@@ -15,7 +15,7 @@ verifiedCommit: ad03468
 
 | 전체 웹 메뉴 | PB 연결 | 웹 신규 | 미확정 |
 |---:|---:|---:|---:|
-| 88 | 69 | 17 | 2 |
+| 97 | 78 | 17 | 2 |
 
 ## 전체 연결표
 
@@ -82,6 +82,15 @@ verifiedCommit: ad03468
 | S-PARTS관리 | S-PARTS수리신청관리 | `MOLD_REPAIR_REQUEST` | `/mold/repair-request` | PB 연결 | `w_mcn_mold_repair_request_master` | PB 메뉴 인벤토리 |
 | S-PARTS관리 | S-PARTS수리관리 | `MOLD_REPAIR` | `/mold/repair` | PB 연결 | `w_mcn_mold_repair_master` | PB 메뉴 인벤토리 |
 | S-PARTS관리 | S-PARTS구매단가관리 | `MOLD_PRICE` | `/mold/price` | PB 연결 | `w_mcn_mold_buy_price_master` | PB 메뉴 인벤토리 |
+| SMT관리 | SMT 라인관리 | `SMT_LINE` | `/smt/line` | PB 연결 | `w_smt_line_master` | PB 메뉴 인벤토리 |
+| SMT관리 | 라인별 테이블 관리 | `SMT_LOCATION` | `/smt/location` | PB 연결 | `w_smt_location_master` | PB 메뉴 인벤토리 |
+| SMT관리 | SMT BOM 대체관리 | `SMT_BOM_REPLACE` | `/smt/bom-replace` | PB 연결 | `w_smt_bom_replace_master` | PB 메뉴 인벤토리 |
+| SMT관리 | SMT 피더레이아웃 등록 | `SMT_NC_UPLOAD` | `/smt/nc-upload` | PB 연결 | `w_smt_upload_nc_master` | PB 메뉴 인벤토리 |
+| SMT관리 | SMT BOM 관리 | `SMT_BOM` | `/smt/bom` | PB 연결 | `w_smt_bom_create_master` | PB 메뉴 인벤토리 |
+| SMT관리 | SMT 계획배포관리 | `SMT_PLAN` | `/smt/plan` | PB 연결 | `w_smt_plan_master` | PB 메뉴 인벤토리 |
+| SMT관리 | SMT BOM 관리리포트 | `SMT_BOM_REPORT` | `/smt/bom-report` | PB 연결 | `w_smt_bom_master_rpt` | PB 메뉴 인벤토리 |
+| SMT관리 | 피더레이아웃 비교 | `SMT_BOM_COMPARISON` | `/smt/bom-comparison` | PB 연결 | `w_smt_bom_comparison_master_rpt` | PB 메뉴 인벤토리 |
+| SMT관리 | 마운터 픽업정보관리 | `SMT_FEEDER_PICKUP` | `/smt/feeder-pickup` | PB 연결 | `w_mcn_feeder_pickup_master` | PB 메뉴 인벤토리 |
 | 공정수불관리 | 공정통과이력 관리 | `PLN_WORKSTAGE_PASS` | `/process-transaction/workstage-pass` | PB 연결 | `w_pln_product_inout_scan_master` | PB 메뉴 인벤토리 |
 | 공정수불관리 | 매거진발행이력 | `PLN_MAGAZINE_LABEL_HISTORY` | `/process-transaction/magazine-label-history` | PB 연결 | `w_pln_product_magazine_label_query` | PB 메뉴 인벤토리 |
 | 제품재고관리 | 제품재고조회 | `PRD_CURRENT_INVENTORY` | `/product/current-inventory` | PB 연결 | `w_prd_product_fg_inventory` | PB 메뉴 인벤토리 |

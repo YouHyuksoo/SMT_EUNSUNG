@@ -426,6 +426,7 @@
     "JIG",
     "FEEDER",
     "MOLD",
+    "SMT",
     "PROCESS_TRANSACTION",
     "PRODUCT_MGMT",
     "PRODUCT_INVENTORY",

@@ -9,6 +9,7 @@
     "JIG",
     "FEEDER",
     "MOLD",
+    "SMT",
     "PROCESS_TRANSACTION",
     "PRODUCT_MGMT",
     "PRODUCT_INVENTORY",
@@ -94,6 +95,17 @@
       "MOLD_REPAIR_REQUEST",
       "MOLD_REPAIR",
       "MOLD_PRICE"
+    ],
+    "SMT": [
+      "SMT_LINE",
+      "SMT_LOCATION",
+      "SMT_BOM_REPLACE",
+      "SMT_NC_UPLOAD",
+      "SMT_BOM",
+      "SMT_PLAN",
+      "SMT_BOM_REPORT",
+      "SMT_BOM_COMPARISON",
+      "SMT_FEEDER_PICKUP"
     ],
     "PROCESS_TRANSACTION": [
       "PLN_WORKSTAGE_PASS",
