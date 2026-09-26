@@ -1,0 +1,153 @@
+{
+  "_comment": [
+    "PB 함수 → 웹 처리 카탈로그 (이관 이력의 단일 출처).",
+    "PB 화면을 이관할 때 그 화면이 부르는 f_* 는 여기를 먼저 조회한다.",
+    "  - 엔트리가 있으면 → 등록된 처리를 그대로 쓴다. 다시 전환하지 않는다.",
+    "  - 없으면 → 처리하고 같은 변경에서 엔트리를 추가한다.",
+    "판별은 이름이 아니라 호출 위치다. SQL 문장 안이면 DB 함수, 밖이면 PB 함수.",
+    "전체 실측 목록: docs/database/generated/pb-function-inventory.json",
+    "현황 문서: docs/business-logics/pb-function-status.md (pnpm gen:function-status)",
+    "action 값: converted(DB 패키지로 전환) | replaced(웹 수단으로 치환) | dropped(제거)",
+    "          | inlined(서비스에 이식) | native(웹에서 직접 구현)"
+  ],
+  "functions": [
+    {
+      "pbFunction": "f_mat_receipt_cancel",
+      "action": "converted",
+      "target": "PKG_MES_MAT.SP_RECEIPT_CANCEL",
+      "source": "oracle_db_scripts/PKG_MES_MAT.sql",
+      "usedBy": "apps/backend/src/modules/material/services/receipt-cancel.service.ts",
+      "note": "입고 1건 상계(역분개). PB 반환규약 유지(-1/-3), -2(이미취소)는 웹에서 추가."
+    },
+    {
+      "pbFunction": "f_check_unit_price_dup",
+      "action": "converted",
+      "target": "PKG_MES_MAT.F_CHECK_UNIT_PRICE_DUP",
+      "source": "oracle_db_scripts/PKG_MES_MAT.sql",
+      "note": "유효기간 겹치는 구매단가 중복 검사. 중복 없으면 0, 다중 조합이면 -1."
+    },
+    {
+      "pbFunction": "f_get_marking_yn",
+      "action": "converted",
+      "target": "PKG_MES_PLN.F_GET_MARKING_YN",
+      "source": "oracle_db_scripts/PKG_MES_PLN.sql",
+      "note": "모델 마킹 사용여부. 조회 실패 시 'N'."
+    },
+    {
+      "pbFunction": "f_get_carrier_size",
+      "action": "converted",
+      "target": "PKG_MES_PLN.F_GET_CARRIER_SIZE",
+      "source": "oracle_db_scripts/PKG_MES_PLN.sql",
+      "note": "모델 캐리어 규격. 모델 없으면 -1, 값 없으면 0."
+    },
+    {
+      "pbFunction": "f_get_magazine_lot_qty",
+      "action": "converted",
+      "target": "PKG_MES_PLN.F_GET_MAGAZINE_LOT_QTY",
+      "source": "oracle_db_scripts/PKG_MES_PLN.sql",
+      "note": "매거진 라벨 LOT 수량. 라벨 없으면 0."
+    },
+    {
+      "pbFunction": "f_get_dynamic_report_name",
+      "action": "blocked",
+      "target": null,
+      "note": "전환 보류 — 참조 컬럼 QR_PID_DW_NAME / PACKING_LABEL_DW_NAME 이 이 DB 의 IP_PRODUCT_MODEL_MASTER 에 없다."
+    },
+    {
+      "pbFunction": "f_msgbox",
+      "action": "replaced",
+      "target": "react-hot-toast / @/components/ui ConfirmModal",
+      "note": "메시지 표시용. alert()/confirm() 금지. 확인이 필요하면 ConfirmModal."
+    },
+    {
+      "pbFunction": "f_msgbox1",
+      "action": "replaced",
+      "target": "react-hot-toast / ConfirmModal",
+      "note": "f_msgbox 와 동일 처리."
+    },
+    {
+      "pbFunction": "f_msg",
+      "action": "replaced",
+      "target": "react-hot-toast",
+      "note": "메시지 표시용."
+    },
+    {
+      "pbFunction": "f_msg_st",
+      "action": "replaced",
+      "target": "react-hot-toast",
+      "note": "상태줄 메시지."
+    },
+    {
+      "pbFunction": "f_msg_mdi_help",
+      "action": "replaced",
+      "target": "화면 내 안내 문구",
+      "note": "MDI MicroHelp. 웹에는 상태줄이 없다."
+    },
+    {
+      "pbFunction": "f_play_sound",
+      "action": "dropped",
+      "target": null,
+      "note": "제거한다. 경고가 필요한 화면만 시각 배너로 대체."
+    },
+    {
+      "pbFunction": "f_sql_check",
+      "action": "replaced",
+      "target": "NestJS 예외 + 트랜잭션 롤백",
+      "note": "f_sql_check_with_msg 도 동일."
+    },
+    {
+      "pbFunction": "f_set_security_row",
+      "action": "replaced",
+      "target": "권한 가드 / 메뉴 권한",
+      "note": "DataWindow 행 단위 보안."
+    },
+    {
+      "pbFunction": "f_t_sysdate",
+      "action": "native",
+      "target": "백엔드 서버 시각 (main.ts KST 고정)",
+      "note": "f_sysdate 도 동일. 본문이 SELECT SYSDATE FROM DUAL 뿐이라 전환 무의미."
+    },
+    {
+      "pbFunction": "f_sysdate",
+      "action": "native",
+      "target": "백엔드 서버 시각",
+      "note": "f_t_sysdate 와 동일."
+    },
+    {
+      "pbFunction": "f_get_sequence",
+      "action": "native",
+      "target": "시퀀스 직접 호출 (예: SEQ_MAT_RECEIPT.NEXTVAL)",
+      "note": "동적 SQL 로 임의 시퀀스를 부르던 래퍼. 웹은 대상 시퀀스를 직접 쓴다."
+    },
+    {
+      "pbFunction": "f_get_first_day",
+      "action": "inlined",
+      "target": "receipt-cancel.service.ts firstDayOfMonth()",
+      "note": "한 화면 전용 날짜 계산이라 DB 오브젝트를 늘리지 않는다."
+    },
+    {
+      "pbFunction": "f_retrieve",
+      "action": "dropped",
+      "target": null,
+      "note": "MDI 활성 시트 조회 트리거. 웹에는 대응물이 없다."
+    },
+    {
+      "pbFunction": "f_menu_control",
+      "action": "dropped",
+      "target": null,
+      "note": "MDI 프레임 메뉴 활성화 제어. 웹 메뉴 권한이 대신한다."
+    },
+    {
+      "pbFunction": "f_object_role_check",
+      "action": "replaced",
+      "target": "권한 가드",
+      "note": "USER_LEVEL 검사 후 메시지박스. 웹은 가드가 403 을 낸다."
+    },
+    {
+      "pbFunction": "f_jssetprofilestring",
+      "action": "dropped",
+      "target": null,
+      "note": "INI 파일 I/O. 설정은 DB(ISYS_CONFIG)·환경변수로 간다."
+    }
+  ]
+}
