@@ -161,3 +161,27 @@ export class SampleMasterDeleteDto {
   @IsString() sampleCode!: string;
   @IsString() sampleLotNo!: string;
 }
+
+/** 지그 출고 등록 — PB w_mcn_jig_issue_master 'INSERT' */
+export class JigIssueCreateDto {
+  @IsString() jigCode!: string;
+  @IsString() jigLotNo!: string;
+  @IsOptional() @Type(() => Number) @IsNumber() issueQty?: number;
+  @IsOptional() @IsString() issueAccount?: string;
+  @IsOptional() @IsString() workstageCode?: string;
+  @IsOptional() @IsString() machineCode?: string;
+}
+
+/** 지그 출고 취소 — ISSUE_STATUS 를 'C' 로 바꾼다 (행 삭제 아님) */
+export class JigIssueCancelDto {
+  @IsDateString() issueDate!: string;
+  @Type(() => Number) @IsInt() issueSequence!: number;
+}
+
+/** 자주보전 실시 — PB cb_confirm */
+export class JigPmConfirmDto {
+  @IsString() lineCode!: string;
+  @IsString() jigCode!: string;
+  @IsString() jigLotNo!: string;
+  @IsString() pmType!: string;
+}

@@ -122,6 +122,61 @@ CREATE OR REPLACE PACKAGE PKG_MES_MAC AS
     p_result            OUT NUMBER
   );
 
+  /**
+   * PB w_mcn_jig_issue_master 'INSERT' 분기 이관 (2026-09-26)
+   *
+   * 지그 출고 1건을 등록한다.
+   *   ISSUE_SEQUENCE = SEQ_MAT_ISSUE (PB 가 자재 출고 시퀀스를 그대로 쓴다)
+   *   ISSUE_DATE = 오늘, ISSUE_DEFICIT = '3'(3출고), ISSUE_STATUS = 'N'(정상)
+   *
+   * p_result : 채번된 ISSUE_SEQUENCE   -1 지그를 찾을 수 없음
+   */
+  PROCEDURE SP_JIG_ISSUE(
+    p_jig_code          IN  VARCHAR2,
+    p_jig_lot_no        IN  VARCHAR2,
+    p_issue_qty         IN  NUMBER,
+    p_issue_account     IN  VARCHAR2,
+    p_workstage_code    IN  VARCHAR2,
+    p_machine_code      IN  VARCHAR2,
+    p_organization_id   IN  NUMBER,
+    p_user_id           IN  VARCHAR2,
+    p_result            OUT NUMBER
+  );
+
+  /**
+   * 지그 출고 취소 (2026-09-26)
+   * PB 는 ISSUE_STATUS 를 'C'(취소)로 바꿔 취소를 표시한다. 행은 지우지 않는다.
+   *
+   * p_result : 1 취소됨   -1 출고건 없음   -2 이미 취소된 건
+   */
+  PROCEDURE SP_JIG_ISSUE_CANCEL(
+    p_issue_date        IN  DATE,
+    p_issue_sequence    IN  NUMBER,
+    p_organization_id   IN  NUMBER,
+    p_user_id           IN  VARCHAR2,
+    p_result            OUT NUMBER
+  );
+
+  /**
+   * PB w_mcn_jig_pm_master cb_confirm(Confirm) 이관 (2026-09-26)
+   *
+   * 자주보전 실시 처리.
+   *   1) IMCN_JIG_PM_MASTER_HIST 에 실시 이력을 남긴다 (CONFIRM_YN='Y', PM_DATE=오늘,
+   *      PLAN_DATE=SYSDATE, HIT_VALUE=NVL(현재 사용횟수,0)).
+   *   2) 계획 행의 HIT_VALUE 를 0 으로 리셋하고 PM_DATE 를 오늘로 바꾼다.
+   *
+   * p_result : 1 처리됨   -1 계획 행 없음
+   */
+  PROCEDURE SP_JIG_PM_CONFIRM(
+    p_line_code         IN  VARCHAR2,
+    p_jig_code          IN  VARCHAR2,
+    p_jig_lot_no        IN  VARCHAR2,
+    p_pm_type           IN  VARCHAR2,
+    p_organization_id   IN  NUMBER,
+    p_user_id           IN  VARCHAR2,
+    p_result            OUT NUMBER
+  );
+
 END PKG_MES_MAC;
 /
 
@@ -368,6 +423,151 @@ CREATE OR REPLACE PACKAGE BODY PKG_MES_MAC AS
 
     p_result := CASE WHEN SQL%ROWCOUNT = 1 THEN 1 ELSE -1 END;
   END SP_REPAIR_UPDATE_STATUS;
+
+  /** PB w_mcn_jig_issue_master 이관 (2026-09-26) — 상세는 SPEC 주석 참조 */
+  PROCEDURE SP_JIG_ISSUE(
+    p_jig_code          IN  VARCHAR2,
+    p_jig_lot_no        IN  VARCHAR2,
+    p_issue_qty         IN  NUMBER,
+    p_issue_account     IN  VARCHAR2,
+    p_workstage_code    IN  VARCHAR2,
+    p_machine_code      IN  VARCHAR2,
+    p_organization_id   IN  NUMBER,
+    p_user_id           IN  VARCHAR2,
+    p_result            OUT NUMBER
+  ) IS
+    l_count    NUMBER;
+    l_sequence NUMBER;
+  BEGIN
+    SELECT COUNT(*)
+      INTO l_count
+      FROM IMCN_JIG
+     WHERE JIG_CODE        = p_jig_code
+       AND JIG_LOT_NO      = p_jig_lot_no
+       AND ORGANIZATION_ID = p_organization_id;
+
+    IF l_count = 0 THEN
+      p_result := -1;
+      RETURN;
+    END IF;
+
+    SELECT SEQ_MAT_ISSUE.NEXTVAL INTO l_sequence FROM DUAL;
+
+    INSERT INTO IMCN_JIG_ISSUE (
+      ISSUE_DATE, ISSUE_SEQUENCE, ORGANIZATION_ID, JIG_CODE, JIG_LOT_NO,
+      ISSUE_DEFICIT, ISSUE_QTY, ISSUE_STATUS, ISSUE_ACCOUNT,
+      WORKSTAGE_CODE, MACHINE_CODE,
+      ENTER_BY, ENTER_DATE, LAST_MODIFY_BY, LAST_MODIFY_DATE
+    ) VALUES (
+      TRUNC(SYSDATE), l_sequence, p_organization_id, p_jig_code, p_jig_lot_no,
+      '3', NVL(p_issue_qty, 1), 'N', p_issue_account,
+      p_workstage_code, p_machine_code,
+      p_user_id, SYSDATE, p_user_id, SYSDATE
+    );
+
+    p_result := l_sequence;
+  END SP_JIG_ISSUE;
+
+  /** 지그 출고 취소 (2026-09-26) — 행을 지우지 않고 ISSUE_STATUS 를 'C' 로 바꾼다 */
+  PROCEDURE SP_JIG_ISSUE_CANCEL(
+    p_issue_date        IN  DATE,
+    p_issue_sequence    IN  NUMBER,
+    p_organization_id   IN  NUMBER,
+    p_user_id           IN  VARCHAR2,
+    p_result            OUT NUMBER
+  ) IS
+    l_status IMCN_JIG_ISSUE.ISSUE_STATUS%TYPE;
+  BEGIN
+    BEGIN
+      SELECT ISSUE_STATUS
+        INTO l_status
+        FROM IMCN_JIG_ISSUE
+       WHERE ISSUE_DATE      = TRUNC(p_issue_date)
+         AND ISSUE_SEQUENCE  = p_issue_sequence
+         AND ORGANIZATION_ID = p_organization_id
+         FOR UPDATE;
+    EXCEPTION
+      WHEN NO_DATA_FOUND THEN
+        p_result := -1;
+        RETURN;
+    END;
+
+    IF l_status = 'C' THEN
+      p_result := -2;
+      RETURN;
+    END IF;
+
+    UPDATE IMCN_JIG_ISSUE
+       SET ISSUE_STATUS     = 'C',
+           LAST_MODIFY_BY   = p_user_id,
+           LAST_MODIFY_DATE = SYSDATE
+     WHERE ISSUE_DATE      = TRUNC(p_issue_date)
+       AND ISSUE_SEQUENCE  = p_issue_sequence
+       AND ORGANIZATION_ID = p_organization_id;
+
+    p_result := 1;
+  END SP_JIG_ISSUE_CANCEL;
+
+  /** PB w_mcn_jig_pm_master cb_confirm 이관 (2026-09-26) — 상세는 SPEC 주석 참조 */
+  PROCEDURE SP_JIG_PM_CONFIRM(
+    p_line_code         IN  VARCHAR2,
+    p_jig_code          IN  VARCHAR2,
+    p_jig_lot_no        IN  VARCHAR2,
+    p_pm_type           IN  VARCHAR2,
+    p_organization_id   IN  NUMBER,
+    p_user_id           IN  VARCHAR2,
+    p_result            OUT NUMBER
+  ) IS
+    l_break_value NUMBER;
+    l_hit_value   NUMBER;
+    l_comments    IMCN_JIG_PM_MASTER.COMMENTS%TYPE;
+    l_pm_division IMCN_JIG_PM_MASTER.PM_DIVISION%TYPE;
+  BEGIN
+    BEGIN
+      SELECT BREAK_VALUE, HIT_VALUE, COMMENTS, PM_DIVISION
+        INTO l_break_value, l_hit_value, l_comments, l_pm_division
+        FROM IMCN_JIG_PM_MASTER
+       WHERE LINE_CODE       = p_line_code
+         AND JIG_CODE        = p_jig_code
+         AND JIG_LOT_NO      = p_jig_lot_no
+         AND PM_TYPE         = p_pm_type
+         AND ORGANIZATION_ID = p_organization_id
+         FOR UPDATE;
+    EXCEPTION
+      WHEN NO_DATA_FOUND THEN
+        p_result := -1;
+        RETURN;
+    END;
+
+    -- PB 는 실시 이력을 별도 테이블에 남긴다
+    INSERT INTO IMCN_JIG_PM_MASTER_HIST (
+      ORGANIZATION_ID, LINE_CODE, JIG_CODE, JIG_LOT_NO, PM_TYPE,
+      PLAN_DATE, BREAK_VALUE, HIT_VALUE, PM_DATE, COMMENTS,
+      CONFIRM_YN, CONFIRM_BY, PM_DIVISION,
+      ENTER_BY, ENTER_DATE, LAST_MODIFY_BY, LAST_MODIFY_DATE
+    ) VALUES (
+      p_organization_id, p_line_code, p_jig_code, p_jig_lot_no, p_pm_type,
+      SYSDATE, l_break_value, NVL(l_hit_value, 0), SYSDATE, l_comments,
+      'Y', p_user_id, l_pm_division,
+      p_user_id, SYSDATE, p_user_id, SYSDATE
+    );
+
+    -- PB: 사용횟수를 0 으로 리셋하고 보전일자를 오늘로
+    UPDATE IMCN_JIG_PM_MASTER
+       SET HIT_VALUE        = 0,
+           PM_DATE          = SYSDATE,
+           CONFIRM_YN       = 'Y',
+           CONFIRM_BY       = p_user_id,
+           LAST_MODIFY_BY   = p_user_id,
+           LAST_MODIFY_DATE = SYSDATE
+     WHERE LINE_CODE       = p_line_code
+       AND JIG_CODE        = p_jig_code
+       AND JIG_LOT_NO      = p_jig_lot_no
+       AND PM_TYPE         = p_pm_type
+       AND ORGANIZATION_ID = p_organization_id;
+
+    p_result := 1;
+  END SP_JIG_PM_CONFIRM;
 
 END PKG_MES_MAC;
 /

@@ -20,7 +20,10 @@ import { BadRequestException, ConflictException, Injectable, NotFoundException }
 import { DataSource } from 'typeorm';
 import { TransactionService } from '../../shared/transaction.service';
 import {
+  JigIssueCancelDto,
+  JigIssueCreateDto,
   JigIssueQueryDto,
+  JigPmConfirmDto,
   JigPmQueryDto,
   JigRepairQueryDto,
   JigRepairRequestDto,
@@ -722,6 +725,112 @@ export class JigCheckService {
         { sampleCode, sampleLotNo, organizationId } as unknown as unknown[],
       );
       return { sampleCode, sampleLotNo, deletedApplyModels: apply };
+    });
+  }
+
+  /** 지그 출고 등록 — PKG_MES_MAC.SP_JIG_ISSUE */
+  async createIssue(dto: JigIssueCreateDto, organizationId: number, userId: string) {
+    const jigCode = dto.jigCode.trim();
+    const jigLotNo = dto.jigLotNo.trim();
+    return this.tx.run(async (qr) => {
+      await qr.query(
+        `DECLARE
+           v_result NUMBER;
+         BEGIN
+           PKG_MES_MAC.SP_JIG_ISSUE(:jigCode, :jigLotNo, :issueQty, :issueAccount,
+             :workstageCode, :machineCode, :organizationId, :userId, v_result);
+           IF v_result < 0 THEN
+             RAISE_APPLICATION_ERROR(-20007, 'JIG_ISSUE_FAILED:' || v_result);
+           END IF;
+         END;`,
+        {
+          jigCode, jigLotNo,
+          issueQty: dto.issueQty ?? null,
+          issueAccount: dto.issueAccount ?? null,
+          workstageCode: dto.workstageCode ?? null,
+          machineCode: dto.machineCode ?? null,
+          organizationId, userId,
+        } as unknown as unknown[],
+      ).catch((error: unknown) => {
+        const message = error instanceof Error ? error.message : String(error);
+        if (/JIG_ISSUE_FAILED/.test(message)) {
+          throw new BadRequestException('등록되지 않은 지그입니다.');
+        }
+        throw error;
+      });
+      const saved = await qr.query(
+        `SELECT * FROM (
+           SELECT ISSUE_SEQUENCE AS "issueSequence", ISSUE_DATE AS "issueDate",
+                  ISSUE_STATUS AS "issueStatus"
+             FROM IMCN_JIG_ISSUE
+            WHERE JIG_CODE = :jigCode AND JIG_LOT_NO = :jigLotNo
+              AND ORGANIZATION_ID = :organizationId
+            ORDER BY ISSUE_DATE DESC, ISSUE_SEQUENCE DESC
+         ) WHERE ROWNUM = 1`,
+        { jigCode, jigLotNo, organizationId } as unknown as unknown[],
+      ) as OracleRow[];
+      return saved[0] ?? {};
+    });
+  }
+
+  /** 지그 출고 취소 — PKG_MES_MAC.SP_JIG_ISSUE_CANCEL */
+  async cancelIssue(dto: JigIssueCancelDto, organizationId: number, userId: string) {
+    return this.tx.run(async (qr) => {
+      await qr.query(
+        `DECLARE
+           v_result NUMBER;
+         BEGIN
+           PKG_MES_MAC.SP_JIG_ISSUE_CANCEL(:issueDate, :issueSequence,
+             :organizationId, :userId, v_result);
+           IF v_result < 0 THEN
+             RAISE_APPLICATION_ERROR(-20008, 'JIG_ISSUE_CANCEL_FAILED:' || v_result);
+           END IF;
+         END;`,
+        {
+          issueDate: new Date(dto.issueDate),
+          issueSequence: dto.issueSequence,
+          organizationId, userId,
+        } as unknown as unknown[],
+      ).catch((error: unknown) => {
+        const message = error instanceof Error ? error.message : String(error);
+        const matched = /JIG_ISSUE_CANCEL_FAILED:(-?\d+)/.exec(message);
+        if (!matched) throw error;
+        throw new BadRequestException(
+          matched[1] === '-2' ? '이미 취소된 출고건입니다.' : '출고건을 찾을 수 없습니다.',
+        );
+      });
+      return { issueSequence: dto.issueSequence, issueStatus: 'C' };
+    });
+  }
+
+  /** 자주보전 실시 — PKG_MES_MAC.SP_JIG_PM_CONFIRM */
+  async confirmPm(dto: JigPmConfirmDto, organizationId: number, userId: string) {
+    return this.tx.run(async (qr) => {
+      await qr.query(
+        `DECLARE
+           v_result NUMBER;
+         BEGIN
+           PKG_MES_MAC.SP_JIG_PM_CONFIRM(:lineCode, :jigCode, :jigLotNo, :pmType,
+             :organizationId, :userId, v_result);
+           IF v_result < 0 THEN
+             RAISE_APPLICATION_ERROR(-20009, 'JIG_PM_CONFIRM_FAILED:' || v_result);
+           END IF;
+         END;`,
+        {
+          lineCode: dto.lineCode,
+          jigCode: dto.jigCode.trim(),
+          jigLotNo: dto.jigLotNo.trim(),
+          pmType: dto.pmType,
+          organizationId, userId,
+        } as unknown as unknown[],
+      ).catch((error: unknown) => {
+        const message = error instanceof Error ? error.message : String(error);
+        if (/JIG_PM_CONFIRM_FAILED/.test(message)) {
+          throw new BadRequestException('보전 계획을 찾을 수 없습니다.');
+        }
+        throw error;
+      });
+      return { jigCode: dto.jigCode, pmType: dto.pmType };
     });
   }
 }

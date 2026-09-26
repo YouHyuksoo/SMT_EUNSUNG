@@ -7,15 +7,15 @@
  * 초보자 가이드:
  * 1. PB 는 `값 + '%'` LIKE 로 조회한다. 빈 값이면 전체다.
  * 2. PM 유형·주기·승인은 기초코드(PM TYPE / PM DIVISION / CONFIRM YN)에서 고른다.
- * 3. 계획 등록·승인은 PB 원본에 있으나 이번 범위에서 제외했다(조회 먼저).
+ * 3. 보전 실시(Confirm)는 이력을 남기고 사용횟수를 0 으로 리셋한다 — PB cb_confirm 과 같다.
  */
 import { useCallback, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
-import { CalendarCheck, RefreshCw, Search } from 'lucide-react';
+import { CalendarCheck, CheckCircle2, RefreshCw, Search } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
 import ComCodeSelect from '@/components/shared/ComCodeSelect';
 import LineSelect from '@/components/shared/LineSelect';
-import { Button, Card, CardContent, Input } from '@/components/ui';
+import { Button, Card, CardContent, ConfirmModal, Input } from '@/components/ui';
 import api from '@/services/api';
 import { jigPmColumns, type JigPmRow } from './columns';
 
@@ -29,6 +29,8 @@ export default function JigPmPage() {
   const [jigLotNo, setJigLotNo] = useState('');
   const [pmType, setPmType] = useState('');
   const [confirmYn, setConfirmYn] = useState('');
+  const [selected, setSelected] = useState<JigPmRow | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const search = useCallback(async () => {
     setLoading(true);
@@ -45,12 +47,30 @@ export default function JigPmPage() {
       setRows(response.data?.data ?? []);
       setTotal(Number(response.data?.meta?.total ?? 0));
       setSearched(true);
+      setSelected(null);
     } catch {
       toast.error('자주보전 조회에 실패했습니다.');
     } finally {
       setLoading(false);
     }
   }, [lineCode, jigCode, jigLotNo, pmType, confirmYn]);
+
+  const confirmPm = useCallback(async () => {
+    if (!selected) return;
+    setConfirmOpen(false);
+    try {
+      await api.post('/jig/pm/confirm', {
+        lineCode: selected.lineCode ?? '',
+        jigCode: selected.jigCode,
+        jigLotNo: selected.jigLotNo ?? '',
+        pmType: selected.pmType ?? '',
+      });
+      toast.success('보전 실시를 기록했습니다.');
+      void search();
+    } catch {
+      toast.error('보전 계획을 찾을 수 없습니다.');
+    }
+  }, [selected, search]);
 
   const columns = useMemo(() => jigPmColumns, []);
 
@@ -72,6 +92,9 @@ export default function JigPmPage() {
           <Button size="sm" onClick={search} disabled={loading}>
             <Search className="mr-1 h-4 w-4" />조회
           </Button>
+          <Button size="sm" disabled={!selected} onClick={() => setConfirmOpen(true)}>
+            <CheckCircle2 className="mr-1 h-4 w-4" />보전 실시
+          </Button>
         </div>
       </header>
 
@@ -91,9 +114,24 @@ export default function JigPmPage() {
         <CardContent className="h-full p-3">
           <DataGrid data={rows} columns={columns} isLoading={loading} pageSize={50}
             enableColumnFilter enableExport exportFileName="지그자주보전"
-            emptyMessage="조회 버튼을 눌러 보전계획을 확인하세요." />
+            emptyMessage="조회 버튼을 눌러 보전계획을 확인하세요."
+            onRowClick={(row) => setSelected(row as JigPmRow)}
+            getRowId={(row) => {
+              const pm = row as JigPmRow;
+              return `${pm.jigCode}|${pm.jigLotNo ?? ''}|${pm.pmType ?? ''}`;
+            }} />
         </CardContent>
       </Card>
+
+      <ConfirmModal
+        isOpen={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        onConfirm={confirmPm}
+        title="보전 실시"
+        message={selected
+          ? `${selected.jigCode} / ${selected.pmTypeName ?? selected.pmType ?? ''} 보전을 실시 처리합니다. 실시 이력이 남고 사용횟수가 0 으로 리셋됩니다.`
+          : ''}
+      />
     </div>
   );
 }

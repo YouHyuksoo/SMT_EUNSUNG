@@ -4,7 +4,10 @@ import { OrganizationId, UserId } from '../../common/decorators/tenant.decorator
 import { ResponseUtil } from '../../common/dto/response.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import {
+  JigIssueCancelDto,
+  JigIssueCreateDto,
   JigIssueQueryDto,
+  JigPmConfirmDto,
   JigPmQueryDto,
   JigRepairQueryDto,
   JigRepairRequestDto,
@@ -165,5 +168,41 @@ export class JigCheckController {
     @OrganizationId() organizationId: number,
   ) {
     return ResponseUtil.success(await this.service.deleteSample(dto, organizationId));
+  }
+
+  @Post('issue')
+  @ApiOperation({ summary: '지그 출고 등록 (PKG_MES_MAC.SP_JIG_ISSUE)' })
+  async createIssue(
+    @Body() dto: JigIssueCreateDto,
+    @OrganizationId() organizationId: number,
+    @UserId() userId?: string,
+  ) {
+    return ResponseUtil.success(
+      await this.service.createIssue(dto, organizationId, userId || DEFAULT_USER),
+    );
+  }
+
+  @Put('issue/cancel')
+  @ApiOperation({ summary: '지그 출고 취소 (ISSUE_STATUS = C, 행은 남긴다)' })
+  async cancelIssue(
+    @Body() dto: JigIssueCancelDto,
+    @OrganizationId() organizationId: number,
+    @UserId() userId?: string,
+  ) {
+    return ResponseUtil.success(
+      await this.service.cancelIssue(dto, organizationId, userId || DEFAULT_USER),
+    );
+  }
+
+  @Post('pm/confirm')
+  @ApiOperation({ summary: '자주보전 실시 (이력 적재 + 사용횟수 리셋)' })
+  async confirmPm(
+    @Body() dto: JigPmConfirmDto,
+    @OrganizationId() organizationId: number,
+    @UserId() userId?: string,
+  ) {
+    return ResponseUtil.success(
+      await this.service.confirmPm(dto, organizationId, userId || DEFAULT_USER),
+    );
   }
 }
