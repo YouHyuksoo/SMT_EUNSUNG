@@ -442,7 +442,16 @@
     "feeder": "Feeder",
     "feeder.master": "Feeder Master",
     "feeder.repair": "Feeder Repair",
-    "feeder.adjust": "Feeder Calibration"
+    "feeder.adjust": "Feeder Calibration",
+    "mold": "S-PARTS",
+    "mold.master": "S-PARTS Master",
+    "mold.inventory": "S-PARTS Inventory",
+    "mold.order": "S-PARTS Purchase Order",
+    "mold.receipt": "S-PARTS Receipt",
+    "mold.issue": "S-PARTS Issue",
+    "mold.repairRequest": "S-PARTS Repair Request",
+    "mold.repair": "S-PARTS Repair",
+    "mold.price": "S-PARTS Purchase Price"
   },
   "header": {
     "theme": "Theme",

@@ -3,7 +3,7 @@ sources:
   - apps/frontend/src/config/menuConfig.ts
   - apps/frontend/scripts/data/pb-screen-inventory.json
 generator: apps/frontend/scripts/gen-migration-status.mjs
-verifiedCommit: 7ae1281
+verifiedCommit: e505f9b
 ---
 
 # PB 화면 이관 현황 (자동 생성)
@@ -17,11 +17,11 @@ verifiedCommit: 7ae1281
 | 상태 | 건수 |
 |---|---:|
 | PB 업무화면(셸 메뉴 제외) | 275 |
-| 완료(개발됨, pbWindow 매핑) | 47 |
-| 미착수 | 202 |
+| 완료(개발됨, pbWindow 매핑) | 55 |
+| 미착수 | 194 |
 | 윈도우 미상 | 26 |
 
-웹 메뉴 연결 계약: **PB 49개 / 웹 신규 17개 / 미확정 2개**. PB 매핑과 웹 경로의 전체 연결표는 [pb-menu-route-links.md](pb-menu-route-links.md)에서 관리합니다.
+웹 메뉴 연결 계약: **PB 57개 / 웹 신규 17개 / 미확정 2개**. PB 매핑과 웹 경로의 전체 연결표는 [pb-menu-route-links.md](pb-menu-route-links.md)에서 관리합니다.
 
 ## 대분류별 진행률
 
@@ -33,7 +33,7 @@ verifiedCommit: 7ae1281
 | 설비 | `M_JIG` | 19 | 10 | 7 | 2 |
 | 지그 | `M_JIG0` | 12 | 10 | 2 | 0 |
 | 피더 | `M_FEEDER` | 4 | 3 | 1 | 0 |
-| S-PARTS | `M_MOLD` | 8 | 0 | 8 | 0 |
+| S-PARTS | `M_MOLD` | 8 | 8 | 0 | 0 |
 | 생산 | `M_PLANNING` | 7 | 0 | 7 | 0 |
 | 공정 | `M_WORKSTAGE0` | 5 | 2 | 3 | 0 |
 | 자재창고 | `M_WAREHOUSE` | 22 | 2 | 20 | 0 |
@@ -153,14 +153,14 @@ verifiedCommit: 7ae1281
 
 | 순서 | 메뉴명 | PB 윈도우 | 원본 | 상태 | MES 메뉴코드 | 경로 |
 |---:|---|---|:--:|---|---|---|
-| 206 | S-PARTS관리 | `w_mcn_mold_master` | srw | 미착수 |  |  |
-| 207 | S-PARTS주문관리 | `w_mcn_mold_purchase_order_master` | srw | 미착수 |  |  |
-| 208 | S-PARTS입고관리 | `w_mcn_mold_receipt_master` | srw | 미착수 |  |  |
-| 209 | S-PARTS출고관리 | `w_mcn_mold_issue_master` | srw | 미착수 |  |  |
-| 210 | S-PARTS재고관리 | `w_mcn_mold_inventory_master` | srw | 미착수 |  |  |
-| 212 | S-PARTS수리신청관리 | `w_mcn_mold_repair_request_master` | srw | 미착수 |  |  |
-| 213 | S-PARTS수리관리 | `w_mcn_mold_repair_master` | srw | 미착수 |  |  |
-| 215 | S-PARTS구매단가관리 | `w_mcn_mold_buy_price_master` | srw | 미착수 |  |  |
+| 206 | S-PARTS관리 | `w_mcn_mold_master` | srw | 완료 | `MOLD_MASTER` | `/mold/master` |
+| 207 | S-PARTS주문관리 | `w_mcn_mold_purchase_order_master` | srw | 완료 | `MOLD_ORDER` | `/mold/order` |
+| 208 | S-PARTS입고관리 | `w_mcn_mold_receipt_master` | srw | 완료 | `MOLD_RECEIPT` | `/mold/receipt` |
+| 209 | S-PARTS출고관리 | `w_mcn_mold_issue_master` | srw | 완료 | `MOLD_ISSUE` | `/mold/issue` |
+| 210 | S-PARTS재고관리 | `w_mcn_mold_inventory_master` | srw | 완료 | `MOLD_INVENTORY` | `/mold/inventory` |
+| 212 | S-PARTS수리신청관리 | `w_mcn_mold_repair_request_master` | srw | 완료 | `MOLD_REPAIR_REQUEST` | `/mold/repair-request` |
+| 213 | S-PARTS수리관리 | `w_mcn_mold_repair_master` | srw | 완료 | `MOLD_REPAIR` | `/mold/repair` |
+| 215 | S-PARTS구매단가관리 | `w_mcn_mold_buy_price_master` | srw | 완료 | `MOLD_PRICE` | `/mold/price` |
 
 ### 생산  `M_PLANNING`
 

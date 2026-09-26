@@ -425,6 +425,7 @@
     "MATERIAL",
     "JIG",
     "FEEDER",
+    "MOLD",
     "PROCESS_TRANSACTION",
     "PRODUCT_MGMT",
     "PRODUCT_INVENTORY",

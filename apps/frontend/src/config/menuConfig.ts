@@ -9,8 +9,20 @@
  * 4. 새 메뉴 추가 시 반드시 고유 code를 부여할 것
  */
 import {
-  Activity, Boxes, Building2, ClipboardList,
-  Cable, Database, GitBranch, Grip, Network, Package, Settings, Warehouse, Wrench,
+  Activity,
+  Boxes,
+  Building2,
+  Cable,
+  ClipboardList,
+  Database,
+  GitBranch,
+  Grip,
+  Hammer,
+  Network,
+  Package,
+  Settings,
+  Warehouse,
+  Wrench,
 } from "lucide-react";
 
 /** 메뉴 설정 항목 인터페이스 */
@@ -142,6 +154,21 @@ export const menuConfig: MenuConfigItem[] = [
       { code: "FEEDER_MASTER", labelKey: "menu.feeder.master", path: "/feeder/master", pbLinkStatus: "powerbuilder", pbWindow: "w_mcn_feeder_master" },
       { code: "FEEDER_REPAIR", labelKey: "menu.feeder.repair", path: "/feeder/repair", pbLinkStatus: "powerbuilder", pbWindow: "w_mcn_feeder_repair_master" },
       { code: "FEEDER_ADJUST", labelKey: "menu.feeder.adjust", path: "/feeder/adjust", pbLinkStatus: "powerbuilder", pbWindow: "w_mcn_jig_feeder_adjust_master" },
+    ],
+  },
+  {
+    code: "MOLD",
+    labelKey: "menu.mold",
+    icon: Hammer,
+    children: [
+      { code: "MOLD_MASTER", labelKey: "menu.mold.master", path: "/mold/master", pbLinkStatus: "powerbuilder", pbWindow: "w_mcn_mold_master" },
+      { code: "MOLD_INVENTORY", labelKey: "menu.mold.inventory", path: "/mold/inventory", pbLinkStatus: "powerbuilder", pbWindow: "w_mcn_mold_inventory_master" },
+      { code: "MOLD_ORDER", labelKey: "menu.mold.order", path: "/mold/order", pbLinkStatus: "powerbuilder", pbWindow: "w_mcn_mold_purchase_order_master" },
+      { code: "MOLD_RECEIPT", labelKey: "menu.mold.receipt", path: "/mold/receipt", pbLinkStatus: "powerbuilder", pbWindow: "w_mcn_mold_receipt_master" },
+      { code: "MOLD_ISSUE", labelKey: "menu.mold.issue", path: "/mold/issue", pbLinkStatus: "powerbuilder", pbWindow: "w_mcn_mold_issue_master" },
+      { code: "MOLD_REPAIR_REQUEST", labelKey: "menu.mold.repairRequest", path: "/mold/repair-request", pbLinkStatus: "powerbuilder", pbWindow: "w_mcn_mold_repair_request_master" },
+      { code: "MOLD_REPAIR", labelKey: "menu.mold.repair", path: "/mold/repair", pbLinkStatus: "powerbuilder", pbWindow: "w_mcn_mold_repair_master" },
+      { code: "MOLD_PRICE", labelKey: "menu.mold.price", path: "/mold/price", pbLinkStatus: "powerbuilder", pbWindow: "w_mcn_mold_buy_price_master" },
     ],
   },
   {

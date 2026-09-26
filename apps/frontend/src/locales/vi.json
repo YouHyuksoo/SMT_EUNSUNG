@@ -442,7 +442,16 @@
     "feeder": "Quản lý feeder",
     "feeder.master": "Quản lý feeder",
     "feeder.repair": "Sửa chữa feeder",
-    "feeder.adjust": "Hiệu chỉnh feeder"
+    "feeder.adjust": "Hiệu chỉnh feeder",
+    "mold": "Quản lý S-PARTS",
+    "mold.master": "Quản lý S-PARTS",
+    "mold.inventory": "Tồn kho S-PARTS",
+    "mold.order": "Đơn đặt hàng S-PARTS",
+    "mold.receipt": "Nhập kho S-PARTS",
+    "mold.issue": "Xuất kho S-PARTS",
+    "mold.repairRequest": "Đăng ký sửa chữa S-PARTS",
+    "mold.repair": "Sửa chữa S-PARTS",
+    "mold.price": "Đơn giá mua S-PARTS"
   },
   "header": {
     "theme": "Giao diện",

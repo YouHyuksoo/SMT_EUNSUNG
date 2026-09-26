@@ -267,6 +267,46 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
       component = mod.getPageComponent();
       break;
     }
+    case "/mold/inventory": {
+      const mod = await import("./page-registries/mold__inventory.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/mold/issue": {
+      const mod = await import("./page-registries/mold__issue.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/mold/master": {
+      const mod = await import("./page-registries/mold__master.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/mold/order": {
+      const mod = await import("./page-registries/mold__order.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/mold/price": {
+      const mod = await import("./page-registries/mold__price.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/mold/receipt": {
+      const mod = await import("./page-registries/mold__receipt.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/mold/repair": {
+      const mod = await import("./page-registries/mold__repair.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/mold/repair-request": {
+      const mod = await import("./page-registries/mold__repair-request.generated");
+      component = mod.getPageComponent();
+      break;
+    }
     case "/oee/dashboard": {
       const mod = await import("./page-registries/oee__dashboard.generated");
       component = mod.getPageComponent();

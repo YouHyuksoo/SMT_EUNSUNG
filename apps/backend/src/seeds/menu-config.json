@@ -8,6 +8,7 @@
     "MATERIAL",
     "JIG",
     "FEEDER",
+    "MOLD",
     "PROCESS_TRANSACTION",
     "PRODUCT_MGMT",
     "PRODUCT_INVENTORY",
@@ -83,6 +84,16 @@
       "FEEDER_MASTER",
       "FEEDER_REPAIR",
       "FEEDER_ADJUST"
+    ],
+    "MOLD": [
+      "MOLD_MASTER",
+      "MOLD_INVENTORY",
+      "MOLD_ORDER",
+      "MOLD_RECEIPT",
+      "MOLD_ISSUE",
+      "MOLD_REPAIR_REQUEST",
+      "MOLD_REPAIR",
+      "MOLD_PRICE"
     ],
     "PROCESS_TRANSACTION": [
       "PLN_WORKSTAGE_PASS",

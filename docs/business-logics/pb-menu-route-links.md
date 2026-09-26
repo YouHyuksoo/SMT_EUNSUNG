@@ -3,7 +3,7 @@ sources:
   - apps/frontend/src/config/menuConfig.ts
   - apps/frontend/scripts/data/pb-screen-inventory.json
 generator: apps/frontend/scripts/gen-migration-status.mjs
-verifiedCommit: 7ae1281
+verifiedCommit: e505f9b
 ---
 
 # PB 윈도우 ↔ 웹 메뉴·경로 연결표 (자동 생성)
@@ -15,7 +15,7 @@ verifiedCommit: 7ae1281
 
 | 전체 웹 메뉴 | PB 연결 | 웹 신규 | 미확정 |
 |---:|---:|---:|---:|
-| 68 | 49 | 17 | 2 |
+| 76 | 57 | 17 | 2 |
 
 ## 전체 연결표
 
@@ -74,6 +74,14 @@ verifiedCommit: 7ae1281
 | 피더관리 | 피더관리 | `FEEDER_MASTER` | `/feeder/master` | PB 연결 | `w_mcn_feeder_master` | PB 메뉴 인벤토리 |
 | 피더관리 | 피더수리관리 | `FEEDER_REPAIR` | `/feeder/repair` | PB 연결 | `w_mcn_feeder_repair_master` | PB 메뉴 인벤토리 |
 | 피더관리 | 피더교정관리 | `FEEDER_ADJUST` | `/feeder/adjust` | PB 연결 | `w_mcn_jig_feeder_adjust_master` | PB 메뉴 인벤토리 |
+| S-PARTS관리 | S-PARTS관리 | `MOLD_MASTER` | `/mold/master` | PB 연결 | `w_mcn_mold_master` | PB 메뉴 인벤토리 |
+| S-PARTS관리 | S-PARTS재고관리 | `MOLD_INVENTORY` | `/mold/inventory` | PB 연결 | `w_mcn_mold_inventory_master` | PB 메뉴 인벤토리 |
+| S-PARTS관리 | S-PARTS주문관리 | `MOLD_ORDER` | `/mold/order` | PB 연결 | `w_mcn_mold_purchase_order_master` | PB 메뉴 인벤토리 |
+| S-PARTS관리 | S-PARTS입고관리 | `MOLD_RECEIPT` | `/mold/receipt` | PB 연결 | `w_mcn_mold_receipt_master` | PB 메뉴 인벤토리 |
+| S-PARTS관리 | S-PARTS출고관리 | `MOLD_ISSUE` | `/mold/issue` | PB 연결 | `w_mcn_mold_issue_master` | PB 메뉴 인벤토리 |
+| S-PARTS관리 | S-PARTS수리신청관리 | `MOLD_REPAIR_REQUEST` | `/mold/repair-request` | PB 연결 | `w_mcn_mold_repair_request_master` | PB 메뉴 인벤토리 |
+| S-PARTS관리 | S-PARTS수리관리 | `MOLD_REPAIR` | `/mold/repair` | PB 연결 | `w_mcn_mold_repair_master` | PB 메뉴 인벤토리 |
+| S-PARTS관리 | S-PARTS구매단가관리 | `MOLD_PRICE` | `/mold/price` | PB 연결 | `w_mcn_mold_buy_price_master` | PB 메뉴 인벤토리 |
 | 공정수불관리 | 공정통과이력 관리 | `PLN_WORKSTAGE_PASS` | `/process-transaction/workstage-pass` | PB 연결 | `w_pln_product_inout_scan_master` | PB 메뉴 인벤토리 |
 | 공정수불관리 | 매거진발행이력 | `PLN_MAGAZINE_LABEL_HISTORY` | `/process-transaction/magazine-label-history` | PB 연결 | `w_pln_product_magazine_label_query` | PB 메뉴 인벤토리 |
 | 제품재고관리 | 제품재고조회 | `PRD_CURRENT_INVENTORY` | `/product/current-inventory` | PB 연결 | `w_prd_product_fg_inventory` | PB 메뉴 인벤토리 |

@@ -3,7 +3,7 @@ sources:
   - apps/frontend/scripts/data/pb-function-catalog.json
   - docs/database/generated/pb-function-inventory.json
 generator: apps/frontend/scripts/gen-function-status.mjs
-verifiedCommit: 7ae1281
+verifiedCommit: e505f9b
 ---
 
 # PB 함수 처리 현황 (자동 생성)
@@ -23,12 +23,12 @@ DB 함수는 웹에서도 **그대로 호출**합니다 — 재구현하면 PB �
 | PB 창(실측) | 547 |
 | SQL 안 호출 = DB 함수 (조치 불필요) | 65 |
 | SQL 밖 호출 = PB 함수 | 219 |
-| 카탈로그 등록(처리 완료) | 22 |
-| 미처리 전환 후보 | 57 |
+| 카탈로그 등록(처리 완료) | 33 |
+| 미처리 전환 후보 | 53 |
 
 ## 처리 완료 (카탈로그)
 
-### DB 패키지 전환 (`converted`) — 5건
+### DB 패키지 전환 (`converted`) — 11건
 
 | PB 함수 | 대상 | 비고 |
 |---|---|---|
@@ -37,6 +37,12 @@ DB 함수는 웹에서도 **그대로 호출**합니다 — 재구현하면 PB �
 | `f_get_marking_yn` | `PKG_MES_PLN.F_GET_MARKING_YN` | 모델 마킹 사용여부. 조회 실패 시 'N'. |
 | `f_get_carrier_size` | `PKG_MES_PLN.F_GET_CARRIER_SIZE` | 모델 캐리어 규격. 모델 없으면 -1, 값 없으면 0. |
 | `f_get_magazine_lot_qty` | `PKG_MES_PLN.F_GET_MAGAZINE_LOT_QTY` | 매거진 라벨 LOT 수량. 라벨 없으면 0. |
+| `f_check_mold_exists` | `PKG_MES_MAC.F_CHECK_MOLD_EXISTS` | S-PARTS 코드 존재 검사. PB 반환규약 유지 — 없으면 -1, 있으면 건수. |
+| `f_check_supplier_exists` | `PKG_MES_MAC.F_CHECK_SUPPLIER_EXISTS` | 공급처 코드 존재 검사. 없으면 -1, 있으면 건수. |
+| `f_get_mold_unit_price` | `PKG_MES_MAC.F_GET_MOLD_UNIT_PRICE` | 오늘 유효한 S-PARTS 구매단가. 없으면 -2. PB 는 통화를 전역구조체로 같이 넘겼으나 함수는 값이 하나뿐이라 통화는 F_GET_MOLD_UNIT_PRICE_CURR 로 나눴다. |
+| `f_get_mold_unit_price_by_confirm` | `PKG_MES_MAC.F_GET_MOLD_UNIT_PRICE(..., 'Y')` | 승인된 단가만 보는 변형. 별도 함수를 만들지 않고 p_confirm_only 인자로 합쳤다. |
+| `f_mcn_mold_receipt_cancel` | `PKG_MES_MAC.SP_MOLD_RECEIPT_CANCEL` | S-PARTS 입고 1건 상계(역분개). 항번은 SEQ_MAT_RECEIPT. PB 반환규약 유지(-1/-3), -2(이미취소)는 웹에서 추가. |
+| `f_mcn_mold_issue_cancel` | `PKG_MES_MAC.SP_MOLD_ISSUE_CANCEL` | S-PARTS 출고 1건 상계 + 청구를 미처리('R')로 되돌림. 항번은 SEQ_MAT_ISSUE. |
 
 ### 웹 수단으로 치환 (`replaced`) — 8건
 
@@ -51,7 +57,7 @@ DB 함수는 웹에서도 **그대로 호출**합니다 — 재구현하면 PB �
 | `f_set_security_row` | `백엔드 저장 시 감사컬럼 자동 기록` | 권한 가드가 아니다. ARG_TYPE 에 따라 ORGANIZATION_ID / ENTER_BY / ENTER_DATE / LAST_MODIFY_BY / LAST_MODIFY_DATE 를 로그인 사용자·서버시각으로 채우는 함수다. ALL=전체, MODIFY=수정컬럼만, NONORG=조직ID 제외. 웹은 서비스의 INSERT/UPDATE 에서 organizationId·userId·SYSDATE 로 같은 컬럼을 채운다. |
 | `f_object_role_check` | `권한 가드` | USER_LEVEL 검사 후 메시지박스. 웹은 가드가 403 을 낸다. |
 
-### 제거 (`dropped`) — 4건
+### 제거 (`dropped`) — 6건
 
 | PB 함수 | 대상 | 비고 |
 |---|---|---|
@@ -59,6 +65,8 @@ DB 함수는 웹에서도 **그대로 호출**합니다 — 재구현하면 PB �
 | `f_retrieve` | — | MDI 활성 시트 조회 트리거. 웹에는 대응물이 없다. |
 | `f_menu_control` | — | MDI 프레임 메뉴 활성화 제어. 웹 메뉴 권한이 대신한다. |
 | `f_jssetprofilestring` | — | INI 파일 I/O. 설정은 DB(ISYS_CONFIG)·환경변수로 간다. |
+| `f_insert` | — | PB DataWindow InsertRow 래퍼. 웹은 우측 폼 패널이 대신한다. |
+| `f_update` | — | PB DataWindow Update 래퍼. 웹은 백엔드 저장 API 가 대신한다. |
 
 ### 서비스에 이식 (`inlined`) — 1건
 
@@ -66,19 +74,22 @@ DB 함수는 웹에서도 **그대로 호출**합니다 — 재구현하면 PB �
 |---|---|---|
 | `f_get_first_day` | `receipt-cancel.service.ts firstDayOfMonth()` | 한 화면 전용 날짜 계산이라 DB 오브젝트를 늘리지 않는다. |
 
-### 웹에서 직접 (`native`) — 3건
+### 웹에서 직접 (`native`) — 5건
 
 | PB 함수 | 대상 | 비고 |
 |---|---|---|
 | `f_t_sysdate` | `백엔드 서버 시각 (main.ts KST 고정)` | f_sysdate 도 동일. 본문이 SELECT SYSDATE FROM DUAL 뿐이라 전환 무의미. |
 | `f_sysdate` | `백엔드 서버 시각` | f_t_sysdate 와 동일. |
 | `f_get_sequence` | `시퀀스 직접 호출 (예: SEQ_MAT_RECEIPT.NEXTVAL)` | 동적 SQL 로 임의 시퀀스를 부르던 래퍼. 웹은 대상 시퀀스를 직접 쓴다 (예: SEQ_MAT_RECEIPT.NEXTVAL, SEQ_JIG_CHECK_SEQUENCE.NEXTVAL). |
+| `f_get_supplier_name` | `F_GET_SUPPLIER_NAME` | 이미 DB 함수로 존재한다(VALID). PB 가 SQL 밖에서 SELECT ... FROM DUAL 로 감싸 불렀을 뿐이라 전환 대상이 아니다. |
+| `f_get_dual_lang_text` | `F_GET_DUAL_LANG_TEXT` | 이미 DB 함수로 존재한다(VALID). 웹은 화면 문구를 i18n 으로 내므로 호출할 일은 없다. |
 
-### 전환 보류 (`blocked`) — 1건
+### 전환 보류 (`blocked`) — 2건
 
 | PB 함수 | 대상 | 비고 |
 |---|---|---|
 | `f_get_dynamic_report_name` | — | 전환 보류 — 참조 컬럼 QR_PID_DW_NAME / PACKING_LABEL_DW_NAME 이 이 DB 의 IP_PRODUCT_MODEL_MASTER 에 없다. |
+| `f_download_mold_rtn_filename` | — | 전환 불가 — PB 파일 I/O(SETPOINTER + 파일 다운로드). 첨부 기능은 S-PARTS 이관 범위에서 제외했다. |
 
 ## 미처리 전환 후보
 
@@ -95,7 +106,6 @@ DB 함수는 웹에서도 **그대로 호출**합니다 — 재구현하면 PB �
 | `f_play_mp3` | 23 | 6 | w_pln_product_magazine_label_split_master, w_prd_product_fg_4_model_issue |
 | `f_get_token` | 15 | 5 | w_dynamic_graph_popup, w_dynamic_where_condition_popup |
 | `f_check_slip_exists` | 6 | 5 | w_mat_other_receipt_rental_borrowing_barcode_master, w_mat_receipt_slip_4_rental_borrowing_master |
-| `f_check_supplier_exists` | 5 | 5 | w_mat_material_receipt_excel_form_popup, w_mat_material_unit_price_excel_form_popup |
 | `f_get_line_code_by_item` | 8 | 4 | w_mat_inventory_close_excel_import_popup, w_mat_receipt_slip_excel_import_popup |
 | `f_get_order_dc_rate` | 5 | 4 | w_mat_item_departure_excel_form_popup, w_mat_item_purchase_excel_form_popup |
 | `f_dual_lang_object_count` | 4 | 4 | w_col_info_popup, w_replace_popup |
@@ -105,7 +115,6 @@ DB 함수는 웹에서도 **그대로 호출**합니다 — 재구현하면 PB �
 | `f_get_mat_inspect_rule` | 4 | 3 | w_mat_departure_4_goods_master, w_mat_departure_master |
 | `f_get_item_type_from_item` | 3 | 3 | w_des_bom_modify_master, w_mat_request_issue_master |
 | `f_get_item_auto_issue_yn` | 3 | 3 | w_mat_material_receipt_excel_form_popup, w_mat_material_unit_price_excel_form_popup |
-| `f_check_mold_exists` | 3 | 3 | w_mcn_mold_buy_price_master, w_mcn_mold_issue_master |
 | `f_download_item_image` | 2 | 2 | w_item_image_flat, w_machine_image_flat |
 | `f_system_access` | 2 | 2 | w_logon, w_main_root |
 | `f_get_computer_name` | 2 | 2 | w_main_frame, w_user_change |
@@ -137,8 +146,6 @@ DB 함수는 웹에서도 **그대로 호출**합니다 — 재구현하면 PB �
 | `f_mat_issue_4_lot_divide_cancel` | 1 | 1 | w_mat_reel_divide_cancel_popup |
 | `f_gen_work_order_to_assy_plan` | 1 | 1 | w_mat_workorder_master |
 | `f_mcn_jig_issue_cancel` | 1 | 1 | w_mcn_jig_issue_master |
-| `f_mcn_mold_issue_cancel` | 1 | 1 | w_mcn_mold_issue_master |
-| `f_mcn_mold_receipt_cancel` | 1 | 1 | w_mcn_mold_receipt_master |
 | `f_download_mold_image` | 1 | 1 | w_mold_image_flat |
 | `f_get_magazine_size` | 1 | 1 | w_pln_product_magazine_label_master |
 | `f_get_item_code_by_model_suffix` | 1 | 1 | w_pln_product_master_plan_master |

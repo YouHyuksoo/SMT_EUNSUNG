@@ -148,6 +148,80 @@
       "action": "dropped",
       "target": null,
       "note": "INI 파일 I/O. 설정은 DB(ISYS_CONFIG)·환경변수로 간다."
+    },
+    {
+      "pbFunction": "f_check_mold_exists",
+      "action": "converted",
+      "target": "PKG_MES_MAC.F_CHECK_MOLD_EXISTS",
+      "source": "oracle_db_scripts/PKG_MES_MAC.sql",
+      "note": "S-PARTS 코드 존재 검사. PB 반환규약 유지 — 없으면 -1, 있으면 건수."
+    },
+    {
+      "pbFunction": "f_check_supplier_exists",
+      "action": "converted",
+      "target": "PKG_MES_MAC.F_CHECK_SUPPLIER_EXISTS",
+      "source": "oracle_db_scripts/PKG_MES_MAC.sql",
+      "note": "공급처 코드 존재 검사. 없으면 -1, 있으면 건수."
+    },
+    {
+      "pbFunction": "f_get_mold_unit_price",
+      "action": "converted",
+      "target": "PKG_MES_MAC.F_GET_MOLD_UNIT_PRICE",
+      "source": "oracle_db_scripts/PKG_MES_MAC.sql",
+      "note": "오늘 유효한 S-PARTS 구매단가. 없으면 -2. PB 는 통화를 전역구조체로 같이 넘겼으나 함수는 값이 하나뿐이라 통화는 F_GET_MOLD_UNIT_PRICE_CURR 로 나눴다."
+    },
+    {
+      "pbFunction": "f_get_mold_unit_price_by_confirm",
+      "action": "converted",
+      "target": "PKG_MES_MAC.F_GET_MOLD_UNIT_PRICE(..., 'Y')",
+      "source": "oracle_db_scripts/PKG_MES_MAC.sql",
+      "note": "승인된 단가만 보는 변형. 별도 함수를 만들지 않고 p_confirm_only 인자로 합쳤다."
+    },
+    {
+      "pbFunction": "f_mcn_mold_receipt_cancel",
+      "action": "converted",
+      "target": "PKG_MES_MAC.SP_MOLD_RECEIPT_CANCEL",
+      "source": "oracle_db_scripts/PKG_MES_MAC.sql",
+      "usedBy": "apps/backend/src/modules/mold/mold-receipt.service.ts",
+      "note": "S-PARTS 입고 1건 상계(역분개). 항번은 SEQ_MAT_RECEIPT. PB 반환규약 유지(-1/-3), -2(이미취소)는 웹에서 추가."
+    },
+    {
+      "pbFunction": "f_mcn_mold_issue_cancel",
+      "action": "converted",
+      "target": "PKG_MES_MAC.SP_MOLD_ISSUE_CANCEL",
+      "source": "oracle_db_scripts/PKG_MES_MAC.sql",
+      "usedBy": "apps/backend/src/modules/mold/mold-issue.service.ts",
+      "note": "S-PARTS 출고 1건 상계 + 청구를 미처리('R')로 되돌림. 항번은 SEQ_MAT_ISSUE."
+    },
+    {
+      "pbFunction": "f_get_supplier_name",
+      "action": "native",
+      "target": "F_GET_SUPPLIER_NAME",
+      "note": "이미 DB 함수로 존재한다(VALID). PB 가 SQL 밖에서 SELECT ... FROM DUAL 로 감싸 불렀을 뿐이라 전환 대상이 아니다."
+    },
+    {
+      "pbFunction": "f_get_dual_lang_text",
+      "action": "native",
+      "target": "F_GET_DUAL_LANG_TEXT",
+      "note": "이미 DB 함수로 존재한다(VALID). 웹은 화면 문구를 i18n 으로 내므로 호출할 일은 없다."
+    },
+    {
+      "pbFunction": "f_download_mold_rtn_filename",
+      "action": "blocked",
+      "target": null,
+      "note": "전환 불가 — PB 파일 I/O(SETPOINTER + 파일 다운로드). 첨부 기능은 S-PARTS 이관 범위에서 제외했다."
+    },
+    {
+      "pbFunction": "f_insert",
+      "action": "dropped",
+      "target": null,
+      "note": "PB DataWindow InsertRow 래퍼. 웹은 우측 폼 패널이 대신한다."
+    },
+    {
+      "pbFunction": "f_update",
+      "action": "dropped",
+      "target": null,
+      "note": "PB DataWindow Update 래퍼. 웹은 백엔드 저장 API 가 대신한다."
     }
   ]
 }

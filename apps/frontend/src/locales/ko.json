@@ -442,7 +442,16 @@
     "feeder": "피더관리",
     "feeder.master": "피더관리",
     "feeder.repair": "피더수리관리",
-    "feeder.adjust": "피더교정관리"
+    "feeder.adjust": "피더교정관리",
+    "mold": "S-PARTS관리",
+    "mold.master": "S-PARTS관리",
+    "mold.inventory": "S-PARTS재고관리",
+    "mold.order": "S-PARTS주문관리",
+    "mold.receipt": "S-PARTS입고관리",
+    "mold.issue": "S-PARTS출고관리",
+    "mold.repairRequest": "S-PARTS수리신청관리",
+    "mold.repair": "S-PARTS수리관리",
+    "mold.price": "S-PARTS구매단가관리"
   },
   "header": {
     "theme": "테마",

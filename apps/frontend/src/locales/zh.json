@@ -442,7 +442,16 @@
     "feeder": "供料器管理",
     "feeder.master": "供料器管理",
     "feeder.repair": "供料器维修管理",
-    "feeder.adjust": "供料器校正管理"
+    "feeder.adjust": "供料器校正管理",
+    "mold": "S-PARTS管理",
+    "mold.master": "S-PARTS管理",
+    "mold.inventory": "S-PARTS库存管理",
+    "mold.order": "S-PARTS订单管理",
+    "mold.receipt": "S-PARTS入库管理",
+    "mold.issue": "S-PARTS出库管理",
+    "mold.repairRequest": "S-PARTS维修申请管理",
+    "mold.repair": "S-PARTS维修管理",
+    "mold.price": "S-PARTS采购单价管理"
   },
   "header": {
     "theme": "主题",
