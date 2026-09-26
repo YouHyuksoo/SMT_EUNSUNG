@@ -75,7 +75,10 @@ for (const target of deleted.scanTargets) {
     if (containsLiteral(source, route)) failures.push(`삭제된 라우트 부활: ${route} -> ${target}`);
   }
   for (const code of deleted.forbiddenCodes) {
-    if (source.includes(code)) failures.push(`삭제된 메뉴코드 부활: ${code} -> ${target}`);
+    // 라우트와 같이 인용부호로 감싼 형태만 본다. 부분문자열로 보면
+    // 삭제된 코드를 접두어로 가진 새 코드(예: QC_IQC → QC_IQC_MASTER)를 잘못 막는다.
+    // forbiddenCodes 안에도 접두어 관계가 27쌍 있어 부분문자열 검사로는 서로 구분되지 않았다.
+    if (containsLiteral(source, code)) failures.push(`삭제된 메뉴코드 부활: ${code} -> ${target}`);
   }
 }
 

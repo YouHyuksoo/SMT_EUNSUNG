@@ -107,6 +107,7 @@
       "PRD_RUN_CARD"
     ],
     "QUALITY": [
+      "QC_IQC_MASTER",
       "QC_REPAIR_HISTORY",
       "QC_PRODUCT_DESTROY"
     ],

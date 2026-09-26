@@ -3,7 +3,7 @@ sources:
   - apps/frontend/src/config/menuConfig.ts
   - apps/frontend/scripts/data/pb-screen-inventory.json
 generator: apps/frontend/scripts/gen-migration-status.mjs
-verifiedCommit: e505f9b
+verifiedCommit: 45ca6bd
 ---
 
 # PB 화면 이관 현황 (자동 생성)
@@ -17,11 +17,11 @@ verifiedCommit: e505f9b
 | 상태 | 건수 |
 |---|---:|
 | PB 업무화면(셸 메뉴 제외) | 275 |
-| 완료(개발됨, pbWindow 매핑) | 55 |
-| 미착수 | 194 |
+| 완료(개발됨, pbWindow 매핑) | 56 |
+| 미착수 | 193 |
 | 윈도우 미상 | 26 |
 
-웹 메뉴 연결 계약: **PB 57개 / 웹 신규 17개 / 미확정 2개**. PB 매핑과 웹 경로의 전체 연결표는 [pb-menu-route-links.md](pb-menu-route-links.md)에서 관리합니다.
+웹 메뉴 연결 계약: **PB 58개 / 웹 신규 17개 / 미확정 2개**. PB 매핑과 웹 경로의 전체 연결표는 [pb-menu-route-links.md](pb-menu-route-links.md)에서 관리합니다.
 
 ## 대분류별 진행률
 
@@ -39,7 +39,7 @@ verifiedCommit: e505f9b
 | 자재창고 | `M_WAREHOUSE` | 22 | 2 | 20 | 0 |
 | 재고 | `M_INVENTORY` | 5 | 1 | 4 | 0 |
 | 수리 | `M_REPAIR` | 4 | 2 | 2 | 0 |
-| 품질관리 | `M_QC` | 12 | 0 | 12 | 0 |
+| 품질관리 | `M_QC` | 12 | 1 | 11 | 0 |
 | 출하현황 | `M_SHIPPING` | 10 | 1 | 9 | 0 |
 | 추적 | `M_TRACKING` | 7 | 0 | 7 | 0 |
 | 조회 | `M_QUERY` | 11 | 0 | 11 | 0 |
@@ -56,7 +56,7 @@ verifiedCommit: e505f9b
 |---:|---|---|:--:|---|---|---|
 | 119 | 고객관리 | `w_com_customer_master` | srw | 완료 | `MST_CUSTOMER` | `/master/customer` |
 | 120 | 협력사관리 | `w_com_supplier_master` | srw | 미착수 |  |  |
-| 122 | 품목관리 | `w_des_item_master` | pbg | 완료 | `MST_PART` | `/master/part` |
+| 122 | 품목관리 | `w_des_item_master` | srw | 완료 | `MST_PART` | `/master/part` |
 | 123 | 제품모델관리 | `w_pln_product_model_simple_master` | srw | 완료 | `MST_PRODUCT_MODEL` | `/master/product-model` |
 | 124 | 품목(공급상)관리 | `w_mat_item_master` | srw | 완료 | `MST_ITEM_SUPPLIER` | `/master/item-supplier` |
 | 125 | LED RANK 관리 | `w_com_mat_rank_master` | srw | 미착수 |  |  |
@@ -94,7 +94,7 @@ verifiedCommit: e505f9b
 | 153 | SMT BOM 대체관리 | `w_smt_bom_replace_master` | srw | 미착수 |  |  |
 | 155 | SMT 피더레이아웃 등록 | `w_smt_upload_nc_master` | srw | 미착수 |  |  |
 | 156 | SMT BOM 관리 | `w_smt_bom_create_master` | srw | 미착수 |  |  |
-| 157 | SMT 계획배포관리 | `w_smt_plan_master` | pbg | 미착수 |  |  |
+| 157 | SMT 계획배포관리 | `w_smt_plan_master` | srw | 미착수 |  |  |
 | 159 | SMT BOM 관리리포트 | `w_smt_bom_master_rpt` | srw | 미착수 |  |  |
 | 160 | 피더레이아웃 비교 | `w_smt_bom_comparison_master_rpt` | srw | 미착수 |  |  |
 | 162 | 마운터 픽업정보관리 | `w_mcn_feeder_pickup_master` | srw | 미착수 |  |  |
@@ -106,14 +106,14 @@ verifiedCommit: e505f9b
 | 164 | AOI 검사결과조회 |  | — | 윈도우미상 |  |  |
 | 164 | 설비자주보전관리 | `w_mcn_machine_pm_master` | srw | 미착수 |  |  |
 | 165 | 설비관리 | `w_mcn_machine_master` | srw | 완료 | `EQUIP_MASTER` | `/master/equip` |
-| 166 | 설비수리이력관리 | `w_mcn_machine_repair_request_master` | pbg | 미착수 |  |  |
+| 166 | 설비수리이력관리 | `w_mcn_machine_repair_request_master` | srw | 미착수 |  |  |
 | 167 | 설비수리관리 | `w_mcn_machine_repair_master` | srw | 미착수 |  |  |
 | 168 | 설비자주보전관리 | `w_mcn_machine_pm_master` | srw | 미착수 |  |  |
 | 169 | 설비일일운행관리 | `w_mcn_machine_daily_operation` | srw | 미착수 |  |  |
 | 171 | SP 작업결과조회 | `w_qc_machine_inspect_data_sp_query` | srw | 완료 | `EQUIP_RESULT_SP` | `/equipment/result-query/sp` |
 | 172 | SPI 검사결과조회 | `w_spi_time_query` | srw | 완료 | `EQUIP_RESULT_SPI` | `/equipment/result-query/spi` |
 | 173 | ICT 검사결과조회 | `w_qc_machine_inspect_data_ict_query` | srw | 완료 | `EQUIP_RESULT_ICT` | `/equipment/result-query/ict` |
-| 174 | AOI 검사결과조회 | `w_aoi_header_detail_query` | pbg | 완료 | `EQUIP_RESULT_AOI` | `/equipment/result-query/aoi` |
+| 174 | AOI 검사결과조회 | `w_aoi_header_detail_query` | srw | 완료 | `EQUIP_RESULT_AOI` | `/equipment/result-query/aoi` |
 | 175 | Router작업결과조회 | `w_qc_machine_inspect_data_rt_query` | srw | 완료 | `EQUIP_RESULT_ROUTER` | `/equipment/result-query/router` |
 | 176 | RomWrite작업결과조회 | `w_qc_machine_inspect_data_rw_query` | srw | 완료 | `EQUIP_RESULT_ROM_WRITE` | `/equipment/result-query/rom-write` |
 | 177 | 솔더점도 검사결과조회 | `w_qc_machine_inspect_data_solder_query` | srw | 완료 | `EQUIP_RESULT_SOLDER` | `/equipment/result-query/solder` |
@@ -127,15 +127,15 @@ verifiedCommit: e505f9b
 
 | 순서 | 메뉴명 | PB 윈도우 | 원본 | 상태 | MES 메뉴코드 | 경로 |
 |---:|---|---|:--:|---|---|---|
-| 185 | 지그마스터 | `w_mcn_jig_master` | pbg | 완료 | `JIG_MASTER` | `/jig/master` |
+| 185 | 지그마스터 | `w_mcn_jig_master` | srw | 완료 | `JIG_MASTER` | `/jig/master` |
 | 186 | 지그출고관리 | `w_mcn_jig_issue_master` | srw | 완료 | `JIG_ISSUE` | `/jig/issue` |
 | 187 | 지그수리신청 | `w_mcn_jig_repair_request_master` | srw | 미착수 |  |  |
 | 188 | 지그수리관리 | `w_mcn_jig_repair_master` | srw | 완료 | `JIG_REPAIR` | `/jig/repair` |
 | 189 | 지그자주보전관리 | `w_mcn_jig_pm_master` | srw | 완료 | `JIG_PM` | `/jig/pm` |
 | 191 | 지그마스터 투입이력조회 | `w_mcn_jig_input_history_master` | srw | 완료 | `JIG_INPUT_HISTORY` | `/jig/input-history` |
 | 193 | 스퀴즈검사관리 | `w_mcn_jig_squeeze_check_master` | srw | 완료 | `JIG_SQUEEZE_CHECK` | `/jig/squeeze-check` |
-| 194 | 메탈마스크텐션관리 | `w_mcn_jig_mask_tension_check_master` | pbg | 완료 | `JIG_MASK_CHECK` | `/jig/mask-check` |
-| 195 | 스퀴지검사관리 | `w_mcn_jig_squeeze_clean_check_master` | pbg | 미착수 |  |  |
+| 194 | 메탈마스크텐션관리 | `w_mcn_jig_mask_tension_check_master` | srw | 완료 | `JIG_MASK_CHECK` | `/jig/mask-check` |
+| 195 | 스퀴지검사관리 | `w_mcn_jig_squeeze_clean_check_master` | srw | 미착수 |  |  |
 | 197 | 샘플마스터 관리 | `w_mcn_sample_master` | srw | 완료 | `JIG_SAMPLE` | `/jig/sample` |
 | 198 | 샘플마스터 장착이력조회 | `w_mcn_sample_input_history_master` | srw | 완료 | `JIG_SAMPLE_INPUT_HISTORY` | `/jig/sample-input-history` |
 | 199 | 샘플마스터 투입이력조회 | `w_mcn_sample_bcr_input_history_master` | srw | 완료 | `JIG_SAMPLE_BCR_HISTORY` | `/jig/sample-bcr-history` |
@@ -167,7 +167,7 @@ verifiedCommit: e505f9b
 | 순서 | 메뉴명 | PB 윈도우 | 원본 | 상태 | MES 메뉴코드 | 경로 |
 |---:|---|---|:--:|---|---|---|
 | 217 | 제품생산계획 | `w_pln_product_master_plan_master` | srw | 미착수 |  |  |
-| 218 | 반제품생산계획 | `w_pln_assembly_master_plan_master` | pbg | 미착수 |  |  |
+| 218 | 반제품생산계획 | `w_pln_assembly_master_plan_master` | srw | 미착수 |  |  |
 | 219 | 반제품생산실적관리 | `w_pln_assembly_actual_master` | srw | 미착수 |  |  |
 | 221 | 롯트카드관리 | `w_product_run_card_duckil` | srw | 미착수 |  |  |
 | 222 | 롯트카드-PID 매핑관리 | `w_pln_product_pcb_kitting_scan_master` | srw | 미착수 |  |  |
@@ -179,7 +179,7 @@ verifiedCommit: e505f9b
 | 순서 | 메뉴명 | PB 윈도우 | 원본 | 상태 | MES 메뉴코드 | 경로 |
 |---:|---|---|:--:|---|---|---|
 | 227 | 제품공정인아웃스캔관리 | `w_pln_product_inout_scan_master` | srw | 완료 | `PLN_WORKSTAGE_PASS` | `/process-transaction/workstage-pass` |
-| 229 | 매거진라벨 발행 | `w_pln_product_magazine_label_master2` | pbg | 미착수 |  |  |
+| 229 | 매거진라벨 발행 | `w_pln_product_magazine_label_master2` | srw | 미착수 |  |  |
 | 230 | 매거진라벨 분할 | `w_pln_product_magazine_label_split_master` | srw | 미착수 |  |  |
 | 231 | 매거진-PID 매핑관리 | `w_pln_product_barcode_create_master` | srw | 미착수 |  |  |
 | 233 | 매거진라벨이력조회 | `w_pln_product_magazine_label_query` | srw | 완료 | `PLN_MAGAZINE_LABEL_HISTORY` | `/process-transaction/magazine-label-history` |
@@ -189,15 +189,15 @@ verifiedCommit: e505f9b
 | 순서 | 메뉴명 | PB 윈도우 | 원본 | 상태 | MES 메뉴코드 | 경로 |
 |---:|---|---|:--:|---|---|---|
 | 235 | 자재입고전표관리 | `w_mat_receipt_slip_master` | srw | 미착수 |  |  |
-| 237 | 자재바코드입고관리 | `w_mat_other_receipt_barcode_master` | pbg | 미착수 |  |  |
+| 237 | 자재바코드입고관리 | `w_mat_other_receipt_barcode_master` | srw | 미착수 |  |  |
 | 238 | 자재바코드출고관리 | `w_mat_other_issue_barcode_master` | srw | 미착수 |  |  |
 | 239 | IMD 라인 자재투입관리 | `w_mat_manual_input_history_query` | srw | 미착수 |  |  |
-| 240 | 자재분할관리 | `w_mat_receipt_barcode_divide_master` | pbg | 미착수 |  |  |
+| 240 | 자재분할관리 | `w_mat_receipt_barcode_divide_master` | srw | 미착수 |  |  |
 | 241 | 자재바코드재발행 | `w_mat_receipt_barcode_reprint_master` | srw | 미착수 |  |  |
 | 243 | 솔더라벨 발행 | `w_mat_receipt_slip_master_onetek_solder` | srw | 미착수 |  |  |
 | 244 | 솔더입출고조회 | `w_mat_solder_receipt_issue_master` | srw | 미착수 |  |  |
 | 245 | 솔더라인투입이력조회 | `w_mat_solder_input_move_query` | srw | 미착수 |  |  |
-| 247 | 자재입출고수불원장 | `w_mat_ledger_report` | pbg | 완료 | `MAT_RECEIPT_ISSUE_LEDGER` | `/material/receipt-issue-ledger` |
+| 247 | 자재입출고수불원장 | `w_mat_ledger_report` | srw | 완료 | `MAT_RECEIPT_ISSUE_LEDGER` | `/material/receipt-issue-ledger` |
 | 250 | └ 출고바코드반품(양산/벌크)관리 | `w_mat_other_mass_issue_barcode_return_master` | srw | 미착수 |  |  |
 | 253 | └ 자재입고관리 | `w_mat_receipt_master` | srw | 미착수 |  |  |
 | 254 | └ 자재기타입고관리 | `w_mat_other_receipt_master` | srw | 미착수 |  |  |
@@ -209,13 +209,13 @@ verifiedCommit: e505f9b
 | 262 | 베이킹재고조회 | `w_mat_baking_scan_query` | srw | 미착수 |  |  |
 | 263 | 진공포장재고조회 | `w_mat_vacuum_scan_query` | srw | 미착수 |  |  |
 | 264 | 제습함재고조회 | `w_mat_dehumi_scan_query` | srw | 미착수 |  |  |
-| 266 | SMT 공릴체크 | `w_smt_recycle_check_rpt` | pbg | 미착수 |  |  |
+| 266 | SMT 공릴체크 | `w_smt_recycle_check_rpt` | srw | 미착수 |  |  |
 
 ### 재고  `M_INVENTORY`
 
 | 순서 | 메뉴명 | PB 윈도우 | 원본 | 상태 | MES 메뉴코드 | 경로 |
 |---:|---|---|:--:|---|---|---|
-| 268 | 현재고조회 | `w_mat_current_inventory_master` | pbg | 완료 | `MAT_CURRENT_INVENTORY` | `/material/current-inventory` |
+| 268 | 현재고조회 | `w_mat_current_inventory_master` | srw | 완료 | `MAT_CURRENT_INVENTORY` | `/material/current-inventory` |
 | 269 | 총재고조회 | `w_mat_total_inventory_query` | srw | 미착수 |  |  |
 | 271 | 자재재고마감 | `w_mat_inventory_close_report` | srw | 미착수 |  |  |
 | 272 | 자재재고조사 | `w_mat_inventory_check_master` | srw | 미착수 |  |  |
@@ -228,13 +228,13 @@ verifiedCommit: e505f9b
 | 276 | 공정수리관리(PID) | `w_pln_product_pcb_repair_master` | srw | 완료 | `QC_REPAIR_HISTORY` | `/quality/repair-history` |
 | 278 | 공정폐기관리 | `w_pln_product_pcb_destroy_master` | srw | 완료 | `QC_PRODUCT_DESTROY` | `/quality/product-destroy` |
 | 280 | 수리자재신청 | `w_mat_request_master` | srw | 미착수 |  |  |
-| 281 | 공정수리이력조회 | `w_pln_product_pcb_repair_query` | pbg | 미착수 |  |  |
+| 281 | 공정수리이력조회 | `w_pln_product_pcb_repair_query` | srw | 미착수 |  |  |
 
 ### 품질관리  `M_QC`
 
 | 순서 | 메뉴명 | PB 윈도우 | 원본 | 상태 | MES 메뉴코드 | 경로 |
 |---:|---|---|:--:|---|---|---|
-| 283 | IQC 관리 | `w_qc_iqc_master` | pbg | 미착수 |  |  |
+| 283 | IQC 관리 | `w_qc_iqc_master` | srw | 완료 | `QC_IQC_MASTER` | `/quality/iqc` |
 | 284 | IQC 이력등록관리 | `w_qc_iqc_inspect_history_master` | srw | 미착수 |  |  |
 | 285 | PCB 이슈발생스캔관리 | `w_pln_product_pid_issue_scan_master` | srw | 미착수 |  |  |
 | 287 | 재고통제관리 | `w_qc_inventory_hold_master` | srw | 미착수 |  |  |
@@ -242,22 +242,22 @@ verifiedCommit: e505f9b
 | 289 | 품질이상발생관리 | `w_qc_notify_master` | srw | 미착수 |  |  |
 | 290 | 품질알림관리 | `w_qc_eco_notify_master` | srw | 미착수 |  |  |
 | 291 | 4M 이력관리 | `w_qc_4m_master` | srw | 미착수 |  |  |
-| 293 | 공정품질검사이력관리 | `w_qc_workstage_inspect_data_master_es` | pbg | 미착수 |  |  |
+| 293 | 공정품질검사이력관리 | `w_qc_workstage_inspect_data_master_es` | srw | 미착수 |  |  |
 | 294 | OQC 검사이력관리(PID) | `w_qc_oqc_inspect_history_master` | srw | 미착수 |  |  |
 | 295 | OQC 검사이력관리(LOT) | `w_qc_oqc_inspect_history_4_lot_master` | srw | 미착수 |  |  |
-| 297 | 온도상태조회 | `w_pln_product_tempreture_history_query` | pbg | 미착수 |  |  |
+| 297 | 온도상태조회 | `w_pln_product_tempreture_history_query` | srw | 미착수 |  |  |
 
 ### 출하현황  `M_SHIPPING`
 
 | 순서 | 메뉴명 | PB 윈도우 | 원본 | 상태 | MES 메뉴코드 | 경로 |
 |---:|---|---|:--:|---|---|---|
-| 299 | 제품포장관리(PID) | `w_prd_product_packing_create_master` | pbg | 미착수 |  |  |
+| 299 | 제품포장관리(PID) | `w_prd_product_packing_create_master` | srw | 미착수 |  |  |
 | 300 | 제품포장관리(LOT) | `w_prd_product_packing_4_magazine_create_master` | srw | 미착수 |  |  |
 | 302 | 제품입고관리(PID) | `w_prd_product_fg_receipt` | srw | 미착수 |  |  |
-| 303 | 제품입고관리(LOT) | `w_prd_product_fg_4_magazine_receipt` | pbg | 미착수 |  |  |
+| 303 | 제품입고관리(LOT) | `w_prd_product_fg_4_magazine_receipt` | srw | 미착수 |  |  |
 | 304 | 제품입고관리 (모델단위) | `w_prd_product_fg_4_model_receipt` | srw | 미착수 |  |  |
 | 306 | 파렛타이징 관리 | `w_prd_product_fg_palletizing` | srw | 미착수 |  |  |
-| 307 | 제품출하관리 | `w_prd_product_fg_issue` | pbg | 미착수 |  |  |
+| 307 | 제품출하관리 | `w_prd_product_fg_issue` | srw | 미착수 |  |  |
 | 308 | 제품출고관리 (모델단위) | `w_prd_product_fg_4_model_issue` | srw | 미착수 |  |  |
 | 310 | 제품재고 | `w_prd_product_fg_inventory` | srw | 완료 | `PRD_CURRENT_INVENTORY` | `/product/current-inventory` |
 | 311 | 제품패킹이력 | `w_prd_product_packing_history` | srw | 미착수 |  |  |
@@ -288,7 +288,7 @@ verifiedCommit: e505f9b
 | 331 | 마스크검사이력조회 | `w_mcn_jig_mask_check_history` | srw | 미착수 |  |  |
 | 332 | 스퀴지검사이력조회 | `w_mcn_jig_squeeze_check_history` | srw | 미착수 |  |  |
 | 333 | 자재 바코드 상태 조회 | `w_mat_barcode_status_report` | srw | 미착수 |  |  |
-| 335 | NSNP 처리이력조회 | `w_pln_product_nsnp_history_query` | pbg | 미착수 |  |  |
+| 335 | NSNP 처리이력조회 | `w_pln_product_nsnp_history_query` | srw | 미착수 |  |  |
 
 ### 리포트  `M_REPORT`
 
@@ -393,7 +393,7 @@ verifiedCommit: e505f9b
 | 454 | └ 리포트관리 | `w_dataobject_master` | srw | 미착수 |  |  |
 | 457 | IT 자산 현황 | `w_mcn_it_master` | srw | 미착수 |  |  |
 | 459 | 리플로우상태조회 | `w_qc_interlock_reflow_status_master` | srw | 미착수 |  |  |
-| 460 | 설비 픽업률조회 | `w_smt_pickup_rate_head` | pbg | 미착수 |  |  |
+| 460 | 설비 픽업률조회 | `w_smt_pickup_rate_head` | srw | 미착수 |  |  |
 | 461 | SMT 픽업율(최종데이터조회) | `w_smt_pickup_rate_last_data_query` | srw | 미착수 |  |  |
 | 463 | 자재전표엑셀업로드관리 | `w_mat_receipt_slip_excel_upload_master` | srw | 미착수 |  |  |
 | 464 | 자재(대여/차용)전표등록관리 | `w_mat_receipt_slip_4_rental_borrowing_master` | srw | 미착수 |  |  |

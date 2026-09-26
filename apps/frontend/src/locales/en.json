@@ -327,6 +327,7 @@
     "production.wipMaterialTrans": "WIP Material Transactions",
     "production.repair": "Repair Management",
     "quality": "Quality",
+    "quality.iqc": "IQC",
     "quality.repairHistory": "Process Repair History",
     "quality.productDestroy": "Process Scrap Management",
     "quality.defect": "Defect Registration",
