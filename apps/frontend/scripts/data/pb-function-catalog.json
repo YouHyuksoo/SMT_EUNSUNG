@@ -98,8 +98,8 @@
     {
       "pbFunction": "f_set_security_row",
       "action": "replaced",
-      "target": "권한 가드 / 메뉴 권한",
-      "note": "DataWindow 행 단위 보안."
+      "target": "백엔드 저장 시 감사컬럼 자동 기록",
+      "note": "권한 가드가 아니다. ARG_TYPE 에 따라 ORGANIZATION_ID / ENTER_BY / ENTER_DATE / LAST_MODIFY_BY / LAST_MODIFY_DATE 를 로그인 사용자·서버시각으로 채우는 함수다. ALL=전체, MODIFY=수정컬럼만, NONORG=조직ID 제외. 웹은 서비스의 INSERT/UPDATE 에서 organizationId·userId·SYSDATE 로 같은 컬럼을 채운다."
     },
     {
       "pbFunction": "f_t_sysdate",

@@ -431,7 +431,8 @@
     "jig": "지그관리",
     "jig.inputHistory": "지그 투입이력조회",
     "jig.sampleInputHistory": "샘플마스터 장착이력조회",
-    "jig.sampleBcrHistory": "샘플마스터 투입이력조회"
+    "jig.sampleBcrHistory": "샘플마스터 투입이력조회",
+    "jig.master": "지그마스터"
   },
   "header": {
     "theme": "테마",

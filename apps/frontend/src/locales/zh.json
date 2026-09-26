@@ -431,7 +431,8 @@
     "jig": "治具管理",
     "jig.inputHistory": "治具投入履历查询",
     "jig.sampleInputHistory": "标准样品安装履历查询",
-    "jig.sampleBcrHistory": "标准样品投入履历查询"
+    "jig.sampleBcrHistory": "标准样品投入履历查询",
+    "jig.master": "治具主数据"
   },
   "header": {
     "theme": "主题",

@@ -122,6 +122,7 @@ export const menuConfig: MenuConfigItem[] = [
     labelKey: "menu.jig",
     icon: Grip,
     children: [
+      { code: "JIG_MASTER", labelKey: "menu.jig.master", path: "/jig/master", pbLinkStatus: "powerbuilder", pbWindow: "w_mcn_jig_master" },
       { code: "JIG_INPUT_HISTORY", labelKey: "menu.jig.inputHistory", path: "/jig/input-history", pbLinkStatus: "powerbuilder", pbWindow: "w_mcn_jig_input_history_master" },
       { code: "JIG_SAMPLE_INPUT_HISTORY", labelKey: "menu.jig.sampleInputHistory", path: "/jig/sample-input-history", pbLinkStatus: "powerbuilder", pbWindow: "w_mcn_sample_input_history_master" },
       { code: "JIG_SAMPLE_BCR_HISTORY", labelKey: "menu.jig.sampleBcrHistory", path: "/jig/sample-bcr-history", pbLinkStatus: "powerbuilder", pbWindow: "w_mcn_sample_bcr_input_history_master" },

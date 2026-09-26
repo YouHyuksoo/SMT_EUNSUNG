@@ -3,7 +3,7 @@ sources:
   - apps/frontend/src/config/menuConfig.ts
   - apps/frontend/scripts/data/pb-screen-inventory.json
 generator: apps/frontend/scripts/gen-migration-status.mjs
-verifiedCommit: e5077fb
+verifiedCommit: 9b641f0
 ---
 
 # PB 화면 이관 현황 (자동 생성)
@@ -17,11 +17,11 @@ verifiedCommit: e5077fb
 | 상태 | 건수 |
 |---|---:|
 | PB 업무화면(셸 메뉴 제외) | 275 |
-| 완료(개발됨, pbWindow 매핑) | 37 |
-| 미착수 | 212 |
+| 완료(개발됨, pbWindow 매핑) | 38 |
+| 미착수 | 211 |
 | 윈도우 미상 | 26 |
 
-웹 메뉴 연결 계약: **PB 39개 / 웹 신규 17개 / 미확정 2개**. PB 매핑과 웹 경로의 전체 연결표는 [pb-menu-route-links.md](pb-menu-route-links.md)에서 관리합니다.
+웹 메뉴 연결 계약: **PB 40개 / 웹 신규 17개 / 미확정 2개**. PB 매핑과 웹 경로의 전체 연결표는 [pb-menu-route-links.md](pb-menu-route-links.md)에서 관리합니다.
 
 ## 대분류별 진행률
 
@@ -31,7 +31,7 @@ verifiedCommit: e5077fb
 | 설계 | `M_DESIGN` | 5 | 1 | 4 | 0 |
 | SMT | `M_SMT` | 9 | 0 | 9 | 0 |
 | 설비 | `M_JIG` | 19 | 10 | 7 | 2 |
-| 지그 | `M_JIG0` | 12 | 3 | 9 | 0 |
+| 지그 | `M_JIG0` | 12 | 4 | 8 | 0 |
 | 피더 | `M_FEEDER` | 4 | 0 | 4 | 0 |
 | S-PARTS | `M_MOLD` | 8 | 0 | 8 | 0 |
 | 생산 | `M_PLANNING` | 7 | 0 | 7 | 0 |
@@ -127,7 +127,7 @@ verifiedCommit: e5077fb
 
 | 순서 | 메뉴명 | PB 윈도우 | 원본 | 상태 | MES 메뉴코드 | 경로 |
 |---:|---|---|:--:|---|---|---|
-| 185 | 지그마스터 | `w_mcn_jig_master` | pbg | 미착수 |  |  |
+| 185 | 지그마스터 | `w_mcn_jig_master` | pbg | 완료 | `JIG_MASTER` | `/jig/master` |
 | 186 | 지그출고관리 | `w_mcn_jig_issue_master` | srw | 미착수 |  |  |
 | 187 | 지그수리신청 | `w_mcn_jig_repair_request_master` | srw | 미착수 |  |  |
 | 188 | 지그수리관리 | `w_mcn_jig_repair_master` | srw | 미착수 |  |  |

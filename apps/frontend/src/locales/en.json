@@ -431,7 +431,8 @@
     "jig": "Jig Management",
     "jig.inputHistory": "Jig Input History",
     "jig.sampleInputHistory": "Sample Mount History",
-    "jig.sampleBcrHistory": "Sample Input History (BCR)"
+    "jig.sampleBcrHistory": "Sample Input History (BCR)",
+    "jig.master": "Jig Master"
   },
   "header": {
     "theme": "Theme",

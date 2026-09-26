@@ -3,7 +3,7 @@ sources:
   - apps/frontend/src/config/menuConfig.ts
   - apps/frontend/scripts/data/pb-screen-inventory.json
 generator: apps/frontend/scripts/gen-migration-status.mjs
-verifiedCommit: e5077fb
+verifiedCommit: 9b641f0
 ---
 
 # PB 윈도우 ↔ 웹 메뉴·경로 연결표 (자동 생성)
@@ -15,7 +15,7 @@ verifiedCommit: e5077fb
 
 | 전체 웹 메뉴 | PB 연결 | 웹 신규 | 미확정 |
 |---:|---:|---:|---:|
-| 58 | 39 | 17 | 2 |
+| 59 | 40 | 17 | 2 |
 
 ## 전체 연결표
 
@@ -61,6 +61,7 @@ verifiedCommit: e5077fb
 | 자재수불관리 | 현재고조회 | `MAT_CURRENT_INVENTORY` | `/material/current-inventory` | PB 연결 | `w_mat_current_inventory_master` | PB 메뉴 인벤토리 |
 | 자재수불관리 | 공정재고조회 | `MAT_WORKSTAGE_INVENTORY` | `/material/workstage-inventory` | PB 연결 | `w_mat_workstage_inventory_query` | `apps/backend/src/modules/material/controllers/workstage-inventory.controller.ts` |
 | 자재수불관리 | 자재입고취소 | `MAT_RECEIPT_CANCEL` | `/material/receipt-cancel` | PB 연결 | `w_mat_receipt_cancel_master` | PB 메뉴 인벤토리 |
+| 지그관리 | 지그마스터 | `JIG_MASTER` | `/jig/master` | PB 연결 | `w_mcn_jig_master` | PB 메뉴 인벤토리 |
 | 지그관리 | 지그 투입이력조회 | `JIG_INPUT_HISTORY` | `/jig/input-history` | PB 연결 | `w_mcn_jig_input_history_master` | PB 메뉴 인벤토리 |
 | 지그관리 | 샘플마스터 장착이력조회 | `JIG_SAMPLE_INPUT_HISTORY` | `/jig/sample-input-history` | PB 연결 | `w_mcn_sample_input_history_master` | PB 메뉴 인벤토리 |
 | 지그관리 | 샘플마스터 투입이력조회 | `JIG_SAMPLE_BCR_HISTORY` | `/jig/sample-bcr-history` | PB 연결 | `w_mcn_sample_bcr_input_history_master` | PB 메뉴 인벤토리 |

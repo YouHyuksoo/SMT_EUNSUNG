@@ -92,6 +92,11 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
       component = mod.getPageComponent();
       break;
     }
+    case "/jig/master": {
+      const mod = await import("./page-registries/jig__master.generated");
+      component = mod.getPageComponent();
+      break;
+    }
     case "/jig/sample-bcr-history": {
       const mod = await import("./page-registries/jig__sample-bcr-history.generated");
       component = mod.getPageComponent();

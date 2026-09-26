@@ -431,7 +431,8 @@
     "jig": "Quản lý đồ gá",
     "jig.inputHistory": "Lịch sử đưa đồ gá vào",
     "jig.sampleInputHistory": "Lịch sử lắp mẫu chuẩn",
-    "jig.sampleBcrHistory": "Lịch sử đưa mẫu chuẩn vào (BCR)"
+    "jig.sampleBcrHistory": "Lịch sử đưa mẫu chuẩn vào (BCR)",
+    "jig.master": "Quản lý đồ gá (Master)"
   },
   "header": {
     "theme": "Giao diện",

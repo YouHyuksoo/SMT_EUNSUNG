@@ -67,6 +67,7 @@
       "MAT_RECEIPT_CANCEL"
     ],
     "JIG": [
+      "JIG_MASTER",
       "JIG_INPUT_HISTORY",
       "JIG_SAMPLE_INPUT_HISTORY",
       "JIG_SAMPLE_BCR_HISTORY"

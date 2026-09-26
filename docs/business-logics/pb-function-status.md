@@ -3,7 +3,7 @@ sources:
   - apps/frontend/scripts/data/pb-function-catalog.json
   - docs/database/generated/pb-function-inventory.json
 generator: apps/frontend/scripts/gen-function-status.mjs
-verifiedCommit: e5077fb
+verifiedCommit: 9b641f0
 ---
 
 # PB 함수 처리 현황 (자동 생성)
@@ -48,7 +48,7 @@ DB 함수는 웹에서도 **그대로 호출**합니다 — 재구현하면 PB �
 | `f_msg_st` | `react-hot-toast` | 상태줄 메시지. |
 | `f_msg_mdi_help` | `화면 내 안내 문구` | MDI MicroHelp. 웹에는 상태줄이 없다. |
 | `f_sql_check` | `NestJS 예외 + 트랜잭션 롤백` | f_sql_check_with_msg 도 동일. |
-| `f_set_security_row` | `권한 가드 / 메뉴 권한` | DataWindow 행 단위 보안. |
+| `f_set_security_row` | `백엔드 저장 시 감사컬럼 자동 기록` | 권한 가드가 아니다. ARG_TYPE 에 따라 ORGANIZATION_ID / ENTER_BY / ENTER_DATE / LAST_MODIFY_BY / LAST_MODIFY_DATE 를 로그인 사용자·서버시각으로 채우는 함수다. ALL=전체, MODIFY=수정컬럼만, NONORG=조직ID 제외. 웹은 서비스의 INSERT/UPDATE 에서 organizationId·userId·SYSDATE 로 같은 컬럼을 채운다. |
 | `f_object_role_check` | `권한 가드` | USER_LEVEL 검사 후 메시지박스. 웹은 가드가 403 을 낸다. |
 
 ### 제거 (`dropped`) — 4건
