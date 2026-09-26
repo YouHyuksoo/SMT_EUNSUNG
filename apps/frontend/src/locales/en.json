@@ -432,7 +432,13 @@
     "jig.inputHistory": "Jig Input History",
     "jig.sampleInputHistory": "Sample Mount History",
     "jig.sampleBcrHistory": "Sample Input History (BCR)",
-    "jig.master": "Jig Master"
+    "jig.master": "Jig Master",
+    "jig.issue": "Jig Issue",
+    "jig.repair": "Jig Repair",
+    "jig.pm": "Jig Autonomous Maintenance",
+    "jig.squeezeCheck": "Squeegee Inspection",
+    "jig.maskCheck": "Metal Mask Tension Check",
+    "jig.sample": "Sample Master"
   },
   "header": {
     "theme": "Theme",

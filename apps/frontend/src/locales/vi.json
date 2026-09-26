@@ -432,7 +432,13 @@
     "jig.inputHistory": "Lịch sử đưa đồ gá vào",
     "jig.sampleInputHistory": "Lịch sử lắp mẫu chuẩn",
     "jig.sampleBcrHistory": "Lịch sử đưa mẫu chuẩn vào (BCR)",
-    "jig.master": "Quản lý đồ gá (Master)"
+    "jig.master": "Quản lý đồ gá (Master)",
+    "jig.issue": "Xuất đồ gá",
+    "jig.repair": "Sửa chữa đồ gá",
+    "jig.pm": "Bảo trì tự chủ đồ gá",
+    "jig.squeezeCheck": "Kiểm tra dao gạt",
+    "jig.maskCheck": "Kiểm tra lực căng lưới thép",
+    "jig.sample": "Quản lý mẫu chuẩn"
   },
   "header": {
     "theme": "Giao diện",

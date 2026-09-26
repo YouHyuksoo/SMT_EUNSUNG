@@ -123,6 +123,12 @@ export const menuConfig: MenuConfigItem[] = [
     icon: Grip,
     children: [
       { code: "JIG_MASTER", labelKey: "menu.jig.master", path: "/jig/master", pbLinkStatus: "powerbuilder", pbWindow: "w_mcn_jig_master" },
+      { code: "JIG_ISSUE", labelKey: "menu.jig.issue", path: "/jig/issue", pbLinkStatus: "powerbuilder", pbWindow: "w_mcn_jig_issue_master" },
+      { code: "JIG_REPAIR", labelKey: "menu.jig.repair", path: "/jig/repair", pbLinkStatus: "powerbuilder", pbWindow: "w_mcn_jig_repair_master" },
+      { code: "JIG_PM", labelKey: "menu.jig.pm", path: "/jig/pm", pbLinkStatus: "powerbuilder", pbWindow: "w_mcn_jig_pm_master" },
+      { code: "JIG_SQUEEZE_CHECK", labelKey: "menu.jig.squeezeCheck", path: "/jig/squeeze-check", pbLinkStatus: "powerbuilder", pbWindow: "w_mcn_jig_squeeze_check_master" },
+      { code: "JIG_MASK_CHECK", labelKey: "menu.jig.maskCheck", path: "/jig/mask-check", pbLinkStatus: "powerbuilder", pbWindow: "w_mcn_jig_mask_tension_check_master" },
+      { code: "JIG_SAMPLE", labelKey: "menu.jig.sample", path: "/jig/sample", pbLinkStatus: "powerbuilder", pbWindow: "w_mcn_sample_master" },
       { code: "JIG_INPUT_HISTORY", labelKey: "menu.jig.inputHistory", path: "/jig/input-history", pbLinkStatus: "powerbuilder", pbWindow: "w_mcn_jig_input_history_master" },
       { code: "JIG_SAMPLE_INPUT_HISTORY", labelKey: "menu.jig.sampleInputHistory", path: "/jig/sample-input-history", pbLinkStatus: "powerbuilder", pbWindow: "w_mcn_sample_input_history_master" },
       { code: "JIG_SAMPLE_BCR_HISTORY", labelKey: "menu.jig.sampleBcrHistory", path: "/jig/sample-bcr-history", pbLinkStatus: "powerbuilder", pbWindow: "w_mcn_sample_bcr_input_history_master" },

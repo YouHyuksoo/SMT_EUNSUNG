@@ -432,7 +432,13 @@
     "jig.inputHistory": "治具投入履历查询",
     "jig.sampleInputHistory": "标准样品安装履历查询",
     "jig.sampleBcrHistory": "标准样品投入履历查询",
-    "jig.master": "治具主数据"
+    "jig.master": "治具主数据",
+    "jig.issue": "治具出库管理",
+    "jig.repair": "治具维修管理",
+    "jig.pm": "治具自主保全管理",
+    "jig.squeezeCheck": "刮刀检查管理",
+    "jig.maskCheck": "钢网张力检查",
+    "jig.sample": "标准样品管理"
   },
   "header": {
     "theme": "主题",

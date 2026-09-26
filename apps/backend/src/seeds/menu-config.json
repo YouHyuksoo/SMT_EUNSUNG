@@ -68,6 +68,12 @@
     ],
     "JIG": [
       "JIG_MASTER",
+      "JIG_ISSUE",
+      "JIG_REPAIR",
+      "JIG_PM",
+      "JIG_SQUEEZE_CHECK",
+      "JIG_MASK_CHECK",
+      "JIG_SAMPLE",
       "JIG_INPUT_HISTORY",
       "JIG_SAMPLE_INPUT_HISTORY",
       "JIG_SAMPLE_BCR_HISTORY"

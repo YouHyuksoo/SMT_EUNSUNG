@@ -17,7 +17,7 @@ export const DEFAULT_MENU_CATEGORY_LAYOUT: readonly DefaultMenuCategoryLayout[] 
   { categoryCode: 'EQUIPMENT', labelKey: 'menu.equipment', sortOrder: 30, menuCodes: ['EQUIP_RESULT_SP', 'EQUIP_RESULT_SPI', 'EQUIP_RESULT_ICT', 'EQUIP_RESULT_AOI', 'EQUIP_RESULT_ROUTER', 'EQUIP_RESULT_ROM_WRITE', 'EQUIP_RESULT_SOLDER', 'EQUIP_RESULT_REFLOW', 'EQUIP_RESULT_PERFORMANCE'] },
   { categoryCode: 'OEE', labelKey: 'menu.oee', sortOrder: 40, menuCodes: ['OEE_DASHBOARD', 'OEE_MULTI_ENTRY', 'OEE_OVERALL_STATUS', 'OEE_EQUIP_WORK_RESULT', 'OEE_EQUIP_OPS_STATUS', 'OEE_FIELD_OPS'] },
   { categoryCode: 'MATERIAL', labelKey: 'menu.material', sortOrder: 50, menuCodes: ['MAT_RECEIPT_ISSUE_LEDGER', 'MAT_CURRENT_INVENTORY', 'MAT_WORKSTAGE_INVENTORY', 'MAT_RECEIPT_CANCEL'] },
-  { categoryCode: 'JIG', labelKey: 'menu.jig', sortOrder: 60, menuCodes: ['JIG_MASTER', 'JIG_INPUT_HISTORY', 'JIG_SAMPLE_INPUT_HISTORY', 'JIG_SAMPLE_BCR_HISTORY'] },
+  { categoryCode: 'JIG', labelKey: 'menu.jig', sortOrder: 60, menuCodes: ['JIG_MASTER', 'JIG_ISSUE', 'JIG_REPAIR', 'JIG_PM', 'JIG_SQUEEZE_CHECK', 'JIG_MASK_CHECK', 'JIG_SAMPLE', 'JIG_INPUT_HISTORY', 'JIG_SAMPLE_INPUT_HISTORY', 'JIG_SAMPLE_BCR_HISTORY'] },
   { categoryCode: 'PROCESS_TRANSACTION', labelKey: 'menu.processTransaction', sortOrder: 70, menuCodes: ['PLN_WORKSTAGE_PASS', 'PLN_MAGAZINE_LABEL_HISTORY'] },
   { categoryCode: 'PRODUCT_MGMT', labelKey: 'menu.productMgmt', sortOrder: 80, menuCodes: [] },
   { categoryCode: 'PRODUCT_INVENTORY', labelKey: 'menu.productInventory', sortOrder: 90, menuCodes: ['PRD_CURRENT_INVENTORY'] },

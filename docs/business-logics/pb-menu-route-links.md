@@ -3,7 +3,7 @@ sources:
   - apps/frontend/src/config/menuConfig.ts
   - apps/frontend/scripts/data/pb-screen-inventory.json
 generator: apps/frontend/scripts/gen-migration-status.mjs
-verifiedCommit: 9b641f0
+verifiedCommit: 5b6adb2
 ---
 
 # PB 윈도우 ↔ 웹 메뉴·경로 연결표 (자동 생성)
@@ -15,7 +15,7 @@ verifiedCommit: 9b641f0
 
 | 전체 웹 메뉴 | PB 연결 | 웹 신규 | 미확정 |
 |---:|---:|---:|---:|
-| 59 | 40 | 17 | 2 |
+| 65 | 46 | 17 | 2 |
 
 ## 전체 연결표
 
@@ -62,6 +62,12 @@ verifiedCommit: 9b641f0
 | 자재수불관리 | 공정재고조회 | `MAT_WORKSTAGE_INVENTORY` | `/material/workstage-inventory` | PB 연결 | `w_mat_workstage_inventory_query` | `apps/backend/src/modules/material/controllers/workstage-inventory.controller.ts` |
 | 자재수불관리 | 자재입고취소 | `MAT_RECEIPT_CANCEL` | `/material/receipt-cancel` | PB 연결 | `w_mat_receipt_cancel_master` | PB 메뉴 인벤토리 |
 | 지그관리 | 지그마스터 | `JIG_MASTER` | `/jig/master` | PB 연결 | `w_mcn_jig_master` | PB 메뉴 인벤토리 |
+| 지그관리 | 지그출고관리 | `JIG_ISSUE` | `/jig/issue` | PB 연결 | `w_mcn_jig_issue_master` | PB 메뉴 인벤토리 |
+| 지그관리 | 지그수리관리 | `JIG_REPAIR` | `/jig/repair` | PB 연결 | `w_mcn_jig_repair_master` | PB 메뉴 인벤토리 |
+| 지그관리 | 지그자주보전관리 | `JIG_PM` | `/jig/pm` | PB 연결 | `w_mcn_jig_pm_master` | PB 메뉴 인벤토리 |
+| 지그관리 | 스퀴즈검사관리 | `JIG_SQUEEZE_CHECK` | `/jig/squeeze-check` | PB 연결 | `w_mcn_jig_squeeze_check_master` | PB 메뉴 인벤토리 |
+| 지그관리 | 메탈마스크 텐션검사 | `JIG_MASK_CHECK` | `/jig/mask-check` | PB 연결 | `w_mcn_jig_mask_tension_check_master` | PB 메뉴 인벤토리 |
+| 지그관리 | 샘플마스터 관리 | `JIG_SAMPLE` | `/jig/sample` | PB 연결 | `w_mcn_sample_master` | PB 메뉴 인벤토리 |
 | 지그관리 | 지그 투입이력조회 | `JIG_INPUT_HISTORY` | `/jig/input-history` | PB 연결 | `w_mcn_jig_input_history_master` | PB 메뉴 인벤토리 |
 | 지그관리 | 샘플마스터 장착이력조회 | `JIG_SAMPLE_INPUT_HISTORY` | `/jig/sample-input-history` | PB 연결 | `w_mcn_sample_input_history_master` | PB 메뉴 인벤토리 |
 | 지그관리 | 샘플마스터 투입이력조회 | `JIG_SAMPLE_BCR_HISTORY` | `/jig/sample-bcr-history` | PB 연결 | `w_mcn_sample_bcr_input_history_master` | PB 메뉴 인벤토리 |

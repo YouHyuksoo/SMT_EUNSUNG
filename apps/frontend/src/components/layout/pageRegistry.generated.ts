@@ -92,8 +92,33 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
       component = mod.getPageComponent();
       break;
     }
+    case "/jig/issue": {
+      const mod = await import("./page-registries/jig__issue.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/jig/mask-check": {
+      const mod = await import("./page-registries/jig__mask-check.generated");
+      component = mod.getPageComponent();
+      break;
+    }
     case "/jig/master": {
       const mod = await import("./page-registries/jig__master.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/jig/pm": {
+      const mod = await import("./page-registries/jig__pm.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/jig/repair": {
+      const mod = await import("./page-registries/jig__repair.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/jig/sample": {
+      const mod = await import("./page-registries/jig__sample.generated");
       component = mod.getPageComponent();
       break;
     }
@@ -104,6 +129,11 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
     }
     case "/jig/sample-input-history": {
       const mod = await import("./page-registries/jig__sample-input-history.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/jig/squeeze-check": {
+      const mod = await import("./page-registries/jig__squeeze-check.generated");
       component = mod.getPageComponent();
       break;
     }
