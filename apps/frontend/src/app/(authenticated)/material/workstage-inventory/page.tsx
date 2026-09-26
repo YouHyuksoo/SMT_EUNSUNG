@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState } from 'react';
-import { Boxes, RefreshCw, Search } from 'lucide-react';
+import { Boxes, Search } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
 import PartSelect from '@/components/shared/PartSelect';
 import { Button, Card, CardContent } from '@/components/ui';
@@ -44,7 +44,6 @@ export default function WorkstageInventoryPage() {
           <p className="mt-1 text-sm text-text-muted">품목별 공정재고(재공) 수량을 조회합니다 · {searched ? `${rows.length}/${total}건` : '조회조건을 선택하세요'}</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="secondary" size="sm" onClick={search} disabled={loading}><RefreshCw className={`mr-1 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />새로고침</Button>
           <Button size="sm" onClick={search} disabled={loading}><Search className="mr-1 h-4 w-4" />조회</Button>
         </div>
       </header>

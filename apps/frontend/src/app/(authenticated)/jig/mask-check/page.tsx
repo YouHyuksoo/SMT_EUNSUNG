@@ -12,7 +12,7 @@
  */
 import { useCallback, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
-import { RefreshCw, Ruler, Search } from 'lucide-react';
+import { Ruler, Search } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
 import ComCodeSelect from '@/components/shared/ComCodeSelect';
 import DateRangeFilter from '@/components/shared/DateRangeFilter';
@@ -79,9 +79,6 @@ export default function MaskCheckPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="secondary" size="sm" onClick={search} disabled={loading}>
-            <RefreshCw className={`mr-1 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />새로고침
-          </Button>
           <Button size="sm" onClick={search} disabled={loading}>
             <Search className="mr-1 h-4 w-4" />조회
           </Button>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState } from 'react';
-import { Boxes, RefreshCw, Search } from 'lucide-react';
+import { Boxes, Search } from 'lucide-react';
 import { Button, Card, CardContent, Input } from '@/components/ui';
 import DataGrid from '@/components/data-grid/DataGrid';
 import api from '@/services/api';
@@ -46,7 +46,7 @@ export default function ProductInventoryPage() {
           <h1 className="flex items-center gap-2 text-xl font-bold text-text"><Boxes className="h-6 w-6 text-primary" />제품재고조회</h1>
           <p className="mt-1 text-sm text-text-muted">제품 로케이션·모델별 완제품 재고와 팔레트 정보를 조회합니다 · {searched ? `${rows.length}/${total}건` : '조회조건을 입력하세요'}</p>
         </div>
-        <div className="flex gap-2"><Button variant="secondary" size="sm" onClick={search} disabled={loading}><RefreshCw className={`mr-1 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />새로고침</Button><Button size="sm" onClick={search} disabled={loading}><Search className="mr-1 h-4 w-4" />조회</Button></div>
+        <div className="flex gap-2"><Button size="sm" onClick={search} disabled={loading}><Search className="mr-1 h-4 w-4" />조회</Button></div>
       </header>
       <Card className="shrink-0" padding="sm"><div className="flex flex-wrap items-center gap-2"><Input aria-label="모델명" placeholder="모델명" value={model} onChange={e => setModel(e.target.value)} className="w-52" /><Input aria-label="제품로케이션" placeholder="제품로케이션" value={locationCode} onChange={e => setLocationCode(e.target.value)} className="w-40" /><Input aria-label="포장유형" placeholder="포장유형" value={packType} onChange={e => setPackType(e.target.value)} className="w-32" /></div></Card>
       <div className="flex gap-4 text-sm text-text-muted"><span>제품재고 합계: <strong className="text-text">{qtyTotal.toLocaleString()}</strong></span><span>조회 건수: <strong className="text-text">{total.toLocaleString()}</strong></span></div>

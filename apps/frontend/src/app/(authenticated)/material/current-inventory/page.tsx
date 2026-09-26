@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState } from 'react';
-import { ClipboardList, RefreshCw, Search } from 'lucide-react';
+import { ClipboardList, Search } from 'lucide-react';
 import { Button, Card, CardContent, Input } from '@/components/ui';
 import DataGrid from '@/components/data-grid/DataGrid';
 import api from '@/services/api';
@@ -60,7 +60,6 @@ export default function CurrentInventoryPage() {
           <p className="mt-1 text-sm text-text-muted">로케이션·품목별 자재 현재고 수량과 재고금액을 조회합니다 · {searched ? `${rows.length}/${total}건` : '조회조건을 입력하세요'}</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="secondary" size="sm" onClick={search} disabled={loading}><RefreshCw className={`mr-1 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />새로고침</Button>
           <Button size="sm" onClick={search} disabled={loading}><Search className="mr-1 h-4 w-4" />조회</Button>
         </div>
       </header>

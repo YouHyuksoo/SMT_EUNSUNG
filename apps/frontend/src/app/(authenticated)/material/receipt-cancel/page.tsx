@@ -13,7 +13,7 @@
  */
 import { useCallback, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
-import { RefreshCw, RotateCcw, Search, Undo2 } from 'lucide-react';
+import { RotateCcw, Search, Undo2 } from 'lucide-react';
 import { Button, Card, CardContent, ConfirmModal, Input } from '@/components/ui';
 import ComCodeSelect from '@/components/shared/ComCodeSelect';
 import DateFilter from '@/components/shared/DateFilter';
@@ -145,9 +145,6 @@ export default function ReceiptCancelPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="secondary" size="sm" onClick={() => search()} disabled={loading}>
-            <RefreshCw className={`mr-1 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />새로고침
-          </Button>
           <Button size="sm" onClick={() => search()} disabled={loading}>
             <Search className="mr-1 h-4 w-4" />조회
           </Button>

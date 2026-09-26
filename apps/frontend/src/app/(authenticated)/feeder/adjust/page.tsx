@@ -12,7 +12,7 @@
  */
 import { useCallback, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
-import { RefreshCw, ScanLine, Search, Settings2 } from 'lucide-react';
+import { ScanLine, Search, Settings2 } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
 import DateRangeFilter from '@/components/shared/DateRangeFilter';
 import { Button, Card, CardContent, Input } from '@/components/ui';
@@ -97,9 +97,6 @@ export default function FeederAdjustPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="secondary" size="sm" onClick={search} disabled={loading}>
-            <RefreshCw className={`mr-1 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />새로고침
-          </Button>
           <Button size="sm" onClick={search} disabled={loading}>
             <Search className="mr-1 h-4 w-4" />조회
           </Button>

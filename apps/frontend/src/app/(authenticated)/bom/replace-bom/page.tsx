@@ -11,7 +11,7 @@
  */
 import { useCallback, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
-import { GitFork, RefreshCw, Search } from 'lucide-react';
+import { GitFork, Search } from 'lucide-react';
 import { Button, Card, CardContent, ConfirmModal, Input } from '@/components/ui';
 import DateFilter from '@/components/shared/DateFilter';
 import DataGrid from '@/components/data-grid/DataGrid';
@@ -202,7 +202,6 @@ export default function ReplaceBomPage() {
               <Input aria-label="구성품목" placeholder="구성품목" value={qChild} onChange={e => setQChild(e.target.value)} className="w-44" />
               <Input aria-label="대체품목" placeholder="대체품목" value={qReplace} onChange={e => setQReplace(e.target.value)} className="w-44" />
               <Button size="sm" onClick={searchList} disabled={loading}><Search className="mr-1 h-4 w-4" />조회</Button>
-              <Button variant="secondary" size="sm" onClick={searchList} disabled={loading}><RefreshCw className={`mr-1 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />새로고침</Button>
               <span className="text-sm text-text-muted">{searched ? `${rows.length}/${total}건` : '조회조건을 입력하세요'}</span>
             </div>
           </Card>

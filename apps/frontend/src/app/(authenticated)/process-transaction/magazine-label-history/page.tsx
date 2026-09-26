@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
-import { History, RefreshCw, Search } from 'lucide-react';
+import { History, Search } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
 import DateRangeFilter from '@/components/shared/DateRangeFilter';
 import LineSelect from '@/components/shared/LineSelect';
@@ -55,7 +55,7 @@ export default function MagazineLabelHistoryPage() {
     <header className="flex items-center justify-between gap-4">
       <div><h1 className="flex items-center gap-2 text-xl font-bold text-text"><History className="h-6 w-6 text-primary" />매거진발행이력</h1>
         <p className="mt-1 text-sm text-text-muted">라인·공정별 매거진 라벨 발행 이력을 조회하고 집계·매트릭스로 확인합니다 · {searched ? `${rows.length}/${total}건` : '조회조건을 입력하세요'}</p></div>
-      <div className="flex gap-2"><Button variant="secondary" size="sm" onClick={search} disabled={loading}><RefreshCw className={`mr-1 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />새로고침</Button><Button size="sm" onClick={search} disabled={loading}><Search className="mr-1 h-4 w-4" />조회</Button></div>
+      <div className="flex gap-2"><Button size="sm" onClick={search} disabled={loading}><Search className="mr-1 h-4 w-4" />조회</Button></div>
     </header>
     <Card className="shrink-0" padding="sm"><div className="flex flex-wrap items-center gap-2">
       <LineSelect labelPrefix="라인" value={lineCode} onChange={setLineCode} className="w-40" />

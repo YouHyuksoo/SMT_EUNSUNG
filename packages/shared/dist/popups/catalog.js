@@ -120,6 +120,58 @@ exports.POPUP_CATALOG = [
             "BUSINESS_CATEGORY = 'M' 조건이 더 있다. 그래서 공급처검색과 합치지 않았다. " +
             '은성 DB 는 현재 모든 공급처의 BUSINESS_CATEGORY 가 NULL 이라 결과가 0건이다.',
     },
+    {
+        id: 'mold-search',
+        pbWindows: ['w_mcn_mold_popup'],
+        kind: 'search-select',
+        status: 'ready',
+        title: 'S-PARTS 검색',
+        query: 'mold-search',
+        returnColumns: ['moldCode', 'moldName', 'moldVersion', 'moldSetSerial'],
+        filters: [
+            { key: 'moldCode', label: 'S-PARTS 코드', type: 'text', autoFocus: true },
+            { key: 'supplierCode', label: '공급처', type: 'text' },
+            { key: 'moldGroup', label: 'S-PARTS 그룹', type: 'com-code', groupCode: 'MOLD GROUP' },
+        ],
+        columns: [
+            { key: 'moldCode', label: 'S-PARTS 코드', width: 150 },
+            { key: 'moldName', label: 'S-PARTS 명', width: 200 },
+            { key: 'moldGroupName', label: '그룹', width: 120 },
+            { key: 'moldSpec', label: '규격', width: 160 },
+            { key: 'supplierName', label: '공급처', width: 160 },
+            { key: 'moldVersion', label: '버전', width: 70, align: 'right' },
+            { key: 'moldSetSerial', label: 'SET번호', width: 80, align: 'right' },
+            { key: 'moldUseStatusName', label: '사용상태', width: 100 },
+            { key: 'inventoryQty', label: '재고수량', width: 90, align: 'right' },
+            { key: 'locationCode', label: '보관위치', width: 110 },
+        ],
+        note: 'PB d_mcn_mold_popup — IMCN_MOLD 기준 좌측 외부조인으로 재고·공급처를 붙인다. ' +
+            "PB 의 MOLD_CODE <> '*' 제외 조건을 유지한다. 재고행이 없으면 버전·SET번호가 비어 나온다.",
+    },
+    {
+        id: 'mold-location-search',
+        pbWindows: ['w_mcn_mold_location_popup'],
+        kind: 'search-select',
+        status: 'ready',
+        title: 'S-PARTS 보관위치 검색',
+        query: 'mold-location-search',
+        returnColumns: ['moldLocationCode', 'moldLocationName'],
+        filters: [
+            { key: 'moldLocationCode', label: '위치코드', type: 'text', autoFocus: true },
+            { key: 'moldGroup', label: 'S-PARTS 그룹', type: 'com-code', groupCode: 'MOLD GROUP' },
+        ],
+        columns: [
+            { key: 'moldLocationCode', label: '위치코드', width: 130 },
+            { key: 'moldLocationName', label: '위치명', width: 200 },
+            { key: 'moldLocationGroup', label: '위치그룹', width: 110 },
+            { key: 'moldLocationNo', label: '위치번호', width: 90, align: 'right' },
+            { key: 'moldLocationStatus', label: '상태', width: 80 },
+            { key: 'moldCode', label: '적치 S-PARTS', width: 150 },
+            { key: 'moldGroupName', label: 'S-PARTS 그룹', width: 120 },
+        ],
+        note: 'PB d_mcn_mold_location_popup — IMCN_MOLD_LOCATION 단일 테이블. ' +
+            'PB 는 S-PARTS 코드로도 걸렀지만 웹에서는 위치코드·그룹으로 찾는 쪽이 쓰기 편해 필터를 그렇게 뒀다.',
+    },
 ];
 const BY_PB_WINDOW = new Map();
 const BY_ID = new Map();
