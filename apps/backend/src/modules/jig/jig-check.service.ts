@@ -20,6 +20,8 @@ import { BadRequestException, ConflictException, Injectable, NotFoundException }
 import { DataSource } from 'typeorm';
 import { TransactionService } from '../../shared/transaction.service';
 import {
+  FeederAdjustQueryDto,
+  FeederAdjustScanDto,
   JigIssueCancelDto,
   JigIssueCreateDto,
   JigIssueQueryDto,
@@ -181,6 +183,7 @@ export class JigCheckService {
       jigCode: this.like(query.jigCode),
       repairStatus: this.like(query.repairStatus),
       repairVendorCode: this.like(query.repairVendorCode),
+      jigType: this.like(query.jigType),
     };
     const body = `
       SELECT r.JIG_CODE AS "jigCode", r.JIG_LOT_NO AS "jigLotNo",
@@ -214,6 +217,7 @@ export class JigCheckService {
        WHERE r.JIG_CODE LIKE :jigCode
          AND NVL(r.REPAIR_STATUS, '*') LIKE :repairStatus
          AND NVL(r.REPAIR_VENDOR_CODE, '*') LIKE :repairVendorCode
+         AND NVL(j.JIG_TYPE, '*') LIKE :jigType
          AND r.REPAIR_REQUEST_DATE >= TRUNC(TO_DATE(:dateFrom, 'YYYY-MM-DD'))
          AND r.REPAIR_REQUEST_DATE < TRUNC(TO_DATE(:dateTo, 'YYYY-MM-DD')) + 1
          AND r.ORGANIZATION_ID = :organizationId`;
@@ -831,6 +835,85 @@ export class JigCheckService {
         throw error;
       });
       return { jigCode: dto.jigCode, pmType: dto.pmType };
+    });
+  }
+
+  /** 피더교정 이력 — PB d_mcn_jig_feeder_adjust_lst */
+  async findFeederAdjusts(query: FeederAdjustQueryDto, organizationId: number) {
+    const binds = {
+      organizationId,
+      dateFrom: query.dateFrom ?? '1900-01-01',
+      dateTo: query.dateTo ?? '2999-12-31',
+      jigCode: this.like(query.jigCode),
+      jigLotNo: this.like(query.jigLotNo),
+    };
+    const body = `
+      SELECT a.ADJUST_DATE AS "adjustDate", a.ADJUST_SEQUENCE AS "adjustSequence",
+             a.JIG_CODE AS "jigCode", a.JIG_LOT_NO AS "jigLotNo",
+             j.JIG_NAME AS "jigName", j.JIG_SPEC AS "jigSpec",
+             j.JIG_TYPE AS "jigType", tp.CODE_MEAN_KOR AS "jigTypeName",
+             j.LINE_CODE AS "lineCode", ln.LINE_NAME AS "lineName",
+             j.USE_STATUS AS "useStatus", j.HIT_VALUE AS "hitValue",
+             a.COMMENTS AS "comments",
+             a.ENTER_BY AS "enterBy", a.ENTER_DATE AS "enterDate",
+             a.LAST_MODIFY_BY AS "lastModifyBy", a.LAST_MODIFY_DATE AS "lastModifyDate"
+        FROM IMCN_JIG_FEEDER_ADJUST a
+        LEFT JOIN IMCN_JIG j
+               ON j.JIG_CODE = a.JIG_CODE AND j.JIG_LOT_NO = a.JIG_LOT_NO
+              AND j.ORGANIZATION_ID = a.ORGANIZATION_ID
+        LEFT JOIN IP_PRODUCT_LINE ln
+               ON ln.LINE_CODE = j.LINE_CODE AND ln.ORGANIZATION_ID = j.ORGANIZATION_ID
+        LEFT JOIN ISYS_BASECODE tp
+               ON tp.CODE_TYPE = 'JIG TYPE' AND tp.CODE_NAME = j.JIG_TYPE
+              AND tp.ORGANIZATION_ID = a.ORGANIZATION_ID
+       WHERE a.JIG_CODE LIKE :jigCode
+         AND NVL(a.JIG_LOT_NO, '*') LIKE :jigLotNo
+         AND a.ADJUST_DATE >= TRUNC(TO_DATE(:dateFrom, 'YYYY-MM-DD'))
+         AND a.ADJUST_DATE < TRUNC(TO_DATE(:dateTo, 'YYYY-MM-DD')) + 1
+         AND a.ORGANIZATION_ID = :organizationId`;
+    return this.page(body, 'ORDER BY "adjustDate" DESC, "adjustSequence" DESC',
+      binds, query.page ?? 1, query.limit ?? DEFAULT_LIMIT);
+  }
+
+  /**
+   * 피더교정 스캔 등록 — PKG_MES_MAC.SP_FEEDER_ADJUST_SCAN.
+   * 스캔 1회로 교정 이력 1건이 남는다 (PB 와 동일).
+   */
+  async registerFeederAdjust(dto: FeederAdjustScanDto, organizationId: number, userId: string) {
+    const jigLotNo = dto.jigLotNo.trim();
+    if (!jigLotNo) throw new BadRequestException('바코드를 입력하세요.');
+    return this.tx.run(async (qr) => {
+      await qr.query(
+        `DECLARE
+           v_result NUMBER;
+         BEGIN
+           PKG_MES_MAC.SP_FEEDER_ADJUST_SCAN(:jigLotNo, :comments,
+             :organizationId, :userId, v_result);
+           IF v_result < 0 THEN
+             RAISE_APPLICATION_ERROR(-20010, 'FEEDER_ADJUST_FAILED:' || v_result);
+           END IF;
+         END;`,
+        {
+          jigLotNo, comments: dto.comments ?? null, organizationId, userId,
+        } as unknown as unknown[],
+      ).catch((error: unknown) => {
+        const message = error instanceof Error ? error.message : String(error);
+        if (/FEEDER_ADJUST_FAILED/.test(message)) {
+          throw new BadRequestException('등록되지 않은 피더 바코드입니다.');
+        }
+        throw error;
+      });
+      const saved = await qr.query(
+        `SELECT * FROM (
+           SELECT ADJUST_SEQUENCE AS "adjustSequence", ADJUST_DATE AS "adjustDate",
+                  JIG_CODE AS "jigCode"
+             FROM IMCN_JIG_FEEDER_ADJUST
+            WHERE JIG_LOT_NO = :jigLotNo AND ORGANIZATION_ID = :organizationId
+            ORDER BY ADJUST_DATE DESC, ADJUST_SEQUENCE DESC
+         ) WHERE ROWNUM = 1`,
+        { jigLotNo, organizationId } as unknown as unknown[],
+      ) as OracleRow[];
+      return saved[0] ?? {};
     });
   }
 }

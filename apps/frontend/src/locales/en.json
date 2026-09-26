@@ -438,7 +438,11 @@
     "jig.pm": "Jig Autonomous Maintenance",
     "jig.squeezeCheck": "Squeegee Inspection",
     "jig.maskCheck": "Metal Mask Tension Check",
-    "jig.sample": "Sample Master"
+    "jig.sample": "Sample Master",
+    "feeder": "Feeder",
+    "feeder.master": "Feeder Master",
+    "feeder.repair": "Feeder Repair",
+    "feeder.adjust": "Feeder Calibration"
   },
   "header": {
     "theme": "Theme",

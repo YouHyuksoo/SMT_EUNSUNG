@@ -3,7 +3,7 @@ sources:
   - apps/frontend/src/config/menuConfig.ts
   - apps/frontend/scripts/data/pb-screen-inventory.json
 generator: apps/frontend/scripts/gen-migration-status.mjs
-verifiedCommit: 6e426a7
+verifiedCommit: 7ae1281
 ---
 
 # PB 화면 이관 현황 (자동 생성)
@@ -17,11 +17,11 @@ verifiedCommit: 6e426a7
 | 상태 | 건수 |
 |---|---:|
 | PB 업무화면(셸 메뉴 제외) | 275 |
-| 완료(개발됨, pbWindow 매핑) | 44 |
-| 미착수 | 205 |
+| 완료(개발됨, pbWindow 매핑) | 47 |
+| 미착수 | 202 |
 | 윈도우 미상 | 26 |
 
-웹 메뉴 연결 계약: **PB 46개 / 웹 신규 17개 / 미확정 2개**. PB 매핑과 웹 경로의 전체 연결표는 [pb-menu-route-links.md](pb-menu-route-links.md)에서 관리합니다.
+웹 메뉴 연결 계약: **PB 49개 / 웹 신규 17개 / 미확정 2개**. PB 매핑과 웹 경로의 전체 연결표는 [pb-menu-route-links.md](pb-menu-route-links.md)에서 관리합니다.
 
 ## 대분류별 진행률
 
@@ -32,7 +32,7 @@ verifiedCommit: 6e426a7
 | SMT | `M_SMT` | 9 | 0 | 9 | 0 |
 | 설비 | `M_JIG` | 19 | 10 | 7 | 2 |
 | 지그 | `M_JIG0` | 12 | 10 | 2 | 0 |
-| 피더 | `M_FEEDER` | 4 | 0 | 4 | 0 |
+| 피더 | `M_FEEDER` | 4 | 3 | 1 | 0 |
 | S-PARTS | `M_MOLD` | 8 | 0 | 8 | 0 |
 | 생산 | `M_PLANNING` | 7 | 0 | 7 | 0 |
 | 공정 | `M_WORKSTAGE0` | 5 | 2 | 3 | 0 |
@@ -144,10 +144,10 @@ verifiedCommit: 6e426a7
 
 | 순서 | 메뉴명 | PB 윈도우 | 원본 | 상태 | MES 메뉴코드 | 경로 |
 |---:|---|---|:--:|---|---|---|
-| 201 | 피더관리 | `w_mcn_feeder_master` | srw | 미착수 |  |  |
+| 201 | 피더관리 | `w_mcn_feeder_master` | srw | 완료 | `FEEDER_MASTER` | `/feeder/master` |
 | 202 | 피더수리신청 | `w_mcn_feeder_repair_request_master` | srw | 미착수 |  |  |
-| 203 | 피더수리관리 | `w_mcn_feeder_repair_master` | srw | 미착수 |  |  |
-| 204 | 피더교정관리 | `w_mcn_jig_feeder_adjust_master` | srw | 미착수 |  |  |
+| 203 | 피더수리관리 | `w_mcn_feeder_repair_master` | srw | 완료 | `FEEDER_REPAIR` | `/feeder/repair` |
+| 204 | 피더교정관리 | `w_mcn_jig_feeder_adjust_master` | srw | 완료 | `FEEDER_ADJUST` | `/feeder/adjust` |
 
 ### S-PARTS  `M_MOLD`
 

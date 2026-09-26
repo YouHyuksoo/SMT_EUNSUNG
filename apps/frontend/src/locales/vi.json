@@ -438,7 +438,11 @@
     "jig.pm": "Bảo trì tự chủ đồ gá",
     "jig.squeezeCheck": "Kiểm tra dao gạt",
     "jig.maskCheck": "Kiểm tra lực căng lưới thép",
-    "jig.sample": "Quản lý mẫu chuẩn"
+    "jig.sample": "Quản lý mẫu chuẩn",
+    "feeder": "Quản lý feeder",
+    "feeder.master": "Quản lý feeder",
+    "feeder.repair": "Sửa chữa feeder",
+    "feeder.adjust": "Hiệu chỉnh feeder"
   },
   "header": {
     "theme": "Giao diện",

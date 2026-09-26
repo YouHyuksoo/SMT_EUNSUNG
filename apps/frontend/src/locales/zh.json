@@ -438,7 +438,11 @@
     "jig.pm": "治具自主保全管理",
     "jig.squeezeCheck": "刮刀检查管理",
     "jig.maskCheck": "钢网张力检查",
-    "jig.sample": "标准样品管理"
+    "jig.sample": "标准样品管理",
+    "feeder": "供料器管理",
+    "feeder.master": "供料器管理",
+    "feeder.repair": "供料器维修管理",
+    "feeder.adjust": "供料器校正管理"
   },
   "header": {
     "theme": "主题",

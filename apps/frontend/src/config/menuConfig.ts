@@ -10,7 +10,7 @@
  */
 import {
   Activity, Boxes, Building2, ClipboardList,
-  Database, GitBranch, Grip, Network, Package, Settings, Warehouse, Wrench,
+  Cable, Database, GitBranch, Grip, Network, Package, Settings, Warehouse, Wrench,
 } from "lucide-react";
 
 /** 메뉴 설정 항목 인터페이스 */
@@ -132,6 +132,16 @@ export const menuConfig: MenuConfigItem[] = [
       { code: "JIG_INPUT_HISTORY", labelKey: "menu.jig.inputHistory", path: "/jig/input-history", pbLinkStatus: "powerbuilder", pbWindow: "w_mcn_jig_input_history_master" },
       { code: "JIG_SAMPLE_INPUT_HISTORY", labelKey: "menu.jig.sampleInputHistory", path: "/jig/sample-input-history", pbLinkStatus: "powerbuilder", pbWindow: "w_mcn_sample_input_history_master" },
       { code: "JIG_SAMPLE_BCR_HISTORY", labelKey: "menu.jig.sampleBcrHistory", path: "/jig/sample-bcr-history", pbLinkStatus: "powerbuilder", pbWindow: "w_mcn_sample_bcr_input_history_master" },
+    ],
+  },
+  {
+    code: "FEEDER",
+    labelKey: "menu.feeder",
+    icon: Cable,
+    children: [
+      { code: "FEEDER_MASTER", labelKey: "menu.feeder.master", path: "/feeder/master", pbLinkStatus: "powerbuilder", pbWindow: "w_mcn_feeder_master" },
+      { code: "FEEDER_REPAIR", labelKey: "menu.feeder.repair", path: "/feeder/repair", pbLinkStatus: "powerbuilder", pbWindow: "w_mcn_feeder_repair_master" },
+      { code: "FEEDER_ADJUST", labelKey: "menu.feeder.adjust", path: "/feeder/adjust", pbLinkStatus: "powerbuilder", pbWindow: "w_mcn_jig_feeder_adjust_master" },
     ],
   },
   {

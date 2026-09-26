@@ -4,6 +4,8 @@ import { OrganizationId, UserId } from '../../common/decorators/tenant.decorator
 import { ResponseUtil } from '../../common/dto/response.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import {
+  FeederAdjustQueryDto,
+  FeederAdjustScanDto,
   JigIssueCancelDto,
   JigIssueCreateDto,
   JigIssueQueryDto,
@@ -203,6 +205,28 @@ export class JigCheckController {
   ) {
     return ResponseUtil.success(
       await this.service.confirmPm(dto, organizationId, userId || DEFAULT_USER),
+    );
+  }
+
+  @Get('feeder-adjust')
+  @ApiOperation({ summary: '피더교정 이력 조회 (PB w_mcn_jig_feeder_adjust_master)' })
+  async feederAdjusts(
+    @Query() query: FeederAdjustQueryDto,
+    @OrganizationId() organizationId: number,
+  ) {
+    const r = await this.service.findFeederAdjusts(query, organizationId);
+    return ResponseUtil.paged(r.data, r.total, r.page, r.limit);
+  }
+
+  @Post('feeder-adjust/scan')
+  @ApiOperation({ summary: '피더 바코드 스캔 교정등록 (PKG_MES_MAC.SP_FEEDER_ADJUST_SCAN)' })
+  async feederAdjustScan(
+    @Body() dto: FeederAdjustScanDto,
+    @OrganizationId() organizationId: number,
+    @UserId() userId?: string,
+  ) {
+    return ResponseUtil.success(
+      await this.service.registerFeederAdjust(dto, organizationId, userId || DEFAULT_USER),
     );
   }
 }

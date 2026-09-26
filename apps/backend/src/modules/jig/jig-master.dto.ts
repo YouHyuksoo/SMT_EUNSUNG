@@ -10,6 +10,8 @@ export class JigMasterQueryDto {
   @IsOptional() @IsString() jigType?: string;
   @IsOptional() @IsString() lineCode?: string;
   @IsOptional() @IsString() jigStatus?: string;
+  /** PB d_mcn_feeder_lst 의 arg_model_name — 피더관리 화면이 쓴다 */
+  @IsOptional() @IsString() jigModelName?: string;
   @IsOptional() @Type(() => Number) @IsInt() @Min(1) page = 1;
   @IsOptional() @Type(() => Number) @IsInt() @Min(1) @Max(5000) limit = 500;
 }

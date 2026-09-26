@@ -177,6 +177,24 @@ CREATE OR REPLACE PACKAGE PKG_MES_MAC AS
     p_result            OUT NUMBER
   );
 
+  /**
+   * PB w_mcn_jig_feeder_adjust_master sle_barcode.modified 이관 (2026-09-26)
+   *
+   * 피더 바코드를 스캔하면 교정 이력 1건이 바로 등록된다.
+   *   1) 지그LOT 으로 IMCN_JIG 에서 지그코드를 읽는다 (PB 는 JIG_TYPE 조건을 걸지 않는다).
+   *   2) SEQ_FEEDER_ADJUST_SEQUENCE 로 교정항번을 채번해 IMCN_JIG_FEEDER_ADJUST 에 넣는다.
+   *      교정일자는 오늘이다.
+   *
+   * p_result : 채번된 ADJUST_SEQUENCE   -1 등록되지 않은 바코드
+   */
+  PROCEDURE SP_FEEDER_ADJUST_SCAN(
+    p_jig_lot_no      IN  VARCHAR2,
+    p_comments        IN  VARCHAR2,
+    p_organization_id IN  NUMBER,
+    p_user_id         IN  VARCHAR2,
+    p_result          OUT NUMBER
+  );
+
 END PKG_MES_MAC;
 /
 
@@ -568,6 +586,45 @@ CREATE OR REPLACE PACKAGE BODY PKG_MES_MAC AS
 
     p_result := 1;
   END SP_JIG_PM_CONFIRM;
+
+  /** PB w_mcn_jig_feeder_adjust_master 이관 (2026-09-26) — 상세는 SPEC 주석 참조 */
+  PROCEDURE SP_FEEDER_ADJUST_SCAN(
+    p_jig_lot_no      IN  VARCHAR2,
+    p_comments        IN  VARCHAR2,
+    p_organization_id IN  NUMBER,
+    p_user_id         IN  VARCHAR2,
+    p_result          OUT NUMBER
+  ) IS
+    l_jig_code IMCN_JIG.JIG_CODE%TYPE;
+    l_sequence NUMBER;
+  BEGIN
+    BEGIN
+      SELECT JIG_CODE
+        INTO l_jig_code
+        FROM IMCN_JIG
+       WHERE JIG_LOT_NO      = p_jig_lot_no
+         AND ORGANIZATION_ID = p_organization_id;
+    EXCEPTION
+      WHEN NO_DATA_FOUND THEN
+        p_result := -1;
+        RETURN;
+      WHEN TOO_MANY_ROWS THEN
+        p_result := -1;   -- 같은 LOT 이 여러 지그에 걸리면 등록하지 않는다
+        RETURN;
+    END;
+
+    SELECT SEQ_FEEDER_ADJUST_SEQUENCE.NEXTVAL INTO l_sequence FROM DUAL;
+
+    INSERT INTO IMCN_JIG_FEEDER_ADJUST (
+      JIG_CODE, JIG_LOT_NO, ADJUST_DATE, ADJUST_SEQUENCE, ORGANIZATION_ID,
+      COMMENTS, ENTER_BY, ENTER_DATE, LAST_MODIFY_BY, LAST_MODIFY_DATE
+    ) VALUES (
+      l_jig_code, p_jig_lot_no, SYSDATE, l_sequence, p_organization_id,
+      p_comments, p_user_id, SYSDATE, p_user_id, SYSDATE
+    );
+
+    p_result := l_sequence;
+  END SP_FEEDER_ADJUST_SCAN;
 
 END PKG_MES_MAC;
 /

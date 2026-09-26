@@ -30,6 +30,8 @@ export class MaskCheckQueryDto extends CheckQueryBase {
 
 /** 지그수리 (신청/관리 공용) — PB d_mcn_jig_repair_lst */
 export class JigRepairQueryDto {
+  /** 지그유형으로 좁힌다 — 피더수리 화면은 'F' 로 고정해 쓴다 */
+  @IsOptional() @IsString() jigType?: string;
   @IsOptional() @IsDateString() dateFrom?: string;
   @IsOptional() @IsDateString() dateTo?: string;
   @IsOptional() @IsString() jigCode?: string;
@@ -184,4 +186,20 @@ export class JigPmConfirmDto {
   @IsString() jigCode!: string;
   @IsString() jigLotNo!: string;
   @IsString() pmType!: string;
+}
+
+/** 피더교정 이력 조회 — PB d_mcn_jig_feeder_adjust_lst */
+export class FeederAdjustQueryDto {
+  @IsOptional() @IsDateString() dateFrom?: string;
+  @IsOptional() @IsDateString() dateTo?: string;
+  @IsOptional() @IsString() jigCode?: string;
+  @IsOptional() @IsString() jigLotNo?: string;
+  @IsOptional() @Type(() => Number) @IsInt() @Min(1) page = 1;
+  @IsOptional() @Type(() => Number) @IsInt() @Min(1) @Max(5000) limit = 500;
+}
+
+/** 피더교정 스캔 등록 — 스캔 1회로 교정 이력 1건이 남는다 */
+export class FeederAdjustScanDto {
+  @IsString() jigLotNo!: string;
+  @IsOptional() @IsString() comments?: string;
 }

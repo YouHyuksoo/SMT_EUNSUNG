@@ -7,6 +7,7 @@
     "OEE",
     "MATERIAL",
     "JIG",
+    "FEEDER",
     "PROCESS_TRANSACTION",
     "PRODUCT_MGMT",
     "PRODUCT_INVENTORY",
@@ -77,6 +78,11 @@
       "JIG_INPUT_HISTORY",
       "JIG_SAMPLE_INPUT_HISTORY",
       "JIG_SAMPLE_BCR_HISTORY"
+    ],
+    "FEEDER": [
+      "FEEDER_MASTER",
+      "FEEDER_REPAIR",
+      "FEEDER_ADJUST"
     ],
     "PROCESS_TRANSACTION": [
       "PLN_WORKSTAGE_PASS",

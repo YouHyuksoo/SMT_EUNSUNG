@@ -3,7 +3,7 @@ sources:
   - apps/frontend/src/config/menuConfig.ts
   - apps/frontend/scripts/data/pb-screen-inventory.json
 generator: apps/frontend/scripts/gen-migration-status.mjs
-verifiedCommit: 6e426a7
+verifiedCommit: 7ae1281
 ---
 
 # PB 윈도우 ↔ 웹 메뉴·경로 연결표 (자동 생성)
@@ -15,7 +15,7 @@ verifiedCommit: 6e426a7
 
 | 전체 웹 메뉴 | PB 연결 | 웹 신규 | 미확정 |
 |---:|---:|---:|---:|
-| 65 | 46 | 17 | 2 |
+| 68 | 49 | 17 | 2 |
 
 ## 전체 연결표
 
@@ -71,6 +71,9 @@ verifiedCommit: 6e426a7
 | 지그관리 | 지그 투입이력조회 | `JIG_INPUT_HISTORY` | `/jig/input-history` | PB 연결 | `w_mcn_jig_input_history_master` | PB 메뉴 인벤토리 |
 | 지그관리 | 샘플마스터 장착이력조회 | `JIG_SAMPLE_INPUT_HISTORY` | `/jig/sample-input-history` | PB 연결 | `w_mcn_sample_input_history_master` | PB 메뉴 인벤토리 |
 | 지그관리 | 샘플마스터 투입이력조회 | `JIG_SAMPLE_BCR_HISTORY` | `/jig/sample-bcr-history` | PB 연결 | `w_mcn_sample_bcr_input_history_master` | PB 메뉴 인벤토리 |
+| 피더관리 | 피더관리 | `FEEDER_MASTER` | `/feeder/master` | PB 연결 | `w_mcn_feeder_master` | PB 메뉴 인벤토리 |
+| 피더관리 | 피더수리관리 | `FEEDER_REPAIR` | `/feeder/repair` | PB 연결 | `w_mcn_feeder_repair_master` | PB 메뉴 인벤토리 |
+| 피더관리 | 피더교정관리 | `FEEDER_ADJUST` | `/feeder/adjust` | PB 연결 | `w_mcn_jig_feeder_adjust_master` | PB 메뉴 인벤토리 |
 | 공정수불관리 | 공정통과이력 관리 | `PLN_WORKSTAGE_PASS` | `/process-transaction/workstage-pass` | PB 연결 | `w_pln_product_inout_scan_master` | PB 메뉴 인벤토리 |
 | 공정수불관리 | 매거진발행이력 | `PLN_MAGAZINE_LABEL_HISTORY` | `/process-transaction/magazine-label-history` | PB 연결 | `w_pln_product_magazine_label_query` | PB 메뉴 인벤토리 |
 | 제품재고관리 | 제품재고조회 | `PRD_CURRENT_INVENTORY` | `/product/current-inventory` | PB 연결 | `w_prd_product_fg_inventory` | PB 메뉴 인벤토리 |

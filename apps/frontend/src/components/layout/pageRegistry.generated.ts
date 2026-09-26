@@ -82,6 +82,21 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
       component = mod.getPageComponent();
       break;
     }
+    case "/feeder/adjust": {
+      const mod = await import("./page-registries/feeder__adjust.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/feeder/master": {
+      const mod = await import("./page-registries/feeder__master.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/feeder/repair": {
+      const mod = await import("./page-registries/feeder__repair.generated");
+      component = mod.getPageComponent();
+      break;
+    }
     case "/help": {
       const mod = await import("./page-registries/help.generated");
       component = mod.getPageComponent();

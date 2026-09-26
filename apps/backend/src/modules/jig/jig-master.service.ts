@@ -70,6 +70,7 @@ export class JigMasterService {
       jigType: this.like(query.jigType),
       lineCode: this.like(query.lineCode),
       jigStatus: this.like(query.jigStatus),
+      jigModelName: this.like(query.jigModelName),
     };
     const body = `
       SELECT j.JIG_CODE AS "jigCode", j.JIG_LOT_NO AS "jigLotNo", j.JIG_NAME AS "jigName",
@@ -125,6 +126,7 @@ export class JigMasterService {
          AND j.JIG_TYPE LIKE :jigType
          AND NVL(j.LINE_CODE, '*') LIKE :lineCode
          AND NVL(j.JIG_STATUS, '*') LIKE :jigStatus
+         AND NVL(j.JIG_MODEL_NAME, '*') LIKE :jigModelName
          AND j.ORGANIZATION_ID = :organizationId`;
     const page = query.page ?? 1;
     const limit = query.limit ?? 500;
