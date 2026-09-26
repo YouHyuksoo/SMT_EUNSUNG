@@ -33,6 +33,17 @@ CREATE OR REPLACE PACKAGE PKG_MES_MAT AS
     p_result           OUT NUMBER
   );
 
+  /**
+   * PB f_check_unit_price_dup 이관 (2026-09-26)
+   * 유효기간이 겹치는 구매단가 중복 등록 검사.
+   * 공급처+품목+라인유형 조합이 2건 이상이면 그 건수를, 중복이 없으면 0,
+   * 중복 조합이 여러 개라 단일 값으로 못 줄이면 -1 (PB 규약 유지).
+   */
+  FUNCTION F_CHECK_UNIT_PRICE_DUP(
+    p_item_code       IN VARCHAR2,
+    p_organization_id IN NUMBER
+  ) RETURN NUMBER;
+
 END PKG_MES_MAT;
 /
 
@@ -121,6 +132,30 @@ CREATE OR REPLACE PACKAGE BODY PKG_MES_MAT AS
       p_result := -1;
     END IF;
   END SP_RECEIPT_CANCEL;
+
+  /** PB f_check_unit_price_dup 이관 (2026-09-26) */
+  FUNCTION F_CHECK_UNIT_PRICE_DUP(
+    p_item_code       IN VARCHAR2,
+    p_organization_id IN NUMBER
+  ) RETURN NUMBER IS
+    l_return NUMBER;
+  BEGIN
+    SELECT COUNT(*)
+      INTO l_return
+      FROM IM_ITEM_UNIT_PRICE
+     WHERE ITEM_CODE       = p_item_code
+       AND ORGANIZATION_ID = p_organization_id
+       AND DATESET <= TRUNC(SYSDATE)
+       AND DATEEND >= TRUNC(SYSDATE)
+     GROUP BY SUPPLIER_CODE, ITEM_CODE, LINE_TYPE, ORGANIZATION_ID
+    HAVING COUNT(*) > 1;
+    RETURN l_return;
+  EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+      RETURN 0;     -- PB: 중복 조합이 없으면 초기값 0
+    WHEN OTHERS THEN
+      RETURN -1;    -- PB: f_sql_check() < 0 이면 -1 (중복 조합이 여러 개인 경우 포함)
+  END F_CHECK_UNIT_PRICE_DUP;
 
 END PKG_MES_MAT;
 /

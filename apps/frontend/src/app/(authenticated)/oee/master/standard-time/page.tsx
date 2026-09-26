@@ -147,11 +147,11 @@ export default function StandardTimeMasterPage() {
 
   async function save() {
     if (!form) return;
-    if (!form.modelCode) return alert('모델을 선택하세요');
-    if (!form.machineCode) return alert('설비를 선택하세요');
-    if (!form.validFrom) return alert('적용 시작일을 입력하세요');
-    if (form.validTo !== OPEN_END && form.validTo < form.validFrom) return alert('적용 종료일은 적용 시작일보다 빠를 수 없습니다');
-    if (!TIME_CATEGORIES.some((c) => form.times[c.code] > 0)) return alert('분류별 표준시간을 1개 이상 입력하세요');
+    if (!form.modelCode) return toast.error('모델을 선택하세요');
+    if (!form.machineCode) return toast.error('설비를 선택하세요');
+    if (!form.validFrom) return toast.error('적용 시작일을 입력하세요');
+    if (form.validTo !== OPEN_END && form.validTo < form.validFrom) return toast.error('적용 종료일은 적용 시작일보다 빠를 수 없습니다');
+    if (!TIME_CATEGORIES.some((c) => form.times[c.code] > 0)) return toast.error('분류별 표준시간을 1개 이상 입력하세요');
 
     const payload = {
       itemCode: form.modelCode, machineCode: form.machineCode, validFrom: form.validFrom, validTo: form.validTo,

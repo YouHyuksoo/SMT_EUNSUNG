@@ -20,6 +20,8 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
+import { ConfirmModal } from '@/components/ui';
 import { Save, Wand2, Trash2, RefreshCw, Check } from 'lucide-react';
 
 type Kind = 'tables' | 'functions' | 'procedures';
@@ -59,6 +61,7 @@ export default function AiTrainingPanel() {
   const [objects, setObjects] = useState<ObjectsResponse | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const [content, setContent] = useState('');
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [savedFlash, setSavedFlash] = useState(false);
@@ -79,7 +82,7 @@ export default function AiTrainingPanel() {
       ]);
       if (!objectsRes.ok) {
         const body = await objectsRes.json().catch(() => ({}));
-        alert(`DB 동기화 실패 (함수/프로시저): ${body.error ?? '알 수 없음'}`);
+        toast.error(`DB 동기화 실패 (함수/프로시저): ${body.error ?? '알 수 없음'}`);
       }
       // tablesRes 가 404 면 경로 없음 (현재는 존재 확인됨) — 조용히 무시
       void tablesRes;
@@ -165,7 +168,7 @@ export default function AiTrainingPanel() {
       );
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        alert(`토글 실패: ${body.error ?? res.status}`);
+        toast.error(`토글 실패: ${body.error ?? res.status}`);
         return;
       }
       await loadObjects();
@@ -181,7 +184,7 @@ export default function AiTrainingPanel() {
       const j = await res.json();
       setContent(j.content);
     } else {
-      alert('자동 초안 생성 실패 — DB 캐시에 객체 없음');
+      toast.error('자동 초안 생성 실패 — DB 캐시에 객체 없음');
     }
   };
 
@@ -200,13 +203,13 @@ export default function AiTrainingPanel() {
       setTimeout(() => setSavedFlash(false), 1500);
       loadObjects();
     } else {
-      alert('저장 실패');
+      toast.error('저장 실패');
     }
   };
 
   const onDelete = async () => {
     if (!selected) return;
-    if (!confirm(`${selected} MD 파일을 삭제할까요?`)) return;
+    setDeleteOpen(false);
     const slug = slugify(selected);
     const res = await fetch(`/api/ai-context/wiki/${kind}/${slug}`, {
       method: 'DELETE',
@@ -362,7 +365,7 @@ export default function AiTrainingPanel() {
                   {saving ? '저장 중...' : savedFlash ? '저장됨' : '저장'}
                 </button>
                 <button
-                  onClick={onDelete}
+                  onClick={() => selected && setDeleteOpen(true)}
                   className="flex items-center gap-1 rounded bg-red-600 px-3 py-1 text-xs text-white hover:bg-red-500"
                 >
                   <Trash2 className="size-3" /> 삭제
@@ -383,6 +386,14 @@ export default function AiTrainingPanel() {
           )}
         </div>
       </div>
+      <ConfirmModal
+        isOpen={deleteOpen}
+        onClose={() => setDeleteOpen(false)}
+        onConfirm={onDelete}
+        title="MD 파일 삭제"
+        message={`${selected} MD 파일을 삭제할까요?`}
+        variant="danger"
+      />
     </div>
   );
 }
