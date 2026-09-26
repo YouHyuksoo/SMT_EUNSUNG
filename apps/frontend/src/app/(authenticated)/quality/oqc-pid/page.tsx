@@ -109,7 +109,7 @@ export default function OqcPage() {
     try {
       await api.delete('/quality/oqc', {
         data: {
-          inspectDate: String(selected.inspectDate),
+          inspectDateKey: selected.inspectDateKey,
           inspectSequence: selected.inspectSequence,
         },
       });

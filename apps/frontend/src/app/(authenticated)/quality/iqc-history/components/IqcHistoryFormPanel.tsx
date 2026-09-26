@@ -22,6 +22,8 @@ import type { IqcInspectHistoryRow } from '../../pid-columns';
 export interface IqcHistoryForm {
   /** 수정일 때만 채워진다 (읽기 전용) */
   inspectDate: string;
+  /** 서버가 내려준 불투명 키. 그대로 되돌려 보낸다 — ISO 로 바꾸면 시간대가 밀린다. */
+  inspectDateKey: string;
   inspectSequence: number | null;
 
   modelName: string;
@@ -44,7 +46,7 @@ export interface IqcHistoryForm {
 const text = (value: unknown) => (value == null ? '' : String(value));
 
 export const emptyIqcHistoryForm = (): IqcHistoryForm => ({
-  inspectDate: '', inspectSequence: null,
+  inspectDate: '', inspectDateKey: '', inspectSequence: null,
   modelName: '', modelSuffix: '*', itemCode: '', itemClass: '', lotNo: '',
   defectCode: '', inspectType: '', inspectResult: 'P', badReasonCode: '',
   supplierCode: '', inspector: '', inspectorName: '', comments: '',
@@ -53,6 +55,7 @@ export const emptyIqcHistoryForm = (): IqcHistoryForm => ({
 
 export const toIqcHistoryForm = (row: IqcInspectHistoryRow): IqcHistoryForm => ({
   inspectDate: String(row.inspectDate),
+  inspectDateKey: row.inspectDateKey,
   inspectSequence: row.inspectSequence,
   modelName: text(row.modelName),
   modelSuffix: text(row.modelSuffix),
@@ -113,7 +116,7 @@ export default function IqcHistoryFormPanel({ mode, initialForm, onClose, onSave
       } else {
         await api.put('/quality/iqc-history', {
           ...body,
-          inspectDate: form.inspectDate,
+          inspectDateKey: form.inspectDateKey,
           inspectSequence: form.inspectSequence,
         });
         toast.success('수정되었습니다.');

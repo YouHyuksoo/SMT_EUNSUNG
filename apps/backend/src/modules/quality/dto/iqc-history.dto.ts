@@ -1,6 +1,6 @@
 import { Type } from 'class-transformer';
 import {
-  IsDateString, IsInt, IsNumber, IsOptional, IsString, Length, Max, Min,
+  IsDateString, IsInt, IsNumber, IsOptional, IsString, Length, Matches, Max, Min,
 } from 'class-validator';
 
 /**
@@ -49,14 +49,24 @@ export class IqcInspectHistoryCreateDto {
   @IsOptional() @Type(() => Number) @IsNumber() defectQty?: number;
 }
 
-/** 수정·삭제 키 — 이 테이블에 기본키 제약이 없어 서버가 이 셋을 키로 다룬다 */
+/**
+ * 수정·삭제 키 — 이 테이블에 기본키 제약이 없어 서버가 이 셋을 키로 다룬다.
+ *
+ * ⚠ 검사일시를 ISO 문자열로 왕복시키면 안 된다. JSON 직렬화가 Date 를 UTC 로 바꾸는데
+ *   DB 는 KST 로 저장돼 있어 9시간이 밀리고 WHERE 가 한 행도 못 잡는다(실측 확인).
+ *   그래서 목록이 내려준 불투명 키(TO_CHAR(INSPECT_DATE,'YYYYMMDDHH24MISS'))를 그대로 받는다.
+ */
 export class IqcInspectHistoryKeyDto {
-  @IsDateString() inspectDate!: string;
+  @IsString() @Matches(/^\d{14}$/, { message: 'inspectDateKey 는 YYYYMMDDHH24MISS 14자리입니다.' })
+  inspectDateKey!: string;
+
   @Type(() => Number) @IsNumber() inspectSequence!: number;
 }
 
 /** 수정 본문 — 키 + 바꿀 값 */
 export class IqcInspectHistoryUpdateDto extends IqcInspectHistoryCreateDto {
-  @IsDateString() inspectDate!: string;
+  @IsString() @Matches(/^\d{14}$/, { message: 'inspectDateKey 는 YYYYMMDDHH24MISS 14자리입니다.' })
+  inspectDateKey!: string;
+
   @Type(() => Number) @IsNumber() inspectSequence!: number;
 }

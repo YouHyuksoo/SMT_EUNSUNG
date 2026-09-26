@@ -1,7 +1,7 @@
 import { Type } from 'class-transformer';
 import {
   ArrayMaxSize, ArrayNotEmpty, IsArray, IsDateString, IsIn, IsInt, IsNumber,
-  IsOptional, IsString, Length, Max, Min,
+  IsOptional, IsString, Length, Matches, Max, Min, ValidateNested,
 } from 'class-validator';
 
 /**
@@ -30,12 +30,24 @@ export class InventoryHoldListQueryDto {
 }
 
 /**
+ * 통제 대상 1건의 키.
+ *
+ * ⚠ 원소 타입을 클래스로 두고 @ValidateNested 를 붙여야 한다. @IsArray() 만 붙이면
+ *   class-validator 가 [{}] 나 ["x"] 도 통과시켜 서비스에서 undefined 가 바인드로 들어간다.
+ */
+export class InventoryHoldKeyDto {
+  @IsString() @Length(1, 30) itemCode!: string;
+  @IsString() @Length(1, 60) materialMfs!: string;
+}
+
+/**
  * 재고통제 등록·해제.
  * 통제하면 IM_ITEM_INVENTORY_HOLD 에 행을 만들고, 해제하면 그 행을 지운다 — PB 와 같다.
  */
 export class InventoryHoldApplyDto {
   @IsArray() @ArrayNotEmpty() @ArrayMaxSize(1000)
-  materialMfsList!: Array<{ itemCode: string; materialMfs: string }>;
+  @ValidateNested({ each: true }) @Type(() => InventoryHoldKeyDto)
+  materialMfsList!: InventoryHoldKeyDto[];
 
   /** 'B' 불량 / 'G' 양품 */
   @IsIn(['B', 'G']) inventoryStatus!: 'B' | 'G';
@@ -44,7 +56,8 @@ export class InventoryHoldApplyDto {
 
 export class InventoryHoldReleaseDto {
   @IsArray() @ArrayNotEmpty() @ArrayMaxSize(1000)
-  materialMfsList!: Array<{ itemCode: string; materialMfs: string }>;
+  @ValidateNested({ each: true }) @Type(() => InventoryHoldKeyDto)
+  materialMfsList!: InventoryHoldKeyDto[];
 }
 
 /** OQC 검사이력 조회 (PID) — PB d_iq_oqc_insepct_history */
@@ -93,8 +106,16 @@ export class OqcHistoryCreateDto {
   @IsOptional() @Type(() => Number) @IsNumber() defectQty?: number;
 }
 
-/** OQC 검사이력 삭제 — PB 도 행을 바로 지웠다 */
+/**
+ * OQC 검사이력 삭제 — PB 도 행을 바로 지웠다.
+ *
+ * ⚠ 검사일시를 ISO 로 왕복시키지 않는다. JSON 직렬화가 Date 를 UTC 로 바꾸는데
+ *   DB 는 KST 로 저장돼 있어 9시간이 밀리고 한 행도 못 잡는다(실측 확인).
+ *   목록이 내려준 불투명 키(TO_CHAR(INSPECT_DATE,'YYYYMMDDHH24MISS'))를 그대로 받는다.
+ */
 export class OqcHistoryKeyDto {
-  @IsDateString() inspectDate!: string;
+  @IsString() @Matches(/^\d{14}$/, { message: 'inspectDateKey 는 YYYYMMDDHH24MISS 14자리입니다.' })
+  inspectDateKey!: string;
+
   @Type(() => Number) @IsNumber() inspectSequence!: number;
 }

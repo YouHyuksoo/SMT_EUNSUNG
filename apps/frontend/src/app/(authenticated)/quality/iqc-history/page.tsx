@@ -82,7 +82,7 @@ export default function IqcHistoryPage() {
     try {
       await api.delete('/quality/iqc-history', {
         data: {
-          inspectDate: String(selected.inspectDate),
+          inspectDateKey: selected.inspectDateKey,
           inspectSequence: selected.inspectSequence,
         },
       });

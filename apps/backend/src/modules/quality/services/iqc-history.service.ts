@@ -5,6 +5,9 @@
  * 초보자 가이드:
  * 1. **이 테이블에는 기본키 제약이 없다.** 서버가 (검사일시 + 검사항번 + ORGANIZATION_ID)를
  *    키로 다룬다. 그래서 등록할 때 그 셋을 반드시 서버가 채워야 한다.
+ *    수정·삭제는 검사일시를 ISO 로 왕복시키지 않고 목록이 내려준 불투명 키
+ *    TO_CHAR(INSPECT_DATE,'YYYYMMDDHH24MISS') 로 잡는다 — JSON 직렬화가 Date 를 UTC 로
+ *    바꿔 KST 저장값과 9시간 밀리기 때문이다(실측 확인).
  * 2. **PB 는 두 모드로 갈려 있었다** — 상세/집계. 같은 테이블에 컬럼 집합만 달랐고,
  *    집계 모드에서만 검사일시·항번을 채워줬다. 상세 모드는 사용자 입력에 맡겨
  *    키가 빈 행이 생길 수 있었다. 웹은 한 경로로 합치고 항상 서버가 채운다.
@@ -64,6 +67,8 @@ export class IqcHistoryService {
     };
     const body = `
       SELECT h.INSPECT_DATE AS "inspectDate", h.INSPECT_SEQUENCE AS "inspectSequence",
+             -- 수정·삭제가 쓰는 불투명 키. DATE 를 ISO 로 왕복시키면 시간대가 밀린다.
+             TO_CHAR(h.INSPECT_DATE, 'YYYYMMDDHH24MISS') AS "inspectDateKey",
              h.MODEL_NAME AS "modelName", h.MODEL_SUFFIX AS "modelSuffix",
              h.ITEM_CODE AS "itemCode", i.ITEM_NAME AS "itemName",
              h.ITEM_CLASS AS "itemClass", cls.CODE_MEAN_KOR AS "itemClassName",
@@ -169,11 +174,11 @@ export class IqcHistoryService {
   private async exists(dto: IqcInspectHistoryKeyDto, organizationId: number) {
     const rows = await this.dataSource.query(
       `SELECT COUNT(*) AS "cnt" FROM IQ_IQC_INSPECT_HISTORY
-        WHERE INSPECT_DATE = TO_DATE(:inspectDate, 'YYYY-MM-DD"T"HH24:MI:SS')
+        WHERE TO_CHAR(INSPECT_DATE, 'YYYYMMDDHH24MISS') = :inspectDateKey
           AND INSPECT_SEQUENCE = :inspectSequence
           AND ORGANIZATION_ID = :organizationId`,
       {
-        inspectDate: dto.inspectDate.slice(0, 19),
+        inspectDateKey: dto.inspectDateKey,
         inspectSequence: dto.inspectSequence,
         organizationId,
       } as unknown as unknown[],
@@ -192,7 +197,7 @@ export class IqcHistoryService {
     }
     const sets: string[] = [`ITEM_CODE = NVL(:itemCode, '*')`];
     const binds: OracleRow = {
-      inspectDate: dto.inspectDate.slice(0, 19),
+      inspectDateKey: dto.inspectDateKey,
       inspectSequence: dto.inspectSequence,
       organizationId,
       itemCode: dto.itemCode?.trim() || null,
@@ -207,7 +212,7 @@ export class IqcHistoryService {
 
     await this.dataSource.query(
       `UPDATE IQ_IQC_INSPECT_HISTORY SET ${sets.join(', ')}
-        WHERE INSPECT_DATE = TO_DATE(:inspectDate, 'YYYY-MM-DD"T"HH24:MI:SS')
+        WHERE TO_CHAR(INSPECT_DATE, 'YYYYMMDDHH24MISS') = :inspectDateKey
           AND INSPECT_SEQUENCE = :inspectSequence
           AND ORGANIZATION_ID = :organizationId`,
       binds as unknown as unknown[],
@@ -222,11 +227,11 @@ export class IqcHistoryService {
     }
     await this.dataSource.query(
       `DELETE FROM IQ_IQC_INSPECT_HISTORY
-        WHERE INSPECT_DATE = TO_DATE(:inspectDate, 'YYYY-MM-DD"T"HH24:MI:SS')
+        WHERE TO_CHAR(INSPECT_DATE, 'YYYYMMDDHH24MISS') = :inspectDateKey
           AND INSPECT_SEQUENCE = :inspectSequence
           AND ORGANIZATION_ID = :organizationId`,
       {
-        inspectDate: dto.inspectDate.slice(0, 19),
+        inspectDateKey: dto.inspectDateKey,
         inspectSequence: dto.inspectSequence,
         organizationId,
       } as unknown as unknown[],

@@ -95,6 +95,8 @@ export const pidIssueScanColumns: ColumnDef<PidIssueScanRow>[] = [
 /** PB d_iq_iqc_insepct_history / _summary_history */
 export interface IqcInspectHistoryRow {
   inspectDate: string;
+  /** 수정·삭제가 쓰는 불투명 키 (YYYYMMDDHH24MISS). 검사일시를 ISO 로 왕복시키면 시간대가 밀린다. */
+  inspectDateKey: string;
   inspectSequence: number;
   modelName: string | null;
   modelSuffix: string | null;

@@ -336,8 +336,25 @@ export class QcNotifyService {
       throw new NotFoundException('처리할 품목을 고르세요.');
     }
     return this.tx.run(async (qr) => {
-      let changed = 0;
+      // 사후 COUNT 로 세면 "이미 그 값이던 품목" 과 "없는 품목" 을 구분할 수 없다.
+      // 바꾸기 전에 현재 값을 읽어 두고 실제로 달라진 것만 센다.
+      const before = await qr.query(
+        `SELECT ITEM_CODE AS "itemCode", ECO_CHECK_YN AS "ecoCheckYn"
+           FROM ID_ITEM
+          WHERE ITEM_CODE IN (${codes.map((_, i) => `:c${i}`).join(', ')})
+            AND ORGANIZATION_ID = :organizationId
+            AND DATESET <= TRUNC(SYSDATE) AND DATEEND >= TRUNC(SYSDATE)`,
+        {
+          ...Object.fromEntries(codes.map((value, i) => [`c${i}`, value])),
+          organizationId,
+        } as unknown as unknown[],
+      ) as OracleRow[];
+      const existing = new Map(
+        before.map((row) => [String(row.itemCode), String(row.ecoCheckYn ?? '')]),
+      );
+
       for (const itemCode of codes) {
+        if (!existing.has(itemCode)) continue;
         await qr.query(
           `UPDATE ID_ITEM
               SET ECO_CHECK_YN       = :ecoCheckYn,
@@ -354,18 +371,16 @@ export class QcNotifyService {
             organizationId,
           } as unknown as unknown[],
         );
-        const check = await qr.query(
-          `SELECT COUNT(*) AS "cnt" FROM ID_ITEM
-            WHERE ITEM_CODE = :itemCode AND ORGANIZATION_ID = :organizationId
-              AND ECO_CHECK_YN = :ecoCheckYn
-              AND DATESET <= TRUNC(SYSDATE) AND DATEEND >= TRUNC(SYSDATE)`,
-          {
-            itemCode, organizationId, ecoCheckYn: dto.ecoCheckYn,
-          } as unknown as unknown[],
-        ) as OracleRow[];
-        changed += Number(check[0]?.cnt ?? 0) > 0 ? 1 : 0;
       }
-      return { requested: codes.length, changed };
+
+      const changed = [...existing.entries()]
+        .filter(([, value]) => value !== dto.ecoCheckYn).length;
+      return {
+        requested: codes.length,
+        changed,
+        alreadySet: existing.size - changed,
+        missing: codes.filter((itemCode) => !existing.has(itemCode)).length,
+      };
     });
   }
 }

@@ -131,9 +131,25 @@ export class PidHoldingService {
       throw new BadRequestException('바꿀 PID 를 고르세요.');
     }
     return this.tx.run(async (qr) => {
-      let changed = 0;
+      // 사후에 COUNT 로 세면 "이미 그 값이던 행" 과 "없는 행" 을 구분할 수 없다.
+      // 그래서 바꾸기 전에 대상 상태를 읽어 두고, 실제로 값이 달라진 것만 센다.
+      const before = await qr.query(
+        `SELECT SERIAL_NO AS "serialNo", BARCODE_STATUS AS "barcodeStatus"
+           FROM IP_PRODUCT_2D_BARCODE
+          WHERE SERIAL_NO IN (${serials.map((_, i) => `:s${i}`).join(', ')})
+            AND ORGANIZATION_ID = :organizationId`,
+        {
+          ...Object.fromEntries(serials.map((value, i) => [`s${i}`, value])),
+          organizationId,
+        } as unknown as unknown[],
+      ) as OracleRow[];
+      const existing = new Map(
+        before.map((row) => [String(row.serialNo), String(row.barcodeStatus ?? '')]),
+      );
+
       for (const serialNo of serials) {
-        const result = await qr.query(
+        if (!existing.has(serialNo)) continue;   // 없는 PID 는 건너뛴다
+        await qr.query(
           `UPDATE IP_PRODUCT_2D_BARCODE
               SET BARCODE_STATUS   = :barcodeStatus,
                   LAST_MODIFY_BY   = :userId,
@@ -145,22 +161,19 @@ export class PidHoldingService {
             serialNo,
             organizationId,
           } as unknown as unknown[],
-        ) as unknown;
-        void result;
-        // 갱신 여부는 다시 읽어 센다 — 드라이버가 영향 행수를 일정하게 주지 않는다.
-        const check = await qr.query(
-          `SELECT COUNT(*) AS "cnt" FROM IP_PRODUCT_2D_BARCODE
-            WHERE SERIAL_NO = :serialNo AND ORGANIZATION_ID = :organizationId
-              AND BARCODE_STATUS = :barcodeStatus`,
-          {
-            serialNo,
-            organizationId,
-            barcodeStatus: dto.barcodeStatus,
-          } as unknown as unknown[],
-        ) as OracleRow[];
-        changed += Number(check[0]?.cnt ?? 0) > 0 ? 1 : 0;
+        );
       }
-      return { requested: serials.length, changed, barcodeStatus: dto.barcodeStatus };
+
+      const changed = [...existing.entries()]
+        .filter(([, status]) => status !== dto.barcodeStatus).length;
+      const missing = serials.filter((serialNo) => !existing.has(serialNo)).length;
+      return {
+        requested: serials.length,
+        changed,                 // 실제로 값이 달라진 건수
+        alreadySet: existing.size - changed,
+        missing,                 // 그 PID 가 없어 건너뛴 건수
+        barcodeStatus: dto.barcodeStatus,
+      };
     });
   }
 

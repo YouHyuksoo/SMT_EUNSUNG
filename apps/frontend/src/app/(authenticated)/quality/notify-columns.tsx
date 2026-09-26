@@ -196,6 +196,8 @@ export const inventoryHoldColumns: ColumnDef<InventoryHoldRow>[] = [
 /** PB d_iq_oqc_insepct_history */
 export interface OqcHistoryRow {
   inspectDate: string;
+  /** 삭제가 쓰는 불투명 키 (YYYYMMDDHH24MISS) */
+  inspectDateKey: string;
   inspectSequence: number;
   productId: string | null;
   modelName: string | null;

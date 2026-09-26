@@ -230,6 +230,8 @@ export class InventoryHoldService {
     };
     const body = `
       SELECT o.INSPECT_DATE AS "inspectDate", o.INSPECT_SEQUENCE AS "inspectSequence",
+             -- 삭제가 쓰는 불투명 키. DATE 를 ISO 로 왕복시키면 시간대가 밀린다.
+             TO_CHAR(o.INSPECT_DATE, 'YYYYMMDDHH24MISS') AS "inspectDateKey",
              o.PRODUCT_ID AS "productId",
              o.MODEL_NAME AS "modelName", o.MODEL_SUFFIX AS "modelSuffix",
              o.ITEM_CODE AS "itemCode", i.ITEM_NAME AS "itemName",
@@ -367,11 +369,11 @@ export class InventoryHoldService {
   async removeOqc(dto: OqcHistoryKeyDto, organizationId: number) {
     const rows = await this.dataSource.query(
       `SELECT COUNT(*) AS "cnt" FROM IQ_OQC_INSPECT_HISTORY
-        WHERE INSPECT_DATE = TO_DATE(:inspectDate, 'YYYY-MM-DD"T"HH24:MI:SS')
+        WHERE TO_CHAR(INSPECT_DATE, 'YYYYMMDDHH24MISS') = :inspectDateKey
           AND INSPECT_SEQUENCE = :inspectSequence
           AND ORGANIZATION_ID = :organizationId`,
       {
-        inspectDate: dto.inspectDate.slice(0, 19),
+        inspectDateKey: dto.inspectDateKey,
         inspectSequence: dto.inspectSequence,
         organizationId,
       } as unknown as unknown[],
@@ -381,11 +383,11 @@ export class InventoryHoldService {
     }
     await this.dataSource.query(
       `DELETE FROM IQ_OQC_INSPECT_HISTORY
-        WHERE INSPECT_DATE = TO_DATE(:inspectDate, 'YYYY-MM-DD"T"HH24:MI:SS')
+        WHERE TO_CHAR(INSPECT_DATE, 'YYYYMMDDHH24MISS') = :inspectDateKey
           AND INSPECT_SEQUENCE = :inspectSequence
           AND ORGANIZATION_ID = :organizationId`,
       {
-        inspectDate: dto.inspectDate.slice(0, 19),
+        inspectDateKey: dto.inspectDateKey,
         inspectSequence: dto.inspectSequence,
         organizationId,
       } as unknown as unknown[],
