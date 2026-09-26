@@ -16,16 +16,20 @@
  * SQL 을 새로 썼다. 조건과 인자는 PB 의 retrieve arguments 를 그대로 따른다.
  * PB 규약대로 문자열 조건은 `값 + '%'` LIKE 다 — 빈 값이면 전체 조회.
  */
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
+import { TransactionService } from '../../shared/transaction.service';
 import {
   JigIssueQueryDto,
   JigPmQueryDto,
   JigRepairQueryDto,
+  JigScanLookupDto,
   MaskCheckQueryDto,
+  MaskTensionSaveDto,
   SampleApplyModelQueryDto,
   SampleMasterQueryDto,
   SqueezeCheckQueryDto,
+  SqueezeScanDto,
 } from './jig-check.dto';
 
 type OracleRow = Record<string, unknown>;
@@ -34,7 +38,10 @@ const DEFAULT_LIMIT = 500;
 
 @Injectable()
 export class JigCheckService {
-  constructor(private readonly dataSource: DataSource) {}
+  constructor(
+    private readonly dataSource: DataSource,
+    private readonly tx: TransactionService,
+  ) {}
 
   private like(value?: string): string {
     return `${(value ?? '').trim()}%`;
@@ -378,5 +385,114 @@ export class JigCheckService {
         ORDER BY ITEM_CODE`,
       { sampleCode: query.sampleCode, sampleLotNo: query.sampleLotNo, organizationId } as unknown as unknown[],
     ) as Promise<OracleRow[]>;
+  }
+
+  /**
+   * 스캔한 지그LOT 의 기준정보 — PB 가 스캔 직후 화면에 채우던 값들.
+   * 현장 스캐너는 키보드 방식이라 값은 그냥 입력 문자열로 들어온다.
+   */
+  async lookupByScan(query: JigScanLookupDto, organizationId: number) {
+    const rows = await this.dataSource.query(
+      `SELECT j.JIG_CODE AS "jigCode", j.JIG_LOT_NO AS "jigLotNo", j.JIG_NAME AS "jigName",
+              j.JIG_TYPE AS "jigType", j.JIG_SPEC AS "jigSpec",
+              j.BREAK_VALUE AS "breakValue", j.HIT_VALUE AS "hitValue",
+              j.MIN_TENSION AS "minTension", j.MAX_TENSION AS "maxTension",
+              j.USE_STATUS AS "useStatus", j.TENSION_CHECK_YN AS "tensionCheckYn",
+              j.LINE_CODE AS "lineCode", ln.LINE_NAME AS "lineName",
+              (SELECT MAX(m.JIG_CHECK_DATE) FROM IMCN_JIG_MASK_CHECK m
+                WHERE m.JIG_LOT_NO = j.JIG_LOT_NO AND m.CLEAN_YN = 'Y'
+                  AND m.ORGANIZATION_ID = j.ORGANIZATION_ID) AS "lastCleanDate"
+         FROM IMCN_JIG j
+         LEFT JOIN IP_PRODUCT_LINE ln
+                ON ln.LINE_CODE = j.LINE_CODE AND ln.ORGANIZATION_ID = j.ORGANIZATION_ID
+        WHERE j.JIG_LOT_NO = :jigLotNo
+          AND j.JIG_TYPE = :jigType
+          AND j.ORGANIZATION_ID = :organizationId`,
+      { jigLotNo: query.jigLotNo.trim(), jigType: query.jigType, organizationId } as unknown as unknown[],
+    ) as OracleRow[];
+    if (rows.length === 0) throw new BadRequestException('등록되지 않은 바코드입니다.');
+    return rows[0];
+  }
+
+  /**
+   * 스퀴즈 검사 스캔 등록 — PKG_MES_MAC.SP_SQUEEZE_CHECK_SCAN.
+   * 조회·판정·등록·지그상태 변경이 DB 프로시저 한 번에 돈다 (PB 와 같은 로직).
+   */
+  async registerSqueezeScan(dto: SqueezeScanDto, organizationId: number, userId: string) {
+    const jigLotNo = dto.jigLotNo.trim();
+    if (!jigLotNo) throw new BadRequestException('바코드를 입력하세요.');
+    return this.tx.run(async (qr) => {
+      // OUT 바인드를 쓰면 서비스가 oracledb 드라이버를 직접 import 해야 하므로,
+      // 실패는 Oracle 오류로 던지게 하고 판정 결과는 저장된 행을 다시 읽어 확인한다.
+      await qr.query(
+        `DECLARE
+           v_result NUMBER;
+         BEGIN
+           PKG_MES_MAC.SP_SQUEEZE_CHECK_SCAN(:jigLotNo, :organizationId, :userId, v_result);
+           IF v_result < 0 THEN
+             RAISE_APPLICATION_ERROR(-20003, 'SQUEEZE_SCAN_FAILED:' || v_result);
+           END IF;
+         END;`,
+        { jigLotNo, organizationId, userId } as unknown as unknown[],
+      ).catch((error: unknown) => {
+        const message = error instanceof Error ? error.message : String(error);
+        if (/SQUEEZE_SCAN_FAILED/.test(message)) {
+          throw new BadRequestException('등록되지 않은 스퀴즈 바코드입니다.');
+        }
+        throw error;
+      });
+      // 방금 넣은 행을 다시 읽어 판정 결과를 돌려준다
+      const saved = await qr.query(
+        `SELECT * FROM (
+           SELECT JIG_CHECK_STATUS AS "jigCheckStatus", JIG_CHECK_SEQUENCE AS "jigCheckSequence",
+                  BREAK_VALUE AS "breakValue", HIT_VALUE AS "hitValue"
+             FROM IMCN_JIG_SQUEZE_CHECK
+            WHERE JIG_LOT_NO = :jigLotNo AND ORGANIZATION_ID = :organizationId
+            ORDER BY JIG_CHECK_DATE DESC, JIG_CHECK_SEQUENCE DESC
+         ) WHERE ROWNUM = 1`,
+        { jigLotNo, organizationId } as unknown as unknown[],
+      ) as OracleRow[];
+      return saved[0] ?? {};
+    });
+  }
+
+  /** 메탈마스크 장력검사 등록 — PKG_MES_MAC.SP_MASK_TENSION_CHECK */
+  async registerMaskTension(dto: MaskTensionSaveDto, organizationId: number, userId: string) {
+    const jigLotNo = dto.jigLotNo.trim();
+    if (!jigLotNo) throw new BadRequestException('바코드를 입력하세요.');
+    return this.tx.run(async (qr) => {
+      await qr.query(
+        `DECLARE
+           v_result NUMBER;
+         BEGIN
+           PKG_MES_MAC.SP_MASK_TENSION_CHECK(:jigLotNo, :checkStatus, :cleanYn,
+             :tension1, :tension2, :tension3, :tension4, :tension5,
+             :comments, :organizationId, :userId, v_result);
+           IF v_result < 0 THEN
+             RAISE_APPLICATION_ERROR(-20004, 'MASK_TENSION_FAILED:' || v_result);
+           END IF;
+         END;`,
+        {
+          jigLotNo,
+          checkStatus: dto.checkStatus,
+          cleanYn: dto.cleanYn ?? 'N',
+          tension1: dto.tension1 ?? null,
+          tension2: dto.tension2 ?? null,
+          tension3: dto.tension3 ?? null,
+          tension4: dto.tension4 ?? null,
+          tension5: dto.tension5 ?? null,
+          comments: dto.comments ?? null,
+          organizationId,
+          userId,
+        } as unknown as unknown[],
+      ).catch((error: unknown) => {
+        const message = error instanceof Error ? error.message : String(error);
+        if (/MASK_TENSION_FAILED/.test(message)) {
+          throw new BadRequestException('등록되지 않은 메탈마스크 바코드입니다.');
+        }
+        throw error;
+      });
+      return { jigLotNo, checkStatus: dto.checkStatus };
+    });
   }
 }

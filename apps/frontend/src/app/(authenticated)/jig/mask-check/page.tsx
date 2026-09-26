@@ -8,7 +8,7 @@
  * 1. PB 는 `값 + '%'` LIKE 로 조회한다. 빈 값이면 전체다.
  * 2. 체크상태는 자유 입력이 아니라 기초코드 'JIG CHECK STATUS' 선택이다.
  * 3. 모델명을 넣으면 PB 처럼 적용모델(IMCN_JIG_APPLY_MODEL) 서브쿼리로 거른다.
- * 4. 검사 등록·승인은 PB 원본에 있으나 이번 범위에서 제외했다(조회 먼저).
+ * 4. 검사 등록은 상단 스캔 패널에서 한다 — 스캔 후 장력 5개를 입력해 저장한다.
  */
 import { useCallback, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -20,6 +20,7 @@ import LineSelect from '@/components/shared/LineSelect';
 import { Button, Card, CardContent, Input } from '@/components/ui';
 import api from '@/services/api';
 import { maskCheckColumns, type MaskCheckRow } from './columns';
+import MaskTensionScanPanel from './components/MaskTensionScanPanel';
 
 const isoDate = (date: Date) => date.toISOString().slice(0, 10);
 const today = () => isoDate(new Date());
@@ -86,6 +87,8 @@ export default function MaskCheckPage() {
           </Button>
         </div>
       </header>
+
+      <MaskTensionScanPanel onRegistered={search} />
 
       <Card padding="none">
         <CardContent className="flex flex-wrap items-center gap-3 p-3">

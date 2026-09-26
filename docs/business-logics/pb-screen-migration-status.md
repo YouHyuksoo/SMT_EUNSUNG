@@ -3,7 +3,7 @@ sources:
   - apps/frontend/src/config/menuConfig.ts
   - apps/frontend/scripts/data/pb-screen-inventory.json
 generator: apps/frontend/scripts/gen-migration-status.mjs
-verifiedCommit: 5b6adb2
+verifiedCommit: 6e426a7
 ---
 
 # PB 화면 이관 현황 (자동 생성)

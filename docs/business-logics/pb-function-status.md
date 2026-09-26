@@ -3,7 +3,7 @@ sources:
   - apps/frontend/scripts/data/pb-function-catalog.json
   - docs/database/generated/pb-function-inventory.json
 generator: apps/frontend/scripts/gen-function-status.mjs
-verifiedCommit: 5b6adb2
+verifiedCommit: 6e426a7
 ---
 
 # PB 함수 처리 현황 (자동 생성)
@@ -72,7 +72,7 @@ DB 함수는 웹에서도 **그대로 호출**합니다 — 재구현하면 PB �
 |---|---|---|
 | `f_t_sysdate` | `백엔드 서버 시각 (main.ts KST 고정)` | f_sysdate 도 동일. 본문이 SELECT SYSDATE FROM DUAL 뿐이라 전환 무의미. |
 | `f_sysdate` | `백엔드 서버 시각` | f_t_sysdate 와 동일. |
-| `f_get_sequence` | `시퀀스 직접 호출 (예: SEQ_MAT_RECEIPT.NEXTVAL)` | 동적 SQL 로 임의 시퀀스를 부르던 래퍼. 웹은 대상 시퀀스를 직접 쓴다. |
+| `f_get_sequence` | `시퀀스 직접 호출 (예: SEQ_MAT_RECEIPT.NEXTVAL)` | 동적 SQL 로 임의 시퀀스를 부르던 래퍼. 웹은 대상 시퀀스를 직접 쓴다 (예: SEQ_MAT_RECEIPT.NEXTVAL, SEQ_JIG_CHECK_SEQUENCE.NEXTVAL). |
 
 ### 전환 보류 (`blocked`) — 1건
 

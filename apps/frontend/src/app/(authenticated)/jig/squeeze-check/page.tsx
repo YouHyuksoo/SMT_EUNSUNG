@@ -7,7 +7,7 @@
  * 초보자 가이드:
  * 1. PB 는 `값 + '%'` LIKE 로 조회한다. 빈 값이면 전체다.
  * 2. 체크상태는 자유 입력이 아니라 기초코드 'JIG CHECK STATUS' 선택이다.
- * 3. 검사 등록·승인은 PB 원본에 있으나 이번 범위에서 제외했다(조회 먼저).
+ * 3. 검사 등록은 바코드 스캔 1회로 끝난다 — 상단 스캔 패널 참조.
  */
 import { useCallback, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -19,6 +19,7 @@ import LineSelect from '@/components/shared/LineSelect';
 import { Button, Card, CardContent, Input } from '@/components/ui';
 import api from '@/services/api';
 import { squeezeCheckColumns, type SqueezeCheckRow } from './columns';
+import SqueezeScanPanel from './components/SqueezeScanPanel';
 
 const isoDate = (date: Date) => date.toISOString().slice(0, 10);
 const today = () => isoDate(new Date());
@@ -83,6 +84,8 @@ export default function SqueezeCheckPage() {
           </Button>
         </div>
       </header>
+
+      <SqueezeScanPanel onRegistered={search} />
 
       <Card padding="none">
         <CardContent className="flex flex-wrap items-center gap-3 p-3">

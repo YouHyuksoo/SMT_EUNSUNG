@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsDateString, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
+import { IsDateString, IsIn, IsInt, IsNumber, IsOptional, IsString, Max, Min } from 'class-validator';
 
 /** 기간 + 지그LOT 을 공통으로 쓰는 검사이력 조회 */
 class CheckQueryBase {
@@ -77,4 +77,30 @@ export class SampleMasterQueryDto {
 export class SampleApplyModelQueryDto {
   @IsString() sampleCode!: string;
   @IsString() sampleLotNo!: string;
+}
+
+/** 스퀴즈 바코드 스캔 등록 — PB sle_barcode.modified 한 번에 조회·판정·등록이 돈다 */
+export class SqueezeScanDto {
+  @IsString() jigLotNo!: string;
+}
+
+/** 메탈마스크 장력검사 등록 — 스캔 후 장력 5개를 입력해 저장한다 */
+export class MaskTensionSaveDto {
+  @IsString() jigLotNo!: string;
+  /** 'P' 합격 / 'N' 불합격 — 화면이 기준치와 비교해 판정한다 */
+  @IsIn(['P', 'N']) checkStatus!: 'P' | 'N';
+  @IsOptional() @IsIn(['Y', 'N']) cleanYn?: 'Y' | 'N';
+  @IsOptional() @Type(() => Number) @IsNumber() tension1?: number;
+  @IsOptional() @Type(() => Number) @IsNumber() tension2?: number;
+  @IsOptional() @Type(() => Number) @IsNumber() tension3?: number;
+  @IsOptional() @Type(() => Number) @IsNumber() tension4?: number;
+  @IsOptional() @Type(() => Number) @IsNumber() tension5?: number;
+  @IsOptional() @IsString() comments?: string;
+}
+
+/** 바코드 스캔 시 지그 기준정보 조회 (등록 전 화면 표시용) */
+export class JigScanLookupDto {
+  @IsString() jigLotNo!: string;
+  /** 'S' 스퀴즈 / 'M' 메탈마스크 */
+  @IsIn(['S', 'M']) jigType!: 'S' | 'M';
 }

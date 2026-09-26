@@ -117,7 +117,7 @@
       "pbFunction": "f_get_sequence",
       "action": "native",
       "target": "시퀀스 직접 호출 (예: SEQ_MAT_RECEIPT.NEXTVAL)",
-      "note": "동적 SQL 로 임의 시퀀스를 부르던 래퍼. 웹은 대상 시퀀스를 직접 쓴다."
+      "note": "동적 SQL 로 임의 시퀀스를 부르던 래퍼. 웹은 대상 시퀀스를 직접 쓴다 (예: SEQ_MAT_RECEIPT.NEXTVAL, SEQ_JIG_CHECK_SEQUENCE.NEXTVAL)."
     },
     {
       "pbFunction": "f_get_first_day",

@@ -1,18 +1,23 @@
-import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { OrganizationId } from '../../common/decorators/tenant.decorator';
+import { OrganizationId, UserId } from '../../common/decorators/tenant.decorator';
 import { ResponseUtil } from '../../common/dto/response.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import {
   JigIssueQueryDto,
   JigPmQueryDto,
   JigRepairQueryDto,
+  JigScanLookupDto,
   MaskCheckQueryDto,
+  MaskTensionSaveDto,
   SampleApplyModelQueryDto,
   SampleMasterQueryDto,
   SqueezeCheckQueryDto,
+  SqueezeScanDto,
 } from './jig-check.dto';
 import { JigCheckService } from './jig-check.service';
+
+const DEFAULT_USER = 'ADMIN';
 
 @ApiTags('지그관리 - 검사·수리·출고·보전·샘플')
 @UseGuards(JwtAuthGuard)
@@ -69,5 +74,35 @@ export class JigCheckController {
     @OrganizationId() organizationId: number,
   ) {
     return ResponseUtil.success(await this.service.findSampleApplyModels(query, organizationId));
+  }
+
+  @Get('scan-lookup')
+  @ApiOperation({ summary: '바코드 스캔 시 지그 기준정보 조회 (한계수명·장력기준·최종세척일)' })
+  async scanLookup(@Query() query: JigScanLookupDto, @OrganizationId() organizationId: number) {
+    return ResponseUtil.success(await this.service.lookupByScan(query, organizationId));
+  }
+
+  @Post('squeeze-check/scan')
+  @ApiOperation({ summary: '스퀴즈 바코드 스캔 검사등록 (PKG_MES_MAC.SP_SQUEEZE_CHECK_SCAN)' })
+  async squeezeScan(
+    @Body() dto: SqueezeScanDto,
+    @OrganizationId() organizationId: number,
+    @UserId() userId?: string,
+  ) {
+    return ResponseUtil.success(
+      await this.service.registerSqueezeScan(dto, organizationId, userId || DEFAULT_USER),
+    );
+  }
+
+  @Post('mask-check')
+  @ApiOperation({ summary: '메탈마스크 장력검사 등록 (PKG_MES_MAC.SP_MASK_TENSION_CHECK)' })
+  async maskTension(
+    @Body() dto: MaskTensionSaveDto,
+    @OrganizationId() organizationId: number,
+    @UserId() userId?: string,
+  ) {
+    return ResponseUtil.success(
+      await this.service.registerMaskTension(dto, organizationId, userId || DEFAULT_USER),
+    );
   }
 }
