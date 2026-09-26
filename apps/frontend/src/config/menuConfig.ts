@@ -210,6 +210,9 @@ export const menuConfig: MenuConfigItem[] = [
     icon: Wrench,
     children: [
       { code: "QC_IQC_MASTER", labelKey: "menu.quality.iqc", path: "/quality/iqc", pbLinkStatus: "powerbuilder", pbWindow: "w_qc_iqc_master" },
+      { code: "QC_4M", labelKey: "menu.quality.fourM", path: "/quality/4m", pbLinkStatus: "powerbuilder", pbWindow: "w_qc_4m_master" },
+      { code: "QC_WQC", labelKey: "menu.quality.wqc", path: "/quality/wqc", pbLinkStatus: "powerbuilder", pbWindow: "w_qc_workstage_inspect_data_master_es" },
+      { code: "QC_TEMPERATURE", labelKey: "menu.quality.temperature", path: "/quality/temperature", pbLinkStatus: "powerbuilder", pbWindow: "w_pln_product_tempreture_history_query" },
       { code: "QC_REPAIR_HISTORY", labelKey: "menu.quality.repairHistory", path: "/quality/repair-history", pbLinkStatus: "powerbuilder", pbWindow: "w_pln_product_pcb_repair_master" },
       { code: "QC_PRODUCT_DESTROY", labelKey: "menu.quality.productDestroy", path: "/quality/product-destroy", pbLinkStatus: "powerbuilder", pbWindow: "w_pln_product_pcb_destroy_master" },
     ],

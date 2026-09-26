@@ -50,6 +50,7 @@ import { MaterialWorkstageInventoryModule } from './modules/material/material-wo
 import { MaterialReceiptCancelModule } from './modules/material/material-receipt-cancel.module';
 import { ProcessTransactionModule } from './modules/process-transaction/process-transaction.module';
 import { QualityIqcModule } from './modules/quality/quality-iqc.module';
+import { QualityQcExtraModule } from './modules/quality/quality-qc-extra.module';
 import { QualityRepairHistoryModule } from './modules/quality/quality-repair-history.module';
 import { QualityProductDestroyModule } from './modules/quality/quality-product-destroy.module';
 import { BomModule } from './modules/bom/bom.module';
@@ -154,6 +155,7 @@ import { SharedModule } from './shared/shared.module';
     MaterialReceiptCancelModule,
     ProcessTransactionModule,
     QualityIqcModule,
+    QualityQcExtraModule,
     QualityRepairHistoryModule,
     QualityProductDestroyModule,
     BomModule,

@@ -113,7 +113,7 @@ export class IqcService {
          AND b.RECEIPT_SLIP_NO LIKE :receiptSlipNo
          AND NVL(b.INSPECT_RESULT, 'N') ${judged ? 'IN' : 'NOT IN'} ('P', 'R')
          AND b.BARCODE_STATUS <> 'C'
-         AND b.ITEM_CODE LIKE :itemCode
+         AND NVL(b.ITEM_CODE, '*') LIKE :itemCode
          AND b.ITEM_BARCODE LIKE :itemBarcode
          AND b.RECEIPT_COMPARE_YN ${judged ? 'LIKE' : '='} :receiptCompareYn
          AND NVL(i.ITEM_NAME, '*') LIKE :itemName

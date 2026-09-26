@@ -3,7 +3,7 @@ sources:
   - apps/frontend/src/config/menuConfig.ts
   - apps/frontend/scripts/data/pb-screen-inventory.json
 generator: apps/frontend/scripts/gen-migration-status.mjs
-verifiedCommit: 45ca6bd
+verifiedCommit: 707d471
 ---
 
 # PB 윈도우 ↔ 웹 메뉴·경로 연결표 (자동 생성)
@@ -15,7 +15,7 @@ verifiedCommit: 45ca6bd
 
 | 전체 웹 메뉴 | PB 연결 | 웹 신규 | 미확정 |
 |---:|---:|---:|---:|
-| 77 | 58 | 17 | 2 |
+| 80 | 61 | 17 | 2 |
 
 ## 전체 연결표
 
@@ -87,6 +87,9 @@ verifiedCommit: 45ca6bd
 | 제품재고관리 | 제품재고조회 | `PRD_CURRENT_INVENTORY` | `/product/current-inventory` | PB 연결 | `w_prd_product_fg_inventory` | PB 메뉴 인벤토리 |
 | 생산관리 | 작업지시관리 | `PRD_RUN_CARD` | `/production/run-card` | PB 연결 | `w_product_run_card` | `apps/frontend/src/app/(authenticated)/production/run-card/page.tsx` |
 | 품질관리 | IQC 관리 | `QC_IQC_MASTER` | `/quality/iqc` | PB 연결 | `w_qc_iqc_master` | PB 메뉴 인벤토리 |
+| 품질관리 | 4M 이력관리 | `QC_4M` | `/quality/4m` | PB 연결 | `w_qc_4m_master` | PB 메뉴 인벤토리 |
+| 품질관리 | 공정품질검사이력 | `QC_WQC` | `/quality/wqc` | PB 연결 | `w_qc_workstage_inspect_data_master_es` | PB 메뉴 인벤토리 |
+| 품질관리 | 온도상태조회 | `QC_TEMPERATURE` | `/quality/temperature` | PB 연결 | `w_pln_product_tempreture_history_query` | PB 메뉴 인벤토리 |
 | 품질관리 | 공정수리이력조회 | `QC_REPAIR_HISTORY` | `/quality/repair-history` | PB 연결 | `w_pln_product_pcb_repair_master` | PB 메뉴 인벤토리 |
 | 품질관리 | 공정폐기관리 | `QC_PRODUCT_DESTROY` | `/quality/product-destroy` | PB 연결 | `w_pln_product_pcb_destroy_master` | PB 메뉴 인벤토리 |
 | 시스템관리 | 회사관리 | `SYS_COMPANY` | `/master/company` | PB 연결 | `w_company_master` | PB 메뉴 인벤토리 |

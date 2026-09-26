@@ -67,6 +67,47 @@ CREATE OR REPLACE PACKAGE PKG_MES_QC AS
     p_result          OUT NUMBER
   );
 
+  /**
+   * PB w_qc_workstage_inspect_data_master_es rb_inspect 이관 (2026-09-27) —
+   * 공정품질검사 PID 스캔 등록.
+   *
+   *   1) PID 가 IP_PRODUCT_2D_BARCODE 에 있는지 본다(SERIAL_NO 유니크 인덱스).
+   *      없으면 -1. 있으면 그 PID 의 품목·모델·서픽스를 끌어온다.
+   *   2) 교대코드는 F_GET_WORK_SHIFT_CODE(SYSDATE) 로 읽는다. 못 읽으면 PB 와 같이 '1'.
+   *   3) SEQ_QC_REPAIR_SEQUENCE 로 검사항번을 채번해 IQ_PRODUCT_WQC 에 1건 넣는다.
+   *
+   * PB 기본값 유지: 수리결과 'N', 검사구분 'A', 검사수량 1,
+   *   불량수량은 불량원인이 'NG' 일 때만 1.
+   * ※ 검사구분 'A' 는 WQC DIVISION 코드표(R/S)에 없는 값이다. PB 가 그렇게 쓰므로 그대로 둔다.
+   *
+   * p_result : 채번된 INSPECT_SEQUENCE   -1 등록되지 않은 PID
+   */
+  PROCEDURE SP_WQC_SCAN(
+    p_serial_no       IN  VARCHAR2,
+    p_line_code       IN  VARCHAR2,
+    p_workstage_code  IN  VARCHAR2,
+    p_machine_code    IN  VARCHAR2,
+    p_bad_reason_code IN  VARCHAR2,
+    p_comments        IN  VARCHAR2,
+    p_organization_id IN  NUMBER,
+    p_user_id         IN  VARCHAR2,
+    p_result          OUT NUMBER
+  );
+
+  /**
+   * PB w_qc_workstage_inspect_data_master_es 취소 분기 이관 —
+   * 같은 PID·라인·공정의 **가장 최근 검사 1건**을 지운다. PB 조건 그대로다.
+   *
+   * p_result : 지운 건수   -1 대상 없음
+   */
+  PROCEDURE SP_WQC_CANCEL(
+    p_serial_no       IN  VARCHAR2,
+    p_line_code       IN  VARCHAR2,
+    p_workstage_code  IN  VARCHAR2,
+    p_organization_id IN  NUMBER,
+    p_result          OUT NUMBER
+  );
+
 END PKG_MES_QC;
 /
 
@@ -203,6 +244,91 @@ CREATE OR REPLACE PACKAGE BODY PKG_MES_QC AS
       p_result := -1;
     END IF;
   END SP_IQC_ESD_CHECK_DONE;
+
+  /** PB w_qc_workstage_inspect_data_master_es rb_inspect 이관 — 상세는 SPEC 주석 참조 */
+  PROCEDURE SP_WQC_SCAN(
+    p_serial_no       IN  VARCHAR2,
+    p_line_code       IN  VARCHAR2,
+    p_workstage_code  IN  VARCHAR2,
+    p_machine_code    IN  VARCHAR2,
+    p_bad_reason_code IN  VARCHAR2,
+    p_comments        IN  VARCHAR2,
+    p_organization_id IN  NUMBER,
+    p_user_id         IN  VARCHAR2,
+    p_result          OUT NUMBER
+  ) IS
+    l_item_code    IP_PRODUCT_2D_BARCODE.ITEM_CODE%TYPE;
+    l_model_name   IP_PRODUCT_2D_BARCODE.MODEL_NAME%TYPE;
+    l_model_suffix IP_PRODUCT_2D_BARCODE.MODEL_SUFFIX%TYPE;
+    l_shift_code   VARCHAR2(10);
+    l_sequence     NUMBER;
+  BEGIN
+    BEGIN
+      SELECT ITEM_CODE, MODEL_NAME, MODEL_SUFFIX
+        INTO l_item_code, l_model_name, l_model_suffix
+        FROM IP_PRODUCT_2D_BARCODE
+       WHERE SERIAL_NO = p_serial_no
+         AND ORGANIZATION_ID = p_organization_id;
+    EXCEPTION
+      WHEN NO_DATA_FOUND THEN p_result := -1; RETURN;
+      WHEN TOO_MANY_ROWS THEN p_result := -1; RETURN;
+    END;
+
+    BEGIN
+      SELECT F_GET_WORK_SHIFT_CODE(SYSDATE) INTO l_shift_code FROM DUAL;
+    EXCEPTION
+      WHEN OTHERS THEN l_shift_code := '1';   -- PB 도 실패하면 '1' 로 떨어진다
+    END;
+    IF l_shift_code IS NULL THEN
+      l_shift_code := '1';
+    END IF;
+
+    SELECT SEQ_QC_REPAIR_SEQUENCE.NEXTVAL INTO l_sequence FROM DUAL;
+
+    INSERT INTO IQ_PRODUCT_WQC (
+      INSPECT_DATE, INSPECT_SEQUENCE, ORGANIZATION_ID,
+      SERIAL_NO, MODEL_NAME, MODEL_SUFFIX, ITEM_CODE,
+      LINE_CODE, WORKSTAGE_CODE, MACHINE_CODE,
+      WQC_DIVISION, INSPECT_QTY, INSPECT_BAD_QTY,
+      BAD_REASON_CODE, REPAIR_RESULT, INSPECT_BY, COMMENTS,
+      ENTER_BY, ENTER_DATE, LAST_MODIFY_BY, LAST_MODIFY_DATE
+    ) VALUES (
+      SYSDATE, l_sequence, p_organization_id,
+      p_serial_no, l_model_name, l_model_suffix, l_item_code,
+      p_line_code, p_workstage_code, p_machine_code,
+      'A', 1, CASE WHEN p_bad_reason_code = 'NG' THEN 1 ELSE 0 END,
+      p_bad_reason_code, 'N', p_user_id, p_comments,
+      p_user_id, SYSDATE, p_user_id, SYSDATE
+    );
+
+    p_result := l_sequence;
+  END SP_WQC_SCAN;
+
+  /** PB w_qc_workstage_inspect_data_master_es 취소 분기 이관 — 상세는 SPEC 주석 참조 */
+  PROCEDURE SP_WQC_CANCEL(
+    p_serial_no       IN  VARCHAR2,
+    p_line_code       IN  VARCHAR2,
+    p_workstage_code  IN  VARCHAR2,
+    p_organization_id IN  NUMBER,
+    p_result          OUT NUMBER
+  ) IS
+  BEGIN
+    DELETE FROM IQ_PRODUCT_WQC
+     WHERE SERIAL_NO = p_serial_no
+       AND LINE_CODE = p_line_code
+       AND WORKSTAGE_CODE = p_workstage_code
+       AND ORGANIZATION_ID = p_organization_id
+       AND INSPECT_DATE = (SELECT MAX(INSPECT_DATE) FROM IQ_PRODUCT_WQC
+                            WHERE SERIAL_NO = p_serial_no
+                              AND LINE_CODE = p_line_code
+                              AND WORKSTAGE_CODE = p_workstage_code
+                              AND ORGANIZATION_ID = p_organization_id);
+
+    p_result := SQL%ROWCOUNT;
+    IF p_result = 0 THEN
+      p_result := -1;
+    END IF;
+  END SP_WQC_CANCEL;
 
 END PKG_MES_QC;
 /
