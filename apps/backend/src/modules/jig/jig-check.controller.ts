@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { OrganizationId, UserId } from '../../common/decorators/tenant.decorator';
 import { ResponseUtil } from '../../common/dto/response.dto';
@@ -7,6 +7,8 @@ import {
   JigIssueQueryDto,
   JigPmQueryDto,
   JigRepairQueryDto,
+  JigRepairRequestDto,
+  JigRepairStatusDto,
   JigScanLookupDto,
   MaskCheckQueryDto,
   MaskTensionSaveDto,
@@ -103,6 +105,30 @@ export class JigCheckController {
   ) {
     return ResponseUtil.success(
       await this.service.registerMaskTension(dto, organizationId, userId || DEFAULT_USER),
+    );
+  }
+
+  @Post('repair')
+  @ApiOperation({ summary: '지그 수리신청 접수 (PKG_MES_MAC.SP_REPAIR_REQUEST)' })
+  async requestRepair(
+    @Body() dto: JigRepairRequestDto,
+    @OrganizationId() organizationId: number,
+    @UserId() userId?: string,
+  ) {
+    return ResponseUtil.success(
+      await this.service.requestRepair(dto, organizationId, userId || DEFAULT_USER),
+    );
+  }
+
+  @Put('repair/status')
+  @ApiOperation({ summary: '수리 상태 전이 (PB Repair OK = P / Line Issue = C)' })
+  async updateRepairStatus(
+    @Body() dto: JigRepairStatusDto,
+    @OrganizationId() organizationId: number,
+    @UserId() userId?: string,
+  ) {
+    return ResponseUtil.success(
+      await this.service.updateRepairStatus(dto, organizationId, userId || DEFAULT_USER),
     );
   }
 }

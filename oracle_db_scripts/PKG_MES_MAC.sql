@@ -76,6 +76,52 @@ CREATE OR REPLACE PACKAGE PKG_MES_MAC AS
     p_result          OUT NUMBER
   );
 
+  /**
+   * PB w_mcn_jig_repair_request_master 'INSERT' 분기 이관 (2026-09-26)
+   *
+   * 지그 수리신청 1건을 접수한다.
+   *   REPAIR_SEQUENCE = SEQ_JIG_REPAIR_SEQUENCE
+   *   REPAIR_REQUEST_DATE = 오늘, REPAIR_STATUS = 'R'(수리중/신청)
+   *   REPAIR_REASON_CODE 기본 'R', CURRENCY 기본 'KRW'(PB 전역 Gvs_currency)
+   *
+   * p_result : 채번된 REPAIR_SEQUENCE   -1 지그를 찾을 수 없음
+   */
+  PROCEDURE SP_REPAIR_REQUEST(
+    p_jig_code          IN  VARCHAR2,
+    p_jig_lot_no        IN  VARCHAR2,
+    p_repair_reason     IN  VARCHAR2,
+    p_repair_vendor     IN  VARCHAR2,
+    p_comments          IN  VARCHAR2,
+    p_currency          IN  VARCHAR2,
+    p_organization_id   IN  NUMBER,
+    p_user_id           IN  VARCHAR2,
+    p_result            OUT NUMBER
+  );
+
+  /**
+   * PB w_mcn_jig_repair_master cb_ok('P') / cb_complete('C') 이관 (2026-09-26)
+   *
+   * 수리건의 상태를 바꾸고 수리 실적을 채운다.
+   *   'P' 수리중, 'C' 수리완료(라인투입). 그 외 값도 REPAIR STATUS 코드면 허용한다.
+   *   수리일자·수리자·수리시간·금액·수리내용은 넘어온 값이 있을 때만 갱신한다.
+   *
+   * p_result : 1 갱신됨   -1 해당 수리건 없음
+   */
+  PROCEDURE SP_REPAIR_UPDATE_STATUS(
+    p_jig_code          IN  VARCHAR2,
+    p_jig_lot_no        IN  VARCHAR2,
+    p_repair_sequence   IN  NUMBER,
+    p_repair_status     IN  VARCHAR2,
+    p_repair_date       IN  DATE,
+    p_repair_by         IN  VARCHAR2,
+    p_repair_time       IN  NUMBER,
+    p_repair_amt        IN  NUMBER,
+    p_repair_comments   IN  VARCHAR2,
+    p_organization_id   IN  NUMBER,
+    p_user_id           IN  VARCHAR2,
+    p_result            OUT NUMBER
+  );
+
 END PKG_MES_MAC;
 /
 
@@ -245,6 +291,83 @@ CREATE OR REPLACE PACKAGE BODY PKG_MES_MAC AS
 
     p_result := 1;
   END SP_MASK_TENSION_CHECK;
+
+  /** PB w_mcn_jig_repair_request_master 이관 (2026-09-26) — 상세는 SPEC 주석 참조 */
+  PROCEDURE SP_REPAIR_REQUEST(
+    p_jig_code          IN  VARCHAR2,
+    p_jig_lot_no        IN  VARCHAR2,
+    p_repair_reason     IN  VARCHAR2,
+    p_repair_vendor     IN  VARCHAR2,
+    p_comments          IN  VARCHAR2,
+    p_currency          IN  VARCHAR2,
+    p_organization_id   IN  NUMBER,
+    p_user_id           IN  VARCHAR2,
+    p_result            OUT NUMBER
+  ) IS
+    l_count    NUMBER;
+    l_sequence NUMBER;
+  BEGIN
+    SELECT COUNT(*)
+      INTO l_count
+      FROM IMCN_JIG
+     WHERE JIG_CODE        = p_jig_code
+       AND JIG_LOT_NO      = p_jig_lot_no
+       AND ORGANIZATION_ID = p_organization_id;
+
+    IF l_count = 0 THEN
+      p_result := -1;
+      RETURN;
+    END IF;
+
+    SELECT SEQ_JIG_REPAIR_SEQUENCE.NEXTVAL INTO l_sequence FROM DUAL;
+
+    INSERT INTO IMCN_JIG_REPAIR (
+      JIG_CODE, JIG_LOT_NO, ORGANIZATION_ID, REPAIR_SEQUENCE,
+      REPAIR_REQUEST_DATE, REPAIR_STATUS, REPAIR_REASON_CODE,
+      REPAIR_VENDOR_CODE, COMMENTS, CURRENCY,
+      ENTER_BY, ENTER_DATE, LAST_MODIFY_BY, LAST_MODIFY_DATE
+    ) VALUES (
+      p_jig_code, p_jig_lot_no, p_organization_id, l_sequence,
+      TRUNC(SYSDATE), 'R', NVL(p_repair_reason, 'R'),
+      p_repair_vendor, p_comments, NVL(p_currency, 'KRW'),
+      p_user_id, SYSDATE, p_user_id, SYSDATE
+    );
+
+    p_result := l_sequence;
+  END SP_REPAIR_REQUEST;
+
+  /** PB w_mcn_jig_repair_master cb_ok/cb_complete 이관 (2026-09-26) */
+  PROCEDURE SP_REPAIR_UPDATE_STATUS(
+    p_jig_code          IN  VARCHAR2,
+    p_jig_lot_no        IN  VARCHAR2,
+    p_repair_sequence   IN  NUMBER,
+    p_repair_status     IN  VARCHAR2,
+    p_repair_date       IN  DATE,
+    p_repair_by         IN  VARCHAR2,
+    p_repair_time       IN  NUMBER,
+    p_repair_amt        IN  NUMBER,
+    p_repair_comments   IN  VARCHAR2,
+    p_organization_id   IN  NUMBER,
+    p_user_id           IN  VARCHAR2,
+    p_result            OUT NUMBER
+  ) IS
+  BEGIN
+    UPDATE IMCN_JIG_REPAIR
+       SET REPAIR_STATUS    = p_repair_status,
+           REPAIR_DATE      = NVL(p_repair_date, REPAIR_DATE),
+           REPAIR_BY        = NVL(p_repair_by, REPAIR_BY),
+           REPAIR_TIME      = NVL(p_repair_time, REPAIR_TIME),
+           REPAIR_AMT       = NVL(p_repair_amt, REPAIR_AMT),
+           REPAIR_COMMENTS  = NVL(p_repair_comments, REPAIR_COMMENTS),
+           LAST_MODIFY_BY   = p_user_id,
+           LAST_MODIFY_DATE = SYSDATE
+     WHERE JIG_CODE        = p_jig_code
+       AND JIG_LOT_NO      = p_jig_lot_no
+       AND REPAIR_SEQUENCE = p_repair_sequence
+       AND ORGANIZATION_ID = p_organization_id;
+
+    p_result := CASE WHEN SQL%ROWCOUNT = 1 THEN 1 ELSE -1 END;
+  END SP_REPAIR_UPDATE_STATUS;
 
 END PKG_MES_MAC;
 /

@@ -104,3 +104,26 @@ export class JigScanLookupDto {
   /** 'S' 스퀴즈 / 'M' 메탈마스크 */
   @IsIn(['S', 'M']) jigType!: 'S' | 'M';
 }
+
+/** 지그 수리신청 접수 — PB w_mcn_jig_repair_request_master 'INSERT' */
+export class JigRepairRequestDto {
+  @IsString() jigCode!: string;
+  @IsString() jigLotNo!: string;
+  @IsOptional() @IsString() repairReasonCode?: string;
+  @IsOptional() @IsString() repairVendorCode?: string;
+  @IsOptional() @IsString() comments?: string;
+  @IsOptional() @IsString() currency?: string;
+}
+
+/** 수리 상태 전이 — PB cb_ok('P' 수리중) / cb_complete('C' 수리완료) */
+export class JigRepairStatusDto {
+  @IsString() jigCode!: string;
+  @IsString() jigLotNo!: string;
+  @Type(() => Number) @IsInt() repairSequence!: number;
+  @IsString() repairStatus!: string;
+  @IsOptional() @IsDateString() repairDate?: string;
+  @IsOptional() @IsString() repairBy?: string;
+  @IsOptional() @Type(() => Number) @IsNumber() repairTime?: number;
+  @IsOptional() @Type(() => Number) @IsNumber() repairAmt?: number;
+  @IsOptional() @IsString() repairComments?: string;
+}

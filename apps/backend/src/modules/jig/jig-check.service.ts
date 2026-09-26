@@ -23,6 +23,8 @@ import {
   JigIssueQueryDto,
   JigPmQueryDto,
   JigRepairQueryDto,
+  JigRepairRequestDto,
+  JigRepairStatusDto,
   JigScanLookupDto,
   MaskCheckQueryDto,
   MaskTensionSaveDto,
@@ -493,6 +495,92 @@ export class JigCheckService {
         throw error;
       });
       return { jigLotNo, checkStatus: dto.checkStatus };
+    });
+  }
+
+  /** 지그 수리신청 접수 — PKG_MES_MAC.SP_REPAIR_REQUEST */
+  async requestRepair(dto: JigRepairRequestDto, organizationId: number, userId: string) {
+    return this.tx.run(async (qr) => {
+      await qr.query(
+        `DECLARE
+           v_result NUMBER;
+         BEGIN
+           PKG_MES_MAC.SP_REPAIR_REQUEST(:jigCode, :jigLotNo, :repairReasonCode,
+             :repairVendorCode, :comments, :currency, :organizationId, :userId, v_result);
+           IF v_result < 0 THEN
+             RAISE_APPLICATION_ERROR(-20005, 'REPAIR_REQUEST_FAILED:' || v_result);
+           END IF;
+         END;`,
+        {
+          jigCode: dto.jigCode.trim(),
+          jigLotNo: dto.jigLotNo.trim(),
+          repairReasonCode: dto.repairReasonCode ?? null,
+          repairVendorCode: dto.repairVendorCode ?? null,
+          comments: dto.comments ?? null,
+          currency: dto.currency ?? null,
+          organizationId,
+          userId,
+        } as unknown as unknown[],
+      ).catch((error: unknown) => {
+        const message = error instanceof Error ? error.message : String(error);
+        if (/REPAIR_REQUEST_FAILED/.test(message)) {
+          throw new BadRequestException('등록되지 않은 지그입니다.');
+        }
+        throw error;
+      });
+      // 방금 접수된 건을 돌려준다 (OUT 바인드 대신 최신 1건 조회)
+      const saved = await qr.query(
+        `SELECT * FROM (
+           SELECT REPAIR_SEQUENCE AS "repairSequence", REPAIR_STATUS AS "repairStatus",
+                  REPAIR_REQUEST_DATE AS "repairRequestDate"
+             FROM IMCN_JIG_REPAIR
+            WHERE JIG_CODE = :jigCode AND JIG_LOT_NO = :jigLotNo
+              AND ORGANIZATION_ID = :organizationId
+            ORDER BY REPAIR_SEQUENCE DESC
+         ) WHERE ROWNUM = 1`,
+        {
+          jigCode: dto.jigCode.trim(), jigLotNo: dto.jigLotNo.trim(), organizationId,
+        } as unknown as unknown[],
+      ) as OracleRow[];
+      return saved[0] ?? {};
+    });
+  }
+
+  /** 수리 상태 전이 — PKG_MES_MAC.SP_REPAIR_UPDATE_STATUS */
+  async updateRepairStatus(dto: JigRepairStatusDto, organizationId: number, userId: string) {
+    return this.tx.run(async (qr) => {
+      await qr.query(
+        `DECLARE
+           v_result NUMBER;
+         BEGIN
+           PKG_MES_MAC.SP_REPAIR_UPDATE_STATUS(:jigCode, :jigLotNo, :repairSequence,
+             :repairStatus, :repairDate, :repairBy, :repairTime, :repairAmt,
+             :repairComments, :organizationId, :userId, v_result);
+           IF v_result < 0 THEN
+             RAISE_APPLICATION_ERROR(-20006, 'REPAIR_UPDATE_FAILED:' || v_result);
+           END IF;
+         END;`,
+        {
+          jigCode: dto.jigCode.trim(),
+          jigLotNo: dto.jigLotNo.trim(),
+          repairSequence: dto.repairSequence,
+          repairStatus: dto.repairStatus,
+          repairDate: dto.repairDate ? new Date(dto.repairDate) : null,
+          repairBy: dto.repairBy ?? null,
+          repairTime: dto.repairTime ?? null,
+          repairAmt: dto.repairAmt ?? null,
+          repairComments: dto.repairComments ?? null,
+          organizationId,
+          userId,
+        } as unknown as unknown[],
+      ).catch((error: unknown) => {
+        const message = error instanceof Error ? error.message : String(error);
+        if (/REPAIR_UPDATE_FAILED/.test(message)) {
+          throw new BadRequestException('해당 수리건을 찾을 수 없습니다.');
+        }
+        throw error;
+      });
+      return { repairSequence: dto.repairSequence, repairStatus: dto.repairStatus };
     });
   }
 }

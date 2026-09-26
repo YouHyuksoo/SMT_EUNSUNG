@@ -7,7 +7,7 @@
  * 초보자 가이드:
  * 1. PB 는 `값 + '%'` LIKE 로 조회한다. 빈 값이면 전체다.
  * 2. 코드성 조건은 자유 입력이 아니라 기초코드 선택이다.
- * 3. 등록·수정은 PB 원본에 있으나 이번 범위에서 제외했다(조회 먼저).
+ * 3. 접수·처리는 상단 패널에서 한다. 목록에서 행을 고르면 그 건의 상태를 바꾼다.
  */
 import { useCallback, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -19,6 +19,7 @@ import LineSelect from '@/components/shared/LineSelect';
 import { Button, Card, CardContent, Input } from '@/components/ui';
 import api from '@/services/api';
 import { jigRepairColumns, type JigRepairRow } from './columns';
+import RepairActionPanel from './components/RepairActionPanel';
 
 const isoDate = (date: Date) => date.toISOString().slice(0, 10);
 const today = () => isoDate(new Date());
@@ -33,6 +34,7 @@ export default function JigRepairPage() {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
+  const [selected, setSelected] = useState<JigRepairRow | null>(null);
   const [dateFrom, setDateFrom] = useState(monthAgo);
   const [dateTo, setDateTo] = useState(today);
   const [jigCode, setJigCode] = useState('');
@@ -54,6 +56,7 @@ export default function JigRepairPage() {
       setRows(response.data?.data ?? []);
       setTotal(Number(response.data?.meta?.total ?? 0));
       setSearched(true);
+      setSelected(null);
     } catch {
       toast.error('지그수리 조회에 실패했습니다.');
     } finally {
@@ -84,6 +87,8 @@ export default function JigRepairPage() {
         </div>
       </header>
 
+      <RepairActionPanel selected={selected} onChanged={search} />
+
       <Card padding="none">
         <CardContent className="flex flex-wrap items-center gap-3 p-3">
           <DateRangeFilter label="신청일" from={dateFrom} to={dateTo}
@@ -101,7 +106,12 @@ export default function JigRepairPage() {
         <CardContent className="h-full p-3">
           <DataGrid data={rows} columns={columns} isLoading={loading} pageSize={50}
             enableColumnFilter enableExport exportFileName="지그수리"
-            emptyMessage="조회 버튼을 눌러 수리이력을 확인하세요." />
+            emptyMessage="조회 버튼을 눌러 수리이력을 확인하세요."
+            onRowClick={(row) => setSelected(row as JigRepairRow)}
+            getRowId={(row) => {
+              const repair = row as JigRepairRow;
+              return `${repair.jigCode}|${repair.jigLotNo ?? ''}|${repair.repairSequence}`;
+            }} />
         </CardContent>
       </Card>
     </div>
