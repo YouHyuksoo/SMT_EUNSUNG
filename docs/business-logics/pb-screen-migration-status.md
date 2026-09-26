@@ -3,7 +3,7 @@ sources:
   - apps/frontend/src/config/menuConfig.ts
   - apps/frontend/scripts/data/pb-screen-inventory.json
 generator: apps/frontend/scripts/gen-migration-status.mjs
-verifiedCommit: 5032897
+verifiedCommit: ad03468
 ---
 
 # PB 화면 이관 현황 (자동 생성)
@@ -17,11 +17,11 @@ verifiedCommit: 5032897
 | 상태 | 건수 |
 |---|---:|
 | PB 업무화면(셸 메뉴 제외) | 275 |
-| 완료(개발됨, pbWindow 매핑) | 62 |
-| 미착수 | 187 |
+| 완료(개발됨, pbWindow 매핑) | 67 |
+| 미착수 | 182 |
 | 윈도우 미상 | 26 |
 
-웹 메뉴 연결 계약: **PB 64개 / 웹 신규 17개 / 미확정 2개**. PB 매핑과 웹 경로의 전체 연결표는 [pb-menu-route-links.md](pb-menu-route-links.md)에서 관리합니다.
+웹 메뉴 연결 계약: **PB 69개 / 웹 신규 17개 / 미확정 2개**. PB 매핑과 웹 경로의 전체 연결표는 [pb-menu-route-links.md](pb-menu-route-links.md)에서 관리합니다.
 
 ## 대분류별 진행률
 
@@ -39,7 +39,7 @@ verifiedCommit: 5032897
 | 자재창고 | `M_WAREHOUSE` | 22 | 2 | 20 | 0 |
 | 재고 | `M_INVENTORY` | 5 | 1 | 4 | 0 |
 | 수리 | `M_REPAIR` | 4 | 2 | 2 | 0 |
-| 품질관리 | `M_QC` | 12 | 7 | 5 | 0 |
+| 품질관리 | `M_QC` | 12 | 12 | 0 | 0 |
 | 출하현황 | `M_SHIPPING` | 10 | 1 | 9 | 0 |
 | 추적 | `M_TRACKING` | 7 | 0 | 7 | 0 |
 | 조회 | `M_QUERY` | 11 | 0 | 11 | 0 |
@@ -237,14 +237,14 @@ verifiedCommit: 5032897
 | 283 | IQC 관리 | `w_qc_iqc_master` | srw | 완료 | `QC_IQC_MASTER` | `/quality/iqc` |
 | 284 | IQC 이력등록관리 | `w_qc_iqc_inspect_history_master` | srw | 완료 | `QC_IQC_HISTORY_REG` | `/quality/iqc-history` |
 | 285 | PCB 이슈발생스캔관리 | `w_pln_product_pid_issue_scan_master` | srw | 완료 | `QC_PID_ISSUE_SCAN` | `/quality/pid-issue-scan` |
-| 287 | 재고통제관리 | `w_qc_inventory_hold_master` | srw | 미착수 |  |  |
+| 287 | 재고통제관리 | `w_qc_inventory_hold_master` | srw | 완료 | `QC_INVENTORY_HOLD` | `/quality/inventory-hold` |
 | 288 | PID 홀딩관리 | `w_pln_product_barcode_holding` | srw | 완료 | `QC_PID_HOLDING` | `/quality/pid-holding` |
-| 289 | 품질이상발생관리 | `w_qc_notify_master` | srw | 미착수 |  |  |
-| 290 | 품질알림관리 | `w_qc_eco_notify_master` | srw | 미착수 |  |  |
+| 289 | 품질이상발생관리 | `w_qc_notify_master` | srw | 완료 | `QC_NOTIFY` | `/quality/notify` |
+| 290 | 품질알림관리 | `w_qc_eco_notify_master` | srw | 완료 | `QC_ECO_NOTIFY` | `/quality/eco-notify` |
 | 291 | 4M 이력관리 | `w_qc_4m_master` | srw | 완료 | `QC_4M` | `/quality/4m` |
 | 293 | 공정품질검사이력관리 | `w_qc_workstage_inspect_data_master_es` | srw | 완료 | `QC_WQC` | `/quality/wqc` |
-| 294 | OQC 검사이력관리(PID) | `w_qc_oqc_inspect_history_master` | srw | 미착수 |  |  |
-| 295 | OQC 검사이력관리(LOT) | `w_qc_oqc_inspect_history_4_lot_master` | srw | 미착수 |  |  |
+| 294 | OQC 검사이력관리(PID) | `w_qc_oqc_inspect_history_master` | srw | 완료 | `QC_OQC_PID` | `/quality/oqc-pid` |
+| 295 | OQC 검사이력관리(LOT) | `w_qc_oqc_inspect_history_4_lot_master` | srw | 완료 | `QC_OQC_LOT` | `/quality/oqc-lot` |
 | 297 | 온도상태조회 | `w_pln_product_tempreture_history_query` | srw | 완료 | `QC_TEMPERATURE` | `/quality/temperature` |
 
 ### 출하현황  `M_SHIPPING`

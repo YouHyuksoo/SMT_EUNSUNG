@@ -3,7 +3,7 @@ sources:
   - apps/frontend/src/config/menuConfig.ts
   - apps/frontend/scripts/data/pb-screen-inventory.json
 generator: apps/frontend/scripts/gen-migration-status.mjs
-verifiedCommit: 5032897
+verifiedCommit: ad03468
 ---
 
 # PB 윈도우 ↔ 웹 메뉴·경로 연결표 (자동 생성)
@@ -15,7 +15,7 @@ verifiedCommit: 5032897
 
 | 전체 웹 메뉴 | PB 연결 | 웹 신규 | 미확정 |
 |---:|---:|---:|---:|
-| 83 | 64 | 17 | 2 |
+| 88 | 69 | 17 | 2 |
 
 ## 전체 연결표
 
@@ -90,6 +90,11 @@ verifiedCommit: 5032897
 | 품질관리 | IQC 이력등록관리 | `QC_IQC_HISTORY_REG` | `/quality/iqc-history` | PB 연결 | `w_qc_iqc_inspect_history_master` | PB 메뉴 인벤토리 |
 | 품질관리 | PCB 이슈발생스캔 | `QC_PID_ISSUE_SCAN` | `/quality/pid-issue-scan` | PB 연결 | `w_pln_product_pid_issue_scan_master` | PB 메뉴 인벤토리 |
 | 품질관리 | PID 홀딩관리 | `QC_PID_HOLDING` | `/quality/pid-holding` | PB 연결 | `w_pln_product_barcode_holding` | PB 메뉴 인벤토리 |
+| 품질관리 | 재고통제관리 | `QC_INVENTORY_HOLD` | `/quality/inventory-hold` | PB 연결 | `w_qc_inventory_hold_master` | PB 메뉴 인벤토리 |
+| 품질관리 | 품질이상발생관리 | `QC_NOTIFY` | `/quality/notify` | PB 연결 | `w_qc_notify_master` | PB 메뉴 인벤토리 |
+| 품질관리 | 품질알림관리 | `QC_ECO_NOTIFY` | `/quality/eco-notify` | PB 연결 | `w_qc_eco_notify_master` | PB 메뉴 인벤토리 |
+| 품질관리 | OQC 검사이력(PID) | `QC_OQC_PID` | `/quality/oqc-pid` | PB 연결 | `w_qc_oqc_inspect_history_master` | PB 메뉴 인벤토리 |
+| 품질관리 | OQC 검사이력(LOT) | `QC_OQC_LOT` | `/quality/oqc-lot` | PB 연결 | `w_qc_oqc_inspect_history_4_lot_master` | PB 메뉴 인벤토리 |
 | 품질관리 | 4M 이력관리 | `QC_4M` | `/quality/4m` | PB 연결 | `w_qc_4m_master` | PB 메뉴 인벤토리 |
 | 품질관리 | 공정품질검사이력 | `QC_WQC` | `/quality/wqc` | PB 연결 | `w_qc_workstage_inspect_data_master_es` | PB 메뉴 인벤토리 |
 | 품질관리 | 온도상태조회 | `QC_TEMPERATURE` | `/quality/temperature` | PB 연결 | `w_pln_product_tempreture_history_query` | PB 메뉴 인벤토리 |

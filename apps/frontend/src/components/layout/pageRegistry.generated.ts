@@ -392,6 +392,16 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
       component = mod.getPageComponent();
       break;
     }
+    case "/quality/eco-notify": {
+      const mod = await import("./page-registries/quality__eco-notify.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/quality/inventory-hold": {
+      const mod = await import("./page-registries/quality__inventory-hold.generated");
+      component = mod.getPageComponent();
+      break;
+    }
     case "/quality/iqc": {
       const mod = await import("./page-registries/quality__iqc.generated");
       component = mod.getPageComponent();
@@ -399,6 +409,21 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
     }
     case "/quality/iqc-history": {
       const mod = await import("./page-registries/quality__iqc-history.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/quality/notify": {
+      const mod = await import("./page-registries/quality__notify.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/quality/oqc-lot": {
+      const mod = await import("./page-registries/quality__oqc-lot.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/quality/oqc-pid": {
+      const mod = await import("./page-registries/quality__oqc-pid.generated");
       component = mod.getPageComponent();
       break;
     }

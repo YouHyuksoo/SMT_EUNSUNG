@@ -1,9 +1,13 @@
 import { Module } from '@nestjs/common';
+import { InventoryHoldController } from './controllers/inventory-hold.controller';
+import { QcNotifyController } from './controllers/qc-notify.controller';
 import { IqcHistoryController } from './controllers/iqc-history.controller';
 import { PidHoldingController } from './controllers/pid-holding.controller';
 import { Qc4mController } from './controllers/qc-4m.controller';
 import { TemperatureController } from './controllers/temperature.controller';
 import { WqcController } from './controllers/wqc.controller';
+import { InventoryHoldService } from './services/inventory-hold.service';
+import { QcNotifyService } from './services/qc-notify.service';
 import { IqcHistoryService } from './services/iqc-history.service';
 import { PidHoldingService } from './services/pid-holding.service';
 import { Qc4mService } from './services/qc-4m.service';
@@ -19,10 +23,12 @@ import { WqcService } from './services/wqc.service';
   controllers: [
     Qc4mController, WqcController, TemperatureController,
     IqcHistoryController, PidHoldingController,
+    QcNotifyController, InventoryHoldController,
   ],
   providers: [
     Qc4mService, WqcService, TemperatureService,
     IqcHistoryService, PidHoldingService,
+    QcNotifyService, InventoryHoldService,
   ],
 })
 export class QualityQcExtraModule {}
