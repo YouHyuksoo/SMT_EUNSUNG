@@ -204,7 +204,7 @@ export class SmtBomService {
 
       await qr.query(
         `INSERT INTO ID_ENG_BOM_SMT (${columns.join(', ')}) VALUES (${values.join(', ')})`,
-        [binds] as unknown as unknown[],
+        binds as unknown as unknown[],
       );
       return { created: 1 };
     });
@@ -227,7 +227,7 @@ export class SmtBomService {
 
       const result = await qr.query(
         `UPDATE ID_ENG_BOM_SMT SET ${sets.join(', ')} WHERE ${this.KEY_WHERE}`,
-        [binds] as unknown as unknown[],
+        binds as unknown as unknown[],
       );
       const affected = Number((result as { rowsAffected?: number })?.rowsAffected ?? 0);
       if (affected === 0) throw new NotFoundException('BOM 행을 찾을 수 없습니다.');
@@ -271,7 +271,7 @@ export class SmtBomService {
              RAISE_APPLICATION_ERROR(-20033, '${marker}:' || v_result);
            END IF;
          END;`,
-        [binds] as unknown as unknown[],
+        binds as unknown as unknown[],
       )
       .catch((error: unknown) => {
         const message = error instanceof Error ? error.message : String(error);

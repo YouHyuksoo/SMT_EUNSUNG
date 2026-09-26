@@ -112,7 +112,7 @@ export class SmtLocationService {
 
       await qr.query(
         `INSERT INTO IB_MACHINE_LOCATION (${columns.join(', ')}) VALUES (${values.join(', ')})`,
-        [binds] as unknown as unknown[],
+        binds as unknown as unknown[],
       );
       return { lineCode: dto.lineCode, locationCode: dto.locationCode };
     });
@@ -137,7 +137,7 @@ export class SmtLocationService {
         `UPDATE IB_MACHINE_LOCATION SET ${sets.join(', ')}
           WHERE LINE_CODE = :lineCode AND LOCATION_CODE = :locationCode
             AND ORGANIZATION_ID = :organizationId`,
-        [binds] as unknown as unknown[],
+        binds as unknown as unknown[],
       );
       const affected = Number((result as { rowsAffected?: number })?.rowsAffected ?? 0);
       if (affected === 0) {

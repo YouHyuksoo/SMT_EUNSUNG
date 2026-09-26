@@ -16,6 +16,9 @@
  * 4. **대조는 PKG_DESIGN.BOM_QUERY 로 전개한 BOM 과 맞춰 본다.**
  *    PB d_smt_feeder_bom_compare_lst 와 같은 UNION ALL 구조다.
  *    읽은 세션 행은 지운다 — ID_ENG_BOM_TEMP 는 이미 3,357,661행이 쌓여 있다.
+ *    PKG_DESIGN 패키지 본문에 COMMIT 이 한 줄도 없음을 확인했으므로(실측),
+ *    전개·조회·정리가 tx.run 의 한 트랜잭션 안에 있다 — 중간에 실패하면 전개행도
+ *    함께 롤백된다.
  */
 import { Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
@@ -109,6 +112,13 @@ export class SmtNcService {
    * BOM 쪽은 PKG_DESIGN.BOM_QUERY 로 전개한 세션행, 피더 쪽은 IB_MNT_PLANDATA 다.
    * 품목별로 두 쪽 수량을 나란히 놓고 차이를 낸다 — PB 는 UNION ALL 로 두 묶음을
    * 그냥 붙여 놓고 사람이 눈으로 맞췄다. 여기서는 품목 기준으로 묶어 차이를 계산한다.
+   *
+   * **피더 쪽은 모델로 걸르지 않는다 (라인 전체).** 묻는 것이 "이 라인이 지금
+   * 이 모델을 돌릴 준비가 됐나" 이므로 라인에 실제로 물려 있는 것 전부와 맞추는 것이
+   * 맞다. PB 도 같다. 단 IB_MNT_PLANDATA 에 MODEL_NAME 컬럼이 있으므로, 한 라인에
+   * 두 모델의 배치가 동시에 적재되는 운영이 생기면 판정이 부풀어 오른다 —
+   * 그때는 `NVL(p.MODEL_NAME,'*') LIKE :modelName` 을 추가해야 한다.
+   * (현재 이 표는 14행이고 라인별 단일 모델이다.)
    */
   async compareWithBom(query: SmtNcCompareQueryDto, organizationId: number) {
     const pcbItem = query.pcbItem ? `${query.pcbItem}%` : '%';

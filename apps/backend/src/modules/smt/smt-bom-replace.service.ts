@@ -169,7 +169,7 @@ export class SmtBomReplaceService {
       await qr.query(
         `INSERT INTO ID_ENG_BOM_SMT_REPLACE (${columns.join(', ')})
          VALUES (${values.join(', ')})`,
-        [binds] as unknown as unknown[],
+        binds as unknown as unknown[],
       );
       return { created: 1 };
     });
@@ -196,7 +196,7 @@ export class SmtBomReplaceService {
 
       const result = await qr.query(
         `UPDATE ID_ENG_BOM_SMT_REPLACE SET ${sets.join(', ')} WHERE ${this.KEY_WHERE}`,
-        [binds] as unknown as unknown[],
+        binds as unknown as unknown[],
       );
       const affected = Number((result as { rowsAffected?: number })?.rowsAffected ?? 0);
       if (affected === 0) throw new NotFoundException('대체 BOM 을 찾을 수 없습니다.');

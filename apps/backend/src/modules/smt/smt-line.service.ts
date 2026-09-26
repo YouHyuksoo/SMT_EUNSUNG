@@ -163,7 +163,7 @@ export class SmtLineService {
 
       await qr.query(
         `INSERT INTO IB_LINE_MASTER (${columns.join(', ')}) VALUES (${values.join(', ')})`,
-        [binds] as unknown as unknown[],
+        binds as unknown as unknown[],
       );
       return { lineCode: dto.lineCode, machine: dto.machine };
     });
@@ -189,7 +189,7 @@ export class SmtLineService {
         `UPDATE IB_LINE_MASTER SET ${sets.join(', ')}
           WHERE LINE_CODE = :lineCode AND MACHINE = :machine
             AND ORGANIZATION_ID = :organizationId`,
-        [binds] as unknown as unknown[],
+        binds as unknown as unknown[],
       );
       const affected = Number((result as { rowsAffected?: number })?.rowsAffected ?? 0);
       if (affected === 0) {

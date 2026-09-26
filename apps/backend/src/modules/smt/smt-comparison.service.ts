@@ -78,7 +78,7 @@ export class SmtComparisonService {
           AND NVL(b.PCB_ITEM, '*') LIKE :pcbItem
         GROUP BY b.CHILD_ITEM_CODE, b.PARENT_ITEM_CODE || b.PCB_ITEM
         ORDER BY b.CHILD_ITEM_CODE`,
-      [binds] as unknown as unknown[],
+      binds as unknown as unknown[],
     )) as CompareRow[];
 
     // 부품별로 모델을 가로로 펼친다. 표시 형태는 프론트가 고르고, 차이 판정은 여기서 한다.
