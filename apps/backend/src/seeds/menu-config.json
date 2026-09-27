@@ -14,6 +14,7 @@
     "PRODUCT_MGMT",
     "PRODUCT_INVENTORY",
     "PRODUCTION",
+    "TRACKING",
     "QUALITY",
     "OUTSOURCING",
     "CONFIRM",
@@ -124,6 +125,15 @@
       "PRD_RUN_CARD_PID",
       "PRD_PCB_RESULT",
       "PRD_DAILY_REPORT"
+    ],
+    "TRACKING": [
+      "TRK_MATERIAL_LOT",
+      "TRK_MATERIAL_DYNAMIC",
+      "TRK_MATERIAL_USAGE",
+      "TRK_PID",
+      "TRK_RUN_NO",
+      "TRK_LOT_ALL",
+      "TRK_LINE_DASHBOARD"
     ],
     "QUALITY": [
       "QC_IQC_MASTER",

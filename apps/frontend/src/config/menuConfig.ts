@@ -22,6 +22,7 @@ import {
   Hammer,
   Network,
   Package,
+  Radar,
   Settings,
   Warehouse,
   Wrench,
@@ -226,6 +227,20 @@ export const menuConfig: MenuConfigItem[] = [
       { code: "PRD_RUN_CARD_PID", labelKey: "menu.production.runCardPid", path: "/production/run-card-pid", pbLinkStatus: "powerbuilder", pbWindow: "w_pln_product_pcb_kitting_scan_master" },
       { code: "PRD_PCB_RESULT", labelKey: "menu.production.pcbResult", path: "/production/pcb-result", pbLinkStatus: "powerbuilder", pbWindow: "w_pln_product_pcb_result_query" },
       { code: "PRD_DAILY_REPORT", labelKey: "menu.production.dailyReport", path: "/production/daily-report", pbLinkStatus: "powerbuilder", pbWindow: "w_pln_product_pcb_result_report" },
+    ],
+  },
+  {
+    code: "TRACKING",
+    labelKey: "menu.tracking",
+    icon: Radar,
+    children: [
+      { code: "TRK_MATERIAL_LOT", labelKey: "menu.tracking.materialLot", path: "/tracking/material-lot", pbLinkStatus: "powerbuilder", pbWindow: "w_product_pid_tracking_rpt" },
+      { code: "TRK_MATERIAL_DYNAMIC", labelKey: "menu.tracking.materialDynamic", path: "/tracking/material-dynamic", pbLinkStatus: "powerbuilder", pbWindow: "w_product_material_tracking_rpt" },
+      { code: "TRK_MATERIAL_USAGE", labelKey: "menu.tracking.materialUsage", path: "/tracking/material-usage", pbLinkStatus: "powerbuilder", pbWindow: "w_product_material_tracking_msl_rpt" },
+      { code: "TRK_PID", labelKey: "menu.tracking.pid", path: "/tracking/pid", pbLinkStatus: "powerbuilder", pbWindow: "w_product_pid_tracking_fpcb_rpt" },
+      { code: "TRK_RUN_NO", labelKey: "menu.tracking.runNo", path: "/tracking/run-no", pbLinkStatus: "powerbuilder", pbWindow: "w_pln_product_barcode_tracking" },
+      { code: "TRK_LOT_ALL", labelKey: "menu.tracking.lotAll", path: "/tracking/lot-all", pbLinkStatus: "powerbuilder", pbWindow: "w_pln_product_all_barcode_tracking" },
+      { code: "TRK_LINE_DASHBOARD", labelKey: "menu.tracking.lineDashboard", path: "/tracking/line-dashboard", pbLinkStatus: "powerbuilder", pbWindow: "w_com_production_status_dashboard" },
     ],
   },
   {

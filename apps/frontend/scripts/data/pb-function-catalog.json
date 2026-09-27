@@ -378,6 +378,20 @@
       "target": "F_GET_RUN_LINE_PDA_OFF(p_run_no, p_line_code, p_org)",
       "usedBy": "apps/backend/src/modules/planning/result.service.ts",
       "note": "생산 종료시각(PDA OFF). NULL 이면 생산시간 0 으로 본다 (PB DECODE 규약)."
+    },
+    {
+      "pbFunction": "f_get_run_no_by_serial",
+      "action": "replaced",
+      "target": "IP_PRODUCT_2D_BARCODE 직접 조회",
+      "usedBy": "apps/backend/src/modules/tracking/pid-tracking.service.ts",
+      "note": "PID → Run No. PB 스크립트(화면 밖)에서만 불러 PB 전역함수이며 이 DB 에 같은 이름의 함수가 없다(실측). 2D바코드를 등호로 직접 읽어 치환했다."
+    },
+    {
+      "pbFunction": "f_get_model_name_by_run_no",
+      "action": "native",
+      "target": "F_GET_MODEL_NAME_BY_RUN_NO",
+      "usedBy": "apps/backend/src/modules/tracking/pid-tracking.service.ts",
+      "note": "이름은 PB 함수처럼 보이지만 같은 이름의 DB 함수가 실제로 있다(VALID). 317 머리글은 2D바코드에서 모델명을 함께 읽어 이 함수 호출이 불필요했다."
     }
   ]
 }

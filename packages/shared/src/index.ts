@@ -24,5 +24,8 @@ export * from './oee';
 // 생산월력 도메인(근무분 계산·휴일 판정) 내보내기
 export * from './work-calendar';
 
+// 추적 조회 필수조건 규칙(프론트 차단 · 백엔드 거부 공용) 내보내기
+export * from './tracking';
+
 // PB 팝업 카탈로그(프론트 엔진 · 백엔드 화이트리스트 공용) 내보내기
 export * from './popups';

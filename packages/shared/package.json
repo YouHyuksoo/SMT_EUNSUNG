@@ -25,6 +25,10 @@
       "types": "./dist/oee/index.d.ts",
       "default": "./dist/oee/index.js"
     },
+    "./tracking": {
+      "types": "./dist/tracking/index.d.ts",
+      "default": "./dist/tracking/index.js"
+    },
     "./work-calendar": {
       "types": "./dist/work-calendar/index.d.ts",
       "default": "./dist/work-calendar/index.js"

@@ -587,6 +587,41 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
       component = mod.getPageComponent();
       break;
     }
+    case "/tracking/line-dashboard": {
+      const mod = await import("./page-registries/tracking__line-dashboard.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/tracking/lot-all": {
+      const mod = await import("./page-registries/tracking__lot-all.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/tracking/material-dynamic": {
+      const mod = await import("./page-registries/tracking__material-dynamic.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/tracking/material-lot": {
+      const mod = await import("./page-registries/tracking__material-lot.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/tracking/material-usage": {
+      const mod = await import("./page-registries/tracking__material-usage.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/tracking/pid": {
+      const mod = await import("./page-registries/tracking__pid.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/tracking/run-no": {
+      const mod = await import("./page-registries/tracking__run-no.generated");
+      component = mod.getPageComponent();
+      break;
+    }
     default:
       return null;
   }

@@ -3,7 +3,7 @@ sources:
   - apps/frontend/src/config/menuConfig.ts
   - apps/frontend/scripts/data/pb-screen-inventory.json
 generator: apps/frontend/scripts/gen-migration-status.mjs
-verifiedCommit: be7f95cf
+verifiedCommit: 65ff489c
 ---
 
 # PB 윈도우 ↔ 웹 메뉴·경로 연결표 (자동 생성)
@@ -15,7 +15,7 @@ verifiedCommit: be7f95cf
 
 | 전체 웹 메뉴 | PB 연결 | 웹 신규 | 미확정 |
 |---:|---:|---:|---:|
-| 107 | 88 | 17 | 2 |
+| 114 | 95 | 17 | 2 |
 
 ## 전체 연결표
 
@@ -101,6 +101,13 @@ verifiedCommit: be7f95cf
 | 생산관리 | 롯트카드-PID 매핑관리 | `PRD_RUN_CARD_PID` | `/production/run-card-pid` | PB 연결 | `w_pln_product_pcb_kitting_scan_master` | PB 메뉴 인벤토리 |
 | 생산관리 | 기간별 생산실적 조회 | `PRD_PCB_RESULT` | `/production/pcb-result` | PB 연결 | `w_pln_product_pcb_result_query` | PB 메뉴 인벤토리 |
 | 생산관리 | 생산일보 리포트 | `PRD_DAILY_REPORT` | `/production/daily-report` | PB 연결 | `w_pln_product_pcb_result_report` | PB 메뉴 인벤토리 |
+| 추적 | 자재 제조번호 기준 추적 | `TRK_MATERIAL_LOT` | `/tracking/material-lot` | PB 연결 | `w_product_pid_tracking_rpt` | PB 메뉴 인벤토리 |
+| 추적 | 자재추적조회(동적) | `TRK_MATERIAL_DYNAMIC` | `/tracking/material-dynamic` | PB 연결 | `w_product_material_tracking_rpt` | PB 메뉴 인벤토리 |
+| 추적 | 자재사용이력조회 | `TRK_MATERIAL_USAGE` | `/tracking/material-usage` | PB 연결 | `w_product_material_tracking_msl_rpt` | PB 메뉴 인벤토리 |
+| 추적 | 생산이력조회(PID) | `TRK_PID` | `/tracking/pid` | PB 연결 | `w_product_pid_tracking_fpcb_rpt` | PB 메뉴 인벤토리 |
+| 추적 | 생산이력조회(Run No) | `TRK_RUN_NO` | `/tracking/run-no` | PB 연결 | `w_pln_product_barcode_tracking` | PB 메뉴 인벤토리 |
+| 추적 | 롯트추적조회(ALL) | `TRK_LOT_ALL` | `/tracking/lot-all` | PB 연결 | `w_pln_product_all_barcode_tracking` | PB 메뉴 인벤토리 |
+| 추적 | 생산현황데쉬보드 | `TRK_LINE_DASHBOARD` | `/tracking/line-dashboard` | PB 연결 | `w_com_production_status_dashboard` | PB 메뉴 인벤토리 |
 | 품질관리 | IQC 관리 | `QC_IQC_MASTER` | `/quality/iqc` | PB 연결 | `w_qc_iqc_master` | PB 메뉴 인벤토리 |
 | 품질관리 | IQC 이력등록관리 | `QC_IQC_HISTORY_REG` | `/quality/iqc-history` | PB 연결 | `w_qc_iqc_inspect_history_master` | PB 메뉴 인벤토리 |
 | 품질관리 | PCB 이슈발생스캔 | `QC_PID_ISSUE_SCAN` | `/quality/pid-issue-scan` | PB 연결 | `w_pln_product_pid_issue_scan_master` | PB 메뉴 인벤토리 |

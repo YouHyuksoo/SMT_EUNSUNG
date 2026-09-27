@@ -3,7 +3,7 @@ sources:
   - apps/frontend/scripts/data/pb-function-catalog.json
   - docs/database/generated/pb-function-inventory.json
 generator: apps/frontend/scripts/gen-function-status.mjs
-verifiedCommit: 24c5200e
+verifiedCommit: 65ff489c
 ---
 
 # PB 함수 처리 현황 (자동 생성)
@@ -23,8 +23,8 @@ DB 함수는 웹에서도 **그대로 호출**합니다 — 재구현하면 PB �
 | PB 창(실측) | 596 |
 | SQL 안 호출 = DB 함수 (조치 불필요) | 196 |
 | SQL 밖 호출 = PB 함수 | 226 |
-| 카탈로그 등록(처리 완료) | 49 |
-| 미처리 전환 후보 | 55 |
+| 카탈로그 등록(처리 완료) | 59 |
+| 미처리 전환 후보 | 53 |
 
 ## 처리 완료 (카탈로그)
 
@@ -44,7 +44,7 @@ DB 함수는 웹에서도 **그대로 호출**합니다 — 재구현하면 PB �
 | `f_mcn_mold_receipt_cancel` | `PKG_MES_MAC.SP_MOLD_RECEIPT_CANCEL` | S-PARTS 입고 1건 상계(역분개). 항번은 SEQ_MAT_RECEIPT. PB 반환규약 유지(-1/-3), -2(이미취소)는 웹에서 추가. |
 | `f_mcn_mold_issue_cancel` | `PKG_MES_MAC.SP_MOLD_ISSUE_CANCEL` | S-PARTS 출고 1건 상계 + 청구를 미처리('R')로 되돌림. 항번은 SEQ_MAT_ISSUE. |
 
-### 웹 수단으로 치환 (`replaced`) — 9건
+### 웹 수단으로 치환 (`replaced`) — 10건
 
 | PB 함수 | 대상 | 비고 |
 |---|---|---|
@@ -57,6 +57,7 @@ DB 함수는 웹에서도 **그대로 호출**합니다 — 재구현하면 PB �
 | `f_set_security_row` | `백엔드 저장 시 감사컬럼 자동 기록` | 권한 가드가 아니다. ARG_TYPE 에 따라 ORGANIZATION_ID / ENTER_BY / ENTER_DATE / LAST_MODIFY_BY / LAST_MODIFY_DATE 를 로그인 사용자·서버시각으로 채우는 함수다. ALL=전체, MODIFY=수정컬럼만, NONORG=조직ID 제외. 웹은 서비스의 INSERT/UPDATE 에서 organizationId·userId·SYSDATE 로 같은 컬럼을 채운다. |
 | `f_object_role_check` | `권한 가드` | USER_LEVEL 검사 후 메시지박스. 웹은 가드가 403 을 낸다. |
 | `f_msg1` | `react-hot-toast` | f_msg 계열과 같다. 메시지 표시용. |
+| `f_get_run_no_by_serial` | `IP_PRODUCT_2D_BARCODE 직접 조회` | PID → Run No. PB 스크립트(화면 밖)에서만 불러 PB 전역함수이며 이 DB 에 같은 이름의 함수가 없다(실측). 2D바코드를 등호로 직접 읽어 치환했다. |
 
 ### 제거 (`dropped`) — 7건
 
@@ -77,7 +78,7 @@ DB 함수는 웹에서도 **그대로 호출**합니다 — 재구현하면 PB �
 | `f_get_first_day` | `receipt-cancel.service.ts firstDayOfMonth()` | 한 화면 전용 날짜 계산이라 DB 오브젝트를 늘리지 않는다. |
 | `f_replace_string` | `String.prototype.replaceAll (대소문자 무시)` | SQL 없는 순수 문자열 치환. PB 는 소문자·대문자를 번갈아 찾는 방식이라 대소문자 무시 치환과 같다. |
 
-### 웹에서 직접 (`native`) — 10건
+### 웹에서 직접 (`native`) — 19건
 
 | PB 함수 | 대상 | 비고 |
 |---|---|---|
@@ -91,6 +92,15 @@ DB 함수는 웹에서도 **그대로 호출**합니다 — 재구현하면 PB �
 | `f_get_listagg_location` | `F_GET_LISTAGG_LOCATION(p_line_code, p_model_name, p_item_code, p_pcb_item)` | SQL 안에서 불리던 DB 함수. 부품이 물린 피더 자리를 한 줄로 모아 준다. 그대로 호출한다. |
 | `f_get_mat_max_unit_price_cfm` | `F_GET_MAT_MAX_UNIT_PRICE_CFM(p_item_code, p_line_type, p_date, p_org)` | SQL 안에서 불리던 DB 함수. 확정단가. 그대로 호출한다. |
 | `f_get_pcb_item_by_name` | `F_GET_PCB_ITEM_BY_NAME(p_set_item_code)` | SQL 안에서 불리던 DB 함수. SET 품목의 PCB 면 코드. 라벨 바코드에 쓴다. |
+| `f_get_run_lot_qty` | `F_GET_RUN_LOT_QTY(p_run_no)` | SQL 안에서 불리던 DB 함수. 작업지시의 LOT 수량. 그대로 호출한다. |
+| `f_get_model_product_st` | `F_GET_MODEL_PRODUCT_ST(p_model, p_line, p_pcb_item, p_workstage, p_org)` | 모델 표준시간. SQL 안에서 불린다. 계획 목록에 넣을 때 그대로 호출한다. |
+| `f_get_work_breaktime_min` | `F_GET_WORK_BREAKTIME_MIN(p_start, p_end)` | 생산일보 휴게시간(분). 가용시간 = 생산 - 휴게 계산에 쓴다. TypeScript 로 다시 구현하면 일보 숫자가 갈린다. |
+| `f_get_work_losstime_min` | `F_GET_WORK_LOSSTIME_MIN(p_line_code, p_start, p_end)` | 생산일보 로스시간(분). 실가동 = 가용 - 로스. |
+| `f_get_run_line_actual_qty` | `F_GET_RUN_LINE_ACTUAL_QTY(p_run_no, p_line_code, p_org)` | 생산일보 실적수량. 성능가동률·양품률의 분자·분모다. |
+| `f_get_run_ng_qty` | `F_GET_RUN_NG_QTY(p_run_no, p_org)` | 생산일보 불량수량. 불량PPM 과 양품률에 쓴다. |
+| `f_get_run_line_pda_on` | `F_GET_RUN_LINE_PDA_ON(p_run_no, p_line_code, p_org)` | 생산 시작시각(PDA ON). 생산시간 계산의 시작점. |
+| `f_get_run_line_pda_off` | `F_GET_RUN_LINE_PDA_OFF(p_run_no, p_line_code, p_org)` | 생산 종료시각(PDA OFF). NULL 이면 생산시간 0 으로 본다 (PB DECODE 규약). |
+| `f_get_model_name_by_run_no` | `F_GET_MODEL_NAME_BY_RUN_NO` | 이름은 PB 함수처럼 보이지만 같은 이름의 DB 함수가 실제로 있다(VALID). 317 머리글은 2D바코드에서 모델명을 함께 읽어 이 함수 호출이 불필요했다. |
 
 ### 전환 보류 (`blocked`) — 10건
 
@@ -139,8 +149,6 @@ DB 함수는 웹에서도 **그대로 호출**합니다 — 재구현하면 PB �
 | `f_get_computer_login_user_name` | 2 | 2 | w_main_frame, w_user_change |
 | `f_mat_issue_return` | 2 | 2 | w_mat_mass_issue_return_master, w_mat_receipt_barcode_reprint_master |
 | `f_mat_receipt_return` | 2 | 2 | w_mat_other_receipt_barcode_return_master, w_mat_receipt_return_master |
-| `f_get_run_no_by_serial` | 2 | 2 | w_plan_run_no_status_popup, w_product_pid_tracking_fpcb_rpt |
-| `f_get_model_name_by_run_no` | 2 | 2 | w_pln_product_pcb_kitting_scan_master, w_product_pid_tracking_fpcb_rpt |
 | `f_get_line_division` | 2 | 2 | w_product_run_card, w_product_run_card_duckil |
 | `f_get_new_scan_qty` | 6 | 1 | w_mat_other_issue_barcode_master |
 | `f_get_line_code_group` | 6 | 1 | w_pln_assembly_master_plan_master |

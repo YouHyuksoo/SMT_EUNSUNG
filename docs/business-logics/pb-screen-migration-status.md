@@ -3,7 +3,7 @@ sources:
   - apps/frontend/src/config/menuConfig.ts
   - apps/frontend/scripts/data/pb-screen-inventory.json
 generator: apps/frontend/scripts/gen-migration-status.mjs
-verifiedCommit: be7f95cf
+verifiedCommit: 65ff489c
 ---
 
 # PB 화면 이관 현황 (자동 생성)
@@ -17,11 +17,11 @@ verifiedCommit: be7f95cf
 | 상태 | 건수 |
 |---|---:|
 | PB 업무화면(셸 메뉴 제외) | 275 |
-| 완료(개발됨, pbWindow 매핑) | 87 |
-| 미착수 | 162 |
+| 완료(개발됨, pbWindow 매핑) | 94 |
+| 미착수 | 155 |
 | 윈도우 미상 | 26 |
 
-웹 메뉴 연결 계약: **PB 88개 / 웹 신규 17개 / 미확정 2개**. PB 매핑과 웹 경로의 전체 연결표는 [pb-menu-route-links.md](pb-menu-route-links.md)에서 관리합니다.
+웹 메뉴 연결 계약: **PB 95개 / 웹 신규 17개 / 미확정 2개**. PB 매핑과 웹 경로의 전체 연결표는 [pb-menu-route-links.md](pb-menu-route-links.md)에서 관리합니다.
 
 ## 대분류별 진행률
 
@@ -41,7 +41,7 @@ verifiedCommit: be7f95cf
 | 수리 | `M_REPAIR` | 4 | 2 | 2 | 0 |
 | 품질관리 | `M_QC` | 12 | 12 | 0 | 0 |
 | 출하현황 | `M_SHIPPING` | 10 | 1 | 9 | 0 |
-| 추적 | `M_TRACKING` | 7 | 0 | 7 | 0 |
+| 추적 | `M_TRACKING` | 7 | 7 | 0 | 0 |
 | 조회 | `M_QUERY` | 11 | 0 | 11 | 0 |
 | 리포트 | `M_REPORT` | 23 | 0 | 23 | 0 |
 | 승인 | `M_CONFIRM` | 6 | 4 | 2 | 0 |
@@ -266,13 +266,13 @@ verifiedCommit: be7f95cf
 
 | 순서 | 메뉴명 | PB 윈도우 | 원본 | 상태 | MES 메뉴코드 | 경로 |
 |---:|---|---|:--:|---|---|---|
-| 313 | 자재 제조번호 기준 추적 | `w_product_pid_tracking_rpt` | srw | 미착수 |  |  |
-| 314 | 자재추적조회(동적) | `w_product_material_tracking_rpt` | srw | 미착수 |  |  |
-| 315 | 자재사용이력조회 | `w_product_material_tracking_msl_rpt` | srw | 미착수 |  |  |
-| 317 | 생산이력조회(PID) | `w_product_pid_tracking_fpcb_rpt` | srw | 미착수 |  |  |
-| 318 | 생산이력조회(Run No) | `w_pln_product_barcode_tracking` | srw | 미착수 |  |  |
-| 319 | 롯트추적조회(ALL) | `w_pln_product_all_barcode_tracking` | srw | 미착수 |  |  |
-| 321 | 생산현황데쉬보드 | `w_com_production_status_dashboard` | srw | 미착수 |  |  |
+| 313 | 자재 제조번호 기준 추적 | `w_product_pid_tracking_rpt` | srw | 완료 | `TRK_MATERIAL_LOT` | `/tracking/material-lot` |
+| 314 | 자재추적조회(동적) | `w_product_material_tracking_rpt` | srw | 완료 | `TRK_MATERIAL_DYNAMIC` | `/tracking/material-dynamic` |
+| 315 | 자재사용이력조회 | `w_product_material_tracking_msl_rpt` | srw | 완료 | `TRK_MATERIAL_USAGE` | `/tracking/material-usage` |
+| 317 | 생산이력조회(PID) | `w_product_pid_tracking_fpcb_rpt` | srw | 완료 | `TRK_PID` | `/tracking/pid` |
+| 318 | 생산이력조회(Run No) | `w_pln_product_barcode_tracking` | srw | 완료 | `TRK_RUN_NO` | `/tracking/run-no` |
+| 319 | 롯트추적조회(ALL) | `w_pln_product_all_barcode_tracking` | srw | 완료 | `TRK_LOT_ALL` | `/tracking/lot-all` |
+| 321 | 생산현황데쉬보드 | `w_com_production_status_dashboard` | srw | 완료 | `TRK_LINE_DASHBOARD` | `/tracking/line-dashboard` |
 
 ### 조회  `M_QUERY`
 
