@@ -1,5 +1,5 @@
 import type { ColumnDef } from '@tanstack/react-table';
-import { codeWithName, dateOnly, dateTime, num } from '../shared-format';
+import { codeWithName, dateOnly, dateTime, num } from '@/components/shared/grid-format';
 
 /** PB d_mcn_jig_issue_lst (IMCN_JIG_ISSUE) */
 export interface JigIssueRow {

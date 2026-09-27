@@ -2,11 +2,11 @@
  * @file src/app/(authenticated)/mold/columns.tsx
  * @description S-PARTS 8화면의 그리드 컬럼 정의.
  *
- * 표시 규칙은 지그관리와 같은 것을 쓴다(`../jig/shared-format`) — 코드컬럼은 뜻을 보여주고
+ * 표시 규칙은 지그관리와 같은 것을 쓴다(`@/components/shared/grid-format`) — 코드컬럼은 뜻을 보여주고
  * 코드는 괄호로 함께 둔다. 같은 규칙을 두 번 정의하지 않는다.
  */
 import type { ColumnDef } from '@tanstack/react-table';
-import { codeWithName, dateOnly, dateTime, num } from '../jig/shared-format';
+import { codeWithName, dateOnly, dateTime, num } from '@/components/shared/grid-format';
 import type {
   MoldBillRow,
   MoldInventoryRow,

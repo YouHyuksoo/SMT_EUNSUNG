@@ -7,7 +7,7 @@
  * 그래서 여기서 new Date() 로 다시 파싱하지 않는다 — 그러면 UTC 로 해석돼 9시간 틀어진다.
  */
 import type { ColumnDef } from '@tanstack/react-table';
-import { codeWithName, num } from '../jig/shared-format';
+import { codeWithName, num } from '@/components/shared/grid-format';
 import type {
   DynamicMaterialRow,
   FeedingWindowRow,

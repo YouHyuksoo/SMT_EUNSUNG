@@ -1,5 +1,5 @@
 import type { ColumnDef } from '@tanstack/react-table';
-import { codeWithName, dateTime, num } from '../shared-format';
+import { codeWithName, dateTime, num } from '@/components/shared/grid-format';
 
 /** PB d_mcn_jig_squeze_check_mlst (IMCN_JIG_SQUEZE_CHECK) */
 export interface SqueezeCheckRow {

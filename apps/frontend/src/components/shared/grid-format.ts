@@ -1,9 +1,12 @@
 /**
- * @file src/app/(authenticated)/jig/shared-format.ts
- * @description 지그관리 화면들이 공유하는 그리드 표시 규칙.
+ * @file components/shared/grid-format.ts
+ * @description 업무 화면 그리드가 공유하는 표시 규칙.
  *
  * 코드컬럼은 그리드에 코드가 아니라 뜻이 보여야 한다. 코드는 괄호로 함께 둔다
  * (수정·필터·전송용으로 원시 값이 필요하므로 행 데이터에는 그대로 남는다).
+ *
+ * 지그관리에서 시작해 10개 대분류가 쓰게 됐으므로 라우트 폴더에서 여기로 옮겼다 —
+ * 특정 대분류 폴더 안에 두면 다음 대분류가 자기 폴더에 복제한다.
  */
 export const dateTime = (value: unknown) => {
   if (!value) return '';

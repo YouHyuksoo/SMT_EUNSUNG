@@ -6,7 +6,7 @@
  * 코드는 괄호로 함께 둔다. 표시 헬퍼는 중복 정의하지 않고 지그 것을 가져온다.
  */
 import type { ColumnDef } from '@tanstack/react-table';
-import { codeWithName, dateOnly, dateTime, num } from '../jig/shared-format';
+import { codeWithName, dateOnly, dateTime, num } from '@/components/shared/grid-format';
 import type {
   DailyReportRow,
   KittingPidRow,

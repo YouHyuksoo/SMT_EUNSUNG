@@ -5,7 +5,7 @@
  * 표시 규칙은 지그·S-PARTS 와 같은 것을 쓴다 — 코드컬럼은 뜻을 보여주고 코드는 괄호로 함께 둔다.
  */
 import type { ColumnDef } from '@tanstack/react-table';
-import { codeWithName, dateOnly, dateTime, num } from '../../jig/shared-format';
+import { codeWithName, dateOnly, dateTime, num } from '@/components/shared/grid-format';
 import type { IqcHistoryRow, IqcTargetRow } from './types';
 
 const right = { align: 'right' } as const;

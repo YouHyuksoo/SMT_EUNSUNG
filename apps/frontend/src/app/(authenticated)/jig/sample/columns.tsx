@@ -1,5 +1,5 @@
 import type { ColumnDef } from '@tanstack/react-table';
-import { codeWithName, dateOnly, dateTime, num } from '../shared-format';
+import { codeWithName, dateOnly, dateTime, num } from '@/components/shared/grid-format';
 
 /** PB d_mcn_sample_lst (IMCN_SAMPLE) */
 export interface SampleMasterRow {

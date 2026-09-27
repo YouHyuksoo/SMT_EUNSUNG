@@ -7,7 +7,7 @@
  * UTC 로 해석돼 9시간 틀어진다).
  */
 import type { ColumnDef } from '@tanstack/react-table';
-import { codeWithName, num } from '../jig/shared-format';
+import { codeWithName, num } from '@/components/shared/grid-format';
 import type {
   CarrierBarcodeRow,
   FgIssueDetailRow,
@@ -33,6 +33,17 @@ const yn = (value: unknown) => (value ? String(value) : '');
 /** 금액은 소수점을 버리고 천단위만 보여준다 — 리포트에서 소수는 읽기를 방해한다. */
 const money = (value: unknown) =>
   value == null ? '' : Math.round(Number(value)).toLocaleString();
+
+/**
+ * 단가는 **반올림하지 않는다.** SMT 부품 단가에는 1 미만이 흔해서
+ * (30일치 픽업 19,595건 중 854건이 1 미만 · 3,430건이 소수 — 실측)
+ * 금액과 같은 규칙으로 찍으면 그 단가가 전부 `0` 으로 보인다.
+ * 소수는 최대 4자리까지 두고 뒤의 0 은 붙이지 않는다.
+ */
+const unitPrice = (value: unknown) =>
+  value == null
+    ? ''
+    : Number(value).toLocaleString(undefined, { maximumFractionDigits: 4 });
 
 // ───────────────────────────────── 338 품목마스터리포트
 
@@ -207,7 +218,7 @@ export const pickupDetailColumns: ColumnDef<PickupDetailRow>[] = [
   { accessorKey: 'itemCode', header: '품목코드', size: 150 },
   { accessorKey: 'itemName', header: '품목명', size: 180 },
   { accessorKey: 'abcGrade', header: 'ABC', size: 70, meta: center },
-  { accessorKey: 'purUnitPrice', header: '구매단가', size: 110, meta: right, cell: (c) => money(c.getValue()) },
+  { accessorKey: 'purUnitPrice', header: '구매단가', size: 110, meta: right, cell: (c) => unitPrice(c.getValue()) },
   { accessorKey: 'takeupQty', header: '집어올림', size: 110, meta: right, cell: (c) => num(c.getValue()) },
   {
     accessorKey: 'missQty',
@@ -399,7 +410,7 @@ export const fgIssueDetailColumns: ColumnDef<FgIssueDetailRow>[] = [
         : num(c.getValue());
     },
   },
-  { accessorKey: 'issuePrice', header: '단가', size: 110, meta: right, cell: (c) => money(c.getValue()) },
+  { accessorKey: 'issuePrice', header: '단가', size: 110, meta: right, cell: (c) => unitPrice(c.getValue()) },
   {
     accessorKey: 'txnDeficit',
     header: '구분',
@@ -450,7 +461,7 @@ export const fgIssueSummaryColumns: ColumnDef<FgIssueSummaryRow>[] = [
     meta: right,
     cell: (c) => <span className="font-semibold">{num(c.getValue())}</span>,
   },
-  { accessorKey: 'issuePrice', header: '단가', size: 110, meta: right, cell: (c) => money(c.getValue()) },
+  { accessorKey: 'issuePrice', header: '단가', size: 110, meta: right, cell: (c) => unitPrice(c.getValue()) },
 ];
 
 // ───────────────────────────────── 350 공정재공 · 352 공정매거진
