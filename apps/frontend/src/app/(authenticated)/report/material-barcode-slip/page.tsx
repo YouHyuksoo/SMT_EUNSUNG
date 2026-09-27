@@ -19,6 +19,7 @@ import DataGrid from '@/components/data-grid/DataGrid';
 import DateRangeFilter from '@/components/shared/DateRangeFilter';
 import { Button, Card, CardContent, Input, Select } from '@/components/ui';
 import api from '@/services/api';
+import { TruncationNotice, useTruncation } from '../components/TruncationNotice';
 import { materialBarcodeSlipColumns } from '../report-b-columns';
 import type { MaterialBarcodeSlipRow } from '../report-b-types';
 
@@ -44,6 +45,7 @@ export default function MaterialBarcodeSlipPage() {
   const [rows, setRows] = useState<MaterialBarcodeSlipRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
+  const { truncated, rowLimit, mark } = useTruncation();
 
   const search = useCallback(async () => {
     setLoading(true);
@@ -58,6 +60,7 @@ export default function MaterialBarcodeSlipPage() {
         },
       });
       setRows(response.data?.data ?? []);
+      mark(response);
       setSearched(true);
     } catch (error: unknown) {
       const message = (error as { response?: { data?: { message?: string } } })
@@ -83,6 +86,8 @@ export default function MaterialBarcodeSlipPage() {
             : '조회하세요'}
         </p>
       </header>
+
+      <TruncationNotice truncated={truncated} rowLimit={rowLimit} what="입고 미대조 건수" />
 
       <Card padding="none">
         <CardContent className="flex flex-wrap items-center gap-3 p-3">

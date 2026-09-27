@@ -18,6 +18,7 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { OrganizationId, UserId } from '../../common/decorators/tenant.decorator';
 import { ResponseUtil } from '../../common/dto/response.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { ROW_LIMIT } from './report-rows';
 import { CarrierBarcodeService } from './carrier-barcode.service';
 import { MasterReportService } from './master-report.service';
 import { ProductionReportService } from './production-report.service';
@@ -39,8 +40,20 @@ import {
 
 const DEFAULT_USER = 'ADMIN';
 
-const paged = <T>(result: { data: T[]; total: number }) =>
-  ResponseUtil.paged(result.data, result.total, 1, result.total || 1);
+/**
+ * 리포트 응답. **`truncated` 를 meta 에 반드시 실어 보낸다.**
+ *
+ * 리포트는 행 수에 상한이 있어 조건이 넓으면 잘린다. 잘렸다는 사실을 화면이
+ * 모르면 헤더의 합계를 잘린 창 안의 값으로 계산해 전체 합계처럼 보여준다 —
+ * 리포트에서는 느린 것보다 이게 위험하다.
+ */
+const paged = <T>(result: { data: T[]; total: number; truncated?: boolean }) => {
+  const base = ResponseUtil.paged(result.data, result.total, 1, result.total || 1);
+  return {
+    ...base,
+    meta: { ...base.meta, truncated: Boolean(result.truncated), rowLimit: ROW_LIMIT },
+  };
+};
 
 @ApiTags('리포트 - 품목마스터')
 @UseGuards(JwtAuthGuard)

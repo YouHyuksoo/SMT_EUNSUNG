@@ -22,6 +22,7 @@ import DateRangeFilter from '@/components/shared/DateRangeFilter';
 import ScreenTabs from '@/components/shared/ScreenTabs';
 import { Button, Card, CardContent, Input } from '@/components/ui';
 import api from '@/services/api';
+import { TruncationNotice, useTruncation } from '../components/TruncationNotice';
 import { magazineStockColumns } from '../report-columns';
 import type { MagazineStockRow } from '../report-types';
 
@@ -52,6 +53,7 @@ export default function MagazineStockReportPage() {
   const [shownKind, setShownKind] = useState<Kind>('workstage');
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
+  const { truncated, rowLimit, mark } = useTruncation();
 
   const search = useCallback(async (target: Kind) => {
     setLoading(true);
@@ -68,6 +70,7 @@ export default function MagazineStockReportPage() {
       });
       setRows(response.data?.data ?? []);
       setShownKind(target);
+      mark(response);
       setSearched(true);
     } catch (error: unknown) {
       const message = (error as { response?: { data?: { message?: string } } })
@@ -98,6 +101,8 @@ export default function MagazineStockReportPage() {
           {KIND_NOTE[kind]} · {searched ? `${rows.length}건` : '조회하세요'}
         </p>
       </header>
+
+      <TruncationNotice truncated={truncated} rowLimit={rowLimit} />
 
       <ScreenTabs
         tabs={[

@@ -36,6 +36,7 @@
 import { Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { likePrefix } from '@smt/shared';
+import { limited, ROW_LIMIT } from './report-rows';
 import {
   FourMHistoryQueryDto,
   JigIssueReportQueryDto,
@@ -47,7 +48,6 @@ import {
 
 type Row = Record<string, unknown>;
 
-const ROW_LIMIT = 10000;
 /** '전체' 를 뜻하는 더미 마스터 코드. 리포트에서는 뺀다 (PB 고정조건). */
 const DUMMY_CODE = '*';
 /** PB 고정조건: 354 는 정상 입고만 본다. */
@@ -113,7 +113,7 @@ export class MoldJigReportService {
         organizationId,
       } as unknown as unknown[],
     )) as Row[];
-    return { data: rows, total: rows.length };
+    return limited(rows);
   }
 
   // ───────────────────────────────── 355 S-PARTS출고리포트
@@ -159,7 +159,7 @@ export class MoldJigReportService {
         organizationId,
       } as unknown as unknown[],
     )) as Row[];
-    return { data: rows, total: rows.length };
+    return limited(rows);
   }
 
   // ───────────────────────────────── 357 지그리포트
@@ -196,7 +196,7 @@ export class MoldJigReportService {
         organizationId,
       } as unknown as unknown[],
     )) as Row[];
-    return { data: rows, total: rows.length };
+    return limited(rows);
   }
 
   /**
@@ -237,7 +237,7 @@ export class MoldJigReportService {
         organizationId,
       } as unknown as unknown[],
     )) as Row[];
-    return { data: rows, total: rows.length };
+    return limited(rows);
   }
 
   /** 지그 출고 이력. **이 표는 0행이다** (IMCN_JIG_ISSUE 실측 0건). */
@@ -279,7 +279,7 @@ export class MoldJigReportService {
         organizationId,
       } as unknown as unknown[],
     )) as Row[];
-    return { data: rows, total: rows.length };
+    return limited(rows);
   }
 
   // ───────────────────────────────── 358 S-PARTS관리리포트
@@ -346,7 +346,7 @@ export class MoldJigReportService {
         organizationId,
       } as unknown as unknown[],
     )) as Row[];
-    return { data: rows, total: rows.length };
+    return limited(rows);
   }
 
   /**
@@ -402,7 +402,7 @@ export class MoldJigReportService {
         organizationId,
       } as unknown as unknown[],
     )) as Row[];
-    return { data: rows, total: rows.length };
+    return limited(rows);
   }
 
   // ───────────────────────────────── 360 4M 변경이력
@@ -450,6 +450,6 @@ export class MoldJigReportService {
         organizationId,
       } as unknown as unknown[],
     )) as Row[];
-    return { data: rows, total: rows.length };
+    return limited(rows);
   }
 }

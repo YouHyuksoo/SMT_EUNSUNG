@@ -20,6 +20,7 @@ import DateFilter from '@/components/shared/DateFilter';
 import LineSelect from '@/components/shared/LineSelect';
 import { Button, Card, CardContent, Input } from '@/components/ui';
 import api from '@/services/api';
+import { TruncationNotice, useTruncation } from '../components/TruncationNotice';
 import { masterPlanColumns } from '../report-columns';
 import type { MasterPlanRow } from '../report-types';
 
@@ -34,6 +35,7 @@ export default function MasterPlanReportPage() {
   const [rows, setRows] = useState<MasterPlanRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
+  const { truncated, rowLimit, mark } = useTruncation();
 
   const search = useCallback(async () => {
     setLoading(true);
@@ -47,6 +49,7 @@ export default function MasterPlanReportPage() {
         },
       });
       setRows(response.data?.data ?? []);
+      mark(response);
       setSearched(true);
     } catch (error: unknown) {
       const message = (error as { response?: { data?: { message?: string } } })
@@ -72,6 +75,8 @@ export default function MasterPlanReportPage() {
             : '조회하세요'}
         </p>
       </header>
+
+      <TruncationNotice truncated={truncated} rowLimit={rowLimit} what="계획 합계" />
 
       <Card padding="none">
         <CardContent className="flex flex-wrap items-center gap-3 p-3">

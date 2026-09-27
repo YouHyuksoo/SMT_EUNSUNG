@@ -28,6 +28,7 @@
 import { Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { likePrefix } from '@smt/shared';
+import { limited, ROW_LIMIT } from './report-rows';
 import {
   MaterialDisusedQueryDto,
   MaterialInventoryDailyQueryDto,
@@ -37,7 +38,6 @@ import {
 
 type Row = Record<string, unknown>;
 
-const ROW_LIMIT = 10000;
 
 @Injectable()
 export class MaterialInventoryReportService {
@@ -99,7 +99,7 @@ export class MaterialInventoryReportService {
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
       this.inventoryBinds(query, organizationId, false) as unknown as unknown[],
     )) as Row[];
-    return { data: rows, total: rows.length };
+    return limited(rows);
   }
 
   /**
@@ -133,7 +133,7 @@ export class MaterialInventoryReportService {
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
       this.inventoryBinds(query, organizationId, true) as unknown as unknown[],
     )) as Row[];
-    return { data: rows, total: rows.length };
+    return limited(rows);
   }
 
   /**
@@ -184,7 +184,7 @@ export class MaterialInventoryReportService {
         baseDate: query.baseDate,
       } as unknown as unknown[],
     )) as Row[];
-    return { data: rows, total: rows.length };
+    return limited(rows);
   }
 
   /**
@@ -253,7 +253,7 @@ export class MaterialInventoryReportService {
         organizationId,
       } as unknown as unknown[],
     )) as Row[];
-    return { data: rows, total: rows.length };
+    return limited(rows);
   }
 
   // ───────────────────────────────── 368 자재장기재고리포트
@@ -304,6 +304,6 @@ export class MaterialInventoryReportService {
         organizationId,
       } as unknown as unknown[],
     )) as Row[];
-    return { data: rows, total: rows.length };
+    return limited(rows);
   }
 }

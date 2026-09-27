@@ -23,6 +23,7 @@
 import { Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { likePrefix } from '@smt/shared';
+import { limited, ROW_LIMIT } from './report-rows';
 import {
   ItemMasterReportQueryDto,
   LineBarcodeQueryDto,
@@ -32,7 +33,6 @@ import {
 
 type Row = Record<string, unknown>;
 
-const ROW_LIMIT = 10000;
 
 @Injectable()
 export class MasterReportService {
@@ -111,7 +111,7 @@ export class MasterReportService {
         organizationId,
       } as unknown as unknown[],
     )) as Row[];
-    return { data: rows, total: rows.length };
+    return limited(rows);
   }
 
   // ───────────────────────────────── 340 라인설비바코드
@@ -146,7 +146,7 @@ export class MasterReportService {
         organizationId,
       } as unknown as unknown[],
     )) as Row[];
-    return { data: rows, total: rows.length };
+    return limited(rows);
   }
 
   // ───────────────────────────────── 343 설비리포트
@@ -189,7 +189,7 @@ export class MasterReportService {
         organizationId,
       } as unknown as unknown[],
     )) as Row[];
-    return { data: rows, total: rows.length };
+    return limited(rows);
   }
 
   /**
@@ -235,6 +235,6 @@ export class MasterReportService {
         organizationId,
       } as unknown as unknown[],
     )) as Row[];
-    return { data: rows, total: rows.length };
+    return limited(rows);
   }
 }

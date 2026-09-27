@@ -23,6 +23,7 @@ import DateRangeFilter from '@/components/shared/DateRangeFilter';
 import ScreenTabs from '@/components/shared/ScreenTabs';
 import { Button, Card, CardContent, Input } from '@/components/ui';
 import api from '@/services/api';
+import { TruncationNotice, useTruncation } from '../components/TruncationNotice';
 import {
   jigCardColumns,
   jigIssueReportColumns,
@@ -50,6 +51,7 @@ export default function JigReportPage() {
   const [issues, setIssues] = useState<JigIssueReportRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
+  const { truncated, rowLimit, mark } = useTruncation();
 
   const search = useCallback(async () => {
     setLoading(true);
@@ -65,6 +67,7 @@ export default function JigReportPage() {
       setList(l.data?.data ?? []);
       setCards(c.data?.data ?? []);
       setIssues(i.data?.data ?? []);
+      mark(l, c, i);
       setSearched(true);
     } catch (error: unknown) {
       const message = (error as { response?: { data?: { message?: string } } })
@@ -91,6 +94,8 @@ export default function JigReportPage() {
             : '조회하세요'}
         </p>
       </header>
+
+      <TruncationNotice truncated={truncated} rowLimit={rowLimit} what="한계값 초과 건수" />
 
       <Card padding="none">
         <CardContent className="flex flex-wrap items-center gap-3 p-3">

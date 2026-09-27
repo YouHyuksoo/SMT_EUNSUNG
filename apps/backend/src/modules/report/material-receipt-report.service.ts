@@ -28,6 +28,7 @@
 import { Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { likePrefix } from '@smt/shared';
+import { limited, ROW_LIMIT } from './report-rows';
 import {
   MaterialBarcodeSlipQueryDto,
   MaterialReceiptReportQueryDto,
@@ -36,7 +37,6 @@ import {
 
 type Row = Record<string, unknown>;
 
-const ROW_LIMIT = 10000;
 /** PB 고정조건: 취소된 입고는 리포트에서 뺀다. */
 const RECEIPT_CANCELED = 'C';
 /** PB 고정조건: 반품 탭의 입출고구분. */
@@ -118,7 +118,7 @@ export class MaterialReceiptReportService {
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
       binds as unknown as unknown[],
     )) as Row[];
-    return { data: rows, total: rows.length };
+    return limited(rows);
   }
 
   // ───────────────────────────────── 363 자재입고리포트
@@ -222,7 +222,7 @@ export class MaterialReceiptReportService {
         itemClass: likePrefix(query.itemClass),
       } as unknown as unknown[],
     )) as Row[];
-    return { data: rows, total: rows.length };
+    return limited(rows);
   }
 
   /**
@@ -286,7 +286,7 @@ export class MaterialReceiptReportService {
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
       binds as unknown as unknown[],
     )) as Row[];
-    return { data: rows, total: rows.length };
+    return limited(rows);
   }
 
   /**
@@ -323,7 +323,7 @@ export class MaterialReceiptReportService {
         organizationId,
       } as unknown as unknown[],
     )) as Row[];
-    return { data: rows, total: rows.length };
+    return limited(rows);
   }
 
   // ───────────────────────────────── 364 자재입고합계리포트
@@ -393,7 +393,7 @@ export class MaterialReceiptReportService {
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
       this.sumBinds(query, organizationId) as unknown as unknown[],
     )) as Row[];
-    return { data: rows, total: rows.length };
+    return limited(rows);
   }
 
   /** 협력사별 입고합계. */
@@ -426,7 +426,7 @@ export class MaterialReceiptReportService {
         organizationId,
       } as unknown as unknown[],
     )) as Row[];
-    return { data: rows, total: rows.length };
+    return limited(rows);
   }
 
   /** 창고별 입고합계. */
@@ -455,7 +455,7 @@ export class MaterialReceiptReportService {
         organizationId,
       } as unknown as unknown[],
     )) as Row[];
-    return { data: rows, total: rows.length };
+    return limited(rows);
   }
 
   /**
@@ -521,6 +521,6 @@ export class MaterialReceiptReportService {
         organizationId,
       } as unknown as unknown[],
     )) as Row[];
-    return { data: rows, total: rows.length };
+    return limited(rows);
   }
 }

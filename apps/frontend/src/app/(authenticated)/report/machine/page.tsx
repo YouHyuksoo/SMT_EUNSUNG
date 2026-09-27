@@ -21,6 +21,7 @@ import DateRangeFilter from '@/components/shared/DateRangeFilter';
 import ScreenTabs from '@/components/shared/ScreenTabs';
 import { Button, Card, CardContent, Input } from '@/components/ui';
 import api from '@/services/api';
+import { TruncationNotice, useTruncation } from '../components/TruncationNotice';
 import { machineColumns, machineOperationColumns } from '../report-columns';
 import type { MachineOperationRow, MachineRow } from '../report-types';
 
@@ -43,6 +44,7 @@ export default function MachineReportPage() {
   const [operations, setOperations] = useState<MachineOperationRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
+  const { truncated, rowLimit, mark } = useTruncation();
 
   const search = useCallback(async () => {
     setLoading(true);
@@ -57,6 +59,7 @@ export default function MachineReportPage() {
       ]);
       setMachines(m.data?.data ?? []);
       setOperations(o.data?.data ?? []);
+      mark(m, o);
       setSearched(true);
     } catch (error: unknown) {
       const message = (error as { response?: { data?: { message?: string } } })
@@ -82,6 +85,8 @@ export default function MachineReportPage() {
             : '조회하세요'}
         </p>
       </header>
+
+      <TruncationNotice truncated={truncated} rowLimit={rowLimit} what="가동기록 건수" />
 
       <Card padding="none">
         <CardContent className="flex flex-wrap items-center gap-3 p-3">

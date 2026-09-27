@@ -20,6 +20,7 @@ import DateFilter from '@/components/shared/DateFilter';
 import SupplierSelect from '@/components/shared/SupplierSelect';
 import { Button, Card, CardContent, Input } from '@/components/ui';
 import api from '@/services/api';
+import { TruncationNotice, useTruncation } from '../components/TruncationNotice';
 import { materialLongTermColumns } from '../report-b-columns';
 import type { MaterialLongTermRow } from '../report-b-types';
 
@@ -35,6 +36,7 @@ export default function MaterialLongTermPage() {
   const [rows, setRows] = useState<MaterialLongTermRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
+  const { truncated, rowLimit, mark } = useTruncation();
 
   const search = useCallback(async () => {
     const months = Number(termMonths);
@@ -54,6 +56,7 @@ export default function MaterialLongTermPage() {
         },
       });
       setRows(response.data?.data ?? []);
+      mark(response);
       setSearched(true);
     } catch (error: unknown) {
       const message = (error as { response?: { data?: { message?: string } } })
@@ -79,6 +82,8 @@ export default function MaterialLongTermPage() {
             : '조회하세요'}
         </p>
       </header>
+
+      <TruncationNotice truncated={truncated} rowLimit={rowLimit} what="1년 이상 건수" />
 
       <Card padding="none">
         <CardContent className="flex flex-wrap items-center gap-3 p-3">

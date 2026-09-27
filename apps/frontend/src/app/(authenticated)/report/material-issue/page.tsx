@@ -25,6 +25,7 @@ import LineSelect from '@/components/shared/LineSelect';
 import ScreenTabs from '@/components/shared/ScreenTabs';
 import { Button, Card, CardContent, Input } from '@/components/ui';
 import api from '@/services/api';
+import { TruncationNotice, useTruncation } from '../components/TruncationNotice';
 import {
   materialIssueColumns,
   materialNotIssuedColumns,
@@ -61,6 +62,7 @@ export default function MaterialIssueReportPage() {
   const [smtCheck, setSmtCheck] = useState<SmtCheckHistoryRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
+  const { truncated, rowLimit, mark } = useTruncation();
 
   const [selected, setSelected] = useState<MaterialIssueRow | null>(null);
   const [fullCheck, setFullCheck] = useState<string | null>(null);
@@ -89,6 +91,7 @@ export default function MaterialIssueReportPage() {
       setDetail(d.data?.data ?? []);
       setSimple(s.data?.data ?? []);
       setNotIssued(n.data?.data ?? []);
+      mark(d, s, n);
       setSearched(true);
     } catch (error: unknown) {
       const message = (error as { response?: { data?: { message?: string } } })
@@ -113,6 +116,7 @@ export default function MaterialIssueReportPage() {
         params: { barcode: barcode.trim() },
       });
       setSmtCheck(response.data?.data ?? []);
+      mark(response);
     } catch (error: unknown) {
       const message = (error as { response?: { data?: { message?: string } } })
         ?.response?.data?.message;
@@ -160,6 +164,8 @@ export default function MaterialIssueReportPage() {
         </p>
       </header>
 
+      <TruncationNotice truncated={truncated} rowLimit={rowLimit} />
+
       <Card padding="none">
         <CardContent className="flex flex-wrap items-center gap-3 p-3">
           <DateRangeFilter label="등록일" from={dateFrom} to={dateTo}
@@ -174,6 +180,10 @@ export default function MaterialIssueReportPage() {
             onChange={(e) => setMaterialMfs(e.target.value)} />
           <ComCodeSelect groupCode="MATERIAL LOCATION CODE" labelPrefix="창고"
             value={locationCode} onChange={setLocationCode} className="w-48" />
+          {/* 단가 하한은 함수 결과에 거는 조건이라 인덱스를 못 쓴다 — 기간 전체를
+              훑으므로 하한을 걸면 간이 탭이 느려진다 (31일치 16초 실측). 그래도
+              **상한을 자르기 전에** 걸어야 한다: 뒤에 걸면 조건에 맞는 건이
+              조용히 빠진다 (실측 16,925건 중 12,786건 누락). */}
           <Input aria-label="단가 이상 (간이 탭)" placeholder="단가 이상 (간이)"
             value={minUnitPrice} className="w-36"
             onChange={(e) => setMinUnitPrice(e.target.value.replace(/[^\d.]/g, ''))} />

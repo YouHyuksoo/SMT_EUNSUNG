@@ -34,6 +34,7 @@
 import { Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { likePrefix } from '@smt/shared';
+import { limited, ROW_LIMIT } from './report-rows';
 import {
   MaterialIssueReportQueryDto,
   MaterialIssueSumQueryDto,
@@ -43,7 +44,6 @@ import {
 
 type Row = Record<string, unknown>;
 
-const ROW_LIMIT = 10000;
 /** PB 고정조건: 취소된 출고는 리포트에서 뺀다. */
 const ISSUE_CANCELED = 'C';
 
@@ -152,13 +152,17 @@ export class MaterialIssueReportService {
           -- ABC 등급은 외부조인 상대 컬럼이라 NVL 이 필요하다. 벗기면 품목마스터가
           -- 없는 출고가 탈락해 외부조인이 내부조인이 된다.
           AND NVL(i.ABC_GRADE, '*') LIKE :abcGrade ESCAPE '\\'
-          AND g.ORGANIZATION_ID = :organizationId
-        ORDER BY g.ENTER_DATE DESC, g.ISSUE_SEQUENCE
-        FETCH FIRST ${ROW_LIMIT} ROWS ONLY )
-       ${priceWhere}`,
+          AND g.ORGANIZATION_ID = :organizationId )
+       -- 단가 하한은 **상한을 자르기 전에** 걸어야 한다. 뒤에 두면 '최근 1만건 중
+       -- 단가 조건을 만족하는 것' 이 되어, 조건에 맞지만 1만건 밖에 있는 출고가
+       -- 조용히 빠진다 (비싼 자재만 보려는 화면에서 하한을 올릴수록 더 빠진다).
+       ${priceWhere}
+       -- 등록일시는 'YYYY-MM-DD HH24:MI:SS' 문자열이라 사전순이 시간순과 같다.
+       ORDER BY "enterDate" DESC, "issueSequence"
+       FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
       binds as unknown as unknown[],
     )) as Row[];
-    return { data: rows, total: rows.length };
+    return limited(rows);
   }
 
   /**
@@ -229,7 +233,7 @@ export class MaterialIssueReportService {
         organizationId,
       } as unknown as unknown[],
     )) as Row[];
-    return { data: rows, total: rows.length };
+    return limited(rows);
   }
 
   /**
@@ -266,7 +270,7 @@ export class MaterialIssueReportService {
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
       { barcode: likePrefix(query.barcode) } as unknown as unknown[],
     )) as Row[];
-    return { data: rows, total: rows.length };
+    return limited(rows);
   }
 
   // ───────────────────────────────── 366 자재출고합계리포트
@@ -307,7 +311,7 @@ export class MaterialIssueReportService {
         organizationId,
       } as unknown as unknown[],
     )) as Row[];
-    return { data: rows, total: rows.length };
+    return limited(rows);
   }
 
   /** 출고계정별 합계. */
@@ -342,7 +346,7 @@ export class MaterialIssueReportService {
         organizationId,
       } as unknown as unknown[],
     )) as Row[];
-    return { data: rows, total: rows.length };
+    return limited(rows);
   }
 
   // ───────────────────────────────── 367 자재랙이동리포트
@@ -381,6 +385,6 @@ export class MaterialIssueReportService {
         organizationId,
       } as unknown as unknown[],
     )) as Row[];
-    return { data: rows, total: rows.length };
+    return limited(rows);
   }
 }

@@ -25,6 +25,7 @@ import { Plus, Search, Trash2 } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
 import { Button, Card, CardContent, CardHeader, ConfirmModal, Input } from '@/components/ui';
 import api from '@/services/api';
+import { TruncationNotice, useTruncation } from '../components/TruncationNotice';
 import { carrierBarcodeColumns } from '../report-columns';
 import type { CarrierBarcodeCreateResult, CarrierBarcodeRow } from '../report-types';
 
@@ -42,6 +43,7 @@ export default function CarrierBarcodeReportPage() {
   const [rows, setRows] = useState<CarrierBarcodeRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
+  const { truncated, rowLimit, mark } = useTruncation();
 
   const [prefix, setPrefix] = useState('');
   const [suffix, setSuffix] = useState('');
@@ -60,6 +62,7 @@ export default function CarrierBarcodeReportPage() {
         params: { barcode: barcode || undefined },
       });
       setRows(response.data?.data ?? []);
+      mark(response);
       setSearched(true);
     } catch (error: unknown) {
       const message = (error as { response?: { data?: { message?: string } } })
@@ -164,6 +167,8 @@ export default function CarrierBarcodeReportPage() {
           {searched ? `${rows.length.toLocaleString()}건` : '조회하세요'}
         </p>
       </header>
+
+      <TruncationNotice truncated={truncated} rowLimit={rowLimit} />
 
       <Card padding="none">
         <CardContent className="flex flex-wrap items-center gap-3 p-3">

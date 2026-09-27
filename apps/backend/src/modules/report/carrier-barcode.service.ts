@@ -23,6 +23,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { likePrefix } from '@smt/shared';
+import { limited, ROW_LIMIT } from './report-rows';
 import { TransactionService } from '../../shared/transaction.service';
 import {
   CarrierBarcodeCreateDto,
@@ -32,7 +33,6 @@ import {
 
 type Row = Record<string, unknown>;
 
-const ROW_LIMIT = 10000;
 /** 한 번에 발행할 수 있는 최대 장수. PB 는 상한이 없어 실수로 10만 장을 만들 수 있었다. */
 const MAX_CREATE = 5000;
 
@@ -62,7 +62,7 @@ export class CarrierBarcodeService {
         organizationId,
       } as unknown as unknown[],
     )) as Row[];
-    return { data: rows, total: rows.length };
+    return limited(rows);
   }
 
   /**

@@ -24,6 +24,7 @@ import LineSelect from '@/components/shared/LineSelect';
 import ScreenTabs from '@/components/shared/ScreenTabs';
 import { Button, Card, CardContent, Input } from '@/components/ui';
 import api from '@/services/api';
+import { TruncationNotice, useTruncation } from '../components/TruncationNotice';
 import { runCardReportColumns, runCardSummaryColumns } from '../report-columns';
 import type { RunCardReportRow, RunCardSummaryRow } from '../report-types';
 
@@ -51,6 +52,7 @@ export default function RunCardReportPage() {
   const [detail, setDetail] = useState<RunCardReportRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
+  const { truncated, rowLimit, mark } = useTruncation();
   /** 마지막 조회가 수량을 포함했는지. 체크박스 상태가 아니라 이 값으로 열을 정한다. */
   const [qtyShown, setQtyShown] = useState(false);
 
@@ -74,6 +76,7 @@ export default function RunCardReportPage() {
       setSummary(s.data?.data ?? []);
       setDetail(d.data?.data ?? []);
       setQtyShown(withQty);
+      mark(s, d);
       setSearched(true);
     } catch (error: unknown) {
       const message = (error as { response?: { data?: { message?: string } } })
@@ -100,6 +103,8 @@ export default function RunCardReportPage() {
             : '조회하세요'}
         </p>
       </header>
+
+      <TruncationNotice truncated={truncated} rowLimit={rowLimit} what="런카드 장수" />
 
       <Card padding="none">
         <CardContent className="flex flex-wrap items-center gap-3 p-3">

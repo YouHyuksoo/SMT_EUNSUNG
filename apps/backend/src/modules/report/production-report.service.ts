@@ -37,6 +37,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { likePrefix } from '@smt/shared';
+import { limited, ROW_LIMIT } from './report-rows';
 import {
   FgIssueReportQueryDto,
   MagazineStockQueryDto,
@@ -48,7 +49,6 @@ import {
 
 type Row = Record<string, unknown>;
 
-const ROW_LIMIT = 10000;
 
 /** 352 의 불량·폐기 갈래가 보는 공정코드. PB 가 SQL 안에 박아 둔 값을 그대로 옮겼다. */
 const MAGAZINE_WORKSTAGES = {
@@ -114,7 +114,7 @@ export class ProductionReportService {
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
       this.pickupBinds(query) as unknown as unknown[],
     )) as Row[];
-    return { data: rows, total: rows.length };
+    return limited(rows);
   }
 
   /**
@@ -142,7 +142,7 @@ export class ProductionReportService {
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
       this.pickupBinds(query) as unknown as unknown[],
     )) as Row[];
-    return { data: rows, total: rows.length };
+    return limited(rows);
   }
 
   // ───────────────────────────────── 346 생산계획리포트
@@ -194,7 +194,7 @@ export class ProductionReportService {
         organizationId,
       } as unknown as unknown[],
     )) as Row[];
-    return { data: rows, total: rows.length };
+    return limited(rows);
   }
 
   // ───────────────────────────────── 347 런카드리포트
@@ -255,7 +255,7 @@ export class ProductionReportService {
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
       this.runCardBinds(query, organizationId) as unknown as unknown[],
     )) as Row[];
-    return { data: rows, total: rows.length };
+    return limited(rows);
   }
 
   /**
@@ -360,7 +360,7 @@ export class ProductionReportService {
         organizationId,
       } as unknown as unknown[],
     )) as Row[];
-    return { data: rows, total: rows.length };
+    return limited(rows);
   }
 
   /** 출하 합계 — 모델·고객·위치별 */
@@ -389,7 +389,7 @@ export class ProductionReportService {
         organizationId,
       } as unknown as unknown[],
     )) as Row[];
-    return { data: rows, total: rows.length };
+    return limited(rows);
   }
 
   /**
@@ -420,7 +420,7 @@ export class ProductionReportService {
         organizationId,
       } as unknown as unknown[],
     )) as Row[];
-    return { data: rows, total: rows.length };
+    return limited(rows);
   }
 
   // ───────────────────────────────── 350 공정재공조회
@@ -463,7 +463,7 @@ export class ProductionReportService {
         organizationId,
       } as unknown as unknown[],
     )) as Row[];
-    return { data: rows, total: rows.length };
+    return limited(rows);
   }
 
   // ───────────────────────────────── 352 공정매거진조회
