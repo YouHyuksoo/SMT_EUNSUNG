@@ -3,7 +3,7 @@ sources:
   - apps/frontend/src/config/menuConfig.ts
   - apps/frontend/scripts/data/pb-screen-inventory.json
 generator: apps/frontend/scripts/gen-migration-status.mjs
-verifiedCommit: 3f0a0b4f
+verifiedCommit: 1fb9ad5a
 ---
 
 # PB 윈도우 ↔ 웹 메뉴·경로 연결표 (자동 생성)
@@ -15,7 +15,7 @@ verifiedCommit: 3f0a0b4f
 
 | 전체 웹 메뉴 | PB 연결 | 웹 신규 | 미확정 |
 |---:|---:|---:|---:|
-| 133 | 114 | 17 | 2 |
+| 146 | 127 | 17 | 2 |
 
 ## 전체 연결표
 
@@ -127,6 +127,19 @@ verifiedCommit: 3f0a0b4f
 | 리포트 | 제품 판매실적 | `RPT_FG_ISSUE` | `/report/fg-issue` | PB 연결 | `w_prd_product_fg_issue_rpt` | PB 메뉴 인벤토리 |
 | 리포트 | 공정재공조회 | `RPT_WORKSTAGE_STOCK` | `/report/workstage-stock` | PB 연결 | `w_product_workstage_stock_rpt` | PB 메뉴 인벤토리 |
 | 리포트 | 공정매거진조회 | `RPT_MAGAZINE_STOCK` | `/report/magazine-stock` | PB 연결 | `w_product_workstage_magazine_stock_rpt` | PB 메뉴 인벤토리 |
+| 리포트 | S-PARTS입고리포트 | `RPT_MOLD_RECEIPT` | `/report/mold-receipt` | PB 연결 | `w_mcn_mold_receipt_rpt` | PB 메뉴 인벤토리 |
+| 리포트 | S-PARTS출고리포트 | `RPT_MOLD_ISSUE` | `/report/mold-issue` | PB 연결 | `w_mcn_mold_issue_rpt` | PB 메뉴 인벤토리 |
+| 리포트 | 지그리포트 | `RPT_JIG` | `/report/jig` | PB 연결 | `w_mcn_jig_rpt` | PB 메뉴 인벤토리 |
+| 리포트 | S-PARTS관리리포트 | `RPT_MOLD` | `/report/mold` | PB 연결 | `w_mcn_mold_rpt` | PB 메뉴 인벤토리 |
+| 리포트 | 4M 변경이력 | `RPT_FOUR_M` | `/report/four-m` | PB 연결 | `w_qc_4m_history_rpt` | PB 메뉴 인벤토리 |
+| 리포트 | 자재전표바코드리포트 | `RPT_MATERIAL_BARCODE_SLIP` | `/report/material-barcode-slip` | PB 연결 | `w_mat_receipt_issue_barcode_history_report` | PB 메뉴 인벤토리 |
+| 리포트 | 자재입고리포트 | `RPT_MATERIAL_RECEIPT` | `/report/material-receipt` | PB 연결 | `w_mat_receipt_report` | PB 메뉴 인벤토리 |
+| 리포트 | 자재입고합계리포트 | `RPT_MATERIAL_RECEIPT_SUM` | `/report/material-receipt-sum` | PB 연결 | `w_mat_receipt_sum_report` | PB 메뉴 인벤토리 |
+| 리포트 | 자재출고리포트 | `RPT_MATERIAL_ISSUE` | `/report/material-issue` | PB 연결 | `w_mat_issue_report` | PB 메뉴 인벤토리 |
+| 리포트 | 자재출고합계리포트 | `RPT_MATERIAL_ISSUE_SUM` | `/report/material-issue-sum` | PB 연결 | `w_mat_issue_sum_report` | PB 메뉴 인벤토리 |
+| 리포트 | 자재랙이동리포트 | `RPT_MATERIAL_RACK_MOVE` | `/report/material-rack-move` | PB 연결 | `w_mat_location_address_move_report` | PB 메뉴 인벤토리 |
+| 리포트 | 자재장기재고리포트 | `RPT_MATERIAL_LONG_TERM` | `/report/material-long-term` | PB 연결 | `w_mat_long_term_inventory_report` | PB 메뉴 인벤토리 |
+| 리포트 | 재고리포트 | `RPT_MATERIAL_INVENTORY` | `/report/material-inventory` | PB 연결 | `w_mat_current_inventory_report` | PB 메뉴 인벤토리 |
 | 품질관리 | IQC 관리 | `QC_IQC_MASTER` | `/quality/iqc` | PB 연결 | `w_qc_iqc_master` | PB 메뉴 인벤토리 |
 | 품질관리 | IQC 이력등록관리 | `QC_IQC_HISTORY_REG` | `/quality/iqc-history` | PB 연결 | `w_qc_iqc_inspect_history_master` | PB 메뉴 인벤토리 |
 | 품질관리 | PCB 이슈발생스캔 | `QC_PID_ISSUE_SCAN` | `/quality/pid-issue-scan` | PB 연결 | `w_pln_product_pid_issue_scan_master` | PB 메뉴 인벤토리 |

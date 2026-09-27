@@ -3,7 +3,7 @@ sources:
   - apps/frontend/src/config/menuConfig.ts
   - apps/frontend/scripts/data/pb-screen-inventory.json
 generator: apps/frontend/scripts/gen-migration-status.mjs
-verifiedCommit: 3f0a0b4f
+verifiedCommit: 1fb9ad5a
 ---
 
 # PB 화면 이관 현황 (자동 생성)
@@ -18,11 +18,11 @@ verifiedCommit: 3f0a0b4f
 | 상태 | 건수 |
 |---|---:|
 | PB 업무화면(셸 메뉴 제외) | 275 |
-| 완료(개발됨, pbWindow 매핑) | 115 |
-| 미착수 | 134 |
+| 완료(개발됨, pbWindow 매핑) | 128 |
+| 미착수 | 121 |
 | 윈도우 미상 | 26 |
 
-웹 메뉴 연결 계약: **PB 114개 / 웹 신규 17개 / 미확정 2개**. PB 매핑과 웹 경로의 전체 연결표는 [pb-menu-route-links.md](pb-menu-route-links.md)에서 관리합니다.
+웹 메뉴 연결 계약: **PB 127개 / 웹 신규 17개 / 미확정 2개**. PB 매핑과 웹 경로의 전체 연결표는 [pb-menu-route-links.md](pb-menu-route-links.md)에서 관리합니다.
 
 ## 대분류별 진행률
 
@@ -44,7 +44,7 @@ verifiedCommit: 3f0a0b4f
 | 출하현황 | `M_SHIPPING` | 10 | 1 | 9 | 0 |
 | 추적 | `M_TRACKING` | 7 | 7 | 0 | 0 |
 | 조회 | `M_QUERY` | 11 | 11 | 0 | 0 |
-| 리포트 | `M_REPORT` | 23 | 10 | 13 | 0 |
+| 리포트 | `M_REPORT` | 23 | 23 | 0 | 0 |
 | 승인 | `M_CONFIRM` | 6 | 4 | 2 | 0 |
 | 기본정보 | `M_MANAGE` | 10 | 4 | 6 | 0 |
 | 시스템 | `M_SYSTEM` | 76 | 1 | 51 | 24 |
@@ -305,19 +305,19 @@ verifiedCommit: 3f0a0b4f
 | 348 | └ 제품 판매실적 | `w_prd_product_fg_issue_rpt` | srw | 완료 | `RPT_FG_ISSUE` | `/report/fg-issue` |
 | 350 | └ 공정재공조회 | `w_product_workstage_stock_rpt` | srw | 완료 | `RPT_WORKSTAGE_STOCK` | `/report/workstage-stock` |
 | 352 | └ 공정매거진조회 | `w_product_workstage_magazine_stock_rpt` | srw | 완료 | `RPT_MAGAZINE_STOCK` | `/report/magazine-stock` |
-| 354 | └ S-PARTS입고리포트 | `w_mcn_mold_receipt_rpt` | srw | 미착수 |  |  |
-| 355 | └ S-PARTS출고리포트 | `w_mcn_mold_issue_rpt` | srw | 미착수 |  |  |
-| 357 | └ 지그리포트 | `w_mcn_jig_rpt` | srw | 미착수 |  |  |
-| 358 | └ S-PARTS관리리포트 | `w_mcn_mold_rpt` | srw | 미착수 |  |  |
-| 360 | └ 4M 변경이력 | `w_qc_4m_history_rpt` | srw | 미착수 |  |  |
-| 362 | └ 자재전표바코드리포트 | `w_mat_receipt_issue_barcode_history_report` | srw | 미착수 |  |  |
-| 363 | └ 자재입고리포트 | `w_mat_receipt_report` | srw | 미착수 |  |  |
-| 364 | └ 자재입고합계리포트 | `w_mat_receipt_sum_report` | srw | 미착수 |  |  |
-| 365 | └ 자재출고리포트 | `w_mat_issue_report` | srw | 미착수 |  |  |
-| 366 | └ 자재출고합계리포트 | `w_mat_issue_sum_report` | srw | 미착수 |  |  |
-| 367 | └ 자재랙이동리포트 | `w_mat_location_address_move_report` | srw | 미착수 |  |  |
-| 368 | └ 자재장기재고리포트 | `w_mat_long_term_inventory_report` | srw | 미착수 |  |  |
-| 369 | └ 재고리포트 | `w_mat_current_inventory_report` | srw | 미착수 |  |  |
+| 354 | └ S-PARTS입고리포트 | `w_mcn_mold_receipt_rpt` | srw | 완료 | `RPT_MOLD_RECEIPT` | `/report/mold-receipt` |
+| 355 | └ S-PARTS출고리포트 | `w_mcn_mold_issue_rpt` | srw | 완료 | `RPT_MOLD_ISSUE` | `/report/mold-issue` |
+| 357 | └ 지그리포트 | `w_mcn_jig_rpt` | srw | 완료 | `RPT_JIG` | `/report/jig` |
+| 358 | └ S-PARTS관리리포트 | `w_mcn_mold_rpt` | srw | 완료 | `RPT_MOLD` | `/report/mold` |
+| 360 | └ 4M 변경이력 | `w_qc_4m_history_rpt` | srw | 완료 | `RPT_FOUR_M` | `/report/four-m` |
+| 362 | └ 자재전표바코드리포트 | `w_mat_receipt_issue_barcode_history_report` | srw | 완료 | `RPT_MATERIAL_BARCODE_SLIP` | `/report/material-barcode-slip` |
+| 363 | └ 자재입고리포트 | `w_mat_receipt_report` | srw | 완료 | `RPT_MATERIAL_RECEIPT` | `/report/material-receipt` |
+| 364 | └ 자재입고합계리포트 | `w_mat_receipt_sum_report` | srw | 완료 | `RPT_MATERIAL_RECEIPT_SUM` | `/report/material-receipt-sum` |
+| 365 | └ 자재출고리포트 | `w_mat_issue_report` | srw | 완료 | `RPT_MATERIAL_ISSUE` | `/report/material-issue` |
+| 366 | └ 자재출고합계리포트 | `w_mat_issue_sum_report` | srw | 완료 | `RPT_MATERIAL_ISSUE_SUM` | `/report/material-issue-sum` |
+| 367 | └ 자재랙이동리포트 | `w_mat_location_address_move_report` | srw | 완료 | `RPT_MATERIAL_RACK_MOVE` | `/report/material-rack-move` |
+| 368 | └ 자재장기재고리포트 | `w_mat_long_term_inventory_report` | srw | 완료 | `RPT_MATERIAL_LONG_TERM` | `/report/material-long-term` |
+| 369 | └ 재고리포트 | `w_mat_current_inventory_report` | srw | 완료 | `RPT_MATERIAL_INVENTORY` | `/report/material-inventory` |
 
 ### 승인  `M_CONFIRM`
 

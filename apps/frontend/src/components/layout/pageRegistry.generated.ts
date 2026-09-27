@@ -562,8 +562,18 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
       component = mod.getPageComponent();
       break;
     }
+    case "/report/four-m": {
+      const mod = await import("./page-registries/report__four-m.generated");
+      component = mod.getPageComponent();
+      break;
+    }
     case "/report/item-master": {
       const mod = await import("./page-registries/report__item-master.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/report/jig": {
+      const mod = await import("./page-registries/report__jig.generated");
       component = mod.getPageComponent();
       break;
     }
@@ -584,6 +594,61 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
     }
     case "/report/master-plan": {
       const mod = await import("./page-registries/report__master-plan.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/report/material-barcode-slip": {
+      const mod = await import("./page-registries/report__material-barcode-slip.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/report/material-inventory": {
+      const mod = await import("./page-registries/report__material-inventory.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/report/material-issue": {
+      const mod = await import("./page-registries/report__material-issue.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/report/material-issue-sum": {
+      const mod = await import("./page-registries/report__material-issue-sum.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/report/material-long-term": {
+      const mod = await import("./page-registries/report__material-long-term.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/report/material-rack-move": {
+      const mod = await import("./page-registries/report__material-rack-move.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/report/material-receipt": {
+      const mod = await import("./page-registries/report__material-receipt.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/report/material-receipt-sum": {
+      const mod = await import("./page-registries/report__material-receipt-sum.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/report/mold": {
+      const mod = await import("./page-registries/report__mold.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/report/mold-issue": {
+      const mod = await import("./page-registries/report__mold-issue.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/report/mold-receipt": {
+      const mod = await import("./page-registries/report__mold-receipt.generated");
       component = mod.getPageComponent();
       break;
     }
