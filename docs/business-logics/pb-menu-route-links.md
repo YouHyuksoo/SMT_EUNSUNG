@@ -3,7 +3,7 @@ sources:
   - apps/frontend/src/config/menuConfig.ts
   - apps/frontend/scripts/data/pb-screen-inventory.json
 generator: apps/frontend/scripts/gen-migration-status.mjs
-verifiedCommit: 24c5200e
+verifiedCommit: be7f95cf
 ---
 
 # PB 윈도우 ↔ 웹 메뉴·경로 연결표 (자동 생성)
@@ -15,7 +15,7 @@ verifiedCommit: 24c5200e
 
 | 전체 웹 메뉴 | PB 연결 | 웹 신규 | 미확정 |
 |---:|---:|---:|---:|
-| 103 | 84 | 17 | 2 |
+| 107 | 88 | 17 | 2 |
 
 ## 전체 연결표
 
@@ -115,6 +115,10 @@ verifiedCommit: 24c5200e
 | 품질관리 | 온도상태조회 | `QC_TEMPERATURE` | `/quality/temperature` | PB 연결 | `w_pln_product_tempreture_history_query` | PB 메뉴 인벤토리 |
 | 품질관리 | 공정수리이력조회 | `QC_REPAIR_HISTORY` | `/quality/repair-history` | PB 연결 | `w_pln_product_pcb_repair_master` | PB 메뉴 인벤토리 |
 | 품질관리 | 공정폐기관리 | `QC_PRODUCT_DESTROY` | `/quality/product-destroy` | PB 연결 | `w_pln_product_pcb_destroy_master` | PB 메뉴 인벤토리 |
+| 승인 | 구매단가승인 | `CFM_BUY_PRICE` | `/confirm/buy-price` | PB 연결 | `w_mat_buy_price_confirm` | PB 메뉴 인벤토리 |
+| 승인 | 판매단가승인 | `CFM_SALE_PRICE` | `/confirm/sale-price` | PB 연결 | `w_sal_sale_price_confirm` | PB 메뉴 인벤토리 |
+| 승인 | S-PARTS구매단가승인 | `CFM_MOLD_PRICE` | `/confirm/mold-price` | PB 연결 | `w_mcn_mold_buy_price_confirm` | PB 메뉴 인벤토리 |
+| 승인 | 설계BOM승인 | `CFM_BOM` | `/confirm/bom` | PB 연결 | `w_des_bom_confirm_master` | PB 메뉴 인벤토리 |
 | 시스템관리 | 회사관리 | `SYS_COMPANY` | `/master/company` | PB 연결 | `w_company_master` | PB 메뉴 인벤토리 |
 | 시스템관리 | 코드관리 | `SYS_CODE` | `/master/code` | PB 연결 | `w_basecode_master` | PB 메뉴 인벤토리 |
 | 시스템관리 | 환경설정 | `SYS_CONFIG` | `/system/config` | PB 연결 | `w_system_config` | PB 메뉴 인벤토리 |

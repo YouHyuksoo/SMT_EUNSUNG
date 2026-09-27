@@ -15,6 +15,7 @@ import {
   Cable,
   CircuitBoard,
   ClipboardList,
+  BadgeCheck,
   Database,
   GitBranch,
   Grip,
@@ -253,6 +254,17 @@ export const menuConfig: MenuConfigItem[] = [
     labelKey: "menu.outsourcing",
     icon: Building2,
     children: [],
+  },
+  {
+    code: "CONFIRM",
+    labelKey: "menu.confirm",
+    icon: BadgeCheck,
+    children: [
+      { code: "CFM_BUY_PRICE", labelKey: "menu.confirm.buyPrice", path: "/confirm/buy-price", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_buy_price_confirm" },
+      { code: "CFM_SALE_PRICE", labelKey: "menu.confirm.salePrice", path: "/confirm/sale-price", pbLinkStatus: "powerbuilder", pbWindow: "w_sal_sale_price_confirm" },
+      { code: "CFM_MOLD_PRICE", labelKey: "menu.confirm.moldPrice", path: "/confirm/mold-price", pbLinkStatus: "powerbuilder", pbWindow: "w_mcn_mold_buy_price_confirm" },
+      { code: "CFM_BOM", labelKey: "menu.confirm.bom", path: "/confirm/bom", pbLinkStatus: "powerbuilder", pbWindow: "w_des_bom_confirm_master" },
+    ],
   },
   {
     code: "SYSTEM",

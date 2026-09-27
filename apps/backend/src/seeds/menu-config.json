@@ -16,6 +16,7 @@
     "PRODUCTION",
     "QUALITY",
     "OUTSOURCING",
+    "CONFIRM",
     "SYSTEM"
   ],
   "childMenuCodes": {
@@ -141,6 +142,12 @@
       "QC_PRODUCT_DESTROY"
     ],
     "OUTSOURCING": [],
+    "CONFIRM": [
+      "CFM_BUY_PRICE",
+      "CFM_SALE_PRICE",
+      "CFM_MOLD_PRICE",
+      "CFM_BOM"
+    ],
     "SYSTEM": [
       "SYS_COMPANY",
       "SYS_CODE",

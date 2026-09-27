@@ -32,6 +32,26 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
       component = mod.getPageComponent();
       break;
     }
+    case "/confirm/bom": {
+      const mod = await import("./page-registries/confirm__bom.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/confirm/buy-price": {
+      const mod = await import("./page-registries/confirm__buy-price.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/confirm/mold-price": {
+      const mod = await import("./page-registries/confirm__mold-price.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/confirm/sale-price": {
+      const mod = await import("./page-registries/confirm__sale-price.generated");
+      component = mod.getPageComponent();
+      break;
+    }
     case "/dashboard": {
       const mod = await import("./page-registries/dashboard.generated");
       component = mod.getPageComponent();

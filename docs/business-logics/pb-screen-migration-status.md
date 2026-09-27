@@ -3,7 +3,7 @@ sources:
   - apps/frontend/src/config/menuConfig.ts
   - apps/frontend/scripts/data/pb-screen-inventory.json
 generator: apps/frontend/scripts/gen-migration-status.mjs
-verifiedCommit: 24c5200e
+verifiedCommit: be7f95cf
 ---
 
 # PB 화면 이관 현황 (자동 생성)
@@ -17,11 +17,11 @@ verifiedCommit: 24c5200e
 | 상태 | 건수 |
 |---|---:|
 | PB 업무화면(셸 메뉴 제외) | 275 |
-| 완료(개발됨, pbWindow 매핑) | 83 |
-| 미착수 | 166 |
+| 완료(개발됨, pbWindow 매핑) | 87 |
+| 미착수 | 162 |
 | 윈도우 미상 | 26 |
 
-웹 메뉴 연결 계약: **PB 84개 / 웹 신규 17개 / 미확정 2개**. PB 매핑과 웹 경로의 전체 연결표는 [pb-menu-route-links.md](pb-menu-route-links.md)에서 관리합니다.
+웹 메뉴 연결 계약: **PB 88개 / 웹 신규 17개 / 미확정 2개**. PB 매핑과 웹 경로의 전체 연결표는 [pb-menu-route-links.md](pb-menu-route-links.md)에서 관리합니다.
 
 ## 대분류별 진행률
 
@@ -44,7 +44,7 @@ verifiedCommit: 24c5200e
 | 추적 | `M_TRACKING` | 7 | 0 | 7 | 0 |
 | 조회 | `M_QUERY` | 11 | 0 | 11 | 0 |
 | 리포트 | `M_REPORT` | 23 | 0 | 23 | 0 |
-| 승인 | `M_CONFIRM` | 6 | 0 | 6 | 0 |
+| 승인 | `M_CONFIRM` | 6 | 4 | 2 | 0 |
 | 기본정보 | `M_MANAGE` | 10 | 4 | 6 | 0 |
 | 시스템 | `M_SYSTEM` | 76 | 1 | 51 | 24 |
 
@@ -324,10 +324,10 @@ verifiedCommit: 24c5200e
 |---:|---|---|:--:|---|---|---|
 | 371 | 반출반입승인 | `w_com_carrying_out_bring_in_confirm` | srw | 미착수 |  |  |
 | 372 | 반출반입승인(보안) | `w_com_carrying_out_bring_in_security` | srw | 미착수 |  |  |
-| 373 | 구매단가승인 | `w_mat_buy_price_confirm` | srw | 미착수 |  |  |
-| 374 | 판매단가승인 | `w_sal_sale_price_confirm` | srw | 미착수 |  |  |
-| 375 | S-PARTS구매단가승인 | `w_mcn_mold_buy_price_confirm` | srw | 미착수 |  |  |
-| 377 | 설계BOM승인 | `w_des_bom_confirm_master` | srw | 미착수 |  |  |
+| 373 | 구매단가승인 | `w_mat_buy_price_confirm` | srw | 완료 | `CFM_BUY_PRICE` | `/confirm/buy-price` |
+| 374 | 판매단가승인 | `w_sal_sale_price_confirm` | srw | 완료 | `CFM_SALE_PRICE` | `/confirm/sale-price` |
+| 375 | S-PARTS구매단가승인 | `w_mcn_mold_buy_price_confirm` | srw | 완료 | `CFM_MOLD_PRICE` | `/confirm/mold-price` |
+| 377 | 설계BOM승인 | `w_des_bom_confirm_master` | srw | 완료 | `CFM_BOM` | `/confirm/bom` |
 
 ### 기본정보  `M_MANAGE`
 
