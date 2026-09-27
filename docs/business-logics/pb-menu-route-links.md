@@ -3,7 +3,7 @@ sources:
   - apps/frontend/src/config/menuConfig.ts
   - apps/frontend/scripts/data/pb-screen-inventory.json
 generator: apps/frontend/scripts/gen-migration-status.mjs
-verifiedCommit: 42123889
+verifiedCommit: 3f0a0b4f
 ---
 
 # PB 윈도우 ↔ 웹 메뉴·경로 연결표 (자동 생성)
@@ -15,7 +15,7 @@ verifiedCommit: 42123889
 
 | 전체 웹 메뉴 | PB 연결 | 웹 신규 | 미확정 |
 |---:|---:|---:|---:|
-| 123 | 104 | 17 | 2 |
+| 133 | 114 | 17 | 2 |
 
 ## 전체 연결표
 
@@ -117,6 +117,16 @@ verifiedCommit: 42123889
 | 조회 | SMT 제품실적센서이력조회 | `QRY_SENSOR_ACTUAL` | `/query/sensor-actual` | PB 연결 | `w_pln_product_sensor_actual_master` | PB 메뉴 인벤토리 |
 | 조회 | 자재 바코드 상태 조회 | `QRY_MATERIAL_BARCODE` | `/query/material-barcode` | PB 연결 | `w_mat_barcode_status_report` | PB 메뉴 인벤토리 |
 | 조회 | NSNP 처리이력조회 | `QRY_NSNP_HISTORY` | `/query/nsnp-history` | PB 연결 | `w_pln_product_nsnp_history_query` | PB 메뉴 인벤토리 |
+| 리포트 | 품목마스터리포트 | `RPT_ITEM_MASTER` | `/report/item-master` | PB 연결 | `w_des_item_master_rpt` | PB 메뉴 인벤토리 |
+| 리포트 | 라인설비바코드 | `RPT_LINE_BARCODE` | `/report/line-barcode` | PB 연결 | `w_pln_line_barcode_rpt` | PB 메뉴 인벤토리 |
+| 리포트 | 캐리어바코드 | `RPT_CARRIER_BARCODE` | `/report/carrier-barcode` | PB 연결 | `w_product_carrier_barcode` | PB 메뉴 인벤토리 |
+| 리포트 | 설비리포트 | `RPT_MACHINE` | `/report/machine` | PB 연결 | `w_mcn_machine_rpt` | PB 메뉴 인벤토리 |
+| 리포트 | SMT PICKUP 리포트 | `RPT_PICKUP_RATE` | `/report/pickup-rate` | PB 연결 | `w_smt_pickup_rate_rpt` | PB 메뉴 인벤토리 |
+| 리포트 | 생산계획리포트 | `RPT_MASTER_PLAN` | `/report/master-plan` | PB 연결 | `w_pln_master_plan_rpt` | PB 메뉴 인벤토리 |
+| 리포트 | 런카드리포트 | `RPT_RUN_CARD` | `/report/run-card` | PB 연결 | `w_product_run_card_rpt` | PB 메뉴 인벤토리 |
+| 리포트 | 제품 판매실적 | `RPT_FG_ISSUE` | `/report/fg-issue` | PB 연결 | `w_prd_product_fg_issue_rpt` | PB 메뉴 인벤토리 |
+| 리포트 | 공정재공조회 | `RPT_WORKSTAGE_STOCK` | `/report/workstage-stock` | PB 연결 | `w_product_workstage_stock_rpt` | PB 메뉴 인벤토리 |
+| 리포트 | 공정매거진조회 | `RPT_MAGAZINE_STOCK` | `/report/magazine-stock` | PB 연결 | `w_product_workstage_magazine_stock_rpt` | PB 메뉴 인벤토리 |
 | 품질관리 | IQC 관리 | `QC_IQC_MASTER` | `/quality/iqc` | PB 연결 | `w_qc_iqc_master` | PB 메뉴 인벤토리 |
 | 품질관리 | IQC 이력등록관리 | `QC_IQC_HISTORY_REG` | `/quality/iqc-history` | PB 연결 | `w_qc_iqc_inspect_history_master` | PB 메뉴 인벤토리 |
 | 품질관리 | PCB 이슈발생스캔 | `QC_PID_ISSUE_SCAN` | `/quality/pid-issue-scan` | PB 연결 | `w_pln_product_pid_issue_scan_master` | PB 메뉴 인벤토리 |

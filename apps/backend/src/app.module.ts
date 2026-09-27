@@ -32,6 +32,7 @@ import { PlanningModule } from './modules/planning/planning.module';
 import { PriceConfirmModule } from './modules/price-confirm/price-confirm.module';
 import { TrackingModule } from './modules/tracking/tracking.module';
 import { QueryModule } from './modules/query/query.module';
+import { ReportModule } from './modules/report/report.module';
 import { SmtModule } from './modules/smt/smt.module';
 import { RunCardModule } from './modules/run-card/run-card.module';
 import { EquipOpsModule } from './modules/equip-ops/equip-ops.module';
@@ -112,6 +113,7 @@ import { SharedModule } from './shared/shared.module';
     PriceConfirmModule,
     TrackingModule,
     QueryModule,
+    ReportModule,
     RunCardModule,
 
     // 메뉴 카테고리 관리 (/system/menu-categories)

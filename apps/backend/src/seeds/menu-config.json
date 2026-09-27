@@ -16,6 +16,7 @@
     "PRODUCTION",
     "TRACKING",
     "QUERY",
+    "REPORT",
     "QUALITY",
     "OUTSOURCING",
     "CONFIRM",
@@ -146,6 +147,18 @@
       "QRY_SENSOR_ACTUAL",
       "QRY_MATERIAL_BARCODE",
       "QRY_NSNP_HISTORY"
+    ],
+    "REPORT": [
+      "RPT_ITEM_MASTER",
+      "RPT_LINE_BARCODE",
+      "RPT_CARRIER_BARCODE",
+      "RPT_MACHINE",
+      "RPT_PICKUP_RATE",
+      "RPT_MASTER_PLAN",
+      "RPT_RUN_CARD",
+      "RPT_FG_ISSUE",
+      "RPT_WORKSTAGE_STOCK",
+      "RPT_MAGAZINE_STOCK"
     ],
     "QUALITY": [
       "QC_IQC_MASTER",

@@ -552,6 +552,56 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
       component = mod.getPageComponent();
       break;
     }
+    case "/report/carrier-barcode": {
+      const mod = await import("./page-registries/report__carrier-barcode.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/report/fg-issue": {
+      const mod = await import("./page-registries/report__fg-issue.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/report/item-master": {
+      const mod = await import("./page-registries/report__item-master.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/report/line-barcode": {
+      const mod = await import("./page-registries/report__line-barcode.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/report/machine": {
+      const mod = await import("./page-registries/report__machine.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/report/magazine-stock": {
+      const mod = await import("./page-registries/report__magazine-stock.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/report/master-plan": {
+      const mod = await import("./page-registries/report__master-plan.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/report/pickup-rate": {
+      const mod = await import("./page-registries/report__pickup-rate.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/report/run-card": {
+      const mod = await import("./page-registries/report__run-card.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/report/workstage-stock": {
+      const mod = await import("./page-registries/report__workstage-stock.generated");
+      component = mod.getPageComponent();
+      break;
+    }
     case "/smt/bom": {
       const mod = await import("./page-registries/smt__bom.generated");
       component = mod.getPageComponent();

@@ -3,7 +3,7 @@ sources:
   - apps/frontend/src/config/menuConfig.ts
   - apps/frontend/scripts/data/pb-screen-inventory.json
 generator: apps/frontend/scripts/gen-migration-status.mjs
-verifiedCommit: 42123889
+verifiedCommit: 3f0a0b4f
 ---
 
 # PB 화면 이관 현황 (자동 생성)
@@ -18,11 +18,11 @@ verifiedCommit: 42123889
 | 상태 | 건수 |
 |---|---:|
 | PB 업무화면(셸 메뉴 제외) | 275 |
-| 완료(개발됨, pbWindow 매핑) | 105 |
-| 미착수 | 144 |
+| 완료(개발됨, pbWindow 매핑) | 115 |
+| 미착수 | 134 |
 | 윈도우 미상 | 26 |
 
-웹 메뉴 연결 계약: **PB 104개 / 웹 신규 17개 / 미확정 2개**. PB 매핑과 웹 경로의 전체 연결표는 [pb-menu-route-links.md](pb-menu-route-links.md)에서 관리합니다.
+웹 메뉴 연결 계약: **PB 114개 / 웹 신규 17개 / 미확정 2개**. PB 매핑과 웹 경로의 전체 연결표는 [pb-menu-route-links.md](pb-menu-route-links.md)에서 관리합니다.
 
 ## 대분류별 진행률
 
@@ -44,7 +44,7 @@ verifiedCommit: 42123889
 | 출하현황 | `M_SHIPPING` | 10 | 1 | 9 | 0 |
 | 추적 | `M_TRACKING` | 7 | 7 | 0 | 0 |
 | 조회 | `M_QUERY` | 11 | 11 | 0 | 0 |
-| 리포트 | `M_REPORT` | 23 | 0 | 23 | 0 |
+| 리포트 | `M_REPORT` | 23 | 10 | 13 | 0 |
 | 승인 | `M_CONFIRM` | 6 | 4 | 2 | 0 |
 | 기본정보 | `M_MANAGE` | 10 | 4 | 6 | 0 |
 | 시스템 | `M_SYSTEM` | 76 | 1 | 51 | 24 |
@@ -295,16 +295,16 @@ verifiedCommit: 42123889
 
 | 순서 | 메뉴명 | PB 윈도우 | 원본 | 상태 | MES 메뉴코드 | 경로 |
 |---:|---|---|:--:|---|---|---|
-| 338 | └ 폼목마스터리포트 | `w_des_item_master_rpt` | srw | 미착수 |  |  |
-| 340 | └ 라인설비바코드 | `w_pln_line_barcode_rpt` | srw | 미착수 |  |  |
-| 341 | └ 캐리어바코드 | `w_product_carrier_barcode` | srw | 미착수 |  |  |
-| 343 | └ 설비리포트 | `w_mcn_machine_rpt` | srw | 미착수 |  |  |
-| 344 | └ SMT PICKUP 리포트 | `w_smt_pickup_rate_rpt` | srw | 미착수 |  |  |
-| 346 | └ 생산계획리포트 | `w_pln_master_plan_rpt` | srw | 미착수 |  |  |
-| 347 | └ 런카드리포트 | `w_product_run_card_rpt` | srw | 미착수 |  |  |
-| 348 | └ 제품 판매실적 | `w_prd_product_fg_issue_rpt` | srw | 미착수 |  |  |
-| 350 | └ 공정재공조회 | `w_product_workstage_stock_rpt` | srw | 미착수 |  |  |
-| 352 | └ 공정매거진조회 | `w_product_workstage_magazine_stock_rpt` | srw | 미착수 |  |  |
+| 338 | └ 폼목마스터리포트 | `w_des_item_master_rpt` | srw | 완료 | `RPT_ITEM_MASTER` | `/report/item-master` |
+| 340 | └ 라인설비바코드 | `w_pln_line_barcode_rpt` | srw | 완료 | `RPT_LINE_BARCODE` | `/report/line-barcode` |
+| 341 | └ 캐리어바코드 | `w_product_carrier_barcode` | srw | 완료 | `RPT_CARRIER_BARCODE` | `/report/carrier-barcode` |
+| 343 | └ 설비리포트 | `w_mcn_machine_rpt` | srw | 완료 | `RPT_MACHINE` | `/report/machine` |
+| 344 | └ SMT PICKUP 리포트 | `w_smt_pickup_rate_rpt` | srw | 완료 | `RPT_PICKUP_RATE` | `/report/pickup-rate` |
+| 346 | └ 생산계획리포트 | `w_pln_master_plan_rpt` | srw | 완료 | `RPT_MASTER_PLAN` | `/report/master-plan` |
+| 347 | └ 런카드리포트 | `w_product_run_card_rpt` | srw | 완료 | `RPT_RUN_CARD` | `/report/run-card` |
+| 348 | └ 제품 판매실적 | `w_prd_product_fg_issue_rpt` | srw | 완료 | `RPT_FG_ISSUE` | `/report/fg-issue` |
+| 350 | └ 공정재공조회 | `w_product_workstage_stock_rpt` | srw | 완료 | `RPT_WORKSTAGE_STOCK` | `/report/workstage-stock` |
+| 352 | └ 공정매거진조회 | `w_product_workstage_magazine_stock_rpt` | srw | 완료 | `RPT_MAGAZINE_STOCK` | `/report/magazine-stock` |
 | 354 | └ S-PARTS입고리포트 | `w_mcn_mold_receipt_rpt` | srw | 미착수 |  |  |
 | 355 | └ S-PARTS출고리포트 | `w_mcn_mold_issue_rpt` | srw | 미착수 |  |  |
 | 357 | └ 지그리포트 | `w_mcn_jig_rpt` | srw | 미착수 |  |  |

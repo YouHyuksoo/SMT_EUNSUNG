@@ -27,8 +27,9 @@ export const DEFAULT_MENU_CATEGORY_LAYOUT: readonly DefaultMenuCategoryLayout[] 
   { categoryCode: 'PRODUCTION', labelKey: 'menu.production', sortOrder: 130, menuCodes: ['PRD_RUN_CARD', 'PRD_MASTER_PLAN', 'PRD_SMD_PLAN', 'PRD_SMD_ACTUAL', 'PRD_RUN_CARD_PID', 'PRD_PCB_RESULT', 'PRD_DAILY_REPORT'] },
   { categoryCode: 'TRACKING', labelKey: 'menu.tracking', sortOrder: 140, menuCodes: ['TRK_MATERIAL_LOT', 'TRK_MATERIAL_DYNAMIC', 'TRK_MATERIAL_USAGE', 'TRK_PID', 'TRK_RUN_NO', 'TRK_LOT_ALL', 'TRK_LINE_DASHBOARD'] },
   { categoryCode: 'QUERY', labelKey: 'menu.query', sortOrder: 150, menuCodes: ['QRY_PID_INFO', 'QRY_MARKING', 'QRY_PCB_INPUT', 'QRY_PDA_SCAN', 'QRY_PDA_NG', 'QRY_FEEDER_MONITOR', 'QRY_SENSOR_ACTUAL', 'QRY_MATERIAL_BARCODE', 'QRY_NSNP_HISTORY'] },
-  { categoryCode: 'QUALITY', labelKey: 'menu.quality', sortOrder: 160, menuCodes: ['QC_IQC_MASTER', 'QC_IQC_HISTORY_REG', 'QC_PID_ISSUE_SCAN', 'QC_PID_HOLDING', 'QC_INVENTORY_HOLD', 'QC_NOTIFY', 'QC_ECO_NOTIFY', 'QC_OQC_PID', 'QC_OQC_LOT', 'QC_4M', 'QC_WQC', 'QC_TEMPERATURE', 'QC_REPAIR_HISTORY', 'QC_PRODUCT_DESTROY'] },
-  { categoryCode: 'OUTSOURCING', labelKey: 'menu.outsourcing', sortOrder: 170, menuCodes: [] },
-  { categoryCode: 'CONFIRM', labelKey: 'menu.confirm', sortOrder: 180, menuCodes: ['CFM_BUY_PRICE', 'CFM_SALE_PRICE', 'CFM_MOLD_PRICE', 'CFM_BOM'] },
-  { categoryCode: 'SYSTEM', labelKey: 'menu.system', sortOrder: 190, menuCodes: ['SYS_COMPANY', 'SYS_CODE', 'SYS_CONFIG', 'SYS_MENU_CATEGORY', 'SYS_DEPT', 'SYS_USER', 'SYS_SCHEDULER', 'SYS_ER_VIEW', 'SYS_IMPR_REQ'] },
+  { categoryCode: 'REPORT', labelKey: 'menu.report', sortOrder: 160, menuCodes: ['RPT_ITEM_MASTER', 'RPT_LINE_BARCODE', 'RPT_CARRIER_BARCODE', 'RPT_MACHINE', 'RPT_PICKUP_RATE', 'RPT_MASTER_PLAN', 'RPT_RUN_CARD', 'RPT_FG_ISSUE', 'RPT_WORKSTAGE_STOCK', 'RPT_MAGAZINE_STOCK'] },
+  { categoryCode: 'QUALITY', labelKey: 'menu.quality', sortOrder: 170, menuCodes: ['QC_IQC_MASTER', 'QC_IQC_HISTORY_REG', 'QC_PID_ISSUE_SCAN', 'QC_PID_HOLDING', 'QC_INVENTORY_HOLD', 'QC_NOTIFY', 'QC_ECO_NOTIFY', 'QC_OQC_PID', 'QC_OQC_LOT', 'QC_4M', 'QC_WQC', 'QC_TEMPERATURE', 'QC_REPAIR_HISTORY', 'QC_PRODUCT_DESTROY'] },
+  { categoryCode: 'OUTSOURCING', labelKey: 'menu.outsourcing', sortOrder: 180, menuCodes: [] },
+  { categoryCode: 'CONFIRM', labelKey: 'menu.confirm', sortOrder: 190, menuCodes: ['CFM_BUY_PRICE', 'CFM_SALE_PRICE', 'CFM_MOLD_PRICE', 'CFM_BOM'] },
+  { categoryCode: 'SYSTEM', labelKey: 'menu.system', sortOrder: 200, menuCodes: ['SYS_COMPANY', 'SYS_CODE', 'SYS_CONFIG', 'SYS_MENU_CATEGORY', 'SYS_DEPT', 'SYS_USER', 'SYS_SCHEDULER', 'SYS_ER_VIEW', 'SYS_IMPR_REQ'] },
 ];
