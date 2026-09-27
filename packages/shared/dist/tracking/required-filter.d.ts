@@ -75,4 +75,24 @@ export declare const TRACKING_FILTER_HINT: string;
  *    사용자가 무엇을 채워야 하는지 알 수 없다.
  */
 export declare function checkTrackingFilter(input: TrackingFilterInput): TrackingFilterVerdict;
+/**
+ * LIKE 와일드카드 이스케이프 문자. SQL 쪽에 `ESCAPE '\'` 를 함께 적어야 한다.
+ */
+export declare const LIKE_ESCAPE = "\\";
+/**
+ * PB 의 `값 + '%'`(앞부분 일치) 조건을 만든다.
+ *
+ * **입력에 든 `%`·`_` 를 먼저 escape 한다.** 이 관례를 그대로 옮기면 사용자가
+ * 모델명 칸에 `%` 한 글자를 넣는 순간 조건이 `'%%'` 가 되어 전체 스캔이 된다.
+ * `_` 한 글자도 `'_%'` 가 되어 같은 일이 벌어진다. checkTrackingFilter 는 값이
+ * 정확히 `'%'` 인 경우만 비었다고 보므로 그 둘을 걸러내지 못한다 — 두 방어가
+ * 서로 다른 일을 한다.
+ *
+ * 빈 값이면 `'%'`(전체)를 그대로 돌려준다. 그 판단은 호출부가 아니라 여기서 한다.
+ *
+ * @example likePrefix('AAF')  → 'AAF%'
+ * @example likePrefix('10%')  → '10\\%%'   (10% 로 시작하는 것만)
+ * @example likePrefix('')     → '%'
+ */
+export declare function likePrefix(value?: string | null): string;
 //# sourceMappingURL=required-filter.d.ts.map

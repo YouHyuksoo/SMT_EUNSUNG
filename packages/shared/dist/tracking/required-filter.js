@@ -32,8 +32,9 @@
  * **기간이 닫혀 있고 라인이 지정돼야** 인덱스 구간 스캔이 된다.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.TRACKING_FILTER_HINT = exports.TRACKING_DATE_RANGE_MAX_DAYS = void 0;
+exports.LIKE_ESCAPE = exports.TRACKING_FILTER_HINT = exports.TRACKING_DATE_RANGE_MAX_DAYS = void 0;
 exports.checkTrackingFilter = checkTrackingFilter;
+exports.likePrefix = likePrefix;
 /**
  * 키 없이 기간으로 여는 경우 허용하는 최대 기간(일).
  * 31일은 '한 달 조회'를 막지 않는 가장 짧은 값이다. 실측 인덱스가
@@ -88,4 +89,29 @@ function checkTrackingFilter(input) {
         };
     }
     return { ok: true };
+}
+/**
+ * LIKE 와일드카드 이스케이프 문자. SQL 쪽에 `ESCAPE '\'` 를 함께 적어야 한다.
+ */
+exports.LIKE_ESCAPE = '\\';
+/**
+ * PB 의 `값 + '%'`(앞부분 일치) 조건을 만든다.
+ *
+ * **입력에 든 `%`·`_` 를 먼저 escape 한다.** 이 관례를 그대로 옮기면 사용자가
+ * 모델명 칸에 `%` 한 글자를 넣는 순간 조건이 `'%%'` 가 되어 전체 스캔이 된다.
+ * `_` 한 글자도 `'_%'` 가 되어 같은 일이 벌어진다. checkTrackingFilter 는 값이
+ * 정확히 `'%'` 인 경우만 비었다고 보므로 그 둘을 걸러내지 못한다 — 두 방어가
+ * 서로 다른 일을 한다.
+ *
+ * 빈 값이면 `'%'`(전체)를 그대로 돌려준다. 그 판단은 호출부가 아니라 여기서 한다.
+ *
+ * @example likePrefix('AAF')  → 'AAF%'
+ * @example likePrefix('10%')  → '10\\%%'   (10% 로 시작하는 것만)
+ * @example likePrefix('')     → '%'
+ */
+function likePrefix(value) {
+    const text = typeof value === 'string' ? value.trim() : '';
+    if (!text || text === '%')
+        return '%';
+    return `${text.replace(/([\\%_])/g, `${exports.LIKE_ESCAPE}$1`)}%`;
 }

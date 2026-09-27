@@ -21,7 +21,7 @@
  */
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
-import { checkTrackingFilter } from '@smt/shared';
+import { checkTrackingFilter, likePrefix } from '@smt/shared';
 import {
   DynamicMaterialQueryDto,
   LotNoQueryDto,
@@ -348,8 +348,8 @@ export class MaterialTrackingService {
        SELECT 'MIN' AS "branch", x.* FROM (
          ${body('a')}
         WHERE a.CHECK_DATE <= TO_DATE(:maxDatetime, 'YYYYMMDDHH24MISS')
-          AND NVL(a.SMT_MODEL_NAME, '*') LIKE :modelName
-          AND NVL(a.LINE_CODE, '*') LIKE :lineCode
+          AND NVL(a.SMT_MODEL_NAME, '*') LIKE :modelName ESCAPE '\\'
+          AND NVL(a.LINE_CODE, '*') LIKE :lineCode ESCAPE '\\'
           AND a.CHECK_TYPE IN ('1', '2')
           AND a.CHECK_STATUS = 'P'
           AND (a.CHECK_DATE, a.PCB_ITEM, a.LOCATION_CODE) IN (
@@ -358,8 +358,8 @@ export class MaterialTrackingService {
                  WHERE CHECK_DATE <= TO_DATE(:maxDatetime, 'YYYYMMDDHH24MISS')
                    AND CHECK_DATE >= NVL(TO_DATE(:minDatetime, 'YYYYMMDDHH24MISS'),
                                          TO_DATE(:maxDatetime, 'YYYYMMDDHH24MISS') - 30)
-                   AND NVL(SMT_MODEL_NAME, '*') LIKE :modelName
-                   AND NVL(LINE_CODE, '*') LIKE :lineCode
+                   AND NVL(SMT_MODEL_NAME, '*') LIKE :modelName ESCAPE '\\'
+                   AND NVL(LINE_CODE, '*') LIKE :lineCode ESCAPE '\\'
                    AND CHECK_TYPE IN ('1', '2')
                    AND CHECK_STATUS = 'P'
                  GROUP BY LINE_CODE, LOT_NAME, SMT_MODEL_NAME, PCB_ITEM, LOCATION_CODE )
@@ -370,8 +370,8 @@ export class MaterialTrackingService {
         WHERE b.CHECK_DATE >= TO_DATE(:maxDatetime, 'YYYYMMDDHH24MISS')
           AND b.CHECK_DATE <= TO_DATE(:maxDatetime, 'YYYYMMDDHH24MISS')
                               + (:timeMinutes / 24 / 60)
-          AND NVL(b.SMT_MODEL_NAME, '*') LIKE :modelName
-          AND NVL(b.LINE_CODE, '*') LIKE :lineCode
+          AND NVL(b.SMT_MODEL_NAME, '*') LIKE :modelName ESCAPE '\\'
+          AND NVL(b.LINE_CODE, '*') LIKE :lineCode ESCAPE '\\'
           AND b.CHECK_TYPE IN ('1', '2')
           AND b.CHECK_STATUS = 'P'
           AND (b.CHECK_DATE, b.PCB_ITEM, b.LOCATION_CODE) IN (
@@ -380,8 +380,8 @@ export class MaterialTrackingService {
                  WHERE CHECK_DATE >= TO_DATE(:maxDatetime, 'YYYYMMDDHH24MISS')
                    AND CHECK_DATE <= TO_DATE(:maxDatetime, 'YYYYMMDDHH24MISS')
                                      + (:timeMinutes / 24 / 60)
-                   AND NVL(SMT_MODEL_NAME, '*') LIKE :modelName
-                   AND NVL(LINE_CODE, '*') LIKE :lineCode
+                   AND NVL(SMT_MODEL_NAME, '*') LIKE :modelName ESCAPE '\\'
+                   AND NVL(LINE_CODE, '*') LIKE :lineCode ESCAPE '\\'
                    AND CHECK_TYPE IN ('1', '2')
                    AND CHECK_STATUS = 'P'
                  GROUP BY LINE_CODE, LOT_NAME, SMT_MODEL_NAME, PCB_ITEM, LOCATION_CODE )
@@ -392,8 +392,11 @@ export class MaterialTrackingService {
         maxDatetime: query.maxDatetime,
         minDatetime: query.minDatetime ?? null,
         // PB 관례: 빈 조건은 '%'. NULL LIKE '%' 는 NULL 이라 컬럼을 NVL 로 감쌌다.
-        modelName: query.modelName ? `${query.modelName}%` : '%',
-        lineCode: query.lineCode ? `${query.lineCode}%` : '%',
+        // likePrefix 가 입력의 '%'·'_' 를 escape 한다 — 그러지 않으면 모델명 칸에
+        // '%' 한 글자만 넣어도 조건이 '%%' 가 되어 전체를 훑는다. SQL 쪽에
+        // ESCAPE 절이 함께 있어야 escape 가 실제로 먹는다.
+        modelName: likePrefix(query.modelName),
+        lineCode: likePrefix(query.lineCode),
         timeMinutes: query.timeMinutes ?? 0,
         organizationId,
       } as unknown as unknown[],

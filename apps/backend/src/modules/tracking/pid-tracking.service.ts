@@ -25,7 +25,7 @@
  */
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { DataSource } from 'typeorm';
-import { checkTrackingFilter } from '@smt/shared';
+import { checkTrackingFilter, likePrefix } from '@smt/shared';
 import { RunCardListQueryDto, RunNoQueryDto, SerialNoQueryDto } from './tracking.dto';
 
 type Row = Record<string, unknown>;
@@ -103,9 +103,9 @@ export class PidTrackingService {
               TO_CHAR(c.LAST_MODIFY_DATE, 'YYYY-MM-DD HH24:MI:SS') AS "lastModifyDate"
          FROM IP_PRODUCT_RUN_CARD c
          LEFT JOIN ID_ITEM i ON i.ITEM_CODE = c.ITEM_CODE
-        WHERE NVL(c.MODEL_NAME, '*') LIKE :modelName
-          AND NVL(c.RUN_NO, '*') LIKE :runNo
-          AND NVL(c.LINE_CODE, '*') LIKE :lineCode
+        WHERE NVL(c.MODEL_NAME, '*') LIKE :modelName ESCAPE '\\'
+          AND NVL(c.RUN_NO, '*') LIKE :runNo ESCAPE '\\'
+          AND NVL(c.LINE_CODE, '*') LIKE :lineCode ESCAPE '\\'
           AND c.RUN_DATE >= TO_DATE(:dateFrom, 'YYYY-MM-DD')
           AND c.RUN_DATE <  TO_DATE(:dateTo, 'YYYY-MM-DD') + 1
           AND c.ORGANIZATION_ID = :organizationId
@@ -113,9 +113,10 @@ export class PidTrackingService {
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
       {
         // PB 관례: 빈 조건은 '%'. NULL LIKE '%' 는 NULL 이라 컬럼을 NVL 로 감쌌다.
-        modelName: query.modelName ? `${query.modelName}%` : '%',
-        runNo: query.runNo ? `${query.runNo}%` : '%',
-        lineCode: query.lineCode ? `${query.lineCode}%` : '%',
+        // likePrefix 가 입력의 '%'·'_' 를 escape 한다 (SQL 에 ESCAPE 절이 함께 있다).
+        modelName: likePrefix(query.modelName),
+        runNo: likePrefix(query.runNo),
+        lineCode: likePrefix(query.lineCode),
         dateFrom: query.dateFrom,
         dateTo: query.dateTo,
         organizationId,

@@ -22,6 +22,7 @@
  */
 import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
+import { likePrefix } from '@smt/shared';
 import { LineDashboardDetailQueryDto, LineDashboardQueryDto, NsnpLockDto } from './tracking.dto';
 
 type Row = Record<string, unknown>;
@@ -269,8 +270,14 @@ export class LineDashboardService {
    * 처리한 줄이 들어 있는데 Oracle 은 `//` 를 주석으로 모른다 — retrieve 할 때마다
    * ORA-00936 이 났다 (parse 로 실측: 그 줄만 지우면 통과). 주석줄을 빼고 옮겼다.
    *
-   * 경과시간 계산은 PB 식 그대로 F_GET_TIME_STR 로 한다. 해동·교반·점도 이후
-   * 경과시간은 솔더 폐기 판정에 쓰는 값이라 계산식이 갈리면 안 된다.
+   * 경과시간 계산은 PB 식 그대로 F_GET_TIME_STR 로 한다. 해동·점도 이후 경과시간은
+   * 솔더 폐기 판정에 쓰는 값이라 계산식이 갈리면 안 된다.
+   *
+   * **교반시간만 PB 식을 버렸다.** PB 는 여기만 `TO_CHAR(..., 'MI:SS')` 를 썼는데
+   * 그 마스크는 시간 성분을 버려서 65분이 '05:00' 으로 보인다. 실측: MIX 구간이 있는
+   * 35,261행 중 906행(2.6%)이 1시간을 넘고 최대 163시간이다 — 표시가 거짓이 된다.
+   * 형제 컬럼과 같이 F_GET_TIME_STR 로 맞췄다. 이 탭은 PB 에서 한 번도 실행된 적이
+   * 없어(위 '//' 결함) 맞출 기준 화면도 없다.
    */
   private async findSolder(itemBarcode?: string) {
     if (!itemBarcode) return [];
@@ -306,9 +313,9 @@ export class LineDashboardService {
                                                         AS "unfreezingWaitTime",
               TO_CHAR(s.MIX_START_DATE, 'YYYY-MM-DD HH24:MI:SS')  AS "mixStartDate",
               TO_CHAR(s.MIX_END_DATE, 'YYYY-MM-DD HH24:MI:SS')    AS "mixEndDate",
-              NULLIF(TO_CHAR(TRUNC(SYSDATE) + (NVL(s.MIX_END_DATE, SYSDATE)
-                                               - NVL(s.MIX_START_DATE, SYSDATE)), 'MI:SS'),
-                     '00:00')                           AS "mixWaitTime",
+              F_GET_TIME_STR(ROUND(NVL(NVL(s.MIX_END_DATE, SYSDATE)
+                                       - NVL(s.MIX_START_DATE, SYSDATE), 0) * 24, 3))
+                                                        AS "mixWaitTime",
               TO_CHAR(s.VISCOSITY_START_DATE, 'YYYY-MM-DD HH24:MI:SS') AS "viscosityStartDate",
               TO_CHAR(s.VISCOSITY_END_DATE, 'YYYY-MM-DD HH24:MI:SS')   AS "viscosityEndDate",
               s.VISCOSITY                               AS "viscosity",
@@ -322,10 +329,10 @@ export class LineDashboardService {
               ${since('s.ISSUE_DATE')}                  AS "afterIssueTime",
               ${since('s.FIRST_LINE_INPUT_DATE')}       AS "afterFirstLineInputTime"
          FROM IM_ITEM_SOLDER_MASTER s
-        WHERE s.ITEM_BARCODE LIKE :itemBarcode
+        WHERE s.ITEM_BARCODE LIKE :itemBarcode ESCAPE '\\'
         ORDER BY s.INPUT_DATE DESC
         FETCH FIRST ${TAB_ROW_LIMIT} ROWS ONLY`,
-      { itemBarcode: `${itemBarcode}%` } as unknown as unknown[],
+      { itemBarcode: likePrefix(itemBarcode) } as unknown as unknown[],
     )) as Row[];
   }
 
