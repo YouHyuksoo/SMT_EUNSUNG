@@ -3,7 +3,7 @@ sources:
   - apps/frontend/src/config/menuConfig.ts
   - apps/frontend/scripts/data/pb-screen-inventory.json
 generator: apps/frontend/scripts/gen-migration-status.mjs
-verifiedCommit: 1fb9ad5a
+verifiedCommit: 3da7be0a
 ---
 
 # PB 화면 이관 현황 (자동 생성)
@@ -18,11 +18,11 @@ verifiedCommit: 1fb9ad5a
 | 상태 | 건수 |
 |---|---:|
 | PB 업무화면(셸 메뉴 제외) | 275 |
-| 완료(개발됨, pbWindow 매핑) | 128 |
-| 미착수 | 121 |
+| 완료(개발됨, pbWindow 매핑) | 132 |
+| 미착수 | 117 |
 | 윈도우 미상 | 26 |
 
-웹 메뉴 연결 계약: **PB 127개 / 웹 신규 17개 / 미확정 2개**. PB 매핑과 웹 경로의 전체 연결표는 [pb-menu-route-links.md](pb-menu-route-links.md)에서 관리합니다.
+웹 메뉴 연결 계약: **PB 131개 / 웹 신규 17개 / 미확정 2개**. PB 매핑과 웹 경로의 전체 연결표는 [pb-menu-route-links.md](pb-menu-route-links.md)에서 관리합니다.
 
 ## 대분류별 진행률
 
@@ -37,7 +37,7 @@ verifiedCommit: 1fb9ad5a
 | S-PARTS | `M_MOLD` | 8 | 8 | 0 | 0 |
 | 생산 | `M_PLANNING` | 7 | 7 | 0 | 0 |
 | 공정 | `M_WORKSTAGE0` | 5 | 2 | 3 | 0 |
-| 자재창고 | `M_WAREHOUSE` | 22 | 2 | 20 | 0 |
+| 자재창고 | `M_WAREHOUSE` | 22 | 6 | 16 | 0 |
 | 재고 | `M_INVENTORY` | 5 | 1 | 4 | 0 |
 | 수리 | `M_REPAIR` | 4 | 2 | 2 | 0 |
 | 품질관리 | `M_QC` | 12 | 12 | 0 | 0 |
@@ -207,10 +207,10 @@ verifiedCommit: 1fb9ad5a
 | 258 | └ 자재출고취소 | `w_mat_mass_issue_cancel_master` | srw | 미착수 |  |  |
 | 260 | MSL 이상품목 처리이력관리 | `w_mat_msl_item_check_master` | srw | 미착수 |  |  |
 | 261 | 베이킹이력관리 | `w_mat_baking_dehumi_scan_master` | srw | 미착수 |  |  |
-| 262 | 베이킹재고조회 | `w_mat_baking_scan_query` | srw | 미착수 |  |  |
-| 263 | 진공포장재고조회 | `w_mat_vacuum_scan_query` | srw | 미착수 |  |  |
-| 264 | 제습함재고조회 | `w_mat_dehumi_scan_query` | srw | 미착수 |  |  |
-| 266 | SMT 공릴체크 | `w_smt_recycle_check_rpt` | srw | 미착수 |  |  |
+| 262 | 베이킹재고조회 | `w_mat_baking_scan_query` | srw | 완료 | `WH_BAKING_STOCK` | `/warehouse/baking-stock` |
+| 263 | 진공포장재고조회 | `w_mat_vacuum_scan_query` | srw | 완료 | `WH_VACUUM_STOCK` | `/warehouse/vacuum-stock` |
+| 264 | 제습함재고조회 | `w_mat_dehumi_scan_query` | srw | 완료 | `WH_DEHUMI_STOCK` | `/warehouse/dehumi-stock` |
+| 266 | SMT 공릴체크 | `w_smt_recycle_check_rpt` | srw | 완료 | `WH_RECYCLE_CHECK` | `/warehouse/recycle-check` |
 
 ### 재고  `M_INVENTORY`
 

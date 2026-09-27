@@ -18,7 +18,7 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { OrganizationId, UserId } from '../../common/decorators/tenant.decorator';
 import { ResponseUtil } from '../../common/dto/response.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
-import { ROW_LIMIT } from './report-rows';
+import { ROW_LIMIT } from '../../shared/row-limit';
 import { CarrierBarcodeService } from './carrier-barcode.service';
 import { MasterReportService } from './master-report.service';
 import { ProductionReportService } from './production-report.service';

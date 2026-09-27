@@ -23,7 +23,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { likePrefix } from '@smt/shared';
-import { limited, ROW_LIMIT } from './report-rows';
+import { limited, ROW_LIMIT } from '../../shared/row-limit';
 import { TransactionService } from '../../shared/transaction.service';
 import {
   CarrierBarcodeCreateDto,

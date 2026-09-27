@@ -3,7 +3,7 @@ sources:
   - apps/frontend/src/config/menuConfig.ts
   - apps/frontend/scripts/data/pb-screen-inventory.json
 generator: apps/frontend/scripts/gen-migration-status.mjs
-verifiedCommit: 1fb9ad5a
+verifiedCommit: 3da7be0a
 ---
 
 # PB 윈도우 ↔ 웹 메뉴·경로 연결표 (자동 생성)
@@ -15,7 +15,7 @@ verifiedCommit: 1fb9ad5a
 
 | 전체 웹 메뉴 | PB 연결 | 웹 신규 | 미확정 |
 |---:|---:|---:|---:|
-| 146 | 127 | 17 | 2 |
+| 150 | 131 | 17 | 2 |
 
 ## 전체 연결표
 
@@ -61,6 +61,10 @@ verifiedCommit: 1fb9ad5a
 | 자재수불관리 | 현재고조회 | `MAT_CURRENT_INVENTORY` | `/material/current-inventory` | PB 연결 | `w_mat_current_inventory_master` | PB 메뉴 인벤토리 |
 | 자재수불관리 | 공정재고조회 | `MAT_WORKSTAGE_INVENTORY` | `/material/workstage-inventory` | PB 연결 | `w_mat_workstage_inventory_query` | `apps/backend/src/modules/material/controllers/workstage-inventory.controller.ts` |
 | 자재수불관리 | 자재입고취소 | `MAT_RECEIPT_CANCEL` | `/material/receipt-cancel` | PB 연결 | `w_mat_receipt_cancel_master` | PB 메뉴 인벤토리 |
+| 자재수불관리 | 베이킹재고조회 | `WH_BAKING_STOCK` | `/warehouse/baking-stock` | PB 연결 | `w_mat_baking_scan_query` | PB 메뉴 인벤토리 |
+| 자재수불관리 | 진공포장재고조회 | `WH_VACUUM_STOCK` | `/warehouse/vacuum-stock` | PB 연결 | `w_mat_vacuum_scan_query` | PB 메뉴 인벤토리 |
+| 자재수불관리 | 제습함재고조회 | `WH_DEHUMI_STOCK` | `/warehouse/dehumi-stock` | PB 연결 | `w_mat_dehumi_scan_query` | PB 메뉴 인벤토리 |
+| 자재수불관리 | SMT 공릴체크 | `WH_RECYCLE_CHECK` | `/warehouse/recycle-check` | PB 연결 | `w_smt_recycle_check_rpt` | PB 메뉴 인벤토리 |
 | 지그관리 | 지그마스터 | `JIG_MASTER` | `/jig/master` | PB 연결 | `w_mcn_jig_master` | PB 메뉴 인벤토리 |
 | 지그관리 | 지그출고관리 | `JIG_ISSUE` | `/jig/issue` | PB 연결 | `w_mcn_jig_issue_master` | PB 메뉴 인벤토리 |
 | 지그관리 | 지그수리관리 | `JIG_REPAIR` | `/jig/repair` | PB 연결 | `w_mcn_jig_repair_master` | PB 메뉴 인벤토리 |

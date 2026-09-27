@@ -782,6 +782,26 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
       component = mod.getPageComponent();
       break;
     }
+    case "/warehouse/baking-stock": {
+      const mod = await import("./page-registries/warehouse__baking-stock.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/warehouse/dehumi-stock": {
+      const mod = await import("./page-registries/warehouse__dehumi-stock.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/warehouse/recycle-check": {
+      const mod = await import("./page-registries/warehouse__recycle-check.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/warehouse/vacuum-stock": {
+      const mod = await import("./page-registries/warehouse__vacuum-stock.generated");
+      component = mod.getPageComponent();
+      break;
+    }
     default:
       return null;
   }

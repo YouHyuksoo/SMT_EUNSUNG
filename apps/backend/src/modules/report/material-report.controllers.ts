@@ -21,7 +21,7 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { OrganizationId } from '../../common/decorators/tenant.decorator';
 import { ResponseUtil } from '../../common/dto/response.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
-import { ROW_LIMIT } from './report-rows';
+import { ROW_LIMIT } from '../../shared/row-limit';
 import { MaterialInventoryReportService } from './material-inventory-report.service';
 import { MaterialIssueReportService } from './material-issue-report.service';
 import { MaterialReceiptReportService } from './material-receipt-report.service';

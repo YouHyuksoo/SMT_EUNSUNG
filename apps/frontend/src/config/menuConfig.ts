@@ -144,6 +144,10 @@ export const menuConfig: MenuConfigItem[] = [
       { code: "MAT_CURRENT_INVENTORY", labelKey: "menu.material.currentInventory", path: "/material/current-inventory", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_current_inventory_master" },
       { code: "MAT_WORKSTAGE_INVENTORY", labelKey: "menu.material.workstageInventory", path: "/material/workstage-inventory", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_workstage_inventory_query", pbEvidence: "apps/backend/src/modules/material/controllers/workstage-inventory.controller.ts" },
       { code: "MAT_RECEIPT_CANCEL", labelKey: "menu.material.receiptCancel", path: "/material/receipt-cancel", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_receipt_cancel_master" },
+      { code: "WH_BAKING_STOCK", labelKey: "menu.warehouse.bakingStock", path: "/warehouse/baking-stock", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_baking_scan_query" },
+      { code: "WH_VACUUM_STOCK", labelKey: "menu.warehouse.vacuumStock", path: "/warehouse/vacuum-stock", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_vacuum_scan_query" },
+      { code: "WH_DEHUMI_STOCK", labelKey: "menu.warehouse.dehumiStock", path: "/warehouse/dehumi-stock", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_dehumi_scan_query" },
+      { code: "WH_RECYCLE_CHECK", labelKey: "menu.warehouse.recycleCheck", path: "/warehouse/recycle-check", pbLinkStatus: "powerbuilder", pbWindow: "w_smt_recycle_check_rpt" },
     ],
   },
   {
