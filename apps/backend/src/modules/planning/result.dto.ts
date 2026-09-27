@@ -66,7 +66,9 @@ export class DailyReportQueryDto {
   reportDate!: string;
 
   @ApiPropertyOptional({
-    description: "기준일 컬럼: 'run'(작업지시일, 기본) | 'actual'(실생산일)",
+    description:
+      "기준: 'run'(작업지시일 RUN_DATE, 기본) | 'actual'(PDA ON 시각의 날짜)."
+      + ' actual 은 RUN_DATE 30일 창을 선필터로 걸고 PDA ON 날짜로 맞춘다 (PB 원본과 같다).',
   })
   @IsOptional() @IsIn(['run', 'actual'])
   dateBasis?: 'run' | 'actual';

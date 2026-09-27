@@ -120,13 +120,12 @@ export class ResultService {
           AND io.WORKSTAGE_CODE = :workstageCode
           AND io.ORGANIZATION_ID = :organizationId
         ORDER BY io.IO_DATE, io.SERIAL_NO
-        FETCH FIRST :limitPlusOne ROWS ONLY`,
+        FETCH FIRST ${SERIAL_LIMIT + 1} ROWS ONLY`,
       {
         runNo: query.runNo.trim(),
         lineCode: query.lineCode.trim(),
         workstageCode: query.workstageCode.trim(),
         organizationId,
-        limitPlusOne: SERIAL_LIMIT + 1,
       } as unknown as unknown[],
     )) as Row[];
     const truncated = rows.length > SERIAL_LIMIT;
@@ -149,7 +148,27 @@ export class ResultService {
    *   ④ 시간가동률·성능가동률·양품률 → 종합효율
    */
   async findDailyReport(query: DailyReportQueryDto, organizationId: number) {
-    const dateColumn = query.dateBasis === 'actual' ? 'c.ACTUAL_DATE' : 'c.RUN_DATE';
+    // PB 는 DataWindow 두 개로 기준일 조건만 바꿨다. 실제 조건은 이렇다:
+    //   작업지시일 기준 : c.RUN_DATE 가 그 날
+    //   실생산일 기준   : PDA ON(생산시작) 시각의 날짜가 그 날
+    //
+    // 'c.ACTUAL_DATE' 라는 컬럼은 없다. DataWindow 이름이 _actual_date 라서
+    // 컬럼명으로 착각하기 쉽다 — IP_PRODUCT_RUN_CARD 에는 RUN_DATE 만 있다.
+    //
+    // **PB 창을 대칭으로 넓혔다.** PB 는 `run_date >= d - 30 AND run_date <= d` 로
+    // 한쪽만 봤다. 작업지시일보다 생산이 먼저 시작되는 일이 실제로 있어서
+    // 그런 행이 조용히 빠진다 — 최근 180일 실측:
+    //     같은 날 1,140건 / 지시일보다 이름 195건(최대 10일) / 지시일 후 172건(최대 10일)
+    // 13%(195건)를 놓치는 셈이라 ±30일로 바꿨다. 관측된 편차 ±10일에 여유를 뒀고,
+    // RUN_DATE 범위 조건은 그대로 남아 함수 호출 대상을 좁히는 역할을 계속한다.
+    const dateCondition = query.dateBasis === 'actual'
+      ? `c.RUN_DATE >= TRUNC(TO_DATE(:reportDate, 'YYYY-MM-DD')) - 30
+                          AND c.RUN_DATE < TRUNC(TO_DATE(:reportDate, 'YYYY-MM-DD')) + 31
+                          AND TRUNC(F_GET_RUN_LINE_PDA_ON(c.RUN_NO, c.LINE_CODE,
+                                                          c.ORGANIZATION_ID))
+                              = TRUNC(TO_DATE(:reportDate, 'YYYY-MM-DD'))`
+      : `c.RUN_DATE >= TO_DATE(:reportDate, 'YYYY-MM-DD')
+                          AND c.RUN_DATE < TO_DATE(:reportDate, 'YYYY-MM-DD') + 1`;
     const rows = (await this.dataSource.query(
       `SELECT lineCode AS "lineCode", lineName AS "lineName",
               runDate AS "runDate", runNo AS "runNo",
@@ -216,8 +235,7 @@ export class ResultService {
                          LEFT JOIN ISYS_BASECODE st
                                 ON st.CODE_TYPE = 'SOLDER TYPE'
                                AND st.CODE_NAME = m.SOLDER_TYPE
-                        WHERE ${dateColumn} >= TO_DATE(:reportDate, 'YYYY-MM-DD')
-                          AND ${dateColumn} < TO_DATE(:reportDate, 'YYYY-MM-DD') + 1
+                        WHERE ${dateCondition}
                           AND c.ORGANIZATION_ID = :organizationId
                           AND NVL(c.LINE_CODE, '*') LIKE :lineCode
                           AND NVL(c.MODEL_NAME, '*') LIKE :modelName

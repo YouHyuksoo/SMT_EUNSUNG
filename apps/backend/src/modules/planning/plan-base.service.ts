@@ -7,7 +7,8 @@
  *    시간대 10칸, 조회조건, 확정처리가 같다. 그래서 규칙을 한 번만 쓰고
  *    테이블·뷰·필수컬럼 차이만 설정으로 받는다.
  * 2. **NOT NULL 이 두 테이블에서 다르다** — 아래 PLAN_TABLES 의 `required` 참고.
- *    MI 는 WORKSTAGE_CODE 가 필수이고 SMD 에는 그 컬럼이 아예 없다.
+ *    MI 는 WORKSTAGE_CODE 와 PLAN_PRIORITY 가 필수이고 SMD 에는 WORKSTAGE_CODE
+ *    컬럼이 아예 없고 PLAN_PRIORITY 는 비워도 된다.
  *    반대로 SMD 는 ITEM_CODE·WORK_ORDER_NO·PCB_ITEM·MASTER_MODEL_NAME·
  *    PRODUCTION_TYPE 이 필수다. 폼에서 먼저 막지 않으면 DB 가 거부한다.
  * 3. **MFS 는 NOT NULL 이고 기본값이 '*' 다.** PB 가 계획을 해제할 때
@@ -49,7 +50,9 @@ export const PLAN_TABLES: Record<'mi' | 'smd', PlanTableConfig> = {
     table: 'IP_PRODUCT_MI_PLAN',
     actualView: 'IP_PRODUCT_ACTUAL_TIME_V',
     extraColumns: [['WORKSTAGE_CODE', 'workstageCode']],
-    required: [['workstageCode', '공정코드']],
+    // PLAN_PRIORITY 는 MI 에서 NOT NULL 이고 SMD 에서는 nullable 이다.
+    // 실측으로 확인했다 (없이 INSERT 하면 ORA-01400).
+    required: [['workstageCode', '공정코드'], ['planPriority', '계획 우선순위']],
     joinWorkstage: true,
   },
   smd: {

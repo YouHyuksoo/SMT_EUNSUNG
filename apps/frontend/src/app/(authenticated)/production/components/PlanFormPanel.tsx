@@ -156,7 +156,10 @@ export default function PlanFormPanel({
       ['계획일', form.planDate], ['라인코드', form.lineCode],
       ['모델명', form.modelName], ['서픽스', form.modelSuffix],
     ];
-    if (isMi) required.push(['공정코드', form.workstageCode]);
+    // MI 는 우선순위가 NOT NULL 이다 (SMD 는 비워도 된다). 실측 확인.
+    if (isMi) {
+      required.push(['공정코드', form.workstageCode], ['우선순위', form.planPriority]);
+    }
     else {
       required.push(
         ['품목코드', form.itemCode], ['작업지시번호', form.workOrderNo],
@@ -321,7 +324,7 @@ export default function PlanFormPanel({
               onChange={(e) => set('planQty', e.target.value)} />
           </label>
           <label className="block text-sm">
-            <span className="text-text-muted">우선순위</span>
+            <span className="text-text-muted">우선순위{isMi ? ' *' : ''}</span>
             <Input type="number" value={form.planPriority}
               onChange={(e) => set('planPriority', e.target.value)} />
           </label>
