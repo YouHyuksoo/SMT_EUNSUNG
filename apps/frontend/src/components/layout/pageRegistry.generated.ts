@@ -382,8 +382,38 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
       component = mod.getPageComponent();
       break;
     }
+    case "/production/daily-report": {
+      const mod = await import("./page-registries/production__daily-report.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/production/master-plan": {
+      const mod = await import("./page-registries/production__master-plan.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/production/pcb-result": {
+      const mod = await import("./page-registries/production__pcb-result.generated");
+      component = mod.getPageComponent();
+      break;
+    }
     case "/production/run-card": {
       const mod = await import("./page-registries/production__run-card.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/production/run-card-pid": {
+      const mod = await import("./page-registries/production__run-card-pid.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/production/smd-actual": {
+      const mod = await import("./page-registries/production__smd-actual.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/production/smd-plan": {
+      const mod = await import("./page-registries/production__smd-plan.generated");
       component = mod.getPageComponent();
       break;
     }

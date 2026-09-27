@@ -116,7 +116,13 @@
       "PRD_CURRENT_INVENTORY"
     ],
     "PRODUCTION": [
-      "PRD_RUN_CARD"
+      "PRD_RUN_CARD",
+      "PRD_MASTER_PLAN",
+      "PRD_SMD_PLAN",
+      "PRD_SMD_ACTUAL",
+      "PRD_RUN_CARD_PID",
+      "PRD_PCB_RESULT",
+      "PRD_DAILY_REPORT"
     ],
     "QUALITY": [
       "QC_IQC_MASTER",

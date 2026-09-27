@@ -14,7 +14,7 @@
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ColumnDef } from '@tanstack/react-table';
-import { Edit2, Plus, RefreshCw, Search, Trash2 } from 'lucide-react';
+import { Edit2, Plus, Search, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Modal from '@/components/ui/Modal';
 import { Button, Card, CardContent, Input } from '@/components/ui';
@@ -171,6 +171,29 @@ export default function RunCardPage() {
     }
   };
 
+  /**
+   * 강제삭제 — PB w_product_run_card_duckil 의 cbx_force_delete 경로.
+   * PID 매핑과 런카드 상세를 함께 지운다. QC 검사된 PID 나 공정실적이 있으면
+   * 서버가 여전히 409 로 막는다 — 지우면 되돌릴 수 없는 이력이다.
+   */
+  const removeForce = async () => {
+    if (!deleteTarget) return;
+    try {
+      const response = await api.delete(
+        `/production/run-card/${encodeURIComponent(deleteTarget.runNo)}/force`,
+      );
+      toast.success(
+        `작업지시와 연결 데이터 ${response.data?.data?.deleted ?? 0}건을 삭제했습니다.`,
+      );
+      setDeleteTarget(null);
+      void load();
+    } catch (error: unknown) {
+      const message = (error as { response?: { data?: { message?: string } } })
+        ?.response?.data?.message;
+      toast.error(message ?? (error instanceof Error ? error.message : '강제삭제에 실패했습니다.'));
+    }
+  };
+
   const columns = useMemo<ColumnDef<RunCard>[]>(() => [
     { accessorKey: 'runNo', header: '작업지시번호', size: 130, meta: { filterType: 'text' } },
     { accessorKey: 'runDate', header: '지시일자', size: 110, meta: { filterType: 'date' } },
@@ -229,10 +252,6 @@ export default function RunCardPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="secondary" size="sm" onClick={() => void load()}>
-            <RefreshCw className={`w-4 h-4 mr-1 ${loading ? 'animate-spin' : ''}`} />
-            새로고침
-          </Button>
           <Button size="sm" onClick={() => setForm(emptyForm())}>
             <Plus className="w-4 h-4 mr-1" />
             등록
@@ -394,12 +413,21 @@ export default function RunCardPage() {
               작업지시 <strong>{deleteTarget.runNo}</strong>({deleteTarget.modelName})를 삭제할까요?
             </p>
             {(deleteTarget.pidCount > 0 || deleteTarget.resultCount > 0) && (
-              <p className="text-sm text-red-500">
-                PID {deleteTarget.pidCount}건 · 작업실적 {deleteTarget.resultCount}건이 연결되어 있어 삭제가 차단됩니다.
-              </p>
+              <>
+                <p className="text-sm text-red-500">
+                  PID {deleteTarget.pidCount}건 · 작업실적 {deleteTarget.resultCount}건이 연결되어 있어 삭제가 차단됩니다.
+                </p>
+                <p className="text-sm text-text-muted">
+                  강제삭제는 PID 매핑과 런카드 상세를 함께 지웁니다. QC 검사된 PID 나
+                  공정실적이 있으면 그때도 거부됩니다.
+                </p>
+              </>
             )}
             <div className="flex justify-end gap-2">
               <Button variant="secondary" onClick={() => setDeleteTarget(null)}>취소</Button>
+              {(deleteTarget.pidCount > 0 || deleteTarget.resultCount > 0) && (
+                <Button variant="danger" onClick={() => void removeForce()}>강제삭제</Button>
+              )}
               <Button onClick={() => void remove()}>삭제</Button>
             </div>
           </div>

@@ -28,6 +28,7 @@ import { ProductModelModule } from './modules/product-model/product-model.module
 import { WorkResultModule } from './modules/work-result/work-result.module';
 import { JigModule } from './modules/jig/jig.module';
 import { MoldModule } from './modules/mold/mold.module';
+import { PlanningModule } from './modules/planning/planning.module';
 import { SmtModule } from './modules/smt/smt.module';
 import { RunCardModule } from './modules/run-card/run-card.module';
 import { EquipOpsModule } from './modules/equip-ops/equip-ops.module';
@@ -104,6 +105,7 @@ import { SharedModule } from './shared/shared.module';
     JigModule,
     MoldModule,
     SmtModule,
+    PlanningModule,
     RunCardModule,
 
     // 메뉴 카테고리 관리 (/system/menu-categories)

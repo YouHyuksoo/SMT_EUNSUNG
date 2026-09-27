@@ -322,6 +322,62 @@
       "target": "F_GET_PCB_ITEM_BY_NAME(p_set_item_code)",
       "usedBy": "apps/backend/src/modules/smt/smt-bom.service.ts",
       "note": "SQL 안에서 불리던 DB 함수. SET 품목의 PCB 면 코드. 라벨 바코드에 쓴다."
+    },
+    {
+      "pbFunction": "f_get_run_lot_qty",
+      "action": "native",
+      "target": "F_GET_RUN_LOT_QTY(p_run_no)",
+      "usedBy": "apps/backend/src/modules/planning/result.service.ts",
+      "note": "SQL 안에서 불리던 DB 함수. 작업지시의 LOT 수량. 그대로 호출한다."
+    },
+    {
+      "pbFunction": "f_get_model_product_st",
+      "action": "native",
+      "target": "F_GET_MODEL_PRODUCT_ST(p_model, p_line, p_pcb_item, p_workstage, p_org)",
+      "usedBy": "(PB d_pln_mi_master_plan_lst_tree 에서 확인. 웹 계획 목록에는 아직 안 쓴다)",
+      "note": "모델 표준시간. SQL 안에서 불린다. 계획 목록에 넣을 때 그대로 호출한다."
+    },
+    {
+      "pbFunction": "f_get_work_breaktime_min",
+      "action": "native",
+      "target": "F_GET_WORK_BREAKTIME_MIN(p_start, p_end)",
+      "usedBy": "apps/backend/src/modules/planning/result.service.ts",
+      "note": "생산일보 휴게시간(분). 가용시간 = 생산 - 휴게 계산에 쓴다. TypeScript 로 다시 구현하면 일보 숫자가 갈린다."
+    },
+    {
+      "pbFunction": "f_get_work_losstime_min",
+      "action": "native",
+      "target": "F_GET_WORK_LOSSTIME_MIN(p_line_code, p_start, p_end)",
+      "usedBy": "apps/backend/src/modules/planning/result.service.ts",
+      "note": "생산일보 로스시간(분). 실가동 = 가용 - 로스."
+    },
+    {
+      "pbFunction": "f_get_run_line_actual_qty",
+      "action": "native",
+      "target": "F_GET_RUN_LINE_ACTUAL_QTY(p_run_no, p_line_code, p_org)",
+      "usedBy": "apps/backend/src/modules/planning/result.service.ts",
+      "note": "생산일보 실적수량. 성능가동률·양품률의 분자·분모다."
+    },
+    {
+      "pbFunction": "f_get_run_ng_qty",
+      "action": "native",
+      "target": "F_GET_RUN_NG_QTY(p_run_no, p_org)",
+      "usedBy": "apps/backend/src/modules/planning/result.service.ts",
+      "note": "생산일보 불량수량. 불량PPM 과 양품률에 쓴다."
+    },
+    {
+      "pbFunction": "f_get_run_line_pda_on",
+      "action": "native",
+      "target": "F_GET_RUN_LINE_PDA_ON(p_run_no, p_line_code, p_org)",
+      "usedBy": "apps/backend/src/modules/planning/result.service.ts",
+      "note": "생산 시작시각(PDA ON). 생산시간 계산의 시작점."
+    },
+    {
+      "pbFunction": "f_get_run_line_pda_off",
+      "action": "native",
+      "target": "F_GET_RUN_LINE_PDA_OFF(p_run_no, p_line_code, p_org)",
+      "usedBy": "apps/backend/src/modules/planning/result.service.ts",
+      "note": "생산 종료시각(PDA OFF). NULL 이면 생산시간 0 으로 본다 (PB DECODE 규약)."
     }
   ]
 }

@@ -212,6 +212,64 @@ export class RunCardService {
     });
   }
 
+  /**
+   * 강제삭제 — PB w_product_run_card_duckil 의 cbx_force_delete 경로 이식.
+   *
+   * 위의 remove() 는 PID·실적·상세가 있으면 409 로 막는다 (PB 의 체크박스 해제 상태).
+   * 체크박스를 켠 PB 는 그것들을 함께 지웠다. 그 경로를 여기 둔다 —
+   * 지우는 순서와 SMD 계획 해제는 PKG_MES_PLN.SP_PLN_RUN_CARD_DELETE_CASCADE 안에 있다.
+   *
+   * PB 보다 두 가지를 더 막는다. 둘 다 지우면 되돌릴 수 없는 이력이다:
+   *   - QC 검사된 PID 가 있으면 거부 (검사이력이 없는 바코드를 가리키게 된다)
+   *   - 공정실적(IP_PRODUCT_WORKSTAGE_IO)이 있으면 거부
+   * PB 는 RUN_CARD_DETAIL 삭제에 ORGANIZATION_ID 가 없었다 — 프로시저에서 넣었다.
+   */
+  async removeForce(runNo: string, userId?: string): Promise<{ runNo: string; deleted: number }> {
+    return this.repo.manager.transaction(async (m) => {
+      const before: Array<{ CNT: number }> = await m.query(
+        `SELECT
+           (SELECT COUNT(*) FROM IP_PRODUCT_2D_BARCODE
+             WHERE RUN_NO = :1 AND ORGANIZATION_ID = ${ORG})
+         + (SELECT COUNT(*) FROM IP_PRODUCT_RUN_CARD_DETAIL
+             WHERE RUN_NO = :1 AND ORGANIZATION_ID = ${ORG})
+         + (SELECT COUNT(*) FROM IP_PRODUCT_RUN_CARD
+             WHERE RUN_NO = :1 AND ORGANIZATION_ID = ${ORG}) AS CNT
+         FROM DUAL`,
+        [runNo],
+      );
+
+      await m
+        .query(
+          `DECLARE
+             v_result NUMBER;
+           BEGIN
+             PKG_MES_PLN.SP_PLN_RUN_CARD_DELETE_CASCADE(:1, ${ORG}, :2, v_result);
+             IF v_result < 0 THEN
+               RAISE_APPLICATION_ERROR(-20042, 'RUN_CARD_FORCE_DELETE_FAILED:' || v_result);
+             END IF;
+           END;`,
+          [runNo, userId || DEFAULT_USER],
+        )
+        .catch((error: unknown) => {
+          const message = error instanceof Error ? error.message : String(error);
+          const matched = /RUN_CARD_FORCE_DELETE_FAILED:(-?\d+)/.exec(message);
+          if (!matched) throw error;
+          const code = Number(matched[1]);
+          if (code === -1) throw new NotFoundException(`작업지시 ${runNo} 를 찾을 수 없습니다.`);
+          if (code === -2) {
+            throw new ConflictException(
+              'QC 검사된 PID 가 있어 강제삭제할 수 없습니다. 검사이력이 고아가 됩니다.',
+            );
+          }
+          throw new ConflictException(
+            '공정실적이 있어 강제삭제할 수 없습니다. 실적이 고아가 됩니다.',
+          );
+        });
+
+      return { runNo, deleted: Number(before[0]?.CNT ?? 0) };
+    });
+  }
+
   /** PB 와 동일하게 저장 시점에만 채번한다 (시퀀스 소모 방지) */
   private async generateRunNo(m: EntityManager, dto: RunCardUpsertDto): Promise<string> {
     const rows: Array<{ RUN_NO: string }> = await m.query(

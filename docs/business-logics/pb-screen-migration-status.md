@@ -3,7 +3,7 @@ sources:
   - apps/frontend/src/config/menuConfig.ts
   - apps/frontend/scripts/data/pb-screen-inventory.json
 generator: apps/frontend/scripts/gen-migration-status.mjs
-verifiedCommit: 173add32
+verifiedCommit: 24c5200e
 ---
 
 # PB 화면 이관 현황 (자동 생성)
@@ -17,11 +17,11 @@ verifiedCommit: 173add32
 | 상태 | 건수 |
 |---|---:|
 | PB 업무화면(셸 메뉴 제외) | 275 |
-| 완료(개발됨, pbWindow 매핑) | 76 |
-| 미착수 | 173 |
+| 완료(개발됨, pbWindow 매핑) | 83 |
+| 미착수 | 166 |
 | 윈도우 미상 | 26 |
 
-웹 메뉴 연결 계약: **PB 78개 / 웹 신규 17개 / 미확정 2개**. PB 매핑과 웹 경로의 전체 연결표는 [pb-menu-route-links.md](pb-menu-route-links.md)에서 관리합니다.
+웹 메뉴 연결 계약: **PB 84개 / 웹 신규 17개 / 미확정 2개**. PB 매핑과 웹 경로의 전체 연결표는 [pb-menu-route-links.md](pb-menu-route-links.md)에서 관리합니다.
 
 ## 대분류별 진행률
 
@@ -34,7 +34,7 @@ verifiedCommit: 173add32
 | 지그 | `M_JIG0` | 12 | 10 | 2 | 0 |
 | 피더 | `M_FEEDER` | 4 | 3 | 1 | 0 |
 | S-PARTS | `M_MOLD` | 8 | 8 | 0 | 0 |
-| 생산 | `M_PLANNING` | 7 | 0 | 7 | 0 |
+| 생산 | `M_PLANNING` | 7 | 7 | 0 | 0 |
 | 공정 | `M_WORKSTAGE0` | 5 | 2 | 3 | 0 |
 | 자재창고 | `M_WAREHOUSE` | 22 | 2 | 20 | 0 |
 | 재고 | `M_INVENTORY` | 5 | 1 | 4 | 0 |
@@ -166,13 +166,13 @@ verifiedCommit: 173add32
 
 | 순서 | 메뉴명 | PB 윈도우 | 원본 | 상태 | MES 메뉴코드 | 경로 |
 |---:|---|---|:--:|---|---|---|
-| 217 | 제품생산계획 | `w_pln_product_master_plan_master` | srw | 미착수 |  |  |
-| 218 | 반제품생산계획 | `w_pln_assembly_master_plan_master` | srw | 미착수 |  |  |
-| 219 | 반제품생산실적관리 | `w_pln_assembly_actual_master` | srw | 미착수 |  |  |
-| 221 | 롯트카드관리 | `w_product_run_card_duckil` | srw | 미착수 |  |  |
-| 222 | 롯트카드-PID 매핑관리 | `w_pln_product_pcb_kitting_scan_master` | srw | 미착수 |  |  |
-| 224 | 기간별 생산실적 조회 | `w_pln_product_pcb_result_query` | srw | 미착수 |  |  |
-| 225 | 생산일보 리포트 | `w_pln_product_pcb_result_report` | srw | 미착수 |  |  |
+| 217 | 제품생산계획 | `w_pln_product_master_plan_master` | srw | 완료 | `PRD_MASTER_PLAN` | `/production/master-plan` |
+| 218 | 반제품생산계획 | `w_pln_assembly_master_plan_master` | srw | 완료 | `PRD_SMD_PLAN` | `/production/smd-plan` |
+| 219 | 반제품생산실적관리 | `w_pln_assembly_actual_master` | srw | 완료 | `PRD_SMD_ACTUAL` | `/production/smd-actual` |
+| 221 | 롯트카드관리 | `w_product_run_card_duckil` | srw | 완료 | `PRD_RUN_CARD` | `/production/run-card` |
+| 222 | 롯트카드-PID 매핑관리 | `w_pln_product_pcb_kitting_scan_master` | srw | 완료 | `PRD_RUN_CARD_PID` | `/production/run-card-pid` |
+| 224 | 기간별 생산실적 조회 | `w_pln_product_pcb_result_query` | srw | 완료 | `PRD_PCB_RESULT` | `/production/pcb-result` |
+| 225 | 생산일보 리포트 | `w_pln_product_pcb_result_report` | srw | 완료 | `PRD_DAILY_REPORT` | `/production/daily-report` |
 
 ### 공정  `M_WORKSTAGE0`
 
