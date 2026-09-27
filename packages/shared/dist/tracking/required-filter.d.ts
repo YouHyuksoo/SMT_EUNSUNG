@@ -38,6 +38,8 @@ export interface TrackingFilterInput {
     serialNo?: string | null;
     /** 롯트카드 번호 */
     runNo?: string | null;
+    /** 매거진 번호. 조회 화면 323(PID 정보조회)이 이것만으로도 열릴 수 있어야 한다. */
+    magazineNo?: string | null;
     /** 기간 시작 (YYYY-MM-DD 또는 ISO) */
     dateFrom?: string | null;
     /** 기간 종료 */
@@ -69,7 +71,7 @@ export declare const TRACKING_FILTER_HINT: string;
 /**
  * 추적 조회를 허용할지 판정한다.
  *
- * 1. 키(제조번호·PID·Run No) 가 하나라도 있으면 통과. 인덱스 단건 조회다.
+ * 1. 키(제조번호·PID·Run No·매거진) 가 하나라도 있으면 통과. 인덱스 단건 조회다.
  * 2. 키가 없으면 라인 + 닫힌 기간이 모두 있어야 하고 기간이 상한 안이어야 한다.
  * 3. 그 외는 거부한다. **거부 사유를 문장으로 돌려준다** — "조회 실패" 만 띄우면
  *    사용자가 무엇을 채워야 하는지 알 수 없다.

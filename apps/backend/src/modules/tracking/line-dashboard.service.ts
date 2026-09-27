@@ -11,24 +11,21 @@
  *    가져온다. MV 였다면 화면이 갱신 주기를 거짓으로 말하게 된다.
  * 3. **탭 9개를 한 번에 받아온다.** PB 는 '상세조회' 한 번에 DataWindow 9개를
  *    각각 retrieve 했다. 웹에서 9번 왕복하면 라인을 고를 때마다 요청이 9개 뜬다.
- * 4. **NSNP 잠금/해제는 쓰기다.** PB 와 같이 P_INTERLOCK_SET_NSNP_TIME_MSG 를
- *    부르고, PB 가 걸던 **사용자 레벨 8 이상** 가드를 유지한다. 라인을 세우는
- *    일이라 아무나 누르면 안 된다.
+ * 4. **NSNP 잠금/해제는 NsnpControlService 가 한다.** 같은 동작을 피더별 모니터링
+ *    (329)·NSNP 처리이력조회(335)도 쓰기 때문에 한 곳에 뒀다 — PB 는 세 창에
+ *    복붙해 둬서 한 창에서만 가드가 고쳐질 수 있었다.
  * 5. **이 화면은 트랙 A(업무화면)다.** Timer 자동갱신만 보면 display 같지만
  *    쓰기 동작과 사용자 레벨 가드가 있고 PB 메뉴(M_PRODUCTIONSTATUSDASHBOARD)에
  *    등록된 화면이다. display 셸에는 로그인 사용자 맥락이 없어 잠금을 걸 수 없다.
  *
  * PB 결함 2건을 여기서 고쳤다 (아래 각 메서드 주석에 근거를 적었다).
  */
-import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { likePrefix } from '@smt/shared';
-import { LineDashboardDetailQueryDto, LineDashboardQueryDto, NsnpLockDto } from './tracking.dto';
+import { LineDashboardDetailQueryDto, LineDashboardQueryDto } from './tracking.dto';
 
 type Row = Record<string, unknown>;
-
-/** NSNP 잠금/해제에 필요한 최소 사용자 레벨. PB w_com_production_status_dashboard cb_3/cb_4 와 같다. */
-const NSNP_MIN_USER_LEVEL = 8;
 
 const TAB_ROW_LIMIT = 2000;
 
@@ -614,74 +611,5 @@ export class LineDashboardService {
         FETCH FIRST ${TAB_ROW_LIMIT} ROWS ONLY`,
       { lineCode, organizationId } as unknown as unknown[],
     )) as Row[];
-  }
-
-  // ───────────────────────────────── NSNP 잠금 / 해제 (쓰기)
-
-  /**
-   * NSNP 잠금·해제. PB cb_4(LOCK) / cb_3(UNLOCK) 와 같은 프로시저를 부른다.
-   *
-   * 실측 시그니처:
-   *   P_INTERLOCK_SET_NSNP_TIME_MSG(P_LINE_CODE, P_MESSAGE, P_TIME,
-   *                                 P_MODEL_NAME, P_MODEL_SUFFIX,
-   *                                 P_NSNP_REASON, P_NSNP_ERROR_MESSAGE)
-   * PB 가 넘긴 값: LOCK 은 ('1', 1, '*', '*', 'LOCK', 사유문),
-   *                UNLOCK 은 ('0', 0, '*', '*', 'UNLOCK', 사유문).
-   *
-   * **사용자 레벨을 DB 에서 직접 읽는다.** JWT 의 role 은 USER_LEVEL 을
-   * ADMIN(9+)/MANAGER(5+)/OPERATOR 로 뭉개서 PB 기준인 '8 이상' 을 표현할 수 없다.
-   * 레벨 8 을 MANAGER 로 낮춰 보면 5~7 사용자에게 잠금 권한이 생긴다.
-   */
-  async setNsnpLock(dto: NsnpLockDto, organizationId: number, userId: string) {
-    const levelRows = (await this.dataSource.query(
-      `SELECT NVL(USER_LEVEL, 0) AS "userLevel", USER_NAME AS "userName"
-         FROM ISYS_USER WHERE USER_ID = :userId`,
-      { userId } as unknown as unknown[],
-    )) as Row[];
-    const level = Number(levelRows[0]?.userLevel ?? 0);
-    if (level < NSNP_MIN_USER_LEVEL) {
-      throw new ForbiddenException(
-        `NSNP 잠금·해제는 사용자 레벨 ${NSNP_MIN_USER_LEVEL} 이상만 할 수 있습니다`
-        + ` (현재 ${level}).`,
-      );
-    }
-    const userName = String(levelRows[0]?.userName ?? userId);
-
-    const exists = (await this.dataSource.query(
-      `SELECT COUNT(*) AS "cnt" FROM IRPT_PRODUCT_LINE_DASHBOARD
-        WHERE LINE_CODE = :lineCode AND ORGANIZATION_ID = :organizationId`,
-      { lineCode: dto.lineCode, organizationId } as unknown as unknown[],
-    )) as Row[];
-    if (Number(exists[0]?.cnt ?? 0) === 0) {
-      throw new BadRequestException(`라인 ${dto.lineCode} 을 대시보드에서 찾을 수 없습니다.`);
-    }
-
-    const reason = dto.lock ? 'LOCK' : 'UNLOCK';
-    const message = dto.lock
-      ? `[수동잠금] ${reason} ${userName}`
-      : `[강제해제] FORCE UNLOCK ${userName}`;
-    await this.dataSource.query(
-      `BEGIN P_INTERLOCK_SET_NSNP_TIME_MSG(:lineCode, :flag, :time,
-                                           '*', '*', :reason, :message); END;`,
-      {
-        lineCode: dto.lineCode,
-        flag: dto.lock ? '1' : '0',
-        time: dto.lock ? 1 : 0,
-        reason,
-        message,
-      } as unknown as unknown[],
-    );
-
-    const after = (await this.dataSource.query(
-      `SELECT NSNP_LOCK_TYPE AS "nsnpLockType", NSNP_LOCK_TYPE_NAME AS "nsnpLockTypeName",
-              NSNP_STATUS AS "nsnpStatus", NSNP_STATUS_NAME AS "nsnpStatusName",
-              NSNP_REASON AS "nsnpReason",
-              TO_CHAR(NSNP_START_DATE, 'YYYY-MM-DD HH24:MI:SS') AS "nsnpStartDate"
-         FROM IRPT_PRODUCT_LINE_DASHBOARD
-        WHERE LINE_CODE = :lineCode AND ORGANIZATION_ID = :organizationId`,
-      { lineCode: dto.lineCode, organizationId } as unknown as unknown[],
-    )) as Row[];
-
-    return { lineCode: dto.lineCode, action: reason, userLevel: level, status: after[0] ?? null };
   }
 }

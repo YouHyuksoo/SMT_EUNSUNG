@@ -15,6 +15,7 @@
     "PRODUCT_INVENTORY",
     "PRODUCTION",
     "TRACKING",
+    "QUERY",
     "QUALITY",
     "OUTSOURCING",
     "CONFIRM",
@@ -134,6 +135,17 @@
       "TRK_RUN_NO",
       "TRK_LOT_ALL",
       "TRK_LINE_DASHBOARD"
+    ],
+    "QUERY": [
+      "QRY_PID_INFO",
+      "QRY_MARKING",
+      "QRY_PCB_INPUT",
+      "QRY_PDA_SCAN",
+      "QRY_PDA_NG",
+      "QRY_FEEDER_MONITOR",
+      "QRY_SENSOR_ACTUAL",
+      "QRY_MATERIAL_BARCODE",
+      "QRY_NSNP_HISTORY"
     ],
     "QUALITY": [
       "QC_IQC_MASTER",

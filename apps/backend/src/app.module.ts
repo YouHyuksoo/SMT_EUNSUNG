@@ -31,6 +31,7 @@ import { MoldModule } from './modules/mold/mold.module';
 import { PlanningModule } from './modules/planning/planning.module';
 import { PriceConfirmModule } from './modules/price-confirm/price-confirm.module';
 import { TrackingModule } from './modules/tracking/tracking.module';
+import { QueryModule } from './modules/query/query.module';
 import { SmtModule } from './modules/smt/smt.module';
 import { RunCardModule } from './modules/run-card/run-card.module';
 import { EquipOpsModule } from './modules/equip-ops/equip-ops.module';
@@ -110,6 +111,7 @@ import { SharedModule } from './shared/shared.module';
     PlanningModule,
     PriceConfirmModule,
     TrackingModule,
+    QueryModule,
     RunCardModule,
 
     // 메뉴 카테고리 관리 (/system/menu-categories)

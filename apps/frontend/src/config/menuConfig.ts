@@ -22,6 +22,7 @@ import {
   Hammer,
   Network,
   Package,
+  ScanSearch,
   Radar,
   Settings,
   Warehouse,
@@ -42,6 +43,18 @@ export interface MenuConfigItem {
   pbLinkStatus?: "powerbuilder" | "web-native" | "unresolved";
   /** 이관 원본 PowerBuilder 윈도우명. pbLinkStatus=powerbuilder일 때 필수다. */
   pbWindow?: string;
+  /**
+   * 이 화면 하나가 함께 대체하는 다른 PB 윈도우들.
+   *
+   * PB 에는 같은 표를 같은 조건으로 보는 창이 둘 이상 있는 경우가 있다 (등록창과
+   * 조회창이 따로 있는 식). 웹에서 한 화면으로 합치면 나머지 PB 창은 영원히
+   * '미착수' 로 남아 이관 현황이 사실과 달라진다. 그 창들을 여기에 적으면
+   * 이관 현황 생성기가 완료로 잡는다.
+   *
+   * **중복 검사는 pbWindow 와 같은 통에서 한다** — 한 PB 창을 두 화면이 각자
+   * 대체했다고 주장할 수 없다.
+   */
+  pbAlsoCovers?: string[];
   /** PB 메뉴 인벤토리에 없는 윈도우를 연결할 때 사용하는 추적 가능한 소스 근거 경로. */
   pbEvidence?: string;
   /** pbLinkStatus=unresolved인 경우 추정하지 않은 이유. */
@@ -141,8 +154,8 @@ export const menuConfig: MenuConfigItem[] = [
       { code: "JIG_ISSUE", labelKey: "menu.jig.issue", path: "/jig/issue", pbLinkStatus: "powerbuilder", pbWindow: "w_mcn_jig_issue_master" },
       { code: "JIG_REPAIR", labelKey: "menu.jig.repair", path: "/jig/repair", pbLinkStatus: "powerbuilder", pbWindow: "w_mcn_jig_repair_master" },
       { code: "JIG_PM", labelKey: "menu.jig.pm", path: "/jig/pm", pbLinkStatus: "powerbuilder", pbWindow: "w_mcn_jig_pm_master" },
-      { code: "JIG_SQUEEZE_CHECK", labelKey: "menu.jig.squeezeCheck", path: "/jig/squeeze-check", pbLinkStatus: "powerbuilder", pbWindow: "w_mcn_jig_squeeze_check_master" },
-      { code: "JIG_MASK_CHECK", labelKey: "menu.jig.maskCheck", path: "/jig/mask-check", pbLinkStatus: "powerbuilder", pbWindow: "w_mcn_jig_mask_tension_check_master" },
+      { code: "JIG_SQUEEZE_CHECK", labelKey: "menu.jig.squeezeCheck", path: "/jig/squeeze-check", pbLinkStatus: "powerbuilder", pbWindow: "w_mcn_jig_squeeze_check_master", pbAlsoCovers: ["w_mcn_jig_squeeze_check_history"] },
+      { code: "JIG_MASK_CHECK", labelKey: "menu.jig.maskCheck", path: "/jig/mask-check", pbLinkStatus: "powerbuilder", pbWindow: "w_mcn_jig_mask_tension_check_master", pbAlsoCovers: ["w_mcn_jig_mask_check_history"] },
       { code: "JIG_SAMPLE", labelKey: "menu.jig.sample", path: "/jig/sample", pbLinkStatus: "powerbuilder", pbWindow: "w_mcn_sample_master" },
       { code: "JIG_INPUT_HISTORY", labelKey: "menu.jig.inputHistory", path: "/jig/input-history", pbLinkStatus: "powerbuilder", pbWindow: "w_mcn_jig_input_history_master" },
       { code: "JIG_SAMPLE_INPUT_HISTORY", labelKey: "menu.jig.sampleInputHistory", path: "/jig/sample-input-history", pbLinkStatus: "powerbuilder", pbWindow: "w_mcn_sample_input_history_master" },
@@ -241,6 +254,22 @@ export const menuConfig: MenuConfigItem[] = [
       { code: "TRK_RUN_NO", labelKey: "menu.tracking.runNo", path: "/tracking/run-no", pbLinkStatus: "powerbuilder", pbWindow: "w_pln_product_barcode_tracking" },
       { code: "TRK_LOT_ALL", labelKey: "menu.tracking.lotAll", path: "/tracking/lot-all", pbLinkStatus: "powerbuilder", pbWindow: "w_pln_product_all_barcode_tracking" },
       { code: "TRK_LINE_DASHBOARD", labelKey: "menu.tracking.lineDashboard", path: "/tracking/line-dashboard", pbLinkStatus: "powerbuilder", pbWindow: "w_com_production_status_dashboard" },
+    ],
+  },
+  {
+    code: "QUERY",
+    labelKey: "menu.query",
+    icon: ScanSearch,
+    children: [
+      { code: "QRY_PID_INFO", labelKey: "menu.query.pidInfo", path: "/query/pid-info", pbLinkStatus: "powerbuilder", pbWindow: "w_pln_product_barcode_query" },
+      { code: "QRY_MARKING", labelKey: "menu.query.marking", path: "/query/marking", pbLinkStatus: "powerbuilder", pbWindow: "w_pln_product_pcb_marking_query" },
+      { code: "QRY_PCB_INPUT", labelKey: "menu.query.pcbInput", path: "/query/pcb-input", pbLinkStatus: "powerbuilder", pbWindow: "w_qc_pcb_input_scan_master" },
+      { code: "QRY_PDA_SCAN", labelKey: "menu.query.pdaScan", path: "/query/pda-scan", pbLinkStatus: "powerbuilder", pbWindow: "w_pln_product_pda_scan_query" },
+      { code: "QRY_PDA_NG", labelKey: "menu.query.pdaNg", path: "/query/pda-ng", pbLinkStatus: "powerbuilder", pbWindow: "w_smt_plan_ng_check_master" },
+      { code: "QRY_FEEDER_MONITOR", labelKey: "menu.query.feederMonitor", path: "/query/feeder-monitor", pbLinkStatus: "powerbuilder", pbWindow: "w_smt_plan_feeder_monitoring_master" },
+      { code: "QRY_SENSOR_ACTUAL", labelKey: "menu.query.sensorActual", path: "/query/sensor-actual", pbLinkStatus: "powerbuilder", pbWindow: "w_pln_product_sensor_actual_master" },
+      { code: "QRY_MATERIAL_BARCODE", labelKey: "menu.query.materialBarcode", path: "/query/material-barcode", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_barcode_status_report" },
+      { code: "QRY_NSNP_HISTORY", labelKey: "menu.query.nsnpHistory", path: "/query/nsnp-history", pbLinkStatus: "powerbuilder", pbWindow: "w_pln_product_nsnp_history_query" },
     ],
   },
   {

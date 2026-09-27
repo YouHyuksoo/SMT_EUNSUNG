@@ -3,13 +3,14 @@ sources:
   - apps/frontend/src/config/menuConfig.ts
   - apps/frontend/scripts/data/pb-screen-inventory.json
 generator: apps/frontend/scripts/gen-migration-status.mjs
-verifiedCommit: 65ff489c
+verifiedCommit: 42123889
 ---
 
 # PB 화면 이관 현황 (자동 생성)
 
 > **이 문서는 자동 생성됩니다. 직접 수정하지 마세요.**
 > `menuConfig.ts` 의 각 화면에 `pbWindow: "w_..."` 를 달면 이 문서가 자동으로 완료로 반영합니다.
+> 한 화면이 PB 창 여럿을 대체하면 `pbAlsoCovers: ["w_...", ...]` 에 적습니다 (중복 선언은 검증에서 막습니다).
 > 재생성: `pnpm --filter @eunsung/frontend gen:migration` (pnpm test/dev 에서 자동 실행).
 
 ## 현황
@@ -17,11 +18,11 @@ verifiedCommit: 65ff489c
 | 상태 | 건수 |
 |---|---:|
 | PB 업무화면(셸 메뉴 제외) | 275 |
-| 완료(개발됨, pbWindow 매핑) | 94 |
-| 미착수 | 155 |
+| 완료(개발됨, pbWindow 매핑) | 105 |
+| 미착수 | 144 |
 | 윈도우 미상 | 26 |
 
-웹 메뉴 연결 계약: **PB 95개 / 웹 신규 17개 / 미확정 2개**. PB 매핑과 웹 경로의 전체 연결표는 [pb-menu-route-links.md](pb-menu-route-links.md)에서 관리합니다.
+웹 메뉴 연결 계약: **PB 104개 / 웹 신규 17개 / 미확정 2개**. PB 매핑과 웹 경로의 전체 연결표는 [pb-menu-route-links.md](pb-menu-route-links.md)에서 관리합니다.
 
 ## 대분류별 진행률
 
@@ -42,7 +43,7 @@ verifiedCommit: 65ff489c
 | 품질관리 | `M_QC` | 12 | 12 | 0 | 0 |
 | 출하현황 | `M_SHIPPING` | 10 | 1 | 9 | 0 |
 | 추적 | `M_TRACKING` | 7 | 7 | 0 | 0 |
-| 조회 | `M_QUERY` | 11 | 0 | 11 | 0 |
+| 조회 | `M_QUERY` | 11 | 11 | 0 | 0 |
 | 리포트 | `M_REPORT` | 23 | 0 | 23 | 0 |
 | 승인 | `M_CONFIRM` | 6 | 4 | 2 | 0 |
 | 기본정보 | `M_MANAGE` | 10 | 4 | 6 | 0 |
@@ -278,17 +279,17 @@ verifiedCommit: 65ff489c
 
 | 순서 | 메뉴명 | PB 윈도우 | 원본 | 상태 | MES 메뉴코드 | 경로 |
 |---:|---|---|:--:|---|---|---|
-| 323 | PID 정보조회 | `w_pln_product_barcode_query` | srw | 미착수 |  |  |
-| 324 | 마킹이력조회 | `w_pln_product_pcb_marking_query` | srw | 미착수 |  |  |
-| 325 | PCB 투입 리스트조회 | `w_qc_pcb_input_scan_master` | srw | 미착수 |  |  |
-| 327 | SMT 오장착 스캔 현황 조회 | `w_pln_product_pda_scan_query` | srw | 미착수 |  |  |
-| 328 | PDA 검사오류내역조회 | `w_smt_plan_ng_check_master` | srw | 미착수 |  |  |
-| 329 | SMT 피더별 모니터링 | `w_smt_plan_feeder_monitoring_master` | srw | 미착수 |  |  |
-| 330 | SMT 제품실적센서이력조회 | `w_pln_product_sensor_actual_master` | srw | 미착수 |  |  |
-| 331 | 마스크검사이력조회 | `w_mcn_jig_mask_check_history` | srw | 미착수 |  |  |
-| 332 | 스퀴지검사이력조회 | `w_mcn_jig_squeeze_check_history` | srw | 미착수 |  |  |
-| 333 | 자재 바코드 상태 조회 | `w_mat_barcode_status_report` | srw | 미착수 |  |  |
-| 335 | NSNP 처리이력조회 | `w_pln_product_nsnp_history_query` | srw | 미착수 |  |  |
+| 323 | PID 정보조회 | `w_pln_product_barcode_query` | srw | 완료 | `QRY_PID_INFO` | `/query/pid-info` |
+| 324 | 마킹이력조회 | `w_pln_product_pcb_marking_query` | srw | 완료 | `QRY_MARKING` | `/query/marking` |
+| 325 | PCB 투입 리스트조회 | `w_qc_pcb_input_scan_master` | srw | 완료 | `QRY_PCB_INPUT` | `/query/pcb-input` |
+| 327 | SMT 오장착 스캔 현황 조회 | `w_pln_product_pda_scan_query` | srw | 완료 | `QRY_PDA_SCAN` | `/query/pda-scan` |
+| 328 | PDA 검사오류내역조회 | `w_smt_plan_ng_check_master` | srw | 완료 | `QRY_PDA_NG` | `/query/pda-ng` |
+| 329 | SMT 피더별 모니터링 | `w_smt_plan_feeder_monitoring_master` | srw | 완료 | `QRY_FEEDER_MONITOR` | `/query/feeder-monitor` |
+| 330 | SMT 제품실적센서이력조회 | `w_pln_product_sensor_actual_master` | srw | 완료 | `QRY_SENSOR_ACTUAL` | `/query/sensor-actual` |
+| 331 | 마스크검사이력조회 | `w_mcn_jig_mask_check_history` | srw | 완료 | `JIG_MASK_CHECK` | `/jig/mask-check` |
+| 332 | 스퀴지검사이력조회 | `w_mcn_jig_squeeze_check_history` | srw | 완료 | `JIG_SQUEEZE_CHECK` | `/jig/squeeze-check` |
+| 333 | 자재 바코드 상태 조회 | `w_mat_barcode_status_report` | srw | 완료 | `QRY_MATERIAL_BARCODE` | `/query/material-barcode` |
+| 335 | NSNP 처리이력조회 | `w_pln_product_nsnp_history_query` | srw | 완료 | `QRY_NSNP_HISTORY` | `/query/nsnp-history` |
 
 ### 리포트  `M_REPORT`
 

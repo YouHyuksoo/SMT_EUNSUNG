@@ -42,7 +42,7 @@ exports.likePrefix = likePrefix;
  */
 exports.TRACKING_DATE_RANGE_MAX_DAYS = 31;
 /** 화면에 그대로 띄우는 안내 문구. 프론트·백엔드가 같은 문장을 쓴다. */
-exports.TRACKING_FILTER_HINT = '제조번호 · PID · Run No 중 하나를 입력하거나, 라인과 기간(최대 '
+exports.TRACKING_FILTER_HINT = '제조번호 · PID · Run No · 매거진 중 하나를 입력하거나, 라인과 기간(최대 '
     + `${exports.TRACKING_DATE_RANGE_MAX_DAYS}일)을 함께 지정하세요.`;
 const filled = (value) => typeof value === 'string' && value.trim().length > 0 && value.trim() !== '%';
 /** 두 날짜 문자열의 간격(일). 파싱 실패면 null. */
@@ -56,13 +56,14 @@ const spanDays = (from, to) => {
 /**
  * 추적 조회를 허용할지 판정한다.
  *
- * 1. 키(제조번호·PID·Run No) 가 하나라도 있으면 통과. 인덱스 단건 조회다.
+ * 1. 키(제조번호·PID·Run No·매거진) 가 하나라도 있으면 통과. 인덱스 단건 조회다.
  * 2. 키가 없으면 라인 + 닫힌 기간이 모두 있어야 하고 기간이 상한 안이어야 한다.
  * 3. 그 외는 거부한다. **거부 사유를 문장으로 돌려준다** — "조회 실패" 만 띄우면
  *    사용자가 무엇을 채워야 하는지 알 수 없다.
  */
 function checkTrackingFilter(input) {
-    if (filled(input.lotNo) || filled(input.serialNo) || filled(input.runNo)) {
+    if (filled(input.lotNo) || filled(input.serialNo) || filled(input.runNo)
+        || filled(input.magazineNo)) {
         return { ok: true };
     }
     if (!filled(input.lineCode)) {

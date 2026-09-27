@@ -15,6 +15,7 @@ import { ResponseUtil } from '../../common/dto/response.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { LineDashboardService } from './line-dashboard.service';
 import { MaterialTrackingService } from './material-tracking.service';
+import { NsnpControlService } from './nsnp-control.service';
 import { PID_STAGE_COUNTS, PidTrackingService } from './pid-tracking.service';
 import {
   DynamicMaterialQueryDto,
@@ -164,7 +165,10 @@ export class PidTrackingController {
 @UseGuards(JwtAuthGuard)
 @Controller('tracking/dashboard')
 export class LineDashboardController {
-  constructor(private readonly service: LineDashboardService) {}
+  constructor(
+    private readonly service: LineDashboardService,
+    private readonly nsnp: NsnpControlService,
+  ) {}
 
   @Get('line')
   @ApiOperation({ summary: '321 라인 현황 요약 (IRPT_PRODUCT_LINE_DASHBOARD 뷰 — 실시간)' })
@@ -193,14 +197,22 @@ export class LineDashboardController {
   }
 
   @Put('nsnp')
-  @ApiOperation({ summary: '321 NSNP 잠금·해제 (사용자 레벨 8 이상 — PB 가드 유지)' })
-  async nsnp(
+  @ApiOperation({
+    summary: '321 NSNP 잠금·해제 (사용자 레벨 8 이상 — PB 가드 유지).'
+      + ' 구현은 NsnpControlService 한 곳에 있고 329·335 도 같은 서비스를 쓴다.',
+  })
+  async setNsnp(
     @Body() dto: NsnpLockDto,
     @OrganizationId() organizationId: number,
     @UserId() userId?: string,
   ) {
     return ResponseUtil.success(
-      await this.service.setNsnpLock(dto, organizationId, userId || DEFAULT_USER),
+      await this.nsnp.control(
+        dto.lock ? 'lock' : 'unlock',
+        dto.lineCode,
+        organizationId,
+        userId || DEFAULT_USER,
+      ),
     );
   }
 }

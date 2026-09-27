@@ -432,6 +432,7 @@
     "PRODUCT_INVENTORY",
     "PRODUCTION",
     "TRACKING",
+    "QUERY",
     "QUALITY",
     "OUTSOURCING",
     "CONFIRM",

@@ -507,6 +507,51 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
       component = mod.getPageComponent();
       break;
     }
+    case "/query/feeder-monitor": {
+      const mod = await import("./page-registries/query__feeder-monitor.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/query/marking": {
+      const mod = await import("./page-registries/query__marking.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/query/material-barcode": {
+      const mod = await import("./page-registries/query__material-barcode.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/query/nsnp-history": {
+      const mod = await import("./page-registries/query__nsnp-history.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/query/pcb-input": {
+      const mod = await import("./page-registries/query__pcb-input.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/query/pda-ng": {
+      const mod = await import("./page-registries/query__pda-ng.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/query/pda-scan": {
+      const mod = await import("./page-registries/query__pda-scan.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/query/pid-info": {
+      const mod = await import("./page-registries/query__pid-info.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/query/sensor-actual": {
+      const mod = await import("./page-registries/query__sensor-actual.generated");
+      component = mod.getPageComponent();
+      break;
+    }
     case "/smt/bom": {
       const mod = await import("./page-registries/smt__bom.generated");
       component = mod.getPageComponent();

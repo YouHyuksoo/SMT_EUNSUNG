@@ -68,11 +68,15 @@ for (const cat of menu) {
       group: label(cat.labelKey),
       pbLinkStatus: child.pbLinkStatus ?? null,
       pbWindow: child.pbWindow ?? null,
+      pbAlsoCovers: child.pbAlsoCovers ?? [],
       pbEvidence: child.pbEvidence ?? null,
       pbLinkNote: child.pbLinkNote ?? null,
     };
     developed.push(entry);
     if (child.pbWindow) developedByWindow.set(child.pbWindow.toLowerCase(), entry);
+    // 한 화면이 여러 PB 창을 대체하는 경우. 같은 맵에 넣어 완료로 잡고,
+    // 중복 검사도 pbWindow 와 같은 통에서 한다.
+    for (const w of entry.pbAlsoCovers) developedByWindow.set(String(w).toLowerCase(), entry);
   }
 }
 
@@ -110,6 +114,15 @@ for (const e of developed) {
   }
   if (seen.has(w)) errors.push(`pbWindow "${e.pbWindow}" 가 ${seen.get(w)} 와 ${e.code} 두 화면에 중복 선언됐습니다.`);
   else seen.set(w, e.code);
+
+  // pbAlsoCovers 도 같은 규칙으로 검사한다 — 인벤토리에 있어야 하고 중복될 수 없다.
+  for (const also of e.pbAlsoCovers) {
+    const aw = String(also).toLowerCase();
+    if (aw === w) { errors.push(`${e.code}의 pbAlsoCovers에 pbWindow와 같은 "${also}"가 있습니다.`); continue; }
+    if (!inventoryWindows.has(aw)) { errors.push(`pbAlsoCovers "${also}" (${e.code})가 PB 메뉴 인벤토리에 없습니다.`); continue; }
+    if (seen.has(aw)) errors.push(`PB 윈도우 "${also}" 가 ${seen.get(aw)} 와 ${e.code} 두 화면에 중복 선언됐습니다.`);
+    else seen.set(aw, e.code);
+  }
 }
 
 // 장비 공통 화면 정의가 menuConfig의 연결 계약과 어긋나지 않게 한다.
@@ -175,6 +188,7 @@ L.push('# PB 화면 이관 현황 (자동 생성)');
 L.push('');
 L.push('> **이 문서는 자동 생성됩니다. 직접 수정하지 마세요.**');
 L.push('> `menuConfig.ts` 의 각 화면에 `pbWindow: "w_..."` 를 달면 이 문서가 자동으로 완료로 반영합니다.');
+L.push('> 한 화면이 PB 창 여럿을 대체하면 `pbAlsoCovers: ["w_...", ...]` 에 적습니다 (중복 선언은 검증에서 막습니다).');
 L.push('> 재생성: `pnpm --filter @eunsung/frontend gen:migration` (pnpm test/dev 에서 자동 실행).');
 L.push('');
 L.push('## 현황');

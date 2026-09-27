@@ -20,6 +20,7 @@
 import { Module } from '@nestjs/common';
 import { LineDashboardService } from './line-dashboard.service';
 import { MaterialTrackingService } from './material-tracking.service';
+import { NsnpControlService } from './nsnp-control.service';
 import { PidTrackingService } from './pid-tracking.service';
 import {
   LineDashboardController,
@@ -29,6 +30,13 @@ import {
 
 @Module({
   controllers: [MaterialTrackingController, PidTrackingController, LineDashboardController],
-  providers: [MaterialTrackingService, PidTrackingService, LineDashboardService],
+  providers: [
+    MaterialTrackingService,
+    PidTrackingService,
+    LineDashboardService,
+    NsnpControlService,
+  ],
+  // 조회 대분류(329 피더별 모니터링 · 335 NSNP 처리이력조회)가 같은 제어를 쓴다.
+  exports: [NsnpControlService],
 })
 export class TrackingModule {}

@@ -3,7 +3,7 @@ sources:
   - apps/frontend/src/config/menuConfig.ts
   - apps/frontend/scripts/data/pb-screen-inventory.json
 generator: apps/frontend/scripts/gen-migration-status.mjs
-verifiedCommit: 65ff489c
+verifiedCommit: 42123889
 ---
 
 # PB 윈도우 ↔ 웹 메뉴·경로 연결표 (자동 생성)
@@ -15,7 +15,7 @@ verifiedCommit: 65ff489c
 
 | 전체 웹 메뉴 | PB 연결 | 웹 신규 | 미확정 |
 |---:|---:|---:|---:|
-| 114 | 95 | 17 | 2 |
+| 123 | 104 | 17 | 2 |
 
 ## 전체 연결표
 
@@ -108,6 +108,15 @@ verifiedCommit: 65ff489c
 | 추적 | 생산이력조회(Run No) | `TRK_RUN_NO` | `/tracking/run-no` | PB 연결 | `w_pln_product_barcode_tracking` | PB 메뉴 인벤토리 |
 | 추적 | 롯트추적조회(ALL) | `TRK_LOT_ALL` | `/tracking/lot-all` | PB 연결 | `w_pln_product_all_barcode_tracking` | PB 메뉴 인벤토리 |
 | 추적 | 생산현황데쉬보드 | `TRK_LINE_DASHBOARD` | `/tracking/line-dashboard` | PB 연결 | `w_com_production_status_dashboard` | PB 메뉴 인벤토리 |
+| 조회 | PID 정보조회 | `QRY_PID_INFO` | `/query/pid-info` | PB 연결 | `w_pln_product_barcode_query` | PB 메뉴 인벤토리 |
+| 조회 | 마킹이력조회 | `QRY_MARKING` | `/query/marking` | PB 연결 | `w_pln_product_pcb_marking_query` | PB 메뉴 인벤토리 |
+| 조회 | PCB 투입 리스트조회 | `QRY_PCB_INPUT` | `/query/pcb-input` | PB 연결 | `w_qc_pcb_input_scan_master` | PB 메뉴 인벤토리 |
+| 조회 | SMT 오장착 스캔 현황 조회 | `QRY_PDA_SCAN` | `/query/pda-scan` | PB 연결 | `w_pln_product_pda_scan_query` | PB 메뉴 인벤토리 |
+| 조회 | PDA 검사오류내역조회 | `QRY_PDA_NG` | `/query/pda-ng` | PB 연결 | `w_smt_plan_ng_check_master` | PB 메뉴 인벤토리 |
+| 조회 | SMT 피더별 모니터링 | `QRY_FEEDER_MONITOR` | `/query/feeder-monitor` | PB 연결 | `w_smt_plan_feeder_monitoring_master` | PB 메뉴 인벤토리 |
+| 조회 | SMT 제품실적센서이력조회 | `QRY_SENSOR_ACTUAL` | `/query/sensor-actual` | PB 연결 | `w_pln_product_sensor_actual_master` | PB 메뉴 인벤토리 |
+| 조회 | 자재 바코드 상태 조회 | `QRY_MATERIAL_BARCODE` | `/query/material-barcode` | PB 연결 | `w_mat_barcode_status_report` | PB 메뉴 인벤토리 |
+| 조회 | NSNP 처리이력조회 | `QRY_NSNP_HISTORY` | `/query/nsnp-history` | PB 연결 | `w_pln_product_nsnp_history_query` | PB 메뉴 인벤토리 |
 | 품질관리 | IQC 관리 | `QC_IQC_MASTER` | `/quality/iqc` | PB 연결 | `w_qc_iqc_master` | PB 메뉴 인벤토리 |
 | 품질관리 | IQC 이력등록관리 | `QC_IQC_HISTORY_REG` | `/quality/iqc-history` | PB 연결 | `w_qc_iqc_inspect_history_master` | PB 메뉴 인벤토리 |
 | 품질관리 | PCB 이슈발생스캔 | `QC_PID_ISSUE_SCAN` | `/quality/pid-issue-scan` | PB 연결 | `w_pln_product_pid_issue_scan_master` | PB 메뉴 인벤토리 |
