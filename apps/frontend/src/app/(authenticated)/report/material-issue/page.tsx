@@ -84,6 +84,9 @@ export default function MaterialIssueReportPage() {
       const [d, s, n] = await Promise.all([
         api.get('/report/material-issue/detail', { params }),
         api.get('/report/material-issue/simple', {
+          // 단가 하한은 함수 결과에 거는 조건이라 기간 전체에 함수가 돈다
+          // (실측 16.4초). 기본 타임아웃 30초로는 부족할 수 있다.
+          timeout: 120_000,
           params: { ...params, minUnitPrice: Number(minUnitPrice) || 0 },
         }),
         api.get('/report/material-issue/not-issued', { params }),

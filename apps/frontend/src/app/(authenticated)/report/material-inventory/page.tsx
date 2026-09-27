@@ -100,6 +100,9 @@ export default function MaterialInventoryReportPage() {
     setDisusedLoading(true);
     try {
       const response = await api.get('/report/material-inventory/disused', {
+        // 판정 함수가 재고 롯트마다 돌아 실측 22초다. axios 기본 타임아웃이
+        // 30초라 현장 부하에서 넘길 수 있어 이 조회만 넉넉히 둔다.
+        timeout: 120_000,
         params: {
           termMonths: Number(termMonths) || 0,
           maxIssueRate: Number(maxIssueRate) || 0,
