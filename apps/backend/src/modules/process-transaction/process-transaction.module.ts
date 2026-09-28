@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { TransactionService } from '../../shared/transaction.service';
 import { MagazineLabelHistoryController } from './magazine-label-history.controller';
 import { MagazineLabelHistoryService } from './magazine-label-history.service';
 import { MagazineLabelService } from './magazine-label.service';
@@ -27,7 +26,6 @@ import { WorkstagePassService } from './workstage-pass.service';
     MagazineLabelService,
     MagazineSplitService,
     MagazinePidService,
-    TransactionService,
   ],
 })
 export class ProcessTransactionModule {}
