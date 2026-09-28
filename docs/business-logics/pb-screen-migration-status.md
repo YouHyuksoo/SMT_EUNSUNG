@@ -3,7 +3,7 @@ sources:
   - apps/frontend/src/config/menuConfig.ts
   - apps/frontend/scripts/data/pb-screen-inventory.json
 generator: apps/frontend/scripts/gen-migration-status.mjs
-verifiedCommit: b72cdc8d
+verifiedCommit: 23e2b0c2
 ---
 
 # PB 화면 이관 현황 (자동 생성)
@@ -18,11 +18,11 @@ verifiedCommit: b72cdc8d
 | 상태 | 건수 |
 |---|---:|
 | PB 업무화면(셸 메뉴 제외) | 275 |
-| 완료(개발됨, pbWindow 매핑) | 152 |
-| 미착수 | 97 |
+| 완료(개발됨, pbWindow 매핑) | 155 |
+| 미착수 | 94 |
 | 윈도우 미상 | 26 |
 
-웹 메뉴 연결 계약: **PB 151개 / 웹 신규 17개 / 미확정 2개**. PB 매핑과 웹 경로의 전체 연결표는 [pb-menu-route-links.md](pb-menu-route-links.md)에서 관리합니다.
+웹 메뉴 연결 계약: **PB 154개 / 웹 신규 17개 / 미확정 2개**. PB 매핑과 웹 경로의 전체 연결표는 [pb-menu-route-links.md](pb-menu-route-links.md)에서 관리합니다.
 
 ## 대분류별 진행률
 
@@ -36,7 +36,7 @@ verifiedCommit: b72cdc8d
 | 피더 | `M_FEEDER` | 4 | 3 | 1 | 0 |
 | S-PARTS | `M_MOLD` | 8 | 8 | 0 | 0 |
 | 생산 | `M_PLANNING` | 7 | 7 | 0 | 0 |
-| 공정 | `M_WORKSTAGE0` | 5 | 2 | 3 | 0 |
+| 공정 | `M_WORKSTAGE0` | 5 | 5 | 0 | 0 |
 | 자재창고 | `M_WAREHOUSE` | 22 | 22 | 0 | 0 |
 | 재고 | `M_INVENTORY` | 5 | 5 | 0 | 0 |
 | 수리 | `M_REPAIR` | 4 | 2 | 2 | 0 |
@@ -180,9 +180,9 @@ verifiedCommit: b72cdc8d
 | 순서 | 메뉴명 | PB 윈도우 | 원본 | 상태 | MES 메뉴코드 | 경로 |
 |---:|---|---|:--:|---|---|---|
 | 227 | 제품공정인아웃스캔관리 | `w_pln_product_inout_scan_master` | srw | 완료 | `PLN_WORKSTAGE_PASS` | `/process-transaction/workstage-pass` |
-| 229 | 매거진라벨 발행 | `w_pln_product_magazine_label_master2` | srw | 미착수 |  |  |
-| 230 | 매거진라벨 분할 | `w_pln_product_magazine_label_split_master` | srw | 미착수 |  |  |
-| 231 | 매거진-PID 매핑관리 | `w_pln_product_barcode_create_master` | srw | 미착수 |  |  |
+| 229 | 매거진라벨 발행 | `w_pln_product_magazine_label_master2` | srw | 완료 | `PLN_MAGAZINE_LABEL` | `/process-transaction/magazine-label` |
+| 230 | 매거진라벨 분할 | `w_pln_product_magazine_label_split_master` | srw | 완료 | `PLN_MAGAZINE_SPLIT` | `/process-transaction/magazine-split` |
+| 231 | 매거진-PID 매핑관리 | `w_pln_product_barcode_create_master` | srw | 완료 | `PLN_MAGAZINE_PID` | `/process-transaction/magazine-pid` |
 | 233 | 매거진라벨이력조회 | `w_pln_product_magazine_label_query` | srw | 완료 | `PLN_MAGAZINE_LABEL_HISTORY` | `/process-transaction/magazine-label-history` |
 
 ### 자재창고  `M_WAREHOUSE`

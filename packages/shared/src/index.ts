@@ -32,3 +32,6 @@ export * from './popups';
 
 // 자재창고 공유 규칙
 export * from './warehouse';
+
+// 생산(공정) 공유 규칙 — 매거진라벨 발행·분할 산술
+export * from './production';

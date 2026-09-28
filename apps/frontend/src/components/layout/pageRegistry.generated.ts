@@ -407,8 +407,23 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
       component = mod.getPageComponent();
       break;
     }
+    case "/process-transaction/magazine-label": {
+      const mod = await import("./page-registries/process-transaction__magazine-label.generated");
+      component = mod.getPageComponent();
+      break;
+    }
     case "/process-transaction/magazine-label-history": {
       const mod = await import("./page-registries/process-transaction__magazine-label-history.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/process-transaction/magazine-pid": {
+      const mod = await import("./page-registries/process-transaction__magazine-pid.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/process-transaction/magazine-split": {
+      const mod = await import("./page-registries/process-transaction__magazine-split.generated");
       component = mod.getPageComponent();
       break;
     }
