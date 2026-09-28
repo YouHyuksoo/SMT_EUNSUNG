@@ -3,7 +3,7 @@ sources:
   - apps/frontend/src/config/menuConfig.ts
   - apps/frontend/scripts/data/pb-screen-inventory.json
 generator: apps/frontend/scripts/gen-migration-status.mjs
-verifiedCommit: 23e2b0c2
+verifiedCommit: 8468f7b7
 ---
 
 # PB 화면 이관 현황 (자동 생성)
@@ -18,11 +18,11 @@ verifiedCommit: 23e2b0c2
 | 상태 | 건수 |
 |---|---:|
 | PB 업무화면(셸 메뉴 제외) | 275 |
-| 완료(개발됨, pbWindow 매핑) | 155 |
-| 미착수 | 94 |
+| 완료(개발됨, pbWindow 매핑) | 161 |
+| 미착수 | 88 |
 | 윈도우 미상 | 26 |
 
-웹 메뉴 연결 계약: **PB 154개 / 웹 신규 17개 / 미확정 2개**. PB 매핑과 웹 경로의 전체 연결표는 [pb-menu-route-links.md](pb-menu-route-links.md)에서 관리합니다.
+웹 메뉴 연결 계약: **PB 160개 / 웹 신규 17개 / 미확정 2개**. PB 매핑과 웹 경로의 전체 연결표는 [pb-menu-route-links.md](pb-menu-route-links.md)에서 관리합니다.
 
 ## 대분류별 진행률
 
@@ -41,7 +41,7 @@ verifiedCommit: 23e2b0c2
 | 재고 | `M_INVENTORY` | 5 | 5 | 0 | 0 |
 | 수리 | `M_REPAIR` | 4 | 2 | 2 | 0 |
 | 품질관리 | `M_QC` | 12 | 12 | 0 | 0 |
-| 출하현황 | `M_SHIPPING` | 10 | 1 | 9 | 0 |
+| 출하현황 | `M_SHIPPING` | 10 | 7 | 3 | 0 |
 | 추적 | `M_TRACKING` | 7 | 7 | 0 | 0 |
 | 조회 | `M_QUERY` | 11 | 11 | 0 | 0 |
 | 리포트 | `M_REPORT` | 23 | 23 | 0 | 0 |
@@ -252,16 +252,16 @@ verifiedCommit: 23e2b0c2
 
 | 순서 | 메뉴명 | PB 윈도우 | 원본 | 상태 | MES 메뉴코드 | 경로 |
 |---:|---|---|:--:|---|---|---|
-| 299 | 제품포장관리(PID) | `w_prd_product_packing_create_master` | srw | 미착수 |  |  |
+| 299 | 제품포장관리(PID) | `w_prd_product_packing_create_master` | srw | 완료 | `PRD_PACK` | `/product/pack` |
 | 300 | 제품포장관리(LOT) | `w_prd_product_packing_4_magazine_create_master` | srw | 미착수 |  |  |
-| 302 | 제품입고관리(PID) | `w_prd_product_fg_receipt` | srw | 미착수 |  |  |
+| 302 | 제품입고관리(PID) | `w_prd_product_fg_receipt` | srw | 완료 | `PRD_FG_RECEIPT` | `/product/fg-receipt` |
 | 303 | 제품입고관리(LOT) | `w_prd_product_fg_4_magazine_receipt` | srw | 미착수 |  |  |
-| 304 | 제품입고관리 (모델단위) | `w_prd_product_fg_4_model_receipt` | srw | 미착수 |  |  |
+| 304 | 제품입고관리 (모델단위) | `w_prd_product_fg_4_model_receipt` | srw | 완료 | `PRD_FG_MODEL_RECEIPT` | `/product/fg-model-receipt` |
 | 306 | 파렛타이징 관리 | `w_prd_product_fg_palletizing` | srw | 미착수 |  |  |
-| 307 | 제품출하관리 | `w_prd_product_fg_issue` | srw | 미착수 |  |  |
-| 308 | 제품출고관리 (모델단위) | `w_prd_product_fg_4_model_issue` | srw | 미착수 |  |  |
+| 307 | 제품출하관리 | `w_prd_product_fg_issue` | srw | 완료 | `PRD_FG_ISSUE` | `/product/fg-issue` |
+| 308 | 제품출고관리 (모델단위) | `w_prd_product_fg_4_model_issue` | srw | 완료 | `PRD_FG_MODEL_ISSUE` | `/product/fg-model-issue` |
 | 310 | 제품재고 | `w_prd_product_fg_inventory` | srw | 완료 | `PRD_CURRENT_INVENTORY` | `/product/current-inventory` |
-| 311 | 제품패킹이력 | `w_prd_product_packing_history` | srw | 미착수 |  |  |
+| 311 | 제품패킹이력 | `w_prd_product_packing_history` | srw | 완료 | `PRD_PACK_HISTORY` | `/product/pack-history` |
 
 ### 추적  `M_TRACKING`
 

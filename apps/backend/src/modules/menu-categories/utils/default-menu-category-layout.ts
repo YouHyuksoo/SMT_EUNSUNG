@@ -23,7 +23,7 @@ export const DEFAULT_MENU_CATEGORY_LAYOUT: readonly DefaultMenuCategoryLayout[] 
   { categoryCode: 'SMT', labelKey: 'menu.smt', sortOrder: 90, menuCodes: ['SMT_LINE', 'SMT_LOCATION', 'SMT_BOM_REPLACE', 'SMT_NC_UPLOAD', 'SMT_BOM', 'SMT_PLAN', 'SMT_BOM_REPORT', 'SMT_BOM_COMPARISON', 'SMT_FEEDER_PICKUP'] },
   { categoryCode: 'PROCESS_TRANSACTION', labelKey: 'menu.processTransaction', sortOrder: 100, menuCodes: ['PLN_WORKSTAGE_PASS', 'PLN_MAGAZINE_LABEL_HISTORY', 'PLN_MAGAZINE_LABEL', 'PLN_MAGAZINE_SPLIT', 'PLN_MAGAZINE_PID'] },
   { categoryCode: 'PRODUCT_MGMT', labelKey: 'menu.productMgmt', sortOrder: 110, menuCodes: [] },
-  { categoryCode: 'PRODUCT_INVENTORY', labelKey: 'menu.productInventory', sortOrder: 120, menuCodes: ['PRD_CURRENT_INVENTORY'] },
+  { categoryCode: 'PRODUCT_INVENTORY', labelKey: 'menu.productInventory', sortOrder: 120, menuCodes: ['PRD_CURRENT_INVENTORY', 'PRD_PACK', 'PRD_PACK_HISTORY', 'PRD_FG_RECEIPT', 'PRD_FG_MODEL_RECEIPT', 'PRD_FG_ISSUE', 'PRD_FG_MODEL_ISSUE'] },
   { categoryCode: 'PRODUCTION', labelKey: 'menu.production', sortOrder: 130, menuCodes: ['PRD_RUN_CARD', 'PRD_MASTER_PLAN', 'PRD_SMD_PLAN', 'PRD_SMD_ACTUAL', 'PRD_RUN_CARD_PID', 'PRD_PCB_RESULT', 'PRD_DAILY_REPORT'] },
   { categoryCode: 'TRACKING', labelKey: 'menu.tracking', sortOrder: 140, menuCodes: ['TRK_MATERIAL_LOT', 'TRK_MATERIAL_DYNAMIC', 'TRK_MATERIAL_USAGE', 'TRK_PID', 'TRK_RUN_NO', 'TRK_LOT_ALL', 'TRK_LINE_DASHBOARD'] },
   { categoryCode: 'QUERY', labelKey: 'menu.query', sortOrder: 150, menuCodes: ['QRY_PID_INFO', 'QRY_MARKING', 'QRY_PCB_INPUT', 'QRY_PDA_SCAN', 'QRY_PDA_NG', 'QRY_FEEDER_MONITOR', 'QRY_SENSOR_ACTUAL', 'QRY_MATERIAL_BARCODE', 'QRY_NSNP_HISTORY'] },

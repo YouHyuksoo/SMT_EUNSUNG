@@ -144,7 +144,13 @@
     ],
     "PRODUCT_MGMT": [],
     "PRODUCT_INVENTORY": [
-      "PRD_CURRENT_INVENTORY"
+      "PRD_CURRENT_INVENTORY",
+      "PRD_PACK",
+      "PRD_PACK_HISTORY",
+      "PRD_FG_RECEIPT",
+      "PRD_FG_MODEL_RECEIPT",
+      "PRD_FG_ISSUE",
+      "PRD_FG_MODEL_ISSUE"
     ],
     "PRODUCTION": [
       "PRD_RUN_CARD",

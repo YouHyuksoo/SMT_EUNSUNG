@@ -3,7 +3,7 @@ sources:
   - apps/frontend/src/config/menuConfig.ts
   - apps/frontend/scripts/data/pb-screen-inventory.json
 generator: apps/frontend/scripts/gen-migration-status.mjs
-verifiedCommit: 23e2b0c2
+verifiedCommit: 8468f7b7
 ---
 
 # PB 윈도우 ↔ 웹 메뉴·경로 연결표 (자동 생성)
@@ -15,7 +15,7 @@ verifiedCommit: 23e2b0c2
 
 | 전체 웹 메뉴 | PB 연결 | 웹 신규 | 미확정 |
 |---:|---:|---:|---:|
-| 173 | 154 | 17 | 2 |
+| 179 | 160 | 17 | 2 |
 
 ## 전체 연결표
 
@@ -121,6 +121,12 @@ verifiedCommit: 23e2b0c2
 | 공정수불관리 | 매거진라벨 분할 | `PLN_MAGAZINE_SPLIT` | `/process-transaction/magazine-split` | PB 연결 | `w_pln_product_magazine_label_split_master` | PB 메뉴 인벤토리 |
 | 공정수불관리 | 매거진-PID 매핑관리 | `PLN_MAGAZINE_PID` | `/process-transaction/magazine-pid` | PB 연결 | `w_pln_product_barcode_create_master` | PB 메뉴 인벤토리 |
 | 제품재고관리 | 제품재고조회 | `PRD_CURRENT_INVENTORY` | `/product/current-inventory` | PB 연결 | `w_prd_product_fg_inventory` | PB 메뉴 인벤토리 |
+| 제품재고관리 | 제품포장관리(PID) | `PRD_PACK` | `/product/pack` | PB 연결 | `w_prd_product_packing_create_master` | PB 메뉴 인벤토리 |
+| 제품재고관리 | 제품패킹이력 | `PRD_PACK_HISTORY` | `/product/pack-history` | PB 연결 | `w_prd_product_packing_history` | PB 메뉴 인벤토리 |
+| 제품재고관리 | 제품입고관리(PID) | `PRD_FG_RECEIPT` | `/product/fg-receipt` | PB 연결 | `w_prd_product_fg_receipt` | PB 메뉴 인벤토리 |
+| 제품재고관리 | 제품입고관리(모델단위) | `PRD_FG_MODEL_RECEIPT` | `/product/fg-model-receipt` | PB 연결 | `w_prd_product_fg_4_model_receipt` | PB 메뉴 인벤토리 |
+| 제품재고관리 | 제품출하관리 | `PRD_FG_ISSUE` | `/product/fg-issue` | PB 연결 | `w_prd_product_fg_issue` | PB 메뉴 인벤토리 |
+| 제품재고관리 | 제품출고관리(모델단위) | `PRD_FG_MODEL_ISSUE` | `/product/fg-model-issue` | PB 연결 | `w_prd_product_fg_4_model_issue` | PB 메뉴 인벤토리 |
 | 생산관리 | 작업지시관리 | `PRD_RUN_CARD` | `/production/run-card` | PB 연결 | `w_product_run_card_duckil` | PB 메뉴 인벤토리 |
 | 생산관리 | 제품생산계획 | `PRD_MASTER_PLAN` | `/production/master-plan` | PB 연결 | `w_pln_product_master_plan_master` | PB 메뉴 인벤토리 |
 | 생산관리 | 반제품생산계획 | `PRD_SMD_PLAN` | `/production/smd-plan` | PB 연결 | `w_pln_assembly_master_plan_master` | PB 메뉴 인벤토리 |

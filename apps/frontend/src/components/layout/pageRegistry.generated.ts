@@ -437,6 +437,36 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
       component = mod.getPageComponent();
       break;
     }
+    case "/product/fg-issue": {
+      const mod = await import("./page-registries/product__fg-issue.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/product/fg-model-issue": {
+      const mod = await import("./page-registries/product__fg-model-issue.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/product/fg-model-receipt": {
+      const mod = await import("./page-registries/product__fg-model-receipt.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/product/fg-receipt": {
+      const mod = await import("./page-registries/product__fg-receipt.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/product/pack": {
+      const mod = await import("./page-registries/product__pack.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/product/pack-history": {
+      const mod = await import("./page-registries/product__pack-history.generated");
+      component = mod.getPageComponent();
+      break;
+    }
     case "/production/daily-report": {
       const mod = await import("./page-registries/production__daily-report.generated");
       component = mod.getPageComponent();
