@@ -807,6 +807,11 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
       component = mod.getPageComponent();
       break;
     }
+    case "/warehouse/barcode-reprint": {
+      const mod = await import("./page-registries/warehouse__barcode-reprint.generated");
+      component = mod.getPageComponent();
+      break;
+    }
     case "/warehouse/dehumi-stock": {
       const mod = await import("./page-registries/warehouse__dehumi-stock.generated");
       component = mod.getPageComponent();
@@ -832,8 +837,18 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
       component = mod.getPageComponent();
       break;
     }
+    case "/warehouse/manual-input": {
+      const mod = await import("./page-registries/warehouse__manual-input.generated");
+      component = mod.getPageComponent();
+      break;
+    }
     case "/warehouse/material-receipt": {
       const mod = await import("./page-registries/warehouse__material-receipt.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/warehouse/msl-check": {
+      const mod = await import("./page-registries/warehouse__msl-check.generated");
       component = mod.getPageComponent();
       break;
     }

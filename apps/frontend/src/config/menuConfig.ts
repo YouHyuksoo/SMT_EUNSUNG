@@ -161,6 +161,9 @@ export const menuConfig: MenuConfigItem[] = [
       { code: "WH_BARCODE_ISSUE", labelKey: "menu.warehouse.barcodeIssue", path: "/warehouse/barcode-issue", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_other_issue_barcode_master" },
       { code: "WH_BARCODE_DIVIDE", labelKey: "menu.warehouse.barcodeDivide", path: "/warehouse/barcode-divide", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_receipt_barcode_divide_master" },
       { code: "WH_BAKING_SCAN", labelKey: "menu.warehouse.bakingScan", path: "/warehouse/baking-scan", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_baking_dehumi_scan_master" },
+      { code: "WH_BARCODE_REPRINT", labelKey: "menu.warehouse.barcodeReprint", path: "/warehouse/barcode-reprint", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_receipt_barcode_reprint_master" },
+      { code: "WH_MSL_CHECK", labelKey: "menu.warehouse.mslCheck", path: "/warehouse/msl-check", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_msl_item_check_master" },
+      { code: "WH_MANUAL_INPUT", labelKey: "menu.warehouse.manualInput", path: "/warehouse/manual-input", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_manual_input_history_query" },
     ],
   },
   {

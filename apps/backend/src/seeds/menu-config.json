@@ -88,7 +88,10 @@
       "WH_ISSUE_RETURN",
       "WH_BARCODE_ISSUE",
       "WH_BARCODE_DIVIDE",
-      "WH_BAKING_SCAN"
+      "WH_BAKING_SCAN",
+      "WH_BARCODE_REPRINT",
+      "WH_MSL_CHECK",
+      "WH_MANUAL_INPUT"
     ],
     "JIG": [
       "JIG_MASTER",

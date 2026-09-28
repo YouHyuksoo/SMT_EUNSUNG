@@ -3,7 +3,7 @@ sources:
   - apps/frontend/src/config/menuConfig.ts
   - apps/frontend/scripts/data/pb-screen-inventory.json
 generator: apps/frontend/scripts/gen-migration-status.mjs
-verifiedCommit: 138d6671
+verifiedCommit: c21d3c9e
 ---
 
 # PB 윈도우 ↔ 웹 메뉴·경로 연결표 (자동 생성)
@@ -15,7 +15,7 @@ verifiedCommit: 138d6671
 
 | 전체 웹 메뉴 | PB 연결 | 웹 신규 | 미확정 |
 |---:|---:|---:|---:|
-| 163 | 144 | 17 | 2 |
+| 166 | 147 | 17 | 2 |
 
 ## 전체 연결표
 
@@ -78,6 +78,9 @@ verifiedCommit: 138d6671
 | 자재수불관리 | 자재바코드출고관리 | `WH_BARCODE_ISSUE` | `/warehouse/barcode-issue` | PB 연결 | `w_mat_other_issue_barcode_master` | PB 메뉴 인벤토리 |
 | 자재수불관리 | 자재분할관리 | `WH_BARCODE_DIVIDE` | `/warehouse/barcode-divide` | PB 연결 | `w_mat_receipt_barcode_divide_master` | PB 메뉴 인벤토리 |
 | 자재수불관리 | 베이킹이력관리 | `WH_BAKING_SCAN` | `/warehouse/baking-scan` | PB 연결 | `w_mat_baking_dehumi_scan_master` | PB 메뉴 인벤토리 |
+| 자재수불관리 | 자재바코드재발행 | `WH_BARCODE_REPRINT` | `/warehouse/barcode-reprint` | PB 연결 | `w_mat_receipt_barcode_reprint_master` | PB 메뉴 인벤토리 |
+| 자재수불관리 | MSL 이상품목 처리이력 | `WH_MSL_CHECK` | `/warehouse/msl-check` | PB 연결 | `w_mat_msl_item_check_master` | PB 메뉴 인벤토리 |
+| 자재수불관리 | IMD 라인 자재투입관리 | `WH_MANUAL_INPUT` | `/warehouse/manual-input` | PB 연결 | `w_mat_manual_input_history_query` | PB 메뉴 인벤토리 |
 | 지그관리 | 지그마스터 | `JIG_MASTER` | `/jig/master` | PB 연결 | `w_mcn_jig_master` | PB 메뉴 인벤토리 |
 | 지그관리 | 지그출고관리 | `JIG_ISSUE` | `/jig/issue` | PB 연결 | `w_mcn_jig_issue_master` | PB 메뉴 인벤토리 |
 | 지그관리 | 지그수리관리 | `JIG_REPAIR` | `/jig/repair` | PB 연결 | `w_mcn_jig_repair_master` | PB 메뉴 인벤토리 |

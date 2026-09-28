@@ -16,6 +16,9 @@
  *   /warehouse/barcode-issue   238 자재바코드출고관리 (출고대조 — 쓰기)
  *   /warehouse/barcode-divide  240 자재분할관리 (쓰기)
  *   /warehouse/baking-scan     261 베이킹이력관리 (챔버 입출고 — 쓰기)
+ *   /warehouse/barcode-reprint 241 자재바코드재발행 (쓰기)
+ *   /warehouse/msl-check       260 MSL 이상품목 처리이력관리 (쓰기)
+ *   /warehouse/manual-input    239 IMD 라인 자재투입관리 (쓰기)
  */
 import {
   Body, Controller, Delete, Get, Patch, Post, Query, UseGuards,
@@ -28,6 +31,9 @@ import { ROW_LIMIT } from '../../shared/row-limit';
 import { BakingScanService } from './baking-scan.service';
 import { BarcodeDivideService } from './barcode-divide.service';
 import { BarcodeIssueService } from './barcode-issue.service';
+import { BarcodeReprintService } from './barcode-reprint.service';
+import { ManualInputService } from './manual-input.service';
+import { MslCheckService } from './msl-check.service';
 import { BarcodeReceiptService } from './barcode-receipt.service';
 import { ChamberStockService } from './chamber-stock.service';
 import { RecycleCheckService } from './recycle-check.service';
@@ -43,6 +49,13 @@ import {
   BarcodeCompareQueryDto,
   BarcodeDivideDto,
   BarcodeDivideQueryDto,
+  BarcodeReprintDto,
+  BarcodeReprintQueryDto,
+  ManualInputCreateDto,
+  ManualInputQueryDto,
+  MslCheckCreateDto,
+  MslCheckQueryDto,
+  MslOverQueryDto,
   BarcodeIssueDto,
   BarcodeIssueHistoryQueryDto,
   BarcodeIssueScanDto,
@@ -811,6 +824,140 @@ export class BakingScanController {
   ) {
     return ResponseUtil.success(
       await this.service.scan(dto, organizationId, userId || DEFAULT_USER),
+    );
+  }
+}
+
+@ApiTags('자재창고 - 자재바코드재발행')
+@UseGuards(JwtAuthGuard)
+@Controller('warehouse/barcode-reprint')
+export class BarcodeReprintController {
+  constructor(private readonly service: BarcodeReprintService) {}
+
+  @Get()
+  @ApiOperation({ summary: '241 재발행 대상 바코드 (취소된 바코드는 뺀다).' })
+  async find(
+    @Query() query: BarcodeReprintQueryDto,
+    @OrganizationId() organizationId: number,
+  ) {
+    return paged(await this.service.findReprintable(query, organizationId));
+  }
+
+  @Post()
+  @ApiOperation({
+    summary: '241 바코드 재발행 (**쓰기**). 새 수량으로 바코드를 다시 만든다.'
+      + ' **원장은 건드리지 않는다** — 수량이 실제로 줄어 재고에 반영해야 하면 250'
+      + ' 출고바코드반품을 써야 한다. PB 의 WHERE 에 빠져 있던 품목코드를 함께 건다.',
+  })
+  async reprint(
+    @Body() dto: BarcodeReprintDto,
+    @OrganizationId() organizationId: number,
+    @UserId() userId?: string,
+  ) {
+    return ResponseUtil.success(
+      await this.service.reprint(dto, organizationId, userId || DEFAULT_USER),
+    );
+  }
+}
+
+@ApiTags('자재창고 - MSL 이상품목')
+@UseGuards(JwtAuthGuard)
+@Controller('warehouse/msl-check')
+export class MslCheckController {
+  constructor(private readonly service: MslCheckService) {}
+
+  @Get('inventory')
+  @ApiOperation({
+    summary: '260 재고에 있는데 MSL 이 넘은 릴. 경과율 계산의 0 나누기를 PB 와 같이'
+      + ' 막는다 (허용시간 0 품목이 1,448건 있다 — 빼면 ORA-01476).',
+  })
+  async inventory(
+    @Query() query: MslOverQueryDto,
+    @OrganizationId() organizationId: number,
+  ) {
+    return paged(await this.service.findInventoryOver(query, organizationId));
+  }
+
+  @Get('issued')
+  @ApiOperation({
+    summary: '260 이미 라인에 나간 릴의 MSL 경과. 라인에 처음 들어간 시각을 검사'
+      + ' 이력에서 함께 찾는다.',
+  })
+  async issued(
+    @Query() query: MslOverQueryDto,
+    @OrganizationId() organizationId: number,
+  ) {
+    return paged(await this.service.findIssuedOver(query, organizationId));
+  }
+
+  @Get('view')
+  @ApiOperation({
+    summary: '260 MSL 현황 (IM_ITEM_MSL_CHECK_VIEW, 실측 209행). 라인·모델·피더'
+      + ' 위치까지 붙은 화면용 뷰다.',
+  })
+  async view(
+    @Query() query: MslCheckQueryDto,
+    @OrganizationId() organizationId: number,
+  ) {
+    return paged(await this.service.findCheckView(query, organizationId));
+  }
+
+  @Get('history')
+  @ApiOperation({
+    summary: '260 처리이력. **아직 비어 있다** — IM_ITEM_MSL_CHECK_MASTER 가 0행이다'
+      + ' (실측). 현장에서 쓰기 시작한 적이 없다.',
+  })
+  async history(
+    @Query() query: MslCheckQueryDto,
+    @OrganizationId() organizationId: number,
+  ) {
+    return paged(await this.service.findHistory(query, organizationId));
+  }
+
+  @Post('history')
+  @ApiOperation({
+    summary: '260 처리이력 등록 (**쓰기**). 품목·롯트·수량은 바코드 원장에서 가져온다'
+      + ' — 사람이 정하는 것은 처리코드와 비고뿐이다 (PB 편집 가능 열도 그 둘이다).',
+  })
+  async createHistory(
+    @Body() dto: MslCheckCreateDto,
+    @OrganizationId() organizationId: number,
+    @UserId() userId?: string,
+  ) {
+    return ResponseUtil.success(
+      await this.service.createHistory(dto, organizationId, userId || DEFAULT_USER),
+    );
+  }
+}
+
+@ApiTags('자재창고 - IMD 라인 자재투입')
+@UseGuards(JwtAuthGuard)
+@Controller('warehouse/manual-input')
+export class ManualInputController {
+  constructor(private readonly service: ManualInputService) {}
+
+  @Get()
+  @ApiOperation({
+    summary: '239 수동 투입 이력. **아직 비어 있다** —'
+      + ' IM_ITEM_MANUAL_INPUT_HISTORY 가 0행이다 (실측).'
+      + ' 모델명 조건에 NVL 을 걸어 런카드가 없는 이력도 보이게 했다 (PB 는 빠졌다).',
+  })
+  async find(
+    @Query() query: ManualInputQueryDto,
+    @OrganizationId() organizationId: number,
+  ) {
+    return paged(await this.service.findHistory(query, organizationId));
+  }
+
+  @Post()
+  @ApiOperation({ summary: '239 수동 투입 등록 (**쓰기**).' })
+  async create(
+    @Body() dto: ManualInputCreateDto,
+    @OrganizationId() organizationId: number,
+    @UserId() userId?: string,
+  ) {
+    return ResponseUtil.success(
+      await this.service.createHistory(dto, organizationId, userId || DEFAULT_USER),
     );
   }
 }

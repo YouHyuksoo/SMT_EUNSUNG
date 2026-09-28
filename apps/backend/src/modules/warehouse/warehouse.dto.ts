@@ -1225,3 +1225,151 @@ export class BakingScanDto {
   @IsOptional() @IsString() @Length(0, 30)
   chamberLocation?: string;
 }
+
+// ══════════════ 241 자재바코드재발행 · 260 MSL 이상품목 · 239 IMD 라인 자재투입
+
+/** 241 재발행 대상 조회 조건. */
+export class BarcodeReprintQueryDto {
+  @ApiPropertyOptional({ description: '품목코드 (앞부분 일치)' })
+  @IsOptional() @IsString() @Length(0, 50)
+  itemCode?: string;
+
+  @ApiPropertyOptional({ description: '전표번호 (앞부분 일치)' })
+  @IsOptional() @IsString() @Length(0, 60)
+  slipNo?: string;
+
+  @ApiPropertyOptional({ description: '협력사 바코드 (앞부분 일치)' })
+  @IsOptional() @IsString() @Length(0, 100)
+  supplierBarcode?: string;
+
+  @ApiPropertyOptional({ description: '자재 바코드 (앞부분 일치)' })
+  @IsOptional() @IsString() @Length(0, 100)
+  barcode?: string;
+
+  @ApiPropertyOptional({ description: '롯트번호 (앞부분 일치)' })
+  @IsOptional() @IsString() @Length(0, 60)
+  lotNo?: string;
+}
+
+/**
+ * 241 바코드 재발행 (**쓰기**).
+ *
+ * **원장은 건드리지 않는다.** 수량이 실제로 줄어 재고에 반영해야 하면 250
+ * 출고바코드반품을 써야 한다.
+ */
+export class BarcodeReprintDto {
+  @ApiProperty({ description: '다시 만들 자재 바코드' })
+  @IsString() @Length(1, 100)
+  barcode!: string;
+
+  @ApiProperty({ description: '새 수량. 1 이상이어야 한다.' })
+  @Type(() => Number) @IsNumber() @Min(1)
+  newQty!: number;
+}
+
+/** 260 MSL 초과 조회 조건 (재고·투입 공용). */
+export class MslOverQueryDto {
+  @ApiPropertyOptional({ description: '품목코드 (앞부분 일치)' })
+  @IsOptional() @IsString() @Length(0, 50)
+  itemCode?: string;
+
+  @ApiPropertyOptional({
+    description: "MSL 등급 하한 (문자 비교). 기본 '2' — 실측 등급은 1·2·2A·3 이다.",
+  })
+  @IsOptional() @IsString() @Length(0, 5)
+  mslLevel?: string;
+
+  @ApiPropertyOptional({
+    description: '경과율 하한 (%). 기본 100 — 허용시간을 이미 넘긴 것만 본다.',
+  })
+  @IsOptional() @Type(() => Number) @IsNumber() @Min(0)
+  passedRate?: number;
+}
+
+/** 260 현황·처리이력 조회 조건. */
+export class MslCheckQueryDto {
+  @ApiPropertyOptional({ description: '품목코드 (앞부분 일치)' })
+  @IsOptional() @IsString() @Length(0, 50)
+  itemCode?: string;
+
+  @ApiPropertyOptional({ description: '자재 바코드 (앞부분 일치)' })
+  @IsOptional() @IsString() @Length(0, 100)
+  barcode?: string;
+
+  @ApiPropertyOptional({ description: '라인코드 (앞부분 일치)' })
+  @IsOptional() @IsString() @Length(0, 20)
+  lineCode?: string;
+
+  @ApiPropertyOptional({ description: '모델명 (앞부분 일치)' })
+  @IsOptional() @IsString() @Length(0, 50)
+  modelName?: string;
+}
+
+/** 260 MSL 처리이력 등록 (**쓰기**). */
+export class MslCheckCreateDto {
+  @ApiProperty({ description: '자재 바코드 (품목·롯트·수량은 원장에서 가져온다)' })
+  @IsString() @Length(1, 100)
+  barcode!: string;
+
+  @ApiProperty({ description: '처리코드 (공통코드). 베이킹·폐기 등' })
+  @IsString() @Length(1, 20)
+  mslActionCode!: string;
+
+  @ApiPropertyOptional({ description: '비고' })
+  @IsOptional() @IsString() @Length(0, 200)
+  comments?: string;
+}
+
+/** 239 수동 투입 이력 조회 조건. */
+export class ManualInputQueryDto {
+  @ApiProperty({ description: '투입일 시작 (YYYY-MM-DD)' })
+  @IsString() @Matches(DATE_ONLY)
+  dateFrom!: string;
+
+  @ApiProperty({ description: '투입일 종료 (YYYY-MM-DD)' })
+  @IsString() @Matches(DATE_ONLY)
+  dateTo!: string;
+
+  @ApiPropertyOptional({ description: '라인코드 (앞부분 일치)' })
+  @IsOptional() @IsString() @Length(0, 20)
+  lineCode?: string;
+
+  @ApiPropertyOptional({ description: '공정코드 (앞부분 일치)' })
+  @IsOptional() @IsString() @Length(0, 20)
+  workstageCode?: string;
+
+  @ApiPropertyOptional({ description: '런번호 (앞부분 일치)' })
+  @IsOptional() @IsString() @Length(0, 40)
+  runNo?: string;
+
+  @ApiPropertyOptional({ description: '모델명 (앞부분 일치)' })
+  @IsOptional() @IsString() @Length(0, 50)
+  modelName?: string;
+}
+
+/** 239 수동 투입 등록 (**쓰기**). */
+export class ManualInputCreateDto {
+  @ApiProperty({ description: '투입일 (YYYY-MM-DD)' })
+  @IsString() @Matches(DATE_ONLY)
+  inputDate!: string;
+
+  @ApiProperty({ description: '라인코드' })
+  @IsString() @Length(1, 20)
+  lineCode!: string;
+
+  @ApiProperty({ description: '공정코드' })
+  @IsString() @Length(1, 20)
+  workstageCode!: string;
+
+  @ApiProperty({ description: '자재 롯트번호' })
+  @IsString() @Length(1, 60)
+  materialLot!: string;
+
+  @ApiPropertyOptional({ description: '런번호 (작업지시). 넣으면 모델명이 붙는다.' })
+  @IsOptional() @IsString() @Length(0, 40)
+  runNo?: string;
+
+  @ApiPropertyOptional({ description: '비고' })
+  @IsOptional() @IsString() @Length(0, 200)
+  comments?: string;
+}

@@ -3,7 +3,7 @@ sources:
   - apps/frontend/src/config/menuConfig.ts
   - apps/frontend/scripts/data/pb-screen-inventory.json
 generator: apps/frontend/scripts/gen-migration-status.mjs
-verifiedCommit: 138d6671
+verifiedCommit: c21d3c9e
 ---
 
 # PB 화면 이관 현황 (자동 생성)
@@ -18,11 +18,11 @@ verifiedCommit: 138d6671
 | 상태 | 건수 |
 |---|---:|
 | PB 업무화면(셸 메뉴 제외) | 275 |
-| 완료(개발됨, pbWindow 매핑) | 145 |
-| 미착수 | 104 |
+| 완료(개발됨, pbWindow 매핑) | 148 |
+| 미착수 | 101 |
 | 윈도우 미상 | 26 |
 
-웹 메뉴 연결 계약: **PB 144개 / 웹 신규 17개 / 미확정 2개**. PB 매핑과 웹 경로의 전체 연결표는 [pb-menu-route-links.md](pb-menu-route-links.md)에서 관리합니다.
+웹 메뉴 연결 계약: **PB 147개 / 웹 신규 17개 / 미확정 2개**. PB 매핑과 웹 경로의 전체 연결표는 [pb-menu-route-links.md](pb-menu-route-links.md)에서 관리합니다.
 
 ## 대분류별 진행률
 
@@ -37,7 +37,7 @@ verifiedCommit: 138d6671
 | S-PARTS | `M_MOLD` | 8 | 8 | 0 | 0 |
 | 생산 | `M_PLANNING` | 7 | 7 | 0 | 0 |
 | 공정 | `M_WORKSTAGE0` | 5 | 2 | 3 | 0 |
-| 자재창고 | `M_WAREHOUSE` | 22 | 19 | 3 | 0 |
+| 자재창고 | `M_WAREHOUSE` | 22 | 22 | 0 | 0 |
 | 재고 | `M_INVENTORY` | 5 | 1 | 4 | 0 |
 | 수리 | `M_REPAIR` | 4 | 2 | 2 | 0 |
 | 품질관리 | `M_QC` | 12 | 12 | 0 | 0 |
@@ -192,9 +192,9 @@ verifiedCommit: 138d6671
 | 235 | 자재입고전표관리 | `w_mat_receipt_slip_master` | srw | 완료 | `WH_RECEIPT_SLIP` | `/warehouse/receipt-slip` |
 | 237 | 자재바코드입고관리 | `w_mat_other_receipt_barcode_master` | srw | 완료 | `WH_BARCODE_RECEIPT` | `/warehouse/barcode-receipt` |
 | 238 | 자재바코드출고관리 | `w_mat_other_issue_barcode_master` | srw | 완료 | `WH_BARCODE_ISSUE` | `/warehouse/barcode-issue` |
-| 239 | IMD 라인 자재투입관리 | `w_mat_manual_input_history_query` | srw | 미착수 |  |  |
+| 239 | IMD 라인 자재투입관리 | `w_mat_manual_input_history_query` | srw | 완료 | `WH_MANUAL_INPUT` | `/warehouse/manual-input` |
 | 240 | 자재분할관리 | `w_mat_receipt_barcode_divide_master` | srw | 완료 | `WH_BARCODE_DIVIDE` | `/warehouse/barcode-divide` |
-| 241 | 자재바코드재발행 | `w_mat_receipt_barcode_reprint_master` | srw | 미착수 |  |  |
+| 241 | 자재바코드재발행 | `w_mat_receipt_barcode_reprint_master` | srw | 완료 | `WH_BARCODE_REPRINT` | `/warehouse/barcode-reprint` |
 | 243 | 솔더라벨 발행 | `w_mat_receipt_slip_master_onetek_solder` | srw | 완료 | `WH_SOLDER_LABEL` | `/warehouse/solder-label` |
 | 244 | 솔더입출고조회 | `w_mat_solder_receipt_issue_master` | srw | 완료 | `WH_SOLDER` | `/warehouse/solder` |
 | 245 | 솔더라인투입이력조회 | `w_mat_solder_input_move_query` | srw | 완료 | `WH_SOLDER_INPUT` | `/warehouse/solder-input` |
@@ -205,7 +205,7 @@ verifiedCommit: 138d6671
 | 255 | └ 자재입고취소 | `w_mat_receipt_cancel_master` | srw | 완료 | `MAT_RECEIPT_CANCEL` | `/material/receipt-cancel` |
 | 257 | └ 자재기타출고 | `w_mat_other_issue_master` | srw | 완료 | `WH_ETC_ISSUE` | `/warehouse/etc-issue` |
 | 258 | └ 자재출고취소 | `w_mat_mass_issue_cancel_master` | srw | 완료 | `WH_ISSUE_CANCEL` | `/warehouse/issue-cancel` |
-| 260 | MSL 이상품목 처리이력관리 | `w_mat_msl_item_check_master` | srw | 미착수 |  |  |
+| 260 | MSL 이상품목 처리이력관리 | `w_mat_msl_item_check_master` | srw | 완료 | `WH_MSL_CHECK` | `/warehouse/msl-check` |
 | 261 | 베이킹이력관리 | `w_mat_baking_dehumi_scan_master` | srw | 완료 | `WH_BAKING_SCAN` | `/warehouse/baking-scan` |
 | 262 | 베이킹재고조회 | `w_mat_baking_scan_query` | srw | 완료 | `WH_BAKING_STOCK` | `/warehouse/baking-stock` |
 | 263 | 진공포장재고조회 | `w_mat_vacuum_scan_query` | srw | 완료 | `WH_VACUUM_STOCK` | `/warehouse/vacuum-stock` |

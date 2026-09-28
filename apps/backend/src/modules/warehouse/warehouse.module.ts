@@ -20,6 +20,9 @@
  *   238 자재바코드출고관리 w_mat_other_issue_barcode_master  → BarcodeIssueService (쓰기)
  *   240 자재분할관리       w_mat_receipt_barcode_divide_master → BarcodeDivideService (쓰기)
  *   261 베이킹이력관리     w_mat_baking_dehumi_scan_master   → BakingScanService (쓰기)
+ *   241 자재바코드재발행   w_mat_receipt_barcode_reprint_master → BarcodeReprintService (쓰기)
+ *   260 MSL 이상품목       w_mat_msl_item_check_master       → MslCheckService (쓰기)
+ *   239 IMD 라인 자재투입  w_mat_manual_input_history_query  → ManualInputService (쓰기)
  *
  * **왜 화면당 모듈이 아닌가.** 기존 `material` 모듈은 화면당 모듈 하나
  * (`material-current-inventory.module.ts` 등) 패턴인데, 자재창고는 20화면이라
@@ -40,6 +43,9 @@ import { Module } from '@nestjs/common';
 import { BakingScanService } from './baking-scan.service';
 import { BarcodeDivideService } from './barcode-divide.service';
 import { BarcodeIssueService } from './barcode-issue.service';
+import { BarcodeReprintService } from './barcode-reprint.service';
+import { ManualInputService } from './manual-input.service';
+import { MslCheckService } from './msl-check.service';
 import { BarcodeReceiptService } from './barcode-receipt.service';
 import { ChamberStockService } from './chamber-stock.service';
 import { RecycleCheckService } from './recycle-check.service';
@@ -54,6 +60,9 @@ import {
   BarcodeDivideController,
   BarcodeIssueController,
   BarcodeReceiptController,
+  BarcodeReprintController,
+  ManualInputController,
+  MslCheckController,
   ChamberStockController,
   IssueManageController,
   IssueReturnController,
@@ -80,6 +89,9 @@ import {
     BarcodeIssueController,
     BarcodeDivideController,
     BakingScanController,
+    BarcodeReprintController,
+    MslCheckController,
+    ManualInputController,
   ],
   providers: [
     ChamberStockService,
@@ -94,6 +106,9 @@ import {
     BarcodeIssueService,
     BarcodeDivideService,
     BakingScanService,
+    BarcodeReprintService,
+    MslCheckService,
+    ManualInputService,
   ],
 })
 /**
