@@ -311,6 +311,7 @@
     "warehouse.etcReceipt": "Quản lý nhập kho khác",
     "warehouse.etcIssue": "Xuất kho vật tư khác",
     "warehouse.issueCancel": "Hủy xuất kho vật tư",
+    "warehouse.issueReturn": "Trả hàng mã vạch xuất kho",
     "cutting": "Công đoạn cắt",
     "cutting.order": "Lệnh sản xuất",
     "cutting.result": "Kết quả sản xuất",

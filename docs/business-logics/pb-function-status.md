@@ -3,7 +3,7 @@ sources:
   - apps/frontend/scripts/data/pb-function-catalog.json
   - docs/database/generated/pb-function-inventory.json
 generator: apps/frontend/scripts/gen-function-status.mjs
-verifiedCommit: 54bf0205
+verifiedCommit: 2708b7fa
 ---
 
 # PB 함수 처리 현황 (자동 생성)
@@ -23,7 +23,7 @@ DB 함수는 웹에서도 **그대로 호출**합니다 — 재구현하면 PB �
 | PB 창(실측) | 596 |
 | SQL 안 호출 = DB 함수 (조치 불필요) | 196 |
 | SQL 밖 호출 = PB 함수 | 226 |
-| 카탈로그 등록(처리 완료) | 67 |
+| 카탈로그 등록(처리 완료) | 68 |
 | 미처리 전환 후보 | 49 |
 
 ## 처리 완료 (카탈로그)
@@ -83,7 +83,7 @@ DB 함수는 웹에서도 **그대로 호출**합니다 — 재구현하면 PB �
 | `f_mat_issue_cancel` | `IssueManageService.cancelIssue (한 트랜잭션: 공정이관 확인 → 원건 상태 'C' → 반납요청 확정 해제 → 부호 뒤집은 행 INSERT)` | DB 에 동명 함수가 없다 (실측). 역분개 패턴이라 f_mat_receipt_cancel → PKG_MES_MAC.SP_RECEIPT_CANCEL 과 같은 성격이지만, PB 와 웹을 한 건에 대해 같이 쓰지 않는다는 사용자 결정에 따라 DB 오브젝트를 만들지 않고 TypeScript 트랜잭션으로 옮겼다. 상태 변경을 UPDATE 조건에 넣어 PB 에 없던 중복취소 방어를 더했다. |
 | `f_get_item_issue_packing_qty` | `@smt/shared applyIssuePacking (packages/shared/src/warehouse/issue-packing.ts)` | DB 에 동명 함수가 없다 (실측). 화면이 실제 출고 수량을 미리 보여줘야 해서 공유 패키지에 두고 테스트 8건으로 못 박았다. PB 는 음수 요청에 양수 포장단위를 내놓아 반납이 출고로 뒤집히는데, 값은 PB 와 맞추고 그 조합을 서비스에서 거절한다. |
 
-### 웹에서 직접 (`native`) — 22건
+### 웹에서 직접 (`native`) — 23건
 
 | PB 함수 | 대상 | 비고 |
 |---|---|---|
@@ -109,6 +109,7 @@ DB 함수는 웹에서도 **그대로 호출**합니다 — 재구현하면 PB �
 | `f_ymd_sysdate` | `SUBSTR(TO_CHAR(SYSDATE,'YYYY'),4,1) || F_GET_MONTH_CODE2(TO_CHAR(SYSDATE,'MM')) || F_GET_DAY_CODE(TO_CHAR(SYSDATE,'DD'))` | 롯트번호 날짜접두어. YYYYMMDD 가 아니라 3글자 코드다 (2026-09-28 → 69S). DB 에 동명 함수가 없고 PB 본문이 쓰는 F_GET_MONTH_CODE2·F_GET_DAY_CODE 는 DB 함수라 그대로 부른다. 실측 롯트번호 303,081건이 8자(3+5). |
 | `f_get_line_type_from_item` | `F_GET_LINE_TYPE_FROM_ITEM(item_code, organization_id)` | DB 함수와 본문이 같고 유효기간 조건만 DB 쪽에서 주석 처리돼 있다. 호출 전에 유효기간을 이미 확인하므로 결과가 같다. 인자 2개다 (PB 래퍼는 1개). |
 | `f_get_any_no` | `F_GET_ANY_NO(UPPER(name), organization_id)` | PB 래퍼 본문이 같은 이름의 DB 함수를 부르는 것뿐이라 직접 불러도 값이 같다 (실측 f_get_any_no.srf). |
+| `f_get_max_supplier_by_item` | `F_GET_MAX_SUPPLIER_BY_ITEM(item_code, organization_id)` | PB 동명 함수가 없고 DB 에 VALID 로 있다 (실측). PB 250 도 INSERT 문 안에서 부르므로 DB 함수다. |
 
 ### 전환 보류 (`blocked`) — 10건
 

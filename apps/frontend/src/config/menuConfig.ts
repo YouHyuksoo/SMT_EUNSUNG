@@ -157,6 +157,7 @@ export const menuConfig: MenuConfigItem[] = [
       { code: "WH_ETC_RECEIPT", labelKey: "menu.warehouse.etcReceipt", path: "/warehouse/etc-receipt", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_other_receipt_master" },
       { code: "WH_ETC_ISSUE", labelKey: "menu.warehouse.etcIssue", path: "/warehouse/etc-issue", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_other_issue_master" },
       { code: "WH_ISSUE_CANCEL", labelKey: "menu.warehouse.issueCancel", path: "/warehouse/issue-cancel", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_mass_issue_cancel_master" },
+      { code: "WH_ISSUE_RETURN", labelKey: "menu.warehouse.issueReturn", path: "/warehouse/issue-return", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_other_mass_issue_barcode_return_master" },
     ],
   },
   {

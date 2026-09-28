@@ -16,6 +16,7 @@
  *   254 자재기타입고관리   w_mat_other_receipt_master        → ReceiptManageService (쓰기)
  *   257 자재기타출고       w_mat_other_issue_master          → IssueManageService (쓰기)
  *   258 자재출고취소       w_mat_mass_issue_cancel_master    → IssueManageService (쓰기)
+ *   250 출고바코드반품     w_mat_other_mass_issue_barcode_return_master → IssueReturnService (쓰기)
  *
  * **왜 화면당 모듈이 아닌가.** 기존 `material` 모듈은 화면당 모듈 하나
  * (`material-current-inventory.module.ts` 등) 패턴인데, 자재창고는 20화면이라
@@ -37,6 +38,7 @@ import { BarcodeReceiptService } from './barcode-receipt.service';
 import { ChamberStockService } from './chamber-stock.service';
 import { RecycleCheckService } from './recycle-check.service';
 import { IssueManageService } from './issue-manage.service';
+import { IssueReturnService } from './issue-return.service';
 import { ReceiptManageService } from './receipt-manage.service';
 import { ReceiptSlipService } from './receipt-slip.service';
 import { SolderLabelService } from './solder-label.service';
@@ -45,6 +47,7 @@ import {
   BarcodeReceiptController,
   ChamberStockController,
   IssueManageController,
+  IssueReturnController,
   RecycleCheckController,
   SolderController,
   ReceiptManageController,
@@ -64,6 +67,7 @@ import {
     SolderLabelController,
     ReceiptManageController,
     IssueManageController,
+    IssueReturnController,
   ],
   providers: [
     ChamberStockService,
@@ -74,6 +78,7 @@ import {
     SolderLabelService,
     ReceiptManageService,
     IssueManageService,
+    IssueReturnService,
   ],
 })
 /**

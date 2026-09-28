@@ -311,6 +311,7 @@
     "warehouse.etcReceipt": "Material Etc. Receipt",
     "warehouse.etcIssue": "Material Etc. Issue",
     "warehouse.issueCancel": "Material Issue Cancel",
+    "warehouse.issueReturn": "Issue Barcode Return",
     "cutting": "Cutting",
     "cutting.order": "Work Order",
     "cutting.result": "Work Result",

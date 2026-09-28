@@ -448,6 +448,13 @@
       "target": "@smt/shared applyIssuePacking (packages/shared/src/warehouse/issue-packing.ts)",
       "usedBy": "apps/backend/src/modules/warehouse/issue-manage.service.ts, apps/frontend/src/app/(authenticated)/warehouse/etc-issue/page.tsx",
       "note": "DB 에 동명 함수가 없다 (실측). 화면이 실제 출고 수량을 미리 보여줘야 해서 공유 패키지에 두고 테스트 8건으로 못 박았다. PB 는 음수 요청에 양수 포장단위를 내놓아 반납이 출고로 뒤집히는데, 값은 PB 와 맞추고 그 조합을 서비스에서 거절한다."
+    },
+    {
+      "pbFunction": "f_get_max_supplier_by_item",
+      "action": "native",
+      "target": "F_GET_MAX_SUPPLIER_BY_ITEM(item_code, organization_id)",
+      "usedBy": "apps/backend/src/modules/warehouse/issue-return.service.ts",
+      "note": "PB 동명 함수가 없고 DB 에 VALID 로 있다 (실측). PB 250 도 INSERT 문 안에서 부르므로 DB 함수다."
     }
   ]
 }

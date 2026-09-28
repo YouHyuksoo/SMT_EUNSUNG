@@ -895,3 +895,69 @@ export class IssueCancelDto {
   @IsString() @Matches(DATE_ONLY)
   cancelDate!: string;
 }
+
+// ══════════════════════════════════ 250 출고바코드반품
+
+/** 250 반품 이력 조회 조건. */
+export class IssueReturnQueryDto {
+  @ApiProperty({ description: '반품일 시작 (YYYY-MM-DD)' })
+  @IsString() @Matches(DATE_ONLY)
+  dateFrom!: string;
+
+  @ApiProperty({ description: '반품일 종료 (YYYY-MM-DD)' })
+  @IsString() @Matches(DATE_ONLY)
+  dateTo!: string;
+
+  @ApiPropertyOptional({ description: '품목코드 (앞부분 일치)' })
+  @IsOptional() @IsString() @Length(0, 50)
+  itemCode?: string;
+
+  @ApiPropertyOptional({ description: '롯트번호 (앞부분 일치)' })
+  @IsOptional() @IsString() @Length(0, 60)
+  lotNo?: string;
+
+  @ApiPropertyOptional({ description: '라인코드 (앞부분 일치)' })
+  @IsOptional() @IsString() @Length(0, 20)
+  lineCode?: string;
+}
+
+/** 250 찍은 바코드를 풀어 본다 (읽기 전용). */
+export class IssueReturnLookupDto {
+  @ApiProperty({ description: '자재 바코드' })
+  @IsString() @Length(1, 100)
+  barcode!: string;
+}
+
+/**
+ * 250 양산반품 (**쓰기**).
+ *
+ * **반품하면 바코드의 수량이 바뀐다** — 남은 수량으로 `품목-롯트-수량` 바코드를
+ * 다시 만든다 (PB 그대로).
+ */
+export class IssueReturnDto {
+  @ApiProperty({ description: '자재 바코드' })
+  @IsString() @Length(1, 100)
+  barcode!: string;
+
+  @ApiProperty({ description: '반품 수량 (되돌려 받는 수량). 1 이상이어야 한다.' })
+  @Type(() => Number) @IsNumber() @Min(1)
+  returnQty!: number;
+
+  @ApiPropertyOptional({
+    description: '실사 수량. 반품 수량과의 차이가 로스로 기록된다'
+      + ' (IM_ITEM_ISSUE_LOSS). 비우면 반품 수량과 같게 보아 로스 0 이다.',
+  })
+  @IsOptional() @Type(() => Number) @IsNumber() @Min(0)
+  actualQty?: number;
+
+  @ApiProperty({
+    description: '라인코드. 화면이 마지막 출고 라인을 찾아 채워 준다'
+      + ' (못 찾으면 직접 넣는다).',
+  })
+  @IsString() @Length(1, 20)
+  lineCode!: string;
+
+  @ApiPropertyOptional({ description: '창고코드' })
+  @IsOptional() @IsString() @Length(0, 20)
+  locationCode?: string;
+}

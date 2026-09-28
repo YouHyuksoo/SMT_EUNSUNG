@@ -84,7 +84,8 @@
       "WH_MATERIAL_RECEIPT",
       "WH_ETC_RECEIPT",
       "WH_ETC_ISSUE",
-      "WH_ISSUE_CANCEL"
+      "WH_ISSUE_CANCEL",
+      "WH_ISSUE_RETURN"
     ],
     "JIG": [
       "JIG_MASTER",

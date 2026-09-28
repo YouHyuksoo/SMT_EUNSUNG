@@ -12,6 +12,7 @@
  *   /warehouse/solder-label    243 솔더라벨 발행 (전표+라벨 — 쓰기)
  *   /warehouse/receipt-manage  253 자재입고관리 (조회) · 254 자재기타입고관리 (쓰기)
  *   /warehouse/issue-manage    257 자재기타출고 · 258 자재출고취소 (쓰기)
+ *   /warehouse/issue-return    250 출고바코드반품 (쓰기)
  */
 import {
   Body, Controller, Delete, Get, Patch, Post, Query, UseGuards,
@@ -25,6 +26,7 @@ import { BarcodeReceiptService } from './barcode-receipt.service';
 import { ChamberStockService } from './chamber-stock.service';
 import { RecycleCheckService } from './recycle-check.service';
 import { IssueManageService } from './issue-manage.service';
+import { IssueReturnService } from './issue-return.service';
 import { ReceiptManageService } from './receipt-manage.service';
 import { ReceiptSlipService } from './receipt-slip.service';
 import { SolderLabelService } from './solder-label.service';
@@ -43,6 +45,9 @@ import {
   IssueCancelDto,
   IssueHistoryQueryDto,
   IssueInventoryQueryDto,
+  IssueReturnDto,
+  IssueReturnLookupDto,
+  IssueReturnQueryDto,
   ReceiptHistoryQueryDto,
   ReceiptInventoryQueryDto,
   ReceiptSlipBarcodeQueryDto,
@@ -539,6 +544,67 @@ export class IssueManageController {
   ) {
     return ResponseUtil.success(
       await this.service.cancelIssue(dto, organizationId, userId || DEFAULT_USER),
+    );
+  }
+}
+
+@ApiTags('자재창고 - 출고바코드반품')
+@UseGuards(JwtAuthGuard)
+@Controller('warehouse/issue-return')
+export class IssueReturnController {
+  constructor(private readonly service: IssueReturnService) {}
+
+  @Get()
+  @ApiOperation({
+    summary: '250 반품 이력. 이 경로가 만든 마이너스 출고만 본다'
+      + " (ISSUE_DEFICIT='4' · ISSUE_ACCOUNT='M001'). 로스 수량을 함께 낸다.",
+  })
+  async find(
+    @Query() query: IssueReturnQueryDto,
+    @OrganizationId() organizationId: number,
+  ) {
+    return paged(await this.service.findReturns(query, organizationId));
+  }
+
+  @Get('losses')
+  @ApiOperation({
+    summary: '250 로스 목록. 반품할 때 반품 수량과 실사 수량의 차이가 한 줄씩 쌓인다.'
+      + ' 반품 목록에 상관 서브쿼리로 붙였더니 실측 10초가 걸려 따로 뗐다.',
+  })
+  async losses(
+    @Query() query: IssueReturnQueryDto,
+    @OrganizationId() organizationId: number,
+  ) {
+    return paged(await this.service.findLosses(query, organizationId));
+  }
+
+  @Post('lookup')
+  @ApiOperation({
+    summary: '250 찍은 바코드를 풀어 본다 (읽기 전용). 지금 릴에 있는 수량과'
+      + ' 마지막으로 나간 라인을 함께 낸다. 아직 라인으로 나가지 않은 바코드'
+      + " (ISSUE_COMPARE_YN='N')는 반품할 수 없다고 알려 준다.",
+  })
+  async lookup(
+    @Body() dto: IssueReturnLookupDto,
+    @OrganizationId() organizationId: number,
+  ) {
+    return ResponseUtil.success(await this.service.lookupBarcode(dto, organizationId));
+  }
+
+  @Post()
+  @ApiOperation({
+    summary: '250 양산반품 (**쓰기**). 바코드 원장을 되돌리고 마이너스 출고를 넣고'
+      + ' 로스를 한 줄 남긴다. **반품하면 그 바코드의 수량이 바뀐다** — 남은 수량으로'
+      + ' 바코드를 다시 만든다 (PB 그대로). 반품 표시를 UPDATE 조건에 넣어 같은 릴을'
+      + ' 동시에 찍어도 한 번만 반품된다.',
+  })
+  async submit(
+    @Body() dto: IssueReturnDto,
+    @OrganizationId() organizationId: number,
+    @UserId() userId?: string,
+  ) {
+    return ResponseUtil.success(
+      await this.service.returnBarcode(dto, organizationId, userId || DEFAULT_USER),
     );
   }
 }
