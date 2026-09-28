@@ -5,3 +5,4 @@
 export * from './reel-plan';
 export * from './solder-label';
 export * from './issue-packing';
+export * from './lot-divide';

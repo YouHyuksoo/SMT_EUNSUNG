@@ -21,3 +21,4 @@ Object.defineProperty(exports, "__esModule", { value: true });
 __exportStar(require("./reel-plan"), exports);
 __exportStar(require("./solder-label"), exports);
 __exportStar(require("./issue-packing"), exports);
+__exportStar(require("./lot-divide"), exports);

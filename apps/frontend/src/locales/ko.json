@@ -313,6 +313,8 @@
     "warehouse.issueCancel": "자재출고취소",
     "warehouse.issueReturn": "출고바코드반품",
     "warehouse.barcodeIssue": "자재바코드출고관리",
+    "warehouse.barcodeDivide": "자재분할관리",
+    "warehouse.bakingScan": "베이킹이력관리",
     "cutting": "절단공정",
     "cutting.order": "작업지시",
     "cutting.result": "작업실적",

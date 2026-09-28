@@ -313,6 +313,8 @@
     "warehouse.issueCancel": "Material Issue Cancel",
     "warehouse.issueReturn": "Issue Barcode Return",
     "warehouse.barcodeIssue": "Material Barcode Issue",
+    "warehouse.barcodeDivide": "Material Lot Divide",
+    "warehouse.bakingScan": "Baking History",
     "cutting": "Cutting",
     "cutting.order": "Work Order",
     "cutting.result": "Work Result",

@@ -1105,3 +1105,123 @@ export class BarcodeIssueDto extends BarcodeIssueScanDto {
   @IsOptional() @IsString() @Length(0, 10)
   issueDivision?: string;
 }
+
+// ══════════════════════════════════ 240 자재분할관리 · 261 베이킹이력관리
+
+/** 240 분할 이력 조회 조건. */
+export class BarcodeDivideQueryDto {
+  @ApiProperty({ description: '분할일 시작 (YYYY-MM-DD)' })
+  @IsString() @Matches(DATE_ONLY)
+  dateFrom!: string;
+
+  @ApiProperty({ description: '분할일 종료 (YYYY-MM-DD)' })
+  @IsString() @Matches(DATE_ONLY)
+  dateTo!: string;
+
+  @ApiPropertyOptional({ description: '품목코드 (앞부분 일치)' })
+  @IsOptional() @IsString() @Length(0, 50)
+  itemCode?: string;
+
+  @ApiPropertyOptional({ description: '롯트번호 (앞부분 일치)' })
+  @IsOptional() @IsString() @Length(0, 60)
+  lotNo?: string;
+
+  @ApiPropertyOptional({ description: '원본 롯트번호 (앞부분 일치)' })
+  @IsOptional() @IsString() @Length(0, 60)
+  originLotNo?: string;
+}
+
+/**
+ * 240 릴 분할 (**쓰기**).
+ *
+ * **조각 N개 중 앞 N-1개만 새 바코드가 되고 마지막 조각은 원본 바코드가 된다.**
+ * 규칙은 `@smt/shared` 의 `planLotDivide` 에 있고 단위테스트로 못 박혀 있다.
+ */
+export class BarcodeDivideDto {
+  @ApiProperty({ description: '나눌 릴의 자재 바코드' })
+  @IsString() @Length(1, 100)
+  barcode!: string;
+
+  @ApiProperty({
+    description: '조각 수량 목록. **2개 이상**이어야 하고 합이 릴 수량과 같아야 한다'
+      + ' (PB 는 합을 검사하지 않아 재고가 늘거나 줄었다).',
+    type: [Number],
+  })
+  @IsArray() @Type(() => Number) @IsNumber({}, { each: true })
+  divideQty!: number[];
+
+  @ApiPropertyOptional({
+    description: "릴 분할이면 true (분할사유에 ' REEL' 이 붙는다). 기본은 롯트 분할.",
+  })
+  @IsOptional() @Transform(({ value }) => value === true || value === 'true')
+  @IsBoolean()
+  reel?: boolean;
+
+  @ApiPropertyOptional({ description: '분할사유. 비우면 *' })
+  @IsOptional() @IsString() @Length(0, 60)
+  divideReason?: string;
+
+  @ApiPropertyOptional({ description: '창고코드 (출고 원장의 LOCATION_CODE)' })
+  @IsOptional() @IsString() @Length(0, 20)
+  locationCode?: string;
+}
+
+/** 261 챔버 입출고 이력 조회 조건. */
+export class BakingHistoryQueryDto {
+  @ApiProperty({ description: '넣은 날 시작 (YYYY-MM-DD)' })
+  @IsString() @Matches(DATE_ONLY)
+  dateFrom!: string;
+
+  @ApiProperty({ description: '넣은 날 종료 (YYYY-MM-DD)' })
+  @IsString() @Matches(DATE_ONLY)
+  dateTo!: string;
+
+  @ApiPropertyOptional({
+    description: "챔버 종류. 'B' 베이킹실 · 'V' 진공포장 · 'D' 제습함. 비우면 전체.",
+    enum: CHAMBER_TYPES,
+  })
+  @IsOptional() @IsString() @Length(0, 1)
+  chamberType?: string;
+
+  @ApiPropertyOptional({ description: '품목코드 (앞부분 일치)' })
+  @IsOptional() @IsString() @Length(0, 50)
+  itemCode?: string;
+
+  @ApiPropertyOptional({ description: '롯트번호 (앞부분 일치)' })
+  @IsOptional() @IsString() @Length(0, 60)
+  lotNo?: string;
+
+  @ApiPropertyOptional({ description: '챔버 번호 (앞부분 일치)' })
+  @IsOptional() @IsString() @Length(0, 20)
+  chamberCode?: string;
+}
+
+/**
+ * 261 챔버에 넣기·꺼내기 (**쓰기**).
+ *
+ * **MSL 시계가 챔버 종류마다 다르게 움직인다** — 서비스 파일 머리 2번 참고.
+ */
+export class BakingScanDto {
+  @ApiProperty({ description: '자재 바코드' })
+  @IsString() @Length(1, 100)
+  barcode!: string;
+
+  @ApiProperty({
+    description: "챔버 종류. 'B' 베이킹실 · 'V' 진공포장 · 'D' 제습함.",
+    enum: CHAMBER_TYPES,
+  })
+  @IsIn(CHAMBER_TYPES as unknown as string[])
+  chamberType!: string;
+
+  @ApiProperty({ description: '챔버 번호' })
+  @IsString() @Length(1, 20)
+  chamberCode!: string;
+
+  @ApiProperty({ description: "방향. 'IN' 넣기 · 'OUT' 꺼내기", enum: ['IN', 'OUT'] })
+  @IsIn(['IN', 'OUT'])
+  direction!: 'IN' | 'OUT';
+
+  @ApiPropertyOptional({ description: '챔버 안 자리 (넣을 때만 쓴다)' })
+  @IsOptional() @IsString() @Length(0, 30)
+  chamberLocation?: string;
+}

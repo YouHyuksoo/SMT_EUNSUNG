@@ -782,8 +782,18 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
       component = mod.getPageComponent();
       break;
     }
+    case "/warehouse/baking-scan": {
+      const mod = await import("./page-registries/warehouse__baking-scan.generated");
+      component = mod.getPageComponent();
+      break;
+    }
     case "/warehouse/baking-stock": {
       const mod = await import("./page-registries/warehouse__baking-stock.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/warehouse/barcode-divide": {
+      const mod = await import("./page-registries/warehouse__barcode-divide.generated");
       component = mod.getPageComponent();
       break;
     }

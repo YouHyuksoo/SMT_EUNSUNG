@@ -14,6 +14,8 @@
  *   /warehouse/issue-manage    257 자재기타출고 · 258 자재출고취소 (쓰기)
  *   /warehouse/issue-return    250 출고바코드반품 (쓰기)
  *   /warehouse/barcode-issue   238 자재바코드출고관리 (출고대조 — 쓰기)
+ *   /warehouse/barcode-divide  240 자재분할관리 (쓰기)
+ *   /warehouse/baking-scan     261 베이킹이력관리 (챔버 입출고 — 쓰기)
  */
 import {
   Body, Controller, Delete, Get, Patch, Post, Query, UseGuards,
@@ -23,6 +25,8 @@ import { OrganizationId, UserId } from '../../common/decorators/tenant.decorator
 import { ResponseUtil } from '../../common/dto/response.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { ROW_LIMIT } from '../../shared/row-limit';
+import { BakingScanService } from './baking-scan.service';
+import { BarcodeDivideService } from './barcode-divide.service';
 import { BarcodeIssueService } from './barcode-issue.service';
 import { BarcodeReceiptService } from './barcode-receipt.service';
 import { ChamberStockService } from './chamber-stock.service';
@@ -34,7 +38,11 @@ import { ReceiptSlipService } from './receipt-slip.service';
 import { SolderLabelService } from './solder-label.service';
 import { SolderService } from './solder.service';
 import {
+  BakingHistoryQueryDto,
+  BakingScanDto,
   BarcodeCompareQueryDto,
+  BarcodeDivideDto,
+  BarcodeDivideQueryDto,
   BarcodeIssueDto,
   BarcodeIssueHistoryQueryDto,
   BarcodeIssueScanDto,
@@ -701,6 +709,108 @@ export class BarcodeIssueController {
   ) {
     return ResponseUtil.success(
       await this.service.issueBarcode(dto, organizationId, userId || DEFAULT_USER),
+    );
+  }
+}
+
+@ApiTags('자재창고 - 자재분할')
+@UseGuards(JwtAuthGuard)
+@Controller('warehouse/barcode-divide')
+export class BarcodeDivideController {
+  constructor(private readonly service: BarcodeDivideService) {}
+
+  @Get()
+  @ApiOperation({
+    summary: "240 분할 이력 (LOT_DIVIDE_YN='Y'). 같은 LOT_DIVIDE_SEQUENCE 를 가진"
+      + ' 것끼리 한 번의 분할이다.',
+  })
+  async find(
+    @Query() query: BarcodeDivideQueryDto,
+    @OrganizationId() organizationId: number,
+  ) {
+    return paged(await this.service.findDivided(query, organizationId));
+  }
+
+  @Post('lookup')
+  @ApiOperation({
+    summary: '240 나눌 릴을 풀어 본다 (읽기 전용). 지금 릴에 있는 수량은'
+      + ' NEW_SCAN_QTY 가 있으면 그쪽이다 — 한 번 나눈 릴을 또 나눌 수 있다.'
+      + ' 폐기·보류된 릴은 나눌 수 없다고 알려 준다.',
+  })
+  async lookup(
+    @Body() dto: IssueReturnLookupDto,
+    @OrganizationId() organizationId: number,
+  ) {
+    return ResponseUtil.success(
+      await this.service.lookupBarcode(dto.barcode, organizationId),
+    );
+  }
+
+  @Post()
+  @ApiOperation({
+    summary: '240 릴 분할 (**쓰기**). **조각 N개 중 앞 N-1개만 새 바코드가 되고'
+      + ' 마지막 조각은 원본 바코드가 된다** — 한 칸 틀리면 재고가 한 조각만큼'
+      + ' 늘어난다. 조각 수량 합이 릴 수량과 다르면 거절한다 (PB 는 검사하지 않았다).'
+      + ' 출고 원장에 조각마다 구분 3/4 쌍이 남는다 (계정 M016 · 비고 LOT DIVIDE).',
+  })
+  async divide(
+    @Body() dto: BarcodeDivideDto,
+    @OrganizationId() organizationId: number,
+    @UserId() userId?: string,
+  ) {
+    return ResponseUtil.success(
+      await this.service.divideBarcode(dto, organizationId, userId || DEFAULT_USER),
+    );
+  }
+}
+
+@ApiTags('자재창고 - 베이킹이력')
+@UseGuards(JwtAuthGuard)
+@Controller('warehouse/baking-scan')
+export class BakingScanController {
+  constructor(private readonly service: BakingScanService) {}
+
+  @Get()
+  @ApiOperation({
+    summary: '261 챔버 입출고 이력. 262·263·264 는 지금 들어가 있는 것만 보지만'
+      + ' 여기는 넣고 꺼낸 이력을 다 본다. 머문 시간을 함께 낸다.',
+  })
+  async find(
+    @Query() query: BakingHistoryQueryDto,
+    @OrganizationId() organizationId: number,
+  ) {
+    return paged(await this.service.findHistory(query, organizationId));
+  }
+
+  @Get('lookup')
+  @ApiOperation({
+    summary: '261 찍은 바코드를 풀어 본다 (읽기 전용). 넣기·꺼내기가 각각 되는지와'
+      + ' 그 이유를 낸다. 폐기된 릴·라인 투입 중인 릴은 넣을 수 없다.',
+  })
+  async lookup(
+    @Query('barcode') barcode: string,
+    @Query('chamberType') chamberType: string,
+    @OrganizationId() organizationId: number,
+  ) {
+    return ResponseUtil.success(
+      await this.service.lookupBarcode(barcode, chamberType, organizationId),
+    );
+  }
+
+  @Post()
+  @ApiOperation({
+    summary: '261 챔버에 넣기·꺼내기 (**쓰기**). **MSL 시계가 챔버 종류마다 다르게'
+      + ' 움직인다** — 베이킹에서 꺼내면 지난시간이 0.01 로 초기화되고, 제습함에서'
+      + ' 꺼내면 개봉시각이 지금으로 찍혀 다시 노출이 시작된다. 넣을 때는 진공·제습이'
+      + ' 개봉시각까지의 노출시간을 누적하고 시계를 멈춘다.',
+  })
+  async scan(
+    @Body() dto: BakingScanDto,
+    @OrganizationId() organizationId: number,
+    @UserId() userId?: string,
+  ) {
+    return ResponseUtil.success(
+      await this.service.scan(dto, organizationId, userId || DEFAULT_USER),
     );
   }
 }

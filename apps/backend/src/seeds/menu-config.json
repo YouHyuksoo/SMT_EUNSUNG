@@ -86,7 +86,9 @@
       "WH_ETC_ISSUE",
       "WH_ISSUE_CANCEL",
       "WH_ISSUE_RETURN",
-      "WH_BARCODE_ISSUE"
+      "WH_BARCODE_ISSUE",
+      "WH_BARCODE_DIVIDE",
+      "WH_BAKING_SCAN"
     ],
     "JIG": [
       "JIG_MASTER",

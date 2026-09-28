@@ -313,6 +313,8 @@
     "warehouse.issueCancel": "Hủy xuất kho vật tư",
     "warehouse.issueReturn": "Trả hàng mã vạch xuất kho",
     "warehouse.barcodeIssue": "Quản lý xuất kho mã vạch vật tư",
+    "warehouse.barcodeDivide": "Quản lý chia lô vật tư",
+    "warehouse.bakingScan": "Lịch sử sấy",
     "cutting": "Công đoạn cắt",
     "cutting.order": "Lệnh sản xuất",
     "cutting.result": "Kết quả sản xuất",

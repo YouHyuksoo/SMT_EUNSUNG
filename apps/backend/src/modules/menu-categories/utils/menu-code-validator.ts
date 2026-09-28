@@ -60,6 +60,8 @@ const KNOWN_LEAF_CODES: ReadonlySet<string> = new Set<string>([
   'WH_ISSUE_CANCEL',
   'WH_ISSUE_RETURN',
   'WH_BARCODE_ISSUE',
+  'WH_BARCODE_DIVIDE',
+  'WH_BAKING_SCAN',
   'JIG_MASTER',
   'JIG_ISSUE',
   'JIG_REPAIR',

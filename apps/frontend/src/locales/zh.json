@@ -313,6 +313,8 @@
     "warehouse.issueCancel": "物料出库取消",
     "warehouse.issueReturn": "出库条码退货",
     "warehouse.barcodeIssue": "物料条码出库管理",
+    "warehouse.barcodeDivide": "物料分割管理",
+    "warehouse.bakingScan": "烘烤履历管理",
     "cutting": "裁切工序",
     "cutting.order": "作业指示",
     "cutting.result": "作业实绩",
