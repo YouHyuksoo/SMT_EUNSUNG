@@ -314,16 +314,17 @@ export class BarcodeReceiptService {
     const parsed = rows[0] ?? {};
     const itemCode = (parsed.itemCode as string) || '';
 
-    // 협력사 바코드는 협력사코드를 함께 넘겨야 품목이 풀린다 (PB `_s` 변형).
+    // 협력사 바코드는 PB `_s` 변형으로 푼다. 협력사코드 자리는 NULL 로 둔다 —
+    // 이 함수는 협력사로 못 찾으면 품번·포함관계로 다시 찾으므로 실측으로 같은 값이
+    // 나온다 (`E1750100370` · `E1760400080-68J59652-40000` 둘 다 원장의 품목과 일치).
+    // 못 푸는 바코드는 빈 값이 아니라 **엉뚱한 토막**을 돌려준다
+    // (`ZZ-NOT-A-BARCODE` → `ZZ-NOT`) — 그래서 아래 비교가 그대로 불일치로 잡는다.
     let supplierItemCode: string | null = null;
     if (dto.supplierBarcode) {
       const sup = (await this.dataSource.query(
-        `SELECT F_GET_ITEM_CODE_FROM_BARCODE_S(:supplierBarcode, :supplierCode) AS "itemCode"
+        `SELECT F_GET_ITEM_CODE_FROM_BARCODE_S(:supplierBarcode, NULL) AS "itemCode"
            FROM DUAL`,
-        {
-          supplierBarcode: dto.supplierBarcode,
-          supplierCode: dto.supplierCode ?? null,
-        } as unknown as unknown[],
+        { supplierBarcode: dto.supplierBarcode } as unknown as unknown[],
       )) as Row[];
       supplierItemCode = (sup[0]?.itemCode as string) || null;
     }
@@ -395,8 +396,13 @@ export class BarcodeReceiptService {
       lotNo: (parsed.lotNo as string) ?? null,
       scanQty: parsed.scanQty === null ? null : Number(parsed.scanQty ?? 0),
       supplierItemCode,
-      /** 협력사 바코드의 품목과 자사 바코드의 품목이 다르면 서로 다른 물건이다. */
-      itemMatches: supplierItemCode === null ? null : supplierItemCode === itemCode,
+      /**
+       * 협력사 바코드의 품목과 자사 바코드의 품목이 다르면 서로 다른 물건이다.
+       * **협력사 바코드를 줬는데 품목이 안 풀린 경우도 불일치로 본다** — PB 는
+       * `lvs_supplier_item_code <> lvs_item_code` 하나로 판정하므로 빈 값이면
+       * 거절했다. null 을 "비교 못 함" 으로 두면 PB 가 막던 것이 웹에서 통과한다.
+       */
+      itemMatches: dto.supplierBarcode ? supplierItemCode === itemCode : null,
       item,
       itemExists: Number(item?.itemExistsFlag ?? 0) > 0,
       barcodeRow: barcodeRows[0] ?? null,
@@ -426,11 +432,7 @@ export class BarcodeReceiptService {
     }
 
     const lookup = await this.lookupScan(
-      {
-        barcode: dto.barcode,
-        supplierBarcode: dto.supplierBarcode,
-        supplierCode: dto.supplierCode,
-      },
+      { barcode: dto.barcode, supplierBarcode: dto.supplierBarcode },
       organizationId,
     );
     if (!lookup.itemCode) {

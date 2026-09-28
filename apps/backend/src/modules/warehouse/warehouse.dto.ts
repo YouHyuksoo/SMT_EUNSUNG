@@ -412,12 +412,6 @@ export class BarcodeScanLookupDto {
   @IsOptional() @IsString() @Length(0, 100)
   supplierBarcode?: string;
 
-  @ApiPropertyOptional({
-    description: '협력사코드. PB 는 화면 위 협력사 선택값을 그대로 넘긴다 —'
-      + ' 같은 바코드 형식을 협력사마다 다르게 해석하는 규칙이 DB 함수 안에 있다.',
-  })
-  @IsOptional() @IsString() @Length(0, 30)
-  supplierCode?: string;
 }
 
 /**
@@ -444,10 +438,6 @@ export class BarcodeCompareReceiveDto {
   @ApiPropertyOptional({ description: '원 협력사코드 (ORIGIN_SUPPLIER_CODE · VENDOR_CODE)' })
   @IsOptional() @IsString() @Length(0, 30)
   originSupplierCode?: string;
-
-  @ApiPropertyOptional({ description: '협력사코드 (바코드 해석에 쓴다)' })
-  @IsOptional() @IsString() @Length(0, 30)
-  supplierCode?: string;
 
   @ApiPropertyOptional({
     description: '협력사 바코드와 자사 바코드가 같아도 통과시킨다'
