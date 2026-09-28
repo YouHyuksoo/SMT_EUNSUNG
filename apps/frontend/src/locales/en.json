@@ -309,6 +309,8 @@
     "warehouse.solderLabel": "Solder Label Issue",
     "warehouse.materialReceipt": "Material Receipt",
     "warehouse.etcReceipt": "Material Etc. Receipt",
+    "warehouse.etcIssue": "Material Etc. Issue",
+    "warehouse.issueCancel": "Material Issue Cancel",
     "cutting": "Cutting",
     "cutting.order": "Work Order",
     "cutting.result": "Work Result",

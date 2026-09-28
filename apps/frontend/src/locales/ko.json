@@ -309,6 +309,8 @@
     "warehouse.solderLabel": "솔더라벨 발행",
     "warehouse.materialReceipt": "자재입고관리",
     "warehouse.etcReceipt": "자재기타입고관리",
+    "warehouse.etcIssue": "자재기타출고",
+    "warehouse.issueCancel": "자재출고취소",
     "cutting": "절단공정",
     "cutting.order": "작업지시",
     "cutting.result": "작업실적",

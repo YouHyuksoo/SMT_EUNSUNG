@@ -797,8 +797,18 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
       component = mod.getPageComponent();
       break;
     }
+    case "/warehouse/etc-issue": {
+      const mod = await import("./page-registries/warehouse__etc-issue.generated");
+      component = mod.getPageComponent();
+      break;
+    }
     case "/warehouse/etc-receipt": {
       const mod = await import("./page-registries/warehouse__etc-receipt.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/warehouse/issue-cancel": {
+      const mod = await import("./page-registries/warehouse__issue-cancel.generated");
       component = mod.getPageComponent();
       break;
     }

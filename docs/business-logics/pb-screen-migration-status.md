@@ -3,7 +3,7 @@ sources:
   - apps/frontend/src/config/menuConfig.ts
   - apps/frontend/scripts/data/pb-screen-inventory.json
 generator: apps/frontend/scripts/gen-migration-status.mjs
-verifiedCommit: 3c924ed5
+verifiedCommit: 54bf0205
 ---
 
 # PB 화면 이관 현황 (자동 생성)
@@ -18,11 +18,11 @@ verifiedCommit: 3c924ed5
 | 상태 | 건수 |
 |---|---:|
 | PB 업무화면(셸 메뉴 제외) | 275 |
-| 완료(개발됨, pbWindow 매핑) | 139 |
-| 미착수 | 110 |
+| 완료(개발됨, pbWindow 매핑) | 141 |
+| 미착수 | 108 |
 | 윈도우 미상 | 26 |
 
-웹 메뉴 연결 계약: **PB 138개 / 웹 신규 17개 / 미확정 2개**. PB 매핑과 웹 경로의 전체 연결표는 [pb-menu-route-links.md](pb-menu-route-links.md)에서 관리합니다.
+웹 메뉴 연결 계약: **PB 140개 / 웹 신규 17개 / 미확정 2개**. PB 매핑과 웹 경로의 전체 연결표는 [pb-menu-route-links.md](pb-menu-route-links.md)에서 관리합니다.
 
 ## 대분류별 진행률
 
@@ -37,7 +37,7 @@ verifiedCommit: 3c924ed5
 | S-PARTS | `M_MOLD` | 8 | 8 | 0 | 0 |
 | 생산 | `M_PLANNING` | 7 | 7 | 0 | 0 |
 | 공정 | `M_WORKSTAGE0` | 5 | 2 | 3 | 0 |
-| 자재창고 | `M_WAREHOUSE` | 22 | 13 | 9 | 0 |
+| 자재창고 | `M_WAREHOUSE` | 22 | 15 | 7 | 0 |
 | 재고 | `M_INVENTORY` | 5 | 1 | 4 | 0 |
 | 수리 | `M_REPAIR` | 4 | 2 | 2 | 0 |
 | 품질관리 | `M_QC` | 12 | 12 | 0 | 0 |
@@ -203,8 +203,8 @@ verifiedCommit: 3c924ed5
 | 253 | └ 자재입고관리 | `w_mat_receipt_master` | srw | 완료 | `WH_MATERIAL_RECEIPT` | `/warehouse/material-receipt` |
 | 254 | └ 자재기타입고관리 | `w_mat_other_receipt_master` | srw | 완료 | `WH_ETC_RECEIPT` | `/warehouse/etc-receipt` |
 | 255 | └ 자재입고취소 | `w_mat_receipt_cancel_master` | srw | 완료 | `MAT_RECEIPT_CANCEL` | `/material/receipt-cancel` |
-| 257 | └ 자재기타출고 | `w_mat_other_issue_master` | srw | 미착수 |  |  |
-| 258 | └ 자재출고취소 | `w_mat_mass_issue_cancel_master` | srw | 미착수 |  |  |
+| 257 | └ 자재기타출고 | `w_mat_other_issue_master` | srw | 완료 | `WH_ETC_ISSUE` | `/warehouse/etc-issue` |
+| 258 | └ 자재출고취소 | `w_mat_mass_issue_cancel_master` | srw | 완료 | `WH_ISSUE_CANCEL` | `/warehouse/issue-cancel` |
 | 260 | MSL 이상품목 처리이력관리 | `w_mat_msl_item_check_master` | srw | 미착수 |  |  |
 | 261 | 베이킹이력관리 | `w_mat_baking_dehumi_scan_master` | srw | 미착수 |  |  |
 | 262 | 베이킹재고조회 | `w_mat_baking_scan_query` | srw | 완료 | `WH_BAKING_STOCK` | `/warehouse/baking-stock` |

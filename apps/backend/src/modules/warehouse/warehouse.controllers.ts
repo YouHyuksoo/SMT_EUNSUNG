@@ -11,6 +11,7 @@
  *   /warehouse/barcode-receipt 237 자재바코드입고관리 (입고대조 — 쓰기)
  *   /warehouse/solder-label    243 솔더라벨 발행 (전표+라벨 — 쓰기)
  *   /warehouse/receipt-manage  253 자재입고관리 (조회) · 254 자재기타입고관리 (쓰기)
+ *   /warehouse/issue-manage    257 자재기타출고 · 258 자재출고취소 (쓰기)
  */
 import {
   Body, Controller, Delete, Get, Patch, Post, Query, UseGuards,
@@ -23,6 +24,7 @@ import { ROW_LIMIT } from '../../shared/row-limit';
 import { BarcodeReceiptService } from './barcode-receipt.service';
 import { ChamberStockService } from './chamber-stock.service';
 import { RecycleCheckService } from './recycle-check.service';
+import { IssueManageService } from './issue-manage.service';
 import { ReceiptManageService } from './receipt-manage.service';
 import { ReceiptSlipService } from './receipt-slip.service';
 import { SolderLabelService } from './solder-label.service';
@@ -34,9 +36,13 @@ import {
   BarcodeScanLookupDto,
   ChamberStockDetailQueryDto,
   ChamberStockQueryDto,
+  EtcIssueCreateDto,
   EtcReceiptCreateDto,
   EtcReceiptKeyDto,
   EtcReceiptUpdateDto,
+  IssueCancelDto,
+  IssueHistoryQueryDto,
+  IssueInventoryQueryDto,
   ReceiptHistoryQueryDto,
   ReceiptInventoryQueryDto,
   ReceiptSlipBarcodeQueryDto,
@@ -468,5 +474,71 @@ export class ReceiptManageController {
     @OrganizationId() organizationId: number,
   ) {
     return ResponseUtil.success(await this.service.deleteEtcReceipt(dto, organizationId));
+  }
+}
+
+@ApiTags('자재창고 - 자재출고관리')
+@UseGuards(JwtAuthGuard)
+@Controller('warehouse/issue-manage')
+export class IssueManageController {
+  constructor(private readonly service: IssueManageService) {}
+
+  @Get('history')
+  @ApiOperation({
+    summary: '257·258 출고 이력. 두 화면이 PB 에서도 같은 DataWindow 를 쓴다.'
+      + " issueStatus 로 'C'(취소된 건)만 볼 수 있다. 이 목록은 편집할 수 없다 —"
+      + ' PB DataWindow 에 갱신 대상 표가 없다 (실측).',
+  })
+  async history(
+    @Query() query: IssueHistoryQueryDto,
+    @OrganizationId() organizationId: number,
+  ) {
+    return paged(await this.service.findHistory(query, organizationId));
+  }
+
+  @Get('inventory')
+  @ApiOperation({
+    summary: '257 현재고 목록. 여기서 품목을 골라 출고한다. 포장 단위를 함께 내므로'
+      + ' 화면이 "실제로 몇 개가 나가나" 를 미리 보여줄 수 있다.',
+  })
+  async inventory(
+    @Query() query: IssueInventoryQueryDto,
+    @OrganizationId() organizationId: number,
+  ) {
+    return paged(await this.service.findInventory(query, organizationId));
+  }
+
+  @Post()
+  @ApiOperation({
+    summary: '257 기타출고 등록 (**쓰기**). 라인·공정·설비는 반드시 있어야 한다'
+      + ' (PB 도 같다). **수량이 음수면 반납이다.** 포장 단위 적용은 @smt/shared 의'
+      + ' 같은 함수를 화면과 서버가 함께 쓴다 — 음수 수량과 같이 쓰면 PB 가 양수를'
+      + ' 내놓아 반납이 출고로 뒤집히므로 그 조합은 거절한다.',
+  })
+  async create(
+    @Body() dto: EtcIssueCreateDto,
+    @OrganizationId() organizationId: number,
+    @UserId() userId?: string,
+  ) {
+    return ResponseUtil.success(
+      await this.service.createEtcIssue(dto, organizationId, userId || DEFAULT_USER),
+    );
+  }
+
+  @Post('cancel')
+  @ApiOperation({
+    summary: '258 출고취소 (**쓰기**). 원장을 지우지 않는 역분개다 — 원래 건을'
+      + " 'C' 로 바꾸고 부호를 뒤집은 행을 한 건 넣는다 (구분 3↔4, 수량·금액 음수)."
+      + ' 이미 공정으로 이관된 자재는 거절한다. 상태 변경을 UPDATE 조건에 넣어'
+      + ' 동시에 두 번 눌러도 한 번만 취소된다.',
+  })
+  async cancel(
+    @Body() dto: IssueCancelDto,
+    @OrganizationId() organizationId: number,
+    @UserId() userId?: string,
+  ) {
+    return ResponseUtil.success(
+      await this.service.cancelIssue(dto, organizationId, userId || DEFAULT_USER),
+    );
   }
 }

@@ -14,6 +14,8 @@
  *   243 솔더라벨 발행      w_mat_receipt_slip_master_onetek_solder → SolderLabelService (쓰기)
  *   253 자재입고관리       w_mat_receipt_master              → ReceiptManageService (조회)
  *   254 자재기타입고관리   w_mat_other_receipt_master        → ReceiptManageService (쓰기)
+ *   257 자재기타출고       w_mat_other_issue_master          → IssueManageService (쓰기)
+ *   258 자재출고취소       w_mat_mass_issue_cancel_master    → IssueManageService (쓰기)
  *
  * **왜 화면당 모듈이 아닌가.** 기존 `material` 모듈은 화면당 모듈 하나
  * (`material-current-inventory.module.ts` 등) 패턴인데, 자재창고는 20화면이라
@@ -34,6 +36,7 @@ import { Module } from '@nestjs/common';
 import { BarcodeReceiptService } from './barcode-receipt.service';
 import { ChamberStockService } from './chamber-stock.service';
 import { RecycleCheckService } from './recycle-check.service';
+import { IssueManageService } from './issue-manage.service';
 import { ReceiptManageService } from './receipt-manage.service';
 import { ReceiptSlipService } from './receipt-slip.service';
 import { SolderLabelService } from './solder-label.service';
@@ -41,6 +44,7 @@ import { SolderService } from './solder.service';
 import {
   BarcodeReceiptController,
   ChamberStockController,
+  IssueManageController,
   RecycleCheckController,
   SolderController,
   ReceiptManageController,
@@ -59,6 +63,7 @@ import {
     BarcodeReceiptController,
     SolderLabelController,
     ReceiptManageController,
+    IssueManageController,
   ],
   providers: [
     ChamberStockService,
@@ -68,6 +73,7 @@ import {
     BarcodeReceiptService,
     SolderLabelService,
     ReceiptManageService,
+    IssueManageService,
   ],
 })
 /**

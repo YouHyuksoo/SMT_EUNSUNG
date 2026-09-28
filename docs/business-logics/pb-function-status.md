@@ -3,7 +3,7 @@ sources:
   - apps/frontend/scripts/data/pb-function-catalog.json
   - docs/database/generated/pb-function-inventory.json
 generator: apps/frontend/scripts/gen-function-status.mjs
-verifiedCommit: 2de9d15a
+verifiedCommit: 54bf0205
 ---
 
 # PB 함수 처리 현황 (자동 생성)
@@ -23,8 +23,8 @@ DB 함수는 웹에서도 **그대로 호출**합니다 — 재구현하면 PB �
 | PB 창(실측) | 596 |
 | SQL 안 호출 = DB 함수 (조치 불필요) | 196 |
 | SQL 밖 호출 = PB 함수 | 226 |
-| 카탈로그 등록(처리 완료) | 64 |
-| 미처리 전환 후보 | 50 |
+| 카탈로그 등록(처리 완료) | 67 |
+| 미처리 전환 후보 | 49 |
 
 ## 처리 완료 (카탈로그)
 
@@ -59,7 +59,7 @@ DB 함수는 웹에서도 **그대로 호출**합니다 — 재구현하면 PB �
 | `f_msg1` | `react-hot-toast` | f_msg 계열과 같다. 메시지 표시용. |
 | `f_get_run_no_by_serial` | `IP_PRODUCT_2D_BARCODE 직접 조회` | PID → Run No. PB 스크립트(화면 밖)에서만 불러 PB 전역함수이며 이 DB 에 같은 이름의 함수가 없다(실측). 2D바코드를 등호로 직접 읽어 치환했다. |
 
-### 제거 (`dropped`) — 7건
+### 제거 (`dropped`) — 8건
 
 | PB 함수 | 대상 | 비고 |
 |---|---|---|
@@ -70,8 +70,9 @@ DB 함수는 웹에서도 **그대로 호출**합니다 — 재구현하면 PB �
 | `f_insert` | — | PB DataWindow InsertRow 래퍼. 웹은 우측 폼 패널이 대신한다. |
 | `f_update` | — | PB DataWindow Update 래퍼. 웹은 백엔드 저장 API 가 대신한다. |
 | `f_set_column_dddw` | — | PB DataWindow 의 드롭다운 목록을 런타임에 채우는 유틸. 웹은 기초코드 선택 컴포넌트가 대신한다. |
+| `f_mat_issue_change_location` | `-` | 258 의 창고이동 버튼. 취소(역분개) + 새 창고로 재출고를 한 번에 하는 것인데, 이관 범위(출고취소)에 없어 옮기지 않았다. 필요해지면 f_mat_issue_cancel 과 같은 방식으로 붙인다. |
 
-### 서비스에 이식 (`inlined`) — 4건
+### 서비스에 이식 (`inlined`) — 6건
 
 | PB 함수 | 대상 | 비고 |
 |---|---|---|
@@ -79,6 +80,8 @@ DB 함수는 웹에서도 **그대로 호출**합니다 — 재구현하면 PB �
 | `f_replace_string` | `String.prototype.replaceAll (대소문자 무시)` | SQL 없는 순수 문자열 치환. PB 는 소문자·대문자를 번갈아 찾는 방식이라 대소문자 무시 치환과 같다. |
 | `f_check_item_exists` | `ID_ITEM 유효기간 조건 (DATESET <= TRUNC(SYSDATE) AND DATEEND >= TRUNC(SYSDATE))` | **DB 동명 함수와 뜻이 다르다.** PB 는 ID_ITEM 품목 유효기간을 보고, DB F_CHECK_ITEM_EXISTS(p_set_item,p_org) 는 ID_CUSTOMER_SET_BOM 세트 BOM 유무를 보며 'EXISTS'/'NOTFOUND' 를 낸다. 인자도 (품목,조직) 이라 PB 가 넘기던 날짜 자리와 맞지 않는다 (실측 ORA-06553 PLS-306). PB 쪽 SQL 을 인라인한다. |
 | `f_check_slip_exists` | `COUNT(*) FROM IM_ITEM_RECEIPT_SLIP WHERE RECEIPT_SLIP_NO=? AND RECEIPT_STATUS<>'C' AND ORGANIZATION_ID=?` | DB 에 동명 함수가 없다 (실측). PB 243 은 전표번호를 받아 발행하는 갈래에서 중복을 막는 게이트로 썼는데, 그 갈래는 공장코드를 안 붙여 10자 바코드를 만들고 실데이터에 10자가 한 장도 없다 (7,681장 전부 11자) → 이관하지 않았다. 웹은 전표를 항상 새로 만들므로 이 게이트가 필요 없다. |
+| `f_mat_issue_cancel` | `IssueManageService.cancelIssue (한 트랜잭션: 공정이관 확인 → 원건 상태 'C' → 반납요청 확정 해제 → 부호 뒤집은 행 INSERT)` | DB 에 동명 함수가 없다 (실측). 역분개 패턴이라 f_mat_receipt_cancel → PKG_MES_MAC.SP_RECEIPT_CANCEL 과 같은 성격이지만, PB 와 웹을 한 건에 대해 같이 쓰지 않는다는 사용자 결정에 따라 DB 오브젝트를 만들지 않고 TypeScript 트랜잭션으로 옮겼다. 상태 변경을 UPDATE 조건에 넣어 PB 에 없던 중복취소 방어를 더했다. |
+| `f_get_item_issue_packing_qty` | `@smt/shared applyIssuePacking (packages/shared/src/warehouse/issue-packing.ts)` | DB 에 동명 함수가 없다 (실측). 화면이 실제 출고 수량을 미리 보여줘야 해서 공유 패키지에 두고 테스트 8건으로 못 박았다. PB 는 음수 요청에 양수 포장단위를 내놓아 반납이 출고로 뒤집히는데, 값은 PB 와 맞추고 그 조합을 서비스에서 거절한다. |
 
 ### 웹에서 직접 (`native`) — 22건
 
@@ -163,7 +166,6 @@ DB 함수는 웹에서도 **그대로 호출**합니다 — 재구현하면 PB �
 | `f_get_department_name` | 1 | 1 | w_logon |
 | `f_get_sale_exchange_rate` | 1 | 1 | w_mat_item_departure_excel_form_popup |
 | `f_wqc_complete_cancel` | 1 | 1 | w_mat_mass_issue_cancel_master |
-| `f_mat_issue_change_location` | 1 | 1 | w_mat_mass_issue_cancel_master |
 | `f_mat_issue_return_confirm` | 1 | 1 | w_mat_mass_issue_return_confirm_master |
 | `f_mat_issue_return_request` | 1 | 1 | w_mat_mass_issue_return_request_master |
 | `f_mat_issue_return_request_cancel` | 1 | 1 | w_mat_mass_issue_return_request_master |

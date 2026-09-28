@@ -733,3 +733,165 @@ export class EtcReceiptUpdateDto extends EtcReceiptKeyDto {
   @IsOptional() @IsString() @Length(0, 200)
   comments?: string;
 }
+
+// ══════════════════════════════════ 257 자재기타출고 · 258 자재출고취소
+
+/** 257·258 출고 이력 조회 조건 (PB `d_mat_issue_lst` 인자 그대로). */
+export class IssueHistoryQueryDto {
+  @ApiProperty({ description: '출고일 시작 (YYYY-MM-DD)' })
+  @IsString() @Matches(DATE_ONLY)
+  dateFrom!: string;
+
+  @ApiProperty({ description: '출고일 종료 (YYYY-MM-DD)' })
+  @IsString() @Matches(DATE_ONLY)
+  dateTo!: string;
+
+  @ApiPropertyOptional({ description: '품목코드 (앞부분 일치)' })
+  @IsOptional() @IsString() @Length(0, 50)
+  itemCode?: string;
+
+  @ApiPropertyOptional({ description: '협력사 롯트 = MFS (앞부분 일치)' })
+  @IsOptional() @IsString() @Length(0, 60)
+  mfs?: string;
+
+  @ApiPropertyOptional({ description: '자재 롯트 = MATERIAL_MFS (앞부분 일치)' })
+  @IsOptional() @IsString() @Length(0, 60)
+  materialMfs?: string;
+
+  @ApiPropertyOptional({ description: '라인코드 (앞부분 일치)' })
+  @IsOptional() @IsString() @Length(0, 20)
+  lineCode?: string;
+
+  @ApiPropertyOptional({ description: '공정코드 (앞부분 일치)' })
+  @IsOptional() @IsString() @Length(0, 20)
+  workstageCode?: string;
+
+  @ApiPropertyOptional({ description: '전표번호 (앞부분 일치)' })
+  @IsOptional() @IsString() @Length(0, 60)
+  invoiceNo?: string;
+
+  @ApiPropertyOptional({
+    description: "출고상태. 'N' 정상 · 'C' 취소. 비우면 전체.",
+  })
+  @IsOptional() @IsString() @Length(0, 5)
+  issueStatus?: string;
+}
+
+/** 257 현재고 목록 조건 (254 입고 쪽과 같은 표·같은 조건식). */
+export class IssueInventoryQueryDto {
+  @ApiPropertyOptional({ description: '품목코드 (앞부분 일치)' })
+  @IsOptional() @IsString() @Length(0, 50)
+  itemCode?: string;
+
+  @ApiPropertyOptional({ description: '자재 롯트 (앞부분 일치)' })
+  @IsOptional() @IsString() @Length(0, 60)
+  materialMfs?: string;
+
+  @ApiPropertyOptional({ description: '창고코드 (앞부분 일치)' })
+  @IsOptional() @IsString() @Length(0, 20)
+  locationCode?: string;
+
+  @ApiPropertyOptional({
+    description: '재고가 0 이하인 것도 함께 본다. **기본은 재고 있는 것만이다** —'
+      + ' 전체는 1,837,572행이라 상한에서 잘린 임의의 10,000행이 된다.',
+  })
+  @IsOptional() @Transform(({ value }) => value === true || value === 'true')
+  @IsBoolean()
+  includeZero?: boolean;
+}
+
+/**
+ * 257 기타출고 등록 (**쓰기**).
+ *
+ * PB 가 요구하던 대로 **라인·공정·설비는 반드시 있어야 한다** — 하나라도 비면
+ * 어디로 나갔는지 모르는 출고가 생긴다.
+ */
+export class EtcIssueCreateDto {
+  @ApiProperty({ description: '출고일 (YYYY-MM-DD)' })
+  @IsString() @Matches(DATE_ONLY)
+  issueDate!: string;
+
+  @ApiProperty({ description: '품목코드' })
+  @IsString() @Length(1, 50)
+  itemCode!: string;
+
+  @ApiProperty({
+    description: '수량. **음수면 반납이다** — PB 가 수량 부호로 ISSUE_DEFICIT 을'
+      + ' 정한다 (3 출고 · 4 반납).',
+  })
+  @Type(() => Number) @IsNumber()
+  issueQty!: number;
+
+  @ApiProperty({ description: '라인코드 (필수)' })
+  @IsString() @Length(1, 20)
+  lineCode!: string;
+
+  @ApiProperty({ description: '공정코드 (필수)' })
+  @IsString() @Length(1, 20)
+  workstageCode!: string;
+
+  @ApiProperty({ description: '설비코드 (필수)' })
+  @IsString() @Length(1, 20)
+  machineCode!: string;
+
+  @ApiPropertyOptional({
+    description: '포장 단위로 올려서 출고한다 (PB 체크박스).'
+      + ' **음수 수량과 같이 쓸 수 없다** — PB 가 양수를 내놓아 반납이 출고로 뒤집힌다.',
+  })
+  @IsOptional() @Transform(({ value }) => value === true || value === 'true')
+  @IsBoolean()
+  applyPackingQty?: boolean;
+
+  @ApiPropertyOptional({ description: '창고코드' })
+  @IsOptional() @IsString() @Length(0, 20)
+  locationCode?: string;
+
+  @ApiPropertyOptional({ description: '자재 롯트 (MATERIAL_MFS)' })
+  @IsOptional() @IsString() @Length(0, 60)
+  materialMfs?: string;
+
+  @ApiPropertyOptional({ description: '구매유형. 비우면 품목 기준정보에서 가져온다.' })
+  @IsOptional() @IsString() @Length(0, 10)
+  lineType?: string;
+
+  @ApiPropertyOptional({ description: '협력사코드' })
+  @IsOptional() @IsString() @Length(0, 30)
+  supplierCode?: string;
+
+  @ApiPropertyOptional({ description: '재고유형' })
+  @IsOptional() @IsString() @Length(0, 10)
+  inventoryType?: string;
+
+  @ApiPropertyOptional({ description: '출고단가. 비우면 0' })
+  @IsOptional() @Type(() => Number) @IsNumber()
+  issuePrice?: number;
+
+  @ApiPropertyOptional({ description: '출고계정 (공통코드)' })
+  @IsOptional() @IsString() @Length(0, 20)
+  issueAccount?: string;
+
+  @ApiPropertyOptional({ description: '전표번호. 비우면 시퀀스로 채번한다.' })
+  @IsOptional() @IsString() @Length(0, 60)
+  invoiceNo?: string;
+
+  @ApiPropertyOptional({ description: '비고' })
+  @IsOptional() @IsString() @Length(0, 200)
+  comments?: string;
+}
+
+/** 258 출고취소 (**쓰기**). 원장을 지우지 않고 부호를 뒤집은 행을 넣는다. */
+export class IssueCancelDto {
+  @ApiProperty({ description: '취소할 출고의 출고일 (YYYY-MM-DD)' })
+  @IsString() @Matches(DATE_ONLY)
+  issueDate!: string;
+
+  @ApiProperty({ description: '취소할 출고의 순번' })
+  @Type(() => Number) @IsInt()
+  issueSequence!: number;
+
+  @ApiProperty({
+    description: '취소일 (YYYY-MM-DD). 취소 행의 출고일이 된다 — PB 가 이 값을 쓴다.',
+  })
+  @IsString() @Matches(DATE_ONLY)
+  cancelDate!: string;
+}

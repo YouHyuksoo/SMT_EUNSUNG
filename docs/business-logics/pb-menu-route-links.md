@@ -3,7 +3,7 @@ sources:
   - apps/frontend/src/config/menuConfig.ts
   - apps/frontend/scripts/data/pb-screen-inventory.json
 generator: apps/frontend/scripts/gen-migration-status.mjs
-verifiedCommit: 3c924ed5
+verifiedCommit: 54bf0205
 ---
 
 # PB 윈도우 ↔ 웹 메뉴·경로 연결표 (자동 생성)
@@ -15,7 +15,7 @@ verifiedCommit: 3c924ed5
 
 | 전체 웹 메뉴 | PB 연결 | 웹 신규 | 미확정 |
 |---:|---:|---:|---:|
-| 157 | 138 | 17 | 2 |
+| 159 | 140 | 17 | 2 |
 
 ## 전체 연결표
 
@@ -72,6 +72,8 @@ verifiedCommit: 3c924ed5
 | 자재수불관리 | 솔더라벨 발행 | `WH_SOLDER_LABEL` | `/warehouse/solder-label` | PB 연결 | `w_mat_receipt_slip_master_onetek_solder` | PB 메뉴 인벤토리 |
 | 자재수불관리 | 자재입고관리 | `WH_MATERIAL_RECEIPT` | `/warehouse/material-receipt` | PB 연결 | `w_mat_receipt_master` | PB 메뉴 인벤토리 |
 | 자재수불관리 | 자재기타입고관리 | `WH_ETC_RECEIPT` | `/warehouse/etc-receipt` | PB 연결 | `w_mat_other_receipt_master` | PB 메뉴 인벤토리 |
+| 자재수불관리 | 자재기타출고 | `WH_ETC_ISSUE` | `/warehouse/etc-issue` | PB 연결 | `w_mat_other_issue_master` | PB 메뉴 인벤토리 |
+| 자재수불관리 | 자재출고취소 | `WH_ISSUE_CANCEL` | `/warehouse/issue-cancel` | PB 연결 | `w_mat_mass_issue_cancel_master` | PB 메뉴 인벤토리 |
 | 지그관리 | 지그마스터 | `JIG_MASTER` | `/jig/master` | PB 연결 | `w_mcn_jig_master` | PB 메뉴 인벤토리 |
 | 지그관리 | 지그출고관리 | `JIG_ISSUE` | `/jig/issue` | PB 연결 | `w_mcn_jig_issue_master` | PB 메뉴 인벤토리 |
 | 지그관리 | 지그수리관리 | `JIG_REPAIR` | `/jig/repair` | PB 연결 | `w_mcn_jig_repair_master` | PB 메뉴 인벤토리 |

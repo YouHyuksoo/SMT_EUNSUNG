@@ -309,6 +309,8 @@
     "warehouse.solderLabel": "Phát hành nhãn solder",
     "warehouse.materialReceipt": "Quản lý nhập kho vật tư",
     "warehouse.etcReceipt": "Quản lý nhập kho khác",
+    "warehouse.etcIssue": "Xuất kho vật tư khác",
+    "warehouse.issueCancel": "Hủy xuất kho vật tư",
     "cutting": "Công đoạn cắt",
     "cutting.order": "Lệnh sản xuất",
     "cutting.result": "Kết quả sản xuất",

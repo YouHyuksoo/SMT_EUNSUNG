@@ -82,7 +82,9 @@
       "WH_BARCODE_RECEIPT",
       "WH_SOLDER_LABEL",
       "WH_MATERIAL_RECEIPT",
-      "WH_ETC_RECEIPT"
+      "WH_ETC_RECEIPT",
+      "WH_ETC_ISSUE",
+      "WH_ISSUE_CANCEL"
     ],
     "JIG": [
       "JIG_MASTER",
