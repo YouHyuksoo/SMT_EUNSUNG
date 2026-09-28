@@ -12,18 +12,26 @@
  *    이 함수 안의 `P_CREATE_CELL_BIZ_BARCODE` 는 **`PRAGMA AUTONOMOUS_TRANSACTION`** 이라
  *    박스 행을 만들고 **즉시 확정한다** — 뒤에서 오류가 나도 되돌지 않는다. PB 도 같다.
  *    빈 박스가 남을 수 있다는 뜻이고, 그래서 목록에서 지울 수 있게 뒀다.
- * 4. **한 PID 는 한 박스에만 들어간다.** 이미 담긴 PID 를 다시 찍으면 거절한다.
+ * 4. **담기 전에 인터락 검사를 통과해야 한다.** `IQ_INTERLOCK_CHECK_CONDITION` 에
+ *    (라인, 공정)별 검사 항목이 순서대로 들어 있고(실측 316행 · 59개 조합, 전부 사용중),
+ *    항목마다 `P_INTERLOCK_CHECK` 를 불러 하나라도 NG 면 **담지 않는다.**
+ *    PB 는 이것을 `f_check_interlock_condition` + `AOI_OK_EXISTS_CHECK_TB` 두 단계로
+ *    했고, 둘 중 하나라도 NG 면 스캔을 중단했다. **이 게이트가 없으면 PB 가 막던
+ *    불량 기판이 웹에서는 그대로 포장된다.**
+ * 5. **수리품 여부도 맞아야 한다.** `IP_PRODUCT_WORK_QC` 에 수리 이력이 있는데
+ *    수리품으로 찍지 않았거나, 이력이 없는데 수리품으로 찍으면 거절한다 (PB 그대로).
+ * 6. **한 PID 는 한 박스에만 들어간다.** 이미 담긴 PID 를 다시 찍으면 거절한다.
  *    담을 때 `IP_PRODUCT_2D_BARCODE.BOX_NO` 에 박스 바코드를 적고, 빼면 NULL 로 되돌린다.
  *    이 두 가지가 어긋나면 제품 추적이 끊긴다 — 그래서 한 트랜잭션에서 같이 움직인다.
- * 5. **라벨 인쇄는 옮기지 않았다.** PB 는 DataWindow 와 BarTender 로 찍는다.
+ * 7. **라벨 인쇄는 옮기지 않았다.** PB 는 DataWindow 와 BarTender 로 찍는다.
  *    재출력 횟수(`REPRINT`)만 올려 둘 수 있게 남겼다.
- * 6. **쓰기는 실행하지 않고 parse 로만 검증했다** (사용자 결정).
- * 7. **목록은 기간을 좁혀 본다.** 이 표들은 기간 컬럼에 인덱스가 없어 한 달을 보면
+ * 8. **쓰기는 실행하지 않고 parse 로만 검증했다** (사용자 결정).
+ * 9. **목록은 기간을 좁혀 본다.** 이 표들은 기간 컬럼에 인덱스가 없어 한 달을 보면
  *    9,000행에 **8.7초**가 걸린다 (실측). 7일이면 1,583행 **2.4초**다 — 그래서 화면
  *    기본값을 7일로 뒀다. 인덱스 추가는 스키마 변경이라 손대지 않았다.
  */
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { DataSource } from 'typeorm';
+import { DataSource, QueryRunner } from 'typeorm';
 import { limited, ROW_LIMIT } from '../../../shared/row-limit';
 import { TransactionService } from '../../../shared/transaction.service';
 import {
@@ -231,6 +239,70 @@ export class ProductPackService {
   // ───────────────────────────────── PID 담기·빼기 (쓰기)
 
   /**
+   * 담기 전 인터락 검사 (읽기 전용).
+   *
+   * PB `f_check_interlock_condition` 이 `IQ_INTERLOCK_CHECK_CONDITION` 을 커서로
+   * 돌며 항목마다 `P_INTERLOCK_CHECK` 를 부르던 것을 **PL/SQL 블록 하나**로 옮겼다 —
+   * 항목이 라인·공정마다 최대 열 개라 왕복을 줄인다. 끝에 PB 가 따로 한 번 더 부르던
+   * `AOI_OK_EXISTS_CHECK_TB` 도 같은 블록에서 본다.
+   *
+   * OUT 바인드를 쓰지 않는 저장소 관례대로, NG 면 블록 안에서 오류로 바꿔 던진다.
+   */
+  private async checkInterlock(
+    qr: QueryRunner,
+    lineCode: string,
+    workstageCode: string,
+    serialNo: string,
+  ) {
+    await qr
+      .query(
+        `DECLARE
+           v_result  VARCHAR2(4000);
+           v_msg     VARCHAR2(4000);
+           v_ng_msg  VARCHAR2(4000);
+           v_ok_msg  VARCHAR2(4000);
+         BEGIN
+           -- ① 이 라인·공정에 걸린 검사 항목을 순서대로 돈다.
+           FOR c IN (SELECT INTERLOCK_CHECK_TYPE
+                       FROM IQ_INTERLOCK_CHECK_CONDITION
+                      WHERE LINE_CODE = :lineCode
+                        AND WORKSTAGE_CODE = :workstageCode
+                        AND NVL(USE_YN, 'Y') = 'Y'
+                      ORDER BY CHECK_SEQUENCE ASC)
+           LOOP
+             P_INTERLOCK_CHECK(:lineCode, :workstageCode, '*', :serialNo,
+                               c.INTERLOCK_CHECK_TYPE,
+                               v_result, v_msg, v_ng_msg, v_ok_msg);
+             IF NVL(v_result, 'OK') <> 'OK' THEN
+               RAISE_APPLICATION_ERROR(-20007, 'INTERLOCK_NG:'
+                 || c.INTERLOCK_CHECK_TYPE || ' / ' || v_msg || ' ' || v_ng_msg);
+             END IF;
+           END LOOP;
+
+           -- ② PB 가 항목 목록과 별개로 한 번 더 보던 검사.
+           P_INTERLOCK_CHECK(:lineCode, :workstageCode, '*', :serialNo,
+                             'AOI_OK_EXISTS_CHECK_TB',
+                             v_result, v_msg, v_ng_msg, v_ok_msg);
+           IF v_result = 'NG' THEN
+             RAISE_APPLICATION_ERROR(-20007, 'INTERLOCK_NG:AOI_OK_EXISTS_CHECK_TB / '
+               || v_msg || ' ' || v_ng_msg);
+           END IF;
+         END;`,
+        { lineCode, workstageCode, serialNo } as unknown as unknown[],
+      )
+      .catch((error: unknown) => {
+        const message = error instanceof Error ? error.message : String(error);
+        const matched = /INTERLOCK_NG:(.*)/.exec(message);
+        if (matched) {
+          throw new BadRequestException(
+            `인터락 검사 불합격: ${matched[1].trim() || '사유 없음'}`,
+          );
+        }
+        throw error;
+      });
+  }
+
+  /**
    * PID 한 건을 박스에 담는다 (**쓰기**).
    *
    *   ① 2D바코드에서 런카드번호를 읽는다 (없으면 `'*'`)
@@ -258,7 +330,12 @@ export class ProductPackService {
                   AND s.ORGANIZATION_ID = :organizationId)  AS "serialCount",
               (SELECT MAX(b.RUN_NO) FROM IP_PRODUCT_2D_BARCODE b
                 WHERE b.SERIAL_NO = :serialNo
-                  AND b.ORGANIZATION_ID = :organizationId)  AS "runNo"
+                  AND b.ORGANIZATION_ID = :organizationId)  AS "runNo",
+              -- 이 기판에 공정 수리 이력이 있는지 (PB 의 수리품 일치 검사).
+              (SELECT COUNT(*) FROM IP_PRODUCT_WORK_QC q
+                WHERE q.SERIAL_NO = :serialNo
+                  AND q.ORGANIZATION_ID = :organizationId
+                  AND ROWNUM = 1)                          AS "repairCount"
          FROM DUAL`,
       { packBarcode, serialNo, organizationId } as unknown as unknown[],
     )) as Row[])[0] ?? {};
@@ -269,10 +346,24 @@ export class ProductPackService {
     if (Number(checks.serialCount ?? 0) > 0) {
       throw new BadRequestException(`이미 담긴 PID 입니다: ${serialNo}`);
     }
+    // 수리 이력과 화면의 '수리품' 체크가 어긋나면 거절한다 (PB 그대로).
+    const hasRepair = Number(checks.repairCount ?? 0) > 0;
+    const asRepair = dto.repair === true;
+    if (asRepair && !hasRepair) {
+      throw new BadRequestException(`수리 이력이 없는 기판입니다: ${serialNo}`);
+    }
+    if (!asRepair && hasRepair) {
+      throw new BadRequestException(
+        `수리 이력이 있는 기판입니다. 수리품으로 찍으세요: ${serialNo}`,
+      );
+    }
     // PB 와 같이 2D 바코드가 없어도 막지 않는다 — 런카드번호만 '*' 가 된다.
     const runNo = (checks.runNo as string) ?? '*';
 
     return this.tx.run(async (qr) => {
+      // 담기 전에 인터락을 본다. NG 면 여기서 끝나고 아무것도 남지 않는다.
+      await this.checkInterlock(qr, dto.lineCode, dto.workstageCode, serialNo);
+
       await qr.query(
         `UPDATE IP_PRODUCT_2D_BARCODE
             SET BOX_NO = :packBarcode,

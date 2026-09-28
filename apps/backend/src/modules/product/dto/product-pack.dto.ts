@@ -53,6 +53,11 @@ export class PackScanDto {
   @IsOptional() @IsString() packCharger?: string;
   /** PB `attr8` — 검사 담당자. */
   @IsOptional() @IsString() qcCharger?: string;
+  /**
+   * 수리품으로 담는지 (PB `cbx_repair_yn`).
+   * 공정 수리 이력 유무와 **반드시 일치해야 한다** — 서비스가 막는다.
+   */
+  @IsOptional() @IsBoolean() repair?: boolean;
 }
 
 export class PackCompleteDto {

@@ -34,8 +34,13 @@ const SEQUENCE = 'SEQ_JIG_CHECK_SEQUENCE';
 /** PB 고정조건 — 이 화면은 스퀴지만 다룬다. */
 const JIG_TYPE = 'S';
 
-/** PB `wf_insert_inspect(arg_check_status)` 로 넘어가던 값. */
-const CHECK_STATUS = { pass: 'P', fail: 'F' } as const;
+/**
+ * PB `wf_insert_inspect(arg_check_status)` 로 넘어가던 값.
+ * **불합격은 `'N'` 이다.** 실측 전 기간 `P` 37,386 · `N` 731 · `R` 3 —
+ * `'F'` 는 한 건도 없다. 여기를 틀리면 웹으로 넣은 불합격이 기존 조회에서 안 보인다.
+ * (`'R'` 3건은 2020~21년 재검사로 보이나 화면에 경로가 없어 옮기지 않았다.)
+ */
+const CHECK_STATUS = { pass: 'P', fail: 'N' } as const;
 
 /** 합격/불합격이 지그에 남기는 상태. */
 const USE_STATUS = { usable: 'U', stopped: 'S' } as const;
@@ -155,6 +160,13 @@ export class JigCleanCheckService {
     }
     const jig = lookup.jig as Row;
     const pass = dto.pass === true;
+    // 합격은 세척·외관이 **둘 다 OK** 여야 한다. 화면에도 같은 가드가 있지만,
+    // 컨트롤러를 거치지 않는 호출이 불합격 스퀴지를 사용가능으로 만들 수 있다.
+    if (pass && !(dto.cleanOk && dto.visualOk)) {
+      throw new BadRequestException(
+        '세척·외관 중 NG 가 있어 합격으로 남길 수 없습니다.',
+      );
+    }
     const checkStatus = pass ? CHECK_STATUS.pass : CHECK_STATUS.fail;
 
     return this.tx.run(async (qr) => {

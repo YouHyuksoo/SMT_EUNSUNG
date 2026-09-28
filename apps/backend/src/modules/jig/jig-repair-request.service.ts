@@ -28,14 +28,14 @@ import {
 
 type Row = Record<string, unknown>;
 
-/** 신청번호 채번. PB `f_get_sequence('SEQ_JIG_REPAIR_SEQUENCE')` 와 같다. */
-const SEQUENCE = 'SEQ_JIG_REPAIR_SEQUENCE';
-
 /**
- * PB 가 신청 시 넣던 값.
- * `REPAIR_STATUS` 는 수리 화면이 진행에 따라 바꾼다 — 신청은 `'R'`(요청)로 시작한다.
+ * 신청 등록은 **직접 INSERT 하지 않고 DB 패키지에 맡긴다.**
+ * `/jig/repair`(지그수리관리)가 이미 이 프로시저로 접수하고 있어서, 여기서 따로
+ * INSERT 하면 채번과 초기 상태를 정하는 주체가 둘이 된다.
+ * 실측 `REPAIR_STATUS` 는 `'R'`(수리중) 2건 · `'C'`(수리완료) 10건이고,
+ * 초기값을 무엇으로 둘지는 이 프로시저가 정한다.
  */
-const REQUEST_STATUS = 'R';
+const REQUEST_PROCEDURE = 'PKG_MES_MAC.SP_REPAIR_REQUEST';
 
 @Injectable()
 export class JigRepairRequestService {
@@ -132,55 +132,63 @@ export class JigRepairRequestService {
 
   // ───────────────────────────────── 신청 (쓰기)
 
-  /** 수리 신청을 만든다 (**쓰기**). */
+  /**
+   * 수리 신청을 만든다 (**쓰기**).
+   *
+   * **채번·초기상태·검증을 DB 패키지가 한다** — `PKG_MES_MAC.SP_REPAIR_REQUEST`.
+   * 지그수리관리 화면이 쓰는 것과 같은 경로라 두 화면이 같은 규칙으로 접수한다.
+   * 신청일도 프로시저가 넣으므로 화면에서 받지 않는다.
+   */
   async createRequest(
     dto: JigRepairRequestCreateDto,
     organizationId: number,
     userId: string,
   ) {
     return this.tx.run(async (qr) => {
-      const seqRows = (await qr.query(
-        `SELECT ${SEQUENCE}.NEXTVAL AS "seq" FROM DUAL`,
-      )) as Row[];
-      const repairSequence = Number(seqRows[0]?.seq ?? 0);
+      await qr
+        .query(
+          `DECLARE
+             v_result NUMBER;
+           BEGIN
+             ${REQUEST_PROCEDURE}(:jigCode, :jigLotNo, :repairReasonCode,
+               :repairVendorCode, :comments, :currency, :organizationId, :userId, v_result);
+             IF v_result < 0 THEN
+               RAISE_APPLICATION_ERROR(-20006, 'JIG_REPAIR_REQUEST_FAILED:' || v_result);
+             END IF;
+           END;`,
+          {
+            jigCode: dto.jigCode.trim(),
+            jigLotNo: (dto.jigLotNo ?? '').trim(),
+            repairReasonCode: dto.repairReasonCode,
+            repairVendorCode: dto.repairVendorCode ?? null,
+            comments: dto.comments ?? null,
+            currency: dto.currency ?? null,
+            organizationId,
+            userId,
+          } as unknown as unknown[],
+        )
+        .catch((error: unknown) => {
+          const message = error instanceof Error ? error.message : String(error);
+          if (/JIG_REPAIR_REQUEST_FAILED/.test(message)) {
+            throw new BadRequestException(`등록되지 않은 지그입니다: ${dto.jigCode}`);
+          }
+          throw error;
+        });
 
-      const inserted = await qr.query(
-        `INSERT INTO IMCN_JIG_REPAIR
-           (JIG_CODE, ORGANIZATION_ID, REPAIR_SEQUENCE, REPAIR_STATUS,
-            REPAIR_REASON_CODE, REPAIR_REQUEST_DATE, REPAIR_VENDOR_CODE,
-            CURRENCY, COMMENTS, JIG_LOT_NO,
-            ENTER_BY, ENTER_DATE, LAST_MODIFY_BY, LAST_MODIFY_DATE)
-         SELECT :jigCode, :organizationId, :repairSequence, :repairStatus,
-                :repairReasonCode, TO_DATE(:repairRequestDate, 'YYYY-MM-DD'),
-                :repairVendorCode, :currency, :comments, :jigLotNo,
-                :userId, SYSDATE, :userId, SYSDATE
-           FROM DUAL
-          -- 없는 지그로 신청을 만들지 않는다 (PB 는 목록에서 골라서 넘어갔다).
-          WHERE EXISTS (SELECT 1 FROM IMCN_JIG j
-                         WHERE j.JIG_CODE = :jigCode
-                           AND j.ORGANIZATION_ID = :organizationId)`,
-        {
-          jigCode: dto.jigCode.trim(),
-          organizationId,
-          repairSequence,
-          repairStatus: REQUEST_STATUS,
-          repairReasonCode: dto.repairReasonCode,
-          repairRequestDate: dto.repairRequestDate,
-          repairVendorCode: dto.repairVendorCode ?? null,
-          // NOT NULL 컬럼이라 비우면 들어가지 않는다.
-          currency: dto.currency ?? 'KRW',
-          comments: dto.comments ?? null,
-          jigLotNo: dto.jigLotNo ?? null,
-          userId,
-        } as unknown as unknown[],
-      );
-      const affected = Number(
-        (inserted as { rowsAffected?: number })?.rowsAffected ?? 0,
-      );
-      if (affected !== 1) {
-        throw new BadRequestException(`지그를 찾을 수 없습니다: ${dto.jigCode}`);
-      }
-      return { jigCode: dto.jigCode.trim(), repairSequence };
+      // 방금 접수된 건을 돌려준다 (OUT 바인드 대신 최신 1건 조회 — 저장소 관례).
+      const saved = (await qr.query(
+        `SELECT * FROM (
+           SELECT REPAIR_SEQUENCE AS "repairSequence",
+                  REPAIR_STATUS   AS "repairStatus",
+                  TO_CHAR(REPAIR_REQUEST_DATE, 'YYYY-MM-DD') AS "repairRequestDate"
+             FROM IMCN_JIG_REPAIR
+            WHERE JIG_CODE = :jigCode
+              AND ORGANIZATION_ID = :organizationId
+            ORDER BY REPAIR_SEQUENCE DESC
+         ) WHERE ROWNUM = 1`,
+        { jigCode: dto.jigCode.trim(), organizationId } as unknown as unknown[],
+      )) as Row[];
+      return { jigCode: dto.jigCode.trim(), ...(saved[0] ?? {}) };
     });
   }
 

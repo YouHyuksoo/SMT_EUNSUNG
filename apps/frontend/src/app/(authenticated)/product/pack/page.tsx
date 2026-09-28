@@ -13,8 +13,11 @@
  * 3. **한 PID 는 한 박스에만.** 이미 담긴 PID 를 찍으면 거절한다.
  * 4. **포장완료 후에는 뺄 수 없다.** 완료·입고된 박스에서 PID 를 빼면 박스 수량과
  *    실제 내용이 어긋난 채 입고로 넘어가기 때문이다.
- * 5. **라벨 인쇄는 없다.** PB 는 BarTender 로 찍는다 — 여기서는 재출력 횟수만 올린다.
- * 6. **기본 기간이 7일이다.** 이 표는 기간 컬럼에 인덱스가 없어 한 달을 보면
+ * 5. **담기 전에 인터락 검사를 거친다.** 라인·공정에 걸린 검사 항목을 서버가
+ *    차례로 보고 하나라도 NG 면 담기지 않는다 — PB 가 막던 것과 같다.
+ * 6. **수리품은 수리품으로 찍어야 한다.** 공정 수리 이력 유무와 체크가 어긋나면 거절한다.
+ * 7. **라벨 인쇄는 없다.** PB 는 BarTender 로 찍는다 — 여기서는 재출력 횟수만 올린다.
+ * 8. **기본 기간이 7일이다.** 이 표는 기간 컬럼에 인덱스가 없어 한 달을 보면
  *    9,000행에 8.7초가 걸린다 (7일이면 2.4초).
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -72,6 +75,7 @@ export default function ProductPackPage() {
   // PID 스캔
   const [pid, setPid] = useState('');
   const [unpackMode, setUnpackMode] = useState(false);
+  const [repairMode, setRepairMode] = useState(false);
   const [lastResult, setLastResult] = useState<string | null>(null);
   const pidRef = useRef<HTMLInputElement>(null);
 
@@ -184,6 +188,7 @@ export default function ProductPackPage() {
         serialNo,
         lineCode,
         workstageCode,
+        repair: repairMode,
       });
       setLastResult(`${unpackMode ? '뺐습니다' : '담았습니다'}: ${serialNo}`);
       setPid('');
@@ -198,7 +203,7 @@ export default function ProductPackPage() {
       setBusy(false);
       pidRef.current?.focus();
     }
-  }, [pid, selected, unpackMode, lineCode, workstageCode, loadSerials]);
+  }, [pid, selected, unpackMode, repairMode, lineCode, workstageCode, loadSerials]);
 
   const act = useCallback(async (kind: 'complete' | 'reprint' | 'delete') => {
     if (!selected) return;
@@ -297,6 +302,12 @@ export default function ProductPackPage() {
               <Undo2 className="mr-1 h-4 w-4" />빼기
             </Button>
           </div>
+          {!unpackMode && (
+            <Button size="sm" variant={repairMode ? 'primary' : 'secondary'}
+              onClick={() => { setRepairMode(!repairMode); pidRef.current?.focus(); }}>
+              수리품
+            </Button>
+          )}
           <Input ref={pidRef} aria-label="PID" placeholder="PID" value={pid}
             className="w-64" disabled={!canEdit || busy}
             onChange={(e) => setPid(e.target.value)}

@@ -19,6 +19,13 @@
       "note": "PB 는 SQLCA.BOM_QUERY 를 감싸기만 했다. 웹은 패키지 함수를 그대로 부른다. 세션번호를 돌려주고 ID_ENG_BOM_TEMP 에 전개행을 깐다 — 읽은 뒤 그 세션 행만 지운다 (이 표는 3,357,661행 / 세션 70,117개가 2020년부터 쌓여 있다)."
     },
     {
+      "pbFunction": "f_check_interlock_condition",
+      "action": "inlined",
+      "target": "IQ_INTERLOCK_CHECK_CONDITION 루프 + P_INTERLOCK_CHECK (PL/SQL 블록 1회)",
+      "usedBy": "apps/backend/src/modules/product/services/product-pack.service.ts",
+      "note": "본문이 조건표를 커서로 돌며 P_INTERLOCK_CHECK 를 부르는 것뿐이다. 블록 하나로 옮겨 왕복을 줄였다. 실측 조건표 316행 / 59개 (라인,공정) 조합, 전부 USE_YN='Y'."
+    },
+    {
       "pbFunction": "f_check_item_barcode_hold_yn",
       "action": "inlined",
       "target": "CASE WHEN NVL(MAX(IM_ITEM_RECEIPT_BARCODE.HOLDING_YN),'N')='N' THEN 'N' ELSE 'Y' END",
@@ -136,6 +143,20 @@
       "target": "PKG_MES_PLN.F_GET_CARRIER_SIZE",
       "source": "oracle_db_scripts/PKG_MES_PLN.sql",
       "note": "모델 캐리어 규격. 모델 없으면 -1, 값 없으면 0."
+    },
+    {
+      "pbFunction": "f_get_code_master",
+      "action": "native",
+      "target": "F_GET_CODE_MASTER",
+      "usedBy": "apps/backend/src/modules/quality/services/repair-query.service.ts",
+      "note": "SQL 안에서 부르던 DB 함수. 코드표를 TypeScript 로 복사하지 않는다."
+    },
+    {
+      "pbFunction": "f_get_create_cellbiz_barcode",
+      "action": "native",
+      "target": "F_GET_CREATE_CELLBIZ_BARCODE",
+      "usedBy": "apps/backend/src/modules/product/services/product-pack.service.ts",
+      "note": "SQL 안에서 부르던 DB 함수(VALID). 내부 P_CREATE_CELL_BIZ_BARCODE 가 PRAGMA AUTONOMOUS_TRANSACTION + COMMIT 이라 박스 행이 즉시 확정된다."
     },
     {
       "pbFunction": "f_get_dual_lang_text",
