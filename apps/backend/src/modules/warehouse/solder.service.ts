@@ -119,9 +119,20 @@ export class SolderService {
       ? `AND s.ISSUE_DATE IS NOT NULL
           AND s.DESTROY_DATE IS NULL`
       : '';
-    /** 두 시각의 차이를 '몇 시간 몇 분' 문자열로. PB 와 같은 DB 함수다. */
-    const elapsed = (from: string, to: string) =>
-      `F_GET_TIME_STR(ROUND(NVL(NVL(${to}, SYSDATE) - NVL(${from}, SYSDATE), 0) * 24, 3))`;
+    /**
+     * 두 시각의 차이를 '몇 시간 몇 분' 문자열로. PB 와 같은 DB 함수를 쓴다.
+     *
+     * `clampNegative` 는 PB 의 `DECODE(SIGN(...), -1, 0, ...)` 가드다.
+     * 폐기일이 시작일보다 이른 비정상 행에서 **PB 는 0 을 보여준다** — 그 열에만
+     * 가드가 붙어 있으므로(점도 후·최초투입 후·개봉 후) 그대로 맞춘다.
+     * 가드가 없는 열(해동 소요·교반 소요·출고 후)에는 붙이지 않는다.
+     */
+    const elapsed = (from: string, to: string, clampNegative = false) => {
+      const hours = `ROUND(NVL(NVL(${to}, SYSDATE) - NVL(${from}, SYSDATE), 0) * 24, 3)`;
+      return clampNegative
+        ? `F_GET_TIME_STR(DECODE(SIGN(${hours}), -1, 0, ${hours}))`
+        : `F_GET_TIME_STR(${hours})`;
+    };
 
     const rows = (await this.dataSource.query(
       `SELECT s.ITEM_CODE                               AS "itemCode",
@@ -171,16 +182,18 @@ export class SolderService {
               ${elapsed(
                 `NVL(s.VISCOSITY_END_DATE, s.INPUT_DATE)`,
                 's.DESTROY_DATE',
+                true,
               )}                                        AS "afterViscosityTime",
               -- 냉장고에서 꺼낸 뒤 지난 시간. 솔더는 이 시간이 수명을 깎는다.
               ${elapsed('s.ISSUE_DATE', 's.DESTROY_DATE')} AS "afterIssueTime",
               -- 처음 라인에 올린 뒤 지난 시간.
-              ${elapsed('s.FIRST_LINE_INPUT_DATE', 's.DESTROY_DATE')}
+              ${elapsed('s.FIRST_LINE_INPUT_DATE', 's.DESTROY_DATE', true)}
                                                         AS "afterFirstInputTime",
               -- 개봉(점도측정 시작, 없으면 최초투입, 없으면 투입) 뒤 지난 시간.
               ${elapsed(
                 `NVL(s.VISCOSITY_START_DATE, NVL(s.FIRST_LINE_INPUT_DATE, s.INPUT_DATE))`,
                 's.DESTROY_DATE',
+                true,
               )}                                        AS "afterOpenTime",
               -- 이 통이 투입된 라인 목록 (PB 와 같은 DB 함수).
               F_GET_SOLDER_INPUT_LIST(s.ITEM_BARCODE)   AS "solderInputLine",
