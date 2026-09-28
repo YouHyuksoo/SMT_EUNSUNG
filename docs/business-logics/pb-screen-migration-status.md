@@ -3,7 +3,7 @@ sources:
   - apps/frontend/src/config/menuConfig.ts
   - apps/frontend/scripts/data/pb-screen-inventory.json
 generator: apps/frontend/scripts/gen-migration-status.mjs
-verifiedCommit: 2708b7fa
+verifiedCommit: 5b58cb57
 ---
 
 # PB 화면 이관 현황 (자동 생성)
@@ -18,11 +18,11 @@ verifiedCommit: 2708b7fa
 | 상태 | 건수 |
 |---|---:|
 | PB 업무화면(셸 메뉴 제외) | 275 |
-| 완료(개발됨, pbWindow 매핑) | 142 |
-| 미착수 | 107 |
+| 완료(개발됨, pbWindow 매핑) | 143 |
+| 미착수 | 106 |
 | 윈도우 미상 | 26 |
 
-웹 메뉴 연결 계약: **PB 141개 / 웹 신규 17개 / 미확정 2개**. PB 매핑과 웹 경로의 전체 연결표는 [pb-menu-route-links.md](pb-menu-route-links.md)에서 관리합니다.
+웹 메뉴 연결 계약: **PB 142개 / 웹 신규 17개 / 미확정 2개**. PB 매핑과 웹 경로의 전체 연결표는 [pb-menu-route-links.md](pb-menu-route-links.md)에서 관리합니다.
 
 ## 대분류별 진행률
 
@@ -37,7 +37,7 @@ verifiedCommit: 2708b7fa
 | S-PARTS | `M_MOLD` | 8 | 8 | 0 | 0 |
 | 생산 | `M_PLANNING` | 7 | 7 | 0 | 0 |
 | 공정 | `M_WORKSTAGE0` | 5 | 2 | 3 | 0 |
-| 자재창고 | `M_WAREHOUSE` | 22 | 16 | 6 | 0 |
+| 자재창고 | `M_WAREHOUSE` | 22 | 17 | 5 | 0 |
 | 재고 | `M_INVENTORY` | 5 | 1 | 4 | 0 |
 | 수리 | `M_REPAIR` | 4 | 2 | 2 | 0 |
 | 품질관리 | `M_QC` | 12 | 12 | 0 | 0 |
@@ -191,7 +191,7 @@ verifiedCommit: 2708b7fa
 |---:|---|---|:--:|---|---|---|
 | 235 | 자재입고전표관리 | `w_mat_receipt_slip_master` | srw | 완료 | `WH_RECEIPT_SLIP` | `/warehouse/receipt-slip` |
 | 237 | 자재바코드입고관리 | `w_mat_other_receipt_barcode_master` | srw | 완료 | `WH_BARCODE_RECEIPT` | `/warehouse/barcode-receipt` |
-| 238 | 자재바코드출고관리 | `w_mat_other_issue_barcode_master` | srw | 미착수 |  |  |
+| 238 | 자재바코드출고관리 | `w_mat_other_issue_barcode_master` | srw | 완료 | `WH_BARCODE_ISSUE` | `/warehouse/barcode-issue` |
 | 239 | IMD 라인 자재투입관리 | `w_mat_manual_input_history_query` | srw | 미착수 |  |  |
 | 240 | 자재분할관리 | `w_mat_receipt_barcode_divide_master` | srw | 미착수 |  |  |
 | 241 | 자재바코드재발행 | `w_mat_receipt_barcode_reprint_master` | srw | 미착수 |  |  |

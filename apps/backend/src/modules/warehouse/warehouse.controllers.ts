@@ -13,6 +13,7 @@
  *   /warehouse/receipt-manage  253 자재입고관리 (조회) · 254 자재기타입고관리 (쓰기)
  *   /warehouse/issue-manage    257 자재기타출고 · 258 자재출고취소 (쓰기)
  *   /warehouse/issue-return    250 출고바코드반품 (쓰기)
+ *   /warehouse/barcode-issue   238 자재바코드출고관리 (출고대조 — 쓰기)
  */
 import {
   Body, Controller, Delete, Get, Patch, Post, Query, UseGuards,
@@ -22,6 +23,7 @@ import { OrganizationId, UserId } from '../../common/decorators/tenant.decorator
 import { ResponseUtil } from '../../common/dto/response.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { ROW_LIMIT } from '../../shared/row-limit';
+import { BarcodeIssueService } from './barcode-issue.service';
 import { BarcodeReceiptService } from './barcode-receipt.service';
 import { ChamberStockService } from './chamber-stock.service';
 import { RecycleCheckService } from './recycle-check.service';
@@ -33,6 +35,11 @@ import { SolderLabelService } from './solder-label.service';
 import { SolderService } from './solder.service';
 import {
   BarcodeCompareQueryDto,
+  BarcodeIssueDto,
+  BarcodeIssueHistoryQueryDto,
+  BarcodeIssueScanDto,
+  BarcodeIssueWaitingQueryDto,
+  KittingBomQueryDto,
   BarcodeCompareReceiveDto,
   BarcodeReceiptHistoryQueryDto,
   BarcodeScanLookupDto,
@@ -605,6 +612,95 @@ export class IssueReturnController {
   ) {
     return ResponseUtil.success(
       await this.service.returnBarcode(dto, organizationId, userId || DEFAULT_USER),
+    );
+  }
+}
+
+@ApiTags('자재창고 - 자재바코드출고')
+@UseGuards(JwtAuthGuard)
+@Controller('warehouse/barcode-issue')
+export class BarcodeIssueController {
+  constructor(private readonly service: BarcodeIssueService) {}
+
+  @Get()
+  @ApiOperation({
+    summary: '238 출고 이력 (ISSUE_DEFICIT=3 — 반품은 250 화면이다).'
+      + ' 이 목록은 편집할 수 없다 — PB DataWindow 에 갱신 대상 표가 없다 (실측).',
+  })
+  async find(
+    @Query() query: BarcodeIssueHistoryQueryDto,
+    @OrganizationId() organizationId: number,
+  ) {
+    return paged(await this.service.findIssues(query, organizationId));
+  }
+
+  @Get('waiting')
+  @ApiOperation({
+    summary: '238 출고 대기 바코드 — 입고대조는 됐고 아직 라인으로 안 나간 릴.'
+      + " PB 고정조건 유지: RECEIPT_COMPARE_YN='Y' · ISSUE_COMPARE_YN<>'Y' ·"
+      + " BARCODE_STATUS<>'C' · LOT_DIVIDE_YN='N'.",
+  })
+  async waiting(
+    @Query() query: BarcodeIssueWaitingQueryDto,
+    @OrganizationId() organizationId: number,
+  ) {
+    return paged(await this.service.findWaiting(query, organizationId));
+  }
+
+  @Get('kitting-bom')
+  @ApiOperation({
+    summary: '238 키팅 BOM — 모델에 들어가는 자재 목록. 대체품을 함께 낸다'
+      + ' (대체품으로 찍어도 통과해야 한다).',
+  })
+  async kittingBom(
+    @Query() query: KittingBomQueryDto,
+    @OrganizationId() organizationId: number,
+  ) {
+    return paged(await this.service.findKittingBom(query, organizationId));
+  }
+
+  @Get('fifo')
+  @ApiOperation({
+    summary: '238 FIFO 위반 후보 — 지금 찍은 릴보다 먼저 써야 하는 릴 목록.'
+      + ' 거절 이유를 눈으로 확인할 수 있어야 하므로 목록으로 낸다.',
+  })
+  async fifo(
+    @Query('itemCode') itemCode: string,
+    @Query('lotNo') lotNo: string,
+    @Query('inventoryType') inventoryType: string,
+    @OrganizationId() organizationId: number,
+  ) {
+    return paged(await this.service.findFifoCandidates(
+      itemCode, lotNo, inventoryType || null, organizationId,
+    ));
+  }
+
+  @Post('scan')
+  @ApiOperation({
+    summary: '238 스캔 판정 (읽기 전용). **PB 와 같은 순서로** 검사를 쌓아 첫 거절'
+      + ' 사유를 낸다 — 순서가 뜻을 정한다 (FIFO 경고는 중복 출고 거절 뒤에 와야'
+      + ' 현장이 원인을 바로 읽는다). 화면과 쓰기 경로가 이 함수를 함께 쓴다.',
+  })
+  async scan(
+    @Body() dto: BarcodeIssueScanDto,
+    @OrganizationId() organizationId: number,
+  ) {
+    return ResponseUtil.success(await this.service.evaluateScan(dto, organizationId));
+  }
+
+  @Post()
+  @ApiOperation({
+    summary: '238 출고대조 + 출고 기록 (**쓰기**). 판정을 다시 해서 통과할 때만 넣는다'
+      + ' — 미리 본 시점과 실제 출고 시점 사이에 FIFO·MSL 상황이 바뀔 수 있다.'
+      + ' 중복 출고는 UPDATE 조건으로 막는다.',
+  })
+  async issue(
+    @Body() dto: BarcodeIssueDto,
+    @OrganizationId() organizationId: number,
+    @UserId() userId?: string,
+  ) {
+    return ResponseUtil.success(
+      await this.service.issueBarcode(dto, organizationId, userId || DEFAULT_USER),
     );
   }
 }

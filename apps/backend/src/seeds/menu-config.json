@@ -85,7 +85,8 @@
       "WH_ETC_RECEIPT",
       "WH_ETC_ISSUE",
       "WH_ISSUE_CANCEL",
-      "WH_ISSUE_RETURN"
+      "WH_ISSUE_RETURN",
+      "WH_BARCODE_ISSUE"
     ],
     "JIG": [
       "JIG_MASTER",

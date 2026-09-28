@@ -17,6 +17,7 @@
  *   257 자재기타출고       w_mat_other_issue_master          → IssueManageService (쓰기)
  *   258 자재출고취소       w_mat_mass_issue_cancel_master    → IssueManageService (쓰기)
  *   250 출고바코드반품     w_mat_other_mass_issue_barcode_return_master → IssueReturnService (쓰기)
+ *   238 자재바코드출고관리 w_mat_other_issue_barcode_master  → BarcodeIssueService (쓰기)
  *
  * **왜 화면당 모듈이 아닌가.** 기존 `material` 모듈은 화면당 모듈 하나
  * (`material-current-inventory.module.ts` 등) 패턴인데, 자재창고는 20화면이라
@@ -34,6 +35,7 @@
  *   PB 에서도 이미 죽은 기능이므로 그 조회만 빼고 화면은 옮긴다.
  */
 import { Module } from '@nestjs/common';
+import { BarcodeIssueService } from './barcode-issue.service';
 import { BarcodeReceiptService } from './barcode-receipt.service';
 import { ChamberStockService } from './chamber-stock.service';
 import { RecycleCheckService } from './recycle-check.service';
@@ -44,6 +46,7 @@ import { ReceiptSlipService } from './receipt-slip.service';
 import { SolderLabelService } from './solder-label.service';
 import { SolderService } from './solder.service';
 import {
+  BarcodeIssueController,
   BarcodeReceiptController,
   ChamberStockController,
   IssueManageController,
@@ -68,6 +71,7 @@ import {
     ReceiptManageController,
     IssueManageController,
     IssueReturnController,
+    BarcodeIssueController,
   ],
   providers: [
     ChamberStockService,
@@ -79,6 +83,7 @@ import {
     ReceiptManageService,
     IssueManageService,
     IssueReturnService,
+    BarcodeIssueService,
   ],
 })
 /**

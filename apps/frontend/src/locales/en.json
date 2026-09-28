@@ -312,6 +312,7 @@
     "warehouse.etcIssue": "Material Etc. Issue",
     "warehouse.issueCancel": "Material Issue Cancel",
     "warehouse.issueReturn": "Issue Barcode Return",
+    "warehouse.barcodeIssue": "Material Barcode Issue",
     "cutting": "Cutting",
     "cutting.order": "Work Order",
     "cutting.result": "Work Result",

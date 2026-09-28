@@ -455,6 +455,55 @@
       "target": "F_GET_MAX_SUPPLIER_BY_ITEM(item_code, organization_id)",
       "usedBy": "apps/backend/src/modules/warehouse/issue-return.service.ts",
       "note": "PB 동명 함수가 없고 DB 에 VALID 로 있다 (실측). PB 250 도 INSERT 문 안에서 부르므로 DB 함수다."
+    },
+    {
+      "pbFunction": "f_check_item_inventory_hold_yn",
+      "action": "inlined",
+      "target": "CASE WHEN MAX(IM_ITEM_INVENTORY.INVENTORY_HOLD)='C' THEN 'Y' ELSE 'N' END (창고 M01)",
+      "usedBy": "apps/backend/src/modules/warehouse/barcode-issue.service.ts",
+      "note": "DB 에 동명 함수가 없다 (실측). PB 가 SQL 밖에서 부르는 PB 함수이고 본문이 한 줄 SELECT 라 그대로 인라인했다. 'C' 만 보류로 본다."
+    },
+    {
+      "pbFunction": "f_check_item_barcode_hold_yn",
+      "action": "inlined",
+      "target": "CASE WHEN NVL(MAX(IM_ITEM_RECEIPT_BARCODE.HOLDING_YN),'N')='N' THEN 'N' ELSE 'Y' END",
+      "usedBy": "apps/backend/src/modules/warehouse/barcode-issue.service.ts",
+      "note": "DB 에 동명 함수가 없다 (실측). PB 함수 본문 그대로 인라인. 'N' 이 아니면 전부 보류로 본다."
+    },
+    {
+      "pbFunction": "f_get_prepare_barcode",
+      "action": "native",
+      "target": "F_GET_PREPARE_BARCODE(barcode)",
+      "usedBy": "apps/backend/src/modules/warehouse/barcode-issue.service.ts",
+      "note": "PB 동명 함수가 없고 DB 에 VALID 로 있다. PB 도 SQL 안에서 부른다 — 스캐너가 붙이는 접두어·공백을 떼는 규칙이라 TypeScript 로 다시 쓰면 값이 갈린다."
+    },
+    {
+      "pbFunction": "f_get_prepare_supplier_barcode",
+      "action": "native",
+      "target": "F_GET_PREPARE_SUPPLIER_BARCODE(barcode)",
+      "usedBy": "apps/backend/src/modules/warehouse/issue-return.service.ts (간접), barcode-issue.service.ts",
+      "note": "PB 동명 함수가 없고 DB 에 VALID 로 있다. 협력사 바코드 정제용이다."
+    },
+    {
+      "pbFunction": "f_check_pcb_coating_date",
+      "action": "native",
+      "target": "F_CHECK_PCB_COATING_DATE(item_code, coating_date, organization_id)",
+      "usedBy": "apps/backend/src/modules/warehouse/barcode-issue.service.ts",
+      "note": "PB 동명 함수가 없고 DB 에 VALID 로 있다. PB 도 SQL 안에서 부른다."
+    },
+    {
+      "pbFunction": "f_get_mat_msl_max_time",
+      "action": "native",
+      "target": "F_GET_MAT_MSL_MAX_TIME(item_code)",
+      "usedBy": "apps/backend/src/modules/warehouse/barcode-issue.service.ts",
+      "note": "PB 동명 함수가 없고 DB 에 VALID 로 있다. MSL 등급 3 이상 품목의 허용 노출시간이다."
+    },
+    {
+      "pbFunction": "f_get_msl_passed_time",
+      "action": "native",
+      "target": "F_GET_MSL_PASSED_TIME(item_barcode)",
+      "usedBy": "apps/backend/src/modules/warehouse/barcode-issue.service.ts",
+      "note": "PB 동명 함수가 없고 DB 에 VALID 로 있다. 출고 원장 MSL_PASSED_TIME 에도 이 함수 값이 들어간다 (실측 81,191/81,322건 채워짐)."
     }
   ]
 }

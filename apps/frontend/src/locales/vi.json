@@ -312,6 +312,7 @@
     "warehouse.etcIssue": "Xuất kho vật tư khác",
     "warehouse.issueCancel": "Hủy xuất kho vật tư",
     "warehouse.issueReturn": "Trả hàng mã vạch xuất kho",
+    "warehouse.barcodeIssue": "Quản lý xuất kho mã vạch vật tư",
     "cutting": "Công đoạn cắt",
     "cutting.order": "Lệnh sản xuất",
     "cutting.result": "Kết quả sản xuất",

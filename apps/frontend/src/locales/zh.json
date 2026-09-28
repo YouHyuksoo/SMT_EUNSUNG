@@ -312,6 +312,7 @@
     "warehouse.etcIssue": "物料其他出库",
     "warehouse.issueCancel": "物料出库取消",
     "warehouse.issueReturn": "出库条码退货",
+    "warehouse.barcodeIssue": "物料条码出库管理",
     "cutting": "裁切工序",
     "cutting.order": "作业指示",
     "cutting.result": "作业实绩",

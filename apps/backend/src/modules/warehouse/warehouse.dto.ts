@@ -961,3 +961,147 @@ export class IssueReturnDto {
   @IsOptional() @IsString() @Length(0, 20)
   locationCode?: string;
 }
+
+// ══════════════════════════════════ 238 자재바코드출고관리
+
+/** 238 출고 이력 조회 조건. */
+export class BarcodeIssueHistoryQueryDto {
+  @ApiProperty({ description: '출고일 시작 (YYYY-MM-DD)' })
+  @IsString() @Matches(DATE_ONLY)
+  dateFrom!: string;
+
+  @ApiProperty({ description: '출고일 종료 (YYYY-MM-DD)' })
+  @IsString() @Matches(DATE_ONLY)
+  dateTo!: string;
+
+  @ApiPropertyOptional({ description: '품목코드 (앞부분 일치)' })
+  @IsOptional() @IsString() @Length(0, 50)
+  itemCode?: string;
+
+  @ApiPropertyOptional({ description: '롯트번호 (앞부분 일치)' })
+  @IsOptional() @IsString() @Length(0, 60)
+  lotNo?: string;
+
+  @ApiPropertyOptional({ description: '라인코드 (앞부분 일치)' })
+  @IsOptional() @IsString() @Length(0, 20)
+  lineCode?: string;
+
+  @ApiPropertyOptional({ description: '공정코드 (앞부분 일치)' })
+  @IsOptional() @IsString() @Length(0, 20)
+  workstageCode?: string;
+
+  @ApiPropertyOptional({ description: '모델명 (앞부분 일치)' })
+  @IsOptional() @IsString() @Length(0, 50)
+  modelName?: string;
+}
+
+/** 238 출고 대기 바코드 조회 조건. */
+export class BarcodeIssueWaitingQueryDto {
+  @ApiPropertyOptional({ description: '품목코드 (앞부분 일치)' })
+  @IsOptional() @IsString() @Length(0, 50)
+  itemCode?: string;
+
+  @ApiPropertyOptional({ description: '자재 바코드 (앞부분 일치)' })
+  @IsOptional() @IsString() @Length(0, 100)
+  barcode?: string;
+
+  @ApiPropertyOptional({ description: '롯트번호 (앞부분 일치)' })
+  @IsOptional() @IsString() @Length(0, 60)
+  lotNo?: string;
+}
+
+/** 238 키팅 BOM 조회 조건. */
+export class KittingBomQueryDto {
+  @ApiProperty({ description: '모델명' })
+  @IsString() @Length(1, 50)
+  modelName!: string;
+
+  @ApiPropertyOptional({ description: '라인코드 (앞부분 일치)' })
+  @IsOptional() @IsString() @Length(0, 20)
+  lineCode?: string;
+}
+
+/**
+ * 238 스캔 판정 (읽기 전용).
+ *
+ * 켜고 끄는 검사의 기본값은 **PB 체크박스 기본값 그대로**다 —
+ * FIFO·MSL 시간·PCB 코팅이 ON, 장기재고·수명주기가 OFF.
+ */
+export class BarcodeIssueScanDto {
+  @ApiProperty({ description: '자재 바코드' })
+  @IsString() @Length(1, 100)
+  barcode!: string;
+
+  @ApiProperty({ description: '라인코드 (필수 — PB 도 비면 거절한다)' })
+  @IsString() @Length(1, 20)
+  lineCode!: string;
+
+  @ApiProperty({ description: '공정코드 (필수)' })
+  @IsString() @Length(1, 20)
+  workstageCode!: string;
+
+  @ApiPropertyOptional({
+    description: 'FIFO(선입선출) 검사. **PB 기본 ON.** 먼저 들어온 릴이 창고에 남아'
+      + ' 있으면 거절한다. PB 에는 평문 비밀번호로 뚫는 장치가 있었지만 옮기지 않았다.',
+    default: true,
+  })
+  @IsOptional() @Transform(({ value }) => value !== false && value !== 'false')
+  @IsBoolean()
+  checkFifo?: boolean;
+
+  @ApiPropertyOptional({ description: 'MSL 허용시간 검사. **PB 기본 ON.**', default: true })
+  @IsOptional() @Transform(({ value }) => value !== false && value !== 'false')
+  @IsBoolean()
+  checkMslTime?: boolean;
+
+  @ApiPropertyOptional({ description: 'PCB 코팅일 검사. **PB 기본 ON.**', default: true })
+  @IsOptional() @Transform(({ value }) => value !== false && value !== 'false')
+  @IsBoolean()
+  checkPcbCoating?: boolean;
+
+  @ApiPropertyOptional({
+    description: '장기재고 검사 (12개월 넘은 재고 거절). PB 기본 OFF.',
+  })
+  @IsOptional() @Transform(({ value }) => value === true || value === 'true')
+  @IsBoolean()
+  checkLongTermInventory?: boolean;
+
+  @ApiPropertyOptional({ description: '수명주기 검사. PB 기본 OFF.' })
+  @IsOptional() @Transform(({ value }) => value === true || value === 'true')
+  @IsBoolean()
+  checkLifeCycle?: boolean;
+}
+
+/** 238 출고대조 + 출고 기록 (**쓰기**). 판정 항목은 스캔과 같다. */
+export class BarcodeIssueDto extends BarcodeIssueScanDto {
+  @ApiPropertyOptional({ description: '모델명 (FEEDING_MODEL · MODEL_NAME 으로 들어간다)' })
+  @IsOptional() @IsString() @Length(0, 50)
+  modelName?: string;
+
+  @ApiPropertyOptional({ description: '피더 위치 (바코드의 LOCATION_CODE 로도 들어간다)' })
+  @IsOptional() @IsString() @Length(0, 30)
+  feederLocationCode?: string;
+
+  @ApiPropertyOptional({ description: '창고코드 (출고 원장의 LOCATION_CODE)' })
+  @IsOptional() @IsString() @Length(0, 20)
+  locationCode?: string;
+
+  @ApiPropertyOptional({ description: '협력사 롯트 (MFS). 비우면 *' })
+  @IsOptional() @IsString() @Length(0, 60)
+  mfs?: string;
+
+  @ApiPropertyOptional({ description: '협력사 바코드 (ORIGIN_MFS 로 들어간다)' })
+  @IsOptional() @IsString() @Length(0, 100)
+  supplierBarcode?: string;
+
+  @ApiPropertyOptional({
+    description: "키팅 모드. 켜면 출고구분이 'K' 로 들어간다 (PB rb_kitting).",
+  })
+  @IsOptional() @Transform(({ value }) => value === true || value === 'true')
+  @IsBoolean()
+  kitting?: boolean;
+
+  @ApiPropertyOptional({ description: '출고구분 (키팅이 아닐 때 직접 넣는다)' })
+  @IsOptional() @IsString() @Length(0, 10)
+  issueDivision?: string;
+}
