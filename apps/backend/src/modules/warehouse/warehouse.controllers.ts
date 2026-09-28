@@ -5,20 +5,29 @@
  *   /warehouse/chamber-stock   262 베이킹재고 · 263 진공포장재고 · 264 제습함재고
  *                              (chamberType 'B'·'V'·'D' 로 갈린다)
  *   /warehouse/recycle-check   266 SMT 공릴체크
+ *   /warehouse/solder          244 솔더입출고조회 (입고·출고 — 쓰기)
+ *   /warehouse/solder-input    245 솔더라인투입이력조회
  */
-import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { OrganizationId } from '../../common/decorators/tenant.decorator';
+import { OrganizationId, UserId } from '../../common/decorators/tenant.decorator';
 import { ResponseUtil } from '../../common/dto/response.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { ROW_LIMIT } from '../../shared/row-limit';
 import { ChamberStockService } from './chamber-stock.service';
 import { RecycleCheckService } from './recycle-check.service';
+import { SolderService } from './solder.service';
 import {
   ChamberStockDetailQueryDto,
   ChamberStockQueryDto,
   RecycleCheckQueryDto,
+  SolderInputHistoryQueryDto,
+  SolderListQueryDto,
+  SolderScanDto,
+  SolderStageCountQueryDto,
 } from './warehouse.dto';
+
+const DEFAULT_USER = 'ADMIN';
 
 /**
  * 목록 응답. **`truncated` 를 meta 에 실어 보낸다** — 화면이 합계를 잘린 창 안의
@@ -80,5 +89,74 @@ export class RecycleCheckController {
     @OrganizationId() organizationId: number,
   ) {
     return paged(await this.service.find(query, organizationId));
+  }
+}
+
+@ApiTags('자재창고 - 솔더 입출고')
+@UseGuards(JwtAuthGuard)
+@Controller('warehouse/solder')
+export class SolderController {
+  constructor(private readonly service: SolderService) {}
+
+  @Get('stage-counts')
+  @ApiOperation({
+    summary: '244 단계별 대기 수량 — 냉장고·해동중·교반중·점도대기·투입대기.'
+      + ' 라인에 들어갔거나 버린 통은 세지 않는다 (PB 고정조건).'
+      + ' 실측 진행중 115통 (냉장고 105 · 해동중 10).',
+  })
+  async stageCounts(
+    @Query() query: SolderStageCountQueryDto,
+    @OrganizationId() organizationId: number,
+  ) {
+    return paged(await this.service.findStageCounts(query, organizationId));
+  }
+
+  @Get()
+  @ApiOperation({
+    summary: '244 솔더 통 목록. runningOnly 를 켜면 PB Running 탭과 같아진다'
+      + ' (꺼냈고 아직 버리지 않은 통). 단계별 경과시간을 함께 낸다 —'
+      + ' 교반시간은 PB 가 24시간을 버리던 것을 고쳤다 (실측 최대 163.2시간).',
+  })
+  async find(
+    @Query() query: SolderListQueryDto,
+    @OrganizationId() organizationId: number,
+  ) {
+    return paged(await this.service.findSolders(query, organizationId));
+  }
+
+  @Post('scan')
+  @ApiOperation({
+    summary: "244 입고·출고 스캔 (**쓰기**). scanType 'R' 입고 (새 통 등록) ·"
+      + " 'I' 출고 (냉장고에서 꺼냄). 이미 입고된 롯트를 다시 입고하면 거절한다"
+      + ' — 그 판정을 빼면 같은 통이 두 번 등록돼 단계 집계가 두 배가 된다.',
+  })
+  async scan(
+    @Body() dto: SolderScanDto,
+    @OrganizationId() organizationId: number,
+    @UserId() userId?: string,
+  ) {
+    return ResponseUtil.success(
+      await this.service.scan(dto, organizationId, userId || DEFAULT_USER),
+    );
+  }
+}
+
+@ApiTags('자재창고 - 솔더 라인투입이력')
+@UseGuards(JwtAuthGuard)
+@Controller('warehouse/solder-input')
+export class SolderInputHistoryController {
+  constructor(private readonly service: SolderService) {}
+
+  @Get()
+  @ApiOperation({
+    summary: '245 솔더가 어느 라인·설비에 언제 투입됐는지. 조회 전용이다 —'
+      + ' PB 에 244 에서 복붙한 저장 함수가 남아 있지만 호출부가 없고'
+      + ' dw.update() 도 주석 처리돼 있다 (실측).',
+  })
+  async find(
+    @Query() query: SolderInputHistoryQueryDto,
+    @OrganizationId() organizationId: number,
+  ) {
+    return paged(await this.service.findInputHistory(query, organizationId));
   }
 }

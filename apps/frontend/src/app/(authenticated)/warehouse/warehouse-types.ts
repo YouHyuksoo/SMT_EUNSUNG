@@ -92,3 +92,105 @@ export interface RecycleCheckRow {
   feedingDate: string | null;
   enterDate: string | null;
 }
+
+/**
+ * 244 솔더 한 통.
+ *
+ * 날짜 컬럼들이 단계를 나타낸다: 입고 → 출고(냉장고에서 꺼냄) → 해동 → 교반
+ * → 점도측정 → 라인투입 → 반납/폐기. 솔더는 굳으면 못 쓰므로 **각 단계에 머문
+ * 시간**이 핵심이고, 시간 열은 서버가 '몇 시간 몇 분' 문자열로 만들어 보낸다.
+ */
+export interface SolderRow {
+  itemCode: string | null;
+  solderLotNo: string;
+  itemBarcode: string | null;
+  solderType: string | null;
+  modelName: string | null;
+  lineCode: string | null;
+  lineName: string | null;
+  workstageCode: string | null;
+  machineCode: string | null;
+  runNo: string | null;
+  receiptDate: string | null;
+  issueDate: string | null;
+  openDate: string | null;
+  unfreezingStartDate: string | null;
+  unfreezingEndDate: string | null;
+  mixStartDate: string | null;
+  mixEndDate: string | null;
+  viscosityStartDate: string | null;
+  viscosityEndDate: string | null;
+  inputDate: string | null;
+  firstLineInputDate: string | null;
+  returnDate: string | null;
+  destroyDate: string | null;
+  validDate: string | null;
+  /** 유효기한까지 남은 일수. 음수면 이미 지났다. */
+  validCount: number | null;
+  freezerInTemp: number | null;
+  unfreezingStartTemp: number | null;
+  unfreezingEndTemp: number | null;
+  viscosity: number | null;
+  viscosityOperator: string | null;
+  viscosityFileName: string | null;
+  rpm: number | null;
+  mixTime: number | null;
+  temp: number | null;
+  /** 해동에 걸린 시간 ('1h 20m' 꼴). 아직 끝나지 않았으면 지금까지다. */
+  unfreezingWaitTime: string | null;
+  /** 교반에 걸린 시간. PB 는 여기서 24시간을 버렸다 (최대 163시간이 19:12 로 보였다). */
+  mixWaitTime: string | null;
+  afterViscosityTime: string | null;
+  /** 냉장고에서 꺼낸 뒤 지난 시간. 이 시간이 솔더 수명을 깎는다. */
+  afterIssueTime: string | null;
+  afterFirstInputTime: string | null;
+  afterOpenTime: string | null;
+  /** 이 통이 투입된 라인 목록 (DB 함수가 만든 문자열). */
+  solderInputLine: string | null;
+  enterBy: string | null;
+  enterDate: string | null;
+  lastModifyBy: string | null;
+  lastModifyDate: string | null;
+}
+
+/** 244 단계별 대기 수량 한 줄 (설비·라인·종류별). */
+export interface SolderStageCountRow {
+  machineCode: string | null;
+  machineName: string | null;
+  lineCode: string | null;
+  lineName: string | null;
+  solderType: string | null;
+  /** 넣었고 아직 안 꺼낸 통 */
+  refrigeratorCnt: number | null;
+  unfreezingCnt: number | null;
+  mixCnt: number | null;
+  viscosityWaitCnt: number | null;
+  inputWaitCnt: number | null;
+}
+
+/** 244 입고·출고 스캔 결과. */
+export interface SolderScanResult {
+  scanType: 'R' | 'I';
+  solderLotNo: string;
+  /** 입고일 때만 채워진다 (자재 바코드 표에서 찾은 품목). */
+  itemCode: string | null;
+  affected: number;
+}
+
+/** 245 솔더 라인투입 이력 한 줄. */
+export interface SolderInputHistoryRow {
+  inputDate: string | null;
+  solderLotNo: string;
+  runNo: string | null;
+  lineCode: string | null;
+  lineName: string | null;
+  machineCode: string | null;
+  machineName: string | null;
+  itemCode: string | null;
+  solderType: string | null;
+  itemBarcode: string | null;
+  enterBy: string | null;
+  enterDate: string | null;
+  lastModifyBy: string | null;
+  lastModifyDate: string | null;
+}

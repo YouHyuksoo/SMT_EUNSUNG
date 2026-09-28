@@ -75,7 +75,9 @@
       "WH_BAKING_STOCK",
       "WH_VACUUM_STOCK",
       "WH_DEHUMI_STOCK",
-      "WH_RECYCLE_CHECK"
+      "WH_RECYCLE_CHECK",
+      "WH_SOLDER",
+      "WH_SOLDER_INPUT"
     ],
     "JIG": [
       "JIG_MASTER",

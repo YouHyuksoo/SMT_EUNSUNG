@@ -302,6 +302,8 @@
     "warehouse.vacuumStock": "Tồn hút chân không",
     "warehouse.dehumiStock": "Tồn tủ chống ẩm",
     "warehouse.recycleCheck": "Kiểm tra reel rỗng SMT",
+    "warehouse.solder": "Nhập xuất solder",
+    "warehouse.solderInput": "Lịch sử đưa solder lên line",
     "cutting": "Công đoạn cắt",
     "cutting.order": "Lệnh sản xuất",
     "cutting.result": "Kết quả sản xuất",

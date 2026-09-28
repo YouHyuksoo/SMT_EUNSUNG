@@ -17,7 +17,8 @@
  *    무동작이다 (340 라인설비바코드와 같은 유형).
  */
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsIn, IsOptional, IsString, Length, Matches } from 'class-validator';
+import { Transform } from 'class-transformer';
+import { IsBoolean, IsIn, IsOptional, IsString, Length, Matches } from 'class-validator';
 
 const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -103,4 +104,108 @@ export class RecycleCheckQueryDto {
   @ApiPropertyOptional({ description: '스캔 바코드 (앞부분 일치). 이 표의 유일한 인덱스 컬럼이다.' })
   @IsOptional() @IsString() @Length(0, 60)
   scanPartName?: string;
+}
+
+// ───────────────────────────────── 244 솔더입출고관리 · 245 솔더라인투입이력
+
+/**
+ * 솔더 페이스트 종류. 실측 분포 'F' 35,629건 · 'P' 131건.
+ * PB 는 드롭다운으로 골랐고 코드표가 따로 없다.
+ */
+export const SOLDER_TYPES = ['F', 'P'] as const;
+
+/**
+ * 244 솔더 통 목록 조건.
+ *
+ * `runningOnly` 가 PB 의 Running/All 라디오다. 두 DataWindow 의 SQL 차이가
+ * **딱 두 조건**이다 (실측): 켜면 `ISSUE_DATE IS NOT NULL AND DESTROY_DATE IS NULL`
+ * — 냉장고에서 꺼냈고 아직 버리지 않은 통, 즉 **지금 쓰이고 있는 것**이다.
+ */
+export class SolderListQueryDto {
+  @ApiProperty({ description: '입고일 시작 (YYYY-MM-DD)' })
+  @IsString() @Matches(DATE_ONLY)
+  dateFrom!: string;
+
+  @ApiProperty({ description: '입고일 종료 (YYYY-MM-DD, 이 날짜 포함)' })
+  @IsString() @Matches(DATE_ONLY)
+  dateTo!: string;
+
+  @ApiPropertyOptional({
+    description: '지금 쓰이는 통만 볼지 (PB Running 라디오).'
+      + ' 켜면 꺼냈고 아직 버리지 않은 것만 나온다.',
+    default: false,
+  })
+  @IsOptional()
+  @Transform(({ value }) => value === true || value === 'true')
+  @IsBoolean()
+  runningOnly?: boolean;
+
+  @ApiPropertyOptional({ description: '솔더 롯트번호 (앞부분 일치)' })
+  @IsOptional() @IsString() @Length(0, 60)
+  solderLotNo?: string;
+
+  @ApiPropertyOptional({ description: '솔더 바코드 (앞부분 일치)' })
+  @IsOptional() @IsString() @Length(0, 60)
+  itemBarcode?: string;
+
+  @ApiPropertyOptional({ description: '라인코드 (앞부분 일치)' })
+  @IsOptional() @IsString() @Length(0, 10)
+  lineCode?: string;
+
+  @ApiPropertyOptional({ description: "솔더 종류 (앞부분 일치). 'F'·'P'" })
+  @IsOptional() @IsString() @Length(0, 5)
+  solderType?: string;
+
+  @ApiPropertyOptional({
+    description: '설비(공장)코드 (앞부분 일치). PB 의 Factory 드롭다운이다 —'
+      + ' 이 표의 MACHINE_CODE 가 공장을 가르는 값으로 쓰인다.',
+  })
+  @IsOptional() @IsString() @Length(0, 30)
+  machineCode?: string;
+}
+
+/** 244 단계별 대기 수량 집계 조건. */
+export class SolderStageCountQueryDto {
+  @ApiPropertyOptional({ description: '설비(공장)코드 (앞부분 일치)' })
+  @IsOptional() @IsString() @Length(0, 30)
+  machineCode?: string;
+}
+
+/**
+ * 244 입고·출고 (**쓰기**).
+ *
+ * PB `wf_insert(arg_solder_lot_no, arg_type)` 를 그대로 옮긴다.
+ *   'R' 입고 — 자재 바코드 표에서 품목코드를 찾아 새 통을 등록한다
+ *   'I' 출고 — 그 통의 ISSUE_DATE 를 지금으로 적는다 (냉장고에서 꺼냄)
+ */
+export class SolderScanDto {
+  @ApiProperty({ description: '솔더 롯트번호 (스캔한 값)' })
+  @IsString() @Length(1, 60)
+  solderLotNo!: string;
+
+  @ApiProperty({
+    description: "'R' 입고 (냉장고에 넣음) · 'I' 출고 (냉장고에서 꺼냄)",
+    enum: ['R', 'I'],
+  })
+  @IsIn(['R', 'I'])
+  scanType!: 'R' | 'I';
+}
+
+/** 245 솔더 라인투입 이력 조건. */
+export class SolderInputHistoryQueryDto {
+  @ApiProperty({ description: '투입일 시작 (YYYY-MM-DD)' })
+  @IsString() @Matches(DATE_ONLY)
+  dateFrom!: string;
+
+  @ApiProperty({ description: '투입일 종료 (YYYY-MM-DD, 이 날짜 포함)' })
+  @IsString() @Matches(DATE_ONLY)
+  dateTo!: string;
+
+  @ApiPropertyOptional({ description: '솔더 롯트번호 (앞부분 일치)' })
+  @IsOptional() @IsString() @Length(0, 60)
+  solderLotNo?: string;
+
+  @ApiPropertyOptional({ description: '설비코드 (앞부분 일치)' })
+  @IsOptional() @IsString() @Length(0, 30)
+  machineCode?: string;
 }

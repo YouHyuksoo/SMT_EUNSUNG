@@ -7,6 +7,8 @@
  *   263 진공포장재고조회   w_mat_vacuum_scan_query   → ChamberStockService
  *   264 제습함재고조회     w_mat_dehumi_scan_query   → ChamberStockService
  *   266 SMT 공릴체크       w_smt_recycle_check_rpt   → RecycleCheckService
+ *   244 솔더입출고조회     w_mat_solder_receipt_issue_master → SolderService (쓰기)
+ *   245 솔더라인투입이력   w_mat_solder_input_move_query     → SolderService
  *
  * **왜 화면당 모듈이 아닌가.** 기존 `material` 모듈은 화면당 모듈 하나
  * (`material-current-inventory.module.ts` 등) 패턴인데, 자재창고는 20화면이라
@@ -26,11 +28,22 @@
 import { Module } from '@nestjs/common';
 import { ChamberStockService } from './chamber-stock.service';
 import { RecycleCheckService } from './recycle-check.service';
-import { ChamberStockController, RecycleCheckController } from './warehouse.controllers';
+import { SolderService } from './solder.service';
+import {
+  ChamberStockController,
+  RecycleCheckController,
+  SolderController,
+  SolderInputHistoryController,
+} from './warehouse.controllers';
 
 @Module({
-  controllers: [ChamberStockController, RecycleCheckController],
-  providers: [ChamberStockService, RecycleCheckService],
+  controllers: [
+    ChamberStockController,
+    RecycleCheckController,
+    SolderController,
+    SolderInputHistoryController,
+  ],
+  providers: [ChamberStockService, RecycleCheckService, SolderService],
 })
 /**
  * 클래스 이름이 `MaterialWarehouseModule` 인 이유: `modules/inventory` 에 이미

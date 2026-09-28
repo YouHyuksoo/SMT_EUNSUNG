@@ -302,6 +302,8 @@
     "warehouse.vacuumStock": "Vacuum Pack Stock",
     "warehouse.dehumiStock": "Dehumidifier Stock",
     "warehouse.recycleCheck": "SMT Empty Reel Check",
+    "warehouse.solder": "Solder Receipt/Issue",
+    "warehouse.solderInput": "Solder Line Input History",
     "cutting": "Cutting",
     "cutting.order": "Work Order",
     "cutting.result": "Work Result",

@@ -3,7 +3,7 @@ sources:
   - apps/frontend/src/config/menuConfig.ts
   - apps/frontend/scripts/data/pb-screen-inventory.json
 generator: apps/frontend/scripts/gen-migration-status.mjs
-verifiedCommit: 3da7be0a
+verifiedCommit: b479354b
 ---
 
 # PB 화면 이관 현황 (자동 생성)
@@ -18,11 +18,11 @@ verifiedCommit: 3da7be0a
 | 상태 | 건수 |
 |---|---:|
 | PB 업무화면(셸 메뉴 제외) | 275 |
-| 완료(개발됨, pbWindow 매핑) | 132 |
-| 미착수 | 117 |
+| 완료(개발됨, pbWindow 매핑) | 134 |
+| 미착수 | 115 |
 | 윈도우 미상 | 26 |
 
-웹 메뉴 연결 계약: **PB 131개 / 웹 신규 17개 / 미확정 2개**. PB 매핑과 웹 경로의 전체 연결표는 [pb-menu-route-links.md](pb-menu-route-links.md)에서 관리합니다.
+웹 메뉴 연결 계약: **PB 133개 / 웹 신규 17개 / 미확정 2개**. PB 매핑과 웹 경로의 전체 연결표는 [pb-menu-route-links.md](pb-menu-route-links.md)에서 관리합니다.
 
 ## 대분류별 진행률
 
@@ -37,7 +37,7 @@ verifiedCommit: 3da7be0a
 | S-PARTS | `M_MOLD` | 8 | 8 | 0 | 0 |
 | 생산 | `M_PLANNING` | 7 | 7 | 0 | 0 |
 | 공정 | `M_WORKSTAGE0` | 5 | 2 | 3 | 0 |
-| 자재창고 | `M_WAREHOUSE` | 22 | 6 | 16 | 0 |
+| 자재창고 | `M_WAREHOUSE` | 22 | 8 | 14 | 0 |
 | 재고 | `M_INVENTORY` | 5 | 1 | 4 | 0 |
 | 수리 | `M_REPAIR` | 4 | 2 | 2 | 0 |
 | 품질관리 | `M_QC` | 12 | 12 | 0 | 0 |
@@ -196,8 +196,8 @@ verifiedCommit: 3da7be0a
 | 240 | 자재분할관리 | `w_mat_receipt_barcode_divide_master` | srw | 미착수 |  |  |
 | 241 | 자재바코드재발행 | `w_mat_receipt_barcode_reprint_master` | srw | 미착수 |  |  |
 | 243 | 솔더라벨 발행 | `w_mat_receipt_slip_master_onetek_solder` | srw | 미착수 |  |  |
-| 244 | 솔더입출고조회 | `w_mat_solder_receipt_issue_master` | srw | 미착수 |  |  |
-| 245 | 솔더라인투입이력조회 | `w_mat_solder_input_move_query` | srw | 미착수 |  |  |
+| 244 | 솔더입출고조회 | `w_mat_solder_receipt_issue_master` | srw | 완료 | `WH_SOLDER` | `/warehouse/solder` |
+| 245 | 솔더라인투입이력조회 | `w_mat_solder_input_move_query` | srw | 완료 | `WH_SOLDER_INPUT` | `/warehouse/solder-input` |
 | 247 | 자재입출고수불원장 | `w_mat_ledger_report` | srw | 완료 | `MAT_RECEIPT_ISSUE_LEDGER` | `/material/receipt-issue-ledger` |
 | 250 | └ 출고바코드반품(양산/벌크)관리 | `w_mat_other_mass_issue_barcode_return_master` | srw | 미착수 |  |  |
 | 253 | └ 자재입고관리 | `w_mat_receipt_master` | srw | 미착수 |  |  |
