@@ -20,7 +20,7 @@
  *    한 화면에서만 다시 계산하면 값이 갈린다.
  * 6. **쓰기는 실행하지 않고 parse 로만 검증했다** (사용자 결정).
  */
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { likePrefix } from '@smt/shared';
 import { limited, ROW_LIMIT } from '../../shared/row-limit';
@@ -275,7 +275,9 @@ export class MslCheckService {
       );
       const rows = Number((result as { rowsAffected?: number })?.rowsAffected ?? 0);
       if (rows !== 1) {
-        throw new Error(`바코드를 찾을 수 없습니다: ${dto.barcode}`);
+        // 다른 서비스와 같은 예외를 쓴다. 평범한 Error 를 던지면 500 으로 나가
+        // 화면이 "등록에 실패했습니다" 만 띄우고 이유를 못 보여준다.
+        throw new BadRequestException(`바코드를 찾을 수 없습니다: ${dto.barcode}`);
       }
       return { barcode: dto.barcode, mslActionCode: dto.mslActionCode, rows };
     });
