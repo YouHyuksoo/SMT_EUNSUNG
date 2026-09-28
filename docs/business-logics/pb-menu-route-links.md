@@ -3,7 +3,7 @@ sources:
   - apps/frontend/src/config/menuConfig.ts
   - apps/frontend/scripts/data/pb-screen-inventory.json
 generator: apps/frontend/scripts/gen-migration-status.mjs
-verifiedCommit: 8468f7b7
+verifiedCommit: 967387a7
 ---
 
 # PB 윈도우 ↔ 웹 메뉴·경로 연결표 (자동 생성)
@@ -15,7 +15,7 @@ verifiedCommit: 8468f7b7
 
 | 전체 웹 메뉴 | PB 연결 | 웹 신규 | 미확정 |
 |---:|---:|---:|---:|
-| 179 | 160 | 17 | 2 |
+| 183 | 165 | 17 | 1 |
 
 ## 전체 연결표
 
@@ -23,7 +23,8 @@ verifiedCommit: 8468f7b7
 |---|---|---|---|---|---|---|
 | 기준정보 | 품목관리 | `MST_PART` | `/master/part` | PB 연결 | `w_des_item_master` | PB 메뉴 인벤토리 |
 | 기준정보 | 제품모델 관리 | `MST_PRODUCT_MODEL` | `/master/product-model` | PB 연결 | `w_pln_product_model_simple_master` | PB 메뉴 인벤토리 |
-| 기준정보 | BOM관리 | `MST_BOM` | `/master/bom` | 미확정 |  | PB BOM 메뉴가 설계BOM·제조BOM·원단위BOM으로 분리되어 단일 원본을 확정할 수 없음 |
+| 기준정보 | BOM관리 | `MST_BOM` | `/master/bom` | PB 연결 | `w_des_bom_modify_master` | PB 메뉴 인벤토리 |
+| 기준정보 | 적용모델관리 | `MST_APPLY_ITEM` | `/design/apply-item` | PB 연결 | `w_des_apply_item_master` | PB 메뉴 인벤토리 |
 | 기준정보 | 거래처관리 | `MST_PARTNER` | `/master/partner` | 미확정 |  | 웹 거래처가 PB 고객·협력사 화면을 통합하므로 단일 원본을 확정할 수 없음 |
 | 기준정보 | 고객마스터 | `MST_CUSTOMER` | `/master/customer` | PB 연결 | `w_com_customer_master` | PB 메뉴 인벤토리 |
 | 기준정보 | 설비마스터 | `EQUIP_MASTER` | `/master/equip` | PB 연결 | `w_mcn_machine_master` | PB 메뉴 인벤토리 |
@@ -90,6 +91,8 @@ verifiedCommit: 8468f7b7
 | 지그관리 | 지그수리관리 | `JIG_REPAIR` | `/jig/repair` | PB 연결 | `w_mcn_jig_repair_master` | PB 메뉴 인벤토리 |
 | 지그관리 | 지그자주보전관리 | `JIG_PM` | `/jig/pm` | PB 연결 | `w_mcn_jig_pm_master` | PB 메뉴 인벤토리 |
 | 지그관리 | 스퀴즈검사관리 | `JIG_SQUEEZE_CHECK` | `/jig/squeeze-check` | PB 연결 | `w_mcn_jig_squeeze_check_master` | PB 메뉴 인벤토리 |
+| 지그관리 | 스퀴지검사관리(세척) | `JIG_CLEAN_CHECK` | `/jig/clean-check` | PB 연결 | `w_mcn_jig_squeeze_clean_check_master` | PB 메뉴 인벤토리 |
+| 지그관리 | 지그수리신청 | `JIG_REPAIR_REQUEST` | `/jig/repair-request` | PB 연결 | `w_mcn_jig_repair_request_master` | PB 메뉴 인벤토리 |
 | 지그관리 | 메탈마스크 텐션검사 | `JIG_MASK_CHECK` | `/jig/mask-check` | PB 연결 | `w_mcn_jig_mask_tension_check_master` | PB 메뉴 인벤토리 |
 | 지그관리 | 샘플마스터 관리 | `JIG_SAMPLE` | `/jig/sample` | PB 연결 | `w_mcn_sample_master` | PB 메뉴 인벤토리 |
 | 지그관리 | 지그 투입이력조회 | `JIG_INPUT_HISTORY` | `/jig/input-history` | PB 연결 | `w_mcn_jig_input_history_master` | PB 메뉴 인벤토리 |
@@ -186,6 +189,7 @@ verifiedCommit: 8468f7b7
 | 품질관리 | 공정품질검사이력 | `QC_WQC` | `/quality/wqc` | PB 연결 | `w_qc_workstage_inspect_data_master_es` | PB 메뉴 인벤토리 |
 | 품질관리 | 온도상태조회 | `QC_TEMPERATURE` | `/quality/temperature` | PB 연결 | `w_pln_product_tempreture_history_query` | PB 메뉴 인벤토리 |
 | 품질관리 | 공정수리이력조회 | `QC_REPAIR_HISTORY` | `/quality/repair-history` | PB 연결 | `w_pln_product_pcb_repair_master` | PB 메뉴 인벤토리 |
+| 품질관리 | 공정수리이력조회 | `QC_REPAIR_QUERY` | `/quality/repair-query` | PB 연결 | `w_pln_product_pcb_repair_query` | PB 메뉴 인벤토리 |
 | 품질관리 | 공정폐기관리 | `QC_PRODUCT_DESTROY` | `/quality/product-destroy` | PB 연결 | `w_pln_product_pcb_destroy_master` | PB 메뉴 인벤토리 |
 | 승인 | 구매단가승인 | `CFM_BUY_PRICE` | `/confirm/buy-price` | PB 연결 | `w_mat_buy_price_confirm` | PB 메뉴 인벤토리 |
 | 승인 | 판매단가승인 | `CFM_SALE_PRICE` | `/confirm/sale-price` | PB 연결 | `w_sal_sale_price_confirm` | PB 메뉴 인벤토리 |

@@ -57,6 +57,11 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
       component = mod.getPageComponent();
       break;
     }
+    case "/design/apply-item": {
+      const mod = await import("./page-registries/design__apply-item.generated");
+      component = mod.getPageComponent();
+      break;
+    }
     case "/equipment/result-query/aoi": {
       const mod = await import("./page-registries/equipment__result-query__aoi.generated");
       component = mod.getPageComponent();
@@ -142,6 +147,11 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
       component = mod.getPageComponent();
       break;
     }
+    case "/jig/clean-check": {
+      const mod = await import("./page-registries/jig__clean-check.generated");
+      component = mod.getPageComponent();
+      break;
+    }
     case "/jig/input-history": {
       const mod = await import("./page-registries/jig__input-history.generated");
       component = mod.getPageComponent();
@@ -169,6 +179,11 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
     }
     case "/jig/repair": {
       const mod = await import("./page-registries/jig__repair.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/jig/repair-request": {
+      const mod = await import("./page-registries/jig__repair-request.generated");
       component = mod.getPageComponent();
       break;
     }
@@ -559,6 +574,11 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
     }
     case "/quality/repair-history": {
       const mod = await import("./page-registries/quality__repair-history.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/quality/repair-query": {
+      const mod = await import("./page-registries/quality__repair-query.generated");
       component = mod.getPageComponent();
       break;
     }

@@ -3,7 +3,7 @@ sources:
   - apps/frontend/src/config/menuConfig.ts
   - apps/frontend/scripts/data/pb-screen-inventory.json
 generator: apps/frontend/scripts/gen-migration-status.mjs
-verifiedCommit: 8468f7b7
+verifiedCommit: 967387a7
 ---
 
 # PB 화면 이관 현황 (자동 생성)
@@ -18,28 +18,28 @@ verifiedCommit: 8468f7b7
 | 상태 | 건수 |
 |---|---:|
 | PB 업무화면(셸 메뉴 제외) | 275 |
-| 완료(개발됨, pbWindow 매핑) | 161 |
-| 미착수 | 88 |
+| 완료(개발됨, pbWindow 매핑) | 166 |
+| 미착수 | 83 |
 | 윈도우 미상 | 26 |
 
-웹 메뉴 연결 계약: **PB 160개 / 웹 신규 17개 / 미확정 2개**. PB 매핑과 웹 경로의 전체 연결표는 [pb-menu-route-links.md](pb-menu-route-links.md)에서 관리합니다.
+웹 메뉴 연결 계약: **PB 165개 / 웹 신규 17개 / 미확정 1개**. PB 매핑과 웹 경로의 전체 연결표는 [pb-menu-route-links.md](pb-menu-route-links.md)에서 관리합니다.
 
 ## 대분류별 진행률
 
 | 대분류 | 코드 | 전체 | 완료 | 미착수 | 윈도우미상 |
 |---|---|---:|---:|---:|---:|
 | 기준정보 | `M_BASIS1` | 20 | 10 | 10 | 0 |
-| 설계 | `M_DESIGN` | 5 | 1 | 4 | 0 |
+| 설계 | `M_DESIGN` | 5 | 3 | 2 | 0 |
 | SMT | `M_SMT` | 9 | 9 | 0 | 0 |
 | 설비 | `M_JIG` | 19 | 10 | 7 | 2 |
-| 지그 | `M_JIG0` | 12 | 10 | 2 | 0 |
+| 지그 | `M_JIG0` | 12 | 12 | 0 | 0 |
 | 피더 | `M_FEEDER` | 4 | 3 | 1 | 0 |
 | S-PARTS | `M_MOLD` | 8 | 8 | 0 | 0 |
 | 생산 | `M_PLANNING` | 7 | 7 | 0 | 0 |
 | 공정 | `M_WORKSTAGE0` | 5 | 5 | 0 | 0 |
 | 자재창고 | `M_WAREHOUSE` | 22 | 22 | 0 | 0 |
 | 재고 | `M_INVENTORY` | 5 | 5 | 0 | 0 |
-| 수리 | `M_REPAIR` | 4 | 2 | 2 | 0 |
+| 수리 | `M_REPAIR` | 4 | 3 | 1 | 0 |
 | 품질관리 | `M_QC` | 12 | 12 | 0 | 0 |
 | 출하현황 | `M_SHIPPING` | 10 | 7 | 3 | 0 |
 | 추적 | `M_TRACKING` | 7 | 7 | 0 | 0 |
@@ -80,11 +80,11 @@ verifiedCommit: 8468f7b7
 
 | 순서 | 메뉴명 | PB 윈도우 | 원본 | 상태 | MES 메뉴코드 | 경로 |
 |---:|---|---|:--:|---|---|---|
-| 145 | 설계BOM관리 | `w_des_bom_modify_master` | srw | 미착수 |  |  |
+| 145 | 설계BOM관리 | `w_des_bom_modify_master` | srw | 완료 | `MST_BOM` | `/master/bom` |
 | 146 | 제조BOM관리 | `w_des_mfs_bom_master` | srw | 미착수 |  |  |
 | 147 | 대체BOM관리 | `w_des_replace_bom_master` | srw | 완료 | `BOM_REPLACE` | `/bom/replace-bom` |
 | 148 | 원단위BOM마스터 | `w_des_raw_bom_master` | srw | 미착수 |  |  |
-| 149 | 적용모델관리 | `w_des_apply_item_master` | srw | 미착수 |  |  |
+| 149 | 적용모델관리 | `w_des_apply_item_master` | srw | 완료 | `MST_APPLY_ITEM` | `/design/apply-item` |
 
 ### SMT  `M_SMT`
 
@@ -130,13 +130,13 @@ verifiedCommit: 8468f7b7
 |---:|---|---|:--:|---|---|---|
 | 185 | 지그마스터 | `w_mcn_jig_master` | srw | 완료 | `JIG_MASTER` | `/jig/master` |
 | 186 | 지그출고관리 | `w_mcn_jig_issue_master` | srw | 완료 | `JIG_ISSUE` | `/jig/issue` |
-| 187 | 지그수리신청 | `w_mcn_jig_repair_request_master` | srw | 미착수 |  |  |
+| 187 | 지그수리신청 | `w_mcn_jig_repair_request_master` | srw | 완료 | `JIG_REPAIR_REQUEST` | `/jig/repair-request` |
 | 188 | 지그수리관리 | `w_mcn_jig_repair_master` | srw | 완료 | `JIG_REPAIR` | `/jig/repair` |
 | 189 | 지그자주보전관리 | `w_mcn_jig_pm_master` | srw | 완료 | `JIG_PM` | `/jig/pm` |
 | 191 | 지그마스터 투입이력조회 | `w_mcn_jig_input_history_master` | srw | 완료 | `JIG_INPUT_HISTORY` | `/jig/input-history` |
 | 193 | 스퀴즈검사관리 | `w_mcn_jig_squeeze_check_master` | srw | 완료 | `JIG_SQUEEZE_CHECK` | `/jig/squeeze-check` |
 | 194 | 메탈마스크텐션관리 | `w_mcn_jig_mask_tension_check_master` | srw | 완료 | `JIG_MASK_CHECK` | `/jig/mask-check` |
-| 195 | 스퀴지검사관리 | `w_mcn_jig_squeeze_clean_check_master` | srw | 미착수 |  |  |
+| 195 | 스퀴지검사관리 | `w_mcn_jig_squeeze_clean_check_master` | srw | 완료 | `JIG_CLEAN_CHECK` | `/jig/clean-check` |
 | 197 | 샘플마스터 관리 | `w_mcn_sample_master` | srw | 완료 | `JIG_SAMPLE` | `/jig/sample` |
 | 198 | 샘플마스터 장착이력조회 | `w_mcn_sample_input_history_master` | srw | 완료 | `JIG_SAMPLE_INPUT_HISTORY` | `/jig/sample-input-history` |
 | 199 | 샘플마스터 투입이력조회 | `w_mcn_sample_bcr_input_history_master` | srw | 완료 | `JIG_SAMPLE_BCR_HISTORY` | `/jig/sample-bcr-history` |
@@ -229,7 +229,7 @@ verifiedCommit: 8468f7b7
 | 276 | 공정수리관리(PID) | `w_pln_product_pcb_repair_master` | srw | 완료 | `QC_REPAIR_HISTORY` | `/quality/repair-history` |
 | 278 | 공정폐기관리 | `w_pln_product_pcb_destroy_master` | srw | 완료 | `QC_PRODUCT_DESTROY` | `/quality/product-destroy` |
 | 280 | 수리자재신청 | `w_mat_request_master` | srw | 미착수 |  |  |
-| 281 | 공정수리이력조회 | `w_pln_product_pcb_repair_query` | srw | 미착수 |  |  |
+| 281 | 공정수리이력조회 | `w_pln_product_pcb_repair_query` | srw | 완료 | `QC_REPAIR_QUERY` | `/quality/repair-query` |
 
 ### 품질관리  `M_QC`
 
@@ -432,5 +432,4 @@ verifiedCommit: 8468f7b7
 
 | 그룹 | 화면 | 코드 | 경로 | 미확정 사유 |
 |---|---|---|---|---|
-| 기준정보 | BOM관리 | `MST_BOM` | `/master/bom` | PB BOM 메뉴가 설계BOM·제조BOM·원단위BOM으로 분리되어 단일 원본을 확정할 수 없음 |
 | 기준정보 | 거래처관리 | `MST_PARTNER` | `/master/partner` | 웹 거래처가 PB 고객·협력사 화면을 통합하므로 단일 원본을 확정할 수 없음 |
