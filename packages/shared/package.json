@@ -32,6 +32,10 @@
     "./work-calendar": {
       "types": "./dist/work-calendar/index.d.ts",
       "default": "./dist/work-calendar/index.js"
+    },
+    "./warehouse": {
+      "types": "./dist/warehouse/index.d.ts",
+      "default": "./dist/warehouse/index.js"
     }
   },
   "scripts": {

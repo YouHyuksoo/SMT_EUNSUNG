@@ -150,6 +150,7 @@ export const menuConfig: MenuConfigItem[] = [
       { code: "WH_RECYCLE_CHECK", labelKey: "menu.warehouse.recycleCheck", path: "/warehouse/recycle-check", pbLinkStatus: "powerbuilder", pbWindow: "w_smt_recycle_check_rpt" },
       { code: "WH_SOLDER", labelKey: "menu.warehouse.solder", path: "/warehouse/solder", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_solder_receipt_issue_master" },
       { code: "WH_SOLDER_INPUT", labelKey: "menu.warehouse.solderInput", path: "/warehouse/solder-input", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_solder_input_move_query" },
+      { code: "WH_RECEIPT_SLIP", labelKey: "menu.warehouse.receiptSlip", path: "/warehouse/receipt-slip", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_receipt_slip_master" },
     ],
   },
   {

@@ -15,4 +15,5 @@ export * from './oee';
 export * from './work-calendar';
 export * from './tracking';
 export * from './popups';
+export * from './warehouse';
 //# sourceMappingURL=index.d.ts.map

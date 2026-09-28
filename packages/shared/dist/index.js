@@ -38,3 +38,5 @@ __exportStar(require("./work-calendar"), exports);
 __exportStar(require("./tracking"), exports);
 // PB 팝업 카탈로그(프론트 엔진 · 백엔드 화이트리스트 공용) 내보내기
 __exportStar(require("./popups"), exports);
+// 자재창고 공유 규칙
+__exportStar(require("./warehouse"), exports);

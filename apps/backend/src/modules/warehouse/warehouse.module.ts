@@ -9,6 +9,7 @@
  *   266 SMT 공릴체크       w_smt_recycle_check_rpt   → RecycleCheckService
  *   244 솔더입출고조회     w_mat_solder_receipt_issue_master → SolderService (쓰기)
  *   245 솔더라인투입이력   w_mat_solder_input_move_query     → SolderService
+ *   235 자재입고전표관리   w_mat_receipt_slip_master         → ReceiptSlipService (쓰기)
  *
  * **왜 화면당 모듈이 아닌가.** 기존 `material` 모듈은 화면당 모듈 하나
  * (`material-current-inventory.module.ts` 등) 패턴인데, 자재창고는 20화면이라
@@ -28,11 +29,13 @@
 import { Module } from '@nestjs/common';
 import { ChamberStockService } from './chamber-stock.service';
 import { RecycleCheckService } from './recycle-check.service';
+import { ReceiptSlipService } from './receipt-slip.service';
 import { SolderService } from './solder.service';
 import {
   ChamberStockController,
   RecycleCheckController,
   SolderController,
+  ReceiptSlipController,
   SolderInputHistoryController,
 } from './warehouse.controllers';
 
@@ -42,8 +45,14 @@ import {
     RecycleCheckController,
     SolderController,
     SolderInputHistoryController,
+    ReceiptSlipController,
   ],
-  providers: [ChamberStockService, RecycleCheckService, SolderService],
+  providers: [
+    ChamberStockService,
+    RecycleCheckService,
+    SolderService,
+    ReceiptSlipService,
+  ],
 })
 /**
  * 클래스 이름이 `MaterialWarehouseModule` 인 이유: `modules/inventory` 에 이미

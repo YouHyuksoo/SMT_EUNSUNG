@@ -17,8 +17,20 @@
  *    무동작이다 (340 라인설비바코드와 같은 유형).
  */
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Transform } from 'class-transformer';
-import { IsBoolean, IsIn, IsOptional, IsString, Length, Matches } from 'class-validator';
+import { Transform, Type } from 'class-transformer';
+import {
+  IsArray,
+  IsBoolean,
+  IsIn,
+  IsInt,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Length,
+  Matches,
+  Max,
+  Min,
+} from 'class-validator';
 
 const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -208,4 +220,126 @@ export class SolderInputHistoryQueryDto {
   @ApiPropertyOptional({ description: '설비코드 (앞부분 일치)' })
   @IsOptional() @IsString() @Length(0, 30)
   machineCode?: string;
+}
+
+// ───────────────────────────────── 235 자재입고전표관리
+
+/** 235 입고전표 목록 조건. */
+export class ReceiptSlipQueryDto {
+  @ApiProperty({ description: '전표일 시작 (YYYY-MM-DD)' })
+  @IsString() @Matches(DATE_ONLY)
+  dateFrom!: string;
+
+  @ApiProperty({ description: '전표일 종료 (YYYY-MM-DD, 이 날짜 포함)' })
+  @IsString() @Matches(DATE_ONLY)
+  dateTo!: string;
+
+  @ApiPropertyOptional({ description: '품목코드 (앞부분 일치)' })
+  @IsOptional() @IsString() @Length(0, 50)
+  itemCode?: string;
+
+  @ApiPropertyOptional({ description: '전표번호 (앞부분 일치)' })
+  @IsOptional() @IsString() @Length(0, 60)
+  slipNo?: string;
+
+  @ApiPropertyOptional({
+    description: "입고유형 (앞부분 일치). 실측 전표는 'N' 하나뿐이다"
+      + " (PB 는 'B'·'T' 를 고정으로 제외한다).",
+  })
+  @IsOptional() @IsString() @Length(0, 10)
+  receiptType?: string;
+
+  @ApiPropertyOptional({ description: '전표상태 (앞부분 일치)' })
+  @IsOptional() @IsString() @Length(0, 10)
+  receiptStatus?: string;
+}
+
+/** 235 고른 전표의 바코드 목록 조건 (목록이 돌려준 값을 그대로 받는다 — 등호). */
+export class ReceiptSlipBarcodeQueryDto {
+  @ApiProperty({ description: '전표번호' })
+  @IsString() @Length(1, 60)
+  slipNo!: string;
+
+  @ApiProperty({ description: '품목코드' })
+  @IsString() @Length(1, 50)
+  itemCode!: string;
+}
+
+/**
+ * 235 바코드 발행 (**쓰기**).
+ *
+ * 분할은 두 갈래다 (PB `cbx_manual_slip`):
+ *   수동 — `divideQty` 에 장별 수량을 적는다. 장수 = 적은 개수
+ *   균등 — `reelQty` 장을 만들고 모두 `unitQty` 를 넣는다
+ * 규칙과 판정은 `@smt/shared` 의 `checkReelPlan`·`planReelBarcodes` 가 갖고 있고
+ * 단위테스트로 못 박혀 있다 — 화면과 서버가 같은 함수를 쓴다.
+ */
+export class ReceiptSlipIssueDto {
+  @ApiProperty({ description: '전표번호' })
+  @IsString() @Length(1, 60)
+  slipNo!: string;
+
+  @ApiProperty({ description: '품목코드' })
+  @IsString() @Length(1, 50)
+  itemCode!: string;
+
+  @ApiProperty({
+    description: '롯트번호 날짜접두어 (YYYYMMDD). PB `F_YMD_SYSDATE()` 자리다 —'
+      + ' 화면이 보여준 번호와 서버가 넣는 번호를 같게 하려고 받는다.',
+  })
+  @IsString() @Matches(/^\d{8}$/)
+  datePrefix!: string;
+
+  @ApiPropertyOptional({ description: '릴 장수 (균등 분할). divideQty 가 없으면 필수' })
+  @IsOptional() @Type(() => Number) @IsInt() @Min(1) @Max(1000)
+  reelQty?: number;
+
+  @ApiPropertyOptional({
+    description: '한 장 수량 (균등 분할). PB 는 이 값이 비면 발행을 거절한다.',
+  })
+  @IsOptional() @Type(() => Number) @IsNumber() @Min(1)
+  unitQty?: number;
+
+  @ApiPropertyOptional({
+    description: '장별 수량 목록 (수동 분할). 있으면 이 값이 우선한다.',
+    type: [Number],
+  })
+  @IsOptional() @IsArray() @Type(() => Number) @IsNumber({}, { each: true })
+  divideQty?: number[];
+
+  @ApiPropertyOptional({ description: '구매유형 (LINE_TYPE). F 무상구매 · G 국내구매 등' })
+  @IsOptional() @IsString() @Length(0, 10)
+  lineType?: string;
+
+  @ApiPropertyOptional({ description: '협력사 바코드 (ORIGIN_MFS 로 들어간다)' })
+  @IsOptional() @IsString() @Length(0, 60)
+  supplierBarcode?: string;
+
+  @ApiPropertyOptional({ description: '협력사 롯트번호 (MFS 로 들어간다)' })
+  @IsOptional() @IsString() @Length(0, 60)
+  supplierLotNo?: string;
+
+  @ApiPropertyOptional({ description: '원 협력사코드' })
+  @IsOptional() @IsString() @Length(0, 30)
+  originSupplierCode?: string;
+
+  @ApiPropertyOptional({ description: '출하 협력사코드' })
+  @IsOptional() @IsString() @Length(0, 30)
+  fromSupplierCode?: string;
+
+  @ApiPropertyOptional({ description: '제조주차' })
+  @IsOptional() @IsString() @Length(0, 20)
+  manufactureWeek?: string;
+
+  @ApiPropertyOptional({ description: '재고유형' })
+  @IsOptional() @IsString() @Length(0, 10)
+  inventoryType?: string;
+
+  @ApiPropertyOptional({ description: 'PCB 코팅일 (YYYY-MM-DD)' })
+  @IsOptional() @IsString() @Matches(DATE_ONLY)
+  coatingDate?: string;
+
+  @ApiPropertyOptional({ description: '제조일 (YYYY-MM-DD)' })
+  @IsOptional() @IsString() @Matches(DATE_ONLY)
+  manufactureDate?: string;
 }

@@ -29,3 +29,6 @@ export * from './tracking';
 
 // PB 팝업 카탈로그(프론트 엔진 · 백엔드 화이트리스트 공용) 내보내기
 export * from './popups';
+
+// 자재창고 공유 규칙
+export * from './warehouse';

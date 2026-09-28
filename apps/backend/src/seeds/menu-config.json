@@ -77,7 +77,8 @@
       "WH_DEHUMI_STOCK",
       "WH_RECYCLE_CHECK",
       "WH_SOLDER",
-      "WH_SOLDER_INPUT"
+      "WH_SOLDER_INPUT",
+      "WH_RECEIPT_SLIP"
     ],
     "JIG": [
       "JIG_MASTER",

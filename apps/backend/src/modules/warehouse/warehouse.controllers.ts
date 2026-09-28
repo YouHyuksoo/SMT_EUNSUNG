@@ -7,6 +7,7 @@
  *   /warehouse/recycle-check   266 SMT 공릴체크
  *   /warehouse/solder          244 솔더입출고조회 (입고·출고 — 쓰기)
  *   /warehouse/solder-input    245 솔더라인투입이력조회
+ *   /warehouse/receipt-slip    235 자재입고전표관리 (바코드 발행 — 쓰기)
  */
 import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -16,10 +17,14 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { ROW_LIMIT } from '../../shared/row-limit';
 import { ChamberStockService } from './chamber-stock.service';
 import { RecycleCheckService } from './recycle-check.service';
+import { ReceiptSlipService } from './receipt-slip.service';
 import { SolderService } from './solder.service';
 import {
   ChamberStockDetailQueryDto,
   ChamberStockQueryDto,
+  ReceiptSlipBarcodeQueryDto,
+  ReceiptSlipIssueDto,
+  ReceiptSlipQueryDto,
   RecycleCheckQueryDto,
   SolderInputHistoryQueryDto,
   SolderListQueryDto,
@@ -158,5 +163,54 @@ export class SolderInputHistoryController {
     @OrganizationId() organizationId: number,
   ) {
     return paged(await this.service.findInputHistory(query, organizationId));
+  }
+}
+
+@ApiTags('자재창고 - 자재입고전표')
+@UseGuards(JwtAuthGuard)
+@Controller('warehouse/receipt-slip')
+export class ReceiptSlipController {
+  constructor(private readonly service: ReceiptSlipService) {}
+
+  @Get()
+  @ApiOperation({
+    summary: "235 입고전표 목록. PB 고정조건 RECEIPT_TYPE NOT IN ('B','T') 를 유지한다"
+      + " (실측 전표 215,672건 전부 'N' 이라 지금은 아무것도 걸러내지 않는다)."
+      + ' 전표마다 이미 발행된 바코드 장수를 함께 낸다 — 0 이면 아직 발행 전이다.',
+  })
+  async find(
+    @Query() query: ReceiptSlipQueryDto,
+    @OrganizationId() organizationId: number,
+  ) {
+    return paged(await this.service.findSlips(query, organizationId));
+  }
+
+  @Get('barcodes')
+  @ApiOperation({
+    summary: "235 고른 전표로 발행된 바코드 목록 (PB 고정조건 BARCODE_STATUS <> 'C' —"
+      + ' 취소된 바코드는 뺀다).',
+  })
+  async barcodes(
+    @Query() query: ReceiptSlipBarcodeQueryDto,
+    @OrganizationId() organizationId: number,
+  ) {
+    return paged(await this.service.findSlipBarcodes(query, organizationId));
+  }
+
+  @Post('issue')
+  @ApiOperation({
+    summary: '235 바코드 발행 + 입고 기록 (**쓰기**). 장수·수량 규칙은 @smt/shared 가'
+      + ' 갖고 있고 단위테스트로 못 박혀 있다. 채번은 PB 와 같은 Oracle 시퀀스를 쓴다.'
+      + ' 전표 수량과 발행 수량 합이 다르면 거절한다 — PB 는 이 검사를 하지 않아'
+      + ' 잘못 넣으면 입고 원장이 전표와 어긋났다.',
+  })
+  async issue(
+    @Body() dto: ReceiptSlipIssueDto,
+    @OrganizationId() organizationId: number,
+    @UserId() userId?: string,
+  ) {
+    return ResponseUtil.success(
+      await this.service.issueBarcodes(dto, organizationId, userId || DEFAULT_USER),
+    );
   }
 }

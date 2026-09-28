@@ -304,6 +304,7 @@
     "warehouse.recycleCheck": "SMT 空卷盘检查",
     "warehouse.solder": "锡膏入出库查询",
     "warehouse.solderInput": "锡膏线投入履历查询",
+    "warehouse.receiptSlip": "物料入库传票管理",
     "cutting": "裁切工序",
     "cutting.order": "作业指示",
     "cutting.result": "作业实绩",

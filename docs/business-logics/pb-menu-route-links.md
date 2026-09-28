@@ -3,7 +3,7 @@ sources:
   - apps/frontend/src/config/menuConfig.ts
   - apps/frontend/scripts/data/pb-screen-inventory.json
 generator: apps/frontend/scripts/gen-migration-status.mjs
-verifiedCommit: b479354b
+verifiedCommit: 8fe9b738
 ---
 
 # PB 윈도우 ↔ 웹 메뉴·경로 연결표 (자동 생성)
@@ -15,7 +15,7 @@ verifiedCommit: b479354b
 
 | 전체 웹 메뉴 | PB 연결 | 웹 신규 | 미확정 |
 |---:|---:|---:|---:|
-| 152 | 133 | 17 | 2 |
+| 153 | 134 | 17 | 2 |
 
 ## 전체 연결표
 
@@ -67,6 +67,7 @@ verifiedCommit: b479354b
 | 자재수불관리 | SMT 공릴체크 | `WH_RECYCLE_CHECK` | `/warehouse/recycle-check` | PB 연결 | `w_smt_recycle_check_rpt` | PB 메뉴 인벤토리 |
 | 자재수불관리 | 솔더입출고조회 | `WH_SOLDER` | `/warehouse/solder` | PB 연결 | `w_mat_solder_receipt_issue_master` | PB 메뉴 인벤토리 |
 | 자재수불관리 | 솔더라인투입이력조회 | `WH_SOLDER_INPUT` | `/warehouse/solder-input` | PB 연결 | `w_mat_solder_input_move_query` | PB 메뉴 인벤토리 |
+| 자재수불관리 | 자재입고전표관리 | `WH_RECEIPT_SLIP` | `/warehouse/receipt-slip` | PB 연결 | `w_mat_receipt_slip_master` | PB 메뉴 인벤토리 |
 | 지그관리 | 지그마스터 | `JIG_MASTER` | `/jig/master` | PB 연결 | `w_mcn_jig_master` | PB 메뉴 인벤토리 |
 | 지그관리 | 지그출고관리 | `JIG_ISSUE` | `/jig/issue` | PB 연결 | `w_mcn_jig_issue_master` | PB 메뉴 인벤토리 |
 | 지그관리 | 지그수리관리 | `JIG_REPAIR` | `/jig/repair` | PB 연결 | `w_mcn_jig_repair_master` | PB 메뉴 인벤토리 |
