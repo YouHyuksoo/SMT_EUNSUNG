@@ -153,6 +153,8 @@ export const menuConfig: MenuConfigItem[] = [
       { code: "WH_RECEIPT_SLIP", labelKey: "menu.warehouse.receiptSlip", path: "/warehouse/receipt-slip", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_receipt_slip_master" },
       { code: "WH_BARCODE_RECEIPT", labelKey: "menu.warehouse.barcodeReceipt", path: "/warehouse/barcode-receipt", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_other_receipt_barcode_master" },
       { code: "WH_SOLDER_LABEL", labelKey: "menu.warehouse.solderLabel", path: "/warehouse/solder-label", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_receipt_slip_master_onetek_solder" },
+      { code: "WH_MATERIAL_RECEIPT", labelKey: "menu.warehouse.materialReceipt", path: "/warehouse/material-receipt", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_receipt_master" },
+      { code: "WH_ETC_RECEIPT", labelKey: "menu.warehouse.etcReceipt", path: "/warehouse/etc-receipt", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_other_receipt_master" },
     ],
   },
   {

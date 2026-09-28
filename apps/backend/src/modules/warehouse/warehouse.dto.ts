@@ -533,3 +533,203 @@ export class SolderLabelIssueDto {
   @IsOptional() @IsString() @Length(0, 100)
   supplierBarcode?: string;
 }
+
+// ══════════════════════════════════ 253 자재입고관리 · 254 자재기타입고관리
+
+/** 253·254 입고 이력 조회 조건 (PB `d_mat_receipt_hst` 인자 그대로). */
+export class ReceiptHistoryQueryDto {
+  @ApiProperty({ description: '입고일 시작 (YYYY-MM-DD)' })
+  @IsString() @Matches(DATE_ONLY)
+  dateFrom!: string;
+
+  @ApiProperty({ description: '입고일 종료 (YYYY-MM-DD)' })
+  @IsString() @Matches(DATE_ONLY)
+  dateTo!: string;
+
+  @ApiPropertyOptional({ description: '품목코드 (앞부분 일치)' })
+  @IsOptional() @IsString() @Length(0, 50)
+  itemCode?: string;
+
+  @ApiPropertyOptional({ description: '자재 롯트 = MATERIAL_MFS (앞부분 일치)' })
+  @IsOptional() @IsString() @Length(0, 60)
+  materialMfs?: string;
+
+  @ApiPropertyOptional({ description: '협력사코드 (앞부분 일치)' })
+  @IsOptional() @IsString() @Length(0, 30)
+  supplierCode?: string;
+
+  @ApiPropertyOptional({ description: '창고코드 (앞부분 일치)' })
+  @IsOptional() @IsString() @Length(0, 20)
+  locationCode?: string;
+
+  @ApiPropertyOptional({ description: '전표번호 = INVOICE_NO (앞부분 일치)' })
+  @IsOptional() @IsString() @Length(0, 60)
+  invoiceNo?: string;
+
+  @ApiPropertyOptional({
+    description: "입고유형. 'E' 기타입고 · 'N' 일반입고. 비우면 전체.",
+  })
+  @IsOptional() @IsString() @Length(0, 5)
+  receiptType?: string;
+}
+
+/** 254 현재고 목록 조건. */
+export class ReceiptInventoryQueryDto {
+  @ApiPropertyOptional({ description: '품목코드 (앞부분 일치)' })
+  @IsOptional() @IsString() @Length(0, 50)
+  itemCode?: string;
+
+  @ApiPropertyOptional({ description: '자재 롯트 (앞부분 일치)' })
+  @IsOptional() @IsString() @Length(0, 60)
+  materialMfs?: string;
+
+  @ApiPropertyOptional({ description: '창고코드 (앞부분 일치)' })
+  @IsOptional() @IsString() @Length(0, 20)
+  locationCode?: string;
+
+  @ApiPropertyOptional({
+    description: '재고가 0 이하인 것도 함께 본다 (PB 라디오버튼 "전체").'
+      + ' **기본은 재고 있는 것만이다** — 전체는 1,837,572행이라 상한에서 잘린'
+      + ' 임의의 10,000행이 되고 실측 7.6초가 걸린다 (재고 있는 것은 3,446행 / 1.2초).',
+  })
+  @IsOptional() @Transform(({ value }) => value === true || value === 'true')
+  @IsBoolean()
+  includeZero?: boolean;
+}
+
+/** 254 기타입고 한 건을 가리키는 키 (실측 XPKIM_ITEM_RECEIPT 3개 열). */
+export class EtcReceiptKeyDto {
+  @ApiProperty({ description: '입고일 (YYYY-MM-DD)' })
+  @IsString() @Matches(DATE_ONLY)
+  receiptDate!: string;
+
+  @ApiProperty({ description: '입고순번' })
+  @Type(() => Number) @IsInt()
+  receiptSequence!: number;
+}
+
+/** 254 기타입고 등록 (**쓰기**). */
+export class EtcReceiptCreateDto {
+  @ApiProperty({ description: '품목코드' })
+  @IsString() @Length(1, 50)
+  itemCode!: string;
+
+  @ApiProperty({
+    description: '수량. **음수면 차감이다** — PB 가 수량 부호로 RECEIPT_DEFICIT 을'
+      + " 정한다 (실측 유형 'E' 1,829건이 정확히 그 규칙을 따른다).",
+  })
+  @Type(() => Number) @IsNumber()
+  receiptQty!: number;
+
+  @ApiPropertyOptional({ description: '구매유형. 비우면 품목 기준정보에서 가져온다.' })
+  @IsOptional() @IsString() @Length(0, 10)
+  lineType?: string;
+
+  @ApiPropertyOptional({ description: '협력사코드' })
+  @IsOptional() @IsString() @Length(0, 30)
+  supplierCode?: string;
+
+  @ApiPropertyOptional({ description: '창고코드' })
+  @IsOptional() @IsString() @Length(0, 20)
+  locationCode?: string;
+
+  @ApiPropertyOptional({ description: '자재 롯트 (MATERIAL_MFS). 비우면 *' })
+  @IsOptional() @IsString() @Length(0, 60)
+  materialMfs?: string;
+
+  @ApiPropertyOptional({ description: '단가. 비우면 0' })
+  @IsOptional() @Type(() => Number) @IsNumber()
+  unitPrice?: number;
+
+  @ApiPropertyOptional({ description: '통화. 비우면 ISYS_CONFIG.CURRENCY (실측 KRW)' })
+  @IsOptional() @IsString() @Length(0, 10)
+  currency?: string;
+
+  @ApiPropertyOptional({ description: '전표번호. 비우면 YYYYMMDD + 입고순번' })
+  @IsOptional() @IsString() @Length(0, 60)
+  invoiceNo?: string;
+
+  @ApiPropertyOptional({ description: '입고 롯트번호. 비우면 F_GET_ANY_NO 채번' })
+  @IsOptional() @IsString() @Length(0, 60)
+  receiptLotNo?: string;
+
+  @ApiPropertyOptional({ description: '비고' })
+  @IsOptional() @IsString() @Length(0, 200)
+  comments?: string;
+}
+
+/**
+ * 254 기타입고 수정 (**쓰기**).
+ *
+ * 여기 있는 항목만 바꿀 수 있다 — 서비스의 화이트리스트와 짝이다.
+ * **수량은 없다.** PB DataWindow 도 수량을 편집 대상으로 두지 않는다 (실측).
+ */
+export class EtcReceiptUpdateDto extends EtcReceiptKeyDto {
+  @ApiPropertyOptional({ description: '품목코드' })
+  @IsOptional() @IsString() @Length(1, 50)
+  itemCode?: string;
+
+  @ApiPropertyOptional({ description: '구매유형' })
+  @IsOptional() @IsString() @Length(0, 10)
+  lineType?: string;
+
+  @ApiPropertyOptional({ description: '창고코드' })
+  @IsOptional() @IsString() @Length(0, 20)
+  locationCode?: string;
+
+  @ApiPropertyOptional({ description: '자재 롯트 (MATERIAL_MFS)' })
+  @IsOptional() @IsString() @Length(0, 60)
+  materialMfs?: string;
+
+  @ApiPropertyOptional({ description: '협력사 롯트 (MFS)' })
+  @IsOptional() @IsString() @Length(0, 60)
+  mfs?: string;
+
+  @ApiPropertyOptional({ description: '전표번호' })
+  @IsOptional() @IsString() @Length(0, 60)
+  invoiceNo?: string;
+
+  @ApiPropertyOptional({ description: '입고 롯트번호' })
+  @IsOptional() @IsString() @Length(0, 60)
+  receiptLotNo?: string;
+
+  @ApiPropertyOptional({ description: '단가. 바꾸면 입고금액도 함께 다시 계산한다.' })
+  @IsOptional() @Type(() => Number) @IsNumber()
+  unitPrice?: number;
+
+  @ApiPropertyOptional({ description: '통화' })
+  @IsOptional() @IsString() @Length(0, 10)
+  currency?: string;
+
+  @ApiPropertyOptional({ description: '환율' })
+  @IsOptional() @Type(() => Number) @IsNumber()
+  exchangeRate?: number;
+
+  @ApiPropertyOptional({ description: '발주번호' })
+  @IsOptional() @IsString() @Length(0, 60)
+  orderNo?: string;
+
+  @ApiPropertyOptional({ description: '발주유형' })
+  @IsOptional() @IsString() @Length(0, 10)
+  orderType?: string;
+
+  @ApiPropertyOptional({ description: '원 협력사코드' })
+  @IsOptional() @IsString() @Length(0, 30)
+  originSupplierCode?: string;
+
+  @ApiPropertyOptional({ description: '부대비용코드' })
+  @IsOptional() @IsString() @Length(0, 20)
+  incidentalExpenseCode?: string;
+
+  @ApiPropertyOptional({ description: '관세율' })
+  @IsOptional() @Type(() => Number) @IsNumber()
+  tariffRate?: number;
+
+  @ApiPropertyOptional({ description: '관세액' })
+  @IsOptional() @Type(() => Number) @IsNumber()
+  tariffAmt?: number;
+
+  @ApiPropertyOptional({ description: '비고' })
+  @IsOptional() @IsString() @Length(0, 200)
+  comments?: string;
+}

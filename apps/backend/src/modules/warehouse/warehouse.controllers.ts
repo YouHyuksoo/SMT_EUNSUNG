@@ -10,8 +10,11 @@
  *   /warehouse/receipt-slip    235 자재입고전표관리 (바코드 발행 — 쓰기)
  *   /warehouse/barcode-receipt 237 자재바코드입고관리 (입고대조 — 쓰기)
  *   /warehouse/solder-label    243 솔더라벨 발행 (전표+라벨 — 쓰기)
+ *   /warehouse/receipt-manage  253 자재입고관리 (조회) · 254 자재기타입고관리 (쓰기)
  */
-import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body, Controller, Delete, Get, Patch, Post, Query, UseGuards,
+} from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { OrganizationId, UserId } from '../../common/decorators/tenant.decorator';
 import { ResponseUtil } from '../../common/dto/response.dto';
@@ -20,6 +23,7 @@ import { ROW_LIMIT } from '../../shared/row-limit';
 import { BarcodeReceiptService } from './barcode-receipt.service';
 import { ChamberStockService } from './chamber-stock.service';
 import { RecycleCheckService } from './recycle-check.service';
+import { ReceiptManageService } from './receipt-manage.service';
 import { ReceiptSlipService } from './receipt-slip.service';
 import { SolderLabelService } from './solder-label.service';
 import { SolderService } from './solder.service';
@@ -30,6 +34,11 @@ import {
   BarcodeScanLookupDto,
   ChamberStockDetailQueryDto,
   ChamberStockQueryDto,
+  EtcReceiptCreateDto,
+  EtcReceiptKeyDto,
+  EtcReceiptUpdateDto,
+  ReceiptHistoryQueryDto,
+  ReceiptInventoryQueryDto,
   ReceiptSlipBarcodeQueryDto,
   ReceiptSlipIssueDto,
   ReceiptSlipQueryDto,
@@ -372,5 +381,92 @@ export class SolderLabelController {
     return ResponseUtil.success(
       await this.service.issueLabels(dto, organizationId, userId || DEFAULT_USER),
     );
+  }
+}
+
+@ApiTags('자재창고 - 자재입고관리')
+@UseGuards(JwtAuthGuard)
+@Controller('warehouse/receipt-manage')
+export class ReceiptManageController {
+  constructor(private readonly service: ReceiptManageService) {}
+
+  @Get('history')
+  @ApiOperation({
+    summary: '253·254 입고 이력. 두 화면이 PB 에서도 같은 DataWindow 를 쓴다.'
+      + " receiptType 으로 'E'(기타입고)만 볼 수 있다.",
+  })
+  async history(
+    @Query() query: ReceiptHistoryQueryDto,
+    @OrganizationId() organizationId: number,
+  ) {
+    return paged(await this.service.findHistory(query, organizationId));
+  }
+
+  @Get('arrivals')
+  @ApiOperation({
+    summary: '253 입고예정 목록. **이 현장에서는 항상 비어 있다** —'
+      + ' IM_ITEM_ARRIVAL 이 0행이고 그 표를 채우는 PB 창(구매발주·반품)이 쓰이지'
+      + ' 않는다 (실측). 그래서 253 에는 등록 경로가 없다.',
+  })
+  async arrivals(
+    @Query() query: ReceiptHistoryQueryDto,
+    @OrganizationId() organizationId: number,
+  ) {
+    return paged(await this.service.findArrivals(query, organizationId));
+  }
+
+  @Get('inventory')
+  @ApiOperation({
+    summary: '254 현재고 목록. 여기서 품목을 골라 기타입고를 만든다.'
+      + ' 협력사코드는 PB 와 같이 DB 함수가 붙인다 — 재고 표에는 협력사가 없다.',
+  })
+  async inventory(
+    @Query() query: ReceiptInventoryQueryDto,
+    @OrganizationId() organizationId: number,
+  ) {
+    return paged(await this.service.findInventory(query, organizationId));
+  }
+
+  @Post()
+  @ApiOperation({
+    summary: '254 기타입고 등록 (**쓰기**). **수량이 음수면 차감이다** —'
+      + ' PB 가 수량 부호로 RECEIPT_DEFICIT 을 정한다.',
+  })
+  async create(
+    @Body() dto: EtcReceiptCreateDto,
+    @OrganizationId() organizationId: number,
+    @UserId() userId?: string,
+  ) {
+    return ResponseUtil.success(
+      await this.service.createEtcReceipt(dto, organizationId, userId || DEFAULT_USER),
+    );
+  }
+
+  @Patch()
+  @ApiOperation({
+    summary: '254 기타입고 수정 (**쓰기**). 고칠 수 있는 열을 화이트리스트로 막았다 —'
+      + ' 문장에 없는 열은 요청이 무엇을 보내든 바뀌지 않는다. 수량은 바꿀 수 없다'
+      + " (PB DataWindow 도 편집 대상으로 두지 않는다). RECEIPT_TYPE='E' 이고"
+      + ' 바코드로 만들어지지 않은 행만 대상이다.',
+  })
+  async update(
+    @Body() dto: EtcReceiptUpdateDto,
+    @OrganizationId() organizationId: number,
+    @UserId() userId?: string,
+  ) {
+    return ResponseUtil.success(
+      await this.service.updateEtcReceipt(dto, organizationId, userId || DEFAULT_USER),
+    );
+  }
+
+  @Delete()
+  @ApiOperation({
+    summary: '254 기타입고 삭제 (**쓰기**). 수정과 같은 범위 제한을 건다.',
+  })
+  async remove(
+    @Body() dto: EtcReceiptKeyDto,
+    @OrganizationId() organizationId: number,
+  ) {
+    return ResponseUtil.success(await this.service.deleteEtcReceipt(dto, organizationId));
   }
 }

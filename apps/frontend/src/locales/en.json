@@ -307,6 +307,8 @@
     "warehouse.receiptSlip": "Material Receipt Slip",
     "warehouse.barcodeReceipt": "Material Barcode Receipt",
     "warehouse.solderLabel": "Solder Label Issue",
+    "warehouse.materialReceipt": "Material Receipt",
+    "warehouse.etcReceipt": "Material Etc. Receipt",
     "cutting": "Cutting",
     "cutting.order": "Work Order",
     "cutting.result": "Work Result",

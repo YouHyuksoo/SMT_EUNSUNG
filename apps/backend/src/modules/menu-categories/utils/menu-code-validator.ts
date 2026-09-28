@@ -54,6 +54,8 @@ const KNOWN_LEAF_CODES: ReadonlySet<string> = new Set<string>([
   'WH_RECEIPT_SLIP',
   'WH_BARCODE_RECEIPT',
   'WH_SOLDER_LABEL',
+  'WH_MATERIAL_RECEIPT',
+  'WH_ETC_RECEIPT',
   'JIG_MASTER',
   'JIG_ISSUE',
   'JIG_REPAIR',

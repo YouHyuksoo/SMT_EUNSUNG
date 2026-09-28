@@ -80,7 +80,9 @@
       "WH_SOLDER_INPUT",
       "WH_RECEIPT_SLIP",
       "WH_BARCODE_RECEIPT",
-      "WH_SOLDER_LABEL"
+      "WH_SOLDER_LABEL",
+      "WH_MATERIAL_RECEIPT",
+      "WH_ETC_RECEIPT"
     ],
     "JIG": [
       "JIG_MASTER",

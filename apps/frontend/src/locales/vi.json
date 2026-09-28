@@ -307,6 +307,8 @@
     "warehouse.receiptSlip": "Quản lý phiếu nhập vật tư",
     "warehouse.barcodeReceipt": "Quản lý nhập kho mã vạch vật tư",
     "warehouse.solderLabel": "Phát hành nhãn solder",
+    "warehouse.materialReceipt": "Quản lý nhập kho vật tư",
+    "warehouse.etcReceipt": "Quản lý nhập kho khác",
     "cutting": "Công đoạn cắt",
     "cutting.order": "Lệnh sản xuất",
     "cutting.result": "Kết quả sản xuất",
