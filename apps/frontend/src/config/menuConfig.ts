@@ -152,6 +152,7 @@ export const menuConfig: MenuConfigItem[] = [
       { code: "WH_SOLDER_INPUT", labelKey: "menu.warehouse.solderInput", path: "/warehouse/solder-input", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_solder_input_move_query" },
       { code: "WH_RECEIPT_SLIP", labelKey: "menu.warehouse.receiptSlip", path: "/warehouse/receipt-slip", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_receipt_slip_master" },
       { code: "WH_BARCODE_RECEIPT", labelKey: "menu.warehouse.barcodeReceipt", path: "/warehouse/barcode-receipt", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_other_receipt_barcode_master" },
+      { code: "WH_SOLDER_LABEL", labelKey: "menu.warehouse.solderLabel", path: "/warehouse/solder-label", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_receipt_slip_master_onetek_solder" },
     ],
   },
   {

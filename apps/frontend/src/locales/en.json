@@ -306,6 +306,7 @@
     "warehouse.solderInput": "Solder Line Input History",
     "warehouse.receiptSlip": "Material Receipt Slip",
     "warehouse.barcodeReceipt": "Material Barcode Receipt",
+    "warehouse.solderLabel": "Solder Label Issue",
     "cutting": "Cutting",
     "cutting.order": "Work Order",
     "cutting.result": "Work Result",

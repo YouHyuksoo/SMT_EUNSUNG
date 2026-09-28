@@ -17,6 +17,7 @@
  *    무동작이다 (340 라인설비바코드와 같은 유형).
  */
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { SOLDER_FACTORIES } from '@smt/shared';
 import { Transform, Type } from 'class-transformer';
 import {
   IsArray,
@@ -446,4 +447,89 @@ export class BarcodeCompareReceiveDto {
   @IsOptional() @Transform(({ value }) => value === true || value === 'true')
   @IsBoolean()
   ignoreSupplierBarcode?: boolean;
+}
+
+// ══════════════════════════════════ 243 솔더라벨 발행
+
+/** 243 솔더 전표 목록 조건. */
+export class SolderLabelSlipQueryDto {
+  @ApiProperty({ description: '전표일 시작 (YYYY-MM-DD)' })
+  @IsString() @Matches(DATE_ONLY)
+  dateFrom!: string;
+
+  @ApiProperty({ description: '전표일 종료 (YYYY-MM-DD)' })
+  @IsString() @Matches(DATE_ONLY)
+  dateTo!: string;
+
+  @ApiPropertyOptional({ description: '품목코드 (앞부분 일치)' })
+  @IsOptional() @IsString() @Length(0, 50)
+  itemCode?: string;
+
+  @ApiPropertyOptional({ description: '전표번호 (앞부분 일치)' })
+  @IsOptional() @IsString() @Length(0, 60)
+  slipNo?: string;
+}
+
+/** 243 전표로 발행된 라벨 목록 조건. */
+export class SolderLabelBarcodeQueryDto {
+  @ApiProperty({ description: '전표번호' })
+  @IsString() @Length(1, 60)
+  slipNo!: string;
+
+  @ApiProperty({ description: '품목코드' })
+  @IsString() @Length(1, 50)
+  itemCode!: string;
+}
+
+/**
+ * 243 솔더 라벨 발행 (**쓰기**).
+ *
+ * 장수·수량 규칙은 235 와 같다 (`divideQty` 가 있으면 수동, 없으면 릴 장수 × 단위수량).
+ * 바코드 형식만 다르다 — `@smt/shared` 의 `solder-label.ts` 참고.
+ */
+export class SolderLabelIssueDto {
+  @ApiProperty({ description: '품목코드 (ID_ITEM.ITEM_CLASS = SOLDER 여야 한다)' })
+  @IsString() @Length(1, 50)
+  itemCode!: string;
+
+  @ApiProperty({
+    description: "공장코드. 바코드 마지막 1자로 들어간다 (PB ddlb_factory: 'A'·'B').",
+    enum: SOLDER_FACTORIES,
+  })
+  @IsIn(SOLDER_FACTORIES as unknown as string[])
+  factory!: string;
+
+  @ApiPropertyOptional({ description: '릴 장수 (균등 분할). divideQty 가 없으면 필수' })
+  @IsOptional() @Type(() => Number) @IsInt() @Min(1) @Max(1000)
+  reelQty?: number;
+
+  @ApiPropertyOptional({ description: '한 통 수량 (균등 분할)' })
+  @IsOptional() @Type(() => Number) @IsNumber() @Min(1)
+  unitQty?: number;
+
+  @ApiPropertyOptional({
+    description: '장별 수량 목록 (수동 분할). 있으면 이 값이 우선한다.',
+    type: [Number],
+  })
+  @IsOptional() @IsArray() @Type(() => Number) @IsNumber({}, { each: true })
+  divideQty?: number[];
+
+  @ApiPropertyOptional({
+    description: '총수량. 넣으면 라벨 수량 합과 같은지 확인한다 —'
+      + ' PB 는 따로 적게 하고 맞는지 보지 않았다.',
+  })
+  @IsOptional() @Type(() => Number) @IsNumber() @Min(0)
+  totalQty?: number;
+
+  @ApiPropertyOptional({ description: '유효기한 (YYYY-MM-DD)' })
+  @IsOptional() @IsString() @Matches(DATE_ONLY)
+  validDate?: string;
+
+  @ApiPropertyOptional({ description: '협력사코드' })
+  @IsOptional() @IsString() @Length(0, 30)
+  supplierCode?: string;
+
+  @ApiPropertyOptional({ description: '협력사 바코드 (전표의 RECEIPT_BARCODE 로 들어간다)' })
+  @IsOptional() @IsString() @Length(0, 100)
+  supplierBarcode?: string;
 }

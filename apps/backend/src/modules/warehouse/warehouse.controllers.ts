@@ -9,6 +9,7 @@
  *   /warehouse/solder-input    245 솔더라인투입이력조회
  *   /warehouse/receipt-slip    235 자재입고전표관리 (바코드 발행 — 쓰기)
  *   /warehouse/barcode-receipt 237 자재바코드입고관리 (입고대조 — 쓰기)
+ *   /warehouse/solder-label    243 솔더라벨 발행 (전표+라벨 — 쓰기)
  */
 import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -20,6 +21,7 @@ import { BarcodeReceiptService } from './barcode-receipt.service';
 import { ChamberStockService } from './chamber-stock.service';
 import { RecycleCheckService } from './recycle-check.service';
 import { ReceiptSlipService } from './receipt-slip.service';
+import { SolderLabelService } from './solder-label.service';
 import { SolderService } from './solder.service';
 import {
   BarcodeCompareQueryDto,
@@ -33,6 +35,9 @@ import {
   ReceiptSlipQueryDto,
   RecycleCheckQueryDto,
   SolderInputHistoryQueryDto,
+  SolderLabelBarcodeQueryDto,
+  SolderLabelIssueDto,
+  SolderLabelSlipQueryDto,
   SolderListQueryDto,
   SolderScanDto,
   SolderStageCountQueryDto,
@@ -299,6 +304,73 @@ export class BarcodeReceiptController {
   ) {
     return ResponseUtil.success(
       await this.service.compareAndReceive(dto, organizationId, userId || DEFAULT_USER),
+    );
+  }
+}
+
+@ApiTags('자재창고 - 솔더라벨 발행')
+@UseGuards(JwtAuthGuard)
+@Controller('warehouse/solder-label')
+export class SolderLabelController {
+  constructor(private readonly service: SolderLabelService) {}
+
+  @Get()
+  @ApiOperation({
+    summary: '243 솔더 전표 목록. 솔더 품목(ITEM_CLASS=SOLDER)만 본다.'
+      + ' 이 표는 편집할 수 없다 — PB 가 dw.update() 를 부르지만 18개 컬럼이 전부'
+      + ' tabsequence=32766(편집 불가)이라 바뀔 값이 없다 (실측).',
+  })
+  async find(
+    @Query() query: SolderLabelSlipQueryDto,
+    @OrganizationId() organizationId: number,
+  ) {
+    return paged(await this.service.findSlips(query, organizationId));
+  }
+
+  @Get('barcodes')
+  @ApiOperation({
+    summary: '243 고른 전표로 발행된 라벨 목록. 라벨 인쇄는 이 목록을 그대로 쓴다 —'
+      + ' PB 리포트 DataWindow 는 같은 자료를 종이 모양으로 배치한 것뿐이다.',
+  })
+  async barcodes(
+    @Query() query: SolderLabelBarcodeQueryDto,
+    @OrganizationId() organizationId: number,
+  ) {
+    return paged(await this.service.findSlipBarcodes(query, organizationId));
+  }
+
+  @Get('context')
+  @ApiOperation({
+    summary: '243 발행 전 확인 (읽기 전용). 품목의 솔더 종류와 그날 이미 찍힌 마지막'
+      + ' 일련번호를 낸다 — 화면이 찍힐 바코드를 미리 보여줄 때 쓴다.'
+      + ' 발행은 이 값을 다시 읽어서 계산한다 (그 사이에 누가 찍었을 수 있다).',
+  })
+  async context(
+    @Query('itemCode') itemCode: string,
+    @Query('factory') factory: string,
+    @OrganizationId() organizationId: number,
+  ) {
+    return ResponseUtil.success(
+      await this.service.findIssueContext(itemCode, factory || 'A', organizationId),
+    );
+  }
+
+  @Post('issue')
+  @ApiOperation({
+    summary: '243 전표 생성 + 솔더 라벨 발행 (**쓰기**). 입고 원장에는 넣지 않는다 —'
+      + ' 입고는 237 대조 때 생긴다. 바코드는 11자 고정'
+      + " (종류1+YYMMDD6+일련3+공장1). PB 가 검사만 하고 막지 않던 '하루 999장'"
+      + ' 을 여기서는 거절한다. 일련번호가 시퀀스가 아니라 그날 최대값+1 이고'
+      + ' 유일 인덱스가 복합이라 Oracle 이 막아 주지 않으므로, INSERT 문 안에서'
+      + ' 중복을 확인하고 한 장이라도 실패하면 전체를 되돌린다.',
+  })
+  async issue(
+    @Body() dto: SolderLabelIssueDto,
+    @OrganizationId() organizationId: number,
+    @UserId() userId?: string,
+  ) {
+    return ResponseUtil.success(
+      await this.service.issueLabels(dto, organizationId, userId || DEFAULT_USER),
     );
   }
 }

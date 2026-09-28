@@ -11,6 +11,7 @@
  *   245 솔더라인투입이력   w_mat_solder_input_move_query     → SolderService
  *   235 자재입고전표관리   w_mat_receipt_slip_master         → ReceiptSlipService (쓰기)
  *   237 자재바코드입고관리 w_mat_other_receipt_barcode_master → BarcodeReceiptService (쓰기)
+ *   243 솔더라벨 발행      w_mat_receipt_slip_master_onetek_solder → SolderLabelService (쓰기)
  *
  * **왜 화면당 모듈이 아닌가.** 기존 `material` 모듈은 화면당 모듈 하나
  * (`material-current-inventory.module.ts` 등) 패턴인데, 자재창고는 20화면이라
@@ -32,6 +33,7 @@ import { BarcodeReceiptService } from './barcode-receipt.service';
 import { ChamberStockService } from './chamber-stock.service';
 import { RecycleCheckService } from './recycle-check.service';
 import { ReceiptSlipService } from './receipt-slip.service';
+import { SolderLabelService } from './solder-label.service';
 import { SolderService } from './solder.service';
 import {
   BarcodeReceiptController,
@@ -39,6 +41,7 @@ import {
   RecycleCheckController,
   SolderController,
   ReceiptSlipController,
+  SolderLabelController,
   SolderInputHistoryController,
 } from './warehouse.controllers';
 
@@ -50,6 +53,7 @@ import {
     SolderInputHistoryController,
     ReceiptSlipController,
     BarcodeReceiptController,
+    SolderLabelController,
   ],
   providers: [
     ChamberStockService,
@@ -57,6 +61,7 @@ import {
     SolderService,
     ReceiptSlipService,
     BarcodeReceiptService,
+    SolderLabelService,
   ],
 })
 /**

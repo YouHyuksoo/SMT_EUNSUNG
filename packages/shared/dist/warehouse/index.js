@@ -19,3 +19,4 @@ Object.defineProperty(exports, "__esModule", { value: true });
  * @description 자재창고 공유 규칙 진입점.
  */
 __exportStar(require("./reel-plan"), exports);
+__exportStar(require("./solder-label"), exports);
