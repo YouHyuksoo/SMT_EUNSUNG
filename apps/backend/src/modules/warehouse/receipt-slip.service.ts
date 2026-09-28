@@ -23,6 +23,12 @@
  *                                 붙어 회계가 틀어진다 — PB 동작을 유지한다.
  *        ORDER_TYPE    = 'M'    — 실측 분포와 일치한다
  *        CURRENCY='WON' · EXCHANGE_RATE=1 · RECEIPT_DEFICIT=1(입고) · CONFIRM_YN='N'
+ * 4-1. **롯트번호 접두어는 `YYYYMMDD` 가 아니다.** PB `f_ymd_sysdate()` 는 PB 함수이고
+ *    (DB 에 같은 이름이 **없다** — 실측) 본문이
+ *    `연도끝자리 + F_GET_MONTH_CODE2(월) + F_GET_DAY_CODE(일)` 이라 **3글자 코드**를 낸다.
+ *    2026-09-28 이면 `69S` 다. 실제 롯트번호가 8자(`69S` + 5자리 순번)인 것과 맞는다
+ *    (실측 최근 1년 303,081건이 8자). 그래서 접두어를 화면에서 받지 않고 **여기서
+ *    같은 DB 함수로 만든다** — 화면이 만들면 PB 와 롯트번호 체계가 갈린다.
  * 5. **전표번호는 INVOICE_NO 로 들어간다** (PB 그대로). 자재 롯트번호는
  *    MATERIAL_MFS, 협력사 롯트는 MFS, 협력사 바코드는 ORIGIN_MFS 다 — 이름과
  *    뜻이 어긋나 있어 그대로 옮기지 않으면 조회 화면들과 어긋난다.
@@ -258,15 +264,22 @@ export class ReceiptSlipService {
         );
       }
 
-      const quantities = totalReelQty(dto);
-      void quantities;
+      // PB `f_ymd_sysdate()` 와 같은 식·같은 DB 함수로 날짜코드를 만든다 (파일 머리 4-1번).
+      const prefixRows = (await qr.query(
+        `SELECT SUBSTR(TO_CHAR(SYSDATE, 'YYYY'), 4, 1)
+                || F_GET_MONTH_CODE2(TO_CHAR(SYSDATE, 'MM'))
+                || F_GET_DAY_CODE(TO_CHAR(SYSDATE, 'DD')) AS "datePrefix"
+           FROM DUAL`,
+      )) as Row[];
+      const datePrefix = String(prefixRows[0]?.datePrefix ?? '');
+      if (!datePrefix) {
+        throw new BadRequestException('롯트번호 날짜코드를 만들 수 없습니다.');
+      }
+
       const lotSeqs = await this.nextSequences(
         qr, SEQUENCES.materialBarcode, dto.divideQty?.length || Number(dto.reelQty),
       );
-      const plans = planReelBarcodes(
-        { ...dto, datePrefix: dto.datePrefix },
-        lotSeqs,
-      );
+      const plans = planReelBarcodes({ ...dto, datePrefix }, lotSeqs);
       const receiptSeqs = await this.nextSequences(
         qr, SEQUENCES.matReceipt, plans.length,
       );
@@ -363,6 +376,7 @@ export class ReceiptSlipService {
       return {
         slipNo: dto.slipNo,
         itemCode: dto.itemCode,
+        datePrefix,
         issued: plans.length,
         totalQty: planned,
         barcodeRows,

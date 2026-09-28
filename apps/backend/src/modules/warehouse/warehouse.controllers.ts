@@ -8,6 +8,7 @@
  *   /warehouse/solder          244 솔더입출고조회 (입고·출고 — 쓰기)
  *   /warehouse/solder-input    245 솔더라인투입이력조회
  *   /warehouse/receipt-slip    235 자재입고전표관리 (바코드 발행 — 쓰기)
+ *   /warehouse/barcode-receipt 237 자재바코드입고관리 (입고대조 — 쓰기)
  */
 import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -15,11 +16,16 @@ import { OrganizationId, UserId } from '../../common/decorators/tenant.decorator
 import { ResponseUtil } from '../../common/dto/response.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { ROW_LIMIT } from '../../shared/row-limit';
+import { BarcodeReceiptService } from './barcode-receipt.service';
 import { ChamberStockService } from './chamber-stock.service';
 import { RecycleCheckService } from './recycle-check.service';
 import { ReceiptSlipService } from './receipt-slip.service';
 import { SolderService } from './solder.service';
 import {
+  BarcodeCompareQueryDto,
+  BarcodeCompareReceiveDto,
+  BarcodeReceiptHistoryQueryDto,
+  BarcodeScanLookupDto,
   ChamberStockDetailQueryDto,
   ChamberStockQueryDto,
   ReceiptSlipBarcodeQueryDto,
@@ -211,6 +217,88 @@ export class ReceiptSlipController {
   ) {
     return ResponseUtil.success(
       await this.service.issueBarcodes(dto, organizationId, userId || DEFAULT_USER),
+    );
+  }
+}
+
+@ApiTags('자재창고 - 자재바코드입고')
+@UseGuards(JwtAuthGuard)
+@Controller('warehouse/barcode-receipt')
+export class BarcodeReceiptController {
+  constructor(private readonly service: BarcodeReceiptService) {}
+
+  @Get('waiting')
+  @ApiOperation({
+    summary: '237 입고대조 대기 목록. PB 고정조건 3개를 유지한다 —'
+      + " LOT_DIVIDE_YN='N'(분할 조각 제외) · RETURN_YN='N'(반품 제외) ·"
+      + " BARCODE_STATUS<>'C'(취소 제외). 빼면 대조할 수 없는 바코드가 섞인다.",
+  })
+  async waiting(
+    @Query() query: BarcodeCompareQueryDto,
+    @OrganizationId() organizationId: number,
+  ) {
+    return paged(await this.service.findCompareWaiting(query, organizationId));
+  }
+
+  @Get('barcodes')
+  @ApiOperation({
+    summary: '237 바코드 전체 이력. 대기 목록과 달리 고정조건이 없어 취소·분할·반품된'
+      + ' 것까지 보인다 — "왜 대기 목록에 없나" 를 여기서 확인한다.',
+  })
+  async barcodes(
+    @Query() query: BarcodeCompareQueryDto,
+    @OrganizationId() organizationId: number,
+  ) {
+    return paged(await this.service.findBarcodeHistory(query, organizationId));
+  }
+
+  @Get('receipts')
+  @ApiOperation({
+    summary: '237 대조 결과로 들어간 입고 원장. IM_ITEM_RECEIPT 는 22만행/년 규모라'
+      + ' 기간이 필수다.',
+  })
+  async receipts(
+    @Query() query: BarcodeReceiptHistoryQueryDto,
+    @OrganizationId() organizationId: number,
+  ) {
+    return paged(await this.service.findReceiptHistory(query, organizationId));
+  }
+
+  @Get('no-receipt')
+  @ApiOperation({
+    summary: '237 발행됐지만 아직 입고대조되지 않은 바코드 (PB 우측 버튼).'
+      + ' 협력사 바코드는 스캔 이력에서 끌어온다 — 대조 전이라 바코드 표에는 없다.',
+  })
+  async noReceipt(@OrganizationId() organizationId: number) {
+    return paged(await this.service.findNoReceiptIssued(organizationId));
+  }
+
+  @Post('lookup')
+  @ApiOperation({
+    summary: '237 스캔한 바코드를 풀어 본다 (읽기 전용). 품목·롯트·수량은 PB 와 같은'
+      + ' DB 함수로 뽑고, 품목 기준정보로 협력사 롯트 입력 필요 여부를 함께 낸다.'
+      + ' 판정은 하지 않는다 — 실제 거절은 대조 요청에서 다시 한다.',
+  })
+  async lookup(
+    @Body() dto: BarcodeScanLookupDto,
+    @OrganizationId() organizationId: number,
+  ) {
+    return ResponseUtil.success(await this.service.lookupScan(dto, organizationId));
+  }
+
+  @Post('compare')
+  @ApiOperation({
+    summary: '237 입고대조 + 입고 기록 (**쓰기**). PB 와 달리 대조 표시를 UPDATE 조건에'
+      + " 넣었다 (NVL(RECEIPT_COMPARE_YN,'N') <> 'Y') — PB 는 SELECT 로 먼저 보고"
+      + ' 조건 없이 UPDATE 해서, 같은 바코드를 동시에 스캔하면 입고가 두 건 들어갔다.',
+  })
+  async compare(
+    @Body() dto: BarcodeCompareReceiveDto,
+    @OrganizationId() organizationId: number,
+    @UserId() userId?: string,
+  ) {
+    return ResponseUtil.success(
+      await this.service.compareAndReceive(dto, organizationId, userId || DEFAULT_USER),
     );
   }
 }

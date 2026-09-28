@@ -40,8 +40,6 @@ const daysAgo = (n: number) => {
   d.setDate(d.getDate() - n);
   return d.toISOString().slice(0, 10);
 };
-/** 롯트번호 접두어. 서버가 넣는 번호와 화면이 보여준 번호를 같게 하려고 보낸다. */
-const datePrefix = () => new Date().toISOString().slice(0, 10).replace(/-/g, '');
 
 export default function ReceiptSlipPage() {
   const [dateFrom, setDateFrom] = useState(daysAgo(7));
@@ -145,7 +143,6 @@ export default function ReceiptSlipPage() {
       const response = await api.post('/warehouse/receipt-slip/issue', {
         slipNo: selected.receiptSlipNo,
         itemCode: selected.itemCode,
-        datePrefix: datePrefix(),
         ...(divideQty.length > 0
           ? { divideQty }
           : { reelQty: Number(reelQty), unitQty: Number(unitQty) }),

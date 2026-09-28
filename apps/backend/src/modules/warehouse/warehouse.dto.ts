@@ -283,13 +283,6 @@ export class ReceiptSlipIssueDto {
   @IsString() @Length(1, 50)
   itemCode!: string;
 
-  @ApiProperty({
-    description: '롯트번호 날짜접두어 (YYYYMMDD). PB `F_YMD_SYSDATE()` 자리다 —'
-      + ' 화면이 보여준 번호와 서버가 넣는 번호를 같게 하려고 받는다.',
-  })
-  @IsString() @Matches(/^\d{8}$/)
-  datePrefix!: string;
-
   @ApiPropertyOptional({ description: '릴 장수 (균등 분할). divideQty 가 없으면 필수' })
   @IsOptional() @Type(() => Number) @IsInt() @Min(1) @Max(1000)
   reelQty?: number;
@@ -342,4 +335,125 @@ export class ReceiptSlipIssueDto {
   @ApiPropertyOptional({ description: '제조일 (YYYY-MM-DD)' })
   @IsOptional() @IsString() @Matches(DATE_ONLY)
   manufactureDate?: string;
+}
+
+// ══════════════════════════════════ 237 자재바코드입고관리
+
+/**
+ * 237 대조 대기 / 바코드 이력 목록 조건.
+ *
+ * PB 는 이 두 목록을 별도 DataWindow 로 두었지만 조건이 거의 같다
+ * (`d_mat_rceipt_barcode_4_receipt_wait_lst` · `d_mat_receipt_barcode_all_lst`).
+ * 대기 목록만 `receiptCompareYn` 갈래와 PB 고정조건 3개가 더 붙는다.
+ */
+export class BarcodeCompareQueryDto {
+  @ApiPropertyOptional({ description: '품목코드 (앞부분 일치)' })
+  @IsOptional() @IsString() @Length(0, 50)
+  itemCode?: string;
+
+  @ApiPropertyOptional({ description: '자재 바코드 (앞부분 일치)' })
+  @IsOptional() @IsString() @Length(0, 100)
+  barcode?: string;
+
+  @ApiPropertyOptional({ description: '롯트번호 (앞부분 일치)' })
+  @IsOptional() @IsString() @Length(0, 60)
+  lotNo?: string;
+
+  @ApiPropertyOptional({ description: '전표번호 (앞부분 일치)' })
+  @IsOptional() @IsString() @Length(0, 60)
+  slipNo?: string;
+
+  @ApiPropertyOptional({
+    description: "입고대조 여부. 'N' 대조 대기 · 'Y' 대조 완료."
+      + ' 비우면 둘 다 본다 (PB 공통코드 RECEIPT COMPARE YN).',
+  })
+  @IsOptional() @IsString() @Length(0, 1)
+  receiptCompareYn?: string;
+}
+
+/** 237 입고 이력 목록 조건 (IM_ITEM_RECEIPT — 기간이 필수다). */
+export class BarcodeReceiptHistoryQueryDto {
+  @ApiProperty({ description: '입고일 시작 (YYYY-MM-DD)' })
+  @IsString() @Matches(DATE_ONLY)
+  dateFrom!: string;
+
+  @ApiProperty({ description: '입고일 종료 (YYYY-MM-DD)' })
+  @IsString() @Matches(DATE_ONLY)
+  dateTo!: string;
+
+  @ApiPropertyOptional({ description: '품목코드 (앞부분 일치)' })
+  @IsOptional() @IsString() @Length(0, 50)
+  itemCode?: string;
+
+  @ApiPropertyOptional({ description: '전표번호 = INVOICE_NO (앞부분 일치)' })
+  @IsOptional() @IsString() @Length(0, 60)
+  slipNo?: string;
+
+  @ApiPropertyOptional({ description: '자재 롯트번호 = MATERIAL_MFS (앞부분 일치)' })
+  @IsOptional() @IsString() @Length(0, 60)
+  lotNo?: string;
+}
+
+/**
+ * 237 스캔한 자사 바코드를 풀어 본다 (읽기 전용).
+ *
+ * **왜 별도 단계가 있나.** PB 는 바코드를 입력하는 순간 DB 함수 세 개로 품목·롯트·
+ * 수량을 뽑고, 품목 기준정보를 읽어 **협력사 롯트를 요구할지** 정한다
+ * (`ID_ITEM.RECEIPT_LOT_CHECK_YN`). 화면이 그 판정을 알아야 입력칸을 열 수 있다.
+ */
+export class BarcodeScanLookupDto {
+  @ApiProperty({ description: '자사(자재) 바코드' })
+  @IsString() @Length(1, 100)
+  barcode!: string;
+
+  @ApiPropertyOptional({
+    description: '협력사 바코드. 넣으면 협력사 품목코드까지 같이 풀어 대조한다.',
+  })
+  @IsOptional() @IsString() @Length(0, 100)
+  supplierBarcode?: string;
+
+  @ApiPropertyOptional({
+    description: '협력사코드. PB 는 화면 위 협력사 선택값을 그대로 넘긴다 —'
+      + ' 같은 바코드 형식을 협력사마다 다르게 해석하는 규칙이 DB 함수 안에 있다.',
+  })
+  @IsOptional() @IsString() @Length(0, 30)
+  supplierCode?: string;
+}
+
+/**
+ * 237 입고대조 + 입고 기록 (**쓰기**).
+ *
+ * PB `wf_receipt_barcode('N')` 한 번에 대응한다.
+ */
+export class BarcodeCompareReceiveDto {
+  @ApiProperty({ description: '협력사 바코드 (ORIGIN_MFS 로 들어간다)' })
+  @IsString() @Length(1, 100)
+  supplierBarcode!: string;
+
+  @ApiProperty({ description: '자사 바코드' })
+  @IsString() @Length(1, 100)
+  barcode!: string;
+
+  @ApiPropertyOptional({
+    description: '협력사 롯트번호 (MFS · VENDOR_LOTNO 로 들어간다).'
+      + ' 품목의 RECEIPT_LOT_CHECK_YN 이 Y 면 필수다.',
+  })
+  @IsOptional() @IsString() @Length(0, 60)
+  supplierLotNo?: string;
+
+  @ApiPropertyOptional({ description: '원 협력사코드 (ORIGIN_SUPPLIER_CODE · VENDOR_CODE)' })
+  @IsOptional() @IsString() @Length(0, 30)
+  originSupplierCode?: string;
+
+  @ApiPropertyOptional({ description: '협력사코드 (바코드 해석에 쓴다)' })
+  @IsOptional() @IsString() @Length(0, 30)
+  supplierCode?: string;
+
+  @ApiPropertyOptional({
+    description: '협력사 바코드와 자사 바코드가 같아도 통과시킨다'
+      + ' (PB cbx_ignore_sup_bcd 체크박스).',
+  })
+  @IsOptional() @Transform(({ value }) => value === true || value === 'true')
+  @IsBoolean()
+  ignoreSupplierBarcode?: boolean;
 }

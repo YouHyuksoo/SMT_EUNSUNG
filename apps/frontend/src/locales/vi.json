@@ -305,6 +305,7 @@
     "warehouse.solder": "Nhập xuất solder",
     "warehouse.solderInput": "Lịch sử đưa solder lên line",
     "warehouse.receiptSlip": "Quản lý phiếu nhập vật tư",
+    "warehouse.barcodeReceipt": "Quản lý nhập kho mã vạch vật tư",
     "cutting": "Công đoạn cắt",
     "cutting.order": "Lệnh sản xuất",
     "cutting.result": "Kết quả sản xuất",

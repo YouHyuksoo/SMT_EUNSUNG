@@ -78,7 +78,8 @@
       "WH_RECYCLE_CHECK",
       "WH_SOLDER",
       "WH_SOLDER_INPUT",
-      "WH_RECEIPT_SLIP"
+      "WH_RECEIPT_SLIP",
+      "WH_BARCODE_RECEIPT"
     ],
     "JIG": [
       "JIG_MASTER",

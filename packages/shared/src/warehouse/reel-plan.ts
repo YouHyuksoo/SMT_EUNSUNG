@@ -15,16 +15,18 @@
  * 3. **균등인데 단위수량이 비어 있으면 PB 는 거절한다** (실측 928·1049행 두 곳).
  *    그 판정이 없으면 수량 0짜리 바코드가 릴 수만큼 발행된다.
  * 4. **바코드 형식은 `품목코드-롯트번호-수량` 이다** (PB 문자열 연결 그대로).
- *    롯트번호는 `YYYYMMDD` + 시퀀스값이고 **장마다 새로 뽑는다** — 장마다 롯트가
+ *    롯트번호는 3글자 날짜코드 + 시퀀스값이고 **장마다 새로 뽑는다** — 장마다 롯트가
  *    다르다는 뜻이다 (PB 루프 안에서 `F_GET_SEQUENCE('SEQ_MATERIAL_BARCODE')` 를
  *    매번 부른다).
- * 5. **시퀀스는 이 파일이 만들지 않는다.** 밖에서 받아 쓴다 — 그래야 이 규칙을
- *    DB 없이 테스트할 수 있고, 값은 PB 와 같은 Oracle 시퀀스에서 나온다.
+ * 5. **시퀀스와 날짜코드는 이 파일이 만들지 않는다.** 밖에서 받아 쓴다 — 그래야 이 규칙을
+ *    DB 없이 테스트할 수 있고, 값은 PB 와 같은 Oracle 시퀀스·함수에서 나온다.
+ *    날짜코드는 `SUBSTR(TO_CHAR(SYSDATE,'YYYY'),4,1) || F_GET_MONTH_CODE2(MM)
+ *    || F_GET_DAY_CODE(DD)` 로 받는다 — PB `f_ymd_sysdate()` 와 같은 DB 함수다.
  */
 
 /** 한 장의 바코드 계획. */
 export interface ReelBarcodePlan {
-  /** 롯트번호 (`YYYYMMDD` + 시퀀스). 장마다 다르다. */
+  /** 롯트번호 (3글자 날짜코드 + 시퀀스). 장마다 다르다. */
   lotNo: string;
   /** 자재 바코드 (`품목코드-롯트번호-수량`). */
   itemBarcode: string;
@@ -105,7 +107,14 @@ export function planReelQuantities(input: ReelPlanInput): number[] {
   return Array.from({ length: Number(input.reelQty) }, () => Number(input.unitQty));
 }
 
-/** 롯트번호 = 날짜접두어 + 시퀀스값 (PB `F_YMD_SYSDATE() + STRING(시퀀스)`). */
+/**
+ * 롯트번호 = 날짜접두어 + 시퀀스값 (PB `F_YMD_SYSDATE() + STRING(시퀀스)`).
+ *
+ * **접두어는 `YYYYMMDD` 가 아니라 3글자 코드다.** PB `f_ymd_sysdate()` 본문이
+ * `연도끝자리 + F_GET_MONTH_CODE2(월) + F_GET_DAY_CODE(일)` 이다 (실측 `.srf`).
+ * 2026-09-28 이면 `69S` 다 — 실제 롯트번호가 8자(`69S` + 5자리 순번)인 것과 맞는다
+ * (실측 최근 1년 303,081건이 8자). 그래서 **접두어는 화면이 만들지 않고 DB 에서 받는다.**
+ */
 export function buildReelLotNo(datePrefix: string, sequence: number | string): string {
   return `${datePrefix}${sequence}`;
 }

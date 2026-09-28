@@ -392,6 +392,34 @@
       "target": "F_GET_MODEL_NAME_BY_RUN_NO",
       "usedBy": "apps/backend/src/modules/tracking/pid-tracking.service.ts",
       "note": "이름은 PB 함수처럼 보이지만 같은 이름의 DB 함수가 실제로 있다(VALID). 317 머리글은 2D바코드에서 모델명을 함께 읽어 이 함수 호출이 불필요했다."
+    },
+    {
+      "pbFunction": "f_ymd_sysdate",
+      "action": "native",
+      "target": "SUBSTR(TO_CHAR(SYSDATE,'YYYY'),4,1) || F_GET_MONTH_CODE2(TO_CHAR(SYSDATE,'MM')) || F_GET_DAY_CODE(TO_CHAR(SYSDATE,'DD'))",
+      "usedBy": "apps/backend/src/modules/warehouse/receipt-slip.service.ts",
+      "note": "롯트번호 날짜접두어. YYYYMMDD 가 아니라 3글자 코드다 (2026-09-28 → 69S). DB 에 동명 함수가 없고 PB 본문이 쓰는 F_GET_MONTH_CODE2·F_GET_DAY_CODE 는 DB 함수라 그대로 부른다. 실측 롯트번호 303,081건이 8자(3+5)."
+    },
+    {
+      "pbFunction": "f_check_item_exists",
+      "action": "inlined",
+      "target": "ID_ITEM 유효기간 조건 (DATESET <= TRUNC(SYSDATE) AND DATEEND >= TRUNC(SYSDATE))",
+      "usedBy": "apps/backend/src/modules/warehouse/barcode-receipt.service.ts",
+      "note": "**DB 동명 함수와 뜻이 다르다.** PB 는 ID_ITEM 품목 유효기간을 보고, DB F_CHECK_ITEM_EXISTS(p_set_item,p_org) 는 ID_CUSTOMER_SET_BOM 세트 BOM 유무를 보며 'EXISTS'/'NOTFOUND' 를 낸다. 인자도 (품목,조직) 이라 PB 가 넘기던 날짜 자리와 맞지 않는다 (실측 ORA-06553 PLS-306). PB 쪽 SQL 을 인라인한다."
+    },
+    {
+      "pbFunction": "f_get_line_type_from_item",
+      "action": "native",
+      "target": "F_GET_LINE_TYPE_FROM_ITEM(item_code, organization_id)",
+      "usedBy": "apps/backend/src/modules/warehouse/barcode-receipt.service.ts",
+      "note": "DB 함수와 본문이 같고 유효기간 조건만 DB 쪽에서 주석 처리돼 있다. 호출 전에 유효기간을 이미 확인하므로 결과가 같다. 인자 2개다 (PB 래퍼는 1개)."
+    },
+    {
+      "pbFunction": "f_get_any_no",
+      "action": "native",
+      "target": "F_GET_ANY_NO(UPPER(name), organization_id)",
+      "usedBy": "apps/backend/src/modules/warehouse/barcode-receipt.service.ts",
+      "note": "PB 래퍼 본문이 같은 이름의 DB 함수를 부르는 것뿐이라 직접 불러도 값이 같다 (실측 f_get_any_no.srf)."
     }
   ]
 }

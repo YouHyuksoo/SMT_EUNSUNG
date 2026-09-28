@@ -100,32 +100,34 @@ describe('totalReelQty — 수량 합', () => {
 
 describe('롯트번호·바코드 형식 (PB 문자열 연결 그대로)', () => {
   it('롯트번호 = 날짜접두어 + 시퀀스', () => {
-    expect(buildReelLotNo('20260928', 96510)).toBe('2026092896510');
+    // 접두어는 PB `f_ymd_sysdate()` 가 내는 **3글자 코드**다 (연끝자리+월코드+일코드).
+    // 2026-09-28 → '69S'. 실제 롯트번호가 8자인 것과 맞는다 (실측 30만건).
+    expect(buildReelLotNo('69S', 96510)).toBe('69S96510');
   });
 
   it('바코드 = 품목코드-롯트번호-수량', () => {
-    expect(buildReelBarcode('E1851600020', '2026092896510', 250))
-      .toBe('E1851600020-2026092896510-250');
+    expect(buildReelBarcode('E1851600020', '69S96510', 250))
+      .toBe('E1851600020-69S96510-250');
   });
 });
 
 describe('planReelBarcodes — 발행 목록', () => {
-  const base = { itemCode: 'E1851600020', datePrefix: '20260928' };
+  const base = { itemCode: 'E1851600020', datePrefix: '69S' };
 
   it('장마다 다른 시퀀스로 다른 롯트번호를 만든다', () => {
     const plans = planReelBarcodes({ ...base, reelQty: 3, unitQty: 100 }, [11, 12, 13]);
     expect(plans).toEqual([
-      { lotNo: '2026092811', itemBarcode: 'E1851600020-2026092811-100', scanQty: 100 },
-      { lotNo: '2026092812', itemBarcode: 'E1851600020-2026092812-100', scanQty: 100 },
-      { lotNo: '2026092813', itemBarcode: 'E1851600020-2026092813-100', scanQty: 100 },
+      { lotNo: '69S11', itemBarcode: 'E1851600020-69S11-100', scanQty: 100 },
+      { lotNo: '69S12', itemBarcode: 'E1851600020-69S12-100', scanQty: 100 },
+      { lotNo: '69S13', itemBarcode: 'E1851600020-69S13-100', scanQty: 100 },
     ]);
   });
 
   it('수동 분할은 장마다 수량이 다르고 바코드에도 그 수량이 들어간다', () => {
     const plans = planReelBarcodes({ ...base, divideQty: [70, 30] }, [21, 22]);
     expect(plans.map((p) => p.scanQty)).toEqual([70, 30]);
-    expect(plans[0].itemBarcode).toBe('E1851600020-2026092821-70');
-    expect(plans[1].itemBarcode).toBe('E1851600020-2026092822-30');
+    expect(plans[0].itemBarcode).toBe('E1851600020-69S21-70');
+    expect(plans[1].itemBarcode).toBe('E1851600020-69S22-30');
   });
 
   it('롯트번호가 장마다 다르다 — 겹치면 바코드가 중복된다', () => {

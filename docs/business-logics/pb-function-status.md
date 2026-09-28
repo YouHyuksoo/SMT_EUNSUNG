@@ -3,7 +3,7 @@ sources:
   - apps/frontend/scripts/data/pb-function-catalog.json
   - docs/database/generated/pb-function-inventory.json
 generator: apps/frontend/scripts/gen-function-status.mjs
-verifiedCommit: 8fe9b738
+verifiedCommit: 7cc8ec6d
 ---
 
 # PB 함수 처리 현황 (자동 생성)
@@ -23,8 +23,8 @@ DB 함수는 웹에서도 **그대로 호출**합니다 — 재구현하면 PB �
 | PB 창(실측) | 596 |
 | SQL 안 호출 = DB 함수 (조치 불필요) | 196 |
 | SQL 밖 호출 = PB 함수 | 226 |
-| 카탈로그 등록(처리 완료) | 59 |
-| 미처리 전환 후보 | 53 |
+| 카탈로그 등록(처리 완료) | 63 |
+| 미처리 전환 후보 | 51 |
 
 ## 처리 완료 (카탈로그)
 
@@ -71,14 +71,15 @@ DB 함수는 웹에서도 **그대로 호출**합니다 — 재구현하면 PB �
 | `f_update` | — | PB DataWindow Update 래퍼. 웹은 백엔드 저장 API 가 대신한다. |
 | `f_set_column_dddw` | — | PB DataWindow 의 드롭다운 목록을 런타임에 채우는 유틸. 웹은 기초코드 선택 컴포넌트가 대신한다. |
 
-### 서비스에 이식 (`inlined`) — 2건
+### 서비스에 이식 (`inlined`) — 3건
 
 | PB 함수 | 대상 | 비고 |
 |---|---|---|
 | `f_get_first_day` | `receipt-cancel.service.ts firstDayOfMonth()` | 한 화면 전용 날짜 계산이라 DB 오브젝트를 늘리지 않는다. |
 | `f_replace_string` | `String.prototype.replaceAll (대소문자 무시)` | SQL 없는 순수 문자열 치환. PB 는 소문자·대문자를 번갈아 찾는 방식이라 대소문자 무시 치환과 같다. |
+| `f_check_item_exists` | `ID_ITEM 유효기간 조건 (DATESET <= TRUNC(SYSDATE) AND DATEEND >= TRUNC(SYSDATE))` | **DB 동명 함수와 뜻이 다르다.** PB 는 ID_ITEM 품목 유효기간을 보고, DB F_CHECK_ITEM_EXISTS(p_set_item,p_org) 는 ID_CUSTOMER_SET_BOM 세트 BOM 유무를 보며 'EXISTS'/'NOTFOUND' 를 낸다. 인자도 (품목,조직) 이라 PB 가 넘기던 날짜 자리와 맞지 않는다 (실측 ORA-06553 PLS-306). PB 쪽 SQL 을 인라인한다. |
 
-### 웹에서 직접 (`native`) — 19건
+### 웹에서 직접 (`native`) — 22건
 
 | PB 함수 | 대상 | 비고 |
 |---|---|---|
@@ -101,6 +102,9 @@ DB 함수는 웹에서도 **그대로 호출**합니다 — 재구현하면 PB �
 | `f_get_run_line_pda_on` | `F_GET_RUN_LINE_PDA_ON(p_run_no, p_line_code, p_org)` | 생산 시작시각(PDA ON). 생산시간 계산의 시작점. |
 | `f_get_run_line_pda_off` | `F_GET_RUN_LINE_PDA_OFF(p_run_no, p_line_code, p_org)` | 생산 종료시각(PDA OFF). NULL 이면 생산시간 0 으로 본다 (PB DECODE 규약). |
 | `f_get_model_name_by_run_no` | `F_GET_MODEL_NAME_BY_RUN_NO` | 이름은 PB 함수처럼 보이지만 같은 이름의 DB 함수가 실제로 있다(VALID). 317 머리글은 2D바코드에서 모델명을 함께 읽어 이 함수 호출이 불필요했다. |
+| `f_ymd_sysdate` | `SUBSTR(TO_CHAR(SYSDATE,'YYYY'),4,1) || F_GET_MONTH_CODE2(TO_CHAR(SYSDATE,'MM')) || F_GET_DAY_CODE(TO_CHAR(SYSDATE,'DD'))` | 롯트번호 날짜접두어. YYYYMMDD 가 아니라 3글자 코드다 (2026-09-28 → 69S). DB 에 동명 함수가 없고 PB 본문이 쓰는 F_GET_MONTH_CODE2·F_GET_DAY_CODE 는 DB 함수라 그대로 부른다. 실측 롯트번호 303,081건이 8자(3+5). |
+| `f_get_line_type_from_item` | `F_GET_LINE_TYPE_FROM_ITEM(item_code, organization_id)` | DB 함수와 본문이 같고 유효기간 조건만 DB 쪽에서 주석 처리돼 있다. 호출 전에 유효기간을 이미 확인하므로 결과가 같다. 인자 2개다 (PB 래퍼는 1개). |
+| `f_get_any_no` | `F_GET_ANY_NO(UPPER(name), organization_id)` | PB 래퍼 본문이 같은 이름의 DB 함수를 부르는 것뿐이라 직접 불러도 값이 같다 (실측 f_get_any_no.srf). |
 
 ### 전환 보류 (`blocked`) — 10건
 
@@ -124,9 +128,7 @@ DB 함수는 웹에서도 **그대로 호출**합니다 — 재구현하면 PB �
 
 | PB 함수 | 호출 | 창 수 | 대표 창 |
 |---|---:|---:|---|
-| `f_check_item_exists` | 65 | 37 | w_mat_baking_dehumi_scan_master, w_mat_baking_dehumi_scan_query |
 | `f_set_layered_window` | 14 | 14 | w_bad_reason_select_popup, w_com_message_popup_lg |
-| `f_get_line_type_from_item` | 14 | 10 | w_des_bom_modify_master, w_mat_other_issue_barcode_master |
 | `f_play_mp3` | 45 | 9 | w_pln_product_magazine_label_split_master, w_prd_product_fg_4_magazine_receipt |
 | `f_get_tariff_rate` | 7 | 7 | w_mat_departure_4_goods_master, w_mat_departure_master |
 | `f_get_token` | 15 | 5 | w_dynamic_graph_popup, w_dynamic_where_condition_popup |
