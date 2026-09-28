@@ -3,7 +3,7 @@ sources:
   - apps/frontend/src/config/menuConfig.ts
   - apps/frontend/scripts/data/pb-screen-inventory.json
 generator: apps/frontend/scripts/gen-migration-status.mjs
-verifiedCommit: c21d3c9e
+verifiedCommit: 23e2b0c2
 ---
 
 # PB 윈도우 ↔ 웹 메뉴·경로 연결표 (자동 생성)
@@ -15,7 +15,7 @@ verifiedCommit: c21d3c9e
 
 | 전체 웹 메뉴 | PB 연결 | 웹 신규 | 미확정 |
 |---:|---:|---:|---:|
-| 166 | 147 | 17 | 2 |
+| 173 | 154 | 17 | 2 |
 
 ## 전체 연결표
 
@@ -59,6 +59,10 @@ verifiedCommit: c21d3c9e
 | OEE 관리 | 설비 운영 및 실적관리(현장) | `OEE_FIELD_OPS` | `/oee/field-ops` | 웹 신규 |  | PB 대응 없음 |
 | 자재수불관리 | 자재입출고수불원장 | `MAT_RECEIPT_ISSUE_LEDGER` | `/material/receipt-issue-ledger` | PB 연결 | `w_mat_ledger_report` | PB 메뉴 인벤토리 |
 | 자재수불관리 | 현재고조회 | `MAT_CURRENT_INVENTORY` | `/material/current-inventory` | PB 연결 | `w_mat_current_inventory_master` | PB 메뉴 인벤토리 |
+| 자재수불관리 | 총재고조회 | `INV_TOTAL` | `/inventory-query/total-inventory` | PB 연결 | `w_mat_total_inventory_query` | PB 메뉴 인벤토리 |
+| 자재수불관리 | 자재재고마감 | `INV_CLOSE` | `/inventory-query/inventory-close` | PB 연결 | `w_mat_inventory_close_report` | PB 메뉴 인벤토리 |
+| 자재수불관리 | 자재재고조사 | `INV_CHECK` | `/inventory-query/inventory-check` | PB 연결 | `w_mat_inventory_check_master` | PB 메뉴 인벤토리 |
+| 자재수불관리 | 자재바코드스캔실사 | `INV_BARCODE_CHECK` | `/inventory-query/barcode-check` | PB 연결 | `w_mat_barcode_check_master` | PB 메뉴 인벤토리 |
 | 자재수불관리 | 공정재고조회 | `MAT_WORKSTAGE_INVENTORY` | `/material/workstage-inventory` | PB 연결 | `w_mat_workstage_inventory_query` | `apps/backend/src/modules/material/controllers/workstage-inventory.controller.ts` |
 | 자재수불관리 | 자재입고취소 | `MAT_RECEIPT_CANCEL` | `/material/receipt-cancel` | PB 연결 | `w_mat_receipt_cancel_master` | PB 메뉴 인벤토리 |
 | 자재수불관리 | 베이킹재고조회 | `WH_BAKING_STOCK` | `/warehouse/baking-stock` | PB 연결 | `w_mat_baking_scan_query` | PB 메뉴 인벤토리 |
@@ -113,6 +117,9 @@ verifiedCommit: c21d3c9e
 | SMT관리 | 마운터 픽업정보관리 | `SMT_FEEDER_PICKUP` | `/smt/feeder-pickup` | PB 연결 | `w_mcn_feeder_pickup_master` | PB 메뉴 인벤토리 |
 | 공정수불관리 | 공정통과이력 관리 | `PLN_WORKSTAGE_PASS` | `/process-transaction/workstage-pass` | PB 연결 | `w_pln_product_inout_scan_master` | PB 메뉴 인벤토리 |
 | 공정수불관리 | 매거진발행이력 | `PLN_MAGAZINE_LABEL_HISTORY` | `/process-transaction/magazine-label-history` | PB 연결 | `w_pln_product_magazine_label_query` | PB 메뉴 인벤토리 |
+| 공정수불관리 | 매거진라벨 발행 | `PLN_MAGAZINE_LABEL` | `/process-transaction/magazine-label` | PB 연결 | `w_pln_product_magazine_label_master2` | PB 메뉴 인벤토리 |
+| 공정수불관리 | 매거진라벨 분할 | `PLN_MAGAZINE_SPLIT` | `/process-transaction/magazine-split` | PB 연결 | `w_pln_product_magazine_label_split_master` | PB 메뉴 인벤토리 |
+| 공정수불관리 | 매거진-PID 매핑관리 | `PLN_MAGAZINE_PID` | `/process-transaction/magazine-pid` | PB 연결 | `w_pln_product_barcode_create_master` | PB 메뉴 인벤토리 |
 | 제품재고관리 | 제품재고조회 | `PRD_CURRENT_INVENTORY` | `/product/current-inventory` | PB 연결 | `w_prd_product_fg_inventory` | PB 메뉴 인벤토리 |
 | 생산관리 | 작업지시관리 | `PRD_RUN_CARD` | `/production/run-card` | PB 연결 | `w_product_run_card_duckil` | PB 메뉴 인벤토리 |
 | 생산관리 | 제품생산계획 | `PRD_MASTER_PLAN` | `/production/master-plan` | PB 연결 | `w_pln_product_master_plan_master` | PB 메뉴 인벤토리 |

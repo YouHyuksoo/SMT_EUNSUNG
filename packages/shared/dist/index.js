@@ -40,3 +40,5 @@ __exportStar(require("./tracking"), exports);
 __exportStar(require("./popups"), exports);
 // 자재창고 공유 규칙
 __exportStar(require("./warehouse"), exports);
+// 생산(공정) 공유 규칙 — 매거진라벨 발행·분할 산술
+__exportStar(require("./production"), exports);

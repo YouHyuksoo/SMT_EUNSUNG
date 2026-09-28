@@ -19,6 +19,7 @@ import { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { AlertTriangle, ScanLine, Scissors, Search } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
+import DateRangeFilter from '@/components/shared/DateRangeFilter';
 import { Button, Card, CardContent, ConfirmModal, Input } from '@/components/ui';
 import api from '@/services/api';
 import {
@@ -240,11 +241,8 @@ export default function MagazineSplitPage() {
 
       <Card padding="none">
         <CardContent className="flex flex-wrap items-center gap-3 p-3">
-          <Input aria-label="시작일" type="date" value={dateFrom} className="w-44"
-            onChange={(e) => setDateFrom(e.target.value)} />
-          <span className="text-text-muted">~</span>
-          <Input aria-label="종료일" type="date" value={dateTo} className="w-44"
-            onChange={(e) => setDateTo(e.target.value)} />
+          <DateRangeFilter label="분할일" from={dateFrom} to={dateTo}
+            onFromChange={setDateFrom} onToChange={setDateTo} />
           <Button size="sm" onClick={search} disabled={loading}>
             <Search className="mr-1 h-4 w-4" />조회
           </Button>

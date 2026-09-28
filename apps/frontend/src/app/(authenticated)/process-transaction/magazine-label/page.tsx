@@ -12,13 +12,19 @@
  * 3. **지시수량을 넘겨 발행할 수 없다.** 이미 발행된 수량까지 합쳐서 본다.
  * 4. **라벨 인쇄는 포함하지 않았다.** 원장(라벨 행)만 만들고 발행된 라벨번호를
  *    돌려준다 — 라벨 프린터 연동은 장비 결정이 필요해 뒤로 미뤘다.
- * 5. **폐기는 되돌릴 수 없다.** 라벨이 이력표로 옮겨지고 목록에서 사라진다.
+ * 5. **공정은 화면에서 고른다.** PB 는 PC 설정(`WORKENV.INI`)에 저장해 두고 썼는데,
+ *    웹에는 그런 파일이 없으므로 브라우저에 기억시킨다. **런카드에서 가져오면 안 된다** —
+ *    실측 런카드의 공정코드는 전부 비어 있고, 원장은 전부 `W180` 이다.
+ * 6. **한 번에 한 모델만 발행한다.** PB 는 그리드의 모든 줄을 훑어 한꺼번에 찍었지만,
+ *    웹은 고른 모델 하나만 발행한다 — 무엇이 몇 장 나가는지 확인하고 누르게 하려는 것이다.
+ * 7. **폐기는 되돌릴 수 없다.** 라벨이 이력표로 옮겨지고 목록에서 사라진다.
  *    이미 공정에 투입된 라벨은 폐기되지 않는다.
  */
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { AlertTriangle, Printer, ScanLine, Trash2 } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
+import ProcessSelect from '@/components/shared/ProcessSelect';
 import { Button, Card, CardContent, ConfirmModal, Input } from '@/components/ui';
 import api from '@/services/api';
 import {
@@ -39,9 +45,12 @@ interface RunCard {
   itemCode: string | null;
   lotSize: number | null;
   pcbItem: string | null;
-  workstageCode: string | null;
+  runCardWorkstageCode: string | null;
   runDate: string | null;
 }
+
+/** 고른 공정을 기억하는 자리 — PB 의 `WORKENV.INI` 를 브라우저로 옮긴 것이다. */
+const WORKSTAGE_KEY = 'mes-magazine-label-workstage';
 
 export default function MagazineLabelPage() {
   const [scan, setScan] = useState('');
@@ -54,6 +63,7 @@ export default function MagazineLabelPage() {
   const { truncated, rowLimit, mark } = useTruncation();
 
   // 발행 입력
+  const [workstageCode, setWorkstageCode] = useState('');
   const [okQty, setOkQty] = useState('');
   const [printQty, setPrintQty] = useState('1');
   const [issueOpen, setIssueOpen] = useState(false);
@@ -61,6 +71,24 @@ export default function MagazineLabelPage() {
   // 폐기 입력
   const [destroyNo, setDestroyNo] = useState('');
   const [destroyOpen, setDestroyOpen] = useState(false);
+
+  /**
+   * 고른 공정을 브라우저에 기억한다 — PB 의 `WORKENV.INI [WORKSTAGE] MAGAZINE` 대응.
+   * 현장 PC 는 같은 공정만 계속 쓰므로 매번 고르게 하면 오히려 틀린다.
+   */
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem(WORKSTAGE_KEY);
+      if (saved) setWorkstageCode(saved);
+    } catch { /* 저장소를 못 쓰는 브라우저면 그냥 고르게 둔다 */ }
+  }, []);
+
+  useEffect(() => {
+    if (!workstageCode) return;
+    try {
+      window.localStorage.setItem(WORKSTAGE_KEY, workstageCode);
+    } catch { /* 무시 */ }
+  }, [workstageCode]);
 
   const loadIssued = useCallback(async (runNo: string) => {
     try {
@@ -139,18 +167,20 @@ export default function MagazineLabelPage() {
 
   const blocker = !runCard
     ? '런카드를 먼저 찍으세요.'
-    : !selected
-      ? '발행할 모델을 고르세요.'
-      : !(Number.isFinite(qty) && qty > 0)
-        ? '발행 수량을 1 이상으로 넣으세요.'
-        : packing <= 0
-          ? '장입수량이 0 입니다. 모델기준정보를 확인하세요.'
-          : !(Number.isFinite(sheets) && sheets > 0)
-            ? '라벨 장수를 1 이상으로 넣으세요.'
-            : Number(selected.magazineQty ?? 0) + qty > Number(runCard.lotSize ?? 0)
-              ? `지시수량을 넘습니다 (이미 ${selected.magazineQty} + ${qty}`
-                + ` > 지시 ${runCard.lotSize}).`
-              : null;
+    : !workstageCode
+      ? '공정을 고르세요.'
+      : !selected
+        ? '발행할 모델을 고르세요.'
+        : !(Number.isFinite(qty) && qty > 0)
+          ? '발행 수량을 1 이상으로 넣으세요.'
+          : packing <= 0
+            ? '장입수량이 0 입니다. 모델기준정보를 확인하세요.'
+            : !(Number.isFinite(sheets) && sheets > 0)
+              ? '라벨 장수를 1 이상으로 넣으세요.'
+              : Number(selected.magazineQty ?? 0) + qty > Number(runCard.lotSize ?? 0)
+                ? `지시수량을 넘습니다 (이미 ${selected.magazineQty} + ${qty}`
+                  + ` > 지시 ${runCard.lotSize}).`
+                : null;
 
   const issue = useCallback(async () => {
     setIssueOpen(false);
@@ -163,6 +193,7 @@ export default function MagazineLabelPage() {
         okQty: qty,
         printQty: sheets,
         packingPcsQty: packing,
+        workstageCode,
       });
       const result = r.data?.data as {
         issued?: { magazineLabelNo: string; qty: number }[];
@@ -181,7 +212,7 @@ export default function MagazineLabelPage() {
     } finally {
       setBusy(false);
     }
-  }, [runCard, selected, qty, sheets, packing, lookup]);
+  }, [runCard, selected, qty, sheets, packing, workstageCode, lookup]);
 
   const destroy = useCallback(async () => {
     setDestroyOpen(false);
@@ -240,6 +271,8 @@ export default function MagazineLabelPage() {
           <span className="flex items-center gap-1 text-sm font-semibold text-text">
             <Printer className="h-4 w-4" />라벨 발행
           </span>
+          <ProcessSelect aria-label="공정" value={workstageCode} className="w-44"
+            onChange={setWorkstageCode} />
           <span className="text-sm text-text-muted">
             {selected ? `${selected.modelName} · 장입 ${packing}` : '모델을 고르세요'}
           </span>

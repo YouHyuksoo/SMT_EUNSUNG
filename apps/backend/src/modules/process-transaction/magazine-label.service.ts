@@ -56,7 +56,7 @@ const FIXED = {
   receiptConfirmYn: 'N',
   /** 런카드 발행(`'R'`). 실측도 전부 이 값이다. */
   transactionType: 'R',
-  /** 원본 라벨번호가 아직 없으므로 자기 자신을 넣는다 (PB 주석 그대로). */
+  /** 분할로 생긴 조각이 아니므로 '부모 없음'(`'*'`) 을 넣는다 (PB 그대로). */
   parentMagazineLabelNo: '*',
   mfsGroupNo: '',
 } as const;
@@ -87,7 +87,8 @@ export class MagazineLabelService {
               rc.ITEM_CODE          AS "itemCode",
               rc.LOT_SIZE           AS "lotSize",
               rc.PCB_ITEM           AS "pcbItem",
-              rc.WORKSTAGE_CODE     AS "workstageCode",
+              -- 실측 전부 NULL 이다. 참고로만 내보내고 발행에는 쓰지 않는다.
+              rc.WORKSTAGE_CODE     AS "runCardWorkstageCode",
               rc.RUN_STATUS         AS "runStatus",
               TO_CHAR(rc.RUN_DATE, 'YYYY-MM-DD') AS "runDate"
          FROM IP_PRODUCT_RUN_CARD rc
@@ -288,9 +289,17 @@ export class MagazineLabelService {
     }
 
     const lineCode = String(runCard.lineCode ?? '');
-    const workstageCode = dto.workstageCode ?? String(runCard.workstageCode ?? '');
-    if (!lineCode || !workstageCode) {
-      throw new BadRequestException('라인코드·공정코드가 비어 있습니다.');
+    // **공정은 런카드에서 가져오면 안 된다.** PB 도 런카드를 보지 않고 PC 설정
+    // (`WORKENV.INI [WORKSTAGE] MAGAZINE`)에서 읽어 콤보에 꽂아 두고, 그 콤보 값을
+    // 원장에 넣었다. 실측으로도 `IP_PRODUCT_RUN_CARD.WORKSTAGE_CODE` 는 최근 30일
+    // 런카드 593건이 **전부 NULL** 이고, 원장은 전부 `W180` 이다. 런카드를 믿으면
+    // NOT NULL 컬럼에 빈 값이 들어간다 — 화면이 고른 공정을 반드시 받는다.
+    const workstageCode = (dto.workstageCode ?? '').trim();
+    if (!lineCode) {
+      throw new BadRequestException('런카드에 라인코드가 없습니다.');
+    }
+    if (!workstageCode) {
+      throw new BadRequestException('공정을 고르세요.');
     }
 
     return this.tx.run(async (qr) => {

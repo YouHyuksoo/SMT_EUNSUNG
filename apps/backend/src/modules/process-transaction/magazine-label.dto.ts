@@ -41,7 +41,11 @@ export class MagazineIssueDto {
   /** 상자 하나에 담는 수량. 비우면 모델기준정보의 값을 쓴다. */
   @IsOptional() @Type(() => Number) @IsInt() @Min(1) packingPcsQty?: number;
   @IsOptional() @Type(() => Number) @IsInt() @Min(0) okIncludeQty?: number;
-  @IsOptional() @IsString() workstageCode?: string;
+  /**
+   * 라벨을 붙일 공정. **런카드에는 없다** — PB 도 PC 설정에서 읽어 썼고,
+   * 실측 런카드 `WORKSTAGE_CODE` 는 전부 NULL 이다. 화면이 반드시 보낸다.
+   */
+  @IsString() @IsNotEmpty() workstageCode!: string;
   @IsOptional() @IsString() magazineSetNo?: string;
 }
 
