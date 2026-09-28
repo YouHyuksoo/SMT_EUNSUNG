@@ -122,6 +122,26 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
       component = mod.getPageComponent();
       break;
     }
+    case "/inventory-query/barcode-check": {
+      const mod = await import("./page-registries/inventory-query__barcode-check.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/inventory-query/inventory-check": {
+      const mod = await import("./page-registries/inventory-query__inventory-check.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/inventory-query/inventory-close": {
+      const mod = await import("./page-registries/inventory-query__inventory-close.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/inventory-query/total-inventory": {
+      const mod = await import("./page-registries/inventory-query__total-inventory.generated");
+      component = mod.getPageComponent();
+      break;
+    }
     case "/jig/input-history": {
       const mod = await import("./page-registries/jig__input-history.generated");
       component = mod.getPageComponent();

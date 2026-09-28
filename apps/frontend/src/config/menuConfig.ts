@@ -142,6 +142,10 @@ export const menuConfig: MenuConfigItem[] = [
     children: [
       { code: "MAT_RECEIPT_ISSUE_LEDGER", labelKey: "menu.material.receiptIssueLedger", path: "/material/receipt-issue-ledger", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_ledger_report" },
       { code: "MAT_CURRENT_INVENTORY", labelKey: "menu.material.currentInventory", path: "/material/current-inventory", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_current_inventory_master" },
+      { code: "INV_TOTAL", labelKey: "menu.material.totalInventory", path: "/inventory-query/total-inventory", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_total_inventory_query" },
+      { code: "INV_CLOSE", labelKey: "menu.material.inventoryClose", path: "/inventory-query/inventory-close", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_inventory_close_report" },
+      { code: "INV_CHECK", labelKey: "menu.material.inventoryCheck", path: "/inventory-query/inventory-check", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_inventory_check_master" },
+      { code: "INV_BARCODE_CHECK", labelKey: "menu.material.barcodeCheck", path: "/inventory-query/barcode-check", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_barcode_check_master" },
       { code: "MAT_WORKSTAGE_INVENTORY", labelKey: "menu.material.workstageInventory", path: "/material/workstage-inventory", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_workstage_inventory_query", pbEvidence: "apps/backend/src/modules/material/controllers/workstage-inventory.controller.ts" },
       { code: "MAT_RECEIPT_CANCEL", labelKey: "menu.material.receiptCancel", path: "/material/receipt-cancel", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_receipt_cancel_master" },
       { code: "WH_BAKING_STOCK", labelKey: "menu.warehouse.bakingStock", path: "/warehouse/baking-stock", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_baking_scan_query" },

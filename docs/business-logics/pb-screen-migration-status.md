@@ -3,7 +3,7 @@ sources:
   - apps/frontend/src/config/menuConfig.ts
   - apps/frontend/scripts/data/pb-screen-inventory.json
 generator: apps/frontend/scripts/gen-migration-status.mjs
-verifiedCommit: c21d3c9e
+verifiedCommit: b72cdc8d
 ---
 
 # PB 화면 이관 현황 (자동 생성)
@@ -18,11 +18,11 @@ verifiedCommit: c21d3c9e
 | 상태 | 건수 |
 |---|---:|
 | PB 업무화면(셸 메뉴 제외) | 275 |
-| 완료(개발됨, pbWindow 매핑) | 148 |
-| 미착수 | 101 |
+| 완료(개발됨, pbWindow 매핑) | 152 |
+| 미착수 | 97 |
 | 윈도우 미상 | 26 |
 
-웹 메뉴 연결 계약: **PB 147개 / 웹 신규 17개 / 미확정 2개**. PB 매핑과 웹 경로의 전체 연결표는 [pb-menu-route-links.md](pb-menu-route-links.md)에서 관리합니다.
+웹 메뉴 연결 계약: **PB 151개 / 웹 신규 17개 / 미확정 2개**. PB 매핑과 웹 경로의 전체 연결표는 [pb-menu-route-links.md](pb-menu-route-links.md)에서 관리합니다.
 
 ## 대분류별 진행률
 
@@ -38,7 +38,7 @@ verifiedCommit: c21d3c9e
 | 생산 | `M_PLANNING` | 7 | 7 | 0 | 0 |
 | 공정 | `M_WORKSTAGE0` | 5 | 2 | 3 | 0 |
 | 자재창고 | `M_WAREHOUSE` | 22 | 22 | 0 | 0 |
-| 재고 | `M_INVENTORY` | 5 | 1 | 4 | 0 |
+| 재고 | `M_INVENTORY` | 5 | 5 | 0 | 0 |
 | 수리 | `M_REPAIR` | 4 | 2 | 2 | 0 |
 | 품질관리 | `M_QC` | 12 | 12 | 0 | 0 |
 | 출하현황 | `M_SHIPPING` | 10 | 1 | 9 | 0 |
@@ -217,10 +217,10 @@ verifiedCommit: c21d3c9e
 | 순서 | 메뉴명 | PB 윈도우 | 원본 | 상태 | MES 메뉴코드 | 경로 |
 |---:|---|---|:--:|---|---|---|
 | 268 | 현재고조회 | `w_mat_current_inventory_master` | srw | 완료 | `MAT_CURRENT_INVENTORY` | `/material/current-inventory` |
-| 269 | 총재고조회 | `w_mat_total_inventory_query` | srw | 미착수 |  |  |
-| 271 | 자재재고마감 | `w_mat_inventory_close_report` | srw | 미착수 |  |  |
-| 272 | 자재재고조사 | `w_mat_inventory_check_master` | srw | 미착수 |  |  |
-| 274 | 자재바코드스캔실사 | `w_mat_barcode_check_master` | srw | 미착수 |  |  |
+| 269 | 총재고조회 | `w_mat_total_inventory_query` | srw | 완료 | `INV_TOTAL` | `/inventory-query/total-inventory` |
+| 271 | 자재재고마감 | `w_mat_inventory_close_report` | srw | 완료 | `INV_CLOSE` | `/inventory-query/inventory-close` |
+| 272 | 자재재고조사 | `w_mat_inventory_check_master` | srw | 완료 | `INV_CHECK` | `/inventory-query/inventory-check` |
+| 274 | 자재바코드스캔실사 | `w_mat_barcode_check_master` | srw | 완료 | `INV_BARCODE_CHECK` | `/inventory-query/barcode-check` |
 
 ### 수리  `M_REPAIR`
 
