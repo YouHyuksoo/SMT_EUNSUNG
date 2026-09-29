@@ -4,7 +4,7 @@ sources:
   - apps/frontend/scripts/data/pb-screen-inventory.json
   - apps/frontend/scripts/data/pb-screen-exclusions.json
 generator: apps/frontend/scripts/gen-migration-status.mjs
-verifiedCommit: 2ec10850
+verifiedCommit: 89aa4e1c
 ---
 
 # PB 화면 이관 현황 (자동 생성)
@@ -20,8 +20,8 @@ verifiedCommit: 2ec10850
 |---|---:|
 | PB 업무화면(셸 메뉴 제외) | 275 |
 | 완료(개발됨, pbWindow 매핑) | 166 |
-| 이관제외(사용자 결정) | 33 |
-| 미착수 | 50 |
+| 이관제외(사용자 결정) | 31 |
+| 미착수 | 52 |
 | 윈도우 미상 | 26 |
 
 웹 메뉴 연결 계약: **PB 165개 / 웹 신규 17개 / 미확정 1개**. PB 매핑과 웹 경로의 전체 연결표는 [pb-menu-route-links.md](pb-menu-route-links.md)에서 관리합니다.
@@ -49,7 +49,7 @@ verifiedCommit: 2ec10850
 | 리포트 | `M_REPORT` | 23 | 23 | 0 | 0 | 0 |
 | 승인 | `M_CONFIRM` | 6 | 4 | 2 | 0 | 0 |
 | 기본정보 | `M_MANAGE` | 10 | 4 | 5 | 1 | 0 |
-| 시스템 | `M_SYSTEM` | 76 | 1 | 26 | 25 | 24 |
+| 시스템 | `M_SYSTEM` | 76 | 1 | 24 | 27 | 24 |
 
 ## 화면 목록
 
@@ -396,8 +396,8 @@ verifiedCommit: 2ec10850
 | 454 | └ 리포트관리 | `w_dataobject_master` | srw | 이관제외 |  | PB IDE 내장 개발도구. 웹 대응물 없음 (DB 접속 도구·/system/er-view 가 대신) |
 | 457 | IT 자산 현황 | `w_mcn_it_master` | srw | 이관제외 |  | IMCN_FIXASSET 0행 |
 | 459 | 리플로우상태조회 | `w_qc_interlock_reflow_status_master` | srw | 미착수 |  |  |
-| 460 | 설비 픽업률조회 | `w_smt_pickup_rate_head` | srw | 이관제외 |  | 사용자 결정 — 이관 대상 아님 |
-| 461 | SMT 픽업율(최종데이터조회) | `w_smt_pickup_rate_last_data_query` | srw | 이관제외 |  | 사용자 결정 — 이관 대상 아님 |
+| 460 | 설비 픽업률조회 | `w_smt_pickup_rate_head` | srw | 미착수 |  |  |
+| 461 | SMT 픽업율(최종데이터조회) | `w_smt_pickup_rate_last_data_query` | srw | 미착수 |  |  |
 | 463 | 자재전표엑셀업로드관리 | `w_mat_receipt_slip_excel_upload_master` | srw | 미착수 |  |  |
 | 464 | 자재(대여/차용)전표등록관리 | `w_mat_receipt_slip_4_rental_borrowing_master` | srw | 미착수 |  |  |
 | 465 | 자재(대여/차용상환)관리 | `w_mat_other_receipt_rental_borrowing_barcode_master` | srw | 미착수 |  |  |
