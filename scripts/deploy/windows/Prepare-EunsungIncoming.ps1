@@ -28,6 +28,15 @@ try {
     New-Item -ItemType Directory -Path $target -ErrorAction Stop | Out-Null
     $created = Get-Item -LiteralPath $target -Force
     if (($created.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) { throw 'Created incoming target is a reparse point' }
+    if (-not $TestMode) {
+      # Windows assigns BUILTIN\Administrators as the owner of objects created by
+      # an administrator, so later ownership checks would reject this directory.
+      # Claim what we just created; this is not a takeover because Prepare refuses
+      # to run when the target already exists.
+      $createdAcl = Get-Acl -LiteralPath $target
+      $createdAcl.SetOwner([Security.Principal.WindowsIdentity]::GetCurrent().User)
+      Set-Acl -LiteralPath $target -AclObject $createdAcl
+    }
   } elseif (Test-Path -LiteralPath $target) {
     $targetItem = Get-Item -LiteralPath $target -Force
     if (-not $targetItem.PSIsContainer -or (($targetItem.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0)) {
