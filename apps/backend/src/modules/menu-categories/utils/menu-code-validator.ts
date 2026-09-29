@@ -42,6 +42,7 @@ const KNOWN_LEAF_CODES: ReadonlySet<string> = new Set<string>([
   'OEE_EQUIP_WORK_RESULT',
   'OEE_EQUIP_OPS_STATUS',
   'OEE_FIELD_OPS',
+  'PUR_REQUIREMENT',
   'PUR_FORECAST',
   'PUR_ORDER',
   'PUR_DEPARTURE',

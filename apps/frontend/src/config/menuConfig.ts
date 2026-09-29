@@ -142,6 +142,7 @@ export const menuConfig: MenuConfigItem[] = [
     labelKey: "menu.purchase",
     icon: ShoppingCart,
     children: [
+      { code: "PUR_REQUIREMENT", labelKey: "menu.purchase.requirement", path: "/purchase/requirement", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_requirment_plan_master" },
       { code: "PUR_FORECAST", labelKey: "menu.purchase.forecast", path: "/purchase/forecast", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_forecast_order_master" },
       { code: "PUR_ORDER", labelKey: "menu.purchase.order", path: "/purchase/order", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_purchase_order_master" },
       { code: "PUR_DEPARTURE", labelKey: "menu.purchase.departure", path: "/purchase/departure", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_departure_master" },

@@ -16,7 +16,7 @@
       "action": "native",
       "target": "PKG_DESIGN.BOM_QUERY(p_parent_item_code, p_dateset, p_org)",
       "usedBy": "apps/backend/src/modules/smt/smt-comparison.service.ts, apps/backend/src/modules/smt/smt-nc.service.ts",
-      "note": "PB 는 SQLCA.BOM_QUERY 를 감싸기만 했다. 웹은 패키지 함수를 그대로 부른다. 세션번호를 돌려주고 ID_ENG_BOM_TEMP 에 전개행을 깐다 — 읽은 뒤 그 세션 행만 지운다 (이 표는 3,357,661행 / 세션 70,117개가 2020년부터 쌓여 있다)."
+      "note": "PB 는 SQLCA.BOM_QUERY 를 감싸기만 했다. 웹은 패키지 함수를 그대로 부른다. 세션번호를 돌려주고 ID_ENG_BOM_TEMP 에 전개행을 깐다 — 읽은 뒤 그 세션 행만 지운다 (이 표는 3,357,661행 / 세션 70,117개가 2020년부터 쌓여 있다). 477 자재소요량은 형제 함수 PKG_DESIGN.BOM_EXPLOSION 을 같은 방식으로 쓴다 (requirement-plan.service.ts)."
     },
     {
       "pbFunction": "f_check_interlock_condition",
@@ -250,7 +250,7 @@
       "pbFunction": "f_get_max_supplier_by_item",
       "action": "native",
       "target": "F_GET_MAX_SUPPLIER_BY_ITEM(item_code, organization_id)",
-      "usedBy": "apps/backend/src/modules/warehouse/issue-return.service.ts",
+      "usedBy": "apps/backend/src/modules/warehouse/issue-return.service.ts, apps/backend/src/modules/purchase/requirement-plan.service.ts",
       "note": "PB 동명 함수가 없고 DB 에 VALID 로 있다 (실측). PB 250 도 INSERT 문 안에서 부르므로 DB 함수다."
     },
     {

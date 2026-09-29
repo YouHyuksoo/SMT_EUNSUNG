@@ -5,6 +5,7 @@
  *   /purchase/order     481 자재주문관리 (쓰기)
  *   /purchase/forecast  480 자재주문예정관리 (쓰기)
  *   /purchase/arrival   483 자재출발관리 · 484 자재도착관리 (쓰기)
+ *   /purchase/requirement 477 자재소요량관리 (쓰기)
  */
 import { Body, Controller, Delete, Get, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -16,6 +17,11 @@ import { ArrivalService } from './arrival.service';
 import {
   ArrivalConfirmDto,
   ArrivalQueryDto,
+  MasterPlanDeleteDto,
+  MasterPlanQueryDto,
+  MasterPlanRowDto,
+  RequirementPlanQueryDto,
+  RequirementRunDto,
   DepartureCreateDto,
   ForecastConfirmDto,
   ForecastOrderQueryDto,
@@ -25,6 +31,7 @@ import {
   PurchaseOrderSaveDto,
 } from './purchase.dto';
 import { PurchaseOrderService } from './purchase-order.service';
+import { RequirementPlanService } from './requirement-plan.service';
 
 const DEFAULT_USER = 'SYSTEM';
 
@@ -197,5 +204,102 @@ export class ArrivalController {
     return ResponseUtil.success(
       await this.service.cancelArrival(dto, organizationId, userId || DEFAULT_USER),
     );
+  }
+}
+
+@ApiTags('자재구매 - 소요량관리')
+@UseGuards(JwtAuthGuard)
+@Controller('purchase/requirement')
+export class RequirementPlanController {
+  constructor(private readonly service: RequirementPlanService) {}
+
+  @Get('master-plan')
+  @ApiOperation({ summary: '477 기준계획 목록 (dw_1).' })
+  async masterPlan(
+    @Query() query: MasterPlanQueryDto,
+    @OrganizationId() organizationId: number,
+  ) {
+    return paged(await this.service.findMasterPlan(query, organizationId));
+  }
+
+  @Post('master-plan')
+  @ApiOperation({ summary: '477 기준계획 등록·수정 (**쓰기**).' })
+  async saveMasterPlan(
+    @Body() dto: MasterPlanRowDto,
+    @OrganizationId() organizationId: number,
+    @UserId() userId?: string,
+  ) {
+    return ResponseUtil.success(
+      await this.service.saveMasterPlan(dto, organizationId, userId || DEFAULT_USER),
+    );
+  }
+
+  @Delete('master-plan')
+  @ApiOperation({ summary: '477 기준계획 삭제 (**쓰기**). PB 는 체크한 줄을 한 번에 지웠다.' })
+  async deleteMasterPlan(
+    @Body() dto: MasterPlanDeleteDto,
+    @OrganizationId() organizationId: number,
+  ) {
+    return ResponseUtil.success(await this.service.deleteMasterPlan(dto, organizationId));
+  }
+
+  @Post('explode')
+  @ApiOperation({
+    summary: '477 소요량 전개 (**쓰기**). 기준계획을 BOM 으로 펴서 소요량표를 만든다.'
+      + ' 전개는 `PKG_DESIGN.BOM_EXPLOSION` 이 하고, 공급처는'
+      + ' `F_GET_MAX_SUPPLIER_BY_ITEM` 이 정한다 — 둘 다 PB 와 같은 DB 오브젝트다.',
+  })
+  async explode(
+    @Body() dto: RequirementRunDto,
+    @OrganizationId() organizationId: number,
+    @UserId() userId?: string,
+  ) {
+    return ResponseUtil.success(
+      await this.service.explode(dto, organizationId, userId || DEFAULT_USER),
+    );
+  }
+
+  @Post('inventory')
+  @ApiOperation({
+    summary: '477 재고 반영 (**쓰기**). 계획일 순서로 앞에서부터 재고를 배정한다.'
+      + ' PB 에서 실재고를 읽는 UPDATE 가 주석 처리돼 있어 재고 풀은 0 이고'
+      + ' 안전재고만 채워진다 — PB 동작 그대로다.',
+  })
+  async applyInventory(
+    @Body() dto: RequirementRunDto,
+    @OrganizationId() organizationId: number,
+  ) {
+    return ResponseUtil.success(await this.service.applyInventory(dto, organizationId));
+  }
+
+  @Get()
+  @ApiOperation({ summary: '477 소요량 목록 (dw_2).' })
+  async requirement(
+    @Query() query: RequirementPlanQueryDto,
+    @OrganizationId() organizationId: number,
+  ) {
+    return paged(await this.service.findRequirementPlan(query, organizationId));
+  }
+
+  @Get('matrix')
+  @ApiOperation({
+    summary: '477 소요량 매트릭스 (dw_3). 계획일을 가로로 편다 —'
+      + ' 열 목록은 `planDates` 로 함께 내보낸다.',
+  })
+  async matrix(
+    @Query() query: RequirementPlanQueryDto,
+    @OrganizationId() organizationId: number,
+  ) {
+    const result = await this.service.findRequirementMatrix(query, organizationId);
+    const base = ResponseUtil.paged(result.data, result.total, 1, result.total || 1);
+    return {
+      ...base,
+      meta: {
+        ...base.meta,
+        planDates: result.planDates,
+        truncated: result.truncated,
+        rowLimit: ROW_LIMIT,
+      },
+    };
   }
 }

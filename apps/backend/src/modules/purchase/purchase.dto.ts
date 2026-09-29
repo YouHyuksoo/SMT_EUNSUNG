@@ -20,6 +20,7 @@ import {
   IsOptional,
   IsString,
   Min,
+  ValidateNested,
 } from 'class-validator';
 
 // ───────────────────────────────── 481 주문 · 480 주문예정
@@ -108,4 +109,44 @@ export class ArrivalConfirmDto {
   @Type(() => Number) @IsInt() @Min(1) arrivalSeqNo!: number;
   /** 도착 확인에만 쓴다. 취소에는 필요 없다. */
   @IsOptional() @IsDateString() arrivalDate?: string;
+}
+
+// ───────────────────────────────── 477 자재소요량
+
+export class MasterPlanQueryDto {
+  /** 소요전개 기준일자. PB 는 이 하나로 기준계획을 묶는다. */
+  @IsDateString() requirementPlanDate!: string;
+}
+
+export class RequirementPlanQueryDto extends MasterPlanQueryDto {
+  @IsOptional() @IsString() supplierCode?: string;
+  @IsOptional() @IsString() itemCode?: string;
+  /** 공통코드 `LINE TYPE`. */
+  @IsOptional() @IsString() lineType?: string;
+}
+
+export class MasterPlanRowDto {
+  @IsDateString() requirementPlanDate!: string;
+  @IsDateString() planDate!: string;
+  @IsString() @IsNotEmpty() itemCode!: string;
+  @Type(() => Number) @IsNumber() @Min(0) orderQty!: number;
+  /** `'Y'`/`'N'`. 비우면 기존 값을 둔다 (새 행은 `'Y'`). */
+  @IsOptional() @IsString() applyYn?: string;
+}
+
+export class MasterPlanKeyDto {
+  @IsDateString() requirementPlanDate!: string;
+  @IsDateString() planDate!: string;
+  @IsString() @IsNotEmpty() itemCode!: string;
+}
+
+export class MasterPlanDeleteDto {
+  @IsArray() @ArrayNotEmpty() @ArrayMaxSize(500)
+  @ValidateNested({ each: true })
+  @Type(() => MasterPlanKeyDto)
+  rows!: MasterPlanKeyDto[];
+}
+
+export class RequirementRunDto {
+  @IsDateString() requirementPlanDate!: string;
 }

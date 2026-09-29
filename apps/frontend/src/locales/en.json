@@ -568,7 +568,8 @@
     "purchase.forecast": "Forecast Orders",
     "purchase.order": "Purchase Orders",
     "purchase.departure": "Departure",
-    "purchase.arrival": "Arrival"
+    "purchase.arrival": "Arrival",
+    "purchase.requirement": "Material Requirements"
   },
   "header": {
     "theme": "Theme",

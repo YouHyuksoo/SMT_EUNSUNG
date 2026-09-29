@@ -70,6 +70,7 @@
       "OEE_FIELD_OPS"
     ],
     "PURCHASE": [
+      "PUR_REQUIREMENT",
       "PUR_FORECAST",
       "PUR_ORDER",
       "PUR_DEPARTURE",

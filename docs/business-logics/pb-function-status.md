@@ -3,7 +3,7 @@ sources:
   - apps/frontend/scripts/data/pb-function-catalog.json
   - docs/database/generated/pb-function-inventory.json
 generator: apps/frontend/scripts/gen-function-status.mjs
-verifiedCommit: 3c10b506
+verifiedCommit: c3acf004
 ---
 
 # PB 함수 처리 현황 (자동 생성)
@@ -95,7 +95,7 @@ DB 함수는 웹에서도 **그대로 호출**합니다 — 재구현하면 PB �
 
 | PB 함수 | 대상 | 비고 |
 |---|---|---|
-| `f_bom_query_prc` | `PKG_DESIGN.BOM_QUERY(p_parent_item_code, p_dateset, p_org)` | PB 는 SQLCA.BOM_QUERY 를 감싸기만 했다. 웹은 패키지 함수를 그대로 부른다. 세션번호를 돌려주고 ID_ENG_BOM_TEMP 에 전개행을 깐다 — 읽은 뒤 그 세션 행만 지운다 (이 표는 3,357,661행 / 세션 70,117개가 2020년부터 쌓여 있다). |
+| `f_bom_query_prc` | `PKG_DESIGN.BOM_QUERY(p_parent_item_code, p_dateset, p_org)` | PB 는 SQLCA.BOM_QUERY 를 감싸기만 했다. 웹은 패키지 함수를 그대로 부른다. 세션번호를 돌려주고 ID_ENG_BOM_TEMP 에 전개행을 깐다 — 읽은 뒤 그 세션 행만 지운다 (이 표는 3,357,661행 / 세션 70,117개가 2020년부터 쌓여 있다). 477 자재소요량은 형제 함수 PKG_DESIGN.BOM_EXPLOSION 을 같은 방식으로 쓴다 (requirement-plan.service.ts). |
 | `f_check_pcb_coating_date` | `F_CHECK_PCB_COATING_DATE(item_code, coating_date, organization_id)` | PB 동명 함수가 없고 DB 에 VALID 로 있다. PB 도 SQL 안에서 부른다. |
 | `f_get_any_no` | `F_GET_ANY_NO(UPPER(name), organization_id)` | PB 래퍼 본문이 같은 이름의 DB 함수를 부르는 것뿐이라 직접 불러도 값이 같다 (실측 f_get_any_no.srf). |
 | `f_get_code_master` | `F_GET_CODE_MASTER` | SQL 안에서 부르던 DB 함수. 코드표를 TypeScript 로 복사하지 않는다. |

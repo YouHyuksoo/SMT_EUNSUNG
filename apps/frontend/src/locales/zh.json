@@ -568,7 +568,8 @@
     "purchase.forecast": "物料订购预定管理",
     "purchase.order": "物料订购管理",
     "purchase.departure": "物料发出管理",
-    "purchase.arrival": "物料到货管理"
+    "purchase.arrival": "物料到货管理",
+    "purchase.requirement": "物料需求管理"
   },
   "header": {
     "theme": "主题",
