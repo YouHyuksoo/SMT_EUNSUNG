@@ -102,10 +102,6 @@ export const menuConfig: MenuConfigItem[] = [
       { code: "MST_BOM", labelKey: "menu.master.bom", path: "/master/bom", pbLinkStatus: "powerbuilder", pbWindow: "w_des_bom_modify_master", pbLinkNote: "ID_ENG_BOM 전 CRUD·계층·엑셀을 덮는다. 원단위BOM(w_des_raw_bom_master)은 같은 표를 보지만 유효기간·BOM작업번호 편집이 아직 없어 매핑하지 않았다." },
       { code: "BOM_REPLACE", labelKey: "menu.bom.replace", path: "/bom/replace-bom", pbLinkStatus: "powerbuilder", pbWindow: "w_des_replace_bom_master" },
       { code: "CFM_BOM", labelKey: "menu.confirm.bom", path: "/confirm/bom", pbLinkStatus: "powerbuilder", pbWindow: "w_des_bom_confirm_master" },
-      { code: "SMT_BOM", labelKey: "menu.smt.bom", path: "/smt/bom", pbLinkStatus: "powerbuilder", pbWindow: "w_smt_bom_create_master" },
-      { code: "SMT_BOM_REPLACE", labelKey: "menu.smt.bomReplace", path: "/smt/bom-replace", pbLinkStatus: "powerbuilder", pbWindow: "w_smt_bom_replace_master" },
-      { code: "SMT_BOM_REPORT", labelKey: "menu.smt.bomReport", path: "/smt/bom-report", pbLinkStatus: "powerbuilder", pbWindow: "w_smt_bom_master_rpt" },
-      { code: "SMT_BOM_COMPARISON", labelKey: "menu.smt.bomComparison", path: "/smt/bom-comparison", pbLinkStatus: "powerbuilder", pbWindow: "w_smt_bom_comparison_master_rpt" },
     ],
   },
   {
@@ -241,8 +237,12 @@ export const menuConfig: MenuConfigItem[] = [
     children: [
       { code: "SMT_LINE", labelKey: "menu.smt.line", path: "/smt/line", pbLinkStatus: "powerbuilder", pbWindow: "w_smt_line_master" },
       { code: "SMT_LOCATION", labelKey: "menu.smt.location", path: "/smt/location", pbLinkStatus: "powerbuilder", pbWindow: "w_smt_location_master" },
+      { code: "SMT_BOM_REPLACE", labelKey: "menu.smt.bomReplace", path: "/smt/bom-replace", pbLinkStatus: "powerbuilder", pbWindow: "w_smt_bom_replace_master" },
       { code: "SMT_NC_UPLOAD", labelKey: "menu.smt.ncUpload", path: "/smt/nc-upload", pbLinkStatus: "powerbuilder", pbWindow: "w_smt_upload_nc_master" },
+      { code: "SMT_BOM", labelKey: "menu.smt.bom", path: "/smt/bom", pbLinkStatus: "powerbuilder", pbWindow: "w_smt_bom_create_master" },
       { code: "SMT_PLAN", labelKey: "menu.smt.plan", path: "/smt/plan", pbLinkStatus: "powerbuilder", pbWindow: "w_smt_plan_master" },
+      { code: "SMT_BOM_REPORT", labelKey: "menu.smt.bomReport", path: "/smt/bom-report", pbLinkStatus: "powerbuilder", pbWindow: "w_smt_bom_master_rpt" },
+      { code: "SMT_BOM_COMPARISON", labelKey: "menu.smt.bomComparison", path: "/smt/bom-comparison", pbLinkStatus: "powerbuilder", pbWindow: "w_smt_bom_comparison_master_rpt" },
       { code: "SMT_FEEDER_PICKUP", labelKey: "menu.smt.feederPickup", path: "/smt/feeder-pickup", pbLinkStatus: "powerbuilder", pbWindow: "w_mcn_feeder_pickup_master" },
     ],
   },
@@ -322,13 +322,6 @@ export const menuConfig: MenuConfigItem[] = [
       { code: "QRY_SENSOR_ACTUAL", labelKey: "menu.query.sensorActual", path: "/query/sensor-actual", pbLinkStatus: "powerbuilder", pbWindow: "w_pln_product_sensor_actual_master" },
       { code: "QRY_MATERIAL_BARCODE", labelKey: "menu.query.materialBarcode", path: "/query/material-barcode", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_barcode_status_report" },
       { code: "QRY_NSNP_HISTORY", labelKey: "menu.query.nsnpHistory", path: "/query/nsnp-history", pbLinkStatus: "powerbuilder", pbWindow: "w_pln_product_nsnp_history_query" },
-    ],
-  },
-  {
-    code: "REPORT",
-    labelKey: "menu.report",
-    icon: FileText,
-    children: [
       { code: "RPT_ITEM_MASTER", labelKey: "menu.report.itemMaster", path: "/report/item-master", pbLinkStatus: "powerbuilder", pbWindow: "w_des_item_master_rpt" },
       { code: "RPT_LINE_BARCODE", labelKey: "menu.report.lineBarcode", path: "/report/line-barcode", pbLinkStatus: "powerbuilder", pbWindow: "w_pln_line_barcode_rpt" },
       { code: "RPT_CARRIER_BARCODE", labelKey: "menu.report.carrierBarcode", path: "/report/carrier-barcode", pbLinkStatus: "powerbuilder", pbWindow: "w_product_carrier_barcode" },

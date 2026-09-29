@@ -4,7 +4,7 @@ sources:
   - apps/frontend/scripts/data/pb-screen-inventory.json
   - apps/frontend/scripts/data/pb-screen-exclusions.json
 generator: apps/frontend/scripts/gen-migration-status.mjs
-verifiedCommit: 7cbced64
+verifiedCommit: 5dcb909d
 ---
 
 # PB 화면 이관 현황 (자동 생성)
@@ -19,12 +19,12 @@ verifiedCommit: 7cbced64
 | 상태 | 건수 |
 |---|---:|
 | PB 업무화면(셸 메뉴 제외) | 275 |
-| 완료(개발됨, pbWindow 매핑) | 171 |
+| 완료(개발됨, pbWindow 매핑) | 172 |
 | 이관제외(사용자 결정) | 31 |
-| 미착수 | 47 |
+| 미착수 | 46 |
 | 윈도우 미상 | 26 |
 
-웹 메뉴 연결 계약: **PB 170개 / 웹 신규 17개 / 미확정 1개**. PB 매핑과 웹 경로의 전체 연결표는 [pb-menu-route-links.md](pb-menu-route-links.md)에서 관리합니다.
+웹 메뉴 연결 계약: **PB 171개 / 웹 신규 17개 / 미확정 1개**. PB 매핑과 웹 경로의 전체 연결표는 [pb-menu-route-links.md](pb-menu-route-links.md)에서 관리합니다.
 
 ## 대분류별 진행률
 
@@ -49,7 +49,7 @@ verifiedCommit: 7cbced64
 | 리포트 | `M_REPORT` | 23 | 23 | 0 | 0 | 0 |
 | 승인 | `M_CONFIRM` | 6 | 4 | 2 | 0 | 0 |
 | 기본정보 | `M_MANAGE` | 10 | 4 | 5 | 1 | 0 |
-| 시스템 | `M_SYSTEM` | 76 | 6 | 24 | 22 | 24 |
+| 시스템 | `M_SYSTEM` | 76 | 7 | 24 | 21 | 24 |
 
 ## 화면 목록
 
@@ -409,7 +409,7 @@ verifiedCommit: 7cbced64
 | 473 | 반품수리관리 | `w_sal_shipping_return_repair_master` | srw | 미착수 |  |  |
 | 475 | 반제품바코드스캔실사 | `w_pln_barcode_check_master` | srw | 이관제외 |  | IM_ASSY_INVENTORY_CHECK_BCD 0행 |
 | 477 | 자재소요량관리 | `w_mat_requirment_plan_master` | srw | 완료 | `PUR_REQUIREMENT` | `/purchase/requirement` |
-| 478 | 자재발주계획 | `w_mat_purchase_order_plan_master` | srw | 미착수 |  |  |
+| 478 | 자재발주계획 | `w_mat_purchase_order_plan_master` | srw | 완료 | `PUR_ORDER_PLAN` | `/purchase/order-plan` |
 | 480 | 자재주문예정관리 | `w_mat_forecast_order_master` | srw | 완료 | `PUR_FORECAST` | `/purchase/forecast` |
 | 481 | 자재주문관리 | `w_mat_purchase_order_master` | srw | 완료 | `PUR_ORDER` | `/purchase/order` |
 | 483 | 자재출발관리 | `w_mat_departure_master` | srw | 완료 | `PUR_DEPARTURE` | `/purchase/departure` |

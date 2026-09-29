@@ -17,7 +17,6 @@
     "PRODUCTION",
     "TRACKING",
     "QUERY",
-    "REPORT",
     "QUALITY",
     "OUTSOURCING",
     "CONFIRM",
@@ -49,11 +48,7 @@
     "BOM_MANAGEMENT": [
       "MST_BOM",
       "BOM_REPLACE",
-      "CFM_BOM",
-      "SMT_BOM",
-      "SMT_BOM_REPLACE",
-      "SMT_BOM_REPORT",
-      "SMT_BOM_COMPARISON"
+      "CFM_BOM"
     ],
     "EQUIPMENT": [
       "EQUIP_RESULT_SP",
@@ -144,8 +139,12 @@
     "SMT": [
       "SMT_LINE",
       "SMT_LOCATION",
+      "SMT_BOM_REPLACE",
       "SMT_NC_UPLOAD",
+      "SMT_BOM",
       "SMT_PLAN",
+      "SMT_BOM_REPORT",
+      "SMT_BOM_COMPARISON",
       "SMT_FEEDER_PICKUP"
     ],
     "PROCESS_TRANSACTION": [
@@ -192,9 +191,7 @@
       "QRY_FEEDER_MONITOR",
       "QRY_SENSOR_ACTUAL",
       "QRY_MATERIAL_BARCODE",
-      "QRY_NSNP_HISTORY"
-    ],
-    "REPORT": [
+      "QRY_NSNP_HISTORY",
       "RPT_ITEM_MASTER",
       "RPT_LINE_BARCODE",
       "RPT_CARRIER_BARCODE",

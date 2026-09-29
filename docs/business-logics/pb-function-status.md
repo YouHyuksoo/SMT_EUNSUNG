@@ -3,7 +3,7 @@ sources:
   - apps/frontend/scripts/data/pb-function-catalog.json
   - docs/database/generated/pb-function-inventory.json
 generator: apps/frontend/scripts/gen-function-status.mjs
-verifiedCommit: 7cbced64
+verifiedCommit: 5dcb909d
 ---
 
 # PB 함수 처리 현황 (자동 생성)
@@ -23,8 +23,8 @@ DB 함수는 웹에서도 **그대로 호출**합니다 — 재구현하면 PB �
 | PB 창(실측) | 596 |
 | SQL 안 호출 = DB 함수 (조치 불필요) | 196 |
 | SQL 밖 호출 = PB 함수 | 226 |
-| 카탈로그 등록(처리 완료) | 84 |
-| 미처리 전환 후보 | 45 |
+| 카탈로그 등록(처리 완료) | 91 |
+| 미처리 전환 후보 | 44 |
 
 ## 처리 완료 (카탈로그)
 
@@ -59,10 +59,11 @@ DB 함수는 웹에서도 **그대로 호출**합니다 — 재구현하면 PB �
 | `f_set_security_row` | `백엔드 저장 시 감사컬럼 자동 기록` | 권한 가드가 아니다. ARG_TYPE 에 따라 ORGANIZATION_ID / ENTER_BY / ENTER_DATE / LAST_MODIFY_BY / LAST_MODIFY_DATE 를 로그인 사용자·서버시각으로 채우는 함수다. ALL=전체, MODIFY=수정컬럼만, NONORG=조직ID 제외. 웹은 서비스의 INSERT/UPDATE 에서 organizationId·userId·SYSDATE 로 같은 컬럼을 채운다. |
 | `f_sql_check` | `NestJS 예외 + 트랜잭션 롤백` | f_sql_check_with_msg 도 동일. |
 
-### 제거 (`dropped`) — 10건
+### 제거 (`dropped`) — 11건
 
 | PB 함수 | 대상 | 비고 |
 |---|---|---|
+| `f_get_max_vendor_by_item` | `NVL(IM_ITEM_MASTER.SUPPLIER_CODE, '*')` | PB 원본에서 호출 5곳이 **전부 주석 처리**돼 있고 NVL(B.SUPPLIER_CODE,'*') 로 대체돼 있다 (실측). 구현하지 않는다. |
 | `f_get_new_magazine_no` | — | DB 함수로 존재하나(INVALID) PB 호출부가 **전부 주석 처리**돼 있다. 살아있는 채번은 라인코드+f_ymd_sysdate()+SEQ_MAGAZINE_LABEL_SEQUENCE 4자리다 — 실측 라벨번호 9자(1069S6199)와 일치. |
 | `f_insert` | — | PB DataWindow InsertRow 래퍼. 웹은 우측 폼 패널이 대신한다. |
 | `f_jssetprofilestring` | — | INI 파일 I/O. 설정은 DB(ISYS_CONFIG)·환경변수로 간다. |
@@ -74,7 +75,7 @@ DB 함수는 웹에서도 **그대로 호출**합니다 — 재구현하면 PB �
 | `f_set_column_dddw` | — | PB DataWindow 의 드롭다운 목록을 런타임에 채우는 유틸. 웹은 기초코드 선택 컴포넌트가 대신한다. |
 | `f_update` | — | PB DataWindow Update 래퍼. 웹은 백엔드 저장 API 가 대신한다. |
 
-### 서비스에 이식 (`inlined`) — 12건
+### 서비스에 이식 (`inlined`) — 18건
 
 | PB 함수 | 대상 | 비고 |
 |---|---|---|
@@ -84,10 +85,16 @@ DB 함수는 웹에서도 **그대로 호출**합니다 — 재구현하면 PB �
 | `f_check_item_inventory_hold_yn` | `CASE WHEN MAX(IM_ITEM_INVENTORY.INVENTORY_HOLD)='C' THEN 'Y' ELSE 'N' END (창고 M01)` | DB 에 동명 함수가 없다 (실측). PB 가 SQL 밖에서 부르는 PB 함수이고 본문이 한 줄 SELECT 라 그대로 인라인했다. 'C' 만 보류로 본다. |
 | `f_check_run_no` | `런카드 조회 결과 유무` | 본문이 IP_PRODUCT_RUN_CARD COUNT(*) 뿐이다. lookupRunCard 가 행을 못 찾으면 같은 판정이 난다. |
 | `f_check_slip_exists` | `COUNT(*) FROM IM_ITEM_RECEIPT_SLIP WHERE RECEIPT_SLIP_NO=? AND RECEIPT_STATUS<>'C' AND ORGANIZATION_ID=?` | DB 에 동명 함수가 없다 (실측). PB 243 은 전표번호를 받아 발행하는 갈래에서 중복을 막는 게이트로 썼는데, 그 갈래는 공장코드를 안 붙여 10자 바코드를 만들고 실데이터에 10자가 한 장도 없다 (7,681장 전부 11자) → 이관하지 않았다. 웹은 전표를 항상 새로 만들므로 이 게이트가 필요 없다. |
+| `f_gen_purchase_order_plan_by_manual` | `OrderPlanService.generate({ source: 'manual' })` | 다섯 생성기(by_manual · by_prod_plan · by_prod_plan_by_time · by_sale_plan · by_sale_plan_by_time)는 커서 원천만 다르고 나머지가 같다 (실측). 서비스의 PLAN_SOURCES 에 SELECT 문 하나씩 두고 같은 PL/SQL 블록이 돈다. 원천은 IM_ITEM_MASTER_PLAN_4_PO. |
+| `f_gen_purchase_order_plan_by_prod_plan` | `OrderPlanService.generate({ source: 'productionPlan' })` | 원천은 IP_PRODUCT_MI_PLAN (생산계획, 실측 20,119행). PB 에서 IP_PRODUCT_MASTER_PLAN 커서는 주석 처리돼 있고 살아있는 커서가 MI_PLAN 을 쓴다 — 그 표는 이 스키마에 없다. |
+| `f_gen_purchase_order_plan_by_prod_plan_by_time` | `OrderPlanService.generate({ source: 'productionPlanByTime' })` | 생산계획을 시:분까지 나눈다. PLAN_PRIORITY 의 3~7자리가 HHMI. |
+| `f_gen_purchase_order_plan_by_sale_plan` | `OrderPlanService.generate({ source: 'salePlan' })` | 원천은 IP_PRODUCT_DELIVERY_PLAN. 남은 수량에서 F_GET_PLAN_ACTUAL_QTY_BY_ONO (DB 함수) 로 잡힌 실적까지 뺀다. |
+| `f_gen_purchase_order_plan_by_sale_plan_by_time` | `OrderPlanService.generate({ source: 'salePlanByTime' })` | 납품계획을 시:분:초까지 나눈다 (PLAN_PRIORITY). |
 | `f_get_first_day` | `receipt-cancel.service.ts firstDayOfMonth()` | 한 화면 전용 날짜 계산이라 DB 오브젝트를 늘리지 않는다. |
 | `f_get_item_issue_packing_qty` | `@smt/shared applyIssuePacking (packages/shared/src/warehouse/issue-packing.ts)` | DB 에 동명 함수가 없다 (실측). 화면이 실제 출고 수량을 미리 보여줘야 해서 공유 패키지에 두고 테스트 8건으로 못 박았다. PB 는 음수 요청에 양수 포장단위를 내놓아 반납이 출고로 뒤집히는데, 값은 PB 와 맞추고 그 조합을 서비스에서 거절한다. |
 | `f_get_lot_size_by_run_no` | `IP_PRODUCT_RUN_CARD.LOT_SIZE` | 런카드 조회 SQL 이 LOT_SIZE 를 이미 가져오므로 따로 부를 이유가 없다. |
 | `f_get_magazine_size` | `IP_PRODUCT_MODEL_MASTER.MAGAZINE_SIZE` | 본문이 단일행 SELECT 하나뿐이라 조회 SQL 에 NVL(m.MAGAZINE_SIZE,1) 로 녹였다. |
+| `f_get_order_property` | `OrderPlanService.netRequirements 안의 PL/SQL 블록` | DB 에 동명 함수가 없다 (실측). IM_ITEM_MASTER 에서 최소주문량·포장단위·불량율을 읽어 발주량을 올린다. PB 의 'A' 분기(최소 적용 후 포장 올림)만 쓰인다. 불량율 반올림 자릿수는 단위가 EA·SET 이면 0, 아니면 4 — PB 와 같다. DB 오브젝트를 새로 만들지 않으려고 블록 안에 옮겼다. 안에서 부르는 f_get_uom 은 ID_ITEM.ITEM_UOM 한 줄 조회뿐이라 같은 블록에서 바로 읽는다. |
 | `f_mat_issue_cancel` | `IssueManageService.cancelIssue (한 트랜잭션: 공정이관 확인 → 원건 상태 'C' → 반납요청 확정 해제 → 부호 뒤집은 행 INSERT)` | DB 에 동명 함수가 없다 (실측). 역분개 패턴이라 f_mat_receipt_cancel → PKG_MES_MAC.SP_RECEIPT_CANCEL 과 같은 성격이지만, PB 와 웹을 한 건에 대해 같이 쓰지 않는다는 사용자 결정에 따라 DB 오브젝트를 만들지 않고 TypeScript 트랜잭션으로 옮겼다. 상태 변경을 UPDATE 조건에 넣어 PB 에 없던 중복취소 방어를 더했다. |
 | `f_replace_string` | `String.prototype.replaceAll (대소문자 무시)` | SQL 없는 순수 문자열 치환. PB 는 소문자·대문자를 번갈아 찾는 방식이라 대소문자 무시 치환과 같다. |
 
@@ -171,7 +178,6 @@ DB 함수는 웹에서도 **그대로 호출**합니다 — 재구현하면 PB �
 | `f_get_new_scan_qty` | 6 | 1 | w_mat_other_issue_barcode_master |
 | `f_get_line_code_group` | 6 | 1 | w_pln_assembly_master_plan_master |
 | `f_check_return_request_slip_exists` | 2 | 1 | w_mat_other_receipt_rental_borrowing_barcode_master |
-| `f_get_order_property` | 2 | 1 | w_mat_purchase_order_plan_master |
 | `f_call_db_sql` | 1 | 1 | w_default_value_popup |
 | `f_download_item_eco_image` | 1 | 1 | w_item_eco_notify_image_popup |
 | `f_check_is_admin_yn` | 1 | 1 | w_lock_by_admin |
