@@ -19,6 +19,7 @@ import { Search } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
 import DateRangeFilter from '@/components/shared/DateRangeFilter';
 import LineSelect from '@/components/shared/LineSelect';
+import ModelSearchField from '@/components/shared/ModelSearchField';
 import { Button, Card, CardContent, Input } from '@/components/ui';
 import api from '@/services/api';
 import { pcbInputColumns } from '../query-columns';
@@ -91,8 +92,8 @@ export default function PcbInputQueryPage() {
           <div className="w-40">
             <LineSelect value={lineCode} onChange={setLineCode} labelPrefix="라인" />
           </div>
-          <Input aria-label="모델명" placeholder="모델명" value={modelName} className="w-36"
-            onChange={(e) => setModelName(e.target.value)} />
+          <ModelSearchField aria-label="모델명" placeholder="모델명" value={modelName} className="w-36"
+            onChange={(v) => setModelName(v)} />
           <Input aria-label="품목코드" placeholder="품목코드" value={itemCode} className="w-36"
             onChange={(e) => setItemCode(e.target.value)} />
           <Input aria-label="PCB 바코드" placeholder="PCB 바코드" value={itemBarcode}

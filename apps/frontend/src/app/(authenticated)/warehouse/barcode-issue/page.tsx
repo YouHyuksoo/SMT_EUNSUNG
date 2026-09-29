@@ -24,6 +24,8 @@ import { AlertTriangle, CheckCircle2, MinusCircle, ScanLine, Search, XCircle } f
 import DataGrid from '@/components/data-grid/DataGrid';
 import DateRangeFilter from '@/components/shared/DateRangeFilter';
 import LineSelect from '@/components/shared/LineSelect';
+import ModelSearchField from '@/components/shared/ModelSearchField';
+import { useRunAfterRender } from '@/hooks/useRunAfterRender';
 import ScreenTabs from '@/components/shared/ScreenTabs';
 import { Button, Card, CardContent, ConfirmModal, Input } from '@/components/ui';
 import api from '@/services/api';
@@ -237,6 +239,9 @@ export default function BarcodeIssuePage() {
     issues: issues.length, waiting: waiting.length, bom: bom.length,
   };
 
+  // 모델을 고르면 새 모델명으로 바로 조회한다 (Enter 조회를 대신함)
+  const searchAfterModelSelect = useRunAfterRender(search);
+
   return (
     <div className="flex h-full flex-col gap-4 p-6">
       <header>
@@ -383,10 +388,9 @@ export default function BarcodeIssuePage() {
               onFromChange={setDateFrom} onToChange={setDateTo} />
           )}
           {tab === 'bom' ? (
-            <Input aria-label="BOM 모델명" placeholder="모델명" value={bomModelName}
+            <ModelSearchField aria-label="BOM 모델명" placeholder="모델명" value={bomModelName}
               className="w-56"
-              onChange={(e) => setBomModelName(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') void search(); }} />
+              onChange={(v) => { setBomModelName(v); if (v) searchAfterModelSelect(); }} />
           ) : (
             <>
               <Input aria-label="품목코드" placeholder="품목코드" value={itemCode}

@@ -21,6 +21,7 @@ import toast from 'react-hot-toast';
 import { Gauge, Lock, RefreshCw, Search, Unlock } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
 import LineSelect from '@/components/shared/LineSelect';
+import ModelSearchField from '@/components/shared/ModelSearchField';
 import { Button, Card, CardContent, ConfirmModal, Input } from '@/components/ui';
 import api from '@/services/api';
 import { AutoRefreshControl } from '../components/QueryTabs';
@@ -181,8 +182,8 @@ export default function FeederMonitorPage() {
           <div className="w-44">
             <LineSelect value={lineCode} onChange={setLineCode} labelPrefix="라인" />
           </div>
-          <Input aria-label="모델명" placeholder="모델명" value={modelName} className="w-40"
-            onChange={(e) => setModelName(e.target.value)} />
+          <ModelSearchField aria-label="모델명" placeholder="모델명" value={modelName} className="w-40"
+            onChange={(v) => setModelName(v)} />
           <Input aria-label="품목코드" placeholder="품목코드" value={itemCode} className="w-36"
             onChange={(e) => setItemCode(e.target.value)} />
           <Button size="sm" onClick={search} disabled={!lineCode || loading}>

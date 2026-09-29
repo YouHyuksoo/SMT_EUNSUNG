@@ -17,6 +17,7 @@ import toast from 'react-hot-toast';
 import { Edit2, Search, Trash2 } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
 import DateRangeFilter from '@/components/shared/DateRangeFilter';
+import ModelSearchField from '@/components/shared/ModelSearchField';
 import ProdLineSelect from '@/components/shared/ProdLineSelect';
 import { Button, Card, CardContent, ConfirmModal, Input, Modal } from '@/components/ui';
 import api from '@/services/api';
@@ -189,8 +190,8 @@ export default function SmdActualPage() {
             onFromChange={setDateFrom} onToChange={setDateTo} />
           <ProdLineSelect labelPrefix="라인" value={lineCode}
             onChange={setLineCode} className="w-56" />
-          <Input aria-label="모델명" placeholder="모델명" value={modelName}
-            className="w-48" onChange={(e) => setModelName(e.target.value)} />
+          <ModelSearchField aria-label="모델명" placeholder="모델명" value={modelName}
+            className="w-48" onChange={(v) => setModelName(v)} />
           <Input aria-label="공정코드" placeholder="공정코드" value={workstageCode}
             className="w-36" onChange={(e) => setWorkstageCode(e.target.value)} />
         </CardContent>

@@ -15,6 +15,7 @@ import { Search } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
 import DateRangeFilter from '@/components/shared/DateRangeFilter';
 import LineSelect from '@/components/shared/LineSelect';
+import ModelSearchField from '@/components/shared/ModelSearchField';
 import { Button, Card, CardContent, Input } from '@/components/ui';
 import api from '@/services/api';
 import { runCardColumns } from '../tracking-columns';
@@ -73,8 +74,8 @@ export default function RunCardPicker({ selected, onSelect }: RunCardPickerProps
           <div className="w-44">
             <LineSelect value={lineCode} onChange={setLineCode} labelPrefix="라인" />
           </div>
-          <Input aria-label="모델명" placeholder="모델명" value={modelName} className="w-40"
-            onChange={(e) => setModelName(e.target.value)} />
+          <ModelSearchField aria-label="모델명" placeholder="모델명" value={modelName} className="w-40"
+            onChange={(v) => setModelName(v)} />
           <Input aria-label="Run No" placeholder="Run No" value={runNo} className="w-40"
             onChange={(e) => setRunNo(e.target.value)} />
           <DateRangeFilter label="지시일" from={dateFrom} to={dateTo}

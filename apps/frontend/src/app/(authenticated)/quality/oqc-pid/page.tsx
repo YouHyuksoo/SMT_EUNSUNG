@@ -16,6 +16,7 @@ import { PackageCheck, ScanLine, Search, Trash2 } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
 import ComCodeSelect from '@/components/shared/ComCodeSelect';
 import DateRangeFilter from '@/components/shared/DateRangeFilter';
+import ModelSearchField from '@/components/shared/ModelSearchField';
 import { Button, Card, CardContent, ConfirmModal, Input } from '@/components/ui';
 import api from '@/services/api';
 import { oqcHistoryColumns, type OqcHistoryRow } from '../notify-columns';
@@ -193,8 +194,8 @@ export default function OqcPage() {
             onFromChange={setDateFrom} onToChange={setDateTo} />
           <Input aria-label="PID" placeholder="PID" value={productId}
             className="w-52" onChange={(e) => setProductId(e.target.value)} />
-          <Input aria-label="모델명" placeholder="모델명" value={modelName}
-            className="w-44" onChange={(e) => setModelName(e.target.value)} />
+          <ModelSearchField value={modelName} onChange={(v) => setModelName(v)}
+            className="w-44" aria-label="모델명" placeholder="모델명" />
           <Input aria-label="품목코드" placeholder="품목코드" value={itemCode}
             className="w-40" onChange={(e) => setItemCode(e.target.value)} />
           <ComCodeSelect groupCode="INSPECT RESULT" labelPrefix="판정"

@@ -23,6 +23,7 @@ import toast from 'react-hot-toast';
 import { Search } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
 import DateFilter from '@/components/shared/DateFilter';
+import ModelSearchField from '@/components/shared/ModelSearchField';
 import ProdLineSelect from '@/components/shared/ProdLineSelect';
 import { Button, Card, CardContent, Input } from '@/components/ui';
 import api from '@/services/api';
@@ -126,8 +127,8 @@ export default function DailyReportPage() {
           </label>
           <ProdLineSelect labelPrefix="라인" value={lineCode}
             onChange={setLineCode} className="w-56" />
-          <Input aria-label="모델명" placeholder="모델명" value={modelName}
-            className="w-48" onChange={(e) => setModelName(e.target.value)} />
+          <ModelSearchField aria-label="모델명" placeholder="모델명" value={modelName}
+            className="w-48" onChange={(v) => setModelName(v)} />
           <Input aria-label="작업지시번호" placeholder="작업지시번호" value={runNo}
             className="w-44" onChange={(e) => setRunNo(e.target.value)} />
         </CardContent>

@@ -17,6 +17,7 @@ import { ClipboardList, Edit2, Plus, Search, Trash2 } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
 import ComCodeSelect from '@/components/shared/ComCodeSelect';
 import DateRangeFilter from '@/components/shared/DateRangeFilter';
+import ModelSearchField from '@/components/shared/ModelSearchField';
 import { Button, Card, CardContent, ConfirmModal, Input } from '@/components/ui';
 import api from '@/services/api';
 import { iqcInspectHistoryColumns, type IqcInspectHistoryRow } from '../pid-columns';
@@ -131,8 +132,8 @@ export default function IqcHistoryPage() {
           <CardContent className="flex flex-wrap items-center gap-3 p-3">
             <DateRangeFilter label="검사일" from={dateFrom} to={dateTo}
               onFromChange={setDateFrom} onToChange={setDateTo} />
-            <Input aria-label="모델명" placeholder="모델명" value={modelName}
-              className="w-44" onChange={(e) => setModelName(e.target.value)} />
+            <ModelSearchField value={modelName} onChange={(v) => setModelName(v)}
+              className="w-44" aria-label="모델명" placeholder="모델명" />
             <Input aria-label="품목코드" placeholder="품목코드" value={itemCode}
               className="w-40" onChange={(e) => setItemCode(e.target.value)} />
             <ComCodeSelect groupCode="ITEM CLASS" labelPrefix="품목분류"

@@ -22,6 +22,7 @@ import { Save, Search } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
 import DateFilter from '@/components/shared/DateFilter';
 import LineSelect from '@/components/shared/LineSelect';
+import ModelSearchField from '@/components/shared/ModelSearchField';
 import { Button, Card, CardContent, Input } from '@/components/ui';
 import api from '@/services/api';
 import { AutoRefreshControl, QueryTabs } from '../components/QueryTabs';
@@ -157,8 +158,8 @@ export default function SensorActualPage() {
           <div className="w-44">
             <LineSelect value={lineCode} onChange={setLineCode} labelPrefix="라인" />
           </div>
-          <Input aria-label="모델명" placeholder="모델명 (시간·시간대 탭)" value={modelName}
-            className="w-52" onChange={(e) => setModelName(e.target.value)} />
+          <ModelSearchField aria-label="모델명" placeholder="모델명 (시간·시간대 탭)" value={modelName}
+            className="w-52" onChange={(v) => setModelName(v)} />
           <label className="flex items-center gap-2 text-sm text-text">
             기준일
             <DateFilter value={dateFrom} onChange={setDateFrom} />

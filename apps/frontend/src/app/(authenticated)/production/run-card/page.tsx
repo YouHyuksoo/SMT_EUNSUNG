@@ -21,6 +21,7 @@ import { Button, Card, CardContent, Input } from '@/components/ui';
 import ComCodeSelect from '@/components/shared/ComCodeSelect';
 import ProdLineSelect from '@/components/shared/ProdLineSelect';
 import ModelSearchModal from '@/components/shared/ModelSearchModal';
+import ModelSearchField from '@/components/shared/ModelSearchField';
 import DataGrid from '@/components/data-grid/DataGrid';
 import { useComCodeMap } from '@/hooks/useComCode';
 import api from '@/services/api';
@@ -275,7 +276,7 @@ export default function RunCardPage() {
                 <span className="text-text-muted">~</span>
                 <Input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} />
                 <Input placeholder="작업지시번호" value={runNo} onChange={(e) => setRunNo(e.target.value)} />
-                <Input placeholder="모델명" value={modelName} onChange={(e) => setModelName(e.target.value)} />
+                <ModelSearchField placeholder="모델명" value={modelName} className="w-44" onChange={(v) => setModelName(v)} />
                 <Input placeholder="LOT번호" value={lotNo} onChange={(e) => setLotNo(e.target.value)} />
                 <ProdLineSelect labelPrefix="라인" value={lineCode} onChange={setLineCode} />
                 <Button size="sm" onClick={() => void load()}>

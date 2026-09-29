@@ -20,6 +20,7 @@ import { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { ClipboardCheck, Search } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
+import ModelSearchField from '@/components/shared/ModelSearchField';
 import ScreenTabs from '@/components/shared/ScreenTabs';
 import { Button, Card, CardContent, ConfirmModal, Input, Select } from '@/components/ui';
 import api from '@/services/api';
@@ -220,9 +221,9 @@ export default function MslCheckPage() {
               <Input aria-label="라인코드" placeholder="라인코드" value={lineCode}
                 className="w-32"
                 onChange={(e) => setLineCode(e.target.value)} />
-              <Input aria-label="모델명" placeholder="모델명" value={modelName}
+              <ModelSearchField aria-label="모델명" placeholder="모델명" value={modelName}
                 className="w-48"
-                onChange={(e) => setModelName(e.target.value)} />
+                onChange={(v) => setModelName(v)} />
             </>
           )}
           <Button size="sm" onClick={search} disabled={loading}>

@@ -17,6 +17,8 @@ export { default as PartSearchModal } from "./PartSearchModal";
 export type { PartItem } from "./PartSearchModal";
 export { default as ModelSearchModal } from "./ModelSearchModal";
 export type { ModelItem } from "./ModelSearchModal";
+export { default as ModelSearchField } from "./ModelSearchField";
+export type { ModelSearchFieldProps } from "./ModelSearchField";
 export { default as EquipSearchModal } from "./EquipSearchModal";
 export type { EquipItem } from "./EquipSearchModal";
 export { default as ComCodeSelect } from "./ComCodeSelect";

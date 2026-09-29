@@ -21,6 +21,7 @@ import DataGrid from '@/components/data-grid/DataGrid';
 import ComCodeSelect from '@/components/shared/ComCodeSelect';
 import DateRangeFilter from '@/components/shared/DateRangeFilter';
 import LineSelect from '@/components/shared/LineSelect';
+import ModelSearchField from '@/components/shared/ModelSearchField';
 import ScreenTabs from '@/components/shared/ScreenTabs';
 import { Button, Card, CardContent, Input } from '@/components/ui';
 import api from '@/services/api';
@@ -113,8 +114,8 @@ export default function RunCardReportPage() {
           <Input aria-label="Run No" placeholder="Run No" value={runNo} className="w-36"
             onChange={(e) => setRunNo(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') void search(); }} />
-          <Input aria-label="모델명" placeholder="모델명" value={modelName} className="w-36"
-            onChange={(e) => setModelName(e.target.value)} />
+          <ModelSearchField aria-label="모델명" placeholder="모델명" value={modelName} className="w-36"
+            onChange={(v) => setModelName(v)} />
           <Input aria-label="마킹번호" placeholder="마킹번호" value={markingNo} className="w-32"
             onChange={(e) => setMarkingNo(e.target.value)} />
           <Input aria-label="롯트번호" placeholder="롯트번호" value={lotNo} className="w-32"

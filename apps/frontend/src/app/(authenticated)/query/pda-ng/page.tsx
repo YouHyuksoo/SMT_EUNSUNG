@@ -19,6 +19,8 @@ import toast from 'react-hot-toast';
 import { Save, Search } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
 import LineSelect from '@/components/shared/LineSelect';
+import ModelSearchField from '@/components/shared/ModelSearchField';
+import { useRunAfterRender } from '@/hooks/useRunAfterRender';
 import Select from '@/components/ui/Select';
 import { Button, Card, CardContent, Input } from '@/components/ui';
 import api from '@/services/api';
@@ -158,6 +160,9 @@ export default function PdaNgQueryPage() {
       .join('|');
   const offCount = rows.filter((r) => r.checkYn === 'N' || r.ccsYn === 'N').length;
 
+  // 모델을 고르면 새 모델명으로 바로 조회한다 (Enter 조회를 대신함)
+  const searchAfterModelSelect = useRunAfterRender(search);
+
   return (
     <div className="flex h-full flex-col gap-4 p-6">
       <header>
@@ -173,9 +178,8 @@ export default function PdaNgQueryPage() {
 
       <Card padding="none">
         <CardContent className="flex flex-wrap items-center gap-3 p-3">
-          <Input aria-label="모델명" placeholder="모델명 (필수)" value={modelName}
-            className="w-52" onChange={(e) => setModelName(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') void search(); }} />
+          <ModelSearchField aria-label="모델명" placeholder="모델명 (필수)" value={modelName}
+            className="w-52" onChange={(v) => { setModelName(v); if (v) searchAfterModelSelect(); }} />
           <div className="w-40">
             <LineSelect value={lineCode} onChange={setLineCode} labelPrefix="라인" />
           </div>

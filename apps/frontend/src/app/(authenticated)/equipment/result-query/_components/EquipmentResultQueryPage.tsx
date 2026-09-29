@@ -8,6 +8,7 @@ import DataGrid from '@/components/data-grid/DataGrid';
 import DateRangeFilter from '@/components/shared/DateRangeFilter';
 import ProdLineSelect from '@/components/shared/ProdLineSelect';
 import { Button, Card, CardContent, Input, Select } from '@/components/ui';
+import ModelSearchField from '@/components/shared/ModelSearchField';
 import api from '@/services/api';
 import type { ResultQueryDefinition } from '../_lib/result-query-definitions';
 
@@ -65,7 +66,7 @@ export default function EquipmentResultQueryPage({ definition }: { definition: R
       <DateRangeFilter label="기간" from={dateFrom} to={dateTo} onFromChange={setDateFrom} onToChange={setDateTo} />
       {definition.filters.line ? <ProdLineSelect includeAll value={lineCode} onChange={setLineCode} className="w-40" /> : null}
       {definition.filters.pid ? <Input aria-label={definition.filters.pid} placeholder={definition.filters.pid} value={pid} onChange={event => setPid(event.target.value)} className="w-44" /> : null}
-      {definition.filters.model ? <Input aria-label="모델명" placeholder="모델명" value={modelName} onChange={event => setModelName(event.target.value)} className="w-40" /> : null}
+      {definition.filters.model ? <ModelSearchField aria-label="모델명" placeholder="모델명" value={modelName} onChange={(v) => setModelName(v)} className="w-40" /> : null}
       {definition.filters.runNo ? <Input aria-label="작업지시" placeholder="작업지시" value={runNo} onChange={event => setRunNo(event.target.value)} className="w-40" /> : null}
       {definition.filters.jobFile ? <Input aria-label="Job File" placeholder="Job File" value={jobFile} onChange={event => setJobFile(event.target.value)} className="w-44" /> : null}
       {definition.filters.result ? <Select aria-label="검사결과" options={resultOptions} value={result} onChange={setResult} className="w-36" /> : null}

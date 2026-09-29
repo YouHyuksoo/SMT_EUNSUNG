@@ -20,6 +20,7 @@ import toast from 'react-hot-toast';
 import { Search, Wrench } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
 import LineSelect from '@/components/shared/LineSelect';
+import ModelSearchField from '@/components/shared/ModelSearchField';
 import { Button, Card, CardContent, ConfirmModal, Input } from '@/components/ui';
 import { checkTrackingFilter } from '@smt/shared';
 import api from '@/services/api';
@@ -129,8 +130,8 @@ export default function PidInfoQueryPage() {
           <div className="w-44">
             <LineSelect value={lineCode} onChange={setLineCode} labelPrefix="라인" />
           </div>
-          <Input aria-label="모델명" placeholder="모델명" value={modelName} className="w-40"
-            onChange={(e) => setModelName(e.target.value)} />
+          <ModelSearchField aria-label="모델명" placeholder="모델명" value={modelName} className="w-40"
+            onChange={(v) => setModelName(v)} />
           {/* X-OUT 해제 메모. PB 는 sle_message 를 화면에만 띄우고 저장하지 않았다 —
               여기서는 2D바코드 메모에 함께 남겨 누가 왜 풀었는지 추적할 수 있게 한다. */}
           <Input aria-label="X-OUT 해제 메모" placeholder="X-OUT 해제 메모"
