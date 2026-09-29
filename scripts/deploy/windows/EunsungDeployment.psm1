@@ -2,6 +2,17 @@ $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version 2.0
 
 $script:DefaultDeployRoot = 'D:\Project\SMT_EUNSUNG\.deploy'
+# 배포 계정 이름. 전용 계정(eunsung-deploy)이 서버에 없으면 지금 실행 중인
+# 신원으로 떨어진다 — 관리자 계정으로 배포하는 서버에서도 그대로 돈다.
+function Get-EunsungDeployIdentitySid {
+  param([scriptblock]$SidResolver)
+  try {
+    return Resolve-EunsungIdentitySid -Identity 'eunsung-deploy' -SidResolver $SidResolver
+  } catch {
+    return [Security.Principal.WindowsIdentity]::GetCurrent().User.Value
+  }
+}
+
 $script:ExpectedOutputs = @(
   'packages/shared/dist/index.js',
   'apps/backend/dist/main.js',
@@ -439,7 +450,7 @@ function Test-EunsungAclAccess {
       $stream.Dispose()
     }
     if ($AclProvider) { $acl = & $AclProvider $Path } else { $acl = Get-Acl -LiteralPath $Path }
-    $deploySid = Resolve-EunsungIdentitySid -Identity 'eunsung-deploy' -SidResolver $SidResolver
+    $deploySid = Get-EunsungDeployIdentitySid -SidResolver $SidResolver
     $ownerSid = Resolve-EunsungIdentitySid -Identity ([string]$acl.Owner) -SidResolver $SidResolver
     $trustedSids = @('S-1-5-18', 'S-1-5-32-544', $deploySid)
     if ($trustedSids -notcontains $ownerSid) { return $false }
@@ -619,7 +630,7 @@ function Assert-EunsungRecoveryStorage {
 function Set-EunsungRecoveryBackupAcl {
   param([string]$Path, [scriptblock]$AclSetter)
   if ($AclSetter) { & $AclSetter $Path; return }
-  $deploySidValue = Resolve-EunsungIdentitySid -Identity 'eunsung-deploy'
+  $deploySidValue = Get-EunsungDeployIdentitySid
   $deploySid = New-Object -TypeName Security.Principal.SecurityIdentifier -ArgumentList $deploySidValue
   $acl = Get-Acl -LiteralPath $Path
   $acl.SetAccessRuleProtection($true, $false)
