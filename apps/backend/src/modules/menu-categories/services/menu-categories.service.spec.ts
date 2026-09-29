@@ -115,22 +115,55 @@ describe('MenuCategoriesService', () => {
   });
 
   describe('delete', () => {
+    const itemTxRepo = () => ({ delete: jest.fn().mockResolvedValue({}) });
+    const wireTx = (catTx: any, itmTx: any) =>
+      tx.run.mockImplementationOnce(async (cb: any) =>
+        cb({
+          manager: {
+            getRepository: (entity: unknown) => (entity === MenuCategory ? catTx : itmTx),
+          },
+        }),
+      );
+
     it('비어있는 카테고리는 삭제된다', async () => {
       categoryRepo.findOne.mockResolvedValueOnce({ categoryCode: 'X' } as any);
-      itemRepo.count.mockResolvedValueOnce(0);
+      itemRepo.find.mockResolvedValueOnce([]);
+      const itmTx = itemTxRepo();
+      wireTx(categoryRepo, itmTx);
       categoryRepo.delete.mockResolvedValueOnce({} as any);
 
       await service.delete('X');
       expect(categoryRepo.delete).toHaveBeenCalledWith({ categoryCode: 'X' });
     });
 
-    it('자식 메뉴가 있으면 Conflict 한국어 메시지', async () => {
+    it('현재 메뉴가 있으면 Conflict 한국어 메시지 (제거된 메뉴코드는 세지 않음)', async () => {
       categoryRepo.findOne.mockResolvedValueOnce({ categoryCode: 'X' } as any);
-      itemRepo.count.mockResolvedValueOnce(3);
+      itemRepo.find.mockResolvedValueOnce([
+        { menuCode: 'SYS_USER' },
+        { menuCode: 'SYS_DEPT' },
+        { menuCode: 'SHIP_PACK' },
+      ] as any);
 
       await expect(service.delete('X')).rejects.toThrow(
-        '카테고리에 메뉴가 3개 있습니다. 먼저 다른 카테고리로 이동하거나 삭제해주세요',
+        '카테고리에 메뉴가 2개 있습니다. 먼저 다른 카테고리로 이동하거나 삭제해주세요',
       );
+      expect(categoryRepo.delete).not.toHaveBeenCalled();
+    });
+
+    it('제거된 메뉴코드 배치행만 남아 있으면 그 행과 카테고리를 함께 삭제한다', async () => {
+      categoryRepo.findOne.mockResolvedValueOnce({ categoryCode: 'SHIPPING' } as any);
+      itemRepo.find.mockResolvedValueOnce([
+        { menuCode: 'SHIP_PACK' },
+        { menuCode: 'SHIP_RETURN' },
+      ] as any);
+      const itmTx = itemTxRepo();
+      wireTx(categoryRepo, itmTx);
+      categoryRepo.delete.mockResolvedValueOnce({} as any);
+
+      await service.delete('SHIPPING', { organizationId: 1, userId: 'tester' });
+
+      expect(itmTx.delete).toHaveBeenCalledWith({ categoryCode: 'SHIPPING', organizationId: 1 });
+      expect(categoryRepo.delete).toHaveBeenCalledWith({ categoryCode: 'SHIPPING', organizationId: 1 });
     });
 
     it('__ROOT__는 삭제 차단', async () => {

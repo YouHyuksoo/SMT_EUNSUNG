@@ -4,7 +4,7 @@
  *
  * 초보자 가이드:
  * 1. 카테고리 코드는 영문 대문자/언더스코어, __ROOT__는 예약어
- * 2. 빈 카테고리만 삭제 가능 (자식 있으면 한국어 메시지 409)
+ * 2. 빈 카테고리만 삭제 가능 (현재 메뉴가 있으면 한국어 메시지 409, 제거된 메뉴코드 배치행은 함께 삭제)
  * 3. reorder는 트랜잭션으로 일괄 갱신
  */
 import { Injectable, ConflictException, BadRequestException, NotFoundException } from '@nestjs/common';
@@ -173,14 +173,24 @@ export class MenuCategoriesService {
     const existing = await this.categoryRepo.findOne({ where: { categoryCode: code, ...tenantWhere } });
     if (!existing) throw new NotFoundException(`카테고리를 찾을 수 없습니다: ${code}`);
 
-    const childCount = await this.itemRepo.count({ where: { categoryCode: code, ...tenantWhere } });
-    if (childCount > 0) {
+    // 사이드바 트리와 같은 기준: menuConfig에서 제거된 메뉴코드(stale 배치행)는 메뉴로 세지 않는다.
+    // 화면에는 비어 보이는데 stale 행 때문에 삭제가 막히지 않도록, stale 행은 카테고리와 함께 지운다.
+    const items = await this.itemRepo.find({ where: { categoryCode: code, ...tenantWhere } });
+    const liveCount = items.filter((item) => isValidMenuCode(item.menuCode)).length;
+    if (liveCount > 0) {
       throw new ConflictException(
-        `카테고리에 메뉴가 ${childCount}개 있습니다. 먼저 다른 카테고리로 이동하거나 삭제해주세요`,
+        `카테고리에 메뉴가 ${liveCount}개 있습니다. 먼저 다른 카테고리로 이동하거나 삭제해주세요`,
       );
     }
 
-    await this.categoryRepo.delete({ categoryCode: code, ...tenantWhere });
+    await this.tx.run(async (queryRunner) => {
+      await queryRunner.manager
+        .getRepository(MenuCategoryItem)
+        .delete({ categoryCode: code, ...tenantWhere });
+      await queryRunner.manager
+        .getRepository(MenuCategory)
+        .delete({ categoryCode: code, ...tenantWhere });
+    });
     return { code };
   }
 
