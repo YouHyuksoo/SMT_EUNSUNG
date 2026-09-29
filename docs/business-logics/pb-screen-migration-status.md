@@ -2,8 +2,9 @@
 sources:
   - apps/frontend/src/config/menuConfig.ts
   - apps/frontend/scripts/data/pb-screen-inventory.json
+  - apps/frontend/scripts/data/pb-screen-exclusions.json
 generator: apps/frontend/scripts/gen-migration-status.mjs
-verifiedCommit: 967387a7
+verifiedCommit: 2ec10850
 ---
 
 # PB 화면 이관 현황 (자동 생성)
@@ -19,35 +20,36 @@ verifiedCommit: 967387a7
 |---|---:|
 | PB 업무화면(셸 메뉴 제외) | 275 |
 | 완료(개발됨, pbWindow 매핑) | 166 |
-| 미착수 | 83 |
+| 이관제외(사용자 결정) | 33 |
+| 미착수 | 50 |
 | 윈도우 미상 | 26 |
 
 웹 메뉴 연결 계약: **PB 165개 / 웹 신규 17개 / 미확정 1개**. PB 매핑과 웹 경로의 전체 연결표는 [pb-menu-route-links.md](pb-menu-route-links.md)에서 관리합니다.
 
 ## 대분류별 진행률
 
-| 대분류 | 코드 | 전체 | 완료 | 미착수 | 윈도우미상 |
-|---|---|---:|---:|---:|---:|
-| 기준정보 | `M_BASIS1` | 20 | 10 | 10 | 0 |
-| 설계 | `M_DESIGN` | 5 | 3 | 2 | 0 |
-| SMT | `M_SMT` | 9 | 9 | 0 | 0 |
-| 설비 | `M_JIG` | 19 | 10 | 7 | 2 |
-| 지그 | `M_JIG0` | 12 | 12 | 0 | 0 |
-| 피더 | `M_FEEDER` | 4 | 3 | 1 | 0 |
-| S-PARTS | `M_MOLD` | 8 | 8 | 0 | 0 |
-| 생산 | `M_PLANNING` | 7 | 7 | 0 | 0 |
-| 공정 | `M_WORKSTAGE0` | 5 | 5 | 0 | 0 |
-| 자재창고 | `M_WAREHOUSE` | 22 | 22 | 0 | 0 |
-| 재고 | `M_INVENTORY` | 5 | 5 | 0 | 0 |
-| 수리 | `M_REPAIR` | 4 | 3 | 1 | 0 |
-| 품질관리 | `M_QC` | 12 | 12 | 0 | 0 |
-| 출하현황 | `M_SHIPPING` | 10 | 7 | 3 | 0 |
-| 추적 | `M_TRACKING` | 7 | 7 | 0 | 0 |
-| 조회 | `M_QUERY` | 11 | 11 | 0 | 0 |
-| 리포트 | `M_REPORT` | 23 | 23 | 0 | 0 |
-| 승인 | `M_CONFIRM` | 6 | 4 | 2 | 0 |
-| 기본정보 | `M_MANAGE` | 10 | 4 | 6 | 0 |
-| 시스템 | `M_SYSTEM` | 76 | 1 | 51 | 24 |
+| 대분류 | 코드 | 전체 | 완료 | 이관제외 | 미착수 | 윈도우미상 |
+|---|---|---:|---:|---:|---:|---:|
+| 기준정보 | `M_BASIS1` | 20 | 10 | 0 | 10 | 0 |
+| 설계 | `M_DESIGN` | 5 | 3 | 0 | 2 | 0 |
+| SMT | `M_SMT` | 9 | 9 | 0 | 0 | 0 |
+| 설비 | `M_JIG` | 19 | 10 | 0 | 7 | 2 |
+| 지그 | `M_JIG0` | 12 | 12 | 0 | 0 | 0 |
+| 피더 | `M_FEEDER` | 4 | 3 | 0 | 1 | 0 |
+| S-PARTS | `M_MOLD` | 8 | 8 | 0 | 0 | 0 |
+| 생산 | `M_PLANNING` | 7 | 7 | 0 | 0 | 0 |
+| 공정 | `M_WORKSTAGE0` | 5 | 5 | 0 | 0 | 0 |
+| 자재창고 | `M_WAREHOUSE` | 22 | 22 | 0 | 0 | 0 |
+| 재고 | `M_INVENTORY` | 5 | 5 | 0 | 0 | 0 |
+| 수리 | `M_REPAIR` | 4 | 3 | 0 | 1 | 0 |
+| 품질관리 | `M_QC` | 12 | 12 | 0 | 0 | 0 |
+| 출하현황 | `M_SHIPPING` | 10 | 7 | 0 | 3 | 0 |
+| 추적 | `M_TRACKING` | 7 | 7 | 0 | 0 | 0 |
+| 조회 | `M_QUERY` | 11 | 11 | 0 | 0 | 0 |
+| 리포트 | `M_REPORT` | 23 | 23 | 0 | 0 | 0 |
+| 승인 | `M_CONFIRM` | 6 | 4 | 2 | 0 | 0 |
+| 기본정보 | `M_MANAGE` | 10 | 4 | 5 | 1 | 0 |
+| 시스템 | `M_SYSTEM` | 76 | 1 | 26 | 25 | 24 |
 
 ## 화면 목록
 
@@ -323,8 +325,8 @@ verifiedCommit: 967387a7
 
 | 순서 | 메뉴명 | PB 윈도우 | 원본 | 상태 | MES 메뉴코드 | 경로 |
 |---:|---|---|:--:|---|---|---|
-| 371 | 반출반입승인 | `w_com_carrying_out_bring_in_confirm` | srw | 미착수 |  |  |
-| 372 | 반출반입승인(보안) | `w_com_carrying_out_bring_in_security` | srw | 미착수 |  |  |
+| 371 | 반출반입승인 | `w_com_carrying_out_bring_in_confirm` | srw | 이관제외 |  | 반출반입 업무는 이관 대상에서 제외 (사용자 지시) |
+| 372 | 반출반입승인(보안) | `w_com_carrying_out_bring_in_security` | srw | 이관제외 |  | 반출반입 업무는 이관 대상에서 제외 (사용자 지시) |
 | 373 | 구매단가승인 | `w_mat_buy_price_confirm` | srw | 완료 | `CFM_BUY_PRICE` | `/confirm/buy-price` |
 | 374 | 판매단가승인 | `w_sal_sale_price_confirm` | srw | 완료 | `CFM_SALE_PRICE` | `/confirm/sale-price` |
 | 375 | S-PARTS구매단가승인 | `w_mcn_mold_buy_price_confirm` | srw | 완료 | `CFM_MOLD_PRICE` | `/confirm/mold-price` |
@@ -335,13 +337,13 @@ verifiedCommit: 967387a7
 | 순서 | 메뉴명 | PB 윈도우 | 원본 | 상태 | MES 메뉴코드 | 경로 |
 |---:|---|---|:--:|---|---|---|
 | 379 | 회사 | `w_company_master` | srw | 완료 | `SYS_COMPANY` | `/master/company` |
-| 380 | 조직 | `w_organization_master` | srw | 미착수 |  |  |
+| 380 | 조직 | `w_organization_master` | srw | 이관제외 |  | 웹이 다른 방식으로 처리 (menuConfig·RBAC·i18n locales·activity-log) — /master/company·/system/department |
 | 381 | 부서 | `w_department_master` | srw | 완료 | `SYS_DEPT` | `/system/department` |
 | 382 | 사용자 | `w_user_master` | srw | 완료 | `SYS_USER` | `/system/users` |
-| 384 | 애플리케이션창 | `w_window_master` | srw | 미착수 |  |  |
-| 385 | 역할 | `w_role_master` | srw | 미착수 |  |  |
-| 387 | └ 프로그램사용권한 | `w_privilege_master` | srw | 미착수 |  |  |
-| 389 | 메세지에이젼트 | `w_agent_message_master` | srw | 미착수 |  |  |
+| 384 | 애플리케이션창 | `w_window_master` | srw | 이관제외 |  | 웹이 다른 방식으로 처리 (menuConfig·RBAC·i18n locales·activity-log) — PB 창 등록부라 웹에 대응 개념이 없다 |
+| 385 | 역할 | `w_role_master` | srw | 이관제외 |  | 웹이 다른 방식으로 처리 (menuConfig·RBAC·i18n locales·activity-log) — 역할·권한은 RBAC |
+| 387 | └ 프로그램사용권한 | `w_privilege_master` | srw | 이관제외 |  | 웹이 다른 방식으로 처리 (menuConfig·RBAC·i18n locales·activity-log) — 역할·권한은 RBAC |
+| 389 | 메세지에이젼트 | `w_agent_message_master` | srw | 이관제외 |  | ISYS_AUDIT_MESSAGE 0행 — 들어 있는 자료가 없어 옮겨도 확인할 수 없다 |
 | 391 | 기초코드관리 | `w_basecode_master` | srw | 완료 | `SYS_CODE` | `/master/code` |
 | 392 | 표준코드관리 | `w_standard_code_master` | srw | 미착수 |  |  |
 
@@ -349,29 +351,29 @@ verifiedCommit: 967387a7
 
 | 순서 | 메뉴명 | PB 윈도우 | 원본 | 상태 | MES 메뉴코드 | 경로 |
 |---:|---|---|:--:|---|---|---|
-| 395 | └ 언어텍스트관리 | `w_dual_language` | srw | 미착수 |  |  |
-| 396 | └ 메세지텍스트관리 | `w_dual_message` | srw | 미착수 |  |  |
-| 398 | └ 용어사전 | `w_word_dictionary` | srw | 미착수 |  |  |
+| 395 | └ 언어텍스트관리 | `w_dual_language` | srw | 이관제외 |  | 웹이 다른 방식으로 처리 (menuConfig·RBAC·i18n locales·activity-log) — i18n locales(ko·en·vi·zh) |
+| 396 | └ 메세지텍스트관리 | `w_dual_message` | srw | 이관제외 |  | 웹이 다른 방식으로 처리 (menuConfig·RBAC·i18n locales·activity-log) — i18n locales |
+| 398 | └ 용어사전 | `w_word_dictionary` | srw | 이관제외 |  | PB IDE 내장 개발도구. 웹 대응물 없음 (DB 접속 도구·/system/er-view 가 대신) |
 | 400 | └ 윈도우언어변환대상찾기	Alt+F10 |  | — | 윈도우미상 |  |  |
 | 401 | └ 메뉴언어변환대상찾기	Alt+F11 |  | — | 윈도우미상 |  |  |
 | 403 | └ 시스템환경 | `w_system_config` | srw | 완료 | `SYS_CONFIG` | `/system/config` |
-| 404 | └ 컬럼포맷	F12 | `w_col_info_popup` | srw | 미착수 |  |  |
+| 404 | └ 컬럼포맷	F12 | `w_col_info_popup` | srw | 이관제외 |  | PB IDE 내장 개발도구. 웹 대응물 없음 (DB 접속 도구·/system/er-view 가 대신) |
 | 405 | └ 재고마감일자설정 | `w_system_inventory_close_date_setup` | srw | 미착수 |  |  |
 | 407 | └ 엔터키탭처럼사용안함 |  | — | 윈도우미상 |  |  |
 | 408 | └ 행변경이벤트켜기 |  | — | 윈도우미상 |  |  |
 | 410 | └ 언어즉시변경켜기 |  | — | 윈도우미상 |  |  |
 | 412 | └ 메뉴재설정 |  | — | 윈도우미상 |  |  |
-| 413 | └ 메뉴관리 | `w_menu_master` | srw | 미착수 |  |  |
-| 415 | └ SQL 페인터 | `w_sql_painter` | srw | 미착수 |  |  |
-| 416 | └ SQL보기 | `w_edit_window` | srw | 미착수 |  |  |
-| 417 | └ 기초코드보기	Ctrl+F1 | `w_value_list_popup` | srw | 미착수 |  |  |
-| 418 | └ 선택된데이타보기 | `w_edit_window` | srw | 미착수 |  |  |
-| 419 | └ 데이타창보기 | `w_show_datawindow_popup` | srw | 미착수 |  |  |
-| 420 | └ 테이블컬럼보기 | `w_table_description_rpt` | srw | 미착수 |  |  |
-| 421 | └ 오브젝트보기 | `w_db_object_master` | srw | 미착수 |  |  |
+| 413 | └ 메뉴관리 | `w_menu_master` | srw | 이관제외 |  | 웹이 다른 방식으로 처리 (menuConfig·RBAC·i18n locales·activity-log) — 메뉴는 menuConfig.ts 가 정본 |
+| 415 | └ SQL 페인터 | `w_sql_painter` | srw | 이관제외 |  | PB IDE 내장 개발도구. 웹 대응물 없음 (DB 접속 도구·/system/er-view 가 대신) |
+| 416 | └ SQL보기 | `w_edit_window` | srw | 이관제외 |  | PB IDE 내장 개발도구. 웹 대응물 없음 (DB 접속 도구·/system/er-view 가 대신) |
+| 417 | └ 기초코드보기	Ctrl+F1 | `w_value_list_popup` | srw | 이관제외 |  | PB IDE 내장 개발도구. 웹 대응물 없음 (DB 접속 도구·/system/er-view 가 대신) |
+| 418 | └ 선택된데이타보기 | `w_edit_window` | srw | 이관제외 |  | PB IDE 내장 개발도구. 웹 대응물 없음 (DB 접속 도구·/system/er-view 가 대신) |
+| 419 | └ 데이타창보기 | `w_show_datawindow_popup` | srw | 이관제외 |  | PB IDE 내장 개발도구. 웹 대응물 없음 (DB 접속 도구·/system/er-view 가 대신) |
+| 420 | └ 테이블컬럼보기 | `w_table_description_rpt` | srw | 이관제외 |  | PB IDE 내장 개발도구. 웹 대응물 없음 (DB 접속 도구·/system/er-view 가 대신) |
+| 421 | └ 오브젝트보기 | `w_db_object_master` | srw | 이관제외 |  | PB IDE 내장 개발도구. 웹 대응물 없음 (DB 접속 도구·/system/er-view 가 대신) |
 | 423 | └ 인터페이스로그보기 |  | — | 윈도우미상 |  |  |
-| 424 | └ 시스템오류내역보기 | `w_error_log_trace` | srw | 미착수 |  |  |
-| 425 | └ 시스템사용내역 | `w_system_access_master` | srw | 미착수 |  |  |
+| 424 | └ 시스템오류내역보기 | `w_error_log_trace` | srw | 이관제외 |  | 웹이 다른 방식으로 처리 (menuConfig·RBAC·i18n locales·activity-log) — 백엔드 로깅 인터셉터 |
+| 425 | └ 시스템사용내역 | `w_system_access_master` | srw | 이관제외 |  | 웹이 다른 방식으로 처리 (menuConfig·RBAC·i18n locales·activity-log) — activity-log |
 | 428 | 수정모드켜기 |  | — | 윈도우미상 |  |  |
 | 429 | 수정모드끄기 |  | — | 윈도우미상 |  |  |
 | 431 | 오브젝트삭제 |  | — | 윈도우미상 |  |  |
@@ -389,13 +391,13 @@ verifiedCommit: 967387a7
 | 448 | 박스보이기 |  | — | 윈도우미상 |  |  |
 | 449 | 박스없애기 |  | — | 윈도우미상 |  |  |
 | 450 | 그림자보기 |  | — | 윈도우미상 |  |  |
-| 451 | └ 런타임데이타창생성 | `w_runtime_dw_generator` | srw | 미착수 |  |  |
-| 452 | └ 리포트생성기 | `w_report_generator` | srw | 미착수 |  |  |
-| 454 | └ 리포트관리 | `w_dataobject_master` | srw | 미착수 |  |  |
-| 457 | IT 자산 현황 | `w_mcn_it_master` | srw | 미착수 |  |  |
+| 451 | └ 런타임데이타창생성 | `w_runtime_dw_generator` | srw | 이관제외 |  | PB IDE 내장 개발도구. 웹 대응물 없음 (DB 접속 도구·/system/er-view 가 대신) |
+| 452 | └ 리포트생성기 | `w_report_generator` | srw | 이관제외 |  | PB IDE 내장 개발도구. 웹 대응물 없음 (DB 접속 도구·/system/er-view 가 대신) |
+| 454 | └ 리포트관리 | `w_dataobject_master` | srw | 이관제외 |  | PB IDE 내장 개발도구. 웹 대응물 없음 (DB 접속 도구·/system/er-view 가 대신) |
+| 457 | IT 자산 현황 | `w_mcn_it_master` | srw | 이관제외 |  | IMCN_FIXASSET 0행 |
 | 459 | 리플로우상태조회 | `w_qc_interlock_reflow_status_master` | srw | 미착수 |  |  |
-| 460 | 설비 픽업률조회 | `w_smt_pickup_rate_head` | srw | 미착수 |  |  |
-| 461 | SMT 픽업율(최종데이터조회) | `w_smt_pickup_rate_last_data_query` | srw | 미착수 |  |  |
+| 460 | 설비 픽업률조회 | `w_smt_pickup_rate_head` | srw | 이관제외 |  | 사용자 결정 — 이관 대상 아님 |
+| 461 | SMT 픽업율(최종데이터조회) | `w_smt_pickup_rate_last_data_query` | srw | 이관제외 |  | 사용자 결정 — 이관 대상 아님 |
 | 463 | 자재전표엑셀업로드관리 | `w_mat_receipt_slip_excel_upload_master` | srw | 미착수 |  |  |
 | 464 | 자재(대여/차용)전표등록관리 | `w_mat_receipt_slip_4_rental_borrowing_master` | srw | 미착수 |  |  |
 | 465 | 자재(대여/차용상환)관리 | `w_mat_other_receipt_rental_borrowing_barcode_master` | srw | 미착수 |  |  |
@@ -405,7 +407,7 @@ verifiedCommit: 967387a7
 | 469 | 라인별 모니터링 | `w_smt_plan_feeder_monitoring_line_master` | srw | 미착수 |  |  |
 | 471 | 자재요청관리 | `w_pln_workstage_material_receipt_check_master` | srw | 미착수 |  |  |
 | 473 | 반품수리관리 | `w_sal_shipping_return_repair_master` | srw | 미착수 |  |  |
-| 475 | 반제품바코드스캔실사 | `w_pln_barcode_check_master` | srw | 미착수 |  |  |
+| 475 | 반제품바코드스캔실사 | `w_pln_barcode_check_master` | srw | 이관제외 |  | IM_ASSY_INVENTORY_CHECK_BCD 0행 |
 | 477 | 자재소요량관리 | `w_mat_requirment_plan_master` | srw | 미착수 |  |  |
 | 478 | 자재발주계획 | `w_mat_purchase_order_plan_master` | srw | 미착수 |  |  |
 | 480 | 자재주문예정관리 | `w_mat_forecast_order_master` | srw | 미착수 |  |  |
@@ -414,14 +416,14 @@ verifiedCommit: 967387a7
 | 484 | 자재도착관리 | `w_mat_arrival_master` | srw | 미착수 |  |  |
 | 486 | 설비검사확인(스캔) | `w_qc_machine_inspect_manual` | srw | 미착수 |  |  |
 | 487 | 고객컴플레인관리 | `w_customer_complaints_master` | srw | 미착수 |  |  |
-| 488 | 이상발생 모니터링 | `w_pln_product_sound_history_query` | srw | 미착수 |  |  |
-| 490 | SMT 파트라이브러리관리 | `w_smt_upload_partlib_master` | srw | 미착수 |  |  |
+| 488 | 이상발생 모니터링 | `w_pln_product_sound_history_query` | srw | 이관제외 |  | ISYS_SOUND_MENT 0행 |
+| 490 | SMT 파트라이브러리관리 | `w_smt_upload_partlib_master` | srw | 이관제외 |  | IB_MNT_PARTLIB_MASTER 0행 |
 | 492 | 메탈마스크텐션 수동 관리 | `w_mcn_jig_mask_check_master` | srw | 미착수 |  |  |
 | 493 | 픽스쳐검사관리 | `w_mcn_jig_fixture_check_master` | srw | 미착수 |  |  |
-| 495 | 제품납품계획 | `w_pln_product_delivery_master` | srw | 미착수 |  |  |
+| 495 | 제품납품계획 | `w_pln_product_delivery_master` | srw | 이관제외 |  | IP_PRODUCT_DELIVERY_MONTH_PLAN 0행 |
 | 496 | 포장바코드중복체크관리 | `w_pln_product_packing_dupulicate_check_master` | srw | 미착수 |  |  |
-| 498 | 반출송장 | `w_com_carrying_out_master` | srw | 미착수 |  |  |
-| 499 | 반입송장 | `w_com_bring_in_master` | srw | 미착수 |  |  |
+| 498 | 반출송장 | `w_com_carrying_out_master` | srw | 이관제외 |  | 반출반입 업무는 이관 대상에서 제외 (사용자 지시) |
+| 499 | 반입송장 | `w_com_bring_in_master` | srw | 이관제외 |  | 반출반입 업무는 이관 대상에서 제외 (사용자 지시) |
 | 501 | 워크오더추적조회 | `w_product_material_tracking_4_workorder_rpt` | srw | 미착수 |  |  |
 | 502 | 자재추적조회(멀티/동적) | `w_product_material_tracking_multi_rpt` | srw | 미착수 |  |  |
 | 503 | 제품 추적 조회 | `w_product_material_tracking_history_rpt` | srw | 미착수 |  |  |

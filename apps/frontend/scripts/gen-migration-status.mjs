@@ -26,6 +26,7 @@ const frontendRoot = join(scriptDir, '..');
 const repoRoot = join(frontendRoot, '..', '..');
 const menuConfigPath = join(frontendRoot, 'src', 'config', 'menuConfig.ts');
 const inventoryPath = join(scriptDir, 'data', 'pb-screen-inventory.json');
+const exclusionsPath = join(scriptDir, 'data', 'pb-screen-exclusions.json');
 const outPath = join(repoRoot, 'docs', 'business-logics', 'pb-screen-migration-status.md');
 const linkOutPath = join(repoRoot, 'docs', 'business-logics', 'pb-menu-route-links.md');
 
@@ -54,6 +55,14 @@ function loadKoLabels() {
 const menu = parseMenuConfig();
 const ko = loadKoLabels();
 const inventory = JSON.parse(readFileSync(inventoryPath, 'utf8'));
+/**
+ * 사용자가 이관 대상에서 뺀 화면. 미착수 건수에서 제외한다.
+ * 전체 건수에는 남겨 두므로 "무엇을 왜 뺐는지"가 문서에 남는다.
+ */
+const exclusions = JSON.parse(readFileSync(exclusionsPath, 'utf8')).exclusions ?? [];
+const excludedByWindow = new Map(
+  exclusions.map((e) => [String(e.window).toLowerCase(), e]),
+);
 const label = (key) => ko[String(key).replace(/^menu\./, '')] ?? key;
 
 /** 개발된 화면: pbWindow -> { code, path, label } */
@@ -160,15 +169,21 @@ for (const sc of bizScreens) {
 
 const statusOf = (sc) => {
   const dev = sc.window ? developedByWindow.get(sc.window.toLowerCase()) : null;
+  // 완료가 제외보다 앞이다 — 이미 옮긴 화면을 제외로 뒤집지 않는다.
   if (dev) return { status: '완료', mes: dev.code, path: dev.path };
+  const ex = sc.window ? excludedByWindow.get(sc.window.toLowerCase()) : null;
+  if (ex) return { status: '이관제외', mes: '', path: '', reason: ex.reason ?? '' };
   if (!sc.window) return { status: '윈도우미상', mes: '', path: '' };
   return { status: '미착수', mes: '', path: '' };
 };
 
-let done = 0, todo = 0, unknown = 0;
+let done = 0, todo = 0, unknown = 0, excluded = 0;
 for (const sc of bizScreens) {
   const st = statusOf(sc).status;
-  if (st === '완료') done++; else if (st === '윈도우미상') unknown++; else todo++;
+  if (st === '완료') done++;
+  else if (st === '이관제외') excluded++;
+  else if (st === '윈도우미상') unknown++;
+  else todo++;
 }
 const mappedMenus = developed.filter((e) => e.pbLinkStatus === 'powerbuilder');
 const nativeMenus = developed.filter((e) => e.pbLinkStatus === 'web-native');
@@ -180,6 +195,7 @@ L.push('---');
 L.push('sources:');
 L.push('  - apps/frontend/src/config/menuConfig.ts');
 L.push('  - apps/frontend/scripts/data/pb-screen-inventory.json');
+L.push('  - apps/frontend/scripts/data/pb-screen-exclusions.json');
 L.push('generator: apps/frontend/scripts/gen-migration-status.mjs');
 L.push(`verifiedCommit: ${verifiedCommit}`);
 L.push('---');
@@ -197,6 +213,7 @@ L.push('| 상태 | 건수 |');
 L.push('|---|---:|');
 L.push(`| PB 업무화면(셸 메뉴 제외) | ${bizScreens.length} |`);
 L.push(`| 완료(개발됨, pbWindow 매핑) | ${done} |`);
+L.push(`| 이관제외(사용자 결정) | ${excluded} |`);
 L.push(`| 미착수 | ${todo} |`);
 L.push(`| 윈도우 미상 | ${unknown} |`);
 L.push('');
@@ -204,13 +221,14 @@ L.push(`웹 메뉴 연결 계약: **PB ${mappedMenus.length}개 / 웹 신규 ${n
 L.push('');
 L.push('## 대분류별 진행률');
 L.push('');
-L.push('| 대분류 | 코드 | 전체 | 완료 | 미착수 | 윈도우미상 |');
-L.push('|---|---|---:|---:|---:|---:|');
+L.push('| 대분류 | 코드 | 전체 | 완료 | 이관제외 | 미착수 | 윈도우미상 |');
+L.push('|---|---|---:|---:|---:|---:|---:|');
 for (const g of groups) {
   const scs = byGroup.get(g.code);
   const d = scs.filter((s) => statusOf(s).status === '완료').length;
+  const x = scs.filter((s) => statusOf(s).status === '이관제외').length;
   const u = scs.filter((s) => statusOf(s).status === '윈도우미상').length;
-  L.push(`| ${g.text} | \`${g.code}\` | ${scs.length} | ${d} | ${scs.length - d - u} | ${u} |`);
+  L.push(`| ${g.text} | \`${g.code}\` | ${scs.length} | ${d} | ${x} | ${scs.length - d - x - u} | ${u} |`);
 }
 L.push('');
 L.push('## 화면 목록');
@@ -223,7 +241,12 @@ for (const g of groups) {
   for (const sc of byGroup.get(g.code)) {
     const st = statusOf(sc);
     const ind = sc.level === '3' ? '└ ' : '';
-    L.push(`| ${sc.order} | ${ind}${sc.text} | ${sc.window ? '`' + sc.window + '`' : ''} | ${sc.origin || '—'} | ${st.status} | ${st.mes ? '`' + st.mes + '`' : ''} | ${st.path ? '`' + st.path + '`' : ''} |`);
+    // 제외된 화면은 MES 코드·경로가 없으므로 그 칸에 사유를 적는다.
+    const mesCell = st.mes ? '`' + st.mes + '`' : '';
+    const pathCell = st.status === '이관제외'
+      ? (st.reason || '사유 미기재')
+      : (st.path ? '`' + st.path + '`' : '');
+    L.push(`| ${sc.order} | ${ind}${sc.text} | ${sc.window ? '`' + sc.window + '`' : ''} | ${sc.origin || '—'} | ${st.status} | ${mesCell} | ${pathCell} |`);
   }
   L.push('');
 }
@@ -274,5 +297,5 @@ for (const e of developed) {
 R.push('');
 writeFileSync(linkOutPath, R.join('\n'), 'utf8');
 
-console.log(`Generated migration status → docs/business-logics/pb-screen-migration-status.md (완료 ${done} / 미착수 ${todo} / 미상 ${unknown})`);
+console.log(`Generated migration status → docs/business-logics/pb-screen-migration-status.md (완료 ${done} / 이관제외 ${excluded} / 미착수 ${todo} / 미상 ${unknown})`);
 console.log(`Generated PB route links → docs/business-logics/pb-menu-route-links.md (PB ${mappedMenus.length} / 웹 신규 ${nativeMenus.length} / 미확정 ${unresolvedMenus.length})`);
