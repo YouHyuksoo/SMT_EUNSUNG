@@ -4,7 +4,7 @@ sources:
   - apps/frontend/scripts/data/pb-screen-inventory.json
   - apps/frontend/scripts/data/pb-screen-exclusions.json
 generator: apps/frontend/scripts/gen-migration-status.mjs
-verifiedCommit: 89aa4e1c
+verifiedCommit: 3c10b506
 ---
 
 # PB 화면 이관 현황 (자동 생성)
@@ -19,12 +19,12 @@ verifiedCommit: 89aa4e1c
 | 상태 | 건수 |
 |---|---:|
 | PB 업무화면(셸 메뉴 제외) | 275 |
-| 완료(개발됨, pbWindow 매핑) | 166 |
+| 완료(개발됨, pbWindow 매핑) | 170 |
 | 이관제외(사용자 결정) | 31 |
-| 미착수 | 52 |
+| 미착수 | 48 |
 | 윈도우 미상 | 26 |
 
-웹 메뉴 연결 계약: **PB 165개 / 웹 신규 17개 / 미확정 1개**. PB 매핑과 웹 경로의 전체 연결표는 [pb-menu-route-links.md](pb-menu-route-links.md)에서 관리합니다.
+웹 메뉴 연결 계약: **PB 169개 / 웹 신규 17개 / 미확정 1개**. PB 매핑과 웹 경로의 전체 연결표는 [pb-menu-route-links.md](pb-menu-route-links.md)에서 관리합니다.
 
 ## 대분류별 진행률
 
@@ -49,7 +49,7 @@ verifiedCommit: 89aa4e1c
 | 리포트 | `M_REPORT` | 23 | 23 | 0 | 0 | 0 |
 | 승인 | `M_CONFIRM` | 6 | 4 | 2 | 0 | 0 |
 | 기본정보 | `M_MANAGE` | 10 | 4 | 5 | 1 | 0 |
-| 시스템 | `M_SYSTEM` | 76 | 1 | 24 | 27 | 24 |
+| 시스템 | `M_SYSTEM` | 76 | 5 | 24 | 23 | 24 |
 
 ## 화면 목록
 
@@ -410,10 +410,10 @@ verifiedCommit: 89aa4e1c
 | 475 | 반제품바코드스캔실사 | `w_pln_barcode_check_master` | srw | 이관제외 |  | IM_ASSY_INVENTORY_CHECK_BCD 0행 |
 | 477 | 자재소요량관리 | `w_mat_requirment_plan_master` | srw | 미착수 |  |  |
 | 478 | 자재발주계획 | `w_mat_purchase_order_plan_master` | srw | 미착수 |  |  |
-| 480 | 자재주문예정관리 | `w_mat_forecast_order_master` | srw | 미착수 |  |  |
-| 481 | 자재주문관리 | `w_mat_purchase_order_master` | srw | 미착수 |  |  |
-| 483 | 자재출발관리 | `w_mat_departure_master` | srw | 미착수 |  |  |
-| 484 | 자재도착관리 | `w_mat_arrival_master` | srw | 미착수 |  |  |
+| 480 | 자재주문예정관리 | `w_mat_forecast_order_master` | srw | 완료 | `PUR_FORECAST` | `/purchase/forecast` |
+| 481 | 자재주문관리 | `w_mat_purchase_order_master` | srw | 완료 | `PUR_ORDER` | `/purchase/order` |
+| 483 | 자재출발관리 | `w_mat_departure_master` | srw | 완료 | `PUR_DEPARTURE` | `/purchase/departure` |
+| 484 | 자재도착관리 | `w_mat_arrival_master` | srw | 완료 | `PUR_ARRIVAL` | `/purchase/arrival` |
 | 486 | 설비검사확인(스캔) | `w_qc_machine_inspect_manual` | srw | 미착수 |  |  |
 | 487 | 고객컴플레인관리 | `w_customer_complaints_master` | srw | 미착수 |  |  |
 | 488 | 이상발생 모니터링 | `w_pln_product_sound_history_query` | srw | 이관제외 |  | ISYS_SOUND_MENT 0행 |

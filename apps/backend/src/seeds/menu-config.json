@@ -5,6 +5,7 @@
     "BOM_MANAGEMENT",
     "EQUIPMENT",
     "OEE",
+    "PURCHASE",
     "MATERIAL",
     "JIG",
     "FEEDER",
@@ -67,6 +68,12 @@
       "OEE_EQUIP_WORK_RESULT",
       "OEE_EQUIP_OPS_STATUS",
       "OEE_FIELD_OPS"
+    ],
+    "PURCHASE": [
+      "PUR_FORECAST",
+      "PUR_ORDER",
+      "PUR_DEPARTURE",
+      "PUR_ARRIVAL"
     ],
     "MATERIAL": [
       "MAT_RECEIPT_ISSUE_LEDGER",

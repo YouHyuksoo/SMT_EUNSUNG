@@ -23,6 +23,7 @@ import {
   Hammer,
   Network,
   Package,
+  ShoppingCart,
   ScanSearch,
   Radar,
   Settings,
@@ -134,6 +135,17 @@ export const menuConfig: MenuConfigItem[] = [
       // 되살리려면 OEE_EQUIP_OPS_ANALYSIS 항목을 이 자리에 다시 넣고 gen:menu 를 실행한다.
       // 숨김(2026-09-06): 생산라인관리에서 OEE 속성을 통합 관리한다.
       // 추후 삭제 전까지 직접 URL은 유지한다: { code: "OEE_MST_RESOURCE", labelKey: "menu.oee.resource", path: "/oee/master/resource" }
+    ],
+  },
+  {
+    code: "PURCHASE",
+    labelKey: "menu.purchase",
+    icon: ShoppingCart,
+    children: [
+      { code: "PUR_FORECAST", labelKey: "menu.purchase.forecast", path: "/purchase/forecast", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_forecast_order_master" },
+      { code: "PUR_ORDER", labelKey: "menu.purchase.order", path: "/purchase/order", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_purchase_order_master" },
+      { code: "PUR_DEPARTURE", labelKey: "menu.purchase.departure", path: "/purchase/departure", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_departure_master" },
+      { code: "PUR_ARRIVAL", labelKey: "menu.purchase.arrival", path: "/purchase/arrival", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_arrival_master" },
     ],
   },
   {

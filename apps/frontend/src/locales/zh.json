@@ -563,7 +563,12 @@
     "smt.plan": "SMT计划下发管理",
     "smt.bomReport": "SMT BOM管理报表",
     "smt.bomComparison": "供料器布局比较",
-    "smt.feederPickup": "贴片机吸取信息管理"
+    "smt.feederPickup": "贴片机吸取信息管理",
+    "purchase": "订购",
+    "purchase.forecast": "物料订购预定管理",
+    "purchase.order": "物料订购管理",
+    "purchase.departure": "物料发出管理",
+    "purchase.arrival": "物料到货管理"
   },
   "header": {
     "theme": "主题",

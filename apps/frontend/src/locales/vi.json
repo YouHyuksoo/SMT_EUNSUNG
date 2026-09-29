@@ -563,7 +563,12 @@
     "smt.plan": "Quản lý triển khai kế hoạch SMT",
     "smt.bomReport": "Báo cáo quản lý BOM SMT",
     "smt.bomComparison": "So sánh layout feeder",
-    "smt.feederPickup": "Quản lý dữ liệu pickup mounter"
+    "smt.feederPickup": "Quản lý dữ liệu pickup mounter",
+    "purchase": "Đặt hàng",
+    "purchase.forecast": "Dự kiến đặt hàng vật tư",
+    "purchase.order": "Quản lý đơn đặt vật tư",
+    "purchase.departure": "Quản lý xuất phát vật tư",
+    "purchase.arrival": "Quản lý vật tư đến"
   },
   "header": {
     "theme": "Giao diện",

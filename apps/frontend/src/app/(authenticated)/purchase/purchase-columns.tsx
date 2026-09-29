@@ -5,6 +5,7 @@
  * 코드값은 전부 공통코드 실측이다. 화면에는 코드가 아니라 **뜻**이 보인다.
  */
 import type { ColumnDef } from '@tanstack/react-table';
+import { comCodeCell } from '@/components/shared/codeCells';
 import { num } from '@/components/shared/grid-format';
 
 const right = { align: 'right' } as const;
@@ -23,27 +24,13 @@ export const ARRIVAL_TYPE_NAME: Record<string, string> = {
 export const ARRIVAL_STATUS_NAME: Record<string, string> = {
   N: '정상', C: '취소',
 };
-/** 공통코드 `ORDER TYPE`. */
-export const ORDER_TYPE_NAME: Record<string, string> = {
-  A: '자동', C: '교환', D: '344대체', F: '고정',
-  M: '311정규', O: '직납입', R: '931위탁수리', S: '부족분',
-};
-/** 공통코드 `LINE TYPE`. */
-export const LINE_TYPE_NAME: Record<string, string> = {
-  A: '외부부품', D: '도입(면세)', F: '무상구매', G: '국내구매',
-  L: '도입로칼', M: '무상사급', N: '내부거래', O: 'OEM',
-};
-/** 공통코드 `DELIVERY METHOD`. */
-export const DELIVERY_METHOD_NAME: Record<string, string> = {
-  A: 'AIR', C: 'CAR', S: 'SHIP', T: 'TRAIN',
-};
 
-/** 코드 대신 뜻을 보여 준다. 뜻이 없으면 코드를 그대로 둔다. */
-const codeCell = (map: Record<string, string>) => (value: unknown) => {
-  const code = String(value ?? '');
-  if (!code) return '';
-  return <span>{map[code] ?? code}</span>;
-};
+/**
+ * 라벨만 보여 주는 코드 컬럼은 정적 맵을 두지 않는다. 화면에 적어 두면 기준정보가
+ * 늘었을 때 조용히 어긋난다 (`ORDER TYPE`·`LINE TYPE` 은 실제로 11개다).
+ * 공용 `comCodeCell` 이 ISYS_BASECODE 에서 그때그때 읽는다.
+ * 아래 CONFIRM/ARRIVAL 맵은 색까지 바꿔야 해서 남긴다 — 코드 수가 DB 와 같다.
+ */
 
 // ───────────────────────────────── 480·481 주문
 
@@ -149,13 +136,13 @@ const orderBaseColumns: ColumnDef<PurchaseOrderRow>[] = [
     accessorKey: 'orderType',
     header: '주문구분',
     size: 110,
-    cell: (c) => codeCell(ORDER_TYPE_NAME)(c.getValue()),
+    cell: comCodeCell<PurchaseOrderRow>('ORDER TYPE'),
   },
   {
     accessorKey: 'lineType',
     header: '거래구분',
     size: 110,
-    cell: (c) => codeCell(LINE_TYPE_NAME)(c.getValue()),
+    cell: comCodeCell<PurchaseOrderRow>('LINE TYPE'),
   },
   {
     accessorKey: 'purchaseOrderDate',
@@ -177,7 +164,7 @@ export const purchaseOrderColumns: ColumnDef<PurchaseOrderRow>[] = [
     accessorKey: 'deliveryMethod',
     header: '운송',
     size: 90,
-    cell: (c) => codeCell(DELIVERY_METHOD_NAME)(c.getValue()),
+    cell: comCodeCell<PurchaseOrderRow>('DELIVERY METHOD'),
   },
   { accessorKey: 'enterBy', header: '작성자', size: 100 },
 ];

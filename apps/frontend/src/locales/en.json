@@ -563,7 +563,12 @@
     "smt.plan": "SMT Plan Deployment",
     "smt.bomReport": "SMT BOM Report",
     "smt.bomComparison": "Feeder Layout Comparison",
-    "smt.feederPickup": "Mounter Pickup Data"
+    "smt.feederPickup": "Mounter Pickup Data",
+    "purchase": "Purchasing",
+    "purchase.forecast": "Forecast Orders",
+    "purchase.order": "Purchase Orders",
+    "purchase.departure": "Departure",
+    "purchase.arrival": "Arrival"
   },
   "header": {
     "theme": "Theme",

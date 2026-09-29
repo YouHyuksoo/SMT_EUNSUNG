@@ -3,7 +3,7 @@ sources:
   - apps/frontend/src/config/menuConfig.ts
   - apps/frontend/scripts/data/pb-screen-inventory.json
 generator: apps/frontend/scripts/gen-migration-status.mjs
-verifiedCommit: 89aa4e1c
+verifiedCommit: 3c10b506
 ---
 
 # PB 윈도우 ↔ 웹 메뉴·경로 연결표 (자동 생성)
@@ -15,7 +15,7 @@ verifiedCommit: 89aa4e1c
 
 | 전체 웹 메뉴 | PB 연결 | 웹 신규 | 미확정 |
 |---:|---:|---:|---:|
-| 183 | 165 | 17 | 1 |
+| 187 | 169 | 17 | 1 |
 
 ## 전체 연결표
 
@@ -58,6 +58,10 @@ verifiedCommit: 89aa4e1c
 | OEE 관리 | 설비별 작업 실적관리 | `OEE_EQUIP_WORK_RESULT` | `/oee/equip-work-result` | 웹 신규 |  | PB 대응 없음 |
 | OEE 관리 | 설비 운영 현황 | `OEE_EQUIP_OPS_STATUS` | `/oee/equip-ops-status` | 웹 신규 |  | PB 대응 없음 |
 | OEE 관리 | 설비 운영 및 실적관리(현장) | `OEE_FIELD_OPS` | `/oee/field-ops` | 웹 신규 |  | PB 대응 없음 |
+| 발주 | 자재주문예정관리 | `PUR_FORECAST` | `/purchase/forecast` | PB 연결 | `w_mat_forecast_order_master` | PB 메뉴 인벤토리 |
+| 발주 | 자재주문관리 | `PUR_ORDER` | `/purchase/order` | PB 연결 | `w_mat_purchase_order_master` | PB 메뉴 인벤토리 |
+| 발주 | 자재출발관리 | `PUR_DEPARTURE` | `/purchase/departure` | PB 연결 | `w_mat_departure_master` | PB 메뉴 인벤토리 |
+| 발주 | 자재도착관리 | `PUR_ARRIVAL` | `/purchase/arrival` | PB 연결 | `w_mat_arrival_master` | PB 메뉴 인벤토리 |
 | 자재수불관리 | 자재입출고수불원장 | `MAT_RECEIPT_ISSUE_LEDGER` | `/material/receipt-issue-ledger` | PB 연결 | `w_mat_ledger_report` | PB 메뉴 인벤토리 |
 | 자재수불관리 | 현재고조회 | `MAT_CURRENT_INVENTORY` | `/material/current-inventory` | PB 연결 | `w_mat_current_inventory_master` | PB 메뉴 인벤토리 |
 | 자재수불관리 | 총재고조회 | `INV_TOTAL` | `/inventory-query/total-inventory` | PB 연결 | `w_mat_total_inventory_query` | PB 메뉴 인벤토리 |

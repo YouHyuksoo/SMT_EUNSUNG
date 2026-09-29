@@ -563,7 +563,12 @@
     "smt.plan": "SMT 계획배포관리",
     "smt.bomReport": "SMT BOM 관리리포트",
     "smt.bomComparison": "피더레이아웃 비교",
-    "smt.feederPickup": "마운터 픽업정보관리"
+    "smt.feederPickup": "마운터 픽업정보관리",
+    "purchase": "발주",
+    "purchase.forecast": "자재주문예정관리",
+    "purchase.order": "자재주문관리",
+    "purchase.departure": "자재출발관리",
+    "purchase.arrival": "자재도착관리"
   },
   "header": {
     "theme": "테마",
