@@ -27,7 +27,6 @@
     "MASTER": [
       "MST_PART",
       "MST_PRODUCT_MODEL",
-      "MST_BOM",
       "MST_APPLY_ITEM",
       "MST_PARTNER",
       "MST_CUSTOMER",
@@ -48,7 +47,13 @@
       "MST_SALE_PRICE"
     ],
     "BOM_MANAGEMENT": [
-      "BOM_REPLACE"
+      "MST_BOM",
+      "BOM_REPLACE",
+      "CFM_BOM",
+      "SMT_BOM",
+      "SMT_BOM_REPLACE",
+      "SMT_BOM_REPORT",
+      "SMT_BOM_COMPARISON"
     ],
     "EQUIPMENT": [
       "EQUIP_RESULT_SP",
@@ -71,6 +76,7 @@
     ],
     "PURCHASE": [
       "PUR_REQUIREMENT",
+      "PUR_ORDER_PLAN",
       "PUR_FORECAST",
       "PUR_ORDER",
       "PUR_DEPARTURE",
@@ -138,12 +144,8 @@
     "SMT": [
       "SMT_LINE",
       "SMT_LOCATION",
-      "SMT_BOM_REPLACE",
       "SMT_NC_UPLOAD",
-      "SMT_BOM",
       "SMT_PLAN",
-      "SMT_BOM_REPORT",
-      "SMT_BOM_COMPARISON",
       "SMT_FEEDER_PICKUP"
     ],
     "PROCESS_TRANSACTION": [
@@ -238,8 +240,7 @@
     "CONFIRM": [
       "CFM_BUY_PRICE",
       "CFM_SALE_PRICE",
-      "CFM_MOLD_PRICE",
-      "CFM_BOM"
+      "CFM_MOLD_PRICE"
     ],
     "SYSTEM": [
       "SYS_COMPANY",

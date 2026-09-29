@@ -3,7 +3,7 @@ sources:
   - apps/frontend/src/config/menuConfig.ts
   - apps/frontend/scripts/data/pb-screen-inventory.json
 generator: apps/frontend/scripts/gen-migration-status.mjs
-verifiedCommit: 3c10b506
+verifiedCommit: 7cbced64
 ---
 
 # PB 윈도우 ↔ 웹 메뉴·경로 연결표 (자동 생성)
@@ -15,7 +15,7 @@ verifiedCommit: 3c10b506
 
 | 전체 웹 메뉴 | PB 연결 | 웹 신규 | 미확정 |
 |---:|---:|---:|---:|
-| 187 | 169 | 17 | 1 |
+| 188 | 170 | 17 | 1 |
 
 ## 전체 연결표
 
@@ -23,7 +23,6 @@ verifiedCommit: 3c10b506
 |---|---|---|---|---|---|---|
 | 기준정보 | 품목관리 | `MST_PART` | `/master/part` | PB 연결 | `w_des_item_master` | PB 메뉴 인벤토리 |
 | 기준정보 | 제품모델 관리 | `MST_PRODUCT_MODEL` | `/master/product-model` | PB 연결 | `w_pln_product_model_simple_master` | PB 메뉴 인벤토리 |
-| 기준정보 | BOM관리 | `MST_BOM` | `/master/bom` | PB 연결 | `w_des_bom_modify_master` | PB 메뉴 인벤토리 |
 | 기준정보 | 적용모델관리 | `MST_APPLY_ITEM` | `/design/apply-item` | PB 연결 | `w_des_apply_item_master` | PB 메뉴 인벤토리 |
 | 기준정보 | 거래처관리 | `MST_PARTNER` | `/master/partner` | 미확정 |  | 웹 거래처가 PB 고객·협력사 화면을 통합하므로 단일 원본을 확정할 수 없음 |
 | 기준정보 | 고객마스터 | `MST_CUSTOMER` | `/master/customer` | PB 연결 | `w_com_customer_master` | PB 메뉴 인벤토리 |
@@ -42,7 +41,13 @@ verifiedCommit: 3c10b506
 | 기준정보 | 구매단가관리 | `MST_PURCHASE_PRICE` | `/master/purchase-price` | PB 연결 | `w_mat_buy_price_master` | PB 메뉴 인벤토리 |
 | 기준정보 | 품목별 공급처 관리 | `MST_ITEM_SUPPLIER` | `/master/item-supplier` | PB 연결 | `w_mat_item_master` | PB 메뉴 인벤토리 |
 | 기준정보 | 제품판매단가관리 | `MST_SALE_PRICE` | `/master/sale-price` | PB 연결 | `w_sal_sale_price_master` | PB 메뉴 인벤토리 |
+| BOM 관리 | BOM관리 | `MST_BOM` | `/master/bom` | PB 연결 | `w_des_bom_modify_master` | PB 메뉴 인벤토리 |
 | BOM 관리 | 대체BOM관리 | `BOM_REPLACE` | `/bom/replace-bom` | PB 연결 | `w_des_replace_bom_master` | PB 메뉴 인벤토리 |
+| BOM 관리 | 설계BOM승인 | `CFM_BOM` | `/confirm/bom` | PB 연결 | `w_des_bom_confirm_master` | PB 메뉴 인벤토리 |
+| BOM 관리 | SMT BOM 관리 | `SMT_BOM` | `/smt/bom` | PB 연결 | `w_smt_bom_create_master` | PB 메뉴 인벤토리 |
+| BOM 관리 | SMT BOM 대체관리 | `SMT_BOM_REPLACE` | `/smt/bom-replace` | PB 연결 | `w_smt_bom_replace_master` | PB 메뉴 인벤토리 |
+| BOM 관리 | SMT BOM 관리리포트 | `SMT_BOM_REPORT` | `/smt/bom-report` | PB 연결 | `w_smt_bom_master_rpt` | PB 메뉴 인벤토리 |
+| BOM 관리 | 피더레이아웃 비교 | `SMT_BOM_COMPARISON` | `/smt/bom-comparison` | PB 연결 | `w_smt_bom_comparison_master_rpt` | PB 메뉴 인벤토리 |
 | 설비관리 | SP 작업결과조회 | `EQUIP_RESULT_SP` | `/equipment/result-query/sp` | PB 연결 | `w_qc_machine_inspect_data_sp_query` | PB 메뉴 인벤토리 |
 | 설비관리 | SPI 검사결과조회 | `EQUIP_RESULT_SPI` | `/equipment/result-query/spi` | PB 연결 | `w_spi_time_query` | PB 메뉴 인벤토리 |
 | 설비관리 | ICT 검사결과조회 | `EQUIP_RESULT_ICT` | `/equipment/result-query/ict` | PB 연결 | `w_qc_machine_inspect_data_ict_query` | PB 메뉴 인벤토리 |
@@ -58,6 +63,7 @@ verifiedCommit: 3c10b506
 | OEE 관리 | 설비별 작업 실적관리 | `OEE_EQUIP_WORK_RESULT` | `/oee/equip-work-result` | 웹 신규 |  | PB 대응 없음 |
 | OEE 관리 | 설비 운영 현황 | `OEE_EQUIP_OPS_STATUS` | `/oee/equip-ops-status` | 웹 신규 |  | PB 대응 없음 |
 | OEE 관리 | 설비 운영 및 실적관리(현장) | `OEE_FIELD_OPS` | `/oee/field-ops` | 웹 신규 |  | PB 대응 없음 |
+| 발주 | 자재소요량관리 | `PUR_REQUIREMENT` | `/purchase/requirement` | PB 연결 | `w_mat_requirment_plan_master` | PB 메뉴 인벤토리 |
 | 발주 | 자재주문예정관리 | `PUR_FORECAST` | `/purchase/forecast` | PB 연결 | `w_mat_forecast_order_master` | PB 메뉴 인벤토리 |
 | 발주 | 자재주문관리 | `PUR_ORDER` | `/purchase/order` | PB 연결 | `w_mat_purchase_order_master` | PB 메뉴 인벤토리 |
 | 발주 | 자재출발관리 | `PUR_DEPARTURE` | `/purchase/departure` | PB 연결 | `w_mat_departure_master` | PB 메뉴 인벤토리 |
@@ -115,12 +121,8 @@ verifiedCommit: 3c10b506
 | S-PARTS관리 | S-PARTS구매단가관리 | `MOLD_PRICE` | `/mold/price` | PB 연결 | `w_mcn_mold_buy_price_master` | PB 메뉴 인벤토리 |
 | SMT관리 | SMT 라인관리 | `SMT_LINE` | `/smt/line` | PB 연결 | `w_smt_line_master` | PB 메뉴 인벤토리 |
 | SMT관리 | 라인별 테이블 관리 | `SMT_LOCATION` | `/smt/location` | PB 연결 | `w_smt_location_master` | PB 메뉴 인벤토리 |
-| SMT관리 | SMT BOM 대체관리 | `SMT_BOM_REPLACE` | `/smt/bom-replace` | PB 연결 | `w_smt_bom_replace_master` | PB 메뉴 인벤토리 |
 | SMT관리 | SMT 피더레이아웃 등록 | `SMT_NC_UPLOAD` | `/smt/nc-upload` | PB 연결 | `w_smt_upload_nc_master` | PB 메뉴 인벤토리 |
-| SMT관리 | SMT BOM 관리 | `SMT_BOM` | `/smt/bom` | PB 연결 | `w_smt_bom_create_master` | PB 메뉴 인벤토리 |
 | SMT관리 | SMT 계획배포관리 | `SMT_PLAN` | `/smt/plan` | PB 연결 | `w_smt_plan_master` | PB 메뉴 인벤토리 |
-| SMT관리 | SMT BOM 관리리포트 | `SMT_BOM_REPORT` | `/smt/bom-report` | PB 연결 | `w_smt_bom_master_rpt` | PB 메뉴 인벤토리 |
-| SMT관리 | 피더레이아웃 비교 | `SMT_BOM_COMPARISON` | `/smt/bom-comparison` | PB 연결 | `w_smt_bom_comparison_master_rpt` | PB 메뉴 인벤토리 |
 | SMT관리 | 마운터 픽업정보관리 | `SMT_FEEDER_PICKUP` | `/smt/feeder-pickup` | PB 연결 | `w_mcn_feeder_pickup_master` | PB 메뉴 인벤토리 |
 | 공정수불관리 | 공정통과이력 관리 | `PLN_WORKSTAGE_PASS` | `/process-transaction/workstage-pass` | PB 연결 | `w_pln_product_inout_scan_master` | PB 메뉴 인벤토리 |
 | 공정수불관리 | 매거진발행이력 | `PLN_MAGAZINE_LABEL_HISTORY` | `/process-transaction/magazine-label-history` | PB 연결 | `w_pln_product_magazine_label_query` | PB 메뉴 인벤토리 |
@@ -198,7 +200,6 @@ verifiedCommit: 3c10b506
 | 승인 | 구매단가승인 | `CFM_BUY_PRICE` | `/confirm/buy-price` | PB 연결 | `w_mat_buy_price_confirm` | PB 메뉴 인벤토리 |
 | 승인 | 판매단가승인 | `CFM_SALE_PRICE` | `/confirm/sale-price` | PB 연결 | `w_sal_sale_price_confirm` | PB 메뉴 인벤토리 |
 | 승인 | S-PARTS구매단가승인 | `CFM_MOLD_PRICE` | `/confirm/mold-price` | PB 연결 | `w_mcn_mold_buy_price_confirm` | PB 메뉴 인벤토리 |
-| 승인 | 설계BOM승인 | `CFM_BOM` | `/confirm/bom` | PB 연결 | `w_des_bom_confirm_master` | PB 메뉴 인벤토리 |
 | 시스템관리 | 회사관리 | `SYS_COMPANY` | `/master/company` | PB 연결 | `w_company_master` | PB 메뉴 인벤토리 |
 | 시스템관리 | 코드관리 | `SYS_CODE` | `/master/code` | PB 연결 | `w_basecode_master` | PB 메뉴 인벤토리 |
 | 시스템관리 | 환경설정 | `SYS_CONFIG` | `/system/config` | PB 연결 | `w_system_config` | PB 메뉴 인벤토리 |

@@ -480,3 +480,123 @@ export const requirementColumns: ColumnDef<RequirementRow>[] = [
   },
   { accessorKey: 'parentItemCode', header: '상위품목', size: 150 },
 ];
+
+// ───────────────────────────────── 478 발주계획
+
+export interface OrderPlanRow {
+  itemCode: string | null;
+  itemName: string | null;
+  itemSpec: string | null;
+  itemUom: string | null;
+  lineType: string | null;
+  supplierCode: string | null;
+  supplierName: string | null;
+  orderNo: string | null;
+  purchaseOrderDate: string | null;
+  deliveryDate: string | null;
+  orderQty: number | null;
+  inventoryQty: number | null;
+  totalInventoryQty: number | null;
+  purchaseOrderQty: number | null;
+  arrivalQty: number | null;
+  unitPrice: number | null;
+  orderAmt: number | null;
+  currency: string | null;
+  delivery: string | null;
+  purchaseOrderStatus: string | null;
+  mfs: string | null;
+  enterBy: string | null;
+  enterDate: string | null;
+}
+
+export interface RequirementOrderRow {
+  requirementPlanDate: string | null;
+  planDate: string | null;
+  itemCode: string | null;
+  itemName: string | null;
+  itemUom: string | null;
+  lineType: string | null;
+  supplierCode: string | null;
+  supplierName: string | null;
+  mfs: string | null;
+  requirementQty: number | null;
+}
+
+export const orderPlanColumns: ColumnDef<OrderPlanRow>[] = [
+  { accessorKey: 'itemCode', header: '품목코드', size: 150 },
+  { accessorKey: 'itemName', header: '품목명', size: 190 },
+  { accessorKey: 'itemUom', header: '단위', size: 70, meta: center },
+  {
+    accessorKey: 'lineType',
+    header: '거래유형',
+    size: 110,
+    cell: comCodeCell<OrderPlanRow>('LINE TYPE'),
+  },
+  { accessorKey: 'supplierName', header: '협력사', size: 160 },
+  { accessorKey: 'deliveryDate', header: '납기', size: 110, cell: (c) => ts(c.getValue()) },
+  {
+    accessorKey: 'orderQty',
+    header: '소요량',
+    size: 110,
+    meta: right,
+    cell: (c) => num(c.getValue()),
+  },
+  {
+    accessorKey: 'inventoryQty',
+    header: '차감재고',
+    size: 110,
+    meta: right,
+    cell: (c) => num(c.getValue()),
+  },
+  {
+    accessorKey: 'purchaseOrderQty',
+    header: '발주량',
+    size: 120,
+    meta: right,
+    cell: (c) => {
+      const value = Number(c.getValue() ?? 0);
+      return (
+        <span className={value > 0 ? 'font-semibold text-primary' : 'text-text-muted'}>
+          {num(value)}
+        </span>
+      );
+    },
+  },
+  {
+    accessorKey: 'unitPrice',
+    header: '단가',
+    size: 110,
+    meta: right,
+    cell: (c) => num(c.getValue()),
+  },
+  {
+    accessorKey: 'orderAmt',
+    header: '금액',
+    size: 130,
+    meta: right,
+    cell: (c) => num(c.getValue()),
+  },
+  { accessorKey: 'currency', header: '통화', size: 80, meta: center },
+  { accessorKey: 'orderNo', header: '계획번호', size: 150 },
+];
+
+export const requirementOrderColumns: ColumnDef<RequirementOrderRow>[] = [
+  { accessorKey: 'planDate', header: '계획일', size: 110, cell: (c) => ts(c.getValue()) },
+  { accessorKey: 'itemCode', header: '품목코드', size: 150 },
+  { accessorKey: 'itemName', header: '품목명', size: 190 },
+  { accessorKey: 'itemUom', header: '단위', size: 70, meta: center },
+  {
+    accessorKey: 'lineType',
+    header: '거래유형',
+    size: 110,
+    cell: comCodeCell<RequirementOrderRow>('LINE TYPE'),
+  },
+  { accessorKey: 'supplierName', header: '공급처', size: 160 },
+  {
+    accessorKey: 'requirementQty',
+    header: '소요량',
+    size: 120,
+    meta: right,
+    cell: (c) => <span className="font-semibold">{num(c.getValue())}</span>,
+  },
+];

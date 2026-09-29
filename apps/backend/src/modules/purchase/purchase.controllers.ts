@@ -6,6 +6,7 @@
  *   /purchase/forecast  480 자재주문예정관리 (쓰기)
  *   /purchase/arrival   483 자재출발관리 · 484 자재도착관리 (쓰기)
  *   /purchase/requirement 477 자재소요량관리 (쓰기)
+ *   /purchase/order-plan  478 자재발주계획 (쓰기)
  */
 import { Body, Controller, Delete, Get, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -18,6 +19,10 @@ import {
   ArrivalConfirmDto,
   ArrivalQueryDto,
   MasterPlanDeleteDto,
+  OrderPlanGenerateDto,
+  OrderPlanPurchaseDto,
+  OrderPlanQueryDto,
+  PriceResetDto,
   MasterPlanQueryDto,
   MasterPlanRowDto,
   RequirementPlanQueryDto,
@@ -31,6 +36,7 @@ import {
   PurchaseOrderSaveDto,
 } from './purchase.dto';
 import { PurchaseOrderService } from './purchase-order.service';
+import { OrderPlanService } from './order-plan.service';
 import { RequirementPlanService } from './requirement-plan.service';
 
 const DEFAULT_USER = 'SYSTEM';
@@ -301,5 +307,71 @@ export class RequirementPlanController {
         rowLimit: ROW_LIMIT,
       },
     };
+  }
+}
+
+@ApiTags('자재구매 - 발주계획')
+@UseGuards(JwtAuthGuard)
+@Controller('purchase/order-plan')
+export class OrderPlanController {
+  constructor(private readonly service: OrderPlanService) {}
+
+  @Get()
+  @ApiOperation({ summary: '478 발주계획 목록 (dw_1).' })
+  async find(
+    @Query() query: OrderPlanQueryDto,
+    @OrganizationId() organizationId: number,
+  ) {
+    return paged(await this.service.findOrderPlans(query, organizationId));
+  }
+
+  @Get('requirements')
+  @ApiOperation({ summary: '478 발주계획을 만들기 전 단계인 소요량.' })
+  async requirements(@OrganizationId() organizationId: number) {
+    return paged(await this.service.findRequirementOrders(organizationId));
+  }
+
+  @Post('generate')
+  @ApiOperation({
+    summary: '478 발주계획 생성 (**쓰기**). 계획 원천을 BOM 으로 펴고, 켜 둔 재고'
+      + ' 원천을 차감해 발주계획을 만든다. 조직 단위로 갈아끼운다 — PB 와 같다.'
+      + ' 전개는 `PKG_DESIGN.BOM_EXPLOSION`, 공급처는 `F_GET_MAX_SUPPLIER_BY_ITEM`,'
+      + ' 납기는 `F_GET_DELIVERY_DATE` 를 그대로 쓴다.',
+  })
+  async generate(
+    @Body() dto: OrderPlanGenerateDto,
+    @OrganizationId() organizationId: number,
+    @UserId() userId?: string,
+  ) {
+    return ResponseUtil.success(
+      await this.service.generate(dto, organizationId, userId || DEFAULT_USER),
+    );
+  }
+
+  @Post('price-reset')
+  @ApiOperation({
+    summary: '478 단가 재설정 (**쓰기**). 단가 기준정보에서 납품구분·단가·통화를'
+      + ' 다시 붙인다 (유효기간 안의 단가만).',
+  })
+  async resetPrice(
+    @Body() dto: PriceResetDto,
+    @OrganizationId() organizationId: number,
+  ) {
+    return ResponseUtil.success(await this.service.resetPrice(dto, organizationId));
+  }
+
+  @Post('purchase')
+  @ApiOperation({
+    summary: '478 발주 확정 (**쓰기**). 고른 계획을 실제 주문으로 넘기고, 넘어간'
+      + ' 계획은 지운다 — PB 도 그렇게 한다 (두 번 발주되지 않게).',
+  })
+  async purchase(
+    @Body() dto: OrderPlanPurchaseDto,
+    @OrganizationId() organizationId: number,
+    @UserId() userId?: string,
+  ) {
+    return ResponseUtil.success(
+      await this.service.purchase(dto, organizationId, userId || DEFAULT_USER),
+    );
   }
 }

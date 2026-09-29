@@ -569,7 +569,8 @@
     "purchase.order": "Purchase Orders",
     "purchase.departure": "Departure",
     "purchase.arrival": "Arrival",
-    "purchase.requirement": "Material Requirements"
+    "purchase.requirement": "Material Requirements",
+    "purchase.orderPlan": "Purchase Order Planning"
   },
   "header": {
     "theme": "Theme",

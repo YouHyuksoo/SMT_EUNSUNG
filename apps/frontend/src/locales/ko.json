@@ -569,7 +569,8 @@
     "purchase.order": "자재주문관리",
     "purchase.departure": "자재출발관리",
     "purchase.arrival": "자재도착관리",
-    "purchase.requirement": "자재소요량관리"
+    "purchase.requirement": "자재소요량관리",
+    "purchase.orderPlan": "자재발주계획"
   },
   "header": {
     "theme": "테마",

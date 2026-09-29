@@ -569,7 +569,8 @@
     "purchase.order": "Quản lý đơn đặt vật tư",
     "purchase.departure": "Quản lý xuất phát vật tư",
     "purchase.arrival": "Quản lý vật tư đến",
-    "purchase.requirement": "Quản lý nhu cầu vật tư"
+    "purchase.requirement": "Quản lý nhu cầu vật tư",
+    "purchase.orderPlan": "Kế hoạch đặt hàng vật tư"
   },
   "header": {
     "theme": "Giao diện",

@@ -150,3 +150,72 @@ export class MasterPlanDeleteDto {
 export class RequirementRunDto {
   @IsDateString() requirementPlanDate!: string;
 }
+
+// ───────────────────────────────── 478 자재발주계획
+
+/** PB 라디오버튼(계획 원천)에 대응한다. */
+export const PLAN_SOURCE_VALUES = [
+  'manual',
+  'productionPlan',
+  'productionPlanByTime',
+  'salePlan',
+  'salePlanByTime',
+] as const;
+
+/** PB 체크박스(재고 반영 대상)에 대응한다. */
+export const INVENTORY_ARM_VALUES = [
+  'inventory',
+  'order',
+  'arrival',
+  'workstageInventory',
+  'freeInventory',
+] as const;
+
+export class OrderPlanQueryDto {
+  @IsOptional() @IsDateString() dateFrom?: string;
+  @IsOptional() @IsDateString() dateTo?: string;
+  @IsOptional() @IsString() supplierCode?: string;
+  @IsOptional() @IsString() itemCode?: string;
+  @IsOptional() @IsString() lineType?: string;
+  /** 발주할 수량이 남은 계획만 본다. */
+  @IsOptional() @Type(() => Boolean) pendingOnly?: boolean;
+}
+
+export class OrderPlanGenerateDto {
+  /** 어느 계획에서 펼지. PB 는 라디오버튼이었다. */
+  @IsIn([...PLAN_SOURCE_VALUES]) source!: string;
+  @IsDateString() dateFrom!: string;
+  @IsDateString() dateTo!: string;
+  /** 발주일. 만들어지는 계획의 `PURCHASE_ORDER_DATE` 가 된다. */
+  @IsDateString() orderDate!: string;
+  @IsOptional() @IsString() itemCode?: string;
+  /**
+   * 소요량에서 뺄 재고 원천. PB 체크박스 다섯과 1:1 이고, 켜진 것만 합산된다.
+   * 비우면 아무것도 빼지 않는다 (소요량이 그대로 발주량이 된다).
+   */
+  @IsArray() @IsIn([...INVENTORY_ARM_VALUES], { each: true })
+  inventorySources!: string[];
+  /** 최소주문량·포장단위·불량율을 적용한다 (PB f_get_order_property 'A'). */
+  @Type(() => Boolean) applyOrderRule!: boolean;
+  /** 단가 기준정보를 붙인다. */
+  @Type(() => Boolean) applyUnitPrice!: boolean;
+  /** 리드타임만큼 납기를 민다. */
+  @Type(() => Boolean) applyLeadTime!: boolean;
+}
+
+export class PriceResetDto {
+  @IsOptional() @IsString() supplierCode?: string;
+}
+
+export class OrderPlanKeyDto {
+  @IsString() @IsNotEmpty() itemCode!: string;
+  @IsString() @IsNotEmpty() lineType!: string;
+}
+
+export class OrderPlanPurchaseDto {
+  @IsDateString() orderDate!: string;
+  @IsArray() @ArrayNotEmpty() @ArrayMaxSize(500)
+  @ValidateNested({ each: true })
+  @Type(() => OrderPlanKeyDto)
+  itemCodes!: OrderPlanKeyDto[];
+}
