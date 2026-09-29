@@ -30,11 +30,26 @@ try {
     if (($created.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) { throw 'Created incoming target is a reparse point' }
     if (-not $TestMode) {
       # Windows assigns BUILTIN\Administrators as the owner of objects created by
-      # an administrator, so later ownership checks would reject this directory.
-      # Claim what we just created; this is not a takeover because Prepare refuses
-      # to run when the target already exists.
-      $createdAcl = Get-Acl -LiteralPath $target
-      $createdAcl.SetOwner([Security.Principal.WindowsIdentity]::GetCurrent().User)
+      # an administrator, and the directory inherits whatever the deploy root
+      # grants. Later checks demand sole ownership and no write access outside
+      # the deployment identity, so establish both on what we just created.
+      # This is not a takeover: Prepare refuses to run when the target exists.
+      $deployIdentity = [Security.Principal.WindowsIdentity]::GetCurrent().User
+      $createdAcl = New-Object Security.AccessControl.DirectorySecurity
+      $createdAcl.SetAccessRuleProtection($true, $false)
+      $createdAcl.SetOwner($deployIdentity)
+      $inherit = [Security.AccessControl.InheritanceFlags]::ContainerInherit `
+        -bor [Security.AccessControl.InheritanceFlags]::ObjectInherit
+      foreach ($sid in @($deployIdentity,
+                         (New-Object Security.Principal.SecurityIdentifier('S-1-5-18')),
+                         (New-Object Security.Principal.SecurityIdentifier('S-1-5-32-544')))) {
+        $createdAcl.AddAccessRule((New-Object Security.AccessControl.FileSystemAccessRule(
+          $sid,
+          [Security.AccessControl.FileSystemRights]::FullControl,
+          $inherit,
+          [Security.AccessControl.PropagationFlags]::None,
+          [Security.AccessControl.AccessControlType]::Allow)))
+      }
       Set-Acl -LiteralPath $target -AclObject $createdAcl
     }
   } elseif (Test-Path -LiteralPath $target) {
