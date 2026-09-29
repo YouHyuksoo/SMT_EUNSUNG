@@ -236,7 +236,7 @@ export default function IdleReasonMasterPage() {
             <p className="text-sm text-text-muted mt-1">설비 비가동 사유코드 · 표준시간 · 분류별 매뉴얼(BFILE) 관리</p>
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={load} className="border border-border rounded px-3 h-10 text-text-muted hover:bg-surface flex items-center gap-1"><RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />새로고침</button>
+            <button onClick={load} className="border border-border rounded px-3 h-10 text-text-muted hover:bg-surface flex items-center gap-1"><RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />조회</button>
             <button onClick={openCreate} className="bg-primary text-white px-4 py-2 rounded h-10">사유코드 등록</button>
           </div>
         </div>

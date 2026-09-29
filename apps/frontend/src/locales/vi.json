@@ -50,7 +50,7 @@
     "add": "Thêm",
     "search": "Tìm kiếm",
     "period": "Thời gian",
-    "refresh": "Làm mới",
+    "refresh": "Tra cứu",
     "viewMore": "Xem thêm",
     "reset": "Đặt lại",
     "export": "Xuất",
@@ -173,7 +173,8 @@
       "thisMonth": "Tháng này",
       "presets": "Chọn khoảng",
       "openIncludedNotice": "Đã bao gồm {{count}} mục đang xử lý nằm ngoài khoảng ngày."
-    }
+    },
+    "refreshInterval": "Chu kỳ làm mới"
   },
   "help": {
     "title": "Trợ giúp",

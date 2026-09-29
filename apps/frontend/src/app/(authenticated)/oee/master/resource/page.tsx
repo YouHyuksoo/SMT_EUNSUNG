@@ -349,7 +349,7 @@ export default function OeeResourceMasterPage() {
           </div>
           <div className="flex items-center gap-2">
             <button type="button" onClick={() => void load()} className="flex h-10 items-center gap-1 rounded border border-border px-3 text-text-muted hover:bg-surface">
-              <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />새로고침
+              <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />조회
             </button>
             <button type="button" onClick={openCreate} className="h-10 rounded bg-primary px-4 py-2 text-white">리소스 등록</button>
           </div>

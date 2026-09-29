@@ -79,13 +79,9 @@ export default function ReceiptIssueLedgerPage() {
         </div>
         {/* 상단 액션 순서: 보조(secondary) → 주요(primary). docs/design/layout.md */}
         <div className="flex gap-2">
-          <Button variant="secondary" onClick={runSearch} disabled={loading}>
-            <RefreshCw className={`mr-1 h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-            {t("common.refresh")}
-          </Button>
           <Button onClick={runSearch} disabled={loading}>
-            <Search className="mr-1 h-4 w-4" />
-            {t("common.search")}
+            <Search className={`mr-1 h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+            {t("common.refresh")}
           </Button>
         </div>
       </header>

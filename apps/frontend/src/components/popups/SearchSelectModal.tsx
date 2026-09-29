@@ -192,7 +192,7 @@ function SearchSelectBody({
         ))}
         <Button onClick={handleSearch} className="flex-shrink-0">
           <Search className="w-4 h-4 mr-1" />
-          {t("common.search")}
+          {t("common.refresh")}
         </Button>
       </div>
 

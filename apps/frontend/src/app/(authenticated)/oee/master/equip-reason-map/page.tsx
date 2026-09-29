@@ -293,7 +293,7 @@ export default function EquipReasonMapPage() {
             <p className="text-sm text-text-muted mt-1">설비마스터 × 비가동사유코드 매핑 관리</p>
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={load} className="border border-border rounded px-3 h-10 text-text-muted hover:bg-surface flex items-center gap-1"><RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />새로고침</button>
+            <button onClick={load} className="border border-border rounded px-3 h-10 text-text-muted hover:bg-surface flex items-center gap-1"><RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />조회</button>
             <button onClick={openCreate} className="bg-primary text-white px-4 py-2 rounded h-10">연계 등록</button>
           </div>
         </div>

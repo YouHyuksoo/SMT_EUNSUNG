@@ -70,7 +70,7 @@ export default function PurchasePricePage() {
           </div>
           <div className="flex shrink-0 gap-2">
             <Button variant="secondary" size="sm" onClick={fetchData}>
-              <RefreshCw className={`mr-1 h-4 w-4 ${loading ? "animate-spin" : ""}`} />새로고침
+              <RefreshCw className={`mr-1 h-4 w-4 ${loading ? "animate-spin" : ""}`} />조회
             </Button>
             <Button size="sm" onClick={openCreate}><Plus className="mr-1 h-4 w-4" />신규 단가</Button>
           </div>

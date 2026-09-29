@@ -297,7 +297,7 @@ export default function PartSearchModal({
           className="w-32 flex-shrink-0"
         />
         <Button onClick={handleSearch} className="flex-shrink-0">
-          {t("common.search")}
+          {t("common.refresh")}
         </Button>
       </div>
 

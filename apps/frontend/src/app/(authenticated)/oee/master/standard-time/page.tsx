@@ -185,7 +185,7 @@ export default function StandardTimeMasterPage() {
             <p className="text-sm text-text-muted mt-1">품목(모델) 기준 ST/CT/NT/TT 표준시간 · 적용기간 리비전 관리</p>
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={load} className="border border-border rounded px-3 h-10 text-text-muted hover:bg-surface flex items-center gap-1"><RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />새로고침</button>
+            <button onClick={load} className="border border-border rounded px-3 h-10 text-text-muted hover:bg-surface flex items-center gap-1"><RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />조회</button>
             <button onClick={openCreate} className="bg-primary text-white px-4 py-2 rounded h-10">표준시간 등록</button>
           </div>
         </div>

@@ -50,7 +50,7 @@
     "add": "추가",
     "search": "검색",
     "period": "기간",
-    "refresh": "새로고침",
+    "refresh": "조회",
     "viewMore": "더보기",
     "reset": "초기화",
     "export": "내보내기",
@@ -173,7 +173,8 @@
       "thisMonth": "이번 달",
       "presets": "기간 선택",
       "openIncludedNotice": "기간 밖이지만 진행 중인 {{count}}건이 포함되어 있습니다."
-    }
+    },
+    "refreshInterval": "새로고침 주기"
   },
   "help": {
     "title": "도움말",

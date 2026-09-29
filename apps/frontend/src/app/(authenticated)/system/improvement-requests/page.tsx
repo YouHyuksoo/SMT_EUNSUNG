@@ -138,7 +138,7 @@ export default function ImprovementRequestsPage() {
           onClick={handleSearch}
           className="px-4 py-1.5 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
         >
-          {t("common.search", "조회")}
+          {t("common.refresh")}
         </button>
         <button
           onClick={handleReset}
