@@ -697,6 +697,43 @@ exit $LASTEXITCODE
     Assert-EunsungBuiltRelease -DeployRoot $root -ReleaseDir (Join-Path $root "releases/$shaA") -CommitSha $shaA -AccessValidator { $true }
   }
 
+  Test-Case 'stale release leftovers are cleared but the active release is never overwritten' {
+    $root = Join-Path $tempRoot 'release-target'
+    $sourceRoot = Join-Path $tempRoot 'release-target-source'
+    $sourceRelease = New-TestRelease -DeployRoot $sourceRoot -Sha $shaA
+    $archive = Join-Path $root 'incoming.zip'
+    New-Item -ItemType Directory -Force -Path $root, (Join-Path $root 'shared') | Out-Null
+    Set-Content -LiteralPath (Join-Path $root 'shared/backend.env') -Value 'DB=x' -Encoding UTF8
+    Set-Content -LiteralPath (Join-Path $root 'shared/frontend-database.json') -Value '{}' -Encoding UTF8
+    Compress-Archive -Path (Join-Path $sourceRelease '*') -DestinationPath $archive
+    $adapters = @{
+      TestMode = $true
+      AccessValidator = { $true }
+      NativeInvoker = {
+        param($FilePath, $Arguments, $WorkingDirectory, $Environment)
+        if ($Arguments -contains '--version') { return @{ ExitCode=0; Output='10.28.1' } }
+        return @{ ExitCode=0; Output='' }
+      }
+      CaptureSwitchState = { throw 'must not capture PM2' }
+      HealthCheck = { throw 'must not health check' }
+      PortOwnerProvider = { throw 'must not inspect ports' }
+    }
+    $releaseDir = Join-Path $root "releases/$shaA"
+
+    # 지금 서비스 중인 릴리스면 손대지 않고 막는다.
+    New-Item -ItemType Directory -Force -Path $releaseDir | Out-Null
+    Set-Content -LiteralPath (Join-Path $releaseDir 'live.txt') -Value 'live' -Encoding UTF8
+    Set-Content -LiteralPath (Join-Path $root 'current.json') -Value (@{ commitSha=$shaA; releaseDir=$releaseDir } | ConvertTo-Json) -Encoding UTF8
+    Assert-Throws { Invoke-EunsungDeployment -CommitSha $shaA -ArchivePath $archive -BuildOnly -DeployRoot $root -Adapters $adapters } 'Release target already exists'
+    Assert-True (Test-Path -LiteralPath (Join-Path $releaseDir 'live.txt')) 'the active release must not be touched'
+
+    # 실패한 배포가 남긴 잔해면 치우고 진행한다.
+    Set-Content -LiteralPath (Join-Path $root 'current.json') -Value (@{ commitSha=$shaB; releaseDir=(Join-Path $root "releases/$shaB") } | ConvertTo-Json) -Encoding UTF8
+    Invoke-EunsungDeployment -CommitSha $shaA -ArchivePath $archive -BuildOnly -DeployRoot $root -Adapters $adapters
+    Assert-True (-not (Test-Path -LiteralPath (Join-Path $releaseDir 'live.txt'))) 'the stale leftover must be cleared'
+    Assert-EunsungBuiltRelease -DeployRoot $root -ReleaseDir $releaseDir -CommitSha $shaA -AccessValidator { $true }
+  }
+
   Test-Case 'injected post-switch health failure restores prior current release without config mutation' {
     $root = Join-Path $tempRoot 'inject'
     New-TestRelease -DeployRoot $root -Sha $shaA | Out-Null
@@ -830,7 +867,8 @@ exit $LASTEXITCODE
       Assert-Equal 1 $safeBackups.Count
       Assert-True (Test-Path -LiteralPath $unsafeBackup)
       Assert-True (Test-Path -LiteralPath $nonRecovery)
-      Assert-Equal 2 $aclSet.Count
+      # 활성화 2회 x (state 디렉터리 + dump 백업) = 4
+      Assert-Equal 4 $aclSet.Count
     } finally {
       [Environment]::SetEnvironmentVariable('PM2_HOME', $previousPm2Home, 'Process')
     }

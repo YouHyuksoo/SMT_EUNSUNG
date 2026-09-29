@@ -664,6 +664,30 @@ function Assert-EunsungRecoveryStorage {
   return $resolvedState
 }
 
+# state 디렉터리는 배포가 직접 만든다. 만들기만 하고 ACL 은 안 걸어둔 채
+# Test-EunsungAclAccess 로 검증만 하면, 상위에서 상속된 ACE(예: 삭제된 계정의
+# 고아 SID) 때문에 배포가 자기가 만든 폴더에서 막힌다. 만들 때 ACL 을 확정한다.
+function Set-EunsungRecoveryStateAcl {
+  param([string]$Path, [scriptblock]$AclSetter)
+  if ($AclSetter) { & $AclSetter $Path; return }
+  $deploySid = New-Object -TypeName Security.Principal.SecurityIdentifier -ArgumentList (Get-EunsungDeployIdentitySid)
+  $acl = Get-Acl -LiteralPath $Path
+  $acl.SetAccessRuleProtection($true, $false)
+  foreach ($existingRule in @($acl.Access)) { [void]$acl.RemoveAccessRuleAll($existingRule) }
+  $acl.SetOwner($deploySid)
+  $inheritance = [Security.AccessControl.InheritanceFlags]::ContainerInherit -bor [Security.AccessControl.InheritanceFlags]::ObjectInherit
+  foreach ($sidValue in @($deploySid.Value, 'S-1-5-18', 'S-1-5-32-544')) {
+    $sid = New-Object -TypeName Security.Principal.SecurityIdentifier -ArgumentList $sidValue
+    $acl.AddAccessRule((New-Object -TypeName Security.AccessControl.FileSystemAccessRule -ArgumentList @(
+      $sid,
+      [Security.AccessControl.FileSystemRights]::FullControl,
+      $inheritance,
+      [Security.AccessControl.PropagationFlags]::None,
+      [Security.AccessControl.AccessControlType]::Allow)))
+  }
+  Set-Acl -LiteralPath $Path -AclObject $acl
+}
+
 function Set-EunsungRecoveryBackupAcl {
   param([string]$Path, [scriptblock]$AclSetter)
   if ($AclSetter) { & $AclSetter $Path; return }
@@ -739,6 +763,7 @@ function Get-EunsungSwitchState {
     Assert-EunsungNoReparseAncestry -Root $DeployRoot -Target $stateDir -AttributeProvider $AttributeProvider
     $stateDir = Resolve-EunsungContainedPath -Root $DeployRoot -Candidate $stateDir -AllowMissing
     New-Item -ItemType Directory -Force -Path $stateDir | Out-Null
+    Set-EunsungRecoveryStateAcl -Path $stateDir -AclSetter $AclSetter
     $stateDir = Assert-EunsungRecoveryStorage -DeployRoot $DeployRoot -Pm2Home $pm2Home -StateDir $stateDir -DumpPath $dumpPath -AttributeProvider $AttributeProvider -AccessValidator $AccessValidator
     Remove-EunsungStaleRecoveryDumps -DeployRoot $DeployRoot -StateDir $stateDir -Keep 0 -AttributeProvider $AttributeProvider -AccessValidator $AccessValidator
     $backup = Join-Path $stateDir ("dump-before-$([guid]::NewGuid().ToString('N')).pm2")
@@ -1068,6 +1093,45 @@ function Invoke-EunsungBuild {
   Write-EunsungBuildMarker -ReleaseDir $ReleaseDir -CommitSha $CommitSha
 }
 
+# 실패한 배포가 남긴 releases\<SHA> 를 치운다.
+#
+# 그냥 지우면 되는 게 아니다. pnpm 은 전역 store 에서 하드링크를 건다. 그래서
+# 릴리스 안의 네이티브 .dll 은 지금 돌고 있는 서비스가 물고 있는 실체 파일과
+# 같은 것이고, 서비스를 내리기 전에는 삭제가 공유 위반으로 막힌다. 지우지 못하면
+# 이름만 바꿔 옆으로 치워서 같은 커밋을 다시 배포할 수 있게 한다.
+function Remove-EunsungFailedRelease {
+  param([string]$DeployRoot, [string]$ReleaseDir, [scriptblock]$AttributeProvider)
+  if (-not (Test-Path -LiteralPath $ReleaseDir)) { return $true }
+  try {
+    Assert-EunsungNoReparseAncestry -Root $DeployRoot -Target $ReleaseDir -AttributeProvider $AttributeProvider
+    $resolved = Resolve-EunsungContainedPath -Root $DeployRoot -Candidate $ReleaseDir
+    Remove-Item -LiteralPath $resolved -Recurse -Force -ErrorAction SilentlyContinue
+    if (-not (Test-Path -LiteralPath $resolved)) { return $true }
+    $quarantine = Join-Path (Split-Path -Parent $resolved) ((Split-Path -Leaf $resolved) + '.abandoned-' + [guid]::NewGuid().ToString('N'))
+    Move-Item -LiteralPath $resolved -Destination $quarantine -Force -ErrorAction SilentlyContinue
+    return (-not (Test-Path -LiteralPath $resolved))
+  } catch {
+    # 정리 실패가 원래 배포 오류를 덮어쓰면 안 된다. 원인은 호출부가 다시 던진다.
+    return $false
+  }
+}
+
+# 같은 커밋을 다시 배포할 때, 지금 서비스 중인 릴리스는 절대 건드리지 않는다.
+# 그 외의 잔해는 실패한 배포가 남긴 것이므로 치우고 진행한다.
+function Assert-EunsungReleaseTargetAvailable {
+  param([string]$DeployRoot, [string]$ReleaseDir, [string]$CommitSha, [scriptblock]$AttributeProvider)
+  if (-not (Test-Path -LiteralPath $ReleaseDir)) { return }
+  $currentPath = Join-Path $DeployRoot 'current.json'
+  if (Test-Path -LiteralPath $currentPath -PathType Leaf) {
+    $current = $null
+    try { $current = Get-Content -Raw -LiteralPath $currentPath | ConvertFrom-Json } catch { throw 'Current release marker is invalid' }
+    if ($null -ne $current -and [string]$current.commitSha -ceq $CommitSha) { throw 'Release target already exists' }
+  }
+  if (-not (Remove-EunsungFailedRelease -DeployRoot $DeployRoot -ReleaseDir $ReleaseDir -AttributeProvider $AttributeProvider)) {
+    throw 'Release target already exists'
+  }
+}
+
 function Invoke-EunsungDeployment {
   [CmdletBinding()]
   param(
@@ -1105,13 +1169,20 @@ function Invoke-EunsungDeployment {
     $archive = Resolve-EunsungContainedPath -Root $DeployRoot -Candidate $ArchivePath
     Assert-EunsungNoReparseAncestry -Root $DeployRoot -Target $archive -AttributeProvider $attributeProvider
     Assert-EunsungOrdinaryFile -Path $archive -AttributeProvider $attributeProvider
-    if (Test-Path -LiteralPath $releaseDir) { throw 'Release target already exists' }
+    Assert-EunsungReleaseTargetAvailable -DeployRoot $DeployRoot -ReleaseDir $releaseDir -CommitSha $CommitSha -AttributeProvider $attributeProvider
     New-Item -ItemType Directory -Path $releaseDir | Out-Null
-    Assert-EunsungNoReparseAncestry -Root $DeployRoot -Target $releaseDir -AttributeProvider $attributeProvider
-    Expand-Archive -LiteralPath $archive -DestinationPath $releaseDir
-    Copy-EunsungProtectedConfigs -DeployRoot $DeployRoot -ReleaseDir $releaseDir -AccessValidator $accessValidator -AttributeProvider $attributeProvider
-    Set-Content -LiteralPath (Join-Path $releaseDir '.commit-sha') -Value $CommitSha -NoNewline -Encoding ASCII
-    Invoke-EunsungBuild -ReleaseDir $releaseDir -CommitSha $CommitSha -NativeInvoker $native
+    # 여기서 실패하면 반쯤 만들어진 releases\<SHA> 가 남아, 같은 커밋을 다시 배포할 때
+    # 'Release target already exists' 로 막힌다. 자기가 만든 잔해는 자기가 치운다.
+    try {
+      Assert-EunsungNoReparseAncestry -Root $DeployRoot -Target $releaseDir -AttributeProvider $attributeProvider
+      Expand-Archive -LiteralPath $archive -DestinationPath $releaseDir
+      Copy-EunsungProtectedConfigs -DeployRoot $DeployRoot -ReleaseDir $releaseDir -AccessValidator $accessValidator -AttributeProvider $attributeProvider
+      Set-Content -LiteralPath (Join-Path $releaseDir '.commit-sha') -Value $CommitSha -NoNewline -Encoding ASCII
+      Invoke-EunsungBuild -ReleaseDir $releaseDir -CommitSha $CommitSha -NativeInvoker $native
+    } catch {
+      Remove-EunsungFailedRelease -DeployRoot $DeployRoot -ReleaseDir $releaseDir -AttributeProvider $attributeProvider
+      throw
+    }
   }
 
   if ($BuildOnly) {
