@@ -281,7 +281,44 @@ function ConvertFrom-EunsungPm2Json {
   try {
     $apps = @($Json | ConvertFrom-Json)
   } catch {
-    throw 'PM2 returned invalid JSON'
+    # PM2 는 각 앱의 pm2_env 에 프로세스 환경변수를 통째로 넣는다. Windows 환경에는
+    # 'username' 과 'USERNAME' 처럼 대소문자만 다른 항목이 있고, PowerShell 5.1 의
+    # ConvertFrom-Json 은 키를 대소문자 구분 없이 다루므로 중복으로 보고 거부한다.
+    # 배포가 보는 것은 name/pid/pm2_env 의 몇 개 필드뿐이라, node 로 필요한 것만
+    # 추려 다시 읽는다 (node 는 PM2 를 돌리는 그 런타임이다).
+    try {
+      $reduced = $Json | & node -e @'
+let raw = '';
+process.stdin.on('data', (c) => { raw += c; });
+process.stdin.on('end', () => {
+  const apps = JSON.parse(raw);
+  process.stdout.write(JSON.stringify(apps.map((a) => ({
+    name: a.name,
+    pid: a.pid,
+    pm2_env: {
+      status: a.pm2_env && a.pm2_env.status,
+      pm_uptime: a.pm2_env && a.pm2_env.pm_uptime,
+      restart_time: a.pm2_env && a.pm2_env.restart_time,
+      unstable_restarts: a.pm2_env && a.pm2_env.unstable_restarts,
+      pm_cwd: a.pm2_env && a.pm2_env.pm_cwd,
+      pm_exec_path: a.pm2_env && a.pm2_env.pm_exec_path,
+      exec_interpreter: a.pm2_env && a.pm2_env.exec_interpreter,
+      args: a.pm2_env && a.pm2_env.args,
+      instances: a.pm2_env && a.pm2_env.instances,
+      exec_mode: a.pm2_env && a.pm2_env.exec_mode,
+      autorestart: a.pm2_env && a.pm2_env.autorestart,
+      watch: a.pm2_env && a.pm2_env.watch,
+      pm_out_log_path: a.pm2_env && a.pm2_env.pm_out_log_path,
+      pm_err_log_path: a.pm2_env && a.pm2_env.pm_err_log_path,
+      env: { RELEASE_TOKEN: a.pm2_env && a.pm2_env.env && a.pm2_env.env.RELEASE_TOKEN }
+    }
+  }))));
+});
+'@
+      $apps = @([string]$reduced | ConvertFrom-Json)
+    } catch {
+      throw 'PM2 returned invalid JSON'
+    }
   }
   return $apps
 }
