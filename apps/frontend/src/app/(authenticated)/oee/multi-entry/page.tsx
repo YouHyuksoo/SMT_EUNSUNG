@@ -23,66 +23,63 @@ import {
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Modal } from '@/components/ui';
+import { resolveOeeViewMode, type OeeViewMode } from '@/lib/oee-view-mode';
 import { api } from '@/services/api';
 import { useAuthStore } from '@/stores/authStore';
 import {
-  createRequestId,
-  makeEndPayload,
-  makeStartPayload,
-  normalizeCommandResult,
   normalizeResource,
-  normalizeStatus,
   readCollection,
   resourceIdentity,
-  stableEndSignature,
-  stableStartSignature,
   unwrap,
-  type EndCommandFields,
-  type OeeCommandResult,
-  type OeeEndPayload,
   type OeeProcessCode,
   type OeeReason,
   type OeeResource,
-  type OeeStartPayload,
-  type OeeStatus,
   type OeeWorker,
-  type StartCommandFields,
 } from './_lib/oee-mobile';
 import {
-  commandKey,
-  isRetryableOutcome,
-  isTerminalSuccess,
-  selectRetryableResources,
-  type CommandOutcomeState,
-  type CommandOutcomeView,
+  clearPendingSubmission,
+  canConfirmPendingSubmission,
+  createEndReasonOverride,
+  getActiveEndReasonCode,
+  getPendingSubmissionStorageKey,
+  makeEndBatchPayload,
+  makeStartBatchPayload,
+  normalizeBatchResponse,
+  normalizeMultiEntryStatus,
+  parseOrganizationId,
+  PendingSubmissionStorageError,
+  readPendingSubmission,
+  summarizeEndReasons,
+  utf8ByteLength,
+  validateBatchEvents,
+  writePendingSubmission,
+  type BatchOutcomeState,
+  type EndReasonOverride,
+  type MultiEntryEndItem,
+  type MultiEntryEvent,
+  type MultiEntryEndReasonTarget,
+  type MultiEntryStatus,
+  type PendingMultiEntrySubmission,
+  type PendingStatusSnapshot,
   type MultiEntryMode,
 } from './_lib/multi-entry';
 
 interface ResourceStatusRow {
   loading: boolean;
-  status: OeeStatus | null;
+  status: MultiEntryStatus | null;
   error: string | null;
 }
 
-interface PendingCommand {
-  signature: string;
-  requestId: string;
-}
-
-interface CommandToSubmit {
+interface BatchOutcomeView {
   mode: MultiEntryMode;
-  resource: OeeResource;
-  key: string;
-  signature: string;
-  requestId: string;
-  payload: OeeStartPayload | OeeEndPayload;
-}
-
-interface CommandAttempt {
-  command: CommandToSubmit;
-  state: CommandOutcomeState;
+  processCode: OeeProcessCode;
+  lineCodes: string[];
+  targetItemCount: number;
+  state: BatchOutcomeState;
   message: string;
+  events: MultiEntryEvent[] | null;
 }
 
 interface AvailabilityLabels {
@@ -121,8 +118,18 @@ function readApiMessage(error: unknown, fallback: string): string {
   return fallback;
 }
 
+function readPendingStorageErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof PendingSubmissionStorageError) return `${fallback} (${error.code})`;
+  return fallback;
+}
+
 function responseStatus(error: unknown): number | null {
   return axios.isAxiosError(error) ? error.response?.status ?? null : null;
+}
+
+function responseHttpStatus(response: unknown): number | null {
+  if (!isRecord(response) || typeof response.status !== 'number') return null;
+  return response.status;
 }
 
 function parseWorker(response: unknown): OeeWorker | null {
@@ -134,7 +141,7 @@ function parseWorker(response: unknown): OeeWorker | null {
 function isEligibleStatus(mode: MultiEntryMode, row: ResourceStatusRow | undefined): boolean {
   if (!row || row.loading || row.error || !row.status) return false;
   if (mode === 'START') return row.status.state === 'RUNNING';
-  return row.status.state === 'DOWNTIME' && Boolean(row.status.openEvent?.eventId);
+  return row.status.state === 'DOWNTIME' && row.status.openEvents.length > 0;
 }
 
 function getResourceAvailability(
@@ -152,7 +159,7 @@ function getResourceAvailability(
   if (mode === 'START' && row.status.state === 'RUNNING') {
     return { disabled: false, label: labels.running, icon: PlayCircle, tone: 'text-emerald-300' };
   }
-  if (mode === 'END' && row.status.state === 'DOWNTIME' && row.status.openEvent?.eventId) {
+  if (mode === 'END' && row.status.state === 'DOWNTIME' && row.status.openEvents.length > 0) {
     return { disabled: false, label: labels.downtime, icon: PauseCircle, tone: 'text-red-300' };
   }
 
@@ -169,16 +176,20 @@ function getResourceAvailability(
   };
 }
 
-function getOutcomeIcon(state: CommandOutcomeState | undefined): LucideIcon {
+function getOutcomeIcon(state: BatchOutcomeState | undefined): LucideIcon {
   if (state === 'success') return CheckCircle2;
-  if (state === 'replayed') return RefreshCw;
-  if (state === 'conflict') return AlertTriangle;
-  if (state === 'error') return CircleHelp;
+  if (state === 'definitiveFailure') return AlertTriangle;
+  if (state === 'needsConfirmation') return CircleHelp;
   return CircleHelp;
 }
 
 export default function OeeMultiEntryPage() {
   const { t } = useTranslation();
+  const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const viewMode = resolveOeeViewMode(pathname, searchParams.get('view'));
+  const isCompactFullView = viewMode === 'full';
   const user = useAuthStore((state) => state.user);
   const [online, setOnline] = useState(true);
   const [lastCommunicationAt, setLastCommunicationAt] = useState<number | null>(null);
@@ -188,7 +199,7 @@ export default function OeeMultiEntryPage() {
   const [workerLoading, setWorkerLoading] = useState(false);
   const [workerError, setWorkerError] = useState<string | null>(null);
 
-  const [selectedWorkplace, setSelectedWorkplace] = useState<OeeProcessCode | 'ALL' | null>(null);
+  const [selectedWorkplace, setSelectedWorkplace] = useState<OeeProcessCode | null>(null);
   const [resources, setResources] = useState<OeeResource[]>([]);
   const [resourceLoadingByProcess, setResourceLoadingByProcess] = useState<Partial<Record<OeeProcessCode, boolean>>>({});
   const [resourceProcessErrors, setResourceProcessErrors] = useState<Partial<Record<OeeProcessCode, string>>>({});
@@ -200,10 +211,17 @@ export default function OeeMultiEntryPage() {
 
   const [mode, setMode] = useState<MultiEntryMode>('START');
   const [reasonCode, setReasonCode] = useState('');
+  const [endReasonOverride, setEndReasonOverride] = useState<EndReasonOverride | null>(null);
   const [memo, setMemo] = useState('');
   const [reasonEditorOpen, setReasonEditorOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [commandOutcomes, setCommandOutcomes] = useState<Record<string, CommandOutcomeView>>({});
+  const [batchOutcome, setBatchOutcome] = useState<BatchOutcomeView | null>(null);
+  const [pendingSubmission, setPendingSubmission] = useState<PendingMultiEntrySubmission | null>(null);
+  const [pendingStorageError, setPendingStorageError] = useState<string | null>(null);
+  const [hydratedPendingStorageKey, setHydratedPendingStorageKey] = useState<string | undefined>(undefined);
+  const [pendingStatusLoading, setPendingStatusLoading] = useState(false);
+  const [pendingStatusByLine, setPendingStatusByLine] = useState<Record<string, PendingStatusSnapshot>>({});
+  const [pendingStatusSnapshotGeneration, setPendingStatusSnapshotGeneration] = useState<number | null>(null);
 
   const contextGeneration = useRef(0);
   const statusGeneration = useRef(0);
@@ -211,18 +229,40 @@ export default function OeeMultiEntryPage() {
   const reasonsLoadedRef = useRef(false);
   const reasonsLoadingRef = useRef(false);
   const autoWorkerIdentityRef = useRef<string | null>(null);
-  const pendingCommandsRef = useRef<Map<string, PendingCommand>>(new Map());
-  const outcomesRef = useRef<Map<string, CommandOutcomeView>>(new Map());
+  const submissionLockRef = useRef(false);
+  const pendingSubmissionRef = useRef<PendingMultiEntrySubmission | null>(null);
+  const pendingStorageKeyRef = useRef<string | null>(null);
+  const pendingStatusRequestRef = useRef(false);
+  const pendingQueryGenerationRef = useRef(0);
   const firstReasonButtonRef = useRef<HTMLButtonElement>(null);
+
+  // The authenticated backend exposes ORGANIZATION_ID as AuthUser.plant; it is only
+  // used to scope the browser-side uncertain-submission lock, never sent by the page.
+  const organizationId = parseOrganizationId(user?.plant);
+  const userId = typeof user?.id === 'string' ? user.id.trim() : '';
+  const pendingStorageKey = useMemo(
+    () => getPendingSubmissionStorageKey(user?.plant, user?.id),
+    [user?.id, user?.plant],
+  );
+  const pendingLockReady = !user || hydratedPendingStorageKey === (pendingStorageKey ?? '');
+  const contextLocked = submitting || Boolean(pendingSubmission) || Boolean(pendingStorageError) || (Boolean(user) && !pendingLockReady);
+
+  const switchView = useCallback(
+    (nextMode: OeeViewMode) => {
+      if (!pathname || contextLocked || nextMode === viewMode) return;
+      const params = new URLSearchParams(searchParams.toString());
+      params.set('view', nextMode);
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    },
+    [contextLocked, pathname, router, searchParams, viewMode],
+  );
 
   const markCommunication = useCallback(() => {
     setLastCommunicationAt(Date.now());
   }, []);
 
-  const clearCommandState = useCallback(() => {
-    pendingCommandsRef.current.clear();
-    outcomesRef.current.clear();
-    setCommandOutcomes({});
+  const clearBatchOutcome = useCallback(() => {
+    setBatchOutcome(null);
   }, []);
 
   const clearContext = useCallback(() => {
@@ -241,8 +281,12 @@ export default function OeeMultiEntryPage() {
     setResourceProcessErrors({});
     setReasonsError(null);
     setReasonEditorOpen(false);
-    clearCommandState();
-  }, [clearCommandState]);
+    setEndReasonOverride(null);
+    if (!pendingSubmissionRef.current) {
+      clearBatchOutcome();
+      setPendingStatusByLine({});
+    }
+  }, [clearBatchOutcome]);
 
   useEffect(() => {
     const updateOnline = () => setOnline(navigator.onLine);
@@ -267,16 +311,14 @@ export default function OeeMultiEntryPage() {
       const results = await Promise.allSettled(
         targetResources.map(async (resource) => {
           try {
-            const response = await api.get('/oee/mobile/status', {
+            const response = await api.get('/oee/multi-entry/status', {
               params: {
                 processCode: resource.processCode,
-                resourceType: resource.resourceType,
-                resourceCode: resource.resourceCode,
-                parentLineCode: resource.parentLineCode ?? resource.resourceCode,
+                lineCode: resource.resourceCode,
               },
               suppressErrorModal: true,
             });
-            return { resource, status: normalizeStatus(response), error: null };
+            return { resource, status: normalizeMultiEntryStatus(response), error: null };
           } catch (error: unknown) {
             return {
               resource,
@@ -441,6 +483,159 @@ export default function OeeMultiEntryPage() {
     [loadReasons, loadStatuses, markCommunication, t],
   );
 
+  useEffect(() => {
+    pendingStorageKeyRef.current = pendingStorageKey;
+    pendingQueryGenerationRef.current += 1;
+    pendingStatusRequestRef.current = false;
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (cancelled) return;
+      pendingSubmissionRef.current = null;
+      submissionLockRef.current = false;
+      setPendingStatusLoading(false);
+      setPendingStatusSnapshotGeneration(null);
+      setPendingSubmission(null);
+      setPendingStatusByLine({});
+      setPendingStorageError(null);
+
+      if (!user || organizationId === null || !userId || !pendingStorageKey) {
+        if (user) setPendingStorageError(t('oeeMultiEntry.pendingStorageUnavailable'));
+        setBatchOutcome(null);
+        setHydratedPendingStorageKey(pendingStorageKey ?? '');
+        return;
+      }
+
+      let stored: PendingMultiEntrySubmission | null;
+      try {
+        stored = readPendingSubmission(pendingStorageKey);
+      } catch (error: unknown) {
+        pendingSubmissionRef.current = null;
+        submissionLockRef.current = false;
+        setPendingStorageError(
+          readPendingStorageErrorMessage(error, t('oeeMultiEntry.pendingStorageUnavailable')),
+        );
+        setBatchOutcome(null);
+        setHydratedPendingStorageKey(pendingStorageKey);
+        return;
+      }
+
+      pendingSubmissionRef.current = stored;
+      submissionLockRef.current = Boolean(stored);
+      setPendingSubmission(stored);
+      setPendingStatusByLine({});
+      if (stored) {
+        setBatchOutcome({
+          mode: stored.mode,
+          processCode: stored.processCode,
+          lineCodes: stored.lineCodes,
+          targetItemCount: stored.items?.length ?? stored.lineCodes.length,
+          state: 'needsConfirmation',
+          message: t('oeeMultiEntry.uncertainSubmission'),
+          events: null,
+        });
+      } else {
+        setBatchOutcome(null);
+      }
+      setHydratedPendingStorageKey(pendingStorageKey);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [organizationId, pendingStorageKey, t, user, userId]);
+
+  useEffect(() => {
+    if (!pendingSubmission || !worker || selectedWorkplace === pendingSubmission.processCode) return;
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (cancelled) return;
+      setSelectedWorkplace(pendingSubmission.processCode);
+      void loadContext([pendingSubmission.processCode]);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [loadContext, pendingSubmission, selectedWorkplace, worker]);
+
+  const requeryPendingStatus = useCallback(async () => {
+    const pending = pendingSubmissionRef.current;
+    const queryStorageKey = pendingStorageKeyRef.current;
+    if (
+      !pending ||
+      !queryStorageKey ||
+      queryStorageKey !== pendingStorageKey ||
+      organizationId === null ||
+      !userId ||
+      pendingStatusRequestRef.current
+    ) return;
+
+    const queryGeneration = pendingQueryGenerationRef.current + 1;
+    pendingQueryGenerationRef.current = queryGeneration;
+
+    pendingStatusRequestRef.current = true;
+    setPendingStatusLoading(true);
+    setPendingStatusSnapshotGeneration(null);
+    setPendingStatusByLine({});
+    try {
+      const results = await Promise.allSettled(
+        pending.lineCodes.map(async (lineCode) => {
+          try {
+            const response = await api.get('/oee/multi-entry/status', {
+              params: { processCode: pending.processCode, lineCode },
+              suppressErrorModal: true,
+            });
+            return { lineCode, status: normalizeMultiEntryStatus(response), error: null };
+          } catch (error: unknown) {
+            return {
+              lineCode,
+              status: null,
+              error: readApiMessage(error, t('oeeMultiEntry.statusLoadError')),
+            };
+          } finally {
+            if (
+              pendingSubmissionRef.current === pending &&
+              pendingStorageKeyRef.current === queryStorageKey &&
+              pendingQueryGenerationRef.current === queryGeneration
+            ) {
+              markCommunication();
+            }
+          }
+        }),
+      );
+      if (
+        pendingSubmissionRef.current !== pending ||
+        pendingStorageKeyRef.current !== queryStorageKey ||
+        pendingQueryGenerationRef.current !== queryGeneration
+      ) return;
+
+      const next: Record<string, PendingStatusSnapshot> = {};
+      results.forEach((result, index) => {
+        const lineCode = pending.lineCodes[index];
+        if (!lineCode) return;
+        next[lineCode] = result.status === 'fulfilled'
+          ? { status: result.value.status, error: result.value.error }
+          : { status: null, error: readApiMessage(result.reason, t('oeeMultiEntry.statusLoadError')) };
+      });
+      setPendingStatusSnapshotGeneration(queryGeneration);
+      setPendingStatusByLine(next);
+      setBatchOutcome((current) =>
+        current
+          ? { ...current, message: `${current.message} ${t('oeeMultiEntry.statusRequeryComplete')}` }
+          : current,
+      );
+    } finally {
+      if (pendingQueryGenerationRef.current === queryGeneration) {
+        pendingStatusRequestRef.current = false;
+        setPendingStatusLoading(false);
+      }
+    }
+  }, [markCommunication, organizationId, pendingStorageKey, t, userId]);
+
+  useEffect(() => {
+    if (batchOutcome?.state === 'needsConfirmation' && pendingSubmission && online) {
+      void requeryPendingStatus();
+    }
+  }, [batchOutcome?.state, online, pendingSubmission, requeryPendingStatus]);
+
   const applyWorker = useCallback(
     (nextWorker: OeeWorker) => {
       setWorker(nextWorker);
@@ -520,7 +715,7 @@ export default function OeeMultiEntryPage() {
       autoWorkerIdentityRef.current = null;
       return;
     }
-    const identity = loggedInUser.id.trim();
+    const identity = typeof loggedInUser.id === 'string' ? loggedInUser.id.trim() : '';
     if (!identity) return;
     if (autoWorkerIdentityRef.current === identity) return;
 
@@ -528,8 +723,6 @@ export default function OeeMultiEntryPage() {
     const candidates = [loggedInUser.empNo ?? '', loggedInUser.id];
     void resolveAutoWorker(candidates);
   }, [resolveAutoWorker, user]);
-
-  const contextLocked = submitting;
 
   const changeWorker = useCallback(() => {
     if (contextLocked) return;
@@ -539,18 +732,12 @@ export default function OeeMultiEntryPage() {
     clearContext();
   }, [clearContext, contextLocked]);
 
-  const toggleAllProcesses = useCallback(() => {
-    if (!worker || contextLocked) return;
-    if (selectedWorkplace === 'ALL') return;
-    setSelectedWorkplace('ALL');
-    void loadContext(RESOURCE_PROCESS_CODES);
-  }, [contextLocked, loadContext, selectedWorkplace, worker]);
-
   const toggleWorkplace = useCallback(
     (processCode: OeeProcessCode) => {
       if (!worker || contextLocked) return;
       if (selectedWorkplace === processCode) return;
       setSelectedWorkplace(processCode);
+      setEndReasonOverride(null);
       setSelectedResourceIds((current) => {
         const next = new Set(current);
         for (const resource of resources) {
@@ -558,17 +745,16 @@ export default function OeeMultiEntryPage() {
         }
         return next;
       });
+      clearBatchOutcome();
       void loadContext([processCode]);
     },
-    [contextLocked, loadContext, resources, selectedWorkplace, worker],
+    [clearBatchOutcome, contextLocked, loadContext, resources, selectedWorkplace, worker],
   );
 
   const selectedProcessList = useMemo(
-    () => (selectedWorkplace === 'ALL' ? RESOURCE_PROCESS_CODES : selectedWorkplace ? [selectedWorkplace] : []),
+    () => (selectedWorkplace ? [selectedWorkplace] : []),
     [selectedWorkplace],
   );
-
-  const processMasterState = selectedWorkplace === 'ALL';
 
   const retryProcess = useCallback(
     (processCode: OeeProcessCode) => {
@@ -584,26 +770,28 @@ export default function OeeMultiEntryPage() {
       setMode(nextMode);
       setSelectedResourceIds(new Set());
       setReasonCode('');
+      setEndReasonOverride(null);
       setMemo('');
       setReasonEditorOpen(false);
-      clearCommandState();
+      clearBatchOutcome();
     },
-    [clearCommandState, contextLocked],
+    [clearBatchOutcome, contextLocked],
   );
 
   const toggleResource = useCallback(
     (resource: OeeResource) => {
       if (contextLocked) return;
       const key = resourceIdentity(resource);
-      if (!isEligibleStatus(mode, statusByResource[key])) return;
+      setEndReasonOverride(null);
       setSelectedResourceIds((current) => {
         const next = new Set(current);
         if (next.has(key)) next.delete(key);
-        else next.add(key);
+        else if (isEligibleStatus(mode, statusByResource[key])) next.add(key);
         return next;
       });
+      clearBatchOutcome();
     },
-    [contextLocked, mode, statusByResource],
+    [clearBatchOutcome, contextLocked, mode, statusByResource],
   );
 
   const retryReasons = useCallback(() => {
@@ -614,6 +802,27 @@ export default function OeeMultiEntryPage() {
     () => resources.filter((resource) => selectedResourceIds.has(resourceIdentity(resource))),
     [resources, selectedResourceIds],
   );
+
+  const selectedEndReasonTargets = useMemo<MultiEntryEndReasonTarget[]>(
+    () => selectedResources.flatMap((resource) => {
+      const openEvents = statusByResource[resourceIdentity(resource)]?.status?.openEvents ?? [];
+      return openEvents.map((event) => ({
+        lineCode: event.lineCode,
+        dtSeq: event.dtSeq,
+        reasonCode: event.reasonCode,
+      }));
+    }),
+    [selectedResources, statusByResource],
+  );
+  const endReasonSummary = useMemo(
+    () => summarizeEndReasons(selectedEndReasonTargets),
+    [selectedEndReasonTargets],
+  );
+  const endReasonSnapshotKey = endReasonSummary.snapshotKey;
+  const endReasonOverrideCode = getActiveEndReasonCode(endReasonOverride, endReasonSnapshotKey);
+  const endReasonNeedsSelection = endReasonSummary.state === 'someMissing' || endReasonSummary.state === 'allMissing';
+  const endDisplayedReasonCode = endReasonOverrideCode
+    ?? (endReasonSummary.state === 'same' ? endReasonSummary.reasonCodes[0] ?? null : null);
 
   const visibleResources = useMemo(
     () => resources.filter((resource) => selectedProcessList.includes(resource.processCode)),
@@ -645,6 +854,7 @@ export default function OeeMultiEntryPage() {
 
   const toggleVisibleEligible = useCallback(() => {
     if (contextLocked || visibleEligibleResources.length === 0) return;
+    setEndReasonOverride(null);
     setSelectedResourceIds((current) => {
       const clearVisible = visibleEligibleResources.every((resource) =>
         current.has(resourceIdentity(resource)),
@@ -657,32 +867,8 @@ export default function OeeMultiEntryPage() {
       }
       return next;
     });
-  }, [contextLocked, visibleEligibleResources]);
-
-  const selectedItems = useMemo(
-    () => selectedResources.map((resource) => ({ resource, resourceKey: resourceIdentity(resource) })),
-    [selectedResources],
-  );
-
-  const outcomesMap = useMemo(() => new Map(Object.entries(commandOutcomes)), [commandOutcomes]);
-
-  const retryCandidates = useMemo(
-    () => selectRetryableResources(selectedItems, outcomesMap),
-    [outcomesMap, selectedItems],
-  );
-
-  const failedCount = useMemo(
-    () => selectedResources.filter((resource) => isRetryableOutcome(commandOutcomes[resourceIdentity(resource)]?.state)).length,
-    [commandOutcomes, selectedResources],
-  );
-
-  const completedCount = useMemo(
-    () =>
-      selectedResources.filter((resource) =>
-        isTerminalSuccess(commandOutcomes[resourceIdentity(resource)]?.state),
-      ).length,
-    [commandOutcomes, selectedResources],
-  );
+    clearBatchOutcome();
+  }, [clearBatchOutcome, contextLocked, visibleEligibleResources]);
 
   const statusLoading = resources.some((resource) => statusByResource[resourceIdentity(resource)]?.loading);
   const lastCommunicationLabel = lastCommunicationAt
@@ -693,189 +879,306 @@ export default function OeeMultiEntryPage() {
       })
     : t('oeeMultiEntry.notYet');
 
-  const updateOutcome = useCallback((outcome: CommandOutcomeView) => {
-    outcomesRef.current.set(outcome.resourceKey, outcome);
-    setCommandOutcomes(Object.fromEntries(outcomesRef.current.entries()));
-  }, []);
-
-  const buildStartCommand = useCallback(
-    (resource: OeeResource): CommandToSubmit | null => {
-      const row = statusByResource[resourceIdentity(resource)];
-      if (!worker || selectedProcessList.length === 0 || !reasonCode || !isEligibleStatus('START', row)) return null;
-
-      const fields: StartCommandFields = {
-        processCode: resource.processCode,
-        resourceType: resource.resourceType,
-        resourceCode: resource.resourceCode,
-        parentLineCode: resource.parentLineCode ?? resource.resourceCode,
-        workerId: worker.workerId,
-        reasonCode,
-        memo,
-        requestId: '',
-      };
-      const signature = stableStartSignature(fields);
-      const key = commandKey('START', resourceIdentity(resource), signature);
-      const pending = pendingCommandsRef.current.get(key);
-      const requestId = pending?.signature === signature ? pending.requestId : createRequestId();
-      pendingCommandsRef.current.set(key, { signature, requestId });
-      return {
-        mode: 'START',
-        resource,
-        key,
-        signature,
-        requestId,
-        payload: makeStartPayload({ ...fields, requestId }),
-      };
-    },
-    [memo, reasonCode, selectedProcessList.length, statusByResource, worker],
-  );
-
-  const buildEndCommand = useCallback(
-    (resource: OeeResource): CommandToSubmit | null => {
-      const row = statusByResource[resourceIdentity(resource)];
-      const activeEvent = row?.status?.openEvent;
-      if (!worker || selectedProcessList.length === 0 || !activeEvent?.eventId || !isEligibleStatus('END', row)) return null;
-
-      const fields: EndCommandFields = {
-        eventId: activeEvent.eventId,
-        processCode: resource.processCode,
-        resourceType: resource.resourceType,
-        resourceCode: resource.resourceCode,
-        parentLineCode: resource.parentLineCode ?? resource.resourceCode,
-        workerId: worker.workerId,
-        requestId: '',
-      };
-      const signature = stableEndSignature(fields);
-      const key = commandKey('END', resourceIdentity(resource), signature);
-      const pending = pendingCommandsRef.current.get(key);
-      const requestId = pending?.signature === signature ? pending.requestId : createRequestId();
-      pendingCommandsRef.current.set(key, { signature, requestId });
-      return {
-        mode: 'END',
-        resource,
-        key,
-        signature,
-        requestId,
-        payload: makeEndPayload({ ...fields, requestId }),
-      };
-    },
-    [selectedProcessList.length, statusByResource, worker],
-  );
-
   const refreshStatuses = useCallback(async () => {
     if (selectedProcessList.length > 0 && resources.length > 0) await loadStatuses(resources);
   }, [loadStatuses, resources, selectedProcessList.length]);
 
+  const canConfirmPending =
+    canConfirmPendingSubmission({
+      pending: pendingSubmission,
+      statusByLine: pendingStatusByLine,
+      statusLoading: pendingStatusLoading,
+      online,
+      submitting,
+    }) &&
+    pendingStatusSnapshotGeneration !== null &&
+    organizationId !== null &&
+    Boolean(userId) &&
+    pendingStorageKey !== null &&
+    hydratedPendingStorageKey === pendingStorageKey &&
+    !pendingStorageError;
+
   const submitBatch = useCallback(async () => {
-    if (submitting || !online) {
-      if (!online) toast.error(t('oeeMultiEntry.offlineBlocked'));
+    // This ref guard is synchronous so two clicks cannot pass before React rerenders.
+    if (submissionLockRef.current || pendingSubmissionRef.current || submitting || !pendingLockReady || pendingStorageError) {
       return;
     }
-    if (!worker || selectedProcessList.length === 0 || selectedResources.length === 0) {
+    const submissionStorageKey = pendingStorageKeyRef.current;
+    if (organizationId === null || !userId || !pendingStorageKey || submissionStorageKey !== pendingStorageKey) {
+      const message = t('oeeMultiEntry.pendingStorageUnavailable');
+      setPendingStorageError(message);
+      toast.error(message);
+      return;
+    }
+    if (!online) {
+      toast.error(t('oeeMultiEntry.offlineBlocked'));
+      return;
+    }
+    const processCode = selectedProcessList[0];
+    if (!worker || !processCode || selectedResources.length === 0) {
       toast.error(t('oeeMultiEntry.selectAtLeastOne'));
       return;
     }
-    if (mode === 'START' && !reasonCode) {
+    const normalizedStartReasonCode = reasonCode.trim();
+    if (mode === 'END' && endReasonNeedsSelection && !endReasonOverrideCode) {
       toast.error(t('oeeMultiEntry.reasonRequired'));
       return;
     }
-    if (mode === 'START' && memo.length > 500) {
+    if (mode === 'START' && utf8ByteLength(memo) > 500) {
       toast.error(t('oeeMultiEntry.memoTooLong'));
       return;
     }
 
-    const commands = retryCandidates
-      .map((item) => (mode === 'START' ? buildStartCommand(item.resource) : buildEndCommand(item.resource)))
-      .filter((command): command is CommandToSubmit => command !== null);
-
-    if (commands.length !== retryCandidates.length) {
-      toast.error(t('oeeMultiEntry.statusChanged'));
-      await refreshStatuses();
+    const lineCodes = selectedResources.map((resource) => resource.resourceCode);
+    if (new Set(lineCodes).size !== lineCodes.length) {
+      toast.error(t('oeeMultiEntry.duplicateLineSelection'));
       return;
     }
 
-    setSubmitting(true);
-    try {
-      const commandResults = await Promise.allSettled(
-        commands.map(async (command): Promise<CommandAttempt> => {
-          try {
-            const response =
-              command.mode === 'START'
-                ? await api.post('/oee/mobile/downtime/start', command.payload, {
-                    suppressErrorModal: true,
-                    skipSuccessToast: true,
-                  }).finally(markCommunication)
-                : await api.post('/oee/mobile/downtime/end', command.payload, {
-                    suppressErrorModal: true,
-                    skipSuccessToast: true,
-                  }).finally(markCommunication);
-            const result: OeeCommandResult = normalizeCommandResult(response);
-            return {
-              command,
-              state: result.replayed ? 'replayed' : 'success',
-              message: result.replayed ? t('oeeMultiEntry.replayed') : t('oeeMultiEntry.success'),
-            };
-          } catch (error: unknown) {
-            const conflict = responseStatus(error) === 409;
-            return {
-              command,
-              state: conflict ? 'conflict' : 'error',
-              message: conflict
-                ? t('oeeMultiEntry.conflict')
-                : readApiMessage(error, t('oeeMultiEntry.error')),
-            };
-          }
-        }),
-      );
-
-      let failed = 0;
-      let completed = 0;
-      for (const [index, settled] of commandResults.entries()) {
-        const fallbackCommand = commands[index];
-        if (!fallbackCommand) continue;
-        const attempt: CommandAttempt =
-          settled.status === 'fulfilled'
-            ? settled.value
-            : { command: fallbackCommand, state: 'error', message: t('oeeMultiEntry.error') };
-        const resourceKey = resourceIdentity(attempt.command.resource);
-        updateOutcome({
-          resourceKey,
-          resourceCode: attempt.command.resource.resourceCode,
-          mode: attempt.command.mode,
-          requestId: attempt.command.requestId,
-          state: attempt.state,
-          message: attempt.message,
-        });
-        if (isTerminalSuccess(attempt.state)) pendingCommandsRef.current.delete(attempt.command.key);
-        if (isRetryableOutcome(attempt.state)) failed += 1;
-        else completed += 1;
+    let endItems: MultiEntryEndItem[] | undefined;
+    if (mode === 'END') {
+      endItems = [];
+      for (const resource of selectedResources) {
+        const openEvents = statusByResource[resourceIdentity(resource)]?.status?.openEvents ?? [];
+        if (openEvents.length === 0 || !isEligibleStatus('END', statusByResource[resourceIdentity(resource)])) {
+          toast.error(t('oeeMultiEntry.statusChanged'));
+          await refreshStatuses();
+          return;
+        }
+        endItems.push(...openEvents.map((event) => ({ lineCode: resource.resourceCode, dtSeq: event.dtSeq })));
       }
+      if (new Set(endItems.map((item) => item.dtSeq)).size !== endItems.length) {
+        toast.error(t('oeeMultiEntry.statusChanged'));
+        await refreshStatuses();
+        return;
+      }
+    }
 
-      if (failed > 0) {
-        toast.error(t('oeeMultiEntry.partialResult', { completed, failed }));
+    const pending: PendingMultiEntrySubmission = {
+      mode,
+      processCode,
+      lineCodes,
+      ...(endItems ? { items: endItems } : {}),
+      createdAt: Date.now(),
+    };
+    const payload = mode === 'START'
+      ? makeStartBatchPayload({
+          processCode,
+          lineCodes,
+          workerId: worker.workerId,
+          reasonCode: normalizedStartReasonCode || undefined,
+          memo: memo.trim() || undefined,
+        })
+      : makeEndBatchPayload({
+          processCode,
+          items: endItems ?? [],
+          ...(endReasonOverrideCode ? { reasonCode: endReasonOverrideCode } : {}),
+        });
+
+    try {
+      writePendingSubmission(submissionStorageKey, pending);
+    } catch (error: unknown) {
+      const message = readPendingStorageErrorMessage(error, t('oeeMultiEntry.pendingStorageUnavailable'));
+      pendingSubmissionRef.current = null;
+      submissionLockRef.current = false;
+      setPendingSubmission(null);
+      setPendingStatusByLine({});
+      setPendingStorageError(message);
+      setBatchOutcome(null);
+      setSubmitting(false);
+      toast.error(message);
+      return;
+    }
+
+    setPendingStorageError(null);
+    pendingQueryGenerationRef.current += 1;
+    setPendingStatusSnapshotGeneration(null);
+    submissionLockRef.current = true;
+    pendingSubmissionRef.current = pending;
+    setPendingSubmission(pending);
+    setPendingStatusByLine({});
+    setBatchOutcome(null);
+    setSubmitting(true);
+    let response: unknown = null;
+    let refreshAfterResponse = false;
+    try {
+      response = await api.post(
+        `/oee/multi-entry/${mode === 'START' ? 'start' : 'end'}`,
+        payload,
+        { suppressErrorModal: true, skipSuccessToast: true },
+      ).finally(markCommunication);
+      const normalized = normalizeBatchResponse(response);
+      validateBatchEvents(
+        normalized.events,
+        mode === 'START'
+          ? { mode: 'START', organizationId, lineCodes }
+          : {
+              mode: 'END',
+              organizationId,
+              items: endItems ?? [],
+              ...(endReasonOverrideCode ? { reasonCode: endReasonOverrideCode } : {}),
+            },
+      );
+      setBatchOutcome({
+        mode,
+        processCode,
+        lineCodes,
+        targetItemCount: endItems?.length ?? lineCodes.length,
+        state: 'success',
+        message: t('oeeMultiEntry.batchSaved'),
+        events: normalized.events,
+      });
+      clearPendingSubmission(submissionStorageKey);
+      pendingSubmissionRef.current = null;
+      submissionLockRef.current = false;
+      setPendingSubmission(null);
+      toast.success(t('oeeMultiEntry.batchSaved'));
+      refreshAfterResponse = true;
+    } catch (error: unknown) {
+      const status = responseStatus(error) ?? responseHttpStatus(response);
+      if (error instanceof PendingSubmissionStorageError) {
+        setPendingStorageError(readPendingStorageErrorMessage(error, t('oeeMultiEntry.pendingStorageUnavailable')));
+      }
+      const definitiveFailure = status !== null && status >= 400 && status < 500 && status !== 408;
+      const uncertain = !definitiveFailure;
+      if (uncertain) {
+        // A changed GET state cannot attribute this POST, so the lock remains persisted.
+        setBatchOutcome({
+          mode,
+          processCode,
+          lineCodes,
+          targetItemCount: endItems?.length ?? lineCodes.length,
+          state: 'needsConfirmation',
+          message: t('oeeMultiEntry.uncertainSubmission'),
+          events: null,
+        });
+        toast.error(t('oeeMultiEntry.needsConfirmation'));
       } else {
-        toast.success(t('oeeMultiEntry.batchSaved'));
+        setBatchOutcome({
+          mode,
+          processCode,
+          lineCodes,
+          targetItemCount: endItems?.length ?? lineCodes.length,
+          state: 'definitiveFailure',
+          message: readApiMessage(error, t('oeeMultiEntry.error')),
+          events: null,
+        });
+        const message = readApiMessage(error, t('oeeMultiEntry.error'));
+        try {
+          clearPendingSubmission(submissionStorageKey);
+          pendingSubmissionRef.current = null;
+          submissionLockRef.current = false;
+          setPendingSubmission(null);
+        } catch (clearError: unknown) {
+          setPendingStorageError(
+            readPendingStorageErrorMessage(clearError, t('oeeMultiEntry.pendingStorageUnavailable')),
+          );
+          toast.error(readPendingStorageErrorMessage(clearError, t('oeeMultiEntry.pendingStorageUnavailable')));
+        }
+        toast.error(message);
+        refreshAfterResponse = true;
       }
     } finally {
-      await refreshStatuses();
+      if (refreshAfterResponse) await refreshStatuses();
       setSubmitting(false);
     }
   }, [
-    buildEndCommand,
-    buildStartCommand,
+    endReasonNeedsSelection,
+    endReasonOverrideCode,
     markCommunication,
-    memo.length,
+    memo,
     mode,
     online,
+    pendingLockReady,
     reasonCode,
     refreshStatuses,
-    retryCandidates,
-    selectedProcessList.length,
-    selectedResources.length,
+    selectedProcessList,
+    selectedResources,
+    organizationId,
+    pendingStorageError,
+    pendingStorageKey,
+    statusByResource,
     submitting,
     t,
-    updateOutcome,
+    userId,
     worker,
+  ]);
+
+  const confirmPendingSubmission = useCallback(() => {
+    const pending = pendingSubmissionRef.current;
+    const storageKey = pendingStorageKeyRef.current;
+    const queryGeneration = pendingQueryGenerationRef.current;
+    const isCurrentPending =
+      pending !== null &&
+      pendingSubmissionRef.current === pending &&
+      storageKey !== null &&
+      pendingStorageKeyRef.current === storageKey &&
+      pendingQueryGenerationRef.current === queryGeneration;
+
+    if (
+      !canConfirmPending ||
+      !isCurrentPending ||
+      storageKey === null ||
+      storageKey !== pendingStorageKey ||
+      organizationId === null ||
+      !userId ||
+      pendingStatusSnapshotGeneration !== queryGeneration
+    ) return;
+    if (!pending || !storageKey) return;
+
+    try {
+      clearPendingSubmission(storageKey);
+    } catch (error: unknown) {
+      const message = readPendingStorageErrorMessage(error, t('oeeMultiEntry.pendingStorageUnavailable'));
+      setPendingStorageError(message);
+      toast.error(message);
+      return;
+    }
+
+    const stillCurrentPending =
+      pendingSubmissionRef.current === pending &&
+      pendingStorageKeyRef.current === storageKey &&
+      pendingQueryGenerationRef.current === queryGeneration;
+    if (!stillCurrentPending) {
+      setPendingStorageError(t('oeeMultiEntry.pendingStorageUnavailable'));
+      return;
+    }
+
+    const latestPendingStatuses = pendingStatusByLine;
+    statusGeneration.current += 1;
+    pendingQueryGenerationRef.current = queryGeneration + 1;
+    pendingStatusRequestRef.current = false;
+    pendingSubmissionRef.current = null;
+    submissionLockRef.current = false;
+    setStatusByResource((current) => {
+      const next = { ...current };
+      for (const resource of resources) {
+        if (resource.processCode !== pending.processCode || !pending.lineCodes.includes(resource.resourceCode)) continue;
+        const snapshot = latestPendingStatuses[resource.resourceCode];
+        if (!snapshot?.status || snapshot.error) continue;
+        next[resourceIdentity(resource)] = { loading: false, status: snapshot.status, error: null };
+      }
+      return next;
+    });
+    setPendingSubmission(null);
+    setPendingStatusByLine({});
+    setPendingStatusSnapshotGeneration(null);
+    setPendingStatusLoading(false);
+    setSelectedResourceIds(new Set());
+    setEndReasonOverride(null);
+    setReasonCode('');
+    setMemo('');
+    setBatchOutcome(null);
+    toast.success(t('oeeMultiEntry.pendingConfirmationComplete'));
+  }, [
+    canConfirmPending,
+    organizationId,
+    pendingStatusByLine,
+    pendingStatusSnapshotGeneration,
+    pendingStorageKey,
+    resources,
+    t,
+    userId,
   ]);
 
   const resourceLabels: AvailabilityLabels = {
@@ -887,7 +1190,9 @@ export default function OeeMultiEntryPage() {
     running: t('oeeMultiEntry.running'),
     downtime: t('oeeMultiEntry.downtime'),
   };
-  const selectedReason = reasons.find((reason) => reason.reasonCode === reasonCode);
+  const selectedReasonCode = mode === 'START' ? reasonCode : endDisplayedReasonCode;
+  const selectedReason = reasons.find((reason) => reason.reasonCode === selectedReasonCode);
+  const pickerReasonCode = mode === 'START' ? reasonCode : endReasonOverrideCode;
   const selectedReasonTypeLabel = selectedReason
     ? selectedReason.reasonType === 'PLAN'
       ? t('oeeMultiEntry.reasonTypePlan')
@@ -926,15 +1231,24 @@ export default function OeeMultiEntryPage() {
   const selectedEligibleCount = selectedResources.filter((resource) =>
     isEligibleStatus(mode, statusByResource[resourceIdentity(resource)]),
   ).length;
-  const canSubmitStart = mode === 'START' && selectedEligibleCount > 0 && Boolean(reasonCode) && !reasonsLoading;
-  const canSubmitEnd = mode === 'END' && selectedEligibleCount > 0;
+  const selectedOpenEventCount = selectedEndReasonTargets.length;
+  const allSelectedEligible = selectedResources.length > 0 && selectedEligibleCount === selectedResources.length;
+  const canSubmitStart = mode === 'START' && allSelectedEligible && !reasonsLoading;
+  const canSubmitEnd = mode === 'END' && allSelectedEligible && (!endReasonNeedsSelection || Boolean(endReasonOverrideCode));
   const canSubmit = (canSubmitStart || canSubmitEnd) && online && !submitting && !contextLocked;
+  const endReasonStatusLabel = endReasonSummary.state === 'same'
+    ? t('oeeMultiEntry.endReasonSame')
+    : endReasonSummary.state === 'mixed'
+      ? t('oeeMultiEntry.endReasonMixed')
+      : endReasonSummary.state === 'someMissing'
+        ? t('oeeMultiEntry.endReasonSomeMissing')
+        : t('oeeMultiEntry.endReasonAllMissing');
 
   return (
     <div className="oee-multi-entry-board flex h-full min-h-0 flex-col overflow-hidden bg-[#07111d] text-slate-100">
-      <div className="mx-auto flex min-h-0 w-full max-w-[1680px] flex-1 flex-col gap-3 overflow-y-auto p-3 sm:p-4 lg:p-5">
+      <div className={`mx-auto flex min-h-0 w-full max-w-[1680px] flex-1 flex-col ${isCompactFullView ? 'gap-2 overflow-hidden p-2' : 'gap-3 overflow-y-auto p-3 sm:p-4 lg:p-5'}`}>
         <header className="shrink-0 rounded-2xl border border-slate-700/80 bg-[#0d1a2a] p-3 shadow-[0_12px_32px_rgba(0,0,0,0.24)] sm:p-4">
-          <div className="flex min-w-0 flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+          <div className={`flex min-w-0 flex-col gap-3 ${isCompactFullView ? 'xl:flex-row xl:items-center xl:justify-between' : '2xl:flex-row 2xl:items-center 2xl:justify-between'}`}>
             <div className="flex min-w-0 items-start gap-3 xl:flex-1">
               <div className="rounded-xl border border-cyan-400/30 bg-cyan-400/10 p-2.5 text-cyan-300">
                 <PauseCircle className="h-8 w-8" aria-hidden="true" />
@@ -998,6 +1312,24 @@ export default function OeeMultiEntryPage() {
                 </div>
               )}
             </div>
+
+            <div
+              data-testid="oee-multi-view-switch"
+              className="flex min-h-[44px] shrink-0 flex-wrap items-center gap-1 rounded-xl border border-slate-700 bg-[#101f31] p-1"
+              role="group"
+              aria-label={t('oeeMultiEntry.viewMode')}
+            >
+              <span className="sr-only">{t('oeeMultiEntry.viewMode')}</span>
+              <button
+                type="button"
+                onClick={() => switchView(viewMode === 'normal' ? 'full' : 'normal')}
+                disabled={submitting || contextLocked}
+                aria-label={viewMode === 'normal' ? t('oeeMultiEntry.viewFull') : t('oeeMultiEntry.viewNormal')}
+                className="min-h-[44px] cursor-pointer rounded-lg px-3 text-xs font-black text-slate-100 transition hover:bg-cyan-300/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 disabled:cursor-not-allowed disabled:opacity-45"
+              >
+                {viewMode === 'normal' ? t('oeeMultiEntry.viewFull') : t('oeeMultiEntry.viewNormal')}
+              </button>
+            </div>
           </div>
 
           {!worker && (
@@ -1034,8 +1366,8 @@ export default function OeeMultiEntryPage() {
           {workerError && <p id="oee-multi-worker-error" className="mt-2 text-sm font-semibold text-red-300">{workerError}</p>}
         </header>
 
-        <div className="grid min-h-0 min-w-0 shrink-0 grid-cols-1 gap-3 lg:flex-1 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
-          <section className="flex min-h-[560px] min-w-0 flex-col overflow-hidden rounded-2xl border border-slate-700/80 bg-[#0d1a2a] p-3 shadow-[0_12px_32px_rgba(0,0,0,0.2)] sm:p-4" aria-labelledby="oee-multi-selection-title">
+        <div className={`grid min-h-0 min-w-0 ${isCompactFullView ? 'flex-1 grid-cols-[minmax(0,3fr)_minmax(0,2fr)] gap-2' : 'shrink-0 grid-cols-1 gap-3 lg:flex-1 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]'}`}>
+          <section className={`flex ${isCompactFullView ? 'min-h-0' : 'min-h-[560px]'} min-w-0 flex-col overflow-hidden rounded-2xl border border-slate-700/80 bg-[#0d1a2a] p-3 shadow-[0_12px_32px_rgba(0,0,0,0.2)] sm:p-4`} aria-labelledby="oee-multi-selection-title">
             <div className="flex shrink-0 flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
               <div>
                 <p className="font-mono text-xs font-bold uppercase tracking-[0.24em] text-cyan-300">01 / SELECT</p>
@@ -1043,26 +1375,7 @@ export default function OeeMultiEntryPage() {
               </div>
             </div>
 
-            <div className="mt-2 grid shrink-0 grid-cols-1 gap-2 sm:grid-cols-3" role="group" aria-label={t('oeeMultiEntry.processSelection')}>
-              <button
-                data-testid="oee-multi-process-all"
-                type="button"
-                role="checkbox"
-                onClick={toggleAllProcesses}
-                disabled={!worker || contextLocked}
-                aria-checked={processMasterState}
-                className={`inline-flex min-h-[64px] cursor-pointer items-center gap-3 rounded-xl border px-4 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 ${
-                  processMasterState !== false ? 'border-cyan-300 bg-cyan-400/15 text-white' : 'border-slate-600 bg-[#07111d] text-slate-300 hover:border-cyan-300/70'
-                } disabled:cursor-not-allowed disabled:opacity-45`}
-              >
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded border border-cyan-200" aria-hidden="true">
-                  {processMasterState ? <Check className="h-4 w-4" /> : null}
-                </span>
-                <span className="min-w-0">
-                  <strong className="block truncate font-mono text-lg font-black">{t('oeeMultiEntry.allProcesses')}</strong>
-                  <small className="mt-0.5 block truncate text-xs font-semibold opacity-75">{t('oeeMultiEntry.processGroupSmt')} + {t('oeeMultiEntry.processGroupAssy')}</small>
-                </span>
-              </button>
+            <div className="mt-2 grid shrink-0 grid-cols-1 gap-2 sm:grid-cols-2" role="group" aria-label={t('oeeMultiEntry.processSelection')}>
               {RESOURCE_PROCESS_CODES.map((processCode) => {
                 const selected = selectedWorkplace === processCode;
                 return (
@@ -1230,8 +1543,8 @@ export default function OeeMultiEntryPage() {
                                     data-testid="oee-multi-resource-card"
                                     type="button"
                                     onClick={() => toggleResource(resource)}
-                                    disabled={availability.disabled || contextLocked}
-                                    aria-disabled={availability.disabled || contextLocked}
+                                    disabled={contextLocked || (availability.disabled && !selected)}
+                                    aria-disabled={contextLocked || (availability.disabled && !selected)}
                                     aria-pressed={selected}
                                     aria-label={`${resource.resourceCode}, ${resource.resourceName}, ${resource.resourceType}, ${availability.label}${availability.disabledReason ? `, ${availability.disabledReason}` : ''}`}
                                     title={availability.disabledReason}
@@ -1269,7 +1582,7 @@ export default function OeeMultiEntryPage() {
             </div>
           </section>
 
-          <section className="flex min-h-[560px] min-w-0 flex-col overflow-hidden rounded-2xl border border-slate-700/80 bg-[#0d1a2a] p-3 shadow-[0_12px_32px_rgba(0,0,0,0.2)] sm:p-4" aria-labelledby="oee-multi-command-title">
+          <section className={`flex ${isCompactFullView ? 'min-h-0' : 'min-h-[560px]'} min-w-0 flex-col overflow-hidden rounded-2xl border border-slate-700/80 bg-[#0d1a2a] p-3 shadow-[0_12px_32px_rgba(0,0,0,0.2)] sm:p-4`} aria-labelledby="oee-multi-command-title">
             <div className="flex shrink-0 items-start justify-between gap-3">
               <div>
                 <p className="font-mono text-xs font-bold uppercase tracking-[0.24em] text-amber-300">02 / COMMAND</p>
@@ -1302,23 +1615,87 @@ export default function OeeMultiEntryPage() {
               )}
             </div>
 
+            {pendingStorageError && (
+              <div data-testid="oee-multi-storage-error" role="alert" aria-live="assertive" className="mt-3 shrink-0 rounded-xl border border-red-300/50 bg-red-400/10 p-3 text-red-100">
+                <div className="flex items-start gap-3">
+                  <LockKeyhole className="mt-0.5 h-5 w-5 shrink-0 text-red-200" aria-hidden="true" />
+                  <div className="min-w-0">
+                    <p className="font-bold">{pendingStorageError}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {pendingSubmission && (
+              <div data-testid="oee-multi-pending-lock" role="status" aria-live="polite" className="mt-3 shrink-0 rounded-xl border border-amber-300/50 bg-amber-300/10 p-3 text-amber-100">
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-start gap-3">
+                    <LockKeyhole className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
+                    <div className="min-w-0">
+                      <p className="font-bold">{t('oeeMultiEntry.pendingSubmissionLock')}</p>
+                      <p className="mt-1 text-xs text-amber-100/80">{t('oeeMultiEntry.noAutomaticUnlock')}</p>
+                    </div>
+                  </div>
+                  <div className="flex shrink-0 flex-wrap justify-end gap-2">
+                    <button
+                      data-testid="oee-multi-status-requery"
+                      type="button"
+                      onClick={() => void requeryPendingStatus()}
+                      disabled={pendingStatusLoading || !online}
+                      className="inline-flex min-h-[44px] shrink-0 cursor-pointer items-center gap-2 rounded-lg border border-amber-200 px-3 text-xs font-black text-amber-50 transition hover:bg-amber-200/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {pendingStatusLoading && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
+                      <RefreshCw className="h-4 w-4" aria-hidden="true" />
+                      {t('oeeMultiEntry.statusRequery')}
+                    </button>
+                    <button
+                      data-testid="oee-multi-confirm-pending"
+                      type="button"
+                      onClick={confirmPendingSubmission}
+                      disabled={!canConfirmPending}
+                      className="inline-flex min-h-[44px] shrink-0 cursor-pointer items-center gap-2 rounded-lg border border-emerald-200 px-3 text-xs font-black text-emerald-50 transition hover:bg-emerald-200/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-200 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
+                      {t('oeeMultiEntry.confirmPendingSubmission')}
+                    </button>
+                  </div>
+                </div>
+                <div className="mt-2 grid gap-1 pl-8">
+                  {Object.entries(pendingStatusByLine).map(([lineCode, result]) => (
+                    <div key={lineCode} className="flex min-w-0 items-center justify-between gap-2 text-xs text-amber-100/80">
+                      <span className="font-mono font-bold">{lineCode}</span>
+                      <span className="truncate text-right">{result.error ?? (result.status?.state === 'DOWNTIME' ? t('oeeMultiEntry.downtime') : result.status ? t('oeeMultiEntry.running') : t('oeeMultiEntry.statusUnknown'))}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="mt-3 grid grid-cols-3 gap-2 rounded-xl border border-slate-700 bg-[#07111d] p-3 text-center">
-              <div><span className="block text-xs font-bold uppercase tracking-wide text-slate-500">{t('oeeMultiEntry.selected')}</span><strong className="block text-2xl text-white">{selectedResources.length}</strong><small className="block text-[11px] text-slate-500">{t('oeeMultiEntry.visible')}: {visibleSelectedCount}</small></div>
-              <div><span className="block text-xs font-bold uppercase tracking-wide text-slate-500">{t('oeeMultiEntry.ready')}</span><strong className="block text-2xl text-cyan-200">{selectedEligibleCount}</strong><small className="block text-[11px] text-slate-500">{t('oeeMultiEntry.visible')}: {visibleSelectedEligibleCount}</small></div>
-              <div><span className="block text-xs font-bold uppercase tracking-wide text-slate-500">{t('oeeMultiEntry.failed')}</span><strong className="text-2xl text-red-200">{failedCount}</strong></div>
+              <div><span className="block text-xs font-bold uppercase tracking-wide text-slate-500">{t('oeeMultiEntry.selectedLineCount')}</span><strong className="block text-2xl text-white">{selectedResources.length}</strong><small className="block text-[11px] text-slate-500">{t('oeeMultiEntry.visible')}: {visibleSelectedCount}{mode === 'END' ? ` · ${t('oeeMultiEntry.openEventCount', { count: selectedOpenEventCount })}` : ''}</small></div>
+              <div><span className="block text-xs font-bold uppercase tracking-wide text-slate-500">{t('oeeMultiEntry.readyLineCount')}</span><strong className="block text-2xl text-cyan-200">{selectedEligibleCount}</strong><small className="block text-[11px] text-slate-500">{t('oeeMultiEntry.visible')}: {visibleSelectedEligibleCount}</small></div>
+              <div><span className="block text-xs font-bold uppercase tracking-wide text-slate-500">{t('oeeMultiEntry.resultRowCount')}</span><strong className="block text-2xl text-cyan-200">{batchOutcome?.events?.length ?? 0}</strong><small className="block text-[11px] text-slate-500">{batchOutcome ? t('oeeMultiEntry.responseReceived') : t('oeeMultiEntry.awaitingResults')}</small></div>
             </div>
 
-            {mode === 'START' && selectedResources.length > 0 && (
-              <fieldset disabled={contextLocked} className="mt-3 min-w-0 rounded-xl border border-emerald-400/30 bg-emerald-400/5 p-3">
-                <legend className="px-1 text-sm font-black text-emerald-100">{t('oeeMultiEntry.commonStartFields')}</legend>
-                <p className="mt-1 text-xs text-slate-400">{t('oeeMultiEntry.commonStartHint')}</p>
-                {reasonCode ? (
+            {selectedResources.length > 0 && (
+              <fieldset disabled={contextLocked} className={`mt-3 min-w-0 rounded-xl p-3 ${mode === 'START' ? 'border border-emerald-400/30 bg-emerald-400/5' : 'border border-red-400/30 bg-red-400/5'}`}>
+                <legend className={`px-1 text-sm font-black ${mode === 'START' ? 'text-emerald-100' : 'text-red-100'}`}>
+                  {mode === 'START' ? t('oeeMultiEntry.commonStartFields') : t('oeeMultiEntry.endReasonFields')}
+                </legend>
+                <p className="mt-1 text-xs text-slate-400">{mode === 'START' ? t('oeeMultiEntry.commonStartHint') : t('oeeMultiEntry.endReasonHint')}</p>
+                <p className="mt-3 text-sm font-bold text-slate-200">
+                  {t('oeeMultiEntry.reason')}
+                  {mode === 'START' || (endReasonNeedsSelection && !endReasonOverrideCode)
+                    ? <span className="font-normal text-slate-400">({mode === 'START' ? t('oeeMultiEntry.optional') : t('oeeMultiEntry.required')})</span>
+                    : null}
+                </p>
+                {mode === 'START' && reasonCode ? (
                   <button
                     data-testid="oee-multi-reason-summary"
                     type="button"
                     onClick={openReasonEditor}
                     disabled={contextLocked}
-                    aria-label={`${t('oeeMultiEntry.reason')}: ${selectedReason?.reasonName ?? reasonCode}, ${selectedReasonTypeLabel} · ${selectedReason?.reasonCode ?? reasonCode}; ${t('common.change')}; ${t('oeeMultiEntry.memo')}: ${memo.trim() || '—'}`}
+                    aria-label={`${t('oeeMultiEntry.reason')}: ${selectedReason?.reasonName ?? reasonCode}, ${selectedReasonTypeLabel} · ${selectedReason?.reasonCode ?? reasonCode}; ${t('oeeMultiEntry.optional')}; ${t('common.change')}`}
                     className="mt-3 flex min-h-[48px] w-full min-w-0 cursor-pointer items-center justify-between gap-3 rounded-lg border border-slate-600 bg-[#07111d] px-3 py-2 text-left transition hover:border-cyan-300/70 hover:bg-cyan-300/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <span className="min-w-0 flex-1">
@@ -1327,7 +1704,7 @@ export default function OeeMultiEntryPage() {
                     </span>
                     <span className="shrink-0 text-xs font-bold text-slate-100">{t('common.change')}</span>
                   </button>
-                ) : (
+                ) : mode === 'START' ? (
                   <button
                     data-testid="oee-multi-reason-trigger"
                     type="button"
@@ -1340,33 +1717,84 @@ export default function OeeMultiEntryPage() {
                     <span>{t('oeeMultiEntry.reasonSelect')}</span>
                     <span aria-hidden="true" className="text-lg leading-none">+</span>
                   </button>
+                ) : (
+                  <div
+                    data-testid="oee-multi-end-reason-summary"
+                    aria-label={endReasonStatusLabel}
+                    className="mt-3 flex min-h-[48px] w-full min-w-0 items-center justify-between gap-3 rounded-lg border border-slate-600 bg-[#07111d] px-3 py-2 text-left"
+                  >
+                    <div className="min-w-0 flex-1">
+                      {endDisplayedReasonCode ? (
+                        <>
+                          <span className="block truncate text-sm font-bold text-emerald-100">
+                            {selectedReason?.reasonName ?? t('oeeMultiEntry.reasonMetadataUnavailable')}
+                          </span>
+                          <span className="mt-0.5 block truncate text-xs text-slate-400">
+                            {selectedReason ? `${selectedReasonTypeLabel} · ${endDisplayedReasonCode}` : endDisplayedReasonCode}
+                          </span>
+                        </>
+                      ) : (
+                        <span className="block truncate text-sm font-bold text-red-100">{endReasonStatusLabel}</span>
+                      )}
+                      {endReasonNeedsSelection && !endReasonOverrideCode && (
+                        <span className="mt-0.5 block text-xs font-normal text-red-200">({t('oeeMultiEntry.required')})</span>
+                      )}
+                    </div>
+                    <button
+                      data-testid="oee-multi-end-reason-change"
+                      type="button"
+                      onClick={openReasonEditor}
+                      disabled={contextLocked}
+                      aria-haspopup="dialog"
+                      aria-expanded={reasonEditorOpen}
+                      className="inline-flex min-h-[44px] shrink-0 cursor-pointer items-center justify-center rounded-lg border border-slate-600 px-3 text-xs font-bold text-slate-100 transition hover:border-cyan-300 hover:bg-cyan-300/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {endReasonSummary.state === 'allMissing' && !endReasonOverrideCode
+                        ? t('oeeMultiEntry.reasonSelect')
+                        : t('oeeMultiEntry.changeReason')}
+                    </button>
+                  </div>
                 )}
-                <label className="mt-3 block text-sm font-bold text-slate-200">
-                  {t('oeeMultiEntry.memo')} <span className="font-normal text-slate-400">({t('oeeMultiEntry.optional')})</span>
-                  <textarea
-                    value={memo}
-                    onChange={(event) => {
-                      setMemo(event.target.value);
-                      clearCommandState();
-                    }}
-                    maxLength={500}
-                    rows={2}
-                    className="mt-1 min-h-[64px] w-full resize-none rounded-lg border border-slate-600 bg-[#07111d] px-3 py-2 text-base font-medium text-white outline-none focus:border-cyan-300 focus:ring-2 focus:ring-cyan-300/30 disabled:opacity-50"
-                    placeholder={t('oeeMultiEntry.memoPlaceholder')}
-                  />
-                  <span className="mt-1 block text-right text-xs text-slate-400">{memo.length} / 500</span>
-                </label>
+                 {mode === 'START' && (
+                   <label className="mt-3 block text-sm font-bold text-slate-200">
+                     {t('oeeMultiEntry.memo')} <span className="font-normal text-slate-400">({t('oeeMultiEntry.optional')})</span>
+                     <textarea
+                       value={memo}
+                       onChange={(event) => {
+                         setMemo(event.target.value);
+                         clearBatchOutcome();
+                       }}
+                       maxLength={500}
+                       rows={2}
+                       className="mt-1 min-h-[64px] w-full resize-none rounded-lg border border-slate-600 bg-[#07111d] px-3 py-2 text-base font-medium text-white outline-none focus:border-cyan-300 focus:ring-2 focus:ring-cyan-300/30 disabled:opacity-50"
+                       placeholder={t('oeeMultiEntry.memoPlaceholder')}
+                     />
+                      <span className="mt-1 block text-right text-xs text-slate-400">{utf8ByteLength(memo)} / 500 B</span>
+                   </label>
+                 )}
               </fieldset>
             )}
 
             {mode === 'END' && selectedResources.length > 0 && (
               <div className="mt-3 rounded-xl border border-red-400/30 bg-red-400/5 p-3">
                 <p className="text-sm font-black text-red-100">{t('oeeMultiEntry.endSelectionTitle')}</p>
-                <p className="mt-1 text-xs text-slate-400">{t('oeeMultiEntry.endSelectionHint')}</p>
+                <p className="mt-1 text-xs text-slate-400">{t('oeeMultiEntry.endSelectionHint')} · {t('oeeMultiEntry.openEventCount', { count: selectedOpenEventCount })}</p>
                 <div className="mt-3 grid gap-2">
                   {selectedResources.map((resource) => {
-                    const event = statusByResource[resourceIdentity(resource)]?.status?.openEvent;
-                    return <div key={resourceIdentity(resource)} className="flex min-h-[64px] items-center justify-between gap-3 rounded-lg border border-slate-700 bg-[#07111d] px-3 text-sm"><span className="min-w-0 truncate font-mono font-bold text-white">{resource.resourceCode}</span><span className="shrink-0 text-right text-xs text-slate-400">{event?.eventId ? `EVENT #${event.eventId}` : t('oeeMultiEntry.statusUnknown')}</span></div>;
+                    const openEvents = statusByResource[resourceIdentity(resource)]?.status?.openEvents ?? [];
+                    return (
+                      <div key={resourceIdentity(resource)} className="rounded-lg border border-slate-700 bg-[#07111d] px-3 py-2 text-sm">
+                        <div className="flex min-h-[32px] items-center justify-between gap-3">
+                          <span className="min-w-0 truncate font-mono font-bold text-white">{resource.resourceCode}</span>
+                          <span className="shrink-0 text-right text-xs text-slate-400">{t('oeeMultiEntry.openEventCount', { count: openEvents.length })}</span>
+                        </div>
+                        <div className="mt-1 grid gap-1 pl-2">
+                          {openEvents.map((event) => (
+                            <span key={`${event.lineCode}-${event.dtSeq}`} className="font-mono text-xs text-slate-400">DT #{event.dtSeq}</span>
+                          ))}
+                        </div>
+                      </div>
+                    );
                   })}
                 </div>
               </div>
@@ -1379,47 +1807,56 @@ export default function OeeMultiEntryPage() {
               </div>
             )}
 
-            {failedCount > 0 && (
-              <div className="mt-3 flex shrink-0 flex-col gap-2">
-                <button type="button" onClick={() => void submitBatch()} disabled={!online || submitting || contextLocked || retryCandidates.length === 0} className="inline-flex min-h-[64px] cursor-pointer items-center justify-center gap-2 rounded-xl border border-amber-300/70 bg-amber-300/10 px-5 text-base font-black text-amber-100 transition hover:bg-amber-300/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200 disabled:cursor-not-allowed disabled:opacity-45">
-                  <RefreshCw className="h-5 w-5" aria-hidden="true" />{t('oeeMultiEntry.retryFailed', { count: failedCount })}
-                </button>
-              </div>
-            )}
-
             {submitting && <div role="status" aria-live="polite" className="mt-3 flex min-h-[64px] items-center gap-3 rounded-xl border border-cyan-300/40 bg-cyan-300/10 px-4 text-sm font-bold text-cyan-100"><LockKeyhole className="h-5 w-5 shrink-0" aria-hidden="true" />{t('oeeMultiEntry.contextLocked')}</div>}
 
             <div className="mt-3 min-h-0 flex-1 overflow-y-auto rounded-xl border border-slate-700 bg-[#07111d] p-3" aria-live="polite">
               <div className="flex items-center justify-between gap-2">
                 <div>
                   <h3 className="text-sm font-black uppercase tracking-wider text-slate-200">{t('oeeMultiEntry.resultsTitle')}</h3>
-                  <p className="mt-1 text-xs text-slate-400">{completedCount > 0 && failedCount > 0 ? t('oeeMultiEntry.partialResult', { completed: completedCount, failed: failedCount }) : completedCount > 0 && failedCount === 0 ? t('oeeMultiEntry.allComplete', { completed: completedCount }) : t('oeeMultiEntry.awaitingResults')}</p>
+                  <p className="mt-1 text-xs text-slate-400">{batchOutcome ? t(`oeeMultiEntry.${batchOutcome.state}`) : t('oeeMultiEntry.awaitingResults')}</p>
                 </div>
-                    {selectedProcessList.length > 0 && <span className="font-mono text-xs font-bold text-cyan-300">{selectedProcessList.join(' + ')} · {mode}</span>}
+                {selectedProcessList.length > 0 && <span className="font-mono text-xs font-bold text-cyan-300">{selectedProcessList[0]} · {mode}</span>}
               </div>
               <div className="mt-3 grid gap-2">
-                {selectedResources.length === 0 && <p className="py-6 text-center text-sm text-slate-500">{t('oeeMultiEntry.noResults')}</p>}
-                {selectedResources.map((resource) => {
-                  const key = resourceIdentity(resource);
-                  const outcome = commandOutcomes[key];
-                  const OutcomeIcon = getOutcomeIcon(outcome?.state);
-                  const stateLabel = outcome?.state ? t(`oeeMultiEntry.${outcome.state}`) : t('oeeMultiEntry.queued');
-                  return (
-                    <article key={key} className={`rounded-lg border p-3 ${outcome?.state === 'error' || outcome?.state === 'conflict' ? 'border-red-400/40 bg-red-400/5' : outcome ? 'border-emerald-400/30 bg-emerald-400/5' : 'border-slate-700 bg-[#0d1a2a]'}`} aria-label={`${resource.resourceCode}: ${stateLabel}`}>
-                      <div className="flex items-start gap-3">
-                        <OutcomeIcon className={`mt-0.5 h-6 w-6 shrink-0 ${outcome?.state === 'error' || outcome?.state === 'conflict' ? 'text-red-300' : outcome ? 'text-emerald-300' : 'text-slate-500'}`} aria-hidden="true" />
-                        <div className="min-w-0 flex-1">
-                          <div className="flex flex-wrap items-center justify-between gap-2">
-                            <span className="font-mono font-black text-white">{resource.resourceCode}</span>
-                            <span className="text-sm font-black text-slate-200">{stateLabel}</span>
+                {batchOutcome ? (
+                  (() => {
+                    const OutcomeIcon = getOutcomeIcon(batchOutcome.state);
+                    const isFailure = batchOutcome.state !== 'success';
+                    return (
+                      <article
+                        data-testid="oee-multi-batch-result"
+                        className={`rounded-lg border p-3 ${isFailure ? 'border-amber-300/40 bg-amber-300/5' : 'border-emerald-400/30 bg-emerald-400/5'}`}
+                        aria-label={t(`oeeMultiEntry.${batchOutcome.state}`)}
+                      >
+                        <div className="flex items-start gap-3">
+                          <OutcomeIcon className={`mt-0.5 h-6 w-6 shrink-0 ${isFailure ? 'text-amber-200' : 'text-emerald-300'}`} aria-hidden="true" />
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <span className="font-mono font-black text-white">{batchOutcome.processCode}</span>
+                              <span className="text-sm font-black text-slate-200">{t(`oeeMultiEntry.${batchOutcome.state}`)}</span>
+                            </div>
+                            <p className="mt-1 text-xs text-slate-400">{batchOutcome.message}</p>
+                            <p className="mt-1 text-xs text-slate-500">{t('oeeMultiEntry.batchTargetCount', { count: batchOutcome.lineCodes.length, itemCount: batchOutcome.targetItemCount })}</p>
+                            {batchOutcome.events && (
+                              <div className="mt-2 grid gap-1">
+                                {batchOutcome.events.map((event) => (
+                                  <div key={`${event.lineCode}-${event.dtSeq}`} className="flex items-center justify-between gap-2 rounded-md border border-slate-700 bg-[#07111d] px-2 py-1.5 text-xs">
+                                    <span className="font-mono font-bold text-slate-200">{event.lineCode}</span>
+                                    <span className="font-mono text-slate-400">DT #{event.dtSeq}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
                           </div>
-                          <p className="mt-1 text-xs text-slate-400">{outcome?.message ?? t('oeeMultiEntry.notSubmitted')}</p>
-                          {outcome && <p className="mt-1 truncate font-mono text-[11px] text-slate-500">{t('oeeMultiEntry.requestId')}: {outcome.requestId}</p>}
                         </div>
-                      </div>
-                    </article>
-                  );
-                })}
+                      </article>
+                    );
+                  })()
+                ) : selectedResources.length === 0 ? (
+                  <p className="py-6 text-center text-sm text-slate-500">{t('oeeMultiEntry.noResults')}</p>
+                ) : (
+                  <p className="py-6 text-center text-sm text-slate-500">{t('oeeMultiEntry.notSubmitted')}</p>
+                )}
               </div>
             </div>
           </section>
@@ -1501,13 +1938,18 @@ export default function OeeMultiEntryPage() {
                             data-testid="oee-multi-reason-card"
                             type="button"
                             onClick={() => {
-                              setReasonCode(reason.reasonCode);
-                              clearCommandState();
+                              if (mode === 'START') {
+                                setReasonCode(reason.reasonCode);
+                              } else {
+                                const override = createEndReasonOverride(reason.reasonCode, endReasonSummary.snapshotKey);
+                                if (override) setEndReasonOverride(override);
+                              }
+                              clearBatchOutcome();
                               setReasonEditorOpen(false);
                             }}
-                            aria-pressed={reasonCode === reason.reasonCode}
+                            aria-pressed={pickerReasonCode === reason.reasonCode}
                             aria-label={`${reasonTypeLabel}: ${reason.reasonName}, ${reason.reasonCode}`}
-                            className={`flex min-h-[44px] min-w-0 cursor-pointer flex-col justify-center rounded-lg border px-2.5 py-1.5 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 ${reasonCode === reason.reasonCode ? 'border-cyan-300 bg-cyan-400/20 text-white' : 'border-slate-600 bg-[#07111d] text-slate-300 hover:border-cyan-300/70'}`}
+                            className={`flex min-h-[44px] min-w-0 cursor-pointer flex-col justify-center rounded-lg border px-2.5 py-1.5 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 ${pickerReasonCode === reason.reasonCode ? 'border-cyan-300 bg-cyan-400/20 text-white' : 'border-slate-600 bg-[#07111d] text-slate-300 hover:border-cyan-300/70'}`}
                           >
                             <span className="block min-w-0 truncate text-xs font-bold">{reason.reasonName}</span>
                             <span className="mt-0.5 block min-w-0 truncate font-mono text-[11px] text-slate-400">{reasonTypeLabel} · {reason.reasonCode}</span>

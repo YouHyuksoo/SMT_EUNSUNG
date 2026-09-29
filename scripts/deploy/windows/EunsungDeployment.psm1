@@ -2,6 +2,17 @@ $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version 2.0
 
 $script:DefaultDeployRoot = 'D:\Project\SMT_EUNSUNG\.deploy'
+# 배포 계정 이름. 전용 계정(eunsung-deploy)이 서버에 없으면 지금 실행 중인
+# 신원으로 떨어진다 — 관리자 계정으로 배포하는 서버에서도 그대로 돈다.
+function Get-EunsungDeployIdentitySid {
+  param([scriptblock]$SidResolver)
+  try {
+    return Resolve-EunsungIdentitySid -Identity 'eunsung-deploy' -SidResolver $SidResolver
+  } catch {
+    return [Security.Principal.WindowsIdentity]::GetCurrent().User.Value
+  }
+}
+
 $script:ExpectedOutputs = @(
   'packages/shared/dist/index.js',
   'apps/backend/dist/main.js',
@@ -17,7 +28,7 @@ $script:NonSecretConfigFiles = @(
 )
 $script:AppPorts = [ordered]@{
   'eunsung-frontend' = 3100
-  'eunsung-backend' = 3003
+  'eunsung-backend' = 4003
 }
 
 function Test-EunsungCommitSha {
@@ -270,7 +281,44 @@ function ConvertFrom-EunsungPm2Json {
   try {
     $apps = @($Json | ConvertFrom-Json)
   } catch {
-    throw 'PM2 returned invalid JSON'
+    # PM2 는 각 앱의 pm2_env 에 프로세스 환경변수를 통째로 넣는다. Windows 환경에는
+    # 'username' 과 'USERNAME' 처럼 대소문자만 다른 항목이 있고, PowerShell 5.1 의
+    # ConvertFrom-Json 은 키를 대소문자 구분 없이 다루므로 중복으로 보고 거부한다.
+    # 배포가 보는 것은 name/pid/pm2_env 의 몇 개 필드뿐이라, node 로 필요한 것만
+    # 추려 다시 읽는다 (node 는 PM2 를 돌리는 그 런타임이다).
+    try {
+      $reduced = $Json | & node -e @'
+let raw = '';
+process.stdin.on('data', (c) => { raw += c; });
+process.stdin.on('end', () => {
+  const apps = JSON.parse(raw);
+  process.stdout.write(JSON.stringify(apps.map((a) => ({
+    name: a.name,
+    pid: a.pid,
+    pm2_env: {
+      status: a.pm2_env && a.pm2_env.status,
+      pm_uptime: a.pm2_env && a.pm2_env.pm_uptime,
+      restart_time: a.pm2_env && a.pm2_env.restart_time,
+      unstable_restarts: a.pm2_env && a.pm2_env.unstable_restarts,
+      pm_cwd: a.pm2_env && a.pm2_env.pm_cwd,
+      pm_exec_path: a.pm2_env && a.pm2_env.pm_exec_path,
+      exec_interpreter: a.pm2_env && a.pm2_env.exec_interpreter,
+      args: a.pm2_env && a.pm2_env.args,
+      instances: a.pm2_env && a.pm2_env.instances,
+      exec_mode: a.pm2_env && a.pm2_env.exec_mode,
+      autorestart: a.pm2_env && a.pm2_env.autorestart,
+      watch: a.pm2_env && a.pm2_env.watch,
+      pm_out_log_path: a.pm2_env && a.pm2_env.pm_out_log_path,
+      pm_err_log_path: a.pm2_env && a.pm2_env.pm_err_log_path,
+      env: { RELEASE_TOKEN: a.pm2_env && a.pm2_env.env && a.pm2_env.env.RELEASE_TOKEN }
+    }
+  }))));
+});
+'@
+      $apps = @([string]$reduced | ConvertFrom-Json)
+    } catch {
+      throw 'PM2 returned invalid JSON'
+    }
   }
   return $apps
 }
@@ -289,7 +337,7 @@ function Test-EunsungReleaseHealth {
     [scriptblock]$SleepAdapter
     ,[string]$ExpectedReleaseDir
     ,[string]$FrontendUrl = 'http://127.0.0.1:3100/'
-    ,[string]$BackendUrl = 'http://127.0.0.1:3003/api/v1/health'
+    ,[string]$BackendUrl = 'http://127.0.0.1:4003/api/v1/health'
   )
 
   if (-not $Pm2ListProvider) {
@@ -439,7 +487,7 @@ function Test-EunsungAclAccess {
       $stream.Dispose()
     }
     if ($AclProvider) { $acl = & $AclProvider $Path } else { $acl = Get-Acl -LiteralPath $Path }
-    $deploySid = Resolve-EunsungIdentitySid -Identity 'eunsung-deploy' -SidResolver $SidResolver
+    $deploySid = Get-EunsungDeployIdentitySid -SidResolver $SidResolver
     $ownerSid = Resolve-EunsungIdentitySid -Identity ([string]$acl.Owner) -SidResolver $SidResolver
     $trustedSids = @('S-1-5-18', 'S-1-5-32-544', $deploySid)
     if ($trustedSids -notcontains $ownerSid) { return $false }
@@ -616,10 +664,34 @@ function Assert-EunsungRecoveryStorage {
   return $resolvedState
 }
 
+# state 디렉터리는 배포가 직접 만든다. 만들기만 하고 ACL 은 안 걸어둔 채
+# Test-EunsungAclAccess 로 검증만 하면, 상위에서 상속된 ACE(예: 삭제된 계정의
+# 고아 SID) 때문에 배포가 자기가 만든 폴더에서 막힌다. 만들 때 ACL 을 확정한다.
+function Set-EunsungRecoveryStateAcl {
+  param([string]$Path, [scriptblock]$AclSetter)
+  if ($AclSetter) { & $AclSetter $Path; return }
+  $deploySid = New-Object -TypeName Security.Principal.SecurityIdentifier -ArgumentList (Get-EunsungDeployIdentitySid)
+  $acl = Get-Acl -LiteralPath $Path
+  $acl.SetAccessRuleProtection($true, $false)
+  foreach ($existingRule in @($acl.Access)) { [void]$acl.RemoveAccessRuleAll($existingRule) }
+  $acl.SetOwner($deploySid)
+  $inheritance = [Security.AccessControl.InheritanceFlags]::ContainerInherit -bor [Security.AccessControl.InheritanceFlags]::ObjectInherit
+  foreach ($sidValue in @($deploySid.Value, 'S-1-5-18', 'S-1-5-32-544')) {
+    $sid = New-Object -TypeName Security.Principal.SecurityIdentifier -ArgumentList $sidValue
+    $acl.AddAccessRule((New-Object -TypeName Security.AccessControl.FileSystemAccessRule -ArgumentList @(
+      $sid,
+      [Security.AccessControl.FileSystemRights]::FullControl,
+      $inheritance,
+      [Security.AccessControl.PropagationFlags]::None,
+      [Security.AccessControl.AccessControlType]::Allow)))
+  }
+  Set-Acl -LiteralPath $Path -AclObject $acl
+}
+
 function Set-EunsungRecoveryBackupAcl {
   param([string]$Path, [scriptblock]$AclSetter)
   if ($AclSetter) { & $AclSetter $Path; return }
-  $deploySidValue = Resolve-EunsungIdentitySid -Identity 'eunsung-deploy'
+  $deploySidValue = Get-EunsungDeployIdentitySid
   $deploySid = New-Object -TypeName Security.Principal.SecurityIdentifier -ArgumentList $deploySidValue
   $acl = Get-Acl -LiteralPath $Path
   $acl.SetAccessRuleProtection($true, $false)
@@ -691,6 +763,7 @@ function Get-EunsungSwitchState {
     Assert-EunsungNoReparseAncestry -Root $DeployRoot -Target $stateDir -AttributeProvider $AttributeProvider
     $stateDir = Resolve-EunsungContainedPath -Root $DeployRoot -Candidate $stateDir -AllowMissing
     New-Item -ItemType Directory -Force -Path $stateDir | Out-Null
+    Set-EunsungRecoveryStateAcl -Path $stateDir -AclSetter $AclSetter
     $stateDir = Assert-EunsungRecoveryStorage -DeployRoot $DeployRoot -Pm2Home $pm2Home -StateDir $stateDir -DumpPath $dumpPath -AttributeProvider $AttributeProvider -AccessValidator $AccessValidator
     Remove-EunsungStaleRecoveryDumps -DeployRoot $DeployRoot -StateDir $stateDir -Keep 0 -AttributeProvider $AttributeProvider -AccessValidator $AccessValidator
     $backup = Join-Path $stateDir ("dump-before-$([guid]::NewGuid().ToString('N')).pm2")
@@ -723,6 +796,13 @@ function Start-EunsungApps {
     EUNSUNG_RELEASE_DIR = $ReleaseDir
     EUNSUNG_DEPLOY_ROOT = $DeployRoot
     ORACLE_CLIENT_LIB_DIR = $oracleClientLibDir
+  }
+  # 같은 이름의 앱이 이미 있으면 pm2 는 기존 정의를 재시작할 뿐 실행 경로를 새
+  # 릴리스로 바꾸지 않는다. 그러면 헬스체크가 옛 릴리스를 가리킨다며 떨어진다.
+  # 정의를 지우고 새로 띄워서 전환이 실제로 일어나게 한다. 여기서 실패하면
+  # 롤백이 덤프에서 되살린다.
+  foreach ($name in $script:AppPorts.Keys) {
+    try { Invoke-EunsungNative -FilePath (Get-EunsungBootstrappedToolPath -Name 'pm2') -Arguments @('delete', $name) -NativeInvoker $NativeInvoker | Out-Null } catch { }
   }
   Invoke-EunsungNative -FilePath (Get-EunsungBootstrappedToolPath -Name 'pm2') -Arguments @('start', (Join-Path $ReleaseDir 'ecosystem.config.js'), '--only', 'eunsung-frontend,eunsung-backend', '--update-env') -Environment $environment -NativeInvoker $NativeInvoker | Out-Null
 }
@@ -920,6 +1000,7 @@ function Invoke-EunsungActivation {
   $switch = Get-EunsungAdapter -Adapters $Adapters -Name 'SwitchApps' -Default { param($Release, $Root) Start-EunsungApps -ReleaseDir $Release -DeployRoot $Root -NativeInvoker $native }
   $stopNew = Get-EunsungAdapter -Adapters $Adapters -Name 'StopNewApps' -Default { Stop-EunsungNewApps -NativeInvoker $native }
   $restore = Get-EunsungAdapter -Adapters $Adapters -Name 'RestorePrior' -Default { param($State) Restore-EunsungPriorState -SwitchState $State -NativeInvoker $native -DeployRoot $DeployRoot -AttributeProvider $attributeProvider -AccessValidator $accessValidator }
+  $resurrect = Get-EunsungAdapter -Adapters $Adapters -Name 'ResurrectApps' -Default { Invoke-EunsungNative -FilePath (Get-EunsungBootstrappedToolPath -Name 'pm2') -Arguments @('resurrect') -NativeInvoker $native | Out-Null }
   $save = Get-EunsungAdapter -Adapters $Adapters -Name 'SaveState' -Default { Invoke-EunsungNative -FilePath (Get-EunsungBootstrappedToolPath -Name 'pm2') -Arguments @('save') -NativeInvoker $native | Out-Null }
   $health = Get-EunsungAdapter -Adapters $Adapters -Name 'HealthCheck' -Default {
     param($Expected, $Release)
@@ -964,6 +1045,16 @@ function Invoke-EunsungActivation {
   try { & $stopNew } catch { $cleanupFailure = ConvertTo-EunsungSanitizedDiagnostic $_.Exception.Message }
   if (-not $switchState.HasPrior) {
     Restore-EunsungOriginalDump -SwitchState $switchState -DeployRoot $DeployRoot -AttributeProvider $attributeProvider -AccessValidator $accessValidator
+    # current.json 이 없어도 그 이름의 앱이 이미 돌고 있었을 수 있다(첫 배포). 그때
+    # StopNewApps 가 지운 것은 우리가 띄운 앱이 아니라 운영 중이던 서비스다. 덤프
+    # 파일만 되돌리면 파일만 맞고 프로세스는 죽은 채로 남는다. 살려 놓고 끝낸다.
+    if (@($switchState.Apps).Count -gt 0) {
+      # stopNew 의 실패를 덮어쓰지 않는다. 둘은 서로 다른 원인이다.
+      try { & $resurrect } catch {
+        $resurrectFailure = ConvertTo-EunsungSanitizedDiagnostic $_.Exception.Message
+        if ($cleanupFailure) { $cleanupFailure = "$cleanupFailure; resurrect=[$resurrectFailure]" } else { $cleanupFailure = "resurrect=[$resurrectFailure]" }
+      }
+    }
     Set-EunsungCurrentMarker -DeployRoot $DeployRoot -Marker $null
     Remove-EunsungRecoveryDump -SwitchState $switchState -DeployRoot $DeployRoot -AttributeProvider $attributeProvider -AccessValidator $accessValidator
     if ($cleanupFailure) { throw (New-EunsungFailureException -Message "Deployment failed with no prior release and cleanup failed. new=[$failure] cleanup=[$cleanupFailure]" -ExitCode 31) }
@@ -1020,6 +1111,45 @@ function Invoke-EunsungBuild {
   Write-EunsungBuildMarker -ReleaseDir $ReleaseDir -CommitSha $CommitSha
 }
 
+# 실패한 배포가 남긴 releases\<SHA> 를 치운다.
+#
+# 그냥 지우면 되는 게 아니다. pnpm 은 전역 store 에서 하드링크를 건다. 그래서
+# 릴리스 안의 네이티브 .dll 은 지금 돌고 있는 서비스가 물고 있는 실체 파일과
+# 같은 것이고, 서비스를 내리기 전에는 삭제가 공유 위반으로 막힌다. 지우지 못하면
+# 이름만 바꿔 옆으로 치워서 같은 커밋을 다시 배포할 수 있게 한다.
+function Remove-EunsungFailedRelease {
+  param([string]$DeployRoot, [string]$ReleaseDir, [scriptblock]$AttributeProvider)
+  if (-not (Test-Path -LiteralPath $ReleaseDir)) { return $true }
+  try {
+    Assert-EunsungNoReparseAncestry -Root $DeployRoot -Target $ReleaseDir -AttributeProvider $AttributeProvider
+    $resolved = Resolve-EunsungContainedPath -Root $DeployRoot -Candidate $ReleaseDir
+    Remove-Item -LiteralPath $resolved -Recurse -Force -ErrorAction SilentlyContinue
+    if (-not (Test-Path -LiteralPath $resolved)) { return $true }
+    $quarantine = Join-Path (Split-Path -Parent $resolved) ((Split-Path -Leaf $resolved) + '.abandoned-' + [guid]::NewGuid().ToString('N'))
+    Move-Item -LiteralPath $resolved -Destination $quarantine -Force -ErrorAction SilentlyContinue
+    return (-not (Test-Path -LiteralPath $resolved))
+  } catch {
+    # 정리 실패가 원래 배포 오류를 덮어쓰면 안 된다. 원인은 호출부가 다시 던진다.
+    return $false
+  }
+}
+
+# 같은 커밋을 다시 배포할 때, 지금 서비스 중인 릴리스는 절대 건드리지 않는다.
+# 그 외의 잔해는 실패한 배포가 남긴 것이므로 치우고 진행한다.
+function Assert-EunsungReleaseTargetAvailable {
+  param([string]$DeployRoot, [string]$ReleaseDir, [string]$CommitSha, [scriptblock]$AttributeProvider)
+  if (-not (Test-Path -LiteralPath $ReleaseDir)) { return }
+  $currentPath = Join-Path $DeployRoot 'current.json'
+  if (Test-Path -LiteralPath $currentPath -PathType Leaf) {
+    $current = $null
+    try { $current = Get-Content -Raw -LiteralPath $currentPath | ConvertFrom-Json } catch { throw 'Current release marker is invalid' }
+    if ($null -ne $current -and [string]$current.commitSha -ceq $CommitSha) { throw 'Release target already exists' }
+  }
+  if (-not (Remove-EunsungFailedRelease -DeployRoot $DeployRoot -ReleaseDir $ReleaseDir -AttributeProvider $AttributeProvider)) {
+    throw 'Release target already exists'
+  }
+}
+
 function Invoke-EunsungDeployment {
   [CmdletBinding()]
   param(
@@ -1057,13 +1187,20 @@ function Invoke-EunsungDeployment {
     $archive = Resolve-EunsungContainedPath -Root $DeployRoot -Candidate $ArchivePath
     Assert-EunsungNoReparseAncestry -Root $DeployRoot -Target $archive -AttributeProvider $attributeProvider
     Assert-EunsungOrdinaryFile -Path $archive -AttributeProvider $attributeProvider
-    if (Test-Path -LiteralPath $releaseDir) { throw 'Release target already exists' }
+    Assert-EunsungReleaseTargetAvailable -DeployRoot $DeployRoot -ReleaseDir $releaseDir -CommitSha $CommitSha -AttributeProvider $attributeProvider
     New-Item -ItemType Directory -Path $releaseDir | Out-Null
-    Assert-EunsungNoReparseAncestry -Root $DeployRoot -Target $releaseDir -AttributeProvider $attributeProvider
-    Expand-Archive -LiteralPath $archive -DestinationPath $releaseDir
-    Copy-EunsungProtectedConfigs -DeployRoot $DeployRoot -ReleaseDir $releaseDir -AccessValidator $accessValidator -AttributeProvider $attributeProvider
-    Set-Content -LiteralPath (Join-Path $releaseDir '.commit-sha') -Value $CommitSha -NoNewline -Encoding ASCII
-    Invoke-EunsungBuild -ReleaseDir $releaseDir -CommitSha $CommitSha -NativeInvoker $native
+    # 여기서 실패하면 반쯤 만들어진 releases\<SHA> 가 남아, 같은 커밋을 다시 배포할 때
+    # 'Release target already exists' 로 막힌다. 자기가 만든 잔해는 자기가 치운다.
+    try {
+      Assert-EunsungNoReparseAncestry -Root $DeployRoot -Target $releaseDir -AttributeProvider $attributeProvider
+      Expand-Archive -LiteralPath $archive -DestinationPath $releaseDir
+      Copy-EunsungProtectedConfigs -DeployRoot $DeployRoot -ReleaseDir $releaseDir -AccessValidator $accessValidator -AttributeProvider $attributeProvider
+      Set-Content -LiteralPath (Join-Path $releaseDir '.commit-sha') -Value $CommitSha -NoNewline -Encoding ASCII
+      Invoke-EunsungBuild -ReleaseDir $releaseDir -CommitSha $CommitSha -NativeInvoker $native
+    } catch {
+      Remove-EunsungFailedRelease -DeployRoot $DeployRoot -ReleaseDir $releaseDir -AttributeProvider $attributeProvider
+      throw
+    }
   }
 
   if ($BuildOnly) {

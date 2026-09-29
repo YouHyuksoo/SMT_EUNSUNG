@@ -1,0 +1,572 @@
+{
+  "_comment": [
+    "PB 함수 → 웹 처리 카탈로그 (이관 이력의 단일 출처).",
+    "PB 화면을 이관할 때 그 화면이 부르는 f_* 는 여기를 먼저 조회한다.",
+    "  - 엔트리가 있으면 → 등록된 처리를 그대로 쓴다. 다시 전환하지 않는다.",
+    "  - 없으면 → 처리하고 같은 변경에서 엔트리를 추가한다.",
+    "판별은 이름이 아니라 호출 위치다. SQL 문장 안이면 DB 함수, 밖이면 PB 함수.",
+    "전체 실측 목록: docs/database/generated/pb-function-inventory.json",
+    "현황 문서: docs/business-logics/pb-function-status.md (pnpm gen:function-status)",
+    "action 값: converted(DB 패키지로 전환) | replaced(웹 수단으로 치환) | dropped(제거)",
+    "          | inlined(서비스에 이식) | native(웹에서 직접 구현)"
+  ],
+  "functions": [
+    {
+      "pbFunction": "f_bom_query_prc",
+      "action": "native",
+      "target": "PKG_DESIGN.BOM_QUERY(p_parent_item_code, p_dateset, p_org)",
+      "usedBy": "apps/backend/src/modules/smt/smt-comparison.service.ts, apps/backend/src/modules/smt/smt-nc.service.ts",
+      "note": "PB 는 SQLCA.BOM_QUERY 를 감싸기만 했다. 웹은 패키지 함수를 그대로 부른다. 세션번호를 돌려주고 ID_ENG_BOM_TEMP 에 전개행을 깐다 — 읽은 뒤 그 세션 행만 지운다 (이 표는 3,357,661행 / 세션 70,117개가 2020년부터 쌓여 있다)."
+    },
+    {
+      "pbFunction": "f_check_interlock_condition",
+      "action": "inlined",
+      "target": "IQ_INTERLOCK_CHECK_CONDITION 루프 + P_INTERLOCK_CHECK (PL/SQL 블록 1회)",
+      "usedBy": "apps/backend/src/modules/product/services/product-pack.service.ts",
+      "note": "본문이 조건표를 커서로 돌며 P_INTERLOCK_CHECK 를 부르는 것뿐이다. 블록 하나로 옮겨 왕복을 줄였다. 실측 조건표 316행 / 59개 (라인,공정) 조합, 전부 USE_YN='Y'."
+    },
+    {
+      "pbFunction": "f_check_item_barcode_hold_yn",
+      "action": "inlined",
+      "target": "CASE WHEN NVL(MAX(IM_ITEM_RECEIPT_BARCODE.HOLDING_YN),'N')='N' THEN 'N' ELSE 'Y' END",
+      "usedBy": "apps/backend/src/modules/warehouse/barcode-issue.service.ts",
+      "note": "DB 에 동명 함수가 없다 (실측). PB 함수 본문 그대로 인라인. 'N' 이 아니면 전부 보류로 본다."
+    },
+    {
+      "pbFunction": "f_check_item_exists",
+      "action": "inlined",
+      "target": "ID_ITEM 유효기간 조건 (DATESET <= TRUNC(SYSDATE) AND DATEEND >= TRUNC(SYSDATE))",
+      "usedBy": "apps/backend/src/modules/warehouse/barcode-receipt.service.ts",
+      "note": "**DB 동명 함수와 뜻이 다르다.** PB 는 ID_ITEM 품목 유효기간을 보고, DB F_CHECK_ITEM_EXISTS(p_set_item,p_org) 는 ID_CUSTOMER_SET_BOM 세트 BOM 유무를 보며 'EXISTS'/'NOTFOUND' 를 낸다. 인자도 (품목,조직) 이라 PB 가 넘기던 날짜 자리와 맞지 않는다 (실측 ORA-06553 PLS-306). PB 쪽 SQL 을 인라인한다."
+    },
+    {
+      "pbFunction": "f_check_item_inventory_hold_yn",
+      "action": "inlined",
+      "target": "CASE WHEN MAX(IM_ITEM_INVENTORY.INVENTORY_HOLD)='C' THEN 'Y' ELSE 'N' END (창고 M01)",
+      "usedBy": "apps/backend/src/modules/warehouse/barcode-issue.service.ts",
+      "note": "DB 에 동명 함수가 없다 (실측). PB 가 SQL 밖에서 부르는 PB 함수이고 본문이 한 줄 SELECT 라 그대로 인라인했다. 'C' 만 보류로 본다."
+    },
+    {
+      "pbFunction": "f_check_mold_exists",
+      "action": "converted",
+      "target": "PKG_MES_MAC.F_CHECK_MOLD_EXISTS",
+      "source": "oracle_db_scripts/PKG_MES_MAC.sql",
+      "note": "S-PARTS 코드 존재 검사. PB 반환규약 유지 — 없으면 -1, 있으면 건수."
+    },
+    {
+      "pbFunction": "f_check_pcb_coating_date",
+      "action": "native",
+      "target": "F_CHECK_PCB_COATING_DATE(item_code, coating_date, organization_id)",
+      "usedBy": "apps/backend/src/modules/warehouse/barcode-issue.service.ts",
+      "note": "PB 동명 함수가 없고 DB 에 VALID 로 있다. PB 도 SQL 안에서 부른다."
+    },
+    {
+      "pbFunction": "f_check_run_no",
+      "action": "inlined",
+      "target": "런카드 조회 결과 유무",
+      "usedBy": "apps/backend/src/modules/process-transaction/magazine-label.service.ts",
+      "note": "본문이 IP_PRODUCT_RUN_CARD COUNT(*) 뿐이다. lookupRunCard 가 행을 못 찾으면 같은 판정이 난다."
+    },
+    {
+      "pbFunction": "f_check_slip_exists",
+      "action": "inlined",
+      "target": "COUNT(*) FROM IM_ITEM_RECEIPT_SLIP WHERE RECEIPT_SLIP_NO=? AND RECEIPT_STATUS<>'C' AND ORGANIZATION_ID=?",
+      "usedBy": "apps/backend/src/modules/warehouse/solder-label.service.ts",
+      "note": "DB 에 동명 함수가 없다 (실측). PB 243 은 전표번호를 받아 발행하는 갈래에서 중복을 막는 게이트로 썼는데, 그 갈래는 공장코드를 안 붙여 10자 바코드를 만들고 실데이터에 10자가 한 장도 없다 (7,681장 전부 11자) → 이관하지 않았다. 웹은 전표를 항상 새로 만들므로 이 게이트가 필요 없다."
+    },
+    {
+      "pbFunction": "f_check_supplier_exists",
+      "action": "converted",
+      "target": "PKG_MES_MAC.F_CHECK_SUPPLIER_EXISTS",
+      "source": "oracle_db_scripts/PKG_MES_MAC.sql",
+      "note": "공급처 코드 존재 검사. 없으면 -1, 있으면 건수."
+    },
+    {
+      "pbFunction": "f_check_unit_price_dup",
+      "action": "converted",
+      "target": "PKG_MES_MAT.F_CHECK_UNIT_PRICE_DUP",
+      "source": "oracle_db_scripts/PKG_MES_MAT.sql",
+      "note": "유효기간 겹치는 구매단가 중복 검사. 중복 없으면 0, 다중 조합이면 -1."
+    },
+    {
+      "pbFunction": "f_download_eco_rtn_filename",
+      "action": "blocked",
+      "target": null,
+      "note": "전환 불가 — PB 파일 I/O(첨부파일 다운로드). 품질 첨부·이미지 기능은 이관 범위에서 제외했다."
+    },
+    {
+      "pbFunction": "f_download_mold_rtn_filename",
+      "action": "blocked",
+      "target": null,
+      "note": "전환 불가 — PB 파일 I/O(SETPOINTER + 파일 다운로드). 첨부 기능은 S-PARTS 이관 범위에서 제외했다."
+    },
+    {
+      "pbFunction": "f_download_qc_4m_data",
+      "action": "blocked",
+      "target": null,
+      "note": "전환 불가 — PB 파일 I/O(첨부파일 다운로드). 품질 첨부·이미지 기능은 이관 범위에서 제외했다."
+    },
+    {
+      "pbFunction": "f_download_qc_document_data",
+      "action": "blocked",
+      "target": null,
+      "note": "전환 불가 — PB 파일 I/O(첨부파일 다운로드). 품질 첨부·이미지 기능은 이관 범위에서 제외했다."
+    },
+    {
+      "pbFunction": "f_download_qc_inspect_data",
+      "action": "blocked",
+      "target": null,
+      "note": "전환 불가 — PB 파일 I/O(첨부파일 다운로드). 품질 첨부·이미지 기능은 이관 범위에서 제외했다."
+    },
+    {
+      "pbFunction": "f_download_qc_ng_image_data",
+      "action": "blocked",
+      "target": null,
+      "note": "전환 불가 — PB 파일 I/O(첨부파일 다운로드). 품질 첨부·이미지 기능은 이관 범위에서 제외했다."
+    },
+    {
+      "pbFunction": "f_download_qc_notify_rtn_multi_filename",
+      "action": "blocked",
+      "target": null,
+      "note": "전환 불가 — PB 파일 I/O(첨부파일 다운로드). 품질 첨부·이미지 기능은 이관 범위에서 제외했다."
+    },
+    {
+      "pbFunction": "f_get_any_no",
+      "action": "native",
+      "target": "F_GET_ANY_NO(UPPER(name), organization_id)",
+      "usedBy": "apps/backend/src/modules/warehouse/barcode-receipt.service.ts",
+      "note": "PB 래퍼 본문이 같은 이름의 DB 함수를 부르는 것뿐이라 직접 불러도 값이 같다 (실측 f_get_any_no.srf)."
+    },
+    {
+      "pbFunction": "f_get_carrier_size",
+      "action": "converted",
+      "target": "PKG_MES_PLN.F_GET_CARRIER_SIZE",
+      "source": "oracle_db_scripts/PKG_MES_PLN.sql",
+      "note": "모델 캐리어 규격. 모델 없으면 -1, 값 없으면 0."
+    },
+    {
+      "pbFunction": "f_get_code_master",
+      "action": "native",
+      "target": "F_GET_CODE_MASTER",
+      "usedBy": "apps/backend/src/modules/quality/services/repair-query.service.ts",
+      "note": "SQL 안에서 부르던 DB 함수. 코드표를 TypeScript 로 복사하지 않는다."
+    },
+    {
+      "pbFunction": "f_get_create_cellbiz_barcode",
+      "action": "native",
+      "target": "F_GET_CREATE_CELLBIZ_BARCODE",
+      "usedBy": "apps/backend/src/modules/product/services/product-pack.service.ts",
+      "note": "SQL 안에서 부르던 DB 함수(VALID). 내부 P_CREATE_CELL_BIZ_BARCODE 가 PRAGMA AUTONOMOUS_TRANSACTION + COMMIT 이라 박스 행이 즉시 확정된다."
+    },
+    {
+      "pbFunction": "f_get_dual_lang_text",
+      "action": "native",
+      "target": "F_GET_DUAL_LANG_TEXT",
+      "note": "이미 DB 함수로 존재한다(VALID). 웹은 화면 문구를 i18n 으로 내므로 호출할 일은 없다."
+    },
+    {
+      "pbFunction": "f_get_dynamic_report_name",
+      "action": "blocked",
+      "target": null,
+      "note": "전환 보류 — 참조 컬럼 QR_PID_DW_NAME / PACKING_LABEL_DW_NAME 이 이 DB 의 IP_PRODUCT_MODEL_MASTER 에 없다."
+    },
+    {
+      "pbFunction": "f_get_first_day",
+      "action": "inlined",
+      "target": "receipt-cancel.service.ts firstDayOfMonth()",
+      "note": "한 화면 전용 날짜 계산이라 DB 오브젝트를 늘리지 않는다."
+    },
+    {
+      "pbFunction": "f_get_item_issue_packing_qty",
+      "action": "inlined",
+      "target": "@smt/shared applyIssuePacking (packages/shared/src/warehouse/issue-packing.ts)",
+      "usedBy": "apps/backend/src/modules/warehouse/issue-manage.service.ts, apps/frontend/src/app/(authenticated)/warehouse/etc-issue/page.tsx",
+      "note": "DB 에 동명 함수가 없다 (실측). 화면이 실제 출고 수량을 미리 보여줘야 해서 공유 패키지에 두고 테스트 8건으로 못 박았다. PB 는 음수 요청에 양수 포장단위를 내놓아 반납이 출고로 뒤집히는데, 값은 PB 와 맞추고 그 조합을 서비스에서 거절한다."
+    },
+    {
+      "pbFunction": "f_get_line_type_from_item",
+      "action": "native",
+      "target": "F_GET_LINE_TYPE_FROM_ITEM(item_code, organization_id)",
+      "usedBy": "apps/backend/src/modules/warehouse/barcode-receipt.service.ts",
+      "note": "DB 함수와 본문이 같고 유효기간 조건만 DB 쪽에서 주석 처리돼 있다. 호출 전에 유효기간을 이미 확인하므로 결과가 같다. 인자 2개다 (PB 래퍼는 1개)."
+    },
+    {
+      "pbFunction": "f_get_listagg_location",
+      "action": "native",
+      "target": "F_GET_LISTAGG_LOCATION(p_line_code, p_model_name, p_item_code, p_pcb_item)",
+      "usedBy": "apps/backend/src/modules/smt/smt-comparison.service.ts",
+      "note": "SQL 안에서 불리던 DB 함수. 부품이 물린 피더 자리를 한 줄로 모아 준다. 그대로 호출한다."
+    },
+    {
+      "pbFunction": "f_get_lot_size_by_run_no",
+      "action": "inlined",
+      "target": "IP_PRODUCT_RUN_CARD.LOT_SIZE",
+      "usedBy": "apps/backend/src/modules/process-transaction/magazine-label.service.ts",
+      "note": "런카드 조회 SQL 이 LOT_SIZE 를 이미 가져오므로 따로 부를 이유가 없다."
+    },
+    {
+      "pbFunction": "f_get_magazine_lot_qty",
+      "action": "converted",
+      "target": "PKG_MES_PLN.F_GET_MAGAZINE_LOT_QTY",
+      "source": "oracle_db_scripts/PKG_MES_PLN.sql",
+      "note": "매거진 라벨 LOT 수량. 라벨 없으면 0."
+    },
+    {
+      "pbFunction": "f_get_magazine_qty_by_run_no",
+      "action": "native",
+      "target": "F_GET_MAGAZINE_QTY_BY_RUN_NO",
+      "usedBy": "apps/backend/src/modules/process-transaction/magazine-label.service.ts",
+      "note": "SQL 문장 안에서 부르던 DB 함수다(VALID). 웹 쿼리에서 같은 이름으로 그대로 호출한다."
+    },
+    {
+      "pbFunction": "f_get_magazine_size",
+      "action": "inlined",
+      "target": "IP_PRODUCT_MODEL_MASTER.MAGAZINE_SIZE",
+      "usedBy": "apps/backend/src/modules/process-transaction/magazine-label.service.ts",
+      "note": "본문이 단일행 SELECT 하나뿐이라 조회 SQL 에 NVL(m.MAGAZINE_SIZE,1) 로 녹였다."
+    },
+    {
+      "pbFunction": "f_get_marking_yn",
+      "action": "converted",
+      "target": "PKG_MES_PLN.F_GET_MARKING_YN",
+      "source": "oracle_db_scripts/PKG_MES_PLN.sql",
+      "note": "모델 마킹 사용여부. 조회 실패 시 'N'."
+    },
+    {
+      "pbFunction": "f_get_mat_max_unit_price_cfm",
+      "action": "native",
+      "target": "F_GET_MAT_MAX_UNIT_PRICE_CFM(p_item_code, p_line_type, p_date, p_org)",
+      "usedBy": "apps/backend/src/modules/smt/smt-bom.service.ts",
+      "note": "SQL 안에서 불리던 DB 함수. 확정단가. 그대로 호출한다."
+    },
+    {
+      "pbFunction": "f_get_mat_msl_max_time",
+      "action": "native",
+      "target": "F_GET_MAT_MSL_MAX_TIME(item_code)",
+      "usedBy": "apps/backend/src/modules/warehouse/barcode-issue.service.ts",
+      "note": "PB 동명 함수가 없고 DB 에 VALID 로 있다. MSL 등급 3 이상 품목의 허용 노출시간이다."
+    },
+    {
+      "pbFunction": "f_get_max_supplier_by_item",
+      "action": "native",
+      "target": "F_GET_MAX_SUPPLIER_BY_ITEM(item_code, organization_id)",
+      "usedBy": "apps/backend/src/modules/warehouse/issue-return.service.ts",
+      "note": "PB 동명 함수가 없고 DB 에 VALID 로 있다 (실측). PB 250 도 INSERT 문 안에서 부르므로 DB 함수다."
+    },
+    {
+      "pbFunction": "f_get_model_name_by_run_no",
+      "action": "native",
+      "target": "F_GET_MODEL_NAME_BY_RUN_NO",
+      "usedBy": "apps/backend/src/modules/tracking/pid-tracking.service.ts",
+      "note": "이름은 PB 함수처럼 보이지만 같은 이름의 DB 함수가 실제로 있다(VALID). 317 머리글은 2D바코드에서 모델명을 함께 읽어 이 함수 호출이 불필요했다."
+    },
+    {
+      "pbFunction": "f_get_model_product_st",
+      "action": "native",
+      "target": "F_GET_MODEL_PRODUCT_ST(p_model, p_line, p_pcb_item, p_workstage, p_org)",
+      "usedBy": "(PB d_pln_mi_master_plan_lst_tree 에서 확인. 웹 계획 목록에는 아직 안 쓴다)",
+      "note": "모델 표준시간. SQL 안에서 불린다. 계획 목록에 넣을 때 그대로 호출한다."
+    },
+    {
+      "pbFunction": "f_get_mold_unit_price",
+      "action": "converted",
+      "target": "PKG_MES_MAC.F_GET_MOLD_UNIT_PRICE",
+      "source": "oracle_db_scripts/PKG_MES_MAC.sql",
+      "note": "오늘 유효한 S-PARTS 구매단가. 없으면 -2. PB 는 통화를 전역구조체로 같이 넘겼으나 함수는 값이 하나뿐이라 통화는 F_GET_MOLD_UNIT_PRICE_CURR 로 나눴다."
+    },
+    {
+      "pbFunction": "f_get_mold_unit_price_by_confirm",
+      "action": "converted",
+      "target": "PKG_MES_MAC.F_GET_MOLD_UNIT_PRICE(..., 'Y')",
+      "source": "oracle_db_scripts/PKG_MES_MAC.sql",
+      "note": "승인된 단가만 보는 변형. 별도 함수를 만들지 않고 p_confirm_only 인자로 합쳤다."
+    },
+    {
+      "pbFunction": "f_get_msl_passed_time",
+      "action": "native",
+      "target": "F_GET_MSL_PASSED_TIME(item_barcode)",
+      "usedBy": "apps/backend/src/modules/warehouse/barcode-issue.service.ts",
+      "note": "PB 동명 함수가 없고 DB 에 VALID 로 있다. 출고 원장 MSL_PASSED_TIME 에도 이 함수 값이 들어간다 (실측 81,191/81,322건 채워짐)."
+    },
+    {
+      "pbFunction": "f_get_new_magazine_no",
+      "action": "dropped",
+      "target": null,
+      "usedBy": "apps/backend/src/modules/process-transaction/magazine-label.service.ts",
+      "note": "DB 함수로 존재하나(INVALID) PB 호출부가 **전부 주석 처리**돼 있다. 살아있는 채번은 라인코드+f_ymd_sysdate()+SEQ_MAGAZINE_LABEL_SEQUENCE 4자리다 — 실측 라벨번호 9자(1069S6199)와 일치."
+    },
+    {
+      "pbFunction": "f_get_pcb_item_by_name",
+      "action": "native",
+      "target": "F_GET_PCB_ITEM_BY_NAME(p_set_item_code)",
+      "usedBy": "apps/backend/src/modules/smt/smt-bom.service.ts",
+      "note": "SQL 안에서 불리던 DB 함수. SET 품목의 PCB 면 코드. 라벨 바코드에 쓴다."
+    },
+    {
+      "pbFunction": "f_get_prepare_barcode",
+      "action": "native",
+      "target": "F_GET_PREPARE_BARCODE(barcode)",
+      "usedBy": "apps/backend/src/modules/warehouse/barcode-issue.service.ts",
+      "note": "PB 동명 함수가 없고 DB 에 VALID 로 있다. PB 도 SQL 안에서 부른다 — 스캐너가 붙이는 접두어·공백을 떼는 규칙이라 TypeScript 로 다시 쓰면 값이 갈린다."
+    },
+    {
+      "pbFunction": "f_get_prepare_supplier_barcode",
+      "action": "native",
+      "target": "F_GET_PREPARE_SUPPLIER_BARCODE(barcode)",
+      "usedBy": "apps/backend/src/modules/warehouse/issue-return.service.ts (간접), barcode-issue.service.ts",
+      "note": "PB 동명 함수가 없고 DB 에 VALID 로 있다. 협력사 바코드 정제용이다."
+    },
+    {
+      "pbFunction": "f_get_product_date_by_model",
+      "action": "blocked",
+      "target": null,
+      "note": "전환 불가 — 참조 테이블 TB_VIS_TSTRSLT(VISION 검사결과)가 이 DB 에 없다."
+    },
+    {
+      "pbFunction": "f_get_run_line_actual_qty",
+      "action": "native",
+      "target": "F_GET_RUN_LINE_ACTUAL_QTY(p_run_no, p_line_code, p_org)",
+      "usedBy": "apps/backend/src/modules/planning/result.service.ts",
+      "note": "생산일보 실적수량. 성능가동률·양품률의 분자·분모다."
+    },
+    {
+      "pbFunction": "f_get_run_line_pda_off",
+      "action": "native",
+      "target": "F_GET_RUN_LINE_PDA_OFF(p_run_no, p_line_code, p_org)",
+      "usedBy": "apps/backend/src/modules/planning/result.service.ts",
+      "note": "생산 종료시각(PDA OFF). NULL 이면 생산시간 0 으로 본다 (PB DECODE 규약)."
+    },
+    {
+      "pbFunction": "f_get_run_line_pda_on",
+      "action": "native",
+      "target": "F_GET_RUN_LINE_PDA_ON(p_run_no, p_line_code, p_org)",
+      "usedBy": "apps/backend/src/modules/planning/result.service.ts",
+      "note": "생산 시작시각(PDA ON). 생산시간 계산의 시작점."
+    },
+    {
+      "pbFunction": "f_get_run_lot_qty",
+      "action": "native",
+      "target": "F_GET_RUN_LOT_QTY(p_run_no)",
+      "usedBy": "apps/backend/src/modules/planning/result.service.ts",
+      "note": "SQL 안에서 불리던 DB 함수. 작업지시의 LOT 수량. 그대로 호출한다."
+    },
+    {
+      "pbFunction": "f_get_run_ng_qty",
+      "action": "native",
+      "target": "F_GET_RUN_NG_QTY(p_run_no, p_org)",
+      "usedBy": "apps/backend/src/modules/planning/result.service.ts",
+      "note": "생산일보 불량수량. 불량PPM 과 양품률에 쓴다."
+    },
+    {
+      "pbFunction": "f_get_run_no_by_serial",
+      "action": "replaced",
+      "target": "IP_PRODUCT_2D_BARCODE 직접 조회",
+      "usedBy": "apps/backend/src/modules/tracking/pid-tracking.service.ts",
+      "note": "PID → Run No. PB 스크립트(화면 밖)에서만 불러 PB 전역함수이며 이 DB 에 같은 이름의 함수가 없다(실측). 2D바코드를 등호로 직접 읽어 치환했다."
+    },
+    {
+      "pbFunction": "f_get_sequence",
+      "action": "native",
+      "target": "시퀀스 직접 호출 (예: SEQ_MAT_RECEIPT.NEXTVAL)",
+      "note": "동적 SQL 로 임의 시퀀스를 부르던 래퍼. 웹은 대상 시퀀스를 직접 쓴다 (예: SEQ_MAT_RECEIPT.NEXTVAL, SEQ_JIG_CHECK_SEQUENCE.NEXTVAL)."
+    },
+    {
+      "pbFunction": "f_get_supplier_name",
+      "action": "native",
+      "target": "F_GET_SUPPLIER_NAME",
+      "note": "이미 DB 함수로 존재한다(VALID). PB 가 SQL 밖에서 SELECT ... FROM DUAL 로 감싸 불렀을 뿐이라 전환 대상이 아니다."
+    },
+    {
+      "pbFunction": "f_get_work_breaktime_min",
+      "action": "native",
+      "target": "F_GET_WORK_BREAKTIME_MIN(p_start, p_end)",
+      "usedBy": "apps/backend/src/modules/planning/result.service.ts",
+      "note": "생산일보 휴게시간(분). 가용시간 = 생산 - 휴게 계산에 쓴다. TypeScript 로 다시 구현하면 일보 숫자가 갈린다."
+    },
+    {
+      "pbFunction": "f_get_work_losstime_min",
+      "action": "native",
+      "target": "F_GET_WORK_LOSSTIME_MIN(p_line_code, p_start, p_end)",
+      "usedBy": "apps/backend/src/modules/planning/result.service.ts",
+      "note": "생산일보 로스시간(분). 실가동 = 가용 - 로스."
+    },
+    {
+      "pbFunction": "f_get_work_shift_code",
+      "action": "native",
+      "target": "F_GET_WORK_SHIFT_CODE",
+      "note": "이미 DB 함수로 존재한다(VALID). PB 가 SQL 밖에서 DUAL 로 감싸 불렀을 뿐이라 전환 대상이 아니다. 업무일·교대 판정은 PB 와 값이 갈리면 안 되므로 반드시 이 함수를 쓴다."
+    },
+    {
+      "pbFunction": "f_insert",
+      "action": "dropped",
+      "target": null,
+      "note": "PB DataWindow InsertRow 래퍼. 웹은 우측 폼 패널이 대신한다."
+    },
+    {
+      "pbFunction": "f_jssetprofilestring",
+      "action": "dropped",
+      "target": null,
+      "note": "INI 파일 I/O. 설정은 DB(ISYS_CONFIG)·환경변수로 간다."
+    },
+    {
+      "pbFunction": "f_mat_issue_cancel",
+      "action": "inlined",
+      "target": "IssueManageService.cancelIssue (한 트랜잭션: 공정이관 확인 → 원건 상태 'C' → 반납요청 확정 해제 → 부호 뒤집은 행 INSERT)",
+      "usedBy": "apps/backend/src/modules/warehouse/issue-manage.service.ts",
+      "note": "DB 에 동명 함수가 없다 (실측). 역분개 패턴이라 f_mat_receipt_cancel → PKG_MES_MAC.SP_RECEIPT_CANCEL 과 같은 성격이지만, PB 와 웹을 한 건에 대해 같이 쓰지 않는다는 사용자 결정에 따라 DB 오브젝트를 만들지 않고 TypeScript 트랜잭션으로 옮겼다. 상태 변경을 UPDATE 조건에 넣어 PB 에 없던 중복취소 방어를 더했다."
+    },
+    {
+      "pbFunction": "f_mat_issue_change_location",
+      "action": "dropped",
+      "target": "-",
+      "usedBy": "-",
+      "note": "258 의 창고이동 버튼. 취소(역분개) + 새 창고로 재출고를 한 번에 하는 것인데, 이관 범위(출고취소)에 없어 옮기지 않았다. 필요해지면 f_mat_issue_cancel 과 같은 방식으로 붙인다."
+    },
+    {
+      "pbFunction": "f_mat_receipt_cancel",
+      "action": "converted",
+      "target": "PKG_MES_MAT.SP_RECEIPT_CANCEL",
+      "source": "oracle_db_scripts/PKG_MES_MAT.sql",
+      "usedBy": "apps/backend/src/modules/material/services/receipt-cancel.service.ts",
+      "note": "입고 1건 상계(역분개). PB 반환규약 유지(-1/-3), -2(이미취소)는 웹에서 추가."
+    },
+    {
+      "pbFunction": "f_mcn_mold_issue_cancel",
+      "action": "converted",
+      "target": "PKG_MES_MAC.SP_MOLD_ISSUE_CANCEL",
+      "source": "oracle_db_scripts/PKG_MES_MAC.sql",
+      "usedBy": "apps/backend/src/modules/mold/mold-issue.service.ts",
+      "note": "S-PARTS 출고 1건 상계 + 청구를 미처리('R')로 되돌림. 항번은 SEQ_MAT_ISSUE."
+    },
+    {
+      "pbFunction": "f_mcn_mold_receipt_cancel",
+      "action": "converted",
+      "target": "PKG_MES_MAC.SP_MOLD_RECEIPT_CANCEL",
+      "source": "oracle_db_scripts/PKG_MES_MAC.sql",
+      "usedBy": "apps/backend/src/modules/mold/mold-receipt.service.ts",
+      "note": "S-PARTS 입고 1건 상계(역분개). 항번은 SEQ_MAT_RECEIPT. PB 반환규약 유지(-1/-3), -2(이미취소)는 웹에서 추가."
+    },
+    {
+      "pbFunction": "f_menu_control",
+      "action": "dropped",
+      "target": null,
+      "note": "MDI 프레임 메뉴 활성화 제어. 웹 메뉴 권한이 대신한다."
+    },
+    {
+      "pbFunction": "f_msg",
+      "action": "replaced",
+      "target": "react-hot-toast",
+      "note": "메시지 표시용."
+    },
+    {
+      "pbFunction": "f_msg1",
+      "action": "replaced",
+      "target": "react-hot-toast",
+      "note": "f_msg 계열과 같다. 메시지 표시용."
+    },
+    {
+      "pbFunction": "f_msg_mdi_help",
+      "action": "replaced",
+      "target": "화면 내 안내 문구",
+      "note": "MDI MicroHelp. 웹에는 상태줄이 없다."
+    },
+    {
+      "pbFunction": "f_msg_st",
+      "action": "replaced",
+      "target": "react-hot-toast",
+      "note": "상태줄 메시지."
+    },
+    {
+      "pbFunction": "f_msgbox",
+      "action": "replaced",
+      "target": "react-hot-toast / @/components/ui ConfirmModal",
+      "note": "메시지 표시용. alert()/confirm() 금지. 확인이 필요하면 ConfirmModal."
+    },
+    {
+      "pbFunction": "f_msgbox1",
+      "action": "replaced",
+      "target": "react-hot-toast / ConfirmModal",
+      "note": "f_msgbox 와 동일 처리."
+    },
+    {
+      "pbFunction": "f_object_role_check",
+      "action": "replaced",
+      "target": "권한 가드",
+      "note": "USER_LEVEL 검사 후 메시지박스. 웹은 가드가 403 을 낸다."
+    },
+    {
+      "pbFunction": "f_play_mp3",
+      "action": "dropped",
+      "target": null,
+      "usedBy": "apps/backend/src/modules/process-transaction/magazine-split.service.ts",
+      "note": "PB 런타임 사운드. f_play_sound 와 같은 처리 — 경고가 필요한 화면만 시각 배너로 대체."
+    },
+    {
+      "pbFunction": "f_play_sound",
+      "action": "dropped",
+      "target": null,
+      "note": "제거한다. 경고가 필요한 화면만 시각 배너로 대체."
+    },
+    {
+      "pbFunction": "f_replace_string",
+      "action": "inlined",
+      "target": "String.prototype.replaceAll (대소문자 무시)",
+      "note": "SQL 없는 순수 문자열 치환. PB 는 소문자·대문자를 번갈아 찾는 방식이라 대소문자 무시 치환과 같다."
+    },
+    {
+      "pbFunction": "f_retrieve",
+      "action": "dropped",
+      "target": null,
+      "note": "MDI 활성 시트 조회 트리거. 웹에는 대응물이 없다."
+    },
+    {
+      "pbFunction": "f_set_column_dddw",
+      "action": "dropped",
+      "target": null,
+      "note": "PB DataWindow 의 드롭다운 목록을 런타임에 채우는 유틸. 웹은 기초코드 선택 컴포넌트가 대신한다."
+    },
+    {
+      "pbFunction": "f_set_security_row",
+      "action": "replaced",
+      "target": "백엔드 저장 시 감사컬럼 자동 기록",
+      "note": "권한 가드가 아니다. ARG_TYPE 에 따라 ORGANIZATION_ID / ENTER_BY / ENTER_DATE / LAST_MODIFY_BY / LAST_MODIFY_DATE 를 로그인 사용자·서버시각으로 채우는 함수다. ALL=전체, MODIFY=수정컬럼만, NONORG=조직ID 제외. 웹은 서비스의 INSERT/UPDATE 에서 organizationId·userId·SYSDATE 로 같은 컬럼을 채운다."
+    },
+    {
+      "pbFunction": "f_shell_execute_by_extention",
+      "action": "blocked",
+      "target": null,
+      "note": "전환 불가 — 확장자로 OS 연결 프로그램을 띄운다. 첨부파일 열기 기능은 품질관리 이관 범위에서 제외했다."
+    },
+    {
+      "pbFunction": "f_sql_check",
+      "action": "replaced",
+      "target": "NestJS 예외 + 트랜잭션 롤백",
+      "note": "f_sql_check_with_msg 도 동일."
+    },
+    {
+      "pbFunction": "f_sysdate",
+      "action": "native",
+      "target": "백엔드 서버 시각",
+      "note": "f_t_sysdate 와 동일."
+    },
+    {
+      "pbFunction": "f_t_sysdate",
+      "action": "native",
+      "target": "백엔드 서버 시각 (main.ts KST 고정)",
+      "note": "f_sysdate 도 동일. 본문이 SELECT SYSDATE FROM DUAL 뿐이라 전환 무의미."
+    },
+    {
+      "pbFunction": "f_update",
+      "action": "dropped",
+      "target": null,
+      "note": "PB DataWindow Update 래퍼. 웹은 백엔드 저장 API 가 대신한다."
+    },
+    {
+      "pbFunction": "f_ymd_sysdate",
+      "action": "native",
+      "target": "SUBSTR(TO_CHAR(SYSDATE,'YYYY'),4,1) || F_GET_MONTH_CODE2(TO_CHAR(SYSDATE,'MM')) || F_GET_DAY_CODE(TO_CHAR(SYSDATE,'DD'))",
+      "usedBy": "apps/backend/src/modules/warehouse/receipt-slip.service.ts",
+      "note": "롯트번호 날짜접두어. YYYYMMDD 가 아니라 3글자 코드다 (2026-09-28 → 69S). DB 에 동명 함수가 없고 PB 본문이 쓰는 F_GET_MONTH_CODE2·F_GET_DAY_CODE 는 DB 함수라 그대로 부른다. 실측 롯트번호 303,081건이 8자(3+5)."
+    }
+  ]
+}

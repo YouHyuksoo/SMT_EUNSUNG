@@ -24,7 +24,7 @@ export interface FilterBarProps {
 
 export default function FilterBar({ children, className = '' }: FilterBarProps) {
   return (
-    <div className={`flex gap-3 flex-1 min-w-0 items-center flex-wrap ${className}`}>
+    <div className={`flex min-w-0 flex-1 flex-wrap content-start items-center gap-2 ${className}`}>
       {children}
     </div>
   );

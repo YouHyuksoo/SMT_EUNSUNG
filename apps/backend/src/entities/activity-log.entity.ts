@@ -53,8 +53,11 @@ export class ActivityLog {
   @Column({ type: 'varchar2', name: 'DEVICE_TYPE', length: 20, nullable: true })
   deviceType: string | null;
 
-  @Column({ name: 'ORGANIZATION_ID', type: 'number' })
-  organizationId!: number;
+  @Column({ name: 'COMPANY', type: 'varchar2', length: 50 })
+  company!: string;
+
+  @Column({ name: 'PLANT_CD', type: 'varchar2', length: 50 })
+  plantCd!: string;
 
   @CreateDateColumn({ name: 'CREATED_AT', type: 'timestamp' })
   createdAt: Date;

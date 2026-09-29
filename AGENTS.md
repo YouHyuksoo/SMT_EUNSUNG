@@ -92,8 +92,8 @@ Package manager is **pnpm**. Do not use `npm` or `yarn`.
 ```bash
 # 개발 서버 (사용자가 직접 기동한다 — 아래 Execution & Verification 참고)
 pnpm dev                                   # turbo run dev (frontend+backend)
-pnpm dev:frontend                          # @eunsung/frontend  → http://localhost:3100
-pnpm dev:backend                           # @eunsung/backend   → http://localhost:3003
+pnpm dev:frontend                          # @eunsung/frontend  → http://localhost:4010
+pnpm dev:backend                           # @eunsung/backend   → http://localhost:4003
 
 # 검증 (focused typecheck 우선)
 pnpm --filter @eunsung/frontend typecheck  # registry 자동 생성·전수 검증 + tsc
@@ -106,7 +106,7 @@ pnpm --filter @eunsung/backend  test       # jest
 pnpm build                                 # @eunsung/frontend build
 ```
 
-- Ports: frontend **3100**, backend **3003** (고정, `apps/backend/src/main.ts`). Swagger는 백엔드에서 제공.
+- Ports: frontend **4010**, backend **4003** (고정, `apps/backend/src/main.ts`). Swagger는 백엔드에서 제공.
 - Backend 시간은 `main.ts`에서 KST로 고정된다. 날짜 관련 로직 변경 시 이 전제를 유지한다.
 
 ## Repository Shape
@@ -121,7 +121,7 @@ apps/
       database/             # data-source.ts, oracle-data-source.ts (TypeORM)
       seeds/                # seed-roles.ts, menu-config.json 등
       common/               # filters, interceptors (logging/transform/sql-debug)
-      main.ts               # 포트 3003, KST 고정
+      main.ts               # 포트 4003, KST 고정
     .env                    # Oracle 접속정보, untracked
   frontend/                 # @eunsung/frontend (Next.js App Router)
     config/                 # cards.json, database.json(untracked), menuConfig.ts
@@ -158,6 +158,7 @@ oracle_db_scripts/          # 주석 처리된 PL/SQL 소스 스냅샷
 - **Oracle DB 기반 화면은 컴파일·단위 테스트·Swagger·HTTP 200만으로 완료 처리하지 않는다.** Oracle 기대 건수 → 인증된 백엔드 API → 프론트 프록시 API → 렌더된 행 순서로 실제 데이터를 확인한다.
 - `@OrganizationId()`를 사용하는 컨트롤러는 `JwtAuthGuard` 적용과 Guard 메타데이터 테스트가 필수다. 서비스는 요청 body/query의 조직 ID를 신뢰하지 않는다.
 - TypeORM Oracle raw query는 named bind 객체를 여러 호출에 재사용하지 않는다. 호출마다 새 객체를 전달하고 드라이버가 첫 bind 객체를 변경하는 회귀 테스트를 둔다.
+- TypeORM Oracle raw DML 검증은 드라이버 반환값과 bind 규칙을 그대로 재현한다. 배열 bind는 SQL에서 placeholder가 나타나는 순서로 전달하고, `manager.query()`의 UPDATE 결과는 객체가 아닌 숫자 affected count일 수 있다. 관련 변경 시 실제 드라이버 경계 회귀 테스트와 `pnpm --filter @eunsung/backend test --runInBand --runTestsByPath src/modules/oee/oee-multi-entry.service.spec.ts`를 필수 실행한다. 상세 사례는 `docs/reports/2026-09-10-oee-multi-entry-batch-verification.md` 참조.
 - 상세 절차와 실패 진단 순서는 `docs/standards/oracle-db-backed-screen-verification.md`를 따른다.
 
 ## DB Work
@@ -169,6 +170,8 @@ Oracle is the system of record for both backend (TypeORM) and the legacy Display
 - **DDL/DML 실행 전 실제 스키마를 확인한다.** 라이브 컬럼이 없으면 필드를 지어내지 말고 쿼리/UI 의존성을 고친다.
 - DB 스키마는 명시 요청이 없으면 변경하지 않는다.
 - Raw SQL / 스키마 점검 / 운영 데이터 DML은 `oracle-db` connector 또는 검증된 raw SQL 파일 경로를 우선한다. **SQL 파일만 만들고 끝내지 않는다** — 사용자가 보류를 명시하지 않으면 connector로 실제 적용하고 pre/post 결과를 기록한다.
+- 기존 환경에서 만든 Oracle 마이그레이션은 대상 운영 DB에 테이블이 없을 수 있음을 전제로 한다. 신규 테이블 계약은 `USER_TABLES` 존재 확인 후 `CREATE TABLE`, 기존 테이블은 컬럼 보정까지 한 파일에서 멱등 처리하고, 테이블 부재 상태를 잡는 구조 테스트를 둔다. 검증 절차는 `docs/standards/oracle-migration-deployment.md`를 따른다.
+- Oracle 테이블을 대체·폐기할 때는 백엔드 전체의 SELECT/DML 참조를 전수 검색해 새 원장으로 바꾸고, 폐기 테이블이 실행 SQL에 다시 등장하면 실패하는 정적 회귀 테스트를 둔다.
 - `oracle-db --execute-file`로 여러 블록을 실행하는 파일의 첫 익명 PL/SQL 블록은 파일 첫 토큰을 `DECLARE` 또는 `BEGIN`으로 둔다. 선행 주석 때문에 connector가 SQL로 오인하지 않도록 정적 테스트를 두고 실제 재실행으로 확인한다.
 - Oracle에서 `(tenant_key, nullable_request_id)` 일반 UNIQUE를 부분 unique로 사용하지 않는다. null 요청 ID를 제외하는 함수기반 unique index를 사용하고, 같은 tenant의 null 2건 허용과 non-null 중복 차단 DML을 검증한다. OEE 계약은 `oee-mobile-ddl.spec.ts`가 이를 강제한다.
 - Oracle/driver 오류(`ORA-*`, `NJS-*`)는 원문 그대로 보존한다. API가 `Database query failed`만 반환하면 같은 헬퍼 경로나 read-only 쿼리로 실제 SQL을 재현해 진짜 오류를 드러낸다.

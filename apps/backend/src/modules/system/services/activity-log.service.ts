@@ -25,7 +25,8 @@ export interface LogActivityParams {
   ipAddress?: string | null;
   userAgent?: string | null;
   deviceType?: string | null;
-  organizationId?: number | null;
+  company: string;
+  plantCd: string;
 }
 
 @Injectable()
@@ -56,7 +57,8 @@ export class ActivityLogService {
         ipAddress: params.ipAddress ?? null,
         userAgent: params.userAgent ?? null,
         deviceType: params.deviceType ?? null,
-        organizationId: params.organizationId ?? undefined,
+        company: params.company,
+        plantCd: params.plantCd,
       });
 
       await this.activityLogRepository.save(log);
@@ -69,7 +71,7 @@ export class ActivityLogService {
   /**
    * 활동 로그 목록 조회 (페이지네이션 + 필터)
    */
-  async findAll(query: ActivityLogQueryDto, organizationId?: number) {
+  async findAll(query: ActivityLogQueryDto, company?: string, plantCd?: string) {
     const page = query.page || 1;
     const limit = query.limit || 20;
     const skip = (page - 1) * limit;
@@ -80,7 +82,8 @@ export class ActivityLogService {
       .skip(skip)
       .take(limit);
 
-    if (organizationId != null) qb.andWhere('al.organizationId = :organizationId', { organizationId });
+    if (company) qb.andWhere('al.company = :company', { company });
+    if (plantCd) qb.andWhere('al.plantCd = :plantCd', { plantCd });
     if (query.userId) qb.andWhere('al.userEmail = :userId', { userId: query.userId });
     if (query.activityType) qb.andWhere('al.activityType = :activityType', { activityType: query.activityType });
 

@@ -9,6 +9,7 @@ export class EquipDowntimeResult {
   // 작업지시 없이 발생한 비가동은 NULL (ADR 0002)
   @Column({ name: 'RUN_NO', length: 30, nullable: true }) runNo: string | null;
   @Column({ name: 'MACHINE_CODE', length: 30, nullable: true }) machineCode: string | null;
+  @Column({ name: 'LINE_CODE', type: 'varchar2', length: 20, nullable: true }) lineCode: string | null;
   @Column({ name: 'WORKSTAGE_CODE', length: 10, nullable: true }) workstageCode: string | null;
   @Column({ name: 'REASON_CODE', length: 20, nullable: true }) reasonCode: string | null;
   @Column({ name: 'START_TIME', type: 'date', nullable: true }) startTime: Date | null;
@@ -19,4 +20,5 @@ export class EquipDowntimeResult {
   @Column({ name: 'ENTER_DATE', type: 'date', nullable: true }) enterDate: Date | null;
   @Column({ name: 'LAST_MODIFY_BY', length: 20, nullable: true }) lastModifyBy: string | null;
   @Column({ name: 'LAST_MODIFY_DATE', type: 'date', nullable: true }) lastModifyDate: Date | null;
+  @Column({ name: 'CAUSE_YN', length: 1, nullable: true }) causeYn: string | null;
 }

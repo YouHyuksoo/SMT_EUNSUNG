@@ -41,7 +41,6 @@ export * from './equip-inspect-item-pool.entity';
 
 
 // System
-export * from './user.entity';
 export * from './comm-config.entity';
 export * from './label-template.entity';
 export * from './model-suffix.entity';

@@ -2,6 +2,8 @@
 sources:
   - apps/backend/src/entities/product-sensor-actual.entity.ts
   - apps/backend/src/modules/work-result/work-result.service.ts
+  - apps/backend/src/modules/run-card/run-card.service.ts
+  - apps/backend/src/database/retired-table-contract.structure.test.mjs
   - apps/backend/src/migrations/2026-09-02_sensor_actual_work_columns.sql
   - apps/backend/src/migrations/2026-09-02_migrate_work_result_to_sensor_actual.sql
 verifiedCommit: dee4f7e
@@ -71,3 +73,6 @@ PROCEDURE  P_INTERLOCK_RESET_LINE (_BAK/_SHS)
 - FK 제약이 없다. `RUN_NO`·`MACHINE_CODE`·`WORKSTAGE_CODE` 연결은 애플리케이션 규약이다.
 - 사이트별로 데이터 유무가 다르다 — 2026-09-02 기준 ES_JSIDC 3건, esh_mes 11건(운영 중).
   신규 4개 컬럼 DDL은 ES_JSIDC에만 적용돼 있다.
+- 런카드의 실적 건수와 삭제 가드도 이 테이블의 `RUN_NO`, `ORGANIZATION_ID`를 기준으로 한다.
+  폐기된 `IP_PRODUCT_WORK_RESULT`를 실행 SQL에서 참조하면 운영에서 `ORA-00942`가 발생하므로
+  `retired-table-contract.structure.test.mjs`가 해당 참조를 차단한다.

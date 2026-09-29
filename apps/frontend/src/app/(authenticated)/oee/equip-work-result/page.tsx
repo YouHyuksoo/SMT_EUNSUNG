@@ -137,7 +137,7 @@ export default function EquipWorkResultPage() {
         <div className="flex items-start justify-between flex-shrink-0 gap-4 flex-wrap">
           <div>
             <h1 className="text-xl font-bold text-text flex items-center gap-2"><Factory className="w-6 h-6 text-primary" /> 설비별 작업 실적관리</h1>
-            <p className="text-sm text-text-muted mt-1">작업지시(IP_PRODUCT_RUN_CARD) 기준 설비 가동상태 · 계획/실적 · 실적/불량/비가동 등록</p>
+            <p className="text-sm text-text-muted mt-1">작업지시 기준 설비 가동상태 · 계획/실적 · 실적/불량/비가동 등록</p>
           </div>
           <div className="flex items-end gap-2 flex-wrap">
             <label className="text-xs text-text-muted flex flex-col gap-1">계획일(From)

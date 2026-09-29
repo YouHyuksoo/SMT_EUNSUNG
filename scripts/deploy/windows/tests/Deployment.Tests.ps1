@@ -513,11 +513,14 @@ exit $LASTEXITCODE
     } finally {
       [Environment]::SetEnvironmentVariable('ORACLE_CLIENT_LIB_DIR', $oldOracleClient, 'Process')
     }
-    Assert-Match '^native:start .*--only eunsung-frontend,eunsung-backend --update-env$' ([string]$script:events[0])
-    Assert-Equal 'health' ([string]$script:events[1])
-    Assert-Equal 'native:save' ([string]$script:events[2])
-    Assert-Equal 'retention' ([string]$script:events[3])
-    Assert-Equal 2 $script:pm2Executables.Count
+    # 전환은 기존 정의를 지우고 새 릴리스로 다시 띄운다.
+    Assert-Equal 'native:delete eunsung-frontend' ([string]$script:events[0])
+    Assert-Equal 'native:delete eunsung-backend' ([string]$script:events[1])
+    Assert-Match '^native:start .*--only eunsung-frontend,eunsung-backend --update-env$' ([string]$script:events[2])
+    Assert-Equal 'health' ([string]$script:events[3])
+    Assert-Equal 'native:save' ([string]$script:events[4])
+    Assert-Equal 'retention' ([string]$script:events[5])
+    Assert-Equal 4 $script:pm2Executables.Count
     Assert-True (@($script:pm2Executables | Where-Object { -not [IO.Path]::IsPathRooted($_) }).Count -eq 0) 'all PM2 calls must use an absolute bootstrapped path'
     Assert-True (@($script:pm2Executables | Where-Object { $_ -notmatch '(?i)\\pm2\.cmd$' }).Count -eq 0) 'all PM2 calls must target pm2.cmd'
     $current = Get-Content -Raw -LiteralPath (Join-Path $root 'current.json') | ConvertFrom-Json
@@ -632,6 +635,31 @@ exit $LASTEXITCODE
     Assert-True (-not (Test-Path -LiteralPath (Join-Path $root 'current.json')))
   }
 
+  Test-Case 'no-prior failure resurrects apps that were already running before the deploy' {
+    $root = Join-Path $tempRoot 'no-prior-resurrect'
+    New-TestRelease -DeployRoot $root -Sha $shaA | Out-Null
+    $script:resurrected = 0
+    $adapters = @{
+      TestMode = $true
+      AccessValidator = { $true }
+      # current.json 은 없지만 그 이름의 앱이 이미 돌고 있던 상황.
+      CaptureSwitchState = { @{ HasPrior = $false; CurrentMarker = $null; Apps = @(@{ name = 'eunsung-frontend' }); DumpBackup = 'original-untouched' } }
+      SwitchApps = { }
+      HealthCheck = { @{ Success = $false; Diagnostics = @('failed') } }
+      StopNewApps = { }
+      ResurrectApps = { $script:resurrected++ }
+      RestorePrior = { throw 'must not take the prior-release path' }
+    }
+    Assert-Throws { Invoke-EunsungDeployment -CommitSha $shaA -ActivateExisting -DeployRoot $root -Adapters $adapters } 'no prior'
+    Assert-Equal 1 $script:resurrected
+
+    # 원래 돌던 앱이 없었으면 되살릴 것도 없다.
+    $script:resurrected = 0
+    $adapters.CaptureSwitchState = { @{ HasPrior = $false; CurrentMarker = $null; Apps = @(); DumpBackup = 'original-untouched' } }
+    Assert-Throws { Invoke-EunsungDeployment -CommitSha $shaA -ActivateExisting -DeployRoot $root -Adapters $adapters } 'no prior'
+    Assert-Equal 0 $script:resurrected
+  }
+
   Test-Case 'cleanup native failure is propagated as distinct sanitized rollback failure' {
     $root = Join-Path $tempRoot 'cleanup-fails'
     New-TestRelease -DeployRoot $root -Sha $shaA | Out-Null
@@ -695,6 +723,43 @@ exit $LASTEXITCODE
     Assert-Equal '--version' ([string]$script:buildArguments[0][0])
     Assert-Equal 'install' ([string]$script:buildArguments[1][0])
     Assert-EunsungBuiltRelease -DeployRoot $root -ReleaseDir (Join-Path $root "releases/$shaA") -CommitSha $shaA -AccessValidator { $true }
+  }
+
+  Test-Case 'stale release leftovers are cleared but the active release is never overwritten' {
+    $root = Join-Path $tempRoot 'release-target'
+    $sourceRoot = Join-Path $tempRoot 'release-target-source'
+    $sourceRelease = New-TestRelease -DeployRoot $sourceRoot -Sha $shaA
+    $archive = Join-Path $root 'incoming.zip'
+    New-Item -ItemType Directory -Force -Path $root, (Join-Path $root 'shared') | Out-Null
+    Set-Content -LiteralPath (Join-Path $root 'shared/backend.env') -Value 'DB=x' -Encoding UTF8
+    Set-Content -LiteralPath (Join-Path $root 'shared/frontend-database.json') -Value '{}' -Encoding UTF8
+    Compress-Archive -Path (Join-Path $sourceRelease '*') -DestinationPath $archive
+    $adapters = @{
+      TestMode = $true
+      AccessValidator = { $true }
+      NativeInvoker = {
+        param($FilePath, $Arguments, $WorkingDirectory, $Environment)
+        if ($Arguments -contains '--version') { return @{ ExitCode=0; Output='10.28.1' } }
+        return @{ ExitCode=0; Output='' }
+      }
+      CaptureSwitchState = { throw 'must not capture PM2' }
+      HealthCheck = { throw 'must not health check' }
+      PortOwnerProvider = { throw 'must not inspect ports' }
+    }
+    $releaseDir = Join-Path $root "releases/$shaA"
+
+    # 지금 서비스 중인 릴리스면 손대지 않고 막는다.
+    New-Item -ItemType Directory -Force -Path $releaseDir | Out-Null
+    Set-Content -LiteralPath (Join-Path $releaseDir 'live.txt') -Value 'live' -Encoding UTF8
+    Set-Content -LiteralPath (Join-Path $root 'current.json') -Value (@{ commitSha=$shaA; releaseDir=$releaseDir } | ConvertTo-Json) -Encoding UTF8
+    Assert-Throws { Invoke-EunsungDeployment -CommitSha $shaA -ArchivePath $archive -BuildOnly -DeployRoot $root -Adapters $adapters } 'Release target already exists'
+    Assert-True (Test-Path -LiteralPath (Join-Path $releaseDir 'live.txt')) 'the active release must not be touched'
+
+    # 실패한 배포가 남긴 잔해면 치우고 진행한다.
+    Set-Content -LiteralPath (Join-Path $root 'current.json') -Value (@{ commitSha=$shaB; releaseDir=(Join-Path $root "releases/$shaB") } | ConvertTo-Json) -Encoding UTF8
+    Invoke-EunsungDeployment -CommitSha $shaA -ArchivePath $archive -BuildOnly -DeployRoot $root -Adapters $adapters
+    Assert-True (-not (Test-Path -LiteralPath (Join-Path $releaseDir 'live.txt'))) 'the stale leftover must be cleared'
+    Assert-EunsungBuiltRelease -DeployRoot $root -ReleaseDir $releaseDir -CommitSha $shaA -AccessValidator { $true }
   }
 
   Test-Case 'injected post-switch health failure restores prior current release without config mutation' {
@@ -830,7 +895,8 @@ exit $LASTEXITCODE
       Assert-Equal 1 $safeBackups.Count
       Assert-True (Test-Path -LiteralPath $unsafeBackup)
       Assert-True (Test-Path -LiteralPath $nonRecovery)
-      Assert-Equal 2 $aclSet.Count
+      # 활성화 2회 x (state 디렉터리 + dump 백업) = 4
+      Assert-Equal 4 $aclSet.Count
     } finally {
       [Environment]::SetEnvironmentVariable('PM2_HOME', $previousPm2Home, 'Process')
     }

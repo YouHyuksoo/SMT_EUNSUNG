@@ -34,3 +34,11 @@ __exportStar(require("./utils"), exports);
 __exportStar(require("./oee"), exports);
 // 생산월력 도메인(근무분 계산·휴일 판정) 내보내기
 __exportStar(require("./work-calendar"), exports);
+// 추적 조회 필수조건 규칙(프론트 차단 · 백엔드 거부 공용) 내보내기
+__exportStar(require("./tracking"), exports);
+// PB 팝업 카탈로그(프론트 엔진 · 백엔드 화이트리스트 공용) 내보내기
+__exportStar(require("./popups"), exports);
+// 자재창고 공유 규칙
+__exportStar(require("./warehouse"), exports);
+// 생산(공정) 공유 규칙 — 매거진라벨 발행·분할 산술
+__exportStar(require("./production"), exports);

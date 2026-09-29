@@ -1,4 +1,5 @@
 "use client";
+import { getTodayLocal } from "@/utils/date";
 
 import { useEffect, useMemo, useState } from "react";
 import { Search, X } from "lucide-react";
@@ -16,7 +17,7 @@ interface Props {
 }
 
 const initialForm = {
-  dateset: new Date().toISOString().slice(0, 10), dateend: "9999-12-31",
+  dateset: getTodayLocal(), dateend: "9999-12-31",
   itemCode: "", itemName: "", supplierCode: "", lineType: "G",
   unitPrice: "", standardUnitPrice: "", taxRate: "", currency: "KRW",
   delivery: "2", priceType: "F", priceChangeReason: "N",

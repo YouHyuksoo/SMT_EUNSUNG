@@ -26,6 +26,17 @@ import { IdleReasonModule } from './modules/idle-reason/idle-reason.module';
 import { EquipReasonMapModule } from './modules/equip-reason-map/equip-reason-map.module';
 import { ProductModelModule } from './modules/product-model/product-model.module';
 import { WorkResultModule } from './modules/work-result/work-result.module';
+import { JigModule } from './modules/jig/jig.module';
+import { MoldModule } from './modules/mold/mold.module';
+import { PlanningModule } from './modules/planning/planning.module';
+import { PriceConfirmModule } from './modules/price-confirm/price-confirm.module';
+import { TrackingModule } from './modules/tracking/tracking.module';
+import { QueryModule } from './modules/query/query.module';
+import { ReportModule } from './modules/report/report.module';
+import { DesignModule } from './modules/design/design.module';
+import { InventoryQueryModule } from './modules/inventory-query/inventory-query.module';
+import { MaterialWarehouseModule } from './modules/warehouse/warehouse.module';
+import { SmtModule } from './modules/smt/smt.module';
 import { RunCardModule } from './modules/run-card/run-card.module';
 import { EquipOpsModule } from './modules/equip-ops/equip-ops.module';
 import { MenuCategoriesModule } from './modules/menu-categories/menu-categories.module';
@@ -42,6 +53,18 @@ import { MasterBomModule } from './modules/master/master-bom.module';
 import { MasterPartnerModule } from './modules/master/master-partner.module';
 import { MasterProdLineModule } from './modules/master/master-prod-line.module';
 import { WarehouseModule } from './modules/inventory/warehouse.module';
+import { MaterialReceiptIssueLedgerModule } from './modules/material/material-receipt-issue-ledger.module';
+import { MaterialCurrentInventoryModule } from './modules/material/material-current-inventory.module';
+import { MaterialWorkstageInventoryModule } from './modules/material/material-workstage-inventory.module';
+import { MaterialReceiptCancelModule } from './modules/material/material-receipt-cancel.module';
+import { ProcessTransactionModule } from './modules/process-transaction/process-transaction.module';
+import { QualityIqcModule } from './modules/quality/quality-iqc.module';
+import { QualityQcExtraModule } from './modules/quality/quality-qc-extra.module';
+import { QualityRepairHistoryModule } from './modules/quality/quality-repair-history.module';
+import { QualityProductDestroyModule } from './modules/quality/quality-product-destroy.module';
+import { BomModule } from './modules/bom/bom.module';
+import { PopupSearchModule } from './modules/popup-search/popup-search.module';
+import { ProductInventoryModule } from './modules/product/product-inventory.module';
 import { MasterWorkerModule } from './modules/master/master-worker.module';
 import { MasterWorkInstructionModule } from './modules/master/master-work-instruction.module';
 import { MasterWorkCalendarModule } from './modules/master/master-work-calendar.module';
@@ -86,6 +109,17 @@ import { SharedModule } from './shared/shared.module';
     WorkResultModule,
     EquipOpsModule,
 
+    JigModule,
+    MoldModule,
+    SmtModule,
+    PlanningModule,
+    PriceConfirmModule,
+    TrackingModule,
+    QueryModule,
+    ReportModule,
+    MaterialWarehouseModule,
+    InventoryQueryModule,
+    DesignModule,
     RunCardModule,
 
     // 메뉴 카테고리 관리 (/system/menu-categories)
@@ -131,6 +165,21 @@ import { SharedModule } from './shared/shared.module';
 
     // 기준정보 창고/로케이션 (/inventory/warehouses, /inventory/warehouse-locations)
     WarehouseModule,
+
+    // 자재관리 자재입출고수불원장 (/material/receipt-issue-ledger)
+    MaterialReceiptIssueLedgerModule,
+    MaterialCurrentInventoryModule,
+    MaterialWorkstageInventoryModule,
+    MaterialReceiptCancelModule,
+    ProcessTransactionModule,
+    QualityIqcModule,
+    QualityQcExtraModule,
+    QualityRepairHistoryModule,
+    QualityProductDestroyModule,
+    BomModule,
+    // 공용 팝업조회 (PB 팝업 카탈로그의 엔진 설정형 팝업)
+    PopupSearchModule,
+    ProductInventoryModule,
 
     // 기준정보 작업자정보 (/master/workers)
     MasterWorkerModule,
