@@ -308,7 +308,7 @@ exit $LASTEXITCODE
   Test-Case 'health rejects degraded database state' {
     $pm2 = { '[{"name":"eunsung-frontend","pid":101,"pm2_env":{"status":"online"}},{"name":"eunsung-backend","pid":202,"pm2_env":{"status":"online"}}]' }
     $ports = { param($Port) if ($Port -eq 3100) { @(101) } else { @(202) } }
-    $http = { param($Uri, $TimeoutSec) if ($Uri -match 'health') { @{ StatusCode = 200; Body = '{"status":"ok","database":{"status":"degraded"}}' } } else { @{ StatusCode = 200; Body = 'ok' } } }
+    $http = { param($Uri, $TimeoutSec) if ($Uri -match 'health') { @{ StatusCode = 200; Body = '{"success":true,"data":{"status":"ok","database":{"status":"degraded"}}}' } } else { @{ StatusCode = 200; Body = 'ok' } } }
     $result = Test-EunsungReleaseHealth -ExpectedSha $shaA -ReleaseMarkerSha $shaA -Pm2ListProvider $pm2 -PortOwnerProvider $ports -HttpInvoker $http -MaxAttempts 1
     Assert-True (-not $result.Success)
     Assert-Match 'database' ($result.Diagnostics -join ' ')
@@ -317,7 +317,7 @@ exit $LASTEXITCODE
   Test-Case 'health rejects PID-to-port ownership mismatch' {
     $pm2 = { '[{"name":"eunsung-frontend","pid":101,"pm2_env":{"status":"online"}},{"name":"eunsung-backend","pid":202,"pm2_env":{"status":"online"}}]' }
     $ports = { param($Port) @(999) }
-    $http = { param($Uri, $TimeoutSec) @{ StatusCode = 200; Body = '{"status":"ok","database":{"status":"connected"}}' } }
+    $http = { param($Uri, $TimeoutSec) @{ StatusCode = 200; Body = '{"success":true,"data":{"status":"ok","database":{"status":"connected"}}}' } }
     $result = Test-EunsungReleaseHealth -ExpectedSha $shaA -ReleaseMarkerSha $shaA -Pm2ListProvider $pm2 -PortOwnerProvider $ports -HttpInvoker $http -MaxAttempts 1
     Assert-True (-not $result.Success)
     Assert-Match 'PID' ($result.Diagnostics -join ' ')
@@ -326,7 +326,7 @@ exit $LASTEXITCODE
   Test-Case 'health succeeds only with exact marker, online apps, owned ports and healthy HTTP' {
     $pm2 = { '[{"name":"eunsung-frontend","pid":101,"pm2_env":{"status":"online"}},{"name":"eunsung-backend","pid":202,"pm2_env":{"status":"online"}}]' }
     $ports = { param($Port) if ($Port -eq 3100) { @(101) } else { @(202) } }
-    $http = { param($Uri, $TimeoutSec) if ($Uri -match 'health') { @{ StatusCode = 200; Body = '{"status":"ok","database":{"status":"connected"}}' } } else { @{ StatusCode = 204; Body = '' } } }
+    $http = { param($Uri, $TimeoutSec) if ($Uri -match 'health') { @{ StatusCode = 200; Body = '{"success":true,"data":{"status":"ok","database":{"status":"connected"}}}' } } else { @{ StatusCode = 204; Body = '' } } }
     $result = Test-EunsungReleaseHealth -ExpectedSha $shaA -ReleaseMarkerSha $shaA -Pm2ListProvider $pm2 -PortOwnerProvider $ports -HttpInvoker $http -MaxAttempts 1
     Assert-True $result.Success
   }
@@ -342,7 +342,7 @@ exit $LASTEXITCODE
       ) | ConvertTo-Json -Compress)
     }
     $ports = { param($Port) if ($Port -eq 3100) { @(101) } else { @(202) } }
-    $http = { param($Uri, $TimeoutSec) @{ StatusCode=200; Body='{"status":"ok","database":{"status":"connected"}}' } }
+    $http = { param($Uri, $TimeoutSec) @{ StatusCode=200; Body='{"success":true,"data":{"status":"ok","database":{"status":"connected"}}}' } }
     $result = Test-EunsungReleaseHealth -ExpectedSha $shaA -ReleaseMarkerSha $shaA -ExpectedReleaseDir $expected -Pm2ListProvider $pm2 -PortOwnerProvider $ports -HttpInvoker $http -MaxAttempts 1
     Assert-True (-not $result.Success)
     Assert-Match 'outside expected release' ($result.Diagnostics -join ' ')
