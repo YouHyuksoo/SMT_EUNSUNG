@@ -513,11 +513,14 @@ exit $LASTEXITCODE
     } finally {
       [Environment]::SetEnvironmentVariable('ORACLE_CLIENT_LIB_DIR', $oldOracleClient, 'Process')
     }
-    Assert-Match '^native:start .*--only eunsung-frontend,eunsung-backend --update-env$' ([string]$script:events[0])
-    Assert-Equal 'health' ([string]$script:events[1])
-    Assert-Equal 'native:save' ([string]$script:events[2])
-    Assert-Equal 'retention' ([string]$script:events[3])
-    Assert-Equal 2 $script:pm2Executables.Count
+    # 전환은 기존 정의를 지우고 새 릴리스로 다시 띄운다.
+    Assert-Equal 'native:delete eunsung-frontend' ([string]$script:events[0])
+    Assert-Equal 'native:delete eunsung-backend' ([string]$script:events[1])
+    Assert-Match '^native:start .*--only eunsung-frontend,eunsung-backend --update-env$' ([string]$script:events[2])
+    Assert-Equal 'health' ([string]$script:events[3])
+    Assert-Equal 'native:save' ([string]$script:events[4])
+    Assert-Equal 'retention' ([string]$script:events[5])
+    Assert-Equal 4 $script:pm2Executables.Count
     Assert-True (@($script:pm2Executables | Where-Object { -not [IO.Path]::IsPathRooted($_) }).Count -eq 0) 'all PM2 calls must use an absolute bootstrapped path'
     Assert-True (@($script:pm2Executables | Where-Object { $_ -notmatch '(?i)\\pm2\.cmd$' }).Count -eq 0) 'all PM2 calls must target pm2.cmd'
     $current = Get-Content -Raw -LiteralPath (Join-Path $root 'current.json') | ConvertFrom-Json
@@ -630,6 +633,31 @@ exit $LASTEXITCODE
     Assert-True $script:stopped
     Assert-True (-not $script:restored)
     Assert-True (-not (Test-Path -LiteralPath (Join-Path $root 'current.json')))
+  }
+
+  Test-Case 'no-prior failure resurrects apps that were already running before the deploy' {
+    $root = Join-Path $tempRoot 'no-prior-resurrect'
+    New-TestRelease -DeployRoot $root -Sha $shaA | Out-Null
+    $script:resurrected = 0
+    $adapters = @{
+      TestMode = $true
+      AccessValidator = { $true }
+      # current.json 은 없지만 그 이름의 앱이 이미 돌고 있던 상황.
+      CaptureSwitchState = { @{ HasPrior = $false; CurrentMarker = $null; Apps = @(@{ name = 'eunsung-frontend' }); DumpBackup = 'original-untouched' } }
+      SwitchApps = { }
+      HealthCheck = { @{ Success = $false; Diagnostics = @('failed') } }
+      StopNewApps = { }
+      ResurrectApps = { $script:resurrected++ }
+      RestorePrior = { throw 'must not take the prior-release path' }
+    }
+    Assert-Throws { Invoke-EunsungDeployment -CommitSha $shaA -ActivateExisting -DeployRoot $root -Adapters $adapters } 'no prior'
+    Assert-Equal 1 $script:resurrected
+
+    # 원래 돌던 앱이 없었으면 되살릴 것도 없다.
+    $script:resurrected = 0
+    $adapters.CaptureSwitchState = { @{ HasPrior = $false; CurrentMarker = $null; Apps = @(); DumpBackup = 'original-untouched' } }
+    Assert-Throws { Invoke-EunsungDeployment -CommitSha $shaA -ActivateExisting -DeployRoot $root -Adapters $adapters } 'no prior'
+    Assert-Equal 0 $script:resurrected
   }
 
   Test-Case 'cleanup native failure is propagated as distinct sanitized rollback failure' {

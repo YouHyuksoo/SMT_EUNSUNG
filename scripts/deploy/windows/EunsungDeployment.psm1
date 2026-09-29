@@ -28,7 +28,7 @@ $script:NonSecretConfigFiles = @(
 )
 $script:AppPorts = [ordered]@{
   'eunsung-frontend' = 3100
-  'eunsung-backend' = 3003
+  'eunsung-backend' = 4003
 }
 
 function Test-EunsungCommitSha {
@@ -337,7 +337,7 @@ function Test-EunsungReleaseHealth {
     [scriptblock]$SleepAdapter
     ,[string]$ExpectedReleaseDir
     ,[string]$FrontendUrl = 'http://127.0.0.1:3100/'
-    ,[string]$BackendUrl = 'http://127.0.0.1:3003/api/v1/health'
+    ,[string]$BackendUrl = 'http://127.0.0.1:4003/api/v1/health'
   )
 
   if (-not $Pm2ListProvider) {
@@ -797,6 +797,13 @@ function Start-EunsungApps {
     EUNSUNG_DEPLOY_ROOT = $DeployRoot
     ORACLE_CLIENT_LIB_DIR = $oracleClientLibDir
   }
+  # 같은 이름의 앱이 이미 있으면 pm2 는 기존 정의를 재시작할 뿐 실행 경로를 새
+  # 릴리스로 바꾸지 않는다. 그러면 헬스체크가 옛 릴리스를 가리킨다며 떨어진다.
+  # 정의를 지우고 새로 띄워서 전환이 실제로 일어나게 한다. 여기서 실패하면
+  # 롤백이 덤프에서 되살린다.
+  foreach ($name in $script:AppPorts.Keys) {
+    try { Invoke-EunsungNative -FilePath (Get-EunsungBootstrappedToolPath -Name 'pm2') -Arguments @('delete', $name) -NativeInvoker $NativeInvoker | Out-Null } catch { }
+  }
   Invoke-EunsungNative -FilePath (Get-EunsungBootstrappedToolPath -Name 'pm2') -Arguments @('start', (Join-Path $ReleaseDir 'ecosystem.config.js'), '--only', 'eunsung-frontend,eunsung-backend', '--update-env') -Environment $environment -NativeInvoker $NativeInvoker | Out-Null
 }
 
@@ -993,6 +1000,7 @@ function Invoke-EunsungActivation {
   $switch = Get-EunsungAdapter -Adapters $Adapters -Name 'SwitchApps' -Default { param($Release, $Root) Start-EunsungApps -ReleaseDir $Release -DeployRoot $Root -NativeInvoker $native }
   $stopNew = Get-EunsungAdapter -Adapters $Adapters -Name 'StopNewApps' -Default { Stop-EunsungNewApps -NativeInvoker $native }
   $restore = Get-EunsungAdapter -Adapters $Adapters -Name 'RestorePrior' -Default { param($State) Restore-EunsungPriorState -SwitchState $State -NativeInvoker $native -DeployRoot $DeployRoot -AttributeProvider $attributeProvider -AccessValidator $accessValidator }
+  $resurrect = Get-EunsungAdapter -Adapters $Adapters -Name 'ResurrectApps' -Default { Invoke-EunsungNative -FilePath (Get-EunsungBootstrappedToolPath -Name 'pm2') -Arguments @('resurrect') -NativeInvoker $native | Out-Null }
   $save = Get-EunsungAdapter -Adapters $Adapters -Name 'SaveState' -Default { Invoke-EunsungNative -FilePath (Get-EunsungBootstrappedToolPath -Name 'pm2') -Arguments @('save') -NativeInvoker $native | Out-Null }
   $health = Get-EunsungAdapter -Adapters $Adapters -Name 'HealthCheck' -Default {
     param($Expected, $Release)
@@ -1037,6 +1045,16 @@ function Invoke-EunsungActivation {
   try { & $stopNew } catch { $cleanupFailure = ConvertTo-EunsungSanitizedDiagnostic $_.Exception.Message }
   if (-not $switchState.HasPrior) {
     Restore-EunsungOriginalDump -SwitchState $switchState -DeployRoot $DeployRoot -AttributeProvider $attributeProvider -AccessValidator $accessValidator
+    # current.json 이 없어도 그 이름의 앱이 이미 돌고 있었을 수 있다(첫 배포). 그때
+    # StopNewApps 가 지운 것은 우리가 띄운 앱이 아니라 운영 중이던 서비스다. 덤프
+    # 파일만 되돌리면 파일만 맞고 프로세스는 죽은 채로 남는다. 살려 놓고 끝낸다.
+    if (@($switchState.Apps).Count -gt 0) {
+      # stopNew 의 실패를 덮어쓰지 않는다. 둘은 서로 다른 원인이다.
+      try { & $resurrect } catch {
+        $resurrectFailure = ConvertTo-EunsungSanitizedDiagnostic $_.Exception.Message
+        if ($cleanupFailure) { $cleanupFailure = "$cleanupFailure; resurrect=[$resurrectFailure]" } else { $cleanupFailure = "resurrect=[$resurrectFailure]" }
+      }
+    }
     Set-EunsungCurrentMarker -DeployRoot $DeployRoot -Marker $null
     Remove-EunsungRecoveryDump -SwitchState $switchState -DeployRoot $DeployRoot -AttributeProvider $attributeProvider -AccessValidator $accessValidator
     if ($cleanupFailure) { throw (New-EunsungFailureException -Message "Deployment failed with no prior release and cleanup failed. new=[$failure] cleanup=[$cleanupFailure]" -ExitCode 31) }

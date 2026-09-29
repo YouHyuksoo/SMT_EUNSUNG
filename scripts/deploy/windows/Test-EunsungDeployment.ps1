@@ -18,7 +18,7 @@ param(
 
   [string]$FrontendUrl = 'http://127.0.0.1:3100/',
 
-  [string]$BackendUrl = 'http://127.0.0.1:3003/api/v1/health',
+  [string]$BackendUrl = 'http://127.0.0.1:4003/api/v1/health',
 
   [string]$Pm2Path,
 
