@@ -15,8 +15,10 @@
  *    그래서 기준일자는 화면 맨 위에 한 번만, 계획일은 입력 줄에 둔다.
  * 4. **전개는 되돌릴 수 없다.** PB 도 전개하면서 그 일자 이전의 기준계획을 함께
  *    지운다 (`<=` 조건). 버그로 보이지만 PB 와 값을 맞추려고 그대로 뒀다.
- * 5. **재고 반영은 안전재고만 채운다.** PB 에서 실재고를 읽는 부분이 주석 처리돼
- *    있어서다. 실재고를 쓰려면 현장 합의가 먼저다.
+ * 5. **이 화면이 내는 것은 순소요다 — 재고를 빼지 않은 총 필요량이다.**
+ *    재고 차감은 478 자재발주계획이 한다 (2026-09-30 사용자 확정). 그래서 '재고 표시'
+ *    버튼은 참고용 컬럼만 채우고 소요량 숫자를 바꾸지 않는다 — 의도된 동작이다.
+ *    (그 버튼도 PB 에서 실재고를 읽는 부분이 주석 처리돼 안전재고만 채운다.)
  * 6. 버튼 설명은 `data-tooltip` 으로 붙였다 (전역 툴팁 시스템).
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -50,8 +52,9 @@ const TIP = {
   save: '기준계획 한 줄을 등록하거나 고칩니다. 같은 기준일자·계획일·품목이면 수량만 바뀝니다.',
   search: '지금 화면의 조건으로 다시 읽어옵니다.',
   remove: '고른 기준계획 줄을 지웁니다. 표에서 줄을 눌러 고릅니다.',
-  inventory: '기준계획에 재고를 배정합니다. 계획일이 이른 것부터 먼저 받습니다.'
-    + ' PB 에서 실재고를 읽는 부분이 막혀 있어 지금은 안전재고만 채워집니다.',
+  inventory: '기준계획 줄에 현재 재고를 **참고용으로 표시**합니다. 계획일이 이른 것부터'
+    + ' 배정해 보여 줍니다. **소요량 숫자는 바뀌지 않습니다** — 순소요는 재고를 감안하지'
+    + ' 않는 것이 맞고, 재고 차감은 자재발주계획(478) 에서 합니다.',
   explode: 'BOM 을 타고 내려가 자재별 소요량을 만듭니다. 그 기준일자의 기존 소요량은 지워지고'
     + ' 새로 만들어집니다. PB 와 같은 동작이라 그 일자 이전의 기준계획도 함께 지워집니다.',
   tabMaster: '무엇을 얼마나 만들지 넣는 표입니다. 여기서 시작합니다.',
@@ -259,8 +262,8 @@ export default function RequirementPlanPage() {
       <header>
         <h1 className="text-xl font-bold text-text">자재소요량관리</h1>
         <p className="mt-1 text-sm text-text-muted">
-          제품 생산계획을 BOM 으로 펴서 자재 소요량을 산출합니다 ·{' '}
-          <span className="text-text">① 기준계획 등록 → ② 재고 반영(선택) → ③ 소요량 전개</span>
+          제품 생산계획을 BOM 으로 펴서 <span className="text-text">순소요</span>를 산출합니다 (재고를 빼지 않은 총 필요량) ·{' '}
+          <span className="text-text">① 기준계획 등록 → ② 재고 표시(선택) → ③ 소요량 전개</span>
         </p>
       </header>
 
@@ -350,7 +353,7 @@ export default function RequirementPlanPage() {
                 disabled={busy || masterRows.length === 0}
                 data-tooltip={TIP.inventory}
                 onClick={() => setPending('inventory')}>
-                <Boxes className="mr-1 h-4 w-4" />② 재고 반영
+                <Boxes className="mr-1 h-4 w-4" />② 재고 표시
               </Button>
               <Button size="sm" disabled={busy || masterRows.length === 0}
                 data-tooltip={TIP.explode}
