@@ -7,16 +7,19 @@
  * 초보자 가이드:
  * 1. **"언제 무엇을 얼마나 발주할지"를 계산해 내는 화면이다.** 생산·납품계획을
  *    BOM 으로 펴서 자재 소요량을 구하고, 거기서 **이미 있는 것을 빼면** 발주량이다.
- * 2. **순서가 있다.** ① 발주계획 생성 → ② 확인 → ③ 발주 확정.
- *    화면도 그 순서대로 위에서 아래로 놓았다.
- * 3. **무엇을 뺄지는 체크박스가 정한다.** 창고재고 · 발주잔량 · 도착분 · 공정재고 ·
+ *    (재고를 빼지 않은 순소요는 477 자재소요량관리가 낸다.)
+ * 2. **두 표를 위아래로 같이 본다.** 위가 결과(발주계획), 아래가 재고를 빼기 전의
+ *    소요량이다. 발주량이 이상할 때 아래를 보면 소요량 자체가 문제인지, 재고 차감이
+ *    문제인지 바로 갈린다. 발주계획이 열이 많아 넓어야 하므로 위아래로 놓았다.
+ * 3. **순서가 있다.** ① 발주계획 생성 → ② 확인 → ③ 발주 확정.
+ * 4. **무엇을 뺄지는 체크박스가 정한다.** 창고재고 · 발주잔량 · 도착분 · 공정재고 ·
  *    무상재고. 켠 것만 빠진다. 하나도 안 켜면 소요량이 그대로 발주량이 된다.
  *    PB 는 조합마다 SQL 을 따로 적어 두었고(실측 40개), 웹은 켠 가지만 이어 붙인다.
- * 4. **생성은 조직 단위로 갈아끼운다.** 돌릴 때마다 기존 발주계획이 통째로 새로
+ * 5. **생성은 조직 단위로 갈아끼운다.** 돌릴 때마다 기존 발주계획이 통째로 새로
  *    만들어진다 — PB 와 같다.
- * 5. **확정하면 계획이 실제 주문이 되고 계획에서는 사라진다.** 두 번 발주되지
- *    않게 하려는 것이다.
- * 6. 버튼·체크박스 설명은 `data-tooltip` 으로 붙였다 (전역 툴팁 시스템).
+ * 6. **확정해도 계획은 지워지지 않는다.** `PURCHASE_ORDER_STATUS` 가 `'Y'` 가 될
+ *    뿐이다 — 어느 계획에서 나온 주문인지 되짚을 수 있어야 한다.
+ * 7. 버튼·체크박스 설명은 `data-tooltip` 으로 붙였다 (전역 툴팁 시스템).
  */
 import { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -24,7 +27,6 @@ import { Calculator, Play, Search, Send, Tag } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
 import ComCodeSelect from '@/components/shared/ComCodeSelect';
 import DateRangeFilter from '@/components/shared/DateRangeFilter';
-import ScreenTabs from '@/components/shared/ScreenTabs';
 import SupplierSelect from '@/components/shared/SupplierSelect';
 import { Button, Card, CardContent, ConfirmModal, Input, Select } from '@/components/ui';
 import api from '@/services/api';
@@ -34,8 +36,6 @@ import {
 } from '../../report/components/TruncationNotice';
 import { orderPlanColumns, requirementOrderColumns } from '../purchase-columns';
 import type { OrderPlanRow, RequirementOrderRow } from '../purchase-columns';
-
-type Tab = 'plan' | 'requirement';
 
 /** PB 라디오버튼(계획 원천). 어느 계획에서 BOM 을 펼지. */
 const PLAN_SOURCES = [
@@ -86,25 +86,28 @@ const INVENTORY_ARMS = [
 ];
 
 const TIP = {
-  source: '어느 계획에서 BOM 을 펼지 고릅니다. 고르면 아래에 설명이 바뀝니다.',
+  source: '어느 계획에서 BOM 을 펼지 고릅니다. 고르면 옆에 설명이 바뀝니다.',
   range: '이 기간에 든 계획만 펼칩니다.',
   orderDate: '만들어지는 발주계획에 찍히는 발주일입니다. 실제 주문으로 넘길 때도 이 날짜를 씁니다.',
-  itemCode: '특정 품목만 펼치려면 넣습니다. 비우면 전부입니다.',
+  itemCode: '특정 품목만 봅니다. 비우면 전부입니다. 생성할 때도 이 조건이 걸립니다.',
   orderRule: '협력사별 최소주문량·포장단위·불량율을 발주량에 반영합니다.'
-    + ' 예: 포장단위가 100이고 계산값이 120이면 200으로 올립니다.',
+    + ' 예: 포장단위가 100이고 계산값이 120이면 200으로 올립니다.'
+    + ' 올려서 남는 만큼은 같은 자재의 뒤 계획줄이 덜 발주하도록 되돌립니다.',
   unitPrice: '단가 기준정보에서 유효기간 안의 단가·통화·납품구분을 붙입니다.',
-  leadTime: '제조 리드타임만큼 납기를 앞으로 당깁니다 — 자재가 생산 시작 전에 들어와야 하기 때문입니다.'
-    + ' 안 켜면 자재가 필요한 날이 곧 납기가 됩니다.',
+  leadTime: '제조 리드타임만큼 납기를 앞으로 당깁니다 — 자재가 생산 시작 전에 들어와야'
+    + ' 하기 때문입니다. 안 켜면 자재가 필요한 날이 곧 납기가 됩니다.',
   calendar: '당긴 납기가 휴무일이면 일하는 날로 옮깁니다. 리드타임 반영과는 별개 단계입니다.',
   generate: '고른 계획을 BOM 으로 펴고, 켜 둔 재고를 빼서 발주계획을 만듭니다.'
     + ' 기존 발주계획은 통째로 새로 만들어집니다.',
-  search: '지금 화면의 조건으로 다시 읽어옵니다.',
-  pendingOnly: '발주할 수량이 0보다 큰 계획만 봅니다. 재고로 다 충당된 것은 숨깁니다.',
+  search: '두 표를 다시 읽어옵니다.',
+  pendingOnly: '발주할 수량이 남아 있고 아직 확정하지 않은 계획만 봅니다.'
+    + ' 재고로 다 충당된 것과 이미 확정한 것은 숨깁니다.',
   priceReset: '단가만 다시 붙입니다. 발주량은 그대로 두고 단가 기준정보가 바뀐 것을 반영할 때 씁니다.',
   purchase: '고른 계획을 실제 주문으로 넘깁니다. 계획은 지워지지 않고 확정 표시만 남아,'
     + ' 어느 계획에서 나온 주문인지 되짚을 수 있습니다. 한 번의 확정이 한 발주그룹입니다.',
-  tabPlan: '계산이 끝난 발주계획입니다. 여기서 골라 주문으로 넘깁니다.',
-  tabRequirement: '재고를 빼기 전의 순수 소요량입니다. 계산이 이상할 때 여기를 먼저 봅니다.',
+  gridPlan: '계산이 끝난 발주계획입니다. 줄을 눌러 고른 뒤 발주 확정으로 넘깁니다.',
+  gridRequirement: '재고를 빼기 전의 소요량입니다. 발주량이 이상하면 여기를 먼저 봅니다 —'
+    + ' 소요량 자체가 문제인지, 재고 차감이 문제인지 갈립니다.',
 } as const;
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -117,7 +120,6 @@ const apiMessage = (error: unknown) =>
   (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
 
 export default function OrderPlanPage() {
-  const [tab, setTab] = useState<Tab>('plan');
   const [plans, setPlans] = useState<OrderPlanRow[]>([]);
   const [requirements, setRequirements] = useState<RequirementOrderRow[]>([]);
   const [loading, setLoading] = useState(false);
@@ -147,42 +149,34 @@ export default function OrderPlanPage() {
 
   const rowKey = (row: OrderPlanRow) => `${row.itemCode ?? ''}|${row.lineType ?? ''}`;
 
-  const search = useCallback(async (nextTab: Tab = tab) => {
+  /** 두 표를 한 번에 읽는다. 결과(발주계획)와 그 전 단계(소요량)를 같이 보는 화면이다. */
+  const search = useCallback(async () => {
     setLoading(true);
     try {
-      if (nextTab === 'plan') {
-        const r = await api.get('/purchase/order-plan', {
+      const [plan, requirement] = await Promise.all([
+        api.get('/purchase/order-plan', {
           params: {
             supplierCode: supplierCond || undefined,
             itemCode: itemCond.trim() || undefined,
             lineType: lineTypeCond || undefined,
             pendingOnly: pendingOnly || undefined,
           },
-        });
-        setPlans(r.data?.data ?? []);
-        setSelected(new Set());
-        mark(r);
-      } else {
-        const r = await api.get('/purchase/order-plan/requirements');
-        setRequirements(r.data?.data ?? []);
-        mark(r);
-      }
+        }),
+        api.get('/purchase/order-plan/requirements'),
+      ]);
+      setPlans(plan.data?.data ?? []);
+      setRequirements(requirement.data?.data ?? []);
+      setSelected(new Set());
+      mark(plan);
       setSearched(true);
     } catch (error: unknown) {
       toast.error(apiMessage(error) ?? '조회에 실패했습니다.');
     } finally {
       setLoading(false);
     }
-  }, [tab, supplierCond, itemCond, lineTypeCond, pendingOnly, mark]);
+  }, [supplierCond, itemCond, lineTypeCond, pendingOnly, mark]);
 
-  useEffect(() => { void search('plan'); }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const changeTab = useCallback((nextTab: Tab) => {
-    setTab(nextTab);
-    setSearched(false);
-    setSelected(new Set());
-    void search(nextTab);
-  }, [search]);
+  useEffect(() => { void search(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const toggleArm = useCallback((value: string) => {
     setArms((prev) => (prev.includes(value)
@@ -211,13 +205,11 @@ export default function OrderPlanPage() {
         toast.success(
           `발주계획을 만들었습니다 — 소요량 ${d.requirementRows ?? 0}건 → 계획 ${d.planRows ?? 0}건.`,
         );
-        await search('plan');
       } else if (pending === 'price') {
         const r = await api.post('/purchase/order-plan/price-reset', {
           supplierCode: supplierCond || undefined,
         });
         toast.success(`단가를 다시 붙였습니다 (${r.data?.data?.updated ?? 0}건).`);
-        await search('plan');
       } else {
         const itemCodes = plans
           .filter((row) => selected.has(rowKey(row)))
@@ -233,9 +225,9 @@ export default function OrderPlanPage() {
             + ' 단가 재설정을 먼저 실행해 보세요.',
           );
         }
-        await search('plan');
       }
       setPending(null);
+      await search();
     } catch (error: unknown) {
       toast.error(apiMessage(error) ?? '처리에 실패했습니다.');
     } finally {
@@ -265,9 +257,12 @@ export default function OrderPlanPage() {
       title: '발주 확정',
       message: `고른 ${selected.size}건을 실제 주문으로 넘깁니다.`
         + `\n\n· 발주일: ${orderDate}`
-        + '\n· 넘어간 계획은 발주계획에서 사라집니다 (두 번 발주되지 않게).',
+        + '\n· 계획은 지워지지 않고 확정 표시만 남습니다 (두 번 발주되지 않게).'
+        + '\n· 납품구분이 비었거나 거래유형이 T 인 계획은 넘어가지 않습니다.',
     },
   }[pending ?? 'generate'];
+
+  const count = (n: number) => (searched ? `${n.toLocaleString()}건` : '');
 
   return (
     <div className="flex h-full flex-col gap-3 p-6">
@@ -367,78 +362,62 @@ export default function OrderPlanPage() {
         </CardContent>
       </Card>
 
-      <ScreenTabs<Tab>
-        active={tab}
-        onChange={changeTab}
-        tabs={[
-          { key: 'plan', label: '② 발주계획', tooltip: TIP.tabPlan },
-          { key: 'requirement', label: '소요량 (재고 차감 전)', tooltip: TIP.tabRequirement },
-        ]}
-      />
-
-      {/* ② 조회 — 조건만 둔다 */}
+      {/* ② 확인 + ③ 실행 — 두 표를 같이 보므로 한 줄로 합쳐 세로 공간을 아낀다 */}
       <Card padding="none">
         <CardContent className="flex flex-wrap items-center gap-3 p-3">
           <span className="text-sm font-semibold text-text">② 확인</span>
           <SupplierSelect aria-label="협력사" includeAll labelPrefix="협력사"
-            value={supplierCond} className="w-48" onChange={setSupplierCond} />
+            value={supplierCond} className="w-44" onChange={setSupplierCond} />
           <Input aria-label="품목코드" placeholder="품목코드" value={itemCond}
-            className="w-40" data-tooltip={TIP.itemCode}
+            className="w-36" data-tooltip={TIP.itemCode}
             onChange={(e) => setItemCond(e.target.value)} />
           <ComCodeSelect groupCode="LINE TYPE" labelPrefix="거래유형"
-            aria-label="거래유형" value={lineTypeCond} className="w-40"
+            aria-label="거래유형" value={lineTypeCond} className="w-36"
             onChange={setLineTypeCond} />
-          {tab === 'plan' && (
-            <label data-tooltip={TIP.pendingOnly}
-              className="flex items-center gap-1 text-sm text-text">
-              <input type="checkbox" checked={pendingOnly}
-                onChange={(e) => setPendingOnly(e.target.checked)} />
-              발주할 것만
-            </label>
-          )}
+          <label data-tooltip={TIP.pendingOnly}
+            className="flex items-center gap-1 text-sm text-text">
+            <input type="checkbox" checked={pendingOnly}
+              onChange={(e) => setPendingOnly(e.target.checked)} />
+            발주할 것만
+          </label>
           <Button size="sm" variant="secondary" data-tooltip={TIP.search}
             onClick={() => search()} disabled={loading}>
             <Search className="mr-1 h-4 w-4" />조회
           </Button>
+
+          <span className="mx-2 h-4 w-px bg-border" />
+          <span className="text-sm font-semibold text-text">③ 실행</span>
+          <Button size="sm" variant="secondary" disabled={busy || plans.length === 0}
+            data-tooltip={TIP.priceReset}
+            onClick={() => setPending('price')}>
+            <Tag className="mr-1 h-4 w-4" />단가 재설정
+          </Button>
+          <span className="ml-auto flex items-center gap-3">
+            <span className="text-sm text-text-muted">
+              위 표에서 줄을 누르면 골라집니다
+            </span>
+            <Button size="sm" disabled={busy || selected.size === 0}
+              data-tooltip={TIP.purchase}
+              onClick={() => setPending('purchase')}>
+              <Send className="mr-1 h-4 w-4" />발주 확정 ({selected.size})
+            </Button>
+          </span>
         </CardContent>
       </Card>
 
-      {/* ③ 실행 — 조회 조건과 섞이지 않게 줄을 따로 둔다 */}
-      {tab === 'plan' && (
-        <Card padding="none">
-          <CardContent className="flex flex-wrap items-center gap-3 p-3">
-            <span className="text-sm font-semibold text-text">③ 실행</span>
-            <Button size="sm" variant="secondary" disabled={busy || plans.length === 0}
-              data-tooltip={TIP.priceReset}
-              onClick={() => setPending('price')}>
-              <Tag className="mr-1 h-4 w-4" />단가 재설정
-            </Button>
-            <span className="ml-auto flex items-center gap-3">
-              <span className="text-sm text-text-muted">
-                아래 표에서 줄을 누르면 골라집니다
-              </span>
-              <Button size="sm" disabled={busy || selected.size === 0}
-                data-tooltip={TIP.purchase}
-                onClick={() => setPending('purchase')}>
-                <Send className="mr-1 h-4 w-4" />발주 확정 ({selected.size})
-              </Button>
-            </span>
-          </CardContent>
-        </Card>
-      )}
-
       <TruncationNotice truncated={truncated} rowLimit={rowLimit} />
 
-      <Card className="min-h-0 flex-1 overflow-hidden" padding="none">
-        <CardContent className="flex h-full flex-col gap-2 p-3">
-          <span className="text-sm font-semibold text-text">
-            {tab === 'plan' ? '발주계획' : '소요량 (재고 차감 전)'}{' '}
-            {searched
-              ? `${(tab === 'plan' ? plans.length : requirements.length).toLocaleString()}건`
-              : ''}
-          </span>
-          <div className="min-h-0 flex-1">
-            {tab === 'plan' ? (
+      {/* 위: 결과(발주계획, 열이 많아 넓게) / 아래: 재고 차감 전 소요량 */}
+      <div className="flex min-h-0 flex-1 flex-col gap-3">
+        <Card className="min-h-0 flex-[3] overflow-hidden" padding="none">
+          <CardContent className="flex h-full flex-col gap-2 p-3">
+            <span className="text-sm font-semibold text-text" data-tooltip={TIP.gridPlan}>
+              ② 발주계획 {count(plans.length)}
+              <span className="ml-2 text-xs font-normal text-text-muted">
+                줄을 누르면 골라집니다
+              </span>
+            </span>
+            <div className="min-h-0 flex-1">
               <DataGrid
                 data={plans}
                 columns={orderPlanColumns}
@@ -466,7 +445,20 @@ export default function OrderPlanPage() {
                 rowClassName={(row) => (selected.has(rowKey(row as OrderPlanRow))
                   ? 'bg-primary/10' : '')}
               />
-            ) : (
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="min-h-0 flex-[2] overflow-hidden" padding="none">
+          <CardContent className="flex h-full flex-col gap-2 p-3">
+            <span className="text-sm font-semibold text-text"
+              data-tooltip={TIP.gridRequirement}>
+              소요량 (재고 차감 전) {count(requirements.length)}
+              <span className="ml-2 text-xs font-normal text-text-muted">
+                발주량이 이상하면 여기를 먼저 봅니다
+              </span>
+            </span>
+            <div className="min-h-0 flex-1">
               <DataGrid
                 data={requirements}
                 columns={requirementOrderColumns}
@@ -479,10 +471,10 @@ export default function OrderPlanPage() {
                   ? '소요량이 없습니다. 위 ① 에서 발주계획을 생성하세요.'
                   : '조회하세요.'}
               />
-            )}
-          </div>
-        </CardContent>
-      </Card>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       <ConfirmModal
         isOpen={Boolean(pending)}
