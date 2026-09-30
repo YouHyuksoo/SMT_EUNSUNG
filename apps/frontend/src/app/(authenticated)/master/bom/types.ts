@@ -13,6 +13,8 @@ export interface ParentPart {
   itemName: string;
   itemNo?: string;
   itemType: string;
+  /** 품목구분 (ITEM DIVISION: F 제품 / W 반제품 / R 원자재) */
+  itemDivision?: string | null;
   spec?: string;
   unit?: string;
   customer?: string;

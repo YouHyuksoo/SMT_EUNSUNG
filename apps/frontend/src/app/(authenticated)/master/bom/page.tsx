@@ -21,7 +21,8 @@ import { getTodayLocal } from "@/utils/date";
 export default function BomPage() {
   const { t } = useTranslation();
   const router = useRouter();
-  const itemTypeOptions = useComCodeOptions("ITEM_TYPE");
+  // 제품/반제품 구분은 ITEM_TYPE(자작·유상·무상)이 아니라 ITEM DIVISION(F 제품 / W 반제품) 기준 — PB ddlb_item_division 과 같다
+  const itemDivisionOptions = useComCodeOptions("ITEM DIVISION");
   const [parents, setParents] = useState<ParentPart[]>([]);
   const [selectedParent, setSelectedParent] = useState<ParentPart | null>(null);
   const [selectedBomItem, setSelectedBomItem] = useState<RoutingTarget | null>(null);
@@ -36,15 +37,21 @@ export default function BomPage() {
   const [uploadOpen, setUploadOpen] = useState(false);
   const [loadingRouting, setLoadingRouting] = useState(false);
 
-  const itemTypeLabelMap = useMemo(() => {
+  const itemDivisionLabelMap = useMemo(() => {
     const map: Record<string, string> = {};
-    itemTypeOptions.forEach((option) => { map[option.value] = option.label; });
+    itemDivisionOptions.forEach((option) => { map[option.value] = option.label; });
     return map;
-  }, [itemTypeOptions]);
+  }, [itemDivisionOptions]);
+
+  /** 필터 칩: 제품(F)·반제품(W)만. 원자재(R)는 칩으로 두지 않는다 (전체에는 보인다). */
+  const divisionFilterOptions = useMemo(
+    () => itemDivisionOptions.filter((option) => option.value === "F" || option.value === "W"),
+    [itemDivisionOptions],
+  );
 
   const filteredParents = useMemo(() => {
     if (!typeFilter) return parents;
-    return parents.filter((parent) => parent.itemType === typeFilter);
+    return parents.filter((parent) => parent.itemDivision === typeFilter);
   }, [parents, typeFilter]);
 
   const processes = useMemo(() => routingInfo?.processes ?? [], [routingInfo]);
@@ -242,7 +249,7 @@ export default function BomPage() {
                 >
                   {t("common.all")}
                 </button>
-                {itemTypeOptions.filter((option) => !["RAW_MATERIAL", "CONSUMABLE"].includes(option.value)).map((option) => (
+                {divisionFilterOptions.map((option) => (
                   <button
                     key={option.value}
                     type="button"
@@ -275,11 +282,19 @@ export default function BomPage() {
                               : "hover:bg-surface-hover text-text"
                           }`}
                         >
-                          <td className="px-2 py-2 min-w-0">
-                            <div className="font-mono font-semibold truncate">{parent.itemNo || parent.itemCode}</div>
-                            <div className="font-medium truncate">{parent.itemName}</div>
-                            <div className="text-[11px] opacity-70 truncate">
-                              {parent.itemCode} / {itemTypeLabelMap[parent.itemType] || parent.itemType} / BOM {parent.bomCount}
+                          <td className="px-2 py-1.5 min-w-0">
+                            <div
+                              className="flex items-center gap-2 min-w-0"
+                              title={`${parent.itemCode}${parent.itemNo ? ` (${parent.itemNo})` : ""} - ${parent.itemName}`}
+                            >
+                              <span className="shrink-0 font-mono font-semibold">{parent.itemCode}</span>
+                              <span className="min-w-0 flex-1 truncate">{parent.itemName}</span>
+                              {parent.itemDivision && (
+                                <span className="shrink-0 text-[10px] opacity-70">
+                                  {itemDivisionLabelMap[parent.itemDivision] || parent.itemDivision}
+                                </span>
+                              )}
+                              <span className="shrink-0 text-[10px] opacity-70">BOM {parent.bomCount}</span>
                             </div>
                           </td>
                         </tr>
