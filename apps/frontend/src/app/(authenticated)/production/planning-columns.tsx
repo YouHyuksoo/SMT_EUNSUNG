@@ -271,13 +271,6 @@ export const smdActualSummaryColumns: ColumnDef<SmdActualSummaryRow>[] = [
 export const kittingRunCardColumns: ColumnDef<KittingRunCardRow>[] = [
   { accessorKey: 'runNo', header: '작업지시번호', size: 140 },
   { accessorKey: 'runDate', header: '작업일', size: 110, cell: (c) => dateOnly(c.getValue()) },
-  {
-    accessorKey: 'pidCount',
-    header: '매핑 PID',
-    size: 100,
-    meta: right,
-    cell: (c) => num(c.getValue()),
-  },
   { accessorKey: 'lotSize', header: 'LOT수량', size: 100, meta: right, cell: (c) => num(c.getValue()) },
   { accessorKey: 'modelName', header: '모델명', size: 190 },
   { accessorKey: 'masterModelName', header: '마스터모델', size: 150 },
