@@ -16,6 +16,7 @@ import {
 } from '../../common/decorators/tenant.decorator';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import {
+  ApplySensorDto,
   DefectSaveDto,
   DowntimeBulkDto,
   DowntimeUpsertDto,
@@ -92,6 +93,15 @@ export class WorkResultController {
     @UserId() userId?: string,
   ) {
     return await this.service.upsertResult(dto, organizationId, userId);
+  }
+
+  /** 센서 반영 재시도 — 완료인데 미반영인 실적을 다시 프로시저로 넘긴다 */
+  @Post('results/apply-sensor')
+  async applySensor(
+    @Body() dto: ApplySensorDto,
+    @OrganizationId() organizationId?: number,
+  ) {
+    return await this.service.applySensor(dto, organizationId);
   }
 
   /** 작업지시 대표불량 조회 */
