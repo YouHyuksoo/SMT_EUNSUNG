@@ -8,6 +8,7 @@
  *   목록 GET ?fromDate&toDate&lineCode&keyword&excludeSmt=Y(라인구분 SMT 제외) · 실적이력 GET /results?runNo
  *   실적상세 GET /results/:runNo/:seqNo · 실적 POST/PUT /results
  *   부적합유형 GET /bad-reasons(WQC) · 후공정설비 GET /machines · 비가동사유 GET /downtime-reasons
+ *   비가동 설비콤보 GET /downtime-machines?runNo (작업지시 설비 고정 → 공정 배치설비 → 라인 배치설비)
  *   비가동 처리는 공용 컴포넌트 components/shared/EquipDowntimePanel 이 담당
  */
 import { useCallback, useEffect, useState } from 'react';
@@ -36,6 +37,8 @@ interface RunRow {
 }
 interface Machine { machineCode: string; machineName: string; workstageCode: string; workstageName: string; lineCode: string; }
 interface Code { code: string; name: string; }
+/** 설비비가동 설비 콤보 — by: 구성 기준(작업지시 설비/공정 배치설비/라인 배치설비/없음) */
+interface DowntimeMachines { by: 'machine' | 'workstage' | 'line' | 'none'; fixed: boolean; list: Machine[]; }
 
 type PanelMode = 'result' | 'defect' | 'downtime';
 
@@ -64,6 +67,8 @@ export default function EquipWorkResultPage() {
   // 공용 코드/콤보
   const [machines, setMachines] = useState<Machine[]>([]);
   const [badReasons, setBadReasons] = useState<Code[]>([]);
+  // 설비비가동 패널의 설비 콤보 (작업지시 선택 시에만, 로딩 중 null)
+  const [dtMachines, setDtMachines] = useState<DowntimeMachines | null>(null);
 
 
   // 불량 패널 (작업지시 단위 대표불량 단일)
@@ -124,9 +129,23 @@ export default function EquipWorkResultPage() {
   // ---- 비가동 패널 (설비 기준 — 작업지시 선택은 선택사항, ADR 0002) ----
   // 실제 조회·시작·종료는 공용 컴포넌트 EquipDowntimePanel이 담당한다.
   // r=null 이면 작업지시 없이 설비만 선택해 등록하는 흐름
-  function openDowntimePanel(r: RunRow | null) {
+  async function openDowntimePanel(r: RunRow | null) {
     setSelectedRun(r?.runNo ?? null); setPanelRun(r); setPanelMode('downtime');
+    setDtMachines(null);
+    if (!r) return;
+    try {
+      const res = await api.get('/oee/work-result/downtime-machines', { params: { runNo: r.runNo } });
+      setDtMachines(res.data?.data ?? { by: 'none', fixed: false, list: [] });
+    } catch {
+      toast.error('설비 목록 조회에 실패했습니다');
+      setDtMachines({ by: 'none', fixed: false, list: [] });
+    }
   }
+  const dtByLabel = (d: DowntimeMachines, r: RunRow) =>
+    d.by === 'machine' ? '작업지시 설비 (고정)'
+      : d.by === 'workstage' ? `공정 ${r.workstageCode} 배치 설비`
+      : d.by === 'line' ? `라인 ${r.lineCode} 배치 설비`
+      : '작업지시에 설비·공정·라인 정보가 없습니다';
 
   // 폼 상태는 WorkResultForm이 들고 있다 — 패널이 닫히며 언마운트되면 같이 사라진다
   function closePanel() { setPanelMode(null); setPanelRun(null); }
@@ -333,12 +352,20 @@ export default function EquipWorkResultPage() {
             <button onClick={closePanel} className="px-3 py-2 rounded border border-border text-text-muted text-sm">닫기</button>
           </div>
           <div className="flex-1 min-h-0 overflow-y-auto px-5 py-4">
-            <EquipDowntimePanel
-              machine={panelRun?.machineCode ? { machineCode: panelRun.machineCode, machineName: panelRun.machineName, workstageCode: panelRun.workstageCode } : null}
-              selectableMachines={machines}
-              runNo={panelRun?.runNo ?? null}
-              onChanged={search}
-            />
+            {panelRun && !dtMachines ? (
+              <div className="p-8 text-center text-text-muted text-sm">설비 목록 조회 중…</div>
+            ) : (
+              <>
+                {panelRun && dtMachines && <p className="text-[11px] text-text-muted mb-2">설비 목록: {dtByLabel(dtMachines, panelRun)}</p>}
+                <EquipDowntimePanel
+                  key={panelRun?.runNo ?? 'none'}
+                  machine={dtMachines?.fixed ? dtMachines.list[0] ?? null : null}
+                  selectableMachines={panelRun ? dtMachines?.list ?? [] : machines}
+                  runNo={panelRun?.runNo ?? null}
+                  onChanged={search}
+                />
+              </>
+            )}
           </div>
         </div>
       )}

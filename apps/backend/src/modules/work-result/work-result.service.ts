@@ -459,6 +459,43 @@ export class WorkResultService {
     );
   }
 
+  /**
+   * 설비비가동 등록용 설비 콤보 — 작업지시 기준
+   * 1) 작업지시에 설비가 있으면 그 설비로 고정(fixed)
+   * 2) 설비 없이 공정만 있으면 그 공정의 배치 설비(IMCN_MACHINE.WORKSTAGE_CODE)
+   * 3) 둘 다 없으면 작업지시 라인코드와 같은 배치 설비(IMCN_MACHINE.LINE_CODE)
+   */
+  async downtimeMachines(runNo: string, organizationId?: number) {
+    const organization = this.requireOrganization(organizationId);
+    const run = (await this.q<{ machineCode: string | null; workstageCode: string | null; lineCode: string | null }>(
+      `SELECT MACHINE_CODE AS "machineCode", WORKSTAGE_CODE AS "workstageCode", LINE_CODE AS "lineCode"
+         FROM IP_PRODUCT_RUN_CARD WHERE RUN_NO=:1 AND ORGANIZATION_ID=:2`,
+      [runNo, organization],
+    ))[0];
+    if (!run) throw new NotFoundException(`작업지시를 찾을 수 없습니다: ${runNo}`);
+
+    const select = `SELECT m.MACHINE_CODE AS "machineCode", m.MACHINE_NAME AS "machineName",
+              m.WORKSTAGE_CODE AS "workstageCode", m.LINE_CODE AS "lineCode"
+         FROM IMCN_MACHINE m WHERE m.ORGANIZATION_ID=:1`;
+    let by: 'machine' | 'workstage' | 'line' | 'none';
+    let list: Array<Record<string, unknown>> = [];
+    if (run.machineCode) {
+      by = 'machine';
+      list = await this.q(`${select} AND m.MACHINE_CODE=:2`, [organization, run.machineCode]);
+      // 설비 마스터에 없어도 작업지시 설비로 고정한다
+      if (!list.length) list = [{ machineCode: run.machineCode, machineName: null, workstageCode: run.workstageCode, lineCode: run.lineCode }];
+    } else if (run.workstageCode) {
+      by = 'workstage';
+      list = await this.q(`${select} AND m.WORKSTAGE_CODE=:2 ORDER BY m.MACHINE_CODE`, [organization, run.workstageCode]);
+    } else if (run.lineCode) {
+      by = 'line';
+      list = await this.q(`${select} AND m.LINE_CODE=:2 ORDER BY m.MACHINE_CODE`, [organization, run.lineCode]);
+    } else {
+      by = 'none';
+    }
+    return { by, fixed: by === 'machine', list };
+  }
+
   /** 설비 연계 비가동 사유 (없으면 전체 사용중 사유) */
   async downtimeReasons(
     machineCode?: string,

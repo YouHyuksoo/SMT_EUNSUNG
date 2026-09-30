@@ -145,6 +145,15 @@ export class WorkResultController {
     return { list: await this.service.machines(organizationId) };
   }
 
+  /** 설비비가동 설비 콤보 (작업지시 설비 → 공정 배치설비 → 라인 배치설비) */
+  @Get('downtime-machines')
+  async downtimeMachines(
+    @Query('runNo') runNo: string,
+    @OrganizationId() organizationId?: number,
+  ) {
+    return this.service.downtimeMachines(runNo, organizationId);
+  }
+
   /** 비가동 사유 (설비 연계) */
   @Get('downtime-reasons')
   async downtimeReasons(
