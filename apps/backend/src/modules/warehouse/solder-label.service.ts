@@ -57,6 +57,7 @@ import {
   SolderLabelSlipQueryDto,
   SolderLabelBarcodeQueryDto,
 } from './warehouse.dto';
+import { affectedRows } from '../../common/utils/affected-rows.util';
 
 type Row = Record<string, unknown>;
 
@@ -402,7 +403,7 @@ export class SolderLabelService {
             userId,
           } as unknown as unknown[],
         );
-        const affected = Number((result as { rowsAffected?: number })?.rowsAffected ?? 0);
+        const affected = Number(affectedRows(result) ?? 0);
         if (affected !== 1) {
           // 다른 사람이 같은 번호를 먼저 찍었다. 반쪽만 들어가면 라벨과 전표가
           // 어긋나므로 트랜잭션 전체를 되돌린다.
@@ -422,7 +423,7 @@ export class SolderLabelService {
         datePrefix,
         issued: barcodes.length,
         totalQty,
-        slipRows: Number((slipResult as { rowsAffected?: number })?.rowsAffected ?? 0),
+        slipRows: Number(affectedRows(slipResult) ?? 0),
         barcodeRows,
         firstBarcode: barcodes[0] ?? null,
         lastBarcode: barcodes[barcodes.length - 1] ?? null,

@@ -36,6 +36,7 @@ import { likePrefix } from '@smt/shared';
 import { limited, ROW_LIMIT } from '../../shared/row-limit';
 import { TransactionService } from '../../shared/transaction.service';
 import { BakingScanDto, BakingHistoryQueryDto } from './warehouse.dto';
+import { affectedRows } from '../../common/utils/affected-rows.util';
 
 type Row = Record<string, unknown>;
 
@@ -292,7 +293,7 @@ export class BakingScanService {
           } as unknown as unknown[],
         );
         const masterRows = Number(
-          (inserted as { rowsAffected?: number })?.rowsAffected ?? 0,
+          affectedRows(inserted) ?? 0,
         );
         if (masterRows !== 1) {
           throw new BadRequestException('이미 챔버에 들어가 있습니다. 먼저 꺼내세요.');
@@ -333,10 +334,10 @@ export class BakingScanService {
           lotQty: Number(info.lotQty ?? 0),
           masterRows,
           barcodeRows: Number(
-            (barcodeResult as { rowsAffected?: number })?.rowsAffected ?? 0,
+            affectedRows(barcodeResult) ?? 0,
           ),
           inventoryRows: Number(
-            (inventoryResult as { rowsAffected?: number })?.rowsAffected ?? 0,
+            affectedRows(inventoryResult) ?? 0,
           ),
         };
       });
@@ -368,7 +369,7 @@ export class BakingScanService {
           organizationId,
         } as unknown as unknown[],
       );
-      const masterRows = Number((closed as { rowsAffected?: number })?.rowsAffected ?? 0);
+      const masterRows = Number(affectedRows(closed) ?? 0);
       if (masterRows < 1) {
         throw new BadRequestException(
           '이 챔버에 들어 있는 기록이 없습니다 (챔버 번호를 확인하세요).',
@@ -397,7 +398,7 @@ export class BakingScanService {
         lotNo: lookup.lotNo,
         masterRows,
         barcodeRows: Number(
-          (barcodeResult as { rowsAffected?: number })?.rowsAffected ?? 0,
+          affectedRows(barcodeResult) ?? 0,
         ),
         /** 베이킹에서 꺼내면 MSL 시계가 초기화된다 (PB 값 0.01). */
         mslReset: kind === 'B',

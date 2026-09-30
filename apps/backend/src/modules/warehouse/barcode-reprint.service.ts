@@ -28,6 +28,7 @@ import { likePrefix } from '@smt/shared';
 import { limited, ROW_LIMIT } from '../../shared/row-limit';
 import { TransactionService } from '../../shared/transaction.service';
 import { BarcodeReprintDto, BarcodeReprintQueryDto } from './warehouse.dto';
+import { affectedRows } from '../../common/utils/affected-rows.util';
 
 type Row = Record<string, unknown>;
 
@@ -156,7 +157,7 @@ export class BarcodeReprintService {
           newQty: qty, itemCode, lotNo, userId, organizationId,
         } as unknown as unknown[],
       );
-      const rows = Number((result as { rowsAffected?: number })?.rowsAffected ?? 0);
+      const rows = Number(affectedRows(result) ?? 0);
       if (rows !== 1) {
         throw new BadRequestException(
           `다시 만들 바코드를 찾을 수 없습니다: ${itemCode}-${lotNo}`

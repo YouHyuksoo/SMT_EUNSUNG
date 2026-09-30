@@ -38,6 +38,7 @@ import { DataSource } from 'typeorm';
 import { limited, ROW_LIMIT } from '../../shared/row-limit';
 import { TransactionService } from '../../shared/transaction.service';
 import { BarcodeDivideDto, BarcodeDivideQueryDto } from './warehouse.dto';
+import { affectedRows } from '../../common/utils/affected-rows.util';
 
 type Row = Record<string, unknown>;
 
@@ -352,7 +353,7 @@ export class BarcodeDivideService {
           } as unknown as unknown[],
         );
         const affected = Number(
-          (inserted as { rowsAffected?: number })?.rowsAffected ?? 0,
+          affectedRows(inserted) ?? 0,
         );
         if (affected !== 1) {
           throw new BadRequestException(
@@ -407,7 +408,7 @@ export class BarcodeDivideService {
               inventoryType: (info.inventoryType as string) ?? null,
             } as unknown as unknown[],
           );
-          issueRows += Number((issued as { rowsAffected?: number })?.rowsAffected ?? 0);
+          issueRows += Number(affectedRows(issued) ?? 0);
         }
       }
 
@@ -444,7 +445,7 @@ export class BarcodeDivideService {
         } as unknown as unknown[],
       );
       const originalRows = Number(
-        (updated as { rowsAffected?: number })?.rowsAffected ?? 0,
+        affectedRows(updated) ?? 0,
       );
       if (originalRows !== 1) {
         // 원본을 못 고치면 조각만 늘어나 재고가 부풀어 오른다 — 통째로 되돌린다.

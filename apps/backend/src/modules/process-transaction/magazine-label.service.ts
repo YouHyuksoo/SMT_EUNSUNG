@@ -36,6 +36,7 @@ import {
   MagazineIssueDto,
   MagazineIssuedQueryDto,
 } from './magazine-label.dto';
+import { affectedRows } from '../../common/utils/affected-rows.util';
 
 type Row = Record<string, unknown>;
 
@@ -387,7 +388,7 @@ export class MagazineLabelService {
           } as unknown as unknown[],
         );
         const affected = Number(
-          (result as { rowsAffected?: number })?.rowsAffected ?? 0,
+          affectedRows(result) ?? 0,
         );
         if (affected !== 1) {
           throw new BadRequestException(
@@ -465,7 +466,7 @@ export class MagazineLabelService {
         } as unknown as unknown[],
       );
       const backedRows = Number(
-        (backed as { rowsAffected?: number })?.rowsAffected ?? 0,
+        affectedRows(backed) ?? 0,
       );
       if (backedRows === 0) {
         throw new BadRequestException('폐기할 라벨이 사라졌습니다. 다시 조회하세요.');
@@ -485,7 +486,7 @@ export class MagazineLabelService {
         } as unknown as unknown[],
       );
       const deletedRows = Number(
-        (deleted as { rowsAffected?: number })?.rowsAffected ?? 0,
+        affectedRows(deleted) ?? 0,
       );
       if (deletedRows !== backedRows) {
         throw new BadRequestException(

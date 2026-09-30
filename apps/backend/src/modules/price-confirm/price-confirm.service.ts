@@ -29,6 +29,7 @@ import {
   PriceConfirmKeyDto,
   PriceConfirmQueryDto,
 } from './price-confirm.dto';
+import { affectedRows } from '../../common/utils/affected-rows.util';
 
 type Row = Record<string, unknown>;
 
@@ -275,7 +276,7 @@ export class PriceConfirmService {
               AND NVL(PRICE_CHANGE_CONFIRM_YN, 'N') <> :confirmYn`,
           binds as unknown as unknown[],
         );
-        const affected = Number((result as { rowsAffected?: number })?.rowsAffected ?? 0);
+        const affected = Number(affectedRows(result) ?? 0);
         if (affected > 0) {
           changed += affected;
           continue;

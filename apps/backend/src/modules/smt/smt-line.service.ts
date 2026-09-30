@@ -26,6 +26,7 @@ import {
   SmtLineUpsertDto,
   SmtLocationGenerateDto,
 } from './smt-line.dto';
+import { affectedRows } from '../../common/utils/affected-rows.util';
 
 /** 센티넬 라인. 목록·수정·삭제 어디서도 대상이 아니다. */
 const SENTINEL_LINE = '*';
@@ -191,7 +192,7 @@ export class SmtLineService {
             AND ORGANIZATION_ID = :organizationId`,
         binds as unknown as unknown[],
       );
-      const affected = Number((result as { rowsAffected?: number })?.rowsAffected ?? 0);
+      const affected = Number(affectedRows(result) ?? 0);
       if (affected === 0) {
         throw new NotFoundException(`라인·설비를 찾을 수 없습니다: ${dto.lineCode} / ${dto.machine}`);
       }
@@ -226,7 +227,7 @@ export class SmtLineService {
             AND ORGANIZATION_ID = :organizationId`,
         { lineCode: key.lineCode, machine: key.machine, organizationId } as unknown as unknown[],
       );
-      const affected = Number((result as { rowsAffected?: number })?.rowsAffected ?? 0);
+      const affected = Number(affectedRows(result) ?? 0);
       if (affected === 0) {
         throw new NotFoundException(`라인·설비를 찾을 수 없습니다: ${key.lineCode} / ${key.machine}`);
       }

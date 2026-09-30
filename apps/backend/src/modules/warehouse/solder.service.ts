@@ -39,6 +39,7 @@ import {
   SolderScanDto,
   SolderStageCountQueryDto,
 } from './warehouse.dto';
+import { affectedRows } from '../../common/utils/affected-rows.util';
 
 type Row = Record<string, unknown>;
 
@@ -297,7 +298,7 @@ export class SolderService {
           scanType: 'R' as const,
           solderLotNo: dto.solderLotNo,
           itemCode: items[0].itemCode as string,
-          affected: Number((result as { rowsAffected?: number })?.rowsAffected ?? 0),
+          affected: Number(affectedRows(result) ?? 0),
         };
       }
 
@@ -311,7 +312,7 @@ export class SolderService {
             AND ORGANIZATION_ID = :organizationId`,
         { ...lotBinds, userId } as unknown as unknown[],
       );
-      const affected = Number((result as { rowsAffected?: number })?.rowsAffected ?? 0);
+      const affected = Number(affectedRows(result) ?? 0);
       if (affected === 0) {
         // PB 는 UPDATE 전에 COUNT 로 확인했다. 결과는 같고 왕복이 한 번 줄어든다.
         throw new BadRequestException(`입고되지 않은 솔더입니다: ${dto.solderLotNo}`);

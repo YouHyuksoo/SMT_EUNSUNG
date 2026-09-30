@@ -20,6 +20,7 @@ import {
   SmtLocationQueryDto,
   SmtLocationUpsertDto,
 } from './smt-location.dto';
+import { affectedRows } from '../../common/utils/affected-rows.util';
 
 const EDITABLE: Array<[column: string, field: keyof SmtLocationUpsertDto]> = [
   ['MACHINE', 'machine'],
@@ -139,7 +140,7 @@ export class SmtLocationService {
             AND ORGANIZATION_ID = :organizationId`,
         binds as unknown as unknown[],
       );
-      const affected = Number((result as { rowsAffected?: number })?.rowsAffected ?? 0);
+      const affected = Number(affectedRows(result) ?? 0);
       if (affected === 0) {
         throw new NotFoundException(`위치를 찾을 수 없습니다: ${dto.lineCode} / ${dto.locationCode}`);
       }
@@ -169,7 +170,7 @@ export class SmtLocationService {
             AND ORGANIZATION_ID = :organizationId`,
         { lineCode: key.lineCode, locationCode: key.locationCode, organizationId } as unknown as unknown[],
       );
-      const affected = Number((result as { rowsAffected?: number })?.rowsAffected ?? 0);
+      const affected = Number(affectedRows(result) ?? 0);
       if (affected === 0) {
         throw new NotFoundException(`위치를 찾을 수 없습니다: ${key.lineCode} / ${key.locationCode}`);
       }

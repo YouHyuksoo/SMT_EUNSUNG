@@ -24,6 +24,7 @@ import {
   BomConfirmClearDto,
   BomConfirmQueryDto,
 } from './bom-confirm.dto';
+import { affectedRows } from '../../common/utils/affected-rows.util';
 
 type Row = Record<string, unknown>;
 
@@ -191,7 +192,7 @@ export class BomConfirmService {
           WHERE BOM_WORK_NO = :bomWorkNo AND ORGANIZATION_ID = :organizationId`,
         { bomWorkNo: dto.bomWorkNo, organizationId } as unknown as unknown[],
       );
-      const affected = Number((result as { rowsAffected?: number })?.rowsAffected ?? 0);
+      const affected = Number(affectedRows(result) ?? 0);
       if (affected === 0) {
         throw new NotFoundException(`작업번호 ${dto.bomWorkNo} 에 행이 없습니다.`);
       }

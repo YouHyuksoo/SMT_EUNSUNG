@@ -25,6 +25,7 @@ import {
   JigCleanCheckQueryDto,
   JigCleanCheckSaveDto,
 } from './jig-clean-check.dto';
+import { affectedRows } from '../../common/utils/affected-rows.util';
 
 type Row = Record<string, unknown>;
 
@@ -223,7 +224,7 @@ export class JigCleanCheckService {
         } as unknown as unknown[],
       );
       const affected = Number(
-        (updated as { rowsAffected?: number })?.rowsAffected ?? 0,
+        affectedRows(updated) ?? 0,
       );
       if (affected !== 1) {
         throw new BadRequestException(

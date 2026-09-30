@@ -63,6 +63,7 @@ import {
   BarcodeIssueWaitingQueryDto,
   KittingBomQueryDto,
 } from './warehouse.dto';
+import { affectedRows } from '../../common/utils/affected-rows.util';
 
 type Row = Record<string, unknown>;
 
@@ -739,7 +740,7 @@ export class BarcodeIssueService {
         } as unknown as unknown[],
       );
       const barcodeRows = Number(
-        (updated as { rowsAffected?: number })?.rowsAffected ?? 0,
+        affectedRows(updated) ?? 0,
       );
       if (barcodeRows !== 1) {
         throw new BadRequestException(
@@ -806,7 +807,7 @@ export class BarcodeIssueService {
         issueDivision: dto.kitting ? FIXED.issueDivisionKitting : (dto.issueDivision ?? null),
         warnings: verdict.checks.filter((c) => c.result === 'warn'),
         barcodeRows,
-        issueRows: Number((inserted as { rowsAffected?: number })?.rowsAffected ?? 0),
+        issueRows: Number(affectedRows(inserted) ?? 0),
       };
     });
   }

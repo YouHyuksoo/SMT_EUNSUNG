@@ -48,6 +48,7 @@ import {
   ReceiptSlipIssueDto,
   ReceiptSlipQueryDto,
 } from './warehouse.dto';
+import { affectedRows } from '../../common/utils/affected-rows.util';
 
 type Row = Record<string, unknown>;
 
@@ -320,7 +321,7 @@ export class ReceiptSlipService {
           common as unknown as unknown[],
         );
         barcodeRows += Number(
-          (barcodeResult as { rowsAffected?: number })?.rowsAffected ?? 0,
+          affectedRows(barcodeResult) ?? 0,
         );
 
         const receiptResult = await qr.query(
@@ -369,7 +370,7 @@ export class ReceiptSlipService {
           } as unknown as unknown[],
         );
         receiptRows += Number(
-          (receiptResult as { rowsAffected?: number })?.rowsAffected ?? 0,
+          affectedRows(receiptResult) ?? 0,
         );
       }
 

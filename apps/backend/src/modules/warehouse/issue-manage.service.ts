@@ -37,6 +37,7 @@ import {
   IssueHistoryQueryDto,
   IssueInventoryQueryDto,
 } from './warehouse.dto';
+import { affectedRows } from '../../common/utils/affected-rows.util';
 
 type Row = Record<string, unknown>;
 
@@ -294,7 +295,7 @@ export class IssueManageService {
         /** 3 = 출고 · 4 = 반납 */
         issueDeficit: issueQty < 0 ? 4 : 3,
         invoiceNo,
-        rows: Number((result as { rowsAffected?: number })?.rowsAffected ?? 0),
+        rows: Number(affectedRows(result) ?? 0),
       };
     });
   }
@@ -379,7 +380,7 @@ export class IssueManageService {
         } as unknown as unknown[],
       );
       const flaggedRows = Number(
-        (flagged as { rowsAffected?: number })?.rowsAffected ?? 0,
+        affectedRows(flagged) ?? 0,
       );
       if (flaggedRows !== 1) {
         throw new BadRequestException('이미 취소된 출고입니다.');
@@ -449,7 +450,7 @@ export class IssueManageService {
         } as unknown as unknown[],
       );
       const insertedRows = Number(
-        (inserted as { rowsAffected?: number })?.rowsAffected ?? 0,
+        affectedRows(inserted) ?? 0,
       );
       if (insertedRows !== 1) {
         // 역분개가 안 들어가면 원장이 반쪽만 바뀐다 — 통째로 되돌린다.
@@ -466,7 +467,7 @@ export class IssueManageService {
         flaggedRows,
         insertedRows,
         returnRequestRows: Number(
-          (requestCleared as { rowsAffected?: number })?.rowsAffected ?? 0,
+          affectedRows(requestCleared) ?? 0,
         ),
       };
     });

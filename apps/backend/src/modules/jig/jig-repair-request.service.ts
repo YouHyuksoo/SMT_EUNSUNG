@@ -25,6 +25,7 @@ import {
   JigRepairRequestUpdateDto,
   RepairableJigQueryDto,
 } from './jig-repair-request.dto';
+import { affectedRows } from '../../common/utils/affected-rows.util';
 
 type Row = Record<string, unknown>;
 
@@ -230,7 +231,7 @@ export class JigRepairRequestService {
         } as unknown as unknown[],
       );
       const affected = Number(
-        (updated as { rowsAffected?: number })?.rowsAffected ?? 0,
+        affectedRows(updated) ?? 0,
       );
       if (affected !== 1) {
         throw new BadRequestException(
@@ -257,7 +258,7 @@ export class JigRepairRequestService {
         } as unknown as unknown[],
       );
       const affected = Number(
-        (deleted as { rowsAffected?: number })?.rowsAffected ?? 0,
+        affectedRows(deleted) ?? 0,
       );
       if (affected !== 1) {
         throw new BadRequestException(

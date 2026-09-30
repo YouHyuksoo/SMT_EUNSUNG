@@ -27,6 +27,7 @@ import {
   MagazinePidMapDto,
   MagazinePidQueryDto,
 } from './magazine-label.dto';
+import { affectedRows } from '../../common/utils/affected-rows.util';
 
 type Row = Record<string, unknown>;
 
@@ -197,7 +198,7 @@ export class MagazinePidService {
         } as unknown as unknown[],
       );
       const affected = Number(
-        (result as { rowsAffected?: number })?.rowsAffected ?? 0,
+        affectedRows(result) ?? 0,
       );
       if (affected !== 1) {
         // 조회와 INSERT 사이에 다른 자리에서 같은 PID 를 찍은 것이다.
@@ -230,7 +231,7 @@ export class MagazinePidService {
         } as unknown as unknown[],
       );
       const affected = Number(
-        (result as { rowsAffected?: number })?.rowsAffected ?? 0,
+        affectedRows(result) ?? 0,
       );
       if (affected !== 1) {
         throw new BadRequestException(
