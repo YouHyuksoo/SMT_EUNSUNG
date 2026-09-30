@@ -19,6 +19,7 @@ import { DataSource } from 'typeorm';
 import { TransactionService } from '../../shared/transaction.service';
 import { SmdActualKeyDto, SmdActualQueryDto, SmdActualUpdateDto } from './smd-actual.dto';
 import { like } from './plan-shared';
+import { affectedRows } from '../../common/utils/affected-rows.util';
 
 type Row = Record<string, unknown>;
 
@@ -137,7 +138,7 @@ export class SmdActualService {
           organizationId,
         } as unknown as unknown[],
       );
-      const affected = Number((result as { rowsAffected?: number })?.rowsAffected ?? 0);
+      const affected = Number(affectedRows(result) ?? 0);
       if (affected === 0) throw new NotFoundException('생산실적을 찾을 수 없습니다.');
       return { changed: affected };
     });
@@ -153,7 +154,7 @@ export class SmdActualService {
           organizationId,
         } as unknown as unknown[],
       );
-      const affected = Number((result as { rowsAffected?: number })?.rowsAffected ?? 0);
+      const affected = Number(affectedRows(result) ?? 0);
       if (affected === 0) throw new NotFoundException('생산실적을 찾을 수 없습니다.');
       return { deleted: affected };
     });

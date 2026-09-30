@@ -29,6 +29,7 @@ import {
   planTimeSumExpression,
   timeDescColumns,
 } from './plan-shared';
+import { affectedRows } from '../../common/utils/affected-rows.util';
 
 export interface PlanTableConfig {
   /** 화면에 보일 이름. 오류 문구에 쓴다. */
@@ -40,8 +41,13 @@ export interface PlanTableConfig {
   extraColumns: Array<[column: string, field: keyof PlanUpsertDto]>;
   /** 이 테이블에서 NOT NULL 인 DTO 필드 (키·수량 제외) */
   required: Array<[field: keyof PlanUpsertDto, label: string]>;
-  /** 실적 뷰 조인에 공정코드를 포함하는가 (MI 만 해당) */
+  /** 공정코드 조회조건을 쓰는가 (MI 만 해당) */
   joinWorkstage: boolean;
+  /**
+   * 실적 뷰 조인 조건 [계획 컬럼, 뷰 컬럼]. PB 데이터윈도 조인을 그대로 옮긴다.
+   * 두 뷰는 날짜 컬럼 이름부터 다르다 (IP_PRODUCT_ACTUAL_TIME_V.ACTUAL_DATE / IP_ASSEMBLY_ACTUAL_TIME_V.RECEIPT_DATE).
+   */
+  actualJoin: Array<[planColumn: string, viewColumn: string]>;
 }
 
 export const PLAN_TABLES: Record<'mi' | 'smd', PlanTableConfig> = {
@@ -54,6 +60,13 @@ export const PLAN_TABLES: Record<'mi' | 'smd', PlanTableConfig> = {
     // 실측으로 확인했다 (없이 INSERT 하면 ORA-01400).
     required: [['workstageCode', '공정코드'], ['planPriority', '계획 우선순위']],
     joinWorkstage: true,
+    // d_pln_mi_master_plan_lst_tree: MODEL_SUFFIX 조인은 PB 에서도 주석 처리돼 있다.
+    actualJoin: [
+      ['PLAN_DATE', 'ACTUAL_DATE'],
+      ['LINE_CODE', 'LINE_CODE'],
+      ['MODEL_NAME', 'MODEL_NAME'],
+      ['WORKSTAGE_CODE', 'WORKSTAGE_CODE'],
+    ],
   },
   smd: {
     label: '반제품생산계획',
@@ -72,6 +85,14 @@ export const PLAN_TABLES: Record<'mi' | 'smd', PlanTableConfig> = {
       ['productionType', '생산유형'],
     ],
     joinWorkstage: false,
+    // d_pln_smd_master_plan_lst_tree: 날짜는 RECEIPT_DATE, 서픽스·PCB 면까지 맞춘다.
+    actualJoin: [
+      ['PLAN_DATE', 'RECEIPT_DATE'],
+      ['LINE_CODE', 'LINE_CODE'],
+      ['MODEL_NAME', 'MODEL_NAME'],
+      ['MODEL_SUFFIX', 'MODEL_SUFFIX'],
+      ['PCB_ITEM', 'PCB_ITEM'],
+    ],
   },
 };
 
@@ -159,10 +180,7 @@ export class PlanBaseService {
          LEFT JOIN ISYS_BASECODE ps
                 ON ps.CODE_TYPE = 'PLAN STATUS' AND ps.CODE_NAME = p.PLAN_STATUS
          LEFT JOIN ${cfg.actualView} v
-                ON v.ACTUAL_DATE = p.PLAN_DATE
-               AND v.LINE_CODE = p.LINE_CODE
-               AND v.MODEL_NAME = p.MODEL_NAME
-               ${hasWorkstage ? 'AND v.WORKSTAGE_CODE = p.WORKSTAGE_CODE' : ''}
+                ON ${cfg.actualJoin.map(([planCol, viewCol]) => `v.${viewCol} = p.${planCol}`).join('\n               AND ')}
         WHERE p.ORGANIZATION_ID = :organizationId
           AND p.PLAN_DATE >= TO_DATE(:dateFrom, 'YYYY-MM-DD')
           AND p.PLAN_DATE < TO_DATE(:dateTo, 'YYYY-MM-DD') + 1
@@ -304,7 +322,7 @@ export class PlanBaseService {
             AND ORGANIZATION_ID = :organizationId`,
         binds as unknown as unknown[],
       );
-      const affected = Number((result as { rowsAffected?: number })?.rowsAffected ?? 0);
+      const affected = Number(affectedRows(result) ?? 0);
       if (affected === 0) {
         throw new NotFoundException(
           `${cfg.label}을 찾을 수 없습니다: ${dto.planDate} / 순번 ${dto.planSequence}`,
@@ -355,7 +373,7 @@ export class PlanBaseService {
           organizationId,
         } as unknown as unknown[],
       );
-      return { deleted: Number((result as { rowsAffected?: number })?.rowsAffected ?? 0) };
+      return { deleted: Number(affectedRows(result) ?? 0) };
     });
   }
 
@@ -386,7 +404,7 @@ export class PlanBaseService {
           organizationId,
         } as unknown as unknown[],
       );
-      const affected = Number((result as { rowsAffected?: number })?.rowsAffected ?? 0);
+      const affected = Number(affectedRows(result) ?? 0);
       // 0건은 "없는 계획" 과 "이미 그 상태" 두 가지다 — 구분해서 알려준다.
       if (affected === 0) {
         const rows = (await qr.query(

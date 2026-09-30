@@ -27,6 +27,10 @@ import DateRangeFilter from '@/components/shared/DateRangeFilter';
 import LineSelect from '@/components/shared/LineSelect';
 import { Button, Card, CardContent, Input } from '@/components/ui';
 import api from '@/services/api';
+import {
+  TruncationNotice,
+  useTruncation,
+} from '../../report/components/TruncationNotice';
 import { QueryTabs } from '../components/QueryTabs';
 import {
   barcodeMatchColumns,
@@ -67,6 +71,10 @@ export default function PdaScanQueryPage() {
   const [issues, setIssues] = useState<IssueHistoryRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
+  // 기간 조회(상세·회차)와 바코드 조회는 따로 돌므로 잘림 표시도 따로 둔다.
+  const scanCut = useTruncation();
+  const barcodeCut = useTruncation();
+  const cut = tab === 'barcode' || tab === 'issue' ? barcodeCut : scanCut;
 
   const [selected, setSelected] = useState<ScanDetailRow | null>(null);
   const [ngReason, setNgReason] = useState('');
@@ -94,6 +102,7 @@ export default function PdaScanQueryPage() {
       ]);
       setDetail(d.data?.data ?? []);
       setGroup(g.data?.data ?? []);
+      scanCut.mark(d, g);
       setSearched(true);
     } catch (error: unknown) {
       const message = (error as { response?: { data?: { message?: string } } })
@@ -103,7 +112,7 @@ export default function PdaScanQueryPage() {
       setLoading(false);
     }
   }, [dateFrom, dateTo, lineCode, itemCode, modelName, locationCode,
-      checkStatus, checkType, scanBarcode]);
+      checkStatus, checkType, scanBarcode, scanCut.mark]);
 
   useEffect(() => { void search(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -122,6 +131,7 @@ export default function PdaScanQueryPage() {
       ]);
       setMatches(m.data?.data ?? []);
       setIssues(i.data?.data ?? []);
+      barcodeCut.mark(m, i);
     } catch (error: unknown) {
       const message = (error as { response?: { data?: { message?: string } } })
         ?.response?.data?.message;
@@ -129,7 +139,7 @@ export default function PdaScanQueryPage() {
     } finally {
       setLoading(false);
     }
-  }, [scanBarcode]);
+  }, [scanBarcode, barcodeCut.mark]);
 
   const pick = useCallback((row: ScanDetailRow) => {
     setSelected(row);
@@ -224,6 +234,8 @@ export default function PdaScanQueryPage() {
         active={tab}
         onChange={setTab}
       />
+
+      <TruncationNotice truncated={cut.truncated} rowLimit={cut.rowLimit} />
 
       <Card className="min-h-0 flex-1 overflow-hidden" padding="none">
         <CardContent className="h-full p-3">

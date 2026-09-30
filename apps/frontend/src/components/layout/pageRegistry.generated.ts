@@ -27,6 +27,16 @@ export async function getPageComponent(path: string): Promise<ComponentType | nu
 async function loadPageComponent(path: string): Promise<ComponentType | null> {
   let component: ComponentType | null = null;
   switch (path) {
+    case "/bom/mfs-bom": {
+      const mod = await import("./page-registries/bom__mfs-bom.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/bom/raw-bom": {
+      const mod = await import("./page-registries/bom__raw-bom.generated");
+      component = mod.getPageComponent();
+      break;
+    }
     case "/bom/replace-bom": {
       const mod = await import("./page-registries/bom__replace-bom.generated");
       component = mod.getPageComponent();
@@ -514,6 +524,36 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
     }
     case "/production/smd-plan": {
       const mod = await import("./page-registries/production__smd-plan.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/purchase/arrival": {
+      const mod = await import("./page-registries/purchase__arrival.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/purchase/departure": {
+      const mod = await import("./page-registries/purchase__departure.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/purchase/forecast": {
+      const mod = await import("./page-registries/purchase__forecast.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/purchase/order": {
+      const mod = await import("./page-registries/purchase__order.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/purchase/order-plan": {
+      const mod = await import("./page-registries/purchase__order-plan.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/purchase/requirement": {
+      const mod = await import("./page-registries/purchase__requirement.generated");
       component = mod.getPageComponent();
       break;
     }

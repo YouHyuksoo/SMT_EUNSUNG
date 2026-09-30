@@ -24,6 +24,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 import DataGrid from '@/components/data-grid/DataGrid';
 import ComCodeSelect from '@/components/shared/ComCodeSelect';
 import DateRangeFilter from '@/components/shared/DateRangeFilter';
+import ModelSearchField from '@/components/shared/ModelSearchField';
 import ProdLineSelect from '@/components/shared/ProdLineSelect';
 import { Button, Card, CardContent, ConfirmModal, Input } from '@/components/ui';
 import api from '@/services/api';
@@ -181,8 +182,8 @@ export default function PlanScreen({ config }: { config: PlanScreenConfig }) {
               onFromChange={setDateFrom} onToChange={setDateTo} />
             <ProdLineSelect labelPrefix="라인" value={lineCode}
               onChange={setLineCode} className="w-56" />
-            <Input aria-label="모델명" placeholder="모델명" value={modelName}
-              className="w-48" onChange={(e) => setModelName(e.target.value)} />
+            <ModelSearchField aria-label="모델명" placeholder="모델명" value={modelName}
+              className="w-48" onChange={(v) => setModelName(v)} />
             {isMi && (
               <Input aria-label="공정코드" placeholder="공정코드" value={workstageCode}
                 className="w-36" onChange={(e) => setWorkstageCode(e.target.value)} />

@@ -25,18 +25,18 @@ function DepartmentPage() {
   const { t } = useTranslation();
   const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(false);
-  const [search, setSearch] = useState("");
+  const [searchText, setSearchText] = useState("");
 
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [editingDept, setEditingDept] = useState<Department | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Department | null>(null);
   const panelAnimateRef = useRef(true);
 
-  const fetchData = useCallback(async () => {
+  const search = useCallback(async () => {
     setLoading(true);
     try {
       const res = await api.get("/system/departments", {
-        params: { search: search || undefined, limit: 200 },
+        params: { search: searchText || undefined, limit: 200 },
       });
       const result = res.data?.data ?? res.data;
       setDepartments(Array.isArray(result) ? result : []);
@@ -45,11 +45,11 @@ function DepartmentPage() {
     } finally {
       setLoading(false);
     }
-  }, [search]);
+  }, [searchText]);
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    search();
+  }, [search]);
 
   const handlePanelClose = useCallback(() => {
     setIsPanelOpen(false);
@@ -58,15 +58,15 @@ function DepartmentPage() {
   }, []);
 
   const handlePanelSave = useCallback(() => {
-    fetchData();
-  }, [fetchData]);
+    search();
+  }, [search]);
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
     try {
       await api.delete(`/system/departments/${deleteTarget.deptCode}`);
       setDeleteTarget(null);
-      fetchData();
+      search();
     } catch {
       /* ignore */
     }
@@ -95,8 +95,8 @@ function DepartmentPage() {
             <p className="text-text-muted mt-1">{t("system.department.subtitle", "조직의 부서 정보를 관리합니다.")}</p>
           </div>
           <div className="flex gap-2">
-            <Button variant="secondary" size="sm" onClick={fetchData}>
-              <RefreshCw className={`w-4 h-4 mr-1 ${loading ? "animate-spin" : ""}`} /> {t("common.refresh", "새로고침")}
+            <Button variant="secondary" size="sm" onClick={search}>
+              <RefreshCw className={`w-4 h-4 mr-1 ${loading ? "animate-spin" : ""}`} /> {t("common.refresh")}
             </Button>
             <Button size="sm" onClick={() => { panelAnimateRef.current = !isPanelOpen; setEditingDept(null); setIsPanelOpen(true); }}>
               <Plus className="w-4 h-4 mr-1" /> {t("system.department.addDepartment", "부서 추가")}
@@ -117,8 +117,8 @@ function DepartmentPage() {
               toolbarLeft={
                 <Input
                   placeholder={t("system.department.searchPlaceholder", "부서코드/부서명 검색")}
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
+                  value={searchText}
+                  onChange={(e) => setSearchText(e.target.value)}
                   leftIcon={<Search className="w-4 h-4" />}
                 />
               }

@@ -30,6 +30,7 @@ import { DataSource } from 'typeorm';
 import { limited, ROW_LIMIT } from '../../shared/row-limit';
 import { TransactionService } from '../../shared/transaction.service';
 import { MagazineSplitDto, MagazineSplitQueryDto } from './magazine-label.dto';
+import { affectedRows } from '../../common/utils/affected-rows.util';
 
 type Row = Record<string, unknown>;
 
@@ -239,7 +240,7 @@ export class MagazineSplitService {
           } as unknown as unknown[],
         );
         const affected = Number(
-          (result as { rowsAffected?: number })?.rowsAffected ?? 0,
+          affectedRows(result) ?? 0,
         );
         if (affected !== 1) {
           throw new BadRequestException(
@@ -287,7 +288,7 @@ export class MagazineSplitService {
         } as unknown as unknown[],
       );
       const backedRows = Number(
-        (backed as { rowsAffected?: number })?.rowsAffected ?? 0,
+        affectedRows(backed) ?? 0,
       );
       if (backedRows === 0) {
         throw new BadRequestException('원본 라벨이 사라졌습니다. 다시 조회하세요.');
@@ -303,7 +304,7 @@ export class MagazineSplitService {
         } as unknown as unknown[],
       );
       const deletedRows = Number(
-        (deleted as { rowsAffected?: number })?.rowsAffected ?? 0,
+        affectedRows(deleted) ?? 0,
       );
 
       // ④ 조각들이 어느 라벨에서 나왔는지 적는다.

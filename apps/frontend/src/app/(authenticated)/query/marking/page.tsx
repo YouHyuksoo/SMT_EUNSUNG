@@ -22,6 +22,10 @@ import DataGrid from '@/components/data-grid/DataGrid';
 import DateRangeFilter from '@/components/shared/DateRangeFilter';
 import { Button, Card, CardContent, Input } from '@/components/ui';
 import api from '@/services/api';
+import {
+  TruncationNotice,
+  useTruncation,
+} from '../../report/components/TruncationNotice';
 import { QueryTabs } from '../components/QueryTabs';
 import { markingDetailColumns, markingSummaryColumns } from '../query-columns';
 import type { MarkingDetailRow, MarkingSummaryRow } from '../query-types';
@@ -45,6 +49,7 @@ export default function MarkingQueryPage() {
   const [summary, setSummary] = useState<MarkingSummaryRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
+  const { truncated, rowLimit, mark } = useTruncation();
 
   const search = useCallback(async () => {
     setLoading(true);
@@ -61,6 +66,7 @@ export default function MarkingQueryPage() {
       ]);
       setDetail(d.data?.data ?? []);
       setSummary(s.data?.data ?? []);
+      mark(d, s);
       setSearched(true);
     } catch (error: unknown) {
       const message = (error as { response?: { data?: { message?: string } } })
@@ -69,7 +75,7 @@ export default function MarkingQueryPage() {
     } finally {
       setLoading(false);
     }
-  }, [runNo, serialNo, dateFrom, dateTo]);
+  }, [runNo, serialNo, dateFrom, dateTo, mark]);
 
   useEffect(() => { void search(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -110,6 +116,8 @@ export default function MarkingQueryPage() {
         active={tab}
         onChange={setTab}
       />
+
+      <TruncationNotice truncated={truncated} rowLimit={rowLimit} />
 
       <Card className="min-h-0 flex-1 overflow-hidden" padding="none">
         <CardContent className="h-full p-3">

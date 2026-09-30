@@ -15,6 +15,7 @@ import toast from 'react-hot-toast';
 import { ScanSearch, Search } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
 import DateRangeFilter from '@/components/shared/DateRangeFilter';
+import ModelSearchField from '@/components/shared/ModelSearchField';
 import { Button, Card, CardContent, Input } from '@/components/ui';
 import api from '@/services/api';
 import { pidIssueScanColumns, type PidIssueScanRow } from '../pid-columns';
@@ -88,8 +89,8 @@ export default function PidIssueScanPage() {
           <Input aria-label="PID" placeholder="PID" value={serialNo}
             className="w-52" onChange={(e) => setSerialNo(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') void search(); }} />
-          <Input aria-label="모델명" placeholder="모델명" value={modelName}
-            className="w-44" onChange={(e) => setModelName(e.target.value)} />
+          <ModelSearchField value={modelName} onChange={(v) => setModelName(v)}
+            className="w-44" aria-label="모델명" placeholder="모델명" />
           <Input aria-label="품목코드" placeholder="품목코드" value={itemCode}
             className="w-40" onChange={(e) => setItemCode(e.target.value)} />
           <Input aria-label="이슈유형" placeholder="이슈유형" value={pidIssueType}

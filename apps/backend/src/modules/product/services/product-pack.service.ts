@@ -42,6 +42,7 @@ import {
   PackScanDto,
   PackSerialQueryDto,
 } from '../dto/product-pack.dto';
+import { affectedRows } from '../../../common/utils/affected-rows.util';
 
 type Row = Record<string, unknown>;
 
@@ -406,7 +407,7 @@ export class ProductPackService {
         } as unknown as unknown[],
       );
       const affected = Number(
-        (inserted as { rowsAffected?: number })?.rowsAffected ?? 0,
+        affectedRows(inserted) ?? 0,
       );
       if (affected !== 1) {
         throw new BadRequestException(`이미 담긴 PID 입니다: ${serialNo}`);
@@ -459,7 +460,7 @@ export class ProductPackService {
         { packBarcode, serialNo, organizationId } as unknown as unknown[],
       );
       const affected = Number(
-        (deleted as { rowsAffected?: number })?.rowsAffected ?? 0,
+        affectedRows(deleted) ?? 0,
       );
       if (affected !== 1) {
         throw new BadRequestException(
@@ -516,7 +517,7 @@ export class ProductPackService {
         { packBarcode, userId, organizationId } as unknown as unknown[],
       );
       const affected = Number(
-        (updated as { rowsAffected?: number })?.rowsAffected ?? 0,
+        affectedRows(updated) ?? 0,
       );
       if (affected !== 1) {
         throw new BadRequestException(
@@ -547,7 +548,7 @@ export class ProductPackService {
         { packBarcode, userId, organizationId } as unknown as unknown[],
       );
       const affected = Number(
-        (updated as { rowsAffected?: number })?.rowsAffected ?? 0,
+        affectedRows(updated) ?? 0,
       );
       if (affected !== 1) {
         throw new BadRequestException(`박스를 찾을 수 없습니다: ${packBarcode}`);
@@ -578,7 +579,7 @@ export class ProductPackService {
         { packBarcode, organizationId } as unknown as unknown[],
       );
       const affected = Number(
-        (deleted as { rowsAffected?: number })?.rowsAffected ?? 0,
+        affectedRows(deleted) ?? 0,
       );
       if (affected !== 1) {
         throw new BadRequestException(

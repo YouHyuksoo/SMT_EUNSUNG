@@ -35,6 +35,8 @@ export class KittingService {
   /**
    * 롯트카드 목록 — PB d_ip_product_run_card_4_kitting_lst.
    * RUN_TYPE_CODE 는 내리지 않는다 — 38,899행 전부 NULL 이고 코드표도 없다.
+   * 카드별 매핑 PID 수는 내리지 않는다 (PB 에도 없다). IP_PRODUCT_2D_BARCODE(1.8억 행)를
+   * 카드마다 세면 전체 목록이 3분을 넘긴다. 선택한 카드의 PID 수는 PID 패널이 보여준다.
    */
   async findRunCards(query: KittingRunCardQueryDto, organizationId: number) {
     const rows = (await this.dataSource.query(
@@ -50,9 +52,6 @@ export class KittingService {
               prt.CODE_MEAN_KOR AS "productRunTypeName",
               c.KITTING_DATE AS "kittingDate",
               c.MFS_GROUP_NO AS "mfsGroupNo", c.COMMENTS AS "comments",
-              (SELECT COUNT(*) FROM IP_PRODUCT_2D_BARCODE b
-                WHERE b.RUN_NO = c.RUN_NO
-                  AND b.ORGANIZATION_ID = c.ORGANIZATION_ID) AS "pidCount",
               c.ENTER_BY AS "enterBy", c.ENTER_DATE AS "enterDate",
               c.LAST_MODIFY_BY AS "lastModifyBy", c.LAST_MODIFY_DATE AS "lastModifyDate"
          FROM IP_PRODUCT_RUN_CARD c

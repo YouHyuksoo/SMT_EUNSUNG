@@ -44,14 +44,23 @@ import {
   SensorActualQueryDto,
   XOutRepairDto,
 } from './query.dto';
+import { ROW_LIMIT } from './row-limit';
 import { SensorActualService } from './sensor-actual.service';
 import { SmtCheckQueryService } from './smt-check-query.service';
 
 const DEFAULT_USER = 'ADMIN';
 
-/** 목록 응답. 조회 대분류는 부가 meta 가 필요한 곳이 없어 단순하게 둔다. */
-const paged = <T>(result: { data: T[]; total: number }) =>
-  ResponseUtil.paged(result.data, result.total, 1, result.total || 1);
+/**
+ * 목록 응답. 상한(ROW_LIMIT)에서 잘렸으면 `meta.truncated` 로 알린다 —
+ * 알리지 않으면 화면이 잘린 목록을 전체처럼 보여준다. 상한이 없는 목록은 false.
+ */
+const paged = <T>(result: { data: T[]; total: number; truncated?: boolean }) => {
+  const base = ResponseUtil.paged(result.data, result.total, 1, result.total || 1);
+  return {
+    ...base,
+    meta: { ...base.meta, truncated: Boolean(result.truncated), rowLimit: ROW_LIMIT },
+  };
+};
 
 @ApiTags('조회 - PID 정보조회')
 @UseGuards(JwtAuthGuard)

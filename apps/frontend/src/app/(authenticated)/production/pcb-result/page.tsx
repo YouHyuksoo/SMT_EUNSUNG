@@ -17,6 +17,7 @@ import toast from 'react-hot-toast';
 import { Search } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
 import DateRangeFilter from '@/components/shared/DateRangeFilter';
+import ModelSearchField from '@/components/shared/ModelSearchField';
 import ProdLineSelect from '@/components/shared/ProdLineSelect';
 import { Button, Card, CardContent, Input } from '@/components/ui';
 import api from '@/services/api';
@@ -149,8 +150,8 @@ export default function PcbResultPage() {
         <CardContent className="flex flex-wrap items-center gap-3 p-3">
           <DateRangeFilter label="생산일" from={dateFrom} to={dateTo}
             onFromChange={setDateFrom} onToChange={setDateTo} />
-          <Input aria-label="모델명" placeholder="모델명" value={modelName}
-            className="w-48" onChange={(e) => setModelName(e.target.value)} />
+          <ModelSearchField aria-label="모델명" placeholder="모델명" value={modelName}
+            className="w-48" onChange={(v) => setModelName(v)} />
           <Input aria-label="작업지시번호" placeholder="작업지시번호" value={runNo}
             className="w-44" onChange={(e) => setRunNo(e.target.value)} />
           <ProdLineSelect labelPrefix="라인" value={lineCode}

@@ -16,7 +16,7 @@
       "action": "native",
       "target": "PKG_DESIGN.BOM_QUERY(p_parent_item_code, p_dateset, p_org)",
       "usedBy": "apps/backend/src/modules/smt/smt-comparison.service.ts, apps/backend/src/modules/smt/smt-nc.service.ts",
-      "note": "PB 는 SQLCA.BOM_QUERY 를 감싸기만 했다. 웹은 패키지 함수를 그대로 부른다. 세션번호를 돌려주고 ID_ENG_BOM_TEMP 에 전개행을 깐다 — 읽은 뒤 그 세션 행만 지운다 (이 표는 3,357,661행 / 세션 70,117개가 2020년부터 쌓여 있다)."
+      "note": "PB 는 SQLCA.BOM_QUERY 를 감싸기만 했다. 웹은 패키지 함수를 그대로 부른다. 세션번호를 돌려주고 ID_ENG_BOM_TEMP 에 전개행을 깐다 — 읽은 뒤 그 세션 행만 지운다 (이 표는 3,357,661행 / 세션 70,117개가 2020년부터 쌓여 있다). 477 자재소요량은 형제 함수 PKG_DESIGN.BOM_EXPLOSION 을 같은 방식으로 쓴다 (requirement-plan.service.ts)."
     },
     {
       "pbFunction": "f_check_interlock_condition",
@@ -129,6 +129,41 @@
       "action": "blocked",
       "target": null,
       "note": "전환 불가 — PB 파일 I/O(첨부파일 다운로드). 품질 첨부·이미지 기능은 이관 범위에서 제외했다."
+    },
+    {
+      "pbFunction": "f_gen_purchase_order_plan_by_manual",
+      "action": "inlined",
+      "target": "OrderPlanService.generate({ source: 'manual' })",
+      "usedBy": "apps/backend/src/modules/purchase/order-plan.service.ts",
+      "note": "다섯 생성기(by_manual · by_prod_plan · by_prod_plan_by_time · by_sale_plan · by_sale_plan_by_time)는 커서 원천만 다르고 나머지가 같다 (실측). 서비스의 PLAN_SOURCES 에 SELECT 문 하나씩 두고 같은 PL/SQL 블록이 돈다. 원천은 IM_ITEM_MASTER_PLAN_4_PO."
+    },
+    {
+      "pbFunction": "f_gen_purchase_order_plan_by_prod_plan",
+      "action": "inlined",
+      "target": "OrderPlanService.generate({ source: 'productionPlan' })",
+      "usedBy": "apps/backend/src/modules/purchase/order-plan.service.ts",
+      "note": "원천은 IP_PRODUCT_MI_PLAN (생산계획, 실측 20,119행). PB 에서 IP_PRODUCT_MASTER_PLAN 커서는 주석 처리돼 있고 살아있는 커서가 MI_PLAN 을 쓴다 — 그 표는 이 스키마에 없다."
+    },
+    {
+      "pbFunction": "f_gen_purchase_order_plan_by_prod_plan_by_time",
+      "action": "inlined",
+      "target": "OrderPlanService.generate({ source: 'productionPlanByTime' })",
+      "usedBy": "apps/backend/src/modules/purchase/order-plan.service.ts",
+      "note": "생산계획을 시:분까지 나눈다. PLAN_PRIORITY 의 3~7자리가 HHMI."
+    },
+    {
+      "pbFunction": "f_gen_purchase_order_plan_by_sale_plan",
+      "action": "inlined",
+      "target": "OrderPlanService.generate({ source: 'salePlan' })",
+      "usedBy": "apps/backend/src/modules/purchase/order-plan.service.ts",
+      "note": "원천은 IP_PRODUCT_DELIVERY_PLAN. 남은 수량에서 F_GET_PLAN_ACTUAL_QTY_BY_ONO (DB 함수) 로 잡힌 실적까지 뺀다."
+    },
+    {
+      "pbFunction": "f_gen_purchase_order_plan_by_sale_plan_by_time",
+      "action": "inlined",
+      "target": "OrderPlanService.generate({ source: 'salePlanByTime' })",
+      "usedBy": "apps/backend/src/modules/purchase/order-plan.service.ts",
+      "note": "납품계획을 시:분:초까지 나눈다 (PLAN_PRIORITY)."
     },
     {
       "pbFunction": "f_get_any_no",
@@ -250,8 +285,15 @@
       "pbFunction": "f_get_max_supplier_by_item",
       "action": "native",
       "target": "F_GET_MAX_SUPPLIER_BY_ITEM(item_code, organization_id)",
-      "usedBy": "apps/backend/src/modules/warehouse/issue-return.service.ts",
+      "usedBy": "apps/backend/src/modules/warehouse/issue-return.service.ts, apps/backend/src/modules/purchase/requirement-plan.service.ts, apps/backend/src/modules/purchase/order-plan.service.ts",
       "note": "PB 동명 함수가 없고 DB 에 VALID 로 있다 (실측). PB 250 도 INSERT 문 안에서 부르므로 DB 함수다."
+    },
+    {
+      "pbFunction": "f_get_max_vendor_by_item",
+      "action": "dropped",
+      "target": "NVL(IM_ITEM_MASTER.SUPPLIER_CODE, '*')",
+      "usedBy": "apps/backend/src/modules/purchase/order-plan.service.ts",
+      "note": "PB 원본에서 호출 5곳이 **전부 주석 처리**돼 있고 NVL(B.SUPPLIER_CODE,'*') 로 대체돼 있다 (실측). 구현하지 않는다."
     },
     {
       "pbFunction": "f_get_model_name_by_run_no",
@@ -294,6 +336,13 @@
       "target": null,
       "usedBy": "apps/backend/src/modules/process-transaction/magazine-label.service.ts",
       "note": "DB 함수로 존재하나(INVALID) PB 호출부가 **전부 주석 처리**돼 있다. 살아있는 채번은 라인코드+f_ymd_sysdate()+SEQ_MAGAZINE_LABEL_SEQUENCE 4자리다 — 실측 라벨번호 9자(1069S6199)와 일치."
+    },
+    {
+      "pbFunction": "f_get_order_property",
+      "action": "inlined",
+      "target": "OrderPlanService.netRequirements 안의 PL/SQL 블록",
+      "usedBy": "apps/backend/src/modules/purchase/order-plan.service.ts",
+      "note": "DB 에 동명 함수가 없다 (실측). IM_ITEM_MASTER 에서 최소주문량·포장단위·불량율을 읽어 발주량을 올린다. PB 의 'A' 분기(최소 적용 후 포장 올림)만 쓰인다. 불량율 반올림 자릿수는 단위가 EA·SET 이면 0, 아니면 4 — PB 와 같다. DB 오브젝트를 새로 만들지 않으려고 블록 안에 옮겼다. 안에서 부르는 f_get_uom 은 ID_ITEM.ITEM_UOM 한 줄 조회뿐이라 같은 블록에서 바로 읽는다."
     },
     {
       "pbFunction": "f_get_pcb_item_by_name",

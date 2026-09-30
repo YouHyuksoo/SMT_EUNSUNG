@@ -19,6 +19,7 @@ import DataGrid from '@/components/data-grid/DataGrid';
 import ComCodeSelect from '@/components/shared/ComCodeSelect';
 import DateRangeFilter from '@/components/shared/DateRangeFilter';
 import LineSelect from '@/components/shared/LineSelect';
+import ModelSearchField from '@/components/shared/ModelSearchField';
 import ProcessSelect from '@/components/shared/ProcessSelect';
 import { Button, Card, CardContent, ConfirmModal, Input } from '@/components/ui';
 import api from '@/services/api';
@@ -158,8 +159,8 @@ export default function QcNotifyPage() {
           <CardContent className="flex flex-wrap items-center gap-3 p-3">
             <DateRangeFilter label="발생일" from={dateFrom} to={dateTo}
               onFromChange={setDateFrom} onToChange={setDateTo} />
-            <Input aria-label="모델명" placeholder="모델명" value={modelName}
-              className="w-44" onChange={(e) => setModelName(e.target.value)} />
+            <ModelSearchField value={modelName} onChange={(v) => setModelName(v)}
+              className="w-44" aria-label="모델명" placeholder="모델명" />
             <LineSelect labelPrefix="라인" value={lineCode}
               onChange={setLineCode} className="w-40" />
             <ProcessSelect labelPrefix="공정" value={workstageCode}

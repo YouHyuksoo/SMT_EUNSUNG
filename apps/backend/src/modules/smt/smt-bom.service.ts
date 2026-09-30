@@ -41,6 +41,7 @@ import {
   SmtBomReportQueryDto,
   SmtBomUpsertDto,
 } from './smt-bom.dto';
+import { affectedRows } from '../../common/utils/affected-rows.util';
 
 const EDITABLE: Array<[column: string, field: keyof SmtBomUpsertDto]> = [
   ['ITEM_UNIT_QTY', 'itemUnitQty'],
@@ -229,7 +230,7 @@ export class SmtBomService {
         `UPDATE ID_ENG_BOM_SMT SET ${sets.join(', ')} WHERE ${this.KEY_WHERE}`,
         binds as unknown as unknown[],
       );
-      const affected = Number((result as { rowsAffected?: number })?.rowsAffected ?? 0);
+      const affected = Number(affectedRows(result) ?? 0);
       if (affected === 0) throw new NotFoundException('BOM 행을 찾을 수 없습니다.');
       return { changed: affected };
     });
@@ -241,7 +242,7 @@ export class SmtBomService {
         `DELETE FROM ID_ENG_BOM_SMT WHERE ${this.KEY_WHERE}`,
         [this.keyBinds(key, organizationId)] as unknown as unknown[],
       );
-      const affected = Number((result as { rowsAffected?: number })?.rowsAffected ?? 0);
+      const affected = Number(affectedRows(result) ?? 0);
       if (affected === 0) throw new NotFoundException('BOM 행을 찾을 수 없습니다.');
       return { deleted: affected };
     });

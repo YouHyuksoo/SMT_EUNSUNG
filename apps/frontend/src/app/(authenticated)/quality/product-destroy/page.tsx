@@ -17,6 +17,7 @@ import { Button, Card, CardContent, ConfirmModal, Input } from '@/components/ui'
 import ComCodeSelect from '@/components/shared/ComCodeSelect';
 import DateRangeFilter from '@/components/shared/DateRangeFilter';
 import LineSelect from '@/components/shared/LineSelect';
+import ModelSearchField from '@/components/shared/ModelSearchField';
 import ProcessSelect from '@/components/shared/ProcessSelect';
 import DataGrid from '@/components/data-grid/DataGrid';
 import api from '@/services/api';
@@ -244,7 +245,7 @@ export default function ProductDestroyPage() {
           <Card className="shrink-0" padding="sm">
             <div className="flex flex-wrap items-center gap-2">
               <Input aria-label="PCB 시리얼" placeholder="PCB 시리얼" value={serialNo} onChange={e => setSerialNo(e.target.value)} className="w-44" />
-              <Input aria-label="모델명" placeholder="모델명" value={modelName} onChange={e => setModelName(e.target.value)} className="w-40" />
+              <ModelSearchField value={modelName} onChange={(v) => setModelName(v)} className="w-40" aria-label="모델명" placeholder="모델명" />
               <LineSelect aria-label="라인" labelPrefix="라인" value={lineCode} onChange={value => setLineCode(value)} className="w-40" />
               <ProcessSelect aria-label="공정" labelPrefix="공정" value={workstageCode} onChange={value => setWorkstageCode(value)} className="w-44" />
               <DateRangeFilter label="폐기일자" from={dateFrom} to={dateTo} onFromChange={setDateFrom} onToChange={setDateTo} />

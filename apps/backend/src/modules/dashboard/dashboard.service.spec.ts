@@ -5,10 +5,12 @@
  * 초보자 가이드:
  * - target: 테스트 대상(SUT), mock*: 모킹된 의존성
  * - OracleService를 모킹하여 PKG_DASHBOARD 프로시저 호출 테스트
+ * - DataSource를 모킹하여 getSummary 카드 조회 SQL·바인드 테스트
  * - 실행: `pnpm test -- -t "DashboardService"`
  */
 import { Test, TestingModule } from '@nestjs/testing';
 import { DashboardService } from './dashboard.service';
+import { DataSource } from 'typeorm';
 import { OracleService } from '../../common/services/oracle.service';
 import { MockLoggerService } from '@test/mock-logger.service';
 
@@ -18,17 +20,20 @@ describe('DashboardService', () => {
     callProc: jest.Mock;
     callProcMultiCursor: jest.Mock;
   };
+  let mockDataSource: { query: jest.Mock };
 
   beforeEach(async () => {
     mockOracleService = {
       callProc: jest.fn(),
       callProcMultiCursor: jest.fn(),
     };
+    mockDataSource = { query: jest.fn() };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         DashboardService,
         { provide: OracleService, useValue: mockOracleService },
+        { provide: DataSource, useValue: mockDataSource },
       ],
     })
       .setLogger(new MockLoggerService())
@@ -43,14 +48,51 @@ describe('DashboardService', () => {
 
   // ─── getSummary ───
   describe('getSummary', () => {
-    it('returns the temporary summary mock without calling Oracle procedures', async () => {
-      const result = await target.getSummary('2026-03-18', 'CO', 'P01');
+    function answer(sql: string) {
+      if (sql.includes('FROM IMCN_MACHINE')) return [{ total: '93', inUse: '91', notUsed: '2', down: '0' }];
+      if (sql.includes('IP_PRODUCT_SMD_PLAN')) return [{ smdPlan: 75104, smdActual: 8848, miPlan: 128320, miActual: 19216 }];
+      if (sql.includes('"solderInUse"')) return [{ solderInUse: 12, mslLots: 10 }];
+      if (sql.includes('IP_PRODUCT_WORK_QC')) return [{ pending: 0, genuine: 46, pseudo: 3, unrepaired: 0 }];
+      return [{ NG_COUNT: 1 }];
+    }
 
-      expect(result.equip).toEqual({ normal: 0, maint: 0, stop: 0, total: 0 });
-      expect(result.job).toEqual({ wait: 0, running: 0, done: 0, total: 0 });
-      expect(result.daily).toEqual({ total: 0, completed: 0, pass: 0, fail: 0, items: [] });
+    it('maps each card from the Eunsung tables', async () => {
+      mockDataSource.query.mockImplementation(async (sql: string) => answer(sql));
+
+      const result = await target.getSummary('2026-09-30');
+
+      expect(result.equip).toEqual({ inUse: 91, down: 0, notUsed: 2, total: 93 });
+      expect(result.production).toEqual({ smdPlan: 75104, smdActual: 8848, miPlan: 128320, miActual: 19216 });
+      expect(result.material).toEqual({ solderInUse: 12, solderNg: 1, mslLots: 10, mslNg: 1 });
+      expect(result.defect).toEqual({ pending: 0, genuine: 46, pseudo: 3, unrepaired: 0 });
       expect(mockOracleService.callProc).not.toHaveBeenCalled();
-      expect(mockOracleService.callProcMultiCursor).not.toHaveBeenCalled();
+    });
+
+    it('excludes TEMP sensors from the equipment count and binds the day by name', async () => {
+      mockDataSource.query.mockImplementation(async (sql: string) => answer(sql));
+
+      await target.getSummary('2026-09-30');
+
+      const calls = mockDataSource.query.mock.calls as [string, unknown][];
+      const equipSql = calls.find(([sql]) => sql.includes('FROM IMCN_MACHINE'))![0];
+      expect(equipSql).toContain("<> 'TEMP'");
+      const qc = calls.find(([sql]) => sql.includes('IP_PRODUCT_WORK_QC'))!;
+      expect(qc[1]).toEqual({ day: '2026-09-30' });
+    });
+
+    it('falls back to today when no date is given', async () => {
+      mockDataSource.query.mockImplementation(async (sql: string) => answer(sql));
+
+      await target.getSummary(undefined);
+
+      const qc = (mockDataSource.query.mock.calls as [string, unknown][]).find(([sql]) => sql.includes('IP_PRODUCT_WORK_QC'))!;
+      expect(qc[1]).toEqual({ day: null });
+      expect(qc[0]).toContain('TRUNC(SYSDATE)');
+    });
+
+    it('rejects a malformed date', async () => {
+      await expect(target.getSummary('2026/09/30')).rejects.toThrow('YYYY-MM-DD');
+      expect(mockDataSource.query).not.toHaveBeenCalled();
     });
   });
 

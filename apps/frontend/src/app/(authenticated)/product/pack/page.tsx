@@ -28,6 +28,7 @@ import DateRangeFilter from '@/components/shared/DateRangeFilter';
 import LineSelect from '@/components/shared/LineSelect';
 import ProcessSelect from '@/components/shared/ProcessSelect';
 import { Button, Card, CardContent, ConfirmModal, Input } from '@/components/ui';
+import ModelSearchField from '@/components/shared/ModelSearchField';
 import api from '@/services/api';
 import {
   TruncationNotice,
@@ -349,9 +350,9 @@ export default function ProductPackPage() {
           <Input aria-label="박스 바코드" placeholder="박스 바코드"
             value={packBarcodeCond} className="w-52"
             onChange={(e) => setPackBarcodeCond(e.target.value)} />
-          <Input aria-label="모델 조건" placeholder="모델" value={modelNameCond}
+          <ModelSearchField aria-label="모델 조건" placeholder="모델" value={modelNameCond}
             className="w-36"
-            onChange={(e) => setModelNameCond(e.target.value)} />
+            onChange={(v) => setModelNameCond(v)} />
           <Button size="sm" onClick={search} disabled={loading}>
             <Search className="mr-1 h-4 w-4" />조회
           </Button>

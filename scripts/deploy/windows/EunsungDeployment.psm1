@@ -404,8 +404,15 @@ function Test-EunsungReleaseHealth {
         $diagnostics.Add('backend health HTTP status was not 200')
       } else {
         try { $health = [string]$backend.Body | ConvertFrom-Json } catch { $health = $null }
-        if ($null -eq $health -or [string]$health.status -cne 'ok') { $diagnostics.Add('backend health status is not ok') }
-        if ($null -eq $health -or $null -eq $health.database -or [string]$health.database.status -cne 'connected') {
+        # 백엔드는 TransformInterceptor 로 모든 응답을 { success, data, ... } 로 감싼다.
+        # 최상위에서 status 를 찾으면 StrictMode 에서 '속성 없음' 으로 터진다.
+        $payload = Get-EunsungObjectMember -Object $health -Name 'data'
+        if ($payload.Present -and $null -ne $payload.Value) { $health = $payload.Value }
+        $status = Get-EunsungObjectMember -Object $health -Name 'status'
+        if (-not $status.Present -or [string]$status.Value -cne 'ok') { $diagnostics.Add('backend health status is not ok') }
+        $database = Get-EunsungObjectMember -Object $health -Name 'database'
+        $databaseStatus = Get-EunsungObjectMember -Object $database.Value -Name 'status'
+        if (-not $databaseStatus.Present -or [string]$databaseStatus.Value -cne 'connected') {
           $diagnostics.Add('backend database status is not connected')
         }
       }

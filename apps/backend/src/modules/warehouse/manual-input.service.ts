@@ -20,6 +20,7 @@ import { likePrefix } from '@smt/shared';
 import { limited, ROW_LIMIT } from '../../shared/row-limit';
 import { TransactionService } from '../../shared/transaction.service';
 import { ManualInputCreateDto, ManualInputQueryDto } from './warehouse.dto';
+import { affectedRows } from '../../common/utils/affected-rows.util';
 
 type Row = Record<string, unknown>;
 
@@ -100,7 +101,7 @@ export class ManualInputService {
       );
       return {
         ...dto,
-        rows: Number((result as { rowsAffected?: number })?.rowsAffected ?? 0),
+        rows: Number(affectedRows(result) ?? 0),
       };
     });
   }

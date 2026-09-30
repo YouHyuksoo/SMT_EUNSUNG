@@ -34,6 +34,7 @@ import { TrackingModule } from './modules/tracking/tracking.module';
 import { QueryModule } from './modules/query/query.module';
 import { ReportModule } from './modules/report/report.module';
 import { DesignModule } from './modules/design/design.module';
+import { PurchaseModule } from './modules/purchase/purchase.module';
 import { InventoryQueryModule } from './modules/inventory-query/inventory-query.module';
 import { MaterialWarehouseModule } from './modules/warehouse/warehouse.module';
 import { SmtModule } from './modules/smt/smt.module';
@@ -120,6 +121,7 @@ import { SharedModule } from './shared/shared.module';
     MaterialWarehouseModule,
     InventoryQueryModule,
     DesignModule,
+    PurchaseModule,
     RunCardModule,
 
     // 메뉴 카테고리 관리 (/system/menu-categories)

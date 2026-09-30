@@ -30,6 +30,7 @@ import {
   CarrierBarcodeDeleteDto,
   CarrierBarcodeQueryDto,
 } from './report.dto';
+import { affectedRows } from '../../common/utils/affected-rows.util';
 
 type Row = Record<string, unknown>;
 
@@ -124,7 +125,7 @@ export class CarrierBarcodeService {
 
       return {
         requested: count,
-        created: Number((result as { rowsAffected?: number })?.rowsAffected ?? 0),
+        created: Number(affectedRows(result) ?? 0),
         alreadyExisted: Number(existing[0]?.cnt ?? 0),
         firstSerial: `${dto.prefix}${String(dto.startSerial).padStart(3, '0')}${dto.suffix ?? ''}`,
         lastSerial: `${dto.prefix}${String(dto.endSerial).padStart(3, '0')}${dto.suffix ?? ''}`,
@@ -158,7 +159,7 @@ export class CarrierBarcodeService {
       );
       return {
         matched: Number(before[0]?.cnt ?? 0),
-        deleted: Number((result as { rowsAffected?: number })?.rowsAffected ?? 0),
+        deleted: Number(affectedRows(result) ?? 0),
       };
     });
   }

@@ -33,10 +33,10 @@ import {
   PidInfoQueryDto,
   XOutRepairDto,
 } from './query.dto';
+import { ROW_LIMIT } from './row-limit';
 
 type Row = Record<string, unknown>;
 
-const ROW_LIMIT = 5000;
 /** PB 가 X-OUT 불량에 쓰는 사유코드. 이 값만 지운다 — 다른 불량은 건드리지 않는다. */
 const X_OUT_REASON = 'X-OUT';
 
@@ -127,7 +127,7 @@ export class PidQueryService {
         organizationId,
       } as unknown as unknown[],
     )) as Row[];
-    return { data: rows, total: rows.length };
+    return { data: rows, total: rows.length, truncated: rows.length >= ROW_LIMIT };
   }
 
   /**
@@ -224,7 +224,7 @@ export class PidQueryService {
         organizationId,
       } as unknown as unknown[],
     )) as Row[];
-    return { data: rows, total: rows.length };
+    return { data: rows, total: rows.length, truncated: rows.length >= ROW_LIMIT };
   }
 
   /**
@@ -266,7 +266,7 @@ export class PidQueryService {
         organizationId,
       } as unknown as unknown[],
     )) as Row[];
-    return { data: rows, total: rows.length };
+    return { data: rows, total: rows.length, truncated: rows.length >= ROW_LIMIT };
   }
 
   // ───────────────────────────────── 325 PCB 투입 리스트조회
@@ -329,6 +329,6 @@ export class PidQueryService {
         organizationId,
       } as unknown as unknown[],
     )) as Row[];
-    return { data: rows, total: rows.length };
+    return { data: rows, total: rows.length, truncated: rows.length >= ROW_LIMIT };
   }
 }

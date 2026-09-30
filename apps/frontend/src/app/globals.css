@@ -713,3 +713,24 @@ textarea {
 .login-node {
   animation: login-node-pulse 3s ease-in-out infinite;
 }
+
+/* ─────────────────────────────────────────────────────────────
+ * 풍선 도움말 (src/lib/menu/tooltip.ts)
+ *
+ * 요소에 `data-tooltip="설명"` 을 달면 뜬다. tooltip.ts 는 위치·투명도만
+ * 인라인으로 주고 모양은 이 클래스에 맡기는데, 그 CSS 가 없어서 지금까지
+ * 배경도 여백도 없는 맨 글자로 떴다. 여기서 채운다.
+ * ───────────────────────────────────────────────────────────── */
+.custom-tooltip {
+  max-width: 22rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--border);
+  background: var(--popover, var(--card));
+  color: var(--popover-foreground, var(--foreground));
+  box-shadow: 0 8px 24px oklch(0 0 0 / 0.18);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  white-space: pre-line;
+  text-align: left;
+}

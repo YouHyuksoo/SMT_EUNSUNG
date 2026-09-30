@@ -44,7 +44,7 @@ export default function ImprovementRequestsPage() {
   const keywordRef = useRef(keyword);
   keywordRef.current = keyword;
 
-  const load = useCallback(async (p: number, status: StatusTab, kw: string, from: string, to: string) => {
+  const search = useCallback(async (p: number, status: StatusTab, kw: string, from: string, to: string) => {
     setIsLoading(true);
     try {
       const res = await improvementRequestService.list({
@@ -66,13 +66,13 @@ export default function ImprovementRequestsPage() {
   }, []);
 
   useEffect(() => {
-    load(page, statusFilter, keyword, fromDate, toDate);
+    search(page, statusFilter, keyword, fromDate, toDate);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, statusFilter, fromDate, toDate]);
 
   const handleSearch = () => {
     setPage(1);
-    load(1, statusFilter, keyword, fromDate, toDate);
+    search(1, statusFilter, keyword, fromDate, toDate);
   };
 
   const handleReset = () => {
@@ -81,7 +81,7 @@ export default function ImprovementRequestsPage() {
     setToDate("");
     setPage(1);
     setStatusFilter("ALL");
-    load(1, "ALL", "", "", "");
+    search(1, "ALL", "", "", "");
   };
 
   const handleStatusTab = (s: StatusTab) => {
@@ -138,7 +138,7 @@ export default function ImprovementRequestsPage() {
           onClick={handleSearch}
           className="px-4 py-1.5 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
         >
-          {t("common.search", "조회")}
+          {t("common.refresh")}
         </button>
         <button
           onClick={handleReset}
@@ -239,7 +239,7 @@ export default function ImprovementRequestsPage() {
         <ImprovementDetailModal
           imprId={selectedId}
           onClose={() => setSelectedId(null)}
-          onStatusChanged={() => load(page, statusFilter, keyword, fromDate, toDate)}
+          onStatusChanged={() => search(page, statusFilter, keyword, fromDate, toDate)}
         />
       )}
     </div>

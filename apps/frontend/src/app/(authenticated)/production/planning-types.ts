@@ -135,7 +135,6 @@ export interface KittingRunCardRow {
   kittingDate: string | null;
   mfsGroupNo: string | null;
   comments: string | null;
-  pidCount: number;
   enterBy: string | null;
   enterDate: string | null;
   lastModifyBy: string | null;

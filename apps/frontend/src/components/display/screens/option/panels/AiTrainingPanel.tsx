@@ -272,9 +272,9 @@ export default function AiTrainingPanel() {
         <button
           onClick={loadObjects}
           className="flex items-center gap-1 rounded bg-zinc-200 px-2 py-1 text-xs hover:bg-zinc-300 dark:bg-zinc-700 dark:text-zinc-100 dark:hover:bg-zinc-600"
-          title="목록 새로고침 (캐시 파일 기준)"
+          title="목록 조회 (캐시 파일 기준)"
         >
-          <RefreshCw className="size-3" /> 새로고침
+          <RefreshCw className="size-3" /> 조회
         </button>
         <button
           onClick={syncWithDb}

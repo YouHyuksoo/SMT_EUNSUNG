@@ -66,7 +66,7 @@ export default function SchedulerJobTab() {
   } | null>(null);
 
   /* 데이터 조회 */
-  const fetchData = useCallback(async () => {
+  const search = useCallback(async () => {
     setLoading(true);
     try {
       const params: Record<string, string> = {};
@@ -82,15 +82,15 @@ export default function SchedulerJobTab() {
     }
   }, [searchText, groupFilter, typeFilter]);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => { search(); }, [search]);
 
   /* 활성 토글 */
   const handleToggle = useCallback(async (job: SchedulerJob) => {
     try {
       await api.patch(`/scheduler/jobs/${job.jobCode}/toggle`);
-      fetchData();
+      search();
     } catch { /* api 인터셉터에서 처리 */ }
-  }, [fetchData]);
+  }, [search]);
 
   /* 즉시 실행 */
   const handleRunNow = useCallback(() => {
@@ -100,10 +100,10 @@ export default function SchedulerJobTab() {
       message: t("system.scheduler.confirmRun", "이 작업을 즉시 실행하시겠습니까?"),
       action: async () => {
         await api.post(`/scheduler/jobs/${selectedRow.jobCode}/run`);
-        fetchData();
+        search();
       },
     });
-  }, [selectedRow, t, fetchData]);
+  }, [selectedRow, t, search]);
 
   /* 삭제 */
   const handleDelete = useCallback(() => {
@@ -114,10 +114,10 @@ export default function SchedulerJobTab() {
       action: async () => {
         await api.delete(`/scheduler/jobs/${selectedRow.jobCode}`);
         setSelectedRow(null);
-        fetchData();
+        search();
       },
     });
-  }, [selectedRow, t, fetchData]);
+  }, [selectedRow, t, search]);
 
   /* 날짜 포맷 */
   const fmtDt = (v: string | null) => v ? v.replace("T", " ").slice(0, 19) : "-";
@@ -159,7 +159,7 @@ export default function SchedulerJobTab() {
               action: async () => {
                 await api.delete(`/scheduler/jobs/${row.original.jobCode}`);
                 setSelectedRow(null);
-                fetchData();
+                search();
               },
             });
           }} className="p-1 hover:bg-surface rounded">
@@ -232,7 +232,7 @@ export default function SchedulerJobTab() {
       <div className="flex justify-between items-center flex-shrink-0">
         <p className="text-sm text-text-muted">{t("system.scheduler.jobs", "작업 관리")}</p>
         <div className="flex gap-2">
-          <Button variant="secondary" size="sm" onClick={fetchData}>
+          <Button variant="secondary" size="sm" onClick={search}>
             <RefreshCw className={`w-4 h-4 mr-1 ${loading ? "animate-spin" : ""}`} />
             {t("common.refresh")}
           </Button>
@@ -294,7 +294,7 @@ export default function SchedulerJobTab() {
         <SchedulerJobModal
           editData={editTarget}
           onClose={() => { setModalOpen(false); setEditTarget(null); }}
-          onSave={fetchData}
+          onSave={search}
         />
       )}
 

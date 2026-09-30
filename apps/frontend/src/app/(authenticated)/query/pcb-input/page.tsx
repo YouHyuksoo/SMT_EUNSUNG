@@ -19,8 +19,13 @@ import { Search } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
 import DateRangeFilter from '@/components/shared/DateRangeFilter';
 import LineSelect from '@/components/shared/LineSelect';
+import ModelSearchField from '@/components/shared/ModelSearchField';
 import { Button, Card, CardContent, Input } from '@/components/ui';
 import api from '@/services/api';
+import {
+  TruncationNotice,
+  useTruncation,
+} from '../../report/components/TruncationNotice';
 import { pcbInputColumns } from '../query-columns';
 import type { PcbInputRow } from '../query-types';
 
@@ -43,6 +48,7 @@ export default function PcbInputQueryPage() {
   const [rows, setRows] = useState<PcbInputRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
+  const { truncated, rowLimit, mark } = useTruncation();
 
   const search = useCallback(async () => {
     setLoading(true);
@@ -60,6 +66,7 @@ export default function PcbInputQueryPage() {
         },
       });
       setRows(response.data?.data ?? []);
+      mark(response);
       setSearched(true);
     } catch (error: unknown) {
       const message = (error as { response?: { data?: { message?: string } } })
@@ -68,7 +75,7 @@ export default function PcbInputQueryPage() {
     } finally {
       setLoading(false);
     }
-  }, [runNo, lineCode, modelName, itemCode, itemBarcode, manufactureWeek, dateFrom, dateTo]);
+  }, [runNo, lineCode, modelName, itemCode, itemBarcode, manufactureWeek, dateFrom, dateTo, mark]);
 
   useEffect(() => { void search(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -91,8 +98,8 @@ export default function PcbInputQueryPage() {
           <div className="w-40">
             <LineSelect value={lineCode} onChange={setLineCode} labelPrefix="라인" />
           </div>
-          <Input aria-label="모델명" placeholder="모델명" value={modelName} className="w-36"
-            onChange={(e) => setModelName(e.target.value)} />
+          <ModelSearchField aria-label="모델명" placeholder="모델명" value={modelName} className="w-36"
+            onChange={(v) => setModelName(v)} />
           <Input aria-label="품목코드" placeholder="품목코드" value={itemCode} className="w-36"
             onChange={(e) => setItemCode(e.target.value)} />
           <Input aria-label="PCB 바코드" placeholder="PCB 바코드" value={itemBarcode}
@@ -107,6 +114,8 @@ export default function PcbInputQueryPage() {
           </Button>
         </CardContent>
       </Card>
+
+      <TruncationNotice truncated={truncated} rowLimit={rowLimit} />
 
       <Card className="min-h-0 flex-1 overflow-hidden" padding="none">
         <CardContent className="h-full p-3">

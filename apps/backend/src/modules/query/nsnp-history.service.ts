@@ -22,10 +22,9 @@ import { Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { likePrefix } from '@smt/shared';
 import { NsnpHistoryQueryDto } from './query.dto';
+import { ROW_LIMIT } from './row-limit';
 
 type Row = Record<string, unknown>;
-
-const ROW_LIMIT = 5000;
 
 @Injectable()
 export class NsnpHistoryService {
@@ -125,6 +124,6 @@ export class NsnpHistoryService {
         organizationId,
       } as unknown as unknown[],
     )) as Row[];
-    return { data: rows, total: rows.length };
+    return { data: rows, total: rows.length, truncated: rows.length >= ROW_LIMIT };
   }
 }

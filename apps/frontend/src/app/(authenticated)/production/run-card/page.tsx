@@ -21,6 +21,7 @@ import { Button, Card, CardContent, Input } from '@/components/ui';
 import ComCodeSelect from '@/components/shared/ComCodeSelect';
 import ProdLineSelect from '@/components/shared/ProdLineSelect';
 import ModelSearchModal from '@/components/shared/ModelSearchModal';
+import ModelSearchField from '@/components/shared/ModelSearchField';
 import DataGrid from '@/components/data-grid/DataGrid';
 import { useComCodeMap } from '@/hooks/useComCode';
 import api from '@/services/api';
@@ -92,7 +93,7 @@ export default function RunCardPage() {
   const statusMap = useComCodeMap('RUN STATUS');
   const runTypeMap = useComCodeMap('PRODUCT RUN TYPE');
 
-  const load = useCallback(async () => {
+  const search = useCallback(async () => {
     setLoading(true);
     try {
       const res = await api.get('/production/run-card', {
@@ -106,7 +107,7 @@ export default function RunCardPage() {
     }
   }, [fromDate, toDate, runNo, modelName, lineCode, lotNo]);
 
-  useEffect(() => { void load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { void search(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const set = (key: keyof EditForm, value: string) =>
     setForm((prev) => (prev ? { ...prev, [key]: value } : prev));
@@ -151,7 +152,7 @@ export default function RunCardPage() {
         toast.success(`작업지시 ${res.data?.data?.runNo ?? ''} 를 등록했습니다.`);
       }
       setForm(null);
-      await load();
+      await search();
     } catch (error: unknown) {
       toast.error(error instanceof Error ? error.message : '저장에 실패했습니다.');
     } finally {
@@ -165,7 +166,7 @@ export default function RunCardPage() {
       await api.delete(`/production/run-card/${encodeURIComponent(deleteTarget.runNo)}`);
       toast.success('작업지시를 삭제했습니다.');
       setDeleteTarget(null);
-      await load();
+      await search();
     } catch (error: unknown) {
       toast.error(error instanceof Error ? error.message : '삭제에 실패했습니다.');
     }
@@ -186,7 +187,7 @@ export default function RunCardPage() {
         `작업지시와 연결 데이터 ${response.data?.data?.deleted ?? 0}건을 삭제했습니다.`,
       );
       setDeleteTarget(null);
-      void load();
+      void search();
     } catch (error: unknown) {
       const message = (error as { response?: { data?: { message?: string } } })
         ?.response?.data?.message;
@@ -275,10 +276,10 @@ export default function RunCardPage() {
                 <span className="text-text-muted">~</span>
                 <Input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} />
                 <Input placeholder="작업지시번호" value={runNo} onChange={(e) => setRunNo(e.target.value)} />
-                <Input placeholder="모델명" value={modelName} onChange={(e) => setModelName(e.target.value)} />
+                <ModelSearchField placeholder="모델명" value={modelName} className="w-44" onChange={(v) => setModelName(v)} />
                 <Input placeholder="LOT번호" value={lotNo} onChange={(e) => setLotNo(e.target.value)} />
                 <ProdLineSelect labelPrefix="라인" value={lineCode} onChange={setLineCode} />
-                <Button size="sm" onClick={() => void load()}>
+                <Button size="sm" onClick={() => void search()}>
                   <Search className="w-4 h-4 mr-1" />
                   조회
                 </Button>

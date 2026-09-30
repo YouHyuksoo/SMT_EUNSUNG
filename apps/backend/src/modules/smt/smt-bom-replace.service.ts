@@ -23,6 +23,7 @@ import {
   SmtBomReplaceQueryDto,
   SmtBomReplaceUpsertDto,
 } from './smt-bom-replace.dto';
+import { affectedRows } from '../../common/utils/affected-rows.util';
 
 const EDITABLE: Array<[column: string, field: keyof SmtBomReplaceUpsertDto]> = [
   ['ITEM_UNIT_QTY', 'itemUnitQty'],
@@ -198,7 +199,7 @@ export class SmtBomReplaceService {
         `UPDATE ID_ENG_BOM_SMT_REPLACE SET ${sets.join(', ')} WHERE ${this.KEY_WHERE}`,
         binds as unknown as unknown[],
       );
-      const affected = Number((result as { rowsAffected?: number })?.rowsAffected ?? 0);
+      const affected = Number(affectedRows(result) ?? 0);
       if (affected === 0) throw new NotFoundException('대체 BOM 을 찾을 수 없습니다.');
       return { changed: affected };
     });
@@ -210,7 +211,7 @@ export class SmtBomReplaceService {
         `DELETE FROM ID_ENG_BOM_SMT_REPLACE WHERE ${this.KEY_WHERE}`,
         [this.keyBinds(key, organizationId)] as unknown as unknown[],
       );
-      const affected = Number((result as { rowsAffected?: number })?.rowsAffected ?? 0);
+      const affected = Number(affectedRows(result) ?? 0);
       if (affected === 0) throw new NotFoundException('대체 BOM 을 찾을 수 없습니다.');
       return { deleted: affected };
     });

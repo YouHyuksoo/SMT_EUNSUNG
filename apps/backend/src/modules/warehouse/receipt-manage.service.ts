@@ -51,6 +51,7 @@ import {
   ReceiptHistoryQueryDto,
   ReceiptInventoryQueryDto,
 } from './warehouse.dto';
+import { affectedRows } from '../../common/utils/affected-rows.util';
 
 type Row = Record<string, unknown>;
 
@@ -405,7 +406,7 @@ export class ReceiptManageService {
         receiptDeficit: qty < 0 ? 2 : 1,
         invoiceNo,
         confirmYn: autoConfirm,
-        rows: Number((result as { rowsAffected?: number })?.rowsAffected ?? 0),
+        rows: Number(affectedRows(result) ?? 0),
       };
     });
   }
@@ -456,7 +457,7 @@ export class ReceiptManageService {
             AND BARCODE IS NULL`,
         binds as unknown as unknown[],
       );
-      const rows = Number((result as { rowsAffected?: number })?.rowsAffected ?? 0);
+      const rows = Number(affectedRows(result) ?? 0);
       if (rows !== 1) {
         throw new NotFoundException(
           `고칠 수 있는 기타입고가 아닙니다 (${dto.receiptDate} / ${dto.receiptSequence}).`
@@ -483,7 +484,7 @@ export class ReceiptManageService {
           organizationId,
         } as unknown as unknown[],
       );
-      const rows = Number((result as { rowsAffected?: number })?.rowsAffected ?? 0);
+      const rows = Number(affectedRows(result) ?? 0);
       if (rows !== 1) {
         throw new NotFoundException(
           `지울 수 있는 기타입고가 아닙니다 (${dto.receiptDate} / ${dto.receiptSequence}).`,

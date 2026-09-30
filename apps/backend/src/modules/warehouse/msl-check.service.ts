@@ -26,6 +26,7 @@ import { likePrefix } from '@smt/shared';
 import { limited, ROW_LIMIT } from '../../shared/row-limit';
 import { TransactionService } from '../../shared/transaction.service';
 import { MslCheckCreateDto, MslCheckQueryDto, MslOverQueryDto } from './warehouse.dto';
+import { affectedRows } from '../../common/utils/affected-rows.util';
 
 type Row = Record<string, unknown>;
 
@@ -273,7 +274,7 @@ export class MslCheckService {
           barcode: dto.barcode,
         } as unknown as unknown[],
       );
-      const rows = Number((result as { rowsAffected?: number })?.rowsAffected ?? 0);
+      const rows = Number(affectedRows(result) ?? 0);
       if (rows !== 1) {
         // 다른 서비스와 같은 예외를 쓴다. 평범한 Error 를 던지면 500 으로 나가
         // 화면이 "등록에 실패했습니다" 만 띄우고 이유를 못 보여준다.

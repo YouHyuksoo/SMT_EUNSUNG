@@ -41,7 +41,7 @@ export default function RunNoTrackingPage() {
     })();
   }, []);
 
-  const load = useCallback(async (runNo: string) => {
+  const search = useCallback(async (runNo: string) => {
     setLoading(true);
     try {
       const response = await api.get('/tracking/pid/stage-counts-by-run', { params: { runNo } });
@@ -63,8 +63,8 @@ export default function RunNoTrackingPage() {
       setRows([]);
       return;
     }
-    void load(selected.runNo);
-  }, [selected, load]);
+    void search(selected.runNo);
+  }, [selected, search]);
 
   return (
     <div className="flex h-full flex-col gap-4 p-6">

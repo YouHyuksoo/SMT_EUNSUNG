@@ -23,6 +23,7 @@ import {
   Hammer,
   Network,
   Package,
+  ShoppingCart,
   ScanSearch,
   Radar,
   Settings,
@@ -73,7 +74,6 @@ export const menuConfig: MenuConfigItem[] = [
     children: [
       { code: "MST_PART", labelKey: "menu.master.part", path: "/master/part", pbLinkStatus: "powerbuilder", pbWindow: "w_des_item_master" },
       { code: "MST_PRODUCT_MODEL", labelKey: "menu.master.productModel", path: "/master/product-model", pbLinkStatus: "powerbuilder", pbWindow: "w_pln_product_model_simple_master" },
-      { code: "MST_BOM", labelKey: "menu.master.bom", path: "/master/bom", pbLinkStatus: "powerbuilder", pbWindow: "w_des_bom_modify_master", pbLinkNote: "ID_ENG_BOM 전 CRUD·계층·엑셀을 덮는다. 원단위BOM(w_des_raw_bom_master)은 같은 표를 보지만 유효기간·BOM작업번호 편집이 아직 없어 매핑하지 않았다." },
       { code: "MST_APPLY_ITEM", labelKey: "menu.master.applyItem", path: "/design/apply-item", pbLinkStatus: "powerbuilder", pbWindow: "w_des_apply_item_master" },
       { code: "MST_PARTNER", labelKey: "menu.master.partner", path: "/master/partner", pbLinkStatus: "unresolved", pbLinkNote: "웹 거래처가 PB 고객·협력사 화면을 통합하므로 단일 원본을 확정할 수 없음" },
       { code: "MST_CUSTOMER", labelKey: "menu.master.customer", path: "/master/customer", pbLinkStatus: "powerbuilder", pbWindow: "w_com_customer_master" },
@@ -99,7 +99,11 @@ export const menuConfig: MenuConfigItem[] = [
     labelKey: "menu.bom",
     icon: Network,
     children: [
+      { code: "MST_BOM", labelKey: "menu.master.bom", path: "/master/bom", pbLinkStatus: "powerbuilder", pbWindow: "w_des_bom_modify_master", pbLinkNote: "ID_ENG_BOM 전 CRUD·계층·엑셀을 덮는다. 원단위BOM(w_des_raw_bom_master)은 BOM_RAW(/bom/raw-bom)로 따로 이식했다." },
       { code: "BOM_REPLACE", labelKey: "menu.bom.replace", path: "/bom/replace-bom", pbLinkStatus: "powerbuilder", pbWindow: "w_des_replace_bom_master" },
+      { code: "BOM_RAW", labelKey: "menu.bom.raw", path: "/bom/raw-bom", pbLinkStatus: "powerbuilder", pbWindow: "w_des_raw_bom_master" },
+      { code: "BOM_MFS", labelKey: "menu.bom.mfs", path: "/bom/mfs-bom", pbLinkStatus: "powerbuilder", pbWindow: "w_des_mfs_bom_master" },
+      { code: "CFM_BOM", labelKey: "menu.confirm.bom", path: "/confirm/bom", pbLinkStatus: "powerbuilder", pbWindow: "w_des_bom_confirm_master" },
     ],
   },
   {
@@ -134,6 +138,19 @@ export const menuConfig: MenuConfigItem[] = [
       // 되살리려면 OEE_EQUIP_OPS_ANALYSIS 항목을 이 자리에 다시 넣고 gen:menu 를 실행한다.
       // 숨김(2026-09-06): 생산라인관리에서 OEE 속성을 통합 관리한다.
       // 추후 삭제 전까지 직접 URL은 유지한다: { code: "OEE_MST_RESOURCE", labelKey: "menu.oee.resource", path: "/oee/master/resource" }
+    ],
+  },
+  {
+    code: "PURCHASE",
+    labelKey: "menu.purchase",
+    icon: ShoppingCart,
+    children: [
+      { code: "PUR_REQUIREMENT", labelKey: "menu.purchase.requirement", path: "/purchase/requirement", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_requirment_plan_master" },
+      { code: "PUR_ORDER_PLAN", labelKey: "menu.purchase.orderPlan", path: "/purchase/order-plan", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_purchase_order_plan_master" },
+      { code: "PUR_FORECAST", labelKey: "menu.purchase.forecast", path: "/purchase/forecast", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_forecast_order_master" },
+      { code: "PUR_ORDER", labelKey: "menu.purchase.order", path: "/purchase/order", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_purchase_order_master" },
+      { code: "PUR_DEPARTURE", labelKey: "menu.purchase.departure", path: "/purchase/departure", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_departure_master" },
+      { code: "PUR_ARRIVAL", labelKey: "menu.purchase.arrival", path: "/purchase/arrival", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_arrival_master" },
     ],
   },
   {
@@ -307,13 +324,6 @@ export const menuConfig: MenuConfigItem[] = [
       { code: "QRY_SENSOR_ACTUAL", labelKey: "menu.query.sensorActual", path: "/query/sensor-actual", pbLinkStatus: "powerbuilder", pbWindow: "w_pln_product_sensor_actual_master" },
       { code: "QRY_MATERIAL_BARCODE", labelKey: "menu.query.materialBarcode", path: "/query/material-barcode", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_barcode_status_report" },
       { code: "QRY_NSNP_HISTORY", labelKey: "menu.query.nsnpHistory", path: "/query/nsnp-history", pbLinkStatus: "powerbuilder", pbWindow: "w_pln_product_nsnp_history_query" },
-    ],
-  },
-  {
-    code: "REPORT",
-    labelKey: "menu.report",
-    icon: FileText,
-    children: [
       { code: "RPT_ITEM_MASTER", labelKey: "menu.report.itemMaster", path: "/report/item-master", pbLinkStatus: "powerbuilder", pbWindow: "w_des_item_master_rpt" },
       { code: "RPT_LINE_BARCODE", labelKey: "menu.report.lineBarcode", path: "/report/line-barcode", pbLinkStatus: "powerbuilder", pbWindow: "w_pln_line_barcode_rpt" },
       { code: "RPT_CARRIER_BARCODE", labelKey: "menu.report.carrierBarcode", path: "/report/carrier-barcode", pbLinkStatus: "powerbuilder", pbWindow: "w_product_carrier_barcode" },
@@ -375,7 +385,6 @@ export const menuConfig: MenuConfigItem[] = [
       { code: "CFM_BUY_PRICE", labelKey: "menu.confirm.buyPrice", path: "/confirm/buy-price", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_buy_price_confirm" },
       { code: "CFM_SALE_PRICE", labelKey: "menu.confirm.salePrice", path: "/confirm/sale-price", pbLinkStatus: "powerbuilder", pbWindow: "w_sal_sale_price_confirm" },
       { code: "CFM_MOLD_PRICE", labelKey: "menu.confirm.moldPrice", path: "/confirm/mold-price", pbLinkStatus: "powerbuilder", pbWindow: "w_mcn_mold_buy_price_confirm" },
-      { code: "CFM_BOM", labelKey: "menu.confirm.bom", path: "/confirm/bom", pbLinkStatus: "powerbuilder", pbWindow: "w_des_bom_confirm_master" },
     ],
   },
   {

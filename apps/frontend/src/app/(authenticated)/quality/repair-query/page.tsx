@@ -19,8 +19,9 @@ import { Search } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
 import DateRangeFilter from '@/components/shared/DateRangeFilter';
 import LineSelect from '@/components/shared/LineSelect';
+import ModelSearchField from '@/components/shared/ModelSearchField';
 import ScreenTabs from '@/components/shared/ScreenTabs';
-import { Button, Card, CardContent, Input } from '@/components/ui';
+import { Button, Card, CardContent } from '@/components/ui';
 import api from '@/services/api';
 import {
   TruncationNotice,
@@ -103,8 +104,8 @@ export default function RepairQueryPage() {
             onFromChange={setDateFrom} onToChange={setDateTo} />
           <LineSelect labelPrefix="라인" value={lineCode} className="w-40"
             onChange={setLineCode} />
-          <Input aria-label="모델" placeholder="모델" value={modelName} className="w-40"
-            onChange={(e) => setModelName(e.target.value)} />
+          <ModelSearchField value={modelName} className="w-40"
+            onChange={(v) => setModelName(v)} aria-label="모델" placeholder="모델" />
           <Button size="sm" onClick={search} disabled={loading}>
             <Search className="mr-1 h-4 w-4" />조회
           </Button>

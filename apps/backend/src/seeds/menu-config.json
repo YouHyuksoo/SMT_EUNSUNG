@@ -5,6 +5,7 @@
     "BOM_MANAGEMENT",
     "EQUIPMENT",
     "OEE",
+    "PURCHASE",
     "MATERIAL",
     "JIG",
     "FEEDER",
@@ -16,7 +17,6 @@
     "PRODUCTION",
     "TRACKING",
     "QUERY",
-    "REPORT",
     "QUALITY",
     "OUTSOURCING",
     "CONFIRM",
@@ -26,7 +26,6 @@
     "MASTER": [
       "MST_PART",
       "MST_PRODUCT_MODEL",
-      "MST_BOM",
       "MST_APPLY_ITEM",
       "MST_PARTNER",
       "MST_CUSTOMER",
@@ -47,7 +46,11 @@
       "MST_SALE_PRICE"
     ],
     "BOM_MANAGEMENT": [
-      "BOM_REPLACE"
+      "MST_BOM",
+      "BOM_REPLACE",
+      "BOM_RAW",
+      "BOM_MFS",
+      "CFM_BOM"
     ],
     "EQUIPMENT": [
       "EQUIP_RESULT_SP",
@@ -67,6 +70,14 @@
       "OEE_EQUIP_WORK_RESULT",
       "OEE_EQUIP_OPS_STATUS",
       "OEE_FIELD_OPS"
+    ],
+    "PURCHASE": [
+      "PUR_REQUIREMENT",
+      "PUR_ORDER_PLAN",
+      "PUR_FORECAST",
+      "PUR_ORDER",
+      "PUR_DEPARTURE",
+      "PUR_ARRIVAL"
     ],
     "MATERIAL": [
       "MAT_RECEIPT_ISSUE_LEDGER",
@@ -182,9 +193,7 @@
       "QRY_FEEDER_MONITOR",
       "QRY_SENSOR_ACTUAL",
       "QRY_MATERIAL_BARCODE",
-      "QRY_NSNP_HISTORY"
-    ],
-    "REPORT": [
+      "QRY_NSNP_HISTORY",
       "RPT_ITEM_MASTER",
       "RPT_LINE_BARCODE",
       "RPT_CARRIER_BARCODE",
@@ -230,8 +239,7 @@
     "CONFIRM": [
       "CFM_BUY_PRICE",
       "CFM_SALE_PRICE",
-      "CFM_MOLD_PRICE",
-      "CFM_BOM"
+      "CFM_MOLD_PRICE"
     ],
     "SYSTEM": [
       "SYS_COMPANY",

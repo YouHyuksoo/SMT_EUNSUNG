@@ -18,7 +18,9 @@ import DataGrid from '@/components/data-grid/DataGrid';
 import CustomerSelect from '@/components/shared/CustomerSelect';
 import DateFilter from '@/components/shared/DateFilter';
 import LineSelect from '@/components/shared/LineSelect';
-import { Button, Card, CardContent, Input } from '@/components/ui';
+import ModelSearchField from '@/components/shared/ModelSearchField';
+import { useRunAfterRender } from '@/hooks/useRunAfterRender';
+import { Button, Card, CardContent } from '@/components/ui';
 import api from '@/services/api';
 import { TruncationNotice, useTruncation } from '../components/TruncationNotice';
 import { masterPlanColumns } from '../report-columns';
@@ -64,6 +66,9 @@ export default function MasterPlanReportPage() {
 
   const totalPlan = rows.reduce((sum, r) => sum + Number(r.planQty ?? 0), 0);
 
+  // 모델을 고르면 새 모델명으로 바로 조회한다 (Enter 조회를 대신함)
+  const searchAfterModelSelect = useRunAfterRender(search);
+
   return (
     <div className="flex h-full flex-col gap-4 p-6">
       <header>
@@ -85,9 +90,8 @@ export default function MasterPlanReportPage() {
             계획일
             <DateFilter value={planDate} onChange={setPlanDate} />
           </label>
-          <Input aria-label="모델명" placeholder="모델명" value={modelName} className="w-40"
-            onChange={(e) => setModelName(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') void search(); }} />
+          <ModelSearchField aria-label="모델명" placeholder="모델명" value={modelName} className="w-40"
+            onChange={(v) => { setModelName(v); if (v) searchAfterModelSelect(); }} />
           <div className="w-44">
             <LineSelect value={lineCode} onChange={setLineCode} labelPrefix="라인" />
           </div>

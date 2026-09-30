@@ -22,6 +22,7 @@ import DataGrid from '@/components/data-grid/DataGrid';
 import DateRangeFilter from '@/components/shared/DateRangeFilter';
 import ScreenTabs from '@/components/shared/ScreenTabs';
 import { Button, Card, CardContent, Input } from '@/components/ui';
+import ModelSearchField from '@/components/shared/ModelSearchField';
 import api from '@/services/api';
 import {
   TruncationNotice,
@@ -137,9 +138,9 @@ export default function FgIssuePage() {
           <Input aria-label="바코드 조건" placeholder="바코드" value={barcode}
             className="w-52"
             onChange={(e) => setBarcode(e.target.value)} />
-          <Input aria-label="모델 조건" placeholder="모델" value={modelName}
+          <ModelSearchField aria-label="모델 조건" placeholder="모델" value={modelName}
             className="w-36"
-            onChange={(e) => setModelName(e.target.value)} />
+            onChange={(v) => setModelName(v)} />
           <Button size="sm" onClick={search} disabled={loading}>
             <Search className="mr-1 h-4 w-4" />조회
           </Button>

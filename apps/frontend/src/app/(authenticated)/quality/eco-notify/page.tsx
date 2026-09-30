@@ -16,6 +16,7 @@ import { useCallback, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { BellRing, Check, Search, Undo2 } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
+import ModelSearchField from '@/components/shared/ModelSearchField';
 import UseYnSelect from '@/components/shared/UseYnSelect';
 import { Button, Card, CardContent, ConfirmModal, Input } from '@/components/ui';
 import api from '@/services/api';
@@ -113,8 +114,8 @@ export default function EcoNotifyPage() {
             className="w-44" onChange={(e) => setItemCode(e.target.value)} />
           <Input aria-label="품목명" placeholder="품목명" value={itemName}
             className="w-44" onChange={(e) => setItemName(e.target.value)} />
-          <Input aria-label="모델명" placeholder="모델명" value={modelName}
-            className="w-44" onChange={(e) => setModelName(e.target.value)} />
+          <ModelSearchField value={modelName} onChange={(v) => setModelName(v)}
+            className="w-44" aria-label="모델명" placeholder="모델명" />
           <UseYnSelect includeAll labelPrefix="ECO 확인"
             value={ecoCheckYn} onChange={setEcoCheckYn} className="w-44" />
         </CardContent>

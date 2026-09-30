@@ -8,6 +8,7 @@ import DateRangeFilter from '@/components/shared/DateRangeFilter';
 import LineSelect from '@/components/shared/LineSelect';
 import ProcessSelect from '@/components/shared/ProcessSelect';
 import { Button, Card, CardContent, Input } from '@/components/ui';
+import ModelSearchField from '@/components/shared/ModelSearchField';
 import api from '@/services/api';
 import { magazineLabelColumns } from './columns';
 import { matrixColumnKeys, pivotMagazineMatrix } from './matrix';
@@ -60,7 +61,7 @@ export default function MagazineLabelHistoryPage() {
     <Card className="shrink-0" padding="sm"><div className="flex flex-wrap items-center gap-2">
       <LineSelect labelPrefix="라인" value={lineCode} onChange={setLineCode} className="w-40" />
       <ProcessSelect labelPrefix="공정" value={workstageCode} onChange={setWorkstageCode} className="w-44" />
-      <Input aria-label="모델명" placeholder="모델명" value={modelName} onChange={e => setModelName(e.target.value)} className="w-40" />
+      <ModelSearchField aria-label="모델명" placeholder="모델명" value={modelName} onChange={(v) => setModelName(v)} className="w-40" />
       <Input aria-label="매거진 라벨번호" placeholder="매거진 라벨번호" value={magazineLabelNo} onChange={e => setMagazineLabelNo(e.target.value)} className="w-48" />
       <Input aria-label="RUN NO" placeholder="RUN NO" value={runNo} onChange={e => setRunNo(e.target.value)} className="w-40" />
       <DateRangeFilter label="발행일" from={dateFrom} to={dateTo} onFromChange={setDateFrom} onToChange={setDateTo} />

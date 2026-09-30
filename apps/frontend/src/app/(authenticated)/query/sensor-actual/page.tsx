@@ -22,8 +22,13 @@ import { Save, Search } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
 import DateFilter from '@/components/shared/DateFilter';
 import LineSelect from '@/components/shared/LineSelect';
+import ModelSearchField from '@/components/shared/ModelSearchField';
 import { Button, Card, CardContent, Input } from '@/components/ui';
 import api from '@/services/api';
+import {
+  TruncationNotice,
+  useTruncation,
+} from '../../report/components/TruncationNotice';
 import { AutoRefreshControl, QueryTabs } from '../components/QueryTabs';
 import { sensorActualColumns, sensorBucketColumns } from '../query-columns';
 import type { SensorActualRow, SensorBucketRow } from '../query-types';
@@ -44,6 +49,7 @@ export default function SensorActualPage() {
   const [timeSlot, setTimeSlot] = useState<SensorBucketRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
+  const { truncated, rowLimit, mark } = useTruncation();
 
   const [selected, setSelected] = useState<SensorActualRow | null>(null);
   const [actualQty, setActualQty] = useState('');
@@ -73,6 +79,7 @@ export default function SensorActualPage() {
       setHistory(h.data?.data ?? []);
       setHourly(hr.data?.data ?? []);
       setTimeSlot(t.data?.data ?? []);
+      mark(c, h, hr, t);
       setSearched(true);
     } catch (error: unknown) {
       const message = (error as { response?: { data?: { message?: string } } })
@@ -81,7 +88,7 @@ export default function SensorActualPage() {
     } finally {
       setLoading(false);
     }
-  }, [lineCode, modelName, dateFrom]);
+  }, [lineCode, modelName, dateFrom, mark]);
 
   const autoRef = useRef(search);
   autoRef.current = search;
@@ -157,8 +164,8 @@ export default function SensorActualPage() {
           <div className="w-44">
             <LineSelect value={lineCode} onChange={setLineCode} labelPrefix="라인" />
           </div>
-          <Input aria-label="모델명" placeholder="모델명 (시간·시간대 탭)" value={modelName}
-            className="w-52" onChange={(e) => setModelName(e.target.value)} />
+          <ModelSearchField aria-label="모델명" placeholder="모델명 (시간·시간대 탭)" value={modelName}
+            className="w-52" onChange={(v) => setModelName(v)} />
           <label className="flex items-center gap-2 text-sm text-text">
             기준일
             <DateFilter value={dateFrom} onChange={setDateFrom} />
@@ -179,6 +186,8 @@ export default function SensorActualPage() {
         active={tab}
         onChange={setTab}
       />
+
+      <TruncationNotice truncated={truncated} rowLimit={rowLimit} />
 
       <Card className="min-h-0 flex-1 overflow-hidden" padding="none">
         <CardContent className="h-full p-3">

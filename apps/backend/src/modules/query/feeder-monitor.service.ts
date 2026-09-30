@@ -17,10 +17,10 @@ import { DataSource } from 'typeorm';
 import { likePrefix } from '@smt/shared';
 import { TransactionService } from '../../shared/transaction.service';
 import { FeederMonitorQueryDto, FeederSlotQueryDto } from './query.dto';
+import { ROW_LIMIT } from './row-limit';
+import { affectedRows } from '../../common/utils/affected-rows.util';
 
 type Row = Record<string, unknown>;
-
-const ROW_LIMIT = 5000;
 
 @Injectable()
 export class FeederMonitorService {
@@ -90,7 +90,7 @@ export class FeederMonitorService {
         organizationId,
       } as unknown as unknown[],
     )) as Row[];
-    return { data: rows, total: rows.length };
+    return { data: rows, total: rows.length, truncated: rows.length >= ROW_LIMIT };
   }
 
   /**
@@ -140,7 +140,7 @@ export class FeederMonitorService {
         itemCode: query.itemCode,
       } as unknown as unknown[],
     )) as Row[];
-    return { data: rows, total: rows.length };
+    return { data: rows, total: rows.length, truncated: rows.length >= ROW_LIMIT };
   }
 
   /** 라인의 센서 실적 (PB d_pln_product_sensor_actual_4_feeder — 피더 화면 머리글) */
@@ -226,7 +226,7 @@ export class FeederMonitorService {
       );
       return {
         lineCode: query.lineCode,
-        changed: Number((result as { rowsAffected?: number })?.rowsAffected ?? 0),
+        changed: Number(affectedRows(result) ?? 0),
       };
     });
   }

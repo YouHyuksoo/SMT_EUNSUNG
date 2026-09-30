@@ -37,6 +37,7 @@ import { likePrefix } from '@smt/shared';
 import { limited, ROW_LIMIT } from '../../shared/row-limit';
 import { TransactionService } from '../../shared/transaction.service';
 import { IssueReturnLookupDto, IssueReturnDto, IssueReturnQueryDto } from './warehouse.dto';
+import { affectedRows } from '../../common/utils/affected-rows.util';
 
 type Row = Record<string, unknown>;
 
@@ -323,7 +324,7 @@ export class IssueReturnService {
         } as unknown as unknown[],
       );
       const barcodeRows = Number(
-        (updated as { rowsAffected?: number })?.rowsAffected ?? 0,
+        affectedRows(updated) ?? 0,
       );
       if (barcodeRows !== 1) {
         throw new BadRequestException(
@@ -408,8 +409,8 @@ export class IssueReturnService {
         previousQty: Number(info.currentQty ?? 0),
         lineCode: dto.lineCode.trim(),
         barcodeRows,
-        issueRows: Number((issued as { rowsAffected?: number })?.rowsAffected ?? 0),
-        lossRows: Number((loss as { rowsAffected?: number })?.rowsAffected ?? 0),
+        issueRows: Number(affectedRows(issued) ?? 0),
+        lossRows: Number(affectedRows(loss) ?? 0),
       };
     });
   }

@@ -18,6 +18,7 @@ import DataGrid from '@/components/data-grid/DataGrid';
 import ComCodeSelect from '@/components/shared/ComCodeSelect';
 import DateRangeFilter from '@/components/shared/DateRangeFilter';
 import LineSelect from '@/components/shared/LineSelect';
+import ModelSearchField from '@/components/shared/ModelSearchField';
 import ProcessSelect from '@/components/shared/ProcessSelect';
 import { Button, Card, CardContent, ConfirmModal, Input } from '@/components/ui';
 import api from '@/services/api';
@@ -234,8 +235,8 @@ export default function WqcPage() {
           <LineSelect labelPrefix="라인" value={lineCode} onChange={setLineCode} className="w-40" />
           <ProcessSelect labelPrefix="공정" value={workstageCode}
             onChange={setWorkstageCode} className="w-44" />
-          <Input aria-label="모델명" placeholder="모델명" value={modelName}
-            className="w-44" onChange={(e) => setModelName(e.target.value)} />
+          <ModelSearchField value={modelName} onChange={(v) => setModelName(v)}
+            className="w-44" aria-label="모델명" placeholder="모델명" />
           <Input aria-label="PID" placeholder="PID" value={serialNo}
             className="w-48" onChange={(e) => setSerialNo(e.target.value)} />
         </CardContent>

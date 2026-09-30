@@ -16,6 +16,8 @@ export interface ScreenTabDef<K extends string> {
   label: string;
   /** 탭 제목 옆에 붙일 건수. 0 이면 표시하지 않는다. */
   count?: number;
+  /** 이 탭이 무엇을 보여 주는지. 전역 툴팁(data-tooltip)으로 뜬다. */
+  tooltip?: string;
 }
 
 export default function ScreenTabs<K extends string>({
@@ -34,6 +36,7 @@ export default function ScreenTabs<K extends string>({
           key={t.key}
           type="button"
           onClick={() => onChange(t.key)}
+          data-tooltip={t.tooltip}
           className={`px-3 py-2 text-sm ${active === t.key
             ? 'border-b-2 border-primary font-semibold text-text'
             : 'text-text-muted hover:text-text'}`}

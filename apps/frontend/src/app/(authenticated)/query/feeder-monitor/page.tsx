@@ -21,8 +21,13 @@ import toast from 'react-hot-toast';
 import { Gauge, Lock, RefreshCw, Search, Unlock } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
 import LineSelect from '@/components/shared/LineSelect';
+import ModelSearchField from '@/components/shared/ModelSearchField';
 import { Button, Card, CardContent, ConfirmModal, Input } from '@/components/ui';
 import api from '@/services/api';
+import {
+  TruncationNotice,
+  useTruncation,
+} from '../../report/components/TruncationNotice';
 import { AutoRefreshControl } from '../components/QueryTabs';
 import { feederSlotColumns, slotHistoryColumns } from '../query-columns';
 import type { FeederSlotRow, SlotHistoryRow } from '../query-types';
@@ -44,10 +49,12 @@ export default function FeederMonitorPage() {
   const [slots, setSlots] = useState<FeederSlotRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
+  const slotCut = useTruncation();
 
   const [selected, setSelected] = useState<FeederSlotRow | null>(null);
   const [history, setHistory] = useState<SlotHistoryRow[]>([]);
   const [histLoading, setHistLoading] = useState(false);
+  const histCut = useTruncation();
 
   const [intervalSec, setIntervalSec] = useState('60');
   const [autoOn, setAutoOn] = useState(false);
@@ -67,6 +74,7 @@ export default function FeederMonitorPage() {
         },
       });
       setSlots(response.data?.data ?? []);
+      slotCut.mark(response);
       setSearched(true);
     } catch (error: unknown) {
       const message = (error as { response?: { data?: { message?: string } } })
@@ -75,7 +83,7 @@ export default function FeederMonitorPage() {
     } finally {
       setLoading(false);
     }
-  }, [lineCode, modelName, itemCode]);
+  }, [lineCode, modelName, itemCode, slotCut.mark]);
 
   // 자동갱신. 목록만 다시 읽는다 — 이력까지 매번 다시 읽으면 고른 자리가 흔들린다.
   const autoRef = useRef(search);
@@ -100,6 +108,7 @@ export default function FeederMonitorPage() {
         },
       });
       setHistory(response.data?.data ?? []);
+      histCut.mark(response);
     } catch (error: unknown) {
       const message = (error as { response?: { data?: { message?: string } } })
         ?.response?.data?.message;
@@ -108,7 +117,7 @@ export default function FeederMonitorPage() {
     } finally {
       setHistLoading(false);
     }
-  }, []);
+  }, [histCut.mark]);
 
   const setFeedingQty = useCallback(async () => {
     setFeedingOpen(false);
@@ -181,8 +190,8 @@ export default function FeederMonitorPage() {
           <div className="w-44">
             <LineSelect value={lineCode} onChange={setLineCode} labelPrefix="라인" />
           </div>
-          <Input aria-label="모델명" placeholder="모델명" value={modelName} className="w-40"
-            onChange={(e) => setModelName(e.target.value)} />
+          <ModelSearchField aria-label="모델명" placeholder="모델명" value={modelName} className="w-40"
+            onChange={(v) => setModelName(v)} />
           <Input aria-label="품목코드" placeholder="품목코드" value={itemCode} className="w-36"
             onChange={(e) => setItemCode(e.target.value)} />
           <Button size="sm" onClick={search} disabled={!lineCode || loading}>
@@ -218,6 +227,8 @@ export default function FeederMonitorPage() {
         </CardContent>
       </Card>
 
+      <TruncationNotice truncated={slotCut.truncated} rowLimit={slotCut.rowLimit} />
+
       <Card className="min-h-0 flex-1 overflow-hidden" padding="none">
         <CardContent className="flex h-full flex-col gap-2 p-3">
           <b className="text-sm text-text">
@@ -247,6 +258,8 @@ export default function FeederMonitorPage() {
           </div>
         </CardContent>
       </Card>
+
+      <TruncationNotice truncated={histCut.truncated} rowLimit={histCut.rowLimit} />
 
       <Card className="h-56 shrink-0 overflow-hidden" padding="none">
         <CardContent className="flex h-full flex-col gap-2 p-3">

@@ -17,6 +17,7 @@ import { Boxes, ScanLine, Search } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
 import ComCodeSelect from '@/components/shared/ComCodeSelect';
 import DateRangeFilter from '@/components/shared/DateRangeFilter';
+import ModelSearchField from '@/components/shared/ModelSearchField';
 import { Button, Card, CardContent, Input } from '@/components/ui';
 import api from '@/services/api';
 import {
@@ -188,8 +189,8 @@ export default function OqcLotPage() {
             onFromChange={setDateFrom} onToChange={setDateTo} />
           <Input aria-label="포장바코드" placeholder="포장바코드" value={packBarcode}
             className="w-52" onChange={(e) => setPackBarcode(e.target.value)} />
-          <Input aria-label="모델명" placeholder="모델명" value={modelName}
-            className="w-44" onChange={(e) => setModelName(e.target.value)} />
+          <ModelSearchField value={modelName} onChange={(v) => setModelName(v)}
+            className="w-44" aria-label="모델명" placeholder="모델명" />
         </CardContent>
       </Card>
 

@@ -18,6 +18,7 @@ import { Lock, LockOpen, Search, ShieldAlert } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
 import ComCodeSelect from '@/components/shared/ComCodeSelect';
 import LineSelect from '@/components/shared/LineSelect';
+import ModelSearchField from '@/components/shared/ModelSearchField';
 import { Button, Card, CardContent, ConfirmModal, Input } from '@/components/ui';
 import api from '@/services/api';
 import { pidHoldingColumns, type PidHoldingRow } from '../pid-columns';
@@ -144,8 +145,8 @@ export default function PidHoldingPage() {
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <span className="text-xs text-text-muted">추가 조건</span>
-            <Input aria-label="모델명" placeholder="모델명" value={modelName}
-              className="w-44" onChange={(e) => setModelName(e.target.value)} />
+            <ModelSearchField value={modelName} onChange={(v) => setModelName(v)}
+              className="w-44" aria-label="모델명" placeholder="모델명" />
             <LineSelect labelPrefix="라인" value={lineCode}
               onChange={setLineCode} className="w-40" />
             <ComCodeSelect groupCode="BARCODE STATUS" labelPrefix="바코드상태"

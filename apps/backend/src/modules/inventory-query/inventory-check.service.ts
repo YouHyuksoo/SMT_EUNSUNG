@@ -35,6 +35,7 @@ import {
   InventoryAdjustDto,
   InventoryCheckQueryDto,
 } from './inventory-query.dto';
+import { affectedRows } from '../../common/utils/affected-rows.util';
 
 type Row = Record<string, unknown>;
 
@@ -290,10 +291,10 @@ export class InventoryCheckService {
         /** 3 = 실제가 더 많음 · 4 = 실제가 적음 */
         issueDeficit: plus ? 3 : 4,
         barcodeRows: Number(
-          (barcodeResult as { rowsAffected?: number })?.rowsAffected ?? 0,
+          affectedRows(barcodeResult) ?? 0,
         ),
         issueRows: Number(
-          (issueResult as { rowsAffected?: number })?.rowsAffected ?? 0,
+          affectedRows(issueResult) ?? 0,
         ),
       };
     });

@@ -23,6 +23,7 @@ import {
   SmtPickupQueryDto,
   SmtPickupUploadDto,
 } from './smt-pickup.dto';
+import { affectedRows } from '../../common/utils/affected-rows.util';
 
 @Injectable()
 export class SmtPickupService {
@@ -89,7 +90,7 @@ export class SmtPickupService {
             AND ORGANIZATION_ID = :organizationId`,
         { productDate: dto.productDate, lineCode: dto.lineCode, organizationId } as unknown as unknown[],
       );
-      const removed = Number((deleted as { rowsAffected?: number })?.rowsAffected ?? 0);
+      const removed = Number(affectedRows(deleted) ?? 0);
 
       for (const row of dto.rows) {
         // PB 식 그대로: 이송횟수가 0 이면 0, 아니면 흡착에러 / 이송횟수 * 100
@@ -139,7 +140,7 @@ export class SmtPickupService {
             AND ORGANIZATION_ID = :organizationId`,
         { productDate: dto.productDate, lineCode: dto.lineCode, organizationId } as unknown as unknown[],
       );
-      return { deleted: Number((result as { rowsAffected?: number })?.rowsAffected ?? 0) };
+      return { deleted: Number(affectedRows(result) ?? 0) };
     });
   }
 }
