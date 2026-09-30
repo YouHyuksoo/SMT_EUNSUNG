@@ -35,6 +35,14 @@ describe('WorkResultService tenancy', () => {
     expect(params).toEqual([7, '2026-08-01', '2026-08-25']);
   });
 
+  it('excludes SMT-division lines only when requested', async () => {
+    await service.list('2026-08-01', '2026-08-25', undefined, undefined, 7, undefined, true);
+
+    const [sql, params] = query.mock.calls[0] as [string, unknown[]];
+    expect(sql).toContain('LINE_DIVISION IN (:4,:5)');
+    expect(params).toEqual([7, '2026-08-01', '2026-08-25', 'D', 'SMT']);
+  });
+
   it('uses the authenticated user and organization for writes', async () => {
     const manager = {
       query: jest.fn().mockImplementation((sql: string) => {

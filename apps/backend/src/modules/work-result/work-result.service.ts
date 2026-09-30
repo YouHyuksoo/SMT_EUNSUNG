@@ -23,6 +23,7 @@ import {
   PlanDowntimeCreateDto,
   WorkResultUpsertDto,
 } from './work-result.dto';
+import { SMT_LINE_DIVISIONS } from '@smt/shared';
 
 const DEFAULT_USER = 'ADMIN';
 
@@ -63,6 +64,7 @@ export class WorkResultService {
     keyword?: string,
     organizationId?: number,
     machineCode?: string,
+    excludeSmt?: boolean,
   ) {
     const organization = this.requireOrganization(organizationId);
     const params: unknown[] = [organization, fromDate, toDate];
@@ -71,6 +73,15 @@ export class WorkResultService {
     if (lineCode) {
       params.push(lineCode);
       where += ` AND r.LINE_CODE = :${params.length}`;
+    }
+    // 라인구분이 SMT인 라인의 작업지시 제외 (설비별 작업실적관리)
+    if (excludeSmt) {
+      const binds = SMT_LINE_DIVISIONS.map((d) => {
+        params.push(d);
+        return `:${params.length}`;
+      });
+      where += ` AND NOT EXISTS (SELECT 1 FROM IP_PRODUCT_LINE sl WHERE sl.LINE_CODE = r.LINE_CODE
+        AND sl.ORGANIZATION_ID = r.ORGANIZATION_ID AND sl.LINE_DIVISION IN (${binds.join(',')}))`;
     }
     // 설비 단위 조회. keyword는 품번·모델명에도 걸려서 설비만 추리는 용도로는 못 쓴다.
     if (machineCode) {

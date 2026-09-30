@@ -39,6 +39,7 @@ export class WorkResultController {
     @Query('keyword') keyword?: string,
     @Query('machineCode') machineCode?: string,
     @OrganizationId() organizationId?: number,
+    @Query('excludeSmt') excludeSmt?: string,
   ) {
     return {
       list: await this.service.list(
@@ -48,6 +49,7 @@ export class WorkResultController {
         keyword || undefined,
         organizationId,
         machineCode || undefined,
+        excludeSmt === 'Y',
       ),
     };
   }

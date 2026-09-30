@@ -20,10 +20,17 @@ interface ProdLineSelectProps extends Omit<SelectProps, "options"> {
   includeAll?: boolean;
   /** '미지정'(값 '*') 옵션을 선택 가능하도록 맨 앞에 추가 */
   includeUnassigned?: boolean;
+  /** 제외할 라인구분 코드 (예: SMT_LINE_DIVISIONS) */
+  excludeDivisions?: readonly string[];
 }
 
-export default function ProdLineSelect({ labelPrefix, includeAll, includeUnassigned, ...props }: ProdLineSelectProps) {
-  const { options, isLoading } = useProdLineOptions();
+export default function ProdLineSelect({ labelPrefix, includeAll, includeUnassigned, excludeDivisions, ...props }: ProdLineSelectProps) {
+  const { options: allOptions, isLoading, rawData } = useProdLineOptions();
+  const options = useMemo(() => {
+    if (!excludeDivisions?.length) return allOptions;
+    const excluded = new Set(rawData.filter((l) => excludeDivisions.includes(l.lineDivision)).map((l) => l.lineCode));
+    return allOptions.filter((o) => !excluded.has(String(o.value)));
+  }, [allOptions, rawData, excludeDivisions]);
   const finalOptions = useMemo(() => {
     const base = includeUnassigned ? [{ value: "*", label: "미지정" }, ...options] : options;
     if (!labelPrefix) return includeAll ? [{ value: "", label: "전체" }, ...base] : base;

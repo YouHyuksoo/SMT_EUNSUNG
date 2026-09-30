@@ -5,7 +5,7 @@
  * @description 설비별 작업 실적관리 — IP_PRODUCT_RUN_CARD 기준 실적/불량/설비비가동 실 DB 연결
  *
  * API(글로벌 prefix /api → 백엔드 /api/v1) : /oee/work-result
- *   목록 GET ?fromDate&toDate&lineCode&keyword · 실적이력 GET /results?runNo
+ *   목록 GET ?fromDate&toDate&lineCode&keyword&excludeSmt=Y(라인구분 SMT 제외) · 실적이력 GET /results?runNo
  *   실적상세 GET /results/:runNo/:seqNo · 실적 POST/PUT /results
  *   부적합유형 GET /bad-reasons(WQC) · 후공정설비 GET /machines · 비가동사유 GET /downtime-reasons
  *   비가동 처리는 공용 컴포넌트 components/shared/EquipDowntimePanel 이 담당
@@ -17,6 +17,7 @@ import { Card, CardContent, Input } from '@/components/ui';
 import { ProdLineSelect, WorkResultForm } from '@/components/shared';
 import EquipDowntimePanel from '@/components/shared/EquipDowntimePanel';
 import api from '@/services/api';
+import { SMT_LINE_DIVISIONS } from '@smt/shared';
 
 function todayStr() {
   const d = new Date();
@@ -72,7 +73,7 @@ export default function EquipWorkResultPage() {
   const search = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await api.get('/oee/work-result', { params: { fromDate, toDate, lineCode: lineCode || undefined, keyword: keyword || undefined } });
+      const res = await api.get('/oee/work-result', { params: { fromDate, toDate, lineCode: lineCode || undefined, keyword: keyword || undefined, excludeSmt: 'Y' } });
       setRows(res.data?.data?.list ?? []);
     } catch { toast.error('작업지시 목록 조회에 실패했습니다'); }
     finally { setLoading(false); }
@@ -147,7 +148,7 @@ export default function EquipWorkResultPage() {
               <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="border border-border rounded p-2 bg-background text-text text-sm h-10" />
             </label>
             <label className="text-xs text-text-muted flex flex-col gap-1 w-44">라인
-              <ProdLineSelect includeAll value={lineCode} onChange={setLineCode} fullWidth />
+              <ProdLineSelect includeAll excludeDivisions={SMT_LINE_DIVISIONS} value={lineCode} onChange={setLineCode} fullWidth />
             </label>
             <label className="text-xs text-text-muted flex flex-col gap-1">통합검색
               <div className="w-56"><Input placeholder="품번·품명·설비코드/명" value={keyword} onChange={(e) => setKeyword(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && search()} leftIcon={<Search className="w-4 h-4" />} fullWidth /></div>

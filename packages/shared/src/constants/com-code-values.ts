@@ -349,6 +349,8 @@ export const LINE_DIVISION_LABELS: Record<LineDivisionValue, string> = {
   T: '검사라인',
   W: '가공공정',
 };
+/** 라벨이 'SMT'인 라인구분 코드 — 후공정 화면 라인 조회조건에서 제외할 때 쓴다 */
+export const SMT_LINE_DIVISIONS: readonly LineDivisionValue[] = ['D', 'SMT'];
 
 /** 라인제품구분 (IP_PRODUCT_LINE.LINE_PRODUCT_DIVISION) */
 export const LINE_PRODUCT_DIVISION_VALUES = ['FIXED', 'ONESELF', 'SALE', 'SUBLET'] as const;
