@@ -29,10 +29,10 @@ import {
   SensorActualAdjustDto,
   SensorActualQueryDto,
 } from './query.dto';
+import { ROW_LIMIT } from './row-limit';
+import { affectedRows } from '../../common/utils/affected-rows.util';
 
 type Row = Record<string, unknown>;
-
-const ROW_LIMIT = 5000;
 
 @Injectable()
 export class SensorActualService {
@@ -90,7 +90,7 @@ export class SensorActualService {
       this.actualSelect('IP_PRODUCT_SENSOR_ACTUAL', true),
       { lineCode: likePrefix(query.lineCode), organizationId } as unknown as unknown[],
     )) as Row[];
-    return { data: rows, total: rows.length };
+    return { data: rows, total: rows.length, truncated: rows.length >= ROW_LIMIT };
   }
 
   /** 330 실적 이력 (일자 마감 후 백업) */
@@ -99,7 +99,7 @@ export class SensorActualService {
       this.actualSelect('IP_PRODUCT_SENSOR_ACTUAL_BACK', false),
       { lineCode: likePrefix(query.lineCode), organizationId } as unknown as unknown[],
     )) as Row[];
-    return { data: rows, total: rows.length };
+    return { data: rows, total: rows.length, truncated: rows.length >= ROW_LIMIT };
   }
 
   /**
@@ -138,7 +138,7 @@ export class SensorActualService {
         organizationId,
       } as unknown as unknown[],
     )) as Row[];
-    return { data: rows, total: rows.length };
+    return { data: rows, total: rows.length, truncated: rows.length >= ROW_LIMIT };
   }
 
   findHourly(query: SensorActualQueryDto, organizationId: number) {
@@ -205,7 +205,7 @@ export class SensorActualService {
       )) as Row[];
       return {
         found: true,
-        changed: Number((result as { rowsAffected?: number })?.rowsAffected ?? 0),
+        changed: Number(affectedRows(result) ?? 0),
         before: before[0],
         after: after[0] ?? null,
       };
@@ -312,6 +312,6 @@ export class SensorActualService {
         organizationId,
       } as unknown as unknown[],
     )) as Row[];
-    return { data: rows, total: rows.length };
+    return { data: rows, total: rows.length, truncated: rows.length >= ROW_LIMIT };
   }
 }

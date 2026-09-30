@@ -25,6 +25,10 @@ import DataGrid from '@/components/data-grid/DataGrid';
 import DateRangeFilter from '@/components/shared/DateRangeFilter';
 import { Button, Card, CardContent, ConfirmModal, Input } from '@/components/ui';
 import api from '@/services/api';
+import {
+  TruncationNotice,
+  useTruncation,
+} from '../../report/components/TruncationNotice';
 import { nsnpHistoryColumns, nsnpLineColumns } from '../query-columns';
 import type { NsnpHistoryRow, NsnpLineRow } from '../query-types';
 
@@ -54,6 +58,7 @@ export default function NsnpHistoryPage() {
   const [history, setHistory] = useState<NsnpHistoryRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
+  const { truncated, rowLimit, mark } = useTruncation();
 
   const [busy, setBusy] = useState(false);
   const [nsnpOpen, setNsnpOpen] = useState<NsnpAction | null>(null);
@@ -83,6 +88,7 @@ export default function NsnpHistoryPage() {
         },
       });
       setHistory(response.data?.data ?? []);
+      mark(response);
       setSearched(true);
     } catch (error: unknown) {
       const message = (error as { response?: { data?: { message?: string } } })
@@ -91,7 +97,7 @@ export default function NsnpHistoryPage() {
     } finally {
       setLoading(false);
     }
-  }, [selected, modelName, dateFrom, dateTo]);
+  }, [selected, modelName, dateFrom, dateTo, mark]);
 
   useEffect(() => { void loadLines(); }, [loadLines]);
   useEffect(() => { void search(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -226,6 +232,8 @@ export default function NsnpHistoryPage() {
           </span>
         </CardContent>
       </Card>
+
+      <TruncationNotice truncated={truncated} rowLimit={rowLimit} />
 
       <Card className="min-h-0 flex-1 overflow-hidden" padding="none">
         <CardContent className="h-full p-3">

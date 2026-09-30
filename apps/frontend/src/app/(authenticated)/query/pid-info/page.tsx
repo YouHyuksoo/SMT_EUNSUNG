@@ -24,6 +24,10 @@ import ModelSearchField from '@/components/shared/ModelSearchField';
 import { Button, Card, CardContent, ConfirmModal, Input } from '@/components/ui';
 import { checkTrackingFilter } from '@smt/shared';
 import api from '@/services/api';
+import {
+  TruncationNotice,
+  useTruncation,
+} from '../../report/components/TruncationNotice';
 import { pidInfoColumns } from '../query-columns';
 import type { PidInfoRow } from '../query-types';
 
@@ -37,6 +41,7 @@ export default function PidInfoQueryPage() {
   const [rows, setRows] = useState<PidInfoRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
+  const { truncated, rowLimit, mark } = useTruncation();
   const [selected, setSelected] = useState<PidInfoRow | null>(null);
   const [repairOpen, setRepairOpen] = useState(false);
   const [repairNote, setRepairNote] = useState('');
@@ -59,6 +64,7 @@ export default function PidInfoQueryPage() {
         },
       });
       setRows(response.data?.data ?? []);
+      mark(response);
       setSearched(true);
     } catch (error: unknown) {
       const message = (error as { response?: { data?: { message?: string } } })
@@ -67,7 +73,7 @@ export default function PidInfoQueryPage() {
     } finally {
       setLoading(false);
     }
-  }, [runNo, serialNo, magazineNo, lineCode, modelName]);
+  }, [runNo, serialNo, magazineNo, lineCode, modelName, mark]);
 
   const repair = useCallback(async () => {
     if (!selected) return;
@@ -142,6 +148,8 @@ export default function PidInfoQueryPage() {
           )}
         </CardContent>
       </Card>
+
+      <TruncationNotice truncated={truncated} rowLimit={rowLimit} />
 
       <Card className="min-h-0 flex-1 overflow-hidden" padding="none">
         <CardContent className="h-full p-3">

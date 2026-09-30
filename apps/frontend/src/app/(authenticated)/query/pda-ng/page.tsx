@@ -24,6 +24,10 @@ import { useRunAfterRender } from '@/hooks/useRunAfterRender';
 import Select from '@/components/ui/Select';
 import { Button, Card, CardContent, Input } from '@/components/ui';
 import api from '@/services/api';
+import {
+  TruncationNotice,
+  useTruncation,
+} from '../../report/components/TruncationNotice';
 import { QueryTabs } from '../components/QueryTabs';
 import { planDataColumns, workflowColumns } from '../query-columns';
 import type { PlanDataRow, WorkflowRow } from '../query-types';
@@ -53,6 +57,10 @@ export default function PdaNgQueryPage() {
   const [workflow, setWorkflow] = useState<WorkflowRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
+  // 모델 조회(모델별·배치 메모)와 라인 조회는 따로 돌므로 잘림 표시도 따로 둔다.
+  const modelCut = useTruncation();
+  const lineCut = useTruncation();
+  const cut = tab === 'line' ? lineCut : modelCut;
 
   const [selected, setSelected] = useState<PlanDataRow | null>(null);
   const [checkYn, setCheckYn] = useState('');
@@ -80,6 +88,7 @@ export default function PdaNgQueryPage() {
       ]);
       setByModel(m.data?.data ?? []);
       setWorkflow(w.data?.data ?? []);
+      modelCut.mark(m, w);
       setSearched(true);
     } catch (error: unknown) {
       const message = (error as { response?: { data?: { message?: string } } })
@@ -88,7 +97,7 @@ export default function PdaNgQueryPage() {
     } finally {
       setLoading(false);
     }
-  }, [modelName, lineCode, pcbItem, revision]);
+  }, [modelName, lineCode, pcbItem, revision, modelCut.mark]);
 
   const searchByLine = useCallback(async () => {
     if (!lineCode) {
@@ -99,6 +108,7 @@ export default function PdaNgQueryPage() {
     try {
       const response = await api.get('/query/pda-ng/line', { params: { lineCode } });
       setByLine(response.data?.data ?? []);
+      lineCut.mark(response);
       setTab('line');
     } catch (error: unknown) {
       const message = (error as { response?: { data?: { message?: string } } })
@@ -107,7 +117,7 @@ export default function PdaNgQueryPage() {
     } finally {
       setLoading(false);
     }
-  }, [lineCode]);
+  }, [lineCode, lineCut.mark]);
 
   const pick = useCallback((row: PlanDataRow) => {
     setSelected(row);
@@ -206,6 +216,8 @@ export default function PdaNgQueryPage() {
         active={tab}
         onChange={setTab}
       />
+
+      <TruncationNotice truncated={cut.truncated} rowLimit={cut.rowLimit} />
 
       <Card className="min-h-0 flex-1 overflow-hidden" padding="none">
         <CardContent className="h-full p-3">

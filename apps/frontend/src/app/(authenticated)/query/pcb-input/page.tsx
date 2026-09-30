@@ -22,6 +22,10 @@ import LineSelect from '@/components/shared/LineSelect';
 import ModelSearchField from '@/components/shared/ModelSearchField';
 import { Button, Card, CardContent, Input } from '@/components/ui';
 import api from '@/services/api';
+import {
+  TruncationNotice,
+  useTruncation,
+} from '../../report/components/TruncationNotice';
 import { pcbInputColumns } from '../query-columns';
 import type { PcbInputRow } from '../query-types';
 
@@ -44,6 +48,7 @@ export default function PcbInputQueryPage() {
   const [rows, setRows] = useState<PcbInputRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
+  const { truncated, rowLimit, mark } = useTruncation();
 
   const search = useCallback(async () => {
     setLoading(true);
@@ -61,6 +66,7 @@ export default function PcbInputQueryPage() {
         },
       });
       setRows(response.data?.data ?? []);
+      mark(response);
       setSearched(true);
     } catch (error: unknown) {
       const message = (error as { response?: { data?: { message?: string } } })
@@ -69,7 +75,7 @@ export default function PcbInputQueryPage() {
     } finally {
       setLoading(false);
     }
-  }, [runNo, lineCode, modelName, itemCode, itemBarcode, manufactureWeek, dateFrom, dateTo]);
+  }, [runNo, lineCode, modelName, itemCode, itemBarcode, manufactureWeek, dateFrom, dateTo, mark]);
 
   useEffect(() => { void search(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -108,6 +114,8 @@ export default function PcbInputQueryPage() {
           </Button>
         </CardContent>
       </Card>
+
+      <TruncationNotice truncated={truncated} rowLimit={rowLimit} />
 
       <Card className="min-h-0 flex-1 overflow-hidden" padding="none">
         <CardContent className="h-full p-3">

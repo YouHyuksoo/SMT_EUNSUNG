@@ -32,10 +32,10 @@ import {
   PlanCheckFlagBulkDto,
   PlanDataQueryDto,
 } from './query.dto';
+import { ROW_LIMIT } from './row-limit';
+import { affectedRows } from '../../common/utils/affected-rows.util';
 
 type Row = Record<string, unknown>;
-
-const ROW_LIMIT = 5000;
 
 @Injectable()
 export class SmtCheckQueryService {
@@ -134,7 +134,7 @@ export class SmtCheckQueryService {
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
       { ...this.scanBinds(query), organizationId } as unknown as unknown[],
     )) as Row[];
-    return { data: rows, total: rows.length };
+    return { data: rows, total: rows.length, truncated: rows.length >= ROW_LIMIT };
   }
 
   /**
@@ -186,7 +186,7 @@ export class SmtCheckQueryService {
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
       { ...this.scanBinds(query), organizationId } as unknown as unknown[],
     )) as Row[];
-    return { data: rows, total: rows.length };
+    return { data: rows, total: rows.length, truncated: rows.length >= ROW_LIMIT };
   }
 
   /**
@@ -230,7 +230,7 @@ export class SmtCheckQueryService {
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
       { barcode: likePrefix(query.barcode), organizationId } as unknown as unknown[],
     )) as Row[];
-    return { data: rows, total: rows.length };
+    return { data: rows, total: rows.length, truncated: rows.length >= ROW_LIMIT };
   }
 
   /** 327 출고 — 그 자재 제조번호의 출고 이력 (PB d_mat_issue_4_pda_scan_lst) */
@@ -259,7 +259,7 @@ export class SmtCheckQueryService {
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
       { barcode: likePrefix(query.barcode), organizationId } as unknown as unknown[],
     )) as Row[];
-    return { data: rows, total: rows.length };
+    return { data: rows, total: rows.length, truncated: rows.length >= ROW_LIMIT };
   }
 
   /**
@@ -296,8 +296,8 @@ export class SmtCheckQueryService {
             checkDateKey: row.checkDateKey,
           } as unknown as unknown[],
         );
-        // 영향 행수는 드라이버가 rowsAffected 로 준다 (이 저장소의 기존 관례).
-        const affected = Number((result as { rowsAffected?: number })?.rowsAffected ?? 0);
+        // 영향 행수는 affectedRows 로 읽는다 (TypeORM Oracle 은 DML 결과로 행수 숫자를 준다).
+        const affected = Number(affectedRows(result) ?? 0);
         if (affected > 0) changed += affected;
         else notFound += 1;
       }
@@ -353,7 +353,7 @@ export class SmtCheckQueryService {
         organizationId,
       } as unknown as unknown[],
     )) as Row[];
-    return { data: rows, total: rows.length };
+    return { data: rows, total: rows.length, truncated: rows.length >= ROW_LIMIT };
   }
 
   /** 라인 단위 NG 체크 목록 — 검사가 꺼져 있거나 CCS 를 쓰지 않는 자리를 찾는다. */
@@ -385,7 +385,7 @@ export class SmtCheckQueryService {
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
       { lineCode: query.lineCode, organizationId } as unknown as unknown[],
     )) as Row[];
-    return { data: rows, total: rows.length };
+    return { data: rows, total: rows.length, truncated: rows.length >= ROW_LIMIT };
   }
 
   /** 328 워크플로 — 모델의 피더 배치 이미지(BOM 이미지)와 맞춰 본다 */
@@ -417,7 +417,7 @@ export class SmtCheckQueryService {
         organizationId,
       } as unknown as unknown[],
     )) as Row[];
-    return { data: rows, total: rows.length };
+    return { data: rows, total: rows.length, truncated: rows.length >= ROW_LIMIT };
   }
 
   /**
@@ -466,7 +466,7 @@ export class SmtCheckQueryService {
             organizationId,
           } as unknown as unknown[],
         );
-        const affected = Number((result as { rowsAffected?: number })?.rowsAffected ?? 0);
+        const affected = Number(affectedRows(result) ?? 0);
         if (affected > 0) changed += affected;
         else notFound += 1;
       }

@@ -19,6 +19,10 @@ import { Search } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
 import { Button, Card, CardContent, Input } from '@/components/ui';
 import api from '@/services/api';
+import {
+  TruncationNotice,
+  useTruncation,
+} from '../../report/components/TruncationNotice';
 import { materialBarcodeColumns } from '../query-columns';
 import type { MaterialBarcodeRow } from '../query-types';
 
@@ -30,6 +34,7 @@ export default function MaterialBarcodeQueryPage() {
   const [rows, setRows] = useState<MaterialBarcodeRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
+  const { truncated, rowLimit, mark } = useTruncation();
 
   const hasFilter = Boolean(itemCode || lotNo || itemBarcode);
 
@@ -44,6 +49,7 @@ export default function MaterialBarcodeQueryPage() {
         },
       });
       setRows(response.data?.data ?? []);
+      mark(response);
       setSearched(true);
     } catch (error: unknown) {
       const message = (error as { response?: { data?: { message?: string } } })
@@ -52,7 +58,7 @@ export default function MaterialBarcodeQueryPage() {
     } finally {
       setLoading(false);
     }
-  }, [itemCode, lotNo, itemBarcode]);
+  }, [itemCode, lotNo, itemBarcode, mark]);
 
   const holdCount = rows.filter(
     (r) => r.holdingYn === 'Y' || r.reelDestroyYn === 'Y',
@@ -92,6 +98,8 @@ export default function MaterialBarcodeQueryPage() {
           )}
         </CardContent>
       </Card>
+
+      <TruncationNotice truncated={truncated} rowLimit={rowLimit} />
 
       <Card className="min-h-0 flex-1 overflow-hidden" padding="none">
         <CardContent className="h-full p-3">
