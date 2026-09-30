@@ -65,6 +65,19 @@ oracledb 기본값 `autoCommit: false`로 실행된다. 같은 파일 167행 주
 확인하지 못했다 — 이 화면의 대상 설비가 전부 SMT 라인 소속이면 드물고, 아니면 잦다.
 실패해도 실적 등록은 되도록 설계했으므로 현장이 막히지는 않는다.
 
+### `git stash`로 dev 서버가 낡은 빌드에 갇힌다
+
+테스트 기준선을 재려고 `git stash` → `git stash pop`을 했더니 `/oee/work-result/results/apply-sensor`가
+404가 됐다. stash가 소스를 되돌리자 `nest start --watch`가 그 상태로 재빌드해 변경 전 코드로
+프로세스를 띄웠고, 곧이은 pop 중에 tsc가 물려 `Found 1 error`로 실패했다. watch는 컴파일
+성공 시에만 재시작하므로 그 뒤로 낡은 빌드가 계속 돌았다.
+
+증상 판별법 — 응답의 `seqNo`가 6자리면 낡은 빌드다(구 `RECEIPT_SEQUENCE`). 새 코드는 2자리다.
+`dist`에 새 코드가 있는데도 404면 프로세스 시작 시각과 `dist` mtime을 비교하면 드러난다.
+
+dev 서버가 떠 있는 동안 `git stash`를 쓰지 않는다. 불가피하면 이후 `dist`를 지우고 재기동한다.
+`touch`로는 watcher가 반응하지 않았다.
+
 ### 확인하지 못한 것
 
 - ES_JSIDC(운영 DB)는 1521 포트 차단으로 접속 불가. 스키마 실측과 DDL 적용을 못 했다.

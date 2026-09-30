@@ -229,21 +229,7 @@ export default function WorkResultForm({ run, machines, defaultWorkerName, onSav
       {/* 실적 이력 그리드 */}
       <div>
         <div className="flex items-center justify-between mb-1">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold text-text">실적 이력</span>
-            {/* 센서 반영에 실패한 실적을 다시 프로시저로 넘긴다 */}
-            <button type="button" onClick={applySensorNow} disabled={!canApplySensor || applying}
-              title={canApplySensor
-                ? (selectedRow?.sensorApplyMsg ?? '센서 실적에 반영되지 않았습니다')
-                : '완료인데 센서에 반영되지 않은 실적을 선택하세요'}
-              className={`text-xs rounded px-2 py-1 flex items-center gap-1 border ${
-                canApplySensor && !applying
-                  ? 'border-red-500 text-red-600 hover:bg-red-50'
-                  : 'border-border text-text-muted opacity-50 cursor-not-allowed'
-              }`}>
-              <RefreshCw className={`w-3 h-3 ${applying ? 'animate-spin' : ''}`} />실적반영
-            </button>
-          </div>
+          <span className="text-sm font-semibold text-text">실적 이력</span>
           {fieldMode ? (
             history.length > 1 && (
               <button type="button" onClick={() => setHistoryOpen((v) => !v)}
@@ -286,7 +272,17 @@ export default function WorkResultForm({ run, machines, defaultWorkerName, onSav
       {form && (
         <div className="border-t border-border pt-4 space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-semibold text-text">{form.seqNo ? `실적 상세 (일련 ${form.seqNo})` : '신규 실적'}</span>
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-semibold text-text">{form.seqNo ? `실적 상세 (일련 ${form.seqNo})` : '신규 실적'}</span>
+              {/* 센서 반영에 실패한 실적을 다시 프로시저로 넘긴다 — 선택한 실적에만 해당한다 */}
+              {canApplySensor && (
+                <button type="button" onClick={applySensorNow} disabled={applying}
+                  title={selectedRow?.sensorApplyMsg ?? '센서 실적에 반영되지 않았습니다'}
+                  className="text-xs rounded px-2 py-1 flex items-center gap-1 border border-red-500 text-red-600 hover:bg-red-50 disabled:opacity-50">
+                  <RefreshCw className={`w-3 h-3 ${applying ? 'animate-spin' : ''}`} />실적반영
+                </button>
+              )}
+            </div>
             {!readOnly && !onRegisterSave && <button onClick={saveResult} className="px-3 py-1.5 rounded bg-primary text-white text-sm">저장</button>}
             {readOnly && <span className="text-xs text-blue-600 font-semibold">완료 · 수정불가</span>}
           </div>
