@@ -4,7 +4,7 @@ sources:
   - apps/frontend/scripts/data/pb-screen-inventory.json
   - apps/frontend/scripts/data/pb-screen-exclusions.json
 generator: apps/frontend/scripts/gen-migration-status.mjs
-verifiedCommit: 5dcb909d
+verifiedCommit: ae9b59a3
 ---
 
 # PB 화면 이관 현황 (자동 생성)
@@ -19,19 +19,19 @@ verifiedCommit: 5dcb909d
 | 상태 | 건수 |
 |---|---:|
 | PB 업무화면(셸 메뉴 제외) | 275 |
-| 완료(개발됨, pbWindow 매핑) | 172 |
+| 완료(개발됨, pbWindow 매핑) | 174 |
 | 이관제외(사용자 결정) | 31 |
-| 미착수 | 46 |
+| 미착수 | 44 |
 | 윈도우 미상 | 26 |
 
-웹 메뉴 연결 계약: **PB 171개 / 웹 신규 17개 / 미확정 1개**. PB 매핑과 웹 경로의 전체 연결표는 [pb-menu-route-links.md](pb-menu-route-links.md)에서 관리합니다.
+웹 메뉴 연결 계약: **PB 173개 / 웹 신규 17개 / 미확정 1개**. PB 매핑과 웹 경로의 전체 연결표는 [pb-menu-route-links.md](pb-menu-route-links.md)에서 관리합니다.
 
 ## 대분류별 진행률
 
 | 대분류 | 코드 | 전체 | 완료 | 이관제외 | 미착수 | 윈도우미상 |
 |---|---|---:|---:|---:|---:|---:|
 | 기준정보 | `M_BASIS1` | 20 | 10 | 0 | 10 | 0 |
-| 설계 | `M_DESIGN` | 5 | 3 | 0 | 2 | 0 |
+| 설계 | `M_DESIGN` | 5 | 5 | 0 | 0 | 0 |
 | SMT | `M_SMT` | 9 | 9 | 0 | 0 | 0 |
 | 설비 | `M_JIG` | 19 | 10 | 0 | 7 | 2 |
 | 지그 | `M_JIG0` | 12 | 12 | 0 | 0 | 0 |
@@ -83,9 +83,9 @@ verifiedCommit: 5dcb909d
 | 순서 | 메뉴명 | PB 윈도우 | 원본 | 상태 | MES 메뉴코드 | 경로 |
 |---:|---|---|:--:|---|---|---|
 | 145 | 설계BOM관리 | `w_des_bom_modify_master` | srw | 완료 | `MST_BOM` | `/master/bom` |
-| 146 | 제조BOM관리 | `w_des_mfs_bom_master` | srw | 미착수 |  |  |
+| 146 | 제조BOM관리 | `w_des_mfs_bom_master` | srw | 완료 | `BOM_MFS` | `/bom/mfs-bom` |
 | 147 | 대체BOM관리 | `w_des_replace_bom_master` | srw | 완료 | `BOM_REPLACE` | `/bom/replace-bom` |
-| 148 | 원단위BOM마스터 | `w_des_raw_bom_master` | srw | 미착수 |  |  |
+| 148 | 원단위BOM마스터 | `w_des_raw_bom_master` | srw | 완료 | `BOM_RAW` | `/bom/raw-bom` |
 | 149 | 적용모델관리 | `w_des_apply_item_master` | srw | 완료 | `MST_APPLY_ITEM` | `/design/apply-item` |
 
 ### SMT  `M_SMT`

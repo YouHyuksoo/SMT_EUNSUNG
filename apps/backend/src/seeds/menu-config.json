@@ -48,6 +48,8 @@
     "BOM_MANAGEMENT": [
       "MST_BOM",
       "BOM_REPLACE",
+      "BOM_RAW",
+      "BOM_MFS",
       "CFM_BOM"
     ],
     "EQUIPMENT": [

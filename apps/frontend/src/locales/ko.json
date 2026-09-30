@@ -193,6 +193,8 @@
     "monitoring": "모니터링",
     "bom": "BOM 관리",
     "bom.replace": "대체BOM관리",
+    "bom.raw": "원단위BOM마스터",
+    "bom.mfs": "제조BOM관리",
     "master": "기준정보",
     "master.part": "품목관리",
     "master.applyItem": "적용모델관리",

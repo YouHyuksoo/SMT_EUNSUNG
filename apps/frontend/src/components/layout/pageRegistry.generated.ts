@@ -27,6 +27,16 @@ export async function getPageComponent(path: string): Promise<ComponentType | nu
 async function loadPageComponent(path: string): Promise<ComponentType | null> {
   let component: ComponentType | null = null;
   switch (path) {
+    case "/bom/mfs-bom": {
+      const mod = await import("./page-registries/bom__mfs-bom.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/bom/raw-bom": {
+      const mod = await import("./page-registries/bom__raw-bom.generated");
+      component = mod.getPageComponent();
+      break;
+    }
     case "/bom/replace-bom": {
       const mod = await import("./page-registries/bom__replace-bom.generated");
       component = mod.getPageComponent();

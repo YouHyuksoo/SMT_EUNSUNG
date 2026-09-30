@@ -193,6 +193,8 @@
     "monitoring": "Giám sát",
     "bom": "Quản lý BOM",
     "bom.replace": "Quản lý BOM thay thế",
+    "bom.raw": "BOM nguyên đơn vị",
+    "bom.mfs": "Quản lý BOM sản xuất",
     "master": "Dữ liệu cơ sở",
     "master.part": "Quản lý vật tư",
     "master.applyItem": "Model áp dụng",

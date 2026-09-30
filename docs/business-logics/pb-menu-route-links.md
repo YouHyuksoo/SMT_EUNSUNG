@@ -3,7 +3,7 @@ sources:
   - apps/frontend/src/config/menuConfig.ts
   - apps/frontend/scripts/data/pb-screen-inventory.json
 generator: apps/frontend/scripts/gen-migration-status.mjs
-verifiedCommit: 5dcb909d
+verifiedCommit: ae9b59a3
 ---
 
 # PB 윈도우 ↔ 웹 메뉴·경로 연결표 (자동 생성)
@@ -15,7 +15,7 @@ verifiedCommit: 5dcb909d
 
 | 전체 웹 메뉴 | PB 연결 | 웹 신규 | 미확정 |
 |---:|---:|---:|---:|
-| 189 | 171 | 17 | 1 |
+| 191 | 173 | 17 | 1 |
 
 ## 전체 연결표
 
@@ -43,6 +43,8 @@ verifiedCommit: 5dcb909d
 | 기준정보 | 제품판매단가관리 | `MST_SALE_PRICE` | `/master/sale-price` | PB 연결 | `w_sal_sale_price_master` | PB 메뉴 인벤토리 |
 | BOM 관리 | BOM관리 | `MST_BOM` | `/master/bom` | PB 연결 | `w_des_bom_modify_master` | PB 메뉴 인벤토리 |
 | BOM 관리 | 대체BOM관리 | `BOM_REPLACE` | `/bom/replace-bom` | PB 연결 | `w_des_replace_bom_master` | PB 메뉴 인벤토리 |
+| BOM 관리 | 원단위BOM마스터 | `BOM_RAW` | `/bom/raw-bom` | PB 연결 | `w_des_raw_bom_master` | PB 메뉴 인벤토리 |
+| BOM 관리 | 제조BOM관리 | `BOM_MFS` | `/bom/mfs-bom` | PB 연결 | `w_des_mfs_bom_master` | PB 메뉴 인벤토리 |
 | BOM 관리 | 설계BOM승인 | `CFM_BOM` | `/confirm/bom` | PB 연결 | `w_des_bom_confirm_master` | PB 메뉴 인벤토리 |
 | 설비관리 | SP 작업결과조회 | `EQUIP_RESULT_SP` | `/equipment/result-query/sp` | PB 연결 | `w_qc_machine_inspect_data_sp_query` | PB 메뉴 인벤토리 |
 | 설비관리 | SPI 검사결과조회 | `EQUIP_RESULT_SPI` | `/equipment/result-query/spi` | PB 연결 | `w_spi_time_query` | PB 메뉴 인벤토리 |

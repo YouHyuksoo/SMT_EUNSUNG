@@ -193,6 +193,8 @@
     "monitoring": "监控",
     "bom": "BOM 管理",
     "bom.replace": "替代BOM管理",
+    "bom.raw": "单位BOM主数据",
+    "bom.mfs": "制造BOM管理",
     "master": "基础数据",
     "master.part": "零件管理",
     "master.applyItem": "适用型号管理",

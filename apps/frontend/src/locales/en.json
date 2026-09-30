@@ -193,6 +193,8 @@
     "monitoring": "Monitoring",
     "bom": "BOM Management",
     "bom.replace": "BOM Replace Management",
+    "bom.raw": "Raw BOM Master",
+    "bom.mfs": "MFS BOM Master",
     "master": "Master Data",
     "master.part": "Part Management",
     "master.applyItem": "Applied Model",

@@ -27,6 +27,8 @@ const KNOWN_LEAF_CODES: ReadonlySet<string> = new Set<string>([
   'MST_SALE_PRICE',
   'MST_BOM',
   'BOM_REPLACE',
+  'BOM_RAW',
+  'BOM_MFS',
   'CFM_BOM',
   'EQUIP_RESULT_SP',
   'EQUIP_RESULT_SPI',

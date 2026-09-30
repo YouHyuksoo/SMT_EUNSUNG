@@ -99,8 +99,10 @@ export const menuConfig: MenuConfigItem[] = [
     labelKey: "menu.bom",
     icon: Network,
     children: [
-      { code: "MST_BOM", labelKey: "menu.master.bom", path: "/master/bom", pbLinkStatus: "powerbuilder", pbWindow: "w_des_bom_modify_master", pbLinkNote: "ID_ENG_BOM 전 CRUD·계층·엑셀을 덮는다. 원단위BOM(w_des_raw_bom_master)은 같은 표를 보지만 유효기간·BOM작업번호 편집이 아직 없어 매핑하지 않았다." },
+      { code: "MST_BOM", labelKey: "menu.master.bom", path: "/master/bom", pbLinkStatus: "powerbuilder", pbWindow: "w_des_bom_modify_master", pbLinkNote: "ID_ENG_BOM 전 CRUD·계층·엑셀을 덮는다. 원단위BOM(w_des_raw_bom_master)은 BOM_RAW(/bom/raw-bom)로 따로 이식했다." },
       { code: "BOM_REPLACE", labelKey: "menu.bom.replace", path: "/bom/replace-bom", pbLinkStatus: "powerbuilder", pbWindow: "w_des_replace_bom_master" },
+      { code: "BOM_RAW", labelKey: "menu.bom.raw", path: "/bom/raw-bom", pbLinkStatus: "powerbuilder", pbWindow: "w_des_raw_bom_master" },
+      { code: "BOM_MFS", labelKey: "menu.bom.mfs", path: "/bom/mfs-bom", pbLinkStatus: "powerbuilder", pbWindow: "w_des_mfs_bom_master" },
       { code: "CFM_BOM", labelKey: "menu.confirm.bom", path: "/confirm/bom", pbLinkStatus: "powerbuilder", pbWindow: "w_des_bom_confirm_master" },
     ],
   },
