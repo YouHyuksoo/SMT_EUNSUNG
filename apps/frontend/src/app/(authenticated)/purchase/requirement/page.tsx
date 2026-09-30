@@ -7,16 +7,21 @@
  * 초보자 가이드:
  * 1. **"이 제품을 이만큼 만들려면 자재가 얼마나 드는가"를 계산하는 화면이다.**
  *    기준계획(제품·수량)을 넣고 전개하면 BOM 을 타고 내려가 자재별 소요량이 나온다.
- * 2. **순서가 있다.** 기준계획 등록 → (재고 반영) → 소요량 전개. 전개는 그 일자의
- *    소요량표를 통째로 갈아끼운다.
- * 3. **전개는 되돌릴 수 없다.** PB 도 전개하면서 그 일자 이전의 기준계획을 함께
+ * 2. **순서가 있다.** ① 기준계획 등록 → ② 재고 반영(선택) → ③ 소요량 전개.
+ *    화면도 그 순서대로 위에서 아래로 놓았다.
+ * 3. **날짜가 두 개인 것이 이 화면에서 가장 헷갈리는 부분이다.**
+ *    - **기준일자**: 이번 계산을 묶는 번호표. 이 값이 같은 기준계획이 한 묶음으로 전개된다.
+ *    - **계획일**: 그 자재가 실제로 필요한 날. 한 묶음 안에 여러 날이 들어간다.
+ *    그래서 기준일자는 화면 맨 위에 한 번만, 계획일은 입력 줄에 둔다.
+ * 4. **전개는 되돌릴 수 없다.** PB 도 전개하면서 그 일자 이전의 기준계획을 함께
  *    지운다 (`<=` 조건). 버그로 보이지만 PB 와 값을 맞추려고 그대로 뒀다.
- * 4. **재고 반영은 안전재고만 채운다.** PB 에서 실재고를 읽는 부분이 주석 처리돼
+ * 5. **재고 반영은 안전재고만 채운다.** PB 에서 실재고를 읽는 부분이 주석 처리돼
  *    있어서다. 실재고를 쓰려면 현장 합의가 먼저다.
+ * 6. 버튼 설명은 `data-tooltip` 으로 붙였다 (전역 툴팁 시스템).
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
-import { AlertTriangle, Boxes, FilePlus, Play, Search } from 'lucide-react';
+import { AlertTriangle, Boxes, Play, Plus, Search, Trash2 } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
 import ComCodeSelect from '@/components/shared/ComCodeSelect';
 import ScreenTabs from '@/components/shared/ScreenTabs';
@@ -35,6 +40,24 @@ import type {
 } from '../purchase-columns';
 
 type Tab = 'master' | 'requirement' | 'matrix';
+
+const TIP = {
+  baseDate: '이번 계산을 묶는 번호표입니다. 이 값이 같은 기준계획이 한 묶음으로 전개됩니다.'
+    + ' 아래 "계획일"과 다릅니다 — 계획일은 그 자재가 실제로 필요한 날입니다.',
+  planDate: '그 자재가 실제로 필요한 날입니다. 한 기준일자 안에 여러 계획일을 넣을 수 있습니다.',
+  itemCode: 'BOM 을 펼 제품(또는 반제품) 코드입니다. 이 품목의 BOM 을 타고 내려가 자재를 찾습니다.',
+  orderQty: '그 날 만들 수량입니다. 자재 소요량 = BOM 단위수량 × 이 수량.',
+  save: '기준계획 한 줄을 등록하거나 고칩니다. 같은 기준일자·계획일·품목이면 수량만 바뀝니다.',
+  search: '지금 화면의 조건으로 다시 읽어옵니다.',
+  remove: '고른 기준계획 줄을 지웁니다. 표에서 줄을 눌러 고릅니다.',
+  inventory: '기준계획에 재고를 배정합니다. 계획일이 이른 것부터 먼저 받습니다.'
+    + ' PB 에서 실재고를 읽는 부분이 막혀 있어 지금은 안전재고만 채워집니다.',
+  explode: 'BOM 을 타고 내려가 자재별 소요량을 만듭니다. 그 기준일자의 기존 소요량은 지워지고'
+    + ' 새로 만들어집니다. PB 와 같은 동작이라 그 일자 이전의 기준계획도 함께 지워집니다.',
+  tabMaster: '무엇을 얼마나 만들지 넣는 표입니다. 여기서 시작합니다.',
+  tabRequirement: '전개 결과입니다. 자재별로 언제 얼마가 필요한지 나옵니다.',
+  tabMatrix: '같은 결과를 계획일을 가로로 펴서 봅니다. 날짜별 흐름을 볼 때 씁니다.',
+} as const;
 
 const today = () => new Date().toISOString().slice(0, 10);
 const apiMessage = (error: unknown) =>
@@ -55,7 +78,7 @@ export default function RequirementPlanPage() {
   const [searched, setSearched] = useState(false);
   const { truncated, rowLimit, mark } = useTruncation();
 
-  // 기준계획 등록 폼
+  // 기준계획 입력
   const [itemCode, setItemCode] = useState('');
   const [rowPlanDate, setRowPlanDate] = useState(today());
   const [orderQty, setOrderQty] = useState('');
@@ -143,9 +166,9 @@ export default function RequirementPlanPage() {
 
   const qty = Number(orderQty);
   const blocker = !itemCode.trim()
-    ? '품목을 넣으세요.'
+    ? '품목코드를 넣으세요.'
     : !Number.isFinite(qty) || qty < 0
-      ? '주문수량은 0 이상입니다.'
+      ? '수량은 0 이상 숫자입니다.'
       : null;
 
   const saveRow = useCallback(async () => {
@@ -211,14 +234,15 @@ export default function RequirementPlanPage() {
   const confirmText = {
     explode: {
       title: '소요량 전개',
-      message: `${planDate} 기준계획을 BOM 으로 펴서 소요량표를 만듭니다.`
-        + ' 그 일자의 기존 소요량은 지워집니다.'
-        + ' PB 와 같은 동작이라, 그 일자 **이전**의 기준계획도 함께 지워집니다.',
+      message: `기준일자 ${planDate} 의 기준계획을 BOM 으로 펴서 소요량을 만듭니다.`
+        + '\n\n· 그 기준일자의 기존 소요량은 지워지고 새로 만들어집니다.'
+        + '\n· PB 와 같은 동작이라, 그 일자 이전의 기준계획도 함께 지워집니다.',
     },
     inventory: {
       title: '재고 반영',
-      message: `${planDate} 기준계획에 재고를 배정합니다.`
-        + ' PB 에서 실재고를 읽는 부분이 막혀 있어 안전재고만 채워집니다.',
+      message: `기준일자 ${planDate} 의 기준계획에 재고를 배정합니다.`
+        + ' 계획일이 이른 것부터 먼저 받습니다.'
+        + '\n\n· PB 에서 실재고를 읽는 부분이 막혀 있어 지금은 안전재고만 채워집니다.',
     },
     delete: {
       title: '기준계획 삭제',
@@ -226,91 +250,144 @@ export default function RequirementPlanPage() {
     },
   }[pending ?? 'explode'];
 
+  const rowCount = tab === 'master' ? masterRows.length
+    : tab === 'requirement' ? requirementRows.length
+      : matrixRows.length;
+
   return (
-    <div className="flex h-full flex-col gap-4 p-6">
+    <div className="flex h-full flex-col gap-3 p-6">
       <header>
         <h1 className="text-xl font-bold text-text">자재소요량관리</h1>
         <p className="mt-1 text-sm text-text-muted">
-          기준계획을 BOM 으로 펴서 자재 소요량을 산출합니다 ·{' '}
-          {searched
-            ? `${(tab === 'master' ? masterRows.length
-              : tab === 'requirement' ? requirementRows.length
-                : matrixRows.length).toLocaleString()}건`
-            : '조회하세요'}
+          제품 생산계획을 BOM 으로 펴서 자재 소요량을 산출합니다 ·{' '}
+          <span className="text-text">① 기준계획 등록 → ② 재고 반영(선택) → ③ 소요량 전개</span>
         </p>
       </header>
 
-      <ScreenTabs<Tab>
-        active={tab}
-        onChange={changeTab}
-        tabs={[
-          { key: 'master', label: '기준계획' },
-          { key: 'requirement', label: '소요량' },
-          { key: 'matrix', label: '소요량 매트릭스' },
-        ]}
-      />
-
+      {/* 기준일자 — 이 화면 전체를 묶는 값이라 맨 위에 한 번만 둔다 */}
       <Card padding="none">
         <CardContent className="flex flex-wrap items-center gap-3 p-3">
-          <label className="text-sm font-semibold text-text" htmlFor="requirement-date">
-            소요일자
+          <label className="text-sm font-semibold text-text" htmlFor="base-date"
+            data-tooltip={TIP.baseDate}>
+            기준일자
           </label>
-          <Input id="requirement-date" type="date" value={planDate}
-            className="w-40" onChange={(e) => setPlanDate(e.target.value)} />
-          {tab !== 'master' && (
-            <>
-              <SupplierSelect aria-label="공급처" includeAll labelPrefix="공급처"
-                value={supplierCond} className="w-48" onChange={setSupplierCond} />
-              <Input aria-label="품목코드" placeholder="품목코드" value={itemCond}
-                className="w-40" onChange={(e) => setItemCond(e.target.value)} />
-              <ComCodeSelect groupCode="LINE TYPE" labelPrefix="거래유형"
-                aria-label="거래유형" value={lineTypeCond} className="w-40"
-                onChange={setLineTypeCond} />
-            </>
-          )}
-          <Button size="sm" onClick={() => search()} disabled={loading}>
+          <Input id="base-date" type="date" value={planDate} className="w-40"
+            data-tooltip={TIP.baseDate}
+            onChange={(e) => setPlanDate(e.target.value)} />
+          <span className="text-sm text-text-muted">
+            이 날짜로 묶인 계획을 한 번에 전개합니다
+          </span>
+          <Button size="sm" variant="secondary" className="ml-auto"
+            data-tooltip={TIP.search}
+            onClick={() => search()} disabled={loading}>
             <Search className="mr-1 h-4 w-4" />조회
           </Button>
         </CardContent>
       </Card>
 
-      {tab === 'master' && (
-        <Card padding="none">
-          <CardContent className="flex flex-wrap items-center gap-3 p-3">
-            <span className="flex items-center gap-1 text-sm font-semibold text-text">
-              <FilePlus className="h-4 w-4" />기준계획
-            </span>
-            <Input aria-label="계획일" type="date" value={rowPlanDate}
-              className="w-40" onChange={(e) => setRowPlanDate(e.target.value)} />
-            <Input aria-label="품목코드" placeholder="품목코드" value={itemCode}
-              className="w-40" onChange={(e) => setItemCode(e.target.value)} />
-            <Input aria-label="주문수량" type="number" min={0} placeholder="주문수량"
-              value={orderQty} className="w-32"
-              onChange={(e) => setOrderQty(e.target.value)} />
-            <Button size="sm" disabled={busy || Boolean(blocker)} onClick={saveRow}>
-              저장
-            </Button>
-            {blocker && itemCode && (
-              <span className="flex items-center gap-1 text-sm text-amber-500">
-                <AlertTriangle className="h-4 w-4" />{blocker}
-              </span>
-            )}
+      <ScreenTabs<Tab>
+        active={tab}
+        onChange={changeTab}
+        tabs={[
+          { key: 'master', label: '① 기준계획', tooltip: TIP.tabMaster },
+          { key: 'requirement', label: '③ 소요량', tooltip: TIP.tabRequirement },
+          { key: 'matrix', label: '③ 소요량 (날짜별)', tooltip: TIP.tabMatrix },
+        ]}
+      />
 
-            <span className="ml-auto flex items-center gap-3">
-              <Button size="sm" variant="danger"
-                disabled={busy || selected.size === 0}
-                onClick={() => setPending('delete')}>
-                선택 삭제 ({selected.size})
+      {tab === 'master' && (
+        <>
+          {/* ① 입력 */}
+          <Card padding="none">
+            <CardContent className="flex flex-wrap items-end gap-3 p-3">
+              <span className="flex items-center gap-1 self-center text-sm font-semibold text-text">
+                <Plus className="h-4 w-4" />① 기준계획 등록
+              </span>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs text-text-muted" htmlFor="row-plan-date"
+                  data-tooltip={TIP.planDate}>
+                  계획일 (필요한 날)
+                </label>
+                <Input id="row-plan-date" type="date" value={rowPlanDate} className="w-40"
+                  data-tooltip={TIP.planDate}
+                  onChange={(e) => setRowPlanDate(e.target.value)} />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs text-text-muted" htmlFor="row-item"
+                  data-tooltip={TIP.itemCode}>
+                  품목코드 (펼 제품)
+                </label>
+                <Input id="row-item" placeholder="예: ES-1234" value={itemCode}
+                  className="w-44" data-tooltip={TIP.itemCode}
+                  onChange={(e) => setItemCode(e.target.value)} />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs text-text-muted" htmlFor="row-qty"
+                  data-tooltip={TIP.orderQty}>
+                  수량
+                </label>
+                <Input id="row-qty" type="number" min={0} placeholder="0" value={orderQty}
+                  className="w-28" data-tooltip={TIP.orderQty}
+                  onChange={(e) => setOrderQty(e.target.value)} />
+              </div>
+              <Button size="sm" disabled={busy || Boolean(blocker)}
+                data-tooltip={TIP.save} onClick={saveRow}>
+                저장
               </Button>
-              <Button size="sm" variant="secondary" disabled={busy || masterRows.length === 0}
+              {blocker && itemCode && (
+                <span className="flex items-center gap-1 self-center text-sm text-amber-500">
+                  <AlertTriangle className="h-4 w-4" />{blocker}
+                </span>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* ②③ 실행 — 입력과 섞이지 않게 줄을 따로 둔다 */}
+          <Card padding="none">
+            <CardContent className="flex flex-wrap items-center gap-3 p-3">
+              <span className="text-sm font-semibold text-text">실행</span>
+              <Button size="sm" variant="secondary"
+                disabled={busy || masterRows.length === 0}
+                data-tooltip={TIP.inventory}
                 onClick={() => setPending('inventory')}>
-                <Boxes className="mr-1 h-4 w-4" />재고 반영
+                <Boxes className="mr-1 h-4 w-4" />② 재고 반영
               </Button>
               <Button size="sm" disabled={busy || masterRows.length === 0}
+                data-tooltip={TIP.explode}
                 onClick={() => setPending('explode')}>
-                <Play className="mr-1 h-4 w-4" />소요량 전개
+                <Play className="mr-1 h-4 w-4" />③ 소요량 전개
               </Button>
-            </span>
+              <span className="ml-auto flex items-center gap-3">
+                <span className="text-sm text-text-muted">
+                  아래 표에서 줄을 누르면 골라집니다
+                </span>
+                <Button size="sm" variant="danger"
+                  disabled={busy || selected.size === 0}
+                  data-tooltip={TIP.remove}
+                  onClick={() => setPending('delete')}>
+                  <Trash2 className="mr-1 h-4 w-4" />선택 삭제 ({selected.size})
+                </Button>
+              </span>
+            </CardContent>
+          </Card>
+        </>
+      )}
+
+      {tab !== 'master' && (
+        <Card padding="none">
+          <CardContent className="flex flex-wrap items-center gap-3 p-3">
+            <span className="text-sm font-semibold text-text">결과 걸러보기</span>
+            <SupplierSelect aria-label="공급처" includeAll labelPrefix="공급처"
+              value={supplierCond} className="w-48" onChange={setSupplierCond} />
+            <Input aria-label="품목코드" placeholder="품목코드" value={itemCond}
+              className="w-40" onChange={(e) => setItemCond(e.target.value)} />
+            <ComCodeSelect groupCode="LINE TYPE" labelPrefix="거래유형"
+              aria-label="거래유형" value={lineTypeCond} className="w-40"
+              onChange={setLineTypeCond} />
+            <Button size="sm" data-tooltip={TIP.search}
+              onClick={() => search()} disabled={loading}>
+              <Search className="mr-1 h-4 w-4" />조회
+            </Button>
           </CardContent>
         </Card>
       )}
@@ -318,53 +395,66 @@ export default function RequirementPlanPage() {
       <TruncationNotice truncated={truncated} rowLimit={rowLimit} />
 
       <Card className="min-h-0 flex-1 overflow-hidden" padding="none">
-        <CardContent className="h-full p-3">
-          {tab === 'master' && (
-            <DataGrid
-              data={masterRows}
-              columns={masterPlanColumns}
-              isLoading={loading}
-              pageSize={100}
-              enableColumnFilter
-              enableExport
-              exportFileName="기준계획"
-              emptyMessage={searched ? '이 일자에 기준계획이 없습니다.' : '조회하세요.'}
-              onRowClick={(row) => {
-                const key = rowKey(row as MasterPlanRow);
-                setSelected((prev) => {
-                  const next = new Set(prev);
-                  if (next.has(key)) next.delete(key); else next.add(key);
-                  return next;
-                });
-              }}
-              rowClassName={(row) => (selected.has(rowKey(row as MasterPlanRow))
-                ? 'bg-primary/10' : '')}
-            />
-          )}
-          {tab === 'requirement' && (
-            <DataGrid
-              data={requirementRows}
-              columns={requirementColumns}
-              isLoading={loading}
-              pageSize={100}
-              enableColumnFilter
-              enableExport
-              exportFileName="자재소요량"
-              emptyMessage={searched ? '이 일자에 소요량이 없습니다. 전개했는지 확인하세요.' : '조회하세요.'}
-            />
-          )}
-          {tab === 'matrix' && (
-            <DataGrid
-              data={matrixRows}
-              columns={matrixColumns}
-              isLoading={loading}
-              pageSize={100}
-              enableColumnFilter
-              enableExport
-              exportFileName="소요량매트릭스"
-              emptyMessage={searched ? '이 일자에 소요량이 없습니다.' : '조회하세요.'}
-            />
-          )}
+        <CardContent className="flex h-full flex-col gap-2 p-3">
+          <span className="text-sm font-semibold text-text">
+            {tab === 'master' ? '기준계획'
+              : tab === 'requirement' ? '소요량' : '소요량 (날짜별)'}{' '}
+            {searched ? `${rowCount.toLocaleString()}건` : ''}
+          </span>
+          <div className="min-h-0 flex-1">
+            {tab === 'master' && (
+              <DataGrid
+                data={masterRows}
+                columns={masterPlanColumns}
+                isLoading={loading}
+                pageSize={100}
+                enableColumnFilter
+                enableExport
+                exportFileName="기준계획"
+                emptyMessage={searched
+                  ? '이 기준일자에 기준계획이 없습니다. 위에서 등록하세요.'
+                  : '조회하세요.'}
+                onRowClick={(row) => {
+                  const key = rowKey(row as MasterPlanRow);
+                  setSelected((prev) => {
+                    const next = new Set(prev);
+                    if (next.has(key)) next.delete(key); else next.add(key);
+                    return next;
+                  });
+                }}
+                rowClassName={(row) => (selected.has(rowKey(row as MasterPlanRow))
+                  ? 'bg-primary/10' : '')}
+              />
+            )}
+            {tab === 'requirement' && (
+              <DataGrid
+                data={requirementRows}
+                columns={requirementColumns}
+                isLoading={loading}
+                pageSize={100}
+                enableColumnFilter
+                enableExport
+                exportFileName="자재소요량"
+                emptyMessage={searched
+                  ? '소요량이 없습니다. ① 기준계획 탭에서 ③ 소요량 전개를 먼저 실행하세요.'
+                  : '조회하세요.'}
+              />
+            )}
+            {tab === 'matrix' && (
+              <DataGrid
+                data={matrixRows}
+                columns={matrixColumns}
+                isLoading={loading}
+                pageSize={100}
+                enableColumnFilter
+                enableExport
+                exportFileName="소요량매트릭스"
+                emptyMessage={searched
+                  ? '소요량이 없습니다. ① 기준계획 탭에서 ③ 소요량 전개를 먼저 실행하세요.'
+                  : '조회하세요.'}
+              />
+            )}
+          </div>
         </CardContent>
       </Card>
 
