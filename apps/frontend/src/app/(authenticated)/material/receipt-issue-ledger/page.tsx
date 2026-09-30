@@ -36,7 +36,7 @@ export default function ReceiptIssueLedgerPage() {
   const [mode, setMode] = useState<LedgerMode>("ledger");
   const [filters, setFilters] = useState<LedgerFilterState>(() =>
     createEmptyFilters(initialRange.from, initialRange.to));
-  const { rows, total, loading, error, loaded, search, reset } = useLedgerQuery();
+  const { rows, total, loading, error, loaded, search: runLedgerQuery, reset } = useLedgerQuery();
 
   const patchFilters = useCallback((patch: Partial<LedgerFilterState>) => {
     setFilters(prev => ({ ...prev, ...patch }));
@@ -47,9 +47,9 @@ export default function ReceiptIssueLedgerPage() {
     reset();
   }, [reset]);
 
-  const runSearch = useCallback(() => {
-    void search(mode, filters);
-  }, [search, mode, filters]);
+  const search = useCallback(() => {
+    void runLedgerQuery(mode, filters);
+  }, [runLedgerQuery, mode, filters]);
 
   const columns = useMemo(() => {
     switch (mode) {
@@ -79,7 +79,7 @@ export default function ReceiptIssueLedgerPage() {
         </div>
         {/* 상단 액션 순서: 보조(secondary) → 주요(primary). docs/design/layout.md */}
         <div className="flex gap-2">
-          <Button onClick={runSearch} disabled={loading}>
+          <Button onClick={search} disabled={loading}>
             <Search className={`mr-1 h-4 w-4 ${loading ? "animate-spin" : ""}`} />
             {t("common.refresh")}
           </Button>

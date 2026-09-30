@@ -86,9 +86,9 @@ export default function IdleReasonMasterPage() {
   const [records, setRecords] = useState<IdleReasonRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState<EditForm | null>(null);
-  const [search, setSearch] = useState('');
+  const [searchText, setSearchText] = useState('');
 
-  const load = useCallback(async () => {
+  const search = useCallback(async () => {
     setLoading(true);
     try {
       const res = await api.get('/oee/idle-reason');
@@ -114,16 +114,16 @@ export default function IdleReasonMasterPage() {
       setLoading(false);
     }
   }, []);
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { search(); }, [search]);
 
   const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
+    const q = searchText.trim().toLowerCase();
     // 통합검색 — 사유코드·사유명에서 매칭
     const base = q
       ? records.filter((r) => [r.reasonCode, r.reasonName].join(' ').toLowerCase().includes(q))
       : records;
     return [...base].sort((a, b) => a.displayOrder - b.displayOrder); // 화면 표시 순서 오름차순
-  }, [records, search]);
+  }, [records, searchText]);
 
   const columns = useMemo<ColumnDef<IdleReasonRecord>[]>(
     () => [
@@ -215,7 +215,7 @@ export default function IdleReasonMasterPage() {
       }
       toast.success('저장되었습니다');
       setForm(null);
-      await load();
+      await search();
     } catch (e: unknown) {
       // 서버가 내려준 메시지(중복 등) 우선 표시
       const msg =
@@ -236,7 +236,7 @@ export default function IdleReasonMasterPage() {
             <p className="text-sm text-text-muted mt-1">설비 비가동 사유코드 · 표준시간 · 분류별 매뉴얼(BFILE) 관리</p>
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={load} className="border border-border rounded px-3 h-10 text-text-muted hover:bg-surface flex items-center gap-1"><RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />조회</button>
+            <button onClick={search} className="border border-border rounded px-3 h-10 text-text-muted hover:bg-surface flex items-center gap-1"><RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />조회</button>
             <button onClick={openCreate} className="bg-primary text-white px-4 py-2 rounded h-10">사유코드 등록</button>
           </div>
         </div>
@@ -258,7 +258,7 @@ export default function IdleReasonMasterPage() {
               toolbarLeft={
                 <div className="flex flex-wrap gap-3 flex-1 min-w-0">
                   <div className="w-96 flex-shrink-0">
-                    <Input placeholder="통합검색 (사유코드·사유명)" value={search} onChange={(e) => setSearch(e.target.value)} leftIcon={<Search className="w-4 h-4" />} fullWidth />
+                    <Input placeholder="통합검색 (사유코드·사유명)" value={searchText} onChange={(e) => setSearchText(e.target.value)} leftIcon={<Search className="w-4 h-4" />} fullWidth />
                   </div>
                 </div>
               }

@@ -35,7 +35,7 @@ export default function WorkerPage() {
   const panelAnimateRef = useRef(true);
   const { markDirty, guard, guardModalProps } = useUnsavedGuard();
 
-  const fetchData = useCallback(async () => {
+  const search = useCallback(async () => {
     setLoading(true);
     try {
       const res = await api.get("/master/workers", {
@@ -50,18 +50,18 @@ export default function WorkerPage() {
     }
   }, [searchText, useYnFilter]);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => { search(); }, [search]);
 
   const handleDeleteConfirm = useCallback(async () => {
     if (!deleteTarget) return;
     try {
       await api.delete(`/master/workers/${deleteTarget.workerCode}`);
-      fetchData();
+      search();
     } catch { /* ignore */ }
     finally {
       setDeleteTarget(null);
     }
-  }, [deleteTarget, fetchData]);
+  }, [deleteTarget, search]);
 
   const handlePanelClose = useCallback(() => {
     setIsPanelOpen(false);
@@ -70,8 +70,8 @@ export default function WorkerPage() {
   }, []);
 
   const handlePanelSave = useCallback(() => {
-    fetchData();
-  }, [fetchData]);
+    search();
+  }, [search]);
 
   const openEdit = useCallback((worker: Worker) => {
     guard(() => { panelAnimateRef.current = !isPanelOpen; setEditingWorker(worker); setIsPanelOpen(true); });
@@ -98,7 +98,7 @@ export default function WorkerPage() {
             <p className="text-text-muted mt-1">{t("master.worker.subtitle", "작업자 등록 및 관리")}</p>
           </div>
           <div className="flex gap-2">
-            <Button variant="secondary" size="sm" onClick={fetchData}>
+            <Button variant="secondary" size="sm" onClick={search}>
               <RefreshCw className={`w-4 h-4 mr-1 ${loading ? "animate-spin" : ""}`} />{t("common.refresh")}
             </Button>
             <Button size="sm" onClick={openCreate}>

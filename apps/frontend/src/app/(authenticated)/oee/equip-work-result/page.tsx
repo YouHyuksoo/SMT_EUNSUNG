@@ -69,7 +69,7 @@ export default function EquipWorkResultPage() {
   const [defect, setDefect] = useState<{ badCode: string; badQty: number; remark: string }>({ badCode: '', badQty: 0, remark: '' });
   const [defectInfoOpen, setDefectInfoOpen] = useState(false); // 기본정보 접힘(기본값)
 
-  const load = useCallback(async () => {
+  const search = useCallback(async () => {
     setLoading(true);
     try {
       const res = await api.get('/oee/work-result', { params: { fromDate, toDate, lineCode: lineCode || undefined, keyword: keyword || undefined } });
@@ -77,7 +77,7 @@ export default function EquipWorkResultPage() {
     } catch { toast.error('작업지시 목록 조회에 실패했습니다'); }
     finally { setLoading(false); }
   }, [fromDate, toDate, lineCode, keyword]);
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { search(); }, [search]);
 
   // 공용 콤보 최초 1회
   useEffect(() => {
@@ -113,7 +113,7 @@ export default function EquipWorkResultPage() {
     try {
       await api.post('/oee/work-result/defect', { runNo: panelRun.runNo, badCode: defect.badCode, badQty: defect.badQty, remark: defect.remark || undefined });
       toast.success('불량이 저장되었습니다');
-      await load();
+      await search();
     } catch (e: unknown) {
       const msg = e && typeof e === 'object' && 'response' in e ? (e as { response?: { data?: { message?: string } } }).response?.data?.message : undefined;
       toast.error(msg || '불량 저장에 실패했습니다');
@@ -150,9 +150,9 @@ export default function EquipWorkResultPage() {
               <ProdLineSelect includeAll value={lineCode} onChange={setLineCode} fullWidth />
             </label>
             <label className="text-xs text-text-muted flex flex-col gap-1">통합검색
-              <div className="w-56"><Input placeholder="품번·품명·설비코드/명" value={keyword} onChange={(e) => setKeyword(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && load()} leftIcon={<Search className="w-4 h-4" />} fullWidth /></div>
+              <div className="w-56"><Input placeholder="품번·품명·설비코드/명" value={keyword} onChange={(e) => setKeyword(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && search()} leftIcon={<Search className="w-4 h-4" />} fullWidth /></div>
             </label>
-            <button onClick={load} className="border border-border rounded px-3 h-10 text-text-muted hover:bg-surface flex items-center gap-1"><RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />조회</button>
+            <button onClick={search} className="border border-border rounded px-3 h-10 text-text-muted hover:bg-surface flex items-center gap-1"><RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />조회</button>
           </div>
         </div>
 
@@ -241,7 +241,7 @@ export default function EquipWorkResultPage() {
             <button onClick={closePanel} className="px-3 py-2 rounded border border-border text-text-muted text-sm">닫기</button>
           </div>
           <div className="flex-1 min-h-0 overflow-y-auto px-5 py-4 space-y-4">
-            <WorkResultForm key={panelRun.runNo} run={panelRun} machines={machines} onSaved={load} />
+            <WorkResultForm key={panelRun.runNo} run={panelRun} machines={machines} onSaved={search} />
           </div>
         </div>
       )}
@@ -336,7 +336,7 @@ export default function EquipWorkResultPage() {
               machine={panelRun?.machineCode ? { machineCode: panelRun.machineCode, machineName: panelRun.machineName, workstageCode: panelRun.workstageCode } : null}
               selectableMachines={machines}
               runNo={panelRun?.runNo ?? null}
-              onChanged={load}
+              onChanged={search}
             />
           </div>
         </div>

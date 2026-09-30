@@ -151,7 +151,7 @@ function apiErrorMessage(error: unknown): string | undefined {
 export default function OeeResourceMasterPage() {
   const [records, setRecords] = useState<ResourceRecord[]>([]);
   const [loading, setLoading] = useState(false);
-  const [search, setSearch] = useState('');
+  const [searchText, setSearchText] = useState('');
   const [form, setForm] = useState<ResourceForm | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<ResourceRecord | null>(null);
   const [candidatePickerOpen, setCandidatePickerOpen] = useState(false);
@@ -159,7 +159,7 @@ export default function OeeResourceMasterPage() {
   const [candidates, setCandidates] = useState<LineCandidate[]>([]);
   const [candidateQuery, setCandidateQuery] = useState('');
 
-  const load = useCallback(async () => {
+  const search = useCallback(async () => {
     setLoading(true);
     try {
       const response = await api.get('/oee/resource');
@@ -174,10 +174,10 @@ export default function OeeResourceMasterPage() {
 
   useEffect(() => {
     const initialLoad = window.setTimeout(() => {
-      void load();
+      void search();
     }, 0);
     return () => window.clearTimeout(initialLoad);
-  }, [load]);
+  }, [search]);
 
   const loadCandidates = useCallback(async () => {
     if (candidates.length) return;
@@ -197,7 +197,7 @@ export default function OeeResourceMasterPage() {
   }, [candidates.length]);
 
   const filtered = useMemo(() => {
-    const query = search.trim().toLowerCase();
+    const query = searchText.trim().toLowerCase();
     if (!query) return records;
     return records.filter((record) => [
       record.lineCode,
@@ -207,7 +207,7 @@ export default function OeeResourceMasterPage() {
       record.resourceType,
       record.parentLineCode,
     ].join(' ').toLowerCase().includes(query));
-  }, [records, search]);
+  }, [records, searchText]);
 
   const candidateItems = useMemo(() => {
     const query = candidateQuery.trim().toLowerCase();
@@ -320,7 +320,7 @@ export default function OeeResourceMasterPage() {
       toast.success('저장되었습니다');
       setForm(null);
       setCandidates([]);
-      await load();
+      await search();
     } catch (error: unknown) {
       toast.error(apiErrorMessage(error) || '저장에 실패했습니다');
     }
@@ -333,7 +333,7 @@ export default function OeeResourceMasterPage() {
       toast.success('삭제되었습니다');
       setDeleteTarget(null);
       setCandidates([]);
-      await load();
+      await search();
     } catch (error: unknown) {
       toast.error(apiErrorMessage(error) || '삭제에 실패했습니다');
     }
@@ -348,7 +348,7 @@ export default function OeeResourceMasterPage() {
             <p className="mt-1 text-sm text-text-muted">작업장별 라인·셀 리소스 기준정보를 관리합니다.</p>
           </div>
           <div className="flex items-center gap-2">
-            <button type="button" onClick={() => void load()} className="flex h-10 items-center gap-1 rounded border border-border px-3 text-text-muted hover:bg-surface">
+            <button type="button" onClick={() => void search()} className="flex h-10 items-center gap-1 rounded border border-border px-3 text-text-muted hover:bg-surface">
               <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />조회
             </button>
             <button type="button" onClick={openCreate} className="h-10 rounded bg-primary px-4 py-2 text-white">리소스 등록</button>
@@ -373,8 +373,8 @@ export default function OeeResourceMasterPage() {
                   <div className="w-96 flex-shrink-0">
                     <Input
                       placeholder="통합검색 (라인코드·라인명·리소스명·작업장·유형)"
-                      value={search}
-                      onChange={(event) => setSearch(event.target.value)}
+                      value={searchText}
+                      onChange={(event) => setSearchText(event.target.value)}
                       leftIcon={<Search className="h-4 w-4" />}
                       fullWidth
                     />

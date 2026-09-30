@@ -28,7 +28,7 @@ export default function PurchasePricePage() {
   const [panelOpen, setPanelOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<PurchasePriceItem | null>(null);
 
-  const fetchData = useCallback(async () => {
+  const search = useCallback(async () => {
     setLoading(true);
     try {
       const params: Record<string, string> = { limit: "5000", baseDate, validOnly: validOnly ? "Y" : "N" };
@@ -45,7 +45,7 @@ export default function PurchasePricePage() {
     }
   }, [baseDate, validOnly, item, supplierCode, lineType, priceType]);
 
-  useEffect(() => { void fetchData(); }, [fetchData]);
+  useEffect(() => { void search(); }, [search]);
   const columns = useMemo(() => createPurchasePriceGridColumns(), []);
 
   const openCreate = () => {
@@ -69,7 +69,7 @@ export default function PurchasePricePage() {
             <p className="mt-1 text-sm text-text-muted">품목·공급사별 적용 기간과 구매단가를 관리합니다.</p>
           </div>
           <div className="flex shrink-0 gap-2">
-            <Button variant="secondary" size="sm" onClick={fetchData}>
+            <Button variant="secondary" size="sm" onClick={search}>
               <RefreshCw className={`mr-1 h-4 w-4 ${loading ? "animate-spin" : ""}`} />조회
             </Button>
             <Button size="sm" onClick={openCreate}><Plus className="mr-1 h-4 w-4" />신규 단가</Button>
@@ -119,7 +119,7 @@ export default function PurchasePricePage() {
         <PurchasePriceFormPanel
           editingItem={editingItem}
           onClose={() => setPanelOpen(false)}
-          onSaved={() => { setPanelOpen(false); void fetchData(); }}
+          onSaved={() => { setPanelOpen(false); void search(); }}
         />
       )}
       <PartSearchModal isOpen={partSearchOpen} onClose={() => setPartSearchOpen(false)} onSelect={(selected) => { setItem(selected); setPartSearchOpen(false); }} />

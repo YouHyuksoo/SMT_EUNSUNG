@@ -96,7 +96,7 @@ export default function DashboardPage() {
 
   const today = formatDate(new Date());
 
-  const fetchData = useCallback(async () => {
+  const search = useCallback(async () => {
     setLoading(true);
     setInspectLoading(true);
     try {
@@ -118,7 +118,7 @@ export default function DashboardPage() {
     }
   }, [today]);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => { search(); }, [search]);
 
   return (
     <div className="h-full flex flex-col overflow-hidden p-6 gap-4 animate-fade-in">
@@ -130,7 +130,7 @@ export default function DashboardPage() {
           </h1>
           <p className="text-text-muted mt-1">{t("dashboard.subtitle")}</p>
         </div>
-        <Button variant="secondary" size="sm" onClick={fetchData}>
+        <Button variant="secondary" size="sm" onClick={search}>
           <RefreshCw className={`w-4 h-4 mr-1 ${loading ? "animate-spin" : ""}`} /> {t("common.refresh")}
         </Button>
       </div>
