@@ -6,8 +6,13 @@
 
 - [x] `apps/backend/src/migrations/2026-09-30_restore_work_result.sql` 작성
       (원본 DDL + `SENSOR_APPLY_YN` + `SENSOR_APPLY_MSG` + 코멘트)
-- [ ] DDL 실제 적용 — **사용자 결정 대기** (ES_JSIDC 접속 불가, es_mesi 적용 여부 미정)
-      → 검증: `USER_TABLES`에 테이블 존재, `USER_TAB_COLUMNS` 16건
+- [x] DDL 적용 — **es_mesi(192.168.175.100/XE) 완료** (2026-09-30 13:4x)
+      - PRE: 테이블 0건 / 휴지통 0건 / 전체 테이블 600
+      - 실행: `blocks_executed: 8`, 전부 success
+      - POST: 테이블 1건 / 컬럼 16 / PK 1 / 컬럼주석 6 / 전체 테이블 601
+      - 쿼리 검증: `results` 조회 0행 정상, `SEQ_NO` 첫 채번값 `01`, `list()` 집계 서브쿼리 3행 정상
+- [ ] DDL 적용 — **ES_JSIDC 미적용** (1521 차단). 접속 복구 후 `USER_RECYCLEBIN` 확인 →
+      사본이 살아 있으면 `FLASHBACK TABLE ... TO BEFORE DROP` + 컬럼 2개 `ALTER`, 없으면 이 DDL 실행
 
 ## 2. 백엔드
 
