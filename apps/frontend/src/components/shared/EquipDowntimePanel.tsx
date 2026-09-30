@@ -12,7 +12,6 @@
  * 사용 예:
  *   <EquipDowntimePanel machine={{ machineCode, machineName, workstageCode }} runNo={runNo} onChanged={reload} />
  *   <EquipDowntimePanel machine={null} selectableMachines={machines} onChanged={reload} />
- *   selectableMachines를 넘기면 machine은 초기값일 뿐이고 콤보로 다른 설비를 고를 수 있다.
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -57,15 +56,14 @@ export function ElapsedTime({ startAt, skewMs }: { startAt: string | null; skewM
 }
 
 /** 설비 검색 콤보 (native input + 필터 리스트) */
-function MachineCombo({ machines, selected, onSelect }: { machines: DowntimeMachine[]; selected: DowntimeMachine | null; onSelect: (m: DowntimeMachine) => void }) {
+function MachineCombo({ machines, value, onSelect }: { machines: DowntimeMachine[]; value: string; onSelect: (m: DowntimeMachine) => void }) {
   const [q, setQ] = useState('');
   const [open, setOpen] = useState(false);
   const list = useMemo(() => {
     const s = q.trim().toLowerCase();
     return (s ? machines.filter((m) => `${m.machineCode} ${m.machineName ?? ''}`.toLowerCase().includes(s)) : machines).slice(0, 100);
   }, [machines, q]);
-  // 작업지시 설비가 콤보 목록(PBA)에 없어도 표시되도록 선택값을 그대로 쓴다
-  const sel = selected;
+  const sel = machines.find((m) => m.machineCode === value);
   return (
     <div className="relative">
       <button type="button" onClick={() => setOpen((o) => !o)}
@@ -93,24 +91,21 @@ function MachineCombo({ machines, selected, onSelect }: { machines: DowntimeMach
 }
 
 interface Props {
-  /** 대상 설비. selectableMachines가 있으면 초기값, 없으면 고정. null이면 콤보에서 직접 고른다 */
+  /** 대상 설비. null이면 selectableMachines에서 직접 고른다 */
   machine: DowntimeMachine | null;
-  /** 고를 수 있는 설비 목록 — 넘기면 설비를 콤보로 변경할 수 있다 */
+  /** machine이 null일 때 고를 수 있는 설비 목록 */
   selectableMachines?: DowntimeMachine[];
-  /** 비가동이 발생한 작업지시 (선택 — 없으면 RUN_NO NULL로 저장, machine과 다른 설비를 고르면 저장하지 않는다) */
+  /** 비가동이 발생한 작업지시 (선택 — 없으면 RUN_NO NULL로 저장) */
   runNo?: string | null;
   /** 시작/종료 후 바깥 목록을 갱신하고 싶을 때 */
   onChanged?: () => void | Promise<void>;
 }
 
 export default function EquipDowntimePanel({ machine, selectableMachines = [], runNo, onChanged }: Props) {
-  // 설비 목록이 있으면 콤보로 변경 가능(machine은 초기값), 없으면 machine 고정
-  const selectable = selectableMachines.length > 0;
-  const [picked, setPicked] = useState<DowntimeMachine | null>(machine);
-  const target = selectable ? picked : machine;
+  // machine prop이 있으면 그걸 쓰고, 없으면 콤보로 고른 설비를 쓴다
+  const [picked, setPicked] = useState<DowntimeMachine | null>(null);
+  const target = machine ?? picked;
   const machineCode = target?.machineCode ?? '';
-  // 작업지시의 설비가 아닌 다른 설비를 고르면 작업지시와 무관한 비가동으로 저장한다
-  const effectiveRunNo = machine && machineCode === machine.machineCode ? runNo : null;
 
   const [downtimes, setDowntimes] = useState<DowntimeRow[]>([]);
   const [dtReasons, setDtReasons] = useState<Code[]>([]);
@@ -155,7 +150,7 @@ export default function EquipDowntimePanel({ machine, selectableMachines = [], r
     // 최초 비가동 시작은 사유 없이도 가능(종료 시 필수 선택)
     try {
       await api.post('/oee/work-result/downtimes', {
-        runNo: effectiveRunNo || undefined, machineCode, workstageCode: target?.workstageCode || undefined,
+        runNo: runNo || undefined, machineCode, workstageCode: target?.workstageCode || undefined,
         reasonCode: form.reasonCode || undefined, memo: form.memo || undefined, worker: form.worker || undefined,
       });
       toast.success('비가동 시작 등록');
@@ -197,18 +192,15 @@ export default function EquipDowntimePanel({ machine, selectableMachines = [], r
     <div className="space-y-4">
       {/* 설비: 지정돼 있으면 고정, 아니면 직접 선택 */}
       <div>
-        <span className="text-sm font-semibold text-text">설비 {selectable ? '(설비 선택)' : ''} <span className="text-red-500">*</span></span>
-        {!selectable && machine ? (
+        <span className="text-sm font-semibold text-text">설비 {machine ? '' : '(설비 선택)'} <span className="text-red-500">*</span></span>
+        {machine ? (
           <div className="mt-1 border border-border rounded p-2 bg-surface text-sm">
             <span className="font-mono">{machine.machineCode}</span> · {machine.machineName ?? ''}
             <span className="text-text-muted text-xs"> ({machine.workstageCode})</span>
           </div>
         ) : (
           <div className="mt-1">
-            <MachineCombo machines={selectableMachines} selected={target} onSelect={setPicked} />
-            {machine && machineCode !== machine.machineCode && (
-              <p className="text-[11px] text-amber-600 mt-1">작업지시 설비({machine.machineCode})가 아닌 설비라 작업지시 없이 비가동으로 등록됩니다.</p>
-            )}
+            <MachineCombo machines={selectableMachines} value={machineCode} onSelect={setPicked} />
           </div>
         )}
       </div>

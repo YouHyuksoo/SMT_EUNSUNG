@@ -334,7 +334,6 @@ export default function EquipWorkResultPage() {
           </div>
           <div className="flex-1 min-h-0 overflow-y-auto px-5 py-4">
             <EquipDowntimePanel
-              key={panelRun?.runNo ?? 'none'}
               machine={panelRun?.machineCode ? { machineCode: panelRun.machineCode, machineName: panelRun.machineName, workstageCode: panelRun.workstageCode } : null}
               selectableMachines={machines}
               runNo={panelRun?.runNo ?? null}
