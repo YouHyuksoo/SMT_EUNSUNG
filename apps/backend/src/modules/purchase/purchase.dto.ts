@@ -199,8 +199,10 @@ export class OrderPlanGenerateDto {
   @Type(() => Boolean) applyOrderRule!: boolean;
   /** 단가 기준정보를 붙인다. */
   @Type(() => Boolean) applyUnitPrice!: boolean;
-  /** 리드타임만큼 납기를 민다. */
+  /** 제조 리드타임만큼 납기를 **앞으로 당긴다** (자재가 생산 시작 전에 들어와야 한다). */
   @Type(() => Boolean) applyLeadTime!: boolean;
+  /** 당긴 납기가 휴무일이면 일하는 날로 옮긴다 (PB cbx_apply_calendar). */
+  @Type(() => Boolean) applyCalendar!: boolean;
 }
 
 export class PriceResetDto {

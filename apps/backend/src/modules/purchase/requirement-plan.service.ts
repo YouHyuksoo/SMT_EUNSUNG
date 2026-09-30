@@ -20,6 +20,7 @@ import type {
   RequirementPlanQueryDto,
   RequirementRunDto,
 } from './purchase.dto';
+import { affectedRows } from '../../common/utils/affected-rows.util';
 
 /** BOM 전개 결과 중 소요량으로 잡는 거래유형. PB 원본 그대로다. */
 const REQUIREMENT_LINE_TYPES = ['G', 'D', 'N', 'S', 'M', 'F', 'B'];
@@ -220,7 +221,7 @@ export class RequirementPlanService {
         } as unknown as unknown[],
       );
       const affected = Number(
-        (updated as { rowsAffected?: number })?.rowsAffected ?? 0,
+        affectedRows(updated) ?? 0,
       );
       if (affected > 0) return { updated: true };
 
@@ -271,7 +272,7 @@ export class RequirementPlanService {
             itemCode: row.itemCode,
           } as unknown as unknown[],
         );
-        deleted += Number((result as { rowsAffected?: number })?.rowsAffected ?? 0);
+        deleted += Number(affectedRows(result) ?? 0);
       }
       return { deleted };
     });
@@ -357,7 +358,20 @@ export class RequirementPlanService {
               WHERE TRUNC(REQUIRMENT_PLAN_DATE) = v_date
                 AND ORGANIZATION_ID = :organizationId
            ) LOOP
+             -- 수량이 비어 있으면 MODEL_UNIT_QTY * NULL 이 NULL 이 되고, TEMP 의
+             -- REQUIRMENT_QTY 는 NOT NULL 이라 ORA-01400 으로 떨어진다. 어느 품목
+             -- 때문인지 알 수 있게 먼저 막는다.
+             IF c.ORDER_QTY IS NULL THEN
+               RAISE_APPLICATION_ERROR(-20012, 'QTY_NULL:' || c.ITEM_CODE);
+             END IF;
+
              v_bom_session := PKG_DESIGN.BOM_EXPLOSION(c.ITEM_CODE, c.PLAN_DATE, :organizationId);
+             -- 전개가 실패하면 음수를 준다. 그대로 두면 WHERE SESSION_ID = -1 이
+             -- 0행을 넣고 넘어가, 그 품목의 소요량이 조용히 빠진다. PB 477 은
+             -- 검사하지 않았지만 478 생성기는 검사한다 - 그쪽에 맞춘다.
+             IF v_bom_session IS NULL OR v_bom_session < 0 THEN
+               RAISE_APPLICATION_ERROR(-20013, 'BOM_FAIL:' || c.ITEM_CODE);
+             END IF;
 
              INSERT INTO IM_ITEM_REQUIRMENT_PLAN_TEMP
                (SESSION_ID, REQUIRMENT_PLAN_DATE, ITEM_CODE, LINE_TYPE, SUPPLIER_CODE,
@@ -391,13 +405,37 @@ export class RequirementPlanService {
                      ORGANIZATION_ID, PLAN_DATE;
 
            DELETE FROM IM_ITEM_REQUIRMENT_PLAN_TEMP WHERE SESSION_ID = v_req_session;
+         EXCEPTION
+           -- BOM_EXPLOSION 은 ID_ENG_BOM_TEMP 에 행을 깔고 스스로 커밋한다
+           -- (그래서 그 표에 2020년부터 세션 7만 개가 쌓여 있다). 우리 트랜잭션을
+           -- 롤백해도 그 행은 남으므로, 실패한 세션만 여기서 지우고 다시 던진다.
+           WHEN OTHERS THEN
+             IF v_bom_session IS NOT NULL AND v_bom_session > 0 THEN
+               DELETE FROM ID_ENG_BOM_TEMP WHERE SESSION_ID = v_bom_session;
+             END IF;
+             RAISE;
          END;`,
         {
           planDate: dto.requirementPlanDate,
           organizationId,
           userId,
         } as unknown as unknown[],
-      );
+      ).catch((error: unknown) => {
+        const message = error instanceof Error ? error.message : String(error);
+        const qtyNull = /QTY_NULL:(\S+)/.exec(message);
+        if (qtyNull) {
+          throw new BadRequestException(
+            `${qtyNull[1]} 의 주문수량이 비어 있습니다. 기준계획을 먼저 고치세요.`,
+          );
+        }
+        const bomFail = /BOM_FAIL:(\S+)/.exec(message);
+        if (bomFail) {
+          throw new BadRequestException(
+            `${bomFail[1]} 의 BOM 을 펼 수 없습니다. BOM 이 등록돼 있는지 확인하세요.`,
+          );
+        }
+        throw error;
+      });
 
       // OUT 인자를 쓰면 서비스가 oracledb 드라이버를 직접 import 해야 한다.
       // 저장소 관례대로 만들어진 행을 같은 트랜잭션에서 세어 온다.

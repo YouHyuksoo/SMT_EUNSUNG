@@ -26,6 +26,7 @@ import type {
   OrderPlanQueryDto,
   PriceResetDto,
 } from './purchase.dto';
+import { affectedRows } from '../../common/utils/affected-rows.util';
 
 /**
  * 계획 원천. PB 는 라디오버튼으로 골랐고 각각 전용 PB 함수를 불렀다
@@ -187,9 +188,11 @@ export class OrderPlanService {
       binds.dateFrom = query.dateFrom;
       binds.dateTo = query.dateTo;
     }
-    /** 주문으로 넘어간 계획을 뺀다 (ORDER_NO 가 채워진 행). */
+    // 아직 발주할 것만: 수량이 남아 있고 확정되지 않은 계획.
+    // 확정하면 계획을 지우지 않고 상태만 'Y' 가 되므로 상태도 같이 걸러야 한다.
     if (query.pendingOnly) {
-      filter += ' AND A.PURCHASE_ORDER_QTY > 0';
+      filter += " AND NVL(A.PURCHASE_ORDER_QTY, 0) > 0"
+        + " AND NVL(A.PURCHASE_ORDER_STATUS, 'N') <> 'Y'";
     }
 
     const rows = await this.dataSource.query(
@@ -465,6 +468,7 @@ export class OrderPlanService {
          v_bad_rate  NUMBER;
          v_uom       VARCHAR2(20);
          v_bad_qty   NUMBER;
+         v_surplus   NUMBER;
        BEGIN
          DELETE FROM IM_ITEM_PURCHASE_ORDER_PLAN WHERE ORGANIZATION_ID = :organizationId;
 
@@ -593,6 +597,24 @@ export class OrderPlanService {
              END IF;
            END IF;
 
+           -- 최소주문량·포장단위로 올린 만큼은 남는 물량이다. PB 는 이것을 재고 풀에
+           -- 다시 써 넣어, 같은 자재의 뒤 계획줄이 그만큼 덜 발주하게 한다.
+           -- 되돌리지 않으면 줄마다 올림이 반복돼 필요보다 많이 발주된다.
+           v_surplus := v_calc - v_remain;
+           IF v_surplus > 0 THEN
+             UPDATE IM_ITEM_INVENTORY_GEN
+                SET INVENTORY_QTY = NVL(INVENTORY_QTY, 0) + v_surplus
+              WHERE ITEM_CODE = p.ITEM_CODE
+                AND LINE_TYPE = p.LINE_TYPE
+                AND ORGANIZATION_ID = :organizationId
+                AND ROWNUM = 1;
+             IF SQL%ROWCOUNT = 0 THEN
+               INSERT INTO IM_ITEM_INVENTORY_GEN
+                 (ITEM_CODE, LINE_TYPE, ORGANIZATION_ID, INVENTORY_QTY, PURCHASE_ORDER_QTY)
+               VALUES (p.ITEM_CODE, p.LINE_TYPE, :organizationId, v_surplus, 0);
+             END IF;
+           END IF;
+
            UPDATE IM_ITEM_PURCHASE_ORDER_PLAN
               SET ORDER_NO = CASE WHEN v_calc > 0
                                   THEN 'TA' || TO_CHAR(SYSDATE, 'YYMMDD') || SEQ_ORDER_NO.NEXTVAL
@@ -625,12 +647,32 @@ export class OrderPlanService {
                       AND B.ORGANIZATION_ID = :organizationId);
          END IF;
 
-         -- 리드타임을 켜면 납기를 뒤로 민다 (F_GET_DELIVERY_DATE, DB 함수).
+         -- 리드타임은 납기를 **앞으로 당긴다**. 자재가 생산 시작 전에 들어와야 하므로
+         -- 제조 리드타임만큼 먼저 받는다 (PB: DELIVERY_DATE - MANUFACTURE_LEADTIME).
          IF :applyLeadTime = 'Y' THEN
+           UPDATE IM_ITEM_PURCHASE_ORDER_PLAN A
+              SET A.DELIVERY_DATE = A.DELIVERY_DATE -
+                  (SELECT NVL(B.MANUFACTURE_LEADTIME, 0) FROM ID_ITEM B
+                    WHERE B.ITEM_CODE = A.ITEM_CODE
+                      AND B.ORGANIZATION_ID = A.ORGANIZATION_ID
+                      AND B.DATESET <= TRUNC(SYSDATE)
+                      AND B.DATEEND >= TRUNC(SYSDATE))
+            WHERE A.ORGANIZATION_ID = :organizationId
+              AND EXISTS (SELECT 'X' FROM ID_ITEM B
+                           WHERE B.ITEM_CODE = A.ITEM_CODE
+                             AND B.ORGANIZATION_ID = A.ORGANIZATION_ID
+                             AND B.DATESET <= TRUNC(SYSDATE)
+                             AND B.DATEEND >= TRUNC(SYSDATE));
+         END IF;
+
+         -- 작업일 보정은 리드타임과 별개 단계다 (PB cbx_apply_calendar).
+         -- 당긴 납기가 휴무일이면 일하는 날로 옮긴다. PB 와 같이 인자 두 개다.
+         IF :applyCalendar = 'Y' THEN
            UPDATE IM_ITEM_PURCHASE_ORDER_PLAN
-              SET DELIVERY_DATE = F_GET_DELIVERY_DATE(ITEM_CODE, SUPPLIER_CODE,
-                                                      DELIVERY_DATE, ORGANIZATION_ID)
-            WHERE ORGANIZATION_ID = :organizationId;
+              SET DELIVERY_DATE = NVL(F_GET_DELIVERY_DATE(DELIVERY_DATE, ORGANIZATION_ID),
+                                      PURCHASE_ORDER_DATE - 1)
+            WHERE PURCHASE_ORDER_STATUS = 'N'
+              AND ORGANIZATION_ID = :organizationId;
          END IF;
        END;`,
       {
@@ -640,6 +682,7 @@ export class OrderPlanService {
         applyOrderRule: dto.applyOrderRule ? 'Y' : 'N',
         applyUnitPrice: dto.applyUnitPrice ? 'Y' : 'N',
         applyLeadTime: dto.applyLeadTime ? 'Y' : 'N',
+        applyCalendar: dto.applyCalendar ? 'Y' : 'N',
       } as unknown as unknown[],
     );
   }
@@ -679,7 +722,7 @@ export class OrderPlanService {
         binds as unknown as unknown[],
       );
       return {
-        updated: Number((result as { rowsAffected?: number })?.rowsAffected ?? 0),
+        updated: Number(affectedRows(result) ?? 0),
       };
     });
   }
@@ -689,55 +732,100 @@ export class OrderPlanService {
   /**
    * 발주계획을 실제 주문으로 넘긴다.
    *
-   * PB 는 고른 줄마다 주문번호를 채번해 한 건씩 INSERT 했다. 웹도 같은 순서를
-   * 지키되, 넘어간 계획은 다시 넘어가지 않도록 **계획에서 지운다** (PB 동작).
+   * PB 원문과 맞춘 것 네 가지 — 처음 구현은 넷 다 어긋나 있었다:
+   *
+   * 1. **계획을 지우지 않는다.** `PURCHASE_ORDER_STATUS` 를 `'Y'` 로 바꿀 뿐이다.
+   *    지우면 어느 계획에서 나온 주문인지 되짚을 수 없고, 다시 확정되는 것을
+   *    막을 근거도 사라진다. 480 주문예정도 같은 이유로 기록을 남긴다.
+   * 2. **주문번호는 계획이 이미 들고 있는 `ORDER_NO` 를 그대로 쓴다.** 생성 때
+   *    `TA+YYMMDD+일련번호` 로 붙여 둔 값이다. 새로 채번하면 계획과 주문이 끊긴다.
+   * 3. **`ORDER_GROUP_NO` 를 채운다** (`yyyymmdd` + 3자리 일련번호). 한 번의 확정이
+   *    한 묶음이다. 481 자재주문관리가 이 값으로 발주그룹 합계를 낸다 — 비어 있으면
+   *    그 화면의 그룹 집계가 나오지 않는다.
+   * 4. **넘길 수 없는 계획을 막는다.** `LINE_TYPE <> 'T'` 이고 `DELIVERY` 가 채워진
+   *    것만 넘어간다. 납품구분이 없으면 단가·통화가 안 붙은 계획이라는 뜻이다.
    */
   async purchase(
     dto: OrderPlanPurchaseDto,
     organizationId: number,
     userId: string,
-  ): Promise<{ created: number }> {
-    if (dto.itemCodes.length === 0) return { created: 0 };
+  ): Promise<{ created: number; skipped: number }> {
+    if (dto.itemCodes.length === 0) return { created: 0, skipped: 0 };
 
     return this.dataSource.transaction(async (manager) => {
+      // 이번 확정을 한 묶음으로 묶는 발주그룹 번호. PB 와 같은 형태다.
+      const [{ GRP }] = await manager.query(
+        `SELECT TO_CHAR(SYSDATE, 'YYYYMMDD')
+                || TO_CHAR(SEQ_PURCHASE_ORDER_NO.NEXTVAL, 'FM000') AS GRP FROM DUAL`,
+      );
+      const orderGroupNo = String(GRP);
+
       let created = 0;
+      let candidates = 0;
       for (const key of dto.itemCodes) {
+        const binds = {
+          orderGroupNo,
+          orderDate: dto.orderDate,
+          userId,
+          organizationId,
+          itemCode: key.itemCode,
+          lineType: key.lineType,
+        } as unknown as unknown[];
+
+        const [{ CNT }] = await manager.query(
+          `SELECT COUNT(*) AS CNT FROM IM_ITEM_PURCHASE_ORDER_PLAN
+            WHERE ORGANIZATION_ID = :organizationId
+              AND ITEM_CODE = :itemCode
+              AND LINE_TYPE = :lineType
+              AND NVL(PURCHASE_ORDER_STATUS, 'N') <> 'Y'
+              AND NVL(PURCHASE_ORDER_QTY, 0) > 0`,
+          { organizationId, itemCode: key.itemCode, lineType: key.lineType } as unknown as unknown[],
+        );
+        candidates += Number(CNT);
+
         const result = await manager.query(
           `INSERT INTO IM_ITEM_PURCHASE_ORDER
-             (ORDER_NO, PURCHASE_ORDER_DATE, ORGANIZATION_ID, SUPPLIER_CODE, ITEM_CODE,
-              DELIVERY_DATE, LINE_TYPE, ORDER_QTY, UNIT_PRICE, ORDER_AMT,
+             (ORDER_NO, ORDER_GROUP_NO, ORGANIZATION_ID, PURCHASE_ORDER_DATE,
+              SUPPLIER_CODE, ITEM_CODE, DELIVERY_DATE, DELIVERY, LINE_TYPE, ORDER_TYPE,
+              ORDER_QTY, UNIT_PRICE, CURRENCY, ARRIVAL_QTY, MFS,
               ENTER_BY, ENTER_DATE, LAST_MODIFY_BY, LAST_MODIFY_DATE)
-           SELECT TO_CHAR(A.ORGANIZATION_ID) || TO_CHAR(SYSDATE, 'YYMMDD')
-                    || SEQ_PURCHASE_ORDER_NO.NEXTVAL,
+           SELECT ORDER_NO, :orderGroupNo, ORGANIZATION_ID,
                   TRUNC(TO_DATE(:orderDate, 'YYYY-MM-DD')),
-                  A.ORGANIZATION_ID, NVL(A.SUPPLIER_CODE, '*'), A.ITEM_CODE,
-                  A.DELIVERY_DATE, A.LINE_TYPE, A.PURCHASE_ORDER_QTY,
-                  A.UNIT_PRICE, A.ORDER_AMT,
+                  NVL(SUPPLIER_CODE, '*'), ITEM_CODE, DELIVERY_DATE,
+                  NVL(DELIVERY, '1'), LINE_TYPE, ORDER_TYPE,
+                  PURCHASE_ORDER_QTY, UNIT_PRICE, CURRENCY, NVL(ARRIVAL_QTY, 0), MFS,
                   :userId, SYSDATE, :userId, SYSDATE
-             FROM IM_ITEM_PURCHASE_ORDER_PLAN A
-            WHERE A.ORGANIZATION_ID = :organizationId
-              AND A.ITEM_CODE = :itemCode
-              AND A.LINE_TYPE = :lineType
-              AND NVL(A.PURCHASE_ORDER_QTY, 0) > 0`,
-          {
-            orderDate: dto.orderDate,
-            userId,
-            organizationId,
-            itemCode: key.itemCode,
-            lineType: key.lineType,
-          } as unknown as unknown[],
+             FROM IM_ITEM_PURCHASE_ORDER_PLAN
+            WHERE ORGANIZATION_ID = :organizationId
+              AND ITEM_CODE = :itemCode
+              AND LINE_TYPE = :lineType
+              AND LINE_TYPE <> 'T'
+              AND DELIVERY IS NOT NULL
+              AND NVL(PURCHASE_ORDER_STATUS, 'N') <> 'Y'
+              AND NVL(PURCHASE_ORDER_QTY, 0) > 0`,
+          binds,
         );
         const affected = Number(
           (result as { rowsAffected?: number })?.rowsAffected ?? 0,
         );
         created += affected;
+
         if (affected > 0) {
+          // 지우지 않고 확정 표시만 남긴다.
           await manager.query(
-            `DELETE FROM IM_ITEM_PURCHASE_ORDER_PLAN
+            `UPDATE IM_ITEM_PURCHASE_ORDER_PLAN
+                SET PURCHASE_ORDER_STATUS = 'Y',
+                    LAST_MODIFY_BY = :userId,
+                    LAST_MODIFY_DATE = SYSDATE
               WHERE ORGANIZATION_ID = :organizationId
                 AND ITEM_CODE = :itemCode
-                AND LINE_TYPE = :lineType`,
+                AND LINE_TYPE = :lineType
+                AND LINE_TYPE <> 'T'
+                AND DELIVERY IS NOT NULL
+                AND NVL(PURCHASE_ORDER_STATUS, 'N') <> 'Y'
+                AND NVL(PURCHASE_ORDER_QTY, 0) > 0`,
             {
+              userId,
               organizationId,
               itemCode: key.itemCode,
               lineType: key.lineType,
@@ -745,7 +833,8 @@ export class OrderPlanService {
           );
         }
       }
-      return { created };
+      // 납품구분이 없거나 거래유형이 T 여서 넘어가지 못한 계획 수.
+      return { created, skipped: Math.max(candidates - created, 0) };
     });
   }
 

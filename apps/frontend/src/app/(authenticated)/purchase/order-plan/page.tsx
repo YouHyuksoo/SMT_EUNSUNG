@@ -93,13 +93,16 @@ const TIP = {
   orderRule: '협력사별 최소주문량·포장단위·불량율을 발주량에 반영합니다.'
     + ' 예: 포장단위가 100이고 계산값이 120이면 200으로 올립니다.',
   unitPrice: '단가 기준정보에서 유효기간 안의 단가·통화·납품구분을 붙입니다.',
-  leadTime: '협력사 리드타임만큼 납기를 뒤로 밉니다. 안 켜면 자재가 필요한 날이 곧 납기가 됩니다.',
+  leadTime: '제조 리드타임만큼 납기를 앞으로 당깁니다 — 자재가 생산 시작 전에 들어와야 하기 때문입니다.'
+    + ' 안 켜면 자재가 필요한 날이 곧 납기가 됩니다.',
+  calendar: '당긴 납기가 휴무일이면 일하는 날로 옮깁니다. 리드타임 반영과는 별개 단계입니다.',
   generate: '고른 계획을 BOM 으로 펴고, 켜 둔 재고를 빼서 발주계획을 만듭니다.'
     + ' 기존 발주계획은 통째로 새로 만들어집니다.',
   search: '지금 화면의 조건으로 다시 읽어옵니다.',
   pendingOnly: '발주할 수량이 0보다 큰 계획만 봅니다. 재고로 다 충당된 것은 숨깁니다.',
   priceReset: '단가만 다시 붙입니다. 발주량은 그대로 두고 단가 기준정보가 바뀐 것을 반영할 때 씁니다.',
-  purchase: '고른 계획을 실제 주문으로 넘깁니다. 넘어간 계획은 발주계획에서 사라집니다.',
+  purchase: '고른 계획을 실제 주문으로 넘깁니다. 계획은 지워지지 않고 확정 표시만 남아,'
+    + ' 어느 계획에서 나온 주문인지 되짚을 수 있습니다. 한 번의 확정이 한 발주그룹입니다.',
   tabPlan: '계산이 끝난 발주계획입니다. 여기서 골라 주문으로 넘깁니다.',
   tabRequirement: '재고를 빼기 전의 순수 소요량입니다. 계산이 이상할 때 여기를 먼저 봅니다.',
 } as const;
@@ -136,6 +139,7 @@ export default function OrderPlanPage() {
   const [applyOrderRule, setApplyOrderRule] = useState(true);
   const [applyUnitPrice, setApplyUnitPrice] = useState(true);
   const [applyLeadTime, setApplyLeadTime] = useState(true);
+  const [applyCalendar, setApplyCalendar] = useState(true);
 
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [pending, setPending] = useState<'generate' | 'purchase' | 'price' | null>(null);
@@ -201,6 +205,7 @@ export default function OrderPlanPage() {
           applyOrderRule,
           applyUnitPrice,
           applyLeadTime,
+          applyCalendar,
         });
         const d = r.data?.data ?? {};
         toast.success(
@@ -218,7 +223,16 @@ export default function OrderPlanPage() {
           .filter((row) => selected.has(rowKey(row)))
           .map((row) => ({ itemCode: row.itemCode, lineType: row.lineType }));
         const r = await api.post('/purchase/order-plan/purchase', { orderDate, itemCodes });
-        toast.success(`${r.data?.data?.created ?? 0}건을 주문으로 넘겼습니다.`);
+        const created = r.data?.data?.created ?? 0;
+        const skipped = r.data?.data?.skipped ?? 0;
+        toast.success(`${created}건을 주문으로 넘겼습니다.`);
+        // 납품구분이 안 붙은 계획은 단가·통화도 비어 있어 주문이 될 수 없다.
+        if (skipped > 0) {
+          toast.error(
+            `${skipped}건은 넘어가지 못했습니다 — 납품구분이 비었거나 거래유형이 T 입니다.`
+            + ' 단가 재설정을 먼저 실행해 보세요.',
+          );
+        }
         await search('plan');
       }
       setPending(null);
@@ -228,7 +242,7 @@ export default function OrderPlanPage() {
       setBusy(false);
     }
   }, [pending, source, dateFrom, dateTo, orderDate, itemCond, arms, applyOrderRule,
-    applyUnitPrice, applyLeadTime, supplierCond, plans, selected, search]);
+    applyUnitPrice, applyLeadTime, applyCalendar, supplierCond, plans, selected, search]);
 
   const sourceLabel = PLAN_SOURCES.find((s) => s.value === source)?.label ?? '';
   const armLabels = INVENTORY_ARMS
@@ -337,6 +351,12 @@ export default function OrderPlanPage() {
               <input type="checkbox" checked={applyLeadTime}
                 onChange={(e) => setApplyLeadTime(e.target.checked)} />
               리드타임 반영
+            </label>
+            <label data-tooltip={TIP.calendar}
+              className="flex items-center gap-1 text-sm text-text">
+              <input type="checkbox" checked={applyCalendar}
+                onChange={(e) => setApplyCalendar(e.target.checked)} />
+              작업일 보정
             </label>
             <Button size="sm" className="ml-auto" disabled={busy}
               data-tooltip={TIP.generate}
