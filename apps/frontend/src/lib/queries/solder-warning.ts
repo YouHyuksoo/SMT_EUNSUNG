@@ -74,39 +74,5 @@ SELECT w.LOT_NO,
 `;
 }
 
-/**
- * Solder Paste NG 건수 조회 (d_display_solder_waring_ng_count2).
- * gap3 > '11:30' (5자리) OR aftr_unfreezing_time > '23:30' OR 유효기간 만료 시 NG.
- * NG > 0이면 경고 사운드 대신 화면 상단에 경고 배너를 표시한다.
- */
-export function sqlSolderNgCount(): string {
-  return `
-SELECT COUNT(*) AS NG_COUNT
-  FROM IM_ITEM_SOLDER_MASTER
- WHERE ISSUE_DATE IS NOT NULL
-   AND DESTROY_DATE IS NULL
-   AND ORGANIZATION_ID = 1
-   AND (
-     (
-       LENGTH(
-         F_GET_TIME_TERM_HMI(
-           NVL(NVL(NVL(VISCOSITY_START_DATE, FIRST_LINE_INPUT_DATE), INPUT_DATE), SYSDATE),
-           SYSDATE
-         )
-       ) = 5
-       AND F_GET_TIME_TERM_HMI(
-             NVL(NVL(NVL(VISCOSITY_START_DATE, FIRST_LINE_INPUT_DATE), INPUT_DATE), SYSDATE),
-             SYSDATE
-           ) > '11:30'
-     )
-     OR F_GET_TIME_STR(
-          DECODE(
-            SIGN((NVL(DESTROY_DATE, SYSDATE) - NVL(UNFREEZING_START_DATE, SYSDATE)) * 24),
-            -1, 0,
-            (NVL(DESTROY_DATE, SYSDATE) - NVL(UNFREEZING_START_DATE, SYSDATE)) * 24
-          )
-        ) > '23:30'
-     OR (TRUNC(VALID_DATE) - TRUNC(SYSDATE)) <= 0
-   )
-`;
-}
+/** Solder Paste NG 건수 SQL 은 대시보드와 같이 쓰므로 @smt/shared 에 있다. */
+export { sqlSolderNgCount } from '@smt/shared';

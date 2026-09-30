@@ -2,24 +2,21 @@
 
 /**
  * @file src/app/(authenticated)/dashboard/page.tsx
- * @description 대시보드 페이지 — 설비/작업지시/자재/품질 현황 + 점검 요약
+ * @description 대시보드 페이지 — 설비/오늘 생산/솔더·MSL/오늘 불량 현황 카드 4개
  *
  * 초보자 가이드:
- * 1. **현황 카드 4개**: 설비 가동, 작업지시 진행, 자재 알림, 품질 이슈
- * 2. **점검 현황**: 일상점검, 정기점검, 예방보전(PM WO) 오늘 기준 요약
- * 3. API: /equipment/equips/stats, /production/job-orders, /material/stocks,
- *         /material/shelf-life, /quality/defect-logs/stats/by-status
+ * 1. API: GET /dashboard/summary?date=YYYY-MM-DD — 카드별 출처는 백엔드 dashboard.service.ts 머리말 참고
+ * 2. 설비·솔더·MSL 은 조회 시점 현재 상태, 생산·불량은 date 하루 기준이다
+ * 3. 설비 일상/정기점검·PM 카드는 은성 DB에 데이터가 없어 두지 않는다
  */
 import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
+import toast from "react-hot-toast";
 import {
   Cpu, ClipboardList, PackageSearch, Bug,
   LayoutDashboard, RefreshCw,
-  ClipboardCheck, CalendarCheck, Wrench,
 } from "lucide-react";
 import { Button } from "@/components/ui";
-import InspectSummaryCard from "./components/InspectSummaryCard";
-import type { InspectItem } from "./components/InspectSummaryCard";
 import api from "@/services/api";
 
 /* ── Status Card ── */
@@ -43,7 +40,7 @@ function StatusCard({ title, icon: Icon, color, gradient, items }: StatusCardPro
           {items.map((item) => (
             <div key={item.label} className="text-center p-1.5 rounded-md bg-surface dark:bg-slate-800/50">
               <div className={`text-lg font-bold leading-tight ${item.accent || "text-text"}`}>
-                {item.value}
+                {item.value.toLocaleString()}
               </div>
               <div className="text-[10px] text-text-muted mt-0.5">{item.label}</div>
             </div>
@@ -55,28 +52,19 @@ function StatusCard({ title, icon: Icon, color, gradient, items }: StatusCardPro
 }
 
 /* ── Types ── */
-interface EquipStats {
-  normal: number; maint: number; stop: number; total: number;
-}
-interface JobStats {
-  wait: number; running: number; done: number; total: number;
-}
-interface MatAlert {
-  lowStock: number; nearExpiry: number; expired: number;
-}
-interface DefectStats {
-  wait: number; repair: number; rework: number; done: number; total: number;
+interface DashboardSummary {
+  equip: { inUse: number; down: number; notUsed: number; total: number };
+  production: { smdPlan: number; smdActual: number; miPlan: number; miActual: number };
+  material: { solderInUse: number; solderNg: number; mslLots: number; mslNg: number };
+  defect: { pending: number; genuine: number; pseudo: number; unrepaired: number };
 }
 
-interface InspectSummary {
-  items: InspectItem[];
-  total: number;
-  completed: number;
-  pass: number;
-  fail: number;
-}
-
-const emptySummary: InspectSummary = { items: [], total: 0, completed: 0, pass: 0, fail: 0 };
+const emptySummary: DashboardSummary = {
+  equip: { inUse: 0, down: 0, notUsed: 0, total: 0 },
+  production: { smdPlan: 0, smdActual: 0, miPlan: 0, miActual: 0 },
+  material: { solderInUse: 0, solderNg: 0, mslLots: 0, mslNg: 0 },
+  defect: { pending: 0, genuine: 0, pseudo: 0, unrepaired: 0 },
+};
 
 function formatDate(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -84,41 +72,27 @@ function formatDate(d: Date) {
 
 export default function DashboardPage() {
   const { t } = useTranslation();
-  const [equip, setEquip] = useState<EquipStats>({ normal: 0, maint: 0, stop: 0, total: 0 });
-  const [job, setJob] = useState<JobStats>({ wait: 0, running: 0, done: 0, total: 0 });
-  const [mat, setMat] = useState<MatAlert>({ lowStock: 0, nearExpiry: 0, expired: 0 });
-  const [defect, setDefect] = useState<DefectStats>({ wait: 0, repair: 0, rework: 0, done: 0, total: 0 });
-  const [daily, setDaily] = useState<InspectSummary>(emptySummary);
-  const [periodic, setPeriodic] = useState<InspectSummary>(emptySummary);
-  const [pm, setPm] = useState<InspectSummary>(emptySummary);
+  const [summary, setSummary] = useState<DashboardSummary>(emptySummary);
   const [loading, setLoading] = useState(false);
-  const [inspectLoading, setInspectLoading] = useState(false);
 
   const today = formatDate(new Date());
 
   const search = useCallback(async () => {
     setLoading(true);
-    setInspectLoading(true);
     try {
       const res = await api.get("/dashboard/summary", { params: { date: today } });
-      const { equip, job, mat, defect, daily, periodic, pm } = res.data.data;
-
-      if (equip) setEquip(equip);
-      if (job) setJob(job);
-      if (mat) setMat(mat);
-      if (defect) setDefect(defect);
-      if (daily) setDaily(daily);
-      if (periodic) setPeriodic(periodic);
-      if (pm) setPm(pm);
-    } catch {
-      /* keep current state */
+      setSummary(res.data.data);
+    } catch (error: unknown) {
+      console.error(error);
+      toast.error(t("dashboard.loadFailed"));
     } finally {
       setLoading(false);
-      setInspectLoading(false);
     }
-  }, [today]);
+  }, [today, t]);
 
   useEffect(() => { search(); }, [search]);
+
+  const { equip, production, material, defect } = summary;
 
   return (
     <div className="h-full flex flex-col overflow-hidden p-6 gap-4 animate-fade-in">
@@ -138,92 +112,49 @@ export default function DashboardPage() {
       {/* Status Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 flex-shrink-0">
         <StatusCard
-          title={t("dashboard.equipStatus", "설비 가동 현황")}
+          title={t("dashboard.equipStatus")}
           icon={Cpu} color="text-indigo-500"
           gradient="bg-gradient-to-br from-indigo-400 via-purple-400 to-blue-500"
           items={[
-            { label: t("dashboard.equipNormal", "가동"), value: equip.normal, accent: "text-success" },
-            { label: t("dashboard.equipMaint", "정비중"), value: equip.maint, accent: "text-warning" },
-            { label: t("dashboard.equipStop", "정지"), value: equip.stop, accent: equip.stop > 0 ? "text-error" : "text-text" },
-            { label: t("dashboard.equipTotal", "전체"), value: equip.total },
+            { label: t("dashboard.equipInUse"), value: equip.inUse, accent: "text-success" },
+            { label: t("dashboard.equipDown"), value: equip.down, accent: equip.down > 0 ? "text-error" : "text-text" },
+            { label: t("dashboard.equipNotUsed"), value: equip.notUsed },
+            { label: t("dashboard.equipTotal"), value: equip.total },
           ]}
         />
         <StatusCard
-          title={t("dashboard.jobStatus", "오늘 작업지시")}
+          title={t("dashboard.prodStatus")}
           icon={ClipboardList} color="text-sky-500"
           gradient="bg-gradient-to-br from-sky-400 to-cyan-500"
           items={[
-            { label: t("dashboard.jobWait", "대기"), value: job.wait },
-            { label: t("dashboard.jobRunning", "진행"), value: job.running, accent: "text-info" },
-            { label: t("dashboard.jobDone", "완료"), value: job.done, accent: "text-success" },
-            { label: t("dashboard.jobTotal", "전체"), value: job.total },
+            { label: t("dashboard.smdPlan"), value: production.smdPlan },
+            { label: t("dashboard.smdActual"), value: production.smdActual, accent: "text-info" },
+            { label: t("dashboard.miPlan"), value: production.miPlan },
+            { label: t("dashboard.miActual"), value: production.miActual, accent: "text-info" },
           ]}
         />
         <StatusCard
-          title={t("dashboard.matAlert", "자재 알림")}
+          title={t("dashboard.matStatus")}
           icon={PackageSearch} color="text-amber-500"
           gradient="bg-gradient-to-br from-amber-400 to-orange-500"
           items={[
-            { label: t("dashboard.matLowStock", "안전재고 미달"), value: mat.lowStock, accent: mat.lowStock > 0 ? "text-warning" : "text-text" },
-            { label: t("dashboard.matNearExpiry", "유효기한 임박"), value: mat.nearExpiry, accent: mat.nearExpiry > 0 ? "text-warning" : "text-text" },
-            { label: t("dashboard.matExpired", "기한 초과"), value: mat.expired, accent: mat.expired > 0 ? "text-error" : "text-text" },
-            { label: t("dashboard.matAlertTotal", "알림 합계"), value: mat.lowStock + mat.nearExpiry + mat.expired },
+            { label: t("dashboard.solderInUse"), value: material.solderInUse },
+            { label: t("dashboard.solderNg"), value: material.solderNg, accent: material.solderNg > 0 ? "text-error" : "text-text" },
+            { label: t("dashboard.mslLots"), value: material.mslLots },
+            { label: t("dashboard.mslNg"), value: material.mslNg, accent: material.mslNg > 0 ? "text-error" : "text-text" },
           ]}
         />
         <StatusCard
-          title={t("dashboard.defectStatus", "불량 현황")}
+          title={t("dashboard.defectStatus")}
           icon={Bug} color="text-rose-500"
           gradient="bg-gradient-to-br from-rose-400 to-red-500"
           items={[
-            { label: t("dashboard.defectWait", "미처리"), value: defect.wait, accent: defect.wait > 0 ? "text-error" : "text-text" },
-            { label: t("dashboard.defectRepair", "수리중"), value: defect.repair, accent: "text-warning" },
-            { label: t("dashboard.defectRework", "재작업"), value: defect.rework, accent: "text-warning" },
-            { label: t("dashboard.defectDone", "처리완료"), value: defect.done, accent: "text-success" },
+            { label: t("dashboard.defectPending"), value: defect.pending, accent: defect.pending > 0 ? "text-warning" : "text-text" },
+            { label: t("dashboard.defectGenuine"), value: defect.genuine },
+            { label: t("dashboard.defectPseudo"), value: defect.pseudo },
+            { label: t("dashboard.defectUnrepaired"), value: defect.unrepaired, accent: defect.unrepaired > 0 ? "text-error" : "text-text" },
           ]}
         />
-      </div>
-
-      {/* Scrollable content area */}
-      <div className="flex-1 min-h-0 overflow-y-auto space-y-4">
-        {/* Inspection Summary (3 columns) */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <InspectSummaryCard
-            title={t("dashboard.inspect.dailyTitle", "일상점검")}
-            icon={ClipboardCheck}
-            iconColor="text-blue-500"
-            gradient="bg-gradient-to-br from-sky-400 to-blue-500"
-            items={daily.items}
-            total={daily.total}
-            completed={daily.completed}
-            pass={daily.pass}
-            fail={daily.fail}
-            loading={inspectLoading}
-          />
-          <InspectSummaryCard
-            title={t("dashboard.inspect.periodicTitle", "정기점검")}
-            icon={CalendarCheck}
-            iconColor="text-purple-500"
-            gradient="bg-gradient-to-br from-purple-400 to-violet-500"
-            items={periodic.items}
-            total={periodic.total}
-            completed={periodic.completed}
-            pass={periodic.pass}
-            fail={periodic.fail}
-            loading={inspectLoading}
-          />
-          <InspectSummaryCard
-            title={t("dashboard.inspect.pmTitle", "예방보전")}
-            icon={Wrench}
-            iconColor="text-orange-500"
-            gradient="bg-gradient-to-br from-amber-400 to-orange-500"
-            items={pm.items}
-            total={pm.total}
-            completed={pm.completed}
-            pass={pm.pass}
-            fail={pm.fail}
-            loading={inspectLoading}
-          />
-        </div>
       </div>
     </div>
   );

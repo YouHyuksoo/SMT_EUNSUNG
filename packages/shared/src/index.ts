@@ -35,3 +35,6 @@ export * from './warehouse';
 
 // 생산(공정) 공유 규칙 — 매거진라벨 발행·분할 산술
 export * from './production';
+
+// 모니터링 경고 건수 SQL(display · 대시보드 공용) 내보내기
+export * from './monitoring';
