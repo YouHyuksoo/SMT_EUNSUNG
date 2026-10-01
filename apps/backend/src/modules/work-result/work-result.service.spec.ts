@@ -35,6 +35,53 @@ describe('WorkResultService tenancy', () => {
     expect(params).toEqual([7, '2026-08-01', '2026-08-25']);
   });
 
+  describe('downtimeMachines', () => {
+    const machineRow = { machineCode: 'MC-1', machineName: 'M1', workstageCode: 'W1', lineCode: '03' };
+
+    it('fixes the machine when the work order has one', async () => {
+      query
+        .mockResolvedValueOnce([{ machineCode: 'MC-1', workstageCode: 'W1', lineCode: '03' }])
+        .mockResolvedValueOnce([machineRow]);
+      const res = await service.downtimeMachines('RUN-1', 7);
+      expect(res).toEqual({ by: 'machine', fixed: true, list: [machineRow] });
+      expect(query.mock.calls[1][0]).toContain('m.MACHINE_CODE=:2');
+      expect(query.mock.calls[1][1]).toEqual([7, 'MC-1']);
+    });
+
+    it('lists the placed machines of the workstage when only the workstage is set', async () => {
+      query
+        .mockResolvedValueOnce([{ machineCode: null, workstageCode: 'W1', lineCode: '03' }])
+        .mockResolvedValueOnce([machineRow]);
+      const res = await service.downtimeMachines('RUN-1', 7);
+      expect(res.by).toBe('workstage');
+      expect(query.mock.calls[1][0]).toContain('m.WORKSTAGE_CODE=:2');
+      expect(query.mock.calls[1][1]).toEqual([7, 'W1']);
+    });
+
+    it('falls back to machines placed on the work order line', async () => {
+      query
+        .mockResolvedValueOnce([{ machineCode: null, workstageCode: null, lineCode: '03' }])
+        .mockResolvedValueOnce([machineRow]);
+      const res = await service.downtimeMachines('RUN-1', 7);
+      expect(res.by).toBe('line');
+      expect(query.mock.calls[1][0]).toContain('m.LINE_CODE=:2');
+      expect(query.mock.calls[1][1]).toEqual([7, '03']);
+    });
+
+    it('returns an empty list when the work order has no machine, workstage or line', async () => {
+      query.mockResolvedValueOnce([{ machineCode: null, workstageCode: null, lineCode: null }]);
+      expect(await service.downtimeMachines('RUN-1', 7)).toEqual({ by: 'none', fixed: false, list: [] });
+    });
+  });
+
+  it('excludes SMT-division lines only when requested', async () => {
+    await service.list('2026-08-01', '2026-08-25', undefined, undefined, 7, undefined, true);
+
+    const [sql, params] = query.mock.calls[0] as [string, unknown[]];
+    expect(sql).toContain('LINE_DIVISION IN (:4,:5)');
+    expect(params).toEqual([7, '2026-08-01', '2026-08-25', 'D', 'SMT']);
+  });
+
   it('uses the authenticated user and organization for writes', async () => {
     const manager = {
       query: jest.fn().mockImplementation((sql: string) => {

@@ -39,6 +39,7 @@ export class WorkResultController {
     @Query('keyword') keyword?: string,
     @Query('machineCode') machineCode?: string,
     @OrganizationId() organizationId?: number,
+    @Query('excludeSmt') excludeSmt?: string,
   ) {
     return {
       list: await this.service.list(
@@ -48,6 +49,7 @@ export class WorkResultController {
         keyword || undefined,
         organizationId,
         machineCode || undefined,
+        excludeSmt === 'Y',
       ),
     };
   }
@@ -141,6 +143,15 @@ export class WorkResultController {
   @Get('machines')
   async machines(@OrganizationId() organizationId?: number) {
     return { list: await this.service.machines(organizationId) };
+  }
+
+  /** 설비비가동 설비 콤보 (작업지시 설비 → 공정 배치설비 → 라인 배치설비) */
+  @Get('downtime-machines')
+  async downtimeMachines(
+    @Query('runNo') runNo: string,
+    @OrganizationId() organizationId?: number,
+  ) {
+    return this.service.downtimeMachines(runNo, organizationId);
   }
 
   /** 비가동 사유 (설비 연계) */
