@@ -9,7 +9,7 @@ related: [EQUIP_RESULT_SPI]
 ---
 # AOI 검사결과조회 — 운영 가이드
 ## 시스템 목적·역할
-PB `w_aoi_header_detail_query`의 원판정·리뷰판정 조회입니다.
+AOI 원판정·리뷰판정을 조회합니다.
 ## 데이터 구조
 `IQ_MACHINE_INSPECT_DATA_AOI`; `RESULT`와 `REVIEW_RESULT`는 전체/OK/NG/USEROK/USERNG 조건을 지원합니다.
 ## ① 결과 — IQ_MACHINE_INSPECT_DATA_AOI (전체 컬럼)

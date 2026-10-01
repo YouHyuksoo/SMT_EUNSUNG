@@ -176,8 +176,7 @@ export default function ManualInputPage() {
 
       {searched && rows.length === 0 && (
         <p className="text-sm text-text-muted">
-          이 이력은 아직 비어 있습니다 — PB 에도 기능은 있지만 현장에서 쓰기 시작한
-          적이 없습니다.
+          이 이력은 아직 비어 있습니다 — 현장에서 이 기능을 쓰기 시작한 적이 없습니다.
         </p>
       )}
 

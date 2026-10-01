@@ -70,7 +70,7 @@ export default function PdaNgQueryPage() {
 
   const search = useCallback(async () => {
     if (!modelName) {
-      toast.error('모델명을 입력하세요 (PB 도 모델을 등호로 걸었습니다).');
+      toast.error('모델명을 입력하세요. 모델명이 정확히 같은 것만 조회합니다.');
       return;
     }
     setLoading(true);

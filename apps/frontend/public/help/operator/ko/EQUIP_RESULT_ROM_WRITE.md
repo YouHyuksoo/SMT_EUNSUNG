@@ -9,7 +9,7 @@ related: [EQUIP_RESULT_PERFORMANCE]
 ---
 # ROM WRITE 작업결과조회 — 운영 가이드
 ## 시스템 목적·역할
-PB `w_qc_machine_inspect_data_rw_query`의 ROM 기록 결과를 제공합니다.
+ROM 기록 결과를 조회합니다.
 ## 데이터 구조
 `IQ_MACHINE_INSPECT_DATA_RW`; 기간은 INSPECT_DATE, 조직은 ORGANIZATION_ID입니다.
 ## ① 결과 — IQ_MACHINE_INSPECT_DATA_RW (전체 컬럼)

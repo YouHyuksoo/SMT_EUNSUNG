@@ -110,7 +110,7 @@ export default function MfsActionPanel({
             <span>
               반제품 전개여부와 관계없이 전체 전개
               <span className="block text-xs text-text-muted">
-                체크: PKG_DESIGN.BOM_QUERY_ALL, 해제: 반제품 전개여부(Y) 품목만 전개하는 BOM_QUERY. PB의 Show Hide Item 과 같습니다.
+                체크: PKG_DESIGN.BOM_QUERY_ALL, 해제: 반제품 전개여부(Y) 품목만 전개하는 BOM_QUERY.
               </span>
             </span>
           </label>

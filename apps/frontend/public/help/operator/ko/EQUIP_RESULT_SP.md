@@ -9,7 +9,7 @@ related: [EQUIP_MASTER]
 ---
 # SP 작업결과조회 — 운영 가이드
 ## 시스템 목적·역할
-PB `w_qc_machine_inspect_data_sp_query`를 웹 조회 화면으로 이식했습니다.
+SP 작업결과를 조회합니다.
 ## 데이터 구조
 `IQ_MACHINE_INSPECT_DATA_SP`를 기간과 `ORGANIZATION_ID`로 조회하고 `F_GET_RUN_MODEL_NAME(RUN_NO)`로 모델명을 표시합니다.
 ## ① 결과 — IQ_MACHINE_INSPECT_DATA_SP (전체 컬럼)

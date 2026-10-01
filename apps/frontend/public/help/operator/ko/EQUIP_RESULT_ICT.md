@@ -9,7 +9,7 @@ related: [EQUIP_RESULT_PERFORMANCE]
 ---
 # ICT 검사결과조회 — 운영 가이드
 ## 시스템 목적·역할
-PB `w_qc_machine_inspect_data_ict_query`의 ICT 상세 측정 조회입니다.
+ICT 상세 측정값을 조회합니다.
 ## 데이터 구조
 `IQ_MACHINE_INSPECT_DATA_ICT`; 기간 기준은 `INSPECT_DATE`, 조직 범위는 `ORGANIZATION_ID`입니다.
 ## ① 결과 — IQ_MACHINE_INSPECT_DATA_ICT (전체 컬럼)

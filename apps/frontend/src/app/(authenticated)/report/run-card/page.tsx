@@ -137,7 +137,6 @@ export default function RunCardReportPage() {
           </label>
           <span className="text-xs text-text-muted">
             켜면 런카드마다 1억행 넘는 표를 세 번 셉니다 (25일치 523건 = 47초 실측).
-            PB 와 같은 DB 함수라 숫자는 같습니다.
           </span>
         </CardContent>
       </Card>

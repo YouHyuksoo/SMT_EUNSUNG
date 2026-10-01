@@ -9,7 +9,7 @@ related: [EQUIP_RESULT_ICT]
 ---
 # 성능 검사결과조회 — 운영 가이드
 ## 시스템 목적·역할
-화면명은 성능 검사결과조회이며 PB 원본은 `w_qc_machine_inspect_data_eol_query`입니다.
+화면명은 성능 검사결과조회입니다.
 ## 데이터 구조
 `IQ_MACHINE_INSPECT_DATA_EOL`; 기간은 INSPECT_START_DATE, 조직은 ORGANIZATION_ID입니다.
 ## ① 결과 — IQ_MACHINE_INSPECT_DATA_EOL (전체 컬럼)

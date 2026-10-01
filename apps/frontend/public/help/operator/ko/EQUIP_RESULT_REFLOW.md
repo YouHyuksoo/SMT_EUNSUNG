@@ -9,7 +9,7 @@ related: [EQUIP_MASTER]
 ---
 # REFLOW 작업결과조회 — 운영 가이드
 ## 시스템 목적·역할
-PB `w_qc_machine_inspect_data_reflow_query`의 프로파일 조회입니다.
+리플로우 프로파일을 조회합니다.
 ## 데이터 구조
 `IQ_MACHINE_INSPECT_DATA_REFLOW`; 기간은 MEASURE_DATE, 선택 조건은 LINE_CODE와 JOB_FILE입니다.
 ## ① 결과 — IQ_MACHINE_INSPECT_DATA_REFLOW (전체 컬럼)

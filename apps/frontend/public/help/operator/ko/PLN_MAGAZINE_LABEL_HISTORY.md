@@ -42,7 +42,7 @@ PowerBuilder `W_PLN_PRODUCT_MAGAZINE_LABEL_QUERY`의 이력·집계·매트릭�
 
 ## 집계 로직
 
-- 이력: PB `d_pln_product_run_card_io_lst` 컬럼과 정렬을 유지합니다.
+- 이력: 런카드 입출력 이력과 같은 컬럼·정렬로 보여 줍니다.
 - 집계: 수불일을 일 단위로 절삭하고 주요 생산 식별자별 `LOT_QTY`를 합산합니다.
 - 매트릭스: 라인·RUN NO·모델·PCB·수불일·라벨유형별 `LOT_QTY`를 합산합니다.
 

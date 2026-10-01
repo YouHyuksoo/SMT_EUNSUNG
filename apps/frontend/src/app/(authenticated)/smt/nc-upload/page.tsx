@@ -126,7 +126,7 @@ export default function SmtNcUploadPage() {
 
       <div className="rounded border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-text">
         마운터 벤더별 NC 파일 파싱(Yamaha · NPM · LG)은 이관 범위 밖입니다.
-        적재는 기존 PB 화면으로 하고, 이 화면에서는 적재 결과를 조회·검증·대조합니다.
+        적재는 기존 NC 적재 프로그램으로 하고, 이 화면에서는 적재 결과를 조회·검증·대조합니다.
       </div>
 
       <div className="flex gap-1 border-b border-border">

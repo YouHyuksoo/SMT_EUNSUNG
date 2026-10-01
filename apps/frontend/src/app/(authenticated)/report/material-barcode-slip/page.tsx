@@ -31,7 +31,7 @@ const daysAgo = (n: number) => {
 };
 
 const DIVIDE_OPTIONS = [
-  { value: 'Y', label: '롯트분할: 분할분만 (PB 기본)' },
+  { value: 'Y', label: '롯트분할: 분할분만 (기본)' },
   { value: 'N', label: '롯트분할: 분할 아닌 것만' },
   { value: 'ALL', label: '롯트분할: 전체' },
 ];

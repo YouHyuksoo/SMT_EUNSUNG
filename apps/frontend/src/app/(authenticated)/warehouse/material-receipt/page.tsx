@@ -149,7 +149,7 @@ export default function MaterialReceiptPage() {
       {tab === 'arrivals' && searched && arrivals.length === 0 && (
         <p className="text-sm text-text-muted">
           입고예정은 구매발주·반품 화면이 만듭니다. 이 현장에서는 그 화면을 쓰지 않아
-          항상 비어 있습니다 — PB 에서도 같습니다.
+          항상 비어 있습니다.
         </p>
       )}
 

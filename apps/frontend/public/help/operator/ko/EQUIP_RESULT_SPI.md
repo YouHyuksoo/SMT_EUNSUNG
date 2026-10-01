@@ -9,7 +9,7 @@ related: [EQUIP_RESULT_SP]
 ---
 # SPI 검사결과조회 — 운영 가이드
 ## 시스템 목적·역할
-PB `w_spi_time_query`의 조회 흐름을 제공합니다.
+SPI 검사결과를 조회합니다.
 ## 데이터 구조
 `IQ_MACHINE_INSPECT_DATA_SPI`를 기간·조직·선택조건으로 조회하고 RUN_NO의 모델명을 계산합니다.
 ## ① 결과 — IQ_MACHINE_INSPECT_DATA_SPI (전체 컬럼)

@@ -337,7 +337,7 @@ export default function EtcReceiptPage() {
                 ({Number(selected?.receiptQty ?? 0) < 0 ? '차감' : '입고'}) ·
                 입고일 {selected?.receiptDate} · 순번 {selected?.receiptSequence}
                 <div className="mt-1 text-xs text-text-muted">
-                  수량은 바꿀 수 없습니다 (PB 도 같습니다). 틀렸으면 지우고 다시 넣으세요.
+                  수량은 바꿀 수 없습니다. 틀렸으면 지우고 다시 넣으세요.
                 </div>
               </div>
             )}

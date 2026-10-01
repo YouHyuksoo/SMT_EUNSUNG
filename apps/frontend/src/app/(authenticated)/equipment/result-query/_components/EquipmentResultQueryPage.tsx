@@ -59,7 +59,7 @@ export default function EquipmentResultQueryPage({ definition }: { definition: R
 
   return <main className="flex h-full min-w-0 flex-col gap-3 p-5">
     <header className="flex items-center justify-between gap-4">
-      <div><h1 className="flex items-center gap-2 text-xl font-bold text-text"><ClipboardList className="h-6 w-6 text-primary" />{definition.title}</h1><p className="mt-1 text-sm text-text-muted">{definition.table} · {definition.pbWindow} · {searched ? `${rows.length.toLocaleString()}건` : '조회조건을 입력하세요'}</p></div>
+      <div><h1 className="flex items-center gap-2 text-xl font-bold text-text"><ClipboardList className="h-6 w-6 text-primary" />{definition.title}</h1><p className="mt-1 text-sm text-text-muted">{definition.table} · {searched ? `${rows.length.toLocaleString()}건` : '조회조건을 입력하세요'}</p></div>
       <div className="flex gap-2"><Button size="sm" onClick={search} disabled={loading}><Search className={`mr-1 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />조회</Button></div>
     </header>
     <Card className="shrink-0" padding="sm"><div className="flex flex-wrap items-center gap-2">

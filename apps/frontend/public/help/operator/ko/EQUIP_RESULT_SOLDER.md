@@ -9,7 +9,7 @@ related: [EQUIP_RESULT_SP]
 ---
 # 솔더점도 검사결과조회 — 운영 가이드
 ## 시스템 목적·역할
-PB `w_qc_machine_inspect_data_solder_query`를 이식했습니다.
+솔더 점도 검사결과를 조회합니다.
 ## 데이터 구조
 `IQ_MACHINE_INSPECT_DATA_SOLDER`; 기간 컬럼은 MEASURE_DATE이며 PID 입력은 SOLDER_NO에 대응합니다.
 ## ① 결과 — IQ_MACHINE_INSPECT_DATA_SOLDER (전체 컬럼)
