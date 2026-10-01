@@ -20,7 +20,8 @@ import toast from 'react-hot-toast';
 import { Edit2, Plus, Search, Trash2, Wand2 } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
 import ComCodeSelect from '@/components/shared/ComCodeSelect';
-import { Button, Card, CardContent, ConfirmModal, Input } from '@/components/ui';
+import { Button, Card, CardContent, ConfirmModal } from '@/components/ui';
+import LineSelect from '@/components/shared/LineSelect';
 import api from '@/services/api';
 import { SmtMachineSelect } from '../components/SmtSelects';
 import { smtLineColumns, smtLineLocationColumns } from '../columns';
@@ -163,8 +164,7 @@ export default function SmtLinePage() {
 
         <Card padding="none">
           <CardContent className="flex flex-wrap items-center gap-3 p-3">
-            <Input aria-label="라인코드" placeholder="라인코드" value={lineCode}
-              className="w-40" onChange={(e) => setLineCode(e.target.value)} />
+            <LineSelect labelPrefix="라인" value={lineCode} onChange={setLineCode} className="w-44" />
             <SmtMachineSelect labelPrefix="설비" value={machine}
               onChange={setMachine} className="w-56" />
             <ComCodeSelect groupCode="LINE STATUS" labelPrefix="라인상태"

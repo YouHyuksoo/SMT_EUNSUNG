@@ -17,6 +17,8 @@ import toast from 'react-hot-toast';
 import { ScanLine, Undo2 } from 'lucide-react';
 import { Button, Card, CardContent, Input } from '@/components/ui';
 import api from '@/services/api';
+import PopupSearchField from '@/components/shared/PopupSearchField';
+import ComCodeSelect from '@/components/shared/ComCodeSelect';
 
 export interface FgScanPanelProps {
   /** 호출할 엔드포인트 (예: `/product/fg/receipt`). */
@@ -129,13 +131,13 @@ export default function FgScanPanel({
             onChange={(e) => setQty(e.target.value)} />
         )}
         {withCustomer && (
-          <Input aria-label="고객코드" placeholder="고객코드" value={customerCode}
-            className="w-36" disabled={busy}
+          <PopupSearchField popupId="customer-search" returnKey="customerCode" aria-label="고객코드" placeholder="고객코드"
+            value={customerCode} className="w-40" disabled={busy}
             onChange={(e) => setCustomerCode(e.target.value)} />
         )}
-        <Input aria-label="창고코드" placeholder="창고코드" value={locationCode}
-          className="w-28" disabled={busy}
-          onChange={(e) => setLocationCode(e.target.value)} />
+        {/* PB w_prd_product_fg_issue ddlb_product_location_code = uo_basecode(PRODUCT LOCATION CODE) */}
+        <ComCodeSelect groupCode="PRODUCT LOCATION CODE" labelPrefix="창고" value={locationCode}
+          className="w-44" disabled={busy} onChange={setLocationCode} />
         <Button size="sm" disabled={busy || Boolean(blocker)} onClick={submit}
           variant={cancel ? 'danger' : 'primary'}>
           {cancel ? '취소 처리' : '처리'}

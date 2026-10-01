@@ -40,9 +40,7 @@ const EXEMPT = {
   "warehouse/etc-receipt/page.tsx:supplierCode": "기타입고 등록 영역",
   "warehouse/etc-receipt/page.tsx:lineType": "기타입고 등록 영역",
   "warehouse/solder-label/page.tsx:supplierCode": "솔더 라벨 발행 등록 영역",
-  "quality/temperature/page.tsx:machineCode": "PB w_pln_product_tempreture_history_query 도 sle_machine_code 자유입력",
   "query/pda-scan/page.tsx:locationCode": "피더위치(창고 아님), PB sle_location_code 자유입력",
-  "smt/line/page.tsx:lineCode": "SMT 라인 마스터 자체 조회, PB sle_line_code 자유입력",
   "smt/location/page.tsx:locationCode": "피더 위치코드(창고 아님), PB 에 조건 없음",
 };
 
