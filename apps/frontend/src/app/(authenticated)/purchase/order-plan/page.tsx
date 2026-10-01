@@ -44,6 +44,7 @@ import OrderPlanGeneratePanel, {
   type OrderPlanGenerateValues,
 } from './components/OrderPlanGeneratePanel';
 import PartSearchField from '@/components/shared/PartSearchField';
+import { notifySkippedBom } from '../skipped-bom';
 
 // 생성 옵션(계획 원천·뺄 재고·계산 옵션)과 그 설명은 우측 생성 패널(components/OrderPlanGeneratePanel)에 있다.
 const TIP = {
@@ -187,6 +188,7 @@ export default function OrderPlanPage() {
         toast.success(
           `발주계획을 만들었습니다 — 소요량 ${d.requirementRows ?? 0}건 → 계획 ${d.planRows ?? 0}건.`,
         );
+        notifySkippedBom(d.skippedItems);
         setGenerateOpen(false);
       } else if (pending === 'price') {
         const r = await api.post('/purchase/order-plan/price-reset', {

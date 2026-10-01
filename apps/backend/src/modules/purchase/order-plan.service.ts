@@ -27,7 +27,15 @@ import type {
   PriceResetDto,
 } from './purchase.dto';
 import { affectedRows } from '../../common/utils/affected-rows.util';
-import { ITEM_LINE_TYPE_SQL, LEAF_ONLY_SQL } from './bom-requirement.sql';
+import {
+  ITEM_LINE_TYPE_SQL,
+  LEAF_ONLY_SQL,
+  SKIPPED_ASSIGN_SQL,
+  SKIPPED_DECLARE_SQL,
+  parseSkipped,
+  skipNoBomSql,
+  skippedOutBind,
+} from './bom-requirement.sql';
 
 /**
  * 계획 원천. PB 는 라디오버튼으로 골랐고 각각 전용 PB 함수를 불렀다
@@ -278,12 +286,13 @@ export class OrderPlanService {
    *
    * PB 가 라디오버튼·체크박스로 갈라 두었던 것을 인자로 받는다.
    * 체크박스 하나하나가 계산에 실제로 관여하므로 기본값을 두지 않고 전부 받는다.
+   * BOM 이 없는 계획은 그 줄만 건너뛰고 나머지로 만든다. 건너뛴 품목은 `skippedItems` 로 돌려준다.
    */
   async generate(
     dto: OrderPlanGenerateDto,
     organizationId: number,
     userId: string,
-  ): Promise<{ requirementRows: number; planRows: number }> {
+  ): Promise<{ requirementRows: number; planRows: number; skippedItems: string[] }> {
     const source = PLAN_SOURCES[dto.source as PlanSource];
     if (!source) throw new BadRequestException('계획 원천이 올바르지 않습니다.');
 
@@ -293,13 +302,14 @@ export class OrderPlanService {
 
     return this.dataSource.transaction(async (manager) => {
       // ① 계획을 BOM 으로 펴서 소요량을 만든다.
-      await manager.query(
+      const out = await manager.query(
         `DECLARE
            v_from        DATE := TRUNC(TO_DATE(:dateFrom, 'YYYY-MM-DD'));
            v_to          DATE := TRUNC(TO_DATE(:dateTo, 'YYYY-MM-DD'));
            v_item        VARCHAR2(100) := :itemPattern;
            v_req_session NUMBER;
            v_bom_session NUMBER;
+           ${SKIPPED_DECLARE_SQL}
          BEGIN
            v_req_session := SEQ_REQUIRMENT_PLAN.NEXTVAL;
 
@@ -309,9 +319,7 @@ export class OrderPlanService {
              END IF;
 
              v_bom_session := PKG_DESIGN.BOM_EXPLOSION(c.ITEM_CODE, c.PLAN_DATE, :organizationId);
-             IF v_bom_session < 0 THEN
-               RAISE_APPLICATION_ERROR(-20011, 'BOM_FAIL:' || c.ITEM_CODE);
-             END IF;
+             ${skipNoBomSql('c.ITEM_CODE')}
 
              INSERT INTO IM_ITEM_REQUIRMENT_PLAN_TEMP
                (SESSION_ID, REQUIRMENT_PLAN_DATE, MFS, ITEM_CODE, LINE_TYPE, SUPPLIER_CODE,
@@ -347,6 +355,7 @@ export class OrderPlanService {
                      ORGANIZATION_ID, PLAN_DATE;
 
            DELETE FROM IM_ITEM_REQUIRMENT_PLAN_TEMP WHERE SESSION_ID = v_req_session;
+           ${SKIPPED_ASSIGN_SQL}
          END;`,
         {
           dateFrom: dto.dateFrom,
@@ -354,6 +363,7 @@ export class OrderPlanService {
           itemPattern: dto.itemCode ? `%${dto.itemCode}%` : '%',
           organizationId,
           userId,
+          skipped: skippedOutBind(),
         } as unknown as unknown[],
       ).catch((error: unknown) => {
         const message = error instanceof Error ? error.message : String(error);
@@ -362,10 +372,6 @@ export class OrderPlanService {
           throw new BadRequestException(
             `${qtyNull[1]} 의 계획수량이 비어 있습니다. 계획을 먼저 확인하세요.`,
           );
-        }
-        const bomFail = /BOM_FAIL:(\S+)/.exec(message);
-        if (bomFail) {
-          throw new BadRequestException(`${bomFail[1]} 의 BOM 을 펼 수 없습니다.`);
         }
         throw error;
       });
@@ -386,7 +392,11 @@ export class OrderPlanService {
           WHERE ORGANIZATION_ID = :organizationId`,
         { organizationId } as unknown as unknown[],
       );
-      return { requirementRows: Number(REQ), planRows: Number(PLN) };
+      return {
+        requirementRows: Number(REQ),
+        planRows: Number(PLN),
+        skippedItems: parseSkipped(out),
+      };
     });
   }
 

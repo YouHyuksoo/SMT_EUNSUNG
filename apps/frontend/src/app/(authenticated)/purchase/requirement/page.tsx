@@ -29,6 +29,7 @@ import { Boxes, Download, Play, Plus, Search, Trash2 } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
 import ComCodeSelect from '@/components/shared/ComCodeSelect';
 import PlanImportModal from './components/PlanImportModal';
+import { notifySkippedBom } from '../skipped-bom';
 import RequirementPlanFormPanel from './components/RequirementPlanFormPanel';
 import SupplierSelect from '@/components/shared/SupplierSelect';
 import { Button, Card, CardContent, ConfirmModal, Input } from '@/components/ui';
@@ -204,6 +205,7 @@ export default function RequirementPlanPage() {
         toast.success(
           `전개했습니다 — 기준계획 ${d.planRows ?? 0}건 → 소요량 ${d.requirementRows ?? 0}건.`,
         );
+        notifySkippedBom(d.skippedItems);
       } else {
         const r = await api.post('/purchase/requirement/inventory', {
           requirementPlanDate: planDate,

@@ -24,7 +24,15 @@ import type {
   RequirementRunDto,
 } from './purchase.dto';
 import { affectedRows } from '../../common/utils/affected-rows.util';
-import { ITEM_LINE_TYPE_SQL, LEAF_ONLY_SQL } from './bom-requirement.sql';
+import {
+  ITEM_LINE_TYPE_SQL,
+  LEAF_ONLY_SQL,
+  SKIPPED_ASSIGN_SQL,
+  SKIPPED_DECLARE_SQL,
+  parseSkipped,
+  skipNoBomSql,
+  skippedOutBind,
+} from './bom-requirement.sql';
 
 interface Paged<T> {
   data: T[];
@@ -289,12 +297,14 @@ export class RequirementPlanService {
    *   2. 기준계획을 지우고 _S 에서 새 일련번호로 다시 넣는다
    *   3. 계획 한 줄씩 `PKG_DESIGN.BOM_EXPLOSION` 을 돌려 자재로 펴서 TEMP 에 쌓는다
    *   4. 소요량표를 갈아끼운다 (공급처는 `F_GET_MAX_SUPPLIER_BY_ITEM`)
+   *
+   * BOM 이 없는 계획은 그 줄만 건너뛰고 나머지를 전개한다. 건너뛴 품목은 `skippedItems` 로 돌려준다.
    */
   async explode(
     dto: RequirementRunDto,
     organizationId: number,
     userId: string,
-  ): Promise<{ planRows: number; requirementRows: number }> {
+  ): Promise<{ planRows: number; requirementRows: number; skippedItems: string[] }> {
     const [{ CNT: planRows }] = await this.dataSource.query(
       `SELECT COUNT(*) AS CNT
          FROM IM_ITEM_MASTER_PLAN_4_REQUIR
@@ -307,11 +317,12 @@ export class RequirementPlanService {
     }
 
     return this.dataSource.transaction(async (manager) => {
-      await manager.query(
+      const out = await manager.query(
         `DECLARE
            v_date        DATE := TRUNC(TO_DATE(:planDate, 'YYYY-MM-DD'));
            v_req_session NUMBER;
            v_bom_session NUMBER;
+           ${SKIPPED_DECLARE_SQL}
          BEGIN
            v_req_session := SEQ_REQUIRMENT_PLAN.NEXTVAL;
 
@@ -367,12 +378,8 @@ export class RequirementPlanService {
              END IF;
 
              v_bom_session := PKG_DESIGN.BOM_EXPLOSION(c.ITEM_CODE, c.PLAN_DATE, :organizationId);
-             -- 전개가 실패하면 음수를 준다. 그대로 두면 WHERE SESSION_ID = -1 이
-             -- 0행을 넣고 넘어가, 그 품목의 소요량이 조용히 빠진다. PB 477 은
-             -- 검사하지 않았지만 478 생성기는 검사한다 - 그쪽에 맞춘다.
-             IF v_bom_session IS NULL OR v_bom_session < 0 THEN
-               RAISE_APPLICATION_ERROR(-20013, 'BOM_FAIL:' || c.ITEM_CODE);
-             END IF;
+             -- BOM 이 없으면 음수를 준다. 그 계획만 건너뛰고 나머지는 계속 편다.
+             ${skipNoBomSql('c.ITEM_CODE')}
 
              INSERT INTO IM_ITEM_REQUIRMENT_PLAN_TEMP
                (SESSION_ID, REQUIRMENT_PLAN_DATE, ITEM_CODE, LINE_TYPE, SUPPLIER_CODE,
@@ -407,6 +414,7 @@ export class RequirementPlanService {
                      ORGANIZATION_ID, PLAN_DATE;
 
            DELETE FROM IM_ITEM_REQUIRMENT_PLAN_TEMP WHERE SESSION_ID = v_req_session;
+           ${SKIPPED_ASSIGN_SQL}
          EXCEPTION
            -- BOM_EXPLOSION 은 ID_ENG_BOM_TEMP 에 행을 깔고 스스로 커밋한다
            -- (그래서 그 표에 2020년부터 세션 7만 개가 쌓여 있다). 우리 트랜잭션을
@@ -421,6 +429,7 @@ export class RequirementPlanService {
           planDate: dto.requirementPlanDate,
           organizationId,
           userId,
+          skipped: skippedOutBind(),
         } as unknown as unknown[],
       ).catch((error: unknown) => {
         const message = error instanceof Error ? error.message : String(error);
@@ -428,12 +437,6 @@ export class RequirementPlanService {
         if (qtyNull) {
           throw new BadRequestException(
             `${qtyNull[1]} 의 주문수량이 비어 있습니다. 기준계획을 먼저 고치세요.`,
-          );
-        }
-        const bomFail = /BOM_FAIL:(\S+)/.exec(message);
-        if (bomFail) {
-          throw new BadRequestException(
-            `${bomFail[1]} 의 BOM 을 펼 수 없습니다. BOM 이 등록돼 있는지 확인하세요.`,
           );
         }
         throw error;
@@ -448,7 +451,11 @@ export class RequirementPlanService {
             AND TRUNC(REQUIRMENT_PLAN_DATE) = TRUNC(TO_DATE(:planDate, 'YYYY-MM-DD'))`,
         { organizationId, planDate: dto.requirementPlanDate } as unknown as unknown[],
       );
-      return { planRows: Number(planRows), requirementRows: Number(CNT) };
+      return {
+        planRows: Number(planRows),
+        requirementRows: Number(CNT),
+        skippedItems: parseSkipped(out),
+      };
     });
   }
 
