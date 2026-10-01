@@ -156,9 +156,9 @@ export interface ManualInputRow {
 }
 
 export const reprintColumns: ColumnDef<ReprintRow>[] = [
-  { accessorKey: 'itemBarcode', header: '자재 바코드', size: 220 },
   { accessorKey: 'itemCode', header: '품목코드', size: 140 },
   { accessorKey: 'itemName', header: '품목명', size: 170 },
+  { accessorKey: 'itemBarcode', header: '자재 바코드', size: 220 },
   { accessorKey: 'itemSpec', header: '규격', size: 150 },
   { accessorKey: 'lotNo', header: '롯트번호', size: 130 },
   { accessorKey: 'scanQty', header: '수량', size: 100, meta: right, cell: (c) => num(c.getValue()) },
@@ -217,11 +217,11 @@ export const mslIssuedColumns: ColumnDef<MslIssuedRow>[] = [
 ];
 
 export const mslViewColumns: ColumnDef<MslViewRow>[] = [
+  { accessorKey: 'itemCode', header: '품목코드', size: 140 },
+  { accessorKey: 'itemName', header: '품목명', size: 170 },
   { accessorKey: 'lineCode', header: '라인', size: 80, meta: center },
   { accessorKey: 'modelName', header: '모델명', size: 160 },
   { accessorKey: 'locationCode', header: '피더 위치', size: 110 },
-  { accessorKey: 'itemCode', header: '품목코드', size: 140 },
-  { accessorKey: 'itemName', header: '품목명', size: 170 },
   { accessorKey: 'partNo', header: '품번', size: 140 },
   { accessorKey: 'lotNo', header: '롯트번호', size: 130 },
   { accessorKey: 'itemBarcode', header: '자재 바코드', size: 220 },
@@ -239,10 +239,10 @@ export const mslViewColumns: ColumnDef<MslViewRow>[] = [
 ];
 
 export const mslHistoryColumns: ColumnDef<MslHistoryRow>[] = [
-  { accessorKey: 'scanDate', header: '처리시각', size: 160, cell: (c) => ts(c.getValue()) },
-  { accessorKey: 'scanBy', header: '처리자', size: 100 },
   { accessorKey: 'itemCode', header: '품목코드', size: 140 },
   { accessorKey: 'itemName', header: '품목명', size: 170 },
+  { accessorKey: 'scanDate', header: '처리시각', size: 160, cell: (c) => ts(c.getValue()) },
+  { accessorKey: 'scanBy', header: '처리자', size: 100 },
   { accessorKey: 'mslLevel', header: 'MSL', size: 70, meta: center },
   { accessorKey: 'itemBarcode', header: '자재 바코드', size: 220 },
   { accessorKey: 'lotNo', header: '롯트번호', size: 130 },

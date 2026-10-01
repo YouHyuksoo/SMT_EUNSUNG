@@ -17,6 +17,7 @@ const codeWithName = (code: unknown, name: unknown) => {
 };
 
 export const jigMasterColumns: ColumnDef<JigMasterRow>[] = [
+  { accessorKey: 'itemCode', header: '품목코드', size: 130 },
   { accessorKey: 'jigCode', header: '지그코드', size: 130 },
   { accessorKey: 'jigLotNo', header: '지그LOT', size: 130 },
   { accessorKey: 'jigName', header: '지그명', size: 170 },
@@ -26,7 +27,6 @@ export const jigMasterColumns: ColumnDef<JigMasterRow>[] = [
   { id: 'lineName', header: '라인', size: 110, accessorFn: (r) => codeWithName(r.lineCode, r.lineName) },
   { id: 'workstageName', header: '공정', size: 120, accessorFn: (r) => codeWithName(r.workstageCode, r.workstageName) },
   { accessorKey: 'machineCode', header: '설비코드', size: 110 },
-  { accessorKey: 'itemCode', header: '품목코드', size: 130 },
   { accessorKey: 'jigModelName', header: '지그모델명', size: 150 },
   { accessorKey: 'jigSpec', header: '지그규격', size: 150 },
   { id: 'pcbItemName', header: 'T/B', size: 100, accessorFn: (r) => codeWithName(r.pcbItem, r.pcbItemName) },

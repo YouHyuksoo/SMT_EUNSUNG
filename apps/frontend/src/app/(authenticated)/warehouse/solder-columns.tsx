@@ -98,9 +98,9 @@ export const solderStageCountColumns: ColumnDef<SolderStageCountRow>[] = [
 // ───────────────────────────────── 244 솔더 통 목록
 
 export const solderColumns: ColumnDef<SolderRow>[] = [
+  { accessorKey: 'itemCode', header: '품목코드', size: 150 },
   { accessorKey: 'solderLotNo', header: '솔더 롯트', size: 160 },
   { accessorKey: 'itemBarcode', header: '솔더 바코드', size: 180 },
-  { accessorKey: 'itemCode', header: '품목코드', size: 150 },
   {
     accessorKey: 'solderType',
     header: '종류',
@@ -172,10 +172,10 @@ export const solderColumns: ColumnDef<SolderRow>[] = [
 // ───────────────────────────────── 245 솔더 라인투입이력
 
 export const solderInputHistoryColumns: ColumnDef<SolderInputHistoryRow>[] = [
+  { accessorKey: 'itemCode', header: '품목코드', size: 150 },
   { accessorKey: 'inputDate', header: '투입시각', size: 170, cell: (c) => ts(c.getValue()) },
   { accessorKey: 'solderLotNo', header: '솔더 롯트', size: 160 },
   { accessorKey: 'itemBarcode', header: '솔더 바코드', size: 180 },
-  { accessorKey: 'itemCode', header: '품목코드', size: 150 },
   {
     accessorKey: 'solderType',
     header: '종류',

@@ -40,6 +40,7 @@ import type {
   MslIssuedRow,
   MslViewRow,
 } from '../reprint-msl-columns';
+import PartSearchField from '@/components/shared/PartSearchField';
 
 type TabKey = 'inventory' | 'issued' | 'view' | 'history';
 
@@ -204,7 +205,7 @@ export default function MslCheckPage() {
 
       <Card padding="none">
         <CardContent className="flex flex-wrap items-center gap-3 p-3">
-          <Input aria-label="품목코드" placeholder="품목코드" value={itemCode}
+          <PartSearchField aria-label="품목코드" placeholder="품목코드" value={itemCode}
             className="w-44"
             onChange={(e) => setItemCode(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') void search(); }} />

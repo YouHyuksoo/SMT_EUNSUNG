@@ -40,7 +40,7 @@ import { SqlViewerModal, type ActiveFilter } from './SqlViewerModal';
 import { ResizeHandle } from './ResizeHandle';
 import { ColumnFilterInput } from './ColumnFilterInput';
 import { PaginationControls } from './PaginationControls';
-import { detectAlignment, getAlignmentClass, getPinnedStyle } from './utils';
+import { detectAlignment, getAlignmentClass, getPinnedStyle, withLeadingPinnedColumns } from './utils';
 import { numberRangeFilterFn } from './numberFilterFn';
 import { dateRangeFilterFn } from './dateFilterFn';
 import { textInFilterFn } from './textFilterFn';
@@ -151,8 +151,12 @@ function DataGrid<T>({
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnOrder, setColumnOrder] = useState<ColumnOrderState>([]);
   const [columnSizing, setColumnSizing] = useState<ColumnSizingState>({});
-  const [columnPinning, setColumnPinning] = useState<ColumnPinningState>(
-    defaultPinnedColumns ?? {}
+  // 좌측 고정이 있으면 관리→선택→품목코드→품목명 컬럼을 고정 맨 앞에 둔다 (utils.withLeadingPinnedColumns)
+  const [columnPinning, setColumnPinning] = useState<ColumnPinningState>(() =>
+    withLeadingPinnedColumns(
+      defaultPinnedColumns,
+      columns.map((c) => c.id ?? ('accessorKey' in c ? String(c.accessorKey) : '')),
+    )
   );
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,

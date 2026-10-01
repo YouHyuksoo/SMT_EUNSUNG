@@ -25,6 +25,7 @@ import {
 } from '../../report/components/TruncationNotice';
 import { materialBarcodeColumns } from '../query-columns';
 import type { MaterialBarcodeRow } from '../query-types';
+import PartSearchField from '@/components/shared/PartSearchField';
 
 export default function MaterialBarcodeQueryPage() {
   const [itemCode, setItemCode] = useState('');
@@ -79,7 +80,7 @@ export default function MaterialBarcodeQueryPage() {
 
       <Card padding="none">
         <CardContent className="flex flex-wrap items-center gap-3 p-3">
-          <Input aria-label="품목코드" placeholder="품목코드" value={itemCode} className="w-44"
+          <PartSearchField aria-label="품목코드" placeholder="품목코드" value={itemCode} className="w-44"
             onChange={(e) => setItemCode(e.target.value)} />
           <Input aria-label="제조번호" placeholder="제조번호" value={lotNo} className="w-44"
             onChange={(e) => setLotNo(e.target.value)} />

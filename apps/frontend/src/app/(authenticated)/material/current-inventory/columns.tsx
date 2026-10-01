@@ -11,11 +11,11 @@ const dateTime = (value: unknown) => {
 };
 
 export const currentInventoryColumns: ColumnDef<CurrentInventoryRow>[] = [
+  { accessorKey: 'itemCode', header: '품목코드', size: 140 },
+  { accessorKey: 'itemName', header: '품목명', size: 180 },
   { accessorKey: 'locationCode', header: '로케이션', size: 110 },
   { accessorKey: 'locationAddress', header: '로케이션 주소', size: 140 },
   { accessorKey: 'materialMfs', header: '자재 MFS', size: 150 },
-  { accessorKey: 'itemCode', header: '품목코드', size: 140 },
-  { accessorKey: 'itemName', header: '품목명', size: 180 },
   { accessorKey: 'itemSpec', header: '규격', size: 180 },
   { accessorKey: 'lineType', header: '라인유형', size: 90 },
   { accessorKey: 'inventoryStatus', header: '재고상태', size: 90 },

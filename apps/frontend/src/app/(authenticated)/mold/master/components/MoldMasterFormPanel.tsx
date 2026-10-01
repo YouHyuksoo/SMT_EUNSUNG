@@ -19,6 +19,7 @@ import UseYnSelect from '@/components/shared/UseYnSelect';
 import { Button, Input } from '@/components/ui';
 import api from '@/services/api';
 import type { MoldMasterRow } from '../../types';
+import PartSearchField from '@/components/shared/PartSearchField';
 
 export interface MoldForm {
   moldCode: string;
@@ -203,7 +204,7 @@ export default function MoldMasterFormPanel({ mode, initialForm, onClose, onSave
         </label>
         <label className="block text-sm">
           <span className="text-text-muted">품목코드</span>
-          <Input value={form.itemCode} onChange={(e) => set('itemCode', e.target.value)} />
+          <PartSearchField value={form.itemCode} onChange={(e) => set('itemCode', e.target.value)} />
         </label>
         <label className="block text-sm">
           <span className="text-text-muted">바코드</span>

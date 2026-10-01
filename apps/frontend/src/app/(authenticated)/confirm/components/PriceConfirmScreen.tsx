@@ -23,6 +23,7 @@ import DataGrid from '@/components/data-grid/DataGrid';
 import DateRangeFilter from '@/components/shared/DateRangeFilter';
 import Select from '@/components/ui/Select';
 import { Button, Card, CardContent, ConfirmModal, Input } from '@/components/ui';
+import PartSearchField from '@/components/shared/PartSearchField';
 import api from '@/services/api';
 import { priceConfirmColumns } from '../confirm-columns';
 import type { PriceConfirmRow } from '../confirm-types';
@@ -64,6 +65,8 @@ export default function PriceConfirmScreen({ config }: { config: PriceConfirmScr
   const [searched, setSearched] = useState(false);
 
   const [itemCode, setItemCode] = useState('');
+  // 금형(S-PARTS) 모드는 품목마스터 조회 대상이 아니므로 일반 입력칸을 쓴다
+  const CodeField = config.variant === 'mold' ? Input : PartSearchField;
   const [partnerCode, setPartnerCode] = useState('');
   const [confirmStatus, setConfirmStatus] = useState('N');
   const [dateFrom, setDateFrom] = useState('');
@@ -171,7 +174,7 @@ export default function PriceConfirmScreen({ config }: { config: PriceConfirmScr
 
       <Card padding="none">
         <CardContent className="flex flex-wrap items-center gap-3 p-3">
-          <Input
+          <CodeField
             aria-label={config.variant === 'mold' ? 'S-PARTS 코드' : '품목코드'}
             placeholder={config.variant === 'mold' ? 'S-PARTS 코드' : '품목코드'}
             value={itemCode} className="w-44"

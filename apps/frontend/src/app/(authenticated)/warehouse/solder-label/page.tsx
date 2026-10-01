@@ -44,6 +44,7 @@ import type {
   SolderLabelRow,
   SolderSlipRow,
 } from '../solder-label-columns';
+import PartSearchField from '@/components/shared/PartSearchField';
 
 const daysAgo = (n: number) => {
   const d = new Date();
@@ -233,7 +234,7 @@ export default function SolderLabelPage() {
         <CardContent className="flex flex-wrap items-center gap-3 p-3">
           <DateRangeFilter label="전표일" from={dateFrom} to={dateTo}
             onFromChange={setDateFrom} onToChange={setDateTo} />
-          <Input aria-label="품목코드" placeholder="품목코드" value={itemCodeCond}
+          <PartSearchField aria-label="품목코드" placeholder="품목코드" value={itemCodeCond}
             className="w-44"
             onChange={(e) => setItemCodeCond(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') void search(); }} />
@@ -292,7 +293,7 @@ export default function SolderLabelPage() {
             </h2>
 
             <div className="flex gap-2">
-              <Input aria-label="품목코드" placeholder="솔더 품목코드" value={itemCode}
+              <PartSearchField aria-label="품목코드" placeholder="솔더 품목코드" value={itemCode}
                 onChange={(e) => setItemCode(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') void loadContext(); }} />
               <Button size="sm" variant="secondary" onClick={loadContext}

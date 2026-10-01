@@ -19,6 +19,7 @@ import ProcessSelect from '@/components/shared/ProcessSelect';
 import { Button, Input } from '@/components/ui';
 import api from '@/services/api';
 import type { QcNotifyRow } from '../../notify-columns';
+import PartSearchField from '@/components/shared/PartSearchField';
 
 export interface QcNotifyForm {
   /** 수정일 때만 채워진다 (읽기 전용) */
@@ -183,7 +184,7 @@ export default function QcNotifyFormPanel({ mode, initialForm, onClose, onSaved 
         <div className="grid grid-cols-2 gap-3">
           <label className="block text-sm">
             <span className="text-text-muted">품목코드</span>
-            <Input value={form.itemCode} onChange={(e) => set('itemCode', e.target.value)} />
+            <PartSearchField value={form.itemCode} onChange={(e) => set('itemCode', e.target.value)} />
           </label>
           <label className="block text-sm">
             <span className="text-text-muted">RUN번호</span>

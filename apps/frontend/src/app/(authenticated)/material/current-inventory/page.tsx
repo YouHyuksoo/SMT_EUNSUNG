@@ -7,6 +7,7 @@ import DataGrid from '@/components/data-grid/DataGrid';
 import api from '@/services/api';
 import { currentInventoryColumns } from './columns';
 import type { CurrentInventoryRow } from './types';
+import PartSearchField from '@/components/shared/PartSearchField';
 
 export default function CurrentInventoryPage() {
   const [rows, setRows] = useState<CurrentInventoryRow[]>([]);
@@ -65,7 +66,7 @@ export default function CurrentInventoryPage() {
       </header>
       <Card className="shrink-0" padding="sm">
         <div className="flex flex-wrap items-center gap-2">
-          <Input aria-label="품목코드" placeholder="품목코드" value={itemCode} onChange={e => setItemCode(e.target.value)} className="w-40" />
+          <PartSearchField aria-label="품목코드" placeholder="품목코드" value={itemCode} onChange={e => setItemCode(e.target.value)} className="w-40" />
           <Input aria-label="로케이션" placeholder="로케이션" value={locationCode} onChange={e => setLocationCode(e.target.value)} className="w-36" />
           <Input aria-label="라인유형" placeholder="라인유형" value={lineType} onChange={e => setLineType(e.target.value)} className="w-32" />
           <Input aria-label="재고상태" placeholder="재고상태" value={inventoryStatus} onChange={e => setInventoryStatus(e.target.value)} className="w-32" />

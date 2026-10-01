@@ -21,7 +21,7 @@ import ComCodeSelect from '@/components/shared/ComCodeSelect';
 import DateRangeFilter from '@/components/shared/DateRangeFilter';
 import ScreenTabs from '@/components/shared/ScreenTabs';
 import SupplierSelect from '@/components/shared/SupplierSelect';
-import { Button, Card, CardContent, Input } from '@/components/ui';
+import { Button, Card, CardContent } from '@/components/ui';
 import api from '@/services/api';
 import { TruncationNotice, useTruncation } from '../components/TruncationNotice';
 import { CrosstabGrid, type CrosstabSpec } from '../components/CrosstabGrid';
@@ -34,6 +34,7 @@ import type {
   MaterialReceiptRow,
   MaterialReceiptSupplierRow,
 } from '../report-b-types';
+import PartSearchField from '@/components/shared/PartSearchField';
 
 const daysAgo = (n: number) => {
   const d = new Date();
@@ -134,7 +135,7 @@ export default function MaterialReceiptReportPage() {
           <div className="w-52">
             <SupplierSelect includeAll value={supplierCode} onChange={setSupplierCode} />
           </div>
-          <Input aria-label="품목코드" placeholder="품목코드" value={itemCode} className="w-40"
+          <PartSearchField aria-label="품목코드" placeholder="품목코드" value={itemCode} className="w-40"
             onChange={(e) => setItemCode(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') void search(); }} />
           <ComCodeSelect groupCode="ITEM CLASS" labelPrefix="품목분류" value={itemClass}

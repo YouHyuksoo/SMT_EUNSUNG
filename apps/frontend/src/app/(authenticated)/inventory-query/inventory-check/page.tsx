@@ -28,6 +28,7 @@ import {
 } from '../../report/components/TruncationNotice';
 import { adjustHistoryColumns, inventoryCheckColumns } from '../inventory-query-columns';
 import type { AdjustHistoryRow, InventoryCheckRow } from '../inventory-query-columns';
+import PartSearchField from '@/components/shared/PartSearchField';
 
 const lastMonth = () => {
   const d = new Date();
@@ -152,7 +153,7 @@ export default function InventoryCheckPage() {
           <span className="flex items-center gap-1 text-sm font-semibold text-text">
             <Scale className="h-4 w-4" />재고 조정
           </span>
-          <Input aria-label="품목코드" placeholder="품목코드" value={itemCode}
+          <PartSearchField aria-label="품목코드" placeholder="품목코드" value={itemCode}
             className="w-44"
             onChange={(e) => setItemCode(e.target.value)} />
           <Input aria-label="롯트번호" placeholder="롯트번호" value={lotNo}
@@ -196,7 +197,7 @@ export default function InventoryCheckPage() {
             className="w-36" inputMode="numeric"
             onChange={(e) => setYyyymm(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') void search(); }} />
-          <Input aria-label="품목코드 조건" placeholder="품목코드" value={itemCodeCond}
+          <PartSearchField aria-label="품목코드 조건" placeholder="품목코드" value={itemCodeCond}
             className="w-44"
             onChange={(e) => setItemCodeCond(e.target.value)} />
           {tab === 'check' && (

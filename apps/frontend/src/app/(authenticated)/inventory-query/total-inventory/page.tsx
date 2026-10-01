@@ -35,6 +35,7 @@ import type {
   InventoryByLotRow,
   TotalInventoryRow,
 } from '../inventory-query-columns';
+import PartSearchField from '@/components/shared/PartSearchField';
 
 type DetailTab = 'location' | 'lot';
 
@@ -119,7 +120,7 @@ export default function TotalInventoryPage() {
 
       <Card padding="none">
         <CardContent className="flex flex-wrap items-center gap-3 p-3">
-          <Input aria-label="품목코드" placeholder="품목코드" value={itemCode}
+          <PartSearchField aria-label="품목코드" placeholder="품목코드" value={itemCode}
             className="w-44"
             onChange={(e) => setItemCode(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') void search(); }} />

@@ -26,6 +26,7 @@ import SmtBomReplaceFormPanel, {
   toSmtBomReplaceForm,
   type SmtBomReplaceForm,
 } from './components/SmtBomReplaceFormPanel';
+import PartSearchField from '@/components/shared/PartSearchField';
 
 export default function SmtBomReplacePage() {
   const [rows, setRows] = useState<SmtBomReplaceRow[]>([]);
@@ -127,9 +128,9 @@ export default function SmtBomReplacePage() {
           <CardContent className="flex flex-wrap items-center gap-3 p-3">
             <SmtModelSelect labelPrefix="모델" value={modelName}
               onChange={setModelName} className="w-56" />
-            <Input aria-label="원 품목코드" placeholder="원 품목코드" value={childItemCode}
+            <PartSearchField aria-label="원 품목코드" placeholder="원 품목코드" value={childItemCode}
               className="w-44" onChange={(e) => setChildItemCode(e.target.value)} />
-            <Input aria-label="대체 품목코드" placeholder="대체 품목코드" value={replaceItemCode}
+            <PartSearchField aria-label="대체 품목코드" placeholder="대체 품목코드" value={replaceItemCode}
               className="w-44" onChange={(e) => setReplaceItemCode(e.target.value)} />
             <Input aria-label="라인코드" placeholder="라인코드" value={lineCode}
               className="w-36" onChange={(e) => setLineCode(e.target.value)} />

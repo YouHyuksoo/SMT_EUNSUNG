@@ -118,6 +118,7 @@ export default function SmtBomComparisonPage() {
   /** 모델 수가 조회할 때 정해지므로 컬럼도 그때 만든다. */
   const compareColumns = useMemo<ColumnDef<SmtCompareRow>[]>(() => {
     const base: ColumnDef<SmtCompareRow>[] = [
+      { accessorKey: 'itemName', header: '부품명', size: 190 },
       {
         id: 'diff',
         header: '판정',
@@ -125,7 +126,6 @@ export default function SmtBomComparisonPage() {
         accessorFn: (r) => (r.diff ? (r.missingIn.length > 0 ? '한쪽만' : '자리 다름') : '같음'),
       },
       { accessorKey: 'childItemCode', header: '부품코드', size: 160 },
-      { accessorKey: 'itemName', header: '부품명', size: 190 },
       { accessorKey: 'itemSpec', header: '규격', size: 160 },
     ];
     return [

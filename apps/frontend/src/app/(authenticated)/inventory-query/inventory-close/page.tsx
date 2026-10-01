@@ -27,6 +27,7 @@ import {
 } from '../../report/components/TruncationNotice';
 import { closeSummaryColumns, ledgerColumns } from '../inventory-query-columns';
 import type { CloseSummaryRow, LedgerRow } from '../inventory-query-columns';
+import PartSearchField from '@/components/shared/PartSearchField';
 
 /** 지난달 `YYYYMM` — 마감은 보통 지난달을 본다. */
 const lastMonth = () => {
@@ -121,7 +122,7 @@ export default function InventoryClosePage() {
             className="w-36" inputMode="numeric"
             onChange={(e) => setYyyymm(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') void search(); }} />
-          <Input aria-label="품목코드" placeholder="품목코드" value={itemCode}
+          <PartSearchField aria-label="품목코드" placeholder="품목코드" value={itemCode}
             className="w-44"
             onChange={(e) => setItemCode(e.target.value)} />
           {tab === 'ledger' ? (

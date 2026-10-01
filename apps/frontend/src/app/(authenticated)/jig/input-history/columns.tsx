@@ -16,6 +16,7 @@ const codeWithName = (code: unknown, name: unknown) => {
 };
 
 export const jigInputHistoryColumns: ColumnDef<JigInputHistoryRow>[] = [
+  { accessorKey: 'itemCode', header: '품목코드', size: 140 },
   { accessorKey: 'inputDate', header: '투입일시', size: 150, cell: (ctx) => dateTime(ctx.getValue()) },
   {
     id: 'lineName',
@@ -35,7 +36,6 @@ export const jigInputHistoryColumns: ColumnDef<JigInputHistoryRow>[] = [
   { accessorKey: 'solderType', header: '솔더유형', size: 100 },
   { accessorKey: 'currentHitValue', header: '누적타수', size: 100, meta: { align: 'right' }, cell: (ctx) => qty(ctx.getValue()) },
   { accessorKey: 'runNo', header: 'RUN NO', size: 120 },
-  { accessorKey: 'itemCode', header: '품목코드', size: 140 },
   { accessorKey: 'modelName', header: '모델명', size: 150 },
   { accessorKey: 'enterBy', header: '등록자', size: 90 },
   { accessorKey: 'enterDate', header: '등록일시', size: 150, cell: (ctx) => dateTime(ctx.getValue()) },

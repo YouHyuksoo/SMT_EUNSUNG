@@ -24,6 +24,7 @@ import DateRangeFilter from "@/components/shared/DateRangeFilter";
 import UseYnSelect from "@/components/shared/UseYnSelect";
 import FilterBar from "@/components/shared/FilterBar";
 import type { LedgerFilterState, LedgerMode } from "./types";
+import PartSearchField from "@/components/shared/PartSearchField";
 
 interface LedgerFiltersProps {
   mode: LedgerMode;
@@ -59,7 +60,7 @@ export default function LedgerFilters({ mode, filters, onChange }: LedgerFilters
       )}
 
       {showItemCode && (
-        <Input
+        <PartSearchField
           value={filters.itemCode}
           onChange={event => onChange({ itemCode: event.target.value })}
           placeholder={f("itemCode")}

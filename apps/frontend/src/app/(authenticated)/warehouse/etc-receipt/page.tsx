@@ -30,6 +30,7 @@ import {
 } from '../../report/components/TruncationNotice';
 import { receiptColumns, receiptInventoryColumns } from '../receipt-manage-columns';
 import type { ReceiptInventoryRow, ReceiptRow } from '../receipt-manage-columns';
+import PartSearchField from '@/components/shared/PartSearchField';
 
 const daysAgo = (n: number) => {
   const d = new Date();
@@ -238,7 +239,7 @@ export default function EtcReceiptPage() {
 
       <Card padding="none">
         <CardContent className="flex flex-wrap items-center gap-3 p-3">
-          <Input aria-label="재고 품목코드" placeholder="재고 품목코드" value={invItemCode}
+          <PartSearchField aria-label="재고 품목코드" placeholder="재고 품목코드" value={invItemCode}
             className="w-44"
             onChange={(e) => setInvItemCode(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') void search(); }} />
@@ -312,7 +313,7 @@ export default function EtcReceiptPage() {
               )}
             </div>
 
-            <Input label="품목코드" value={itemCode} readOnly={mode === 'edit'}
+            <PartSearchField label="품목코드" value={itemCode} readOnly={mode === 'edit'}
               onChange={(e) => setItemCode(e.target.value)} />
 
             {mode === 'create' ? (

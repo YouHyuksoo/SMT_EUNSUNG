@@ -7,7 +7,8 @@
  *    - 숫자 → 우측(right), 날짜 → 중앙(center), 문자 → 좌측(left)
  * 2. **getAlignmentClass**: 정렬 방향에 맞는 Tailwind CSS 클래스 반환
  * 3. **getPinnedStyle**: 고정 컬럼(pinned column)에 필요한 sticky 스타일 생성
- * 4. 이 파일은 DataGrid 내부에서만 사용되는 헬퍼로, 외부 직접 사용은 불필요
+ * 4. **withLeadingPinnedColumns**: 좌측 고정이 있으면 관리→선택→품목코드→품목명 컬럼을 고정 맨 앞에 넣는다
+ * 5. 이 파일은 DataGrid 내부에서만 사용되는 헬퍼로, 외부 직접 사용은 불필요
  */
 import React from 'react';
 
@@ -59,5 +60,25 @@ export function getPinnedStyle(
     ...(pinned === 'right' ? { position: 'sticky', right: afterRight, zIndex } : {}),
     ...(isLastLeft ? { boxShadow: '4px 0 8px -2px rgba(0,0,0,0.1)' } : {}),
     ...(isFirstRight ? { boxShadow: '-4px 0 8px -2px rgba(0,0,0,0.1)' } : {}),
+  };
+}
+
+/**
+ * 그리드 앞쪽 고정 순서: 관리 → 선택 체크박스 → 품목코드 → 품목명.
+ * 컬럼 배열 순서는 gridItemColumnOrder.structure.test.mjs 가 강제하지만, 화면이 다른 컬럼(예: issueDate)을
+ * 좌측 고정하면 고정 컬럼이 먼저 그려져 그 순서가 깨진다. 그래서 좌측 고정 목록 앞에도 같은 순서로 넣는다.
+ */
+export const LEADING_COLUMN_IDS = ['actions', 'select', 'check', 'itemCode', 'itemName'] as const;
+
+export function withLeadingPinnedColumns(
+  pinning: { left?: string[]; right?: string[] } | undefined,
+  columnIds: string[],
+): { left?: string[]; right?: string[] } {
+  if (!pinning?.left?.length) return pinning ?? {};
+  const present = new Set(columnIds);
+  const leading: string[] = LEADING_COLUMN_IDS.filter((id) => present.has(id));
+  return {
+    ...pinning,
+    left: [...leading, ...pinning.left.filter((id) => !leading.includes(id))],
   };
 }

@@ -8,8 +8,8 @@ const date = (value: unknown) => formatDisplayDate(value);
 
 /** (1) 제품모델 목록 */
 export const modelColumns: ColumnDef<MfsModelRow>[] = [
-  { accessorKey: 'modelName', header: '모델명', size: 180 },
   { accessorKey: 'itemCode', header: '품목코드', size: 140 },
+  { accessorKey: 'modelName', header: '모델명', size: 180 },
   { accessorKey: 'smtModelName', header: 'SMT 모델명', size: 160 },
   { accessorKey: 'masterModelName', header: '마스터 모델명', size: 150 },
   { accessorKey: 'customerName', header: '고객사', size: 120 },
@@ -33,6 +33,7 @@ export const feederColumns: ColumnDef<MfsFeederRow>[] = [
 
 /** (3) MFS 목록 */
 export const mfsColumns: ColumnDef<MfsSummaryRow>[] = [
+  { accessorKey: 'itemName', header: '품목명', size: 180 },
   { accessorKey: 'mfs', header: 'MFS', size: 110 },
   {
     id: 'status', header: '승인', size: 90,
@@ -44,12 +45,12 @@ export const mfsColumns: ColumnDef<MfsSummaryRow>[] = [
   { accessorKey: 'confirmDate', header: '승인일', size: 100, cell: ctx => date(ctx.getValue()) },
   { accessorKey: 'confirmBy', header: '승인자', size: 90 },
   { accessorKey: 'lastModifyBy', header: '최종 수정자', size: 90 },
-  { accessorKey: 'itemName', header: '품목명', size: 180 },
   { accessorKey: 'comments', header: '비고', size: 160 },
 ];
 
 /** (4) MFS 상세. BOM_LEVEL 만큼 들여써서 계층을 표시한다. */
 export const detailColumns: ColumnDef<MfsDetailRow>[] = [
+  { accessorKey: 'childItemName', header: '품목명', size: 180 },
   {
     accessorKey: 'childItemCode', header: '구성품목', size: 220,
     cell: ({ row }) => {
@@ -58,7 +59,6 @@ export const detailColumns: ColumnDef<MfsDetailRow>[] = [
     },
   },
   { accessorKey: 'bomLevel', header: '레벨', size: 60, meta: { align: 'right' } },
-  { accessorKey: 'childItemName', header: '품목명', size: 180 },
   { accessorKey: 'childItemSpec', header: '규격', size: 150 },
   { accessorKey: 'childItemUom', header: '단위', size: 60 },
   { accessorKey: 'itemType', header: '품목유형', size: 90, cell: comCodeCell('ITEM TYPE') },

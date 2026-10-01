@@ -27,6 +27,12 @@ export function parentColumns(labels: ParentColumnLabels): ColumnDef<ParentPart,
       cell: (c) => <span className="font-mono">{c.getValue() as string}</span>,
     },
     {
+      accessorKey: "itemName",
+      header: "품목명",
+      size: 220,
+      meta: { filterType: "text" },
+    },
+    {
       id: "productClass",
       accessorFn: (row) => codeName(labels.productClass, row.productClass),
       header: "차종",
@@ -52,12 +58,6 @@ export function parentColumns(labels: ParentColumnLabels): ColumnDef<ParentPart,
       header: "BOM",
       size: 56,
       meta: { filterType: "number", align: "right" },
-    },
-    {
-      accessorKey: "itemName",
-      header: "품목명",
-      size: 220,
-      meta: { filterType: "text" },
     },
   ];
 }

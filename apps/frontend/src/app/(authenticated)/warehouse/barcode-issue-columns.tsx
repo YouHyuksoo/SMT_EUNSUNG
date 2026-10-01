@@ -137,10 +137,10 @@ export interface BarcodeIssueScanResult {
 }
 
 export const barcodeIssueColumns: ColumnDef<BarcodeIssueRow>[] = [
-  { accessorKey: 'issueDate', header: '출고일', size: 110, meta: center },
-  { accessorKey: 'issueSequence', header: '순번', size: 100, meta: right },
   { accessorKey: 'itemCode', header: '품목코드', size: 140 },
   { accessorKey: 'itemName', header: '품목명', size: 170 },
+  { accessorKey: 'issueDate', header: '출고일', size: 110, meta: center },
+  { accessorKey: 'issueSequence', header: '순번', size: 100, meta: right },
   { accessorKey: 'itemSpec', header: '규격', size: 150 },
   { accessorKey: 'issueQty', header: '출고수량', size: 110, meta: right, cell: (c) => num(c.getValue()) },
   { accessorKey: 'itemUom', header: '단위', size: 70, meta: center },
@@ -172,9 +172,9 @@ export const barcodeIssueColumns: ColumnDef<BarcodeIssueRow>[] = [
 ];
 
 export const issueWaitingColumns: ColumnDef<IssueWaitingRow>[] = [
-  { accessorKey: 'itemBarcode', header: '자재 바코드', size: 220 },
   { accessorKey: 'itemCode', header: '품목코드', size: 140 },
   { accessorKey: 'itemName', header: '품목명', size: 170 },
+  { accessorKey: 'itemBarcode', header: '자재 바코드', size: 220 },
   { accessorKey: 'itemSpec', header: '규격', size: 150 },
   { accessorKey: 'lotNo', header: '롯트번호', size: 130 },
   { accessorKey: 'currentQty', header: '수량', size: 100, meta: right, cell: (c) => num(c.getValue()) },
@@ -200,11 +200,11 @@ export const issueWaitingColumns: ColumnDef<IssueWaitingRow>[] = [
 ];
 
 export const kittingBomColumns: ColumnDef<KittingBomRow>[] = [
+  { accessorKey: 'itemCode', header: '자재코드', size: 140 },
+  { accessorKey: 'itemName', header: '자재명', size: 170 },
   { accessorKey: 'workstageCode', header: '공정', size: 90, meta: center },
   { accessorKey: 'feederLocationCode', header: '피더 위치', size: 110 },
   { accessorKey: 'feederShaft', header: '피더 축', size: 90, meta: center },
-  { accessorKey: 'itemCode', header: '자재코드', size: 140 },
-  { accessorKey: 'itemName', header: '자재명', size: 170 },
   { accessorKey: 'itemSpec', header: '규격', size: 150 },
   { accessorKey: 'bomQty', header: '소요량', size: 100, meta: right, cell: (c) => num(c.getValue()) },
   { accessorKey: 'locationInfo', header: '회로 기호', size: 180 },

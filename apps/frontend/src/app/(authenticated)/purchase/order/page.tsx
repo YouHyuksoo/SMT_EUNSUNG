@@ -31,6 +31,7 @@ import {
   purchaseOrderGroupColumns,
 } from '../purchase-columns';
 import type { PurchaseOrderGroupRow, PurchaseOrderRow } from '../purchase-columns';
+import PartSearchField from '@/components/shared/PartSearchField';
 
 const today = () => getTodayLocal();
 const monthsAgo = (n: number) => {
@@ -223,7 +224,7 @@ export default function PurchaseOrderPage() {
             className="w-36" onChange={(e) => setOrderGroupNo(e.target.value)} />
           <SupplierSelect aria-label="협력사" value={supplierCode}
             className="w-48" onChange={setSupplierCode} />
-          <Input aria-label="품목코드" placeholder="품목코드" value={itemCode}
+          <PartSearchField aria-label="품목코드" placeholder="품목코드" value={itemCode}
             className="w-40" onChange={(e) => setItemCode(e.target.value)} />
           <Input aria-label="주문일" type="date" value={purchaseOrderDate}
             className="w-40" onChange={(e) => setPurchaseOrderDate(e.target.value)} />
@@ -276,7 +277,7 @@ export default function PurchaseOrderPage() {
             onFromChange={setDateFrom} onToChange={setDateTo} />
           <SupplierSelect aria-label="협력사 조건" includeAll labelPrefix="협력사"
             value={supplierCond} className="w-48" onChange={setSupplierCond} />
-          <Input aria-label="품목코드 조건" placeholder="품목코드" value={itemCond}
+          <PartSearchField aria-label="품목코드 조건" placeholder="품목코드" value={itemCond}
             className="w-40" onChange={(e) => setItemCond(e.target.value)} />
           <ComCodeSelect groupCode="ORDER TYPE" labelPrefix="주문유형"
             aria-label="주문유형 조건" value={orderTypeCond} className="w-40"

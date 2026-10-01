@@ -12,7 +12,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { GitFork, Search } from 'lucide-react';
-import { Button, Card, CardContent, ConfirmModal, Input } from '@/components/ui';
+import { Button, Card, CardContent, ConfirmModal } from '@/components/ui';
 import DateFilter from '@/components/shared/DateFilter';
 import DataGrid from '@/components/data-grid/DataGrid';
 import api from '@/services/api';
@@ -20,6 +20,7 @@ import { useUnsavedGuard } from '@/hooks/useUnsavedGuard';
 import ReplaceBomFormPanel from './components/ReplaceBomFormPanel';
 import { bomExpandColumns, replaceColumns } from './columns';
 import type { BomExpandRow, ReplaceBomMode, ReplaceForm, ReplaceRow } from './types';
+import PartSearchField from '@/components/shared/PartSearchField';
 
 const today = () => new Date().toISOString().slice(0, 10);
 const emptyForm = (): ReplaceForm => ({
@@ -175,7 +176,7 @@ export default function ReplaceBomPage() {
         <>
           <Card className="shrink-0" padding="sm">
             <div className="flex flex-wrap items-center gap-2">
-              <Input aria-label="SET 품목코드" placeholder="SET 품목코드" value={setItemCode} onChange={e => setSetItemCode(e.target.value)} className="w-52" />
+              <PartSearchField aria-label="SET 품목코드" placeholder="SET 품목코드" value={setItemCode} onChange={e => setSetItemCode(e.target.value)} className="w-52" />
               <label className="flex items-center gap-1 whitespace-nowrap text-sm text-text-muted">
                 기준일자
                 <DateFilter value={expandDate} onChange={setExpandDate} />
@@ -198,9 +199,9 @@ export default function ReplaceBomPage() {
         <>
           <Card className="shrink-0" padding="sm">
             <div className="flex flex-wrap items-center gap-2">
-              <Input aria-label="상위품목" placeholder="상위품목(SET)" value={qParent} onChange={e => setQParent(e.target.value)} className="w-44" />
-              <Input aria-label="구성품목" placeholder="구성품목" value={qChild} onChange={e => setQChild(e.target.value)} className="w-44" />
-              <Input aria-label="대체품목" placeholder="대체품목" value={qReplace} onChange={e => setQReplace(e.target.value)} className="w-44" />
+              <PartSearchField aria-label="상위품목" placeholder="상위품목(SET)" value={qParent} onChange={e => setQParent(e.target.value)} className="w-44" />
+              <PartSearchField aria-label="구성품목" placeholder="구성품목" value={qChild} onChange={e => setQChild(e.target.value)} className="w-44" />
+              <PartSearchField aria-label="대체품목" placeholder="대체품목" value={qReplace} onChange={e => setQReplace(e.target.value)} className="w-44" />
               <Button size="sm" onClick={searchList} disabled={loading}><Search className="mr-1 h-4 w-4" />조회</Button>
               <span className="text-sm text-text-muted">{searched ? `${rows.length}/${total}건` : '조회조건을 입력하세요'}</span>
             </div>

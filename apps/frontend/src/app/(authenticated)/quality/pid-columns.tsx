@@ -35,13 +35,13 @@ export interface PidHoldingRow {
 }
 
 export const pidHoldingColumns: ColumnDef<PidHoldingRow>[] = [
+  { accessorKey: 'itemCode', header: '품목코드', size: 140 },
+  { accessorKey: 'itemName', header: '품목명', size: 180 },
   { accessorKey: 'serialNo', header: 'PID', size: 190 },
   { id: 'barcodeStatusName', header: '바코드상태', size: 110, accessorFn: (r) => codeWithName(r.barcodeStatus, r.barcodeStatusName) },
   { accessorKey: 'runNo', header: 'RUN번호', size: 150 },
   { accessorKey: 'modelName', header: '모델명', size: 180 },
   { accessorKey: 'modelSuffix', header: '서픽스', size: 90 },
-  { accessorKey: 'itemCode', header: '품목코드', size: 140 },
-  { accessorKey: 'itemName', header: '품목명', size: 180 },
   { id: 'lineName', header: '라인', size: 120, accessorFn: (r) => codeWithName(r.lineCode, r.lineName) },
   { accessorKey: 'magazineNo', header: '매거진번호', size: 140 },
   { accessorKey: 'boxNo', header: 'BOX번호', size: 140 },
@@ -76,13 +76,13 @@ export interface PidIssueScanRow {
 }
 
 export const pidIssueScanColumns: ColumnDef<PidIssueScanRow>[] = [
+  { accessorKey: 'itemCode', header: '품목코드', size: 140 },
+  { accessorKey: 'itemName', header: '품목명', size: 180 },
   { accessorKey: 'scanDate', header: '스캔일시', size: 160, cell: (c) => dateTime(c.getValue()) },
   { accessorKey: 'serialNo', header: 'PID', size: 190 },
   { accessorKey: 'pidIssueType', header: '이슈유형', size: 120 },
   { accessorKey: 'modelName', header: '모델명', size: 180 },
   { accessorKey: 'modelSuffix', header: '서픽스', size: 90 },
-  { accessorKey: 'itemCode', header: '품목코드', size: 140 },
-  { accessorKey: 'itemName', header: '품목명', size: 180 },
   { id: 'lineName', header: '라인', size: 120, accessorFn: (r) => codeWithName(r.lineCode, r.lineName) },
   { accessorKey: 'location', header: '위치', size: 130 },
   { accessorKey: 'cleanCharger', header: '세척담당', size: 110 },
@@ -131,12 +131,12 @@ export interface IqcInspectHistoryRow {
 }
 
 export const iqcInspectHistoryColumns: ColumnDef<IqcInspectHistoryRow>[] = [
+  { accessorKey: 'itemCode', header: '품목코드', size: 140 },
+  { accessorKey: 'itemName', header: '품목명', size: 180 },
   { accessorKey: 'inspectDate', header: '검사일시', size: 160, cell: (c) => dateTime(c.getValue()) },
   { accessorKey: 'inspectSequence', header: '검사항번', size: 100, meta: right },
   { accessorKey: 'modelName', header: '모델명', size: 180 },
   { accessorKey: 'modelSuffix', header: '서픽스', size: 90 },
-  { accessorKey: 'itemCode', header: '품목코드', size: 140 },
-  { accessorKey: 'itemName', header: '품목명', size: 180 },
   { id: 'itemClassName', header: '품목분류', size: 130, accessorFn: (r) => codeWithName(r.itemClass, r.itemClassName) },
   { accessorKey: 'lotNo', header: 'LOT번호', size: 140 },
   { accessorKey: 'inspectType', header: '검사유형', size: 110 },

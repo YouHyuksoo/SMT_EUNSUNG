@@ -38,14 +38,14 @@ function checkColumn({ selected, toggle }: CheckOptions): ColumnDef<ReceiptCance
 }
 
 const baseColumns: ColumnDef<ReceiptCancelRow>[] = [
+  { accessorKey: 'itemCode', header: '품목코드', size: 140 },
+  { accessorKey: 'itemName', header: '품목명', size: 180 },
   { accessorKey: 'receiptDate', header: '입고일', size: 110, cell: ctx => date(ctx.getValue()) },
   { accessorKey: 'receiptSequence', header: '입고순번', size: 110, meta: { align: 'right' } },
   { accessorKey: 'receiptStatus', header: '입고상태', size: 90, cell: comCodeCell('RECEIPT STATUS') },
   { accessorKey: 'receiptType', header: '입고유형', size: 90, cell: comCodeCell('RECEIPT TYPE') },
   { accessorKey: 'locationCode', header: '로케이션', size: 110 },
   { accessorKey: 'lineType', header: '라인유형', size: 90, cell: comCodeCell('LINE TYPE') },
-  { accessorKey: 'itemCode', header: '품목코드', size: 140 },
-  { accessorKey: 'itemName', header: '품목명', size: 180 },
   { accessorKey: 'itemSpec', header: '규격', size: 160 },
   { accessorKey: 'materialMfs', header: '자재 MFS', size: 150 },
   { accessorKey: 'supplierCode', header: '공급업체코드', size: 120 },

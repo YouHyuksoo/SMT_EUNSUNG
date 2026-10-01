@@ -31,6 +31,7 @@ import {
 } from '../../report/components/TruncationNotice';
 import { issueColumns, issueInventoryColumns } from '../issue-manage-columns';
 import type { IssueInventoryRow, IssueRow } from '../issue-manage-columns';
+import PartSearchField from '@/components/shared/PartSearchField';
 
 const today = () => new Date().toISOString().slice(0, 10);
 const daysAgo = (n: number) => {
@@ -178,7 +179,7 @@ export default function EtcIssuePage() {
 
       <Card padding="none">
         <CardContent className="flex flex-wrap items-center gap-3 p-3">
-          <Input aria-label="재고 품목코드" placeholder="재고 품목코드" value={invItemCode}
+          <PartSearchField aria-label="재고 품목코드" placeholder="재고 품목코드" value={invItemCode}
             className="w-44"
             onChange={(e) => setInvItemCode(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') void search(); }} />

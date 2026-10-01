@@ -14,10 +14,10 @@ const right = { align: 'right' } as const;
 export const ESD_CHECK_LIMIT = 10;
 
 export const iqcTargetColumns: ColumnDef<IqcTargetRow>[] = [
-  { accessorKey: 'receiptSlipNo', header: '입고전표', size: 140 },
-  { accessorKey: 'itemBarcode', header: '자재바코드', size: 160 },
   { accessorKey: 'itemCode', header: '품목코드', size: 140 },
   { accessorKey: 'itemName', header: '품목명', size: 180 },
+  { accessorKey: 'receiptSlipNo', header: '입고전표', size: 140 },
+  { accessorKey: 'itemBarcode', header: '자재바코드', size: 160 },
   { accessorKey: 'itemSpec', header: '규격', size: 150 },
   { id: 'itemClassName', header: '품목분류', size: 120, accessorFn: (r) => codeWithName(r.itemClass, r.itemClassName) },
   { id: 'supplierName', header: '공급처', size: 150, accessorFn: (r) => codeWithName(r.supplierCode, r.supplierName) },
@@ -49,11 +49,11 @@ export const iqcTargetColumns: ColumnDef<IqcTargetRow>[] = [
 ];
 
 export const iqcHistoryColumns: ColumnDef<IqcHistoryRow>[] = [
+  { accessorKey: 'itemCode', header: '품목코드', size: 140 },
+  { accessorKey: 'itemName', header: '품목명', size: 180 },
   { accessorKey: 'inspectDate', header: '검사일시', size: 150, cell: (c) => dateTime(c.getValue()) },
   { accessorKey: 'inspectSequence', header: '검사항번', size: 100, meta: right },
   { accessorKey: 'iqcInspectNo', header: '입고전표', size: 140 },
-  { accessorKey: 'itemCode', header: '품목코드', size: 140 },
-  { accessorKey: 'itemName', header: '품목명', size: 180 },
   { accessorKey: 'mfs', header: 'MFS(원LOT)', size: 140 },
   { id: 'inspectResultName', header: '판정', size: 100, accessorFn: (r) => codeWithName(r.inspectResult, r.inspectResultName) },
   { id: 'badReasonName', header: '불량원인', size: 130, accessorFn: (r) => codeWithName(r.badReasonCode, r.badReasonName) },

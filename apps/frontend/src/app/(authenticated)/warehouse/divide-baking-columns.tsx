@@ -123,6 +123,8 @@ export interface BakingLookup {
 }
 
 export const dividedColumns: ColumnDef<DividedRow>[] = [
+  { accessorKey: 'itemCode', header: '품목코드', size: 140 },
+  { accessorKey: 'itemName', header: '품목명', size: 170 },
   { accessorKey: 'lotDivideDate', header: '분할시각', size: 160, cell: (c) => ts(c.getValue()) },
   {
     accessorKey: 'lotDivideSequence',
@@ -133,8 +135,6 @@ export const dividedColumns: ColumnDef<DividedRow>[] = [
     cell: (c) => num(c.getValue()),
   },
   { accessorKey: 'itemBarcode', header: '자재 바코드', size: 220 },
-  { accessorKey: 'itemCode', header: '품목코드', size: 140 },
-  { accessorKey: 'itemName', header: '품목명', size: 170 },
   { accessorKey: 'lotNo', header: '롯트번호', size: 130 },
   { accessorKey: 'originLotNo', header: '원본 롯트', size: 130 },
   { accessorKey: 'scanQty', header: '수량', size: 100, meta: right, cell: (c) => num(c.getValue()) },
@@ -150,6 +150,8 @@ export const dividedColumns: ColumnDef<DividedRow>[] = [
 ];
 
 export const bakingHistoryColumns: ColumnDef<BakingHistoryRow>[] = [
+  { accessorKey: 'itemCode', header: '품목코드', size: 140 },
+  { accessorKey: 'itemName', header: '품목명', size: 170 },
   {
     accessorKey: 'chamberType',
     header: '챔버 종류',
@@ -159,8 +161,6 @@ export const bakingHistoryColumns: ColumnDef<BakingHistoryRow>[] = [
   },
   { accessorKey: 'chamberCode', header: '챔버 번호', size: 110, meta: center },
   { accessorKey: 'chamberLocation', header: '자리', size: 90, meta: center },
-  { accessorKey: 'itemCode', header: '품목코드', size: 140 },
-  { accessorKey: 'itemName', header: '품목명', size: 170 },
   { accessorKey: 'itemSpec', header: '규격', size: 150 },
   { accessorKey: 'mslLevel', header: 'MSL', size: 70, meta: center },
   { accessorKey: 'lotNo', header: '롯트번호', size: 130 },

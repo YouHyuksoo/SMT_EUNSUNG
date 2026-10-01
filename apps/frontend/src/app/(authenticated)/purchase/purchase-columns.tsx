@@ -123,11 +123,11 @@ export interface PurchaseOrderGroupRow {
 
 /** 주문·예정이 함께 쓰는 앞부분 컬럼. */
 const orderBaseColumns: ColumnDef<PurchaseOrderRow>[] = [
+  { accessorKey: 'itemCode', header: '품목코드', size: 140 },
+  { accessorKey: 'itemName', header: '품목명', size: 180 },
   { accessorKey: 'orderNo', header: '주문번호', size: 120 },
   { accessorKey: 'orderGroupNo', header: '발주그룹', size: 120 },
   { accessorKey: 'supplierName', header: '협력사', size: 150 },
-  { accessorKey: 'itemCode', header: '품목코드', size: 140 },
-  { accessorKey: 'itemName', header: '품목명', size: 180 },
   { accessorKey: 'itemSpec', header: '규격', size: 160 },
   {
     accessorKey: 'orderQty',
@@ -310,6 +310,8 @@ export interface OrderForArrivalRow {
 }
 
 export const arrivalColumns: ColumnDef<ArrivalRow>[] = [
+  { accessorKey: 'itemCode', header: '품목코드', size: 140 },
+  { accessorKey: 'itemName', header: '품목명', size: 180 },
   {
     accessorKey: 'arrivalSeqNo',
     header: '순번',
@@ -345,8 +347,6 @@ export const arrivalColumns: ColumnDef<ArrivalRow>[] = [
   },
   { accessorKey: 'orderNo', header: '주문번호', size: 120 },
   { accessorKey: 'supplierName', header: '협력사', size: 150 },
-  { accessorKey: 'itemCode', header: '품목코드', size: 140 },
-  { accessorKey: 'itemName', header: '품목명', size: 180 },
   {
     accessorKey: 'arrivalQty',
     header: '수량',
@@ -377,10 +377,10 @@ export const arrivalColumns: ColumnDef<ArrivalRow>[] = [
 ];
 
 export const orderForArrivalColumns: ColumnDef<OrderForArrivalRow>[] = [
-  { accessorKey: 'orderNo', header: '주문번호', size: 120 },
-  { accessorKey: 'supplierName', header: '협력사', size: 150 },
   { accessorKey: 'itemCode', header: '품목코드', size: 140 },
   { accessorKey: 'itemName', header: '품목명', size: 180 },
+  { accessorKey: 'orderNo', header: '주문번호', size: 120 },
+  { accessorKey: 'supplierName', header: '협력사', size: 150 },
   {
     accessorKey: 'orderQty',
     header: '주문수량',
@@ -459,9 +459,9 @@ export interface RequirementMatrixRow {
 }
 
 export const masterPlanColumns: ColumnDef<MasterPlanRow>[] = [
-  { accessorKey: 'planDate', header: '계획일', size: 110, cell: (c) => ts(c.getValue()) },
   { accessorKey: 'itemCode', header: '품목코드', size: 150 },
   { accessorKey: 'itemName', header: '품목명', size: 200 },
+  { accessorKey: 'planDate', header: '계획일', size: 110, cell: (c) => ts(c.getValue()) },
   { accessorKey: 'itemSpec', header: '규격', size: 160 },
   { accessorKey: 'itemUom', header: '단위', size: 70, meta: center },
   {
@@ -497,9 +497,9 @@ export const masterPlanColumns: ColumnDef<MasterPlanRow>[] = [
 ];
 
 export const requirementColumns: ColumnDef<RequirementRow>[] = [
-  { accessorKey: 'planDate', header: '계획일', size: 110, cell: (c) => ts(c.getValue()) },
   { accessorKey: 'itemCode', header: '품목코드', size: 150 },
   { accessorKey: 'itemName', header: '품목명', size: 200 },
+  { accessorKey: 'planDate', header: '계획일', size: 110, cell: (c) => ts(c.getValue()) },
   { accessorKey: 'itemSpec', header: '규격', size: 160 },
   { accessorKey: 'itemUom', header: '단위', size: 70, meta: center },
   {
@@ -619,9 +619,9 @@ export const orderPlanColumns: ColumnDef<OrderPlanRow>[] = [
 ];
 
 export const requirementOrderColumns: ColumnDef<RequirementOrderRow>[] = [
-  { accessorKey: 'planDate', header: '계획일', size: 110, cell: (c) => ts(c.getValue()) },
   { accessorKey: 'itemCode', header: '품목코드', size: 150 },
   { accessorKey: 'itemName', header: '품목명', size: 190 },
+  { accessorKey: 'planDate', header: '계획일', size: 110, cell: (c) => ts(c.getValue()) },
   { accessorKey: 'itemUom', header: '단위', size: 70, meta: center },
   {
     accessorKey: 'lineType',

@@ -94,10 +94,10 @@ export interface SolderIssueResult {
 }
 
 export const solderSlipColumns: ColumnDef<SolderSlipRow>[] = [
-  { accessorKey: 'receiptSlipNo', header: '전표번호', size: 150 },
-  { accessorKey: 'receiptDate', header: '전표일', size: 110, meta: center },
   { accessorKey: 'itemCode', header: '품목코드', size: 130 },
   { accessorKey: 'itemName', header: '품목명', size: 170 },
+  { accessorKey: 'receiptSlipNo', header: '전표번호', size: 150 },
+  { accessorKey: 'receiptDate', header: '전표일', size: 110, meta: center },
   { accessorKey: 'itemSpec', header: '규격', size: 150 },
   {
     accessorKey: 'solderType',

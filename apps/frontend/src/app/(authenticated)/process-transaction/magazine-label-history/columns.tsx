@@ -6,6 +6,7 @@ const qty = (value: unknown) => value == null ? '' : Number(value).toLocaleStrin
 const dateTime = (value: unknown) => value ? new Date(String(value)).toLocaleString('ko-KR', { hour12: false }).replace(/\.\s?$/, '') : '';
 
 const historyColumns: ColumnDef<MagazineLabelHistoryRow>[] = [
+  { accessorKey: 'itemCode', header: '품목코드', size: 145 },
   { accessorKey: 'magazineLabelType', header: '라벨유형', size: 110, cell: comCodeCell('MAGAZINE LABEL TYPE') },
   { accessorKey: 'runNo', header: 'RUN NO', size: 145 },
   { accessorKey: 'magazineLabelNo', header: '매거진 라벨번호', size: 180 },
@@ -15,7 +16,6 @@ const historyColumns: ColumnDef<MagazineLabelHistoryRow>[] = [
   { accessorKey: 'receiptDate', header: '수불일시', size: 165, cell: ctx => dateTime(ctx.getValue()) },
   { accessorKey: 'modelName', header: '모델명', size: 150 },
   { accessorKey: 'modelSuffix', header: '서픽스', size: 85 },
-  { accessorKey: 'itemCode', header: '품목코드', size: 145 },
   { accessorKey: 'pcbItem', header: 'PCB 구분', size: 95 },
   { accessorKey: 'lotQty', header: '수량', size: 95, meta: { align: 'right' }, cell: ctx => qty(ctx.getValue()) },
   { accessorKey: 'badQty', header: '불량수량', size: 100, meta: { align: 'right' }, cell: ctx => qty(ctx.getValue()) },

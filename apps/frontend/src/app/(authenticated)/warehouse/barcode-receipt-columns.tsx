@@ -134,9 +134,9 @@ export interface BarcodeCompareResult {
 }
 
 export const barcodeColumns: ColumnDef<BarcodeRow>[] = [
-  { accessorKey: 'itemBarcode', header: '자재 바코드', size: 230 },
   { accessorKey: 'itemCode', header: '품목코드', size: 140 },
   { accessorKey: 'itemName', header: '품목명', size: 180 },
+  { accessorKey: 'itemBarcode', header: '자재 바코드', size: 230 },
   { accessorKey: 'itemSpec', header: '규격', size: 170 },
   { accessorKey: 'lotNo', header: '롯트번호', size: 130 },
   { accessorKey: 'scanQty', header: '수량', size: 100, meta: right, cell: (c) => num(c.getValue()) },
@@ -175,10 +175,10 @@ export const barcodeColumns: ColumnDef<BarcodeRow>[] = [
 ];
 
 export const barcodeReceiptColumns: ColumnDef<BarcodeReceiptRow>[] = [
-  { accessorKey: 'receiptDate', header: '입고일', size: 110, meta: center },
-  { accessorKey: 'receiptSequence', header: '입고순번', size: 110, meta: right },
   { accessorKey: 'itemCode', header: '품목코드', size: 140 },
   { accessorKey: 'itemName', header: '품목명', size: 180 },
+  { accessorKey: 'receiptDate', header: '입고일', size: 110, meta: center },
+  { accessorKey: 'receiptSequence', header: '입고순번', size: 110, meta: right },
   { accessorKey: 'itemSpec', header: '규격', size: 170 },
   { accessorKey: 'receiptQty', header: '입고수량', size: 110, meta: right, cell: (c) => num(c.getValue()) },
   {

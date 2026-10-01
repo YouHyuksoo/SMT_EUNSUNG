@@ -12,11 +12,11 @@ const dateTime = (value: unknown) => {
 
 /** 폐기이력 그리드 (rb_history) */
 export const destroyHistoryColumns: ColumnDef<ProductDestroyRow>[] = [
+  { accessorKey: 'itemCode', header: '품목코드', size: 140 },
   { accessorKey: 'qcSequence', header: 'QC순번', size: 100, meta: { align: 'right' } },
   { accessorKey: 'serialNo', header: 'PCB 시리얼', size: 170 },
   { accessorKey: 'modelName', header: '모델명', size: 150 },
   { accessorKey: 'modelSuffix', header: '서픽스', size: 90 },
-  { accessorKey: 'itemCode', header: '품목코드', size: 140 },
   { accessorKey: 'lineCode', header: '라인', size: 100 },
   { accessorKey: 'workstageCode', header: '공정', size: 110 },
   { accessorKey: 'badReasonCode', header: '불량사유', size: 110, cell: codeMasterCell('WQC BAD REASON CODE') },

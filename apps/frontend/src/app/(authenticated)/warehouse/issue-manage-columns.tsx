@@ -78,10 +78,10 @@ export interface IssueInventoryRow {
 }
 
 export const issueColumns: ColumnDef<IssueRow>[] = [
-  { accessorKey: 'issueDate', header: '출고일', size: 110, meta: center },
-  { accessorKey: 'issueSequence', header: '출고순번', size: 110, meta: right },
   { accessorKey: 'itemCode', header: '품목코드', size: 140 },
   { accessorKey: 'itemName', header: '품목명', size: 180 },
+  { accessorKey: 'issueDate', header: '출고일', size: 110, meta: center },
+  { accessorKey: 'issueSequence', header: '출고순번', size: 110, meta: right },
   { accessorKey: 'itemSpec', header: '규격', size: 160 },
   {
     accessorKey: 'issueQty',

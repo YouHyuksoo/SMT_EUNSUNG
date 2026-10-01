@@ -28,6 +28,7 @@ import {
 } from '../../report/components/TruncationNotice';
 import { pcbInputColumns } from '../query-columns';
 import type { PcbInputRow } from '../query-types';
+import PartSearchField from '@/components/shared/PartSearchField';
 
 const daysAgo = (n: number) => {
   const d = new Date();
@@ -100,7 +101,7 @@ export default function PcbInputQueryPage() {
           </div>
           <ModelSearchField aria-label="모델명" placeholder="모델명" value={modelName} className="w-36"
             onChange={(v) => setModelName(v)} />
-          <Input aria-label="품목코드" placeholder="품목코드" value={itemCode} className="w-36"
+          <PartSearchField aria-label="품목코드" placeholder="품목코드" value={itemCode} className="w-36"
             onChange={(e) => setItemCode(e.target.value)} />
           <Input aria-label="PCB 바코드" placeholder="PCB 바코드" value={itemBarcode}
             className="w-44" onChange={(e) => setItemBarcode(e.target.value)}

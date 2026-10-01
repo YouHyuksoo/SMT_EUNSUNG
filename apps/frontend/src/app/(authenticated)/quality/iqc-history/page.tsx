@@ -26,6 +26,7 @@ import IqcHistoryFormPanel, {
   toIqcHistoryForm,
   type IqcHistoryForm,
 } from './components/IqcHistoryFormPanel';
+import PartSearchField from '@/components/shared/PartSearchField';
 
 const isoDate = (date: Date) => date.toISOString().slice(0, 10);
 const today = () => isoDate(new Date());
@@ -134,7 +135,7 @@ export default function IqcHistoryPage() {
               onFromChange={setDateFrom} onToChange={setDateTo} />
             <ModelSearchField value={modelName} onChange={(v) => setModelName(v)}
               className="w-44" aria-label="모델명" placeholder="모델명" />
-            <Input aria-label="품목코드" placeholder="품목코드" value={itemCode}
+            <PartSearchField aria-label="품목코드" placeholder="품목코드" value={itemCode}
               className="w-40" onChange={(e) => setItemCode(e.target.value)} />
             <ComCodeSelect groupCode="ITEM CLASS" labelPrefix="품목분류"
               value={itemClass} onChange={setItemClass} className="w-48" />

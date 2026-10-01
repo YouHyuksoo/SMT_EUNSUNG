@@ -11,6 +11,7 @@ const num = (value: unknown) => value == null ? '' : Number(value).toLocaleStrin
  * 코드 컬럼은 공통코드 뜻을 보인다(PB DDDW vd_basecode). 날짜는 서버가 'YYYY-MM-DD' 문자열로 준다.
  */
 export const rawBomColumns: ColumnDef<RawBomRow>[] = [
+  { accessorKey: 'itemName', header: '품명', size: 180 },
   {
     id: 'rowNo', header: '순번', size: 60, enableSorting: false,
     meta: { filterType: 'none' as const, align: 'right' as const },
@@ -20,7 +21,6 @@ export const rawBomColumns: ColumnDef<RawBomRow>[] = [
   { accessorKey: 'assyExplosionYn', header: '반제품전개', size: 90, cell: comCodeCell('ASSY EXPLOSION YN') },
   { accessorKey: 'parentItemCode', header: '모품목코드', size: 160 },
   { accessorKey: 'childItemCode', header: '자품목코드', size: 150 },
-  { accessorKey: 'itemName', header: '품명', size: 180 },
   { accessorKey: 'itemSpec', header: '규격', size: 160 },
   { accessorKey: 'itemDivision', header: '품목구분', size: 90, cell: comCodeCell('ITEM DIVISION') },
   { accessorKey: 'drawingNo', header: '도면번호', size: 120 },

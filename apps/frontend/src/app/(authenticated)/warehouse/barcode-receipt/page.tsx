@@ -41,6 +41,7 @@ import type {
   BarcodeScanLookup,
   NoReceiptBarcodeRow,
 } from '../barcode-receipt-columns';
+import PartSearchField from '@/components/shared/PartSearchField';
 
 const daysAgo = (n: number) => {
   const d = new Date();
@@ -319,7 +320,7 @@ export default function BarcodeReceiptPage() {
           )}
           {tab !== 'noReceipt' && (
             <>
-              <Input aria-label="품목코드" placeholder="품목코드" value={itemCode}
+              <PartSearchField aria-label="품목코드" placeholder="품목코드" value={itemCode}
                 className="w-44"
                 onChange={(e) => setItemCode(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') void search(); }} />

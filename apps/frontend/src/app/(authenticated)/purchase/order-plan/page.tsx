@@ -29,7 +29,7 @@ import { Play, Search, Send, Tag } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
 import ComCodeSelect from '@/components/shared/ComCodeSelect';
 import SupplierSelect from '@/components/shared/SupplierSelect';
-import { Button, Card, CardContent, ConfirmModal, Input } from '@/components/ui';
+import { Button, Card, CardContent, ConfirmModal } from '@/components/ui';
 import api from '@/services/api';
 import { getTodayLocal } from '@/utils/date';
 import {
@@ -43,6 +43,7 @@ import OrderPlanGeneratePanel, {
   PLAN_SOURCES,
   type OrderPlanGenerateValues,
 } from './components/OrderPlanGeneratePanel';
+import PartSearchField from '@/components/shared/PartSearchField';
 
 // 생성 옵션(계획 원천·뺄 재고·계산 옵션)과 그 설명은 우측 생성 패널(components/OrderPlanGeneratePanel)에 있다.
 const TIP = {
@@ -269,7 +270,7 @@ export default function OrderPlanPage() {
           <span className="text-sm font-semibold text-text">② 확인</span>
           <SupplierSelect aria-label="협력사" includeAll labelPrefix="협력사"
             value={supplierCond} className="w-44" onChange={setSupplierCond} />
-          <Input aria-label="품목코드" placeholder="품목코드" value={itemCond}
+          <PartSearchField aria-label="품목코드" placeholder="품목코드" value={itemCond}
             className="w-36" data-tooltip={TIP.itemCode}
             onChange={(e) => setItemCond(e.target.value)} />
           <ComCodeSelect groupCode="LINE TYPE" labelPrefix="거래유형"

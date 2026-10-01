@@ -75,9 +75,9 @@ export interface MagazineIssuedRow {
 }
 
 export const magazinePlanColumns: ColumnDef<MagazinePlanRow>[] = [
+  { accessorKey: 'itemCode', header: '품목코드', size: 130 },
   { accessorKey: 'modelName', header: '모델', size: 160 },
   { accessorKey: 'modelSuffix', header: '서픽스', size: 90 },
-  { accessorKey: 'itemCode', header: '품목코드', size: 130 },
   {
     accessorKey: 'lotQty',
     header: '지시수량',

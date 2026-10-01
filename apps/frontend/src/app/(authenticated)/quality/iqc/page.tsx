@@ -22,6 +22,7 @@ import { Button, Card, CardContent, ConfirmModal, Input } from '@/components/ui'
 import api from '@/services/api';
 import { ESD_CHECK_LIMIT, iqcHistoryColumns, iqcTargetColumns } from './columns';
 import type { IqcHistoryRow, IqcTargetRow } from './types';
+import PartSearchField from '@/components/shared/PartSearchField';
 
 type Mode = 'wait' | 'cancel' | 'history';
 
@@ -186,7 +187,7 @@ export default function IqcPage() {
             from={dateFrom} to={dateTo}
             onFromChange={setDateFrom} onToChange={setDateTo}
           />
-          <Input aria-label="품목코드" placeholder="품목코드" value={itemCode}
+          <PartSearchField aria-label="품목코드" placeholder="품목코드" value={itemCode}
             className="w-40" onChange={(e) => setItemCode(e.target.value)} />
           <Input aria-label="입고전표" placeholder="입고전표" value={receiptSlipNo}
             className="w-40" onChange={(e) => setReceiptSlipNo(e.target.value)} />

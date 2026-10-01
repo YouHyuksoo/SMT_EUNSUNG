@@ -35,6 +35,7 @@ import type {
   IssueReturnResult,
   IssueReturnRow,
 } from '../issue-return-columns';
+import PartSearchField from '@/components/shared/PartSearchField';
 
 const today = () => new Date().toISOString().slice(0, 10);
 const daysAgo = (n: number) => {
@@ -247,7 +248,7 @@ export default function IssueReturnPage() {
           <DateRangeFilter label={tab === 'returns' ? '반품일' : '발생일'}
             from={dateFrom} to={dateTo}
             onFromChange={setDateFrom} onToChange={setDateTo} />
-          <Input aria-label="품목코드" placeholder="품목코드" value={itemCode}
+          <PartSearchField aria-label="품목코드" placeholder="품목코드" value={itemCode}
             className="w-44"
             onChange={(e) => setItemCode(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') void search(); }} />

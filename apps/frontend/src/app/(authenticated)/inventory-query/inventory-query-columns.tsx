@@ -226,6 +226,8 @@ export const totalInventoryColumns: ColumnDef<TotalInventoryRow>[] = [
 ];
 
 export const inventoryByLocationColumns: ColumnDef<InventoryByLocationRow>[] = [
+  { accessorKey: 'itemCode', header: '품목코드', size: 140 },
+  { accessorKey: 'itemName', header: '품목명', size: 180 },
   {
     accessorKey: 'div',
     header: '구분',
@@ -234,8 +236,6 @@ export const inventoryByLocationColumns: ColumnDef<InventoryByLocationRow>[] = [
     cell: (c) => DIV_LABEL[String(c.getValue() ?? '')] ?? String(c.getValue() ?? ''),
   },
   { accessorKey: 'locationName', header: '자리', size: 180 },
-  { accessorKey: 'itemCode', header: '품목코드', size: 140 },
-  { accessorKey: 'itemName', header: '품목명', size: 180 },
   { accessorKey: 'itemSpec', header: '규격', size: 160 },
   { accessorKey: 'inventoryQty', header: '수량', size: 110, meta: right, cell: (c) => num(c.getValue()) },
   { accessorKey: 'itemUom', header: '단위', size: 70, meta: center },
@@ -256,11 +256,11 @@ export const inventoryByLotColumns: ColumnDef<InventoryByLotRow>[] = [
 ];
 
 export const ledgerColumns: ColumnDef<LedgerRow>[] = [
+  { accessorKey: 'itemCode', header: '품목코드', size: 140 },
+  { accessorKey: 'itemName', header: '품목명', size: 180 },
   { accessorKey: 'div', header: '구분', size: 130, meta: center },
   { accessorKey: 'ledgerDate', header: '일자', size: 110, meta: center },
   { accessorKey: 'sequence', header: '순번', size: 100, meta: right },
-  { accessorKey: 'itemCode', header: '품목코드', size: 140 },
-  { accessorKey: 'itemName', header: '품목명', size: 180 },
   { accessorKey: 'lotNo', header: '롯트번호', size: 130 },
   { accessorKey: 'qty', header: '수량', size: 110, meta: right, cell: (c) => num(c.getValue()) },
   { accessorKey: 'itemUom', header: '단위', size: 70, meta: center },
@@ -276,9 +276,9 @@ export const ledgerColumns: ColumnDef<LedgerRow>[] = [
 ];
 
 export const closeSummaryColumns: ColumnDef<CloseSummaryRow>[] = [
-  { accessorKey: 'closeYyyymm', header: '마감월', size: 100, meta: center },
   { accessorKey: 'itemCode', header: '품목코드', size: 140 },
   { accessorKey: 'itemName', header: '품목명', size: 180 },
+  { accessorKey: 'closeYyyymm', header: '마감월', size: 100, meta: center },
   { accessorKey: 'itemUom', header: '단위', size: 70, meta: center },
   { accessorKey: 'lastQty', header: '전월말 수량', size: 120, meta: right, cell: (c) => num(c.getValue()) },
   { accessorKey: 'receiptQty', header: '입고', size: 110, meta: right, cell: (c) => num(c.getValue()) },
@@ -306,9 +306,9 @@ export const closeSummaryColumns: ColumnDef<CloseSummaryRow>[] = [
 ];
 
 export const inventoryCheckColumns: ColumnDef<InventoryCheckRow>[] = [
-  { accessorKey: 'closeYyyymm', header: '마감월', size: 100, meta: center },
   { accessorKey: 'itemCode', header: '품목코드', size: 140 },
   { accessorKey: 'itemName', header: '품목명', size: 180 },
+  { accessorKey: 'closeYyyymm', header: '마감월', size: 100, meta: center },
   { accessorKey: 'lotNo', header: '롯트번호', size: 130 },
   { accessorKey: 'locationCode', header: '창고', size: 80, meta: center },
   { accessorKey: 'bookQty', header: '장부수량', size: 110, meta: right, cell: (c) => num(c.getValue()) },
@@ -328,10 +328,10 @@ export const inventoryCheckColumns: ColumnDef<InventoryCheckRow>[] = [
 ];
 
 export const adjustHistoryColumns: ColumnDef<AdjustHistoryRow>[] = [
-  { accessorKey: 'issueDate', header: '조정일', size: 110, meta: center },
-  { accessorKey: 'issueSequence', header: '순번', size: 100, meta: right },
   { accessorKey: 'itemCode', header: '품목코드', size: 140 },
   { accessorKey: 'itemName', header: '품목명', size: 180 },
+  { accessorKey: 'issueDate', header: '조정일', size: 110, meta: center },
+  { accessorKey: 'issueSequence', header: '순번', size: 100, meta: right },
   { accessorKey: 'lotNo', header: '롯트번호', size: 130 },
   {
     accessorKey: 'issueQty',
@@ -357,10 +357,10 @@ export const adjustHistoryColumns: ColumnDef<AdjustHistoryRow>[] = [
 ];
 
 export const barcodeCheckColumns: ColumnDef<BarcodeCheckRow>[] = [
-  { accessorKey: 'checkYyyymm', header: '실사월', size: 100, meta: center },
-  { accessorKey: 'itemBarcode', header: '자재 바코드', size: 220 },
   { accessorKey: 'itemCode', header: '품목코드', size: 140 },
   { accessorKey: 'itemName', header: '품목명', size: 180 },
+  { accessorKey: 'checkYyyymm', header: '실사월', size: 100, meta: center },
+  { accessorKey: 'itemBarcode', header: '자재 바코드', size: 220 },
   { accessorKey: 'lotNo', header: '롯트번호', size: 130 },
   { accessorKey: 'barcodeQty', header: '찍은 수량', size: 110, meta: right, cell: (c) => num(c.getValue()) },
   { accessorKey: 'inventoryQty', header: '장부수량', size: 110, meta: right, cell: (c) => num(c.getValue()) },
@@ -382,9 +382,9 @@ export const barcodeCheckColumns: ColumnDef<BarcodeCheckRow>[] = [
 ];
 
 export const barcodeCheckSummaryColumns: ColumnDef<BarcodeCheckSummaryRow>[] = [
-  { accessorKey: 'checkYyyymm', header: '실사월', size: 100, meta: center },
   { accessorKey: 'itemCode', header: '품목코드', size: 140 },
   { accessorKey: 'itemName', header: '품목명', size: 180 },
+  { accessorKey: 'checkYyyymm', header: '실사월', size: 100, meta: center },
   { accessorKey: 'itemSpec', header: '규격', size: 160 },
   { accessorKey: 'barcodeCount', header: '바코드 수', size: 110, meta: right, cell: (c) => num(c.getValue()) },
   { accessorKey: 'barcodeQty', header: '찍은 수량', size: 110, meta: right, cell: (c) => num(c.getValue()) },

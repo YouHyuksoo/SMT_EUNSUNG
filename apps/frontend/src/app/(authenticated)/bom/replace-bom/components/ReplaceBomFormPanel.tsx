@@ -20,6 +20,7 @@ import DateFilter from '@/components/shared/DateFilter';
 import ProcessSelect from '@/components/shared/ProcessSelect';
 import api from '@/services/api';
 import type { ReplaceForm } from '../types';
+import PartSearchField from '@/components/shared/PartSearchField';
 
 interface Props {
   mode: 'create' | 'edit';
@@ -87,13 +88,13 @@ export default function ReplaceBomFormPanel({
       <div className="flex-1 overflow-y-auto p-5">
         <div className="grid grid-cols-2 gap-3">
           <label className="col-span-1 text-sm text-text-muted">상위품목(SET)
-            <Input aria-label="상위품목" value={form.parentItemCode} onChange={e => set('parentItemCode', e.target.value)} disabled={isEdit} fullWidth />
+            <PartSearchField aria-label="상위품목" value={form.parentItemCode} onChange={e => set('parentItemCode', e.target.value)} disabled={isEdit} fullWidth />
           </label>
           <label className="col-span-1 text-sm text-text-muted">구성품목
-            <Input aria-label="구성품목" value={form.childItemCode} onChange={e => set('childItemCode', e.target.value)} disabled={isEdit} fullWidth />
+            <PartSearchField aria-label="구성품목" value={form.childItemCode} onChange={e => set('childItemCode', e.target.value)} disabled={isEdit} fullWidth />
           </label>
           <label className="col-span-2 text-sm text-text-muted">대체품목
-            <Input aria-label="대체품목" value={form.replaceItemCode} onChange={e => set('replaceItemCode', e.target.value)} disabled={isEdit} fullWidth />
+            <PartSearchField aria-label="대체품목" value={form.replaceItemCode} onChange={e => set('replaceItemCode', e.target.value)} disabled={isEdit} fullWidth />
           </label>
           <label className="col-span-1 text-sm text-text-muted">공정
             <ProcessSelect aria-label="공정" value={form.workstageCode} onChange={v => set('workstageCode', v)} fullWidth />

@@ -29,6 +29,7 @@ import {
 } from '../../report/components/TruncationNotice';
 import { arrivalColumns, receiptColumns } from '../receipt-manage-columns';
 import type { ArrivalRow, ReceiptRow } from '../receipt-manage-columns';
+import PartSearchField from '@/components/shared/PartSearchField';
 
 const daysAgo = (n: number) => {
   const d = new Date();
@@ -121,7 +122,7 @@ export default function MaterialReceiptPage() {
             label={tab === 'history' ? '입고일' : '입고예정일'}
             from={dateFrom} to={dateTo}
             onFromChange={setDateFrom} onToChange={setDateTo} />
-          <Input aria-label="품목코드" placeholder="품목코드" value={itemCode}
+          <PartSearchField aria-label="품목코드" placeholder="품목코드" value={itemCode}
             className="w-44"
             onChange={(e) => setItemCode(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') void search(); }} />

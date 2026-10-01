@@ -20,7 +20,7 @@ import DataGrid from '@/components/data-grid/DataGrid';
 import ComCodeSelect from '@/components/shared/ComCodeSelect';
 import DateRangeFilter from '@/components/shared/DateRangeFilter';
 import SupplierSelect from '@/components/shared/SupplierSelect';
-import { Button, Card, CardContent, ConfirmModal, Input } from '@/components/ui';
+import { Button, Card, CardContent, ConfirmModal } from '@/components/ui';
 import api from '@/services/api';
 import { getTodayLocal } from '@/utils/date';
 import {
@@ -29,6 +29,7 @@ import {
 } from '../../report/components/TruncationNotice';
 import { forecastOrderColumns, selectColumn } from '../purchase-columns';
 import type { PurchaseOrderRow } from '../purchase-columns';
+import PartSearchField from '@/components/shared/PartSearchField';
 
 type Confirm = 'N' | 'W' | 'Y';
 
@@ -150,7 +151,7 @@ export default function ForecastOrderPage() {
             onFromChange={setDateFrom} onToChange={setDateTo} />
           <SupplierSelect aria-label="협력사" includeAll labelPrefix="협력사"
             value={supplierCond} className="w-48" onChange={setSupplierCond} />
-          <Input aria-label="품목코드" placeholder="품목코드" value={itemCond}
+          <PartSearchField aria-label="품목코드" placeholder="품목코드" value={itemCond}
             className="w-40" onChange={(e) => setItemCond(e.target.value)} />
           <ComCodeSelect groupCode="CONFIRM YN" labelPrefix="승인"
             aria-label="승인단계" value={confirmCond} className="w-36"

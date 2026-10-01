@@ -86,10 +86,10 @@ export interface IssueReturnResult {
 }
 
 export const issueReturnColumns: ColumnDef<IssueReturnRow>[] = [
-  { accessorKey: 'issueDate', header: '반품일', size: 110, meta: center },
-  { accessorKey: 'issueSequence', header: '순번', size: 100, meta: right },
   { accessorKey: 'itemCode', header: '품목코드', size: 140 },
   { accessorKey: 'itemName', header: '품목명', size: 180 },
+  { accessorKey: 'issueDate', header: '반품일', size: 110, meta: center },
+  { accessorKey: 'issueSequence', header: '순번', size: 100, meta: right },
   { accessorKey: 'itemSpec', header: '규격', size: 160 },
   {
     accessorKey: 'issueQty',
@@ -118,9 +118,9 @@ export const issueReturnColumns: ColumnDef<IssueReturnRow>[] = [
 ];
 
 export const issueLossColumns: ColumnDef<IssueLossRow>[] = [
-  { accessorKey: 'issueDate', header: '발생일시', size: 160, cell: (c) => ts(c.getValue()) },
   { accessorKey: 'itemCode', header: '품목코드', size: 140 },
   { accessorKey: 'itemName', header: '품목명', size: 180 },
+  { accessorKey: 'issueDate', header: '발생일시', size: 160, cell: (c) => ts(c.getValue()) },
   { accessorKey: 'itemSpec', header: '규격', size: 160 },
   { accessorKey: 'lotNo', header: '롯트번호', size: 130 },
   {

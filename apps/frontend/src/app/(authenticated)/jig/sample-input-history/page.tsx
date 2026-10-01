@@ -20,6 +20,7 @@ import { Button, Card, CardContent, Input } from '@/components/ui';
 import api from '@/services/api';
 import { sampleInputHistoryColumns } from './columns';
 import type { SampleInputHistoryRow } from './types';
+import PartSearchField from '@/components/shared/PartSearchField';
 
 const isoDate = (date: Date) => date.toISOString().slice(0, 10);
 const today = () => isoDate(new Date());
@@ -101,7 +102,7 @@ export default function SampleInputHistoryPage() {
             onChange={(event) => setSampleLotNo(event.target.value)}
             className="w-44"
           />
-          <Input
+          <PartSearchField
             placeholder="품목코드"
             value={modelItem}
             onChange={(event) => setModelItem(event.target.value)}

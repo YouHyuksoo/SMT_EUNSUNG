@@ -23,6 +23,7 @@ import { SmtModelSelect } from '../components/SmtSelects';
 import { smtPickupColumns } from '../columns';
 import type { SmtPickupRow } from '../types';
 import SmtPickupUploadModal from './components/SmtPickupUploadModal';
+import PartSearchField from '@/components/shared/PartSearchField';
 
 const isoDate = (date: Date) => date.toISOString().slice(0, 10);
 const today = () => isoDate(new Date());
@@ -125,7 +126,7 @@ export default function SmtFeederPickupPage() {
             className="w-36" onChange={(e) => setLineCode(e.target.value)} />
           <SmtModelSelect labelPrefix="모델" value={modelName}
             onChange={setModelName} className="w-60" />
-          <Input aria-label="품목코드" placeholder="품목코드" value={itemCode}
+          <PartSearchField aria-label="품목코드" placeholder="품목코드" value={itemCode}
             className="w-40" onChange={(e) => setItemCode(e.target.value)} />
           <Input aria-label="피더 ID" placeholder="피더 ID" value={feederId}
             className="w-40" onChange={(e) => setFeederId(e.target.value)} />

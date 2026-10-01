@@ -30,6 +30,7 @@ import type {
   ChamberStockSummaryRow,
   ChamberType,
 } from '../warehouse-types';
+import PartSearchField from '@/components/shared/PartSearchField';
 
 export function ChamberStockScreen({
   chamberType,
@@ -128,7 +129,7 @@ export function ChamberStockScreen({
 
       <Card padding="none">
         <CardContent className="flex flex-wrap items-center gap-3 p-3">
-          <Input aria-label="품목코드" placeholder="품목코드" value={itemCode} className="w-40"
+          <PartSearchField aria-label="품목코드" placeholder="품목코드" value={itemCode} className="w-40"
             onChange={(e) => setItemCode(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') void search(); }} />
           <Input aria-label="자재 롯트" placeholder="자재 롯트" value={lotNo} className="w-40"

@@ -42,6 +42,7 @@ import type {
   RequirementMatrixRow,
   RequirementRow,
 } from '../purchase-columns';
+import PartSearchField from '@/components/shared/PartSearchField';
 
 const TIP = {
   baseDate: '이번 계산을 묶는 번호표입니다. 이 값이 같은 기준계획이 한 묶음으로 전개됩니다.'
@@ -291,7 +292,7 @@ export default function RequirementPlanPage() {
           </span>
           <SupplierSelect aria-label="공급처" includeAll labelPrefix="공급처"
             value={supplierCond} className="w-44" onChange={setSupplierCond} />
-          <Input aria-label="품목코드" placeholder="품목코드" value={itemCond}
+          <PartSearchField aria-label="품목코드" placeholder="품목코드" value={itemCond}
             className="w-36" onChange={(e) => setItemCond(e.target.value)} />
           <ComCodeSelect groupCode="LINE TYPE" labelPrefix="거래유형"
             aria-label="거래유형" value={lineTypeCond} className="w-36"
@@ -325,7 +326,7 @@ export default function RequirementPlanPage() {
               data-tooltip={TIP.itemCode}>
               품목코드 (펼 제품)
             </label>
-            <Input id="row-item" placeholder="예: ES-1234" value={itemCode}
+            <PartSearchField id="row-item" placeholder="예: ES-1234" value={itemCode}
               className="w-44" data-tooltip={TIP.itemCode}
               onChange={(e) => setItemCode(e.target.value)} />
           </div>

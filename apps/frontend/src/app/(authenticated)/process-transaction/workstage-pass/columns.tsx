@@ -5,11 +5,11 @@ import type { WorkstagePassMode, WorkstagePassRow } from './types';
 const dt = (value: unknown) => value ? new Date(String(value)).toLocaleString('ko-KR', { hour12: false }).replace(/\.\s?$/, '') : '';
 const qty = (value: unknown) => value == null ? '' : Number(value).toLocaleString();
 const detail: ColumnDef<WorkstagePassRow>[] = [
-  { accessorKey: 'ioDate', header: '통과일시', size: 165, cell: c => dt(c.getValue()) },
-  { accessorKey: 'serialNo', header: 'PID/매거진', size: 190 }, { accessorKey: 'runNo', header: 'RUN NO', size: 140 },
-  { accessorKey: 'lineCode', header: '라인', size: 110, cell: ctx => ctx.row.original.lineName ?? ctx.getValue() ?? '' }, { accessorKey: 'workstageCode', header: '공정', size: 120, cell: ctx => ctx.row.original.workstageName ?? ctx.getValue() ?? '' },
-  { accessorKey: 'modelName', header: '모델명', size: 150 }, { accessorKey: 'modelSuffix', header: '서픽스', size: 90 },
-  { accessorKey: 'itemCode', header: '품목코드', size: 145 }, { accessorKey: 'ioDeficit', header: '수불', size: 70, cell: comCodeCell('IO DEFICIT') },
+  { accessorKey: 'itemCode', header: '품목코드', size: 145 },
+  { accessorKey: 'ioDate', header: '통과일시', size: 165, cell: c => dt(c.getValue()) }, { accessorKey: 'serialNo', header: 'PID/매거진', size: 190 },
+  { accessorKey: 'runNo', header: 'RUN NO', size: 140 }, { accessorKey: 'lineCode', header: '라인', size: 110, cell: ctx => ctx.row.original.lineName ?? ctx.getValue() ?? '' },
+  { accessorKey: 'workstageCode', header: '공정', size: 120, cell: ctx => ctx.row.original.workstageName ?? ctx.getValue() ?? '' }, { accessorKey: 'modelName', header: '모델명', size: 150 },
+  { accessorKey: 'modelSuffix', header: '서픽스', size: 90 }, { accessorKey: 'ioDeficit', header: '수불', size: 70, cell: comCodeCell('IO DEFICIT') },
   { accessorKey: 'ioQty', header: '수량', size: 90, meta: { align: 'right' }, cell: c => qty(c.getValue()) },
   { accessorKey: 'outDate', header: '출고일시', size: 165, cell: c => dt(c.getValue()) }, { accessorKey: 'lotNo', header: 'LOT NO', size: 130 },
 ];
