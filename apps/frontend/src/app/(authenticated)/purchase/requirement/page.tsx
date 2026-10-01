@@ -25,10 +25,11 @@
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
-import { Boxes, Download, Play, Plus, Search, Trash2 } from 'lucide-react';
+import { AlertTriangle, Boxes, CheckSquare, Download, Play, Plus, Search, Trash2 } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
 import ComCodeSelect from '@/components/shared/ComCodeSelect';
 import PlanImportModal from './components/PlanImportModal';
+import ExplodeFailuresModal from './components/ExplodeFailuresModal';
 import { notifySkippedBom } from '../skipped-bom';
 import RequirementPlanFormPanel from './components/RequirementPlanFormPanel';
 import SupplierSelect from '@/components/shared/SupplierSelect';
@@ -51,6 +52,8 @@ const TIP = {
   baseDate: '이번 계산을 묶는 번호표입니다. 이 날짜로 묶인 기준계획을 한 번에 전개합니다.'
     + ' 아래 "계획일"과 다릅니다 — 계획일은 그 자재가 실제로 필요한 날입니다.',
   register: '기준계획 한 줄을 오른쪽 패널에서 등록합니다. 같은 기준일자·계획일·품목이면 수량만 바뀝니다.',
+  selectAll: '왼쪽 기준계획을 모두 고르거나, 모두 골라져 있으면 고른 것을 풉니다.',
+  failures: 'BOM 이 없어 소요량 전개에서 빠지는 기준계획 줄을 따로 봅니다.',
   importPlan: '제품생산계획에서 골라 이 기준일자의 기준계획으로 한 번에 등록합니다. 같은 날·같은 품목은 수량을 합칩니다.',
   search: '세 표를 다시 읽어옵니다.',
   remove: '고른 기준계획 줄을 지웁니다. 왼쪽 표에서 줄을 눌러 고릅니다.',
@@ -91,6 +94,7 @@ export default function RequirementPlanPage() {
   const [pending, setPending] = useState<'explode' | 'inventory' | 'delete' | null>(null);
   const [busy, setBusy] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+  const [failuresOpen, setFailuresOpen] = useState(false);
 
   const toggleRow = useCallback((row: MasterPlanRow) => {
     const key = rowKey(row);
@@ -262,6 +266,11 @@ export default function RequirementPlanPage() {
           <Button size="sm" data-tooltip={TIP.register} onClick={() => setFormOpen(true)}>
             <Plus className="mr-1 h-4 w-4" />① 기준계획 등록
           </Button>
+          <Button size="sm" variant="secondary" disabled={busy || masterRows.length === 0}
+            data-tooltip={TIP.selectAll}
+            onClick={() => setSelected(allSelected ? new Set() : new Set(masterRows.map(rowKey)))}>
+            <CheckSquare className="mr-1 h-4 w-4" />{allSelected ? '선택 해제' : '전체 선택'}
+          </Button>
           <Button size="sm" variant="secondary" disabled={busy}
             data-tooltip={TIP.importPlan} onClick={() => setImportOpen(true)}>
             <Download className="mr-1 h-4 w-4" />기준계획 가져오기
@@ -282,6 +291,10 @@ export default function RequirementPlanPage() {
             data-tooltip={TIP.explode}
             onClick={() => setPending('explode')}>
             <Play className="mr-1 h-4 w-4" />③ 소요량 전개
+          </Button>
+          <Button size="sm" variant="secondary" disabled={masterRows.length === 0}
+            data-tooltip={TIP.failures} onClick={() => setFailuresOpen(true)}>
+            <AlertTriangle className="mr-1 h-4 w-4" />실패내역 보기
           </Button>
         </div>
       </header>
@@ -416,6 +429,12 @@ export default function RequirementPlanPage() {
         />
         </div>
       )}
+
+      <ExplodeFailuresModal
+        isOpen={failuresOpen}
+        onClose={() => setFailuresOpen(false)}
+        requirementPlanDate={planDate}
+      />
 
       <PlanImportModal
         isOpen={importOpen}

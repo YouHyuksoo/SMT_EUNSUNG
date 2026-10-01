@@ -27,6 +27,7 @@ import { affectedRows } from '../../common/utils/affected-rows.util';
 import {
   ITEM_LINE_TYPE_SQL,
   LEAF_ONLY_SQL,
+  noBomSql,
   SKIPPED_ASSIGN_SQL,
   SKIPPED_DECLARE_SQL,
   parseSkipped,
@@ -193,6 +194,34 @@ export class RequirementPlanService {
       total: byItem.size,
       truncated: result.truncated,
     };
+  }
+
+  /**
+   * 전개 실패내역 — 그 기준일자 기준계획 중 BOM 이 없어 전개에서 빠지는 행.
+   * 전개가 건너뛰는 조건(noBomSql)을 그대로 쓰므로 전개 전·후 언제 봐도 같은 행이 나온다.
+   */
+  async findExplodeFailures(
+    query: MasterPlanQueryDto,
+    organizationId: number,
+  ): Promise<Record<string, unknown>[]> {
+    return this.dataSource.query(
+      `SELECT TO_CHAR(A.PLAN_DATE, 'YYYY-MM-DD') AS "planDate",
+              A.ITEM_CODE                        AS "itemCode",
+              I.ITEM_NAME                        AS "itemName",
+              I.ITEM_SPEC                        AS "itemSpec",
+              A.ORDER_QTY                        AS "orderQty",
+              CASE WHEN I.ITEM_CODE IS NULL THEN '품목 기준정보 없음'
+                   ELSE '계획일에 유효한 BOM 없음' END AS "reason"
+         FROM IM_ITEM_MASTER_PLAN_4_REQUIR A
+         LEFT JOIN ID_ITEM I
+           ON I.ITEM_CODE = A.ITEM_CODE
+          AND I.ORGANIZATION_ID = A.ORGANIZATION_ID
+        WHERE A.ORGANIZATION_ID = :organizationId
+          AND TRUNC(A.REQUIRMENT_PLAN_DATE) = TRUNC(TO_DATE(:planDate, 'YYYY-MM-DD'))
+          AND ${noBomSql('A.ITEM_CODE', 'A.PLAN_DATE', 'A.ORGANIZATION_ID')}
+        ORDER BY A.PLAN_DATE, A.ITEM_CODE`,
+      { organizationId, planDate: query.requirementPlanDate } as unknown as unknown[],
+    );
   }
 
   // ─────────────────────────────── 기준계획 쓰기 (dw_1)

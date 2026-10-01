@@ -228,6 +228,15 @@ export class RequirementPlanController {
     return paged(await this.service.findMasterPlan(query, organizationId));
   }
 
+  @Get('explode-failures')
+  @ApiOperation({ summary: '477 전개 실패내역 — 기준계획 중 BOM 이 없어 전개에서 빠지는 행.' })
+  async explodeFailures(
+    @Query() query: MasterPlanQueryDto,
+    @OrganizationId() organizationId: number,
+  ) {
+    return ResponseUtil.success(await this.service.findExplodeFailures(query, organizationId));
+  }
+
   @Post('master-plan')
   @ApiOperation({ summary: '477 기준계획 등록·수정 (**쓰기**).' })
   async saveMasterPlan(

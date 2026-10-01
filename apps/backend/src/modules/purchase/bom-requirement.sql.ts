@@ -54,3 +54,15 @@ export const parseSkipped = (raw: unknown): string[] => {
   const value = (raw as { skipped?: string | null } | undefined)?.skipped ?? '';
   return [...new Set(value.split(',').filter(Boolean))];
 };
+
+/**
+ * `PKG_DESIGN.BOM_EXPLOSION` 이 "BOM 없음"(-100)으로 판단하는 조건과 같다:
+ * 그 계획일에 유효한 BOM 행 중 그 품목을 CHILD 로 가진 행이 하나도 없다.
+ * 전개 실패내역 조회에 쓴다 — 전개가 건너뛴 행과 같은 행이 나와야 한다.
+ */
+export const noBomSql = (itemExpr: string, dateExpr: string, orgExpr: string) => `NOT EXISTS (
+         SELECT 'X' FROM ID_ENG_BOM B
+          WHERE B.CHILD_ITEM_CODE = ${itemExpr}
+            AND B.ORGANIZATION_ID = ${orgExpr}
+            AND TRUNC(B.DATESET) <= ${dateExpr}
+            AND NVL(B.DATEEND, DATE '9999-12-31') >= ${dateExpr})`;
