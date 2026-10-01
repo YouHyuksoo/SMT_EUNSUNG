@@ -237,7 +237,7 @@ TRUNC(SYSDATE - (7.5 / 24)) + (7.5 / 24)
 
 ## Browser Automation
 
-- 브라우저 자동화는 `claude-in-chrome`을 기본으로 사용한다. 사용자의 기존 크롬 세션에 붙어 로그인 상태를 유지한 채 화면을 조작/캡처한다.
+- 브라우저 작업(화면 확인·조작·캡처)은 `aside-browser` 스킬(aside)을 기본으로 사용한다. `claude-in-chrome`은 사용자가 명시할 때만 쓴다.
 - devtools 전용 기능(lighthouse, heap snapshot, 정밀 트레이스)이 필요할 때만 예외적으로 다른 도구를 쓴다.
 
 ## Docs & Coordination
