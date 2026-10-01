@@ -263,7 +263,7 @@ export default function RequirementPlanPage() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Button size="sm" data-tooltip={TIP.register} onClick={() => setFormOpen(true)}>
+          <Button size="sm" variant="secondary" data-tooltip={TIP.register} onClick={() => setFormOpen(true)}>
             <Plus className="mr-1 h-4 w-4" />① 기준계획 등록
           </Button>
           <Button size="sm" variant="secondary" disabled={busy}
@@ -275,11 +275,11 @@ export default function RequirementPlanPage() {
             onClick={() => setSelected(allSelected ? new Set() : new Set(masterRows.map(rowKey)))}>
             <CheckSquare className="mr-1 h-4 w-4" />{allSelected ? '선택 해제' : '전체 선택'}
           </Button>
-          <Button size="sm" variant="danger"
+          <Button size="sm" variant="secondary"
             disabled={busy || selected.size === 0}
             data-tooltip={TIP.remove}
             onClick={() => setPending('delete')}>
-            <Trash2 className="mr-1 h-4 w-4" />선택 삭제 ({selected.size})
+            <Trash2 className="mr-1 h-4 w-4 text-red-500" />선택 삭제 ({selected.size})
           </Button>
           <Button size="sm" variant="secondary"
             disabled={busy || masterRows.length === 0}
@@ -287,7 +287,7 @@ export default function RequirementPlanPage() {
             onClick={() => setPending('inventory')}>
             <Boxes className="mr-1 h-4 w-4" />② 재고 표시
           </Button>
-          <Button size="sm" disabled={busy || masterRows.length === 0}
+          <Button size="sm" variant="secondary" disabled={busy || masterRows.length === 0}
             data-tooltip={TIP.explode}
             onClick={() => setPending('explode')}>
             <Play className="mr-1 h-4 w-4" />③ 소요량 전개
