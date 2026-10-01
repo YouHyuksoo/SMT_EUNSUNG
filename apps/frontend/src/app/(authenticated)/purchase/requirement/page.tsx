@@ -266,14 +266,14 @@ export default function RequirementPlanPage() {
           <Button size="sm" data-tooltip={TIP.register} onClick={() => setFormOpen(true)}>
             <Plus className="mr-1 h-4 w-4" />① 기준계획 등록
           </Button>
+          <Button size="sm" variant="secondary" disabled={busy}
+            data-tooltip={TIP.importPlan} onClick={() => setImportOpen(true)}>
+            <Download className="mr-1 h-4 w-4" />기준계획 가져오기
+          </Button>
           <Button size="sm" variant="secondary" disabled={busy || masterRows.length === 0}
             data-tooltip={TIP.selectAll}
             onClick={() => setSelected(allSelected ? new Set() : new Set(masterRows.map(rowKey)))}>
             <CheckSquare className="mr-1 h-4 w-4" />{allSelected ? '선택 해제' : '전체 선택'}
-          </Button>
-          <Button size="sm" variant="secondary" disabled={busy}
-            data-tooltip={TIP.importPlan} onClick={() => setImportOpen(true)}>
-            <Download className="mr-1 h-4 w-4" />기준계획 가져오기
           </Button>
           <Button size="sm" variant="danger"
             disabled={busy || selected.size === 0}
