@@ -287,7 +287,7 @@ export default function RequirementPlanPage() {
             onClick={() => setPending('inventory')}>
             <Boxes className="mr-1 h-4 w-4" />② 재고 표시
           </Button>
-          <Button size="sm" variant="secondary" disabled={busy || masterRows.length === 0}
+          <Button size="sm" disabled={busy || masterRows.length === 0}
             data-tooltip={TIP.explode}
             onClick={() => setPending('explode')}>
             <Play className="mr-1 h-4 w-4" />③ 소요량 전개
