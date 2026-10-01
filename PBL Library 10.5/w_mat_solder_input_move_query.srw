@@ -13,6 +13,10 @@ type st_4 from so_statictext within w_mat_solder_input_move_query
 end type
 type sle_barcode from so_singlelineedit within w_mat_solder_input_move_query
 end type
+type ddlb_factory from dropdownlistbox within w_mat_solder_input_move_query
+end type
+type st_1 from so_statictext within w_mat_solder_input_move_query
+end type
 type gb_2 from so_groupbox within w_mat_solder_input_move_query
 end type
 end forward
@@ -26,6 +30,8 @@ uo_dateend uo_dateend
 st_3 st_3
 st_4 st_4
 sle_barcode sle_barcode
+ddlb_factory ddlb_factory
+st_1 st_1
 gb_2 gb_2
 end type
 global w_mat_solder_input_move_query w_mat_solder_input_move_query
@@ -154,6 +160,8 @@ this.uo_dateend=create uo_dateend
 this.st_3=create st_3
 this.st_4=create st_4
 this.sle_barcode=create sle_barcode
+this.ddlb_factory=create ddlb_factory
+this.st_1=create st_1
 this.gb_2=create gb_2
 iCurrent=UpperBound(this.Control)
 this.Control[iCurrent+1]=this.uo_dateset
@@ -161,7 +169,9 @@ this.Control[iCurrent+2]=this.uo_dateend
 this.Control[iCurrent+3]=this.st_3
 this.Control[iCurrent+4]=this.st_4
 this.Control[iCurrent+5]=this.sle_barcode
-this.Control[iCurrent+6]=this.gb_2
+this.Control[iCurrent+6]=this.ddlb_factory
+this.Control[iCurrent+7]=this.st_1
+this.Control[iCurrent+8]=this.gb_2
 end on
 
 on w_mat_solder_input_move_query.destroy
@@ -171,6 +181,8 @@ destroy(this.uo_dateend)
 destroy(this.st_3)
 destroy(this.st_4)
 destroy(this.sle_barcode)
+destroy(this.ddlb_factory)
+destroy(this.st_1)
 destroy(this.gb_2)
 end on
 
@@ -235,7 +247,7 @@ choose case gvs_ue_data_control
 		
 			dw_1.reset()
 			
-		    dw_1.retrieve(sle_barcode.text + '%', uo_dateset.text() , uo_dateend.text() )		
+		    dw_1.retrieve(sle_barcode.text + '%', uo_dateset.text() , uo_dateend.text(), ddlb_factory.text)		
 	
 
 //	CASE	'INSERT'
@@ -379,9 +391,41 @@ integer taborder = 50
 boolean bringtotop = true
 end type
 
+type ddlb_factory from dropdownlistbox within w_mat_solder_input_move_query
+integer x = 1865
+integer y = 168
+integer width = 480
+integer height = 324
+integer taborder = 60
+boolean bringtotop = true
+integer textsize = -8
+integer weight = 700
+fontcharset fontcharset = ansi!
+fontpitch fontpitch = variable!
+fontfamily fontfamily = swiss!
+string facename = "Tahoma"
+long textcolor = 33554432
+boolean sorted = false
+string item[] = {"A","B","%"}
+borderstyle borderstyle = stylelowered!
+end type
+
+event constructor;
+ddlb_factory.selectitem(1)
+end event
+
+type st_1 from so_statictext within w_mat_solder_input_move_query
+integer x = 1865
+integer y = 88
+integer width = 480
+integer height = 68
+boolean bringtotop = true
+string text = "Factory"
+end type
+
 type gb_2 from so_groupbox within w_mat_solder_input_move_query
 integer x = 14
-integer width = 1915
+integer width = 2405
 integer height = 300
 integer weight = 700
 long textcolor = 16711680

@@ -59,6 +59,8 @@ export interface QcNotifyRow {
 }
 
 export const qcNotifyColumns: ColumnDef<QcNotifyRow>[] = [
+  { accessorKey: 'itemCode', header: '품목코드', size: 140 },
+  { accessorKey: 'itemName', header: '품목명', size: 170 },
   { accessorKey: 'actionDate', header: '발생일자', size: 110, cell: (c) => dateOnly(c.getValue()) },
   { accessorKey: 'notifySequence', header: '발생항번', size: 100, meta: right },
   { id: 'notifyStatusName', header: '조치상태', size: 110, accessorFn: (r) => codeWithName(r.notifyStatus, r.notifyStatusName) },
@@ -68,8 +70,6 @@ export const qcNotifyColumns: ColumnDef<QcNotifyRow>[] = [
   { id: 'lineName', header: '라인', size: 120, accessorFn: (r) => codeWithName(r.lineCode, r.lineName) },
   { id: 'workstageName', header: '공정', size: 130, accessorFn: (r) => codeWithName(r.workstageCode, r.workstageName) },
   { accessorKey: 'machineCode', header: '설비코드', size: 110 },
-  { accessorKey: 'itemCode', header: '품목코드', size: 140 },
-  { accessorKey: 'itemName', header: '품목명', size: 170 },
   { accessorKey: 'runNo', header: 'RUN번호', size: 140 },
   { id: 'gradeName', header: '등급', size: 90, accessorFn: (r) => codeWithName(r.grade, r.gradeName) },
   { id: 'badReasonName', header: '불량원인', size: 130, accessorFn: (r) => codeWithName(r.badReasonCode, r.badReasonName) },
@@ -151,10 +151,10 @@ export interface InventoryHoldTargetRow {
 }
 
 export const inventoryHoldTargetColumns: ColumnDef<InventoryHoldTargetRow>[] = [
-  { accessorKey: 'heldYn', header: '통제', size: 80 },
-  { accessorKey: 'materialMfs', header: '자재LOT', size: 180 },
   { accessorKey: 'itemCode', header: '품목코드', size: 140 },
   { accessorKey: 'itemName', header: '품목명', size: 190 },
+  { accessorKey: 'heldYn', header: '통제', size: 80 },
+  { accessorKey: 'materialMfs', header: '자재LOT', size: 180 },
   { accessorKey: 'itemSpec', header: '규격', size: 160 },
   { accessorKey: 'inventoryQty', header: '재고수량', size: 100, meta: right, cell: (c) => num(c.getValue()) },
   { accessorKey: 'itemUom', header: '단위', size: 80 },
@@ -182,9 +182,9 @@ export interface InventoryHoldRow {
 }
 
 export const inventoryHoldColumns: ColumnDef<InventoryHoldRow>[] = [
-  { accessorKey: 'materialMfs', header: '자재LOT', size: 180 },
   { accessorKey: 'itemCode', header: '품목코드', size: 140 },
   { accessorKey: 'itemName', header: '품목명', size: 190 },
+  { accessorKey: 'materialMfs', header: '자재LOT', size: 180 },
   { accessorKey: 'itemSpec', header: '규격', size: 160 },
   { id: 'inventoryStatusName', header: '통제상태', size: 110, accessorFn: (r) => codeWithName(r.inventoryStatus, r.inventoryStatusName) },
   { accessorKey: 'holdingDate', header: '통제일시', size: 150, cell: (c) => dateTime(c.getValue()) },
@@ -224,13 +224,13 @@ export interface OqcHistoryRow {
 }
 
 export const oqcHistoryColumns: ColumnDef<OqcHistoryRow>[] = [
+  { accessorKey: 'itemCode', header: '품목코드', size: 140 },
+  { accessorKey: 'itemName', header: '품목명', size: 180 },
   { accessorKey: 'inspectDate', header: '검사일시', size: 160, cell: (c) => dateTime(c.getValue()) },
   { accessorKey: 'inspectSequence', header: '검사항번', size: 100, meta: right },
   { accessorKey: 'productId', header: 'PID', size: 190 },
   { accessorKey: 'modelName', header: '모델명', size: 180 },
   { accessorKey: 'modelSuffix', header: '서픽스', size: 90 },
-  { accessorKey: 'itemCode', header: '품목코드', size: 140 },
-  { accessorKey: 'itemName', header: '품목명', size: 180 },
   { id: 'inspectResultName', header: '판정', size: 100, accessorFn: (r) => codeWithName(r.inspectResult, r.inspectResultName) },
   { id: 'badReasonName', header: '불량원인', size: 130, accessorFn: (r) => codeWithName(r.badReasonCode, r.badReasonName) },
   { accessorKey: 'badReasonDivision', header: '원인구분', size: 110 },

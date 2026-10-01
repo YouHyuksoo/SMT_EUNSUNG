@@ -16,7 +16,7 @@ import { useCallback, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { Edit2, Plus, Search, Trash2 } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
-import { Button, Card, CardContent, ConfirmModal, Input } from '@/components/ui';
+import { Button, Card, CardContent, ConfirmModal } from '@/components/ui';
 import api from '@/services/api';
 import { SmtMachineSelect, SmtModelSelect } from '../components/SmtSelects';
 import { smtBomReplaceColumns } from '../columns';
@@ -26,6 +26,8 @@ import SmtBomReplaceFormPanel, {
   toSmtBomReplaceForm,
   type SmtBomReplaceForm,
 } from './components/SmtBomReplaceFormPanel';
+import PartSearchField from '@/components/shared/PartSearchField';
+import LineSelect from '@/components/shared/LineSelect';
 
 export default function SmtBomReplacePage() {
   const [rows, setRows] = useState<SmtBomReplaceRow[]>([]);
@@ -127,12 +129,11 @@ export default function SmtBomReplacePage() {
           <CardContent className="flex flex-wrap items-center gap-3 p-3">
             <SmtModelSelect labelPrefix="모델" value={modelName}
               onChange={setModelName} className="w-56" />
-            <Input aria-label="원 품목코드" placeholder="원 품목코드" value={childItemCode}
+            <PartSearchField aria-label="원 품목코드" placeholder="원 품목코드" value={childItemCode}
               className="w-44" onChange={(e) => setChildItemCode(e.target.value)} />
-            <Input aria-label="대체 품목코드" placeholder="대체 품목코드" value={replaceItemCode}
+            <PartSearchField aria-label="대체 품목코드" placeholder="대체 품목코드" value={replaceItemCode}
               className="w-44" onChange={(e) => setReplaceItemCode(e.target.value)} />
-            <Input aria-label="라인코드" placeholder="라인코드" value={lineCode}
-              className="w-36" onChange={(e) => setLineCode(e.target.value)} />
+            <LineSelect labelPrefix="라인" value={lineCode} onChange={setLineCode} className="w-44" />
             <SmtMachineSelect labelPrefix="설비" value={machine}
               onChange={setMachine} className="w-52" />
             <label className="flex items-center gap-2 text-sm text-text">

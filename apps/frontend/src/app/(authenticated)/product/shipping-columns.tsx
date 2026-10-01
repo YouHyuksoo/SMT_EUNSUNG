@@ -5,10 +5,11 @@
  */
 import type { ColumnDef } from '@tanstack/react-table';
 import { num } from '@/components/shared/grid-format';
+import { formatDisplayDate } from '@/utils/date';
 
 const right = { align: 'right' } as const;
 const center = { align: 'center' } as const;
-const ts = (value: unknown) => (value ? String(value) : '');
+const ts = (value: unknown) => (value ? formatDisplayDate(value) : '');
 
 /** Y/N 플래그를 눈에 띄게. 단계가 어디까지 갔는지 한눈에 본다. */
 const flagCell = (label: string) => (value: unknown) => (
@@ -229,6 +230,7 @@ const txnCell = (value: unknown) => {
 };
 
 export const fgReceiptColumns: ColumnDef<FgReceiptRow>[] = [
+  { accessorKey: 'itemCode', header: '품목코드', size: 130 },
   { accessorKey: 'barcode', header: '바코드', size: 220 },
   {
     accessorKey: 'txnDeficit',
@@ -246,7 +248,6 @@ export const fgReceiptColumns: ColumnDef<FgReceiptRow>[] = [
   },
   { accessorKey: 'modelName', header: '모델', size: 150 },
   { accessorKey: 'modelSuffix', header: '서픽스', size: 90 },
-  { accessorKey: 'itemCode', header: '품목코드', size: 130 },
   { accessorKey: 'locationCode', header: '창고', size: 80, meta: center },
   { accessorKey: 'lineName', header: '라인', size: 110 },
   { accessorKey: 'shiftCode', header: '근무조', size: 80, meta: center },
@@ -347,6 +348,7 @@ export const fgIssueSummaryColumns: ColumnDef<FgIssueSummaryRow>[] = [
 ];
 
 export const fgIssuableColumns: ColumnDef<FgIssuableRow>[] = [
+  { accessorKey: 'itemCode', header: '품목코드', size: 130 },
   { accessorKey: 'barcode', header: '바코드', size: 220 },
   {
     accessorKey: 'qty',
@@ -357,7 +359,6 @@ export const fgIssuableColumns: ColumnDef<FgIssuableRow>[] = [
   },
   { accessorKey: 'modelName', header: '모델', size: 150 },
   { accessorKey: 'modelSuffix', header: '서픽스', size: 90 },
-  { accessorKey: 'itemCode', header: '품목코드', size: 130 },
   { accessorKey: 'locationCode', header: '창고', size: 80, meta: center },
   { accessorKey: 'receiptNo', header: '입고번호', size: 130 },
   {

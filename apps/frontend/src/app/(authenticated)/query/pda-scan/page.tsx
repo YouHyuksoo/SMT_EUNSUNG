@@ -44,6 +44,7 @@ import type {
   ScanDetailRow,
   ScanGroupRow,
 } from '../query-types';
+import PartSearchField from '@/components/shared/PartSearchField';
 
 const daysAgo = (n: number) => {
   const d = new Date();
@@ -207,7 +208,7 @@ export default function PdaScanQueryPage() {
             <ComCodeSelect groupCode="CHECK STATUS" value={checkStatus}
               onChange={setCheckStatus} labelPrefix="상태" />
           </div>
-          <Input aria-label="품목코드" placeholder="품목코드" value={itemCode} className="w-36"
+          <PartSearchField aria-label="품목코드" placeholder="품목코드" value={itemCode} className="w-36"
             onChange={(e) => setItemCode(e.target.value)} />
           <Input aria-label="설비 롯트명" placeholder="설비 롯트명" value={modelName}
             className="w-40" onChange={(e) => setModelName(e.target.value)} />

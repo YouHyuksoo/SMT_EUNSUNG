@@ -26,6 +26,7 @@ import api from '@/services/api';
 import { SmtModelSelect, SmtPcbItemSelect } from '../components/SmtSelects';
 import { smtBomExplodeColumns } from '../columns';
 import type { SmtBomExplodeRow, SmtCompareRow } from '../types';
+import LineSelect from '@/components/shared/LineSelect';
 
 type Tab = 'group' | 'location' | 'explode';
 
@@ -118,6 +119,7 @@ export default function SmtBomComparisonPage() {
   /** 모델 수가 조회할 때 정해지므로 컬럼도 그때 만든다. */
   const compareColumns = useMemo<ColumnDef<SmtCompareRow>[]>(() => {
     const base: ColumnDef<SmtCompareRow>[] = [
+      { accessorKey: 'itemName', header: '부품명', size: 190 },
       {
         id: 'diff',
         header: '판정',
@@ -125,7 +127,6 @@ export default function SmtBomComparisonPage() {
         accessorFn: (r) => (r.diff ? (r.missingIn.length > 0 ? '한쪽만' : '자리 다름') : '같음'),
       },
       { accessorKey: 'childItemCode', header: '부품코드', size: 160 },
-      { accessorKey: 'itemName', header: '부품명', size: 190 },
       { accessorKey: 'itemSpec', header: '규격', size: 160 },
     ];
     return [
@@ -184,8 +185,7 @@ export default function SmtBomComparisonPage() {
 
       <Card padding="none">
         <CardContent className="flex flex-wrap items-center gap-3 p-3">
-          <Input aria-label="라인코드" placeholder="라인코드" value={lineCode}
-            className="w-36" onChange={(e) => setLineCode(e.target.value)} />
+          <LineSelect labelPrefix="라인" value={lineCode} onChange={setLineCode} className="w-44" />
           <SmtPcbItemSelect labelPrefix="PCB면" value={pcbItem}
             onChange={setPcbItem} className="w-44" />
           {tab === 'explode' ? (

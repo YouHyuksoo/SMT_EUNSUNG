@@ -38,11 +38,12 @@ import type {
   MoldReportRow,
   SmtCheckHistoryRow,
 } from './report-b-types';
+import { formatDisplayDate } from '@/utils/date';
 
 const right = { align: 'right' } as const;
 const center = { align: 'center' } as const;
 
-const ts = (value: unknown) => (value ? String(value) : '');
+const ts = (value: unknown) => (value ? formatDisplayDate(value) : '');
 /** 금액은 소수를 버린다. 리포트에서 소수는 읽기를 방해한다. */
 const money = (value: unknown) =>
   value == null ? '' : Math.round(Number(value)).toLocaleString();
@@ -60,9 +61,9 @@ const yesNo = (value: unknown) => {
 // ───────────────────────────────── 362 자재전표바코드
 
 export const materialBarcodeSlipColumns: ColumnDef<MaterialBarcodeSlipRow>[] = [
+  { accessorKey: 'itemCode', header: '품목코드', size: 150 },
   { accessorKey: 'itemBarcode', header: '자재 바코드', size: 200 },
   { accessorKey: 'scanDate', header: '스캔시각', size: 160, cell: (c) => ts(c.getValue()) },
-  { accessorKey: 'itemCode', header: '품목코드', size: 150 },
   { accessorKey: 'lotNo', header: '자재 롯트', size: 150 },
   { accessorKey: 'scanQty', header: '스캔수량', size: 100, meta: right, cell: (c) => num(c.getValue()) },
   {
@@ -111,10 +112,10 @@ export const materialBarcodeSlipColumns: ColumnDef<MaterialBarcodeSlipRow>[] = [
 // ───────────────────────────────── 363 자재입고
 
 export const materialReceiptColumns: ColumnDef<MaterialReceiptRow>[] = [
-  { accessorKey: 'receiptDate', header: '입고시각', size: 160, cell: (c) => ts(c.getValue()) },
-  { accessorKey: 'receiptSequence', header: '순번', size: 80, meta: right },
   { accessorKey: 'itemCode', header: '품목코드', size: 150 },
   { accessorKey: 'itemName', header: '품목명', size: 180 },
+  { accessorKey: 'receiptDate', header: '입고시각', size: 160, cell: (c) => ts(c.getValue()) },
+  { accessorKey: 'receiptSequence', header: '순번', size: 80, meta: right },
   { accessorKey: 'itemSpec', header: '규격', size: 160 },
   { accessorKey: 'itemUom', header: '단위', size: 70, meta: center },
   { accessorKey: 'itemClass', header: '품목분류', size: 110 },
@@ -171,6 +172,8 @@ export const materialReceiptColumns: ColumnDef<MaterialReceiptRow>[] = [
 ];
 
 export const materialReceiptSupplierColumns: ColumnDef<MaterialReceiptSupplierRow>[] = [
+  { accessorKey: 'itemCode', header: '품목코드', size: 150 },
+  { accessorKey: 'itemName', header: '품목명', size: 180 },
   {
     id: 'supplierName',
     header: '협력사',
@@ -179,8 +182,6 @@ export const materialReceiptSupplierColumns: ColumnDef<MaterialReceiptSupplierRo
   },
   { accessorKey: 'receiptDate', header: '입고시각', size: 160, cell: (c) => ts(c.getValue()) },
   { accessorKey: 'receiptSequence', header: '순번', size: 80, meta: right },
-  { accessorKey: 'itemCode', header: '품목코드', size: 150 },
-  { accessorKey: 'itemName', header: '품목명', size: 180 },
   { accessorKey: 'itemSpec', header: '규격', size: 160 },
   { accessorKey: 'itemUom', header: '단위', size: 70, meta: center },
   { accessorKey: 'locationCode', header: '창고', size: 100 },
@@ -296,10 +297,10 @@ export const materialReceiptSumWarehouseColumns: ColumnDef<MaterialReceiptSumWar
 // ───────────────────────────────── 365 자재출고
 
 export const materialIssueColumns: ColumnDef<MaterialIssueRow>[] = [
-  { accessorKey: 'issueDate', header: '출고시각', size: 160, cell: (c) => ts(c.getValue()) },
-  { accessorKey: 'issueSequence', header: '순번', size: 80, meta: right },
   { accessorKey: 'itemCode', header: '품목코드', size: 150 },
   { accessorKey: 'itemName', header: '품목명', size: 180 },
+  { accessorKey: 'issueDate', header: '출고시각', size: 160, cell: (c) => ts(c.getValue()) },
+  { accessorKey: 'issueSequence', header: '순번', size: 80, meta: right },
   { accessorKey: 'itemSpec', header: '규격', size: 160 },
   { accessorKey: 'itemUom', header: '단위', size: 70, meta: center },
   { accessorKey: 'abcGrade', header: 'ABC', size: 70, meta: center },
@@ -329,9 +330,9 @@ export const materialIssueColumns: ColumnDef<MaterialIssueRow>[] = [
 ];
 
 export const materialNotIssuedColumns: ColumnDef<MaterialNotIssuedRow>[] = [
-  { accessorKey: 'issueDate', header: '지시일', size: 110 },
   { accessorKey: 'itemCode', header: '품목코드', size: 150 },
   { accessorKey: 'itemName', header: '품목명', size: 180 },
+  { accessorKey: 'issueDate', header: '지시일', size: 110 },
   { accessorKey: 'itemSpec', header: '규격', size: 160 },
   { accessorKey: 'itemUom', header: '단위', size: 70, meta: center },
   { accessorKey: 'parentItemCode', header: '상위품목', size: 140 },
@@ -393,9 +394,9 @@ export const materialIssueSumItemColumns: ColumnDef<MaterialIssueSumItemRow>[] =
 ];
 
 export const materialIssueSumAccountColumns: ColumnDef<MaterialIssueSumAccountRow>[] = [
-  { accessorKey: 'issueAccount', header: '출고계정', size: 140 },
   { accessorKey: 'itemCode', header: '품목코드', size: 150 },
   { accessorKey: 'itemName', header: '품목명', size: 190 },
+  { accessorKey: 'issueAccount', header: '출고계정', size: 140 },
   { accessorKey: 'itemSpec', header: '규격', size: 170 },
   { accessorKey: 'itemUom', header: '단위', size: 70, meta: center },
   { accessorKey: 'lineType', header: '구매유형', size: 100, meta: center },
@@ -412,9 +413,9 @@ export const materialIssueSumAccountColumns: ColumnDef<MaterialIssueSumAccountRo
 // ───────────────────────────────── 367 자재랙이동
 
 export const materialRackMoveColumns: ColumnDef<MaterialRackMoveRow>[] = [
-  { accessorKey: 'moveDate', header: '이동시각', size: 170, cell: (c) => ts(c.getValue()) },
   { accessorKey: 'itemCode', header: '품목코드', size: 150 },
   { accessorKey: 'itemName', header: '품목명', size: 190 },
+  { accessorKey: 'moveDate', header: '이동시각', size: 170, cell: (c) => ts(c.getValue()) },
   { accessorKey: 'itemSpec', header: '규격', size: 170 },
   { accessorKey: 'materialMfs', header: '자재 롯트', size: 150 },
   { accessorKey: 'fromRack', header: '이전 랙', size: 120 },
@@ -564,13 +565,13 @@ export const materialDisusedColumns: ColumnDef<MaterialDisusedRow>[] = [
 // ───────────────────────────────── 354·355 S-PARTS 입·출고
 
 export const moldReceiptColumns: ColumnDef<MoldReceiptRow>[] = [
+  { accessorKey: 'itemCode', header: '품목코드', size: 140 },
   { accessorKey: 'receiptDate', header: '입고시각', size: 170, cell: (c) => ts(c.getValue()) },
   { accessorKey: 'receiptSequence', header: '순번', size: 80, meta: right },
   { accessorKey: 'moldCode', header: 'S-PARTS 코드', size: 140 },
   { accessorKey: 'moldName', header: 'S-PARTS 명', size: 180 },
   { accessorKey: 'moldSpec', header: '규격', size: 160 },
   { accessorKey: 'moldGroup', header: '그룹', size: 110 },
-  { accessorKey: 'itemCode', header: '품목코드', size: 140 },
   {
     id: 'supplierName',
     header: '협력사',
@@ -704,6 +705,7 @@ export const jigIssueReportColumns: ColumnDef<JigIssueReportRow>[] = [
 // ───────────────────────────────── 358 S-PARTS 관리
 
 export const moldReportColumns: ColumnDef<MoldReportRow>[] = [
+  { accessorKey: 'itemCode', header: '품목코드', size: 140 },
   { accessorKey: 'moldCode', header: 'S-PARTS 코드', size: 140 },
   { accessorKey: 'moldName', header: 'S-PARTS 명', size: 180 },
   { accessorKey: 'moldSpec', header: '규격', size: 160 },
@@ -714,7 +716,6 @@ export const moldReportColumns: ColumnDef<MoldReportRow>[] = [
   { accessorKey: 'rawMaterial', header: '재질', size: 120 },
   { accessorKey: 'punchNo', header: '펀치번호', size: 110 },
   { accessorKey: 'moldLineType', header: '구매유형', size: 100, meta: center },
-  { accessorKey: 'itemCode', header: '품목코드', size: 140 },
   { accessorKey: 'itemUnitQty', header: '단위수량', size: 100, meta: right, cell: (c) => num(c.getValue()) },
   { accessorKey: 'gasYn', header: '가스', size: 70, meta: center, cell: (c) => yesNo(c.getValue()) },
   { accessorKey: 'itemGasQty', header: '가스수량', size: 100, meta: right, cell: (c) => num(c.getValue()) },
@@ -767,12 +768,12 @@ export const moldReportColumns: ColumnDef<MoldReportRow>[] = [
 ];
 
 export const moldCardColumns: ColumnDef<MoldCardRow>[] = [
+  { accessorKey: 'itemCode', header: '품목코드', size: 140 },
   { accessorKey: 'moldCode', header: 'S-PARTS 코드', size: 140 },
   { accessorKey: 'moldName', header: 'S-PARTS 명', size: 180 },
   { accessorKey: 'moldSpec', header: '규격', size: 160 },
   { accessorKey: 'moldGroup', header: '그룹', size: 110 },
   { accessorKey: 'moldType', header: '유형', size: 100 },
-  { accessorKey: 'itemCode', header: '품목코드', size: 140 },
   { accessorKey: 'moldVersion', header: '버전', size: 90, meta: center },
   { accessorKey: 'moldSetSerial', header: '세트일련', size: 110 },
   { accessorKey: 'moldRowQty', header: '열수', size: 90, meta: right, cell: (c) => num(c.getValue()) },
@@ -805,10 +806,10 @@ export const moldCardColumns: ColumnDef<MoldCardRow>[] = [
 // ───────────────────────────────── 360 4M 변경이력
 
 export const fourMHistoryColumns: ColumnDef<FourMHistoryRow>[] = [
+  { accessorKey: 'itemCode', header: '품목코드', size: 150 },
   { accessorKey: 'modelName', header: '모델', size: 170 },
   { accessorKey: 'modelSuffix', header: '모델 SFX', size: 110 },
   { accessorKey: 'version', header: '버전', size: 100, meta: center },
-  { accessorKey: 'itemCode', header: '품목코드', size: 150 },
   { accessorKey: 'hwVersion', header: 'H/W 버전', size: 130 },
   {
     accessorKey: 'swVersionOut',

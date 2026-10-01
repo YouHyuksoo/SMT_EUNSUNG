@@ -26,6 +26,7 @@ import SmtLocationFormPanel, {
   toSmtLocationForm,
   type SmtLocationForm,
 } from './components/SmtLocationFormPanel';
+import LineSelect from '@/components/shared/LineSelect';
 
 export default function SmtLocationPage() {
   const [rows, setRows] = useState<SmtLocationRow[]>([]);
@@ -115,8 +116,7 @@ export default function SmtLocationPage() {
 
         <Card padding="none">
           <CardContent className="flex flex-wrap items-center gap-3 p-3">
-            <Input aria-label="라인코드" placeholder="라인코드" value={lineCode}
-              className="w-40" onChange={(e) => setLineCode(e.target.value)} />
+            <LineSelect labelPrefix="라인" value={lineCode} onChange={setLineCode} className="w-44" />
             <SmtMachineSelect labelPrefix="설비" value={machine}
               onChange={setMachine} className="w-56" />
             <Input aria-label="테이블문자" placeholder="테이블문자" value={tableId}

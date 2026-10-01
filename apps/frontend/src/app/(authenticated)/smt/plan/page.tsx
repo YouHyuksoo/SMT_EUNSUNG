@@ -20,13 +20,14 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { Play, Power, Search, Trash2 } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
-import { Button, Card, CardContent, ConfirmModal, Input } from '@/components/ui';
+import { Button, Card, CardContent, ConfirmModal } from '@/components/ui';
 import Select from '@/components/ui/Select';
 import api from '@/services/api';
 import { SmtModelSelect, SmtPcbItemSelect } from '../components/SmtSelects';
 import { smtPlanColumns, smtPlanLineColumns } from '../columns';
 import type { SmtPlanLineRow, SmtPlanRow } from '../types';
 import SmtPlanDeployModal from './components/SmtPlanDeployModal';
+import LineSelect from '@/components/shared/LineSelect';
 
 const YN_OPTIONS = [
   { value: '', label: '전체' },
@@ -203,8 +204,7 @@ export default function SmtPlanPage() {
         <CardContent className="flex flex-wrap items-center gap-3 p-3">
           <SmtModelSelect labelPrefix="모델" value={modelName}
             onChange={setModelName} className="w-64" />
-          <Input aria-label="라인코드" placeholder="라인코드" value={lineCode}
-            className="w-36" onChange={(e) => setLineCode(e.target.value)} />
+          <LineSelect labelPrefix="라인" value={lineCode} onChange={setLineCode} className="w-44" />
           <SmtPcbItemSelect labelPrefix="PCB면" value={pcbItem}
             onChange={setPcbItem} className="w-44" />
           <div className="w-36">

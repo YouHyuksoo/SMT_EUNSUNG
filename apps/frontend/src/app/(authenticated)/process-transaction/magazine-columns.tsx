@@ -4,10 +4,11 @@
  */
 import type { ColumnDef } from '@tanstack/react-table';
 import { num } from '@/components/shared/grid-format';
+import { formatDisplayDate } from '@/utils/date';
 
 const right = { align: 'right' } as const;
 const center = { align: 'center' } as const;
-const ts = (value: unknown) => (value ? String(value) : '');
+const ts = (value: unknown) => (value ? formatDisplayDate(value) : '');
 
 /** `MAGAZINE_LABEL_TYPE` 을 사람이 읽는 말로. 현장은 사실상 P 만 쓴다. */
 export const LABEL_TYPE_NAME: Record<string, string> = {
@@ -74,9 +75,9 @@ export interface MagazineIssuedRow {
 }
 
 export const magazinePlanColumns: ColumnDef<MagazinePlanRow>[] = [
+  { accessorKey: 'itemCode', header: '품목코드', size: 130 },
   { accessorKey: 'modelName', header: '모델', size: 160 },
   { accessorKey: 'modelSuffix', header: '서픽스', size: 90 },
-  { accessorKey: 'itemCode', header: '품목코드', size: 130 },
   {
     accessorKey: 'lotQty',
     header: '지시수량',

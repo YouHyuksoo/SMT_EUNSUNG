@@ -31,6 +31,8 @@ import {
 } from '../../report/components/TruncationNotice';
 import { issueColumns, issueInventoryColumns } from '../issue-manage-columns';
 import type { IssueInventoryRow, IssueRow } from '../issue-manage-columns';
+import PartSearchField from '@/components/shared/PartSearchField';
+import ComCodeSelect from '@/components/shared/ComCodeSelect';
 
 const today = () => new Date().toISOString().slice(0, 10);
 const daysAgo = (n: number) => {
@@ -178,13 +180,11 @@ export default function EtcIssuePage() {
 
       <Card padding="none">
         <CardContent className="flex flex-wrap items-center gap-3 p-3">
-          <Input aria-label="재고 품목코드" placeholder="재고 품목코드" value={invItemCode}
+          <PartSearchField aria-label="재고 품목코드" placeholder="재고 품목코드" value={invItemCode}
             className="w-44"
             onChange={(e) => setInvItemCode(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') void search(); }} />
-          <Input aria-label="재고 창고코드" placeholder="재고 창고코드" value={invLocationCode}
-            className="w-36"
-            onChange={(e) => setInvLocationCode(e.target.value)} />
+          <ComCodeSelect groupCode="MATERIAL LOCATION CODE" labelPrefix="재고창고" value={invLocationCode} onChange={setInvLocationCode} className="w-44" />
           <label className="flex items-center gap-2 text-sm text-text">
             <input type="checkbox" checked={includeZero}
               onChange={(e) => setIncludeZero(e.target.checked)} />

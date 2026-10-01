@@ -44,10 +44,10 @@ export interface Qc4mRow {
 }
 
 export const qc4mColumns: ColumnDef<Qc4mRow>[] = [
+  { accessorKey: 'itemCode', header: '품목코드', size: 140 },
   { accessorKey: 'ecoDate', header: '변경일자', size: 150, cell: (c) => dateTime(c.getValue()) },
   { accessorKey: 'modelName', header: '모델명', size: 200 },
   { accessorKey: 'modelSuffix', header: '서픽스', size: 90 },
-  { accessorKey: 'itemCode', header: '품목코드', size: 140 },
   { id: 'ecoDivisionName', header: '4M 구분', size: 120, accessorFn: (r) => codeWithName(r.ecoDivision, r.ecoDivisionName) },
   { id: 'ecoTypeName', header: '변경유형', size: 110, accessorFn: (r) => codeWithName(r.ecoType, r.ecoTypeName) },
   { id: 'ecoStatusName', header: '진행상태', size: 100, accessorFn: (r) => codeWithName(r.ecoStatus, r.ecoStatusName) },
@@ -108,12 +108,12 @@ export interface WqcRow {
 }
 
 export const wqcColumns: ColumnDef<WqcRow>[] = [
+  { accessorKey: 'itemCode', header: '품목코드', size: 140 },
   { accessorKey: 'inspectDate', header: '검사일시', size: 150, cell: (c) => dateTime(c.getValue()) },
   { accessorKey: 'inspectSequence', header: '검사항번', size: 100, meta: right },
   { accessorKey: 'serialNo', header: 'PID', size: 180 },
   { accessorKey: 'modelName', header: '모델명', size: 180 },
   { accessorKey: 'modelSuffix', header: '서픽스', size: 90 },
-  { accessorKey: 'itemCode', header: '품목코드', size: 140 },
   { id: 'lineName', header: '라인', size: 120, accessorFn: (r) => codeWithName(r.lineCode, r.lineName) },
   { id: 'workstageName', header: '공정', size: 130, accessorFn: (r) => codeWithName(r.workstageCode, r.workstageName) },
   { accessorKey: 'machineCode', header: '설비코드', size: 110 },

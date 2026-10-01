@@ -52,6 +52,8 @@ interface PartSearchModalProps {
   pageSize?: number;
   /** 단건 선택 모달 폭. 미지정 시 기존 기본 폭(xl)을 유지 */
   modalSize?: 'xl' | '2xl';
+  /** 열릴 때 검색어 초기값 (PartSearchField 에 입력해 둔 값으로 바로 검색) */
+  initialKeyword?: string;
 }
 
 export default function PartSearchModal({
@@ -64,6 +66,7 @@ export default function PartSearchModal({
   allowedItemTypes,
   pageSize = 15,
   modalSize = "xl",
+  initialKeyword = "",
 }: PartSearchModalProps) {
   const { t } = useTranslation();
 
@@ -101,10 +104,11 @@ export default function PartSearchModal({
   /** 모달 열릴 때 초기화 및 자동 조회 */
   useEffect(() => {
     if (!isOpen) return;
-    setKeyword("");
+    setKeyword(initialKeyword);
     setItemType(defaultItemType ?? "");
     setSelectedItemCodes(new Set());
-    fetchParts("", defaultItemType ?? "");
+    fetchParts(initialKeyword, defaultItemType ?? "");
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 열릴 때의 검색어만 사용
   }, [isOpen, defaultItemType, fetchParts]);
 
   /** 검색 실행 */

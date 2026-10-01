@@ -1,0 +1,195 @@
+HA$PBExportHeader$d_display_smt_pickup_rate_lst2_base.srd
+$PBExportComments$$$HEX2$$20c731c1$$ENDHEX$$, 30$$HEX11$$84bd200004aca9ac3cc75cb82000ddc020c11cb42000$$ENDHEX$$Pickup $$HEX10$$15c8f4bc200038cc70c858d5ecc5200070c88cd6$$ENDHEX$$
+release 10.5;
+datawindow(units=0 timer_interval=0 color=16777215 processing=1 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no grid.lines=0 )
+header(height=204 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=164 color="1073741824" )
+table(column=(type=char(4000) updatewhereclause=yes name=line_name dbname="line_name" )
+ column=(type=number updatewhereclause=yes name=t_cnt dbname="t_cnt" )
+ column=(type=number updatewhereclause=yes name=m_cnt dbname="m_cnt" )
+ column=(type=number updatewhereclause=yes name=r_cnt dbname="r_cnt" )
+ column=(type=char(40) updatewhereclause=yes name=good_rate dbname="good_rate" )
+ column=(type=char(40) updatewhereclause=yes name=ppm dbname="ppm" )
+ column=(type=char(4000) updatewhereclause=yes name=ng_position dbname="ng_position" )
+ column=(type=char(1) updatewhereclause=yes name=line_warning_sign dbname="line_warning_sign" )
+ column=(type=char(1) updatewhereclause=yes name=item_warning_sign dbname="item_warning_sign" )
+ column=(type=number updatewhereclause=yes name=ng_count dbname="ng_count" )
+ retrieve="SELECT M.LINE_NAME,
+       M.T_CNT,
+       M.M_CNT,
+       M.R_CNT,
+       M.GOOD_RATE,
+       M.PPM,
+       D.NG_POSITION,
+       M.LINE_WARNING_SIGN,
+       D.ITEM_WARNING_SIGN,
+       (
+          SELECT nvl(sum(1),0)
+              from isys_sound_ment
+            where organization_id = 1
+                and sound_group     = 'PICKUP'
+                and sound_status    = 'O'  
+                and line_code       = M.LINE_code
+                and rownum = 1
+       ) ng_count
+  FROM (     
+        SELECT /*+ RULE */ LINE_CODE,
+               f_get_line_name(LINE_CODE, 1) LINE_NAME,
+               T_CNT,
+               M_CNT,
+               R_CNT,
+               DECODE(T_CNT,0, NULL, ROUND((100-(M_CNT + R_CNT) / T_CNT * 100),2)) GOOD_RATE,
+               DECODE(T_CNT,0, NULL, ROUND((M_CNT + R_CNT) / T_CNT * 1000000))     PPM,
+               CASE WHEN ( 
+                           DECODE(T_CNT,0, NULL, ROUND((100-(M_CNT + R_CNT) / T_CNT * 100),2)) <= 99.60   -- $$HEX4$$88bdc9b760b92000$$ENDHEX$$0.4% $$HEX5$$74c7c1c074c774ba2000$$ENDHEX$$warning 
+                         ) THEN 'W'
+               END LINE_WARNING_SIGN                                         
+          FROM (
+                SELECT LINE_CODE, 
+                       SUM(T_CNT) T_CNT,
+                       SUM(M_CNT) M_CNT,
+                       SUM(R_CNT) R_CNT
+                 FROM (      
+                        SELECT LINE_CODE, 
+                               SUM(DECODE(DATA_TYPE,'T', DECODE( SIGN(SIM_COUNT), -1, HEAD_SUM, NVL(SIM_COUNT,HEAD_SUM)))) T_CNT,
+                               SUM(DECODE(DATA_TYPE,'M', DECODE( SIGN(SIM_COUNT), -1, HEAD_SUM, NVL(SIM_COUNT,HEAD_SUM)))) M_CNT,
+                               SUM(DECODE(DATA_TYPE,'R', DECODE( SIGN(SIM_COUNT), -1, HEAD_SUM, NVL(SIM_COUNT,HEAD_SUM)))) R_CNT
+                          FROM (       
+                                 SELECT
+                                        T.LINE_CODE  , 
+                                        T.ACTUAL_DATE, 
+                                        T.ACTUAL_TIME,            
+                                        T.MACHINE_CODE,
+                                        T.PROGRAM_NAME,
+                                        T.ADDRESS, 
+                                        T.SUB_ADDRESS,
+                                        T.ITEM_CODE,
+                                        T.DATA_TYPE  ,
+                                        T.HEAD_SUM   ,
+                                        DECODE(NVL(MACHINE_TYPE,'CM'), 'NPM' , T.HEAD_SUM, 
+                                        HEAD_SUM - LAG(HEAD_SUM) OVER ( 
+                                                                        PARTITION BY LINE_CODE  , 
+                                                                                     MACHINE_CODE, 
+                                                                                     PROGRAM_NAME,
+                                                                                     ADDRESS    , 
+                                                                                     SUB_ADDRESS,
+                                                                                     ITEM_CODE  ,
+                                                                                     DATA_TYPE  
+                                                                            ORDER BY LINE_CODE  , 
+                                                                                     MACHINE_CODE,
+                                                                                     PROGRAM_NAME,
+                                                                                     ADDRESS    , 
+                                                                                     SUB_ADDRESS, 
+                                                                                     ITEM_CODE  ,
+                                                                                     DATA_TYPE  ,
+                                                                                     ACTUAL_DATE, 
+                                                                                     ACTUAL_TIME
+                                                                      )
+                                        ) SIM_COUNT  
+                                    FROM IQ_MACHINE_INSPECT_PICKUP_RATE t
+                                   WHERE ( 
+                                           ( ACTUAL_DATE = F_GET_WORK_ACTUAL_DATE(sysdate,'A') )  OR
+                                           ( ACTUAL_DATE = F_GET_WORK_ACTUAL_DATE(sysdate,'A') -1 AND ACTUAL_TIME = 'J')
+                                         ) 
+                                     AND item_code <> 'HEAD'         
+                                 
+                             )             
+                          WHERE  ACTUAL_DATE = F_GET_WORK_ACTUAL_DATE(sysdate,'A')
+                          GROUP BY LINE_CODE 
+    
+               ) 
+               GROUP BY LINE_CODE  
+           )
+        ) M,
+        (
+          SELECT /*+ RULE */ LINE_CODE,
+                LISTAGG('['||MACHINE_CODE||'-'||ADDRESS||'-'||SUB_ADDRESS||' : '||to_char(m_cnt+r_cnt)||']') WITHIN GROUP (ORDER BY MACHINE_CODE||'-'||ADDRESS||'-'||SUB_ADDRESS||to_char(m_cnt+r_cnt)) NG_POSITION,
+                 'S'                                                                                                          ITEM_WARNING_SIGN
+            FROM (                   
+                  SELECT LINE_CODE, 
+                         MACHINE_CODE,
+                         ADDRESS, 
+                         SUB_ADDRESS,  
+                         ITEM_CODE,                   
+                         SUM(DECODE(DATA_TYPE,'T', DECODE( SIGN(SIM_COUNT), -1, HEAD_SUM, NVL(SIM_COUNT,HEAD_SUM)),0)) T_CNT,
+                         SUM(DECODE(DATA_TYPE,'M', DECODE( SIGN(SIM_COUNT), -1, HEAD_SUM, NVL(SIM_COUNT,HEAD_SUM)),0)) M_CNT,
+                         SUM(DECODE(DATA_TYPE,'R', DECODE( SIGN(SIM_COUNT), -1, HEAD_SUM, NVL(SIM_COUNT,HEAD_SUM)),0)) R_CNT                   
+                    FROM (       
+                           SELECT
+                                  T.LINE_CODE  , 
+                                  T.ACTUAL_DATE, 
+                                  T.ACTUAL_TIME,            
+                                  T.MACHINE_CODE,
+                                  T.PROGRAM_NAME,
+                                  T.ADDRESS, 
+                                  T.SUB_ADDRESS,
+                                  T.ITEM_CODE,
+                                  T.DATA_TYPE  ,
+                                  T.HEAD_SUM   ,
+                                  DECODE(NVL(MACHINE_TYPE,'CM'), 'NPM' , T.HEAD_SUM, 
+                                  HEAD_SUM - LAG(HEAD_SUM) OVER ( 
+                                                                  PARTITION BY LINE_CODE  , 
+                                                                               MACHINE_CODE, 
+                                                                               PROGRAM_NAME,
+                                                                               ADDRESS    , 
+                                                                               SUB_ADDRESS,
+                                                                               ITEM_CODE  ,
+                                                                               DATA_TYPE  
+                                                                      ORDER BY LINE_CODE  , 
+                                                                               MACHINE_CODE,
+                                                                               PROGRAM_NAME,
+                                                                               ADDRESS    , 
+                                                                               SUB_ADDRESS, 
+                                                                               ITEM_CODE  ,
+                                                                               DATA_TYPE  ,
+                                                                               ACTUAL_DATE, 
+                                                                               ACTUAL_TIME
+                                                                )
+                                  ) SIM_COUNT  
+                              FROM IQ_MACHINE_INSPECT_PICKUP_RATE t
+                             WHERE ( 
+                                     ( ACTUAL_DATE = F_GET_WORK_ACTUAL_DATE(sysdate,'A') )  OR
+                                     ( ACTUAL_DATE = F_GET_WORK_ACTUAL_DATE(sysdate,'A')-1 AND ACTUAL_TIME = 'J')
+                                   ) 
+                                 AND item_code <> 'HEAD' 
+                                
+                       )             
+                    WHERE  ACTUAL_DATE = F_GET_WORK_ACTUAL_DATE(sysdate,'A')
+                    GROUP BY LINE_CODE, 
+                             MACHINE_CODE,
+                             ADDRESS, 
+                             SUB_ADDRESS,
+                             ITEM_CODE  
+                            
+                             
+                 )
+           WHERE T_CNT >500                                                                              -- 500$$HEX10$$1cac200074c7c1c020007cc7bdacb0c6ccb92000$$ENDHEX$$check
+             AND DECODE(T_CNT, 0, NULL, (M_CNT + R_CNT) / T_CNT) >= 0.01         -- $$HEX4$$88bdc9b760b92000$$ENDHEX$$1% $$HEX5$$74c7c1c074c774ba2000$$ENDHEX$$NG
+           GROUP BY LINE_CODE 
+        ) D
+  WHERE M.LINE_CODE = D.LINE_CODE(+)
+      AND M.LINE_CODE ||'' = :ARG_LINE_CODE
+  ORDER BY M.LINE_NAME " arguments=(("arg_line_code", string)) )
+text(band=header alignment="2" text="Line Name" border="0" color="0" x="9" y="4" height="200" width="1115" html.valueishtml="0"  name=line_name_t visible="1"  font.face="Tahoma" font.height="-20" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Takeup Count" border="0" color="0" x="1134" y="4" height="200" width="1083" html.valueishtml="0"  name=t_cnt_t visible="1"  font.face="Tahoma" font.height="-20" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Miss Count" border="0" color="0" x="2226" y="4" height="200" width="1010" html.valueishtml="0"  name=m_cnt_t visible="1"  font.face="Tahoma" font.height="-20" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Realize Count" border="0" color="0" x="3246" y="4" height="200" width="992" html.valueishtml="0"  name=r_cnt_t visible="1"  font.face="Tahoma" font.height="-20" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Pickup Rate(%)" border="0" color="0" x="4247" y="4" height="200" width="1216" html.valueishtml="0"  name=good_rate_t visible="1"  font.face="Tahoma" font.height="-20" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="0" x="9" y="4~tif ( arg_row_y_position = 0 or isnull(arg_row_y_position) , 44 , arg_row_y_position )" height="200" width="1115" format="[general]" html.valueishtml="0"  name=line_name visible="1" edit.limit=4000 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-20" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="536870912~tif (  line_warning_sign = 'W', rgb(255,0,0), if (mod( getrow() , 2 )  = 1,rgb(255,255,255),rgb(220,220,220)))" )
+column(band=detail id=2 alignment="1" tabsequence=32766 border="0" color="0" x="1134" y="4~tif ( arg_row_y_position = 0 or isnull(arg_row_y_position) , 44 , arg_row_y_position )" height="200" width="1083" format="###,###,###" html.valueishtml="0"  name=t_cnt visible="1" edit.limit=0 edit.case=any edit.format="" edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-20" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="536870912~tif (  line_warning_sign = 'W', rgb(255,204,000), if (mod( getrow() , 2 )  = 1,rgb(255,255,255),rgb(220,220,220)))" )
+column(band=detail id=3 alignment="1" tabsequence=32766 border="0" color="0" x="2226" y="4~tif ( arg_row_y_position = 0 or isnull(arg_row_y_position) , 44 , arg_row_y_position )" height="200" width="1010" format="###,###,###" html.valueishtml="0"  name=m_cnt visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-20" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="536870912~tif (  line_warning_sign = 'W', rgb(255,204,000), if (mod( getrow() , 2 )  = 1,rgb(255,255,255),rgb(220,220,220)))" )
+column(band=detail id=4 alignment="1" tabsequence=32766 border="0" color="0" x="3246" y="4~tif ( arg_row_y_position = 0 or isnull(arg_row_y_position) , 44 , arg_row_y_position )" height="200" width="992" format="###,###,###" html.valueishtml="0"  name=r_cnt visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-20" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="536870912~tif (  line_warning_sign = 'W', rgb(255,204,000), if (mod( getrow() , 2 )  = 1,rgb(255,255,255),rgb(220,220,220)))" )
+column(band=detail id=5 alignment="1" tabsequence=32766 border="0" color="0" x="4247" y="4~tif ( arg_row_y_position = 0 or isnull(arg_row_y_position) , 44 , arg_row_y_position )" height="200" width="1216" format="[general]" html.valueishtml="0"  name=good_rate visible="1" edit.limit=40 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-20" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="536870912~tif (  line_warning_sign = 'W', rgb(255,204,000), if (mod( getrow() , 2 )  = 1,rgb(255,255,255),rgb(220,220,220)))" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

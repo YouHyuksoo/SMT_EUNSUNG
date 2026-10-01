@@ -181,6 +181,10 @@ type sle_proddate from so_singlelineedit within w_mat_receipt_slip_master_onetek
 end type
 type uo_valid_date from uo_ymd_calendar within w_mat_receipt_slip_master_onetek_solder
 end type
+type ddlb_factory from uo_basecode within w_mat_receipt_slip_master_onetek_solder
+end type
+type st_25 from so_statictext within w_mat_receipt_slip_master_onetek_solder
+end type
 end forward
 
 global type w_mat_receipt_slip_master_onetek_solder from w_main_root
@@ -278,6 +282,8 @@ dw_10 dw_10
 cb_1 cb_1
 sle_proddate sle_proddate
 uo_valid_date uo_valid_date
+ddlb_factory ddlb_factory
+st_25 st_25
 end type
 global w_mat_receipt_slip_master_onetek_solder w_mat_receipt_slip_master_onetek_solder
 
@@ -1546,7 +1552,7 @@ do
 		//dw_2.object.item_barcode[LVL_ROW]       = sle_item_code.text+"+"+lvs_receipt_lot_no+"+"+string( ivl_divide_qty[i])// $$HEX8$$5ccd85c814bc54cfdcb4200009000900$$ENDHEX$$
 		//lvs_our_barcode = sle_item_code.text+"+"+lvs_receipt_lot_no+"+"+string( ivl_divide_qty[i])// $$HEX6$$5ccd85c814bc54cfdcb42000$$ENDHEX$$
 		
-		dw_2.object.item_barcode[LVL_ROW]       = lvs_solder_type+lvs_solder_day_yymmdd+string(lvl_solder_day_seq+i,'000')// $$HEX5$$5ccd85c814bc54cfdcb4$$ENDHEX$$
+		dw_2.object.item_barcode[LVL_ROW]       = lvs_solder_type+lvs_solder_day_yymmdd+string(lvl_solder_day_seq+i,'000') + ddlb_factory.TEXT  // $$HEX5$$5ccd85c814bc54cfdcb4$$ENDHEX$$
 		lvs_our_barcode = dw_2.object.item_barcode[LVL_ROW]
 		
 	else
@@ -1555,7 +1561,7 @@ do
 		//dw_2.object.item_barcode[LVL_ROW]       = sle_item_code.text+"+"+lvs_receipt_lot_no+"+"+sle_unit_qty.text // $$HEX9$$5ccd85c814bc54cfdcb42000090009000900$$ENDHEX$$
 		//lvs_our_barcode = sle_item_code.text+"+"+lvs_receipt_lot_no+"+"+sle_unit_qty.text
 		
-		dw_2.object.item_barcode[LVL_ROW]       = lvs_solder_type+lvs_solder_day_yymmdd+string(lvl_solder_day_seq+i,'000')// $$HEX5$$5ccd85c814bc54cfdcb4$$ENDHEX$$
+		dw_2.object.item_barcode[LVL_ROW]       = lvs_solder_type+lvs_solder_day_yymmdd+string(lvl_solder_day_seq+i,'000') + ddlb_factory.TEXT // $$HEX5$$5ccd85c814bc54cfdcb4$$ENDHEX$$
 		lvs_our_barcode = dw_2.object.item_barcode[LVL_ROW]
 		
 	end if 
@@ -1761,6 +1767,8 @@ this.dw_10=create dw_10
 this.cb_1=create cb_1
 this.sle_proddate=create sle_proddate
 this.uo_valid_date=create uo_valid_date
+this.ddlb_factory=create ddlb_factory
+this.st_25=create st_25
 iCurrent=UpperBound(this.Control)
 this.Control[iCurrent+1]=this.ddlb_item_code
 this.Control[iCurrent+2]=this.st_3
@@ -1851,6 +1859,8 @@ this.Control[iCurrent+86]=this.dw_10
 this.Control[iCurrent+87]=this.cb_1
 this.Control[iCurrent+88]=this.sle_proddate
 this.Control[iCurrent+89]=this.uo_valid_date
+this.Control[iCurrent+90]=this.ddlb_factory
+this.Control[iCurrent+91]=this.st_25
 end on
 
 on w_mat_receipt_slip_master_onetek_solder.destroy
@@ -1944,6 +1954,8 @@ destroy(this.dw_10)
 destroy(this.cb_1)
 destroy(this.sle_proddate)
 destroy(this.uo_valid_date)
+destroy(this.ddlb_factory)
+destroy(this.st_25)
 end on
 
 event activate;call super::activate;/***************************************
@@ -4935,4 +4947,32 @@ end type
 on uo_valid_date.destroy
 call uo_ymd_calendar::destroy
 end on
+
+type ddlb_factory from uo_basecode within w_mat_receipt_slip_master_onetek_solder
+integer x = 4064
+integer y = 172
+integer width = 270
+integer height = 324
+integer taborder = 260
+boolean bringtotop = true
+long backcolor = 16777215
+boolean sorted = false
+string item[] = {"A","B",""}
+string ivs_type = "0"
+end type
+
+event constructor;call super::constructor;this.selectitem(1)
+end event
+
+type st_25 from so_statictext within w_mat_receipt_slip_master_onetek_solder
+integer x = 3799
+integer y = 176
+integer width = 261
+integer height = 76
+boolean bringtotop = true
+integer weight = 700
+long textcolor = 65535
+long backcolor = 16711680
+string text = "Factory"
+end type
 

@@ -17,4 +17,5 @@ export * from './tracking';
 export * from './popups';
 export * from './warehouse';
 export * from './production';
+export * from './monitoring';
 //# sourceMappingURL=index.d.ts.map

@@ -28,7 +28,6 @@ export function priceConfirmColumns(
   partnerLabel: string,
 ): ColumnDef<PriceConfirmRow>[] {
   const cols: ColumnDef<PriceConfirmRow>[] = [
-    { accessorKey: 'confirmYn', header: '승인', size: 70 },
     {
       accessorKey: 'itemCode',
       header: variant === 'mold' ? 'S-PARTS 코드' : '품목코드',
@@ -39,6 +38,7 @@ export function priceConfirmColumns(
       header: variant === 'mold' ? 'S-PARTS명' : '품목명',
       size: 190,
     },
+    { accessorKey: 'confirmYn', header: '승인', size: 70 },
     {
       id: 'partnerName',
       header: partnerLabel,
@@ -135,9 +135,9 @@ export function priceConfirmColumns(
 }
 
 export const bomWorkNumberColumns: ColumnDef<BomWorkNumberRow>[] = [
-  { accessorKey: 'bomWorkNo', header: '작업번호', size: 110, meta: right },
   { accessorKey: 'itemCode', header: 'SET 품목', size: 150 },
   { accessorKey: 'itemName', header: 'SET 품목명', size: 200 },
+  { accessorKey: 'bomWorkNo', header: '작업번호', size: 110, meta: right },
   { accessorKey: 'rowCount', header: '행수', size: 90, meta: right, cell: (c) => num(c.getValue()) },
   {
     accessorKey: 'newRowCount',

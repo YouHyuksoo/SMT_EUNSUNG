@@ -14,6 +14,7 @@ const codeWithName = (code: unknown, name: unknown) => {
 };
 
 export const sampleInputHistoryColumns: ColumnDef<SampleInputHistoryRow>[] = [
+  { accessorKey: 'itemCode', header: '품목코드', size: 140 },
   { accessorKey: 'inputDate', header: '장착일시', size: 150, cell: (ctx) => dateTime(ctx.getValue()) },
   { id: 'lineName', header: '라인', size: 120, accessorFn: (row) => codeWithName(row.lineCode, row.lineName) },
   { id: 'sampleTypeName', header: '샘플유형', size: 140, accessorFn: (row) => codeWithName(row.sampleType, row.sampleTypeName) },
@@ -23,7 +24,6 @@ export const sampleInputHistoryColumns: ColumnDef<SampleInputHistoryRow>[] = [
   { accessorKey: 'currentApplyDate', header: '장착시 적용일', size: 120, cell: (ctx) => dateOnly(ctx.getValue()) },
   { accessorKey: 'sampleApplyDate', header: '마스터 적용일', size: 120, cell: (ctx) => dateOnly(ctx.getValue()) },
   { accessorKey: 'runNo', header: 'RUN NO', size: 120 },
-  { accessorKey: 'itemCode', header: '품목코드', size: 140 },
   { accessorKey: 'modelName', header: '모델명', size: 150 },
   { accessorKey: 'enterBy', header: '등록자', size: 90 },
   { accessorKey: 'enterDate', header: '등록일시', size: 150, cell: (ctx) => dateTime(ctx.getValue()) },

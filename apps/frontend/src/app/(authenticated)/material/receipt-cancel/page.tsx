@@ -23,6 +23,7 @@ import DataGrid from '@/components/data-grid/DataGrid';
 import api from '@/services/api';
 import { buildReceiptCancelColumns } from './columns';
 import { receiptKey, type ReceiptCancelMode, type ReceiptCancelRow } from './types';
+import PartSearchField from '@/components/shared/PartSearchField';
 
 const today = () => new Date().toISOString().slice(0, 10);
 const firstDayOfMonth = () => `${new Date().toISOString().slice(0, 7)}-01`;
@@ -169,7 +170,7 @@ export default function ReceiptCancelPage() {
 
       <Card className="shrink-0" padding="sm">
         <div className="flex flex-wrap items-center gap-2">
-          <Input aria-label="품목코드" placeholder="품목코드" value={itemCode} onChange={e => setItemCode(e.target.value)} className="w-36" />
+          <PartSearchField aria-label="품목코드" placeholder="품목코드" value={itemCode} onChange={e => setItemCode(e.target.value)} className="w-36" />
           <Input aria-label="자재 MFS" placeholder="자재 MFS" value={materialMfs} onChange={e => setMaterialMfs(e.target.value)} className="w-36" />
           <SupplierSelect aria-label="공급업체" value={supplierCode} onChange={setSupplierCode} className="w-40" />
           <ComCodeSelect aria-label="자재위치" groupCode="MATERIAL LOCATION CODE" value={locationCode} onChange={setLocationCode} className="w-44" />

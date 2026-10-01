@@ -1,0 +1,68 @@
+HA$PBExportHeader$f_set_smd_plan_lot_divide.srf
+global type f_set_smd_plan_lot_divide from function_object
+end type
+
+forward prototypes
+global function integer f_set_smd_plan_lot_divide (datetime arg_plan_date, long arg_plan_sequence, string arg_run_no)
+end prototypes
+
+global function integer f_set_smd_plan_lot_divide (datetime arg_plan_date, long arg_plan_sequence, string arg_run_no);LONG LVL_PLAN_QTY , LVL_LOT_QTY , LVI_COUNT
+
+ SELECT SUM(PLAN_QTY) , COUNT(*) 
+    INTO :LVL_PLAN_QTY , :LVI_COUNT
+   FROM IP_PRODUCT_SMD_PLAN 
+ WHERE PLAN_DATE = :ARG_PLAN_DATE
+     AND PLAN_SEQUENCE = :ARG_PLAN_SEQUENCE
+//	 AND nvl(PLAN_STATUS,'W') = 'W' 
+	 AND ORGANIZATION_ID = :GVI_ORGANIZATION_ID ;
+
+ IF F_SQL_CHECK_WITH_MSG('IP_PRODUCT_SMD_PLAN : ' +STRING(ARG_PLAN_DATE) +' : '+STRING(ARG_PLAN_SEQUENCE)) < 0 THEN 
+	RETURN -1 
+END IF 
+
+IF LVI_COUNT >= 1 THEN 
+	
+	RETURN    0
+	
+ELSE
+	
+       SELECT SUM(PLAN_QTY) , COUNT(*) 
+           INTO :LVL_PLAN_QTY , :LVI_COUNT
+          FROM IP_PRODUCT_MI_PLAN 
+        WHERE PLAN_DATE           = :ARG_PLAN_DATE
+             AND PLAN_SEQUENCE   = :ARG_PLAN_SEQUENCE
+            //	 AND nvl(PLAN_STATUS,'W') = 'W' 
+	        AND ORGANIZATION_ID = :GVI_ORGANIZATION_ID ;
+
+       IF F_SQL_CHECK_WITH_MSG('IP_PRODUCT_MI_PLAN : ' +STRING(ARG_PLAN_DATE) +' : '+STRING(ARG_PLAN_SEQUENCE)) < 0 THEN 
+	      RETURN -1 
+       END IF 
+
+       IF LVI_COUNT >= 1 THEN 
+			
+			RETURN    0
+	
+       ELSE
+	          F_MSG("$$HEX11$$c4ac8dd644c720003ecc44c72000c6c5b5c2c8b2e4b2$$ENDHEX$$." , 'P' )
+	          RETURN  -1
+	   END IF
+	
+END IF 
+
+//		//========================================
+//		//$$HEX25$$94c7c9b774c720006fb8b8d218c2c9b7fcac200019ac40c72000bdacb0c620001cc888bcccb92000c5c570b374c7b8d22000$$ENDHEX$$
+//		//========================================
+//		
+//		UPDATE IP_PRODUCT_SMD_PLAN 
+//		  SET 	LOT_DIVIDE_YN = 'Y' , 
+//				PLAN_STATUS   = 'L' 
+//		WHERE PLAN_DATE = :ARG_PLAN_DATE
+//			AND PLAN_SEQUENCE = :ARG_PLAN_SEQUENCE
+//			AND ORGANIZATION_ID = :GVI_ORGANIZATION_ID ;
+//				 
+//		 IF F_SQL_CHECK() < 0 THEN 
+//			RETURN -1 
+//		END IF 		
+
+end function
+

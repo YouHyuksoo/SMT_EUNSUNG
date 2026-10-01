@@ -38,6 +38,7 @@ import type {
   MaterialInventoryRow,
   MaterialInventorySummaryRow,
 } from '../report-b-types';
+import PartSearchField from '@/components/shared/PartSearchField';
 
 const today = () => new Date().toISOString().slice(0, 10);
 
@@ -138,7 +139,7 @@ export default function MaterialInventoryReportPage() {
 
       <Card padding="none">
         <CardContent className="flex flex-wrap items-center gap-3 p-3">
-          <Input aria-label="품목코드" placeholder="품목코드" value={itemCode} className="w-40"
+          <PartSearchField aria-label="품목코드" placeholder="품목코드" value={itemCode} className="w-40"
             onChange={(e) => setItemCode(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') void search(); }} />
           <ComCodeSelect groupCode="MATERIAL LOCATION CODE" labelPrefix="창고"

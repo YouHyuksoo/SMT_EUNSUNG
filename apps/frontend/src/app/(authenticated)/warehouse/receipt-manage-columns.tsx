@@ -7,10 +7,11 @@
  */
 import type { ColumnDef } from '@tanstack/react-table';
 import { codeWithName, num } from '@/components/shared/grid-format';
+import { formatDisplayDate } from '@/utils/date';
 
 const right = { align: 'right' } as const;
 const center = { align: 'center' } as const;
-const ts = (value: unknown) => (value ? String(value) : '');
+const ts = (value: unknown) => (value ? formatDisplayDate(value) : '');
 const yesNo = (value: unknown) => {
   const v = String(value ?? '');
   if (v === 'Y') return '예';
@@ -111,10 +112,10 @@ export interface ArrivalRow {
 }
 
 export const receiptColumns: ColumnDef<ReceiptRow>[] = [
-  { accessorKey: 'receiptDate', header: '입고일', size: 110, meta: center },
-  { accessorKey: 'receiptSequence', header: '입고순번', size: 110, meta: right },
   { accessorKey: 'itemCode', header: '품목코드', size: 140 },
   { accessorKey: 'itemName', header: '품목명', size: 180 },
+  { accessorKey: 'receiptDate', header: '입고일', size: 110, meta: center },
+  { accessorKey: 'receiptSequence', header: '입고순번', size: 110, meta: right },
   { accessorKey: 'itemSpec', header: '규격', size: 160 },
   {
     accessorKey: 'receiptQty',
@@ -187,10 +188,10 @@ export const receiptInventoryColumns: ColumnDef<ReceiptInventoryRow>[] = [
 ];
 
 export const arrivalColumns: ColumnDef<ArrivalRow>[] = [
-  { accessorKey: 'arrivalDate', header: '입고예정일', size: 120, meta: center },
-  { accessorKey: 'arrivalSeqNo', header: '순번', size: 90, meta: right },
   { accessorKey: 'itemCode', header: '품목코드', size: 140 },
   { accessorKey: 'itemName', header: '품목명', size: 180 },
+  { accessorKey: 'arrivalDate', header: '입고예정일', size: 120, meta: center },
+  { accessorKey: 'arrivalSeqNo', header: '순번', size: 90, meta: right },
   { accessorKey: 'itemSpec', header: '규격', size: 160 },
   { accessorKey: 'arrivalQty', header: '예정수량', size: 110, meta: right, cell: (c) => num(c.getValue()) },
   { accessorKey: 'arrivalStatus', header: '상태', size: 90, meta: center },

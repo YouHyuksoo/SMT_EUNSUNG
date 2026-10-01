@@ -16,7 +16,7 @@ import { useCallback, useState } from 'react';
 import toast from 'react-hot-toast';
 import { GitBranch, Search } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
-import { Button, Card, CardContent, Input } from '@/components/ui';
+import { Button, Card, CardContent } from '@/components/ui';
 import api from '@/services/api';
 import {
   TruncationNotice,
@@ -24,6 +24,7 @@ import {
 } from '../../report/components/TruncationNotice';
 import { applyItemColumns, applyModelColumns } from '../design-columns';
 import type { ApplyItemRow, ApplyModelRow } from '../design-columns';
+import PartSearchField from '@/components/shared/PartSearchField';
 
 export default function ApplyItemPage() {
   const [itemCode, setItemCode] = useState('');
@@ -85,7 +86,7 @@ export default function ApplyItemPage() {
           <span className="flex items-center gap-1 text-sm font-semibold text-text">
             <GitBranch className="h-4 w-4" />자재코드
           </span>
-          <Input aria-label="자재코드" placeholder="자재(품목)코드" value={itemCode}
+          <PartSearchField aria-label="자재코드" placeholder="자재(품목)코드" value={itemCode}
             className="w-64" autoFocus
             onChange={(e) => setItemCode(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') void search(); }} />

@@ -18,6 +18,7 @@ import { ColumnDef, CellContext } from "@tanstack/react-table";
 import { useTranslation } from "react-i18next";
 import { ComCodeBadge } from "@/components/ui";
 import Button from "@/components/ui/Button";
+import { formatDisplayDate } from "@/utils/date";
 
 // ========================================
 // 공통 Cell 렌더러
@@ -33,18 +34,10 @@ export function QtyCell<T>({ getValue }: CellContext<T, unknown>) {
 }
 
 /**
- * 날짜 Cell (YYYY-MM-DD 형식)
+ * 날짜 Cell (YYYY-MM-DD, 시각이 있으면 YYYY-MM-DD HH:mm:ss)
  */
 export function DateCell<T>({ getValue }: CellContext<T, unknown>) {
-  const value = getValue();
-  if (!value) return "-";
-  const date = new Date(value as string);
-  if (isNaN(date.getTime())) return String(value);
-  return date.toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  });
+  return formatDisplayDate(getValue(), "-");
 }
 
 /**

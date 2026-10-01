@@ -24,6 +24,7 @@ import {
   type InventoryHoldRow,
   type InventoryHoldTargetRow,
 } from '../notify-columns';
+import PartSearchField from '@/components/shared/PartSearchField';
 
 type Mode = 'targets' | 'holds';
 type Key = { itemCode: string; materialMfs: string };
@@ -164,7 +165,7 @@ export default function InventoryHoldPage() {
 
       <Card padding="none">
         <CardContent className="flex flex-wrap items-center gap-3 p-3">
-          <Input aria-label="품목코드" placeholder="품목코드" value={itemCode}
+          <PartSearchField aria-label="품목코드" placeholder="품목코드" value={itemCode}
             className="w-44" onChange={(e) => setItemCode(e.target.value)} />
           <Input aria-label="자재LOT" placeholder="자재LOT" value={materialMfs}
             className="w-52" onChange={(e) => setMaterialMfs(e.target.value)}

@@ -17,7 +17,6 @@ import toast from 'react-hot-toast';
 import { Network, RefreshCw, Search } from 'lucide-react';
 import { Button, Card, CardContent, ConfirmModal, Input } from '@/components/ui';
 import DataGrid from '@/components/data-grid/DataGrid';
-import PartSearchModal from '@/components/shared/PartSearchModal';
 import api from '@/services/api';
 import { useUnsavedGuard } from '@/hooks/useUnsavedGuard';
 import { readRowLimit, readTruncated, TruncationNotice } from '@/app/(authenticated)/report/components/TruncationNotice';
@@ -25,6 +24,7 @@ import RawBomFormPanel from './components/RawBomFormPanel';
 import LoopCheckModal from './components/LoopCheckModal';
 import { rawBomColumns } from './columns';
 import type { RawBomForm, RawBomLoopResult, RawBomRow } from './types';
+import PartSearchField from '@/components/shared/PartSearchField';
 
 const rowKey = (row: Pick<RawBomRow, 'parentItemCode' | 'childItemCode' | 'dateset'>) =>
   `${row.parentItemCode}::${row.childItemCode}::${row.dateset}`;
@@ -53,7 +53,6 @@ export default function RawBomPage() {
   const [parentCode, setParentCode] = useState('');
   const [childCode, setChildCode] = useState('');
   const [nameFilter, setNameFilter] = useState('');
-  const [pickerTarget, setPickerTarget] = useState<'parent' | 'child' | null>(null);
 
   const [checking, setChecking] = useState(false);
   const [loopResult, setLoopResult] = useState<RawBomLoopResult | null>(null);
@@ -137,14 +136,12 @@ export default function RawBomPage() {
         <Card className="shrink-0" padding="sm">
           <div className="flex flex-wrap items-center gap-2">
             <div className="flex items-center gap-1">
-              <Input aria-label="모품목코드" placeholder="모품목코드" value={parentCode}
+              <PartSearchField aria-label="모품목코드" placeholder="모품목코드" value={parentCode}
                 onChange={e => setParentCode(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') void search(); }} className="w-44" />
-              <Button size="sm" variant="ghost" onClick={() => setPickerTarget('parent')} aria-label="모품목 검색"><Search className="h-4 w-4" /></Button>
             </div>
             <div className="flex items-center gap-1">
-              <Input aria-label="자품목코드" placeholder="자품목코드" value={childCode}
+              <PartSearchField aria-label="자품목코드" placeholder="자품목코드" value={childCode}
                 onChange={e => setChildCode(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') void search(); }} className="w-44" />
-              <Button size="sm" variant="ghost" onClick={() => setPickerTarget('child')} aria-label="자품목 검색"><Search className="h-4 w-4" /></Button>
             </div>
             <Input aria-label="품명 필터" placeholder="품명 필터(조회 결과 안에서)" value={nameFilter}
               onChange={e => setNameFilter(e.target.value)} className="w-52" />
@@ -181,15 +178,6 @@ export default function RawBomPage() {
         />
       )}
 
-      <PartSearchModal
-        isOpen={pickerTarget !== null}
-        onClose={() => setPickerTarget(null)}
-        onSelect={(part) => {
-          if (pickerTarget === 'parent') setParentCode(part.itemCode);
-          else setChildCode(part.itemCode);
-          setPickerTarget(null);
-        }}
-      />
       <LoopCheckModal result={loopResult} onClose={() => setLoopResult(null)} />
       <ConfirmModal {...guardModalProps} />
     </div>

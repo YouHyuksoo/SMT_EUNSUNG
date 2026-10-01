@@ -21,6 +21,7 @@ import { Button, Card, CardContent, Input } from '@/components/ui';
 import api from '@/services/api';
 import { maskCheckColumns, type MaskCheckRow } from './columns';
 import MaskTensionScanPanel from './components/MaskTensionScanPanel';
+import PartSearchField from '@/components/shared/PartSearchField';
 
 const isoDate = (date: Date) => date.toISOString().slice(0, 10);
 const today = () => isoDate(new Date());
@@ -96,7 +97,7 @@ export default function MaskCheckPage() {
           <LineSelect labelPrefix="라인" value={lineCode} onChange={setLineCode} className="w-44" />
           <ComCodeSelect groupCode="JIG CHECK STATUS" value={jigCheckStatus}
             onChange={setJigCheckStatus} className="w-44" />
-          <Input placeholder="적용모델 품목코드" value={modelName} className="w-48"
+          <PartSearchField placeholder="적용모델 품목코드" value={modelName} className="w-48"
             onChange={(e) => setModelName(e.target.value)} />
         </CardContent>
       </Card>

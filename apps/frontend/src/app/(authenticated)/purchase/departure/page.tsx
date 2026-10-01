@@ -21,6 +21,7 @@ import DateRangeFilter from '@/components/shared/DateRangeFilter';
 import SupplierSelect from '@/components/shared/SupplierSelect';
 import { Button, Card, CardContent, ConfirmModal, Input } from '@/components/ui';
 import api from '@/services/api';
+import { getTodayLocal } from '@/utils/date';
 import {
   TruncationNotice,
   useTruncation,
@@ -28,11 +29,11 @@ import {
 import { arrivalColumns, orderForArrivalColumns } from '../purchase-columns';
 import type { ArrivalRow, OrderForArrivalRow } from '../purchase-columns';
 
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => getTodayLocal();
 const monthsAgo = (n: number) => {
   const d = new Date();
   d.setMonth(d.getMonth() - n);
-  return d.toISOString().slice(0, 10);
+  return getTodayLocal(d);
 };
 const apiMessage = (error: unknown) =>
   (error as { response?: { data?: { message?: string } } })?.response?.data?.message;

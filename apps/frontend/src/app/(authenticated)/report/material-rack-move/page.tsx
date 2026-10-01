@@ -22,6 +22,7 @@ import api from '@/services/api';
 import { TruncationNotice, useTruncation } from '../components/TruncationNotice';
 import { materialRackMoveColumns } from '../report-b-columns';
 import type { MaterialRackMoveRow } from '../report-b-types';
+import PartSearchField from '@/components/shared/PartSearchField';
 
 const daysAgo = (n: number) => {
   const d = new Date();
@@ -81,7 +82,7 @@ export default function MaterialRackMovePage() {
         <CardContent className="flex flex-wrap items-center gap-3 p-3">
           <DateRangeFilter label="이동일" from={dateFrom} to={dateTo}
             onFromChange={setDateFrom} onToChange={setDateTo} />
-          <Input aria-label="품목코드" placeholder="품목코드" value={itemCode} className="w-40"
+          <PartSearchField aria-label="품목코드" placeholder="품목코드" value={itemCode} className="w-40"
             onChange={(e) => setItemCode(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') void search(); }} />
           <Input aria-label="자재 롯트" placeholder="자재 롯트" value={materialMfs} className="w-40"

@@ -64,6 +64,8 @@ function planCommonColumns(variant: 'mi' | 'smd'): ColumnDef<PlanRow>[] {
   }
 
   return [
+    { accessorKey: 'itemCode', header: '품목코드', size: 140 },
+    { accessorKey: 'itemName', header: '품목명', size: 180 },
     ...base,
     {
       id: 'pcbItemName',
@@ -71,8 +73,6 @@ function planCommonColumns(variant: 'mi' | 'smd'): ColumnDef<PlanRow>[] {
       size: 100,
       accessorFn: (r) => codeWithName(r.pcbItem, r.pcbItemName),
     },
-    { accessorKey: 'itemCode', header: '품목코드', size: 140 },
-    { accessorKey: 'itemName', header: '품목명', size: 180 },
     { accessorKey: 'workOrderNo', header: '작업지시번호', size: 140 },
     {
       accessorKey: 'planQty',
@@ -269,12 +269,12 @@ export const smdActualSummaryColumns: ColumnDef<SmdActualSummaryRow>[] = [
 ];
 
 export const kittingRunCardColumns: ColumnDef<KittingRunCardRow>[] = [
+  { accessorKey: 'itemCode', header: '품목코드', size: 140 },
   { accessorKey: 'runNo', header: '작업지시번호', size: 140 },
   { accessorKey: 'runDate', header: '작업일', size: 110, cell: (c) => dateOnly(c.getValue()) },
   { accessorKey: 'lotSize', header: 'LOT수량', size: 100, meta: right, cell: (c) => num(c.getValue()) },
   { accessorKey: 'modelName', header: '모델명', size: 190 },
   { accessorKey: 'masterModelName', header: '마스터모델', size: 150 },
-  { accessorKey: 'itemCode', header: '품목코드', size: 140 },
   {
     id: 'lineName',
     header: '라인',
@@ -308,11 +308,11 @@ export const kittingRunCardColumns: ColumnDef<KittingRunCardRow>[] = [
 ];
 
 export const kittingPidColumns: ColumnDef<KittingPidRow>[] = [
+  { accessorKey: 'itemCode', header: '품목코드', size: 140 },
   { accessorKey: 'serialNo', header: 'PID', size: 200 },
   // PID 7~11번째 다섯 글자. 모델매칭이 맞는지 눈으로 확인하는 자리다.
   { accessorKey: 'modelCode', header: '모델코드', size: 100 },
   { accessorKey: 'modelName', header: '모델명', size: 180 },
-  { accessorKey: 'itemCode', header: '품목코드', size: 140 },
   { accessorKey: 'lineCode', header: '라인', size: 80 },
   { accessorKey: 'workstageCode', header: '공정', size: 80 },
   {

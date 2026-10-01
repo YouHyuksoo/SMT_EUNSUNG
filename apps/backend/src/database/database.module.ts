@@ -78,6 +78,7 @@ import { ProductSensorActual } from '../entities/product-sensor-actual.entity';
 import { ProductWorkResult } from '../entities/product-work-result.entity';
 import { ProductWorkDefect } from '../entities/product-work-defect.entity';
 import { EquipDowntimeResult } from '../entities/equip-downtime-result.entity';
+import { AiChatFeedback } from '../entities/ai-chat-feedback.entity';
 
 @Global()
 @Module({
@@ -109,6 +110,7 @@ import { EquipDowntimeResult } from '../entities/equip-downtime-result.entity';
           // 화면을 은성화하며 필요한 엔티티를 이 배열에 추가한다.
           entities: [
             IsysUser,
+            AiChatFeedback,
             IsysOrganization,
             DepartmentMaster,
             Plant,

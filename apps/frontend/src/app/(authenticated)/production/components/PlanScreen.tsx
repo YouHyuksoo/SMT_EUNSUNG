@@ -26,11 +26,12 @@ import ComCodeSelect from '@/components/shared/ComCodeSelect';
 import DateRangeFilter from '@/components/shared/DateRangeFilter';
 import ModelSearchField from '@/components/shared/ModelSearchField';
 import ProdLineSelect from '@/components/shared/ProdLineSelect';
-import { Button, Card, CardContent, ConfirmModal, Input } from '@/components/ui';
+import { Button, Card, CardContent, ConfirmModal } from '@/components/ui';
 import api from '@/services/api';
 import { miPlanColumns, planTimeSlotColumns, smdPlanColumns } from '../planning-columns';
 import type { PlanRow } from '../planning-types';
 import PlanFormPanel, { emptyPlanForm, toPlanForm, type PlanForm } from './PlanFormPanel';
+import ProcessSelect from '@/components/shared/ProcessSelect';
 
 export interface PlanScreenConfig {
   /** 화면 제목 */
@@ -185,8 +186,7 @@ export default function PlanScreen({ config }: { config: PlanScreenConfig }) {
             <ModelSearchField aria-label="모델명" placeholder="모델명" value={modelName}
               className="w-48" onChange={(v) => setModelName(v)} />
             {isMi && (
-              <Input aria-label="공정코드" placeholder="공정코드" value={workstageCode}
-                className="w-36" onChange={(e) => setWorkstageCode(e.target.value)} />
+              <ProcessSelect labelPrefix="공정" value={workstageCode} onChange={setWorkstageCode} className="w-44" />
             )}
             <ComCodeSelect groupCode="PLAN STATUS" labelPrefix="계획상태"
               value={planStatus} onChange={setPlanStatus} className="w-48" />

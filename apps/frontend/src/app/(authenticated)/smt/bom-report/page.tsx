@@ -23,6 +23,7 @@ import api from '@/services/api';
 import { SmtModelSelect, SmtPcbItemSelect } from '../components/SmtSelects';
 import { smtBomReportColumns } from '../columns';
 import type { SmtBomReportRow } from '../types';
+import LineSelect from '@/components/shared/LineSelect';
 
 export default function SmtBomReportPage() {
   const [rows, setRows] = useState<SmtBomReportRow[]>([]);
@@ -81,8 +82,7 @@ export default function SmtBomReportPage() {
         <CardContent className="flex flex-wrap items-center gap-3 p-3">
           <SmtModelSelect labelPrefix="모델" value={modelName}
             onChange={setModelName} className="w-64" />
-          <Input aria-label="라인코드" placeholder="라인코드" value={lineCode}
-            className="w-36" onChange={(e) => setLineCode(e.target.value)} />
+          <LineSelect labelPrefix="라인" value={lineCode} onChange={setLineCode} className="w-44" />
           <SmtPcbItemSelect labelPrefix="PCB면" value={pcbItem}
             onChange={setPcbItem} className="w-44" />
           <Input aria-label="리비전" placeholder="리비전" value={revision}

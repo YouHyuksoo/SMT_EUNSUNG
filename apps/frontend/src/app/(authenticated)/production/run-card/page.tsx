@@ -26,6 +26,7 @@ import DataGrid from '@/components/data-grid/DataGrid';
 import { useComCodeMap } from '@/hooks/useComCode';
 import api from '@/services/api';
 import { getTodayLocal } from '@/utils/date';
+import PartSearchField from '@/components/shared/PartSearchField';
 
 /** 목록 행 — 백엔드 RunCardRow 와 1:1 */
 interface RunCard {
@@ -196,32 +197,6 @@ export default function RunCardPage() {
   };
 
   const columns = useMemo<ColumnDef<RunCard>[]>(() => [
-    { accessorKey: 'runNo', header: '작업지시번호', size: 130, meta: { filterType: 'text' } },
-    { accessorKey: 'runDate', header: '지시일자', size: 110, meta: { filterType: 'date' } },
-    { accessorKey: 'lotNo', header: 'LOT번호', size: 120, meta: { filterType: 'text' } },
-    {
-      id: 'line', header: '라인', size: 110, meta: { filterType: 'text' },
-      accessorFn: (r) => (r.lineName ? `${r.lineCode} - ${r.lineName}` : r.lineCode),
-    },
-    { accessorKey: 'modelName', header: '모델명', size: 220, meta: { filterType: 'text' } },
-    { accessorKey: 'itemCode', header: '품목코드', size: 140, meta: { filterType: 'text' } },
-    { accessorKey: 'itemName', header: '품명', size: 220, meta: { filterType: 'text' } },
-    { accessorKey: 'lotSize', header: '지시수량', size: 100, meta: { filterType: 'number', align: 'right' } },
-    { accessorKey: 'unit', header: '단위', size: 70, meta: { filterType: 'select' } },
-    {
-      id: 'runStatus', header: '진행상태', size: 110, meta: { filterType: 'select' },
-      accessorFn: (r) => (r.runStatus ? statusMap[r.runStatus] ?? r.runStatus : ''),
-    },
-    {
-      id: 'productRunType', header: '제조유형', size: 110, meta: { filterType: 'select' },
-      accessorFn: (r) => (r.productRunType ? runTypeMap[r.productRunType] ?? r.productRunType : ''),
-    },
-    { accessorKey: 'charger', header: '담당자', size: 90, meta: { filterType: 'text' } },
-    { accessorKey: 'customerName', header: '고객사', size: 140, meta: { filterType: 'text' } },
-    { accessorKey: 'pidCount', header: 'PID', size: 80, meta: { filterType: 'number', align: 'right' } },
-    { accessorKey: 'resultCount', header: '실적', size: 80, meta: { filterType: 'number', align: 'right' } },
-    { accessorKey: 'updatedBy', header: '수정자', size: 90, meta: { filterType: 'text' } },
-    { accessorKey: 'updatedAt', header: '수정일시', size: 140, meta: { filterType: 'text' } },
     {
       id: 'actions', header: '작업', size: 80, enableSorting: false, meta: { filterType: 'none' as const },
       cell: ({ row }) => (
@@ -241,6 +216,32 @@ export default function RunCardPage() {
         </div>
       ),
     },
+    { accessorKey: 'itemCode', header: '품목코드', size: 140, meta: { filterType: 'text' } },
+    { accessorKey: 'itemName', header: '품명', size: 220, meta: { filterType: 'text' } },
+    { accessorKey: 'runNo', header: '작업지시번호', size: 130, meta: { filterType: 'text' } },
+    { accessorKey: 'runDate', header: '지시일자', size: 110, meta: { filterType: 'date' } },
+    { accessorKey: 'lotNo', header: 'LOT번호', size: 120, meta: { filterType: 'text' } },
+    {
+      id: 'line', header: '라인', size: 110, meta: { filterType: 'text' },
+      accessorFn: (r) => (r.lineName ? `${r.lineCode} - ${r.lineName}` : r.lineCode),
+    },
+    { accessorKey: 'modelName', header: '모델명', size: 220, meta: { filterType: 'text' } },
+    { accessorKey: 'lotSize', header: '지시수량', size: 100, meta: { filterType: 'number', align: 'right' } },
+    { accessorKey: 'unit', header: '단위', size: 70, meta: { filterType: 'select' } },
+    {
+      id: 'runStatus', header: '진행상태', size: 110, meta: { filterType: 'select' },
+      accessorFn: (r) => (r.runStatus ? statusMap[r.runStatus] ?? r.runStatus : ''),
+    },
+    {
+      id: 'productRunType', header: '제조유형', size: 110, meta: { filterType: 'select' },
+      accessorFn: (r) => (r.productRunType ? runTypeMap[r.productRunType] ?? r.productRunType : ''),
+    },
+    { accessorKey: 'charger', header: '담당자', size: 90, meta: { filterType: 'text' } },
+    { accessorKey: 'customerName', header: '고객사', size: 140, meta: { filterType: 'text' } },
+    { accessorKey: 'pidCount', header: 'PID', size: 80, meta: { filterType: 'number', align: 'right' } },
+    { accessorKey: 'resultCount', header: '실적', size: 80, meta: { filterType: 'number', align: 'right' } },
+    { accessorKey: 'updatedBy', header: '수정자', size: 90, meta: { filterType: 'text' } },
+    { accessorKey: 'updatedAt', header: '수정일시', size: 140, meta: { filterType: 'text' } },
   ], [statusMap, runTypeMap]);
 
   return (
@@ -318,7 +319,7 @@ export default function RunCardPage() {
                 </div>
               </Field>
               <Field label="품목코드 *">
-                <Input value={form.itemCode} onChange={(e) => set('itemCode', e.target.value)} />
+                <PartSearchField value={form.itemCode} onChange={(e) => set('itemCode', e.target.value)} />
               </Field>
               <Field label="라인 *">
                 <ProdLineSelect value={form.lineCode} onChange={(v) => set('lineCode', v)} fullWidth />
@@ -368,7 +369,7 @@ export default function RunCardPage() {
                 <Input value={form.masterModelName} onChange={(e) => set('masterModelName', e.target.value)} />
               </Field>
               <Field label="모부품코드">
-                <Input value={form.parentItemCode} onChange={(e) => set('parentItemCode', e.target.value)} />
+                <PartSearchField value={form.parentItemCode} onChange={(e) => set('parentItemCode', e.target.value)} />
               </Field>
               <Field label="제조그룹번호">
                 <Input value={form.mfsGroupNo} onChange={(e) => set('mfsGroupNo', e.target.value)} />

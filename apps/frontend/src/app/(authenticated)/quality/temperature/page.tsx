@@ -19,6 +19,7 @@ import DataGrid from '@/components/data-grid/DataGrid';
 import ComCodeSelect from '@/components/shared/ComCodeSelect';
 import DateRangeFilter from '@/components/shared/DateRangeFilter';
 import { Button, Card, CardContent, Input } from '@/components/ui';
+import EquipSelect from '@/components/shared/EquipSelect';
 import api from '@/services/api';
 import {
   temperatureCheckColumns,
@@ -161,8 +162,7 @@ export default function TemperaturePage() {
             <>
               <DateRangeFilter label="확인일" from={dateFrom} to={dateTo}
                 onFromChange={setDateFrom} onToChange={setDateTo} />
-              <Input aria-label="설비코드" placeholder="설비코드" value={machineCode}
-                className="w-40" onChange={(e) => setMachineCode(e.target.value)} />
+              <EquipSelect labelPrefix="설비" value={machineCode} onChange={setMachineCode} className="w-44" />
               <ComCodeSelect groupCode="CONFIRM YN" labelPrefix="확인"
                 value={confirmYn} onChange={setConfirmYn} className="w-40" />
             </>

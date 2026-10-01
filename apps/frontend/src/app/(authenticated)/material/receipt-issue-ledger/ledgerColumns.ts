@@ -52,6 +52,8 @@ const qtyCell = {
 export function ledgerColumns(t: TFunction): ColumnDef<LedgerRow>[] {
   const c = (key: string) => t(`materialLedger.col.${key}`);
   return [
+    { accessorKey: "itemCode", header: c("itemCode"), size: 140 },
+    { accessorKey: "itemName", header: c("itemName"), size: 180 },
     { accessorKey: "inventoryType", header: c("inventoryType"), size: 100 },
     { accessorKey: "locationCode", header: c("locationCode"), size: 100 },
     { accessorKey: "labelType", header: c("labelType"), size: 90 },
@@ -65,10 +67,8 @@ export function ledgerColumns(t: TFunction): ColumnDef<LedgerRow>[] {
     { accessorKey: "rcvIssCode", header: c("rcvIssCode"), size: 90 },
     { accessorKey: "enterDate", header: c("enterDate"), size: 150, ...dateTimeCell },
     { accessorKey: "locationAddress", header: c("locationAddress"), size: 110 },
-    { accessorKey: "itemCode", header: c("itemCode"), size: 140 },
     { accessorKey: "materialMfs", header: c("materialMfs"), size: 140 },
     { accessorKey: "manufactureWeek", header: c("manufactureWeek"), size: 100 },
-    { accessorKey: "itemName", header: c("itemName"), size: 180 },
     { accessorKey: "itemSpec", header: c("itemSpec"), size: 180 },
     { accessorKey: "qty", header: c("qty"), size: 100, ...qtyCell },
     { accessorKey: "receiptIssueDeficit", header: c("receiptIssueDeficit"), size: 110 },
@@ -92,11 +92,11 @@ export function ledgerColumns(t: TFunction): ColumnDef<LedgerRow>[] {
 export function workstageLedgerColumns(t: TFunction): ColumnDef<WorkstageLedgerRow>[] {
   const c = (key: string) => t(`materialLedger.col.${key}`);
   return [
+    { accessorKey: "itemCode", header: c("itemCode"), size: 140 },
+    { accessorKey: "itemName", header: c("itemName"), size: 200 },
     { accessorKey: "rcvIssCode", header: c("rcvIssCode"), size: 90 },
     { accessorKey: "enterDate", header: c("enterDate"), size: 150, ...dateTimeCell },
     { accessorKey: "locationAddress", header: c("locationAddress"), size: 110 },
-    { accessorKey: "itemCode", header: c("itemCode"), size: 140 },
-    { accessorKey: "itemName", header: c("itemName"), size: 200 },
     { accessorKey: "itemSpec", header: c("itemSpec"), size: 200 },
     { accessorKey: "qty", header: c("qty"), size: 100, ...qtyCell },
     { accessorKey: "receiptIssueDeficit", header: c("receiptIssueDeficit"), size: 110 },
@@ -108,6 +108,7 @@ export function workstageLedgerColumns(t: TFunction): ColumnDef<WorkstageLedgerR
 export function receiptBarcodeColumns(t: TFunction): ColumnDef<ReceiptBarcodeRow>[] {
   const c = (key: string) => t(`materialLedger.col.${key}`);
   return [
+    { accessorKey: "itemCode", header: c("itemCode"), size: 140 },
     { accessorKey: "lotDivideYn", header: c("lotDivideYn"), size: 90 },
     { accessorKey: "receiptCompareYn", header: c("receiptCompareYn"), size: 100 },
     { accessorKey: "receiptType", header: c("receiptType"), size: 90 },
@@ -117,7 +118,6 @@ export function receiptBarcodeColumns(t: TFunction): ColumnDef<ReceiptBarcodeRow
     { accessorKey: "fromSupplierCode", header: c("fromSupplierCode"), size: 120 },
     { accessorKey: "scanDate", header: c("scanDate"), size: 150, ...dateTimeCell },
     { accessorKey: "locationAddress", header: c("locationAddress"), size: 110 },
-    { accessorKey: "itemCode", header: c("itemCode"), size: 140 },
     { accessorKey: "lotNo", header: c("lotNo"), size: 140 },
     { accessorKey: "receiptSlipNo", header: c("receiptSlipNo"), size: 140 },
     { accessorKey: "scanQty", header: c("scanQty"), size: 100, ...qtyCell },
@@ -157,10 +157,10 @@ export function feederLayoutColumns(t: TFunction): ColumnDef<FeederLayoutRow>[] 
 export function issueLossColumns(t: TFunction): ColumnDef<IssueLossRow>[] {
   const c = (key: string) => t(`materialLedger.col.${key}`);
   return [
-    { accessorKey: "issueDate", header: c("issueDate"), size: 120, ...dateCell },
-    { accessorKey: "issueSequence", header: c("issueSequence"), size: 90 },
     { accessorKey: "itemCode", header: c("itemCode"), size: 140 },
     { accessorKey: "itemName", header: c("itemName"), size: 180 },
+    { accessorKey: "issueDate", header: c("issueDate"), size: 120, ...dateCell },
+    { accessorKey: "issueSequence", header: c("issueSequence"), size: 90 },
     { accessorKey: "itemSpec", header: c("itemSpec"), size: 180 },
     { accessorKey: "materialMfs", header: c("materialMfs"), size: 140 },
     { accessorKey: "lineCode", header: c("lineCode"), size: 90 },

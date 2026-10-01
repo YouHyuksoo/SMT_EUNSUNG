@@ -1,0 +1,139 @@
+HA$PBExportHeader$d_qc_inspect_time_check_query.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=134217750 processing=1 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no grid.lines=0 )
+header(height=140 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=72 color="536870912" )
+table(column=(type=datetime updatewhereclause=yes name=inspection_date dbname="iqc_inspection_time_check.inspection_date" )
+ column=(type=char(20) updatewhereclause=yes name=line_code dbname="iqc_inspection_time_check.line_code" )
+ column=(type=char(30) updatewhereclause=yes name=work_order_no dbname="iqc_inspection_time_check.work_order_no" )
+ column=(type=char(50) updatewhereclause=yes name=inspect_group dbname="iqc_inspection_time_check.inspect_group" )
+ column=(type=char(100) updatewhereclause=yes name=inspect_group_desc dbname="iqc_inspection_time_check.inspect_group_desc" )
+ column=(type=number updatewhereclause=yes name=display_seq dbname="iqc_inspection_time_check.display_seq" )
+ column=(type=char(100) updatewhereclause=yes name=inspection_item dbname="iqc_inspection_time_check.inspection_item" )
+ column=(type=number updatewhereclause=yes name=organization_id dbname="iqc_inspection_time_check.organization_id" )
+ column=(type=number updatewhereclause=yes name=inspection_value_lcl dbname="inspection_value_lcl" )
+ column=(type=number updatewhereclause=yes name=inspection_value_ucl dbname="inspection_value_ucl" )
+ column=(type=char(10) updatewhereclause=yes name=inspection_unit dbname="inspection_unit" )
+ column=(type=number updatewhereclause=yes name=value_x dbname="value_x" )
+ column=(type=char(10) updatewhereclause=yes name=result_x dbname="result_x" )
+ column=(type=datetime updatewhereclause=yes name=last_modify_date_x dbname="last_modify_date_x" )
+ column=(type=char(20) updatewhereclause=yes name=last_modify_by_x dbname="last_modify_by_x" )
+ column=(type=number updatewhereclause=yes name=value_y dbname="value_y" )
+ column=(type=char(10) updatewhereclause=yes name=result_y dbname="result_y" )
+ column=(type=datetime updatewhereclause=yes name=last_modify_date_y dbname="last_modify_date_y" )
+ column=(type=char(20) updatewhereclause=yes name=last_modify_by_y dbname="last_modify_by_y" )
+ column=(type=number updatewhereclause=yes name=value_z dbname="value_z" )
+ column=(type=char(10) updatewhereclause=yes name=result_z dbname="result_z" )
+ column=(type=datetime updatewhereclause=yes name=last_modify_date_z dbname="last_modify_date_z" )
+ column=(type=char(20) updatewhereclause=yes name=last_modify_by_z dbname="last_modify_by_z" )
+ retrieve="    SELECT A.INSPECTION_DATE,
+                A.LINE_CODE,
+                A.WORK_ORDER_NO,
+
+                A.INSPECT_GROUP,
+                A.INSPECT_GROUP_DESC,
+                A.INSPECTION_ITEM_SEQ                                               AS DISPLAY_SEQ,
+                A.INSPECTION_ITEM,
+                A.ORGANIZATION_ID,
+                
+                MAX(A.INSPECTION_VALUE_LCL)                                     AS INSPECTION_VALUE_LCL,
+                MAX(A.INSPECTION_VALUE_UCL)                                    AS INSPECTION_VALUE_UCL,
+                MAX(A.INSPECTION_UNIT)                                              AS INSPECTION_UNIT,
+                
+                MAX(DECODE(CHECK_TIME, 'X', A.INSPECTION_VALUE))    AS VALUE_X,
+                MAX(DECODE(CHECK_TIME, 'X', A.INSPECTION_RESULT))  AS RESULT_X,
+                MAX(DECODE(CHECK_TIME, 'X', A.LAST_MODIFY_DATE))   AS LAST_MODIFY_DATE_X,
+                MAX(DECODE(CHECK_TIME, 'X', A.LAST_MODIFY_BY))       AS LAST_MODIFY_BY_X,
+
+                MAX(DECODE(CHECK_TIME, 'Y', A.INSPECTION_VALUE))    AS VALUE_Y,
+                MAX(DECODE(CHECK_TIME, 'Y', A.INSPECTION_RESULT))  AS RESULT_Y,
+                MAX(DECODE(CHECK_TIME, 'Y', A.LAST_MODIFY_DATE))   AS LAST_MODIFY_DATE_Y,
+                MAX(DECODE(CHECK_TIME, 'Y', A.LAST_MODIFY_BY))       AS LAST_MODIFY_BY_Y,
+                
+                MAX(DECODE(CHECK_TIME, 'Z', A.INSPECTION_VALUE))    AS VALUE_Z,
+                MAX(DECODE(CHECK_TIME, 'Z', A.INSPECTION_RESULT))  AS RESULT_Z,
+                MAX(DECODE(CHECK_TIME, 'Z', A.LAST_MODIFY_DATE))   AS LAST_MODIFY_DATE_Z,
+                MAX(DECODE(CHECK_TIME, 'Z', A.LAST_MODIFY_BY))       AS LAST_MODIFY_BY_Z                
+
+    FROM IQC_INSPECTION_TIME_CHECK A
+ 
+     WHERE A.ORGANIZATION_ID          = :arg_org_id
+       AND A.INSPECTION_DATE            between :arg_sdate and :arg_edate
+       AND A.line_CODE                        like :arg_line_code
+       AND A.INSPECT_GROUP_DESC     like :arg_model_name
+       AND A.WORK_ORDER_NO            like :arg_work_order
+       AND A.INSPECTION_YN               = 'Y'            
+
+   GROUP BY  A.INSPECTION_DATE, A.LINE_CODE, A.WORK_ORDER_NO, A.INSPECT_GROUP,  A.INSPECT_GROUP_DESC, A.INSPECTION_ITEM_SEQ, A.INSPECTION_ITEM, A.ORGANIZATION_ID
+   ORDER BY  A.INSPECTION_DATE, A.LINE_CODE, A.WORK_ORDER_NO, A.INSPECT_GROUP,  A.INSPECT_GROUP_DESC, A.INSPECTION_ITEM_SEQ, A.INSPECTION_ITEM, A.ORGANIZATION_ID
+" arguments=(("arg_org_id", number),("arg_sdate", datetime),("arg_edate", datetime),("arg_line_code", string),("arg_model_name", string),("arg_work_order", string))  sort="inspection_date A work_order_no A display_seq A " )
+group(level=1 header.height=0 trailer.height=32 by=("line_code" , "organization_id" ) header.color="536870912" trailer.color="12632256" )
+group(level=2 header.height=0 trailer.height=0 by=("line_code" , "inspection_date" , "work_order_no" , "inspect_group" , "inspect_group_desc" ) header.color="536870912" trailer.color="0" )
+rectangle(band=header x="7840" y="0" height="72" width="1371"  name=r_3 visible="1" brush.hatch="6" brush.color="15780518" pen.style="0" pen.width="5" pen.color="1073741824"  background.mode="2" background.color="15780518" )
+rectangle(band=header x="6405" y="0" height="72" width="1426"  name=r_2 visible="1" brush.hatch="6" brush.color="65535" pen.style="0" pen.width="5" pen.color="1073741824"  background.mode="2" background.color="65535" )
+text(band=header alignment="2" text="Value" border="0" color="33554432" x="5038" y="80" height="52" width="219" html.valueishtml="0"  name=value_x_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=header alignment="2" text="Result" border="0" color="33554432" x="5266" y="80" height="52" width="219" html.valueishtml="0"  name=result_x_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=header alignment="2" text="Inspection Date" border="0" color="33554432" x="5495" y="80" height="52" width="498" html.valueishtml="0"  name=last_modify_date_x_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=header alignment="2" text="Inspector" border="0" color="33554432" x="6002" y="80" height="52" width="398" html.valueishtml="0"  name=last_modify_by_x_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=header alignment="2" text="Value" border="0" color="33554432" x="7845" y="80" height="52" width="247" html.valueishtml="0"  name=value_z_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=header alignment="2" text="Result" border="0" color="33554432" x="8101" y="80" height="52" width="219" html.valueishtml="0"  name=result_z_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=header alignment="2" text="Inspection Date" border="0" color="33554432" x="8329" y="80" height="52" width="553" html.valueishtml="0"  name=last_modify_date_z_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=header alignment="2" text="Inspector" border="0" color="33554432" x="8891" y="80" height="52" width="329" html.valueishtml="0"  name=last_modify_by_z_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=header alignment="2" text="Value" border="0" color="33554432" x="6409" y="80" height="52" width="265" html.valueishtml="0"  name=value_y_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+text(band=header alignment="2" text="Result" border="0" color="33554432" x="6683" y="80" height="52" width="219" html.valueishtml="0"  name=result_y_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+text(band=header alignment="2" text="Inspection Date" border="0" color="33554432" x="6912" y="80" height="52" width="503" html.valueishtml="0"  name=last_modify_date_y_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+text(band=header alignment="2" text="Inspector" border="0" color="33554432" x="7424" y="80" height="52" width="411" html.valueishtml="0"  name=last_modify_by_y_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+text(band=header alignment="2" text="Organization Id" border="0" color="33554432" x="9230" y="8" height="124" width="247" html.valueishtml="0"  name=organization_id_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=header alignment="2" text="No." border="0" color="33554432" x="9" y="8" height="124" width="178" html.valueishtml="0"  name=getrow_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="Line Code" border="0" color="33554432" x="197" y="8" height="124" width="398" html.valueishtml="0"  name=line_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Inspection Date" border="0" color="33554432" x="603" y="8" height="124" width="453" html.valueishtml="0"  name=inspection_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+rectangle(band=header x="5033" y="0" height="72" width="1371"  name=r_1 visible="1" brush.hatch="6" brush.color="15780518" pen.style="0" pen.width="5" pen.color="1073741824"  background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="$$HEX4$$08cd3cbb80acacc0$$ENDHEX$$" border="0" color="33554432" x="5495" y="4" height="64" width="498" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="$$HEX4$$11c93cbb80acacc0$$ENDHEX$$" border="0" color="33554432" x="6912" y="4" height="64" width="503" html.valueishtml="0"  name=t_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+text(band=header alignment="2" text="$$HEX4$$85c83cbb80acacc0$$ENDHEX$$" border="0" color="33554432" x="8329" y="4" height="64" width="553" html.valueishtml="0"  name=t_3 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Work Order No" border="0" color="33554432" x="1065" y="8" height="124" width="453" html.valueishtml="0"  name=work_order_no_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="$$HEX4$$88d4a9ba54cfdcb4$$ENDHEX$$" border="0" color="33554432" x="1527" y="8" height="124" width="622" html.valueishtml="0"  name=inspect_group_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="$$HEX4$$80acacc0a8ba78b3$$ENDHEX$$" border="0" color="33554432" x="2158" y="8" height="124" width="837" html.valueishtml="0"  name=inspect_group_desc_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="27260153" )
+text(band=header alignment="2" text="$$HEX2$$1cc21cc1$$ENDHEX$$" border="0" color="33554432" x="3003" y="8" height="124" width="201" html.valueishtml="0"  name=display_seq_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="27260153" )
+text(band=header alignment="2" text="$$HEX4$$80acacc06dd5a9ba$$ENDHEX$$" border="0" color="33554432" x="3214" y="8" height="124" width="1074" html.valueishtml="0"  name=inspection_item_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="27260153" )
+text(band=header alignment="2" text="$$HEX3$$58d55cd558ce$$ENDHEX$$" border="0" color="33554432" x="4297" y="8" height="124" width="261" html.valueishtml="0"  name=inspection_value_lcl_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="$$HEX3$$c1c058d658ce$$ENDHEX$$" border="0" color="33554432" x="4567" y="8" height="124" width="233" html.valueishtml="0"  name=inspection_value_ucl_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="$$HEX2$$e8b204c7$$ENDHEX$$" border="0" color="33554432" x="4809" y="8" height="124" width="219" html.valueishtml="0"  name=inspection_unit_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12639424" )
+compute(band=detail alignment="2" expression="GETROW()"border="0" color="33554432" x="9" y="8" height="64" width="178" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="33554432" x="603" y="8" height="64" width="453" format="yyyy-mm-dd" html.valueishtml="0"  name=inspection_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="33554432" x="197" y="8" height="64" width="398" format="[general]" html.valueishtml="0"  name=line_code visible="0" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="0" color="33554432" x="1065" y="8" height="64" width="453" format="[general]" html.valueishtml="0"  name=work_order_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=6 alignment="2" tabsequence=32766 border="0" color="33554432" x="3003" y="8" height="64" width="201" format="[general]" html.valueishtml="0"  name=display_seq visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=8 alignment="2" tabsequence=32766 border="0" color="33554432" x="9230" y="8" height="64" width="247" format="[general]" html.valueishtml="0"  name=organization_id visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=9 alignment="2" tabsequence=32766 border="0" color="33554432" x="4297" y="8" height="64" width="261" format="[general]" html.valueishtml="0"  name=inspection_value_lcl visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=10 alignment="2" tabsequence=32766 border="0" color="33554432" x="4567" y="8" height="64" width="233" format="[general]" html.valueishtml="0"  name=inspection_value_ucl visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=11 alignment="2" tabsequence=32766 border="0" color="33554432" x="4809" y="8" height="64" width="219" format="[general]" html.valueishtml="0"  name=inspection_unit visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=12 alignment="2" tabsequence=32766 border="0" color="33554432" x="5038" y="8" height="64" width="219" format="[general]" html.valueishtml="0"  name=value_x visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=13 alignment="2" tabsequence=32766 border="0" color="33554432" x="5266" y="8" height="64" width="219" format="[general]" html.valueishtml="0"  name=result_x visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=14 alignment="2" tabsequence=32766 border="0" color="33554432" x="5495" y="8" height="64" width="498" format="[shortdate] [time]" html.valueishtml="0"  name=last_modify_date_x visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=15 alignment="2" tabsequence=32766 border="0" color="33554432" x="6002" y="8" height="64" width="398" format="[general]" html.valueishtml="0"  name=last_modify_by_x visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=16 alignment="2" tabsequence=32766 border="0" color="33554432" x="6409" y="8" height="64" width="265" format="[general]" html.valueishtml="0"  name=value_y visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=17 alignment="2" tabsequence=32766 border="0" color="33554432" x="6683" y="8" height="64" width="219" format="[general]" html.valueishtml="0"  name=result_y visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=18 alignment="2" tabsequence=32766 border="0" color="33554432" x="6912" y="8" height="64" width="503" format="[shortdate] [time]" html.valueishtml="0"  name=last_modify_date_y visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=19 alignment="2" tabsequence=32766 border="0" color="33554432" x="7424" y="8" height="64" width="411" format="[general]" html.valueishtml="0"  name=last_modify_by_y visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=20 alignment="2" tabsequence=32766 border="0" color="33554432" x="7845" y="8" height="64" width="247" format="[general]" html.valueishtml="0"  name=value_z visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=21 alignment="2" tabsequence=32766 border="0" color="33554432" x="8101" y="8" height="64" width="219" format="[general]" html.valueishtml="0"  name=result_z visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=22 alignment="2" tabsequence=32766 border="0" color="33554432" x="8329" y="8" height="64" width="553" format="[shortdate] [time]" html.valueishtml="0"  name=last_modify_date_z visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=23 alignment="2" tabsequence=32766 border="0" color="33554432" x="8891" y="8" height="64" width="329" format="[general]" html.valueishtml="0"  name=last_modify_by_z visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="0" color="33554432" x="1527" y="8" height="64" width="622" format="[general]" html.valueishtml="0"  name=inspect_group visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=5 alignment="0" tabsequence=32766 border="0" color="33554432" x="2158" y="8" height="64" width="837" format="[general]" html.valueishtml="0"  name=inspect_group_desc visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=7 alignment="0" tabsequence=32766 border="0" color="33554432" x="3214" y="8" height="64" width="1074" format="[general]" html.valueishtml="0"  name=inspection_item visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+
+sparse(names="line_code	inspection_date	work_order_no	inspect_group	inspect_group_desc")htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

@@ -17,6 +17,7 @@ import SupplierSelect from '@/components/shared/SupplierSelect';
 import { Button, Card, CardContent, ConfirmModal, Input } from '@/components/ui';
 import api from '@/services/api';
 import type { MoldRepairRow } from '../../types';
+import PartSearchField from '@/components/shared/PartSearchField';
 
 interface Props {
   selected: MoldRepairRow | null;
@@ -183,7 +184,7 @@ export default function RepairProcessPanel({ selected, onChanged }: Props) {
         </label>
         <label className="text-xs text-text-muted">
           수리품목 (1건만)
-          <Input value={itemCode} className="w-36" disabled={!selected || done}
+          <PartSearchField value={itemCode} className="w-36" disabled={!selected || done}
             placeholder="품목코드" onChange={(e) => setItemCode(e.target.value)} />
         </label>
         <label className="text-xs text-text-muted">

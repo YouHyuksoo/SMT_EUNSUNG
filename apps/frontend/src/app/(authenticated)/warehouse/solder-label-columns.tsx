@@ -4,10 +4,11 @@
  */
 import type { ColumnDef } from '@tanstack/react-table';
 import { codeWithName, num } from '@/components/shared/grid-format';
+import { formatDisplayDate } from '@/utils/date';
 
 const right = { align: 'right' } as const;
 const center = { align: 'center' } as const;
-const ts = (value: unknown) => (value ? String(value) : '');
+const ts = (value: unknown) => (value ? formatDisplayDate(value) : '');
 const solderTypeLabel = (value: unknown) => {
   const v = String(value ?? '');
   if (v === 'F') return '무연(F)';
@@ -93,10 +94,10 @@ export interface SolderIssueResult {
 }
 
 export const solderSlipColumns: ColumnDef<SolderSlipRow>[] = [
-  { accessorKey: 'receiptSlipNo', header: '전표번호', size: 150 },
-  { accessorKey: 'receiptDate', header: '전표일', size: 110, meta: center },
   { accessorKey: 'itemCode', header: '품목코드', size: 130 },
   { accessorKey: 'itemName', header: '품목명', size: 170 },
+  { accessorKey: 'receiptSlipNo', header: '전표번호', size: 150 },
+  { accessorKey: 'receiptDate', header: '전표일', size: 110, meta: center },
   { accessorKey: 'itemSpec', header: '규격', size: 150 },
   {
     accessorKey: 'solderType',

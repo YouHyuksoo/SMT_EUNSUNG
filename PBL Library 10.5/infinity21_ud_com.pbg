@@ -42,6 +42,7 @@ Save Format v3.0(19990112)
  "d_des_bom_workspace_query.srd" "infinity21_ud_com.pbl";
  "d_ib_machine_location_lst.srd" "infinity21_ud_com.pbl";
  "d_man_bring_in_confirm_lst.srd" "infinity21_ud_com.pbl";
+ "d_display_smt_pickup_rate_lst2_base.srd" "infinity21_ud_com.pbl";
  "d_des_raw_bom_workspace_query.srd" "infinity21_ud_com.pbl";
  "d_com_customer_document.srd" "infinity21_ud_com.pbl";
  "d_com_supplier_document.srd" "infinity21_ud_com.pbl";

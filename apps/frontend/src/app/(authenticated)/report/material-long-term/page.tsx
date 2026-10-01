@@ -23,6 +23,7 @@ import api from '@/services/api';
 import { TruncationNotice, useTruncation } from '../components/TruncationNotice';
 import { materialLongTermColumns } from '../report-b-columns';
 import type { MaterialLongTermRow } from '../report-b-types';
+import PartSearchField from '@/components/shared/PartSearchField';
 
 const today = () => new Date().toISOString().slice(0, 10);
 
@@ -97,7 +98,7 @@ export default function MaterialLongTermPage() {
               onChange={(e) => setTermMonths(e.target.value.replace(/\D/g, ''))} />
             개월 이상 입고 없음
           </label>
-          <Input aria-label="품목코드" placeholder="품목코드" value={itemCode} className="w-40"
+          <PartSearchField aria-label="품목코드" placeholder="품목코드" value={itemCode} className="w-40"
             onChange={(e) => setItemCode(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') void search(); }} />
           <Input aria-label="자재 롯트" placeholder="자재 롯트" value={materialMfs} className="w-40"

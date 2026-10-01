@@ -19,6 +19,7 @@ import { Button, Input } from '@/components/ui';
 import api from '@/services/api';
 import { SmtMachineSelect, SmtPcbItemSelect } from '../../components/SmtSelects';
 import type { SmtBomRow } from '../../types';
+import PartSearchField from '@/components/shared/PartSearchField';
 
 export interface SmtBomForm {
   parentItemCode: string;
@@ -174,12 +175,12 @@ export default function SmtBomFormPanel({ mode, initialForm, onClose, onSaved }:
       <div className="flex-1 space-y-3 overflow-auto p-4">
         <label className="block text-sm">
           <span className="text-text-muted">상위품목 (모델) *</span>
-          <Input value={form.parentItemCode} disabled={edit}
+          <PartSearchField value={form.parentItemCode} disabled={edit}
             onChange={(e) => set('parentItemCode', e.target.value)} />
         </label>
         <label className="block text-sm">
           <span className="text-text-muted">하위품목 (부품) *</span>
-          <Input value={form.childItemCode} disabled={edit}
+          <PartSearchField value={form.childItemCode} disabled={edit}
             onChange={(e) => set('childItemCode', e.target.value)} />
         </label>
         <div className="grid grid-cols-2 gap-3">

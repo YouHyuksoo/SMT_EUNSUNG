@@ -7,10 +7,11 @@
  */
 import type { ColumnDef } from '@tanstack/react-table';
 import { codeWithName, num } from '@/components/shared/grid-format';
+import { formatDisplayDate } from '@/utils/date';
 
 const right = { align: 'right' } as const;
 const center = { align: 'center' } as const;
-const ts = (value: unknown) => (value ? String(value) : '');
+const ts = (value: unknown) => (value ? formatDisplayDate(value) : '');
 /** 출고/반납 구분. PB 는 수량 부호로 이 값을 정한다. */
 const deficitLabel = (value: unknown) => {
   const v = String(value ?? '');
@@ -77,10 +78,10 @@ export interface IssueInventoryRow {
 }
 
 export const issueColumns: ColumnDef<IssueRow>[] = [
-  { accessorKey: 'issueDate', header: '출고일', size: 110, meta: center },
-  { accessorKey: 'issueSequence', header: '출고순번', size: 110, meta: right },
   { accessorKey: 'itemCode', header: '품목코드', size: 140 },
   { accessorKey: 'itemName', header: '품목명', size: 180 },
+  { accessorKey: 'issueDate', header: '출고일', size: 110, meta: center },
+  { accessorKey: 'issueSequence', header: '출고순번', size: 110, meta: right },
   { accessorKey: 'itemSpec', header: '규격', size: 160 },
   {
     accessorKey: 'issueQty',

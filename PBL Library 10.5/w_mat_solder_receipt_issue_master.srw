@@ -31,6 +31,10 @@ type rb_running from so_radiobutton within w_mat_solder_receipt_issue_master
 end type
 type rb_2 from so_radiobutton within w_mat_solder_receipt_issue_master
 end type
+type ddlb_factoey from uo_basecode within w_mat_solder_receipt_issue_master
+end type
+type st_6 from so_statictext within w_mat_solder_receipt_issue_master
+end type
 type gb_2 from so_groupbox within w_mat_solder_receipt_issue_master
 end type
 type gb_1 from so_groupbox within w_mat_solder_receipt_issue_master
@@ -40,7 +44,7 @@ end type
 end forward
 
 global type w_mat_solder_receipt_issue_master from w_main_root
-integer width = 4827
+integer width = 5376
 integer height = 3028
 string title = "Solder Receipt Issue Query"
 uo_dateset uo_dateset
@@ -57,6 +61,8 @@ ddlb_solder_type ddlb_solder_type
 st_5 st_5
 rb_running rb_running
 rb_2 rb_2
+ddlb_factoey ddlb_factoey
+st_6 st_6
 gb_2 gb_2
 gb_1 gb_1
 gb_3 gb_3
@@ -196,6 +202,8 @@ this.ddlb_solder_type=create ddlb_solder_type
 this.st_5=create st_5
 this.rb_running=create rb_running
 this.rb_2=create rb_2
+this.ddlb_factoey=create ddlb_factoey
+this.st_6=create st_6
 this.gb_2=create gb_2
 this.gb_1=create gb_1
 this.gb_3=create gb_3
@@ -214,9 +222,11 @@ this.Control[iCurrent+11]=this.ddlb_solder_type
 this.Control[iCurrent+12]=this.st_5
 this.Control[iCurrent+13]=this.rb_running
 this.Control[iCurrent+14]=this.rb_2
-this.Control[iCurrent+15]=this.gb_2
-this.Control[iCurrent+16]=this.gb_1
-this.Control[iCurrent+17]=this.gb_3
+this.Control[iCurrent+15]=this.ddlb_factoey
+this.Control[iCurrent+16]=this.st_6
+this.Control[iCurrent+17]=this.gb_2
+this.Control[iCurrent+18]=this.gb_1
+this.Control[iCurrent+19]=this.gb_3
 end on
 
 on w_mat_solder_receipt_issue_master.destroy
@@ -235,6 +245,8 @@ destroy(this.ddlb_solder_type)
 destroy(this.st_5)
 destroy(this.rb_running)
 destroy(this.rb_2)
+destroy(this.ddlb_factoey)
+destroy(this.st_6)
 destroy(this.gb_2)
 destroy(this.gb_1)
 destroy(this.gb_3)
@@ -303,12 +315,12 @@ choose case gvs_ue_data_control
 			dw_2.reset()
 			if rb_running.checked = true then 
 				
-			    dw_1.retrieve(sle_lot_no.text + '%' ,  sle_barcode.text + '%', uo_dateset.text() , uo_dateend.text() ,  ddlb_line_code.getcode()+'%' , ddlb_solder_type.getcode()+'%' ,  gvi_organization_id)		
+			    dw_1.retrieve(sle_lot_no.text + '%' ,  sle_barcode.text + '%', uo_dateset.text() , uo_dateend.text() ,  ddlb_line_code.getcode()+'%' , ddlb_solder_type.getcode()+'%' ,  gvi_organization_id, ddlb_factoey.text )		
 			else
-			    dw_3.retrieve(sle_lot_no.text + '%' ,  sle_barcode.text + '%', uo_dateset.text() , uo_dateend.text() ,  ddlb_line_code.getcode()+'%' , ddlb_solder_type.getcode()+'%' ,  gvi_organization_id)		
+			    dw_3.retrieve(sle_lot_no.text + '%' ,  sle_barcode.text + '%', uo_dateset.text() , uo_dateend.text() ,  ddlb_line_code.getcode()+'%' , ddlb_solder_type.getcode()+'%' ,  gvi_organization_id, ddlb_factoey.text )		
 				
 			end if 
-		dw_2.retrieve()
+		dw_2.retrieve( ddlb_factoey.text )
 	
 
 //	CASE	'INSERT'
@@ -445,7 +457,7 @@ string text = "Receipt Date"
 end type
 
 type cb_receipt from so_commandbutton within w_mat_solder_receipt_issue_master
-integer x = 3877
+integer x = 4402
 integer y = 108
 integer height = 112
 integer taborder = 30
@@ -546,9 +558,31 @@ event clicked;call super::clicked;dw_3.bringtotop = true
 selected_data_window = dw_3
 end event
 
+type ddlb_factoey from uo_basecode within w_mat_solder_receipt_issue_master
+integer x = 3694
+integer y = 164
+integer width = 489
+integer taborder = 70
+boolean bringtotop = true
+boolean sorted = false
+string item[] = {"A","B","%"}
+end type
+
+event constructor;call super::constructor;this.selectitem(1)
+end event
+
+type st_6 from so_statictext within w_mat_solder_receipt_issue_master
+integer x = 3694
+integer y = 84
+integer width = 475
+integer height = 64
+boolean bringtotop = true
+string text = "Factory"
+end type
+
 type gb_2 from so_groupbox within w_mat_solder_receipt_issue_master
 integer x = 539
-integer width = 3186
+integer width = 3698
 integer height = 300
 integer weight = 700
 long textcolor = 16711680
@@ -556,7 +590,7 @@ string text = "Where Condition"
 end type
 
 type gb_1 from so_groupbox within w_mat_solder_receipt_issue_master
-integer x = 3735
+integer x = 4261
 integer y = 4
 integer width = 791
 integer height = 296

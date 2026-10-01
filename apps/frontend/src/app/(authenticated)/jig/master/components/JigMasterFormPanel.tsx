@@ -21,6 +21,7 @@ import ProcessSelect from '@/components/shared/ProcessSelect';
 import { Button, Input } from '@/components/ui';
 import api from '@/services/api';
 import type { JigMasterRow } from '../types';
+import PartSearchField from '@/components/shared/PartSearchField';
 
 export interface JigForm {
   jigCode: string;
@@ -152,7 +153,7 @@ export default function JigMasterFormPanel({ mode, initialForm, onClose, onSaved
             onChange={(v) => set('workstageCode', v)} />
           <Input label="설비코드" value={form.machineCode}
             onChange={(e) => set('machineCode', e.target.value)} />
-          <Input label="품목코드" value={form.itemCode}
+          <PartSearchField label="품목코드" value={form.itemCode}
             onChange={(e) => set('itemCode', e.target.value)} />
           <Input label="지그모델명" value={form.jigModelName}
             onChange={(e) => set('jigModelName', e.target.value)} />

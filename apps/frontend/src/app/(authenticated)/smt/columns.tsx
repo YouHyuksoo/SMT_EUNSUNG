@@ -127,6 +127,8 @@ export const smtBomReplaceColumns: ColumnDef<SmtBomReplaceRow>[] = [
 ];
 
 export const smtBomColumns: ColumnDef<SmtBomRow>[] = [
+  { accessorKey: 'childItemCode', header: '품목코드', size: 150 },
+  { accessorKey: 'childItemName', header: '품목명', size: 190 },
   { accessorKey: 'lineCode', header: '라인', size: 80 },
   { accessorKey: 'machine', header: '설비', size: 90 },
   { accessorKey: 'tableId', header: '테이블', size: 80 },
@@ -137,8 +139,6 @@ export const smtBomColumns: ColumnDef<SmtBomRow>[] = [
     size: 110,
     accessorFn: (r) => codeWithName(r.pcbItem, r.pcbItemName),
   },
-  { accessorKey: 'childItemCode', header: '품목코드', size: 150 },
-  { accessorKey: 'childItemName', header: '품목명', size: 190 },
   { accessorKey: 'childItemSpec', header: '규격', size: 160 },
   {
     accessorKey: 'itemUnitQty',
@@ -171,6 +171,8 @@ export const smtBomColumns: ColumnDef<SmtBomRow>[] = [
 ];
 
 export const smtPlanColumns: ColumnDef<SmtPlanRow>[] = [
+  { accessorKey: 'itemCode', header: '품목코드', size: 150 },
+  { accessorKey: 'itemName', header: '품목명', size: 190 },
   {
     id: 'activeYnName',
     header: '활성',
@@ -188,8 +190,6 @@ export const smtPlanColumns: ColumnDef<SmtPlanRow>[] = [
     size: 110,
     accessorFn: (r) => codeWithName(r.pcbItem, r.pcbItemName),
   },
-  { accessorKey: 'itemCode', header: '품목코드', size: 150 },
-  { accessorKey: 'itemName', header: '품목명', size: 190 },
   {
     accessorKey: 'itemUnitQty',
     header: '소요량',
@@ -253,14 +253,14 @@ export const smtPlanLineColumns: ColumnDef<SmtPlanLineRow>[] = [
 ];
 
 export const smtBomReportColumns: ColumnDef<SmtBomReportRow>[] = [
+  { accessorKey: 'itemCode', header: '품목코드', size: 150 },
+  { accessorKey: 'itemName', header: '품목명', size: 190 },
   { accessorKey: 'replaceYn', header: '대체', size: 70 },
   { accessorKey: 'lineCode', header: '라인', size: 80 },
   { accessorKey: 'lineName', header: '라인명', size: 140 },
   { accessorKey: 'machine', header: '설비', size: 90 },
   { accessorKey: 'tableId', header: '테이블', size: 80 },
   { accessorKey: 'locationCode', header: '위치코드', size: 120 },
-  { accessorKey: 'itemCode', header: '품목코드', size: 150 },
-  { accessorKey: 'itemName', header: '품목명', size: 190 },
   { accessorKey: 'itemSpec', header: '규격', size: 160 },
   {
     accessorKey: 'itemUnitQty',
@@ -359,6 +359,7 @@ export const smtNcDuplicateColumns: ColumnDef<SmtNcDuplicateRow>[] = [
 ];
 
 export const smtNcCompareColumns: ColumnDef<SmtNcCompareRow>[] = [
+  { accessorKey: 'itemCode', header: '품목코드', size: 170 },
   {
     id: 'state',
     header: '판정',
@@ -369,7 +370,6 @@ export const smtNcCompareColumns: ColumnDef<SmtNcCompareRow>[] = [
       return r.diff ? '수량 불일치' : '일치';
     },
   },
-  { accessorKey: 'itemCode', header: '품목코드', size: 170 },
   {
     accessorKey: 'bomQty',
     header: 'BOM 소요량',
@@ -408,14 +408,14 @@ export const smtNcCompareColumns: ColumnDef<SmtNcCompareRow>[] = [
 ];
 
 export const smtPickupColumns: ColumnDef<SmtPickupRow>[] = [
+  { accessorKey: 'itemCode', header: '품목코드', size: 150 },
+  { accessorKey: 'itemName', header: '품목명', size: 180 },
   { accessorKey: 'productDate', header: '생산일', size: 110, cell: (c) => dateOnly(c.getValue()) },
   { accessorKey: 'lineCode', header: '라인', size: 90 },
   { accessorKey: 'lineName', header: '라인명', size: 150 },
   { accessorKey: 'modelName', header: '모델명', size: 170 },
   { accessorKey: 'feederId', header: '피더 ID', size: 150 },
   { accessorKey: 'feederType', header: '피더유형', size: 130 },
-  { accessorKey: 'itemCode', header: '품목코드', size: 150 },
-  { accessorKey: 'itemName', header: '품목명', size: 180 },
   {
     accessorKey: 'transferCount',
     header: '이송횟수',

@@ -36,6 +36,7 @@ import {
 } from '../../report/components/TruncationNotice';
 import { packColumns, packSerialColumns } from '../shipping-columns';
 import type { PackRow, PackSerialRow } from '../shipping-columns';
+import PartSearchField from '@/components/shared/PartSearchField';
 
 /** 오늘 / 7일 전 — 기본 기간을 좁게 잡는 이유는 파일 상단 주석 6번. */
 const today = () => new Date().toISOString().slice(0, 10);
@@ -268,7 +269,7 @@ export default function ProductPackPage() {
           <Input aria-label="서픽스" placeholder="서픽스" value={modelSuffix}
             className="w-28"
             onChange={(e) => setModelSuffix(e.target.value)} />
-          <Input aria-label="품목코드" placeholder="품목코드" value={itemCode}
+          <PartSearchField aria-label="품목코드" placeholder="품목코드" value={itemCode}
             className="w-36"
             onChange={(e) => setItemCode(e.target.value)} />
           <Input aria-label="박스 정량" placeholder="박스 정량" value={packUnitQty}

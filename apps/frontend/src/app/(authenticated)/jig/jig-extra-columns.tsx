@@ -4,10 +4,11 @@
  */
 import type { ColumnDef } from '@tanstack/react-table';
 import { num } from '@/components/shared/grid-format';
+import { formatDisplayDate } from '@/utils/date';
 
 const right = { align: 'right' } as const;
 const center = { align: 'center' } as const;
-const ts = (value: unknown) => (value ? String(value) : '');
+const ts = (value: unknown) => (value ? formatDisplayDate(value) : '');
 
 const yesNo = (yes: string, no: string) => (value: unknown) => (
   String(value ?? 'N') === 'Y'

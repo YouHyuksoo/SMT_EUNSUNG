@@ -20,6 +20,7 @@ import ModelSearchField from '@/components/shared/ModelSearchField';
 import { Button, Card, CardContent, ConfirmModal, Input } from '@/components/ui';
 import api from '@/services/api';
 import { oqcHistoryColumns, type OqcHistoryRow } from '../notify-columns';
+import PartSearchField from '@/components/shared/PartSearchField';
 
 const isoDate = (date: Date) => date.toISOString().slice(0, 10);
 const today = () => isoDate(new Date());
@@ -196,7 +197,7 @@ export default function OqcPage() {
             className="w-52" onChange={(e) => setProductId(e.target.value)} />
           <ModelSearchField value={modelName} onChange={(v) => setModelName(v)}
             className="w-44" aria-label="모델명" placeholder="모델명" />
-          <Input aria-label="품목코드" placeholder="품목코드" value={itemCode}
+          <PartSearchField aria-label="품목코드" placeholder="품목코드" value={itemCode}
             className="w-40" onChange={(e) => setItemCode(e.target.value)} />
           <ComCodeSelect groupCode="INSPECT RESULT" labelPrefix="판정"
             value={inspectResult} onChange={setInspectResult} className="w-40" />

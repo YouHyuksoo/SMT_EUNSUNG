@@ -36,6 +36,7 @@ import type {
   MaterialNotIssuedRow,
   SmtCheckHistoryRow,
 } from '../report-b-types';
+import PartSearchField from '@/components/shared/PartSearchField';
 
 const daysAgo = (n: number) => {
   const d = new Date();
@@ -173,7 +174,7 @@ export default function MaterialIssueReportPage() {
         <CardContent className="flex flex-wrap items-center gap-3 p-3">
           <DateRangeFilter label="등록일" from={dateFrom} to={dateTo}
             onFromChange={setDateFrom} onToChange={setDateTo} />
-          <Input aria-label="품목코드" placeholder="품목코드" value={itemCode} className="w-40"
+          <PartSearchField aria-label="품목코드" placeholder="품목코드" value={itemCode} className="w-40"
             onChange={(e) => setItemCode(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') void search(); }} />
           <div className="w-40">

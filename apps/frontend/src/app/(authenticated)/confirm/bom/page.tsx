@@ -18,10 +18,11 @@ import { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { CheckCircle2, Search, Trash2 } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
-import { Button, Card, CardContent, ConfirmModal, Input } from '@/components/ui';
+import { Button, Card, CardContent, ConfirmModal } from '@/components/ui';
 import api from '@/services/api';
 import { bomWorkNumberColumns, bomWorkspaceColumns } from '../confirm-columns';
 import type { BomWorkNumberRow, BomWorkspaceRow } from '../confirm-types';
+import PartSearchField from '@/components/shared/PartSearchField';
 
 export default function BomConfirmPage() {
   const [workNumbers, setWorkNumbers] = useState<BomWorkNumberRow[]>([]);
@@ -175,7 +176,7 @@ export default function BomConfirmPage() {
 
       <Card padding="none">
         <CardContent className="flex flex-wrap items-center gap-3 p-3">
-          <Input aria-label="상위 품목코드" placeholder="상위 품목코드" value={parentItemCode}
+          <PartSearchField aria-label="상위 품목코드" placeholder="상위 품목코드" value={parentItemCode}
             className="w-48" onChange={(e) => setParentItemCode(e.target.value)} />
           <Button size="sm" variant="secondary" disabled={!selected}
             onClick={() => selected && void loadRows(selected.bomWorkNo)}>

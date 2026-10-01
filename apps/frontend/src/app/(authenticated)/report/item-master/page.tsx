@@ -22,6 +22,7 @@ import api from '@/services/api';
 import { TruncationNotice, useTruncation } from '../components/TruncationNotice';
 import { itemMasterColumns } from '../report-columns';
 import type { ItemMasterRow } from '../report-types';
+import PartSearchField from '@/components/shared/PartSearchField';
 
 const STATUS_OPTIONS = [
   { value: '', label: '유효기간: 전체' },
@@ -88,7 +89,7 @@ export default function ItemMasterReportPage() {
 
       <Card padding="none">
         <CardContent className="flex flex-wrap items-center gap-3 p-3">
-          <Input aria-label="품목코드" placeholder="품목코드" value={itemCode} className="w-40"
+          <PartSearchField aria-label="품목코드" placeholder="품목코드" value={itemCode} className="w-40"
             onChange={(e) => setItemCode(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') void search(); }} />
           <Input aria-label="품목명" placeholder="품목명" value={itemName} className="w-44"

@@ -14,7 +14,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { CheckCircle, Copy, Layers, Play, Search, Trash2, Undo2 } from 'lucide-react';
-import { Button, Card, CardContent, ConfirmModal, Input } from '@/components/ui';
+import { Button, Card, CardContent, ConfirmModal } from '@/components/ui';
 import ModelSearchField from '@/components/shared/ModelSearchField';
 import DataGrid from '@/components/data-grid/DataGrid';
 import api from '@/services/api';
@@ -23,6 +23,7 @@ import { detailColumns, feederColumns, mfsColumns, modelColumns } from './column
 import type {
   MfsConfirmAction, MfsDetailRow, MfsFeederRow, MfsModelRow, MfsPanelMode, MfsSummaryRow,
 } from './types';
+import PartSearchField from '@/components/shared/PartSearchField';
 
 const errorMessage = (error: unknown) =>
   (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
@@ -178,7 +179,7 @@ export default function MfsBomPage() {
         <Card className="shrink-0" padding="sm">
           <div className="flex flex-wrap items-center gap-2">
             <ModelSearchField value={qModel} onChange={v => setQModel(v)} className="w-56" />
-            <Input aria-label="품목코드" placeholder="품목코드 (앞부분 일치)" value={qItem}
+            <PartSearchField aria-label="품목코드" placeholder="품목코드 (앞부분 일치)" value={qItem}
               onChange={e => setQItem(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') void searchModels(); }} className="w-52" />
             <Button size="sm" onClick={searchModels} disabled={modelsLoading}>
               <Search className="mr-1 h-4 w-4" />조회
@@ -253,7 +254,7 @@ export default function MfsBomPage() {
                   {mfs ? `${mfs.mfs} · ${filteredDetail.length}/${detail.length}행` : ''}
                 </span>
               </span>
-              <Input aria-label="구성품목 필터" placeholder="구성품목 필터" value={childFilter}
+              <PartSearchField aria-label="구성품목 필터" placeholder="구성품목 필터" value={childFilter}
                 onChange={e => setChildFilter(e.target.value)} className="w-40" disabled={!hasMfs} />
               <Button size="sm" variant="secondary" onClick={() => setConfirmAction('usedY')} disabled={!hasMfs || busy}>전체 사용</Button>
               <Button size="sm" variant="secondary" onClick={() => setConfirmAction('usedN')} disabled={!hasMfs || busy}>전체 미사용</Button>

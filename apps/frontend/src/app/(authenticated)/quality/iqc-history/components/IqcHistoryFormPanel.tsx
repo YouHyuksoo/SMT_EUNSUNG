@@ -18,6 +18,7 @@ import SupplierSelect from '@/components/shared/SupplierSelect';
 import { Button, Input } from '@/components/ui';
 import api from '@/services/api';
 import type { IqcInspectHistoryRow } from '../../pid-columns';
+import PartSearchField from '@/components/shared/PartSearchField';
 
 export interface IqcHistoryForm {
   /** 수정일 때만 채워진다 (읽기 전용) */
@@ -161,7 +162,7 @@ export default function IqcHistoryFormPanel({ mode, initialForm, onClose, onSave
           </label>
           <label className="block text-sm">
             <span className="text-text-muted">품목코드</span>
-            <Input value={form.itemCode} onChange={(e) => set('itemCode', e.target.value)} />
+            <PartSearchField value={form.itemCode} onChange={(e) => set('itemCode', e.target.value)} />
           </label>
         </div>
         <label className="block text-sm">

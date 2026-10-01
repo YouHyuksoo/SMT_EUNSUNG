@@ -42,3 +42,5 @@ __exportStar(require("./popups"), exports);
 __exportStar(require("./warehouse"), exports);
 // 생산(공정) 공유 규칙 — 매거진라벨 발행·분할 산술
 __exportStar(require("./production"), exports);
+// 모니터링 경고 건수 SQL(display · 대시보드 공용) 내보내기
+__exportStar(require("./monitoring"), exports);

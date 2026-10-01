@@ -11,6 +11,7 @@
 import { useCallback } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import * as XLSX from "xlsx";
+import { formatDisplayDate } from "@/utils/date";
 
 /** 내보내기 포맷 타입 */
 export type ExportFormat = "xlsx" | "pdf" | "csv" | "html" | "md" | "txt";
@@ -72,7 +73,8 @@ function toRows<T>(data: T[], cols: ExtractedColumn[]): string[][] {
     cols.map((col) => {
       const val = row[col.key];
       if (val === null || val === undefined) return "";
-      return String(val);
+      // 화면 그리드와 같은 날짜 모양으로 내보낸다. 날짜가 아닌 값은 문자열로만 바뀐다.
+      return formatDisplayDate(val);
     })
   );
 }

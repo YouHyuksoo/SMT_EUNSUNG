@@ -27,12 +27,13 @@ import type {
   SlotHistoryRow,
   WorkflowRow,
 } from './query-types';
+import { formatDisplayDate } from '@/utils/date';
 
 const right = { align: 'right' } as const;
 const center = { align: 'center' } as const;
 
 /** 서버가 만든 시각 문자열을 그대로 쓴다. */
-const ts = (value: unknown) => (value ? String(value) : '');
+const ts = (value: unknown) => (value ? formatDisplayDate(value) : '');
 /** IQ_MACHINE_INSPECT_* 의 검사시각은 'YYYY/MM/DD HH24:MI:SS' 문자열이다 */
 const rawTs = (value: unknown) => (value ? String(value).replace(/\//g, '-') : '');
 /** Y/N 플래그를 눈에 들어오게. 빈 값과 'N' 을 구분해 보여준다. */
@@ -44,6 +45,8 @@ const yn = (value: unknown) => {
 // ───────────────────────────────── 323 PID 정보조회
 
 export const pidInfoColumns: ColumnDef<PidInfoRow>[] = [
+  { accessorKey: 'itemCode', header: '품목코드', size: 150 },
+  { accessorKey: 'itemName', header: '품목명', size: 180 },
   { accessorKey: 'serialNo', header: 'PID', size: 150 },
   {
     accessorKey: 'xOutCount',
@@ -65,8 +68,6 @@ export const pidInfoColumns: ColumnDef<PidInfoRow>[] = [
   },
   { accessorKey: 'modelName', header: '모델', size: 150 },
   { accessorKey: 'customerModelName', header: '고객모델', size: 150 },
-  { accessorKey: 'itemCode', header: '품목코드', size: 150 },
-  { accessorKey: 'itemName', header: '품목명', size: 180 },
   { accessorKey: 'lotNo', header: '롯트번호', size: 130 },
   { accessorKey: 'lotQty', header: '롯트수량', size: 100, meta: right, cell: (c) => num(c.getValue()) },
   { accessorKey: 'magazineNo', header: '매거진', size: 110 },
@@ -147,6 +148,8 @@ export const markingSummaryColumns: ColumnDef<MarkingSummaryRow>[] = [
 // ───────────────────────────────── 325 PCB 투입 리스트조회
 
 export const pcbInputColumns: ColumnDef<PcbInputRow>[] = [
+  { accessorKey: 'itemCode', header: '품목코드', size: 150 },
+  { accessorKey: 'itemName', header: '품목명', size: 180 },
   { accessorKey: 'scanDate', header: '스캔시각', size: 160, cell: (c) => ts(c.getValue()) },
   { accessorKey: 'pcbBarcode', header: 'PCB 바코드', size: 180 },
   { accessorKey: 'runNo', header: 'Run No', size: 130 },
@@ -157,8 +160,6 @@ export const pcbInputColumns: ColumnDef<PcbInputRow>[] = [
     accessorFn: (r) => codeWithName(r.lineCode, r.lineName),
   },
   { accessorKey: 'modelName', header: '모델', size: 150 },
-  { accessorKey: 'itemCode', header: '품목코드', size: 150 },
-  { accessorKey: 'itemName', header: '품목명', size: 180 },
   { accessorKey: 'itemSpec', header: '규격', size: 160 },
   { accessorKey: 'lotQty', header: '수량', size: 90, meta: right, cell: (c) => num(c.getValue()) },
   {
@@ -183,6 +184,8 @@ export const pcbInputColumns: ColumnDef<PcbInputRow>[] = [
 
 /** NG 사유·메모는 화면에서 고칠 수 있다 — 편집 가능함을 제목에 표시한다. */
 export const scanDetailColumns: ColumnDef<ScanDetailRow>[] = [
+  { accessorKey: 'partName', header: '품목코드', size: 150 },
+  { accessorKey: 'itemName', header: '품목명', size: 180 },
   { accessorKey: 'checkDate', header: '스캔시각', size: 160, cell: (c) => ts(c.getValue()) },
   {
     id: 'checkStatusName',
@@ -216,8 +219,6 @@ export const scanDetailColumns: ColumnDef<ScanDetailRow>[] = [
   { accessorKey: 'tableId', header: '테이블', size: 90 },
   { accessorKey: 'locationCode', header: '피더위치', size: 100 },
   { accessorKey: 'pcbItem', header: 'PCB면', size: 80, meta: center },
-  { accessorKey: 'partName', header: '품목코드', size: 150 },
-  { accessorKey: 'itemName', header: '품목명', size: 180 },
   { accessorKey: 'chipName', header: '칩명', size: 130 },
   { accessorKey: 'scanPartName', header: '스캔 바코드', size: 170 },
   { accessorKey: 'scanSupplierPartName', header: '공급처 바코드', size: 170 },
@@ -239,6 +240,7 @@ export const scanDetailColumns: ColumnDef<ScanDetailRow>[] = [
 ];
 
 export const scanGroupColumns: ColumnDef<ScanGroupRow>[] = [
+  { accessorKey: 'partName', header: '품목코드', size: 150 },
   { accessorKey: 'fullCheckSequence', header: '풀체크 회차', size: 110, meta: right },
   { accessorKey: 'fullCheckStartTime', header: '회차 시작', size: 160, cell: (c) => ts(c.getValue()) },
   { accessorKey: 'fullCheckEndTime', header: '회차 종료', size: 160, cell: (c) => ts(c.getValue()) },
@@ -265,7 +267,6 @@ export const scanGroupColumns: ColumnDef<ScanGroupRow>[] = [
   { accessorKey: 'machine', header: '설비', size: 100 },
   { accessorKey: 'locationCode', header: '피더위치', size: 100 },
   { accessorKey: 'pcbItem', header: 'PCB면', size: 80, meta: center },
-  { accessorKey: 'partName', header: '품목코드', size: 150 },
   { accessorKey: 'chipName', header: '칩명', size: 130 },
   { accessorKey: 'scanPartName', header: '스캔 바코드', size: 170 },
   { accessorKey: 'ccsCheckTime', header: 'CCS 종료', size: 160, cell: (c) => ts(c.getValue()) },
@@ -275,6 +276,7 @@ export const scanGroupColumns: ColumnDef<ScanGroupRow>[] = [
 ];
 
 export const barcodeMatchColumns: ColumnDef<BarcodeMatchRow>[] = [
+  { accessorKey: 'partName', header: '품목코드', size: 150 },
   { accessorKey: 'matchedOn', header: '일치 위치', size: 100, meta: center },
   { accessorKey: 'checkDate', header: '스캔시각', size: 160, cell: (c) => ts(c.getValue()) },
   {
@@ -299,7 +301,6 @@ export const barcodeMatchColumns: ColumnDef<BarcodeMatchRow>[] = [
   { accessorKey: 'machine', header: '설비', size: 100 },
   { accessorKey: 'locationCode', header: '피더위치', size: 100 },
   { accessorKey: 'pcbItem', header: 'PCB면', size: 80, meta: center },
-  { accessorKey: 'partName', header: '품목코드', size: 150 },
   { accessorKey: 'scanPartName', header: '스캔 바코드', size: 170 },
   { accessorKey: 'scanSupplierPartName', header: '공급처 바코드', size: 170 },
   { accessorKey: 'oldBarcode', header: '이전 바코드', size: 150 },
@@ -310,6 +311,8 @@ export const barcodeMatchColumns: ColumnDef<BarcodeMatchRow>[] = [
 ];
 
 export const issueHistoryColumns: ColumnDef<IssueHistoryRow>[] = [
+  { accessorKey: 'itemCode', header: '품목코드', size: 150 },
+  { accessorKey: 'itemName', header: '품목명', size: 180 },
   { accessorKey: 'issueDate', header: '출고시각', size: 160, cell: (c) => ts(c.getValue()) },
   {
     id: 'issueDeficitName',
@@ -317,8 +320,6 @@ export const issueHistoryColumns: ColumnDef<IssueHistoryRow>[] = [
     size: 130,
     accessorFn: (r) => codeWithName(r.issueDeficit, r.issueDeficitName),
   },
-  { accessorKey: 'itemCode', header: '품목코드', size: 150 },
-  { accessorKey: 'itemName', header: '품목명', size: 180 },
   { accessorKey: 'itemSpec', header: '규격', size: 160 },
   { accessorKey: 'lotNo', header: '제조번호', size: 140 },
   { accessorKey: 'issueQty', header: '출고수량', size: 100, meta: right, cell: (c) => num(c.getValue()) },
@@ -337,6 +338,8 @@ export const issueHistoryColumns: ColumnDef<IssueHistoryRow>[] = [
 
 /** 검사 플래그 3개는 화면에서 고칠 수 있다 — 제목에 표시한다. */
 export const planDataColumns: ColumnDef<PlanDataRow>[] = [
+  { accessorKey: 'itemCode', header: '품목코드', size: 150 },
+  { accessorKey: 'itemName', header: '품목명', size: 180 },
   {
     id: 'lineName',
     header: '라인',
@@ -347,8 +350,6 @@ export const planDataColumns: ColumnDef<PlanDataRow>[] = [
   { accessorKey: 'tableId', header: '테이블', size: 90 },
   { accessorKey: 'locationCode', header: '피더위치', size: 100 },
   { accessorKey: 'pcbItem', header: 'PCB면', size: 80, meta: center },
-  { accessorKey: 'itemCode', header: '품목코드', size: 150 },
-  { accessorKey: 'itemName', header: '품목명', size: 180 },
   { accessorKey: 'itemSpec', header: '규격', size: 160 },
   {
     accessorKey: 'checkYn',
@@ -381,6 +382,7 @@ export const planDataColumns: ColumnDef<PlanDataRow>[] = [
 ];
 
 export const workflowColumns: ColumnDef<WorkflowRow>[] = [
+  { accessorKey: 'itemCode', header: '품목코드', size: 150 },
   {
     accessorKey: 'lineCode',
     header: '라인',
@@ -391,7 +393,6 @@ export const workflowColumns: ColumnDef<WorkflowRow>[] = [
   { accessorKey: 'tableId', header: '테이블', size: 90 },
   { accessorKey: 'locationCode', header: '피더위치', size: 100 },
   { accessorKey: 'pcbItem', header: 'PCB면', size: 80, meta: center },
-  { accessorKey: 'itemCode', header: '품목코드', size: 150 },
   { accessorKey: 'checkYn', header: '검사', size: 80, meta: center, cell: (c) => yn(c.getValue()) },
   { accessorKey: 'ccsYn', header: 'CCS', size: 80, meta: center, cell: (c) => yn(c.getValue()) },
   { accessorKey: 'modelComments', header: '배치 메모', size: 300 },
@@ -400,12 +401,12 @@ export const workflowColumns: ColumnDef<WorkflowRow>[] = [
 // ───────────────────────────────── 329 SMT 피더별 모니터링
 
 export const feederSlotColumns: ColumnDef<FeederSlotRow>[] = [
+  { accessorKey: 'itemCode', header: '품목코드', size: 150 },
+  { accessorKey: 'itemName', header: '품목명', size: 180 },
   { accessorKey: 'machine', header: '설비', size: 100 },
   { accessorKey: 'tableId', header: '테이블', size: 90 },
   { accessorKey: 'locationCode', header: '피더위치', size: 100 },
   { accessorKey: 'pcbItem', header: 'PCB면', size: 80, meta: center },
-  { accessorKey: 'itemCode', header: '품목코드', size: 150 },
-  { accessorKey: 'itemName', header: '품목명', size: 180 },
   { accessorKey: 'itemSpec', header: '규격', size: 160 },
   {
     accessorKey: 'feedingQty',
@@ -520,6 +521,8 @@ export const sensorBucketColumns: ColumnDef<SensorBucketRow>[] = [
 // ───────────────────────────────── 333 자재 바코드 상태 조회
 
 export const materialBarcodeColumns: ColumnDef<MaterialBarcodeRow>[] = [
+  { accessorKey: 'itemCode', header: '품목코드', size: 150 },
+  { accessorKey: 'itemName', header: '품목명', size: 180 },
   { accessorKey: 'itemBarcode', header: '자재 바코드', size: 170 },
   {
     id: 'barcodeStatusName',
@@ -527,8 +530,6 @@ export const materialBarcodeColumns: ColumnDef<MaterialBarcodeRow>[] = [
     size: 110,
     accessorFn: (r) => codeWithName(r.barcodeStatus, r.barcodeStatusName),
   },
-  { accessorKey: 'itemCode', header: '품목코드', size: 150 },
-  { accessorKey: 'itemName', header: '품목명', size: 180 },
   { accessorKey: 'itemSpec', header: '규격', size: 160 },
   { accessorKey: 'lotNo', header: '제조번호', size: 140 },
   { accessorKey: 'vendorLotNo', header: '제조사 롯트', size: 140 },

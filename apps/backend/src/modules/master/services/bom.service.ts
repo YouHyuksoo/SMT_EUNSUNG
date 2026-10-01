@@ -53,6 +53,10 @@ type BomParentRow = {
   itemType: string | null;
   /** 품목구분 (공통코드 ITEM DIVISION: F 제품 / W 반제품 / R 원자재) — PB ddlb_item_division 과 같은 기준 */
   itemDivision: string | null;
+  /** 차종코드 IP_PRODUCT_MODEL_MASTER.PRODUCT_CLASS (공통코드 PRODUCT CLASS, PB 사전 'PRODUCT CLASS' = 차종코드) */
+  productClass: string | null;
+  /** 고객코드 — 모델마스터 우선, 없으면 ID_ITEM.CUSTOMER_CODE */
+  customerCode: string | null;
   spec: string | null;
   unit: string | null;
   remark: string | null;
@@ -155,6 +159,13 @@ export class BomService {
                 p.PART_NO     AS "itemNo",
                 p.ITEM_TYPE   AS "itemType",
                 p.ITEM_DIVISION AS "itemDivision",
+                -- 한 품목에 모델이 여럿일 수 있어 조인하지 않고 서브쿼리로 붙인다 (BOM 건수가 불어나지 않게).
+                -- 2026-09-30 기준 모품목별 차종·고객은 모두 하나다.
+                (SELECT MIN(m.PRODUCT_CLASS) FROM IP_PRODUCT_MODEL_MASTER m
+                  WHERE m.ITEM_CODE = p.ITEM_CODE AND m.ORGANIZATION_ID = p.ORGANIZATION_ID) AS "productClass",
+                NVL((SELECT MIN(m.CUSTOMER_CODE) FROM IP_PRODUCT_MODEL_MASTER m
+                      WHERE m.ITEM_CODE = p.ITEM_CODE AND m.ORGANIZATION_ID = p.ORGANIZATION_ID),
+                    p.CUSTOMER_CODE) AS "customerCode",
                 p.ITEM_SPEC   AS "spec",
                 p.ITEM_UOM    AS "unit",
                 p.COMMENTS    AS "remark",
@@ -167,7 +178,7 @@ export class BomService {
              ON b.PARENT_ITEM_CODE = p.ITEM_CODE
             AND b.ORGANIZATION_ID = p.ORGANIZATION_ID
           WHERE p.ITEM_CODE <> '*' ${dateFilter} ${searchFilter} ${tenantFilter}
-          GROUP BY p.ITEM_CODE, p.ITEM_NAME, p.PART_NO, p.ITEM_TYPE, p.ITEM_DIVISION,
+          GROUP BY p.ITEM_CODE, p.ORGANIZATION_ID, p.CUSTOMER_CODE, p.ITEM_NAME, p.PART_NO, p.ITEM_TYPE, p.ITEM_DIVISION,
                    p.ITEM_SPEC, p.ITEM_UOM, p.COMMENTS
           ORDER BY p.ITEM_CODE ASC`,
         params,

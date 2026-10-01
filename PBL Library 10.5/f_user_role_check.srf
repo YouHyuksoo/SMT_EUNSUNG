@@ -1,0 +1,133 @@
+HA$PBExportHeader$f_user_role_check.srf
+global type f_user_role_check from function_object
+end type
+
+forward prototypes
+global function boolean f_user_role_check (string arg_menu_text, string arg_window_name)
+end prototypes
+
+global function boolean f_user_role_check (string arg_menu_text, string arg_window_name);
+
+long li_check
+string arg_win_name , lvs_open_yn	
+arg_win_name = upper(arg_window_name)
+
+//=========================================================
+// $$HEX17$$54ba74b285ba6dce44c7200008c7c4b3b0c6200024c185ba3cc75cb82000f1b45db8$$ENDHEX$$
+//=========================================================
+IF GVS_LANGUAGE = 'C' THEN 
+	
+	UPDATE ISYS_WINDOW
+			SET  WINDOW_DESCRIPTION_LOCAL  = :arg_menu_text
+	WHERE WINDOW_NAME = :arg_win_name
+		 AND ORGANIZATION_ID = :GVI_ORGANIZATION_ID ;
+		 
+ELSEIF GVS_LANGUAGE = 'E' THEN
+	
+	UPDATE ISYS_WINDOW
+			SET WINDOW_DESCRIPTION_ENG  = :arg_menu_text
+	WHERE WINDOW_NAME = :arg_win_name
+		 AND ORGANIZATION_ID = :GVI_ORGANIZATION_ID ;
+		 
+ELSEIF GVS_LANGUAGE = 'K' THEN
+	
+	UPDATE ISYS_WINDOW
+			SET  WINDOW_DESCRIPTION_KOR = :arg_menu_text
+	WHERE WINDOW_NAME = :arg_win_name
+		 AND ORGANIZATION_ID = :GVI_ORGANIZATION_ID ;	
+		 
+END IF
+	 
+IF F_SQL_CHECK() < 0 THEN 
+	MESSAGEBOX("Error" , 'Menu Message Update Error' )
+ELSE
+	COMMIT ;
+END IF
+
+
+return true
+
+
+
+////=========================================================
+////
+////=========================================================
+//
+//IF GVI_USER_LEVEL = 9 THEN
+//	
+//		select nvl(window_open_yn,'Y')
+//		  into :lvs_open_yn
+//		  from isys_window
+//		 where UPPER(window_name)     = UPPER(:ar_window_name)
+//			and organization_id = :gvi_organization_id ;
+//			
+//		if F_SQL_CHECK () < 0 THEN 
+//			return false
+//		end if 
+//			
+//		if lvs_open_yn = 'N' then	
+//			OPENWITHPARM( W_PRIVILEGE_WARNING_POPUP , ar_win_name)
+//			RETURN FALSE	
+//		else	
+//			RETURN TRUE
+//		end if
+//END IF 
+////==========================================================
+////
+////==========================================================
+//
+//li_check = 0 
+//select count(*) 
+//  into :li_check
+//  from isys_privilege
+// where user_id         = :gvs_user_id 
+//   and UPPER(window_name)     = UPPER(:ar_window_name)
+//	and dateset       < = trunc(sysdate)
+//	and dateend        >= trunc(sysdate)
+//	and organization_id = :gvi_organization_id ;
+//
+//IF F_SQL_CHECK () < 0 THEN 
+//	
+//	OPENWITHPARM( W_PRIVILEGE_WARNING_POPUP , ar_win_name)
+//
+//	 RETURN FALSE
+//	 
+//END IF 
+//
+//if SQLCA.SQLCODE = 100 then
+//	
+//	OPENWITHPARM( W_PRIVILEGE_WARNING_POPUP , ar_win_name  )
+//	RETURN FALSE
+//end if 
+////============================================
+//// $$HEX23$$08c7c4b3b0c600ac2000f1b45db8200018b4b4c5200088c73cc774ba2000b4cc6cd07cb92000e4b4b4c504ace4b2$$ENDHEX$$.
+////============================================
+//if li_check > 0 then 
+//	
+//select nvl(window_open_yn,'Y')
+//  into :lvs_open_yn
+//  from isys_window
+// where UPPER(window_name)     = UPPER(:ar_window_name)
+//	and organization_id = :gvi_organization_id ;
+//	
+//if F_SQL_CHECK () < 0 THEN 
+//	return false
+//end if 
+//	
+//if lvs_open_yn = 'N' then	
+//	OPENWITHPARM( W_PRIVILEGE_WARNING_POPUP , ar_win_name)
+//	RETURN FALSE	
+//else	
+//	RETURN TRUE
+//end if
+//	
+//elseif li_check < 1 then //$$HEX30$$f1b45db81cb4200008c7c4b300ac200044c5c8b274ba200044c534bb98b02000f8c418c2200088c794b283ac3cc75cb8200010d3e8b22000b9c278c7$$ENDHEX$$.
+//	
+//	OPENWITHPARM( W_PRIVILEGE_WARNING_POPUP , ar_win_name)
+//	RETURN FALSE
+//	
+//end if 
+//
+
+end function
+

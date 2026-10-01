@@ -22,7 +22,7 @@ import { Gauge, Lock, RefreshCw, Search, Unlock } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
 import LineSelect from '@/components/shared/LineSelect';
 import ModelSearchField from '@/components/shared/ModelSearchField';
-import { Button, Card, CardContent, ConfirmModal, Input } from '@/components/ui';
+import { Button, Card, CardContent, ConfirmModal } from '@/components/ui';
 import api from '@/services/api';
 import {
   TruncationNotice,
@@ -31,6 +31,7 @@ import {
 import { AutoRefreshControl } from '../components/QueryTabs';
 import { feederSlotColumns, slotHistoryColumns } from '../query-columns';
 import type { FeederSlotRow, SlotHistoryRow } from '../query-types';
+import PartSearchField from '@/components/shared/PartSearchField';
 
 type NsnpAction = 'lock' | 'unlock' | 'use' | 'noUse';
 
@@ -192,7 +193,7 @@ export default function FeederMonitorPage() {
           </div>
           <ModelSearchField aria-label="모델명" placeholder="모델명" value={modelName} className="w-40"
             onChange={(v) => setModelName(v)} />
-          <Input aria-label="품목코드" placeholder="품목코드" value={itemCode} className="w-36"
+          <PartSearchField aria-label="품목코드" placeholder="품목코드" value={itemCode} className="w-36"
             onChange={(e) => setItemCode(e.target.value)} />
           <Button size="sm" onClick={search} disabled={!lineCode || loading}>
             <Search className="mr-1 h-4 w-4" />조회

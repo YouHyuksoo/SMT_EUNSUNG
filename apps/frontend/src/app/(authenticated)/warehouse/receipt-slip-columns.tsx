@@ -7,10 +7,11 @@
  */
 import type { ColumnDef } from '@tanstack/react-table';
 import { codeWithName, num } from '@/components/shared/grid-format';
+import { formatDisplayDate } from '@/utils/date';
 
 const right = { align: 'right' } as const;
 const center = { align: 'center' } as const;
-const ts = (value: unknown) => (value ? String(value) : '');
+const ts = (value: unknown) => (value ? formatDisplayDate(value) : '');
 const yesNo = (value: unknown) => {
   const v = String(value ?? '');
   if (v === 'Y') return '예';
@@ -79,10 +80,10 @@ export interface ReceiptSlipIssueResult {
 }
 
 export const receiptSlipColumns: ColumnDef<ReceiptSlipRow>[] = [
-  { accessorKey: 'receiptSlipNo', header: '전표번호', size: 160 },
-  { accessorKey: 'receiptDate', header: '전표일시', size: 160, cell: (c) => ts(c.getValue()) },
   { accessorKey: 'itemCode', header: '품목코드', size: 150 },
   { accessorKey: 'itemName', header: '품목명', size: 190 },
+  { accessorKey: 'receiptSlipNo', header: '전표번호', size: 160 },
+  { accessorKey: 'receiptDate', header: '전표일시', size: 160, cell: (c) => ts(c.getValue()) },
   { accessorKey: 'itemSpec', header: '규격', size: 170 },
   { accessorKey: 'itemUom', header: '단위', size: 70, meta: center },
   {

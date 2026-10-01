@@ -32,6 +32,7 @@ import SmtBomFormPanel, {
   type SmtBomForm,
 } from './components/SmtBomFormPanel';
 import SmtBomBatchModal, { type SmtBomBatchKind } from './components/SmtBomBatchModal';
+import LineSelect from '@/components/shared/LineSelect';
 
 export default function SmtBomPage() {
   const [rows, setRows] = useState<SmtBomRow[]>([]);
@@ -137,8 +138,7 @@ export default function SmtBomPage() {
           <CardContent className="flex flex-wrap items-center gap-3 p-3">
             <SmtModelSelect labelPrefix="모델" value={modelName}
               onChange={setModelName} className="w-64" />
-            <Input aria-label="라인코드" placeholder="라인코드" value={lineCode}
-              className="w-36" onChange={(e) => setLineCode(e.target.value)} />
+            <LineSelect labelPrefix="라인" value={lineCode} onChange={setLineCode} className="w-44" />
             <SmtMachineSelect labelPrefix="설비" value={machine}
               onChange={setMachine} className="w-52" />
             <SmtPcbItemSelect labelPrefix="PCB면" value={pcbItem}

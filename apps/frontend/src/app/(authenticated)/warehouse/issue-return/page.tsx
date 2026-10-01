@@ -35,6 +35,8 @@ import type {
   IssueReturnResult,
   IssueReturnRow,
 } from '../issue-return-columns';
+import PartSearchField from '@/components/shared/PartSearchField';
+import LineSelect from '@/components/shared/LineSelect';
 
 const today = () => new Date().toISOString().slice(0, 10);
 const daysAgo = (n: number) => {
@@ -199,9 +201,7 @@ export default function IssueReturnPage() {
             <Input aria-label="실사 수량" placeholder="실사 수량 (비우면 로스 0)"
               value={actualQty} className="w-44" inputMode="numeric"
               onChange={(e) => setActualQty(e.target.value)} />
-            <Input aria-label="라인코드" placeholder="라인코드" value={lineCode}
-              className="w-32"
-              onChange={(e) => setLineCode(e.target.value)} />
+            <LineSelect labelPrefix="라인" value={lineCode} onChange={setLineCode} className="w-44" />
             <Button size="sm" disabled={busy || Boolean(blocker)}
               onClick={() => setConfirmOpen(true)}>
               반품
@@ -247,7 +247,7 @@ export default function IssueReturnPage() {
           <DateRangeFilter label={tab === 'returns' ? '반품일' : '발생일'}
             from={dateFrom} to={dateTo}
             onFromChange={setDateFrom} onToChange={setDateTo} />
-          <Input aria-label="품목코드" placeholder="품목코드" value={itemCode}
+          <PartSearchField aria-label="품목코드" placeholder="품목코드" value={itemCode}
             className="w-44"
             onChange={(e) => setItemCode(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') void search(); }} />

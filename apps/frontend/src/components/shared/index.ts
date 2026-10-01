@@ -15,6 +15,8 @@ export { default as ProcessSelect } from "./ProcessSelect";
 export { default as EquipSelect } from "./EquipSelect";
 export { default as PartSearchModal } from "./PartSearchModal";
 export type { PartItem } from "./PartSearchModal";
+export { default as PartSearchField } from "./PartSearchField";
+export type { PartSearchFieldProps } from "./PartSearchField";
 export { default as ModelSearchModal } from "./ModelSearchModal";
 export type { ModelItem } from "./ModelSearchModal";
 export { default as ModelSearchField } from "./ModelSearchField";

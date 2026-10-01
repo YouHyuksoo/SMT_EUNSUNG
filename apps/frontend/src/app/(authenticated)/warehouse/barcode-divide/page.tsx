@@ -30,6 +30,7 @@ import {
 } from '../../report/components/TruncationNotice';
 import { dividedColumns } from '../divide-baking-columns';
 import type { DivideLookup, DivideResult, DividedRow } from '../divide-baking-columns';
+import PartSearchField from '@/components/shared/PartSearchField';
 
 const today = () => new Date().toISOString().slice(0, 10);
 const daysAgo = (n: number) => {
@@ -237,7 +238,7 @@ export default function BarcodeDividePage() {
         <CardContent className="flex flex-wrap items-center gap-3 p-3">
           <DateRangeFilter label="분할일" from={dateFrom} to={dateTo}
             onFromChange={setDateFrom} onToChange={setDateTo} />
-          <Input aria-label="품목코드" placeholder="품목코드" value={itemCode}
+          <PartSearchField aria-label="품목코드" placeholder="품목코드" value={itemCode}
             className="w-44"
             onChange={(e) => setItemCode(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') void search(); }} />

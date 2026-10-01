@@ -26,6 +26,7 @@ import { Button, Input } from '@/components/ui';
 import api from '@/services/api';
 import type { PlanRow } from '../planning-types';
 import { SLOT_INDEXES } from '../planning-types';
+import PartSearchField from '@/components/shared/PartSearchField';
 
 export interface PlanForm {
   planDate: string;
@@ -284,7 +285,7 @@ export default function PlanFormPanel({
             <div className="grid grid-cols-2 gap-3">
               <label className="block text-sm">
                 <span className="text-text-muted">품목코드 *</span>
-                <Input value={form.itemCode}
+                <PartSearchField value={form.itemCode}
                   onChange={(e) => set('itemCode', e.target.value)} />
               </label>
               <label className="block text-sm">
@@ -343,7 +344,7 @@ export default function PlanFormPanel({
         {isMi && (
           <label className="block text-sm">
             <span className="text-text-muted">상위 품목코드</span>
-            <Input value={form.parentItemCode}
+            <PartSearchField value={form.parentItemCode}
               onChange={(e) => set('parentItemCode', e.target.value)} />
           </label>
         )}

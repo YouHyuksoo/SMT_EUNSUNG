@@ -24,11 +24,12 @@ import type {
   RunCardSummaryRow,
   WorkstageStockRow,
 } from './report-types';
+import { formatDisplayDate } from '@/utils/date';
 
 const right = { align: 'right' } as const;
 const center = { align: 'center' } as const;
 
-const ts = (value: unknown) => (value ? String(value) : '');
+const ts = (value: unknown) => (value ? formatDisplayDate(value) : '');
 const yn = (value: unknown) => (value ? String(value) : '');
 /** 금액은 소수점을 버리고 천단위만 보여준다 — 리포트에서 소수는 읽기를 방해한다. */
 const money = (value: unknown) =>
@@ -206,6 +207,8 @@ export const machineOperationColumns: ColumnDef<MachineOperationRow>[] = [
 // ───────────────────────────────── 344 SMT PICKUP 리포트
 
 export const pickupDetailColumns: ColumnDef<PickupDetailRow>[] = [
+  { accessorKey: 'itemCode', header: '품목코드', size: 150 },
+  { accessorKey: 'itemName', header: '품목명', size: 180 },
   { accessorKey: 'actualDate', header: '실적일', size: 110 },
   { accessorKey: 'lineCode', header: '라인', size: 80, meta: center },
   { accessorKey: 'machineCode', header: '설비', size: 110 },
@@ -215,8 +218,6 @@ export const pickupDetailColumns: ColumnDef<PickupDetailRow>[] = [
   { accessorKey: 'subAddress', header: '보조주소', size: 100 },
   { accessorKey: 'feederZaxis', header: 'Z축', size: 80 },
   { accessorKey: 'feederLraxis', header: 'LR축', size: 80 },
-  { accessorKey: 'itemCode', header: '품목코드', size: 150 },
-  { accessorKey: 'itemName', header: '품목명', size: 180 },
   { accessorKey: 'abcGrade', header: 'ABC', size: 70, meta: center },
   { accessorKey: 'purUnitPrice', header: '구매단가', size: 110, meta: right, cell: (c) => unitPrice(c.getValue()) },
   { accessorKey: 'takeupQty', header: '집어올림', size: 110, meta: right, cell: (c) => num(c.getValue()) },
@@ -282,6 +283,8 @@ export const pickupAmountColumns: ColumnDef<PickupAmountRow>[] = [
 
 /** 시간대 10칸은 고정이다 (생산 대분류의 MI/SMD 계획과 같은 구조). */
 export const masterPlanColumns: ColumnDef<MasterPlanRow>[] = [
+  { accessorKey: 'itemCode', header: '품목코드', size: 150 },
+  { accessorKey: 'itemName', header: '품목명', size: 180 },
   {
     id: 'lineName',
     header: '라인',
@@ -289,8 +292,6 @@ export const masterPlanColumns: ColumnDef<MasterPlanRow>[] = [
     accessorFn: (r) => codeWithName(r.lineCode, r.lineName),
   },
   { accessorKey: 'modelName', header: '모델', size: 150 },
-  { accessorKey: 'itemCode', header: '품목코드', size: 150 },
-  { accessorKey: 'itemName', header: '품목명', size: 180 },
   { accessorKey: 'mfs', header: 'MFS', size: 110 },
   { accessorKey: 'pcbItem', header: 'PCB면', size: 80, meta: center },
   {
@@ -324,6 +325,8 @@ export const masterPlanColumns: ColumnDef<MasterPlanRow>[] = [
 // ───────────────────────────────── 347 런카드리포트
 
 export const runCardReportColumns: ColumnDef<RunCardReportRow>[] = [
+  { accessorKey: 'itemCode', header: '품목코드', size: 150 },
+  { accessorKey: 'itemName', header: '품목명', size: 180 },
   { accessorKey: 'runNo', header: 'Run No', size: 130 },
   { accessorKey: 'runDate', header: '지시일', size: 110 },
   {
@@ -333,8 +336,6 @@ export const runCardReportColumns: ColumnDef<RunCardReportRow>[] = [
     accessorFn: (r) => codeWithName(r.lineCode, r.lineName),
   },
   { accessorKey: 'modelName', header: '모델', size: 150 },
-  { accessorKey: 'itemCode', header: '품목코드', size: 150 },
-  { accessorKey: 'itemName', header: '품목명', size: 180 },
   { accessorKey: 'lotNo', header: '롯트번호', size: 130 },
   { accessorKey: 'markingNo', header: '마킹번호', size: 110 },
   { accessorKey: 'lotSize', header: '롯트수량', size: 100, meta: right, cell: (c) => num(c.getValue()) },
@@ -360,6 +361,8 @@ export const runCardReportColumns: ColumnDef<RunCardReportRow>[] = [
  */
 export function runCardSummaryColumns(withQty: boolean): ColumnDef<RunCardSummaryRow>[] {
   const cols: ColumnDef<RunCardSummaryRow>[] = [
+    { accessorKey: 'itemCode', header: '품목코드', size: 150 },
+    { accessorKey: 'itemName', header: '품목명', size: 180 },
     { accessorKey: 'runDate', header: '지시일', size: 110 },
     {
       id: 'lineName',
@@ -368,8 +371,6 @@ export function runCardSummaryColumns(withQty: boolean): ColumnDef<RunCardSummar
       accessorFn: (r) => codeWithName(r.lineCode, r.lineName),
     },
     { accessorKey: 'modelName', header: '모델', size: 150 },
-    { accessorKey: 'itemCode', header: '품목코드', size: 150 },
-    { accessorKey: 'itemName', header: '품목명', size: 180 },
     { accessorKey: 'markingNo', header: '마킹번호', size: 110 },
     {
       id: 'productRunTypeName',
@@ -393,11 +394,11 @@ export function runCardSummaryColumns(withQty: boolean): ColumnDef<RunCardSummar
 // ───────────────────────────────── 348 제품 판매실적
 
 export const fgIssueDetailColumns: ColumnDef<FgIssueDetailRow>[] = [
+  { accessorKey: 'itemCode', header: '품목코드', size: 150 },
   { accessorKey: 'issueDate', header: '출하시각', size: 160, cell: (c) => ts(c.getValue()) },
   { accessorKey: 'barcode', header: '제품 바코드', size: 170 },
   { accessorKey: 'modelName', header: '모델', size: 150 },
   { accessorKey: 'modelSuffix', header: '모델 SFX', size: 100 },
-  { accessorKey: 'itemCode', header: '품목코드', size: 150 },
   {
     accessorKey: 'qty',
     header: '수량 (부호)',
@@ -503,10 +504,10 @@ export function magazineStockColumns(
   kind: 'workstage' | 'defect' | 'destroy',
 ): ColumnDef<MagazineStockRow>[] {
   const cols: ColumnDef<MagazineStockRow>[] = [
+    { accessorKey: 'itemCode', header: '품목코드', size: 150 },
     { accessorKey: 'workstageName', header: '공정', size: 200 },
     { accessorKey: 'modelName', header: '모델', size: 160 },
     { accessorKey: 'modelSuffix', header: '모델 SFX', size: 100 },
-    { accessorKey: 'itemCode', header: '품목코드', size: 150 },
     { accessorKey: 'pcbItem', header: 'PCB면', size: 80, meta: center },
   ];
   if (kind === 'workstage') {

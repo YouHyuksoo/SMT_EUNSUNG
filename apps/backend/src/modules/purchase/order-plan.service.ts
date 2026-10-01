@@ -27,6 +27,7 @@ import type {
   PriceResetDto,
 } from './purchase.dto';
 import { affectedRows } from '../../common/utils/affected-rows.util';
+import { ITEM_LINE_TYPE_SQL, LEAF_ONLY_SQL } from './bom-requirement.sql';
 
 /**
  * 계획 원천. PB 는 라디오버튼으로 골랐고 각각 전용 PB 함수를 불렀다
@@ -145,8 +146,6 @@ const INVENTORY_ARMS = {
 
 export type InventoryArm = keyof typeof INVENTORY_ARMS;
 
-/** BOM 전개 결과에서 소요량으로 잡지 않는 거래유형. PB 원본 그대로다. */
-const EXCLUDED_LINE_TYPES = ["'A'", "'T'"];
 
 interface Paged<T> {
   data: T[];
@@ -205,8 +204,11 @@ export class OrderPlanService {
                 A.SUPPLIER_CODE        AS "supplierCode",
                 S.SUPPLIER_NAME        AS "supplierName",
                 A.ORDER_NO             AS "orderNo",
-                A.PURCHASE_ORDER_DATE  AS "purchaseOrderDate",
-                A.DELIVERY_DATE        AS "deliveryDate",
+                TO_CHAR(A.PURCHASE_ORDER_DATE, 'YYYY-MM-DD')  AS "purchaseOrderDate",
+                -- 시간별 원천이면 계획일(=납기)에 시:분이 붙는다. 자정이면 날짜만.
+                CASE WHEN A.DELIVERY_DATE = TRUNC(A.DELIVERY_DATE)
+                     THEN TO_CHAR(A.DELIVERY_DATE, 'YYYY-MM-DD')
+                     ELSE TO_CHAR(A.DELIVERY_DATE, 'YYYY-MM-DD HH24:MI') END AS "deliveryDate",
                 A.ORDER_QTY            AS "orderQty",
                 A.INVENTORY_QTY        AS "inventoryQty",
                 A.TOTAL_INVENTORY_QTY  AS "totalInventoryQty",
@@ -219,7 +221,7 @@ export class OrderPlanService {
                 A.PURCHASE_ORDER_STATUS AS "purchaseOrderStatus",
                 A.MFS                  AS "mfs",
                 A.ENTER_BY             AS "enterBy",
-                A.ENTER_DATE           AS "enterDate"
+                TO_CHAR(A.ENTER_DATE, 'YYYY-MM-DD HH24:MI:SS')           AS "enterDate"
            FROM IM_ITEM_PURCHASE_ORDER_PLAN A
            LEFT JOIN ID_ITEM I
              ON I.ITEM_CODE = A.ITEM_CODE
@@ -242,8 +244,10 @@ export class OrderPlanService {
   ): Promise<Paged<Record<string, unknown>>> {
     const rows = await this.dataSource.query(
       `SELECT * FROM (
-         SELECT A.REQUIRMENT_PLAN_DATE AS "requirementPlanDate",
-                A.PLAN_DATE            AS "planDate",
+         SELECT TO_CHAR(A.REQUIRMENT_PLAN_DATE, 'YYYY-MM-DD') AS "requirementPlanDate",
+                CASE WHEN A.PLAN_DATE = TRUNC(A.PLAN_DATE)
+                     THEN TO_CHAR(A.PLAN_DATE, 'YYYY-MM-DD')
+                     ELSE TO_CHAR(A.PLAN_DATE, 'YYYY-MM-DD HH24:MI') END AS "planDate",
                 A.ITEM_CODE            AS "itemCode",
                 I.ITEM_NAME            AS "itemName",
                 I.ITEM_UOM             AS "itemUom",
@@ -313,12 +317,14 @@ export class OrderPlanService {
                (SESSION_ID, REQUIRMENT_PLAN_DATE, MFS, ITEM_CODE, LINE_TYPE, SUPPLIER_CODE,
                 ORGANIZATION_ID, PLAN_DATE, REQUIRMENT_QTY, ENTER_BY, ENTER_DATE,
                 LAST_MODIFY_BY, LAST_MODIFY_DATE)
-             SELECT v_req_session, TRUNC(SYSDATE), '*', CHILD_ITEM_CODE, LINE_TYPE, '*',
-                    ORGANIZATION_ID, c.PLAN_DATE, MODEL_UNIT_QTY * c.QTY,
+             SELECT v_req_session, TRUNC(SYSDATE), '*', T.CHILD_ITEM_CODE,
+                    ${ITEM_LINE_TYPE_SQL}, '*',
+                    T.ORGANIZATION_ID, c.PLAN_DATE, T.MODEL_UNIT_QTY * c.QTY,
                     :userId, SYSDATE, :userId, SYSDATE
-               FROM ID_ENG_BOM_TEMP
-              WHERE SESSION_ID = v_bom_session
-                AND LINE_TYPE NOT IN (${EXCLUDED_LINE_TYPES.join(', ')});
+               FROM ID_ENG_BOM_TEMP T
+              WHERE T.SESSION_ID = v_bom_session
+                -- PB 는 LINE_TYPE NOT IN ('A','T') 로 걸렀다. 구매구분은 보지 않는다.
+                AND ${LEAF_ONLY_SQL};
 
              DELETE FROM ID_ENG_BOM_TEMP WHERE SESSION_ID = v_bom_session;
            END LOOP;
@@ -337,7 +343,6 @@ export class OrderPlanService {
                   MAX(ENTER_BY), MAX(ENTER_DATE), MAX(LAST_MODIFY_BY), MAX(LAST_MODIFY_DATE)
              FROM IM_ITEM_REQUIRMENT_PLAN_TEMP
             WHERE SESSION_ID = v_req_session
-              AND LINE_TYPE <> 'T'
             GROUP BY REQUIRMENT_PLAN_DATE, MFS, ITEM_CODE, LINE_TYPE, SUPPLIER_CODE,
                      ORGANIZATION_ID, PLAN_DATE;
 
@@ -742,8 +747,9 @@ export class OrderPlanService {
    * 3. **`ORDER_GROUP_NO` 를 채운다** (`yyyymmdd` + 3자리 일련번호). 한 번의 확정이
    *    한 묶음이다. 481 자재주문관리가 이 값으로 발주그룹 합계를 낸다 — 비어 있으면
    *    그 화면의 그룹 집계가 나오지 않는다.
-   * 4. **넘길 수 없는 계획을 막는다.** `LINE_TYPE <> 'T'` 이고 `DELIVERY` 가 채워진
-   *    것만 넘어간다. 납품구분이 없으면 단가·통화가 안 붙은 계획이라는 뜻이다.
+   * 4. **넘길 수 없는 계획을 막는다.** `DELIVERY` 가 채워진 것만 넘어간다.
+   *    납품구분이 없으면 단가·통화가 안 붙은 계획이라는 뜻이다. PB 는 `LINE_TYPE <> 'T'`
+   *    도 걸었지만 구매구분은 보지 않기로 해 뺐다 (bom-requirement.sql 참고).
    */
   async purchase(
     dto: OrderPlanPurchaseDto,
@@ -799,7 +805,6 @@ export class OrderPlanService {
             WHERE ORGANIZATION_ID = :organizationId
               AND ITEM_CODE = :itemCode
               AND LINE_TYPE = :lineType
-              AND LINE_TYPE <> 'T'
               AND DELIVERY IS NOT NULL
               AND NVL(PURCHASE_ORDER_STATUS, 'N') <> 'Y'
               AND NVL(PURCHASE_ORDER_QTY, 0) > 0`,
@@ -820,7 +825,6 @@ export class OrderPlanService {
               WHERE ORGANIZATION_ID = :organizationId
                 AND ITEM_CODE = :itemCode
                 AND LINE_TYPE = :lineType
-                AND LINE_TYPE <> 'T'
                 AND DELIVERY IS NOT NULL
                 AND NVL(PURCHASE_ORDER_STATUS, 'N') <> 'Y'
                 AND NVL(PURCHASE_ORDER_QTY, 0) > 0`,
@@ -833,7 +837,7 @@ export class OrderPlanService {
           );
         }
       }
-      // 납품구분이 없거나 거래유형이 T 여서 넘어가지 못한 계획 수.
+      // 납품구분이 없어 넘어가지 못한 계획 수.
       return { created, skipped: Math.max(candidates - created, 0) };
     });
   }

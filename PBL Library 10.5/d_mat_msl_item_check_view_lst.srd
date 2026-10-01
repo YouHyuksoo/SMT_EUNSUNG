@@ -112,7 +112,7 @@ select LINE_CODE,
                    select nvl(sum(1),0)
                      from IM_ITEM_BAKING_MASTER
                     where lot_no = ~"IM_ITEM_MSL_CHECK_VIEW~".~"LOT_NO~"
-                      and rownum = 1
+                      and chamber_type = 'B'
                   ) baking_count  ,
                   f_get_line_name(line_code,1) line_name ,
                   part_no               

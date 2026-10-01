@@ -1,0 +1,105 @@
+HA$PBExportHeader$d_mat_ws_receipt_issue_rpt.srd
+$PBExportComments$D_MAT_RECEIPT_ISSUE_RPT CREATE DATE :2006-12-22 CREATED BY : ADMIN
+release 10.5;
+datawindow(units=0 timer_interval=0 color=16777215 processing=9 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no grid.lines=0 )
+header(height=128 color="553648127" )
+summary(height=80 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=68 color="553648127~tif (  mod( getrow() , 2 ) = 0 , rgb(240,240,240) , rgb(255,255,255))" )
+table(column=(type=char(1) updatewhereclause=yes name=rcv_iss_code dbname="id_item.rcv_iss_code" )
+ column=(type=number updatewhereclause=yes name=receipt_issue_sequence dbname="id_item.receipt_issue_sequence" )
+ column=(type=datetime updatewhereclause=yes name=receipt_issue_date dbname="id_item.receipt_issue_date" )
+ column=(type=number update=yes updatewhereclause=yes key=yes name=organization_id dbname="id_item.organization_id" )
+ column=(type=char(1) updatewhereclause=yes name=receipt_issue_deficit dbname="id_item.receipt_issue_deficit" )
+ column=(type=number updatewhereclause=yes name=qty dbname="id_item.qty" )
+ column=(type=char(20) update=yes updatewhereclause=yes key=yes name=item_code dbname="id_item.item_code" )
+ column=(type=char(300) updatewhereclause=yes name=item_name dbname="id_item.item_name" )
+ column=(type=char(300) updatewhereclause=yes name=item_spec dbname="id_item.item_spec" )
+ column=(type=char(3) updatewhereclause=yes name=item_uom dbname="id_item.item_uom" )
+ column=(type=datetime updatewhereclause=yes name=enter_date dbname="id_item.enter_date" )
+ column=(type=char(20) updatewhereclause=yes name=location_address dbname="id_item.location_address" )
+ retrieve="SELECT A.RCV_ISS_CODE ,
+			A.RECEIPT_ISSUE_SEQUENCE,   
+			A.RECEIPT_ISSUE_DATE,   
+			A.ORGANIZATION_ID,   
+			A.RECEIPT_ISSUE_DEFICIT,   
+			
+			A.QTY,   
+			A.ITEM_CODE  ,
+			B.ITEM_NAME,
+			B.ITEM_SPEC,
+			B.ITEM_UOM   ,
+			A.ENTER_DATE ,
+			B.LOCATION_ADDRESS 
+ FROM 
+(
+
+  SELECT 'R' RCV_ISS_CODE ,
+         RECEIPT_SEQUENCE RECEIPT_ISSUE_SEQUENCE,   
+         RECEIPT_DATE           RECEIPT_ISSUE_DATE,   
+         ORGANIZATION_ID,   
+         RECEIPT_DEFICIT        RECEIPT_ISSUE_DEFICIT,   
+    
+         RECEIPT_QTY               QTY,   
+     
+         ITEM_CODE  ,
+		ENTER_DATE
+
+    FROM IM_ITEM_WORKSTAGE_RECEIPT   
+WHERE RECEIPT_DATE >=:ARG_DATESET
+      AND RECEIPT_DATE < :ARG_DATEEND +1
+      AND ITEM_CODE LIKE :ARG_ITEM
+      AND ORGANIZATION_ID = :ARG_ORG
+
+UNION  ALL
+
+  SELECT  'I' RCV_ISS_CODE ,
+         ISSUE_SEQUENCE  RECEIPT_ISSUE_SEQUENCE,   
+         ISSUE_DATE                 RECEIPT_ISSUE_DATE,   
+         ORGANIZATION_ID,   
+         ISSUE_DEFICIT            RECEIPT_ISSUE_DEFICIT,   
+   
+         ISSUE_QTY                   QTY,   
+ 
+         ITEM_CODE  ,
+         ENTER_DATE 
+  
+    FROM IM_ITEM_WORKSTAGE_ISSUE  
+ WHERE ISSUE_DATE >= :ARG_DATESET
+      AND ISSUE_DATE <  :ARG_DATEEND  +1
+      AND ITEM_CODE LIKE :ARG_ITEM
+      AND ORGANIZATION_ID = :ARG_ORG 
+)   A , ID_ITEM B 
+WHERE A.ITEM_CODE = B.ITEM_CODE
+  AND A.RCV_ISS_CODE LIKE :arg_deficit
+" update="ID_ITEM" updatewhere=0 updatekeyinplace=no arguments=(("arg_dateset", datetime),("arg_dateend", datetime),("arg_item", string),("arg_lot_no", string),("arg_line_code", string),("arg_workstage_code", string),("arg_deficit", string),("arg_supplier_code", string),("arg_from_supplier_code", string),("arg_location_code", string),("arg_supplier_issue", string),("arg_issue_deficit", string),("arg_etc_line", stringlist),("arg_org", number),("arg_keyitem_yn", string),("arg_inventory_type", string))  sort="organization_id A enter_date A receipt_issue_date D receipt_issue_sequence D " )
+text(band=header alignment="2" text="Receipt Issue Deficit" border="0" color="33554432" x="4375" y="8" height="116" width="293" html.valueishtml="0"  name=receipt_issue_deficit_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Item Spec" border="0" color="33554432" x="2953" y="8" height="116" width="1051" html.valueishtml="0"  name=item_spec_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Item Name" border="0" color="33554432" x="1929" y="8" height="116" width="1015" html.valueishtml="0"  name=item_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Item Code" border="0" color="33554432" x="1289" y="8" height="116" width="631" html.valueishtml="0"  name=item_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Qty" border="0" color="33554432" x="4014" y="8" height="116" width="352" html.valueishtml="0"  name=qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Rcv Iss Code" border="0" color="33554432" x="169" y="8" height="116" width="325" html.valueishtml="0"  name=rcv_iss_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Enter Date" border="0" color="33554432" x="503" y="8" height="116" width="571" html.valueishtml="0"  name=enter_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Location Address" border="0" color="33554432" x="1083" y="8" height="116" width="197" html.valueishtml="0"  name=location_address_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="No" border="0" color="33554432" x="9" y="8" height="116" width="151" html.valueishtml="0"  name=t_1 visible="1"  font.face="TAHOMA" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217728" )
+compute(band=detail alignment="0" expression="GETROW()"border="0" color="0" x="9" y="0" height="60" width="151" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="TAHOMA" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=5 alignment="0" tabsequence=32766 border="0" color="33554432" x="4375" y="0" height="60" width="293" format="[general]" html.valueishtml="0"  name=receipt_issue_deficit visible="1" dddw.name=VD_BASECODE dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=6 alignment="1" tabsequence=32766 border="0" color="33554432~tif ( qty < 0 , 255 , 0 )" x="4014" y="0" height="60" width="352" format="###,###,##0" html.valueishtml="0"  name=qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+column(band=detail id=9 alignment="0" tabsequence=32766 border="0" color="33554432~tif ( receipt_issue_status = ~"C~" , RGB(192,192,192) , 0)" x="2953" y="0" height="60" width="1051" format="[general]" html.valueishtml="0"  name=item_spec visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=8 alignment="0" tabsequence=32766 border="0" color="33554432~tif ( receipt_issue_status = ~"C~" , RGB(192,192,192) , 0)" x="1929" y="0" height="60" width="1015" format="[general]" html.valueishtml="0"  name=item_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=7 alignment="0" tabsequence=32766 border="0" color="33554432~tif ( receipt_issue_status = ~"C~" , RGB(192,192,192) , 0)" x="1289" y="0" height="60" width="631" format="[general]" html.valueishtml="0"  name=item_code visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="33554432~tif ( receipt_issue_status = ~"C~" , RGB(192,192,192) , 0)" x="169" y="0" height="60" width="325" format="[general]" html.valueishtml="0"  name=rcv_iss_code visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="553648127~tif (  rcv_iss_code =~"I~" , RGB(128,255,255) , RGB(255,255,255) )" )
+column(band=detail id=11 alignment="2" tabsequence=32766 border="0" color="33554432~tif ( receipt_issue_status = ~"C~" , RGB(192,192,192) , 0)" x="503" y="0" height="60" width="571" format="[shortdate] [time]" html.valueishtml="0"  name=enter_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=12 alignment="2" tabsequence=32766 border="0" color="33554432~tif ( receipt_issue_status = ~"C~" , RGB(192,192,192) , 0)" x="1083" y="0" height="60" width="197" format="[general]" html.valueishtml="0"  name=location_address visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12639424" )
+compute(band=summary alignment="1" expression="sum(qty for all)"border="0" color="33554432" x="4014" y="4" height="68" width="352" format="###,###,##0" html.valueishtml="0"  name=compute_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

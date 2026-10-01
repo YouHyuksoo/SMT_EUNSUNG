@@ -1,0 +1,99 @@
+HA$PBExportHeader$f_mat_receipt_slip_cancel.srf
+global type f_mat_receipt_slip_cancel from function_object
+end type
+
+forward prototypes
+global function integer f_mat_receipt_slip_cancel (string arg_slip_no)
+end prototypes
+
+global function integer f_mat_receipt_slip_cancel (string arg_slip_no);
+
+//====================================================================
+// solder $$HEX10$$7cb92000e8cd8cc1200060d52000bdacb0c62000$$ENDHEX$$im_item_solder_master $$HEX16$$d0c52000f1b45db820001cb4200070b374c7c0d07cb92000adc01cc85cd5e4b2$$ENDHEX$$
+// 2022-04-14 $$HEX3$$7cc7200015c8$$ENDHEX$$D $$HEX5$$94c6adcc3cc75cb82000$$ENDHEX$$SLIP $$HEX10$$e8cd8cc1dcc22000adc01cc85cb82000f4bc44c6$$ENDHEX$$
+//====================================================================
+
+ delete im_item_solder_master
+ where ITEM_BARCODE in (
+                                        SELECT ITEM_BARCODE
+                                          FROM IM_ITEM_RECEIPT_BARCODE 
+                                        WHERE RECEIPT_SLIP_NO    =  :ARG_SLIP_NO
+                                              AND ORGANIZATION_ID  =  :GVI_ORGANIZATION_ID 
+                                      )
+    AND ORGANIZATION_ID  =  :GVI_ORGANIZATION_ID ;
+	 
+//====================================================================
+	 
+	 
+UPDATE IM_ITEM_RECEIPT_SLIP 
+      SET RECEIPT_STATUS = 'C' 
+WHERE RECEIPT_SLIP_NO = :ARG_SLIP_NO
+	 AND ORGANIZATION_ID = :GVI_ORGANIZATION_ID ;
+	 
+IF F_SQL_CHECK() < 0 THEN 
+	RETURN -1
+END IF 
+  
+  INSERT INTO IM_ITEM_RECEIPT_SLIP  
+         ( RECEIPT_DATE,   
+           RECEIPT_SEQUENCE,   
+           RECEIPT_STATUS,   
+           RECEIPT_BARCODE,   
+           ITEM_CODE,   
+           REEL_QTY,   
+           RECEIPT_UNIT_QTY,   
+           RECEIPT_SUM_QTY,   
+           RECEIPT_SLIP_NO,   
+           ENTER_DATE,   
+           ENTER_BY,   
+           LAST_MODIFY_DATE,   
+           LAST_MODIFY_BY,   
+           ORGANIZATION_ID,   
+           ECO_ITEM_YN ,
+		  SUPPLIER_CODE,
+		  FROM_SUPPLIER_CODE,
+		  RECEIPT_TYPE,
+		  RETURN_CONDITION)  
+ SELECT  TRUNC(SYSDATE),   
+           SEQ_RECEIPT_SLIP.NEXTVAL,   
+           'C' RECEIPT_STATUS,   
+           RECEIPT_BARCODE,   
+           ITEM_CODE,   
+           REEL_QTY * -1,   
+           RECEIPT_UNIT_QTY * -1,   
+           RECEIPT_SUM_QTY * -1,   
+           RECEIPT_SLIP_NO,   
+           SYSDATE ,   
+           :GVS_USER_ID ,
+           LAST_MODIFY_DATE,   
+           LAST_MODIFY_BY,   
+           ORGANIZATION_ID,   
+           ECO_ITEM_YN,
+	      SUPPLIER_CODE ,
+	      FROM_SUPPLIER_CODE,
+		  RECEIPT_TYPE,
+		  RETURN_CONDITION
+ FROM IM_ITEM_RECEIPT_SLIP
+WHERE RECEIPT_SLIP_NO = :ARG_SLIP_NO
+	   AND ORGANIZATION_ID = :GVI_ORGANIZATION_ID ;
+		
+IF F_SQL_CHECK() < 0 THEN 
+	RETURN -1
+END IF 
+
+//===================================================
+//
+//===================================================
+UPDATE IM_ITEM_RECEIPT_BARCODE 
+      SET BARCODE_STATUS = 'C'
+ WHERE RECEIPT_SLIP_NO  = :ARG_SLIP_NO
+      AND RECEIPT_COMPARE_YN = 'N'
+      AND ORGANIZATION_ID = :GVI_ORGANIZATION_ID ;
+		
+  IF F_SQL_CHECK() < 0 THEN 
+	RETURN -1
+END IF 
+
+return 0
+end function
+

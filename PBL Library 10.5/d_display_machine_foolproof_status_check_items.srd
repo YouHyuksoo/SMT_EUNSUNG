@@ -1,0 +1,322 @@
+HA$PBExportHeader$d_display_machine_foolproof_status_check_items.srd
+$PBExportComments$$$HEX3$$24c631c1acc0$$ENDHEX$$
+release 10.5;
+datawindow(units=0 timer_interval=0 color=15793151 processing=0 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no )
+header(height=344 color="15793151" )
+summary(height=0 color="536870912" )
+footer(height=48 color="0" )
+detail(height=1460 color="15793151" height.autosize=yes )
+table(column=(type=number updatewhereclause=yes name=organization_id dbname="irpt_product_line_dashboard.organization_id" )
+ column=(type=char(4000) updatewhereclause=yes name=organization_name dbname="irpt_product_line_dashboard.organization_name" )
+ column=(type=datetime updatewhereclause=yes name=actual_date dbname="irpt_product_line_dashboard.actual_date" )
+ column=(type=char(4000) updatewhereclause=yes name=work_shift_code dbname="irpt_product_line_dashboard.work_shift_code" )
+ column=(type=char(20) updatewhereclause=yes name=line_code dbname="irpt_product_line_dashboard.line_code" )
+ column=(type=char(100) updatewhereclause=yes name=line_name dbname="irpt_product_line_dashboard.line_name" )
+ column=(type=char(20) updatewhereclause=yes name=mes_display_group dbname="irpt_product_line_dashboard.mes_display_group" )
+ column=(type=char(1) updatewhereclause=yes name=mes_display_yn dbname="irpt_product_line_dashboard.mes_display_yn" )
+ column=(type=number updatewhereclause=yes name=mes_display_sequence dbname="irpt_product_line_dashboard.mes_display_sequence" )
+ column=(type=char(10) updatewhereclause=yes name=line_status dbname="irpt_product_line_dashboard.line_status" )
+ column=(type=char(4000) updatewhereclause=yes name=line_status_name dbname="irpt_product_line_dashboard.line_status_name" )
+ column=(type=char(10) updatewhereclause=yes name=line_status_code dbname="irpt_product_line_dashboard.line_status_code" )
+ column=(type=char(4000) updatewhereclause=yes name=line_status_code_name dbname="irpt_product_line_dashboard.line_status_code_name" )
+ column=(type=char(100) updatewhereclause=yes name=nsnp_lock_type dbname="irpt_product_line_dashboard.nsnp_lock_type" )
+ column=(type=char(4000) updatewhereclause=yes name=nsnp_lock_type_name dbname="irpt_product_line_dashboard.nsnp_lock_type_name" )
+ column=(type=char(1000) updatewhereclause=yes name=nsnp_reason dbname="irpt_product_line_dashboard.nsnp_reason" )
+ column=(type=datetime updatewhereclause=yes name=nsnp_start_date dbname="irpt_product_line_dashboard.nsnp_start_date" )
+ column=(type=char(10) updatewhereclause=yes name=nsnp_status dbname="irpt_product_line_dashboard.nsnp_status" )
+ column=(type=char(4000) updatewhereclause=yes name=nsnp_status_name dbname="irpt_product_line_dashboard.nsnp_status_name" )
+ column=(type=char(30) updatewhereclause=yes name=running_run_no dbname="irpt_product_line_dashboard.running_run_no" )
+ column=(type=char(100) updatewhereclause=yes name=running_model_name dbname="irpt_product_line_dashboard.running_model_name" )
+ column=(type=datetime updatewhereclause=yes name=running_run_date dbname="irpt_product_line_dashboard.running_run_date" )
+ column=(type=char(50) updatewhereclause=yes name=run_no_changed_by dbname="irpt_product_line_dashboard.run_no_changed_by" )
+ column=(type=char(40) updatewhereclause=yes name=solder_lot_no dbname="irpt_product_line_dashboard.solder_lot_no" )
+ column=(type=datetime updatewhereclause=yes name=solder_check_date dbname="irpt_product_line_dashboard.solder_check_date" )
+ column=(type=number updatewhereclause=yes name=running_lot_plan_qty dbname="irpt_product_line_dashboard.running_lot_plan_qty" )
+ column=(type=number updatewhereclause=yes name=running_lot_input_qty dbname="irpt_product_line_dashboard.running_lot_input_qty" )
+ column=(type=number updatewhereclause=yes name=running_lot_actual_qty dbname="irpt_product_line_dashboard.running_lot_actual_qty" )
+ column=(type=number updatewhereclause=yes name=running_lot_ng_qty dbname="irpt_product_line_dashboard.running_lot_ng_qty" )
+ column=(type=datetime updatewhereclause=yes name=run_date dbname="irpt_product_line_dashboard.run_date" )
+ column=(type=char(30) updatewhereclause=yes name=item_code dbname="irpt_product_line_dashboard.item_code" )
+ column=(type=char(100) updatewhereclause=yes name=model_name dbname="irpt_product_line_dashboard.model_name" )
+ column=(type=char(1) updatewhereclause=yes name=run_status dbname="irpt_product_line_dashboard.run_status" )
+ column=(type=char(4000) updatewhereclause=yes name=run_status_name dbname="irpt_product_line_dashboard.run_status_name" )
+ column=(type=number updatewhereclause=yes name=carrier_size dbname="irpt_product_line_dashboard.carrier_size" )
+ column=(type=char(1) updatewhereclause=yes name=product_run_type dbname="irpt_product_line_dashboard.product_run_type" )
+ column=(type=char(4000) updatewhereclause=yes name=product_run_type_name dbname="irpt_product_line_dashboard.product_run_type_name" )
+ column=(type=char(2) updatewhereclause=yes name=mask_check dbname="irpt_product_line_dashboard.mask_check" )
+ column=(type=char(20) updatewhereclause=yes name=mask_check_date dbname="irpt_product_line_dashboard.mask_check_date" )
+ column=(type=char(2) updatewhereclause=yes name=squeeze_check dbname="irpt_product_line_dashboard.squeeze_check" )
+ column=(type=char(20) updatewhereclause=yes name=squeeze_check_date dbname="irpt_product_line_dashboard.squeeze_check_date" )
+ column=(type=char(2) updatewhereclause=yes name=solder_check dbname="irpt_product_line_dashboard.solder_check" )
+ column=(type=char(52) updatewhereclause=yes name=solder_check_val dbname="irpt_product_line_dashboard.solder_check_val" )
+ column=(type=char(2) updatewhereclause=yes name=solder_check_hour dbname="irpt_product_line_dashboard.solder_check_hour" )
+ column=(type=char(2) updatewhereclause=yes name=ccs_check dbname="irpt_product_line_dashboard.ccs_check" )
+ column=(type=char(16) updatewhereclause=yes name=ccs_check_date dbname="irpt_product_line_dashboard.ccs_check_date" )
+ column=(type=char(4) updatewhereclause=yes name=full_check dbname="irpt_product_line_dashboard.full_check" )
+ column=(type=char(16) updatewhereclause=yes name=full_check_date dbname="irpt_product_line_dashboard.full_check_date" )
+ column=(type=char(2) updatewhereclause=yes name=xray_check dbname="irpt_product_line_dashboard.xray_check" )
+ column=(type=char(16) updatewhereclause=yes name=xray_check_date dbname="irpt_product_line_dashboard.xray_check_date" )
+ column=(type=char(4) updatewhereclause=yes name=spec_check dbname="irpt_product_line_dashboard.spec_check" )
+ column=(type=char(16) updatewhereclause=yes name=spec_check_date dbname="irpt_product_line_dashboard.spec_check_date" )
+ column=(type=char(2) updatewhereclause=yes name=sample_check dbname="irpt_product_line_dashboard.sample_check" )
+ column=(type=char(20) updatewhereclause=yes name=sample_check_date dbname="irpt_product_line_dashboard.sample_check_date" )
+ column=(type=char(100) updatewhereclause=yes name=qc_comments dbname="irpt_product_line_dashboard.qc_comments" )
+ column=(type=char(20) updatewhereclause=yes name=mask_lot_no dbname="irpt_product_line_dashboard.mask_lot_no" )
+ column=(type=char(20) updatewhereclause=yes name=squeeze_lot_no dbname="irpt_product_line_dashboard.squeeze_lot_no" )
+ column=(type=char(20) updatewhereclause=yes name=mask_lot_no2 dbname="irpt_product_line_dashboard.mask_lot_no2" )
+ column=(type=char(20) updatewhereclause=yes name=squeeze_lot_no2 dbname="irpt_product_line_dashboard.squeeze_lot_no2" )
+ column=(type=number updatewhereclause=yes name=aoi_pass_rate dbname="irpt_product_line_dashboard.aoi_pass_rate" )
+ column=(type=number updatewhereclause=yes name=mask_break_value dbname="irpt_product_line_dashboard.mask_break_value" )
+ column=(type=number updatewhereclause=yes name=mask_hit_value dbname="irpt_product_line_dashboard.mask_hit_value" )
+ column=(type=number updatewhereclause=yes name=squeeze_break_value dbname="irpt_product_line_dashboard.squeeze_break_value" )
+ column=(type=number updatewhereclause=yes name=squeeze_hit_value dbname="irpt_product_line_dashboard.squeeze_hit_value" )
+ column=(type=number updatewhereclause=yes name=mask_break_value2 dbname="irpt_product_line_dashboard.mask_break_value2" )
+ column=(type=number updatewhereclause=yes name=mask_hit_value2 dbname="irpt_product_line_dashboard.mask_hit_value2" )
+ column=(type=number updatewhereclause=yes name=spi_pass_rate dbname="irpt_product_line_dashboard.spi_pass_rate" )
+ column=(type=char(100) updatewhereclause=yes name=customer_name dbname="irpt_product_line_dashboard.customer_name" )
+ column=(type=char(20) updatewhereclause=yes name=product_class dbname="irpt_product_line_dashboard.product_class" )
+ column=(type=char(100) updatewhereclause=yes name=customer_model_name dbname="irpt_product_line_dashboard.customer_model_name" )
+ column=(type=char(20) updatewhereclause=yes name=last_marking_date dbname="irpt_product_line_dashboard.last_marking_date" )
+ column=(type=number updatewhereclause=yes name=squeeze_break_value2 dbname="irpt_product_line_dashboard.squeeze_break_value2" )
+ column=(type=number updatewhereclause=yes name=squeeze_hit_value2 dbname="irpt_product_line_dashboard.squeeze_hit_value2" )
+ column=(type=char(1) updatewhereclause=yes name=solder_type dbname="irpt_product_line_dashboard.solder_type" )
+ column=(type=char(10) updatewhereclause=yes name=pcb_item dbname="irpt_product_line_dashboard.pcb_item" )
+ column=(type=number updatewhereclause=yes name=model_st dbname="irpt_product_line_dashboard.model_st" )
+ column=(type=number updatewhereclause=yes name=sensor_count dbname="irpt_product_line_dashboard.sensor_count" )
+ column=(type=number updatewhereclause=yes name=target_qty dbname="target_qty" )
+ column=(type=char(20) updatewhereclause=yes name=first_marking_date dbname="irpt_product_line_dashboard.first_marking_date" )
+ column=(type=char(14) updatewhereclause=yes name=solder_remain_time dbname="irpt_product_line_dashboard.solder_remain_time" )
+ column=(type=number updatewhereclause=yes name=real_st dbname="real_st" )
+ column=(type=number updatewhereclause=yes name=spi_count dbname="irpt_product_line_dashboard.spi_count" )
+ column=(type=number updatewhereclause=yes name=aoi_count dbname="irpt_product_line_dashboard.aoi_count" )
+ column=(type=char(30) updatewhereclause=yes name=first_spi_date dbname="irpt_product_line_dashboard.first_spi_date" )
+ column=(type=char(30) updatewhereclause=yes name=first_aoi_date dbname="irpt_product_line_dashboard.first_aoi_date" )
+ column=(type=number updatewhereclause=yes name=pcb_input_qty dbname="irpt_product_line_dashboard.pcb_input_qty" )
+ column=(type=char(2) updatewhereclause=yes name=nozzle_check dbname="irpt_product_line_dashboard.nozzle_check" )
+ column=(type=char(16) updatewhereclause=yes name=nozzle_check_date dbname="irpt_product_line_dashboard.nozzle_check_date" )
+ column=(type=char(4) updatewhereclause=yes name=backupblock_check dbname="irpt_product_line_dashboard.backupblock_check" )
+ column=(type=char(19) updatewhereclause=yes name=backupblock_check_date dbname="irpt_product_line_dashboard.backupblock_check_date" )
+ retrieve="  SELECT ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"ORGANIZATION_ID~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"ORGANIZATION_NAME~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"ACTUAL_DATE~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"WORK_SHIFT_CODE~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"LINE_CODE~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"LINE_NAME~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"MES_DISPLAY_GROUP~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"MES_DISPLAY_YN~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"MES_DISPLAY_SEQUENCE~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"LINE_STATUS~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"LINE_STATUS_NAME~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"LINE_STATUS_CODE~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"LINE_STATUS_CODE_NAME~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"NSNP_LOCK_TYPE~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"NSNP_LOCK_TYPE_NAME~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"NSNP_REASON~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"NSNP_START_DATE~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"NSNP_STATUS~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"NSNP_STATUS_NAME~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"RUNNING_RUN_NO~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"RUNNING_MODEL_NAME~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"RUNNING_RUN_DATE~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"RUN_NO_CHANGED_BY~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"SOLDER_LOT_NO~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"SOLDER_CHECK_DATE~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"RUNNING_LOT_PLAN_QTY~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"RUNNING_LOT_INPUT_QTY~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"RUNNING_LOT_ACTUAL_QTY~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"RUNNING_LOT_NG_QTY~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"RUN_DATE~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"ITEM_CODE~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"MODEL_NAME~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"RUN_STATUS~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"RUN_STATUS_NAME~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"CARRIER_SIZE~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"PRODUCT_RUN_TYPE~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"PRODUCT_RUN_TYPE_NAME~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"MASK_CHECK~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"MASK_CHECK_DATE~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"SQUEEZE_CHECK~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"SQUEEZE_CHECK_DATE~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"SOLDER_CHECK~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"SOLDER_CHECK_VAL~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"SOLDER_CHECK_HOUR~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"CCS_CHECK~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"CCS_CHECK_DATE~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"FULL_CHECK~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"FULL_CHECK_DATE~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"XRAY_CHECK~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"XRAY_CHECK_DATE~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"SPEC_CHECK~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"SPEC_CHECK_DATE~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"SAMPLE_CHECK~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"SAMPLE_CHECK_DATE~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"QC_COMMENTS~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"MASK_LOT_NO~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"SQUEEZE_LOT_NO~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"MASK_LOT_NO2~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"SQUEEZE_LOT_NO2~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"AOI_PASS_RATE~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"MASK_BREAK_VALUE~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"MASK_HIT_VALUE~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"SQUEEZE_BREAK_VALUE~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"SQUEEZE_HIT_VALUE~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"MASK_BREAK_VALUE2~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"MASK_HIT_VALUE2~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"SPI_PASS_RATE~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"CUSTOMER_NAME~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"PRODUCT_CLASS~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"CUSTOMER_MODEL_NAME~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"LAST_MARKING_DATE~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"SQUEEZE_BREAK_VALUE2~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"SQUEEZE_HIT_VALUE2~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"SOLDER_TYPE~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"PCB_ITEM~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"MODEL_ST~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"SENSOR_COUNT~",   
+         decode( model_st  , 0 , 0 , round( ( sysdate - TO_DATE( first_spi_date , 'YYYY/MM/DD HH24:MI:SS')) * 24 * 60 * 60  / model_st , 1 )) TARGET_QTY,   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"FIRST_MARKING_DATE~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"SOLDER_REMAIN_TIME~",   
+         decode( running_lot_actual_qty , 0 , 0 , round( ( sysdate - TO_DATE( first_marking_date , 'YYYY/MM/DD HH24:MI:SS')) * 24 * 60 * 60  / running_lot_actual_qty , 1 ) ) REAL_ST,   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"SPI_COUNT~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"AOI_COUNT~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"FIRST_SPI_DATE~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"FIRST_AOI_DATE~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"PCB_INPUT_QTY~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"NOZZLE_CHECK~",   
+         ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"NOZZLE_CHECK_DATE~"  ,
+         IRPT_PRODUCT_LINE_DASHBOARD.backupblock_check,
+         IRPT_PRODUCT_LINE_DASHBOARD.backupblock_check_date
+    FROM ~"IRPT_PRODUCT_LINE_DASHBOARD~"  
+   WHERE ( ~"IRPT_PRODUCT_LINE_DASHBOARD~".~"LINE_CODE~" = :arg_line_code )    
+" arguments=(("arg_line_code", string)) )
+column(band=header id=32 alignment="2" tabsequence=32766 border="6" color="65280" x="1111" y="124" height="112" width="1202" format="[general]" html.valueishtml="0"  name=model_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-16" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+column(band=header id=70 alignment="2" tabsequence=32766 border="6" color="33554432" x="1111" y="244" height="60" width="1202" format="[general]" html.valueishtml="0"  name=customer_model_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=header id=68 alignment="2" tabsequence=32766 border="6" color="134217729" x="677" y="136" height="168" width="416" format="[general]" html.valueishtml="0"  name=customer_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-22" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=header id=75 alignment="2" tabsequence=32766 border="6" color="65280" x="2331" y="124" height="184" width="178" format="[general]" html.valueishtml="0"  name=pcb_item visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-22" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+column(band=header id=30 alignment="2" tabsequence=32766 border="6" color="134217729" x="2903" y="224" height="84" width="553" format="yyyy/mm/dd" html.valueishtml="0"  name=run_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=header id=20 alignment="2" tabsequence=32766 border="6" color="134217729" x="2903" y="124" height="96" width="553" format="[general]" html.valueishtml="0"  name=running_run_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-16" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=header id=6 alignment="2" tabsequence=32766 border="6" color="0" x="128" y="12" height="104" width="311" format="[general]" html.valueishtml="0"  name=line_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217750" )
+column(band=header id=36 alignment="2" tabsequence=32766 border="6" color="0" x="453" y="12" height="104" width="210" format="[general]" html.valueishtml="0"  name=product_run_type visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217750" )
+text(band=header alignment="2" text="Customer" border="6" color="0" x="677" y="12" height="104" width="416" html.valueishtml="0"  name=t_29 visible="1"  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217750" )
+text(band=header alignment="2" text="Model Name" border="6" color="0" x="1111" y="12" height="104" width="1202" html.valueishtml="0"  name=t_3 visible="1"  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217750" )
+text(band=header alignment="2" text="T-B" border="6" color="0" x="2331" y="12" height="104" width="178" html.valueishtml="0"  name=t_27 visible="1"  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217750" )
+column(band=header id=69 alignment="2" tabsequence=32766 border="6" color="65280" x="2523" y="124" height="184" width="361" format="[general]" html.valueishtml="0"  name=product_class visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-22" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+text(band=header alignment="2" text="Product Class" border="6" color="0" x="2523" y="12" height="104" width="361" html.valueishtml="0"  name=t_28 visible="1"  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217750" )
+column(band=header id=76 alignment="2" tabsequence=32766 border="6" color="65280" x="3470" y="124" height="180" width="343" format="[general]" html.valueishtml="0"  name=model_st visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-24" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+column(band=header id=26 alignment="2" tabsequence=32766 border="6" color="65535" x="3826" y="124" height="180" width="434" format="[general]" html.valueishtml="0"  name=running_lot_plan_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-20" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+column(band=header id=27 alignment="2" tabsequence=32766 border="6" color="65280" x="4274" y="124" height="180" width="434" format="[general]" html.valueishtml="0"  name=running_lot_input_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-20" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+column(band=header id=28 alignment="2" tabsequence=32766 border="6" color="65280" x="4722" y="124" height="180" width="434" format="[general]" html.valueishtml="0"  name=running_lot_actual_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-20" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+column(band=header id=29 alignment="2" tabsequence=32766 border="6" color="65280" x="5175" y="124" height="180" width="434" format="[general]" html.valueishtml="0"  name=running_lot_ng_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-20" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+column(band=header id=5 alignment="0" tabsequence=32766 border="0" color="33554432" x="6427" y="40" height="104" width="475" format="[general]" html.valueishtml="0"  name=line_code visible="0" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=header alignment="2" text="Run No" border="6" color="0" x="2903" y="12" height="104" width="553" html.valueishtml="0"  name=t_4 visible="1"  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217750" )
+text(band=header alignment="2" text="ST" border="6" color="0" x="3470" y="12" height="104" width="343" html.valueishtml="0"  name=t_34 visible="1"  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217750" )
+text(band=header alignment="2" text="Plan Qty" border="6" color="0" x="3826" y="12" height="104" width="434" html.valueishtml="0"  name=t_5 visible="1"  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217750" )
+text(band=header alignment="2" text="Input Qty" border="6" color="0" x="4274" y="12" height="104" width="434" html.valueishtml="0"  name=t_6 visible="1"  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217750" )
+text(band=header alignment="2" text="Actual Qty" border="6" color="0" x="4722" y="12" height="104" width="434" html.valueishtml="0"  name=t_13 visible="1"  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217750" )
+text(band=header alignment="2" text="NG Qty" border="6" color="0" x="5175" y="12" height="104" width="434" html.valueishtml="0"  name=t_18 visible="1"  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217750" )
+text(band=header alignment="2" text="Sensor Qty" border="6" color="0" x="5623" y="12" height="104" width="434" html.valueishtml="0"  name=t_8 visible="1"  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217750" )
+column(band=header id=77 alignment="2" tabsequence=32766 border="6" color="65280" x="5623" y="124" height="180" width="434" format="[general]" html.valueishtml="0"  name=sensor_count visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-20" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+text(band=detail alignment="2" text=" FOOL PROOF" border="6" color="65535" x="128" y="20" height="88" width="1746" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-12" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217741" )
+text(band=detail alignment="2" text="JIG Status" border="6" color="65535" x="1979" y="20" height="88" width="1458" html.valueishtml="0"  name=t_30 visible="1"  font.face="Tahoma" font.height="-12" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217741" )
+column(band=detail id=63 alignment="2" tabsequence=32766 border="6" color="33554432" x="2546" y="376" height="64" width="311" format="###,##0" html.valueishtml="0"  name=squeeze_break_value visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=64 alignment="2" tabsequence=32766 border="6" color="33554432" x="2875" y="376" height="64" width="311" format="###,##0" html.valueishtml="0"  name=squeeze_hit_value visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+text(band=detail alignment="1" text="Squeeze 1" border="6" color="0" x="1979" y="376" height="64" width="553" html.valueishtml="0"  name=t_19 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217750" )
+column(band=detail id=66 alignment="2" tabsequence=32766 border="6" color="33554432" x="2546" y="300" height="64" width="311" format="###,##0" html.valueishtml="0"  name=mask_hit_value2 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=65 alignment="2" tabsequence=32766 border="6" color="33554432" x="2875" y="300" height="64" width="311" format="###,##0" html.valueishtml="0"  name=mask_break_value2 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+text(band=detail alignment="1" text="Metal Mask 2" border="6" color="0" x="1979" y="300" height="64" width="553" html.valueishtml="0"  name=t_7 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217750" )
+column(band=detail id=61 alignment="2" tabsequence=32766 border="6" color="33554432" x="2546" y="224" height="64" width="311" format="###,##0" html.valueishtml="0"  name=mask_break_value visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=62 alignment="2" tabsequence=32766 border="6" color="33554432" x="2875" y="224" height="64" width="311" format="###,##0" html.valueishtml="0"  name=mask_hit_value visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+text(band=detail alignment="1" text="Metal Mask 1" border="6" color="0" x="1979" y="224" height="64" width="553" html.valueishtml="0"  name=t_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217750" )
+column(band=detail id=74 alignment="2" tabsequence=32766 border="6" color="33554432" x="1979" y="132" height="64" width="553" format="[general]" html.valueishtml="0"  name=solder_type visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217750" )
+text(band=detail alignment="2" text="Break Value" border="6" color="33554432" x="2546" y="132" height="64" width="311" html.valueishtml="0"  name=t_22 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217750" )
+text(band=detail alignment="2" text="Hit Value" border="6" color="33554432" x="2875" y="132" height="64" width="311" html.valueishtml="0"  name=t_23 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217750" )
+text(band=detail alignment="2" text="Hit Rate" border="6" color="33554432" x="3200" y="132" height="64" width="233" html.valueishtml="0"  name=t_24 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217750" )
+column(band=detail id=72 alignment="2" tabsequence=32766 border="6" color="33554432" x="2546" y="452" height="64" width="311" format="###,##0" html.valueishtml="0"  name=squeeze_break_value2 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=73 alignment="2" tabsequence=32766 border="6" color="33554432" x="2875" y="452" height="64" width="311" format="###,##0" html.valueishtml="0"  name=squeeze_hit_value2 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=38 alignment="2" tabsequence=32766 border="6" color="33554432" x="1682" y="456" height="196" width="192" format="[general]" html.valueishtml="0"  name=mask_check visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="1073741824~tif (  mask_check =~"OK~" , RGB(0,255,0) , 255 )" )
+text(band=detail alignment="1" text="Metal Mask" border="6" color="0" x="128" y="456" height="200" width="530" html.valueishtml="0"  name=t_10 visible="1"  font.face="Tahoma" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217750" )
+text(band=detail alignment="1" text="Solder" border="6" color="0" x="128" y="296" height="144" width="530" html.valueishtml="0"  name=t_9 visible="1"  font.face="Tahoma" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217750" )
+column(band=detail id=16 alignment="2" tabsequence=32766 border="6" color="255" x="133" y="120" height="156" width="1536" format="[general]" html.valueishtml="0"  name=nsnp_reason visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-12" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=18 alignment="2" tabsequence=32766 border="6" color="0" x="1682" y="120" height="156" width="192" format="[general]" html.valueishtml="0"  name=nsnp_status visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+compute(band=detail alignment="2" expression=" mask_hit_value / mask_break_value "border="6" color="33554432" x="3200" y="224" height="64" width="233" format="0%" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="1073741824~tif (  compute_1 > 0.9 , 255 , rgb(0,255,0))" )
+compute(band=detail alignment="2" expression=" mask_hit_value2 / mask_break_value2"border="6" color="33554432" x="3200" y="300" height="64" width="233" format="0%" html.valueishtml="0"  name=compute_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="1073741824~tif (  compute_2 > 0.9 , 255 , rgb(0,255,0))" )
+compute(band=detail alignment="2" expression="squeeze_hit_value / squeeze_break_value "border="6" color="33554432" x="3200" y="376" height="64" width="233" format="0%" html.valueishtml="0"  name=compute_3 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="1073741824~tif (  compute_3 > 0.9 , 255 , rgb(0,255,0))" )
+text(band=detail alignment="2" text="Inspect" border="6" color="65535" x="1979" y="636" height="88" width="1458" html.valueishtml="0"  name=t_31 visible="1"  font.face="Tahoma" font.height="-12" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217741" )
+column(band=detail id=71 alignment="2" tabsequence=32766 border="6" color="33554432" x="2715" y="836" height="80" width="722" format="[general]" html.valueishtml="0"  name=last_marking_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=79 alignment="2" tabsequence=32766 border="6" color="33554432" x="1979" y="836" height="80" width="722" format="[general]" html.valueishtml="0"  name=first_marking_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+text(band=detail alignment="2" text="Last Marking" border="6" color="33554432" x="2715" y="748" height="64" width="722" html.valueishtml="0"  name=t_32 visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217750" )
+text(band=detail alignment="2" text="First Marking" border="6" color="33554432" x="1979" y="748" height="64" width="722" html.valueishtml="0"  name=t_33 visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217750" )
+compute(band=detail alignment="2" expression="squeeze_hit_value2 / squeeze_break_value2 "border="6" color="33554432" x="3200" y="452" height="64" width="233" format="0%" html.valueishtml="0"  name=compute_4 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="1073741824~tif (  compute_4 > 0.9 , 255 , rgb(0,255,0))" )
+text(band=detail alignment="1" text="Squeeze 2" border="6" color="0" x="1979" y="452" height="64" width="553" html.valueishtml="0"  name=t_20 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217750" )
+column(band=detail id=24 alignment="2" tabsequence=32766 border="0" color="65280" x="672" y="384" height="64" width="983" format="[general]" html.valueishtml="0"  name=solder_lot_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+column(band=detail id=43 alignment="2" tabsequence=32766 border="0" color="65280" x="677" y="296" height="84" width="978" format="[general]" html.valueishtml="0"  name=solder_check_val visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+column(band=detail id=42 alignment="2" tabsequence=32766 border="6" color="33554432" x="1682" y="296" height="148" width="192" format="[general]" html.valueishtml="0"  name=solder_check visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="1073741824~tif (  solder_check =~"OK~" , RGB(0,255,0) , 255 )" )
+text(band=detail alignment="1" text="Solder Remain Time" border="6" color="0" x="1979" y="532" height="68" width="553" html.valueishtml="0"  name=t_39 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217750" )
+column(band=detail id=44 alignment="2" tabsequence=32766 border="6" color="33554432" x="3200" y="532" height="68" width="233" format="[general]" html.valueishtml="0"  name=solder_check_hour visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="1073741824~tif (  solder_check_hour =~"OK~" , RGB(0,255,0) , 255 )" )
+column(band=detail id=80 alignment="2" tabsequence=32766 border="0" color="65535" x="2551" y="532" height="68" width="635" format="[general]" html.valueishtml="0"  name=solder_remain_time visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+column(band=detail id=81 alignment="2" tabsequence=32766 border="6" color="65280" x="3470" y="124" height="172" width="343" format="##0" html.valueishtml="0"  name=real_st visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-20" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+text(band=detail alignment="2" text="Real ST" border="6" color="65535" x="3470" y="24" height="76" width="343" html.valueishtml="0"  name=t_40 visible="1"  font.face="Tahoma" font.height="-12" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217741" )
+text(band=detail alignment="2" text="Target Qty" border="6" color="65535" x="3826" y="20" height="88" width="434" html.valueishtml="0"  name=t_12 visible="1"  font.face="Tahoma" font.height="-12" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217741" )
+column(band=detail id=78 alignment="2" tabsequence=32766 border="6" color="65535" x="3826" y="124" height="172" width="434" format="###,##0" html.valueishtml="0"  name=target_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-20" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+text(band=detail alignment="2" text="Input Rate" border="6" color="65535" x="4274" y="20" height="88" width="434" html.valueishtml="0"  name=t_37 visible="1"  font.face="Tahoma" font.height="-12" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217741" )
+compute(band=detail alignment="2" expression=" running_lot_input_qty /  running_lot_plan_qty *100"border="6" color="16711935" x="4274" y="124" height="172" width="434" format="##0.0" html.valueishtml="0"  name=compute_7 visible="1"  font.face="Tahoma" font.height="-20" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+text(band=detail alignment="2" text="Actual Rate" border="6" color="65535" x="4722" y="20" height="88" width="434" html.valueishtml="0"  name=t_35 visible="1"  font.face="Tahoma" font.height="-12" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217741" )
+compute(band=detail alignment="2" expression=" running_lot_actual_qty /  running_lot_plan_qty *100"border="6" color="16711935" x="4722" y="124" height="172" width="434" format="##0.0" html.valueishtml="0"  name=compute_5 visible="1"  font.face="Tahoma" font.height="-20" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+text(band=detail alignment="2" text="SPI Pass Rate" border="6" color="0" x="1979" y="932" height="64" width="722" html.valueishtml="0"  name=t_25 visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217750" )
+text(band=detail alignment="2" text="AOI Pass Rate" border="6" color="0" x="2715" y="932" height="64" width="722" html.valueishtml="0"  name=t_26 visible="1"  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217750" )
+column(band=detail id=60 alignment="2" tabsequence=32766 border="6" color="65280" x="3072" y="1092" height="172" width="370" format="[general]" html.valueishtml="0"  name=aoi_pass_rate visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-20" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+column(band=detail id=67 alignment="2" tabsequence=32766 border="6" color="65280" x="2331" y="1092" height="172" width="370" format="[general]" html.valueishtml="0"  name=spi_pass_rate visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-20" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+text(band=detail alignment="2" text="Count" border="6" color="65535" x="2725" y="1096" height="64" width="338" html.valueishtml="0"  name=t_42 visible="1"  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217741" )
+text(band=detail alignment="2" text="Count" border="6" color="65535" x="1979" y="1096" height="64" width="338" html.valueishtml="0"  name=t_41 visible="1"  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217741" )
+column(band=detail id=82 alignment="2" tabsequence=32766 border="6" color="65280" x="1979" y="1168" height="96" width="338" format="[general]" html.valueishtml="0"  name=spi_count visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-16" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+column(band=detail id=83 alignment="2" tabsequence=32766 border="6" color="65280" x="2720" y="1168" height="96" width="338" format="[general]" html.valueishtml="0"  name=aoi_count visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-16" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+column(band=detail id=84 alignment="2" tabsequence=32766 border="6" color="65280" x="1984" y="1008" height="64" width="722" format="[general]" html.valueishtml="0"  name=first_spi_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+column(band=detail id=85 alignment="2" tabsequence=32766 border="6" color="65280" x="2715" y="1008" height="64" width="722" format="[general]" html.valueishtml="0"  name=first_aoi_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+column(band=detail id=49 alignment="2" tabsequence=32766 border="6" color="33554432" x="1682" y="2008" height="144" width="192" format="[general]" html.valueishtml="0"  name=xray_check visible="0" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="1073741824~tif (  xray_check =~"OK~" , RGB(0,255,0) , 255 )" )
+text(band=detail alignment="1" text="Xray Check" border="6" color="33554432" x="128" y="2008" height="144" width="530" html.valueishtml="0"  name=t_17 visible="0"  font.face="Tahoma" font.height="-12" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+column(band=detail id=50 alignment="2" tabsequence=32766 border="0" color="33554432" x="677" y="2008" height="144" width="978" format="[general]" html.valueishtml="0"  name=xray_check_date visible="0" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" font.italic="1" background.mode="2" background.color="1073741824" )
+compute(band=detail alignment="2" expression=" running_lot_ng_qty /  running_lot_plan_qty * 100"border="6" color="16711935" x="5175" y="124" height="172" width="434" format="##0.0" html.valueishtml="0"  name=compute_6 visible="1"  font.face="Tahoma" font.height="-20" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+column(band=detail id=86 alignment="2" tabsequence=32766 border="6" color="65280" x="5623" y="124" height="172" width="434" format="[general]" html.valueishtml="0"  name=pcb_input_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-20" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+text(band=detail alignment="2" text="NG Rate" border="6" color="65535" x="5175" y="20" height="88" width="434" html.valueishtml="0"  name=t_36 visible="1"  font.face="Tahoma" font.height="-12" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217741" )
+text(band=detail alignment="2" text="PCB $$HEX2$$a4c294ce$$ENDHEX$$" border="6" color="0" x="5623" y="20" height="88" width="434" html.valueishtml="0"  name=t_43 visible="1"  font.face="Tahoma" font.height="-12" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217750" )
+compute(band=detail alignment="2" expression=" running_lot_actual_qty /  target_qty "border="0" color="16776960" x="4727" y="412" height="272" width="1330" format="##0.0%" html.valueishtml="0"  name=compute_8 visible="1"  font.face="Tahoma" font.height="-36" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+text(band=detail alignment="2" text="Target Rate" border="6" color="65535" x="4727" y="320" height="76" width="1330" html.valueishtml="0"  name=t_38 visible="1"  font.face="Tahoma" font.height="-12" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217741" )
+column(band=header id=11 alignment="2" tabsequence=32766 border="6" color="134217729" x="137" y="132" height="168" width="535" format="[general]" html.valueishtml="0"  name=line_status_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-22" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="16777215~tif (   line_status_name =~"$$HEX2$$15c8c1c0$$ENDHEX$$~" , RGB(0,255,0) , 255 )" )
+column(band=detail id=31 alignment="0" tabsequence=0 border="0" color="33554432" x="3534" y="480" height="168" width="1134" html.valueishtml="0"  name=item_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-18" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=40 alignment="2" tabsequence=32766 border="6" color="33554432" x="1682" y="672" height="196" width="192" format="[general]" html.valueishtml="0"  name=squeeze_check visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="1073741824~tif (  squeeze_check =~"OK~" , RGB(0,255,0) , 255 )" )
+column(band=detail id=47 alignment="2" tabsequence=32766 border="6" color="33554432" x="1682" y="980" height="72" width="192" format="[general]" html.valueishtml="0"  name=full_check visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="1073741824~tif (  full_check=~"OK~" , RGB(0,255,0) , rgb(128,255,255))" )
+column(band=detail id=45 alignment="2" tabsequence=32766 border="6" color="33554432" x="1682" y="888" height="72" width="192" format="[general]" html.valueishtml="0"  name=ccs_check visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="1073741824~tif (  ccs_check=~"OK~" , RGB(0,255,0) , 255 )" )
+column(band=detail id=53 alignment="2" tabsequence=32766 border="6" color="33554432" x="1682" y="1072" height="72" width="192" format="[general]" html.valueishtml="0"  name=sample_check visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="16777215~tif (  sample_check=~"OK~" , RGB(0,255,0) , rgb(128,255,255))" )
+column(band=detail id=51 alignment="2" tabsequence=32766 border="6" color="33554432" x="1682" y="1160" height="72" width="192" format="[general]" html.valueishtml="0"  name=spec_check visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="1073741824~tif (  spec_check =~"OK~" , RGB(0,255,0) , 255 )" )
+column(band=detail id=87 alignment="2" tabsequence=32766 border="6" color="0" x="1682" y="1256" height="76" width="192" format="[general]" html.valueishtml="0"  name=nozzle_check visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="1073741824~tif ( nozzle_check =~"OK~" , RGB(0,255,0) , 255 )" )
+column(band=detail id=89 alignment="2" tabsequence=32766 border="6" color="0" x="1682" y="1352" height="76" width="192" format="[general]" html.valueishtml="0"  name=backupblock_check visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="0" background.color="1073741824~tif (  backupblock_check =~"OK~" , RGB(0,255,0) , 255 )" )
+text(band=detail alignment="1" text="Profile Check" border="6" color="0" x="128" y="1164" height="76" width="530" html.valueishtml="0"  name=t_16 visible="1"  font.face="Tahoma" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217750" )
+text(band=detail alignment="1" text="Sample Check" border="6" color="0" x="128" y="1072" height="76" width="530" html.valueishtml="0"  name=t_21 visible="1"  font.face="Tahoma" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217750" )
+text(band=detail alignment="1" text="Full Check" border="6" color="0" x="128" y="980" height="76" width="530" html.valueishtml="0"  name=t_15 visible="1"  font.face="Tahoma" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217750" )
+column(band=detail id=48 alignment="2" tabsequence=32766 border="0" color="65280" x="677" y="980" height="76" width="978" format="[general]" html.valueishtml="0"  name=full_check_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+text(band=detail alignment="1" text="CCS" border="6" color="0" x="128" y="888" height="76" width="530" html.valueishtml="0"  name=t_14 visible="1"  font.face="Tahoma" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217750" )
+text(band=detail alignment="1" text="Nozzle Check" border="6" color="0" x="128" y="1256" height="76" width="530" html.valueishtml="0"  name=t_44 visible="1"  font.face="Tahoma" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217750" )
+text(band=detail alignment="1" text="$$HEX5$$31bcc5c514beedb72000$$ENDHEX$$Check" border="6" color="0" x="128" y="1348" height="76" width="530" html.valueishtml="0"  name=t_45 visible="1"  font.face="Tahoma" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217750" )
+column(band=detail id=46 alignment="2" tabsequence=32766 border="0" color="65280" x="677" y="888" height="76" width="978" format="[general]" html.valueishtml="0"  name=ccs_check_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+column(band=detail id=54 alignment="2" tabsequence=32766 border="0" color="65280" x="677" y="1072" height="76" width="978" format="[general]" html.valueishtml="0"  name=sample_check_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+column(band=detail id=52 alignment="2" tabsequence=32766 border="0" color="65280" x="677" y="1164" height="76" width="978" format="[general]" html.valueishtml="0"  name=spec_check_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+column(band=detail id=88 alignment="2" tabsequence=32766 border="0" color="65280" x="677" y="1260" height="76" width="978" format="[general]" html.valueishtml="0"  name=nozzle_check_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+column(band=detail id=90 alignment="2" tabsequence=32766 border="0" color="65280" x="677" y="1356" height="76" width="978" format="[general]" html.valueishtml="0"  name=backupblock_check_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+text(band=detail alignment="1" text="Squeeze" border="6" color="0" x="128" y="672" height="196" width="530" html.valueishtml="0"  name=t_11 visible="1"  font.face="Tahoma" font.height="-12" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217750" )
+column(band=detail id=39 alignment="2" tabsequence=32766 border="0" color="65280" x="677" y="460" height="60" width="978" format="[general]" html.valueishtml="0"  name=mask_check_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+column(band=detail id=56 alignment="2" tabsequence=32766 border="0" color="65280" x="677" y="532" height="60" width="978" format="[general]" html.valueishtml="0"  name=mask_lot_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+column(band=detail id=58 alignment="0" tabsequence=32766 border="0" color="65280" x="677" y="596" height="60" width="978" format="[general]" html.valueishtml="0"  name=mask_lot_no2 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+column(band=detail id=41 alignment="2" tabsequence=32766 border="0" color="65280" x="677" y="672" height="60" width="978" format="[general]" html.valueishtml="0"  name=squeeze_check_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+column(band=detail id=57 alignment="2" tabsequence=32766 border="0" color="65280" x="677" y="744" height="60" width="978" format="[general]" html.valueishtml="0"  name=squeeze_lot_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+column(band=detail id=59 alignment="2" tabsequence=32766 border="0" color="65280" x="677" y="812" height="60" width="978" format="[general]" html.valueishtml="0"  name=squeeze_lot_no2 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-10" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

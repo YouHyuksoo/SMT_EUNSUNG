@@ -22,6 +22,7 @@ import { Button, Input } from '@/components/ui';
 import api from '@/services/api';
 import { SmtMachineSelect, SmtModelSelect, SmtPcbItemSelect } from '../../components/SmtSelects';
 import type { SmtBomReplaceRow } from '../../types';
+import PartSearchField from '@/components/shared/PartSearchField';
 
 export interface SmtBomReplaceForm {
   parentItemCode: string;
@@ -170,18 +171,18 @@ export default function SmtBomReplaceFormPanel({ mode, initialForm, onClose, onS
       <div className="flex-1 space-y-3 overflow-auto p-4">
         <label className="block text-sm">
           <span className="text-text-muted">상위품목 (모델) *</span>
-          <Input value={form.parentItemCode} disabled={edit}
+          <PartSearchField value={form.parentItemCode} disabled={edit}
             onChange={(e) => set('parentItemCode', e.target.value)} />
         </label>
         <div className="grid grid-cols-2 gap-3">
           <label className="block text-sm">
             <span className="text-text-muted">원 품목 *</span>
-            <Input value={form.childItemCode} disabled={edit}
+            <PartSearchField value={form.childItemCode} disabled={edit}
               onChange={(e) => set('childItemCode', e.target.value)} />
           </label>
           <label className="block text-sm">
             <span className="text-text-muted">대체품목 *</span>
-            <Input value={form.replaceItemCode} disabled={edit}
+            <PartSearchField value={form.replaceItemCode} disabled={edit}
               onChange={(e) => set('replaceItemCode', e.target.value)} />
           </label>
           <label className="block text-sm">

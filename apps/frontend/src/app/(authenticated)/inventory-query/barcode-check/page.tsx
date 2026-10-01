@@ -34,6 +34,8 @@ import type {
   BarcodeCheckRow,
   BarcodeCheckSummaryRow,
 } from '../inventory-query-columns';
+import PartSearchField from '@/components/shared/PartSearchField';
+import LineSelect from '@/components/shared/LineSelect';
 
 type TabKey = 'list' | 'summary';
 
@@ -108,13 +110,11 @@ export default function BarcodeCheckPage() {
             value={yyyymm} className="w-52" inputMode="numeric"
             onChange={(e) => setYyyymm(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') void search(); }} />
-          <Input aria-label="품목코드" placeholder="품목코드" value={itemCode}
+          <PartSearchField aria-label="품목코드" placeholder="품목코드" value={itemCode}
             className="w-44"
             onChange={(e) => setItemCode(e.target.value)} />
           {tab === 'list' && (
-            <Input aria-label="라인코드" placeholder="라인코드" value={lineCode}
-              className="w-32"
-              onChange={(e) => setLineCode(e.target.value)} />
+            <LineSelect labelPrefix="라인" value={lineCode} onChange={setLineCode} className="w-44" />
           )}
           <Button size="sm" onClick={search} disabled={loading}>
             <Search className="mr-1 h-4 w-4" />조회

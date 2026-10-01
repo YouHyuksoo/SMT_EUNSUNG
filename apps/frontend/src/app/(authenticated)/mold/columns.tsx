@@ -34,6 +34,7 @@ const priceOrNone = (value: unknown) => {
 const right = { align: 'right' } as const;
 
 export const moldMasterColumns: ColumnDef<MoldMasterRow>[] = [
+  { accessorKey: 'itemCode', header: '품목코드', size: 130 },
   { id: 'moldGroupName', header: 'S-PARTS 그룹', size: 140, accessorFn: (r) => codeWithName(r.moldGroup, r.moldGroupName) },
   { accessorKey: 'moldCode', header: 'S-PARTS 코드', size: 150 },
   { accessorKey: 'moldName', header: 'S-PARTS 명', size: 180 },
@@ -59,7 +60,6 @@ export const moldMasterColumns: ColumnDef<MoldMasterRow>[] = [
   { id: 'moldWarehouseName', header: '창고', size: 100, accessorFn: (r) => codeWithName(r.moldWarehouseCode, r.moldWarehouseName) },
   { accessorKey: 'locationCode', header: '보관위치', size: 110 },
   { accessorKey: 'applyModelName', header: '적용모델', size: 140 },
-  { accessorKey: 'itemCode', header: '품목코드', size: 130 },
   { accessorKey: 'itemUnitQty', header: '품목당 수량', size: 100, meta: right, cell: (c) => num(c.getValue()) },
   { accessorKey: 'cycleTime', header: 'C/T', size: 80, meta: right, cell: (c) => num(c.getValue()) },
   { accessorKey: 'machineCapacity', header: '설비능력', size: 90, meta: right, cell: (c) => num(c.getValue()) },
@@ -316,8 +316,8 @@ export const moldRepairTargetColumns: ColumnDef<MoldRepairTargetRow>[] = [
 ];
 
 export const moldRepairItemColumns: ColumnDef<MoldRepairItemRow>[] = [
-  { accessorKey: 'repairItemCode', header: '수리품목', size: 150 },
   { accessorKey: 'repairItemName', header: '품목명', size: 180 },
+  { accessorKey: 'repairItemCode', header: '수리품목', size: 150 },
   { accessorKey: 'repairItemSpec', header: '규격', size: 150 },
   { accessorKey: 'repairItemUom', header: '단위', size: 70 },
   { accessorKey: 'repairItemQty', header: '수량', size: 90, meta: right, cell: (c) => num(c.getValue()) },

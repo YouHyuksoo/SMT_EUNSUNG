@@ -15,6 +15,10 @@ export interface ParentPart {
   itemType: string;
   /** 품목구분 (ITEM DIVISION: F 제품 / W 반제품 / R 원자재) */
   itemDivision?: string | null;
+  /** 차종코드 (모델마스터 PRODUCT_CLASS, 공통코드 PRODUCT CLASS) */
+  productClass?: string | null;
+  /** 고객코드 (모델마스터 우선, 없으면 품목마스터) */
+  customerCode?: string | null;
   spec?: string;
   unit?: string;
   customer?: string;

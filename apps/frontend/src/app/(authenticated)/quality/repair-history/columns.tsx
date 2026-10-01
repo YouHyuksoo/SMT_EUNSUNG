@@ -12,6 +12,7 @@ const dateTime = (value: unknown) => {
 };
 
 export const repairHistoryColumns: ColumnDef<RepairHistoryRow>[] = [
+  { accessorKey: 'itemCode', header: '품목코드', size: 140 },
   { accessorKey: 'qcSequence', header: 'QC순번', size: 100, meta: { align: 'right' } },
   { accessorKey: 'receiptDeficit', header: '불량구분', size: 100, cell: comCodeCell('RECEIPT DEFICIT') },
   { accessorKey: 'qcInspectHandling', header: '검사처리', size: 100, cell: comCodeCell('QC INSPECT HANDLING') },
@@ -19,7 +20,6 @@ export const repairHistoryColumns: ColumnDef<RepairHistoryRow>[] = [
   { accessorKey: 'serialNo', header: 'PCB 시리얼', size: 170 },
   { accessorKey: 'modelName', header: '모델명', size: 150 },
   { accessorKey: 'modelSuffix', header: '서픽스', size: 90 },
-  { accessorKey: 'itemCode', header: '품목코드', size: 140 },
   { accessorKey: 'lineCode', header: '라인', size: 110, cell: ctx => ctx.row.original.lineName ?? ctx.getValue() ?? '' },
   { accessorKey: 'workstageCode', header: '공정', size: 120, cell: ctx => ctx.row.original.workstageName ?? ctx.getValue() ?? '' },
   { accessorKey: 'badReasonCode', header: '불량사유', size: 110, cell: codeMasterCell('WQC BAD REASON CODE') },

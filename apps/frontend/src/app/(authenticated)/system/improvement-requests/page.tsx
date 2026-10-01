@@ -12,6 +12,7 @@ import {
   ImprRequestItem,
 } from "@/services/improvementRequestService";
 import ImprovementDetailModal from "./components/ImprovementDetailModal";
+import { formatDisplayDate } from "@/utils/date";
 
 const STATUS_TABS = ["ALL", "PENDING", "IN_PROGRESS", "DONE"] as const;
 type StatusTab = (typeof STATUS_TABS)[number];
@@ -190,7 +191,7 @@ export default function ImprovementRequestsPage() {
                     {item.pageUrl}
                   </p>
                   <p className="text-xs text-text-muted mt-0.5">
-                    {item.requesterNm ?? item.requesterId} · {new Date(item.createdAt).toLocaleString()}
+                    {item.requesterNm ?? item.requesterId} · {formatDisplayDate(item.createdAt)}
                   </p>
                 </div>
               </div>

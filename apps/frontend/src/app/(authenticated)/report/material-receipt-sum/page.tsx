@@ -37,6 +37,7 @@ import type {
   MaterialReceiptSumWarehouseRow,
   MaterialTxnMatrixRow,
 } from '../report-b-types';
+import PartSearchField from '@/components/shared/PartSearchField';
 
 const daysAgo = (n: number) => {
   const d = new Date();
@@ -141,7 +142,7 @@ export default function MaterialReceiptSumPage() {
           <div className="w-52">
             <SupplierSelect includeAll value={supplierCode} onChange={setSupplierCode} />
           </div>
-          <Input aria-label="품목코드" placeholder="품목코드" value={itemCode} className="w-40"
+          <PartSearchField aria-label="품목코드" placeholder="품목코드" value={itemCode} className="w-40"
             onChange={(e) => setItemCode(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') void search(); }} />
           <Input aria-label="전표번호" placeholder="전표번호" value={invoiceNo} className="w-40"

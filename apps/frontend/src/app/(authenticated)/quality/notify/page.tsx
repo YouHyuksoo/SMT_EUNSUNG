@@ -29,6 +29,7 @@ import QcNotifyFormPanel, {
   toQcNotifyForm,
   type QcNotifyForm,
 } from './components/QcNotifyFormPanel';
+import PartSearchField from '@/components/shared/PartSearchField';
 
 const isoDate = (date: Date) => date.toISOString().slice(0, 10);
 const today = () => isoDate(new Date());
@@ -165,7 +166,7 @@ export default function QcNotifyPage() {
               onChange={setLineCode} className="w-40" />
             <ProcessSelect labelPrefix="공정" value={workstageCode}
               onChange={setWorkstageCode} className="w-44" />
-            <Input aria-label="품목코드" placeholder="품목코드" value={itemCode}
+            <PartSearchField aria-label="품목코드" placeholder="품목코드" value={itemCode}
               className="w-40" onChange={(e) => setItemCode(e.target.value)} />
             <ComCodeSelect groupCode="NOTIFY STATUS" labelPrefix="조치상태"
               value={notifyStatus} onChange={setNotifyStatus} className="w-44" />

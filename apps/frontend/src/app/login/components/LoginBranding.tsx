@@ -7,11 +7,11 @@
  * 초보자 가이드:
  * 1. **FloatingShape**: CSS 애니메이션으로 떠다니는 도형들
  * 2. **ConnectionNode**: PCB SMT를 상징하는 연결 노드 애니메이션
- * 3. **로고 펄스**: 중앙 로고에 glow 효과
+ * 3. **회사 로고**: public/images/eunsung-logo.png (eunsungele.com 헤더 로고), 흰 판 위에 glow 효과
  */
 
 import { useTranslation } from "react-i18next";
-import { Factory } from "lucide-react";
+import Image from "next/image";
 
 /** 떠다니는 도형 하나 */
 function FloatingShape({
@@ -124,12 +124,12 @@ export default function LoginBranding() {
 
       {/* 중앙 콘텐츠 */}
       <div className="relative z-10 text-center text-white">
-        {/* 로고 - 글로우 펄스 */}
-        <div className="relative mx-auto mb-8 w-24 h-24">
+        {/* 회사 로고 - 글로우 펄스 */}
+        <div className="relative mx-auto mb-8 w-56 h-28">
           <div className="absolute inset-0 bg-white/20 rounded-2xl login-glow" />
-          <div className="relative w-24 h-24 bg-white/20 backdrop-blur-sm rounded-2xl
+          <div className="relative w-56 h-28 bg-white rounded-2xl shadow-lg
                           flex items-center justify-center login-logo-breathe">
-            <Factory className="w-12 h-12 text-white" />
+            <Image src="/images/eunsung-logo.png" alt="EUNSUNG" width={176} height={80} priority />
           </div>
         </div>
 

@@ -24,6 +24,7 @@ import api from '@/services/api';
 import { TruncationNotice, useTruncation } from '../components/TruncationNotice';
 import { pickupAmountColumns, pickupDetailColumns } from '../report-columns';
 import type { PickupAmountRow, PickupDetailRow } from '../report-types';
+import PartSearchField from '@/components/shared/PartSearchField';
 
 const daysAgo = (n: number) => {
   const d = new Date();
@@ -99,7 +100,7 @@ export default function PickupRateReportPage() {
           <div className="w-44">
             <LineSelect value={lineCode} onChange={setLineCode} labelPrefix="라인" />
           </div>
-          <Input aria-label="품목코드" placeholder="품목코드" value={itemCode} className="w-40"
+          <PartSearchField aria-label="품목코드" placeholder="품목코드" value={itemCode} className="w-40"
             onChange={(e) => setItemCode(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') void search(); }} />
           {/* PB 의 단가 하한. 비싼 자재의 미스만 보려고 둔 조건이다. */}

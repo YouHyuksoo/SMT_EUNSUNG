@@ -13,11 +13,12 @@ import type {
   ChamberStockSummaryRow,
   RecycleCheckRow,
 } from './warehouse-types';
+import { formatDisplayDate } from '@/utils/date';
 
 const right = { align: 'right' } as const;
 const center = { align: 'center' } as const;
 
-const ts = (value: unknown) => (value ? String(value) : '');
+const ts = (value: unknown) => (value ? formatDisplayDate(value) : '');
 /** 시간은 소수 한 자리까지 (0.1시간 = 6분 단위면 현장 판단에 충분하다). */
 const hours = (value: unknown) =>
   value == null ? '' : `${Number(value).toLocaleString(undefined, { maximumFractionDigits: 1 })}h`;
@@ -46,14 +47,14 @@ const lapseCell = (lapse: unknown, bakingTime: unknown, lifeCycle: unknown) => {
 // ───────────────────────────────── 262·263·264 챔버 재고
 
 export const chamberStockSummaryColumns: ColumnDef<ChamberStockSummaryRow>[] = [
+  { accessorKey: 'itemCode', header: '품목코드', size: 150 },
+  { accessorKey: 'itemName', header: '품목명', size: 190 },
   {
     id: 'chamberName',
     header: '챔버',
     size: 170,
     accessorFn: (r) => codeWithName(r.chamberCode, r.chamberName),
   },
-  { accessorKey: 'itemCode', header: '품목코드', size: 150 },
-  { accessorKey: 'itemName', header: '품목명', size: 190 },
   { accessorKey: 'itemSpec', header: '규격', size: 170 },
   { accessorKey: 'supplierCode', header: '협력사', size: 110 },
   {
@@ -83,6 +84,8 @@ export const chamberStockSummaryColumns: ColumnDef<ChamberStockSummaryRow>[] = [
 ];
 
 export const chamberStockDetailColumns: ColumnDef<ChamberStockDetailRow>[] = [
+  { accessorKey: 'itemCode', header: '품목코드', size: 150 },
+  { accessorKey: 'itemName', header: '품목명', size: 180 },
   { accessorKey: 'itemBarcode', header: '자재 바코드', size: 200 },
   { accessorKey: 'lotNo', header: '자재 롯트', size: 150 },
   { accessorKey: 'lotQty', header: '수량', size: 100, meta: right, cell: (c) => num(c.getValue()) },
@@ -100,8 +103,6 @@ export const chamberStockDetailColumns: ColumnDef<ChamberStockDetailRow>[] = [
   { accessorKey: 'bakingTime', header: '기준 베이킹', size: 120, meta: right, cell: (c) => hours(c.getValue()) },
   { accessorKey: 'lifeCycle', header: '수명', size: 100, meta: right, cell: (c) => hours(c.getValue()) },
   { accessorKey: 'mslLevel', header: 'MSL', size: 80, meta: center },
-  { accessorKey: 'itemCode', header: '품목코드', size: 150 },
-  { accessorKey: 'itemName', header: '품목명', size: 180 },
   { accessorKey: 'itemSpec', header: '규격', size: 160 },
   { accessorKey: 'itemClass', header: '품목분류', size: 110 },
   { accessorKey: 'height', header: '높이', size: 90, meta: right, cell: (c) => num(c.getValue()) },

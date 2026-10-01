@@ -16,11 +16,12 @@ import type {
   SolderRow,
   SolderStageCountRow,
 } from './warehouse-types';
+import { formatDisplayDate } from '@/utils/date';
 
 const right = { align: 'right' } as const;
 const center = { align: 'center' } as const;
 
-const ts = (value: unknown) => (value ? String(value) : '');
+const ts = (value: unknown) => (value ? formatDisplayDate(value) : '');
 
 /** 솔더 종류. 실측 분포 'F' 35,629건 · 'P' 131건. 코드표는 따로 없다. */
 const SOLDER_TYPE_LABEL: Record<string, string> = { F: '무연(F)', P: '유연(P)' };
@@ -97,9 +98,9 @@ export const solderStageCountColumns: ColumnDef<SolderStageCountRow>[] = [
 // ───────────────────────────────── 244 솔더 통 목록
 
 export const solderColumns: ColumnDef<SolderRow>[] = [
+  { accessorKey: 'itemCode', header: '품목코드', size: 150 },
   { accessorKey: 'solderLotNo', header: '솔더 롯트', size: 160 },
   { accessorKey: 'itemBarcode', header: '솔더 바코드', size: 180 },
-  { accessorKey: 'itemCode', header: '품목코드', size: 150 },
   {
     accessorKey: 'solderType',
     header: '종류',
@@ -171,10 +172,10 @@ export const solderColumns: ColumnDef<SolderRow>[] = [
 // ───────────────────────────────── 245 솔더 라인투입이력
 
 export const solderInputHistoryColumns: ColumnDef<SolderInputHistoryRow>[] = [
+  { accessorKey: 'itemCode', header: '품목코드', size: 150 },
   { accessorKey: 'inputDate', header: '투입시각', size: 170, cell: (c) => ts(c.getValue()) },
   { accessorKey: 'solderLotNo', header: '솔더 롯트', size: 160 },
   { accessorKey: 'itemBarcode', header: '솔더 바코드', size: 180 },
-  { accessorKey: 'itemCode', header: '품목코드', size: 150 },
   {
     accessorKey: 'solderType',
     header: '종류',

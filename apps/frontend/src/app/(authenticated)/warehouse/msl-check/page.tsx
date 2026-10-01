@@ -40,6 +40,8 @@ import type {
   MslIssuedRow,
   MslViewRow,
 } from '../reprint-msl-columns';
+import PartSearchField from '@/components/shared/PartSearchField';
+import LineSelect from '@/components/shared/LineSelect';
 
 type TabKey = 'inventory' | 'issued' | 'view' | 'history';
 
@@ -204,7 +206,7 @@ export default function MslCheckPage() {
 
       <Card padding="none">
         <CardContent className="flex flex-wrap items-center gap-3 p-3">
-          <Input aria-label="품목코드" placeholder="품목코드" value={itemCode}
+          <PartSearchField aria-label="품목코드" placeholder="품목코드" value={itemCode}
             className="w-44"
             onChange={(e) => setItemCode(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') void search(); }} />
@@ -218,9 +220,7 @@ export default function MslCheckPage() {
           )}
           {tab === 'view' && (
             <>
-              <Input aria-label="라인코드" placeholder="라인코드" value={lineCode}
-                className="w-32"
-                onChange={(e) => setLineCode(e.target.value)} />
+              <LineSelect labelPrefix="라인" value={lineCode} onChange={setLineCode} className="w-44" />
               <ModelSearchField aria-label="모델명" placeholder="모델명" value={modelName}
                 className="w-48"
                 onChange={(v) => setModelName(v)} />
