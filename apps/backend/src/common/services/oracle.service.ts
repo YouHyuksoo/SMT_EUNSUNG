@@ -216,11 +216,14 @@ export class OracleService implements OnModuleInit, OnModuleDestroy {
    * @param procName 프로시저명
    * @param outDefs OUT 파라미터 정의 배열
    * @param inParams IN 파라미터 (선택)
+   * @param options autoCommit=true는 쓰기 프로시저에만 준다. 기본값 false라 커넥션 반납 시
+   *                프로시저의 DML이 롤백되므로, 실제로 저장해야 하면 반드시 켠다.
    */
   async callProcScalar(
     procName: string,
     outDefs: Array<{ name: string; type: 'NUMBER' | 'STRING' | 'DATE'; maxSize?: number }>,
     inParams?: Record<string, unknown>,
+    options?: { autoCommit?: boolean },
   ): Promise<Record<string, unknown>> {
     validateIdentifier(procName, '프로시저명');
 
@@ -251,7 +254,9 @@ export class OracleService implements OnModuleInit, OnModuleDestroy {
       }
 
       const sql = `BEGIN ${procName}(${paramNames.join(', ')}); END;`;
-      const result = await this.executeWithRetry(conn, sql, bindVars);
+      const result = await this.executeWithRetry(conn, sql, bindVars, {
+        autoCommit: options?.autoCommit ?? false,
+      });
       return getOutBinds(result.outBinds);
     } catch (err) {
       this.logger.error(

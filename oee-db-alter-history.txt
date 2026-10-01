@@ -1,0 +1,160 @@
+==============================================================================
+ 은성 전장 MES — OEE 앱 관련 DB 변경(ALTER) 이력
+==============================================================================
+ 작성일   : 2026-09-21
+ 대상 DB  : ESDBPDB @ 139.150.82.207 / INFINITY21_JSMES (운영)
+ 현재구조 : docs/sql/oee-app-ddl.sql (2026-09-21 추출)
+
+ [이 문서를 읽는 법]
+  Oracle은 컬럼 단위 변경 이력을 보관하지 않는다. 감사(audit)도 켜져 있지 않고,
+  저장소에도 ALTER TABLE 스크립트가 남아 있지 않다(전체 검색 결과 0건).
+  따라서 아래 내용은 다음 세 가지 근거로 역산한 것이다.
+    (1) USER_OBJECTS.CREATED / LAST_DDL_TIME  — 테이블 단위 생성·최종변경 시각
+    (2) USER_TAB_COLUMNS.COLUMN_ID 순서       — 뒤에 추가된 컬럼일수록 번호가 크다
+    (3) 컬럼 주석과 git 커밋 이력             — 용도·시점 교차 확인
+  ALTER 문은 "실제로 실행된 문장"이 아니라 현재 구조에서 역산한 재구성문이다.
+  NOT NULL 로 표기된 컬럼은 그대로 실행하면 기존 행이 있는 테이블에서 실패한다.
+  실제로는 NULL 허용으로 추가 → 값 채움 → NOT NULL 전환 순서였을 것이다.
+
+==============================================================================
+ 1. 기존 테이블에 컬럼을 추가한 내역 (확정)
+==============================================================================
+
+------------------------------------------------------------------------------
+ 2026-08-24 14:20   IP_PRODUCT_RUN_CARD  (작업지시)
+------------------------------------------------------------------------------
+ 사유: 작업지시에 설비·공정을 직접 물리기 위해 추가. 설비별 작업 실적관리가 이 두
+       컬럼으로 작업지시를 설비 단위로 필터한다.
+
+ -- COLUMN_ID 44
+ ALTER TABLE IP_PRODUCT_RUN_CARD ADD (MACHINE_CODE VARCHAR2(30));
+ COMMENT ON COLUMN IP_PRODUCT_RUN_CARD.MACHINE_CODE IS '설비코드 (IMCN_MACHINE.MACHINE_CODE)';
+ -- COLUMN_ID 45
+ ALTER TABLE IP_PRODUCT_RUN_CARD ADD (WORKSTAGE_CODE VARCHAR2(10));
+ COMMENT ON COLUMN IP_PRODUCT_RUN_CARD.WORKSTAGE_CODE IS '공정코드 (IP_PRODUCT_WORKSTAGE.WORKSTAGE_CODE)';
+
+
+------------------------------------------------------------------------------
+ 2026-08-25 22:17   IP_PRODUCT_ST_MASTER  (표준시간)
+------------------------------------------------------------------------------
+ 사유: 표준시간을 모델 단위에서 모델×설비 단위로 확장. 유일하게 NOT NULL로
+       추가된 컬럼이다.
+
+ -- COLUMN_ID 14
+ ALTER TABLE IP_PRODUCT_ST_MASTER ADD (MACHINE_CODE VARCHAR2(30) NOT NULL);
+ COMMENT ON COLUMN IP_PRODUCT_ST_MASTER.MACHINE_CODE IS '설비코드 (IMCN_MACHINE.MACHINE_CODE) — 설비별 표준시간 PK';
+
+
+------------------------------------------------------------------------------
+ 2026-09-02 20:14   IP_PRODUCT_SENSOR_ACTUAL  (작업지시 실적)
+------------------------------------------------------------------------------
+ 사유: 실적 저장 테이블을 IP_PRODUCT_WORK_RESULT에서 이 테이블로
+       이관하면서 수기 실적용 컬럼을 추가. 센서 실적과 수기 실적이 한 테이블에
+       섞인다.
+
+ -- COLUMN_ID 21
+ ALTER TABLE IP_PRODUCT_SENSOR_ACTUAL ADD (RUN_NO VARCHAR2(20));
+ -- COLUMN_ID 22
+ ALTER TABLE IP_PRODUCT_SENSOR_ACTUAL ADD (MACHINE_CODE VARCHAR2(30));
+ COMMENT ON COLUMN IP_PRODUCT_SENSOR_ACTUAL.MACHINE_CODE IS '설비코드 (IMCN_MACHINE.MACHINE_CODE) - 수기 실적 전용, 센서 배치는 NULL';
+ -- COLUMN_ID 23
+ ALTER TABLE IP_PRODUCT_SENSOR_ACTUAL ADD (WORK_TIME NUMBER);
+ COMMENT ON COLUMN IP_PRODUCT_SENSOR_ACTUAL.WORK_TIME IS '작업시간(분) - 수기 실적 전용';
+ -- COLUMN_ID 24
+ ALTER TABLE IP_PRODUCT_SENSOR_ACTUAL ADD (WORKER_NAME VARCHAR2(100));
+ COMMENT ON COLUMN IP_PRODUCT_SENSOR_ACTUAL.WORKER_NAME IS '작업자명 - 수기 실적 전용';
+ -- COLUMN_ID 25
+ ALTER TABLE IP_PRODUCT_SENSOR_ACTUAL ADD (WORKER_COUNT NUMBER);
+ COMMENT ON COLUMN IP_PRODUCT_SENSOR_ACTUAL.WORKER_COUNT IS '작업인원 - 수기 실적 전용';
+
+
+------------------------------------------------------------------------------
+ 2026-09-06 14:34   IP_PRODUCT_LINE  (생산라인)
+------------------------------------------------------------------------------
+ 사유: OEE 라인 속성을 생산라인관리 화면에서 통합 관리하기 위해 추가(별도 OEE
+       라인 관리 메뉴는 숨김 처리).
+
+ -- COLUMN_ID 120
+ ALTER TABLE IP_PRODUCT_LINE ADD (PROCESS_CODE VARCHAR2(20));
+ -- COLUMN_ID 121
+ ALTER TABLE IP_PRODUCT_LINE ADD (RESOURCE_TYPE VARCHAR2(20));
+ -- COLUMN_ID 122
+ ALTER TABLE IP_PRODUCT_LINE ADD (PARENT_LINE_CODE VARCHAR2(20));
+
+
+------------------------------------------------------------------------------
+ 2026-09-09 19:33   WORKER_MASTERS  (작업자)
+------------------------------------------------------------------------------
+ 사유: 작업자관리 500 오류(스키마 불일치) 수정 과정에서 추가. 커밋
+       fb6a4a1.
+
+ -- COLUMN_ID 21
+ ALTER TABLE WORKER_MASTERS ADD (ORGANIZATION_ID NUMBER DEFAULT 1 NOT NULL);
+ COMMENT ON COLUMN WORKER_MASTERS.ORGANIZATION_ID IS '조직ID. 은성 단일 조직은 1';
+
+
+------------------------------------------------------------------------------
+ 2026-09-10 16:11   IP_EQUIP_DOWNTIME_RESULT  (설비 비가동 실적)
+------------------------------------------------------------------------------
+ 사유: CAUSE_YN은 라인 일괄 비가동 시 원인설비를 구분하려고,
+       LINE_CODE는 라인 단위 집계를 위해 추가. LINE_CODE에 실제 값이
+       들어가기 시작한 것은 애플리케이션 수정 이후인 2026-09-13부터다(커밋
+       cf40180).
+
+ -- COLUMN_ID 15
+ ALTER TABLE IP_EQUIP_DOWNTIME_RESULT ADD (CAUSE_YN VARCHAR2(1) DEFAULT 'N');
+ COMMENT ON COLUMN IP_EQUIP_DOWNTIME_RESULT.CAUSE_YN IS '원인설비 여부: Y=이 설비가 라인 정지의 원인, N=동반 정지';
+ -- COLUMN_ID 16
+ ALTER TABLE IP_EQUIP_DOWNTIME_RESULT ADD (LINE_CODE VARCHAR2(20));
+ COMMENT ON COLUMN IP_EQUIP_DOWNTIME_RESULT.LINE_CODE IS '생산라인 코드 (동일 조직의 IP_PRODUCT_LINE.LINE_CODE, 기존 실적은 NULL)';
+
+
+==============================================================================
+ 2. 앱 작업으로 새로 만든 테이블 (CREATE)
+==============================================================================
+
+ 2026-08-06 16:18   IP_EQUIP_DOWNTIME_REASON
+                      └ 설비 비가동 사유코드 마스터
+ 2026-08-06 16:51   IP_EQUIP_DOWNTIME_MAP
+                      └ 설비별 비가동 사유 연계 헤더
+ 2026-08-06 16:51   IP_EQUIP_DOWNTIME_MAP_DTL
+                      └ 설비별 비가동 사유 연계 상세
+ 2026-08-07 22:06   OEE_DOWNTIME_EVENT
+                      └ LINE/CELL 단위 비가동 이벤트
+ 2026-08-13 10:29   OEE_RESOURCE / OEE_DOWNTIME_REASON / OEE_OPERATION_LOG / OEE_PLAN_TIME /
+                       OEE_PRODUCTION_RESULT / OEE_DAILY_SUMMARY / OEE_CUSTOMER_DEFECT / OEE_MATERIAL_READINESS
+                      └ OEE 도메인 테이블 8종 일괄 생성 (설계: docs/specs/2026-07-06-oee-management-design.md)
+ 2026-08-24 15:17   IP_EQUIP_DOWNTIME_RESULT
+                      └ 설비 단위 비가동 실적
+ 2026-09-01 04:14   OEE_ROUTING / OEE_ROUTING_PROCESS / OEE_ROUTING_MACHINE
+                      └ OEE 라우팅 3종
+
+ * 전체 DDL은 docs/sql/oee-app-ddl.sql 참고.
+
+==============================================================================
+ 3. 변경 시각만 확인되고 내용을 특정하지 못한 건
+==============================================================================
+
+ 2026-08-21 18:45   OEE_RESOURCE
+                      └ 생성(08-13) 이후 구조 변경 1회. 변경 내용은 특정 불가.
+ 2026-08-29 02:00   OEE_DOWNTIME_EVENT / OEE_PLAN_TIME / OEE_PRODUCTION_RESULT /
+                       OEE_OPERATION_LOG / OEE_DAILY_SUMMARY
+                      └ 5개 테이블이 같은 시각에 구조 변경. 일괄 마이그레이션으로 보이나 변경 내용은 특정 불가.
+
+==============================================================================
+ 4. 참고 — 변경되지 않은 주요 테이블
+==============================================================================
+
+ IMCN_MACHINE (설비마스터)   최종 변경 2026-07-12 — DB 이관 이후 구조 변경 없음
+ * 2026-07-12 14:33~14:35는 레거시 스키마를 이 DB로 이관한 시각이다.
+   그 시각의 CREATED는 "설계 시점"이 아니라 "이관 시점"으로 읽어야 한다.
+
+==============================================================================
+ 5. 권고
+==============================================================================
+
+ 앞으로 DB 구조를 바꿀 때는 적용 전에 ALTER 스크립트를 docs/sql/ 에 남기고
+ 적용한다. 그래야 git 이력으로 "언제 무엇을 왜 바꿨는지"가 추적된다.
+ 이번처럼 사후 역산하면 시각과 컬럼은 알 수 있어도 변경 사유와 일괄 변경의
+ 내용(3번 항목)은 복구할 수 없다.
+
