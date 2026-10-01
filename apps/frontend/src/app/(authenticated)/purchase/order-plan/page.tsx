@@ -20,15 +20,16 @@
  * 6. **확정해도 계획은 지워지지 않는다.** `PURCHASE_ORDER_STATUS` 가 `'Y'` 가 될
  *    뿐이다 — 어느 계획에서 나온 주문인지 되짚을 수 있어야 한다.
  * 7. 버튼·체크박스 설명은 `data-tooltip` 으로 붙였다 (전역 툴팁 시스템).
+ * 8. **생성 옵션은 우측 패널에서 고른다** (components/OrderPlanGeneratePanel).
+ *    화면 위에는 조회 조건과 실행 버튼만 두어 두 표가 넓게 보이게 했다.
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
-import { Calculator, Play, Search, Send, Tag } from 'lucide-react';
+import { Play, Search, Send, Tag } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
 import ComCodeSelect from '@/components/shared/ComCodeSelect';
-import DateRangeFilter from '@/components/shared/DateRangeFilter';
 import SupplierSelect from '@/components/shared/SupplierSelect';
-import { Button, Card, CardContent, ConfirmModal, Input, Select } from '@/components/ui';
+import { Button, Card, CardContent, ConfirmModal, Input } from '@/components/ui';
 import api from '@/services/api';
 import { getTodayLocal } from '@/utils/date';
 import {
@@ -37,69 +38,16 @@ import {
 } from '../../report/components/TruncationNotice';
 import { orderPlanColumns, requirementOrderColumns, selectColumn } from '../purchase-columns';
 import type { OrderPlanRow, RequirementOrderRow } from '../purchase-columns';
+import OrderPlanGeneratePanel, {
+  INVENTORY_ARMS,
+  PLAN_SOURCES,
+  type OrderPlanGenerateValues,
+} from './components/OrderPlanGeneratePanel';
 
-/** PB 라디오버튼(계획 원천). 어느 계획에서 BOM 을 펼지. */
-const PLAN_SOURCES = [
-  { value: 'productionPlan', label: '생산계획' },
-  { value: 'productionPlanByTime', label: '생산계획(시간별)' },
-  { value: 'salePlan', label: '납품계획' },
-  { value: 'salePlanByTime', label: '납품계획(시간별)' },
-  { value: 'manual', label: '수기계획' },
-];
-
-const SOURCE_TIP: Record<string, string> = {
-  productionPlan: '생산계획(IP_PRODUCT_MI_PLAN)에서 아직 못 만든 수량(계획 − 실적)만 펼칩니다.',
-  productionPlanByTime: '생산계획을 같은 날 안에서도 시:분 단위로 나눠 봅니다.'
-    + ' 하루에 여러 번 투입하는 라인에 씁니다.',
-  salePlan: '납품계획에서 아직 안 보낸 수량을 펼칩니다. 지시번호로 잡힌 실적까지 뺍니다.',
-  salePlanByTime: '납품계획을 시:분:초 단위로 나눠 봅니다.',
-  manual: '손으로 넣어 둔 발주 기준계획(IM_ITEM_MASTER_PLAN_4_PO)을 펼칩니다.',
-};
-
-/** PB 체크박스(소요량에서 뺄 재고). 켠 것만 빠진다. */
-const INVENTORY_ARMS = [
-  {
-    value: 'inventory',
-    label: '창고재고',
-    tip: '자재창고(M01)에 지금 있는 재고를 뺍니다. 가장 기본입니다.',
-  },
-  {
-    value: 'order',
-    label: '발주잔량',
-    tip: '이미 발주했지만 아직 안 들어온 수량을 뺍니다. 안 켜면 같은 자재를 두 번 발주하게 됩니다.',
-  },
-  {
-    value: 'arrival',
-    label: '도착분',
-    tip: '협력사에서 도착했지만 아직 입고 처리가 안 된 수량을 뺍니다.',
-  },
-  {
-    value: 'workstageInventory',
-    label: '공정재고',
-    tip: '라인·공정에 이미 깔려 있는 재고를 뺍니다.'
-      + ' 이 표에는 거래유형 컬럼이 없어 품목 기준정보에서 가져옵니다.',
-  },
-  {
-    value: 'freeInventory',
-    label: '무상재고',
-    tip: '무상으로 받아 둔 재고를 뺍니다.',
-  },
-];
-
+// 생성 옵션(계획 원천·뺄 재고·계산 옵션)과 그 설명은 우측 생성 패널(components/OrderPlanGeneratePanel)에 있다.
 const TIP = {
-  source: '어느 계획에서 BOM 을 펼지 고릅니다. 고르면 옆에 설명이 바뀝니다.',
-  range: '이 기간에 든 계획만 펼칩니다.',
-  orderDate: '만들어지는 발주계획에 찍히는 발주일입니다. 실제 주문으로 넘길 때도 이 날짜를 씁니다.',
   itemCode: '특정 품목만 봅니다. 비우면 전부입니다. 생성할 때도 이 조건이 걸립니다.',
-  orderRule: '협력사별 최소주문량·포장단위·불량율을 발주량에 반영합니다.'
-    + ' 예: 포장단위가 100이고 계산값이 120이면 200으로 올립니다.'
-    + ' 올려서 남는 만큼은 같은 자재의 뒤 계획줄이 덜 발주하도록 되돌립니다.',
-  unitPrice: '단가 기준정보에서 유효기간 안의 단가·통화·납품구분을 붙입니다.',
-  leadTime: '제조 리드타임만큼 납기를 앞으로 당깁니다 — 자재가 생산 시작 전에 들어와야'
-    + ' 하기 때문입니다. 안 켜면 자재가 필요한 날이 곧 납기가 됩니다.',
-  calendar: '당긴 납기가 휴무일이면 일하는 날로 옮깁니다. 리드타임 반영과는 별개 단계입니다.',
-  generate: '고른 계획을 BOM 으로 펴고, 켜 둔 재고를 빼서 발주계획을 만듭니다.'
-    + ' 기존 발주계획은 통째로 새로 만들어집니다.',
+  openGenerate: '계획 원천·기간·뺄 재고·계산 옵션을 오른쪽 패널에서 고르고 발주계획을 만듭니다.',
   search: '두 표를 다시 읽어옵니다.',
   pendingOnly: '발주할 수량이 남아 있고 아직 확정하지 않은 계획만 봅니다.'
     + ' 재고로 다 충당된 것과 이미 확정한 것은 숨깁니다.',
@@ -136,16 +84,23 @@ export default function OrderPlanPage() {
   const [lineTypeCond, setLineTypeCond] = useState('');
   const [pendingOnly, setPendingOnly] = useState(true);
 
-  // 생성 조건
-  const [source, setSource] = useState('productionPlan');
-  const [dateFrom, setDateFrom] = useState(today());
-  const [dateTo, setDateTo] = useState(daysFromNow(30));
-  const [orderDate, setOrderDate] = useState(today());
-  const [arms, setArms] = useState<string[]>(['inventory', 'order', 'arrival']);
-  const [applyOrderRule, setApplyOrderRule] = useState(true);
-  const [applyUnitPrice, setApplyUnitPrice] = useState(true);
-  const [applyLeadTime, setApplyLeadTime] = useState(true);
-  const [applyCalendar, setApplyCalendar] = useState(true);
+  // 생성 조건 — 우측 생성 패널에서 고른다 (기본값은 이전과 같다)
+  const [generateOpen, setGenerateOpen] = useState(false);
+  const [gen, setGen] = useState<OrderPlanGenerateValues>(() => ({
+    source: 'productionPlan',
+    dateFrom: today(),
+    dateTo: daysFromNow(30),
+    orderDate: today(),
+    arms: ['inventory', 'order', 'arrival'],
+    applyOrderRule: true,
+    applyUnitPrice: true,
+    applyLeadTime: true,
+    applyCalendar: true,
+  }));
+  const patchGen = useCallback(
+    (patch: Partial<OrderPlanGenerateValues>) => setGen((prev) => ({ ...prev, ...patch })),
+    [],
+  );
 
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [pending, setPending] = useState<'generate' | 'purchase' | 'price' | null>(null);
@@ -210,33 +165,28 @@ export default function OrderPlanPage() {
 
   useEffect(() => { void search(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const toggleArm = useCallback((value: string) => {
-    setArms((prev) => (prev.includes(value)
-      ? prev.filter((v) => v !== value)
-      : [...prev, value]));
-  }, []);
-
   const run = useCallback(async () => {
     if (!pending) return;
     setBusy(true);
     try {
       if (pending === 'generate') {
         const r = await api.post('/purchase/order-plan/generate', {
-          source,
-          dateFrom,
-          dateTo,
-          orderDate,
+          source: gen.source,
+          dateFrom: gen.dateFrom,
+          dateTo: gen.dateTo,
+          orderDate: gen.orderDate,
           itemCode: itemCond.trim() || undefined,
-          inventorySources: arms,
-          applyOrderRule,
-          applyUnitPrice,
-          applyLeadTime,
-          applyCalendar,
+          inventorySources: gen.arms,
+          applyOrderRule: gen.applyOrderRule,
+          applyUnitPrice: gen.applyUnitPrice,
+          applyLeadTime: gen.applyLeadTime,
+          applyCalendar: gen.applyCalendar,
         });
         const d = r.data?.data ?? {};
         toast.success(
           `발주계획을 만들었습니다 — 소요량 ${d.requirementRows ?? 0}건 → 계획 ${d.planRows ?? 0}건.`,
         );
+        setGenerateOpen(false);
       } else if (pending === 'price') {
         const r = await api.post('/purchase/order-plan/price-reset', {
           supplierCode: supplierCond || undefined,
@@ -246,7 +196,7 @@ export default function OrderPlanPage() {
         const itemCodes = plans
           .filter((row) => selected.has(rowKey(row)))
           .map((row) => ({ itemCode: row.itemCode, lineType: row.lineType }));
-        const r = await api.post('/purchase/order-plan/purchase', { orderDate, itemCodes });
+        const r = await api.post('/purchase/order-plan/purchase', { orderDate: gen.orderDate, itemCodes });
         const created = r.data?.data?.created ?? 0;
         const skipped = r.data?.data?.skipped ?? 0;
         toast.success(`${created}건을 주문으로 넘겼습니다.`);
@@ -265,18 +215,17 @@ export default function OrderPlanPage() {
     } finally {
       setBusy(false);
     }
-  }, [pending, source, dateFrom, dateTo, orderDate, itemCond, arms, applyOrderRule,
-    applyUnitPrice, applyLeadTime, applyCalendar, supplierCond, plans, selected, search]);
+  }, [pending, gen, itemCond, supplierCond, plans, selected, search]);
 
-  const sourceLabel = PLAN_SOURCES.find((s) => s.value === source)?.label ?? '';
+  const sourceLabel = PLAN_SOURCES.find((s) => s.value === gen.source)?.label ?? '';
   const armLabels = INVENTORY_ARMS
-    .filter((a) => arms.includes(a.value))
+    .filter((a) => gen.arms.includes(a.value))
     .map((a) => a.label);
 
   const confirmText = {
     generate: {
       title: '발주계획 생성',
-      message: `${sourceLabel} ${dateFrom} ~ ${dateTo} 를 BOM 으로 펴서 발주계획을 만듭니다.`
+      message: `${sourceLabel} ${gen.dateFrom} ~ ${gen.dateTo} 를 BOM 으로 펴서 발주계획을 만듭니다.`
         + `\n\n· 소요량에서 빼는 것: ${armLabels.length === 0 ? '없음 (소요량이 그대로 발주량이 됩니다)' : armLabels.join(' · ')}`
         + '\n· 기존 발주계획은 통째로 새로 만들어집니다.',
     },
@@ -288,7 +237,7 @@ export default function OrderPlanPage() {
     purchase: {
       title: '발주 확정',
       message: `고른 ${selected.size}건을 실제 주문으로 넘깁니다.`
-        + `\n\n· 발주일: ${orderDate}`
+        + `\n\n· 발주일: ${gen.orderDate}`
         + '\n· 계획은 지워지지 않고 확정 표시만 남습니다 (두 번 발주되지 않게).'
         + '\n· 납품구분이 빈 계획은 넘어가지 않습니다.',
     },
@@ -297,102 +246,22 @@ export default function OrderPlanPage() {
   const count = (n: number) => (searched ? `${n.toLocaleString()}건` : '');
 
   return (
-    <div className="flex h-full flex-col gap-3 p-6">
-      <header>
-        <h1 className="text-xl font-bold text-text">자재발주계획</h1>
-        <p className="mt-1 text-sm text-text-muted">
-          생산·납품계획에서 자재 발주량을 산출합니다 (소요량 − 보유분) ·{' '}
-          <span className="text-text">① 발주계획 생성 → ② 확인 → ③ 발주 확정</span>
-        </p>
+    <div className="flex h-full">
+    <main className="flex h-full min-w-0 flex-1 flex-col gap-3 p-6">
+      <header className="flex items-start justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-bold text-text">자재발주계획</h1>
+          <p className="mt-1 text-sm text-text-muted">
+            생산·납품계획에서 자재 발주량을 산출합니다 (소요량 − 보유분) ·{' '}
+            <span className="text-text">① 발주계획 생성 → ② 확인 → ③ 발주 확정</span>
+          </p>
+        </div>
+        {/* ① 생성 옵션은 우측 패널에서 고른다 */}
+        <Button size="sm" disabled={busy} data-tooltip={TIP.openGenerate}
+          onClick={() => setGenerateOpen(true)}>
+          <Play className="mr-1 h-4 w-4" />① 발주계획 생성
+        </Button>
       </header>
-
-      {/* ① 생성 — 무엇을 펼지 */}
-      <Card padding="none">
-        <CardContent className="flex flex-col gap-3 p-3">
-          <div className="flex flex-wrap items-end gap-3">
-            <span className="flex items-center gap-1 self-center text-sm font-semibold text-text">
-              <Calculator className="h-4 w-4" />① 발주계획 생성
-            </span>
-            <div className="flex flex-col gap-1">
-              <label className="text-xs text-text-muted" htmlFor="plan-source"
-                data-tooltip={TIP.source}>
-                계획 원천
-              </label>
-              <Select id="plan-source" aria-label="계획 원천" value={source} className="w-48"
-                data-tooltip={SOURCE_TIP[source]}
-                onChange={setSource} options={PLAN_SOURCES} />
-            </div>
-            <span className="self-center" data-tooltip={TIP.range}>
-              <DateRangeFilter label="계획기간" from={dateFrom} to={dateTo}
-                onFromChange={setDateFrom} onToChange={setDateTo} />
-            </span>
-            <div className="flex flex-col gap-1">
-              <label className="text-xs text-text-muted" htmlFor="order-date"
-                data-tooltip={TIP.orderDate}>
-                발주일
-              </label>
-              <Input id="order-date" type="date" value={orderDate} className="w-40"
-                data-tooltip={TIP.orderDate}
-                onChange={(e) => setOrderDate(e.target.value)} />
-            </div>
-            <span className="self-center text-sm text-text-muted">
-              {SOURCE_TIP[source]}
-            </span>
-          </div>
-
-          {/* 무엇을 뺄지 — 이 다섯이 발주량을 정한다 */}
-          <div className="flex flex-wrap items-center gap-3 rounded border border-border bg-surface/40 p-2">
-            <span className="text-sm font-semibold text-text">소요량에서 뺄 재고</span>
-            {INVENTORY_ARMS.map((arm) => (
-              <label key={arm.value} data-tooltip={arm.tip}
-                className="flex items-center gap-1 text-sm text-text">
-                <input type="checkbox" checked={arms.includes(arm.value)}
-                  onChange={() => toggleArm(arm.value)} />
-                {arm.label}
-              </label>
-            ))}
-            {arms.length === 0 && (
-              <span className="text-sm text-amber-500">
-                하나도 안 켜면 소요량이 그대로 발주량이 됩니다
-              </span>
-            )}
-          </div>
-
-          {/* 계산 옵션 — 수량·단가·납기를 손보는 것들 */}
-          <div className="flex flex-wrap items-center gap-3">
-            <span className="text-sm font-semibold text-text">계산 옵션</span>
-            <label data-tooltip={TIP.orderRule}
-              className="flex items-center gap-1 text-sm text-text">
-              <input type="checkbox" checked={applyOrderRule}
-                onChange={(e) => setApplyOrderRule(e.target.checked)} />
-              발주속성 (최소·포장·불량율)
-            </label>
-            <label data-tooltip={TIP.unitPrice}
-              className="flex items-center gap-1 text-sm text-text">
-              <input type="checkbox" checked={applyUnitPrice}
-                onChange={(e) => setApplyUnitPrice(e.target.checked)} />
-              단가 적용
-            </label>
-            <label data-tooltip={TIP.leadTime}
-              className="flex items-center gap-1 text-sm text-text">
-              <input type="checkbox" checked={applyLeadTime}
-                onChange={(e) => setApplyLeadTime(e.target.checked)} />
-              리드타임 반영
-            </label>
-            <label data-tooltip={TIP.calendar}
-              className="flex items-center gap-1 text-sm text-text">
-              <input type="checkbox" checked={applyCalendar}
-                onChange={(e) => setApplyCalendar(e.target.checked)} />
-              작업일 보정
-            </label>
-            <Button size="sm" className="ml-auto" disabled={busy}
-              data-tooltip={TIP.generate}
-              onClick={() => setPending('generate')}>
-              <Play className="mr-1 h-4 w-4" />발주계획 생성
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
 
       {/* ② 확인 + ③ 실행 — 두 표를 같이 보므로 한 줄로 합쳐 세로 공간을 아낀다 */}
       <Card padding="none">
@@ -459,7 +328,7 @@ export default function OrderPlanPage() {
                 enableExport
                 exportFileName="발주계획"
                 emptyMessage={searched
-                  ? '발주계획이 없습니다. 위 ① 에서 생성하세요.'
+                  ? '발주계획이 없습니다. 오른쪽 위 ① 발주계획 생성으로 만드세요.'
                   : '조회하세요.'}
                 onRowClick={(row) => toggleRow(row as OrderPlanRow)}
                 rowClassName={(row) => (selected.has(rowKey(row as OrderPlanRow))
@@ -488,13 +357,25 @@ export default function OrderPlanPage() {
                 enableExport
                 exportFileName="발주소요량"
                 emptyMessage={searched
-                  ? '소요량이 없습니다. 위 ① 에서 발주계획을 생성하세요.'
+                  ? '소요량이 없습니다. 오른쪽 위 ① 발주계획 생성으로 만드세요.'
                   : '조회하세요.'}
               />
             </div>
           </CardContent>
         </Card>
       </div>
+    </main>
+
+      {generateOpen && (
+        <OrderPlanGeneratePanel
+          values={gen}
+          onChange={patchGen}
+          itemCode={itemCond}
+          busy={busy}
+          onGenerate={() => setPending('generate')}
+          onClose={() => setGenerateOpen(false)}
+        />
+      )}
 
       <ConfirmModal
         isOpen={Boolean(pending)}
