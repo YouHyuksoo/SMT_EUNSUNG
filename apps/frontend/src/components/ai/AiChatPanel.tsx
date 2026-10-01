@@ -189,7 +189,7 @@ export default function AiChatPanel() {
         audience: AI_PERSONAS.find((item) => item.value === persona)?.audience ?? "user",
         persona,
       };
-      const res = await api.post("/ai/chat", { messages: history, knowledgeContext });
+      const res = await api.post("/ai/chat", { messages: history, knowledgeContext }, { timeout: 180_000 }); // LLM 다단계 호출이라 기본 30초를 넘길 수 있다
       const data = res.data?.data ?? {};
       addMessage({
         role: "assistant",

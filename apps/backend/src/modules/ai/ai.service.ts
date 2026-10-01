@@ -8,20 +8,24 @@
  * - test(): 입력 키/provider/model로 즉석 연결 확인
  */
 import { Injectable, BadRequestException, Logger } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { Mistral } from '@mistralai/mistralai';
-import { SysConfig } from '../../entities/sys-config.entity';
+import { AiSettingsService } from '../ai-knowledge/ai-settings.service';
 import { AiChatAttachmentDto, AiChatMessageDto } from './dto/ai-chat.dto';
 
 const SYSTEM_PROMPT =
-  '당신은 HANES MES(제조실행시스템) 운영을 돕는 AI 비서입니다. 한국어로 간결하고 정확하게 답합니다.';
+  '당신은 은성전장 MES(제조실행시스템) 운영을 돕는 AI 비서입니다. 한국어로 간결하고 정확하게 답합니다.';
 
 const PROVIDER_DEFAULT_MODEL: Record<string, string> = {
-  mistral: 'mistral-large-latest',
+  mistral: 'mistral-medium-latest',
   openai: 'gpt-4o-mini',
-  openrouter: 'openai/gpt-oss-120b:free',
+  openrouter: 'nvidia/nemotron-3-super-120b-a12b:free',
 };
+
+/** OpenRouter 대체 모델 기본값 (2026-10-01 응답 확인된 무료 모델) — AI_MODEL_FALLBACKS 로 바꾼다 */
+const OPENROUTER_DEFAULT_FALLBACKS = [
+  'inclusionai/ling-3.0-flash-sante:free',
+  'google/gemma-4-31b-it:free',
+];
 
 type LlmMessage = { role: 'system' | 'user' | 'assistant'; content: string; attachments?: AiChatAttachmentDto[] };
 type OpenAIContentPart =
@@ -33,28 +37,17 @@ type OpenAIMessage = { role: 'system' | 'user' | 'assistant'; content: string | 
 export class AiService {
   private readonly logger = new Logger(AiService.name);
 
-  constructor(
-    @InjectRepository(SysConfig)
-    private readonly sysConfigRepo: Repository<SysConfig>,
-  ) {}
+  constructor(private readonly settings: AiSettingsService) {}
 
+  /** 설정: AI 설정 파일(AI_ENV_PATH) → 백엔드 .env → 기본값 (ai-settings.service) */
   private async getConfigValue(configKey: string, def: string): Promise<string> {
-    const row = await this.sysConfigRepo.findOne({ where: { configKey } });
-    return row?.configValue ?? def;
+    return this.settings.get(configKey, def);
   }
 
-  /** 키: sys-config(UI 입력) 우선, 없으면 .env */
+  /** 키: AI 설정 파일 또는 .env 의 {PROVIDER}_API_KEY */
   private async getApiKey(provider: string): Promise<string | undefined> {
-    const cfg = await this.getConfigValue(`AI_${provider.toUpperCase()}_KEY`, '');
-    if (cfg.trim()) return cfg.trim();
-    switch (provider) {
-      case 'openai':
-        return process.env.OPENAI_API_KEY;
-      case 'openrouter':
-        return process.env.OPENROUTER_API_KEY;
-      default:
-        return process.env.MISTRAL_API_KEY;
-    }
+    const key = provider === 'openai' ? 'OPENAI_API_KEY' : provider === 'openrouter' ? 'OPENROUTER_API_KEY' : 'MISTRAL_API_KEY';
+    return this.settings.get(key) || undefined;
   }
 
   /** config 탭 표시용 상태 (키 원문은 반환하지 않는다) */
@@ -63,7 +56,7 @@ export class AiService {
       this.getConfigValue('AI_ENABLED', 'Y'),
       this.getConfigValue('AI_PROVIDER', 'mistral'),
     ]);
-    const model = await this.getConfigValue('AI_MODEL', PROVIDER_DEFAULT_MODEL[provider] ?? 'mistral-large-latest');
+    const model = await this.getConfigValue('AI_MODEL', PROVIDER_DEFAULT_MODEL[provider] ?? 'mistral-medium-latest');
     const apiKey = await this.getApiKey(provider);
     return {
       enabled: enabled === 'Y',
@@ -80,7 +73,7 @@ export class AiService {
       throw new BadRequestException('AI 채팅이 비활성화되어 있습니다. 시스템 환경설정에서 AI를 활성화해 주세요.');
     }
     const provider = await this.getConfigValue('AI_PROVIDER', 'mistral');
-    const model = await this.getConfigValue('AI_MODEL', PROVIDER_DEFAULT_MODEL[provider] ?? 'mistral-large-latest');
+    const model = await this.getConfigValue('AI_MODEL', PROVIDER_DEFAULT_MODEL[provider] ?? 'mistral-medium-latest');
     const apiKey = await this.getApiKey(provider);
     if (!apiKey) {
       throw new BadRequestException(`${provider} API 키가 설정되지 않았습니다. 시스템 환경설정 > AI에서 키를 등록해 주세요.`);
@@ -93,8 +86,10 @@ export class AiService {
         const detail = error instanceof Error ? error.message : String(error);
         const statusCode = typeof error === 'object' && error !== null ? Reflect.get(error, 'statusCode') : undefined;
         const isRate = /429|rate ?limit|too many/i.test(detail) || statusCode === 429;
-        if (isRate && attempt < 2) {
-          await new Promise((r) => setTimeout(r, 1200 * (attempt + 1)));
+        // 무료 모델 상류 장애(과부하·중도 끊김·게이트웨이 오류)도 일시적이라 다시 시도한다
+        const isTransient = isRate || /overloaded|aborted|upstream|timed? ?out|\b50[234]\b/i.test(detail);
+        if (isTransient && attempt < 2) {
+          await new Promise((r) => setTimeout(r, 1500 * (attempt + 1)));
           continue;
         }
         this.logger.error(`${provider} 호출 실패: ${detail}`);
@@ -137,12 +132,13 @@ export class AiService {
     apiKey: string,
     messages: LlmMessage[],
     extraHeaders: Record<string, string> = {},
+    extraBody: Record<string, unknown> = {},
   ): Promise<string> {
     const providerMessages = this.toOpenAICompatibleMessages(messages);
     const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}`, ...extraHeaders },
-      body: JSON.stringify({ model, messages: providerMessages }),
+      body: JSON.stringify({ model, messages: providerMessages, ...extraBody }),
     });
     if (!res.ok) {
       const body = await res.text();
@@ -161,14 +157,25 @@ export class AiService {
     return this.callOpenAICompatible('https://api.openai.com/v1/chat/completions', 'OpenAI', model, apiKey, messages);
   }
 
+  /**
+   * OpenRouter — 무료 모델은 상류 혼잡(429/overloaded)이 잦아 대체 모델 목록(models)을 함께 보낸다.
+   * 첫 모델이 실패하면 OpenRouter 가 다음 모델로 자동 전환한다. 목록은 AI_MODEL_FALLBACKS(쉼표 구분).
+   */
   private async callOpenRouter(model: string, apiKey: string, messages: LlmMessage[]): Promise<string> {
+    const fallbacks = this.settings
+      .get('AI_MODEL_FALLBACKS', OPENROUTER_DEFAULT_FALLBACKS.join(','))
+      .split(',')
+      .map((m) => m.trim())
+      .filter((m) => m && m !== model);
     return this.callOpenAICompatible(
       'https://openrouter.ai/api/v1/chat/completions',
       'OpenRouter',
       model,
       apiKey,
       messages,
-      { 'HTTP-Referer': 'https://hswbs.haengsung.com', 'X-Title': 'HANES MES' },
+      { 'X-Title': 'EUNSUNG MES' },
+      // OpenRouter 는 models 최대 3개
+      fallbacks.length ? { models: [model, ...fallbacks].slice(0, 3) } : {},
     );
   }
 

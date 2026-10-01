@@ -2,10 +2,9 @@
  * @file src/modules/ai/sql-validator.service.ts
  * @description text-to-SQL 보안 검증 (Oracle)
  *
- * - 허용: SELECT / INSERT / UPDATE / WITH (단일 쿼리)
- * - 차단: DELETE/DROP/TRUNCATE/ALTER/GRANT/REVOKE/EXEC/MERGE/CREATE/시스템객체/다중쿼리
- * - INSERT/UPDATE는 kind='write' → 승인 후 실행
- * - SELECT는 kind='select' → 즉시 실행(읽기전용)
+ * - 허용: SELECT / WITH (단일 쿼리) — 은성전장은 AI SQL 을 조회 전용으로 운영한다 (CLAUDE.md: 명시 승인 전 SELECT-only)
+ * - 차단: INSERT/UPDATE/DELETE/DROP/TRUNCATE/ALTER/GRANT/REVOKE/EXEC/MERGE/CREATE/시스템객체/다중쿼리
+ * - 통과하면 kind='select' → 즉시 실행(읽기전용)
  */
 import { Injectable } from '@nestjs/common';
 
@@ -18,6 +17,8 @@ export interface SqlValidation {
 }
 
 const DANGEROUS: { pattern: RegExp; name: string }[] = [
+  { pattern: /\bINSERT\b/, name: 'INSERT' },
+  { pattern: /\bUPDATE\b/, name: 'UPDATE' },
   { pattern: /\bDELETE\b/, name: 'DELETE' },
   { pattern: /\bDROP\b/, name: 'DROP' },
   { pattern: /\bTRUNCATE\b/, name: 'TRUNCATE' },
@@ -55,9 +56,9 @@ export class SqlValidatorService {
     }
 
     // 허용 시작 구문
-    const startsAllowed = ['SELECT', 'INSERT', 'UPDATE', 'WITH'].some((s) => upper.startsWith(s));
+    const startsAllowed = ['SELECT', 'WITH'].some((s) => upper.startsWith(s));
     if (!startsAllowed) {
-      return { valid: false, error: 'SELECT / INSERT / UPDATE 문만 허용됩니다.' };
+      return { valid: false, error: '조회(SELECT) 문만 허용됩니다.' };
     }
 
     // 위험 키워드 차단
@@ -67,13 +68,6 @@ export class SqlValidatorService {
       }
     }
 
-    const isWrite = /\bINSERT\b/.test(upper) || /\bUPDATE\b/.test(upper);
-
-    // UPDATE 안전장치: WHERE 필수
-    if (/\bUPDATE\b/.test(upper) && !/\bWHERE\b/.test(upper)) {
-      return { valid: false, error: 'UPDATE 문에는 반드시 WHERE 절이 필요합니다.' };
-    }
-
-    return { valid: true, kind: isWrite ? 'write' : 'select' };
+    return { valid: true, kind: 'select' };
   }
 }

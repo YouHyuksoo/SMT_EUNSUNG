@@ -102,7 +102,13 @@ export class AiKnowledgeService implements OnModuleInit {
   constructor(private readonly embedding: EmbeddingService) {}
 
   async onModuleInit(): Promise<void> {
-    await this.open();
+    // 기동 실패로 백엔드 전체가 죽지 않게 한다 (better-sqlite3 네이티브 로드 실패·경로 권한 등).
+    // 지식 기능만 비활성으로 두고, 이후 요청 때 open() 을 다시 시도한다.
+    try {
+      await this.open();
+    } catch (error: unknown) {
+      this.logger.error(`AI 지식 DB 열기 실패 — 지식 검색 비활성: ${error instanceof Error ? error.message : String(error)}`);
+    }
   }
 
   private projectRoot(): string {

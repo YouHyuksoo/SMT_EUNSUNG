@@ -240,15 +240,18 @@ api.interceptors.response.use(
     return response;
   },
   (error: AxiosError) => {
-    // 네트워크 에러 (백엔드 미실행, ECONNREFUSED 등)
+    // 응답 없음: 제한 시간 초과(ECONNABORTED) 와 연결 실패(ECONNREFUSED 등)를 구분해서 알린다
     if (!error.response) {
+      const timedOut = error.code === "ECONNABORTED" || error.code === "ETIMEDOUT";
       useErrorStore.getState().showError({
         timestamp: new Date().toLocaleString(),
         method: error.config?.method?.toUpperCase() || "UNKNOWN",
         url: error.config?.url || "unknown",
         status: 0,
-        message: "서버에 연결할 수 없습니다. 백엔드가 실행 중인지 확인하세요.",
-        responseBody: "네트워크 연결 실패 (ECONNREFUSED)",
+        message: timedOut
+          ? `응답 시간이 초과되었습니다 (${Math.round((error.config?.timeout ?? 0) / 1000)}초). 서버는 계속 처리 중일 수 있습니다.`
+          : "서버에 연결할 수 없습니다. 백엔드가 실행 중인지 확인하세요.",
+        responseBody: timedOut ? "응답 시간 초과 (timeout)" : "네트워크 연결 실패 (ECONNREFUSED)",
       });
       return Promise.reject(error);
     }

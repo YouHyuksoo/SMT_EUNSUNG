@@ -160,7 +160,7 @@ describe('AiSqlService response quality prompts', () => {
 
     const result = await target.process([{ role: 'user', content: '/WEB Oracle 23ai JSON duality view 찾아줘' }]);
 
-    expect(result.content).toContain('/WEB 외부 웹 검색은 현재 HANES 백엔드 AI 채팅 파이프라인에 연결되어 있지 않습니다');
+    expect(result.content).toContain('/WEB 외부 웹 검색은 현재 은성전장 MES 백엔드 AI 채팅 파이프라인에 연결되어 있지 않습니다');
     expect(complete).not.toHaveBeenCalled();
     expect(catalog.getSelectionCatalog).not.toHaveBeenCalled();
     expect(dataSource.query).not.toHaveBeenCalled();

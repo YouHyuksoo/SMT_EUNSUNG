@@ -5,12 +5,9 @@ import { AiService } from './ai.service';
 
 describe('AiService multimodal chat payloads', () => {
   const createService = (values: Record<string, string>) => {
-    const repo = {
-      findOne: jest.fn(({ where }: { where: { configKey: string } }) =>
-        Promise.resolve(values[where.configKey] === undefined ? null : { configValue: values[where.configKey] }),
-      ),
-    };
-    return new AiService(repo as any);
+    // AI 설정은 ai-settings.service(env 파일) 에서 온다 — get(key, def) 만 흉내낸다
+    const settings = { get: (key: string, def = "") => values[key] ?? def };
+    return new AiService(settings as any);
   };
 
   beforeEach(() => {
@@ -26,7 +23,7 @@ describe('AiService multimodal chat payloads', () => {
       AI_ENABLED: 'Y',
       AI_PROVIDER: 'openai',
       AI_MODEL: 'gpt-4o-mini',
-      AI_OPENAI_KEY: 'test-key',
+      OPENAI_API_KEY: 'test-key',
     });
 
     const result = await service.complete([
@@ -47,7 +44,7 @@ describe('AiService multimodal chat payloads', () => {
       AI_ENABLED: 'Y',
       AI_PROVIDER: 'mistral',
       AI_MODEL: 'mistral-large-latest',
-      AI_MISTRAL_KEY: 'test-key',
+      MISTRAL_API_KEY: 'test-key',
     });
 
     await expect(

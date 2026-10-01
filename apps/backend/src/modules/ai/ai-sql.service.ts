@@ -38,32 +38,33 @@ export interface AiSqlResult {
 
 type AiChatRouteMode = 'auto' | 'mes' | 'help' | 'do' | 'web';
 
-const TABLE_SELECT_PROMPT = `당신은 HANES MES 데이터베이스에서 사용자 질문에 답할 테이블을 고르는 도우미입니다.
+const TABLE_SELECT_PROMPT = `당신은 은성전장 MES 데이터베이스에서 사용자 질문에 답할 테이블을 고르는 도우미입니다.
 규칙:
 1. 아래 테이블 목록에서 질문에 답하는 데 필요한 테이블을 고릅니다(최대 6개).
 2. 회사·거래처·인물(대표/담당자/작업자/검사자)·품목·생산·재고·출하·품질·설비 등 MES에 저장된 정보를 묻는 질문이면, 일반 상식으로 답할 수 있어 보여도 반드시 관련 테이블을 선택하세요. (예: 사람 이름으로 소속·대표 여부를 묻는 질문은 회사·거래처 마스터의 대표자명 등으로 조회)
 3. 같은 성격의 정보가 여러 테이블에 나뉘어 있을 수 있으면(예: 자사 정보와 거래처 정보, 자재와 제품) 코멘트를 보고 후보 테이블을 모두 선택하세요. 단어 하나(예: "회사")만 보고 한 테이블로 단정하지 마세요.
 4. 인사·잡담 등 데이터와 전혀 무관한 경우에만 빈 배열 []을 응답합니다.
-5. 반드시 JSON 배열로만 응답합니다. 예: ["PARTNER_MASTERS","COMPANY_MASTERS"]
+5. 반드시 JSON 배열로만 응답합니다. 예: ["ID_ITEM","ICOM_SUPPLIER"]
 다른 설명 없이 JSON 배열만 출력하세요.`;
 
-const SQL_GEN_PROMPT = `당신은 Oracle SQL 생성 AI입니다.
+/** SQL 생성 프롬프트 — 테넌트(ORGANIZATION_ID)는 로그인 사용자 조직으로 채운다 */
+const sqlGenPrompt = (organizationId: number | undefined) => `당신은 Oracle SQL 생성 AI입니다.
 규칙:
 - 반드시 아래 '테이블 스키마'에 제시된 테이블·컬럼만 사용하세요. 목록에 없는 테이블/뷰/컬럼을 추측하거나 만들어내지 마세요. 필요한 데이터가 스키마에 없으면 NO_SQL로 응답하세요.
 - Oracle 문법. 식별자는 대문자(따옴표 없이).
-- 멀티테넌시 필터는 메인(FROM) 테이블에만 한 번 적용: WHERE <메인별칭>.COMPANY='40' AND <메인별칭>.PLANT_CD='1000'.
-  JOIN된 테이블에는 동일 조건을 중복으로 넣지 마세요. JOIN ON 절에서 COMPANY/PLANT_CD를 연결했다면 그것으로 충분합니다.
+${organizationId !== undefined ? `- 조직 필터는 메인(FROM) 테이블에 ORGANIZATION_ID 컬럼이 있을 때만 한 번 적용: WHERE <메인별칭>.ORGANIZATION_ID = ${organizationId}.
+  JOIN된 테이블에는 같은 조건을 중복으로 넣지 마세요. JOIN ON 절에서 ORGANIZATION_ID를 연결했다면 그것으로 충분합니다.` : '- 조직(ORGANIZATION_ID) 필터는 넣지 마세요.'}
 - 컬럼 의미는 각 컬럼 뒤 주석(-- 설명)으로 판단하고, 질문 속 단어를 의미가 맞는 컬럼에 매핑하세요.
   (예: "대표/사장"은 대표자명 컬럼, "회사/업체/거래처"는 회사명·거래처명 컬럼) 조건 컬럼을 임의로 고르지 마세요.
 - JOIN이 필요하면 '테이블 관계(JOIN 키)' 섹션에 제시된 키로 연결하세요. 관계 섹션에 없는 임의 컬럼으로 JOIN을 추측하지 마세요.
 - 이름·명칭 등 텍스트 검색은 정확일치(=) 대신 LIKE '%값%'를 사용하세요.
 - 검색값에서 한국어 조사(은/는/이/가/을/를/에/의/와/과/도)를 제거하고 핵심 단어만 사용하세요. 예: "정의선이" → "정의선".
-- 조회는 SELECT. 등록은 INSERT, 수정은 UPDATE(UPDATE는 WHERE 필수). DELETE/DDL 절대 금지.
+- 조회(SELECT 또는 WITH)만 생성하세요. INSERT/UPDATE/DELETE/DDL 은 만들지 않습니다. 등록·수정·삭제 요청이면 "NO_SQL"만 응답하세요.
 - 단일 쿼리만. 세미콜론으로 여러 쿼리를 연결하지 마세요.
 - 데이터 작업이 불필요한 일반 대화면 "NO_SQL"만 응답.
 - SQL만 출력(코드블록·설명 없이). 또는 "NO_SQL".`;
 
-const ANALYSIS_PROMPT = `당신은 HANES MES 데이터 분석 AI입니다. 한국어 마크다운으로 답합니다.
+const ANALYSIS_PROMPT = `당신은 은성전장 MES 데이터 분석 AI입니다. 한국어 마크다운으로 답합니다.
 규칙:
 - 반드시 실행 SQL 결과(JSON)와 참고 문서에 있는 내용만 사용하세요. 모델이 학습한 일반 지식으로 절차, 규칙, 원인, API, 상태값을 보태지 마세요.
 - 결과와 참고 문서에 없는 내용은 "제공된 출처에서는 확인되지 않습니다"라고 답하세요.
@@ -74,7 +75,7 @@ const ANALYSIS_PROMPT = `당신은 HANES MES 데이터 분석 AI입니다. 한�
 - 결과에 없는 데이터를 지어내지 마세요.`;
 
 const GENERAL_PROMPT =
-  '당신은 HANES MES(제조실행시스템) 운영을 돕는 AI 비서입니다. 한국어로 정확하고 실무자가 바로 판단할 수 있게 답합니다. ' +
+  '당신은 은성전장 MES(제조실행시스템) 운영을 돕는 AI 비서입니다. 한국어로 정확하고 실무자가 바로 판단할 수 있게 답합니다. ' +
   '반드시 제공된 도움말/문서 출처에 있는 내용만 사용하세요. 출처에 없는 절차, 규칙, API, 상태값, 원인을 모델 지식으로 보태면 안 됩니다. ' +
   '출처에서 확인되지 않는 내용은 "제공된 출처에서는 확인되지 않습니다"라고 답하세요. ' +
   '질문에 바로 답한 뒤, 필요한 경우 확인한 근거, 업무 영향, 다음 확인 항목을 함께 제시하세요. ' +
@@ -102,6 +103,7 @@ export class AiSqlService {
   async process(
     messages: AiChatMessageDto[],
     knowledgeContext?: AiKnowledgeContextDto,
+    organizationId?: number,
   ): Promise<AiSqlResult> {
     const rawUserMessage = [...messages].reverse().find((m) => m.role === 'user')?.content ?? '';
     const route = this.parseRouteMode(rawUserMessage);
@@ -110,7 +112,7 @@ export class AiSqlService {
     if (route.mode === 'web') {
       return {
         content:
-          '/WEB 외부 웹 검색은 현재 HANES 백엔드 AI 채팅 파이프라인에 연결되어 있지 않습니다. MES 데이터는 /MES, 화면 도움말은 /HELP로 질문해 주세요.',
+          '/WEB 외부 웹 검색은 현재 은성전장 MES 백엔드 AI 채팅 파이프라인에 연결되어 있지 않습니다. MES 데이터는 /MES, 화면 도움말은 /HELP로 질문해 주세요.',
       };
     }
 
@@ -140,6 +142,7 @@ export class AiSqlService {
       knowledgeContext,
       knowledgeIntent,
       route.mode,
+      organizationId,
     );
     return this.withSources(result, knowledgeChunks);
   }
@@ -169,6 +172,7 @@ export class AiSqlService {
     knowledgeContext?: AiKnowledgeContextDto,
     knowledgeIntent: KnowledgeIntent = 'usage',
     routeMode: AiChatRouteMode = 'auto',
+    organizationId?: number,
   ): Promise<AiSqlResult> {
     if (routeMode === 'help') {
       return this.generalChat(messages, knowledgePrompt, knowledgeContext, knowledgeIntent);
@@ -181,7 +185,7 @@ export class AiSqlService {
     // [2단계] SQL 생성 (스키마 + 카탈로그 관계(JOIN 키) 주입)
     const schemaText = await this.schemaInfo.getSchemaText(tables);
     const relations = await this.catalog.getRelationsText(tables);
-    const rawSql = await this.generateSql(userMessage, relations ? `${schemaText}\n\n${relations}` : schemaText);
+    const rawSql = await this.generateSql(userMessage, relations ? `${schemaText}\n\n${relations}` : schemaText, organizationId);
     if (!rawSql) return this.generalChat(messages, knowledgePrompt, knowledgeContext, knowledgeIntent);
 
     // [검증]
@@ -189,15 +193,6 @@ export class AiSqlService {
     const sql = this.validator.stripFences(rawSql);
     if (!v.valid) {
       return { content: `생성된 SQL이 보안 정책에 위배됩니다: ${v.error}`, sql };
-    }
-
-    // 쓰기: 승인 대기 (실행하지 않음)
-    if (v.kind === 'write') {
-      return {
-        content: '아래 데이터 변경 작업을 검토하고, 실행하려면 승인해 주세요.',
-        sql,
-        requiresApproval: true,
-      };
     }
 
     // 조회: 즉시 실행 + 분석
@@ -216,26 +211,9 @@ export class AiSqlService {
     }
   }
 
-  /** 승인된 INSERT/UPDATE 실행 (재검증 필수) */
-  async executeApproved(rawSql: string): Promise<AiSqlResult> {
-    const v = this.validator.validate(rawSql);
-    if (!v.valid) throw new BadRequestException(`SQL 검증 실패: ${v.error}`);
-    if (v.kind !== 'write') {
-      throw new BadRequestException('승인 실행은 INSERT/UPDATE 문만 가능합니다.');
-    }
-    const sql = this.validator.stripFences(rawSql);
-    try {
-      const result = await this.dataSource.query(sql);
-      const affected = Array.isArray(result) ? result.length : (result?.affectedRows ?? 0);
-      return { content: `실행이 완료되었습니다. (영향받은 행: ${affected})`, sql, executed: true };
-    } catch (error: unknown) {
-      this.logger.error(
-        `승인 SQL 실행 실패: ${error instanceof Error ? error.message : String(error)}`,
-      );
-      throw new BadRequestException(
-        `실행 중 오류가 발생했습니다: ${error instanceof Error ? error.message : '알 수 없음'}`,
-      );
-    }
+  /** 쓰기 SQL 실행 — 은성전장은 AI SQL 을 조회 전용으로 운영하므로 항상 거절한다 (경로는 프론트 호환용으로 유지) */
+  async executeApproved(_rawSql: string): Promise<AiSqlResult> {
+    throw new BadRequestException('AI 는 조회(SELECT)만 실행합니다. 데이터 등록·수정은 해당 화면에서 처리해 주세요.');
   }
 
   private async selectTables(userMessage: string): Promise<string[]> {
@@ -262,9 +240,9 @@ export class AiSqlService {
     }
   }
 
-  private async generateSql(userMessage: string, schemaText: string): Promise<string | null> {
+  private async generateSql(userMessage: string, schemaText: string, organizationId?: number): Promise<string | null> {
     const res = await this.aiService.complete([
-      { role: 'system', content: SQL_GEN_PROMPT },
+      { role: 'system', content: sqlGenPrompt(organizationId) },
       {
         role: 'user',
         content: `## 테이블 스키마\n${schemaText}\n\n## 질문\n${userMessage}\n\nOracle SQL 한 개를 생성하세요. 데이터 작업이 불필요하면 NO_SQL.`,

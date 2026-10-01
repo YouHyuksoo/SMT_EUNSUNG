@@ -44,11 +44,12 @@ export class AiCatalogService {
 
   constructor(@InjectDataSource() private readonly dataSource: DataSource) {}
 
-  /** md 파일 경로. 기본은 프로젝트 루트의 docs/database/table-catalog.md (docs 표준으로 관리).
+  /** md 파일 경로. 기본은 프로젝트 루트의 docs/database/ai-table-catalog.md — catalog/sync 가 DB 주석으로 만드는 AI 전용 형식.
+   *  (docs/database/infinity21-jsmes-table-catalog.md 는 표 형식 인벤토리라 이 파서와 맞지 않는다)
    *  env AI_CATALOG_PATH로 override 가능. 상대경로는 프로젝트 루트(backend cwd의 ../..) 기준. */
   private filePath(): string {
     const root = path.resolve(process.cwd(), '..', '..');
-    const p = process.env.AI_CATALOG_PATH || 'docs/database/table-catalog.md';
+    const p = process.env.AI_CATALOG_PATH || 'docs/database/ai-table-catalog.md';
     return path.isAbsolute(p) ? p : path.resolve(root, p);
   }
 
@@ -184,7 +185,7 @@ export class AiCatalogService {
   /** CatalogTable[] → md (정규 형식) */
   serialize(tables: CatalogTable[]): string {
     const head = [
-      '# HANES MES — AI 테이블 카탈로그',
+      '# 은성전장 MES — AI 테이블 카탈로그',
       '',
       '<!-- AI 질의(text-to-SQL) 시 주입되는 테이블 지식. 사람이 직접 편집할 수 있습니다. -->',
       '<!-- 형식: "## 테이블명 — 설명" / "동의어: a, b" / "관계:" 아래 "- 컬럼 -> 대상테이블.컬럼" -->',

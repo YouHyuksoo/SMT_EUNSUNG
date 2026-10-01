@@ -4,7 +4,6 @@
  */
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { SysConfig } from '../../entities/sys-config.entity';
 import { AiChatFeedback } from '../../entities/ai-chat-feedback.entity';
 import { AiKnowledgeModule } from '../ai-knowledge/ai-knowledge.module';
 import { AiController } from './ai.controller';
@@ -17,7 +16,7 @@ import { AiFeedbackService } from './ai-feedback.service';
 import { KnowledgePipelineService } from './knowledge-pipeline.service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([SysConfig, AiChatFeedback]), AiKnowledgeModule],
+  imports: [TypeOrmModule.forFeature([AiChatFeedback]), AiKnowledgeModule],
   controllers: [AiController],
   providers: [AiService, AiSqlService, AiCatalogService, SchemaInfoService, SqlValidatorService, AiFeedbackService, KnowledgePipelineService],
 })

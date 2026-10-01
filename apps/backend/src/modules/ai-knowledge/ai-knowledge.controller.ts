@@ -2,7 +2,8 @@
  * @file src/modules/ai-knowledge/ai-knowledge.controller.ts
  * @description AI 문서 RAG 인덱스 관리/검색 API.
  */
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { IsArray, IsIn, IsNumber, IsOptional, IsString, Max, Min } from 'class-validator';
 import { AiKnowledgeService, KnowledgeSearchContext } from './ai-knowledge.service';
 
@@ -45,6 +46,7 @@ class KnowledgeReindexDto {
 }
 
 @Controller('ai/knowledge')
+@UseGuards(JwtAuthGuard)
 export class AiKnowledgeController {
   constructor(private readonly knowledge: AiKnowledgeService) {}
 

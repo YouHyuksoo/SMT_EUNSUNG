@@ -17,13 +17,11 @@ export class AiFeedbackService {
 
   async create(
     dto: AiChatFeedbackDto,
-    company: string,
-    plant: string,
+    organizationId: number,
     createdBy: string,
   ): Promise<{ id: number }> {
     const entity = this.repository.create({
-      company,
-      plant,
+      organizationId,
       route: dto.route ?? null,
       menuCode: dto.menuCode ?? null,
       question: dto.question,
@@ -36,8 +34,8 @@ export class AiFeedbackService {
     return { id: saved.feedbackId };
   }
 
-  async remove(feedbackId: number, company: string, plant: string): Promise<{ ok: true }> {
-    await this.repository.delete({ feedbackId, company, plant });
+  async remove(feedbackId: number, organizationId: number): Promise<{ ok: true }> {
+    await this.repository.delete({ feedbackId, organizationId });
     return { ok: true };
   }
 }
