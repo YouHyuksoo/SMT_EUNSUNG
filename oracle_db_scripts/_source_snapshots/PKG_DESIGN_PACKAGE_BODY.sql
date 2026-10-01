@@ -477,7 +477,7 @@ IS
                    LEVEL bom_level,
                    sort_sequence,
                    SYS_CONNECT_BY_PATH (
-                      TRIM (TO_CHAR (sort_sequence || ROWNUM, '0000')),
+                      TRIM (TO_CHAR (sort_sequence || ROWNUM, '000000000')),
                       '.')
                       AS sort_order,
                    parent_item_code,
@@ -708,7 +708,7 @@ IS
                    LEVEL bom_level,
                    sort_sequence,
                    SYS_CONNECT_BY_PATH (
-                      TRIM (TO_CHAR (sort_sequence || ROWNUM, '0000')),
+                      TRIM (TO_CHAR (sort_sequence || ROWNUM, '000000000')),
                       '.')
                       AS sort_order,
                    parent_item_code,
@@ -891,7 +891,7 @@ IS
                    LEVEL bom_level,
                    sort_sequence,
                    SYS_CONNECT_BY_PATH (
-                      TRIM (TO_CHAR (sort_sequence || ROWNUM, '0000')),
+                      TRIM (TO_CHAR (sort_sequence || ROWNUM, '000000000')),
                       '.')
                       AS sort_order,
                    parent_item_code,
@@ -1074,7 +1074,7 @@ IS
                    LEVEL bom_level,
                    sort_sequence,
                    SYS_CONNECT_BY_PATH (
-                      TRIM (TO_CHAR (sort_sequence || ROWNUM, '0000')),
+                      TRIM (TO_CHAR (sort_sequence || ROWNUM, '000000000')),
                       '.')
                       AS sort_order,
                    parent_item_code,
