@@ -11,7 +11,9 @@ import { Calendar, Download, FileSpreadsheet, GitBranch, Layers, RefreshCw, Sear
 import { Button, Card, CardContent, Input } from "@/components/ui";
 import { useComCodeOptions } from "@/hooks/useComCode";
 import api from "@/services/api";
+import DataGrid from "@/components/data-grid/DataGrid";
 import BomTab from "./components/BomTab";
+import { parentColumns } from "./parentColumns";
 import BomUploadModal from "./components/BomUploadModal";
 import RoutingMaterialEditor from "../routing/components/RoutingMaterialEditor";
 import type { BomRoutingInfo, BomRoutingProcess, ParentPart, RoutingTarget } from "./types";
@@ -23,6 +25,13 @@ export default function BomPage() {
   const router = useRouter();
   // 제품/반제품 구분은 ITEM_TYPE(자작·유상·무상)이 아니라 ITEM DIVISION(F 제품 / W 반제품) 기준 — PB ddlb_item_division 과 같다
   const itemDivisionOptions = useComCodeOptions("ITEM DIVISION");
+  // 차종: 모델마스터 PRODUCT_CLASS 코드 → 공통코드 PRODUCT CLASS 의 이름 (예: DN8 HEV)
+  const productClassOptions = useComCodeOptions("PRODUCT CLASS");
+  const productClassLabelMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    productClassOptions.forEach((option) => { map[option.value] = option.label; });
+    return map;
+  }, [productClassOptions]);
   const [parents, setParents] = useState<ParentPart[]>([]);
   const [selectedParent, setSelectedParent] = useState<ParentPart | null>(null);
   const [selectedBomItem, setSelectedBomItem] = useState<RoutingTarget | null>(null);
@@ -47,6 +56,11 @@ export default function BomPage() {
   const divisionFilterOptions = useMemo(
     () => itemDivisionOptions.filter((option) => option.value === "F" || option.value === "W"),
     [itemDivisionOptions],
+  );
+
+  const parentGridColumns = useMemo(
+    () => parentColumns({ productClass: productClassLabelMap, itemDivision: itemDivisionLabelMap }),
+    [productClassLabelMap, itemDivisionLabelMap],
   );
 
   const filteredParents = useMemo(() => {
@@ -227,7 +241,7 @@ export default function BomPage() {
       </div>
 
       <div className="grid grid-cols-12 gap-4 min-h-0 flex-1">
-        <div className="col-span-3 flex flex-col min-h-0">
+        <div className="col-span-4 flex flex-col min-h-0">
           <Card padding="none" className="flex-1 flex flex-col min-h-0">
             <CardContent className="flex-1 flex flex-col min-h-0 p-3">
               <div className="text-sm font-semibold text-text mb-2 shrink-0">{t("master.bom.productSemiProductList", "제품/반제품 목록")}</div>
@@ -262,52 +276,24 @@ export default function BomPage() {
                   </button>
                 ))}
               </div>
-              <div className="flex-1 overflow-y-auto border border-border rounded-lg min-h-0">
-                {loadingParents ? (
-                  <div className="flex justify-center py-12">
-                    <RefreshCw className="w-6 h-6 text-primary animate-spin" />
-                  </div>
-                ) : filteredParents.length === 0 ? (
-                  <div className="py-12 text-center text-sm text-text-muted">{t("common.noData")}</div>
-                ) : (
-                  <table className="w-full text-xs">
-                    <tbody>
-                      {filteredParents.map((parent) => (
-                        <tr
-                          key={parent.itemCode}
-                          onClick={() => setSelectedParent(parent)}
-                          className={`border-b border-border/50 cursor-pointer transition-colors ${
-                            selectedParent?.itemCode === parent.itemCode
-                              ? "bg-primary text-white"
-                              : "hover:bg-surface-hover text-text"
-                          }`}
-                        >
-                          <td className="px-2 py-1.5 min-w-0">
-                            <div
-                              className="flex items-center gap-2 min-w-0"
-                              title={`${parent.itemCode}${parent.itemNo ? ` (${parent.itemNo})` : ""} - ${parent.itemName}`}
-                            >
-                              <span className="shrink-0 font-mono font-semibold">{parent.itemCode}</span>
-                              <span className="min-w-0 flex-1 truncate">{parent.itemName}</span>
-                              {parent.itemDivision && (
-                                <span className="shrink-0 text-[10px] opacity-70">
-                                  {itemDivisionLabelMap[parent.itemDivision] || parent.itemDivision}
-                                </span>
-                              )}
-                              <span className="shrink-0 text-[10px] opacity-70">BOM {parent.bomCount}</span>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
+              <div className="flex-1 min-h-0">
+                <DataGrid
+                  data={filteredParents}
+                  columns={parentGridColumns}
+                  isLoading={loadingParents}
+                  emptyMessage={t("common.noData")}
+                  onRowClick={setSelectedParent}
+                  getRowId={(row) => row.itemCode}
+                  selectedRowId={selectedParent?.itemCode}
+                  pageSize={100}
+                  enableColumnFilter
+                />
               </div>
             </CardContent>
           </Card>
         </div>
 
-        <div className={`${routingPanelOpen ? "col-span-5" : "col-span-9"} flex flex-col min-h-0`}>
+        <div className={`${routingPanelOpen ? "col-span-4" : "col-span-8"} flex flex-col min-h-0`}>
           <Card padding="none" className="flex-1 flex flex-col min-h-0">
             <CardContent className="flex-1 flex flex-col min-h-0 p-3">
               <div className="flex items-center justify-between border-b border-border pb-2 mb-2 shrink-0">
