@@ -12,7 +12,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
-import { LogIn, Factory, Smartphone } from 'lucide-react';
+import { LogIn, Smartphone } from 'lucide-react';
+import Image from 'next/image';
 import { useAuthStore } from '@/stores/authStore';
 import { Button, Input } from '@/components/ui';
 import { AxiosError } from 'axios';
@@ -56,9 +57,14 @@ function LoginPage() {
         <div className="w-full max-w-md">
           {/* 모바일 로고 */}
           <div className="lg:hidden text-center mb-8">
-            <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center mx-auto mb-3">
-              <Factory className="w-6 h-6 text-white" />
-            </div>
+            <Image
+              src="/images/eunsung-logo.png"
+              alt="EUNSUNG"
+              width={132}
+              height={60}
+              priority
+              className="mx-auto mb-3"
+            />
             <h1 className="text-2xl font-bold text-text">은성전장 MES</h1>
           </div>
 
