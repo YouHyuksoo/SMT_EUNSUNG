@@ -120,10 +120,12 @@ Save Format v3.0(19990112)
  "d_pln_assembly_master_plan_lst_tree.srd" "infinity21_ud_pln.pbl";
  "d_pln_delivery_master_plan_lst_tree.srd" "infinity21_ud_pln.pbl";
  "d_pln_product_model_master_simple_4_apply_mst.srd" "infinity21_ud_pln.pbl";
+ "d_plan_pcm_run_card_rpt_qr.srd" "infinity21_ud_pln.pbl";
  "d_production_performance_model.srd" "infinity21_ud_pln.pbl";
  "d_pln_product_workstage_io_ws_list.srd" "infinity21_ud_pln.pbl";
  "d_pln_product_sensor_actual_time_modify.srd" "infinity21_ud_pln.pbl";
  "d_pln_smd_master_plan_vs_actual_lst.srd" "infinity21_ud_pln.pbl";
+ "d_plan_pcm_run_card_all_rpt_qr.srd" "infinity21_ud_pln.pbl";
  "d_sal_sale_price_lst_tree.srd" "infinity21_ud_pln.pbl";
  "d_pln_product_work_time_lst.srd" "infinity21_ud_pln.pbl";
  "d_pln_delivery_month_master_plan_lst.srd" "infinity21_ud_pln.pbl";

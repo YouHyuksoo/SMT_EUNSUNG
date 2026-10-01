@@ -4,6 +4,7 @@ Save Format v3.0(19990112)
 @end;
 @begin Objects
  "w_smt_pickup_rate_head.srw" "infinity21_uw_smt.pbl";
+ "w_smt_split_history_master.srw" "infinity21_uw_smt.pbl";
  "w_smt_pickup_rate_base.srw" "infinity21_uw_smt.pbl";
  "w_smt_upload_nc_master.srw" "infinity21_uw_smt.pbl";
  "w_smt_location_master.srw" "infinity21_uw_smt.pbl";

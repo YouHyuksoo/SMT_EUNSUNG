@@ -225,7 +225,7 @@ int lvi_count
 	where item_code         = :lvs_item_code
 	    and lot_no = :lvs_lot_no 
 		and receipt_compare_yn = 'Y'
-		and return_yn = 'N' 
+		and NVL(return_yn, 'N') = 'N' 
 		and barcode_status <> 'C' 
 		and organization_id        = :gvi_organization_id ;
 		
@@ -251,10 +251,10 @@ if lvi_count > 0 then
 		      and receipt_status <> 'C' 
 			 and organization_id = :gvi_organization_id 
 			  and enter_date = ( select max(enter_date) from  im_item_receipt 
-		  where item_code = :lvs_item_code
-	          and material_mfs    = :lvs_lot_no 
-		      and receipt_status <> 'C' 
-			 and organization_id = :gvi_organization_id  ) 
+	                                   	  where item_code = :lvs_item_code
+	                                          and material_mfs    = :lvs_lot_no 
+		                                     and receipt_status <> 'C' 
+			                                 and organization_id = :gvi_organization_id  ) 
 			 and rownum = 1 
 			 ;
 			  
@@ -273,7 +273,7 @@ if lvi_count > 0 then
 			 where  item_code         = :lvs_item_code
 	  			and lot_no = :lvs_lot_no 
 				and receipt_compare_yn = 'Y'
-				and return_yn = 'N'
+				and NVL(return_yn, 'N') = 'N' 
 				and barcode_status <> 'C' 
 				and organization_id  = :gvi_organization_id ;
 				
@@ -314,10 +314,10 @@ else
 		      and receipt_status <> 'C' 
 			 and organization_id = :gvi_organization_id 
 			  and enter_date = ( select max(enter_date) from  im_item_receipt 
-		  where item_code = :lvs_item_code
-	          and material_mfs    = :lvs_lot_no 
-		      and receipt_status <> 'C' 
-			 and organization_id = :gvi_organization_id  ) 
+		                                  where item_code = :lvs_item_code
+	                                          and material_mfs    = :lvs_lot_no 
+		                                      and receipt_status <> 'C' 
+		                                  	  and organization_id = :gvi_organization_id  ) 
 			 and rownum = 1 
 			 ;
 			  
@@ -331,12 +331,11 @@ else
 //======================================================
 			UPDATE im_item_receipt_barcode 
 		   	     SET receipt_compare_yn = 'N' ,
-					   
 					   barcode_status = 'C'
 			 where  item_code         = :lvs_item_code
 	  			and lot_no = :lvs_lot_no 
 				and receipt_compare_yn = 'Y'
-				and return_yn = 'N'
+				and NVL(return_yn, 'N') = 'N' 
 				and barcode_status <> 'C' 
 				and organization_id  = :gvi_organization_id ;
 				

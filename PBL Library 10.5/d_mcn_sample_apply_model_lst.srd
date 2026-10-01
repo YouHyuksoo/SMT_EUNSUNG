@@ -1,0 +1,63 @@
+HA$PBExportHeader$d_mcn_sample_apply_model_lst.srd
+$PBExportComments$apply model for sample master
+release 10.5;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no grid.lines=0 )
+header(height=132 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=76 color="536870912" )
+table(column=(type=char(30) update=yes updatewhereclause=yes key=yes name=sample_code dbname="imcn_sample_apply_model.sample_code" )
+ column=(type=char(30) update=yes updatewhereclause=yes key=yes name=sample_lot_no dbname="imcn_sample_apply_model.sample_lot_no" )
+ column=(type=char(30) update=yes updatewhereclause=yes key=yes name=item_code dbname="imcn_sample_apply_model.item_code" )
+ column=(type=number update=yes updatewhereclause=yes key=yes name=organization_id dbname="imcn_sample_apply_model.organization_id" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=enter_by dbname="imcn_sample_apply_model.enter_by" )
+ column=(type=datetime update=yes updatewhereclause=yes name=enter_date dbname="imcn_sample_apply_model.enter_date" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=last_modify_by dbname="imcn_sample_apply_model.last_modify_by" )
+ column=(type=datetime update=yes updatewhereclause=yes name=last_modify_date dbname="imcn_sample_apply_model.last_modify_date" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=apply_smt_model_name dbname="imcn_sample_apply_model.apply_smt_model_name" )
+ retrieve="  SELECT ~"IMCN_SAMPLE_APPLY_MODEL~".~"SAMPLE_CODE~",   
+              ~"IMCN_SAMPLE_APPLY_MODEL~".~"SAMPLE_LOT_NO~",   
+              ~"IMCN_SAMPLE_APPLY_MODEL~".~"ITEM_CODE~",   
+              ~"IMCN_SAMPLE_APPLY_MODEL~".~"ORGANIZATION_ID~",   
+              ~"IMCN_SAMPLE_APPLY_MODEL~".~"ENTER_BY~",   
+              ~"IMCN_SAMPLE_APPLY_MODEL~".~"ENTER_DATE~",   
+              ~"IMCN_SAMPLE_APPLY_MODEL~".~"LAST_MODIFY_BY~",   
+              ~"IMCN_SAMPLE_APPLY_MODEL~".~"LAST_MODIFY_DATE~",   
+              ~"IMCN_SAMPLE_APPLY_MODEL~".~"APPLY_SMT_MODEL_NAME~"  
+    FROM ~"IMCN_SAMPLE_APPLY_MODEL~"  
+   WHERE ( ~"IMCN_SAMPLE_APPLY_MODEL~".~"SAMPLE_CODE~"             = :arg_sample_code ) AND  
+              ( ~"IMCN_SAMPLE_APPLY_MODEL~".~"SAMPLE_LOT_NO~"          = :arg_sample_lot_no ) AND  
+              ( ~"IMCN_SAMPLE_APPLY_MODEL~".~"ORGANIZATION_ID~" = :arg_org )    
+" update="IMCN_SAMPLE_APPLY_MODEL" updatewhere=0 updatekeyinplace=no arguments=(("arg_sample_code", string),("arg_sample_lot_no", string),("arg_org", number))  sort="item_code A apply_smt_model_name A " )
+text(band=header alignment="2" text="Sample Code" border="0" color="33554432" x="343" y="4" height="120" width="466" html.valueishtml="0"  name=sample_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Sample Lot No" border="0" color="33554432" x="818" y="4" height="120" width="494" html.valueishtml="0"  name=sample_lot_no_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Item Code" border="0" color="33554432" x="1321" y="4" height="120" width="471" html.valueishtml="0"  name=item_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Organization Id" border="0" color="33554432" x="2304" y="4" height="120" width="320" html.valueishtml="0"  name=organization_id_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Enter By" border="0" color="33554432" x="3209" y="4" height="120" width="389" html.valueishtml="0"  name=enter_by_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Enter Date" border="0" color="33554432" x="2633" y="4" height="120" width="567" html.valueishtml="0"  name=enter_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Last Modify By" border="0" color="33554432" x="4155" y="4" height="120" width="402" html.valueishtml="0"  name=last_modify_by_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Last Modify Date" border="0" color="33554432" x="3607" y="4" height="120" width="539" html.valueishtml="0"  name=last_modify_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Apply Smt Model Name" border="0" color="33554432" x="1801" y="4" height="120" width="494" html.valueishtml="0"  name=apply_smt_model_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="65535" )
+compute(band=detail alignment="2" expression="getrow()"border="0" color="33554432" x="9" y="8" height="60" width="114" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="2" expression="trim('')"border="0" color="16777215" x="133" y="4" height="60" width="201" format="[GENERAL]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+button(band=detail text="Del" enabled=yes action="10" border="0" color="33554432" x="123" y="0" height="76" width="197" vtextalign="0" htextalign="0"  name=b_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="67108864" )
+column(band=detail id=1 alignment="0" tabsequence=10 border="0" color="33554432" x="343" y="8" height="60" width="466" format="[general]" html.valueishtml="0"  name=sample_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=2 alignment="0" tabsequence=20 border="0" color="33554432" x="818" y="8" height="60" width="494" format="[general]" html.valueishtml="0"  name=sample_lot_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=3 alignment="0" tabsequence=30 border="0" color="33554432" x="1321" y="8" height="60" width="471" format="[general]" html.valueishtml="0"  name=item_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=9 alignment="0" tabsequence=40 border="0" color="33554432" x="1801" y="8" height="60" width="494" format="[general]" html.valueishtml="0"  name=apply_smt_model_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="0" color="33554432" x="2304" y="8" height="60" width="320" format="[general]" html.valueishtml="0"  name=organization_id visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=5 alignment="2" tabsequence=32766 border="0" color="33554432" x="3209" y="8" height="60" width="389" format="[general]" html.valueishtml="0"  name=enter_by visible="1" dddw.name=vd_user_name dddw.displaycolumn=user_name dddw.datacolumn=user_id dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=6 alignment="2" tabsequence=32766 border="0" color="33554432" x="2633" y="8" height="60" width="567" format="[shortdate] [time]" html.valueishtml="0"  name=enter_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=7 alignment="2" tabsequence=32766 border="0" color="33554432" x="4155" y="8" height="60" width="402" format="[general]" html.valueishtml="0"  name=last_modify_by visible="1" dddw.name=vd_user_name dddw.displaycolumn=user_name dddw.datacolumn=user_id dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=8 alignment="2" tabsequence=32766 border="0" color="33554432" x="3607" y="8" height="60" width="539" format="[shortdate] [time]" html.valueishtml="0"  name=last_modify_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

@@ -21,12 +21,24 @@ type sle_pcb_barcode from so_singlelineedit within w_qc_pcb_input_scan_master
 end type
 type st_3 from so_statictext within w_qc_pcb_input_scan_master
 end type
+type st_1 from so_statictext within w_qc_pcb_input_scan_master
+end type
+type sle_run_no from so_singlelineedit within w_qc_pcb_input_scan_master
+end type
+type st_2 from so_statictext within w_qc_pcb_input_scan_master
+end type
+type sle_model from so_singlelineedit within w_qc_pcb_input_scan_master
+end type
+type st_6 from so_statictext within w_qc_pcb_input_scan_master
+end type
+type sle_week from so_singlelineedit within w_qc_pcb_input_scan_master
+end type
 type gb_1 from so_groupbox within w_qc_pcb_input_scan_master
 end type
 end forward
 
 global type w_qc_pcb_input_scan_master from w_main_root
-integer width = 4571
+integer width = 5792
 integer height = 2748
 string title = "PCB Input Scan List Query"
 st_line_code st_line_code
@@ -38,6 +50,12 @@ uo_item uo_item
 st_5 st_5
 sle_pcb_barcode sle_pcb_barcode
 st_3 st_3
+st_1 st_1
+sle_run_no sle_run_no
+st_2 st_2
+sle_model sle_model
+st_6 st_6
+sle_week sle_week
 gb_1 gb_1
 end type
 global w_qc_pcb_input_scan_master w_qc_pcb_input_scan_master
@@ -54,6 +72,12 @@ this.uo_item=create uo_item
 this.st_5=create st_5
 this.sle_pcb_barcode=create sle_pcb_barcode
 this.st_3=create st_3
+this.st_1=create st_1
+this.sle_run_no=create sle_run_no
+this.st_2=create st_2
+this.sle_model=create sle_model
+this.st_6=create st_6
+this.sle_week=create sle_week
 this.gb_1=create gb_1
 iCurrent=UpperBound(this.Control)
 this.Control[iCurrent+1]=this.st_line_code
@@ -65,7 +89,13 @@ this.Control[iCurrent+6]=this.uo_item
 this.Control[iCurrent+7]=this.st_5
 this.Control[iCurrent+8]=this.sle_pcb_barcode
 this.Control[iCurrent+9]=this.st_3
-this.Control[iCurrent+10]=this.gb_1
+this.Control[iCurrent+10]=this.st_1
+this.Control[iCurrent+11]=this.sle_run_no
+this.Control[iCurrent+12]=this.st_2
+this.Control[iCurrent+13]=this.sle_model
+this.Control[iCurrent+14]=this.st_6
+this.Control[iCurrent+15]=this.sle_week
+this.Control[iCurrent+16]=this.gb_1
 end on
 
 on w_qc_pcb_input_scan_master.destroy
@@ -79,6 +109,12 @@ destroy(this.uo_item)
 destroy(this.st_5)
 destroy(this.sle_pcb_barcode)
 destroy(this.st_3)
+destroy(this.st_1)
+destroy(this.sle_run_no)
+destroy(this.st_2)
+destroy(this.sle_model)
+destroy(this.st_6)
+destroy(this.sle_week)
 destroy(this.gb_1)
 end on
 
@@ -132,7 +168,7 @@ choose case gvs_ue_data_control
 		
 	case 'RETRIEVE'
 		
-			dw_1.retrieve( uo_item.text()+'%' ,  sle_pcb_barcode.text+'%' ,  ddlb_line_code.getcode() + '%',  uo_dateset.text() , uo_dateend.text() ,   gvi_organization_id)
+			dw_1.retrieve( uo_item.text()+'%' ,  sle_pcb_barcode.text+'%' ,  ddlb_line_code.getcode() + '%',  uo_dateset.text() , uo_dateend.text() ,   gvi_organization_id, sle_run_no.text+'%', sle_model.text+'%', sle_week.text+'%')
 			dw_1.setfocus()
 			
 	case else
@@ -197,7 +233,7 @@ end type
 
 type ddlb_line_code from uo_line_code within w_qc_pcb_input_scan_master
 integer x = 69
-integer y = 188
+integer y = 176
 integer taborder = 20
 boolean bringtotop = true
 end type
@@ -205,7 +241,7 @@ end type
 type uo_dateset from uo_ymd_calendar within w_qc_pcb_input_scan_master
 event destroy ( )
 integer x = 2322
-integer y = 184
+integer y = 176
 integer taborder = 40
 boolean bringtotop = true
 end type
@@ -217,7 +253,7 @@ end on
 type uo_dateend from uo_ymd_calendar within w_qc_pcb_input_scan_master
 event destroy ( )
 integer x = 2738
-integer y = 184
+integer y = 176
 integer taborder = 50
 boolean bringtotop = true
 end type
@@ -237,7 +273,7 @@ end type
 
 type uo_item from uo_item_code within w_qc_pcb_input_scan_master
 integer x = 709
-integer y = 188
+integer y = 176
 integer width = 581
 integer height = 764
 integer taborder = 50
@@ -256,7 +292,7 @@ end type
 
 type sle_pcb_barcode from so_singlelineedit within w_qc_pcb_input_scan_master
 integer x = 1298
-integer y = 188
+integer y = 176
 integer width = 997
 integer height = 84
 integer taborder = 50
@@ -269,12 +305,66 @@ integer y = 104
 integer width = 997
 integer height = 68
 boolean bringtotop = true
-string text = "PCB Barcode"
+string text = "Item Barcode"
+end type
+
+type st_1 from so_statictext within w_qc_pcb_input_scan_master
+integer x = 3168
+integer y = 104
+integer width = 562
+integer height = 68
+boolean bringtotop = true
+string text = "Run No"
+end type
+
+type sle_run_no from so_singlelineedit within w_qc_pcb_input_scan_master
+integer x = 3168
+integer y = 176
+integer width = 562
+integer height = 84
+integer taborder = 60
+boolean bringtotop = true
+end type
+
+type st_2 from so_statictext within w_qc_pcb_input_scan_master
+integer x = 3749
+integer y = 104
+integer width = 928
+integer height = 68
+boolean bringtotop = true
+string text = "Model"
+end type
+
+type sle_model from so_singlelineedit within w_qc_pcb_input_scan_master
+integer x = 3749
+integer y = 176
+integer width = 928
+integer height = 84
+integer taborder = 60
+boolean bringtotop = true
+end type
+
+type st_6 from so_statictext within w_qc_pcb_input_scan_master
+integer x = 4695
+integer y = 104
+integer width = 562
+integer height = 68
+boolean bringtotop = true
+string text = "Manufacture Week"
+end type
+
+type sle_week from so_singlelineedit within w_qc_pcb_input_scan_master
+integer x = 4695
+integer y = 176
+integer width = 562
+integer height = 84
+integer taborder = 60
+boolean bringtotop = true
 end type
 
 type gb_1 from so_groupbox within w_qc_pcb_input_scan_master
 integer x = 9
-integer width = 3173
+integer width = 5312
 integer height = 304
 integer taborder = 10
 integer weight = 700

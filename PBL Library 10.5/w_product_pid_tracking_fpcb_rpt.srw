@@ -125,7 +125,7 @@ CHOOSE CASE Gvs_Ue_DATA_control
 			DW_1.RETRIEVE( sle_pcb_serial_no.text , gvi_organization_id )
 			
 			f_set_column_dddw( dw_1 )
-	//		f_dual_lang_change_dwtext( dw_1 )
+			f_dual_lang_change_dwtext( dw_1 )
 			
 	CASE ELSE
 		

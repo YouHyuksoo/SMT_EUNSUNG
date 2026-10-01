@@ -10,6 +10,7 @@ Save Format v3.0(19990112)
  "f_get_column_display_size.srf" "infinity21_sf.pbl";
  "f_download_mold_image.srf" "infinity21_sf.pbl";
  "f_object_role_check.srf" "infinity21_sf.pbl";
+ "f_download_qr_barcode.srf" "infinity21_sf.pbl";
  "f_reset_dual_language.srf" "infinity21_sf.pbl";
  "f_sort.srf" "infinity21_sf.pbl";
  "f_dual_lang_gettext_menu.srf" "infinity21_sf.pbl";
