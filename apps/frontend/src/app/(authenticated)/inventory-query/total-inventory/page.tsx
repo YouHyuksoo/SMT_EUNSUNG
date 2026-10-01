@@ -19,7 +19,7 @@ import toast from 'react-hot-toast';
 import { Search } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
 import ScreenTabs from '@/components/shared/ScreenTabs';
-import { Button, Card, CardContent, Input } from '@/components/ui';
+import { Button, Card, CardContent } from '@/components/ui';
 import api from '@/services/api';
 import {
   TruncationNotice,
@@ -36,6 +36,7 @@ import type {
   TotalInventoryRow,
 } from '../inventory-query-columns';
 import PartSearchField from '@/components/shared/PartSearchField';
+import ComCodeSelect from '@/components/shared/ComCodeSelect';
 
 type DetailTab = 'location' | 'lot';
 
@@ -124,12 +125,8 @@ export default function TotalInventoryPage() {
             className="w-44"
             onChange={(e) => setItemCode(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') void search(); }} />
-          <Input aria-label="품목분류" placeholder="품목분류" value={itemClass}
-            className="w-36"
-            onChange={(e) => setItemClass(e.target.value)} />
-          <Input aria-label="품목구분" placeholder="품목구분" value={itemDivision}
-            className="w-36"
-            onChange={(e) => setItemDivision(e.target.value)} />
+          <ComCodeSelect groupCode="ITEM CLASS" labelPrefix="품목분류" value={itemClass} onChange={setItemClass} className="w-44" />
+          <ComCodeSelect groupCode="ITEM DIVISION" labelPrefix="품목구분" value={itemDivision} onChange={setItemDivision} className="w-44" />
           <Button size="sm" onClick={search} disabled={loading}>
             <Search className="mr-1 h-4 w-4" />조회
           </Button>

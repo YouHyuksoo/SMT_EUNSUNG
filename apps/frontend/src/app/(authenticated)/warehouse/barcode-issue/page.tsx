@@ -48,6 +48,7 @@ import type {
   ScanCheck,
 } from '../barcode-issue-columns';
 import PartSearchField from '@/components/shared/PartSearchField';
+import ProcessSelect from '@/components/shared/ProcessSelect';
 
 const today = () => new Date().toISOString().slice(0, 10);
 const daysAgo = (n: number) => {
@@ -263,12 +264,8 @@ export default function BarcodeIssuePage() {
             <div className="w-40">
               <LineSelect value={lineCode} onChange={setLineCode} labelPrefix="라인" />
             </div>
-            <Input aria-label="공정코드" placeholder="공정코드" value={workstageCode}
-              className="w-32"
-              onChange={(e) => setWorkstageCode(e.target.value)} />
-            <Input aria-label="모델명" placeholder="모델명" value={modelName}
-              className="w-44"
-              onChange={(e) => setModelName(e.target.value)} />
+            <ProcessSelect labelPrefix="공정" value={workstageCode} onChange={setWorkstageCode} className="w-44" />
+            <ModelSearchField value={modelName} onChange={setModelName} className="w-44" />
             <Input aria-label="피더 위치" placeholder="피더 위치" value={feederLocationCode}
               className="w-32"
               onChange={(e) => setFeederLocationCode(e.target.value)} />

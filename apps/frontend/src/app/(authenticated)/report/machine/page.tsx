@@ -19,11 +19,12 @@ import DataGrid from '@/components/data-grid/DataGrid';
 import ComCodeSelect from '@/components/shared/ComCodeSelect';
 import DateRangeFilter from '@/components/shared/DateRangeFilter';
 import ScreenTabs from '@/components/shared/ScreenTabs';
-import { Button, Card, CardContent, Input } from '@/components/ui';
+import { Button, Card, CardContent } from '@/components/ui';
 import api from '@/services/api';
 import { TruncationNotice, useTruncation } from '../components/TruncationNotice';
 import { machineColumns, machineOperationColumns } from '../report-columns';
 import type { MachineOperationRow, MachineRow } from '../report-types';
+import EquipSelect from '@/components/shared/EquipSelect';
 
 const daysAgo = (n: number) => {
   const d = new Date();
@@ -90,9 +91,7 @@ export default function MachineReportPage() {
 
       <Card padding="none">
         <CardContent className="flex flex-wrap items-center gap-3 p-3">
-          <Input aria-label="설비코드" placeholder="설비코드" value={machineCode} className="w-40"
-            onChange={(e) => setMachineCode(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') void search(); }} />
+          <EquipSelect labelPrefix="설비" value={machineCode} onChange={setMachineCode} className="w-44" />
           <ComCodeSelect groupCode="MACHINE TYPE" labelPrefix="설비유형" value={machineType}
             onChange={setMachineType} className="w-52" />
           <DateRangeFilter label="가동일" from={dateFrom} to={dateTo}

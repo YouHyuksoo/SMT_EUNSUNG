@@ -20,6 +20,7 @@ import { Button, Card, CardContent, Input } from '@/components/ui';
 import api from '@/services/api';
 import { pidIssueScanColumns, type PidIssueScanRow } from '../pid-columns';
 import PartSearchField from '@/components/shared/PartSearchField';
+import ComCodeSelect from '@/components/shared/ComCodeSelect';
 
 const isoDate = (date: Date) => date.toISOString().slice(0, 10);
 const today = () => isoDate(new Date());
@@ -94,8 +95,7 @@ export default function PidIssueScanPage() {
             className="w-44" aria-label="모델명" placeholder="모델명" />
           <PartSearchField aria-label="품목코드" placeholder="품목코드" value={itemCode}
             className="w-40" onChange={(e) => setItemCode(e.target.value)} />
-          <Input aria-label="이슈유형" placeholder="이슈유형" value={pidIssueType}
-            className="w-36" onChange={(e) => setPidIssueType(e.target.value)} />
+          <ComCodeSelect groupCode="PID ISSUE TYPE" labelPrefix="이슈유형" value={pidIssueType} onChange={setPidIssueType} className="w-44" />
         </CardContent>
       </Card>
 

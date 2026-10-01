@@ -29,6 +29,7 @@ import {
 import { adjustHistoryColumns, inventoryCheckColumns } from '../inventory-query-columns';
 import type { AdjustHistoryRow, InventoryCheckRow } from '../inventory-query-columns';
 import PartSearchField from '@/components/shared/PartSearchField';
+import ComCodeSelect from '@/components/shared/ComCodeSelect';
 
 const lastMonth = () => {
   const d = new Date();
@@ -162,9 +163,7 @@ export default function InventoryCheckPage() {
           <Input aria-label="차이 수량" placeholder="차이 (실사 − 장부)"
             value={differenceQty} className="w-40" inputMode="numeric"
             onChange={(e) => setDifferenceQty(e.target.value)} />
-          <Input aria-label="창고코드" placeholder="창고코드 (선택)" value={locationCode}
-            className="w-36"
-            onChange={(e) => setLocationCode(e.target.value)} />
+          <ComCodeSelect groupCode="MATERIAL LOCATION CODE" labelPrefix="창고" value={locationCode} onChange={setLocationCode} className="w-44" />
           {Number.isFinite(diff) && diff !== 0 && (
             <span className={`text-sm font-semibold ${diff > 0 ? 'text-emerald-500' : 'text-red-500'}`}>
               {diff > 0 ? '실제가 더 많음' : '실제가 적음'} {Math.abs(diff).toLocaleString()}

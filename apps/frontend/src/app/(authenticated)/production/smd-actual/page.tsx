@@ -23,6 +23,7 @@ import { Button, Card, CardContent, ConfirmModal, Input, Modal } from '@/compone
 import api from '@/services/api';
 import { smdActualColumns, smdActualSummaryColumns } from '../planning-columns';
 import type { SmdActualRow, SmdActualSummaryRow } from '../planning-types';
+import ProcessSelect from '@/components/shared/ProcessSelect';
 
 type Tab = 'list' | 'summary';
 
@@ -192,8 +193,7 @@ export default function SmdActualPage() {
             onChange={setLineCode} className="w-56" />
           <ModelSearchField aria-label="모델명" placeholder="모델명" value={modelName}
             className="w-48" onChange={(v) => setModelName(v)} />
-          <Input aria-label="공정코드" placeholder="공정코드" value={workstageCode}
-            className="w-36" onChange={(e) => setWorkstageCode(e.target.value)} />
+          <ProcessSelect labelPrefix="공정" value={workstageCode} onChange={setWorkstageCode} className="w-44" />
         </CardContent>
       </Card>
 

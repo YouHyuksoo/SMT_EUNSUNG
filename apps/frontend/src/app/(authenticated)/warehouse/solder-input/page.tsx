@@ -21,6 +21,7 @@ import { Button, Card, CardContent, Input } from '@/components/ui';
 import api from '@/services/api';
 import { solderInputHistoryColumns } from '../solder-columns';
 import type { SolderInputHistoryRow } from '../warehouse-types';
+import EquipSelect from '@/components/shared/EquipSelect';
 
 const daysAgo = (n: number) => {
   const d = new Date();
@@ -84,9 +85,7 @@ export default function SolderInputHistoryPage() {
             className="w-44"
             onChange={(e) => setSolderLotNo(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') void search(); }} />
-          <Input aria-label="설비코드" placeholder="설비코드" value={machineCode}
-            className="w-36"
-            onChange={(e) => setMachineCode(e.target.value)} />
+          <EquipSelect labelPrefix="설비" value={machineCode} onChange={setMachineCode} className="w-44" />
           <Button size="sm" onClick={search} disabled={loading}>
             <Search className="mr-1 h-4 w-4" />조회
           </Button>

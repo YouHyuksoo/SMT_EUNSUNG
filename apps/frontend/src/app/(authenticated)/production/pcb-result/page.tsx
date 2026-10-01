@@ -31,6 +31,7 @@ import type {
   ResultRunRow,
   ResultSerialRow,
 } from '../planning-types';
+import ProcessSelect from '@/components/shared/ProcessSelect';
 
 const isoDate = (date: Date) => date.toISOString().slice(0, 10);
 const today = () => isoDate(new Date());
@@ -156,8 +157,7 @@ export default function PcbResultPage() {
             className="w-44" onChange={(e) => setRunNo(e.target.value)} />
           <ProdLineSelect labelPrefix="라인" value={lineCode}
             onChange={setLineCode} className="w-56" />
-          <Input aria-label="공정코드" placeholder="공정코드" value={workstageCode}
-            className="w-36" onChange={(e) => setWorkstageCode(e.target.value)} />
+          <ProcessSelect labelPrefix="공정" value={workstageCode} onChange={setWorkstageCode} className="w-44" />
         </CardContent>
       </Card>
 

@@ -26,6 +26,7 @@ import api from '@/services/api';
 import { SmtModelSelect, SmtPcbItemSelect } from '../components/SmtSelects';
 import { smtBomExplodeColumns } from '../columns';
 import type { SmtBomExplodeRow, SmtCompareRow } from '../types';
+import LineSelect from '@/components/shared/LineSelect';
 
 type Tab = 'group' | 'location' | 'explode';
 
@@ -184,8 +185,7 @@ export default function SmtBomComparisonPage() {
 
       <Card padding="none">
         <CardContent className="flex flex-wrap items-center gap-3 p-3">
-          <Input aria-label="라인코드" placeholder="라인코드" value={lineCode}
-            className="w-36" onChange={(e) => setLineCode(e.target.value)} />
+          <LineSelect labelPrefix="라인" value={lineCode} onChange={setLineCode} className="w-44" />
           <SmtPcbItemSelect labelPrefix="PCB면" value={pcbItem}
             onChange={setPcbItem} className="w-44" />
           {tab === 'explode' ? (

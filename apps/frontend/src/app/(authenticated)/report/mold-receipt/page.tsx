@@ -17,11 +17,12 @@ import { Search } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
 import DateRangeFilter from '@/components/shared/DateRangeFilter';
 import SupplierSelect from '@/components/shared/SupplierSelect';
-import { Button, Card, CardContent, Input } from '@/components/ui';
+import { Button, Card, CardContent } from '@/components/ui';
 import api from '@/services/api';
 import { TruncationNotice, useTruncation } from '../components/TruncationNotice';
 import { moldReceiptColumns } from '../report-b-columns';
 import type { MoldReceiptRow } from '../report-b-types';
+import MoldCodeField from '@/app/(authenticated)/mold/components/MoldCodeField';
 
 const daysAgo = (n: number) => {
   const d = new Date();
@@ -81,10 +82,7 @@ export default function MoldReceiptReportPage() {
         <CardContent className="flex flex-wrap items-center gap-3 p-3">
           <DateRangeFilter label="입고일" from={dateFrom} to={dateTo}
             onFromChange={setDateFrom} onToChange={setDateTo} />
-          <Input aria-label="S-PARTS 코드" placeholder="S-PARTS 코드" value={moldCode}
-            className="w-44"
-            onChange={(e) => setMoldCode(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') void search(); }} />
+          <MoldCodeField popupId="mold-search" returnKey="moldCode" placeholder="S-PARTS 코드" value={moldCode} onChange={setMoldCode} onEnter={() => void search()} className="w-44" />
           <div className="w-52">
             <SupplierSelect includeAll value={supplierCode} onChange={setSupplierCode} />
           </div>

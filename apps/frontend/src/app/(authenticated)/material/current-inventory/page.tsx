@@ -2,12 +2,13 @@
 
 import { useCallback, useMemo, useState } from 'react';
 import { ClipboardList, Search } from 'lucide-react';
-import { Button, Card, CardContent, Input } from '@/components/ui';
+import { Button, Card, CardContent } from '@/components/ui';
 import DataGrid from '@/components/data-grid/DataGrid';
 import api from '@/services/api';
 import { currentInventoryColumns } from './columns';
 import type { CurrentInventoryRow } from './types';
 import PartSearchField from '@/components/shared/PartSearchField';
+import ComCodeSelect from '@/components/shared/ComCodeSelect';
 
 export default function CurrentInventoryPage() {
   const [rows, setRows] = useState<CurrentInventoryRow[]>([]);
@@ -67,10 +68,10 @@ export default function CurrentInventoryPage() {
       <Card className="shrink-0" padding="sm">
         <div className="flex flex-wrap items-center gap-2">
           <PartSearchField aria-label="품목코드" placeholder="품목코드" value={itemCode} onChange={e => setItemCode(e.target.value)} className="w-40" />
-          <Input aria-label="로케이션" placeholder="로케이션" value={locationCode} onChange={e => setLocationCode(e.target.value)} className="w-36" />
-          <Input aria-label="라인유형" placeholder="라인유형" value={lineType} onChange={e => setLineType(e.target.value)} className="w-32" />
-          <Input aria-label="재고상태" placeholder="재고상태" value={inventoryStatus} onChange={e => setInventoryStatus(e.target.value)} className="w-32" />
-          <Input aria-label="보류" placeholder="보류(Y/N)" value={inventoryHold} onChange={e => setInventoryHold(e.target.value)} className="w-28" />
+          <ComCodeSelect groupCode="MATERIAL LOCATION CODE" labelPrefix="창고" value={locationCode} onChange={setLocationCode} className="w-44" />
+          <ComCodeSelect groupCode="LINE TYPE" labelPrefix="라인유형" value={lineType} onChange={setLineType} className="w-44" />
+          <ComCodeSelect groupCode="INVENTORY STATUS" labelPrefix="재고상태" value={inventoryStatus} onChange={setInventoryStatus} className="w-44" />
+          <ComCodeSelect groupCode="INVENTORY HOLD" labelPrefix="보류" value={inventoryHold} onChange={setInventoryHold} className="w-44" />
           <label className="flex h-10 items-center gap-2 whitespace-nowrap text-sm"><input type="checkbox" checked={includeZero} onChange={e => setIncludeZero(e.target.checked)} className="h-4 w-4 accent-primary" />0 재고 포함</label>
         </div>
       </Card>

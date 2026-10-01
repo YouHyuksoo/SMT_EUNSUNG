@@ -30,6 +30,8 @@ import {
 import { arrivalColumns, receiptColumns } from '../receipt-manage-columns';
 import type { ArrivalRow, ReceiptRow } from '../receipt-manage-columns';
 import PartSearchField from '@/components/shared/PartSearchField';
+import SupplierSelect from '@/components/shared/SupplierSelect';
+import ComCodeSelect from '@/components/shared/ComCodeSelect';
 
 const daysAgo = (n: number) => {
   const d = new Date();
@@ -126,9 +128,7 @@ export default function MaterialReceiptPage() {
             className="w-44"
             onChange={(e) => setItemCode(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') void search(); }} />
-          <Input aria-label="협력사코드" placeholder="협력사코드" value={supplierCode}
-            className="w-40"
-            onChange={(e) => setSupplierCode(e.target.value)} />
+          <SupplierSelect includeAll labelPrefix="협력사" value={supplierCode} onChange={setSupplierCode} className="w-44" />
           <Input aria-label="전표번호" placeholder="전표번호" value={invoiceNo}
             className="w-40"
             onChange={(e) => setInvoiceNo(e.target.value)} />
@@ -137,9 +137,7 @@ export default function MaterialReceiptPage() {
               <Input aria-label="자재 롯트" placeholder="자재 롯트" value={materialMfs}
                 className="w-40"
                 onChange={(e) => setMaterialMfs(e.target.value)} />
-              <Input aria-label="창고코드" placeholder="창고코드" value={locationCode}
-                className="w-32"
-                onChange={(e) => setLocationCode(e.target.value)} />
+              <ComCodeSelect groupCode="MATERIAL LOCATION CODE" labelPrefix="창고" value={locationCode} onChange={setLocationCode} className="w-44" />
             </>
           )}
           <Button size="sm" onClick={search} disabled={loading}>

@@ -24,6 +24,7 @@ import api from '@/services/api';
 import { SmtMachineSelect, SmtModelSelect, SmtPcbItemSelect } from '../components/SmtSelects';
 import { smtNcColumns, smtNcCompareColumns, smtNcDuplicateColumns } from '../columns';
 import type { SmtNcCompareRow, SmtNcDuplicateRow, SmtNcRow } from '../types';
+import LineSelect from '@/components/shared/LineSelect';
 
 type Tab = 'list' | 'duplicates' | 'compare';
 
@@ -147,8 +148,7 @@ export default function SmtNcUploadPage() {
 
       <Card padding="none">
         <CardContent className="flex flex-wrap items-center gap-3 p-3">
-          <Input aria-label="라인코드" placeholder="라인코드" value={lineCode}
-            className="w-36" onChange={(e) => setLineCode(e.target.value)} />
+          <LineSelect labelPrefix="라인" value={lineCode} onChange={setLineCode} className="w-44" />
           {tab !== 'compare' && (
             <SmtMachineSelect labelPrefix="설비" value={machineCode}
               onChange={setMachineCode} className="w-52" />

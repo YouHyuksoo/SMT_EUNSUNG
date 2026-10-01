@@ -27,6 +27,7 @@ import {
 } from '../../report/components/TruncationNotice';
 import { manualInputColumns } from '../reprint-msl-columns';
 import type { ManualInputRow } from '../reprint-msl-columns';
+import ProcessSelect from '@/components/shared/ProcessSelect';
 
 const today = () => new Date().toISOString().slice(0, 10);
 const daysAgo = (n: number) => {
@@ -134,9 +135,7 @@ export default function ManualInputPage() {
           <div className="w-40">
             <LineSelect value={lineCode} onChange={setLineCode} labelPrefix="라인" />
           </div>
-          <Input aria-label="공정코드" placeholder="공정코드" value={workstageCode}
-            className="w-32"
-            onChange={(e) => setWorkstageCode(e.target.value)} />
+          <ProcessSelect labelPrefix="공정" value={workstageCode} onChange={setWorkstageCode} className="w-44" />
           <Input aria-label="자재 롯트" placeholder="자재 롯트번호" value={materialLot}
             className="w-44"
             onChange={(e) => setMaterialLot(e.target.value)} />

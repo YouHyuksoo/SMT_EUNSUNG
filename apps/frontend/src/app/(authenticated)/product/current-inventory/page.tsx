@@ -2,12 +2,13 @@
 
 import { useCallback, useMemo, useState } from 'react';
 import { Boxes, Search } from 'lucide-react';
-import { Button, Card, CardContent, Input } from '@/components/ui';
+import { Button, Card, CardContent } from '@/components/ui';
 import ModelSearchField from '@/components/shared/ModelSearchField';
 import DataGrid from '@/components/data-grid/DataGrid';
 import api from '@/services/api';
 import { productInventoryColumns } from './columns';
 import type { ProductInventoryRow } from './types';
+import ComCodeSelect from '@/components/shared/ComCodeSelect';
 
 export default function ProductInventoryPage() {
   const [rows, setRows] = useState<ProductInventoryRow[]>([]);
@@ -49,7 +50,7 @@ export default function ProductInventoryPage() {
         </div>
         <div className="flex gap-2"><Button size="sm" onClick={search} disabled={loading}><Search className="mr-1 h-4 w-4" />조회</Button></div>
       </header>
-      <Card className="shrink-0" padding="sm"><div className="flex flex-wrap items-center gap-2"><ModelSearchField aria-label="모델명" placeholder="모델명" value={model} onChange={(v) => setModel(v)} className="w-52" /><Input aria-label="제품로케이션" placeholder="제품로케이션" value={locationCode} onChange={e => setLocationCode(e.target.value)} className="w-40" /><Input aria-label="포장유형" placeholder="포장유형" value={packType} onChange={e => setPackType(e.target.value)} className="w-32" /></div></Card>
+      <Card className="shrink-0" padding="sm"><div className="flex flex-wrap items-center gap-2"><ModelSearchField aria-label="모델명" placeholder="모델명" value={model} onChange={(v) => setModel(v)} className="w-52" /><ComCodeSelect groupCode="PRODUCT LOCATION CODE" labelPrefix="로케이션" value={locationCode} onChange={setLocationCode} className="w-44" /><ComCodeSelect groupCode="PACK TYPE" labelPrefix="포장유형" value={packType} onChange={setPackType} className="w-44" /></div></Card>
       <div className="flex gap-4 text-sm text-text-muted"><span>제품재고 합계: <strong className="text-text">{qtyTotal.toLocaleString()}</strong></span><span>조회 건수: <strong className="text-text">{total.toLocaleString()}</strong></span></div>
       <Card className="min-h-0 flex-1 overflow-hidden" padding="none"><CardContent className="h-full p-3"><DataGrid data={rows} columns={columns} isLoading={loading} pageSize={50} enableColumnFilter enableExport exportFileName="제품재고조회" emptyMessage={searched ? '조회 결과가 없습니다.' : '조회 버튼을 눌러 제품재고를 확인하세요.'} /></CardContent></Card>
     </main>

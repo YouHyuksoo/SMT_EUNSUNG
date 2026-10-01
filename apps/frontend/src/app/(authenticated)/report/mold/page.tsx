@@ -19,11 +19,12 @@ import { Search } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
 import ComCodeSelect from '@/components/shared/ComCodeSelect';
 import ScreenTabs from '@/components/shared/ScreenTabs';
-import { Button, Card, CardContent, Input } from '@/components/ui';
+import { Button, Card, CardContent } from '@/components/ui';
 import api from '@/services/api';
 import { TruncationNotice, useTruncation } from '../components/TruncationNotice';
 import { moldCardColumns, moldReportColumns } from '../report-b-columns';
 import type { MoldCardRow, MoldReportRow } from '../report-b-types';
+import MoldCodeField from '@/app/(authenticated)/mold/components/MoldCodeField';
 
 type Tab = 'list' | 'card';
 
@@ -82,10 +83,7 @@ export default function MoldReportPage() {
 
       <Card padding="none">
         <CardContent className="flex flex-wrap items-center gap-3 p-3">
-          <Input aria-label="S-PARTS 코드" placeholder="S-PARTS 코드" value={moldCode}
-            className="w-44"
-            onChange={(e) => setMoldCode(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') void search(); }} />
+          <MoldCodeField popupId="mold-search" returnKey="moldCode" placeholder="S-PARTS 코드" value={moldCode} onChange={setMoldCode} onEnter={() => void search()} className="w-44" />
           <ComCodeSelect groupCode="MOLD GROUP" labelPrefix="그룹" value={moldGroup}
             onChange={setMoldGroup} className="w-52" />
           <Button size="sm" onClick={search} disabled={loading}>
