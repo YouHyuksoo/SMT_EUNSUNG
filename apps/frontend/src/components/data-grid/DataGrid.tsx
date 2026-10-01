@@ -34,6 +34,7 @@ import { flushSync, createPortal } from 'react-dom';
 import { ChevronUp, ChevronDown, ChevronsUpDown, GripVertical, X, Pin, PinOff, Maximize2, Minimize2, Database, SlidersHorizontal, FileSpreadsheet, FileText, FileCode, FileType } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import { useExport } from '@/hooks/useExport';
+import { formatDisplayDate } from '@/utils/date';
 import type { ExportFormat } from '@/hooks/useExport';
 import { SqlViewerModal, type ActiveFilter } from './SqlViewerModal';
 import { ResizeHandle } from './ResizeHandle';
@@ -201,9 +202,20 @@ function DataGrid<T>({
     }),
   [columns]);
 
+  // cell 을 따로 주지 않은 컬럼의 기본 표시. 서버가 Date 를 그대로 내려 UTC ISO 가 찍히던 것을
+  // 공용 포맷(YYYY-MM-DD / YYYY-MM-DD HH:mm:ss)으로 통일한다. 날짜가 아닌 값은 기존과 같다.
+  const defaultColumn = useMemo<Partial<ColumnDef<T, unknown>>>(() => ({
+    cell: ({ renderValue }) => {
+      const value = renderValue();
+      if (typeof value === 'string' || value instanceof Date) return formatDisplayDate(value);
+      return (value as { toString?: () => string } | null | undefined)?.toString?.() ?? null;
+    },
+  }), []);
+
   const table = useReactTable({
     data,
     columns: processedColumns,
+    defaultColumn,
     filterFns: { numberRange: numberRangeFilterFn, dateRange: dateRangeFilterFn, textIn: textInFilterFn },
     state: { sorting, columnFilters, columnOrder, columnSizing, columnPinning, pagination },
     onSortingChange: setSorting,

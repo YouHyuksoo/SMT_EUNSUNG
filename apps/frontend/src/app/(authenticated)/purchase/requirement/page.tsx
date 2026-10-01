@@ -31,11 +31,12 @@ import ComCodeSelect from '@/components/shared/ComCodeSelect';
 import SupplierSelect from '@/components/shared/SupplierSelect';
 import { Button, Card, CardContent, ConfirmModal, Input } from '@/components/ui';
 import api from '@/services/api';
+import { getTodayLocal } from '@/utils/date';
 import {
   TruncationNotice,
   useTruncation,
 } from '../../report/components/TruncationNotice';
-import { masterPlanColumns, requirementColumns } from '../purchase-columns';
+import { masterPlanColumns, requirementColumns, selectColumn } from '../purchase-columns';
 import type {
   MasterPlanRow,
   RequirementMatrixRow,
@@ -62,7 +63,9 @@ const TIP = {
   gridMatrix: '같은 결과를 계획일을 가로로 펴서 봅니다. 날짜별 흐름을 볼 때 씁니다.',
 } as const;
 
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => getTodayLocal();
+const rowKey = (row: MasterPlanRow) =>
+  `${row.planDate ?? ''}|${row.itemCode ?? ''}`;
 const apiMessage = (error: unknown) =>
   (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
 
@@ -88,8 +91,25 @@ export default function RequirementPlanPage() {
   const [pending, setPending] = useState<'explode' | 'inventory' | 'delete' | null>(null);
   const [busy, setBusy] = useState(false);
 
-  const rowKey = (row: MasterPlanRow) =>
-    `${row.planDate ?? ''}|${row.itemCode ?? ''}`;
+  const toggleRow = useCallback((row: MasterPlanRow) => {
+    const key = rowKey(row);
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
+  }, []);
+
+  const allSelected = masterRows.length > 0 && selected.size === masterRows.length;
+  const masterColumns = useMemo(() => [
+    selectColumn<MasterPlanRow>({
+      isSelected: (row) => selected.has(rowKey(row)),
+      onToggle: toggleRow,
+      allSelected,
+      onToggleAll: () => setSelected(allSelected ? new Set() : new Set(masterRows.map(rowKey))),
+    }),
+    ...masterPlanColumns,
+  ], [selected, toggleRow, allSelected, masterRows]);
 
   /** 세 표를 한 번에 읽는다. 원인(기준계획)과 결과(소요량)를 같이 보는 화면이다. */
   const search = useCallback(async () => {
@@ -359,13 +379,13 @@ export default function RequirementPlanPage() {
             <span className="text-sm font-semibold text-text" data-tooltip={TIP.gridMaster}>
               ① 기준계획 {count(masterRows.length)}
               <span className="ml-2 text-xs font-normal text-text-muted">
-                줄을 누르면 골라집니다
+                맨 앞 체크박스나 줄을 누르면 골라집니다
               </span>
             </span>
             <div className="min-h-0 flex-1">
               <DataGrid
                 data={masterRows}
-                columns={masterPlanColumns}
+                columns={masterColumns}
                 isLoading={loading}
                 pageSize={100}
                 enableColumnFilter
@@ -374,16 +394,9 @@ export default function RequirementPlanPage() {
                 emptyMessage={searched
                   ? '이 기준일자에 기준계획이 없습니다. 위에서 등록하세요.'
                   : '조회하세요.'}
-                onRowClick={(row) => {
-                  const key = rowKey(row as MasterPlanRow);
-                  setSelected((prev) => {
-                    const next = new Set(prev);
-                    if (next.has(key)) next.delete(key); else next.add(key);
-                    return next;
-                  });
-                }}
+                onRowClick={(row) => toggleRow(row as MasterPlanRow)}
                 rowClassName={(row) => (selected.has(rowKey(row as MasterPlanRow))
-                  ? 'bg-primary/10' : '')}
+                  ? 'bg-primary/15' : '')}
               />
             </div>
           </CardContent>

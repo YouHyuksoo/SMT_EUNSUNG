@@ -7,10 +7,11 @@
  */
 import type { ColumnDef } from '@tanstack/react-table';
 import { codeWithName, num } from '@/components/shared/grid-format';
+import { formatDisplayDate } from '@/utils/date';
 
 const right = { align: 'right' } as const;
 const center = { align: 'center' } as const;
-const ts = (value: unknown) => (value ? String(value) : '');
+const ts = (value: unknown) => (value ? formatDisplayDate(value) : '');
 /** 출고/반납 구분. PB 는 수량 부호로 이 값을 정한다. */
 const deficitLabel = (value: unknown) => {
   const v = String(value ?? '');

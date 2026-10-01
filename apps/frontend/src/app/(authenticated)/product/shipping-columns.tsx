@@ -5,10 +5,11 @@
  */
 import type { ColumnDef } from '@tanstack/react-table';
 import { num } from '@/components/shared/grid-format';
+import { formatDisplayDate } from '@/utils/date';
 
 const right = { align: 'right' } as const;
 const center = { align: 'center' } as const;
-const ts = (value: unknown) => (value ? String(value) : '');
+const ts = (value: unknown) => (value ? formatDisplayDate(value) : '');
 
 /** Y/N 플래그를 눈에 띄게. 단계가 어디까지 갔는지 한눈에 본다. */
 const flagCell = (label: string) => (value: unknown) => (

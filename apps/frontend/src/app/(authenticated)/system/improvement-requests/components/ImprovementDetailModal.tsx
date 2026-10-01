@@ -16,6 +16,7 @@ import {
   improvementRequestService,
   ImprRequestItem,
 } from "@/services/improvementRequestService";
+import { formatDisplayDate } from "@/utils/date";
 
 const STATUS_COLORS: Record<string, string> = {
   PENDING: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300",
@@ -91,7 +92,7 @@ export default function ImprovementDetailModal({ imprId, onClose, onStatusChange
                   {t(`improvement.${item.status === "PENDING" ? "statusPending" : item.status === "IN_PROGRESS" ? "statusInProgress" : "statusDone"}`)}
                 </span>
                 <span className="text-xs text-text-muted">
-                  {item.requesterNm ?? item.requesterId} · {new Date(item.createdAt).toLocaleString()}
+                  {item.requesterNm ?? item.requesterId} · {formatDisplayDate(item.createdAt)}
                 </span>
               </div>
 

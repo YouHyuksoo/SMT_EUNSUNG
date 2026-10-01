@@ -22,20 +22,21 @@ import DateRangeFilter from '@/components/shared/DateRangeFilter';
 import SupplierSelect from '@/components/shared/SupplierSelect';
 import { Button, Card, CardContent, ConfirmModal, Input } from '@/components/ui';
 import api from '@/services/api';
+import { getTodayLocal } from '@/utils/date';
 import {
   TruncationNotice,
   useTruncation,
 } from '../../report/components/TruncationNotice';
-import { forecastOrderColumns } from '../purchase-columns';
+import { forecastOrderColumns, selectColumn } from '../purchase-columns';
 import type { PurchaseOrderRow } from '../purchase-columns';
 
 type Confirm = 'N' | 'W' | 'Y';
 
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => getTodayLocal();
 const monthsAgo = (n: number) => {
   const d = new Date();
   d.setMonth(d.getMonth() - n);
-  return d.toISOString().slice(0, 10);
+  return getTodayLocal(d);
 };
 const apiMessage = (error: unknown) =>
   (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
@@ -104,6 +105,15 @@ export default function ForecastOrderPage() {
   );
   const allSelected = selectableNos.length > 0
     && selectableNos.every((no) => selected.has(no));
+  const columns = useMemo(() => [
+    selectColumn<PurchaseOrderRow>({
+      isSelected: (row) => selected.has(row.orderNo),
+      onToggle: (row) => toggle(row.orderNo),
+      allSelected,
+      onToggleAll: () => setSelected(allSelected ? new Set() : new Set(selectableNos)),
+    }),
+    ...forecastOrderColumns,
+  ], [selected, toggle, allSelected, selectableNos]);
 
   const apply = useCallback(async () => {
     if (!pending || selected.size === 0) return;
@@ -185,7 +195,7 @@ export default function ForecastOrderPage() {
         <CardContent className="h-full p-3">
           <DataGrid
             data={rows}
-            columns={forecastOrderColumns}
+            columns={columns}
             isLoading={loading}
             pageSize={100}
             enableColumnFilter
@@ -194,7 +204,7 @@ export default function ForecastOrderPage() {
             emptyMessage={searched ? '이 기간에 예정이 없습니다.' : '조회하세요.'}
             onRowClick={(row) => toggle((row as PurchaseOrderRow).orderNo)}
             rowClassName={(row) => (selected.has((row as PurchaseOrderRow).orderNo)
-              ? 'bg-primary/10' : '')}
+              ? 'bg-primary/15' : '')}
           />
         </CardContent>
       </Card>

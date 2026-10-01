@@ -6,6 +6,7 @@ import { Edit2, Trash2, Users } from "lucide-react";
 import type { ColumnDef } from "@tanstack/react-table";
 import StatusHeaderHelp from "@/components/shared/StatusHeaderHelp";
 import StatusBadge from "@/components/shared/StatusBadge";
+import { formatDisplayDate } from "@/utils/date";
 
 export interface User {
   email: string;
@@ -106,7 +107,7 @@ export function createUsersGridColumns({
       meta: { filterType: "date" as const },
       cell: ({ getValue }) => {
         const v = getValue() as string | null;
-        return v ? new Date(v).toLocaleString() : "-";
+        return formatDisplayDate(v, "-");
       },
     },
   ];

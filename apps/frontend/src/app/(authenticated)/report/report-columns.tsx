@@ -24,11 +24,12 @@ import type {
   RunCardSummaryRow,
   WorkstageStockRow,
 } from './report-types';
+import { formatDisplayDate } from '@/utils/date';
 
 const right = { align: 'right' } as const;
 const center = { align: 'center' } as const;
 
-const ts = (value: unknown) => (value ? String(value) : '');
+const ts = (value: unknown) => (value ? formatDisplayDate(value) : '');
 const yn = (value: unknown) => (value ? String(value) : '');
 /** 금액은 소수점을 버리고 천단위만 보여준다 — 리포트에서 소수는 읽기를 방해한다. */
 const money = (value: unknown) =>

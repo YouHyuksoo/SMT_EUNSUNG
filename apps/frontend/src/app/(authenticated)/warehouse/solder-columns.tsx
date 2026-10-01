@@ -16,11 +16,12 @@ import type {
   SolderRow,
   SolderStageCountRow,
 } from './warehouse-types';
+import { formatDisplayDate } from '@/utils/date';
 
 const right = { align: 'right' } as const;
 const center = { align: 'center' } as const;
 
-const ts = (value: unknown) => (value ? String(value) : '');
+const ts = (value: unknown) => (value ? formatDisplayDate(value) : '');
 
 /** 솔더 종류. 실측 분포 'F' 35,629건 · 'P' 131건. 코드표는 따로 없다. */
 const SOLDER_TYPE_LABEL: Record<string, string> = { F: '무연(F)', P: '유연(P)' };

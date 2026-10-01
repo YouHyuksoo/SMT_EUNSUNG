@@ -7,10 +7,48 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import { comCodeCell } from '@/components/shared/codeCells';
 import { num } from '@/components/shared/grid-format';
+import { formatDisplayDate } from '@/utils/date';
 
 const right = { align: 'right' } as const;
 const center = { align: 'center' } as const;
-const ts = (value: unknown) => (value ? String(value) : '');
+const ts = (value: unknown) => (value ? formatDisplayDate(value) : '');
+
+interface SelectColumnOptions<T> {
+  isSelected: (row: T) => boolean;
+  onToggle: (row: T) => void;
+  /** 고를 수 없는 줄(발주할 수량 없음 등)은 체크박스를 끈다. */
+  isSelectable?: (row: T) => boolean;
+  allSelected: boolean;
+  onToggleAll: () => void;
+}
+
+/**
+ * 여러 줄을 고르는 그리드의 맨 앞 체크박스 칸. 배경색만으로는 고른 줄이 잘 안 보여
+ * 붙였다. 줄을 눌러도 같이 켜지고 꺼진다. id 가 'select' 라 엑셀 내보내기에서 빠진다.
+ */
+export function selectColumn<T>({
+  isSelected, onToggle, isSelectable, allSelected, onToggleAll,
+}: SelectColumnOptions<T>): ColumnDef<T> {
+  return {
+    id: 'select',
+    size: 44,
+    enableSorting: false,
+    enableResizing: false,
+    meta: { filterType: 'none' as const, align: 'center' as const },
+    header: () => (
+      <input type="checkbox" aria-label="전체 선택" className="h-4 w-4 accent-primary"
+        checked={allSelected} onChange={onToggleAll}
+        onClick={(event) => event.stopPropagation()} />
+    ),
+    cell: ({ row }) => (
+      <input type="checkbox" aria-label="줄 선택" className="h-4 w-4 accent-primary"
+        checked={isSelected(row.original)}
+        disabled={isSelectable ? !isSelectable(row.original) : false}
+        onChange={() => onToggle(row.original)}
+        onClick={(event) => event.stopPropagation()} />
+    ),
+  };
+}
 
 /** 공통코드 `CONFIRM YN`. */
 export const CONFIRM_NAME: Record<string, string> = {

@@ -8,6 +8,9 @@
  *
  * PB 의 동작 중 버그로 보이지만 **그대로 둔 것** 두 가지는 각 자리에 적어 두었다.
  * 고치면 PB 화면과 값이 갈린다.
+ *
+ * PB 와 **다르게 한 것**: 소요량 전개는 구매구분(LINE_TYPE)으로 거르지 않고
+ * BOM 말단 자재만 담으며, 거래유형은 품목 기준정보 값을 붙인다 (bom-requirement.sql).
  */
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { DataSource } from 'typeorm';
@@ -21,9 +24,7 @@ import type {
   RequirementRunDto,
 } from './purchase.dto';
 import { affectedRows } from '../../common/utils/affected-rows.util';
-
-/** BOM 전개 결과 중 소요량으로 잡는 거래유형. PB 원본 그대로다. */
-const REQUIREMENT_LINE_TYPES = ['G', 'D', 'N', 'S', 'M', 'F', 'B'];
+import { ITEM_LINE_TYPE_SQL, LEAF_ONLY_SQL } from './bom-requirement.sql';
 
 interface Paged<T> {
   data: T[];
@@ -44,9 +45,9 @@ export class RequirementPlanService {
   ): Promise<Paged<Record<string, unknown>>> {
     const rows = await this.dataSource.query(
       `SELECT * FROM (
-         SELECT A.REQUIRMENT_PLAN_DATE  AS "requirementPlanDate",
+         SELECT TO_CHAR(A.REQUIRMENT_PLAN_DATE, 'YYYY-MM-DD')  AS "requirementPlanDate",
                 A.REQUIRMENT_PLAN_SEQ   AS "requirementPlanSeq",
-                A.PLAN_DATE             AS "planDate",
+                TO_CHAR(A.PLAN_DATE, 'YYYY-MM-DD')             AS "planDate",
                 A.ITEM_CODE             AS "itemCode",
                 I.ITEM_NAME             AS "itemName",
                 I.ITEM_SPEC             AS "itemSpec",
@@ -57,7 +58,7 @@ export class RequirementPlanService {
                 A.SAFETY_INVENTORY_QTY  AS "safetyInventoryQty",
                 A.APPLY_YN              AS "applyYn",
                 A.ENTER_BY              AS "enterBy",
-                A.ENTER_DATE            AS "enterDate"
+                TO_CHAR(A.ENTER_DATE, 'YYYY-MM-DD HH24:MI:SS')            AS "enterDate"
            FROM IM_ITEM_MASTER_PLAN_4_REQUIR A
            LEFT JOIN ID_ITEM I
              ON I.ITEM_CODE = A.ITEM_CODE
@@ -102,8 +103,8 @@ export class RequirementPlanService {
 
     const rows = await this.dataSource.query(
       `SELECT * FROM (
-         SELECT A.REQUIRMENT_PLAN_DATE AS "requirementPlanDate",
-                A.PLAN_DATE            AS "planDate",
+         SELECT TO_CHAR(A.REQUIRMENT_PLAN_DATE, 'YYYY-MM-DD') AS "requirementPlanDate",
+                TO_CHAR(A.PLAN_DATE, 'YYYY-MM-DD')            AS "planDate",
                 A.ITEM_CODE            AS "itemCode",
                 I.ITEM_NAME            AS "itemName",
                 I.ITEM_SPEC            AS "itemSpec",
@@ -115,7 +116,7 @@ export class RequirementPlanService {
                 A.SET_ITEM_CODE        AS "setItemCode",
                 A.PARENT_ITEM_CODE     AS "parentItemCode",
                 A.ENTER_BY             AS "enterBy",
-                A.ENTER_DATE           AS "enterDate"
+                TO_CHAR(A.ENTER_DATE, 'YYYY-MM-DD HH24:MI:SS')           AS "enterDate"
            FROM IM_ITEM_REQUIRMENT_PLAN A
            LEFT JOIN ID_ITEM I
              ON I.ITEM_CODE = A.ITEM_CODE
@@ -377,12 +378,13 @@ export class RequirementPlanService {
                (SESSION_ID, REQUIRMENT_PLAN_DATE, ITEM_CODE, LINE_TYPE, SUPPLIER_CODE,
                 ORGANIZATION_ID, PLAN_DATE, REQUIRMENT_QTY, ENTER_BY, ENTER_DATE,
                 LAST_MODIFY_BY, LAST_MODIFY_DATE)
-             SELECT v_req_session, v_date, CHILD_ITEM_CODE, LINE_TYPE, '*',
-                    ORGANIZATION_ID, c.PLAN_DATE, MODEL_UNIT_QTY * c.ORDER_QTY,
+             SELECT v_req_session, v_date, T.CHILD_ITEM_CODE, ${ITEM_LINE_TYPE_SQL}, '*',
+                    T.ORGANIZATION_ID, c.PLAN_DATE, T.MODEL_UNIT_QTY * c.ORDER_QTY,
                     :userId, SYSDATE, :userId, SYSDATE
-               FROM ID_ENG_BOM_TEMP
-              WHERE SESSION_ID = v_bom_session
-                AND LINE_TYPE IN (${REQUIREMENT_LINE_TYPES.map((t) => `'${t}'`).join(', ')});
+               FROM ID_ENG_BOM_TEMP T
+              WHERE T.SESSION_ID = v_bom_session
+                -- PB 는 LINE_TYPE IN ('G','D','N','S','M','F','B') 로 걸렀다. 구매구분은 보지 않는다.
+                AND ${LEAF_ONLY_SQL};
 
              DELETE FROM ID_ENG_BOM_TEMP WHERE SESSION_ID = v_bom_session;
            END LOOP;
@@ -611,7 +613,12 @@ export class RequirementPlanService {
 
   private dateKey(value: unknown): string | null {
     if (!value) return null;
-    if (value instanceof Date) return value.toISOString().slice(0, 10);
+    // 조회 SQL 이 TO_CHAR 로 문자열을 내려 준다. Date 가 오면 toISOString(UTC) 대신
+    // 로컬(KST) 날짜로 자른다 — UTC 로 자르면 자정 값이 하루 앞당겨진다.
+    if (value instanceof Date) {
+      const pad = (n: number) => String(n).padStart(2, '0');
+      return `${value.getFullYear()}-${pad(value.getMonth() + 1)}-${pad(value.getDate())}`;
+    }
     return String(value).slice(0, 10);
   }
 }

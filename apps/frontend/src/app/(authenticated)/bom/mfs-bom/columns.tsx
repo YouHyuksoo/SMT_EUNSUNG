@@ -1,14 +1,10 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import { comCodeCell } from '@/components/shared/codeCells';
 import type { MfsDetailRow, MfsFeederRow, MfsModelRow, MfsSummaryRow } from './types';
+import { formatDisplayDate } from '@/utils/date';
 
 const qty = (value: unknown) => value == null ? '' : Number(value).toLocaleString(undefined, { maximumFractionDigits: 6 });
-const date = (value: unknown) => {
-  if (!value) return '';
-  const parsed = new Date(String(value));
-  if (Number.isNaN(parsed.getTime())) return String(value);
-  return parsed.toLocaleDateString('ko-KR').replace(/\.$/, '');
-};
+const date = (value: unknown) => formatDisplayDate(value);
 
 /** (1) 제품모델 목록 */
 export const modelColumns: ColumnDef<MfsModelRow>[] = [

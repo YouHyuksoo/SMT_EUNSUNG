@@ -13,11 +13,12 @@ import type {
   ChamberStockSummaryRow,
   RecycleCheckRow,
 } from './warehouse-types';
+import { formatDisplayDate } from '@/utils/date';
 
 const right = { align: 'right' } as const;
 const center = { align: 'center' } as const;
 
-const ts = (value: unknown) => (value ? String(value) : '');
+const ts = (value: unknown) => (value ? formatDisplayDate(value) : '');
 /** 시간은 소수 한 자리까지 (0.1시간 = 6분 단위면 현장 판단에 충분하다). */
 const hours = (value: unknown) =>
   value == null ? '' : `${Number(value).toLocaleString(undefined, { maximumFractionDigits: 1 })}h`;

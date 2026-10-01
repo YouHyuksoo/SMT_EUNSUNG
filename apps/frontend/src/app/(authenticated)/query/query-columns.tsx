@@ -27,12 +27,13 @@ import type {
   SlotHistoryRow,
   WorkflowRow,
 } from './query-types';
+import { formatDisplayDate } from '@/utils/date';
 
 const right = { align: 'right' } as const;
 const center = { align: 'center' } as const;
 
 /** 서버가 만든 시각 문자열을 그대로 쓴다. */
-const ts = (value: unknown) => (value ? String(value) : '');
+const ts = (value: unknown) => (value ? formatDisplayDate(value) : '');
 /** IQ_MACHINE_INSPECT_* 의 검사시각은 'YYYY/MM/DD HH24:MI:SS' 문자열이다 */
 const rawTs = (value: unknown) => (value ? String(value).replace(/\//g, '-') : '');
 /** Y/N 플래그를 눈에 들어오게. 빈 값과 'N' 을 구분해 보여준다. */

@@ -1,14 +1,10 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import { comCodeCell } from '@/components/shared/codeCells';
 import type { BomExpandRow, ReplaceRow } from './types';
+import { formatDisplayDate } from '@/utils/date';
 
 const qty = (value: unknown) => value == null ? '' : Number(value).toLocaleString(undefined, { maximumFractionDigits: 6 });
-const date = (value: unknown) => {
-  if (!value) return '';
-  const parsed = new Date(String(value));
-  if (Number.isNaN(parsed.getTime())) return String(value);
-  return parsed.toLocaleDateString('ko-KR').replace(/\.$/, '');
-};
+const date = (value: unknown) => formatDisplayDate(value);
 
 /** 관리 모드 — BOM 전개 그리드. bomLevel(LPAD '.') 로 계층 들여쓰기를 표현한다. */
 export const bomExpandColumns: ColumnDef<BomExpandRow>[] = [

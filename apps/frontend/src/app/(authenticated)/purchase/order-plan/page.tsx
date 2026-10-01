@@ -21,7 +21,7 @@
  *    뿐이다 — 어느 계획에서 나온 주문인지 되짚을 수 있어야 한다.
  * 7. 버튼·체크박스 설명은 `data-tooltip` 으로 붙였다 (전역 툴팁 시스템).
  */
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { Calculator, Play, Search, Send, Tag } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
@@ -30,11 +30,12 @@ import DateRangeFilter from '@/components/shared/DateRangeFilter';
 import SupplierSelect from '@/components/shared/SupplierSelect';
 import { Button, Card, CardContent, ConfirmModal, Input, Select } from '@/components/ui';
 import api from '@/services/api';
+import { getTodayLocal } from '@/utils/date';
 import {
   TruncationNotice,
   useTruncation,
 } from '../../report/components/TruncationNotice';
-import { orderPlanColumns, requirementOrderColumns } from '../purchase-columns';
+import { orderPlanColumns, requirementOrderColumns, selectColumn } from '../purchase-columns';
 import type { OrderPlanRow, RequirementOrderRow } from '../purchase-columns';
 
 /** PB 라디오버튼(계획 원천). 어느 계획에서 BOM 을 펼지. */
@@ -110,12 +111,15 @@ const TIP = {
     + ' 소요량 자체가 문제인지, 재고 차감이 문제인지 갈립니다.',
 } as const;
 
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => getTodayLocal();
 const daysFromNow = (n: number) => {
   const d = new Date();
   d.setDate(d.getDate() + n);
-  return d.toISOString().slice(0, 10);
+  return getTodayLocal(d);
 };
+const rowKey = (row: OrderPlanRow) => `${row.itemCode ?? ''}|${row.lineType ?? ''}`;
+/** 발주할 수량이 남은 계획만 고를 수 있다. 재고로 다 충당된 줄은 넘길 것이 없다. */
+const isPurchasable = (row: OrderPlanRow) => Number(row.purchaseOrderQty ?? 0) > 0;
 const apiMessage = (error: unknown) =>
   (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
 
@@ -147,7 +151,35 @@ export default function OrderPlanPage() {
   const [pending, setPending] = useState<'generate' | 'purchase' | 'price' | null>(null);
   const [busy, setBusy] = useState(false);
 
-  const rowKey = (row: OrderPlanRow) => `${row.itemCode ?? ''}|${row.lineType ?? ''}`;
+  const toggleRow = useCallback((plan: OrderPlanRow) => {
+    if (!isPurchasable(plan)) {
+      toast.error('발주할 수량이 없는 계획입니다 (재고로 다 충당됨).');
+      return;
+    }
+    const key = rowKey(plan);
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
+  }, []);
+
+  const selectableKeys = useMemo(
+    () => [...new Set(plans.filter(isPurchasable).map(rowKey))],
+    [plans],
+  );
+  const allSelected = selectableKeys.length > 0
+    && selectableKeys.every((key) => selected.has(key));
+  const planColumns = useMemo(() => [
+    selectColumn<OrderPlanRow>({
+      isSelected: (row) => selected.has(rowKey(row)),
+      onToggle: toggleRow,
+      isSelectable: isPurchasable,
+      allSelected,
+      onToggleAll: () => setSelected(allSelected ? new Set() : new Set(selectableKeys)),
+    }),
+    ...orderPlanColumns,
+  ], [selected, toggleRow, allSelected, selectableKeys]);
 
   /** 두 표를 한 번에 읽는다. 결과(발주계획)와 그 전 단계(소요량)를 같이 보는 화면이다. */
   const search = useCallback(async () => {
@@ -221,7 +253,7 @@ export default function OrderPlanPage() {
         // 납품구분이 안 붙은 계획은 단가·통화도 비어 있어 주문이 될 수 없다.
         if (skipped > 0) {
           toast.error(
-            `${skipped}건은 넘어가지 못했습니다 — 납품구분이 비었거나 거래유형이 T 입니다.`
+            `${skipped}건은 넘어가지 못했습니다 — 납품구분이 비어 있습니다.`
             + ' 단가 재설정을 먼저 실행해 보세요.',
           );
         }
@@ -258,7 +290,7 @@ export default function OrderPlanPage() {
       message: `고른 ${selected.size}건을 실제 주문으로 넘깁니다.`
         + `\n\n· 발주일: ${orderDate}`
         + '\n· 계획은 지워지지 않고 확정 표시만 남습니다 (두 번 발주되지 않게).'
-        + '\n· 납품구분이 비었거나 거래유형이 T 인 계획은 넘어가지 않습니다.',
+        + '\n· 납품구분이 빈 계획은 넘어가지 않습니다.',
     },
   }[pending ?? 'generate'];
 
@@ -414,13 +446,13 @@ export default function OrderPlanPage() {
             <span className="text-sm font-semibold text-text" data-tooltip={TIP.gridPlan}>
               ② 발주계획 {count(plans.length)}
               <span className="ml-2 text-xs font-normal text-text-muted">
-                줄을 누르면 골라집니다
+                맨 앞 체크박스나 줄을 누르면 골라집니다
               </span>
             </span>
             <div className="min-h-0 flex-1">
               <DataGrid
                 data={plans}
-                columns={orderPlanColumns}
+                columns={planColumns}
                 isLoading={loading}
                 pageSize={100}
                 enableColumnFilter
@@ -429,21 +461,9 @@ export default function OrderPlanPage() {
                 emptyMessage={searched
                   ? '발주계획이 없습니다. 위 ① 에서 생성하세요.'
                   : '조회하세요.'}
-                onRowClick={(row) => {
-                  const plan = row as OrderPlanRow;
-                  if (Number(plan.purchaseOrderQty ?? 0) <= 0) {
-                    toast.error('발주할 수량이 없는 계획입니다 (재고로 다 충당됨).');
-                    return;
-                  }
-                  const key = rowKey(plan);
-                  setSelected((prev) => {
-                    const next = new Set(prev);
-                    if (next.has(key)) next.delete(key); else next.add(key);
-                    return next;
-                  });
-                }}
+                onRowClick={(row) => toggleRow(row as OrderPlanRow)}
                 rowClassName={(row) => (selected.has(rowKey(row as OrderPlanRow))
-                  ? 'bg-primary/10' : '')}
+                  ? 'bg-primary/15' : '')}
               />
             </div>
           </CardContent>

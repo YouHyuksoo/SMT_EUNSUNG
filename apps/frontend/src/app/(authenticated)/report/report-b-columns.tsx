@@ -38,11 +38,12 @@ import type {
   MoldReportRow,
   SmtCheckHistoryRow,
 } from './report-b-types';
+import { formatDisplayDate } from '@/utils/date';
 
 const right = { align: 'right' } as const;
 const center = { align: 'center' } as const;
 
-const ts = (value: unknown) => (value ? String(value) : '');
+const ts = (value: unknown) => (value ? formatDisplayDate(value) : '');
 /** 금액은 소수를 버린다. 리포트에서 소수는 읽기를 방해한다. */
 const money = (value: unknown) =>
   value == null ? '' : Math.round(Number(value)).toLocaleString();

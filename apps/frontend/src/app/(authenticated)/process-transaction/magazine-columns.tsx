@@ -4,10 +4,11 @@
  */
 import type { ColumnDef } from '@tanstack/react-table';
 import { num } from '@/components/shared/grid-format';
+import { formatDisplayDate } from '@/utils/date';
 
 const right = { align: 'right' } as const;
 const center = { align: 'center' } as const;
-const ts = (value: unknown) => (value ? String(value) : '');
+const ts = (value: unknown) => (value ? formatDisplayDate(value) : '');
 
 /** `MAGAZINE_LABEL_TYPE` 을 사람이 읽는 말로. 현장은 사실상 P 만 쓴다. */
 export const LABEL_TYPE_NAME: Record<string, string> = {
