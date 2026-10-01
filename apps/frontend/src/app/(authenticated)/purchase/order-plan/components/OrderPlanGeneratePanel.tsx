@@ -66,10 +66,14 @@ export const INVENTORY_ARMS = [
 export const GENERATE_TIP = {
   range: '이 기간에 든 계획만 펼칩니다.',
   orderDate: '만들어지는 발주계획에 찍히는 발주일입니다. 실제 주문으로 넘길 때도 이 날짜를 씁니다.',
-  orderRule: '협력사별 최소주문량·포장단위·불량율을 발주량에 반영합니다.'
-    + ' 예: 포장단위가 100이고 계산값이 120이면 200으로 올립니다.'
-    + ' 올려서 남는 만큼은 같은 자재의 뒤 계획줄이 덜 발주하도록 되돌립니다.',
-  unitPrice: '단가 기준정보에서 유효기간 안의 단가·통화·납품구분을 붙입니다.',
+  orderRule: '발주규칙이 자동(A)인 품목만 계획하고, 협력사별 최소주문량·포장단위·불량율을'
+    + ' 발주량에 반영합니다. 예: 포장단위가 100이고 계산값이 120이면 200으로 올립니다.'
+    + ' 끄면 전 품목을 소요량 그대로 계획합니다.',
+  distinctMfs: '같은 품목·거래유형을 한 줄로 합칩니다. 납기는 가장 이른 날이 됩니다.'
+    + ' 끄면 작업지시·계획일별로 줄이 나뉩니다.',
+  roundQty: '발주량을 소수 4자리로 반올림합니다.',
+  unitPrice: '단가는 항상 단가 기준정보에서 붙입니다. 단가가 0 이어도 등록돼 있으면 붙고,'
+    + ' 등록이 없으면 거래처를 확정할 수 없어 상태 P 로 남고 확정되지 않습니다.',
   leadTime: '제조 리드타임만큼 납기를 앞으로 당깁니다 — 자재가 생산 시작 전에 들어와야'
     + ' 하기 때문입니다. 안 켜면 자재가 필요한 날이 곧 납기가 됩니다.',
   calendar: '당긴 납기가 휴무일이면 일하는 날로 옮깁니다. 리드타임 반영과는 별개 단계입니다.',
@@ -84,7 +88,8 @@ export interface OrderPlanGenerateValues {
   orderDate: string;
   arms: string[];
   applyOrderRule: boolean;
-  applyUnitPrice: boolean;
+  distinctMfs: boolean;
+  roundQty: boolean;
   applyLeadTime: boolean;
   applyCalendar: boolean;
 }
@@ -186,16 +191,20 @@ export default function OrderPlanGeneratePanel({
           <h3 className="text-sm font-semibold text-text">계산 옵션</h3>
           <OptionRow checked={values.applyOrderRule}
             onToggle={() => onChange({ applyOrderRule: !values.applyOrderRule })}
-            label="발주속성 (최소·포장·불량율)" desc={GENERATE_TIP.orderRule} />
-          <OptionRow checked={values.applyUnitPrice}
-            onToggle={() => onChange({ applyUnitPrice: !values.applyUnitPrice })}
-            label="단가 적용" desc={GENERATE_TIP.unitPrice} />
+            label="자동발주 품목·발주속성 (최소·포장·불량율)" desc={GENERATE_TIP.orderRule} />
+          <OptionRow checked={values.distinctMfs}
+            onToggle={() => onChange({ distinctMfs: !values.distinctMfs })}
+            label="품목별 한 줄로 합치기" desc={GENERATE_TIP.distinctMfs} />
+          <OptionRow checked={values.roundQty}
+            onToggle={() => onChange({ roundQty: !values.roundQty })}
+            label="소수 4자리 반올림" desc={GENERATE_TIP.roundQty} />
           <OptionRow checked={values.applyLeadTime}
             onToggle={() => onChange({ applyLeadTime: !values.applyLeadTime })}
             label="리드타임 반영" desc={GENERATE_TIP.leadTime} />
           <OptionRow checked={values.applyCalendar}
             onToggle={() => onChange({ applyCalendar: !values.applyCalendar })}
             label="작업일 보정" desc={GENERATE_TIP.calendar} />
+          <p className="px-2 pt-1 text-xs text-text-muted">{GENERATE_TIP.unitPrice}</p>
         </section>
 
         <p className="text-xs text-text-muted">{GENERATE_TIP.generate}</p>

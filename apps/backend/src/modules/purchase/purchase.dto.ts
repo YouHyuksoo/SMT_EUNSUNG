@@ -12,6 +12,7 @@ import {
   ArrayMaxSize,
   ArrayNotEmpty,
   IsArray,
+  IsBoolean,
   IsDateString,
   IsIn,
   IsInt,
@@ -195,14 +196,19 @@ export class OrderPlanGenerateDto {
    */
   @IsArray() @IsIn([...INVENTORY_ARM_VALUES], { each: true })
   inventorySources!: string[];
-  /** 최소주문량·포장단위·불량율을 적용한다 (PB f_get_order_property 'A'). */
-  @Type(() => Boolean) applyOrderRule!: boolean;
-  /** 단가 기준정보를 붙인다. */
-  @Type(() => Boolean) applyUnitPrice!: boolean;
+  /**
+   * PB Apply Auto Order Rule. 켜면 발주규칙 A(자동) 품목만 계획하고 최소주문량·포장단위·
+   * 불량율을 반영한다. 끄면 전 품목을 소요량 그대로 계획한다.
+   */
+  @IsBoolean() applyOrderRule!: boolean;
+  /** 품목·거래유형당 한 줄로 합친다 (납기는 가장 이른 날, PB Distinct MFS). */
+  @IsBoolean() distinctMfs!: boolean;
+  /** 발주량을 소수 4자리로 반올림한다 (PB Round). */
+  @IsBoolean() roundQty!: boolean;
   /** 제조 리드타임만큼 납기를 **앞으로 당긴다** (자재가 생산 시작 전에 들어와야 한다). */
-  @Type(() => Boolean) applyLeadTime!: boolean;
+  @IsBoolean() applyLeadTime!: boolean;
   /** 당긴 납기가 휴무일이면 일하는 날로 옮긴다 (PB cbx_apply_calendar). */
-  @Type(() => Boolean) applyCalendar!: boolean;
+  @IsBoolean() applyCalendar!: boolean;
 }
 
 export class PriceResetDto {

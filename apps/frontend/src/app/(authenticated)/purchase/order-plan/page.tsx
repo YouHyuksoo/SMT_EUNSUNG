@@ -86,18 +86,19 @@ export default function OrderPlanPage() {
   const [lineTypeCond, setLineTypeCond] = useState('');
   const [pendingOnly, setPendingOnly] = useState(true);
 
-  // 생성 조건 — 우측 생성 패널에서 고른다 (기본값은 이전과 같다)
+  // 생성 조건 — 우측 생성 패널에서 고른다 (기본값은 PB 화면을 열었을 때와 같다)
   const [generateOpen, setGenerateOpen] = useState(false);
   const [gen, setGen] = useState<OrderPlanGenerateValues>(() => ({
     source: 'productionPlan',
     dateFrom: today(),
-    dateTo: daysFromNow(30),
+    dateTo: daysFromNow(3),
     orderDate: today(),
-    arms: ['inventory', 'order', 'arrival'],
+    arms: ['inventory'],
     applyOrderRule: true,
-    applyUnitPrice: true,
-    applyLeadTime: true,
-    applyCalendar: true,
+    distinctMfs: true,
+    roundQty: true,
+    applyLeadTime: false,
+    applyCalendar: false,
   }));
   const patchGen = useCallback(
     (patch: Partial<OrderPlanGenerateValues>) => setGen((prev) => ({ ...prev, ...patch })),
@@ -180,7 +181,8 @@ export default function OrderPlanPage() {
           itemCode: itemCond.trim() || undefined,
           inventorySources: gen.arms,
           applyOrderRule: gen.applyOrderRule,
-          applyUnitPrice: gen.applyUnitPrice,
+          distinctMfs: gen.distinctMfs,
+          roundQty: gen.roundQty,
           applyLeadTime: gen.applyLeadTime,
           applyCalendar: gen.applyCalendar,
         });
@@ -230,7 +232,8 @@ export default function OrderPlanPage() {
       title: '발주계획 생성',
       message: `${sourceLabel} ${gen.dateFrom} ~ ${gen.dateTo} 를 BOM 으로 펴서 발주계획을 만듭니다.`
         + `\n\n· 소요량에서 빼는 것: ${armLabels.length === 0 ? '없음 (소요량이 그대로 발주량이 됩니다)' : armLabels.join(' · ')}`
-        + '\n· 기존 발주계획은 통째로 새로 만들어집니다.',
+        + '\n· 기존 발주계획은 통째로 새로 만들어집니다.'
+        + '\n· 단가 기준정보가 없는 계획은 상태 P 로 남아 확정되지 않습니다.',
     },
     price: {
       title: '단가 재설정',
@@ -242,7 +245,7 @@ export default function OrderPlanPage() {
       message: `고른 ${selected.size}건을 실제 주문으로 넘깁니다.`
         + `\n\n· 발주일: ${gen.orderDate}`
         + '\n· 계획은 지워지지 않고 확정 표시만 남습니다 (두 번 발주되지 않게).'
-        + '\n· 납품구분이 빈 계획은 넘어가지 않습니다.',
+        + '\n· 단가 기준정보가 없는 계획(상태 P)은 넘어가지 않습니다.',
     },
   }[pending ?? 'generate'];
 
