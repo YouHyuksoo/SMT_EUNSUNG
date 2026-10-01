@@ -117,6 +117,8 @@ export interface DataGridProps<T> {
   sqlFilters?: Record<string, unknown>;
   /** 초기 정렬 상태(기본정렬). 예: [{ id: "createdAt", desc: true }] */
   initialSorting?: SortingState;
+  /** false 면 컬럼을 내용 폭으로만 두고 남는 오른쪽을 비운다 (기본 true: 그리드 폭을 꽉 채움) */
+  fillWidth?: boolean;
 }
 
 function DataGrid<T>({
@@ -146,6 +148,7 @@ function DataGrid<T>({
   sqlQuery,
   sqlFilters,
   initialSorting,
+  fillWidth = true,
 }: DataGridProps<T>) {
   const [sorting, setSorting] = useState<SortingState>(initialSorting ?? []);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -485,7 +488,7 @@ function DataGrid<T>({
           )}
         <table
           className="font-data text-xs"
-          style={{ minWidth: '100%', width: 'max-content' }}
+          style={{ minWidth: fillWidth ? '100%' : undefined, width: 'max-content' }}
         >
           {/* Header */}
           <thead className="bg-background sticky top-0 z-10">

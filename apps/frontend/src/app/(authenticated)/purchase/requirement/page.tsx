@@ -147,7 +147,17 @@ export default function RequirementPlanPage() {
   /** 계획일을 가로로 편 열. 날짜 수가 조회마다 달라 런타임에 만든다. */
   const matrixColumns = useMemo(() => [
     { accessorKey: 'itemCode', header: '품목코드', size: 140 },
-    { accessorKey: 'itemName', header: '품목명', size: 170 },
+    // 표 너비는 내용에 맞춰 늘어난다. 긴 품목명이 날짜 열을 밀어내지 않게 잘라 보이고 전체는 툴팁으로.
+    {
+      accessorKey: 'itemName',
+      header: '품목명',
+      size: 170,
+      cell: (c: { getValue: () => unknown }) => (
+        <span className="block max-w-[160px] truncate" title={String(c.getValue() ?? '')}>
+          {String(c.getValue() ?? '')}
+        </span>
+      ),
+    },
     {
       accessorKey: 'totalQty',
       header: '합계',
@@ -382,6 +392,7 @@ export default function RequirementPlanPage() {
                   enableColumnFilter
                   enableExport
                   exportFileName="소요량매트릭스"
+                  fillWidth={false}
                   emptyMessage={searched
                     ? '소요량이 없습니다. ③ 소요량 전개를 먼저 실행하세요.'
                     : '조회하세요.'}
