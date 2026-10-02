@@ -6,6 +6,7 @@
  *   /inventory-query/close        271 자재재고마감 (원자재 월마감 — 월총평균법, 쓰기)
  *   /inventory-query/check        272 자재재고조사 (조정 — 쓰기)
  *   /inventory-query/barcode      274 자재바코드스캔실사 (조회)
+ *   /inventory-query/stocktake    바코드 실사 시작 · 스캔 · 일괄 조정 (272·274·PDA, 쓰기)
  */
 import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -15,12 +16,16 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { ROW_LIMIT } from '../../shared/row-limit';
 import { InventoryCheckService } from './inventory-check.service';
 import { InventoryCloseService } from './inventory-close.service';
+import { StocktakeService } from './stocktake.service';
 import { TotalInventoryService } from './total-inventory.service';
 import {
   BarcodeCheckQueryDto,
   InventoryAdjustDto,
   InventoryCheckQueryDto,
   InventoryCloseMonthDto,
+  StocktakeCancelDto,
+  StocktakeScanDto,
+  StocktakeStartDto,
   TotalInventoryDetailQueryDto,
   TotalInventoryLotQueryDto,
   TotalInventoryQueryDto,
@@ -135,8 +140,7 @@ export class InventoryCheckController {
 
   @Get()
   @ApiOperation({
-    summary: '272 실사 대상·결과 (장부수량 · 실사수량 · 차이).'
-      + ' **이 표는 0행이다** — 실사를 돌린 적이 없다 (실측).',
+    summary: '272 실사표 (장부수량 · 실사수량 · 차이 · 이미 넣은 조정). 차이 있는 롯트가 먼저 나온다.',
   })
   async find(
     @Query() query: InventoryCheckQueryDto,
@@ -147,8 +151,7 @@ export class InventoryCheckController {
 
   @Get('adjust-history')
   @ApiOperation({
-    summary: "272 조정 이력 (계정 M009 인 출고만). **실측 0건**이다 —"
-      + ' 원장에 M001 1,897,372 · M016 722,578 뿐이고 M009 는 없다.',
+    summary: '272 조정 이력 (계정 M009 인 출고만).',
   })
   async adjustHistory(
     @Query() query: InventoryCheckQueryDto,
@@ -159,7 +162,7 @@ export class InventoryCheckController {
 
   @Post('adjust')
   @ApiOperation({
-    summary: '272 재고 조정 (**쓰기**). 차이의 부호가 방향을 정한다 (양수 3 · 음수 4).'
+    summary: '272 한 롯트 재고 조정 (**쓰기**). 차이 = 실사 − 장부 (적으면 구분 3 · 많으면 구분 4).'
       + ' 조정 출고는 계정 M009 · 비고 INVENTORY ADJUST 로 남고, 날짜는'
       + ' F_GET_INVENTORY_CLOSE_DATE 가 정하는 **마감월의 마지막 날**이다 —'
       + ' SYSDATE 를 쓰면 다음 달 수불로 새어 나간다.',
@@ -183,8 +186,7 @@ export class BarcodeCheckController {
 
   @Get()
   @ApiOperation({
-    summary: '274 바코드 실사 목록. **실측 1행(2020-10)** — 6년 동안 쓰이지 않았다.'
-      + ' 쓰기(무전표 바코드를 가상 입고로 만드는 경로)는 옮기지 않았다.',
+    summary: '274 바코드 실사 스캔 기록. 스캔은 /inventory-query/stocktake/scan 이 한다.',
   })
   async find(
     @Query() query: BarcodeCheckQueryDto,
@@ -200,5 +202,66 @@ export class BarcodeCheckController {
     @OrganizationId() organizationId: number,
   ) {
     return paged(await this.service.findBarcodeCheckSummary(query, organizationId));
+  }
+}
+
+@ApiTags('재고 - 바코드 실사')
+@UseGuards(JwtAuthGuard)
+@Controller('inventory-query/stocktake')
+export class StocktakeController {
+  constructor(private readonly service: StocktakeService) {}
+
+  @Get('active')
+  @ApiOperation({ summary: '진행 중인 실사 (마감 안 된 가장 최근 실사월과 진행 현황). 없으면 null.' })
+  async active(@OrganizationId() organizationId: number) {
+    return ResponseUtil.success(await this.service.active(organizationId));
+  }
+
+  @Post('start')
+  @ApiOperation({ summary: '실사 시작 (**쓰기**) — 지금 장부(재고 ≠ 0 롯트)를 실사표에 고정한다.' })
+  async start(
+    @Body() dto: StocktakeStartDto,
+    @OrganizationId() organizationId: number,
+    @UserId() userId?: string,
+  ) {
+    return ResponseUtil.success(
+      await this.service.start(dto.yyyymm, Boolean(dto.regenerate), organizationId, userId || DEFAULT_USER),
+    );
+  }
+
+  @Post('scan')
+  @ApiOperation({ summary: '바코드 스캔 (**쓰기**) — 그 롯트의 실사수량을 바코드 수량(또는 입력 수량)으로 채운다.' })
+  async scan(
+    @Body() dto: StocktakeScanDto,
+    @OrganizationId() organizationId: number,
+    @UserId() userId?: string,
+  ) {
+    return ResponseUtil.success(
+      await this.service.scan(dto.barcode, dto.qty, organizationId, userId || DEFAULT_USER),
+    );
+  }
+
+  @Post('scan/cancel')
+  @ApiOperation({ summary: '스캔 취소 (**쓰기**).' })
+  async cancel(
+    @Body() dto: StocktakeCancelDto,
+    @OrganizationId() organizationId: number,
+    @UserId() userId?: string,
+  ) {
+    return ResponseUtil.success(
+      await this.service.cancelScan(dto.barcode, organizationId, userId || DEFAULT_USER),
+    );
+  }
+
+  @Post('adjust-all')
+  @ApiOperation({ summary: '일괄 조정 (**쓰기**) — 실사표 차이에서 이미 넣은 조정을 뺀 만큼 M009 로 넣는다.' })
+  async adjustAll(
+    @Body() dto: InventoryCloseMonthDto,
+    @OrganizationId() organizationId: number,
+    @UserId() userId?: string,
+  ) {
+    return ResponseUtil.success(
+      await this.service.adjustAll(dto.yyyymm, organizationId, userId || DEFAULT_USER),
+    );
   }
 }

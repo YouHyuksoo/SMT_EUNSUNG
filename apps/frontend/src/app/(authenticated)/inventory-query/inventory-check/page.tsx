@@ -7,13 +7,12 @@
  * 초보자 가이드:
  * 1. **실사(實査)는 장부와 실제를 맞추는 일이다.** 창고에서 센 수량이 장부와 다르면
  *    그 차이만큼 원장을 조정한다.
- * 2. **차이의 부호가 방향을 정한다.** 실제가 더 많으면(+) 그만큼 나간 것으로,
- *    적으면(−) 돌아온 것으로 처리한다.
- * 3. **조정은 마감월의 마지막 날짜로 들어간다.** 오늘 날짜로 넣으면 다음 달 수불로
- *    새어 나가기 때문이다.
- * 4. **이 현장은 실사를 아직 돌린 적이 없다** — 실사표와 조정 이력이 모두 비어 있다.
- *    빈 화면만 보고 헷갈리지 않도록 적어 둔다.
- * 5. **되돌릴 수 없다.** 조정을 잘못했으면 반대 부호로 한 번 더 조정해야 한다.
+ * 2. **실사는 바코드로 한다.** 바코드 실사 패널에서 실사를 시작하면(장부 고정) 자재바코드스캔실사
+ *    화면이나 PDA 로 바코드를 찍고, 끝나면 일괄 조정을 누른다 (stocktake-panel.tsx).
+ * 3. **차이 = 실사 − 장부.** 실제가 많으면(+) 재고가 늘고, 적으면(−) 준다.
+ * 4. **조정은 마감월의 마지막 날짜로 들어간다.** 오늘 날짜로 넣으면 다음 달 수불로
+ *    새어 나가기 때문이다. 마감된 달은 조정되지 않는다.
+ * 5. 아래 재고 조정 칸은 한 롯트만 손으로 조정할 때 쓴다. 되돌리려면 반대 부호로 한 번 더 조정한다.
  */
 import { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -30,6 +29,8 @@ import { adjustHistoryColumns, inventoryCheckColumns } from '../inventory-query-
 import type { AdjustHistoryRow, InventoryCheckRow } from '../inventory-query-columns';
 import PartSearchField from '@/components/shared/PartSearchField';
 import ComCodeSelect from '@/components/shared/ComCodeSelect';
+import StocktakePanel from './stocktake-panel';
+import { stocktakeApi, type StocktakeSession } from '../stocktake';
 
 const lastMonth = () => {
   const d = new Date();
@@ -50,6 +51,7 @@ export default function InventoryCheckPage() {
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
   const { truncated, rowLimit, mark } = useTruncation();
+  const [session, setSession] = useState<StocktakeSession | null>(null);
 
   // 조정 (쓰기)
   const [itemCode, setItemCode] = useState('');
@@ -90,7 +92,28 @@ export default function InventoryCheckPage() {
     }
   }, [tab, yyyymm, itemCodeCond, lotNoCond, mark]);
 
-  useEffect(() => { void search(); }, [tab]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { void search(); }, [tab, yyyymm.length === 6 ? yyyymm : '']); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const loadSession = useCallback(async () => {
+    try {
+      const s = await stocktakeApi.active();
+      setSession(s);
+      return s;
+    } catch {
+      setSession(null);
+      return null;
+    }
+  }, []);
+
+  // 진행 중인 실사가 있으면 그 달을 연다.
+  useEffect(() => {
+    void loadSession().then((s) => { if (s) setYyyymm(s.yyyymm); });
+  }, [loadSession]);
+
+  const onStocktakeChanged = useCallback((ym: string) => {
+    void loadSession();
+    if (ym === yyyymm) void search(); else setYyyymm(ym);
+  }, [loadSession, search, yyyymm]);
 
   /** 실사 목록에서 한 줄을 고르면 조정 폼을 그 줄로 채운다. */
   const pick = useCallback((row: InventoryCheckRow) => {
@@ -126,6 +149,7 @@ export default function InventoryCheckPage() {
       );
       setDifferenceQty('');
       void search();
+      void loadSession();
     } catch (error: unknown) {
       const message = (error as { response?: { data?: { message?: string } } })
         ?.response?.data?.message;
@@ -133,25 +157,27 @@ export default function InventoryCheckPage() {
     } finally {
       setBusy(false);
     }
-  }, [yyyymm, itemCode, lotNo, diff, locationCode, search]);
+  }, [yyyymm, itemCode, lotNo, diff, locationCode, search, loadSession]);
 
   return (
     <div className="flex h-full flex-col gap-4 p-6">
       <header>
         <h1 className="text-xl font-bold text-text">자재재고조사</h1>
         <p className="mt-1 text-sm text-text-muted">
-          실사 수량과 장부 수량의 차이만큼 재고를 조정합니다 ·{' '}
+          바코드 실사 결과(실사 − 장부)만큼 재고를 조정합니다 ·{' '}
           {searched
             ? `${(tab === 'check' ? checks : adjusts).length.toLocaleString()}건`
             : '조회하세요'}
         </p>
       </header>
 
+      <StocktakePanel session={session} onChanged={onStocktakeChanged} />
+
       {/* 조정 (쓰기) */}
       <Card padding="none">
         <CardContent className="flex flex-wrap items-center gap-3 p-3">
           <span className="flex items-center gap-1 text-sm font-semibold text-text">
-            <Scale className="h-4 w-4" />재고 조정
+            <Scale className="h-4 w-4" />한 롯트 조정
           </span>
           <PartSearchField aria-label="품목코드" placeholder="품목코드" value={itemCode}
             className="w-44"
@@ -208,7 +234,7 @@ export default function InventoryCheckPage() {
           </Button>
           {searched && (tab === 'check' ? checks : adjusts).length === 0 && (
             <span className="text-sm text-text-muted">
-              비어 있습니다 — 이 현장은 재고조사를 아직 돌린 적이 없습니다.
+              이 달 실사표가 없습니다. 바코드 실사에서 실사를 시작하세요.
             </span>
           )}
         </CardContent>

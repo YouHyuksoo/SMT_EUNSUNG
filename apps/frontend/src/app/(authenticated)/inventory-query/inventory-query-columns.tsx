@@ -82,6 +82,10 @@ export interface InventoryCheckRow {
   differenceQty: number | null;
   inventoryPrice: number | null;
   inventoryAmt: number | null;
+  /** 이미 넣은 조정 (실사 − 장부 기준 부호) */
+  adjustedQty: number | null;
+  scannedYn: string | null;
+  barcodeYn: string | null;
   comments: string | null;
   enterBy: string | null;
   enterDate: string | null;
@@ -221,6 +225,12 @@ export const inventoryCheckColumns: ColumnDef<InventoryCheckRow>[] = [
     size: 110,
     meta: right,
     cell: (c) => diffCell(c.getValue()),
+  },
+  { accessorKey: 'adjustedQty', header: '조정됨', size: 100, meta: right, cell: (c) => (c.getValue() == null ? '' : diffCell(c.getValue())) },
+  { accessorKey: 'scannedYn', header: '스캔', size: 70, meta: center, cell: (c) => (c.getValue() === 'Y' ? '찍음' : '') },
+  {
+    accessorKey: 'barcodeYn', header: '바코드', size: 80, meta: center,
+    cell: (c) => (c.getValue() === 'N' ? <span className="text-amber-500">없음</span> : ''),
   },
   { accessorKey: 'itemUom', header: '단위', size: 70, meta: center },
   { accessorKey: 'inventoryPrice', header: '재고단가', size: 110, meta: right, cell: (c) => num(c.getValue()) },

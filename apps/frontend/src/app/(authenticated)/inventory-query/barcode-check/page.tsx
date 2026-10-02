@@ -5,15 +5,11 @@
  * @description 자재바코드스캔실사 — PB w_mat_barcode_check_master 이식 (조회 전용)
  *
  * 초보자 가이드:
- * 1. **실사할 때 릴 바코드를 찍은 기록을 보는 화면이다.** 찍은 수량과 장부 수량을
- *    나란히 놓고 차이를 본다.
- * 2. **이 기록은 2020년 10월 것 한 건뿐이다** — 6년 동안 이 방식으로 실사한 적이
- *    없다. 화면에 그렇게 적었다.
- * 3. **쓰기는 옮기지 않았다.** PB 에는 실사에서 발견된 무전표 바코드를 **가상 입고로
- *    만드는** 경로가 있는데, 6년간 쓰이지 않았고 협력사 코드가 하드코딩돼 있다.
- *    검증할 수 없는 원장 생성 코드를 미리 만들어 두면 위험만 늘어난다 —
- *    필요해지면 그때 실측을 다시 하고 붙인다.
- * 4. 차이를 실제로 맞추는 것은 **자재재고조사** 화면이 한다.
+ * 1. **실사 때 릴 바코드를 찍는 화면이다.** 자재재고조사에서 실사를 시작하면 위쪽 입력칸으로
+ *    바코드를 찍는다 (scan-card.tsx). PDA 자재 재고실사도 같은 기록을 남긴다.
+ * 2. 아래 목록은 찍은 기록이다. 찍은 수량과 찍을 때의 장부 수량을 나란히 놓고 차이를 본다.
+ * 3. 장부에 없는 바코드를 찍으면 실사표에 장부 0 으로 들어가고, 일괄 조정 때 재고로 들어온다.
+ * 4. 차이를 실제로 맞추는 것은 **자재재고조사** 화면의 일괄 조정이다.
  */
 import { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -36,6 +32,8 @@ import type {
 } from '../inventory-query-columns';
 import PartSearchField from '@/components/shared/PartSearchField';
 import LineSelect from '@/components/shared/LineSelect';
+import ScanCard from './scan-card';
+import { stocktakeApi, type StocktakeSession } from '../stocktake';
 
 type TabKey = 'list' | 'summary';
 
@@ -50,6 +48,7 @@ export default function BarcodeCheckPage() {
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
   const { truncated, rowLimit, mark } = useTruncation();
+  const [session, setSession] = useState<StocktakeSession | null>(null);
 
   const search = useCallback(async () => {
     setLoading(true);
@@ -78,7 +77,28 @@ export default function BarcodeCheckPage() {
     }
   }, [tab, yyyymm, itemCode, lineCode, mark]);
 
-  useEffect(() => { void search(); }, [tab]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { void search(); }, [tab, yyyymm.length === 6 ? yyyymm : '']); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const loadSession = useCallback(async () => {
+    try {
+      const s = await stocktakeApi.active();
+      setSession(s);
+      return s;
+    } catch {
+      setSession(null);
+      return null;
+    }
+  }, []);
+
+  // 진행 중인 실사가 있으면 그 달 기록을 연다.
+  useEffect(() => {
+    void loadSession().then((s) => { if (s) setYyyymm(s.yyyymm); });
+  }, [loadSession]);
+
+  const onScanned = useCallback(() => {
+    void loadSession();
+    void search();
+  }, [loadSession, search]);
 
   const mismatched = rows.filter((r) => Number(r.differenceQty ?? 0) !== 0).length;
 
@@ -94,6 +114,8 @@ export default function BarcodeCheckPage() {
             : '조회하세요'}
         </p>
       </header>
+
+      <ScanCard session={session} onScanned={onScanned} />
 
       <ScreenTabs
         tabs={[
@@ -122,10 +144,6 @@ export default function BarcodeCheckPage() {
         </CardContent>
       </Card>
 
-      <p className="text-sm text-text-muted">
-        이 방식의 실사 기록은 2020년 10월 것 한 건뿐입니다. 차이를 실제로 맞추는 것은
-        자재재고조사 화면이 합니다.
-      </p>
 
       <TruncationNotice truncated={truncated} rowLimit={rowLimit} />
 

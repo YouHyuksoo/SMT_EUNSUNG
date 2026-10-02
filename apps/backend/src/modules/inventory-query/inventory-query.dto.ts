@@ -11,7 +11,7 @@
  */
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsInt, IsNumber, IsOptional, IsString, Length, Matches } from 'class-validator';
+import { IsBoolean, IsInt, IsNumber, IsOptional, IsString, Length, Matches, Min } from 'class-validator';
 
 /** `YYYYMM` 여섯 자리. 마감월·실사월이 이 형식이다. */
 const YYYYMM = /^\d{6}$/;
@@ -73,8 +73,8 @@ export class InventoryCheckQueryDto {
 /**
  * 272 재고 조정 (**쓰기**).
  *
- * **차이의 부호가 방향을 정한다** — 양수면 실제가 더 많다는 뜻이고 구분 3,
- * 음수면 실제가 적다는 뜻이고 구분 4 로 들어간다 (PB 그대로).
+ * **차이 = 실사 − 장부.** 양수(실제가 많음)면 구분 4 로 재고가 늘고,
+ * 음수(실제가 적음)면 구분 3 으로 재고가 준다.
  */
 export class InventoryAdjustDto {
   @ApiProperty({
@@ -101,6 +101,35 @@ export class InventoryAdjustDto {
   @ApiPropertyOptional({ description: '창고코드. 비우면 재고 표의 값을 쓴다.' })
   @IsOptional() @IsString() @Length(0, 20)
   locationCode?: string;
+}
+
+/** 바코드 실사 시작 — 그 순간의 장부를 실사표에 고정한다. */
+export class StocktakeStartDto {
+  @ApiProperty({ description: '실사월 (YYYYMM). 이번 달 또는 지난달만.' })
+  @IsString() @Matches(YYYYMM)
+  yyyymm!: string;
+
+  @ApiPropertyOptional({ description: '이미 시작한 달의 장부를 다시 고정한다 (스캔은 유지).' })
+  @IsOptional() @IsBoolean()
+  regenerate?: boolean;
+}
+
+/** 바코드 스캔 (진행 중인 실사월에 기록). */
+export class StocktakeScanDto {
+  @ApiProperty({ description: '자재 바코드' })
+  @IsString() @Length(1, 200)
+  barcode!: string;
+
+  @ApiPropertyOptional({ description: '센 수량. 비우면 바코드 수량 (일부 쓴 릴·벌크만 입력).' })
+  @IsOptional() @Type(() => Number) @IsNumber() @Min(0)
+  qty?: number;
+}
+
+/** 스캔 취소. */
+export class StocktakeCancelDto {
+  @ApiProperty({ description: '자재 바코드' })
+  @IsString() @Length(1, 200)
+  barcode!: string;
 }
 
 /** 274 바코드 실사 조회 조건. */

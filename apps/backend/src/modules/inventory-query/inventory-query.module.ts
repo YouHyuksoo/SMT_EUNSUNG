@@ -18,12 +18,14 @@
  */
 import { Module } from '@nestjs/common';
 import { InventoryCheckService } from './inventory-check.service';
+import { StocktakeService } from './stocktake.service';
 import { InventoryCloseService } from './inventory-close.service';
 import { TotalInventoryService } from './total-inventory.service';
 import {
   BarcodeCheckController,
   InventoryCheckController,
   InventoryCloseController,
+  StocktakeController,
   TotalInventoryController,
 } from './inventory-query.controllers';
 
@@ -33,11 +35,13 @@ import {
     InventoryCloseController,
     InventoryCheckController,
     BarcodeCheckController,
+    StocktakeController,
   ],
   providers: [
     TotalInventoryService,
     InventoryCloseService,
     InventoryCheckService,
+    StocktakeService,
   ],
 })
 export class InventoryQueryModule {}
