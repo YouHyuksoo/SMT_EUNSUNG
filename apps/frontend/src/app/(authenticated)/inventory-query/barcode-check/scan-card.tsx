@@ -6,10 +6,12 @@
  * 1. 스캐너는 키보드처럼 입력하고 Enter 를 보낸다. 입력칸에 포커스를 두면 연속으로 찍힌다.
  * 2. 센 수량은 비워 두면 바코드 수량으로 센다. 일부 쓴 릴·벌크만 수량을 넣고 찍는다.
  * 3. "취소" 를 켜고 찍으면 그 바코드의 스캔 기록을 지운다.
+ * 4. 엑셀 업로드는 바코드 목록을 한꺼번에 찍는 것이다 (upload-modal.tsx).
  */
 import { useEffect, useRef, useState } from 'react';
-import { ScanLine } from 'lucide-react';
-import { Card, CardContent, Input } from '@/components/ui';
+import { FileSpreadsheet, ScanLine } from 'lucide-react';
+import { Button, Card, CardContent, Input } from '@/components/ui';
+import UploadModal from './upload-modal';
 import {
   apiMessage,
   stocktakeApi,
@@ -32,6 +34,7 @@ export default function ScanCard({ session, onScanned }: Props) {
   const [cancelMode, setCancelMode] = useState(false);
   const [busy, setBusy] = useState(false);
   const [last, setLast] = useState<Last | null>(null);
+  const [uploadOpen, setUploadOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { inputRef.current?.focus(); }, [session]);
@@ -98,6 +101,10 @@ export default function ScanCard({ session, onScanned }: Props) {
           <span className="text-sm text-text-muted">
             찍음 {session.countedLots.toLocaleString()} / 장부 {session.bookLots.toLocaleString()}롯트
           </span>
+          <Button size="sm" variant="secondary" className="ml-auto" onClick={() => setUploadOpen(true)}
+            data-tooltip="바코드(또는 롯트번호)·수량 목록 엑셀을 한꺼번에 반영합니다.">
+            <FileSpreadsheet className="mr-1 h-4 w-4" />엑셀 업로드
+          </Button>
         </div>
         {last && (
           <div className={`text-sm font-semibold ${last.ok ? 'text-emerald-600' : 'text-red-500'}`}>
@@ -105,6 +112,8 @@ export default function ScanCard({ session, onScanned }: Props) {
           </div>
         )}
       </CardContent>
+      <UploadModal isOpen={uploadOpen} yyyymm={session.yyyymm}
+        onClose={() => { setUploadOpen(false); inputRef.current?.focus(); }} onDone={onScanned} />
     </Card>
   );
 }

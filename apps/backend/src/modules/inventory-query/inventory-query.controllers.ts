@@ -8,8 +8,13 @@
  *   /inventory-query/barcode      274 자재바코드스캔실사 (조회)
  *   /inventory-query/stocktake    바코드 실사 시작 · 스캔 · 일괄 조정 (272·274·PDA, 쓰기)
  */
-import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  BadRequestException, Body, Controller, Get, Post, Query, UploadedFile, UseGuards, UseInterceptors,
+} from '@nestjs/common';
+import { ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
+import { Request } from 'express';
 import { OrganizationId, UserId } from '../../common/decorators/tenant.decorator';
 import { ResponseUtil } from '../../common/dto/response.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -17,6 +22,7 @@ import { ROW_LIMIT } from '../../shared/row-limit';
 import { InventoryCheckService } from './inventory-check.service';
 import { InventoryCloseService } from './inventory-close.service';
 import { StocktakeService } from './stocktake.service';
+import { parseStocktakeWorkbook } from './stocktake-excel';
 import { TotalInventoryService } from './total-inventory.service';
 import {
   BarcodeCheckQueryDto,
@@ -239,6 +245,32 @@ export class StocktakeController {
     return ResponseUtil.success(
       await this.service.scan(dto.barcode, dto.qty, organizationId, userId || DEFAULT_USER),
     );
+  }
+
+  @Post('upload')
+  @ApiOperation({
+    summary: '실사 엑셀 업로드 (**쓰기**) — 첫 시트의 바코드(또는 롯트번호)·수량 열을 한꺼번에 스캔한다.'
+      + ' 이미 찍은 롯트는 엑셀 수량으로 고친다. 반영 못 한 줄은 줄 번호와 사유로 돌려준다.',
+  })
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FileInterceptor('file', {
+    storage: memoryStorage(),
+    limits: { fileSize: 10 * 1024 * 1024 },
+    fileFilter: (_req: Request, file: Express.Multer.File, callback: (error: Error | null, accept: boolean) => void) => {
+      if (!/\.(xlsx|xls|csv)$/i.test(file.originalname)) {
+        return callback(new BadRequestException('.xlsx · .xls · .csv 파일만 올릴 수 있습니다.'), false);
+      }
+      callback(null, true);
+    },
+  }))
+  async upload(
+    @UploadedFile() file: Express.Multer.File,
+    @OrganizationId() organizationId: number,
+    @UserId() userId?: string,
+  ) {
+    if (!file) throw new BadRequestException('파일이 필요합니다.');
+    const rows = parseStocktakeWorkbook(file.buffer);
+    return ResponseUtil.success(await this.service.upload(rows, organizationId, userId || DEFAULT_USER));
   }
 
   @Post('scan/cancel')

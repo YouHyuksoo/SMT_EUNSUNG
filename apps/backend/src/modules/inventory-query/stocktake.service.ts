@@ -16,16 +16,74 @@
  *       조정만큼은 빼고 넣으므로 다시 눌러도 두 번 들어가지 않는다.
  * 3. 실사 중에는 입출고를 멈춘다 — 장부는 ① 시점에 고정되기 때문이다.
  * 4. 조정 날짜는 그 달 마지막 날이다(`postAdjustment`). 마감된 달은 시작·스캔·조정 모두 거절한다.
+ * 5. **엑셀 업로드**(`upload`)는 스캔을 한꺼번에 하는 것이다. 한 줄 = 바코드 또는 롯트번호 하나.
+ *    이미 찍은 롯트는 엑셀 수량으로 고친다 — 같은 파일을 다시 올려도 결과가 같다.
  */
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { DataSource, QueryRunner } from 'typeorm';
 import { TransactionService } from '../../shared/transaction.service';
+import { clobBind } from '../../common/services/oracle.service';
 import { namedBinds } from '../../common/utils/named-binds.util';
 import { assertMonthOpen, postAdjustment } from './inventory-check.service';
 
 type Row = Record<string, unknown>;
 
 const num = (v: unknown) => Number(v ?? 0);
+
+/** 엑셀 한 줄. 바코드나 롯트번호 중 하나는 있어야 한다. 수량을 비우면 바코드 수량. */
+export interface StocktakeUploadRow {
+  /** 엑셀 줄 번호 (오류 보고용) */
+  row?: number;
+  barcode?: string;
+  lotNo?: string;
+  itemCode?: string;
+  qty?: number;
+}
+
+/** 업로드 한 번에 받는 최대 줄 수 (재고 롯트가 5천 개 안쪽이다). */
+export const UPLOAD_MAX_ROWS = 20_000;
+
+/** 업로드에서 반영하지 않은 줄 */
+export interface UploadError {
+  row: number;
+  value: string;
+  reason: string;
+}
+
+/**
+ * 찾아온 바코드와 입력 줄을 맞춰 반영할 줄과 오류 줄로 나눈다.
+ * 오류: 바코드·롯트 없음 / 등록 안 된 바코드 / 수량이 음수·숫자 아님 / 파일 안 롯트 중복.
+ */
+export function classifyUploadRows(
+  input: { rn: number; barcode: string | null; lotNo: string | null; qty: number | null }[],
+  resolved: Record<string, unknown>[],
+) {
+  const byRn = new Map(resolved.map((r) => [num(r.rn), r]));
+  const errors: UploadError[] = [];
+  const seen = new Set<string>();
+  const accepted: {
+    barcode: string; itemCode: string; lotNo: string; qty: number; labelType: string | null; origin: string;
+    bookQty: number; price: number; locationCode: string;
+  }[] = [];
+  for (const src of input) {
+    const r = byRn.get(src.rn);
+    const value = src.barcode ?? src.lotNo ?? '';
+    if (!src.barcode && !src.lotNo) { errors.push({ row: src.rn, value, reason: '바코드·롯트번호가 비어 있음' }); continue; }
+    if (!r?.lotNo) { errors.push({ row: src.rn, value, reason: '등록되지 않은 바코드·롯트' }); continue; }
+    if (src.qty !== null && !(Number.isFinite(src.qty) && src.qty >= 0)) {
+      errors.push({ row: src.rn, value, reason: '수량이 0 이상의 숫자가 아님' }); continue;
+    }
+    const key = `${String(r.itemCode)}|${String(r.lotNo)}`;
+    if (seen.has(key)) { errors.push({ row: src.rn, value, reason: '파일 안에서 같은 롯트가 겹침' }); continue; }
+    seen.add(key);
+    accepted.push({
+      barcode: String(r.itemBarcode), itemCode: String(r.itemCode), lotNo: String(r.lotNo),
+      qty: src.qty ?? num(r.scanQty), labelType: (r.labelType as string) ?? null, origin: value,
+      bookQty: num(r.bookQty), price: num(r.price), locationCode: (r.locationCode as string) ?? 'M01',
+    });
+  }
+  return { accepted, errors };
+}
 
 /** 실사 시작은 이번 달 또는 지난달만 받는다 (월말 실사가 다음 달 초에 끝나는 경우). */
 export function isStocktakeMonthAllowed(yyyymm: string, today = new Date()): boolean {
@@ -244,6 +302,104 @@ export class StocktakeService {
       );
       await qr.query(applyScansSql(true), namedBinds({ yyyymm, organizationId, userId, lotNo }));
       return this.lotResult(qr, yyyymm, itemCode, lotNo, organizationId);
+    });
+  }
+
+  /**
+   * 엑셀 업로드 — 여러 줄을 한 트랜잭션으로 스캔한다. 찾지 못한 줄·수량이 틀린 줄·파일 안에서
+   * 같은 롯트가 겹친 줄은 반영하지 않고 줄 번호와 함께 돌려준다. 나머지는 반영한다.
+   */
+  async upload(rows: StocktakeUploadRow[], organizationId: number, userId: string) {
+    if (!rows.length) throw new BadRequestException('올릴 줄이 없습니다.');
+    if (rows.length > UPLOAD_MAX_ROWS) {
+      throw new BadRequestException(`한 번에 ${UPLOAD_MAX_ROWS.toLocaleString()}줄까지 올릴 수 있습니다.`);
+    }
+    const session = await this.active(organizationId);
+    if (!session) throw new BadRequestException('진행 중인 실사가 없습니다. 실사를 먼저 시작하세요.');
+    const yyyymm = session.yyyymm;
+
+    const input = rows.map((r, i) => ({
+      rn: r.row ?? i + 1,
+      barcode: r.barcode?.trim().toUpperCase() || null,
+      lotNo: r.lotNo?.trim().toUpperCase() || null,
+      itemCode: r.itemCode?.trim().toUpperCase() || null,
+      qty: r.qty === undefined ? null : r.qty,
+    }));
+
+    return this.tx.run(async (qr) => {
+      await assertMonthOpen(qr, yyyymm, organizationId);
+      // 줄마다 입고 바코드를 찾는다: 바코드 그대로 → 롯트번호 → 바코드에서 뽑은 롯트·품목 순.
+      const resolved = (await qr.query(
+        `SELECT J.RN AS "rn", B.ITEM_BARCODE AS "itemBarcode", B.ITEM_CODE AS "itemCode",
+                B.LOT_NO AS "lotNo", B.SCAN_QTY AS "scanQty", B.LABEL_TYPE AS "labelType",
+                V.BOOK AS "bookQty", V.PRICE AS "price", V.LOC AS "locationCode"
+           FROM JSON_TABLE(:uploadJson, '$[*]' COLUMNS (
+                  RN NUMBER PATH '$.rn', BC VARCHAR2(200) PATH '$.barcode',
+                  LOT VARCHAR2(60) PATH '$.lotNo', ITEM VARCHAR2(30) PATH '$.itemCode')) J
+           OUTER APPLY (
+             SELECT * FROM (
+               SELECT b.ITEM_BARCODE, b.ITEM_CODE, b.LOT_NO, b.SCAN_QTY, b.LABEL_TYPE, 1 AS RK
+                 FROM IM_ITEM_RECEIPT_BARCODE b
+                WHERE J.BC IS NOT NULL AND b.ITEM_BARCODE = J.BC AND b.ORGANIZATION_ID = :organizationId
+               UNION ALL
+               SELECT b.ITEM_BARCODE, b.ITEM_CODE, b.LOT_NO, b.SCAN_QTY, b.LABEL_TYPE, 2
+                 FROM IM_ITEM_RECEIPT_BARCODE b
+                WHERE J.LOT IS NOT NULL AND b.LOT_NO = J.LOT
+                  AND (J.ITEM IS NULL OR b.ITEM_CODE = J.ITEM) AND b.ORGANIZATION_ID = :organizationId
+               UNION ALL
+               SELECT b.ITEM_BARCODE, b.ITEM_CODE, b.LOT_NO, b.SCAN_QTY, b.LABEL_TYPE, 3
+                 FROM IM_ITEM_RECEIPT_BARCODE b
+                WHERE J.BC IS NOT NULL AND b.LOT_NO = F_GET_LOT_NO_FROM_BARCODE(J.BC)
+                  AND b.ITEM_CODE = F_GET_ITEM_CODE_FROM_BARCODE(J.BC) AND b.ORGANIZATION_ID = :organizationId
+             ) ORDER BY RK FETCH FIRST 1 ROWS ONLY) B
+           OUTER APPLY (
+             SELECT MAX(v.INVENTORY_QTY) AS BOOK, MAX(v.INVENTORY_PRICE) AS PRICE, MAX(v.LOCATION_CODE) AS LOC
+               FROM IM_ITEM_INVENTORY v
+              WHERE v.MATERIAL_MFS = B.LOT_NO AND v.ITEM_CODE = B.ITEM_CODE
+                AND v.ORGANIZATION_ID = :organizationId) V
+          ORDER BY J.RN`,
+        namedBinds({ uploadJson: clobBind(JSON.stringify(input)), organizationId }),
+      )) as Row[];
+
+      const { accepted, errors } = classifyUploadRows(input, resolved);
+      if (!accepted.length) return { yyyymm, applied: 0, updated: 0, errors };
+
+      const acceptedJson = JSON.stringify(accepted);
+      // 이미 찍은 롯트 수. JSON_TABLE 을 IN 서브쿼리에 넣으면 이 DB 에서 ORA-00600 이 나 JS 로 센다.
+      const scanned = new Set(((await qr.query(
+        `SELECT ITEM_CODE || '|' || LOT_NO AS "k" FROM IM_ITEM_INVENTORY_CHECK_BCD
+          WHERE CHECK_YYYYMM = :yyyymm AND ORGANIZATION_ID = :organizationId`,
+        namedBinds({ yyyymm, organizationId }),
+      )) as Row[]).map((r) => String(r.k)));
+      const updated = accepted.filter((x) => scanned.has(`${x.itemCode}|${x.lotNo}`)).length;
+
+      await qr.query(
+        `MERGE INTO IM_ITEM_INVENTORY_CHECK_BCD t
+         USING (
+           SELECT J.BC, J.ITEM, J.LOT, J.QTY, J.LABEL, J.ORIG, J.BOOK, J.PRICE, J.LOC
+             FROM JSON_TABLE(:acceptedJson, '$[*]' COLUMNS (
+                    BC VARCHAR2(200) PATH '$.barcode', ITEM VARCHAR2(30) PATH '$.itemCode',
+                    LOT VARCHAR2(60) PATH '$.lotNo', QTY NUMBER PATH '$.qty',
+                    LABEL VARCHAR2(10) PATH '$.labelType', ORIG VARCHAR2(200) PATH '$.origin',
+                    BOOK NUMBER PATH '$.bookQty', PRICE NUMBER PATH '$.price',
+                    LOC VARCHAR2(30) PATH '$.locationCode')) J
+         ) s
+         ON (t.CHECK_YYYYMM = :yyyymm AND t.ORGANIZATION_ID = :organizationId
+             AND t.ITEM_CODE = s.ITEM AND t.LOT_NO = s.LOT)
+         WHEN MATCHED THEN UPDATE
+              SET t.BARCODE_QTY = s.QTY, t.INVENTORY_AMT = s.QTY * NVL(s.PRICE, 0),
+                  t.LAST_MODIFY_BY = :userId, t.LAST_MODIFY_DATE = SYSDATE
+         WHEN NOT MATCHED THEN INSERT
+              (CHECK_YYYYMM, ITEM_BARCODE, ITEM_CODE, LOT_NO, ORIGIN_ITEM_BARCODE, BARCODE_QTY,
+               INVENTORY_QTY, LABEL_TYPE, CHECK_TYPE, LOCATION_CODE, UNIT_PRICE, INVENTORY_AMT,
+               ORGANIZATION_ID, ENTER_BY, ENTER_DATE, LAST_MODIFY_BY, LAST_MODIFY_DATE)
+              VALUES (:yyyymm, s.BC, s.ITEM, s.LOT, s.ORIG, s.QTY,
+               NVL(s.BOOK, 0), s.LABEL, '3', NVL(s.LOC, 'M01'), NVL(s.PRICE, 0), s.QTY * NVL(s.PRICE, 0),
+               :organizationId, :userId, SYSDATE, :userId, SYSDATE)`,
+        namedBinds({ yyyymm, organizationId, userId, acceptedJson: clobBind(acceptedJson) }),
+      );
+      await qr.query(applyScansSql(false), namedBinds({ yyyymm, organizationId, userId }));
+      return { yyyymm, applied: accepted.length, updated, errors };
     });
   }
 
