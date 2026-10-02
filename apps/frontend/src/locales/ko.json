@@ -3841,6 +3841,7 @@
       "issuing": "자재출고",
       "adjustment": "재고조정",
       "invCount": "자재실사",
+      "wipCount": "공정실사",
       "productInv": "제품재고실사",
       "productReceiving": "제품박스입고",
       "logout": "로그아웃"
@@ -3953,6 +3954,20 @@
       "confirmCount": "실사확인",
       "countSuccess": "재고실사가 완료되었습니다",
       "countFailed": "재고실사에 실패했습니다"
+    },
+    "wipCount": {
+      "title": "공정 실사",
+      "scanReel": "라인 릴 바코드 스캔",
+      "qty": "남은 수량 (비우면 라벨 수량)",
+      "itemCode": "바코드 없는 자재 품목코드",
+      "itemQty": "수량",
+      "add": "입력",
+      "cancel": "취소 모드",
+      "noActive": "진행 중인 공정 실사가 없습니다",
+      "startOnPc": "PC 공정실사 화면에서 실사를 시작하세요",
+      "book": "장부",
+      "counted": "실사",
+      "canceled": "취소함"
     },
     "invCount": {
       "noActive": "진행 중인 실사가 없습니다",

@@ -3839,6 +3839,7 @@
       "issuing": "物料出库",
       "adjustment": "库存调整",
       "invCount": "物料盘点",
+      "wipCount": "工序盘点",
       "productInv": "产品库存盘点",
       "productReceiving": "产品装箱入库",
       "logout": "登出"
@@ -3951,6 +3952,20 @@
       "confirmCount": "确认盘点",
       "countSuccess": "库存盘点完成",
       "countFailed": "库存盘点失败"
+    },
+    "wipCount": {
+      "title": "工序盘点",
+      "scanReel": "扫描产线料盘条码",
+      "qty": "剩余数量（空=标签数量）",
+      "itemCode": "无条码物料编码",
+      "itemQty": "数量",
+      "add": "录入",
+      "cancel": "取消模式",
+      "noActive": "没有进行中的工序盘点",
+      "startOnPc": "请在PC工序盘点画面开始盘点",
+      "book": "账面",
+      "counted": "实盘",
+      "canceled": "已取消"
     },
     "invCount": {
       "noActive": "没有进行中的盘点",

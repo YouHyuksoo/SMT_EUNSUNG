@@ -143,6 +143,14 @@ export const pdaMaterialSubMenuItems: PdaMenuItem[] = [
     iconColorClass: "text-cyan-600 dark:text-cyan-400",
     menuCode: "PDA_MAT_INV_COUNT",
   },
+  {
+    labelKey: "pda.menu.wipCount",
+    path: "/pda/material/wip-count",
+    icon: ClipboardCheck,
+    borderClass: "border-amber-200 dark:border-amber-800",
+    iconColorClass: "text-amber-600 dark:text-amber-400",
+    menuCode: "PDA_MAT_WIP_COUNT",
+  },
 ];
 
 /**

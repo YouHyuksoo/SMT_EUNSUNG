@@ -3839,6 +3839,7 @@
       "issuing": "Xuất kho",
       "adjustment": "Điều chỉnh tồn kho",
       "invCount": "Kiểm kê vật tư",
+      "wipCount": "Kiểm kê công đoạn",
       "productInv": "Kiểm kê sản phẩm",
       "productReceiving": "Nhập kho thùng SP",
       "logout": "Đăng xuất"
@@ -3951,6 +3952,20 @@
       "confirmCount": "Xác nhận kiểm kê",
       "countSuccess": "Kiểm kê thành công",
       "countFailed": "Kiểm kê thất bại"
+    },
+    "wipCount": {
+      "title": "Kiểm kê công đoạn",
+      "scanReel": "Quét mã vạch cuộn trên line",
+      "qty": "SL còn lại (trống = SL nhãn)",
+      "itemCode": "Mã vật tư (không có mã vạch)",
+      "itemQty": "Số lượng",
+      "add": "Nhập",
+      "cancel": "Chế độ hủy",
+      "noActive": "Không có kiểm kê công đoạn đang tiến hành",
+      "startOnPc": "Bắt đầu kiểm kê công đoạn trên PC",
+      "book": "Sổ sách",
+      "counted": "Thực tế",
+      "canceled": "Đã hủy"
     },
     "invCount": {
       "noActive": "Không có kiểm kê đang tiến hành",

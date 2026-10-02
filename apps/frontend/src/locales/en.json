@@ -3839,6 +3839,7 @@
       "issuing": "Issuing",
       "adjustment": "Adjustment",
       "invCount": "Inventory Count",
+      "wipCount": "WIP Count",
       "productInv": "Product Inventory",
       "productReceiving": "Product Box Receiving",
       "logout": "Logout"
@@ -3951,6 +3952,20 @@
       "confirmCount": "Confirm Count",
       "countSuccess": "Inventory count completed",
       "countFailed": "Inventory count failed"
+    },
+    "wipCount": {
+      "title": "WIP Stocktake",
+      "scanReel": "Scan line reel barcode",
+      "qty": "Remaining qty (blank = label qty)",
+      "itemCode": "Item code (no barcode)",
+      "itemQty": "Qty",
+      "add": "Add",
+      "cancel": "Cancel mode",
+      "noActive": "No active WIP stocktake",
+      "startOnPc": "Start the WIP stocktake on PC",
+      "book": "Book",
+      "counted": "Counted",
+      "canceled": "Canceled"
     },
     "invCount": {
       "noActive": "No active inventory count",
