@@ -6,9 +6,11 @@
  * 초보자 가이드:
  * 1. **실사(實査)는 장부와 실제를 맞추는 일이다.** 창고에 가서 센 수량을 적고,
  *    장부와 다르면 그 차이만큼 원장을 조정한다.
- * 2. **272 는 품목·롯트 단위로 센다.** 실사수량을 적으면 차이만큼 조정 출고를 만든다:
- *        차이 > 0 (실제가 더 많다) → 구분 3, 바코드를 "나간 것" 으로 표시
- *        차이 < 0 (실제가 적다)   → 구분 4, 바코드를 "돌아온 것" 으로 표시
+ * 2. **272 는 품목·롯트 단위로 센다.** 실사수량을 적으면 차이만큼 조정 출고를 만든다.
+ *    화면의 차이는 실사 − 장부(양수 = 실제가 더 많음)이고, 조정 출고 수량은 그 반대인
+ *    장부 − 실사다 (PB 원본의 difference_qty 정의). 출고 트리거는 재고에서 출고수량을 뺀다:
+ *        실제가 적다 → 출고 +, 구분 3, 바코드를 "나간 것" 으로 표시 → 재고 감소
+ *        실제가 많다 → 출고 −, 구분 4, 바코드를 "돌아온 것" 으로 표시 → 재고 증가
  *    조정 출고는 계정 `M009` · 비고 `INVENTORY ADJUST` 로 남는다 (PB 그대로).
  *    날짜는 `F_GET_INVENTORY_CLOSE_DATE(마감월, 'END'|'LAST', 조직)` 이 정한다 —
  *    조정은 **마감월의 마지막 날짜로 들어가야** 그 달 수불이 맞는다.
@@ -180,6 +182,18 @@ export class InventoryCheckService {
     }
 
     return this.tx.run(async (qr) => {
+      // 마감된 달에 조정을 넣으면 마감 결과와 원장이 어긋난다 — 마감 취소 → 조정 → 재마감 순서다.
+      const closed = (await qr.query(
+        `SELECT 1 AS "closed" FROM ISYS_INVENTORY_CLOSE_DATE
+          WHERE CLOSE_YYYYMM = :yyyymm AND ORGANIZATION_ID = :organizationId AND CLOSE_YN = 'Y'`,
+        namedBinds({ yyyymm: dto.yyyymm, organizationId }),
+      )) as Row[];
+      if (closed.length) {
+        throw new BadRequestException(
+          `${dto.yyyymm} 은 마감된 달입니다. 자재재고마감에서 마감을 취소한 뒤 조정하세요.`,
+        );
+      }
+
       const facts = ((await qr.query(
         `SELECT v.INVENTORY_TYPE          AS "inventoryType",
                 v.LINE_TYPE               AS "lineType",
@@ -200,8 +214,10 @@ export class InventoryCheckService {
         );
       }
 
-      // ① 바코드 원장 상태. 차이의 부호가 방향을 정한다 (PB 그대로).
-      const plus = diff > 0;
+      // 조정 출고 수량 = 장부 − 실사 (화면 차이의 반대 부호). 양수면 재고를 뺀다.
+      const outQty = -diff;
+      // ① 바코드 원장 상태. 출고 부호가 방향을 정한다 (PB 그대로).
+      const plus = outQty > 0;
       const barcodeResult = await qr.query(
         plus
           ? `UPDATE IM_ITEM_RECEIPT_BARCODE
@@ -258,7 +274,7 @@ export class InventoryCheckService {
             SEQ_MAT_ISSUE.NEXTVAL, :organizationId,
             :lotNo, :itemCode, :locationCode, '${ADJUST.itemType}',
             '${ADJUST.lineCode}', '${ADJUST.workstageCode}',
-            :deficit, :diff, '${ADJUST.issueStatus}', :inventoryPrice * :diff,
+            :deficit, :outQty, '${ADJUST.issueStatus}', :inventoryPrice * :outQty,
             '${ADJUST.issueAccount}',
             :lineType, '${ADJUST.comments}', :inventoryPrice,
             '${ADJUST.virtualReceiptYn}', '${ADJUST.issueType}',
@@ -275,7 +291,7 @@ export class InventoryCheckService {
           itemCode: dto.itemCode,
           locationCode: dto.locationCode ?? (facts.locationCode as string) ?? null,
           deficit: plus ? '3' : '4',
-          diff,
+          outQty,
           inventoryPrice: Number(facts.inventoryPrice ?? 0),
           lineType: (facts.lineType as string) ?? null,
           userId,
@@ -289,7 +305,7 @@ export class InventoryCheckService {
         yyyymm: dto.yyyymm,
         bookQty: Number(facts.bookQty ?? 0),
         differenceQty: diff,
-        /** 3 = 실제가 더 많음 · 4 = 실제가 적음 */
+        /** 3 = 실제가 적음(재고 감소) · 4 = 실제가 더 많음(재고 증가) */
         issueDeficit: plus ? 3 : 4,
         barcodeRows: Number(
           affectedRows(barcodeResult) ?? 0,

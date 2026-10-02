@@ -113,16 +113,15 @@ export default function InventoryCheckPage() {
     setConfirmOpen(false);
     setBusy(true);
     try {
-      const r = await api.post('/inventory-query/check/adjust', {
+      await api.post('/inventory-query/check/adjust', {
         yyyymm,
         itemCode: itemCode.trim(),
         lotNo: lotNo.trim(),
         differenceQty: diff,
         locationCode: locationCode.trim() || undefined,
       });
-      const result = r.data?.data as { issueDeficit?: number } | undefined;
       toast.success(
-        `조정했습니다 (${result?.issueDeficit === 3 ? '실제 많음' : '실제 적음'}`
+        `조정했습니다 (${diff > 0 ? '실제 많음 → 재고 증가' : '실제 적음 → 재고 감소'}`
         + ` ${Math.abs(diff).toLocaleString()}).`,
       );
       setDifferenceQty('');
