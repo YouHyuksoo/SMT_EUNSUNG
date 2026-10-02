@@ -139,8 +139,9 @@ describe('BomService', () => {
       await target.findAll({ page: 1, limit: 10 } as any, 1);
 
       expect(mockPartRepo.find).toHaveBeenCalledWith({
+        // 은성 ID_ITEM 기준 컬럼(itemClass/itemUom)으로 조회 — HANES 의 productType/unit 은 없다
         where: { itemCode: expect.anything(), organizationId: 1 },
-        select: ['itemCode', 'itemName', 'itemNo', 'itemType', 'productType', 'spec', 'unit'],
+        select: ['itemCode', 'itemName', 'itemNo', 'itemType', 'itemClass', 'spec', 'itemUom'],
       });
     });
   });
@@ -300,8 +301,9 @@ describe('BomService', () => {
       await target.findParents(undefined, '2026-06-29', 1);
 
       const [sql] = mockBomRepo.query.mock.calls[0] as [string, unknown[]];
-      expect(sql).toContain('MIN(b.VALID_FROM)');
-      expect(sql).toContain('MAX(b.VALID_TO)');
+      // ID_ENG_BOM 적용일자 컬럼은 DATESET/DATEEND — 모품목 행은 자품목 중 최소 시작일~최대 종료일을 보여준다
+      expect(sql).toContain(`TO_CHAR(MIN(b.DATESET), 'YYYY-MM-DD') AS "validFrom"`);
+      expect(sql).toContain(`TO_CHAR(MAX(b.DATEEND), 'YYYY-MM-DD') AS "validTo"`);
       expect(sql).toContain('validFrom');
       expect(sql).toContain('validTo');
     });
@@ -371,8 +373,9 @@ describe('BomService', () => {
       await target.findByParentId('P01', undefined, 1);
 
       expect(mockPartRepo.find).toHaveBeenCalledWith({
+        // 은성 ID_ITEM 기준 컬럼(itemClass/itemUom)으로 조회 — HANES 의 productType/unit 은 없다
         where: { itemCode: expect.anything(), organizationId: 1 },
-        select: ['itemCode', 'itemName', 'itemNo', 'itemType', 'productType', 'spec', 'unit'],
+        select: ['itemCode', 'itemName', 'itemNo', 'itemType', 'itemClass', 'spec', 'itemUom'],
       });
     });
   });

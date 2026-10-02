@@ -55,7 +55,7 @@ describe('PdaRoleService', () => {
       .filter(column => column.target === PdaRole && column.options.primary)
       .map(column => column.propertyName);
 
-    expect(primaryColumnNames).toEqual(expect.arrayContaining(['company', 'plant', 'code']));
+    expect(primaryColumnNames).toEqual(expect.arrayContaining(['organizationId', 'code']));
   });
 
   it('includes tenant columns in PDA role menu primary key metadata', () => {
@@ -64,7 +64,7 @@ describe('PdaRoleService', () => {
       .filter(column => column.target === PdaRoleMenu && column.options.primary)
       .map(column => column.propertyName);
 
-    expect(primaryColumnNames).toEqual(expect.arrayContaining(['company', 'plant', 'pdaRoleCode', 'menuCode']));
+    expect(primaryColumnNames).toEqual(expect.arrayContaining(['organizationId', 'pdaRoleCode', 'menuCode']));
   });
 
   // ─── findAll ───
@@ -75,12 +75,12 @@ describe('PdaRoleService', () => {
       mockRoleRepo.find.mockResolvedValue(roles);
 
       // Act
-      const result = await target.findAll('C1', 'P1');
+      const result = await target.findAll(1);
 
       // Assert
       expect(result).toEqual(roles);
       expect(mockRoleRepo.find).toHaveBeenCalledWith({
-        where: { company: 'C1', plant: 'P1' },
+        where: { organizationId: 1 },
         relations: ['menus'],
         order: { createdAt: 'ASC' },
       });
@@ -95,12 +95,12 @@ describe('PdaRoleService', () => {
       mockRoleRepo.find.mockResolvedValue(roles);
 
       // Act
-      const result = await target.findAllActive('C1', 'P1');
+      const result = await target.findAllActive(1);
 
       // Assert
       expect(result).toEqual(roles);
       expect(mockRoleRepo.find).toHaveBeenCalledWith(expect.objectContaining({
-        where: { isActive: true, company: 'C1', plant: 'P1' },
+        where: { isActive: true, organizationId: 1 },
       }));
     });
   });
@@ -126,13 +126,13 @@ describe('PdaRoleService', () => {
       mockRoleRepo.findOne.mockResolvedValue({ code: 'NEW', menus: [] } as any);
 
       // Act
-      const result = await target.create(dto as any, 'C1', 'P1');
+      const result = await target.create(dto as any, 1);
 
       // Assert
       expect(mockTx.run).toHaveBeenCalled();
-      expect(mockRoleRepo.findOne).toHaveBeenCalledWith({ where: { code: 'NEW', company: 'C1', plant: 'P1' } });
-      expect(mockManager.create).toHaveBeenCalledWith(PdaRole, expect.objectContaining({ company: 'C1', plant: 'P1' }));
-      expect(mockManager.create).toHaveBeenCalledWith(PdaRoleMenu, expect.objectContaining({ company: 'C1', plant: 'P1' }));
+      expect(mockRoleRepo.findOne).toHaveBeenCalledWith({ where: { code: 'NEW', organizationId: 1 } });
+      expect(mockManager.create).toHaveBeenCalledWith(PdaRole, expect.objectContaining({ organizationId: 1 }));
+      expect(mockManager.create).toHaveBeenCalledWith(PdaRoleMenu, expect.objectContaining({ organizationId: 1 }));
     });
 
     it('should throw ConflictException when code exists', async () => {
@@ -141,10 +141,10 @@ describe('PdaRoleService', () => {
       mockRoleRepo.findOne.mockResolvedValue({ code: 'EXISTING' } as any);
 
       // Act & Assert
-      await expect(target.create(dto, 'C1', 'P1')).rejects.toThrow(ConflictException);
+      await expect(target.create(dto, 1)).rejects.toThrow(ConflictException);
     });
 
-    it('should reject create when tenant is missing instead of defaulting to EUNSUNG/P01', async () => {
+    it('should reject create when tenant is missing instead of saving without organizationId', async () => {
       mockRoleRepo.findOne.mockResolvedValue(null);
 
       await expect(target.create({ code: 'NEW', name: 'New Role' } as any)).rejects.toThrow(BadRequestException);
@@ -166,13 +166,13 @@ describe('PdaRoleService', () => {
       mockTx.run.mockImplementation(async (cb) => cb({ manager: mockManager } as any));
 
       // Act
-      await target.update('R1', { name: 'Updated', menuCodes: ['PDA_SHIPPING'] } as any, 'C1', 'P1');
+      await target.update('R1', { name: 'Updated', menuCodes: ['PDA_SHIPPING'] } as any, 1);
 
       // Assert
       expect(mockTx.run).toHaveBeenCalled();
-      expect(mockManager.update).toHaveBeenCalledWith(PdaRole, { code: 'R1', company: 'C1', plant: 'P1' }, expect.objectContaining({ name: 'Updated' }));
-      expect(mockManager.delete).toHaveBeenCalledWith(PdaRoleMenu, { pdaRoleCode: 'R1', company: 'C1', plant: 'P1' });
-      expect(mockManager.create).toHaveBeenCalledWith(PdaRoleMenu, expect.objectContaining({ pdaRoleCode: 'R1', company: 'C1', plant: 'P1' }));
+      expect(mockManager.update).toHaveBeenCalledWith(PdaRole, { code: 'R1', organizationId: 1 }, expect.objectContaining({ name: 'Updated' }));
+      expect(mockManager.delete).toHaveBeenCalledWith(PdaRoleMenu, { pdaRoleCode: 'R1', organizationId: 1 });
+      expect(mockManager.create).toHaveBeenCalledWith(PdaRoleMenu, expect.objectContaining({ pdaRoleCode: 'R1', organizationId: 1 }));
     });
 
     it('should throw NotFoundException when role not found', async () => {
@@ -180,10 +180,10 @@ describe('PdaRoleService', () => {
       mockRoleRepo.findOne.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(target.update('NONE', {} as any, 'C1', 'P1')).rejects.toThrow(NotFoundException);
+      await expect(target.update('NONE', {} as any, 1)).rejects.toThrow(NotFoundException);
     });
 
-    it('should reject menu replacement when tenant is missing instead of defaulting to EUNSUNG/P01', async () => {
+    it('should reject menu replacement when tenant is missing instead of saving without organizationId', async () => {
       mockRoleRepo.findOne.mockResolvedValue({ code: 'R1' } as any);
 
       await expect(target.update('R1', { menuCodes: ['PDA_SHIPPING'] } as any)).rejects.toThrow(BadRequestException);
@@ -200,11 +200,11 @@ describe('PdaRoleService', () => {
       mockRoleRepo.delete.mockResolvedValue({ affected: 1 } as any);
 
       // Act
-      const result = await target.remove('R1', 'C1', 'P1');
+      const result = await target.remove('R1', 1);
 
       // Assert
       expect(result).toEqual({ code: 'R1', deleted: true });
-      expect(mockRoleRepo.delete).toHaveBeenCalledWith({ code: 'R1', company: 'C1', plant: 'P1' });
+      expect(mockRoleRepo.delete).toHaveBeenCalledWith({ code: 'R1', organizationId: 1 });
     });
 
     it('should throw NotFoundException when role not found', async () => {

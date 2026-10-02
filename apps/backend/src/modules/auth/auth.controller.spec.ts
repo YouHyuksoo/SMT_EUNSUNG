@@ -16,18 +16,19 @@ describe('AuthController', () => {
     controller = new AuthController(service);
   });
 
-  it('passes token and tenant headers to current user lookup', async () => {
-    service.me.mockResolvedValue({ email: 'user@test.com' } as any);
+  // 은성전장은 단일 조직이라 테넌트 헤더를 넘기지 않고 토큰(USER_ID)만으로 조회한다.
+  it('passes only bearer token (USER_ID) to current user lookup', async () => {
+    service.me.mockResolvedValue({ userId: 'USER01' } as any);
 
     await controller.me({
       headers: {
-        authorization: 'Bearer user@test.com',
+        authorization: 'Bearer USER01',
         'x-company': 'C1',
         'x-plant': 'P1',
       },
     } as any);
 
-    expect(service.me).toHaveBeenCalledWith('user@test.com', 'C1', 'P1');
+    expect(service.me).toHaveBeenCalledWith('USER01');
   });
 
   it('rejects missing bearer token', async () => {
