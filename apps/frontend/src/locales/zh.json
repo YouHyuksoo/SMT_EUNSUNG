@@ -189,6 +189,11 @@
   "menu": {
     "dashboard": "仪表盘",
     "root": "顶级",
+    "favorites": "收藏夹",
+    "favorites.add": "添加到收藏夹",
+    "favorites.remove": "从收藏夹移除",
+    "favorites.manageFolders": "管理文件夹",
+    "favorites.empty": "暂无收藏。点击菜单旁的★添加。",
     "workflow": "工作流程",
     "monitoring": "监控",
     "bom": "BOM 管理",

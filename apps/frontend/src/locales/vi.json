@@ -189,6 +189,11 @@
   "menu": {
     "dashboard": "Bảng điều khiển",
     "root": "Cấp cao nhất",
+    "favorites": "Mục yêu thích",
+    "favorites.add": "Thêm vào mục yêu thích",
+    "favorites.remove": "Xóa khỏi mục yêu thích",
+    "favorites.manageFolders": "Quản lý thư mục",
+    "favorites.empty": "Chưa có mục yêu thích. Nhấn ★ bên cạnh menu để thêm.",
     "workflow": "Quy trình",
     "monitoring": "Giám sát",
     "bom": "Quản lý BOM",

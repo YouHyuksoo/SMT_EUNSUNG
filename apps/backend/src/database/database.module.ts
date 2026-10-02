@@ -24,6 +24,8 @@ import { OeeDowntimeEvent } from '../entities/oee-downtime-event.entity';
 import { WorktimeRange } from '../entities/worktime-range.entity';
 import { MenuCategory } from '../entities/menu-category.entity';
 import { MenuCategoryItem } from '../entities/menu-category-item.entity';
+import { UserMenuFavorite } from '../entities/user-menu-favorite.entity';
+import { UserMenuFavoriteFolder } from '../entities/user-menu-favorite-folder.entity';
 import { ComCode } from '../entities/com-code.entity';
 import { CommConfig } from '../entities/comm-config.entity';
 import { SysConfig } from '../entities/sys-config.entity';
@@ -121,6 +123,8 @@ import { AiChatFeedback } from '../entities/ai-chat-feedback.entity';
             WorktimeRange,
             MenuCategory,
             MenuCategoryItem,
+            UserMenuFavorite,
+            UserMenuFavoriteFolder,
             ComCode,
             CommConfig,
             SysConfig,

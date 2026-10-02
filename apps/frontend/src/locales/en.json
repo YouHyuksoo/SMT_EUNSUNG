@@ -189,6 +189,11 @@
   "menu": {
     "dashboard": "Dashboard",
     "root": "Root",
+    "favorites": "Favorites",
+    "favorites.add": "Add to favorites",
+    "favorites.remove": "Remove from favorites",
+    "favorites.manageFolders": "Manage folders",
+    "favorites.empty": "No favorites yet. Click ★ next to a menu to add one.",
     "workflow": "Workflow",
     "monitoring": "Monitoring",
     "bom": "BOM Management",
