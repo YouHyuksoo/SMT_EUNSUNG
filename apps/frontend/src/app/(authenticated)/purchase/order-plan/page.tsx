@@ -43,6 +43,7 @@ import OrderPlanGeneratePanel, {
   PLAN_SOURCES,
   type OrderPlanGenerateValues,
 } from './components/OrderPlanGeneratePanel';
+import OrderPlanPreviewModal from './components/OrderPlanPreviewModal';
 import PartSearchField from '@/components/shared/PartSearchField';
 import { notifySkippedBom } from '../skipped-bom';
 
@@ -88,6 +89,7 @@ export default function OrderPlanPage() {
 
   // 생성 조건 — 우측 생성 패널에서 고른다 (기본값은 PB 화면을 열었을 때와 같다)
   const [generateOpen, setGenerateOpen] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const [gen, setGen] = useState<OrderPlanGenerateValues>(() => ({
     source: 'productionPlan',
     dateFrom: today(),
@@ -100,6 +102,20 @@ export default function OrderPlanPage() {
     applyLeadTime: false,
     applyCalendar: false,
   }));
+  // 미리보기와 생성이 같은 본문을 쓴다 — 미리 본 계산이 그대로 저장된다.
+  const genBody = useMemo(() => ({
+    source: gen.source,
+    dateFrom: gen.dateFrom,
+    dateTo: gen.dateTo,
+    orderDate: gen.orderDate,
+    itemCode: itemCond.trim() || undefined,
+    inventorySources: gen.arms,
+    applyOrderRule: gen.applyOrderRule,
+    distinctMfs: gen.distinctMfs,
+    roundQty: gen.roundQty,
+    applyLeadTime: gen.applyLeadTime,
+    applyCalendar: gen.applyCalendar,
+  }), [gen, itemCond]);
   const patchGen = useCallback(
     (patch: Partial<OrderPlanGenerateValues>) => setGen((prev) => ({ ...prev, ...patch })),
     [],
@@ -173,19 +189,7 @@ export default function OrderPlanPage() {
     setBusy(true);
     try {
       if (pending === 'generate') {
-        const r = await api.post('/purchase/order-plan/generate', {
-          source: gen.source,
-          dateFrom: gen.dateFrom,
-          dateTo: gen.dateTo,
-          orderDate: gen.orderDate,
-          itemCode: itemCond.trim() || undefined,
-          inventorySources: gen.arms,
-          applyOrderRule: gen.applyOrderRule,
-          distinctMfs: gen.distinctMfs,
-          roundQty: gen.roundQty,
-          applyLeadTime: gen.applyLeadTime,
-          applyCalendar: gen.applyCalendar,
-        });
+        const r = await api.post('/purchase/order-plan/generate', genBody, { timeout: 180_000 });
         const d = r.data?.data ?? {};
         toast.success(
           `발주계획을 만들었습니다 — 소요량 ${d.requirementRows ?? 0}건 → 계획 ${d.planRows ?? 0}건.`,
@@ -379,9 +383,17 @@ export default function OrderPlanPage() {
           itemCode={itemCond}
           busy={busy}
           onGenerate={() => setPending('generate')}
+          onPreview={() => setPreviewOpen(true)}
           onClose={() => setGenerateOpen(false)}
         />
       )}
+
+      <OrderPlanPreviewModal
+        isOpen={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+        body={genBody}
+        onGenerate={() => { setPreviewOpen(false); setPending('generate'); }}
+      />
 
       <ConfirmModal
         isOpen={Boolean(pending)}

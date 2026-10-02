@@ -2,20 +2,16 @@
  * @file src/modules/purchase/order-plan.service.ts
  * @description 478 자재발주계획 — PB w_mat_purchase_order_plan_master 이식 (쓰기)
  *
- * PB 원본은 4,252줄이지만 SQL 은 몇 개 되지 않는다. 같은 문장이 화면 체크박스
- * 조합마다 복붙돼 있을 뿐이다 — 실측으로 `IM_ITEM_INVENTORY_GEN` INSERT 40개가
- * **전부 같은 5컬럼**이고, 달라지는 것은 UNION ALL 가지 다섯 개의 켬/끔이다.
- * 웹은 그 다섯을 불리언으로 받아 한 문장을 만든다.
+ * 발주량 = (계획잔량 × BOM 누적수량) − 가용재고 → 발주속성 올림 → 공급처 비율 → 납기 보정 → 단가.
+ * 옵션(계획 원천·뺄 재고·발주속성·합치기·리드타임·작업일·반올림)은 이 식의 각 항을 켜고 끈다.
  *
- * 처리 순서 (PB cb_gen_po / cb_gen_do):
- *   1. 계획 원천에서 BOM 을 펴 `IM_ITEM_PURCHASE_REQUIR_ORDER` 를 만든다 (생성기 5종)
- *   2. 발주잔량·도착분·재고를 `*_GEN` 표에 모은다
- *   3. 소요량에서 그것들을 순서대로 차감해 `IM_ITEM_PURCHASE_ORDER_PLAN` 을 만든다
- *      (PB Generate PO — 주문유형 F, 단가 기준정보가 없으면 상태 P 로 확정에서 뺀다)
- *   4. 확정하면 계획이 실제 주문(`IM_ITEM_PURCHASE_ORDER`)이 된다
- *
- * 차감은 순서가 결과를 바꾸므로 집합 연산으로 바꾸지 않고 PB 와 같은 커서 순회를
- * 유지한다. 다만 커서는 PowerBuilder 가 아니라 **익명 PL/SQL 블록 안**에서 돈다.
+ * PB 는 작업 테이블(_TEMP·_GEN·REQUIR_ORDER)에 썼다 지우며 커서로 한 줄씩 돌았다.
+ * 웹은 이렇게 나눈다:
+ *   - 계산: SQL 한 문장(order-plan.sql.ts) + 순서가 결과를 바꾸는 차감·올림(order-plan.netting.ts)
+ *   - 미리보기: 계산만 한다. 아무것도 쓰지 않는다.
+ *   - 생성: 계산 결과로 소요량표·발주계획을 조직 단위로 갈아끼운다 (PB 와 같다).
+ *   - 확정: 계획이 실제 주문(`IM_ITEM_PURCHASE_ORDER`)이 된다.
+ * 단가 기준정보가 없거나 공급처가 * 인 계획은 상태 P — 확정되지 않는다.
  */
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { DataSource } from 'typeorm';
@@ -28,198 +24,70 @@ import type {
   PriceResetDto,
 } from './purchase.dto';
 import { affectedRows } from '../../common/utils/affected-rows.util';
+import { clobBind } from '../../common/services/oracle.service';
 import {
-  ITEM_LINE_TYPE_SQL,
-  LEAF_ONLY_SQL,
-  SKIPPED_ASSIGN_SQL,
-  SKIPPED_DECLARE_SQL,
-  parseSkipped,
-  skipNoBomSql,
-  skippedOutBind,
-} from './bom-requirement.sql';
+  ARM_COLUMNS,
+  INVENTORY_ARMS,
+  PLAN_SOURCES,
+  nullQtySql,
+  orderLinesSql,
+  pickBinds,
+  requirementCtes,
+  skippedItemsSql,
+  type InventoryArm,
+  type PlanSource,
+} from './order-plan.sql';
+import { netOrderLines, roundHalfUp } from './order-plan.netting';
 
-/**
- * 계획 원천. PB 는 라디오버튼으로 골랐고 각각 전용 PB 함수를 불렀다
- * (`f_gen_purchase_order_plan_by_*`). 다섯의 차이는 **커서 원천뿐**이라
- * 여기서는 SELECT 문 하나씩만 둔다.
- *
- * `byTime` 계열은 계획일에 시:분을 붙여 같은 날 안에서도 순서를 가른다.
- */
-const PLAN_SOURCES = {
-  /** 수기로 넣은 발주 기준계획. 소요전개 기준일은 원천 값을 그대로 쓴다. */
-  manual: {
-    label: '수기계획',
-    explodeAll: false,
-    sql: `SELECT ITEM_CODE, PLAN_DATE, ORDER_QTY AS QTY, '*' AS MFS,
-                 REQUIRMENT_PLAN_DATE AS REQ_DATE
-            FROM IM_ITEM_MASTER_PLAN_4_PO
-           WHERE TRUNC(PLAN_DATE) BETWEEN v_from AND v_to
-             AND ITEM_CODE LIKE v_item
-             AND ORGANIZATION_ID = :organizationId`,
-  },
-  /** 생산계획(MI). 남은 수량 = 계획 - 실적. MFS 에 작업지시번호를 남긴다. */
-  productionPlan: {
-    label: '생산계획',
-    explodeAll: false,
-    sql: `SELECT ITEM_CODE, PLAN_DATE, PLAN_QTY - NVL(ACTUAL_QTY, 0) AS QTY,
-                 NVL(WORK_ORDER_NO, '*') AS MFS, TRUNC(SYSDATE) AS REQ_DATE
-            FROM IP_PRODUCT_MI_PLAN
-           WHERE TRUNC(PLAN_DATE) BETWEEN v_from AND v_to
-             AND NVL(PLAN_QTY, 0) - NVL(ACTUAL_QTY, 0) > 0
-             AND ITEM_CODE LIKE v_item
-             AND ORGANIZATION_ID = :organizationId`,
-  },
-  /** 생산계획을 시간까지 나눠 본다 (PLAN_PRIORITY 3~7자리가 HHMI). */
-  productionPlanByTime: {
-    label: '생산계획(시간별)',
-    explodeAll: false,
-    sql: `SELECT ITEM_CODE,
-                 TO_DATE(TO_CHAR(PLAN_DATE, 'YYYYMMDD') || ' '
-                         || SUBSTR(PLAN_PRIORITY, 3, 5), 'YYYYMMDD HH24:MI') AS PLAN_DATE,
-                 PLAN_QTY - NVL(ACTUAL_QTY, 0) AS QTY,
-                 NVL(WORK_ORDER_NO, '*') AS MFS, TRUNC(SYSDATE) AS REQ_DATE
-            FROM IP_PRODUCT_MI_PLAN
-           WHERE TRUNC(PLAN_DATE) BETWEEN v_from AND v_to
-             AND NVL(PLAN_QTY, 0) - NVL(ACTUAL_QTY, 0) > 0
-             AND ITEM_CODE LIKE v_item
-             AND ORGANIZATION_ID = :organizationId`,
-  },
-  /** 납품계획. 남은 수량에서 지시번호로 잡힌 실적까지 뺀다. */
-  salePlan: {
-    label: '납품계획',
-    explodeAll: false,
-    sql: `SELECT ITEM_CODE, PLAN_DATE,
-                 PLAN_QTY - (NVL(ACTUAL_QTY, 0)
-                   + F_GET_PLAN_ACTUAL_QTY_BY_ONO(WORK_ORDER_NO, ORGANIZATION_ID)) AS QTY,
-                 NVL(WORK_ORDER_NO, '*') AS MFS, TRUNC(SYSDATE) AS REQ_DATE
-            FROM IP_PRODUCT_DELIVERY_PLAN
-           WHERE TRUNC(PLAN_DATE) BETWEEN v_from AND v_to
-             AND NVL(PLAN_QTY, 0) - NVL(ACTUAL_QTY, 0) > 0
-             AND ITEM_CODE LIKE v_item
-             AND ORGANIZATION_ID = :organizationId`,
-  },
-  /**
-   * 납품계획(시간별). 은성 설정(SALE_UPLOAD_DIVISION=SAMSUNG)에서 PB 가 실제로 쓰던 경로다.
-   * 전개는 반제품 전개여부와 관계없이 전 단계를 편다 (`BOM_EXPLOSION_ALL`).
-   * 발주규칙 E(PO제외) 제품은 뺀다.
-   */
-  salePlanByTime: {
-    label: '납품계획(시간별)',
-    explodeAll: true,
-    sql: `SELECT ITEM_CODE,
-                 TO_DATE(TO_CHAR(PLAN_DATE, 'YYYYMMDD') || ' '
-                         || PLAN_PRIORITY, 'YYYYMMDD HH24:MI:SS') AS PLAN_DATE,
-                 PLAN_QTY - NVL(ACTUAL_QTY, 0) AS QTY,
-                 NVL(WORK_ORDER_NO, '*') AS MFS, TRUNC(SYSDATE) AS REQ_DATE
-            FROM IP_PRODUCT_DELIVERY_PLAN
-           WHERE TRUNC(PLAN_DATE) BETWEEN v_from AND v_to
-             AND NVL(PLAN_QTY, 0) - NVL(ACTUAL_QTY, 0) > 0
-             AND ITEM_CODE LIKE v_item
-             AND ITEM_CODE NOT IN (SELECT ITEM_CODE FROM ID_ITEM
-                                    WHERE ORDER_RULE = 'E'
-                                      AND ORGANIZATION_ID = :organizationId)
-             AND ORGANIZATION_ID = :organizationId`,
-  },
-} as const;
+/** 발주 줄 — 미리보기와 저장이 같이 쓴다 */
+export interface OrderPlanLine {
+  itemCode: string;
+  itemName: string | null;
+  itemSpec: string | null;
+  itemUom: string | null;
+  /** 저장되는 거래유형 (단가표에 맞춘 값) */
+  lineType: string;
+  /** 재고 차감에 쓴 거래유형 (품목 기준정보) */
+  netLineType: string;
+  supplierCode: string;
+  supplierName: string | null;
+  paymentType: string;
+  orderRate: number | null;
+  mfs: string;
+  setItemCode: string | null;
+  parentItemCode: string | null;
+  /** 소요가 생긴 날 (보정 전 납기) */
+  planDate: string;
+  /** 리드타임·작업일 보정 후 납기 */
+  deliveryDate: string;
+  /** 비율 적용 전 소요량 */
+  requirementQty: number;
+  /** 비율 적용 후 소요량 */
+  orderQty: number;
+  invStock: number;
+  invOrder: number;
+  invArrival: number;
+  invWorkstage: number;
+  invFree: number;
+  appliedQty: number;
+  badQty: number;
+  roundUpQty: number;
+  purchaseQty: number;
+  delivery: string | null;
+  unitPrice: number;
+  currency: string;
+  status: 'N' | 'P';
+  statusReason: string | null;
+}
 
-export type PlanSource = keyof typeof PLAN_SOURCES;
+interface ComputeResult {
+  lines: OrderPlanLine[];
+  skippedItems: string[];
+  binds: Record<string, unknown>;
+  applyInventory: boolean;
+}
 
-/**
- * 재고 집계에 넣을 원천. PB 는 체크박스 다섯의 조합마다 INSERT 를 따로 적어
- * 두었다(실측 40개, 컬럼은 전부 동일). 여기서는 켜진 가지만 UNION ALL 로 잇는다.
- */
-const INVENTORY_ARMS = {
-  /** 자재창고 재고. PB 도 `LOCATION_CODE = 'M01'` 만 본다. */
-  inventory: `SELECT ITEM_CODE, LINE_TYPE, ORGANIZATION_ID, SUM(INVENTORY_QTY) AS QTY
-                FROM IM_ITEM_INVENTORY
-               WHERE ORGANIZATION_ID = :organizationId
-                 AND LOCATION_CODE = 'M01'
-               GROUP BY ITEM_CODE, LINE_TYPE, ORGANIZATION_ID`,
-  /** 아직 안 들어온 발주잔량. */
-  order: `SELECT ITEM_CODE, LINE_TYPE, ORGANIZATION_ID, SUM(ORDER_QTY) AS QTY
-            FROM IM_ITEM_PURCHASE_ORDER_GEN
-           WHERE ORGANIZATION_ID = :organizationId
-           GROUP BY ITEM_CODE, LINE_TYPE, ORGANIZATION_ID`,
-  /** 도착했지만 입고 전인 물량. */
-  arrival: `SELECT ITEM_CODE, LINE_TYPE, ORGANIZATION_ID, ARRIVAL_QTY AS QTY
-              FROM IM_ITEM_ARRIVAL_GEN
-             WHERE ORGANIZATION_ID = :organizationId`,
-  /**
-   * 공정에 깔려 있는 재고.
-   *
-   * PB 는 이 표에서 `LINE_TYPE` 을 읽는데, **이 스키마의
-   * `IM_ITEM_WORKSTAGE_INVENTORY` 에는 그 컬럼이 없다** (`LINE_CODE` 뿐, 실측).
-   * PB 에서 이 체크박스를 켜면 ORA-00904 로 떨어진다. 다른 가지들과 묶으려면
-   * 거래유형이 있어야 하므로, 이미 같은 문장이 걸고 있는 `ID_ITEM` 에서 가져온다.
-   */
-  workstageInventory: `SELECT W.ITEM_CODE, I.LINE_TYPE, W.ORGANIZATION_ID,
-                              SUM(W.INVENTORY_QTY) AS QTY
-                         FROM IM_ITEM_WORKSTAGE_INVENTORY W
-                         JOIN ID_ITEM I
-                           ON I.ITEM_CODE = W.ITEM_CODE
-                          AND I.ORGANIZATION_ID = W.ORGANIZATION_ID
-                          AND I.ITEM_DIVISION IN ('R', 'S')
-                          AND I.DATESET <= TRUNC(SYSDATE)
-                          AND I.DATEEND >= TRUNC(SYSDATE)
-                        WHERE W.ORGANIZATION_ID = :organizationId
-                        GROUP BY W.ITEM_CODE, I.LINE_TYPE, W.ORGANIZATION_ID`,
-  /** 무상재고. PB 도 원자재·부자재(`ITEM_DIVISION` R·S)만 센다. */
-  freeInventory: `SELECT ITEM_CODE, LINE_TYPE, ORGANIZATION_ID, SUM(INVENTORY_QTY) AS QTY
-                    FROM IM_ITEM_FREE_INVENTORY
-                   WHERE ORGANIZATION_ID = :organizationId
-                     AND ITEM_CODE IN (SELECT ITEM_CODE FROM ID_ITEM
-                                        WHERE ITEM_DIVISION IN ('R', 'S')
-                                          AND ORGANIZATION_ID = :organizationId)
-                   GROUP BY ITEM_CODE, LINE_TYPE, ORGANIZATION_ID`,
-} as const;
-
-export type InventoryArm = keyof typeof INVENTORY_ARMS;
-
-/**
- * 발주계획 대상 품목. 발주속성 적용(PB Auto Order Rule)을 켜면 `:orderRule` 이 'A%'
- * (발주규칙 A=자동), 끄면 '%' (전 품목)이다.
- */
-const ORDER_RULE_ITEMS_SQL = `SELECT ITEM_CODE FROM ID_ITEM
-                 WHERE DATESET <= TRUNC(SYSDATE)
-                   AND DATEEND >= TRUNC(SYSDATE)
-                   AND NVL(ORDER_RULE, '*') LIKE :orderRule
-                   AND ORGANIZATION_ID = :organizationId`;
-
-/**
- * 품목별 발주 공급처와 발주비율 (`IM_ITEM_MASTER`, 비율 0 초과 100 이하).
- * 비율이 나뉘어 있으면(예: 60/40) 공급처마다 그 비율로 나눠 발주한다.
- * 비율 100 이 둘 이상이면 같은 수량이 공급처마다 통째로 발주되므로, 주거래선
- * 한 곳만 남긴다 (사용자 결정 2026-10-02). 은성 데이터는 MAIN_VENDOR_YN 이 전부
- * Y 라 그 컬럼으로는 가릴 수 없어, 아래 순서로 고른다:
- *   1. 품목 기준정보 공급처(ID_ITEM.SUPPLIER_CODE)와 같은 공급처
- *   2. 단가 기준정보가 등록된 공급처
- *   3. 공급처코드 순
- */
-const ORDER_SUPPLIER_SQL = `SELECT ITEM_CODE, ORGANIZATION_ID, SUPPLIER_CODE, ORDER_RATE, PAYMENT_TYPE
-  FROM (
-    SELECT M.ITEM_CODE, M.ORGANIZATION_ID, M.SUPPLIER_CODE, M.ORDER_RATE, M.PAYMENT_TYPE,
-           ROW_NUMBER() OVER (
-             PARTITION BY M.ITEM_CODE, M.ORGANIZATION_ID,
-                          DECODE(M.ORDER_RATE, 100, '*', M.SUPPLIER_CODE)
-             ORDER BY CASE WHEN M.SUPPLIER_CODE = (SELECT MAX(I.SUPPLIER_CODE) FROM ID_ITEM I
-                                                    WHERE I.ITEM_CODE = M.ITEM_CODE
-                                                      AND I.ORGANIZATION_ID = M.ORGANIZATION_ID)
-                           THEN 0 ELSE 1 END,
-                      CASE WHEN EXISTS (SELECT 'X' FROM IM_ITEM_UNIT_PRICE P
-                                         WHERE P.SUPPLIER_CODE = M.SUPPLIER_CODE
-                                           AND P.ITEM_CODE = M.ITEM_CODE
-                                           AND P.ORGANIZATION_ID = M.ORGANIZATION_ID
-                                           AND P.DATESET <= TRUNC(SYSDATE)
-                                           AND P.DATEEND >= TRUNC(SYSDATE))
-                           THEN 0 ELSE 1 END,
-                      M.SUPPLIER_CODE) AS RN
-      FROM IM_ITEM_MASTER M
-     WHERE M.ORDER_RATE > 0
-       AND M.ORDER_RATE <= 100
-       AND M.DATESET <= TRUNC(SYSDATE)
-       AND M.DATEEND >= TRUNC(SYSDATE)
-       AND M.ORGANIZATION_ID = :organizationId)
- WHERE RN = 1`;
+type QueryRunnerLike = { query: (sql: string, binds?: unknown[]) => Promise<unknown> };
 
 /**
  * 단가 재설정 (PB cb_price_reset). PL/SQL 블록 안에 넣는다. `filter` 는 별칭 A 조건.
@@ -412,435 +280,226 @@ export class OrderPlanService {
     return this.page(rows);
   }
 
-  // ─────────────────────────────── 발주계획 생성 (cb_gen_po / cb_gen_do)
+  // ─────────────────────────────── 발주량 계산 · 미리보기 · 생성 (cb_gen_po)
 
   /**
-   * 계획 원천 → BOM 전개 → 재고 차감 → 발주계획.
-   *
-   * PB 가 라디오버튼·체크박스로 갈라 두었던 것을 인자로 받는다.
-   * 체크박스 하나하나가 계산에 실제로 관여하므로 기본값을 두지 않고 전부 받는다.
-   * BOM 이 없는 계획은 그 줄만 건너뛰고 나머지로 만든다. 건너뛴 품목은 `skippedItems` 로 돌려준다.
+   * 발주량을 계산한다. **DB 에 아무것도 쓰지 않는다.**
+   * SQL 한 문장이 계획 → BOM 전개 → 소요량 → 발주 줄(공급처·재고·속성·납기·단가)을 만들고,
+   * 순서가 결과를 바꾸는 재고 차감·올림만 netOrderLines 가 한다.
+   */
+  private async compute(
+    runner: QueryRunnerLike,
+    dto: OrderPlanGenerateDto,
+    organizationId: number,
+  ): Promise<ComputeResult> {
+    const source = dto.source as PlanSource;
+    if (!PLAN_SOURCES[source]) throw new BadRequestException('계획 원천이 올바르지 않습니다.');
+    const arms = (dto.inventorySources ?? []).filter(
+      (name): name is InventoryArm => name in INVENTORY_ARMS,
+    );
+    const binds: Record<string, unknown> = {
+      dateFrom: dto.dateFrom.slice(0, 10),
+      dateTo: dto.dateTo.slice(0, 10),
+      itemPattern: dto.itemCode ? `%${dto.itemCode}%` : '%',
+      organizationId,
+      orderRule: dto.applyOrderRule ? 'A%' : '%',
+      orderDate: dto.orderDate.slice(0, 10),
+    };
+    const run = (sql: string) => runner.query(sql, pickBinds(sql, binds) as unknown as unknown[]);
+
+    const [nullQty] = await run(nullQtySql(source)) as { itemCode: string | null }[];
+    if (nullQty?.itemCode) {
+      throw new BadRequestException(
+        `${nullQty.itemCode} 의 계획수량이 비어 있습니다. 계획을 먼저 확인하세요.`,
+      );
+    }
+    const skippedItems = (await run(skippedItemsSql(source)) as { itemCode: string }[])
+      .map((row) => row.itemCode);
+
+    const rows = await run(orderLinesSql({
+      source,
+      arms,
+      distinctMfs: dto.distinctMfs,
+      applyLeadTime: dto.applyLeadTime,
+      applyCalendar: dto.applyCalendar,
+    })) as Record<string, unknown>[];
+
+    const num = (value: unknown) => Number(value ?? 0) || 0;
+    const armCols = Object.values(ARM_COLUMNS);
+    const pools = new Map<string, number>();
+    for (const row of rows) {
+      const key = `${row.itemCode}|${row.lineType}`;
+      if (!pools.has(key)) pools.set(key, armCols.reduce((sum, col) => sum + num(row[col]), 0));
+    }
+    const netted = netOrderLines(
+      rows.map((row) => ({
+        itemCode: String(row.itemCode),
+        lineType: String(row.lineType),
+        qty: num(row.orderQty),
+        minQty: num(row.minQty),
+        packQty: num(row.packQty),
+        badRate: num(row.badRate),
+        countUnit: row.orderUom === 'EA' || row.orderUom === 'SET',
+      })),
+      pools,
+      { applyInventory: arms.length > 0, applyOrderRule: dto.applyOrderRule },
+    );
+
+    const round = (value: number) => (dto.roundQty ? roundHalfUp(value, 4) : value);
+    const lines: OrderPlanLine[] = rows.map((row, i) => {
+      const n = netted[i];
+      const delivery = (row.delivery as string | null) ?? null;
+      return {
+        itemCode: String(row.itemCode),
+        itemName: (row.itemName as string | null) ?? null,
+        itemSpec: (row.itemSpec as string | null) ?? null,
+        itemUom: (row.itemUom as string | null) ?? null,
+        lineType: String(row.priceLineType ?? row.lineType),
+        netLineType: String(row.lineType),
+        supplierCode: String(row.supplierCode),
+        supplierName: (row.supplierName as string | null) ?? null,
+        paymentType: String(row.paymentType),
+        orderRate: row.orderRate == null ? null : num(row.orderRate),
+        mfs: String(row.mfs),
+        setItemCode: (row.setItemCode as string | null) ?? null,
+        parentItemCode: (row.parentItemCode as string | null) ?? null,
+        planDate: String(row.planDate),
+        deliveryDate: String(row.deliveryDate),
+        requirementQty: num(row.requirementQty),
+        orderQty: round(num(row.orderQty)),
+        invStock: num(row.INV_STOCK),
+        invOrder: num(row.INV_ORDER),
+        invArrival: num(row.INV_ARRIVAL),
+        invWorkstage: num(row.INV_WORKSTAGE),
+        invFree: num(row.INV_FREE),
+        appliedQty: n.applied,
+        badQty: n.badQty,
+        roundUpQty: n.roundUpQty,
+        purchaseQty: round(n.purchaseQty),
+        delivery,
+        unitPrice: num(row.unitPrice),
+        currency: (row.currency as string | null) ?? '*',
+        status: delivery ? 'N' : 'P',
+        statusReason: delivery ? null
+          : row.supplierCode === '*' ? '공급처 미지정' : '단가 기준정보 없음',
+      };
+    });
+    return { lines, skippedItems, binds, applyInventory: arms.length > 0 };
+  }
+
+  /** 미리보기 — 계산만 하고 저장하지 않는다. */
+  async preview(dto: OrderPlanGenerateDto, organizationId: number): Promise<{
+    lines: OrderPlanLine[];
+    skippedItems: string[];
+    summary: { lines: number; orderLines: number; heldLines: number; purchaseQty: number };
+  }> {
+    const { lines, skippedItems } = await this.compute(this.dataSource, dto, organizationId);
+    return {
+      lines,
+      skippedItems,
+      summary: {
+        lines: lines.length,
+        orderLines: lines.filter((l) => l.status === 'N' && l.purchaseQty > 0).length,
+        heldLines: lines.filter((l) => l.status === 'P').length,
+        purchaseQty: lines.reduce((sum, l) => sum + l.purchaseQty, 0),
+      },
+    };
+  }
+
+  /**
+   * 생성 — 계산한 결과로 소요량표와 발주계획을 조직 단위로 갈아끼운다 (PB 와 같다).
+   * 작업 테이블(_TEMP·_GEN)은 쓰지 않는다. 한 트랜잭션.
    */
   async generate(
     dto: OrderPlanGenerateDto,
     organizationId: number,
     userId: string,
   ): Promise<{ requirementRows: number; planRows: number; skippedItems: string[] }> {
-    const source = PLAN_SOURCES[dto.source as PlanSource];
-    if (!source) throw new BadRequestException('계획 원천이 올바르지 않습니다.');
-
-    const arms = (dto.inventorySources ?? []).filter(
-      (name): name is InventoryArm => name in INVENTORY_ARMS,
-    );
-    const explode = source.explodeAll ? 'PKG_DESIGN.BOM_EXPLOSION_ALL' : 'PKG_DESIGN.BOM_EXPLOSION';
-
     return this.dataSource.transaction(async (manager) => {
-      // ① 계획을 BOM 으로 펴서 소요량을 만든다.
-      const out = await manager.query(
-        `DECLARE
-           v_from        DATE := TRUNC(TO_DATE(:dateFrom, 'YYYY-MM-DD'));
-           v_to          DATE := TRUNC(TO_DATE(:dateTo, 'YYYY-MM-DD'));
-           v_item        VARCHAR2(100) := :itemPattern;
-           v_req_session NUMBER;
-           v_bom_session NUMBER;
-           ${SKIPPED_DECLARE_SQL}
-         BEGIN
-           v_req_session := SEQ_REQUIRMENT_PLAN.NEXTVAL;
+      const { lines, skippedItems, binds, applyInventory } = await this.compute(
+        manager, dto, organizationId,
+      );
+      const all = { ...binds, userId };
 
-           FOR c IN (${source.sql}) LOOP
-             IF c.QTY IS NULL THEN
-               RAISE_APPLICATION_ERROR(-20010, 'QTY_NULL:' || c.ITEM_CODE);
-             END IF;
-
-             v_bom_session := ${explode}(c.ITEM_CODE, c.PLAN_DATE, :organizationId);
-             ${skipNoBomSql('c.ITEM_CODE')}
-
-             -- MFS 에 작업지시번호, SET_ITEM_CODE 에 계획 제품을 남긴다 (PB 와 같다).
-             INSERT INTO IM_ITEM_REQUIRMENT_PLAN_TEMP
-               (SESSION_ID, REQUIRMENT_PLAN_DATE, MFS, ITEM_CODE, LINE_TYPE, SUPPLIER_CODE,
-                ORGANIZATION_ID, PLAN_DATE, REQUIRMENT_QTY, ENTER_BY, ENTER_DATE,
-                LAST_MODIFY_BY, LAST_MODIFY_DATE, SET_ITEM_CODE, PARENT_ITEM_CODE)
-             SELECT v_req_session, c.REQ_DATE, c.MFS, T.CHILD_ITEM_CODE,
-                    ${ITEM_LINE_TYPE_SQL}, '*',
-                    T.ORGANIZATION_ID, c.PLAN_DATE, NVL(T.MODEL_UNIT_QTY, 0) * c.QTY,
-                    :userId, SYSDATE, :userId, SYSDATE, c.ITEM_CODE, T.PARENT_ITEM_CODE
-               FROM ID_ENG_BOM_TEMP T
-              WHERE T.SESSION_ID = v_bom_session
-                -- PB 는 LINE_TYPE NOT IN ('A','T') 로 걸렀다. 구매구분은 보지 않는다.
-                AND ${LEAF_ONLY_SQL};
-
-             DELETE FROM ID_ENG_BOM_TEMP WHERE SESSION_ID = v_bom_session;
-           END LOOP;
-
-           -- 소요량은 조직 단위로 통째로 갈아끼운다. PB 도 그렇게 한다.
-           DELETE FROM IM_ITEM_PURCHASE_REQUIR_ORDER
-            WHERE ORGANIZATION_ID = :organizationId;
-
-           INSERT INTO IM_ITEM_PURCHASE_REQUIR_ORDER
-             (REQUIRMENT_PLAN_DATE, MFS, ITEM_CODE, SUPPLIER_CODE, ORGANIZATION_ID,
-              PLAN_DATE, REQUIRMENT_QTY, LINE_TYPE, ENTER_BY, ENTER_DATE,
-              LAST_MODIFY_BY, LAST_MODIFY_DATE, SET_ITEM_CODE, PARENT_ITEM_CODE)
-           SELECT REQUIRMENT_PLAN_DATE, MFS, ITEM_CODE,
-                  F_GET_MAX_SUPPLIER_BY_ITEM(ITEM_CODE, ORGANIZATION_ID),
-                  ORGANIZATION_ID, PLAN_DATE, SUM(REQUIRMENT_QTY), LINE_TYPE,
-                  MAX(ENTER_BY), MAX(ENTER_DATE), MAX(LAST_MODIFY_BY), MAX(LAST_MODIFY_DATE),
-                  MAX(SET_ITEM_CODE), MAX(PARENT_ITEM_CODE)
-             FROM IM_ITEM_REQUIRMENT_PLAN_TEMP
-            WHERE SESSION_ID = v_req_session
-            GROUP BY REQUIRMENT_PLAN_DATE, MFS, ITEM_CODE, LINE_TYPE, SUPPLIER_CODE,
-                     ORGANIZATION_ID, PLAN_DATE;
-
-           DELETE FROM IM_ITEM_REQUIRMENT_PLAN_TEMP WHERE SESSION_ID = v_req_session;
-           ${SKIPPED_ASSIGN_SQL}
-         END;`,
-        {
-          dateFrom: dto.dateFrom,
-          dateTo: dto.dateTo,
-          itemPattern: dto.itemCode ? `%${dto.itemCode}%` : '%',
-          organizationId,
-          userId,
-          skipped: skippedOutBind(),
-        } as unknown as unknown[],
-      ).catch((error: unknown) => {
-        const message = error instanceof Error ? error.message : String(error);
-        const qtyNull = /QTY_NULL:(\S+)/.exec(message);
-        if (qtyNull) {
-          throw new BadRequestException(
-            `${qtyNull[1]} 의 계획수량이 비어 있습니다. 계획을 먼저 확인하세요.`,
-          );
-        }
-        throw error;
-      });
-
-      // ② 발주잔량·도착분을 모으고, ③ 켜진 재고 가지를 합친다.
-      await this.buildGenTables(manager, organizationId, arms);
-
-      // ④ 소요량에서 차감해 발주계획을 만들고, ⑤ 단가를 붙인다.
-      await this.netRequirements(manager, organizationId, dto, userId, arms.length > 0);
       await manager.query(
-        `BEGIN ${priceResetSql('')} END;`,
+        `DELETE FROM IM_ITEM_PURCHASE_REQUIR_ORDER WHERE ORGANIZATION_ID = :organizationId`,
         { organizationId } as unknown as unknown[],
       );
+      const reqSql = `INSERT INTO IM_ITEM_PURCHASE_REQUIR_ORDER
+          (REQUIRMENT_PLAN_DATE, MFS, ITEM_CODE, SUPPLIER_CODE, ORGANIZATION_ID,
+           PLAN_DATE, REQUIRMENT_QTY, LINE_TYPE, ENTER_BY, ENTER_DATE,
+           LAST_MODIFY_BY, LAST_MODIFY_DATE, SET_ITEM_CODE, PARENT_ITEM_CODE)
+        WITH ${requirementCtes(dto.source as PlanSource)}
+        SELECT REQ_DATE, MFS, ITEM_CODE, F_GET_MAX_SUPPLIER_BY_ITEM(ITEM_CODE, :organizationId),
+               :organizationId, PLAN_DATE, REQ_QTY, LINE_TYPE, :userId, SYSDATE, :userId, SYSDATE,
+               SET_ITEM_CODE, PARENT_ITEM_CODE
+          FROM REQO`;
+      await manager.query(reqSql, pickBinds(reqSql, all) as unknown as unknown[]);
+
+      await manager.query(
+        `DELETE FROM IM_ITEM_PURCHASE_ORDER_PLAN WHERE ORGANIZATION_ID = :organizationId`,
+        { organizationId } as unknown as unknown[],
+      );
+      if (lines.length > 0) {
+        // 줄이 수백~수천이라 한 문장으로 넣는다 (JSON_TABLE).
+        // 주문번호: 재고 차감을 거쳐 발주량이 생긴 줄은 TA+YYMMDD+일련번호 (PB 와 같다).
+        const json = JSON.stringify(lines.map((l) => ({
+          s: l.supplierCode, i: l.itemCode, d: l.deliveryDate, dv: l.delivery, lt: l.lineType,
+          oq: l.orderQty, pq: l.purchaseQty, up: l.unitPrice, cu: l.currency,
+          iq: l.appliedQty, mfs: l.mfs, st: l.status, pt: l.paymentType,
+          si: l.setItemCode, pi: l.parentItemCode,
+          ta: applyInventory && l.purchaseQty > 0 ? 'Y' : 'N',
+        })));
+        await manager.query(
+          `INSERT INTO IM_ITEM_PURCHASE_ORDER_PLAN
+             (ORDER_NO, PURCHASE_ORDER_DATE, ORGANIZATION_ID, SUPPLIER_CODE, ITEM_CODE,
+              DELIVERY_DATE, DELIVERY, LINE_TYPE, ORDER_TYPE, ORDER_QTY,
+              PURCHASE_ORDER_QTY, UNIT_PRICE, CURRENCY, INVENTORY_QTY, TOTAL_INVENTORY_QTY,
+              ARRIVAL_QTY, PRE_ORDER_QTY, MFS, PURCHASE_ORDER_STATUS, PAYMENT_TYPE,
+              ENTER_BY, ENTER_DATE, LAST_MODIFY_BY, LAST_MODIFY_DATE,
+              SET_ITEM_CODE, PARENT_ITEM_CODE)
+           SELECT CASE WHEN J.TA = 'Y'
+                       THEN 'TA' || TO_CHAR(SYSDATE, 'YYMMDD') || SEQ_ORDER_NO.NEXTVAL
+                       ELSE TO_CHAR(:organizationId) || TO_CHAR(SYSDATE, 'YYMMDD') || ROWNUM END,
+                  TO_DATE(:orderDate, 'YYYY-MM-DD'), :organizationId, J.S, J.I,
+                  TO_DATE(J.D, 'YYYY-MM-DD HH24:MI:SS'), J.DV, J.LT, 'F', J.OQ,
+                  J.PQ, J.UP, J.CU, J.IQ, J.IQ,
+                  0, 0, J.MFS, J.ST, J.PT,
+                  :userId, SYSDATE, :userId, SYSDATE,
+                  J.SI, J.PI
+             FROM JSON_TABLE(:planJson, '$[*]' COLUMNS (
+                    S   VARCHAR2(100)  PATH '$.s',
+                    I   VARCHAR2(100)  PATH '$.i',
+                    D   VARCHAR2(19)   PATH '$.d',
+                    DV  VARCHAR2(20)   PATH '$.dv',
+                    LT  VARCHAR2(20)   PATH '$.lt',
+                    OQ  NUMBER         PATH '$.oq',
+                    PQ  NUMBER         PATH '$.pq',
+                    UP  NUMBER         PATH '$.up',
+                    CU  VARCHAR2(20)   PATH '$.cu',
+                    IQ  NUMBER         PATH '$.iq',
+                    MFS VARCHAR2(100)  PATH '$.mfs',
+                    ST  VARCHAR2(1)    PATH '$.st',
+                    PT  VARCHAR2(20)   PATH '$.pt',
+                    SI  VARCHAR2(100)  PATH '$.si',
+                    PI  VARCHAR2(100)  PATH '$.pi',
+                    TA  VARCHAR2(1)    PATH '$.ta')) J`,
+          {
+            planJson: clobBind(json),
+            organizationId,
+            orderDate: binds.orderDate,
+            userId,
+          } as unknown as unknown[],
+        );
+      }
 
       const [{ REQ }] = await manager.query(
         `SELECT COUNT(*) AS REQ FROM IM_ITEM_PURCHASE_REQUIR_ORDER
           WHERE ORGANIZATION_ID = :organizationId`,
         { organizationId } as unknown as unknown[],
       );
-      const [{ PLN }] = await manager.query(
-        `SELECT COUNT(*) AS PLN FROM IM_ITEM_PURCHASE_ORDER_PLAN
-          WHERE ORGANIZATION_ID = :organizationId`,
-        { organizationId } as unknown as unknown[],
-      );
-      return {
-        requirementRows: Number(REQ),
-        planRows: Number(PLN),
-        skippedItems: parseSkipped(out),
-      };
+      return { requirementRows: Number(REQ), planRows: lines.length, skippedItems };
     });
-  }
-
-  /** 발주잔량·도착분·재고를 `*_GEN` 표에 모은다. */
-  private async buildGenTables(
-    manager: { query: (sql: string, binds?: unknown[]) => Promise<unknown> },
-    organizationId: number,
-    arms: InventoryArm[],
-  ): Promise<void> {
-    const binds = { organizationId } as unknown as unknown[];
-
-    await manager.query(
-      `DELETE FROM IM_ITEM_PURCHASE_ORDER_GEN WHERE ORGANIZATION_ID = :organizationId`,
-      binds,
-    );
-    await manager.query(
-      `INSERT INTO IM_ITEM_PURCHASE_ORDER_GEN
-         (ITEM_CODE, LINE_TYPE, ORGANIZATION_ID, DELIVERY_DATE, ORDER_QTY)
-       SELECT ITEM_CODE, LINE_TYPE, ORGANIZATION_ID, DELIVERY_DATE,
-              SUM(ORDER_QTY - NVL(ARRIVAL_QTY, 0))
-         FROM IM_ITEM_PURCHASE_ORDER
-        WHERE ORDER_QTY - NVL(ARRIVAL_QTY, 0) > 0
-          AND ORGANIZATION_ID = :organizationId
-        GROUP BY ITEM_CODE, LINE_TYPE, DELIVERY_DATE, ORGANIZATION_ID`,
-      binds,
-    );
-
-    await manager.query(
-      `DELETE FROM IM_ITEM_ARRIVAL_GEN WHERE ORGANIZATION_ID = :organizationId`,
-      binds,
-    );
-    await manager.query(
-      `INSERT INTO IM_ITEM_ARRIVAL_GEN
-         (ITEM_CODE, LINE_TYPE, ORGANIZATION_ID, ARRIVAL_QTY)
-       SELECT ITEM_CODE, LINE_TYPE, ORGANIZATION_ID, SUM(ARRIVAL_QTY)
-         FROM IM_ITEM_ARRIVAL
-        WHERE ARRIVAL_TYPE = 'A'
-          AND ARRIVAL_STATUS = 'N'
-          AND ORGANIZATION_ID = :organizationId
-        GROUP BY ITEM_CODE, LINE_TYPE, ORGANIZATION_ID`,
-      binds,
-    );
-
-    await manager.query(
-      `DELETE FROM IM_ITEM_INVENTORY_GEN WHERE ORGANIZATION_ID = :organizationId`,
-      binds,
-    );
-    if (arms.length === 0) return;
-
-    // PB 가 조합마다 따로 적어 둔 INSERT 를 여기서는 켜진 가지만 이어 만든다.
-    const union = arms.map((name) => INVENTORY_ARMS[name]).join('\n UNION ALL\n');
-    await manager.query(
-      `INSERT INTO IM_ITEM_INVENTORY_GEN
-         (ITEM_CODE, LINE_TYPE, ORGANIZATION_ID, INVENTORY_QTY, PURCHASE_ORDER_QTY)
-       SELECT ITEM_CODE, LINE_TYPE, ORGANIZATION_ID, SUM(QTY), 0
-         FROM (${union})
-        GROUP BY ITEM_CODE, LINE_TYPE, ORGANIZATION_ID`,
-      binds,
-    );
-  }
-
-  /**
-   * 소요량에서 재고를 차감해 발주계획을 만든다 (PB cb_gen_po).
-   *
-   * - 대상 품목: 발주속성 적용(Auto Order Rule)을 켜면 발주규칙 A(자동) 품목만, 끄면 전 품목.
-   * - 같은 품목·거래유형을 한 줄로 합칠지(Distinct MFS)는 옵션이다. 합치면 납기는 가장 이른 날.
-   * - 차감은 순서가 결과를 바꾸므로 PB 와 같은 순회를 유지한다 (품목·거래유형·납기).
-   *   재고 가지를 하나도 안 켜면 차감도 발주속성도 건너뛴다 (PB: Apply Inventory 끔).
-   * - `F_GET_ORDER_PROPERTY` 는 DB 에 없는 PB 함수라 블록 안에 그대로 옮겼다.
-   * - 납품구분·단가는 비워 두고, 끝에서 단가 재설정({@link priceResetSql})이 채운다.
-   */
-  private async netRequirements(
-    manager: { query: (sql: string, binds?: unknown[]) => Promise<unknown> },
-    organizationId: number,
-    dto: OrderPlanGenerateDto,
-    userId: string,
-    applyInventory: boolean,
-  ): Promise<void> {
-    const reqGroup = dto.distinctMfs
-      ? `SELECT ORGANIZATION_ID, ITEM_CODE, MIN(PLAN_DATE) AS DELIVERY_DATE, LINE_TYPE,
-                SUM(REQUIRMENT_QTY) AS ORDER_QTY, '*' AS MFS,
-                MAX(SET_ITEM_CODE) AS SET_ITEM_CODE, MAX(PARENT_ITEM_CODE) AS PARENT_ITEM_CODE
-           FROM IM_ITEM_PURCHASE_REQUIR_ORDER
-          WHERE ORGANIZATION_ID = :organizationId
-            AND ITEM_CODE IN (${ORDER_RULE_ITEMS_SQL})
-          GROUP BY ITEM_CODE, LINE_TYPE, ORGANIZATION_ID`
-      : `SELECT ORGANIZATION_ID, ITEM_CODE, PLAN_DATE AS DELIVERY_DATE, LINE_TYPE,
-                SUM(REQUIRMENT_QTY) AS ORDER_QTY, MFS,
-                MAX(SET_ITEM_CODE) AS SET_ITEM_CODE, MAX(PARENT_ITEM_CODE) AS PARENT_ITEM_CODE
-           FROM IM_ITEM_PURCHASE_REQUIR_ORDER
-          WHERE ORGANIZATION_ID = :organizationId
-            AND ITEM_CODE IN (${ORDER_RULE_ITEMS_SQL})
-          GROUP BY MFS, PLAN_DATE, ITEM_CODE, LINE_TYPE, ORGANIZATION_ID`;
-
-    await manager.query(
-      `DECLARE
-         v_remain    NUMBER;
-         v_pool      NUMBER;
-         v_rowid     ROWID;
-         v_applied   NUMBER;
-         v_calc      NUMBER;
-         v_min_qty   NUMBER;
-         v_pack_qty  NUMBER;
-         v_bad_rate  NUMBER;
-         v_uom       VARCHAR2(20);
-         v_bad_qty   NUMBER;
-         v_surplus   NUMBER;
-       BEGIN
-         DELETE FROM IM_ITEM_PURCHASE_ORDER_PLAN WHERE ORGANIZATION_ID = :organizationId;
-
-         -- 소요량의 계획일이 곧 납기가 되고, 주문량은 협력사별 발주비율로 나뉜다.
-         -- 주문유형 F, 납품구분은 비워 둔다 — 단가 재설정이 단가 기준정보에서 채운다.
-         INSERT INTO IM_ITEM_PURCHASE_ORDER_PLAN
-           (ORDER_NO, PURCHASE_ORDER_DATE, ORGANIZATION_ID, SUPPLIER_CODE, ITEM_CODE,
-            DELIVERY_DATE, DELIVERY, LINE_TYPE, ORDER_TYPE, ORDER_QTY,
-            PURCHASE_ORDER_QTY, UNIT_PRICE, CURRENCY, INVENTORY_QTY, ARRIVAL_QTY,
-            PRE_ORDER_QTY, MFS, PURCHASE_ORDER_STATUS, PAYMENT_TYPE,
-            ENTER_BY, ENTER_DATE, LAST_MODIFY_BY, LAST_MODIFY_DATE,
-            SET_ITEM_CODE, PARENT_ITEM_CODE)
-         SELECT TO_CHAR(A.ORGANIZATION_ID) || TO_CHAR(SYSDATE, 'YYMMDD') || ROWNUM,
-                TRUNC(TO_DATE(:orderDate, 'YYYY-MM-DD')),
-                A.ORGANIZATION_ID, NVL(B.SUPPLIER_CODE, '*'), A.ITEM_CODE,
-                A.DELIVERY_DATE, NULL, A.LINE_TYPE, 'F',
-                DECODE(B.ORDER_RATE, NULL, A.ORDER_QTY, A.ORDER_QTY * B.ORDER_RATE / 100),
-                DECODE(B.ORDER_RATE, NULL, A.ORDER_QTY, A.ORDER_QTY * B.ORDER_RATE / 100),
-                0, '*', 0, 0, 0, A.MFS, 'N', NVL(B.PAYMENT_TYPE, '*'),
-                :userId, SYSDATE, :userId, SYSDATE,
-                A.SET_ITEM_CODE, A.PARENT_ITEM_CODE
-           FROM (${reqGroup}) A
-           LEFT JOIN (${ORDER_SUPPLIER_SQL}) B
-             ON A.ITEM_CODE = B.ITEM_CODE
-            AND A.ORGANIZATION_ID = B.ORGANIZATION_ID;
-
-         IF :applyInventory = 'Y' THEN
-         -- 품목·거래유형·납기 순서로 앞에서부터 재고를 떼어 준다.
-         FOR p IN (
-           SELECT SUPPLIER_CODE, ITEM_CODE, LINE_TYPE, ORDER_QTY, ROWID AS RID
-             FROM IM_ITEM_PURCHASE_ORDER_PLAN
-            WHERE ORGANIZATION_ID = :organizationId
-            ORDER BY ITEM_CODE, LINE_TYPE, DELIVERY_DATE, ORGANIZATION_ID
-         ) LOOP
-           v_remain := NVL(p.ORDER_QTY, 0);
-           v_applied := 0;
-
-           FOR g IN (
-             SELECT NVL(INVENTORY_QTY, 0) AS QTY, ROWID AS RID
-               FROM IM_ITEM_INVENTORY_GEN
-              WHERE ITEM_CODE = p.ITEM_CODE
-                AND LINE_TYPE = p.LINE_TYPE
-                AND NVL(INVENTORY_QTY, 0) > 0
-                AND ORGANIZATION_ID = :organizationId
-              ORDER BY ITEM_CODE, LINE_TYPE, ORGANIZATION_ID
-           ) LOOP
-             EXIT WHEN v_remain <= 0;
-             v_pool := g.QTY;
-             v_rowid := g.RID;
-             IF v_remain > v_pool THEN
-               v_remain := v_remain - v_pool;
-               v_applied := v_applied + v_pool;
-               UPDATE IM_ITEM_INVENTORY_GEN SET INVENTORY_QTY = 0 WHERE ROWID = v_rowid;
-             ELSE
-               v_applied := v_applied + v_remain;
-               UPDATE IM_ITEM_INVENTORY_GEN
-                  SET INVENTORY_QTY = v_pool - v_remain
-                WHERE ROWID = v_rowid;
-               v_remain := 0;
-             END IF;
-           END LOOP;
-
-           -- 발주속성(최소주문량·포장단위·불량율) 적용. PB f_get_order_property 'A'.
-           v_calc := v_remain;
-           IF :applyOrderRule = 'Y' AND v_remain > 0 THEN
-             BEGIN
-               SELECT NVL(MIM_ORDER_QTY, 0), NVL(PACKING_QTY, 0), NVL(ORDER_BAD_RATE, 0)
-                 INTO v_min_qty, v_pack_qty, v_bad_rate
-                 FROM IM_ITEM_MASTER
-                WHERE SUPPLIER_CODE = p.SUPPLIER_CODE
-                  AND ITEM_CODE = p.ITEM_CODE
-                  AND DATESET <= TRUNC(SYSDATE)
-                  AND DATEEND >= TRUNC(SYSDATE)
-                  AND ORGANIZATION_ID = :organizationId;
-             EXCEPTION
-               WHEN NO_DATA_FOUND THEN
-                 v_min_qty := 0; v_pack_qty := 0; v_bad_rate := 0;
-               WHEN TOO_MANY_ROWS THEN
-                 v_min_qty := 0; v_pack_qty := 0; v_bad_rate := 0;
-             END;
-
-             IF v_bad_rate = 0 THEN
-               v_bad_qty := 0;
-             ELSE
-               BEGIN
-                 SELECT ITEM_UOM INTO v_uom FROM ID_ITEM
-                  WHERE ITEM_CODE = p.ITEM_CODE
-                    AND DATESET <= TRUNC(SYSDATE)
-                    AND DATEEND >= TRUNC(SYSDATE)
-                    AND ORGANIZATION_ID = :organizationId;
-               EXCEPTION WHEN OTHERS THEN v_uom := NULL;
-               END;
-               -- 개수로 세는 단위는 소수점을 두지 않는다. PB 와 같은 자릿수다.
-               IF v_uom IN ('EA', 'SET') THEN
-                 v_bad_qty := ROUND(v_bad_rate * v_remain / 100, 0);
-               ELSE
-                 v_bad_qty := ROUND(v_bad_rate * v_remain / 100, 4);
-               END IF;
-             END IF;
-
-             v_calc := v_remain + v_bad_qty;
-             IF v_min_qty > 0 AND v_calc < v_min_qty THEN
-               v_calc := v_min_qty;
-             END IF;
-             IF v_pack_qty > 0 THEN
-               IF v_calc > v_pack_qty THEN
-                 IF MOD(v_calc, v_pack_qty) > 0 THEN
-                   v_calc := TRUNC(v_calc / v_pack_qty) * v_pack_qty + v_pack_qty;
-                 END IF;
-               ELSE
-                 v_calc := v_pack_qty;
-               END IF;
-             END IF;
-           END IF;
-           -- 소요량이 0 이하인 줄은 발주하지 않는다 (PB 도 0 으로 둔다).
-           IF v_calc < 0 THEN
-             v_calc := 0;
-           END IF;
-
-           -- 최소주문량·포장단위로 올린 만큼은 남는 물량이다. 재고 풀에 다시 써 넣어,
-           -- 같은 자재의 뒤 계획줄이 그만큼 덜 발주하게 한다. PB 는 재고 행이 없는
-           -- 자재에서 이 물량을 버려 줄마다 올림이 반복됐다 — 웹은 행을 만들어 남긴다.
-           v_surplus := v_calc - v_remain;
-           IF v_remain > 0 AND v_surplus > 0 THEN
-             UPDATE IM_ITEM_INVENTORY_GEN
-                SET INVENTORY_QTY = NVL(INVENTORY_QTY, 0) + v_surplus
-              WHERE ITEM_CODE = p.ITEM_CODE
-                AND LINE_TYPE = p.LINE_TYPE
-                AND ORGANIZATION_ID = :organizationId
-                AND ROWNUM = 1;
-             IF SQL%ROWCOUNT = 0 THEN
-               INSERT INTO IM_ITEM_INVENTORY_GEN
-                 (ITEM_CODE, LINE_TYPE, ORGANIZATION_ID, INVENTORY_QTY, PURCHASE_ORDER_QTY)
-               VALUES (p.ITEM_CODE, p.LINE_TYPE, :organizationId, v_surplus, 0);
-             END IF;
-           END IF;
-
-           UPDATE IM_ITEM_PURCHASE_ORDER_PLAN
-              SET ORDER_NO = CASE WHEN v_calc > 0
-                                  THEN 'TA' || TO_CHAR(SYSDATE, 'YYMMDD') || SEQ_ORDER_NO.NEXTVAL
-                                  ELSE ORDER_NO END,
-                  INVENTORY_QTY = v_applied,
-                  TOTAL_INVENTORY_QTY = v_applied,
-                  PURCHASE_ORDER_QTY = v_calc
-            WHERE ROWID = p.RID;
-         END LOOP;
-         END IF;
-
-         -- 리드타임은 납기를 **앞으로 당긴다**. 자재가 생산 시작 전에 들어와야 하므로
-         -- 제조 리드타임만큼 먼저 받는다 (PB: DELIVERY_DATE - MANUFACTURE_LEADTIME).
-         IF :applyLeadTime = 'Y' THEN
-           UPDATE IM_ITEM_PURCHASE_ORDER_PLAN A
-              SET A.DELIVERY_DATE = A.DELIVERY_DATE -
-                  (SELECT NVL(B.MANUFACTURE_LEADTIME, 0) FROM ID_ITEM B
-                    WHERE B.ITEM_CODE = A.ITEM_CODE
-                      AND B.ORGANIZATION_ID = A.ORGANIZATION_ID
-                      AND B.DATESET <= TRUNC(SYSDATE)
-                      AND B.DATEEND >= TRUNC(SYSDATE))
-            WHERE A.ORGANIZATION_ID = :organizationId
-              AND EXISTS (SELECT 'X' FROM ID_ITEM B
-                           WHERE B.ITEM_CODE = A.ITEM_CODE
-                             AND B.ORGANIZATION_ID = A.ORGANIZATION_ID
-                             AND B.DATESET <= TRUNC(SYSDATE)
-                             AND B.DATEEND >= TRUNC(SYSDATE));
-         END IF;
-
-         -- 작업일 보정은 리드타임과 별개 단계다 (PB cbx_apply_calendar).
-         -- 당긴 납기가 휴무일이면 일하는 날로 옮긴다. PB 와 같이 인자 두 개다.
-         IF :applyCalendar = 'Y' THEN
-           UPDATE IM_ITEM_PURCHASE_ORDER_PLAN
-              SET DELIVERY_DATE = NVL(F_GET_DELIVERY_DATE(DELIVERY_DATE, ORGANIZATION_ID),
-                                      PURCHASE_ORDER_DATE - 1)
-            WHERE PURCHASE_ORDER_STATUS = 'N'
-              AND ORGANIZATION_ID = :organizationId;
-         END IF;
-
-         -- 소수 4자리 반올림 (PB cbx_round).
-         IF :roundQty = 'Y' THEN
-           UPDATE IM_ITEM_PURCHASE_ORDER_PLAN
-              SET PURCHASE_ORDER_QTY = ROUND(PURCHASE_ORDER_QTY, 4),
-                  ORDER_QTY = ROUND(ORDER_QTY, 4)
-            WHERE PURCHASE_ORDER_STATUS = 'N'
-              AND ORGANIZATION_ID = :organizationId;
-         END IF;
-       END;`,
-      {
-        organizationId,
-        userId,
-        orderDate: dto.orderDate,
-        orderRule: dto.applyOrderRule ? 'A%' : '%',
-        applyInventory: applyInventory ? 'Y' : 'N',
-        applyOrderRule: dto.applyOrderRule ? 'Y' : 'N',
-        applyLeadTime: dto.applyLeadTime ? 'Y' : 'N',
-        applyCalendar: dto.applyCalendar ? 'Y' : 'N',
-        roundQty: dto.roundQty ? 'Y' : 'N',
-      } as unknown as unknown[],
-    );
   }
 
   // ─────────────────────────────── 단가 재설정 (cb_price_reset)

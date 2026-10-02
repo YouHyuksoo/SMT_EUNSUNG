@@ -8,7 +8,7 @@
  * 478: NOT IN A·T). 은성 BOM 은 LINE_TYPE 이 거의 전부 'T'(자작)로 일괄 입력돼 있어
  * 그대로 두면 소요량이 0 건이 된다. 사용자 결정(2026-09-30)으로 구매구분은 보지 않는다.
  */
-import * as oracledb from 'oracledb';
+import { outStringBind } from '../../common/services/oracle.service';
 
 /**
  * 말단 자재만 남긴다. 같은 전개 안에서 하위 품목을 가진 행(모델 자신·반제품)은
@@ -43,11 +43,7 @@ export const skipNoBomSql = (itemExpr: string) => `IF v_bom_session IS NULL OR v
 
 export const SKIPPED_ASSIGN_SQL = `:skipped := v_skipped;`;
 
-export const skippedOutBind = () => ({
-  dir: oracledb.BIND_OUT,
-  type: oracledb.STRING,
-  maxSize: 4000,
-});
+export const skippedOutBind = () => outStringBind(4000);
 
 /** OUT 바인드 결과 → 중복 없는 품목코드 목록 */
 export const parseSkipped = (raw: unknown): string[] => {

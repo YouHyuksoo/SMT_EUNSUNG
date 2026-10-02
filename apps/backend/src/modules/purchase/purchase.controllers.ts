@@ -340,12 +340,22 @@ export class OrderPlanController {
     return paged(await this.service.findRequirementOrders(organizationId));
   }
 
+  @Post('preview')
+  @ApiOperation({
+    summary: '478 발주량 미리보기 (읽기). 생성과 같은 계산을 하고 저장하지 않는다.'
+      + ' 줄마다 소요량·재고 가지별 수량·차감·불량가산·올림·발주량·단가·상태를 준다.',
+  })
+  async preview(
+    @Body() dto: OrderPlanGenerateDto,
+    @OrganizationId() organizationId: number,
+  ) {
+    return ResponseUtil.success(await this.service.preview(dto, organizationId));
+  }
+
   @Post('generate')
   @ApiOperation({
-    summary: '478 발주계획 생성 (**쓰기**). 계획 원천을 BOM 으로 펴고, 켜 둔 재고'
-      + ' 원천을 차감해 발주계획을 만든다. 조직 단위로 갈아끼운다 — PB 와 같다.'
-      + ' 전개는 `PKG_DESIGN.BOM_EXPLOSION`, 공급처는 `F_GET_MAX_SUPPLIER_BY_ITEM`,'
-      + ' 납기는 `F_GET_DELIVERY_DATE` 를 그대로 쓴다.',
+    summary: '478 발주계획 생성 (**쓰기**). 미리보기와 같은 계산 결과로 소요량표와'
+      + ' 발주계획을 조직 단위로 갈아끼운다 — PB 와 같다. 작업 테이블은 쓰지 않는다.',
   })
   async generate(
     @Body() dto: OrderPlanGenerateDto,

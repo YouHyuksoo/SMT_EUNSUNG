@@ -26,6 +26,19 @@ import { ConfigService } from '@nestjs/config';
 import * as oracledb from 'oracledb';
 import { isRecord } from '../utils/json-record.util';
 
+/**
+ * TypeORM `manager.query` 에 넘길 oracledb 바인드. 드라이버 상수는 이 파일 밖에서 쓰지 않는다
+ * (architecture/module-boundary.spec.ts).
+ */
+export const outStringBind = (maxSize = 4000) => ({
+  dir: oracledb.BIND_OUT,
+  type: oracledb.STRING,
+  maxSize,
+});
+
+/** 긴 문자열(JSON 등)을 CLOB 으로 넘긴다 — VARCHAR2 한도(32KB)를 넘어도 된다. */
+export const clobBind = (val: string) => ({ val, type: oracledb.CLOB });
+
 /** Oracle 식별자 화이트리스트 패턴 (패키지명/프로시저명 인젝션 방지) */
 const SAFE_IDENTIFIER = /^[A-Z][A-Z0-9_$#]{0,29}$/i;
 type OracleRow = Record<string, unknown>;

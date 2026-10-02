@@ -11,7 +11,7 @@
  *    생성 API 호출은 페이지가 그대로 한다.
  * 3. 툴팁으로만 보이던 설명을 옵션 아래 한 줄로 풀어 적었다.
  */
-import { Play, X } from 'lucide-react';
+import { Eye, Play, X } from 'lucide-react';
 import DateRangeFilter from '@/components/shared/DateRangeFilter';
 import { Button, Input, Select } from '@/components/ui';
 
@@ -77,6 +77,7 @@ export const GENERATE_TIP = {
   leadTime: '제조 리드타임만큼 납기를 앞으로 당깁니다 — 자재가 생산 시작 전에 들어와야'
     + ' 하기 때문입니다. 안 켜면 자재가 필요한 날이 곧 납기가 됩니다.',
   calendar: '당긴 납기가 휴무일이면 일하는 날로 옮깁니다. 리드타임 반영과는 별개 단계입니다.',
+  preview: '생성과 같은 계산을 하고 저장하지 않습니다. 줄마다 소요량·재고 차감·올림·발주량을 봅니다.',
   generate: '고른 계획을 BOM 으로 펴고, 켜 둔 재고를 빼서 발주계획을 만듭니다.'
     + ' 기존 발주계획은 통째로 새로 만들어집니다.',
 } as const;
@@ -101,6 +102,7 @@ interface Props {
   itemCode: string;
   busy: boolean;
   onGenerate: () => void;
+  onPreview: () => void;
   onClose: () => void;
 }
 
@@ -123,7 +125,7 @@ function OptionRow({ checked, onToggle, label, desc }: {
 }
 
 export default function OrderPlanGeneratePanel({
-  values, onChange, itemCode, busy, onGenerate, onClose,
+  values, onChange, itemCode, busy, onGenerate, onPreview, onClose,
 }: Props) {
   const toggleArm = (value: string) => onChange({
     arms: values.arms.includes(value)
@@ -138,6 +140,10 @@ export default function OrderPlanGeneratePanel({
         <div className="flex items-center gap-2">
           <Button size="sm" variant="secondary" onClick={onClose} disabled={busy}>
             <X className="mr-1 h-4 w-4" />닫기
+          </Button>
+          <Button size="sm" variant="secondary" onClick={onPreview} disabled={busy}
+            data-tooltip={GENERATE_TIP.preview}>
+            <Eye className="mr-1 h-4 w-4" />미리보기
           </Button>
           <Button size="sm" onClick={onGenerate} disabled={busy} data-tooltip={GENERATE_TIP.generate}>
             <Play className="mr-1 h-4 w-4" />생성
