@@ -277,6 +277,7 @@
     "magazineLabel": "매거진라벨 발행",
     "magazineSplit": "매거진라벨 분할",
     "magazinePid": "매거진-PID 매핑관리",
+    "wipStocktake": "공정실사",
     "productMgmt": "제품수불관리",
     "productMgmt.receive": "제품입고관리",
     "productMgmt.receiptCancel": "제품입고취소",

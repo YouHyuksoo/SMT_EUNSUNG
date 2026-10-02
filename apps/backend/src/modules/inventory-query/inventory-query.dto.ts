@@ -132,6 +132,25 @@ export class StocktakeCancelDto {
   barcode!: string;
 }
 
+/** 공정 실사 입력 한 건 — 바코드(또는 롯트번호)나 품목코드. 품목코드로 넣으면 수량이 필요하다. */
+export class WipStocktakeCountDto {
+  @ApiPropertyOptional({ description: '자재 바코드 (라인에 걸린 릴)' })
+  @IsOptional() @IsString() @Length(0, 200)
+  barcode?: string;
+
+  @ApiPropertyOptional({ description: '품목코드 (바코드가 없는 자재)' })
+  @IsOptional() @IsString() @Length(0, 30)
+  itemCode?: string;
+
+  @ApiPropertyOptional({ description: '센 수량. 바코드면 비울 때 라벨 수량.' })
+  @IsOptional() @Type(() => Number) @IsNumber() @Min(0)
+  qty?: number;
+
+  @ApiPropertyOptional({ description: '센 라인 (기록용)' })
+  @IsOptional() @IsString() @Length(0, 20)
+  lineCode?: string;
+}
+
 /** 274 바코드 실사 조회 조건. */
 export class BarcodeCheckQueryDto {
   @ApiPropertyOptional({

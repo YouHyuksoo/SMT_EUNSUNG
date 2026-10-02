@@ -1,18 +1,18 @@
 /**
- * @file src/app/(authenticated)/inventory-query/barcode-check/upload-modal.tsx
- * @description 실사 엑셀 업로드 — 바코드(또는 롯트번호)·수량 목록을 한꺼번에 스캔으로 반영한다
+ * @file src/app/(authenticated)/inventory-query/stocktake-upload-modal.tsx
+ * @description 실사 엑셀 업로드 — 원자재 실사(274)와 공정 실사가 같이 쓴다
  *
  * 초보자 가이드:
- * 1. 첫 시트의 머리글에 "바코드" 또는 "롯트번호" 열이 있어야 한다. "수량" 을 비우면 바코드 수량.
- * 2. 이미 찍은 롯트는 엑셀 수량으로 고친다. 같은 파일을 다시 올려도 결과가 같다.
- * 3. 반영하지 못한 줄(미등록·수량 오류·파일 안 중복)은 줄 번호와 사유로 보여 준다.
+ * 1. 파일을 서버로 보내고 서버가 첫 시트를 읽는다. 어떤 열을 읽는지는 `guide` 문구와 양식 머리글로 알린다.
+ * 2. 이미 넣은 롯트(품목)는 엑셀 수량으로 고친다. 같은 파일을 다시 올려도 결과가 같다.
+ * 3. 반영하지 못한 줄은 엑셀 줄 번호와 사유로 보여 준다.
  */
 import { useState } from 'react';
 import * as XLSX from 'xlsx';
 import { Download, Upload } from 'lucide-react';
 import { Button, Modal } from '@/components/ui';
 import api from '@/services/api';
-import { apiMessage } from '../stocktake';
+import { apiMessage } from './stocktake';
 
 interface UploadResult {
   yyyymm: string;
@@ -23,19 +23,26 @@ interface UploadResult {
 
 interface Props {
   isOpen: boolean;
-  yyyymm: string;
+  /** 제목에 붙는 이름 (예: "202610 실사") */
+  title: string;
+  /** 업로드 API 경로 */
+  endpoint: string;
+  /** 양식 머리글과 파일 이름 */
+  template: { headers: string[]; fileName: string };
+  /** 어떤 열을 읽는지 설명 */
+  guide: React.ReactNode;
   onClose: () => void;
   onDone: () => void;
 }
 
-/** 빈 양식 (머리글만) */
-const downloadTemplate = () => {
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['바코드', '롯트번호', '수량']]), '실사');
-  XLSX.writeFile(wb, '자재실사_양식.xlsx');
-};
+export default function StocktakeUploadModal({ isOpen, title, endpoint, template, guide, onClose, onDone }: Props) {
+  /** 빈 양식 (머리글만) */
+  const downloadTemplate = () => {
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([template.headers]), '실사');
+    XLSX.writeFile(wb, template.fileName);
+  };
 
-export default function UploadModal({ isOpen, yyyymm, onClose, onDone }: Props) {
   const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -52,7 +59,7 @@ export default function UploadModal({ isOpen, yyyymm, onClose, onDone }: Props) 
     try {
       const body = new FormData();
       body.append('file', file);
-      const r = await api.post('/inventory-query/stocktake/upload', body, {
+      const r = await api.post(endpoint, body, {
         headers: { 'Content-Type': 'multipart/form-data' },
         timeout: 300_000,
       });
@@ -66,7 +73,7 @@ export default function UploadModal({ isOpen, yyyymm, onClose, onDone }: Props) 
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={close} title={`${yyyymm} 실사 엑셀 업로드`} size="lg"
+    <Modal isOpen={isOpen} onClose={close} title={`${title} 엑셀 업로드`} size="lg"
       footer={(
         <>
           <Button variant="secondary" onClick={downloadTemplate}>
@@ -79,10 +86,7 @@ export default function UploadModal({ isOpen, yyyymm, onClose, onDone }: Props) 
         </>
       )}>
       <div className="space-y-3">
-        <p className="text-sm text-text-muted">
-          첫 시트의 머리글에 <b>바코드</b> 또는 <b>롯트번호</b> 열이 있어야 합니다. <b>수량</b>을 비우면 바코드
-          수량으로 셉니다. 이미 찍은 롯트는 엑셀 수량으로 고칩니다.
-        </p>
+        <p className="text-sm text-text-muted">{guide}</p>
         <label className="block cursor-pointer rounded-lg border-2 border-dashed border-border p-8 text-center text-sm"
           onDragOver={(e) => e.preventDefault()}
           onDrop={(e) => { e.preventDefault(); const next = e.dataTransfer.files[0]; if (next) { setFile(next); setResult(null); } }}>
@@ -95,7 +99,7 @@ export default function UploadModal({ isOpen, yyyymm, onClose, onDone }: Props) 
           <div className="space-y-2">
             <p className="text-sm font-semibold text-emerald-600">
               {result.applied.toLocaleString()}줄 반영
-              {result.updated ? ` (이미 찍은 롯트 ${result.updated.toLocaleString()}개는 수량을 고침)` : ''}
+              {result.updated ? ` (이미 넣은 ${result.updated.toLocaleString()}건은 수량을 고침)` : ''}
               {result.errors.length ? ` · 반영 못 함 ${result.errors.length.toLocaleString()}줄` : ''}
             </p>
             {result.errors.length > 0 && (

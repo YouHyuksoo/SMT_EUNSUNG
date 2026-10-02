@@ -7,6 +7,7 @@
  *   /inventory-query/check        272 자재재고조사 (조정 — 쓰기)
  *   /inventory-query/barcode      274 자재바코드스캔실사 (조회)
  *   /inventory-query/stocktake    바코드 실사 시작 · 스캔 · 일괄 조정 (272·274·PDA, 쓰기)
+ *   /inventory-query/wip-stocktake 공정 실사 시작 · 입력 · 엑셀 · 일괄 조정 (쓰기)
  */
 import {
   BadRequestException, Body, Controller, Get, Post, Query, UploadedFile, UseGuards, UseInterceptors,
@@ -23,6 +24,7 @@ import { InventoryCheckService } from './inventory-check.service';
 import { InventoryCloseService } from './inventory-close.service';
 import { StocktakeService } from './stocktake.service';
 import { parseStocktakeWorkbook } from './stocktake-excel';
+import { WipStocktakeService } from './wip-stocktake.service';
 import { TotalInventoryService } from './total-inventory.service';
 import {
   BarcodeCheckQueryDto,
@@ -32,6 +34,7 @@ import {
   StocktakeCancelDto,
   StocktakeScanDto,
   StocktakeStartDto,
+  WipStocktakeCountDto,
   TotalInventoryDetailQueryDto,
   TotalInventoryLotQueryDto,
   TotalInventoryQueryDto,
@@ -295,5 +298,84 @@ export class StocktakeController {
     return ResponseUtil.success(
       await this.service.adjustAll(dto.yyyymm, organizationId, userId || DEFAULT_USER),
     );
+  }
+}
+
+const excelUpload = () => FileInterceptor('file', {
+  storage: memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (_req: Request, file: Express.Multer.File, callback: (error: Error | null, accept: boolean) => void) => {
+    if (!/.(xlsx|xls|csv)$/i.test(file.originalname)) {
+      return callback(new BadRequestException('.xlsx · .xls · .csv 파일만 올릴 수 있습니다.'), false);
+    }
+    callback(null, true);
+  },
+});
+
+@ApiTags('재고 - 공정 실사')
+@UseGuards(JwtAuthGuard)
+@Controller('inventory-query/wip-stocktake')
+export class WipStocktakeController {
+  constructor(private readonly service: WipStocktakeService) {}
+
+  @Get('active')
+  @ApiOperation({ summary: '진행 중인 공정 실사 (가장 최근 실사월과 진행 현황). 없으면 null.' })
+  async active(@OrganizationId() organizationId: number) {
+    return ResponseUtil.success(await this.service.active(organizationId));
+  }
+
+  @Get()
+  @ApiOperation({ summary: '공정 실사표 (품목별 장부 · 실사 · 차이 · 이미 넣은 조정).' })
+  async list(@Query() query: InventoryCloseMonthDto, @OrganizationId() organizationId: number) {
+    return ResponseUtil.success(await this.service.list(query.yyyymm, organizationId));
+  }
+
+  @Get('entries')
+  @ApiOperation({ summary: '공정 실사 입력 기록 (롯트·품목 입력 한 건씩).' })
+  async entries(@Query() query: InventoryCloseMonthDto, @OrganizationId() organizationId: number) {
+    return ResponseUtil.success(await this.service.entries(query.yyyymm, organizationId));
+  }
+
+  @Post('start')
+  @ApiOperation({ summary: '공정 실사 시작 (**쓰기**) — 지금 공정재고(품목 단위)를 실사표에 고정한다.' })
+  async start(@Body() dto: StocktakeStartDto, @OrganizationId() organizationId: number, @UserId() userId?: string) {
+    return ResponseUtil.success(
+      await this.service.start(dto.yyyymm, Boolean(dto.regenerate), organizationId, userId || DEFAULT_USER),
+    );
+  }
+
+  @Post('count')
+  @ApiOperation({ summary: '공정 실사 입력 한 건 (**쓰기**) — 바코드나 품목코드·수량. 이미 센 롯트는 거절한다.' })
+  async count(@Body() dto: WipStocktakeCountDto, @OrganizationId() organizationId: number, @UserId() userId?: string) {
+    return ResponseUtil.success(await this.service.record([dto], 'scan', organizationId, userId || DEFAULT_USER));
+  }
+
+  @Post('count/cancel')
+  @ApiOperation({ summary: '공정 실사 입력 취소 (**쓰기**).' })
+  async cancel(@Body() dto: WipStocktakeCountDto, @OrganizationId() organizationId: number, @UserId() userId?: string) {
+    return ResponseUtil.success(await this.service.cancel(dto, organizationId, userId || DEFAULT_USER));
+  }
+
+  @Post('upload')
+  @ApiOperation({
+    summary: '공정 실사 엑셀 업로드 (**쓰기**) — 바코드·롯트번호·품목코드 중 하나와 수량·라인 열.'
+      + ' 이미 넣은 롯트·품목은 엑셀 수량으로 고친다.',
+  })
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(excelUpload())
+  async upload(
+    @UploadedFile() file: Express.Multer.File,
+    @OrganizationId() organizationId: number,
+    @UserId() userId?: string,
+  ) {
+    if (!file) throw new BadRequestException('파일이 필요합니다.');
+    const rows = parseStocktakeWorkbook(file.buffer, { itemOnly: true });
+    return ResponseUtil.success(await this.service.record(rows, 'upload', organizationId, userId || DEFAULT_USER));
+  }
+
+  @Post('adjust-all')
+  @ApiOperation({ summary: '공정 실사 일괄 조정 (**쓰기**) — 품목별 차이에서 이미 넣은 조정을 뺀 만큼 공정출고로 넣는다.' })
+  async adjustAll(@Body() dto: InventoryCloseMonthDto, @OrganizationId() organizationId: number, @UserId() userId?: string) {
+    return ResponseUtil.success(await this.service.adjustAll(dto.yyyymm, organizationId, userId || DEFAULT_USER));
   }
 }

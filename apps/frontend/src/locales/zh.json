@@ -277,6 +277,7 @@
     "magazineLabel": "弹匣标签发行",
     "magazineSplit": "弹匣标签拆分",
     "magazinePid": "弹匣-PID 映射管理",
+    "wipStocktake": "工序盘点",
     "productMgmt": "产品收发管理",
     "productMgmt.receive": "产品入库管理",
     "productMgmt.receiptCancel": "产品入库取消",

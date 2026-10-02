@@ -277,6 +277,7 @@
     "magazineLabel": "Phát hành nhãn magazine",
     "magazineSplit": "Tách nhãn magazine",
     "magazinePid": "Ánh xạ magazine-PID",
+    "wipStocktake": "Kiểm kê công đoạn",
     "productMgmt": "Quản lý xuất nhập sản phẩm",
     "productMgmt.receive": "Nhập kho sản phẩm",
     "productMgmt.receiptCancel": "Hủy nhập kho sản phẩm",

@@ -258,6 +258,7 @@ export const menuConfig: MenuConfigItem[] = [
       { code: "PLN_MAGAZINE_LABEL", labelKey: "menu.magazineLabel", path: "/process-transaction/magazine-label", pbLinkStatus: "powerbuilder", pbWindow: "w_pln_product_magazine_label_master2" },
       { code: "PLN_MAGAZINE_SPLIT", labelKey: "menu.magazineSplit", path: "/process-transaction/magazine-split", pbLinkStatus: "powerbuilder", pbWindow: "w_pln_product_magazine_label_split_master" },
       { code: "PLN_MAGAZINE_PID", labelKey: "menu.magazinePid", path: "/process-transaction/magazine-pid", pbLinkStatus: "powerbuilder", pbWindow: "w_pln_product_barcode_create_master" },
+      { code: "PLN_WIP_STOCKTAKE", labelKey: "menu.wipStocktake", path: "/process-transaction/wip-stocktake", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_workstage_inventory_check_master", pbEvidence: "apps/backend/src/modules/inventory-query/wip-stocktake.service.ts" },
     ],
   },
   {

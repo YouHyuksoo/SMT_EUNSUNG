@@ -22,7 +22,7 @@ export const DEFAULT_MENU_CATEGORY_LAYOUT: readonly DefaultMenuCategoryLayout[] 
   { categoryCode: 'FEEDER', labelKey: 'menu.feeder', sortOrder: 80, menuCodes: ['FEEDER_MASTER', 'FEEDER_REPAIR', 'FEEDER_ADJUST'] },
   { categoryCode: 'MOLD', labelKey: 'menu.mold', sortOrder: 90, menuCodes: ['MOLD_MASTER', 'MOLD_INVENTORY', 'MOLD_ORDER', 'MOLD_RECEIPT', 'MOLD_ISSUE', 'MOLD_REPAIR_REQUEST', 'MOLD_REPAIR', 'MOLD_PRICE'] },
   { categoryCode: 'SMT', labelKey: 'menu.smt', sortOrder: 100, menuCodes: ['SMT_LINE', 'SMT_LOCATION', 'SMT_BOM_REPLACE', 'SMT_NC_UPLOAD', 'SMT_BOM', 'SMT_PLAN', 'SMT_BOM_REPORT', 'SMT_BOM_COMPARISON', 'SMT_FEEDER_PICKUP'] },
-  { categoryCode: 'PROCESS_TRANSACTION', labelKey: 'menu.processTransaction', sortOrder: 110, menuCodes: ['PLN_WORKSTAGE_PASS', 'PLN_MAGAZINE_LABEL_HISTORY', 'PLN_MAGAZINE_LABEL', 'PLN_MAGAZINE_SPLIT', 'PLN_MAGAZINE_PID'] },
+  { categoryCode: 'PROCESS_TRANSACTION', labelKey: 'menu.processTransaction', sortOrder: 110, menuCodes: ['PLN_WORKSTAGE_PASS', 'PLN_MAGAZINE_LABEL_HISTORY', 'PLN_MAGAZINE_LABEL', 'PLN_MAGAZINE_SPLIT', 'PLN_MAGAZINE_PID', 'PLN_WIP_STOCKTAKE'] },
   { categoryCode: 'PRODUCT_MGMT', labelKey: 'menu.productMgmt', sortOrder: 120, menuCodes: [] },
   { categoryCode: 'PRODUCT_INVENTORY', labelKey: 'menu.productInventory', sortOrder: 130, menuCodes: ['PRD_CURRENT_INVENTORY', 'PRD_PACK', 'PRD_PACK_HISTORY', 'PRD_FG_RECEIPT', 'PRD_FG_MODEL_RECEIPT', 'PRD_FG_ISSUE', 'PRD_FG_MODEL_ISSUE'] },
   { categoryCode: 'PRODUCTION', labelKey: 'menu.production', sortOrder: 140, menuCodes: ['PRD_RUN_CARD', 'PRD_MASTER_PLAN', 'PRD_SMD_PLAN', 'PRD_SMD_ACTUAL', 'PRD_RUN_CARD_PID', 'PRD_PCB_RESULT', 'PRD_DAILY_REPORT'] },

@@ -6,12 +6,12 @@
  * 1. 스캐너는 키보드처럼 입력하고 Enter 를 보낸다. 입력칸에 포커스를 두면 연속으로 찍힌다.
  * 2. 센 수량은 비워 두면 바코드 수량으로 센다. 일부 쓴 릴·벌크만 수량을 넣고 찍는다.
  * 3. "취소" 를 켜고 찍으면 그 바코드의 스캔 기록을 지운다.
- * 4. 엑셀 업로드는 바코드 목록을 한꺼번에 찍는 것이다 (upload-modal.tsx).
+ * 4. 엑셀 업로드는 바코드 목록을 한꺼번에 찍는 것이다 (../stocktake-upload-modal.tsx).
  */
 import { useEffect, useRef, useState } from 'react';
 import { FileSpreadsheet, ScanLine } from 'lucide-react';
 import { Button, Card, CardContent, Input } from '@/components/ui';
-import UploadModal from './upload-modal';
+import StocktakeUploadModal from '../stocktake-upload-modal';
 import {
   apiMessage,
   stocktakeApi,
@@ -112,7 +112,11 @@ export default function ScanCard({ session, onScanned }: Props) {
           </div>
         )}
       </CardContent>
-      <UploadModal isOpen={uploadOpen} yyyymm={session.yyyymm}
+      <StocktakeUploadModal isOpen={uploadOpen} title={`${session.yyyymm} 실사`}
+        endpoint="/inventory-query/stocktake/upload"
+        template={{ headers: ['바코드', '롯트번호', '수량'], fileName: '자재실사_양식.xlsx' }}
+        guide={<>첫 시트의 머리글에 <b>바코드</b> 또는 <b>롯트번호</b> 열이 있어야 합니다. <b>수량</b>을 비우면 바코드
+          수량으로 셉니다. 이미 찍은 롯트는 엑셀 수량으로 고칩니다.</>}
         onClose={() => { setUploadOpen(false); inputRef.current?.focus(); }} onDone={onScanned} />
     </Card>
   );
