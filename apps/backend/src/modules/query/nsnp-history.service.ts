@@ -23,6 +23,7 @@ import { DataSource } from 'typeorm';
 import { likePrefix } from '@smt/shared';
 import { NsnpHistoryQueryDto } from './query.dto';
 import { ROW_LIMIT } from './row-limit';
+import { namedBinds } from '../../common/utils/named-binds.util';
 
 type Row = Record<string, unknown>;
 
@@ -61,7 +62,7 @@ export class NsnpHistoryService {
         WHERE l.MES_DISPLAY_YN = 'Y'
           AND l.ORGANIZATION_ID = :organizationId
         ORDER BY l.LINE_CODE`,
-      { organizationId } as unknown as unknown[],
+      namedBinds({ organizationId }),
     )) as Row[];
     return { data: rows, total: rows.length };
   }
@@ -116,13 +117,13 @@ export class NsnpHistoryService {
           AND h.ORGANIZATION_ID = :organizationId
         ORDER BY "enterDate" DESC
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         lineCode: likePrefix(query.lineCode),
         modelName: likePrefix(query.modelName),
         dateFrom: query.dateFrom,
         dateTo: query.dateTo,
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return { data: rows, total: rows.length, truncated: rows.length >= ROW_LIMIT };
   }

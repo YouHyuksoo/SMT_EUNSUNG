@@ -20,6 +20,9 @@ import {
   RESERVED_ROOT,
 } from '../dto/menu-category.dto';
 import { DEFAULT_MENU_CATEGORY_LAYOUT } from '../utils/default-menu-category-layout';
+
+/** 사용 여부 Y — 새 카테고리는 켠 상태로 만든다 */
+const ACTIVE_YES: 'Y' = 'Y';
 import { isValidMenuCode } from '../utils/menu-code-validator';
 
 interface AuditScope {
@@ -84,7 +87,7 @@ export class MenuCategoriesService {
             labelKey: category.labelKey,
             iconName: null,
             sortOrder: category.sortOrder,
-            isActive: 'Y' as const,
+            isActive: ACTIVE_YES,
             createdAt: now,
             createdBy: scope.userId,
             updatedAt: now,

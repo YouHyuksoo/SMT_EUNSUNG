@@ -42,6 +42,7 @@ import {
   FgReceiptDto,
   FgReceiptQueryDto,
 } from '../dto/product-fg.dto';
+import { namedBinds } from '../../../common/utils/named-binds.util';
 
 type Row = Record<string, unknown>;
 
@@ -104,14 +105,14 @@ export class ProductFgService {
           AND r.ORGANIZATION_ID = :organizationId
         ORDER BY r.RECEIPT_DATE DESC, r.RECEIPT_SEQUENCE DESC
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         dateFrom: query.dateFrom,
         dateTo: query.dateTo,
         modelName: this.like(query.modelName),
         barcode: this.like(query.barcode),
         txnDeficit: this.like(query.txnDeficit),
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }
@@ -152,14 +153,14 @@ export class ProductFgService {
           AND i.ORGANIZATION_ID = :organizationId
         ORDER BY i.ISSUE_DATE DESC, i.ISSUE_SEQUENCE DESC
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         dateFrom: query.dateFrom,
         dateTo: query.dateTo,
         modelName: this.like(query.modelName),
         barcode: this.like(query.barcode),
         customerCode: this.like(query.customerCode),
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }
@@ -186,14 +187,14 @@ export class ProductFgService {
         GROUP BY i.CUSTOMER_CODE
         ORDER BY 4 DESC
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         dateFrom: query.dateFrom,
         dateTo: query.dateTo,
         modelName: this.like(query.modelName),
         barcode: this.like(query.barcode),
         customerCode: this.like(query.customerCode),
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }
@@ -230,14 +231,14 @@ export class ProductFgService {
           AND v.ORGANIZATION_ID = :organizationId
         ORDER BY v.PALLET_NO, v.INVENTORY_DATE
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         dateFrom: query.dateFrom,
         dateTo: query.dateTo,
         barcode: this.like(query.barcode),
         modelName: this.like(query.modelName),
         locationCode: query.locationCode ?? 'P01',
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }
@@ -347,7 +348,7 @@ export class ProductFgService {
                RAISE_APPLICATION_ERROR(-20005, 'FG_PROC_NG:' || v_msg);
              END IF;
            END;`,
-          binds as unknown as unknown[],
+          namedBinds(binds),
         )
         .catch((error: unknown) => {
           const message = error instanceof Error ? error.message : String(error);

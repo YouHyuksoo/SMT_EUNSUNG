@@ -38,6 +38,7 @@ import {
   IssueInventoryQueryDto,
 } from './warehouse.dto';
 import { affectedRows } from '../../common/utils/affected-rows.util';
+import { namedBinds } from '../../common/utils/named-binds.util';
 
 type Row = Record<string, unknown>;
 
@@ -125,7 +126,7 @@ export class IssueManageService {
           AND s.ORGANIZATION_ID = :organizationId
         ORDER BY s.ISSUE_DATE DESC, s.ISSUE_SEQUENCE DESC
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         dateFrom: query.dateFrom,
         dateTo: query.dateTo,
         itemCode: likePrefix(query.itemCode),
@@ -136,7 +137,7 @@ export class IssueManageService {
         invoiceNo: likePrefix(query.invoiceNo),
         issueStatus: likePrefix(query.issueStatus),
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }
@@ -181,13 +182,13 @@ export class IssueManageService {
           AND v.ORGANIZATION_ID = :organizationId
         ORDER BY v.ITEM_CODE, v.LOCATION_CODE
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         itemCode: likePrefix(query.itemCode),
         materialMfs: likePrefix(query.materialMfs),
         locationCode: likePrefix(query.locationCode),
         sign: query.includeZero ? -2 : 1,
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }
@@ -221,7 +222,7 @@ export class IssueManageService {
            FROM ID_ITEM i
           WHERE i.ITEM_CODE = :itemCode
             AND i.ORGANIZATION_ID = :organizationId`,
-        { itemCode: dto.itemCode, organizationId } as unknown as unknown[],
+        namedBinds({ itemCode: dto.itemCode, organizationId }),
       )) as Row[];
       if (items.length === 0) {
         throw new BadRequestException(`품목을 찾을 수 없습니다: ${dto.itemCode}`);
@@ -262,7 +263,7 @@ export class IssueManageService {
             '${FIXED.issueStatus}', '${FIXED.issueType}', :issueAccount,
             :invoiceNo, '${FIXED.workOrderNo}', :comments,
             SYSDATE, :userId, SYSDATE, :userId)`,
-        {
+        namedBinds({
           issueDate: dto.issueDate,
           issueSequence,
           organizationId,
@@ -282,7 +283,7 @@ export class IssueManageService {
           invoiceNo,
           comments: dto.comments ?? null,
           userId,
-        } as unknown as unknown[],
+        }),
       );
 
       return {
@@ -324,11 +325,11 @@ export class IssueManageService {
           WHERE s.ISSUE_DATE = TO_DATE(:issueDate, 'YYYY-MM-DD')
             AND s.ISSUE_SEQUENCE = :issueSequence
             AND s.ORGANIZATION_ID = :organizationId`,
-        {
+        namedBinds({
           issueDate: dto.issueDate,
           issueSequence: dto.issueSequence,
           organizationId,
-        } as unknown as unknown[],
+        }),
       )) as Row[];
       if (originals.length === 0) {
         throw new BadRequestException(
@@ -349,11 +350,11 @@ export class IssueManageService {
             AND p.WORK_ORDER_NO = :workOrderNo
             AND p.TRANSFER_YN = 'Y'
             AND p.ORGANIZATION_ID = :organizationId`,
-        {
+        namedBinds({
           mfs: (original.mfs as string) ?? null,
           workOrderNo: original.workOrderNo ?? null,
           organizationId,
-        } as unknown as unknown[],
+        }),
       )) as Row[];
       if (Number(transferred[0]?.cnt ?? 0) > 0) {
         throw new BadRequestException(
@@ -372,12 +373,12 @@ export class IssueManageService {
             AND ISSUE_SEQUENCE = :issueSequence
             AND ORGANIZATION_ID = :organizationId
             AND NVL(ISSUE_STATUS, 'N') <> '${FIXED.cancelStatus}'`,
-        {
+        namedBinds({
           userId,
           issueDate: dto.issueDate,
           issueSequence: dto.issueSequence,
           organizationId,
-        } as unknown as unknown[],
+        }),
       );
       const flaggedRows = Number(
         affectedRows(flagged) ?? 0,
@@ -396,11 +397,11 @@ export class IssueManageService {
             AND ISSUE_SEQUENCE = :returnRequestSequence
             AND CONFIRM_YN = 'Y'
             AND ORGANIZATION_ID = :organizationId`,
-        {
+        namedBinds({
           returnRequestDate: original.returnRequestDate ?? null,
           returnRequestSequence: original.returnRequestSequence ?? null,
           organizationId,
-        } as unknown as unknown[],
+        }),
       );
 
       // PB ④: 부호를 뒤집은 취소 행을 넣는다. 열 목록과 DECODE 는 PB 그대로다.
@@ -440,14 +441,14 @@ export class IssueManageService {
           WHERE s.ISSUE_DATE = TO_DATE(:issueDate, 'YYYY-MM-DD')
             AND s.ISSUE_SEQUENCE = :issueSequence
             AND s.ORGANIZATION_ID = :organizationId`,
-        {
+        namedBinds({
           cancelDate: dto.cancelDate,
           cancelSequence: cancelSeq,
           organizationId,
           userId,
           issueDate: dto.issueDate,
           issueSequence: dto.issueSequence,
-        } as unknown as unknown[],
+        }),
       );
       const insertedRows = Number(
         affectedRows(inserted) ?? 0,

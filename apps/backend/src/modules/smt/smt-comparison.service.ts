@@ -24,6 +24,7 @@ import { Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { TransactionService } from '../../shared/transaction.service';
 import { SmtBomExplodeQueryDto, SmtLocationCompareQueryDto } from './smt-comparison.dto';
+import { namedBinds } from '../../common/utils/named-binds.util';
 
 interface CompareRow {
   childItemCode: string;
@@ -78,7 +79,7 @@ export class SmtComparisonService {
           AND NVL(b.PCB_ITEM, '*') LIKE :pcbItem
         GROUP BY b.CHILD_ITEM_CODE, b.PARENT_ITEM_CODE || b.PCB_ITEM
         ORDER BY b.CHILD_ITEM_CODE`,
-      binds as unknown as unknown[],
+      namedBinds(binds),
     )) as CompareRow[];
 
     // 부품별로 모델을 가로로 펼친다. 표시 형태는 프론트가 고르고, 차이 판정은 여기서 한다.
@@ -140,7 +141,7 @@ export class SmtComparisonService {
         `SELECT PKG_DESIGN.BOM_QUERY(:setItemCode, TRUNC(SYSDATE), :organizationId)
                   AS SESSION_ID
            FROM DUAL`,
-        { setItemCode: query.setItemCode, organizationId } as unknown as unknown[],
+        namedBinds({ setItemCode: query.setItemCode, organizationId }),
       )) as { SESSION_ID: number }[];
       const sessionId = Number(sessionRows?.[0]?.SESSION_ID ?? 0);
       if (sessionId <= 0) {
@@ -176,13 +177,13 @@ export class SmtComparisonService {
             WHERE t.SESSION_ID = :sessionId
               AND t.ORGANIZATION_ID = :organizationId
             ORDER BY t.SORT_ORDER`,
-          {
+          namedBinds({
               sessionId,
               organizationId,
               lineCode: query.lineCode,
               setItemCode: query.setItemCode,
               pcbItem,
-            } as unknown as unknown[],
+            }),
         )) as Record<string, unknown>[];
         return { sessionId, data, total: data.length };
       } finally {
@@ -190,7 +191,7 @@ export class SmtComparisonService {
         await qr.query(
           `DELETE FROM ID_ENG_BOM_TEMP
             WHERE SESSION_ID = :sessionId AND ORGANIZATION_ID = :organizationId`,
-          { sessionId, organizationId } as unknown as unknown[],
+          namedBinds({ sessionId, organizationId }),
         );
       }
     });

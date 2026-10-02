@@ -43,6 +43,7 @@ import {
   PackSerialQueryDto,
 } from '../dto/product-pack.dto';
 import { affectedRows } from '../../../common/utils/affected-rows.util';
+import { namedBinds } from '../../../common/utils/named-binds.util';
 
 type Row = Record<string, unknown>;
 
@@ -107,14 +108,14 @@ export class ProductPackService {
           AND m.ORGANIZATION_ID = :organizationId
         ORDER BY m.PACK_DATE DESC, m.PACK_BARCODE
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         dateFrom: query.dateFrom,
         dateTo: query.dateTo,
         packBarcode: this.like(query.packBarcode),
         modelName: this.like(query.modelName),
         packType: this.like(query.packType),
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }
@@ -138,7 +139,7 @@ export class ProductPackService {
           AND s.ORGANIZATION_ID = :organizationId
         ORDER BY s.SCAN_DATE, s.BARCODE
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      { packBarcode: query.packBarcode, organizationId } as unknown as unknown[],
+      namedBinds({ packBarcode: query.packBarcode, organizationId }),
     )) as Row[];
     return limited(rows);
   }
@@ -194,11 +195,11 @@ export class ProductPackService {
           ${packBarcode ? 'AND s.PACK_BARCODE = :packBarcode' : ''}
         ORDER BY s.SCAN_DATE DESC, s.BARCODE
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         ...(serialNo ? { serialNo } : {}),
         ...(packBarcode ? { packBarcode } : {}),
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }
@@ -220,14 +221,14 @@ export class ProductPackService {
                 :modelName, :modelSuffix, :itemCode, TRUNC(SYSDATE),
                 :lineCode, :workstageCode, :packUnitQty) AS "packBarcode"
          FROM DUAL`,
-      {
+      namedBinds({
         modelName: dto.modelName,
         modelSuffix: dto.modelSuffix ?? '*',
         itemCode: dto.itemCode,
         lineCode: dto.lineCode,
         workstageCode: dto.workstageCode,
         packUnitQty: dto.packUnitQty,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
 
     const packBarcode = String(rows[0]?.packBarcode ?? '');
@@ -289,7 +290,7 @@ export class ProductPackService {
                || v_msg || ' ' || v_ng_msg);
            END IF;
          END;`,
-        { lineCode, workstageCode, serialNo } as unknown as unknown[],
+        namedBinds({ lineCode, workstageCode, serialNo }),
       )
       .catch((error: unknown) => {
         const message = error instanceof Error ? error.message : String(error);
@@ -338,7 +339,7 @@ export class ProductPackService {
                   AND q.ORGANIZATION_ID = :organizationId
                   AND ROWNUM = 1)                          AS "repairCount"
          FROM DUAL`,
-      { packBarcode, serialNo, organizationId } as unknown as unknown[],
+      namedBinds({ packBarcode, serialNo, organizationId }),
     )) as Row[])[0] ?? {};
 
     if (Number(checks.packCount ?? 0) === 0) {
@@ -372,7 +373,7 @@ export class ProductPackService {
                 LAST_MODIFY_BY = :userId
           WHERE SERIAL_NO = :serialNo
             AND ORGANIZATION_ID = :organizationId`,
-        { packBarcode, serialNo, userId, organizationId } as unknown as unknown[],
+        namedBinds({ packBarcode, serialNo, userId, organizationId }),
       );
 
       const inserted = await qr.query(
@@ -395,7 +396,7 @@ export class ProductPackService {
                   SELECT 1 FROM IP_PRODUCT_PACK_SERIAL x
                    WHERE x.BARCODE = :serialNo
                      AND x.ORGANIZATION_ID = :organizationId)`,
-        {
+        namedBinds({
           packBarcode,
           serialNo,
           lineCode: dto.lineCode,
@@ -404,7 +405,7 @@ export class ProductPackService {
           userId,
           runNo,
           masterBarcode: dto.masterBarcode ?? null,
-        } as unknown as unknown[],
+        }),
       );
       const affected = Number(
         affectedRows(inserted) ?? 0,
@@ -422,13 +423,13 @@ export class ProductPackService {
                 LAST_MODIFY_BY = :userId
           WHERE PACK_BARCODE = :packBarcode
             AND ORGANIZATION_ID = :organizationId`,
-        {
+        namedBinds({
           packCharger: dto.packCharger ?? null,
           qcCharger: dto.qcCharger ?? null,
           userId,
           packBarcode,
           organizationId,
-        } as unknown as unknown[],
+        }),
       );
 
       return { packBarcode, serialNo, runNo };
@@ -457,7 +458,7 @@ export class ProductPackService {
                      AND m.ORGANIZATION_ID = s.ORGANIZATION_ID
                      AND NVL(m.COMPLETE_FLAG, 'N') <> 'Y'
                      AND NVL(m.RECEIPT_FLAG, 'N') <> 'Y')`,
-        { packBarcode, serialNo, organizationId } as unknown as unknown[],
+        namedBinds({ packBarcode, serialNo, organizationId }),
       );
       const affected = Number(
         affectedRows(deleted) ?? 0,
@@ -475,7 +476,7 @@ export class ProductPackService {
                 LAST_MODIFY_BY = :userId
           WHERE SERIAL_NO = :serialNo
             AND ORGANIZATION_ID = :organizationId`,
-        { serialNo, userId, organizationId } as unknown as unknown[],
+        namedBinds({ serialNo, userId, organizationId }),
       );
 
       await qr.query(
@@ -485,7 +486,7 @@ export class ProductPackService {
                 LAST_MODIFY_BY = :userId
           WHERE PACK_BARCODE = :packBarcode
             AND ORGANIZATION_ID = :organizationId`,
-        { packBarcode, userId, organizationId } as unknown as unknown[],
+        namedBinds({ packBarcode, userId, organizationId }),
       );
 
       return { packBarcode, serialNo, deletedRows: affected };
@@ -514,7 +515,7 @@ export class ProductPackService {
             AND x.ORGANIZATION_ID = :organizationId
             -- 이미 입고된 박스는 다시 완료하지 않는다.
             AND NVL(x.RECEIPT_FLAG, 'N') <> 'Y'`,
-        { packBarcode, userId, organizationId } as unknown as unknown[],
+        namedBinds({ packBarcode, userId, organizationId }),
       );
       const affected = Number(
         affectedRows(updated) ?? 0,
@@ -528,7 +529,7 @@ export class ProductPackService {
         `SELECT PACK_QTY AS "packQty", PACKING_PCS_QTY AS "packingPcsQty"
            FROM IP_PRODUCT_PACK_MASTER
           WHERE PACK_BARCODE = :packBarcode AND ORGANIZATION_ID = :organizationId`,
-        { packBarcode, organizationId } as unknown as unknown[],
+        namedBinds({ packBarcode, organizationId }),
       )) as Row[];
       return { packBarcode, ...(rows[0] ?? {}) };
     });
@@ -545,7 +546,7 @@ export class ProductPackService {
                 LAST_MODIFY_BY = :userId
           WHERE PACK_BARCODE = :packBarcode
             AND ORGANIZATION_ID = :organizationId`,
-        { packBarcode, userId, organizationId } as unknown as unknown[],
+        namedBinds({ packBarcode, userId, organizationId }),
       );
       const affected = Number(
         affectedRows(updated) ?? 0,
@@ -576,7 +577,7 @@ export class ProductPackService {
                   SELECT 1 FROM IP_PRODUCT_PACK_SERIAL s
                    WHERE s.PACK_BARCODE = m.PACK_BARCODE
                      AND s.ORGANIZATION_ID = m.ORGANIZATION_ID)`,
-        { packBarcode, organizationId } as unknown as unknown[],
+        namedBinds({ packBarcode, organizationId }),
       );
       const affected = Number(
         affectedRows(deleted) ?? 0,

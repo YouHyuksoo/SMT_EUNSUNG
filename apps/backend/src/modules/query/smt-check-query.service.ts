@@ -34,6 +34,7 @@ import {
 } from './query.dto';
 import { ROW_LIMIT } from './row-limit';
 import { affectedRows } from '../../common/utils/affected-rows.util';
+import { namedBinds } from '../../common/utils/named-binds.util';
 
 type Row = Record<string, unknown>;
 
@@ -132,7 +133,7 @@ export class SmtCheckQueryService {
         WHERE ${this.scanWhere('c')}
         ORDER BY c.CHECK_DATE DESC
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      { ...this.scanBinds(query), organizationId } as unknown as unknown[],
+      namedBinds({ ...this.scanBinds(query), organizationId }),
     )) as Row[];
     return { data: rows, total: rows.length, truncated: rows.length >= ROW_LIMIT };
   }
@@ -184,7 +185,7 @@ export class SmtCheckQueryService {
         WHERE ${this.scanWhere('c')}
         ORDER BY c.LINE_CODE, c.LOT_NAME, c.FULL_CHECK_SEQUENCE, c.CHECK_DATE
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      { ...this.scanBinds(query), organizationId } as unknown as unknown[],
+      namedBinds({ ...this.scanBinds(query), organizationId }),
     )) as Row[];
     return { data: rows, total: rows.length, truncated: rows.length >= ROW_LIMIT };
   }
@@ -228,7 +229,7 @@ export class SmtCheckQueryService {
                 OR c.OLD_BARCODE LIKE :barcode ESCAPE '\\' )
         ORDER BY c.CHECK_DATE DESC
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      { barcode: likePrefix(query.barcode), organizationId } as unknown as unknown[],
+      namedBinds({ barcode: likePrefix(query.barcode), organizationId }),
     )) as Row[];
     return { data: rows, total: rows.length, truncated: rows.length >= ROW_LIMIT };
   }
@@ -257,7 +258,7 @@ export class SmtCheckQueryService {
           AND s.ORGANIZATION_ID = :organizationId
         ORDER BY s.ENTER_DATE DESC
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      { barcode: likePrefix(query.barcode), organizationId } as unknown as unknown[],
+      namedBinds({ barcode: likePrefix(query.barcode), organizationId }),
     )) as Row[];
     return { data: rows, total: rows.length, truncated: rows.length >= ROW_LIMIT };
   }
@@ -285,7 +286,7 @@ export class SmtCheckQueryService {
               AND LOT_NAME = :lotName
               AND CHECK_SEQUENCE = :checkSequence
               AND CHECK_DATE = TO_DATE(:checkDateKey, 'YYYYMMDDHH24MISS')`,
-          {
+          namedBinds({
             ngReason: row.ngReason ?? null,
             comments: row.comments
               ? `${row.comments} [${userId}]`
@@ -294,7 +295,7 @@ export class SmtCheckQueryService {
             lotName: row.lotName,
             checkSequence: row.checkSequence,
             checkDateKey: row.checkDateKey,
-          } as unknown as unknown[],
+          }),
         );
         // 영향 행수는 affectedRows 로 읽는다 (TypeORM Oracle 은 DML 결과로 행수 숫자를 준다).
         const affected = Number(affectedRows(result) ?? 0);
@@ -345,13 +346,13 @@ export class SmtCheckQueryService {
           AND p.ORGANIZATION_ID = :organizationId
         ORDER BY p.LINE_CODE, p.MACHINE, p.TABLE_ID, p.LOCATION_CODE
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         modelName: query.modelName,
         lineCode: likePrefix(query.lineCode),
         pcbItem: likePrefix(query.pcbItem),
         revision: likePrefix(query.revision),
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return { data: rows, total: rows.length, truncated: rows.length >= ROW_LIMIT };
   }
@@ -383,7 +384,7 @@ export class SmtCheckQueryService {
           AND p.ORGANIZATION_ID = :organizationId
         ORDER BY p.MACHINE, p.TABLE_ID, p.LOCATION_CODE
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      { lineCode: query.lineCode, organizationId } as unknown as unknown[],
+      namedBinds({ lineCode: query.lineCode, organizationId }),
     )) as Row[];
     return { data: rows, total: rows.length, truncated: rows.length >= ROW_LIMIT };
   }
@@ -410,12 +411,12 @@ export class SmtCheckQueryService {
           AND p.ORGANIZATION_ID = :organizationId
         ORDER BY p.LINE_CODE, p.MACHINE, p.LOCATION_CODE
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         modelName: query.modelName,
         lineCode: likePrefix(query.lineCode),
         pcbItem: likePrefix(query.pcbItem),
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return { data: rows, total: rows.length, truncated: rows.length >= ROW_LIMIT };
   }
@@ -451,7 +452,7 @@ export class SmtCheckQueryService {
               AND TABLE_ID = :tableId
               AND PCB_ITEM = :pcbItem
               AND ORGANIZATION_ID = :organizationId`,
-          {
+          namedBinds({
             checkYn: row.checkYn ?? null,
             checkStatus: row.checkStatus ?? null,
             ccsYn: row.ccsYn ?? null,
@@ -464,7 +465,7 @@ export class SmtCheckQueryService {
             tableId: row.tableId,
             pcbItem: row.pcbItem,
             organizationId,
-          } as unknown as unknown[],
+          }),
         );
         const affected = Number(affectedRows(result) ?? 0);
         if (affected > 0) changed += affected;

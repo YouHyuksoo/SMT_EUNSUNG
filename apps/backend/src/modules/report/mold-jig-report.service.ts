@@ -45,6 +45,7 @@ import {
   MoldMasterReportQueryDto,
   MoldReceiptReportQueryDto,
 } from './material-report.dto';
+import { namedBinds } from '../../common/utils/named-binds.util';
 
 type Row = Record<string, unknown>;
 
@@ -105,13 +106,13 @@ export class MoldJigReportService {
           AND r.RECEIPT_STATUS = '${MOLD_RECEIPT_NORMAL}'
         ORDER BY r.RECEIPT_DATE DESC, r.RECEIPT_SEQUENCE
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         dateFrom: query.dateFrom,
         dateTo: query.dateTo,
         moldCode: likePrefix(query.moldCode),
         supplierCode: likePrefix(query.supplierCode),
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }
@@ -152,12 +153,12 @@ export class MoldJigReportService {
           AND g.ORGANIZATION_ID = :organizationId
         ORDER BY g.ISSUE_DATE DESC, g.ISSUE_SEQUENCE
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         dateFrom: query.dateFrom,
         dateTo: query.dateTo,
         moldCode: likePrefix(query.moldCode),
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }
@@ -191,10 +192,10 @@ export class MoldJigReportService {
           AND j.JIG_CODE <> '${DUMMY_CODE}'
         ORDER BY j.JIG_CODE, j.JIG_LOT_NO
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         jigCode: likePrefix(query.jigCode),
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }
@@ -232,10 +233,10 @@ export class MoldJigReportService {
           AND j.JIG_CODE <> '${DUMMY_CODE}'
         ORDER BY j.JIG_CODE, p.REPAIR_SEQUENCE
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         jigCode: likePrefix(query.jigCode),
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }
@@ -270,14 +271,14 @@ export class MoldJigReportService {
           AND g.ORGANIZATION_ID = :organizationId
         ORDER BY g.ISSUE_DATE DESC, g.ISSUE_SEQUENCE
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         dateFrom: query.dateFrom,
         dateTo: query.dateTo,
         jigCode: likePrefix(query.jigCode),
         jigType: likePrefix(query.jigType),
         issueStatus: likePrefix(query.issueStatus),
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }
@@ -340,11 +341,11 @@ export class MoldJigReportService {
           AND m.MOLD_CODE <> '${DUMMY_CODE}'
         ORDER BY m.MOLD_CODE, v.MOLD_VERSION, v.MOLD_SET_SERIAL
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         moldCode: likePrefix(query.moldCode),
         moldGroup: likePrefix(query.moldGroup),
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }
@@ -396,11 +397,11 @@ export class MoldJigReportService {
           AND m.ORGANIZATION_ID = :organizationId
         ORDER BY m.MOLD_CODE, v.MOLD_VERSION, v.MOLD_SET_SERIAL, p.REPAIR_SEQUENCE
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         moldCode: likePrefix(query.moldCode),
         moldGroup: likePrefix(query.moldGroup),
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }
@@ -444,11 +445,11 @@ export class MoldJigReportService {
           AND a.ORGANIZATION_ID = :organizationId
         ORDER BY a.MODEL_NAME, a.MODEL_SUFFIX
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         modelName: likePrefix(query.modelName),
         modelSuffix: likePrefix(query.modelSuffix),
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }

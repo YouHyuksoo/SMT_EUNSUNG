@@ -28,6 +28,7 @@ import {
   MagazinePidQueryDto,
 } from './magazine-label.dto';
 import { affectedRows } from '../../common/utils/affected-rows.util';
+import { namedBinds } from '../../common/utils/named-binds.util';
 
 type Row = Record<string, unknown>;
 
@@ -71,7 +72,7 @@ export class MagazinePidService {
                AND ln.ORGANIZATION_ID = io.ORGANIZATION_ID
         WHERE io.MAGAZINE_LABEL_NO = :magazineLabelNo
           AND io.ORGANIZATION_ID = :organizationId`,
-      { magazineLabelNo, organizationId } as unknown as unknown[],
+      namedBinds({ magazineLabelNo, organizationId }),
     )) as Row[];
 
     const magazine = rows[0] ?? null;
@@ -109,10 +110,10 @@ export class MagazinePidService {
           AND b.ORGANIZATION_ID = :organizationId
         ORDER BY b.ENTER_DATE, b.SERIAL_NO
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         magazineLabelNo: query.magazineLabelNo,
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }
@@ -135,7 +136,7 @@ export class MagazinePidService {
         WHERE b.SERIAL_NO = :serialNo
           AND b.ORGANIZATION_ID = :organizationId
         FETCH FIRST 1 ROWS ONLY`,
-      { serialNo, organizationId } as unknown as unknown[],
+      namedBinds({ serialNo, organizationId }),
     )) as Row[];
     return rows[0] ?? null;
   }
@@ -182,7 +183,7 @@ export class MagazinePidService {
                   SELECT 1 FROM IP_PRODUCT_2D_BARCODE x
                    WHERE x.SERIAL_NO = :serialNo
                      AND x.ORGANIZATION_ID = :organizationId)`,
-        {
+        namedBinds({
           serialNo,
           runNo: String(magazine.runNo ?? ''),
           runDate: (magazine.runDate as Date) ?? null,
@@ -195,7 +196,7 @@ export class MagazinePidService {
           barcodeStatus,
           organizationId,
           userId,
-        } as unknown as unknown[],
+        }),
       );
       const affected = Number(
         affectedRows(result) ?? 0,
@@ -224,11 +225,11 @@ export class MagazinePidService {
             AND ORGANIZATION_ID = :organizationId
             -- 공정·검사가 이미 읽어 간 기록은 지우지 않는다 (PB 는 막지 않았다).
             AND NVL(QC_SCAN_YN, 'N') <> 'Y'`,
-        {
+        namedBinds({
           serialNo,
           magazineLabelNo: dto.magazineLabelNo,
           organizationId,
-        } as unknown as unknown[],
+        }),
       );
       const affected = Number(
         affectedRows(result) ?? 0,

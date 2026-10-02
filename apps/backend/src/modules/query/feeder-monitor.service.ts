@@ -19,6 +19,7 @@ import { TransactionService } from '../../shared/transaction.service';
 import { FeederMonitorQueryDto, FeederSlotQueryDto } from './query.dto';
 import { ROW_LIMIT } from './row-limit';
 import { affectedRows } from '../../common/utils/affected-rows.util';
+import { namedBinds } from '../../common/utils/named-binds.util';
 
 type Row = Record<string, unknown>;
 
@@ -83,12 +84,12 @@ export class FeederMonitorService {
           AND p.ORGANIZATION_ID = :organizationId
         ORDER BY p.MACHINE, p.TABLE_ID, p.LOCATION_CODE
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         lineCode: query.lineCode,
         modelName: likePrefix(query.modelName),
         itemCode: likePrefix(query.itemCode),
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return { data: rows, total: rows.length, truncated: rows.length >= ROW_LIMIT };
   }
@@ -133,12 +134,12 @@ export class FeederMonitorService {
                                    AND h.CHECK_TYPE = '1' )
         ORDER BY c.CHECK_DATE DESC
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         lineCode: query.lineCode,
         lotName: query.lotName,
         locationCode: query.locationCode,
         itemCode: query.itemCode,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return { data: rows, total: rows.length, truncated: rows.length >= ROW_LIMIT };
   }
@@ -166,7 +167,7 @@ export class FeederMonitorService {
           AND a.ORGANIZATION_ID = :organizationId
         ORDER BY a.RECEIPT_DATE DESC, a.WORKSTAGE_CODE
         FETCH FIRST 200 ROWS ONLY`,
-      { lineCode: query.lineCode, organizationId } as unknown as unknown[],
+      namedBinds({ lineCode: query.lineCode, organizationId }),
     )) as Row[];
     return { data: rows, total: rows.length };
   }
@@ -216,13 +217,13 @@ export class FeederMonitorService {
             AND NVL(p.ITEM_CODE, '*') LIKE :itemCode ESCAPE '\\'
             AND p.ACTIVE_YN = 'Y'
             AND p.ORGANIZATION_ID = :organizationId`,
-        {
+        namedBinds({
           userId,
           lineCode: query.lineCode,
           modelName: likePrefix(query.modelName),
           itemCode: likePrefix(query.itemCode),
           organizationId,
-        } as unknown as unknown[],
+        }),
       );
       return {
         lineCode: query.lineCode,

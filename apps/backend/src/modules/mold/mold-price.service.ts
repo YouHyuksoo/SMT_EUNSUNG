@@ -21,6 +21,7 @@ import {
   MoldPriceSupplierChangeDto,
   MoldPriceUpsertDto,
 } from './mold-price.dto';
+import { namedBinds } from '../../common/utils/named-binds.util';
 
 type OracleRow = Record<string, unknown>;
 
@@ -107,13 +108,13 @@ export class MoldPriceService {
     const limit = query.limit ?? 500;
     const totals = await this.dataSource.query(
       `SELECT COUNT(*) AS "total" FROM (${body}) source_rows`,
-      { ...binds } as unknown as unknown[],
+      namedBinds({ ...binds }),
     ) as OracleRow[];
     // PB 트리 정렬: 적용상태로 묶고 그 안에서 코드·공급처·적용일 순
     const rows = await this.dataSource.query(
       `${body} ORDER BY "status", "moldCode", "supplierCode", "dateset" DESC
        OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY`,
-      { ...binds, offset: (page - 1) * limit, limit } as unknown as unknown[],
+      namedBinds({ ...binds, offset: (page - 1) * limit, limit }),
     ) as OracleRow[];
     return { data: rows, total: Number(totals[0]?.total ?? 0), page, limit };
   }
@@ -123,12 +124,12 @@ export class MoldPriceService {
       `SELECT COUNT(*) AS "cnt" FROM IMCN_MOLD_UNIT_PRICE
         WHERE DATESET = TO_DATE(:dateset, 'YYYY-MM-DD') AND MOLD_CODE = :moldCode
           AND SUPPLIER_CODE = :supplierCode AND ORGANIZATION_ID = :organizationId`,
-      {
+      namedBinds({
         dateset: dto.dateset.slice(0, 10),
         moldCode: dto.moldCode,
         supplierCode: dto.supplierCode,
         organizationId,
-      } as unknown as unknown[],
+      }),
     ) as OracleRow[];
     return Number(rows[0]?.cnt ?? 0) > 0;
   }
@@ -165,7 +166,7 @@ export class MoldPriceService {
 
     await this.dataSource.query(
       `INSERT INTO IMCN_MOLD_UNIT_PRICE (${columns.join(', ')}) VALUES (${values.join(', ')})`,
-      binds as unknown as unknown[],
+      namedBinds(binds),
     );
     return { moldCode: dto.moldCode, supplierCode: dto.supplierCode, dateset: dto.dateset };
   }
@@ -196,7 +197,7 @@ export class MoldPriceService {
       `UPDATE IMCN_MOLD_UNIT_PRICE SET ${sets.join(', ')}
         WHERE DATESET = TO_DATE(:dateset, 'YYYY-MM-DD') AND MOLD_CODE = :moldCode
           AND SUPPLIER_CODE = :supplierCode AND ORGANIZATION_ID = :organizationId`,
-      binds as unknown as unknown[],
+      namedBinds(binds),
     );
     return { moldCode: dto.moldCode, supplierCode: dto.supplierCode, dateset: dto.dateset };
   }
@@ -208,12 +209,12 @@ export class MoldPriceService {
          FROM IMCN_MOLD_UNIT_PRICE
         WHERE DATESET = TO_DATE(:dateset, 'YYYY-MM-DD') AND MOLD_CODE = :moldCode
           AND SUPPLIER_CODE = :supplierCode AND ORGANIZATION_ID = :organizationId`,
-      {
+      namedBinds({
         dateset: dto.dateset.slice(0, 10),
         moldCode: dto.moldCode,
         supplierCode: dto.supplierCode,
         organizationId,
-      } as unknown as unknown[],
+      }),
     ) as OracleRow[];
     if (rows.length === 0) {
       throw new NotFoundException('단가를 찾을 수 없습니다.');
@@ -225,12 +226,12 @@ export class MoldPriceService {
       `DELETE FROM IMCN_MOLD_UNIT_PRICE
         WHERE DATESET = TO_DATE(:dateset, 'YYYY-MM-DD') AND MOLD_CODE = :moldCode
           AND SUPPLIER_CODE = :supplierCode AND ORGANIZATION_ID = :organizationId`,
-      {
+      namedBinds({
         dateset: dto.dateset.slice(0, 10),
         moldCode: dto.moldCode,
         supplierCode: dto.supplierCode,
         organizationId,
-      } as unknown as unknown[],
+      }),
     );
     return { deleted: true };
   }
@@ -241,7 +242,7 @@ export class MoldPriceService {
       const before = await qr.query(
         `SELECT COUNT(*) AS "cnt" FROM IMCN_MOLD_UNIT_PRICE
           WHERE ORGANIZATION_ID = :organizationId`,
-        { organizationId } as unknown as unknown[],
+        namedBinds({ organizationId }),
       ) as OracleRow[];
       await qr.query(
         `DECLARE
@@ -249,12 +250,12 @@ export class MoldPriceService {
          BEGIN
            PKG_MES_MAC.SP_MOLD_PRICE_GENERATE(:currency, :organizationId, :userId, v_result);
          END;`,
-        { currency: dto.currency, organizationId, userId } as unknown as unknown[],
+        namedBinds({ currency: dto.currency, organizationId, userId }),
       );
       const after = await qr.query(
         `SELECT COUNT(*) AS "cnt" FROM IMCN_MOLD_UNIT_PRICE
           WHERE ORGANIZATION_ID = :organizationId`,
-        { organizationId } as unknown as unknown[],
+        namedBinds({ organizationId }),
       ) as OracleRow[];
       return { created: Number(after[0]?.cnt ?? 0) - Number(before[0]?.cnt ?? 0) };
     });
@@ -275,7 +276,7 @@ export class MoldPriceService {
           WHERE SUPPLIER_CODE = :supplierCode
             AND DATESET <= TRUNC(SYSDATE) AND DATEEND >= TRUNC(SYSDATE)
             AND ORGANIZATION_ID = :organizationId`,
-        { supplierCode: dto.beforeSupplierCode, organizationId } as unknown as unknown[],
+        namedBinds({ supplierCode: dto.beforeSupplierCode, organizationId }),
       ) as OracleRow[];
       await qr.query(
         `DECLARE
@@ -287,12 +288,12 @@ export class MoldPriceService {
              RAISE_APPLICATION_ERROR(-20011, 'MOLD_PRICE_SUPPLIER_INVALID');
            END IF;
          END;`,
-        {
+        namedBinds({
           beforeSupplier: dto.beforeSupplierCode,
           afterSupplier: dto.afterSupplierCode,
           organizationId,
           userId,
-        } as unknown as unknown[],
+        }),
       ).catch((error: unknown) => {
         const message = error instanceof Error ? error.message : String(error);
         if (message.includes('MOLD_PRICE_SUPPLIER_INVALID')) {

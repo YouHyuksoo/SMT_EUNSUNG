@@ -21,6 +21,7 @@ import {
   ProductDestroyHistoryQueryDto,
   ProductDestroyIssueDto,
 } from '../dto/product-destroy.dto';
+import { namedBinds } from '../../../common/utils/named-binds.util';
 
 type OracleRow = Record<string, unknown>;
 
@@ -68,10 +69,10 @@ export class ProductDestroyService {
       OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY`;
     const offset = (query.page - 1) * query.limit;
     const rows = await this.dataSource.query(
-      select, { ...binds, offset, limit: query.limit } as unknown as unknown[],
+      select, namedBinds({ ...binds, offset, limit: query.limit }),
     ) as OracleRow[];
     const totals = await this.dataSource.query(
-      `SELECT COUNT(*) AS "total" ${from}`, binds as unknown as unknown[],
+      `SELECT COUNT(*) AS "total" ${from}`, namedBinds(binds),
     ) as OracleRow[];
     return { data: rows, total: Number(totals[0]?.total ?? 0), page: query.page, limit: query.limit };
   }
@@ -86,7 +87,7 @@ export class ProductDestroyService {
          AND qc.SERIAL_NO LIKE :serialNo
          AND qc.RECEIPT_DEFICIT = '${deficit}'
        ORDER BY qc.QC_SEQUENCE`,
-      binds as unknown as unknown[],
+      namedBinds(binds),
     ) as OracleRow[];
     const [destroyList, issueList] = await Promise.all([load(DEFICIT_RECEIPT), load(DEFICIT_ISSUE)]);
     return { destroyList, issueList };
@@ -129,7 +130,7 @@ export class ProductDestroyService {
       `SELECT QC_SEQUENCE AS "qcSequence" FROM IP_PRODUCT_WORK_QC
         WHERE ORGANIZATION_ID = :organizationId AND SERIAL_NO = :serialNo
           AND RECEIPT_DEFICIT = '${DEFICIT_RECEIPT}'`,
-      { organizationId, serialNo } as unknown as unknown[],
+      namedBinds({ organizationId, serialNo }),
     ) as OracleRow[];
     if (existing.length > 0) {
       return { serialNo, status: 'SKIP', reason: '이미 폐기 처리된 시리얼입니다.' };
@@ -140,7 +141,7 @@ export class ProductDestroyService {
       `SELECT DISTINCT ITEM_CODE AS "itemCode", MODEL_NAME AS "modelName", MODEL_SUFFIX AS "modelSuffix"
          FROM IP_PRODUCT_2D_BARCODE
         WHERE SERIAL_NO = :serialNo AND ORGANIZATION_ID = :organizationId`,
-      { serialNo, organizationId } as unknown as unknown[],
+      namedBinds({ serialNo, organizationId }),
     ) as OracleRow[];
     if (barcode.length === 0) {
       return { serialNo, status: 'FAIL', reason: '시리얼의 품목/모델 정보를 찾을 수 없습니다.' };
@@ -152,7 +153,7 @@ export class ProductDestroyService {
          FROM IP_PRODUCT_WORKSTAGE_IO
         WHERE SERIAL_NO = :serialNo
           AND WIP_SEQ = (SELECT MAX(WIP_SEQ) FROM IP_PRODUCT_WORKSTAGE_IO WHERE SERIAL_NO = :serialNo)`,
-      { serialNo } as unknown as unknown[],
+      namedBinds({ serialNo }),
     ) as OracleRow[];
     const lineCode = String(io[0]?.lineCode ?? this.fallback(dto.fallbackLineCode));
     const workstageCode = String(io[0]?.workstageCode ?? this.fallback(dto.fallbackWorkstageCode));
@@ -175,18 +176,18 @@ export class ProductDestroyService {
          1, 1, SYSDATE, NVL(F_GET_WORK_SHIFT_CODE(SYSDATE), '1'),
          :userId, :userId, :userId, SYSDATE, :userId, SYSDATE
        )`,
-      {
+      namedBinds({
         serialNo, organizationId,
         itemCode: barcode[0].itemCode, modelName: barcode[0].modelName, modelSuffix: barcode[0].modelSuffix,
         lineCode, workstageCode, badReasonCode: dto.badReasonCode, userId,
-      } as unknown as unknown[],
+      }),
     );
 
     const created = await qr.query(
       `SELECT MAX(QC_SEQUENCE) AS "qcSequence" FROM IP_PRODUCT_WORK_QC
         WHERE SERIAL_NO = :serialNo AND ORGANIZATION_ID = :organizationId
           AND RECEIPT_DEFICIT = '${DEFICIT_RECEIPT}'`,
-      { serialNo, organizationId } as unknown as unknown[],
+      namedBinds({ serialNo, organizationId }),
     ) as OracleRow[];
     return { serialNo, status: 'OK', qcSequence: Number(created[0]?.qcSequence ?? 0) };
   }
@@ -211,7 +212,7 @@ export class ProductDestroyService {
     const found = await this.dataSource.query(
       `SELECT RECEIPT_DEFICIT AS "deficit" FROM IP_PRODUCT_WORK_QC
         WHERE SERIAL_NO = :serialNo AND QC_SEQUENCE = :qcSequence AND ORGANIZATION_ID = :organizationId`,
-      key as unknown as unknown[],
+      namedBinds(key),
     ) as OracleRow[];
     if (found.length === 0) throw new BadRequestException('대상 이력을 찾을 수 없습니다.');
     if (found[0].deficit === deficit) throw new BadRequestException('이미 해당 상태입니다.');
@@ -220,7 +221,7 @@ export class ProductDestroyService {
       `UPDATE IP_PRODUCT_WORK_QC
           SET RECEIPT_DEFICIT = '${deficit}', REPAIR_DATE = ${repairDate}
         WHERE SERIAL_NO = :serialNo AND QC_SEQUENCE = :qcSequence AND ORGANIZATION_ID = :organizationId`,
-      key as unknown as unknown[],
+      namedBinds(key),
     );
     return { serialNo: dto.serialNo, qcSequence: dto.qcSequence, receiptDeficit: deficit };
   }

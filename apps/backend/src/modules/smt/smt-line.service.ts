@@ -27,6 +27,7 @@ import {
   SmtLocationGenerateDto,
 } from './smt-line.dto';
 import { affectedRows } from '../../common/utils/affected-rows.util';
+import { namedBinds } from '../../common/utils/named-binds.util';
 
 /** 센티넬 라인. 목록·수정·삭제 어디서도 대상이 아니다. */
 const SENTINEL_LINE = '*';
@@ -84,13 +85,13 @@ export class SmtLineService {
           AND NVL(m.MACHINE, '*') LIKE :machine
           AND NVL(m.LINE_STATUS, '*') LIKE :lineStatus
         ORDER BY m.LINE_CODE, m.MACHINE`,
-      {
+      namedBinds({
           organizationId,
           sentinel: SENTINEL_LINE,
           lineCode: this.like(query.lineCode),
           machine: this.like(query.machine),
           lineStatus: this.like(query.lineStatus),
-        } as unknown as unknown[],
+        }),
     )) as Record<string, unknown>[];
     return { data: rows, total: rows.length };
   }
@@ -103,7 +104,7 @@ export class SmtLineService {
         WHERE m.ORGANIZATION_ID = :organizationId
           AND m.LINE_CODE <> :sentinel
         ORDER BY m.MACHINE`,
-      { organizationId, sentinel: SENTINEL_LINE } as unknown as unknown[],
+      namedBinds({ organizationId, sentinel: SENTINEL_LINE }),
     )) as Record<string, unknown>[];
   }
 
@@ -120,7 +121,7 @@ export class SmtLineService {
           AND l.MACHINE = :machine
           AND l.ORGANIZATION_ID = :organizationId
         ORDER BY l.TABLE_ID, SUBSTR(l.LOCATION_CODE, 2)`,
-      { lineCode: key.lineCode, machine: key.machine, organizationId } as unknown as unknown[],
+      namedBinds({ lineCode: key.lineCode, machine: key.machine, organizationId }),
     )) as Record<string, unknown>[];
   }
 
@@ -139,7 +140,7 @@ export class SmtLineService {
         `SELECT COUNT(*) AS CNT FROM IB_LINE_MASTER
           WHERE LINE_CODE = :lineCode AND MACHINE = :machine
             AND ORGANIZATION_ID = :organizationId`,
-        { lineCode: dto.lineCode, machine: dto.machine, organizationId } as unknown as unknown[],
+        namedBinds({ lineCode: dto.lineCode, machine: dto.machine, organizationId }),
       )) as { CNT: number }[];
       if (Number(dup?.CNT ?? 0) > 0) {
         throw new ConflictException(`이미 있는 라인·설비입니다: ${dto.lineCode} / ${dto.machine}`);
@@ -164,7 +165,7 @@ export class SmtLineService {
 
       await qr.query(
         `INSERT INTO IB_LINE_MASTER (${columns.join(', ')}) VALUES (${values.join(', ')})`,
-        binds as unknown as unknown[],
+        namedBinds(binds),
       );
       return { lineCode: dto.lineCode, machine: dto.machine };
     });
@@ -190,7 +191,7 @@ export class SmtLineService {
         `UPDATE IB_LINE_MASTER SET ${sets.join(', ')}
           WHERE LINE_CODE = :lineCode AND MACHINE = :machine
             AND ORGANIZATION_ID = :organizationId`,
-        binds as unknown as unknown[],
+        namedBinds(binds),
       );
       const affected = Number(affectedRows(result) ?? 0);
       if (affected === 0) {
@@ -212,7 +213,7 @@ export class SmtLineService {
         `SELECT COUNT(*) AS CNT FROM IB_MACHINE_LOCATION
           WHERE LINE_CODE = :lineCode AND MACHINE = :machine
             AND ORGANIZATION_ID = :organizationId`,
-        { lineCode: key.lineCode, machine: key.machine, organizationId } as unknown as unknown[],
+        namedBinds({ lineCode: key.lineCode, machine: key.machine, organizationId }),
       )) as { CNT: number }[];
       const locations = Number(child?.CNT ?? 0);
       if (locations > 0) {
@@ -225,7 +226,7 @@ export class SmtLineService {
         `DELETE FROM IB_LINE_MASTER
           WHERE LINE_CODE = :lineCode AND MACHINE = :machine
             AND ORGANIZATION_ID = :organizationId`,
-        { lineCode: key.lineCode, machine: key.machine, organizationId } as unknown as unknown[],
+        namedBinds({ lineCode: key.lineCode, machine: key.machine, organizationId }),
       );
       const affected = Number(affectedRows(result) ?? 0);
       if (affected === 0) {
@@ -246,7 +247,7 @@ export class SmtLineService {
       `SELECT COUNT(*) AS CNT FROM IB_MACHINE_LOCATION
         WHERE LINE_CODE = :lineCode AND MACHINE = :machine
           AND ORGANIZATION_ID = :organizationId`,
-      { lineCode, machine, organizationId } as unknown as unknown[],
+      namedBinds({ lineCode, machine, organizationId }),
     )) as { CNT: number }[];
     return Number(rows?.[0]?.CNT ?? 0);
   }
@@ -280,7 +281,7 @@ export class SmtLineService {
                RAISE_APPLICATION_ERROR(-20031, 'SMT_LOCATION_GENERATE_FAILED:' || v_result);
              END IF;
            END;`,
-          {
+          namedBinds({
               lineCode: dto.lineCode,
               machine: dto.machine,
               tableId: dto.tableId.toUpperCase(),
@@ -290,7 +291,7 @@ export class SmtLineService {
               allTables: dto.allTables ?? 'N',
               organizationId,
               userId,
-            } as unknown as unknown[],
+            }),
         )
         .catch((error: unknown) => {
           const message = error instanceof Error ? error.message : String(error);
@@ -324,7 +325,7 @@ export class SmtLineService {
                RAISE_APPLICATION_ERROR(-20032, 'SMT_LOCATION_DELETE_FAILED:' || v_result);
              END IF;
            END;`,
-          { lineCode: key.lineCode, machine: key.machine, organizationId } as unknown as unknown[],
+          namedBinds({ lineCode: key.lineCode, machine: key.machine, organizationId }),
         )
         .catch((error: unknown) => {
           const message = error instanceof Error ? error.message : String(error);

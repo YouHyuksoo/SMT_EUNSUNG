@@ -24,6 +24,7 @@ import {
   IqcJudgeDto,
   IqcTargetQueryDto,
 } from '../dto/iqc.dto';
+import { namedBinds } from '../../../common/utils/named-binds.util';
 
 type OracleRow = Record<string, unknown>;
 
@@ -122,12 +123,12 @@ export class IqcService {
     const limit = query.limit ?? 500;
     const totals = await this.dataSource.query(
       `SELECT COUNT(*) AS "total" FROM (${body}) source_rows`,
-      { ...binds } as unknown as unknown[],
+      namedBinds({ ...binds }),
     ) as OracleRow[];
     const rows = await this.dataSource.query(
       `${body} ORDER BY "scanDate" DESC, "receiptSlipNo", "itemBarcode"
        OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY`,
-      { ...binds, offset: (page - 1) * limit, limit } as unknown as unknown[],
+      namedBinds({ ...binds, offset: (page - 1) * limit, limit }),
     ) as OracleRow[];
     return { data: rows, total: Number(totals[0]?.total ?? 0), page, limit };
   }
@@ -179,12 +180,12 @@ export class IqcService {
     const limit = query.limit ?? 500;
     const totals = await this.dataSource.query(
       `SELECT COUNT(*) AS "total" FROM (${body}) source_rows`,
-      { ...binds } as unknown as unknown[],
+      namedBinds({ ...binds }),
     ) as OracleRow[];
     const rows = await this.dataSource.query(
       `${body} ORDER BY "inspectDate" DESC, "inspectSequence" DESC
        OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY`,
-      { ...binds, offset: (page - 1) * limit, limit } as unknown as unknown[],
+      namedBinds({ ...binds, offset: (page - 1) * limit, limit }),
     ) as OracleRow[];
     return { data: rows, total: Number(totals[0]?.total ?? 0), page, limit };
   }
@@ -211,11 +212,11 @@ export class IqcService {
             AND b.ORGANIZATION_ID = :organizationId
             AND F_GET_ESD_CHECK_CYCLE_VALUE(b.SUPPLIER_CODE, b.ITEM_CODE, b.ORGANIZATION_ID)
                 >= :limit`,
-        {
+        namedBinds({
           receiptSlipNo: dto.receiptSlipNo,
           organizationId,
           limit: ESD_CHECK_LIMIT,
-        } as unknown as unknown[],
+        }),
       ) as OracleRow[];
       if (Number(blocked[0]?.cnt ?? 0) > 0) {
         throw new BadRequestException(
@@ -236,13 +237,13 @@ export class IqcService {
              RAISE_APPLICATION_ERROR(-20020, 'IQC_JUDGE_FAILED:' || v_result);
            END IF;
          END;`,
-        {
+        namedBinds({
           receiptSlipNo: dto.receiptSlipNo,
           inspectResult: dto.inspectResult,
           badReasonCode,
           organizationId,
           userId,
-        } as unknown as unknown[],
+        }),
       ).catch((error: unknown) => {
         const message = error instanceof Error ? error.message : String(error);
         const matched = /IQC_JUDGE_FAILED:(-?\d+)/.exec(message);
@@ -260,7 +261,7 @@ export class IqcService {
         `SELECT COUNT(*) AS "created" FROM IQ_ITEM_IQC
           WHERE IQC_INSPECT_NO = :receiptSlipNo AND ORGANIZATION_ID = :organizationId
             AND INSPECT_DATE >= TRUNC(SYSDATE)`,
-        { receiptSlipNo: dto.receiptSlipNo, organizationId } as unknown as unknown[],
+        namedBinds({ receiptSlipNo: dto.receiptSlipNo, organizationId }),
       ) as OracleRow[];
       return {
         receiptSlipNo: dto.receiptSlipNo,
@@ -286,11 +287,11 @@ export class IqcService {
              RAISE_APPLICATION_ERROR(-20021, 'IQC_CANCEL_FAILED');
            END IF;
          END;`,
-        {
+        namedBinds({
           receiptSlipNo: dto.receiptSlipNo,
           organizationId,
           userId,
-        } as unknown as unknown[],
+        }),
       ).catch((error: unknown) => {
         const message = error instanceof Error ? error.message : String(error);
         if (message.includes('IQC_CANCEL_FAILED')) {
@@ -302,7 +303,7 @@ export class IqcService {
         `SELECT COUNT(*) AS "reverted" FROM IM_ITEM_RECEIPT_BARCODE
           WHERE RECEIPT_SLIP_NO = :receiptSlipNo AND ORGANIZATION_ID = :organizationId
             AND INSPECT_RESULT = 'W'`,
-        { receiptSlipNo: dto.receiptSlipNo, organizationId } as unknown as unknown[],
+        namedBinds({ receiptSlipNo: dto.receiptSlipNo, organizationId }),
       ) as OracleRow[];
       return {
         receiptSlipNo: dto.receiptSlipNo,
@@ -324,12 +325,12 @@ export class IqcService {
              RAISE_APPLICATION_ERROR(-20022, 'IQC_ESD_NOT_FOUND');
            END IF;
          END;`,
-        {
+        namedBinds({
           supplierCode: dto.supplierCode,
           itemCode: dto.itemCode,
           organizationId,
           userId,
-        } as unknown as unknown[],
+        }),
       ).catch((error: unknown) => {
         const message = error instanceof Error ? error.message : String(error);
         if (message.includes('IQC_ESD_NOT_FOUND')) {

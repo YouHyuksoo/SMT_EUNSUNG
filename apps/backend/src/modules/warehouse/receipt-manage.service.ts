@@ -52,6 +52,7 @@ import {
   ReceiptInventoryQueryDto,
 } from './warehouse.dto';
 import { affectedRows } from '../../common/utils/affected-rows.util';
+import { namedBinds } from '../../common/utils/named-binds.util';
 
 type Row = Record<string, unknown>;
 
@@ -173,7 +174,7 @@ export class ReceiptManageService {
           AND r.ORGANIZATION_ID = :organizationId
         ORDER BY r.RECEIPT_DATE DESC, r.RECEIPT_SEQUENCE DESC
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         dateFrom: query.dateFrom,
         dateTo: query.dateTo,
         itemCode: likePrefix(query.itemCode),
@@ -183,7 +184,7 @@ export class ReceiptManageService {
         invoiceNo: likePrefix(query.invoiceNo),
         receiptType: likePrefix(query.receiptType),
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }
@@ -235,7 +236,7 @@ export class ReceiptManageService {
           AND v.ORGANIZATION_ID = :organizationId
         ORDER BY v.ITEM_CODE, v.LOCATION_CODE
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         itemCode: likePrefix(query.itemCode),
         materialMfs: likePrefix(query.materialMfs),
         locationCode: likePrefix(query.locationCode),
@@ -243,7 +244,7 @@ export class ReceiptManageService {
         // 10,000행이 되고 실측 7.6초가 걸린다 (재고 있는 것은 3,446행 / 1.2초).
         sign: query.includeZero ? -2 : 1,
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }
@@ -290,14 +291,14 @@ export class ReceiptManageService {
           AND a.ORGANIZATION_ID = :organizationId
         ORDER BY a.ARRIVAL_DATE DESC, a.ARRIVAL_SEQ_NO
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         dateFrom: query.dateFrom,
         dateTo: query.dateTo,
         itemCode: likePrefix(query.itemCode),
         supplierCode: likePrefix(query.supplierCode),
         invoiceNo: likePrefix(query.invoiceNo),
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }
@@ -327,7 +328,7 @@ export class ReceiptManageService {
            FROM ID_ITEM i
           WHERE i.ITEM_CODE = :itemCode
             AND i.ORGANIZATION_ID = :organizationId`,
-        { itemCode: dto.itemCode, organizationId } as unknown as unknown[],
+        namedBinds({ itemCode: dto.itemCode, organizationId }),
       )) as Row[];
       if (items.length === 0) {
         throw new BadRequestException(`품목을 찾을 수 없습니다: ${dto.itemCode}`);
@@ -345,7 +346,7 @@ export class ReceiptManageService {
                       WHERE c.CONFIG_NAME = 'MATERIAL_RECEIPT_AUTO_CONFIRM'
                         AND c.ORGANIZATION_ID = :organizationId), 'N')   AS "autoConfirm"
            FROM DUAL`,
-        { organizationId } as unknown as unknown[],
+        namedBinds({ organizationId }),
       )) as Row[];
       const receiptSequence = Number(meta[0]?.receiptSequence ?? 0);
       const autoConfirm = String(meta[0]?.autoConfirm ?? 'N') === 'Y' ? 'Y' : 'N';
@@ -379,7 +380,7 @@ export class ReceiptManageService {
             :confirmYn, DECODE(:confirmYn, 'Y', TRUNC(SYSDATE), NULL),
             DECODE(:confirmYn, 'Y', :userId, NULL),
             SYSDATE, :userId, SYSDATE, :userId)`,
-        {
+        namedBinds({
           receiptSequence,
           organizationId,
           itemCode: dto.itemCode,
@@ -395,7 +396,7 @@ export class ReceiptManageService {
           comments: dto.comments ?? null,
           confirmYn: autoConfirm,
           userId,
-        } as unknown as unknown[],
+        }),
       );
 
       return {
@@ -430,7 +431,7 @@ export class ReceiptManageService {
       userId,
     };
     for (const [field, column] of Object.entries(UPDATABLE)) {
-      const value = (dto as unknown as Record<string, unknown>)[field];
+      const value = Object.fromEntries(Object.entries(dto))[field];
       if (value === undefined) continue;
       sets.push(`${column} = :${field}`);
       binds[field] = value === '' ? null : value;
@@ -455,7 +456,7 @@ export class ReceiptManageService {
             -- 이 화면이 만든 기타입고만 건드린다 (파일 머리 6번).
             AND RECEIPT_TYPE = '${FIXED.receiptType}'
             AND BARCODE IS NULL`,
-        binds as unknown as unknown[],
+        namedBinds(binds),
       );
       const rows = Number(affectedRows(result) ?? 0);
       if (rows !== 1) {
@@ -478,11 +479,11 @@ export class ReceiptManageService {
             AND ORGANIZATION_ID = :organizationId
             AND RECEIPT_TYPE = '${FIXED.receiptType}'
             AND BARCODE IS NULL`,
-        {
+        namedBinds({
           receiptDate: dto.receiptDate,
           receiptSequence: dto.receiptSequence,
           organizationId,
-        } as unknown as unknown[],
+        }),
       );
       const rows = Number(affectedRows(result) ?? 0);
       if (rows !== 1) {

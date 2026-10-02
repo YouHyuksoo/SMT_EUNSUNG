@@ -31,6 +31,7 @@ import {
   PurchaseOrderSaveDto,
 } from './purchase.dto';
 import { affectedRows } from '../../common/utils/affected-rows.util';
+import { namedBinds } from '../../common/utils/named-binds.util';
 
 type Row = Record<string, unknown>;
 
@@ -80,7 +81,7 @@ export class PurchaseOrderService {
           AND NVL(o.ORDER_TYPE, '*') LIKE :orderType
         ORDER BY o.PURCHASE_ORDER_DATE DESC, o.ORDER_NO DESC
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      this.listBinds(query, organizationId) as unknown as unknown[],
+      namedBinds(this.listBinds(query, organizationId)),
     )) as Row[];
     return limited(rows);
   }
@@ -99,10 +100,10 @@ export class PurchaseOrderService {
           AND NVL(o.CONFIRM_YN, 'N') LIKE :confirmYn
         ORDER BY o.PURCHASE_ORDER_DATE DESC, o.ORDER_NO DESC
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         ...this.listBinds(query, organizationId),
         confirmYn: this.like(query.confirmYn),
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }
@@ -133,7 +134,7 @@ export class PurchaseOrderService {
         GROUP BY o.ORDER_GROUP_NO, o.SUPPLIER_CODE
         ORDER BY 4 DESC, 1
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      this.listBinds(query, organizationId) as unknown as unknown[],
+      namedBinds(this.listBinds(query, organizationId)),
     )) as Row[];
     return limited(rows);
   }
@@ -176,7 +177,7 @@ export class PurchaseOrderService {
               AND ORGANIZATION_ID = :organizationId
               -- 도착분이 잡힌 주문은 손대지 않는다.
               AND NVL(ARRIVAL_QTY, 0) = 0`,
-          this.saveBinds(dto, organizationId, userId) as unknown as unknown[],
+          namedBinds(this.saveBinds(dto, organizationId, userId)),
         );
         const affected = Number(
           affectedRows(updated) ?? 0,
@@ -213,10 +214,10 @@ export class PurchaseOrderService {
             :orderQty, :unitPrice, :deliveryMethod, :currency, 0,
             :itemCode, :orderAmt, :shipmentComment, :attnName, :ccName,
             SYSDATE, :userId, SYSDATE, :userId)`,
-        {
+        namedBinds({
           ...this.saveBinds(dto, organizationId, userId),
           orderNo,
-        } as unknown as unknown[],
+        }),
       );
       return { orderNo, created: true };
     });
@@ -235,7 +236,7 @@ export class PurchaseOrderService {
                   SELECT 1 FROM IM_ITEM_ARRIVAL a
                    WHERE a.ORDER_NO = o.ORDER_NO
                      AND a.ORGANIZATION_ID = o.ORGANIZATION_ID)`,
-        { orderNo: dto.orderNo, organizationId } as unknown as unknown[],
+        namedBinds({ orderNo: dto.orderNo, organizationId }),
       );
       const affected = Number(
         affectedRows(deleted) ?? 0,
@@ -278,12 +279,12 @@ export class PurchaseOrderService {
             AND ORGANIZATION_ID = :organizationId
             -- 이미 확정된 건은 되돌리지 않는다.
             AND NVL(CONFIRM_YN, 'N') <> 'Y'`,
-        {
+        namedBinds({
           confirmYn: dto.confirmYn,
           userId,
           organizationId,
           ...this.inBinds(dto.orderNos, 'n'),
-        } as unknown as unknown[],
+        }),
       );
       return {
         confirmYn: dto.confirmYn,
@@ -325,11 +326,11 @@ export class PurchaseOrderService {
                   SELECT 1 FROM IM_ITEM_PURCHASE_ORDER x
                    WHERE x.ORDER_NO = w.ORDER_NO
                      AND x.ORGANIZATION_ID = w.ORGANIZATION_ID)`,
-        {
+        namedBinds({
           userId,
           organizationId,
           ...this.inBinds(dto.orderNos, 'n'),
-        } as unknown as unknown[],
+        }),
       );
       const created = Number(
         affectedRows(inserted) ?? 0,
@@ -351,11 +352,11 @@ export class PurchaseOrderService {
                 LAST_MODIFY_DATE = SYSDATE
           WHERE ORDER_NO IN (${this.inList(dto.orderNos, 'n')})
             AND ORGANIZATION_ID = :organizationId`,
-        {
+        namedBinds({
           userId,
           organizationId,
           ...this.inBinds(dto.orderNos, 'n'),
-        } as unknown as unknown[],
+        }),
       );
 
       return { confirmYn: CONFIRM.yes, createdOrders: created };

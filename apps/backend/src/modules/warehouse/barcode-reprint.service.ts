@@ -29,6 +29,7 @@ import { limited, ROW_LIMIT } from '../../shared/row-limit';
 import { TransactionService } from '../../shared/transaction.service';
 import { BarcodeReprintDto, BarcodeReprintQueryDto } from './warehouse.dto';
 import { affectedRows } from '../../common/utils/affected-rows.util';
+import { namedBinds } from '../../common/utils/named-binds.util';
 
 type Row = Record<string, unknown>;
 
@@ -93,14 +94,14 @@ export class BarcodeReprintService {
           AND b.ORGANIZATION_ID = :organizationId
         ORDER BY b.SCAN_DATE DESC, b.ITEM_BARCODE
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         itemCode: likePrefix(query.itemCode),
         slipNo: likePrefix(query.slipNo),
         supplierBarcode: likePrefix(query.supplierBarcode),
         barcode: likePrefix(query.barcode),
         lotNo: likePrefix(query.lotNo),
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }
@@ -124,7 +125,7 @@ export class BarcodeReprintService {
               F_GET_LOT_NO_FROM_BARCODE(
                 F_GET_PREPARE_BARCODE(:barcode)) AS "lotNo"
          FROM DUAL`,
-      { barcode: dto.barcode } as unknown as unknown[],
+      namedBinds({ barcode: dto.barcode }),
     )) as Row[])[0] ?? {};
     const itemCode = (parsed.itemCode as string) || '';
     const lotNo = (parsed.lotNo as string) || '';
@@ -153,9 +154,9 @@ export class BarcodeReprintService {
             AND ITEM_CODE = :itemCode
             AND ORGANIZATION_ID = :organizationId
             AND NVL(BARCODE_STATUS, '*') <> 'C'`,
-        {
+        namedBinds({
           newQty: qty, itemCode, lotNo, userId, organizationId,
-        } as unknown as unknown[],
+        }),
       );
       const rows = Number(affectedRows(result) ?? 0);
       if (rows !== 1) {

@@ -19,6 +19,7 @@ import {
   ResourceCreateDto,
   ResourceUpdateDto,
 } from './oee.dto';
+import { namedBinds } from '../../common/utils/named-binds.util';
 
 const RESOURCE_LIST_SQL = `
   SELECT r.ORGANIZATION_ID AS "organizationId",
@@ -503,7 +504,7 @@ export class OeeMasterService {
     binds: Record<string, unknown>,
   ): Promise<T> {
     // Oracle 드라이버가 named bind 객체를 변경할 수 있으므로 호출마다 복제한다.
-    return this.dataSource.query<T>(sql, { ...binds } as unknown as unknown[]);
+    return this.dataSource.query<T>(sql, namedBinds({ ...binds }));
   }
 
   private isOracleUniqueViolation(error: unknown): boolean {

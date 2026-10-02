@@ -24,6 +24,7 @@ import { Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { TransactionService } from '../../shared/transaction.service';
 import { SmtNcCompareQueryDto, SmtNcQueryDto } from './smt-nc.dto';
+import { namedBinds } from '../../common/utils/named-binds.util';
 
 @Injectable()
 export class SmtNcService {
@@ -60,14 +61,14 @@ export class SmtNcService {
           AND NVL(p.LOT_NAME, '*') LIKE :lotName
           AND NVL(p.TABLE_ID, '*') LIKE :tableId
         ORDER BY p.LINE_CODE, p.MACHINE_CODE, p.TABLE_ID, p.ADDRESS, p.POSITION`,
-      {
+      namedBinds({
           organizationId,
           lineCode: this.like(query.lineCode),
           machineCode: this.like(query.machineCode),
           modelName: this.like(query.modelName),
           lotName: this.like(query.lotName),
           tableId: this.like(query.tableId),
-        } as unknown as unknown[],
+        }),
     )) as Record<string, unknown>[];
     return { data: rows, total: rows.length };
   }
@@ -96,12 +97,12 @@ export class SmtNcService {
                  p.TABLE_ID, p.ADDRESS, p.POSITION, p.PCB_ITEM
         HAVING COUNT(*) > 1
         ORDER BY 1 DESC, 2, 3`,
-      {
+      namedBinds({
           organizationId,
           lineCode: this.like(query.lineCode),
           machineCode: this.like(query.machineCode),
           modelName: this.like(query.modelName),
-        } as unknown as unknown[],
+        }),
     )) as Record<string, unknown>[];
     return { data: rows, total: rows.length };
   }
@@ -127,7 +128,7 @@ export class SmtNcService {
         `SELECT PKG_DESIGN.BOM_QUERY(:setItemCode, TRUNC(SYSDATE), :organizationId)
                   AS SESSION_ID
            FROM DUAL`,
-        { setItemCode: query.setItemCode, organizationId } as unknown as unknown[],
+        namedBinds({ setItemCode: query.setItemCode, organizationId }),
       )) as { SESSION_ID: number }[];
       const sessionId = Number(sessionRows?.[0]?.SESSION_ID ?? 0);
       if (sessionId <= 0) {
@@ -158,12 +159,12 @@ export class SmtNcService {
              )
             GROUP BY itemCode
             ORDER BY itemCode`,
-          {
+          namedBinds({
               sessionId,
               organizationId,
               pcbItem,
               lineCode: this.like(query.lineCode),
-            } as unknown as unknown[],
+            }),
         )) as 
           {
             itemCode: string;
@@ -195,7 +196,7 @@ export class SmtNcService {
         await qr.query(
           `DELETE FROM ID_ENG_BOM_TEMP
             WHERE SESSION_ID = :sessionId AND ORGANIZATION_ID = :organizationId`,
-          { sessionId, organizationId } as unknown as unknown[],
+          namedBinds({ sessionId, organizationId }),
         );
       }
     });

@@ -14,6 +14,7 @@ import { Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { parseDateStart } from '../../../shared/date.util';
 import { RepairHistoryQueryDto } from '../dto/repair-history.dto';
+import { namedBinds } from '../../../common/utils/named-binds.util';
 
 type OracleRow = Record<string, unknown>;
 
@@ -108,9 +109,9 @@ export class RepairHistoryService {
 
     const rows = await this.dataSource.query(
       select,
-      { ...binds, offset, limit: query.limit } as unknown as unknown[],
+      namedBinds({ ...binds, offset, limit: query.limit }),
     ) as OracleRow[];
-    const totals = await this.dataSource.query(count, binds as unknown as unknown[]) as OracleRow[];
+    const totals = await this.dataSource.query(count, namedBinds(binds)) as OracleRow[];
     return { data: rows, total: Number(totals[0]?.total ?? 0), page: query.page, limit: query.limit };
   }
 

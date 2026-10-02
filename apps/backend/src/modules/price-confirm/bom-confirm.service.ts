@@ -25,6 +25,7 @@ import {
   BomConfirmQueryDto,
 } from './bom-confirm.dto';
 import { affectedRows } from '../../common/utils/affected-rows.util';
+import { namedBinds } from '../../common/utils/named-binds.util';
 
 type Row = Record<string, unknown>;
 
@@ -56,7 +57,7 @@ export class BomConfirmService {
         WHERE w.ORGANIZATION_ID = :organizationId
         GROUP BY w.BOM_WORK_NO
         ORDER BY w.BOM_WORK_NO DESC`,
-      { organizationId } as unknown as unknown[],
+      namedBinds({ organizationId }),
     )) as Row[];
   }
 
@@ -105,12 +106,12 @@ export class BomConfirmService {
           AND NVL(w.ITEM_CODE, '*') LIKE :itemCode
           AND NVL(w.PARENT_ITEM_CODE, '*') LIKE :parentItemCode
         ORDER BY w.BOM_WORK_NO DESC, w.PARENT_ITEM_CODE, w.SORT_SEQUENCE`,
-      {
+      namedBinds({
         organizationId,
         bomWorkNo: query.bomWorkNo ?? null,
         itemCode: this.like(query.itemCode),
         parentItemCode: this.like(query.parentItemCode),
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return { data: rows, total: rows.length };
   }
@@ -129,11 +130,11 @@ export class BomConfirmService {
             AND ITEM_CODE = :itemCode
             AND ORGANIZATION_ID = :organizationId
             AND NVL(NEW_BOM_YN, 'N') = 'Y'`,
-        {
+        namedBinds({
           bomWorkNo: dto.bomWorkNo,
           itemCode: dto.itemCode,
           organizationId,
-        } as unknown as unknown[],
+        }),
       )) as Array<{ CNT: number }>;
       // PB 가드: 새로 넣을 행이 없으면 반영하지 않는다
       if (Number(newRows?.[0]?.CNT ?? 0) === 0) {
@@ -145,18 +146,18 @@ export class BomConfirmService {
       const before = (await qr.query(
         `SELECT COUNT(*) AS CNT FROM ID_ENG_BOM
           WHERE PARENT_ITEM_CODE = :itemCode AND ORGANIZATION_ID = :organizationId`,
-        { itemCode: dto.itemCode, organizationId } as unknown as unknown[],
+        namedBinds({ itemCode: dto.itemCode, organizationId }),
       )) as Array<{ CNT: number }>;
 
       const result = (await qr.query(
         `SELECT PKG_DESIGN.BOM_TRANSLATION(:bomWorkNo, :itemCode, :organizationId)
                   AS RESULT
            FROM DUAL`,
-        {
+        namedBinds({
           bomWorkNo: dto.bomWorkNo,
           itemCode: dto.itemCode,
           organizationId,
-        } as unknown as unknown[],
+        }),
       )) as Array<{ RESULT: number }>;
       const code = Number(result?.[0]?.RESULT ?? -1);
       if (code < 0) {
@@ -168,7 +169,7 @@ export class BomConfirmService {
       const after = (await qr.query(
         `SELECT COUNT(*) AS CNT FROM ID_ENG_BOM
           WHERE PARENT_ITEM_CODE = :itemCode AND ORGANIZATION_ID = :organizationId`,
-        { itemCode: dto.itemCode, organizationId } as unknown as unknown[],
+        namedBinds({ itemCode: dto.itemCode, organizationId }),
       )) as Array<{ CNT: number }>;
 
       return {
@@ -190,7 +191,7 @@ export class BomConfirmService {
       const result = await qr.query(
         `DELETE FROM ID_ENG_BOM_WORKSPACE
           WHERE BOM_WORK_NO = :bomWorkNo AND ORGANIZATION_ID = :organizationId`,
-        { bomWorkNo: dto.bomWorkNo, organizationId } as unknown as unknown[],
+        namedBinds({ bomWorkNo: dto.bomWorkNo, organizationId }),
       );
       const affected = Number(affectedRows(result) ?? 0);
       if (affected === 0) {

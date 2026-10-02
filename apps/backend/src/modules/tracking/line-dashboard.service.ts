@@ -24,6 +24,7 @@ import { Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { likePrefix } from '@smt/shared';
 import { LineDashboardDetailQueryDto, LineDashboardQueryDto } from './tracking.dto';
+import { namedBinds } from '../../common/utils/named-binds.util';
 
 type Row = Record<string, unknown>;
 
@@ -144,7 +145,7 @@ export class LineDashboardService {
          FROM IRPT_PRODUCT_LINE_DASHBOARD v
         WHERE v.LINE_CODE = :lineCode
           AND v.ORGANIZATION_ID = :organizationId`,
-      { lineCode: query.lineCode, organizationId } as unknown as unknown[],
+      namedBinds({ lineCode: query.lineCode, organizationId }),
     )) as Row[];
     return { data: rows, total: rows.length };
   }
@@ -232,7 +233,7 @@ export class LineDashboardService {
              ON D.LINE_CODE = M.LINE_CODE
         WHERE M.LINE_CODE = :lineCode
         ORDER BY M.LINE_NAME`,
-      { lineCode: query.lineCode, organizationId, workDate } as unknown as unknown[],
+      namedBinds({ lineCode: query.lineCode, organizationId, workDate }),
     )) as Row[];
     return { data: rows, total: rows.length, workDate };
   }
@@ -329,7 +330,7 @@ export class LineDashboardService {
         WHERE s.ITEM_BARCODE LIKE :itemBarcode ESCAPE '\\'
         ORDER BY s.INPUT_DATE DESC
         FETCH FIRST ${TAB_ROW_LIMIT} ROWS ONLY`,
-      { itemBarcode: likePrefix(itemBarcode) } as unknown as unknown[],
+      namedBinds({ itemBarcode: likePrefix(itemBarcode) }),
     )) as Row[];
   }
 
@@ -365,7 +366,7 @@ export class LineDashboardService {
         WHERE c.JIG_LOT_NO = :jigLotNo
         ORDER BY c.JIG_CHECK_DATE DESC
         FETCH FIRST ${TAB_ROW_LIMIT} ROWS ONLY`,
-      { jigLotNo } as unknown as unknown[],
+      namedBinds({ jigLotNo }),
     )) as Row[];
   }
 
@@ -398,7 +399,7 @@ export class LineDashboardService {
         WHERE c.JIG_LOT_NO IN (${placeholders})
         ORDER BY c.JIG_CHECK_DATE DESC
         FETCH FIRST ${TAB_ROW_LIMIT} ROWS ONLY`,
-      binds as unknown as unknown[],
+      namedBinds(binds),
     )) as Row[];
   }
 
@@ -450,7 +451,7 @@ export class LineDashboardService {
           AND v.MSL_MAX_TIME > 0
         ORDER BY v.PASSED_RATE DESC, v.LOCATION_CODE
         FETCH FIRST ${TAB_ROW_LIMIT} ROWS ONLY`,
-      { lineCode, organizationId } as unknown as unknown[],
+      namedBinds({ lineCode, organizationId }),
     )) as Row[];
   }
 
@@ -484,7 +485,7 @@ export class LineDashboardService {
         WHERE m.RUN_NO = :runNo
         ORDER BY m.SCAN_DATE
         FETCH FIRST ${TAB_ROW_LIMIT} ROWS ONLY`,
-      { runNo } as unknown as unknown[],
+      namedBinds({ runNo }),
     )) as Row[];
   }
 
@@ -515,7 +516,7 @@ export class LineDashboardService {
         WHERE r.RUN_NO = :runNo
         ORDER BY h.INPUT_DATE
         FETCH FIRST ${TAB_ROW_LIMIT} ROWS ONLY`,
-      { runNo, organizationId } as unknown as unknown[],
+      namedBinds({ runNo, organizationId }),
     )) as Row[];
   }
 
@@ -580,7 +581,7 @@ export class LineDashboardService {
         WHERE c.RUN_NO = :runNo
         ORDER BY c.CHECK_DATE DESC
         FETCH FIRST ${TAB_ROW_LIMIT} ROWS ONLY`,
-      { runNo } as unknown as unknown[],
+      namedBinds({ runNo }),
     )) as Row[];
   }
 
@@ -609,7 +610,7 @@ export class LineDashboardService {
           AND n.ORGANIZATION_ID = :organizationId
         ORDER BY n.ENTER_DATE DESC
         FETCH FIRST ${TAB_ROW_LIMIT} ROWS ONLY`,
-      { lineCode, organizationId } as unknown as unknown[],
+      namedBinds({ lineCode, organizationId }),
     )) as Row[];
   }
 }

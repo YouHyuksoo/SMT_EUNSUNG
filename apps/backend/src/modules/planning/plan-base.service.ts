@@ -30,6 +30,7 @@ import {
   timeDescColumns,
 } from './plan-shared';
 import { affectedRows } from '../../common/utils/affected-rows.util';
+import { namedBinds } from '../../common/utils/named-binds.util';
 
 export interface PlanTableConfig {
   /** 화면에 보일 이름. 오류 문구에 쓴다. */
@@ -189,7 +190,7 @@ export class PlanBaseService {
           AND NVL(p.PLAN_STATUS, '*') LIKE :planStatus
           ${hasWorkstage ? 'AND NVL(p.WORKSTAGE_CODE, \'*\') LIKE :workstageCode' : ''}
         ORDER BY p.PLAN_DATE, p.LINE_CODE, p.PLAN_PRIORITY, p.PLAN_SEQUENCE`,
-      {
+      namedBinds({
         organizationId,
         dateFrom: query.dateFrom,
         dateTo: query.dateTo,
@@ -197,7 +198,7 @@ export class PlanBaseService {
         modelName: like(query.modelName),
         planStatus: like(query.planStatus),
         ...(hasWorkstage ? { workstageCode: like(query.workstageCode) } : {}),
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return { data: rows, total: rows.length };
   }
@@ -239,7 +240,7 @@ export class PlanBaseService {
           `SELECT NVL(MAX(PLAN_SEQUENCE), 0) + 1 AS NEXT_SEQ FROM ${cfg.table}
             WHERE PLAN_DATE = TO_DATE(:planDate, 'YYYY-MM-DD')
               AND ORGANIZATION_ID = :organizationId`,
-          { planDate: dto.planDate, organizationId } as unknown as unknown[],
+          namedBinds({ planDate: dto.planDate, organizationId }),
         )) as Array<{ NEXT_SEQ: number }>;
         sequence = Number(rows?.[0]?.NEXT_SEQ ?? 1);
       } else {
@@ -248,11 +249,11 @@ export class PlanBaseService {
             WHERE PLAN_DATE = TO_DATE(:planDate, 'YYYY-MM-DD')
               AND PLAN_SEQUENCE = :planSequence
               AND ORGANIZATION_ID = :organizationId`,
-          {
+          namedBinds({
             planDate: dto.planDate,
             planSequence: sequence,
             organizationId,
-          } as unknown as unknown[],
+          }),
         )) as Array<{ CNT: number }>;
         if (Number(dup?.[0]?.CNT ?? 0) > 0) {
           throw new ConflictException(
@@ -278,14 +279,14 @@ export class PlanBaseService {
       for (const [column, field] of this.editableColumns(cfg)) {
         columns.push(column);
         values.push(`:${field}`);
-        binds[field] = (dto as unknown as Record<string, unknown>)[field] ?? null;
+        binds[field] = Object.fromEntries(Object.entries(dto))[field] ?? null;
       }
       columns.push('ENTER_BY', 'ENTER_DATE', 'LAST_MODIFY_BY', 'LAST_MODIFY_DATE');
       values.push(':userId', 'SYSDATE', ':userId', 'SYSDATE');
 
       await qr.query(
         `INSERT INTO ${cfg.table} (${columns.join(', ')}) VALUES (${values.join(', ')})`,
-        binds as unknown as unknown[],
+        namedBinds(binds),
       );
       return { planDate: dto.planDate, planSequence: sequence };
     });
@@ -311,7 +312,7 @@ export class PlanBaseService {
       const sets: string[] = [];
       for (const [column, field] of this.editableColumns(cfg)) {
         sets.push(`${column} = :${field}`);
-        binds[field] = (dto as unknown as Record<string, unknown>)[field] ?? null;
+        binds[field] = Object.fromEntries(Object.entries(dto))[field] ?? null;
       }
       sets.push('LAST_MODIFY_BY = :userId', 'LAST_MODIFY_DATE = SYSDATE');
 
@@ -320,7 +321,7 @@ export class PlanBaseService {
           WHERE PLAN_DATE = TO_DATE(:planDate, 'YYYY-MM-DD')
             AND PLAN_SEQUENCE = :planSequence
             AND ORGANIZATION_ID = :organizationId`,
-        binds as unknown as unknown[],
+        namedBinds(binds),
       );
       const affected = Number(affectedRows(result) ?? 0);
       if (affected === 0) {
@@ -344,11 +345,11 @@ export class PlanBaseService {
           WHERE PLAN_DATE = TO_DATE(:planDate, 'YYYY-MM-DD')
             AND PLAN_SEQUENCE = :planSequence
             AND ORGANIZATION_ID = :organizationId`,
-        {
+        namedBinds({
           planDate: key.planDate,
           planSequence: key.planSequence,
           organizationId,
-        } as unknown as unknown[],
+        }),
       )) as Array<{ MFS: string }>;
       const mfs = rows?.[0]?.MFS;
       if (mfs === undefined) {
@@ -367,11 +368,11 @@ export class PlanBaseService {
           WHERE PLAN_DATE = TO_DATE(:planDate, 'YYYY-MM-DD')
             AND PLAN_SEQUENCE = :planSequence
             AND ORGANIZATION_ID = :organizationId`,
-        {
+        namedBinds({
           planDate: key.planDate,
           planSequence: key.planSequence,
           organizationId,
-        } as unknown as unknown[],
+        }),
       );
       return { deleted: Number(affectedRows(result) ?? 0) };
     });
@@ -396,13 +397,13 @@ export class PlanBaseService {
             AND PLAN_SEQUENCE = :planSequence
             AND ORGANIZATION_ID = :organizationId
             AND NVL(CONFIRM_YN, 'N') <> :confirmYn`,
-        {
+        namedBinds({
           confirmYn: dto.confirmYn,
           userId,
           planDate: dto.planDate,
           planSequence: dto.planSequence,
           organizationId,
-        } as unknown as unknown[],
+        }),
       );
       const affected = Number(affectedRows(result) ?? 0);
       // 0건은 "없는 계획" 과 "이미 그 상태" 두 가지다 — 구분해서 알려준다.
@@ -412,11 +413,11 @@ export class PlanBaseService {
             WHERE PLAN_DATE = TO_DATE(:planDate, 'YYYY-MM-DD')
               AND PLAN_SEQUENCE = :planSequence
               AND ORGANIZATION_ID = :organizationId`,
-          {
+          namedBinds({
             planDate: dto.planDate,
             planSequence: dto.planSequence,
             organizationId,
-          } as unknown as unknown[],
+          }),
         )) as Array<{ CONFIRM_YN: string }>;
         if (rows.length === 0) {
           throw new NotFoundException(

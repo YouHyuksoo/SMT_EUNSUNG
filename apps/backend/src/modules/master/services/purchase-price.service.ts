@@ -9,6 +9,7 @@ import {
   SupplierQueryDto,
   UpdatePurchasePriceDto,
 } from '../dto/purchase-price.dto';
+import { namedBinds } from '../../../common/utils/named-binds.util';
 
 type OracleRow = Record<string, unknown>;
 
@@ -172,7 +173,7 @@ export class PurchasePriceService {
 
   private async query(sql: string, binds: Record<string, unknown>): Promise<OracleRow[]> {
     try {
-      return await this.dataSource.query(sql, { ...binds } as unknown as unknown[]);
+      return await this.dataSource.query(sql, namedBinds({ ...binds }));
     } catch (error: unknown) {
       throw this.toOracleException(error);
     }

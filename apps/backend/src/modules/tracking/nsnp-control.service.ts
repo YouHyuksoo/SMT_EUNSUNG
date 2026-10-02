@@ -29,6 +29,7 @@
 import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { TransactionService } from '../../shared/transaction.service';
+import { namedBinds } from '../../common/utils/named-binds.util';
 
 type Row = Record<string, unknown>;
 
@@ -55,7 +56,7 @@ export class NsnpControlService {
     const rows = (await this.dataSource.query(
       `SELECT NVL(USER_LEVEL, 0) AS "userLevel", USER_NAME AS "userName"
          FROM ISYS_USERS WHERE USER_ID = :userId`,
-      { userId } as unknown as unknown[],
+      namedBinds({ userId }),
     )) as Row[];
     const level = Number(rows[0]?.userLevel ?? 0);
     if (level < NSNP_MIN_USER_LEVEL) {
@@ -71,7 +72,7 @@ export class NsnpControlService {
     const rows = (await this.dataSource.query(
       `SELECT COUNT(*) AS "cnt" FROM IP_PRODUCT_LINE
         WHERE LINE_CODE = :lineCode AND ORGANIZATION_ID = :organizationId`,
-      { lineCode, organizationId } as unknown as unknown[],
+      namedBinds({ lineCode, organizationId }),
     )) as Row[];
     if (Number(rows[0]?.cnt ?? 0) === 0) {
       throw new BadRequestException(`라인 ${lineCode} 을 찾을 수 없습니다.`);
@@ -95,7 +96,7 @@ export class NsnpControlService {
                AND m.ORGANIZATION_ID = l.ORGANIZATION_ID
                AND m.MACHINE_TYPE = 'NSNP'
         WHERE l.LINE_CODE = :lineCode AND l.ORGANIZATION_ID = :organizationId`,
-      { lineCode, organizationId } as unknown as unknown[],
+      namedBinds({ lineCode, organizationId }),
     )) as Row[];
     return rows[0] ?? null;
   }
@@ -131,7 +132,7 @@ export class NsnpControlService {
         await qr.query(
           `BEGIN P_INTERLOCK_SET_NSNP_TIME_MSG(:lineCode, :flag, :time,
                                                '*', '*', :reason, :message); END;`,
-          {
+          namedBinds({
             lineCode,
             flag: lock ? '1' : '0',
             time: lock ? 1 : 0,
@@ -139,7 +140,7 @@ export class NsnpControlService {
             message: lock
               ? `[수동잠금] LOCK ${userName}`
               : `[강제해제] FORCE UNLOCK ${userName}`,
-          } as unknown as unknown[],
+          }),
         );
       }
       // use / noUse 는 설비 사용상태까지 바꾼다.
@@ -152,12 +153,12 @@ export class NsnpControlService {
             WHERE LINE_CODE = :lineCode
               AND MACHINE_TYPE = 'NSNP'
               AND ORGANIZATION_ID = :organizationId`,
-          {
+          namedBinds({
             useStatus: USE_STATUS[action],
             userId,
             lineCode,
             organizationId,
-          } as unknown as unknown[],
+          }),
         );
       }
     });
@@ -190,17 +191,17 @@ export class NsnpControlService {
       const before = (await qr.query(
         `SELECT COUNT(*) AS "cnt" FROM IQ_MACHINE_INSPECT_NSNP
           WHERE LINE_CODE = :lineCode AND ORGANIZATION_ID = :organizationId`,
-        { lineCode, organizationId } as unknown as unknown[],
+        namedBinds({ lineCode, organizationId }),
       )) as Row[];
       await qr.query(
         `DELETE FROM IQ_MACHINE_INSPECT_NSNP
           WHERE LINE_CODE = :lineCode AND ORGANIZATION_ID = :organizationId`,
-        { lineCode, organizationId } as unknown as unknown[],
+        namedBinds({ lineCode, organizationId }),
       );
       const after = (await qr.query(
         `SELECT COUNT(*) AS "cnt" FROM IQ_MACHINE_INSPECT_NSNP
           WHERE LINE_CODE = :lineCode AND ORGANIZATION_ID = :organizationId`,
-        { lineCode, organizationId } as unknown as unknown[],
+        namedBinds({ lineCode, organizationId }),
       )) as Row[];
       return {
         lineCode,
@@ -216,7 +217,7 @@ export class NsnpControlService {
     const rows = (await this.dataSource.query(
       `SELECT COUNT(*) AS "cnt" FROM IQ_MACHINE_INSPECT_NSNP
         WHERE LINE_CODE = :lineCode AND ORGANIZATION_ID = :organizationId`,
-      { lineCode, organizationId } as unknown as unknown[],
+      namedBinds({ lineCode, organizationId }),
     )) as Row[];
     return { lineCode, rows: Number(rows[0]?.cnt ?? 0) };
   }

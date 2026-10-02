@@ -21,6 +21,7 @@ import { limited, ROW_LIMIT } from '../../shared/row-limit';
 import { TransactionService } from '../../shared/transaction.service';
 import { ManualInputCreateDto, ManualInputQueryDto } from './warehouse.dto';
 import { affectedRows } from '../../common/utils/affected-rows.util';
+import { namedBinds } from '../../common/utils/named-binds.util';
 
 type Row = Record<string, unknown>;
 
@@ -60,7 +61,7 @@ export class ManualInputService {
           AND m.ORGANIZATION_ID = :organizationId
         ORDER BY m.INPUT_DATE DESC, m.LINE_CODE, m.RUN_NO
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         dateFrom: query.dateFrom,
         dateTo: query.dateTo,
         lineCode: likePrefix(query.lineCode),
@@ -68,7 +69,7 @@ export class ManualInputService {
         runNo: likePrefix(query.runNo),
         modelName: likePrefix(query.modelName),
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }
@@ -88,7 +89,7 @@ export class ManualInputService {
            (TO_DATE(:inputDate, 'YYYY-MM-DD'), :lineCode, :workstageCode,
             :runNo, :materialLot, :comments,
             :organizationId, SYSDATE, :userId, SYSDATE, :userId)`,
-        {
+        namedBinds({
           inputDate: dto.inputDate,
           lineCode: dto.lineCode,
           workstageCode: dto.workstageCode,
@@ -97,7 +98,7 @@ export class ManualInputService {
           comments: dto.comments ?? null,
           organizationId,
           userId,
-        } as unknown as unknown[],
+        }),
       );
       return {
         ...dto,

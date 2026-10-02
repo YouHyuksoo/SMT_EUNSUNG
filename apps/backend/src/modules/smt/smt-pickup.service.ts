@@ -24,6 +24,7 @@ import {
   SmtPickupUploadDto,
 } from './smt-pickup.dto';
 import { affectedRows } from '../../common/utils/affected-rows.util';
+import { namedBinds } from '../../common/utils/named-binds.util';
 
 @Injectable()
 export class SmtPickupService {
@@ -64,7 +65,7 @@ export class SmtPickupService {
           AND NVL(p.ITEM_CODE, '*') LIKE :itemCode
           AND NVL(p.FEEDER_ID, '*') LIKE :feederId
         ORDER BY p.PRODUCT_DATE DESC, p.LINE_CODE, p.FEEDER_ID`,
-      {
+      namedBinds({
           organizationId,
           dateFrom: query.dateFrom,
           dateTo: query.dateTo,
@@ -72,7 +73,7 @@ export class SmtPickupService {
           modelName: this.like(query.modelName),
           itemCode: this.like(query.itemCode),
           feederId: this.like(query.feederId),
-        } as unknown as unknown[],
+        }),
     )) as Record<string, unknown>[];
     return { data: rows, total: rows.length };
   }
@@ -88,7 +89,7 @@ export class SmtPickupService {
           WHERE PRODUCT_DATE = TO_DATE(:productDate, 'YYYY-MM-DD')
             AND LINE_CODE = :lineCode
             AND ORGANIZATION_ID = :organizationId`,
-        { productDate: dto.productDate, lineCode: dto.lineCode, organizationId } as unknown as unknown[],
+        namedBinds({ productDate: dto.productDate, lineCode: dto.lineCode, organizationId }),
       );
       const removed = Number(affectedRows(deleted) ?? 0);
 
@@ -110,7 +111,7 @@ export class SmtPickupService {
               :feederId, :feederType, :transferCount, :adsorptionErrorCount,
               :pickupRate, 'OK', :organizationId,
               :userId, SYSDATE, :userId, SYSDATE)`,
-          {
+          namedBinds({
               productDate: dto.productDate,
               lineCode: dto.lineCode,
               modelName: dto.modelName ?? null,
@@ -122,7 +123,7 @@ export class SmtPickupService {
               pickupRate: rate,
               organizationId,
               userId,
-            } as unknown as unknown[],
+            }),
         );
       }
 
@@ -138,7 +139,7 @@ export class SmtPickupService {
           WHERE PRODUCT_DATE = TO_DATE(:productDate, 'YYYY-MM-DD')
             AND LINE_CODE = :lineCode
             AND ORGANIZATION_ID = :organizationId`,
-        { productDate: dto.productDate, lineCode: dto.lineCode, organizationId } as unknown as unknown[],
+        namedBinds({ productDate: dto.productDate, lineCode: dto.lineCode, organizationId }),
       );
       return { deleted: Number(affectedRows(result) ?? 0) };
     });

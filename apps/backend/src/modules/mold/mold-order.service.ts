@@ -22,6 +22,7 @@ import {
   MoldOrderQueryDto,
   MoldOrderUpdateDto,
 } from './mold-order.dto';
+import { namedBinds } from '../../common/utils/named-binds.util';
 
 type OracleRow = Record<string, unknown>;
 
@@ -95,12 +96,12 @@ export class MoldOrderService {
     const limit = query.limit ?? 500;
     const totals = await this.dataSource.query(
       `SELECT COUNT(*) AS "total" FROM (${body}) source_rows`,
-      { ...binds } as unknown as unknown[],
+      namedBinds({ ...binds }),
     ) as OracleRow[];
     const rows = await this.dataSource.query(
       `${body} ORDER BY "deliveryDate" DESC, "orderNo"
        OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY`,
-      { ...binds, offset: (page - 1) * limit, limit } as unknown as unknown[],
+      namedBinds({ ...binds, offset: (page - 1) * limit, limit }),
     ) as OracleRow[];
     return { data: rows, total: Number(totals[0]?.total ?? 0), page, limit };
   }
@@ -110,7 +111,7 @@ export class MoldOrderService {
    * 같은 주문그룹번호의 건수·수량·금액을 묶어 본다.
    */
   async findGroups(query: MoldOrderQueryDto, organizationId: number) {
-    return this.dataSource.query(
+    return this.dataSource.query<OracleRow[]>(
       `SELECT o.ORDER_GROUP_NO AS "orderGroupNo",
               o.SUPPLIER_CODE AS "supplierCode", sup.SUPPLIER_NAME AS "supplierName",
               MIN(o.PURCHASE_ORDER_DATE) AS "purchaseOrderDate",
@@ -131,14 +132,14 @@ export class MoldOrderService {
           AND o.ORGANIZATION_ID = :organizationId
         GROUP BY o.ORDER_GROUP_NO, o.SUPPLIER_CODE, sup.SUPPLIER_NAME
         ORDER BY MIN(o.DELIVERY_DATE) DESC, o.ORDER_GROUP_NO`,
-      {
+      namedBinds({
         organizationId,
         dateFrom: query.dateFrom.slice(0, 10),
         dateTo: query.dateTo.slice(0, 10),
         supplierCode: this.like(query.supplierCode),
         moldCode: this.like(query.moldCode),
-      } as unknown as unknown[],
-    ) as Promise<OracleRow[]>;
+      }),
+    );
   }
 
   /**
@@ -149,7 +150,7 @@ export class MoldOrderService {
     return this.tx.run(async (qr) => {
       const exists = await qr.query(
         `SELECT PKG_MES_MAC.F_CHECK_MOLD_EXISTS(:moldCode, :organizationId) AS "cnt" FROM DUAL`,
-        { moldCode: dto.moldCode, organizationId } as unknown as unknown[],
+        namedBinds({ moldCode: dto.moldCode, organizationId }),
       ) as OracleRow[];
       if (Number(exists[0]?.cnt ?? -1) < 0) {
         throw new BadRequestException(`등록되지 않은 S-PARTS 입니다 (${dto.moldCode}).`);
@@ -157,7 +158,7 @@ export class MoldOrderService {
       const supplier = await qr.query(
         `SELECT PKG_MES_MAC.F_CHECK_SUPPLIER_EXISTS(:supplierCode, :organizationId) AS "cnt"
            FROM DUAL`,
-        { supplierCode: dto.supplierCode, organizationId } as unknown as unknown[],
+        namedBinds({ supplierCode: dto.supplierCode, organizationId }),
       ) as OracleRow[];
       if (Number(supplier[0]?.cnt ?? -1) < 0) {
         throw new BadRequestException(`등록되지 않은 공급처입니다 (${dto.supplierCode}).`);
@@ -168,7 +169,7 @@ export class MoldOrderService {
         `SELECT TO_CHAR(TO_DATE(:orderDate, 'YYYY-MM-DD'), 'YYYYMMDD')
                 || LPAD(TO_CHAR(SEQ_PURCHASE_ORDER_NO.NEXTVAL), 3, '0') AS "orderNo"
            FROM DUAL`,
-        { orderDate: dto.purchaseOrderDate.slice(0, 10) } as unknown as unknown[],
+        namedBinds({ orderDate: dto.purchaseOrderDate.slice(0, 10) }),
       ) as OracleRow[];
       const orderNo = String(generated[0]?.orderNo ?? '');
 
@@ -195,7 +196,7 @@ export class MoldOrderService {
                                 :supplierCode, :moldCode, :organizationId)),
                           0) AS UNIT_PRICE
                    FROM DUAL) resolved`,
-        {
+        namedBinds({
           orderNo,
           organizationId,
           orderGroupNo: dto.orderGroupNo ?? null,
@@ -213,7 +214,7 @@ export class MoldOrderService {
           lineType: dto.lineType ?? null,
           unitPrice: dto.unitPrice ?? null,
           userId,
-        } as unknown as unknown[],
+        }),
       );
       return { orderNo };
     });
@@ -251,7 +252,7 @@ export class MoldOrderService {
     const result = await this.dataSource.query(
       `UPDATE IMCN_MOLD_PURCHASE_ORDER SET ${sets.join(', ')}
         WHERE ORDER_NO = :orderNo AND ORGANIZATION_ID = :organizationId`,
-      binds as unknown as unknown[],
+      namedBinds(binds),
     ) as unknown;
     void result;
     if (!await this.exists(dto.orderNo, organizationId)) {
@@ -264,7 +265,7 @@ export class MoldOrderService {
     const rows = await this.dataSource.query(
       `SELECT COUNT(*) AS "cnt" FROM IMCN_MOLD_PURCHASE_ORDER
         WHERE ORDER_NO = :orderNo AND ORGANIZATION_ID = :organizationId`,
-      { orderNo, organizationId } as unknown as unknown[],
+      namedBinds({ orderNo, organizationId }),
     ) as OracleRow[];
     return Number(rows[0]?.cnt ?? 0) > 0;
   }
@@ -274,7 +275,7 @@ export class MoldOrderService {
     const rows = await this.dataSource.query(
       `SELECT NVL(RECEIPT_QTY, 0) AS "receiptQty" FROM IMCN_MOLD_PURCHASE_ORDER
         WHERE ORDER_NO = :orderNo AND ORGANIZATION_ID = :organizationId`,
-      { orderNo: dto.orderNo, organizationId } as unknown as unknown[],
+      namedBinds({ orderNo: dto.orderNo, organizationId }),
     ) as OracleRow[];
     if (rows.length === 0) {
       throw new NotFoundException(`주문을 찾을 수 없습니다 (${dto.orderNo}).`);
@@ -285,7 +286,7 @@ export class MoldOrderService {
     await this.dataSource.query(
       `DELETE FROM IMCN_MOLD_PURCHASE_ORDER
         WHERE ORDER_NO = :orderNo AND ORGANIZATION_ID = :organizationId`,
-      { orderNo: dto.orderNo, organizationId } as unknown as unknown[],
+      namedBinds({ orderNo: dto.orderNo, organizationId }),
     );
     return { deleted: true };
   }

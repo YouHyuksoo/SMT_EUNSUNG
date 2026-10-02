@@ -12,12 +12,10 @@
  *  5. 첨부 영역 상단 우측에 [일괄 내려받기] · [일괄 삭제] 버튼
  *  6. 향후 모든 개발에서 공통 적용
  *
- * 동작 모드:
- *  - 기본(mock=false): 백엔드 API 연동
+ * 백엔드 API 연동:
  *      업로드  POST   /files/upload?businessType=&refKey=  (multipart, field: files)
  *      다운로드 GET   /uploads/... (서버 정적)  또는 GET /files/:id
  *      삭제     DELETE /files { ids }
- *  - mock=true: 실 DB 미연결 화면용 — 브라우저 File 보유·클라이언트 다운로드만.
  */
 import { useRef, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -48,12 +46,8 @@ export interface FileAttachmentProps {
   /** 첨부 영역 최소 높이 — 사전 영역 확보 (기본 140px) */
   minHeight?: string;
   accept?: string;
-  /** true면 백엔드 미연동(클라이언트 Mock) */
-  mock?: boolean;
 }
 
-let seq = 0;
-const uid = () => `att_${Date.now()}_${++seq}`;
 const isBackendId = (id: string) => /^\d+$/.test(id);
 const fmtSize = (n?: number) =>
   n == null ? '' : n < 1024 ? `${n}B` : n < 1048576 ? `${(n / 1024).toFixed(1)}KB` : `${(n / 1048576).toFixed(1)}MB`;
@@ -68,7 +62,6 @@ export default function FileAttachment({
   readOnly = false,
   minHeight = '140px',
   accept,
-  mock = false,
 }: FileAttachmentProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
@@ -77,12 +70,6 @@ export default function FileAttachment({
   async function addFiles(list: FileList | null) {
     if (!list || !list.length) return;
     const picked = Array.from(list);
-
-    if (mock) {
-      const added: AttachedFile[] = picked.map((f) => ({ id: uid(), name: f.name, size: f.size, file: f }));
-      onChange(multiple ? [...value, ...added] : added.slice(0, 1));
-      return;
-    }
 
     // 백엔드 업로드
     setBusy(true);
@@ -108,7 +95,7 @@ export default function FileAttachment({
 
   async function deleteBackend(ids: string[]) {
     const nums = ids.filter(isBackendId).map(Number);
-    if (!nums.length || mock) return;
+    if (!nums.length) return;
     await api.delete('/files', { data: { ids: nums } }).catch((e) => {
       console.error(e);
     });

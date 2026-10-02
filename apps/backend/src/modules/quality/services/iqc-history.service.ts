@@ -26,6 +26,7 @@ import {
   IqcInspectHistoryQueryDto,
   IqcInspectHistoryUpdateDto,
 } from '../dto/iqc-history.dto';
+import { namedBinds } from '../../../common/utils/named-binds.util';
 
 type OracleRow = Record<string, unknown>;
 
@@ -115,12 +116,12 @@ export class IqcHistoryService {
     const limit = query.limit ?? 500;
     const totals = await this.dataSource.query(
       `SELECT COUNT(*) AS "total" FROM (${body}) source_rows`,
-      { ...binds } as unknown as unknown[],
+      namedBinds({ ...binds }),
     ) as OracleRow[];
     const rows = await this.dataSource.query(
       `${body} ORDER BY "inspectDate" DESC, "inspectSequence" DESC
        OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY`,
-      { ...binds, offset: (page - 1) * limit, limit } as unknown as unknown[],
+      namedBinds({ ...binds, offset: (page - 1) * limit, limit }),
     ) as OracleRow[];
     return { data: rows, total: Number(totals[0]?.total ?? 0), page, limit };
   }
@@ -165,7 +166,7 @@ export class IqcHistoryService {
       await qr.query(
         `INSERT INTO IQ_IQC_INSPECT_HISTORY (${columns.join(', ')})
          VALUES (${values.join(', ')})`,
-        binds as unknown as unknown[],
+        namedBinds(binds),
       );
       return { inspectSequence };
     });
@@ -177,11 +178,11 @@ export class IqcHistoryService {
         WHERE TO_CHAR(INSPECT_DATE, 'YYYYMMDDHH24MISS') = :inspectDateKey
           AND INSPECT_SEQUENCE = :inspectSequence
           AND ORGANIZATION_ID = :organizationId`,
-      {
+      namedBinds({
         inspectDateKey: dto.inspectDateKey,
         inspectSequence: dto.inspectSequence,
         organizationId,
-      } as unknown as unknown[],
+      }),
     ) as OracleRow[];
     return Number(rows[0]?.cnt ?? 0) > 0;
   }
@@ -215,7 +216,7 @@ export class IqcHistoryService {
         WHERE TO_CHAR(INSPECT_DATE, 'YYYYMMDDHH24MISS') = :inspectDateKey
           AND INSPECT_SEQUENCE = :inspectSequence
           AND ORGANIZATION_ID = :organizationId`,
-      binds as unknown as unknown[],
+      namedBinds(binds),
     );
     return { inspectSequence: dto.inspectSequence };
   }
@@ -230,11 +231,11 @@ export class IqcHistoryService {
         WHERE TO_CHAR(INSPECT_DATE, 'YYYYMMDDHH24MISS') = :inspectDateKey
           AND INSPECT_SEQUENCE = :inspectSequence
           AND ORGANIZATION_ID = :organizationId`,
-      {
+      namedBinds({
         inspectDateKey: dto.inspectDateKey,
         inspectSequence: dto.inspectSequence,
         organizationId,
-      } as unknown as unknown[],
+      }),
     );
     return { deleted: true };
   }

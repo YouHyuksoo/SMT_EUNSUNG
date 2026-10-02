@@ -15,6 +15,7 @@ import { likePrefix } from '@smt/shared';
 import { limited, ROW_LIMIT } from '../../../shared/row-limit';
 import { TransactionService } from '../../../shared/transaction.service';
 import { RawBomListQueryDto, RawBomLoopCheckQueryDto, RawBomUpdateDto } from '../dto/raw-bom.dto';
+import { namedBinds } from '../../../common/utils/named-binds.util';
 
 type OracleRow = Record<string, unknown>;
 
@@ -130,11 +131,11 @@ export class RawBomService {
 
   /** 목록 — PB d_des_raw_bom_lst. 조건이 없으면 조직 전체를 ROW_LIMIT 까지 돌려준다. */
   async findList(query: RawBomListQueryDto, organizationId: number) {
-    const rows = await this.dataSource.query(LIST_SQL, {
+    const rows = await this.dataSource.query(LIST_SQL, namedBinds({
       organizationId,
       parentItemCode: likePrefix(query.parentItemCode?.toUpperCase()),
       childItemCode: likePrefix(query.childItemCode?.toUpperCase()),
-    } as unknown as unknown[]) as OracleRow[];
+    })) as OracleRow[];
     return limited(rows);
   }
 
@@ -167,7 +168,7 @@ export class RawBomService {
             AND CHILD_ITEM_CODE = :childItemCode
             AND DATESET = TO_DATE(:dateset, 'YYYY-MM-DD')
             AND ORGANIZATION_ID = :organizationId`,
-        {
+        namedBinds({
           ...key,
           assyExplosionYn: dto.assyExplosionYn,
           itemType: dto.itemType,
@@ -178,7 +179,7 @@ export class RawBomService {
           sortSequence: dto.sortSequence,
           dateend: dto.dateend,
           userId,
-        } as unknown as unknown[],
+        }),
         true,
       ) as { affected?: number };
       const affected = Number(result?.affected ?? 0);
@@ -205,7 +206,7 @@ export class RawBomService {
         `SELECT COUNT(*) AS "cnt" FROM ID_ENG_BOM
           WHERE ORGANIZATION_ID = :organizationId
             AND (PARENT_ITEM_CODE = :itemCode OR CHILD_ITEM_CODE = :itemCode)`,
-        { organizationId, itemCode } as unknown as unknown[],
+        namedBinds({ organizationId, itemCode }),
       ) as OracleRow[];
       if (Number(found[0]?.cnt ?? 0) === 0) {
         throw new BadRequestException(
@@ -215,7 +216,7 @@ export class RawBomService {
     }
     const rows = await this.dataSource.query(
       itemCode ? LOOP_ITEM_SQL : LOOP_ALL_SQL,
-      (itemCode ? { organizationId, itemCode } : { organizationId }) as unknown as unknown[],
+      namedBinds((itemCode ? { organizationId, itemCode } : { organizationId })),
     ) as OracleRow[];
     const loops = normalizeLoops(rows.map((r) => String(r.cyclePath ?? '')));
     return { itemCode, loops, total: loops.length };

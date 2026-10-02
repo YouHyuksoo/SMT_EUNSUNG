@@ -20,7 +20,7 @@
  * - ID_MFS_BOM.DATEEND 는 NOT NULL 인데 전개 결과(DATEEND)는 NULL 일 수 있어 9999-12-31 로 채운다.
  */
 import { BadRequestException, Injectable } from '@nestjs/common';
-import * as oracledb from 'oracledb';
+import { outNumberBind } from '../../../common/services/oracle.service';
 import { DataSource, QueryRunner } from 'typeorm';
 import { TransactionService } from '../../../shared/transaction.service';
 import {
@@ -32,6 +32,7 @@ import {
   MfsModelQueryDto,
   MfsUsedDto,
 } from '../dto/mfs-bom.dto';
+import { namedBinds } from '../../../common/utils/named-binds.util';
 
 type OracleRow = Record<string, unknown>;
 type Binds = Record<string, unknown>;
@@ -213,7 +214,7 @@ export class MfsBomService {
       const fn = showHide === 'Y' ? 'PKG_DESIGN.BOM_QUERY_ALL' : 'PKG_DESIGN.BOM_QUERY';
       const out = (await qr.query(
         `BEGIN :sid := ${fn}(:itemCode, SYSDATE, :org); END;`,
-        { sid: { dir: oracledb.BIND_OUT, type: oracledb.NUMBER }, itemCode, org } as unknown as unknown[],
+        namedBinds({ sid: outNumberBind(), itemCode, org }),
       )) as { sid?: number | null } | undefined;
       const sid = Number(out?.sid ?? 0);
       // 0: 품목 없음, -100: 유효한 설계BOM 없음
@@ -311,7 +312,7 @@ export class MfsBomService {
     const rows = (await qr.query(
       `SELECT COUNT(*) AS "cnt" FROM ID_MFS_BOM
         WHERE ITEM_CODE = :itemCode AND MFS = :mfs AND ORGANIZATION_ID = :org AND CONFIRM_YN = 'Y'`,
-      { itemCode, mfs, org } as unknown as unknown[],
+      namedBinds({ itemCode, mfs, org }),
     )) as OracleRow[];
     if (Number(rows[0]?.cnt ?? 0) > 0) {
       throw new BadRequestException(`${mfs} 제조BOM은 승인되어 ${action}할 수 없습니다. 승인취소 후 진행하세요.`);
@@ -321,19 +322,19 @@ export class MfsBomService {
   private async count(qr: QueryRunner, itemCode: string, mfs: string, org: number) {
     const rows = (await qr.query(
       `SELECT COUNT(*) AS "cnt" FROM ID_MFS_BOM WHERE ITEM_CODE = :itemCode AND MFS = :mfs AND ORGANIZATION_ID = :org`,
-      { itemCode, mfs, org } as unknown as unknown[],
+      namedBinds({ itemCode, mfs, org }),
     )) as OracleRow[];
     return Number(rows[0]?.cnt ?? 0);
   }
 
   /** DML 실행 후 영향 행수. 구조화 결과를 써야 0 행일 때도 숫자가 온다. */
   private async exec(qr: QueryRunner, sql: string, binds: Binds): Promise<number> {
-    const result = await qr.query(sql, binds as unknown as unknown[], true) as { affected?: number };
+    const result = await qr.query(sql, namedBinds(binds), true) as { affected?: number };
     return Number(result.affected ?? 0);
   }
 
   private async select(sql: string, binds: Binds) {
-    return (await this.dataSource.query(sql, binds as unknown as unknown[])) as OracleRow[];
+    return (await this.dataSource.query(sql, namedBinds(binds))) as OracleRow[];
   }
 
   private prefix(value?: string): string {

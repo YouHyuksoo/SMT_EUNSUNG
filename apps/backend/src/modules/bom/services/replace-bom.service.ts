@@ -21,6 +21,7 @@ import {
   ReplaceListQueryDto,
   ReplaceUpsertDto,
 } from '../dto/replace-bom.dto';
+import { namedBinds } from '../../../common/utils/named-binds.util';
 
 type OracleRow = Record<string, unknown>;
 const FAR_FUTURE = new Date(9999, 11, 31);
@@ -76,7 +77,7 @@ export class ReplaceBomService {
     }
     const dateset = parseDateStart(query.dateset) ?? new Date();
 
-    const { rows, sessionId } = await this.oracle.callFunctionReturningCursor<OracleRow>(
+    const { rows, sessionId } = await this.oracle.callFunctionReturningCursor(
       'PKG_DESIGN.BOM_QUERY(:parent, :dateset, :org)',
       BOM_EXPAND_SQL,
       { parent: setItemCode, dateset, org: organizationId },
@@ -128,10 +129,10 @@ export class ReplaceBomService {
       OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY`;
     const offset = (query.page - 1) * query.limit;
     const rows = await this.dataSource.query(
-      select, { ...binds, offset, limit: query.limit } as unknown as unknown[],
+      select, namedBinds({ ...binds, offset, limit: query.limit }),
     ) as OracleRow[];
     const totals = await this.dataSource.query(
-      `SELECT COUNT(*) AS "total" ${from}`, binds as unknown as unknown[],
+      `SELECT COUNT(*) AS "total" ${from}`, namedBinds(binds),
     ) as OracleRow[];
     return { data: rows, total: Number(totals[0]?.total ?? 0), page: query.page, limit: query.limit };
   }
@@ -150,7 +151,7 @@ export class ReplaceBomService {
         `SELECT REPLACE_SEQUENCE AS "seq" FROM ID_ITEM_REPLACE
           WHERE PARENT_ITEM_CODE = :parentItemCode AND CHILD_ITEM_CODE = :childItemCode
             AND REPLACE_ITEM_CODE = :replaceItemCode AND ORGANIZATION_ID = :organizationId`,
-        key as unknown as unknown[],
+        namedBinds(key),
       ) as OracleRow[];
 
       if (existing.length > 0) {
@@ -162,11 +163,11 @@ export class ReplaceBomService {
                   LAST_MODIFY_BY = :userId, LAST_MODIFY_DATE = SYSDATE
             WHERE PARENT_ITEM_CODE = :parentItemCode AND CHILD_ITEM_CODE = :childItemCode
               AND REPLACE_ITEM_CODE = :replaceItemCode AND ORGANIZATION_ID = :organizationId`,
-          {
+          namedBinds({
             ...key, itemUnitQty: dto.itemUnitQty, itemUnitQtyExt: dto.itemUnitQtyExt ?? null,
             workstageCode: dto.workstageCode, bomLocationCode: dto.bomLocationCode ?? null,
             dateset, dateend, userId,
-          } as unknown as unknown[],
+          }),
         );
         return { mode: 'update' as const, ...key };
       }
@@ -176,7 +177,7 @@ export class ReplaceBomService {
         `SELECT NVL(MAX(REPLACE_SEQUENCE), 0) + 1 AS "seq" FROM ID_ITEM_REPLACE
           WHERE PARENT_ITEM_CODE = :parentItemCode AND CHILD_ITEM_CODE = :childItemCode
             AND ORGANIZATION_ID = :organizationId`,
-        { parentItemCode: dto.parentItemCode, childItemCode: dto.childItemCode, organizationId } as unknown as unknown[],
+        namedBinds({ parentItemCode: dto.parentItemCode, childItemCode: dto.childItemCode, organizationId }),
       ) as OracleRow[];
       const replaceSequence = Number(seqRow[0]?.seq ?? 1);
 
@@ -190,11 +191,11 @@ export class ReplaceBomService {
            :replaceSequence, :itemUnitQty, :itemUnitQtyExt, :workstageCode, :bomLocationCode,
            :dateset, :dateend, :userId, SYSDATE, :userId, SYSDATE
          )`,
-        {
+        namedBinds({
           ...key, replaceSequence, itemUnitQty: dto.itemUnitQty,
           itemUnitQtyExt: dto.itemUnitQtyExt ?? null, workstageCode: dto.workstageCode,
           bomLocationCode: dto.bomLocationCode ?? null, dateset, dateend, userId,
-        } as unknown as unknown[],
+        }),
       );
       return { mode: 'insert' as const, replaceSequence, ...key };
     });
@@ -206,10 +207,10 @@ export class ReplaceBomService {
       `DELETE FROM ID_ITEM_REPLACE
         WHERE PARENT_ITEM_CODE = :parentItemCode AND CHILD_ITEM_CODE = :childItemCode
           AND REPLACE_ITEM_CODE = :replaceItemCode AND ORGANIZATION_ID = :organizationId`,
-      {
+      namedBinds({
         parentItemCode: dto.parentItemCode, childItemCode: dto.childItemCode,
         replaceItemCode: dto.replaceItemCode, organizationId,
-      } as unknown as unknown[],
+      }),
     ) as unknown;
     void result;
     return { deleted: true, ...dto };

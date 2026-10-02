@@ -24,6 +24,7 @@ import {
   MoldMasterQueryDto,
   MoldMasterUpsertDto,
 } from './mold-master.dto';
+import { namedBinds } from '../../common/utils/named-binds.util';
 
 type OracleRow = Record<string, unknown>;
 
@@ -123,13 +124,13 @@ export class MoldMasterService {
     const limit = query.limit ?? 500;
     const totals = await this.dataSource.query(
       `SELECT COUNT(*) AS "total" FROM (${body}) source_rows`,
-      { ...binds } as unknown as unknown[],
+      namedBinds({ ...binds }),
     ) as OracleRow[];
     // PB 트리 정렬: MOLD_GROUP 으로 묶고 그 안에서 코드·버전·SET번호 순
     const rows = await this.dataSource.query(
       `${body} ORDER BY "moldGroup", "moldCode", "moldVersion", "moldSetSerial"
        OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY`,
-      { ...binds, offset: (page - 1) * limit, limit } as unknown as unknown[],
+      namedBinds({ ...binds, offset: (page - 1) * limit, limit }),
     ) as OracleRow[];
     return { data: rows, total: Number(totals[0]?.total ?? 0), page, limit };
   }
@@ -140,7 +141,7 @@ export class MoldMasterService {
    * 품목(ID_ITEM)은 오늘 유효한 행만 붙인다(PB 의 DATESET/DATEEND 조건).
    */
   async findBills(query: MoldBillQueryDto, organizationId: number) {
-    return this.dataSource.query(
+    return this.dataSource.query<OracleRow[]>(
       `SELECT b.MOLD_CODE AS "moldCode", b.ITEM_CODE AS "itemCode",
               b.SEQUENCE AS "sequence",
               b.MOLD_VERSION AS "moldVersion", b.MOLD_SET_SERIAL AS "moldSetSerial",
@@ -160,17 +161,17 @@ export class MoldMasterService {
           AND b.ITEM_CODE LIKE :itemCode
           AND b.ORGANIZATION_ID = :organizationId
         ORDER BY b.MOLD_CODE, b.ITEM_CODE, b.SEQUENCE`,
-      {
+      namedBinds({
         moldCode: this.like(query.moldCode),
         itemCode: this.like(query.itemCode),
         organizationId,
-      } as unknown as unknown[],
-    ) as Promise<OracleRow[]>;
+      }),
+    );
   }
 
   /** 선택 S-PARTS 의 재고 — PB d_mcn_mold_inventory_4_mold_lst */
   async findInventory(query: MoldCodeDto, organizationId: number) {
-    return this.dataSource.query(
+    return this.dataSource.query<OracleRow[]>(
       `SELECT inv.MOLD_CODE AS "moldCode",
               inv.MOLD_VERSION AS "moldVersion", inv.MOLD_SET_SERIAL AS "moldSetSerial",
               inv.MOLD_VERSION_SPEC AS "moldVersionSpec",
@@ -221,15 +222,15 @@ export class MoldMasterService {
                AND whs.ORGANIZATION_ID = inv.ORGANIZATION_ID
         WHERE inv.MOLD_CODE = :moldCode AND inv.ORGANIZATION_ID = :organizationId
         ORDER BY inv.MOLD_VERSION, inv.MOLD_SET_SERIAL`,
-      { moldCode: query.moldCode, organizationId } as unknown as unknown[],
-    ) as Promise<OracleRow[]>;
+      namedBinds({ moldCode: query.moldCode, organizationId }),
+    );
   }
 
   private async exists(moldCode: string, organizationId: number) {
     const rows = await this.dataSource.query(
       `SELECT COUNT(*) AS "cnt" FROM IMCN_MOLD
         WHERE MOLD_CODE = :moldCode AND ORGANIZATION_ID = :organizationId`,
-      { moldCode, organizationId } as unknown as unknown[],
+      namedBinds({ moldCode, organizationId }),
     ) as OracleRow[];
     return Number(rows[0]?.cnt ?? 0) > 0;
   }
@@ -252,7 +253,7 @@ export class MoldMasterService {
 
     await this.dataSource.query(
       `INSERT INTO IMCN_MOLD (${columns.join(', ')}) VALUES (${values.join(', ')})`,
-      binds as unknown as unknown[],
+      namedBinds(binds),
     );
     return { moldCode: dto.moldCode };
   }
@@ -273,7 +274,7 @@ export class MoldMasterService {
     await this.dataSource.query(
       `UPDATE IMCN_MOLD SET ${sets.join(', ')}
         WHERE MOLD_CODE = :moldCode AND ORGANIZATION_ID = :organizationId`,
-      binds as unknown as unknown[],
+      namedBinds(binds),
     );
     return { moldCode: dto.moldCode };
   }
@@ -293,7 +294,7 @@ export class MoldMasterService {
              RAISE_APPLICATION_ERROR(-20010, 'MOLD_NOT_FOUND');
            END IF;
          END;`,
-        { moldCode: dto.moldCode, organizationId } as unknown as unknown[],
+        namedBinds({ moldCode: dto.moldCode, organizationId }),
       ).catch((error: unknown) => {
         const message = error instanceof Error ? error.message : String(error);
         if (message.includes('MOLD_NOT_FOUND')) {
@@ -314,7 +315,7 @@ export class MoldMasterService {
     return this.tx.run(async (qr) => {
       const before = await qr.query(
         `SELECT COUNT(*) AS "cnt" FROM ID_ITEM WHERE ORGANIZATION_ID = :organizationId`,
-        { organizationId } as unknown as unknown[],
+        namedBinds({ organizationId }),
       ) as OracleRow[];
       await qr.query(
         `DECLARE
@@ -322,11 +323,11 @@ export class MoldMasterService {
          BEGIN
            PKG_MES_MAC.SP_MOLD_GENERATE_ITEM(:organizationId, :userId, v_result);
          END;`,
-        { organizationId, userId } as unknown as unknown[],
+        namedBinds({ organizationId, userId }),
       );
       const after = await qr.query(
         `SELECT COUNT(*) AS "cnt" FROM ID_ITEM WHERE ORGANIZATION_ID = :organizationId`,
-        { organizationId } as unknown as unknown[],
+        namedBinds({ organizationId }),
       ) as OracleRow[];
       return { created: Number(after[0]?.cnt ?? 0) - Number(before[0]?.cnt ?? 0) };
     });

@@ -31,6 +31,7 @@ import {
   CarrierBarcodeQueryDto,
 } from './report.dto';
 import { affectedRows } from '../../common/utils/affected-rows.util';
+import { namedBinds } from '../../common/utils/named-binds.util';
 
 type Row = Record<string, unknown>;
 
@@ -58,10 +59,10 @@ export class CarrierBarcodeService {
           AND c.ORGANIZATION_ID = :organizationId
         ORDER BY c.SERIAL_NO
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         barcode: likePrefix(query.barcode),
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }
@@ -109,7 +110,7 @@ export class CarrierBarcodeService {
           WHERE EXISTS ( SELECT 1 FROM IP_PRODUCT_CARRIER_BARCODE c
                           WHERE c.SERIAL_NO = n.SERIAL_NO
                             AND c.ORGANIZATION_ID = :organizationId )`,
-        numberBinds as unknown as unknown[],
+        namedBinds(numberBinds),
       )) as Row[];
 
       const result = await qr.query(
@@ -120,7 +121,7 @@ export class CarrierBarcodeService {
           WHERE NOT EXISTS ( SELECT 1 FROM IP_PRODUCT_CARRIER_BARCODE c
                               WHERE c.SERIAL_NO = n.SERIAL_NO
                                 AND c.ORGANIZATION_ID = :organizationId )`,
-        insertBinds as unknown as unknown[],
+        namedBinds(insertBinds),
       );
 
       return {
@@ -149,13 +150,13 @@ export class CarrierBarcodeService {
         `SELECT COUNT(*) AS "cnt" FROM IP_PRODUCT_CARRIER_BARCODE
           WHERE SERIAL_NO LIKE :barcode ESCAPE '\\'
             AND ORGANIZATION_ID = :organizationId`,
-        binds as unknown as unknown[],
+        namedBinds(binds),
       )) as Row[];
       const result = await qr.query(
         `DELETE FROM IP_PRODUCT_CARRIER_BARCODE
           WHERE SERIAL_NO LIKE :barcode ESCAPE '\\'
             AND ORGANIZATION_ID = :organizationId`,
-        binds as unknown as unknown[],
+        namedBinds(binds),
       );
       return {
         matched: Number(before[0]?.cnt ?? 0),
@@ -170,10 +171,10 @@ export class CarrierBarcodeService {
       `SELECT COUNT(*) AS "cnt" FROM IP_PRODUCT_CARRIER_BARCODE
         WHERE SERIAL_NO LIKE :barcode ESCAPE '\\'
           AND ORGANIZATION_ID = :organizationId`,
-      {
+      namedBinds({
         barcode: likePrefix(query.barcode),
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return { rows: Number(rows[0]?.cnt ?? 0) };
   }

@@ -36,6 +36,9 @@ export const outStringBind = (maxSize = 4000) => ({
   maxSize,
 });
 
+/** 숫자 OUT 바인드 (프로시저·함수가 돌려주는 세션번호 등). */
+export const outNumberBind = () => ({ dir: oracledb.BIND_OUT, type: oracledb.NUMBER });
+
 /** 긴 문자열(JSON 등)을 CLOB 으로 넘긴다 — VARCHAR2 한도(32KB)를 넘어도 된다. */
 export const clobBind = (val: string) => ({ val, type: oracledb.CLOB });
 
@@ -187,11 +190,11 @@ export class OracleService implements OnModuleInit, OnModuleDestroy {
    * @param cursorSql  세션ID 기준 조회 SQL. 예: 'SELECT ... WHERE SESSION_ID = :sid'
    * @param inParams   IN 바인드 (예: { parent, dateset, org })
    */
-  async callFunctionReturningCursor<T = OracleRow>(
+  async callFunctionReturningCursor(
     assignExpr: string,
     cursorSql: string,
     inParams: Record<string, unknown>,
-  ): Promise<{ rows: T[]; sessionId: number }> {
+  ): Promise<{ rows: OracleRow[]; sessionId: number }> {
     let conn: oracledb.Connection | undefined;
     try {
       conn = await this.pool.getConnection();
@@ -210,7 +213,7 @@ export class OracleService implements OnModuleInit, OnModuleDestroy {
       const cursor = getCursor(result.outBinds, 'o_cursor');
       const rows = await cursor.getRows();
       await cursor.close();
-      return { rows: rows as T[], sessionId };
+      return { rows, sessionId };
     } catch (err) {
       this.logger.error(
         `함수+커서 호출 실패: ${assignExpr}`,

@@ -42,6 +42,7 @@ import {
   SmtBomUpsertDto,
 } from './smt-bom.dto';
 import { affectedRows } from '../../common/utils/affected-rows.util';
+import { namedBinds } from '../../common/utils/named-binds.util';
 
 const EDITABLE: Array<[column: string, field: keyof SmtBomUpsertDto]> = [
   ['ITEM_UNIT_QTY', 'itemUnitQty'],
@@ -122,7 +123,7 @@ export class SmtBomService {
           AND NVL(b.DATEEND, TO_DATE('99991231', 'YYYYMMDD')) >= TO_DATE(:dateSet, 'YYYY-MM-DD')
         ORDER BY b.LINE_CODE, b.MACHINE, b.TABLE_ID,
                  SUBSTR(b.LOCATION_CODE, 2), b.SORT_SEQUENCE`,
-      {
+      namedBinds({
           organizationId,
           modelName: query.modelName.trim(),
           lineCode: this.like(query.lineCode),
@@ -131,7 +132,7 @@ export class SmtBomService {
           revision: this.like(query.revision),
           feederShaft: this.like(query.feederShaft),
           dateSet: query.dateSet ?? new Date().toISOString().slice(0, 10),
-        } as unknown as unknown[],
+        }),
     )) as Record<string, unknown>[];
     return { data: rows, total: rows.length };
   }
@@ -143,7 +144,7 @@ export class SmtBomService {
          FROM IP_PRODUCT_MODEL_MASTER m
         WHERE m.ORGANIZATION_ID = :organizationId
         ORDER BY m.MODEL_NAME`,
-      { organizationId } as unknown as unknown[],
+      namedBinds({ organizationId }),
     )) as Record<string, unknown>[];
   }
 
@@ -174,7 +175,7 @@ export class SmtBomService {
     return this.tx.run(async (qr) => {
       const [dup] = (await qr.query(
         `SELECT COUNT(*) AS CNT FROM ID_ENG_BOM_SMT WHERE ${this.KEY_WHERE}`,
-        [this.keyBinds(dto, organizationId)] as unknown as unknown[],
+        namedBinds([this.keyBinds(dto, organizationId)]),
       )) as { CNT: number }[];
       if (Number(dup?.CNT ?? 0) > 0) {
         throw new ConflictException('이미 있는 BOM 행입니다 (같은 모델·라인·설비·자리·면).');
@@ -205,7 +206,7 @@ export class SmtBomService {
 
       await qr.query(
         `INSERT INTO ID_ENG_BOM_SMT (${columns.join(', ')}) VALUES (${values.join(', ')})`,
-        binds as unknown as unknown[],
+        namedBinds(binds),
       );
       return { created: 1 };
     });
@@ -228,7 +229,7 @@ export class SmtBomService {
 
       const result = await qr.query(
         `UPDATE ID_ENG_BOM_SMT SET ${sets.join(', ')} WHERE ${this.KEY_WHERE}`,
-        binds as unknown as unknown[],
+        namedBinds(binds),
       );
       const affected = Number(affectedRows(result) ?? 0);
       if (affected === 0) throw new NotFoundException('BOM 행을 찾을 수 없습니다.');
@@ -240,7 +241,7 @@ export class SmtBomService {
     return this.tx.run(async (qr) => {
       const result = await qr.query(
         `DELETE FROM ID_ENG_BOM_SMT WHERE ${this.KEY_WHERE}`,
-        [this.keyBinds(key, organizationId)] as unknown as unknown[],
+        namedBinds([this.keyBinds(key, organizationId)]),
       );
       const affected = Number(affectedRows(result) ?? 0);
       if (affected === 0) throw new NotFoundException('BOM 행을 찾을 수 없습니다.');
@@ -272,7 +273,7 @@ export class SmtBomService {
              RAISE_APPLICATION_ERROR(-20033, '${marker}:' || v_result);
            END IF;
          END;`,
-        binds as unknown as unknown[],
+        namedBinds(binds),
       )
       .catch((error: unknown) => {
         const message = error instanceof Error ? error.message : String(error);
@@ -321,7 +322,7 @@ export class SmtBomService {
         WHERE LINE_CODE IN (:lineCode1, :lineCode2)
           AND ORGANIZATION_ID = :organizationId
         GROUP BY LINE_CODE`,
-      { lineCode1: dto.lineCode1, lineCode2: dto.lineCode2, organizationId } as unknown as unknown[],
+      namedBinds({ lineCode1: dto.lineCode1, lineCode2: dto.lineCode2, organizationId }),
     )) as { LINE_CODE: string; CNT: number }[];
     const find = (code: string) =>
       Number(rows.find((r) => r.LINE_CODE === code)?.CNT ?? 0);
@@ -362,7 +363,7 @@ export class SmtBomService {
          + (SELECT COUNT(*) FROM IB_PRODUCT_PLANDATA
              WHERE MODEL_NAME = :newModelName AND ORGANIZATION_ID = :organizationId)
            AS CNT FROM DUAL`,
-        { newModelName: dto.newModelName, organizationId } as unknown as unknown[],
+        namedBinds({ newModelName: dto.newModelName, organizationId }),
       )) as { CNT: number }[];
       return { newModelName: dto.newModelName, rows: Number(rows?.[0]?.CNT ?? 0) };
     });
@@ -380,7 +381,7 @@ export class SmtBomService {
                   WHERE PARENT_ITEM_CODE = :modelName AND LINE_CODE = :lineCode
                     AND NVL(PCB_ITEM, '*') LIKE :pcb AND ORGANIZATION_ID = :organizationId)
                 AS CNT FROM DUAL`,
-        { modelName: dto.modelName, lineCode: dto.lineCode, pcb, organizationId } as unknown as unknown[],
+        namedBinds({ modelName: dto.modelName, lineCode: dto.lineCode, pcb, organizationId }),
       )) as { CNT: number }[];
       await this.runProcedure(
         qr,
@@ -443,13 +444,13 @@ export class SmtBomService {
           AND NVL(d.PCB_ITEM, '*') LIKE :pcbItem
           AND NVL(d.REVISION, '0000') LIKE :revision
         ORDER BY d.LINE_CODE, d.MACHINE, d.TABLE_ID, SUBSTR(d.LOCATION_CODE, 2)`,
-      {
+      namedBinds({
           organizationId,
           modelName: query.modelName.trim(),
           lineCode: this.like(query.lineCode),
           pcbItem: this.like(query.pcbItem),
           revision: this.like(query.revision),
-        } as unknown as unknown[],
+        }),
     )) as Record<string, unknown>[];
     return { data: rows, total: rows.length };
   }

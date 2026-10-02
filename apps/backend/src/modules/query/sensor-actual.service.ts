@@ -31,6 +31,7 @@ import {
 } from './query.dto';
 import { ROW_LIMIT } from './row-limit';
 import { affectedRows } from '../../common/utils/affected-rows.util';
+import { namedBinds } from '../../common/utils/named-binds.util';
 
 type Row = Record<string, unknown>;
 
@@ -88,7 +89,7 @@ export class SensorActualService {
   async findCurrent(query: SensorActualQueryDto, organizationId: number) {
     const rows = (await this.dataSource.query(
       this.actualSelect('IP_PRODUCT_SENSOR_ACTUAL', true),
-      { lineCode: likePrefix(query.lineCode), organizationId } as unknown as unknown[],
+      namedBinds({ lineCode: likePrefix(query.lineCode), organizationId }),
     )) as Row[];
     return { data: rows, total: rows.length, truncated: rows.length >= ROW_LIMIT };
   }
@@ -97,7 +98,7 @@ export class SensorActualService {
   async findHistory(query: SensorActualQueryDto, organizationId: number) {
     const rows = (await this.dataSource.query(
       this.actualSelect('IP_PRODUCT_SENSOR_ACTUAL_BACK', false),
-      { lineCode: likePrefix(query.lineCode), organizationId } as unknown as unknown[],
+      namedBinds({ lineCode: likePrefix(query.lineCode), organizationId }),
     )) as Row[];
     return { data: rows, total: rows.length, truncated: rows.length >= ROW_LIMIT };
   }
@@ -131,12 +132,12 @@ export class SensorActualService {
           AND a.ORGANIZATION_ID = :organizationId
         ORDER BY a.RECEIPT_DATE DESC
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         lineCode: likePrefix(query.lineCode),
         modelName: likePrefix(query.modelName),
         dateFrom: query.dateFrom ?? new Date().toISOString().slice(0, 10),
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return { data: rows, total: rows.length, truncated: rows.length >= ROW_LIMIT };
   }
@@ -164,11 +165,11 @@ export class SensorActualService {
           WHERE RECEIPT_DATE = TO_DATE(:receiptDateKey, 'YYYYMMDDHH24MISS')
             AND RECEIPT_SEQUENCE = :receiptSequence
             AND ORGANIZATION_ID = :organizationId`,
-        {
+        namedBinds({
           receiptDateKey: dto.receiptDateKey,
           receiptSequence: dto.receiptSequence,
           organizationId,
-        } as unknown as unknown[],
+        }),
       )) as Row[];
       if (before.length === 0) {
         return { found: false, changed: 0, before: null, after: null };
@@ -182,14 +183,14 @@ export class SensorActualService {
           WHERE RECEIPT_DATE = TO_DATE(:receiptDateKey, 'YYYYMMDDHH24MISS')
             AND RECEIPT_SEQUENCE = :receiptSequence
             AND ORGANIZATION_ID = :organizationId`,
-        {
+        namedBinds({
           productActualQty: dto.productActualQty ?? null,
           adjustQty: dto.adjustQty ?? null,
           userId,
           receiptDateKey: dto.receiptDateKey,
           receiptSequence: dto.receiptSequence,
           organizationId,
-        } as unknown as unknown[],
+        }),
       );
       const after = (await qr.query(
         `SELECT PRODUCT_ACTUAL_QTY AS "productActualQty", ADJUST_QTY AS "adjustQty"
@@ -197,11 +198,11 @@ export class SensorActualService {
           WHERE RECEIPT_DATE = TO_DATE(:receiptDateKey, 'YYYYMMDDHH24MISS')
             AND RECEIPT_SEQUENCE = :receiptSequence
             AND ORGANIZATION_ID = :organizationId`,
-        {
+        namedBinds({
           receiptDateKey: dto.receiptDateKey,
           receiptSequence: dto.receiptSequence,
           organizationId,
-        } as unknown as unknown[],
+        }),
       )) as Row[];
       return {
         found: true,
@@ -305,12 +306,12 @@ export class SensorActualService {
           AND b.ORGANIZATION_ID = :organizationId
         ORDER BY b.SCAN_DATE DESC
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         itemCode: likePrefix(query.itemCode),
         lotNo: likePrefix(query.lotNo),
         itemBarcode: likePrefix(query.itemBarcode),
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return { data: rows, total: rows.length, truncated: rows.length >= ROW_LIMIT };
   }

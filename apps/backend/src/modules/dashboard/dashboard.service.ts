@@ -24,6 +24,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { sqlMslNgCount, sqlSolderNgCount } from '@smt/shared';
 import { OracleService } from '../../common/services/oracle.service';
+import { namedBinds } from '../../common/utils/named-binds.util';
 
 const PKG = 'PKG_DASHBOARD';
 const ORG = 1;
@@ -57,7 +58,7 @@ export class DashboardService {
 
   private async one(sql: string, binds: Record<string, unknown> = {}): Promise<Record<string, number>> {
     // 이름 바인드(:day)는 같은 이름이 여러 번 나와도 한 값으로 묶인다
-    const rows = (await this.dataSource.query(sql, binds as unknown as unknown[])) as CountRow[];
+    const rows = (await this.dataSource.query(sql, namedBinds(binds))) as CountRow[];
     const row = rows[0] ?? {};
     return Object.fromEntries(Object.entries(row).map(([k, v]) => [k, Number(v ?? 0)]));
   }

@@ -15,6 +15,7 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { Qc4mKeyDto, Qc4mQueryDto, Qc4mUpsertDto } from '../dto/qc-4m.dto';
+import { namedBinds } from '../../../common/utils/named-binds.util';
 
 type OracleRow = Record<string, unknown>;
 
@@ -110,12 +111,12 @@ export class Qc4mService {
     const limit = query.limit ?? 500;
     const totals = await this.dataSource.query(
       `SELECT COUNT(*) AS "total" FROM (${body}) source_rows`,
-      { ...binds } as unknown as unknown[],
+      namedBinds({ ...binds }),
     ) as OracleRow[];
     const rows = await this.dataSource.query(
       `${body} ORDER BY "ecoDate" DESC, "modelName", "modelSuffix"
        OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY`,
-      { ...binds, offset: (page - 1) * limit, limit } as unknown as unknown[],
+      namedBinds({ ...binds, offset: (page - 1) * limit, limit }),
     ) as OracleRow[];
     return { data: rows, total: Number(totals[0]?.total ?? 0), page, limit };
   }
@@ -126,12 +127,12 @@ export class Qc4mService {
         WHERE MODEL_NAME = :modelName AND MODEL_SUFFIX = :modelSuffix
           AND ECO_DATE = TO_DATE(:ecoDate, 'YYYY-MM-DD')
           AND ORGANIZATION_ID = :organizationId`,
-      {
+      namedBinds({
         modelName: dto.modelName,
         modelSuffix: dto.modelSuffix,
         ecoDate: dto.ecoDate.slice(0, 10),
         organizationId,
-      } as unknown as unknown[],
+      }),
     ) as OracleRow[];
     return Number(rows[0]?.cnt ?? 0) > 0;
   }
@@ -169,7 +170,7 @@ export class Qc4mService {
 
     await this.dataSource.query(
       `INSERT INTO IQ_4M_MASTER (${columns.join(', ')}) VALUES (${values.join(', ')})`,
-      binds as unknown as unknown[],
+      namedBinds(binds),
     );
     return { modelName: dto.modelName, modelSuffix: dto.modelSuffix, ecoDate: dto.ecoDate };
   }
@@ -202,7 +203,7 @@ export class Qc4mService {
         WHERE MODEL_NAME = :modelName AND MODEL_SUFFIX = :modelSuffix
           AND ECO_DATE = TO_DATE(:ecoDate, 'YYYY-MM-DD')
           AND ORGANIZATION_ID = :organizationId`,
-      binds as unknown as unknown[],
+      namedBinds(binds),
     );
     return { modelName: dto.modelName, modelSuffix: dto.modelSuffix, ecoDate: dto.ecoDate };
   }
@@ -217,12 +218,12 @@ export class Qc4mService {
         WHERE MODEL_NAME = :modelName AND MODEL_SUFFIX = :modelSuffix
           AND ECO_DATE = TO_DATE(:ecoDate, 'YYYY-MM-DD')
           AND ORGANIZATION_ID = :organizationId`,
-      {
+      namedBinds({
         modelName: dto.modelName,
         modelSuffix: dto.modelSuffix,
         ecoDate: dto.ecoDate.slice(0, 10),
         organizationId,
-      } as unknown as unknown[],
+      }),
     );
     return { deleted: true };
   }

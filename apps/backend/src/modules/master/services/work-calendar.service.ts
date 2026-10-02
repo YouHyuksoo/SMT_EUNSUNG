@@ -443,10 +443,10 @@ export class WorkCalendarService {
       await this.ensureNotConfirmed(from, to, lineCode, organizationId, qr.manager);
       if (lineCode) {
         await qr.manager.delete(ProductLineCalendar, { organizationId, lineCode, planDate: Between(from, to) });
-        if (rows.length > 0) await qr.manager.insert(ProductLineCalendar, rows as ProductLineCalendar[]);
+        if (rows.length > 0) await qr.manager.insert(ProductLineCalendar, rows);
       } else {
         await qr.manager.delete(ProductCompanyCalendar, { organizationId, planDate: Between(from, to) });
-        if (rows.length > 0) await qr.manager.insert(ProductCompanyCalendar, rows as ProductCompanyCalendar[]);
+        if (rows.length > 0) await qr.manager.insert(ProductCompanyCalendar, rows);
       }
       // 부모를 지웠으면 자식도 같은 범위에서 지운다. 남겨두면 새로 만든 일자에 옛 교대조
       // 시간이 그대로 달라붙어 근무분이 사라진 근거로 계산된다.
@@ -511,10 +511,10 @@ export class WorkCalendarService {
       await this.ensureNotConfirmed(from, to, lineCode, organizationId, qr.manager);
       if (lineCode) {
         await qr.manager.delete(ProductLineCalendar, { organizationId, lineCode, planDate: In(planDates) });
-        await qr.manager.insert(ProductLineCalendar, rows as ProductLineCalendar[]);
+        await qr.manager.insert(ProductLineCalendar, rows);
       } else {
         await qr.manager.delete(ProductCompanyCalendar, { organizationId, planDate: In(planDates) });
-        await qr.manager.insert(ProductCompanyCalendar, rows as ProductCompanyCalendar[]);
+        await qr.manager.insert(ProductCompanyCalendar, rows);
       }
       // 부모와 같은 의미로 "보낸 내용이 그 일자의 전부"다 — 요청에 shifts/breaks가 없으면
       // 그 일자의 자식행은 비워진다(교대시간 마스터 기본값으로 되돌아간다).

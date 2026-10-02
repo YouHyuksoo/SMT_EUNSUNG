@@ -35,6 +35,7 @@ import {
   ResultSerialQueryDto,
 } from './result.dto';
 import { like } from './plan-shared';
+import { namedBinds } from '../../common/utils/named-binds.util';
 
 type Row = Record<string, unknown>;
 
@@ -70,7 +71,7 @@ export class ResultService {
         GROUP BY io.MODEL_NAME, io.RUN_NO, io.LINE_CODE, pl.LINE_NAME,
                  io.WORKSTAGE_CODE
         ORDER BY io.MODEL_NAME, io.RUN_NO, io.LINE_CODE, io.WORKSTAGE_CODE`,
-      {
+      namedBinds({
         organizationId,
         dateFrom: query.dateFrom,
         dateTo: query.dateTo,
@@ -78,7 +79,7 @@ export class ResultService {
         runNo: like(query.runNo),
         lineCode: like(query.lineCode),
         workstageCode: like(query.workstageCode),
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return { data: rows, total: rows.length };
   }
@@ -101,7 +102,7 @@ export class ResultService {
           AND io.ORGANIZATION_ID = :organizationId
         GROUP BY io.RUN_NO, io.LINE_CODE, pl.LINE_NAME, io.WORKSTAGE_CODE
         ORDER BY io.LINE_CODE, io.WORKSTAGE_CODE`,
-      { runNo: query.runNo.trim(), organizationId } as unknown as unknown[],
+      namedBinds({ runNo: query.runNo.trim(), organizationId }),
     )) as Row[];
     return { data: rows, total: rows.length };
   }
@@ -121,12 +122,12 @@ export class ResultService {
           AND io.ORGANIZATION_ID = :organizationId
         ORDER BY io.IO_DATE, io.SERIAL_NO
         FETCH FIRST ${SERIAL_LIMIT + 1} ROWS ONLY`,
-      {
+      namedBinds({
         runNo: query.runNo.trim(),
         lineCode: query.lineCode.trim(),
         workstageCode: query.workstageCode.trim(),
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     const truncated = rows.length > SERIAL_LIMIT;
     return {
@@ -245,13 +246,13 @@ export class ResultService {
              )
          )
         ORDER BY "lineCode", "modelName", "runNo"`,
-      {
+      namedBinds({
         reportDate: query.reportDate,
         organizationId,
         lineCode: like(query.lineCode),
         modelName: like(query.modelName),
         runNo: like(query.runNo),
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return { data: rows, total: rows.length };
   }

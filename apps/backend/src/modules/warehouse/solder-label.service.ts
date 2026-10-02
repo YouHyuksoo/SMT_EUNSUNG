@@ -58,6 +58,7 @@ import {
   SolderLabelBarcodeQueryDto,
 } from './warehouse.dto';
 import { affectedRows } from '../../common/utils/affected-rows.util';
+import { namedBinds } from '../../common/utils/named-binds.util';
 
 type Row = Record<string, unknown>;
 
@@ -131,13 +132,13 @@ export class SolderLabelService {
           AND s.ORGANIZATION_ID = :organizationId
         ORDER BY s.RECEIPT_DATE DESC, s.RECEIPT_SLIP_NO
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         dateFrom: query.dateFrom,
         dateTo: query.dateTo,
         itemCode: likePrefix(query.itemCode),
         slipNo: likePrefix(query.slipNo),
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }
@@ -174,11 +175,11 @@ export class SolderLabelService {
           AND b.ORGANIZATION_ID = :organizationId
         ORDER BY b.ITEM_BARCODE
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         slipNo: query.slipNo,
         itemCode: query.itemCode,
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }
@@ -203,7 +204,7 @@ export class SolderLabelService {
          FROM ID_ITEM i
         WHERE i.ITEM_CODE = :itemCode
           AND i.ORGANIZATION_ID = :organizationId`,
-      { itemCode, organizationId } as unknown as unknown[],
+      namedBinds({ itemCode, organizationId }),
     )) as Row[];
     const item = rows[0] ?? null;
     const typeCode = solderTypeCode(item?.solderType as string);
@@ -235,7 +236,7 @@ export class SolderLabelService {
          FROM IM_ITEM_RECEIPT_BARCODE b
         WHERE b.ITEM_BARCODE LIKE :typeCode || TO_CHAR(SYSDATE, 'YYMMDD') || '%'
           AND b.ORGANIZATION_ID = :organizationId`,
-      { typeCode: typeCode || '~none~', organizationId } as unknown as unknown[],
+      namedBinds({ typeCode: typeCode || '~none~', organizationId }),
     )) as Row[];
     return {
       lastSequence: Number(rows[0]?.lastSequence ?? 0),
@@ -253,7 +254,7 @@ export class SolderLabelService {
       `SELECT ${name}.NEXTVAL AS "seq"
          FROM DUAL
       CONNECT BY LEVEL <= :count`,
-      { count } as unknown as unknown[],
+      namedBinds({ count }),
     )) as Row[];
     return rows.map((r) => Number(r.seq));
   }
@@ -299,7 +300,7 @@ export class SolderLabelService {
            FROM ID_ITEM i
           WHERE i.ITEM_CODE = :itemCode
             AND i.ORGANIZATION_ID = :organizationId`,
-        { itemCode: dto.itemCode, organizationId } as unknown as unknown[],
+        namedBinds({ itemCode: dto.itemCode, organizationId }),
       )) as Row[];
       if (items.length === 0) {
         throw new BadRequestException(`품목을 찾을 수 없습니다: ${dto.itemCode}`);
@@ -337,7 +338,7 @@ export class SolderLabelService {
             '${FIXED.receiptType}', '${FIXED.receiptStatus}',
             :supplierCode, :supplierCode,
             :organizationId, SYSDATE, :userId, SYSDATE, :userId)`,
-        {
+        namedBinds({
           slipNo,
           slipSequence: slipSeq,
           itemCode: dto.itemCode,
@@ -348,7 +349,7 @@ export class SolderLabelService {
           supplierCode: dto.supplierCode ?? null,
           organizationId,
           userId,
-        } as unknown as unknown[],
+        }),
       );
 
       const lotSeqs = await this.nextSequences(
@@ -391,7 +392,7 @@ export class SolderLabelService {
                       FROM IM_ITEM_RECEIPT_BARCODE x
                      WHERE x.ITEM_BARCODE = :itemBarcode
                        AND x.ORGANIZATION_ID = :organizationId)`,
-          {
+          namedBinds({
             itemBarcode: barcodes[i],
             lotNo,
             scanQty: quantities[i],
@@ -401,7 +402,7 @@ export class SolderLabelService {
             supplierCode: dto.supplierCode ?? null,
             organizationId,
             userId,
-          } as unknown as unknown[],
+          }),
         );
         const affected = Number(affectedRows(result) ?? 0);
         if (affected !== 1) {

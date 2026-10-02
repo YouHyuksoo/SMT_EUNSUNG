@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { ProductInventoryQueryDto } from '../dto/product-inventory.dto';
+import { namedBinds } from '../../../common/utils/named-binds.util';
 
 type OracleRow = Record<string, unknown>;
 
@@ -41,8 +42,8 @@ export class ProductInventoryService {
       OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY
     `;
     const count = `SELECT COUNT(*) AS "total", NVL(SUM(inv.QTY), 0) AS "qtyTotal" ${from}`;
-    const rows = await this.dataSource.query(select, pageBinds as unknown as unknown[]) as OracleRow[];
-    const totals = await this.dataSource.query(count, binds as unknown as unknown[]) as OracleRow[];
+    const rows = await this.dataSource.query(select, namedBinds(pageBinds)) as OracleRow[];
+    const totals = await this.dataSource.query(count, namedBinds(binds)) as OracleRow[];
     return {
       data: rows,
       total: Number(totals[0]?.total ?? 0),

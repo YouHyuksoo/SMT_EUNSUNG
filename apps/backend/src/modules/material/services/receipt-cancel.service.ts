@@ -19,6 +19,7 @@ import {
   ReceiptCancelQueryDto,
   ReceiptCancelTargetDto,
 } from '../dto/receipt-cancel.dto';
+import { namedBinds } from '../../../common/utils/named-binds.util';
 
 type OracleRow = Record<string, unknown>;
 
@@ -49,9 +50,9 @@ export class ReceiptCancelService {
     const offset = (query.page - 1) * query.limit;
     const rows = await this.dataSource.query(
       select,
-      { ...binds, offset, limit: query.limit } as unknown as unknown[],
+      namedBinds({ ...binds, offset, limit: query.limit }),
     ) as OracleRow[];
-    const totals = await this.dataSource.query(count, binds as unknown as unknown[]) as OracleRow[];
+    const totals = await this.dataSource.query(count, namedBinds(binds)) as OracleRow[];
     return { data: rows, total: Number(totals[0]?.total ?? 0), page: query.page, limit: query.limit };
   }
 
@@ -185,13 +186,13 @@ export class ReceiptCancelService {
              RAISE_APPLICATION_ERROR(-20001, 'RECEIPT_CANCEL_FAILED:' || v_result);
            END IF;
          END;`,
-        {
+        namedBinds({
           receiptDate,
           receiptSequence: target.receiptSequence,
           cancelDate,
           organizationId,
           userId,
-        } as unknown as unknown[],
+        }),
       );
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : String(error);

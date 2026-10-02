@@ -18,6 +18,7 @@ import { DataSource } from 'typeorm';
 import { likePrefix } from '@smt/shared';
 import { limited, ROW_LIMIT } from '../../shared/row-limit';
 import { RecycleCheckQueryDto } from './warehouse.dto';
+import { namedBinds } from '../../common/utils/named-binds.util';
 
 type Row = Record<string, unknown>;
 
@@ -57,14 +58,14 @@ export class RecycleCheckService {
           AND r.ORGANIZATION_ID = :organizationId
         ORDER BY r.CHECK_DATE DESC, r.CHECK_SEQUENCE
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         dateFrom: query.dateFrom,
         dateTo: query.dateTo,
         lineCode: likePrefix(query.lineCode),
         checkStatus: likePrefix(query.checkStatus),
         scanPartName: likePrefix(query.scanPartName),
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }

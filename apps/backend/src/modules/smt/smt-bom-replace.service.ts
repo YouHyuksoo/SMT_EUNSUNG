@@ -24,6 +24,7 @@ import {
   SmtBomReplaceUpsertDto,
 } from './smt-bom-replace.dto';
 import { affectedRows } from '../../common/utils/affected-rows.util';
+import { namedBinds } from '../../common/utils/named-binds.util';
 
 const EDITABLE: Array<[column: string, field: keyof SmtBomReplaceUpsertDto]> = [
   ['ITEM_UNIT_QTY', 'itemUnitQty'],
@@ -101,14 +102,14 @@ export class SmtBomReplaceService {
           AND NVL(r.MACHINE, '*') LIKE :machine
           ${effectiveOnly ? 'AND r.DATESET <= TRUNC(SYSDATE) AND r.DATEEND >= TRUNC(SYSDATE)' : ''}
         ORDER BY r.MODEL_NAME, r.LINE_CODE, r.LOCATION_CODE, r.SORT_SEQUENCE`,
-      {
+      namedBinds({
           organizationId,
           modelName: this.like(query.modelName),
           childItemCode: this.like(query.childItemCode),
           replaceItemCode: this.like(query.replaceItemCode),
           lineCode: this.like(query.lineCode),
           machine: this.like(query.machine),
-        } as unknown as unknown[],
+        }),
     )) as Record<string, unknown>[];
     return { data: rows, total: rows.length };
   }
@@ -136,7 +137,7 @@ export class SmtBomReplaceService {
     return this.tx.run(async (qr) => {
       const [dup] = (await qr.query(
         `SELECT COUNT(*) AS CNT FROM ID_ENG_BOM_SMT_REPLACE WHERE ${this.KEY_WHERE}`,
-        [this.keyBinds(dto, organizationId)] as unknown as unknown[],
+        namedBinds([this.keyBinds(dto, organizationId)]),
       )) as { CNT: number }[];
       if (Number(dup?.CNT ?? 0) > 0) {
         throw new ConflictException('이미 있는 대체 BOM 입니다.');
@@ -170,7 +171,7 @@ export class SmtBomReplaceService {
       await qr.query(
         `INSERT INTO ID_ENG_BOM_SMT_REPLACE (${columns.join(', ')})
          VALUES (${values.join(', ')})`,
-        binds as unknown as unknown[],
+        namedBinds(binds),
       );
       return { created: 1 };
     });
@@ -197,7 +198,7 @@ export class SmtBomReplaceService {
 
       const result = await qr.query(
         `UPDATE ID_ENG_BOM_SMT_REPLACE SET ${sets.join(', ')} WHERE ${this.KEY_WHERE}`,
-        binds as unknown as unknown[],
+        namedBinds(binds),
       );
       const affected = Number(affectedRows(result) ?? 0);
       if (affected === 0) throw new NotFoundException('대체 BOM 을 찾을 수 없습니다.');
@@ -209,7 +210,7 @@ export class SmtBomReplaceService {
     return this.tx.run(async (qr) => {
       const result = await qr.query(
         `DELETE FROM ID_ENG_BOM_SMT_REPLACE WHERE ${this.KEY_WHERE}`,
-        [this.keyBinds(key, organizationId)] as unknown as unknown[],
+        namedBinds([this.keyBinds(key, organizationId)]),
       );
       const affected = Number(affectedRows(result) ?? 0);
       if (affected === 0) throw new NotFoundException('대체 BOM 을 찾을 수 없습니다.');

@@ -39,6 +39,7 @@ import { limited, ROW_LIMIT } from '../../shared/row-limit';
 import { TransactionService } from '../../shared/transaction.service';
 import { BarcodeDivideDto, BarcodeDivideQueryDto } from './warehouse.dto';
 import { affectedRows } from '../../common/utils/affected-rows.util';
+import { namedBinds } from '../../common/utils/named-binds.util';
 
 type Row = Record<string, unknown>;
 
@@ -120,14 +121,14 @@ export class BarcodeDivideService {
           AND b.ORGANIZATION_ID = :organizationId
         ORDER BY b.LOT_DIVIDE_DATE DESC, b.LOT_DIVIDE_SEQUENCE, b.ITEM_BARCODE
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         dateFrom: query.dateFrom,
         dateTo: query.dateTo,
         itemCode: likePrefix(query.itemCode),
         lotNo: likePrefix(query.lotNo),
         originLotNo: likePrefix(query.originLotNo),
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }
@@ -146,7 +147,7 @@ export class BarcodeDivideService {
               F_GET_LOT_NO_FROM_BARCODE(
                 F_GET_PREPARE_BARCODE(:barcode)) AS "lotNo"
          FROM DUAL`,
-      { barcode } as unknown as unknown[],
+      namedBinds({ barcode }),
     )) as Row[])[0] ?? {};
     const itemCode = (parsed.itemCode as string) || '';
     const lotNo = (parsed.lotNo as string) || '';
@@ -199,7 +200,7 @@ export class BarcodeDivideService {
         WHERE b.ITEM_CODE = :itemCode
           AND b.LOT_NO = :lotNo
           AND b.ORGANIZATION_ID = :organizationId`,
-      { itemCode, lotNo, organizationId } as unknown as unknown[],
+      namedBinds({ itemCode, lotNo, organizationId }),
     )) as Row[];
     const info = rows[0] ?? null;
 
@@ -266,7 +267,7 @@ export class BarcodeDivideService {
         `SELECT ${SEQUENCES.materialBarcode}.NEXTVAL AS "seq"
            FROM DUAL
         CONNECT BY LEVEL <= :count`,
-        { count: plan.newPieces.length } as unknown as unknown[],
+        namedBinds({ count: plan.newPieces.length }),
       )) as Row[]).map((r) => Number(r.seq));
 
       // PB 분할사유: 릴분할이면 ' REEL' 이 붙는다.
@@ -317,7 +318,7 @@ export class BarcodeDivideService {
                      WHERE x.ITEM_CODE = :itemCode
                        AND x.LOT_NO = :lotNo
                        AND x.ORGANIZATION_ID = :organizationId)`,
-          {
+          namedBinds({
             itemBarcode,
             itemCode: lookup.itemCode,
             lotNo,
@@ -350,7 +351,7 @@ export class BarcodeDivideService {
             mslPassedTime: info.mslPassedTime ?? null,
             mslRemainTime: info.mslRemainTime ?? null,
             organizationId,
-          } as unknown as unknown[],
+          }),
         );
         const affected = Number(
           affectedRows(inserted) ?? 0,
@@ -391,7 +392,7 @@ export class BarcodeDivideService {
                 '${FIXED.parentItemCode}', :materialMfs,
                 '${FIXED.closeYn}', :divideSequence, :feederLocationCode,
                 TO_DATE(:receiptCompareDate, 'YYYY-MM-DD'), :inventoryType)`,
-            {
+            namedBinds({
               itemCode: lookup.itemCode,
               organizationId,
               mfs: side.mfs,
@@ -406,7 +407,7 @@ export class BarcodeDivideService {
               feederLocationCode: (info.feederLocationCode as string) ?? null,
               receiptCompareDate: (info.receiptCompareDate as string) ?? null,
               inventoryType: (info.inventoryType as string) ?? null,
-            } as unknown as unknown[],
+            }),
           );
           issueRows += Number(affectedRows(issued) ?? 0);
         }
@@ -432,7 +433,7 @@ export class BarcodeDivideService {
           WHERE ITEM_CODE = :itemCode
             AND LOT_NO = :lotNo
             AND ORGANIZATION_ID = :organizationId`,
-        {
+        namedBinds({
           originalPiece: plan.originalPiece,
           divideSequence,
           lotNo: lookup.lotNo,
@@ -442,7 +443,7 @@ export class BarcodeDivideService {
           userId,
           itemCode: lookup.itemCode,
           organizationId,
-        } as unknown as unknown[],
+        }),
       );
       const originalRows = Number(
         affectedRows(updated) ?? 0,

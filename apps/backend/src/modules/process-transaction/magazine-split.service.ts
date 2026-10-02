@@ -31,6 +31,7 @@ import { limited, ROW_LIMIT } from '../../shared/row-limit';
 import { TransactionService } from '../../shared/transaction.service';
 import { MagazineSplitDto, MagazineSplitQueryDto } from './magazine-label.dto';
 import { affectedRows } from '../../common/utils/affected-rows.util';
+import { namedBinds } from '../../common/utils/named-binds.util';
 
 type Row = Record<string, unknown>;
 
@@ -77,11 +78,11 @@ export class MagazineSplitService {
           AND io.PARENT_MAGAZINE_LABEL_NO <> '*'
         ORDER BY io.RECEIPT_DATE DESC, io.MAGAZINE_SET_NO, io.MAGAZINE_LABEL_NO
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         dateFrom: query.dateFrom,
         dateTo: query.dateTo,
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }
@@ -108,7 +109,7 @@ export class MagazineSplitService {
                AND ln.ORGANIZATION_ID = io.ORGANIZATION_ID
         WHERE io.MAGAZINE_LABEL_NO = :magazineLabelNo
           AND io.ORGANIZATION_ID = :organizationId`,
-      { magazineLabelNo, organizationId } as unknown as unknown[],
+      namedBinds({ magazineLabelNo, organizationId }),
     )) as Row[];
 
     const label = rows[0] ?? null;
@@ -178,7 +179,7 @@ export class MagazineSplitService {
                 ${SEQUENCES.receipt}.NEXTVAL AS "receiptSeq"
            FROM DUAL
         CONNECT BY LEVEL <= :count`,
-        { count: plan.pieces.length } as unknown as unknown[],
+        namedBinds({ count: plan.pieces.length }),
       )) as Row[];
 
       const created: { magazineLabelNo: string; labelType: string; qty: number }[] = [];
@@ -219,7 +220,7 @@ export class MagazineSplitService {
                     SELECT 1 FROM IP_PRODUCT_RUN_CARD_IO x
                      WHERE x.MAGAZINE_LABEL_NO = :magazineLabelNo
                        AND x.ORGANIZATION_ID = :organizationId)`,
-          {
+          namedBinds({
             runNo: String(label.runNo ?? ''),
             receiptSequence,
             itemCode: String(label.itemCode ?? ''),
@@ -237,7 +238,7 @@ export class MagazineSplitService {
             destroyQty: piece.labelType === 'D' ? piece.qty : 0,
             magazineSetNo,
             parentMagazineLabelNo: dto.magazineLabelNo,
-          } as unknown as unknown[],
+          }),
         );
         const affected = Number(
           affectedRows(result) ?? 0,
@@ -282,10 +283,10 @@ export class MagazineSplitService {
            FROM IP_PRODUCT_RUN_CARD_IO io
           WHERE io.MAGAZINE_LABEL_NO = :magazineLabelNo
             AND io.ORGANIZATION_ID = :organizationId`,
-        {
+        namedBinds({
           magazineLabelNo: dto.magazineLabelNo,
           organizationId,
-        } as unknown as unknown[],
+        }),
       );
       const backedRows = Number(
         affectedRows(backed) ?? 0,
@@ -298,10 +299,10 @@ export class MagazineSplitService {
         `DELETE FROM IP_PRODUCT_RUN_CARD_IO
           WHERE MAGAZINE_LABEL_NO = :magazineLabelNo
             AND ORGANIZATION_ID = :organizationId`,
-        {
+        namedBinds({
           magazineLabelNo: dto.magazineLabelNo,
           organizationId,
-        } as unknown as unknown[],
+        }),
       );
       const deletedRows = Number(
         affectedRows(deleted) ?? 0,
@@ -313,11 +314,11 @@ export class MagazineSplitService {
             SET TRANSFER_MAGAZINE_LABEL_NO = :parentMagazineLabelNo
           WHERE MAGAZINE_SET_NO = :magazineSetNo
             AND ORGANIZATION_ID = :organizationId`,
-        {
+        namedBinds({
           parentMagazineLabelNo: dto.magazineLabelNo,
           magazineSetNo,
           organizationId,
-        } as unknown as unknown[],
+        }),
       );
 
       // ⑤ 공정 재고를 같이 가른다. PB 와 같은 프로시저를 그대로 부른다.
@@ -335,10 +336,10 @@ export class MagazineSplitService {
              RAISE_APPLICATION_ERROR(-20004, 'WS_IO_SPLIT_NG:' || v_msg);
            END IF;
          END;`,
-        {
+        namedBinds({
           organizationId,
           magazineLabelNo: dto.magazineLabelNo,
-        } as unknown as unknown[],
+        }),
       ).catch((error: unknown) => {
         const message = error instanceof Error ? error.message : String(error);
         const matched = /WS_IO_SPLIT_NG:(.*)/.exec(message);

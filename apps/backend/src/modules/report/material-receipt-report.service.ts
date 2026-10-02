@@ -34,6 +34,7 @@ import {
   MaterialReceiptReportQueryDto,
   MaterialReceiptSumQueryDto,
 } from './material-report.dto';
+import { namedBinds } from '../../common/utils/named-binds.util';
 
 type Row = Record<string, unknown>;
 
@@ -116,7 +117,7 @@ export class MaterialReceiptReportService {
           ${divideWhere}
         ORDER BY b.SCAN_DATE DESC, b.ITEM_BARCODE
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      binds as unknown as unknown[],
+      namedBinds(binds),
     )) as Row[];
     return limited(rows);
   }
@@ -215,12 +216,12 @@ export class MaterialReceiptReportService {
           AND NVL(i.ITEM_CLASS, '*') LIKE :itemClass ESCAPE '\\'`)}
         ORDER BY r.RECEIPT_DATE DESC, r.RECEIPT_SEQUENCE
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         ...this.receiptBinds(query, organizationId),
         receiptType: likePrefix(query.receiptType),
         locationCode: likePrefix(query.locationCode),
         itemClass: likePrefix(query.itemClass),
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }
@@ -284,7 +285,7 @@ export class MaterialReceiptReportService {
         WHERE ${this.receiptWhere(returnWhere)}
         ORDER BY r.SUPPLIER_CODE, r.RECEIPT_DATE DESC, r.RECEIPT_SEQUENCE
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      binds as unknown as unknown[],
+      namedBinds(binds),
     )) as Row[];
     return limited(rows);
   }
@@ -316,12 +317,12 @@ export class MaterialReceiptReportService {
                  i.ITEM_NAME, i.ITEM_SPEC, i.ITEM_UOM
         ORDER BY r.ITEM_CODE, 1
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         dateFrom: query.dateFrom,
         dateTo: query.dateTo,
         itemCode: likePrefix(query.itemCode),
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }
@@ -391,7 +392,7 @@ export class MaterialReceiptReportService {
                  r.RECEIPT_TYPE, r.INVOICE_NO${contactGroup}
         ORDER BY r.SUPPLIER_CODE, r.ITEM_CODE
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      this.sumBinds(query, organizationId) as unknown as unknown[],
+      namedBinds(this.sumBinds(query, organizationId)),
     )) as Row[];
     return limited(rows);
   }
@@ -418,13 +419,13 @@ export class MaterialReceiptReportService {
         GROUP BY r.SUPPLIER_CODE, s.SUPPLIER_NAME, r.RECEIPT_TYPE, r.INVOICE_NO
         ORDER BY r.SUPPLIER_CODE
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         dateFrom: query.dateFrom,
         dateTo: query.dateTo,
         supplierCode: likePrefix(query.supplierCode),
         invoiceNo: likePrefix(query.invoiceNo),
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }
@@ -447,13 +448,13 @@ export class MaterialReceiptReportService {
         GROUP BY r.LOCATION_CODE, r.RECEIPT_TYPE, r.ORGANIZATION_ID
         ORDER BY r.LOCATION_CODE
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         dateFrom: query.dateFrom,
         dateTo: query.dateTo,
         locationCode: likePrefix(query.locationCode),
         lang: query.lang ?? 'KOR',
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }
@@ -512,14 +513,14 @@ export class MaterialReceiptReportService {
        )
        ORDER BY "itemCode", "txnKind", "txnDate"
        FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         dateFrom: query.dateFrom,
         dateTo: query.dateTo,
         supplierCode: likePrefix(query.supplierCode),
         itemCode: likePrefix(query.itemCode),
         lang: query.lang ?? 'KOR',
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }

@@ -19,6 +19,7 @@ import {
   JigMasterQueryDto,
   JigMasterUpsertDto,
 } from './jig-master.dto';
+import { namedBinds } from '../../common/utils/named-binds.util';
 
 type OracleRow = Record<string, unknown>;
 
@@ -132,20 +133,20 @@ export class JigMasterService {
     const limit = query.limit ?? 500;
     const totals = await this.dataSource.query(
       `SELECT COUNT(*) AS "total" FROM (${body}) source_rows`,
-      { ...binds } as unknown as unknown[],
+      namedBinds({ ...binds }),
     ) as OracleRow[];
     // PB 정렬: jig_type A, jig_status D, jig_code A, jig_lot_no A
     const rows = await this.dataSource.query(
       `${body} ORDER BY "jigType", "jigStatus" DESC, "jigCode", "jigLotNo"
        OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY`,
-      { ...binds, offset: (page - 1) * limit, limit } as unknown as unknown[],
+      namedBinds({ ...binds, offset: (page - 1) * limit, limit }),
     ) as OracleRow[];
     return { data: rows, total: Number(totals[0]?.total ?? 0), page, limit };
   }
 
   /** 적용모델 목록 — PB d_mcn_jig_apply_model_lst */
   async findApplyModels(query: JigApplyModelQueryDto, organizationId: number) {
-    return this.dataSource.query(
+    return this.dataSource.query<OracleRow[]>(
       `SELECT JIG_CODE AS "jigCode", JIG_LOT_NO AS "jigLotNo", ITEM_CODE AS "itemCode",
               APPLY_SMT_MODEL_NAME AS "applySmtModelName",
               ENTER_BY AS "enterBy", ENTER_DATE AS "enterDate",
@@ -154,15 +155,15 @@ export class JigMasterService {
         WHERE JIG_CODE = :jigCode AND JIG_LOT_NO = :jigLotNo
           AND ORGANIZATION_ID = :organizationId
         ORDER BY ITEM_CODE`,
-      { jigCode: query.jigCode, jigLotNo: query.jigLotNo, organizationId } as unknown as unknown[],
-    ) as Promise<OracleRow[]>;
+      namedBinds({ jigCode: query.jigCode, jigLotNo: query.jigLotNo, organizationId }),
+    );
   }
 
   private async exists(jigCode: string, jigLotNo: string, organizationId: number) {
     const rows = await this.dataSource.query(
       `SELECT COUNT(*) AS "cnt" FROM IMCN_JIG
         WHERE JIG_CODE = :jigCode AND JIG_LOT_NO = :jigLotNo AND ORGANIZATION_ID = :organizationId`,
-      { jigCode, jigLotNo, organizationId } as unknown as unknown[],
+      namedBinds({ jigCode, jigLotNo, organizationId }),
     ) as OracleRow[];
     return Number(rows[0]?.cnt ?? 0) > 0;
   }
@@ -192,7 +193,7 @@ export class JigMasterService {
 
     await this.dataSource.query(
       `INSERT INTO IMCN_JIG (${columns.join(', ')}) VALUES (${values.join(', ')})`,
-      binds as unknown as unknown[],
+      namedBinds(binds),
     );
     return { jigCode: dto.jigCode, jigLotNo: dto.jigLotNo };
   }
@@ -219,7 +220,7 @@ export class JigMasterService {
     await this.dataSource.query(
       `UPDATE IMCN_JIG SET ${sets.join(', ')}
         WHERE JIG_CODE = :jigCode AND JIG_LOT_NO = :jigLotNo AND ORGANIZATION_ID = :organizationId`,
-      binds as unknown as unknown[],
+      namedBinds(binds),
     );
     return { jigCode: dto.jigCode, jigLotNo: dto.jigLotNo };
   }
@@ -246,7 +247,7 @@ export class JigMasterService {
                RAISE_APPLICATION_ERROR(-20002, 'APPLY_MODEL_COPY_FAILED:' || v_result);
              END IF;
            END;`,
-          { jigType: dto.jigType, fromJigLot: from, toJigLot: to } as unknown as unknown[],
+          namedBinds({ jigType: dto.jigType, fromJigLot: from, toJigLot: to }),
         );
       } catch (error: unknown) {
         const message = error instanceof Error ? error.message : String(error);

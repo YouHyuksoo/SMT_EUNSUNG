@@ -20,6 +20,7 @@ import { Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { limited, ROW_LIMIT } from '../../../shared/row-limit';
 import { RepairQueryDto } from '../dto/repair-query.dto';
+import { namedBinds } from '../../../common/utils/named-binds.util';
 
 type Row = Record<string, unknown>;
 
@@ -68,14 +69,14 @@ export class RepairQueryService {
         GROUP BY ${groupKey}, qc.MODEL_NAME, qc.BAD_REASON_CODE, qc.ORGANIZATION_ID
         ORDER BY 1 DESC, 6 DESC
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         organizationId,
         dateFrom: query.dateFrom,
         dateTo: query.dateTo,
         lineCode: this.like(query.lineCode),
         modelName: this.like(query.modelName),
         lang: query.lang ?? 'KOR',
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }

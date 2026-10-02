@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { EquipmentResultQueryDto } from '../dto/equipment-result-query.dto';
+import { namedBinds } from '../../../common/utils/named-binds.util';
 
 interface ResultDefinition {
   table: string;
@@ -79,7 +80,7 @@ export class EquipmentResultQueryService {
          ORDER BY t.${definition.dateColumn} DESC
       )
       WHERE ROWNUM <= :limit`;
-    const rows = await this.dataSource.query(sql, { ...binds } as unknown as unknown[]);
+    const rows = await this.dataSource.query(sql, namedBinds({ ...binds }));
     const data = rows.map((row: Record<string, unknown>) => Object.fromEntries(
       Object.entries(row).map(([key, value]) => [toCamelCase(key), value]),
     ));

@@ -13,6 +13,7 @@
 import { Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { MoldInventoryDetailQueryDto, MoldInventoryQueryDto } from './mold-inventory.dto';
+import { namedBinds } from '../../common/utils/named-binds.util';
 
 type OracleRow = Record<string, unknown>;
 
@@ -113,12 +114,12 @@ export class MoldInventoryService {
     const limit = query.limit ?? 500;
     const totals = await this.dataSource.query(
       `SELECT COUNT(*) AS "total" FROM (${body}) source_rows`,
-      { ...binds } as unknown as unknown[],
+      namedBinds({ ...binds }),
     ) as OracleRow[];
     const rows = await this.dataSource.query(
       `${body} ORDER BY "moldCode", "moldVersion", "moldSetSerial"
        OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY`,
-      { ...binds, offset: (page - 1) * limit, limit } as unknown as unknown[],
+      namedBinds({ ...binds, offset: (page - 1) * limit, limit }),
     ) as OracleRow[];
     return { data: rows, total: Number(totals[0]?.total ?? 0), page, limit };
   }
@@ -128,7 +129,7 @@ export class MoldInventoryService {
    * PB 가 최근 30일로 못박아 놨다(`issue_date >= sysdate - 30`).
    */
   async findIssueHistory(query: MoldInventoryDetailQueryDto, organizationId: number) {
-    return this.dataSource.query(
+    return this.dataSource.query<OracleRow[]>(
       `SELECT i.ISSUE_DATE AS "issueDate", i.ISSUE_SEQUENCE AS "issueSequence",
               i.MOLD_CODE AS "moldCode",
               i.MOLD_VERSION AS "moldVersion", i.MOLD_SET_SERIAL AS "moldSetSerial",
@@ -163,8 +164,8 @@ export class MoldInventoryService {
           AND i.ISSUE_DATE >= SYSDATE - 30
           AND i.ORGANIZATION_ID = :organizationId
         ORDER BY i.ISSUE_DATE DESC, i.ISSUE_SEQUENCE DESC`,
-      { moldCode: query.moldCode, organizationId } as unknown as unknown[],
-    ) as Promise<OracleRow[]>;
+      namedBinds({ moldCode: query.moldCode, organizationId }),
+    );
   }
 
   /**
@@ -172,7 +173,7 @@ export class MoldInventoryService {
    * PB 는 미처리(`REQUEST_STATUS = 'R'`)만 본다.
    */
   async findRequests(query: MoldInventoryDetailQueryDto, organizationId: number) {
-    return this.dataSource.query(
+    return this.dataSource.query<OracleRow[]>(
       `SELECT r.MOLD_CODE AS "moldCode",
               r.MOLD_VERSION AS "moldVersion", r.MOLD_SET_SERIAL AS "moldSetSerial",
               r.REQUEST_DATE AS "requestDate", r.REQUEST_SEQUENCE AS "requestSequence",
@@ -190,7 +191,7 @@ export class MoldInventoryService {
           AND r.REQUEST_STATUS = 'R'
           AND r.ORGANIZATION_ID = :organizationId
         ORDER BY r.REQUEST_DATE DESC, r.REQUEST_SEQUENCE DESC`,
-      { moldCode: query.moldCode, organizationId } as unknown as unknown[],
-    ) as Promise<OracleRow[]>;
+      namedBinds({ moldCode: query.moldCode, organizationId }),
+    );
   }
 }

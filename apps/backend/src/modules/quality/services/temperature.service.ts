@@ -16,6 +16,7 @@
 import { Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { TemperatureCheckQueryDto, TemperatureRawQueryDto } from '../dto/temperature.dto';
+import { namedBinds } from '../../../common/utils/named-binds.util';
 
 type OracleRow = Record<string, unknown>;
 
@@ -29,7 +30,7 @@ export class TemperatureService {
 
   /** 노드 목록 — 조회조건 드롭다운용. 설비명과 기준범위를 함께 내린다. */
   async findNodes(organizationId: number) {
-    return this.dataSource.query(
+    return this.dataSource.query<OracleRow[]>(
       `SELECT d.NODEID AS "nodeId", m.MACHINE_CODE AS "machineCode",
               m.MACHINE_NAME AS "machineName",
               m.MIN_TEMP_VALUE AS "minTempValue", m.MAX_TEMP_VALUE AS "maxTempValue",
@@ -45,7 +46,7 @@ export class TemperatureService {
           AND NVL(m.MACHINE_STATUS_CODE, '*') <> 'S'
         ORDER BY m.MACHINE_NAME NULLS LAST, d.NODEID`,
       [],
-    ) as Promise<OracleRow[]>;
+    );
   }
 
   /** 원시데이터 — PB d_com_tempreture_raw_lst */
@@ -87,12 +88,12 @@ export class TemperatureService {
     const limit = query.limit ?? 1000;
     const totals = await this.dataSource.query(
       `SELECT COUNT(*) AS "total" FROM (${body}) source_rows`,
-      { ...binds } as unknown as unknown[],
+      namedBinds({ ...binds }),
     ) as OracleRow[];
     const rows = await this.dataSource.query(
       `${body} ORDER BY "gatherDate" DESC
        OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY`,
-      { ...binds, offset: (page - 1) * limit, limit } as unknown as unknown[],
+      namedBinds({ ...binds, offset: (page - 1) * limit, limit }),
     ) as OracleRow[];
     return { data: rows, total: Number(totals[0]?.total ?? 0), page, limit };
   }
@@ -137,12 +138,12 @@ export class TemperatureService {
     const limit = query.limit ?? 500;
     const totals = await this.dataSource.query(
       `SELECT COUNT(*) AS "total" FROM (${body}) source_rows`,
-      { ...binds } as unknown as unknown[],
+      namedBinds({ ...binds }),
     ) as OracleRow[];
     const rows = await this.dataSource.query(
       `${body} ORDER BY "confirmDate" DESC, "machineCode", "checkSequence" DESC
        OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY`,
-      { ...binds, offset: (page - 1) * limit, limit } as unknown as unknown[],
+      namedBinds({ ...binds, offset: (page - 1) * limit, limit }),
     ) as OracleRow[];
     return { data: rows, total: Number(totals[0]?.total ?? 0), page, limit };
   }

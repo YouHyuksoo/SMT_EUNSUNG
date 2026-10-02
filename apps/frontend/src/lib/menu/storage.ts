@@ -138,7 +138,7 @@ const DEFAULT_SETTINGS = DEFAULT_MENU_SETTINGS;
  * @example
  * ```ts
  * const settings = loadSettings();
- * console.log(settings.tunnelShape); // 'triangle'
+ * settings.tunnelShape; // 'triangle'
  * ```
  */
 export function loadSettings(): MenuSettings {

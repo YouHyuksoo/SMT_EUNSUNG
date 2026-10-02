@@ -22,6 +22,7 @@ import {
   KittingScanDto,
 } from './kitting.dto';
 import { like } from './plan-shared';
+import { namedBinds } from '../../common/utils/named-binds.util';
 
 type Row = Record<string, unknown>;
 
@@ -67,11 +68,11 @@ export class KittingService {
           AND NVL(c.RUN_NO, '*') LIKE :runNo
           AND NVL(c.MFS_GROUP_NO, '*') LIKE :mfsGroupNo
         ORDER BY c.RUN_DATE DESC, c.RUN_NO DESC`,
-      {
+      namedBinds({
         organizationId,
         runNo: like(query.runNo),
         mfsGroupNo: like(query.mfsGroupNo),
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return { data: rows, total: rows.length };
   }
@@ -103,7 +104,7 @@ export class KittingService {
         WHERE b.RUN_NO = :runNo
           AND b.ORGANIZATION_ID = :organizationId
         ORDER BY b.SERIAL_NO`,
-      { runNo: query.runNo.trim(), organizationId } as unknown as unknown[],
+      namedBinds({ runNo: query.runNo.trim(), organizationId }),
     )) as Row[];
     return { data: rows, total: rows.length };
   }
@@ -129,7 +130,7 @@ export class KittingService {
              RAISE_APPLICATION_ERROR(-20041, '${marker}:' || v_result);
            END IF;
          END;`,
-        binds as unknown as unknown[],
+        namedBinds(binds),
       )
       .catch((error: unknown) => {
         const message = error instanceof Error ? error.message : String(error);
@@ -180,7 +181,7 @@ export class KittingService {
       const rows = (await qr.query(
         `SELECT COUNT(*) AS CNT FROM IP_PRODUCT_2D_BARCODE
           WHERE RUN_NO = :runNo AND ORGANIZATION_ID = :organizationId`,
-        { runNo: dto.runNo.trim(), organizationId } as unknown as unknown[],
+        namedBinds({ runNo: dto.runNo.trim(), organizationId }),
       )) as Array<{ CNT: number }>;
       return { serialNo, pidCount: Number(rows?.[0]?.CNT ?? 0) };
     });
@@ -213,7 +214,7 @@ export class KittingService {
       const rows = (await qr.query(
         `SELECT COUNT(*) AS CNT FROM IP_PRODUCT_2D_BARCODE
           WHERE RUN_NO = :runNo AND ORGANIZATION_ID = :organizationId`,
-        { runNo: dto.runNo.trim(), organizationId } as unknown as unknown[],
+        namedBinds({ runNo: dto.runNo.trim(), organizationId }),
       )) as Array<{ CNT: number }>;
       return { serialNo: dto.serialNo.trim(), pidCount: Number(rows?.[0]?.CNT ?? 0) };
     });
@@ -225,7 +226,7 @@ export class KittingService {
       const before = (await qr.query(
         `SELECT COUNT(*) AS CNT FROM IP_PRODUCT_2D_BARCODE
           WHERE RUN_NO = :runNo AND ORGANIZATION_ID = :organizationId`,
-        { runNo: dto.runNo.trim(), organizationId } as unknown as unknown[],
+        namedBinds({ runNo: dto.runNo.trim(), organizationId }),
       )) as Array<{ CNT: number }>;
 
       await this.runProcedure(
@@ -246,7 +247,7 @@ export class KittingService {
       const after = (await qr.query(
         `SELECT COUNT(*) AS CNT FROM IP_PRODUCT_2D_BARCODE
           WHERE RUN_NO = :runNo AND ORGANIZATION_ID = :organizationId`,
-        { runNo: dto.runNo.trim(), organizationId } as unknown as unknown[],
+        namedBinds({ runNo: dto.runNo.trim(), organizationId }),
       )) as Array<{ CNT: number }>;
       return {
         deleted: Number(before?.[0]?.CNT ?? 0) - Number(after?.[0]?.CNT ?? 0),

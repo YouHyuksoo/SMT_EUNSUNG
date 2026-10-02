@@ -41,6 +41,7 @@ import {
   MaterialRackMoveQueryDto,
   SmtCheckBarcodeQueryDto,
 } from './material-report.dto';
+import { namedBinds } from '../../common/utils/named-binds.util';
 
 type Row = Record<string, unknown>;
 
@@ -160,7 +161,7 @@ export class MaterialIssueReportService {
        -- 등록일시는 'YYYY-MM-DD HH24:MI:SS' 문자열이라 사전순이 시간순과 같다.
        ORDER BY "enterDate" DESC, "issueSequence"
        FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      binds as unknown as unknown[],
+      namedBinds(binds),
     )) as Row[];
     return limited(rows);
   }
@@ -178,12 +179,12 @@ export class MaterialIssueReportService {
          FROM IB_SMT_CHECKHIST c
         WHERE c.CHECK_DATE >= TO_DATE(:issueDateKey, 'YYYYMMDDHH24MISS')
           AND c.SCAN_PARTNAME LIKE :prefix ESCAPE '\\'`,
-      {
+      namedBinds({
         issueDateKey,
         // 접두어를 바인드로 넘기면 SCAN_PARTNAME 인덱스를 탄다. PB 처럼 컬럼
         // 연결식으로 두면 인덱스를 못 쓴다 — 그것이 367초의 원인이었다.
         prefix: likePrefix(`${itemCode}-${materialMfs}`),
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return { fullCheckDate: (rows[0]?.fullCheckDate as string | null) ?? null };
   }
@@ -226,12 +227,12 @@ export class MaterialIssueReportService {
           AND w.ISSUE_STATUS <> '${ISSUE_CANCELED}'
         ORDER BY w.ISSUE_DATE DESC, w.ITEM_CODE
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         dateFrom: query.dateFrom,
         dateTo: query.dateTo,
         itemCode: likePrefix(query.itemCode),
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }
@@ -268,7 +269,7 @@ export class MaterialIssueReportService {
                OR c.OLD_BARCODE LIKE :barcode ESCAPE '\\')
         ORDER BY c.CHECK_DATE DESC
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      { barcode: likePrefix(query.barcode) } as unknown as unknown[],
+      namedBinds({ barcode: likePrefix(query.barcode) }),
     )) as Row[];
     return limited(rows);
   }
@@ -303,13 +304,13 @@ export class MaterialIssueReportService {
                  g.SUPPLIER_CODE, s.SUPPLIER_NAME
         ORDER BY g.ITEM_CODE
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         dateFrom: query.dateFrom,
         dateTo: query.dateTo,
         itemCode: likePrefix(query.itemCode),
         supplierCode: likePrefix(query.supplierCode),
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }
@@ -338,13 +339,13 @@ export class MaterialIssueReportService {
                  i.ITEM_NAME, i.ITEM_SPEC, i.ITEM_UOM
         ORDER BY g.ISSUE_ACCOUNT, g.ITEM_CODE
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         dateFrom: query.dateFrom,
         dateTo: query.dateTo,
         itemCode: likePrefix(query.itemCode),
         issueAccount: likePrefix(query.issueAccount),
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }
@@ -377,13 +378,13 @@ export class MaterialIssueReportService {
           AND m.ORGANIZATION_ID = :organizationId
         ORDER BY m.MOVE_DATE DESC
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         dateFrom: query.dateFrom,
         dateTo: query.dateTo,
         itemCode: likePrefix(query.itemCode),
         materialMfs: likePrefix(query.materialMfs),
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }

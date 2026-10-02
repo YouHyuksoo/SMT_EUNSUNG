@@ -21,6 +21,7 @@ import {
   SmtLocationUpsertDto,
 } from './smt-location.dto';
 import { affectedRows } from '../../common/utils/affected-rows.util';
+import { namedBinds } from '../../common/utils/named-binds.util';
 
 const EDITABLE: Array<[column: string, field: keyof SmtLocationUpsertDto]> = [
   ['MACHINE', 'machine'],
@@ -69,13 +70,13 @@ export class SmtLocationService {
           AND NVL(l.TABLE_ID, '*') LIKE :tableId
           AND NVL(l.LOCATION_CODE, '*') LIKE :locationCode
         ORDER BY l.LINE_CODE, l.MACHINE, l.TABLE_ID, SUBSTR(l.LOCATION_CODE, 2)`,
-      {
+      namedBinds({
           organizationId,
           lineCode: this.like(query.lineCode),
           machine: this.like(query.machine),
           tableId: this.like(query.tableId),
           locationCode: this.like(query.locationCode),
-        } as unknown as unknown[],
+        }),
     )) as Record<string, unknown>[];
     return { data: rows, total: rows.length };
   }
@@ -86,7 +87,7 @@ export class SmtLocationService {
         `SELECT COUNT(*) AS CNT FROM IB_MACHINE_LOCATION
           WHERE LINE_CODE = :lineCode AND LOCATION_CODE = :locationCode
             AND ORGANIZATION_ID = :organizationId`,
-        { lineCode: dto.lineCode, locationCode: dto.locationCode, organizationId } as unknown as unknown[],
+        namedBinds({ lineCode: dto.lineCode, locationCode: dto.locationCode, organizationId }),
       )) as { CNT: number }[];
       if (Number(dup?.CNT ?? 0) > 0) {
         throw new ConflictException(
@@ -113,7 +114,7 @@ export class SmtLocationService {
 
       await qr.query(
         `INSERT INTO IB_MACHINE_LOCATION (${columns.join(', ')}) VALUES (${values.join(', ')})`,
-        binds as unknown as unknown[],
+        namedBinds(binds),
       );
       return { lineCode: dto.lineCode, locationCode: dto.locationCode };
     });
@@ -138,7 +139,7 @@ export class SmtLocationService {
         `UPDATE IB_MACHINE_LOCATION SET ${sets.join(', ')}
           WHERE LINE_CODE = :lineCode AND LOCATION_CODE = :locationCode
             AND ORGANIZATION_ID = :organizationId`,
-        binds as unknown as unknown[],
+        namedBinds(binds),
       );
       const affected = Number(affectedRows(result) ?? 0);
       if (affected === 0) {
@@ -155,7 +156,7 @@ export class SmtLocationService {
         `SELECT COUNT(*) AS CNT FROM IB_PRODUCT_PLANDATA
           WHERE LINE_CODE = :lineCode AND LOCATION_CODE = :locationCode
             AND ORGANIZATION_ID = :organizationId`,
-        { lineCode: key.lineCode, locationCode: key.locationCode, organizationId } as unknown as unknown[],
+        namedBinds({ lineCode: key.lineCode, locationCode: key.locationCode, organizationId }),
       )) as { CNT: number }[];
       const planRows = Number(used?.CNT ?? 0);
       if (planRows > 0) {
@@ -168,7 +169,7 @@ export class SmtLocationService {
         `DELETE FROM IB_MACHINE_LOCATION
           WHERE LINE_CODE = :lineCode AND LOCATION_CODE = :locationCode
             AND ORGANIZATION_ID = :organizationId`,
-        { lineCode: key.lineCode, locationCode: key.locationCode, organizationId } as unknown as unknown[],
+        namedBinds({ lineCode: key.lineCode, locationCode: key.locationCode, organizationId }),
       );
       const affected = Number(affectedRows(result) ?? 0);
       if (affected === 0) {

@@ -26,6 +26,7 @@ import { DataSource } from 'typeorm';
 import { likePrefix } from '@smt/shared';
 import { limited, ROW_LIMIT } from '../../shared/row-limit';
 import { ChamberStockDetailQueryDto, ChamberStockQueryDto } from './warehouse.dto';
+import { namedBinds } from '../../common/utils/named-binds.util';
 
 type Row = Record<string, unknown>;
 
@@ -82,13 +83,13 @@ export class ChamberStockService {
                  i.BAKING_TIME, i.LIFE_CYCLE, i.MSL_LEVEL
         ORDER BY b.CHAMBER_CODE, b.ITEM_CODE
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         itemCode: likePrefix(query.itemCode),
         lotNo: likePrefix(query.lotNo),
         chamberCode: likePrefix(query.chamberCode),
         chamberType: query.chamberType,
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }
@@ -143,12 +144,12 @@ export class ChamberStockService {
           AND b.ORGANIZATION_ID = :organizationId
         ORDER BY b.INPUT_SCAN_DATE, b.ITEM_BARCODE
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         itemCode: query.itemCode,
         chamberCode: query.chamberCode,
         chamberType: query.chamberType,
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }

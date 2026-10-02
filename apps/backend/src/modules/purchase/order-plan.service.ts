@@ -38,6 +38,7 @@ import {
   type PlanSource,
 } from './order-plan.sql';
 import { netOrderLines, roundHalfUp } from './order-plan.netting';
+import { namedBinds } from '../../common/utils/named-binds.util';
 
 /** 발주 줄 — 미리보기와 저장이 같이 쓴다 */
 export interface OrderPlanLine {
@@ -242,7 +243,7 @@ export class OrderPlanService {
             ${filter}
           ORDER BY A.ITEM_CODE, A.LINE_TYPE, A.DELIVERY_DATE
        ) WHERE ROWNUM <= :rowLimit`,
-      binds as unknown as unknown[],
+      namedBinds(binds),
     );
     return this.page(rows);
   }
@@ -275,7 +276,7 @@ export class OrderPlanService {
           WHERE A.ORGANIZATION_ID = :organizationId
           ORDER BY A.ITEM_CODE, A.PLAN_DATE
        ) WHERE ROWNUM <= :rowLimit`,
-      { organizationId, rowLimit: ROW_LIMIT + 1 } as unknown as unknown[],
+      namedBinds({ organizationId, rowLimit: ROW_LIMIT + 1 }),
     );
     return this.page(rows);
   }
@@ -305,7 +306,7 @@ export class OrderPlanService {
       orderRule: dto.applyOrderRule ? 'A%' : '%',
       orderDate: dto.orderDate.slice(0, 10),
     };
-    const run = (sql: string) => runner.query(sql, pickBinds(sql, binds) as unknown as unknown[]);
+    const run = (sql: string) => runner.query(sql, namedBinds(pickBinds(sql, binds)));
 
     const [nullQty] = await run(nullQtySql(source)) as { itemCode: string | null }[];
     if (nullQty?.itemCode) {
@@ -423,7 +424,7 @@ export class OrderPlanService {
 
       await manager.query(
         `DELETE FROM IM_ITEM_PURCHASE_REQUIR_ORDER WHERE ORGANIZATION_ID = :organizationId`,
-        { organizationId } as unknown as unknown[],
+        namedBinds({ organizationId }),
       );
       const reqSql = `INSERT INTO IM_ITEM_PURCHASE_REQUIR_ORDER
           (REQUIRMENT_PLAN_DATE, MFS, ITEM_CODE, SUPPLIER_CODE, ORGANIZATION_ID,
@@ -434,11 +435,11 @@ export class OrderPlanService {
                :organizationId, PLAN_DATE, REQ_QTY, LINE_TYPE, :userId, SYSDATE, :userId, SYSDATE,
                SET_ITEM_CODE, PARENT_ITEM_CODE
           FROM REQO`;
-      await manager.query(reqSql, pickBinds(reqSql, all) as unknown as unknown[]);
+      await manager.query(reqSql, namedBinds(pickBinds(reqSql, all)));
 
       await manager.query(
         `DELETE FROM IM_ITEM_PURCHASE_ORDER_PLAN WHERE ORGANIZATION_ID = :organizationId`,
-        { organizationId } as unknown as unknown[],
+        namedBinds({ organizationId }),
       );
       if (lines.length > 0) {
         // 줄이 수백~수천이라 한 문장으로 넣는다 (JSON_TABLE).
@@ -484,19 +485,19 @@ export class OrderPlanService {
                     SI  VARCHAR2(100)  PATH '$.si',
                     PI  VARCHAR2(100)  PATH '$.pi',
                     TA  VARCHAR2(1)    PATH '$.ta')) J`,
-          {
+          namedBinds({
             planJson: clobBind(json),
             organizationId,
             orderDate: binds.orderDate,
             userId,
-          } as unknown as unknown[],
+          }),
         );
       }
 
       const [{ REQ }] = await manager.query(
         `SELECT COUNT(*) AS REQ FROM IM_ITEM_PURCHASE_REQUIR_ORDER
           WHERE ORGANIZATION_ID = :organizationId`,
-        { organizationId } as unknown as unknown[],
+        namedBinds({ organizationId }),
       );
       return { requirementRows: Number(REQ), planRows: lines.length, skippedItems };
     });
@@ -520,12 +521,12 @@ export class OrderPlanService {
         filter = ' AND A.SUPPLIER_CODE = :supplierCode';
         binds.supplierCode = dto.supplierCode;
       }
-      await manager.query(`BEGIN ${priceResetSql(filter)} END;`, binds as unknown as unknown[]);
+      await manager.query(`BEGIN ${priceResetSql(filter)} END;`, namedBinds(binds));
       const [{ CNT }] = await manager.query(
         `SELECT COUNT(*) AS CNT FROM IM_ITEM_PURCHASE_ORDER_PLAN A
           WHERE A.ORGANIZATION_ID = :organizationId${filter}
             AND A.DELIVERY IS NOT NULL`,
-        binds as unknown as unknown[],
+        namedBinds(binds),
       );
       return { updated: Number(CNT) };
     });
@@ -568,14 +569,14 @@ export class OrderPlanService {
       let created = 0;
       let candidates = 0;
       for (const key of dto.itemCodes) {
-        const binds = {
+        const binds = namedBinds({
           orderGroupNo,
           orderDate: dto.orderDate,
           userId,
           organizationId,
           itemCode: key.itemCode,
           lineType: key.lineType,
-        } as unknown as unknown[];
+        });
 
         const [{ CNT }] = await manager.query(
           `SELECT COUNT(*) AS CNT FROM IM_ITEM_PURCHASE_ORDER_PLAN
@@ -584,7 +585,7 @@ export class OrderPlanService {
               AND LINE_TYPE = :lineType
               AND NVL(PURCHASE_ORDER_STATUS, 'N') <> 'Y'
               AND NVL(PURCHASE_ORDER_QTY, 0) > 0`,
-          { organizationId, itemCode: key.itemCode, lineType: key.lineType } as unknown as unknown[],
+          namedBinds({ organizationId, itemCode: key.itemCode, lineType: key.lineType }),
         );
         candidates += Number(CNT);
 
@@ -627,12 +628,12 @@ export class OrderPlanService {
                 AND DELIVERY IS NOT NULL
                 AND NVL(PURCHASE_ORDER_STATUS, 'N') <> 'Y'
                 AND NVL(PURCHASE_ORDER_QTY, 0) > 0`,
-            {
+            namedBinds({
               userId,
               organizationId,
               itemCode: key.itemCode,
               lineType: key.lineType,
-            } as unknown as unknown[],
+            }),
           );
         }
       }

@@ -40,6 +40,7 @@ import {
   SqueezeCheckQueryDto,
   SqueezeScanDto,
 } from './jig-check.dto';
+import { namedBinds } from '../../common/utils/named-binds.util';
 
 type OracleRow = Record<string, unknown>;
 
@@ -59,11 +60,11 @@ export class JigCheckService {
   private async page(body: string, orderBy: string, binds: OracleRow, page: number, limit: number) {
     const totals = await this.dataSource.query(
       `SELECT COUNT(*) AS "total" FROM (${body}) source_rows`,
-      { ...binds } as unknown as unknown[],
+      namedBinds({ ...binds }),
     ) as OracleRow[];
     const rows = await this.dataSource.query(
       `${body} ${orderBy} OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY`,
-      { ...binds, offset: (page - 1) * limit, limit } as unknown as unknown[],
+      namedBinds({ ...binds, offset: (page - 1) * limit, limit }),
     ) as OracleRow[];
     return { data: rows, total: Number(totals[0]?.total ?? 0), page, limit };
   }
@@ -386,7 +387,7 @@ export class JigCheckService {
 
   /** 샘플별 적용모델 — PB d_mcn_sample_apply_model_lst */
   async findSampleApplyModels(query: SampleApplyModelQueryDto, organizationId: number) {
-    return this.dataSource.query(
+    return this.dataSource.query<OracleRow[]>(
       `SELECT SAMPLE_CODE AS "sampleCode", SAMPLE_LOT_NO AS "sampleLotNo",
               ITEM_CODE AS "itemCode", APPLY_SMT_MODEL_NAME AS "applySmtModelName",
               ENTER_BY AS "enterBy", ENTER_DATE AS "enterDate"
@@ -394,8 +395,8 @@ export class JigCheckService {
         WHERE SAMPLE_CODE = :sampleCode AND SAMPLE_LOT_NO = :sampleLotNo
           AND ORGANIZATION_ID = :organizationId
         ORDER BY ITEM_CODE`,
-      { sampleCode: query.sampleCode, sampleLotNo: query.sampleLotNo, organizationId } as unknown as unknown[],
-    ) as Promise<OracleRow[]>;
+      namedBinds({ sampleCode: query.sampleCode, sampleLotNo: query.sampleLotNo, organizationId }),
+    );
   }
 
   /**
@@ -419,7 +420,7 @@ export class JigCheckService {
         WHERE j.JIG_LOT_NO = :jigLotNo
           AND j.JIG_TYPE = :jigType
           AND j.ORGANIZATION_ID = :organizationId`,
-      { jigLotNo: query.jigLotNo.trim(), jigType: query.jigType, organizationId } as unknown as unknown[],
+      namedBinds({ jigLotNo: query.jigLotNo.trim(), jigType: query.jigType, organizationId }),
     ) as OracleRow[];
     if (rows.length === 0) throw new BadRequestException('등록되지 않은 바코드입니다.');
     return rows[0];
@@ -444,7 +445,7 @@ export class JigCheckService {
              RAISE_APPLICATION_ERROR(-20003, 'SQUEEZE_SCAN_FAILED:' || v_result);
            END IF;
          END;`,
-        { jigLotNo, organizationId, userId } as unknown as unknown[],
+        namedBinds({ jigLotNo, organizationId, userId }),
       ).catch((error: unknown) => {
         const message = error instanceof Error ? error.message : String(error);
         if (/SQUEEZE_SCAN_FAILED/.test(message)) {
@@ -461,7 +462,7 @@ export class JigCheckService {
             WHERE JIG_LOT_NO = :jigLotNo AND ORGANIZATION_ID = :organizationId
             ORDER BY JIG_CHECK_DATE DESC, JIG_CHECK_SEQUENCE DESC
          ) WHERE ROWNUM = 1`,
-        { jigLotNo, organizationId } as unknown as unknown[],
+        namedBinds({ jigLotNo, organizationId }),
       ) as OracleRow[];
       return saved[0] ?? {};
     });
@@ -483,7 +484,7 @@ export class JigCheckService {
              RAISE_APPLICATION_ERROR(-20004, 'MASK_TENSION_FAILED:' || v_result);
            END IF;
          END;`,
-        {
+        namedBinds({
           jigLotNo,
           checkStatus: dto.checkStatus,
           cleanYn: dto.cleanYn ?? 'N',
@@ -495,7 +496,7 @@ export class JigCheckService {
           comments: dto.comments ?? null,
           organizationId,
           userId,
-        } as unknown as unknown[],
+        }),
       ).catch((error: unknown) => {
         const message = error instanceof Error ? error.message : String(error);
         if (/MASK_TENSION_FAILED/.test(message)) {
@@ -520,7 +521,7 @@ export class JigCheckService {
              RAISE_APPLICATION_ERROR(-20005, 'REPAIR_REQUEST_FAILED:' || v_result);
            END IF;
          END;`,
-        {
+        namedBinds({
           jigCode: dto.jigCode.trim(),
           jigLotNo: dto.jigLotNo.trim(),
           repairReasonCode: dto.repairReasonCode ?? null,
@@ -529,7 +530,7 @@ export class JigCheckService {
           currency: dto.currency ?? null,
           organizationId,
           userId,
-        } as unknown as unknown[],
+        }),
       ).catch((error: unknown) => {
         const message = error instanceof Error ? error.message : String(error);
         if (/REPAIR_REQUEST_FAILED/.test(message)) {
@@ -547,9 +548,9 @@ export class JigCheckService {
               AND ORGANIZATION_ID = :organizationId
             ORDER BY REPAIR_SEQUENCE DESC
          ) WHERE ROWNUM = 1`,
-        {
+        namedBinds({
           jigCode: dto.jigCode.trim(), jigLotNo: dto.jigLotNo.trim(), organizationId,
-        } as unknown as unknown[],
+        }),
       ) as OracleRow[];
       return saved[0] ?? {};
     });
@@ -569,7 +570,7 @@ export class JigCheckService {
              RAISE_APPLICATION_ERROR(-20006, 'REPAIR_UPDATE_FAILED:' || v_result);
            END IF;
          END;`,
-        {
+        namedBinds({
           jigCode: dto.jigCode.trim(),
           jigLotNo: dto.jigLotNo.trim(),
           repairSequence: dto.repairSequence,
@@ -581,7 +582,7 @@ export class JigCheckService {
           repairComments: dto.repairComments ?? null,
           organizationId,
           userId,
-        } as unknown as unknown[],
+        }),
       ).catch((error: unknown) => {
         const message = error instanceof Error ? error.message : String(error);
         if (/REPAIR_UPDATE_FAILED/.test(message)) {
@@ -609,7 +610,7 @@ export class JigCheckService {
       `SELECT COUNT(*) AS "cnt" FROM IMCN_SAMPLE
         WHERE SAMPLE_CODE = :sampleCode AND SAMPLE_LOT_NO = :sampleLotNo
           AND ORGANIZATION_ID = :organizationId`,
-      { sampleCode, sampleLotNo, organizationId } as unknown as unknown[],
+      namedBinds({ sampleCode, sampleLotNo, organizationId }),
     ) as OracleRow[];
     return Number(rows[0]?.cnt ?? 0) > 0;
   }
@@ -629,7 +630,7 @@ export class JigCheckService {
     const dupLot = await this.dataSource.query(
       `SELECT COUNT(*) AS "cnt" FROM IMCN_SAMPLE
         WHERE SAMPLE_LOT_NO = :sampleLotNo AND ORGANIZATION_ID = :organizationId`,
-      { sampleLotNo, organizationId } as unknown as unknown[],
+      namedBinds({ sampleLotNo, organizationId }),
     ) as OracleRow[];
     if (Number(dupLot[0]?.cnt ?? 0) > 0) {
       throw new ConflictException(`이미 쓰이는 샘플LOT 입니다 (${sampleLotNo}).`);
@@ -654,7 +655,7 @@ export class JigCheckService {
 
     await this.dataSource.query(
       `INSERT INTO IMCN_SAMPLE (${columns.join(', ')}) VALUES (${values.join(', ')})`,
-      binds as unknown as unknown[],
+      namedBinds(binds),
     );
     return { sampleCode, sampleLotNo };
   }
@@ -680,7 +681,7 @@ export class JigCheckService {
       `UPDATE IMCN_SAMPLE SET ${sets.join(', ')}
         WHERE SAMPLE_CODE = :sampleCode AND SAMPLE_LOT_NO = :sampleLotNo
           AND ORGANIZATION_ID = :organizationId`,
-      binds as unknown as unknown[],
+      namedBinds(binds),
     );
     return { sampleCode, sampleLotNo };
   }
@@ -705,7 +706,7 @@ export class JigCheckService {
            WHERE SAMPLE_CODE = :sampleCode AND SAMPLE_LOT_NO = :sampleLotNo
              AND ORGANIZATION_ID = :organizationId) AS "applyCount"
        FROM DUAL`,
-      { sampleCode, sampleLotNo, organizationId } as unknown as unknown[],
+      namedBinds({ sampleCode, sampleLotNo, organizationId }),
     ) as OracleRow[];
     const mount = Number(used[0]?.mountCount ?? 0);
     const apply = Number(used[0]?.applyCount ?? 0);
@@ -719,14 +720,14 @@ export class JigCheckService {
           `DELETE FROM IMCN_SAMPLE_APPLY_MODEL
             WHERE SAMPLE_CODE = :sampleCode AND SAMPLE_LOT_NO = :sampleLotNo
               AND ORGANIZATION_ID = :organizationId`,
-          { sampleCode, sampleLotNo, organizationId } as unknown as unknown[],
+          namedBinds({ sampleCode, sampleLotNo, organizationId }),
         );
       }
       await qr.query(
         `DELETE FROM IMCN_SAMPLE
           WHERE SAMPLE_CODE = :sampleCode AND SAMPLE_LOT_NO = :sampleLotNo
             AND ORGANIZATION_ID = :organizationId`,
-        { sampleCode, sampleLotNo, organizationId } as unknown as unknown[],
+        namedBinds({ sampleCode, sampleLotNo, organizationId }),
       );
       return { sampleCode, sampleLotNo, deletedApplyModels: apply };
     });
@@ -747,14 +748,14 @@ export class JigCheckService {
              RAISE_APPLICATION_ERROR(-20007, 'JIG_ISSUE_FAILED:' || v_result);
            END IF;
          END;`,
-        {
+        namedBinds({
           jigCode, jigLotNo,
           issueQty: dto.issueQty ?? null,
           issueAccount: dto.issueAccount ?? null,
           workstageCode: dto.workstageCode ?? null,
           machineCode: dto.machineCode ?? null,
           organizationId, userId,
-        } as unknown as unknown[],
+        }),
       ).catch((error: unknown) => {
         const message = error instanceof Error ? error.message : String(error);
         if (/JIG_ISSUE_FAILED/.test(message)) {
@@ -771,7 +772,7 @@ export class JigCheckService {
               AND ORGANIZATION_ID = :organizationId
             ORDER BY ISSUE_DATE DESC, ISSUE_SEQUENCE DESC
          ) WHERE ROWNUM = 1`,
-        { jigCode, jigLotNo, organizationId } as unknown as unknown[],
+        namedBinds({ jigCode, jigLotNo, organizationId }),
       ) as OracleRow[];
       return saved[0] ?? {};
     });
@@ -790,11 +791,11 @@ export class JigCheckService {
              RAISE_APPLICATION_ERROR(-20008, 'JIG_ISSUE_CANCEL_FAILED:' || v_result);
            END IF;
          END;`,
-        {
+        namedBinds({
           issueDate: new Date(dto.issueDate),
           issueSequence: dto.issueSequence,
           organizationId, userId,
-        } as unknown as unknown[],
+        }),
       ).catch((error: unknown) => {
         const message = error instanceof Error ? error.message : String(error);
         const matched = /JIG_ISSUE_CANCEL_FAILED:(-?\d+)/.exec(message);
@@ -820,13 +821,13 @@ export class JigCheckService {
              RAISE_APPLICATION_ERROR(-20009, 'JIG_PM_CONFIRM_FAILED:' || v_result);
            END IF;
          END;`,
-        {
+        namedBinds({
           lineCode: dto.lineCode,
           jigCode: dto.jigCode.trim(),
           jigLotNo: dto.jigLotNo.trim(),
           pmType: dto.pmType,
           organizationId, userId,
-        } as unknown as unknown[],
+        }),
       ).catch((error: unknown) => {
         const message = error instanceof Error ? error.message : String(error);
         if (/JIG_PM_CONFIRM_FAILED/.test(message)) {
@@ -893,9 +894,9 @@ export class JigCheckService {
              RAISE_APPLICATION_ERROR(-20010, 'FEEDER_ADJUST_FAILED:' || v_result);
            END IF;
          END;`,
-        {
+        namedBinds({
           jigLotNo, comments: dto.comments ?? null, organizationId, userId,
-        } as unknown as unknown[],
+        }),
       ).catch((error: unknown) => {
         const message = error instanceof Error ? error.message : String(error);
         if (/FEEDER_ADJUST_FAILED/.test(message)) {
@@ -911,7 +912,7 @@ export class JigCheckService {
             WHERE JIG_LOT_NO = :jigLotNo AND ORGANIZATION_ID = :organizationId
             ORDER BY ADJUST_DATE DESC, ADJUST_SEQUENCE DESC
          ) WHERE ROWNUM = 1`,
-        { jigLotNo, organizationId } as unknown as unknown[],
+        namedBinds({ jigLotNo, organizationId }),
       ) as OracleRow[];
       return saved[0] ?? {};
     });

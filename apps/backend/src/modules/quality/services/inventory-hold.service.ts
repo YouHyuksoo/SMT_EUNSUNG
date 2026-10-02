@@ -30,6 +30,7 @@ import {
   OqcHistoryQueryDto,
   OqcLotQueryDto,
 } from '../dto/inventory-hold.dto';
+import { namedBinds } from '../../../common/utils/named-binds.util';
 
 type OracleRow = Record<string, unknown>;
 
@@ -106,12 +107,12 @@ export class InventoryHoldService {
     const limit = query.limit ?? 500;
     const totals = await this.dataSource.query(
       `SELECT COUNT(*) AS "total" FROM (${body}) source_rows`,
-      { ...binds } as unknown as unknown[],
+      namedBinds({ ...binds }),
     ) as OracleRow[];
     const rows = await this.dataSource.query(
       `${body} ORDER BY "itemCode", "materialMfs"
        OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY`,
-      { ...binds, offset: (page - 1) * limit, limit } as unknown as unknown[],
+      namedBinds({ ...binds, offset: (page - 1) * limit, limit }),
     ) as OracleRow[];
     return { data: rows, total: Number(totals[0]?.total ?? 0), page, limit };
   }
@@ -146,12 +147,12 @@ export class InventoryHoldService {
     const limit = query.limit ?? 500;
     const totals = await this.dataSource.query(
       `SELECT COUNT(*) AS "total" FROM (${body}) source_rows`,
-      { ...binds } as unknown as unknown[],
+      namedBinds({ ...binds }),
     ) as OracleRow[];
     const rows = await this.dataSource.query(
       `${body} ORDER BY "holdingDate" DESC, "itemCode", "materialMfs"
        OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY`,
-      { ...binds, offset: (page - 1) * limit, limit } as unknown as unknown[],
+      namedBinds({ ...binds, offset: (page - 1) * limit, limit }),
     ) as OracleRow[];
     return { data: rows, total: Number(totals[0]?.total ?? 0), page, limit };
   }
@@ -181,12 +182,12 @@ export class InventoryHoldService {
                  :comments, SYSDATE,
                  :userId, SYSDATE, :userId, SYSDATE
                )`,
-          {
+          namedBinds({
             itemCode, materialMfs, organizationId,
             inventoryStatus: dto.inventoryStatus,
             comments: dto.comments ?? null,
             userId,
-          } as unknown as unknown[],
+          }),
         );
         applied += 1;
       }
@@ -203,13 +204,13 @@ export class InventoryHoldService {
           `DELETE FROM IM_ITEM_INVENTORY_HOLD
             WHERE ITEM_CODE = :itemCode AND MATERIAL_MFS = :materialMfs
               AND ORGANIZATION_ID = :organizationId`,
-          { itemCode, materialMfs, organizationId } as unknown as unknown[],
+          namedBinds({ itemCode, materialMfs, organizationId }),
         );
         const check = await qr.query(
           `SELECT COUNT(*) AS "cnt" FROM IM_ITEM_INVENTORY_HOLD
             WHERE ITEM_CODE = :itemCode AND MATERIAL_MFS = :materialMfs
               AND ORGANIZATION_ID = :organizationId`,
-          { itemCode, materialMfs, organizationId } as unknown as unknown[],
+          namedBinds({ itemCode, materialMfs, organizationId }),
         ) as OracleRow[];
         released += Number(check[0]?.cnt ?? 0) === 0 ? 1 : 0;
       }
@@ -265,12 +266,12 @@ export class InventoryHoldService {
     const limit = query.limit ?? 500;
     const totals = await this.dataSource.query(
       `SELECT COUNT(*) AS "total" FROM (${body}) source_rows`,
-      { ...binds } as unknown as unknown[],
+      namedBinds({ ...binds }),
     ) as OracleRow[];
     const rows = await this.dataSource.query(
       `${body} ORDER BY "inspectDate" DESC, "inspectSequence" DESC
        OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY`,
-      { ...binds, offset: (page - 1) * limit, limit } as unknown as unknown[],
+      namedBinds({ ...binds, offset: (page - 1) * limit, limit }),
     ) as OracleRow[];
     return { data: rows, total: Number(totals[0]?.total ?? 0), page, limit };
   }
@@ -325,12 +326,12 @@ export class InventoryHoldService {
     const limit = query.limit ?? 500;
     const totals = await this.dataSource.query(
       `SELECT COUNT(*) AS "total" FROM (${body}) source_rows`,
-      { ...binds } as unknown as unknown[],
+      namedBinds({ ...binds }),
     ) as OracleRow[];
     const rows = await this.dataSource.query(
       `${body} ORDER BY "packDate" DESC, "packBarcode"
        OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY`,
-      { ...binds, offset: (page - 1) * limit, limit } as unknown as unknown[],
+      namedBinds({ ...binds, offset: (page - 1) * limit, limit }),
     ) as OracleRow[];
     return { data: rows, total: Number(totals[0]?.total ?? 0), page, limit };
   }
@@ -359,7 +360,7 @@ export class InventoryHoldService {
       await qr.query(
         `INSERT INTO IQ_OQC_INSPECT_HISTORY (${columns.join(', ')})
          VALUES (${values.join(', ')})`,
-        binds as unknown as unknown[],
+        namedBinds(binds),
       );
       return { inspectSequence };
     });
@@ -372,11 +373,11 @@ export class InventoryHoldService {
         WHERE TO_CHAR(INSPECT_DATE, 'YYYYMMDDHH24MISS') = :inspectDateKey
           AND INSPECT_SEQUENCE = :inspectSequence
           AND ORGANIZATION_ID = :organizationId`,
-      {
+      namedBinds({
         inspectDateKey: dto.inspectDateKey,
         inspectSequence: dto.inspectSequence,
         organizationId,
-      } as unknown as unknown[],
+      }),
     ) as OracleRow[];
     if (Number(rows[0]?.cnt ?? 0) === 0) {
       throw new NotFoundException('OQC 검사이력을 찾을 수 없습니다.');
@@ -386,11 +387,11 @@ export class InventoryHoldService {
         WHERE TO_CHAR(INSPECT_DATE, 'YYYYMMDDHH24MISS') = :inspectDateKey
           AND INSPECT_SEQUENCE = :inspectSequence
           AND ORGANIZATION_ID = :organizationId`,
-      {
+      namedBinds({
         inspectDateKey: dto.inspectDateKey,
         inspectSequence: dto.inspectSequence,
         organizationId,
-      } as unknown as unknown[],
+      }),
     );
     return { deleted: true };
   }

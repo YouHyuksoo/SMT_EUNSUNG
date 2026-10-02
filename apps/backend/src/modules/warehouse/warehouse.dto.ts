@@ -52,7 +52,7 @@ export class ChamberStockQueryDto {
       + ' 화면마다 고정이며 이 값으로 세 화면이 갈린다.',
     enum: CHAMBER_TYPES,
   })
-  @IsIn(CHAMBER_TYPES as unknown as string[])
+  @IsIn([...CHAMBER_TYPES])
   chamberType!: ChamberType;
 
   @ApiPropertyOptional({ description: '품목코드 (앞부분 일치)' })
@@ -76,7 +76,7 @@ export class ChamberStockQueryDto {
  */
 export class ChamberStockDetailQueryDto {
   @ApiProperty({ description: "챔버 종류 ('B'·'V'·'D')", enum: CHAMBER_TYPES })
-  @IsIn(CHAMBER_TYPES as unknown as string[])
+  @IsIn([...CHAMBER_TYPES])
   chamberType!: ChamberType;
 
   @ApiProperty({ description: '품목코드 (요약이 돌려준 값 그대로 — 등호로 걸린다)' })
@@ -496,7 +496,7 @@ export class SolderLabelIssueDto {
     description: "공장코드. 바코드 마지막 1자로 들어간다 (PB ddlb_factory: 'A'·'B').",
     enum: SOLDER_FACTORIES,
   })
-  @IsIn(SOLDER_FACTORIES as unknown as string[])
+  @IsIn([...SOLDER_FACTORIES])
   factory!: string;
 
   @ApiPropertyOptional({ description: '릴 장수 (균등 분할). divideQty 가 없으면 필수' })
@@ -1210,7 +1210,7 @@ export class BakingScanDto {
     description: "챔버 종류. 'B' 베이킹실 · 'V' 진공포장 · 'D' 제습함.",
     enum: CHAMBER_TYPES,
   })
-  @IsIn(CHAMBER_TYPES as unknown as string[])
+  @IsIn([...CHAMBER_TYPES])
   chamberType!: string;
 
   @ApiProperty({ description: '챔버 번호' })

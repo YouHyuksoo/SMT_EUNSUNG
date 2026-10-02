@@ -19,8 +19,6 @@ import { SchedulerLog } from '../../entities/scheduler-log.entity';
 import { SchedulerNotification } from '../../entities/scheduler-notification.entity';
 import { IsysUser } from '../../entities/isys-user.entity';
 import { IsysOrganization } from '../../entities/isys-organization.entity';
-import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
-import { RolesGuard } from '../../common/guards/roles.guard';
 
 // 컨트롤러
 import { SchedulerJobController } from './controllers/scheduler-job.controller';
@@ -71,8 +69,6 @@ import { SERVICE_CLASS_MAP } from './config/scheduler-security.config';
     HttpExecutor,
     ScriptExecutor,
     DbBackupService,
-    JwtAuthGuard,
-    RolesGuard,
   ],
   exports: [SchedulerNotiService],
 })

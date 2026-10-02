@@ -35,6 +35,7 @@ import {
   MaterialInventoryQueryDto,
   MaterialLongTermQueryDto,
 } from './material-report.dto';
+import { namedBinds } from '../../common/utils/named-binds.util';
 
 type Row = Record<string, unknown>;
 
@@ -97,7 +98,7 @@ export class MaterialInventoryReportService {
         WHERE ${this.inventoryWhere(false)}
         ORDER BY v.ITEM_CODE, v.MATERIAL_MFS
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      this.inventoryBinds(query, organizationId, false) as unknown as unknown[],
+      namedBinds(this.inventoryBinds(query, organizationId, false)),
     )) as Row[];
     return limited(rows);
   }
@@ -131,7 +132,7 @@ export class MaterialInventoryReportService {
                  v.LINE_TYPE, v.INVENTORY_STATUS
         ORDER BY v.ITEM_CODE
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      this.inventoryBinds(query, organizationId, true) as unknown as unknown[],
+      namedBinds(this.inventoryBinds(query, organizationId, true)),
     )) as Row[];
     return limited(rows);
   }
@@ -179,10 +180,10 @@ export class MaterialInventoryReportService {
                  v.LINE_TYPE, v.LOCATION_CODE, v.INVENTORY_STATUS, v.ORGANIZATION_ID
         ORDER BY v.ITEM_CODE, v.LOCATION_CODE
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         ...this.inventoryBinds(query, organizationId, true),
         baseDate: query.baseDate,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }
@@ -246,12 +247,12 @@ export class MaterialInventoryReportService {
                       OR d."issueQty" / d."inventoryQty" * 100 <= :maxIssueRate )
                  ORDER BY d."itemCode", d."materialMfs"
                  FETCH FIRST ${ROW_LIMIT} ROWS ONLY ) j`,
-      {
+      namedBinds({
         termMonths: query.termMonths,
         maxIssueRate: query.maxIssueRate ?? 0,
         itemCode: likePrefix(query.itemCode),
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }
@@ -295,14 +296,14 @@ export class MaterialInventoryReportService {
           AND v.INVENTORY_QTY > 0
         ORDER BY v.LAST_RECEIPT_DATE, v.ITEM_CODE
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         baseDate: query.baseDate,
         termMonths: query.termMonths,
         itemCode: likePrefix(query.itemCode),
         materialMfs: likePrefix(query.materialMfs),
         supplierCode: likePrefix(query.supplierCode),
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }

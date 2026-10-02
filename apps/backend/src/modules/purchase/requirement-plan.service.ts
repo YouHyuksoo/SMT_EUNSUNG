@@ -34,6 +34,7 @@ import {
   skipNoBomSql,
   skippedOutBind,
 } from './bom-requirement.sql';
+import { namedBinds } from '../../common/utils/named-binds.util';
 
 interface Paged<T> {
   data: T[];
@@ -76,11 +77,11 @@ export class RequirementPlanService {
             AND TRUNC(A.REQUIRMENT_PLAN_DATE) = TRUNC(TO_DATE(:planDate, 'YYYY-MM-DD'))
           ORDER BY A.PLAN_DATE, A.ITEM_CODE
        ) WHERE ROWNUM <= :rowLimit`,
-      {
+      namedBinds({
         organizationId,
         planDate: query.requirementPlanDate,
         rowLimit: ROW_LIMIT + 1,
-      } as unknown as unknown[],
+      }),
     );
     return this.page(rows);
   }
@@ -138,7 +139,7 @@ export class RequirementPlanService {
             ${filter}
           ORDER BY A.PLAN_DATE, A.ITEM_CODE
        ) WHERE ROWNUM <= :rowLimit`,
-      binds as unknown as unknown[],
+      namedBinds(binds),
     );
     return this.page(rows);
   }
@@ -220,7 +221,7 @@ export class RequirementPlanService {
           AND TRUNC(A.REQUIRMENT_PLAN_DATE) = TRUNC(TO_DATE(:planDate, 'YYYY-MM-DD'))
           AND ${noBomSql('A.ITEM_CODE', 'A.PLAN_DATE', 'A.ORGANIZATION_ID')}
         ORDER BY A.PLAN_DATE, A.ITEM_CODE`,
-      { organizationId, planDate: query.requirementPlanDate } as unknown as unknown[],
+      namedBinds({ organizationId, planDate: query.requirementPlanDate }),
     );
   }
 
@@ -248,7 +249,7 @@ export class RequirementPlanService {
             AND TRUNC(REQUIRMENT_PLAN_DATE) = TRUNC(TO_DATE(:requirementPlanDate, 'YYYY-MM-DD'))
             AND TRUNC(PLAN_DATE) = TRUNC(TO_DATE(:planDate, 'YYYY-MM-DD'))
             AND ITEM_CODE = :itemCode`,
-        {
+        namedBinds({
           orderQty,
           applyYn: dto.applyYn ?? null,
           userId,
@@ -256,7 +257,7 @@ export class RequirementPlanService {
           requirementPlanDate: dto.requirementPlanDate,
           planDate: dto.planDate,
           itemCode: dto.itemCode,
-        } as unknown as unknown[],
+        }),
       );
       const affected = Number(
         affectedRows(updated) ?? 0,
@@ -274,7 +275,7 @@ export class RequirementPlanService {
             TRUNC(TO_DATE(:planDate, 'YYYY-MM-DD')),
             :organizationId, :orderQty, :itemCode, NVL(:applyYn, 'Y'),
             0, 0, 0, :userId, SYSDATE, :userId, SYSDATE)`,
-        {
+        namedBinds({
           requirementPlanDate: dto.requirementPlanDate,
           planDate: dto.planDate,
           organizationId,
@@ -282,7 +283,7 @@ export class RequirementPlanService {
           itemCode: dto.itemCode,
           applyYn: dto.applyYn ?? null,
           userId,
-        } as unknown as unknown[],
+        }),
       );
       return { updated: false };
     });
@@ -303,12 +304,12 @@ export class RequirementPlanService {
               AND TRUNC(REQUIRMENT_PLAN_DATE) = TRUNC(TO_DATE(:requirementPlanDate, 'YYYY-MM-DD'))
               AND TRUNC(PLAN_DATE) = TRUNC(TO_DATE(:planDate, 'YYYY-MM-DD'))
               AND ITEM_CODE = :itemCode`,
-          {
+          namedBinds({
             organizationId,
             requirementPlanDate: row.requirementPlanDate,
             planDate: row.planDate,
             itemCode: row.itemCode,
-          } as unknown as unknown[],
+          }),
         );
         deleted += Number(affectedRows(result) ?? 0);
       }
@@ -339,7 +340,7 @@ export class RequirementPlanService {
          FROM IM_ITEM_MASTER_PLAN_4_REQUIR
         WHERE ORGANIZATION_ID = :organizationId
           AND TRUNC(REQUIRMENT_PLAN_DATE) = TRUNC(TO_DATE(:planDate, 'YYYY-MM-DD'))`,
-      { organizationId, planDate: dto.requirementPlanDate } as unknown as unknown[],
+      namedBinds({ organizationId, planDate: dto.requirementPlanDate }),
     );
     if (Number(planRows) === 0) {
       throw new BadRequestException('그 일자에 기준계획이 없습니다.');
@@ -454,12 +455,12 @@ export class RequirementPlanService {
              END IF;
              RAISE;
          END;`,
-        {
+        namedBinds({
           planDate: dto.requirementPlanDate,
           organizationId,
           userId,
           skipped: skippedOutBind(),
-        } as unknown as unknown[],
+        }),
       ).catch((error: unknown) => {
         const message = error instanceof Error ? error.message : String(error);
         const qtyNull = /QTY_NULL:(\S+)/.exec(message);
@@ -478,7 +479,7 @@ export class RequirementPlanService {
            FROM IM_ITEM_REQUIRMENT_PLAN
           WHERE ORGANIZATION_ID = :organizationId
             AND TRUNC(REQUIRMENT_PLAN_DATE) = TRUNC(TO_DATE(:planDate, 'YYYY-MM-DD'))`,
-        { organizationId, planDate: dto.requirementPlanDate } as unknown as unknown[],
+        namedBinds({ organizationId, planDate: dto.requirementPlanDate }),
       );
       return {
         planRows: Number(planRows),
@@ -615,10 +616,10 @@ export class RequirementPlanService {
              END;
            END LOOP;
          END;`,
-        {
+        namedBinds({
           planDate: dto.requirementPlanDate,
           organizationId,
-        } as unknown as unknown[],
+        }),
       )
       .catch((error: unknown) => {
         const message = error instanceof Error ? error.message : String(error);
@@ -633,7 +634,7 @@ export class RequirementPlanService {
            FROM IM_ITEM_MASTER_PLAN_4_REQUIR
           WHERE ORGANIZATION_ID = :organizationId
             AND TRUNC(REQUIRMENT_PLAN_DATE) = TRUNC(TO_DATE(:planDate, 'YYYY-MM-DD'))`,
-        { organizationId, planDate: dto.requirementPlanDate } as unknown as unknown[],
+        namedBinds({ organizationId, planDate: dto.requirementPlanDate }),
       );
       return { planRows: Number(CNT) };
     });

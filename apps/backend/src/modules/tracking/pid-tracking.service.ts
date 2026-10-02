@@ -27,6 +27,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { DataSource } from 'typeorm';
 import { checkTrackingFilter, likePrefix } from '@smt/shared';
 import { RunCardListQueryDto, RunNoQueryDto, SerialNoQueryDto } from './tracking.dto';
+import { namedBinds } from '../../common/utils/named-binds.util';
 
 type Row = Record<string, unknown>;
 
@@ -111,7 +112,7 @@ export class PidTrackingService {
           AND c.ORGANIZATION_ID = :organizationId
         ORDER BY c.RUN_DATE DESC, c.RUN_NO
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         // PB 관례: 빈 조건은 '%'. NULL LIKE '%' 는 NULL 이라 컬럼을 NVL 로 감쌌다.
         // likePrefix 가 입력의 '%'·'_' 를 escape 한다 (SQL 에 ESCAPE 절이 함께 있다).
         modelName: likePrefix(query.modelName),
@@ -120,7 +121,7 @@ export class PidTrackingService {
         dateFrom: query.dateFrom,
         dateTo: query.dateTo,
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return { data: rows, total: rows.length };
   }
@@ -155,7 +156,7 @@ export class PidTrackingService {
           AND b.ORGANIZATION_ID = :organizationId
         ORDER BY b.SERIAL_NO
         FETCH FIRST ${PID_MATRIX_LIMIT + 1} ROWS ONLY`,
-      binds as unknown as unknown[],
+      namedBinds(binds),
     )) as Row[];
 
     const truncated = rows.length > PID_MATRIX_LIMIT;
@@ -204,7 +205,7 @@ export class PidTrackingService {
         WHERE b.SERIAL_NO = :serialNo
           AND b.ORGANIZATION_ID = :organizationId
         FETCH FIRST 1 ROWS ONLY`,
-      { serialNo: query.serialNo, organizationId } as unknown as unknown[],
+      namedBinds({ serialNo: query.serialNo, organizationId }),
     )) as Row[];
     if (rows.length === 0) {
       throw new NotFoundException(`PID ${query.serialNo} 를 2D바코드에서 찾을 수 없습니다.`);
@@ -317,7 +318,7 @@ export class PidTrackingService {
           AND b.ORGANIZATION_ID = :organizationId
         ORDER BY b.SERIAL_NO
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      { runNo: query.runNo, organizationId } as unknown as unknown[],
+      namedBinds({ runNo: query.runNo, organizationId }),
     )) as Row[];
     return { data: rows, total: rows.length };
   }
@@ -364,7 +365,7 @@ export class PidTrackingService {
                               AND ORGANIZATION_ID = :organizationId )
         ORDER BY c.CHECK_DATE, c.LOCATION_CODE
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      { serialNo: query.serialNo, organizationId } as unknown as unknown[],
+      namedBinds({ serialNo: query.serialNo, organizationId }),
     )) as Row[];
     return { data: rows, total: rows.length };
   }

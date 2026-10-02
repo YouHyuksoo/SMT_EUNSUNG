@@ -21,6 +21,7 @@ import {
   WqcHistoryQueryDto,
   WqcScanDto,
 } from '../dto/wqc.dto';
+import { namedBinds } from '../../../common/utils/named-binds.util';
 
 type OracleRow = Record<string, unknown>;
 
@@ -99,25 +100,25 @@ export class WqcService {
     const limit = query.limit ?? 500;
     const totals = await this.dataSource.query(
       `SELECT COUNT(*) AS "total" FROM (${body}) source_rows`,
-      { ...binds } as unknown as unknown[],
+      namedBinds({ ...binds }),
     ) as OracleRow[];
     const rows = await this.dataSource.query(
       `${body} ORDER BY "inspectDate" DESC, "inspectSequence" DESC
        OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY`,
-      { ...binds, offset: (page - 1) * limit, limit } as unknown as unknown[],
+      namedBinds({ ...binds, offset: (page - 1) * limit, limit }),
     ) as OracleRow[];
     return { data: rows, total: Number(totals[0]?.total ?? 0), page, limit };
   }
 
   /** 선택 PID 의 검사내역 — PB d_qc_visual_inspect_bad_lst_es */
   async findByPid(query: WqcByPidQueryDto, organizationId: number, lang: string) {
-    return this.dataSource.query(
+    return this.dataSource.query<OracleRow[]>(
       `SELECT ${SELECT_COLUMNS}
        ${JOINS}
         WHERE w.SERIAL_NO = :serialNo AND w.ORGANIZATION_ID = :organizationId
         ORDER BY w.INSPECT_DATE DESC, w.INSPECT_SEQUENCE DESC`,
-      { serialNo: query.serialNo, organizationId, lang } as unknown as unknown[],
-    ) as Promise<OracleRow[]>;
+      namedBinds({ serialNo: query.serialNo, organizationId, lang }),
+    );
   }
 
   /** 등록 — PKG_MES_QC.SP_WQC_SCAN. PID 가 없으면 400 으로 막는다. */
@@ -134,7 +135,7 @@ export class WqcService {
              RAISE_APPLICATION_ERROR(-20023, 'WQC_SCAN_FAILED');
            END IF;
          END;`,
-        {
+        namedBinds({
           serialNo: dto.serialNo,
           lineCode: dto.lineCode,
           workstageCode: dto.workstageCode,
@@ -143,7 +144,7 @@ export class WqcService {
           comments: dto.comments ?? null,
           organizationId,
           userId,
-        } as unknown as unknown[],
+        }),
       ).catch((error: unknown) => {
         const message = error instanceof Error ? error.message : String(error);
         if (message.includes('WQC_SCAN_FAILED')) {
@@ -154,7 +155,7 @@ export class WqcService {
       const rows = await qr.query(
         `SELECT MAX(INSPECT_SEQUENCE) AS "inspectSequence" FROM IQ_PRODUCT_WQC
           WHERE SERIAL_NO = :serialNo AND ORGANIZATION_ID = :organizationId`,
-        { serialNo: dto.serialNo, organizationId } as unknown as unknown[],
+        namedBinds({ serialNo: dto.serialNo, organizationId }),
       ) as OracleRow[];
       return {
         serialNo: dto.serialNo,
@@ -176,12 +177,12 @@ export class WqcService {
              RAISE_APPLICATION_ERROR(-20024, 'WQC_CANCEL_NOT_FOUND');
            END IF;
          END;`,
-        {
+        namedBinds({
           serialNo: dto.serialNo,
           lineCode: dto.lineCode,
           workstageCode: dto.workstageCode,
           organizationId,
-        } as unknown as unknown[],
+        }),
       ).catch((error: unknown) => {
         const message = error instanceof Error ? error.message : String(error);
         if (message.includes('WQC_CANCEL_NOT_FOUND')) {

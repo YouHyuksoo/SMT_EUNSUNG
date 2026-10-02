@@ -27,6 +27,7 @@ import { limited, ROW_LIMIT } from '../../shared/row-limit';
 import { TransactionService } from '../../shared/transaction.service';
 import { MslCheckCreateDto, MslCheckQueryDto, MslOverQueryDto } from './warehouse.dto';
 import { affectedRows } from '../../common/utils/affected-rows.util';
+import { namedBinds } from '../../common/utils/named-binds.util';
 
 type Row = Record<string, unknown>;
 
@@ -86,12 +87,12 @@ export class MslCheckService {
           AND v.ORGANIZATION_ID = :organizationId
         ORDER BY TRUNC(NVL(F_GET_MSL_PASSED_TIME(b.ITEM_BARCODE), 0), 2) DESC
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         itemCode: likePrefix(query.itemCode),
         mslLevel: query.mslLevel ?? '2',
         passedRate: Number(query.passedRate ?? 100),
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }
@@ -147,12 +148,12 @@ export class MslCheckService {
           AND b.ORGANIZATION_ID = :organizationId
         ORDER BY TRUNC(NVL(F_GET_MSL_PASSED_TIME(b.ITEM_BARCODE), 0), 2) DESC
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         itemCode: likePrefix(query.itemCode),
         mslLevel: query.mslLevel ?? '2',
         passedRate: Number(query.passedRate ?? 100),
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }
@@ -198,11 +199,11 @@ export class MslCheckService {
           AND NVL(v.MODEL_NAME, '*') LIKE :modelName ESCAPE '\\'
         ORDER BY v.PASSED_RATE DESC NULLS LAST
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         itemCode: likePrefix(query.itemCode),
         lineCode: likePrefix(query.lineCode),
         modelName: likePrefix(query.modelName),
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     void organizationId;
     return limited(rows);
@@ -239,11 +240,11 @@ export class MslCheckService {
           AND c.ORGANIZATION_ID = :organizationId
         ORDER BY c.SCAN_DATE DESC
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         itemCode: likePrefix(query.itemCode),
         barcode: likePrefix(query.barcode),
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }
@@ -266,13 +267,13 @@ export class MslCheckService {
            FROM IM_ITEM_RECEIPT_BARCODE b
           WHERE b.ITEM_BARCODE = :barcode
             AND b.ORGANIZATION_ID = :organizationId`,
-        {
+        namedBinds({
           userId,
           mslActionCode: dto.mslActionCode,
           comments: dto.comments ?? null,
           organizationId,
           barcode: dto.barcode,
-        } as unknown as unknown[],
+        }),
       );
       const rows = Number(affectedRows(result) ?? 0);
       if (rows !== 1) {

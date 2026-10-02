@@ -64,6 +64,7 @@ import {
   KittingBomQueryDto,
 } from './warehouse.dto';
 import { affectedRows } from '../../common/utils/affected-rows.util';
+import { namedBinds } from '../../common/utils/named-binds.util';
 
 type Row = Record<string, unknown>;
 
@@ -153,7 +154,7 @@ export class BarcodeIssueService {
           AND s.ORGANIZATION_ID = :organizationId
         ORDER BY s.ISSUE_DATE DESC, s.ISSUE_SEQUENCE DESC
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         dateFrom: query.dateFrom,
         dateTo: query.dateTo,
         itemCode: likePrefix(query.itemCode),
@@ -162,7 +163,7 @@ export class BarcodeIssueService {
         workstageCode: likePrefix(query.workstageCode),
         modelName: likePrefix(query.modelName),
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }
@@ -215,12 +216,12 @@ export class BarcodeIssueService {
           AND b.ORGANIZATION_ID = :organizationId
         ORDER BY b.SCAN_DATE, b.ITEM_BARCODE
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         itemCode: likePrefix(query.itemCode),
         barcode: likePrefix(query.barcode),
         lotNo: likePrefix(query.lotNo),
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }
@@ -269,11 +270,11 @@ export class BarcodeIssueService {
           AND b.ORGANIZATION_ID = :organizationId
         ORDER BY b.WORKSTAGE_CODE, b.LOCATION_CODE, b.CHILD_ITEM_CODE
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         modelName: query.modelName,
         lineCode: likePrefix(query.lineCode),
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }
@@ -321,7 +322,7 @@ export class BarcodeIssueService {
           AND b.ORGANIZATION_ID = :organizationId
         ORDER BY b.MANUFACTURE_DATE, b.MANUFACTURE_WEEK, b.LOT_NO
         FETCH FIRST 200 ROWS ONLY`,
-      { itemCode, lotNo, inventoryType, organizationId } as unknown as unknown[],
+      namedBinds({ itemCode, lotNo, inventoryType, organizationId }),
     )) as Row[];
     return limited(rows);
   }
@@ -371,7 +372,7 @@ export class BarcodeIssueService {
               F_GET_LOT_NO_FROM_BARCODE(
                 F_GET_PREPARE_BARCODE(:barcode))              AS "lotNo"
          FROM DUAL`,
-      { barcode: dto.barcode } as unknown as unknown[],
+      namedBinds({ barcode: dto.barcode }),
     )) as Row[])[0] ?? {};
     const itemCode = (parsed.itemCode as string) || '';
     const lotNo = (parsed.lotNo as string) || '';
@@ -441,7 +442,7 @@ export class BarcodeIssueService {
          FROM ID_ITEM i
         WHERE i.ITEM_CODE = :itemCode
           AND i.ORGANIZATION_ID = :organizationId`,
-      { itemCode, lotNo, organizationId } as unknown as unknown[],
+      namedBinds({ itemCode, lotNo, organizationId }),
     )) as Row[])[0] ?? null;
 
     if (!facts) {
@@ -481,7 +482,7 @@ export class BarcodeIssueService {
         WHERE b.ITEM_CODE = :itemCode
           AND b.LOT_NO = :lotNo
           AND b.ORGANIZATION_ID = :organizationId`,
-      { itemCode, lotNo, organizationId } as unknown as unknown[],
+      namedBinds({ itemCode, lotNo, organizationId }),
     )) as Row[])[0] ?? null;
 
     // ④ 검사를 PB 순서대로 쌓는다.
@@ -644,7 +645,7 @@ export class BarcodeIssueService {
           WHERE b.ITEM_CODE = :itemCode
             ${extra}
           ${common}`,
-        { itemCode, inventoryType, organizationId, ...binds } as unknown as unknown[],
+        namedBinds({ itemCode, inventoryType, organizationId, ...binds }),
       )) as Row[];
       return Number(rows[0]?.cnt ?? 0);
     };
@@ -728,7 +729,7 @@ export class BarcodeIssueService {
             AND ORGANIZATION_ID = :organizationId
             AND NVL(ISSUE_COMPARE_YN, 'N') <> 'Y'
             AND NVL(RECEIPT_COMPARE_YN, 'N') = 'Y'`,
-        {
+        namedBinds({
           userId,
           lineCode: dto.lineCode.trim(),
           modelName: dto.modelName ?? null,
@@ -737,7 +738,7 @@ export class BarcodeIssueService {
           lotNo: verdict.lotNo,
           itemCode: verdict.itemCode,
           organizationId,
-        } as unknown as unknown[],
+        }),
       );
       const barcodeRows = Number(
         affectedRows(updated) ?? 0,
@@ -773,7 +774,7 @@ export class BarcodeIssueService {
             '${FIXED.closeYn}', :barcode, :supplierBarcode, :feederLocationCode,
             :issueDivision, :modelName, :inventoryType,
             F_GET_MSL_PASSED_TIME(:barcode))`,
-        {
+        namedBinds({
           itemCode: verdict.itemCode,
           organizationId,
           mfs: dto.mfs ?? null,
@@ -793,7 +794,7 @@ export class BarcodeIssueService {
           issueDivision: dto.kitting ? FIXED.issueDivisionKitting : (dto.issueDivision ?? null),
           modelName: dto.modelName ?? null,
           inventoryType: (ledger.inventoryType as string) ?? null,
-        } as unknown as unknown[],
+        }),
       );
 
       return {

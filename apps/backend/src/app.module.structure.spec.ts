@@ -43,7 +43,8 @@ describe('AppModule activated API modules', () => {
     expect(databaseModuleSource).toMatch(/entities:\s*\[[\s\S]*\bPlant\b/);
     expect(plantModuleSource).toMatch(/controllers:\s*\[[\s\S]*\bPlantController\b/);
     expect(plantModuleSource).toMatch(/providers:\s*\[[\s\S]*\bPlantService\b/);
-    expect(plantModuleSource).toMatch(/providers:\s*\[[\s\S]*\bJwtAuthGuard\b/);
+    // 가드는 @UseGuards 로 붙이고 모듈 providers 에 두지 않는다 (architecture/module-boundary.spec.ts).
+    expect(plantModuleSource).not.toMatch(/providers:\s*\[[^\]]*\bJwtAuthGuard\b/);
   });
 
   it('activates the IMCN_MACHINE-backed equipment API without importing the full equipment module', () => {

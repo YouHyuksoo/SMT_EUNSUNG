@@ -26,6 +26,7 @@ import {
   MoldIssueRequestQueryDto,
   MoldIssueTargetQueryDto,
 } from './mold-issue.dto';
+import { namedBinds } from '../../common/utils/named-binds.util';
 
 type OracleRow = Record<string, unknown>;
 
@@ -103,12 +104,12 @@ export class MoldIssueService {
     const limit = query.limit ?? 500;
     const totals = await this.dataSource.query(
       `SELECT COUNT(*) AS "total" FROM (${body}) source_rows`,
-      { ...binds } as unknown as unknown[],
+      namedBinds({ ...binds }),
     ) as OracleRow[];
     const rows = await this.dataSource.query(
       `${body} ORDER BY "issueDate" DESC, "issueSequence" DESC
        OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY`,
-      { ...binds, offset: (page - 1) * limit, limit } as unknown as unknown[],
+      namedBinds({ ...binds, offset: (page - 1) * limit, limit }),
     ) as OracleRow[];
     return { data: rows, total: Number(totals[0]?.total ?? 0), page, limit };
   }
@@ -118,7 +119,7 @@ export class MoldIssueService {
    * PB 는 출고수량 기본값을 1 로 두고 시작한다(COMPUTE `1 ISSUE_QTY`). 그 값을 같이 내린다.
    */
   async findTargets(query: MoldIssueTargetQueryDto, organizationId: number) {
-    return this.dataSource.query(
+    return this.dataSource.query<OracleRow[]>(
       `SELECT m.MOLD_CODE AS "moldCode", m.MOLD_NAME AS "moldName",
               m.MOLD_SPEC AS "moldSpec", m.DRAWING_NO AS "drawingNo",
               m.MOLD_GROUP AS "moldGroup", grp.CODE_MEAN_KOR AS "moldGroupName",
@@ -163,13 +164,13 @@ export class MoldIssueService {
           AND m.MOLD_CODE <> '*'
           AND m.ORGANIZATION_ID = :organizationId
         ORDER BY m.MOLD_CODE, inv.MOLD_VERSION, inv.MOLD_SET_SERIAL`,
-      {
+      namedBinds({
         moldCode: this.like(query.moldCode),
         supplierCode: this.like(query.supplierCode),
         moldUseStatus: this.like(query.moldUseStatus),
         organizationId,
-      } as unknown as unknown[],
-    ) as Promise<OracleRow[]>;
+      }),
+    );
   }
 
   /**
@@ -177,7 +178,7 @@ export class MoldIssueService {
    * 미처리 청구('R')만 보고, 재고를 버전·SET번호까지 맞춰 붙인다.
    */
   async findRequests(query: MoldIssueRequestQueryDto, organizationId: number) {
-    return this.dataSource.query(
+    return this.dataSource.query<OracleRow[]>(
       `SELECT r.MOLD_CODE AS "moldCode",
               m.MOLD_NAME AS "moldName", m.MOLD_SPEC AS "moldSpec",
               r.MOLD_VERSION AS "moldVersion", r.MOLD_SET_SERIAL AS "moldSetSerial",
@@ -204,11 +205,11 @@ export class MoldIssueService {
           AND r.REQUEST_STATUS = 'R'
           AND r.ORGANIZATION_ID = :organizationId
         ORDER BY r.REQUEST_DATE, r.REQUEST_SEQUENCE`,
-      {
+      namedBinds({
         moldCode: this.like(query.moldCode),
         organizationId,
-      } as unknown as unknown[],
-    ) as Promise<OracleRow[]>;
+      }),
+    );
   }
 
   private assertAccount(account: string) {
@@ -224,7 +225,7 @@ export class MoldIssueService {
     return this.tx.run(async (qr) => {
       const exists = await qr.query(
         `SELECT PKG_MES_MAC.F_CHECK_MOLD_EXISTS(:moldCode, :organizationId) AS "cnt" FROM DUAL`,
-        { moldCode: dto.moldCode, organizationId } as unknown as unknown[],
+        namedBinds({ moldCode: dto.moldCode, organizationId }),
       ) as OracleRow[];
       if (Number(exists[0]?.cnt ?? -1) < 0) {
         throw new BadRequestException(`등록되지 않은 S-PARTS 입니다 (${dto.moldCode}).`);
@@ -273,12 +274,12 @@ export class MoldIssueService {
             AND REQUEST_DATE = TO_DATE(:requestDate, 'YYYY-MM-DD')
             AND REQUEST_SEQUENCE = :requestSequence
             AND ORGANIZATION_ID = :organizationId`,
-        {
+        namedBinds({
           moldCode: dto.moldCode,
           requestDate: dto.requestDate.slice(0, 10),
           requestSequence: dto.requestSequence,
           organizationId,
-        } as unknown as unknown[],
+        }),
       ) as OracleRow[];
       if (requests.length === 0) {
         throw new BadRequestException('청구건을 찾을 수 없습니다.');
@@ -322,7 +323,7 @@ export class MoldIssueService {
             AND REQUEST_DATE = TO_DATE(:requestDate, 'YYYY-MM-DD')
             AND REQUEST_SEQUENCE = :requestSequence
             AND ORGANIZATION_ID = :organizationId`,
-        {
+        namedBinds({
           issueSequence,
           issueQty: dto.issueQty,
           userId,
@@ -330,7 +331,7 @@ export class MoldIssueService {
           requestDate: dto.requestDate.slice(0, 10),
           requestSequence: dto.requestSequence,
           organizationId,
-        } as unknown as unknown[],
+        }),
       );
       return { issueSequence };
     });
@@ -381,7 +382,7 @@ export class MoldIssueService {
                       PKG_MES_MAC.F_GET_MOLD_UNIT_PRICE_CURR(
                         :supplierCode, :moldCode, :organizationId) AS CURRENCY
                  FROM DUAL) resolved`,
-      values as unknown as unknown[],
+      namedBinds(values),
     );
   }
 
@@ -402,12 +403,12 @@ export class MoldIssueService {
              RAISE_APPLICATION_ERROR(-20013, 'MOLD_ISSUE_CANCEL_FAILED:' || v_result);
            END IF;
          END;`,
-        {
+        namedBinds({
           issueDate: dto.issueDate.slice(0, 10),
           issueSequence: dto.issueSequence,
           organizationId,
           userId,
-        } as unknown as unknown[],
+        }),
       ).catch((error: unknown) => {
         const message = error instanceof Error ? error.message : String(error);
         const matched = /MOLD_ISSUE_CANCEL_FAILED:(-?\d+)/.exec(message);
@@ -423,7 +424,7 @@ export class MoldIssueService {
            FROM IMCN_MOLD_ISSUE
           WHERE ISSUE_DATE = TRUNC(SYSDATE) AND ISSUE_STATUS = 'C'
             AND ORGANIZATION_ID = :organizationId`,
-        { organizationId } as unknown as unknown[],
+        namedBinds({ organizationId }),
       ) as OracleRow[];
       return { cancelSequence: Number(rows[0]?.cancelSequence ?? 0) };
     });

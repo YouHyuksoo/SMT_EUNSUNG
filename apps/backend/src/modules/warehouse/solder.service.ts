@@ -40,6 +40,7 @@ import {
   SolderStageCountQueryDto,
 } from './warehouse.dto';
 import { affectedRows } from '../../common/utils/affected-rows.util';
+import { namedBinds } from '../../common/utils/named-binds.util';
 
 type Row = Record<string, unknown>;
 
@@ -97,10 +98,10 @@ export class SolderService {
         GROUP BY MACHINE_CODE, LINE_CODE, SOLDER_TYPE
         ORDER BY MACHINE_CODE, LINE_CODE, SOLDER_TYPE
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         machineCode: likePrefix(query.machineCode),
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }
@@ -214,7 +215,7 @@ export class SolderService {
           ${runningWhere}
         ORDER BY s.RECEIPT_DATE DESC, s.SOLDER_LOT_NO
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         dateFrom: query.dateFrom,
         dateTo: query.dateTo,
         solderLotNo: likePrefix(query.solderLotNo),
@@ -223,7 +224,7 @@ export class SolderService {
         solderType: likePrefix(query.solderType),
         machineCode: likePrefix(query.machineCode),
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }
@@ -254,7 +255,7 @@ export class SolderService {
              FROM IM_ITEM_RECEIPT_BARCODE b
             WHERE b.LOT_NO = :solderLotNo
               AND b.ORGANIZATION_ID = :organizationId`,
-          lotBinds as unknown as unknown[],
+          namedBinds(lotBinds),
         )) as Row[];
         if (items.length === 0) {
           throw new BadRequestException(
@@ -274,7 +275,7 @@ export class SolderService {
              FROM IM_ITEM_SOLDER_MASTER
             WHERE SOLDER_LOT_NO = :solderLotNo
               AND ORGANIZATION_ID = :organizationId`,
-          lotBinds as unknown as unknown[],
+          namedBinds(lotBinds),
         )) as Row[];
         if (Number(exists[0]?.cnt ?? 0) > 0) {
           throw new BadRequestException(`이미 입고된 솔더입니다: ${dto.solderLotNo}`);
@@ -287,12 +288,12 @@ export class SolderService {
            VALUES
              (:itemCode, :solderLotNo, SYSDATE,
               SYSDATE, :userId, SYSDATE, :userId, :organizationId)`,
-          {
+          namedBinds({
             itemCode: items[0].itemCode,
             solderLotNo: dto.solderLotNo,
             userId,
             organizationId,
-          } as unknown as unknown[],
+          }),
         );
         return {
           scanType: 'R' as const,
@@ -310,7 +311,7 @@ export class SolderService {
                 LAST_MODIFY_BY = :userId
           WHERE SOLDER_LOT_NO = :solderLotNo
             AND ORGANIZATION_ID = :organizationId`,
-        { ...lotBinds, userId } as unknown as unknown[],
+        namedBinds({ ...lotBinds, userId }),
       );
       const affected = Number(affectedRows(result) ?? 0);
       if (affected === 0) {
@@ -366,13 +367,13 @@ export class SolderService {
           AND NVL(h.MACHINE_CODE, '*') LIKE :machineCode ESCAPE '\\'
         ORDER BY h.INPUT_DATE DESC, h.SOLDER_LOT_NO
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         dateFrom: query.dateFrom,
         dateTo: query.dateTo,
         solderLotNo: likePrefix(query.solderLotNo),
         machineCode: likePrefix(query.machineCode),
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }

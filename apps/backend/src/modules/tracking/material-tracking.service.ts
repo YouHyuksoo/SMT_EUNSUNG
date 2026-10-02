@@ -28,6 +28,7 @@ import {
   MaterialLotSpiQueryDto,
   SerialNoQueryDto,
 } from './tracking.dto';
+import { namedBinds } from '../../common/utils/named-binds.util';
 
 type Row = Record<string, unknown>;
 
@@ -70,7 +71,7 @@ export class MaterialTrackingService {
   private async resolveLotNo(input: string): Promise<string> {
     const rows = (await this.dataSource.query(
       `SELECT F_GET_LOT_NO_FROM_BARCODE(:barcode) AS "lotNo" FROM DUAL`,
-      { barcode: input } as unknown as unknown[],
+      namedBinds({ barcode: input }),
     )) as Row[];
     const resolved = rows[0]?.lotNo;
     return resolved ? String(resolved) : input;
@@ -119,7 +120,7 @@ export class MaterialTrackingService {
           AND a.CHECK_STATUS = 'P'
         ORDER BY a.CHECK_DATE
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      { lotNo, organizationId } as unknown as unknown[],
+      namedBinds({ lotNo, organizationId }),
     )) as Row[];
     return { data: rows, total: rows.length, resolvedLotNo: lotNo };
   }
@@ -186,7 +187,7 @@ export class MaterialTrackingService {
           AND s.ORGANIZATION_ID = :organizationId
         ORDER BY s.INSPECT_DATE
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      binds as unknown as unknown[],
+      namedBinds(binds),
     )) as Row[];
     return { data: rows, total: rows.length, expandedLines: lines };
   }
@@ -282,7 +283,7 @@ export class MaterialTrackingService {
          LEFT JOIN ISYS_BASECODE bs
                 ON bs.CODE_TYPE = 'BARCODE STATUS' AND bs.CODE_NAME = b.BARCODE_STATUS
         ORDER BY g.INSPECT_DATE, g.WORKSTAGE_NAME`,
-      { serialNo: query.serialNo, organizationId } as unknown as unknown[],
+      namedBinds({ serialNo: query.serialNo, organizationId }),
     )) as Row[];
     return { data: rows, total: rows.length };
   }
@@ -388,7 +389,7 @@ export class MaterialTrackingService {
        ) y
        )
        ORDER BY "lineName", "pcbItem", "locationCode", "checkDate"`,
-      {
+      namedBinds({
         maxDatetime: query.maxDatetime,
         minDatetime: query.minDatetime ?? null,
         // PB 관례: 빈 조건은 '%'. NULL LIKE '%' 는 NULL 이라 컬럼을 NVL 로 감쌌다.
@@ -399,7 +400,7 @@ export class MaterialTrackingService {
         lineCode: likePrefix(query.lineCode),
         timeMinutes: query.timeMinutes ?? 0,
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return { data: rows, total: rows.length };
   }
@@ -504,7 +505,7 @@ export class MaterialTrackingService {
                 ON rdf.CODE_TYPE = 'RECEIPT DEFICIT' AND rdf.CODE_NAME = e.PROC_CODE
         ORDER BY e.PROC_DATE
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      { lotNo, organizationId } as unknown as unknown[],
+      namedBinds({ lotNo, organizationId }),
     )) as Row[];
     return { data: rows, total: rows.length, resolvedLotNo: lotNo };
   }

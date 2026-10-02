@@ -10,7 +10,6 @@ import { DepartmentMaster } from '../../entities/department-master.entity';
 import { ProdLineMaster } from '../../entities/prod-line-master.entity';
 import { IsysUser } from '../../entities/isys-user.entity';
 import { IsysOrganization } from '../../entities/isys-organization.entity';
-import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { EquipMaster } from '../../entities/equip-master.entity';
 import { ProcessController } from './controllers/process.controller';
 import { ProcessService } from './services/process.service';
@@ -18,7 +17,7 @@ import { ProcessService } from './services/process.service';
 @Module({
   imports: [TypeOrmModule.forFeature([ProcessMaster, ProcessLine, EquipMaster, DepartmentMaster, ProdLineMaster, IsysUser, IsysOrganization])],
   controllers: [ProcessController],
-  providers: [ProcessService, JwtAuthGuard],
+  providers: [ProcessService],
   exports: [ProcessService],
 })
 export class MasterProcessModule {}

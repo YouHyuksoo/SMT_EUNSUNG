@@ -37,6 +37,7 @@ import { limited, ROW_LIMIT } from '../../shared/row-limit';
 import { TransactionService } from '../../shared/transaction.service';
 import { BakingScanDto, BakingHistoryQueryDto } from './warehouse.dto';
 import { affectedRows } from '../../common/utils/affected-rows.util';
+import { namedBinds } from '../../common/utils/named-binds.util';
 
 type Row = Record<string, unknown>;
 
@@ -132,7 +133,7 @@ export class BakingScanService {
           AND m.ORGANIZATION_ID = :organizationId
         ORDER BY m.INPUT_SCAN_DATE DESC
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         dateFrom: query.dateFrom,
         dateTo: query.dateTo,
         chamberType: likePrefix(query.chamberType),
@@ -140,7 +141,7 @@ export class BakingScanService {
         lotNo: likePrefix(query.lotNo),
         chamberCode: likePrefix(query.chamberCode),
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }
@@ -158,7 +159,7 @@ export class BakingScanService {
               F_GET_LOT_NO_FROM_BARCODE(
                 F_GET_PREPARE_BARCODE(:barcode)) AS "lotNo"
          FROM DUAL`,
-      { barcode } as unknown as unknown[],
+      namedBinds({ barcode }),
     )) as Row[])[0] ?? {};
     const itemCode = (parsed.itemCode as string) || '';
     const lotNo = (parsed.lotNo as string) || '';
@@ -200,7 +201,7 @@ export class BakingScanService {
         WHERE b.ITEM_CODE = :itemCode
           AND b.LOT_NO = :lotNo
           AND b.ORGANIZATION_ID = :organizationId`,
-      { itemCode, lotNo, organizationId } as unknown as unknown[],
+      namedBinds({ itemCode, lotNo, organizationId }),
     )) as Row[])[0] ?? null;
 
     const openCount = Number(info?.openCount ?? 0);
@@ -280,7 +281,7 @@ export class BakingScanService {
                        AND x.LOT_NO = :lotNo
                        AND x.OUTPUT_SCAN_DATE IS NULL
                        AND x.ORGANIZATION_ID = :organizationId)`,
-          {
+          namedBinds({
             chamberCode: dto.chamberCode,
             chamberType: dto.chamberType,
             chamberLocation: dto.chamberLocation ?? null,
@@ -290,7 +291,7 @@ export class BakingScanService {
             lotNo: lookup.lotNo,
             lotQty: Number(info.lotQty ?? 0),
             organizationId,
-          } as unknown as unknown[],
+          }),
         );
         const masterRows = Number(
           affectedRows(inserted) ?? 0,
@@ -308,9 +309,9 @@ export class BakingScanService {
             WHERE ITEM_CODE = :itemCode
               AND LOT_NO = :lotNo
               AND ORGANIZATION_ID = :organizationId`,
-          {
+          namedBinds({
             userId, itemCode: lookup.itemCode, lotNo: lookup.lotNo, organizationId,
-          } as unknown as unknown[],
+          }),
         );
 
         const inventoryResult = await qr.query(
@@ -319,9 +320,9 @@ export class BakingScanService {
             WHERE ITEM_CODE = :itemCode
               AND MATERIAL_MFS = :lotNo
               AND ORGANIZATION_ID = :organizationId`,
-          {
+          namedBinds({
             itemCode: lookup.itemCode, lotNo: lookup.lotNo, organizationId,
-          } as unknown as unknown[],
+          }),
         );
 
         return {
@@ -360,14 +361,14 @@ export class BakingScanService {
             AND CHAMBER_TYPE = :chamberType
             AND CHAMBER_CODE = :chamberCode
             AND ORGANIZATION_ID = :organizationId`,
-        {
+        namedBinds({
           userId,
           itemCode: lookup.itemCode,
           lotNo: lookup.lotNo,
           chamberType: dto.chamberType,
           chamberCode: dto.chamberCode,
           organizationId,
-        } as unknown as unknown[],
+        }),
       );
       const masterRows = Number(affectedRows(closed) ?? 0);
       if (masterRows < 1) {
@@ -384,9 +385,9 @@ export class BakingScanService {
           WHERE ITEM_CODE = :itemCode
             AND LOT_NO = :lotNo
             AND ORGANIZATION_ID = :organizationId`,
-        {
+        namedBinds({
           userId, itemCode: lookup.itemCode, lotNo: lookup.lotNo, organizationId,
-        } as unknown as unknown[],
+        }),
       );
 
       return {

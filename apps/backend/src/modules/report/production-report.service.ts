@@ -46,6 +46,7 @@ import {
   RunCardReportQueryDto,
   WorkstageStockQueryDto,
 } from './report.dto';
+import { namedBinds } from '../../common/utils/named-binds.util';
 
 type Row = Record<string, unknown>;
 
@@ -112,7 +113,7 @@ export class ProductionReportService {
         WHERE ${this.pickupWhere()}
         ORDER BY p.ACTUAL_DATE DESC, p.LINE_CODE, p.MACHINE_CODE, p.ADDRESS
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      this.pickupBinds(query) as unknown as unknown[],
+      namedBinds(this.pickupBinds(query)),
     )) as Row[];
     return limited(rows);
   }
@@ -140,7 +141,7 @@ export class ProductionReportService {
         GROUP BY p.LINE_CODE, p.ACTUAL_DATE
         ORDER BY p.ACTUAL_DATE DESC, p.LINE_CODE
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      this.pickupBinds(query) as unknown as unknown[],
+      namedBinds(this.pickupBinds(query)),
     )) as Row[];
     return limited(rows);
   }
@@ -186,13 +187,13 @@ export class ProductionReportService {
                  b.ITEM_NAME, b.ITEM_SPEC, a.CUSTOMER_CODE, c.CUSTOMER_NAME
         ORDER BY a.LINE_CODE, b.MODEL_NAME, a.ITEM_CODE
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         planDate: query.planDate,
         modelName: likePrefix(query.modelName),
         lineCode: likePrefix(query.lineCode),
         customerCode: likePrefix(query.customerCode),
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }
@@ -253,7 +254,7 @@ export class ProductionReportService {
         WHERE ${this.runCardWhere()}
         ORDER BY c.RUN_DATE DESC, c.RUN_NO
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      this.runCardBinds(query, organizationId) as unknown as unknown[],
+      namedBinds(this.runCardBinds(query, organizationId)),
     )) as Row[];
     return limited(rows);
   }
@@ -302,7 +303,7 @@ export class ProductionReportService {
                  c.LINE_CODE, c.PRODUCT_RUN_TYPE, rt.CODE_MEAN_KOR
         ORDER BY c.RUN_DATE DESC, c.LINE_CODE, c.MODEL_NAME
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      this.runCardBinds(query, organizationId) as unknown as unknown[],
+      namedBinds(this.runCardBinds(query, organizationId)),
     )) as Row[];
     return { data: rows, total: rows.length, withQty: Boolean(query.withQty) };
   }
@@ -352,13 +353,13 @@ export class ProductionReportService {
         WHERE ${this.fgIssueWhere(true)}
         ORDER BY f.ISSUE_DATE DESC, f.ISSUE_SEQUENCE
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         dateFrom: query.dateFrom,
         dateTo: query.dateTo,
         modelName: likePrefix(query.modelName),
         barcode: likePrefix(query.barcode),
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }
@@ -382,12 +383,12 @@ export class ProductionReportService {
                  f.LOCATION_CODE
         ORDER BY f.MODEL_NAME, f.CUSTOMER_CODE
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         dateFrom: query.dateFrom,
         dateTo: query.dateTo,
         modelName: likePrefix(query.modelName),
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }
@@ -413,12 +414,12 @@ export class ProductionReportService {
                  f.CUSTOMER_CODE, f.LOCATION_CODE
         ORDER BY 1, 2
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         dateFrom: query.dateFrom,
         dateTo: query.dateTo,
         modelName: likePrefix(query.modelName),
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }
@@ -455,13 +456,13 @@ export class ProductionReportService {
          LEFT JOIN IP_PRODUCT_WORKSTAGE z ON z.WORKSTAGE_CODE = y.WORKSTAGE_CODE
         ORDER BY y.LINE_CODE, y.WORKSTAGE_CODE, y.MODEL_NAME
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         modelName: likePrefix(query.modelName),
         modelSuffix: likePrefix(query.modelSuffix),
         workstageCode: likePrefix(query.workstageCode),
         sign: query.sign ?? 0,
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }
@@ -498,12 +499,12 @@ export class ProductionReportService {
           GROUP BY v.MODEL_NAME, v.MODEL_SUFFIX, v.ITEM_CODE, v.PCB_ITEM, v.WORKSTAGE_CODE
           ORDER BY v.WORKSTAGE_CODE, v.MODEL_NAME, v.ITEM_CODE
           FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-        {
+        namedBinds({
           modelName: likePrefix(query.modelName),
           modelSuffix: likePrefix(query.modelSuffix),
           workstageCode: likePrefix(query.workstageCode),
           organizationId,
-        } as unknown as unknown[],
+        }),
       )) as Row[];
       return { data: rows, total: rows.length, kind };
     }
@@ -547,7 +548,7 @@ export class ProductionReportService {
                  io.WORKSTAGE_CODE, io.RECEIPT_DEFICIT
         ORDER BY io.WORKSTAGE_CODE, io.MODEL_NAME, io.ITEM_CODE
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         dateFrom: query.dateFrom,
         dateTo: query.dateTo,
         modelName: likePrefix(query.modelName),
@@ -555,7 +556,7 @@ export class ProductionReportService {
         workstageCode: likePrefix(query.workstageCode),
         labelType: MAGAZINE_LABEL_TYPE[kind],
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return { data: rows, total: rows.length, kind };
   }

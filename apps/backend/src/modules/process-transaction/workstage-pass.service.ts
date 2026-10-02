@@ -2,6 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { OracleService } from '../../common/services/oracle.service';
 import { WorkstagePassQueryDto, WorkstagePassScanDto } from './workstage-pass.dto';
+import { namedBinds } from '../../common/utils/named-binds.util';
 
 type Row = Record<string, unknown>;
 
@@ -39,10 +40,10 @@ export class WorkstagePassService {
       : mode === 'workstageSummary'
         ? `SELECT io.WORKSTAGE_CODE AS "workstageCode", ws.WORKSTAGE_NAME AS "workstageName", io.MODEL_NAME AS "modelName", io.IO_DEFICIT AS "ioDeficit", SUM(io.IO_QTY) AS "ioQty" ${where} GROUP BY io.WORKSTAGE_CODE, ws.WORKSTAGE_NAME, io.MODEL_NAME, io.IO_DEFICIT`
         : `${detail}${mode === 'wait' ? " AND io.IO_DEFICIT = 'I' AND io.OUT_DATE IS NULL" : ''}`;
-    const totals = await this.dataSource.query(`SELECT COUNT(*) AS "total" FROM (${body})`, { ...binds } as never) as Row[];
+    const totals = await this.dataSource.query(`SELECT COUNT(*) AS "total" FROM (${body})`, namedBinds({ ...binds })) as Row[];
     const page = query.page ?? 1; const limit = query.limit ?? 500;
     const rows = await this.dataSource.query(`${body} ORDER BY 1 DESC OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY`,
-      { ...binds, offset: (page - 1) * limit, limit } as never) as Row[];
+      namedBinds({ ...binds, offset: (page - 1) * limit, limit })) as Row[];
     return { data: rows, total: Number(totals[0]?.total ?? 0), page, limit };
   }
 
@@ -52,7 +53,7 @@ export class WorkstagePassService {
     const checks = await this.dataSource.query(`SELECT INTERLOCK_CHECK_TYPE AS "interlockCheckType"
       FROM IQ_INTERLOCK_CHECK_CONDITION WHERE ORGANIZATION_ID = :organizationId
         AND LINE_CODE = :lineCode AND WORKSTAGE_CODE = :workstageCode AND NVL(USE_YN, 'Y') = 'Y'
-      ORDER BY CHECK_SEQUENCE`, { organizationId, lineCode, workstageCode } as never) as Row[];
+      ORDER BY CHECK_SEQUENCE`, namedBinds({ organizationId, lineCode, workstageCode })) as Row[];
     for (const check of checks) {
       const result = await this.oracle.callProcScalar('P_INTERLOCK_CHECK', [
         { name: 'result', type: 'STRING', maxSize: 100 }, { name: 'message', type: 'STRING', maxSize: 2000 },
@@ -60,15 +61,15 @@ export class WorkstagePassService {
       ], { lineCode, workstageCode, machineCode: '*', serialNo: pid, interlockCheckType: check.interlockCheckType });
       if (String(result.result ?? '').toUpperCase() === 'NG') throw new BadRequestException(String(result.ngMessage ?? result.message ?? '인터록 검사에 실패했습니다.'));
     }
-    const statuses = await this.dataSource.query(`SELECT F_CHECK_PID_STATUS_4_WS(:pid) AS "status" FROM DUAL`, { pid } as never) as Row[];
+    const statuses = await this.dataSource.query(`SELECT F_CHECK_PID_STATUS_4_WS(:pid) AS "status" FROM DUAL`, namedBinds({ pid })) as Row[];
     if (String(statuses[0]?.status ?? '').toUpperCase() !== 'OK') throw new BadRequestException(String(statuses[0]?.status ?? 'PID 상태를 확인할 수 없습니다.'));
 
     const magazine = await this.dataSource.query(`SELECT ITEM_CODE AS "itemCode", MODEL_NAME AS "modelName", MODEL_SUFFIX AS "modelSuffix",
       RUN_NO AS "runNo", NVL(LOT_QTY, 1) AS "ioQty" FROM IP_PRODUCT_RUN_CARD_IO
-      WHERE MAGAZINE_LABEL_NO = :pid AND ORGANIZATION_ID = :organizationId AND ROWNUM = 1`, { pid, organizationId } as never) as Row[];
+      WHERE MAGAZINE_LABEL_NO = :pid AND ORGANIZATION_ID = :organizationId AND ROWNUM = 1`, namedBinds({ pid, organizationId })) as Row[];
     const barcode = magazine.length ? [] : await this.dataSource.query(`SELECT ITEM_CODE AS "itemCode", MODEL_NAME AS "modelName", MODEL_SUFFIX AS "modelSuffix",
       RUN_NO AS "runNo", 1 AS "ioQty" FROM IP_PRODUCT_2D_BARCODE
-      WHERE SERIAL_NO = :pid AND ORGANIZATION_ID = :organizationId AND ROWNUM = 1`, { pid, organizationId } as never) as Row[];
+      WHERE SERIAL_NO = :pid AND ORGANIZATION_ID = :organizationId AND ROWNUM = 1`, namedBinds({ pid, organizationId })) as Row[];
     const product = magazine[0] ?? barcode[0];
     if (!product) throw new BadRequestException('등록되지 않은 PID입니다.');
 

@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { MagazineLabelHistoryQueryDto } from './magazine-label-history.dto';
+import { namedBinds } from '../../common/utils/named-binds.util';
 
 type OracleRow = Record<string, unknown>;
 
@@ -43,11 +44,11 @@ export class MagazineLabelHistoryService {
         ? 'ORDER BY "receiptDate", "modelName"'
         : 'ORDER BY "lineCode", "runNo", "modelName", "pcbItem", "receiptDate", "magazineLabelType"';
     const countSql = `SELECT COUNT(*) AS "total" FROM (${body}) source_rows`;
-    const totals = await this.dataSource.query(countSql, { ...binds } as unknown as unknown[]) as OracleRow[];
+    const totals = await this.dataSource.query(countSql, namedBinds({ ...binds })) as OracleRow[];
     const offset = ((query.page ?? 1) - 1) * (query.limit ?? 500);
     const rows = await this.dataSource.query(
       `${body} ${orderBy} OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY`,
-      { ...binds, offset, limit: query.limit ?? 500 } as unknown as unknown[],
+      namedBinds({ ...binds, offset, limit: query.limit ?? 500 }),
     ) as OracleRow[];
     return { data: rows, total: Number(totals[0]?.total ?? 0), page: query.page ?? 1, limit: query.limit ?? 500 };
   }

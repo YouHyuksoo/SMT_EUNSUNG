@@ -21,6 +21,7 @@ import { DataSource } from 'typeorm';
 import { likePrefix } from '@smt/shared';
 import { limited, ROW_LIMIT } from '../../shared/row-limit';
 import { InventoryCloseQueryDto, ReceiptIssueLedgerQueryDto } from './inventory-query.dto';
+import { namedBinds } from '../../common/utils/named-binds.util';
 
 type Row = Record<string, unknown>;
 
@@ -118,12 +119,12 @@ export class InventoryCloseService {
         ORDER BY a.ITEM_CODE, a.MATERIAL_MFS, a.DIV,
                  a.RECEIPT_ISSUE_DATE, a.RECEIPT_ISSUE_SEQUENCE
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         yyyymm: query.yyyymm,
         itemCode: likePrefix(query.itemCode),
         locationCode: likePrefix(query.locationCode),
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }
@@ -185,12 +186,12 @@ export class InventoryCloseService {
           AND c.ORGANIZATION_ID = :organizationId
         ORDER BY i.ITEM_CLASS, i.ITEM_DIVISION, c.ITEM_CODE
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         yyyymm: query.yyyymm,
         itemCode: likePrefix(query.itemCode),
         itemDivision: likePrefix(query.itemDivision),
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }

@@ -37,6 +37,7 @@ import {
   MagazineIssuedQueryDto,
 } from './magazine-label.dto';
 import { affectedRows } from '../../common/utils/affected-rows.util';
+import { namedBinds } from '../../common/utils/named-binds.util';
 
 type Row = Record<string, unknown>;
 
@@ -106,7 +107,7 @@ export class MagazineLabelService {
                 (SELECT MAX(io.RUN_NO) FROM IP_PRODUCT_RUN_CARD_IO io
                   WHERE io.MAGAZINE_LABEL_NO = :scan
                     AND io.ORGANIZATION_ID = :organizationId))`,
-      { scan, organizationId } as unknown as unknown[],
+      namedBinds({ scan, organizationId }),
     )) as Row[];
 
     const runCard = rows[0] ?? null;
@@ -148,7 +149,7 @@ export class MagazineLabelService {
         WHERE m.MASTER_MODEL_NAME = :masterModelName
           AND m.ORGANIZATION_ID = :organizationId
         ORDER BY m.MODEL_NAME`,
-      { runNo, masterModelName, organizationId } as unknown as unknown[],
+      namedBinds({ runNo, masterModelName, organizationId }),
     )) as Row[];
 
     return rows.map((r) => {
@@ -199,7 +200,7 @@ export class MagazineLabelService {
           AND io.RUN_NO = :runNo
         ORDER BY io.RECEIPT_DATE DESC, io.RECEIPT_SEQUENCE DESC
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      { runNo: query.runNo, organizationId } as unknown as unknown[],
+      namedBinds({ runNo: query.runNo, organizationId }),
     )) as Row[];
     return limited(rows);
   }
@@ -230,7 +231,7 @@ export class MagazineLabelService {
         CROSS JOIN (SELECT COUNT(*) AS WORKSTAGE_IO_COUNT
                       FROM IP_PRODUCT_WORKSTAGE_IO x
                      WHERE x.SERIAL_NO = :magazineLabelNo) io_cnt`,
-      { magazineLabelNo, organizationId } as unknown as unknown[],
+      namedBinds({ magazineLabelNo, organizationId }),
     )) as Row[];
 
     const info = rows[0] ?? {};
@@ -322,7 +323,7 @@ export class MagazineLabelService {
                 ${SEQUENCES.receipt}.NEXTVAL AS "receiptSeq"
            FROM DUAL
         CONNECT BY LEVEL <= :count`,
-        { count: labelQtys.length } as unknown as unknown[],
+        namedBinds({ count: labelQtys.length }),
       )) as Row[];
 
       const issued: { magazineLabelNo: string; qty: number }[] = [];
@@ -364,7 +365,7 @@ export class MagazineLabelService {
                     SELECT 1 FROM IP_PRODUCT_RUN_CARD_IO x
                      WHERE x.MAGAZINE_LABEL_NO = :magazineLabelNo
                        AND x.ORGANIZATION_ID = :organizationId)`,
-          {
+          namedBinds({
             runNo: String(runCard.runNo),
             receiptSequence,
             itemCode: String(model.itemCode ?? runCard.itemCode ?? ''),
@@ -385,7 +386,7 @@ export class MagazineLabelService {
             magazineSetNo: dto.magazineSetNo ?? magazineLabelNo,
             mfsGroupNo: FIXED.mfsGroupNo,
             parentMagazineLabelNo: FIXED.parentMagazineLabelNo,
-          } as unknown as unknown[],
+          }),
         );
         const affected = Number(
           affectedRows(result) ?? 0,
@@ -460,10 +461,10 @@ export class MagazineLabelService {
            FROM IP_PRODUCT_RUN_CARD_IO io
           WHERE io.MAGAZINE_LABEL_NO = :magazineLabelNo
             AND io.ORGANIZATION_ID = :organizationId`,
-        {
+        namedBinds({
           magazineLabelNo: dto.magazineLabelNo,
           organizationId,
-        } as unknown as unknown[],
+        }),
       );
       const backedRows = Number(
         affectedRows(backed) ?? 0,
@@ -480,10 +481,10 @@ export class MagazineLabelService {
             AND NOT EXISTS (
                   SELECT 1 FROM IP_PRODUCT_WORKSTAGE_IO x
                    WHERE x.SERIAL_NO = io.MAGAZINE_LABEL_NO)`,
-        {
+        namedBinds({
           magazineLabelNo: dto.magazineLabelNo,
           organizationId,
-        } as unknown as unknown[],
+        }),
       );
       const deletedRows = Number(
         affectedRows(deleted) ?? 0,

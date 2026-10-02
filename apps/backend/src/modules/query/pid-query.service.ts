@@ -34,6 +34,7 @@ import {
   XOutRepairDto,
 } from './query.dto';
 import { ROW_LIMIT } from './row-limit';
+import { namedBinds } from '../../common/utils/named-binds.util';
 
 type Row = Record<string, unknown>;
 
@@ -118,14 +119,14 @@ export class PidQueryService {
           AND b.ORGANIZATION_ID = :organizationId
         ORDER BY b.SERIAL_NO
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         runNo: likePrefix(query.runNo),
         serialNo: likePrefix(query.serialNo),
         magazineNo: likePrefix(query.magazineNo),
         lineCode: likePrefix(query.lineCode),
         modelName: likePrefix(query.modelName),
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return { data: rows, total: rows.length, truncated: rows.length >= ROW_LIMIT };
   }
@@ -146,9 +147,9 @@ export class PidQueryService {
           WHERE SERIAL_NO = :serialNo
             AND BAD_REASON_CODE = :reason
             AND ORGANIZATION_ID = :organizationId`,
-        {
+        namedBinds({
           serialNo: dto.serialNo, reason: X_OUT_REASON, organizationId,
-        } as unknown as unknown[],
+        }),
       )) as Row[];
       const count = Number(before[0]?.cnt ?? 0);
       if (count === 0) {
@@ -159,9 +160,9 @@ export class PidQueryService {
           WHERE SERIAL_NO = :serialNo
             AND BAD_REASON_CODE = :reason
             AND ORGANIZATION_ID = :organizationId`,
-        {
+        namedBinds({
           serialNo: dto.serialNo, reason: X_OUT_REASON, organizationId,
-        } as unknown as unknown[],
+        }),
       );
       // 되살린 이력을 2D바코드 메모에 남긴다. PB 는 sle_message 를 화면에만 띄우고
       // 아무 곳에도 적지 않아 '누가 언제 풀었나' 가 남지 않았다.
@@ -175,12 +176,12 @@ export class PidQueryService {
                 LAST_MODIFY_BY = :userId,
                 LAST_MODIFY_DATE = SYSDATE
           WHERE SERIAL_NO = :serialNo AND ORGANIZATION_ID = :organizationId`,
-        {
+        namedBinds({
           serialNo: dto.serialNo,
           userId,
           comments: dto.comments ?? null,
           organizationId,
-        } as unknown as unknown[],
+        }),
       );
       return { serialNo: dto.serialNo, deleted: count, repairedBy: userId };
     });
@@ -216,13 +217,13 @@ export class PidQueryService {
           AND m.ORGANIZATION_ID = :organizationId
         ORDER BY m.DATESET, m.PID
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         runNo: likePrefix(query.runNo),
         serialNo: likePrefix(query.serialNo),
         dateFrom: query.dateFrom,
         dateTo: query.dateTo,
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return { data: rows, total: rows.length, truncated: rows.length >= ROW_LIMIT };
   }
@@ -258,13 +259,13 @@ export class PidQueryService {
                  m.LINE_CODE, m.MACHINE_CODE
         ORDER BY MIN(m.DATESET), m.LOTID
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         runNo: likePrefix(query.runNo),
         serialNo: likePrefix(query.serialNo),
         dateFrom: query.dateFrom,
         dateTo: query.dateTo,
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return { data: rows, total: rows.length, truncated: rows.length >= ROW_LIMIT };
   }
@@ -317,7 +318,7 @@ export class PidQueryService {
           AND m.ORGANIZATION_ID = :organizationId
         ORDER BY m.SCAN_DATE DESC
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         runNo: likePrefix(query.runNo),
         lineCode: likePrefix(query.lineCode),
         modelName: likePrefix(query.modelName),
@@ -327,7 +328,7 @@ export class PidQueryService {
         dateFrom: query.dateFrom,
         dateTo: query.dateTo,
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return { data: rows, total: rows.length, truncated: rows.length >= ROW_LIMIT };
   }

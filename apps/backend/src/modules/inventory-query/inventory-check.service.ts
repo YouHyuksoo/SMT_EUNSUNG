@@ -36,6 +36,7 @@ import {
   InventoryCheckQueryDto,
 } from './inventory-query.dto';
 import { affectedRows } from '../../common/utils/affected-rows.util';
+import { namedBinds } from '../../common/utils/named-binds.util';
 
 type Row = Record<string, unknown>;
 
@@ -103,13 +104,13 @@ export class InventoryCheckService {
           AND c.ORGANIZATION_ID = :organizationId
         ORDER BY c.ITEM_CODE, c.MATERIAL_MFS
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         yyyymm: query.yyyymm,
         itemCode: likePrefix(query.itemCode),
         lotNo: likePrefix(query.lotNo),
         locationCode: likePrefix(query.locationCode),
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }
@@ -150,11 +151,11 @@ export class InventoryCheckService {
           AND s.ORGANIZATION_ID = :organizationId
         ORDER BY s.ISSUE_DATE DESC, s.ISSUE_SEQUENCE DESC
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         yyyymm: query.yyyymm,
         itemCode: likePrefix(query.itemCode),
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }
@@ -189,9 +190,9 @@ export class InventoryCheckService {
           WHERE v.ITEM_CODE = :itemCode
             AND v.MATERIAL_MFS = :lotNo
             AND v.ORGANIZATION_ID = :organizationId`,
-        {
+        namedBinds({
           itemCode: dto.itemCode, lotNo: dto.lotNo, organizationId,
-        } as unknown as unknown[],
+        }),
       )) as Row[])[0] ?? null;
       if (!facts) {
         throw new BadRequestException(
@@ -232,13 +233,13 @@ export class InventoryCheckService {
               WHERE LOT_NO = :lotNo
                 AND ITEM_CODE = :itemCode
                 AND ORGANIZATION_ID = :organizationId`,
-        {
+        namedBinds({
           yyyymm: dto.yyyymm,
           organizationId,
           userId,
           lotNo: dto.lotNo,
           itemCode: dto.itemCode,
-        } as unknown as unknown[],
+        }),
       );
 
       // ② 조정 출고. 날짜는 마감월의 마지막 날이다 (파일 머리 2번).
@@ -267,7 +268,7 @@ export class InventoryCheckService {
             '${ADJUST.machineCode}', '${ADJUST.invoiceNo}', '${ADJUST.madeBy}',
             '${ADJUST.parentItemCode}', :lotNo,
             :inventoryType)`,
-        {
+        namedBinds({
           yyyymm: dto.yyyymm,
           organizationId,
           lotNo: dto.lotNo,
@@ -279,7 +280,7 @@ export class InventoryCheckService {
           lineType: (facts.lineType as string) ?? null,
           userId,
           inventoryType: (facts.inventoryType as string) ?? null,
-        } as unknown as unknown[],
+        }),
       );
 
       return {
@@ -343,12 +344,12 @@ export class InventoryCheckService {
           AND c.ORGANIZATION_ID = :organizationId
         ORDER BY c.CHECK_YYYYMM DESC, c.ITEM_CODE, c.LOT_NO
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         yyyymm: likePrefix(query.yyyymm),
         itemCode: likePrefix(query.itemCode),
         lineCode: likePrefix(query.lineCode),
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }
@@ -381,11 +382,11 @@ export class InventoryCheckService {
         GROUP BY c.CHECK_YYYYMM, c.ITEM_CODE, i.ITEM_NAME, i.ITEM_SPEC, i.ITEM_UOM
         ORDER BY c.CHECK_YYYYMM DESC, c.ITEM_CODE
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         yyyymm: likePrefix(query.yyyymm),
         itemCode: likePrefix(query.itemCode),
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }

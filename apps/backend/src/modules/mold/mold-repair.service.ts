@@ -26,6 +26,7 @@ import {
   MoldRepairTargetQueryDto,
   MoldRepairUpdateDto,
 } from './mold-repair.dto';
+import { namedBinds } from '../../common/utils/named-binds.util';
 
 type OracleRow = Record<string, unknown>;
 
@@ -54,7 +55,7 @@ export class MoldRepairService {
    * 수리주기는 오늘 − 마지막 입고일이다(PB 계산식 그대로).
    */
   async findTargets(query: MoldRepairTargetQueryDto, organizationId: number) {
-    return this.dataSource.query(
+    return this.dataSource.query<OracleRow[]>(
       `SELECT m.MOLD_CODE AS "moldCode", m.MOLD_NAME AS "moldName",
               m.MOLD_SPEC AS "moldSpec", m.DRAWING_NO AS "drawingNo",
               m.MOLD_GROUP AS "moldGroup", grp.CODE_MEAN_KOR AS "moldGroupName",
@@ -99,12 +100,12 @@ export class MoldRepairService {
           AND m.MOLD_CODE <> '*'
           AND m.ORGANIZATION_ID = :organizationId
         ORDER BY m.MOLD_CODE, inv.MOLD_VERSION, inv.MOLD_SET_SERIAL`,
-      {
+      namedBinds({
         moldCode: this.like(query.moldCode),
         moldGroup: this.like(query.moldGroup),
         organizationId,
-      } as unknown as unknown[],
-    ) as Promise<OracleRow[]>;
+      }),
+    );
   }
 
   /** 수리 목록 — PB d_mcn_mold_repair_change_request_lst (신청일 기간) */
@@ -174,12 +175,12 @@ export class MoldRepairService {
     const limit = query.limit ?? 500;
     const totals = await this.dataSource.query(
       `SELECT COUNT(*) AS "total" FROM (${body}) source_rows`,
-      { ...binds } as unknown as unknown[],
+      namedBinds({ ...binds }),
     ) as OracleRow[];
     const rows = await this.dataSource.query(
       `${body} ORDER BY "repairRequestDate" DESC, "repairSequence" DESC
        OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY`,
-      { ...binds, offset: (page - 1) * limit, limit } as unknown as unknown[],
+      namedBinds({ ...binds, offset: (page - 1) * limit, limit }),
     ) as OracleRow[];
     return { data: rows, total: Number(totals[0]?.total ?? 0), page, limit };
   }
@@ -189,7 +190,7 @@ export class MoldRepairService {
     return this.tx.run(async (qr) => {
       const exists = await qr.query(
         `SELECT PKG_MES_MAC.F_CHECK_MOLD_EXISTS(:moldCode, :organizationId) AS "cnt" FROM DUAL`,
-        { moldCode: dto.moldCode, organizationId } as unknown as unknown[],
+        namedBinds({ moldCode: dto.moldCode, organizationId }),
       ) as OracleRow[];
       if (Number(exists[0]?.cnt ?? -1) < 0) {
         throw new BadRequestException(`등록되지 않은 S-PARTS 입니다 (${dto.moldCode}).`);
@@ -215,7 +216,7 @@ export class MoldRepairService {
            :applyMachineCode, :lineCode, :repairQty, :comments,
            :userId, SYSDATE, :userId, SYSDATE
          )`,
-        {
+        namedBinds({
           moldCode: dto.moldCode,
           repairSequence,
           organizationId,
@@ -229,7 +230,7 @@ export class MoldRepairService {
           repairQty: dto.repairQty ?? null,
           comments: dto.comments ?? null,
           userId,
-        } as unknown as unknown[],
+        }),
       );
       return { moldCode: dto.moldCode, repairSequence };
     });
@@ -240,7 +241,7 @@ export class MoldRepairService {
       `SELECT REPAIR_STATUS AS "repairStatus" FROM IMCN_MOLD_REPAIR
         WHERE MOLD_CODE = :moldCode AND REPAIR_SEQUENCE = :repairSequence
           AND ORGANIZATION_ID = :organizationId`,
-      { moldCode, repairSequence, organizationId } as unknown as unknown[],
+      namedBinds({ moldCode, repairSequence, organizationId }),
     ) as OracleRow[];
     if (rows.length === 0) {
       throw new NotFoundException(`수리건을 찾을 수 없습니다 (${moldCode}/${repairSequence}).`);
@@ -280,7 +281,7 @@ export class MoldRepairService {
       `UPDATE IMCN_MOLD_REPAIR SET ${sets.join(', ')}
         WHERE MOLD_CODE = :moldCode AND REPAIR_SEQUENCE = :repairSequence
           AND ORGANIZATION_ID = :organizationId`,
-      binds as unknown as unknown[],
+      namedBinds(binds),
     );
     return { moldCode: dto.moldCode, repairSequence: dto.repairSequence, repairStatus: 'P' };
   }
@@ -304,20 +305,20 @@ export class MoldRepairService {
               LAST_MODIFY_DATE = SYSDATE
         WHERE MOLD_CODE = :moldCode AND REPAIR_SEQUENCE = :repairSequence
           AND ORGANIZATION_ID = :organizationId`,
-      {
+      namedBinds({
         next,
         userId,
         moldCode: dto.moldCode,
         repairSequence: dto.repairSequence,
         organizationId,
-      } as unknown as unknown[],
+      }),
     );
     return { moldCode: dto.moldCode, repairSequence: dto.repairSequence, repairStatus: next };
   }
 
   /** 수리품목 — PB d_mcn_mold_repair_item_lst */
   async findItems(query: MoldRepairItemQueryDto, organizationId: number) {
-    return this.dataSource.query(
+    return this.dataSource.query<OracleRow[]>(
       `SELECT ri.MOLD_CODE AS "moldCode", ri.REPAIR_SEQUENCE AS "repairSequence",
               ri.REPAIR_ITEM_CODE AS "repairItemCode",
               i.ITEM_NAME AS "repairItemName", i.ITEM_SPEC AS "repairItemSpec",
@@ -333,12 +334,12 @@ export class MoldRepairService {
         WHERE ri.MOLD_CODE = :moldCode AND ri.REPAIR_SEQUENCE = :repairSequence
           AND ri.ORGANIZATION_ID = :organizationId
         ORDER BY ri.REPAIR_ITEM_CODE`,
-      {
+      namedBinds({
         moldCode: query.moldCode,
         repairSequence: query.repairSequence,
         organizationId,
-      } as unknown as unknown[],
-    ) as Promise<OracleRow[]>;
+      }),
+    );
   }
 
   /**
@@ -373,7 +374,7 @@ export class MoldRepairService {
                :repairItemCode, :repairItemQty, :comments,
                :userId, SYSDATE, :userId, SYSDATE
              )`,
-        {
+        namedBinds({
           moldCode: dto.moldCode,
           repairSequence: dto.repairSequence,
           organizationId,
@@ -381,7 +382,7 @@ export class MoldRepairService {
           repairItemQty: dto.repairItemQty ?? null,
           comments: dto.comments ?? null,
           userId,
-        } as unknown as unknown[],
+        }),
       );
       return { moldCode: dto.moldCode, repairSequence: dto.repairSequence };
     });

@@ -20,6 +20,7 @@ import { TransactionService } from '../../shared/transaction.service';
 import { SmdActualKeyDto, SmdActualQueryDto, SmdActualUpdateDto } from './smd-actual.dto';
 import { like } from './plan-shared';
 import { affectedRows } from '../../common/utils/affected-rows.util';
+import { namedBinds } from '../../common/utils/named-binds.util';
 
 type Row = Record<string, unknown>;
 
@@ -65,14 +66,14 @@ export class SmdActualService {
           AND NVL(a.MODEL_NAME, '*') LIKE :modelName
           AND NVL(a.WORKSTAGE_CODE, '*') LIKE :workstageCode
         ORDER BY a.RECEIPT_DATE DESC, a.RECEIPT_SEQUENCE DESC`,
-      {
+      namedBinds({
         organizationId,
         dateFrom: query.dateFrom,
         dateTo: query.dateTo,
         lineCode: like(query.lineCode),
         modelName: like(query.modelName),
         workstageCode: like(query.workstageCode),
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return { data: rows, total: rows.length };
   }
@@ -103,14 +104,14 @@ export class SmdActualService {
           AND NVL(a.WORKSTAGE_CODE, '*') LIKE :workstageCode
         GROUP BY a.LINE_CODE, pl.LINE_NAME, a.MODEL_NAME
         ORDER BY a.LINE_CODE, a.MODEL_NAME`,
-      {
+      namedBinds({
         organizationId,
         dateFrom: query.dateFrom,
         dateTo: query.dateTo,
         lineCode: like(query.lineCode),
         modelName: like(query.modelName),
         workstageCode: like(query.workstageCode),
-      } as unknown as unknown[],
+      }),
     )) as Row[];
   }
 
@@ -129,14 +130,14 @@ export class SmdActualService {
                 LAST_MODIFY_BY = :userId,
                 LAST_MODIFY_DATE = SYSDATE
           WHERE ${this.KEY_WHERE}`,
-        {
+        namedBinds({
           productActualQty: dto.productActualQty,
           adjustQty: dto.adjustQty ?? null,
           userId,
           receiptDateKey: dto.receiptDateKey,
           receiptSequence: dto.receiptSequence,
           organizationId,
-        } as unknown as unknown[],
+        }),
       );
       const affected = Number(affectedRows(result) ?? 0);
       if (affected === 0) throw new NotFoundException('생산실적을 찾을 수 없습니다.');
@@ -148,11 +149,11 @@ export class SmdActualService {
     return this.tx.run(async (qr) => {
       const result = await qr.query(
         `DELETE FROM IP_PRODUCT_SENSOR_ACTUAL_TIME WHERE ${this.KEY_WHERE}`,
-        {
+        namedBinds({
           receiptDateKey: key.receiptDateKey,
           receiptSequence: key.receiptSequence,
           organizationId,
-        } as unknown as unknown[],
+        }),
       );
       const affected = Number(affectedRows(result) ?? 0);
       if (affected === 0) throw new NotFoundException('생산실적을 찾을 수 없습니다.');

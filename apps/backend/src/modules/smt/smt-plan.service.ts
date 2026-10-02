@@ -28,6 +28,7 @@ import {
   SmtPlanQueryDto,
   SmtPlanSetActiveDto,
 } from './smt-plan.dto';
+import { namedBinds } from '../../common/utils/named-binds.util';
 
 @Injectable()
 export class SmtPlanService {
@@ -90,7 +91,7 @@ export class SmtPlanService {
           AND NVL(d.REPLACE_YN, 'N') LIKE :replaceYn
           AND NVL(d.ACTIVE_YN, 'N') LIKE :activeYn
         ORDER BY d.LINE_CODE, d.MACHINE, d.TABLE_ID, SUBSTR(d.LOCATION_CODE, 2)`,
-      {
+      namedBinds({
           organizationId,
           modelName: query.modelName.trim(),
           lineCode: this.like(query.lineCode),
@@ -99,7 +100,7 @@ export class SmtPlanService {
           revision: this.like(query.revision),
           replaceYn: this.like(query.replaceYn),
           activeYn: this.like(query.activeYn),
-        } as unknown as unknown[],
+        }),
     )) as Record<string, unknown>[];
     return { data: rows, total: rows.length };
   }
@@ -130,7 +131,7 @@ export class SmtPlanService {
           AND l.LINE_CODE <> '*'
           AND l.LINE_DIVISION = 'D'
         ORDER BY l.MES_DISPLAY_SEQUENCE, l.LINE_NAME`,
-      { organizationId } as unknown as unknown[],
+      namedBinds({ organizationId }),
     )) as Record<string, unknown>[];
   }
 
@@ -147,7 +148,7 @@ export class SmtPlanService {
         WHERE LINE_CODE = :lineCode AND MODEL_NAME = :modelName
           AND NVL(PCB_ITEM, '*') LIKE :pcbItem
           AND ORGANIZATION_ID = :organizationId`,
-      { lineCode, modelName, pcbItem, organizationId } as unknown as unknown[],
+      namedBinds({ lineCode, modelName, pcbItem, organizationId }),
     )) as { CNT: number }[];
     return Number(rows?.[0]?.CNT ?? 0);
   }
@@ -172,14 +173,14 @@ export class SmtPlanService {
                  'SMT_PLAN_DEPLOY_FAILED:' || v_result || ':' || v_existing);
              END IF;
            END;`,
-          {
+          namedBinds({
               lineCode: dto.lineCode,
               modelName: dto.modelName,
               pcbItem: dto.pcbItem,
               feederShaft: dto.feederShaft ? `${dto.feederShaft}%` : '%',
               organizationId,
               userId,
-            } as unknown as unknown[],
+            }),
         )
         .catch((error: unknown) => {
           const message = error instanceof Error ? error.message : String(error);
@@ -231,13 +232,13 @@ export class SmtPlanService {
                RAISE_APPLICATION_ERROR(-20035, 'SMT_PLAN_DELETE_FAILED:' || v_result);
              END IF;
            END;`,
-          {
+          namedBinds({
               lineCode: dto.lineCode,
               modelName: dto.modelName,
               pcbItem: pcb,
               feederShaft: dto.feederShaft ? `${dto.feederShaft}%` : '%',
               organizationId,
-            } as unknown as unknown[],
+            }),
         )
         .catch((error: unknown) => {
           const message = error instanceof Error ? error.message : String(error);
@@ -269,14 +270,14 @@ export class SmtPlanService {
                RAISE_APPLICATION_ERROR(-20036, 'SMT_PLAN_SET_ACTIVE_FAILED:' || v_result);
              END IF;
            END;`,
-          {
+          namedBinds({
               lineCode: dto.lineCode,
               modelName: dto.modelName,
               pcbItem: pcb,
               activeYn: dto.activeYn,
               organizationId,
               userId,
-            } as unknown as unknown[],
+            }),
         )
         .catch((error: unknown) => {
           const message = error instanceof Error ? error.message : String(error);
@@ -300,12 +301,12 @@ export class SmtPlanService {
             AND NVL(PCB_ITEM, '*') LIKE :pcbItem
             AND ORGANIZATION_ID = :organizationId
           GROUP BY NVL(ACTIVE_YN, 'N')`,
-        {
+        namedBinds({
             lineCode: dto.lineCode,
             modelName: dto.modelName,
             pcbItem: pcb,
             organizationId,
-          } as unknown as unknown[],
+          }),
       )) as { ACTIVE_YN: string; CNT: number }[];
       const at = (yn: string) => Number(rows.find((r) => r.ACTIVE_YN === yn)?.CNT ?? 0);
       return { activeYn: dto.activeYn, active: at('Y'), inactive: at('N') };

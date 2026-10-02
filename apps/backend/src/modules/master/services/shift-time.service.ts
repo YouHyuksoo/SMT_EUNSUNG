@@ -46,7 +46,7 @@ function parseYmd(isoDate: string): Date {
  * UTC 자정으로 해석되는데, parseYmd()가 만드는 비교 대상(target)은 로컬(KST) 자정이다.
  * KST(UTC+9)에서는 로컬 자정이 UTC 자정보다 9시간 빠르므로, DATESET 당일 자체가
  * "target >= from" 비교에서 항상 탈락한다(교대기간 첫날이 0분으로 계산되는 버그).
- * repo.create()로 막 만든 엔티티(아직 저장 전)나 단위 테스트 목(mock)은 진짜 Date 객체를
+ * repo.create()로 막 만든 엔티티(아직 저장 전)나 단위 테스트용 가짜 객체는 진짜 Date 객체를
  * 주므로, 문자열/Date 두 모양을 이 함수 하나로 흡수해 resolveFromRows()/ensureNoOverlap()
  * 양쪽에서 동일하게 쓴다.
  */
@@ -119,7 +119,7 @@ export class ShiftTimeService {
         })),
     );
     await manager.delete(ShiftTimeBreak, { organizationId, dateset: planDate });
-    if (rows.length > 0) await manager.insert(ShiftTimeBreak, rows as ShiftTimeBreak[]);
+    if (rows.length > 0) await manager.insert(ShiftTimeBreak, rows);
   }
 
   async findAll(organizationId: number): Promise<ShiftTimeMaster[]> {

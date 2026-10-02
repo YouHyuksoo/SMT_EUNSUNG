@@ -15,7 +15,7 @@
  *   - `App.saveSettings` -> Storage.saveSettings (storage.ts import)
  *   - `gsap` -> import gsap from 'gsap'
  *   - 다이얼로그(showConfirm, showPrompt, showAlert) 포함
- *   - ui-stub.ts를 대체하는 최종 모듈
+ *   - 예전 임시 UI 모듈을 대체하는 최종 모듈
  */
 
 import gsap from 'gsap';
@@ -112,7 +112,7 @@ export function closeModal(): void {
 export function showToast(message: string): void {
   const toast = document.getElementById('toast');
   if (!toast) {
-    console.log('[Toast]', message);
+    console.info('[Toast]', message);
     return;
   }
   toast.textContent = message;

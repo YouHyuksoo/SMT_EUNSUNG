@@ -28,6 +28,7 @@ import {
   PidIssueScanByPidDto,
   PidIssueScanHistoryQueryDto,
 } from '../dto/pid-holding.dto';
+import { namedBinds } from '../../../common/utils/named-binds.util';
 
 type OracleRow = Record<string, unknown>;
 
@@ -111,12 +112,12 @@ export class PidHoldingService {
     const limit = query.limit ?? 500;
     const totals = await this.dataSource.query(
       `SELECT COUNT(*) AS "total" FROM (${body}) source_rows`,
-      { ...binds } as unknown as unknown[],
+      namedBinds({ ...binds }),
     ) as OracleRow[];
     const rows = await this.dataSource.query(
       `${body} ORDER BY "serialNo"
        OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY`,
-      { ...binds, offset: (page - 1) * limit, limit } as unknown as unknown[],
+      namedBinds({ ...binds, offset: (page - 1) * limit, limit }),
     ) as OracleRow[];
     return { data: rows, total: Number(totals[0]?.total ?? 0), page, limit };
   }
@@ -138,10 +139,10 @@ export class PidHoldingService {
            FROM IP_PRODUCT_2D_BARCODE
           WHERE SERIAL_NO IN (${serials.map((_, i) => `:s${i}`).join(', ')})
             AND ORGANIZATION_ID = :organizationId`,
-        {
+        namedBinds({
           ...Object.fromEntries(serials.map((value, i) => [`s${i}`, value])),
           organizationId,
-        } as unknown as unknown[],
+        }),
       ) as OracleRow[];
       const existing = new Map(
         before.map((row) => [String(row.serialNo), String(row.barcodeStatus ?? '')]),
@@ -155,12 +156,12 @@ export class PidHoldingService {
                   LAST_MODIFY_BY   = :userId,
                   LAST_MODIFY_DATE = SYSDATE
             WHERE SERIAL_NO = :serialNo AND ORGANIZATION_ID = :organizationId`,
-          {
+          namedBinds({
             barcodeStatus: dto.barcodeStatus,
             userId,
             serialNo,
             organizationId,
-          } as unknown as unknown[],
+          }),
         );
       }
 
@@ -217,19 +218,19 @@ export class PidHoldingService {
     const limit = query.limit ?? 500;
     const totals = await this.dataSource.query(
       `SELECT COUNT(*) AS "total" FROM (${body}) source_rows`,
-      { ...binds } as unknown as unknown[],
+      namedBinds({ ...binds }),
     ) as OracleRow[];
     const rows = await this.dataSource.query(
       `${body} ORDER BY "scanDate" DESC, "serialNo"
        OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY`,
-      { ...binds, offset: (page - 1) * limit, limit } as unknown as unknown[],
+      namedBinds({ ...binds, offset: (page - 1) * limit, limit }),
     ) as OracleRow[];
     return { data: rows, total: Number(totals[0]?.total ?? 0), page, limit };
   }
 
   /** 선택 PID 의 이슈 스캔 내역 — PB d_qc_pid_issue_scan_lst (SERIAL_NO 등호) */
   async findIssueScansByPid(query: PidIssueScanByPidDto, organizationId: number) {
-    return this.dataSource.query(
+    return this.dataSource.query<OracleRow[]>(
       `SELECT s.SERIAL_NO AS "serialNo", s.SCAN_DATE AS "scanDate",
               s.PID_ISSUE_TYPE AS "pidIssueType",
               s.MODEL_NAME AS "modelName", s.MODEL_SUFFIX AS "modelSuffix",
@@ -243,7 +244,7 @@ export class PidHoldingService {
                 ON i.ITEM_CODE = s.ITEM_CODE AND i.ORGANIZATION_ID = s.ORGANIZATION_ID
         WHERE s.SERIAL_NO = :serialNo AND s.ORGANIZATION_ID = :organizationId
         ORDER BY s.SCAN_DATE DESC`,
-      { serialNo: query.serialNo, organizationId } as unknown as unknown[],
-    ) as Promise<OracleRow[]>;
+      namedBinds({ serialNo: query.serialNo, organizationId }),
+    );
   }
 }

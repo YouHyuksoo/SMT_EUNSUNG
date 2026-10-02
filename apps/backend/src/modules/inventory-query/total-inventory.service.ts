@@ -34,6 +34,7 @@ import { DataSource } from 'typeorm';
 import { likePrefix } from '@smt/shared';
 import { limited, ROW_LIMIT } from '../../shared/row-limit';
 import { TotalInventoryDetailQueryDto, TotalInventoryQueryDto } from './inventory-query.dto';
+import { namedBinds } from '../../common/utils/named-binds.util';
 
 type Row = Record<string, unknown>;
 
@@ -71,12 +72,12 @@ export class TotalInventoryService {
           AND i.ORGANIZATION_ID = :organizationId
         ORDER BY i.ITEM_CLASS, i.ITEM_DIVISION, i.SET_ITEM_YN DESC, i.ITEM_CODE
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         itemCode: likePrefix(query.itemCode),
         itemDivision: likePrefix(query.itemDivision),
         itemClass: likePrefix(query.itemClass),
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     // **합계는 여기서 더한다.** 같은 SELECT 안에서 네 함수를 다시 부르면 호출이
     // 두 배가 되어 2,560품목 조회가 **54.38초**가 됐다 (실측). 값은 이미 손에
@@ -124,11 +125,11 @@ export class TotalInventoryService {
           AND a.ORGANIZATION_ID = :organizationId
         ORDER BY a.ITEM_CODE, a.DIV, a.LOCATION_CODE
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         lang: query.lang ?? 'KOR',
         itemCode: likePrefix(query.itemCode),
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }
@@ -165,7 +166,7 @@ export class TotalInventoryService {
           AND F_GET_MAT_WS_INV_QTY_BY_LINE(w.ITEM_CODE, w.LINE_CODE,
                                            w.MATERIAL_MFS, w.ORGANIZATION_ID) <> 0
         GROUP BY w.LINE_CODE, w.ITEM_CODE, w.MATERIAL_MFS, w.ORGANIZATION_ID`,
-      { itemCode, lang: lang || 'KOR', organizationId } as unknown as unknown[],
+      namedBinds({ itemCode, lang: lang || 'KOR', organizationId }),
     )) as Row[];
     return limited(rows);
   }

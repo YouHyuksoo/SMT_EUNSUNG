@@ -30,6 +30,7 @@ import {
   PriceConfirmQueryDto,
 } from './price-confirm.dto';
 import { affectedRows } from '../../common/utils/affected-rows.util';
+import { namedBinds } from '../../common/utils/named-binds.util';
 
 type Row = Record<string, unknown>;
 
@@ -196,7 +197,7 @@ export class PriceConfirmService {
           AND p.DATESET >= TO_DATE(:dateFrom, 'YYYY-MM-DD')
           AND p.DATESET < TO_DATE(:dateTo, 'YYYY-MM-DD') + 1
         ORDER BY p.DATESET DESC, p.${cfg.itemColumn}, p.${cfg.partnerColumn}`,
-      {
+      namedBinds({
         organizationId,
         itemCode: this.like(query.itemCode),
         partnerCode: this.like(query.partnerCode),
@@ -204,7 +205,7 @@ export class PriceConfirmService {
         // 기간을 안 주면 전부. 두 테이블 다 작다 (5,356 / 132 / 0행).
         dateFrom: query.dateFrom ?? '1900-01-01',
         dateTo: query.dateTo ?? '2999-12-31',
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return { data: rows, total: rows.length };
   }
@@ -274,7 +275,7 @@ export class PriceConfirmService {
                   LAST_MODIFY_DATE = SYSDATE
             WHERE ${this.keyWhere(cfg, '')}
               AND NVL(PRICE_CHANGE_CONFIRM_YN, 'N') <> :confirmYn`,
-          binds as unknown as unknown[],
+          namedBinds(binds),
         );
         const affected = Number(affectedRows(result) ?? 0);
         if (affected > 0) {
@@ -284,7 +285,7 @@ export class PriceConfirmService {
         // 0건은 "이미 그 상태" 와 "그런 단가가 없음" 두 가지다. 구분해서 센다.
         const exists = (await qr.query(
           `SELECT COUNT(*) AS CNT FROM ${cfg.table} WHERE ${this.keyWhere(cfg, '')}`,
-          { ...this.keyBinds(cfg, key, ''), organizationId } as unknown as unknown[],
+          namedBinds({ ...this.keyBinds(cfg, key, ''), organizationId }),
         )) as Array<{ CNT: number }>;
         if (Number(exists?.[0]?.CNT ?? 0) > 0) alreadySet += 1;
         else missing.push(key);

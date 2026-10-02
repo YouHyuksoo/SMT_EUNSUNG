@@ -26,6 +26,7 @@ import {
   JigCleanCheckSaveDto,
 } from './jig-clean-check.dto';
 import { affectedRows } from '../../common/utils/affected-rows.util';
+import { namedBinds } from '../../common/utils/named-binds.util';
 
 type Row = Record<string, unknown>;
 
@@ -85,7 +86,7 @@ export class JigCleanCheckService {
         WHERE j.JIG_LOT_NO = :jigLotNo
           AND j.JIG_TYPE = :jigType
           AND j.ORGANIZATION_ID = :organizationId`,
-      { jigLotNo: trimmed, jigType: JIG_TYPE, organizationId } as unknown as unknown[],
+      namedBinds({ jigLotNo: trimmed, jigType: JIG_TYPE, organizationId }),
     )) as Row[];
 
     const jig = rows[0] ?? null;
@@ -129,12 +130,12 @@ export class JigCleanCheckService {
           AND NVL(s.JIG_LOT_NO, '*') LIKE :jigLotNo
         ORDER BY s.JIG_CHECK_DATE DESC, s.JIG_CHECK_SEQUENCE DESC
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         organizationId,
         dateFrom: query.dateFrom,
         dateTo: query.dateTo,
         jigLotNo: this.like(query.jigLotNo),
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }
@@ -189,7 +190,7 @@ export class JigCleanCheckService {
             :breakValue, :hitValue, :airPressValue,
             :cleanYn, :pinHoleYn, :comments, :userId,
             :userId, SYSDATE, :userId, SYSDATE)`,
-        {
+        namedBinds({
           jigCode: String(jig.jigCode ?? ''),
           jigLotNo: dto.jigLotNo.trim(),
           organizationId,
@@ -203,7 +204,7 @@ export class JigCleanCheckService {
           pinHoleYn: dto.visualOk ? 'Y' : 'N',
           comments: dto.comments ?? null,
           userId,
-        } as unknown as unknown[],
+        }),
       );
 
       const updated = await qr.query(
@@ -215,13 +216,13 @@ export class JigCleanCheckService {
           WHERE JIG_LOT_NO = :jigLotNo
             AND JIG_TYPE = :jigType
             AND ORGANIZATION_ID = :organizationId`,
-        {
+        namedBinds({
           useStatus: pass ? USE_STATUS.usable : USE_STATUS.stopped,
           userId,
           jigLotNo: dto.jigLotNo.trim(),
           jigType: JIG_TYPE,
           organizationId,
-        } as unknown as unknown[],
+        }),
       );
       const affected = Number(
         affectedRows(updated) ?? 0,

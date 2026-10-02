@@ -38,6 +38,7 @@ import { limited, ROW_LIMIT } from '../../shared/row-limit';
 import { TransactionService } from '../../shared/transaction.service';
 import { IssueReturnLookupDto, IssueReturnDto, IssueReturnQueryDto } from './warehouse.dto';
 import { affectedRows } from '../../common/utils/affected-rows.util';
+import { namedBinds } from '../../common/utils/named-binds.util';
 
 type Row = Record<string, unknown>;
 
@@ -116,14 +117,14 @@ export class IssueReturnService {
           AND s.ORGANIZATION_ID = :organizationId
         ORDER BY s.ISSUE_DATE DESC, s.ISSUE_SEQUENCE DESC
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         dateFrom: query.dateFrom,
         dateTo: query.dateTo,
         itemCode: likePrefix(query.itemCode),
         lotNo: likePrefix(query.lotNo),
         lineCode: likePrefix(query.lineCode),
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }
@@ -139,7 +140,7 @@ export class IssueReturnService {
       `SELECT F_GET_ITEM_CODE_FROM_BARCODE(:barcode)  AS "itemCode",
               F_GET_LOT_NO_FROM_BARCODE(:barcode)     AS "lotNo"
          FROM DUAL`,
-      { barcode: dto.barcode } as unknown as unknown[],
+      namedBinds({ barcode: dto.barcode }),
     )) as Row[])[0] ?? {};
     const itemCode = (parsed.itemCode as string) || '';
     const lotNo = (parsed.lotNo as string) || '';
@@ -174,7 +175,7 @@ export class IssueReturnService {
         WHERE b.ITEM_CODE = :itemCode
           AND b.LOT_NO = :lotNo
           AND b.ORGANIZATION_ID = :organizationId`,
-      { itemCode, lotNo, organizationId } as unknown as unknown[],
+      namedBinds({ itemCode, lotNo, organizationId }),
     )) as Row[];
     const barcodeRow = rows[0] ?? null;
 
@@ -192,7 +193,7 @@ export class IssueReturnService {
                                   AND x.MATERIAL_MFS = :lotNo
                                   AND x.ISSUE_DEFICIT = '3'
                                   AND x.ISSUE_ACCOUNT <> 'M009' )`,
-      { itemCode, lotNo } as unknown as unknown[],
+      namedBinds({ itemCode, lotNo }),
     )) as Row[];
 
     const reason = !barcodeRow
@@ -246,14 +247,14 @@ export class IssueReturnService {
           AND l.ORGANIZATION_ID = :organizationId
         ORDER BY l.ISSUE_DATE DESC
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         dateFrom: query.dateFrom,
         dateTo: query.dateTo,
         itemCode: likePrefix(query.itemCode),
         lotNo: likePrefix(query.lotNo),
         lineCode: likePrefix(query.lineCode),
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }
@@ -315,13 +316,13 @@ export class IssueReturnService {
             AND LOT_NO = :lotNo
             AND ORGANIZATION_ID = :organizationId
             AND NVL(ISSUE_COMPARE_YN, 'N') = 'Y'`,
-        {
+        namedBinds({
           returnQty,
           itemCode: lookup.itemCode,
           lotNo: lookup.lotNo,
           userId,
           organizationId,
-        } as unknown as unknown[],
+        }),
       );
       const barcodeRows = Number(
         affectedRows(updated) ?? 0,
@@ -360,7 +361,7 @@ export class IssueReturnService {
             '${FIXED.closeYn}', :barcode, :feederShaft, :issueDivision,
             -- PB LVS_MODEL_NAME 은 대입되는 곳이 없어 빈 값이 들어간다 (파일 머리 7번).
             :feederLocationCode, NULL, '${FIXED.pcbItem}', :inventoryType)`,
-        {
+        namedBinds({
           itemCode: lookup.itemCode,
           organizationId,
           locationCode: dto.locationCode ?? null,
@@ -374,7 +375,7 @@ export class IssueReturnService {
           issueDivision: (info.issueDivision as string) ?? null,
           feederLocationCode: (info.feederLocationCode as string) ?? null,
           inventoryType: (info.inventoryType as string) ?? null,
-        } as unknown as unknown[],
+        }),
       );
 
       // ③ 로스 (반품 수량 − 실사 수량). PB 와 같은 식이다.
@@ -387,14 +388,14 @@ export class IssueReturnService {
            (SYSDATE, SEQ_MAT_ISSUE.NEXTVAL, :itemCode, :lotNo,
             NULL, :lineCode, :lossQty,
             SYSDATE, :userId, SYSDATE, :userId, :organizationId)`,
-        {
+        namedBinds({
           itemCode: lookup.itemCode,
           lotNo: lookup.lotNo,
           lineCode: dto.lineCode.trim(),
           lossQty: returnQty - actualQty,
           userId,
           organizationId,
-        } as unknown as unknown[],
+        }),
       );
 
       return {

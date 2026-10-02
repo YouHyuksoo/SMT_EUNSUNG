@@ -22,6 +22,7 @@ import {
   MoldReceiptQueryDto,
   MoldReceiptTargetQueryDto,
 } from './mold-receipt.dto';
+import { namedBinds } from '../../common/utils/named-binds.util';
 
 type OracleRow = Record<string, unknown>;
 
@@ -89,12 +90,12 @@ export class MoldReceiptService {
     const limit = query.limit ?? 500;
     const totals = await this.dataSource.query(
       `SELECT COUNT(*) AS "total" FROM (${body}) source_rows`,
-      { ...binds } as unknown as unknown[],
+      namedBinds({ ...binds }),
     ) as OracleRow[];
     const rows = await this.dataSource.query(
       `${body} ORDER BY "receiptDate" DESC, "receiptSequence" DESC
        OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY`,
-      { ...binds, offset: (page - 1) * limit, limit } as unknown as unknown[],
+      namedBinds({ ...binds, offset: (page - 1) * limit, limit }),
     ) as OracleRow[];
     return { data: rows, total: Number(totals[0]?.total ?? 0), page, limit };
   }
@@ -104,7 +105,7 @@ export class MoldReceiptService {
    * 입고할 S-PARTS 를 고르는 목록이다. 승인된 구매단가를 같이 내려 화면이 단가를 바로 보여준다.
    */
   async findTargets(query: MoldReceiptTargetQueryDto, organizationId: number) {
-    return this.dataSource.query(
+    return this.dataSource.query<OracleRow[]>(
       `SELECT m.MOLD_CODE AS "moldCode", m.MOLD_NAME AS "moldName",
               m.MOLD_SPEC AS "moldSpec",
               m.MOLD_GROUP AS "moldGroup", grp.CODE_MEAN_KOR AS "moldGroupName",
@@ -133,12 +134,12 @@ export class MoldReceiptService {
           AND m.MOLD_CODE <> '*'
           AND m.ORGANIZATION_ID = :organizationId
         ORDER BY m.MOLD_CODE, inv.MOLD_VERSION, inv.MOLD_SET_SERIAL`,
-      {
+      namedBinds({
         moldCode: this.like(query.moldCode),
         supplierCode: this.like(query.supplierCode),
         organizationId,
-      } as unknown as unknown[],
-    ) as Promise<OracleRow[]>;
+      }),
+    );
   }
 
   /** 등록 — PB 기본값(입고일=오늘, 구분='1', 상태='N')을 그대로 쓴다. */
@@ -148,11 +149,11 @@ export class MoldReceiptService {
         `SELECT PKG_MES_MAC.F_CHECK_MOLD_EXISTS(:moldCode, :organizationId) AS "mold",
                 PKG_MES_MAC.F_CHECK_SUPPLIER_EXISTS(:supplierCode, :organizationId) AS "supplier"
            FROM DUAL`,
-        {
+        namedBinds({
           moldCode: dto.moldCode,
           supplierCode: dto.supplierCode,
           organizationId,
-        } as unknown as unknown[],
+        }),
       ) as OracleRow[];
       if (Number(checks[0]?.mold ?? -1) < 0) {
         throw new BadRequestException(`등록되지 않은 S-PARTS 입니다 (${dto.moldCode}).`);
@@ -192,7 +193,7 @@ export class MoldReceiptService {
                         PKG_MES_MAC.F_GET_MOLD_UNIT_PRICE_CURR(
                           :supplierCode, :moldCode, :organizationId, 'Y') AS CURRENCY
                    FROM DUAL) resolved`,
-        {
+        namedBinds({
           receiptDate: dto.receiptDate ? dto.receiptDate.slice(0, 10) : null,
           receiptSequence,
           organizationId,
@@ -209,7 +210,7 @@ export class MoldReceiptService {
           moldVersionSpec: dto.moldVersionSpec ?? null,
           unitPrice: dto.unitPrice ?? null,
           userId,
-        } as unknown as unknown[],
+        }),
       );
       return { receiptSequence };
     });
@@ -232,12 +233,12 @@ export class MoldReceiptService {
              RAISE_APPLICATION_ERROR(-20012, 'MOLD_RECEIPT_CANCEL_FAILED:' || v_result);
            END IF;
          END;`,
-        {
+        namedBinds({
           receiptDate: dto.receiptDate.slice(0, 10),
           receiptSequence: dto.receiptSequence,
           organizationId,
           userId,
-        } as unknown as unknown[],
+        }),
       ).catch((error: unknown) => {
         const message = error instanceof Error ? error.message : String(error);
         const matched = /MOLD_RECEIPT_CANCEL_FAILED:(-?\d+)/.exec(message);
@@ -254,7 +255,7 @@ export class MoldReceiptService {
            FROM IMCN_MOLD_RECEIPT
           WHERE RECEIPT_DATE = TRUNC(SYSDATE) AND RECEIPT_STATUS = 'C'
             AND ORGANIZATION_ID = :organizationId`,
-        { organizationId } as unknown as unknown[],
+        namedBinds({ organizationId }),
       ) as OracleRow[];
       return { cancelSequence: Number(rows[0]?.cancelSequence ?? 0) };
     });

@@ -35,7 +35,7 @@ function initOracleThick(): void {
     if (!fs.existsSync(libDir)) continue;
     try {
       oracledb.initOracleClient({ libDir });
-      console.log(`[db] Oracle thick mode 활성 (libDir=${libDir})`);
+      console.info(`[db] Oracle thick mode 활성 (libDir=${libDir})`);
       return;
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
@@ -47,7 +47,7 @@ function initOracleThick(): void {
   // 마지막 수단: 시스템 PATH의 Oracle Client 자동 탐색
   try {
     oracledb.initOracleClient();
-    console.log('[db] Oracle thick mode 활성 (PATH 기반 클라이언트)');
+    console.info('[db] Oracle thick mode 활성 (PATH 기반 클라이언트)');
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     if (message.includes('already been initialized')) return;

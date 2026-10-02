@@ -24,6 +24,7 @@ import {
   QcNotifyStatusDto,
   QcNotifyUpdateDto,
 } from '../dto/qc-notify.dto';
+import { namedBinds } from '../../../common/utils/named-binds.util';
 
 type OracleRow = Record<string, unknown>;
 
@@ -145,12 +146,12 @@ export class QcNotifyService {
     const limit = query.limit ?? 500;
     const totals = await this.dataSource.query(
       `SELECT COUNT(*) AS "total" FROM (${body}) source_rows`,
-      { ...binds } as unknown as unknown[],
+      namedBinds({ ...binds }),
     ) as OracleRow[];
     const rows = await this.dataSource.query(
       `${body} ORDER BY "actionDate" DESC, "notifySequence" DESC
        OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY`,
-      { ...binds, offset: (page - 1) * limit, limit } as unknown as unknown[],
+      namedBinds({ ...binds, offset: (page - 1) * limit, limit }),
     ) as OracleRow[];
     return { data: rows, total: Number(totals[0]?.total ?? 0), page, limit };
   }
@@ -183,7 +184,7 @@ export class QcNotifyService {
 
       await qr.query(
         `INSERT INTO IQ_DAILY_NOTIFY (${columns.join(', ')}) VALUES (${values.join(', ')})`,
-        binds as unknown as unknown[],
+        namedBinds(binds),
       );
       return { notifySequence };
     });
@@ -195,11 +196,11 @@ export class QcNotifyService {
         WHERE ACTION_DATE = TO_DATE(:actionDate, 'YYYY-MM-DD')
           AND NOTIFY_SEQUENCE = :notifySequence
           AND ORGANIZATION_ID = :organizationId`,
-      {
+      namedBinds({
         actionDate: dto.actionDate.slice(0, 10),
         notifySequence: dto.notifySequence,
         organizationId,
-      } as unknown as unknown[],
+      }),
     ) as OracleRow[];
     return Number(rows[0]?.cnt ?? 0) > 0;
   }
@@ -231,7 +232,7 @@ export class QcNotifyService {
         WHERE ACTION_DATE = TO_DATE(:actionDate, 'YYYY-MM-DD')
           AND NOTIFY_SEQUENCE = :notifySequence
           AND ORGANIZATION_ID = :organizationId`,
-      binds as unknown as unknown[],
+      namedBinds(binds),
     );
     return { notifySequence: dto.notifySequence };
   }
@@ -265,7 +266,7 @@ export class QcNotifyService {
         WHERE ACTION_DATE = TO_DATE(:actionDate, 'YYYY-MM-DD')
           AND NOTIFY_SEQUENCE = :notifySequence
           AND ORGANIZATION_ID = :organizationId`,
-      binds as unknown as unknown[],
+      namedBinds(binds),
     );
     return { notifySequence: dto.notifySequence };
   }
@@ -280,11 +281,11 @@ export class QcNotifyService {
         WHERE ACTION_DATE = TO_DATE(:actionDate, 'YYYY-MM-DD')
           AND NOTIFY_SEQUENCE = :notifySequence
           AND ORGANIZATION_ID = :organizationId`,
-      {
+      namedBinds({
         actionDate: dto.actionDate.slice(0, 10),
         notifySequence: dto.notifySequence,
         organizationId,
-      } as unknown as unknown[],
+      }),
     );
     return { deleted: true };
   }
@@ -319,12 +320,12 @@ export class QcNotifyService {
     const limit = query.limit ?? 500;
     const totals = await this.dataSource.query(
       `SELECT COUNT(*) AS "total" FROM (${body}) source_rows`,
-      { ...binds } as unknown as unknown[],
+      namedBinds({ ...binds }),
     ) as OracleRow[];
     const rows = await this.dataSource.query(
       `${body} ORDER BY "itemCode"
        OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY`,
-      { ...binds, offset: (page - 1) * limit, limit } as unknown as unknown[],
+      namedBinds({ ...binds, offset: (page - 1) * limit, limit }),
     ) as OracleRow[];
     return { data: rows, total: Number(totals[0]?.total ?? 0), page, limit };
   }
@@ -344,10 +345,10 @@ export class QcNotifyService {
           WHERE ITEM_CODE IN (${codes.map((_, i) => `:c${i}`).join(', ')})
             AND ORGANIZATION_ID = :organizationId
             AND DATESET <= TRUNC(SYSDATE) AND DATEEND >= TRUNC(SYSDATE)`,
-        {
+        namedBinds({
           ...Object.fromEntries(codes.map((value, i) => [`c${i}`, value])),
           organizationId,
-        } as unknown as unknown[],
+        }),
       ) as OracleRow[];
       const existing = new Map(
         before.map((row) => [String(row.itemCode), String(row.ecoCheckYn ?? '')]),
@@ -363,13 +364,13 @@ export class QcNotifyService {
                   LAST_MODIFY_DATE   = SYSDATE
             WHERE ITEM_CODE = :itemCode AND ORGANIZATION_ID = :organizationId
               AND DATESET <= TRUNC(SYSDATE) AND DATEEND >= TRUNC(SYSDATE)`,
-          {
+          namedBinds({
             ecoCheckYn: dto.ecoCheckYn,
             ecoCheckComments: dto.ecoCheckComments ?? null,
             userId,
             itemCode,
             organizationId,
-          } as unknown as unknown[],
+          }),
         );
       }
 

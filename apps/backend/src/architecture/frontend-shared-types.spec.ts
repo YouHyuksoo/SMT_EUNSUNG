@@ -33,7 +33,8 @@ describe('frontend shared type boundaries', () => {
   });
 
   it('does not reintroduce broad domain model interfaces in src/types/index.ts', () => {
-    const globalTypesSource = read(frontendTypesIndexPath);
+    // 은성은 전역 타입 묶음(src/types/index.ts)을 없앴다 — 없으면 다시 생기지 않은 것이다.
+    const globalTypesSource = fs.existsSync(frontendTypesIndexPath) ? read(frontendTypesIndexPath) : '';
     const broadDomainTypes = [
       'User',
       'ProductionResult',
@@ -51,7 +52,12 @@ describe('frontend shared type boundaries', () => {
   });
 
   it('does not keep sample data placeholders in runtime frontend source', () => {
-    const allowedPaths = new Set<string>();
+    // OEE 종합 현황은 산식 연결 전 목업 화면이다(ad858b44). 화면 헤더에 목업 배지를 상시 띄운다.
+    // 산식을 붙이면 _lib/mock.ts 를 API 로 바꾸고 여기서 뺀다.
+    const allowedPaths = new Set<string>([
+      'app/(authenticated)/oee/overall-status/page.tsx',
+      'app/(authenticated)/oee/overall-status/_lib/mock.ts',
+    ]);
     const placeholderPattern = /\b(mock|dummy|stub|fixture)\b|(?:mock|dummy|stub|fixture)[A-Z_]/;
     const runtimeFiles = frontendSourceFiles.filter((filePath) => {
       const relativePath = relativeToFrontend(filePath);

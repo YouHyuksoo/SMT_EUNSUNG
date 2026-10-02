@@ -19,6 +19,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { limited, ROW_LIMIT } from '../../shared/row-limit';
 import { ApplyItemQueryDto, ApplyModelQueryDto } from './apply-item.dto';
+import { namedBinds } from '../../common/utils/named-binds.util';
 
 type Row = Record<string, unknown>;
 
@@ -75,7 +76,7 @@ export class ApplyItemService {
                    AND b.ORGANIZATION_ID = :organizationId)
         ORDER BY i.ITEM_CODE
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      { organizationId, itemCode } as unknown as unknown[],
+      namedBinds({ organizationId, itemCode }),
     )) as Row[];
     return limited(rows);
   }
@@ -104,7 +105,7 @@ export class ApplyItemService {
           AND m.ITEM_CODE = :itemCode
         ORDER BY m.MODEL_NAME
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      { organizationId, itemCode: query.itemCode.trim() } as unknown as unknown[],
+      namedBinds({ organizationId, itemCode: query.itemCode.trim() }),
     )) as Row[];
     return limited(rows);
   }

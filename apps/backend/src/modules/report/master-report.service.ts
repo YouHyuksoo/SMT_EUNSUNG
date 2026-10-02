@@ -30,6 +30,7 @@ import {
   MachineOperationQueryDto,
   MachineReportQueryDto,
 } from './report.dto';
+import { namedBinds } from '../../common/utils/named-binds.util';
 
 type Row = Record<string, unknown>;
 
@@ -101,7 +102,7 @@ export class MasterReportService {
           AND i.ORGANIZATION_ID = :organizationId
         ORDER BY i.ITEM_CODE
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         itemCode: likePrefix(query.itemCode),
         itemName: likePrefix(query.itemName),
         itemClass: likePrefix(query.itemClass),
@@ -109,7 +110,7 @@ export class MasterReportService {
         lineType: likePrefix(query.lineType),
         status: likePrefix(query.status),
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }
@@ -140,11 +141,11 @@ export class MasterReportService {
           AND NVL(l.MACHINE, '*') LIKE :machine ESCAPE '\\'
           AND l.ORGANIZATION_ID = :organizationId
         ORDER BY l.LINE_CODE, l.MACHINE`,
-      {
+      namedBinds({
         lineCode: likePrefix(query.lineCode),
         machine: likePrefix(query.machine),
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }
@@ -183,11 +184,11 @@ export class MasterReportService {
           AND NVL(m.MACHINE_TYPE, '*') LIKE :machineType ESCAPE '\\'
           AND m.ORGANIZATION_ID = :organizationId
         ORDER BY m.MACHINE_TYPE, m.MACHINE_CODE`,
-      {
+      namedBinds({
         machineCode: likePrefix(query.machineCode),
         machineType: likePrefix(query.machineType),
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }
@@ -227,13 +228,13 @@ export class MasterReportService {
           AND m.ORGANIZATION_ID = :organizationId
         ORDER BY m.MACHINE_CODE, o.PLAN_DATE
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         machineCode: likePrefix(query.machineCode),
         machineType: likePrefix(query.machineType),
         dateFrom: query.dateFrom,
         dateTo: query.dateTo,
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }

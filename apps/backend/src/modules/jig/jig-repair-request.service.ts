@@ -26,6 +26,7 @@ import {
   RepairableJigQueryDto,
 } from './jig-repair-request.dto';
 import { affectedRows } from '../../common/utils/affected-rows.util';
+import { namedBinds } from '../../common/utils/named-binds.util';
 
 type Row = Record<string, unknown>;
 
@@ -79,13 +80,13 @@ export class JigRepairRequestService {
           AND NVL(r.REPAIR_STATUS, '*') LIKE :repairStatus
         ORDER BY r.REPAIR_REQUEST_DATE DESC, r.REPAIR_SEQUENCE DESC
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         organizationId,
         dateFrom: query.dateFrom,
         dateTo: query.dateTo,
         jigCode: this.like(query.jigCode),
         repairStatus: this.like(query.repairStatus),
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }
@@ -121,12 +122,12 @@ export class JigRepairRequestService {
           AND NVL(j.LINE_CODE, '*') LIKE :lineCode
         ORDER BY j.JIG_CODE
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         organizationId,
         jigCode: this.like(query.jigCode),
         jigType: this.like(query.jigType),
         lineCode: this.like(query.lineCode),
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }
@@ -157,7 +158,7 @@ export class JigRepairRequestService {
                RAISE_APPLICATION_ERROR(-20006, 'JIG_REPAIR_REQUEST_FAILED:' || v_result);
              END IF;
            END;`,
-          {
+          namedBinds({
             jigCode: dto.jigCode.trim(),
             jigLotNo: (dto.jigLotNo ?? '').trim(),
             repairReasonCode: dto.repairReasonCode,
@@ -166,7 +167,7 @@ export class JigRepairRequestService {
             currency: dto.currency ?? null,
             organizationId,
             userId,
-          } as unknown as unknown[],
+          }),
         )
         .catch((error: unknown) => {
           const message = error instanceof Error ? error.message : String(error);
@@ -187,7 +188,7 @@ export class JigRepairRequestService {
               AND ORGANIZATION_ID = :organizationId
             ORDER BY REPAIR_SEQUENCE DESC
          ) WHERE ROWNUM = 1`,
-        { jigCode: dto.jigCode.trim(), organizationId } as unknown as unknown[],
+        namedBinds({ jigCode: dto.jigCode.trim(), organizationId }),
       )) as Row[];
       return { jigCode: dto.jigCode.trim(), ...(saved[0] ?? {}) };
     });
@@ -218,7 +219,7 @@ export class JigRepairRequestService {
             AND REPAIR_SEQUENCE = :repairSequence
             AND ORGANIZATION_ID = :organizationId
             AND REPAIR_DATE IS NULL`,
-        {
+        namedBinds({
           repairReasonCode: dto.repairReasonCode,
           repairRequestDate: dto.repairRequestDate,
           repairVendorCode: dto.repairVendorCode ?? null,
@@ -228,7 +229,7 @@ export class JigRepairRequestService {
           jigCode: dto.jigCode.trim(),
           repairSequence: dto.repairSequence,
           organizationId,
-        } as unknown as unknown[],
+        }),
       );
       const affected = Number(
         affectedRows(updated) ?? 0,
@@ -251,11 +252,11 @@ export class JigRepairRequestService {
             AND REPAIR_SEQUENCE = :repairSequence
             AND ORGANIZATION_ID = :organizationId
             AND REPAIR_DATE IS NULL`,
-        {
+        namedBinds({
           jigCode: dto.jigCode.trim(),
           repairSequence: dto.repairSequence,
           organizationId,
-        } as unknown as unknown[],
+        }),
       );
       const affected = Number(
         affectedRows(deleted) ?? 0,

@@ -29,6 +29,7 @@ import {
   OrderForArrivalQueryDto,
 } from './purchase.dto';
 import { affectedRows } from '../../common/utils/affected-rows.util';
+import { namedBinds } from '../../common/utils/named-binds.util';
 
 type Row = Record<string, unknown>;
 
@@ -91,7 +92,7 @@ export class ArrivalService {
           AND NVL(a.ORDER_NO, '*') LIKE :orderNo
         ORDER BY a.ARRIVAL_DATE DESC, a.ARRIVAL_SEQ_NO DESC
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         organizationId,
         dateFrom: query.dateFrom,
         dateTo: query.dateTo,
@@ -99,7 +100,7 @@ export class ArrivalService {
         arrivalStatus: this.like(query.arrivalStatus),
         supplierCode: this.like(query.supplierCode),
         orderNo: this.like(query.orderNo),
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }
@@ -152,12 +153,12 @@ export class ArrivalService {
           AND o.ORDER_QTY - NVL(pend.QTY, 0) > 0
         ORDER BY o.DELIVERY_DATE, o.ORDER_NO
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         organizationId,
         supplierCode: this.like(query.supplierCode),
         orderNo: this.like(query.orderNo),
         itemCode: this.like(query.itemCode),
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }
@@ -208,7 +209,7 @@ export class ArrivalService {
                                       AND a.ORGANIZATION_ID = o.ORGANIZATION_ID
                                       AND NVL(a.ARRIVAL_STATUS, 'N') <> 'C'), 0)
                 >= :arrivalQty`,
-        {
+        namedBinds({
           departureDate: dto.departureDate,
           arrivalSeqNo,
           arrivalQty: dto.arrivalQty,
@@ -217,7 +218,7 @@ export class ArrivalService {
           userId,
           orderNo: dto.orderNo,
           organizationId,
-        } as unknown as unknown[],
+        }),
       );
       const affected = Number(
         affectedRows(inserted) ?? 0,
@@ -257,7 +258,7 @@ export class ArrivalService {
             -- 출발 상태인 정상 건만 도착으로 바꾼다.
             AND ARRIVAL_TYPE = :fromType
             AND NVL(ARRIVAL_STATUS, 'N') = :normal`,
-        {
+        namedBinds({
           toType: ARRIVAL_TYPE.arrival,
           arrivalDate: dto.arrivalDate,
           userId,
@@ -265,7 +266,7 @@ export class ArrivalService {
           organizationId,
           fromType: ARRIVAL_TYPE.departure,
           normal: ARRIVAL_STATUS.normal,
-        } as unknown as unknown[],
+        }),
       );
       const affected = Number(
         affectedRows(updated) ?? 0,
@@ -291,13 +292,13 @@ export class ArrivalService {
                                WHERE x.ARRIVAL_SEQ_NO = :arrivalSeqNo
                                  AND x.ORGANIZATION_ID = :organizationId)
             AND o.ORGANIZATION_ID = :organizationId`,
-        {
+        namedBinds({
           arrivalType: ARRIVAL_TYPE.arrival,
           normal: ARRIVAL_STATUS.normal,
           userId,
           arrivalSeqNo: dto.arrivalSeqNo,
           organizationId,
-        } as unknown as unknown[],
+        }),
       );
 
       return { arrivalSeqNo: dto.arrivalSeqNo, arrivalType: ARRIVAL_TYPE.arrival };
@@ -325,14 +326,14 @@ export class ArrivalService {
             AND ORGANIZATION_ID = :organizationId
             AND NVL(ARRIVAL_STATUS, 'N') = :normal
             AND ARRIVAL_TYPE <> :receipt`,
-        {
+        namedBinds({
           cancelled: ARRIVAL_STATUS.cancelled,
           userId,
           arrivalSeqNo: dto.arrivalSeqNo,
           organizationId,
           normal: ARRIVAL_STATUS.normal,
           receipt: ARRIVAL_TYPE.receipt,
-        } as unknown as unknown[],
+        }),
       );
       const affected = Number(
         affectedRows(updated) ?? 0,

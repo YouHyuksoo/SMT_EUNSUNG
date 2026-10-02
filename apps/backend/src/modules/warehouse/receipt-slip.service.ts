@@ -49,6 +49,7 @@ import {
   ReceiptSlipQueryDto,
 } from './warehouse.dto';
 import { affectedRows } from '../../common/utils/affected-rows.util';
+import { namedBinds } from '../../common/utils/named-binds.util';
 
 type Row = Record<string, unknown>;
 
@@ -136,7 +137,7 @@ export class ReceiptSlipService {
           AND s.ORGANIZATION_ID = :organizationId
         ORDER BY s.RECEIPT_DATE DESC, s.RECEIPT_SLIP_NO
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         dateFrom: query.dateFrom,
         dateTo: query.dateTo,
         itemCode: likePrefix(query.itemCode),
@@ -144,7 +145,7 @@ export class ReceiptSlipService {
         receiptType: likePrefix(query.receiptType),
         receiptStatus: likePrefix(query.receiptStatus),
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }
@@ -183,11 +184,11 @@ export class ReceiptSlipService {
           AND b.ORGANIZATION_ID = :organizationId
         ORDER BY b.SCAN_DATE, b.ITEM_BARCODE
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         itemCode: query.itemCode,
         slipNo: query.slipNo,
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }
@@ -209,7 +210,7 @@ export class ReceiptSlipService {
       `SELECT ${name}.NEXTVAL AS "seq"
          FROM DUAL
       CONNECT BY LEVEL <= :count`,
-      { count } as unknown as unknown[],
+      namedBinds({ count }),
     )) as Row[];
     return rows.map((r) => Number(r.seq));
   }
@@ -242,11 +243,11 @@ export class ReceiptSlipService {
           WHERE s.RECEIPT_SLIP_NO = :slipNo
             AND s.ITEM_CODE = :itemCode
             AND s.ORGANIZATION_ID = :organizationId`,
-        {
+        namedBinds({
           slipNo: dto.slipNo,
           itemCode: dto.itemCode,
           organizationId,
-        } as unknown as unknown[],
+        }),
       )) as Row[];
       if (slips.length === 0) {
         throw new BadRequestException(
@@ -318,7 +319,7 @@ export class ReceiptSlipService {
               -- PB 가 고정으로 넣던 값. 발행 직후 상태다.
               'N', 'N', 'N', 'N',
               :organizationId, SYSDATE, :userId, SYSDATE, :userId)`,
-          common as unknown as unknown[],
+          namedBinds(common),
         );
         barcodeRows += Number(
           affectedRows(barcodeResult) ?? 0,
@@ -358,7 +359,7 @@ export class ReceiptSlipService {
               :fromSupplierCode, :manufactureWeek, :inventoryType,
               TO_DATE(:coatingDate, 'YYYY-MM-DD'),
               TO_DATE(:manufactureDate, 'YYYY-MM-DD'))`,
-          {
+          namedBinds({
             ...common,
             receiptSequence: receiptSeqs[i],
             lineType: dto.lineType ?? null,
@@ -367,7 +368,7 @@ export class ReceiptSlipService {
             manufactureWeek: dto.manufactureWeek ?? null,
             coatingDate: dto.coatingDate ?? null,
             manufactureDate: dto.manufactureDate ?? null,
-          } as unknown as unknown[],
+          }),
         );
         receiptRows += Number(
           affectedRows(receiptResult) ?? 0,

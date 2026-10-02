@@ -12,6 +12,7 @@
  */
 import { Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
+import { namedBinds } from '../../../common/utils/named-binds.util';
 
 export interface CodeMasterItem {
   detailCode: string;
@@ -56,7 +57,7 @@ export class CodeMasterService {
          FROM ISYS_CODE_MASTER
         WHERE (:organizationId IS NULL OR ORGANIZATION_ID = :organizationId)
         ORDER BY CODE_TYPE, CODE_NAME`,
-      { organizationId: organizationId ?? null } as unknown as unknown[],
+      namedBinds({ organizationId: organizationId ?? null }),
     )) as CodeMasterRow[];
 
     const grouped: CodeMasterMap = {};

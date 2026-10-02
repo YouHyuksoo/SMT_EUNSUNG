@@ -66,6 +66,7 @@ import {
   BarcodeScanLookupDto,
 } from './warehouse.dto';
 import { affectedRows } from '../../common/utils/affected-rows.util';
+import { namedBinds } from '../../common/utils/named-binds.util';
 
 type Row = Record<string, unknown>;
 
@@ -157,13 +158,13 @@ export class BarcodeReceiptService {
           AND b.ORGANIZATION_ID = :organizationId
         ORDER BY b.SCAN_DATE DESC, b.ITEM_BARCODE
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         itemCode: likePrefix(query.itemCode),
         barcode: likePrefix(query.barcode),
         receiptCompareYn: likePrefix(query.receiptCompareYn),
         lotNo: likePrefix(query.lotNo),
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }
@@ -188,13 +189,13 @@ export class BarcodeReceiptService {
           AND b.ORGANIZATION_ID = :organizationId
         ORDER BY b.SCAN_DATE DESC, b.RECEIPT_SLIP_NO
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         itemCode: likePrefix(query.itemCode),
         barcode: likePrefix(query.barcode),
         lotNo: likePrefix(query.lotNo),
         slipNo: likePrefix(query.slipNo),
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }
@@ -252,14 +253,14 @@ export class BarcodeReceiptService {
           AND r.ORGANIZATION_ID = :organizationId
         ORDER BY r.INVOICE_NO, r.RECEIPT_DATE, r.RECEIPT_SEQUENCE
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      {
+      namedBinds({
         dateFrom: query.dateFrom,
         dateTo: query.dateTo,
         itemCode: likePrefix(query.itemCode),
         slipNo: likePrefix(query.slipNo),
         lotNo: likePrefix(query.lotNo),
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
     return limited(rows);
   }
@@ -286,7 +287,7 @@ export class BarcodeReceiptService {
           AND b.ORGANIZATION_ID = :organizationId
         ORDER BY b.SCAN_DATE DESC
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      { organizationId } as unknown as unknown[],
+      namedBinds({ organizationId }),
     )) as Row[];
     return limited(rows);
   }
@@ -310,7 +311,7 @@ export class BarcodeReceiptService {
               F_GET_LOT_NO_FROM_BARCODE(:barcode)           AS "lotNo",
               TO_NUMBER(F_GET_LOT_QTY_FROM_BARCODE(:barcode)) AS "scanQty"
          FROM DUAL`,
-      { barcode: dto.barcode } as unknown as unknown[],
+      namedBinds({ barcode: dto.barcode }),
     )) as Row[];
     const parsed = rows[0] ?? {};
     const itemCode = (parsed.itemCode as string) || '';
@@ -325,7 +326,7 @@ export class BarcodeReceiptService {
       const sup = (await this.dataSource.query(
         `SELECT F_GET_ITEM_CODE_FROM_BARCODE_S(:supplierBarcode, NULL) AS "itemCode"
            FROM DUAL`,
-        { supplierBarcode: dto.supplierBarcode } as unknown as unknown[],
+        namedBinds({ supplierBarcode: dto.supplierBarcode }),
       )) as Row[];
       supplierItemCode = (sup[0]?.itemCode as string) || null;
     }
@@ -364,7 +365,7 @@ export class BarcodeReceiptService {
          FROM ID_ITEM i
         WHERE i.ITEM_CODE = :itemCode
           AND i.ORGANIZATION_ID = :organizationId`,
-      { itemCode, organizationId } as unknown as unknown[],
+      namedBinds({ itemCode, organizationId }),
     )) as Row[];
 
     const barcodeRows = (await this.dataSource.query(
@@ -384,11 +385,11 @@ export class BarcodeReceiptService {
         WHERE b.ITEM_CODE = :itemCode
           AND b.LOT_NO = :lotNo
           AND b.ORGANIZATION_ID = :organizationId`,
-      {
+      namedBinds({
         itemCode,
         lotNo: (parsed.lotNo as string) ?? '',
         organizationId,
-      } as unknown as unknown[],
+      }),
     )) as Row[];
 
     const item = items[0] ?? null;
@@ -513,7 +514,7 @@ export class BarcodeReceiptService {
             AND ORGANIZATION_ID = :organizationId
             AND NVL(RECEIPT_COMPARE_YN, 'N') <> 'Y'
             AND NVL(BARCODE_STATUS, '*') <> 'C'`,
-        {
+        namedBinds({
           userId,
           supplierBarcode: dto.supplierBarcode,
           supplierLotNo: dto.supplierLotNo ?? null,
@@ -521,7 +522,7 @@ export class BarcodeReceiptService {
           itemCode: lookup.itemCode,
           lotNo: lookup.lotNo,
           organizationId,
-        } as unknown as unknown[],
+        }),
       );
       const compared = Number(
         affectedRows(updateResult) ?? 0,
@@ -537,10 +538,10 @@ export class BarcodeReceiptService {
         `SELECT F_GET_ANY_NO('RECEIPT_LOT_NO', :organizationId) AS "no",
                 NVL(:manufactureWeek, TO_CHAR(SYSDATE, 'YYWW')) AS "week"
            FROM DUAL`,
-        {
+        namedBinds({
           organizationId,
           manufactureWeek: (ledger.manufactureWeek as string) ?? null,
-        } as unknown as unknown[],
+        }),
       )) as Row[];
 
       const receiptSeq = (await qr.query(
@@ -581,7 +582,7 @@ export class BarcodeReceiptService {
             :fromSupplierCode, :manufactureWeek, :inventoryType,
             TO_DATE(:coatingDate, 'YYYY-MM-DD'),
             TO_DATE(:manufactureDate, 'YYYY-MM-DD'))`,
-        {
+        namedBinds({
           receiptSequence: Number(receiptSeq[0]?.seq ?? 0),
           organizationId,
           locationCode,
@@ -603,7 +604,7 @@ export class BarcodeReceiptService {
           inventoryType: (ledger.inventoryType as string) ?? null,
           coatingDate: (ledger.pcbCoatingDate as string) ?? null,
           manufactureDate: (ledger.manufactureDate as string) ?? null,
-        } as unknown as unknown[],
+        }),
       );
 
       return {
