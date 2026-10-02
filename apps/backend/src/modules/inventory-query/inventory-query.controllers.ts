@@ -3,7 +3,7 @@
  * @description 재고(M_INVENTORY) 컨트롤러
  *
  *   /inventory-query/total        269 총재고조회
- *   /inventory-query/close        271 자재재고마감 (수불명세)
+ *   /inventory-query/close        271 자재재고마감 (원자재 월마감 — 월총평균법, 쓰기)
  *   /inventory-query/check        272 자재재고조사 (조정 — 쓰기)
  *   /inventory-query/barcode      274 자재바코드스캔실사 (조회)
  */
@@ -20,8 +20,7 @@ import {
   BarcodeCheckQueryDto,
   InventoryAdjustDto,
   InventoryCheckQueryDto,
-  InventoryCloseQueryDto,
-  ReceiptIssueLedgerQueryDto,
+  InventoryCloseMonthDto,
   TotalInventoryDetailQueryDto,
   TotalInventoryLotQueryDto,
   TotalInventoryQueryDto,
@@ -89,29 +88,42 @@ export class TotalInventoryController {
 export class InventoryCloseController {
   constructor(private readonly service: InventoryCloseService) {}
 
-  @Get('ledger')
-  @ApiOperation({
-    summary: '271 월 수불명세. (1)전월말 → (2)입고 → (3)출고 → (4)당월말 을 한 목록으로'
-      + ' 낸다. **(1)과 (4)는 월마감을 돌려야 생긴다** —'
-      + ' IM_ITEM_INVENTORY_CLOSE_MFS 가 0행이라 지금은 (2)(3)만 나온다 (실측).',
-  })
-  async ledger(
-    @Query() query: ReceiptIssueLedgerQueryDto,
-    @OrganizationId() organizationId: number,
-  ) {
-    return paged(await this.service.findLedger(query, organizationId));
+  @Get('status')
+  @ApiOperation({ summary: '271 마감 상태 — 마감 여부, 마지막 마감월, 기초 출처, 마감·취소 가능 여부와 이유.' })
+  async status(@Query() query: InventoryCloseMonthDto, @OrganizationId() organizationId: number) {
+    return ResponseUtil.success(await this.service.status(query.yyyymm, organizationId));
   }
 
-  @Get('summary')
+  @Get('preview')
   @ApiOperation({
-    summary: '271 품목 단위 월마감. **이 표도 0행이다** (IM_ITEM_INVENTORY_CLOSE).'
-      + ' 현재고를 함께 내어 마감값과 견줘 볼 수 있게 한다.',
+    summary: '271 원자재 월마감 계산 (읽기). 저장하지 않는다. 마감한 달이면 저장된 결과를 준다.'
+      + ' 월평균단가 = (기초금액 + 입고금액) ÷ (기초수량 + 입고수량), 출고·기말은 그 단가로 평가.',
   })
-  async summary(
-    @Query() query: InventoryCloseQueryDto,
+  async preview(@Query() query: InventoryCloseMonthDto, @OrganizationId() organizationId: number) {
+    return ResponseUtil.success(await this.service.preview(query.yyyymm, organizationId));
+  }
+
+  @Post()
+  @ApiOperation({
+    summary: '271 원자재 월마감 (**쓰기**). 계산 결과를 IM_ITEM_INVENTORY_CLOSE 에 그 달만 갈아끼우고'
+      + ' ISYS_INVENTORY_CLOSE_DATE 에 마감으로 남긴다. 첫 마감이거나 마지막 마감월의 다음 달, 그 달이 끝난 뒤만.',
+  })
+  async close(
+    @Body() dto: InventoryCloseMonthDto,
     @OrganizationId() organizationId: number,
+    @UserId() userId?: string,
   ) {
-    return paged(await this.service.findCloseSummary(query, organizationId));
+    return ResponseUtil.success(await this.service.close(dto.yyyymm, organizationId, userId || DEFAULT_USER));
+  }
+
+  @Post('cancel')
+  @ApiOperation({ summary: '271 마감 취소 (**쓰기**). 마지막 마감월만 — 그 달 마감 결과를 지우고 미마감으로 돌린다.' })
+  async cancel(
+    @Body() dto: InventoryCloseMonthDto,
+    @OrganizationId() organizationId: number,
+    @UserId() userId?: string,
+  ) {
+    return ResponseUtil.success(await this.service.cancel(dto.yyyymm, organizationId, userId || DEFAULT_USER));
   }
 }
 

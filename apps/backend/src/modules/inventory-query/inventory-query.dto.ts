@@ -44,34 +44,11 @@ export class TotalInventoryDetailQueryDto {
   lang?: string;
 }
 
-/** 271 월 수불명세 조회 조건. */
-export class ReceiptIssueLedgerQueryDto {
-  @ApiProperty({ description: '마감월 (YYYYMM). 입고·출고 원장이 크므로 필수다.' })
-  @IsString() @Matches(YYYYMM)
-  yyyymm!: string;
-
-  @ApiPropertyOptional({ description: '품목코드 (앞부분 일치)' })
-  @IsOptional() @IsString() @Length(0, 50)
-  itemCode?: string;
-
-  @ApiPropertyOptional({ description: '창고코드 (앞부분 일치)' })
-  @IsOptional() @IsString() @Length(0, 20)
-  locationCode?: string;
-}
-
-/** 271 품목 단위 마감 조회 조건. */
-export class InventoryCloseQueryDto {
+/** 271 원자재 월마감 — 대상 월. */
+export class InventoryCloseMonthDto {
   @ApiProperty({ description: '마감월 (YYYYMM)' })
   @IsString() @Matches(YYYYMM)
   yyyymm!: string;
-
-  @ApiPropertyOptional({ description: '품목코드 (앞부분 일치)' })
-  @IsOptional() @IsString() @Length(0, 50)
-  itemCode?: string;
-
-  @ApiPropertyOptional({ description: '품목구분 (앞부분 일치)' })
-  @IsOptional() @IsString() @Length(0, 20)
-  itemDivision?: string;
 }
 
 /** 272 실사·조정 조회 조건. */

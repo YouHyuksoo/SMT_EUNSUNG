@@ -66,54 +66,6 @@ export interface InventoryByLotRow {
   inventoryQty: number | null;
 }
 
-/** 271 월 수불명세 한 줄. */
-export interface LedgerRow {
-  div: string | null;
-  sequence: number | null;
-  ledgerDate: string | null;
-  deficit: string | null;
-  lineType: string | null;
-  qty: number | null;
-  price: number | null;
-  amt: number | null;
-  invoiceNo: string | null;
-  supplierCode: string | null;
-  ledgerType: string | null;
-  currency: string | null;
-  status: string | null;
-  itemCode: string | null;
-  itemName: string | null;
-  itemSpec: string | null;
-  itemUom: string | null;
-  lotNo: string | null;
-  locationCode: string | null;
-  lineCode: string | null;
-}
-
-/** 271 품목 단위 마감 한 줄. */
-export interface CloseSummaryRow {
-  closeYyyymm: string | null;
-  itemCode: string | null;
-  itemName: string | null;
-  itemSpec: string | null;
-  itemUom: string | null;
-  lineType: string | null;
-  locationCode: string | null;
-  lastQty: number | null;
-  lastAvgPrice: number | null;
-  lastAmt: number | null;
-  receiptQty: number | null;
-  receiptAmt: number | null;
-  issueQty: number | null;
-  issueAmt: number | null;
-  badQty: number | null;
-  extraQty: number | null;
-  avgPrice: number | null;
-  closeQty: number | null;
-  closeAmt: number | null;
-  currentQty: number | null;
-}
-
 /** 272 실사 한 줄. */
 export interface InventoryCheckRow {
   closeYyyymm: string | null;
@@ -253,56 +205,6 @@ export const inventoryByLotColumns: ColumnDef<InventoryByLotRow>[] = [
   { accessorKey: 'locationCode', header: '코드', size: 100, meta: center },
   { accessorKey: 'lotNo', header: '롯트번호', size: 150 },
   { accessorKey: 'inventoryQty', header: '수량', size: 110, meta: right, cell: (c) => num(c.getValue()) },
-];
-
-export const ledgerColumns: ColumnDef<LedgerRow>[] = [
-  { accessorKey: 'itemCode', header: '품목코드', size: 140 },
-  { accessorKey: 'itemName', header: '품목명', size: 180 },
-  { accessorKey: 'div', header: '구분', size: 130, meta: center },
-  { accessorKey: 'ledgerDate', header: '일자', size: 110, meta: center },
-  { accessorKey: 'sequence', header: '순번', size: 100, meta: right },
-  { accessorKey: 'lotNo', header: '롯트번호', size: 130 },
-  { accessorKey: 'qty', header: '수량', size: 110, meta: right, cell: (c) => num(c.getValue()) },
-  { accessorKey: 'itemUom', header: '단위', size: 70, meta: center },
-  { accessorKey: 'price', header: '단가', size: 100, meta: right, cell: (c) => num(c.getValue()) },
-  { accessorKey: 'amt', header: '금액', size: 120, meta: right, cell: (c) => num(c.getValue()) },
-  { accessorKey: 'deficit', header: '증감', size: 80, meta: center },
-  { accessorKey: 'locationCode', header: '창고', size: 80, meta: center },
-  { accessorKey: 'lineCode', header: '라인', size: 80, meta: center },
-  { accessorKey: 'invoiceNo', header: '전표번호', size: 150 },
-  { accessorKey: 'supplierCode', header: '협력사', size: 110 },
-  { accessorKey: 'ledgerType', header: '유형', size: 80, meta: center },
-  { accessorKey: 'status', header: '상태', size: 80, meta: center },
-];
-
-export const closeSummaryColumns: ColumnDef<CloseSummaryRow>[] = [
-  { accessorKey: 'itemCode', header: '품목코드', size: 140 },
-  { accessorKey: 'itemName', header: '품목명', size: 180 },
-  { accessorKey: 'closeYyyymm', header: '마감월', size: 100, meta: center },
-  { accessorKey: 'itemUom', header: '단위', size: 70, meta: center },
-  { accessorKey: 'lastQty', header: '전월말 수량', size: 120, meta: right, cell: (c) => num(c.getValue()) },
-  { accessorKey: 'receiptQty', header: '입고', size: 110, meta: right, cell: (c) => num(c.getValue()) },
-  { accessorKey: 'issueQty', header: '출고', size: 110, meta: right, cell: (c) => num(c.getValue()) },
-  { accessorKey: 'badQty', header: '불량', size: 100, meta: right, cell: (c) => num(c.getValue()) },
-  { accessorKey: 'extraQty', header: '기타', size: 100, meta: right, cell: (c) => num(c.getValue()) },
-  {
-    accessorKey: 'closeQty',
-    header: '당월말 수량',
-    size: 120,
-    meta: right,
-    cell: (c) => <span className="font-semibold">{num(c.getValue())}</span>,
-  },
-  {
-    accessorKey: 'currentQty',
-    header: '현재고',
-    size: 110,
-    meta: right,
-    // 마감값과 지금 재고를 견줘 보라고 붙인 열이다.
-    cell: (c) => num(c.getValue()),
-  },
-  { accessorKey: 'avgPrice', header: '평균단가', size: 110, meta: right, cell: (c) => num(c.getValue()) },
-  { accessorKey: 'closeAmt', header: '당월말 금액', size: 130, meta: right, cell: (c) => num(c.getValue()) },
-  { accessorKey: 'locationCode', header: '창고', size: 80, meta: center },
 ];
 
 export const inventoryCheckColumns: ColumnDef<InventoryCheckRow>[] = [

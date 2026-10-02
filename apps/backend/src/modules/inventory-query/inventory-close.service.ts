@@ -1,198 +1,338 @@
 /**
  * @file src/modules/inventory-query/inventory-close.service.ts
- * @description 271 자재재고마감 — PB `w_mat_inventory_close_report` 이식 (조회 전용)
+ * @description 271 자재재고마감 — 원자재 월마감 (월총평균법)
  *
  * 초보자 가이드:
- * 1. **월별 수불명세를 보는 화면이다.** 한 달 동안 자재가 어떻게 드나들었는지를
- *    네 덩어리로 이어 붙여 보여준다:
- *        (1) 전월말 재고 → (2) 이번 달 입고 → (3) 이번 달 출고 → (4) 당월말 재고
- *    그래서 `(1) + (2) − (3) = (4)` 가 맞는지 눈으로 확인할 수 있다.
- * 2. **(1)과 (4)는 월마감을 돌려야 생긴다.** 그 값은 `IM_ITEM_INVENTORY_CLOSE_MFS`
- *    에서 오는데 **이 현장에서는 0행이다** (실측). `IM_ITEM_INVENTORY_CLOSE`(품목
- *    단위 마감)도 **0행**이다. 즉 **월마감을 한 번도 돌린 적이 없다** —
- *    (2)입고·(3)출고 줄만 나오고 앞뒤 잔액 줄은 비어 있다. 화면에 그렇게 적었다.
- * 3. **마감을 만드는 경로는 이 화면에 없다.** PB 도 리포트만 있고 마감 생성은
- *    다른 배치다 (이 창에 INSERT·UPDATE 가 한 줄도 없다 — 실측).
- * 4. **조회 조건에 월(`YYYYMM`)이 필수다.** 입고·출고 원장이 각각 22만/260만 행이라
- *    월이 없으면 전 기간을 훑는다.
+ * 1. 계산(미리보기): 집계 SQL(inventory-close.sql.ts) + 단가·금액 계산(inventory-close.calc.ts).
+ *    아무것도 쓰지 않는다.
+ * 2. 마감: 계산 결과를 IM_ITEM_INVENTORY_CLOSE 에 그 달 것만 갈아끼우고,
+ *    ISYS_INVENTORY_CLOSE_DATE 에 그 달을 마감(CLOSE_YN = 'Y')으로 남긴다. 한 트랜잭션.
+ * 3. 순서 규칙 — 표준 월마감과 같다:
+ *    - 마감은 첫 마감이거나 마지막 마감월의 다음 달만, 그 달이 끝난 뒤에 할 수 있다.
+ *    - 마감 취소는 마지막 마감월만 할 수 있다 (다음 달 기초가 이 달 기말이기 때문).
+ * 4. 현재고(IM_ITEM_INVENTORY)는 고치지 않는다. 마감은 장부를 닫는 일이다.
  */
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
-import { likePrefix } from '@smt/shared';
-import { limited, ROW_LIMIT } from '../../shared/row-limit';
-import { InventoryCloseQueryDto, ReceiptIssueLedgerQueryDto } from './inventory-query.dto';
+import { InjectDataSource } from '@nestjs/typeorm';
+import { clobBind } from '../../common/services/oracle.service';
+import { affectedRows } from '../../common/utils/affected-rows.util';
 import { namedBinds } from '../../common/utils/named-binds.util';
+import { closeMonth } from './inventory-close.calc';
+import { closeAggregateSql } from './inventory-close.sql';
 
-type Row = Record<string, unknown>;
+/** 마감 한 줄 (품목·창고의 한 달) */
+export interface CloseLine {
+  itemCode: string;
+  itemName: string | null;
+  itemSpec: string | null;
+  itemUom: string | null;
+  lineType: string;
+  locationCode: string;
+  openingQty: number;
+  openingPrice: number;
+  openingAmt: number;
+  receiptQty: number;
+  receiptAmt: number;
+  massQty: number;
+  massAmt: number;
+  badQty: number;
+  badAmt: number;
+  freeQty: number;
+  freeAmt: number;
+  saleQty: number;
+  saleAmt: number;
+  extraQty: number;
+  extraAmt: number;
+  issueQty: number;
+  issueAmt: number;
+  avgPrice: number;
+  endingQty: number;
+  endingAmt: number;
+  /** 입고 중 단가표로 금액을 채운 건수 / 단가 등록이 없어 0원으로 둔 건수 (미리보기만) */
+  tablePriced?: number;
+  unpriced?: number;
+}
+
+export interface CloseStatus {
+  yyyymm: string;
+  closed: boolean;
+  closedAt: string | null;
+  lastClosed: string | null;
+  /** 이 달 기초를 어디서 잡는가 */
+  openingSource: 'ledger' | 'previousClose' | null;
+  canClose: boolean;
+  canCancel: boolean;
+  /** 마감할 수 없는 이유 */
+  reason: string | null;
+}
+
+const num = (v: unknown) => Number(v ?? 0) || 0;
+
+/** YYYYMM ± n 개월 */
+export const shiftMonth = (yyyymm: string, n: number) => {
+  const d = new Date(Number(yyyymm.slice(0, 4)), Number(yyyymm.slice(4, 6)) - 1 + n, 1);
+  return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}`;
+};
+const firstDay = (yyyymm: string) => `${yyyymm.slice(0, 4)}-${yyyymm.slice(4, 6)}-01`;
 
 @Injectable()
 export class InventoryCloseService {
-  constructor(private readonly dataSource: DataSource) {}
+  constructor(@InjectDataSource() private readonly dataSource: DataSource) {}
 
-  /**
-   * 월 수불명세 (PB `d_mat_receipt_issue_rpt`).
-   *
-   * 네 덩어리를 `DIV` 로 구분해 한 목록으로 낸다 — PB 와 같은 순서로 정렬하면
-   * 전월말 → 입고 → 출고 → 당월말이 차례로 보인다.
-   */
-  async findLedger(query: ReceiptIssueLedgerQueryDto, organizationId: number) {
-    const rows = (await this.dataSource.query(
-      `SELECT a.DIV                        AS "div",
-              a.RECEIPT_ISSUE_SEQUENCE     AS "sequence",
-              TO_CHAR(a.RECEIPT_ISSUE_DATE, 'YYYY-MM-DD')  AS "ledgerDate",
-              a.RECEIPT_ISSUE_DEFICIT      AS "deficit",
-              a.LINE_TYPE                  AS "lineType",
-              a.QTY                        AS "qty",
-              a.PRICE                      AS "price",
-              a.AMT                        AS "amt",
-              a.MATERIAL_COST              AS "materialCost",
-              a.MATERIAL_COST_AMT          AS "materialCostAmt",
-              a.EXCHANGE_RATE              AS "exchangeRate",
-              a.FOREIGN_RECEIPT_AMT        AS "foreignAmt",
-              a.INVOICE_NO                 AS "invoiceNo",
-              a.SUPPLIER_CODE              AS "supplierCode",
-              a.RECEIPT_ISSUE_TYPE         AS "ledgerType",
-              a.CURRENCY                   AS "currency",
-              a.RECEIPT_ISSUE_STATUS       AS "status",
-              a.ITEM_CODE                  AS "itemCode",
-              b.ITEM_NAME                  AS "itemName",
-              b.ITEM_SPEC                  AS "itemSpec",
-              b.ITEM_UOM                   AS "itemUom",
-              a.MATERIAL_MFS               AS "lotNo",
-              a.LOCATION_CODE              AS "locationCode",
-              a.LINE_CODE                  AS "lineCode"
-         FROM (
-                -- (1) 전월말 재고. 월마감을 돌려야 생긴다 (파일 머리 2번).
-                SELECT '(1) 전월말재고' DIV, 0 RECEIPT_ISSUE_SEQUENCE,
-                       LAST_DAY(ADD_MONTHS(TO_DATE(:yyyymm || '01', 'YYYYMMDD'), -1))
-                         RECEIPT_ISSUE_DATE,
-                       NULL RECEIPT_ISSUE_DEFICIT, LINE_TYPE,
-                       LAST_INVENTORY_QTY QTY, 0 MATERIAL_COST,
-                       LAST_AVG_PRICE PRICE, 0 MATERIAL_COST_AMT,
-                       NULL INVOICE_NO, LAST_INVENTORY_AMT AMT,
-                       0 EXCHANGE_RATE, 0 FOREIGN_RECEIPT_AMT,
-                       NULL SUPPLIER_CODE, NULL RECEIPT_ISSUE_TYPE, NULL CURRENCY,
-                       'N' RECEIPT_ISSUE_STATUS, ITEM_CODE, MATERIAL_MFS,
-                       LOCATION_CODE, NULL LINE_CODE, ORGANIZATION_ID
-                  FROM IM_ITEM_INVENTORY_CLOSE_MFS
-                 WHERE CLOSE_YYYYMM = :yyyymm
-                UNION ALL
-                -- (2) 이번 달 입고
-                SELECT '(2) 입고', RECEIPT_SEQUENCE, RECEIPT_DATE,
-                       RECEIPT_DEFICIT, LINE_TYPE, RECEIPT_QTY, MATERIAL_COST,
-                       UNIT_PRICE, MATERIAL_COST_AMT, INVOICE_NO, RECEIPT_AMT,
-                       EXCHANGE_RATE, FOREIGN_RECEIPT_AMT, SUPPLIER_CODE,
-                       RECEIPT_TYPE, CURRENCY, RECEIPT_STATUS, ITEM_CODE,
-                       MATERIAL_MFS, LOCATION_CODE, NULL, ORGANIZATION_ID
-                  FROM IM_ITEM_RECEIPT
-                 WHERE RECEIPT_DATE >= TO_DATE(:yyyymm || '01', 'YYYYMMDD')
-                   AND RECEIPT_DATE <  ADD_MONTHS(TO_DATE(:yyyymm || '01', 'YYYYMMDD'), 1)
-                UNION ALL
-                -- (3) 이번 달 출고
-                SELECT '(3) 출고', ISSUE_SEQUENCE, ISSUE_DATE,
-                       ISSUE_DEFICIT, LINE_TYPE, ISSUE_QTY, 0,
-                       ISSUE_PRICE, 0, NULL, ISSUE_AMT,
-                       0, 0, SUPPLIER_CODE,
-                       ISSUE_TYPE, NULL, ISSUE_STATUS, ITEM_CODE,
-                       MATERIAL_MFS, LOCATION_CODE, LINE_CODE, ORGANIZATION_ID
-                  FROM IM_ITEM_ISSUE
-                 WHERE ISSUE_DATE >= TO_DATE(:yyyymm || '01', 'YYYYMMDD')
-                   AND ISSUE_DATE <  ADD_MONTHS(TO_DATE(:yyyymm || '01', 'YYYYMMDD'), 1)
-                UNION ALL
-                -- (4) 당월말 재고. 역시 월마감을 돌려야 생긴다.
-                SELECT '(4) 당월말재고', 9999999,
-                       LAST_DAY(TO_DATE(:yyyymm || '01', 'YYYYMMDD')),
-                       NULL, LINE_TYPE, MM_INVENTORY_QTY, 0,
-                       MM_AVG_PRICE, 0, NULL, MM_INVENTORY_AMT,
-                       0, 0, NULL, NULL, NULL,
-                       'N', ITEM_CODE, MATERIAL_MFS, LOCATION_CODE, NULL,
-                       ORGANIZATION_ID
-                  FROM IM_ITEM_INVENTORY_CLOSE_MFS
-                 WHERE CLOSE_YYYYMM = :yyyymm
-              ) a
-         LEFT JOIN ID_ITEM b
-                ON b.ITEM_CODE = a.ITEM_CODE
-               AND b.ORGANIZATION_ID = a.ORGANIZATION_ID
-        WHERE a.ITEM_CODE LIKE :itemCode ESCAPE '\\'
-          AND NVL(a.LOCATION_CODE, '*') LIKE :locationCode ESCAPE '\\'
-          AND a.ORGANIZATION_ID = :organizationId
-        ORDER BY a.ITEM_CODE, a.MATERIAL_MFS, a.DIV,
-                 a.RECEIPT_ISSUE_DATE, a.RECEIPT_ISSUE_SEQUENCE
-        FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      namedBinds({
-        yyyymm: query.yyyymm,
-        itemCode: likePrefix(query.itemCode),
-        locationCode: likePrefix(query.locationCode),
-        organizationId,
-      }),
-    )) as Row[];
-    return limited(rows);
+  // ─────────────────────────────── 상태
+
+  async status(yyyymm: string, organizationId: number): Promise<CloseStatus> {
+    const [row] = await this.dataSource.query<{ LAST_CLOSED: string | null; CLOSED_AT: string | null }[]>(
+      `SELECT (SELECT MAX(CLOSE_YYYYMM) FROM ISYS_INVENTORY_CLOSE_DATE
+                WHERE ORGANIZATION_ID = :organizationId AND CLOSE_YN = 'Y') AS LAST_CLOSED,
+              (SELECT TO_CHAR(MAX(LAST_CLOSE_DATE), 'YYYY-MM-DD HH24:MI') FROM ISYS_INVENTORY_CLOSE_DATE
+                WHERE ORGANIZATION_ID = :organizationId AND CLOSE_YN = 'Y'
+                  AND CLOSE_YYYYMM = :yyyymm) AS CLOSED_AT
+         FROM DUAL`,
+      namedBinds({ organizationId, yyyymm }),
+    );
+    const lastClosed = row?.LAST_CLOSED ?? null;
+    const closed = row?.CLOSED_AT != null;
+    const monthEnded = new Date() >= new Date(`${firstDay(shiftMonth(yyyymm, 1))}T00:00:00+09:00`);
+
+    let openingSource: CloseStatus['openingSource'] = null;
+    let reason: string | null = null;
+    if (closed) {
+      reason = '이미 마감한 달입니다.';
+    } else if (!lastClosed) {
+      openingSource = 'ledger';
+    } else if (yyyymm === shiftMonth(lastClosed, 1)) {
+      openingSource = 'previousClose';
+    } else if (yyyymm < lastClosed) {
+      reason = `${lastClosed} 까지 마감돼 있습니다. 앞선 달은 다시 계산할 수 없습니다.`;
+    } else {
+      reason = `${shiftMonth(lastClosed, 1)} 을 먼저 마감하세요.`;
+    }
+    if (!reason && !monthEnded) reason = '그 달이 끝난 뒤에 마감할 수 있습니다. (미리보기는 됩니다)';
+
+    return {
+      yyyymm,
+      closed,
+      closedAt: row?.CLOSED_AT ?? null,
+      lastClosed,
+      openingSource,
+      canClose: !reason,
+      canCancel: closed && yyyymm === lastClosed,
+      reason,
+    };
   }
 
-  /**
-   * 품목 단위 월마감 (PB `d_mat_inventory_close_rpt`).
-   *
-   * **이 표도 0행이다** (실측 `IM_ITEM_INVENTORY_CLOSE`). 월마감 배치가 돌면 채워진다.
-   * 현재고는 `F_GET_MAT_INVENTORY_QTY` 로 함께 내어 마감값과 견줘 볼 수 있게 한다
-   * (PB 가 같은 자리에 붙이던 계산식이다).
-   */
-  async findCloseSummary(query: InventoryCloseQueryDto, organizationId: number) {
-    const rows = (await this.dataSource.query(
-      `SELECT c.CLOSE_YYYYMM              AS "closeYyyymm",
-              c.ITEM_CODE                 AS "itemCode",
-              i.ITEM_NAME                 AS "itemName",
-              i.ITEM_SPEC                 AS "itemSpec",
-              i.ITEM_UOM                  AS "itemUom",
-              i.ITEM_CLASS                AS "itemClass",
-              i.ITEM_DIVISION             AS "itemDivision",
-              c.LINE_TYPE                 AS "lineType",
-              c.LOCATION_CODE             AS "locationCode",
-              c.LAST_INVENTORY_QTY        AS "lastQty",
-              c.LAST_AVG_PRICE            AS "lastAvgPrice",
-              c.LAST_INVENTORY_AMT        AS "lastAmt",
-              c.MM_RECEIPT_QTY            AS "receiptQty",
-              c.MM_RECEIPT_AMT            AS "receiptAmt",
-              c.MM_ISSUE_QTY              AS "issueQty",
-              c.MM_ISSUE_AMT              AS "issueAmt",
-              c.MM_MASS_QTY               AS "massQty",
-              c.MM_MASS_AMT               AS "massAmt",
-              c.MM_BAD_QTY                AS "badQty",
-              c.MM_BAD_AMT                AS "badAmt",
-              c.MM_EXTRA_QTY              AS "extraQty",
-              c.MM_EXTRA_AMT              AS "extraAmt",
-              c.MM_FREE_QTY               AS "freeQty",
-              c.MM_FREE_AMT               AS "freeAmt",
-              c.MM_SALE_QTY               AS "saleQty",
-              c.MM_SALE_AMT               AS "saleAmt",
-              c.MM_SHIPPING_QTY           AS "shippingQty",
-              c.MM_SHIPPING_AMT           AS "shippingAmt",
-              c.MM_LOGICAL_ISSUE_QTY      AS "logicalIssueQty",
-              c.MM_AVG_PRICE              AS "avgPrice",
-              c.MM_INVENTORY_QTY          AS "closeQty",
-              c.MM_INVENTORY_AMT          AS "closeAmt",
-              c.MM_MATERIAL_COST_AMT      AS "materialCostAmt",
-              -- 지금 이 순간의 재고. 마감값과 견줘 보라고 PB 가 붙이던 계산식이다.
-              F_GET_MAT_INVENTORY_QTY(c.ITEM_CODE, c.LINE_TYPE, c.ORGANIZATION_ID)
-                                          AS "currentQty",
-              c.ENTER_BY                  AS "enterBy",
-              TO_CHAR(c.ENTER_DATE, 'YYYY-MM-DD HH24:MI:SS')        AS "enterDate"
-         FROM IM_ITEM_INVENTORY_CLOSE c
-         LEFT JOIN ID_ITEM i
-                ON i.ITEM_CODE = c.ITEM_CODE
-               AND i.ORGANIZATION_ID = c.ORGANIZATION_ID
-        WHERE c.CLOSE_YYYYMM = :yyyymm
-          AND c.ITEM_CODE LIKE :itemCode ESCAPE '\\'
-          AND NVL(i.ITEM_DIVISION, '*') LIKE :itemDivision ESCAPE '\\'
-          AND c.ORGANIZATION_ID = :organizationId
-        ORDER BY i.ITEM_CLASS, i.ITEM_DIVISION, c.ITEM_CODE
-        FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
-      namedBinds({
-        yyyymm: query.yyyymm,
-        itemCode: likePrefix(query.itemCode),
-        itemDivision: likePrefix(query.itemDivision),
-        organizationId,
-      }),
-    )) as Row[];
-    return limited(rows);
+  // ─────────────────────────────── 계산 · 마감 · 취소
+
+  /** 미리보기 — 계산만 하고 쓰지 않는다. 마감한 달이면 저장된 결과를 준다. */
+  async preview(yyyymm: string, organizationId: number) {
+    const status = await this.status(yyyymm, organizationId);
+    if (status.closed) {
+      return { status, lines: await this.closedLines(yyyymm, organizationId) };
+    }
+    if (!status.openingSource) throw new BadRequestException(status.reason ?? '계산할 수 없는 달입니다.');
+    return { status, lines: await this.compute(yyyymm, status.openingSource, organizationId) };
+  }
+
+  async close(yyyymm: string, organizationId: number, userId: string) {
+    const status = await this.status(yyyymm, organizationId);
+    if (!status.canClose || !status.openingSource) {
+      throw new BadRequestException(status.reason ?? '마감할 수 없는 달입니다.');
+    }
+    const openingSource = status.openingSource;
+
+    return this.dataSource.transaction(async (manager) => {
+      const lines = await this.compute(yyyymm, openingSource, organizationId);
+
+      await manager.query(
+        `DELETE FROM IM_ITEM_INVENTORY_CLOSE WHERE CLOSE_YYYYMM = :yyyymm AND ORGANIZATION_ID = :organizationId`,
+        namedBinds({ yyyymm, organizationId }),
+      );
+      if (lines.length > 0) {
+        const json = JSON.stringify(lines.map((l) => ({
+          i: l.itemCode, lt: l.lineType, loc: l.locationCode,
+          lp: l.openingPrice, lq: l.openingQty, la: l.openingAmt,
+          rq: l.receiptQty, ra: l.receiptAmt,
+          mq: l.massQty, ma: l.massAmt, bq: l.badQty, ba: l.badAmt,
+          fq: l.freeQty, fa: l.freeAmt, sq: l.saleQty, sa: l.saleAmt,
+          xq: l.extraQty, xa: l.extraAmt, iq: l.issueQty, ia: l.issueAmt,
+          ap: l.avgPrice, eq: l.endingQty, ea: l.endingAmt,
+        })));
+        await manager.query(
+          `INSERT INTO IM_ITEM_INVENTORY_CLOSE
+             (CLOSE_YYYYMM, ITEM_CODE, LINE_TYPE, LOCATION_CODE, ORGANIZATION_ID,
+              LAST_AVG_PRICE, LAST_INVENTORY_QTY, LAST_INVENTORY_AMT,
+              MM_RECEIPT_QTY, MM_RECEIPT_AMT, MM_MATERIAL_COST_AMT,
+              MM_MASS_QTY, MM_MASS_AMT, MM_BAD_QTY, MM_BAD_AMT,
+              MM_FREE_QTY, MM_FREE_AMT, MM_SALE_QTY, MM_SALE_AMT,
+              MM_EXTRA_QTY, MM_EXTRA_AMT, MM_SHIPPING_QTY, MM_SHIPPING_AMT,
+              MM_ISSUE_QTY, MM_ISSUE_AMT, MM_LOGICAL_ISSUE_QTY,
+              MM_AVG_PRICE, MM_INVENTORY_QTY, MM_INVENTORY_AMT,
+              ENTER_BY, ENTER_DATE, LAST_MODIFY_BY, LAST_MODIFY_DATE)
+           SELECT :yyyymm, J.I, J.LT, J.LOC, :organizationId,
+                  J.LP, J.LQ, J.LA,
+                  J.RQ, J.RA, 0,
+                  J.MQ, J.MA, J.BQ, J.BA,
+                  J.FQ, J.FA, J.SQ, J.SA,
+                  J.XQ, J.XA, 0, 0,
+                  J.IQ, J.IA, 0,
+                  J.AP, J.EQ, J.EA,
+                  :userId, SYSDATE, :userId, SYSDATE
+             FROM JSON_TABLE(:closeJson, '$[*]' COLUMNS (
+                    I   VARCHAR2(20) PATH '$.i',
+                    LT  VARCHAR2(10) PATH '$.lt',
+                    LOC VARCHAR2(20) PATH '$.loc',
+                    LP NUMBER PATH '$.lp', LQ NUMBER PATH '$.lq', LA NUMBER PATH '$.la',
+                    RQ NUMBER PATH '$.rq', RA NUMBER PATH '$.ra',
+                    MQ NUMBER PATH '$.mq', MA NUMBER PATH '$.ma',
+                    BQ NUMBER PATH '$.bq', BA NUMBER PATH '$.ba',
+                    FQ NUMBER PATH '$.fq', FA NUMBER PATH '$.fa',
+                    SQ NUMBER PATH '$.sq', SA NUMBER PATH '$.sa',
+                    XQ NUMBER PATH '$.xq', XA NUMBER PATH '$.xa',
+                    IQ NUMBER PATH '$.iq', IA NUMBER PATH '$.ia',
+                    AP NUMBER PATH '$.ap', EQ NUMBER PATH '$.eq', EA NUMBER PATH '$.ea')) J`,
+          namedBinds({ yyyymm, organizationId, userId, closeJson: clobBind(json) }),
+        );
+      }
+
+      // 마감월 표시. 그 달 행이 없으면 달력월 기간으로 만든다 (F_GET_INVENTORY_CLOSE_DATE 와 같은 경계).
+      const updated = await manager.query(
+        `UPDATE ISYS_INVENTORY_CLOSE_DATE
+            SET CLOSE_YN = 'Y', LAST_CLOSE_DATE = SYSDATE, LAST_MODIFY_BY = :userId, LAST_MODIFY_DATE = SYSDATE
+          WHERE CLOSE_YYYYMM = :yyyymm AND ORGANIZATION_ID = :organizationId`,
+        namedBinds({ yyyymm, organizationId, userId }),
+      );
+      if (!affectedRows(updated)) {
+        await manager.query(
+          `INSERT INTO ISYS_INVENTORY_CLOSE_DATE
+             (CLOSE_YYYYMM, ORGANIZATION_ID, START_DATE, END_DATE, CLOSE_YN, LAST_CLOSE_DATE,
+              ENTER_DATE, ENTER_BY, LAST_MODIFY_DATE, LAST_MODIFY_BY)
+           VALUES (:yyyymm, :organizationId, TO_DATE(:yyyymm || '01', 'YYYYMMDD'),
+                   ADD_MONTHS(TO_DATE(:yyyymm || '01', 'YYYYMMDD'), 1) - 1 / 86400, 'Y', SYSDATE,
+                   SYSDATE, :userId, SYSDATE, :userId)`,
+          namedBinds({ yyyymm, organizationId, userId }),
+        );
+      }
+      return { yyyymm, lines: lines.length, endingAmt: lines.reduce((s, l) => s + l.endingAmt, 0) };
+    });
+  }
+
+  async cancel(yyyymm: string, organizationId: number, userId: string) {
+    const status = await this.status(yyyymm, organizationId);
+    if (!status.canCancel) {
+      throw new BadRequestException(status.closed
+        ? `마지막 마감월(${status.lastClosed})만 취소할 수 있습니다.`
+        : '마감하지 않은 달입니다.');
+    }
+    return this.dataSource.transaction(async (manager) => {
+      await manager.query(
+        `DELETE FROM IM_ITEM_INVENTORY_CLOSE WHERE CLOSE_YYYYMM = :yyyymm AND ORGANIZATION_ID = :organizationId`,
+        namedBinds({ yyyymm, organizationId }),
+      );
+      await manager.query(
+        `UPDATE ISYS_INVENTORY_CLOSE_DATE
+            SET CLOSE_YN = 'N', LAST_MODIFY_BY = :userId, LAST_MODIFY_DATE = SYSDATE
+          WHERE CLOSE_YYYYMM = :yyyymm AND ORGANIZATION_ID = :organizationId`,
+        namedBinds({ yyyymm, organizationId, userId }),
+      );
+      return { yyyymm };
+    });
+  }
+
+  // ─────────────────────────────── 보조
+
+  private async compute(
+    yyyymm: string,
+    openingSource: 'ledger' | 'previousClose',
+    organizationId: number,
+  ): Promise<CloseLine[]> {
+    const binds: Record<string, unknown> = {
+      organizationId,
+      startDate: firstDay(yyyymm),
+      endDate: firstDay(shiftMonth(yyyymm, 1)),
+    };
+    if (openingSource === 'previousClose') binds.prevYyyymm = shiftMonth(yyyymm, -1);
+    const rows = await this.dataSource.query<Record<string, unknown>[]>(
+      closeAggregateSql(openingSource === 'ledger'),
+      namedBinds(binds),
+    );
+    return rows.map((r) => {
+      const c = closeMonth({
+        openingQty: num(r.openingQty),
+        openingAmt: num(r.openingAmt),
+        openingPrice: num(r.openingPrice),
+        receiptQty: num(r.receiptQty),
+        receiptAmt: num(r.receiptAmt),
+        massQty: num(r.massQty),
+        badQty: num(r.badQty),
+        freeQty: num(r.freeQty),
+        saleQty: num(r.saleQty),
+        extraQty: num(r.extraQty),
+      });
+      return {
+        itemCode: String(r.itemCode),
+        itemName: (r.itemName as string | null) ?? null,
+        itemSpec: (r.itemSpec as string | null) ?? null,
+        itemUom: (r.itemUom as string | null) ?? null,
+        lineType: String(r.lineType),
+        locationCode: String(r.locationCode),
+        openingQty: num(r.openingQty),
+        openingPrice: num(r.openingPrice),
+        openingAmt: num(r.openingAmt),
+        receiptQty: num(r.receiptQty),
+        receiptAmt: num(r.receiptAmt),
+        massQty: num(r.massQty),
+        badQty: num(r.badQty),
+        freeQty: num(r.freeQty),
+        saleQty: num(r.saleQty),
+        extraQty: num(r.extraQty),
+        ...c,
+        tablePriced: num(r.tablePriced),
+        unpriced: num(r.unpriced),
+      };
+    });
+  }
+
+  /** 마감한 달의 저장된 결과 */
+  private async closedLines(yyyymm: string, organizationId: number): Promise<CloseLine[]> {
+    const rows = await this.dataSource.query<Record<string, unknown>[]>(
+      `SELECT C.ITEM_CODE AS "itemCode", I.ITEM_NAME AS "itemName", I.ITEM_SPEC AS "itemSpec",
+              I.ITEM_UOM AS "itemUom", C.LINE_TYPE AS "lineType", C.LOCATION_CODE AS "locationCode",
+              C.LAST_INVENTORY_QTY AS "openingQty", C.LAST_AVG_PRICE AS "openingPrice",
+              C.LAST_INVENTORY_AMT AS "openingAmt",
+              C.MM_RECEIPT_QTY AS "receiptQty", C.MM_RECEIPT_AMT AS "receiptAmt",
+              C.MM_MASS_QTY AS "massQty", C.MM_MASS_AMT AS "massAmt",
+              C.MM_BAD_QTY AS "badQty", C.MM_BAD_AMT AS "badAmt",
+              C.MM_FREE_QTY AS "freeQty", C.MM_FREE_AMT AS "freeAmt",
+              C.MM_SALE_QTY AS "saleQty", C.MM_SALE_AMT AS "saleAmt",
+              C.MM_EXTRA_QTY AS "extraQty", C.MM_EXTRA_AMT AS "extraAmt",
+              C.MM_ISSUE_QTY AS "issueQty", C.MM_ISSUE_AMT AS "issueAmt",
+              C.MM_AVG_PRICE AS "avgPrice",
+              C.MM_INVENTORY_QTY AS "endingQty", C.MM_INVENTORY_AMT AS "endingAmt"
+         FROM IM_ITEM_INVENTORY_CLOSE C
+         LEFT JOIN (SELECT ITEM_CODE, MAX(ITEM_NAME) AS ITEM_NAME, MAX(ITEM_SPEC) AS ITEM_SPEC,
+                           MAX(ITEM_UOM) AS ITEM_UOM
+                      FROM ID_ITEM WHERE ORGANIZATION_ID = :organizationId GROUP BY ITEM_CODE) I
+           ON I.ITEM_CODE = C.ITEM_CODE
+        WHERE C.CLOSE_YYYYMM = :yyyymm AND C.ORGANIZATION_ID = :organizationId
+        ORDER BY C.ITEM_CODE, C.LOCATION_CODE`,
+      namedBinds({ yyyymm, organizationId }),
+    );
+    return rows.map((r) => ({
+        itemCode: String(r.itemCode),
+        itemName: (r.itemName as string | null) ?? null,
+        itemSpec: (r.itemSpec as string | null) ?? null,
+        itemUom: (r.itemUom as string | null) ?? null,
+        lineType: String(r.lineType),
+        locationCode: String(r.locationCode),
+        openingQty: num(r.openingQty), openingPrice: num(r.openingPrice), openingAmt: num(r.openingAmt),
+        receiptQty: num(r.receiptQty), receiptAmt: num(r.receiptAmt),
+        massQty: num(r.massQty), massAmt: num(r.massAmt), badQty: num(r.badQty), badAmt: num(r.badAmt),
+        freeQty: num(r.freeQty), freeAmt: num(r.freeAmt), saleQty: num(r.saleQty), saleAmt: num(r.saleAmt),
+        extraQty: num(r.extraQty), extraAmt: num(r.extraAmt),
+        issueQty: num(r.issueQty), issueAmt: num(r.issueAmt), avgPrice: num(r.avgPrice),
+        endingQty: num(r.endingQty), endingAmt: num(r.endingAmt),
+      }));
   }
 }
