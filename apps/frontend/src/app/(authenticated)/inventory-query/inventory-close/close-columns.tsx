@@ -21,6 +21,8 @@ export interface CloseLine {
   freeQty: number;
   saleQty: number;
   extraQty: number;
+  adjustQty: number;
+  adjustAmt: number;
   issueQty: number;
   issueAmt: number;
   avgPrice: number;
@@ -61,6 +63,8 @@ export const closeColumns: ColumnDef<CloseLine>[] = [
   num('freeQty', '무상출고', 90, 4),
   num('saleQty', '유상출고', 90, 4),
   num('extraQty', '기타출고', 90, 4),
+  num('adjustQty', '재고조정', 90, 4),
+  num('adjustAmt', '조정금액', 100),
   num('issueAmt', '출고금액', 110),
   {
     accessorKey: 'avgPrice', header: '월평균단가', size: 90, meta: { align: 'right' },

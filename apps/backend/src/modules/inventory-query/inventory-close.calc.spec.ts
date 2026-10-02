@@ -2,7 +2,7 @@ import { closeMonth, type CloseInput } from './inventory-close.calc';
 
 const input = (p: Partial<CloseInput>): CloseInput => ({
   openingQty: 0, openingAmt: 0, openingPrice: 0, receiptQty: 0, receiptAmt: 0,
-  massQty: 0, badQty: 0, freeQty: 0, saleQty: 0, extraQty: 0, ...p,
+  massQty: 0, badQty: 0, freeQty: 0, saleQty: 0, extraQty: 0, adjustQty: 0, ...p,
 });
 
 describe('closeMonth (월총평균법)', () => {
@@ -43,7 +43,15 @@ describe('closeMonth (월총평균법)', () => {
 
   it('출고 계정별 금액 합은 총 출고금액과 같다', () => {
     const r = closeMonth(input({ receiptQty: 7, receiptAmt: 1000, massQty: 3, badQty: 2, extraQty: 1 }));
-    expect(r.massAmt + r.badAmt + r.freeAmt + r.saleAmt + r.extraAmt).toBe(r.issueAmt);
+    expect(r.massAmt + r.badAmt + r.freeAmt + r.saleAmt + r.extraAmt + r.adjustAmt).toBe(r.issueAmt);
+  });
+
+  it('재고조정은 출고에 포함되고 따로 금액이 매겨진다 (남음은 음수)', () => {
+    // 100개 @10, 양산 60, 실사 결과 5개 모자람(+5) → 기말 35
+    const r = closeMonth(input({ receiptQty: 100, receiptAmt: 1000, massQty: 60, adjustQty: 5 }));
+    expect([r.issueQty, r.adjustAmt, r.endingQty, r.endingAmt]).toEqual([65, 50, 35, 350]);
+    const s = closeMonth(input({ receiptQty: 100, receiptAmt: 1000, massQty: 60, adjustQty: -3 }));
+    expect([s.issueQty, s.adjustAmt, s.endingQty]).toEqual([57, -30, 43]);
   });
 
   it('무상(0원) 자재는 수량만 마감된다', () => {

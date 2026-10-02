@@ -13,6 +13,7 @@
  *    그것도 없으면 입고일에 유효한 단가표(IM_ITEM_UNIT_PRICE, 공급처·품목·거래유형) × 수량.
  *    단가표가 0원이면 0원이다 (무상 F 자재 — 사용자 결정 2026-10-02). 입고행은 고치지 않는다.
  * 4. 출고: 출고계정별 수량. 반품·취소는 음수로 들어 있어 그대로 더하면 상쇄된다.
+ *    재고조정(M009, 272 실사 조정 — 그 달 말일 날짜)은 따로 모은다. 모자람은 +, 남음은 − 다.
  * 5. 금액 계산(평균단가·출고금액·기말금액)은 inventory-close.calc.ts 가 한다.
  */
 
@@ -22,6 +23,7 @@ export const ISSUE_GROUPS = {
   bad: ['M002', 'M007', 'M008', 'M013', 'M014'],    // 양산불량·분실·검사폐기·LOSS·스크렙
   free: ['M003'],                                   // 무상
   sale: ['M004', 'M005'],                           // 유상·내부거래
+  adjust: ['M009'],                                 // 재고조정 (실사 차이)
 } as const;
 
 const inList = (codes: readonly string[]) => codes.map((c) => `'${c}'`).join(', ');
@@ -127,8 +129,9 @@ IS_SUM AS (
          SUM(CASE WHEN ISSUE_ACCOUNT IN (${inList(ISSUE_GROUPS.bad)}) THEN ISSUE_QTY ELSE 0 END) AS BAD,
          SUM(CASE WHEN ISSUE_ACCOUNT IN (${inList(ISSUE_GROUPS.free)}) THEN ISSUE_QTY ELSE 0 END) AS FREE,
          SUM(CASE WHEN ISSUE_ACCOUNT IN (${inList(ISSUE_GROUPS.sale)}) THEN ISSUE_QTY ELSE 0 END) AS SALE,
+         SUM(CASE WHEN ISSUE_ACCOUNT IN (${inList(ISSUE_GROUPS.adjust)}) THEN ISSUE_QTY ELSE 0 END) AS ADJUST,
          SUM(CASE WHEN ISSUE_ACCOUNT IN (${inList([...ISSUE_GROUPS.mass, ...ISSUE_GROUPS.bad,
-           ...ISSUE_GROUPS.free, ...ISSUE_GROUPS.sale])}) THEN 0 ELSE ISSUE_QTY END) AS EXTRA
+           ...ISSUE_GROUPS.free, ...ISSUE_GROUPS.sale, ...ISSUE_GROUPS.adjust])}) THEN 0 ELSE ISSUE_QTY END) AS EXTRA
     FROM IM_ITEM_ISSUE
    WHERE ORGANIZATION_ID = :organizationId
      AND ISSUE_DATE >= TO_DATE(:startDate, 'YYYY-MM-DD')
@@ -159,7 +162,8 @@ SELECT K.ITEM_CODE       AS "itemCode",
        NVL(S.BAD, 0)     AS "badQty",
        NVL(S.FREE, 0)    AS "freeQty",
        NVL(S.SALE, 0)    AS "saleQty",
-       NVL(S.EXTRA, 0)   AS "extraQty"
+       NVL(S.EXTRA, 0)   AS "extraQty",
+       NVL(S.ADJUST, 0)  AS "adjustQty"
   FROM KEYS K
   JOIN ITEMS I ON I.ITEM_CODE = K.ITEM_CODE
   LEFT JOIN OPEN_ROWS O

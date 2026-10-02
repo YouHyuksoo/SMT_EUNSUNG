@@ -13,6 +13,8 @@
  *    그 달이 끝난 뒤에 된다. 취소는 마지막 마감월만 된다.
  * 4. 첫 마감의 기초는 원장(입고 − 출고) 합계, 그 다음 달부터는 전월 기말이다.
  * 5. 단위는 품목·창고다. 원장의 거래유형이 시기마다 섞여 있어 품목 단위로 평균한다.
+ * 6. 재고조정(272 자재재고조사의 실사 차이, 그 달 말일 날짜)은 출고에 포함되고 '재고조정' 칸에
+ *    따로 보인다. 모자람은 +, 남음은 −. 마감 후 조정이 생기면 마감 취소 → 조정 → 재마감한다.
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -114,6 +116,7 @@ export default function InventoryClosePage() {
       receipt: sum('receiptAmt'),
       issue: sum('issueAmt'),
       ending: sum('endingAmt'),
+      adjust: sum('adjustAmt'),
       unpriced: sum('unpriced'),
       negative: shown.filter((l) => l.endingQty < 0).length,
     };
@@ -166,12 +169,13 @@ export default function InventoryClosePage() {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-6">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-7">
         {[
           ['기초금액', won(total.opening)],
           ['입고금액', won(total.receipt)],
           ['출고금액', won(total.issue)],
           ['기말금액', won(total.ending)],
+          ['재고조정 금액', won(total.adjust)],
           ['단가 미등록 입고', `${total.unpriced.toLocaleString()}건`],
           ['기말 음수 품목', `${total.negative.toLocaleString()}품목`],
         ].map(([label, value]) => (

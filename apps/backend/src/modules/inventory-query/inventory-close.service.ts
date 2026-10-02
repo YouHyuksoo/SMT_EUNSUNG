@@ -44,6 +44,9 @@ export interface CloseLine {
   saleAmt: number;
   extraQty: number;
   extraAmt: number;
+  /** 재고조정 (실사 차이, M009) */
+  adjustQty: number;
+  adjustAmt: number;
   issueQty: number;
   issueAmt: number;
   avgPrice: number;
@@ -156,7 +159,7 @@ export class InventoryCloseService {
           rq: l.receiptQty, ra: l.receiptAmt,
           mq: l.massQty, ma: l.massAmt, bq: l.badQty, ba: l.badAmt,
           fq: l.freeQty, fa: l.freeAmt, sq: l.saleQty, sa: l.saleAmt,
-          xq: l.extraQty, xa: l.extraAmt, iq: l.issueQty, ia: l.issueAmt,
+          xq: l.extraQty, xa: l.extraAmt, jq: l.adjustQty, ja: l.adjustAmt, iq: l.issueQty, ia: l.issueAmt,
           ap: l.avgPrice, eq: l.endingQty, ea: l.endingAmt,
         })));
         await manager.query(
@@ -166,7 +169,7 @@ export class InventoryCloseService {
               MM_RECEIPT_QTY, MM_RECEIPT_AMT, MM_MATERIAL_COST_AMT,
               MM_MASS_QTY, MM_MASS_AMT, MM_BAD_QTY, MM_BAD_AMT,
               MM_FREE_QTY, MM_FREE_AMT, MM_SALE_QTY, MM_SALE_AMT,
-              MM_EXTRA_QTY, MM_EXTRA_AMT, MM_SHIPPING_QTY, MM_SHIPPING_AMT,
+              MM_EXTRA_QTY, MM_EXTRA_AMT, MM_ADJUST_QTY, MM_ADJUST_AMT, MM_SHIPPING_QTY, MM_SHIPPING_AMT,
               MM_ISSUE_QTY, MM_ISSUE_AMT, MM_LOGICAL_ISSUE_QTY,
               MM_AVG_PRICE, MM_INVENTORY_QTY, MM_INVENTORY_AMT,
               ENTER_BY, ENTER_DATE, LAST_MODIFY_BY, LAST_MODIFY_DATE)
@@ -175,7 +178,7 @@ export class InventoryCloseService {
                   J.RQ, J.RA, 0,
                   J.MQ, J.MA, J.BQ, J.BA,
                   J.FQ, J.FA, J.SQ, J.SA,
-                  J.XQ, J.XA, 0, 0,
+                  J.XQ, J.XA, J.JQ, J.JA, 0, 0,
                   J.IQ, J.IA, 0,
                   J.AP, J.EQ, J.EA,
                   :userId, SYSDATE, :userId, SYSDATE
@@ -190,6 +193,7 @@ export class InventoryCloseService {
                     FQ NUMBER PATH '$.fq', FA NUMBER PATH '$.fa',
                     SQ NUMBER PATH '$.sq', SA NUMBER PATH '$.sa',
                     XQ NUMBER PATH '$.xq', XA NUMBER PATH '$.xa',
+                    JQ NUMBER PATH '$.jq', JA NUMBER PATH '$.ja',
                     IQ NUMBER PATH '$.iq', IA NUMBER PATH '$.ia',
                     AP NUMBER PATH '$.ap', EQ NUMBER PATH '$.eq', EA NUMBER PATH '$.ea')) J`,
           namedBinds({ yyyymm, organizationId, userId, closeJson: clobBind(json) }),
@@ -269,6 +273,7 @@ export class InventoryCloseService {
         freeQty: num(r.freeQty),
         saleQty: num(r.saleQty),
         extraQty: num(r.extraQty),
+        adjustQty: num(r.adjustQty),
       });
       return {
         itemCode: String(r.itemCode),
@@ -287,6 +292,7 @@ export class InventoryCloseService {
         freeQty: num(r.freeQty),
         saleQty: num(r.saleQty),
         extraQty: num(r.extraQty),
+        adjustQty: num(r.adjustQty),
         ...c,
         tablePriced: num(r.tablePriced),
         unpriced: num(r.unpriced),
@@ -307,6 +313,7 @@ export class InventoryCloseService {
               C.MM_FREE_QTY AS "freeQty", C.MM_FREE_AMT AS "freeAmt",
               C.MM_SALE_QTY AS "saleQty", C.MM_SALE_AMT AS "saleAmt",
               C.MM_EXTRA_QTY AS "extraQty", C.MM_EXTRA_AMT AS "extraAmt",
+              NVL(C.MM_ADJUST_QTY, 0) AS "adjustQty", NVL(C.MM_ADJUST_AMT, 0) AS "adjustAmt",
               C.MM_ISSUE_QTY AS "issueQty", C.MM_ISSUE_AMT AS "issueAmt",
               C.MM_AVG_PRICE AS "avgPrice",
               C.MM_INVENTORY_QTY AS "endingQty", C.MM_INVENTORY_AMT AS "endingAmt"
@@ -331,6 +338,7 @@ export class InventoryCloseService {
         massQty: num(r.massQty), massAmt: num(r.massAmt), badQty: num(r.badQty), badAmt: num(r.badAmt),
         freeQty: num(r.freeQty), freeAmt: num(r.freeAmt), saleQty: num(r.saleQty), saleAmt: num(r.saleAmt),
         extraQty: num(r.extraQty), extraAmt: num(r.extraAmt),
+        adjustQty: num(r.adjustQty), adjustAmt: num(r.adjustAmt),
         issueQty: num(r.issueQty), issueAmt: num(r.issueAmt), avgPrice: num(r.avgPrice),
         endingQty: num(r.endingQty), endingAmt: num(r.endingAmt),
       }));

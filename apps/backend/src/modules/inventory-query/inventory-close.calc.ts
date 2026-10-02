@@ -7,7 +7,7 @@
  *    여기서 단가와 금액을 정한다.
  * 2. 월평균단가 = (기초금액 + 입고금액) ÷ (기초수량 + 입고수량).
  *    분모가 0 이하(기초·입고가 없거나 반품이 더 많음)면 기초단가를 그대로 쓴다.
- * 3. 출고금액 = 출고수량 × 월평균단가 (원 단위 반올림). 출고 계정별(양산·불량·무상·유상·기타)
+ * 3. 출고금액 = 출고수량 × 월평균단가 (원 단위 반올림). 출고 계정별(양산·불량·무상·유상·기타·조정)
  *    금액도 같은 단가로 나누고, 반올림 끝자리는 총 출고금액에 맞춘다.
  * 4. 기말금액 = 기초금액 + 입고금액 − 출고금액 (끝자리 차이는 기말이 흡수한다).
  *    기말수량이 0 이면 기말금액도 0 이어야 하므로 남는 금액은 출고금액에 붙인다.
@@ -25,6 +25,8 @@ export interface CloseInput {
   freeQty: number;
   saleQty: number;
   extraQty: number;
+  /** 재고조정 (실사 차이). 모자람 +, 남음 − */
+  adjustQty: number;
 }
 
 export interface CloseResult {
@@ -36,6 +38,7 @@ export interface CloseResult {
   freeAmt: number;
   saleAmt: number;
   extraAmt: number;
+  adjustAmt: number;
   endingQty: number;
   endingAmt: number;
 }
@@ -54,7 +57,7 @@ export function closeMonth(input: CloseInput): CloseResult {
   const baseAmt = input.openingAmt + input.receiptAmt;
   const avgPrice = baseQty > 0 ? roundHalfUp(baseAmt / baseQty, 4) : roundHalfUp(input.openingPrice, 4);
 
-  const issueQty = qty6(input.massQty + input.badQty + input.freeQty + input.saleQty + input.extraQty);
+  const issueQty = qty6(input.massQty + input.badQty + input.freeQty + input.saleQty + input.extraQty + input.adjustQty);
   const endingQty = qty6(input.openingQty + input.receiptQty - issueQty);
 
   let issueAmt = roundHalfUp(issueQty * avgPrice);
@@ -72,13 +75,14 @@ export function closeMonth(input: CloseInput): CloseResult {
     freeAmt: roundHalfUp(input.freeQty * avgPrice),
     saleAmt: roundHalfUp(input.saleQty * avgPrice),
     extraAmt: roundHalfUp(input.extraQty * avgPrice),
+    adjustAmt: roundHalfUp(input.adjustQty * avgPrice),
   };
-  const sum = parts.massAmt + parts.badAmt + parts.freeAmt + parts.saleAmt + parts.extraAmt;
+  const sum = parts.massAmt + parts.badAmt + parts.freeAmt + parts.saleAmt + parts.extraAmt + parts.adjustAmt;
   const diff = roundHalfUp(issueAmt - sum);
   if (diff !== 0) {
     const qtys: [keyof typeof parts, number][] = [
       ['massAmt', input.massQty], ['badAmt', input.badQty], ['freeAmt', input.freeQty],
-      ['saleAmt', input.saleQty], ['extraAmt', input.extraQty],
+      ['saleAmt', input.saleQty], ['extraAmt', input.extraQty], ['adjustAmt', input.adjustQty],
     ];
     const largest = qtys.reduce((a, b) => (Math.abs(b[1]) > Math.abs(a[1]) ? b : a))[0];
     parts[largest] = roundHalfUp(parts[largest] + diff);
