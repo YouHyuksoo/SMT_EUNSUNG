@@ -669,6 +669,28 @@
     "defectGenuine": "진성",
     "defectPseudo": "가성",
     "defectUnrepaired": "미수리",
+    "chart": {
+      "equipTitle": "설비 가동률",
+      "equipSub": "설비 상태 비율 (현재)",
+      "inUseRate": "가동률",
+      "total": "합계",
+      "defectTitle": "불량 판정 구성",
+      "defectSub": "오늘 판정 결과 비율",
+      "gaugeTitle": "생산 달성률",
+      "gaugeSub": "실적 / 계획 (오늘)",
+      "product": "제품",
+      "materialTitle": "솔더·MSL 정상/NG",
+      "materialSub": "현재 관리 건수 기준",
+      "solder": "솔더",
+      "normal": "정상",
+      "trendTitle": "최근 7일 생산 추이",
+      "trendSub": "실적(막대) vs 계획(점선)",
+      "lineTitle": "라인별 계획 대비 실적",
+      "lineSub": "오늘 기준",
+      "plan": "계획",
+      "actual": "실적",
+      "noData": "표시할 데이터가 없습니다."
+    },
     "loadFailed": "대시보드 조회에 실패했습니다."
   },
   "inventory": {

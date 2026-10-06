@@ -12,6 +12,7 @@
  *            + NG 건수는 display 31/29 와 같은 @smt/shared SQL
  *    - 불량: 당일 IP_PRODUCT_WORK_QC — QC_RESULT W=대기 N=진성 O=가성, 진성 중 REPAIR_RESULT_CODE≠G 는 미수리
  *    일상/정기점검·PM 은 은성 DB에 데이터가 없어(EQUIP_INSPECT_*, IMCN_PM_RESULT 0행) 제공하지 않는다.
+ * 0-1. getInsights() 차트용 — 선택일 포함 7일 추이(trend)와 선택일 라인별 계획/실적(lines). SQL 은 dashboard-insights.sql.ts
  * 1. OracleService.callProc()로 PKG_DASHBOARD 패키지의 프로시저를 호출
  * 2. callProcMultiCursor()로 다중 커서(요약+아이템) 반환 프로시저 호출
  * 3. 기존 API 응답 구조를 그대로 유지하여 프론트엔드 변경 없음
@@ -25,14 +26,13 @@ import { DataSource } from 'typeorm';
 import { sqlMslNgCount, sqlSolderNgCount } from '@smt/shared';
 import { OracleService } from '../../common/services/oracle.service';
 import { namedBinds } from '../../common/utils/named-binds.util';
+import { DASHBOARD_ACTUAL_SUM, DASHBOARD_INSIGHTS_SQL } from './dashboard-insights.sql';
 
 const PKG = 'PKG_DASHBOARD';
 const ORG = 1;
 
 /** 실적 뷰의 시간대 10칸(A~J) 합 */
-const ACTUAL_SUM = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
-  .map((p) => `NVL(v.${p}_TIME_ACTUAL, 0)`)
-  .join(' + ');
+const ACTUAL_SUM = DASHBOARD_ACTUAL_SUM;
 
 type CountRow = Record<string, number | string | null>;
 
@@ -48,6 +48,16 @@ type KpiRow = {
 };
 
 type RecentProductionRow = Record<string, unknown>;
+
+type InsightRow = {
+  selectedDate: string;
+  date: string;
+  productionType: string | null;
+  lineCode: string | null;
+  lineName: string | null;
+  planQty: number | string | null;
+  actualQty: number | string | null;
+};
 
 @Injectable()
 export class DashboardService {
@@ -149,6 +159,59 @@ export class DashboardService {
     };
   }
 
+  /**
+   * 대시보드 차트 데이터. dateStr(YYYY-MM-DD) 포함 최근 7일 추이 + dateStr 하루의 라인별 계획/실적.
+   * SQL 1번으로 날짜·라인별 행을 받아 여기서 합산한다 (실적만 있는 라인, 데이터 없는 날도 유지).
+   */
+  async getInsights(dateStr?: string) {
+    const date = dateStr?.trim() || null;
+    if (date && !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      throw new BadRequestException('date 는 YYYY-MM-DD 형식이어야 합니다.');
+    }
+    const rows = (await this.dataSource.query(DASHBOARD_INSIGHTS_SQL, namedBinds({ day: date }))) as InsightRow[];
+    const selected = rows[0]?.selectedDate ?? date ?? '';
+
+    const trend = new Map<string, { date: string; smdPlan: number; smdActual: number; miPlan: number; miActual: number }>();
+    const lines = new Map<string, { lineCode: string; lineName: string; productionType: string; planQty: number; actualQty: number }>();
+
+    for (const r of rows) {
+      const day = trend.get(r.date) ?? { date: r.date, smdPlan: 0, smdActual: 0, miPlan: 0, miActual: 0 };
+      trend.set(r.date, day);
+      if (!r.productionType || !r.lineCode) continue;
+
+      const plan = Number(r.planQty ?? 0);
+      const actual = Number(r.actualQty ?? 0);
+      if (r.productionType === 'SMD') {
+        day.smdPlan += plan;
+        day.smdActual += actual;
+      } else {
+        day.miPlan += plan;
+        day.miActual += actual;
+      }
+
+      if (r.date !== selected) continue;
+      const key = `${r.productionType}|${r.lineCode}`;
+      const line = lines.get(key) ?? {
+        lineCode: r.lineCode,
+        lineName: r.lineName ?? r.lineCode,
+        productionType: r.productionType,
+        planQty: 0,
+        actualQty: 0,
+      };
+      line.planQty += plan;
+      line.actualQty += actual;
+      lines.set(key, line);
+    }
+
+    const typeOrder = (t: string) => (t === 'SMD' ? 0 : 1);
+    return {
+      date: selected,
+      trend: [...trend.values()].sort((a, b) => a.date.localeCompare(b.date)),
+      lines: [...lines.values()].sort(
+        (a, b) => typeOrder(a.productionType) - typeOrder(b.productionType) || a.lineCode.localeCompare(b.lineCode),
+      ),
+    };
+  }
   /** KPI 데이터 (생산량/재고/합격률/불량) */
   async getKpi(company?: string, plant?: string) {
     const rows = await this.oracle.callProc<KpiRow>(PKG, 'SP_KPI', this.tenantParams(company, plant));

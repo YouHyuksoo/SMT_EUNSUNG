@@ -669,6 +669,28 @@
     "defectGenuine": "Lỗi thật",
     "defectPseudo": "Lỗi giả",
     "defectUnrepaired": "Chưa sửa",
+    "chart": {
+      "equipTitle": "Tỷ lệ vận hành thiết bị",
+      "equipSub": "Tỷ lệ trạng thái thiết bị hiện tại",
+      "inUseRate": "Vận hành",
+      "total": "Tổng",
+      "defectTitle": "Cơ cấu phán định lỗi",
+      "defectSub": "Tỷ lệ phán định hôm nay",
+      "gaugeTitle": "Mức đạt sản xuất",
+      "gaugeSub": "Thực tế / kế hoạch (hôm nay)",
+      "product": "Sản phẩm",
+      "materialTitle": "Kem hàn / MSL bình thường và NG",
+      "materialSub": "Theo số lượng đang quản lý",
+      "solder": "Kem hàn",
+      "normal": "Bình thường",
+      "trendTitle": "Xu hướng sản xuất 7 ngày",
+      "trendSub": "Thực tế (cột) so với kế hoạch (nét đứt)",
+      "lineTitle": "Kế hoạch so với thực tế theo dây chuyền",
+      "lineSub": "Hôm nay",
+      "plan": "Kế hoạch",
+      "actual": "Thực tế",
+      "noData": "Không có dữ liệu để hiển thị."
+    },
     "loadFailed": "Không tải được bảng điều khiển."
   },
   "inventory": {

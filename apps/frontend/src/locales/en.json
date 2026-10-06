@@ -669,6 +669,28 @@
     "defectGenuine": "Genuine",
     "defectPseudo": "False call",
     "defectUnrepaired": "Unrepaired",
+    "chart": {
+      "equipTitle": "Equipment utilization",
+      "equipSub": "Current equipment status ratio",
+      "inUseRate": "In use",
+      "total": "Total",
+      "defectTitle": "Defect judgment mix",
+      "defectSub": "Today's judgment ratio",
+      "gaugeTitle": "Production achievement",
+      "gaugeSub": "Actual / plan (today)",
+      "product": "Product",
+      "materialTitle": "Solder / MSL normal vs NG",
+      "materialSub": "Current managed count",
+      "solder": "Solder",
+      "normal": "Normal",
+      "trendTitle": "Production trend (7 days)",
+      "trendSub": "Actual (bars) vs plan (dashed)",
+      "lineTitle": "Plan vs actual by line",
+      "lineSub": "Today",
+      "plan": "Plan",
+      "actual": "Actual",
+      "noData": "No data to display."
+    },
     "loadFailed": "Failed to load the dashboard."
   },
   "inventory": {

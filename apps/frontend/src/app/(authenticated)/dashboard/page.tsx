@@ -2,11 +2,12 @@
 
 /**
  * @file src/app/(authenticated)/dashboard/page.tsx
- * @description 대시보드 페이지 — 설비/오늘 생산/솔더·MSL/오늘 불량 현황 카드 4개
+ * @description 대시보드 페이지 — 현황 카드 4개 + 요약 차트 4개 + 7일 추이/라인별 차트
  *
  * 초보자 가이드:
  * 1. API: GET /dashboard/summary?date=YYYY-MM-DD — 카드별 출처는 백엔드 dashboard.service.ts 머리말 참고
  * 2. 설비·솔더·MSL 은 조회 시점 현재 상태, 생산·불량은 date 하루 기준이다
+ * 2-1. GET /dashboard/insights?date=YYYY-MM-DD — 7일 추이(trend)·라인별 계획/실적(lines), 차트는 components/DashboardCharts.tsx
  * 3. 설비 일상/정기점검·PM 카드는 은성 DB에 데이터가 없어 두지 않는다
  */
 import { useState, useEffect, useCallback } from "react";
@@ -18,6 +19,10 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui";
 import api from "@/services/api";
+import {
+  EquipDonutCard, ProductionGaugeCard, MaterialBarCard, DefectDonutCard,
+  ProductionTrendCard, LineAchievementCard, type DashboardInsights,
+} from "./components/DashboardCharts";
 
 /* ── Status Card ── */
 interface StatusCardProps {
@@ -73,6 +78,7 @@ function formatDate(d: Date) {
 export default function DashboardPage() {
   const { t } = useTranslation();
   const [summary, setSummary] = useState<DashboardSummary>(emptySummary);
+  const [insights, setInsights] = useState<DashboardInsights | null>(null);
   const [loading, setLoading] = useState(false);
 
   const today = formatDate(new Date());
@@ -82,6 +88,10 @@ export default function DashboardPage() {
     try {
       const res = await api.get("/dashboard/summary", { params: { date: today } });
       setSummary(res.data.data);
+      // 추이/라인별 차트용. 실패해도 카드와 요약 차트는 그대로 보여준다
+      api.get("/dashboard/insights", { params: { date: today } })
+        .then((r) => setInsights(r.data.data))
+        .catch((e: unknown) => { console.error(e); setInsights(null); });
     } catch (error: unknown) {
       console.error(error);
       toast.error(t("dashboard.loadFailed"));
@@ -109,6 +119,7 @@ export default function DashboardPage() {
         </Button>
       </div>
 
+      <div className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-4 pr-1">
       {/* Status Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 flex-shrink-0">
         <StatusCard
@@ -155,6 +166,21 @@ export default function DashboardPage() {
             { label: t("dashboard.defectUnrepaired"), value: defect.unrepaired, accent: defect.unrepaired > 0 ? "text-error" : "text-text" },
           ]}
         />
+      </div>
+
+      {/* Charts: 요약 시각화 */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 flex-shrink-0">
+        <EquipDonutCard equip={equip} />
+        <ProductionGaugeCard production={production} />
+        <MaterialBarCard material={material} />
+        <DefectDonutCard defect={defect} />
+      </div>
+
+      {/* Charts: 7일 추이 / 라인별 */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 flex-shrink-0">
+        <ProductionTrendCard trend={insights?.trend ?? null} />
+        <LineAchievementCard lines={insights?.lines ?? null} />
+      </div>
       </div>
     </div>
   );

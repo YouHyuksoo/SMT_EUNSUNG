@@ -669,6 +669,28 @@
     "defectGenuine": "真不良",
     "defectPseudo": "假不良",
     "defectUnrepaired": "未维修",
+    "chart": {
+      "equipTitle": "设备开动率",
+      "equipSub": "当前设备状态占比",
+      "inUseRate": "开动率",
+      "total": "合计",
+      "defectTitle": "不良判定构成",
+      "defectSub": "今日判定结果占比",
+      "gaugeTitle": "生产达成率",
+      "gaugeSub": "实绩 / 计划（今日）",
+      "product": "产品",
+      "materialTitle": "锡膏·MSL 正常/NG",
+      "materialSub": "按当前管理数量",
+      "solder": "锡膏",
+      "normal": "正常",
+      "trendTitle": "近7日生产趋势",
+      "trendSub": "实绩（柱）与计划（虚线）",
+      "lineTitle": "各产线计划与实绩对比",
+      "lineSub": "今日",
+      "plan": "计划",
+      "actual": "实绩",
+      "noData": "没有可显示的数据。"
+    },
     "loadFailed": "仪表板查询失败。"
   },
   "inventory": {

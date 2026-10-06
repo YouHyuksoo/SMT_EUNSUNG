@@ -96,6 +96,39 @@ describe('DashboardService', () => {
     });
   });
 
+  // ─── getInsights ───
+  describe('getInsights', () => {
+    it('aggregates line rows once, keeps actual-only lines, and fills empty calendar days', async () => {
+      const rows = [
+        { selectedDate: '2026-10-06', date: '2026-10-04', productionType: null, lineCode: null, lineName: null, planQty: null, actualQty: null },
+        { selectedDate: '2026-10-06', date: '2026-10-05', productionType: 'SMD', lineCode: 'S1', lineName: 'SMD 1', planQty: '100', actualQty: '120' },
+        { selectedDate: '2026-10-06', date: '2026-10-06', productionType: 'SMD', lineCode: 'S1', lineName: 'SMD 1', planQty: '200', actualQty: '80' },
+        { selectedDate: '2026-10-06', date: '2026-10-06', productionType: 'MI', lineCode: 'M1', lineName: '제품 1', planQty: '0', actualQty: '25' },
+      ];
+      mockDataSource.query.mockResolvedValue(rows);
+      const result = await target.getInsights('2026-10-06');
+      expect(result.date).toBe('2026-10-06');
+      expect(result.trend).toEqual([
+        { date: '2026-10-04', smdPlan: 0, smdActual: 0, miPlan: 0, miActual: 0 },
+        { date: '2026-10-05', smdPlan: 100, smdActual: 120, miPlan: 0, miActual: 0 },
+        { date: '2026-10-06', smdPlan: 200, smdActual: 80, miPlan: 0, miActual: 25 },
+      ]);
+      expect(result.lines).toHaveLength(2);
+      expect(result.lines[0]).toMatchObject({ lineCode: 'S1', productionType: 'SMD', planQty: 200, actualQty: 80 });
+      expect(result.lines[1]).toMatchObject({ lineCode: 'M1', planQty: 0, actualQty: 25 });
+      const [sql, binds] = mockDataSource.query.mock.calls[0];
+      expect(sql).toContain('UNION ALL');
+      expect(sql).toContain('CONNECT BY LEVEL <= 7');
+      expect(sql).toContain('LEFT JOIN');
+      expect(binds).toEqual({ day: '2026-10-06' });
+      expect(mockDataSource.query).toHaveBeenCalledTimes(1);
+    });
+
+    it('rejects a malformed date without querying', async () => {
+      await expect(target.getInsights('2026/10/06')).rejects.toThrow('YYYY-MM-DD');
+      expect(mockDataSource.query).not.toHaveBeenCalled();
+    });
+  });
   // ─── getKpi ───
   describe('getKpi', () => {
     it('should return KPI data', async () => {
