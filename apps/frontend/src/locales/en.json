@@ -646,6 +646,26 @@
     "goHome": "Go to Dashboard",
     "userId": "User ID"
   },
+  "apiNotice": {
+    "title": {
+      "invalidInput": "Please check your input",
+      "forbidden": "You do not have permission",
+      "notFound": "Item not found",
+      "conflict": "This value is already registered",
+      "default": "Please review before continuing"
+    },
+    "hint": {
+      "invalidInput": "A required field is empty or the format is invalid.",
+      "forbidden": "Your account is not allowed to perform this action.",
+      "notFound": "It may have been deleted, or no data matches the condition.",
+      "conflict": "The value already exists, or this action is not allowed in the current state.",
+      "default": "Please review the message below and try again."
+    },
+    "confirm": "OK",
+    "showDetail": "Show details",
+    "hideDetail": "Hide details",
+    "close": "Close"
+  },
   "dashboard": {
     "title": "Dashboard",
     "subtitle": "Monitor real-time production status at a glance.",

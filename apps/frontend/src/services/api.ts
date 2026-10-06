@@ -20,6 +20,8 @@ declare module "axios" {
 interface ApiErrorResponse {
   message?: string;
   error?: string;
+  /** 백엔드 HttpExceptionFilter가 채우는 에러 코드 (HTTP_400, DB_CONNECTION_ERROR 등) */
+  errorCode?: string;
   [key: string]: unknown;
 }
 
@@ -46,6 +48,7 @@ interface CachedSqlDebug {
 
 import toast from "react-hot-toast";
 import { useErrorStore } from "@/stores/errorStore";
+import { classifyApiError } from "./api-error-severity";
 import { useAuthStore } from "@/stores/authStore";
 
 // 응답 인터셉터의 자동 성공 토스트를 끄는 opt-out 플래그.
@@ -244,6 +247,7 @@ api.interceptors.response.use(
     if (!error.response) {
       const timedOut = error.code === "ECONNABORTED" || error.code === "ETIMEDOUT";
       useErrorStore.getState().showError({
+        severity: "system",
         timestamp: new Date().toLocaleString(),
         method: error.config?.method?.toUpperCase() || "UNKNOWN",
         url: error.config?.url || "unknown",
@@ -287,13 +291,16 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    // 에러 상세 모달 표시
+    // 심각도에 따라 업무 안내 창 / 시스템 오류 창으로 분리 표시
+    const errorCode = typeof data?.errorCode === "string" ? data.errorCode : undefined;
     useErrorStore.getState().showError({
+      severity: classifyApiError(status, errorCode),
       timestamp: new Date().toLocaleString(),
       method: error.config?.method?.toUpperCase() || "UNKNOWN",
       url: error.config?.url || "unknown",
       status,
       message: serverMessage,
+      errorCode,
       responseBody: JSON.stringify(data, null, 2),
       requestBody,
     });

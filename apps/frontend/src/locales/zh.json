@@ -646,6 +646,26 @@
     "goHome": "前往仪表盘",
     "userId": "用户ID"
   },
+  "apiNotice": {
+    "title": {
+      "invalidInput": "请检查输入内容",
+      "forbidden": "没有权限",
+      "notFound": "未找到对象",
+      "conflict": "该值已存在",
+      "default": "需要确认"
+    },
+    "hint": {
+      "invalidInput": "必填项为空或格式不正确。",
+      "forbidden": "当前账号无权执行此操作。",
+      "notFound": "对象可能已被删除，或没有符合条件的数据。",
+      "conflict": "该值已登记，或当前状态不允许此操作。",
+      "default": "请确认以下内容后重试。"
+    },
+    "confirm": "确定",
+    "showDetail": "查看详情",
+    "hideDetail": "隐藏详情",
+    "close": "关闭"
+  },
   "dashboard": {
     "title": "仪表盘",
     "subtitle": "实时查看生产状况。",

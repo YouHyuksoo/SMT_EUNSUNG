@@ -646,6 +646,26 @@
     "goHome": "대시보드로 이동",
     "userId": "아이디"
   },
+  "apiNotice": {
+    "title": {
+      "invalidInput": "입력한 내용을 확인해 주세요",
+      "forbidden": "권한이 없습니다",
+      "notFound": "대상을 찾을 수 없습니다",
+      "conflict": "이미 등록된 값입니다",
+      "default": "확인이 필요합니다"
+    },
+    "hint": {
+      "invalidInput": "필수 항목이 비었거나 형식이 맞지 않습니다.",
+      "forbidden": "이 작업을 수행할 수 있는 권한이 계정에 없습니다.",
+      "notFound": "이미 삭제되었거나 조건에 맞는 데이터가 없습니다.",
+      "conflict": "이미 등록된 값이거나 현재 상태에서 허용되지 않는 작업입니다.",
+      "default": "아래 내용을 확인한 뒤 다시 시도해 주세요."
+    },
+    "confirm": "확인",
+    "showDetail": "상세 보기",
+    "hideDetail": "상세 숨기기",
+    "close": "닫기"
+  },
   "dashboard": {
     "title": "대시보드",
     "subtitle": "실시간 생산 현황을 한눈에 확인하세요.",

@@ -646,6 +646,26 @@
     "goHome": "Đi đến bảng điều khiển",
     "userId": "Tên đăng nhập"
   },
+  "apiNotice": {
+    "title": {
+      "invalidInput": "Vui lòng kiểm tra nội dung đã nhập",
+      "forbidden": "Không có quyền",
+      "notFound": "Không tìm thấy đối tượng",
+      "conflict": "Giá trị này đã được đăng ký",
+      "default": "Cần xác nhận"
+    },
+    "hint": {
+      "invalidInput": "Mục bắt buộc còn trống hoặc định dạng không hợp lệ.",
+      "forbidden": "Tài khoản của bạn không được phép thực hiện thao tác này.",
+      "notFound": "Đối tượng có thể đã bị xóa hoặc không có dữ liệu phù hợp.",
+      "conflict": "Giá trị đã tồn tại hoặc thao tác không được phép ở trạng thái hiện tại.",
+      "default": "Vui lòng kiểm tra nội dung bên dưới rồi thử lại."
+    },
+    "confirm": "Xác nhận",
+    "showDetail": "Xem chi tiết",
+    "hideDetail": "Ẩn chi tiết",
+    "close": "Đóng"
+  },
   "dashboard": {
     "title": "Bảng điều khiển",
     "subtitle": "Theo dõi tình trạng sản xuất thời gian thực.",
