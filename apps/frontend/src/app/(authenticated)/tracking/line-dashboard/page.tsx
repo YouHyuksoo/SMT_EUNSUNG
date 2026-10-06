@@ -20,6 +20,7 @@
  *    라인코드로 찾도록 고쳤다 — 실측 라인 8곳에서 PB 0행 → 135~98,985행.
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useActiveInterval } from '@/hooks/useTabActive';
 import toast from 'react-hot-toast';
 import { Lock, RefreshCw, Search, Unlock } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
@@ -153,17 +154,13 @@ export default function LineDashboardPage() {
   });
   autoRef.current = { code: lineCode, detail: autoDetail, status };
 
-  useEffect(() => {
-    if (!autoOn || !lineCode) return;
-    const sec = Math.max(5, Number(intervalSec) || 60);
-    const id = setInterval(() => {
-      const { code, detail: withDetail, status: current } = autoRef.current;
-      void loadStatus(code).then(() => {
-        if (withDetail) void loadDetail(current);
-      });
-    }, sec * 1000);
-    return () => clearInterval(id);
-  }, [autoOn, intervalSec, lineCode, loadStatus, loadDetail]);
+  const autoSec = Math.max(5, Number(intervalSec) || 60);
+  useActiveInterval(() => {
+    const { code, detail: withDetail, status: current } = autoRef.current;
+    void loadStatus(code).then(() => {
+      if (withDetail) void loadDetail(current);
+    });
+  }, autoOn && lineCode ? autoSec * 1000 : null, { catchUp: true });
 
   const applyNsnp = useCallback(async (lock: boolean) => {
     setNsnpOpen(null);

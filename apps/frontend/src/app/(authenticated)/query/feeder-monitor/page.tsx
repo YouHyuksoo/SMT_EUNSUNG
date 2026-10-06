@@ -17,6 +17,7 @@
  *    마지막 CCS 이후만 본다 — 그 전은 이전 롯트 얘기다.
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useActiveInterval } from '@/hooks/useTabActive';
 import toast from 'react-hot-toast';
 import { Gauge, Lock, RefreshCw, Search, Unlock } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
@@ -89,12 +90,8 @@ export default function FeederMonitorPage() {
   // 자동갱신. 목록만 다시 읽는다 — 이력까지 매번 다시 읽으면 고른 자리가 흔들린다.
   const autoRef = useRef(search);
   autoRef.current = search;
-  useEffect(() => {
-    if (!autoOn || !lineCode) return;
-    const sec = Math.max(5, Number(intervalSec) || 60);
-    const id = setInterval(() => { void autoRef.current(); }, sec * 1000);
-    return () => clearInterval(id);
-  }, [autoOn, intervalSec, lineCode]);
+  const autoSec = Math.max(5, Number(intervalSec) || 60);
+  useActiveInterval(() => { void autoRef.current(); }, autoOn && lineCode ? autoSec * 1000 : null, { catchUp: true });
 
   const pick = useCallback(async (row: FeederSlotRow) => {
     setSelected(row);

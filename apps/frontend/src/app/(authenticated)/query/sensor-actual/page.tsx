@@ -17,6 +17,7 @@
  *    없다 (실측) — 화면이 숨기지 않고 비워 둔다.
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useActiveInterval } from '@/hooks/useTabActive';
 import toast from 'react-hot-toast';
 import { Save, Search } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
@@ -92,12 +93,8 @@ export default function SensorActualPage() {
 
   const autoRef = useRef(search);
   autoRef.current = search;
-  useEffect(() => {
-    if (!autoOn || !lineCode) return;
-    const sec = Math.max(5, Number(intervalSec) || 20);
-    const id = setInterval(() => { void autoRef.current(); }, sec * 1000);
-    return () => clearInterval(id);
-  }, [autoOn, intervalSec, lineCode]);
+  const autoSec = Math.max(5, Number(intervalSec) || 20);
+  useActiveInterval(() => { void autoRef.current(); }, autoOn && lineCode ? autoSec * 1000 : null, { catchUp: true });
 
   const pick = useCallback((row: SensorActualRow) => {
     setSelected(row);

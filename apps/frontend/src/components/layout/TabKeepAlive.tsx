@@ -12,6 +12,7 @@
 import { memo, useEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { useTabStore, useMaxTabs } from "@/stores/tabStore";
+import { TabActiveProvider } from "@/hooks/useTabActive";
 import { getPageComponent } from "./pageRegistry.generated";
 
 type CachedPage = {
@@ -38,7 +39,9 @@ const KeepAliveCell = memo(function KeepAliveCell({
       style={{ display: active ? undefined : "none" }}
       aria-hidden={!active}
     >
-      <Component />
+      <TabActiveProvider value={active}>
+        <Component />
+      </TabActiveProvider>
     </div>
   );
 });
