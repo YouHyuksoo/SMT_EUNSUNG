@@ -1,6 +1,6 @@
 /**
  * @file src/hooks/pda/useMatInventoryCount.ts
- * @description 자재 재고실사 PDA 훅 — PC(자재재고조사)에서 시작한 바코드 실사에 스캔을 기록한다
+ * @description 자재 재고실사 PDA 훅 — PC(자재재고실사)에서 시작한 바코드 실사에 스캔을 기록한다
  *
  * 초보자 가이드:
  * 1. 마운트 시 GET /inventory-query/stocktake/active → 진행 중인 실사월. 없으면 noActiveInv.

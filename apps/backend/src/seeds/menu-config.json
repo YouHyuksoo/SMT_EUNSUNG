@@ -1,6 +1,7 @@
 {
   "_comment": "AUTO-GENERATED from apps/frontend/src/config/menuConfig.ts — 직접 편집 금지. Regenerate: pnpm --filter @eunsung/frontend gen:menu",
   "topMenuCodes": [
+    "MONITORING",
     "MASTER",
     "BOM_MANAGEMENT",
     "EQUIPMENT",
@@ -14,6 +15,7 @@
     "PROCESS_TRANSACTION",
     "PRODUCT_MGMT",
     "PRODUCT_INVENTORY",
+    "INVENTORY_CLOSE",
     "PRODUCTION",
     "TRACKING",
     "QUERY",
@@ -23,6 +25,13 @@
     "SYSTEM"
   ],
   "childMenuCodes": {
+    "MONITORING": [
+      "MON_PROD_BOARD",
+      "MON_QUALITY_BOARD",
+      "MON_INV_BOARD",
+      "MON_JOB_BOARD",
+      "MON_EQUIP_BOARD"
+    ],
     "MASTER": [
       "MST_PART",
       "MST_PRODUCT_MODEL",
@@ -83,9 +92,6 @@
       "MAT_RECEIPT_ISSUE_LEDGER",
       "MAT_CURRENT_INVENTORY",
       "INV_TOTAL",
-      "INV_CLOSE",
-      "INV_CHECK",
-      "INV_BARCODE_CHECK",
       "MAT_WORKSTAGE_INVENTORY",
       "MAT_RECEIPT_CANCEL",
       "WH_BAKING_STOCK",
@@ -154,8 +160,7 @@
       "PLN_MAGAZINE_LABEL_HISTORY",
       "PLN_MAGAZINE_LABEL",
       "PLN_MAGAZINE_SPLIT",
-      "PLN_MAGAZINE_PID",
-      "PLN_WIP_STOCKTAKE"
+      "PLN_MAGAZINE_PID"
     ],
     "PRODUCT_MGMT": [],
     "PRODUCT_INVENTORY": [
@@ -166,6 +171,16 @@
       "PRD_FG_MODEL_RECEIPT",
       "PRD_FG_ISSUE",
       "PRD_FG_MODEL_ISSUE"
+    ],
+    "INVENTORY_CLOSE": [
+      "SYS_INV_CLOSE_DATE",
+      "INV_CLOSE",
+      "INV_CHECK",
+      "INV_BARCODE_CHECK",
+      "PLN_WIP_STOCKTAKE",
+      "PLN_WIP_CLOSE",
+      "PRD_FG_STOCKTAKE",
+      "PRD_FG_CLOSE"
     ],
     "PRODUCTION": [
       "PRD_RUN_CARD",

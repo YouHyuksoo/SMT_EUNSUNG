@@ -372,6 +372,31 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
       component = mod.getPageComponent();
       break;
     }
+    case "/monitoring/equipment-board": {
+      const mod = await import("./page-registries/monitoring__equipment-board.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/monitoring/inventory-board": {
+      const mod = await import("./page-registries/monitoring__inventory-board.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/monitoring/job-order-board": {
+      const mod = await import("./page-registries/monitoring__job-order-board.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/monitoring/production-board": {
+      const mod = await import("./page-registries/monitoring__production-board.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/monitoring/quality-board": {
+      const mod = await import("./page-registries/monitoring__quality-board.generated");
+      component = mod.getPageComponent();
+      break;
+    }
     case "/oee/dashboard": {
       const mod = await import("./page-registries/oee__dashboard.generated");
       component = mod.getPageComponent();
@@ -452,6 +477,11 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
       component = mod.getPageComponent();
       break;
     }
+    case "/process-transaction/wip-close": {
+      const mod = await import("./page-registries/process-transaction__wip-close.generated");
+      component = mod.getPageComponent();
+      break;
+    }
     case "/process-transaction/wip-stocktake": {
       const mod = await import("./page-registries/process-transaction__wip-stocktake.generated");
       component = mod.getPageComponent();
@@ -464,6 +494,11 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
     }
     case "/product/current-inventory": {
       const mod = await import("./page-registries/product__current-inventory.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/product/fg-close": {
+      const mod = await import("./page-registries/product__fg-close.generated");
       component = mod.getPageComponent();
       break;
     }
@@ -484,6 +519,11 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
     }
     case "/product/fg-receipt": {
       const mod = await import("./page-registries/product__fg-receipt.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/product/fg-stocktake": {
+      const mod = await import("./page-registries/product__fg-stocktake.generated");
       component = mod.getPageComponent();
       break;
     }
@@ -859,6 +899,11 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
     }
     case "/system/improvement-requests": {
       const mod = await import("./page-registries/system__improvement-requests.generated");
+      component = mod.getPageComponent();
+      break;
+    }
+    case "/system/inventory-close-date": {
+      const mod = await import("./page-registries/system__inventory-close-date.generated");
       component = mod.getPageComponent();
       break;
     }

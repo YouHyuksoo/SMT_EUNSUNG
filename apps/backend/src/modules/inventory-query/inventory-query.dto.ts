@@ -11,7 +11,7 @@
  */
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsBoolean, IsInt, IsNumber, IsOptional, IsString, Length, Matches, Min } from 'class-validator';
+import { IsBoolean, IsIn, IsInt, IsNumber, IsOptional, IsString, Length, Matches, Min } from 'class-validator';
 
 /** `YYYYMM` 여섯 자리. 마감월·실사월이 이 형식이다. */
 const YYYYMM = /^\d{6}$/;
@@ -182,4 +182,71 @@ export class TotalInventoryLotQueryDto {
   @ApiPropertyOptional({ description: '사용하지 않는다 (표준 페이지 인자 자리)' })
   @IsOptional() @Type(() => Number) @IsInt()
   page?: number;
+}
+
+/** 제품 실사 입력 한 건 — 박스 바코드. 수량을 비우면 장부(없던 박스는 박스 라벨) 수량. */
+export class FgStocktakeCountDto {
+  @ApiProperty({ description: '제품 박스(PACK) 바코드' })
+  @IsString() @Length(1, 100)
+  barcode!: string;
+
+  @ApiPropertyOptional({ description: '센 수량 (PCS). 쓰다 만 박스일 때만 넣는다.' })
+  @IsOptional() @Type(() => Number) @IsNumber() @Min(0)
+  qty?: number;
+
+  @ApiPropertyOptional({ description: '로케이션. 비우면 실사표의 로케이션, 장부에 없던 박스는 P01.' })
+  @IsOptional() @IsString() @Length(0, 10)
+  locationCode?: string;
+}
+
+/** 제품 실사표 조회 조건. */
+export class FgStocktakeListDto {
+  @ApiProperty({ description: '실사월 (YYYYMM)' })
+  @IsString() @Matches(YYYYMM)
+  yyyymm!: string;
+
+  @ApiPropertyOptional({ description: 'diff 차이 있는 것만 · unscanned 안 센 것만' })
+  @IsOptional() @IsIn(['diff', 'unscanned'])
+  status?: 'diff' | 'unscanned';
+
+  @ApiPropertyOptional({ description: '박스 바코드 (앞부분 일치)' })
+  @IsOptional() @IsString() @Length(0, 100)
+  barcode?: string;
+
+  @ApiPropertyOptional({ description: '모델명 (앞부분 일치)' })
+  @IsOptional() @IsString() @Length(0, 100)
+  modelName?: string;
+}
+
+/** 재고마감일자 조회 조건 — 연도. */
+export class CloseDateYearDto {
+  @ApiProperty({ description: '연도 (YYYY)' })
+  @Type(() => Number) @IsInt() @Min(2000)
+  year!: number;
+}
+
+/** 재고마감일자 한 달 저장. */
+export class CloseDateSaveDto {
+  @ApiProperty({ description: '마감월 (YYYYMM)' })
+  @IsString() @Matches(YYYYMM)
+  yyyymm!: string;
+
+  @ApiProperty({ description: '시작일 (YYYY-MM-DD, 그날 0시부터)' })
+  @IsString() @Matches(/^\d{4}-\d{2}-\d{2}$/)
+  startDate!: string;
+
+  @ApiProperty({ description: '종료일 (YYYY-MM-DD, 그날 끝까지 포함)' })
+  @IsString() @Matches(/^\d{4}-\d{2}-\d{2}$/)
+  endDate!: string;
+}
+
+/** 재고마감일자 연간 생성. */
+export class CloseDateGenerateDto {
+  @ApiProperty({ description: '연도 (YYYY)' })
+  @Type(() => Number) @IsInt() @Min(2000)
+  year!: number;
+
+  @ApiProperty({ description: '시작일 (1~28). 1 이면 달력 월, N 이면 전달 N일 ~ 이번 달 N−1일.' })
+  @Type(() => Number) @IsInt() @Min(1)
+  startDay!: number;
 }

@@ -73,7 +73,7 @@ export default function ScanCard({ session, onScanned }: Props) {
     return (
       <Card padding="none">
         <CardContent className="p-3 text-sm text-text-muted">
-          진행 중인 실사가 없습니다. 자재재고조사 화면에서 실사를 시작하면 여기서 바코드를 찍을 수 있습니다.
+          진행 중인 실사가 없습니다. 자재재고실사 화면에서 실사를 시작하면 여기서 바코드를 찍을 수 있습니다.
         </CardContent>
       </Card>
     );

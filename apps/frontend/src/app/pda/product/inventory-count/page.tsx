@@ -2,87 +2,138 @@
 
 /**
  * @file src/app/pda/product/inventory-count/page.tsx
- * @description 제품 재고실사 PDA 페이지 - PC 개시 연동 버전
+ * @description 제품 재고실사 PDA — 창고의 제품 박스 바코드를 찍어 센다
  *
  * 초보자 가이드:
- * 1. PC에서 실사를 개시해야 PDA 스캔 가능 (noActiveInv 안내)
- * 2. 실사 있으면: 실사 정보 헤더 → 제품 바코드 연속 스캔
- * 3. 바코드 스캔 시 → POST /count → 해당 아이템 countedQty +1
- * 4. 품목별 시스템수량 vs 실사수량 테이블 실시간 갱신
- * 5. 스캔 이력이 하단에 누적 표시
+ * 1. PC 제품실사 화면에서 실사를 시작해야 입력할 수 있다 (없으면 안내만 나온다).
+ * 2. 박스 바코드를 찍으면 장부 수량으로 센다. 쓰다 만 박스는 "센 수량" 을 먼저 넣고 찍는다.
+ *    찍은 뒤 센 수량 칸은 비워진다 (다음 박스에 잘못 붙지 않게).
+ * 3. 장부에 없던 박스도 박스 라벨 수량으로 들어간다 (결과에 "장부에 없던 박스" 로 표시).
+ * 4. "취소 모드" 를 켜고 찍으면 그 박스의 입력을 지운다.
+ * 5. 서버 API 는 PC 화면과 같다 (/inventory-query/fg-stocktake/*). 조정은 PC 의 일괄 조정이 한다.
  */
-import { useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { AlertTriangle, Loader2 } from "lucide-react";
 import PdaHeader from "@/components/pda/PdaHeader";
 import ScanInput from "@/components/pda/ScanInput";
 import type { ScanInputHandle } from "@/components/pda/ScanInput";
 import ScanResultCard from "@/components/pda/ScanResultCard";
 import ScanHistoryList from "@/components/pda/ScanHistoryList";
 import { useSoundFeedback } from "@/components/pda/SoundFeedback";
-import { useBarcodeDetector } from "@/hooks/pda/useBarcodeDetector";
-import { ClipboardList, AlertTriangle, Loader2 } from "lucide-react";
-import {
-  useProductInvCount,
-  type ProductCountHistoryItem,
-} from "@/hooks/pda/useProductInvCount";
+import { api } from "@/services/api";
+
+interface Session {
+  yyyymm: string;
+  bookBoxes: number;
+  scannedBoxes: number;
+}
+
+interface ScanLast {
+  barcode: string;
+  locationCode: string;
+  modelName: string | null;
+  modelSuffix: string | null;
+  qty: number;
+  bookQty: number;
+  countedQty: number;
+  newBox: boolean;
+}
+
+interface HistoryItem {
+  key: string;
+  barcode: string;
+  modelName: string;
+  qty: number;
+  bookQty: number;
+  newBox: boolean;
+  canceled: boolean;
+  timestamp: string;
+}
+
+const BASE = "/inventory-query/fg-stocktake";
+const message = (err: unknown) =>
+  (err as { response?: { data?: { message?: string } } })?.response?.data?.message || "SCAN_FAILED";
 
 export default function ProductInventoryCountPage() {
   const { t } = useTranslation();
   const { playSuccess, playError } = useSoundFeedback();
-
   const scanRef = useRef<ScanInputHandle>(null);
 
-  const {
-    session,
-    noActiveInv,
-    isLoadingSession,
-    countItems,
-    isScanning,
-    error,
-    history,
-    handleScanProduct,
-    clearError,
-  } = useProductInvCount();
+  const [session, setSession] = useState<Session | null>(null);
+  const [loadingSession, setLoadingSession] = useState(true);
+  const [qty, setQty] = useState("");
+  const [cancelMode, setCancelMode] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [history, setHistory] = useState<HistoryItem[]>([]);
 
-  /** 제품 바코드 스캔 */
-  const onScanProduct = useCallback(
+  const loadSession = useCallback(async () => {
+    try {
+      const { data } = await api.get(`${BASE}/active`, { suppressErrorModal: true });
+      setSession((data?.data ?? null) as Session | null);
+    } catch {
+      setSession(null);
+    } finally {
+      setLoadingSession(false);
+    }
+  }, []);
+
+  useEffect(() => { void loadSession(); }, [loadSession]);
+
+  const onScan = useCallback(
     async (barcode: string) => {
-      clearError();
-      const ok = await handleScanProduct(barcode);
-      if (ok) {
+      setBusy(true);
+      setError(null);
+      try {
+        if (cancelMode) {
+          await api.post(`${BASE}/scan/cancel`, { barcode }, { suppressErrorModal: true });
+          setHistory((prev) => [{
+            key: `${Date.now()}`, barcode, modelName: "", qty: 0, bookQty: 0, newBox: false, canceled: true,
+            timestamp: new Date().toLocaleTimeString(),
+          }, ...prev]);
+        } else {
+          const body = { barcode, ...(qty.trim() === "" ? {} : { qty: Number(qty) }) };
+          const { data } = await api.post(`${BASE}/scan`, body, { suppressErrorModal: true });
+          const r = (data?.data as { last: ScanLast }).last;
+          setHistory((prev) => [{
+            key: `${Date.now()}`, barcode: r.barcode, modelName: r.modelName ?? "", qty: r.qty,
+            bookQty: r.bookQty, newBox: r.newBox, canceled: false, timestamp: new Date().toLocaleTimeString(),
+          }, ...prev]);
+        }
         playSuccess();
-      } else {
+        void loadSession();
+      } catch (err: unknown) {
+        setError(message(err));
         playError();
+      } finally {
+        setBusy(false);
+        setQty("");
+        setTimeout(() => scanRef.current?.focus(), 100);
       }
     },
-    [handleScanProduct, clearError, playSuccess, playError],
+    [cancelMode, qty, playSuccess, playError, loadSession],
   );
 
-  /** 하드웨어 스캐너 감지 */
-  useBarcodeDetector({
-    onScan: onScanProduct,
-    enabled: !!session && !isScanning,
-  });
-
-  /** 이력 렌더 */
   const renderHistoryItem = useCallback(
-    (item: ProductCountHistoryItem) => (
+    (item: HistoryItem) => (
       <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm font-medium text-slate-800 dark:text-slate-200">
-            {item.itemCode}
-          </p>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            {item.itemName}
-          </p>
+        <div className="min-w-0">
+          <p className="truncate text-sm font-medium text-slate-800 dark:text-slate-200">{item.barcode}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">{item.modelName}</p>
+          {item.newBox && <p className="text-xs text-amber-600 dark:text-amber-400">{t("pda.fgCount.newBox")}</p>}
         </div>
         <div className="text-right">
-          <p className="text-base font-bold text-emerald-600 dark:text-emerald-400">
-            +1
-          </p>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            {t("pda.invCount.countedQty")}: {item.countedQty}
-          </p>
+          {item.canceled ? (
+            <p className="text-sm font-bold text-red-500">{t("pda.fgCount.canceled")}</p>
+          ) : (
+            <>
+              <p className="text-base font-bold text-emerald-600 dark:text-emerald-400">{item.qty.toLocaleString()}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                {t("pda.fgCount.book")} {item.bookQty.toLocaleString()}
+              </p>
+            </>
+          )}
           <p className="text-xs text-slate-400">{item.timestamp}</p>
         </div>
       </div>
@@ -90,159 +141,67 @@ export default function ProductInventoryCountPage() {
     [t],
   );
 
-  /* ─── 세션 로딩 중 ─── */
-  if (isLoadingSession) {
+  if (loadingSession) {
     return (
       <>
-        <PdaHeader titleKey="pda.productInvCount.title" backPath="/pda/menu" />
+        <PdaHeader titleKey="pda.fgCount.title" backPath="/pda/menu" />
         <div className="flex flex-col items-center justify-center py-20 gap-3">
           <Loader2 className="w-10 h-10 text-primary animate-spin" />
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            {t("common.loading")}
-          </p>
         </div>
       </>
     );
   }
 
-  /* ─── 진행 중 실사 없음 ─── */
-  if (noActiveInv) {
+  if (!session) {
     return (
       <>
-        <PdaHeader titleKey="pda.productInvCount.title" backPath="/pda/menu" />
+        <PdaHeader titleKey="pda.fgCount.title" backPath="/pda/menu" />
         <div className="mx-4 mt-8 p-8 rounded-2xl border-2 border-dashed border-amber-300 dark:border-amber-600 bg-amber-50 dark:bg-amber-950/20">
           <div className="text-center">
             <AlertTriangle className="w-12 h-12 text-amber-400 dark:text-amber-500 mx-auto mb-3" />
-            <p className="text-base font-semibold text-amber-700 dark:text-amber-400">
-              {t("pda.productInv.noActive")}
-            </p>
-            <p className="text-sm text-amber-600 dark:text-amber-500 mt-2">
-              {t("pda.productInv.startOnPc")}
-            </p>
+            <p className="text-base font-semibold text-amber-700 dark:text-amber-400">{t("pda.fgCount.noActive")}</p>
+            <p className="text-sm text-amber-600 dark:text-amber-500 mt-2">{t("pda.fgCount.startOnPc")}</p>
           </div>
         </div>
       </>
     );
   }
 
-  /* ─── 메인 UI ─── */
   return (
     <>
-      <PdaHeader titleKey="pda.productInvCount.title" backPath="/pda/menu" />
+      <PdaHeader titleKey="pda.fgCount.title" backPath="/pda/menu" />
 
-      {/* 실사 정보 헤더 */}
-      {session && (
-        <div className="mx-4 mb-1 px-4 py-3 rounded-xl bg-primary/5 dark:bg-primary/10 border border-primary/20">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-              {session.sessionNo}
-            </span>
-            <span className="text-xs font-bold text-primary">
-              {session.warehouseName}
-            </span>
-          </div>
-          <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
-            {session.countMonth}
-          </p>
+      <div className="mx-4 mb-1 px-4 py-3 rounded-xl bg-primary/5 dark:bg-primary/10 border border-primary/20">
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-bold text-primary">{session.yyyymm}</span>
+          <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+            {session.scannedBoxes.toLocaleString()} / {session.bookBoxes.toLocaleString()}
+          </span>
         </div>
-      )}
+        <label className="mt-2 flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
+          <input type="checkbox" className="h-5 w-5" checked={cancelMode}
+            onChange={(e) => setCancelMode(e.target.checked)} />
+          {t("pda.fgCount.cancel")}
+        </label>
+      </div>
 
-      {/* 제품 바코드 스캔 */}
+      {/* 쓰다 만 박스는 센 수량을 먼저 넣고 찍는다 */}
+      <div className="mx-4 mt-2">
+        <input aria-label={t("pda.fgCount.qty")} placeholder={t("pda.fgCount.qty")} inputMode="decimal"
+          value={qty} disabled={cancelMode} onChange={(e) => setQty(e.target.value)}
+          className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-3 text-base text-slate-800 dark:text-slate-100" />
+      </div>
       <ScanInput
         ref={scanRef}
-        onScan={onScanProduct}
-        placeholderKey="pda.productInv.scanProduct"
-        disabled={isScanning}
-        isLoading={isScanning}
+        onScan={onScan}
+        placeholderKey="pda.fgCount.scanBox"
+        disabled={busy}
+        isLoading={busy}
       />
 
-      {/* 에러 표시 */}
-      {error && (
-        <ScanResultCard
-          fields={[]}
-          variant="error"
-          errorMessage={error}
-        />
-      )}
+      {error && <ScanResultCard fields={[]} variant="error" errorMessage={error} />}
 
-      {/* 품목별 현황 테이블 */}
-      {countItems.length > 0 ? (
-        <div className="mx-4 mt-1 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
-          <table className="w-full text-xs">
-            <thead>
-              <tr className="bg-slate-100 dark:bg-slate-800">
-                <th className="text-left px-3 py-2 font-medium text-slate-600 dark:text-slate-400">
-                  {t("pda.receiving.partCode")}
-                </th>
-                <th className="text-right px-3 py-2 font-medium text-slate-600 dark:text-slate-400">
-                  {t("pda.invCount.systemQty")}
-                </th>
-                <th className="text-right px-3 py-2 font-medium text-emerald-600 dark:text-emerald-400">
-                  {t("pda.invCount.countedQty")}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {countItems.map((item) => {
-                const diff = item.countedQty - item.systemQty;
-                const diffColor =
-                  diff === 0
-                    ? "text-slate-400"
-                    : diff > 0
-                      ? "text-blue-500"
-                      : "text-red-500";
-                return (
-                  <tr
-                    key={item.itemCode}
-                    className="border-t border-slate-100 dark:border-slate-800"
-                  >
-                    <td className="px-3 py-2">
-                      <p className="font-medium text-slate-800 dark:text-slate-200">
-                        {item.itemCode}
-                      </p>
-                      <p className="text-[10px] text-slate-400 truncate max-w-[120px]">
-                        {item.itemName}
-                      </p>
-                    </td>
-                    <td className="px-3 py-2 text-right text-slate-600 dark:text-slate-400">
-                      {item.systemQty}
-                    </td>
-                    <td className="px-3 py-2 text-right">
-                      <span className="font-bold text-emerald-600 dark:text-emerald-400">
-                        {item.countedQty}
-                      </span>
-                      {diff !== 0 && (
-                        <span className={`ml-1 text-[10px] font-medium ${diffColor}`}>
-                          ({diff > 0 ? "+" : ""}{diff})
-                        </span>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      ) : (
-        /* 스캔 전 안내 */
-        !error && (
-          <div className="mx-4 mt-2 p-6 rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900">
-            <div className="text-center">
-              <ClipboardList className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
-              <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
-                {t("pda.productInv.scanProduct")}
-              </p>
-            </div>
-          </div>
-        )
-      )}
-
-      {/* 스캔 이력 */}
-      <ScanHistoryList
-        items={history}
-        renderItem={renderHistoryItem}
-        keyExtractor={(item, idx) => `${item.barcode}-${idx}`}
-      />
+      <ScanHistoryList items={history} renderItem={renderHistoryItem} keyExtractor={(item) => item.key} />
     </>
   );
 }

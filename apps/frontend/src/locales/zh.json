@@ -262,6 +262,7 @@
     "master.salePrice": "产品销售单价管理",
     "matInventory": "材料库存管理",
     "productInventory": "产品库存管理",
+    "inventoryClose": "库存结账",
     "inventory": "库存管理",
     "inventory.matStock": "材料库存查询",
     "inventory.stock": "总库存状况查询",
@@ -283,6 +284,7 @@
     "magazineSplit": "弹匣标签拆分",
     "magazinePid": "弹匣-PID 映射管理",
     "wipStocktake": "工序盘点",
+    "wipClose": "工序库存结账",
     "productMgmt": "产品收发管理",
     "productMgmt.receive": "产品入库管理",
     "productMgmt.receiptCancel": "产品入库取消",
@@ -296,6 +298,8 @@
     "productMgmt.fgModelReceipt": "成品入库管理(按型号)",
     "productMgmt.fgIssue": "成品出货管理",
     "productMgmt.fgModelIssue": "成品出库管理(按型号)",
+    "productMgmt.fgStocktake": "成品盘点",
+    "productMgmt.fgClose": "成品库存结账",
     "material.request": "出库申请管理",
     "material.requestOther": "其他出库申请",
     "material.issue": "物料出库管理",
@@ -462,6 +466,7 @@
     "system.erView": "ER VIEW",
     "system.menuCategory": "菜单类别管理",
     "system.improvementRequests": "改善申请管理",
+    "system.inventoryCloseDate": "库存结账日期设置",
     "oee": "OEE管理",
     "oee.dashboard": "OEE综合看板",
     "oee.drilldown": "资源钻取",
@@ -578,7 +583,12 @@
     "purchase.departure": "物料发出管理",
     "purchase.arrival": "物料到货管理",
     "purchase.requirement": "物料需求管理",
-    "purchase.orderPlan": "物料订购计划"
+    "purchase.orderPlan": "物料订购计划",
+    "monitoring.prodBoard": "生产状况看板",
+    "monitoring.qualityBoard": "质量看板",
+    "monitoring.invBoard": "库存看板",
+    "monitoring.jobBoard": "工单看板",
+    "monitoring.equipBoard": "设备运行看板"
   },
   "header": {
     "theme": "主题",
@@ -666,9 +676,101 @@
     "hideDetail": "隐藏详情",
     "close": "关闭"
   },
+  "monitoring": {
+    "managerCall": {
+      "title": "管理员呼叫",
+      "ack": "已处理",
+      "noRemark": "无内容",
+      "collapse": "收起呼叫列表",
+      "expand": "展开呼叫列表",
+      "ackFailed": "处理呼叫失败。"
+    },
+    "board": {
+      "updatedAt": "更新",
+      "noOrders": "没有可显示的生产计划。",
+      "noData": "暂无数据。",
+      "good": "良品",
+      "defect": "不良",
+      "hourlyTitle": "各时段实绩（今日工作日）",
+      "todayOrders": "今日生产计划",
+      "production": {
+        "title": "生产状况看板"
+      },
+      "kpi": {
+        "planQty": "总计划",
+        "goodQty": "总实绩",
+        "defectQty": "不良数量",
+        "achieveRate": "达成率",
+        "running": "进行中计划",
+        "total": "全部"
+      },
+      "col": {
+        "orderNo": "工单号",
+        "item": "品目",
+        "process": "类别",
+        "plan": "计划",
+        "good": "实绩",
+        "defect": "不良",
+        "achieve": "达成率",
+        "status": "状态",
+        "line": "产线"
+      },
+      "quality": {
+        "title": "质量监控看板",
+        "totalQty": "判定数量",
+        "defectRate": "真性不良率",
+        "repairReceived": "待修理",
+        "repairInRepair": "返修(不合格)",
+        "repairCompletedToday": "今日修理完成",
+        "byProcessTitle": "各线判定/真性不良 (今日)",
+        "topDefectsTitle": "真性不良原因 TOP 10 (今日)",
+        "dailyTrendTitle": "近7日真性不良率趋势",
+        "defectQty": "真性不良数"
+      },
+      "inventory": {
+        "title": "库存监控看板",
+        "shortageTitle": "低于安全库存",
+        "noShortage": "没有低于安全库存的物料。",
+        "currentQty": "当前库存",
+        "safetyStock": "安全库存",
+        "shortageQty": "不足数量",
+        "expired": "过期批次",
+        "nearExpiry": "即将过期批次",
+        "hold": "受管制批次",
+        "todayInOut": "今日出入库件数",
+        "todayInOutSub": "入库 / 发料 (笔数)",
+        "expiryTitle": "锡膏 / MSL 过期或即将过期批次",
+        "noExpiry": "没有存在有效期问题的锡膏 / MSL 批次。",
+        "daysLeft": "D-{{days}}",
+        "expiredDays": "超期{{days}}天",
+        "holdTitle": "受管制批次 (保留 / 不良)",
+        "noHold": "没有受管制库存。",
+        "kindMaterial": "材料",
+        "kindProduct": "产品",
+        "reasonHold": "保留",
+        "reasonIqcFail": "IQC不合格",
+        "reasonIqcHold": "IQC保留",
+        "reasonDefect": "不良"
+      },
+      "jobOrder": {
+        "title": "工单进度看板",
+        "defectRate": "不良率",
+        "remaining": "剩余",
+        "continued": "续",
+        "more": "另 {{n}} 件"
+      },
+      "equipment": {
+        "state": {
+          "NORMAL": "正常",
+          "STOP": "停机(非运转)",
+          "UNUSED": "未使用"
+        }
+      }
+    }
+  },
   "dashboard": {
     "title": "仪表盘",
-    "subtitle": "实时查看生产状况。",
+    "subtitle": "在一个画面查看SMT产线的生产、设备、焊锡/MSL及不良判定情况。",
     "equipStatus": "设备现况",
     "equipInUse": "使用中",
     "equipDown": "停机",
@@ -711,7 +813,166 @@
       "actual": "实绩",
       "noData": "没有可显示的数据。"
     },
-    "loadFailed": "仪表板查询失败。"
+    "loadFailed": "仪表板查询失败。",
+    "layout": {
+      "group": "形态",
+      "cockpit": "驾驶舱",
+      "board": "出发看板",
+      "map": "线路图",
+      "charts": "图表"
+    },
+    "skinGroup": "配色",
+    "board": {
+      "orders": "今日生产计划看板",
+      "orderNo": "工单号",
+      "item": "品目",
+      "where": "工序 · 类别",
+      "qty": "实绩 / 计划",
+      "progress": "进度",
+      "status": "状态",
+      "noOrders": "今日暂无工单。",
+      "equipRun": "设备运行",
+      "page": "{{page}} / {{count}}",
+      "lines": "各产线计划对比实绩（今日）",
+      "code": "代码",
+      "name": "品目 / 产线",
+      "noRows": "今日没有生产计划。",
+      "materialNg": "焊锡·MSL NG",
+      "defectJudge": "不良待判定",
+      "state": {
+        "RUNNING": "进行",
+        "DONE": "完成",
+        "WAITING": "待机",
+        "HOLD": "保留"
+      }
+    },
+    "map": {
+      "flowLine": "工序线",
+      "equipLine": "设备线",
+      "hint": "点击站点仅显示该阶段的处理项，再点一次显示全部",
+      "station": "选中站点",
+      "all": "全部",
+      "pressure": "压力"
+    },
+    "charts": {
+      "hourly": "分时实绩（今日）",
+      "byProcess": "工序不良率",
+      "topDefects": "主要不良类型",
+      "status": "状态分布",
+      "orderStatus": "工单",
+      "equipStatus": "设备",
+      "equipNormal": "正常",
+      "equipMaint": "保养中",
+      "equipStop": "停止",
+      "inventory": "库存处理项",
+      "rate": "不良率",
+      "qty": "数量",
+      "noData": "暂无数据"
+    },
+    "skin": {
+      "control": "管制塔",
+      "departure": "航班牌",
+      "datawall": "数据墙",
+      "white": "白色"
+    },
+    "tvMode": "电视模式",
+    "updatedAt": "更新",
+    "pulse": {
+      "achieve": "今日达成率",
+      "running": "进行中工单",
+      "ofTotal": "/ {{total}}件",
+      "defectRate": "不良率",
+      "attention": "需处理",
+      "countUnit": "件",
+      "smdAchieve": "SMD达成率",
+      "productAchieve": "成品达成率",
+      "equipRun": "设备使用中",
+      "equipOfTotal": "/ {{total}}台",
+      "genuine": "真不良"
+    },
+    "stream": {
+      "title": "工序流程",
+      "hint": "点击阶段跳转至对应画面",
+      "receive": "入库",
+      "material": "物料",
+      "production": "生产",
+      "quality": "品质",
+      "product": "成品",
+      "receiveHero": "今日入库笔数",
+      "materialHero": "今日出库笔数",
+      "productionHero": "实绩 / 计划",
+      "qualityHero": "今日真不良",
+      "productHero": "成品 实绩 / 计划",
+      "countUnit": "笔",
+      "expired": "过期LOT",
+      "nearExpiry": "临期LOT",
+      "shortage": "低于安全库存",
+      "hold": "保留·不良库存",
+      "orders": "进行 · 等待 · 保留",
+      "equipRun": "设备运行 / 全部",
+      "defectWait": "不良未处理",
+      "repair": "待修 · 维修中",
+      "productHold": "成品保留·不良",
+      "repairDone": "今日维修完成",
+      "stock": "库存",
+      "smd": "SMD",
+      "stockHero": "今日入库次数",
+      "smdHero": "SMD 实绩 / 计划",
+      "out": "今日出库次数",
+      "achieve": "达成率",
+      "remaining": "剩余数量"
+    },
+    "rhythm": {
+      "hourly": "时段节奏（今日）",
+      "good": "良品",
+      "defect": "不良",
+      "noHourly": "今日尚无实绩。",
+      "trend7": "近7日不良率",
+      "noTrend": "无趋势数据",
+      "trendAchieve7": "最近7天达成率"
+    },
+    "inspect": {
+      "title": "今日点检",
+      "daily": "日常点检",
+      "periodic": "定期点检",
+      "pm": "预防保全",
+      "pass": "合格",
+      "fail": "不合格",
+      "notDone": "未实施",
+      "noTarget": "无对象"
+    },
+    "attention": {
+      "open": "前往画面处理",
+      "noDetail": "此项仅汇总数量，请在画面中查看明细。",
+      "title": "需处理",
+      "empty": "当前没有需要处理的事项。",
+      "equipStop": "设备停止 {{count}}台",
+      "inspectFail": "{{kind}}不合格 {{count}}件",
+      "inspectNotDone": "{{kind}}未实施 {{count}}件",
+      "defectWait": "不良未处理 {{count}}件",
+      "expiredLot": "过期LOT {{count}}件",
+      "holdStock": "保留·不良库存 {{count}}件",
+      "holdOrder": "保留工单 {{count}}件",
+      "shortage": "低于安全库存 {{count}}项",
+      "nearExpiry": "临期LOT {{count}}件",
+      "repairWait": "待修 {{count}}件",
+      "consumableShortage": "耗材低于安全库存 {{count}} 项",
+      "consumablePreAlert": "耗材库存预警 {{count}} 项",
+      "equipDown": "设备停机 {{count}}台",
+      "solderNg": "焊锡NG {{count}}件",
+      "mslNg": "MSL NG {{count}}件",
+      "defectPending": "不良待判定 {{count}}件",
+      "defectUnrepaired": "真不良未修理 {{count}}件",
+      "lowAchieveSmd": "SMD产线达成率偏低 {{count}}条",
+      "lowAchieveProduct": "成品产线达成率偏低 {{count}}条"
+    },
+    "lineRails": {
+      "title": "各产线计划对比实绩（今日）",
+      "noPlan": "无计划",
+      "noTarget": "今日没有有计划/实绩的产线。",
+      "done": "达成计划",
+      "remaining": "未达成"
+    }
   },
   "inventory": {
     "stock": {
@@ -3999,6 +4260,18 @@
       "confirmCount": "确认盘点",
       "countSuccess": "库存盘点完成",
       "countFailed": "库存盘点失败"
+    },
+    "fgCount": {
+      "title": "成品盘点",
+      "scanBox": "扫描成品箱条码",
+      "qty": "实盘数量(仅未装满的箱;留空=账面数量)",
+      "cancel": "取消模式",
+      "noActive": "没有进行中的成品盘点",
+      "startOnPc": "请在PC成品盘点画面开始盘点",
+      "book": "账面",
+      "counted": "实盘",
+      "canceled": "已取消",
+      "newBox": "账面没有的箱"
     },
     "wipCount": {
       "title": "工序盘点",

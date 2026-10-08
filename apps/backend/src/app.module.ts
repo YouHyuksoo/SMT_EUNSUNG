@@ -80,6 +80,7 @@ import { MasterSalePriceModule } from './modules/master/master-sale-price.module
 import { MasterItemSupplierModule } from './modules/master/master-item-supplier.module';
 import { MasterCustomerModule } from './modules/master/master-customer.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { MonitoringModule } from './modules/monitoring/monitoring.module';
 import { AttachmentModule } from './modules/attachment/attachment.module';
 import { SharedModule } from './shared/shared.module';
 
@@ -216,6 +217,7 @@ import { SharedModule } from './shared/shared.module';
 
     // 대시보드 (/dashboard/summary)
     DashboardModule,
+    MonitoringModule,
     AttachmentModule,
   ],
   controllers: [AppController],

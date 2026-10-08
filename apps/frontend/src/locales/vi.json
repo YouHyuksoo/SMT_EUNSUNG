@@ -262,6 +262,7 @@
     "master.salePrice": "Quản lý đơn giá bán sản phẩm",
     "matInventory": "Quản lý kho vật tư",
     "productInventory": "Quản lý kho sản phẩm",
+    "inventoryClose": "Chốt tồn kho",
     "inventory": "Quản lý kho",
     "inventory.matStock": "Tra cứu tồn kho VT",
     "inventory.stock": "Tra cứu tồn kho tổng",
@@ -283,6 +284,7 @@
     "magazineSplit": "Tách nhãn magazine",
     "magazinePid": "Ánh xạ magazine-PID",
     "wipStocktake": "Kiểm kê công đoạn",
+    "wipClose": "Chốt tồn kho công đoạn",
     "productMgmt": "Quản lý xuất nhập sản phẩm",
     "productMgmt.receive": "Nhập kho sản phẩm",
     "productMgmt.receiptCancel": "Hủy nhập kho sản phẩm",
@@ -296,6 +298,8 @@
     "productMgmt.fgModelReceipt": "Nhập kho thành phẩm (theo model)",
     "productMgmt.fgIssue": "Xuất hàng thành phẩm",
     "productMgmt.fgModelIssue": "Xuất kho thành phẩm (theo model)",
+    "productMgmt.fgStocktake": "Kiểm kê thành phẩm",
+    "productMgmt.fgClose": "Chốt tồn kho thành phẩm",
     "material.request": "Quản lý yêu cầu xuất kho",
     "material.requestOther": "Yêu cầu xuất khác",
     "material.issue": "Xuất kho vật tư",
@@ -462,6 +466,7 @@
     "system.erView": "ER VIEW",
     "system.menuCategory": "Quản lý danh mục menu",
     "system.improvementRequests": "Quản lý yêu cầu cải tiến",
+    "system.inventoryCloseDate": "Thiết lập ngày chốt tồn kho",
     "oee": "Quản lý OEE",
     "oee.dashboard": "Tổng quan OEE",
     "oee.drilldown": "Chi tiết nguồn lực",
@@ -578,7 +583,12 @@
     "purchase.departure": "Quản lý xuất phát vật tư",
     "purchase.arrival": "Quản lý vật tư đến",
     "purchase.requirement": "Quản lý nhu cầu vật tư",
-    "purchase.orderPlan": "Kế hoạch đặt hàng vật tư"
+    "purchase.orderPlan": "Kế hoạch đặt hàng vật tư",
+    "monitoring.prodBoard": "Bảng tình hình sản xuất",
+    "monitoring.qualityBoard": "Bảng chất lượng",
+    "monitoring.invBoard": "Bảng tồn kho",
+    "monitoring.jobBoard": "Bảng lệnh sản xuất",
+    "monitoring.equipBoard": "Bảng vận hành thiết bị"
   },
   "header": {
     "theme": "Giao diện",
@@ -666,9 +676,101 @@
     "hideDetail": "Ẩn chi tiết",
     "close": "Đóng"
   },
+  "monitoring": {
+    "managerCall": {
+      "title": "Gọi quản lý",
+      "ack": "Đã xử lý",
+      "noRemark": "Không có nội dung",
+      "collapse": "Thu gọn danh sách gọi quản lý",
+      "expand": "Mở danh sách gọi quản lý",
+      "ackFailed": "Xử lý cuộc gọi thất bại."
+    },
+    "board": {
+      "updatedAt": "Cập nhật",
+      "noOrders": "Không có kế hoạch sản xuất để hiển thị.",
+      "noData": "Không có dữ liệu.",
+      "good": "Hàng đạt",
+      "defect": "Hàng lỗi",
+      "hourlyTitle": "Sản lượng theo khung giờ (ngày làm việc hôm nay)",
+      "todayOrders": "Kế hoạch sản xuất hôm nay",
+      "production": {
+        "title": "Bảng tình hình sản xuất"
+      },
+      "kpi": {
+        "planQty": "Tổng kế hoạch",
+        "goodQty": "Tổng sản lượng",
+        "defectQty": "Số lượng lỗi",
+        "achieveRate": "Tỷ lệ đạt",
+        "running": "Kế hoạch đang chạy",
+        "total": "Tổng"
+      },
+      "col": {
+        "orderNo": "Số lệnh",
+        "item": "Sản phẩm",
+        "process": "Loại",
+        "plan": "Kế hoạch",
+        "good": "Sản lượng",
+        "defect": "Lỗi",
+        "achieve": "Tỷ lệ đạt",
+        "status": "Trạng thái",
+        "line": "Chuyền"
+      },
+      "quality": {
+        "title": "Bảng giám sát chất lượng",
+        "totalQty": "Số lượt phán định",
+        "defectRate": "Tỷ lệ lỗi thật",
+        "repairReceived": "Chờ sửa chữa",
+        "repairInRepair": "Sửa lại (không đạt)",
+        "repairCompletedToday": "Sửa xong hôm nay",
+        "byProcessTitle": "Phán định / lỗi thật theo chuyền (hôm nay)",
+        "topDefectsTitle": "Top 10 nguyên nhân lỗi thật (hôm nay)",
+        "dailyTrendTitle": "Tỷ lệ lỗi thật 7 ngày gần nhất",
+        "defectQty": "Lỗi thật"
+      },
+      "inventory": {
+        "title": "Bảng giám sát tồn kho",
+        "shortageTitle": "Dưới tồn kho an toàn",
+        "noShortage": "Không có vật tư dưới mức tồn kho an toàn.",
+        "currentQty": "Tồn hiện tại",
+        "safetyStock": "Tồn kho an toàn",
+        "shortageQty": "Số lượng thiếu",
+        "expired": "LOT quá hạn",
+        "nearExpiry": "LOT sắp hết hạn",
+        "hold": "LOT bị kiểm soát",
+        "todayInOut": "Số lượt nhập/xuất hôm nay",
+        "todayInOutSub": "Nhập / Xuất (số lượt)",
+        "expiryTitle": "LOT Solder / MSL quá hạn hoặc sắp hết hạn",
+        "noExpiry": "Không có LOT Solder / MSL gặp vấn đề về hạn dùng.",
+        "daysLeft": "D-{{days}}",
+        "expiredDays": "Quá hạn {{days}} ngày",
+        "holdTitle": "LOT bị kiểm soát (Giữ / Lỗi)",
+        "noHold": "Không có tồn kho bị kiểm soát.",
+        "kindMaterial": "NVL",
+        "kindProduct": "SP",
+        "reasonHold": "Giữ lại",
+        "reasonIqcFail": "IQC không đạt",
+        "reasonIqcHold": "IQC giữ lại",
+        "reasonDefect": "Lỗi"
+      },
+      "jobOrder": {
+        "title": "Bảng tiến độ lệnh sản xuất",
+        "defectRate": "Tỷ lệ lỗi",
+        "remaining": "Còn lại",
+        "continued": "tiếp",
+        "more": "+{{n}} lệnh"
+      },
+      "equipment": {
+        "state": {
+          "NORMAL": "Bình thường",
+          "STOP": "Dừng (ngừng hoạt động)",
+          "UNUSED": "Không sử dụng"
+        }
+      }
+    }
+  },
   "dashboard": {
     "title": "Bảng điều khiển",
-    "subtitle": "Theo dõi tình trạng sản xuất thời gian thực.",
+    "subtitle": "Xem tình hình sản xuất, thiết bị, solder/MSL và phán định lỗi của chuyền SMT trên một màn hình.",
     "equipStatus": "Thiết bị",
     "equipInUse": "Đang sử dụng",
     "equipDown": "Dừng máy",
@@ -711,7 +813,166 @@
       "actual": "Thực tế",
       "noData": "Không có dữ liệu để hiển thị."
     },
-    "loadFailed": "Không tải được bảng điều khiển."
+    "loadFailed": "Không tải được bảng điều khiển.",
+    "layout": {
+      "group": "Dạng",
+      "cockpit": "Buồng lái",
+      "board": "Bảng khởi hành",
+      "map": "Sơ đồ tuyến",
+      "charts": "Biểu đồ"
+    },
+    "skinGroup": "Màu",
+    "board": {
+      "orders": "Bảng kế hoạch sản xuất hôm nay",
+      "orderNo": "Số lệnh",
+      "item": "Mặt hàng",
+      "where": "Công đoạn · Loại",
+      "qty": "Thực tế / Kế hoạch",
+      "progress": "Tiến độ",
+      "status": "Trạng thái",
+      "noOrders": "Hôm nay không có lệnh sản xuất.",
+      "equipRun": "Thiết bị đang chạy",
+      "page": "{{page}} / {{count}}",
+      "lines": "Kế hoạch so với thực tế theo chuyền (hôm nay)",
+      "code": "Mã",
+      "name": "Hạng mục / Chuyền",
+      "noRows": "Hôm nay không có kế hoạch sản xuất.",
+      "materialNg": "Solder / MSL NG",
+      "defectJudge": "Lỗi chờ phán định",
+      "state": {
+        "RUNNING": "Đang chạy",
+        "DONE": "Hoàn tất",
+        "WAITING": "Chờ",
+        "HOLD": "Giữ"
+      }
+    },
+    "map": {
+      "flowLine": "TUYẾN CÔNG ĐOẠN",
+      "equipLine": "Tuyến thiết bị",
+      "hint": "Chạm vào ga để chỉ xem giai đoạn đó. Chạm lại để xem tất cả",
+      "station": "Ga đã chọn",
+      "all": "Tất cả",
+      "pressure": "Áp lực"
+    },
+    "charts": {
+      "hourly": "Sản lượng theo giờ (hôm nay)",
+      "byProcess": "Tỷ lệ lỗi theo công đoạn",
+      "topDefects": "Loại lỗi hàng đầu",
+      "status": "Phân bố trạng thái",
+      "orderStatus": "Lệnh sản xuất",
+      "equipStatus": "Thiết bị",
+      "equipNormal": "Bình thường",
+      "equipMaint": "Bảo trì",
+      "equipStop": "Dừng",
+      "inventory": "Hạng mục xử lý tồn kho",
+      "rate": "Tỷ lệ lỗi",
+      "qty": "Số lượng",
+      "noData": "Không có dữ liệu"
+    },
+    "skin": {
+      "control": "Tháp điều khiển",
+      "departure": "Bảng khởi hành",
+      "datawall": "Tường dữ liệu",
+      "white": "Trắng"
+    },
+    "tvMode": "Chế độ TV",
+    "updatedAt": "Cập nhật",
+    "pulse": {
+      "achieve": "Tỷ lệ đạt hôm nay",
+      "running": "Lệnh đang chạy",
+      "ofTotal": "/ {{total}} lệnh",
+      "defectRate": "Tỷ lệ lỗi",
+      "attention": "Cần xử lý",
+      "countUnit": "mục",
+      "smdAchieve": "Tỷ lệ đạt SMD",
+      "productAchieve": "Tỷ lệ đạt thành phẩm",
+      "equipRun": "Thiết bị đang dùng",
+      "equipOfTotal": "/ {{total}} máy",
+      "genuine": "Lỗi thật"
+    },
+    "stream": {
+      "title": "Luồng công đoạn",
+      "hint": "Nhấn vào giai đoạn để mở màn hình tương ứng",
+      "receive": "Nhập kho",
+      "material": "Vật tư",
+      "production": "Sản xuất",
+      "quality": "Chất lượng",
+      "product": "Thành phẩm",
+      "receiveHero": "Số lần nhập hôm nay",
+      "materialHero": "Số lần xuất hôm nay",
+      "productionHero": "Thực tế / Kế hoạch",
+      "qualityHero": "Lỗi thật hôm nay",
+      "productHero": "Thành phẩm thực tế / kế hoạch",
+      "countUnit": "lần",
+      "expired": "LOT hết hạn",
+      "nearExpiry": "LOT sắp hết hạn",
+      "shortage": "Dưới tồn kho an toàn",
+      "hold": "Tồn kho giữ/lỗi",
+      "orders": "Đang chạy · Chờ · Giữ",
+      "equipRun": "Thiết bị chạy / tổng",
+      "defectWait": "Lỗi chưa xử lý",
+      "repair": "Chờ sửa · đang sửa",
+      "productHold": "Thành phẩm giữ·lỗi",
+      "repairDone": "Sửa xong hôm nay",
+      "stock": "Tồn kho",
+      "smd": "SMD",
+      "stockHero": "Số lần nhập hôm nay",
+      "smdHero": "SMD thực tế / kế hoạch",
+      "out": "Số lần xuất hôm nay",
+      "achieve": "Tỷ lệ đạt",
+      "remaining": "Số lượng còn lại"
+    },
+    "rhythm": {
+      "hourly": "Nhịp theo giờ (hôm nay)",
+      "good": "Đạt",
+      "defect": "Lỗi",
+      "noHourly": "Hôm nay chưa có kết quả.",
+      "trend7": "Tỷ lệ lỗi 7 ngày gần nhất",
+      "noTrend": "Không có dữ liệu xu hướng",
+      "trendAchieve7": "Tỷ lệ đạt 7 ngày gần đây"
+    },
+    "inspect": {
+      "title": "Kiểm tra hôm nay",
+      "daily": "Kiểm tra hằng ngày",
+      "periodic": "Kiểm tra định kỳ",
+      "pm": "Bảo trì phòng ngừa",
+      "pass": "Đạt",
+      "fail": "Không đạt",
+      "notDone": "Chưa thực hiện",
+      "noTarget": "Không có đối tượng"
+    },
+    "attention": {
+      "open": "Xử lý trên màn hình",
+      "noDetail": "Mục này chỉ tổng hợp số lượng. Mở màn hình để xem chi tiết.",
+      "title": "Cần xử lý",
+      "empty": "Hiện không có mục nào cần xử lý.",
+      "equipStop": "{{count}} thiết bị dừng",
+      "inspectFail": "{{kind}} không đạt: {{count}}",
+      "inspectNotDone": "{{kind}} chưa thực hiện: {{count}}",
+      "defectWait": "{{count}} lỗi chưa xử lý",
+      "expiredLot": "{{count}} LOT hết hạn",
+      "holdStock": "{{count}} tồn kho giữ·lỗi",
+      "holdOrder": "{{count}} lệnh sản xuất đang giữ",
+      "shortage": "{{count}} mặt hàng dưới tồn an toàn",
+      "nearExpiry": "{{count}} LOT sắp hết hạn",
+      "repairWait": "{{count}} chờ sửa",
+      "consumableShortage": "{{count}} vật tư dưới tồn an toàn",
+      "consumablePreAlert": "{{count}} vật tư cảnh báo sớm",
+      "equipDown": "{{count}} thiết bị ngừng hoạt động",
+      "solderNg": "{{count}} solder NG",
+      "mslNg": "{{count}} MSL NG",
+      "defectPending": "{{count}} lỗi chờ phán định",
+      "defectUnrepaired": "{{count}} lỗi thật chưa sửa",
+      "lowAchieveSmd": "{{count}} chuyền SMD đạt thấp",
+      "lowAchieveProduct": "{{count}} chuyền thành phẩm đạt thấp"
+    },
+    "lineRails": {
+      "title": "Kế hoạch so với thực tế theo chuyền (hôm nay)",
+      "noPlan": "Không có kế hoạch",
+      "noTarget": "Hôm nay không có chuyền nào có kế hoạch hoặc thực tế.",
+      "done": "Đạt kế hoạch",
+      "remaining": "Thiếu"
+    }
   },
   "inventory": {
     "stock": {
@@ -3999,6 +4260,18 @@
       "confirmCount": "Xác nhận kiểm kê",
       "countSuccess": "Kiểm kê thành công",
       "countFailed": "Kiểm kê thất bại"
+    },
+    "fgCount": {
+      "title": "Kiểm kê thành phẩm",
+      "scanBox": "Quét mã vạch thùng thành phẩm",
+      "qty": "Số lượng đếm (chỉ thùng dùng dở; để trống = số sổ sách)",
+      "cancel": "Chế độ hủy",
+      "noActive": "Không có đợt kiểm kê thành phẩm đang diễn ra",
+      "startOnPc": "Bắt đầu kiểm kê trên màn hình Kiểm kê thành phẩm (PC)",
+      "book": "Sổ sách",
+      "counted": "Đã đếm",
+      "canceled": "Đã hủy",
+      "newBox": "Thùng không có trong sổ sách"
     },
     "wipCount": {
       "title": "Kiểm kê công đoạn",

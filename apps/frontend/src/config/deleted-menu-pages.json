@@ -418,6 +418,7 @@
     "apps/frontend/src/components/layout/page-registries/oee__entry.generated.ts"
   ],
   "expectedTopLevelMenuCodes": [
+    "MONITORING",
     "MASTER",
     "BOM_MANAGEMENT",
     "EQUIPMENT",
@@ -431,6 +432,7 @@
     "PROCESS_TRANSACTION",
     "PRODUCT_MGMT",
     "PRODUCT_INVENTORY",
+    "INVENTORY_CLOSE",
     "PRODUCTION",
     "TRACKING",
     "QUERY",

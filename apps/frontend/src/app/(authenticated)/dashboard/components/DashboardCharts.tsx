@@ -1,12 +1,12 @@
-"use client";
+﻿"use client";
 
 /**
  * @file src/app/(authenticated)/dashboard/components/DashboardCharts.tsx
  * @description 대시보드 시각화 카드 모음 (도넛/게이지/누적막대/추이/라인별 막대)
  *
  * 초보자 가이드:
- * 1. 색은 globals.css 의 CSS 변수(--success, --error, --warning, --info)만 쓴다 (라이트/다크 자동 대응)
- * 2. 데이터는 page.tsx 가 /dashboard/summary, /dashboard/insights 로 받아 props 로 넘긴다
+ * 1. 색은 CSS 변수(--success, --error, --warning, --info, --text, --text-muted)만 쓴다 (라이트/다크 + 대시보드 스킨 A/B/C/D 자동 대응)
+ * 2. 데이터는 useDashboardData 가 /dashboard/summary, /dashboard/insights 로 받고 ChartsLayout 이 props 로 넘긴다
  * 3. insights(7일 추이·라인별)가 없으면 해당 카드는 "데이터 없음" 으로 표시한다
  * 4. 차트 높이는 부모(고정 높이 div)가 정한다 — ResponsiveContainer 는 높이 0 이면 그려지지 않는다
  */
@@ -19,28 +19,9 @@ import {
 } from "recharts";
 import { Button } from "@/components/ui";
 
-/* ── Types ── */
-export interface InsightsTrend {
-  date: string;
-  smdPlan: number;
-  smdActual: number;
-  miPlan: number;
-  miActual: number;
-}
-
-export interface InsightsLine {
-  lineCode: string;
-  lineName?: string | null;
-  productionType: string;
-  planQty: number;
-  actualQty: number;
-}
-
-export interface DashboardInsights {
-  date: string;
-  trend: InsightsTrend[];
-  lines: InsightsLine[];
-}
+/* ── Types ── (단일 출처는 ./types.ts — 기존 import 경로 호환을 위해 다시 내보낸다) */
+import type { InsightsLine, InsightsTrend } from "./types";
+export type { DashboardInsights, InsightsLine, InsightsTrend } from "./types";
 
 /* ── 공통 ── */
 const C = {
@@ -49,7 +30,7 @@ const C = {
   warning: "var(--warning)",
   info: "var(--info)",
   primary: "var(--primary)",
-  muted: "var(--muted-foreground)",
+  muted: "var(--text-muted)",
   grid: "var(--border)",
 };
 
@@ -58,7 +39,7 @@ const tooltipStyle = {
   border: "1px solid var(--border)",
   borderRadius: 8,
   fontSize: 12,
-  color: "var(--card-foreground)",
+  color: "var(--text)",
 };
 
 const axisTick = { fontSize: 11, fill: C.muted };

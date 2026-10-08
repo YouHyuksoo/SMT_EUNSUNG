@@ -1,6 +1,6 @@
 /**
  * @file src/app/(authenticated)/inventory-query/stocktake.ts
- * @description 바코드 실사 API — 272 자재재고조사 · 274 자재바코드스캔실사가 같이 쓴다
+ * @description 바코드 실사 API — 272 자재재고실사 · 274 자재바코드스캔실사가 같이 쓴다
  */
 import api from '@/services/api';
 

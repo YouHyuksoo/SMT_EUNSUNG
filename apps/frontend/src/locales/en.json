@@ -262,6 +262,7 @@
     "master.salePrice": "Product Sale Price",
     "matInventory": "Material Inventory",
     "productInventory": "Product Inventory",
+    "inventoryClose": "Inventory Close",
     "inventory": "Inventory",
     "inventory.matStock": "Material Stock Status",
     "inventory.stock": "Total Stock Status",
@@ -283,6 +284,7 @@
     "magazineSplit": "Magazine Label Split",
     "magazinePid": "Magazine-PID Mapping",
     "wipStocktake": "WIP Stocktake",
+    "wipClose": "WIP Inventory Close",
     "productMgmt": "Product Mgmt",
     "productMgmt.receive": "Product Receive",
     "productMgmt.receiptCancel": "Product Receipt Cancel",
@@ -296,6 +298,8 @@
     "productMgmt.fgModelReceipt": "FG Receipt (Model)",
     "productMgmt.fgIssue": "FG Shipping",
     "productMgmt.fgModelIssue": "FG Issue (Model)",
+    "productMgmt.fgStocktake": "FG Stocktake",
+    "productMgmt.fgClose": "FG Inventory Close",
     "material.request": "Issue Request Mgmt",
     "material.requestOther": "Other Issue Request",
     "material.issue": "Material Issuing",
@@ -462,6 +466,7 @@
     "system.erView": "ER VIEW",
     "system.menuCategory": "Menu Category Management",
     "system.improvementRequests": "Improvement Requests",
+    "system.inventoryCloseDate": "Inventory Close Dates",
     "oee": "OEE",
     "oee.dashboard": "OEE Overview",
     "oee.drilldown": "Resource Drilldown",
@@ -578,7 +583,12 @@
     "purchase.departure": "Departure",
     "purchase.arrival": "Arrival",
     "purchase.requirement": "Material Requirements",
-    "purchase.orderPlan": "Purchase Order Planning"
+    "purchase.orderPlan": "Purchase Order Planning",
+    "monitoring.prodBoard": "Production Board",
+    "monitoring.qualityBoard": "Quality Board",
+    "monitoring.invBoard": "Inventory Board",
+    "monitoring.jobBoard": "Job Order Board",
+    "monitoring.equipBoard": "Equipment Board"
   },
   "header": {
     "theme": "Theme",
@@ -666,9 +676,101 @@
     "hideDetail": "Hide details",
     "close": "Close"
   },
+  "monitoring": {
+    "managerCall": {
+      "title": "Manager Calls",
+      "ack": "Mark Handled",
+      "noRemark": "No details",
+      "collapse": "Collapse manager call list",
+      "expand": "Expand manager call list",
+      "ackFailed": "Failed to mark the call as handled."
+    },
+    "board": {
+      "updatedAt": "Updated",
+      "noOrders": "No production plans to display.",
+      "noData": "No data.",
+      "good": "Good",
+      "defect": "Defect",
+      "hourlyTitle": "Hourly Output (Today shift day)",
+      "todayOrders": "Today's Production Plans",
+      "production": {
+        "title": "Production Status Board"
+      },
+      "kpi": {
+        "planQty": "Total Plan",
+        "goodQty": "Total Output",
+        "defectQty": "Defect Qty",
+        "achieveRate": "Achievement",
+        "running": "Running Plans",
+        "total": "Total"
+      },
+      "col": {
+        "orderNo": "Order No",
+        "item": "Item",
+        "process": "Type",
+        "plan": "Plan",
+        "good": "Output",
+        "defect": "Defect",
+        "achieve": "Achievement",
+        "status": "Status",
+        "line": "Line"
+      },
+      "quality": {
+        "title": "Quality Monitoring Board",
+        "totalQty": "Judged",
+        "defectRate": "Confirmed defect rate",
+        "repairReceived": "Repair Waiting",
+        "repairInRepair": "Re-repair (failed)",
+        "repairCompletedToday": "Repaired Today",
+        "byProcessTitle": "Judged / confirmed defects by line (today)",
+        "topDefectsTitle": "Confirmed defect reasons TOP 10 (today)",
+        "dailyTrendTitle": "Confirmed defect rate, last 7 days",
+        "defectQty": "Confirmed defects"
+      },
+      "inventory": {
+        "title": "Inventory Monitoring Board",
+        "shortageTitle": "Below Safety Stock",
+        "noShortage": "No materials below safety stock.",
+        "currentQty": "Current",
+        "safetyStock": "Safety Stock",
+        "shortageQty": "Shortage",
+        "expired": "Expired Lots",
+        "nearExpiry": "Expiring Lots",
+        "hold": "Controlled Lots",
+        "todayInOut": "Today In / Out",
+        "todayInOutSub": "Receipt / Issue (count)",
+        "expiryTitle": "Solder / MSL Expired or Expiring Lots",
+        "noExpiry": "No solder or MSL lots with expiry issues.",
+        "daysLeft": "D-{{days}}",
+        "expiredDays": "{{days}}d overdue",
+        "holdTitle": "Controlled Lots (Hold / Defect)",
+        "noHold": "No controlled inventory.",
+        "kindMaterial": "MAT",
+        "kindProduct": "PRD",
+        "reasonHold": "Hold",
+        "reasonIqcFail": "IQC Fail",
+        "reasonIqcHold": "IQC Hold",
+        "reasonDefect": "Defect"
+      },
+      "jobOrder": {
+        "title": "Job Order Progress Board",
+        "defectRate": "Defect rate",
+        "remaining": "Remaining",
+        "continued": "cont.",
+        "more": "+{{n}} more"
+      },
+      "equipment": {
+        "state": {
+          "NORMAL": "Normal",
+          "STOP": "Stopped (downtime)",
+          "UNUSED": "Not in use"
+        }
+      }
+    }
+  },
   "dashboard": {
     "title": "Dashboard",
-    "subtitle": "Monitor real-time production status at a glance.",
+    "subtitle": "See SMT line production, equipment, solder/MSL and defect judgment status on one screen.",
     "equipStatus": "Equipment",
     "equipInUse": "In use",
     "equipDown": "Down",
@@ -711,7 +813,166 @@
       "actual": "Actual",
       "noData": "No data to display."
     },
-    "loadFailed": "Failed to load the dashboard."
+    "loadFailed": "Failed to load the dashboard.",
+    "layout": {
+      "group": "Form",
+      "cockpit": "Cockpit",
+      "board": "Departure board",
+      "map": "Line map",
+      "charts": "Charts"
+    },
+    "skinGroup": "Color",
+    "board": {
+      "orders": "Today's production plan board",
+      "orderNo": "Order No.",
+      "item": "Item",
+      "where": "Process · Type",
+      "qty": "Actual / Plan",
+      "progress": "Progress",
+      "status": "Status",
+      "noOrders": "No job orders today.",
+      "equipRun": "Equipment running",
+      "page": "{{page}} / {{count}}",
+      "lines": "Plan vs actual by line (today)",
+      "code": "Code",
+      "name": "Item / Line",
+      "noRows": "No production plan for today.",
+      "materialNg": "Solder / MSL NG",
+      "defectJudge": "Defects awaiting judgment",
+      "state": {
+        "RUNNING": "Running",
+        "DONE": "Done",
+        "WAITING": "Waiting",
+        "HOLD": "Hold"
+      }
+    },
+    "map": {
+      "flowLine": "PROCESS LINE",
+      "equipLine": "Equipment line",
+      "hint": "Tap a station to see only that stage. Tap again for all",
+      "station": "Station",
+      "all": "All",
+      "pressure": "Pressure"
+    },
+    "charts": {
+      "hourly": "Hourly output (today)",
+      "byProcess": "Defect rate by process",
+      "topDefects": "Top defect types",
+      "status": "Status mix",
+      "orderStatus": "Job orders",
+      "equipStatus": "Equipment",
+      "equipNormal": "Normal",
+      "equipMaint": "Maintenance",
+      "equipStop": "Stopped",
+      "inventory": "Inventory actions",
+      "rate": "Defect rate",
+      "qty": "Qty",
+      "noData": "No data"
+    },
+    "skin": {
+      "control": "Control tower",
+      "departure": "Departure board",
+      "datawall": "Data wall",
+      "white": "White"
+    },
+    "tvMode": "TV mode",
+    "updatedAt": "Updated",
+    "pulse": {
+      "achieve": "Today's achievement",
+      "running": "Running orders",
+      "ofTotal": "/ {{total}}",
+      "defectRate": "Defect rate",
+      "attention": "Needs action",
+      "countUnit": "items",
+      "smdAchieve": "SMD achievement",
+      "productAchieve": "Product achievement",
+      "equipRun": "Equipment in use",
+      "equipOfTotal": "/ {{total}} units",
+      "genuine": "True defects"
+    },
+    "stream": {
+      "title": "Process flow",
+      "hint": "Click a stage to open its screen",
+      "receive": "Receiving",
+      "material": "Material",
+      "production": "Production",
+      "quality": "Quality",
+      "product": "Product",
+      "receiveHero": "Receipts today",
+      "materialHero": "Issues today",
+      "productionHero": "Actual / Plan",
+      "qualityHero": "True defects today",
+      "productHero": "Product actual / plan",
+      "countUnit": "txns",
+      "expired": "Expired lots",
+      "nearExpiry": "Near-expiry lots",
+      "shortage": "Below safety stock",
+      "hold": "Held / defective stock",
+      "orders": "Running · Waiting · Hold",
+      "equipRun": "Equipment running / total",
+      "defectWait": "Unhandled defects",
+      "repair": "Repair waiting · in repair",
+      "productHold": "Held/defective product",
+      "repairDone": "Repairs done today",
+      "stock": "Stock",
+      "smd": "SMD",
+      "stockHero": "Receipts today",
+      "smdHero": "SMD actual / plan",
+      "out": "Issues today",
+      "achieve": "Achievement",
+      "remaining": "Remaining qty"
+    },
+    "rhythm": {
+      "hourly": "Hourly rhythm (today)",
+      "good": "Good",
+      "defect": "Defect",
+      "noHourly": "No results yet today.",
+      "trend7": "Defect rate, last 7 days",
+      "noTrend": "No trend data",
+      "trendAchieve7": "Achievement, last 7 days"
+    },
+    "inspect": {
+      "title": "Today's inspections",
+      "daily": "Daily",
+      "periodic": "Periodic",
+      "pm": "Preventive",
+      "pass": "Pass",
+      "fail": "Fail",
+      "notDone": "Not done",
+      "noTarget": "No targets"
+    },
+    "attention": {
+      "open": "Open screen",
+      "noDetail": "Only a count is available here. Open the screen for details.",
+      "title": "Needs action",
+      "empty": "Nothing needs action right now.",
+      "equipStop": "{{count}} equipment stopped",
+      "inspectFail": "{{kind}} inspection failed: {{count}}",
+      "inspectNotDone": "{{kind}} inspection pending: {{count}}",
+      "defectWait": "{{count}} unhandled defects",
+      "expiredLot": "{{count}} expired lots",
+      "holdStock": "{{count}} held/defective stocks",
+      "holdOrder": "{{count}} job orders on hold",
+      "shortage": "{{count}} items below safety stock",
+      "nearExpiry": "{{count}} near-expiry lots",
+      "repairWait": "{{count}} repairs waiting",
+      "consumableShortage": "{{count}} consumables below safety stock",
+      "consumablePreAlert": "{{count}} consumables in pre-alert",
+      "equipDown": "{{count}} equipment down",
+      "solderNg": "{{count}} solder NG",
+      "mslNg": "{{count}} MSL NG",
+      "defectPending": "{{count}} defects awaiting judgment",
+      "defectUnrepaired": "{{count}} true defects not repaired",
+      "lowAchieveSmd": "{{count}} SMD lines below target",
+      "lowAchieveProduct": "{{count}} product lines below target"
+    },
+    "lineRails": {
+      "title": "Plan vs actual by line (today)",
+      "noPlan": "No plan",
+      "noTarget": "No line has a plan or actual today.",
+      "done": "Plan met",
+      "remaining": "Short"
+    }
   },
   "inventory": {
     "stock": {
@@ -3999,6 +4260,18 @@
       "confirmCount": "Confirm Count",
       "countSuccess": "Inventory count completed",
       "countFailed": "Inventory count failed"
+    },
+    "fgCount": {
+      "title": "FG Stocktake",
+      "scanBox": "Scan FG box barcode",
+      "qty": "Counted qty (partial box only; blank = book qty)",
+      "cancel": "Cancel mode",
+      "noActive": "No FG stocktake in progress",
+      "startOnPc": "Start the stocktake on the PC FG Stocktake screen",
+      "book": "Book",
+      "counted": "Counted",
+      "canceled": "Canceled",
+      "newBox": "Box not in book"
     },
     "wipCount": {
       "title": "WIP Stocktake",

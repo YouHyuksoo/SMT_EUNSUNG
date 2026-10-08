@@ -1,6 +1,7 @@
 /**
  * @file src/modules/inventory-query/wip-stocktake.service.ts
  * @description 공정(라인) 실사 — 실사 시작(장부 고정) · 바코드/품목 수량 입력 · 엑셀 업로드 · 일괄 조정
+ * PB 원본: PBL Library 10.5/w_mat_workstage_inventory_check_master.srw
  *
  * 초보자 가이드:
  * 1. **공정재고는 품목 단위다.** `IM_ITEM_WORKSTAGE_INVENTORY` 의 키는 품목코드+조직뿐이고
@@ -20,9 +21,11 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { DataSource, QueryRunner } from 'typeorm';
 import { TransactionService } from '../../shared/transaction.service';
+import { isStocktakePeriodAllowed, periodBoundsSql } from './close-period';
 import { namedBinds } from '../../common/utils/named-binds.util';
 import { clobBind } from '../../common/services/oracle.service';
 import { isStocktakeMonthAllowed, UPLOAD_MAX_ROWS } from './stocktake.service';
+import { assertWipMonthOpen } from './wip-close.service';
 
 type Row = Record<string, unknown>;
 const num = (v: unknown) => Number(v ?? 0);
@@ -56,8 +59,7 @@ const postedSql = `
     FROM IM_ITEM_WORKSTAGE_ISSUE s
    WHERE s.ORGANIZATION_ID = :organizationId
      AND s.LAST_MODIFY_BY = '${WIP_ADJUST_MARK}'
-     AND s.ISSUE_DATE >= TO_DATE(:yyyymm || '01', 'YYYYMMDD')
-     AND s.ISSUE_DATE <  ADD_MONTHS(TO_DATE(:yyyymm || '01', 'YYYYMMDD'), 1)
+     AND ${periodBoundsSql('s.ISSUE_DATE', ':yyyymm', ':organizationId')}
    GROUP BY s.ITEM_CODE`;
 
 /** 입력 합계를 실사표에 반영한다. 실사표에 없는 품목은 장부 0 으로 넣는다. */
@@ -137,8 +139,7 @@ export class WipStocktakeService {
                             - NVL((SELECT SUM(s.ISSUE_QTY) FROM IM_ITEM_WORKSTAGE_ISSUE s
                                     WHERE s.ITEM_CODE = c.ITEM_CODE AND s.ORGANIZATION_ID = c.ORGANIZATION_ID
                                       AND s.LAST_MODIFY_BY = '${WIP_ADJUST_MARK}'
-                                      AND s.ISSUE_DATE >= TO_DATE(c.CLOSE_YYYYMM || '01', 'YYYYMMDD')
-                                      AND s.ISSUE_DATE <  ADD_MONTHS(TO_DATE(c.CLOSE_YYYYMM || '01', 'YYYYMMDD'), 1)), 0) <> 0
+                                      AND ${periodBoundsSql('s.ISSUE_DATE', 'c.CLOSE_YYYYMM', 'c.ORGANIZATION_ID')}), 0) <> 0
                        THEN 1 ELSE 0 END) AS "pendingItems",
               (SELECT COUNT(*) FROM IM_ITEM_WS_INVE_CHECK_EXCEL e
                 WHERE e.CLOSE_YYYYMM = c.CLOSE_YYYYMM AND e.ORGANIZATION_ID = c.ORGANIZATION_ID) AS "entries",
@@ -167,10 +168,11 @@ export class WipStocktakeService {
 
   /** 실사 시작 — 지금 공정재고(≠ 0)를 실사표에 고정한다. `regenerate` 면 장부만 다시 고정. */
   async start(yyyymm: string, regenerate: boolean, organizationId: number, userId: string) {
-    if (!isStocktakeMonthAllowed(yyyymm)) {
-      throw new BadRequestException('실사는 이번 달 또는 지난달만 시작할 수 있습니다.');
+    if (!(await isStocktakePeriodAllowed(this.dataSource, yyyymm, organizationId, isStocktakeMonthAllowed))) {
+      throw new BadRequestException('실사는 이번 마감 기간 또는 직전 마감 기간만 시작할 수 있습니다.');
     }
     return this.tx.run(async (qr) => {
+      await assertWipMonthOpen(qr, yyyymm, organizationId);
       const exists = num(((await qr.query(
         `SELECT COUNT(*) AS "n" FROM IM_ITEM_WORKSTAGE_INV_CHECK
           WHERE CLOSE_YYYYMM = :yyyymm AND ORGANIZATION_ID = :organizationId`,
@@ -229,6 +231,7 @@ export class WipStocktakeService {
     }));
 
     return this.tx.run(async (qr) => {
+      await assertWipMonthOpen(qr, yyyymm, organizationId);
       const resolved = await this.resolve(qr, input, organizationId);
       const { entries, errors } = classifyWipRows(input, resolved);
       if (mode === 'scan' && errors.length) throw new BadRequestException(errors[0].reason + `: ${errors[0].value}`);
@@ -313,6 +316,7 @@ export class WipStocktakeService {
     const up = (v?: string) => v?.trim().toUpperCase() || null;
     const input = [{ rn: 1, barcode: up(row.barcode), lotNo: up(row.lotNo), itemCode: up(row.itemCode), qty: 0, lineCode: up(row.lineCode) }];
     return this.tx.run(async (qr) => {
+      await assertWipMonthOpen(qr, yyyymm, organizationId);
       const resolved = await this.resolve(qr, input, organizationId);
       const { entries, errors } = classifyWipRows(input, resolved);
       if (errors.length) throw new BadRequestException(errors[0].reason + `: ${errors[0].value}`);
@@ -340,6 +344,7 @@ export class WipStocktakeService {
   /** 일괄 조정 — 품목별 (장부 − 실사) 에서 이미 넣은 조정을 빼고 남은 만큼 공정출고로 넣는다. */
   async adjustAll(yyyymm: string, organizationId: number, userId: string) {
     return this.tx.run(async (qr) => {
+      await assertWipMonthOpen(qr, yyyymm, organizationId);
       const rows = (await qr.query(
         `SELECT c.ITEM_CODE AS "itemCode",
                 NVL(c.INVENTORY_QTY, 0) - NVL(c.CHECK_INVENTORY_QTY, 0) - NVL(a.POSTED, 0) AS "remaining"

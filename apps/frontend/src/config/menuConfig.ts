@@ -17,10 +17,12 @@ import {
   ClipboardList,
   FileText,
   BadgeCheck,
+  CalendarCheck,
   Database,
   GitBranch,
   Grip,
   Hammer,
+  Monitor,
   Network,
   Package,
   ShoppingCart,
@@ -67,6 +69,18 @@ export interface MenuConfigItem {
 
 /** 사이드바 메뉴 설정 배열 */
 export const menuConfig: MenuConfigItem[] = [
+  {
+    code: "MONITORING",
+    labelKey: "menu.monitoring",
+    icon: Monitor,
+    children: [
+      { code: "MON_PROD_BOARD", labelKey: "menu.monitoring.prodBoard", path: "/monitoring/production-board" },
+      { code: "MON_QUALITY_BOARD", labelKey: "menu.monitoring.qualityBoard", path: "/monitoring/quality-board" },
+      { code: "MON_INV_BOARD", labelKey: "menu.monitoring.invBoard", path: "/monitoring/inventory-board" },
+      { code: "MON_JOB_BOARD", labelKey: "menu.monitoring.jobBoard", path: "/monitoring/job-order-board" },
+      { code: "MON_EQUIP_BOARD", labelKey: "menu.monitoring.equipBoard", path: "/monitoring/equipment-board" },
+    ],
+  },
   {
     code: "MASTER",
     labelKey: "menu.master",
@@ -161,9 +175,6 @@ export const menuConfig: MenuConfigItem[] = [
       { code: "MAT_RECEIPT_ISSUE_LEDGER", labelKey: "menu.material.receiptIssueLedger", path: "/material/receipt-issue-ledger", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_ledger_report" },
       { code: "MAT_CURRENT_INVENTORY", labelKey: "menu.material.currentInventory", path: "/material/current-inventory", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_current_inventory_master" },
       { code: "INV_TOTAL", labelKey: "menu.material.totalInventory", path: "/inventory-query/total-inventory", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_total_inventory_query" },
-      { code: "INV_CLOSE", labelKey: "menu.material.inventoryClose", path: "/inventory-query/inventory-close", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_inventory_close_report" },
-      { code: "INV_CHECK", labelKey: "menu.material.inventoryCheck", path: "/inventory-query/inventory-check", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_inventory_check_master" },
-      { code: "INV_BARCODE_CHECK", labelKey: "menu.material.barcodeCheck", path: "/inventory-query/barcode-check", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_barcode_check_master" },
       { code: "MAT_WORKSTAGE_INVENTORY", labelKey: "menu.material.workstageInventory", path: "/material/workstage-inventory", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_workstage_inventory_query", pbEvidence: "apps/backend/src/modules/material/controllers/workstage-inventory.controller.ts" },
       { code: "MAT_RECEIPT_CANCEL", labelKey: "menu.material.receiptCancel", path: "/material/receipt-cancel", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_receipt_cancel_master" },
       { code: "WH_BAKING_STOCK", labelKey: "menu.warehouse.bakingStock", path: "/warehouse/baking-stock", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_baking_scan_query" },
@@ -258,7 +269,6 @@ export const menuConfig: MenuConfigItem[] = [
       { code: "PLN_MAGAZINE_LABEL", labelKey: "menu.magazineLabel", path: "/process-transaction/magazine-label", pbLinkStatus: "powerbuilder", pbWindow: "w_pln_product_magazine_label_master2" },
       { code: "PLN_MAGAZINE_SPLIT", labelKey: "menu.magazineSplit", path: "/process-transaction/magazine-split", pbLinkStatus: "powerbuilder", pbWindow: "w_pln_product_magazine_label_split_master" },
       { code: "PLN_MAGAZINE_PID", labelKey: "menu.magazinePid", path: "/process-transaction/magazine-pid", pbLinkStatus: "powerbuilder", pbWindow: "w_pln_product_barcode_create_master" },
-      { code: "PLN_WIP_STOCKTAKE", labelKey: "menu.wipStocktake", path: "/process-transaction/wip-stocktake", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_workstage_inventory_check_master", pbEvidence: "apps/backend/src/modules/inventory-query/wip-stocktake.service.ts" },
     ],
   },
   {
@@ -281,6 +291,22 @@ export const menuConfig: MenuConfigItem[] = [
       { code: "PRD_FG_MODEL_RECEIPT", labelKey: "menu.productMgmt.fgModelReceipt", path: "/product/fg-model-receipt", pbLinkStatus: "powerbuilder", pbWindow: "w_prd_product_fg_4_model_receipt" },
       { code: "PRD_FG_ISSUE", labelKey: "menu.productMgmt.fgIssue", path: "/product/fg-issue", pbLinkStatus: "powerbuilder", pbWindow: "w_prd_product_fg_issue" },
       { code: "PRD_FG_MODEL_ISSUE", labelKey: "menu.productMgmt.fgModelIssue", path: "/product/fg-model-issue", pbLinkStatus: "powerbuilder", pbWindow: "w_prd_product_fg_4_model_issue" },
+    ],
+  },
+  {
+    code: "INVENTORY_CLOSE",
+    labelKey: "menu.inventoryClose",
+    icon: CalendarCheck,
+    // 자재·공정·제품의 재고마감과 실사(조정 포함), 마감 기간 설정을 한곳에 모은다
+    children: [
+      { code: "SYS_INV_CLOSE_DATE", labelKey: "menu.system.inventoryCloseDate", path: "/system/inventory-close-date", pbLinkStatus: "powerbuilder", pbWindow: "w_system_inventory_close_date_setup" },
+      { code: "INV_CLOSE", labelKey: "menu.material.inventoryClose", path: "/inventory-query/inventory-close", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_inventory_close_report" },
+      { code: "INV_CHECK", labelKey: "menu.material.inventoryCheck", path: "/inventory-query/inventory-check", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_inventory_check_master" },
+      { code: "INV_BARCODE_CHECK", labelKey: "menu.material.barcodeCheck", path: "/inventory-query/barcode-check", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_barcode_check_master" },
+      { code: "PLN_WIP_STOCKTAKE", labelKey: "menu.wipStocktake", path: "/process-transaction/wip-stocktake", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_workstage_inventory_check_master", pbEvidence: "apps/backend/src/modules/inventory-query/wip-stocktake.service.ts" },
+      { code: "PLN_WIP_CLOSE", labelKey: "menu.wipClose", path: "/process-transaction/wip-close", pbLinkStatus: "web-native" },
+      { code: "PRD_FG_STOCKTAKE", labelKey: "menu.productMgmt.fgStocktake", path: "/product/fg-stocktake", pbLinkStatus: "web-native" },
+      { code: "PRD_FG_CLOSE", labelKey: "menu.productMgmt.fgClose", path: "/product/fg-close", pbLinkStatus: "web-native" },
     ],
   },
   {

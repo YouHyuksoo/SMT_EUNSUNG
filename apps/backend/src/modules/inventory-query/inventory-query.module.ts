@@ -5,7 +5,7 @@
  * 화면 ↔ 서비스 대응:
  *   269 총재고조회         w_mat_total_inventory_query    → TotalInventoryService
  *   271 자재재고마감       w_mat_inventory_close_report   → InventoryCloseService
- *   272 자재재고조사       w_mat_inventory_check_master   → InventoryCheckService (쓰기)
+ *   272 자재재고실사       w_mat_inventory_check_master   → InventoryCheckService (쓰기)
  *   274 자재바코드스캔실사 w_mat_barcode_check_master     → InventoryCheckService (조회)
  *
  * **왜 `modules/inventory` 가 아닌가.** 그 폴더에는 이미 창고·로케이션 기준정보용
@@ -20,6 +20,10 @@ import { Module } from '@nestjs/common';
 import { InventoryCheckService } from './inventory-check.service';
 import { StocktakeService } from './stocktake.service';
 import { WipStocktakeService } from './wip-stocktake.service';
+import { FgStocktakeService } from './fg-stocktake.service';
+import { FgCloseService } from './fg-close.service';
+import { WipCloseService } from './wip-close.service';
+import { CloseDateService } from './close-date.service';
 import { InventoryCloseService } from './inventory-close.service';
 import { TotalInventoryService } from './total-inventory.service';
 import {
@@ -28,6 +32,10 @@ import {
   InventoryCloseController,
   StocktakeController,
   WipStocktakeController,
+  FgStocktakeController,
+  FgCloseController,
+  WipCloseController,
+  CloseDateController,
   TotalInventoryController,
 } from './inventory-query.controllers';
 
@@ -39,6 +47,10 @@ import {
     BarcodeCheckController,
     StocktakeController,
     WipStocktakeController,
+    FgStocktakeController,
+    FgCloseController,
+    WipCloseController,
+    CloseDateController,
   ],
   providers: [
     TotalInventoryService,
@@ -46,6 +58,10 @@ import {
     InventoryCheckService,
     StocktakeService,
     WipStocktakeService,
+    FgStocktakeService,
+    FgCloseService,
+    WipCloseService,
+    CloseDateService,
   ],
 })
 export class InventoryQueryModule {}

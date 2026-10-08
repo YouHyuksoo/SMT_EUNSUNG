@@ -1,6 +1,6 @@
 /**
  * @file src/modules/inventory-query/inventory-check.service.ts
- * @description 272 자재재고조사 (**쓰기**) · 274 자재바코드스캔실사 (조회) —
+ * @description 272 자재재고실사 (**쓰기**) · 274 자재바코드스캔실사 (조회) —
  *              PB `w_mat_inventory_check_master` · `w_mat_barcode_check_master` 이식
  *
  * 초보자 가이드:
@@ -30,6 +30,7 @@ import {
   InventoryCheckQueryDto,
 } from './inventory-query.dto';
 import { affectedRows } from '../../common/utils/affected-rows.util';
+import { periodBoundsSql } from './close-period';
 import { namedBinds } from '../../common/utils/named-binds.util';
 
 type Row = Record<string, unknown>;
@@ -59,7 +60,7 @@ export class InventoryCheckService {
     private readonly tx: TransactionService,
   ) {}
 
-  // ───────────────────────────────── 272 재고조사
+  // ───────────────────────────────── 272 재고실사
 
   /**
    * 실사 대상·결과 (PB `d_mat_inventory_check_lst`).
@@ -88,8 +89,7 @@ export class InventoryCheckService {
               (SELECT -SUM(s.ISSUE_QTY) FROM IM_ITEM_ISSUE s
                 WHERE s.ISSUE_ACCOUNT = 'M009' AND s.MATERIAL_MFS = c.MATERIAL_MFS
                   AND s.ITEM_CODE = c.ITEM_CODE AND s.ORGANIZATION_ID = c.ORGANIZATION_ID
-                  AND s.ISSUE_DATE >= TO_DATE(c.CLOSE_YYYYMM || '01', 'YYYYMMDD')
-                  AND s.ISSUE_DATE <  ADD_MONTHS(TO_DATE(c.CLOSE_YYYYMM || '01', 'YYYYMMDD'), 1)
+                  AND ${periodBoundsSql('s.ISSUE_DATE', 'c.CLOSE_YYYYMM', 'c.ORGANIZATION_ID')}
               )                          AS "adjustedQty",
               CASE WHEN EXISTS (SELECT 1 FROM IM_ITEM_INVENTORY_CHECK_BCD b
                                  WHERE b.CHECK_YYYYMM = c.CLOSE_YYYYMM AND b.LOT_NO = c.MATERIAL_MFS
@@ -152,8 +152,7 @@ export class InventoryCheckService {
          LEFT JOIN ID_ITEM i
                 ON i.ITEM_CODE = s.ITEM_CODE
                AND i.ORGANIZATION_ID = s.ORGANIZATION_ID
-        WHERE s.ISSUE_DATE >= TO_DATE(:yyyymm || '01', 'YYYYMMDD')
-          AND s.ISSUE_DATE <  ADD_MONTHS(TO_DATE(:yyyymm || '01', 'YYYYMMDD'), 1)
+        WHERE ${periodBoundsSql('s.ISSUE_DATE', ':yyyymm', ':organizationId')}
           AND s.ITEM_CODE LIKE :itemCode ESCAPE '\\'
           -- 실사 조정만 본다 (PB 고정조건).
           AND s.ISSUE_ACCOUNT = '${ADJUST.issueAccount}'

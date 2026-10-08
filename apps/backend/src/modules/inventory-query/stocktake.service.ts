@@ -23,6 +23,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { DataSource, QueryRunner } from 'typeorm';
 import { TransactionService } from '../../shared/transaction.service';
 import { clobBind } from '../../common/services/oracle.service';
+import { isStocktakePeriodAllowed, periodBoundsSql } from './close-period';
 import { namedBinds } from '../../common/utils/named-binds.util';
 import { assertMonthOpen, postAdjustment } from './inventory-check.service';
 
@@ -175,8 +176,8 @@ export class StocktakeService {
    * 장부를 다시 고정하고, 그동안 찍은 스캔은 지우지 않고 다시 반영한다.
    */
   async start(yyyymm: string, regenerate: boolean, organizationId: number, userId: string) {
-    if (!isStocktakeMonthAllowed(yyyymm)) {
-      throw new BadRequestException('실사는 이번 달 또는 지난달만 시작할 수 있습니다.');
+    if (!(await isStocktakePeriodAllowed(this.dataSource, yyyymm, organizationId, isStocktakeMonthAllowed))) {
+      throw new BadRequestException('실사는 이번 마감 기간 또는 직전 마감 기간만 시작할 수 있습니다.');
     }
     return this.tx.run(async (qr) => {
       await assertMonthOpen(qr, yyyymm, organizationId);
@@ -191,8 +192,7 @@ export class StocktakeService {
       const adjusted = num(((await qr.query(
         `SELECT COUNT(*) AS "n" FROM IM_ITEM_ISSUE
           WHERE ISSUE_ACCOUNT = 'M009' AND ORGANIZATION_ID = :organizationId
-            AND ISSUE_DATE >= TO_DATE(:yyyymm || '01', 'YYYYMMDD')
-            AND ISSUE_DATE <  ADD_MONTHS(TO_DATE(:yyyymm || '01', 'YYYYMMDD'), 1)`,
+            AND ${periodBoundsSql('ISSUE_DATE', ':yyyymm', ':organizationId')}`,
         namedBinds({ yyyymm, organizationId }),
       )) as Row[])[0]?.n);
       if (adjusted) {
@@ -236,7 +236,7 @@ export class StocktakeService {
       throw new BadRequestException('수량은 0 이상이어야 합니다.');
     }
     const session = await this.active(organizationId);
-    if (!session) throw new BadRequestException('진행 중인 실사가 없습니다. 자재재고조사에서 실사를 시작하세요.');
+    if (!session) throw new BadRequestException('진행 중인 실사가 없습니다. 자재재고실사에서 실사를 시작하세요.');
     const yyyymm = session.yyyymm;
 
     return this.tx.run(async (qr) => {
@@ -443,8 +443,7 @@ export class StocktakeService {
             AND NOT EXISTS (SELECT 1 FROM IM_ITEM_ISSUE s
                              WHERE s.ISSUE_ACCOUNT = 'M009' AND s.MATERIAL_MFS = c.MATERIAL_MFS
                                AND s.ORGANIZATION_ID = c.ORGANIZATION_ID
-                               AND s.ISSUE_DATE >= TO_DATE(:yyyymm || '01', 'YYYYMMDD')
-                               AND s.ISSUE_DATE <  ADD_MONTHS(TO_DATE(:yyyymm || '01', 'YYYYMMDD'), 1))`,
+                               AND ${periodBoundsSql('s.ISSUE_DATE', ':yyyymm', ':organizationId')})`,
         namedBinds({ yyyymm, organizationId, itemCode, lotNo }),
       );
       return { yyyymm, itemCode, lotNo };
@@ -466,8 +465,7 @@ export class StocktakeService {
            LEFT JOIN (SELECT s.MATERIAL_MFS, s.ITEM_CODE, -SUM(s.ISSUE_QTY) AS POSTED
                         FROM IM_ITEM_ISSUE s
                        WHERE s.ISSUE_ACCOUNT = 'M009' AND s.ORGANIZATION_ID = :organizationId
-                         AND s.ISSUE_DATE >= TO_DATE(:yyyymm || '01', 'YYYYMMDD')
-                         AND s.ISSUE_DATE <  ADD_MONTHS(TO_DATE(:yyyymm || '01', 'YYYYMMDD'), 1)
+                         AND ${periodBoundsSql('s.ISSUE_DATE', ':yyyymm', ':organizationId')}
                        GROUP BY s.MATERIAL_MFS, s.ITEM_CODE) a
                   ON a.MATERIAL_MFS = c.MATERIAL_MFS AND a.ITEM_CODE = c.ITEM_CODE
           WHERE c.CLOSE_YYYYMM = :yyyymm AND c.ORGANIZATION_ID = :organizationId

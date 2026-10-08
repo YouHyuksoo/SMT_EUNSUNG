@@ -262,6 +262,7 @@
     "master.salePrice": "제품판매단가관리",
     "matInventory": "자재재고관리",
     "productInventory": "제품재고관리",
+    "inventoryClose": "재고마감",
     "inventory": "재고관리",
     "inventory.matStock": "자재재고현황조회",
     "inventory.stock": "총재고현황조회",
@@ -283,6 +284,7 @@
     "magazineSplit": "매거진라벨 분할",
     "magazinePid": "매거진-PID 매핑관리",
     "wipStocktake": "공정실사",
+    "wipClose": "공정재고마감",
     "productMgmt": "제품수불관리",
     "productMgmt.receive": "제품입고관리",
     "productMgmt.receiptCancel": "제품입고취소",
@@ -296,6 +298,8 @@
     "productMgmt.fgModelReceipt": "제품입고관리(모델단위)",
     "productMgmt.fgIssue": "제품출하관리",
     "productMgmt.fgModelIssue": "제품출고관리(모델단위)",
+    "productMgmt.fgStocktake": "제품실사",
+    "productMgmt.fgClose": "제품재고마감",
     "material.request": "출고요청관리",
     "material.requestOther": "기타출고요청",
     "material.issue": "자재출고관리",
@@ -462,6 +466,7 @@
     "system.erView": "ER VIEW",
     "system.menuCategory": "메뉴 카테고리 관리",
     "system.improvementRequests": "개선요청 관리",
+    "system.inventoryCloseDate": "재고마감일자설정",
     "oee": "OEE 관리",
     "oee.dashboard": "공정별 OEE 종합",
     "oee.drilldown": "리소스 드릴다운",
@@ -533,7 +538,7 @@
     "material.currentInventory": "현재고조회",
     "material.totalInventory": "총재고조회",
     "material.inventoryClose": "자재재고마감",
-    "material.inventoryCheck": "자재재고조사",
+    "material.inventoryCheck": "자재재고실사",
     "material.barcodeCheck": "자재바코드스캔실사",
     "material.workstageInventory": "공정재고조회",
     "jig": "지그관리",
@@ -578,7 +583,12 @@
     "purchase.departure": "자재출발관리",
     "purchase.arrival": "자재도착관리",
     "purchase.requirement": "자재소요량관리",
-    "purchase.orderPlan": "자재발주계획"
+    "purchase.orderPlan": "자재발주계획",
+    "monitoring.prodBoard": "생산현황 보드",
+    "monitoring.qualityBoard": "품질 보드",
+    "monitoring.invBoard": "재고 보드",
+    "monitoring.jobBoard": "작업지시 보드",
+    "monitoring.equipBoard": "설비가동 보드"
   },
   "header": {
     "theme": "테마",
@@ -666,9 +676,101 @@
     "hideDetail": "상세 숨기기",
     "close": "닫기"
   },
+  "monitoring": {
+    "managerCall": {
+      "title": "관리자호출",
+      "ack": "응대 완료",
+      "noRemark": "내용 없음",
+      "collapse": "관리자호출 목록 접기",
+      "expand": "관리자호출 목록 펼치기",
+      "ackFailed": "응대 처리에 실패했습니다."
+    },
+    "board": {
+      "updatedAt": "갱신",
+      "noOrders": "표시할 생산계획이 없습니다.",
+      "noData": "데이터가 없습니다.",
+      "good": "양품",
+      "defect": "불량",
+      "hourlyTitle": "시간대별 실적 (금일 작업일)",
+      "todayOrders": "금일 생산계획",
+      "production": {
+        "title": "생산현황 보드"
+      },
+      "kpi": {
+        "planQty": "총 계획",
+        "goodQty": "총 실적",
+        "defectQty": "불량 수량",
+        "achieveRate": "달성률",
+        "running": "진행중 계획",
+        "total": "전체"
+      },
+      "col": {
+        "orderNo": "지시번호",
+        "item": "품목",
+        "process": "구분",
+        "plan": "계획",
+        "good": "실적",
+        "defect": "불량",
+        "achieve": "달성률",
+        "status": "상태",
+        "line": "라인"
+      },
+      "quality": {
+        "title": "품질 모니터링 보드",
+        "totalQty": "판정 건수",
+        "defectRate": "진성불량률",
+        "repairReceived": "수리 대기",
+        "repairInRepair": "재수리(불합격)",
+        "repairCompletedToday": "금일 수리완료",
+        "byProcessTitle": "라인별 판정/진성불량 (금일)",
+        "topDefectsTitle": "진성불량 사유 TOP 10 (금일)",
+        "dailyTrendTitle": "최근 7일 진성불량률 추이",
+        "defectQty": "진성불량 건수"
+      },
+      "inventory": {
+        "title": "재고 모니터링 보드",
+        "shortageTitle": "안전재고 미달",
+        "noShortage": "안전재고 미달 자재가 없습니다.",
+        "currentQty": "현재고",
+        "safetyStock": "안전재고",
+        "shortageQty": "부족수량",
+        "expired": "기한초과 LOT",
+        "nearExpiry": "기한임박 LOT",
+        "hold": "재고통제 LOT",
+        "todayInOut": "금일 입·출고 건수",
+        "todayInOutSub": "입고 / 불출",
+        "expiryTitle": "솔더·MSL 기한 초과·임박 LOT",
+        "noExpiry": "기한 문제 솔더·MSL LOT가 없습니다.",
+        "daysLeft": "D-{{days}}",
+        "expiredDays": "{{days}}일 초과",
+        "holdTitle": "재고통제 (보류·불량) LOT",
+        "noHold": "통제 중인 재고가 없습니다.",
+        "kindMaterial": "자재",
+        "kindProduct": "제품",
+        "reasonHold": "보류",
+        "reasonIqcFail": "IQC 불합격",
+        "reasonIqcHold": "IQC 보류",
+        "reasonDefect": "불량"
+      },
+      "jobOrder": {
+        "title": "작업지시 진행 보드",
+        "defectRate": "불량률",
+        "remaining": "잔량",
+        "continued": "계속",
+        "more": "외 {{n}}건"
+      },
+      "equipment": {
+        "state": {
+          "NORMAL": "정상",
+          "STOP": "정지(비가동)",
+          "UNUSED": "미사용"
+        }
+      }
+    }
+  },
   "dashboard": {
     "title": "대시보드",
-    "subtitle": "실시간 생산 현황을 한눈에 확인하세요.",
+    "subtitle": "SMT 라인의 생산·설비·솔더/MSL·불량 판정 현황을 한 화면에서 확인합니다.",
     "equipStatus": "설비 현황",
     "equipInUse": "사용중",
     "equipDown": "비가동",
@@ -711,7 +813,166 @@
       "actual": "실적",
       "noData": "표시할 데이터가 없습니다."
     },
-    "loadFailed": "대시보드 조회에 실패했습니다."
+    "loadFailed": "대시보드 조회에 실패했습니다.",
+    "layout": {
+      "group": "형태",
+      "cockpit": "콕핏",
+      "board": "전광판",
+      "map": "노선도",
+      "charts": "차트"
+    },
+    "skinGroup": "색상",
+    "board": {
+      "orders": "오늘 생산 계획 전광판",
+      "orderNo": "지시번호",
+      "item": "품목",
+      "where": "공정 · 구분",
+      "qty": "실적 / 계획",
+      "progress": "진행",
+      "status": "상태",
+      "noOrders": "오늘 작업지시가 없습니다.",
+      "equipRun": "설비 가동",
+      "page": "{{page}} / {{count}}",
+      "lines": "라인별 계획 대비 실적 (오늘)",
+      "code": "코드",
+      "name": "품목 / 라인",
+      "noRows": "오늘 생산 계획이 없습니다.",
+      "materialNg": "솔더·MSL NG",
+      "defectJudge": "불량 판정대기",
+      "state": {
+        "RUNNING": "진행",
+        "DONE": "완료",
+        "WAITING": "대기",
+        "HOLD": "보류"
+      }
+    },
+    "map": {
+      "flowLine": "공정 라인",
+      "equipLine": "설비 라인",
+      "hint": "역을 누르면 그 단계의 조치만 보입니다. 다시 누르면 전체",
+      "station": "선택 역",
+      "all": "전체",
+      "pressure": "압력"
+    },
+    "charts": {
+      "hourly": "시간대별 실적 (금일)",
+      "byProcess": "공정별 불량률",
+      "topDefects": "상위 불량 유형",
+      "status": "상태 분포",
+      "orderStatus": "작업지시",
+      "equipStatus": "설비",
+      "equipNormal": "정상",
+      "equipMaint": "보전중",
+      "equipStop": "정지",
+      "inventory": "재고 조치 항목",
+      "rate": "불량률",
+      "qty": "수량",
+      "noData": "데이터 없음"
+    },
+    "skin": {
+      "control": "관제탑",
+      "departure": "출발 전광판",
+      "datawall": "데이터 월",
+      "white": "화이트"
+    },
+    "tvMode": "TV 모드",
+    "updatedAt": "갱신",
+    "pulse": {
+      "achieve": "오늘 달성률",
+      "running": "진행 지시",
+      "ofTotal": "/ {{total}}건",
+      "defectRate": "불량률",
+      "attention": "조치 필요",
+      "countUnit": "건",
+      "smdAchieve": "SMD 달성률",
+      "productAchieve": "제품 달성률",
+      "equipRun": "설비 사용중",
+      "equipOfTotal": "/ {{total}}대",
+      "genuine": "진성 불량"
+    },
+    "stream": {
+      "title": "공정 흐름",
+      "hint": "단계를 누르면 해당 화면으로 이동",
+      "receive": "입고",
+      "material": "자재",
+      "production": "생산",
+      "quality": "품질",
+      "product": "제품",
+      "receiveHero": "금일 입고 건수",
+      "materialHero": "금일 출고 건수",
+      "productionHero": "실적 / 계획",
+      "qualityHero": "오늘 진성 불량",
+      "productHero": "제품 실적 / 계획",
+      "countUnit": "건",
+      "expired": "기한초과 LOT",
+      "nearExpiry": "기한임박 LOT",
+      "shortage": "안전재고 미달",
+      "hold": "보류·불량 재고",
+      "orders": "진행 · 대기 · 보류",
+      "equipRun": "설비 가동 / 전체",
+      "defectWait": "불량 미처리",
+      "repair": "수리 대기 · 수리중",
+      "productHold": "제품 보류·불량",
+      "repairDone": "금일 수리완료",
+      "stock": "재고",
+      "smd": "SMD",
+      "stockHero": "금일 입고 건수",
+      "smdHero": "SMD 실적 / 계획",
+      "out": "금일 출고 건수",
+      "achieve": "달성률",
+      "remaining": "잔여 수량"
+    },
+    "rhythm": {
+      "hourly": "시간대별 리듬 (금일)",
+      "good": "양품",
+      "defect": "불량",
+      "noHourly": "금일 실적이 아직 없습니다.",
+      "trend7": "최근 7일 불량률",
+      "noTrend": "추이 데이터 없음",
+      "trendAchieve7": "최근 7일 달성률"
+    },
+    "inspect": {
+      "title": "오늘 점검",
+      "daily": "일상점검",
+      "periodic": "정기점검",
+      "pm": "예방보전",
+      "pass": "합격",
+      "fail": "불합격",
+      "notDone": "미실시",
+      "noTarget": "대상 없음"
+    },
+    "attention": {
+      "open": "화면에서 처리",
+      "noDetail": "건수만 집계되는 항목입니다. 화면에서 상세를 확인하세요.",
+      "title": "조치 필요",
+      "empty": "지금 처리할 항목이 없습니다.",
+      "equipStop": "설비 정지 {{count}}대",
+      "inspectFail": "{{kind}} 불합격 {{count}}건",
+      "inspectNotDone": "{{kind}} 미실시 {{count}}건",
+      "defectWait": "불량 미처리 {{count}}건",
+      "expiredLot": "기한초과 LOT {{count}}건",
+      "holdStock": "보류·불량 재고 {{count}}건",
+      "holdOrder": "보류 작업지시 {{count}}건",
+      "shortage": "안전재고 미달 {{count}}품목",
+      "nearExpiry": "기한임박 LOT {{count}}건",
+      "repairWait": "수리 대기 {{count}}건",
+      "consumableShortage": "소모품 안전재고 미달 {{count}}품목",
+      "consumablePreAlert": "소모품 재고 사전경고 {{count}}품목",
+      "equipDown": "설비 비가동 {{count}}대",
+      "solderNg": "솔더 NG {{count}}건",
+      "mslNg": "MSL NG {{count}}건",
+      "defectPending": "불량 판정대기 {{count}}건",
+      "defectUnrepaired": "진성 불량 미수리 {{count}}건",
+      "lowAchieveSmd": "SMD 라인 달성률 저조 {{count}}개",
+      "lowAchieveProduct": "제품 라인 달성률 저조 {{count}}개"
+    },
+    "lineRails": {
+      "title": "라인별 계획 대비 실적 (오늘)",
+      "noPlan": "계획 없음",
+      "noTarget": "오늘 계획/실적이 있는 라인이 없습니다.",
+      "done": "계획 달성",
+      "remaining": "미달"
+    }
   },
   "inventory": {
     "stock": {
@@ -4001,6 +4262,18 @@
       "confirmCount": "실사확인",
       "countSuccess": "재고실사가 완료되었습니다",
       "countFailed": "재고실사에 실패했습니다"
+    },
+    "fgCount": {
+      "title": "제품 재고실사",
+      "scanBox": "제품 박스 바코드 스캔",
+      "qty": "센 수량 (쓰다 만 박스만, 비우면 장부 수량)",
+      "cancel": "취소 모드",
+      "noActive": "진행 중인 제품 실사가 없습니다",
+      "startOnPc": "PC 제품실사 화면에서 실사를 시작하세요",
+      "book": "장부",
+      "counted": "실사",
+      "canceled": "취소함",
+      "newBox": "장부에 없던 박스"
     },
     "wipCount": {
       "title": "공정 실사",

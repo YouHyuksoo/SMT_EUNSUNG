@@ -2,7 +2,7 @@
 
 /**
  * @file src/app/pda/material/inventory-count/page.tsx
- * @description 자재 재고실사 PDA — PC(자재재고조사)에서 시작한 바코드 실사에 릴 바코드를 찍는다
+ * @description 자재 재고실사 PDA — PC(자재재고실사)에서 시작한 바코드 실사에 릴 바코드를 찍는다
  *
  * 초보자 가이드:
  * 1. PC 에서 실사를 시작해야 스캔할 수 있다 (없으면 안내만 나온다).

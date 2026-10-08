@@ -20,6 +20,7 @@ import { affectedRows } from '../../common/utils/affected-rows.util';
 import { namedBinds } from '../../common/utils/named-binds.util';
 import { closeMonth } from './inventory-close.calc';
 import { closeAggregateSql } from './inventory-close.sql';
+import { getClosePeriod, periodEnded, shiftMonth } from './close-period';
 
 /** 마감 한 줄 (품목·창고의 한 달) */
 export interface CloseLine {
@@ -72,12 +73,7 @@ export interface CloseStatus {
 
 const num = (v: unknown) => Number(v ?? 0) || 0;
 
-/** YYYYMM ± n 개월 */
-export const shiftMonth = (yyyymm: string, n: number) => {
-  const d = new Date(Number(yyyymm.slice(0, 4)), Number(yyyymm.slice(4, 6)) - 1 + n, 1);
-  return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}`;
-};
-const firstDay = (yyyymm: string) => `${yyyymm.slice(0, 4)}-${yyyymm.slice(4, 6)}-01`;
+export { shiftMonth };
 
 @Injectable()
 export class InventoryCloseService {
@@ -97,7 +93,8 @@ export class InventoryCloseService {
     );
     const lastClosed = row?.LAST_CLOSED ?? null;
     const closed = row?.CLOSED_AT != null;
-    const monthEnded = new Date() >= new Date(`${firstDay(shiftMonth(yyyymm, 1))}T00:00:00+09:00`);
+    const period = await getClosePeriod(this.dataSource, yyyymm, organizationId);
+    const monthEnded = periodEnded(period);
 
     let openingSource: CloseStatus['openingSource'] = null;
     let reason: string | null = null;
@@ -112,7 +109,7 @@ export class InventoryCloseService {
     } else {
       reason = `${shiftMonth(lastClosed, 1)} 을 먼저 마감하세요.`;
     }
-    if (!reason && !monthEnded) reason = '그 달이 끝난 뒤에 마감할 수 있습니다. (미리보기는 됩니다)';
+    if (!reason && !monthEnded) reason = `마감 기간(${period.start} ~ ${period.end})이 끝난 뒤에 마감할 수 있습니다. (미리보기는 됩니다)`;
 
     return {
       yyyymm,
@@ -251,10 +248,11 @@ export class InventoryCloseService {
     openingSource: 'ledger' | 'previousClose',
     organizationId: number,
   ): Promise<CloseLine[]> {
+    const period = await getClosePeriod(this.dataSource, yyyymm, organizationId);
     const binds: Record<string, unknown> = {
       organizationId,
-      startDate: firstDay(yyyymm),
-      endDate: firstDay(shiftMonth(yyyymm, 1)),
+      startDate: period.start,
+      endDate: period.endExclusive,
     };
     if (openingSource === 'previousClose') binds.prevYyyymm = shiftMonth(yyyymm, -1);
     const rows = await this.dataSource.query<Record<string, unknown>[]>(

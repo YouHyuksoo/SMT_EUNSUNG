@@ -1,187 +1,167 @@
-"use client";
+﻿"use client";
 
 /**
  * @file src/app/(authenticated)/dashboard/page.tsx
- * @description 대시보드 페이지 — 현황 카드 4개 + 요약 차트 4개 + 7일 추이/라인별 차트
+ * @description 대시보드 — 형태(레이아웃) × 색상(스킨) 두 축으로 갈아입는다.
+ *
+ *   형태 4종 (components/layouts.ts)
+ *     콕핏   CockpitLayout : 오늘의 한 줄 → 공정 흐름 리본 → 리듬/라인 레일 → 조치 큐 (기본)
+ *     전광판 BoardLayout   : 초대형 숫자 + 오늘 생산 계획 전광판(자동 순환) + 조치 큐
+ *     노선도 FlowMapLayout : 공정/설비 라인의 역을 눌러 그 단계의 조치만 본다
+ *     차트   ChartsLayout  : 설비·생산·솔더/MSL·불량 판정 차트 + 7일 추이·라인별 실적 + 보드 차트(recharts)
+ *   색상 3종+화이트 (components/skins.ts) — A 관제탑 / B 출발 전광판 / C 데이터 월 / D 화이트. CSS 변수 오버라이드.
+ *
+ * 두 축은 독립이라 어떤 조합도 동작한다. 선택은 각각 localStorage(dashboard:layout / dashboard:skin)에 남고,
+ * TV 모드는 모니터링 보드와 같은 전체화면 오버레이다.
  *
  * 초보자 가이드:
- * 1. API: GET /dashboard/summary?date=YYYY-MM-DD — 카드별 출처는 백엔드 dashboard.service.ts 머리말 참고
- * 2. 설비·솔더·MSL 은 조회 시점 현재 상태, 생산·불량은 date 하루 기준이다
- * 2-1. GET /dashboard/insights?date=YYYY-MM-DD — 7일 추이(trend)·라인별 계획/실적(lines), 차트는 components/DashboardCharts.tsx
- * 3. 설비 일상/정기점검·PM 카드는 은성 DB에 데이터가 없어 두지 않는다
+ * - 데이터/갱신은 useDashboardData(60초, 보이는 탭에서만), 예외 큐 산출은 buildAttention(순수 함수) 에 있다.
+ * - 이 파일은 헤더 + 두 전환 그룹 + 형태 분기만 담당한다. 화면 구조는 각 Layout 컴포넌트에 있다.
+ * - 색은 의미 토큰(text-primary/error/warning/success, border-border)만 쓴다. 파스텔 배경·카드박스 금지.
+ * - 은성 DB 에 없는 점검(일상/정기/PM)·소모품·작업지시 보류는 두지 않는다 (buildAttention 머리말 참고).
  */
-import { useState, useEffect, useCallback } from "react";
+import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import toast from "react-hot-toast";
-import {
-  Cpu, ClipboardList, PackageSearch, Bug,
-  LayoutDashboard, RefreshCw,
-} from "lucide-react";
+import { Maximize2, Minimize2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui";
-import api from "@/services/api";
+import { formatClock } from "@/components/monitoring/BoardClock";
+import { useBoardSkin, useTvMode } from "@/components/monitoring";
 import {
-  EquipDonutCard, ProductionGaugeCard, MaterialBarCard, DefectDonutCard,
-  ProductionTrendCard, LineAchievementCard, type DashboardInsights,
-} from "./components/DashboardCharts";
+  DASHBOARD_DEFAULT_SKIN, DASHBOARD_SKIN_IDS, DASHBOARD_SKIN_STORAGE_KEY, DASHBOARD_SKINS, type DashboardSkinId,
+} from "./components/skins";
+import {
+  DASHBOARD_DEFAULT_LAYOUT, DASHBOARD_LAYOUT_IDS, DASHBOARD_LAYOUT_STORAGE_KEY, DASHBOARD_LAYOUTS, type DashboardLayoutId,
+} from "./components/layouts";
+import { useDashboardData } from "./components/useDashboardData";
+import { buildAttention, attentionTotal } from "./components/buildAttention";
+import HeaderClock, { useNowHour } from "./components/HeaderClock";
+import CockpitLayout from "./components/CockpitLayout";
+import BoardLayout from "./components/BoardLayout";
+import FlowMapLayout from "./components/FlowMapLayout";
+import ChartsLayout from "./components/ChartsLayout";
 
-/* ── Status Card ── */
-interface StatusCardProps {
-  title: string;
-  icon: React.ComponentType<{ className?: string }>;
-  color: string;
-  gradient: string;
-  items: { label: string; value: number; accent?: string }[];
-}
+const MOTION_CSS = `
+@keyframes ds-rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.ds-rise { animation: ds-rise .55s cubic-bezier(.2,.7,.2,1) both; }
+@keyframes ds-flow { to { stroke-dashoffset: -28; } }
+.ds-flow { animation: ds-flow 1.2s linear infinite; }
+@keyframes ds-blink { 0%, 100% { opacity: 1; } 50% { opacity: .25; } }
+.ds-blink { animation: ds-blink 1.4s ease-in-out infinite; }
+@keyframes ds-grow { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+.ds-grow { transform-origin: bottom; animation: ds-grow .6s cubic-bezier(.2,.7,.2,1) both; }
+@media (prefers-reduced-motion: reduce) { .ds-rise, .ds-flow, .ds-blink, .ds-grow { animation: none; } }
+`;
 
-function StatusCard({ title, icon: Icon, color, gradient, items }: StatusCardProps) {
-  return (
-    <div className={`p-[1.5px] rounded-2xl ${gradient}`}>
-      <div className="bg-card rounded-2xl p-3 h-full">
-        <div className="flex items-center gap-2 mb-3">
-          <Icon className={`w-4 h-4 ${color}`} />
-          <span className="text-xs font-semibold text-text">{title}</span>
-        </div>
-        <div className="grid grid-cols-2 gap-2">
-          {items.map((item) => (
-            <div key={item.label} className="text-center p-1.5 rounded-md bg-surface dark:bg-slate-800/50">
-              <div className={`text-lg font-bold leading-tight ${item.accent || "text-text"}`}>
-                {item.value.toLocaleString()}
-              </div>
-              <div className="text-[10px] text-text-muted mt-0.5">{item.label}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
+const LAYOUT_COMPONENT = {
+  cockpit: CockpitLayout,
+  board: BoardLayout,
+  map: FlowMapLayout,
+  charts: ChartsLayout,
+} as const satisfies Record<DashboardLayoutId, React.ComponentType<React.ComponentProps<typeof CockpitLayout>>>;
 
-/* ── Types ── */
-interface DashboardSummary {
-  equip: { inUse: number; down: number; notUsed: number; total: number };
-  production: { smdPlan: number; smdActual: number; miPlan: number; miActual: number };
-  material: { solderInUse: number; solderNg: number; mslLots: number; mslNg: number };
-  defect: { pending: number; genuine: number; pseudo: number; unrepaired: number };
-}
-
-const emptySummary: DashboardSummary = {
-  equip: { inUse: 0, down: 0, notUsed: 0, total: 0 },
-  production: { smdPlan: 0, smdActual: 0, miPlan: 0, miActual: 0 },
-  material: { solderInUse: 0, solderNg: 0, mslLots: 0, mslNg: 0 },
-  defect: { pending: 0, genuine: 0, pseudo: 0, unrepaired: 0 },
-};
-
-function formatDate(d: Date) {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
+const segBtn = (active: boolean) =>
+  `h-7 min-w-7 px-1.5 rounded text-xs font-bold flex items-center justify-center transition-colors ${
+    active ? "bg-primary text-primary-foreground" : "text-text-muted hover:text-text hover:bg-muted"
+  }`;
 
 export default function DashboardPage() {
   const { t } = useTranslation();
-  const [summary, setSummary] = useState<DashboardSummary>(emptySummary);
-  const [insights, setInsights] = useState<DashboardInsights | null>(null);
-  const [loading, setLoading] = useState(false);
+  const { data, loading, updatedAt, refresh } = useDashboardData();
+  const nowHour = useNowHour();
 
-  const today = formatDate(new Date());
+  const attention = useMemo(() => buildAttention(data, nowHour), [data, nowHour]);
+  const attentionCount = attentionTotal(attention);
 
-  const search = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await api.get("/dashboard/summary", { params: { date: today } });
-      setSummary(res.data.data);
-      // 추이/라인별 차트용. 실패해도 카드와 요약 차트는 그대로 보여준다
-      api.get("/dashboard/insights", { params: { date: today } })
-        .then((r) => setInsights(r.data.data))
-        .catch((e: unknown) => { console.error(e); setInsights(null); });
-    } catch (error: unknown) {
-      console.error(error);
-      toast.error(t("dashboard.loadFailed"));
-    } finally {
-      setLoading(false);
-    }
-  }, [today, t]);
-
-  useEffect(() => { search(); }, [search]);
-
-  const { equip, production, material, defect } = summary;
+  const { skin: layoutId, setSkin: setLayout } = useBoardSkin<DashboardLayoutId>(DASHBOARD_LAYOUT_STORAGE_KEY, DASHBOARD_LAYOUT_IDS, DASHBOARD_DEFAULT_LAYOUT);
+  const { skin: skinId, setSkin } = useBoardSkin<DashboardSkinId>(DASHBOARD_SKIN_STORAGE_KEY, DASHBOARD_SKIN_IDS, DASHBOARD_DEFAULT_SKIN);
+  const { tvMode, toggleTvMode } = useTvMode();
+  const skin = DASHBOARD_SKINS.find((item) => item.id === skinId) ?? DASHBOARD_SKINS[0];
+  const Layout = LAYOUT_COMPONENT[layoutId];
 
   return (
-    <div className="h-full flex flex-col overflow-hidden p-6 gap-4 animate-fade-in">
-      {/* Header */}
-      <div className="flex justify-between items-center flex-shrink-0">
+    <div
+      data-dashboard-skin={skin.id}
+      data-dashboard-layout={layoutId}
+      style={skin.vars}
+      className={`${tvMode ? "fixed inset-0 z-50" : "h-full"} flex flex-col overflow-hidden bg-background text-text px-6 pt-5 pb-4 gap-4 ${skin.fontClass ?? ""}`}
+    >
+      <style>{MOTION_CSS}</style>
+
+      {/* 헤더 */}
+      <div className="flex items-end justify-between flex-shrink-0">
         <div>
-          <h1 className="text-xl font-bold text-text flex items-center gap-2">
-            <LayoutDashboard className="w-7 h-7 text-primary" />{t("dashboard.title")}
-          </h1>
-          <p className="text-text-muted mt-1">{t("dashboard.subtitle")}</p>
+          <h1 className="text-xl font-bold text-text tracking-tight">{t("dashboard.title")}</h1>
+          <p className="text-xs text-text-muted mt-0.5">{t("dashboard.subtitle")}</p>
         </div>
-        <Button variant="secondary" size="sm" onClick={search}>
-          <RefreshCw className={`w-4 h-4 mr-1 ${loading ? "animate-spin" : ""}`} /> {t("common.refresh")}
-        </Button>
+        <div className="flex flex-wrap items-center justify-end gap-x-4 gap-y-2">
+          <HeaderClock />
+          <div className="h-8 w-px bg-border" />
+          <div className="text-[11px] text-text-muted tabular-nums">
+            {t("dashboard.updatedAt")} {updatedAt ? formatClock(updatedAt).hms : "--:--:--"}
+          </div>
+          <Button variant="secondary" size="sm" className="whitespace-nowrap shrink-0" onClick={() => { void refresh(); }} disabled={loading}>
+            <RefreshCw className={`w-4 h-4 mr-1 ${loading ? "animate-spin" : ""}`} /> {t("common.refresh")}
+          </Button>
+          <div className="h-8 w-px bg-border" />
+
+          {/* 그룹 1: 형태 — 구조가 다른 대시보드 4종 */}
+          <div className="flex items-center gap-1.5" role="group" aria-label={t("dashboard.layout.group")}>
+            <span className="whitespace-nowrap text-[10px] font-semibold uppercase tracking-[0.18em] text-text-muted">{t("dashboard.layout.group")}</span>
+            <div className="flex items-center gap-0.5 rounded-lg border border-border p-0.5">
+              {DASHBOARD_LAYOUTS.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    title={t(item.titleKey)}
+                    aria-label={t(item.titleKey)}
+                    aria-pressed={item.id === layoutId}
+                    onClick={() => setLayout(item.id)}
+                    className={segBtn(item.id === layoutId)}
+                  >
+                    <Icon className="w-3.5 h-3.5" />
+                    <span className="ml-1 hidden 2xl:inline">{t(item.titleKey)}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* 그룹 2: 색상 — 같은 구조에 다른 팔레트 (모니터링 보드와 같은 순서) + TV */}
+          <div className="flex items-center gap-1.5" role="group" aria-label={t("dashboard.skinGroup")}>
+            <span className="whitespace-nowrap text-[10px] font-semibold uppercase tracking-[0.18em] text-text-muted">{t("dashboard.skinGroup")}</span>
+            <div className="flex items-center gap-0.5 rounded-lg border border-border p-0.5">
+              {DASHBOARD_SKINS.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  title={t(item.titleKey)}
+                  aria-label={t(item.titleKey)}
+                  aria-pressed={item.id === skin.id}
+                  onClick={() => setSkin(item.id)}
+                  className={segBtn(item.id === skin.id)}
+                >
+                  {item.label}
+                </button>
+              ))}
+              <span className="h-4 w-px bg-border mx-0.5" />
+              <button
+                type="button"
+                title={t("dashboard.tvMode")}
+                aria-label={t("dashboard.tvMode")}
+                aria-pressed={tvMode}
+                onClick={toggleTvMode}
+                className={segBtn(tvMode)}
+              >
+                {tvMode ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-4 pr-1">
-      {/* Status Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 flex-shrink-0">
-        <StatusCard
-          title={t("dashboard.equipStatus")}
-          icon={Cpu} color="text-indigo-500"
-          gradient="bg-gradient-to-br from-indigo-400 via-purple-400 to-blue-500"
-          items={[
-            { label: t("dashboard.equipInUse"), value: equip.inUse, accent: "text-success" },
-            { label: t("dashboard.equipDown"), value: equip.down, accent: equip.down > 0 ? "text-error" : "text-text" },
-            { label: t("dashboard.equipNotUsed"), value: equip.notUsed },
-            { label: t("dashboard.equipTotal"), value: equip.total },
-          ]}
-        />
-        <StatusCard
-          title={t("dashboard.prodStatus")}
-          icon={ClipboardList} color="text-sky-500"
-          gradient="bg-gradient-to-br from-sky-400 to-cyan-500"
-          items={[
-            { label: t("dashboard.smdPlan"), value: production.smdPlan },
-            { label: t("dashboard.smdActual"), value: production.smdActual, accent: "text-info" },
-            { label: t("dashboard.miPlan"), value: production.miPlan },
-            { label: t("dashboard.miActual"), value: production.miActual, accent: "text-info" },
-          ]}
-        />
-        <StatusCard
-          title={t("dashboard.matStatus")}
-          icon={PackageSearch} color="text-amber-500"
-          gradient="bg-gradient-to-br from-amber-400 to-orange-500"
-          items={[
-            { label: t("dashboard.solderInUse"), value: material.solderInUse },
-            { label: t("dashboard.solderNg"), value: material.solderNg, accent: material.solderNg > 0 ? "text-error" : "text-text" },
-            { label: t("dashboard.mslLots"), value: material.mslLots },
-            { label: t("dashboard.mslNg"), value: material.mslNg, accent: material.mslNg > 0 ? "text-error" : "text-text" },
-          ]}
-        />
-        <StatusCard
-          title={t("dashboard.defectStatus")}
-          icon={Bug} color="text-rose-500"
-          gradient="bg-gradient-to-br from-rose-400 to-red-500"
-          items={[
-            { label: t("dashboard.defectPending"), value: defect.pending, accent: defect.pending > 0 ? "text-warning" : "text-text" },
-            { label: t("dashboard.defectGenuine"), value: defect.genuine },
-            { label: t("dashboard.defectPseudo"), value: defect.pseudo },
-            { label: t("dashboard.defectUnrepaired"), value: defect.unrepaired, accent: defect.unrepaired > 0 ? "text-error" : "text-text" },
-          ]}
-        />
-      </div>
-
-      {/* Charts: 요약 시각화 */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 flex-shrink-0">
-        <EquipDonutCard equip={equip} />
-        <ProductionGaugeCard production={production} />
-        <MaterialBarCard material={material} />
-        <DefectDonutCard defect={defect} />
-      </div>
-
-      {/* Charts: 7일 추이 / 라인별 */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 flex-shrink-0">
-        <ProductionTrendCard trend={insights?.trend ?? null} />
-        <LineAchievementCard lines={insights?.lines ?? null} />
-      </div>
-      </div>
+      <Layout data={data} attention={attention} attentionCount={attentionCount} nowHour={nowHour} />
     </div>
   );
 }

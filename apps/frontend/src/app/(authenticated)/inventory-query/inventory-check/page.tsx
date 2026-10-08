@@ -2,7 +2,7 @@
 
 /**
  * @file src/app/(authenticated)/inventory-query/inventory-check/page.tsx
- * @description 자재재고조사 — PB w_mat_inventory_check_master 이식 (쓰기)
+ * @description 자재재고실사 — PB w_mat_inventory_check_master 이식 (쓰기)
  *
  * 초보자 가이드:
  * 1. **실사(實査)는 장부와 실제를 맞추는 일이다.** 창고에서 센 수량이 장부와 다르면
@@ -162,7 +162,7 @@ export default function InventoryCheckPage() {
   return (
     <div className="flex h-full flex-col gap-4 p-6">
       <header>
-        <h1 className="text-xl font-bold text-text">자재재고조사</h1>
+        <h1 className="text-xl font-bold text-text">자재재고실사</h1>
         <p className="mt-1 text-sm text-text-muted">
           바코드 실사 결과(실사 − 장부)만큼 재고를 조정합니다 ·{' '}
           {searched
@@ -252,7 +252,7 @@ export default function InventoryCheckPage() {
               pageSize={100}
               enableColumnFilter
               enableExport
-              exportFileName="자재재고조사"
+              exportFileName="자재재고실사"
               emptyMessage={searched ? '실사 자료가 없습니다.' : '조회하세요.'}
               onRowClick={(row) => pick(row as InventoryCheckRow)}
               rowClassName={(row) => (Number((row as InventoryCheckRow).differenceQty ?? 0) !== 0

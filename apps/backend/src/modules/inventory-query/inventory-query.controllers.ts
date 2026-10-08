@@ -4,10 +4,12 @@
  *
  *   /inventory-query/total        269 총재고조회
  *   /inventory-query/close        271 자재재고마감 (원자재 월마감 — 월총평균법, 쓰기)
- *   /inventory-query/check        272 자재재고조사 (조정 — 쓰기)
+ *   /inventory-query/check        272 자재재고실사 (조정 — 쓰기)
  *   /inventory-query/barcode      274 자재바코드스캔실사 (조회)
  *   /inventory-query/stocktake    바코드 실사 시작 · 스캔 · 일괄 조정 (272·274·PDA, 쓰기)
  *   /inventory-query/wip-stocktake 공정 실사 시작 · 입력 · 엑셀 · 일괄 조정 (쓰기)
+ *   /inventory-query/fg-stocktake  제품 실사 시작 · 박스 스캔 · 엑셀 · 일괄 조정 (쓰기)
+ *   /inventory-query/fg-close      제품 재고마감 (모델 단위 월마감 — 수량, 쓰기)
  */
 import {
   BadRequestException, Body, Controller, Get, Post, Query, UploadedFile, UseGuards, UseInterceptors,
@@ -25,6 +27,10 @@ import { InventoryCloseService } from './inventory-close.service';
 import { StocktakeService } from './stocktake.service';
 import { parseStocktakeWorkbook } from './stocktake-excel';
 import { WipStocktakeService } from './wip-stocktake.service';
+import { FgStocktakeService } from './fg-stocktake.service';
+import { FgCloseService } from './fg-close.service';
+import { WipCloseService } from './wip-close.service';
+import { CloseDateService } from './close-date.service';
 import { TotalInventoryService } from './total-inventory.service';
 import {
   BarcodeCheckQueryDto,
@@ -35,6 +41,11 @@ import {
   StocktakeScanDto,
   StocktakeStartDto,
   WipStocktakeCountDto,
+  CloseDateGenerateDto,
+  CloseDateSaveDto,
+  CloseDateYearDto,
+  FgStocktakeCountDto,
+  FgStocktakeListDto,
   TotalInventoryDetailQueryDto,
   TotalInventoryLotQueryDto,
   TotalInventoryQueryDto,
@@ -141,7 +152,7 @@ export class InventoryCloseController {
   }
 }
 
-@ApiTags('재고 - 자재재고조사')
+@ApiTags('재고 - 자재재고실사')
 @UseGuards(JwtAuthGuard)
 @Controller('inventory-query/check')
 export class InventoryCheckController {
@@ -377,5 +388,166 @@ export class WipStocktakeController {
   @ApiOperation({ summary: '공정 실사 일괄 조정 (**쓰기**) — 품목별 차이에서 이미 넣은 조정을 뺀 만큼 공정출고로 넣는다.' })
   async adjustAll(@Body() dto: InventoryCloseMonthDto, @OrganizationId() organizationId: number, @UserId() userId?: string) {
     return ResponseUtil.success(await this.service.adjustAll(dto.yyyymm, organizationId, userId || DEFAULT_USER));
+  }
+}
+
+@ApiTags('재고 - 제품 실사')
+@UseGuards(JwtAuthGuard)
+@Controller('inventory-query/fg-stocktake')
+export class FgStocktakeController {
+  constructor(private readonly service: FgStocktakeService) {}
+
+  @Get('active')
+  @ApiOperation({ summary: '진행 중인 제품 실사 (가장 최근 실사월과 진행 현황). 없으면 null.' })
+  async active(@OrganizationId() organizationId: number) {
+    return ResponseUtil.success(await this.service.active(organizationId));
+  }
+
+  @Get()
+  @ApiOperation({ summary: '제품 실사표 (박스별 장부 · 실사 · 차이 · 이미 넣은 조정). 차이 있는 박스가 먼저.' })
+  async list(@Query() query: FgStocktakeListDto, @OrganizationId() organizationId: number) {
+    return ResponseUtil.success(await this.service.list(query.yyyymm, query, organizationId));
+  }
+
+  @Post('start')
+  @ApiOperation({ summary: '제품 실사 시작 (**쓰기**) — 지금 제품재고(수량 ≠ 0)를 박스 단위로 실사표에 고정한다.' })
+  async start(@Body() dto: StocktakeStartDto, @OrganizationId() organizationId: number, @UserId() userId?: string) {
+    return ResponseUtil.success(
+      await this.service.start(dto.yyyymm, Boolean(dto.regenerate), organizationId, userId || DEFAULT_USER),
+    );
+  }
+
+  @Post('scan')
+  @ApiOperation({ summary: '제품 실사 스캔 한 건 (**쓰기**) — 박스 바코드. 이미 센 박스는 거절한다.' })
+  async scan(@Body() dto: FgStocktakeCountDto, @OrganizationId() organizationId: number, @UserId() userId?: string) {
+    return ResponseUtil.success(await this.service.record([dto], 'scan', organizationId, userId || DEFAULT_USER));
+  }
+
+  @Post('scan/cancel')
+  @ApiOperation({ summary: '제품 실사 스캔 취소 (**쓰기**).' })
+  async cancel(@Body() dto: FgStocktakeCountDto, @OrganizationId() organizationId: number, @UserId() userId?: string) {
+    return ResponseUtil.success(await this.service.cancel(dto, organizationId, userId || DEFAULT_USER));
+  }
+
+  @Post('upload')
+  @ApiOperation({
+    summary: '제품 실사 엑셀 업로드 (**쓰기**) — 박스 바코드 열과 선택 수량 열. 이미 센 박스는 엑셀 수량으로 고친다.',
+  })
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(excelUpload())
+  async upload(
+    @UploadedFile() file: Express.Multer.File,
+    @OrganizationId() organizationId: number,
+    @UserId() userId?: string,
+  ) {
+    if (!file) throw new BadRequestException('파일이 필요합니다.');
+    const rows = parseStocktakeWorkbook(file.buffer);
+    return ResponseUtil.success(await this.service.record(rows, 'upload', organizationId, userId || DEFAULT_USER));
+  }
+
+  @Post('adjust-all')
+  @ApiOperation({
+    summary: '제품 실사 일괄 조정 (**쓰기**) — 박스별 (실사 − 장부 − 이미 넣은 조정)을 재고에 더하고'
+      + ' IP_PRODUCT_FG_ADJUST 에 남긴다. 입고·출고 표는 건드리지 않는다.',
+  })
+  async adjustAll(@Body() dto: InventoryCloseMonthDto, @OrganizationId() organizationId: number, @UserId() userId?: string) {
+    return ResponseUtil.success(await this.service.adjustAll(dto.yyyymm, organizationId, userId || DEFAULT_USER));
+  }
+}
+
+@ApiTags('재고 - 제품재고마감')
+@UseGuards(JwtAuthGuard)
+@Controller('inventory-query/fg-close')
+export class FgCloseController {
+  constructor(private readonly service: FgCloseService) {}
+
+  @Get('status')
+  @ApiOperation({ summary: '제품 마감 상태 — 마감 여부, 마지막 마감월, 기초 출처, 마감·취소 가능 여부와 이유.' })
+  async status(@Query() query: InventoryCloseMonthDto, @OrganizationId() organizationId: number) {
+    return ResponseUtil.success(await this.service.status(query.yyyymm, organizationId));
+  }
+
+  @Get('preview')
+  @ApiOperation({ summary: '제품 월마감 계산 (읽기). 기초 + 입고 − 출고 + 조정 = 기말 (모델 단위, 수량). 저장하지 않는다.' })
+  async preview(@Query() query: InventoryCloseMonthDto, @OrganizationId() organizationId: number) {
+    return ResponseUtil.success(await this.service.preview(query.yyyymm, organizationId));
+  }
+
+  @Post()
+  @ApiOperation({ summary: '제품 월마감 (**쓰기**). IP_PRODUCT_FG_INV_CLOSE 에 그 달만 갈아끼우고 마감으로 남긴다.' })
+  async close(@Body() dto: InventoryCloseMonthDto, @OrganizationId() organizationId: number, @UserId() userId?: string) {
+    return ResponseUtil.success(await this.service.close(dto.yyyymm, organizationId, userId || DEFAULT_USER));
+  }
+
+  @Post('cancel')
+  @ApiOperation({ summary: '제품 마감 취소 (**쓰기**). 마지막 마감월만.' })
+  async cancel(@Body() dto: InventoryCloseMonthDto, @OrganizationId() organizationId: number, @UserId() userId?: string) {
+    return ResponseUtil.success(await this.service.cancel(dto.yyyymm, organizationId, userId || DEFAULT_USER));
+  }
+}
+
+@ApiTags('재고 - 공정재고마감')
+@UseGuards(JwtAuthGuard)
+@Controller('inventory-query/wip-close')
+export class WipCloseController {
+  constructor(private readonly service: WipCloseService) {}
+
+  @Get('status')
+  @ApiOperation({ summary: '공정 마감 상태 — 마감 여부, 마지막 마감월, 기초 출처, 원자재 마감 여부, 마감·취소 가능 여부와 이유.' })
+  async status(@Query() query: InventoryCloseMonthDto, @OrganizationId() organizationId: number) {
+    return ResponseUtil.success(await this.service.status(query.yyyymm, organizationId));
+  }
+
+  @Get('preview')
+  @ApiOperation({
+    summary: '공정 월마감 계산 (읽기). 기초 + 입고 − 출고 = 기말 (품목 단위). 단가는 그 달 원자재 마감 월평균단가. 저장하지 않는다.',
+  })
+  async preview(@Query() query: InventoryCloseMonthDto, @OrganizationId() organizationId: number) {
+    return ResponseUtil.success(await this.service.preview(query.yyyymm, organizationId));
+  }
+
+  @Post()
+  @ApiOperation({ summary: '공정 월마감 (**쓰기**). IM_ITEM_WORKSTAGE_INV_CLOSE 에 그 달만 갈아끼운다. 원자재 마감을 먼저 해야 한다.' })
+  async close(@Body() dto: InventoryCloseMonthDto, @OrganizationId() organizationId: number, @UserId() userId?: string) {
+    return ResponseUtil.success(await this.service.close(dto.yyyymm, organizationId, userId || DEFAULT_USER));
+  }
+
+  @Post('cancel')
+  @ApiOperation({ summary: '공정 마감 취소 (**쓰기**). 마지막 마감월만.' })
+  async cancel(@Body() dto: InventoryCloseMonthDto, @OrganizationId() organizationId: number) {
+    return ResponseUtil.success(await this.service.cancel(dto.yyyymm, organizationId));
+  }
+}
+
+@ApiTags('재고 - 재고마감일자')
+@UseGuards(JwtAuthGuard)
+@Controller('inventory-query/close-date')
+export class CloseDateController {
+  constructor(private readonly service: CloseDateService) {}
+
+  @Get()
+  @ApiOperation({ summary: '재고마감일자 — 그 해 12개월의 마감 시작일·종료일과 자재·제품·공정 마감 현황. 등록이 없는 달은 달력 월.' })
+  async list(@Query() query: CloseDateYearDto, @OrganizationId() organizationId: number) {
+    return ResponseUtil.success(await this.service.list(query.year, organizationId));
+  }
+
+  @Post()
+  @ApiOperation({ summary: '재고마감일자 한 달 저장 (**쓰기**). 이웃한 달과 이어져야 하고, 마감한 달은 바꿀 수 없다.' })
+  async save(@Body() dto: CloseDateSaveDto, @OrganizationId() organizationId: number, @UserId() userId?: string) {
+    return ResponseUtil.success(
+      await this.service.save(dto.yyyymm, dto.startDate, dto.endDate, organizationId, userId || DEFAULT_USER),
+    );
+  }
+
+  @Post('delete')
+  @ApiOperation({ summary: '재고마감일자 등록 삭제 (**쓰기**). 그 달은 달력 월로 돌아간다. 마감한 달은 지울 수 없다.' })
+  async remove(@Body() dto: InventoryCloseMonthDto, @OrganizationId() organizationId: number) {
+    return ResponseUtil.success(await this.service.remove(dto.yyyymm, organizationId));
+  }
+
+  @Post('generate')
+  @ApiOperation({ summary: '재고마감일자 연간 생성 (**쓰기**). 시작일 1 = 달력 월, N = 전달 N일 ~ 이번 달 N−1일. 마감한 달이 있는 해는 거절.' })
+  async generate(@Body() dto: CloseDateGenerateDto, @OrganizationId() organizationId: number, @UserId() userId?: string) {
+    return ResponseUtil.success(await this.service.generate(dto.year, dto.startDay, organizationId, userId || DEFAULT_USER));
   }
 }
