@@ -74,11 +74,11 @@ export const menuConfig: MenuConfigItem[] = [
     labelKey: "menu.monitoring",
     icon: Monitor,
     children: [
-      { code: "MON_PROD_BOARD", labelKey: "menu.monitoring.prodBoard", path: "/monitoring/production-board" },
-      { code: "MON_QUALITY_BOARD", labelKey: "menu.monitoring.qualityBoard", path: "/monitoring/quality-board" },
-      { code: "MON_INV_BOARD", labelKey: "menu.monitoring.invBoard", path: "/monitoring/inventory-board" },
-      { code: "MON_JOB_BOARD", labelKey: "menu.monitoring.jobBoard", path: "/monitoring/job-order-board" },
-      { code: "MON_EQUIP_BOARD", labelKey: "menu.monitoring.equipBoard", path: "/monitoring/equipment-board" },
+      { code: "MON_PROD_BOARD", labelKey: "menu.monitoring.prodBoard", path: "/monitoring/production-board", pbLinkStatus: "web-native" },
+      { code: "MON_QUALITY_BOARD", labelKey: "menu.monitoring.qualityBoard", path: "/monitoring/quality-board", pbLinkStatus: "web-native" },
+      { code: "MON_INV_BOARD", labelKey: "menu.monitoring.invBoard", path: "/monitoring/inventory-board", pbLinkStatus: "web-native" },
+      { code: "MON_JOB_BOARD", labelKey: "menu.monitoring.jobBoard", path: "/monitoring/job-order-board", pbLinkStatus: "web-native" },
+      { code: "MON_EQUIP_BOARD", labelKey: "menu.monitoring.equipBoard", path: "/monitoring/equipment-board", pbLinkStatus: "web-native" },
     ],
   },
   {
