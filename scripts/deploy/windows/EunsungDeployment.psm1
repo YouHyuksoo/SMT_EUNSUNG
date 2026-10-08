@@ -331,9 +331,9 @@ function Test-EunsungReleaseHealth {
     [scriptblock]$Pm2ListProvider,
     [scriptblock]$PortOwnerProvider,
     [scriptblock]$HttpInvoker,
-    [ValidateRange(1, 20)][int]$MaxAttempts = 5,
+    [ValidateRange(1, 20)][int]$MaxAttempts = 20,
     [ValidateRange(1, 60)][int]$TimeoutSec = 5,
-    [ValidateRange(0, 60000)][int]$RetryDelayMs = 1000,
+    [ValidateRange(0, 60000)][int]$RetryDelayMs = 5000,
     [scriptblock]$SleepAdapter
     ,[string]$ExpectedReleaseDir
     ,[string]$FrontendUrl = 'http://127.0.0.1:3100/'
