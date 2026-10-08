@@ -71,7 +71,7 @@ export class EquipmentResultQueryService {
       binds.modelName = `%${query.modelName}%`;
     }
 
-    const modelColumn = definition.modelByRunNo ? ', F_GET_RUN_MODEL_NAME(t.RUN_NO) AS MODEL_NAME' : '';
+    const modelColumn = definition.modelByRunNo ? ', F_GET_RUN_MODEL_NAME(t.RUN_NO) AS RUN_MODEL_NAME' : '';
     const sql = `
       SELECT * FROM (
         SELECT t.*${modelColumn}
@@ -81,9 +81,12 @@ export class EquipmentResultQueryService {
       )
       WHERE ROWNUM <= :limit`;
     const rows = await this.dataSource.query(sql, namedBinds({ ...binds }));
-    const data = rows.map((row: Record<string, unknown>) => Object.fromEntries(
-      Object.entries(row).map(([key, value]) => [toCamelCase(key), value]),
-    ));
+    // 테이블에 MODEL_NAME 컬럼이 이미 있는 유형(SPI)과 겹치지 않도록 계산값은 RUN_MODEL_NAME으로 받아 modelName으로 내보낸다.
+    const data = rows.map((row: Record<string, unknown>) => {
+      const { RUN_MODEL_NAME: runModelName, ...rest } = row;
+      const mapped = Object.fromEntries(Object.entries(rest).map(([key, value]) => [toCamelCase(key), value]));
+      return definition.modelByRunNo ? { ...mapped, modelName: runModelName } : mapped;
+    });
     return { data, total: data.length, limited: data.length >= Number(binds.limit) };
   }
 }

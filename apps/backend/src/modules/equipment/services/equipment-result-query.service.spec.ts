@@ -27,6 +27,16 @@ describe('EquipmentResultQueryService', () => {
     expect(query.mock.calls[1][1].organizationId).toBe(-1);
   });
 
+  it('테이블에 MODEL_NAME이 있어도 계산 모델명을 중복 컬럼 없이 modelName으로 돌려준다', async () => {
+    query.mockResolvedValue([{ PID: 'P1', MODEL_NAME: null, RUN_MODEL_NAME: 'M-100' }]);
+    const result = await service.findAll('spi', 1, { dateFrom: '2026-09-01', dateTo: '2026-09-22' });
+
+    expect(query.mock.calls[0][0]).toContain('AS RUN_MODEL_NAME');
+    expect(query.mock.calls[0][0]).not.toMatch(/AS MODEL_NAME/);
+    expect(result.data[0]).toMatchObject({ pid: 'P1', modelName: 'M-100' });
+    expect(result.data[0]).not.toHaveProperty('runModelName');
+  });
+
   it('등록되지 않은 결과 유형을 거부한다', async () => {
     await expect(service.findAll('unknown', 1, { dateFrom: '2026-09-01', dateTo: '2026-09-22' })).rejects.toBeInstanceOf(BadRequestException);
   });
