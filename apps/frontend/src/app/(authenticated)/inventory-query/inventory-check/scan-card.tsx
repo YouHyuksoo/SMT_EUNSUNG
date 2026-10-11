@@ -1,5 +1,5 @@
 /**
- * @file src/app/(authenticated)/inventory-query/barcode-check/scan-card.tsx
+ * @file src/app/(authenticated)/inventory-query/inventory-check/scan-card.tsx
  * @description 274 바코드 스캔 입력 — 진행 중인 실사월에 바코드를 기록한다
  *
  * 초보자 가이드:
@@ -19,7 +19,7 @@ import {
 } from '../stocktake';
 
 interface Props {
-  session: StocktakeSession | null;
+  session: StocktakeSession;
   /** 한 건 처리 뒤 목록·현황을 다시 읽는다. */
   onScanned: () => void;
 }
@@ -37,7 +37,7 @@ export default function ScanCard({ session, onScanned }: Props) {
   const [uploadOpen, setUploadOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => { inputRef.current?.focus(); }, [session]);
+  useEffect(() => { inputRef.current?.focus(); }, []);
 
   const submit = async () => {
     const code = barcode.trim();
@@ -69,28 +69,18 @@ export default function ScanCard({ session, onScanned }: Props) {
     }
   };
 
-  if (!session) {
-    return (
-      <Card padding="none">
-        <CardContent className="p-3 text-sm text-text-muted">
-          진행 중인 실사가 없습니다. 자재재고실사 화면에서 실사를 시작하면 여기서 바코드를 찍을 수 있습니다.
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
     <Card padding="none">
       <CardContent className="flex flex-col gap-2 p-3">
         <div className="flex flex-wrap items-center gap-3">
           <span className="flex items-center gap-1 text-sm font-semibold text-text">
-            <ScanLine className="h-4 w-4" />{session.yyyymm} 실사 스캔
+            <ScanLine className="h-4 w-4" />{session.yyyymm} 자재 실사 입력
           </span>
           <Input ref={inputRef} aria-label="자재 바코드" placeholder="자재 바코드를 찍으세요"
             value={barcode} className="w-80" disabled={busy} autoComplete="off"
             onChange={(e) => setBarcode(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); void submit(); } }} />
-          <Input aria-label="센 수량" placeholder="센 수량 (비우면 바코드 수량)"
+          <Input aria-label="센 수량" placeholder="수량 (비우면 바코드 수량)"
             value={qty} className="w-56" inputMode="decimal" disabled={cancelMode}
             onChange={(e) => setQty(e.target.value)} />
           <label className="flex items-center gap-1 text-sm text-text">
@@ -98,9 +88,6 @@ export default function ScanCard({ session, onScanned }: Props) {
               onChange={(e) => { setCancelMode(e.target.checked); inputRef.current?.focus(); }} />
             취소
           </label>
-          <span className="text-sm text-text-muted">
-            찍음 {session.countedLots.toLocaleString()} / 장부 {session.bookLots.toLocaleString()}롯트
-          </span>
           <Button size="sm" variant="secondary" className="ml-auto" onClick={() => setUploadOpen(true)}
             data-tooltip="바코드(또는 롯트번호)·수량 목록 엑셀을 한꺼번에 반영합니다.">
             <FileSpreadsheet className="mr-1 h-4 w-4" />엑셀 업로드
@@ -112,9 +99,9 @@ export default function ScanCard({ session, onScanned }: Props) {
           </div>
         )}
       </CardContent>
-      <StocktakeUploadModal isOpen={uploadOpen} title={`${session.yyyymm} 실사`}
+      <StocktakeUploadModal isOpen={uploadOpen} title={`${session.yyyymm} 자재 실사`}
         endpoint="/inventory-query/stocktake/upload"
-        template={{ headers: ['바코드', '롯트번호', '수량'], fileName: '자재실사_양식.xlsx' }}
+        template={{ headers: ['바코드', '롯트번호', '수량'], fileName: '자재재고실사_양식.xlsx' }}
         guide={<>첫 시트의 머리글에 <b>바코드</b> 또는 <b>롯트번호</b> 열이 있어야 합니다. <b>수량</b>을 비우면 바코드
           수량으로 셉니다. 이미 찍은 롯트는 엑셀 수량으로 고칩니다.</>}
         onClose={() => { setUploadOpen(false); inputRef.current?.focus(); }} onDone={onScanned} />

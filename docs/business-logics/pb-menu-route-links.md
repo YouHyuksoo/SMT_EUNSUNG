@@ -3,7 +3,7 @@ sources:
   - apps/frontend/src/config/menuConfig.ts
   - apps/frontend/scripts/data/pb-screen-inventory.json
 generator: apps/frontend/scripts/gen-migration-status.mjs
-verifiedCommit: 6b81c0d2
+verifiedCommit: 278c89e0
 ---
 
 # PB 윈도우 ↔ 웹 메뉴·경로 연결표 (자동 생성)
@@ -15,12 +15,17 @@ verifiedCommit: 6b81c0d2
 
 | 전체 웹 메뉴 | PB 연결 | 웹 신규 | 미확정 |
 |---:|---:|---:|---:|
-| 191 | 173 | 17 | 1 |
+| 200 | 174 | 25 | 1 |
 
 ## 전체 연결표
 
 | 그룹 | 웹 메뉴 | 메뉴코드 | 웹 경로 | 연결 상태 | PB 윈도우 | 근거/사유 |
 |---|---|---|---|---|---|---|
+| 모니터링 | 생산현황 보드 | `MON_PROD_BOARD` | `/monitoring/production-board` | 웹 신규 |  | PB 대응 없음 |
+| 모니터링 | 품질 보드 | `MON_QUALITY_BOARD` | `/monitoring/quality-board` | 웹 신규 |  | PB 대응 없음 |
+| 모니터링 | 재고 보드 | `MON_INV_BOARD` | `/monitoring/inventory-board` | 웹 신규 |  | PB 대응 없음 |
+| 모니터링 | 작업지시 보드 | `MON_JOB_BOARD` | `/monitoring/job-order-board` | 웹 신규 |  | PB 대응 없음 |
+| 모니터링 | 설비가동 보드 | `MON_EQUIP_BOARD` | `/monitoring/equipment-board` | 웹 신규 |  | PB 대응 없음 |
 | 기준정보 | 품목관리 | `MST_PART` | `/master/part` | PB 연결 | `w_des_item_master` | PB 메뉴 인벤토리 |
 | 기준정보 | 제품모델 관리 | `MST_PRODUCT_MODEL` | `/master/product-model` | PB 연결 | `w_pln_product_model_simple_master` | PB 메뉴 인벤토리 |
 | 기준정보 | 적용모델관리 | `MST_APPLY_ITEM` | `/design/apply-item` | PB 연결 | `w_des_apply_item_master` | PB 메뉴 인벤토리 |
@@ -61,30 +66,17 @@ verifiedCommit: 6b81c0d2
 | OEE 관리 | 설비별 작업 실적관리 | `OEE_EQUIP_WORK_RESULT` | `/oee/equip-work-result` | 웹 신규 |  | PB 대응 없음 |
 | OEE 관리 | 설비 운영 현황 | `OEE_EQUIP_OPS_STATUS` | `/oee/equip-ops-status` | 웹 신규 |  | PB 대응 없음 |
 | OEE 관리 | 설비 운영 및 실적관리(현장) | `OEE_FIELD_OPS` | `/oee/field-ops` | 웹 신규 |  | PB 대응 없음 |
-| 발주 | 자재소요량관리 | `PUR_REQUIREMENT` | `/purchase/requirement` | PB 연결 | `w_mat_requirment_plan_master` | PB 메뉴 인벤토리 |
-| 발주 | 자재발주계획 | `PUR_ORDER_PLAN` | `/purchase/order-plan` | PB 연결 | `w_mat_purchase_order_plan_master` | PB 메뉴 인벤토리 |
-| 발주 | 자재주문예정관리 | `PUR_FORECAST` | `/purchase/forecast` | PB 연결 | `w_mat_forecast_order_master` | PB 메뉴 인벤토리 |
-| 발주 | 자재주문관리 | `PUR_ORDER` | `/purchase/order` | PB 연결 | `w_mat_purchase_order_master` | PB 메뉴 인벤토리 |
-| 발주 | 자재출발관리 | `PUR_DEPARTURE` | `/purchase/departure` | PB 연결 | `w_mat_departure_master` | PB 메뉴 인벤토리 |
-| 발주 | 자재도착관리 | `PUR_ARRIVAL` | `/purchase/arrival` | PB 연결 | `w_mat_arrival_master` | PB 메뉴 인벤토리 |
-| 자재수불관리 | 자재입출고수불원장 | `MAT_RECEIPT_ISSUE_LEDGER` | `/material/receipt-issue-ledger` | PB 연결 | `w_mat_ledger_report` | PB 메뉴 인벤토리 |
-| 자재수불관리 | 현재고조회 | `MAT_CURRENT_INVENTORY` | `/material/current-inventory` | PB 연결 | `w_mat_current_inventory_master` | PB 메뉴 인벤토리 |
-| 자재수불관리 | 총재고조회 | `INV_TOTAL` | `/inventory-query/total-inventory` | PB 연결 | `w_mat_total_inventory_query` | PB 메뉴 인벤토리 |
-| 자재수불관리 | 자재재고마감 | `INV_CLOSE` | `/inventory-query/inventory-close` | PB 연결 | `w_mat_inventory_close_report` | PB 메뉴 인벤토리 |
-| 자재수불관리 | 자재재고조사 | `INV_CHECK` | `/inventory-query/inventory-check` | PB 연결 | `w_mat_inventory_check_master` | PB 메뉴 인벤토리 |
-| 자재수불관리 | 자재바코드스캔실사 | `INV_BARCODE_CHECK` | `/inventory-query/barcode-check` | PB 연결 | `w_mat_barcode_check_master` | PB 메뉴 인벤토리 |
-| 자재수불관리 | 공정재고조회 | `MAT_WORKSTAGE_INVENTORY` | `/material/workstage-inventory` | PB 연결 | `w_mat_workstage_inventory_query` | `apps/backend/src/modules/material/controllers/workstage-inventory.controller.ts` |
+| 자재발주 | 자재소요량관리 | `PUR_REQUIREMENT` | `/purchase/requirement` | PB 연결 | `w_mat_requirment_plan_master` | PB 메뉴 인벤토리 |
+| 자재발주 | 자재발주계획 | `PUR_ORDER_PLAN` | `/purchase/order-plan` | PB 연결 | `w_mat_purchase_order_plan_master` | PB 메뉴 인벤토리 |
+| 자재발주 | 자재주문예정관리 | `PUR_FORECAST` | `/purchase/forecast` | PB 연결 | `w_mat_forecast_order_master` | PB 메뉴 인벤토리 |
+| 자재발주 | 자재주문관리 | `PUR_ORDER` | `/purchase/order` | PB 연결 | `w_mat_purchase_order_master` | PB 메뉴 인벤토리 |
+| 자재발주 | 자재출발관리 | `PUR_DEPARTURE` | `/purchase/departure` | PB 연결 | `w_mat_departure_master` | PB 메뉴 인벤토리 |
+| 자재발주 | 자재도착관리 | `PUR_ARRIVAL` | `/purchase/arrival` | PB 연결 | `w_mat_arrival_master` | PB 메뉴 인벤토리 |
 | 자재수불관리 | 자재입고취소 | `MAT_RECEIPT_CANCEL` | `/material/receipt-cancel` | PB 연결 | `w_mat_receipt_cancel_master` | PB 메뉴 인벤토리 |
-| 자재수불관리 | 베이킹재고조회 | `WH_BAKING_STOCK` | `/warehouse/baking-stock` | PB 연결 | `w_mat_baking_scan_query` | PB 메뉴 인벤토리 |
-| 자재수불관리 | 진공포장재고조회 | `WH_VACUUM_STOCK` | `/warehouse/vacuum-stock` | PB 연결 | `w_mat_vacuum_scan_query` | PB 메뉴 인벤토리 |
-| 자재수불관리 | 제습함재고조회 | `WH_DEHUMI_STOCK` | `/warehouse/dehumi-stock` | PB 연결 | `w_mat_dehumi_scan_query` | PB 메뉴 인벤토리 |
-| 자재수불관리 | SMT 공릴체크 | `WH_RECYCLE_CHECK` | `/warehouse/recycle-check` | PB 연결 | `w_smt_recycle_check_rpt` | PB 메뉴 인벤토리 |
 | 자재수불관리 | 솔더입출고조회 | `WH_SOLDER` | `/warehouse/solder` | PB 연결 | `w_mat_solder_receipt_issue_master` | PB 메뉴 인벤토리 |
-| 자재수불관리 | 솔더라인투입이력조회 | `WH_SOLDER_INPUT` | `/warehouse/solder-input` | PB 연결 | `w_mat_solder_input_move_query` | PB 메뉴 인벤토리 |
 | 자재수불관리 | 자재입고전표관리 | `WH_RECEIPT_SLIP` | `/warehouse/receipt-slip` | PB 연결 | `w_mat_receipt_slip_master` | PB 메뉴 인벤토리 |
 | 자재수불관리 | 자재바코드입고관리 | `WH_BARCODE_RECEIPT` | `/warehouse/barcode-receipt` | PB 연결 | `w_mat_other_receipt_barcode_master` | PB 메뉴 인벤토리 |
 | 자재수불관리 | 솔더라벨 발행 | `WH_SOLDER_LABEL` | `/warehouse/solder-label` | PB 연결 | `w_mat_receipt_slip_master_onetek_solder` | PB 메뉴 인벤토리 |
-| 자재수불관리 | 자재입고관리 | `WH_MATERIAL_RECEIPT` | `/warehouse/material-receipt` | PB 연결 | `w_mat_receipt_master` | PB 메뉴 인벤토리 |
 | 자재수불관리 | 자재기타입고관리 | `WH_ETC_RECEIPT` | `/warehouse/etc-receipt` | PB 연결 | `w_mat_other_receipt_master` | PB 메뉴 인벤토리 |
 | 자재수불관리 | 자재기타출고 | `WH_ETC_ISSUE` | `/warehouse/etc-issue` | PB 연결 | `w_mat_other_issue_master` | PB 메뉴 인벤토리 |
 | 자재수불관리 | 자재출고취소 | `WH_ISSUE_CANCEL` | `/warehouse/issue-cancel` | PB 연결 | `w_mat_mass_issue_cancel_master` | PB 메뉴 인벤토리 |
@@ -139,6 +131,13 @@ verifiedCommit: 6b81c0d2
 | 제품재고관리 | 제품입고관리(모델단위) | `PRD_FG_MODEL_RECEIPT` | `/product/fg-model-receipt` | PB 연결 | `w_prd_product_fg_4_model_receipt` | PB 메뉴 인벤토리 |
 | 제품재고관리 | 제품출하관리 | `PRD_FG_ISSUE` | `/product/fg-issue` | PB 연결 | `w_prd_product_fg_issue` | PB 메뉴 인벤토리 |
 | 제품재고관리 | 제품출고관리(모델단위) | `PRD_FG_MODEL_ISSUE` | `/product/fg-model-issue` | PB 연결 | `w_prd_product_fg_4_model_issue` | PB 메뉴 인벤토리 |
+| 재고마감 | 재고마감일자설정 | `SYS_INV_CLOSE_DATE` | `/system/inventory-close-date` | PB 연결 | `w_system_inventory_close_date_setup` | PB 메뉴 인벤토리 |
+| 재고마감 | 자재재고마감 | `INV_CLOSE` | `/inventory-query/inventory-close` | PB 연결 | `w_mat_inventory_close_report` | PB 메뉴 인벤토리 |
+| 재고마감 | 자재재고실사 | `INV_CHECK` | `/inventory-query/inventory-check` | PB 연결 | `w_mat_inventory_check_master` | PB 메뉴 인벤토리 |
+| 재고마감 | 공정재고실사 | `PLN_WIP_STOCKTAKE` | `/process-transaction/wip-stocktake` | PB 연결 | `w_mat_workstage_inventory_check_master` | `apps/backend/src/modules/inventory-query/wip-stocktake.service.ts` |
+| 재고마감 | 공정재고마감 | `PLN_WIP_CLOSE` | `/process-transaction/wip-close` | 웹 신규 |  | PB 대응 없음 |
+| 재고마감 | 제품재고실사 | `PRD_FG_STOCKTAKE` | `/product/fg-stocktake` | 웹 신규 |  | PB 대응 없음 |
+| 재고마감 | 제품재고마감 | `PRD_FG_CLOSE` | `/product/fg-close` | 웹 신규 |  | PB 대응 없음 |
 | 생산관리 | 작업지시관리 | `PRD_RUN_CARD` | `/production/run-card` | PB 연결 | `w_product_run_card_duckil` | PB 메뉴 인벤토리 |
 | 생산관리 | 제품생산계획 | `PRD_MASTER_PLAN` | `/production/master-plan` | PB 연결 | `w_pln_product_master_plan_master` | PB 메뉴 인벤토리 |
 | 생산관리 | 반제품생산계획 | `PRD_SMD_PLAN` | `/production/smd-plan` | PB 연결 | `w_pln_assembly_master_plan_master` | PB 메뉴 인벤토리 |
@@ -185,6 +184,16 @@ verifiedCommit: 6b81c0d2
 | 정보조회 | 자재랙이동리포트 | `RPT_MATERIAL_RACK_MOVE` | `/report/material-rack-move` | PB 연결 | `w_mat_location_address_move_report` | PB 메뉴 인벤토리 |
 | 정보조회 | 자재장기재고리포트 | `RPT_MATERIAL_LONG_TERM` | `/report/material-long-term` | PB 연결 | `w_mat_long_term_inventory_report` | PB 메뉴 인벤토리 |
 | 정보조회 | 재고리포트 | `RPT_MATERIAL_INVENTORY` | `/report/material-inventory` | PB 연결 | `w_mat_current_inventory_report` | PB 메뉴 인벤토리 |
+| 정보조회 | 자재입출고수불원장 | `MAT_RECEIPT_ISSUE_LEDGER` | `/material/receipt-issue-ledger` | PB 연결 | `w_mat_ledger_report` | PB 메뉴 인벤토리 |
+| 정보조회 | 현재고조회 | `MAT_CURRENT_INVENTORY` | `/material/current-inventory` | PB 연결 | `w_mat_current_inventory_master` | PB 메뉴 인벤토리 |
+| 정보조회 | 총재고조회 | `INV_TOTAL` | `/inventory-query/total-inventory` | PB 연결 | `w_mat_total_inventory_query` | PB 메뉴 인벤토리 |
+| 정보조회 | 공정재고조회 | `MAT_WORKSTAGE_INVENTORY` | `/material/workstage-inventory` | PB 연결 | `w_mat_workstage_inventory_query` | `apps/backend/src/modules/material/controllers/workstage-inventory.controller.ts` |
+| 정보조회 | 베이킹재고조회 | `WH_BAKING_STOCK` | `/warehouse/baking-stock` | PB 연결 | `w_mat_baking_scan_query` | PB 메뉴 인벤토리 |
+| 정보조회 | 진공포장재고조회 | `WH_VACUUM_STOCK` | `/warehouse/vacuum-stock` | PB 연결 | `w_mat_vacuum_scan_query` | PB 메뉴 인벤토리 |
+| 정보조회 | 제습함재고조회 | `WH_DEHUMI_STOCK` | `/warehouse/dehumi-stock` | PB 연결 | `w_mat_dehumi_scan_query` | PB 메뉴 인벤토리 |
+| 정보조회 | SMT 공릴체크 | `WH_RECYCLE_CHECK` | `/warehouse/recycle-check` | PB 연결 | `w_smt_recycle_check_rpt` | PB 메뉴 인벤토리 |
+| 정보조회 | 솔더라인투입이력조회 | `WH_SOLDER_INPUT` | `/warehouse/solder-input` | PB 연결 | `w_mat_solder_input_move_query` | PB 메뉴 인벤토리 |
+| 정보조회 | 자재입고관리 | `WH_MATERIAL_RECEIPT` | `/warehouse/material-receipt` | PB 연결 | `w_mat_receipt_master` | PB 메뉴 인벤토리 |
 | 품질관리 | IQC 관리 | `QC_IQC_MASTER` | `/quality/iqc` | PB 연결 | `w_qc_iqc_master` | PB 메뉴 인벤토리 |
 | 품질관리 | IQC 이력등록관리 | `QC_IQC_HISTORY_REG` | `/quality/iqc-history` | PB 연결 | `w_qc_iqc_inspect_history_master` | PB 메뉴 인벤토리 |
 | 품질관리 | PCB 이슈발생스캔 | `QC_PID_ISSUE_SCAN` | `/quality/pid-issue-scan` | PB 연결 | `w_pln_product_pid_issue_scan_master` | PB 메뉴 인벤토리 |

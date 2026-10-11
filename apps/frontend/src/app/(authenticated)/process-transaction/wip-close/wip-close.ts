@@ -14,7 +14,7 @@ export interface WipCloseStatus {
   canClose: boolean;
   canCancel: boolean;
   reason: string | null;
-  /** 이 달 공정실사 조정이 아직 안 들어간 품목 수 */
+  /** 이 달 공정재고실사 조정이 아직 안 들어간 품목 수 */
   pendingAdjustItems: number;
 }
 

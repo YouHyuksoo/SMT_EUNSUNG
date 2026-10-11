@@ -13,12 +13,13 @@
  *    빼고 넣으므로 다시 눌러도 두 번 들어가지 않는다. 조정 뒤에는 장부를 다시 고정할 수 없다.
  * 4. 입력은 count-card.tsx, API 는 wip-stocktake.ts, 컬럼은 columns.tsx.
  */
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { ClipboardCheck, RefreshCw, Scale } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
 import ScreenTabs from '@/components/shared/ScreenTabs';
 import { Button, Card, CardContent, ConfirmModal } from '@/components/ui';
+import StocktakeFilterBar, { startsWithCond, type StocktakeStatusFilter } from '@/components/shared/StocktakeFilterBar';
 import CountCard from './count-card';
 import { wipCheckColumns, wipEntryColumns } from './columns';
 import { apiMessage, wipApi, type WipCheckRow, type WipEntryRow, type WipSession } from './wip-stocktake';
@@ -41,6 +42,15 @@ export default function WipStocktakePage() {
   const [pending, setPending] = useState<Pending>(null);
   const [busy, setBusy] = useState(false);
   const startMonth = thisMonth();
+  const [status, setStatus] = useState<StocktakeStatusFilter>('');
+  const [itemCodeCond, setItemCodeCond] = useState('');
+  const [itemNameCond, setItemNameCond] = useState('');
+
+  const shownChecks = useMemo(() => checks.filter((r) =>
+    (status !== 'diff' || Number(r.differenceQty) !== 0)
+    && (status !== 'unscanned' || !r.entries)
+    && startsWithCond(r.itemCode, itemCodeCond)
+    && startsWithCond(r.itemName, itemNameCond)), [checks, status, itemCodeCond, itemNameCond]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -100,7 +110,7 @@ export default function WipStocktakePage() {
   return (
     <div className="flex h-full flex-col gap-3 p-6">
       <header>
-        <h1 className="text-xl font-bold text-text">공정실사</h1>
+        <h1 className="text-xl font-bold text-text">공정재고실사</h1>
         <p className="mt-1 text-sm text-text-muted">
           라인에 있는 자재를 세어 공정재고(품목 단위)를 맞춥니다 · 차이 = 실사 − 장부
         </p>
@@ -152,24 +162,35 @@ export default function WipStocktakePage() {
 
       <ScreenTabs
         tabs={[
-          { key: 'check' as TabKey, label: '실사표', count: checks.length },
+          { key: 'check' as TabKey, label: '실사표', count: shownChecks.length },
           { key: 'entries' as TabKey, label: '입력 기록', count: entries.length },
         ]}
         active={tab}
         onChange={setTab}
       />
 
+      {tab === 'check' && (
+        <StocktakeFilterBar
+          status={status}
+          onStatusChange={setStatus}
+          fields={[
+            { key: 'itemCode', label: '품목코드', value: itemCodeCond, onChange: setItemCodeCond },
+            { key: 'itemName', label: '품목명', value: itemNameCond, onChange: setItemNameCond },
+          ]}
+        />
+      )}
+
       <Card className="min-h-0 flex-1 overflow-hidden" padding="none">
         <CardContent className="h-full p-3">
           {tab === 'check' ? (
             <DataGrid
-              data={checks}
+              data={shownChecks}
               columns={wipCheckColumns}
               isLoading={loading}
               pageSize={100}
               enableColumnFilter
               enableExport
-              exportFileName={`공정실사_${session?.yyyymm ?? ''}`}
+              exportFileName={`공정재고실사_${session?.yyyymm ?? ''}`}
               emptyMessage="실사표가 없습니다. 실사를 시작하세요."
               rowClassName={(row) => (Number((row as WipCheckRow).differenceQty) !== 0 ? 'bg-amber-500/5' : '')}
             />
@@ -181,7 +202,7 @@ export default function WipStocktakePage() {
               pageSize={100}
               enableColumnFilter
               enableExport
-              exportFileName={`공정실사_입력_${session?.yyyymm ?? ''}`}
+              exportFileName={`공정재고실사_입력_${session?.yyyymm ?? ''}`}
               emptyMessage="입력이 없습니다."
             />
           )}

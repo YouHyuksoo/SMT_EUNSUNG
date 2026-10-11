@@ -4,7 +4,7 @@ sources:
   - apps/frontend/scripts/data/pb-screen-inventory.json
   - apps/frontend/scripts/data/pb-screen-exclusions.json
 generator: apps/frontend/scripts/gen-migration-status.mjs
-verifiedCommit: 6b81c0d2
+verifiedCommit: 278c89e0
 ---
 
 # PB 화면 이관 현황 (자동 생성)
@@ -24,7 +24,7 @@ verifiedCommit: 6b81c0d2
 | 미착수 | 44 |
 | 윈도우 미상 | 26 |
 
-웹 메뉴 연결 계약: **PB 173개 / 웹 신규 17개 / 미확정 1개**. PB 매핑과 웹 경로의 전체 연결표는 [pb-menu-route-links.md](pb-menu-route-links.md)에서 관리합니다.
+웹 메뉴 연결 계약: **PB 174개 / 웹 신규 25개 / 미확정 1개**. PB 매핑과 웹 경로의 전체 연결표는 [pb-menu-route-links.md](pb-menu-route-links.md)에서 관리합니다.
 
 ## 대분류별 진행률
 
@@ -40,7 +40,7 @@ verifiedCommit: 6b81c0d2
 | 생산 | `M_PLANNING` | 7 | 7 | 0 | 0 | 0 |
 | 공정 | `M_WORKSTAGE0` | 5 | 5 | 0 | 0 | 0 |
 | 자재창고 | `M_WAREHOUSE` | 22 | 22 | 0 | 0 | 0 |
-| 재고 | `M_INVENTORY` | 5 | 5 | 0 | 0 | 0 |
+| 재고 | `M_INVENTORY` | 5 | 4 | 0 | 1 | 0 |
 | 수리 | `M_REPAIR` | 4 | 3 | 0 | 1 | 0 |
 | 품질관리 | `M_QC` | 12 | 12 | 0 | 0 | 0 |
 | 출하현황 | `M_SHIPPING` | 10 | 7 | 0 | 3 | 0 |
@@ -49,7 +49,7 @@ verifiedCommit: 6b81c0d2
 | 리포트 | `M_REPORT` | 23 | 23 | 0 | 0 | 0 |
 | 승인 | `M_CONFIRM` | 6 | 4 | 2 | 0 | 0 |
 | 기본정보 | `M_MANAGE` | 10 | 4 | 5 | 1 | 0 |
-| 시스템 | `M_SYSTEM` | 76 | 7 | 24 | 21 | 24 |
+| 시스템 | `M_SYSTEM` | 76 | 8 | 24 | 20 | 24 |
 
 ## 화면 목록
 
@@ -222,7 +222,7 @@ verifiedCommit: 6b81c0d2
 | 269 | 총재고조회 | `w_mat_total_inventory_query` | srw | 완료 | `INV_TOTAL` | `/inventory-query/total-inventory` |
 | 271 | 자재재고마감 | `w_mat_inventory_close_report` | srw | 완료 | `INV_CLOSE` | `/inventory-query/inventory-close` |
 | 272 | 자재재고조사 | `w_mat_inventory_check_master` | srw | 완료 | `INV_CHECK` | `/inventory-query/inventory-check` |
-| 274 | 자재바코드스캔실사 | `w_mat_barcode_check_master` | srw | 완료 | `INV_BARCODE_CHECK` | `/inventory-query/barcode-check` |
+| 274 | 자재바코드스캔실사 | `w_mat_barcode_check_master` | srw | 미착수 |  |  |
 
 ### 수리  `M_REPAIR`
 
@@ -358,7 +358,7 @@ verifiedCommit: 6b81c0d2
 | 401 | └ 메뉴언어변환대상찾기	Alt+F11 |  | — | 윈도우미상 |  |  |
 | 403 | └ 시스템환경 | `w_system_config` | srw | 완료 | `SYS_CONFIG` | `/system/config` |
 | 404 | └ 컬럼포맷	F12 | `w_col_info_popup` | srw | 이관제외 |  | PB IDE 내장 개발도구. 웹 대응물 없음 (DB 접속 도구·/system/er-view 가 대신) |
-| 405 | └ 재고마감일자설정 | `w_system_inventory_close_date_setup` | srw | 미착수 |  |  |
+| 405 | └ 재고마감일자설정 | `w_system_inventory_close_date_setup` | srw | 완료 | `SYS_INV_CLOSE_DATE` | `/system/inventory-close-date` |
 | 407 | └ 엔터키탭처럼사용안함 |  | — | 윈도우미상 |  |  |
 | 408 | └ 행변경이벤트켜기 |  | — | 윈도우미상 |  |  |
 | 410 | └ 언어즉시변경켜기 |  | — | 윈도우미상 |  |  |

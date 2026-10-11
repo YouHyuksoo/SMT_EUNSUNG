@@ -539,7 +539,6 @@
     "material.totalInventory": "Total Inventory",
     "material.inventoryClose": "Material Inventory Close",
     "material.inventoryCheck": "Material Inventory Check",
-    "material.barcodeCheck": "Material Barcode Scan Check",
     "material.workstageInventory": "Workstage Inventory",
     "jig": "Jig Management",
     "jig.inputHistory": "Jig Input History",

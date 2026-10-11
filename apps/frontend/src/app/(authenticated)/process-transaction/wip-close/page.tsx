@@ -6,13 +6,13 @@
  *
  * 초보자 가이드:
  * 1. **기말 = 기초 + 입고 − 출고.** 공정입고·공정출고(취소 반영)를 품목별로 모은다.
- *    출고에 들어 있는 공정실사 조정은 "재고조정" 열에 따로도 보인다 (출고에 포함).
+ *    출고에 들어 있는 공정재고실사 조정은 "재고조정" 열에 따로도 보인다 (출고에 포함).
  * 2. **단가**는 그 달 원자재 마감의 월평균단가다. 없으면 직전 달 공정 마감 단가, 그것도 없으면 0 원.
  *    그래서 원자재 재고마감을 먼저 해야 마감할 수 있다.
  * 3. **순서**: 계산(미리보기)은 언제든 된다. 마감은 첫 마감이거나 마지막 마감월의 다음 달만,
  *    그 달이 끝난 뒤에 된다. 취소는 마지막 마감월만 된다.
  * 4. 첫 마감의 기초는 현재 공정재고에서 그 달 이후 움직임을 뺀 값이고, 그 다음 달부터는 전월 기말이다.
- * 5. 공정실사 조정이 남아 있으면 경고가 뜬다. 마감을 막지는 않지만 조정을 끝내고 마감하는 것이 맞다.
+ * 5. 공정재고실사 조정이 남아 있으면 경고가 뜬다. 마감을 막지는 않지만 조정을 끝내고 마감하는 것이 맞다.
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -173,8 +173,8 @@ export default function WipClosePage() {
       )}
       {status && !status.closed && status.pendingAdjustItems > 0 && (
         <div className="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-600">
-          이 달 공정실사 조정이 {status.pendingAdjustItems.toLocaleString()}품목 남아 있습니다.
-          공정실사에서 일괄 조정을 끝낸 뒤 마감하면 조정 수량이 기말에 반영됩니다.
+          이 달 공정재고실사 조정이 {status.pendingAdjustItems.toLocaleString()}품목 남아 있습니다.
+          공정재고실사에서 일괄 조정을 끝낸 뒤 마감하면 조정 수량이 기말에 반영됩니다.
         </div>
       )}
       {status && !status.closed && unpriced > 0 && (
@@ -225,7 +225,7 @@ export default function WipClosePage() {
           ? `${month} 마감 결과를 지우고 미마감으로 돌립니다.`
           : `${month} 공정재고를 품목 단위로 마감합니다.`
             + `\n\n· 기말수량 ${qty(total.endingQty)}, 기말금액 ${qty(Math.round(total.endingAmt))} (기초 ${qty(total.openingQty)} + 입고 ${qty(total.receiptQty)} − 출고 ${qty(total.issueQty)}).`
-            + (status && status.pendingAdjustItems > 0 ? `\n· 공정실사 조정 ${status.pendingAdjustItems.toLocaleString()}품목이 아직 안 들어갔습니다.` : '')
+            + (status && status.pendingAdjustItems > 0 ? `\n· 공정재고실사 조정 ${status.pendingAdjustItems.toLocaleString()}품목이 아직 안 들어갔습니다.` : '')
             + (unpriced > 0 ? `\n· 단가 없는 품목 ${unpriced.toLocaleString()}개는 금액이 0 입니다.` : '')
             + '\n· 마감한 달의 기말이 다음 달 기초가 됩니다.'}
         confirmText={pending === 'cancel' ? '마감 취소' : '마감'}

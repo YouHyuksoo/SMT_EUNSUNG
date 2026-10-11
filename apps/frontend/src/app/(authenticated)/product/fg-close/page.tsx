@@ -152,7 +152,7 @@ export default function FgClosePage() {
       {status && !status.closed && status.pendingAdjustBoxes > 0 && (
         <div className="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-600">
           이 달 실사 조정이 {status.pendingAdjustBoxes.toLocaleString()}박스 남아 있습니다.
-          제품실사에서 일괄 조정을 끝낸 뒤 마감하면 조정 수량이 기말에 반영됩니다.
+          제품재고실사에서 일괄 조정을 끝낸 뒤 마감하면 조정 수량이 기말에 반영됩니다.
         </div>
       )}
 

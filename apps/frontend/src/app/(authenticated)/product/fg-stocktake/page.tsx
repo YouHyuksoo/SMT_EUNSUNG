@@ -16,7 +16,8 @@ import { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { ClipboardCheck, RefreshCw, Scale } from 'lucide-react';
 import DataGrid from '@/components/data-grid/DataGrid';
-import { Button, Card, CardContent, ConfirmModal, Input, Select } from '@/components/ui';
+import { Button, Card, CardContent, ConfirmModal } from '@/components/ui';
+import StocktakeFilterBar from '@/components/shared/StocktakeFilterBar';
 import CountCard from './count-card';
 import { fgCheckColumns } from './columns';
 import {
@@ -96,7 +97,7 @@ export default function FgStocktakePage() {
   return (
     <div className="flex h-full flex-col gap-3 p-6">
       <header>
-        <h1 className="text-xl font-bold text-text">제품실사</h1>
+        <h1 className="text-xl font-bold text-text">제품재고실사</h1>
         <p className="mt-1 text-sm text-text-muted">
           창고의 제품 박스를 세어 제품재고를 맞춥니다 · 차이 = 실사 − 장부
         </p>
@@ -146,22 +147,17 @@ export default function FgStocktakePage() {
 
       {session && <CountCard session={session} onCounted={() => { void load(); }} />}
 
-      <Card padding="none">
-        <CardContent className="flex flex-wrap items-center gap-3 p-3">
-          <Select aria-label="상태" placeholder="전체" value={filter.status}
-            onChange={(v) => setStatus(v as FgStatusFilter)}
-            options={[{ value: '', label: '전체' }, { value: 'diff', label: '차이만' }, { value: 'unscanned', label: '안 센 것만' }]} />
-          <Input aria-label="박스 바코드" placeholder="박스 바코드 (앞부분)" className="w-64" value={filter.barcode}
-            onChange={(e) => setFilter((f) => ({ ...f, barcode: e.target.value }))} />
-          <Input aria-label="모델" placeholder="모델명 (앞부분)" className="w-48" value={filter.modelName}
-            onChange={(e) => setFilter((f) => ({ ...f, modelName: e.target.value }))} />
-          {list.truncated && (
-            <span className="text-sm text-amber-500">
-              일부만 표시합니다 (최대 {list.total.toLocaleString()}행). 상태·바코드·모델로 좁혀 보세요.
-            </span>
-          )}
-        </CardContent>
-      </Card>
+      <StocktakeFilterBar
+        status={filter.status}
+        onStatusChange={setStatus}
+        fields={[
+          { key: 'barcode', label: '박스 바코드', className: 'w-64', value: filter.barcode,
+            onChange: (v) => setFilter((f) => ({ ...f, barcode: v })) },
+          { key: 'modelName', label: '모델명', className: 'w-48', value: filter.modelName,
+            onChange: (v) => setFilter((f) => ({ ...f, modelName: v })) },
+        ]}
+        truncatedLimit={list.truncated ? list.total : null}
+      />
 
       <Card className="min-h-0 flex-1 overflow-hidden" padding="none">
         <CardContent className="h-full p-3">
@@ -172,7 +168,7 @@ export default function FgStocktakePage() {
             pageSize={100}
             enableColumnFilter
             enableExport
-            exportFileName={`제품실사_${session?.yyyymm ?? ''}`}
+            exportFileName={`제품재고실사_${session?.yyyymm ?? ''}`}
             getRowId={(r) => `${(r as FgCheckRow).barcode}|${(r as FgCheckRow).locationCode}`}
             emptyMessage="실사표가 없습니다. 실사를 시작하세요."
             rowClassName={(row) => (Number((row as FgCheckRow).differenceQty) !== 0 ? 'bg-amber-500/5' : '')}

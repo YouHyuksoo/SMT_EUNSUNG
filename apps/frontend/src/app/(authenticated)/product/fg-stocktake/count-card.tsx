@@ -90,7 +90,7 @@ export default function CountCard({ session, onCounted }: Props) {
       </CardContent>
       <StocktakeUploadModal isOpen={uploadOpen} title={`${session.yyyymm} 제품 실사`}
         endpoint={fgApi.uploadEndpoint}
-        template={{ headers: ['바코드', '수량'], fileName: '제품실사_양식.xlsx' }}
+        template={{ headers: ['바코드', '수량'], fileName: '제품재고실사_양식.xlsx' }}
         guide={<>첫 시트의 머리글에 <b>바코드</b> 열이 있어야 합니다. <b>수량</b>을 비우면 장부 수량(장부에 없던
           박스는 박스 라벨 수량)으로 셉니다. 이미 센 박스는 엑셀 수량으로 고칩니다.</>}
         onClose={() => { setUploadOpen(false); barcodeRef.current?.focus(); }} onDone={onCounted} />

@@ -539,7 +539,6 @@
     "material.totalInventory": "总库存查询",
     "material.inventoryClose": "物料库存结算",
     "material.inventoryCheck": "物料库存盘点",
-    "material.barcodeCheck": "物料条码扫描盘点",
     "material.workstageInventory": "工序库存查询",
     "jig": "治具管理",
     "jig.inputHistory": "治具投入履历查询",
