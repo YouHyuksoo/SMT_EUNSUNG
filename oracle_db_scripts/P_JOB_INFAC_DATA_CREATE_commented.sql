@@ -7,6 +7,7 @@ CREATE OR REPLACE PROCEDURE P_JOB_INFAC_DATA_CREATE
    *   2011-00-00 - 지성솔루션컨설팅 - 최초 작성
    *   2026-07-02 - AI(Codex)       - 한글 주석 자동 추가
  *   2026-10-11 - AI(Claude)      - 공정출고 생성을 P_WIP_ISSUE_CREATE 호출로 바꿈 (전 고객 대상)
+   *   2026-10-12 - AI(Claude)      - 인팩 제품 재고(ESEG)는 제품창고 재고만 (입고 전 박스 제외)
    * ================================================================
    * [AI 분석] 기능 설명:
    *   업무 기준 데이터 또는 바코드를 생성하고 대상 테이블에 등록한다.
@@ -140,19 +141,9 @@ P_WIP_ISSUE_CREATE(TO_DATE('20230701', 'YYYYMMDD'));
                                 'N' transfer_yn
                             FROM 
                             (     
-                                  SELECT 
-                                        PART_NO AS cd_item ,
-                                        SUM( PACKING_PCS_QTY ) AS qt_im
-                                     
-                                   FROM IP_PRODUCT_PACK_MASTER
-                                  WHERE MODEL_NAME  IN ( SELECT MODEL_NAME FROM IP_PRODUCT_MODEL_MASTER WHERE CUSTOMER_CODE = 'IP'  )
-                                    AND MODEL_NAME NOT IN ( 'DANA-LPS-680pF')
-                                    AND RECEIPT_FLAG = 'N'
-                                    AND PACKING_PCS_QTY > 0 
-                                  GROUP BY PART_NO 
-                                                          
-                                     UNION ALL
-                                     
+                                  -- 2026-10-12: 입고 안 한 포장 박스(IP_PRODUCT_PACK_MASTER RECEIPT_FLAG='N')는 빼고
+                                  --   제품창고 재고만 보낸다. 입고 전 박스 자재는 공정재고(ESEF)에 남아 있어
+                                  --   함께 보내면 고객사에서 자재와 제품으로 두 번 잡힌다.
                                  SELECT 
                                         ITEM_CODE AS cd_item ,
                                         SUM( QTY ) AS qt_im
