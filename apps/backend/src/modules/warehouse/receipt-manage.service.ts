@@ -35,6 +35,12 @@
  *      · WHERE 는 진짜 기본키 3개로 건다 (`RECEIPT_DATE`·`RECEIPT_SEQUENCE`·
  *        `ORGANIZATION_ID` — 실측 `XPKIM_ITEM_RECEIPT`)
  *    **이미 출고된 입고분을 고치는 것을 막지는 못한다** — 현장 확인이 필요하다.
+ *    · 수정은 재고와 상관없는 열(전표·단가·통화·비고 등)만 바꾼다. 품목·롯트·창고·구매유형을
+ *      바꾸면 원장 키만 옮겨가고 재고(IM_ITEM_INVENTORY)는 옛 키에 남는다 — 입고 UPDATE
+ *      트리거는 수량을 움직이지 않는다. 틀렸으면 삭제하고 다시 넣는다.
+ *    · 삭제는 원장 행을 지우지 않고 입고취소와 같은 상계로 처리한다
+ *      (PKG_MES_MAT.SP_RECEIPT_CANCEL: 원 행 RECEIPT_STATUS='C' + 부호 반전 행을 오늘 날짜로).
+ *      IM_ITEM_RECEIPT 에는 DELETE 트리거가 없어 행을 지우면 재고가 그대로 남기 때문이다.
  * 7. **인쇄 DataWindow(`d_mat_receipt_invoice_rpt`, 거래명세서)는 옮기지 않는다.**
  *    PB 런타임 인쇄 유틸이다.
  * 8. **쓰기는 실행하지 않고 parse 로만 검증했다** (사용자 결정).
@@ -78,18 +84,13 @@ const FIXED = {
 } as const;
 
 /**
- * 254 에서 고칠 수 있는 열. **PB DataWindow 가 실제로 갱신하는 열만** 담았다
- * (`d_mat_receipt_mst` 의 편집 가능 ∩ 갱신 대상 22개 중 의미 있는 것).
+ * 254 에서 고칠 수 있는 열 — 재고 수량·위치와 상관없는 열만 둔다.
+ * 품목·구매유형·창고·롯트(MATERIAL_MFS·MFS)는 재고 행의 키라 여기서 빼고 삭제 후 재등록으로 고친다.
  *
  * 키는 요청 필드 이름, 값은 컬럼 이름이다. 여기 없는 열은 문장에 들어가지 않으므로
  * 요청이 무엇을 보내든 바뀌지 않는다.
  */
 const UPDATABLE = {
-  itemCode: 'ITEM_CODE',
-  lineType: 'LINE_TYPE',
-  locationCode: 'LOCATION_CODE',
-  materialMfs: 'MATERIAL_MFS',
-  mfs: 'MFS',
   invoiceNo: 'INVOICE_NO',
   receiptLotNo: 'RECEIPT_LOT_NO',
   unitPrice: 'UNIT_PRICE',
@@ -455,43 +456,77 @@ export class ReceiptManageService {
             AND ORGANIZATION_ID = :organizationId
             -- 이 화면이 만든 기타입고만 건드린다 (파일 머리 6번).
             AND RECEIPT_TYPE = '${FIXED.receiptType}'
-            AND BARCODE IS NULL`,
+            AND BARCODE IS NULL
+            AND NVL(RECEIPT_STATUS, 'N') <> 'C'`,
         namedBinds(binds),
       );
       const rows = Number(affectedRows(result) ?? 0);
       if (rows !== 1) {
         throw new NotFoundException(
           `고칠 수 있는 기타입고가 아닙니다 (${dto.receiptDate} / ${dto.receiptSequence}).`
-          + ' 바코드로 만들어진 입고이거나 이미 없는 건입니다.',
+          + ' 바코드로 만들어진 입고이거나 취소됐거나 이미 없는 건입니다.',
         );
       }
       return { ...dto, rows, changed: Object.keys(binds).length };
     });
   }
 
-  /** 기타입고 삭제 (**쓰기**). 수정과 같은 범위 제한을 건다. */
-  async deleteEtcReceipt(dto: EtcReceiptKeyDto, organizationId: number) {
+  /**
+   * 기타입고 삭제 (**쓰기**) — 원장 행을 지우지 않고 입고취소와 같은 상계로 처리한다.
+   * 원 행은 RECEIPT_STATUS='C', 부호를 뒤집은 행이 오늘 날짜로 들어가 입고 트리거가 재고를 되돌린다.
+   * 수정과 같은 범위 제한(기타입고 'E', 바코드 없음)을 건다.
+   */
+  async deleteEtcReceipt(dto: EtcReceiptKeyDto, organizationId: number, userId: string) {
     return this.tx.run(async (qr) => {
-      const result = await qr.query(
-        `DELETE FROM IM_ITEM_RECEIPT
+      const target = (await qr.query(
+        `SELECT NVL(RECEIPT_STATUS, 'N') AS "status"
+           FROM IM_ITEM_RECEIPT
           WHERE RECEIPT_DATE = TO_DATE(:receiptDate, 'YYYY-MM-DD')
             AND RECEIPT_SEQUENCE = :receiptSequence
             AND ORGANIZATION_ID = :organizationId
             AND RECEIPT_TYPE = '${FIXED.receiptType}'
             AND BARCODE IS NULL`,
-        namedBinds({
-          receiptDate: dto.receiptDate,
-          receiptSequence: dto.receiptSequence,
-          organizationId,
-        }),
-      );
-      const rows = Number(affectedRows(result) ?? 0);
-      if (rows !== 1) {
+        namedBinds({ receiptDate: dto.receiptDate, receiptSequence: dto.receiptSequence, organizationId }),
+      )) as Row[];
+      if (target.length !== 1) {
         throw new NotFoundException(
           `지울 수 있는 기타입고가 아닙니다 (${dto.receiptDate} / ${dto.receiptSequence}).`,
         );
       }
-      return { ...dto, rows };
+      if (target[0].status === 'C') {
+        throw new BadRequestException(
+          `이미 취소된 기타입고입니다 (${dto.receiptDate} / ${dto.receiptSequence}).`,
+        );
+      }
+      try {
+        await qr.query(
+          `DECLARE
+             v_result NUMBER;
+           BEGIN
+             PKG_MES_MAT.SP_RECEIPT_CANCEL(TO_DATE(:receiptDate, 'YYYY-MM-DD'), :receiptSequence,
+                                           TRUNC(SYSDATE), :organizationId, :userId, v_result);
+             IF v_result <> 1 THEN
+               RAISE_APPLICATION_ERROR(-20001, 'RECEIPT_CANCEL_FAILED:' || v_result);
+             END IF;
+           END;`,
+          namedBinds({
+            receiptDate: dto.receiptDate,
+            receiptSequence: dto.receiptSequence,
+            organizationId,
+            userId,
+          }),
+        );
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
+        const matched = /RECEIPT_CANCEL_FAILED:(-?\d+)/.exec(message);
+        if (!matched) throw error;
+        throw new BadRequestException(
+          matched[1] === '-2'
+            ? `이미 취소된 기타입고입니다 (${dto.receiptDate} / ${dto.receiptSequence}).`
+            : `기타입고를 취소하지 못했습니다 (결과 ${matched[1]}).`,
+        );
+      }
+      return { ...dto, rows: 1 };
     });
   }
 }

@@ -484,7 +484,7 @@ export class ReceiptManageController {
   @Patch()
   @ApiOperation({
     summary: '254 기타입고 수정 (**쓰기**). 고칠 수 있는 열을 화이트리스트로 막았다 —'
-      + ' 문장에 없는 열은 요청이 무엇을 보내든 바뀌지 않는다. 수량은 바꿀 수 없다'
+      + ' 문장에 없는 열은 요청이 무엇을 보내든 바뀌지 않는다. 수량·품목·롯트·창고·구매유형은 바꿀 수 없다'
       + " (PB DataWindow 도 편집 대상으로 두지 않는다). RECEIPT_TYPE='E' 이고"
       + ' 바코드로 만들어지지 않은 행만 대상이다.',
   })
@@ -500,13 +500,17 @@ export class ReceiptManageController {
 
   @Delete()
   @ApiOperation({
-    summary: '254 기타입고 삭제 (**쓰기**). 수정과 같은 범위 제한을 건다.',
+    summary: '254 기타입고 삭제 (**쓰기**). 원장 행을 지우지 않고 입고취소처럼 상계한다'
+      + " (원 행 'C' + 부호 반전 행, 재고가 되돌아간다). 수정과 같은 범위 제한을 건다.",
   })
   async remove(
     @Body() dto: EtcReceiptKeyDto,
     @OrganizationId() organizationId: number,
+    @UserId() userId?: string,
   ) {
-    return ResponseUtil.success(await this.service.deleteEtcReceipt(dto, organizationId));
+    return ResponseUtil.success(
+      await this.service.deleteEtcReceipt(dto, organizationId, userId || DEFAULT_USER),
+    );
   }
 }
 

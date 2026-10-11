@@ -664,27 +664,8 @@ export class EtcReceiptCreateDto {
  * 여기 있는 항목만 바꿀 수 있다 — 서비스의 화이트리스트와 짝이다.
  * **수량은 없다.** PB DataWindow 도 수량을 편집 대상으로 두지 않는다 (실측).
  */
+/** 품목·구매유형·창고·롯트는 재고 행의 키라 받지 않는다 — 틀렸으면 삭제(상계) 후 다시 등록한다. */
 export class EtcReceiptUpdateDto extends EtcReceiptKeyDto {
-  @ApiPropertyOptional({ description: '품목코드' })
-  @IsOptional() @IsString() @Length(1, 50)
-  itemCode?: string;
-
-  @ApiPropertyOptional({ description: '구매유형' })
-  @IsOptional() @IsString() @Length(0, 10)
-  lineType?: string;
-
-  @ApiPropertyOptional({ description: '창고코드' })
-  @IsOptional() @IsString() @Length(0, 20)
-  locationCode?: string;
-
-  @ApiPropertyOptional({ description: '자재 롯트 (MATERIAL_MFS)' })
-  @IsOptional() @IsString() @Length(0, 60)
-  materialMfs?: string;
-
-  @ApiPropertyOptional({ description: '협력사 롯트 (MFS)' })
-  @IsOptional() @IsString() @Length(0, 60)
-  mfs?: string;
-
   @ApiPropertyOptional({ description: '전표번호' })
   @IsOptional() @IsString() @Length(0, 60)
   invoiceNo?: string;

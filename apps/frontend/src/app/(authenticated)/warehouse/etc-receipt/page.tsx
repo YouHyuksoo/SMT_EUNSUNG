@@ -150,6 +150,7 @@ export default function EtcReceiptPage() {
     if (!selected) return '고칠 건을 이력에서 고르세요.';
     if (selected.barcode) return '바코드로 만들어진 입고는 고칠 수 없습니다.';
     if (selected.receiptType !== 'E') return '기타입고가 아닌 건은 고칠 수 없습니다.';
+    if (selected.receiptStatus === 'C') return '취소된 입고(또는 취소 상계 건)는 고칠 수 없습니다.';
     return null;
   }, [mode, itemCode, receiptQty, selected]);
 
@@ -180,9 +181,6 @@ export default function EtcReceiptPage() {
         await api.patch('/warehouse/receipt-manage', {
           receiptDate: selected.receiptDate,
           receiptSequence: selected.receiptSequence,
-          locationCode: locationCode.trim() || undefined,
-          materialMfs: materialMfs.trim() || undefined,
-          lineType: lineType.trim() || undefined,
           unitPrice: unitPrice === '' ? undefined : Number(unitPrice),
           invoiceNo: invoiceNo.trim() || undefined,
           comments: comments.trim() || undefined,
@@ -211,7 +209,7 @@ export default function EtcReceiptPage() {
           receiptSequence: selected.receiptSequence,
         },
       });
-      toast.success('지웠습니다.');
+      toast.success('취소했습니다. 반대 수량 한 건이 오늘 날짜로 들어가 재고가 되돌아갔습니다.');
       resetForm();
       void search();
     } catch (error: unknown) {
@@ -337,18 +335,18 @@ export default function EtcReceiptPage() {
                 ({Number(selected?.receiptQty ?? 0) < 0 ? '차감' : '입고'}) ·
                 입고일 {selected?.receiptDate} · 순번 {selected?.receiptSequence}
                 <div className="mt-1 text-xs text-text-muted">
-                  수량은 바꿀 수 없습니다. 틀렸으면 지우고 다시 넣으세요.
+                  수량·품목·창고·롯트·구매유형은 바꿀 수 없습니다. 틀렸으면 삭제하고 다시 넣으세요.
                 </div>
               </div>
             )}
 
-            <Input label="창고코드" value={locationCode}
+            <Input label="창고코드" value={locationCode} readOnly={mode === 'edit'}
               onChange={(e) => setLocationCode(e.target.value)} />
-            <Input label="자재 롯트 (MATERIAL_MFS)" value={materialMfs}
+            <Input label="자재 롯트 (MATERIAL_MFS)" value={materialMfs} readOnly={mode === 'edit'}
               onChange={(e) => setMaterialMfs(e.target.value)} />
             <Input label="협력사코드" value={supplierCode} readOnly={mode === 'edit'}
               onChange={(e) => setSupplierCode(e.target.value)} />
-            <Input label="구매유형" value={lineType}
+            <Input label="구매유형" value={lineType} readOnly={mode === 'edit'}
               onChange={(e) => setLineType(e.target.value)} />
             <Input label="단가" value={unitPrice} inputMode="numeric"
               onChange={(e) => setUnitPrice(e.target.value)} />
@@ -396,8 +394,8 @@ export default function EtcReceiptPage() {
         onClose={() => setDeleteOpen(false)}
         onConfirm={remove}
         title="기타입고 삭제"
-        message={`입고일 ${selected?.receiptDate} 순번 ${selected?.receiptSequence} 건을`
-          + ' 지웁니다. 되돌릴 수 없습니다.'}
+        message={`입고일 ${selected?.receiptDate} 순번 ${selected?.receiptSequence} 건을 취소합니다.`
+          + ' 원 입고는 취소 상태로 남고, 반대 수량 한 건이 오늘 날짜로 들어가 재고가 되돌아갑니다.'}
         confirmText="삭제"
       />
     </div>
