@@ -226,6 +226,16 @@ export class InventoryCloseService {
         ? `마지막 마감월(${status.lastClosed})만 취소할 수 있습니다.`
         : '마감하지 않은 달입니다.');
     }
+    // 공정 마감은 자재 마감 단가를 쓰고, 공정 마감이 남아 있으면 그 기간 공정 원장이 잠겨 있다.
+    // 자재만 열리면 자재 출고(→ 공정입고)가 공정 잠금에 걸려 실패하므로 공정 마감을 먼저 취소하게 한다.
+    const [wip] = (await this.dataSource.query(
+      `SELECT COUNT(*) AS "n" FROM IM_ITEM_WORKSTAGE_INV_CLOSE
+        WHERE CLOSE_YYYYMM = :yyyymm AND ORGANIZATION_ID = :organizationId AND ROWNUM = 1`,
+      namedBinds({ yyyymm, organizationId }),
+    )) as { n: number }[];
+    if (Number(wip?.n ?? 0) > 0) {
+      throw new BadRequestException(`${yyyymm} 공정 재고마감이 있습니다. 공정 재고마감을 먼저 취소하세요.`);
+    }
     return this.dataSource.transaction(async (manager) => {
       await manager.query(
         `DELETE FROM IM_ITEM_INVENTORY_CLOSE WHERE CLOSE_YYYYMM = :yyyymm AND ORGANIZATION_ID = :organizationId`,

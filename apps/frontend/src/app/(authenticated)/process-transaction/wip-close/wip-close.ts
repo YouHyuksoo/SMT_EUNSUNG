@@ -16,6 +16,8 @@ export interface WipCloseStatus {
   reason: string | null;
   /** 이 달 공정재고실사 조정이 아직 안 들어간 품목 수 */
   pendingAdjustItems: number;
+  /** 기간 안 포장 중 생산투입 잡이 아직 처리하지 않은 건수 (0 이어야 마감할 수 있다) */
+  pendingPacks: number;
 }
 
 export interface WipCloseLine {

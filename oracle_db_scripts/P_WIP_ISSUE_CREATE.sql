@@ -21,6 +21,11 @@ CREATE OR REPLACE PROCEDURE P_WIP_ISSUE_CREATE (
    *   포장은 다음 회차로 넘어간다 (예전에는 INSERT 뒤 전체를 'Y' 로 바꿔 사이에 들어온 포장이 빠졌다).
    *   'P' 는 같은 트랜잭션 안에서만 존재한다. 오류가 나면 이 프로시저가 한 일만 되돌리고 다시 던진다.
    *   COMMIT 은 호출한 쪽이 한다.
+   *
+   * 마감된 기간 (2026-10-11):
+   *   포장일이 이미 공정 재고마감된 기간이면 출고일을 마감 다음 날(열린 기간 첫날)로 넣는다.
+   *   마감 잠금 트리거(TRG_IM_WS_ISSUE_LOCK)가 마감 기간 출고를 거절하므로, 그대로 넣으면 한 건 때문에
+   *   잡 전체가 실패하고 그 뒤 생산투입이 계속 멈춘다.
    * ================================================================ */
 IS
 BEGIN
@@ -42,7 +47,7 @@ BEGIN
                last_modify_date,
                last_modify_by
            )
-   SELECT x.pack_date,
+   SELECT GREATEST(x.pack_date, NVL(x.closed_through + 1, x.pack_date)),
           seq_workstage_issue_seq.NEXTVAL,
           x.organization_id,
           x.item_code,
@@ -79,6 +84,7 @@ BEGIN
                GROUP BY t.top_item, t.child, t.org
            )
            SELECT p.pack_date, p.organization_id, l.child AS item_code,
+                  (SELECT pkg_inv_close_lock.closed_through('WIP', p.organization_id) FROM dual) AS closed_through,
                   p.packing_pcs_qty * l.qty AS issue_qty, p.part_no
              FROM ip_product_pack_master p
              JOIN leaf l
