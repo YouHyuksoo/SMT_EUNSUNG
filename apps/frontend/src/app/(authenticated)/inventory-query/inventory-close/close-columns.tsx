@@ -47,6 +47,22 @@ const num = (key: keyof CloseLine, header: string, size = 100, digits = 0): Colu
   },
 });
 
+/**
+ * 조정 칸 — 원장·마감표는 부족을 출고(+)로 쌓지만, 화면은 실사 화면과 같게 "실사 − 장부"(부족 −, 남음 +)로 보여준다.
+ * accessorFn 으로 뒤집으므로 필터·엑셀 내보내기도 같은 부호를 쓴다.
+ */
+const adjust = (key: 'adjustQty' | 'adjustAmt', header: string, size: number, digits = 0): ColumnDef<CloseLine> => ({
+  id: key,
+  accessorFn: (r) => -Number(r[key] ?? 0),
+  header,
+  size,
+  meta: { align: 'right', filterType: 'number' },
+  cell: (c) => {
+    const v = Number(c.getValue() ?? 0);
+    return <span className={v < 0 ? 'text-red-500' : ''}>{fmt(v, digits)}</span>;
+  },
+});
+
 export const closeColumns: ColumnDef<CloseLine>[] = [
   { accessorKey: 'itemCode', header: '품목코드', size: 130 },
   { accessorKey: 'itemName', header: '품목명', size: 170 },
@@ -63,8 +79,8 @@ export const closeColumns: ColumnDef<CloseLine>[] = [
   num('freeQty', '무상출고', 90, 4),
   num('saleQty', '유상출고', 90, 4),
   num('extraQty', '기타출고', 90, 4),
-  num('adjustQty', '재고조정', 90, 4),
-  num('adjustAmt', '조정금액', 100),
+  adjust('adjustQty', '재고조정(실사−장부)', 110, 4),
+  adjust('adjustAmt', '조정금액(실사−장부)', 120),
   num('issueAmt', '출고금액', 110),
   {
     accessorKey: 'avgPrice', header: '월평균단가', size: 90, meta: { align: 'right' },

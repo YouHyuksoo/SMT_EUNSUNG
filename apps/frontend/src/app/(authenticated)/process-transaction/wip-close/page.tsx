@@ -101,7 +101,8 @@ export default function WipClosePage() {
       openingQty: sum('openingQty'), openingAmt: sum('openingAmt'),
       receiptQty: sum('receiptQty'), receiptAmt: sum('receiptAmt'),
       issueQty: sum('issueQty'), issueAmt: sum('issueAmt'),
-      adjustQty: sum('adjustQty'), adjustAmt: sum('adjustAmt'),
+      // 화면은 "실사 − 장부"(부족 −) 부호로 보여준다 (columns.tsx)
+      adjustQty: -sum('adjustQty'), adjustAmt: -sum('adjustAmt'),
       endingQty: sum('endingQty'), endingAmt: sum('endingAmt'),
     };
   }, [shown]);
@@ -116,7 +117,7 @@ export default function WipClosePage() {
     ['기초', total.openingQty, total.openingAmt],
     ['입고', total.receiptQty, total.receiptAmt],
     ['출고', total.issueQty, total.issueAmt],
-    ['재고조정', total.adjustQty, total.adjustAmt],
+    ['재고조정 (실사−장부)', total.adjustQty, total.adjustAmt],
     ['기말', total.endingQty, total.endingAmt],
   ];
 

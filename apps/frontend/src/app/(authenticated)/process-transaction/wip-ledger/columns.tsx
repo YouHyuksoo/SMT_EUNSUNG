@@ -55,7 +55,9 @@ export const summaryColumns: ColumnDef<WipLedgerSummaryRow>[] = [
   { accessorKey: 'itemUom', header: '단위', size: 60 },
   { accessorKey: 'receiptQty', header: '입고', size: 110, cell: (c) => qtyCell(c.getValue()) },
   { accessorKey: 'issueQty', header: '생산투입', size: 110, cell: (c) => qtyCell(c.getValue()) },
-  { accessorKey: 'adjustQty', header: '실사조정', size: 100, cell: (c) => qtyCell(c.getValue()) },
+  // 공정출고는 부족을 + 로 쌓지만 화면은 실사 화면과 같게 "실사 − 장부"(부족 −, 남음 +)로 보여준다
+  { id: 'adjustQty', accessorFn: (r) => -Number(r.adjustQty ?? 0), header: '실사조정(실사−장부)', size: 130,
+    cell: (c) => signedCell(c.getValue()) },
   { accessorKey: 'netQty', header: '순증감', size: 110, cell: (c) => signedCell(c.getValue()) },
   { accessorKey: 'currentQty', header: '지금 공정재고', size: 120, cell: (c) => qtyCell(c.getValue()) },
   { accessorKey: 'count', header: '건수', size: 80, cell: (c) => qtyCell(c.getValue()) },

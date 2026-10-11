@@ -27,6 +27,6 @@ export const fgCloseColumns: ColumnDef<FgCloseLine>[] = [
   num('openingQty', '기초수량'),
   num('receiptQty', '입고수량'),
   num('issueQty', '출고수량'),
-  num('adjustQty', '재고조정'),
+  num('adjustQty', '재고조정(실사−장부)'),
   num('endingQty', '기말수량', 120, true),
 ];

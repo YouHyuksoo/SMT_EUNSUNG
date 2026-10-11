@@ -116,7 +116,8 @@ export default function InventoryClosePage() {
       receipt: sum('receiptAmt'),
       issue: sum('issueAmt'),
       ending: sum('endingAmt'),
-      adjust: sum('adjustAmt'),
+      // 화면은 "실사 − 장부"(부족 −) 부호로 보여준다 (close-columns.tsx)
+      adjust: -sum('adjustAmt'),
       unpriced: sum('unpriced'),
       negative: shown.filter((l) => l.endingQty < 0).length,
     };
@@ -175,7 +176,7 @@ export default function InventoryClosePage() {
           ['입고금액', won(total.receipt)],
           ['출고금액', won(total.issue)],
           ['기말금액', won(total.ending)],
-          ['재고조정 금액', won(total.adjust)],
+          ['재고조정 금액 (실사−장부)', won(total.adjust)],
           ['단가 미등록 입고', `${total.unpriced.toLocaleString()}건`],
           ['기말 음수 품목', `${total.negative.toLocaleString()}품목`],
         ].map(([label, value]) => (

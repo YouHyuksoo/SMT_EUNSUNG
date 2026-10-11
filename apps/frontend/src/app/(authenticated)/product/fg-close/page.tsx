@@ -161,7 +161,7 @@ export default function FgClosePage() {
           ['기초수량', qty(total.opening)],
           ['입고수량', qty(total.receipt)],
           ['출고수량', qty(total.issue)],
-          ['재고조정', qty(total.adjust)],
+          ['재고조정 (실사−장부)', qty(total.adjust)],
           ['기말수량', qty(total.ending)],
           ['기말 음수 모델', `${total.negative.toLocaleString()}모델`],
         ].map(([label, value]) => (
