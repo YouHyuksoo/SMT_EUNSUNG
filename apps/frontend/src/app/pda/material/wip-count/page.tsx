@@ -38,6 +38,9 @@ interface HistoryItem {
   qty: number;
   bookQty: number;
   countedQty: number;
+  /** 반제품·제품·박스면 풀어서 나온 원자재 가짓수와 풀 기준 제품 */
+  explodedItems?: number;
+  explodeTop?: string;
   canceled: boolean;
   timestamp: string;
 }
@@ -141,7 +144,9 @@ export default function PdaWipCountPage() {
             <>
               <p className="text-base font-bold text-emerald-600 dark:text-emerald-400">{item.qty.toLocaleString()}</p>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                {t("pda.wipCount.counted")} {item.countedQty.toLocaleString()} / {t("pda.wipCount.book")} {item.bookQty.toLocaleString()}
+                {item.explodeTop
+                  ? t("pda.wipCount.exploded", { top: item.explodeTop, n: (item.explodedItems ?? 0).toLocaleString() })
+                  : `${t("pda.wipCount.counted")} ${item.countedQty.toLocaleString()} / ${t("pda.wipCount.book")} ${item.bookQty.toLocaleString()}`}
               </p>
             </>
           )}

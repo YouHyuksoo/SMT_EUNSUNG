@@ -19,9 +19,9 @@
  *    순서 규칙은 자재 마감과 같다: 첫 마감이거나 마지막 마감월의 다음 달만, 그 달이 끝난 뒤에.
  *    취소는 마지막 마감월만. 현재 공정재고(IM_ITEM_WORKSTAGE_INVENTORY)는 고치지 않는다.
  * 5. 마감한 달은 공정실사가 시작·입력·조정을 거절한다 (`assertWipMonthOpen`).
- * 6. **생산투입이 다 들어간 뒤에만 마감한다.** 생산투입(공정출고)은 DB 잡(P_WIP_ISSUE_CREATE, 06:10·17:10)이
- *    포장 실적으로 만든다. 기간 안 포장 중 아직 처리 안 된 것(WIP_PROCESS_FLAG='N')이 있으면 마감을 막는다.
- *    마감 뒤에는 마감 잠금 트리거가 그 기간 원장을 막고, 늦게 처리된 포장은 잡이 다음 기간 첫날로 넣는다.
+ * 6. **생산투입을 다 넣고 마감한다.** 생산투입(공정출고)은 DB 잡(P_WIP_ISSUE_CREATE, 06:10·17:10)이
+ *    제품 입고·입고취소로 만든다 (wip-bom.ts). 마감은 먼저 그 프로시저를 돌려 남은 박스를 반영한 뒤 계산한다.
+ *    마감 뒤에는 마감 잠금 트리거가 그 기간 원장을 막고, 늦게 처리된 박스는 잡이 다음 기간 첫날로 넣는다.
  */
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { DataSource, QueryRunner } from 'typeorm';
@@ -29,6 +29,7 @@ import { InjectDataSource } from '@nestjs/typeorm';
 import { clobBind } from '../../common/services/oracle.service';
 import { namedBinds } from '../../common/utils/named-binds.util';
 import { firstCloseGate, getCloseStartMonth, getClosePeriod, periodBoundsSql, periodEnded, shiftMonth } from './close-period';
+import { catchUpWipIssue, wipMovedSql, wipPendingPackWhere } from './wip-bom';
 
 /** 공정실사 조정 출고를 찾는 표시 (wip-stocktake.service.ts 의 WIP_ADJUST_MARK 와 같다) */
 const ADJUST_MARK = 'INV ADJUST';
@@ -66,7 +67,7 @@ export interface WipCloseStatus {
   reason: string | null;
   /** 이 달 공정실사 조정이 아직 안 들어간 품목 수 (0 이 아니면 조정을 끝내고 마감하는 게 맞다) */
   pendingAdjustItems: number;
-  /** 기간 안 포장 중 생산투입 잡이 아직 처리하지 않은 건수 (0 이어야 마감할 수 있다) */
+  /** 생산투입 잡이 아직 처리하지 않은 박스 수 (마감할 때 먼저 반영한다) */
   pendingPacks: number;
 }
 
@@ -168,12 +169,12 @@ export class WipCloseService {
                              WHERE ORGANIZATION_ID = :organizationId AND LAST_MODIFY_BY = '${ADJUST_MARK}'
                                AND ${periodBoundsSql('ISSUE_DATE', ':yyyymm', ':organizationId')}
                              GROUP BY ITEM_CODE) a ON a.ITEM_CODE = c.ITEM_CODE
+                 LEFT JOIN ${wipMovedSql} mv ON mv.ITEM_CODE = c.ITEM_CODE
                 WHERE c.CLOSE_YYYYMM = :yyyymm AND c.ORGANIZATION_ID = :organizationId
                   AND c.MFS = '*' AND c.LINE_CODE = '*'
-                  AND NVL(c.INVENTORY_QTY, 0) - NVL(c.CHECK_INVENTORY_QTY, 0) - NVL(a.POSTED, 0) <> 0) AS PENDING,
+                  AND NVL(c.INVENTORY_QTY, 0) - NVL(mv.QTY, 0) - NVL(c.CHECK_INVENTORY_QTY, 0) - NVL(a.POSTED, 0) <> 0) AS PENDING,
               (SELECT COUNT(*) FROM IP_PRODUCT_PACK_MASTER p
-                WHERE p.ORGANIZATION_ID = :organizationId AND NVL(p.WIP_PROCESS_FLAG, 'N') = 'N'
-                  AND p.PACK_DATE < TRUNC(F_GET_INVENTORY_CLOSE_DATE(:yyyymm, 'END', :organizationId)) + 1) AS PACKS
+                WHERE p.ORGANIZATION_ID = :organizationId AND ${wipPendingPackWhere('p')}) AS PACKS
          FROM DUAL`,
       namedBinds({ organizationId, yyyymm }),
     );
@@ -202,10 +203,6 @@ export class WipCloseService {
     }
     if (!reason && !materialClosed) reason = '원자재 재고마감을 먼저 하세요. (단가를 원자재 마감에서 가져옵니다)';
     if (!reason && !monthEnded) reason = `마감 기간(${period.start} ~ ${period.end})이 끝난 뒤에 마감할 수 있습니다. (미리보기는 됩니다)`;
-    if (!reason && num(row?.PACKS) > 0) {
-      reason = `생산투입이 아직 안 들어간 포장이 ${num(row?.PACKS).toLocaleString()}건 있습니다.`
-        + ' 생산투입 잡(06:10·17:10)이 돈 뒤 마감하세요.';
-    }
 
     return {
       yyyymm, closed, lastClosed, openingSource, materialClosed,
@@ -227,6 +224,8 @@ export class WipCloseService {
   }
 
   async close(yyyymm: string, organizationId: number, userId: string) {
+    // 입고·입고취소 중 아직 생산투입에 안 들어간 박스를 먼저 반영한다 (따로 커밋 — 마감이 실패해도 맞는 일이다).
+    await this.dataSource.transaction((manager) => catchUpWipIssue(manager, organizationId));
     const status = await this.status(yyyymm, organizationId);
     if (!status.canClose || !status.openingSource) {
       throw new BadRequestException(status.reason ?? '마감할 수 없는 달입니다.');

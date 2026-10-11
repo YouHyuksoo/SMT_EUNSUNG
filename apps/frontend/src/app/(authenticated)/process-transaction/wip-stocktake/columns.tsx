@@ -19,6 +19,10 @@ export const wipCheckColumns: ColumnDef<WipCheckRow>[] = [
   { accessorKey: 'itemSpec', header: '규격', size: 180 },
   { accessorKey: 'lineType', header: '거래유형', size: 70, meta: { align: 'center' } },
   { accessorKey: 'bookQty', header: '장부수량', size: 120, meta: right, cell: (c) => fmt(c.getValue()) },
+  {
+    accessorKey: 'movedQty', header: '실사 중 입고로 빠짐', size: 130, meta: right,
+    cell: (c) => (Number(c.getValue()) ? fmt(c.getValue()) : ''),
+  },
   { accessorKey: 'checkQty', header: '실사수량', size: 110, meta: right, cell: (c) => fmt(c.getValue()) },
   { accessorKey: 'differenceQty', header: '차이', size: 120, meta: right, cell: (c) => signed(c.getValue()) },
   {
@@ -34,6 +38,7 @@ export const wipEntryColumns: ColumnDef<WipEntryRow>[] = [
   { accessorKey: 'itemCode', header: '품목코드', size: 130 },
   { accessorKey: 'itemName', header: '품목명', size: 180 },
   { accessorKey: 'lotNo', header: '롯트번호', size: 130, cell: (c) => (c.getValue() as string | null) ?? '품목 입력' },
+  { accessorKey: 'explodeTop', header: '원자재로 푼 제품 BOM', size: 150 },
   { accessorKey: 'lineCode', header: '라인', size: 80, meta: { align: 'center' } },
   { accessorKey: 'qty', header: '수량', size: 110, meta: right, cell: (c) => fmt(c.getValue()) },
 ];

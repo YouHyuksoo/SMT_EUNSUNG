@@ -4275,9 +4275,9 @@
     },
     "wipCount": {
       "title": "WIP Stocktake",
-      "scanReel": "Scan line reel barcode",
+      "scanReel": "Scan line reel or box barcode",
       "qty": "Remaining qty (blank = label qty)",
-      "itemCode": "Item code (no barcode)",
+      "itemCode": "Item code (material, semi, product)",
       "itemQty": "Qty",
       "add": "Add",
       "cancel": "Cancel mode",
@@ -4285,7 +4285,8 @@
       "startOnPc": "Start the WIP stocktake on PC",
       "book": "Book",
       "counted": "Counted",
-      "canceled": "Canceled"
+      "canceled": "Canceled",
+      "exploded": "Counted as {{n}} materials via {{top}} BOM"
     },
     "invCount": {
       "noActive": "No active inventory count",

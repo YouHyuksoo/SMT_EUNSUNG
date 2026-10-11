@@ -23,7 +23,10 @@ export interface WipCheckRow {
   itemSpec: string | null;
   itemUom: string | null;
   lineType: string | null;
+  /** 비교할 장부 = 고정한 장부 − 고정 뒤 입고된 안 센 박스 몫 */
   bookQty: number;
+  /** 고정 뒤 제품창고에 입고돼 빠진 몫 */
+  movedQty: number;
   checkQty: number;
   differenceQty: number;
   adjustedQty: number | null;
@@ -36,6 +39,8 @@ export interface WipEntryRow {
   itemCode: string;
   itemName: string | null;
   lotNo: string | null;
+  /** 원자재로 풀 기준 제품 (반제품·제품·박스 입력) */
+  explodeTop: string | null;
   lineCode: string | null;
   qty: number;
 }
@@ -48,7 +53,11 @@ export interface WipCountInput {
 }
 
 export interface WipCountResult {
-  last?: { itemCode: string; itemName: string | null; lotNo: string; qty: number; bookQty: number; countedQty: number };
+  last?: {
+    itemCode: string; itemName: string | null; lotNo: string; qty: number; bookQty: number; countedQty: number;
+    /** 반제품·제품·박스면 풀어서 나온 원자재 가짓수와 풀 기준 제품 */
+    explodedItems?: number; explodeTop?: string;
+  };
 }
 
 export const apiMessage = (error: unknown) =>

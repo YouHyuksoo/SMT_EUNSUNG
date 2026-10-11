@@ -4275,9 +4275,9 @@
     },
     "wipCount": {
       "title": "工序盘点",
-      "scanReel": "扫描产线料盘条码",
+      "scanReel": "扫描产线料盘或箱条码",
       "qty": "剩余数量（空=标签数量）",
-      "itemCode": "无条码物料编码",
+      "itemCode": "品目编码（物料·半成品·成品）",
       "itemQty": "数量",
       "add": "录入",
       "cancel": "取消模式",
@@ -4285,7 +4285,8 @@
       "startOnPc": "请在PC工序盘点画面开始盘点",
       "book": "账面",
       "counted": "实盘",
-      "canceled": "已取消"
+      "canceled": "已取消",
+      "exploded": "按 {{top}} BOM 展开为 {{n}} 种物料计入"
     },
     "invCount": {
       "noActive": "没有进行中的盘点",

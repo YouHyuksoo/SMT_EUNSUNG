@@ -1,11 +1,12 @@
 /**
  * @file src/app/(authenticated)/process-transaction/wip-stocktake/count-card.tsx
- * @description 공정 실사 입력 — 릴 바코드를 찍거나, 바코드 없는 자재는 품목코드와 수량을 넣는다
+ * @description 공정 실사 입력 — 릴·박스 바코드를 찍거나, 바코드 없는 것은 품목코드와 수량을 넣는다
  *
  * 초보자 가이드:
  * 1. 바코드 칸: 스캐너는 키보드처럼 입력하고 Enter 를 보낸다. 수량을 비우면 라벨 수량, 쓰다 남은 릴은
- *    남은 수량을 먼저 넣고 찍는다.
- * 2. 품목 칸: 바코드가 없는 자재는 품목코드와 수량을 넣고 Enter. 같은 품목·라인을 다시 넣으려면 취소 후 넣는다.
+ *    남은 수량을 먼저 넣고 찍는다. 입고 안 한 제품 박스 바코드를 찍으면 박스 수량만큼 원자재로 풀어 센다.
+ * 2. 품목 칸: 바코드가 없는 자재·반제품·미포장 제품은 품목코드와 수량을 넣고 Enter. 반제품·제품은
+ *    원자재로 풀어 센다. 같은 품목·라인을 다시 넣으려면 취소 후 넣는다.
  * 3. 라인은 기록용이다 (공정재고는 품목 단위라 라인별로 나누지 않는다).
  * 4. "취소" 를 켜고 넣으면 그 입력을 지운다.
  */
@@ -50,7 +51,13 @@ export default function CountCard({ session, onCounted }: Props) {
         setLast({ ok: true, text: `취소함 · ${r.itemCode}${r.lotNo === '*' ? '' : ` / ${r.lotNo}`}` });
       } else {
         const r = (await wipApi.count(input)).last;
-        if (r) {
+        if (r?.explodeTop) {
+          setLast({
+            ok: true,
+            text: `${r.lotNo === '박스' ? '박스 ' : ''}${r.itemCode} ${r.itemName ?? ''} · ${r.qty.toLocaleString()} 셈`
+              + ` · ${r.explodeTop} BOM 으로 원자재 ${(r.explodedItems ?? 0).toLocaleString()}가지로 풀어 반영`,
+          });
+        } else if (r) {
           setLast({
             ok: true,
             text: `${r.itemCode} ${r.itemName ?? ''}${r.lotNo === '*' ? '' : ` / ${r.lotNo}`} · ${r.qty.toLocaleString()} 셈`
@@ -76,11 +83,11 @@ export default function CountCard({ session, onCounted }: Props) {
           <span className="flex items-center gap-1 text-sm font-semibold text-text">
             <ScanLine className="h-4 w-4" />{session.yyyymm} 공정 실사 입력
           </span>
-          <Input ref={barcodeRef} aria-label="자재 바코드" placeholder="릴 바코드를 찍으세요"
+          <Input ref={barcodeRef} aria-label="릴·박스 바코드" placeholder="릴·박스 바코드를 찍으세요"
             value={barcode} className="w-72" disabled={busy} autoComplete="off"
             onChange={(e) => setBarcode(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); void submit('barcode'); } }} />
-          <PartSearchField aria-label="품목코드" placeholder="바코드 없는 자재 품목코드" value={itemCode}
+          <PartSearchField aria-label="품목코드" placeholder="품목코드 (자재·반제품·제품)" value={itemCode}
             className="w-56" onChange={(e) => setItemCode(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); void submit('item'); } }} />
           <Input aria-label="센 수량" placeholder="수량 (바코드는 비우면 라벨 수량)"
@@ -104,8 +111,8 @@ export default function CountCard({ session, onCounted }: Props) {
         endpoint={wipApi.uploadEndpoint}
         template={{ headers: ['바코드', '품목코드', '수량', '라인'], fileName: '공정실사_양식.xlsx' }}
         guide={<>첫 시트의 머리글에 <b>바코드</b>(또는 롯트번호)나 <b>품목코드</b> 열이 있어야 합니다. 바코드 줄은
-          <b> 수량</b>을 비우면 라벨 수량, 품목코드 줄은 수량이 꼭 있어야 합니다. <b>라인</b>은 기록용입니다.
-          이미 넣은 롯트·품목은 엑셀 수량으로 고칩니다.</>}
+          <b> 수량</b>을 비우면 라벨(박스) 수량, 품목코드 줄은 수량이 꼭 있어야 합니다. <b>라인</b>은 기록용입니다.
+          반제품·제품 품목코드와 박스 바코드는 원자재로 풀어 셉니다. 이미 넣은 롯트·품목·박스는 엑셀 수량으로 고칩니다.</>}
         onClose={() => { setUploadOpen(false); barcodeRef.current?.focus(); }} onDone={onCounted} />
     </Card>
   );

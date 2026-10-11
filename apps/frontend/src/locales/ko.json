@@ -4277,9 +4277,9 @@
     },
     "wipCount": {
       "title": "공정 실사",
-      "scanReel": "라인 릴 바코드 스캔",
+      "scanReel": "라인 릴·박스 바코드 스캔",
       "qty": "남은 수량 (비우면 라벨 수량)",
-      "itemCode": "바코드 없는 자재 품목코드",
+      "itemCode": "품목코드 (자재·반제품·제품)",
       "itemQty": "수량",
       "add": "입력",
       "cancel": "취소 모드",
@@ -4287,7 +4287,8 @@
       "startOnPc": "PC 공정재고실사 화면에서 실사를 시작하세요",
       "book": "장부",
       "counted": "실사",
-      "canceled": "취소함"
+      "canceled": "취소함",
+      "exploded": "{{top}} BOM 으로 원자재 {{n}}가지로 풀어 반영"
     },
     "invCount": {
       "noActive": "진행 중인 실사가 없습니다",
