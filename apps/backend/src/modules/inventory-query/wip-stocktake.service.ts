@@ -31,6 +31,7 @@ import { namedBinds } from '../../common/utils/named-binds.util';
 import { clobBind } from '../../common/services/oracle.service';
 import { isStocktakeMonthAllowed, UPLOAD_MAX_ROWS } from './stocktake.service';
 import { assertWipMonthOpen } from './wip-close.service';
+import { fgBookEffSql } from './fg-stocktake.service';
 import { bomLeafSql, catchUpWipIssue, findExplodeTops, wipBoxKeySql, wipCountedSql, wipMovedSql } from './wip-bom';
 
 type Row = Record<string, unknown>;
@@ -416,6 +417,26 @@ export class WipStocktakeService {
   async adjustAll(yyyymm: string, organizationId: number, userId: string) {
     return this.tx.run(async (qr) => {
       await assertWipMonthOpen(qr, yyyymm, organizationId);
+      // 제품 실사 조정이 먼저다. 제품창고에서 찾은 입고 안 된 박스는 제품 조정이 '입고됨'으로 바꾸고, 그러면
+      // 생산투입이 그 자재를 공정재고에서 뺀다 (고정 뒤 입고 → 비교할 장부에서 빠짐). 공정 조정을 먼저 하면
+      // 그 박스 자재가 공정 부족으로 한 번 빠지고, 뒤에 제품 조정으로 생산투입이 또 뺀다.
+      const fgPending = num(((await qr.query(
+        `SELECT COUNT(*) AS "n" FROM IP_PRODUCT_FG_INV_CHECK c
+           LEFT JOIN (SELECT BARCODE, LOCATION_CODE, SUM(ADJUST_QTY) AS POSTED FROM IP_PRODUCT_FG_ADJUST
+                       WHERE CHECK_YYYYMM = :yyyymm AND ORGANIZATION_ID = :organizationId
+                       GROUP BY BARCODE, LOCATION_CODE) a
+             ON a.BARCODE = c.BARCODE AND a.LOCATION_CODE = c.LOCATION_CODE
+           LEFT JOIN IP_PRODUCT_FG_INVENTORY i ON i.BARCODE = c.BARCODE AND i.LOCATION_CODE = c.LOCATION_CODE
+          WHERE c.CHECK_YYYYMM = :yyyymm AND c.ORGANIZATION_ID = :organizationId
+            AND c.CHECK_QTY - ${fgBookEffSql()} - NVL(a.POSTED, 0) <> 0`,
+        namedBinds({ yyyymm, organizationId }),
+      )) as Row[])[0]?.n);
+      if (fgPending) {
+        throw new BadRequestException(
+          `${yyyymm} 제품 실사 조정을 먼저 하세요 (조정 안 된 박스 ${fgPending.toLocaleString()}개). `
+          + '제품창고에서 찾은 박스 자재가 공정에서 두 번 빠지지 않게 하는 순서입니다.',
+        );
+      }
       await catchUpWipIssue(qr, organizationId);
       const rows = (await qr.query(
         `SELECT c.ITEM_CODE AS "itemCode",
