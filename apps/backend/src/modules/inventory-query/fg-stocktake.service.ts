@@ -218,13 +218,14 @@ export class FgStocktakeService {
       if (adjusted) {
         throw new BadRequestException(`${yyyymm} 은 이미 조정이 ${adjusted}건 들어가 장부를 다시 고정할 수 없습니다.`);
       }
-      // ① 이미 있는 줄은 장부만 지금 값으로 갱신 (센 수량은 그대로)
+      // ① 이미 있는 줄은 장부만 지금 값으로 갱신 (센 수량은 그대로). 찍은 줄은 찍을 때 적은 장부를 지킨다 —
+      //    지금 값으로 덮으면 찍은 뒤 출고된 박스가 장부 0 이 되어 조정이 수량을 다시 더한다.
       await qr.query(
         `UPDATE IP_PRODUCT_FG_INV_CHECK c
             SET c.INVENTORY_QTY = NVL((SELECT i.QTY FROM IP_PRODUCT_FG_INVENTORY i
                                         WHERE i.BARCODE = c.BARCODE AND i.LOCATION_CODE = c.LOCATION_CODE), 0),
                 c.LAST_MODIFY_DATE = SYSDATE, c.LAST_MODIFY_BY = :userId
-          WHERE c.CHECK_YYYYMM = :yyyymm AND c.ORGANIZATION_ID = :organizationId`,
+          WHERE c.CHECK_YYYYMM = :yyyymm AND c.ORGANIZATION_ID = :organizationId AND c.SCANNED_YN = 'N'`,
         namedBinds({ userId, yyyymm, organizationId }),
       );
       // ② 지금 재고가 있는데 실사표에 없는 박스를 추가

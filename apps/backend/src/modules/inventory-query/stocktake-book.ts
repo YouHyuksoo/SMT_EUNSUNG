@@ -11,7 +11,8 @@
  * 3. **안 찍힌 롯트**: 최소(지금 재고 − 넣은 조정, 시작 때 고정 장부), 0 아래로는 안 내린다.
  *    시작 뒤 출고된 만큼은 다시 빼지 않고, 시작 뒤 입고된 만큼은 지우지 않는다.
  * 4. **남은 조정 = 실사 − 비교 장부 − 넣은 조정** (부호: 실사 − 장부, 남음 +). 조정을 넣으면 0 이 되어
- *    다시 눌러도 두 번 들어가지 않는다. 넣은 조정 = 그 기간 M009 출고(부호 반전).
+ *    다시 눌러도 두 번 들어가지 않는다. 넣은 조정 = 그 기간 M009 출고(부호 반전) 중 이 실사를 시작한 뒤의 것
+ *    (시작 전에 넣은 조정은 이미 고정 장부에 들어 있다).
  * 5. 바인드: :yyyymm, :organizationId. 결과 열: 실사표 c.* 의 주요 열 + SCANNED_YN · COUNTED · BOOK_EFF · POSTED.
  */
 import { periodBoundsSql } from './close-period';
@@ -44,6 +45,8 @@ export const materialCheckBookSql = () => `
                  FROM IM_ITEM_ISSUE s
                 WHERE s.ISSUE_ACCOUNT = 'M009' AND s.ORGANIZATION_ID = :organizationId
                   AND ${periodBoundsSql('s.ISSUE_DATE', ':yyyymm', ':organizationId')}
+                  AND s.ENTER_DATE >= (SELECT MIN(k.ENTER_DATE) FROM IM_ITEM_INVENTORY_CHECK k
+                                        WHERE k.CLOSE_YYYYMM = :yyyymm AND k.ORGANIZATION_ID = :organizationId)
                 GROUP BY s.ITEM_CODE, s.MATERIAL_MFS) pa
            ON pa.ITEM_CODE = c.ITEM_CODE AND pa.MATERIAL_MFS = c.MATERIAL_MFS
     LEFT JOIN (SELECT s.ITEM_CODE, s.MATERIAL_MFS, -SUM(s.ISSUE_QTY) AS POSTED
@@ -55,6 +58,8 @@ export const materialCheckBookSql = () => `
                 WHERE s.ISSUE_ACCOUNT = 'M009' AND s.ORGANIZATION_ID = :organizationId
                   AND ${periodBoundsSql('s.ISSUE_DATE', ':yyyymm', ':organizationId')}
                   AND s.ENTER_DATE < x.SCANNED_AT
+                  AND s.ENTER_DATE >= (SELECT MIN(k.ENTER_DATE) FROM IM_ITEM_INVENTORY_CHECK k
+                                        WHERE k.CLOSE_YYYYMM = :yyyymm AND k.ORGANIZATION_ID = :organizationId)
                 GROUP BY s.ITEM_CODE, s.MATERIAL_MFS) pb
            ON pb.ITEM_CODE = c.ITEM_CODE AND pb.MATERIAL_MFS = c.MATERIAL_MFS
    WHERE c.CLOSE_YYYYMM = :yyyymm AND c.ORGANIZATION_ID = :organizationId`;

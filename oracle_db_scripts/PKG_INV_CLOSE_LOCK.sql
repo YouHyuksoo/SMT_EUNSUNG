@@ -11,6 +11,8 @@
 --     제품 FG : IP_PRODUCT_FG_INV_CLOSE_MONTH.CLOSE_YN = 'Y'
 -- 상태만 바꾸는 UPDATE(입고취소·출고취소가 원 행에 'C' 를 찍는 것 등)는 막지 않는다 — 트리거가 수량·날짜·키
 -- 칼럼 UPDATE 에만 걸린다. 오류 번호는 -20090.
+-- 자재 LINE_TYPE 은 잠그지 않는다: 자재 마감은 품목×창고로 수량을 모으고 거래유형은 단가 맞춤·표시에만 쓴다.
+-- 품목 마스터를 고치면 ID_ITEM_UPD_MANUAL 트리거가 그 품목 원장 전체의 LINE_TYPE 을 바꾸기 때문이다.
 
 CREATE OR REPLACE PACKAGE PKG_INV_CLOSE_LOCK AS
    /** 그 재고 종류의 마지막 마감월 종료일(날짜만). 마감한 달이 없으면 NULL. */
@@ -56,7 +58,7 @@ END PKG_INV_CLOSE_LOCK;
 -- (생산투입 잡은 한 문장에 수천 행을 넣는다).
 
 CREATE OR REPLACE TRIGGER TRG_IM_ITEM_RECEIPT_LOCK
-   FOR INSERT OR DELETE OR UPDATE OF receipt_date, receipt_qty, item_code, material_mfs, location_code, line_type
+   FOR INSERT OR DELETE OR UPDATE OF receipt_date, receipt_qty, item_code, material_mfs, location_code
    ON im_item_receipt
    COMPOUND TRIGGER
    TYPE t_map IS TABLE OF DATE INDEX BY PLS_INTEGER;
@@ -75,7 +77,7 @@ END TRG_IM_ITEM_RECEIPT_LOCK;
 /
 
 CREATE OR REPLACE TRIGGER TRG_IM_ITEM_ISSUE_LOCK
-   FOR INSERT OR DELETE OR UPDATE OF issue_date, issue_qty, item_code, material_mfs, location_code, line_type, issue_account
+   FOR INSERT OR DELETE OR UPDATE OF issue_date, issue_qty, item_code, material_mfs, location_code, issue_account
    ON im_item_issue
    COMPOUND TRIGGER
    TYPE t_map IS TABLE OF DATE INDEX BY PLS_INTEGER;
