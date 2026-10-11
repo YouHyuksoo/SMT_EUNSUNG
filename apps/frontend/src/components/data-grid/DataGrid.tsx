@@ -37,6 +37,7 @@ import { useExport } from '@/hooks/useExport';
 import { formatDisplayDate } from '@/utils/date';
 import type { ExportFormat } from '@/hooks/useExport';
 import { SqlViewerModal, type ActiveFilter } from './SqlViewerModal';
+import { useAuthStore } from '@/stores/authStore';
 import { ResizeHandle } from './ResizeHandle';
 import { ColumnFilterInput } from './ColumnFilterInput';
 import { PaginationControls } from './PaginationControls';
@@ -111,7 +112,7 @@ export interface DataGridProps<T> {
   enableFullscreen?: boolean;
   /** 하단 Footer(전체 건수 + 페이지네이션) 표시 여부 (기본: true) */
   showFooter?: boolean;
-  /** SQL 조회문 — 지정 시 툴바에 DB 아이콘 버튼 표시 */
+  /** 대표 SQL 조회문 (선택). SQL 조회문 메뉴는 ADMIN 에게 항상 보이고, 없으면 이 화면에서 실행된 SQL 을 보여 준다. */
   sqlQuery?: string;
   /** 서버사이드 필터 상태 — SQL 뷰어에 WHERE 조건으로 반영 (빈 문자열/null/undefined 자동 제외) */
   sqlFilters?: Record<string, unknown>;
@@ -173,6 +174,8 @@ function DataGrid<T>({
   const [showFilterRow, setShowFilterRow] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showSql, setShowSql] = useState(false);
+  // SQL 조회문은 ADMIN 만 본다 (백엔드도 ADMIN 요청에만 실행 SQL 을 붙인다)
+  const canViewSql = useAuthStore((s) => s.user?.role === 'ADMIN');
   const [menuOpen, setMenuOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const { exportData } = useExport();
@@ -371,7 +374,7 @@ function DataGrid<T>({
       : "w-full h-full flex flex-col"}
     >
       {/* Toolbar */}
-      {(toolbarLeft || enableExport || enableColumnFilter || enableFullscreen || isFullscreen || sqlQuery || activeFilterCount > 0) && (
+      {(toolbarLeft || enableExport || enableColumnFilter || enableFullscreen || isFullscreen || canViewSql || activeFilterCount > 0) && (
         <div className="flex items-center justify-between gap-3 mb-1.5">
           <div className="flex items-center gap-3 flex-1 min-w-0">
             {toolbarLeft}
@@ -389,7 +392,7 @@ function DataGrid<T>({
             )}
 
             {/* 통합 메뉴 드롭다운 */}
-            {(enableExport || enableColumnFilter || sqlQuery) && (
+            {(enableExport || enableColumnFilter || canViewSql) && (
               <div className="relative" ref={menuRef}>
                 <button
                   onClick={() => setMenuOpen(v => !v)}
@@ -435,7 +438,7 @@ function DataGrid<T>({
                         </button>
                       </>
                     )}
-                    {sqlQuery && (
+                    {canViewSql && (
                       <>
                         <div className="h-px bg-border" />
                         <button
@@ -657,9 +660,10 @@ function DataGrid<T>({
         onPaginationChange={setPagination}
       />
       )}
-      {showSql && sqlQuery && (
+      {showSql && canViewSql && (
         <SqlViewerModal
           sql={sqlQuery}
+          columnKeys={table.getAllLeafColumns().map((c) => c.id)}
           activeFilters={[
             ...Object.entries(sqlFilters ?? {})
               .filter(([, v]) => v !== undefined && v !== null && v !== '')

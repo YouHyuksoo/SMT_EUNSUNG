@@ -3,13 +3,20 @@
 /**
  * @file src/components/data-grid/SqlViewerModal.tsx
  * @description DataGrid SQL 뷰어 모달 — SQL 하이라이팅 + 선택형 테이블 컬럼 명세
+ *
+ * 초보자 가이드:
+ * 1. `sql`(화면이 넘긴 대표 조회문)이 있으면 같은 테이블을 읽은 실제 실행 SQL 을 우선 보여 준다.
+ * 2. `sql` 이 없으면 이 화면에서 실제로 실행된 SELECT 문을 보여 준다. 여러 API 를 불렀으면 고를 수 있고,
+ *    그리드 컬럼 키(`columnKeys`)가 컬럼 별칭(AS "itemCode")으로 많이 들어 있는 SQL 을 먼저 보여 준다
+ *    (사이드바·즐겨찾기처럼 같은 화면에서 함께 불린 API 가 앞에 오지 않게).
+ * 3. 실행 SQL 은 백엔드가 ADMIN 요청에만 응답에 붙인다 (sql-debug.interceptor.ts).
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { X, Copy, Check, Database, TableProperties, Loader2 } from "lucide-react";
-import api, { getLatestActualSqlForPreview } from "@/services/api";
+import api, { getLatestActualSqlForPreview, getPageSqlDebugEntries } from "@/services/api";
 
 interface ColumnInfo {
   columnId: number;
@@ -36,7 +43,10 @@ export interface ActiveFilter {
 }
 
 interface SqlViewerModalProps {
-  sql: string;
+  /** 화면이 넘긴 대표 조회문. 없으면 이 화면에서 실행된 SQL 을 쓴다. */
+  sql?: string;
+  /** 그리드 컬럼 키 — 이 화면에서 실행된 SQL 중 그리드의 것을 고르는 데 쓴다 */
+  columnKeys?: string[];
   activeFilters?: ActiveFilter[];
   onClose: () => void;
 }
@@ -149,9 +159,21 @@ function formatType(col: ColumnInfo): string {
 
 // ─── 메인 컴포넌트 ─────────────────────────────────────────────────────────────
 
-export function SqlViewerModal({ sql, activeFilters = [], onClose }: SqlViewerModalProps) {
-  const actualSql = getLatestActualSqlForPreview(sql) ?? sql;
-  const effectiveSql = buildEffectiveSql(actualSql, activeFilters);
+export function SqlViewerModal({ sql, columnKeys = [], activeFilters = [], onClose }: SqlViewerModalProps) {
+  const pageEntries = useMemo(() => {
+    if (sql || typeof window === "undefined") return [];
+    const score = (text: string) => columnKeys.filter((key) => text.includes(`"${key}"`)).length;
+    return getPageSqlDebugEntries(window.location.pathname)
+      .map((entry, order) => ({ entry, order, hits: score(entry.sql) }))
+      .sort((a, b) => b.hits - a.hits || a.order - b.order)
+      .map(({ entry }) => entry);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sql]);
+  const [picked, setPicked] = useState(0);
+  const actualSql = sql
+    ? getLatestActualSqlForPreview(sql) ?? sql
+    : pageEntries[picked]?.sql ?? "";
+  const effectiveSql = actualSql ? buildEffectiveSql(actualSql, activeFilters) : "";
 
   const [copied, setCopied] = useState(false);
   const [showSchema, setShowSchema] = useState(false);
@@ -218,6 +240,20 @@ export function SqlViewerModal({ sql, activeFilters = [], onClose }: SqlViewerMo
                 {schema?.tableComment ? ` · ${schema.tableComment}` : ""}
               </span>
             )}
+            {pageEntries.length > 1 && (
+              <select
+                aria-label="조회 API"
+                value={picked}
+                onChange={(e) => { setPicked(Number(e.target.value)); setSchema(null); }}
+                className="max-w-[360px] truncate rounded-md border border-slate-600/60 bg-slate-800 px-2 py-0.5 text-xs text-slate-300"
+              >
+                {pageEntries.map((entry, idx) => (
+                  <option key={entry.source} value={idx}>
+                    {entry.source} · {new Date(entry.recordedAt).toLocaleTimeString()}
+                  </option>
+                ))}
+              </select>
+            )}
             {activeFilters.length > 0 && (
               <span className="px-2 py-0.5 rounded-md bg-amber-500/20 border border-amber-500/30 text-xs text-amber-400">
                 필터 {activeFilters.length}건 적용됨
@@ -238,8 +274,9 @@ export function SqlViewerModal({ sql, activeFilters = [], onClose }: SqlViewerMo
             </button>
             <button
               onClick={handleCopy}
+              disabled={!effectiveSql}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-150
-                border border-slate-600/60 text-slate-300 hover:bg-slate-700/60 hover:border-slate-500 hover:text-white"
+                border border-slate-600/60 text-slate-300 hover:bg-slate-700/60 hover:border-slate-500 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {copied
                 ? <><Check className="w-3.5 h-3.5 text-emerald-400" /><span className="text-emerald-400">복사됨</span></>
@@ -264,9 +301,15 @@ export function SqlViewerModal({ sql, activeFilters = [], onClose }: SqlViewerMo
               <span className="text-xs text-slate-500 uppercase tracking-widest font-medium">SQL</span>
             </div>
             <div className="overflow-auto flex-1 p-4">
-              <pre className="font-mono text-xs text-slate-300 leading-relaxed whitespace-pre-wrap">
-                {highlightSql(effectiveSql)}
-              </pre>
+              {effectiveSql ? (
+                <pre className="font-mono text-xs text-slate-300 leading-relaxed whitespace-pre-wrap">
+                  {highlightSql(effectiveSql)}
+                </pre>
+              ) : (
+                <p className="text-xs text-slate-500">
+                  이 화면에서 실행된 조회 SQL 이 아직 없습니다. 조회한 뒤 다시 여세요.
+                </p>
+              )}
             </div>
           </div>
 

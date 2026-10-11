@@ -43,6 +43,8 @@ interface CachedSqlDebug {
   parameters?: unknown[];
   tables: string[];
   sourceUrl?: string;
+  /** 응답을 받았을 때의 화면 경로 — 그리드 SQL 뷰어가 이 화면에서 실행된 SQL 만 고른다 */
+  pagePath?: string;
   recordedAt: number;
 }
 
@@ -111,6 +113,7 @@ export const recordSqlDebugResponse = (sourceUrl?: string, debugSql?: SqlDebugPa
       parameters: query.parameters,
       tables: query.tables?.length ? query.tables : extractSqlTables(query.sql),
       sourceUrl,
+      pagePath: typeof window !== "undefined" ? window.location.pathname : undefined,
       recordedAt: Date.now(),
     });
   }
@@ -118,6 +121,40 @@ export const recordSqlDebugResponse = (sourceUrl?: string, debugSql?: SqlDebugPa
   if (sqlDebugCache.length > SQL_DEBUG_CACHE_LIMIT) {
     sqlDebugCache.splice(0, sqlDebugCache.length - SQL_DEBUG_CACHE_LIMIT);
   }
+};
+
+export interface PageSqlDebugEntry {
+  /** API 경로 (쿼리스트링 제외) */
+  source: string;
+  sql: string;
+  recordedAt: number;
+}
+
+/**
+ * 이 화면에서 실행된 SELECT 문 — API 경로마다 가장 최근 것 하나, 최근 것부터.
+ * COUNT 만 하는 문은 같은 API 의 본 조회가 없을 때만 남긴다.
+ * (백엔드는 ADMIN 요청에만 SQL 을 붙이므로 다른 사용자는 늘 비어 있다.)
+ */
+/** 사이드바·헤더·로그인 상태처럼 어느 화면에서나 불리는 API — 그리드 SQL 후보에서 뺀다 */
+const SHELL_SQL_SOURCES = ["/menu-categories", "/menu-favorites", "/auth/", "/db-info", "/system/configs/active"];
+
+export const getPageSqlDebugEntries = (pagePath: string): PageSqlDebugEntry[] => {
+  const main = new Map<string, CachedSqlDebug>();
+  const countOnly = new Map<string, CachedSqlDebug>();
+  for (let idx = sqlDebugCache.length - 1; idx >= 0; idx -= 1) {
+    const entry = sqlDebugCache[idx];
+    if (entry.pagePath !== pagePath) continue;
+    const source = (entry.sourceUrl ?? "").split("?")[0] || "(unknown)";
+    if (SHELL_SQL_SOURCES.some((prefix) => source.startsWith(prefix))) continue;
+    const target = isCountOnlySql(entry.sql) ? countOnly : main;
+    if (!target.has(source)) target.set(source, entry);
+  }
+  for (const [source, entry] of countOnly) {
+    if (!main.has(source)) main.set(source, entry);
+  }
+  return [...main.entries()]
+    .map(([source, entry]) => ({ source, sql: formatActualSql(entry), recordedAt: entry.recordedAt }))
+    .sort((a, b) => b.recordedAt - a.recordedAt);
 };
 
 export const getLatestActualSqlForPreview = (previewSql: string): string | null => {
