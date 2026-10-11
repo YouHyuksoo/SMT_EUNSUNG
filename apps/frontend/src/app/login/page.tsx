@@ -24,7 +24,9 @@ import ConnectionCheckOverlay from './components/ConnectionCheckOverlay';
 function LoginPage() {
   const router = useRouter();
   const { t } = useTranslation();
-  const { login, isLoading } = useAuthStore();
+  const { login } = useAuthStore();
+  // 로그인 API 완료 후 화면 이동이 끝날 때까지 유지 (중복 클릭 방지)
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [systemReady, setSystemReady] = useState(false);
 
@@ -34,13 +36,16 @@ function LoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
     setError('');
+    setIsSubmitting(true);
     try {
       await login(userId, password);
       router.replace('/dashboard');
     } catch (err) {
       const axiosErr = err as AxiosError<{ message: string }>;
       setError(axiosErr.response?.data?.message || t('auth.loginFailed'));
+      setIsSubmitting(false);
     }
   };
 
@@ -112,7 +117,7 @@ function LoginPage() {
               required
             />
 
-            <Button type="submit" isLoading={isLoading} className="w-full mt-6">
+            <Button type="submit" isLoading={isSubmitting} className="w-full mt-6">
               {t('auth.login')}
             </Button>
 
