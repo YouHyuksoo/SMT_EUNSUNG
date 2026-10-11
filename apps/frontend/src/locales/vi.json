@@ -278,6 +278,7 @@
     "material": "Quản lý xuất nhập vật tư",
     "materialMgmt": "Quản lý vật tư",
     "processTransaction": "Quản lý xuất nhập công đoạn",
+    "wipLedger": "Lịch sử nhập xuất công đoạn",
     "magazine": "Quản lý magazine",
     "workstagePass": "Quản lý lịch sử qua công đoạn",
     "magazineLabelHistory": "Lịch sử phát hành nhãn magazine",

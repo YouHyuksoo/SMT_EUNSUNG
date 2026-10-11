@@ -278,6 +278,7 @@
     "material": "Material Mgmt",
     "materialMgmt": "Material Management",
     "processTransaction": "Process Transaction",
+    "wipLedger": "WIP Receipt/Issue History",
     "magazine": "Magazine",
     "workstagePass": "Workstage Pass History",
     "magazineLabelHistory": "Magazine Label History",

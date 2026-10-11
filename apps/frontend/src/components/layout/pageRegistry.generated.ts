@@ -477,6 +477,11 @@ async function loadPageComponent(path: string): Promise<ComponentType | null> {
       component = mod.getPageComponent();
       break;
     }
+    case "/process-transaction/wip-ledger": {
+      const mod = await import("./page-registries/process-transaction__wip-ledger.generated");
+      component = mod.getPageComponent();
+      break;
+    }
     case "/process-transaction/wip-stocktake": {
       const mod = await import("./page-registries/process-transaction__wip-stocktake.generated");
       component = mod.getPageComponent();

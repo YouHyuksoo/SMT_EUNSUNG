@@ -146,7 +146,8 @@
       "SMT_FEEDER_PICKUP"
     ],
     "PROCESS_TRANSACTION": [
-      "PLN_WORKSTAGE_PASS"
+      "MAT_WORKSTAGE_INVENTORY",
+      "PLN_WIP_LEDGER"
     ],
     "MAGAZINE": [
       "PLN_MAGAZINE_LABEL_HISTORY",
@@ -189,7 +190,8 @@
       "TRK_PID",
       "TRK_RUN_NO",
       "TRK_LOT_ALL",
-      "TRK_LINE_DASHBOARD"
+      "TRK_LINE_DASHBOARD",
+      "PLN_WORKSTAGE_PASS"
     ],
     "QUERY": [
       "QRY_PID_INFO",
@@ -227,7 +229,6 @@
       "MAT_RECEIPT_ISSUE_LEDGER",
       "MAT_CURRENT_INVENTORY",
       "INV_TOTAL",
-      "MAT_WORKSTAGE_INVENTORY",
       "WH_BAKING_STOCK",
       "WH_VACUUM_STOCK",
       "WH_DEHUMI_STOCK",

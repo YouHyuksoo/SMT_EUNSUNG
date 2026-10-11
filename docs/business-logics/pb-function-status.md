@@ -3,7 +3,7 @@ sources:
   - apps/frontend/scripts/data/pb-function-catalog.json
   - docs/database/generated/pb-function-inventory.json
 generator: apps/frontend/scripts/gen-function-status.mjs
-verifiedCommit: 72b2a3b0
+verifiedCommit: f1c94fe6
 ---
 
 # PB 함수 처리 현황 (자동 생성)

@@ -3,7 +3,7 @@ sources:
   - packages/shared/src/popups/catalog.ts
   - docs/database/generated/pb-popup-inventory.json
 generator: apps/frontend/scripts/gen-popup-status.mjs
-verifiedCommit: 72b2a3b0
+verifiedCommit: f1c94fe6
 ---
 
 # PB 팝업 이관 현황 (자동 생성)

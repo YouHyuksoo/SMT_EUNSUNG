@@ -11,6 +11,8 @@ import {
 } from './magazine.controllers';
 import { WorkstagePassController } from './workstage-pass.controller';
 import { WorkstagePassService } from './workstage-pass.service';
+import { WipLedgerController } from './wip-ledger.controller';
+import { WipLedgerService } from './wip-ledger.service';
 
 @Module({
   controllers: [
@@ -19,6 +21,7 @@ import { WorkstagePassService } from './workstage-pass.service';
     MagazineLabelController,
     MagazineSplitController,
     MagazinePidController,
+    WipLedgerController,
   ],
   providers: [
     MagazineLabelHistoryService,
@@ -26,6 +29,7 @@ import { WorkstagePassService } from './workstage-pass.service';
     MagazineLabelService,
     MagazineSplitService,
     MagazinePidService,
+    WipLedgerService,
   ],
 })
 export class ProcessTransactionModule {}

@@ -254,7 +254,8 @@ export const menuConfig: MenuConfigItem[] = [
     labelKey: "menu.processTransaction",
     icon: GitBranch,
     children: [
-      { code: "PLN_WORKSTAGE_PASS", labelKey: "menu.workstagePass", path: "/process-transaction/workstage-pass", pbLinkStatus: "powerbuilder", pbWindow: "w_pln_product_inout_scan_master", pbEvidence: "apps/backend/src/modules/process-transaction/workstage-pass.controller.ts" },
+      { code: "MAT_WORKSTAGE_INVENTORY", labelKey: "menu.material.workstageInventory", path: "/material/workstage-inventory", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_workstage_inventory_query", pbEvidence: "apps/backend/src/modules/material/controllers/workstage-inventory.controller.ts" },
+      { code: "PLN_WIP_LEDGER", labelKey: "menu.wipLedger", path: "/process-transaction/wip-ledger", pbLinkStatus: "web-native" },
     ],
   },
   {
@@ -331,6 +332,7 @@ export const menuConfig: MenuConfigItem[] = [
       { code: "TRK_RUN_NO", labelKey: "menu.tracking.runNo", path: "/tracking/run-no", pbLinkStatus: "powerbuilder", pbWindow: "w_pln_product_barcode_tracking" },
       { code: "TRK_LOT_ALL", labelKey: "menu.tracking.lotAll", path: "/tracking/lot-all", pbLinkStatus: "powerbuilder", pbWindow: "w_pln_product_all_barcode_tracking" },
       { code: "TRK_LINE_DASHBOARD", labelKey: "menu.tracking.lineDashboard", path: "/tracking/line-dashboard", pbLinkStatus: "powerbuilder", pbWindow: "w_com_production_status_dashboard" },
+      { code: "PLN_WORKSTAGE_PASS", labelKey: "menu.workstagePass", path: "/process-transaction/workstage-pass", pbLinkStatus: "powerbuilder", pbWindow: "w_pln_product_inout_scan_master", pbEvidence: "apps/backend/src/modules/process-transaction/workstage-pass.controller.ts" },
     ],
   },
   {
@@ -373,7 +375,6 @@ export const menuConfig: MenuConfigItem[] = [
       { code: "MAT_RECEIPT_ISSUE_LEDGER", labelKey: "menu.material.receiptIssueLedger", path: "/material/receipt-issue-ledger", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_ledger_report" },
       { code: "MAT_CURRENT_INVENTORY", labelKey: "menu.material.currentInventory", path: "/material/current-inventory", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_current_inventory_master" },
       { code: "INV_TOTAL", labelKey: "menu.material.totalInventory", path: "/inventory-query/total-inventory", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_total_inventory_query" },
-      { code: "MAT_WORKSTAGE_INVENTORY", labelKey: "menu.material.workstageInventory", path: "/material/workstage-inventory", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_workstage_inventory_query", pbEvidence: "apps/backend/src/modules/material/controllers/workstage-inventory.controller.ts" },
       { code: "WH_BAKING_STOCK", labelKey: "menu.warehouse.bakingStock", path: "/warehouse/baking-stock", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_baking_scan_query" },
       { code: "WH_VACUUM_STOCK", labelKey: "menu.warehouse.vacuumStock", path: "/warehouse/vacuum-stock", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_vacuum_scan_query" },
       { code: "WH_DEHUMI_STOCK", labelKey: "menu.warehouse.dehumiStock", path: "/warehouse/dehumi-stock", pbLinkStatus: "powerbuilder", pbWindow: "w_mat_dehumi_scan_query" },

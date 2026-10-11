@@ -3,7 +3,7 @@ sources:
   - apps/frontend/src/config/menuConfig.ts
   - apps/frontend/scripts/data/pb-screen-inventory.json
 generator: apps/frontend/scripts/gen-migration-status.mjs
-verifiedCommit: 72b2a3b0
+verifiedCommit: f1c94fe6
 ---
 
 # PB 윈도우 ↔ 웹 메뉴·경로 연결표 (자동 생성)
@@ -15,7 +15,7 @@ verifiedCommit: 72b2a3b0
 
 | 전체 웹 메뉴 | PB 연결 | 웹 신규 | 미확정 |
 |---:|---:|---:|---:|
-| 200 | 174 | 25 | 1 |
+| 201 | 174 | 26 | 1 |
 
 ## 전체 연결표
 
@@ -119,7 +119,8 @@ verifiedCommit: 72b2a3b0
 | SMT관리 | SMT BOM 관리리포트 | `SMT_BOM_REPORT` | `/smt/bom-report` | PB 연결 | `w_smt_bom_master_rpt` | PB 메뉴 인벤토리 |
 | SMT관리 | 피더레이아웃 비교 | `SMT_BOM_COMPARISON` | `/smt/bom-comparison` | PB 연결 | `w_smt_bom_comparison_master_rpt` | PB 메뉴 인벤토리 |
 | SMT관리 | 마운터 픽업정보관리 | `SMT_FEEDER_PICKUP` | `/smt/feeder-pickup` | PB 연결 | `w_mcn_feeder_pickup_master` | PB 메뉴 인벤토리 |
-| 공정수불관리 | 공정통과이력 관리 | `PLN_WORKSTAGE_PASS` | `/process-transaction/workstage-pass` | PB 연결 | `w_pln_product_inout_scan_master` | PB 메뉴 인벤토리 |
+| 공정수불관리 | 공정재고조회 | `MAT_WORKSTAGE_INVENTORY` | `/material/workstage-inventory` | PB 연결 | `w_mat_workstage_inventory_query` | `apps/backend/src/modules/material/controllers/workstage-inventory.controller.ts` |
+| 공정수불관리 | 공정입출고내역 | `PLN_WIP_LEDGER` | `/process-transaction/wip-ledger` | 웹 신규 |  | PB 대응 없음 |
 | 매거진관리 | 매거진발행이력 | `PLN_MAGAZINE_LABEL_HISTORY` | `/process-transaction/magazine-label-history` | PB 연결 | `w_pln_product_magazine_label_query` | PB 메뉴 인벤토리 |
 | 매거진관리 | 매거진라벨 발행 | `PLN_MAGAZINE_LABEL` | `/process-transaction/magazine-label` | PB 연결 | `w_pln_product_magazine_label_master2` | PB 메뉴 인벤토리 |
 | 매거진관리 | 매거진라벨 분할 | `PLN_MAGAZINE_SPLIT` | `/process-transaction/magazine-split` | PB 연결 | `w_pln_product_magazine_label_split_master` | PB 메뉴 인벤토리 |
@@ -152,6 +153,7 @@ verifiedCommit: 72b2a3b0
 | 추적 | 생산이력조회(Run No) | `TRK_RUN_NO` | `/tracking/run-no` | PB 연결 | `w_pln_product_barcode_tracking` | PB 메뉴 인벤토리 |
 | 추적 | 롯트추적조회(ALL) | `TRK_LOT_ALL` | `/tracking/lot-all` | PB 연결 | `w_pln_product_all_barcode_tracking` | PB 메뉴 인벤토리 |
 | 추적 | 생산현황데쉬보드 | `TRK_LINE_DASHBOARD` | `/tracking/line-dashboard` | PB 연결 | `w_com_production_status_dashboard` | PB 메뉴 인벤토리 |
+| 추적 | 공정통과이력 관리 | `PLN_WORKSTAGE_PASS` | `/process-transaction/workstage-pass` | PB 연결 | `w_pln_product_inout_scan_master` | PB 메뉴 인벤토리 |
 | 정보조회 | PID 정보조회 | `QRY_PID_INFO` | `/query/pid-info` | PB 연결 | `w_pln_product_barcode_query` | PB 메뉴 인벤토리 |
 | 정보조회 | 마킹이력조회 | `QRY_MARKING` | `/query/marking` | PB 연결 | `w_pln_product_pcb_marking_query` | PB 메뉴 인벤토리 |
 | 정보조회 | PCB 투입 리스트조회 | `QRY_PCB_INPUT` | `/query/pcb-input` | PB 연결 | `w_qc_pcb_input_scan_master` | PB 메뉴 인벤토리 |
@@ -187,7 +189,6 @@ verifiedCommit: 72b2a3b0
 | 정보조회 | 자재입출고수불원장 | `MAT_RECEIPT_ISSUE_LEDGER` | `/material/receipt-issue-ledger` | PB 연결 | `w_mat_ledger_report` | PB 메뉴 인벤토리 |
 | 정보조회 | 현재고조회 | `MAT_CURRENT_INVENTORY` | `/material/current-inventory` | PB 연결 | `w_mat_current_inventory_master` | PB 메뉴 인벤토리 |
 | 정보조회 | 총재고조회 | `INV_TOTAL` | `/inventory-query/total-inventory` | PB 연결 | `w_mat_total_inventory_query` | PB 메뉴 인벤토리 |
-| 정보조회 | 공정재고조회 | `MAT_WORKSTAGE_INVENTORY` | `/material/workstage-inventory` | PB 연결 | `w_mat_workstage_inventory_query` | `apps/backend/src/modules/material/controllers/workstage-inventory.controller.ts` |
 | 정보조회 | 베이킹재고조회 | `WH_BAKING_STOCK` | `/warehouse/baking-stock` | PB 연결 | `w_mat_baking_scan_query` | PB 메뉴 인벤토리 |
 | 정보조회 | 진공포장재고조회 | `WH_VACUUM_STOCK` | `/warehouse/vacuum-stock` | PB 연결 | `w_mat_vacuum_scan_query` | PB 메뉴 인벤토리 |
 | 정보조회 | 제습함재고조회 | `WH_DEHUMI_STOCK` | `/warehouse/dehumi-stock` | PB 연결 | `w_mat_dehumi_scan_query` | PB 메뉴 인벤토리 |
