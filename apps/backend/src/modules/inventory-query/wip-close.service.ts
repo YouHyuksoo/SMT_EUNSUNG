@@ -28,7 +28,7 @@ import { DataSource, QueryRunner } from 'typeorm';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { clobBind } from '../../common/services/oracle.service';
 import { namedBinds } from '../../common/utils/named-binds.util';
-import { getClosePeriod, periodBoundsSql, periodEnded, shiftMonth } from './close-period';
+import { firstCloseGate, getCloseStartMonth, getClosePeriod, periodBoundsSql, periodEnded, shiftMonth } from './close-period';
 
 /** 공정실사 조정 출고를 찾는 표시 (wip-stocktake.service.ts 의 WIP_ADJUST_MARK 와 같다) */
 const ADJUST_MARK = 'INV ADJUST';
@@ -183,13 +183,17 @@ export class WipCloseService {
     const period = await getClosePeriod(this.dataSource, yyyymm, organizationId);
     const monthEnded = periodEnded(period);
 
+    const gate = firstCloseGate(yyyymm, await getCloseStartMonth(this.dataSource, organizationId), lastClosed);
+
     let openingSource: WipCloseStatus['openingSource'] = null;
     let reason: string | null = null;
     if (closed) {
       reason = '이미 마감한 달입니다.';
-    } else if (!lastClosed) {
+    } else if (gate.reason) {
+      reason = gate.reason;
+    } else if (gate.first) {
       openingSource = 'inventory';
-    } else if (yyyymm === shiftMonth(lastClosed, 1)) {
+    } else if (yyyymm === shiftMonth(lastClosed as string, 1)) {
       openingSource = 'previousClose';
     } else if (yyyymm < lastClosed) {
       reason = `${lastClosed} 까지 마감돼 있습니다. 앞선 달은 다시 계산할 수 없습니다.`;

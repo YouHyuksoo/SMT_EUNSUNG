@@ -545,6 +545,18 @@ export class CloseDateController {
     return ResponseUtil.success(await this.service.remove(dto.yyyymm, organizationId));
   }
 
+  @Get('start-month')
+  @ApiOperation({ summary: '재고마감 시작월 — 자재·공정·제품의 첫 마감 달. 그 전 달은 마감하지 않는다.' })
+  async startMonth(@OrganizationId() organizationId: number) {
+    return ResponseUtil.success(await this.service.getStartMonth(organizationId));
+  }
+
+  @Post('start-month')
+  @ApiOperation({ summary: '재고마감 시작월 저장 (**쓰기**). 마감한 달이 하나라도 있으면 바꿀 수 없다.' })
+  async setStartMonth(@Body() dto: InventoryCloseMonthDto, @OrganizationId() organizationId: number, @UserId() userId?: string) {
+    return ResponseUtil.success(await this.service.setStartMonth(dto.yyyymm, organizationId, userId || DEFAULT_USER));
+  }
+
   @Post('generate')
   @ApiOperation({ summary: '재고마감일자 연간 생성 (**쓰기**). 시작일 1 = 달력 월, N = 전달 N일 ~ 이번 달 N−1일. 마감한 달이 있는 해는 거절.' })
   async generate(@Body() dto: CloseDateGenerateDto, @OrganizationId() organizationId: number, @UserId() userId?: string) {

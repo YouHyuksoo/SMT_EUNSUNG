@@ -20,7 +20,7 @@ import { affectedRows } from '../../common/utils/affected-rows.util';
 import { namedBinds } from '../../common/utils/named-binds.util';
 import { closeMonth } from './inventory-close.calc';
 import { closeAggregateSql } from './inventory-close.sql';
-import { getClosePeriod, periodEnded, shiftMonth } from './close-period';
+import { firstCloseGate, getCloseStartMonth, getClosePeriod, periodEnded, shiftMonth } from './close-period';
 
 /** 마감 한 줄 (품목·창고의 한 달) */
 export interface CloseLine {
@@ -64,7 +64,8 @@ export interface CloseStatus {
   closedAt: string | null;
   lastClosed: string | null;
   /** 이 달 기초를 어디서 잡는가 */
-  openingSource: 'ledger' | 'previousClose' | null;
+  /** inventory = 첫 마감(시작월): 지금 재고에서 그 달 이후 입출고를 거꾸로 빼서 기초를 잡는다 */
+  openingSource: 'inventory' | 'previousClose' | null;
   canClose: boolean;
   canCancel: boolean;
   /** 마감할 수 없는 이유 */
@@ -96,13 +97,17 @@ export class InventoryCloseService {
     const period = await getClosePeriod(this.dataSource, yyyymm, organizationId);
     const monthEnded = periodEnded(period);
 
+    const gate = firstCloseGate(yyyymm, await getCloseStartMonth(this.dataSource, organizationId), lastClosed);
+
     let openingSource: CloseStatus['openingSource'] = null;
     let reason: string | null = null;
     if (closed) {
       reason = '이미 마감한 달입니다.';
-    } else if (!lastClosed) {
-      openingSource = 'ledger';
-    } else if (yyyymm === shiftMonth(lastClosed, 1)) {
+    } else if (gate.reason) {
+      reason = gate.reason;
+    } else if (gate.first) {
+      openingSource = 'inventory';
+    } else if (yyyymm === shiftMonth(lastClosed as string, 1)) {
       openingSource = 'previousClose';
     } else if (yyyymm < lastClosed) {
       reason = `${lastClosed} 까지 마감돼 있습니다. 앞선 달은 다시 계산할 수 없습니다.`;
@@ -255,7 +260,7 @@ export class InventoryCloseService {
 
   private async compute(
     yyyymm: string,
-    openingSource: 'ledger' | 'previousClose',
+    openingSource: 'inventory' | 'previousClose',
     organizationId: number,
   ): Promise<CloseLine[]> {
     const period = await getClosePeriod(this.dataSource, yyyymm, organizationId);
@@ -266,7 +271,7 @@ export class InventoryCloseService {
     };
     if (openingSource === 'previousClose') binds.prevYyyymm = shiftMonth(yyyymm, -1);
     const rows = await this.dataSource.query<Record<string, unknown>[]>(
-      closeAggregateSql(openingSource === 'ledger'),
+      closeAggregateSql(openingSource === 'inventory'),
       namedBinds(binds),
     );
     return rows.map((r) => {

@@ -88,3 +88,35 @@ export async function isStocktakePeriodAllowed(
   if (!current) return fallback(yyyymm);
   return yyyymm === current || yyyymm === shiftMonth(current, -1);
 }
+
+/** 재고마감 시작월 설정 (ISYS_CONFIG). 이 달이 첫 마감이고, 그 전 달은 마감하지 않는다. */
+export const CLOSE_START_CONFIG = 'INVENTORY_CLOSE_START_YYYYMM';
+
+/** 재고마감 시작월 (YYYYMM). 정하지 않았으면 null. */
+export async function getCloseStartMonth(q: Queryable, organizationId: number): Promise<string | null> {
+  const rows = (await q.query(
+    `SELECT CONFIG_VALUE AS "v" FROM ISYS_CONFIG
+      WHERE CONFIG_NAME = '${CLOSE_START_CONFIG}' AND ORGANIZATION_ID = :organizationId AND NVL(USE_YN, 'Y') = 'Y'`,
+    namedBinds({ organizationId }),
+  )) as { v: string | null }[];
+  const v = rows[0]?.v?.trim();
+  return v && /^\d{6}$/.test(v) ? v : null;
+}
+
+/**
+ * 첫 마감 판단 — 자재·공정·제품 마감이 같이 쓴다.
+ * 시작월 전 달은 마감하지 않고, 마감한 달이 없으면 시작월만 마감할 수 있다(그 달이 첫 마감).
+ * `reason` 이 null 이고 `first` 가 false 면 직전 마감을 잇는 보통의 마감이다 (호출한 쪽이 순서를 마저 본다).
+ */
+export function firstCloseGate(yyyymm: string, startYm: string | null, lastClosed: string | null) {
+  if (!startYm) return { first: false, reason: '재고마감 시작월을 먼저 정하세요 (재고마감일자설정).' };
+  if (yyyymm < startYm) {
+    return { first: false, reason: `${startYm} 부터 마감합니다 (재고마감 시작월). 그 전 달은 마감하지 않습니다.` };
+  }
+  if (!lastClosed) {
+    return yyyymm === startYm
+      ? { first: true, reason: null }
+      : { first: false, reason: `첫 마감은 재고마감 시작월(${startYm})입니다. ${startYm} 을 먼저 마감하세요.` };
+  }
+  return { first: false, reason: null };
+}

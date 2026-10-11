@@ -7,7 +7,9 @@
  *    원장의 거래유형(LINE_TYPE)은 시기마다 섞여 있어(같은 품목을 F 로 입고하고 Y 로 출고 — 실측)
  *    거래유형별로 나누면 잔량이 음수로 갈린다. 그래서 품목 단위로 평균하고, 마감표의 LINE_TYPE
  *    키에는 품목 기준정보의 현재 거래유형을 넣는다. 입고 단가는 입고행의 거래유형으로 찾는다.
- * 2. 기초: 전월 마감이 있으면 그 기말, 첫 마감이면 그 달 1일 전까지 입고 − 출고 원장 합계.
+ * 2. 기초: 전월 마감이 있으면 그 기말. 첫 마감(재고마감 시작월)이면 지금 재고(IM_ITEM_INVENTORY)에서
+ *    그 달 시작일 이후의 입고를 빼고 출고를 더해 거꾸로 잡는다 — 원장 전체 합계는 재고 행 없이 원장에만
+ *    남은 잔량이 섞여 실사로도 맞출 수 없기 때문이다 (공정 첫 마감과 같은 방식).
  *    첫 마감의 기초단가는 전월 말일에 유효한 단가(품목 기준정보 공급처 우선)다.
  * 3. 입고금액: 입고행에 금액(RECEIPT_AMT)이 있으면 그것, 없으면 입고행 단가 × 수량,
  *    그것도 없으면 입고일에 유효한 단가표(IM_ITEM_UNIT_PRICE, 공급처·품목·거래유형) × 수량.
@@ -31,22 +33,27 @@ const inList = (codes: readonly string[]) => codes.map((c) => `'${c}'`).join(', 
 /**
  * 마감 집계. 바인드: :organizationId, :startDate·:endDate ('YYYY-MM-DD', end 는 다음달 1일),
  * :prevYyyymm (전월 마감이 기초일 때만).
- * @param openingFromLedger 첫 마감이면 true — 기초를 원장 합계로 잡는다.
+ * @param firstClose 첫 마감(시작월)이면 true — 기초를 지금 재고에서 거꾸로 잡는다.
  */
-export function closeAggregateSql(openingFromLedger: boolean): string {
-  const opening = openingFromLedger
+export function closeAggregateSql(firstClose: boolean): string {
+  const opening = firstClose
     ? `OPEN_QTY AS (
          SELECT ITEM_CODE, LOCATION_CODE, SUM(Q) AS QTY
-           FROM (SELECT ITEM_CODE, LOCATION_CODE, RECEIPT_QTY AS Q
-                   FROM IM_ITEM_RECEIPT
+           FROM (SELECT ITEM_CODE, LOCATION_CODE, INVENTORY_QTY AS Q
+                   FROM IM_ITEM_INVENTORY
                   WHERE ORGANIZATION_ID = :organizationId
-                    AND RECEIPT_DATE < TO_DATE(:startDate, 'YYYY-MM-DD')
                     AND ITEM_CODE IN (SELECT ITEM_CODE FROM ITEMS)
                  UNION ALL
-                 SELECT ITEM_CODE, LOCATION_CODE, -ISSUE_QTY
+                 SELECT ITEM_CODE, LOCATION_CODE, -RECEIPT_QTY
+                   FROM IM_ITEM_RECEIPT
+                  WHERE ORGANIZATION_ID = :organizationId
+                    AND RECEIPT_DATE >= TO_DATE(:startDate, 'YYYY-MM-DD')
+                    AND ITEM_CODE IN (SELECT ITEM_CODE FROM ITEMS)
+                 UNION ALL
+                 SELECT ITEM_CODE, LOCATION_CODE, ISSUE_QTY
                    FROM IM_ITEM_ISSUE
                   WHERE ORGANIZATION_ID = :organizationId
-                    AND ISSUE_DATE < TO_DATE(:startDate, 'YYYY-MM-DD')
+                    AND ISSUE_DATE >= TO_DATE(:startDate, 'YYYY-MM-DD')
                     AND ITEM_CODE IN (SELECT ITEM_CODE FROM ITEMS))
           GROUP BY ITEM_CODE, LOCATION_CODE
          HAVING SUM(Q) <> 0

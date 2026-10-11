@@ -17,6 +17,7 @@ import { DataSource } from 'typeorm';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { namedBinds } from '../../common/utils/named-binds.util';
 import { affectedRows } from '../../common/utils/affected-rows.util';
+import { CLOSE_START_CONFIG, getCloseStartMonth } from './close-period';
 
 type Row = Record<string, unknown>;
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -189,6 +190,41 @@ export class CloseDateService {
       }
       return { year, startDay, months: periods.length };
     });
+  }
+
+  /** 재고마감 시작월 — 이 달이 자재·공정·제품의 첫 마감이고, 그 전 달은 마감하지 않는다. */
+  async getStartMonth(organizationId: number) {
+    return { startMonth: await getCloseStartMonth(this.dataSource, organizationId) };
+  }
+
+  /** 재고마감 시작월 저장 (**쓰기**). 한 번이라도 마감한 달이 있으면(어느 재고든) 바꿀 수 없다. */
+  async setStartMonth(yyyymm: string, organizationId: number, userId: string) {
+    if (!/^\d{6}$/.test(yyyymm)) throw new BadRequestException('월은 YYYYMM 형식이어야 합니다.');
+    const [row] = (await this.dataSource.query(
+      `SELECT (SELECT COUNT(*) FROM ISYS_INVENTORY_CLOSE_DATE WHERE ORGANIZATION_ID = :organizationId AND CLOSE_YN = 'Y')
+            + (SELECT COUNT(*) FROM IM_ITEM_WORKSTAGE_INV_CLOSE WHERE ORGANIZATION_ID = :organizationId AND ROWNUM = 1)
+            + (SELECT COUNT(*) FROM IP_PRODUCT_FG_INV_CLOSE_MONTH WHERE ORGANIZATION_ID = :organizationId AND CLOSE_YN = 'Y') AS "n"
+         FROM DUAL`,
+      namedBinds({ organizationId }),
+    )) as { n: number }[];
+    if (Number(row?.n ?? 0) > 0) {
+      throw new BadRequestException('이미 마감한 달이 있어 재고마감 시작월을 바꿀 수 없습니다.');
+    }
+    await this.dataSource.query(
+      `MERGE INTO ISYS_CONFIG c
+       USING (SELECT '${CLOSE_START_CONFIG}' AS NAME FROM DUAL) s
+          ON (c.CONFIG_NAME = s.NAME AND c.ORGANIZATION_ID = :organizationId)
+        WHEN MATCHED THEN UPDATE
+             SET c.CONFIG_VALUE = :yyyymm, c.USE_YN = 'Y', c.LAST_MODIFY_DATE = SYSDATE, c.LAST_MODIFY_BY = :userId
+        WHEN NOT MATCHED THEN INSERT
+             (CONFIG_NAME, ORGANIZATION_ID, CONFIG_DESCRIPTION, CONFIG_VALUE, CONFIG_VALUE_DESCRIPTION,
+              ENTER_DATE, ENTER_BY, LAST_MODIFY_DATE, LAST_MODIFY_BY, USE_YN)
+             VALUES (s.NAME, :organizationId, '재고마감 시작월 (자재·공정·제품 첫 마감 달)', :yyyymm,
+              '이 달 전은 마감 안 함. 첫 마감 기초는 지금 재고에서 역산',
+              SYSDATE, :userId, SYSDATE, :userId, 'Y')`,
+      namedBinds({ organizationId, yyyymm, userId }),
+    );
+    return { startMonth: yyyymm };
   }
 
   private async assertNotClosed(yyyymm: string, organizationId: number) {

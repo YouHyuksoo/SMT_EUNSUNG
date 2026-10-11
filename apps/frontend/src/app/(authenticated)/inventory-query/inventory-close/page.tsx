@@ -30,7 +30,7 @@ interface CloseStatus {
   closed: boolean;
   closedAt: string | null;
   lastClosed: string | null;
-  openingSource: 'ledger' | 'previousClose' | null;
+  openingSource: 'inventory' | 'previousClose' | null;
   canClose: boolean;
   canCancel: boolean;
   reason: string | null;
@@ -124,7 +124,7 @@ export default function InventoryClosePage() {
 
   const statusText = !status ? ''
     : status.closed ? `마감됨 · ${status.closedAt ?? ''}`
-      : `미마감 · 기초: ${status.openingSource === 'ledger' ? '원장 합계(첫 마감)'
+      : `미마감 · 기초: ${status.openingSource === 'inventory' ? '지금 재고에서 역산(첫 마감)'
         : status.openingSource === 'previousClose' ? '전월 마감 기말' : '-'}`
         + (status.lastClosed ? ` · 마지막 마감 ${status.lastClosed}` : ' · 마감 이력 없음');
 

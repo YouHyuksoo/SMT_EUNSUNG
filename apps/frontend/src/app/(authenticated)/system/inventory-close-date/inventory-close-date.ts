@@ -28,6 +28,10 @@ export const closeDateApi = {
   save: async (input: { yyyymm: string; startDate: string; endDate: string }) =>
     (await api.post(BASE, input)).data?.data as { yyyymm: string; startDate: string; endDate: string },
   remove: async (yyyymm: string) => (await api.post(`${BASE}/delete`, { yyyymm })).data?.data as { yyyymm: string },
+  startMonth: async () =>
+    ((await api.get(`${BASE}/start-month`)).data?.data?.startMonth ?? null) as string | null,
+  saveStartMonth: async (yyyymm: string) =>
+    (await api.post(`${BASE}/start-month`, { yyyymm })).data?.data as { startMonth: string },
   generate: async (year: number, startDay: number) =>
     (await api.post(`${BASE}/generate`, { year, startDay })).data?.data as { year: number; startDay: number; months: number },
 };

@@ -1,4 +1,4 @@
-import { getClosePeriod, isStocktakePeriodAllowed, periodBoundsSql, periodEnded, shiftMonth } from './close-period';
+import { getClosePeriod, isStocktakePeriodAllowed, periodBoundsSql, periodEnded, shiftMonth, firstCloseGate } from './close-period';
 import { generateYearPeriods } from './close-date.service';
 
 const fakeDb = (rows: Record<string, unknown>[][]) => {
@@ -73,5 +73,21 @@ describe('보조', () => {
   });
   it('기간 조건 SQL 은 종료일 다음 날 앞까지다', () => {
     expect(periodBoundsSql('s.ISSUE_DATE', ':yyyymm', ':organizationId')).toContain('TRUNC(F_GET_INVENTORY_CLOSE_DATE(:yyyymm, \'END\'');
+  });
+});
+
+describe('firstCloseGate', () => {
+  it('시작월이 없으면 막는다', () => {
+    expect(firstCloseGate('202611', null, null).reason).toMatch(/시작월을 먼저/);
+  });
+  it('시작월 전 달은 마감하지 않는다', () => {
+    expect(firstCloseGate('202610', '202611', null)).toEqual(expect.objectContaining({ first: false, reason: expect.stringMatching(/202611 부터/) }));
+  });
+  it('마감한 달이 없으면 시작월만 첫 마감이다', () => {
+    expect(firstCloseGate('202611', '202611', null)).toEqual({ first: true, reason: null });
+    expect(firstCloseGate('202612', '202611', null).reason).toMatch(/202611 을 먼저/);
+  });
+  it('이미 마감한 달이 있으면 보통의 마감으로 넘긴다', () => {
+    expect(firstCloseGate('202612', '202611', '202611')).toEqual({ first: false, reason: null });
   });
 });

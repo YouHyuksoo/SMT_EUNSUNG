@@ -10,6 +10,8 @@
  * 3. 기간은 이웃한 달과 이어져야 한다 (다음 달 시작일 = 이번 달 종료일 + 1일). 안 이어지면 서버가 거절한다.
  * 4. 자재·제품·공정 중 하나라도 마감한 달은 바꾸거나 지울 수 없다.
  * 5. 연간 생성은 그 해 12개월을 한 번에 다시 만든다. 시작일 1 은 달력 월, 26 은 전달 26일~이번 달 25일.
+ * 6. **재고마감 시작월**은 자재·공정·제품의 첫 마감 달이다. 그 전 달은 마감하지 않고, 첫 마감의 기초는
+ *    지금 재고에서 그 달 이후 입출고를 거꾸로 빼서 잡는다. 한 번이라도 마감하면 바꿀 수 없다.
  */
 import { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -31,6 +33,8 @@ export default function InventoryCloseDatePage() {
   const [busy, setBusy] = useState<string | null>(null);
   const [startDay, setStartDay] = useState('1');
   const [confirmGenerate, setConfirmGenerate] = useState(false);
+  const [startMonth, setStartMonth] = useState<string | null>(null);
+  const [startDraft, setStartDraft] = useState('');
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -47,6 +51,29 @@ export default function InventoryCloseDatePage() {
   }, [year]);
 
   useEffect(() => { void load(); }, [load]);
+
+  useEffect(() => {
+    closeDateApi.startMonth()
+      .then((v) => { setStartMonth(v); setStartDraft(v ?? ''); })
+      .catch(() => setStartMonth(null));
+  }, []);
+
+  const saveStartMonth = async () => {
+    if (!/^\d{6}$/.test(startDraft)) {
+      toast.error('재고마감 시작월을 YYYYMM 여섯 자리로 넣으세요.');
+      return;
+    }
+    setBusy('startMonth');
+    try {
+      const r = await closeDateApi.saveStartMonth(startDraft);
+      setStartMonth(r.startMonth);
+      toast.success(`재고마감 시작월을 ${r.startMonth} 로 정했습니다.`);
+    } catch (error: unknown) {
+      toast.error(apiMessage(error) ?? '저장에 실패했습니다.');
+    } finally {
+      setBusy(null);
+    }
+  };
 
   const setDraft = (yyyymm: string, patch: Partial<Draft>) =>
     setDrafts((prev) => ({ ...prev, [yyyymm]: { ...prev[yyyymm], ...patch } }));
@@ -111,6 +138,21 @@ export default function InventoryCloseDatePage() {
           자재·제품·공정 마감은 여기 등록한 기간의 입출고만 그 달로 센다. 기간이 끝난 뒤의 입출고는 다음 달 몫이라
           마감 중에도 생산을 멈출 필요가 없다. 등록이 없는 달은 달력 월(1일~말일)로 본다. 기간은 이웃한 달과
           이어져야 한다 (다음 달 시작일 = 이번 달 종료일 + 1일).
+        </CardContent>
+      </Card>
+
+      <Card padding="none">
+        <CardContent className="flex flex-wrap items-center gap-3 p-3">
+          <span className="text-sm font-semibold text-text">재고마감 시작월</span>
+          <Input aria-label="재고마감 시작월" placeholder="YYYYMM" className="w-32" inputMode="numeric"
+            value={startDraft} onChange={(e) => setStartDraft(e.target.value.trim())} />
+          <Button size="sm" disabled={busy !== null || startDraft === (startMonth ?? '')} onClick={() => void saveStartMonth()}>
+            <Save className="mr-1 h-4 w-4" />저장
+          </Button>
+          <span className="text-sm text-text-muted">
+            {startMonth ? `${startMonth} 이 첫 마감 달입니다.` : '아직 정하지 않았습니다 — 정하기 전에는 마감할 수 없습니다.'}
+            {' '}그 전 달은 마감하지 않고, 첫 마감의 기초는 지금 재고에서 거꾸로 잡습니다. 한 번이라도 마감하면 바꿀 수 없습니다.
+          </span>
         </CardContent>
       </Card>
 
