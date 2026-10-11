@@ -80,4 +80,9 @@ describe('AppModule activated API modules', () => {
     expect(oeeModuleSource).toMatch(/forFeature\(\[[\s\S]*\bIsysUser\b/);
     expect(oeeModuleSource).toMatch(/forFeature\(\[[\s\S]*\bComCode\b/);
   });
+
+  it('registers the global JWT guard so routes are authenticated unless marked @Public()', () => {
+    expect(source).toContain("import { GuardModule } from './common/modules/guard.module'");
+    expect(source).toMatch(/imports:\s*\[[\s\S]*\bGuardModule\b/);
+  });
 });

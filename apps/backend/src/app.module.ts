@@ -16,6 +16,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { DatabaseModule } from './database/database.module';
 import { OracleModule } from './common/modules/oracle.module';
+import { GuardModule } from './common/modules/guard.module';
 import configuration from './config/configuration';
 
 // 기능 모듈 (은성화 진행하며 하나씩 추가)
@@ -97,6 +98,9 @@ import { SharedModule } from './shared/shared.module';
 
     // OracleService (패키지/프로시저 실행 등 raw Oracle 헬퍼)
     OracleModule,
+
+    // 전역 인증 (APP_GUARD = JwtAuthGuard). 토큰 없이 열어야 하는 라우트는 @Public().
+    GuardModule,
 
     // 전역 공유 서비스 (TransactionService, NumberingService 등)
     SharedModule,
