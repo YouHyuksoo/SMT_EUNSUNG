@@ -20,7 +20,6 @@
     "TRACKING",
     "QUERY",
     "QUALITY",
-    "OUTSOURCING",
     "CONFIRM",
     "SYSTEM"
   ],
@@ -250,7 +249,6 @@
       "QC_REPAIR_QUERY",
       "QC_PRODUCT_DESTROY"
     ],
-    "OUTSOURCING": [],
     "CONFIRM": [
       "CFM_BUY_PRICE",
       "CFM_SALE_PRICE",

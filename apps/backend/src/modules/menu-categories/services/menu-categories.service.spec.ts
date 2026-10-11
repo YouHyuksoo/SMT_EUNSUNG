@@ -208,7 +208,7 @@ describe('MenuCategoriesService', () => {
           expect.objectContaining({ organizationId: 7, categoryCode: 'MASTER' }),
           expect.objectContaining({ organizationId: 7, categoryCode: 'PROCESS_TRANSACTION' }),
           expect.objectContaining({ organizationId: 7, categoryCode: 'PRODUCT_MGMT' }),
-          expect.objectContaining({ organizationId: 7, categoryCode: 'OUTSOURCING' }),
+          expect.objectContaining({ organizationId: 7, categoryCode: 'CONFIRM' }),
         ]),
       );
       expect(itemRepo.save).toHaveBeenCalledWith(
@@ -252,7 +252,6 @@ describe('MenuCategoriesService', () => {
         { organizationId: 7, categoryCode: 'PROCESS_TRANSACTION' },
         { organizationId: 7, categoryCode: 'PRODUCT_MGMT' },
         { organizationId: 7, categoryCode: 'PRODUCTION' },
-        { organizationId: 7, categoryCode: 'OUTSOURCING' },
         { organizationId: 7, categoryCode: 'SYSTEM' },
       ] as any);
       itemRepo.find.mockResolvedValue([

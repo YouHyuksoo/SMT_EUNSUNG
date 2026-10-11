@@ -259,7 +259,8 @@
     "INV_MAT_PHYSICAL_INV_APPLY",
     "INV_MAT_PHYSICAL_INV_HISTORY",
     "OEE_ENTRY",
-    "INV_BARCODE_CHECK"
+    "INV_BARCODE_CHECK",
+    "OUTSOURCING"
   ],
   "deletedRouteDirs": [
     "apps/frontend/src/app/(authenticated)/oee/dashboard/drilldown",
@@ -441,7 +442,6 @@
     "TRACKING",
     "QUERY",
     "QUALITY",
-    "OUTSOURCING",
     "CONFIRM",
     "SYSTEM"
   ]

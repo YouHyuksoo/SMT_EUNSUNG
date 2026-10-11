@@ -11,7 +11,6 @@
 import {
   Activity,
   Boxes,
-  Building2,
   Cable,
   CircuitBoard,
   ClipboardList,
@@ -396,12 +395,6 @@ export const menuConfig: MenuConfigItem[] = [
       { code: "QC_REPAIR_QUERY", labelKey: "menu.quality.repairQuery", path: "/quality/repair-query", pbLinkStatus: "powerbuilder", pbWindow: "w_pln_product_pcb_repair_query" },
       { code: "QC_PRODUCT_DESTROY", labelKey: "menu.quality.productDestroy", path: "/quality/product-destroy", pbLinkStatus: "powerbuilder", pbWindow: "w_pln_product_pcb_destroy_master" },
     ],
-  },
-  {
-    code: "OUTSOURCING",
-    labelKey: "menu.outsourcing",
-    icon: Building2,
-    children: [],
   },
   {
     code: "CONFIRM",

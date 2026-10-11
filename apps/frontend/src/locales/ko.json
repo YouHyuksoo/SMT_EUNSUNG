@@ -445,7 +445,6 @@
     "consumables.stock": "소모품 재고현황조회",
     "consumables.life": "소모품 수명현황조회",
     "consumables.mount": "소모품 장착관리",
-    "outsourcing": "외주수불관리",
     "outsourcing.vendor": "외주처관리",
     "outsourcing.order": "외주발주관리",
     "outsourcing.receive": "외주입고관리",

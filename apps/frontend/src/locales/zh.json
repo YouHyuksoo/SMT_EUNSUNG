@@ -445,7 +445,6 @@
     "consumables.stock": "耗材库存状况查询",
     "consumables.life": "耗材寿命状况查询",
     "consumables.mount": "耗材装卸管理",
-    "outsourcing": "外协管理",
     "outsourcing.vendor": "外协商管理",
     "outsourcing.order": "外协订单管理",
     "outsourcing.receive": "外协入库管理",
