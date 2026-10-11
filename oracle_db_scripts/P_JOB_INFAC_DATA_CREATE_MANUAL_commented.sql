@@ -6,6 +6,7 @@ CREATE OR REPLACE PROCEDURE P_JOB_INFAC_DATA_CREATE_MANUAL
    * 수정이력:
    *   2011-00-00 - 지성솔루션컨설팅 - 최초 작성
    *   2026-07-02 - AI(Codex)       - 한글 주석 자동 추가
+ *   2026-10-11 - AI(Claude)      - 공정출고 생성을 P_WIP_ISSUE_CREATE 호출로 바꿈 (전 고객 대상)
    * ================================================================
    * [AI 분석] 기능 설명:
    *   업무 기준 데이터 또는 바코드를 생성하고 대상 테이블에 등록한다.
@@ -53,39 +54,10 @@ BEGIN
 --  E2011000050 제외
 -------------------------------------------------------------------
 
-INSERT INTO im_item_workstage_issue (
-            issue_date,
-            issue_sequence,
-            organization_id,
-            item_code,
-            issue_deficit,
-            issue_qty,
-            enter_date,
-            enter_by,
-            last_modify_date,
-            last_modify_by
-        ) 
-
-  SELECT P.PACK_DATE AS issue_date ,
-         SEQ_WORKSTAGE_ISSUE_SEQ.NEXTVAL AS issue_sequence ,
-         P.ORGANIZATION_ID AS ORGANIZATION_ID ,
-         B.CHILD_ITEM_CODE  AS item_code,
-         '3' AS issue_deficit, 
-         P.PACKING_PCS_QTY * B.ITEM_UNIT_QTY  AS issue_qty ,
-         SYSDATE ,
-         'ADMIN' ,
-         SYSDATE ,
-         P.PART_NO 
-  FROM IP_PRODUCT_PACK_MASTER P , ID_ENG_BOM  B 
- WHERE P.PART_NO = B.ITEM_CODE
- --  AND P.RUN_NO IN ( SELECT RUN_NO FROM IP_PRODUCT_RUN_CARD WHERE RUN_DATE >= TO_DATE('20230101') )
-   AND NVL(P.WIP_PROCESS_FLAG,'N') = 'N'
-   AND B.ITEM_CODE IN ( SELECT ITEM_CODE FROM IP_PRODUCT_MODEL_MASTER WHERE CUSTOMER_CODE = 'IP' ) 
-   AND B.CHILD_ITEM_CODE IN ( SELECT ITEM_CODE FROM ID_ITEM WHERE SUPPLIER_CODE = 'IP' ) 
-   AND P.MODEL_NAME NOT IN ( 'DANA-LPS-680pF') ;
-
-  UPDATE IP_PRODUCT_PACK_MASTER SET WIP_PROCESS_FLAG = 'Y' , WIP_PROCESS_DATE = SYSDATE
-   WHERE NVL(WIP_PROCESS_FLAG,'N') = 'N' ;
+-- 2026-10-11: 고객 IP 제품 × 공급사 IP 자재만 만들던 공정출고를 모든 고객 제품으로 넓혔다.
+--   예전에는 나머지 포장에 처리 표시만 해서 다른 고객 자재의 공정재고가 줄지 않았다.
+--   생성 규칙(BOM 말단 자재 × 누적 소요량)과 처리 표시는 P_WIP_ISSUE_CREATE 가 맡는다 (포장일 제한 없음).
+P_WIP_ISSUE_CREATE(NULL);
 
 -------------------------------------------------------------------
 --  원자재 창고재고 생성 
