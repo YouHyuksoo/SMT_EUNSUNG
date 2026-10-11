@@ -21,6 +21,7 @@ import { InjectDataSource } from '@nestjs/typeorm';
 import { clobBind } from '../../common/services/oracle.service';
 import { namedBinds } from '../../common/utils/named-binds.util';
 import { getClosePeriod, periodEnded, shiftMonth } from './close-period';
+import { fgBookEffSql } from './fg-stocktake.service';
 
 /** 마감 한 줄 (모델의 한 달) */
 export interface FgCloseLine {
@@ -120,8 +121,9 @@ export class FgCloseService {
                              WHERE CHECK_YYYYMM = :yyyymm AND ORGANIZATION_ID = :organizationId
                              GROUP BY BARCODE, LOCATION_CODE) a
                    ON a.BARCODE = c.BARCODE AND a.LOCATION_CODE = c.LOCATION_CODE
+                 LEFT JOIN IP_PRODUCT_FG_INVENTORY i ON i.BARCODE = c.BARCODE AND i.LOCATION_CODE = c.LOCATION_CODE
                 WHERE c.CHECK_YYYYMM = :yyyymm AND c.ORGANIZATION_ID = :organizationId
-                  AND c.CHECK_QTY - c.INVENTORY_QTY - NVL(a.POSTED, 0) <> 0) AS PENDING
+                  AND c.CHECK_QTY - ${fgBookEffSql()} - NVL(a.POSTED, 0) <> 0) AS PENDING
          FROM DUAL`,
       namedBinds({ organizationId, yyyymm }),
     );

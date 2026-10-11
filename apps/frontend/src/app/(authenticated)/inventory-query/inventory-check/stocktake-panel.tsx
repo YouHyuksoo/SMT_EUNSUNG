@@ -7,7 +7,8 @@
  *    (이 화면의 스캔·엑셀 업로드 또는 PDA 자재 재고실사).
  * 2. 일괄 조정: 찍힌 롯트는 바코드 수량, 안 찍힌 롯트는 0 으로 보고 차이를 그 달 말일 조정으로
  *    넣는다. 이미 넣은 조정은 빼고 넣으므로 다시 눌러도 두 번 들어가지 않는다.
- * 3. 실사 중에는 입출고를 멈춘다 — 장부는 실사 시작 시점에 고정된다.
+ * 3. 실사 중에도 입출고를 멈추지 않아도 된다 — 찍은 롯트는 찍을 때 장부와, 안 찍힌 롯트는 지금 재고와
+ *    고정 장부 중 작은 쪽과 비교한다 (백엔드 stocktake-book.ts).
  */
 import { useState } from 'react';
 import toast from 'react-hot-toast';
@@ -69,7 +70,7 @@ export default function StocktakePanel({ session, onChanged }: Props) {
     : pending === 'regenerate' && session
       ? `${session.yyyymm} 실사표의 장부 수량을 지금 재고로 다시 고정합니다. 찍은 바코드는 그대로 반영됩니다.`
       : `${startMonth} 자재 실사를 시작합니다. 지금 재고가 있는 롯트를 실사표에 고정합니다.`
-        + '\n\n실사가 끝날 때까지 입출고를 멈추세요.';
+        + '\n\n실사 중에도 입출고는 계속할 수 있습니다. 찍은 롯트는 찍을 때 재고와 비교합니다.';
 
   return (
     <Card padding="none">

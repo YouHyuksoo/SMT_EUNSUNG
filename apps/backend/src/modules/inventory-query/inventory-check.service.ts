@@ -32,6 +32,7 @@ import {
 import { affectedRows } from '../../common/utils/affected-rows.util';
 import { periodBoundsSql } from './close-period';
 import { namedBinds } from '../../common/utils/named-binds.util';
+import { materialCheckBookSql } from './stocktake-book';
 
 type Row = Record<string, unknown>;
 
@@ -69,49 +70,41 @@ export class InventoryCheckService {
    * **이 표는 0행이다** — 실사를 돌린 적이 없다.
    */
   async findCheckList(query: InventoryCheckQueryDto, organizationId: number) {
+    // 장부 = 비교할 장부 (실사 중 입출고 반영, stocktake-book.ts). 차이 = 실사 − 장부.
     const rows = (await this.dataSource.query(
-      `SELECT c.CLOSE_YYYYMM             AS "closeYyyymm",
-              c.ITEM_CODE                AS "itemCode",
+      `SELECT t.CLOSE_YYYYMM             AS "closeYyyymm",
+              t.ITEM_CODE                AS "itemCode",
               i.ITEM_NAME                AS "itemName",
               i.ITEM_SPEC                AS "itemSpec",
               i.ITEM_UOM                 AS "itemUom",
-              c.LINE_TYPE                AS "lineType",
-              c.MATERIAL_MFS             AS "lotNo",
-              c.LOCATION_CODE            AS "locationCode",
-              c.INVENTORY_HOLD           AS "inventoryHold",
-              c.INVENTORY_QTY            AS "bookQty",
-              c.CHECK_INVENTORY_QTY      AS "checkQty",
+              t.LINE_TYPE                AS "lineType",
+              t.MATERIAL_MFS             AS "lotNo",
+              t.LOCATION_CODE            AS "locationCode",
+              t.INVENTORY_HOLD           AS "inventoryHold",
+              t.BOOK_EFF                 AS "bookQty",
+              t.COUNTED                  AS "checkQty",
               -- 차이 = 실사 − 장부. 양수면 실제가 더 많다는 뜻이다.
-              NVL(c.CHECK_INVENTORY_QTY, 0) - NVL(c.INVENTORY_QTY, 0) AS "differenceQty",
-              c.INVENTORY_PRICE          AS "inventoryPrice",
-              c.INVENTORY_AMT            AS "inventoryAmt",
+              t.COUNTED - t.BOOK_EFF     AS "differenceQty",
+              t.INVENTORY_PRICE          AS "inventoryPrice",
+              t.INVENTORY_AMT            AS "inventoryAmt",
               -- 이미 넣은 조정 (실사 − 장부 기준 부호). 차이와 같으면 조정이 끝난 줄이다.
-              (SELECT -SUM(s.ISSUE_QTY) FROM IM_ITEM_ISSUE s
-                WHERE s.ISSUE_ACCOUNT = 'M009' AND s.MATERIAL_MFS = c.MATERIAL_MFS
-                  AND s.ITEM_CODE = c.ITEM_CODE AND s.ORGANIZATION_ID = c.ORGANIZATION_ID
-                  AND ${periodBoundsSql('s.ISSUE_DATE', 'c.CLOSE_YYYYMM', 'c.ORGANIZATION_ID')}
-              )                          AS "adjustedQty",
-              CASE WHEN EXISTS (SELECT 1 FROM IM_ITEM_INVENTORY_CHECK_BCD b
-                                 WHERE b.CHECK_YYYYMM = c.CLOSE_YYYYMM AND b.LOT_NO = c.MATERIAL_MFS
-                                   AND b.ITEM_CODE = c.ITEM_CODE AND b.ORGANIZATION_ID = c.ORGANIZATION_ID)
-                   THEN 'Y' ELSE 'N' END AS "scannedYn",
+              t.POSTED                   AS "adjustedQty",
+              t.SCANNED_YN               AS "scannedYn",
               CASE WHEN EXISTS (SELECT 1 FROM IM_ITEM_RECEIPT_BARCODE r
-                                 WHERE r.LOT_NO = c.MATERIAL_MFS AND r.ORGANIZATION_ID = c.ORGANIZATION_ID)
+                                 WHERE r.LOT_NO = t.MATERIAL_MFS AND r.ORGANIZATION_ID = t.ORGANIZATION_ID)
                    THEN 'Y' ELSE 'N' END AS "barcodeYn",
-              c.COMMENTS                 AS "comments",
-              c.ENTER_BY                 AS "enterBy",
-              TO_CHAR(c.ENTER_DATE, 'YYYY-MM-DD HH24:MI:SS')       AS "enterDate"
-         FROM IM_ITEM_INVENTORY_CHECK c
+              t.COMMENTS                 AS "comments",
+              t.ENTER_BY                 AS "enterBy",
+              TO_CHAR(t.ENTER_DATE, 'YYYY-MM-DD HH24:MI:SS')       AS "enterDate"
+         FROM (${materialCheckBookSql()}) t
          LEFT JOIN ID_ITEM i
-                ON i.ITEM_CODE = c.ITEM_CODE
-               AND i.ORGANIZATION_ID = c.ORGANIZATION_ID
-        WHERE c.CLOSE_YYYYMM = :yyyymm
-          AND c.ITEM_CODE LIKE :itemCode ESCAPE '\\'
-          AND NVL(c.MATERIAL_MFS, '*') LIKE :lotNo ESCAPE '\\'
-          AND NVL(c.LOCATION_CODE, '*') LIKE :locationCode ESCAPE '\\'
-          AND c.ORGANIZATION_ID = :organizationId
-        ORDER BY CASE WHEN NVL(c.CHECK_INVENTORY_QTY, 0) <> NVL(c.INVENTORY_QTY, 0) THEN 0 ELSE 1 END,
-                 c.ITEM_CODE, c.MATERIAL_MFS
+                ON i.ITEM_CODE = t.ITEM_CODE
+               AND i.ORGANIZATION_ID = t.ORGANIZATION_ID
+        WHERE t.ITEM_CODE LIKE :itemCode ESCAPE '\\'
+          AND NVL(t.MATERIAL_MFS, '*') LIKE :lotNo ESCAPE '\\'
+          AND NVL(t.LOCATION_CODE, '*') LIKE :locationCode ESCAPE '\\'
+        ORDER BY CASE WHEN t.COUNTED - t.BOOK_EFF - t.POSTED <> 0 THEN 0 ELSE 1 END,
+                 t.ITEM_CODE, t.MATERIAL_MFS
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
       namedBinds({
         yyyymm: query.yyyymm,

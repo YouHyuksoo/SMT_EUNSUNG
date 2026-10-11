@@ -14,8 +14,12 @@
  * 3. **조정은 입고·출고에 넣지 않는다.** 두 표는 판매실적·납품 뷰·출하 화면이 읽어서 조정이 매출로
  *    섞인다. 재고를 직접 고치고 한 건씩 `IP_PRODUCT_FG_ADJUST` 에 남긴다 (월마감의 조정 칸이 이 표를 합산).
  *    날짜는 그 달 마감 기간의 종료일이다 (마감일자설정, 없으면 말일). 다시 눌러도 이미 넣은 만큼은 빼므로 두 번 들어가지 않는다.
- * 4. 실사 중에는 제품 입출고를 멈춘다 — 장부는 ① 시점에 고정되기 때문이다.
- *    마감한 달은 시작·스캔·조정 모두 거절한다.
+ * 4. **실사 중에도 제품 입출고를 멈추지 않는다.** 비교는 박스마다 "비교할 장부"로 한다 (`fgBookEffSql`):
+ *    · 찍은 박스: 처음 찍을 때 장부 칸(INVENTORY_QTY)에 "그 순간 재고 − 그때까지 넣은 조정"을 적어 둔다.
+ *      찍은 뒤의 입출고는 실제 움직임이라 비교에서 빠진다.
+ *    · 안 찍힌 박스: 최소(지금 재고 − 넣은 조정, 시작 때 고정 장부). 시작 뒤 출고된 박스는 다시 빼지 않고,
+ *      시작 뒤 입고된 박스는 지우지 않는다.
+ *    남은 조정 = 실사 − 비교할 장부 − 넣은 조정. 마감한 달은 시작·스캔·조정 모두 거절한다.
  */
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { DataSource, QueryRunner } from 'typeorm';
@@ -29,6 +33,16 @@ import { isStocktakeMonthAllowed, UPLOAD_MAX_ROWS } from './stocktake.service';
 
 type Row = Record<string, unknown>;
 const num = (v: unknown) => Number(v ?? 0);
+
+/**
+ * 비교할 장부 (파일 머리 4번). `c` = 실사표, `i` = 제품재고(같은 바코드·로케이션), `a` = 넣은 조정 합(POSTED).
+ */
+export const fgBookEffSql = (c = 'c', i = 'i', a = 'a') =>
+  `CASE WHEN ${c}.SCANNED_YN = 'Y' THEN ${c}.INVENTORY_QTY
+        ELSE GREATEST(0, LEAST(NVL(${i}.QTY, 0) - NVL(${a}.POSTED, 0), ${c}.INVENTORY_QTY)) END`;
+
+/** 실사 중 찍어서 추가된(시작 때 장부에 없던) 박스 표시 — 스캔 취소 때 이 줄은 지운다. */
+const NEW_BOX_COMMENT = '장부에 없던 박스';
 
 /** 장부에 없던 박스를 넣을 때 쓰는 로케이션 (양품 창고). */
 export const FG_DEFAULT_LOCATION = 'P01';
@@ -156,15 +170,16 @@ export class FgStocktakeService {
     const r = ((await this.dataSource.query(
       `SELECT c.CHECK_YYYYMM AS "yyyymm",
               COUNT(*) AS "boxes",
-              SUM(CASE WHEN c.INVENTORY_QTY <> 0 THEN 1 ELSE 0 END) AS "bookBoxes",
+              SUM(CASE WHEN ${fgBookEffSql()} <> 0 THEN 1 ELSE 0 END) AS "bookBoxes",
               SUM(CASE WHEN c.SCANNED_YN = 'Y' THEN 1 ELSE 0 END) AS "scannedBoxes",
-              SUM(CASE WHEN c.CHECK_QTY <> c.INVENTORY_QTY THEN 1 ELSE 0 END) AS "diffBoxes",
-              SUM(CASE WHEN c.CHECK_QTY - c.INVENTORY_QTY - NVL(a.POSTED, 0) <> 0 THEN 1 ELSE 0 END) AS "pendingBoxes",
-              SUM(c.INVENTORY_QTY) AS "bookQty",
+              SUM(CASE WHEN c.CHECK_QTY <> ${fgBookEffSql()} THEN 1 ELSE 0 END) AS "diffBoxes",
+              SUM(CASE WHEN c.CHECK_QTY - ${fgBookEffSql()} - NVL(a.POSTED, 0) <> 0 THEN 1 ELSE 0 END) AS "pendingBoxes",
+              SUM(${fgBookEffSql()}) AS "bookQty",
               SUM(c.CHECK_QTY) AS "checkQty",
               TO_CHAR(MIN(c.ENTER_DATE), 'YYYY-MM-DD HH24:MI') AS "startedAt"
          FROM IP_PRODUCT_FG_INV_CHECK c
          LEFT JOIN (${postedSql}) a ON a.BARCODE = c.BARCODE AND a.LOCATION_CODE = c.LOCATION_CODE
+         LEFT JOIN IP_PRODUCT_FG_INVENTORY i ON i.BARCODE = c.BARCODE AND i.LOCATION_CODE = c.LOCATION_CODE
         WHERE c.ORGANIZATION_ID = :organizationId AND c.CHECK_YYYYMM = :yyyymm
         GROUP BY c.CHECK_YYYYMM`,
       namedBinds({ yyyymm: latest, organizationId }),
@@ -273,6 +288,8 @@ export class FgStocktakeService {
       const updated = entries.filter((e) => e.inCheck && already.has(`${e.barcode}|${e.locationCode}`)).length;
       if (mode === 'scan' && updated) throw new BadRequestException(`이미 센 박스입니다: ${entries[0].barcode}`);
 
+      // 처음 찍을 때 장부 칸에 "그 순간 재고 − 그때까지 넣은 조정"을 적는다 (파일 머리 4번, fgBookEffSql).
+      // 이미 찍은 박스를 엑셀로 고칠 때는 처음 적은 장부를 그대로 둔다.
       await qr.query(
         `MERGE INTO IP_PRODUCT_FG_INV_CHECK t
          USING (SELECT J.BC, J.LOC, J.QTY, J.PT, J.MN, J.MS, J.IC FROM JSON_TABLE(:entryJson, '$[*]' COLUMNS (
@@ -282,12 +299,21 @@ export class FgStocktakeService {
          ON (t.CHECK_YYYYMM = :yyyymm AND t.ORGANIZATION_ID = :organizationId
              AND t.BARCODE = s.BC AND t.LOCATION_CODE = s.LOC)
          WHEN MATCHED THEN UPDATE
-              SET t.CHECK_QTY = s.QTY, t.SCANNED_YN = 'Y', t.LAST_MODIFY_DATE = SYSDATE, t.LAST_MODIFY_BY = :userId
+              SET t.INVENTORY_QTY = CASE WHEN t.SCANNED_YN = 'Y' THEN t.INVENTORY_QTY
+                                         ELSE NVL((SELECT SUM(i.QTY) FROM IP_PRODUCT_FG_INVENTORY i WHERE i.BARCODE = s.BC AND i.LOCATION_CODE = s.LOC), 0)
+                                              - NVL((SELECT SUM(a.ADJUST_QTY) FROM IP_PRODUCT_FG_ADJUST a
+                         WHERE a.CHECK_YYYYMM = :yyyymm AND a.ORGANIZATION_ID = :organizationId
+                           AND a.BARCODE = s.BC AND a.LOCATION_CODE = s.LOC), 0) END,
+                  t.CHECK_QTY = s.QTY, t.SCANNED_YN = 'Y', t.LAST_MODIFY_DATE = SYSDATE, t.LAST_MODIFY_BY = :userId
          WHEN NOT MATCHED THEN INSERT
               (CHECK_YYYYMM, BARCODE, LOCATION_CODE, ORGANIZATION_ID, PACK_TYPE, MODEL_NAME, MODEL_SUFFIX, ITEM_CODE,
                INVENTORY_QTY, CHECK_QTY, SCANNED_YN, COMMENTS, ENTER_DATE, ENTER_BY, LAST_MODIFY_DATE, LAST_MODIFY_BY)
               VALUES (:yyyymm, s.BC, s.LOC, :organizationId, s.PT, s.MN, s.MS, s.IC,
-               0, s.QTY, 'Y', '장부에 없던 박스', SYSDATE, :userId, SYSDATE, :userId)`,
+               NVL((SELECT SUM(i.QTY) FROM IP_PRODUCT_FG_INVENTORY i WHERE i.BARCODE = s.BC AND i.LOCATION_CODE = s.LOC), 0)
+                 - NVL((SELECT SUM(a.ADJUST_QTY) FROM IP_PRODUCT_FG_ADJUST a
+                         WHERE a.CHECK_YYYYMM = :yyyymm AND a.ORGANIZATION_ID = :organizationId
+                           AND a.BARCODE = s.BC AND a.LOCATION_CODE = s.LOC), 0),
+               s.QTY, 'Y', '${NEW_BOX_COMMENT}', SYSDATE, :userId, SYSDATE, :userId)`,
         namedBinds({ yyyymm, organizationId, userId, entryJson: clobBind(JSON.stringify(entries)) }),
       );
 
@@ -314,7 +340,7 @@ export class FgStocktakeService {
     });
   }
 
-  /** 입력 취소 — 센 것을 지운다. 장부에 없던 박스(장부 0)는 실사표에서 뺀다. */
+  /** 입력 취소 — 센 것을 지운다. 장부에 없던 박스(실사 중 찍어서 추가된 줄)는 실사표에서 뺀다. */
   async cancel(row: FgCountRow, organizationId: number, userId: string) {
     const session = await this.active(organizationId);
     if (!session) throw new BadRequestException('진행 중인 제품 실사가 없습니다.');
@@ -337,7 +363,7 @@ export class FgStocktakeService {
       await qr.query(
         `DELETE FROM IP_PRODUCT_FG_INV_CHECK
           WHERE CHECK_YYYYMM = :yyyymm AND ORGANIZATION_ID = :organizationId AND BARCODE = :barcode
-            AND SCANNED_YN = 'Y' AND INVENTORY_QTY = 0`,
+            AND SCANNED_YN = 'Y' AND COMMENTS = '${NEW_BOX_COMMENT}'`,
         namedBinds({ yyyymm, organizationId, barcode }),
       );
       await qr.query(
@@ -360,13 +386,13 @@ export class FgStocktakeService {
       const rows = (await qr.query(
         `SELECT c.BARCODE AS "barcode", c.LOCATION_CODE AS "locationCode", c.PACK_TYPE AS "packType",
                 c.MODEL_NAME AS "modelName", c.MODEL_SUFFIX AS "modelSuffix", c.ITEM_CODE AS "itemCode",
-                c.CHECK_QTY - c.INVENTORY_QTY - NVL(a.POSTED, 0) AS "remaining",
+                c.CHECK_QTY - ${fgBookEffSql()} - NVL(a.POSTED, 0) AS "remaining",
                 NVL(i.QTY, 0) AS "nowQty", CASE WHEN i.BARCODE IS NULL THEN 'N' ELSE 'Y' END AS "inInventory"
            FROM IP_PRODUCT_FG_INV_CHECK c
            LEFT JOIN (${postedSql}) a ON a.BARCODE = c.BARCODE AND a.LOCATION_CODE = c.LOCATION_CODE
            LEFT JOIN IP_PRODUCT_FG_INVENTORY i ON i.BARCODE = c.BARCODE AND i.LOCATION_CODE = c.LOCATION_CODE
           WHERE c.CHECK_YYYYMM = :yyyymm AND c.ORGANIZATION_ID = :organizationId
-            AND c.CHECK_QTY - c.INVENTORY_QTY - NVL(a.POSTED, 0) <> 0`,
+            AND c.CHECK_QTY - ${fgBookEffSql()} - NVL(a.POSTED, 0) <> 0`,
         namedBinds({ yyyymm, organizationId }),
       )) as Row[];
       if (!rows.length) throw new BadRequestException('조정할 차이가 없습니다.');
@@ -437,20 +463,21 @@ export class FgStocktakeService {
     organizationId: number,
   ) {
     const where: string[] = [];
-    if (filter.status === 'diff') where.push('c.CHECK_QTY <> c.INVENTORY_QTY');
+    if (filter.status === 'diff') where.push(`c.CHECK_QTY <> ${fgBookEffSql()}`);
     if (filter.status === 'unscanned') where.push(`c.SCANNED_YN = 'N'`);
     const rows = (await this.dataSource.query(
       `SELECT c.BARCODE AS "barcode", c.LOCATION_CODE AS "locationCode", c.PACK_TYPE AS "packType",
               c.MODEL_NAME AS "modelName", c.MODEL_SUFFIX AS "modelSuffix", c.ITEM_CODE AS "itemCode",
-              c.INVENTORY_QTY AS "bookQty", c.CHECK_QTY AS "checkQty",
-              c.CHECK_QTY - c.INVENTORY_QTY AS "differenceQty",
+              ${fgBookEffSql()} AS "bookQty", c.CHECK_QTY AS "checkQty",
+              c.CHECK_QTY - ${fgBookEffSql()} AS "differenceQty",
               a.POSTED AS "adjustedQty", c.SCANNED_YN AS "scannedYn", c.COMMENTS AS "comments"
          FROM IP_PRODUCT_FG_INV_CHECK c
          LEFT JOIN (${postedSql}) a ON a.BARCODE = c.BARCODE AND a.LOCATION_CODE = c.LOCATION_CODE
+         LEFT JOIN IP_PRODUCT_FG_INVENTORY i ON i.BARCODE = c.BARCODE AND i.LOCATION_CODE = c.LOCATION_CODE
         WHERE c.CHECK_YYYYMM = :yyyymm AND c.ORGANIZATION_ID = :organizationId
           AND c.BARCODE LIKE :barcode ESCAPE '\\' AND NVL(c.MODEL_NAME, '*') LIKE :modelName ESCAPE '\\'
           ${where.length ? `AND ${where.join(' AND ')}` : ''}
-        ORDER BY CASE WHEN c.CHECK_QTY <> c.INVENTORY_QTY THEN 0 ELSE 1 END, c.MODEL_NAME, c.BARCODE
+        ORDER BY CASE WHEN c.CHECK_QTY <> ${fgBookEffSql()} THEN 0 ELSE 1 END, c.MODEL_NAME, c.BARCODE
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
       namedBinds({ yyyymm, organizationId, barcode: likePrefix(filter.barcode?.trim().toUpperCase()), modelName: likePrefix(filter.modelName?.trim().toUpperCase()) }),
     )) as Row[];

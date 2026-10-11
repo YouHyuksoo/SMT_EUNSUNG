@@ -120,6 +120,24 @@ export function classifyWipRows(
   return { entries, errors };
 }
 
+/**
+ * 생산투입(공정출고)이 다 들어왔는가 — 생산투입은 DB 잡(P_WIP_ISSUE_CREATE, 06:10·17:10)이 포장 실적으로 만든다.
+ * 처리 안 된 포장이 남은 채로 장부를 고정하거나 조정하면, 그 소모가 나중에 또 빠져 이중 차감이 된다.
+ */
+export async function assertWipIssueCaughtUp(qr: QueryRunner, organizationId: number) {
+  const pending = num(((await qr.query(
+    `SELECT COUNT(*) AS "n" FROM IP_PRODUCT_PACK_MASTER
+      WHERE ORGANIZATION_ID = :organizationId AND NVL(WIP_PROCESS_FLAG, 'N') = 'N'`,
+    namedBinds({ organizationId }),
+  )) as Row[])[0]?.n);
+  if (pending) {
+    throw new BadRequestException(
+      `생산투입이 아직 안 들어간 포장이 ${pending.toLocaleString()}건 있습니다.`
+      + ' 생산투입 잡(06:10·17:10)이 돈 뒤 다시 하세요.',
+    );
+  }
+}
+
 @Injectable()
 export class WipStocktakeService {
   constructor(
@@ -173,6 +191,7 @@ export class WipStocktakeService {
     }
     return this.tx.run(async (qr) => {
       await assertWipMonthOpen(qr, yyyymm, organizationId);
+      await assertWipIssueCaughtUp(qr, organizationId);
       const exists = num(((await qr.query(
         `SELECT COUNT(*) AS "n" FROM IM_ITEM_WORKSTAGE_INV_CHECK
           WHERE CLOSE_YYYYMM = :yyyymm AND ORGANIZATION_ID = :organizationId`,
@@ -345,6 +364,7 @@ export class WipStocktakeService {
   async adjustAll(yyyymm: string, organizationId: number, userId: string) {
     return this.tx.run(async (qr) => {
       await assertWipMonthOpen(qr, yyyymm, organizationId);
+      await assertWipIssueCaughtUp(qr, organizationId);
       const rows = (await qr.query(
         `SELECT c.ITEM_CODE AS "itemCode",
                 NVL(c.INVENTORY_QTY, 0) - NVL(c.CHECK_INVENTORY_QTY, 0) - NVL(a.POSTED, 0) AS "remaining"

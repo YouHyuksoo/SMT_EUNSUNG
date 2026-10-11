@@ -14,7 +14,9 @@
  *       그 롯트 실사수량을 바코드 수량으로 채운다. 장부에 없던 롯트는 장부 0 으로 추가된다.
  *    ③ 일괄 조정: 실사표의 차이(실사 − 장부)를 조정 출고(M009)로 넣는다. 이미 넣은
  *       조정만큼은 빼고 넣으므로 다시 눌러도 두 번 들어가지 않는다.
- * 3. 실사 중에는 입출고를 멈춘다 — 장부는 ① 시점에 고정되기 때문이다.
+ * 3. **실사 중에도 입출고를 멈추지 않는다.** 장부는 ① 시점에 고정되지만, 비교·조정은 롯트마다
+ *    "비교할 장부"(찍은 롯트는 찍을 때 장부, 안 찍힌 롯트는 지금 재고와 고정 장부 중 작은 쪽)로 한다
+ *    (stocktake-book.ts). 그래서 시작 뒤 출고·입고가 두 번 반영되지 않는다.
  * 4. 조정 날짜는 그 달 마지막 날이다(`postAdjustment`). 마감된 달은 시작·스캔·조정 모두 거절한다.
  * 5. **엑셀 업로드**(`upload`)는 스캔을 한꺼번에 하는 것이다. 한 줄 = 바코드 또는 롯트번호 하나.
  *    이미 찍은 롯트는 엑셀 수량으로 고친다 — 같은 파일을 다시 올려도 결과가 같다.
@@ -26,6 +28,7 @@ import { clobBind } from '../../common/services/oracle.service';
 import { isStocktakePeriodAllowed, periodBoundsSql } from './close-period';
 import { namedBinds } from '../../common/utils/named-binds.util';
 import { assertMonthOpen, postAdjustment } from './inventory-check.service';
+import { materialCheckBookSql } from './stocktake-book';
 
 type Row = Record<string, unknown>;
 
@@ -138,24 +141,29 @@ export class StocktakeService {
 
   /** 진행 중인 실사 — 실사표가 있고 마감되지 않은 가장 최근 달. 없으면 null. */
   async active(organizationId: number) {
-    const rows = (await this.dataSource.query(
-      `SELECT c.CLOSE_YYYYMM AS "yyyymm",
-              COUNT(*) AS "lots",
-              SUM(CASE WHEN c.INVENTORY_QTY <> 0 THEN 1 ELSE 0 END) AS "bookLots",
-              SUM(CASE WHEN NVL(c.CHECK_INVENTORY_QTY, 0) <> 0 THEN 1 ELSE 0 END) AS "countedLots",
-              SUM(CASE WHEN NVL(c.CHECK_INVENTORY_QTY, 0) = NVL(c.INVENTORY_QTY, 0) THEN 1 ELSE 0 END) AS "matchedLots",
-              SUM(CASE WHEN NVL(c.CHECK_INVENTORY_QTY, 0) < NVL(c.INVENTORY_QTY, 0) THEN 1 ELSE 0 END) AS "shortLots",
-              SUM(CASE WHEN NVL(c.CHECK_INVENTORY_QTY, 0) > NVL(c.INVENTORY_QTY, 0) THEN 1 ELSE 0 END) AS "overLots",
-              TO_CHAR(MIN(c.ENTER_DATE), 'YYYY-MM-DD HH24:MI') AS "startedAt"
+    const months = (await this.dataSource.query(
+      `SELECT MAX(c.CLOSE_YYYYMM) AS "yyyymm"
          FROM IM_ITEM_INVENTORY_CHECK c
         WHERE c.ORGANIZATION_ID = :organizationId
           AND NOT EXISTS (SELECT 1 FROM ISYS_INVENTORY_CLOSE_DATE d
                            WHERE d.CLOSE_YYYYMM = c.CLOSE_YYYYMM
-                             AND d.ORGANIZATION_ID = c.ORGANIZATION_ID AND d.CLOSE_YN = 'Y')
-        GROUP BY c.CLOSE_YYYYMM
-        ORDER BY c.CLOSE_YYYYMM DESC
-        FETCH FIRST 1 ROWS ONLY`,
+                             AND d.ORGANIZATION_ID = c.ORGANIZATION_ID AND d.CLOSE_YN = 'Y')`,
       namedBinds({ organizationId }),
+    )) as Row[];
+    const yyyymm = months[0]?.yyyymm as string | null | undefined;
+    if (!yyyymm) return null;
+    // 차이 = 실사 − 비교할 장부 − 넣은 조정 (stocktake-book.ts). 부족·초과는 아직 조정할 것이 남은 롯트.
+    const rows = (await this.dataSource.query(
+      `SELECT :yyyymm AS "yyyymm",
+              COUNT(*) AS "lots",
+              SUM(CASE WHEN t.BOOK_EFF <> 0 THEN 1 ELSE 0 END) AS "bookLots",
+              SUM(CASE WHEN t.COUNTED <> 0 THEN 1 ELSE 0 END) AS "countedLots",
+              SUM(CASE WHEN t.COUNTED - t.BOOK_EFF - t.POSTED = 0 THEN 1 ELSE 0 END) AS "matchedLots",
+              SUM(CASE WHEN t.COUNTED - t.BOOK_EFF - t.POSTED < 0 THEN 1 ELSE 0 END) AS "shortLots",
+              SUM(CASE WHEN t.COUNTED - t.BOOK_EFF - t.POSTED > 0 THEN 1 ELSE 0 END) AS "overLots",
+              TO_CHAR(MIN(t.ENTER_DATE), 'YYYY-MM-DD HH24:MI') AS "startedAt"
+         FROM (${materialCheckBookSql()}) t`,
+      namedBinds({ yyyymm, organizationId }),
     )) as Row[];
     const r = rows[0];
     if (!r) return null;
@@ -451,25 +459,17 @@ export class StocktakeService {
   }
 
   /**
-   * 일괄 조정 — 실사표의 차이(실사 − 장부)에서 이미 넣은 조정을 빼고 남은 만큼만 넣는다.
+   * 일괄 조정 — 롯트마다 남은 조정(실사 − 비교할 장부 − 넣은 조정, stocktake-book.ts)만 넣는다.
    * 재고 행이 없는 롯트는 넣지 못하므로 건너뛰고 목록으로 돌려준다.
    */
   async adjustAll(yyyymm: string, organizationId: number, userId: string) {
     return this.tx.run(async (qr) => {
       await assertMonthOpen(qr, yyyymm, organizationId);
       const rows = (await qr.query(
-        `SELECT c.ITEM_CODE AS "itemCode", c.MATERIAL_MFS AS "lotNo", c.LOCATION_CODE AS "locationCode",
-                NVL(c.CHECK_INVENTORY_QTY, 0) - NVL(c.INVENTORY_QTY, 0) AS "diff",
-                NVL(a.POSTED, 0) AS "posted"
-           FROM IM_ITEM_INVENTORY_CHECK c
-           LEFT JOIN (SELECT s.MATERIAL_MFS, s.ITEM_CODE, -SUM(s.ISSUE_QTY) AS POSTED
-                        FROM IM_ITEM_ISSUE s
-                       WHERE s.ISSUE_ACCOUNT = 'M009' AND s.ORGANIZATION_ID = :organizationId
-                         AND ${periodBoundsSql('s.ISSUE_DATE', ':yyyymm', ':organizationId')}
-                       GROUP BY s.MATERIAL_MFS, s.ITEM_CODE) a
-                  ON a.MATERIAL_MFS = c.MATERIAL_MFS AND a.ITEM_CODE = c.ITEM_CODE
-          WHERE c.CLOSE_YYYYMM = :yyyymm AND c.ORGANIZATION_ID = :organizationId
-            AND NVL(c.CHECK_INVENTORY_QTY, 0) - NVL(c.INVENTORY_QTY, 0) <> NVL(a.POSTED, 0)`,
+        `SELECT t.ITEM_CODE AS "itemCode", t.MATERIAL_MFS AS "lotNo", t.LOCATION_CODE AS "locationCode",
+                t.COUNTED - t.BOOK_EFF - t.POSTED AS "remaining"
+           FROM (${materialCheckBookSql()}) t
+          WHERE t.COUNTED - t.BOOK_EFF - t.POSTED <> 0`,
         namedBinds({ yyyymm, organizationId }),
       )) as Row[];
       if (!rows.length) throw new BadRequestException('조정할 차이가 없습니다.');
@@ -477,7 +477,7 @@ export class StocktakeService {
       let adjusted = 0;
       const skipped: { itemCode: string; lotNo: string; reason: string }[] = [];
       for (const r of rows) {
-        const remaining = num(r.diff) - num(r.posted);
+        const remaining = num(r.remaining);
         try {
           await postAdjustment(qr, {
             yyyymm,
@@ -510,12 +510,11 @@ export class StocktakeService {
 
   private async lotResult(qr: QueryRunner, yyyymm: string, itemCode: string, lotNo: string, organizationId: number) {
     const r = ((await qr.query(
-      `SELECT c.ITEM_CODE AS "itemCode", i.ITEM_NAME AS "itemName", c.MATERIAL_MFS AS "lotNo",
-              NVL(c.INVENTORY_QTY, 0) AS "bookQty", NVL(c.CHECK_INVENTORY_QTY, 0) AS "countedQty"
-         FROM IM_ITEM_INVENTORY_CHECK c
-         LEFT JOIN ID_ITEM i ON i.ITEM_CODE = c.ITEM_CODE AND i.ORGANIZATION_ID = c.ORGANIZATION_ID
-        WHERE c.CLOSE_YYYYMM = :yyyymm AND c.ORGANIZATION_ID = :organizationId
-          AND c.ITEM_CODE = :itemCode AND c.MATERIAL_MFS = :lotNo`,
+      `SELECT t.ITEM_CODE AS "itemCode", i.ITEM_NAME AS "itemName", t.MATERIAL_MFS AS "lotNo",
+              t.BOOK_EFF AS "bookQty", t.COUNTED AS "countedQty"
+         FROM (${materialCheckBookSql()}) t
+         LEFT JOIN ID_ITEM i ON i.ITEM_CODE = t.ITEM_CODE AND i.ORGANIZATION_ID = t.ORGANIZATION_ID
+        WHERE t.ITEM_CODE = :itemCode AND t.MATERIAL_MFS = :lotNo`,
       namedBinds({ yyyymm, organizationId, itemCode, lotNo }),
     )) as Row[])[0] ?? {};
     const bookQty = num(r.bookQty);
