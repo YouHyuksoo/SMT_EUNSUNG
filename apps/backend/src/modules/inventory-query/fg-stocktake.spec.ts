@@ -68,3 +68,39 @@ describe('fg close', () => {
     expect(fgCloseAggregateSql(false)).toContain(':prevYyyymm');
   });
 });
+
+describe('FgStocktakeService.adjustAll', () => {
+  /** 쿼리 순서: 마감 확인 → 조정 대상 → 재고 MERGE → 조정 INSERT → (새 박스면) 입고표시 UPDATE */
+  const run = async (targets: Record<string, unknown>[]) => {
+    const sqls: { sql: string; params: unknown }[] = [];
+    const qr = {
+      query: jest.fn(async (sql: string, params?: unknown) => {
+        sqls.push({ sql, params });
+        if (/IP_PRODUCT_FG_INV_CLOSE_MONTH/.test(sql)) return [{ n: 0 }];
+        if (/FROM IP_PRODUCT_FG_INV_CHECK c/.test(sql)) return targets;
+        return [];
+      }),
+    };
+    const tx = { run: (cb: (q: typeof qr) => unknown) => cb(qr) };
+    const { FgStocktakeService } = await import('./fg-stocktake.service');
+    const service = new FgStocktakeService({} as never, tx as never);
+    await service.adjustAll('202610', 1, 'tester');
+    return sqls.filter((s) => /UPDATE IP_PRODUCT_PACK_MASTER/.test(s.sql));
+  };
+  const target = (barcode: string, remaining: number, inInventory: 'Y' | 'N') => ({
+    barcode, locationCode: 'P01', packType: 'C', modelName: 'M1', modelSuffix: '*', itemCode: 'E1',
+    remaining, nowQty: inInventory === 'Y' ? 10 : 0, inInventory,
+  });
+
+  it('재고에 없던 박스를 조정으로 넣으면 포장 실적을 입고됨(RECEIPT_FLAG=Y)으로 바꾼다', async () => {
+    const updates = await run([target('NEW1', 72, 'N'), target('OLD1', -5, 'Y')]);
+    expect(updates).toHaveLength(1);
+    expect(updates[0].sql).toMatch(/SET RECEIPT_FLAG = 'Y'[\s\S]*RECEIPT_FLAG = 'N'/);
+    expect(JSON.stringify(updates[0].params)).toContain('NEW1');
+    expect(JSON.stringify(updates[0].params)).not.toContain('OLD1');
+  });
+
+  it('재고에 있던 박스만 조정하면 포장 실적을 건드리지 않는다', async () => {
+    expect(await run([target('OLD1', 3, 'Y')])).toHaveLength(0);
+  });
+});

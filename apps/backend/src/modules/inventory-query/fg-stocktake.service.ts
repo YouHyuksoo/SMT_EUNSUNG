@@ -408,6 +408,24 @@ export class FgStocktakeService {
                   MS VARCHAR2(50) PATH '$.modelSuffix', IC VARCHAR2(20) PATH '$.itemCode')) J`,
         namedBinds({ yyyymm, organizationId, userId, adjustJson: json }),
       );
+      // 재고에 없던 박스를 조정으로 넣었으면 포장 실적도 '입고됨'으로 맞춘다. 안 그러면 나중에
+      // 그 박스를 입고 스캔할 때 P_PRODUCT_FG_RECEIPT 가 RECEIPT_FLAG='N' 을 보고 수량을 한 번 더 더한다.
+      // (JSON_TABLE 을 서브쿼리에 넣으면 이 DB 에서 ORA-00600 이 나서 바코드 목록을 바인드로 넘긴다.)
+      const newBoxes = [...new Set(rows
+        .filter((r) => r.inInventory === 'N' && num(r.remaining) > 0)
+        .map((r) => String(r.barcode)))];
+      for (let i = 0; i < newBoxes.length; i += 500) {
+        const chunk = newBoxes.slice(i, i + 500);
+        const binds: Record<string, string> = {};
+        chunk.forEach((bc, j) => { binds[`b${j}`] = bc; });
+        await qr.query(
+          `UPDATE IP_PRODUCT_PACK_MASTER
+              SET RECEIPT_FLAG = 'Y'
+            WHERE RECEIPT_FLAG = 'N'
+              AND PACK_BARCODE IN (${chunk.map((_, j) => `:b${j}`).join(', ')})`,
+          namedBinds(binds),
+        );
+      }
       return { yyyymm, adjusted: rows.length, adjustedQty: rows.reduce((s, r) => s + num(r.remaining), 0) };
     });
   }
