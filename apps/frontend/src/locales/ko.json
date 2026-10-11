@@ -278,6 +278,7 @@
     "material": "자재수불관리",
     "materialMgmt": "자재관리",
     "processTransaction": "공정수불관리",
+    "magazine": "매거진관리",
     "workstagePass": "공정통과이력 관리",
     "magazineLabelHistory": "매거진발행이력",
     "magazineLabel": "매거진라벨 발행",

@@ -3,7 +3,7 @@ sources:
   - apps/frontend/src/config/menuConfig.ts
   - apps/frontend/scripts/data/pb-screen-inventory.json
 generator: apps/frontend/scripts/gen-migration-status.mjs
-verifiedCommit: f325c064
+verifiedCommit: 72b2a3b0
 ---
 
 # PB 윈도우 ↔ 웹 메뉴·경로 연결표 (자동 생성)
@@ -120,10 +120,10 @@ verifiedCommit: f325c064
 | SMT관리 | 피더레이아웃 비교 | `SMT_BOM_COMPARISON` | `/smt/bom-comparison` | PB 연결 | `w_smt_bom_comparison_master_rpt` | PB 메뉴 인벤토리 |
 | SMT관리 | 마운터 픽업정보관리 | `SMT_FEEDER_PICKUP` | `/smt/feeder-pickup` | PB 연결 | `w_mcn_feeder_pickup_master` | PB 메뉴 인벤토리 |
 | 공정수불관리 | 공정통과이력 관리 | `PLN_WORKSTAGE_PASS` | `/process-transaction/workstage-pass` | PB 연결 | `w_pln_product_inout_scan_master` | PB 메뉴 인벤토리 |
-| 공정수불관리 | 매거진발행이력 | `PLN_MAGAZINE_LABEL_HISTORY` | `/process-transaction/magazine-label-history` | PB 연결 | `w_pln_product_magazine_label_query` | PB 메뉴 인벤토리 |
-| 공정수불관리 | 매거진라벨 발행 | `PLN_MAGAZINE_LABEL` | `/process-transaction/magazine-label` | PB 연결 | `w_pln_product_magazine_label_master2` | PB 메뉴 인벤토리 |
-| 공정수불관리 | 매거진라벨 분할 | `PLN_MAGAZINE_SPLIT` | `/process-transaction/magazine-split` | PB 연결 | `w_pln_product_magazine_label_split_master` | PB 메뉴 인벤토리 |
-| 공정수불관리 | 매거진-PID 매핑관리 | `PLN_MAGAZINE_PID` | `/process-transaction/magazine-pid` | PB 연결 | `w_pln_product_barcode_create_master` | PB 메뉴 인벤토리 |
+| 매거진관리 | 매거진발행이력 | `PLN_MAGAZINE_LABEL_HISTORY` | `/process-transaction/magazine-label-history` | PB 연결 | `w_pln_product_magazine_label_query` | PB 메뉴 인벤토리 |
+| 매거진관리 | 매거진라벨 발행 | `PLN_MAGAZINE_LABEL` | `/process-transaction/magazine-label` | PB 연결 | `w_pln_product_magazine_label_master2` | PB 메뉴 인벤토리 |
+| 매거진관리 | 매거진라벨 분할 | `PLN_MAGAZINE_SPLIT` | `/process-transaction/magazine-split` | PB 연결 | `w_pln_product_magazine_label_split_master` | PB 메뉴 인벤토리 |
+| 매거진관리 | 매거진-PID 매핑관리 | `PLN_MAGAZINE_PID` | `/process-transaction/magazine-pid` | PB 연결 | `w_pln_product_barcode_create_master` | PB 메뉴 인벤토리 |
 | 제품재고관리 | 제품재고조회 | `PRD_CURRENT_INVENTORY` | `/product/current-inventory` | PB 연결 | `w_prd_product_fg_inventory` | PB 메뉴 인벤토리 |
 | 제품재고관리 | 제품포장관리(PID) | `PRD_PACK` | `/product/pack` | PB 연결 | `w_prd_product_packing_create_master` | PB 메뉴 인벤토리 |
 | 제품재고관리 | 제품패킹이력 | `PRD_PACK_HISTORY` | `/product/pack-history` | PB 연결 | `w_prd_product_packing_history` | PB 메뉴 인벤토리 |

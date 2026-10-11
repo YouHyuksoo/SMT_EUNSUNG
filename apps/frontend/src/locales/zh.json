@@ -278,6 +278,7 @@
     "material": "物料收发管理",
     "materialMgmt": "物料管理",
     "processTransaction": "工序收发管理",
+    "magazine": "料盒管理",
     "workstagePass": "工序通过记录管理",
     "magazineLabelHistory": "料架标签发行记录",
     "magazineLabel": "弹匣标签发行",

@@ -4,7 +4,7 @@ sources:
   - apps/frontend/scripts/data/pb-screen-inventory.json
   - apps/frontend/scripts/data/pb-screen-exclusions.json
 generator: apps/frontend/scripts/gen-migration-status.mjs
-verifiedCommit: f325c064
+verifiedCommit: 72b2a3b0
 ---
 
 # PB 화면 이관 현황 (자동 생성)

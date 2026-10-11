@@ -21,6 +21,7 @@ import {
   GitBranch,
   Grip,
   Hammer,
+  Layers,
   Monitor,
   Network,
   Package,
@@ -254,6 +255,13 @@ export const menuConfig: MenuConfigItem[] = [
     icon: GitBranch,
     children: [
       { code: "PLN_WORKSTAGE_PASS", labelKey: "menu.workstagePass", path: "/process-transaction/workstage-pass", pbLinkStatus: "powerbuilder", pbWindow: "w_pln_product_inout_scan_master", pbEvidence: "apps/backend/src/modules/process-transaction/workstage-pass.controller.ts" },
+    ],
+  },
+  {
+    code: "MAGAZINE",
+    labelKey: "menu.magazine",
+    icon: Layers,
+    children: [
       { code: "PLN_MAGAZINE_LABEL_HISTORY", labelKey: "menu.magazineLabelHistory", path: "/process-transaction/magazine-label-history", pbLinkStatus: "powerbuilder", pbWindow: "w_pln_product_magazine_label_query", pbEvidence: "apps/backend/src/modules/process-transaction/magazine-label-history.controller.ts" },
       { code: "PLN_MAGAZINE_LABEL", labelKey: "menu.magazineLabel", path: "/process-transaction/magazine-label", pbLinkStatus: "powerbuilder", pbWindow: "w_pln_product_magazine_label_master2" },
       { code: "PLN_MAGAZINE_SPLIT", labelKey: "menu.magazineSplit", path: "/process-transaction/magazine-split", pbLinkStatus: "powerbuilder", pbWindow: "w_pln_product_magazine_label_split_master" },
