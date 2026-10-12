@@ -53,8 +53,8 @@ export default function EtcIssuePage() {
   // 출고이력 조회
   const [itemCode, setItemCode] = useState('');
   const [materialMfs, setMaterialMfs] = useState('');
-  // 출고가 하루 2천 건이 넘어 7일이면 1만 건 상한에 걸린다 — 기본은 오늘 하루.
-  const [dateFrom, setDateFrom] = useState(today());
+  // 기타출고는 한 달에 수십 건이라 기본은 이번 달 1일부터다.
+  const [dateFrom, setDateFrom] = useState(() => `${today().slice(0, 8)}01`);
   const [dateTo, setDateTo] = useState(today());
   const [histLineCode, setHistLineCode] = useState('');
   const [histInvoiceNo, setHistInvoiceNo] = useState('');
@@ -98,6 +98,8 @@ export default function EtcIssuePage() {
           materialMfs: materialMfs || undefined,
           lineCode: histLineCode || undefined,
           invoiceNo: histInvoiceNo.trim() || undefined,
+          // 바코드 출고·공정 출고는 빼고 기타출고로 나간 것만 본다.
+          etcOnly: true,
         },
       });
       setHistory(hist.data?.data ?? []);

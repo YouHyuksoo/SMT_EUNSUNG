@@ -56,6 +56,15 @@ const NORMAL_ISSUE_ACCOUNTS = ['M001', 'M002'];
 const issueTypeOf = (issueAccount: string, normalIssue = true) =>
   (normalIssue && NORMAL_ISSUE_ACCOUNTS.includes(issueAccount) ? 'N' : 'E');
 
+/**
+ * 기타출고로 들어간 원장 줄 — 작업지시·협력사롯트가 '*' 이고 바코드가 없다.
+ * 바코드 출고는 BARCODE 가, 공정 출고는 MFS 가 채워져 있어 빠진다 (실측).
+ * 기타출고를 취소한 역분개 줄도 같은 값을 복사하므로 함께 나온다.
+ */
+const ETC_ISSUE_CONDITION = `AND s.MFS = '*'
+          AND s.WORK_ORDER_NO = '*'
+          AND s.BARCODE IS NULL`;
+
 const FIXED = {
   issueStatus: 'N',
   /** 취소로 만들어지는 행의 상태 */
@@ -129,6 +138,7 @@ export class IssueManageService {
           AND NVL(s.WORKSTAGE_CODE, '*') LIKE :workstageCode ESCAPE '\\'
           AND NVL(s.INVOICE_NO, '*') LIKE :invoiceNo ESCAPE '\\'
           AND NVL(s.ISSUE_STATUS, '*') LIKE :issueStatus ESCAPE '\\'
+          ${query.etcOnly ? ETC_ISSUE_CONDITION : ''}
           AND s.ORGANIZATION_ID = :organizationId
         ORDER BY s.ISSUE_DATE DESC, s.ISSUE_SEQUENCE DESC
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,

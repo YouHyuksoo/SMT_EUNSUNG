@@ -756,6 +756,14 @@ export class IssueHistoryQueryDto {
   })
   @IsOptional() @IsString() @Length(0, 5)
   issueStatus?: string;
+
+  @ApiPropertyOptional({
+    description: '기타출고만 본다 — 작업지시·협력사롯트가 * 이고 바코드가 없는 건'
+      + ' (바코드 출고·공정 출고는 빠진다).',
+  })
+  @IsOptional() @Transform(({ value }) => value === true || value === 'true')
+  @IsBoolean()
+  etcOnly?: boolean;
 }
 
 /** 257 현재고 목록 조건 (254 입고 쪽과 같은 표·같은 조건식). */
