@@ -23,6 +23,8 @@ interface PreviewRow {
   revision: string;
   status: "new" | "duplicate_db" | "duplicate_file" | "error";
   message?: string;
+  /** 업로드 시 들어갈 BOM 주인(최상위 제품) */
+  ownerItemCode?: string;
 }
 
 interface PreviewResult {
@@ -196,6 +198,7 @@ export default function BomUploadModal({ isOpen, onClose, onComplete }: BomUploa
                     <th className="px-2 py-2 text-center w-12">{t("master.bom.colRow", "행")}</th>
                     <th className="px-2 py-2 text-left">{t("master.bom.colParentItem", "상위품목")}</th>
                     <th className="px-2 py-2 text-left">{t("master.bom.colChildItem", "하위품목")}</th>
+                    <th className="px-2 py-2 text-left" title={t("master.bom.colOwnerItemHint", "이 행이 등록될 BOM의 최상위 제품")}>{t("master.bom.colOwnerItem", "소속 BOM")}</th>
                     <th className="px-2 py-2 text-center w-24">{t("master.bom.colValidFrom", "적용일자")}</th>
                     <th className="px-2 py-2 text-center w-24">{t("master.bom.colValidTo", "완료일자")}</th>
                     <th className="px-2 py-2 text-center w-8">{t("common.quantity", "수량")}</th>
@@ -210,6 +213,7 @@ export default function BomUploadModal({ isOpen, onClose, onComplete }: BomUploa
                         <td className="px-2 py-1.5 text-center font-mono text-text-muted">{r.row}</td>
                         <td className="px-2 py-1.5 font-mono truncate max-w-[120px]" title={r.parentItemCode}>{r.parentItemCode}</td>
                         <td className="px-2 py-1.5 font-mono truncate max-w-[120px]" title={r.childItemCode}>{r.childItemCode}</td>
+                        <td className="px-2 py-1.5 font-mono truncate max-w-[120px] text-text-muted" title={r.ownerItemCode}>{r.ownerItemCode ?? "-"}</td>
                         <td className="px-2 py-1.5 text-center text-text-muted">{r.validFrom ?? "-"}</td>
                         <td className="px-2 py-1.5 text-center text-text-muted">{r.validTo ?? "-"}</td>
                         <td className="px-2 py-1.5 text-center">{r.qtyPer ?? "-"}</td>

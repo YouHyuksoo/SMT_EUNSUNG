@@ -27,6 +27,8 @@ interface BomFormModalProps {
   editingItem: BomTreeItem | null;
   parentItemCode: string;
   parentItemCodeDisplay: string;
+  /** 화면에서 보고 있는 최상위 제품 — 새 상위품목 아래 등록 시 BOM 주인으로 쓴다 */
+  topItemCode?: string;
 }
 
 interface PartOption {
@@ -36,7 +38,7 @@ interface PartOption {
 }
 
 
-export default function BomFormModal({ isOpen, onClose, onSave, editingItem, parentItemCode, parentItemCodeDisplay }: BomFormModalProps) {
+export default function BomFormModal({ isOpen, onClose, onSave, editingItem, parentItemCode, parentItemCodeDisplay, topItemCode }: BomFormModalProps) {
   const { t } = useTranslation();
   const [saving, setSaving] = useState(false);
   const [childSearch, setChildSearch] = useState("");
@@ -106,7 +108,7 @@ export default function BomFormModal({ isOpen, onClose, onSave, editingItem, par
       if (editingItem) {
         await api.put(`/master/boms/${getBomKey(editingItem)}`, body);
       } else {
-        await api.post("/master/boms", body);
+        await api.post("/master/boms", { ...body, topItemCode: topItemCode || undefined });
       }
       onSave();
       onClose();
