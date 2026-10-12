@@ -1,6 +1,7 @@
 // 설비별 작업 실적관리 REST 컨트롤러 (글로벌 prefix /api/v1): /oee/work-result
 import {
   Body,
+  BadRequestException,
   Controller,
   Delete,
   Get,
@@ -25,6 +26,31 @@ import {
 } from './work-result.dto';
 import { WorkResultService } from './work-result.service';
 
+const MAX_LINE_CODES = 100;
+const MAX_LINE_CODE_LENGTH = 20;
+const MAX_WORK_RESULT_ROWS = 100;
+
+function parseLineCodes(value: unknown): string[] | undefined {
+  if (value === undefined) return undefined;
+  if (typeof value !== 'string') {
+    throw new BadRequestException('lineCodes must be a comma-separated string');
+  }
+
+  const codes = value.split(',').map((code) => code.trim());
+  if (
+    codes.length > MAX_LINE_CODES ||
+    codes.some(
+      (code) => code.length < 1 || code.length > MAX_LINE_CODE_LENGTH,
+    )
+  ) {
+    throw new BadRequestException(
+      `lineCodes must contain 1-${MAX_LINE_CODE_LENGTH} character codes (maximum ${MAX_LINE_CODES})`,
+    );
+  }
+
+  return [...new Set(codes)];
+}
+
 @UseGuards(JwtAuthGuard)
 @Controller('oee/work-result')
 export class WorkResultController {
@@ -40,17 +66,24 @@ export class WorkResultController {
     @Query('machineCode') machineCode?: string,
     @OrganizationId() organizationId?: number,
     @Query('excludeSmt') excludeSmt?: string,
+    @Query('lineCodes') lineCodes?: string,
   ) {
+    const parsedLineCodes = parseLineCodes(lineCodes);
+    const rows = await this.service.list(
+      fromDate,
+      toDate,
+      lineCode || undefined,
+      keyword || undefined,
+      organizationId,
+      machineCode || undefined,
+      excludeSmt === 'Y',
+      parsedLineCodes,
+    );
+
+    if (!parsedLineCodes) return { list: rows };
     return {
-      list: await this.service.list(
-        fromDate,
-        toDate,
-        lineCode || undefined,
-        keyword || undefined,
-        organizationId,
-        machineCode || undefined,
-        excludeSmt === 'Y',
-      ),
+      list: rows.slice(0, MAX_WORK_RESULT_ROWS),
+      truncated: rows.length > MAX_WORK_RESULT_ROWS,
     };
   }
 

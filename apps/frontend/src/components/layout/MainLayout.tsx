@@ -21,7 +21,6 @@ import { api } from "@/services/api";
 import ImprovementFAB from "@/components/improvement/ImprovementFAB";
 import AiChatPanel from "@/components/ai/AiChatPanel";
 import HelpPanel from "@/components/help/HelpPanel";
-import { isOeeMultiEntryPath, resolveOeeViewMode } from "@/lib/oee-view-mode";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -38,9 +37,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
     pathname === "/production/input-kiosk" && searchParams.get("view") === "work";
   /** view=full: 헤더/사이드바/탭을 모두 숨기는 전체화면(chromeless) 모드 — 검사 키오스크 등 */
   const isFullscreenView = searchParams.get("view") === "full";
-  const oeeViewMode = resolveOeeViewMode(pathname, searchParams.get("view"));
-  const isOeeMultiEntry = isOeeMultiEntryPath(pathname);
-  const isChromeless = isKioskWorkView || isFullscreenView || (isOeeMultiEntry && oeeViewMode === "full");
+  const isChromeless = isKioskWorkView || isFullscreenView;
 
   useEffect(() => {
     const interceptor = api.interceptors.response.use(
@@ -81,14 +78,14 @@ export default function MainLayout({ children }: MainLayoutProps) {
       {!isChromeless && <Header
         onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
         collapsed={collapsed}
-        onToggleCollapse={() => setCollapsed(!collapsed)}
+        onToggleCollapse={() => setCollapsed((current) => !current)}
       />}
 
       {!isChromeless && <Sidebar
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         collapsed={collapsed}
-        onToggleCollapse={() => setCollapsed(!collapsed)}
+        onToggleCollapse={() => setCollapsed((current) => !current)}
       />}
 
       <main

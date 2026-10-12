@@ -143,6 +143,7 @@ export const menuConfig: MenuConfigItem[] = [
     children: [
       { code: "OEE_DASHBOARD", labelKey: "menu.oee.dashboard", path: "/oee/dashboard", pbLinkStatus: "web-native" },
       { code: "OEE_MULTI_ENTRY", labelKey: "menu.oee.multiEntry", path: "/oee/multi-entry", pbLinkStatus: "web-native" },
+      { code: "OEE_RESULT_ENTRY", labelKey: "menu.oee.resultEntry", path: "/oee/result-entry", pbLinkStatus: "web-native" },
       { code: "OEE_OVERALL_STATUS", labelKey: "menu.oee.overallStatus", path: "/oee/overall-status", pbLinkStatus: "web-native" },
       { code: "OEE_EQUIP_WORK_RESULT", labelKey: "menu.oee.equipWorkResult", path: "/oee/equip-work-result", pbLinkStatus: "web-native" },
       { code: "OEE_EQUIP_OPS_STATUS", labelKey: "menu.oee.equipOpsStatus", path: "/oee/equip-ops-status", pbLinkStatus: "web-native" },

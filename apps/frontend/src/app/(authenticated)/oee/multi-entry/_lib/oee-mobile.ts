@@ -7,12 +7,14 @@ export interface OeeWorker {
 }
 
 export interface OeeResource {
-  resourceId: number;
   processCode: OeeProcessCode;
   resourceType: OeeResourceType;
-  resourceCode: string;
-  resourceName: string;
+  lineCode: string;
+  lineName: string;
   parentLineCode: string | null;
+  activeYn: string | null;
+  mesDisplayYn: string | null;
+  sortOrder: number | null;
 }
 
 export interface OeeReason {
@@ -182,8 +184,8 @@ export function normalizeResource(resource: OeeResource): OeeResource {
   };
 }
 
-export function resourceIdentity(resource: Pick<OeeResource, 'resourceId'>): string {
-  return String(resource.resourceId);
+export function resourceIdentity(resource: Pick<OeeResource, 'lineCode'>): string {
+  return resource.lineCode;
 }
 
 export function stableStartSignature(fields: Omit<StartCommandFields, 'requestId'>): string {
