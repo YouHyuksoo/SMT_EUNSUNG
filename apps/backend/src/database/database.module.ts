@@ -77,6 +77,7 @@ import { EquipDowntimeMapDtl } from '../entities/equip-downtime-map-dtl.entity';
 import { ProductModelMaster } from '../entities/product-model-master.entity';
 import { ProductRunCard } from '../entities/product-run-card.entity';
 import { ProductSensorActual } from '../entities/product-sensor-actual.entity';
+import { SmdShiftManual } from '../entities/smd-shift-manual.entity';
 import { ProductWorkResult } from '../entities/product-work-result.entity';
 import { ProductWorkDefect } from '../entities/product-work-defect.entity';
 import { EquipDowntimeResult } from '../entities/equip-downtime-result.entity';
@@ -176,6 +177,7 @@ import { AiChatFeedback } from '../entities/ai-chat-feedback.entity';
             ProductModelMaster,
             ProductRunCard,
             ProductSensorActual,
+            SmdShiftManual,
             ProductWorkResult,
             ProductWorkDefect,
             EquipDowntimeResult,

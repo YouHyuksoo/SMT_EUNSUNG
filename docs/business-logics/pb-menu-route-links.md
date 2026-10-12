@@ -3,7 +3,7 @@ sources:
   - apps/frontend/src/config/menuConfig.ts
   - apps/frontend/scripts/data/pb-screen-inventory.json
 generator: apps/frontend/scripts/gen-migration-status.mjs
-verifiedCommit: 76d00a04
+verifiedCommit: 781da672
 ---
 
 # PB 윈도우 ↔ 웹 메뉴·경로 연결표 (자동 생성)
@@ -15,7 +15,7 @@ verifiedCommit: 76d00a04
 
 | 전체 웹 메뉴 | PB 연결 | 웹 신규 | 미확정 |
 |---:|---:|---:|---:|
-| 202 | 174 | 27 | 1 |
+| 203 | 174 | 28 | 1 |
 
 ## 전체 연결표
 
@@ -143,6 +143,7 @@ verifiedCommit: 76d00a04
 | 생산관리 | 작업지시관리 | `PRD_RUN_CARD` | `/production/run-card` | PB 연결 | `w_product_run_card_duckil` | PB 메뉴 인벤토리 |
 | 생산관리 | 제품생산계획 | `PRD_MASTER_PLAN` | `/production/master-plan` | PB 연결 | `w_pln_product_master_plan_master` | PB 메뉴 인벤토리 |
 | 생산관리 | 반제품생산계획 | `PRD_SMD_PLAN` | `/production/smd-plan` | PB 연결 | `w_pln_assembly_master_plan_master` | PB 메뉴 인벤토리 |
+| 생산관리 | 반제품생산계획 현황판 | `PRD_SMD_PLAN_BOARD` | `/production/smd-plan-board` | 웹 신규 |  | PB 대응 없음 |
 | 생산관리 | 반제품생산실적관리 | `PRD_SMD_ACTUAL` | `/production/smd-actual` | PB 연결 | `w_pln_assembly_actual_master` | PB 메뉴 인벤토리 |
 | 생산관리 | 롯트카드-PID 매핑관리 | `PRD_RUN_CARD_PID` | `/production/run-card-pid` | PB 연결 | `w_pln_product_pcb_kitting_scan_master` | PB 메뉴 인벤토리 |
 | 생산관리 | 기간별 생산실적 조회 | `PRD_PCB_RESULT` | `/production/pcb-result` | PB 연결 | `w_pln_product_pcb_result_query` | PB 메뉴 인벤토리 |

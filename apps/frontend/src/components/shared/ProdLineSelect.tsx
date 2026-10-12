@@ -22,15 +22,24 @@ interface ProdLineSelectProps extends Omit<SelectProps, "options"> {
   includeUnassigned?: boolean;
   /** 제외할 라인구분 코드 (예: SMT_LINE_DIVISIONS) */
   excludeDivisions?: readonly string[];
+  /** 이 라인구분 코드의 라인만 보인다 (예: PRODUCTION_TEAM_DIVISIONS.TEAM1). 비우면 전체 */
+  includeDivisions?: readonly string[];
 }
 
-export default function ProdLineSelect({ labelPrefix, includeAll, includeUnassigned, excludeDivisions, ...props }: ProdLineSelectProps) {
+export default function ProdLineSelect({ labelPrefix, includeAll, includeUnassigned, excludeDivisions, includeDivisions, ...props }: ProdLineSelectProps) {
   const { options: allOptions, isLoading, rawData } = useProdLineOptions();
   const options = useMemo(() => {
-    if (!excludeDivisions?.length) return allOptions;
-    const excluded = new Set(rawData.filter((l) => excludeDivisions.includes(l.lineDivision)).map((l) => l.lineCode));
-    return allOptions.filter((o) => !excluded.has(String(o.value)));
-  }, [allOptions, rawData, excludeDivisions]);
+    let list = allOptions;
+    if (excludeDivisions?.length) {
+      const excluded = new Set(rawData.filter((l) => excludeDivisions.includes(l.lineDivision)).map((l) => l.lineCode));
+      list = list.filter((o) => !excluded.has(String(o.value)));
+    }
+    if (includeDivisions?.length) {
+      const included = new Set(rawData.filter((l) => includeDivisions.includes(l.lineDivision)).map((l) => l.lineCode));
+      list = list.filter((o) => included.has(String(o.value)));
+    }
+    return list;
+  }, [allOptions, rawData, excludeDivisions, includeDivisions]);
   const finalOptions = useMemo(() => {
     const base = includeUnassigned ? [{ value: "*", label: "미지정" }, ...options] : options;
     if (!labelPrefix) return includeAll ? [{ value: "", label: "전체" }, ...base] : base;

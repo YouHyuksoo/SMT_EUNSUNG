@@ -16,6 +16,9 @@
  * 4. **월 계획은 없다.** PB 에 월계획 서브그리드가 있었지만 원천 테이블
  *    (IP_PRODUCT_MI_MONTH_PLAN / IP_PRODUCT_SMD_MONTH_PLAN)이 둘 다 0행이다 —
  *    은성에서 쓴 적이 없어 이관 범위에서 뺐다.
+ * 5. **생산팀 필터는 제품생산계획에만 둔다** (config.teamFilter).
+ *    팀 ↔ 라인구분 매핑은 @smt/shared PRODUCTION_TEAM_DIVISIONS 한 곳에 있다.
+ *    반제품 계획은 최근 1년 라인이 전부 1팀(라인구분 D)이라 팀을 고를 이유가 없다.
  */
 import { useCallback, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -32,6 +35,18 @@ import { miPlanColumns, planTimeSlotColumns, smdPlanColumns } from '../planning-
 import type { PlanRow } from '../planning-types';
 import PlanFormPanel, { emptyPlanForm, toPlanForm, type PlanForm } from './PlanFormPanel';
 import ProcessSelect from '@/components/shared/ProcessSelect';
+import Select from '@/components/ui/Select';
+import {
+  PRODUCTION_TEAM_DIVISIONS,
+  PRODUCTION_TEAM_LABELS,
+  PRODUCTION_TEAM_VALUES,
+  type ProductionTeamValue,
+} from '@smt/shared';
+
+const TEAM_OPTIONS = [
+  { value: '', label: '생산팀: 전체' },
+  ...PRODUCTION_TEAM_VALUES.map((v) => ({ value: v, label: `생산팀: ${PRODUCTION_TEAM_LABELS[v]}` })),
+];
 
 export interface PlanScreenConfig {
   /** 화면 제목 */
@@ -41,6 +56,8 @@ export interface PlanScreenConfig {
   /** API 경로 — /production/master-plan 또는 /production/smd-plan */
   path: string;
   variant: 'mi' | 'smd';
+  /** 생산팀(1팀 SMT / 2팀 조립·ICT 등) 필터를 보일지 */
+  teamFilter?: boolean;
 }
 
 const isoDate = (date: Date) => date.toISOString().slice(0, 10);
@@ -61,6 +78,7 @@ export default function PlanScreen({ config }: { config: PlanScreenConfig }) {
 
   const [dateFrom, setDateFrom] = useState(weekAgo);
   const [dateTo, setDateTo] = useState(today);
+  const [team, setTeam] = useState<ProductionTeamValue | ''>('');
   const [lineCode, setLineCode] = useState('');
   const [modelName, setModelName] = useState('');
   const [workstageCode, setWorkstageCode] = useState('');
@@ -80,6 +98,7 @@ export default function PlanScreen({ config }: { config: PlanScreenConfig }) {
           dateFrom,
           dateTo,
           lineCode: lineCode || undefined,
+          team: config.teamFilter ? team || undefined : undefined,
           modelName: modelName || undefined,
           workstageCode: isMi ? workstageCode || undefined : undefined,
           planStatus: planStatus || undefined,
@@ -94,7 +113,7 @@ export default function PlanScreen({ config }: { config: PlanScreenConfig }) {
     } finally {
       setLoading(false);
     }
-  }, [config.path, config.title, dateFrom, dateTo, lineCode, modelName, workstageCode, planStatus, isMi]);
+  }, [config.path, config.title, config.teamFilter, dateFrom, dateTo, team, lineCode, modelName, workstageCode, planStatus, isMi]);
 
   const remove = useCallback(async () => {
     if (!selected) return;
@@ -181,7 +200,17 @@ export default function PlanScreen({ config }: { config: PlanScreenConfig }) {
           <CardContent className="flex flex-wrap items-center gap-3 p-3">
             <DateRangeFilter label="계획일" from={dateFrom} to={dateTo}
               onFromChange={setDateFrom} onToChange={setDateTo} />
+            {config.teamFilter && (
+              <Select options={TEAM_OPTIONS} value={team} className="w-60"
+                aria-label="생산팀"
+                onChange={(v) => {
+                  setTeam(v as ProductionTeamValue | '');
+                  // 다른 팀 라인이 남지 않게 라인은 비운다 (라인 미선택 = 팀 전체)
+                  setLineCode('');
+                }} />
+            )}
             <ProdLineSelect labelPrefix="라인" value={lineCode}
+              includeDivisions={config.teamFilter && team ? PRODUCTION_TEAM_DIVISIONS[team] : undefined}
               onChange={setLineCode} className="w-56" />
             <ModelSearchField aria-label="모델명" placeholder="모델명" value={modelName}
               className="w-48" onChange={(v) => setModelName(v)} />

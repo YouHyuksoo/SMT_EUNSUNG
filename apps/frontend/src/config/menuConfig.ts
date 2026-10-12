@@ -315,6 +315,7 @@ export const menuConfig: MenuConfigItem[] = [
       { code: "PRD_RUN_CARD", labelKey: "menu.production.runCard", path: "/production/run-card", pbLinkStatus: "powerbuilder", pbWindow: "w_product_run_card_duckil", pbEvidence: "apps/frontend/src/app/(authenticated)/production/run-card/page.tsx" },
       { code: "PRD_MASTER_PLAN", labelKey: "menu.production.masterPlan", path: "/production/master-plan", pbLinkStatus: "powerbuilder", pbWindow: "w_pln_product_master_plan_master" },
       { code: "PRD_SMD_PLAN", labelKey: "menu.production.smdPlan", path: "/production/smd-plan", pbLinkStatus: "powerbuilder", pbWindow: "w_pln_assembly_master_plan_master" },
+      { code: "PRD_SMD_PLAN_BOARD", labelKey: "menu.production.smdPlanBoard", path: "/production/smd-plan-board", pbLinkStatus: "web-native" },
       { code: "PRD_SMD_ACTUAL", labelKey: "menu.production.smdActual", path: "/production/smd-actual", pbLinkStatus: "powerbuilder", pbWindow: "w_pln_assembly_actual_master" },
       { code: "PRD_RUN_CARD_PID", labelKey: "menu.production.runCardPid", path: "/production/run-card-pid", pbLinkStatus: "powerbuilder", pbWindow: "w_pln_product_pcb_kitting_scan_master" },
       { code: "PRD_PCB_RESULT", labelKey: "menu.production.pcbResult", path: "/production/pcb-result", pbLinkStatus: "powerbuilder", pbWindow: "w_pln_product_pcb_result_query" },

@@ -103,6 +103,14 @@
       ]
     },
     {
+      "key": "production",
+      "title": "생산관리",
+      "items": [
+        { "menuCode": "PRD_SMD_PLAN_BOARD", "title": "반제품생산계획 현황판", "path": "/production/smd-plan-board" },
+        { "menuCode": "PRD_SMD_ACTUAL", "title": "반제품생산실적관리", "path": "/production/smd-actual" }
+      ]
+    },
+    {
       "key": "equipment",
       "title": "설비관리",
       "items": [

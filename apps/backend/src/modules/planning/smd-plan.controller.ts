@@ -30,7 +30,7 @@ export class SmdPlanController {
   }
 
   @Post()
-  @ApiOperation({ summary: '계획 등록 (순번을 비우면 서버가 최대순번 + 1)' })
+  @ApiOperation({ summary: '계획 등록 (순번·작업지시번호를 비우면 서버가 시퀀스로 채번)' })
   async create(
     @Body() dto: PlanUpsertDto,
     @OrganizationId() organizationId: number,

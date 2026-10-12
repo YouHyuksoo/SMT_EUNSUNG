@@ -179,6 +179,7 @@
       "PRD_RUN_CARD",
       "PRD_MASTER_PLAN",
       "PRD_SMD_PLAN",
+      "PRD_SMD_PLAN_BOARD",
       "PRD_SMD_ACTUAL",
       "PRD_RUN_CARD_PID",
       "PRD_PCB_RESULT",

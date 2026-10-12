@@ -17,6 +17,7 @@ export default function MasterPlanPage() {
         subtitle: '라인별 제품 생산계획을 시간대 10칸으로 관리합니다',
         path: '/production/master-plan',
         variant: 'mi',
+        teamFilter: true,
       }}
     />
   );
