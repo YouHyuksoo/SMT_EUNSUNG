@@ -670,7 +670,7 @@ export class BomService {
     if (dto.qtyPer !== undefined) updateData.qtyPer = dto.qtyPer;
     if (dto.seq !== undefined) updateData.seq = dto.seq;
     if (dto.processCode !== undefined) updateData.processCode = dto.processCode;
-    if (dto.side !== undefined) updateData.lineType = dto.side;
+    // dto.side 는 저장하지 않는다 — 화면 '사이드'(BOM_SIDE N/L/R)와 LINE_TYPE(T/G)은 뜻이 다르다.
     if (dto.revision !== undefined) updateData.revision = dto.revision;
     if (dto.validTo !== undefined) updateData.validTo = this.keyDate(dto.validTo);
     if (dto.remark !== undefined) updateData.remark = dto.remark;

@@ -15,7 +15,7 @@ import { Search } from "lucide-react";
 import { Button, Modal, Input } from "@/components/ui";
 import api from "@/services/api";
 import { BomTreeItem, getBomKey } from "../types";
-import { Field, FieldLabel, FieldInput, FieldComCodeSelect, FieldProcessSelect } from "./BomFieldHelp";
+import { Field, FieldLabel, FieldInput, FieldProcessSelect } from "./BomFieldHelp";
 import { formatDateOnly, getTodayLocal } from "@/utils/date";
 
 const DEFAULT_VALID_TO = "2099-12-31";
@@ -49,7 +49,6 @@ export default function BomFormModal({ isOpen, onClose, onSave, editingItem, par
   const [seq, setSeq] = useState("0");
   const [revision, setRevision] = useState("A");
   const [processCode, setProcessCode] = useState("");
-  const [side, setSide] = useState("");
   const [validFrom, setValidFrom] = useState("");
   const [validTo, setValidTo] = useState("");
   const [remark, setRemark] = useState("");
@@ -64,13 +63,12 @@ export default function BomFormModal({ isOpen, onClose, onSave, editingItem, par
       setSeq(String(editingItem.seq));
       setRevision(editingItem.revision || "A");
       setProcessCode(editingItem.processCode || "");
-      setSide(editingItem.side || "");
       setValidFrom(formatDateOnly(editingItem.validFrom));
       setValidTo(formatDateOnly(editingItem.validTo));
       setRemark("");
     } else {
       setSelectedChild(null); setChildSearch(""); setQtyPer("1"); setSeq("0");
-      setRevision("A"); setProcessCode(""); setSide(""); setValidFrom(getTodayLocal()); setValidTo(DEFAULT_VALID_TO); setRemark("");
+      setRevision("A"); setProcessCode(""); setValidFrom(getTodayLocal()); setValidTo(DEFAULT_VALID_TO); setRemark("");
     }
   }, [isOpen, editingItem]);
 
@@ -101,7 +99,7 @@ export default function BomFormModal({ isOpen, onClose, onSave, editingItem, par
       const body = {
         parentItemCode, childItemCode: selectedChild.itemCode,
         qtyPer: Number(qtyPer), seq: Number(seq), revision,
-        processCode: processCode || undefined, side: side || undefined,
+        processCode: processCode || undefined,
         validFrom, validTo,
         remark: remark || undefined, useYn: "Y",
       };
@@ -154,8 +152,6 @@ export default function BomFormModal({ isOpen, onClose, onSave, editingItem, par
           <FieldProcessSelect field="processCode" label={t("master.bom.processCode", "공정코드")} value={processCode} onChange={(v) => setProcessCode(v)} />
         </div>
         <div className="grid grid-cols-2 gap-4">
-          <FieldComCodeSelect field="side" groupCode="BOM_SIDE" includeAll={false}
-            label={t("master.bom.side", "사이드")} value={side} onChange={(v) => setSide(v)} />
           <FieldInput field="remark" label={t("master.bom.remark")} value={remark} onChange={(e) => setRemark(e.target.value)} />
         </div>
         <div className="grid grid-cols-2 gap-4">

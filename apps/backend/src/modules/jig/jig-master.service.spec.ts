@@ -98,21 +98,22 @@ describe('JigMasterService.update — 지그코드·지그LOT 변경', () => {
     expect(updates(calls)).toHaveLength(0);
   });
 
-  it('라인에 장착(직전 장착 포함)돼 있으면 어느 라인·칸인지 알려 주고 막는다', async () => {
+  it('라인에 장착돼 있으면 어느 라인·칸인지 알려 주고 막는다', async () => {
     const { service, calls } = setup({
       mounted: [
         { lineCode: '07', columnName: 'MASK_LOT_NO' },
-        { lineCode: '08', columnName: 'LAST_SQUEEZE_LOT_NO2' },
+        { lineCode: '08', columnName: 'SQUEEZE_LOT_NO2' },
       ],
     });
     await expect(service.update(dto(), 1, 'tester'))
-      .rejects.toThrow('라인 07 메탈마스크, 라인 08 직전 스퀴즈2');
+      .rejects.toThrow('라인 07 메탈마스크, 라인 08 스퀴즈2');
     expect(updates(calls)).toHaveLength(0);
     const mountSql = calls.find((c) => c.sql.includes('IP_PRODUCT_LINE'))!;
     expect(mountSql.binds).toMatchObject({ fromLot: 'OLDLOT' });
-    for (const column of ['MASK_LOT_NO2', 'SQUEEZE_LOT_NO', 'SQUEZE_LOT_NO', 'LAST_MASK_LOT_NO']) {
+    for (const column of ['MASK_LOT_NO2', 'SQUEEZE_LOT_NO', 'SQUEZE_LOT_NO']) {
       expect(mountSql.sql).toContain(`${column} = :fromLot`);
     }
+    expect(mountSql.sql).not.toContain('LAST_');
   });
 
   it('새 LOT 이 적용모델 LOT 칸(50자)보다 길면 DB 를 보기 전에 막는다', async () => {

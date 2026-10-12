@@ -54,15 +54,12 @@ const DATE_FIELDS: Array<[column: string, field: keyof JigMasterUpsertDto]> = [
 const APPLY_MODEL_LOT_MAX = 50;
 
 /**
- * IP_PRODUCT_LINE 에서 지그LOT 을 담는 칸.
- * 장착 칸뿐 아니라 직전 장착(LAST_*) 칸도 본다 — P_CHECK_PDA_TB_INOUT_PS_USER 가 T/B 전환 때
- * LAST_* 값을 장착 칸으로 되돌려 쓰므로, 옛 LOT 이 남아 있으면 다시 장착값으로 돌아온다.
+ * IP_PRODUCT_LINE 에서 지금 장착된 지그LOT 을 담는 칸.
+ * 직전 장착(LAST_*) 칸은 보지 않는다 — 라인에서 뗀 지그는 바꿀 수 있어야 한다(2026-10-12 현장 결정).
  */
 const MOUNT_COLUMNS: Array<[column: string, label: string]> = [
   ['MASK_LOT_NO', '메탈마스크'], ['MASK_LOT_NO2', '메탈마스크2'],
   ['SQUEEZE_LOT_NO', '스퀴즈'], ['SQUEEZE_LOT_NO2', '스퀴즈2'], ['SQUEZE_LOT_NO', '스퀴즈(검사)'],
-  ['LAST_MASK_LOT_NO', '직전 메탈마스크'], ['LAST_MASK_LOT_NO2', '직전 메탈마스크2'],
-  ['LAST_SQUEEZE_LOT_NO', '직전 스퀴즈'], ['LAST_SQUEEZE_LOT_NO2', '직전 스퀴즈2'],
 ];
 
 @Injectable()
@@ -261,7 +258,7 @@ export class JigMasterService {
    * 지그코드·지그LOT 변경 — 한 트랜잭션에서 IMCN_JIG 와 IMCN_JIG_APPLY_MODEL 의 키만 바꾼다.
    * 투입이력·점검·수리·제품추적 등 이력 테이블은 옛 키로 남긴다(업무 결정).
    * 막는 경우: 새 LOT 이 적용모델 칸 길이 초과 / 새 키 중복 / 새 LOT 을 다른 지그코드가 사용 /
-   * 새 키로 남아 있는 적용모델 행 / 라인에 장착(직전 장착 포함)된 지그.
+   * 새 키로 남아 있는 적용모델 행 / 라인에 장착된 지그.
    */
   private async changeKey(
     dto: JigMasterUpsertDto,
