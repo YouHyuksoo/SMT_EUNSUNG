@@ -15,6 +15,7 @@ import { useTranslation } from "react-i18next";
 import { BookOpen } from "lucide-react";
 import { type MenuConfigItem } from "@/config/menuConfig";
 import { useMenuTree } from "@/hooks/useMenuTree";
+import { useMenuFavorites } from "@/hooks/useMenuFavorites";
 import SidebarMenu from "./SidebarMenu";
 
 const HELP_MENU_PATH = "/help";
@@ -36,6 +37,8 @@ function Sidebar({ isOpen, onClose, collapsed }: SidebarProps) {
   const { t } = useTranslation();
   const pathname = usePathname();
   const { items, isMenuDisabled } = useMenuTree();
+  // 즐겨찾기 목록은 헤더 드롭다운(FavoriteMenuDropdown)이 표시한다. 사이드바는 메뉴 옆 ★ 토글만 담당한다.
+  const { isFavorite, toggleFavorite } = useMenuFavorites();
   const [expandedMenus, setExpandedMenus] = useState<string[]>(["DASHBOARD"]);
 
   const toggleMenu = (menuCode: string) => {
@@ -70,6 +73,8 @@ function Sidebar({ isOpen, onClose, collapsed }: SidebarProps) {
             isMenuDisabled={isMenuDisabled}
             onClose={onClose}
             t={t}
+            isFavorite={isFavorite}
+            onToggleFavorite={toggleFavorite}
           />
         </nav>
         <nav className="flex-shrink-0 border-t border-border bg-surface p-3">

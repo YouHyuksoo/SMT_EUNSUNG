@@ -185,6 +185,8 @@ describe('module repository boundaries', () => {
   it('keeps direct oracledb driver usage inside Oracle infrastructure only', () => {
     const allowedFiles = new Set([
       'common/services/oracle.service.ts',
+      // 은성 DB 는 구버전 verifier 라 thick 모드 초기화가 필요하다 — Oracle 인프라다.
+      'database/oracle-thick.ts',
       'database/test-connection.ts',
       'database/migrate-postgres-to-oracle.ts',
     ]);
@@ -215,7 +217,9 @@ describe('module repository boundaries', () => {
   });
 
   it('keeps aggregate domain modules as thin submodule composition roots', () => {
+    // 은성은 묶음 모듈 없이 하위 모듈을 AppModule 에 바로 등록한다 — 있는 것만 검사한다.
     const offenders = aggregateModulePaths
+      .filter((moduleFile) => fs.existsSync(moduleFile))
       .map((moduleFile) => {
         const source = read(moduleFile);
         const hasRepositoryRegistrations = extractForFeatureEntities(source).length > 0;
@@ -399,7 +403,9 @@ describe('module repository boundaries', () => {
       .filter((filePath) => !filePath.endsWith('.spec.ts'));
 
     const offenders = allBackendSourceFiles
-      .filter((filePath) => /(?:req\.user|user)\??\.(?:userId|userName|plantCd)\b/.test(read(filePath)))
+      // 은성 사용자 엔티티(IsysUser)는 USER_ID·USER_NAME 을 userId·userName 으로 매핑한다 — 별칭이 아니다.
+      // 여기서는 요청 사용자(req.user / request.user)에서 옛 별칭을 읽는 것만 막는다.
+      .filter((filePath) => /(?:req|request)\.user\??\.(?:userId|userName|plantCd)\b/.test(read(filePath)))
       .map(relative);
 
     expect(offenders).toEqual([]);

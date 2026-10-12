@@ -69,7 +69,7 @@ export default function EquipReasonMapPage() {
   const [records, setRecords] = useState<MachineReasonRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState<EditForm | null>(null);
-  const [search, setSearch] = useState('');
+  const [searchText, setSearchText] = useState('');
   const [viewCode, setViewCode] = useState<string | null>(null); // 목록 사유 팝업
   const [deleteTarget, setDeleteTarget] = useState<MachineReasonRecord | null>(null);
   const [machinePickerOpen, setMachinePickerOpen] = useState(false);
@@ -80,7 +80,7 @@ export default function EquipReasonMapPage() {
   const [pickerChecked, setPickerChecked] = useState<string[]>([]); // 사유선택 팝업 체크
   const [gridChecked, setGridChecked] = useState<string[]>([]); // 등록 그리드 삭제 체크
 
-  const load = useCallback(async () => {
+  const search = useCallback(async () => {
     setLoading(true);
     try {
       const res = await api.get('/oee/equip-reason-map');
@@ -107,19 +107,19 @@ export default function EquipReasonMapPage() {
       setLoading(false);
     }
   }, []);
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { search(); }, [search]);
 
   const viewRec = useMemo(() => records.find((r) => r.machineCode === viewCode) ?? null, [records, viewCode]);
 
   const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
+    const q = searchText.trim().toLowerCase();
     if (!q) return records;
     // 통합검색 — 설비코드·설비명 + 연계 사유코드·사유명에서 매칭
     return records.filter((r) => {
       const hay = [r.machineCode, r.machineName, ...r.reasons.flatMap((x) => [x.reasonCode, x.reasonName])].join(' ').toLowerCase();
       return hay.includes(q);
     });
-  }, [records, search]);
+  }, [records, searchText]);
 
   const columns = useMemo<ColumnDef<MachineReasonRecord>[]>(
     () => [
@@ -261,7 +261,7 @@ export default function EquipReasonMapPage() {
       else await api.post('/oee/equip-reason-map', payload);
       toast.success('저장되었습니다');
       setForm(null);
-      await load();
+      await search();
     } catch (e: unknown) {
       const msg =
         e && typeof e === 'object' && 'response' in e
@@ -277,7 +277,7 @@ export default function EquipReasonMapPage() {
       await api.delete(`/oee/equip-reason-map/${encodeURIComponent(deleteTarget.machineCode)}`);
       toast.success('삭제되었습니다');
       setDeleteTarget(null);
-      await load();
+      await search();
     } catch {
       toast.error('삭제에 실패했습니다');
     }
@@ -293,7 +293,7 @@ export default function EquipReasonMapPage() {
             <p className="text-sm text-text-muted mt-1">설비마스터 × 비가동사유코드 매핑 관리</p>
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={load} className="border border-border rounded px-3 h-10 text-text-muted hover:bg-surface flex items-center gap-1"><RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />새로고침</button>
+            <button onClick={search} className="border border-border rounded px-3 h-10 text-text-muted hover:bg-surface flex items-center gap-1"><RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />조회</button>
             <button onClick={openCreate} className="bg-primary text-white px-4 py-2 rounded h-10">연계 등록</button>
           </div>
         </div>
@@ -315,7 +315,7 @@ export default function EquipReasonMapPage() {
               toolbarLeft={
                 <div className="flex flex-wrap gap-3 flex-1 min-w-0">
                   <div className="w-96 flex-shrink-0">
-                    <Input placeholder="통합검색 (설비코드·설비명·사유코드·사유명)" value={search} onChange={(e) => setSearch(e.target.value)} leftIcon={<Search className="w-4 h-4" />} fullWidth />
+                    <Input placeholder="통합검색 (설비코드·설비명·사유코드·사유명)" value={searchText} onChange={(e) => setSearchText(e.target.value)} leftIcon={<Search className="w-4 h-4" />} fullWidth />
                   </div>
                 </div>
               }

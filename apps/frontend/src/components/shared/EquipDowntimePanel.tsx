@@ -15,6 +15,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useActiveInterval } from '@/hooks/useTabActive';
 import { Search } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Input, Modal } from '@/components/ui';
@@ -44,10 +45,7 @@ export function parseLocalTime(s: string): number | null {
  *  startAt은 DB 시각이므로 브라우저 시계와의 차이(skewMs)를 더해 맞춘다. */
 export function ElapsedTime({ startAt, skewMs }: { startAt: string | null; skewMs: number }) {
   const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(id);
-  }, []);
+  useActiveInterval(() => setNow(Date.now()), 1000, { catchUp: true });
   const started = startAt ? parseLocalTime(startAt) : null;
   if (started == null) return <>--:--:--</>;
   const sec = Math.max(0, Math.floor((now + skewMs - started) / 1000));

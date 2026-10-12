@@ -44,7 +44,8 @@ export class ActivityLogController {
       getHeaderString(req.headers['x-forwarded-for'])?.split(',')[0]?.trim() ||
       req.ip ||
       null;
-    const organizationId = this.organizationId(req);
+    const scope = this.scope(req);
+    if (!scope.company || !scope.plantCd) return ResponseUtil.success(null);
 
     await this.activityLogService.logActivity({
       userId,
@@ -54,7 +55,8 @@ export class ActivityLogController {
       ipAddress,
       userAgent,
       deviceType: dto.deviceType ?? 'PC',
-      organizationId,
+      company: scope.company,
+      plantCd: scope.plantCd,
     });
 
     return ResponseUtil.success(null);
@@ -63,7 +65,13 @@ export class ActivityLogController {
   @Get()
   @ApiOperation({ summary: '활동 로그 조회 (페이지네이션)' })
   async findAll(@Query() query: ActivityLogQueryDto, @Req() req: Request) {
-    const result = await this.activityLogService.findAll(query, this.organizationId(req));
+    const scope = this.scope(req);
+    if (!scope.company || !scope.plantCd) {
+      const page = query.page || 1;
+      const limit = query.limit || 20;
+      return ResponseUtil.paged([], 0, page, limit);
+    }
+    const result = await this.activityLogService.findAll(query, scope.company, scope.plantCd);
     return ResponseUtil.paged(result.data, result.total, result.page, result.limit);
   }
 
@@ -78,12 +86,11 @@ export class ActivityLogController {
     return type === 'Bearer' && token ? token : null;
   }
 
-  private organizationId(req: Request): number | undefined {
+  private scope(req: Request): { company?: string; plantCd?: string } {
     const user = getRequestUser(req) ?? {};
-    if (user.organizationId != null) return user.organizationId;
-
-    const plant = getHeaderString(req.headers['x-plant']) || user.plant;
-    const organizationId = plant != null ? Number(plant) : NaN;
-    return Number.isFinite(organizationId) ? organizationId : undefined;
+    return {
+      company: getHeaderString(req.headers['x-company']) || user.company,
+      plantCd: getHeaderString(req.headers['x-plant']) || user.plant,
+    };
   }
 }

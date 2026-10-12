@@ -173,6 +173,10 @@ BEGIN
    --
    --         phase := 70;
    --
+   -- 2026-10-02: 라인에 실제로 투입되는 계정만 공정입고로 넘긴다 (양산·공정재작업·피드백재작업·롯트분할).
+   --             재고조정(M009)·폐기·분실·판매 등은 원자재 수불에만 남는다 — 공정재고가 부풀지 않게.
+   IF :new.issue_account IN ('M001', 'M011', 'M015', 'M016')
+   THEN
             INSERT INTO im_item_workstage_receipt (receipt_date,
                                                    receipt_sequence,
                                                    organization_id,
@@ -201,6 +205,7 @@ BEGIN
                     :new.enter_by,
                     SYSDATE,
                     :new.last_modify_by);
+   END IF;
    --      ---------------------------------------------------------------------
    --
    --      END IF;

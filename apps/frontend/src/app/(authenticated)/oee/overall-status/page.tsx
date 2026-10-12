@@ -18,6 +18,7 @@
  *    라인은 자기 상태가 아니라 소속 설비 중 정지가 하나라도 있으면 비가동으로 본다.
  */
 import { useEffect, useMemo, useState } from "react";
+import { useIsTabActive } from "@/hooks/useTabActive";
 import { useTranslation } from "react-i18next";
 import { Activity, AlertTriangle, FlaskConical } from "lucide-react";
 import {
@@ -120,16 +121,19 @@ export default function OeeOverallStatusPage() {
   const [now, setNow] = useState<Date | null>(null);
 
   // 시계는 1초마다. 탭을 벗어나면 멈춰 keep-alive 상태에서 계속 돌지 않게 한다.
+  const tabActive = useIsTabActive();
   useEffect(() => {
-    const tick = () => setNow(document.hidden ? null : new Date());
+    // 브라우저 탭이 가려졌거나 앱 탭이 숨겨졌으면 시계를 멈춘다
+    const tick = () => setNow(document.hidden || !tabActive ? null : new Date());
     tick();
+    if (!tabActive) return;
     const id = setInterval(tick, 1000);
     document.addEventListener("visibilitychange", tick);
     return () => {
       clearInterval(id);
       document.removeEventListener("visibilitychange", tick);
     };
-  }, []);
+  }, [tabActive]);
 
   const machines = useMemo(() => MOCK_MACHINES[selectedLine] ?? [], [selectedLine]);
   const selected = MOCK_LINES.find((l) => l.lineCode === selectedLine) ?? null;

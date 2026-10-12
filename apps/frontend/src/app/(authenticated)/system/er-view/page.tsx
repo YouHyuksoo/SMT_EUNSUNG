@@ -335,7 +335,7 @@ export default function ErViewPage() {
         </div>
         <div className="flex items-center gap-2 text-xs">
           <span className="px-2 py-1 rounded border border-border bg-card">MODE {summary?.mode?.toUpperCase() ?? "DEV"}</span>
-          <Button size="sm" variant="secondary" leftIcon={<RefreshCw className="w-4 h-4" />} onClick={loadBase}>새로고침</Button>
+          <Button size="sm" variant="secondary" leftIcon={<RefreshCw className="w-4 h-4" />} onClick={loadBase}>조회</Button>
         </div>
       </header>
 

@@ -1,0 +1,433 @@
+/**
+ * @file src/modules/inventory-query/inventory-check.service.ts
+ * @description 272 자재재고실사 (**쓰기**) · 274 자재바코드스캔실사 (조회) —
+ *              PB `w_mat_inventory_check_master` · `w_mat_barcode_check_master` 이식
+ *
+ * 초보자 가이드:
+ * 1. **실사(實査)는 장부와 실제를 맞추는 일이다.** 창고에 가서 센 수량을 적고,
+ *    장부와 다르면 그 차이만큼 원장을 조정한다.
+ * 2. **272 는 품목·롯트 단위로 센다.** 실사수량을 적으면 차이만큼 조정 출고를 만든다.
+ *    화면의 차이는 실사 − 장부(양수 = 실제가 더 많음)이고, 조정 출고 수량은 그 반대인
+ *    장부 − 실사다 (PB 원본의 difference_qty 정의). 출고 트리거는 재고에서 출고수량을 뺀다:
+ *        실제가 적다 → 출고 +, 구분 3, 바코드를 "나간 것" 으로 표시 → 재고 감소
+ *        실제가 많다 → 출고 −, 구분 4, 바코드를 "돌아온 것" 으로 표시 → 재고 증가
+ *    조정 출고는 계정 `M009` · 비고 `INVENTORY ADJUST` 로 남는다 (PB 그대로).
+ *    날짜는 `F_GET_INVENTORY_CLOSE_DATE(마감월, 'END'|'LAST', 조직)` 이 정한다 —
+ *    조정은 **마감월의 마지막 날짜로 들어가야** 그 달 수불이 맞는다.
+ * 3. **실사는 바코드로 한다** — 실사 시작·스캔·일괄 조정은 stocktake.service.ts 가 하고,
+ *    조정 한 건은 이 파일 끝의 `postAdjustment` 를 같이 쓴다.
+ * 4. **274 는 스캔 기록 조회다.** 무전표 바코드를 가상 입고로 만드는 예전 경로는 옮기지 않았다 —
+ *    장부에 없는 바코드는 실사표에 장부 0 으로 들어가 일괄 조정 때 재고로 들어온다.
+ */
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { DataSource, QueryRunner } from 'typeorm';
+import { likePrefix } from '@smt/shared';
+import { limited, ROW_LIMIT } from '../../shared/row-limit';
+import { TransactionService } from '../../shared/transaction.service';
+import {
+  BarcodeCheckQueryDto,
+  InventoryAdjustDto,
+  InventoryCheckQueryDto,
+} from './inventory-query.dto';
+import { affectedRows } from '../../common/utils/affected-rows.util';
+import { periodBoundsSql } from './close-period';
+import { namedBinds } from '../../common/utils/named-binds.util';
+import { materialCheckBookSql } from './stocktake-book';
+
+type Row = Record<string, unknown>;
+
+/** PB 가 조정 출고에 고정으로 넣던 값. */
+const ADJUST = {
+  /** 재고조정 전용 계정 (실측 원장에 0건 — 아직 한 번도 조정하지 않았다) */
+  issueAccount: 'M009',
+  comments: 'INVENTORY ADJUST',
+  itemType: 'T',
+  issueStatus: 'N',
+  issueType: 'E',
+  virtualReceiptYn: 'N',
+  lineCode: '*',
+  workstageCode: '*',
+  machineCode: '*',
+  supplierCode: '*',
+  invoiceNo: '*',
+  madeBy: '*',
+  parentItemCode: '*',
+} as const;
+
+@Injectable()
+export class InventoryCheckService {
+  constructor(
+    private readonly dataSource: DataSource,
+    private readonly tx: TransactionService,
+  ) {}
+
+  // ───────────────────────────────── 272 재고실사
+
+  /**
+   * 실사 대상·결과 (PB `d_mat_inventory_check_lst`).
+   *
+   * 실사표(`IM_ITEM_INVENTORY_CHECK`)에 담긴 장부수량과 실사수량, 그 차이를 본다.
+   * **이 표는 0행이다** — 실사를 돌린 적이 없다.
+   */
+  async findCheckList(query: InventoryCheckQueryDto, organizationId: number) {
+    // 장부 = 비교할 장부 (실사 중 입출고 반영, stocktake-book.ts). 차이 = 실사 − 장부.
+    const rows = (await this.dataSource.query(
+      `SELECT t.CLOSE_YYYYMM             AS "closeYyyymm",
+              t.ITEM_CODE                AS "itemCode",
+              i.ITEM_NAME                AS "itemName",
+              i.ITEM_SPEC                AS "itemSpec",
+              i.ITEM_UOM                 AS "itemUom",
+              t.LINE_TYPE                AS "lineType",
+              t.MATERIAL_MFS             AS "lotNo",
+              t.LOCATION_CODE            AS "locationCode",
+              t.INVENTORY_HOLD           AS "inventoryHold",
+              t.BOOK_EFF                 AS "bookQty",
+              t.COUNTED                  AS "checkQty",
+              -- 차이 = 실사 − 장부. 양수면 실제가 더 많다는 뜻이다.
+              t.COUNTED - t.BOOK_EFF     AS "differenceQty",
+              t.INVENTORY_PRICE          AS "inventoryPrice",
+              t.INVENTORY_AMT            AS "inventoryAmt",
+              -- 이미 넣은 조정 (실사 − 장부 기준 부호). 차이와 같으면 조정이 끝난 줄이다.
+              t.POSTED                   AS "adjustedQty",
+              t.SCANNED_YN               AS "scannedYn",
+              CASE WHEN EXISTS (SELECT 1 FROM IM_ITEM_RECEIPT_BARCODE r
+                                 WHERE r.LOT_NO = t.MATERIAL_MFS AND r.ORGANIZATION_ID = t.ORGANIZATION_ID)
+                   THEN 'Y' ELSE 'N' END AS "barcodeYn",
+              t.COMMENTS                 AS "comments",
+              t.ENTER_BY                 AS "enterBy",
+              TO_CHAR(t.ENTER_DATE, 'YYYY-MM-DD HH24:MI:SS')       AS "enterDate"
+         FROM (${materialCheckBookSql()}) t
+         LEFT JOIN ID_ITEM i
+                ON i.ITEM_CODE = t.ITEM_CODE
+               AND i.ORGANIZATION_ID = t.ORGANIZATION_ID
+        WHERE t.ITEM_CODE LIKE :itemCode ESCAPE '\\'
+          AND NVL(t.MATERIAL_MFS, '*') LIKE :lotNo ESCAPE '\\'
+          AND NVL(t.LOCATION_CODE, '*') LIKE :locationCode ESCAPE '\\'
+        ORDER BY CASE WHEN t.COUNTED - t.BOOK_EFF - t.POSTED <> 0 THEN 0 ELSE 1 END,
+                 t.ITEM_CODE, t.MATERIAL_MFS
+        FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
+      namedBinds({
+        yyyymm: query.yyyymm,
+        itemCode: likePrefix(query.itemCode),
+        lotNo: likePrefix(query.lotNo),
+        locationCode: likePrefix(query.locationCode),
+        organizationId,
+      }),
+    )) as Row[];
+    return limited(rows);
+  }
+
+  /**
+   * 조정 이력 (PB `d_mat_issue_by_adjust_lst`).
+   *
+   * 실사로 만들어진 조정 출고만 본다 — 계정이 `M009` 인 것.
+   * **실측 0건**이다 (아직 조정한 적이 없다).
+   */
+  async findAdjustHistory(query: InventoryCheckQueryDto, organizationId: number) {
+    const rows = (await this.dataSource.query(
+      `SELECT TO_CHAR(s.ISSUE_DATE, 'YYYY-MM-DD')  AS "issueDate",
+              s.ISSUE_SEQUENCE           AS "issueSequence",
+              s.ITEM_CODE                AS "itemCode",
+              i.ITEM_NAME                AS "itemName",
+              i.ITEM_SPEC                AS "itemSpec",
+              s.MATERIAL_MFS             AS "lotNo",
+              s.LOCATION_CODE            AS "locationCode",
+              s.ISSUE_DEFICIT            AS "issueDeficit",
+              s.ISSUE_QTY                AS "issueQty",
+              s.ISSUE_PRICE              AS "issuePrice",
+              s.ISSUE_AMT                AS "issueAmt",
+              s.LINE_TYPE                AS "lineType",
+              s.INVENTORY_TYPE           AS "inventoryType",
+              s.COMMENTS                 AS "comments",
+              s.ENTER_BY                 AS "enterBy",
+              TO_CHAR(s.ENTER_DATE, 'YYYY-MM-DD HH24:MI:SS')       AS "enterDate"
+         FROM IM_ITEM_ISSUE s
+         LEFT JOIN ID_ITEM i
+                ON i.ITEM_CODE = s.ITEM_CODE
+               AND i.ORGANIZATION_ID = s.ORGANIZATION_ID
+        WHERE ${periodBoundsSql('s.ISSUE_DATE', ':yyyymm', ':organizationId')}
+          AND s.ITEM_CODE LIKE :itemCode ESCAPE '\\'
+          -- 실사 조정만 본다 (PB 고정조건).
+          AND s.ISSUE_ACCOUNT = '${ADJUST.issueAccount}'
+          AND s.ORGANIZATION_ID = :organizationId
+        ORDER BY s.ISSUE_DATE DESC, s.ISSUE_SEQUENCE DESC
+        FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
+      namedBinds({
+        yyyymm: query.yyyymm,
+        itemCode: likePrefix(query.itemCode),
+        organizationId,
+      }),
+    )) as Row[];
+    return limited(rows);
+  }
+
+  /**
+   * 재고 조정 (**쓰기**). PB 의 실사 확정 경로다.
+   *
+   * 실제 처리는 파일 끝의 `postAdjustment` 가 한다 (일괄 조정과 같이 쓴다).
+   *
+   * 날짜는 `F_GET_INVENTORY_CLOSE_DATE` 가 정한다 — 조정은 **마감월의 마지막
+   * 날짜로** 들어가야 그 달 수불이 맞는다. SYSDATE 를 쓰면 다음 달로 새어 나간다.
+   */
+  async adjustInventory(
+    dto: InventoryAdjustDto,
+    organizationId: number,
+    userId: string,
+  ) {
+    return this.tx.run((qr) => postAdjustment(qr, dto, organizationId, userId));
+  }
+
+  // ───────────────────────────────── 274 바코드 스캔실사 (조회)
+
+  /**
+   * 바코드 실사 목록 (PB `d_mat_inventory_barcode_check_lst`).
+   *
+   * 실사 때 찍은 바코드와 그때의 수량이다.
+   */
+  async findBarcodeCheck(query: BarcodeCheckQueryDto, organizationId: number) {
+    const rows = (await this.dataSource.query(
+      `SELECT c.CHECK_YYYYMM             AS "checkYyyymm",
+              c.CHECK_TYPE               AS "checkType",
+              c.LINE_CODE                AS "lineCode",
+              c.ITEM_BARCODE             AS "itemBarcode",
+              c.ORIGIN_ITEM_BARCODE      AS "originItemBarcode",
+              c.ITEM_CODE                AS "itemCode",
+              i.ITEM_NAME                AS "itemName",
+              i.ITEM_SPEC                AS "itemSpec",
+              c.LOT_NO                   AS "lotNo",
+              c.BARCODE_QTY              AS "barcodeQty",
+              c.INVENTORY_QTY            AS "inventoryQty",
+              -- 찍은 수량과 장부 수량의 차이. 0 이 아니면 맞춰야 한다.
+              NVL(c.BARCODE_QTY, 0) - NVL(c.INVENTORY_QTY, 0) AS "differenceQty",
+              c.LABEL_TYPE               AS "labelType",
+              c.LOCATION_CODE            AS "locationCode",
+              c.LOCATION_ADDRESS         AS "locationAddress",
+              c.UNIT_PRICE               AS "unitPrice",
+              c.INVENTORY_AMT            AS "inventoryAmt",
+              c.INVOICE_NO               AS "invoiceNo",
+              c.CUSTOMER_CODE            AS "customerCode",
+              c.RECEIPT_LABEL_TYPE       AS "receiptLabelType",
+              c.ENTER_BY                 AS "enterBy",
+              TO_CHAR(c.ENTER_DATE, 'YYYY-MM-DD HH24:MI:SS')      AS "enterDate"
+         FROM IM_ITEM_INVENTORY_CHECK_BCD c
+         LEFT JOIN ID_ITEM i
+                ON i.ITEM_CODE = c.ITEM_CODE
+               AND i.ORGANIZATION_ID = c.ORGANIZATION_ID
+        WHERE c.CHECK_YYYYMM LIKE :yyyymm ESCAPE '\\'
+          AND NVL(c.ITEM_CODE, '*') LIKE :itemCode ESCAPE '\\'
+          AND NVL(c.LINE_CODE, '*') LIKE :lineCode ESCAPE '\\'
+          AND c.ORGANIZATION_ID = :organizationId
+        ORDER BY c.CHECK_YYYYMM DESC, c.ITEM_CODE, c.LOT_NO
+        FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
+      namedBinds({
+        yyyymm: likePrefix(query.yyyymm),
+        itemCode: likePrefix(query.itemCode),
+        lineCode: likePrefix(query.lineCode),
+        organizationId,
+      }),
+    )) as Row[];
+    return limited(rows);
+  }
+
+  /**
+   * 바코드 실사 요약 (PB `d_mat_inventory_barcode_check_sum_lst`).
+   *
+   * 품목별로 찍은 수량과 장부 수량을 합쳐 차이를 본다.
+   */
+  async findBarcodeCheckSummary(query: BarcodeCheckQueryDto, organizationId: number) {
+    const rows = (await this.dataSource.query(
+      `SELECT c.CHECK_YYYYMM             AS "checkYyyymm",
+              c.ITEM_CODE                AS "itemCode",
+              i.ITEM_NAME                AS "itemName",
+              i.ITEM_SPEC                AS "itemSpec",
+              i.ITEM_UOM                 AS "itemUom",
+              COUNT(*)                   AS "barcodeCount",
+              SUM(NVL(c.BARCODE_QTY, 0))    AS "barcodeQty",
+              SUM(NVL(c.INVENTORY_QTY, 0))  AS "inventoryQty",
+              SUM(NVL(c.BARCODE_QTY, 0)) - SUM(NVL(c.INVENTORY_QTY, 0))
+                                         AS "differenceQty",
+              SUM(NVL(c.INVENTORY_AMT, 0))  AS "inventoryAmt"
+         FROM IM_ITEM_INVENTORY_CHECK_BCD c
+         LEFT JOIN ID_ITEM i
+                ON i.ITEM_CODE = c.ITEM_CODE
+               AND i.ORGANIZATION_ID = c.ORGANIZATION_ID
+        WHERE c.CHECK_YYYYMM LIKE :yyyymm ESCAPE '\\'
+          AND NVL(c.ITEM_CODE, '*') LIKE :itemCode ESCAPE '\\'
+          AND c.ORGANIZATION_ID = :organizationId
+        GROUP BY c.CHECK_YYYYMM, c.ITEM_CODE, i.ITEM_NAME, i.ITEM_SPEC, i.ITEM_UOM
+        ORDER BY c.CHECK_YYYYMM DESC, c.ITEM_CODE
+        FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
+      namedBinds({
+        yyyymm: likePrefix(query.yyyymm),
+        itemCode: likePrefix(query.itemCode),
+        organizationId,
+      }),
+    )) as Row[];
+    return limited(rows);
+  }
+}
+
+
+/** 조정 한 건에 필요한 값 — 272 단건 조정과 일괄 조정이 같이 쓴다. */
+export interface AdjustInput {
+  yyyymm: string;
+  itemCode: string;
+  lotNo: string;
+  /** 실사 − 장부. 양수면 실제가 더 많다. */
+  differenceQty: number;
+  locationCode?: string;
+}
+
+/** 마감된 달이면 거절한다 — 마감 취소 → 조정 → 재마감 순서다. */
+export async function assertMonthOpen(qr: QueryRunner, yyyymm: string, organizationId: number) {
+  const closed = (await qr.query(
+    `SELECT 1 AS "closed" FROM ISYS_INVENTORY_CLOSE_DATE
+      WHERE CLOSE_YYYYMM = :yyyymm AND ORGANIZATION_ID = :organizationId AND CLOSE_YN = 'Y'`,
+    namedBinds({ yyyymm, organizationId }),
+  )) as Row[];
+  if (closed.length) {
+    throw new BadRequestException(
+      `${yyyymm} 은 마감된 달입니다. 자재재고마감에서 마감을 취소한 뒤 진행하세요.`,
+    );
+  }
+}
+
+/**
+ * 조정 한 건을 넣는다 (트랜잭션은 호출하는 쪽이 연다).
+ *
+ *   ① 차이만큼 바코드 원장의 상태를 바꾼다 (적으면 "나간 것", 많으면 "돌아온 것")
+ *   ② 조정 출고를 한 건 넣는다 (계정 M009 · 비고 INVENTORY ADJUST)
+ */
+export async function postAdjustment(
+  qr: QueryRunner,
+  dto: AdjustInput,
+  organizationId: number,
+  userId: string,
+) {
+  const diff = Number(dto.differenceQty);
+  if (!Number.isFinite(diff) || diff === 0) {
+    throw new BadRequestException('차이 수량이 0 이면 조정할 것이 없습니다.');
+  }
+  await assertMonthOpen(qr, dto.yyyymm, organizationId);
+
+  const facts = ((await qr.query(
+    `SELECT v.INVENTORY_TYPE          AS "inventoryType",
+            v.LINE_TYPE               AS "lineType",
+            v.LOCATION_CODE           AS "locationCode",
+            v.INVENTORY_PRICE         AS "inventoryPrice",
+            v.INVENTORY_QTY           AS "bookQty"
+       FROM IM_ITEM_INVENTORY v
+      WHERE v.ITEM_CODE = :itemCode
+        AND v.MATERIAL_MFS = :lotNo
+        AND v.ORGANIZATION_ID = :organizationId`,
+    namedBinds({
+      itemCode: dto.itemCode, lotNo: dto.lotNo, organizationId,
+    }),
+  )) as Row[])[0] ?? null;
+  if (!facts) {
+    throw new BadRequestException(
+      `재고를 찾을 수 없습니다: ${dto.itemCode} / ${dto.lotNo}`,
+    );
+  }
+
+  // 조정 출고 수량 = 장부 − 실사 (화면 차이의 반대 부호). 양수면 재고를 뺀다.
+  const outQty = -diff;
+  // ① 바코드 원장 상태. 출고 부호가 방향을 정한다 (PB 그대로).
+  const plus = outQty > 0;
+  const barcodeResult = await qr.query(
+    plus
+      ? `UPDATE IM_ITEM_RECEIPT_BARCODE
+            SET RECEIPT_COMPARE_YN = 'Y',
+                ISSUE_COMPARE_YN   = 'Y',
+                ISSUE_COMPARE_DATE = F_GET_INVENTORY_CLOSE_DATE(:yyyymm, 'END',
+                                                                :organizationId),
+                ISSUE_COMPARE_BY   = 'ADJUST',
+                ISSUE_RETURN_YN    = 'N',
+                FEEDING_YN         = 'Y',
+                LAST_MODIFY_DATE   = SYSDATE,
+                LAST_MODIFY_BY     = :userId
+          WHERE LOT_NO = :lotNo
+            AND ITEM_CODE = :itemCode
+            AND ORGANIZATION_ID = :organizationId`
+      : `UPDATE IM_ITEM_RECEIPT_BARCODE
+            SET RECEIPT_COMPARE_YN = 'Y',
+                ISSUE_COMPARE_YN   = 'N',
+                ISSUE_COMPARE_DATE = NULL,
+                ISSUE_COMPARE_BY   = NULL,
+                ISSUE_RETURN_YN    = 'Y',
+                ISSUE_RETURN_DATE  = F_GET_INVENTORY_CLOSE_DATE(:yyyymm, 'END',
+                                                                :organizationId),
+                FEEDING_YN         = 'N',
+                -- MSL 시계를 되돌리지 않으려고 투입일만 지운다 (PB 주석).
+                FEEDING_DATE       = NULL,
+                LAST_MODIFY_DATE   = SYSDATE,
+                LAST_MODIFY_BY     = :userId
+          WHERE LOT_NO = :lotNo
+            AND ITEM_CODE = :itemCode
+            AND ORGANIZATION_ID = :organizationId`,
+    namedBinds({
+      yyyymm: dto.yyyymm,
+      organizationId,
+      userId,
+      lotNo: dto.lotNo,
+      itemCode: dto.itemCode,
+    }),
+  );
+
+  // ② 조정 출고. 날짜는 마감월의 마지막 날이다 (파일 머리 2번).
+  const issueResult = await qr.query(
+    `INSERT INTO IM_ITEM_ISSUE
+       (ISSUE_DATE, ISSUE_SEQUENCE, ORGANIZATION_ID,
+        MFS, ITEM_CODE, LOCATION_CODE, ITEM_TYPE, LINE_CODE, WORKSTAGE_CODE,
+        ISSUE_DEFICIT, ISSUE_QTY, ISSUE_STATUS, ISSUE_AMT, ISSUE_ACCOUNT,
+        LINE_TYPE, COMMENTS, ISSUE_PRICE, VIRTUAL_RECEIPT_YN, ISSUE_TYPE,
+        SUPPLIER_CODE, WORK_ORDER_NO,
+        ENTER_DATE, ENTER_BY, LAST_MODIFY_DATE, LAST_MODIFY_BY,
+        MACHINE_CODE, INVOICE_NO, MADE_BY, PARENT_ITEM_CODE, MATERIAL_MFS,
+        INVENTORY_TYPE)
+     VALUES
+       (F_GET_INVENTORY_CLOSE_DATE(:yyyymm, 'END', :organizationId),
+        SEQ_MAT_ISSUE.NEXTVAL, :organizationId,
+        :lotNo, :itemCode, :locationCode, '${ADJUST.itemType}',
+        '${ADJUST.lineCode}', '${ADJUST.workstageCode}',
+        :deficit, :outQty, '${ADJUST.issueStatus}', :inventoryPrice * :outQty,
+        '${ADJUST.issueAccount}',
+        :lineType, '${ADJUST.comments}', :inventoryPrice,
+        '${ADJUST.virtualReceiptYn}', '${ADJUST.issueType}',
+        '${ADJUST.supplierCode}', 0,
+        F_GET_INVENTORY_CLOSE_DATE(:yyyymm, 'LAST', :organizationId),
+        :userId, SYSDATE, :userId,
+        '${ADJUST.machineCode}', '${ADJUST.invoiceNo}', '${ADJUST.madeBy}',
+        '${ADJUST.parentItemCode}', :lotNo,
+        :inventoryType)`,
+    namedBinds({
+      yyyymm: dto.yyyymm,
+      organizationId,
+      lotNo: dto.lotNo,
+      itemCode: dto.itemCode,
+      locationCode: dto.locationCode ?? (facts.locationCode as string) ?? null,
+      deficit: plus ? '3' : '4',
+      outQty,
+      inventoryPrice: Number(facts.inventoryPrice ?? 0),
+      lineType: (facts.lineType as string) ?? null,
+      userId,
+      inventoryType: (facts.inventoryType as string) ?? null,
+    }),
+  );
+
+  return {
+    itemCode: dto.itemCode,
+    lotNo: dto.lotNo,
+    yyyymm: dto.yyyymm,
+    bookQty: Number(facts.bookQty ?? 0),
+    differenceQty: diff,
+    /** 3 = 실제가 적음(재고 감소) · 4 = 실제가 더 많음(재고 증가) */
+    issueDeficit: plus ? 3 : 4,
+    barcodeRows: Number(
+      affectedRows(barcodeResult) ?? 0,
+    ),
+    issueRows: Number(
+      affectedRows(issueResult) ?? 0,
+    ),
+  };
+}

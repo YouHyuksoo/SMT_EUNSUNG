@@ -20,6 +20,8 @@ declare module "axios" {
 interface ApiErrorResponse {
   message?: string;
   error?: string;
+  /** 백엔드 HttpExceptionFilter가 채우는 에러 코드 (HTTP_400, DB_CONNECTION_ERROR 등) */
+  errorCode?: string;
   [key: string]: unknown;
 }
 
@@ -41,11 +43,14 @@ interface CachedSqlDebug {
   parameters?: unknown[];
   tables: string[];
   sourceUrl?: string;
+  /** 응답을 받았을 때의 화면 경로 — 그리드 SQL 뷰어가 이 화면에서 실행된 SQL 만 고른다 */
+  pagePath?: string;
   recordedAt: number;
 }
 
 import toast from "react-hot-toast";
 import { useErrorStore } from "@/stores/errorStore";
+import { classifyApiError } from "./api-error-severity";
 import { useAuthStore } from "@/stores/authStore";
 
 // 응답 인터셉터의 자동 성공 토스트를 끄는 opt-out 플래그.
@@ -108,6 +113,7 @@ export const recordSqlDebugResponse = (sourceUrl?: string, debugSql?: SqlDebugPa
       parameters: query.parameters,
       tables: query.tables?.length ? query.tables : extractSqlTables(query.sql),
       sourceUrl,
+      pagePath: typeof window !== "undefined" ? window.location.pathname : undefined,
       recordedAt: Date.now(),
     });
   }
@@ -115,6 +121,40 @@ export const recordSqlDebugResponse = (sourceUrl?: string, debugSql?: SqlDebugPa
   if (sqlDebugCache.length > SQL_DEBUG_CACHE_LIMIT) {
     sqlDebugCache.splice(0, sqlDebugCache.length - SQL_DEBUG_CACHE_LIMIT);
   }
+};
+
+export interface PageSqlDebugEntry {
+  /** API 경로 (쿼리스트링 제외) */
+  source: string;
+  sql: string;
+  recordedAt: number;
+}
+
+/**
+ * 이 화면에서 실행된 SELECT 문 — API 경로마다 가장 최근 것 하나, 최근 것부터.
+ * COUNT 만 하는 문은 같은 API 의 본 조회가 없을 때만 남긴다.
+ * (백엔드는 ADMIN 요청에만 SQL 을 붙이므로 다른 사용자는 늘 비어 있다.)
+ */
+/** 사이드바·헤더·로그인 상태처럼 어느 화면에서나 불리는 API — 그리드 SQL 후보에서 뺀다 */
+const SHELL_SQL_SOURCES = ["/menu-categories", "/menu-favorites", "/auth/", "/db-info", "/system/configs/active"];
+
+export const getPageSqlDebugEntries = (pagePath: string): PageSqlDebugEntry[] => {
+  const main = new Map<string, CachedSqlDebug>();
+  const countOnly = new Map<string, CachedSqlDebug>();
+  for (let idx = sqlDebugCache.length - 1; idx >= 0; idx -= 1) {
+    const entry = sqlDebugCache[idx];
+    if (entry.pagePath !== pagePath) continue;
+    const source = (entry.sourceUrl ?? "").split("?")[0] || "(unknown)";
+    if (SHELL_SQL_SOURCES.some((prefix) => source.startsWith(prefix))) continue;
+    const target = isCountOnlySql(entry.sql) ? countOnly : main;
+    if (!target.has(source)) target.set(source, entry);
+  }
+  for (const [source, entry] of countOnly) {
+    if (!main.has(source)) main.set(source, entry);
+  }
+  return [...main.entries()]
+    .map(([source, entry]) => ({ source, sql: formatActualSql(entry), recordedAt: entry.recordedAt }))
+    .sort((a, b) => b.recordedAt - a.recordedAt);
 };
 
 export const getLatestActualSqlForPreview = (previewSql: string): string | null => {
@@ -240,15 +280,19 @@ api.interceptors.response.use(
     return response;
   },
   (error: AxiosError) => {
-    // 네트워크 에러 (백엔드 미실행, ECONNREFUSED 등)
+    // 응답 없음: 제한 시간 초과(ECONNABORTED) 와 연결 실패(ECONNREFUSED 등)를 구분해서 알린다
     if (!error.response) {
+      const timedOut = error.code === "ECONNABORTED" || error.code === "ETIMEDOUT";
       useErrorStore.getState().showError({
+        severity: "system",
         timestamp: new Date().toLocaleString(),
         method: error.config?.method?.toUpperCase() || "UNKNOWN",
         url: error.config?.url || "unknown",
         status: 0,
-        message: "서버에 연결할 수 없습니다. 백엔드가 실행 중인지 확인하세요.",
-        responseBody: "네트워크 연결 실패 (ECONNREFUSED)",
+        message: timedOut
+          ? `응답 시간이 초과되었습니다 (${Math.round((error.config?.timeout ?? 0) / 1000)}초). 서버는 계속 처리 중일 수 있습니다.`
+          : "서버에 연결할 수 없습니다. 백엔드가 실행 중인지 확인하세요.",
+        responseBody: timedOut ? "응답 시간 초과 (timeout)" : "네트워크 연결 실패 (ECONNREFUSED)",
       });
       return Promise.reject(error);
     }
@@ -284,13 +328,16 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    // 에러 상세 모달 표시
+    // 심각도에 따라 업무 안내 창 / 시스템 오류 창으로 분리 표시
+    const errorCode = typeof data?.errorCode === "string" ? data.errorCode : undefined;
     useErrorStore.getState().showError({
+      severity: classifyApiError(status, errorCode),
       timestamp: new Date().toLocaleString(),
       method: error.config?.method?.toUpperCase() || "UNKNOWN",
       url: error.config?.url || "unknown",
       status,
       message: serverMessage,
+      errorCode,
       responseBody: JSON.stringify(data, null, 2),
       requestBody,
     });

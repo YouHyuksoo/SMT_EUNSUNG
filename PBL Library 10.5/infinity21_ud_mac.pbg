@@ -18,9 +18,11 @@ Save Format v3.0(19990112)
  "d_mcn_jig_mask_check_lst_4_dashboard.srd" "infinity21_ud_mac.pbl";
  "d_mcn_jig_input_history_query.srd" "infinity21_ud_mac.pbl";
  "d_mcn_sample_bcr_input_history_query.srd" "infinity21_ud_mac.pbl";
+ "d_smt_split_history_lst.srd" "infinity21_ud_mac.pbl";
  "d_smt_plandata_simple_4_plan.srd" "infinity21_ud_mac.pbl";
  "d_smt_master_line_lst.srd" "infinity21_ud_mac.pbl";
  "d_mcn_jig_pm_plan_lst.srd" "infinity21_ud_mac.pbl";
+ "d_smt_plandata_simple_4_split_lst.srd" "infinity21_ud_mac.pbl";
  "d_mcn_machine_lst.srd" "infinity21_ud_mac.pbl";
  "d_mcn_machine_mst.srd" "infinity21_ud_mac.pbl";
  "d_carier_barcode_lst.srd" "infinity21_ud_mac.pbl";
@@ -118,6 +120,7 @@ Save Format v3.0(19990112)
  "d_smt_pickup_rate_by_zone_head.srd" "infinity21_ud_mac.pbl";
  "d_smt_plandata_4_model_master_lst.srd" "infinity21_ud_mac.pbl";
  "d_stepinfor.srd" "infinity21_ud_mac.pbl";
+ "d_smt_checklist_4_split_check_lst.srd" "infinity21_ud_mac.pbl";
  "d_mcn_feeder_repair_change_request_lst.srd" "infinity21_ud_mac.pbl";
  "d_mcn_sample_apply_model_lst.srd" "infinity21_ud_mac.pbl";
  "d_mcn_jig_feeder_adjust_mlst.srd" "infinity21_ud_mac.pbl";

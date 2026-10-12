@@ -1,0 +1,120 @@
+HA$PBExportHeader$f_get_dynamic_menu.srf
+$PBExportComments$get current menu text
+global type f_get_dynamic_menu from function_object
+end type
+
+forward prototypes
+global function boolean f_get_dynamic_menu (menu arg_main_menu_item, menu am_menuitem)
+end prototypes
+
+global function boolean f_get_dynamic_menu (menu arg_main_menu_item, menu am_menuitem);int  inx,check_cnt, item_int 
+long ll_row
+string  ls_main_menu_name , ls_menu_item_name , ls_text, ls_tag
+
+//if  Gvs_language <>  'E' then
+//	return False
+//end if
+ls_main_menu_name = arg_main_menu_item.classname()
+item_int = upperbound(am_menuitem.item[])
+
+if item_int > 0 then
+
+		     Gvi_menu_level++		
+
+			for inx = 1 to item_int
+				
+                     Gvi_menu_order++
+				 Gvi_menu_index = inx
+				 
+				 ls_menu_item_name = am_menuitem.item[inx].classname()
+				 ls_text = am_menuitem.item[inx].text
+				 ls_tag  = am_menuitem.item[inx].tag
+				 
+//=============================================
+//
+//=============================================
+						 SELECT count(*)   INTO :check_cnt
+						   FROM ISYS_DYNAMIC_MENU
+						   where MENU_NAME            = upper(:ls_main_menu_name)
+							 and MENU_ITEM_NAME = upper(:ls_menu_item_name)
+							 and organization_id = :gvi_organization_id ;
+									
+                                    if f_sql_check() < 0 then 
+							    return false
+							end if
+								
+							if check_cnt < 1  then 
+							
+							else
+								
+								 delete from 	ISYS_DYNAMIC_MENU 
+								 where MENU_NAME           = upper(:ls_main_menu_name)
+									and MENU_ITEM_NAME = upper(:ls_menu_item_name)
+									and organization_id = :gvi_organization_id ;
+								
+								if f_sql_check() < 0 then 
+									return false
+								end if
+								
+							end if
+							
+							  INSERT INTO "ISYS_DYNAMIC_MENU"
+										( "MENU_NAME",   
+										  "MENU_DESCRIPTION",   
+										  "MENU_ITEM_ORDER",   
+										  "MENU_ITEM_LEVEL",   
+									       "MENU_ITEM_INDEX",   	  
+										  "MENU_ITEM_NAME",   
+										  "MENU_ITEM_TEXT",
+										  "MENU_VISIBLE_YN",
+										  "ENTER_BY",   
+										  "ENTER_DATE",   
+										  "LAST_MODIFY_BY",   
+										  "LAST_MODIFY_DATE",   
+										  "ORGANIZATION_ID",
+										  menu_tag)  
+							  VALUES ( upper(:ls_main_menu_name) ,
+											:ls_text,
+											:Gvi_menu_order,
+											TO_CHAR(:Gvi_menu_level),
+											:Gvi_menu_index,
+											upper(:ls_menu_item_name) ,
+											:ls_text ,
+											'Y' ,
+											:GVS_USER_ID ,
+											SYSDATE,
+											:GVS_USER_ID,
+											SYSDATE,
+											:GVI_ORGANIZATION_ID,
+											:ls_tag	)  ;
+												
+							if f_sql_check() < 0 then 
+							   return false
+							end if 
+							
+							if Gvi_menu_level = 1 then 
+							    w_progress_popup.f_stepit()
+							    w_progress_popup.f_set_message( ls_text )
+							end if
+//=============================================
+//
+//=============================================
+
+				if f_get_dynamic_menu( arg_main_menu_item , am_menuitem.item[inx]) then	   					
+				   return true
+				end if		
+          
+			next
+		     Gvi_menu_level = Gvi_menu_level -1 
+			
+end if
+
+//===================================
+//
+//===================================
+Gvi_menu_index = 0
+return false
+
+
+end function
+

@@ -151,7 +151,7 @@ describe('SchedulerLogService', () => {
   describe('recoverStaleRunning', () => {
     it('should recover stale logs', async () => {
       // Arrange
-      mockDataSource.query.mockResolvedValue({ rowsAffected: 3 });
+      mockDataSource.query.mockResolvedValue(3); // TypeORM Oracle query() 는 DML 결과로 행수 숫자를 준다
 
       // Act
       const result = await target.recoverStaleRunning(1);
@@ -162,7 +162,7 @@ describe('SchedulerLogService', () => {
 
     it('should return 0 when no stale logs', async () => {
       // Arrange
-      mockDataSource.query.mockResolvedValue({ rowsAffected: 0 });
+      mockDataSource.query.mockResolvedValue(undefined); // 0행이면 undefined
 
       // Act
       const result = await target.recoverStaleRunning(1);

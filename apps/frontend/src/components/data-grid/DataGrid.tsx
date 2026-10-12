@@ -34,12 +34,14 @@ import { flushSync, createPortal } from 'react-dom';
 import { ChevronUp, ChevronDown, ChevronsUpDown, GripVertical, X, Pin, PinOff, Maximize2, Minimize2, Database, SlidersHorizontal, FileSpreadsheet, FileText, FileCode, FileType } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import { useExport } from '@/hooks/useExport';
+import { formatDisplayDate } from '@/utils/date';
 import type { ExportFormat } from '@/hooks/useExport';
 import { SqlViewerModal, type ActiveFilter } from './SqlViewerModal';
+import { useAuthStore } from '@/stores/authStore';
 import { ResizeHandle } from './ResizeHandle';
 import { ColumnFilterInput } from './ColumnFilterInput';
 import { PaginationControls } from './PaginationControls';
-import { detectAlignment, getAlignmentClass, getPinnedStyle } from './utils';
+import { detectAlignment, getAlignmentClass, getPinnedStyle, withLeadingPinnedColumns } from './utils';
 import { numberRangeFilterFn } from './numberFilterFn';
 import { dateRangeFilterFn } from './dateFilterFn';
 import { textInFilterFn } from './textFilterFn';
@@ -110,12 +112,14 @@ export interface DataGridProps<T> {
   enableFullscreen?: boolean;
   /** 하단 Footer(전체 건수 + 페이지네이션) 표시 여부 (기본: true) */
   showFooter?: boolean;
-  /** SQL 조회문 — 지정 시 툴바에 DB 아이콘 버튼 표시 */
+  /** 대표 SQL 조회문 (선택). SQL 조회문 메뉴는 ADMIN 에게 항상 보이고, 없으면 이 화면에서 실행된 SQL 을 보여 준다. */
   sqlQuery?: string;
   /** 서버사이드 필터 상태 — SQL 뷰어에 WHERE 조건으로 반영 (빈 문자열/null/undefined 자동 제외) */
   sqlFilters?: Record<string, unknown>;
   /** 초기 정렬 상태(기본정렬). 예: [{ id: "createdAt", desc: true }] */
   initialSorting?: SortingState;
+  /** false 면 컬럼을 내용 폭으로만 두고 남는 오른쪽을 비운다 (기본 true: 그리드 폭을 꽉 채움) */
+  fillWidth?: boolean;
 }
 
 function DataGrid<T>({
@@ -145,13 +149,18 @@ function DataGrid<T>({
   sqlQuery,
   sqlFilters,
   initialSorting,
+  fillWidth = true,
 }: DataGridProps<T>) {
   const [sorting, setSorting] = useState<SortingState>(initialSorting ?? []);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnOrder, setColumnOrder] = useState<ColumnOrderState>([]);
   const [columnSizing, setColumnSizing] = useState<ColumnSizingState>({});
-  const [columnPinning, setColumnPinning] = useState<ColumnPinningState>(
-    defaultPinnedColumns ?? {}
+  // 좌측 고정이 있으면 관리→선택→품목코드→품목명 컬럼을 고정 맨 앞에 둔다 (utils.withLeadingPinnedColumns)
+  const [columnPinning, setColumnPinning] = useState<ColumnPinningState>(() =>
+    withLeadingPinnedColumns(
+      defaultPinnedColumns,
+      columns.map((c) => c.id ?? ('accessorKey' in c ? String(c.accessorKey) : '')),
+    )
   );
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
@@ -165,6 +174,8 @@ function DataGrid<T>({
   const [showFilterRow, setShowFilterRow] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showSql, setShowSql] = useState(false);
+  // SQL 조회문은 ADMIN 만 본다 (백엔드도 ADMIN 요청에만 실행 SQL 을 붙인다)
+  const canViewSql = useAuthStore((s) => s.user?.role === 'ADMIN');
   const [menuOpen, setMenuOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const { exportData } = useExport();
@@ -201,9 +212,20 @@ function DataGrid<T>({
     }),
   [columns]);
 
+  // cell 을 따로 주지 않은 컬럼의 기본 표시. 서버가 Date 를 그대로 내려 UTC ISO 가 찍히던 것을
+  // 공용 포맷(YYYY-MM-DD / YYYY-MM-DD HH:mm:ss)으로 통일한다. 날짜가 아닌 값은 기존과 같다.
+  const defaultColumn = useMemo<Partial<ColumnDef<T, unknown>>>(() => ({
+    cell: ({ renderValue }) => {
+      const value = renderValue();
+      if (typeof value === 'string' || value instanceof Date) return formatDisplayDate(value);
+      return (value as { toString?: () => string } | null | undefined)?.toString?.() ?? null;
+    },
+  }), []);
+
   const table = useReactTable({
     data,
     columns: processedColumns,
+    defaultColumn,
     filterFns: { numberRange: numberRangeFilterFn, dateRange: dateRangeFilterFn, textIn: textInFilterFn },
     state: { sorting, columnFilters, columnOrder, columnSizing, columnPinning, pagination },
     onSortingChange: setSorting,
@@ -352,7 +374,7 @@ function DataGrid<T>({
       : "w-full h-full flex flex-col"}
     >
       {/* Toolbar */}
-      {(toolbarLeft || enableExport || enableColumnFilter || enableFullscreen || isFullscreen || sqlQuery || activeFilterCount > 0) && (
+      {(toolbarLeft || enableExport || enableColumnFilter || enableFullscreen || isFullscreen || canViewSql || activeFilterCount > 0) && (
         <div className="flex items-center justify-between gap-3 mb-1.5">
           <div className="flex items-center gap-3 flex-1 min-w-0">
             {toolbarLeft}
@@ -370,7 +392,7 @@ function DataGrid<T>({
             )}
 
             {/* 통합 메뉴 드롭다운 */}
-            {(enableExport || enableColumnFilter || sqlQuery) && (
+            {(enableExport || enableColumnFilter || canViewSql) && (
               <div className="relative" ref={menuRef}>
                 <button
                   onClick={() => setMenuOpen(v => !v)}
@@ -416,7 +438,7 @@ function DataGrid<T>({
                         </button>
                       </>
                     )}
-                    {sqlQuery && (
+                    {canViewSql && (
                       <>
                         <div className="h-px bg-border" />
                         <button
@@ -469,7 +491,7 @@ function DataGrid<T>({
           )}
         <table
           className="font-data text-xs"
-          style={{ minWidth: '100%', width: 'max-content' }}
+          style={{ minWidth: fillWidth ? '100%' : undefined, width: 'max-content' }}
         >
           {/* Header */}
           <thead className="bg-background sticky top-0 z-10">
@@ -638,9 +660,10 @@ function DataGrid<T>({
         onPaginationChange={setPagination}
       />
       )}
-      {showSql && sqlQuery && (
+      {showSql && canViewSql && (
         <SqlViewerModal
           sql={sqlQuery}
+          columnKeys={table.getAllLeafColumns().map((c) => c.id)}
           activeFilters={[
             ...Object.entries(sqlFilters ?? {})
               .filter(([, v]) => v !== undefined && v !== null && v !== '')

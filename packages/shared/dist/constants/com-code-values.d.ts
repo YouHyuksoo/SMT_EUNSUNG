@@ -151,6 +151,8 @@ export type RefTypeValue = typeof REF_TYPE_VALUES[number];
 export declare const LINE_DIVISION_VALUES: readonly ["C", "D", "E", "ETC", "I", "KIPAN", "L", "M", "REBALL", "REPAIR", "S", "SMT", "T", "W"];
 export type LineDivisionValue = typeof LINE_DIVISION_VALUES[number];
 export declare const LINE_DIVISION_LABELS: Record<LineDivisionValue, string>;
+/** 라벨이 'SMT'인 라인구분 코드 — 후공정 화면 라인 조회조건에서 제외할 때 쓴다 */
+export declare const SMT_LINE_DIVISIONS: readonly LineDivisionValue[];
 /** 라인제품구분 (IP_PRODUCT_LINE.LINE_PRODUCT_DIVISION) */
 export declare const LINE_PRODUCT_DIVISION_VALUES: readonly ["FIXED", "ONESELF", "SALE", "SUBLET"];
 export type LineProductDivisionValue = typeof LINE_PRODUCT_DIVISION_VALUES[number];

@@ -6,6 +6,22 @@ import { MenuCategory } from '../../../entities/menu-category.entity';
 import { MenuCategoryItem } from '../../../entities/menu-category-item.entity';
 import { MenuCategoriesService } from './menu-categories.service';
 import { TransactionService } from '../../../shared/transaction.service';
+import { DEFAULT_MENU_CATEGORY_LAYOUT } from '../utils/default-menu-category-layout';
+
+/**
+ * 이 스펙의 픅스처는 기본 레이아웃 상수에서 **파생시킨다.**
+ *
+ * 카테고리 코드를 손으로 나열해 두면 대분류를 하나 추가할 때마다 이 스펙이 깨진다
+ * (실제로 지그·피더·몰드·추적·조회·리포트를 넣는 동안 계속 깨져 있었다).
+ * 검사하려는 것은 '없는 것만 채우고 있는 것은 건드리지 않는다' 이므로,
+ * 몇 개가 있는지는 상수에서 읽어 오면 된다.
+ */
+const allCategoryCodes = DEFAULT_MENU_CATEGORY_LAYOUT.map((c) => c.categoryCode);
+const allMenuCodes = DEFAULT_MENU_CATEGORY_LAYOUT.flatMap((c) => [...c.menuCodes]);
+const seedCategories = (organizationId: number, except: string[] = []) =>
+  allCategoryCodes
+    .filter((categoryCode) => !except.includes(categoryCode))
+    .map((categoryCode) => ({ organizationId, categoryCode }));
 
 describe('MenuCategoriesService', () => {
   let service: MenuCategoriesService;
@@ -99,22 +115,55 @@ describe('MenuCategoriesService', () => {
   });
 
   describe('delete', () => {
+    const itemTxRepo = () => ({ delete: jest.fn().mockResolvedValue({}) });
+    const wireTx = (catTx: any, itmTx: any) =>
+      tx.run.mockImplementationOnce(async (cb: any) =>
+        cb({
+          manager: {
+            getRepository: (entity: unknown) => (entity === MenuCategory ? catTx : itmTx),
+          },
+        }),
+      );
+
     it('비어있는 카테고리는 삭제된다', async () => {
       categoryRepo.findOne.mockResolvedValueOnce({ categoryCode: 'X' } as any);
-      itemRepo.count.mockResolvedValueOnce(0);
+      itemRepo.find.mockResolvedValueOnce([]);
+      const itmTx = itemTxRepo();
+      wireTx(categoryRepo, itmTx);
       categoryRepo.delete.mockResolvedValueOnce({} as any);
 
       await service.delete('X');
       expect(categoryRepo.delete).toHaveBeenCalledWith({ categoryCode: 'X' });
     });
 
-    it('자식 메뉴가 있으면 Conflict 한국어 메시지', async () => {
+    it('현재 메뉴가 있으면 Conflict 한국어 메시지 (제거된 메뉴코드는 세지 않음)', async () => {
       categoryRepo.findOne.mockResolvedValueOnce({ categoryCode: 'X' } as any);
-      itemRepo.count.mockResolvedValueOnce(3);
+      itemRepo.find.mockResolvedValueOnce([
+        { menuCode: 'SYS_USER' },
+        { menuCode: 'SYS_DEPT' },
+        { menuCode: 'SHIP_PACK' },
+      ] as any);
 
       await expect(service.delete('X')).rejects.toThrow(
-        '카테고리에 메뉴가 3개 있습니다. 먼저 다른 카테고리로 이동하거나 삭제해주세요',
+        '카테고리에 메뉴가 2개 있습니다. 먼저 다른 카테고리로 이동하거나 삭제해주세요',
       );
+      expect(categoryRepo.delete).not.toHaveBeenCalled();
+    });
+
+    it('제거된 메뉴코드 배치행만 남아 있으면 그 행과 카테고리를 함께 삭제한다', async () => {
+      categoryRepo.findOne.mockResolvedValueOnce({ categoryCode: 'SHIPPING' } as any);
+      itemRepo.find.mockResolvedValueOnce([
+        { menuCode: 'SHIP_PACK' },
+        { menuCode: 'SHIP_RETURN' },
+      ] as any);
+      const itmTx = itemTxRepo();
+      wireTx(categoryRepo, itmTx);
+      categoryRepo.delete.mockResolvedValueOnce({} as any);
+
+      await service.delete('SHIPPING', { organizationId: 1, userId: 'tester' });
+
+      expect(itmTx.delete).toHaveBeenCalledWith({ categoryCode: 'SHIPPING', organizationId: 1 });
+      expect(categoryRepo.delete).toHaveBeenCalledWith({ categoryCode: 'SHIPPING', organizationId: 1 });
     });
 
     it('__ROOT__는 삭제 차단', async () => {
@@ -159,7 +208,7 @@ describe('MenuCategoriesService', () => {
           expect.objectContaining({ organizationId: 7, categoryCode: 'MASTER' }),
           expect.objectContaining({ organizationId: 7, categoryCode: 'PROCESS_TRANSACTION' }),
           expect.objectContaining({ organizationId: 7, categoryCode: 'PRODUCT_MGMT' }),
-          expect.objectContaining({ organizationId: 7, categoryCode: 'OUTSOURCING' }),
+          expect.objectContaining({ organizationId: 7, categoryCode: 'CONFIRM' }),
         ]),
       );
       expect(itemRepo.save).toHaveBeenCalledWith(
@@ -173,14 +222,9 @@ describe('MenuCategoriesService', () => {
     });
 
     it('adds missing default categories without overwriting an already configured tenant layout', async () => {
-      categoryRepo.find.mockResolvedValueOnce([
-        { organizationId: 7, categoryCode: 'MASTER' },
-        { organizationId: 7, categoryCode: 'SYSTEM' },
-        { organizationId: 7, categoryCode: 'OEE' },
-        { organizationId: 7, categoryCode: 'MATERIAL' },
-        { organizationId: 7, categoryCode: 'PRODUCT_MGMT' },
-        { organizationId: 7, categoryCode: 'OUTSOURCING' },
-      ] as any);
+      categoryRepo.find.mockResolvedValueOnce(
+        seedCategories(7, ['PROCESS_TRANSACTION', 'PRODUCTION']) as any,
+      );
       itemRepo.find.mockResolvedValueOnce([]);
       categoryRepo.save.mockImplementation(async (e: any) => e);
       itemRepo.save.mockImplementation(async (e: any) => e);
@@ -208,7 +252,6 @@ describe('MenuCategoriesService', () => {
         { organizationId: 7, categoryCode: 'PROCESS_TRANSACTION' },
         { organizationId: 7, categoryCode: 'PRODUCT_MGMT' },
         { organizationId: 7, categoryCode: 'PRODUCTION' },
-        { organizationId: 7, categoryCode: 'OUTSOURCING' },
         { organizationId: 7, categoryCode: 'SYSTEM' },
       ] as any);
       itemRepo.find.mockResolvedValue([
@@ -233,52 +276,10 @@ describe('MenuCategoriesService', () => {
     });
 
     it('does not rewrite a fully configured tenant layout', async () => {
-      categoryRepo.find.mockResolvedValueOnce([
-        { organizationId: 7, categoryCode: 'MASTER' },
-        { organizationId: 7, categoryCode: 'SYSTEM' },
-        { organizationId: 7, categoryCode: 'OEE' },
-        { organizationId: 7, categoryCode: 'MATERIAL' },
-        { organizationId: 7, categoryCode: 'PROCESS_TRANSACTION' },
-        { organizationId: 7, categoryCode: 'PRODUCT_MGMT' },
-        { organizationId: 7, categoryCode: 'PRODUCTION' },
-        { organizationId: 7, categoryCode: 'OUTSOURCING' },
-      ] as any);
-      itemRepo.find.mockResolvedValueOnce([
-        { menuCode: 'MST_PART' },
-        { menuCode: 'MST_BOM' },
-        { menuCode: 'MST_PARTNER' },
-        { menuCode: 'MST_CUSTOMER' },
-        { menuCode: 'EQUIP_MASTER' },
-        { menuCode: 'MST_PROCESS' },
-        { menuCode: 'MST_PROD_LINE' },
-        { menuCode: 'MST_ROUTING' },
-        { menuCode: 'MST_WORK_CALENDAR' },
-        { menuCode: 'MST_WORKER' },
-        { menuCode: 'MST_WORK_INST' },
-        { menuCode: 'MST_WAREHOUSE' },
-        { menuCode: 'MST_LABEL' },
-        { menuCode: 'MST_PURCHASE_PRICE' },
-        { menuCode: 'MST_ITEM_SUPPLIER' },
-        { menuCode: 'MST_SALE_PRICE' },
-        { menuCode: 'SYS_COMPANY' },
-        { menuCode: 'SYS_CODE' },
-        { menuCode: 'SYS_CONFIG' },
-        { menuCode: 'SYS_MENU_CATEGORY' },
-        { menuCode: 'SYS_DEPT' },
-        { menuCode: 'SYS_USER' },
-        { menuCode: 'SYS_SCHEDULER' },
-        { menuCode: 'SYS_ER_VIEW' },
-        { menuCode: 'SYS_IMPR_REQ' },
-        { menuCode: 'OEE_DASHBOARD' },
-        { menuCode: 'OEE_MULTI_ENTRY' },
-        { menuCode: 'OEE_EQUIP_WORK_RESULT' },
-        { menuCode: 'OEE_EQUIP_OPS_ANALYSIS' },
-        { menuCode: 'OEE_MST_STD_TIME' },
-        { menuCode: 'OEE_MST_IDLE_REASON' },
-        { menuCode: 'OEE_MST_EQUIP_REASON' },
-        { menuCode: 'OEE_MST_RESOURCE' },
-        { menuCode: 'PRD_RUN_CARD' },
-      ] as any);
+      categoryRepo.find.mockResolvedValueOnce(seedCategories(7) as any);
+      itemRepo.find.mockResolvedValueOnce(
+        allMenuCodes.map((menuCode) => ({ menuCode })) as any,
+      );
 
       await service.ensureDefaultLayout({ organizationId: 7, userId: 'tester' });
 

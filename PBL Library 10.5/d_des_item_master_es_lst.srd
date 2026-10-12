@@ -1,0 +1,70 @@
+HA$PBExportHeader$d_des_item_master_es_lst.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no grid.lines=0 )
+header(height=140 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=76 color="536870912" )
+table(column=(type=char(50) update=yes updatewhereclause=yes key=yes name=item_code dbname="id_item_es.item_code" dbalias=".item_code" )
+ column=(type=char(300) update=yes updatewhereclause=yes name=item_name dbname="id_item_es.item_name" dbalias=".item_name" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=es_item_type dbname="id_item_es.es_item_type" dbalias=".es_item_type" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=customer_code dbname="id_item_es.customer_code" dbalias=".customer_code" )
+ column=(type=char(50) update=yes updatewhereclause=yes name=part_no dbname="id_item_es.part_no" dbalias=".part_no" )
+ column=(type=char(300) update=yes updatewhereclause=yes name=item_spec dbname="id_item_es.item_spec" dbalias=".item_spec" )
+ column=(type=datetime update=yes updatewhereclause=yes name=enter_date dbname="id_item_es.enter_date" dbalias=".enter_date" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=enter_by dbname="id_item_es.enter_by" dbalias=".enter_by" )
+ column=(type=datetime update=yes updatewhereclause=yes name=last_modify_date dbname="id_item_es.last_modify_date" dbalias=".last_modify_date" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=last_modify_by dbname="id_item_es.last_modify_by" dbalias=".last_modify_by" )
+ column=(type=number update=yes updatewhereclause=yes key=yes name=organization_id dbname="id_item_es.organization_id" dbalias=".organization_id" )
+ retrieve="  SELECT item_code, 
+              item_name, 
+              es_item_type, 
+              customer_code, 
+              part_no, 
+              item_spec, 
+              enter_date, 
+              enter_by, 
+              last_modify_date, 
+              last_modify_by, 
+              organization_id
+    FROM ID_ITEM_ES
+  WHERE item_code        like :arg_item_code
+       AND es_item_type   like :arg_item_type
+       AND customer_code like :arg_customer_code
+       AND organization_id =   :arg_org_id
+       AND item_spec       like :arg_item_spec
+" update="ID_ITEM_ES" updatewhere=0 updatekeyinplace=no arguments=(("arg_item_code", string),("arg_item_type", string),("arg_customer_code", string),("arg_org_id", number),("arg_item_spec", string)) )
+text(band=header alignment="2" text="Item Code" border="0" color="33554432" x="187" y="4" height="140" width="530" html.valueishtml="0"  name=item_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Customer Code" border="0" color="33554432" x="2117" y="4" height="140" width="526" html.valueishtml="0"  name=customer_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Part No" border="0" color="33554432" x="2651" y="4" height="140" width="517" html.valueishtml="0"  name=part_no_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Item Spec" border="0" color="33554432" x="3177" y="4" height="140" width="905" html.valueishtml="0"  name=item_spec_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Enter Date" border="0" color="33554432" x="4091" y="4" height="140" width="553" html.valueishtml="0"  name=enter_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Enter By" border="0" color="33554432" x="4654" y="4" height="140" width="512" html.valueishtml="0"  name=enter_by_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Last Modify Date" border="0" color="33554432" x="5175" y="4" height="140" width="539" html.valueishtml="0"  name=last_modify_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Last Modify By" border="0" color="33554432" x="5723" y="4" height="140" width="544" html.valueishtml="0"  name=last_modify_by_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Organization Id" border="0" color="33554432" x="6277" y="4" height="140" width="283" html.valueishtml="0"  name=organization_id_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Item Name" border="0" color="33554432" x="727" y="4" height="140" width="914" html.valueishtml="0"  name=item_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Item Type" border="0" color="33554432" x="1650" y="4" height="140" width="457" html.valueishtml="0"  name=es_item_type_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+compute(band=detail alignment="2" expression="getrow()"border="0" color="33554432" x="9" y="0" height="72" width="169" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12639424" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="33554432" x="187" y="0" height="72" width="530" format="[general]" html.valueishtml="0"  name=item_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=5 alignment="2" tabsequence=40 border="0" color="33554432" x="2651" y="0" height="72" width="517" format="[general]" html.valueishtml="0"  name=part_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=7 alignment="2" tabsequence=32766 border="0" color="33554432" x="4091" y="0" height="72" width="553" format="[shortdate] [time]" html.valueishtml="0"  name=enter_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=8 alignment="2" tabsequence=32766 border="0" color="33554432" x="4654" y="0" height="72" width="512" format="[general]" html.valueishtml="0"  name=enter_by visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=9 alignment="2" tabsequence=32766 border="0" color="33554432" x="5175" y="0" height="72" width="539" format="[shortdate] [time]" html.valueishtml="0"  name=last_modify_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=10 alignment="2" tabsequence=32766 border="0" color="33554432" x="5723" y="0" height="72" width="544" format="[general]" html.valueishtml="0"  name=last_modify_by visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=11 alignment="2" tabsequence=32766 border="0" color="33554432" x="6277" y="0" height="72" width="283" format="[general]" html.valueishtml="0"  name=organization_id visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=2 alignment="0" tabsequence=10 border="0" color="33554432" x="727" y="0" height="72" width="914" format="[general]" html.valueishtml="0"  name=item_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=4 alignment="0" tabsequence=30 border="0" color="33554432" x="2117" y="0" height="72" width="526" format="[general]" html.valueishtml="0"  name=customer_code visible="1" dddw.name=vd_customer_code dddw.displaycolumn=customer_name dddw.datacolumn=customer_code dddw.percentwidth=300 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=6 alignment="0" tabsequence=50 border="0" color="33554432" x="3177" y="0" height="72" width="905" format="[general]" html.valueishtml="0"  name=item_spec visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=3 alignment="0" tabsequence=20 border="0" color="33554432" x="1650" y="0" height="72" width="457" format="[general]" html.valueishtml="0"  name=es_item_type visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=300 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any dddw.autoretrieve=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

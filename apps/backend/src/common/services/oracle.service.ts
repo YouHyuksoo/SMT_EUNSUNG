@@ -26,6 +26,22 @@ import { ConfigService } from '@nestjs/config';
 import * as oracledb from 'oracledb';
 import { isRecord } from '../utils/json-record.util';
 
+/**
+ * TypeORM `manager.query` 에 넘길 oracledb 바인드. 드라이버 상수는 이 파일 밖에서 쓰지 않는다
+ * (architecture/module-boundary.spec.ts).
+ */
+export const outStringBind = (maxSize = 4000) => ({
+  dir: oracledb.BIND_OUT,
+  type: oracledb.STRING,
+  maxSize,
+});
+
+/** 숫자 OUT 바인드 (프로시저·함수가 돌려주는 세션번호 등). */
+export const outNumberBind = () => ({ dir: oracledb.BIND_OUT, type: oracledb.NUMBER });
+
+/** 긴 문자열(JSON 등)을 CLOB 으로 넘긴다 — VARCHAR2 한도(32KB)를 넘어도 된다. */
+export const clobBind = (val: string) => ({ val, type: oracledb.CLOB });
+
 /** Oracle 식별자 화이트리스트 패턴 (패키지명/프로시저명 인젝션 방지) */
 const SAFE_IDENTIFIER = /^[A-Z][A-Z0-9_$#]{0,29}$/i;
 type OracleRow = Record<string, unknown>;
@@ -161,17 +177,69 @@ export class OracleService implements OnModuleInit, OnModuleDestroy {
   }
 
   /**
+   * Oracle 함수 반환값(세션ID 등)을 받아, 그 값을 쓰는 커서를 같은 커넥션에서 연다.
+   *
+   * BOM 전개(PKG_DESIGN.BOM_QUERY)처럼 함수가 임시테이블에 INSERT 하고 세션ID를 반환하는 패턴용.
+   * autoCommit=false 이므로 커넥션 반납 시 함수의 부수 INSERT 는 자동 롤백된다 → 임시테이블 누수 없음.
+   * (커서는 이미 페치를 마친 뒤라 결과에는 영향 없음. PB 의 "함수 호출 → 조회 → ROLLBACK" 과 동일.)
+   *
+   * assignExpr/cursorSql 은 호출측이 제어하는 고정 SQL 이어야 한다(사용자 입력은 inParams 바인드로만).
+   * cursorSql 은 함수 반환값을 `:sid` 바인드로 참조한다.
+   *
+   * @param assignExpr 함수 호출식. 예: 'PKG_DESIGN.BOM_QUERY(:parent, :dateset, :org)'
+   * @param cursorSql  세션ID 기준 조회 SQL. 예: 'SELECT ... WHERE SESSION_ID = :sid'
+   * @param inParams   IN 바인드 (예: { parent, dateset, org })
+   */
+  async callFunctionReturningCursor(
+    assignExpr: string,
+    cursorSql: string,
+    inParams: Record<string, unknown>,
+  ): Promise<{ rows: OracleRow[]; sessionId: number }> {
+    let conn: oracledb.Connection | undefined;
+    try {
+      conn = await this.pool.getConnection();
+      const bindVars: Record<string, oracledb.BindParameter> = {};
+      for (const [key, value] of Object.entries(inParams)) {
+        bindVars[key] = { dir: oracledb.BIND_IN, val: value };
+      }
+      bindVars['sid'] = { dir: oracledb.BIND_INOUT, type: oracledb.NUMBER, val: null };
+      bindVars['o_cursor'] = { dir: oracledb.BIND_OUT, type: oracledb.CURSOR };
+
+      const sql = `BEGIN :sid := ${assignExpr}; OPEN :o_cursor FOR ${cursorSql}; END;`;
+      const result = await this.executeWithRetry(conn, sql, bindVars, {
+        outFormat: oracledb.OUT_FORMAT_OBJECT,
+      });
+      const sessionId = Number(getOutBinds(result.outBinds).sid ?? 0);
+      const cursor = getCursor(result.outBinds, 'o_cursor');
+      const rows = await cursor.getRows();
+      await cursor.close();
+      return { rows, sessionId };
+    } catch (err) {
+      this.logger.error(
+        `함수+커서 호출 실패: ${assignExpr}`,
+        err instanceof Error ? err.stack : String(err),
+      );
+      throw new InternalServerErrorException(`Oracle 함수 호출 실패: ${assignExpr}`);
+    } finally {
+      if (conn) await conn.close();
+    }
+  }
+
+  /**
    * Oracle 프로시저 호출 - 스칼라 OUT 파라미터 반환 (커서 없음)
    * 패키지 없이 standalone procedure, N_RETURN/V_RETURN 패턴에 사용
    *
    * @param procName 프로시저명
    * @param outDefs OUT 파라미터 정의 배열
    * @param inParams IN 파라미터 (선택)
+   * @param options autoCommit=true는 쓰기 프로시저에만 준다. 기본값 false라 커넥션 반납 시
+   *                프로시저의 DML이 롤백되므로, 실제로 저장해야 하면 반드시 켠다.
    */
   async callProcScalar(
     procName: string,
     outDefs: Array<{ name: string; type: 'NUMBER' | 'STRING' | 'DATE'; maxSize?: number }>,
     inParams?: Record<string, unknown>,
+    options?: { autoCommit?: boolean },
   ): Promise<Record<string, unknown>> {
     validateIdentifier(procName, '프로시저명');
 
@@ -202,7 +270,9 @@ export class OracleService implements OnModuleInit, OnModuleDestroy {
       }
 
       const sql = `BEGIN ${procName}(${paramNames.join(', ')}); END;`;
-      const result = await this.executeWithRetry(conn, sql, bindVars);
+      const result = await this.executeWithRetry(conn, sql, bindVars, {
+        autoCommit: options?.autoCommit ?? false,
+      });
       return getOutBinds(result.outBinds);
     } catch (err) {
       this.logger.error(

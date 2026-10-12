@@ -12,14 +12,14 @@
  *  5. 첨부 영역 상단 우측에 [일괄 내려받기] · [일괄 삭제] 버튼
  *  6. 향후 모든 개발에서 공통 적용
  *
- * 동작 모드:
- *  - 기본(mock=false): 백엔드 API 연동
+ * 백엔드 API 연동:
  *      업로드  POST   /files/upload?businessType=&refKey=  (multipart, field: files)
  *      다운로드 GET   /uploads/... (서버 정적)  또는 GET /files/:id
  *      삭제     DELETE /files { ids }
- *  - mock=true: 실 DB 미연결 화면용 — 브라우저 File 보유·클라이언트 다운로드만.
  */
 import { useRef, useState } from 'react';
+import toast from 'react-hot-toast';
+import { ConfirmModal } from '@/components/ui';
 import { Paperclip, Download, Trash2, X, Upload, Loader2 } from 'lucide-react';
 import { api } from '@/services/api';
 import { resolveBackendFileUrl } from '@/utils/file-url';
@@ -46,12 +46,8 @@ export interface FileAttachmentProps {
   /** 첨부 영역 최소 높이 — 사전 영역 확보 (기본 140px) */
   minHeight?: string;
   accept?: string;
-  /** true면 백엔드 미연동(클라이언트 Mock) */
-  mock?: boolean;
 }
 
-let seq = 0;
-const uid = () => `att_${Date.now()}_${++seq}`;
 const isBackendId = (id: string) => /^\d+$/.test(id);
 const fmtSize = (n?: number) =>
   n == null ? '' : n < 1024 ? `${n}B` : n < 1048576 ? `${(n / 1024).toFixed(1)}KB` : `${(n / 1048576).toFixed(1)}MB`;
@@ -66,20 +62,14 @@ export default function FileAttachment({
   readOnly = false,
   minHeight = '140px',
   accept,
-  mock = false,
 }: FileAttachmentProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
+  const [clearOpen, setClearOpen] = useState(false);
 
   async function addFiles(list: FileList | null) {
     if (!list || !list.length) return;
     const picked = Array.from(list);
-
-    if (mock) {
-      const added: AttachedFile[] = picked.map((f) => ({ id: uid(), name: f.name, size: f.size, file: f }));
-      onChange(multiple ? [...value, ...added] : added.slice(0, 1));
-      return;
-    }
 
     // 백엔드 업로드
     setBusy(true);
@@ -96,7 +86,7 @@ export default function FileAttachment({
       const added: AttachedFile[] = dtos.map((d) => ({ id: d.id, name: d.name, size: d.size ?? undefined, url: d.url }));
       onChange(multiple ? [...value, ...added] : added.slice(0, 1));
     } catch (e) {
-      alert('파일 업로드에 실패했습니다.');
+      toast.error('파일 업로드에 실패했습니다.');
       console.error(e);
     } finally {
       setBusy(false);
@@ -105,7 +95,7 @@ export default function FileAttachment({
 
   async function deleteBackend(ids: string[]) {
     const nums = ids.filter(isBackendId).map(Number);
-    if (!nums.length || mock) return;
+    if (!nums.length) return;
     await api.delete('/files', { data: { ids: nums } }).catch((e) => {
       console.error(e);
     });
@@ -116,8 +106,7 @@ export default function FileAttachment({
     onChange(value.filter((x) => x.id !== f.id));
   }
   async function clearAll() {
-    if (!value.length) return;
-    if (!confirm('첨부파일을 모두 삭제할까요?')) return;
+    setClearOpen(false);
     await deleteBackend(value.map((f) => f.id));
     onChange([]);
   }
@@ -159,7 +148,7 @@ export default function FileAttachment({
             </button>
             <button
               type="button"
-              onClick={clearAll}
+              onClick={() => value.length && setClearOpen(true)}
               disabled={!value.length}
               className="text-xs border border-border rounded px-2 py-1 text-red-500 hover:bg-surface disabled:opacity-40 inline-flex items-center gap-1"
             >
@@ -226,6 +215,14 @@ export default function FileAttachment({
           </ul>
         )}
       </div>
+      <ConfirmModal
+        isOpen={clearOpen}
+        onClose={() => setClearOpen(false)}
+        onConfirm={clearAll}
+        title="첨부파일 삭제"
+        message="첨부파일을 모두 삭제할까요?"
+        variant="danger"
+      />
     </div>
   );
 }

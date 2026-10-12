@@ -1,0 +1,171 @@
+{
+  "_comment": [
+    "이관 대상에서 **제외**하기로 사용자가 결정한 PB 화면.",
+    "여기 등록된 창은 이관현황 문서에서 '미착수'가 아니라 '이관제외'로 잡히고",
+    "미착수 건수에서 빠진다. 전체 건수에는 남아 있어 무엇을 왜 뺐는지 추적된다.",
+    "",
+    "등록 규칙:",
+    "  - window: pb-screen-inventory.json 의 window 값 (소문자)",
+    "  - reason: 왜 뺐는지 한 줄. 실측 근거가 있으면 숫자를 적는다.",
+    "  - decidedAt: 사용자가 결정한 날짜 (YYYY-MM-DD)",
+    "**제외 판단은 사용자만 한다. 에이전트가 임의로 추가하지 않는다.**",
+    "",
+    "2026-09-29 일괄 결정: 남은 83건을 한 건씩 확인해 33건을 제외하고",
+    "나머지 50건은 전부 이관 대상으로 확정했다. 실측으로 '미사용'이던 화면 중에도",
+    "사용자가 대상으로 남긴 것이 있다 (300·303·306·146·280) — 표가 비어 있다는 것이",
+    "곧 제외 사유는 아니라는 뜻이다.",
+    "2026-09-29 정정: 460 설비 픽업률조회 · 461 SMT 픽업율(최종데이터조회)는 사용자가 이관 대상으로 확정했다 (제외에서 뺐다)."
+  ],
+  "exclusions": [
+    {
+      "window": "w_agent_message_master",
+      "reason": "ISYS_AUDIT_MESSAGE 0행 — 들어 있는 자료가 없어 옮겨도 확인할 수 없다",
+      "decidedAt": "2026-09-29"
+    },
+    {
+      "window": "w_col_info_popup",
+      "reason": "PB IDE 내장 개발도구. 웹 대응물 없음 (DB 접속 도구·/system/er-view 가 대신)",
+      "decidedAt": "2026-09-29"
+    },
+    {
+      "window": "w_com_bring_in_master",
+      "reason": "반출반입 업무는 이관 대상에서 제외 (사용자 지시)",
+      "decidedAt": "2026-09-29"
+    },
+    {
+      "window": "w_com_carrying_out_bring_in_confirm",
+      "reason": "반출반입 업무는 이관 대상에서 제외 (사용자 지시)",
+      "decidedAt": "2026-09-29"
+    },
+    {
+      "window": "w_com_carrying_out_bring_in_security",
+      "reason": "반출반입 업무는 이관 대상에서 제외 (사용자 지시)",
+      "decidedAt": "2026-09-29"
+    },
+    {
+      "window": "w_com_carrying_out_master",
+      "reason": "반출반입 업무는 이관 대상에서 제외 (사용자 지시)",
+      "decidedAt": "2026-09-29"
+    },
+    {
+      "window": "w_dataobject_master",
+      "reason": "PB IDE 내장 개발도구. 웹 대응물 없음 (DB 접속 도구·/system/er-view 가 대신)",
+      "decidedAt": "2026-09-29"
+    },
+    {
+      "window": "w_db_object_master",
+      "reason": "PB IDE 내장 개발도구. 웹 대응물 없음 (DB 접속 도구·/system/er-view 가 대신)",
+      "decidedAt": "2026-09-29"
+    },
+    {
+      "window": "w_dual_language",
+      "reason": "웹이 다른 방식으로 처리 (menuConfig·RBAC·i18n locales·activity-log) — i18n locales(ko·en·vi·zh)",
+      "decidedAt": "2026-09-29"
+    },
+    {
+      "window": "w_dual_message",
+      "reason": "웹이 다른 방식으로 처리 (menuConfig·RBAC·i18n locales·activity-log) — i18n locales",
+      "decidedAt": "2026-09-29"
+    },
+    {
+      "window": "w_edit_window",
+      "reason": "PB IDE 내장 개발도구. 웹 대응물 없음 (DB 접속 도구·/system/er-view 가 대신)",
+      "decidedAt": "2026-09-29"
+    },
+    {
+      "window": "w_error_log_trace",
+      "reason": "웹이 다른 방식으로 처리 (menuConfig·RBAC·i18n locales·activity-log) — 백엔드 로깅 인터셉터",
+      "decidedAt": "2026-09-29"
+    },
+    {
+      "window": "w_mcn_it_master",
+      "reason": "IMCN_FIXASSET 0행",
+      "decidedAt": "2026-09-29"
+    },
+    {
+      "window": "w_menu_master",
+      "reason": "웹이 다른 방식으로 처리 (menuConfig·RBAC·i18n locales·activity-log) — 메뉴는 menuConfig.ts 가 정본",
+      "decidedAt": "2026-09-29"
+    },
+    {
+      "window": "w_organization_master",
+      "reason": "웹이 다른 방식으로 처리 (menuConfig·RBAC·i18n locales·activity-log) — /master/company·/system/department",
+      "decidedAt": "2026-09-29"
+    },
+    {
+      "window": "w_pln_barcode_check_master",
+      "reason": "IM_ASSY_INVENTORY_CHECK_BCD 0행",
+      "decidedAt": "2026-09-29"
+    },
+    {
+      "window": "w_pln_product_delivery_master",
+      "reason": "IP_PRODUCT_DELIVERY_MONTH_PLAN 0행",
+      "decidedAt": "2026-09-29"
+    },
+    {
+      "window": "w_pln_product_sound_history_query",
+      "reason": "ISYS_SOUND_MENT 0행",
+      "decidedAt": "2026-09-29"
+    },
+    {
+      "window": "w_privilege_master",
+      "reason": "웹이 다른 방식으로 처리 (menuConfig·RBAC·i18n locales·activity-log) — 역할·권한은 RBAC",
+      "decidedAt": "2026-09-29"
+    },
+    {
+      "window": "w_report_generator",
+      "reason": "PB IDE 내장 개발도구. 웹 대응물 없음 (DB 접속 도구·/system/er-view 가 대신)",
+      "decidedAt": "2026-09-29"
+    },
+    {
+      "window": "w_role_master",
+      "reason": "웹이 다른 방식으로 처리 (menuConfig·RBAC·i18n locales·activity-log) — 역할·권한은 RBAC",
+      "decidedAt": "2026-09-29"
+    },
+    {
+      "window": "w_runtime_dw_generator",
+      "reason": "PB IDE 내장 개발도구. 웹 대응물 없음 (DB 접속 도구·/system/er-view 가 대신)",
+      "decidedAt": "2026-09-29"
+    },
+    {
+      "window": "w_show_datawindow_popup",
+      "reason": "PB IDE 내장 개발도구. 웹 대응물 없음 (DB 접속 도구·/system/er-view 가 대신)",
+      "decidedAt": "2026-09-29"
+    },
+    {
+      "window": "w_smt_upload_partlib_master",
+      "reason": "IB_MNT_PARTLIB_MASTER 0행",
+      "decidedAt": "2026-09-29"
+    },
+    {
+      "window": "w_sql_painter",
+      "reason": "PB IDE 내장 개발도구. 웹 대응물 없음 (DB 접속 도구·/system/er-view 가 대신)",
+      "decidedAt": "2026-09-29"
+    },
+    {
+      "window": "w_system_access_master",
+      "reason": "웹이 다른 방식으로 처리 (menuConfig·RBAC·i18n locales·activity-log) — activity-log",
+      "decidedAt": "2026-09-29"
+    },
+    {
+      "window": "w_table_description_rpt",
+      "reason": "PB IDE 내장 개발도구. 웹 대응물 없음 (DB 접속 도구·/system/er-view 가 대신)",
+      "decidedAt": "2026-09-29"
+    },
+    {
+      "window": "w_value_list_popup",
+      "reason": "PB IDE 내장 개발도구. 웹 대응물 없음 (DB 접속 도구·/system/er-view 가 대신)",
+      "decidedAt": "2026-09-29"
+    },
+    {
+      "window": "w_window_master",
+      "reason": "웹이 다른 방식으로 처리 (menuConfig·RBAC·i18n locales·activity-log) — PB 창 등록부라 웹에 대응 개념이 없다",
+      "decidedAt": "2026-09-29"
+    },
+    {
+      "window": "w_word_dictionary",
+      "reason": "PB IDE 내장 개발도구. 웹 대응물 없음 (DB 접속 도구·/system/er-view 가 대신)",
+      "decidedAt": "2026-09-29"
+    }
+  ]
+}

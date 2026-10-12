@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { ItemSupplier } from '../../../entities/item-supplier.entity';
 import { CreateItemSupplierDto, ItemSupplierQueryDto, UpdateItemSupplierDto } from '../dto/item-supplier.dto';
+import { namedBinds } from '../../../common/utils/named-binds.util';
 
 @Injectable()
 export class ItemSupplierService {
@@ -20,8 +21,8 @@ export class ItemSupplierService {
       binds.search = `%${query.search.toUpperCase()}%`;
     }
     const where = conditions.join(' AND ');
-    const totalRows = await this.dataSource.query(`SELECT COUNT(*) "total" FROM IM_ITEM_MASTER m LEFT JOIN ID_ITEM i ON i.ITEM_CODE=m.ITEM_CODE AND i.ORGANIZATION_ID=m.ORGANIZATION_ID LEFT JOIN ICOM_SUPPLIER s ON s.SUPPLIER_CODE=m.SUPPLIER_CODE AND s.ORGANIZATION_ID=m.ORGANIZATION_ID WHERE ${where}`, binds as never);
-    const rows = await this.dataSource.query(`SELECT m.SUPPLIER_CODE "supplierCode",s.SUPPLIER_NAME "supplierName",m.ITEM_CODE "itemCode",i.ITEM_NAME "itemName",m.DATESET "dateset",m.DATEEND "dateend",m.ORDER_TYPE "orderType",m.ORDER_RATE "orderRate",m.ORDER_LEADTIME "orderLeadtime",m.ORDER_BAD_RATE "orderBadRate",m.MIM_ORDER_QTY "mimOrderQty",m.PACKING_QTY "packingQty",m.LONGTERM_DELIVERY_YN "longtermDeliveryYn",m.WAREHOUSE_CHARGE "warehouseCharge",m.ORDER_CHARGE "orderCharge",m.MAIN_VENDOR_YN "mainVendorYn",m.PAYMENT_TYPE "paymentType",m.INSPECT_METHOD "inspectMethod",m.INSPECT_RULE "inspectRule",m.INCIDENTAL_EXPENSE_CODE "incidentalExpenseCode",m.INSPECT_PROCESS "inspectProcess",m.ESD_CHECK_CYCLE_VALUE "esdCheckCycleValue",m.ENTER_BY "enterBy",m.ENTER_DATE "enterDate",m.LAST_MODIFY_BY "lastModifyBy",m.LAST_MODIFY_DATE "lastModifyDate" FROM IM_ITEM_MASTER m LEFT JOIN ID_ITEM i ON i.ITEM_CODE=m.ITEM_CODE AND i.ORGANIZATION_ID=m.ORGANIZATION_ID LEFT JOIN ICOM_SUPPLIER s ON s.SUPPLIER_CODE=m.SUPPLIER_CODE AND s.ORGANIZATION_ID=m.ORGANIZATION_ID WHERE ${where} ORDER BY m.ITEM_CODE,m.SUPPLIER_CODE,m.DATESET DESC OFFSET ${(page - 1) * limit} ROWS FETCH NEXT ${limit} ROWS ONLY`, binds as never);
+    const totalRows = await this.dataSource.query(`SELECT COUNT(*) "total" FROM IM_ITEM_MASTER m LEFT JOIN ID_ITEM i ON i.ITEM_CODE=m.ITEM_CODE AND i.ORGANIZATION_ID=m.ORGANIZATION_ID LEFT JOIN ICOM_SUPPLIER s ON s.SUPPLIER_CODE=m.SUPPLIER_CODE AND s.ORGANIZATION_ID=m.ORGANIZATION_ID WHERE ${where}`, namedBinds(binds));
+    const rows = await this.dataSource.query(`SELECT m.SUPPLIER_CODE "supplierCode",s.SUPPLIER_NAME "supplierName",m.ITEM_CODE "itemCode",i.ITEM_NAME "itemName",m.DATESET "dateset",m.DATEEND "dateend",m.ORDER_TYPE "orderType",m.ORDER_RATE "orderRate",m.ORDER_LEADTIME "orderLeadtime",m.ORDER_BAD_RATE "orderBadRate",m.MIM_ORDER_QTY "mimOrderQty",m.PACKING_QTY "packingQty",m.LONGTERM_DELIVERY_YN "longtermDeliveryYn",m.WAREHOUSE_CHARGE "warehouseCharge",m.ORDER_CHARGE "orderCharge",m.MAIN_VENDOR_YN "mainVendorYn",m.PAYMENT_TYPE "paymentType",m.INSPECT_METHOD "inspectMethod",m.INSPECT_RULE "inspectRule",m.INCIDENTAL_EXPENSE_CODE "incidentalExpenseCode",m.INSPECT_PROCESS "inspectProcess",m.ESD_CHECK_CYCLE_VALUE "esdCheckCycleValue",m.ENTER_BY "enterBy",m.ENTER_DATE "enterDate",m.LAST_MODIFY_BY "lastModifyBy",m.LAST_MODIFY_DATE "lastModifyDate" FROM IM_ITEM_MASTER m LEFT JOIN ID_ITEM i ON i.ITEM_CODE=m.ITEM_CODE AND i.ORGANIZATION_ID=m.ORGANIZATION_ID LEFT JOIN ICOM_SUPPLIER s ON s.SUPPLIER_CODE=m.SUPPLIER_CODE AND s.ORGANIZATION_ID=m.ORGANIZATION_ID WHERE ${where} ORDER BY m.ITEM_CODE,m.SUPPLIER_CODE,m.DATESET DESC OFFSET ${(page - 1) * limit} ROWS FETCH NEXT ${limit} ROWS ONLY`, namedBinds(binds));
     return { data: rows, total: Number(totalRows[0]?.total ?? 0), page, limit };
   }
 

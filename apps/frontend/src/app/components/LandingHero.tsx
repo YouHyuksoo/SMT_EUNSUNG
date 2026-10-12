@@ -2,25 +2,29 @@
 
 /**
  * @file src/app/components/LandingHero.tsx
- * @description 랜딩페이지 히어로 섹션 - 메인 타이틀, 설명, CTA 버튼
+ * @description 랜딩페이지 히어로 섹션 - 시스템 이름, 관리 범위 요약, 로그인/대시보드 진입
  *
  * 초보자 가이드:
- * 1. **몽환적 블룸 배경**: DreamyBackground (선 없이 빛번짐만)
- * 2. **CTA 버튼**: 인증 상태에 따라 대시보드/로그인으로 이동
- * 3. **등장 애니메이션**: gsap 순차 stagger (reduced-motion 존중)
+ * 1. **좌측**: 회사명·시스템명·한 줄 설명·진입 버튼 (로그인은 항상, 대시보드는 로그인 시)
+ * 2. **우측 카드 덱**: 생산기술·검사·제품 관리 범위 (LandingScopeDeck - 부채꼴 펼침·자동 순환)
+ * 3. **배경**: 테마 border 색으로 그린 얇은 격자 (이미지 없음, 오프라인 환경 대응)
+ * 4. **등장 애니메이션**: gsap 순차 stagger (reduced-motion 존중)
  */
 
 import { useEffect, useRef } from "react";
-import { ArrowRight, BarChart3, Zap, ShieldCheck } from "lucide-react";
+import { ArrowRight, LayoutDashboard } from "lucide-react";
 import gsap from "gsap";
-import { DreamyBackground } from "./DreamyBackground";
+import LandingScopeDeck from "./LandingScopeDeck";
 
 interface LandingHeroProps {
-  onNavigate: () => void;
   isAuthenticated: boolean;
+  onLogin: () => void;
+  onDashboard: () => void;
 }
 
-export default function LandingHero({ onNavigate, isAuthenticated }: LandingHeroProps) {
+const GRID_MASK = "radial-gradient(ellipse 80% 70% at 70% 30%, #000 30%, transparent 75%)";
+
+export default function LandingHero({ isAuthenticated, onLogin, onDashboard }: LandingHeroProps) {
   const rootRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -38,87 +42,71 @@ export default function LandingHero({ onNavigate, isAuthenticated }: LandingHero
   }, []);
 
   return (
-    <section ref={rootRef} className="relative overflow-hidden pt-32 pb-24 lg:pt-44 lg:pb-36">
-      {/* 몽환적 소프트 블룸 배경 */}
-      <DreamyBackground className="z-0" />
+    <section ref={rootRef} className="relative overflow-hidden pt-28 pb-20 lg:pt-40 lg:pb-28">
+      {/* 격자 배경 */}
+      <div
+        aria-hidden
+        className="absolute inset-0 z-0 opacity-60"
+        style={{
+          backgroundImage:
+            "linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px)",
+          backgroundSize: "48px 48px",
+          maskImage: GRID_MASK,
+          WebkitMaskImage: GRID_MASK,
+        }}
+      />
 
-      <div className="relative z-10 max-w-7xl mx-auto px-6">
-        <div className="max-w-3xl mx-auto text-center">
-          {/* Badge */}
-          <div
-            data-hero-reveal
-            className="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full
-                       border border-border/60 bg-card/50 text-primary text-sm font-medium
-                       backdrop-blur-md shadow-sm"
-          >
-            <Zap className="w-3.5 h-3.5" />
-            Manufacturing Execution System
-          </div>
-
-          {/* Title */}
-          <h1
-            data-hero-reveal
-            className="text-4xl sm:text-5xl lg:text-[4rem] font-bold text-text
-                       leading-[1.15] tracking-tight mb-6"
-          >
-            스마트한{" "}
-            <span className="text-primary drop-shadow-[0_2px_24px_rgba(236,11,122,0.35)]">
-              생산관리
-            </span>
-            의
-            <br />
-            시작
-          </h1>
-
-          {/* Description */}
-          <p
-            data-hero-reveal
-            className="text-lg text-text-muted max-w-xl mx-auto mb-10 leading-relaxed"
-          >
-            PCB SMT 생산 전 공정을 실시간으로 관리하고, 데이터 기반 의사결정으로
-            생산성을 극대화하세요.
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 grid lg:grid-cols-12 gap-12 lg:gap-10 items-center">
+        {/* 좌측: 소개 */}
+        <div className="lg:col-span-7">
+          <p data-hero-reveal className="mb-6 text-xs font-semibold tracking-[0.2em] text-primary">
+            EUNSUNG ELECTRONICS · MES
           </p>
 
-          {/* CTA Buttons */}
-          <div
+          <h1
             data-hero-reveal
-            className="flex flex-col sm:flex-row items-center justify-center gap-4"
+            className="text-4xl sm:text-5xl lg:text-6xl font-bold text-text leading-[1.15] tracking-tight mb-6"
           >
+            은성전장
+            <br />
+            생산관리시스템
+          </h1>
+
+          <p
+            data-hero-reveal
+            className="text-base sm:text-lg text-text-muted max-w-xl mb-10 leading-relaxed"
+          >
+            자동차 전장용 PCB Ass&apos;y·Brushcard Ass&apos;y 생산 라인의 자재 수불, 공정 실적,
+            검사 결과, 설비 가동 현황을 관리합니다.
+          </p>
+
+          <div data-hero-reveal className="flex flex-col sm:flex-row gap-3">
             <button
-              onClick={onNavigate}
-              className="flex items-center gap-2 px-8 py-3.5 rounded-lg text-base font-semibold
-                         bg-primary text-white shadow-lg shadow-primary/30
+              onClick={onLogin}
+              className="flex items-center justify-center gap-2 px-7 py-3.5 rounded-lg text-base font-semibold
+                         bg-primary text-white
                          hover:bg-primary-hover active:scale-[0.98] transition-all duration-200"
             >
-              {isAuthenticated ? "대시보드로 이동" : "시작하기"}
+              로그인
               <ArrowRight className="w-5 h-5" />
             </button>
+            {isAuthenticated && (
+              <button
+                onClick={onDashboard}
+                className="flex items-center justify-center gap-2 px-7 py-3.5 rounded-lg text-base font-semibold
+                           border border-border bg-card text-text
+                           hover:border-primary/50 hover:text-primary transition-colors duration-200"
+              >
+                <LayoutDashboard className="w-5 h-5" />
+                대시보드로 이동
+              </button>
+            )}
           </div>
+        </div>
 
-          {/* Stats */}
-          <div data-hero-reveal className="mt-16 grid grid-cols-3 gap-8 max-w-lg mx-auto">
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-1.5 mb-1">
-                <BarChart3 className="w-4 h-4 text-primary" />
-                <span className="text-2xl font-bold text-text">16+</span>
-              </div>
-              <span className="text-xs text-text-muted">관리 모듈</span>
-            </div>
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-1.5 mb-1">
-                <Zap className="w-4 h-4 text-primary" />
-                <span className="text-2xl font-bold text-text">실시간</span>
-              </div>
-              <span className="text-xs text-text-muted">생산 모니터링</span>
-            </div>
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-1.5 mb-1">
-                <ShieldCheck className="w-4 h-4 text-primary" />
-                <span className="text-2xl font-bold text-text">100%</span>
-              </div>
-              <span className="text-xs text-text-muted">추적성 보장</span>
-            </div>
-          </div>
+        {/* 우측: 관리 범위 카드 덱 */}
+        <div data-hero-reveal className="lg:col-span-5">
+          <LandingScopeDeck />
         </div>
       </div>
     </section>

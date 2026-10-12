@@ -38,5 +38,4 @@ export { createMeteorImpact, createScreenCrack } from './meteor-impact';
  * 이펙트 시스템 초기화 (자동 실행 없음 - 모든 이펙트는 수동 클릭으로 실행)
  */
 export function init(): void {
-  console.log('[Effects] Effect system ready (manual trigger mode)');
 }

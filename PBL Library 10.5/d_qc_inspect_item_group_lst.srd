@@ -1,0 +1,96 @@
+HA$PBExportHeader$d_qc_inspect_item_group_lst.srd
+release 10.5;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no grid.lines=0 )
+header(height=152 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=88 color="536870912" )
+table(column=(type=char(30) update=yes updatewhereclause=yes key=yes name=inspect_group dbname="iqc_inspection_template.inspect_group" dbalias=".inspect_group" )
+ column=(type=char(50) update=yes updatewhereclause=yes name=inspect_group_desc dbname="iqc_inspection_template.inspect_group_desc" dbalias=".inspect_group_desc" )
+ column=(type=number update=yes updatewhereclause=yes key=yes name=display_seq dbname="iqc_inspection_template.display_seq" dbalias=".display_seq" )
+ column=(type=char(100) update=yes updatewhereclause=yes name=inspection_item dbname="iqc_inspection_template.inspection_item" dbalias=".inspection_item" )
+ column=(type=char(1) update=yes updatewhereclause=yes name=inspection_item_type dbname="iqc_inspection_template.inspection_item_type" dbalias=".inspection_item_type" )
+ column=(type=number update=yes updatewhereclause=yes name=inspection_value_lcl dbname="iqc_inspection_template.inspection_value_lcl" dbalias=".inspection_value_lcl" )
+ column=(type=number update=yes updatewhereclause=yes name=inspection_value_ucl dbname="iqc_inspection_template.inspection_value_ucl" dbalias=".inspection_value_ucl" )
+ column=(type=number update=yes updatewhereclause=yes name=inspection_value_std dbname="iqc_inspection_template.inspection_value_std" dbalias=".inspection_value_std" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=inspection_unit dbname="iqc_inspection_template.inspection_unit" dbalias=".inspection_unit" )
+ column=(type=char(1) update=yes updatewhereclause=yes name=use_flag dbname="iqc_inspection_template.use_flag" dbalias=".use_flag" )
+ column=(type=datetime update=yes updatewhereclause=yes name=last_modify_date dbname="iqc_inspection_template.last_modify_date" dbalias=".last_modify_date" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=last_modify_by dbname="iqc_inspection_template.last_modify_by" dbalias=".last_modify_by" )
+ column=(type=datetime update=yes updatewhereclause=yes name=enter_date dbname="iqc_inspection_template.enter_date" dbalias=".enter_date" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=enter_by dbname="iqc_inspection_template.enter_by" dbalias=".enter_by" )
+ column=(type=number update=yes updatewhereclause=yes key=yes name=organization_id dbname="iqc_inspection_template.organization_id" dbalias=".organization_id" )
+ column=(type=number update=yes updatewhereclause=yes name=inspection_item_seq dbname="iqc_inspection_template.inspection_item_seq" dbalias=".inspection_item_seq" )
+ column=(type=number update=yes updatewhereclause=yes name=sample_qty dbname="iqc_inspection_template.sample_qty" dbalias=".sample_qty" )
+ retrieve="  select inspect_group, 
+         inspect_group_desc, 
+         display_seq, 
+         inspection_item, 
+         inspection_item_type, 
+         inspection_value_lcl, 
+         inspection_value_ucl, 
+         inspection_value_std, 
+         inspection_unit,
+         use_flag,  
+         last_modify_date, 
+         last_modify_by, 
+         enter_date, 
+         enter_by,
+         organization_id, 
+         inspection_item_seq, 
+         sample_qty
+    from iqc_inspection_template
+   where inspect_group like :arg_group  
+     and organization_id = :arg_org_id
+
+" update="iqc_inspection_template" updatewhere=1 updatekeyinplace=no arguments=(("arg_group", string),("arg_org_id", number))  sort="inspect_group A display_seq A inspection_item_seq A " )
+group(level=1 header.height=0 trailer.height=0 by=("inspect_group" ) header.color="536870912" trailer.color="553648127" )
+text(band=header alignment="2" text="No." border="0" color="33554432" x="9" y="8" height="156" width="160" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+text(band=header alignment="2" text="$$HEX4$$88d4a9ba54cfdcb4$$ENDHEX$$" border="0" color="255" x="178" y="8" height="156" width="503" html.valueishtml="0"  name=inspect_group_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="ORG ID" border="0" color="33554432" x="5865" y="8" height="156" width="229" html.valueishtml="0"  name=organization_id_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+text(band=header alignment="2" text="Last Modify Date" border="0" color="33554432" x="4160" y="8" height="156" width="553" html.valueishtml="0"  name=last_modify_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+text(band=header alignment="2" text="Last Modify By" border="0" color="33554432" x="4722" y="8" height="156" width="265" html.valueishtml="0"  name=last_modify_by_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+text(band=header alignment="2" text="Enter Date" border="0" color="33554432" x="4997" y="8" height="156" width="549" html.valueishtml="0"  name=enter_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+text(band=header alignment="2" text="Enter By" border="0" color="33554432" x="5554" y="8" height="156" width="302" html.valueishtml="0"  name=enter_by_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+text(band=header alignment="2" text="$$HEX2$$a8ba78b3$$ENDHEX$$" border="0" color="255" x="690" y="8" height="156" width="814" html.valueishtml="0"  name=inspect_group_desc_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="$$HEX4$$80acacc0c0d085c7$$ENDHEX$$" border="0" color="33554432" x="2350" y="8" height="156" width="329" html.valueishtml="0"  name=inspection_item_type_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="$$HEX3$$58d55cd558ce$$ENDHEX$$" border="0" color="33554432" x="2688" y="8" height="156" width="329" html.valueishtml="0"  name=inspection_value_lcl_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="$$HEX3$$c1c05cd558ce$$ENDHEX$$" border="0" color="33554432" x="3026" y="8" height="156" width="302" html.valueishtml="0"  name=inspection_value_ucl_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="$$HEX6$$80acacc02000c9d3e0ad12ac$$ENDHEX$$" border="0" color="33554432" x="3337" y="8" height="156" width="274" html.valueishtml="0"  name=inspection_value_std_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="$$HEX4$$80acacc06dd5a9ba$$ENDHEX$$" border="0" color="33554432" x="1778" y="8" height="156" width="562" html.valueishtml="0"  name=inspection_item_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="$$HEX2$$e8b204c7$$ENDHEX$$" border="0" color="33554432" x="3621" y="8" height="156" width="279" html.valueishtml="0"  name=inspection_unit_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="Use Flag" border="0" color="33554432" x="3909" y="8" height="156" width="242" html.valueishtml="0"  name=use_flag_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="Inspection Item Seq" border="0" color="33554432" x="6103" y="8" height="156" width="270" html.valueishtml="0"  name=inspection_item_seq_t visible="0"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="Sample Qty" border="0" color="33554432" x="6382" y="8" height="156" width="215" html.valueishtml="0"  name=sample_qty_t visible="0"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12639424" )
+text(band=header alignment="2" text="$$HEX2$$1cc21cc1$$ENDHEX$$" border="0" color="255" x="1513" y="8" height="156" width="256" html.valueishtml="0"  name=display_seq_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12639424" )
+compute(band=detail alignment="2" expression="getrow()"border="0" color="33554432" x="9" y="12" height="64" width="160" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="134217732" )
+column(band=detail id=5 alignment="0" tabsequence=40 border="0" color="33554432" x="2350" y="12" height="64" width="329" format="[general]" html.valueishtml="0"  name=inspection_item_type visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=400 dddw.lines=10 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=6 alignment="1" tabsequence=50 border="0" color="33554432" x="2688" y="12" height="64" width="329" format="[general]" html.valueishtml="0"  name=inspection_value_lcl visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.nilisnull=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=7 alignment="1" tabsequence=60 border="0" color="33554432" x="3026" y="12" height="64" width="302" format="[general]" html.valueishtml="0"  name=inspection_value_ucl visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.nilisnull=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=8 alignment="1" tabsequence=70 border="0" color="33554432" x="3337" y="12" height="64" width="274" format="[general]" html.valueishtml="0"  name=inspection_value_std visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.nilisnull=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=2 alignment="0" tabsequence=10 border="0" color="33554432" x="690" y="12" height="64" width="814" format="[general]" html.valueishtml="0"  name=inspect_group_desc visible="1" edit.limit=50 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.nilisnull=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+column(band=detail id=4 alignment="0" tabsequence=30 border="0" color="33554432" x="1778" y="12" height="64" width="562" format="[general]" html.valueishtml="0"  name=inspection_item visible="1" edit.limit=100 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.nilisnull=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=9 alignment="2" tabsequence=80 border="0" color="33554432" x="3621" y="12" height="64" width="279" format="[general]" html.valueishtml="0"  name=inspection_unit visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.nilisnull=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=10 alignment="2" tabsequence=90 border="0" color="33554432" x="3909" y="12" height="64" width="242" format="[general]" html.valueishtml="0"  name=use_flag visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=600 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=15 alignment="2" tabsequence=32766 border="0" color="33554432" x="5865" y="12" height="64" width="229" format="[general]" html.valueishtml="0"  name=organization_id visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=11 alignment="2" tabsequence=32766 border="0" color="33554432" x="4160" y="12" height="64" width="553" format="[shortdate] [time]" html.valueishtml="0"  name=last_modify_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=12 alignment="2" tabsequence=32766 border="0" color="33554432" x="4722" y="12" height="64" width="265" format="[general]" html.valueishtml="0"  name=last_modify_by visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=13 alignment="2" tabsequence=32766 border="0" color="33554432" x="4997" y="12" height="64" width="549" format="[shortdate] [time]" html.valueishtml="0"  name=enter_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=14 alignment="2" tabsequence=32766 border="0" color="33554432" x="5554" y="12" height="64" width="302" format="[general]" html.valueishtml="0"  name=enter_by visible="1" edit.limit=20 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=16 alignment="1" tabsequence=32766 border="0" color="33554432" x="6103" y="12" height="64" width="270" format="[general]" html.valueishtml="0"  name=inspection_item_seq visible="0" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=17 alignment="1" tabsequence=32766 border="0" color="33554432" x="6382" y="12" height="64" width="215" format="[general]" html.valueishtml="0"  name=sample_qty visible="0" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="33554432" x="178" y="12" height="64" width="503" format="[general]" html.valueishtml="0"  name=inspect_group visible="1" edit.limit=30 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.nilisnull=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+column(band=detail id=3 alignment="2" tabsequence=20 border="0" color="33554432" x="1513" y="12" height="64" width="256" format="[general]" html.valueishtml="0"  name=display_seq visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=yes edit.nilisnull=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+line(band=trailer.1 x1="384" y1="8" x2="3922" y2="8"  name=l_1 visible="1" pen.style="0" pen.width="5" pen.color="33554432"  background.mode="2" background.color="1073741824" )
+
+sparse(names="inspect_group	inspect_group_desc	sample_qty")htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

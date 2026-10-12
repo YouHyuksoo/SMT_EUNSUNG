@@ -37,7 +37,7 @@ export default function WorkInstructionPage() {
   const panelAnimateRef = useRef(true);
   const { markDirty, guard, guardModalProps } = useUnsavedGuard();
 
-  const fetchData = useCallback(async () => {
+  const search = useCallback(async () => {
     setLoading(true);
     try {
       const params: Record<string, string> = { limit: "5000" };
@@ -51,7 +51,7 @@ export default function WorkInstructionPage() {
     }
   }, [searchText]);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => { search(); }, [search]);
 
   /** 패널 닫기 */
   const handlePanelClose = useCallback(() => {
@@ -63,8 +63,8 @@ export default function WorkInstructionPage() {
 
   /** 편집 패널 저장 후 */
   const handlePanelSave = useCallback(() => {
-    fetchData();
-  }, [fetchData]);
+    search();
+  }, [search]);
 
   /** 미리보기 → 편집 전환 */
   const handleSwitchToEdit = useCallback((item: WorkInstruction) => {
@@ -110,13 +110,13 @@ export default function WorkInstructionPage() {
       await api.delete(`/master/work-instructions/${encodeURIComponent(getWorkInstructionKey(deleteTarget))}`);
       setDeleteTarget(null);
       handlePanelClose();
-      fetchData();
+      search();
     } catch {
       // 에러는 api 인터셉터에서 처리
     } finally {
       setDeleting(false);
     }
-  }, [deleteTarget, fetchData, handlePanelClose]);
+  }, [deleteTarget, search, handlePanelClose]);
 
   const columns = useMemo(() => createWorkInstructionGridColumns({
     t,
@@ -135,7 +135,7 @@ export default function WorkInstructionPage() {
             <p className="text-text-muted mt-1">{t("master.workInstruction.subtitle")}</p>
           </div>
           <div className="flex gap-2">
-            <Button variant="secondary" size="sm" onClick={fetchData}>
+            <Button variant="secondary" size="sm" onClick={search}>
               <RefreshCw className="w-4 h-4 mr-1" />{t('common.refresh')}
             </Button>
             <Button size="sm" onClick={handleAddClick}>

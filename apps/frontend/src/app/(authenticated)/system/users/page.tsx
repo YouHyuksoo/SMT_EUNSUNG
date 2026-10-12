@@ -85,7 +85,7 @@ export default function UserPage() {
           </div>
           <div className="flex gap-2">
             <Button variant="secondary" size="sm" onClick={fetchUsers}>
-              <RefreshCw className={`w-4 h-4 mr-1 ${loading ? "animate-spin" : ""}`} />{t("common.refresh", "새로고침")}
+              <RefreshCw className={`w-4 h-4 mr-1 ${loading ? "animate-spin" : ""}`} />{t("common.refresh")}
             </Button>
             <Button size="sm" onClick={() => { panelAnimateRef.current = !isPanelOpen; setEditingUser(null); setIsPanelOpen(true); }}>
               <Plus className="w-4 h-4 mr-1" />{t("system.users.addUser", "사용자 추가")}

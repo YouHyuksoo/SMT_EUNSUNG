@@ -1,0 +1,276 @@
+HA$PBExportHeader$d_des_item_4_extra_mst.srd
+$PBExportComments$$$HEX5$$80bd88d4c8b9a4c230d1$$ENDHEX$$
+release 10.5;
+datawindow(units=0 timer_interval=0 color=12632256 processing=0 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no )
+header(height=0 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=612 color="536870912" )
+table(column=(type=char(20) update=yes updatewhereclause=yes key=yes name=item_code dbname="id_item.item_code" dbalias=".item_code" )
+ column=(type=number update=yes updatewhereclause=yes key=yes name=organization_id dbname="id_item.organization_id" dbalias=".organization_id" )
+ column=(type=char(1) update=yes updatewhereclause=yes name=set_item_yn dbname="id_item.set_item_yn" dbalias=".set_item_yn" values="YES	Y/NO	N/" )
+ column=(type=char(300) update=yes updatewhereclause=yes name=item_name dbname="id_item.item_name" dbalias=".item_name" )
+ column=(type=char(300) update=yes updatewhereclause=yes name=item_spec dbname="id_item.item_spec" dbalias=".item_spec" )
+ column=(type=char(3) update=yes updatewhereclause=yes name=item_uom dbname="id_item.item_uom" dbalias=".item_uom" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=item_type dbname="id_item.item_type" dbalias=".item_type" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=line_type dbname="id_item.line_type" dbalias=".line_type" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=item_class dbname="id_item.item_class" dbalias=".item_class" )
+ column=(type=datetime update=yes updatewhereclause=yes name=enter_date dbname="id_item.enter_date" dbalias=".enter_date" )
+ column=(type=datetime update=yes updatewhereclause=yes name=last_modify_date dbname="id_item.last_modify_date" dbalias=".last_modify_date" )
+ column=(type=char(100) update=yes updatewhereclause=yes name=barcode dbname="id_item.barcode" dbalias=".barcode" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=enter_by dbname="id_item.enter_by" dbalias=".enter_by" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=last_modify_by dbname="id_item.last_modify_by" dbalias=".last_modify_by" )
+ column=(type=number update=yes updatewhereclause=yes name=safety_inventory dbname="id_item.safety_inventory" dbalias=".safety_inventory" initial="0" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=order_rule dbname="id_item.order_rule" dbalias=".order_rule" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=order_cycle dbname="id_item.order_cycle" dbalias=".order_cycle" )
+ column=(type=char(1) update=yes updatewhereclause=yes name=abc_grade dbname="id_item.abc_grade" dbalias=".abc_grade" values="A	A/B	B/C	C/" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=raw_material dbname="id_item.raw_material" dbalias=".raw_material" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=svc_code dbname="id_item.svc_code" dbalias=".svc_code" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=special_property dbname="id_item.special_property" dbalias=".special_property" )
+ column=(type=number update=yes updatewhereclause=yes name=length dbname="id_item.length" dbalias=".length" initial="0" )
+ column=(type=number update=yes updatewhereclause=yes name=height dbname="id_item.height" dbalias=".height" initial="0" )
+ column=(type=number update=yes updatewhereclause=yes name=weight dbname="id_item.weight" dbalias=".weight" initial="0" )
+ column=(type=number update=yes updatewhereclause=yes name=capacity dbname="id_item.capacity" dbalias=".capacity" initial="0" )
+ column=(type=number update=yes updatewhereclause=yes name=density dbname="id_item.density" dbalias=".density" initial="0" )
+ column=(type=number update=yes updatewhereclause=yes name=inner_diameter dbname="id_item.inner_diameter" dbalias=".inner_diameter" initial="0" )
+ column=(type=number update=yes updatewhereclause=yes name=outer_diameter dbname="id_item.outer_diameter" dbalias=".outer_diameter" initial="0" )
+ column=(type=number update=yes updatewhereclause=yes name=gradient dbname="id_item.gradient" dbalias=".gradient" initial="0" )
+ column=(type=number update=yes updatewhereclause=yes name=layer dbname="id_item.layer" dbalias=".layer" initial="0" )
+ column=(type=number update=yes updatewhereclause=yes name=manufacture_leadtime dbname="id_item.manufacture_leadtime" dbalias=".manufacture_leadtime" )
+ column=(type=decimal(1) update=yes updatewhereclause=yes name=work_bad_rate dbname="id_item.work_bad_rate" dbalias=".work_bad_rate" )
+ column=(type=datetime update=yes updatewhereclause=yes name=dateset dbname="id_item.dateset" dbalias=".dateset" )
+ column=(type=datetime update=yes updatewhereclause=yes name=dateend dbname="id_item.dateend" dbalias=".dateend" )
+ column=(type=number update=yes updatewhereclause=yes name=width dbname="id_item.width" dbalias=".width" )
+ column=(type=char(30) update=yes updatewhereclause=yes name=drawing_no dbname="id_item.drawing_no" dbalias=".drawing_no" )
+ column=(type=char(1) update=yes updatewhereclause=yes name=item_division dbname="id_item.item_division" dbalias=".item_division" )
+ column=(type=char(200) update=yes updatewhereclause=yes name=part_no dbname="id_item.part_no" dbalias=".part_no" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=hs_code dbname="id_item.hs_code" dbalias=".hs_code" )
+ column=(type=number update=yes updatewhereclause=yes name=issue_packing_qty dbname="id_item.issue_packing_qty" dbalias=".issue_packing_qty" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=transfer_uom dbname="id_item.transfer_uom" dbalias=".transfer_uom" )
+ column=(type=char(100) update=yes updatewhereclause=yes name=hs_name dbname="id_item.hs_name" dbalias=".hs_name" )
+ column=(type=char(100) update=yes updatewhereclause=yes name=hs_name_sale dbname="id_item.hs_name_sale" dbalias=".hs_name_sale" )
+ column=(type=char(100) update=yes updatewhereclause=yes name=hs_spec dbname="id_item.hs_spec" dbalias=".hs_spec" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=hs_code_scrap dbname="id_item.hs_code_scrap" dbalias=".hs_code_scrap" )
+ column=(type=char(100) update=yes updatewhereclause=yes name=hs_name_scrap dbname="id_item.hs_name_scrap" dbalias=".hs_name_scrap" )
+ column=(type=char(100) update=yes updatewhereclause=yes name=hs_spec_scrap dbname="id_item.hs_spec_scrap" dbalias=".hs_spec_scrap" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=route_no dbname="id_item.route_no" dbalias=".route_no" )
+ column=(type=char(1) update=yes updatewhereclause=yes name=transfer_yn dbname="id_item.transfer_yn" dbalias=".transfer_yn" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=line_code dbname="id_item.line_code" dbalias=".line_code" )
+ column=(type=number update=yes updatewhereclause=yes name=tariff_rate dbname="id_item.tariff_rate" dbalias=".tariff_rate" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=supplier_code dbname="id_item.supplier_code" dbalias=".supplier_code" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=customer_code dbname="id_item.customer_code" dbalias=".customer_code" )
+ column=(type=char(100) update=yes updatewhereclause=yes name=model_name dbname="id_item.model_name" dbalias=".model_name" )
+ column=(type=char(50) update=yes updatewhereclause=yes name=model_suffix dbname="id_item.model_suffix" dbalias=".model_suffix" )
+ column=(type=char(1) update=yes updatewhereclause=yes name=auto_issue_yn dbname="id_item.auto_issue_yn" dbalias=".auto_issue_yn" )
+ column=(type=char(1) update=yes updatewhereclause=yes name=auto_receipt_yn dbname="id_item.auto_receipt_yn" dbalias=".auto_receipt_yn" )
+ column=(type=char(1) update=yes updatewhereclause=yes name=auto_issue_plan_yn dbname="id_item.auto_issue_plan_yn" dbalias=".auto_issue_plan_yn" )
+ column=(type=number update=yes updatewhereclause=yes name=buy_price dbname="id_item.buy_price" dbalias=".buy_price" )
+ column=(type=number update=yes updatewhereclause=yes name=sale_price dbname="id_item.sale_price" dbalias=".sale_price" )
+ column=(type=char(1) update=yes updatewhereclause=yes name=sale_price_apply_type dbname="id_item.sale_price_apply_type" dbalias=".sale_price_apply_type" )
+ column=(type=number update=yes updatewhereclause=yes name=gross_weight dbname="id_item.gross_weight" dbalias=".gross_weight" )
+ column=(type=number update=yes updatewhereclause=yes name=cbm dbname="id_item.cbm" dbalias=".cbm" )
+ column=(type=char(1) update=yes updatewhereclause=yes name=virtual_receipt_yn dbname="id_item.virtual_receipt_yn" dbalias=".virtual_receipt_yn" )
+ column=(type=char(1) update=yes updatewhereclause=yes name=mes_display_yn dbname="id_item.mes_display_yn" dbalias=".mes_display_yn" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=location_address dbname="id_item.location_address" dbalias=".location_address" )
+ column=(type=number update=yes updatewhereclause=yes name=material_qty dbname="id_item.material_qty" dbalias=".material_qty" )
+ column=(type=number update=yes updatewhereclause=yes name=material_qty2 dbname="id_item.material_qty2" dbalias=".material_qty2" )
+ column=(type=number update=yes updatewhereclause=yes name=material_qty3 dbname="id_item.material_qty3" dbalias=".material_qty3" )
+ column=(type=char(10) update=yes updatewhereclause=yes name=msl_level dbname="id_item.msl_level" dbalias=".msl_level" )
+ column=(type=char(1) update=yes updatewhereclause=yes name=check_supplier_barcode dbname="id_item.check_supplier_barcode" dbalias=".check_supplier_barcode" )
+ column=(type=number update=yes updatewhereclause=yes name=msl_max_time dbname="id_item.msl_max_time" dbalias=".msl_max_time" )
+ column=(type=number update=yes updatewhereclause=yes name=life_cycle dbname="id_item.life_cycle" dbalias=".life_cycle" )
+ column=(type=char(1000) update=yes updatewhereclause=yes name=comments dbname="id_item.comments" dbalias=".comments" )
+ column=(type=char(1) update=yes updatewhereclause=yes name=receipt_lot_check_yn dbname="id_item.receipt_lot_check_yn" dbalias=".receipt_lot_check_yn" )
+ column=(type=char(1) update=yes updatewhereclause=yes name=solder_type dbname="id_item.solder_type" dbalias=".solder_type" )
+ column=(type=char(50) update=yes updatewhereclause=yes name=feeder_size dbname="id_item.feeder_size" dbalias=".feeder_size" )
+ column=(type=char(1) update=yes updatewhereclause=yes name=keyitem_yn dbname="keyitem_yn" )
+ column=(type=char(15) update=yes updatewhereclause=yes name=vendor_code1 dbname="id_item.vendor_code1" dbalias=".vendor_code1" )
+ column=(type=char(15) update=yes updatewhereclause=yes name=vendor_code2 dbname="id_item.vendor_code2" dbalias=".vendor_code2" )
+ column=(type=char(15) update=yes updatewhereclause=yes name=vendor_code3 dbname="id_item.vendor_code3" dbalias=".vendor_code3" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=pcb_coating_type dbname="id_item.pcb_coating_type" dbalias=".pcb_coating_type" )
+ column=(type=number update=yes updatewhereclause=yes name=pcb_coating_max_day dbname="id_item.pcb_coating_max_day" dbalias=".pcb_coating_max_day" )
+ column=(type=char(1) update=yes updatewhereclause=yes name=no_check_origin_supplier dbname="id_item.no_check_origin_supplier" dbalias=".no_check_origin_supplier" values="Yes	Y/No	N/" )
+ column=(type=char(50) update=yes updatewhereclause=yes name=customer_part_no dbname="id_item.customer_part_no" dbalias=".customer_part_no" )
+ column=(type=number update=yes updatewhereclause=yes name=pcb_working_max_day dbname="id_item.pcb_working_max_day" dbalias=".pcb_working_max_day" )
+ column=(type=number update=yes updatewhereclause=yes name=baking_time dbname="id_item.baking_time" dbalias=".baking_time" )
+ column=(type=number update=yes updatewhereclause=yes name=baking_temperature dbname="id_item.baking_temperature" dbalias=".baking_temperature" )
+ retrieve="  SELECT ~"ID_ITEM~".~"ITEM_CODE~",   
+         ~"ID_ITEM~".~"ORGANIZATION_ID~",   
+         ~"ID_ITEM~".~"SET_ITEM_YN~",   
+         ~"ID_ITEM~".~"ITEM_NAME~",   
+         ~"ID_ITEM~".~"ITEM_SPEC~",   
+         ~"ID_ITEM~".~"ITEM_UOM~",   
+         ~"ID_ITEM~".~"ITEM_TYPE~",   
+         ~"ID_ITEM~".~"LINE_TYPE~",   
+         ~"ID_ITEM~".~"ITEM_CLASS~",   
+         ~"ID_ITEM~".~"ENTER_DATE~",   
+         ~"ID_ITEM~".~"LAST_MODIFY_DATE~",     
+         ~"ID_ITEM~".~"BARCODE~",   
+         ~"ID_ITEM~".~"ENTER_BY~",   
+         ~"ID_ITEM~".~"LAST_MODIFY_BY~",   
+         ~"ID_ITEM~".~"SAFETY_INVENTORY~",   
+         ~"ID_ITEM~".~"ORDER_RULE~",   
+         ~"ID_ITEM~".~"ORDER_CYCLE~",   
+         ~"ID_ITEM~".~"ABC_GRADE~",   
+         ~"ID_ITEM~".~"RAW_MATERIAL~",   
+         ~"ID_ITEM~".~"SVC_CODE~",   
+         ~"ID_ITEM~".~"SPECIAL_PROPERTY~",     
+         ~"ID_ITEM~".~"LENGTH~",   
+         ~"ID_ITEM~".~"HEIGHT~",   
+         ~"ID_ITEM~".~"WEIGHT~",   
+         ~"ID_ITEM~".~"CAPACITY~",   
+         ~"ID_ITEM~".~"DENSITY~",   
+         ~"ID_ITEM~".~"INNER_DIAMETER~",   
+         ~"ID_ITEM~".~"OUTER_DIAMETER~",   
+         ~"ID_ITEM~".~"GRADIENT~",   
+         ~"ID_ITEM~".~"LAYER~",   
+         ~"ID_ITEM~".~"MANUFACTURE_LEADTIME~",   
+         ~"ID_ITEM~".~"WORK_BAD_RATE~",   
+         ~"ID_ITEM~".~"DATESET~",   
+         ~"ID_ITEM~".~"DATEEND~",   
+         ~"ID_ITEM~".~"WIDTH~",   
+         ~"ID_ITEM~".~"DRAWING_NO~",   
+         ~"ID_ITEM~".~"ITEM_DIVISION~",   
+         ~"ID_ITEM~".~"PART_NO~",   
+         ~"ID_ITEM~".~"HS_CODE~",   
+         ~"ID_ITEM~".~"ISSUE_PACKING_QTY~",   
+         ~"ID_ITEM~".~"TRANSFER_UOM~",   
+         ~"ID_ITEM~".~"HS_NAME~",   
+         ~"ID_ITEM~".~"HS_NAME_SALE~",   
+         ~"ID_ITEM~".~"HS_SPEC~",   
+         ~"ID_ITEM~".~"HS_CODE_SCRAP~",   
+         ~"ID_ITEM~".~"HS_NAME_SCRAP~",   
+         ~"ID_ITEM~".~"HS_SPEC_SCRAP~",   
+         ~"ID_ITEM~".~"ROUTE_NO~",   
+         ~"ID_ITEM~".~"TRANSFER_YN~",   
+         ~"ID_ITEM~".~"LINE_CODE~",   
+         ~"ID_ITEM~".~"TARIFF_RATE~",   
+         ~"ID_ITEM~".~"SUPPLIER_CODE~",   
+         ~"ID_ITEM~".~"CUSTOMER_CODE~",   
+         ~"ID_ITEM~".~"MODEL_NAME~",   
+         ~"ID_ITEM~".~"MODEL_SUFFIX~",   
+         ~"ID_ITEM~".~"AUTO_ISSUE_YN~",   
+         ~"ID_ITEM~".~"AUTO_RECEIPT_YN~",   
+         ~"ID_ITEM~".~"AUTO_ISSUE_PLAN_YN~",   
+         ~"ID_ITEM~".~"BUY_PRICE~",   
+         ~"ID_ITEM~".~"SALE_PRICE~",   
+         ~"ID_ITEM~".~"SALE_PRICE_APPLY_TYPE~",   
+         ~"ID_ITEM~".~"GROSS_WEIGHT~",   
+         ~"ID_ITEM~".~"CBM~",   
+         ~"ID_ITEM~".~"VIRTUAL_RECEIPT_YN~",   
+         ~"ID_ITEM~".~"MES_DISPLAY_YN~",   
+         ~"ID_ITEM~".~"LOCATION_ADDRESS~",   
+         ~"ID_ITEM~".~"MATERIAL_QTY~",   
+         ~"ID_ITEM~".~"MATERIAL_QTY2~",   
+         ~"ID_ITEM~".~"MATERIAL_QTY3~",   
+         ~"ID_ITEM~".~"MSL_LEVEL~",   
+         ~"ID_ITEM~".~"CHECK_SUPPLIER_BARCODE~",   
+         ~"ID_ITEM~".~"MSL_MAX_TIME~",   
+         ~"ID_ITEM~".~"LIFE_CYCLE~",   
+         ~"ID_ITEM~".~"COMMENTS~",   
+         ~"ID_ITEM~".~"RECEIPT_LOT_CHECK_YN~",   
+         ~"ID_ITEM~".~"SOLDER_TYPE~",   
+         ~"ID_ITEM~".~"FEEDER_SIZE~",
+         nvl(~"ID_ITEM~".~"KEYITEM_YN~",'N') KEYITEM_YN,
+         ~"ID_ITEM~".~"VENDOR_CODE1~",
+         ~"ID_ITEM~".~"VENDOR_CODE2~",
+         ~"ID_ITEM~".~"VENDOR_CODE3~",
+		PCB_COATING_TYPE ,
+		PCB_COATING_MAX_DAY,
+         NO_CHECK_ORIGIN_SUPPLIER ,
+           ~"ID_ITEM~".~"CUSTOMER_PART_NO~"   ,
+        PCB_WORKING_MAX_DAY ,
+        BAKING_TIME,
+        ~"ID_ITEM~".~"BAKING_TEMPERATURE~" 
+    FROM ~"ID_ITEM~"  
+   WHERE ( ~"ID_ITEM~".~"ITEM_CODE~" = :ARG_item_code ) AND  
+         ( ~"ID_ITEM~".~"ORGANIZATION_ID~" = :arg_org )    
+" update="ID_ITEM" updatewhere=0 updatekeyinplace=yes arguments=(("ARG_item_code", string),("arg_org", number)) )
+column(band=detail id=71 alignment="0" tabsequence=290 border="0" color="33554432" x="5518" y="72" height="52" width="229" format="[general]" html.valueishtml="0"  name=check_supplier_barcode visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+text(band=detail alignment="1" text="Model Suffix" border="0" color="33554432" x="18" y="104" height="52" width="457" html.valueishtml="0"  name=t_25 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=detail alignment="1" text="Model Name" border="0" color="33554432" x="18" y="32" height="52" width="457" html.valueishtml="0"  name=t_24 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=detail alignment="1" text="Part No" border="0" color="33554432" x="18" y="176" height="52" width="457" html.valueishtml="0"  name=t_8 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=38 alignment="0" tabsequence=30 border="5" color="33554432" x="498" y="176" height="52" width="805" format="[general]" html.valueishtml="0"  name=part_no visible="1" edit.limit=50 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+text(band=detail alignment="1" text="Virtual Receipt" border="0" color="0" x="18" y="252" height="52" width="457" html.valueishtml="0"  name=t_11 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=64 alignment="2" tabsequence=170 border="5" color="33554432" x="498" y="252" height="52" width="805" format="[general]" html.valueishtml="0"  name=virtual_receipt_yn visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=yes dddw.case=any dddw.hscrollbar=yes dddw.vscrollbar=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+text(band=detail alignment="1" text="Order Rule" border="0" color="33554432" x="18" y="324" height="52" width="457" html.valueishtml="0"  name=order_rule_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=16 alignment="0" tabsequence=50 border="5" color="33554432" x="498" y="324" height="52" width="805" format="[general]" html.valueishtml="0"  name=order_rule pointer="h_beam.cur" visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=300 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=yes dddw.case=any dddw.hscrollbar=yes dddw.vscrollbar=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+text(band=detail alignment="1" text="Raw Material" border="0" color="33554432" x="18" y="476" height="52" width="457" html.valueishtml="0"  name=raw_material_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=19 alignment="0" tabsequence=70 border="5" color="33554432" x="498" y="476" height="52" width="805" format="[general]" html.valueishtml="0"  name=raw_material pointer="h_beam.cur" visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=300 dddw.lines=5 dddw.limit=0 dddw.allowedit=no dddw.useasborder=yes dddw.case=any dddw.hscrollbar=yes dddw.vscrollbar=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+text(band=detail alignment="1" text="Order Cycle" border="0" color="33554432" x="18" y="400" height="52" width="457" html.valueishtml="0"  name=order_cycle_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=17 alignment="0" tabsequence=60 border="5" color="33554432" x="498" y="400" height="52" width="805" format="[general]" html.valueishtml="0"  name=order_cycle pointer="h_beam.cur" visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=300 dddw.lines=5 dddw.limit=0 dddw.allowedit=no dddw.useasborder=yes dddw.case=any dddw.hscrollbar=yes dddw.vscrollbar=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=73 alignment="0" tabsequence=310 border="0" color="33554432" x="5271" y="76" height="52" width="229" format="[general]" html.valueishtml="0"  name=life_cycle visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=74 alignment="0" tabsequence=320 border="0" color="33554432" x="5271" y="76" height="52" width="229" format="[general]" html.valueishtml="0"  name=comments visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=69 alignment="0" tabsequence=330 border="0" color="33554432" x="5271" y="76" height="52" width="229" format="[general]" html.valueishtml="0"  name=material_qty3 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=75 alignment="0" tabsequence=340 border="0" color="33554432" x="5271" y="76" height="52" width="229" format="[general]" html.valueishtml="0"  name=receipt_lot_check_yn visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=76 alignment="0" tabsequence=350 border="0" color="33554432" x="5271" y="76" height="52" width="229" format="[general]" html.valueishtml="0"  name=solder_type visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=77 alignment="0" tabsequence=360 border="0" color="33554432" x="5271" y="76" height="52" width="229" format="[general]" html.valueishtml="0"  name=feeder_size visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=78 alignment="0" tabsequence=370 border="0" color="33554432" x="5271" y="76" height="52" width="229" format="[general]" html.valueishtml="0"  name=keyitem_yn visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=79 alignment="0" tabsequence=380 border="0" color="33554432" x="5271" y="76" height="52" width="229" format="[general]" html.valueishtml="0"  name=vendor_code1 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=80 alignment="0" tabsequence=390 border="0" color="33554432" x="5271" y="76" height="52" width="229" format="[general]" html.valueishtml="0"  name=vendor_code2 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=81 alignment="0" tabsequence=400 border="0" color="33554432" x="5271" y="76" height="52" width="229" format="[general]" html.valueishtml="0"  name=vendor_code3 visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=85 alignment="0" tabsequence=440 border="0" color="33554432" x="5271" y="76" height="52" width="229" format="[general]" html.valueishtml="0"  name=customer_part_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=86 alignment="0" tabsequence=450 border="0" color="33554432" x="5271" y="76" height="52" width="229" format="[general]" html.valueishtml="0"  name=pcb_working_max_day visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=49 alignment="2" tabsequence=90 border="5" color="33554432" x="2011" y="104" height="52" width="480" format="[general]" html.valueishtml="0"  name=transfer_yn visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=300 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=yes dddw.case=any dddw.hscrollbar=yes dddw.vscrollbar=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=41 alignment="0" tabsequence=80 border="5" color="33554432" x="2011" y="32" height="52" width="480" format="[general]" html.valueishtml="0"  name=transfer_uom visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=300 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=yes dddw.case=any dddw.hscrollbar=yes dddw.vscrollbar=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=40 alignment="1" tabsequence=100 border="5" color="33554432" x="2011" y="176" height="52" width="480" format="[general]" html.valueishtml="0"  name=issue_packing_qty visible="1" editmask.spin=yes editmask.mask="###,###.00" editmask.spinincr=1 editmask.focusrectangle=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+text(band=detail alignment="1" text="Issue Packing Qty" border="0" color="33554432" x="1481" y="176" height="52" width="507" html.valueishtml="0"  name=t_12 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=56 alignment="2" tabsequence=110 border="5" color="33554432" x="2011" y="252" height="52" width="480" format="[general]" html.valueishtml="0"  name=auto_issue_yn visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=yes dddw.case=any dddw.hscrollbar=yes dddw.vscrollbar=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+text(band=detail alignment="1" text="Auto Issue Yn" border="0" color="33554432" x="1481" y="252" height="52" width="507" html.valueishtml="0"  name=t_26 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=57 alignment="0" tabsequence=120 border="5" color="33554432" x="2011" y="324" height="52" width="480" format="[general]" html.valueishtml="0"  name=auto_receipt_yn visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=300 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=yes dddw.case=any dddw.hscrollbar=yes dddw.vscrollbar=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+text(band=detail alignment="1" text="Auto Receipt Yn" border="0" color="33554432" x="1481" y="324" height="52" width="507" html.valueishtml="0"  name=t_27 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=87 alignment="0" tabsequence=460 border="5" color="33554432" x="2011" y="540" height="52" width="480" format="[general]" html.valueishtml="0"  name=baking_time visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+text(band=detail alignment="1" text="Baking Time" border="0" color="33554432" x="1481" y="544" height="52" width="507" html.valueishtml="0"  name=t_17 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=detail alignment="1" text="PCB Coating Type" border="0" color="33554432" x="1481" y="476" height="52" width="507" html.valueishtml="0"  name=t_10 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=58 alignment="0" tabsequence=130 border="5" color="33554432" x="2011" y="400" height="52" width="480" format="[general]" html.valueishtml="0"  name=auto_issue_plan_yn visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=300 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=yes dddw.case=any dddw.hscrollbar=yes dddw.vscrollbar=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+text(band=detail alignment="1" text="Auto Issue Plan Yn" border="0" color="33554432" x="1481" y="400" height="52" width="507" html.valueishtml="0"  name=t_28 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=82 alignment="0" tabsequence=410 border="0" color="33554432" x="2011" y="476" height="52" width="480" format="[general]" html.valueishtml="0"  name=pcb_coating_type visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=300 dddw.lines=4 dddw.limit=0 dddw.allowedit=no dddw.useasborder=yes dddw.case=any dddw.hscrollbar=yes dddw.vscrollbar=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=24 alignment="1" tabsequence=150 border="5" color="33554432" x="3241" y="104" height="52" width="366" format="#,###,##0.00" html.valueishtml="0"  name=weight pointer="h_beam.cur" visible="1" editmask.spin=yes editmask.mask="###,###.0000" editmask.spinincr=1 editmask.focusrectangle=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=15 alignment="1" tabsequence=40 border="5" color="33554432" x="3241" y="32" height="52" width="366" format="[general]" html.valueishtml="0"  name=safety_inventory pointer="h_beam.cur" visible="1" editmask.spin=yes editmask.mask="###,###.0000" editmask.spinincr=1 editmask.focusrectangle=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=62 alignment="1" tabsequence=160 border="5" color="33554432" x="3241" y="176" height="52" width="366" format="#,###,##0.00" html.valueishtml="0"  name=gross_weight visible="1" editmask.spin=yes editmask.mask="###,###.00" editmask.spinincr=1 editmask.focusrectangle=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=22 alignment="1" tabsequence=180 border="5" color="33554432" x="3241" y="252" height="52" width="366" format="#,###,##0.00" html.valueishtml="0"  name=length pointer="h_beam.cur" visible="1" editmask.spin=yes editmask.mask="#,###,##0.00" editmask.spinincr=1 editmask.focusrectangle=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=23 alignment="1" tabsequence=190 border="5" color="33554432" x="3241" y="324" height="52" width="366" format="#,###,##0.00" html.valueishtml="0"  name=height pointer="h_beam.cur" visible="1" editmask.spin=yes editmask.mask="#,###,##0.00" editmask.spinincr=1 editmask.focusrectangle=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=83 alignment="2" tabsequence=420 border="5" color="33554432" x="3241" y="476" height="52" width="366" format="[general]" html.valueishtml="0"  name=pcb_coating_max_day visible="1" editmask.spin=yes editmask.mask="###,##0" editmask.spinincr=1 editmask.focusrectangle=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=35 alignment="1" tabsequence=200 border="5" color="33554432" x="3241" y="400" height="52" width="366" format="#,###,##0.00" html.valueishtml="0"  name=width visible="1" editmask.spin=yes editmask.mask="#,###,##0.00" editmask.spinincr=1 editmask.focusrectangle=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+text(band=detail alignment="1" text="Manufacture Laedtime" border="0" color="65535" x="3785" y="104" height="52" width="517" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=31 alignment="1" tabsequence=230 border="5" color="33554432" x="4329" y="104" height="52" width="389" format="##0" html.valueishtml="0"  name=manufacture_leadtime visible="1" editmask.spin=yes editmask.mask="##0" editmask.spinrange="0~~0" editmask.spinincr=1 editmask.focusrectangle=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+text(band=detail alignment="2" text="Day(s)" border="0" color="0" x="4736" y="104" height="52" width="174" html.valueishtml="0"  name=t_7 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=21 alignment="0" tabsequence=220 border="5" color="33554432" x="4329" y="32" height="52" width="389" format="[general]" html.valueishtml="0"  name=special_property pointer="h_beam.cur" visible="1" edit.limit=30 edit.case=upper edit.focusrectangle=no edit.autoselect=yes edit.autohscroll=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+text(band=detail alignment="1" text="Special Property" border="0" color="33554432" x="3785" y="32" height="52" width="517" html.valueishtml="0"  name=special_property_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=32 alignment="1" tabsequence=240 border="5" color="33554432" x="4329" y="176" height="52" width="389" format="###,###.00" html.valueishtml="0"  name=work_bad_rate visible="1" editmask.spin=yes editmask.mask="###,###.00" editmask.spinincr=1 editmask.focusrectangle=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+text(band=detail alignment="1" text="Work Bad Rate" border="0" color="33554432" x="3785" y="176" height="52" width="517" html.valueishtml="0"  name=t_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=detail alignment="2" text="%" border="0" color="0" x="4736" y="176" height="52" width="91" html.valueishtml="0"  name=t_6 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+column(band=detail id=65 alignment="2" tabsequence=250 border="5" color="33554432" x="4329" y="252" height="52" width="389" format="[general]" html.valueishtml="0"  name=mes_display_yn visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+text(band=detail alignment="1" text="MES Display Yn" border="0" color="33554432" x="3785" y="252" height="52" width="517" html.valueishtml="0"  name=t_13 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=20 alignment="0" tabsequence=140 border="5" color="33554432" x="4329" y="324" height="52" width="389" format="[general]" html.valueishtml="0"  name=svc_code pointer="h_beam.cur" visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=300 dddw.lines=3 dddw.limit=0 dddw.allowedit=no dddw.useasborder=yes dddw.case=any dddw.hscrollbar=yes dddw.vscrollbar=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+text(band=detail alignment="1" text="Svc Code" border="0" color="65535" x="3785" y="324" height="52" width="517" html.valueishtml="0"  name=svc_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=63 alignment="1" tabsequence=210 border="5" color="33554432" x="4329" y="400" height="52" width="389" format="#,###,##0.00" html.valueishtml="0"  name=cbm visible="1" editmask.spin=yes editmask.mask="#,###,##0.00" editmask.spinincr=1 editmask.focusrectangle=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+text(band=detail alignment="1" text="CBM" border="0" color="33554432" x="3785" y="400" height="52" width="517" html.valueishtml="0"  name=t_5 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=detail alignment="1" text="PCB Coating Max Day" border="0" color="33554432" x="2647" y="476" height="52" width="571" html.valueishtml="0"  name=t_14 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=detail alignment="1" text="Width" border="0" color="33554432" x="2647" y="400" height="52" width="571" html.valueishtml="0"  name=t_3 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=detail alignment="1" text="Height" border="0" color="33554432" x="2647" y="324" height="52" width="571" html.valueishtml="0"  name=height_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=detail alignment="1" text="Length" border="0" color="33554432" x="2647" y="252" height="52" width="571" html.valueishtml="0"  name=length_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=detail alignment="1" text="Gross Weight(Kg)" border="0" color="33554432" x="2647" y="176" height="52" width="571" html.valueishtml="0"  name=t_4 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=detail alignment="1" text="Weight(Kg)" border="0" color="33554432" x="2647" y="104" height="52" width="571" html.valueishtml="0"  name=weight_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=detail alignment="1" text="Safety Inventory" border="0" color="33554432" x="2647" y="32" height="52" width="571" html.valueishtml="0"  name=safety_inventory_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+column(band=detail id=55 alignment="0" tabsequence=20 border="5" color="33554432" x="498" y="104" height="52" width="805" format="[general]" html.valueishtml="0"  name=model_suffix visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=54 alignment="0" tabsequence=10 border="5" color="33554432" x="498" y="32" height="52" width="805" format="[general]" html.valueishtml="0"  name=model_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no edit.autohscroll=yes criteria.override_edit=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=84 alignment="0" tabsequence=430 border="5" color="33554432" x="4325" y="476" height="52" width="389" format="[general]" html.valueishtml="0"  name=no_check_origin_supplier visible="1" ddlb.limit=0 ddlb.allowedit=no ddlb.case=any  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=72 alignment="2" tabsequence=300 border="5" color="33554432" x="3237" y="544" height="52" width="366" format="[general]" html.valueishtml="0"  name=msl_max_time visible="1" editmask.spin=yes editmask.mask="##0" editmask.spinrange="1~~0" editmask.spinincr=1 editmask.focusrectangle=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=88 alignment="1" tabsequence=470 border="5" color="33554432" x="4325" y="544" height="52" width="389" html.valueishtml="0"  name=baking_temperature visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+text(band=detail alignment="1" text="PCB working Max Day" border="0" color="33554432" x="2647" y="544" height="52" width="571" html.valueishtml="0"  name=t_16 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=detail alignment="1" text="No Check Origin Sup" border="0" color="33554432" x="3785" y="476" height="52" width="517" html.valueishtml="0"  name=t_15 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=detail alignment="1" text="Baking Temp" border="0" color="33554432" x="3785" y="544" height="52" width="517" html.valueishtml="0"  name=t_18 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="553648127" )
+text(band=detail alignment="1" text="Transfer Yn" border="0" color="0" x="1481" y="104" height="52" width="507" html.valueishtml="0"  name=t_19 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+text(band=detail alignment="1" text="Trasfer UOM" border="0" color="33554432" x="1481" y="32" height="52" width="507" html.valueishtml="0"  name=t_9 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

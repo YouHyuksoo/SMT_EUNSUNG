@@ -44,6 +44,46 @@ export function formatDateOnly(value?: string | Date | null, fallback = ''): str
   return getTodayLocal(value);
 }
 
+/** 'YYYY-MM-DD' 로 시작하는 값만 날짜로 본다. `new Date('12')` 같은 오판을 막는다. */
+const DATE_LIKE_RE = /^\d{4}-\d{2}-\d{2}(?:$|[T ])/;
+/** 시간대 표시(Z, +09:00)가 붙은 ISO — 로컬 시각으로 바꿔야 하는 값. */
+const ZONED_ISO_RE = /T.*(?:Z|[+-]\d{2}:?\d{2})$/;
+
+const pad2 = (n: number) => String(n).padStart(2, '0');
+
+/**
+ * 화면 표시용 날짜·일시 포맷. 그리드 날짜 칸은 모두 이것을 쓴다.
+ *
+ * - 날짜: `YYYY-MM-DD`, 일시: `YYYY-MM-DD HH:mm:ss` (로컬=KST 기준)
+ * - 서버가 Date 를 그대로 내려 UTC ISO(`...T15:00:00.000Z`)가 되면 로컬로 되돌린다.
+ *   로컬 자정이면 날짜 전용 값으로 보고 시각을 떼어 낸다.
+ * - 이미 `YYYY-MM-DD[ HH:mm:ss]` 문자열이면 그대로 둔다.
+ * - 날짜가 아닌 값(코드·숫자)은 문자열로만 바꿔 돌려준다.
+ */
+export function formatDisplayDate(value: unknown, fallback = ''): string {
+  if (value === null || value === undefined || value === '') return fallback;
+
+  let date: Date | null = null;
+  if (value instanceof Date) {
+    date = value;
+  } else if (typeof value === 'string') {
+    const text = value.trim();
+    if (!DATE_LIKE_RE.test(text)) return text;
+    if (!ZONED_ISO_RE.test(text)) return text.replace('T', ' ');
+    date = new Date(text);
+  } else {
+    return String(value);
+  }
+
+  if (Number.isNaN(date.getTime())) return String(value);
+  const day = getTodayLocal(date);
+  const h = date.getHours();
+  const m = date.getMinutes();
+  const s = date.getSeconds();
+  if (h === 0 && m === 0 && s === 0) return day;
+  return `${day} ${pad2(h)}:${pad2(m)}:${pad2(s)}`;
+}
+
 /** 'YYYY-MM-DD' 시작/종료 범위 */
 export interface DateRange {
   from: string;

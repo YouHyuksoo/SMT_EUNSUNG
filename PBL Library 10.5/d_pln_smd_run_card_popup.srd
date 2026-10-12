@@ -1,0 +1,56 @@
+HA$PBExportHeader$d_pln_smd_run_card_popup.srd
+$PBExportComments$SMD $$HEX5$$91c7c5c5c0c9dcc22000$$ENDHEX$$popup
+release 10.5;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no grid.lines=0 )
+header(height=128 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=84 color="536870912" )
+table(column=(type=char(10) updatewhereclause=yes name=line_code dbname="ip_product_run_card.line_code" )
+ column=(type=datetime updatewhereclause=yes name=run_date dbname="ip_product_run_card.run_date" )
+ column=(type=char(30) updatewhereclause=yes key=yes name=run_no dbname="ip_product_run_card.run_no" )
+ column=(type=char(100) updatewhereclause=yes name=model_name dbname="ip_product_run_card.model_name" )
+ column=(type=char(30) updatewhereclause=yes name=item_code dbname="ip_product_run_card.item_code" )
+ column=(type=number updatewhereclause=yes name=lot_size dbname="ip_product_run_card.lot_size" )
+ column=(type=number updatewhereclause=yes key=yes name=organization_id dbname="ip_product_run_card.organization_id" )
+ retrieve="
+   select line_code, run_date, run_no, model_name, item_code, lot_size, organization_id
+        from ip_product_run_card
+       where run_date = :arg_run_date
+         and line_code like :arg_line_code
+         and line_code in (
+                            select line_code
+                              from ip_product_line
+                             where line_division   = 'D'
+                               and organization_id = :arg_org
+                          )
+         and organization_id = :arg_org
+       order by line_code, run_date, run_no
+" update="ip_product_run_card" updatewhere=0 updatekeyinplace=no arguments=(("arg_run_date", datetime),("arg_line_code", string),("arg_org", number))  sort="run_no A " )
+text(band=header alignment="2" text="Run No" border="0" color="33554432" x="1257" y="4" height="124" width="631" html.valueishtml="0"  name=run_no_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Line Code" border="0" color="33554432" x="311" y="4" height="124" width="453" html.valueishtml="0"  name=line_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Run Date" border="0" color="33554432" x="773" y="4" height="124" width="475" html.valueishtml="0"  name=run_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Model Name" border="0" color="33554432" x="1897" y="4" height="124" width="782" html.valueishtml="0"  name=model_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Lot Size" border="0" color="33554432" x="3264" y="4" height="124" width="329" html.valueishtml="0"  name=lot_size_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Item Code" border="0" color="33554432" x="2688" y="4" height="124" width="567" html.valueishtml="0"  name=item_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Organization Id" border="0" color="33554432" x="3602" y="4" height="124" width="352" html.valueishtml="0"  name=organization_id_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+compute(band=detail alignment="2" expression="TRIM('')"border="0" color="33554432" x="9" y="4" height="72" width="119" format="[GENERAL]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="2" expression="getrow()"border="0" color="33554432" x="137" y="4" height="72" width="165" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12639424" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="0" color="33554432" x="1257" y="4" height="72" width="631" format="[general]" html.valueishtml="0"  name=run_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="33554432" x="311" y="4" height="72" width="453" format="[general]" html.valueishtml="0"  name=line_code visible="1" dddw.name=vd_line_code dddw.displaycolumn=line_name dddw.datacolumn=line_code dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="33554432" x="773" y="4" height="72" width="475" format="[shortdate]" html.valueishtml="0"  name=run_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=4 alignment="0" tabsequence=32766 border="0" color="33554432" x="1897" y="4" height="72" width="782" format="[general]" html.valueishtml="0"  name=model_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=6 alignment="2" tabsequence=32766 border="0" color="33554432" x="3264" y="4" height="72" width="329" format="[general]" html.valueishtml="0"  name=lot_size visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=5 alignment="2" tabsequence=32766 border="0" color="33554432" x="2688" y="4" height="72" width="567" format="[general]" html.valueishtml="0"  name=item_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=7 alignment="2" tabsequence=32766 border="0" color="33554432" x="3602" y="4" height="72" width="352" format="[general]" html.valueishtml="0"  name=organization_id visible="0" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

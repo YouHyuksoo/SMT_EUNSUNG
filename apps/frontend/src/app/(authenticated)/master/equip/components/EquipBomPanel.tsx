@@ -193,9 +193,9 @@ export default function EquipBomPanel({ equipCode, equipName, onClose }: EquipBo
           <thead className="sticky top-0 bg-surface z-10">
             <tr className="text-text-muted border-b border-border">
               <th className="px-2 py-2 text-center w-16">{t("common.actions", "작업")}</th>
-              <th className="px-2 py-2 text-left">{t("master.equip.itemType", "유형")}</th>
               <th className="px-2 py-2 text-left">{t("master.equip.itemCode", "품목코드")}</th>
               <th className="px-2 py-2 text-left">{t("master.equip.itemName", "품목명")}</th>
+              <th className="px-2 py-2 text-left">{t("master.equip.itemType", "유형")}</th>
               <th className="px-2 py-2 text-right">{t("master.equip.stockQty", "재고")}</th>
             </tr>
           </thead>
@@ -221,11 +221,6 @@ export default function EquipBomPanel({ equipCode, equipName, onClose }: EquipBo
                       </button>
                     </div>
                   </td>
-                  <td className="px-2 py-1.5">
-                    <span className={`px-2 py-0.5 text-[10px] rounded-full ${BOM_ITEM_TYPE_COLORS[item.itemType]}`}>
-                      {bomItemTypeLabels[item.itemType]}
-                    </span>
-                  </td>
                   <td className="px-2 py-1.5 font-mono">{item.bomItemCode}</td>
                   <td className="px-2 py-1.5">
                     <div className="leading-tight">
@@ -234,6 +229,11 @@ export default function EquipBomPanel({ equipCode, equipName, onClose }: EquipBo
                         <div className="text-[10px] text-text-muted">{[item.maker, item.spec].filter(Boolean).join(" / ")}</div>
                       )}
                     </div>
+                  </td>
+                  <td className="px-2 py-1.5">
+                    <span className={`px-2 py-0.5 text-[10px] rounded-full ${BOM_ITEM_TYPE_COLORS[item.itemType]}`}>
+                      {bomItemTypeLabels[item.itemType]}
+                    </span>
                   </td>
                   <td className="px-2 py-1.5 text-right">
                     <span className={`font-mono ${isLow ? "text-red-500 font-bold" : ""}`}>

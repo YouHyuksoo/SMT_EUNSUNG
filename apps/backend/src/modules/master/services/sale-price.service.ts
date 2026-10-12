@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { ProductSalePrice } from '../../../entities/product-sale-price.entity';
 import { CreateSalePriceDto, CustomerQueryDto, SalePriceImpactQueryDto, SalePriceQueryDto, UpdateSalePriceDto } from '../dto/sale-price.dto';
+import { namedBinds } from '../../../common/utils/named-binds.util';
 
 type Row = Record<string, unknown>;
 
@@ -73,6 +74,11 @@ export class SalePriceService {
   }
 
   private mutable(dto: CreateSalePriceDto) { return { dateend: dto.dateend ? new Date(dto.dateend) : null, salePrice: dto.salePrice ?? null, standardSalePrice: dto.standardSalePrice ?? null, foreignSalePrice: dto.foreignSalePrice ?? null, saleCurrency: dto.saleCurrency ?? null, foreignSaleCurrency: dto.foreignSaleCurrency ?? null, taxRate: dto.taxRate ?? null, priceType: dto.priceType ?? null, priceChangeReason: dto.priceChangeReason ?? null, saleCharge: dto.saleCharge ?? null, modelName: dto.modelName ?? null }; }
-  private async query(sql: string, binds: Record<string, unknown>): Promise<Row[]> { try { return await this.dataSource.query(sql, { ...binds } as unknown as unknown[]); } catch (error: unknown) { throw this.oracleError(error); } }
-  private oracleError(error: unknown) { const value = error as { message?: string; driverError?: { message?: string } }; return new BadRequestException(value?.driverError?.message ?? value?.message ?? '제품판매단가 처리 중 오류가 발생했습니다.'); }
+  private async query(sql: string, binds: Record<string, unknown>): Promise<Row[]> { try { return await this.dataSource.query(sql, namedBinds({ ...binds })); } catch (error: unknown) { throw this.oracleError(error); } }
+  private oracleError(error: unknown) {
+    const driver = typeof error === 'object' && error !== null && 'driverError' in error ? error.driverError : undefined;
+    const driverMessage = typeof driver === 'object' && driver !== null && 'message' in driver && typeof driver.message === 'string'
+      ? driver.message : undefined;
+    return new BadRequestException(driverMessage ?? (error instanceof Error ? error.message : undefined) ?? '제품판매단가 처리 중 오류가 발생했습니다.');
+  }
 }

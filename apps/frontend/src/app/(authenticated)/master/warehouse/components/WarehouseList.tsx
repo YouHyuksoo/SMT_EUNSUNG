@@ -53,7 +53,7 @@ export default function WarehouseList({ onHeaderActions }: Props) {
     open: false, title: "", message: "", onConfirm: () => {},
   });
 
-  const fetchData = useCallback(async () => {
+  const search = useCallback(async () => {
     setLoading(true);
     try {
       const params: Record<string, string> = {};
@@ -69,7 +69,7 @@ export default function WarehouseList({ onHeaderActions }: Props) {
     }
   }, [filterType]);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => { search(); }, [search]);
 
   const filtered = useMemo(() => {
     if (!searchText) return warehouses;
@@ -113,7 +113,7 @@ export default function WarehouseList({ onHeaderActions }: Props) {
       }
       markDirty(false);
       setIsPanelOpen(false);
-      fetchData();
+      search();
     } catch (e) {
       console.error("Save failed:", e);
     } finally {
@@ -128,7 +128,7 @@ export default function WarehouseList({ onHeaderActions }: Props) {
         setConfirmModal(prev => ({ ...prev, open: false }));
         try {
           await api.delete(`/inventory/warehouses/${warehouseCode}`);
-          fetchData();
+          search();
         } catch (e) {
           console.error("Delete failed:", e);
         }
@@ -140,7 +140,7 @@ export default function WarehouseList({ onHeaderActions }: Props) {
   useEffect(() => {
     onHeaderActions?.(
       <>
-        <Button variant="secondary" size="sm" onClick={fetchData}>
+        <Button variant="secondary" size="sm" onClick={search}>
           <RefreshCw className={`w-4 h-4 mr-1 ${loading ? "animate-spin" : ""}`} />{t("common.refresh")}
         </Button>
         <Button size="sm" onClick={() => guard(handleCreate)}>
@@ -148,7 +148,7 @@ export default function WarehouseList({ onHeaderActions }: Props) {
         </Button>
       </>
     );
-  }, [onHeaderActions, fetchData, handleCreate, guard, loading, t]);
+  }, [onHeaderActions, search, handleCreate, guard, loading, t]);
 
   const columns: ColumnDef<WarehouseData>[] = useMemo(() => [
     { id: "actions", header: "", size: 100, meta: { align: "center" as const, filterType: "none" as const }, cell: ({ row }) => (

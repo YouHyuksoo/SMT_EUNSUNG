@@ -24,6 +24,8 @@ import { OeeDowntimeEvent } from '../entities/oee-downtime-event.entity';
 import { WorktimeRange } from '../entities/worktime-range.entity';
 import { MenuCategory } from '../entities/menu-category.entity';
 import { MenuCategoryItem } from '../entities/menu-category-item.entity';
+import { UserMenuFavorite } from '../entities/user-menu-favorite.entity';
+import { UserMenuFavoriteFolder } from '../entities/user-menu-favorite-folder.entity';
 import { ComCode } from '../entities/com-code.entity';
 import { CommConfig } from '../entities/comm-config.entity';
 import { SysConfig } from '../entities/sys-config.entity';
@@ -75,8 +77,10 @@ import { EquipDowntimeMapDtl } from '../entities/equip-downtime-map-dtl.entity';
 import { ProductModelMaster } from '../entities/product-model-master.entity';
 import { ProductRunCard } from '../entities/product-run-card.entity';
 import { ProductSensorActual } from '../entities/product-sensor-actual.entity';
+import { ProductWorkResult } from '../entities/product-work-result.entity';
 import { ProductWorkDefect } from '../entities/product-work-defect.entity';
 import { EquipDowntimeResult } from '../entities/equip-downtime-result.entity';
+import { AiChatFeedback } from '../entities/ai-chat-feedback.entity';
 
 @Global()
 @Module({
@@ -108,6 +112,7 @@ import { EquipDowntimeResult } from '../entities/equip-downtime-result.entity';
           // 화면을 은성화하며 필요한 엔티티를 이 배열에 추가한다.
           entities: [
             IsysUser,
+            AiChatFeedback,
             IsysOrganization,
             DepartmentMaster,
             Plant,
@@ -118,6 +123,8 @@ import { EquipDowntimeResult } from '../entities/equip-downtime-result.entity';
             WorktimeRange,
             MenuCategory,
             MenuCategoryItem,
+            UserMenuFavorite,
+            UserMenuFavoriteFolder,
             ComCode,
             CommConfig,
             SysConfig,
@@ -169,6 +176,7 @@ import { EquipDowntimeResult } from '../entities/equip-downtime-result.entity';
             ProductModelMaster,
             ProductRunCard,
             ProductSensorActual,
+            ProductWorkResult,
             ProductWorkDefect,
             EquipDowntimeResult,
           ],

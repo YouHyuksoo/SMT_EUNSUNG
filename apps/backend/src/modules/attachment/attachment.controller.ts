@@ -17,7 +17,8 @@ import { AttachmentService, UPLOAD_ROOT, sanitizeSegment } from './attachment.se
 import { DeleteAttachmentDto } from './attachment.dto';
 
 function currentUser(req: Request): string | null {
-  const auth = (req.headers['authorization'] as string) || '';
+  const header = req.headers['authorization'];
+  const auth = typeof header === 'string' ? header : '';
   return auth.replace(/^Bearer\s+/i, '').trim() || null;
 }
 

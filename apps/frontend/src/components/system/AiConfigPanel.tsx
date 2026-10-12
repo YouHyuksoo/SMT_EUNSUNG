@@ -19,9 +19,9 @@ const PROVIDER_OPTIONS = [
 
 const MODEL_OPTIONS: Record<string, { value: string; label: string }[]> = {
   mistral: [
-    { value: "mistral-large-latest", label: "mistral-large-latest" },
-    { value: "mistral-small-latest", label: "mistral-small-latest" },
     { value: "mistral-medium-latest", label: "mistral-medium-latest" },
+    { value: "mistral-small-latest", label: "mistral-small-latest" },
+    { value: "mistral-large-latest", label: "mistral-large-latest (상위 요금제)" },
     { value: "open-mistral-7b", label: "open-mistral-7b" },
   ],
   openai: [
@@ -31,21 +31,20 @@ const MODEL_OPTIONS: Record<string, { value: string; label: string }[]> = {
     { value: "gpt-3.5-turbo", label: "gpt-3.5-turbo" },
   ],
   openrouter: [
-    { value: "openai/gpt-oss-120b:free", label: "openai/gpt-oss-120b:free" },
-    { value: "meta-llama/llama-3.3-70b-instruct:free", label: "meta-llama/llama-3.3-70b-instruct:free" },
-    { value: "qwen/qwen3-coder:free", label: "qwen/qwen3-coder:free" },
+    // 무료 모델은 시간대별로 혼잡(429)이 잦다 — 안 되면 다른 무료 모델로 바꿔 적용한다
+    { value: "nvidia/nemotron-3-super-120b-a12b:free", label: "nvidia/nemotron-3-super-120b:free" },
+    { value: "nvidia/nemotron-3-ultra-550b-a55b:free", label: "nvidia/nemotron-3-ultra-550b:free (느림)" },
+    { value: "google/gemma-4-31b-it:free", label: "google/gemma-4-31b-it:free" },
+    { value: "qwen/qwen3.8-27b:free", label: "qwen/qwen3.8-27b:free" },
     { value: "deepseek/deepseek-chat-v3-0324", label: "deepseek/deepseek-chat-v3-0324 (유료)" },
   ],
 };
 
-type ConfigRow = { configKey: string; configValue: string };
-type ConfigMeta = {
-  label: string;
-  description: string;
-  configType?: "TEXT" | "SELECT" | "NUMBER" | "BOOLEAN";
-  options?: string;
-  sortOrder?: number;
-};
+/** GET/PUT /ai/settings 응답 — 키 값은 오지 않고 등록 여부(keys)만 온다 */
+type AiSettingsSnapshot = { values: Record<string, string>; keys: Record<string, boolean> };
+
+/** provider → env 키 이름 (백엔드 ai-settings.service 와 같은 이름) */
+const apiKeyName = (provider: string) => `${provider.toUpperCase()}_API_KEY`;
 
 function errMessage(e: unknown, fallback: string): string {
   return (e as { response?: { data?: { message?: string } } })?.response?.data?.message ?? fallback;
@@ -58,7 +57,6 @@ export default function AiConfigPanel() {
   const [enabled, setEnabled] = useState(true);
   const [apiKey, setApiKey] = useState("");
   const [keyConfigured, setKeyConfigured] = useState(false);
-  const [existingKeys, setExistingKeys] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
@@ -74,12 +72,9 @@ export default function AiConfigPanel() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await api.get("/system/configs", { params: { configGroup: "AI" } });
-        const raw = res.data?.data;
-        const list = (raw?.data ?? (Array.isArray(raw) ? raw : [])) as ConfigRow[];
-        const map = Object.fromEntries(list.map((c) => [c.configKey, c.configValue]));
+        const res = await api.get("/ai/settings");
+        const map = ((res.data?.data ?? {}) as AiSettingsSnapshot).values ?? {};
         const p = (map.AI_PROVIDER || "mistral").trim();
-        setExistingKeys(new Set(list.map((c) => c.configKey)));
         setProvider(p);
         setModel((map.AI_MODEL || MODEL_OPTIONS[p]?.[0]?.value || "").trim());
         setEnabled((map.AI_ENABLED ?? "Y") === "Y");
@@ -99,36 +94,11 @@ export default function AiConfigPanel() {
     setTestResult(null);
   }, []);
 
-  const upsertConfig = useCallback(async (key: string, configValue: string, meta: ConfigMeta) => {
-    if (existingKeys.has(key)) {
-      await api.patch(`/system/configs/${key}`, {
-        configValue,
-        label: meta.label,
-        description: meta.description,
-        options: meta.options,
-        sortOrder: meta.sortOrder,
-        isActive: "Y",
-      });
-      return;
-    }
-    await api.post("/system/configs", {
-      configGroup: "AI",
-      configKey: key,
-      configValue,
-      configType: meta.configType ?? "TEXT",
-      label: meta.label,
-      description: meta.description,
-      options: meta.options,
-      sortOrder: meta.sortOrder ?? 0,
-    });
-    setExistingKeys((prev) => new Set(prev).add(key));
-  }, [existingKeys]);
-
   const handleTest = useCallback(async () => {
     setTesting(true);
     setTestResult(null);
     try {
-      const res = await api.post("/ai/test", { provider, model, apiKey: apiKey.trim() || undefined });
+      const res = await api.post("/ai/test", { provider, model, apiKey: apiKey.trim() || undefined }, { timeout: 60_000 });
       setTestResult(res.data?.data ?? { ok: false, message: "실패" });
     } catch (e) {
       setTestResult({ ok: false, message: errMessage(e, t("common.error", "오류")) });
@@ -140,36 +110,14 @@ export default function AiConfigPanel() {
   const handleSave = useCallback(async () => {
     setSaving(true);
     try {
-      const providerOptions = JSON.stringify(PROVIDER_OPTIONS.map(({ value, label }) => ({ value, label })));
-      await Promise.all([
-        upsertConfig("AI_PROVIDER", provider, {
-          label: "AI 제공자",
-          description: "채팅/질의 응답에 사용할 LLM 제공자입니다.",
-          configType: "SELECT",
-          options: providerOptions,
-          sortOrder: 10,
-        }),
-        upsertConfig("AI_MODEL", model, {
-          label: "AI 모델",
-          description: "채팅/질의 응답에 사용할 LLM 모델입니다.",
-          configType: "TEXT",
-          sortOrder: 11,
-        }),
-        upsertConfig("AI_ENABLED", enabled ? "Y" : "N", {
-          label: "AI 채팅 활성화",
-          description: "AI 채팅 기능 사용 여부입니다.",
-          configType: "BOOLEAN",
-          sortOrder: 12,
-        }),
-      ]);
-      if (apiKey.trim()) {
-        await upsertConfig(`AI_${provider.toUpperCase()}_KEY`, apiKey.trim(), {
-          label: `${provider.toUpperCase()} API 키`,
-          description: "LLM 채팅용 AI API 키입니다. 조회 시 원문은 반환하지 않습니다.",
-          configType: "TEXT",
-          sortOrder: 30,
-        });
-      }
+      // 백엔드가 AI 설정 env 파일을 고치고 즉시 다시 읽는다 — 다음 AI 호출부터 적용
+      // 키 칸이 비어 있으면 기존 키를 유지한다
+      await api.put("/ai/settings", {
+        AI_PROVIDER: provider,
+        AI_MODEL: model,
+        AI_ENABLED: enabled ? "Y" : "N",
+        ...(apiKey.trim() ? { [apiKeyName(provider)]: apiKey.trim() } : {}),
+      });
       toast.success(t("common.saved", "저장되었습니다."));
       setApiKey("");
       await refreshStatus();
@@ -178,7 +126,7 @@ export default function AiConfigPanel() {
     } finally {
       setSaving(false);
     }
-  }, [provider, model, enabled, apiKey, upsertConfig, refreshStatus, t]);
+  }, [provider, model, enabled, apiKey, refreshStatus, t]);
 
   if (loading) {
     return <Card><CardContent className="py-8 text-center text-text-muted">{t("common.loading", "불러오는 중...")}</CardContent></Card>;

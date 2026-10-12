@@ -10,6 +10,7 @@ import { RoutingProcess } from '../../../entities/routing-process.entity';
 import { SupplierMaster } from '../../../entities/supplier-master.entity';
 import { TransactionService } from '../../../shared/transaction.service';
 import { BulkSaveRoutingMaterialDto, CreateRoutingGroupDto, CreateRoutingProcessDto, ReorderRoutingProcessesDto, RoutingGroupQueryDto, UpdateRoutingGroupDto, UpdateRoutingProcessDto } from '../dto/routing-group.dto';
+import { namedBinds } from '../../../common/utils/named-binds.util';
 
 @Injectable()
 export class RoutingGroupService {
@@ -51,7 +52,7 @@ export class RoutingGroupService {
   }
 
   private conflictUnique(error: unknown): never {
-    if (error instanceof Error && ((error as Error & { code?: string }).code === 'ORA-00001' || error.message.includes('ORA-00001'))) {
+    if (error instanceof Error && (('code' in error && error.code === 'ORA-00001') || error.message.includes('ORA-00001'))) {
       throw new ConflictException('동일한 활성 라우팅 또는 키가 이미 존재합니다.');
     }
     throw error;
@@ -69,7 +70,7 @@ export class RoutingGroupService {
   private async lockRoutingGroup(manager: EntityManager, routingCode: string, organizationId: number) {
     const rows = await manager.query(
       'SELECT ROUTING_CODE AS "routingCode", ITEM_CODE AS "itemCode" FROM IP_ROUTING_GROUPS WHERE ORGANIZATION_ID = :organizationId AND ROUTING_CODE = :routingCode FOR UPDATE',
-      { organizationId, routingCode } as never,
+      namedBinds({ organizationId, routingCode }),
     ) as { routingCode: string; itemCode: string }[];
     if (rows.length !== 1) throw new NotFoundException(`라우팅 그룹을 찾을 수 없습니다: ${routingCode}`);
     return rows[0];
@@ -87,7 +88,8 @@ export class RoutingGroupService {
   async updateGroup(routingCode: string, dto: UpdateRoutingGroupDto, organizationId: number) {
     const group = await this.findGroupByCode(routingCode, organizationId);
     if (dto.useYn === 'Y') await this.ensureSingleActive(group.itemCode, organizationId, routingCode);
-    try { await this.groupRepo.update({ routingCode, organizationId }, dto); }
+    const changes = { routingName: dto.routingName, description: dto.description, useYn: dto.useYn };
+    try { await this.groupRepo.update({ routingCode, organizationId }, changes); }
     catch (error: unknown) { return this.conflictUnique(error); }
     return this.findGroupByCode(routingCode, organizationId);
   }
@@ -157,11 +159,11 @@ export class RoutingGroupService {
 
         const processRows = await manager.query(
           'SELECT p.PROCESS_SEQ AS "processSeq" FROM IP_ROUTING_PROCESSES p WHERE p.ORGANIZATION_ID = :organizationId AND p.ROUTING_CODE = :routingCode ORDER BY p.PROCESS_SEQ FOR UPDATE',
-          { organizationId, routingCode } as never,
+          namedBinds({ organizationId, routingCode }),
         ) as { processSeq: number }[];
         const materialRows = await manager.query(
           'SELECT PROCESS_SEQ AS "processSeq", COUNT(*) AS "materialCount" FROM IP_ROUTING_MATERIALS WHERE ORGANIZATION_ID = :organizationId AND ROUTING_CODE = :routingCode GROUP BY PROCESS_SEQ',
-          { organizationId, routingCode } as never,
+          namedBinds({ organizationId, routingCode }),
         ) as { processSeq: number; materialCount: number }[];
         const materialCounts = new Map(materialRows.map((row) => [Number(row.processSeq), Number(row.materialCount)]));
         const current = processRows.map((row) => Number(row.processSeq)).sort((a, b) => a - b);
@@ -189,15 +191,15 @@ export class RoutingGroupService {
 
         await manager.query('SET CONSTRAINTS FK_IP_RM_PROCESS DEFERRED');
         for (const c of changes) {
-          const materialResult = await manager.query('UPDATE IP_ROUTING_MATERIALS SET PROCESS_SEQ = :tempSeq WHERE ORGANIZATION_ID = :organizationId AND ROUTING_CODE = :routingCode AND PROCESS_SEQ = :fromSeq', { organizationId, routingCode, fromSeq: c.fromSeq, tempSeq: c.tempSeq } as never);
+          const materialResult = await manager.query('UPDATE IP_ROUTING_MATERIALS SET PROCESS_SEQ = :tempSeq WHERE ORGANIZATION_ID = :organizationId AND ROUTING_CODE = :routingCode AND PROCESS_SEQ = :fromSeq', namedBinds({ organizationId, routingCode, fromSeq: c.fromSeq, tempSeq: c.tempSeq }));
           assertAffected(materialResult, c.materialCount);
-          const processResult = await manager.query('UPDATE IP_ROUTING_PROCESSES SET PROCESS_SEQ = :tempSeq WHERE ORGANIZATION_ID = :organizationId AND ROUTING_CODE = :routingCode AND PROCESS_SEQ = :fromSeq', { organizationId, routingCode, fromSeq: c.fromSeq, tempSeq: c.tempSeq } as never);
+          const processResult = await manager.query('UPDATE IP_ROUTING_PROCESSES SET PROCESS_SEQ = :tempSeq WHERE ORGANIZATION_ID = :organizationId AND ROUTING_CODE = :routingCode AND PROCESS_SEQ = :fromSeq', namedBinds({ organizationId, routingCode, fromSeq: c.fromSeq, tempSeq: c.tempSeq }));
           assertAffected(processResult, 1);
         }
         for (const c of changes) {
-          const processResult = await manager.query('UPDATE IP_ROUTING_PROCESSES SET PROCESS_SEQ = :toSeq WHERE ORGANIZATION_ID = :organizationId AND ROUTING_CODE = :routingCode AND PROCESS_SEQ = :tempSeq', { organizationId, routingCode, tempSeq: c.tempSeq, toSeq: c.toSeq } as never);
+          const processResult = await manager.query('UPDATE IP_ROUTING_PROCESSES SET PROCESS_SEQ = :toSeq WHERE ORGANIZATION_ID = :organizationId AND ROUTING_CODE = :routingCode AND PROCESS_SEQ = :tempSeq', namedBinds({ organizationId, routingCode, tempSeq: c.tempSeq, toSeq: c.toSeq }));
           assertAffected(processResult, 1);
-          const materialResult = await manager.query('UPDATE IP_ROUTING_MATERIALS SET PROCESS_SEQ = :toSeq WHERE ORGANIZATION_ID = :organizationId AND ROUTING_CODE = :routingCode AND PROCESS_SEQ = :tempSeq', { organizationId, routingCode, tempSeq: c.tempSeq, toSeq: c.toSeq } as never);
+          const materialResult = await manager.query('UPDATE IP_ROUTING_MATERIALS SET PROCESS_SEQ = :toSeq WHERE ORGANIZATION_ID = :organizationId AND ROUTING_CODE = :routingCode AND PROCESS_SEQ = :tempSeq', namedBinds({ organizationId, routingCode, tempSeq: c.tempSeq, toSeq: c.toSeq }));
           assertAffected(materialResult, c.materialCount);
         }
       });
@@ -256,7 +258,7 @@ export class RoutingGroupService {
       });
       childFilter = ` AND CHILD_ITEM_CODE IN (${placeholders.join(', ')})`;
     }
-    return source.query(
+    return source.query<{ childItemCode: string; bomQty: number }[]>(
       `SELECT CHILD_ITEM_CODE AS "childItemCode", ITEM_UNIT_QTY AS "bomQty"
          FROM ID_ENG_BOM
         WHERE ORGANIZATION_ID = :organizationId
@@ -264,8 +266,8 @@ export class RoutingGroupService {
           AND DATESET <= TRUNC(SYSDATE)
           AND DATEEND >= TRUNC(SYSDATE)${childFilter}
         ORDER BY SORT_SEQUENCE, CHILD_ITEM_CODE`,
-      binds as never,
-    ) as Promise<{ childItemCode: string; bomQty: number }[]>;
+      namedBinds(binds),
+    );
   }
 
   private chunkOracleIn<T>(values: T[]): T[][] {

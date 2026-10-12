@@ -54,4 +54,13 @@ export class RunCardController {
   async remove(@Param('runNo') runNo: string) {
     return await this.service.remove(runNo);
   }
+
+  /**
+   * 강제삭제 — PID·런카드상세를 함께 지운다 (PB cbx_force_delete 경로).
+   * QC 검사된 PID 나 공정실적이 있으면 여전히 409 다.
+   */
+  @Delete(':runNo/force')
+  async removeForce(@Param('runNo') runNo: string, @Query('userId') userId?: string) {
+    return await this.service.removeForce(runNo, userId);
+  }
 }

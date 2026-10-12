@@ -68,7 +68,7 @@ export default function SchedulerLogTab() {
   }, []);
 
   /* 데이터 조회 */
-  const fetchData = useCallback(async () => {
+  const search = useCallback(async () => {
     setLoading(true);
     try {
       const params: Record<string, string> = {};
@@ -85,7 +85,7 @@ export default function SchedulerLogTab() {
     }
   }, [fromDate, toDate, jobFilter, statusFilter]);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => { search(); }, [search]);
 
   /* duration 포맷 */
   const fmtDuration = (ms: number | null) => {
@@ -143,7 +143,7 @@ export default function SchedulerLogTab() {
               value={jobFilter} onChange={setJobFilter} />
             <ComCodeSelect groupCode="SCHED_STATUS" value={statusFilter}
               onChange={setStatusFilter} labelPrefix={t("common.status")} />
-            <Button size="sm" variant="secondary" onClick={fetchData}>
+            <Button size="sm" variant="secondary" onClick={search}>
               <RefreshCw className={`w-4 h-4 mr-1 ${loading ? "animate-spin" : ""}`} />
               {t("common.refresh")}
             </Button>

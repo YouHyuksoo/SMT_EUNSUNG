@@ -5,9 +5,10 @@
  * @description 설비별 작업 실적관리 — IP_PRODUCT_RUN_CARD 기준 실적/불량/설비비가동 실 DB 연결
  *
  * API(글로벌 prefix /api → 백엔드 /api/v1) : /oee/work-result
- *   목록 GET ?fromDate&toDate&lineCode&keyword · 실적이력 GET /results?runNo
+ *   목록 GET ?fromDate&toDate&lineCode&keyword&excludeSmt=Y(라인구분 SMT 제외) · 실적이력 GET /results?runNo
  *   실적상세 GET /results/:runNo/:seqNo · 실적 POST/PUT /results
  *   부적합유형 GET /bad-reasons(WQC) · 후공정설비 GET /machines · 비가동사유 GET /downtime-reasons
+ *   비가동 설비콤보 GET /downtime-machines?runNo (작업지시 설비 고정 → 공정 배치설비 → 라인 배치설비)
  *   비가동 처리는 공용 컴포넌트 components/shared/EquipDowntimePanel 이 담당
  */
 import { useCallback, useEffect, useState } from 'react';
@@ -17,6 +18,7 @@ import { Card, CardContent, Input } from '@/components/ui';
 import { ProdLineSelect, WorkResultForm } from '@/components/shared';
 import EquipDowntimePanel from '@/components/shared/EquipDowntimePanel';
 import api from '@/services/api';
+import { SMT_LINE_DIVISIONS } from '@smt/shared';
 
 function todayStr() {
   const d = new Date();
@@ -35,6 +37,8 @@ interface RunRow {
 }
 interface Machine { machineCode: string; machineName: string; workstageCode: string; workstageName: string; lineCode: string; }
 interface Code { code: string; name: string; }
+/** 설비비가동 설비 콤보 — by: 구성 기준(작업지시 설비/공정 배치설비/라인 배치설비/없음) */
+interface DowntimeMachines { by: 'machine' | 'workstage' | 'line' | 'none'; fixed: boolean; list: Machine[]; }
 
 type PanelMode = 'result' | 'defect' | 'downtime';
 
@@ -63,21 +67,23 @@ export default function EquipWorkResultPage() {
   // 공용 코드/콤보
   const [machines, setMachines] = useState<Machine[]>([]);
   const [badReasons, setBadReasons] = useState<Code[]>([]);
+  // 설비비가동 패널의 설비 콤보 (작업지시 선택 시에만, 로딩 중 null)
+  const [dtMachines, setDtMachines] = useState<DowntimeMachines | null>(null);
 
 
   // 불량 패널 (작업지시 단위 대표불량 단일)
   const [defect, setDefect] = useState<{ badCode: string; badQty: number; remark: string }>({ badCode: '', badQty: 0, remark: '' });
   const [defectInfoOpen, setDefectInfoOpen] = useState(false); // 기본정보 접힘(기본값)
 
-  const load = useCallback(async () => {
+  const search = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await api.get('/oee/work-result', { params: { fromDate, toDate, lineCode: lineCode || undefined, keyword: keyword || undefined } });
+      const res = await api.get('/oee/work-result', { params: { fromDate, toDate, lineCode: lineCode || undefined, keyword: keyword || undefined, excludeSmt: 'Y' } });
       setRows(res.data?.data?.list ?? []);
     } catch { toast.error('작업지시 목록 조회에 실패했습니다'); }
     finally { setLoading(false); }
   }, [fromDate, toDate, lineCode, keyword]);
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { search(); }, [search]);
 
   // 공용 콤보 최초 1회
   useEffect(() => {
@@ -113,7 +119,7 @@ export default function EquipWorkResultPage() {
     try {
       await api.post('/oee/work-result/defect', { runNo: panelRun.runNo, badCode: defect.badCode, badQty: defect.badQty, remark: defect.remark || undefined });
       toast.success('불량이 저장되었습니다');
-      await load();
+      await search();
     } catch (e: unknown) {
       const msg = e && typeof e === 'object' && 'response' in e ? (e as { response?: { data?: { message?: string } } }).response?.data?.message : undefined;
       toast.error(msg || '불량 저장에 실패했습니다');
@@ -123,9 +129,23 @@ export default function EquipWorkResultPage() {
   // ---- 비가동 패널 (설비 기준 — 작업지시 선택은 선택사항, ADR 0002) ----
   // 실제 조회·시작·종료는 공용 컴포넌트 EquipDowntimePanel이 담당한다.
   // r=null 이면 작업지시 없이 설비만 선택해 등록하는 흐름
-  function openDowntimePanel(r: RunRow | null) {
+  async function openDowntimePanel(r: RunRow | null) {
     setSelectedRun(r?.runNo ?? null); setPanelRun(r); setPanelMode('downtime');
+    setDtMachines(null);
+    if (!r) return;
+    try {
+      const res = await api.get('/oee/work-result/downtime-machines', { params: { runNo: r.runNo } });
+      setDtMachines(res.data?.data ?? { by: 'none', fixed: false, list: [] });
+    } catch {
+      toast.error('설비 목록 조회에 실패했습니다');
+      setDtMachines({ by: 'none', fixed: false, list: [] });
+    }
   }
+  const dtByLabel = (d: DowntimeMachines, r: RunRow) =>
+    d.by === 'machine' ? '작업지시 설비 (고정)'
+      : d.by === 'workstage' ? `공정 ${r.workstageCode} 배치 설비`
+      : d.by === 'line' ? `라인 ${r.lineCode} 배치 설비`
+      : '작업지시에 설비·공정·라인 정보가 없습니다';
 
   // 폼 상태는 WorkResultForm이 들고 있다 — 패널이 닫히며 언마운트되면 같이 사라진다
   function closePanel() { setPanelMode(null); setPanelRun(null); }
@@ -137,7 +157,7 @@ export default function EquipWorkResultPage() {
         <div className="flex items-start justify-between flex-shrink-0 gap-4 flex-wrap">
           <div>
             <h1 className="text-xl font-bold text-text flex items-center gap-2"><Factory className="w-6 h-6 text-primary" /> 설비별 작업 실적관리</h1>
-            <p className="text-sm text-text-muted mt-1">작업지시(IP_PRODUCT_RUN_CARD) 기준 설비 가동상태 · 계획/실적 · 실적/불량/비가동 등록</p>
+            <p className="text-sm text-text-muted mt-1">작업지시 기준 설비 가동상태 · 계획/실적 · 실적/불량/비가동 등록</p>
           </div>
           <div className="flex items-end gap-2 flex-wrap">
             <label className="text-xs text-text-muted flex flex-col gap-1">계획일(From)
@@ -147,12 +167,12 @@ export default function EquipWorkResultPage() {
               <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="border border-border rounded p-2 bg-background text-text text-sm h-10" />
             </label>
             <label className="text-xs text-text-muted flex flex-col gap-1 w-44">라인
-              <ProdLineSelect includeAll value={lineCode} onChange={setLineCode} fullWidth />
+              <ProdLineSelect includeAll excludeDivisions={SMT_LINE_DIVISIONS} value={lineCode} onChange={setLineCode} fullWidth />
             </label>
             <label className="text-xs text-text-muted flex flex-col gap-1">통합검색
-              <div className="w-56"><Input placeholder="품번·품명·설비코드/명" value={keyword} onChange={(e) => setKeyword(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && load()} leftIcon={<Search className="w-4 h-4" />} fullWidth /></div>
+              <div className="w-56"><Input placeholder="품번·품명·설비코드/명" value={keyword} onChange={(e) => setKeyword(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && search()} leftIcon={<Search className="w-4 h-4" />} fullWidth /></div>
             </label>
-            <button onClick={load} className="border border-border rounded px-3 h-10 text-text-muted hover:bg-surface flex items-center gap-1"><RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />조회</button>
+            <button onClick={search} className="border border-border rounded px-3 h-10 text-text-muted hover:bg-surface flex items-center gap-1"><RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />조회</button>
           </div>
         </div>
 
@@ -241,7 +261,7 @@ export default function EquipWorkResultPage() {
             <button onClick={closePanel} className="px-3 py-2 rounded border border-border text-text-muted text-sm">닫기</button>
           </div>
           <div className="flex-1 min-h-0 overflow-y-auto px-5 py-4 space-y-4">
-            <WorkResultForm key={panelRun.runNo} run={panelRun} machines={machines} onSaved={load} />
+            <WorkResultForm key={panelRun.runNo} run={panelRun} machines={machines} onSaved={search} />
           </div>
         </div>
       )}
@@ -332,12 +352,20 @@ export default function EquipWorkResultPage() {
             <button onClick={closePanel} className="px-3 py-2 rounded border border-border text-text-muted text-sm">닫기</button>
           </div>
           <div className="flex-1 min-h-0 overflow-y-auto px-5 py-4">
-            <EquipDowntimePanel
-              machine={panelRun?.machineCode ? { machineCode: panelRun.machineCode, machineName: panelRun.machineName, workstageCode: panelRun.workstageCode } : null}
-              selectableMachines={machines}
-              runNo={panelRun?.runNo ?? null}
-              onChanged={load}
-            />
+            {panelRun && !dtMachines ? (
+              <div className="p-8 text-center text-text-muted text-sm">설비 목록 조회 중…</div>
+            ) : (
+              <>
+                {panelRun && dtMachines && <p className="text-[11px] text-text-muted mb-2">설비 목록: {dtByLabel(dtMachines, panelRun)}</p>}
+                <EquipDowntimePanel
+                  key={panelRun?.runNo ?? 'none'}
+                  machine={dtMachines?.fixed ? dtMachines.list[0] ?? null : null}
+                  selectableMachines={panelRun ? dtMachines?.list ?? [] : machines}
+                  runNo={panelRun?.runNo ?? null}
+                  onChanged={search}
+                />
+              </>
+            )}
           </div>
         </div>
       )}

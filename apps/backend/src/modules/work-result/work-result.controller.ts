@@ -17,6 +17,7 @@ import {
 } from '../../common/decorators/tenant.decorator';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import {
+  ApplySensorDto,
   DefectSaveDto,
   DowntimeBulkDto,
   DowntimeUpsertDto,
@@ -64,8 +65,10 @@ export class WorkResultController {
     @Query('keyword') keyword?: string,
     @Query('machineCode') machineCode?: string,
     @OrganizationId() organizationId?: number,
+    @Query('excludeSmt') excludeSmt?: string,
     @Query('lineCodes') lineCodes?: string,
   ) {
+    const parsedLineCodes = parseLineCodes(lineCodes);
     const rows = await this.service.list(
       fromDate,
       toDate,
@@ -73,9 +76,11 @@ export class WorkResultController {
       keyword || undefined,
       organizationId,
       machineCode || undefined,
-      parseLineCodes(lineCodes),
+      excludeSmt === 'Y',
+      parsedLineCodes,
     );
 
+    if (!parsedLineCodes) return { list: rows };
     return {
       list: rows.slice(0, MAX_WORK_RESULT_ROWS),
       truncated: rows.length > MAX_WORK_RESULT_ROWS,
@@ -125,6 +130,15 @@ export class WorkResultController {
     return await this.service.upsertResult(dto, organizationId, userId);
   }
 
+  /** 센서 반영 재시도 — 완료인데 미반영인 실적을 다시 프로시저로 넘긴다 */
+  @Post('results/apply-sensor')
+  async applySensor(
+    @Body() dto: ApplySensorDto,
+    @OrganizationId() organizationId?: number,
+  ) {
+    return await this.service.applySensor(dto, organizationId);
+  }
+
   /** 작업지시 대표불량 조회 */
   @Get('defect')
   async getDefect(
@@ -162,6 +176,15 @@ export class WorkResultController {
   @Get('machines')
   async machines(@OrganizationId() organizationId?: number) {
     return { list: await this.service.machines(organizationId) };
+  }
+
+  /** 설비비가동 설비 콤보 (작업지시 설비 → 공정 배치설비 → 라인 배치설비) */
+  @Get('downtime-machines')
+  async downtimeMachines(
+    @Query('runNo') runNo: string,
+    @OrganizationId() organizationId?: number,
+  ) {
+    return this.service.downtimeMachines(runNo, organizationId);
   }
 
   /** 비가동 사유 (설비 연계) */

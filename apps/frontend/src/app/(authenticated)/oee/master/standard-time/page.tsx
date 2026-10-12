@@ -69,9 +69,9 @@ export default function StandardTimeMasterPage() {
   const [form, setForm] = useState<EditForm | null>(null);
   const [modelPickerOpen, setModelPickerOpen] = useState(false);
   const [equipPickerOpen, setEquipPickerOpen] = useState(false);
-  const [search, setSearch] = useState('');
+  const [searchText, setSearchText] = useState('');
 
-  const load = useCallback(async () => {
+  const search = useCallback(async () => {
     setLoading(true);
     try {
       const res = await api.get('/oee/standard-time');
@@ -95,13 +95,13 @@ export default function StandardTimeMasterPage() {
       setLoading(false);
     }
   }, []);
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { search(); }, [search]);
 
   const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
+    const q = searchText.trim().toLowerCase();
     if (!q) return records;
     return records.filter((r) => [r.modelCode, r.modelName, r.machineCode, r.machineName].join(' ').toLowerCase().includes(q));
-  }, [records, search]);
+  }, [records, searchText]);
 
   const columns = useMemo<ColumnDef<StdTimeRecord>[]>(
     () => [
@@ -147,11 +147,11 @@ export default function StandardTimeMasterPage() {
 
   async function save() {
     if (!form) return;
-    if (!form.modelCode) return alert('모델을 선택하세요');
-    if (!form.machineCode) return alert('설비를 선택하세요');
-    if (!form.validFrom) return alert('적용 시작일을 입력하세요');
-    if (form.validTo !== OPEN_END && form.validTo < form.validFrom) return alert('적용 종료일은 적용 시작일보다 빠를 수 없습니다');
-    if (!TIME_CATEGORIES.some((c) => form.times[c.code] > 0)) return alert('분류별 표준시간을 1개 이상 입력하세요');
+    if (!form.modelCode) return toast.error('모델을 선택하세요');
+    if (!form.machineCode) return toast.error('설비를 선택하세요');
+    if (!form.validFrom) return toast.error('적용 시작일을 입력하세요');
+    if (form.validTo !== OPEN_END && form.validTo < form.validFrom) return toast.error('적용 종료일은 적용 시작일보다 빠를 수 없습니다');
+    if (!TIME_CATEGORIES.some((c) => form.times[c.code] > 0)) return toast.error('분류별 표준시간을 1개 이상 입력하세요');
 
     const payload = {
       itemCode: form.modelCode, machineCode: form.machineCode, validFrom: form.validFrom, validTo: form.validTo,
@@ -165,7 +165,7 @@ export default function StandardTimeMasterPage() {
       }
       toast.success('저장되었습니다');
       setForm(null);
-      await load();
+      await search();
     } catch (e: unknown) {
       // 서버가 내려준 메시지(중복 등) 우선 표시
       const msg =
@@ -185,7 +185,7 @@ export default function StandardTimeMasterPage() {
             <p className="text-sm text-text-muted mt-1">품목(모델) 기준 ST/CT/NT/TT 표준시간 · 적용기간 리비전 관리</p>
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={load} className="border border-border rounded px-3 h-10 text-text-muted hover:bg-surface flex items-center gap-1"><RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />새로고침</button>
+            <button onClick={search} className="border border-border rounded px-3 h-10 text-text-muted hover:bg-surface flex items-center gap-1"><RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />조회</button>
             <button onClick={openCreate} className="bg-primary text-white px-4 py-2 rounded h-10">표준시간 등록</button>
           </div>
         </div>
@@ -206,7 +206,7 @@ export default function StandardTimeMasterPage() {
               toolbarLeft={
                 <div className="flex flex-wrap gap-3 flex-1 min-w-0">
                   <div className="w-96 flex-shrink-0">
-                    <Input placeholder="통합검색 (모델코드·모델명)" value={search} onChange={(e) => setSearch(e.target.value)} leftIcon={<Search className="w-4 h-4" />} fullWidth />
+                    <Input placeholder="통합검색 (모델코드·모델명)" value={searchText} onChange={(e) => setSearchText(e.target.value)} leftIcon={<Search className="w-4 h-4" />} fullWidth />
                   </div>
                 </div>
               }

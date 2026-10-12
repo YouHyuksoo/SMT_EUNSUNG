@@ -1,0 +1,62 @@
+HA$PBExportHeader$d_product_infac_upload_list.srd
+$PBExportComments$INFAC data upload list
+release 10.5;
+datawindow(units=0 timer_interval=0 color=1073741824 processing=1 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no grid.lines=0 )
+header(height=108 color="16777215" )
+summary(height=0 color="16777215" )
+footer(height=0 color="16777215" )
+detail(height=80 color="33554431" pointer="" )
+table(column=(type=char(8) update=yes updatewhereclause=yes key=yes name=dt_if dbname="eseai_m107_temp.dt_if" dbalias=".dt_if" )
+ column=(type=char(4) update=yes updatewhereclause=yes key=yes name=cd_sl dbname="eseai_m107_temp.cd_sl" dbalias=".cd_sl" )
+ column=(type=char(18) update=yes updatewhereclause=yes key=yes name=cd_item dbname="eseai_m107_temp.cd_item" dbalias=".cd_item" )
+ column=(type=char(1) update=yes updatewhereclause=yes name=yn_process dbname="eseai_m107_temp.yn_process" dbalias=".yn_process" )
+ column=(type=char(300) update=yes updatewhereclause=yes name=dc_errormsg dbname="eseai_m107_temp.dc_errormsg" dbalias=".dc_errormsg" )
+ column=(type=decimal(3) update=yes updatewhereclause=yes name=qt_im dbname="eseai_m107_temp.qt_im" dbalias=".qt_im" )
+ column=(type=char(8) update=yes updatewhereclause=yes key=yes name=dts_create dbname="eseai_m107_temp.dts_create" dbalias=".dts_create" )
+ column=(type=datetime updatewhereclause=yes name=transfer_date dbname="eseai_m107_temp.transfer_date" dbalias=".transfer_date" )
+ column=(type=char(1) updatewhereclause=yes name=transfer_yn dbname="eseai_m107_temp.transfer_yn" dbalias=".transfer_yn" )
+ retrieve="SELECT DT_IF, 
+            CD_SL, 
+            CD_ITEM, 
+            YN_PROCESS, 
+            DC_ERRORMSG, 
+            QT_IM, 
+            DTS_CREATE, 
+            TRANSFER_DATE, 
+            TRANSFER_YN
+  FROM ESEAI_M107_TEMP
+WHERE DT_IF                =      TO_CHAR( :ARG_DT_IF, 'YYYYMMDD')
+    AND  CD_SL              LIKE  :ARG_CD_SL
+    AND  CD_ITEM          LIKE  :ARG_CD_ITEM
+    AND  TRANSFER_YN  LIKE :ARG_TRANSFER_YN
+" update="ESEAI_M107_TEMP" updatewhere=1 updatekeyinplace=no arguments=(("ARG_DT_IF", datetime),("ARG_CD_SL", string),("ARG_CD_ITEM", string),("ARG_TRANSFER_YN", string))  sort="dt_if A dts_create A cd_sl A cd_item A " )
+text(band=header alignment="2" text="DT IF" border="0" color="0" x="137" y="0" height="104" width="430" html.valueishtml="0"  name=dt_if_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="CD SL" border="0" color="0" x="576" y="0" height="104" width="338" html.valueishtml="0"  name=cd_sl_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="CD ITEM" border="0" color="0" x="923" y="0" height="104" width="608" html.valueishtml="0"  name=cd_item_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="YN Process" border="0" color="0" x="1541" y="0" height="104" width="306" html.valueishtml="0"  name=yn_process_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="DC Error Message" border="0" color="0" x="1856" y="0" height="104" width="1897" html.valueishtml="0"  name=dc_errormsg_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="QT IM" border="0" color="0" x="3762" y="0" height="104" width="334" html.valueishtml="0"  name=qt_im_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="DTS Create" border="0" color="0" x="4105" y="0" height="104" width="453" html.valueishtml="0"  name=dts_create_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Transfer Date" border="0" color="0" x="4567" y="0" height="104" width="558" html.valueishtml="0"  name=transfer_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Transfer YN" border="0" color="0" x="5134" y="0" height="104" width="325" html.valueishtml="0"  name=transfer_yn_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+compute(band=detail alignment="2" expression="getrow()"border="0" color="33554432" x="9" y="8" height="64" width="119" format="[GENERAL]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12639424" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="33554432" x="142" y="8" height="64" width="425" format="[general]" html.valueishtml="0"  name=dt_if visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="33554432" x="581" y="8" height="64" width="334" format="[general]" html.valueishtml="0"  name=cd_sl visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="0" color="33554432" x="928" y="8" height="64" width="603" format="[general]" html.valueishtml="0"  name=cd_item visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="0" color="33554432" x="1545" y="8" height="64" width="302" format="[general]" html.valueishtml="0"  name=yn_process visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=5 alignment="0" tabsequence=32766 border="0" color="33554432" x="1861" y="8" height="64" width="1893" format="[general]" html.valueishtml="0"  name=dc_errormsg visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=6 alignment="2" tabsequence=32766 border="0" color="33554432" x="3767" y="8" height="64" width="329" format="[general]" html.valueishtml="0"  name=qt_im visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=7 alignment="2" tabsequence=32766 border="0" color="33554432" x="4110" y="8" height="64" width="448" format="[general]" html.valueishtml="0"  name=dts_create visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=8 alignment="2" tabsequence=32766 border="0" color="33554432" x="4571" y="8" height="64" width="553" format="[shortdate] [time]" html.valueishtml="0"  name=transfer_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+column(band=detail id=9 alignment="2" tabsequence=32766 border="0" color="33554432" x="5138" y="8" height="64" width="320" format="[general]" html.valueishtml="0"  name=transfer_yn visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="1073741824" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml( template=(comment="" name="iq_interlock_check_ng_log" xhtml="$$HEX1$$fffe$$ENDHEX$$<form name=~"d_interlock_check_ng_log_dataForm~"><div class=~"d_interlock_check_ng_log_band_0~"><div class=~"d_interlock_check_ng_log_line_code_t~">line_code_t</div><div class=~"d_interlock_check_ng_log_machine_code_t~">machine_code_t</div><div class=~"d_interlock_check_ng_log_vr1_0~"/><div class=~"d_interlock_check_ng_log_serial_no_t~">serial_no_t</div><div class=~"d_interlock_check_ng_log_vr2_0~"/><div class=~"d_interlock_check_ng_log_request_date_t~">request_date_t</div><div class=~"d_interlock_check_ng_log_vr3_0~"/><div class=~"d_interlock_check_ng_log_comments_t~">comments_t</div><div class=~"d_interlock_check_ng_log_vr4_0~"/><div class=~"d_interlock_check_ng_log_log_sequence_t~">log_sequence_t</div><div class=~"d_interlock_check_ng_log_vr5_0~"/><div class=~"d_interlock_check_ng_log_workstage_code_t~">workstage_code_t</div><div class=~"d_interlock_check_ng_log_vr6_0~"/><div class=~"d_interlock_check_ng_log_interlock_type_t~">interlock_type_t</div><div class=~"d_interlock_check_ng_log_vr7_0~"/><div class=~"d_interlock_check_ng_log_return_value_t~">return_value_t</div><div class=~"d_interlock_check_ng_log_vr8_0~"/></div><div class=~"d_interlock_check_ng_log_detail_0~" __pbband=~"detail~"><textarea name=~"d_interlock_check_ng_log_return_value~">return_value</textarea><textarea name=~"d_interlock_check_ng_log_interlock_type~">interlock_type</textarea><textarea name=~"d_interlock_check_ng_log_workstage_code~">workstage_code</textarea><textarea name=~"d_interlock_check_ng_log_log_sequence~">log_sequence</textarea><textarea name=~"d_interlock_check_ng_log_comments~">comments</textarea><textarea name=~"d_interlock_check_ng_log_request_date~">run_date</textarea><textarea name=~"d_interlock_check_ng_log_serial_no~">serial_no</textarea><textarea name=~"d_interlock_check_ng_log_machine_code~">machine_code</textarea><textarea name=~"d_interlock_check_ng_log_line_code~">line_code</textarea></div></form>"))
+ 

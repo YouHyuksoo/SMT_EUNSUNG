@@ -21,6 +21,7 @@ import {
 } from '../ui';
 import * as Storage from '../storage';
 import { t } from '../i18n';
+import { getTodayLocal } from '@/utils/date';
 
 /**
  * 데이터 내보내기 (JSON 파일 다운로드)
@@ -48,7 +49,7 @@ export function exportData(): void {
 
   const a = document.createElement('a');
   a.href = url;
-  a.download = `mydesktop-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  a.download = `mydesktop-backup-${getTodayLocal()}.json`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);

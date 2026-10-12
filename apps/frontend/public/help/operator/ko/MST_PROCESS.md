@@ -83,7 +83,7 @@ IMCN_MACHINE (PK: MACHINE_CODE, ORGANIZATION_ID)   ── 하단 그리드 표�
 | 감사 | `ENTER_BY`, `ENTER_DATE`, `LAST_MODIFY_BY`, `LAST_MODIFY_DATE` | 생성/수정 이력 |
 | 멀티테넌시 | `ORGANIZATION_ID` | PK 구성. 모든 조회/변경에 스코프 적용 |
 
-> **화면에 노출하지 않는 컬럼**: `ACTION_DATE`, `MES_DISPLAY_SEQUENCE`. 레거시 PB 화면에도 없던 항목이라 그대로 둡니다.
+> **화면에 노출하지 않는 컬럼**: `ACTION_DATE`, `MES_DISPLAY_SEQUENCE`. 업무에 쓰지 않는 항목이라 표시하지 않습니다.
 >
 > **테이블에 없는 필드**: `USE_YN`, `REMARK`, `LINE_TYPE`(LV/HV/CM). 현재 모델에 없는 필드로 화면에서 제거되었습니다.
 

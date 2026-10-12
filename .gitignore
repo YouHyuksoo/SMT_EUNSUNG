@@ -106,6 +106,8 @@ next-env.d.ts
 
 # 은성: AI 지식 sqlite 캐시(대용량, 재생성 가능)
 apps/backend/data/ai-knowledge/
+# 은성: AI 설정 env 파일(API 키 포함) — ai-settings.service, AI_ENV_PATH
+apps/backend/data/ai/
 *.sqlite
 
 # pnpm 로컬 스토어 캐시

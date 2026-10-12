@@ -42,7 +42,7 @@ export default function DisplayFooter(props: Props) {
         <div className="flex items-center gap-4 text-xs text-gray-500 font-mono">
           {formattedTime && (
             <div className="flex items-center gap-1.5">
-              <span className="opacity-60">{t("common.refresh")}:</span>
+              <span className="opacity-60">{t("common.refreshInterval")}:</span>
               <span className="text-gray-400">{formattedTime}</span>
             </div>
           )}

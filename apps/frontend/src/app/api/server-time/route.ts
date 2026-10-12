@@ -10,6 +10,18 @@ export const dynamic = "force-dynamic";
 
 interface TimeRow { TODAY: string; NOW: string; }
 
+function fallbackKst(): { today: string; now: string } {
+  const date = new Date();
+  const parts = new Intl.DateTimeFormat('sv-SE', {
+    timeZone: 'Asia/Seoul',
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23',
+  }).formatToParts(date);
+  const values = Object.fromEntries(parts.filter((part) => part.type !== 'literal').map((part) => [part.type, part.value]));
+  const today = `${values.year}-${values.month}-${values.day}`;
+  return { today, now: `${today} ${values.hour}:${values.minute}:${values.second}` };
+}
+
 export async function GET() {
   try {
     const rows = await executeQuery<TimeRow>(
@@ -18,14 +30,9 @@ export async function GET() {
        FROM DUAL`,
       {},
     );
-    return NextResponse.json({
-      today: rows[0]?.TODAY ?? new Date().toISOString().slice(0, 10),
-      now: rows[0]?.NOW ?? new Date().toISOString(),
-    });
+    const fallback = fallbackKst();
+    return NextResponse.json({ today: rows[0]?.TODAY ?? fallback.today, now: rows[0]?.NOW ?? fallback.now });
   } catch {
-    return NextResponse.json({
-      today: new Date().toISOString().slice(0, 10),
-      now: new Date().toISOString(),
-    });
+    return NextResponse.json(fallbackKst());
   }
 }

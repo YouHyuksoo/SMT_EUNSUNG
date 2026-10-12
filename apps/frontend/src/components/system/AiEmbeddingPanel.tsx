@@ -12,11 +12,18 @@ import { api } from "@/services/api";
 import toast from "react-hot-toast";
 
 const EMBEDDING_PROVIDER_OPTIONS = [
+  { value: "ollama", label: "사내 서버 (Ollama)" },
   { value: "mistral", label: "Mistral" },
   { value: "openai", label: "OpenAI" },
 ];
 
 const EMBEDDING_MODEL_OPTIONS: Record<string, { value: string; label: string; dims: string }[]> = {
+  // 사내 서버에서 직접 도는 임베딩 (은성 운영: JSIDC 서버 Ollama). API 키·사용량 제한이 없고 데이터가 밖으로 나가지 않는다.
+  ollama: [
+    { value: "bge-m3", label: "bge-m3 (1024)", dims: "1024" },
+    { value: "bge-large", label: "bge-large (1024)", dims: "1024" },
+    { value: "nomic-embed-text", label: "nomic-embed-text (768)", dims: "768" },
+  ],
   mistral: [{ value: "mistral-embed", label: "mistral-embed (1024)", dims: "1024" }],
   openai: [
     { value: "text-embedding-3-small", label: "text-embedding-3-small (1536)", dims: "1536" },
@@ -41,15 +48,9 @@ const DEFAULT_KNOWLEDGE_TARGETS = [
 ];
 const DEFAULT_KNOWLEDGE_TARGET_LABELS = new Map(DEFAULT_KNOWLEDGE_TARGETS.map((target) => [target.path, target.label]));
 
-type ConfigRow = { configKey: string; configValue: string };
+/** GET/PUT /ai/settings 응답 — 키 값은 오지 않고 등록 여부(keys)만 온다 */
+type AiSettingsSnapshot = { values: Record<string, string>; keys: Record<string, boolean> };
 type ChunkTarget = { path: string; label: string };
-type ConfigMeta = {
-  label: string;
-  description: string;
-  configType?: "TEXT" | "SELECT" | "NUMBER" | "BOOLEAN";
-  options?: string;
-  sortOrder?: number;
-};
 type KnowledgeStatus = {
   dbPath?: string;
   dbDirectory?: string;
@@ -152,11 +153,10 @@ export default function AiEmbeddingPanel() {
   const [model, setModel] = useState("mistral-embed");
   const [dims, setDims] = useState("1024");
   const [apiKey, setApiKey] = useState("");
-  const [existingKeys, setExistingKeys] = useState<Set<string>>(new Set());
   const [status, setStatus] = useState<KnowledgeStatus | null>(null);
   const [reindexResult, setReindexResult] = useState<ReindexResult | null>(null);
   const [testResult, setTestResult] = useState<{ ok: boolean; message: string } | null>(null);
-  const [searchQuery, setSearchQuery] = useState("출하지시 확정취소 언제 가능해?");
+  const [searchQuery, setSearchQuery] = useState("자재 출고 취소는 어떻게 해?");
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [chunkTargets, setChunkTargets] = useState<ChunkTarget[]>(DEFAULT_KNOWLEDGE_TARGETS);
   const [selectedTargetPaths, setSelectedTargetPaths] = useState<Set<string>>(() => new Set(DEFAULT_KNOWLEDGE_TARGETS.map((target) => target.path)));
@@ -184,16 +184,13 @@ export default function AiEmbeddingPanel() {
     (async () => {
       try {
         const [configRes] = await Promise.all([
-          api.get("/system/configs", { params: { configGroup: "AI" } }),
+          api.get("/ai/settings"),
           refreshStatus().catch(() => undefined),
         ]);
-        const raw = configRes.data?.data;
-        const list = (raw?.data ?? (Array.isArray(raw) ? raw : [])) as ConfigRow[];
-        const map = Object.fromEntries(list.map((c) => [c.configKey, c.configValue]));
+        const map = ((configRes.data?.data ?? {}) as AiSettingsSnapshot).values ?? {};
         const p = (map.AI_EMBEDDING_PROVIDER || map.AI_PROVIDER || "mistral").trim();
         const m = (map.AI_EMBEDDING_MODEL || EMBEDDING_MODEL_OPTIONS[p]?.[0]?.value || "mistral-embed").trim();
         const d = (map.AI_EMBEDDING_DIMS || EMBEDDING_MODEL_OPTIONS[p]?.find((opt) => opt.value === m)?.dims || "1024").trim();
-        setExistingKeys(new Set(list.map((c) => c.configKey)));
         setProvider(p);
         setModel(m);
         setDims(d);
@@ -233,64 +230,18 @@ export default function AiEmbeddingPanel() {
     if (option) setDims(option.dims);
   }, [provider]);
 
-  const upsertConfig = useCallback(async (key: string, configValue: string, meta: ConfigMeta) => {
-    if (existingKeys.has(key)) {
-      await api.patch(`/system/configs/${key}`, {
-        configValue,
-        label: meta.label,
-        description: meta.description,
-        options: meta.options,
-        sortOrder: meta.sortOrder,
-        isActive: "Y",
-      });
-      return;
-    }
-    await api.post("/system/configs", {
-      configGroup: "AI",
-      configKey: key,
-      configValue,
-      configType: meta.configType ?? "TEXT",
-      label: meta.label,
-      description: meta.description,
-      options: meta.options,
-      sortOrder: meta.sortOrder ?? 0,
-    });
-    setExistingKeys((prev) => new Set(prev).add(key));
-  }, [existingKeys]);
-
   const handleSave = useCallback(async () => {
     setSaving(true);
     try {
-      const providerOptions = JSON.stringify(EMBEDDING_PROVIDER_OPTIONS.map(({ value, label }) => ({ value, label })));
-      await Promise.all([
-        upsertConfig("AI_EMBEDDING_PROVIDER", provider, {
-          label: "Embedding 제공자",
-          description: "도움말/설계문서 RAG 검색에 사용할 embedding 제공자입니다. LLM 제공자와 별개로 설정합니다.",
-          configType: "SELECT",
-          options: providerOptions,
-          sortOrder: 20,
-        }),
-        upsertConfig("AI_EMBEDDING_MODEL", model, {
-          label: "Embedding 모델",
-          description: "문서 chunk와 사용자 질문을 벡터화할 embedding 모델입니다.",
-          configType: "TEXT",
-          sortOrder: 21,
-        }),
-        upsertConfig("AI_EMBEDDING_DIMS", dims, {
-          label: "Embedding 차원",
-          description: "sqlite-vec vector table 차원입니다. 모델 변경 후 지식 인덱스 재생성을 실행해야 적용됩니다.",
-          configType: "NUMBER",
-          sortOrder: 22,
-        }),
-      ]);
-      if (apiKey.trim()) {
-        await upsertConfig(`AI_${provider.toUpperCase()}_KEY`, apiKey.trim(), {
-          label: `${provider.toUpperCase()} API 키`,
-          description: "AI API 키입니다. LLM과 embedding이 같은 provider면 같은 키를 공유합니다.",
-          configType: "TEXT",
-          sortOrder: 31,
-        });
-      }
+      // 백엔드가 AI 설정 env 파일을 고치고 즉시 다시 읽는다. 차원(dims)을 바꾸면 지식 인덱스를 다시 만들어야 한다.
+      // 키 칸이 비어 있으면 기존 키를 유지한다 (LLM 과 같은 provider 면 같은 키를 공유)
+      await api.put("/ai/settings", {
+        AI_EMBEDDING_PROVIDER: provider,
+        AI_EMBEDDING_MODEL: model,
+        AI_EMBEDDING_DIMS: dims,
+        // Ollama 는 키가 없다. 키는 입력했을 때만 보낸다.
+        ...(provider !== "ollama" && apiKey.trim() ? { [`${provider.toUpperCase()}_API_KEY`]: apiKey.trim() } : {}),
+      });
       toast.success(t("common.saved", "저장되었습니다."));
       setApiKey("");
       await refreshStatus().catch(() => undefined);
@@ -299,7 +250,7 @@ export default function AiEmbeddingPanel() {
     } finally {
       setSaving(false);
     }
-  }, [provider, model, dims, apiKey, upsertConfig, refreshStatus, t]);
+  }, [provider, model, dims, apiKey, refreshStatus, t]);
 
   const handleTest = useCallback(async () => {
     setTesting(true);
@@ -310,7 +261,7 @@ export default function AiEmbeddingPanel() {
         model,
         dims,
         apiKey: apiKey.trim() || undefined,
-      });
+      }, { timeout: 60_000 });
       setTestResult(payload<{ ok: boolean; message: string }>(res));
     } catch (e) {
       setTestResult({ ok: false, message: errMessage(e, t("common.error", "오류")) });

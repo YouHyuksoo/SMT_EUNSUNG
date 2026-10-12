@@ -25,8 +25,8 @@ verifiedCommit: 60adf9d
 ## 시스템 개요 (검증된 사실)
 
 - **Site**: 은성전장 (EUNSUNG).
-- **Shape**: pnpm + turborepo 모노레포 — NestJS 백엔드(`@eunsung/backend`, :3003) +
-  Next.js 프론트엔드(`@eunsung/frontend`, :3100) + 공유 패키지(`@smt/shared`).
+- **Shape**: pnpm + turborepo 모노레포 — NestJS 백엔드(`@eunsung/backend`, :4003) +
+  Next.js 프론트엔드(`@eunsung/frontend`, :4010) + 공유 패키지(`@smt/shared`).
 - **DB**: Oracle. 백엔드는 TypeORM으로 접속(스키마 `INFINITY21_JSMES`, 서비스 `XE`).
 - **언어(UI)**: 한국어/영어/스페인어/베트남어.
 - **도메인**: 생산 · 품질 · 재고 · 자재 · 설비 · OEE · 출하 · 외주 · 소모품 ·

@@ -88,6 +88,9 @@ test('touch console owns the mobile result contract without a machine selector',
   assert.match(consoleSource, /data-testid=\{`oee-result-entry-status-\$\{status\.toLowerCase\(\)\}`\}/);
   assert.match(consoleSource, /\['WIP', 'DONE'\]/);
   assert.match(consoleSource, /api\.post\('\/oee\/work-result\/results'/);
+  assert.match(consoleSource, /sensorWarning/);
+  assert.match(consoleSource, /data-testid="oee-result-entry-sensor-warning"/);
+  assert.match(consoleSource, /api\.post\('\/oee\/work-result\/results\/apply-sensor'/);
   assert.doesNotMatch(consoleSource, /MachineCombo|설비를 선택/);
 });
 

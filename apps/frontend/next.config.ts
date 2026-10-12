@@ -65,7 +65,7 @@ const nextConfig: NextConfig = {
   },
 
   async rewrites() {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3003";
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4003";
     return [
       {
         source: "/api/:path*",

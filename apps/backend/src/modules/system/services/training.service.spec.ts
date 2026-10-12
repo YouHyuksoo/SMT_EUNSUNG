@@ -18,6 +18,10 @@ import { MockLoggerService } from '@test/mock-logger.service';
 import { NumberingService } from '../../../shared/numbering.service';
 import { TransactionService } from '../../../shared/transaction.service';
 
+// 은성 MES 단일 조직 테넌트 (organizationId)
+const ORG = 1;
+const OTHER_ORG = 2;
+
 describe('TrainingService', () => {
   let target: TrainingService;
   let mockPlanRepo: DeepMocked<Repository<TrainingPlan>>;
@@ -100,13 +104,14 @@ describe('TrainingService', () => {
     });
 
     it('scopes training plan lookup by tenant', async () => {
-      const plan = { planNo: 'TRN-001', company: 'COMP', plant: 'PLANT' } as TrainingPlan;
+      // 은성은 단일 organizationId 테넌트 — where 절에 organizationId 가 들어가야 한다
+      const plan = { planNo: 'TRN-001', organizationId: ORG } as TrainingPlan;
       mockPlanRepo.findOne.mockResolvedValue(plan);
 
-      await target.findById('TRN-001', 'COMP', 'PLANT');
+      await target.findById('TRN-001', ORG);
 
       expect(mockPlanRepo.findOne).toHaveBeenCalledWith({
-        where: { planNo: 'TRN-001', company: 'COMP', plant: 'PLANT' },
+        where: { planNo: 'TRN-001', organizationId: ORG },
       });
     });
   });
@@ -121,7 +126,7 @@ describe('TrainingService', () => {
       mockPlanRepo.save.mockResolvedValue(entity);
 
       // Act
-      const result = await target.create(dto, 'COMP', 'PLANT', 'user');
+      const result = await target.create(dto, ORG, 'user');
 
       // Assert
       expect(result.status).toBe('PLANNED');
@@ -129,6 +134,10 @@ describe('TrainingService', () => {
         'TRAINING_PLAN',
         undefined,
         'user',
+      );
+      // 생성 엔티티에 요청 조직이 그대로 들어가야 한다
+      expect(mockPlanRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({ status: 'PLANNED', organizationId: ORG, createdBy: 'user' }),
       );
     });
   });
@@ -149,32 +158,30 @@ describe('TrainingService', () => {
     });
 
     it('should keep tenant and plan key columns from the matched plan when update payload contains them', async () => {
-      const plan = { planNo: 'TRN-001', title: 'Old', status: 'PLANNED', company: 'COMP', plant: 'PLANT' } as TrainingPlan;
+      const plan = { planNo: 'TRN-001', title: 'Old', status: 'PLANNED', organizationId: ORG } as TrainingPlan;
       mockPlanRepo.findOne.mockResolvedValue(plan);
       mockPlanRepo.save.mockImplementation(async (value) => value as TrainingPlan);
 
       const result = await target.update('TRN-001', {
         planNo: 'TRN-999',
         title: 'New',
-        company: 'OTHER',
-        plant: 'OTHER_PLANT',
-      } as any, 'user');
+        organizationId: OTHER_ORG,
+      } as any, 'user', ORG);
 
       expect(result).toEqual(expect.objectContaining({
         planNo: 'TRN-001',
         title: 'New',
-        company: 'COMP',
-        plant: 'PLANT',
+        organizationId: ORG,
         updatedBy: 'user',
       }));
     });
 
     it('rejects update when plan belongs to a different tenant', async () => {
-      const plan = { planNo: 'TRN-001', status: 'PLANNED', company: 'OTHER', plant: 'PLANT' } as TrainingPlan;
+      const plan = { planNo: 'TRN-001', status: 'PLANNED', organizationId: OTHER_ORG } as TrainingPlan;
       mockPlanRepo.findOne.mockResolvedValue(plan);
 
       await expect(
-        target.update('TRN-001', { title: 'Updated' } as any, 'user', 'COMP', 'PLANT'),
+        target.update('TRN-001', { title: 'Updated' } as any, 'user', ORG),
       ).rejects.toThrow(BadRequestException);
       expect(mockPlanRepo.save).not.toHaveBeenCalled();
     });
@@ -205,10 +212,10 @@ describe('TrainingService', () => {
     });
 
     it('rejects delete when plan belongs to a different tenant', async () => {
-      const plan = { planNo: 'TRN-001', company: 'COMP', plant: 'OTHER' } as TrainingPlan;
+      const plan = { planNo: 'TRN-001', organizationId: OTHER_ORG } as TrainingPlan;
       mockPlanRepo.findOne.mockResolvedValue(plan);
 
-      await expect(target.delete('TRN-001', 'COMP', 'PLANT')).rejects.toThrow(BadRequestException);
+      await expect(target.delete('TRN-001', ORG)).rejects.toThrow(BadRequestException);
       expect(mockTx.run).not.toHaveBeenCalled();
     });
   });
@@ -251,10 +258,10 @@ describe('TrainingService', () => {
     });
 
     it('rejects complete when plan belongs to a different tenant', async () => {
-      const plan = { planNo: 'TRN-001', status: 'PLANNED', company: 'OTHER', plant: 'PLANT' } as TrainingPlan;
+      const plan = { planNo: 'TRN-001', status: 'PLANNED', organizationId: OTHER_ORG } as TrainingPlan;
       mockPlanRepo.findOne.mockResolvedValue(plan);
 
-      await expect(target.complete('TRN-001', 'user', 'COMP', 'PLANT')).rejects.toThrow(BadRequestException);
+      await expect(target.complete('TRN-001', 'user', ORG)).rejects.toThrow(BadRequestException);
       expect(mockPlanRepo.save).not.toHaveBeenCalled();
     });
   });
@@ -284,10 +291,10 @@ describe('TrainingService', () => {
     });
 
     it('rejects cancelComplete when plan belongs to a different tenant', async () => {
-      const plan = { planNo: 'TRN-001', status: 'COMPLETED', company: 'COMP', plant: 'OTHER' } as TrainingPlan;
+      const plan = { planNo: 'TRN-001', status: 'COMPLETED', organizationId: OTHER_ORG } as TrainingPlan;
       mockPlanRepo.findOne.mockResolvedValue(plan);
 
-      await expect(target.cancelComplete('TRN-001', 'user', 'COMP', 'PLANT')).rejects.toThrow(BadRequestException);
+      await expect(target.cancelComplete('TRN-001', 'user', ORG)).rejects.toThrow(BadRequestException);
       expect(mockPlanRepo.save).not.toHaveBeenCalled();
     });
   });
@@ -296,7 +303,7 @@ describe('TrainingService', () => {
   describe('addResult', () => {
     it('should add training result', async () => {
       // Arrange
-      const plan = { planNo: 'TRN-001', company: 'COMP', plant: 'PLANT' } as TrainingPlan;
+      const plan = { planNo: 'TRN-001', organizationId: ORG } as TrainingPlan;
       mockPlanRepo.findOne.mockResolvedValue(plan);
       const dto = { workerCode: 'W001', attended: true } as any;
       const entity = { planNo: 'TRN-001', ...dto } as TrainingResult;
@@ -304,18 +311,21 @@ describe('TrainingService', () => {
       mockResultRepo.save.mockResolvedValue(entity);
 
       // Act
-      const result = await target.addResult('TRN-001', dto, 'COMP', 'PLANT', 'user');
+      const result = await target.addResult('TRN-001', dto, ORG, 'user');
 
       // Assert
       expect(result.planNo).toBe('TRN-001');
+      expect(mockResultRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({ planNo: 'TRN-001', workerCode: 'W001', organizationId: ORG, createdBy: 'user' }),
+      );
     });
 
     it('rejects addResult when plan belongs to a different tenant', async () => {
-      const plan = { planNo: 'TRN-001', company: 'OTHER', plant: 'PLANT' } as TrainingPlan;
+      const plan = { planNo: 'TRN-001', organizationId: OTHER_ORG } as TrainingPlan;
       mockPlanRepo.findOne.mockResolvedValue(plan);
 
       await expect(
-        target.addResult('TRN-001', { workerCode: 'W001' } as any, 'COMP', 'PLANT', 'user'),
+        target.addResult('TRN-001', { workerCode: 'W001' } as any, ORG, 'user'),
       ).rejects.toThrow(BadRequestException);
       expect(mockResultRepo.save).not.toHaveBeenCalled();
     });
@@ -337,7 +347,7 @@ describe('TrainingService', () => {
     });
 
     it('should keep tenant and result key columns from the matched training result when update payload contains them', async () => {
-      const item = { planNo: 'TRN-001', workerCode: 'W001', workerName: 'Old', company: 'COMP', plant: 'PLANT' } as TrainingResult;
+      const item = { planNo: 'TRN-001', workerCode: 'W001', workerName: 'Old', organizationId: ORG } as TrainingResult;
       mockResultRepo.findOne.mockResolvedValue(item);
       mockResultRepo.save.mockImplementation(async (value) => value as TrainingResult);
 
@@ -345,16 +355,14 @@ describe('TrainingService', () => {
         planNo: 'TRN-999',
         workerCode: 'W999',
         workerName: 'New',
-        company: 'OTHER',
-        plant: 'OTHER_PLANT',
-      } as any);
+        organizationId: OTHER_ORG,
+      } as any, ORG);
 
       expect(result).toEqual(expect.objectContaining({
         planNo: 'TRN-001',
         workerCode: 'W001',
         workerName: 'New',
-        company: 'COMP',
-        plant: 'PLANT',
+        organizationId: ORG,
       }));
     });
 
@@ -367,23 +375,23 @@ describe('TrainingService', () => {
     });
 
     it('scopes training result lookup by tenant', async () => {
-      const item = { planNo: 'TRN-001', workerCode: 'W001', company: 'COMP', plant: 'PLANT' } as TrainingResult;
+      const item = { planNo: 'TRN-001', workerCode: 'W001', organizationId: ORG } as TrainingResult;
       mockResultRepo.findOne.mockResolvedValue(item);
       mockResultRepo.save.mockResolvedValue(item);
 
-      await target.updateResult('TRN-001', 'W001', { attended: true } as any, 'COMP', 'PLANT');
+      await target.updateResult('TRN-001', 'W001', { attended: true } as any, ORG);
 
       expect(mockResultRepo.findOne).toHaveBeenCalledWith({
-        where: { planNo: 'TRN-001', workerCode: 'W001', company: 'COMP', plant: 'PLANT' },
+        where: { planNo: 'TRN-001', workerCode: 'W001', organizationId: ORG },
       });
     });
 
     it('rejects updateResult when result belongs to a different tenant', async () => {
-      const item = { planNo: 'TRN-001', workerCode: 'W001', company: 'OTHER', plant: 'PLANT' } as TrainingResult;
+      const item = { planNo: 'TRN-001', workerCode: 'W001', organizationId: OTHER_ORG } as TrainingResult;
       mockResultRepo.findOne.mockResolvedValue(item);
 
       await expect(
-        target.updateResult('TRN-001', 'W001', { attended: true } as any, 'COMP', 'PLANT'),
+        target.updateResult('TRN-001', 'W001', { attended: true } as any, ORG),
       ).rejects.toThrow(BadRequestException);
       expect(mockResultRepo.save).not.toHaveBeenCalled();
     });
@@ -413,10 +421,10 @@ describe('TrainingService', () => {
     });
 
     it('rejects deleteResult when result belongs to a different tenant', async () => {
-      const item = { planNo: 'TRN-001', workerCode: 'W001', company: 'COMP', plant: 'OTHER' } as TrainingResult;
+      const item = { planNo: 'TRN-001', workerCode: 'W001', organizationId: OTHER_ORG } as TrainingResult;
       mockResultRepo.findOne.mockResolvedValue(item);
 
-      await expect(target.deleteResult('TRN-001', 'W001', 'COMP', 'PLANT')).rejects.toThrow(BadRequestException);
+      await expect(target.deleteResult('TRN-001', 'W001', ORG)).rejects.toThrow(BadRequestException);
       expect(mockResultRepo.remove).not.toHaveBeenCalled();
     });
   });
@@ -455,16 +463,17 @@ describe('TrainingService', () => {
       mockResultRepo.createQueryBuilder.mockReturnValue(qb);
 
       // Act
-      const result = await target.getWorkerHistory('W001', 'COMP', 'PLANT');
+      const result = await target.getWorkerHistory('W001', ORG);
 
       // Assert
       expect(result).toEqual([]);
+      expect(qb.andWhere).toHaveBeenCalledWith('r.organizationId = :organizationId', { organizationId: ORG });
     });
   });
 
   describe('getResults', () => {
     it('loads worker photos with 1-based binds and tenant filters', async () => {
-      const plan = { planNo: 'TRN-001', company: 'COMP', plant: 'PLANT' } as TrainingPlan;
+      const plan = { planNo: 'TRN-001', organizationId: ORG } as TrainingPlan;
       mockPlanRepo.findOne.mockResolvedValue(plan);
 
       const resultQb = createMock<any>();
@@ -472,22 +481,25 @@ describe('TrainingService', () => {
       resultQb.andWhere.mockReturnThis();
       resultQb.orderBy.mockReturnThis();
       resultQb.getMany.mockResolvedValue([
-        { planNo: 'TRN-001', workerCode: 'W001', company: 'COMP', plant: 'PLANT' },
-        { planNo: 'TRN-001', workerCode: 'W002', company: 'COMP', plant: 'PLANT' },
+        { planNo: 'TRN-001', workerCode: 'W001', organizationId: ORG },
+        { planNo: 'TRN-001', workerCode: 'W002', organizationId: ORG },
       ]);
       mockResultRepo.createQueryBuilder.mockReturnValue(resultQb);
       mockResultRepo.manager.query = jest.fn().mockResolvedValue([]);
 
-      await target.getResults('TRN-001', 'COMP', 'PLANT');
+      await target.getResults('TRN-001', ORG);
 
-      expect(mockResultRepo.manager.query).toHaveBeenCalledWith(
-        expect.stringContaining('WORKER_CODE IN (:1,:2)'),
-        ['W001', 'W002', 'COMP', 'PLANT'],
+      // 1차 조회: 작업자 코드 :1,:2 + 조직 :3
+      expect(mockResultRepo.manager.query).toHaveBeenNthCalledWith(
+        1,
+        expect.stringContaining('WORKER_CODE IN (:1,:2) AND ORGANIZATION_ID = :3'),
+        ['W001', 'W002', ORG],
       );
-      expect(mockResultRepo.manager.query).toHaveBeenCalledWith(
-        expect.stringContaining('COMPANY = :3 AND PLANT_CD = :4'),
-        expect.any(Array),
-      );
+      // 2차 fallback: 1차에서 못 찾은 코드만 조직 조건 없이 재조회
+      const fallbackCall = (mockResultRepo.manager.query as jest.Mock).mock.calls[1];
+      expect(fallbackCall[0]).toContain('WORKER_CODE IN (:1,:2)');
+      expect(fallbackCall[0]).not.toContain('ORGANIZATION_ID');
+      expect(fallbackCall[1]).toEqual(['W001', 'W002']);
     });
   });
 });

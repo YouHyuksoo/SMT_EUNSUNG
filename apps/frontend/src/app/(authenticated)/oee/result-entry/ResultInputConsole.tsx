@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Check, Delete, Eraser, Loader2, Save, Search, UserRound } from 'lucide-react';
+import { Check, Delete, Eraser, Loader2, RefreshCw, Save, Search, UserRound } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Modal } from '@/components/ui';
 import api from '@/services/api';
@@ -34,8 +34,15 @@ interface LatestResult {
   workerCount: number;
   workerName: string;
   resultStatus: 'WIP' | 'DONE' | string;
+  sensorApplyYn?: string;
+  sensorApplyMsg?: string | null;
   receiptDate?: string;
   updatedAt?: string;
+}
+
+interface SensorApplyResponse {
+  sensorApplyYn?: string;
+  sensorWarning?: string;
 }
 
 type NumericField = 'resultQty' | 'workTime' | 'workerCount';
@@ -117,6 +124,7 @@ export default function ResultInputConsole({
   const [latestError, setLatestError] = useState('');
   const [workerLoading, setWorkerLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [applyingSensor, setApplyingSensor] = useState(false);
   const [doneConfirmationOpen, setDoneConfirmationOpen] = useState(false);
 
   const loadLatest = useCallback(async () => {
@@ -216,7 +224,7 @@ export default function ResultInputConsole({
     if (isComplete || saving) return;
     setSaving(true);
     try {
-      await api.post('/oee/work-result/results', {
+      const response = await api.post('/oee/work-result/results', {
         runNo: run.runNo,
         machineCode: run.machineCode || undefined,
         workstageCode: run.workstageCode ?? '',
@@ -229,7 +237,12 @@ export default function ResultInputConsole({
         skipSuccessToast: true,
         suppressErrorModal: true,
       });
-      toast.success('실적이 저장되었습니다.');
+      const result = unwrap<SensorApplyResponse>(response);
+      if (result?.sensorWarning) {
+        toast.error(`실적은 저장됐지만 센서 반영에 실패했습니다. ${result.sensorWarning}`);
+      } else {
+        toast.success('실적이 저장되었습니다.');
+      }
       setDoneConfirmationOpen(false);
       resetDraft();
       await loadLatest();
@@ -238,6 +251,32 @@ export default function ResultInputConsole({
       toast.error(readApiMessage(error, '실적 저장에 실패했습니다.'));
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function applyLatestSensor() {
+    if (!latest || latest.resultStatus !== 'DONE' || latest.sensorApplyYn === 'Y' || applyingSensor) return;
+    setApplyingSensor(true);
+    try {
+      const response = await api.post('/oee/work-result/results/apply-sensor', {
+        runNo: run.runNo,
+        seqNo: latest.seqNo,
+      }, {
+        skipSuccessToast: true,
+        suppressErrorModal: true,
+      });
+      const result = unwrap<SensorApplyResponse>(response);
+      if (result?.sensorWarning) {
+        toast.error(`센서 반영에 실패했습니다. ${result.sensorWarning}`);
+      } else {
+        toast.success('센서 실적에 반영되었습니다.');
+      }
+      await loadLatest();
+      await onSaved();
+    } catch (error: unknown) {
+      toast.error(readApiMessage(error, '센서 반영에 실패했습니다.'));
+    } finally {
+      setApplyingSensor(false);
     }
   }
 
@@ -315,12 +354,23 @@ export default function ResultInputConsole({
           {latestLoading && <div className="flex min-h-12 items-center justify-center gap-2 text-xs font-semibold text-slate-500"><Loader2 className="h-4 w-4 animate-spin text-teal-600" aria-hidden="true" />조회 중</div>}
           {!latestLoading && latestError && <p className="rounded-lg bg-amber-50 p-2 text-xs font-semibold text-amber-800" role="status">{latestError}</p>}
           {!latestLoading && !latestError && latest && (
-            <div className="grid grid-cols-4 gap-2 text-center">
-              <div><span className="block text-[10px] font-bold text-slate-400">수량</span><strong className="mt-0.5 block font-mono text-base tabular-nums">{formatNumber(latest.resultQty)}</strong></div>
-              <div><span className="block text-[10px] font-bold text-slate-400">상태</span><strong className={`mt-0.5 block text-xs ${latest.resultStatus === 'DONE' ? 'text-blue-700' : 'text-amber-700'}`}>{latest.resultStatus === 'DONE' ? '완료' : '진행'}</strong></div>
-              <div className="min-w-0"><span className="block text-[10px] font-bold text-slate-400">작업자</span><strong className="mt-0.5 block truncate text-xs" title={latest.workerName || '미지정'}>{latest.workerName || '미지정'}</strong></div>
-              <div><span className="block text-[10px] font-bold text-slate-400">시간</span><strong className="mt-0.5 block truncate font-mono text-[10px]" title={latest.updatedAt ?? latest.receiptDate ?? '-'}>{latest.updatedAt ?? latest.receiptDate ?? '-'}</strong></div>
-            </div>
+            <>
+              <div className="grid grid-cols-4 gap-2 text-center">
+                <div><span className="block text-[10px] font-bold text-slate-400">수량</span><strong className="mt-0.5 block font-mono text-base tabular-nums">{formatNumber(latest.resultQty)}</strong></div>
+                <div><span className="block text-[10px] font-bold text-slate-400">상태</span><strong className={`mt-0.5 block text-xs ${latest.resultStatus === 'DONE' ? (latest.sensorApplyYn === 'Y' ? 'text-blue-700' : 'text-red-700') : 'text-amber-700'}`}>{latest.resultStatus === 'DONE' ? '완료' : '진행'}</strong></div>
+                <div className="min-w-0"><span className="block text-[10px] font-bold text-slate-400">작업자</span><strong className="mt-0.5 block truncate text-xs" title={latest.workerName || '미지정'}>{latest.workerName || '미지정'}</strong></div>
+                <div><span className="block text-[10px] font-bold text-slate-400">시간</span><strong className="mt-0.5 block truncate font-mono text-[10px]" title={latest.updatedAt ?? latest.receiptDate ?? '-'}>{latest.updatedAt ?? latest.receiptDate ?? '-'}</strong></div>
+              </div>
+              {latest.resultStatus === 'DONE' && latest.sensorApplyYn !== 'Y' && (
+                <div data-testid="oee-result-entry-sensor-warning" className="mt-2 flex items-center justify-between gap-2 rounded-lg border border-red-200 bg-red-50 p-2 text-xs font-bold text-red-700" role="status">
+                  <span className="min-w-0 flex-1 truncate" title={latest.sensorApplyMsg ?? '센서 실적에 반영되지 않았습니다.'}>{latest.sensorApplyMsg ?? '센서 실적에 반영되지 않았습니다.'}</span>
+                  <button type="button" onClick={() => void applyLatestSensor()} disabled={applyingSensor} className="inline-flex min-h-11 shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-red-300 bg-white px-3 text-xs font-black text-red-700 transition hover:bg-red-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 disabled:cursor-not-allowed disabled:opacity-50">
+                    <RefreshCw className={`h-4 w-4 ${applyingSensor ? 'animate-spin' : ''}`} aria-hidden="true" />
+                    실적반영
+                  </button>
+                </div>
+              )}
+            </>
           )}
           {!latestLoading && !latestError && !latest && <p className="py-2 text-center text-xs font-semibold text-slate-500">등록된 실적이 없습니다.</p>}
         </section>

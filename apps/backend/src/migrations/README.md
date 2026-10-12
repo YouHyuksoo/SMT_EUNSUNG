@@ -6,7 +6,7 @@
 ## 적용 절차
 
 ```powershell
-pnpm --filter @eunsung/backend exec oracle-db apply src/migrations/<file>.sql --site ES_JSIDC
+pnpm --filter @eunsung/backend exec oracle-db apply src/migrations/<file>.sql --site <사이트>
 ```
 
 또는 직접 SQL\*Plus / SQL Developer 로 실행합니다.

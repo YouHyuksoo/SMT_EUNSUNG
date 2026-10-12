@@ -16,6 +16,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { Bell, Check } from "lucide-react";
 import api from "@/services/api";
+import { formatDisplayDate } from "@/utils/date";
 
 /** 알림 항목 타입 */
 interface Notification {
@@ -181,7 +182,7 @@ export default function NotificationBell() {
                     <div className="flex-1 min-w-0">
                       <p className="text-sm text-text truncate">{noti.message}</p>
                       <p className="text-xs text-text-muted mt-0.5">
-                        {noti.jobCode} · {new Date(noti.createdAt).toLocaleString()}
+                        {noti.jobCode} · {formatDisplayDate(noti.createdAt)}
                       </p>
                     </div>
                     {noti.isRead === "N" && (

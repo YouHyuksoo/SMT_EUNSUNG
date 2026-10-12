@@ -18,7 +18,6 @@ import { OeeMasterService } from './oee-master.service';
 import { OeeLogService } from './oee-log.service';
 import { OeeDashboardService } from './oee-dashboard.service';
 import { ProdLineMaster } from '../../entities/prod-line-master.entity';
-import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { OeeMobileController } from './oee-mobile.controller';
 import { OeeMobileService } from './oee-mobile.service';
 import { OeeMultiEntryController } from './oee-multi-entry.controller';
@@ -48,7 +47,6 @@ import { SmtCloseRunPreviewService } from './smt-close-run-preview.service';
     OeeMobileService,
     OeeMultiEntryService,
     SmtCloseRunPreviewService,
-    JwtAuthGuard,
   ],
 })
 export class OeeModule {}

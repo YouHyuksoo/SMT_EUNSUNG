@@ -16,6 +16,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { SchedulerLog } from '../../../entities/scheduler-log.entity';
 import { SchedulerLogFilterDto } from '../dto/scheduler-log.dto';
+import { affectedRows } from '../../../common/utils/affected-rows.util';
 
 /** 일별 추이 항목 타입 */
 export interface DailyTrendItem {
@@ -271,7 +272,7 @@ export class SchedulerLogService {
           AND "STATUS" IN ('RUNNING', 'RETRYING')`,
       [organizationId],
     );
-    const affected = result?.rowsAffected ?? 0;
+    const affected = affectedRows(result);
     if (affected > 0) {
       this.logger.warn(`Stale 로그 ${affected}건 FAIL 처리 완료 (organizationId=${organizationId})`);
     }

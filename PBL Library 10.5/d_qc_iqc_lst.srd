@@ -1,0 +1,120 @@
+HA$PBExportHeader$d_qc_iqc_lst.srd
+$PBExportComments$iqc list
+release 10.5;
+datawindow(units=0 timer_interval=0 color=12632256 processing=1 HTMLDW=no print.printername="" print.documentname="" print.orientation = 0 print.margin.left = 110 print.margin.right = 110 print.margin.top = 96 print.margin.bottom = 96 print.paper.source = 0 print.paper.size = 0 print.canusedefaultprinter=yes print.prompt=no print.buttons=no print.preview.buttons=no print.cliptext=no print.overrideprintjob=no print.collate=yes print.preview.outline=yes hidegrayline=no grid.lines=0 )
+header(height=120 color="536870912" )
+summary(height=0 color="536870912" )
+footer(height=0 color="536870912" )
+detail(height=72 color="536870912" )
+table(column=(type=datetime updatewhereclause=yes key=yes name=inspect_date dbname="iq_item_iqc.inspect_date" )
+ column=(type=number updatewhereclause=yes key=yes name=inspect_sequence dbname="iq_item_iqc.inspect_sequence" )
+ column=(type=char(20) updatewhereclause=yes name=iqc_inspect_no dbname="iq_item_iqc.iqc_inspect_no" )
+ column=(type=char(30) updatewhereclause=yes name=mfs dbname="iq_item_iqc.mfs" )
+ column=(type=char(1) update=yes updatewhereclause=yes name=inspect_result dbname="iq_item_iqc.inspect_result" )
+ column=(type=char(20) updatewhereclause=yes name=supplier_code dbname="iq_item_iqc.supplier_code" )
+ column=(type=char(20) updatewhereclause=yes name=inspect_by dbname="iq_item_iqc.inspect_by" )
+ column=(type=datetime updatewhereclause=yes name=enter_date dbname="iq_item_iqc.enter_date" )
+ column=(type=char(20) updatewhereclause=yes name=enter_by dbname="iq_item_iqc.enter_by" )
+ column=(type=datetime updatewhereclause=yes name=last_modify_date dbname="iq_item_iqc.last_modify_date" )
+ column=(type=char(20) updatewhereclause=yes name=last_modify_by dbname="iq_item_iqc.last_modify_by" )
+ column=(type=char(20) updatewhereclause=yes name=item_code dbname="iq_item_iqc.item_code" )
+ column=(type=number updatewhereclause=yes key=yes name=organization_id dbname="iq_item_iqc.organization_id" )
+ column=(type=char(300) updatewhereclause=yes name=item_name dbname="id_item.item_name" )
+ column=(type=char(20) update=yes updatewhereclause=yes name=iqc_bad_reason_code dbname="iq_item_iqc.bad_reason_code" )
+ column=(type=char(1000) update=yes updatewhereclause=yes name=comments dbname="iq_item_iqc.comments" )
+ column=(type=char(20) updatewhereclause=yes name=iqc_improve_no dbname="iq_item_iqc.iqc_improve_no" )
+ column=(type=number update=yes updatewhereclause=yes name=inspect_qty dbname="iq_item_iqc.inspect_qty" )
+ column=(type=decimal(0) update=yes updatewhereclause=yes name=inspect_bad_qty dbname="iq_item_iqc.inspect_bad_qty" )
+ column=(type=number update=yes updatewhereclause=yes name=inspect_bad_lot_qty dbname="iq_item_iqc.inspect_bad_lot_qty" )
+ column=(type=number update=yes updatewhereclause=yes name=inspect_lot_qty dbname="iq_item_iqc.inspect_lot_qty" )
+ column=(type=number updatewhereclause=yes name=arrival_qty dbname="iq_item_iqc.arrival_qty" )
+ column=(type=number updatewhereclause=yes name=destroy_qty dbname="iq_item_iqc.destroy_qty" )
+ column=(type=datetime updatewhereclause=yes name=arrival_date dbname="iq_item_iqc.arrival_date" )
+ retrieve="  SELECT ~"IQ_ITEM_IQC~".~"INSPECT_DATE~",   
+         ~"IQ_ITEM_IQC~".~"INSPECT_SEQUENCE~",   
+         ~"IQ_ITEM_IQC~".~"IQC_INSPECT_NO~",   
+         ~"IQ_ITEM_IQC~".~"MFS~",   
+         ~"IQ_ITEM_IQC~".~"INSPECT_RESULT~",   
+         ~"IQ_ITEM_IQC~".~"SUPPLIER_CODE~",   
+         ~"IQ_ITEM_IQC~".~"INSPECT_BY~",   
+         ~"IQ_ITEM_IQC~".~"ENTER_DATE~",   
+         ~"IQ_ITEM_IQC~".~"ENTER_BY~",   
+         ~"IQ_ITEM_IQC~".~"LAST_MODIFY_DATE~",   
+         ~"IQ_ITEM_IQC~".~"LAST_MODIFY_BY~",   
+         ~"IQ_ITEM_IQC~".~"ITEM_CODE~",   
+         ~"IQ_ITEM_IQC~".~"ORGANIZATION_ID~",   
+         ~"ID_ITEM~".~"ITEM_NAME~",   
+         ~"IQ_ITEM_IQC~".~"BAD_REASON_CODE~",   
+         ~"IQ_ITEM_IQC~".~"COMMENTS~",   
+         ~"IQ_ITEM_IQC~".~"IQC_IMPROVE_NO~",   
+         ~"IQ_ITEM_IQC~".~"INSPECT_QTY~",   
+         ~"IQ_ITEM_IQC~".~"INSPECT_BAD_QTY~",   
+         ~"IQ_ITEM_IQC~".~"INSPECT_BAD_LOT_QTY~",   
+         ~"IQ_ITEM_IQC~".~"INSPECT_LOT_QTY~",   
+         ~"IQ_ITEM_IQC~".~"ARRIVAL_QTY~",   
+         ~"IQ_ITEM_IQC~".~"DESTROY_QTY~",   
+         ~"IQ_ITEM_IQC~".~"ARRIVAL_DATE~"  
+  FROM ~"IQ_ITEM_IQC~",   
+         ~"ID_ITEM~"  
+   WHERE ( ~"IQ_ITEM_IQC~".~"ITEM_CODE~" = ~"ID_ITEM~".~"ITEM_CODE~"(+) ) and  
+         ( ~"IQ_ITEM_IQC~".~"ORGANIZATION_ID~" = ~"ID_ITEM~".~"ORGANIZATION_ID~"(+) ) and  
+         ( ~"IQ_ITEM_IQC~".~"INSPECT_DATE~" >= :ARG_DATESET ) AND  
+         ( ~"IQ_ITEM_IQC~".~"INSPECT_DATE~"  < :ARG_DATEEND+1 ) AND  
+         ( ~"IQ_ITEM_IQC~".~"ITEM_CODE~" LIKE :ARG_ITEM_CODE ) AND  
+         ( ~"IQ_ITEM_IQC~".~"IQC_INSPECT_NO~" LIKE :ARG_SLIP_NO ) AND  
+         ( ~"IQ_ITEM_IQC~".~"ORGANIZATION_ID~" = :ARG_ORG )    
+" update="IQ_ITEM_IQC" updatewhere=0 updatekeyinplace=no arguments=(("ARG_DATESET", datetime),("ARG_DATEEND", datetime),("ARG_ITEM_CODE", string),("ARG_SLIP_NO", string),("ARG_ORG", number))  sort="inspect_date A inspect_sequence A " )
+group(level=1 header.height=0 trailer.height=64 by=("string( inspect_date , 'yyyymmdd' )" ) header.color="536870912" trailer.color="65535" )
+group(level=2 header.height=0 trailer.height=16 by=("iqc_inspect_no" ) header.color="536870912" trailer.color="536870912" )
+text(band=header alignment="2" text="NO" border="0" color="33554432" x="155" y="4" height="112" width="174" html.valueishtml="0"  name=t_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Inspect Date" border="0" color="33554432" x="338" y="4" height="112" width="521" html.valueishtml="0"  name=inspect_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Inspect Sequence" border="0" color="33554432" x="869" y="4" height="112" width="183" html.valueishtml="0"  name=inspect_sequence_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Iqc Inspect No" border="0" color="33554432" x="1061" y="4" height="112" width="407" html.valueishtml="0"  name=iqc_inspect_no_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Item Code" border="0" color="33554432" x="1477" y="4" height="112" width="512" html.valueishtml="0"  name=item_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Mfs" border="0" color="33554432" x="1998" y="4" height="112" width="475" html.valueishtml="0"  name=mfs_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Inspect Result" border="0" color="33554432" x="4553" y="4" height="112" width="288" html.valueishtml="0"  name=inspect_result_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Supplier Code" border="0" color="33554432" x="6670" y="4" height="112" width="320" html.valueishtml="0"  name=supplier_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Inspect By" border="0" color="33554432" x="6281" y="4" height="112" width="379" html.valueishtml="0"  name=inspect_by_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Item Name" border="0" color="33554432" x="5463" y="4" height="112" width="809" html.valueishtml="0"  name=id_item_item_name_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Bad Reason Code" border="0" color="33554432" x="2482" y="4" height="112" width="453" html.valueishtml="0"  name=bad_reason_code_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Comments" border="0" color="33554432" x="2944" y="4" height="112" width="914" html.valueishtml="0"  name=comments_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Iqc Improve No" border="0" color="33554432" x="6999" y="4" height="112" width="320" html.valueishtml="0"  name=iqc_improve_no_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Inspect Qty" border="0" color="33554432" x="3867" y="4" height="112" width="320" html.valueishtml="0"  name=inspect_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Inspect Bad Qty" border="0" color="33554432" x="4197" y="4" height="112" width="347" html.valueishtml="0"  name=inspect_bad_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Inspect Bad Lot Qty" border="0" color="33554432" x="5143" y="4" height="112" width="311" html.valueishtml="0"  name=inspect_bad_lot_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Inspect Lot Qty" border="0" color="33554432" x="4850" y="4" height="112" width="283" html.valueishtml="0"  name=inspect_lot_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Arrival Qty" border="0" color="33554432" x="7328" y="4" height="112" width="357" html.valueishtml="0"  name=arrival_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Destroy Qty" border="0" color="33554432" x="7694" y="4" height="112" width="357" html.valueishtml="0"  name=destroy_qty_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+text(band=header alignment="2" text="Arrival Date" border="0" color="33554432" x="8059" y="4" height="112" width="411" html.valueishtml="0"  name=arrival_date_t visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="15780518" )
+compute(band=detail alignment="0" expression="trim('')"border="0" color="33554432" x="9" y="4" height="64" width="137" format="[GENERAL]" html.valueishtml="0"  name=compute_2 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="1" background.color="536870912" )
+compute(band=detail alignment="0" expression="getrow()"border="0" color="65535" x="155" y="4" height="64" width="174" format="[GENERAL]" html.valueishtml="0"  name=compute_1 visible="1"  font.face="Tahoma" font.height="-8" font.weight="700"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="0" )
+column(band=detail id=1 alignment="2" tabsequence=32766 border="0" color="33554432" x="338" y="4" height="64" width="521" format="[shortdate] [time]" html.valueishtml="0"  name=inspect_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=2 alignment="2" tabsequence=32766 border="0" color="33554432" x="869" y="4" height="64" width="183" format="[general]" html.valueishtml="0"  name=inspect_sequence visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=3 alignment="2" tabsequence=32766 border="0" color="33554432" x="1061" y="4" height="64" width="407" format="[general]" html.valueishtml="0"  name=iqc_inspect_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=12 alignment="2" tabsequence=32766 border="0" color="33554432" x="1477" y="4" height="64" width="512" format="[general]" html.valueishtml="0"  name=item_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=4 alignment="2" tabsequence=32766 border="0" color="33554432" x="1998" y="4" height="64" width="475" format="[general]" html.valueishtml="0"  name=mfs visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=6 alignment="2" tabsequence=32766 border="0" color="33554432" x="6670" y="4" height="64" width="320" format="[general]" html.valueishtml="0"  name=supplier_code visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=7 alignment="2" tabsequence=32766 border="0" color="33554432" x="6281" y="4" height="64" width="379" format="[general]" html.valueishtml="0"  name=inspect_by visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=14 alignment="2" tabsequence=32766 border="0" color="33554432" x="5463" y="4" height="64" width="809" format="[general]" html.valueishtml="0"  name=item_name visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=5 alignment="2" tabsequence=50 border="0" color="33554432" x="4553" y="4" height="64" width="288" format="[general]" html.valueishtml="0"  name=inspect_result visible="1" dddw.name=vd_basecode dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=500 dddw.lines=10 dddw.limit=0 dddw.allowedit=no dddw.useasborder=yes dddw.case=any dddw.hscrollbar=yes dddw.vscrollbar=yes  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=17 alignment="2" tabsequence=32766 border="0" color="33554432" x="6999" y="4" height="64" width="320" format="[general]" html.valueishtml="0"  name=iqc_improve_no visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=22 alignment="2" tabsequence=32766 border="0" color="33554432" x="7328" y="4" height="64" width="357" format="[general]" html.valueishtml="0"  name=arrival_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=23 alignment="2" tabsequence=32766 border="0" color="33554432" x="7694" y="4" height="64" width="357" format="[general]" html.valueishtml="0"  name=destroy_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=24 alignment="2" tabsequence=32766 border="0" color="33554432" x="8059" y="4" height="64" width="411" format="[shortdate] [time]" html.valueishtml="0"  name=arrival_date visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="12632256" )
+column(band=detail id=20 alignment="2" tabsequence=70 border="0" color="33554432" x="5143" y="4" height="64" width="311" format="[general]" html.valueishtml="0"  name=inspect_bad_lot_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=21 alignment="2" tabsequence=60 border="0" color="33554432" x="4850" y="4" height="64" width="283" format="[general]" html.valueishtml="0"  name=inspect_lot_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=18 alignment="2" tabsequence=30 border="0" color="33554432" x="3867" y="4" height="64" width="320" format="[general]" html.valueishtml="0"  name=inspect_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=19 alignment="2" tabsequence=40 border="0" color="33554432" x="4197" y="4" height="64" width="347" format="[general]" html.valueishtml="0"  name=inspect_bad_qty visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=15 alignment="2" tabsequence=20 border="0" color="33554432" x="2482" y="4" height="64" width="453" format="[general]" html.valueishtml="0"  name=iqc_bad_reason_code visible="1" dddw.name=vd_standard_code dddw.displaycolumn=code_mean dddw.datacolumn=code_name dddw.percentwidth=0 dddw.lines=0 dddw.limit=0 dddw.allowedit=no dddw.useasborder=no dddw.case=any  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+column(band=detail id=16 alignment="2" tabsequence=10 border="0" color="33554432" x="2944" y="4" height="64" width="914" format="[general]" html.valueishtml="0"  name=comments visible="1" edit.limit=0 edit.case=any edit.focusrectangle=no edit.autoselect=no  font.face="Tahoma" font.height="-8" font.weight="400"  font.family="2" font.pitch="2" font.charset="0" background.mode="2" background.color="16777215" )
+htmltable(border="1" )
+htmlgen(clientevents="1" clientvalidation="1" clientcomputedfields="1" clientformatting="0" clientscriptable="0" generatejavascript="1" encodeselflinkargs="1" netscapelayers="0" pagingmethod=0 generatedddwframes="1" )
+xhtmlgen() cssgen(sessionspecific="0" )
+xmlgen(inline="0" )
+xsltgen()
+jsgen()
+export.xml(headgroups="1" includewhitespace="0" metadatatype=0 savemetadata=0 )
+import.xml()
+export.pdf(method=0 distill.custompostscript="0" xslfop.print="0" )
+export.xhtml()
+ 

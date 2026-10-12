@@ -14,16 +14,19 @@
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ColumnDef } from '@tanstack/react-table';
-import { Edit2, Plus, RefreshCw, Search, Trash2 } from 'lucide-react';
+import { Edit2, Plus, Search, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Modal from '@/components/ui/Modal';
 import { Button, Card, CardContent, Input } from '@/components/ui';
 import ComCodeSelect from '@/components/shared/ComCodeSelect';
 import ProdLineSelect from '@/components/shared/ProdLineSelect';
 import ModelSearchModal from '@/components/shared/ModelSearchModal';
+import ModelSearchField from '@/components/shared/ModelSearchField';
 import DataGrid from '@/components/data-grid/DataGrid';
 import { useComCodeMap } from '@/hooks/useComCode';
 import api from '@/services/api';
+import { getTodayLocal } from '@/utils/date';
+import PartSearchField from '@/components/shared/PartSearchField';
 
 /** 목록 행 — 백엔드 RunCardRow 와 1:1 */
 interface RunCard {
@@ -48,8 +51,8 @@ interface EditForm {
   pcbWeek: string; comments: string;
 }
 
-const today = () => new Date().toISOString().slice(0, 10);
-const daysAgo = (n: number) => new Date(Date.now() - n * 86400000).toISOString().slice(0, 10);
+const today = () => getTodayLocal();
+const daysAgo = (n: number) => { const date = new Date(); date.setDate(date.getDate() - n); return getTodayLocal(date); };
 
 const emptyForm = (): EditForm => ({
   isEdit: false, runNo: '', runDate: today(), lotNo: '', itemCode: '', modelName: '',
@@ -91,7 +94,7 @@ export default function RunCardPage() {
   const statusMap = useComCodeMap('RUN STATUS');
   const runTypeMap = useComCodeMap('PRODUCT RUN TYPE');
 
-  const load = useCallback(async () => {
+  const search = useCallback(async () => {
     setLoading(true);
     try {
       const res = await api.get('/production/run-card', {
@@ -105,7 +108,7 @@ export default function RunCardPage() {
     }
   }, [fromDate, toDate, runNo, modelName, lineCode, lotNo]);
 
-  useEffect(() => { void load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { void search(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const set = (key: keyof EditForm, value: string) =>
     setForm((prev) => (prev ? { ...prev, [key]: value } : prev));
@@ -150,7 +153,7 @@ export default function RunCardPage() {
         toast.success(`작업지시 ${res.data?.data?.runNo ?? ''} 를 등록했습니다.`);
       }
       setForm(null);
-      await load();
+      await search();
     } catch (error: unknown) {
       toast.error(error instanceof Error ? error.message : '저장에 실패했습니다.');
     } finally {
@@ -164,39 +167,36 @@ export default function RunCardPage() {
       await api.delete(`/production/run-card/${encodeURIComponent(deleteTarget.runNo)}`);
       toast.success('작업지시를 삭제했습니다.');
       setDeleteTarget(null);
-      await load();
+      await search();
     } catch (error: unknown) {
       toast.error(error instanceof Error ? error.message : '삭제에 실패했습니다.');
     }
   };
 
+  /**
+   * 강제삭제 — PB w_product_run_card_duckil 의 cbx_force_delete 경로.
+   * PID 매핑과 런카드 상세를 함께 지운다. QC 검사된 PID 나 공정실적이 있으면
+   * 서버가 여전히 409 로 막는다 — 지우면 되돌릴 수 없는 이력이다.
+   */
+  const removeForce = async () => {
+    if (!deleteTarget) return;
+    try {
+      const response = await api.delete(
+        `/production/run-card/${encodeURIComponent(deleteTarget.runNo)}/force`,
+      );
+      toast.success(
+        `작업지시와 연결 데이터 ${response.data?.data?.deleted ?? 0}건을 삭제했습니다.`,
+      );
+      setDeleteTarget(null);
+      void search();
+    } catch (error: unknown) {
+      const message = (error as { response?: { data?: { message?: string } } })
+        ?.response?.data?.message;
+      toast.error(message ?? (error instanceof Error ? error.message : '강제삭제에 실패했습니다.'));
+    }
+  };
+
   const columns = useMemo<ColumnDef<RunCard>[]>(() => [
-    { accessorKey: 'runNo', header: '작업지시번호', size: 130, meta: { filterType: 'text' } },
-    { accessorKey: 'runDate', header: '지시일자', size: 110, meta: { filterType: 'date' } },
-    { accessorKey: 'lotNo', header: 'LOT번호', size: 120, meta: { filterType: 'text' } },
-    {
-      id: 'line', header: '라인', size: 110, meta: { filterType: 'text' },
-      accessorFn: (r) => (r.lineName ? `${r.lineCode} - ${r.lineName}` : r.lineCode),
-    },
-    { accessorKey: 'modelName', header: '모델명', size: 220, meta: { filterType: 'text' } },
-    { accessorKey: 'itemCode', header: '품목코드', size: 140, meta: { filterType: 'text' } },
-    { accessorKey: 'itemName', header: '품명', size: 220, meta: { filterType: 'text' } },
-    { accessorKey: 'lotSize', header: '지시수량', size: 100, meta: { filterType: 'number', align: 'right' } },
-    { accessorKey: 'unit', header: '단위', size: 70, meta: { filterType: 'select' } },
-    {
-      id: 'runStatus', header: '진행상태', size: 110, meta: { filterType: 'select' },
-      accessorFn: (r) => (r.runStatus ? statusMap[r.runStatus] ?? r.runStatus : ''),
-    },
-    {
-      id: 'productRunType', header: '제조유형', size: 110, meta: { filterType: 'select' },
-      accessorFn: (r) => (r.productRunType ? runTypeMap[r.productRunType] ?? r.productRunType : ''),
-    },
-    { accessorKey: 'charger', header: '담당자', size: 90, meta: { filterType: 'text' } },
-    { accessorKey: 'customerName', header: '고객사', size: 140, meta: { filterType: 'text' } },
-    { accessorKey: 'pidCount', header: 'PID', size: 80, meta: { filterType: 'number', align: 'right' } },
-    { accessorKey: 'resultCount', header: '실적', size: 80, meta: { filterType: 'number', align: 'right' } },
-    { accessorKey: 'updatedBy', header: '수정자', size: 90, meta: { filterType: 'text' } },
-    { accessorKey: 'updatedAt', header: '수정일시', size: 140, meta: { filterType: 'text' } },
     {
       id: 'actions', header: '작업', size: 80, enableSorting: false, meta: { filterType: 'none' as const },
       cell: ({ row }) => (
@@ -216,6 +216,32 @@ export default function RunCardPage() {
         </div>
       ),
     },
+    { accessorKey: 'itemCode', header: '품목코드', size: 140, meta: { filterType: 'text' } },
+    { accessorKey: 'itemName', header: '품명', size: 220, meta: { filterType: 'text' } },
+    { accessorKey: 'runNo', header: '작업지시번호', size: 130, meta: { filterType: 'text' } },
+    { accessorKey: 'runDate', header: '지시일자', size: 110, meta: { filterType: 'date' } },
+    { accessorKey: 'lotNo', header: 'LOT번호', size: 120, meta: { filterType: 'text' } },
+    {
+      id: 'line', header: '라인', size: 110, meta: { filterType: 'text' },
+      accessorFn: (r) => (r.lineName ? `${r.lineCode} - ${r.lineName}` : r.lineCode),
+    },
+    { accessorKey: 'modelName', header: '모델명', size: 220, meta: { filterType: 'text' } },
+    { accessorKey: 'lotSize', header: '지시수량', size: 100, meta: { filterType: 'number', align: 'right' } },
+    { accessorKey: 'unit', header: '단위', size: 70, meta: { filterType: 'select' } },
+    {
+      id: 'runStatus', header: '진행상태', size: 110, meta: { filterType: 'select' },
+      accessorFn: (r) => (r.runStatus ? statusMap[r.runStatus] ?? r.runStatus : ''),
+    },
+    {
+      id: 'productRunType', header: '제조유형', size: 110, meta: { filterType: 'select' },
+      accessorFn: (r) => (r.productRunType ? runTypeMap[r.productRunType] ?? r.productRunType : ''),
+    },
+    { accessorKey: 'charger', header: '담당자', size: 90, meta: { filterType: 'text' } },
+    { accessorKey: 'customerName', header: '고객사', size: 140, meta: { filterType: 'text' } },
+    { accessorKey: 'pidCount', header: 'PID', size: 80, meta: { filterType: 'number', align: 'right' } },
+    { accessorKey: 'resultCount', header: '실적', size: 80, meta: { filterType: 'number', align: 'right' } },
+    { accessorKey: 'updatedBy', header: '수정자', size: 90, meta: { filterType: 'text' } },
+    { accessorKey: 'updatedAt', header: '수정일시', size: 140, meta: { filterType: 'text' } },
   ], [statusMap, runTypeMap]);
 
   return (
@@ -228,10 +254,6 @@ export default function RunCardPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="secondary" size="sm" onClick={() => void load()}>
-            <RefreshCw className={`w-4 h-4 mr-1 ${loading ? 'animate-spin' : ''}`} />
-            새로고침
-          </Button>
           <Button size="sm" onClick={() => setForm(emptyForm())}>
             <Plus className="w-4 h-4 mr-1" />
             등록
@@ -255,10 +277,10 @@ export default function RunCardPage() {
                 <span className="text-text-muted">~</span>
                 <Input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} />
                 <Input placeholder="작업지시번호" value={runNo} onChange={(e) => setRunNo(e.target.value)} />
-                <Input placeholder="모델명" value={modelName} onChange={(e) => setModelName(e.target.value)} />
+                <ModelSearchField placeholder="모델명" value={modelName} className="w-44" onChange={(v) => setModelName(v)} />
                 <Input placeholder="LOT번호" value={lotNo} onChange={(e) => setLotNo(e.target.value)} />
                 <ProdLineSelect labelPrefix="라인" value={lineCode} onChange={setLineCode} />
-                <Button size="sm" onClick={() => void load()}>
+                <Button size="sm" onClick={() => void search()}>
                   <Search className="w-4 h-4 mr-1" />
                   조회
                 </Button>
@@ -297,7 +319,7 @@ export default function RunCardPage() {
                 </div>
               </Field>
               <Field label="품목코드 *">
-                <Input value={form.itemCode} onChange={(e) => set('itemCode', e.target.value)} />
+                <PartSearchField value={form.itemCode} onChange={(e) => set('itemCode', e.target.value)} />
               </Field>
               <Field label="라인 *">
                 <ProdLineSelect value={form.lineCode} onChange={(v) => set('lineCode', v)} fullWidth />
@@ -347,7 +369,7 @@ export default function RunCardPage() {
                 <Input value={form.masterModelName} onChange={(e) => set('masterModelName', e.target.value)} />
               </Field>
               <Field label="모부품코드">
-                <Input value={form.parentItemCode} onChange={(e) => set('parentItemCode', e.target.value)} />
+                <PartSearchField value={form.parentItemCode} onChange={(e) => set('parentItemCode', e.target.value)} />
               </Field>
               <Field label="제조그룹번호">
                 <Input value={form.mfsGroupNo} onChange={(e) => set('mfsGroupNo', e.target.value)} />
@@ -393,12 +415,21 @@ export default function RunCardPage() {
               작업지시 <strong>{deleteTarget.runNo}</strong>({deleteTarget.modelName})를 삭제할까요?
             </p>
             {(deleteTarget.pidCount > 0 || deleteTarget.resultCount > 0) && (
-              <p className="text-sm text-red-500">
-                PID {deleteTarget.pidCount}건 · 작업실적 {deleteTarget.resultCount}건이 연결되어 있어 삭제가 차단됩니다.
-              </p>
+              <>
+                <p className="text-sm text-red-500">
+                  PID {deleteTarget.pidCount}건 · 작업실적 {deleteTarget.resultCount}건이 연결되어 있어 삭제가 차단됩니다.
+                </p>
+                <p className="text-sm text-text-muted">
+                  강제삭제는 PID 매핑과 런카드 상세를 함께 지웁니다. QC 검사된 PID 나
+                  공정실적이 있으면 그때도 거부됩니다.
+                </p>
+              </>
             )}
             <div className="flex justify-end gap-2">
               <Button variant="secondary" onClick={() => setDeleteTarget(null)}>취소</Button>
+              {(deleteTarget.pidCount > 0 || deleteTarget.resultCount > 0) && (
+                <Button variant="danger" onClick={() => void removeForce()}>강제삭제</Button>
+              )}
               <Button onClick={() => void remove()}>삭제</Button>
             </div>
           </div>

@@ -45,7 +45,7 @@ export default function WorkOrderPanel({ scope, workerName }: Props) {
   const saveFnRef = useRef<(() => void) | null>(null);
   const registerSave = useCallback((fn: () => void) => { saveFnRef.current = fn; }, []);
 
-  const load = useCallback(async () => {
+  const search = useCallback(async () => {
     if (!scope) { setRows([]); setSelected(null); return; }
     setLoading(true);
     try {
@@ -58,7 +58,7 @@ export default function WorkOrderPanel({ scope, workerName }: Props) {
   }, [date, scope]);
 
   // 대상이 바뀌면 자동으로 다시 읽는다. 날짜만 바꿨을 때는 [조회]를 눌러야 한다.
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => { void search(); }, [search]);
 
   // 실적 폼의 설비 콤보용 목록 (최초 1회)
   useEffect(() => {
@@ -81,7 +81,7 @@ export default function WorkOrderPanel({ scope, workerName }: Props) {
             <input type="date" value={date} onChange={(e) => setDate(e.target.value)}
               aria-label="계획일"
               className="border border-border rounded px-2 h-8 bg-background text-text text-xs" />
-            <button type="button" onClick={() => void load()}
+            <button type="button" onClick={() => void search()}
               className="border border-border rounded px-2 h-8 text-text-muted hover:bg-surface flex items-center gap-1 text-xs">
               <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />조회
             </button>
@@ -164,7 +164,7 @@ export default function WorkOrderPanel({ scope, workerName }: Props) {
         {formRun && (
           <WorkResultForm key={formRun.runNo} run={formRun} machines={machines}
             defaultWorkerName={workerName} fieldMode onRegisterSave={registerSave}
-            onSaved={async () => { setFormRun(null); await load(); }} />
+            onSaved={async () => { setFormRun(null); await search(); }} />
         )}
       </Modal>
     </Card>

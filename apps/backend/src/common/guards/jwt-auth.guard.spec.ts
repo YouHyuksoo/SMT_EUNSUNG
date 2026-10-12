@@ -1,24 +1,28 @@
-import { ExecutionContext, ForbiddenException } from '@nestjs/common';
+import { ExecutionContext, UnauthorizedException } from '@nestjs/common';
 import { JwtAuthGuard } from './jwt-auth.guard';
 
+// 은성전장: Bearer 토큰 = USER_ID, ISYS_USERS + ISYS_ORGANIZATION 으로 사용자/조직을 확정한다.
 type UserRecord = {
-  email: string;
-  role: string;
-  status: string;
-  company: string;
-  plant: string;
+  userId: string;
+  organizationId: number | null;
+  userLevel: number | null;
+  emailAddress: string | null;
 };
 
-const createContext = (method: string, headers: Record<string, string> = {}): ExecutionContext => {
-  const request = {
+const createContext = (
+  method: string,
+  headers: Record<string, string> = {},
+  token = 'USER01',
+) => {
+  const request: Record<string, unknown> = {
     method,
     headers: {
-      authorization: 'Bearer viewer@example.com',
+      authorization: `Bearer ${token}`,
       ...headers,
     },
   };
 
-  return {
+  const context = {
     switchToHttp: () => ({
       getRequest: () => request,
     }),
@@ -26,11 +30,16 @@ const createContext = (method: string, headers: Record<string, string> = {}): Ex
     getHandler: () => undefined,
     getClass: () => undefined,
   } as unknown as ExecutionContext;
+
+  return { context, request };
 };
 
-const createGuard = (user: UserRecord) => {
-  const repository = {
+const createGuard = (user: UserRecord | null, org: { companyCode: string } | null = { companyCode: 'ES' }) => {
+  const userRepository = {
     findOne: jest.fn().mockResolvedValue(user),
+  };
+  const orgRepository = {
+    findOne: jest.fn().mockResolvedValue(org),
   };
   // @Public() 인식용 Reflector — 기본 false (Public 아님)로 답한다.
   const reflector = {
@@ -38,58 +47,89 @@ const createGuard = (user: UserRecord) => {
   };
 
   return {
-    guard: new JwtAuthGuard(repository as any, reflector as any),
-    repository,
+    guard: new JwtAuthGuard(userRepository as any, orgRepository as any, reflector as any),
+    userRepository,
+    orgRepository,
     reflector,
   };
 };
 
-describe('JwtAuthGuard viewer read-only policy', () => {
-  const viewer: UserRecord = {
-    email: 'viewer@example.com',
-    role: 'VIEWER',
-    status: 'ACTIVE',
-    company: 'EUNSUNG',
-    plant: 'P01',
+describe('JwtAuthGuard', () => {
+  const operator: UserRecord = {
+    userId: 'USER01',
+    organizationId: 1,
+    userLevel: 1,
+    emailAddress: 'user01@example.com',
   };
 
-  it.each(['GET', 'HEAD', 'OPTIONS'])('allows VIEWER %s requests', async (method) => {
-    const { guard } = createGuard(viewer);
+  it('skips authentication for @Public() handlers', async () => {
+    const { guard, reflector, userRepository } = createGuard(operator);
+    reflector.getAllAndOverride.mockReturnValue(true);
 
-    await expect(guard.canActivate(createContext(method))).resolves.toBe(true);
+    await expect(guard.canActivate(createContext('POST', {}, '').context)).resolves.toBe(true);
+    expect(userRepository.findOne).not.toHaveBeenCalled();
   });
 
-  it.each(['POST', 'PUT', 'PATCH', 'DELETE'])('blocks VIEWER %s requests', async (method) => {
-    const { guard } = createGuard(viewer);
+  it('rejects requests without bearer token', async () => {
+    const { guard } = createGuard(operator);
+    const { context, request } = createContext('GET');
+    (request.headers as Record<string, string>).authorization = '';
 
-    await expect(guard.canActivate(createContext(method))).rejects.toBeInstanceOf(
-      ForbiddenException,
+    await expect(guard.canActivate(context)).rejects.toBeInstanceOf(UnauthorizedException);
+  });
+
+  it('rejects unknown USER_ID token', async () => {
+    const { guard } = createGuard(null);
+
+    await expect(guard.canActivate(createContext('GET').context)).rejects.toBeInstanceOf(
+      UnauthorizedException,
     );
   });
 
-  it('allows non-VIEWER mutation requests', async () => {
-    const { guard } = createGuard({
-      ...viewer,
-      role: 'OPERATOR',
-    });
+  it('rejects user without organizationId', async () => {
+    const { guard } = createGuard({ ...operator, organizationId: null });
 
-    await expect(guard.canActivate(createContext('POST'))).resolves.toBe(true);
+    await expect(guard.canActivate(createContext('GET').context)).rejects.toBeInstanceOf(
+      UnauthorizedException,
+    );
   });
 
-  it('looks up bearer user within requested tenant headers', async () => {
-    const { guard, repository } = createGuard({
-      ...viewer,
-      company: 'C1',
-      plant: 'P1',
-    });
+  it.each([
+    [1, 'OPERATOR'],
+    [5, 'MANAGER'],
+    [9, 'ADMIN'],
+  ])('maps USER_LEVEL %i to role %s and allows mutation requests', async (level, role) => {
+    const { guard } = createGuard({ ...operator, userLevel: level });
+    const { context, request } = createContext('POST');
 
-    await expect(
-      guard.canActivate(createContext('GET', { 'x-company': 'C1', 'x-plant': 'P1' })),
-    ).resolves.toBe(true);
+    await expect(guard.canActivate(context)).resolves.toBe(true);
+    expect((request.user as { role: string }).role).toBe(role);
+  });
 
-    expect(repository.findOne).toHaveBeenCalledWith({
-      where: { email: 'viewer@example.com', company: 'C1', plant: 'P1' },
-      select: ['email', 'role', 'status', 'company', 'plant'],
+  it('looks up bearer user by USER_ID and scopes tenant by organizationId', async () => {
+    const { guard, userRepository, orgRepository } = createGuard(operator);
+    const { context, request } = createContext('GET');
+
+    await expect(guard.canActivate(context)).resolves.toBe(true);
+
+    expect(userRepository.findOne).toHaveBeenCalledWith({ where: { userId: 'USER01' } });
+    expect(orgRepository.findOne).toHaveBeenCalledWith({ where: { organizationId: 1 } });
+    // 헤더가 없으면 회사코드는 조직에서, plant는 organizationId 문자열로 파생한다.
+    expect(request.user).toEqual({
+      id: 'USER01',
+      email: 'user01@example.com',
+      role: 'OPERATOR',
+      organizationId: 1,
+      company: 'ES',
+      plant: '1',
     });
+  });
+
+  it('prefers X-Company/X-Plant headers for display company/plant', async () => {
+    const { guard } = createGuard(operator);
+    const { context, request } = createContext('GET', { 'x-company': 'C1', 'x-plant': 'P1' });
+
+    await expect(guard.canActivate(context)).resolves.toBe(true);
+    expect(request.user).toMatchObject({ organizationId: 1, company: 'C1', plant: 'P1' });
   });
 });

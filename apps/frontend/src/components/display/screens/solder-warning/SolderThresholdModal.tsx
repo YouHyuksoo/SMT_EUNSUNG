@@ -7,6 +7,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import toast from 'react-hot-toast';
 import { useTranslations } from 'next-intl';
 import Modal from '@/components/ui/Modal';
 import { DEFAULT_SOLDER_THRESHOLDS, DEFAULT_TIMING_CONFIG } from '@/types/option';
@@ -123,11 +124,11 @@ export default function SolderThresholdModal({ isOpen, onClose }: SolderThreshol
 
   const handleSave = useCallback(() => {
     if (!isValidTime(config.gap3Danger) || !isValidTime(config.gap3Warning)) {
-      alert(t('invalidGap3'));
+      toast.error(t('invalidGap3'));
       return;
     }
     if (!isValidTime(config.unfreezingDanger) || !isValidTime(config.unfreezingWarning)) {
-      alert(t('invalidUnfreezing'));
+      toast.error(t('invalidUnfreezing'));
       return;
     }
     saveSolderThresholds(config);

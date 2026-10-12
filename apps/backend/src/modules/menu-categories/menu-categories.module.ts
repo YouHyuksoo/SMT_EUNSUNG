@@ -9,7 +9,6 @@ import { MenuCategoryItem } from '../../entities/menu-category-item.entity';
 import { IsysUser } from '../../entities/isys-user.entity';
 import { IsysOrganization } from '../../entities/isys-organization.entity';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
-import { TransactionService } from '../../shared/transaction.service';
 import { MenuCategoriesService } from './services/menu-categories.service';
 import { MenuCategoryItemsService } from './services/menu-category-items.service';
 import { MenuCategoriesController } from './controllers/menu-categories.controller';
@@ -21,7 +20,7 @@ import { MenuCategoryItemsController } from './controllers/menu-category-items.c
     TypeOrmModule.forFeature([MenuCategory, MenuCategoryItem, IsysUser, IsysOrganization]),
   ],
   controllers: [MenuCategoriesController, MenuCategoryItemsController],
-  providers: [MenuCategoriesService, MenuCategoryItemsService, JwtAuthGuard, TransactionService],
+  providers: [MenuCategoriesService, MenuCategoryItemsService  ],
   exports: [MenuCategoriesService, MenuCategoryItemsService],
 })
 export class MenuCategoriesModule {}

@@ -46,7 +46,7 @@ describe('WorkResultController', () => {
       machineCode: 'MC-1',
     };
 
-    await controller.list('2026-08-01', '2026-08-25', '01', 'ITEM', undefined, 7);
+    await controller.list('2026-08-01', '2026-08-25', '01', 'ITEM', undefined, 7, 'Y');
     await controller.createResult(resultDto, 7, 'user-7');
     await controller.saveDefect(
       { runNo: 'RUN-1', badCode: 'NG', badQty: 1 },
@@ -62,6 +62,7 @@ describe('WorkResultController', () => {
       'ITEM',
       7,
       undefined,
+      true,
       undefined,
     );
     expect(service.upsertResult).toHaveBeenCalledWith(
@@ -94,6 +95,7 @@ describe('WorkResultController', () => {
       'ITEM',
       'MC-1',
       7,
+      undefined,
       ' L1, L2, L1 ',
     );
 
@@ -104,6 +106,7 @@ describe('WorkResultController', () => {
       'ITEM',
       7,
       'MC-1',
+      false,
       ['L1', 'L2'],
     );
   });
@@ -123,8 +126,9 @@ describe('WorkResultController', () => {
         undefined,
         undefined,
         7,
+        undefined,
       ),
-    ).resolves.toEqual({ list: rows, truncated: false });
+    ).resolves.toEqual({ list: rows });
   });
 
   it('returns the first 100 rows and marks an additional row as truncated', async () => {
@@ -142,6 +146,8 @@ describe('WorkResultController', () => {
         undefined,
         undefined,
         7,
+        undefined,
+        'L1',
       ),
     ).resolves.toEqual({ list: rows.slice(0, 100), truncated: true });
   });
@@ -163,6 +169,7 @@ describe('WorkResultController', () => {
           undefined,
           undefined,
           7,
+          undefined,
           lineCodes,
         ),
       ).rejects.toBeInstanceOf(BadRequestException);

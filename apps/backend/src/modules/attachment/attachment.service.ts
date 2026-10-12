@@ -99,7 +99,7 @@ export class AttachmentService {
       try {
         if (fs.existsSync(abs)) fs.unlinkSync(abs);
       } catch (e) {
-        this.logger.warn(`디스크 파일 삭제 실패: ${abs} (${(e as Error).message})`);
+        this.logger.warn(`디스크 파일 삭제 실패: ${abs} (${e instanceof Error ? e.message : String(e)})`);
       }
       a.delYn = 'Y';
     }

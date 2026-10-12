@@ -13,6 +13,7 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
+import { useActiveInterval } from '@/hooks/useTabActive';
 import { Activity, MonitorDot, PauseCircle, RefreshCw } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Select } from '@/components/ui';
@@ -47,11 +48,8 @@ export default function EquipOpsStatusPage() {
   }, []);
 
   // 자동갱신 — 주기가 0이면 타이머를 걸지 않는다
-  useEffect(() => {
-    if (!refreshSec) return;
-    const id = setInterval(() => { loadMachines(); }, refreshSec * 1000);
-    return () => clearInterval(id);
-  }, [refreshSec, loadMachines]);
+  // 숨겨진 탭에서는 멈추고, 돌아오면 놓친 갱신을 한 번 즉시 실행한다
+  useActiveInterval(() => { loadMachines(); }, refreshSec ? refreshSec * 1000 : null, { catchUp: true });
 
   const tabs: { key: TabValue; label: string; icon: React.ReactNode }[] = [
     { key: 'monitor', label: '모니터링', icon: <MonitorDot className="w-4 h-4" /> },

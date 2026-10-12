@@ -78,7 +78,7 @@ export default function LocationList({ onHeaderActions }: Props) {
     } catch { /* ignore */ }
   }, []);
 
-  const fetchData = useCallback(async () => {
+  const search = useCallback(async () => {
     setLoading(true);
     try {
       const params: Record<string, string> = {};
@@ -94,7 +94,7 @@ export default function LocationList({ onHeaderActions }: Props) {
   }, [whFilter]);
 
   useEffect(() => { fetchWarehouses(); }, [fetchWarehouses]);
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => { search(); }, [search]);
 
   const filtered = useMemo(() => {
     if (!searchText) return data;
@@ -161,29 +161,29 @@ export default function LocationList({ onHeaderActions }: Props) {
       }
       markDirty(false);
       setIsPanelOpen(false);
-      fetchData();
+      search();
     } catch (e) {
       console.error("Save failed:", e);
     } finally {
       setSaving(false);
     }
-  }, [editingItem, form, fetchData, markDirty]);
+  }, [editingItem, form, search, markDirty]);
 
   const handleDelete = useCallback(async () => {
     try {
       await api.delete(`/inventory/warehouse-locations/${confirmModal.compositeKey}`);
       setConfirmModal({ open: false, compositeKey: "" });
-      fetchData();
+      search();
     } catch (e) {
       console.error("Delete failed:", e);
     }
-  }, [confirmModal.compositeKey, fetchData]);
+  }, [confirmModal.compositeKey, search]);
 
   // 헤더 버튼을 부모 페이지에 전달
   useEffect(() => {
     onHeaderActions?.(
       <>
-        <Button variant="secondary" size="sm" onClick={fetchData}>
+        <Button variant="secondary" size="sm" onClick={search}>
           <RefreshCw className={`w-4 h-4 mr-1 ${loading ? "animate-spin" : ""}`} />{t("common.refresh")}
         </Button>
         <Button size="sm" onClick={() => guard(openCreate)}>
@@ -191,7 +191,7 @@ export default function LocationList({ onHeaderActions }: Props) {
         </Button>
       </>
     );
-  }, [onHeaderActions, fetchData, openCreate, guard, loading, t]);
+  }, [onHeaderActions, search, openCreate, guard, loading, t]);
 
   const columns = useMemo<ColumnDef<WarehouseLocation>[]>(() => [
     { id: "actions", header: "", size: 80, meta: { align: "center" as const, filterType: "none" as const }, cell: ({ row }) => (

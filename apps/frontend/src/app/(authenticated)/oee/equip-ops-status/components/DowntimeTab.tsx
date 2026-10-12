@@ -10,6 +10,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useActiveInterval } from '@/hooks/useTabActive';
 import { Barcode, Factory, PauseCircle, PlayCircle, Wrench } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Card, CardContent, Input, Select } from '@/components/ui';
@@ -113,11 +114,8 @@ export default function DowntimeTab({ machines, lines, refreshSec, onChanged }: 
   }, [reasonSeed]);
 
   // 자동갱신 — 페이지 헤더의 주기 설정을 그대로 따른다
-  useEffect(() => {
-    if (!refreshSec) return;
-    const id = setInterval(() => { loadScope(); }, refreshSec * 1000);
-    return () => clearInterval(id);
-  }, [refreshSec, loadScope]);
+  // 숨겨진 탭에서는 멈추고, 돌아오면 놓친 갱신을 한 번 즉시 실행한다
+  useActiveInterval(() => { loadScope(); }, refreshSec ? refreshSec * 1000 : null, { catchUp: true });
 
   /** 바코드/수기 입력 → 선택 모드에 맞는 코드로 대상 확정 (라인 모드=라인코드, 설비 모드=설비코드) */
   function resolveScan(raw: string) {

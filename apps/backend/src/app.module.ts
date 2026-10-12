@@ -16,6 +16,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { DatabaseModule } from './database/database.module';
 import { OracleModule } from './common/modules/oracle.module';
+import { GuardModule } from './common/modules/guard.module';
 import configuration from './config/configuration';
 
 // 기능 모듈 (은성화 진행하며 하나씩 추가)
@@ -26,9 +27,22 @@ import { IdleReasonModule } from './modules/idle-reason/idle-reason.module';
 import { EquipReasonMapModule } from './modules/equip-reason-map/equip-reason-map.module';
 import { ProductModelModule } from './modules/product-model/product-model.module';
 import { WorkResultModule } from './modules/work-result/work-result.module';
+import { JigModule } from './modules/jig/jig.module';
+import { MoldModule } from './modules/mold/mold.module';
+import { PlanningModule } from './modules/planning/planning.module';
+import { PriceConfirmModule } from './modules/price-confirm/price-confirm.module';
+import { TrackingModule } from './modules/tracking/tracking.module';
+import { QueryModule } from './modules/query/query.module';
+import { ReportModule } from './modules/report/report.module';
+import { DesignModule } from './modules/design/design.module';
+import { PurchaseModule } from './modules/purchase/purchase.module';
+import { InventoryQueryModule } from './modules/inventory-query/inventory-query.module';
+import { MaterialWarehouseModule } from './modules/warehouse/warehouse.module';
+import { SmtModule } from './modules/smt/smt.module';
 import { RunCardModule } from './modules/run-card/run-card.module';
 import { EquipOpsModule } from './modules/equip-ops/equip-ops.module';
 import { MenuCategoriesModule } from './modules/menu-categories/menu-categories.module';
+import { MenuFavoritesModule } from './modules/menu-favorites/menu-favorites.module';
 import { SystemModule } from './modules/system/system.module';
 import { SchedulerModule } from './modules/scheduler/scheduler.module';
 import { UserModule } from './modules/user/user.module';
@@ -42,6 +56,19 @@ import { MasterBomModule } from './modules/master/master-bom.module';
 import { MasterPartnerModule } from './modules/master/master-partner.module';
 import { MasterProdLineModule } from './modules/master/master-prod-line.module';
 import { WarehouseModule } from './modules/inventory/warehouse.module';
+import { MaterialReceiptIssueLedgerModule } from './modules/material/material-receipt-issue-ledger.module';
+import { MaterialCurrentInventoryModule } from './modules/material/material-current-inventory.module';
+import { MaterialWorkstageInventoryModule } from './modules/material/material-workstage-inventory.module';
+import { MaterialReceiptCancelModule } from './modules/material/material-receipt-cancel.module';
+import { ProcessTransactionModule } from './modules/process-transaction/process-transaction.module';
+import { QualityIqcModule } from './modules/quality/quality-iqc.module';
+import { QualityQcExtraModule } from './modules/quality/quality-qc-extra.module';
+import { QualityRepairHistoryModule } from './modules/quality/quality-repair-history.module';
+import { QualityProductDestroyModule } from './modules/quality/quality-product-destroy.module';
+import { BomModule } from './modules/bom/bom.module';
+import { PopupSearchModule } from './modules/popup-search/popup-search.module';
+import { AiModule } from './modules/ai/ai.module';
+import { ProductInventoryModule } from './modules/product/product-inventory.module';
 import { MasterWorkerModule } from './modules/master/master-worker.module';
 import { MasterWorkInstructionModule } from './modules/master/master-work-instruction.module';
 import { MasterWorkCalendarModule } from './modules/master/master-work-calendar.module';
@@ -54,6 +81,7 @@ import { MasterSalePriceModule } from './modules/master/master-sale-price.module
 import { MasterItemSupplierModule } from './modules/master/master-item-supplier.module';
 import { MasterCustomerModule } from './modules/master/master-customer.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { MonitoringModule } from './modules/monitoring/monitoring.module';
 import { AttachmentModule } from './modules/attachment/attachment.module';
 import { SharedModule } from './shared/shared.module';
 
@@ -71,6 +99,9 @@ import { SharedModule } from './shared/shared.module';
     // OracleService (패키지/프로시저 실행 등 raw Oracle 헬퍼)
     OracleModule,
 
+    // 전역 인증 (APP_GUARD = JwtAuthGuard). 토큰 없이 열어야 하는 라우트는 @Public().
+    GuardModule,
+
     // 전역 공유 서비스 (TransactionService, NumberingService 등)
     SharedModule,
 
@@ -86,10 +117,25 @@ import { SharedModule } from './shared/shared.module';
     WorkResultModule,
     EquipOpsModule,
 
+    JigModule,
+    MoldModule,
+    SmtModule,
+    PlanningModule,
+    PriceConfirmModule,
+    TrackingModule,
+    QueryModule,
+    ReportModule,
+    MaterialWarehouseModule,
+    InventoryQueryModule,
+    DesignModule,
+    PurchaseModule,
     RunCardModule,
 
     // 메뉴 카테고리 관리 (/system/menu-categories)
     MenuCategoriesModule,
+
+    // 사용자별 메뉴 즐겨찾기 (/menu-favorites)
+    MenuFavoritesModule,
 
     // 시스템관리 (/system/comm-configs 통신설정, 환경설정, 활동로그, 문서, ER뷰 등)
     SystemModule,
@@ -132,6 +178,23 @@ import { SharedModule } from './shared/shared.module';
     // 기준정보 창고/로케이션 (/inventory/warehouses, /inventory/warehouse-locations)
     WarehouseModule,
 
+    // 자재관리 자재입출고수불원장 (/material/receipt-issue-ledger)
+    MaterialReceiptIssueLedgerModule,
+    MaterialCurrentInventoryModule,
+    MaterialWorkstageInventoryModule,
+    MaterialReceiptCancelModule,
+    ProcessTransactionModule,
+    QualityIqcModule,
+    QualityQcExtraModule,
+    QualityRepairHistoryModule,
+    QualityProductDestroyModule,
+    BomModule,
+    // 공용 팝업조회 (PB 팝업 카탈로그의 엔진 설정형 팝업)
+    PopupSearchModule,
+    // AI 채팅·지식 검색·조회 전용 text-to-SQL (설정: AI_ENV_PATH env 파일, ai-settings.service)
+    AiModule,
+    ProductInventoryModule,
+
     // 기준정보 작업자정보 (/master/workers)
     MasterWorkerModule,
 
@@ -158,6 +221,7 @@ import { SharedModule } from './shared/shared.module';
 
     // 대시보드 (/dashboard/summary)
     DashboardModule,
+    MonitoringModule,
     AttachmentModule,
   ],
   controllers: [AppController],

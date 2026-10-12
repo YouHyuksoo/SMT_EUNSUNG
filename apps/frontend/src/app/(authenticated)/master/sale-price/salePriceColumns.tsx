@@ -9,10 +9,10 @@ const codeCell = (groupCode: string, code: unknown) => (
 );
 
 export const salePriceColumns = (): ColumnDef<SalePriceItem, unknown>[] => [
-  { accessorKey: "customerCode", header: "고객코드", size: 100 },
-  { accessorKey: "customerName", header: "고객명", size: 150 },
   { accessorKey: "itemCode", header: "품목코드", size: 140 },
   { accessorKey: "itemName", header: "품목명", size: 180 },
+  { accessorKey: "customerCode", header: "고객코드", size: 100 },
+  { accessorKey: "customerName", header: "고객명", size: 150 },
   { accessorKey: "productLineType", header: "제품라인유형", size: 105, cell: ({ getValue }) => codeCell("PRODUCT_LINE_TYPE", getValue()) },
   { accessorKey: "dateset", header: "시작일", cell: ({ getValue }) => dateText(getValue<string>()), size: 100 },
   { accessorKey: "dateend", header: "종료일", cell: ({ getValue }) => dateText(getValue<string>()), size: 100 },

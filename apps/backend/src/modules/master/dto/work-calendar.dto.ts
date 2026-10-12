@@ -87,7 +87,7 @@ export class WorkCalendarDayItemDto {
   workDate: string;
 
   @ApiProperty({ description: '근무유형', enum: WORK_DAY_TYPES })
-  @IsIn(WORK_DAY_TYPES as unknown as string[])
+  @IsIn([...WORK_DAY_TYPES])
   dayType: string;
 
   @ApiPropertyOptional({ description: '휴무사유 (dayType=OFF일 때만 유효)' })

@@ -5,14 +5,13 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Plant } from '../../entities/plant.entity';
-import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { PlantController } from './controllers/plant.controller';
 import { PlantService } from './services/plant.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Plant])],
   controllers: [PlantController],
-  providers: [PlantService, JwtAuthGuard],
+  providers: [PlantService],
   exports: [PlantService],
 })
 export class MasterPlantModule {}

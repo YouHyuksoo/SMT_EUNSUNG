@@ -44,7 +44,7 @@ export default function SchedulerDashboardTab() {
   const [data, setData] = useState<DashboardSummary>(EMPTY);
   const [loading, setLoading] = useState(false);
 
-  const fetchData = useCallback(async () => {
+  const search = useCallback(async () => {
     setLoading(true);
     try {
       const res = await api.get("/scheduler/logs/summary");
@@ -56,7 +56,7 @@ export default function SchedulerDashboardTab() {
     }
   }, []);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => { search(); }, [search]);
 
   const fmtDt = (v: string | null) => v ? v.replace("T", " ").slice(0, 19) : "-";
 
@@ -64,7 +64,7 @@ export default function SchedulerDashboardTab() {
     <div className="flex flex-col h-full gap-4 overflow-y-auto min-h-0">
       {/* 새로고침 */}
       <div className="flex justify-end flex-shrink-0">
-        <Button size="sm" variant="secondary" onClick={fetchData}>
+        <Button size="sm" variant="secondary" onClick={search}>
           <RefreshCw className={`w-4 h-4 mr-1 ${loading ? "animate-spin" : ""}`} />
           {t("common.refresh")}
         </Button>
