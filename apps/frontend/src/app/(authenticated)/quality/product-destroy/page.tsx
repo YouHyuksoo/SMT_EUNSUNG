@@ -25,11 +25,6 @@ import { destroyHistoryColumns, serialColumns } from './columns';
 import type { DestroyResponse, ProductDestroyMode, ProductDestroyRow } from './types';
 
 const today = () => new Date().toISOString().slice(0, 10);
-const monthAgo = () => {
-  const d = new Date();
-  d.setMonth(d.getMonth() - 1);
-  return d.toISOString().slice(0, 10);
-};
 const parseSerials = (text: string) => text.split(/[\s,;]+/).map(s => s.trim().toUpperCase()).filter(Boolean);
 
 export default function ProductDestroyPage() {
@@ -57,7 +52,7 @@ export default function ProductDestroyPage() {
   const [modelName, setModelName] = useState('');
   const [lineCode, setLineCode] = useState('');
   const [workstageCode, setWorkstageCode] = useState('');
-  const [dateFrom, setDateFrom] = useState(monthAgo);
+  const [dateFrom, setDateFrom] = useState(today);
   const [dateTo, setDateTo] = useState(today);
 
   const serials = parseSerials(serialText);

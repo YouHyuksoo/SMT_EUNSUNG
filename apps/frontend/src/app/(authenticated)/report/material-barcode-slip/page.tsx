@@ -37,7 +37,7 @@ const DIVIDE_OPTIONS = [
 ];
 
 export default function MaterialBarcodeSlipPage() {
-  const [dateFrom, setDateFrom] = useState(daysAgo(7));
+  const [dateFrom, setDateFrom] = useState(daysAgo(0));
   const [dateTo, setDateTo] = useState(daysAgo(0));
   const [itemCode, setItemCode] = useState('');
   const [lotNo, setLotNo] = useState('');

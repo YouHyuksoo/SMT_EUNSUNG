@@ -43,7 +43,7 @@ const daysAgo = (n: number) => {
 };
 
 export default function ReceiptSlipPage() {
-  const [dateFrom, setDateFrom] = useState(daysAgo(7));
+  const [dateFrom, setDateFrom] = useState(daysAgo(0));
   const [dateTo, setDateTo] = useState(daysAgo(0));
   const [itemCode, setItemCode] = useState('');
   const [slipNo, setSlipNo] = useState('');

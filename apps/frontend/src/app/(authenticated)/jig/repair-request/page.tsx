@@ -30,14 +30,9 @@ import { jigRepairRequestColumns, repairableJigColumns } from '../jig-extra-colu
 import type { JigRepairRequestRow, RepairableJigRow } from '../jig-extra-columns';
 
 const today = () => new Date().toISOString().slice(0, 10);
-const yearsAgo = (n: number) => {
-  const d = new Date();
-  d.setFullYear(d.getFullYear() - n);
-  return d.toISOString().slice(0, 10);
-};
 
 export default function JigRepairRequestPage() {
-  const [dateFrom, setDateFrom] = useState(yearsAgo(3));
+  const [dateFrom, setDateFrom] = useState(today());
   const [dateTo, setDateTo] = useState(today());
   const [jigCodeCond, setJigCodeCond] = useState('');
   const [requests, setRequests] = useState<JigRepairRequestRow[]>([]);

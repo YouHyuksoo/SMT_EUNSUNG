@@ -28,7 +28,7 @@ const daysAgo = (n: number) => {
 };
 
 export default function MoldIssueReportPage() {
-  const [dateFrom, setDateFrom] = useState(daysAgo(30));
+  const [dateFrom, setDateFrom] = useState(daysAgo(0));
   const [dateTo, setDateTo] = useState(daysAgo(0));
   const [moldCode, setMoldCode] = useState('');
 

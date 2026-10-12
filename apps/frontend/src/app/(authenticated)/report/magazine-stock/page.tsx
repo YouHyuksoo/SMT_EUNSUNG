@@ -47,7 +47,7 @@ export default function MagazineStockReportPage() {
   const [kind, setKind] = useState<Kind>('workstage');
   const [modelName, setModelName] = useState('');
   const [modelSuffix, setModelSuffix] = useState('');
-  const [dateFrom, setDateFrom] = useState(daysAgo(7));
+  const [dateFrom, setDateFrom] = useState(daysAgo(0));
   const [dateTo, setDateTo] = useState(daysAgo(0));
 
   const [rows, setRows] = useState<MagazineStockRow[]>([]);

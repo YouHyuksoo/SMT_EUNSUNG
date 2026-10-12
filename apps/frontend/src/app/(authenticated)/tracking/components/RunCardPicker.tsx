@@ -41,7 +41,7 @@ export default function RunCardPicker({ selected, onSelect }: RunCardPickerProps
   const [lineCode, setLineCode] = useState('');
   const [modelName, setModelName] = useState('');
   const [runNo, setRunNo] = useState('');
-  const [dateFrom, setDateFrom] = useState(daysAgo(7));
+  const [dateFrom, setDateFrom] = useState(daysAgo(0));
   const [dateTo, setDateTo] = useState(daysAgo(0));
 
   const search = useCallback(async () => {

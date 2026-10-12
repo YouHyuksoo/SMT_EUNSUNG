@@ -34,11 +34,6 @@ type Mode = 'nodes' | 'raw' | 'checks';
 
 const isoDate = (date: Date) => date.toISOString().slice(0, 10);
 const today = () => isoDate(new Date());
-const weekAgo = () => {
-  const date = new Date();
-  date.setDate(date.getDate() - 7);
-  return isoDate(date);
-};
 
 export default function TemperaturePage() {
   const [mode, setMode] = useState<Mode>('nodes');
@@ -50,7 +45,7 @@ export default function TemperaturePage() {
   const [searched, setSearched] = useState(false);
 
   const [nodeId, setNodeId] = useState('');
-  const [dateFrom, setDateFrom] = useState(weekAgo);
+  const [dateFrom, setDateFrom] = useState(today);
   const [dateTo, setDateTo] = useState(today);
   const [ngOnly, setNgOnly] = useState(false);
   const [machineCode, setMachineCode] = useState('');

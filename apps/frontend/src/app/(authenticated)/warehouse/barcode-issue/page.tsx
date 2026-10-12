@@ -51,11 +51,6 @@ import PartSearchField from '@/components/shared/PartSearchField';
 import ProcessSelect from '@/components/shared/ProcessSelect';
 
 const today = () => new Date().toISOString().slice(0, 10);
-const daysAgo = (n: number) => {
-  const d = new Date();
-  d.setDate(d.getDate() - n);
-  return d.toISOString().slice(0, 10);
-};
 
 type TabKey = 'issues' | 'waiting' | 'bom';
 
@@ -77,7 +72,7 @@ export default function BarcodeIssuePage() {
   const [tab, setTab] = useState<TabKey>('issues');
 
   // 조회
-  const [dateFrom, setDateFrom] = useState(daysAgo(7));
+  const [dateFrom, setDateFrom] = useState(today());
   const [dateTo, setDateTo] = useState(today());
   const [itemCode, setItemCode] = useState('');
   const [lotNo, setLotNo] = useState('');

@@ -37,7 +37,7 @@ type Tab = 'master' | 'operation';
 export default function MachineReportPage() {
   const [machineCode, setMachineCode] = useState('');
   const [machineType, setMachineType] = useState('');
-  const [dateFrom, setDateFrom] = useState(daysAgo(7));
+  const [dateFrom, setDateFrom] = useState(daysAgo(0));
   const [dateTo, setDateTo] = useState(daysAgo(0));
 
   const [tab, setTab] = useState<Tab>('master');

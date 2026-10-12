@@ -34,11 +34,6 @@ import PartSearchField from '@/components/shared/PartSearchField';
 type Confirm = 'N' | 'W' | 'Y';
 
 const today = () => getTodayLocal();
-const monthsAgo = (n: number) => {
-  const d = new Date();
-  d.setMonth(d.getMonth() - n);
-  return getTodayLocal(d);
-};
 const apiMessage = (error: unknown) =>
   (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
 
@@ -53,7 +48,7 @@ const ACTION_TEXT: Record<Confirm, { label: string; message: string }> = {
 };
 
 export default function ForecastOrderPage() {
-  const [dateFrom, setDateFrom] = useState(monthsAgo(3));
+  const [dateFrom, setDateFrom] = useState(today());
   const [dateTo, setDateTo] = useState(today());
   const [supplierCond, setSupplierCond] = useState('');
   const [itemCond, setItemCond] = useState('');

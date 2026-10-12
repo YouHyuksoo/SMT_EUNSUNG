@@ -31,11 +31,6 @@ import type { IssueRow } from '../issue-manage-columns';
 import PartSearchField from '@/components/shared/PartSearchField';
 
 const today = () => new Date().toISOString().slice(0, 10);
-const daysAgo = (n: number) => {
-  const d = new Date();
-  d.setDate(d.getDate() - n);
-  return d.toISOString().slice(0, 10);
-};
 
 const STATUS_OPTIONS = [
   { value: 'N', label: '정상 출고만' },
@@ -44,7 +39,7 @@ const STATUS_OPTIONS = [
 ];
 
 export default function IssueCancelPage() {
-  const [dateFrom, setDateFrom] = useState(daysAgo(7));
+  const [dateFrom, setDateFrom] = useState(today());
   const [dateTo, setDateTo] = useState(today());
   const [itemCode, setItemCode] = useState('');
   const [lineCode, setLineCode] = useState('');

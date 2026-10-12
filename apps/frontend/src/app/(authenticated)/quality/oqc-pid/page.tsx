@@ -24,11 +24,6 @@ import PartSearchField from '@/components/shared/PartSearchField';
 
 const isoDate = (date: Date) => date.toISOString().slice(0, 10);
 const today = () => isoDate(new Date());
-const weekAgo = () => {
-  const date = new Date();
-  date.setDate(date.getDate() - 7);
-  return isoDate(date);
-};
 
 export default function OqcPage() {
   const scanRef = useRef<HTMLInputElement>(null);
@@ -37,7 +32,7 @@ export default function OqcPage() {
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
 
-  const [dateFrom, setDateFrom] = useState(weekAgo);
+  const [dateFrom, setDateFrom] = useState(today);
   const [dateTo, setDateTo] = useState(today);
   const [productId, setProductId] = useState('');
   const [modelName, setModelName] = useState('');

@@ -31,17 +31,12 @@ import { repairSummaryColumns } from '../repair-query-columns';
 import type { RepairSummaryRow } from '../repair-query-columns';
 
 const today = () => new Date().toISOString().slice(0, 10);
-const daysAgo = (n: number) => {
-  const d = new Date();
-  d.setDate(d.getDate() - n);
-  return d.toISOString().slice(0, 10);
-};
 
 type TabKey = 'daily' | 'position';
 
 export default function RepairQueryPage() {
   const [tab, setTab] = useState<TabKey>('daily');
-  const [dateFrom, setDateFrom] = useState(daysAgo(30));
+  const [dateFrom, setDateFrom] = useState(today());
   const [dateTo, setDateTo] = useState(today());
   const [lineCode, setLineCode] = useState('');
   const [modelName, setModelName] = useState('');

@@ -68,7 +68,7 @@ export default function BarcodeReceiptPage() {
   const [barcodeCond, setBarcodeCond] = useState('');
   const [lotNo, setLotNo] = useState('');
   const [slipNo, setSlipNo] = useState('');
-  const [dateFrom, setDateFrom] = useState(daysAgo(7));
+  const [dateFrom, setDateFrom] = useState(daysAgo(0));
   const [dateTo, setDateTo] = useState(daysAgo(0));
 
   const [waiting, setWaiting] = useState<BarcodeRow[]>([]);

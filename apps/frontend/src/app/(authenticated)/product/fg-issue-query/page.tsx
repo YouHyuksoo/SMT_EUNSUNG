@@ -56,17 +56,12 @@ const SUMMARY_TABS: Record<
 };
 
 const today = () => new Date().toISOString().slice(0, 10);
-const daysAgo = (n: number) => {
-  const d = new Date();
-  d.setDate(d.getDate() - n);
-  return d.toISOString().slice(0, 10);
-};
 
 const sumOf = <T,>(list: T[], pick: (row: T) => unknown) =>
   list.reduce((sum, row) => sum + Number(pick(row) ?? 0), 0);
 
 export default function FgIssueQueryPage() {
-  const [dateFrom, setDateFrom] = useState(daysAgo(7));
+  const [dateFrom, setDateFrom] = useState(today());
   const [dateTo, setDateTo] = useState(today());
   const [customerCode, setCustomerCode] = useState('');
   const [modelName, setModelName] = useState('');

@@ -42,7 +42,7 @@ type Tab = 'list' | 'card' | 'issue';
 export default function JigReportPage() {
   const [jigCode, setJigCode] = useState('');
   const [jigType, setJigType] = useState('');
-  const [dateFrom, setDateFrom] = useState(daysAgo(30));
+  const [dateFrom, setDateFrom] = useState(daysAgo(0));
   const [dateTo, setDateTo] = useState(daysAgo(0));
 
   const [tab, setTab] = useState<Tab>('list');

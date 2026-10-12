@@ -24,11 +24,6 @@ import { repairHistoryColumns } from './columns';
 import type { RepairHistoryRow } from './types';
 
 const today = () => new Date().toISOString().slice(0, 10);
-const monthAgo = () => {
-  const d = new Date();
-  d.setMonth(d.getMonth() - 1);
-  return d.toISOString().slice(0, 10);
-};
 
 export default function RepairHistoryPage() {
   const [rows, setRows] = useState<RepairHistoryRow[]>([]);
@@ -43,7 +38,7 @@ export default function RepairHistoryPage() {
   const [receiptDeficit, setReceiptDeficit] = useState('');
   const [inspectHandling, setInspectHandling] = useState('');
   const [repairResultCode, setRepairResultCode] = useState('');
-  const [dateFrom, setDateFrom] = useState(monthAgo);
+  const [dateFrom, setDateFrom] = useState(today);
   const [dateTo, setDateTo] = useState(today);
 
   const search = useCallback(async () => {

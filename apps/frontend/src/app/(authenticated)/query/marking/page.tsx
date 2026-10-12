@@ -41,7 +41,7 @@ type Tab = 'detail' | 'summary';
 export default function MarkingQueryPage() {
   const [runNo, setRunNo] = useState('');
   const [serialNo, setSerialNo] = useState('');
-  const [dateFrom, setDateFrom] = useState(daysAgo(1));
+  const [dateFrom, setDateFrom] = useState(daysAgo(0));
   const [dateTo, setDateTo] = useState(daysAgo(0));
 
   const [tab, setTab] = useState<Tab>('summary');

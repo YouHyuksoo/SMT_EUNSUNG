@@ -55,7 +55,7 @@ const daysAgo = (n: number) => {
 type Tab = 'detail' | 'group' | 'barcode' | 'issue';
 
 export default function PdaScanQueryPage() {
-  const [dateFrom, setDateFrom] = useState(daysAgo(3));
+  const [dateFrom, setDateFrom] = useState(daysAgo(0));
   const [dateTo, setDateTo] = useState(daysAgo(0));
   const [lineCode, setLineCode] = useState('');
   const [itemCode, setItemCode] = useState('');

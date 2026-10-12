@@ -44,7 +44,7 @@ type Mode = 'create' | 'edit';
 
 export default function EtcReceiptPage() {
   // 조회
-  const [dateFrom, setDateFrom] = useState(daysAgo(30));
+  const [dateFrom, setDateFrom] = useState(daysAgo(0));
   const [dateTo, setDateTo] = useState(daysAgo(0));
   const [invItemCode, setInvItemCode] = useState('');
   const [invLocationCode, setInvLocationCode] = useState('');

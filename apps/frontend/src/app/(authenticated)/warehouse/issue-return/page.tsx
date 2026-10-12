@@ -39,17 +39,12 @@ import PartSearchField from '@/components/shared/PartSearchField';
 import LineSelect from '@/components/shared/LineSelect';
 
 const today = () => new Date().toISOString().slice(0, 10);
-const daysAgo = (n: number) => {
-  const d = new Date();
-  d.setDate(d.getDate() - n);
-  return d.toISOString().slice(0, 10);
-};
 
 type TabKey = 'returns' | 'losses';
 
 export default function IssueReturnPage() {
   const [tab, setTab] = useState<TabKey>('returns');
-  const [dateFrom, setDateFrom] = useState(daysAgo(7));
+  const [dateFrom, setDateFrom] = useState(today());
   const [dateTo, setDateTo] = useState(today());
   const [itemCode, setItemCode] = useState('');
   const [lotNo, setLotNo] = useState('');

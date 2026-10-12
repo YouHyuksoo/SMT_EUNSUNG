@@ -45,7 +45,7 @@ const daysAgo = (n: number) => {
 type Tab = 'detail' | 'supplier' | 'return' | 'matrix';
 
 export default function MaterialReceiptReportPage() {
-  const [dateFrom, setDateFrom] = useState(daysAgo(7));
+  const [dateFrom, setDateFrom] = useState(daysAgo(0));
   const [dateTo, setDateTo] = useState(daysAgo(0));
   const [supplierCode, setSupplierCode] = useState('');
   const [itemCode, setItemCode] = useState('');

@@ -54,7 +54,7 @@ export default function EtcIssuePage() {
   const [itemCode, setItemCode] = useState('');
   const [materialMfs, setMaterialMfs] = useState('');
   // 기타출고는 한 달에 수십 건이라 기본은 이번 달 1일부터다.
-  const [dateFrom, setDateFrom] = useState(() => `${today().slice(0, 8)}01`);
+  const [dateFrom, setDateFrom] = useState(today());
   const [dateTo, setDateTo] = useState(today());
   const [histLineCode, setHistLineCode] = useState('');
   const [histInvoiceNo, setHistInvoiceNo] = useState('');

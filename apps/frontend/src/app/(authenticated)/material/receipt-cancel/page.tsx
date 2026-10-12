@@ -26,7 +26,6 @@ import { receiptKey, type ReceiptCancelMode, type ReceiptCancelRow } from './typ
 import PartSearchField from '@/components/shared/PartSearchField';
 
 const today = () => new Date().toISOString().slice(0, 10);
-const firstDayOfMonth = () => `${new Date().toISOString().slice(0, 7)}-01`;
 
 export default function ReceiptCancelPage() {
   const [mode, setMode] = useState<ReceiptCancelMode>('CANCEL');
@@ -43,7 +42,7 @@ export default function ReceiptCancelPage() {
   const [supplierCode, setSupplierCode] = useState('');
   const [locationCode, setLocationCode] = useState('');
   const [invoiceNo, setInvoiceNo] = useState('');
-  const [dateFrom, setDateFrom] = useState(firstDayOfMonth);
+  const [dateFrom, setDateFrom] = useState(today);
   const [dateTo, setDateTo] = useState(today);
   const [cancelDate, setCancelDate] = useState(today);
   const [allowLastMonth, setAllowLastMonth] = useState(false);

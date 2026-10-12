@@ -39,11 +39,6 @@ const errorMessage = (error: unknown) =>
 
 const isoDate = (date: Date) => date.toISOString().slice(0, 10);
 const today = () => isoDate(new Date());
-const weekAgo = () => {
-  const date = new Date();
-  date.setDate(date.getDate() - 7);
-  return isoDate(date);
-};
 
 export default function SmdActualPage() {
   const [tab, setTab] = useState<Tab>('shift');
@@ -56,7 +51,7 @@ export default function SmdActualPage() {
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
 
-  const [dateFrom, setDateFrom] = useState(weekAgo);
+  const [dateFrom, setDateFrom] = useState(today);
   const [dateTo, setDateTo] = useState(today);
   const [lineCode, setLineCode] = useState('');
   const [modelName, setModelName] = useState('');

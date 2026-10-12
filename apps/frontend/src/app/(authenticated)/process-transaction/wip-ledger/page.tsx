@@ -38,7 +38,7 @@ import {
 type TabKey = 'summary' | 'detail';
 
 export default function WipLedgerPage() {
-  const initial = useMemo(() => getRecentDaysRange(7), []);
+  const initial = useMemo(() => getRecentDaysRange(1), []);
   const [tab, setTab] = useState<TabKey>('summary');
   const [dateFrom, setDateFrom] = useState(initial.from);
   const [dateTo, setDateTo] = useState(initial.to);

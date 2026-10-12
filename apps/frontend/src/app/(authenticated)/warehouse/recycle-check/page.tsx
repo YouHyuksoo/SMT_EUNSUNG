@@ -24,11 +24,6 @@ import api from '@/services/api';
 import { recycleCheckColumns } from '../warehouse-columns';
 import type { RecycleCheckRow } from '../warehouse-types';
 
-const monthsAgo = (n: number) => {
-  const d = new Date();
-  d.setMonth(d.getMonth() - n);
-  return d.toISOString().slice(0, 10);
-};
 const today = () => new Date().toISOString().slice(0, 10);
 
 const STATUS_OPTIONS = [
@@ -39,7 +34,7 @@ const STATUS_OPTIONS = [
 
 export default function RecycleCheckPage() {
   // 577건이 6년에 걸쳐 있어 기본 기간을 1년으로 둔다 (7일로 두면 늘 빈 화면이다).
-  const [dateFrom, setDateFrom] = useState(monthsAgo(12));
+  const [dateFrom, setDateFrom] = useState(today());
   const [dateTo, setDateTo] = useState(today());
   const [lineCode, setLineCode] = useState('');
   const [checkStatus, setCheckStatus] = useState('');

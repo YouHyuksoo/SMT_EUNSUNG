@@ -63,7 +63,7 @@ const parseDivide = (text: string) => text
   .filter((n) => Number.isFinite(n));
 
 export default function SolderLabelPage() {
-  const [dateFrom, setDateFrom] = useState(daysAgo(30));
+  const [dateFrom, setDateFrom] = useState(daysAgo(0));
   const [dateTo, setDateTo] = useState(daysAgo(0));
   const [slipNoCond, setSlipNoCond] = useState('');
   const [itemCodeCond, setItemCodeCond] = useState('');

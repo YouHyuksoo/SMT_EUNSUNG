@@ -48,7 +48,7 @@ const daysAgo = (n: number) => {
 type Tab = 'item' | 'contact' | 'supplier' | 'warehouse' | 'matrix';
 
 export default function MaterialReceiptSumPage() {
-  const [dateFrom, setDateFrom] = useState(daysAgo(7));
+  const [dateFrom, setDateFrom] = useState(daysAgo(0));
   const [dateTo, setDateTo] = useState(daysAgo(0));
   const [supplierCode, setSupplierCode] = useState('');
   const [itemCode, setItemCode] = useState('');

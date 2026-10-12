@@ -50,8 +50,7 @@ export default function SchedulerLogTab() {
 
   /* 필터 */
   const today = getTodayLocal();
-  const weekAgo = getTodayLocal(new Date(Date.now() - 7 * 86400_000));
-  const [fromDate, setStartDate] = useState(weekAgo);
+  const [fromDate, setStartDate] = useState(today);
   const [toDate, setEndDate] = useState(today);
   const [jobFilter, setJobFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");

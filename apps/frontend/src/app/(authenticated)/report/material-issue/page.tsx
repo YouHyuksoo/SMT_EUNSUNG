@@ -47,7 +47,7 @@ const daysAgo = (n: number) => {
 type Tab = 'detail' | 'simple' | 'notIssued' | 'smtCheck';
 
 export default function MaterialIssueReportPage() {
-  const [dateFrom, setDateFrom] = useState(daysAgo(7));
+  const [dateFrom, setDateFrom] = useState(daysAgo(0));
   const [dateTo, setDateTo] = useState(daysAgo(0));
   const [itemCode, setItemCode] = useState('');
   const [lineCode, setLineCode] = useState('');

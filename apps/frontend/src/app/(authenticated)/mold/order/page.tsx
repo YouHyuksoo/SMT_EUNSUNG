@@ -25,11 +25,6 @@ type Mode = 'orders' | 'groups';
 
 const isoDate = (date: Date) => date.toISOString().slice(0, 10);
 const today = () => isoDate(new Date());
-const monthAgo = () => {
-  const date = new Date();
-  date.setMonth(date.getMonth() - 1);
-  return isoDate(date);
-};
 
 export default function MoldOrderPage() {
   const [mode, setMode] = useState<Mode>('orders');
@@ -39,7 +34,7 @@ export default function MoldOrderPage() {
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
 
-  const [dateFrom, setDateFrom] = useState(monthAgo);
+  const [dateFrom, setDateFrom] = useState(today);
   const [dateTo, setDateTo] = useState(today);
   const [supplierCode, setSupplierCode] = useState('');
   const [moldCode, setMoldCode] = useState('');

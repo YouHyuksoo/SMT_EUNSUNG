@@ -43,7 +43,7 @@ type TabKey = 'history' | 'arrivals';
 
 export default function MaterialReceiptPage() {
   const [tab, setTab] = useState<TabKey>('history');
-  const [dateFrom, setDateFrom] = useState(daysAgo(7));
+  const [dateFrom, setDateFrom] = useState(daysAgo(0));
   const [dateTo, setDateTo] = useState(daysAgo(0));
   const [itemCode, setItemCode] = useState('');
   const [materialMfs, setMaterialMfs] = useState('');

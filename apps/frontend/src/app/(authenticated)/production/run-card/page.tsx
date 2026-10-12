@@ -54,7 +54,6 @@ interface EditForm {
 }
 
 const today = () => getTodayLocal();
-const daysAgo = (n: number) => { const date = new Date(); date.setDate(date.getDate() - n); return getTodayLocal(date); };
 
 const emptyForm = (): EditForm => ({
   isEdit: false, runNo: '', runDate: today(), lotNo: '', itemCode: '', modelName: '',
@@ -87,7 +86,7 @@ export default function RunCardPage() {
   const [modelPickerOpen, setModelPickerOpen] = useState(false);
 
   // 검색 조건 — PB Where Condition 과 동일
-  const [fromDate, setFromDate] = useState(daysAgo(30));
+  const [fromDate, setFromDate] = useState(today());
   const [toDate, setToDate] = useState(today());
   const [runNo, setRunNo] = useState('');
   const [modelName, setModelName] = useState('');

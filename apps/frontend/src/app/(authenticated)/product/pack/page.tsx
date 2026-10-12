@@ -40,18 +40,13 @@ import PartSearchField from '@/components/shared/PartSearchField';
 
 /** 오늘 / 7일 전 — 기본 기간을 좁게 잡는 이유는 파일 상단 주석 6번. */
 const today = () => new Date().toISOString().slice(0, 10);
-const daysAgo = (n: number) => {
-  const d = new Date();
-  d.setDate(d.getDate() - n);
-  return d.toISOString().slice(0, 10);
-};
 
 /** 현장 PC 는 같은 라인·공정만 계속 쓴다 — PB 의 WORKENV.INI 를 브라우저로 옮긴 것. */
 const LINE_KEY = 'mes-product-pack-line';
 const WORKSTAGE_KEY = 'mes-product-pack-workstage';
 
 export default function ProductPackPage() {
-  const [dateFrom, setDateFrom] = useState(daysAgo(7));
+  const [dateFrom, setDateFrom] = useState(today());
   const [dateTo, setDateTo] = useState(today());
   const [packBarcodeCond, setPackBarcodeCond] = useState('');
   const [modelNameCond, setModelNameCond] = useState('');

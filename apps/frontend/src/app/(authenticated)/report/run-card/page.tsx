@@ -38,7 +38,7 @@ const daysAgo = (n: number) => {
 type Tab = 'summary' | 'detail';
 
 export default function RunCardReportPage() {
-  const [dateFrom, setDateFrom] = useState(daysAgo(7));
+  const [dateFrom, setDateFrom] = useState(daysAgo(0));
   const [dateTo, setDateTo] = useState(daysAgo(0));
   const [runNo, setRunNo] = useState('');
   const [modelName, setModelName] = useState('');

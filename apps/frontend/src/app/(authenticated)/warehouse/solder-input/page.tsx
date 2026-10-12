@@ -30,7 +30,7 @@ const daysAgo = (n: number) => {
 };
 
 export default function SolderInputHistoryPage() {
-  const [dateFrom, setDateFrom] = useState(daysAgo(7));
+  const [dateFrom, setDateFrom] = useState(daysAgo(0));
   const [dateTo, setDateTo] = useState(daysAgo(0));
   const [solderLotNo, setSolderLotNo] = useState('');
   const [machineCode, setMachineCode] = useState('');

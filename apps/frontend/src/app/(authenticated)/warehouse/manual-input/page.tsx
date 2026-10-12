@@ -30,14 +30,9 @@ import type { ManualInputRow } from '../reprint-msl-columns';
 import ProcessSelect from '@/components/shared/ProcessSelect';
 
 const today = () => new Date().toISOString().slice(0, 10);
-const daysAgo = (n: number) => {
-  const d = new Date();
-  d.setDate(d.getDate() - n);
-  return d.toISOString().slice(0, 10);
-};
 
 export default function ManualInputPage() {
-  const [dateFrom, setDateFrom] = useState(daysAgo(7));
+  const [dateFrom, setDateFrom] = useState(today());
   const [dateTo, setDateTo] = useState(today());
   const [filterLine, setFilterLine] = useState('');
   const [runNoCond, setRunNoCond] = useState('');

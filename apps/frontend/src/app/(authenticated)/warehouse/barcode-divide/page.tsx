@@ -33,11 +33,6 @@ import type { DivideLookup, DivideResult, DividedRow } from '../divide-baking-co
 import PartSearchField from '@/components/shared/PartSearchField';
 
 const today = () => new Date().toISOString().slice(0, 10);
-const daysAgo = (n: number) => {
-  const d = new Date();
-  d.setDate(d.getDate() - n);
-  return d.toISOString().slice(0, 10);
-};
 
 /** 조각 입력을 숫자 목록으로 바꾼다 (쉼표·공백·줄바꿈 구분). */
 const parsePieces = (text: string) => text
@@ -47,7 +42,7 @@ const parsePieces = (text: string) => text
   .filter((n) => Number.isFinite(n));
 
 export default function BarcodeDividePage() {
-  const [dateFrom, setDateFrom] = useState(daysAgo(7));
+  const [dateFrom, setDateFrom] = useState(today());
   const [dateTo, setDateTo] = useState(today());
   const [itemCode, setItemCode] = useState('');
   const [lotNo, setLotNo] = useState('');

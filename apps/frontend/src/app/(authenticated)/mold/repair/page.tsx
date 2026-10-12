@@ -26,11 +26,6 @@ import RepairProcessPanel from './components/RepairProcessPanel';
 
 const isoDate = (date: Date) => date.toISOString().slice(0, 10);
 const today = () => isoDate(new Date());
-const monthsAgo = (months: number) => {
-  const date = new Date();
-  date.setMonth(date.getMonth() - months);
-  return isoDate(date);
-};
 
 export default function MoldRepairPage() {
   const [rows, setRows] = useState<MoldRepairRow[]>([]);
@@ -38,7 +33,7 @@ export default function MoldRepairPage() {
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
 
-  const [dateFrom, setDateFrom] = useState(() => monthsAgo(3));
+  const [dateFrom, setDateFrom] = useState(today);
   const [dateTo, setDateTo] = useState(today);
   const [moldCode, setMoldCode] = useState('');
   const [moldGroup, setMoldGroup] = useState('');

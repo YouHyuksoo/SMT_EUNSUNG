@@ -46,10 +46,9 @@ interface SplitTarget {
 
 /** 이번 달 1일 / 오늘 — 분할은 드물어 기간을 넓게 잡는다. */
 const today = () => new Date().toISOString().slice(0, 10);
-const yearStart = () => `${new Date().getFullYear()}-01-01`;
 
 export default function MagazineSplitPage() {
-  const [dateFrom, setDateFrom] = useState(yearStart());
+  const [dateFrom, setDateFrom] = useState(today());
   const [dateTo, setDateTo] = useState(today());
   const [rows, setRows] = useState<MagazineSplitRow[]>([]);
   const [loading, setLoading] = useState(false);

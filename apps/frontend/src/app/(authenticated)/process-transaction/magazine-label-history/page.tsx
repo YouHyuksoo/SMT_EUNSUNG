@@ -16,7 +16,6 @@ import type { MagazineLabelHistoryRow, MagazineLabelViewMode } from './types';
 
 const isoDate = (date: Date) => date.toISOString().slice(0, 10);
 const today = () => isoDate(new Date());
-const monthAgo = () => { const date = new Date(); date.setMonth(date.getMonth() - 1); return isoDate(date); };
 
 export default function MagazineLabelHistoryPage() {
   const [rows, setRows] = useState<MagazineLabelHistoryRow[]>([]);
@@ -29,7 +28,7 @@ export default function MagazineLabelHistoryPage() {
   const [modelName, setModelName] = useState('');
   const [magazineLabelNo, setMagazineLabelNo] = useState('');
   const [runNo, setRunNo] = useState('');
-  const [dateFrom, setDateFrom] = useState(monthAgo);
+  const [dateFrom, setDateFrom] = useState(today);
   const [dateTo, setDateTo] = useState(today);
 
   const search = useCallback(async () => {

@@ -43,7 +43,7 @@ export default function PcbInputQueryPage() {
   const [itemCode, setItemCode] = useState('');
   const [itemBarcode, setItemBarcode] = useState('');
   const [manufactureWeek, setManufactureWeek] = useState('');
-  const [dateFrom, setDateFrom] = useState(daysAgo(7));
+  const [dateFrom, setDateFrom] = useState(daysAgo(0));
   const [dateTo, setDateTo] = useState(daysAgo(0));
 
   const [rows, setRows] = useState<PcbInputRow[]>([]);

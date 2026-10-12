@@ -33,11 +33,6 @@ import type { BakingHistoryRow, BakingLookup } from '../divide-baking-columns';
 import PartSearchField from '@/components/shared/PartSearchField';
 
 const today = () => new Date().toISOString().slice(0, 10);
-const daysAgo = (n: number) => {
-  const d = new Date();
-  d.setDate(d.getDate() - n);
-  return d.toISOString().slice(0, 10);
-};
 
 const CHAMBER_OPTIONS = [
   { value: 'B', label: `${CHAMBER_LABEL.B} (B)` },
@@ -47,7 +42,7 @@ const CHAMBER_OPTIONS = [
 const FILTER_OPTIONS = [{ value: '', label: '챔버: 전체' }, ...CHAMBER_OPTIONS];
 
 export default function BakingScanPage() {
-  const [dateFrom, setDateFrom] = useState(daysAgo(7));
+  const [dateFrom, setDateFrom] = useState(today());
   const [dateTo, setDateTo] = useState(today());
   const [filterType, setFilterType] = useState('');
   const [itemCode, setItemCode] = useState('');

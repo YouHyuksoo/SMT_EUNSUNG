@@ -29,14 +29,9 @@ import { fgIssueColumns } from '../shipping-columns';
 import type { FgIssueRow } from '../shipping-columns';
 
 const today = () => new Date().toISOString().slice(0, 10);
-const daysAgo = (n: number) => {
-  const d = new Date();
-  d.setDate(d.getDate() - n);
-  return d.toISOString().slice(0, 10);
-};
 
 export default function FgModelIssuePage() {
-  const [dateFrom, setDateFrom] = useState(daysAgo(7));
+  const [dateFrom, setDateFrom] = useState(today());
   const [dateTo, setDateTo] = useState(today());
   const [barcode, setBarcode] = useState('');
   const [modelName, setModelName] = useState('');

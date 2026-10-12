@@ -35,11 +35,6 @@ import ProcessSelect from '@/components/shared/ProcessSelect';
 
 const isoDate = (date: Date) => date.toISOString().slice(0, 10);
 const today = () => isoDate(new Date());
-const weekAgo = () => {
-  const date = new Date();
-  date.setDate(date.getDate() - 7);
-  return isoDate(date);
-};
 
 export default function PcbResultPage() {
   const [rows, setRows] = useState<ResultPeriodRow[]>([]);
@@ -47,7 +42,7 @@ export default function PcbResultPage() {
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
 
-  const [dateFrom, setDateFrom] = useState(weekAgo);
+  const [dateFrom, setDateFrom] = useState(today);
   const [dateTo, setDateTo] = useState(today);
   const [modelName, setModelName] = useState('');
   const [runNo, setRunNo] = useState('');

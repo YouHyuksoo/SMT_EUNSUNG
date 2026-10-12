@@ -32,7 +32,7 @@ import {
 
 export default function ReceiptIssueLedgerPage() {
   const { t } = useTranslation();
-  const initialRange = useMemo(() => getRecentDaysRange(7), []);
+  const initialRange = useMemo(() => getRecentDaysRange(1), []);
   const [mode, setMode] = useState<LedgerMode>("ledger");
   const [filters, setFilters] = useState<LedgerFilterState>(() =>
     createEmptyFilters(initialRange.from, initialRange.to));

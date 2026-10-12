@@ -31,7 +31,7 @@ const daysAgo = (n: number) => {
 };
 
 export default function MaterialRackMovePage() {
-  const [dateFrom, setDateFrom] = useState(daysAgo(30));
+  const [dateFrom, setDateFrom] = useState(daysAgo(0));
   const [dateTo, setDateTo] = useState(daysAgo(0));
   const [itemCode, setItemCode] = useState('');
   const [materialMfs, setMaterialMfs] = useState('');
