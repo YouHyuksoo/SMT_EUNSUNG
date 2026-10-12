@@ -1,5 +1,6 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import type { CurrentInventoryRow } from './types';
+import { comCodeCell } from '@/components/shared/codeCells';
 
 const qty = (value: unknown) => value == null ? '' : Number(value).toLocaleString(undefined, { maximumFractionDigits: 6 });
 const money = (value: unknown) => value == null ? '' : Number(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -17,7 +18,7 @@ export const currentInventoryColumns: ColumnDef<CurrentInventoryRow>[] = [
   { accessorKey: 'locationAddress', header: '로케이션 주소', size: 140 },
   { accessorKey: 'materialMfs', header: '자재 MFS', size: 150 },
   { accessorKey: 'itemSpec', header: '규격', size: 180 },
-  { accessorKey: 'lineType', header: '라인유형', size: 90 },
+  { accessorKey: 'lineType', header: '라인유형', size: 100, cell: comCodeCell('LINE TYPE') },
   { accessorKey: 'inventoryStatus', header: '재고상태', size: 90 },
   { accessorKey: 'inventoryHold', header: '보류', size: 70 },
   { accessorKey: 'inventoryQty', header: '현재고수량', size: 110, meta: { align: 'right' }, cell: ctx => qty(ctx.getValue()) },

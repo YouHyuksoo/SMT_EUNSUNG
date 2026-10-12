@@ -18,6 +18,7 @@ import { Play } from 'lucide-react';
 import { Button, Modal } from '@/components/ui';
 import DataGrid from '@/components/data-grid/DataGrid';
 import api from '@/services/api';
+import { comCodeCell } from '@/components/shared/codeCells';
 
 export interface OrderPlanPreviewLine {
   itemCode: string;
@@ -70,7 +71,7 @@ const day = (v: string) => (v.endsWith(' 00:00:00') ? v.slice(0, 10) : v.slice(0
 const columns: ColumnDef<OrderPlanPreviewLine>[] = [
   { accessorKey: 'itemCode', header: '품목코드', size: 130 },
   { accessorKey: 'itemName', header: '품목명', size: 180 },
-  { accessorKey: 'lineType', header: '거래유형', size: 70 },
+  { accessorKey: 'lineType', header: '거래유형', size: 100, cell: comCodeCell('LINE TYPE') },
   { id: 'supplier', header: '공급처', size: 120, accessorFn: (r) => r.supplierName ?? r.supplierCode },
   { id: 'deliveryDate', header: '납기', size: 110, accessorFn: (r) => day(r.deliveryDate) },
   numCol('orderQty', '소요량', 100),

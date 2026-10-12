@@ -5,6 +5,7 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import { num } from '@/components/shared/grid-format';
 import { formatDisplayDate } from '@/utils/date';
+import { comCodeCell } from '@/components/shared/codeCells';
 
 const right = { align: 'right' } as const;
 const ts = (value: unknown) => (value ? formatDisplayDate(value) : '');
@@ -56,7 +57,7 @@ export const applyItemColumns: ColumnDef<ApplyItemRow>[] = [
   { accessorKey: 'itemSpec', header: '규격', size: 180 },
   { accessorKey: 'itemType', header: '품목유형', size: 100 },
   { accessorKey: 'itemClass', header: '품목분류', size: 110 },
-  { accessorKey: 'lineType', header: '라인유형', size: 100 },
+  { accessorKey: 'lineType', header: '라인유형', size: 100, cell: comCodeCell('LINE TYPE') },
   { accessorKey: 'itemUom', header: '단위', size: 80 },
   {
     accessorKey: 'safetyInventory',

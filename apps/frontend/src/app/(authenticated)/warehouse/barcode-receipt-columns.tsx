@@ -8,6 +8,7 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import { codeWithName, num } from '@/components/shared/grid-format';
 import { formatDisplayDate } from '@/utils/date';
+import { comCodeCell } from '@/components/shared/codeCells';
 
 const right = { align: 'right' } as const;
 const center = { align: 'center' } as const;
@@ -197,7 +198,7 @@ export const barcodeReceiptColumns: ColumnDef<BarcodeReceiptRow>[] = [
   { accessorKey: 'originMfs', header: '협력사 바코드', size: 190 },
   { accessorKey: 'receiptLotNo', header: '입고 롯트번호', size: 130 },
   { accessorKey: 'locationCode', header: '창고', size: 80, meta: center },
-  { accessorKey: 'lineType', header: '구매유형', size: 90, meta: center },
+  { accessorKey: 'lineType', header: '구매유형', size: 100, meta: center, cell: comCodeCell('LINE TYPE') },
   { accessorKey: 'receiptType', header: '입고유형', size: 90, meta: center },
   { accessorKey: 'receiptStatus', header: '상태', size: 80, meta: center },
   {

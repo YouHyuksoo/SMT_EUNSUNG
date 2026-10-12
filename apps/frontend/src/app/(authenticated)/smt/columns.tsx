@@ -21,6 +21,7 @@ import type {
   SmtPlanLineRow,
   SmtPlanRow,
 } from './types';
+import { comCodeCell } from '@/components/shared/codeCells';
 
 const right = { align: 'right' } as const;
 
@@ -309,7 +310,7 @@ export const smtBomExplodeColumns: ColumnDef<SmtBomExplodeRow>[] = [
   },
   { accessorKey: 'feederLocations', header: '피더 위치', size: 220 },
   { accessorKey: 'itemClass', header: '품목분류', size: 110 },
-  { accessorKey: 'lineType', header: '라인유형', size: 100 },
+  { accessorKey: 'lineType', header: '라인유형', size: 100, cell: comCodeCell('LINE TYPE') },
 ];
 
 export const smtNcColumns: ColumnDef<SmtNcRow>[] = [

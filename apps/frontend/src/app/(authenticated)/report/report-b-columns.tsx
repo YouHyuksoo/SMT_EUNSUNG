@@ -39,6 +39,7 @@ import type {
   SmtCheckHistoryRow,
 } from './report-b-types';
 import { formatDisplayDate } from '@/utils/date';
+import { comCodeCell } from '@/components/shared/codeCells';
 
 const right = { align: 'right' } as const;
 const center = { align: 'center' } as const;
@@ -130,7 +131,7 @@ export const materialReceiptColumns: ColumnDef<MaterialReceiptRow>[] = [
   { accessorKey: 'receiptDeficit', header: '입출고', size: 80, meta: center },
   { accessorKey: 'receiptType', header: '입고유형', size: 100, meta: center },
   { accessorKey: 'orderType', header: '발주유형', size: 100, meta: center },
-  { accessorKey: 'lineType', header: '구매유형', size: 100, meta: center },
+  { accessorKey: 'lineType', header: '구매유형', size: 100, meta: center, cell: comCodeCell('LINE TYPE') },
   { accessorKey: 'receiptQty', header: '입고수량', size: 110, meta: right, cell: (c) => num(c.getValue()) },
   { accessorKey: 'unitPrice', header: '입고단가', size: 110, meta: right, cell: (c) => unitPrice(c.getValue()) },
   {
@@ -188,7 +189,7 @@ export const materialReceiptSupplierColumns: ColumnDef<MaterialReceiptSupplierRo
   { accessorKey: 'receiptDeficit', header: '입출고', size: 80, meta: center },
   { accessorKey: 'receiptType', header: '입고유형', size: 100, meta: center },
   { accessorKey: 'orderType', header: '발주유형', size: 100, meta: center },
-  { accessorKey: 'lineType', header: '구매유형', size: 100, meta: center },
+  { accessorKey: 'lineType', header: '구매유형', size: 100, meta: center, cell: comCodeCell('LINE TYPE') },
   { accessorKey: 'receiptQty', header: '입고수량', size: 110, meta: right, cell: (c) => num(c.getValue()) },
   { accessorKey: 'unitPrice', header: '단가', size: 110, meta: right, cell: (c) => unitPrice(c.getValue()) },
   { accessorKey: 'receiptAmt', header: '금액', size: 130, meta: right, cell: (c) => money(c.getValue()) },
@@ -312,7 +313,7 @@ export const materialIssueColumns: ColumnDef<MaterialIssueRow>[] = [
   { accessorKey: 'issueDeficit', header: '입출고', size: 80, meta: center },
   { accessorKey: 'issueType', header: '출고유형', size: 100, meta: center },
   { accessorKey: 'issueAccount', header: '출고계정', size: 110 },
-  { accessorKey: 'lineType', header: '구매유형', size: 100, meta: center },
+  { accessorKey: 'lineType', header: '구매유형', size: 100, meta: center, cell: comCodeCell('LINE TYPE') },
   { accessorKey: 'issueQty', header: '출고수량', size: 110, meta: right, cell: (c) => num(c.getValue()) },
   { accessorKey: 'unitPrice', header: '단가', size: 110, meta: right, cell: (c) => unitPrice(c.getValue()) },
   { accessorKey: 'issueAmt', header: '출고금액', size: 130, meta: right, cell: (c) => money(c.getValue()) },
@@ -376,7 +377,7 @@ export const materialIssueSumItemColumns: ColumnDef<MaterialIssueSumItemRow>[] =
   { accessorKey: 'itemName', header: '품목명', size: 190 },
   { accessorKey: 'itemSpec', header: '규격', size: 170 },
   { accessorKey: 'itemUom', header: '단위', size: 70, meta: center },
-  { accessorKey: 'lineType', header: '구매유형', size: 100, meta: center },
+  { accessorKey: 'lineType', header: '구매유형', size: 100, meta: center, cell: comCodeCell('LINE TYPE') },
   {
     id: 'supplierName',
     header: '협력사',
@@ -399,7 +400,7 @@ export const materialIssueSumAccountColumns: ColumnDef<MaterialIssueSumAccountRo
   { accessorKey: 'issueAccount', header: '출고계정', size: 140 },
   { accessorKey: 'itemSpec', header: '규격', size: 170 },
   { accessorKey: 'itemUom', header: '단위', size: 70, meta: center },
-  { accessorKey: 'lineType', header: '구매유형', size: 100, meta: center },
+  { accessorKey: 'lineType', header: '구매유형', size: 100, meta: center, cell: comCodeCell('LINE TYPE') },
   {
     accessorKey: 'issueQty',
     header: '출고수량',
@@ -462,7 +463,7 @@ export const materialInventoryColumns: ColumnDef<MaterialInventoryRow>[] = [
   { accessorKey: 'itemSpec', header: '규격', size: 170 },
   { accessorKey: 'itemUom', header: '단위', size: 70, meta: center },
   { accessorKey: 'materialMfs', header: '자재 롯트', size: 150 },
-  { accessorKey: 'lineType', header: '구매유형', size: 100, meta: center },
+  { accessorKey: 'lineType', header: '구매유형', size: 100, meta: center, cell: comCodeCell('LINE TYPE') },
   { accessorKey: 'locationCode', header: '창고', size: 100 },
   {
     accessorKey: 'inventoryQty',
@@ -497,7 +498,7 @@ export const materialInventorySummaryColumns: ColumnDef<MaterialInventorySummary
   { accessorKey: 'itemSpec', header: '규격', size: 170 },
   { accessorKey: 'itemUom', header: '단위', size: 70, meta: center },
   { accessorKey: 'itemClass', header: '품목분류', size: 110 },
-  { accessorKey: 'lineType', header: '구매유형', size: 100, meta: center },
+  { accessorKey: 'lineType', header: '구매유형', size: 100, meta: center, cell: comCodeCell('LINE TYPE') },
   { accessorKey: 'inventoryStatus', header: '재고상태', size: 100, meta: center },
   {
     accessorKey: 'inventoryQty',
@@ -515,7 +516,7 @@ export const materialInventoryDailyColumns: ColumnDef<MaterialInventoryDailyRow>
   { accessorKey: 'itemName', header: '품목명', size: 190 },
   { accessorKey: 'itemSpec', header: '규격', size: 170 },
   { accessorKey: 'itemUom', header: '단위', size: 70, meta: center },
-  { accessorKey: 'lineType', header: '구매유형', size: 100, meta: center },
+  { accessorKey: 'lineType', header: '구매유형', size: 100, meta: center, cell: comCodeCell('LINE TYPE') },
   { accessorKey: 'locationCode', header: '창고', size: 100 },
   { accessorKey: 'inventoryStatus', header: '재고상태', size: 100, meta: center },
   { accessorKey: 'inventoryQty', header: '재고수량', size: 120, meta: right, cell: (c) => num(c.getValue()) },
@@ -537,7 +538,7 @@ export const materialDisusedColumns: ColumnDef<MaterialDisusedRow>[] = [
   { accessorKey: 'itemSpec', header: '규격', size: 170 },
   { accessorKey: 'itemUom', header: '단위', size: 70, meta: center },
   { accessorKey: 'materialMfs', header: '자재 롯트', size: 150 },
-  { accessorKey: 'lineType', header: '구매유형', size: 100, meta: center },
+  { accessorKey: 'lineType', header: '구매유형', size: 100, meta: center, cell: comCodeCell('LINE TYPE') },
   { accessorKey: 'locationCode', header: '창고', size: 100 },
   { accessorKey: 'inventoryQty', header: '재고수량', size: 120, meta: right, cell: (c) => num(c.getValue()) },
   {
@@ -586,7 +587,7 @@ export const moldReceiptColumns: ColumnDef<MoldReceiptRow>[] = [
   { accessorKey: 'receiptAmt', header: '금액', size: 130, meta: right, cell: (c) => money(c.getValue()) },
   { accessorKey: 'currency', header: '통화', size: 80, meta: center },
   { accessorKey: 'locationCode', header: '창고', size: 100 },
-  { accessorKey: 'lineType', header: '구매유형', size: 100, meta: center },
+  { accessorKey: 'lineType', header: '구매유형', size: 100, meta: center, cell: comCodeCell('LINE TYPE') },
   { accessorKey: 'moldVersion', header: '버전', size: 90, meta: center },
   { accessorKey: 'moldSetSerial', header: '세트일련', size: 110 },
   { accessorKey: 'receiptStatus', header: '상태', size: 80, meta: center },

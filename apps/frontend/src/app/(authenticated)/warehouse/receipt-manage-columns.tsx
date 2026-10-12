@@ -8,6 +8,7 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import { codeWithName, num } from '@/components/shared/grid-format';
 import { formatDisplayDate } from '@/utils/date';
+import { comCodeCell } from '@/components/shared/codeCells';
 
 const right = { align: 'right' } as const;
 const center = { align: 'center' } as const;
@@ -154,7 +155,7 @@ export const receiptColumns: ColumnDef<ReceiptRow>[] = [
       : ''),
   },
   { accessorKey: 'receiptType', header: '입고유형', size: 90, meta: center },
-  { accessorKey: 'lineType', header: '구매유형', size: 90, meta: center },
+  { accessorKey: 'lineType', header: '구매유형', size: 100, meta: center, cell: comCodeCell('LINE TYPE') },
   {
     id: 'supplierName',
     header: '협력사',
@@ -180,7 +181,7 @@ export const receiptInventoryColumns: ColumnDef<ReceiptInventoryRow>[] = [
   { accessorKey: 'locationCode', header: '창고', size: 80, meta: center },
   { accessorKey: 'locationAddress', header: '창고번지', size: 110 },
   { accessorKey: 'materialMfs', header: '자재 롯트', size: 130 },
-  { accessorKey: 'lineType', header: '구매유형', size: 90, meta: center },
+  { accessorKey: 'lineType', header: '구매유형', size: 100, meta: center, cell: comCodeCell('LINE TYPE') },
   { accessorKey: 'supplierCode', header: '협력사', size: 110 },
   { accessorKey: 'inventoryStatus', header: '재고상태', size: 100, meta: center },
   { accessorKey: 'inventoryHold', header: '보류', size: 80, meta: center },
