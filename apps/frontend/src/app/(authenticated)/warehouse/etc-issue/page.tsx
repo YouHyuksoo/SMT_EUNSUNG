@@ -280,13 +280,14 @@ export default function EtcIssuePage() {
                   setStocks([]); setStockSearched(false); setPicked(null);
                 }}
                 onKeyDown={(e) => { if (e.key === 'Enter') void loadStock(stockItemCode); }} />
-              <Button size="sm" variant="secondary" disabled={stockLoading || !stockItemCode.trim()}
+              <Button size="sm" variant="secondary" className="shrink-0 whitespace-nowrap"
+                disabled={stockLoading || !stockItemCode.trim()}
                 onClick={() => void loadStock(stockItemCode)}>
                 재고
               </Button>
             </div>
             {stocks.length > 1 && (
-              <Select label="창고·롯트" options={stockOptions}
+              <Select label="창고·롯트" options={stockOptions} fullWidth
                 value={picked ? stockKey(picked) : ''}
                 placeholder="출고할 줄을 고르세요"
                 onChange={(v) => setPicked(stocks.find((r) => stockKey(r) === v) ?? null)} />
@@ -308,9 +309,9 @@ export default function EtcIssuePage() {
               </div>
             )}
 
-            <Input label="출고일" type="date" value={issueDate}
+            <Input label="출고일" type="date" value={issueDate} fullWidth
               onChange={(e) => setIssueDate(e.target.value)} />
-            <Input label="수량 (음수는 반납)" value={issueQty} inputMode="numeric"
+            <Input label="수량 (음수는 반납)" value={issueQty} inputMode="numeric" fullWidth
               onChange={(e) => setIssueQty(e.target.value)} />
             <label className="flex items-center gap-2 text-sm text-text">
               <input type="checkbox" checked={applyPacking}
@@ -328,24 +329,22 @@ export default function EtcIssuePage() {
               </div>
             )}
 
-            <div>
-              <LineSelect value={lineCode} onChange={setLineCode} labelPrefix="라인" />
-            </div>
+            <LineSelect label="라인" value={lineCode} onChange={setLineCode} fullWidth />
             <ProcessSelect label="공정코드" value={workstageCode}
-              onChange={setWorkstageCode} />
+              onChange={setWorkstageCode} fullWidth />
             <EquipSelect label="설비코드" value={machineCode}
-              onChange={setMachineCode} />
+              onChange={setMachineCode} fullWidth />
             <ComCodeSelect groupCode="ISSUE ACCOUNT" includeAll={false} label="출고계정"
-              value={issueAccount} onChange={setIssueAccount} />
+              value={issueAccount} onChange={setIssueAccount} fullWidth />
             <label className={`flex items-center gap-2 text-sm ${normalIssueAllowed ? 'text-text' : 'text-text-muted'}`}>
               <input type="checkbox" checked={normalIssueAllowed && normalIssue}
                 disabled={!normalIssueAllowed}
                 onChange={(e) => setNormalIssue(e.target.checked)} />
               정상출고 (끄면 기타출고 · M001·M002 계정만)
             </label>
-            <Input label="전표번호 (비우면 자동)" value={invoiceNo}
+            <Input label="전표번호 (비우면 자동)" value={invoiceNo} fullWidth
               onChange={(e) => setInvoiceNo(e.target.value)} />
-            <Input label="비고" value={comments}
+            <Input label="비고" value={comments} fullWidth
               onChange={(e) => setComments(e.target.value)} />
 
             {blocker && (

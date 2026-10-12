@@ -41,7 +41,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { ResizeHandle } from './ResizeHandle';
 import { ColumnFilterInput } from './ColumnFilterInput';
 import { PaginationControls } from './PaginationControls';
-import { detectAlignment, getAlignmentClass, getPinnedStyle, withLeadingPinnedColumns } from './utils';
+import { detectAlignment, getAlignmentClass, getPinnedStyle, pinnedWidthStyle, withLeadingPinnedColumns } from './utils';
 import { numberRangeFilterFn } from './numberFilterFn';
 import { dateRangeFilterFn } from './dateFilterFn';
 import { textInFilterFn } from './textFilterFn';
@@ -522,6 +522,7 @@ function DataGrid<T>({
                       style={{
                         width: columnSizing[header.id] ? header.getSize() : 'auto',
                         minWidth: header.column.columnDef.minSize ?? 50,
+                        ...pinnedWidthStyle(pinned, header.getSize()),
                         ...getPinnedStyle(pinned, header.column.getStart('left'), header.column.getAfter('right'), isLastLeftPinned, isFirstRightPinned, 12),
                       }}
                       draggable={canDrag}
@@ -578,7 +579,10 @@ function DataGrid<T>({
                     <th
                       key={`filter-${header.id}`}
                       className={`px-1 py-1 border-b border-r border-border last:border-r-0 ${pinned ? 'bg-surface dark:bg-surface' : ''}`}
-                      style={getPinnedStyle(pinned, header.column.getStart('left'), header.column.getAfter('right'), isLastLeftPinned, isFirstRightPinned, 12)}
+                      style={{
+                        ...pinnedWidthStyle(pinned, header.getSize()),
+                        ...getPinnedStyle(pinned, header.column.getStart('left'), header.column.getAfter('right'), isLastLeftPinned, isFirstRightPinned, 12),
+                      }}
                     >
                       <ColumnFilterInput column={header.column} data={data} />
                     </th>
@@ -629,10 +633,11 @@ function DataGrid<T>({
                     return (
                       <td
                         key={cell.id}
-                        className={`px-3 py-2 whitespace-nowrap text-inherit ${getAlignmentClass(cellAlign)} ${pinnedBg} ${showColumnBorder ? 'border-r border-border last:border-r-0' : ''}`}
+                        className={`px-3 py-2 whitespace-nowrap text-inherit ${getAlignmentClass(cellAlign)} ${pinnedBg} ${pinned ? 'overflow-hidden text-ellipsis' : ''} ${showColumnBorder ? 'border-r border-border last:border-r-0' : ''}`}
                         style={{
                           width: columnSizing[cell.column.id] ? cell.column.getSize() : 'auto',
                           minWidth: cell.column.columnDef.minSize ?? 50,
+                          ...pinnedWidthStyle(pinned, cell.column.getSize()),
                           ...getPinnedStyle(pinned, cell.column.getStart('left'), cell.column.getAfter('right'), isLastLeftPinned, isFirstRightPinned, 11),
                         }}
                       >

@@ -64,6 +64,15 @@ export function getPinnedStyle(
 }
 
 /**
+ * 고정 컬럼의 폭. sticky left 위치는 앞 컬럼들의 getSize() 합으로 잡히므로, 고정 컬럼은
+ * 실제 폭도 getSize() 로 묶어야 한다. 폭을 auto 로 두면 내용(빈 목록이면 머리글)만큼만
+ * 그려져 고정 컬럼 사이에 빈칸이 생기고, 내용이 길면 서로 겹친다.
+ */
+export function pinnedWidthStyle(pinned: false | 'left' | 'right', size: number): React.CSSProperties {
+  return pinned ? { width: size, minWidth: size, maxWidth: size } : {};
+}
+
+/**
  * 그리드 앞쪽 고정 순서: 관리 → 선택 체크박스 → 품목코드 → 품목명.
  * 컬럼 배열 순서는 gridItemColumnOrder.structure.test.mjs 가 강제하지만, 화면이 다른 컬럼(예: issueDate)을
  * 좌측 고정하면 고정 컬럼이 먼저 그려져 그 순서가 깨진다. 그래서 좌측 고정 목록 앞에도 같은 순서로 넣는다.
