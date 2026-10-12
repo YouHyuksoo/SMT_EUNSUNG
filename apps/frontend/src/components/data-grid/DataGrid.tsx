@@ -122,6 +122,13 @@ export interface DataGridProps<T> {
   fillWidth?: boolean;
 }
 
+/** 행이 이보다 많으면 화면에 보이는 행만 그린다 */
+const WINDOW_MIN_ROWS = 100;
+/** 보이는 범위 위아래로 미리 그려 두는 행 수 (빠르게 스크롤할 때 빈칸 방지) */
+const WINDOW_OVERSCAN = 10;
+const WINDOW_INITIAL_ROWS = 60;
+const DEFAULT_ROW_HEIGHT = 33;
+
 function DataGrid<T>({
   data,
   columns,
@@ -249,6 +256,43 @@ function DataGrid<T>({
   // 폭을 한 번이라도 조절하면(리사이즈 시작 때 모든 컬럼 폭을 잡아 둔다) 고정 레이아웃으로 바꾼다.
   // 자동 레이아웃은 줄바꿈 없는 내용보다 좁게 줄일 수 없어 폭을 줄여도 그대로였다.
   const isSized = Object.keys(columnSizing).length > 0;
+
+  // 행이 많으면 화면에 보이는 행만 그리고 나머지는 빈 높이로 둔다. 컬럼 이동·정렬·폭 조절 때
+  // 다시 그리는 양이 보이는 행만큼으로 줄어 한 페이지 500행에서도 멈추지 않는다.
+  // 셀은 줄바꿈이 없어 행 높이가 같으므로 첫 행 높이로 위치를 계산한다.
+  const pageRows = table.getRowModel().rows;
+  const windowed = pageRows.length > WINDOW_MIN_ROWS;
+  const rowHeightRef = useRef(DEFAULT_ROW_HEIGHT);
+  const [rowWindow, setRowWindow] = useState({ start: 0, end: WINDOW_INITIAL_ROWS });
+  const updateRowWindow = useCallback(() => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    const headHeight = el.querySelector('thead')?.getBoundingClientRect().height ?? 0;
+    const firstRow = el.querySelector<HTMLElement>('tbody tr[data-row]');
+    if (firstRow) rowHeightRef.current = firstRow.getBoundingClientRect().height || rowHeightRef.current;
+    const h = rowHeightRef.current;
+    const start = Math.max(0, Math.floor((el.scrollTop - headHeight) / h) - WINDOW_OVERSCAN);
+    const end = Math.ceil((el.scrollTop + el.clientHeight - headHeight) / h) + WINDOW_OVERSCAN;
+    setRowWindow((prev) => (prev.start === start && prev.end === end ? prev : { start, end }));
+  }, []);
+  useEffect(() => {
+    const el = scrollContainerRef.current;
+    if (!windowed || !el) return;
+    updateRowWindow();
+    let frame = 0;
+    const schedule = () => { cancelAnimationFrame(frame); frame = requestAnimationFrame(updateRowWindow); };
+    el.addEventListener('scroll', schedule, { passive: true });
+    const observer = new ResizeObserver(schedule);
+    observer.observe(el);
+    return () => {
+      el.removeEventListener('scroll', schedule);
+      observer.disconnect();
+      cancelAnimationFrame(frame);
+    };
+  }, [windowed, updateRowWindow, isFullscreen, pageRows.length]);
+  const visibleStart = windowed ? Math.min(rowWindow.start, pageRows.length) : 0;
+  const visibleEnd = windowed ? Math.min(rowWindow.end, pageRows.length) : pageRows.length;
+  const spacerColSpan = table.getVisibleLeafColumns().length;
 
   const handleExport = useCallback(async (format: ExportFormat) => {
     setIsExporting(true);
@@ -628,20 +672,28 @@ function DataGrid<T>({
 
           {/* Body */}
           <tbody>
-            {table.getRowModel().rows.length === 0 ? (
+            {pageRows.length === 0 ? (
               <tr>
                 <td colSpan={columns.length} className="px-3 py-16 text-center text-text-muted">
                   {isLoading ? '\u00A0' : emptyMessage}
                 </td>
               </tr>
             ) : (
-              table.getRowModel().rows.map((row, index) => {
+              <>
+              {visibleStart > 0 && (
+                <tr aria-hidden style={{ height: visibleStart * rowHeightRef.current }}>
+                  <td colSpan={spacerColSpan} className="p-0" />
+                </tr>
+              )}
+              {pageRows.slice(visibleStart, visibleEnd).map((row, offset) => {
+                const index = visibleStart + offset;
                 const isSelected = selectedRowId != null && getRowId
                   ? getRowId(row.original) === selectedRowId
                   : false;
                 return (
                 <tr
                   key={row.id}
+                  data-row
                   onClick={() => onRowClick?.(row.original)}
                   className={`
                     border-b border-border last:border-b-0
@@ -681,7 +733,13 @@ function DataGrid<T>({
                   })}
                 </tr>
                 );
-              })
+              })}
+              {visibleEnd < pageRows.length && (
+                <tr aria-hidden style={{ height: (pageRows.length - visibleEnd) * rowHeightRef.current }}>
+                  <td colSpan={spacerColSpan} className="p-0" />
+                </tr>
+              )}
+              </>
             )}
           </tbody>
         </table>
