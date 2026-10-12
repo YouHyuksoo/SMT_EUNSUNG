@@ -1,5 +1,6 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import type { SampleBcrHistoryRow } from './types';
+import { comCodeCell } from '@/components/shared/codeCells';
 
 const dateTime = (value: unknown) => {
   if (!value) return '';
@@ -19,7 +20,7 @@ export const sampleBcrHistoryColumns: ColumnDef<SampleBcrHistoryRow>[] = [
   { accessorKey: 'runNo', header: 'RUN NO', size: 120 },
   { accessorKey: 'modelName', header: '모델명', size: 150 },
   { id: 'sampleTypeName', header: '샘플유형', size: 140, accessorFn: (row) => codeWithName(row.sampleType, row.sampleTypeName) },
-  { accessorKey: 'sampleSection', header: '구분', size: 80 },
+  { accessorKey: 'sampleSection', header: '구분', size: 80, cell: comCodeCell('SAMPLE SECTION') },
   { accessorKey: 'sampleLotNo', header: '샘플LOT', size: 130 },
   { accessorKey: 'sampleBarcode', header: '샘플바코드', size: 170 },
   {

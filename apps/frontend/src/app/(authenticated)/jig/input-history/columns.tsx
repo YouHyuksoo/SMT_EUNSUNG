@@ -1,5 +1,6 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import type { JigInputHistoryRow } from './types';
+import { comCodeCell } from '@/components/shared/codeCells';
 
 const dateTime = (value: unknown) => {
   if (!value) return '';
@@ -33,7 +34,7 @@ export const jigInputHistoryColumns: ColumnDef<JigInputHistoryRow>[] = [
   { accessorKey: 'jigCode', header: '지그코드', size: 130 },
   { accessorKey: 'jigLotNo', header: '지그LOT', size: 130 },
   { accessorKey: 'jigSpec', header: '규격', size: 160 },
-  { accessorKey: 'solderType', header: '솔더유형', size: 100 },
+  { accessorKey: 'solderType', header: '솔더유형', size: 100, cell: comCodeCell('SOLDER TYPE') },
   { accessorKey: 'currentHitValue', header: '누적타수', size: 100, meta: { align: 'right' }, cell: (ctx) => qty(ctx.getValue()) },
   { accessorKey: 'runNo', header: 'RUN NO', size: 120 },
   { accessorKey: 'modelName', header: '모델명', size: 150 },

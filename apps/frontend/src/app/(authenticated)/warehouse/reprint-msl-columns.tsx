@@ -6,6 +6,7 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import { codeWithName, num } from '@/components/shared/grid-format';
 import { formatDisplayDate } from '@/utils/date';
+import { comCodeCell } from '@/components/shared/codeCells';
 
 const right = { align: 'right' } as const;
 const center = { align: 'center' } as const;
@@ -169,7 +170,7 @@ export const reprintColumns: ColumnDef<ReprintRow>[] = [
   { accessorKey: 'issueCompareYn', header: '출고대조', size: 90, meta: center },
   { accessorKey: 'issueReturnYn', header: '반품', size: 80, meta: center },
   { accessorKey: 'holdingYn', header: '보류', size: 80, meta: center },
-  { accessorKey: 'labelType', header: '라벨유형', size: 90, meta: center },
+  { accessorKey: 'labelType', header: '라벨유형', size: 90, meta: center, cell: comCodeCell('LABEL TYPE') },
   { accessorKey: 'lineCode', header: '라인', size: 80, meta: center },
   { accessorKey: 'scanDate', header: '발행시각', size: 160, cell: (c) => ts(c.getValue()) },
   { accessorKey: 'enterBy', header: '발행자', size: 100 },

@@ -8,6 +8,7 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import { codeWithName, num } from '@/components/shared/grid-format';
 import { formatDisplayDate } from '@/utils/date';
+import { comCodeCell } from '@/components/shared/codeCells';
 
 const right = { align: 'right' } as const;
 const center = { align: 'center' } as const;
@@ -128,8 +129,8 @@ export const issueColumns: ColumnDef<IssueRow>[] = [
   { accessorKey: 'invoiceNo', header: '전표번호', size: 140 },
   { accessorKey: 'workOrderNo', header: '작업지시', size: 120 },
   { accessorKey: 'modelName', header: '모델명', size: 140 },
-  { accessorKey: 'issueType', header: '출고유형', size: 90, meta: center },
-  { accessorKey: 'issueAccount', header: '출고계정', size: 100, meta: center },
+  { accessorKey: 'issueType', header: '출고유형', size: 90, meta: center, cell: comCodeCell('ISSUE TYPE') },
+  { accessorKey: 'issueAccount', header: '출고계정', size: 100, meta: center, cell: comCodeCell('ISSUE ACCOUNT') },
   { accessorKey: 'comments', header: '비고', size: 150 },
   { accessorKey: 'enterBy', header: '등록자', size: 100 },
   { accessorKey: 'enterDate', header: '등록일시', size: 160, cell: (c) => ts(c.getValue()) },

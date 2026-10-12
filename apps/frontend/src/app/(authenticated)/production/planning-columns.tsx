@@ -19,6 +19,7 @@ import type {
   SmdActualSummaryRow,
 } from './planning-types';
 import { SLOT_INDEXES } from './planning-types';
+import { comCodeCell } from '@/components/shared/codeCells';
 
 const right = { align: 'right' } as const;
 
@@ -58,7 +59,7 @@ function planCommonColumns(variant: 'mi' | 'smd'): ColumnDef<PlanRow>[] {
   } else {
     base.push(
       { accessorKey: 'shiftCode', header: '교대', size: 80 },
-      { accessorKey: 'productionType', header: '생산유형', size: 100 },
+      { accessorKey: 'productionType', header: '생산유형', size: 100, cell: comCodeCell('PRODUCTION TYPE') },
       { accessorKey: 'mfsGroupNo', header: 'MFS그룹', size: 110 },
     );
   }
@@ -116,7 +117,7 @@ function planCommonColumns(variant: 'mi' | 'smd'): ColumnDef<PlanRow>[] {
       size: 120,
       accessorFn: (r) => codeWithName(r.planStatus, r.planStatusName),
     },
-    { accessorKey: 'confirmYn', header: '확정', size: 70 },
+    { accessorKey: 'confirmYn', header: '확정', size: 70, cell: comCodeCell('CONFIRM YN') },
     // '*' 면 롯트카드가 아직 안 붙은 계획이다. 그대로 보여주면 오해하므로 바꿔 적는다.
     {
       id: 'mfs',

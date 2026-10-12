@@ -41,7 +41,7 @@ export const smtLineColumns: ColumnDef<SmtLineRow>[] = [
     size: 130,
     accessorFn: (r) => codeWithName(r.lineStatus, r.lineStatusName),
   },
-  { accessorKey: 'lineDivision', header: '라인구분', size: 100 },
+  { accessorKey: 'lineDivision', header: '라인구분', size: 100, cell: comCodeCell('LINE DIVISION') },
   { accessorKey: 'showTableYn', header: '테이블표시', size: 100 },
   {
     accessorKey: 'locationCount',
@@ -249,7 +249,7 @@ export const smtPlanLineColumns: ColumnDef<SmtPlanLineRow>[] = [
     meta: right,
     cell: (c) => num(c.getValue()),
   },
-  { accessorKey: 'lineStatus', header: '라인상태', size: 100 },
+  { accessorKey: 'lineStatus', header: '라인상태', size: 100, cell: comCodeCell('LINE STATUS') },
   { accessorKey: 'nsnpStatus', header: 'NSNP', size: 90 },
 ];
 

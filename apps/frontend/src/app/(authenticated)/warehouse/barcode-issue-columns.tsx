@@ -5,6 +5,7 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import { codeWithName, num } from '@/components/shared/grid-format';
 import { formatDisplayDate } from '@/utils/date';
+import { comCodeCell } from '@/components/shared/codeCells';
 
 const right = { align: 'right' } as const;
 const center = { align: 'center' } as const;
@@ -164,7 +165,7 @@ export const barcodeIssueColumns: ColumnDef<BarcodeIssueRow>[] = [
     cell: (c) => (String(c.getValue() ?? '') === 'K' ? '키팅' : String(c.getValue() ?? '')),
   },
   { accessorKey: 'mslPassedTime', header: 'MSL 경과', size: 100, meta: right, cell: (c) => num(c.getValue()) },
-  { accessorKey: 'inventoryType', header: '재고유형', size: 100, meta: center },
+  { accessorKey: 'inventoryType', header: '재고유형', size: 100, meta: center, cell: comCodeCell('INVENTORY TYPE') },
   { accessorKey: 'receiptSlipNo', header: '전표번호', size: 150 },
   { accessorKey: 'supplierCode', header: '협력사', size: 110 },
   { accessorKey: 'enterBy', header: '처리자', size: 100 },
@@ -194,7 +195,7 @@ export const issueWaitingColumns: ColumnDef<IssueWaitingRow>[] = [
       ? <span className="font-semibold text-amber-500">예</span>
       : ''),
   },
-  { accessorKey: 'inventoryType', header: '재고유형', size: 100, meta: center },
+  { accessorKey: 'inventoryType', header: '재고유형', size: 100, meta: center, cell: comCodeCell('INVENTORY TYPE') },
   { accessorKey: 'receiptSlipNo', header: '전표번호', size: 150 },
   { accessorKey: 'scanDate', header: '발행시각', size: 160, cell: (c) => ts(c.getValue()) },
 ];

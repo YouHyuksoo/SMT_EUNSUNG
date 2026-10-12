@@ -5,6 +5,7 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import { codeWithName, num } from '@/components/shared/grid-format';
 import { formatDisplayDate } from '@/utils/date';
+import { comCodeCell } from '@/components/shared/codeCells';
 
 const right = { align: 'right' } as const;
 const center = { align: 'center' } as const;
@@ -122,8 +123,8 @@ export const solderSlipColumns: ColumnDef<SolderSlipRow>[] = [
     accessorFn: (r) => codeWithName(r.supplierCode, r.supplierName),
   },
   { accessorKey: 'receiptBarcode', header: '협력사 바코드', size: 180 },
-  { accessorKey: 'receiptType', header: '입고유형', size: 90, meta: center },
-  { accessorKey: 'receiptStatus', header: '상태', size: 80, meta: center },
+  { accessorKey: 'receiptType', header: '입고유형', size: 90, meta: center, cell: comCodeCell('RECEIPT TYPE') },
+  { accessorKey: 'receiptStatus', header: '상태', size: 80, meta: center, cell: comCodeCell('RECEIPT STATUS') },
   { accessorKey: 'enterBy', header: '발행자', size: 100 },
   { accessorKey: 'enterDate', header: '발행일시', size: 160, cell: (c) => ts(c.getValue()) },
 ];
@@ -143,9 +144,9 @@ export const solderLabelColumns: ColumnDef<SolderLabelRow>[] = [
       ? <span className="text-text-muted">완료</span>
       : <span className="font-semibold text-amber-500">대기</span>),
   },
-  { accessorKey: 'barcodeStatus', header: '바코드상태', size: 100, meta: center },
+  { accessorKey: 'barcodeStatus', header: '바코드상태', size: 100, meta: center, cell: comCodeCell('BARCODE STATUS') },
   { accessorKey: 'holdingYn', header: '보류', size: 80, meta: center },
-  { accessorKey: 'labelType', header: '라벨유형', size: 90, meta: center },
+  { accessorKey: 'labelType', header: '라벨유형', size: 90, meta: center, cell: comCodeCell('LABEL TYPE') },
   { accessorKey: 'originLotNo', header: '원본 롯트', size: 130 },
   { accessorKey: 'supplierCode', header: '협력사', size: 110 },
   { accessorKey: 'scanDate', header: '발행시각', size: 160, cell: (c) => ts(c.getValue()) },

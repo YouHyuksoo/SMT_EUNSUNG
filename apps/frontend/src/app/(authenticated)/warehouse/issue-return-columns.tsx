@@ -5,6 +5,7 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import { codeWithName, num } from '@/components/shared/grid-format';
 import { formatDisplayDate } from '@/utils/date';
+import { comCodeCell } from '@/components/shared/codeCells';
 
 const right = { align: 'right' } as const;
 const center = { align: 'center' } as const;
@@ -110,9 +111,9 @@ export const issueReturnColumns: ColumnDef<IssueReturnRow>[] = [
   },
   { accessorKey: 'receiptSlipNo', header: '전표번호', size: 150 },
   { accessorKey: 'supplierCode', header: '협력사', size: 110 },
-  { accessorKey: 'issueDivision', header: '출고구분', size: 100, meta: center },
+  { accessorKey: 'issueDivision', header: '출고구분', size: 100, meta: center, cell: comCodeCell('ISSUE DIVISION') },
   { accessorKey: 'feederShaft', header: '피더', size: 90, meta: center },
-  { accessorKey: 'inventoryType', header: '재고유형', size: 100, meta: center },
+  { accessorKey: 'inventoryType', header: '재고유형', size: 100, meta: center, cell: comCodeCell('INVENTORY TYPE') },
   { accessorKey: 'enterBy', header: '처리자', size: 100 },
   { accessorKey: 'enterDate', header: '처리일시', size: 160, cell: (c) => ts(c.getValue()) },
 ];

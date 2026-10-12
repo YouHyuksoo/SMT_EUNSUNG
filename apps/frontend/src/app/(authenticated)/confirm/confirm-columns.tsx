@@ -7,6 +7,7 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import { codeWithName, dateOnly, dateTime, num } from '@/components/shared/grid-format';
 import type { BomWorkNumberRow, BomWorkspaceRow, PriceConfirmRow } from './confirm-types';
+import { comCodeCell } from '@/components/shared/codeCells';
 
 const right = { align: 'right' } as const;
 
@@ -38,7 +39,7 @@ export function priceConfirmColumns(
       header: variant === 'mold' ? 'S-PARTS명' : '품목명',
       size: 190,
     },
-    { accessorKey: 'confirmYn', header: '승인', size: 70 },
+    { accessorKey: 'confirmYn', header: '승인', size: 70, cell: comCodeCell('CONFIRM YN') },
     {
       id: 'partnerName',
       header: partnerLabel,

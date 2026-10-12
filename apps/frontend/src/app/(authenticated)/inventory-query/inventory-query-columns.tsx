@@ -5,6 +5,7 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import { num } from '@/components/shared/grid-format';
 import { formatDisplayDate } from '@/utils/date';
+import { comCodeCell } from '@/components/shared/codeCells';
 
 const right = { align: 'right' } as const;
 const center = { align: 'center' } as const;
@@ -157,7 +158,7 @@ export const totalInventoryColumns: ColumnDef<TotalInventoryRow>[] = [
   { accessorKey: 'itemSpec', header: '규격', size: 160 },
   { accessorKey: 'itemUom', header: '단위', size: 70, meta: center },
   { accessorKey: 'itemClass', header: '품목분류', size: 100, meta: center },
-  { accessorKey: 'itemDivision', header: '품목구분', size: 100, meta: center },
+  { accessorKey: 'itemDivision', header: '품목구분', size: 100, meta: center, cell: comCodeCell('ITEM DIVISION') },
   {
     accessorKey: 'totalQty',
     header: '총재고',
@@ -286,7 +287,7 @@ export const barcodeCheckColumns: ColumnDef<BarcodeCheckRow>[] = [
   { accessorKey: 'lineCode', header: '라인', size: 80, meta: center },
   { accessorKey: 'locationCode', header: '창고', size: 80, meta: center },
   { accessorKey: 'locationAddress', header: '창고번지', size: 110 },
-  { accessorKey: 'labelType', header: '라벨유형', size: 90, meta: center },
+  { accessorKey: 'labelType', header: '라벨유형', size: 90, meta: center, cell: comCodeCell('LABEL TYPE') },
   { accessorKey: 'unitPrice', header: '단가', size: 100, meta: right, cell: (c) => num(c.getValue()) },
   { accessorKey: 'inventoryAmt', header: '금액', size: 120, meta: right, cell: (c) => num(c.getValue()) },
   { accessorKey: 'enterBy', header: '처리자', size: 100 },

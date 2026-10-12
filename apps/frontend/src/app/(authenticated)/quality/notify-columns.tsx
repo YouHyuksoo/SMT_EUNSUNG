@@ -237,7 +237,7 @@ export const oqcHistoryColumns: ColumnDef<OqcHistoryRow>[] = [
   { accessorKey: 'badReasonDivision', header: '원인구분', size: 110 },
   { accessorKey: 'badReasonResult', header: '원인결과', size: 110 },
   { accessorKey: 'defectCode', header: '결함코드', size: 120 },
-  { accessorKey: 'inspectType', header: '검사유형', size: 110 },
+  { accessorKey: 'inspectType', header: '검사유형', size: 110, cell: comCodeCell('INSPECT TYPE') },
   { accessorKey: 'inspectQty', header: '검사수량', size: 100, meta: right, cell: (c) => num(c.getValue()) },
   { accessorKey: 'defectQty', header: '결함수량', size: 100, meta: right, cell: (c) => num(c.getValue()) },
   { accessorKey: 'inspector', header: '검사자', size: 100 },

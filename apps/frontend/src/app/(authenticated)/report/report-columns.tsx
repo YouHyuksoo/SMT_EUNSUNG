@@ -23,6 +23,7 @@ import type {
   WorkstageStockRow,
 } from './report-types';
 import { formatDisplayDate } from '@/utils/date';
+import { comCodeCell } from '@/components/shared/codeCells';
 
 const right = { align: 'right' } as const;
 const center = { align: 'center' } as const;
@@ -91,7 +92,7 @@ export const itemMasterColumns: ColumnDef<ItemMasterRow>[] = [
     size: 130,
     accessorFn: (r) => codeWithName(r.lineType, r.lineTypeName),
   },
-  { accessorKey: 'itemDivision', header: '품목구분', size: 100 },
+  { accessorKey: 'itemDivision', header: '품목구분', size: 100, cell: comCodeCell('ITEM DIVISION') },
   { accessorKey: 'setItemYn', header: 'SET', size: 70, meta: center, cell: (c) => yn(c.getValue()) },
   { accessorKey: 'abcGrade', header: 'ABC', size: 70, meta: center },
   { accessorKey: 'barcode', header: '바코드', size: 150 },
@@ -119,9 +120,9 @@ export const lineBarcodeColumns: ColumnDef<LineBarcodeRow>[] = [
   },
   { accessorKey: 'machine', header: '설비', size: 120 },
   { accessorKey: 'machineName', header: '설비명', size: 180 },
-  { accessorKey: 'machineType', header: '설비유형', size: 110 },
+  { accessorKey: 'machineType', header: '설비유형', size: 110, cell: comCodeCell('MACHINE TYPE') },
   { accessorKey: 'machineModelName', header: '설비모델', size: 160 },
-  { accessorKey: 'useStatus', header: '사용상태', size: 100, meta: center },
+  { accessorKey: 'useStatus', header: '사용상태', size: 100, meta: center, cell: comCodeCell('USE STATUS') },
 ];
 
 // ───────────────────────────────── 341 캐리어바코드
@@ -156,14 +157,14 @@ export const machineColumns: ColumnDef<MachineRow>[] = [
   { accessorKey: 'workstageCode', header: '공정', size: 90 },
   { accessorKey: 'capacity', header: '능력', size: 100, meta: right, cell: (c) => num(c.getValue()) },
   { accessorKey: 'reservedCapacity', header: '예비능력', size: 100, meta: right, cell: (c) => num(c.getValue()) },
-  { accessorKey: 'useStatus', header: '사용상태', size: 100, meta: center },
+  { accessorKey: 'useStatus', header: '사용상태', size: 100, meta: center, cell: comCodeCell('USE STATUS') },
   {
     id: 'customerName',
     header: '고객',
     size: 150,
     accessorFn: (r) => codeWithName(r.customerCode, r.customerName),
   },
-  { accessorKey: 'acquisitionType', header: '취득구분', size: 100 },
+  { accessorKey: 'acquisitionType', header: '취득구분', size: 100, cell: comCodeCell('ACQUISITION TYPE') },
   { accessorKey: 'acquisitionDate', header: '취득일', size: 110 },
   { accessorKey: 'nationCode', header: '국가', size: 80, meta: center },
   { accessorKey: 'manualLocationComment', header: '위치메모', size: 200 },
@@ -174,7 +175,7 @@ export const machineColumns: ColumnDef<MachineRow>[] = [
 export const machineOperationColumns: ColumnDef<MachineOperationRow>[] = [
   { accessorKey: 'machineCode', header: '설비코드', size: 130 },
   { accessorKey: 'machineName', header: '설비명', size: 180 },
-  { accessorKey: 'machineType', header: '설비유형', size: 110 },
+  { accessorKey: 'machineType', header: '설비유형', size: 110, cell: comCodeCell('MACHINE TYPE') },
   {
     id: 'lineName',
     header: '라인',
@@ -199,7 +200,7 @@ export const machineOperationColumns: ColumnDef<MachineOperationRow>[] = [
     meta: right,
     cell: (c) => num(c.getValue()),
   },
-  { accessorKey: 'machineStatusCode', header: '상태', size: 90, meta: center },
+  { accessorKey: 'machineStatusCode', header: '상태', size: 90, meta: center, cell: comCodeCell('MACHINE STATUS CODE') },
 ];
 
 // ───────────────────────────────── 344 SMT PICKUP 리포트

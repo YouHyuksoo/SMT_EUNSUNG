@@ -1,5 +1,6 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import type { ProductInventoryRow } from './types';
+import { comCodeCell } from '@/components/shared/codeCells';
 
 const qty = (value: unknown) => value == null ? '' : Number(value).toLocaleString();
 const dateTime = (value: unknown) => {
@@ -17,7 +18,7 @@ export const productInventoryColumns: ColumnDef<ProductInventoryRow>[] = [
   { accessorKey: 'invDay', header: '재고일수', size: 90, meta: { align: 'right' }, cell: ctx => ctx.getValue() == null ? '' : Number(ctx.getValue()).toFixed(2) },
   { accessorKey: 'qty', header: '수량', size: 100, meta: { align: 'right' }, cell: ctx => qty(ctx.getValue()) },
   { accessorKey: 'barcode', header: '바코드', size: 190 },
-  { accessorKey: 'packType', header: '포장유형', size: 100 },
+  { accessorKey: 'packType', header: '포장유형', size: 100, cell: comCodeCell('PACK TYPE') },
   { accessorKey: 'palletNo', header: '팔레트번호', size: 150 },
   { accessorKey: 'palletDate', header: '팔레트일자', size: 150, cell: ctx => dateTime(ctx.getValue()) },
 ];

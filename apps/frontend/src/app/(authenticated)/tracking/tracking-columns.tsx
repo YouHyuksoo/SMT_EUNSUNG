@@ -29,6 +29,7 @@ import type {
   StageTimelineRow,
 } from './tracking-types';
 import { formatDisplayDate } from '@/utils/date';
+import { comCodeCell } from '@/components/shared/codeCells';
 
 const right = { align: 'right' } as const;
 const center = { align: 'center' } as const;
@@ -360,7 +361,7 @@ export const pickupRateColumns: ColumnDef<PickupRateRow>[] = [
 export const solderTabColumns: ColumnDef<SolderTabRow>[] = [
   { accessorKey: 'itemBarcode', header: '솔더 바코드', size: 150 },
   { accessorKey: 'solderLotNo', header: '솔더 롯트', size: 140 },
-  { accessorKey: 'solderType', header: '유형', size: 90 },
+  { accessorKey: 'solderType', header: '유형', size: 90, cell: comCodeCell('SOLDER TYPE') },
   { accessorKey: 'modelName', header: '모델', size: 140 },
   { accessorKey: 'lineCode', header: '라인', size: 80, meta: center },
   { accessorKey: 'issueDate', header: '출고', size: 160, cell: (c) => ts(c.getValue()) },
@@ -412,7 +413,7 @@ export function jigCheckColumns(variant: 'mask' | 'squeeze'): ColumnDef<JigCheck
     cols.push({ accessorKey: 'pinHoleYn', header: '핀홀', size: 70, meta: center });
   }
   cols.push(
-    { accessorKey: 'confirmYn', header: '확인', size: 70, meta: center },
+    { accessorKey: 'confirmYn', header: '확인', size: 70, meta: center, cell: comCodeCell('CONFIRM YN') },
     { accessorKey: 'confirmDate', header: '확인시각', size: 160, cell: (c) => ts(c.getValue()) },
     { accessorKey: 'comments', header: '메모', size: 200 },
     { accessorKey: 'enterBy', header: '등록자', size: 90 },
@@ -469,13 +470,13 @@ export const pcbInputTabColumns: ColumnDef<PcbInputTabRow>[] = [
   { accessorKey: 'pcbCoatingDate', header: '코팅일', size: 110 },
   { accessorKey: 'machineCode', header: '설비', size: 110 },
   { accessorKey: 'scanBy', header: '스캔자', size: 100 },
-  { accessorKey: 'receiptStatus', header: '입고상태', size: 100 },
+  { accessorKey: 'receiptStatus', header: '입고상태', size: 100, cell: comCodeCell('RECEIPT STATUS') },
 ];
 
 export const sampleTabColumns: ColumnDef<SampleTabRow>[] = [
   { accessorKey: 'itemCode', header: '품목코드', size: 150 },
   { accessorKey: 'inputDate', header: '투입시각', size: 160, cell: (c) => ts(c.getValue()) },
-  { accessorKey: 'sampleType', header: '유형', size: 90 },
+  { accessorKey: 'sampleType', header: '유형', size: 90, cell: comCodeCell('SAMPLE TYPE') },
   { accessorKey: 'sampleCode', header: '샘플코드', size: 130 },
   { accessorKey: 'sampleLotNo', header: '샘플 롯트', size: 140 },
   { accessorKey: 'sampleSpec', header: '규격', size: 180 },

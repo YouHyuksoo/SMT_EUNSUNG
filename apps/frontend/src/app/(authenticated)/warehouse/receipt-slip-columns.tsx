@@ -8,6 +8,7 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import { codeWithName, num } from '@/components/shared/grid-format';
 import { formatDisplayDate } from '@/utils/date';
+import { comCodeCell } from '@/components/shared/codeCells';
 
 const right = { align: 'right' } as const;
 const center = { align: 'center' } as const;
@@ -103,8 +104,8 @@ export const receiptSlipColumns: ColumnDef<ReceiptSlipRow>[] = [
     cell: (c) => <span className="font-semibold">{num(c.getValue())}</span>,
   },
   { accessorKey: 'receiptBarcode', header: '전표 바코드', size: 170 },
-  { accessorKey: 'receiptType', header: '입고유형', size: 100, meta: center },
-  { accessorKey: 'receiptStatus', header: '상태', size: 90, meta: center },
+  { accessorKey: 'receiptType', header: '입고유형', size: 100, meta: center, cell: comCodeCell('RECEIPT TYPE') },
+  { accessorKey: 'receiptStatus', header: '상태', size: 90, meta: center, cell: comCodeCell('RECEIPT STATUS') },
   { accessorKey: 'enterBy', header: '등록자', size: 100 },
   { accessorKey: 'enterDate', header: '등록일시', size: 160, cell: (c) => ts(c.getValue()) },
 ];
@@ -114,7 +115,7 @@ export const receiptSlipBarcodeColumns: ColumnDef<ReceiptSlipBarcodeRow>[] = [
   { accessorKey: 'lotNo', header: '롯트번호', size: 160 },
   { accessorKey: 'scanQty', header: '수량', size: 100, meta: right, cell: (c) => num(c.getValue()) },
   { accessorKey: 'scanDate', header: '발행시각', size: 160, cell: (c) => ts(c.getValue()) },
-  { accessorKey: 'barcodeStatus', header: '바코드상태', size: 110, meta: center },
+  { accessorKey: 'barcodeStatus', header: '바코드상태', size: 110, meta: center, cell: comCodeCell('BARCODE STATUS') },
   {
     accessorKey: 'receiptCompareYn',
     header: '입고대조',
@@ -124,11 +125,11 @@ export const receiptSlipBarcodeColumns: ColumnDef<ReceiptSlipBarcodeRow>[] = [
   },
   { accessorKey: 'holdingYn', header: '보류', size: 80, meta: center, cell: (c) => yesNo(c.getValue()) },
   { accessorKey: 'lotDivideYn', header: '롯트분할', size: 90, meta: center, cell: (c) => yesNo(c.getValue()) },
-  { accessorKey: 'inventoryType', header: '재고유형', size: 100, meta: center },
+  { accessorKey: 'inventoryType', header: '재고유형', size: 100, meta: center, cell: comCodeCell('INVENTORY TYPE') },
   { accessorKey: 'supplierBarcode', header: '협력사 바코드', size: 180 },
   { accessorKey: 'supplierLotNo', header: '협력사 롯트', size: 150 },
   { accessorKey: 'supplierCode', header: '협력사', size: 110 },
-  { accessorKey: 'receiptType', header: '입고유형', size: 100, meta: center },
+  { accessorKey: 'receiptType', header: '입고유형', size: 100, meta: center, cell: comCodeCell('RECEIPT TYPE') },
   { accessorKey: 'originItemBarcode', header: '원본 바코드', size: 200 },
   { accessorKey: 'enterBy', header: '발행자', size: 100 },
   { accessorKey: 'enterDate', header: '등록일시', size: 160, cell: (c) => ts(c.getValue()) },

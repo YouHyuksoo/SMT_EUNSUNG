@@ -28,6 +28,7 @@ import type {
   WorkflowRow,
 } from './query-types';
 import { formatDisplayDate } from '@/utils/date';
+import { comCodeCell } from '@/components/shared/codeCells';
 
 const right = { align: 'right' } as const;
 const center = { align: 'center' } as const;
@@ -176,7 +177,7 @@ export const pcbInputColumns: ColumnDef<PcbInputRow>[] = [
   { accessorKey: 'workstageCode', header: '공정', size: 90 },
   { accessorKey: 'machineCode', header: '설비', size: 110 },
   { accessorKey: 'scanBy', header: '스캔자', size: 100 },
-  { accessorKey: 'receiptStatus', header: '입고상태', size: 100 },
+  { accessorKey: 'receiptStatus', header: '입고상태', size: 100, cell: comCodeCell('RECEIPT STATUS') },
   { accessorKey: 'enterDate', header: '등록일시', size: 160, cell: (c) => ts(c.getValue()) },
 ];
 
@@ -424,7 +425,7 @@ export const feederSlotColumns: ColumnDef<FeederSlotRow>[] = [
   { accessorKey: 'lastFeedingDate', header: '최종 투입시각', size: 160, cell: (c) => ts(c.getValue()) },
   { accessorKey: 'checkYn', header: '검사', size: 80, meta: center, cell: (c) => yn(c.getValue()) },
   { accessorKey: 'ccsYn', header: 'CCS', size: 80, meta: center, cell: (c) => yn(c.getValue()) },
-  { accessorKey: 'checkStatus', header: '검사상태', size: 100 },
+  { accessorKey: 'checkStatus', header: '검사상태', size: 100, cell: comCodeCell('CHECK STATUS') },
   { accessorKey: 'mslLevel', header: 'MSL', size: 70, meta: center },
   { accessorKey: 'modelName', header: '모델', size: 150 },
   { accessorKey: 'revision', header: '리비전', size: 90 },
@@ -576,7 +577,7 @@ export const materialBarcodeColumns: ColumnDef<MaterialBarcodeRow>[] = [
   { accessorKey: 'manufactureWeek', header: '제조주차', size: 100 },
   { accessorKey: 'validDate', header: '유효일', size: 110 },
   { accessorKey: 'locationCode', header: '위치', size: 110 },
-  { accessorKey: 'labelType', header: '라벨유형', size: 100 },
+  { accessorKey: 'labelType', header: '라벨유형', size: 100, cell: comCodeCell('LABEL TYPE') },
   { accessorKey: 'receiptSlipNo', header: '입고전표', size: 130 },
   { accessorKey: 'originItemBarcode', header: '원 바코드', size: 170 },
   { accessorKey: 'enterBy', header: '등록자', size: 90 },

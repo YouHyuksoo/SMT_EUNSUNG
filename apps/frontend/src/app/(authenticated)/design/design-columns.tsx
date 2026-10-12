@@ -55,7 +55,7 @@ export const applyItemColumns: ColumnDef<ApplyItemRow>[] = [
   { accessorKey: 'itemCode', header: '품목코드', size: 150 },
   { accessorKey: 'itemName', header: '품목명', size: 200 },
   { accessorKey: 'itemSpec', header: '규격', size: 180 },
-  { accessorKey: 'itemType', header: '품목유형', size: 100 },
+  { accessorKey: 'itemType', header: '품목유형', size: 100, cell: comCodeCell('ITEM TYPE') },
   { accessorKey: 'itemClass', header: '품목분류', size: 110 },
   { accessorKey: 'lineType', header: '라인유형', size: 100, cell: comCodeCell('LINE TYPE') },
   { accessorKey: 'itemUom', header: '단위', size: 80 },
@@ -81,7 +81,7 @@ export const applyItemColumns: ColumnDef<ApplyItemRow>[] = [
 export const applyModelColumns: ColumnDef<ApplyModelRow>[] = [
   { accessorKey: 'modelName', header: '모델', size: 170 },
   { accessorKey: 'modelSuffix', header: '서픽스', size: 90 },
-  { accessorKey: 'modelType', header: '모델유형', size: 100 },
+  { accessorKey: 'modelType', header: '모델유형', size: 100, cell: comCodeCell('MODEL TYPE') },
   { accessorKey: 'partNo', header: 'Part No', size: 140 },
   { accessorKey: 'customerCode', header: '고객코드', size: 110 },
   { accessorKey: 'customerModelName', header: '고객모델명', size: 170 },
