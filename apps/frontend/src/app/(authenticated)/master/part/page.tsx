@@ -6,7 +6,7 @@
  *
  * 초보자 가이드:
  * 1. **품목 목록**: GET /master/parts API로 실제 DB 데이터 조회 — ID_ITEM 109개 컬럼 전부
- * 2. **조회조건**: 품목구분·품목유형·구입유형·품목분류·세트품목구분·공급상·고객·MES 사용은 서버에서 거른다.
+ * 2. **조회조건**: 품목구분·품목유형·구입유형·품목분류·공급상은 서버에서 거른다.
  *    나머지 컬럼은 그리드 머리글 필터로 거른다.
  * 3. **CRUD**: 추가/수정/삭제 모두 API를 통해 DB에 반영
  */
@@ -14,10 +14,9 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Plus, Search, Package, RefreshCw } from "lucide-react";
-import { Card, CardContent, Button, Input, ConfirmModal, Select } from "@/components/ui";
-import { ComCodeSelect, UseYnSelect } from "@/components/shared";
+import { Card, CardContent, Button, Input, ConfirmModal } from "@/components/ui";
+import { ComCodeSelect } from "@/components/shared";
 import SupplierSelect from "@/components/shared/SupplierSelect";
-import { useCustomerOptions } from "@/hooks/useMasterOptions";
 import DataGrid from "@/components/data-grid/DataGrid";
 import api from "@/services/api";
 import { Part } from "./types";
@@ -34,18 +33,12 @@ export default function PartPage() {
   const [searchText, setSearchText] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [partTypeFilter, setPartTypeFilter] = useState("");
-  const [mesDisplayYnFilter, setMesDisplayYnFilter] = useState("");
   /** 서버에서 거르는 코드 컬럼 — 키는 /master/parts 조회 파라미터 이름 */
   const [codeFilters, setCodeFilters] = useState({
-    itemDivision: "", lineType: "", itemClass: "", setItemYn: "", supplierCode: "", customerCode: "",
+    itemDivision: "", lineType: "", itemClass: "", supplierCode: "",
   });
   const setCodeFilter = (key: keyof typeof codeFilters) => (value: string) =>
     setCodeFilters((prev) => ({ ...prev, [key]: value }));
-  const { options: customerOptions } = useCustomerOptions();
-  const customerFilterOptions = useMemo(
-    () => [{ value: "", label: "고객: 전체" }, ...customerOptions.map((o) => ({ ...o, label: `고객: ${o.label}` }))],
-    [customerOptions],
-  );
 
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [editingPart, setEditingPart] = useState<Part | null>(null);
@@ -65,7 +58,6 @@ export default function PartPage() {
     try {
       const params: Record<string, string | number> = { limit: 5000 };
       if (partTypeFilter) params.itemType = partTypeFilter;
-      if (mesDisplayYnFilter) params.mesDisplayYn = mesDisplayYnFilter;
       if (debouncedSearch) params.search = debouncedSearch;
       for (const [key, value] of Object.entries(codeFilters)) {
         if (value) params[key] = value;
@@ -82,7 +74,7 @@ export default function PartPage() {
     } finally {
       setLoading(false);
     }
-  }, [partTypeFilter, mesDisplayYnFilter, debouncedSearch, codeFilters]);
+  }, [partTypeFilter, debouncedSearch, codeFilters]);
 
   /** 초기 로드 */
   useEffect(() => { fetchParts(); }, [fetchParts]);
@@ -175,17 +167,8 @@ export default function PartPage() {
                 <div className="w-48 flex-shrink-0">
                   <ComCodeSelect groupCode="ITEM CLASS" value={codeFilters.itemClass} onChange={setCodeFilter("itemClass")} labelPrefix="품목분류" fullWidth />
                 </div>
-                <div className="w-44 flex-shrink-0">
-                  <ComCodeSelect groupCode="SET ITEM YN" value={codeFilters.setItemYn} onChange={setCodeFilter("setItemYn")} labelPrefix="세트품목구분" fullWidth />
-                </div>
                 <div className="w-48 flex-shrink-0">
                   <SupplierSelect includeAll labelPrefix="공급상" value={codeFilters.supplierCode} onChange={setCodeFilter("supplierCode")} fullWidth />
-                </div>
-                <div className="w-48 flex-shrink-0">
-                  <Select options={customerFilterOptions} value={codeFilters.customerCode} onChange={setCodeFilter("customerCode")} fullWidth aria-label="고객" />
-                </div>
-                <div className="w-36 flex-shrink-0">
-                  <UseYnSelect value={mesDisplayYnFilter} onChange={setMesDisplayYnFilter} labelPrefix="MES 사용" fullWidth />
                 </div>
               </div>
             }
