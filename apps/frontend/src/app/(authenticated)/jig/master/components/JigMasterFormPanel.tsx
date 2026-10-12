@@ -6,7 +6,9 @@
  *
  * 초보자 가이드:
  * 1. **등록/수정 공용**: `mode` 하나로 가른다. 컴포넌트를 두 개 만들지 않는다.
- * 2. **키 컬럼 잠금**: 수정일 때 지그코드·지그LOT 은 키(XPKIMCN_JIG)라 바꿀 수 없다.
+ * 2. **키 변경**: 수정에서도 지그코드·지그LOT 을 바꿀 수 있다. 원래 키(initialForm)를
+ *    originalJigCode/originalJigLotNo 로 함께 보내면 서버가 지그와 적용모델의 키만 바꾸고
+ *    이력은 이전 키로 남긴다. 중복·라인 장착 등으로 막히면 서버 안내 창에 사유가 나온다.
  * 3. **감사컬럼 없음**: 등록자·수정자·일시는 입력하지 않는다. 서버가 채운다
  *    (PB f_set_security_row 가 하던 일).
  * 4. **코드성 값은 선택 컴포넌트**: 지그유형·상태·취득유형 등은 기초코드에서 고른다.
@@ -84,7 +86,8 @@ interface Props {
   mode: 'create' | 'edit';
   initialForm: JigForm;
   onClose: () => void;
-  onSaved: () => void;
+  /** 저장한 지그의 키를 넘긴다 — 호출 화면이 저장 후 그 지그를 다시 고를 때 쓴다 */
+  onSaved: (saved: { jigCode: string; jigLotNo: string }) => void;
 }
 
 export default function JigMasterFormPanel({ mode, initialForm, onClose, onSaved }: Props) {
@@ -113,17 +116,27 @@ export default function JigMasterFormPanel({ mode, initialForm, onClose, onSaved
         minTension: numeric(form.minTension),
         maxTension: numeric(form.maxTension),
       };
-      if (isEdit) await api.put('/jig/master', payload);
-      else await api.post('/jig/master', payload);
+      if (isEdit) {
+        await api.put('/jig/master', {
+          ...payload,
+          originalJigCode: initialForm.jigCode,
+          originalJigLotNo: initialForm.jigLotNo,
+        });
+      } else {
+        await api.post('/jig/master', payload);
+      }
       toast.success('저장되었습니다.');
-      onSaved();
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : '';
-      toast.error(message.includes('409') ? '이미 등록된 지그입니다.' : '저장에 실패했습니다.');
+      onSaved({ jigCode: form.jigCode, jigLotNo: form.jigLotNo });
+    } catch {
+      // 막힌 사유(중복·다른 지그코드 사용·라인 장착 등)는 서버 메시지가 안내 창으로 뜬다
+      toast.error('저장하지 못했습니다.');
     } finally {
       setSaving(false);
     }
-  }, [form, isEdit, onSaved]);
+  }, [form, initialForm, isEdit, onSaved]);
+
+  const keyChanged = isEdit
+    && (form.jigCode !== initialForm.jigCode || form.jigLotNo !== initialForm.jigLotNo);
 
   return (
     <aside className="flex h-full w-[520px] shrink-0 flex-col border-l border-border bg-background shadow-xl">
@@ -136,10 +149,17 @@ export default function JigMasterFormPanel({ mode, initialForm, onClose, onSaved
 
       <div className="flex-1 space-y-3 overflow-y-auto p-5 text-sm">
         <div className="grid grid-cols-2 gap-3">
-          <Input label="지그코드" value={form.jigCode} disabled={isEdit} required
+          <Input label="지그코드" value={form.jigCode} required maxLength={30}
             onChange={(e) => set('jigCode', e.target.value)} />
-          <Input label="지그LOT" value={form.jigLotNo} disabled={isEdit} required
+          <Input label="지그LOT" value={form.jigLotNo} required maxLength={30}
             onChange={(e) => set('jigLotNo', e.target.value)} />
+          {isEdit && (
+            <p className={`col-span-2 text-xs ${keyChanged ? 'text-amber-600 dark:text-amber-400' : 'text-text-muted'}`}>
+              {keyChanged && `${initialForm.jigCode} / ${initialForm.jigLotNo} → ${form.jigCode} / ${form.jigLotNo}. `}
+              지그코드·지그LOT을 바꾸면 지그 정보와 적용모델만 새 값으로 바뀌고, 투입이력·점검·수리·제품추적 이력은 이전 값으로 남습니다.
+              라인에 장착된 지그는 바꿀 수 없습니다.
+            </p>
+          )}
           <Input label="지그명" value={form.jigName} required
             onChange={(e) => set('jigName', e.target.value)} />
           <ComCodeSelect label="지그유형" groupCode="JIG TYPE" includeAll={false}
@@ -188,8 +208,15 @@ export default function JigMasterFormPanel({ mode, initialForm, onClose, onSaved
             onChange={(e) => set('supplierCode', e.target.value)} />
           <Input label="자재위치" value={form.locationAddress}
             onChange={(e) => set('locationAddress', e.target.value)} />
-          <Input label="관리설명" value={form.managementCommnets}
-            onChange={(e) => set('managementCommnets', e.target.value)} />
+          <div className="col-span-2">
+            <label className="mb-1 block font-medium text-text">관리설명</label>
+            <textarea
+              value={form.managementCommnets}
+              rows={4}
+              className="w-full resize-y rounded-lg border border-border bg-background px-3 py-2 text-sm text-text focus:outline-none focus:ring-2 focus:ring-primary/40"
+              onChange={(e) => set('managementCommnets', e.target.value)}
+            />
+          </div>
         </div>
       </div>
 

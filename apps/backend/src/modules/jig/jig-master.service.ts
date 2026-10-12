@@ -9,6 +9,9 @@
  *    등록 시 ENTER_BY/ENTER_DATE + LAST_MODIFY_*, 수정 시 LAST_MODIFY_* 만 서버가 채운다.
  * 3. **적용모델 복사**: 로직은 이 서비스가 아니라 PKG_MES_MAC.SP_COPY_APPLY_MODEL 에 있다.
  *    PB 화면과 웹이 같은 DB 오브젝트를 호출해야 결과가 갈리지 않는다.
+ * 4. **키 변경**: 수정 본문에 originalJigCode/originalJigLotNo 가 오고 새 키와 다르면
+ *    IMCN_JIG 와 IMCN_JIG_APPLY_MODEL 의 키만 한 트랜잭션으로 바꾼다. 이력 테이블은 옛 키로 남긴다.
+ *    FK 가 없으므로 중복·장착 여부는 이 서비스가 먼저 확인한다.
  */
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { DataSource } from 'typeorm';
@@ -45,6 +48,21 @@ const DATE_FIELDS: Array<[column: string, field: keyof JigMasterUpsertDto]> = [
   ['ACQUISITION_DATE', 'acquisitionDate'], ['RECEIPT_DATE', 'receiptDate'],
   ['LAST_INSPECT_DATE', 'lastInspectDate'], ['ISSUE_DATE', 'issueDate'],
   ['DESTROY_DATE', 'destroyDate'],
+];
+
+/** IMCN_JIG_APPLY_MODEL.JIG_LOT_NO 칸 길이. 키를 바꿀 때 새 LOT 이 이보다 길면 막는다. */
+const APPLY_MODEL_LOT_MAX = 50;
+
+/**
+ * IP_PRODUCT_LINE 에서 지그LOT 을 담는 칸.
+ * 장착 칸뿐 아니라 직전 장착(LAST_*) 칸도 본다 — P_CHECK_PDA_TB_INOUT_PS_USER 가 T/B 전환 때
+ * LAST_* 값을 장착 칸으로 되돌려 쓰므로, 옛 LOT 이 남아 있으면 다시 장착값으로 돌아온다.
+ */
+const MOUNT_COLUMNS: Array<[column: string, label: string]> = [
+  ['MASK_LOT_NO', '메탈마스크'], ['MASK_LOT_NO2', '메탈마스크2'],
+  ['SQUEEZE_LOT_NO', '스퀴즈'], ['SQUEEZE_LOT_NO2', '스퀴즈2'], ['SQUEZE_LOT_NO', '스퀴즈(검사)'],
+  ['LAST_MASK_LOT_NO', '직전 메탈마스크'], ['LAST_MASK_LOT_NO2', '직전 메탈마스크2'],
+  ['LAST_SQUEEZE_LOT_NO', '직전 스퀴즈'], ['LAST_SQUEEZE_LOT_NO2', '직전 스퀴즈2'],
 ];
 
 @Injectable()
@@ -198,15 +216,9 @@ export class JigMasterService {
     return { jigCode: dto.jigCode, jigLotNo: dto.jigLotNo };
   }
 
-  /** 수정 — PB f_set_security_row('MODIFY') 와 같이 LAST_MODIFY_* 만 갱신한다. */
-  async update(dto: JigMasterUpsertDto, organizationId: number, userId: string) {
-    if (!await this.exists(dto.jigCode, dto.jigLotNo, organizationId)) {
-      throw new NotFoundException(`지그를 찾을 수 없습니다 (${dto.jigCode}/${dto.jigLotNo}).`);
-    }
+  /** 수정에서 사용자가 고치는 칸의 SET 절. 감사컬럼 LAST_MODIFY_* 도 여기서 붙는다. */
+  private editableSets(dto: JigMasterUpsertDto, binds: OracleRow): string[] {
     const sets: string[] = [];
-    const binds: OracleRow = {
-      jigCode: dto.jigCode, jigLotNo: dto.jigLotNo, organizationId, userId,
-    };
     for (const [column, field] of EDITABLE) {
       sets.push(`${column} = :${field}`);
       binds[field] = dto[field] ?? null;
@@ -216,6 +228,26 @@ export class JigMasterService {
       binds[field] = dto[field] ?? null;
     }
     sets.push('LAST_MODIFY_BY = :userId', 'LAST_MODIFY_DATE = SYSDATE');
+    return sets;
+  }
+
+  /**
+   * 수정 — PB f_set_security_row('MODIFY') 와 같이 LAST_MODIFY_* 만 갱신한다.
+   * originalJigCode/originalJigLotNo 가 새 키와 다르면 키 변경(changeKey)으로 넘긴다.
+   */
+  async update(dto: JigMasterUpsertDto, organizationId: number, userId: string) {
+    const fromCode = dto.originalJigCode || dto.jigCode;
+    const fromLot = dto.originalJigLotNo || dto.jigLotNo;
+    if (fromCode !== dto.jigCode || fromLot !== dto.jigLotNo) {
+      return this.changeKey(dto, { jigCode: fromCode, jigLotNo: fromLot }, organizationId, userId);
+    }
+    if (!await this.exists(dto.jigCode, dto.jigLotNo, organizationId)) {
+      throw new NotFoundException(`지그를 찾을 수 없습니다 (${dto.jigCode}/${dto.jigLotNo}).`);
+    }
+    const binds: OracleRow = {
+      jigCode: dto.jigCode, jigLotNo: dto.jigLotNo, organizationId, userId,
+    };
+    const sets = this.editableSets(dto, binds);
 
     await this.dataSource.query(
       `UPDATE IMCN_JIG SET ${sets.join(', ')}
@@ -223,6 +255,107 @@ export class JigMasterService {
       namedBinds(binds),
     );
     return { jigCode: dto.jigCode, jigLotNo: dto.jigLotNo };
+  }
+
+  /**
+   * 지그코드·지그LOT 변경 — 한 트랜잭션에서 IMCN_JIG 와 IMCN_JIG_APPLY_MODEL 의 키만 바꾼다.
+   * 투입이력·점검·수리·제품추적 등 이력 테이블은 옛 키로 남긴다(업무 결정).
+   * 막는 경우: 새 LOT 이 적용모델 칸 길이 초과 / 새 키 중복 / 새 LOT 을 다른 지그코드가 사용 /
+   * 새 키로 남아 있는 적용모델 행 / 라인에 장착(직전 장착 포함)된 지그.
+   */
+  private async changeKey(
+    dto: JigMasterUpsertDto,
+    from: { jigCode: string; jigLotNo: string },
+    organizationId: number,
+    userId: string,
+  ) {
+    const to = { jigCode: dto.jigCode, jigLotNo: dto.jigLotNo };
+    if (to.jigLotNo.length > APPLY_MODEL_LOT_MAX) {
+      throw new BadRequestException(
+        `지그LOT 은 ${APPLY_MODEL_LOT_MAX}자까지 입력할 수 있습니다 (적용모델 LOT 칸 길이).`,
+      );
+    }
+
+    return this.tx.run(async (qr) => {
+      const keyBinds = { fromCode: from.jigCode, fromLot: from.jigLotNo, organizationId };
+      // 원래 행을 잠가 동시에 같은 지그를 고치는 것을 막는다
+      const original = await qr.query(
+        `SELECT JIG_CODE FROM IMCN_JIG
+          WHERE JIG_CODE = :fromCode AND JIG_LOT_NO = :fromLot AND ORGANIZATION_ID = :organizationId
+          FOR UPDATE`,
+        namedBinds(keyBinds),
+      ) as OracleRow[];
+      if (original.length === 0) {
+        throw new NotFoundException(`지그를 찾을 수 없습니다 (${from.jigCode}/${from.jigLotNo}).`);
+      }
+
+      const duplicate = await qr.query(
+        `SELECT COUNT(*) AS "cnt" FROM IMCN_JIG
+          WHERE JIG_CODE = :toCode AND JIG_LOT_NO = :toLot AND ORGANIZATION_ID = :organizationId`,
+        namedBinds({ toCode: to.jigCode, toLot: to.jigLotNo, organizationId }),
+      ) as OracleRow[];
+      if (Number(duplicate[0]?.cnt ?? 0) > 0) {
+        throw new ConflictException(`이미 등록된 지그입니다 (${to.jigCode}/${to.jigLotNo}).`);
+      }
+
+      const sameLot = await qr.query(
+        `SELECT JIG_CODE AS "jigCode" FROM IMCN_JIG
+          WHERE JIG_LOT_NO = :toLot AND ORGANIZATION_ID = :organizationId
+            AND JIG_CODE <> :toCode
+            AND NOT (JIG_CODE = :fromCode AND JIG_LOT_NO = :fromLot)`,
+        namedBinds({ ...keyBinds, toCode: to.jigCode, toLot: to.jigLotNo }),
+      ) as OracleRow[];
+      if (sameLot.length > 0) {
+        const codes = sameLot.map((row) => String(row.jigCode)).join(', ');
+        throw new ConflictException(
+          `지그LOT ${to.jigLotNo} 을 다른 지그코드(${codes})가 사용하고 있습니다.`,
+        );
+      }
+
+      const leftover = await qr.query(
+        `SELECT COUNT(*) AS "cnt" FROM IMCN_JIG_APPLY_MODEL
+          WHERE JIG_CODE = :toCode AND JIG_LOT_NO = :toLot AND ORGANIZATION_ID = :organizationId`,
+        namedBinds({ toCode: to.jigCode, toLot: to.jigLotNo, organizationId }),
+      ) as OracleRow[];
+      const leftoverCount = Number(leftover[0]?.cnt ?? 0);
+      if (leftoverCount > 0) {
+        throw new ConflictException(
+          `새 지그코드·지그LOT(${to.jigCode}/${to.jigLotNo})으로 남아 있는 적용모델 ${leftoverCount}건이 있습니다. 먼저 정리하세요.`,
+        );
+      }
+
+      const mounted = await qr.query(
+        MOUNT_COLUMNS.map(([column]) => `
+          SELECT LINE_CODE AS "lineCode", '${column}' AS "columnName" FROM IP_PRODUCT_LINE
+           WHERE ${column} = :fromLot AND ORGANIZATION_ID = :organizationId`).join(' UNION ALL '),
+        namedBinds({ fromLot: from.jigLotNo, organizationId }),
+      ) as OracleRow[];
+      if (mounted.length > 0) {
+        const where = mounted.map((row) => {
+          const label = MOUNT_COLUMNS.find(([column]) => column === row.columnName)?.[1] ?? row.columnName;
+          return `라인 ${String(row.lineCode)} ${String(label)}`;
+        }).join(', ');
+        throw new ConflictException(
+          `라인에 장착된 지그라 지그코드·지그LOT 을 바꿀 수 없습니다 (${where}). 라인에서 내린 뒤 바꾸세요.`,
+        );
+      }
+
+      const binds: OracleRow = { ...keyBinds, toCode: to.jigCode, toLot: to.jigLotNo, userId };
+      const sets = this.editableSets(dto, binds);
+      await qr.query(
+        `UPDATE IMCN_JIG SET JIG_CODE = :toCode, JIG_LOT_NO = :toLot, ${sets.join(', ')}
+          WHERE JIG_CODE = :fromCode AND JIG_LOT_NO = :fromLot AND ORGANIZATION_ID = :organizationId`,
+        namedBinds(binds),
+      );
+      await qr.query(
+        `UPDATE IMCN_JIG_APPLY_MODEL
+            SET JIG_CODE = :toCode, JIG_LOT_NO = :toLot,
+                LAST_MODIFY_BY = :userId, LAST_MODIFY_DATE = SYSDATE
+          WHERE JIG_CODE = :fromCode AND JIG_LOT_NO = :fromLot AND ORGANIZATION_ID = :organizationId`,
+        namedBinds({ ...keyBinds, toCode: to.jigCode, toLot: to.jigLotNo, userId }),
+      );
+      return to;
+    });
   }
 
   /**
