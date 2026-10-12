@@ -57,6 +57,8 @@ export class IqcService {
       itemName: this.like(query.itemName),
       itemBarcode: this.like(query.itemBarcode),
       receiptSlipNo: this.like(query.receiptSlipNo),
+      // 공급처(협력업체)는 고를 때만 = 로 건다 — PB 에는 없던 조건이다
+      supplierCode: query.supplierCode?.trim() || null,
       // PB 는 두 목록에서 이 조건의 연산자가 다르다 —
       // 대기목록은 '=' (기본 'N' 입고대기), 취소대상은 LIKE (기본 전체).
       receiptCompareYn: judged
@@ -118,6 +120,7 @@ export class IqcService {
          AND b.ITEM_BARCODE LIKE :itemBarcode
          AND b.RECEIPT_COMPARE_YN ${judged ? 'LIKE' : '='} :receiptCompareYn
          AND NVL(i.ITEM_NAME, '*') LIKE :itemName
+         AND (:supplierCode IS NULL OR b.SUPPLIER_CODE = :supplierCode)
          AND b.ORGANIZATION_ID = :organizationId`;
     const page = query.page ?? 1;
     const limit = query.limit ?? 500;
@@ -141,6 +144,7 @@ export class IqcService {
       dateTo: query.dateTo.slice(0, 10),
       itemCode: this.like(query.itemCode),
       iqcInspectNo: this.like(query.iqcInspectNo),
+      supplierCode: query.supplierCode?.trim() || null,
     };
     const body = `
       SELECT q.INSPECT_DATE AS "inspectDate", q.INSPECT_SEQUENCE AS "inspectSequence",
@@ -175,6 +179,7 @@ export class IqcService {
          AND q.INSPECT_DATE < TO_DATE(:dateTo, 'YYYY-MM-DD') + 1
          AND q.ITEM_CODE LIKE :itemCode
          AND q.IQC_INSPECT_NO LIKE :iqcInspectNo
+         AND (:supplierCode IS NULL OR q.SUPPLIER_CODE = :supplierCode)
          AND q.ORGANIZATION_ID = :organizationId`;
     const page = query.page ?? 1;
     const limit = query.limit ?? 500;

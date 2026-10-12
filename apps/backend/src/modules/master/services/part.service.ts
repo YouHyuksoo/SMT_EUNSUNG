@@ -17,6 +17,11 @@ const todayKst = (): string => {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 };
 
+/** 컬럼 키로 DTO·엔티티 필드를 읽는다 — 컬럼 목록을 돌며 이름으로 접근하려고 쓴다 */
+function fieldOf(source: object, key: string): unknown {
+  return Reflect.get(source, key);
+}
+
 /** 화면 값 → 컬럼 값. 빈 문자열은 NULL, 날짜는 그날 0시(KST). */
 function toColumnValue(col: ItemMasterColumn, value: unknown): unknown {
   if (value === undefined || value === null) return null;
@@ -136,7 +141,7 @@ export class PartService {
     const defaults = itemMasterDefaults(todayKst());
     const values: Record<string, unknown> = {};
     for (const col of ITEM_MASTER_EDITABLE_COLUMNS) {
-      const sent = toColumnValue(col, (dto as unknown as Record<string, unknown>)[col.key]);
+      const sent = toColumnValue(col, fieldOf(dto, col.key));
       const value = sent ?? toColumnValue(col, defaults[col.key]);
       if (col.required && value == null) {
         throw new BadRequestException(`${col.label}은(는) 필수입니다.`);
@@ -164,18 +169,17 @@ export class PartService {
    */
   async update(itemCode: string, dto: UpdatePartDto, organizationId?: number, userId?: string) {
     const current = await this.findById(itemCode, organizationId);
-    const currentRow = current as unknown as Record<string, unknown>;
-
+    
     const changed: Record<string, unknown> = {};
     for (const col of ITEM_MASTER_EDITABLE_COLUMNS) {
       if (col.edit !== 'always') continue;
-      const raw = (dto as unknown as Record<string, unknown>)[col.key];
+      const raw = fieldOf(dto, col.key);
       if (raw === undefined) continue;
       const next = toColumnValue(col, raw);
       if (col.required && next == null) {
         throw new BadRequestException(`${col.label}은(는) 비울 수 없습니다.`);
       }
-      if (!sameColumnValue(col, currentRow[col.key], next)) changed[col.key] = next;
+      if (!sameColumnValue(col, fieldOf(current, col.key), next)) changed[col.key] = next;
     }
     if (Object.keys(changed).length === 0) return current;
 

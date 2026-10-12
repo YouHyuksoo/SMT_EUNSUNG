@@ -19,6 +19,7 @@ import ProcessSelect from '@/components/shared/ProcessSelect';
 import { Button, Input } from '@/components/ui';
 import api from '@/services/api';
 import type { Qc4mRow } from '../../qc-columns';
+import { getTodayLocal } from '@/utils/date';
 
 export interface Qc4mForm {
   modelName: string;
@@ -39,7 +40,8 @@ export interface Qc4mForm {
   ecoReason: string;
 }
 
-const today = () => new Date().toISOString().slice(0, 10);
+/** 로컬(KST) 오늘 — toISOString 은 UTC 라 오전 9시 전엔 어제가 된다 */
+const today = () => getTodayLocal();
 const text = (value: unknown) => (value == null ? '' : String(value));
 const dateInput = (value: unknown) => (value ? String(value).slice(0, 10) : '');
 
@@ -114,9 +116,8 @@ export default function Qc4mFormPanel({ mode, initialForm, onClose, onSaved }: P
       toast.success(mode === 'create' ? '등록되었습니다.' : '수정되었습니다.');
       onSaved();
     } catch {
-      toast.error(mode === 'create'
-        ? '같은 변경일자의 이력이 이미 있습니다.'
-        : '저장에 실패했습니다.');
+      // 원인(중복·시간초과 등)은 api 인터셉터의 오류 창이 보여 준다. 여기서 원인을 짐작해 적지 않는다.
+      toast.error('저장에 실패했습니다.');
     } finally {
       setBusy(false);
     }
@@ -140,76 +141,76 @@ export default function Qc4mFormPanel({ mode, initialForm, onClose, onSaved }: P
         <div className="grid grid-cols-2 gap-3">
           <label className="block text-sm">
             <span className="text-text-muted">서픽스</span>
-            <Input value={form.modelSuffix} disabled={locked}
+            <Input fullWidth value={form.modelSuffix} disabled={locked}
               onChange={(e) => set('modelSuffix', e.target.value)} />
           </label>
           <label className="block text-sm">
             <span className="text-text-muted">변경일자</span>
-            <Input type="date" value={form.ecoDate} disabled={locked}
+            <Input fullWidth type="date" value={form.ecoDate} disabled={locked}
               onChange={(e) => set('ecoDate', e.target.value)} />
           </label>
           <label className="block text-sm">
             <span className="text-text-muted">4M 구분</span>
-            <ComCodeSelect groupCode="ECO DIVISION" includeAll={false}
+            <ComCodeSelect groupCode="ECO DIVISION" includeAll={false} fullWidth placeholder="선택"
               value={form.ecoDivision} onChange={(v) => set('ecoDivision', v)} />
           </label>
           <label className="block text-sm">
             <span className="text-text-muted">변경유형</span>
-            <ComCodeSelect groupCode="ECO TYPE" includeAll={false}
+            <ComCodeSelect groupCode="ECO TYPE" includeAll={false} fullWidth placeholder="선택"
               value={form.ecoType} onChange={(v) => set('ecoType', v)} />
           </label>
           <label className="block text-sm">
             <span className="text-text-muted">진행상태</span>
-            <ComCodeSelect groupCode="ECO STATUS" includeAll={false}
+            <ComCodeSelect groupCode="ECO STATUS" includeAll={false} fullWidth placeholder="선택"
               value={form.ecoStatus} onChange={(v) => set('ecoStatus', v)} />
           </label>
           <label className="block text-sm">
             <span className="text-text-muted">T/B</span>
-            <ComCodeSelect groupCode="PCB ITEM" includeAll={false}
+            <ComCodeSelect groupCode="PCB ITEM" includeAll={false} fullWidth placeholder="선택"
               value={form.pcbItem} onChange={(v) => set('pcbItem', v)} />
           </label>
         </div>
         <label className="block text-sm">
           <span className="text-text-muted">공정</span>
-          <ProcessSelect value={form.workstageCode}
+          <ProcessSelect fullWidth placeholder="선택" value={form.workstageCode}
             onChange={(v) => set('workstageCode', v)} />
         </label>
         <div className="grid grid-cols-2 gap-3">
           <label className="block text-sm">
             <span className="text-text-muted">적용일자</span>
-            <Input type="date" value={form.applyDate}
+            <Input fullWidth type="date" value={form.applyDate}
               onChange={(e) => set('applyDate', e.target.value)} />
           </label>
           <label className="block text-sm">
             <span className="text-text-muted">초생산일</span>
-            <Input type="date" value={form.firstProductDate}
+            <Input fullWidth type="date" value={form.firstProductDate}
               onChange={(e) => set('firstProductDate', e.target.value)} />
           </label>
           <label className="block text-sm">
             <span className="text-text-muted">최종생산일</span>
-            <Input type="date" value={form.lastProductDate}
+            <Input fullWidth type="date" value={form.lastProductDate}
               onChange={(e) => set('lastProductDate', e.target.value)} />
           </label>
           <label className="block text-sm">
             <span className="text-text-muted">H/W Rev</span>
-            <Input value={form.hwRevision} onChange={(e) => set('hwRevision', e.target.value)} />
+            <Input fullWidth value={form.hwRevision} onChange={(e) => set('hwRevision', e.target.value)} />
           </label>
           <label className="block text-sm">
             <span className="text-text-muted">S/W Rev</span>
-            <Input value={form.swRevision} onChange={(e) => set('swRevision', e.target.value)} />
+            <Input fullWidth value={form.swRevision} onChange={(e) => set('swRevision', e.target.value)} />
           </label>
         </div>
         <label className="block text-sm">
           <span className="text-text-muted">변경점</span>
-          <Input value={form.ecoPoint} onChange={(e) => set('ecoPoint', e.target.value)} />
+          <Input fullWidth value={form.ecoPoint} onChange={(e) => set('ecoPoint', e.target.value)} />
         </label>
         <label className="block text-sm">
           <span className="text-text-muted">변경사유</span>
-          <Input value={form.ecoReason} onChange={(e) => set('ecoReason', e.target.value)} />
+          <Input fullWidth value={form.ecoReason} onChange={(e) => set('ecoReason', e.target.value)} />
         </label>
         <label className="block text-sm">
           <span className="text-text-muted">변경내용</span>
-          <Input value={form.ecoComments} onChange={(e) => set('ecoComments', e.target.value)} />
+          <Input fullWidth value={form.ecoComments} onChange={(e) => set('ecoComments', e.target.value)} />
         </label>
       </div>
 

@@ -154,12 +154,40 @@ export interface TemperatureRawRow {
 
 const dec = (value: unknown) => (value == null ? '' : Number(value).toFixed(1));
 
+/**
+ * 온습도 값 칸 — 설비 기준범위를 벗어나면 빨간 바탕·굵은 글씨, 범위 안이면 초록 글씨.
+ * 기준범위가 없는 설비(IMCN_MACHINE 에 최소·최대 미등록)는 색을 넣지 않는다.
+ */
+function rangeCell(value: unknown, min: number | null, max: number | null) {
+  if (value == null) return '';
+  const v = Number(value);
+  const hasRange = min != null || max != null;
+  if (!hasRange) return dec(v);
+  const out = (min != null && v < Number(min)) || (max != null && v > Number(max));
+  return (
+    <span
+      className={out
+        ? 'block rounded bg-red-100 px-1 font-bold text-red-700 dark:bg-red-900/40 dark:text-red-300'
+        : 'block px-1 text-green-700 dark:text-green-400'}
+      title={`기준 ${dec(min)} ~ ${dec(max)}`}
+    >
+      {dec(v)}
+    </span>
+  );
+}
+
 export const temperatureRawColumns: ColumnDef<TemperatureRawRow>[] = [
   { accessorKey: 'gatherDate', header: '수집일시', size: 160, cell: (c) => dateTime(c.getValue()) },
   { accessorKey: 'machineName', header: '설비명', size: 160 },
   { accessorKey: 'nodeId', header: '노드ID', size: 150 },
-  { accessorKey: 'roomTemperature', header: '온도(℃)', size: 100, meta: right, cell: (c) => dec(c.getValue()) },
-  { accessorKey: 'humidity', header: '습도(%)', size: 100, meta: right, cell: (c) => dec(c.getValue()) },
+  {
+    accessorKey: 'roomTemperature', header: '온도(℃)', size: 100, meta: right,
+    cell: (c) => rangeCell(c.getValue(), c.row.original.minTempValue, c.row.original.maxTempValue),
+  },
+  {
+    accessorKey: 'humidity', header: '습도(%)', size: 100, meta: right,
+    cell: (c) => rangeCell(c.getValue(), c.row.original.minHumidityValue, c.row.original.maxHumidityValue),
+  },
   { accessorKey: 'dewPoint', header: '이슬점(℃)', size: 100, meta: right, cell: (c) => dec(c.getValue()) },
   { accessorKey: 'ngYn', header: '기준초과', size: 90 },
   {
@@ -231,8 +259,14 @@ export const temperatureNodeColumns: ColumnDef<TemperatureNodeRow>[] = [
   { id: 'machineName', header: '설비', size: 180, accessorFn: (r) => codeWithName(r.machineCode, r.machineName) },
   { accessorKey: 'nodeId', header: '노드ID', size: 150 },
   { accessorKey: 'lastGatherDate', header: '최근 수집', size: 160, cell: (c) => dateTime(c.getValue()) },
-  { accessorKey: 'roomTemperature', header: '온도(℃)', size: 100, meta: right, cell: (c) => dec(c.getValue()) },
-  { accessorKey: 'humidity', header: '습도(%)', size: 100, meta: right, cell: (c) => dec(c.getValue()) },
+  {
+    accessorKey: 'roomTemperature', header: '온도(℃)', size: 100, meta: right,
+    cell: (c) => rangeCell(c.getValue(), c.row.original.minTempValue, c.row.original.maxTempValue),
+  },
+  {
+    accessorKey: 'humidity', header: '습도(%)', size: 100, meta: right,
+    cell: (c) => rangeCell(c.getValue(), c.row.original.minHumidityValue, c.row.original.maxHumidityValue),
+  },
   { accessorKey: 'dewPoint', header: '이슬점(℃)', size: 100, meta: right, cell: (c) => dec(c.getValue()) },
   {
     id: 'tempRange', header: '온도 기준범위', size: 130, meta: right,

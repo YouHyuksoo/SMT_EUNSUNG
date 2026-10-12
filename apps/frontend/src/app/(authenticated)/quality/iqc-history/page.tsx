@@ -27,9 +27,10 @@ import IqcHistoryFormPanel, {
   type IqcHistoryForm,
 } from './components/IqcHistoryFormPanel';
 import PartSearchField from '@/components/shared/PartSearchField';
+import { getTodayLocal } from '@/utils/date';
 
-const isoDate = (date: Date) => date.toISOString().slice(0, 10);
-const today = () => isoDate(new Date());
+/** 로컬(KST) 오늘 — toISOString 은 UTC 라 오전 9시 전엔 어제가 된다 */
+const today = () => getTodayLocal();
 
 export default function IqcHistoryPage() {
   const [rows, setRows] = useState<IqcInspectHistoryRow[]>([]);
@@ -49,7 +50,8 @@ export default function IqcHistoryPage() {
   const [panel, setPanel] = useState<{ mode: 'create' | 'edit'; form: IqcHistoryForm } | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
-  const search = useCallback(async () => {
+  /** 조회 — 받은 행을 돌려준다 (등록 직후 새 행이 보이는지 확인용) */
+  const search = useCallback(async (): Promise<IqcInspectHistoryRow[] | null> => {
     setLoading(true);
     try {
       const response = await api.get('/quality/iqc-history', {
@@ -62,16 +64,34 @@ export default function IqcHistoryPage() {
           lotNo: lotNo || undefined,
         },
       });
-      setRows(response.data?.data ?? []);
+      const data: IqcInspectHistoryRow[] = response.data?.data ?? [];
+      setRows(data);
       setTotal(Number(response.data?.meta?.total ?? 0));
       setSearched(true);
       setSelected(null);
+      return data;
     } catch {
       toast.error('IQC 검사이력 조회에 실패했습니다.');
+      return null;
     } finally {
       setLoading(false);
     }
   }, [dateFrom, dateTo, modelName, itemCode, itemClass, inspectResult, lotNo]);
+
+  /** 저장 후 다시 조회한다. 새로 등록한 행이 지금 조회조건에 걸려 안 보이면 알려 준다. */
+  const afterSave = useCallback(async (createdSequence?: number) => {
+    setPanel(null);
+    const data = await search();
+    if (createdSequence == null || !data) return;
+    if (data.some((row) => Number(row.inspectSequence) === createdSequence)) return;
+    const active = [
+      dateTo < today() ? `검사일(~${dateTo})` : '',
+      modelName ? '모델명' : '', itemCode ? '품목코드' : '', itemClass ? '품목분류' : '',
+      inspectResult ? '판정' : '', lotNo ? 'LOT번호' : '',
+    ].filter(Boolean);
+    toast(`검사항번 ${createdSequence}번은 저장됐지만 지금 조회조건(${active.join(', ') || '기간'})에 맞지 않아 목록에 보이지 않습니다.`,
+      { icon: 'ℹ️', duration: 6000 });
+  }, [search, dateTo, modelName, itemCode, itemClass, inspectResult, lotNo]);
 
   const remove = useCallback(async () => {
     if (!selected) return;
@@ -106,7 +126,7 @@ export default function IqcHistoryPage() {
             </p>
           </div>
           <div className="flex gap-2">
-            <Button size="sm" onClick={search} disabled={loading}>
+            <Button size="sm" onClick={() => void search()} disabled={loading}>
               <Search className="mr-1 h-4 w-4" />조회
             </Button>
             <Button size="sm" variant="secondary" disabled={!selected}
@@ -168,7 +188,7 @@ export default function IqcHistoryPage() {
           mode={panel.mode}
           initialForm={panel.form}
           onClose={() => setPanel(null)}
-          onSaved={() => { setPanel(null); void search(); }}
+          onSaved={(createdSequence) => { void afterSave(createdSequence); }}
         />
       )}
 

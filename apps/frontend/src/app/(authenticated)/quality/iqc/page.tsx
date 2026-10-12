@@ -23,11 +23,13 @@ import api from '@/services/api';
 import { ESD_CHECK_LIMIT, iqcHistoryColumns, iqcTargetColumns } from './columns';
 import type { IqcHistoryRow, IqcTargetRow } from './types';
 import PartSearchField from '@/components/shared/PartSearchField';
+import SupplierSelect from '@/components/shared/SupplierSelect';
+import { getTodayLocal } from '@/utils/date';
 
 type Mode = 'wait' | 'cancel' | 'history';
 
-const isoDate = (date: Date) => date.toISOString().slice(0, 10);
-const today = () => isoDate(new Date());
+/** 로컬(KST) 오늘 — toISOString 은 UTC 라 오전 9시 전엔 어제가 된다 */
+const today = () => getTodayLocal();
 
 export default function IqcPage() {
   const [mode, setMode] = useState<Mode>('wait');
@@ -43,6 +45,7 @@ export default function IqcPage() {
   const [itemName, setItemName] = useState('');
   const [itemBarcode, setItemBarcode] = useState('');
   const [receiptSlipNo, setReceiptSlipNo] = useState('');
+  const [supplierCode, setSupplierCode] = useState('');
 
   const [selected, setSelected] = useState<IqcTargetRow | null>(null);
   const [badReasonCode, setBadReasonCode] = useState('');
@@ -58,6 +61,7 @@ export default function IqcPage() {
             dateFrom, dateTo,
             itemCode: itemCode || undefined,
             iqcInspectNo: receiptSlipNo || undefined,
+            supplierCode: supplierCode || undefined,
           },
         });
         setHistory(response.data?.data ?? []);
@@ -70,6 +74,7 @@ export default function IqcPage() {
             itemName: itemName || undefined,
             itemBarcode: itemBarcode || undefined,
             receiptSlipNo: receiptSlipNo || undefined,
+            supplierCode: supplierCode || undefined,
           },
         });
         setTargets(response.data?.data ?? []);
@@ -82,7 +87,7 @@ export default function IqcPage() {
     } finally {
       setLoading(false);
     }
-  }, [mode, dateFrom, dateTo, itemCode, itemName, itemBarcode, receiptSlipNo]);
+  }, [mode, dateFrom, dateTo, itemCode, itemName, itemBarcode, receiptSlipNo, supplierCode]);
 
   const changeMode = useCallback((next: Mode) => {
     setMode(next);
@@ -186,6 +191,8 @@ export default function IqcPage() {
             className="w-40" onChange={(e) => setItemCode(e.target.value)} />
           <Input aria-label="입고전표" placeholder="입고전표" value={receiptSlipNo}
             className="w-40" onChange={(e) => setReceiptSlipNo(e.target.value)} />
+          <SupplierSelect includeAll labelPrefix="공급처" value={supplierCode}
+            onChange={setSupplierCode} className="w-52" />
           {mode !== 'history' && (
             <>
               <Input aria-label="품목명" placeholder="품목명" value={itemName}

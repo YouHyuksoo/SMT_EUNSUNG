@@ -80,7 +80,8 @@ interface Props {
   mode: 'create' | 'edit';
   initialForm: IqcHistoryForm;
   onClose: () => void;
-  onSaved: () => void;
+  /** 등록이면 서버가 채번한 검사항번을 넘긴다 */
+  onSaved: (createdSequence?: number) => void;
 }
 
 const optional = (value: string) => (value.trim() === '' ? undefined : value.trim());
@@ -114,7 +115,10 @@ export default function IqcHistoryFormPanel({ mode, initialForm, onClose, onSave
     try {
       if (mode === 'create') {
         const response = await api.post('/quality/iqc-history', body);
-        toast.success(`검사항번 ${response.data?.data?.inspectSequence ?? ''}번 등록`);
+        const created = Number(response.data?.data?.inspectSequence);
+        toast.success(`검사항번 ${Number.isFinite(created) ? created : ''}번 등록`);
+        onSaved(Number.isFinite(created) ? created : undefined);
+        return;
       } else {
         await api.put('/quality/iqc-history', {
           ...body,
@@ -125,6 +129,7 @@ export default function IqcHistoryFormPanel({ mode, initialForm, onClose, onSave
       }
       onSaved();
     } catch {
+      // 원인은 api 인터셉터의 오류 창이 보여 준다
       toast.error('저장에 실패했습니다.');
     } finally {
       setBusy(false);
@@ -159,74 +164,74 @@ export default function IqcHistoryFormPanel({ mode, initialForm, onClose, onSave
         <div className="grid grid-cols-2 gap-3">
           <label className="block text-sm">
             <span className="text-text-muted">서픽스</span>
-            <Input value={form.modelSuffix}
+            <Input fullWidth value={form.modelSuffix}
               onChange={(e) => set('modelSuffix', e.target.value)} />
           </label>
           <label className="block text-sm">
             <span className="text-text-muted">품목코드</span>
-            <PartSearchField value={form.itemCode} onChange={(e) => set('itemCode', e.target.value)} />
+            <PartSearchField fullWidth value={form.itemCode} onChange={(e) => set('itemCode', e.target.value)} />
           </label>
         </div>
         <label className="block text-sm">
           <span className="text-text-muted">품목분류</span>
-          <ComCodeSelect groupCode="ITEM CLASS" includeAll={false}
+          <ComCodeSelect groupCode="ITEM CLASS" includeAll={false} fullWidth placeholder="선택"
             value={form.itemClass} onChange={(v) => set('itemClass', v)} />
         </label>
         <div className="grid grid-cols-2 gap-3">
           <label className="block text-sm">
             <span className="text-text-muted">LOT번호</span>
-            <Input value={form.lotNo} onChange={(e) => set('lotNo', e.target.value)} />
+            <Input fullWidth value={form.lotNo} onChange={(e) => set('lotNo', e.target.value)} />
           </label>
           <label className="block text-sm">
             <span className="text-text-muted">결함코드</span>
-            <ComCodeSelect groupCode="BAD REASON CODE" includeAll={false} placeholder="선택"
+            <ComCodeSelect groupCode="BAD REASON CODE" includeAll={false} fullWidth placeholder="선택"
               value={form.defectCode} onChange={(v) => set('defectCode', v)} />
           </label>
           <label className="block text-sm">
             <span className="text-text-muted">판정</span>
-            <ComCodeSelect groupCode="INSPECT RESULT" includeAll={false}
+            <ComCodeSelect groupCode="INSPECT RESULT" includeAll={false} fullWidth placeholder="선택"
               value={form.inspectResult} onChange={(v) => set('inspectResult', v)} />
           </label>
           <label className="block text-sm">
             <span className="text-text-muted">불량원인</span>
-            <ComCodeSelect groupCode="BAD REASON CODE" includeAll={false}
+            <ComCodeSelect groupCode="BAD REASON CODE" includeAll={false} fullWidth placeholder="선택"
               value={form.badReasonCode} onChange={(v) => set('badReasonCode', v)} />
           </label>
           <label className="block text-sm">
             <span className="text-text-muted">검사유형</span>
-            <ComCodeSelect groupCode="INSPECT METHOD" includeAll={false}
+            <ComCodeSelect groupCode="INSPECT METHOD" includeAll={false} fullWidth placeholder="선택"
               value={form.inspectType} onChange={(v) => set('inspectType', v)} />
           </label>
           <label className="block text-sm">
             <span className="text-text-muted">검사수량</span>
-            <Input type="number" value={form.inspectQty}
+            <Input fullWidth type="number" value={form.inspectQty}
               onChange={(e) => set('inspectQty', e.target.value)} />
           </label>
           <label className="block text-sm">
             <span className="text-text-muted">결함수량</span>
-            <Input type="number" value={form.defectQty}
+            <Input fullWidth type="number" value={form.defectQty}
               onChange={(e) => set('defectQty', e.target.value)} />
           </label>
         </div>
         <label className="block text-sm">
           <span className="text-text-muted">공급처</span>
-          <SupplierSelect includeAll={false} value={form.supplierCode}
+          <SupplierSelect includeAll={false} fullWidth placeholder="선택" value={form.supplierCode}
             onChange={(v) => set('supplierCode', v)} />
         </label>
         <div className="grid grid-cols-2 gap-3">
           <label className="block text-sm">
             <span className="text-text-muted">검사자</span>
-            <Input value={form.inspector} onChange={(e) => set('inspector', e.target.value)} />
+            <Input fullWidth value={form.inspector} onChange={(e) => set('inspector', e.target.value)} />
           </label>
           <label className="block text-sm">
             <span className="text-text-muted">검사자명</span>
-            <Input value={form.inspectorName}
+            <Input fullWidth value={form.inspectorName}
               onChange={(e) => set('inspectorName', e.target.value)} />
           </label>
         </div>
         <label className="block text-sm">
           <span className="text-text-muted">비고</span>
-          <Input value={form.comments} onChange={(e) => set('comments', e.target.value)} />
+          <Input fullWidth value={form.comments} onChange={(e) => set('comments', e.target.value)} />
         </label>
       </div>
 
