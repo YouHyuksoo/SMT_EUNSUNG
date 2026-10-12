@@ -53,7 +53,7 @@ export default function NsnpHistoryPage() {
   const [linesLoading, setLinesLoading] = useState(false);
 
   const [modelName, setModelName] = useState('');
-  const [dateFrom, setDateFrom] = useState(daysAgo(7));
+  const [dateFrom, setDateFrom] = useState(daysAgo(0));
   const [dateTo, setDateTo] = useState(daysAgo(0));
   const [history, setHistory] = useState<NsnpHistoryRow[]>([]);
   const [loading, setLoading] = useState(false);
@@ -100,7 +100,8 @@ export default function NsnpHistoryPage() {
   }, [selected, modelName, dateFrom, dateTo, mark]);
 
   useEffect(() => { void loadLines(); }, [loadLines]);
-  useEffect(() => { void search(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  // 처음 열 때와 왼쪽 라인을 바꿀 때마다 오른쪽 이력을 그 라인으로 다시 조회한다.
+  useEffect(() => { void search(); }, [selected?.lineCode]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const applyNsnp = useCallback(async (action: NsnpAction) => {
     setNsnpOpen(null);
