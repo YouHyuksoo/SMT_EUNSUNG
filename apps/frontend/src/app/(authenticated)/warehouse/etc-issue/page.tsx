@@ -5,19 +5,18 @@
  * @description 자재기타출고 — PB w_mat_other_issue_master 이식 (쓰기)
  *
  * 초보자 가이드:
- * 1. **재고에서 자재를 빼는 화면이다.** 왼쪽 재고 목록에서 품목을 고르고 오른쪽 폼에서
- *    수량과 라인·공정·설비를 넣으면 출고 원장에 한 건이 들어간다.
- *    왼쪽은 [현재고 | 출고이력] 중 고른 목록 하나만 조회한다. 재고가 많아 화면을 열 때
- *    자동 조회하지 않는다.
- * 2. **라인·공정·설비·출고계정은 반드시 넣어야 한다.** 비우면 어디로 나갔는지
+ * 1. **왼쪽은 출고이력, 오른쪽은 한 건씩 출고하는 폼이다.** 화면을 열 때 자동 조회하지 않는다.
+ * 2. **출고할 품목은 오른쪽에서 품목코드로 재고를 불러와 고른다.** 같은 품목이 창고·롯트별로
+ *    여러 줄이면 그중 하나를 고른다. 출고 원장에 그 창고·롯트·단가가 그대로 들어간다.
+ * 3. **라인·공정·설비·출고계정은 반드시 넣어야 한다.** 비우면 어디로 나갔는지
  *    모르는 출고가 생긴다. 출고계정 M001·M002 는 '정상출고' 체크가 켜져 정상출고(N)로,
  *    체크를 끄거나 다른 계정이면 기타출고(E)로 남는다.
- * 3. **수량이 음수면 반납이다.** 라인에서 되돌려 받은 자재를 넣을 때 쓴다.
- * 4. **포장 단위 적용을 켜면 실제 출고 수량이 올라간다.** 250개들이 부품을 300개
+ * 4. **수량이 음수면 반납이다.** 라인에서 되돌려 받은 자재를 넣을 때 쓴다.
+ * 5. **포장 단위 적용을 켜면 실제 출고 수량이 올라간다.** 250개들이 부품을 300개
  *    요청하면 500개가 나간다. 화면이 미리 보여주는 값과 서버가 넣는 값은 **같은
  *    함수**로 계산한다.
- *    **반납(음수)에는 켤 수 없다** — PB 는 그 경우 양수를 내놓아 반납이 출고로
- *    뒤집힌다. 여기서는 막는다.
+ *    **반납(음수)에는 켤 수 없다** — 음수에 포장 단위를 적용하면 양수가 나와 반납이
+ *    출고로 뒤집힌다. 여기서는 막는다.
  */
 import { useCallback, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -26,13 +25,13 @@ import { applyIssuePacking } from '@smt/shared';
 import DataGrid from '@/components/data-grid/DataGrid';
 import DateRangeFilter from '@/components/shared/DateRangeFilter';
 import LineSelect from '@/components/shared/LineSelect';
-import { Button, Card, CardContent, ConfirmModal, Input } from '@/components/ui';
+import { Button, Card, CardContent, ConfirmModal, Input, Select } from '@/components/ui';
 import api from '@/services/api';
 import {
   TruncationNotice,
   useTruncation,
 } from '../../report/components/TruncationNotice';
-import { issueColumns, issueInventoryColumns } from '../issue-manage-columns';
+import { issueColumns } from '../issue-manage-columns';
 import type { IssueInventoryRow, IssueRow } from '../issue-manage-columns';
 import PartSearchField from '@/components/shared/PartSearchField';
 import ComCodeSelect from '@/components/shared/ComCodeSelect';
@@ -43,34 +42,41 @@ const today = () => new Date().toISOString().slice(0, 10);
 /** 정상출고(N)를 고를 수 있는 출고계정. 그 밖의 계정은 기타출고(E)다. */
 const NORMAL_ISSUE_ACCOUNTS = ['M001', 'M002'];
 
-type ListMode = 'inventory' | 'history';
-
 const daysAgo = (n: number) => {
   const d = new Date();
   d.setDate(d.getDate() - n);
   return d.toISOString().slice(0, 10);
 };
 
+/** 재고 한 줄을 고르는 키 — 같은 품목도 창고·롯트가 다르면 다른 줄이다. */
+const stockKey = (row: IssueInventoryRow) =>
+  `${row.locationCode ?? ''}|${row.materialMfs ?? ''}|${row.lineType ?? ''}`;
+
+const errorMessage = (error: unknown) =>
+  (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
+
 export default function EtcIssuePage() {
-  // 조회
-  const [mode, setMode] = useState<ListMode>('inventory');
+  // 출고이력 조회
   const [itemCode, setItemCode] = useState('');
   const [materialMfs, setMaterialMfs] = useState('');
-  const [invLocationCode, setInvLocationCode] = useState('');
-  const [includeZero, setIncludeZero] = useState(false);
   const [dateFrom, setDateFrom] = useState(daysAgo(7));
   const [dateTo, setDateTo] = useState(today());
   const [histLineCode, setHistLineCode] = useState('');
   const [histInvoiceNo, setHistInvoiceNo] = useState('');
 
-  const [inventory, setInventory] = useState<IssueInventoryRow[]>([]);
   const [history, setHistory] = useState<IssueRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
   const { truncated, rowLimit, mark } = useTruncation();
 
-  // 등록 폼
+  // 출고 품목 — 품목코드로 재고를 불러와 한 줄을 고른다
+  const [stockItemCode, setStockItemCode] = useState('');
+  const [stocks, setStocks] = useState<IssueInventoryRow[]>([]);
+  const [stockLoading, setStockLoading] = useState(false);
+  const [stockSearched, setStockSearched] = useState(false);
   const [picked, setPicked] = useState<IssueInventoryRow | null>(null);
+
+  // 등록 폼
   const [issueDate, setIssueDate] = useState(today());
   const [issueQty, setIssueQty] = useState('');
   const [applyPacking, setApplyPacking] = useState(true);
@@ -86,45 +92,50 @@ export default function EtcIssuePage() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [busy, setBusy] = useState(false);
 
-  /** 고른 목록 하나만 조회한다. */
-  const search = useCallback(async (target: ListMode = mode) => {
+  const search = useCallback(async () => {
     setLoading(true);
     try {
-      if (target === 'inventory') {
-        const inv = await api.get('/warehouse/issue-manage/inventory', {
-          params: {
-            itemCode: itemCode || undefined,
-            materialMfs: materialMfs || undefined,
-            locationCode: invLocationCode || undefined,
-            includeZero: includeZero || undefined,
-          },
-        });
-        setInventory(inv.data?.data ?? []);
-        mark(inv);
-      } else {
-        const hist = await api.get('/warehouse/issue-manage/history', {
-          params: {
-            dateFrom,
-            dateTo,
-            itemCode: itemCode || undefined,
-            materialMfs: materialMfs || undefined,
-            lineCode: histLineCode || undefined,
-            invoiceNo: histInvoiceNo.trim() || undefined,
-          },
-        });
-        setHistory(hist.data?.data ?? []);
-        mark(hist);
-      }
+      const hist = await api.get('/warehouse/issue-manage/history', {
+        params: {
+          dateFrom,
+          dateTo,
+          itemCode: itemCode || undefined,
+          materialMfs: materialMfs || undefined,
+          lineCode: histLineCode || undefined,
+          invoiceNo: histInvoiceNo.trim() || undefined,
+        },
+      });
+      setHistory(hist.data?.data ?? []);
+      mark(hist);
       setSearched(true);
     } catch (error: unknown) {
-      const message = (error as { response?: { data?: { message?: string } } })
-        ?.response?.data?.message;
-      toast.error(message ?? '조회에 실패했습니다.');
+      toast.error(errorMessage(error) ?? '조회에 실패했습니다.');
     } finally {
       setLoading(false);
     }
-  }, [mode, itemCode, materialMfs, invLocationCode, includeZero, dateFrom, dateTo,
-    histLineCode, histInvoiceNo, mark]);
+  }, [itemCode, materialMfs, dateFrom, dateTo, histLineCode, histInvoiceNo, mark]);
+
+  /** 품목코드 하나의 재고를 창고·롯트별로 불러온다. */
+  const loadStock = useCallback(async (code: string, keepKey?: string) => {
+    const target = code.trim();
+    if (!target) return;
+    setStockLoading(true);
+    try {
+      const res = await api.get('/warehouse/issue-manage/inventory', {
+        params: { itemCode: target },
+      });
+      const rows = ((res.data?.data ?? []) as IssueInventoryRow[])
+        .filter((r) => r.itemCode === target);
+      setStocks(rows);
+      setStockSearched(true);
+      const kept = keepKey ? rows.find((r) => stockKey(r) === keepKey) : undefined;
+      setPicked(kept ?? (rows.length === 1 ? rows[0] : null));
+    } catch (error: unknown) {
+      toast.error(errorMessage(error) ?? '재고를 불러오지 못했습니다.');
+    } finally {
+      setStockLoading(false);
+    }
+  }, []);
 
   const qty = Number(issueQty);
   const qtyValid = Number.isFinite(qty) && qty !== 0;
@@ -137,7 +148,7 @@ export default function EtcIssuePage() {
   }, [qtyValid, applyPacking, qty, picked]);
 
   const blocker = useMemo(() => {
-    if (!picked) return '왼쪽 재고 목록에서 품목을 고르세요.';
+    if (!picked) return '품목코드로 재고를 불러와 출고할 줄을 고르세요.';
     if (!qtyValid) return '수량은 0 이 아닌 값이어야 합니다 (음수는 반납).';
     if (applyPacking && qty < 0) {
       return '반납(음수)에는 포장 단위를 적용할 수 없습니다.';
@@ -184,16 +195,23 @@ export default function EtcIssuePage() {
         + ` (전표 ${result?.invoiceNo}).`,
       );
       setIssueQty('');
-      void search('inventory');
+      // 바뀐 재고를 다시 보여준다. 이력은 조회한 적이 있을 때만 새로 고친다.
+      void loadStock(picked.itemCode, stockKey(picked));
+      if (searched) void search();
     } catch (error: unknown) {
-      const message = (error as { response?: { data?: { message?: string } } })
-        ?.response?.data?.message;
-      toast.error(message ?? '출고에 실패했습니다.');
+      toast.error(errorMessage(error) ?? '출고에 실패했습니다.');
     } finally {
       setBusy(false);
     }
   }, [picked, issueDate, qty, lineCode, workstageCode, machineCode, applyPacking,
-    issueAccount, normalIssueAllowed, normalIssue, invoiceNo, comments, search]);
+    issueAccount, normalIssueAllowed, normalIssue, invoiceNo, comments, loadStock,
+    searched, search]);
+
+  const stockOptions = useMemo(() => stocks.map((r) => ({
+    value: stockKey(r),
+    label: `창고 ${r.locationCode ?? '-'} · 롯트 ${r.materialMfs ?? '-'}`
+      + ` · 재고 ${Number(r.inventoryQty ?? 0).toLocaleString()}`,
+  })), [stocks]);
 
   return (
     <div className="flex h-full flex-col gap-4 p-6">
@@ -201,27 +219,14 @@ export default function EtcIssuePage() {
         <h1 className="text-xl font-bold text-text">자재기타출고</h1>
         <p className="mt-1 text-sm text-text-muted">
           재고에서 자재를 빼거나 되돌려 받습니다. 수량이 음수면 반납입니다 ·{' '}
-          {searched
-            ? (mode === 'inventory'
-              ? `재고 ${inventory.length.toLocaleString()}건`
-              : `출고 ${history.length.toLocaleString()}건`)
-            : '조건을 넣고 조회하세요'}
+          {searched ? `출고 ${history.length.toLocaleString()}건` : '조건을 넣고 조회하세요'}
         </p>
       </header>
 
       <Card padding="none">
         <CardContent className="flex flex-wrap items-center gap-3 p-3">
-          <div className="flex overflow-hidden rounded border border-border text-sm">
-            {([['inventory', '현재고'], ['history', '출고이력']] as const).map(([key, label]) => (
-              <button key={key} type="button"
-                className={`px-3 py-1.5 ${mode === key
-                  ? 'bg-primary text-white'
-                  : 'bg-surface text-text hover:bg-surface-muted'}`}
-                onClick={() => { setMode(key); setSearched(false); }}>
-                {label}
-              </button>
-            ))}
-          </div>
+          <DateRangeFilter label="출고 기간" from={dateFrom} to={dateTo}
+            onFromChange={setDateFrom} onToChange={setDateTo} />
           <PartSearchField aria-label="품목코드" placeholder="품목코드" value={itemCode}
             className="w-44"
             onChange={(e) => setItemCode(e.target.value)}
@@ -230,26 +235,11 @@ export default function EtcIssuePage() {
             className="w-40"
             onChange={(e) => setMaterialMfs(e.target.value.toUpperCase())}
             onKeyDown={(e) => { if (e.key === 'Enter') void search(); }} />
-          {mode === 'inventory' ? (
-            <>
-              <ComCodeSelect groupCode="MATERIAL LOCATION CODE" labelPrefix="창고" value={invLocationCode} onChange={setInvLocationCode} className="w-44" />
-              <label className="flex items-center gap-2 text-sm text-text">
-                <input type="checkbox" checked={includeZero}
-                  onChange={(e) => setIncludeZero(e.target.checked)} />
-                재고 0 이하도 보기 (느립니다)
-              </label>
-            </>
-          ) : (
-            <>
-              <DateRangeFilter label="출고 기간" from={dateFrom} to={dateTo}
-                onFromChange={setDateFrom} onToChange={setDateTo} />
-              <LineSelect value={histLineCode} onChange={setHistLineCode} labelPrefix="라인" className="w-44" />
-              <Input aria-label="전표번호" placeholder="전표번호" value={histInvoiceNo}
-                className="w-36"
-                onChange={(e) => setHistInvoiceNo(e.target.value.toUpperCase())}
-                onKeyDown={(e) => { if (e.key === 'Enter') void search(); }} />
-            </>
-          )}
+          <LineSelect value={histLineCode} onChange={setHistLineCode} labelPrefix="라인" className="w-44" />
+          <Input aria-label="전표번호" placeholder="전표번호" value={histInvoiceNo}
+            className="w-36"
+            onChange={(e) => setHistInvoiceNo(e.target.value.toUpperCase())}
+            onKeyDown={(e) => { if (e.key === 'Enter') void search(); }} />
           <Button size="sm" onClick={() => void search()} disabled={loading}>
             <Search className="mr-1 h-4 w-4" />조회
           </Button>
@@ -261,35 +251,21 @@ export default function EtcIssuePage() {
       <div className="grid min-h-0 flex-1 gap-4 lg:grid-cols-[1fr_340px]">
         <Card className="min-h-0 overflow-hidden" padding="none">
           <CardContent className="h-full p-3">
-            {mode === 'inventory' ? (
-              <DataGrid
-                data={inventory}
-                columns={issueInventoryColumns}
-                isLoading={loading}
-                pageSize={50}
-                enableColumnFilter
-                enableExport
-                exportFileName="기타출고_현재고"
-                emptyMessage={searched ? '조건에 맞는 재고가 없습니다.' : '조건을 넣고 조회하세요.'}
-                onRowClick={(row) => setPicked(row as IssueInventoryRow)}
-              />
-            ) : (
-              <DataGrid
-                data={history}
-                columns={issueColumns}
-                isLoading={loading}
-                pageSize={50}
-                enableColumnFilter
-                enableExport
-                exportFileName="자재출고"
-                enableColumnPinning
-                defaultPinnedColumns={{ left: ['issueDate'] }}
-                emptyMessage={searched ? '기간 안에 출고가 없습니다.' : '조건을 넣고 조회하세요.'}
-                rowClassName={(row) => (String((row as IssueRow).issueStatus ?? '') === 'C'
-                  ? 'bg-amber-500/5'
-                  : '')}
-              />
-            )}
+            <DataGrid
+              data={history}
+              columns={issueColumns}
+              isLoading={loading}
+              pageSize={50}
+              enableColumnFilter
+              enableExport
+              exportFileName="자재출고"
+              enableColumnPinning
+              defaultPinnedColumns={{ left: ['issueDate'] }}
+              emptyMessage={searched ? '기간 안에 출고가 없습니다.' : '조건을 넣고 조회하세요.'}
+              rowClassName={(row) => (String((row as IssueRow).issueStatus ?? '') === 'C'
+                ? 'bg-amber-500/5'
+                : '')}
+            />
           </CardContent>
         </Card>
 
@@ -299,10 +275,30 @@ export default function EtcIssuePage() {
               <PackageMinus className="h-4 w-4" />기타출고 등록
             </h2>
 
-            {mode === 'history' && (
-              <p className="text-xs text-text-muted">출고하려면 [현재고] 목록에서 품목을 고르세요.</p>
+            <div className="flex items-end gap-2">
+              <PartSearchField label="품목코드" placeholder="품목코드" value={stockItemCode}
+                fullWidth
+                onChange={(e) => {
+                  setStockItemCode(e.target.value);
+                  setStocks([]); setStockSearched(false); setPicked(null);
+                }}
+                onKeyDown={(e) => { if (e.key === 'Enter') void loadStock(stockItemCode); }} />
+              <Button size="sm" variant="secondary" disabled={stockLoading || !stockItemCode.trim()}
+                onClick={() => void loadStock(stockItemCode)}>
+                재고
+              </Button>
+            </div>
+            {stocks.length > 1 && (
+              <Select label="창고·롯트" options={stockOptions}
+                value={picked ? stockKey(picked) : ''}
+                placeholder="출고할 줄을 고르세요"
+                onChange={(v) => setPicked(stocks.find((r) => stockKey(r) === v) ?? null)} />
             )}
-            {picked ? (
+            {stockSearched && stocks.length === 0 && (
+              <p className="text-sm text-amber-500">재고가 있는 줄이 없습니다.</p>
+            )}
+
+            {picked && (
               <div className="rounded border border-border bg-surface-muted px-3 py-2 text-sm">
                 <div><b>{picked.itemCode}</b> {picked.itemName ?? ''}</div>
                 <div className="mt-1 text-text-muted">
@@ -313,8 +309,6 @@ export default function EtcIssuePage() {
                     : '없음'}
                 </div>
               </div>
-            ) : (
-              <p className="text-sm text-text-muted">왼쪽 재고 목록에서 품목을 고르세요.</p>
             )}
 
             <Input label="출고일" type="date" value={issueDate}

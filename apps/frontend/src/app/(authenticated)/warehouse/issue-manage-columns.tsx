@@ -134,26 +134,3 @@ export const issueColumns: ColumnDef<IssueRow>[] = [
   { accessorKey: 'enterBy', header: '등록자', size: 100 },
   { accessorKey: 'enterDate', header: '등록일시', size: 160, cell: (c) => ts(c.getValue()) },
 ];
-
-export const issueInventoryColumns: ColumnDef<IssueInventoryRow>[] = [
-  { accessorKey: 'itemCode', header: '품목코드', size: 140 },
-  { accessorKey: 'itemName', header: '품목명', size: 180 },
-  { accessorKey: 'itemSpec', header: '규격', size: 160 },
-  { accessorKey: 'inventoryQty', header: '재고수량', size: 110, meta: right, cell: (c) => num(c.getValue()) },
-  { accessorKey: 'itemUom', header: '단위', size: 70, meta: center },
-  {
-    accessorKey: 'issuePackingQty',
-    header: '포장 단위',
-    size: 100,
-    meta: right,
-    // 0 이면 올림 없이 요청한 수량 그대로 나간다.
-    cell: (c) => (Number(c.getValue() ?? 0) > 0 ? num(c.getValue()) : '—'),
-  },
-  { accessorKey: 'inventoryPrice', header: '재고단가', size: 110, meta: right, cell: (c) => num(c.getValue()) },
-  { accessorKey: 'locationCode', header: '창고', size: 80, meta: center },
-  { accessorKey: 'locationAddress', header: '창고번지', size: 110 },
-  { accessorKey: 'materialMfs', header: '자재 롯트', size: 130 },
-  { accessorKey: 'lineType', header: '구매유형', size: 90, meta: center },
-  { accessorKey: 'inventoryStatus', header: '재고상태', size: 100, meta: center },
-  { accessorKey: 'inventoryHold', header: '보류', size: 80, meta: center },
-];
