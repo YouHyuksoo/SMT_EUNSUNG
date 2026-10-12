@@ -16,6 +16,7 @@ import {
   FgIssuableQueryDto,
   FgIssueDto,
   FgIssueQueryDto,
+  FgIssueSummaryQueryDto,
   FgModelIssueDto,
   FgModelReceiptDto,
   FgReceiptDto,
@@ -190,9 +191,9 @@ export class ProductFgController {
   }
 
   @Get('issues/summary')
-  @ApiOperation({ summary: '307 고객별 출하 요약.' })
+  @ApiOperation({ summary: '제품출하조회 합계. groupBy = customer(거래처별) · item(품목별) · date(일자별).' })
   async issueSummary(
-    @Query() query: FgIssueQueryDto,
+    @Query() query: FgIssueSummaryQueryDto,
     @OrganizationId() organizationId: number,
   ) {
     return paged(await this.service.findIssueSummary(query, organizationId));

@@ -280,10 +280,18 @@ export interface FgIssueRow {
   actualDate: string | null;
 }
 
+/** 제품출하조회 합계 한 줄 — 기준(거래처·품목·일자)에 따라 앞쪽 키 컬럼만 다르다. */
 export interface FgIssueSummaryRow {
-  customerCode: string;
-  customerName: string | null;
+  customerCode?: string | null;
+  customerName?: string | null;
+  itemCode?: string | null;
+  itemName?: string | null;
+  modelName?: string | null;
+  modelSuffix?: string | null;
+  issueDate?: string | null;
   issueCount: number | null;
+  issueQty: number | null;
+  cancelQty: number | null;
   qty: number | null;
 }
 
@@ -328,23 +336,44 @@ export const fgIssueColumns: ColumnDef<FgIssueRow>[] = [
   { accessorKey: 'issueDate', header: '출하일시', size: 160, cell: (c) => ts(c.getValue()) },
 ];
 
-export const fgIssueSummaryColumns: ColumnDef<FgIssueSummaryRow>[] = [
-  { accessorKey: 'customerCode', header: '고객코드', size: 130 },
-  { accessorKey: 'customerName', header: '고객명', size: 200 },
+/** 합계 공통 숫자 컬럼 — 건수 · 출하 · 취소 · 순출하(출하 − 취소). */
+const fgIssueSumColumns: ColumnDef<FgIssueSummaryRow>[] = [
+  { accessorKey: 'issueCount', header: '건수', size: 90, meta: right, cell: (c) => num(c.getValue()) },
+  { accessorKey: 'issueQty', header: '출하수량', size: 110, meta: right, cell: (c) => num(c.getValue()) },
   {
-    accessorKey: 'issueCount',
-    header: '건수',
-    size: 100,
+    accessorKey: 'cancelQty',
+    header: '취소수량',
+    size: 110,
     meta: right,
-    cell: (c) => num(c.getValue()),
+    cell: (c) => signedQty(-Number(c.getValue() ?? 0) || 0),
   },
-  {
-    accessorKey: 'qty',
-    header: '수량',
-    size: 120,
-    meta: right,
-    cell: (c) => signedQty(c.getValue()),
-  },
+  { accessorKey: 'qty', header: '순출하수량', size: 120, meta: right, cell: (c) => signedQty(c.getValue()) },
+];
+
+/** 합계 품목 컬럼 — 어느 기준이든 품목코드 · 품명 · 모델이 나온다. */
+const fgIssueItemColumns: ColumnDef<FgIssueSummaryRow>[] = [
+  { accessorKey: 'itemCode', header: '품목코드', size: 140 },
+  { accessorKey: 'itemName', header: '품명', size: 220 },
+  { accessorKey: 'modelName', header: '모델', size: 170 },
+  { accessorKey: 'modelSuffix', header: '서픽스', size: 90 },
+];
+
+export const fgIssueCustomerSummaryColumns: ColumnDef<FgIssueSummaryRow>[] = [
+  { accessorKey: 'customerCode', header: '거래처코드', size: 110 },
+  { accessorKey: 'customerName', header: '거래처명', size: 160 },
+  ...fgIssueItemColumns,
+  ...fgIssueSumColumns,
+];
+
+export const fgIssueItemSummaryColumns: ColumnDef<FgIssueSummaryRow>[] = [
+  ...fgIssueItemColumns,
+  ...fgIssueSumColumns,
+];
+
+export const fgIssueDateSummaryColumns: ColumnDef<FgIssueSummaryRow>[] = [
+  { accessorKey: 'issueDate', header: '출하일', size: 110, meta: center },
+  ...fgIssueItemColumns,
+  ...fgIssueSumColumns,
 ];
 
 export const fgIssuableColumns: ColumnDef<FgIssuableRow>[] = [

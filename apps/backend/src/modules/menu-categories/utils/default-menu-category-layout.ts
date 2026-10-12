@@ -26,7 +26,7 @@ export const DEFAULT_MENU_CATEGORY_LAYOUT: readonly DefaultMenuCategoryLayout[] 
   { categoryCode: 'PROCESS_TRANSACTION', labelKey: 'menu.processTransaction', sortOrder: 120, menuCodes: ['MAT_WORKSTAGE_INVENTORY', 'PLN_WIP_LEDGER'] },
   { categoryCode: 'MAGAZINE', labelKey: 'menu.magazine', sortOrder: 130, menuCodes: ['PLN_MAGAZINE_LABEL_HISTORY', 'PLN_MAGAZINE_LABEL', 'PLN_MAGAZINE_SPLIT', 'PLN_MAGAZINE_PID'] },
   { categoryCode: 'PRODUCT_MGMT', labelKey: 'menu.productMgmt', sortOrder: 140, menuCodes: [] },
-  { categoryCode: 'PRODUCT_INVENTORY', labelKey: 'menu.productInventory', sortOrder: 150, menuCodes: ['PRD_CURRENT_INVENTORY', 'PRD_PACK', 'PRD_PACK_HISTORY', 'PRD_FG_RECEIPT', 'PRD_FG_MODEL_RECEIPT', 'PRD_FG_ISSUE', 'PRD_FG_MODEL_ISSUE'] },
+  { categoryCode: 'PRODUCT_INVENTORY', labelKey: 'menu.productInventory', sortOrder: 150, menuCodes: ['PRD_CURRENT_INVENTORY', 'PRD_PACK', 'PRD_PACK_HISTORY', 'PRD_FG_RECEIPT', 'PRD_FG_MODEL_RECEIPT', 'PRD_FG_ISSUE', 'PRD_FG_ISSUE_QUERY', 'PRD_FG_MODEL_ISSUE'] },
   { categoryCode: 'INVENTORY_CLOSE', labelKey: 'menu.inventoryClose', sortOrder: 160, menuCodes: ['SYS_INV_CLOSE_DATE', 'INV_CLOSE', 'INV_CHECK', 'PLN_WIP_STOCKTAKE', 'PLN_WIP_CLOSE', 'PRD_FG_STOCKTAKE', 'PRD_FG_CLOSE'] },
   { categoryCode: 'PRODUCTION', labelKey: 'menu.production', sortOrder: 170, menuCodes: ['PRD_RUN_CARD', 'PRD_MASTER_PLAN', 'PRD_SMD_PLAN', 'PRD_SMD_ACTUAL', 'PRD_RUN_CARD_PID', 'PRD_PCB_RESULT', 'PRD_DAILY_REPORT'] },
   { categoryCode: 'TRACKING', labelKey: 'menu.tracking', sortOrder: 180, menuCodes: ['TRK_MATERIAL_LOT', 'TRK_MATERIAL_DYNAMIC', 'TRK_MATERIAL_USAGE', 'TRK_PID', 'TRK_RUN_NO', 'TRK_LOT_ALL', 'TRK_LINE_DASHBOARD', 'PLN_WORKSTAGE_PASS'] },

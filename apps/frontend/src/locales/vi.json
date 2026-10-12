@@ -299,6 +299,7 @@
     "productMgmt.fgReceipt": "Nhập kho thành phẩm (PID)",
     "productMgmt.fgModelReceipt": "Nhập kho thành phẩm (theo model)",
     "productMgmt.fgIssue": "Xuất hàng thành phẩm",
+    "productMgmt.fgIssueQuery": "Tra cứu xuất hàng thành phẩm",
     "productMgmt.fgModelIssue": "Xuất kho thành phẩm (theo model)",
     "productMgmt.fgStocktake": "Kiểm kê thành phẩm",
     "productMgmt.fgClose": "Chốt tồn kho thành phẩm",

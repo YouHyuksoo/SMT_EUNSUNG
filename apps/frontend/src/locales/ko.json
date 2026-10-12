@@ -299,6 +299,7 @@
     "productMgmt.fgReceipt": "제품입고관리(PID)",
     "productMgmt.fgModelReceipt": "제품입고관리(모델단위)",
     "productMgmt.fgIssue": "제품출하관리",
+    "productMgmt.fgIssueQuery": "제품출하조회",
     "productMgmt.fgModelIssue": "제품출고관리(모델단위)",
     "productMgmt.fgStocktake": "제품재고실사",
     "productMgmt.fgClose": "제품재고마감",

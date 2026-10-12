@@ -299,6 +299,7 @@
     "productMgmt.fgReceipt": "FG Receipt (PID)",
     "productMgmt.fgModelReceipt": "FG Receipt (Model)",
     "productMgmt.fgIssue": "FG Shipping",
+    "productMgmt.fgIssueQuery": "FG Shipping Inquiry",
     "productMgmt.fgModelIssue": "FG Issue (Model)",
     "productMgmt.fgStocktake": "FG Stocktake",
     "productMgmt.fgClose": "FG Inventory Close",

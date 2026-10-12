@@ -115,6 +115,7 @@ const KNOWN_LEAF_CODES: ReadonlySet<string> = new Set<string>([
   'PRD_FG_RECEIPT',
   'PRD_FG_MODEL_RECEIPT',
   'PRD_FG_ISSUE',
+  'PRD_FG_ISSUE_QUERY',
   'PRD_FG_MODEL_ISSUE',
   'SYS_INV_CLOSE_DATE',
   'INV_CLOSE',

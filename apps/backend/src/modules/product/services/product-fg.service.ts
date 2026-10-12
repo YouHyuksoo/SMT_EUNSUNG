@@ -37,6 +37,8 @@ import {
   FgIssuableQueryDto,
   FgIssueDto,
   FgIssueQueryDto,
+  FgIssueSummaryGroup,
+  FgIssueSummaryQueryDto,
   FgModelIssueDto,
   FgModelReceiptDto,
   FgReceiptDto,
@@ -59,6 +61,39 @@ export const FG_TXN = {
  * 프로시저 본문의 모든 `COMMIT`/`ROLLBACK` 이 `if p_commit = 'Y'` 안에 있다.
  */
 const NO_PROC_COMMIT = 'N';
+
+/**
+ * 제품출하조회 합계 기준별 SELECT · GROUP BY · ORDER BY 조각. 사용자 값은 들어가지 않는다.
+ * 세 기준 모두 품목(품목코드 · 품명 · 모델)을 묶음에 넣는다 — 거래처별은 거래처 × 품목,
+ * 일자별은 일자 × 품목, 품목별은 품목 하나로 묶는다.
+ */
+const FG_ISSUE_ITEM_SELECT = `i.ITEM_CODE AS "itemCode",
+              MAX(it.ITEM_NAME) AS "itemName",
+              MAX(i.MODEL_NAME) AS "modelName",
+              MAX(i.MODEL_SUFFIX) AS "modelSuffix"`;
+const FG_ISSUE_SUMMARY_SQL: Record<
+  FgIssueSummaryGroup,
+  { select: string; groupBy: string; orderBy: string }
+> = {
+  customer: {
+    select: `i.CUSTOMER_CODE AS "customerCode",
+              MAX(cu.CUSTOMER_NAME) AS "customerName",
+              ${FG_ISSUE_ITEM_SELECT}`,
+    groupBy: 'i.CUSTOMER_CODE, i.ITEM_CODE',
+    orderBy: 'i.CUSTOMER_CODE, "qty" DESC',
+  },
+  item: {
+    select: FG_ISSUE_ITEM_SELECT,
+    groupBy: 'i.ITEM_CODE',
+    orderBy: '"qty" DESC',
+  },
+  date: {
+    select: `TO_CHAR(TRUNC(i.ISSUE_DATE), 'YYYY-MM-DD') AS "issueDate",
+              ${FG_ISSUE_ITEM_SELECT}`,
+    groupBy: 'TRUNC(i.ISSUE_DATE), i.ITEM_CODE',
+    orderBy: 'TRUNC(i.ISSUE_DATE) DESC, "qty" DESC',
+  },
+};
 
 @Injectable()
 export class ProductFgService {
@@ -158,41 +193,50 @@ export class ProductFgService {
         dateTo: query.dateTo,
         modelName: this.like(query.modelName),
         barcode: this.like(query.barcode),
-        customerCode: this.like(query.customerCode),
+        customerCode: this.exactOrAll(query.customerCode),
         organizationId,
       }),
     )) as Row[];
     return limited(rows);
   }
 
-  /** 고객별 출하 요약 (PB `d_product_fg_issue_summary_lst`). */
-  async findIssueSummary(query: FgIssueQueryDto, organizationId: number) {
+  /**
+   * 제품출하조회 합계 — 거래처별 · 품목별 · 일자별.
+   *
+   * 세 기준 모두 같은 조건·같은 부호(출고 3 +, 취소 4 −)로 묶어 합계가 서로 맞는다.
+   * 일자는 조회 조건과 같은 `ISSUE_DATE` 의 날짜로 묶는다. 품목코드와 모델은 1:1 이라
+   * (실측 90일 99/99/99) 모델은 MAX 로 붙인다. 품명은 품목마스터(ID_ITEM, PK 품목코드+조직)에서 붙인다.
+   */
+  async findIssueSummary(query: FgIssueSummaryQueryDto, organizationId: number) {
+    const group = FG_ISSUE_SUMMARY_SQL[query.groupBy ?? 'customer'];
     const rows = (await this.dataSource.query(
-      `SELECT i.CUSTOMER_CODE   AS "customerCode",
-              MAX(cu.CUSTOMER_NAME) AS "customerName",
+      `SELECT ${group.select},
               COUNT(*)          AS "issueCount",
+              SUM(DECODE(i.TXN_DEFICIT, '3', i.QTY, 0)) AS "issueQty",
+              SUM(DECODE(i.TXN_DEFICIT, '3', 0, i.QTY)) AS "cancelQty",
               SUM(i.QTY * DECODE(i.TXN_DEFICIT, '3', 1, -1)) AS "qty"
          FROM IP_PRODUCT_FG_ISSUE i
          LEFT JOIN ICOM_CUSTOMER cu
                 ON cu.CUSTOMER_CODE = i.CUSTOMER_CODE
                AND cu.ORGANIZATION_ID = i.ORGANIZATION_ID
+         LEFT JOIN ID_ITEM it
+                ON it.ITEM_CODE = i.ITEM_CODE
+               AND it.ORGANIZATION_ID = i.ORGANIZATION_ID
         WHERE i.ISSUE_DATE >= TO_DATE(:dateFrom, 'YYYY-MM-DD')
           AND i.ISSUE_DATE <  TO_DATE(:dateTo, 'YYYY-MM-DD') + 1
           AND i.MODEL_NAME LIKE :modelName
           AND i.BARCODE LIKE :barcode
           AND NVL(i.CUSTOMER_CODE, '*') LIKE :customerCode
-          -- PB 고정조건: 고객이 없는 행은 요약에서 뺀다.
-          AND i.CUSTOMER_CODE IS NOT NULL
           AND i.ORGANIZATION_ID = :organizationId
-        GROUP BY i.CUSTOMER_CODE
-        ORDER BY 4 DESC
+        GROUP BY ${group.groupBy}
+        ORDER BY ${group.orderBy}
         FETCH FIRST ${ROW_LIMIT} ROWS ONLY`,
       namedBinds({
         dateFrom: query.dateFrom,
         dateTo: query.dateTo,
         modelName: this.like(query.modelName),
         barcode: this.like(query.barcode),
-        customerCode: this.like(query.customerCode),
+        customerCode: this.exactOrAll(query.customerCode),
         organizationId,
       }),
     )) as Row[];
@@ -367,5 +411,11 @@ export class ProductFgService {
   private like(value?: string) {
     const trimmed = (value ?? '').trim();
     return trimmed ? `%${trimmed}%` : '%';
+  }
+
+  /** 거래처처럼 목록에서 고르는 코드는 정확히 일치시키고, 비우면 전체다. */
+  private exactOrAll(value?: string) {
+    const trimmed = (value ?? '').trim();
+    return trimmed || '%';
   }
 }

@@ -34,6 +34,14 @@ export class FgIssueQueryDto {
   @IsOptional() @IsString() customerCode?: string;
 }
 
+/** 제품출하조회 합계 기준 — 거래처별 · 품목별 · 일자별. */
+export const FG_ISSUE_SUMMARY_GROUPS = ['customer', 'item', 'date'] as const;
+export type FgIssueSummaryGroup = (typeof FG_ISSUE_SUMMARY_GROUPS)[number];
+
+export class FgIssueSummaryQueryDto extends FgIssueQueryDto {
+  @IsOptional() @IsIn(FG_ISSUE_SUMMARY_GROUPS) groupBy?: FgIssueSummaryGroup;
+}
+
 export class FgIssuableQueryDto {
   @IsDateString() dateFrom!: string;
   @IsDateString() dateTo!: string;
